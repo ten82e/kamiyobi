@@ -47,6 +47,22 @@ jobs:
         id: build
         run: node src/cli.ts build --out public
 
+      # 配信済み health.json を last-known-good として、致命的なデータ縮退を
+      # Pages へ出す前に止める。初回公開などで旧レポートが無い場合は current
+      # report の必須会議・snapshot 条件だけを検査する。
+      - name: Health gate
+        if: ${{ steps.build.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --retry 2 \
+            'https://ten82e.github.io/kamiyobi/health.json' \
+            -o /tmp/last-known-good-health.json || rm -f /tmp/last-known-good-health.json
+          if [ -f /tmp/last-known-good-health.json ]; then
+            node scripts/health-gate.ts public/health.json /tmp/last-known-good-health.json
+          else
+            node scripts/health-gate.ts public/health.json
+          fi
+
       # スナップショットは上流が変わった日にだけ更新される。
       # SPEC.md 6 のとおり、活動を偽装するハートビートコミットは実装しない。
       # snapshot と primary_overrides のどちらかに実質変更があるときだけ

@@ -204,7 +204,25 @@ export const WIKICFP_CATEGORY_MAP: Record<string, string[]> = {
   ],
 };
 
-export type CandidateStatus = "discovered" | "reviewed" | "accepted" | "rejected" | "superseded";
+export type CandidateStatus =
+  | "discovered"
+  | "deduplicated"
+  | "official-site-found"
+  | "verified"
+  | "promoted"
+  | "rejected"
+  | "expired";
+
+export interface CandidateVerification {
+  deadline: "unverified" | "verified" | "conflict";
+  publisher: "unverified" | "verified" | "conflict";
+}
+
+export interface CandidateFingerprint {
+  source: string;
+  url: string;
+  content_hash: string;
+}
 
 export interface Candidate {
   key: string;
@@ -217,6 +235,12 @@ export interface Candidate {
   evidence_url: string;
   status: CandidateStatus;
   discovered_at: string;
+  first_seen_at?: string;
+  last_seen_at?: string;
+  source_fingerprints?: CandidateFingerprint[];
+  official_url?: string | null;
+  verification?: CandidateVerification;
+  risk_flags?: string[];
   review_notes?: string;
   date_text: string;
   /** 開催年。パース時にタイトル等から判明した正しい年 (date_text は締切日で開催年と
@@ -243,6 +267,12 @@ export function makeCandidate(
     evidence_url: "",
     status: "discovered",
     discovered_at: "",
+    first_seen_at: "",
+    last_seen_at: "",
+    source_fingerprints: [],
+    official_url: null,
+    verification: { deadline: "unverified", publisher: "unverified" },
+    risk_flags: [],
     date_text: "",
     place: "",
     deadlines: [],
@@ -268,15 +298,18 @@ export function toYamlDict(c: Candidate | null | undefined): Record<string, unkn
     const m = /(20\d\d)/.exec(c.date_text || "");
     // 開催年がパース時に判明している場合は date_text（締切日）より優先する。
     // 締切が開催年の前年（秋締切等）だと date_text 由来の年が 1 年前にずれるため。
-    const year = c.year && c.year >= 2020 ? c.year : m ? Number(m[1]) : new Date().getUTCFullYear();
-    editions.push({
-      year,
-      id: `${c.key}${year % 100}`,
-      link: c.link,
-      place: c.place || "",
-      date_text: c.date_text || "",
-      deadlines: Array.isArray(c.deadlines) ? c.deadlines : [],
-    });
+    const year =
+      c.year && Number.isInteger(c.year) && c.year >= 2020 ? c.year : m ? Number(m[1]) : null;
+    if (year !== null) {
+      editions.push({
+        year,
+        id: `${c.key}${year % 100}`,
+        link: c.link,
+        place: c.place || "",
+        date_text: c.date_text || "",
+        deadlines: Array.isArray(c.deadlines) ? c.deadlines : [],
+      });
+    }
   }
   entry.editions = editions;
   return entry;
@@ -298,13 +331,20 @@ export function formatCandidateYaml(candidates: Candidate[] | null | undefined):
     .sort((a, b) => String(a.key).localeCompare(String(b.key)))
     .map((c) => ({
       ...toYamlDict(c),
+      state: c.status,
       status: c.status,
       discovered_at: c.discovered_at,
-      ...(c.year ? { target_year: c.year } : {}),
+      first_seen_at: c.first_seen_at || c.discovered_at || null,
+      last_seen_at: c.last_seen_at || c.discovered_at || null,
+      target_year: c.year && Number.isInteger(c.year) && c.year >= 2020 ? c.year : null,
+      source_fingerprints: c.source_fingerprints ?? [],
+      official_url: c.official_url ?? null,
+      verification: c.verification ?? { deadline: "unverified", publisher: "unverified" },
+      risk_flags: c.risk_flags ?? [],
       ...(c.review_notes ? { review_notes: c.review_notes } : {}),
       evidence_url: c.evidence_url,
     }));
-  return dumpYaml({ schema: 1, candidates: records }, { skipInvalid: true }) as string;
+  return dumpYaml({ schema: 2, candidates: records }, { skipInvalid: true }) as string;
 }
 
 /** Date.UTC は不正な年月日を繰り上げてしまうため、暦の妥当性を検証してから返す。 */
@@ -443,7 +483,7 @@ interface WikiCfpEntry {
   categories: string[];
   date_text: string;
   place: string;
-  year: number;
+  year?: number;
 }
 
 /** wikiCFP カテゴリページをパースしてエントリ dict のリストを返す。 */
@@ -490,7 +530,7 @@ export function parseWikiCfpHtml(
     const [when, where, deadline] = cells;
     void when;
     if (deadline === "" || deadline === "N/A") continue;
-    let year = minYear;
+    let year: number | undefined;
     const tm = /(20\d\d)/.exec(title);
     if (tm) {
       year = Number(tm[1]);
@@ -498,7 +538,7 @@ export function parseWikiCfpHtml(
       const dm = /(20\d\d)/.exec(deadline);
       if (dm) year = Number(dm[1]);
     }
-    if (year < minYear) continue;
+    if (year !== undefined && year < minYear) continue;
     entries.push({
       key: slug(title),
       title,
@@ -695,8 +735,8 @@ export async function discoverFromDbworld(
     const [cleaned, sourceType] = cleanDbworldTitle(subject);
     if (!cleaned) continue;
     const m = /(20\d\d)/.exec(cleaned);
-    const year = m ? Number(m[1]) : minYear;
-    if (year < minYear) continue;
+    const year = m ? Number(m[1]) : undefined;
+    if (year !== undefined && year < minYear) continue;
     entries.push({
       key: slug(cleaned),
       title: cleaned,
@@ -819,8 +859,8 @@ export function easyChairEntriesFromRows(
     // 前年、例: DASFAA 2026 の締切 Oct 27, 2025）の会議を締切年で落とさない (#261)。
     const tm = /20\d\d/.exec(`${e.title} ${e.full_name}`);
     const dm = /(20\d\d)/.exec(e.date_text);
-    const year = tm ? Number(tm[0]) : dm ? Number(dm[1]) : minYear;
-    if (year < minYear) continue;
+    const year = tm ? Number(tm[0]) : dm ? Number(dm[1]) : undefined;
+    if (year !== undefined && year < minYear) continue;
     if (!inDomain(`${e.title} ${e.full_name} ${e.topics.join(" ")}`)) continue;
     entries.push({
       key: slug(e.title),
@@ -1071,8 +1111,8 @@ export async function discoverFromImap(minYear: number): Promise<Array<Record<st
         const [cleaned, sourceType] = cleanDbworldTitle(subject);
         if (!cleaned) continue;
         const m2 = /(20\d\d)/.exec(cleaned);
-        const year = m2 ? Number(m2[1]) : minYear;
-        if (year < minYear) continue;
+        const year = m2 ? Number(m2[1]) : undefined;
+        if (year !== undefined && year < minYear) continue;
         entries.push({
           key: slug(cleaned),
           title: cleaned,

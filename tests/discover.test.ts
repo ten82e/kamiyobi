@@ -168,7 +168,7 @@ describe("formatCandidateYaml", () => {
       evidence_url: "https://evidence.example/zeta",
       discovered_at: "2026-08-19T00:00:00.000Z",
       year: 2027,
-      status: "reviewed",
+      status: "verified",
       review_notes: "official CFP found",
     });
     const duplicateKey = makeCandidate({
@@ -188,16 +188,35 @@ describe("formatCandidateYaml", () => {
       evidence_url: "https://evidence.example/zeta",
     });
     const parsed = loadYaml(formatCandidateYaml([first, duplicateKey, alpha])) as any;
-    expect(parsed.schema).toBe(1);
+    expect(parsed.schema).toBe(2);
     expect(parsed.candidates).toHaveLength(1);
     expect(parsed.candidates[0]).toMatchObject({
       key: "zeta",
-      status: "reviewed",
+      state: "verified",
+      status: "verified",
       discovered_at: "2026-08-19T00:00:00.000Z",
+      first_seen_at: "2026-08-19T00:00:00.000Z",
+      last_seen_at: "2026-08-19T00:00:00.000Z",
       target_year: 2027,
       review_notes: "official CFP found",
       evidence_url: "https://evidence.example/zeta",
+      official_url: null,
+      verification: { deadline: "unverified", publisher: "unverified" },
+      risk_flags: [],
     });
+  });
+
+  it("does not invent the current year when a candidate year is unknown", () => {
+    const candidate = makeCandidate({
+      key: "unknown-year",
+      title: "Unknown Year Workshop",
+      full_name: "Unknown Year Workshop",
+      link: "https://example.org/unknown-year",
+      categories: ["systems"],
+      date_text: "Date to be announced",
+      place: "Virtual",
+    });
+    expect(toYamlDict(candidate).editions).toEqual([]);
   });
 });
 

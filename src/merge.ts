@@ -322,7 +322,7 @@ function dedupDeadlines(
     const entry = kept[best.index];
     const sameSource = entry.origins.has(source);
     entry.origins.add(source);
-    entry.deadline = absorb(entry.deadline, deadline, sameSource);
+    entry.deadline = absorb(entry.deadline, deadline, sameSource, source);
     tally.merged_deadlines += 1;
   }
   const out = kept.map((k) => k.deadline);
@@ -336,7 +336,12 @@ function dedupDeadlines(
   return out;
 }
 
-function absorb(winner: Deadline, loser: Deadline, sameSource: boolean): Deadline {
+function absorb(
+  winner: Deadline,
+  loser: Deadline,
+  sameSource: boolean,
+  loserSource: string,
+): Deadline {
   const notes: string[] = [];
   if (winner.comment) notes.push(winner.comment);
   if (loser.comment && !notes.includes(loser.comment)) notes.push(loser.comment);
@@ -347,8 +352,24 @@ function absorb(winner: Deadline, loser: Deadline, sameSource: boolean): Deadlin
   }
   const comment = notes.length > 0 ? notes.join(" / ") : null;
   const round = sameSource ? winner.round : Math.max(winner.round, loser.round);
-  if (comment === winner.comment && round === winner.round) return winner;
-  return { ...winner, comment, round };
+  const priorConflicts = winner.conflicts ?? [];
+  const conflicts =
+    sameSource ||
+    priorConflicts.some(
+      (conflict) =>
+        conflict.source === loserSource &&
+        conflict.at_utc.getTime() === loser.at_utc.getTime() &&
+        conflict.label === loser.label,
+    )
+      ? priorConflicts
+      : [...priorConflicts, { at_utc: loser.at_utc, label: loser.label, source: loserSource }];
+  if (
+    comment === winner.comment &&
+    round === winner.round &&
+    conflicts.length === priorConflicts.length
+  )
+    return winner;
+  return { ...winner, comment, round, ...(conflicts.length > 0 ? { conflicts } : {}) };
 }
 
 function unique(values: string[]): string[] {

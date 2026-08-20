@@ -52,6 +52,7 @@
     ],
     networking: [
       "network",
+      "networking",
       "sdn",
       "p4",
       "protocol",
@@ -181,6 +182,14 @@
       .map((l) => {
         var parts = l.split(/\s*\|\s*/);
         if (parts.length === 1) parts = l.split(/\t+/);
+        if (parts.length >= 4) {
+          return {
+            title: (parts[0] || "").trim(),
+            abstract: (parts[1] || "").trim(),
+            keywords: (parts[2] || "").trim(),
+            venue: (parts[3] || "").trim(),
+          };
+        }
         return {
           title: (parts[0] || "").trim(),
           keywords: (parts[1] || "").trim(),
@@ -242,7 +251,14 @@
     var pageList = Array.isArray(pages) && Array.isArray(pages[0]) ? pages : [pages || []];
     var lines = pdfTextLines(pageList);
     var info = (metadata && (metadata.info || metadata)) || {};
-    var title = String(info.Title || info.title || "").trim();
+    var fallback = String(fallbackText || "").trim();
+    var usableMetadataTitle = (value) => {
+      var candidate = String(value || "").trim();
+      if (!candidate || /^(?:untitled|unknown|unnamed|n\/a|none)$/i.test(candidate)) return "";
+      if (fallback && candidate.toLowerCase() === fallback.toLowerCase()) return "";
+      return candidate;
+    };
+    var title = usableMetadataTitle(info.Title || info.title);
     if (!title) {
       var first = pageList[0] || [];
       var sizes = first.map((item) => Math.abs(Number((item && item.transform || [])[0]) || Number(item && item.height) || 0));
@@ -251,21 +267,23 @@
         title = first.filter((item, index) => sizes[index] >= max * 0.9).map((item) => String(item.str || "").trim()).filter(Boolean).join(" ");
       }
     }
-    var fallback = String(fallbackText || "").trim();
     if (!title) title = lines[0] || fallback.slice(0, 200);
     title = title.replace(/\s+/g, " ").slice(0, 240);
     var normalized = lines.map((line) => line.replace(/\s+/g, " ").trim());
-    var abstractAt = normalized.findIndex((line) => /^abstract\s*[:.]?/i.test(line) || /^概要\s*[:：]?/.test(line));
-    var keywordsAt = normalized.findIndex((line) => /^(keywords?|index terms|キーワード)\s*[:：]?/i.test(line));
-    var sectionEnd = (start) => normalized.findIndex((line, index) => index > start && /^(keywords?|index terms|introduction|references|参考文献|1\.?\s+introduction)\b/i.test(line));
+    var abstractHeading = /^(?:abstract|概要)\s*[:：.．\-‐‑‒–—―]?\s*/i;
+    var keywordHeading = /^(?:keywords?|index\s+terms|キーワード)\s*[:：]?/i;
+    var sectionHeading = /^(?:(?:keywords?|index\s+terms|introduction|references|参考文献|はじめに)(?:\s|[:：.．]|$)|(?:\d+|[IVX]+)[.)]?\s*(?:introduction|references|はじめに|参考文献)(?:\s|[:：.．]|$))/i;
+    var abstractAt = normalized.findIndex((line) => abstractHeading.test(line));
+    var keywordsAt = normalized.findIndex((line) => keywordHeading.test(line));
+    var sectionEnd = (start) => normalized.findIndex((line, index) => index > start && sectionHeading.test(line));
     var abstract = "";
     if (abstractAt >= 0) {
-      var abstractStart = normalized[abstractAt].replace(/^abstract\s*[:.]?/i, "").replace(/^概要\s*[:：]?/, "").trim();
+      var abstractStart = normalized[abstractAt].replace(abstractHeading, "").trim();
       var abstractEnd = sectionEnd(abstractAt);
       abstract = [abstractStart].concat(normalized.slice(abstractAt + 1, abstractEnd < 0 ? (keywordsAt > abstractAt ? keywordsAt : normalized.length) : abstractEnd)).filter(Boolean).join(" ");
     }
     var keywords = keywordsAt >= 0
-      ? normalized[keywordsAt].replace(/^(keywords?|index terms|キーワード)\s*[:：]?/i, "").trim()
+      ? normalized[keywordsAt].replace(keywordHeading, "").trim()
       : "";
     return { title, abstract: abstract.slice(0, 6000), keywords: keywords.slice(0, 1000), venue: "" };
   }
@@ -687,6 +705,31 @@
     return (rankPairs || []).some((p) => p.slice(p.indexOf(":") + 1) === grade);
   }
 
+  var RANK_SCHEMES = ["core", "ccf", "thcpl", "other"];
+  var RANK_ORDER = { "A*": 0, A: 1, B: 2, C: 3, N: 4 };
+
+  function rankInfo(rankPairs) {
+    var pairs = Array.isArray(rankPairs) ? rankPairs : [];
+    for (var i = 0; i < RANK_SCHEMES.length; i++) {
+      var scheme = RANK_SCHEMES[i];
+      var pair = pairs.find((item) => String(item).toLowerCase().indexOf(scheme + ":") === 0);
+      if (pair) {
+        var grade = String(pair).slice(String(pair).indexOf(":") + 1);
+        return { scheme: scheme, schemeOrder: i, grade: grade, gradeOrder: RANK_ORDER[grade] ?? 99 };
+      }
+    }
+    return { scheme: "other", schemeOrder: RANK_SCHEMES.length, grade: "", gradeOrder: 99 };
+  }
+
+  function compareRankPairs(aPairs, bPairs, ascending, aKey, bKey) {
+    var a = rankInfo(aPairs);
+    var b = rankInfo(bPairs);
+    var mult = ascending === false ? -1 : 1;
+    if (a.schemeOrder !== b.schemeOrder) return (a.schemeOrder - b.schemeOrder) * mult;
+    if (a.gradeOrder !== b.gradeOrder) return (a.gradeOrder - b.gradeOrder) * mult;
+    return String(aKey || "").localeCompare(String(bKey || ""));
+  }
+
   /* 論文モード・常時受付用: 常時受付ジャーナル（tag: journal で締切なし）の行を合成する。
    * 特集号（締切付き）は通常の締切行で扱うため除外する。 */
   function journalRows(confs, now) {
@@ -920,18 +963,41 @@
     return "peripheral candidate";
   }
 
-  function availability(row, now) {
-    var time = row && Number.isFinite(row.t) ? row.t : null;
-    var future = row && row.kind === "journal"
-      ? true
-      : row && row.kind === "event"
-        ? now < (row.tLast || row.t) + 86400000
-        : time !== null && time >= now;
+  function deadlineView(row) {
+    if (!row) return null;
+    var estimate = row.ed && row.ed.estimate;
     return {
-      kind: (row && row.kind) || "unknown",
-      status: row && row.kind === "journal" ? "ongoing" : future ? "open" : "past",
-      timestamp: time,
-      estimated: !!(row && row.est),
+      kind: row.kind || "unknown",
+      timestamp: Number.isFinite(row.t) ? row.t : null,
+      estimated: !!row.est,
+      label: row.dl && row.dl.label ? row.dl.label : null,
+      windowStart: estimate && estimate.window_start ? estimate.window_start : null,
+      windowEnd: estimate && estimate.window_end ? estimate.window_end : null,
+      confidence: estimate && estimate.confidence ? estimate.confidence : null,
+    };
+  }
+
+  function availability(rows, now) {
+    var list = Array.isArray(rows) ? rows.filter(Boolean) : rows ? [rows] : [];
+    var journal = list.find((row) => row.kind === "journal");
+    var isFuture = (row) => row.kind === "event"
+      ? now < (row.tLast || row.t) + 86400000
+      : Number.isFinite(row.t) && row.t >= now;
+    var future = list.filter((row) => row.kind === "journal" || isFuture(row))
+      .sort((a, b) => (a.t || 0) - (b.t || 0));
+    var previous = list.filter((row) => row.kind !== "journal" && !isFuture(row))
+      .sort((a, b) => (b.t || 0) - (a.t || 0));
+    var next = journal ? null : future[0] || null;
+    var previousRow = previous[0] || null;
+    var current = next || previousRow || journal || list[0] || null;
+    var status = journal ? "ongoing" : next ? "open" : previousRow ? "past" : "unknown";
+    return {
+      kind: (current && current.kind) || "unknown",
+      status,
+      timestamp: next ? next.t : null,
+      estimated: !!(next && next.est),
+      nextDeadline: deadlineView(next),
+      previousDeadline: deadlineView(previousRow),
     };
   }
 
@@ -1003,7 +1069,7 @@
           rrf: Number(rrf.toFixed(8)),
           evidence,
         },
-        availability: availability(entry.row, safeNow),
+        availability: availability(groups[key], safeNow),
         match: entry.match,
         boosted: entry.boosted,
       };
@@ -1088,28 +1154,30 @@
     return dot / (Math.sqrt(na) * Math.sqrt(nb));
   }
 
-  function embeddingSetCompatible(bundle, language) {
+  function embeddingSetCompatible(bundle, language, expectedProfileHash) {
     var manifest = bundle && bundle.manifest;
     var meta = manifest && manifest.models && manifest.models[language];
     var set = language === "multi" ? bundle.multi : bundle;
-    if (!manifest || manifest.schema !== 1 || typeof manifest.profile_hash !== "string" || !meta || !set) return false;
-    if (set.model !== meta.model || set.dim !== meta.dim || !meta.revision) return false;
+    if (!manifest || manifest.schema_version !== 2 || typeof manifest.profile_hash !== "string" ||
+        (expectedProfileHash && manifest.profile_hash !== expectedProfileHash) ||
+        manifest.probe_text !== "kamiyobi embedding compatibility probe" || !meta || !set) return false;
+    if (set.model !== meta.generator_model || set.dim !== meta.dimension ||
+        typeof meta.browser_model !== "string" || !meta.revision) return false;
     if (!Array.isArray(manifest.keys) || !set.embeddings) return false;
     var keys = Object.keys(set.embeddings).sort();
     var expected = manifest.keys.slice().sort();
     if (keys.length !== expected.length || keys.some(function (key, i) { return key !== expected[i]; })) return false;
-    if (!meta.probe || meta.probe.text !== "kamiyobi embedding compatibility probe") return false;
-    if (!Array.isArray(meta.probe.vector) || meta.probe.vector.length !== meta.dim) return false;
+    if (!Array.isArray(meta.probe_vector) || meta.probe_vector.length !== meta.dimension) return false;
     return keys.every(function (key) {
       var vector = set.embeddings[key];
-      return Array.isArray(vector) && vector.length === meta.dim;
+      return Array.isArray(vector) && vector.length === meta.dimension;
     });
   }
 
   function embeddingProbeMatches(meta, vector) {
     return Boolean(
-      meta && meta.probe && Array.isArray(meta.probe.vector) && Array.isArray(vector) &&
-      meta.probe.vector.length === vector.length && cosine(meta.probe.vector, vector) >= 0.99,
+      meta && Array.isArray(meta.probe_vector) && Array.isArray(vector) &&
+      meta.probe_vector.length === vector.length && cosine(meta.probe_vector, vector) >= 0.99,
     );
   }
 
@@ -1428,6 +1496,7 @@
     fitLabel: fitLabel,
     journalRows: journalRows,
     rankMatches: rankMatches,
+    compareRankPairs: compareRankPairs,
     pastRepresentatives: pastRepresentatives,
     pickRepresentative: pickRepresentative,
     comparePapers: comparePapers,

@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "time_windows": {
+    "synthetic": { "end": "2025-01-01" },
+    "dev": { "start": "2025-01-01", "end": "2026-01-01" },
+    "heldout": { "start": "2026-01-01" }
+  },
   "venue_profiles": [
     {
       "key": "hpc",
@@ -71,6 +76,7 @@
       "title": "Fault tolerant consensus",
       "keywords": "replication protocol",
       "key": "systems",
+      "acceptable": ["systems", "networking"],
       "semantic": { "hpc": 0.1, "systems": 0.93, "networking": 0.2, "security": 0.2 }
     }
   ]

@@ -238,8 +238,17 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
   }
 
   const outdir = resolve(args.out);
+  const healthConfig = (config.health as Record<string, unknown> | undefined) ?? {};
+  const requiredVenues = Array.isArray(healthConfig.required_venues)
+    ? healthConfig.required_venues.map((key) => String(key))
+    : [];
   const stats = await buildAll(confs, config, outdir, now, {
     noEmbeddings: Boolean(args.noEmbeddings),
+    health: {
+      sourceFailures: [...failed],
+      snapshotFallback: degraded && existsSync(snapshot),
+      requiredVenues,
+    },
   });
   // 統合件数は出力に載った会議のぶんだけ数える。
   const byKey = mergeStats.merged_by_key ?? {};

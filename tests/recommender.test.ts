@@ -58,6 +58,12 @@ describe("parsePaperLines", () => {
     expect(lines.length).toBe(4);
   });
 
+  it("accepts an optional abstract field for reference-paper rows", () => {
+    expect(R.parsePaperLines("Title | Abstract text | keyword | RTSS")).toEqual([
+      { title: "Title", abstract: "Abstract text", keywords: "keyword", venue: "RTSS" },
+    ]);
+  });
+
   it("handles empty input", () => {
     expect(R.parsePaperLines("  \n\n ")).toEqual([]);
   });
@@ -120,6 +126,9 @@ describe("bounded PDF paper extraction", () => {
       keywords: "scheduling, systems",
       venue: "",
     });
+    expect(R.pdfPaperRecord({ info: { Title: "Untitled" } }, pages, "filename.pdf").title).toBe(
+      "Large visual title",
+    );
   });
 
   it("uses font-aware title fallback and preserves x reading order", () => {
@@ -133,6 +142,26 @@ describe("bounded PDF paper extraction", () => {
   it("bounds an empty or malformed extraction to a filename fallback", () => {
     expect(R.pdfPaperRecord({}, [[]], "fallback.pdf").title).toBe("fallback.pdf");
     expect(R.pdfPaperRecord({}, null, "").title).toBe("");
+  });
+
+  it("recognizes Japanese section boundaries and Abstract em-dash headings", () => {
+    const pages = [
+      [
+        item("日本語タイトル", 24, 800),
+        item("Abstract—", 12, 740),
+        item("本研究では時刻同期を扱う。", 10, 720),
+        item("Keywords: TSN, scheduling", 10, 680),
+        item("1. はじめに", 12, 640),
+        item("本文を抽出してはいけない。", 10, 620),
+        item("参考文献", 12, 100),
+        item("引用文献を抽出してはいけない。", 10, 80),
+      ],
+    ];
+    expect(R.pdfPaperRecord({}, pages, "paper.pdf")).toMatchObject({
+      title: "日本語タイトル",
+      abstract: "本研究では時刻同期を扱う。",
+      keywords: "TSN, scheduling",
+    });
   });
 });
 
@@ -601,6 +630,12 @@ describe("rankMatches", () => {
     expect(R.rankMatches([], "A")).toBe(false);
     expect(R.rankMatches(undefined, "A")).toBe(false);
   });
+
+  it("sorts within an explicit scheme and uses the venue key as a final tie-break", () => {
+    expect(R.compareRankPairs(["core:A*"], ["core:B"], true)).toBeLessThan(0);
+    expect(R.compareRankPairs(["core:N"], ["ccf:A"], true)).toBeLessThan(0);
+    expect(R.compareRankPairs(["ccf:A"], ["ccf:A"], true, "zeta", "alpha")).toBeGreaterThan(0);
+  });
 });
 
 describe("journalRows", () => {
@@ -789,14 +824,17 @@ describe("score labels and transient UI state", () => {
       readFileSync(join(REPO_ROOT, "site/app.js"), "utf8");
     expect(template).toContain('"適合度 " + (r._fitLabel || "candidate")');
     expect(template).not.toContain('"適合度 " + r._matchScore + "%');
-    expect(template).toContain("r._boosted = false;");
-    expect(template).toContain("return (ar === br ? 0 : ar > br ? 1 : -1) * mult;");
+    expect(template).not.toContain("r._boosted = false;");
+    expect(template).toContain("Object.assign({}, recommendation.row");
+    expect(template).toContain("Rec.compareRankPairs");
     expect(template).toContain('var PDFJS_VERSION = "3.11.174";');
     expect(template).toContain("var PDF_PAGE_LIMIT = 3;");
     expect(template).toContain("var PDF_MAX_BYTES = 20 * 1024 * 1024;");
     expect(template).toContain("new AbortController()");
     expect(template).toContain('id="paperPrimaryTitle"');
     expect(template).toContain('id="paperReferences"');
+    expect(template).toContain("record.abstract");
+    expect(template).toContain("title | abstract | keywords | venue");
   });
 });
 
@@ -827,7 +865,11 @@ describe("venue recommendation fusion", () => {
 
   it("falls back to lexical fit and keeps one availability row per venue", () => {
     const result = R.venueRecommendations(
-      [row("same", "GPU Systems", NOW + 20), row("same", "GPU Systems", NOW + 10)],
+      [
+        row("same", "GPU Systems", NOW + 20),
+        row("same", "GPU Systems", NOW + 10),
+        row("same", "GPU Systems", NOW - 10),
+      ],
       R.parsePaperLines("GPU scheduling | gpu"),
       null,
       NOW,
@@ -836,6 +878,8 @@ describe("venue recommendation fusion", () => {
     expect(result[0].fit.semanticRank).toBeNull();
     expect(result[0].fit.score).toBe(result[0].fit.lexicalScore);
     expect(result[0].availability).toMatchObject({ kind: "paper", status: "open" });
+    expect(result[0].availability.nextDeadline.timestamp).toBe(NOW + 10);
+    expect(result[0].availability.previousDeadline.timestamp).toBe(NOW - 10);
     expect(result[0].fit).not.toHaveProperty("timestamp");
   });
 
@@ -854,6 +898,32 @@ describe("venue recommendation fusion", () => {
     const types = result[0].fit.evidence.map((item: any) => item.type);
     expect(types).toContain("accepted-paper");
     expect(types).not.toContain("venue-name");
+  });
+
+  it("exposes an estimated deadline window instead of only a point timestamp", () => {
+    const estimated = {
+      ...row("estimated", "GPU Systems", NOW + 10),
+      ed: {
+        year: 2027,
+        estimate: {
+          point_estimate: "2027-01-10",
+          window_start: "2027-01-01",
+          window_end: "2027-01-21",
+        },
+      },
+      est: true,
+    };
+    const result = R.venueRecommendations(
+      [estimated],
+      R.parsePaperLines("GPU scheduling | gpu"),
+      null,
+      NOW,
+    );
+    expect(result[0].availability.nextDeadline).toMatchObject({
+      estimated: true,
+      windowStart: "2027-01-01",
+      windowEnd: "2027-01-21",
+    });
   });
 
   it("uses deterministic key ordering for equal lexical ranks", () => {
@@ -882,14 +952,27 @@ describe("semantic functions", () => {
   });
 
   it("embedding manifest rejects incompatible browser data", () => {
-    const probe = { text: "kamiyobi embedding compatibility probe", vector: [1, 0] };
+    const probe = [1, 0];
     const manifest = {
-      schema: 1,
+      schema_version: 2,
       profile_hash: "profile",
+      probe_text: "kamiyobi embedding compatibility probe",
       keys: ["a"],
       models: {
-        en: { model: "en", revision: "main", dim: 2, probe },
-        multi: { model: "multi", revision: "main", dim: 2, probe },
+        en: {
+          generator_model: "en",
+          browser_model: "en-browser",
+          revision: "main",
+          dimension: 2,
+          probe_vector: probe,
+        },
+        multi: {
+          generator_model: "multi",
+          browser_model: "multi-browser",
+          revision: "main",
+          dimension: 2,
+          probe_vector: probe,
+        },
       },
     };
     const bundle = {
@@ -904,6 +987,7 @@ describe("semantic functions", () => {
     expect(R.embeddingProbeMatches(manifest.models.en, [0, 1])).toBe(false);
     expect(R.embeddingSetCompatible({ ...bundle, dim: 3 }, "en")).toBe(false);
     expect(R.embeddingSetCompatible({ ...bundle, manifest: undefined }, "en")).toBe(false);
+    expect(R.embeddingSetCompatible(bundle, "en", "different-profile")).toBe(false);
   });
 
   it("semantic score scaling", () => {
@@ -1593,6 +1677,24 @@ describe("bench-recommender argument parsing and helper utilities", () => {
     );
     fixture.queries[1].title = fixture.queries[0].title;
     expect(() => runBenchmarkV2(fixture)).toThrow(/leak|duplicate|split/);
+  });
+
+  it("runBenchmarkV2 treats acceptable venues as alternative gold answers", () => {
+    const fixture = JSON.parse(
+      readFileSync(join(REPO_ROOT, "tests", "fixtures", "bench-v2.json"), "utf8"),
+    );
+    fixture.queries[0].key = "security";
+    fixture.queries[0].acceptable = ["hpc"];
+    const result = runBenchmarkV2(fixture);
+    expect(result.splits.synthetic.modes.fused["recall@1"]).toBe(1);
+  });
+
+  it("runBenchmarkV2 enforces declared chronological split windows", () => {
+    const fixture = JSON.parse(
+      readFileSync(join(REPO_ROOT, "tests", "fixtures", "bench-v2.json"), "utf8"),
+    );
+    fixture.queries.find((query: { id: string }) => query.id === "heldout-1").time = "2025-12-01";
+    expect(() => runBenchmarkV2(fixture)).toThrow(/time window/);
   });
 
   it("parseBenchArgs parses flags and equal-joined options", () => {

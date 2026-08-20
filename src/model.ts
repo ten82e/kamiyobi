@@ -46,6 +46,7 @@ export interface Deadline {
   tz_raw: string;
   round: number;
   comment: string | null;
+  conflicts?: DeadlineConflict[];
 }
 
 export interface DeadlineEstimate {
@@ -55,6 +56,12 @@ export interface DeadlineEstimate {
   source_editions: number[];
   method: "median-interval";
   confidence: "low" | "medium";
+}
+
+export interface DeadlineConflict {
+  at_utc: Date;
+  label: string;
+  source: string;
 }
 
 export interface Edition {
@@ -885,6 +892,27 @@ export function conferencesFromJson(
         const dl = dlRaw as Record<string, unknown>;
         const at = parseInstant(dl.utc, "UTC");
         if (at === null) continue;
+        const conflicts = (Array.isArray(dl.conflicts) ? dl.conflicts : [])
+          .filter((item): item is Record<string, unknown> =>
+            Boolean(item && typeof item === "object"),
+          )
+          .map((item) => {
+            const evidence =
+              item.evidence && typeof item.evidence === "object"
+                ? (item.evidence as Record<string, unknown>)
+                : {};
+            const conflictAt = parseInstant(
+              item.at_utc ?? item.atUtc ?? evidence.original_value ?? evidence.originalValue,
+              "UTC",
+            );
+            if (conflictAt === null) return null;
+            return {
+              at_utc: conflictAt,
+              label: String(item.label ?? ""),
+              source: String(item.source ?? evidence.source_name ?? evidence.sourceName ?? ""),
+            };
+          })
+          .filter((item): item is DeadlineConflict => item !== null);
         deadlines.push({
           kind: kindOf(String(dl.kind ?? "other")),
           label: String(dl.label ?? ""),
@@ -892,6 +920,7 @@ export function conferencesFromJson(
           tz_raw: String(dl.tz_raw ?? ""),
           round: Number(dl.round ?? 1) || 1,
           comment: dl.comment === null || dl.comment === undefined ? null : String(dl.comment),
+          ...(conflicts.length > 0 ? { conflicts } : {}),
         });
       }
       editions.push({

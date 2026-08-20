@@ -372,7 +372,7 @@
   }
 
   function loadTransformers(modelMeta, cb) {
-    var modelId = modelMeta.model;
+    var modelId = modelMeta.browser_model;
     var revision = modelMeta.revision;
     var modelKey = modelId + "@" + revision;
     if (semLoadedModel === modelKey) { cb(); return; }
@@ -388,12 +388,12 @@
   }
 
   function checkSemanticProbe(modelMeta, cb) {
-    var modelKey = modelMeta.model + "@" + modelMeta.revision;
+    var modelKey = modelMeta.browser_model + "@" + modelMeta.revision;
     if (Object.prototype.hasOwnProperty.call(semProbeCache, modelKey)) {
       cb(semProbeCache[modelKey]);
       return;
     }
-    semModel(modelMeta.probe.text, { pooling: "mean", normalize: true })
+    semModel(EMBEDDINGS.manifest.probe_text, { pooling: "mean", normalize: true })
       .then((out) => {
         var ok = Recommender.embeddingProbeMatches(modelMeta, Array.from(out.data));
         semProbeCache[modelKey] = ok;
@@ -415,10 +415,16 @@
       var isJp = Recommender.hasJapanese(text);
       var language = isJp && EMBEDDINGS.multi ? "multi" : "en";
       var embSet = language === "multi" ? EMBEDDINGS.multi : EMBEDDINGS;
-      if (!Recommender.embeddingSetCompatible(EMBEDDINGS, language)) return;
+      var expectedProfileHash = activeData.embedding_manifest && activeData.embedding_manifest.profile_hash;
+      if (!Recommender.embeddingSetCompatible(EMBEDDINGS, language, expectedProfileHash)) {
+        semQuery = null;
+        semEmbeddings = null;
+        semState = "error";
+        return;
+      }
       var modelMeta = EMBEDDINGS.manifest.models[language];
       loadTransformers(modelMeta, () => {
-        if (semLoadedModel !== modelMeta.model + "@" + modelMeta.revision || !semModel) return;
+        if (semLoadedModel !== modelMeta.browser_model + "@" + modelMeta.revision || !semModel) return;
         semBusy = true;
         checkSemanticProbe(modelMeta, (probeOk) => {
           if (!probeOk) { semBusy = false; return; }
@@ -525,7 +531,6 @@
       if (state.domestic && (r.tags || []).indexOf("domestic-jp") < 0) { return false; }
       if (q && r.hay.indexOf(q) < 0) { return false; }
 
-      r._boosted = false;
       return true;
     });
 
@@ -541,19 +546,18 @@
         });
       }
       out = Rec.venueRecommendations(out, pLines, semanticScores, now, { venueCats: venueCats })
-        .filter((recommendation) => recommendation.fit.score >= 10)
         .map((recommendation) => {
-          var r = recommendation.row;
-          r._boosted = recommendation.boosted;
-          r._match = recommendation.match;
-          r._vocabScore = recommendation.fit.lexicalScore;
-          r._matchScore = recommendation.fit.score;
-          r._fitLabel = recommendation.fit.label;
-          r._lexicalRank = recommendation.fit.lexicalRank;
-          r._semanticRank = recommendation.fit.semanticRank;
-          r._semScore = recommendation.fit.semanticScore;
-          r._availability = recommendation.availability;
-          return r;
+          return Object.assign({}, recommendation.row, {
+            _boosted: recommendation.boosted,
+            _match: recommendation.match,
+            _vocabScore: recommendation.fit.lexicalScore,
+            _matchScore: recommendation.fit.score,
+            _fitLabel: recommendation.fit.label,
+            _lexicalRank: recommendation.fit.lexicalRank,
+            _semanticRank: recommendation.fit.semanticRank,
+            _semScore: recommendation.fit.semanticScore,
+            _availability: recommendation.availability,
+          });
         });
     }
 
@@ -566,9 +570,9 @@
       if (sortKey === "conf") {
         return (a.conf.title || "").localeCompare(b.conf.title || "") * mult;
       } else if (sortKey === "rank") {
-        var ar = a.rankPairs[0] || "";
-        var br = b.rankPairs[0] || "";
-        return (ar === br ? 0 : ar > br ? 1 : -1) * mult;
+        return Rec && Rec.compareRankPairs
+          ? Rec.compareRankPairs(a.rankPairs, b.rankPairs, sortAsc, a.conf.key, b.conf.key)
+          : String(a.conf.key || "").localeCompare(String(b.conf.key || ""));
       }
       return (a.t - b.t) * mult;
     });
@@ -611,6 +615,7 @@
     var rem = remain(r.t);
     // 常時受付ジャーナルは締切の概念がないため「本日終了」等の誤解を与えない表示にする
     if (r.kind === "journal") { rem = { text: "常時受付", cls: "" }; }
+    if (r.est) { rem = { text: "時期推定", cls: "" }; }
 
     var c0 = td(tr, "残り", "c-deadline");
     line(c0, rem.text, "left " + rem.cls);
@@ -618,6 +623,9 @@
     var c1 = td(tr, "日時");
     if (r.kind === "journal") {
       line(c1, "随時受付", "nowrap");
+    } else if (r.est && r.ed.estimate) {
+      line(c1, "締切時期: " + r.ed.estimate.window_start + " 〜 " + r.ed.estimate.window_end, "nowrap");
+      line(c1, "前年実績からの推定（公式発表前）", "sub nowrap");
     } else {
       var d = new Date(r.t);
       line(c1, fmtDate(d) + " UTC", "nowrap");
@@ -836,8 +844,17 @@
   function recommendationAvailability(r) {
     var a = r._availability || {};
     if (a.status === "ongoing") return "常時受付";
-    if (a.timestamp) {
-      return "次回締切: " + fmtDate(new Date(a.timestamp)) + " UTC / " + fmtAoE(new Date(a.timestamp)) + (a.estimated ? "（推定）" : "");
+    if (a.nextDeadline && a.nextDeadline.timestamp) {
+      if (a.nextDeadline.estimated) {
+        if (a.nextDeadline.windowStart && a.nextDeadline.windowEnd) {
+          return "次回未発表（例年: " + a.nextDeadline.windowStart + " 〜 " + a.nextDeadline.windowEnd + "）";
+        }
+        return "次回未発表（過去実績からの推定）";
+      }
+      return "次回締切: " + fmtDate(new Date(a.nextDeadline.timestamp)) + " UTC / " + fmtAoE(new Date(a.nextDeadline.timestamp)) + (a.nextDeadline.estimated ? "（推定）" : "");
+    }
+    if (a.previousDeadline && a.previousDeadline.timestamp) {
+      return "次回未発表（前回: " + fmtDate(new Date(a.previousDeadline.timestamp)) + "）";
     }
     return a.status === "past" ? "締切済み（次回情報なし）" : "受付状況不明";
   }
@@ -1165,7 +1182,10 @@
       if (job !== pdfJob || signal.aborted) throw abortError();
       setPrimaryRecord(records[0] || {});
       $("paperReferences").value = records.slice(1).map((record) =>
-        [record.title, record.keywords, record.venue].filter(Boolean).join(" | "),
+        [record.title, record.abstract, record.keywords, record.venue]
+          .map((value) => String(value || "").replace(/\|/g, " ").replace(/\s+/g, " ").trim())
+          .filter(Boolean)
+          .join(" | "),
       ).join("\n");
       syncPaperText();
       label.textContent = files.map((f) => f.name).join(", ");

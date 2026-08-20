@@ -223,11 +223,18 @@ export interface BenchV2Query {
   title: string;
   keywords: string;
   key: string;
+  acceptable?: string[];
   semantic: Record<string, number>;
+}
+
+export interface BenchV2TimeWindow {
+  start?: string;
+  end?: string;
 }
 
 export interface BenchV2Fixture {
   version: number;
+  time_windows: Record<BenchV2Split, BenchV2TimeWindow>;
   venue_profiles: BenchV2Profile[];
   queries: BenchV2Query[];
 }
@@ -277,6 +284,22 @@ function validateBenchV2(fixture: BenchV2Fixture): void {
   if (!Array.isArray(fixture.queries) || fixture.queries.length === 0) {
     throw new Error("bench v2 queries must be non-empty");
   }
+  if (!fixture.time_windows || typeof fixture.time_windows !== "object") {
+    throw new Error("bench v2 time_windows must be declared");
+  }
+  const windows = new Map<BenchV2Split, { start: number; end: number }>();
+  for (const split of BENCH_V2_SPLITS) {
+    const window = fixture.time_windows[split];
+    if (!window || typeof window !== "object")
+      throw new Error(`bench v2 time window is missing: ${split}`);
+    const start = window.start === undefined ? -Infinity : Date.parse(window.start);
+    const end = window.end === undefined ? Infinity : Date.parse(window.end);
+    if ((Number.isNaN(start) && start !== -Infinity) || (Number.isNaN(end) && end !== Infinity)) {
+      throw new Error(`bench v2 invalid time window: ${split}`);
+    }
+    if (!(start < end)) throw new Error(`bench v2 invalid time window order: ${split}`);
+    windows.set(split, { start, end });
+  }
   const profiles = new Map<string, BenchV2Profile>();
   for (const profile of fixture.venue_profiles) {
     if (!profile?.key || profiles.has(profile.key)) throw new Error("bench v2 duplicate venue key");
@@ -298,8 +321,19 @@ function validateBenchV2(fixture: BenchV2Fixture): void {
     titles.add(title);
     const time = Date.parse(query.time);
     if (!Number.isFinite(time)) throw new Error(`bench v2 invalid query time: ${query.id}`);
+    const window = windows.get(query.split)!;
+    if (time < window.start || time >= window.end) {
+      throw new Error(`bench v2 query outside time window: ${query.id}`);
+    }
     times.get(query.split)?.push(time);
     if (!profiles.has(query.key)) throw new Error(`bench v2 unknown target venue: ${query.key}`);
+    if (
+      query.acceptable !== undefined &&
+      (!Array.isArray(query.acceptable) ||
+        query.acceptable.some((key) => typeof key !== "string" || !profiles.has(key)))
+    ) {
+      throw new Error(`bench v2 unknown acceptable venue: ${query.id}`);
+    }
     if (
       [...profiles.values()].some((profile) =>
         [profile.title, profile.profile, profile.key].map(benchV2Text).includes(title),
@@ -406,7 +440,8 @@ export function runBenchmarkV2(fixture: BenchV2Fixture): BenchV2Result {
                     : b.fit.semanticScore - a.fit.semanticScore) ||
                   a.venueKey.localeCompare(b.venueKey),
               );
-      const index = ordered.findIndex((item) => item.venueKey === query.key);
+      const acceptable = new Set([query.key, ...(query.acceptable ?? [])]);
+      const index = ordered.findIndex((item) => acceptable.has(item.venueKey));
       return index < 0 ? null : index + 1;
     };
     bySplit[query.split].queries += 1;

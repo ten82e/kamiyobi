@@ -320,6 +320,9 @@ describe("merge_sources", () => {
     expect(dls[0].at_utc.getTime()).toBe(utc(2026, 2, 6, 11, 59, 59).getTime());
     expect(dls[0].label).toBe("Paper submission deadline");
     expect(dls[0].comment ?? "").toContain("Paper submission");
+    expect(dls[0].conflicts).toEqual([
+      { at_utc: utc(2026, 2, 6, 11, 59, 0), label: "Paper submission", source: "ccfddl" },
+    ]);
   });
 
   it("same instant in two rounds of one source is one deadline", () => {
@@ -1359,6 +1362,12 @@ describe("conferencesFromJson & defensive merge operations", () => {
                   tz_raw: "UTC",
                   round: 1,
                   comment: "Regular",
+                  conflicts: [
+                    {
+                      at_utc: "2026-07-31T23:59:59Z",
+                      evidence: { source_name: "ccfddl", original_value: "2026-07-31T23:59:59Z" },
+                    },
+                  ],
                 },
                 {
                   kind: "camera_ready",
@@ -1377,6 +1386,13 @@ describe("conferencesFromJson & defensive merge operations", () => {
     expect(confs[0].editions).toHaveLength(1);
     expect(confs[0].editions[0].deadlines).toHaveLength(1);
     expect(confs[0].editions[0].deadlines[0].kind).toBe("paper");
+    expect(confs[0].editions[0].deadlines[0].conflicts).toEqual([
+      {
+        at_utc: utc(2026, 7, 31, 23, 59, 59),
+        label: "",
+        source: "ccfddl",
+      },
+    ]);
   });
 
   it("conferencesFromJson normalizes non-array tags/categories/sources (strings) without throwing (#366)", () => {

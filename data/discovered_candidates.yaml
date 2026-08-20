@@ -1,15 +1,14 @@
-schema: 1
+schema: 2
 candidates:
   - key: >-
       3d-metasurface-assisted-wireless-communications-from-model-based-designs-to-ai-driven-approaches-ieee-wireless-communications
     title: >-
-      3D Metasurface-Assisted Wireless Communications: From Model-Based Designs
-      to AI-Driven Approaches（IEEE Wireless Communications 特集号）
+      3D Metasurface-Assisted Wireless Communications: From Model-Based Designs to AI-Driven Approaches（IEEE Wireless
+      Communications 特集号）
     full_name: >-
-      3D Metasurface-Assisted Wireless Communications: From Model-Based Designs
-      to AI-Driven Approaches（IEEE Wireless Communications 特集号）
-    link: >-
-      https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+      3D Metasurface-Assisted Wireless Communications: From Model-Based Designs to AI-Driven Approaches（IEEE Wireless
+      Communications 特集号）
+    link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
     categories: []
     tags:
       - niche
@@ -18,8 +17,7 @@ candidates:
       - year: 2027
         id: >-
           3d-metasurface-assisted-wireless-communications-from-model-based-designs-to-ai-driven-approaches-ieee-wireless-communications27
-        link: >-
-          https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+        link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
         place: ''
         date_text: 1 January 2027
         deadlines: []
@@ -27,6 +25,15 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2027
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: 3dia
     title: 3DIA
     full_name: 3D Imaging and Applications (3DIA)
@@ -40,6 +47,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/3dica/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: 3dph
     title: 3DPH
     full_name: 3D Physiological Human Workshop (3DPH)
@@ -53,6 +70,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/3dph/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: 3dpvt
     title: 3DPVT
     full_name: 3D Data Processing Visualization and Transmission (3DPVT)
@@ -66,6 +93,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/3dpvt/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: 3dtv
     title: 3DTV
     full_name: 3DTV-Conference (3DTV)
@@ -79,6 +116,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/3dtv/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: 4or-quarterly-journal-of-operations-research
     title: '4OR: Quarterly Journal of Operations Research'
     full_name: '4OR: Quarterly Journal of Operations Research'
@@ -92,6 +139,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/4or/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: 5gwf
     title: 5GWF
     full_name: 5G World Forum (5GWF)
@@ -105,6 +162,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/5gwf/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: 6g-summit
     title: 6G SUMMIT
     full_name: 6G Wireless Summit (6G SUMMIT)
@@ -118,6 +185,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/6gsummit/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: aaai-fall-symposium-series
     title: AAAI Fall Symposium Series
     full_name: AAAI Fall Symposium Series
@@ -131,6 +208,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/aaaifs/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: aaai-mobile-robot-competition
     title: AAAI Mobile Robot Competition
     full_name: AAAI Mobile Robot Competition
@@ -144,6 +231,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/mrc/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: aaai-spring-symposium-series
     title: AAAI Spring Symposium Series
     full_name: AAAI Spring Symposium Series
@@ -157,6 +254,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/aaaiss/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: aaai-summer-symposium-series
     title: AAAI Summer Symposium Series
     full_name: AAAI Summer Symposium Series
@@ -170,6 +277,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/aaaisus/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: acis-international-journal-of-computer-information-science
     title: ACIS International Journal of Computer & Information Science
     full_name: ACIS International Journal of Computer & Information Science
@@ -183,6 +300,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/acisj/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: acm-communications-in-computer-algebra
     title: ACM Communications in Computer Algebra
     full_name: ACM Communications in Computer Algebra
@@ -196,6 +323,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/cca/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: acm-computing-surveys
     title: ACM Computing Surveys
     full_name: ACM Computing Surveys
@@ -209,6 +346,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/csur/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: acm-inroads
     title: ACM Inroads
     full_name: ACM Inroads
@@ -222,6 +369,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/inroads/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: acm-journal-on-computing-and-cultural-heritage
     title: ACM Journal on Computing and Cultural Heritage
     full_name: ACM Journal on Computing and Cultural Heritage
@@ -235,6 +392,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/jocch/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: acm-journal-on-emerging-technologies-in-computing-systems
     title: ACM Journal on Emerging Technologies in Computing Systems
     full_name: ACM Journal on Emerging Technologies in Computing Systems
@@ -248,6 +415,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/jetc/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: acm-queue
     title: ACM Queue
     full_name: ACM Queue
@@ -261,6 +438,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/queue/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: acm-sigaccess-accessibility-and-computing
     title: ACM SIGACCESS Accessibility and Computing
     full_name: ACM SIGACCESS Accessibility and Computing
@@ -274,6 +461,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/sigaccess/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: acm-sigapl-apl-quote-quad
     title: ACM SIGAPL APL Quote Quad
     full_name: ACM SIGAPL APL Quote Quad
@@ -287,6 +484,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/sigapl/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: acm-sigchi-bulletin
     title: ACM SIGCHI Bulletin
     full_name: ACM SIGCHI Bulletin
@@ -300,6 +507,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/sigchi/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: acm-sigcse-bulletin
     title: ACM SIGCSE Bulletin
     full_name: ACM SIGCSE Bulletin
@@ -313,6 +530,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/sigcse/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: acm-siglog-news
     title: ACM SIGLOG News
     full_name: ACM SIGLOG News
@@ -326,6 +553,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/siglog/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: acm-sigme-symposium
     title: ACM SIGME Symposium
     full_name: ACM SIGME Symposium
@@ -339,6 +576,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/sigme/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: acm-sigmis-database
     title: ACM SIGMIS Database
     full_name: ACM SIGMIS Database
@@ -352,6 +599,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/db/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: acm-sigmod-digital-review
     title: ACM SIGMOD Digital Review
     full_name: ACM SIGMOD Digital Review
@@ -365,6 +622,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/dr/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: acm-sigmod-digital-symposium-collection
     title: ACM SIGMOD Digital Symposium Collection
     full_name: ACM SIGMOD Digital Symposium Collection
@@ -378,16 +645,25 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/disc/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: >-
       agentic-ai-enabled-networking-for-heterogeneous-unmanned-systems-in-low-altitude-environments-ieee-wireless-communications
     title: >-
-      Agentic AI-Enabled Networking for Heterogeneous Unmanned Systems in
-      Low-Altitude Environments（IEEE Wireless Communications 特集号）
+      Agentic AI-Enabled Networking for Heterogeneous Unmanned Systems in Low-Altitude Environments（IEEE Wireless
+      Communications 特集号）
     full_name: >-
-      Agentic AI-Enabled Networking for Heterogeneous Unmanned Systems in
-      Low-Altitude Environments（IEEE Wireless Communications 特集号）
-    link: >-
-      https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+      Agentic AI-Enabled Networking for Heterogeneous Unmanned Systems in Low-Altitude Environments（IEEE Wireless
+      Communications 特集号）
+    link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
     categories: []
     tags:
       - niche
@@ -396,8 +672,7 @@ candidates:
       - year: 2026
         id: >-
           agentic-ai-enabled-networking-for-heterogeneous-unmanned-systems-in-low-altitude-environments-ieee-wireless-communications26
-        link: >-
-          https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+        link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
         place: ''
         date_text: 1 September 2026
         deadlines: []
@@ -405,6 +680,15 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: ai-50
     title: AI@50
     full_name: 50 Years of Artificial Intelligence (AI@50)
@@ -418,14 +702,19 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/ai50/
-  - key: >-
-      ai-empowered-cognitive-digital-twin-for-future-network-ecosystems-ieee-network
-    title: >-
-      AI-Empowered Cognitive Digital Twin for Future Network Ecosystems（IEEE
-      Network 特集号）
-    full_name: >-
-      AI-Empowered Cognitive Digital Twin for Future Network Ecosystems（IEEE
-      Network 特集号）
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
+  - key: ai-empowered-cognitive-digital-twin-for-future-network-ecosystems-ieee-network
+    title: AI-Empowered Cognitive Digital Twin for Future Network Ecosystems（IEEE Network 特集号）
+    full_name: AI-Empowered Cognitive Digital Twin for Future Network Ecosystems（IEEE Network 特集号）
     link: https://www.comsoc.org/publications/magazines/ieee-network/cfp
     categories: []
     tags:
@@ -433,8 +722,7 @@ candidates:
       - special-issue
     editions:
       - year: 2026
-        id: >-
-          ai-empowered-cognitive-digital-twin-for-future-network-ecosystems-ieee-network26
+        id: ai-empowered-cognitive-digital-twin-for-future-network-ecosystems-ieee-network26
         link: https://www.comsoc.org/publications/magazines/ieee-network/cfp
         place: ''
         date_text: 31 October 2026
@@ -443,16 +731,24 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: >-
       ai-empowered-underwater-wireless-optical-communications-for-science-exploration-and-defense-applications-ieee-wireless-communications
     title: >-
-      AI-Empowered Underwater Wireless Optical Communications for Science
-      Exploration and Defense Applications（IEEE Wireless Communications 特集号）
+      AI-Empowered Underwater Wireless Optical Communications for Science Exploration and Defense Applications（IEEE
+      Wireless Communications 特集号）
     full_name: >-
-      AI-Empowered Underwater Wireless Optical Communications for Science
-      Exploration and Defense Applications（IEEE Wireless Communications 特集号）
-    link: >-
-      https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+      AI-Empowered Underwater Wireless Optical Communications for Science Exploration and Defense Applications（IEEE
+      Wireless Communications 特集号）
+    link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
     categories: []
     tags:
       - niche
@@ -461,8 +757,7 @@ candidates:
       - year: 2026
         id: >-
           ai-empowered-underwater-wireless-optical-communications-for-science-exploration-and-defense-applications-ieee-wireless-communications26
-        link: >-
-          https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+        link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
         place: ''
         date_text: 1 November 2026
         deadlines: []
@@ -470,14 +765,23 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: >-
       ai-native-smart-radio-environments-for-6g-evolving-from-conventional-architectures-to-self-governing-designs-ieee-network
     title: >-
-      AI-native Smart Radio Environments for 6G: Evolving from Conventional
-      Architectures to Self-Governing Designs（IEEE Network 特集号）
+      AI-native Smart Radio Environments for 6G: Evolving from Conventional Architectures to Self-Governing Designs（IEEE
+      Network 特集号）
     full_name: >-
-      AI-native Smart Radio Environments for 6G: Evolving from Conventional
-      Architectures to Self-Governing Designs（IEEE Network 特集号）
+      AI-native Smart Radio Environments for 6G: Evolving from Conventional Architectures to Self-Governing Designs（IEEE
+      Network 特集号）
     link: https://www.comsoc.org/publications/magazines/ieee-network/cfp
     categories: []
     tags:
@@ -495,11 +799,18 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: aiide
     title: AIIDE
-    full_name: >-
-      AAAI Conference on Artificial Intelligence and Interactive Digital
-      Entertainment Conference (AIIDE)
+    full_name: AAAI Conference on Artificial Intelligence and Interactive Digital Entertainment Conference (AIIDE)
     link: https://dblp.org/db/conf/aiide/
     categories:
       - ai
@@ -510,6 +821,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/aiide/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: ccgrid2027
     title: CCGrid2027
     full_name: IEEE International Symposium on Cluster, Cloud, and Internet Computing
@@ -530,11 +851,18 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2027
     evidence_url: https://easychair.org/cfp/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: chi-play
     title: CHI PLAY
-    full_name: >-
-      ACM SIGCHI Annual Symposium on Computer-Human Interaction in Play (CHI
-      PLAY)
+    full_name: ACM SIGCHI Annual Symposium on Computer-Human Interaction in Play (CHI PLAY)
     link: https://dblp.org/db/conf/chiplay/
     categories:
       - systems
@@ -545,6 +873,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/chiplay/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: compass
     title: COMPASS
     full_name: ACM SIGCAS Conference on Computing and Sustainable Societies (COMPASS)
@@ -558,14 +896,19 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/dev/
-  - key: >-
-      distributed-intelligence-and-collaborative-inference-for-foundation-models-over-wireless-edge-ieee-network
-    title: >-
-      Distributed Intelligence and Collaborative Inference for Foundation Models
-      over Wireless Edge（IEEE Network 特集号）
-    full_name: >-
-      Distributed Intelligence and Collaborative Inference for Foundation Models
-      over Wireless Edge（IEEE Network 特集号）
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
+  - key: distributed-intelligence-and-collaborative-inference-for-foundation-models-over-wireless-edge-ieee-network
+    title: Distributed Intelligence and Collaborative Inference for Foundation Models over Wireless Edge（IEEE Network 特集号）
+    full_name: Distributed Intelligence and Collaborative Inference for Foundation Models over Wireless Edge（IEEE Network 特集号）
     link: https://www.comsoc.org/publications/magazines/ieee-network/cfp
     categories: []
     tags:
@@ -573,8 +916,7 @@ candidates:
       - special-issue
     editions:
       - year: 2026
-        id: >-
-          distributed-intelligence-and-collaborative-inference-for-foundation-models-over-wireless-edge-ieee-network26
+        id: distributed-intelligence-and-collaborative-inference-for-foundation-models-over-wireless-edge-ieee-network26
         link: https://www.comsoc.org/publications/magazines/ieee-network/cfp
         place: ''
         date_text: 31 December 2026
@@ -583,11 +925,20 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: divanet
     title: DIVANet
     full_name: >-
-      ACM International Symposium on Development and Analysis of Intelligent
-      Vehicular Networks and Applications (DIVANet)
+      ACM International Symposium on Development and Analysis of Intelligent Vehicular Networks and Applications
+      (DIVANet)
     link: https://dblp.org/db/conf/divanet/
     categories:
       - systems
@@ -598,6 +949,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/divanet/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: enchires
     title: EnCHIReS
     full_name: ACM SIGCHI Symposium on Engineering Interactive Computing System
@@ -611,11 +972,19 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/eics/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: evolve
     title: EVOLVE
-    full_name: >-
-      A Bridge between Probability, Set Oriented Numerics and Evolutionary
-      Computation (EVOLVE)
+    full_name: A Bridge between Probability, Set Oriented Numerics and Evolutionary Computation (EVOLVE)
     link: https://dblp.org/db/conf/evolve/
     categories:
       - systems
@@ -626,6 +995,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/evolve/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: haskell
     title: Haskell
     full_name: ACM SIGPLAN International Symposium on Haskell (Haskell)
@@ -639,6 +1018,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/haskell/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: hcomp
     title: HCOMP
     full_name: AAAI Conference on Human Computation and Crowdsourcing (HCOMP)
@@ -652,14 +1041,24 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/hcomp/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: >-
       high-reliability-and-low-latency-communications-for-6g-network-isac-enabled-architectures-networking-and-services-ieee-network
     title: >-
-      High-Reliability and Low-Latency Communications for 6G Network:
-      ISAC-Enabled Architectures, Networking, and Services（IEEE Network 特集号）
+      High-Reliability and Low-Latency Communications for 6G Network: ISAC-Enabled Architectures, Networking, and
+      Services（IEEE Network 特集号）
     full_name: >-
-      High-Reliability and Low-Latency Communications for 6G Network:
-      ISAC-Enabled Architectures, Networking, and Services（IEEE Network 特集号）
+      High-Reliability and Low-Latency Communications for 6G Network: ISAC-Enabled Architectures, Networking, and
+      Services（IEEE Network 特集号）
     link: https://www.comsoc.org/publications/magazines/ieee-network/cfp
     categories: []
     tags:
@@ -677,6 +1076,15 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: icbinb
     title: ICBINB
     full_name: '"I Can''t Believe It''s Not Better!" Workshop Series (ICBINB)'
@@ -690,11 +1098,20 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/icbinb/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: ieee-cic-cogmi-risc-tps-2026
     title: IEEE CIC/CogMI/RISC/TPS 2026
     full_name: IEEE CIC/CogMI/RISC/TPS 2026
-    link: >-
-      https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;d7d50c94.2608
+    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;d7d50c94.2608
     categories: []
     tags:
       - niche
@@ -704,26 +1121,27 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: https://dbworld.sigmod.org/browse.html
-  - key: >-
-      in-orbit-computing-striding-into-the-era-of-space-centric-intelligence-ieee-wireless-communications
-    title: >-
-      In-Orbit Computing: Striding into the Era of Space-Centric
-      Intelligence（IEEE Wireless Communications 特集号）
-    full_name: >-
-      In-Orbit Computing: Striding into the Era of Space-Centric
-      Intelligence（IEEE Wireless Communications 特集号）
-    link: >-
-      https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
+  - key: in-orbit-computing-striding-into-the-era-of-space-centric-intelligence-ieee-wireless-communications
+    title: 'In-Orbit Computing: Striding into the Era of Space-Centric Intelligence（IEEE Wireless Communications 特集号）'
+    full_name: 'In-Orbit Computing: Striding into the Era of Space-Centric Intelligence（IEEE Wireless Communications 特集号）'
+    link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
     categories: []
     tags:
       - niche
       - special-issue
     editions:
       - year: 2026
-        id: >-
-          in-orbit-computing-striding-into-the-era-of-space-centric-intelligence-ieee-wireless-communications26
-        link: >-
-          https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+        id: in-orbit-computing-striding-into-the-era-of-space-centric-intelligence-ieee-wireless-communications26
+        link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
         place: ''
         date_text: 1 November 2026
         deadlines: []
@@ -731,16 +1149,24 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: >-
       internet-of-agents-for-communications-and-networking-architectures-protocols-and-orchestration-ieee-communications-magazine
     title: >-
-      Internet of Agents for Communications and Networking: Architectures,
-      Protocols, and Orchestration（IEEE Communications Magazine 特集号）
+      Internet of Agents for Communications and Networking: Architectures, Protocols, and Orchestration（IEEE
+      Communications Magazine 特集号）
     full_name: >-
-      Internet of Agents for Communications and Networking: Architectures,
-      Protocols, and Orchestration（IEEE Communications Magazine 特集号）
-    link: >-
-      https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
+      Internet of Agents for Communications and Networking: Architectures, Protocols, and Orchestration（IEEE
+      Communications Magazine 特集号）
+    link: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
     categories: []
     tags:
       - niche
@@ -749,8 +1175,7 @@ candidates:
       - year: 2027
         id: >-
           internet-of-agents-for-communications-and-networking-architectures-protocols-and-orchestration-ieee-communications-magazine27
-        link: >-
-          https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
+        link: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
         place: ''
         date_text: 1 February 2027
         deadlines: []
@@ -758,6 +1183,15 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2027
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: ipsj-27-l
     title: 超知能と共に革新する新社会システムと高度交通システム（IPSJ 論文誌 特集号）
     full_name: 超知能と共に革新する新社会システムと高度交通システム（IPSJ 論文誌 特集号）
@@ -777,6 +1211,15 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: ipsj-27-m
     title: AIによって変わる社会基盤を支えるコンピュータセキュリティ技術（IPSJ 論文誌 特集号）
     full_name: AIによって変わる社会基盤を支えるコンピュータセキュリティ技術（IPSJ 論文誌 特集号）
@@ -796,6 +1239,15 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: ipsj-27-n
     title: 情報システム論文（IPSJ 論文誌 特集号）
     full_name: 情報システム論文（IPSJ 論文誌 特集号）
@@ -815,6 +1267,15 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: ipsj-27-p
     title: ユビキタスコンピューティングシステム（XIV）（IPSJ 論文誌 特集号）
     full_name: ユビキタスコンピューティングシステム（XIV）（IPSJ 論文誌 特集号）
@@ -834,13 +1295,18 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: ipsj-27-r
-    title: >-
-      “Applications and the internet” in conjunction with the main topics of
-      COMPSAC 2026（IPSJ 論文誌 特集号）
-    full_name: >-
-      “Applications and the internet” in conjunction with the main topics of
-      COMPSAC 2026（IPSJ 論文誌 特集号）
+    title: “Applications and the internet” in conjunction with the main topics of COMPSAC 2026（IPSJ 論文誌 特集号）
+    full_name: “Applications and the internet” in conjunction with the main topics of COMPSAC 2026（IPSJ 論文誌 特集号）
     link: https://www.ipsj.or.jp/journal/cfp/27-R.html
     categories: []
     tags:
@@ -857,6 +1323,15 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: ispd
     title: ISPD
     full_name: ACM International Symposium on Physical Design (ISPD)
@@ -870,6 +1345,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/ispd/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: isvc
     title: ISVC
     full_name: International Symposium on Advances in Visual Computing (ISVC)
@@ -883,6 +1368,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/isvc/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: jcd
     title: JCD
     full_name: ACM Journal of Computer Documentation (JCD)
@@ -896,6 +1391,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/jcd/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: jcss
     title: JCSS
     full_name: ACM Journal on Computing and Sustainable Societies (JCSS)
@@ -909,6 +1414,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/acmjcss/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: jea
     title: JEA
     full_name: ACM Journal of Experimental Algorithmics (JEA)
@@ -922,6 +1437,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/jea/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: login
     title: ';login:'
     full_name: ';login:'
@@ -935,6 +1460,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/usenix-login/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: loplas
     title: LOPLAS
     full_name: ACM Letters on Programming Languages and Systems (LOPLAS)
@@ -948,6 +1483,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/journals/loplas/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: maps
     title: MAPS
     full_name: ACM SIGPLAN International Symposium on Machine Programming (MAPS)
@@ -961,11 +1506,19 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/maps/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: mobiwac
     title: MobiWac
-    full_name: >-
-      ACM International Symposium on Mobility Management and Wireless Access
-      (MobiWac)
+    full_name: ACM International Symposium on Mobility Management and Wireless Access (MobiWac)
     link: https://dblp.org/db/conf/mobiwac/
     categories:
       - systems
@@ -976,6 +1529,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/mobiwac/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: netpl
     title: NetPL
     full_name: Workshop on Networking and Programming Languages
@@ -997,11 +1560,18 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: q2swinet
     title: Q2SWinet
-    full_name: >-
-      ACM International Symposium on QoS and Security for Wireless and Mobile
-      Networks (Q2SWinet)
+    full_name: ACM International Symposium on QoS and Security for Wireless and Mobile Networks (Q2SWinet)
     link: https://dblp.org/db/conf/q2swinet/
     categories:
       - systems
@@ -1012,11 +1582,20 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/q2swinet/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: radio-protocols-for-6g-ieee-communications-magazine
     title: Radio protocols for 6G（IEEE Communications Magazine 特集号）
     full_name: Radio protocols for 6G（IEEE Communications Magazine 特集号）
-    link: >-
-      https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
+    link: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
     categories: []
     tags:
       - niche
@@ -1024,8 +1603,7 @@ candidates:
     editions:
       - year: 2026
         id: radio-protocols-for-6g-ieee-communications-magazine26
-        link: >-
-          https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
+        link: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
         place: ''
         date_text: 1 October 2026
         deadlines: []
@@ -1033,11 +1611,18 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: resound
     title: RESOUND
-    full_name: >-
-      International Workshop on Resilient Systems and Dependable Operating
-      Systems
+    full_name: International Workshop on Resilient Systems and Dependable Operating Systems
     link: https://www.resound-workshop.org/
     categories:
       - systems
@@ -1056,26 +1641,27 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: ''
-  - key: >-
-      security-and-privacy-of-multimodal-embodied-iot-ieee-communications-magazine
-    title: >-
-      Security and Privacy of Multimodal Embodied IoT（IEEE Communications
-      Magazine 特集号）
-    full_name: >-
-      Security and Privacy of Multimodal Embodied IoT（IEEE Communications
-      Magazine 特集号）
-    link: >-
-      https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
+  - key: security-and-privacy-of-multimodal-embodied-iot-ieee-communications-magazine
+    title: Security and Privacy of Multimodal Embodied IoT（IEEE Communications Magazine 特集号）
+    full_name: Security and Privacy of Multimodal Embodied IoT（IEEE Communications Magazine 特集号）
+    link: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
     categories: []
     tags:
       - niche
       - special-issue
     editions:
       - year: 2026
-        id: >-
-          security-and-privacy-of-multimodal-embodied-iot-ieee-communications-magazine26
-        link: >-
-          https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
+        id: security-and-privacy-of-multimodal-embodied-iot-ieee-communications-magazine26
+        link: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
         place: ''
         date_text: 1 November 2026
         deadlines: []
@@ -1083,6 +1669,15 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: smile
     title: SMILE
     full_name: 3D Structure from Multiple Images of Large-Scale Environments (SMILE)
@@ -1096,6 +1691,16 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/smile/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: sosr
     title: SOSR
     full_name: ACM SIGCOMM Symposium on Software Defined Networking Research (SOSR)
@@ -1109,11 +1714,19 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/sosr/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: spaca
     title: SPACA
-    full_name: >-
-      AAAI Symposium on Survival Prediction - Algorithms, Challenges and
-      Applications (SPACA)
+    full_name: AAAI Symposium on Survival Prediction - Algorithms, Challenges and Applications (SPACA)
     link: https://dblp.org/db/conf/spaca/
     categories:
       - theory
@@ -1124,11 +1737,21 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/spaca/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: splash
     title: SPLASH
     full_name: >-
-      ACM SIGPLAN International Conference on Systems, Programming, Languages
-      and Applications: Software for Humanity (SPLASH)
+      ACM SIGPLAN International Conference on Systems, Programming, Languages and Applications: Software for Humanity
+      (SPLASH)
     link: https://dblp.org/db/conf/splash/
     categories:
       - systems
@@ -1139,11 +1762,20 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/splash/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: ssp-2026
     title: SSP 2026
     full_name: 17th Symposium on Software Performance
-    link: >-
-      https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202657&copyownerid=95863
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202657&copyownerid=95863
     categories:
       - performance
     tags:
@@ -1152,8 +1784,7 @@ candidates:
     editions:
       - year: 2026
         id: ssp-202626
-        link: >-
-          https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202657&copyownerid=95863
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202657&copyownerid=95863
         place: Würzburg
         date_text: Aug 24, 2026 (Aug 17, 2026)
         deadlines: []
@@ -1161,11 +1792,18 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: https://www.wikicfp.com
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: taco-special
     title: ACM TACO Special Issues
-    full_name: >-
-      ACM Transactions on Architecture and Code Optimization Special Call for
-      Papers
+    full_name: ACM Transactions on Architecture and Code Optimization Special Call for Papers
     link: https://dl.acm.org/journal/taco
     categories:
       - systems
@@ -1177,14 +1815,24 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: >-
       towards-intellicise-agent-communication-networks-autonomous-integration-and-evolution-of-humans-and-networks-ieee-network
     title: >-
-      Towards Intellicise Agent Communication Networks: Autonomous Integration
-      and Evolution of Humans and Networks（IEEE Network 特集号）
+      Towards Intellicise Agent Communication Networks: Autonomous Integration and Evolution of Humans and Networks（IEEE
+      Network 特集号）
     full_name: >-
-      Towards Intellicise Agent Communication Networks: Autonomous Integration
-      and Evolution of Humans and Networks（IEEE Network 特集号）
+      Towards Intellicise Agent Communication Networks: Autonomous Integration and Evolution of Humans and Networks（IEEE
+      Network 特集号）
     link: https://www.comsoc.org/publications/magazines/ieee-network/cfp
     categories: []
     tags:
@@ -1202,11 +1850,18 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: ubicomp
     title: UbiComp
-    full_name: >-
-      ACM International Joint Conference on Pervasive and Ubiquitous Computing
-      (UbiComp)
+    full_name: ACM International Joint Conference on Pervasive and Ubiquitous Computing (UbiComp)
     link: https://dblp.org/db/conf/huc/
     categories:
       - hci
@@ -1217,11 +1872,19 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/huc/
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
   - key: vecos
     title: VECoS
-    full_name: >-
-      International Conference on Verification and Evaluation of Computer and
-      Communication Systems (VECoS)
+    full_name: International Conference on Verification and Evaluation of Computer and Communication Systems (VECoS)
     link: https://dblp.org/db/conf/vecos/
     categories:
       - systems
@@ -1232,26 +1895,28 @@ candidates:
     status: discovered
     discovered_at: '2026-08-18T20:39:37.811Z'
     evidence_url: https://dblp.org/db/conf/vecos/
-  - key: >-
-      wireless-endogenous-security-for-ai-native-next-generation-wireless-networks-ieee-wireless-communications
-    title: >-
-      Wireless Endogenous Security for AI-Native Next-Generation Wireless
-      Networks（IEEE Wireless Communications 特集号）
-    full_name: >-
-      Wireless Endogenous Security for AI-Native Next-Generation Wireless
-      Networks（IEEE Wireless Communications 特集号）
-    link: >-
-      https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    target_year: null
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []
+  - key: wireless-endogenous-security-for-ai-native-next-generation-wireless-networks-ieee-wireless-communications
+    title: Wireless Endogenous Security for AI-Native Next-Generation Wireless Networks（IEEE Wireless Communications 特集号）
+    full_name: Wireless Endogenous Security for AI-Native Next-Generation Wireless Networks（IEEE Wireless Communications 特集号）
+    link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
     categories: []
     tags:
       - niche
       - special-issue
     editions:
       - year: 2026
-        id: >-
-          wireless-endogenous-security-for-ai-native-next-generation-wireless-networks-ieee-wireless-communications26
-        link: >-
-          https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+        id: wireless-endogenous-security-for-ai-native-next-generation-wireless-networks-ieee-wireless-communications26
+        link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
         place: ''
         date_text: 1 September 2026
         deadlines: []
@@ -1259,3 +1924,12 @@ candidates:
     discovered_at: '2026-08-18T20:39:37.811Z'
     target_year: 2026
     evidence_url: ''
+    state: discovered
+    first_seen_at: '2026-08-18T20:39:37.811Z'
+    last_seen_at: '2026-08-18T20:39:37.811Z'
+    source_fingerprints: []
+    official_url: null
+    verification:
+      deadline: unverified
+      publisher: unverified
+    risk_flags: []

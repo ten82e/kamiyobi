@@ -6,5 +6,5 @@
     "strict": false,
     "types": ["node"]
   },
-  "include": ["app.js", "recommender.d.ts", "runtime.d.ts"]
+  "include": ["app.js", "recommender.js", "recommender.d.ts", "runtime.d.ts"]
 }

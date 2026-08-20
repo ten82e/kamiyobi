@@ -19,7 +19,7 @@ export const EMBEDDING_MODEL = "Xenova/all-MiniLM-L6-v2";
 export const EMBEDDING_MULTI_MODEL = "Xenova/paraphrase-multilingual-MiniLM-L12-v2";
 export const EMBEDDING_DIM = 384;
 export const EMBEDDING_REVISION = "main";
-export const EMBEDDING_SCHEMA_VERSION = 1;
+export const EMBEDDING_SCHEMA_VERSION = 2;
 export const EMBEDDING_PROBE = "kamiyobi embedding compatibility probe";
 
 const extractorPromises = new Map<string, Promise<FeatureExtractionPipeline>>();
@@ -275,15 +275,17 @@ type EmbeddingData = {
 };
 
 export type EmbeddingModelManifest = {
-  model: string;
+  generator_model: string;
+  browser_model: string;
   revision: string;
-  dim: number;
-  probe: { text: string; vector: number[] };
+  dimension: number;
+  probe_vector: number[];
 };
 
 export type EmbeddingManifest = {
-  schema: number;
+  schema_version: number;
   profile_hash: string;
+  probe_text: string;
   keys: string[];
   venue_papers_hash: string;
   models: { en: EmbeddingModelManifest; multi: EmbeddingModelManifest };
@@ -327,17 +329,18 @@ function expectedPaperKeys(data: EmbeddingData | null | undefined): string[] {
 
 function modelManifest(model: string, probe: number[]): EmbeddingModelManifest {
   return {
-    model,
+    generator_model: model,
+    browser_model: model,
     revision: EMBEDDING_REVISION,
-    dim: EMBEDDING_DIM,
-    probe: { text: EMBEDDING_PROBE, vector: probe },
+    dimension: EMBEDDING_DIM,
+    probe_vector: probe,
   };
 }
 
 /** Hash every input that changes profile vectors, not only the output key set. */
 export function embeddingProfileHash(data: EmbeddingData | null | undefined): string {
   const profile = {
-    schema: EMBEDDING_SCHEMA_VERSION,
+    schema_version: EMBEDDING_SCHEMA_VERSION,
     models: {
       en: modelManifest(EMBEDDING_MODEL, []),
       multi: modelManifest(EMBEDDING_MULTI_MODEL, []),
@@ -357,7 +360,7 @@ export function embeddingProfileHash(data: EmbeddingData | null | undefined): st
   return createHash("sha256")
     .update(JSON.stringify(stableValue(profile)))
     .digest("hex")
-    .slice(0, 16);
+    .replace(/^/, "sha256:");
 }
 
 export function embeddingManifest(
@@ -366,8 +369,9 @@ export function embeddingManifest(
 ): EmbeddingManifest {
   const keys = dataConferences(data).map((c) => String(c.key));
   return {
-    schema: EMBEDDING_SCHEMA_VERSION,
+    schema_version: EMBEDDING_SCHEMA_VERSION,
     profile_hash: embeddingProfileHash(data),
+    probe_text: EMBEDDING_PROBE,
     keys,
     venue_papers_hash: venuePapersHash(),
     models: {

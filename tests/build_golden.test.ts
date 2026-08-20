@@ -15,6 +15,8 @@ import {
   embeddingsStale,
   escapeMdCell,
   escapeMdUrl,
+  evaluateHealthGate,
+  healthReport,
   ROOT,
   recordsOf,
   setRoot,
@@ -43,6 +45,113 @@ import {
   runCli,
   utc,
 } from "./helpers.ts";
+
+it("healthReport separates confirmed and estimated future deadlines", () => {
+  const report = healthReport(
+    {
+      generated_at: "2026-08-09T00:00:00Z",
+      categories: { systems: "Systems" },
+      conferences: [
+        {
+          key: "rtss",
+          categories: ["systems"],
+          editions: [
+            { estimated: false, deadlines: [{ kind: "paper", utc: "2026-09-01T00:00:00Z" }] },
+          ],
+        },
+        {
+          key: "nsdi",
+          categories: ["systems"],
+          editions: [
+            { estimated: true, deadlines: [{ kind: "paper", utc: "2026-10-01T00:00:00Z" }] },
+          ],
+        },
+      ],
+    },
+    new Date("2026-08-09T00:00:00Z"),
+    {
+      sourceFailures: ["ccfddl"],
+      parseWarningCount: 4,
+      requiredVenues: ["rtss", "nsdi"],
+    },
+  );
+  expect(report).toMatchObject({
+    confirmed_future_deadlines: 1,
+    estimated_future_deadlines: 1,
+    venues_with_confirmed_future_deadline: 1,
+    source_failures: ["ccfddl"],
+    parse_warning_count: 4,
+    category_counts: { systems: 2 },
+    required_venues: { rtss: "present", nsdi: "present" },
+  });
+});
+
+it("toJson preserves deadline provenance and merged conflicts", () => {
+  const conf = makeConference({
+    key: "rtss",
+    title: "RTSS",
+    sources: ["aideadlines", "ccfddl"],
+    editions: [
+      makeEdition({
+        year: 2026,
+        source: "aideadlines",
+        deadlines: [
+          {
+            ...makeDeadline("paper", "Paper submission", utc(2026, 9, 1)),
+            conflicts: [{ at_utc: utc(2026, 8, 31), label: "Paper deadline", source: "ccfddl" }],
+          },
+        ],
+      }),
+    ],
+  });
+  const payload = toJson(
+    [conf],
+    {
+      sources: [
+        { name: "aideadlines", url: "https://example.org/aideadlines" },
+        { name: "ccfddl", url: "https://example.org/ccfddl" },
+      ],
+    },
+    NOW,
+  );
+  const deadline = (payload.conferences as any[])[0].editions[0].deadlines[0];
+  expect(deadline.evidence[0]).toMatchObject({
+    source_name: "aideadlines",
+    source_url: "https://example.org/aideadlines",
+    observed_at: "2026-08-09T00:00:00Z",
+    original_value: "2026-09-01T00:00:00Z",
+    confidence: "aggregator",
+  });
+  expect(deadline.conflicts[0].evidence).toMatchObject({
+    source_name: "ccfddl",
+    source_url: "https://example.org/ccfddl",
+    original_value: "2026-08-31T00:00:00Z",
+  });
+});
+
+it("evaluateHealthGate blocks destructive regressions but permits snapshot-backed source failures", () => {
+  const previous = {
+    schema_version: 1 as const,
+    generated_at: "2026-08-09T00:00:00Z",
+    profile_hash: "sha256:old",
+    confirmed_future_deadlines: 100,
+    estimated_future_deadlines: 10,
+    venues_with_confirmed_future_deadline: 80,
+    source_failures: [],
+    snapshot_fallback: false,
+    parse_warning_count: 1,
+    category_counts: { systems: 40 },
+    required_venues: { rtss: "present" as const },
+  };
+  const current = { ...previous, confirmed_future_deadlines: 50 };
+  expect(evaluateHealthGate(current, previous).ok).toBe(false);
+  expect(
+    evaluateHealthGate(
+      { ...previous, source_failures: ["ccfddl"], snapshot_fallback: true },
+      previous,
+    ).ok,
+  ).toBe(true);
+});
 
 let site: string;
 let data: Record<string, any>;
@@ -277,7 +386,7 @@ it("upcoming.md is a table", () => {
 
 it("llms.txt indexes generated outputs", () => {
   const text = readFileSync(join(site, "llms.txt"), "utf8");
-  for (const name of ["data.json", "data.csv", "upcoming.md"]) {
+  for (const name of ["data.json", "health.json", "data.csv", "upcoming.md"]) {
     expect(text).toContain(name);
   }
   expect(text).not.toMatch(/\.ics/);
@@ -682,8 +791,8 @@ it("embeddingsStale は profile と manifest の不一致を再生成する", ()
         key,
         title: key,
         full_name: key,
-        categories: [],
-        tags: [],
+        categories: [] as string[],
+        tags: [] as string[],
       })),
     };
     const probe = new Array(EMBEDDING_DIM).fill(0);
@@ -700,13 +809,19 @@ it("embeddingsStale は profile と manifest の不一致を再生成する", ()
           dim: EMBEDDING_DIM,
           embeddings: Object.fromEntries(keys.map((k) => [k, probe])),
         },
-        paperVecs: {},
+        paperVecs: Object.fromEntries(manifest.paper_vecs.keys.map((key) => [key, [probe]])),
         manifest,
       },
     };
   };
   const emb = (keys: string[]) => make(keys);
   const fresh = emb(["a", "b", "c"]);
+  expect(fresh.file.manifest.schema_version).toBe(2);
+  expect(fresh.file.manifest.profile_hash).toMatch(/^sha256:[0-9a-f]{64}$/);
+  expect(fresh.file.manifest.probe_text).toBe("kamiyobi embedding compatibility probe");
+  expect(fresh.file.manifest.models.en.generator_model).toBe(EMBEDDING_MODEL);
+  expect(fresh.file.manifest.models.en.browser_model).toBe(EMBEDDING_MODEL);
+  expect(fresh.file.manifest.models.en.dimension).toBe(EMBEDDING_DIM);
   // 同一キー集合 → stale でない
   expect(embeddingsStale(fresh.file, fresh.data)).toBe(false);
   // 数が同じでもキーが入れ替わったら stale（数比較だと見逃す）
@@ -719,6 +834,18 @@ it("embeddingsStale は profile と manifest の不一致を再生成する", ()
   const changed = structuredClone(fresh.data);
   changed.conferences[0].title = "changed";
   expect(embeddingsStale(fresh.file, changed)).toBe(true);
+  const changedTags = structuredClone(fresh.data);
+  changedTags.conferences[0].tags = ["changed-tag"];
+  expect(embeddingsStale(fresh.file, changedTags)).toBe(true);
+  const changedCategoryName = structuredClone(fresh.data);
+  changedCategoryName.categories = { systems: "Renamed systems" };
+  expect(embeddingsStale(fresh.file, changedCategoryName)).toBe(true);
+  const missingMultiKey = structuredClone(fresh.file);
+  delete missingMultiKey.multi.embeddings.b;
+  expect(embeddingsStale(missingMultiKey, fresh.data)).toBe(true);
+  const missingPaperVectors = emb(["rtss"]);
+  missingPaperVectors.file.paperVecs.rtss = [];
+  expect(embeddingsStale(missingPaperVectors.file, missingPaperVectors.data)).toBe(true);
   // manifest / multilingual / model metadata が無い旧形式は stale
   // embeddings が無い既存データ → stale
   expect(embeddingsStale({}, fresh.data)).toBe(true);

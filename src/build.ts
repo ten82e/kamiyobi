@@ -32,6 +32,7 @@ import {
   type Edition,
   fmtDate,
   fmtUTC,
+  warningCounts,
 } from "./model.ts";
 
 export let ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -136,11 +137,25 @@ type EmbeddingFile = {
   manifest?: {
     schema?: unknown;
     profile_hash?: unknown;
+    schema_version?: unknown;
+    probe_text?: unknown;
     keys?: unknown;
     venue_papers_hash?: unknown;
     models?: {
-      en?: { model?: unknown; revision?: unknown; dim?: unknown; probe?: { vector?: unknown } };
-      multi?: { model?: unknown; revision?: unknown; dim?: unknown; probe?: { vector?: unknown } };
+      en?: {
+        generator_model?: unknown;
+        browser_model?: unknown;
+        revision?: unknown;
+        dimension?: unknown;
+        probe_vector?: unknown;
+      };
+      multi?: {
+        generator_model?: unknown;
+        browser_model?: unknown;
+        revision?: unknown;
+        dimension?: unknown;
+        probe_vector?: unknown;
+      };
     };
     paper_vecs?: { keys?: unknown; dim?: unknown };
   };
@@ -157,6 +172,15 @@ function vectorsHaveDim(vectors: Record<string, unknown> | undefined, dim: numbe
   );
 }
 
+function paperVectorsHaveDim(vectors: Record<string, unknown> | undefined, dim: number): boolean {
+  return Object.values(vectors ?? {}).every(
+    (set) =>
+      Array.isArray(set) &&
+      set.length > 0 &&
+      set.every((vector) => Array.isArray(vector) && vector.length === dim),
+  );
+}
+
 /** 既存 embeddings.json が profile/model/vector 契約を満たすか判定する。 */
 export function embeddingsStale(
   existing: EmbeddingFile | null | undefined,
@@ -168,7 +192,11 @@ export function embeddingsStale(
   const en = manifest?.models?.en;
   const multi = manifest?.models?.multi;
   if (!manifest || !en || !multi) return true;
-  if (manifest.schema !== expected.schema || manifest.profile_hash !== expected.profile_hash)
+  if (
+    manifest.schema_version !== expected.schema_version ||
+    manifest.profile_hash !== expected.profile_hash ||
+    manifest.probe_text !== expected.probe_text
+  )
     return true;
   if (manifest.profile_hash !== embeddingProfileHash(data)) return true;
   if (
@@ -189,22 +217,28 @@ export function embeddingsStale(
     return true;
   }
   if (
-    en.model !== EMBEDDING_MODEL ||
+    en.generator_model !== EMBEDDING_MODEL ||
+    en.browser_model !== EMBEDDING_MODEL ||
     en.revision !== EMBEDDING_REVISION ||
-    en.dim !== EMBEDDING_DIM ||
-    multi.model !== EMBEDDING_MULTI_MODEL ||
+    en.dimension !== EMBEDDING_DIM ||
+    multi.generator_model !== EMBEDDING_MULTI_MODEL ||
+    multi.browser_model !== EMBEDDING_MULTI_MODEL ||
     multi.revision !== EMBEDDING_REVISION ||
-    multi.dim !== EMBEDDING_DIM ||
-    !Array.isArray(en.probe?.vector) ||
-    en.probe.vector.length !== EMBEDDING_DIM ||
-    !Array.isArray(multi.probe?.vector) ||
-    multi.probe.vector.length !== EMBEDDING_DIM
+    multi.dimension !== EMBEDDING_DIM ||
+    !Array.isArray(en.probe_vector) ||
+    en.probe_vector.length !== EMBEDDING_DIM ||
+    !Array.isArray(multi.probe_vector) ||
+    multi.probe_vector.length !== EMBEDDING_DIM
   ) {
     return true;
   }
   if (!vectorsHaveDim(existing.embeddings, EMBEDDING_DIM)) return true;
   if (!vectorsHaveDim(existing.multi?.embeddings, EMBEDDING_DIM)) return true;
-  if (!vectorsHaveDim(existing.paperVecs, EMBEDDING_DIM)) return true;
+  if (
+    !sameKeys(existing.paperVecs, expected.paper_vecs.keys) ||
+    !paperVectorsHaveDim(existing.paperVecs, EMBEDDING_DIM)
+  )
+    return true;
   if (JSON.stringify(manifest.paper_vecs?.keys) !== JSON.stringify(expected.paper_vecs.keys))
     return true;
   if (manifest.paper_vecs?.dim !== EMBEDDING_DIM) return true;
@@ -327,7 +361,28 @@ export function toJson(
   const domain = String(site.domain ?? "conf-deadlines");
   const baseUrl = String(site.base_url ?? `https://${domain}`).replace(/\/+$/, "");
   const categories = (safeConfig.categories as Record<string, string> | null) ?? DEFAULT_CATEGORIES;
-  const sources = (safeConfig.sources as Array<Record<string, unknown>> | null) ?? DEFAULT_SOURCES;
+  const sources: Array<Record<string, unknown>> = ((safeConfig.sources as Array<
+    Record<string, unknown>
+  > | null) ?? DEFAULT_SOURCES) as Array<Record<string, unknown>>;
+  const sourceByName = new Map(sources.map((source) => [String(source.name ?? ""), source]));
+  const observedAt = fmtUTC(safeNow, "%Y-%m-%dT%H:%M:%SZ");
+  const evidenceOf = (sourceName: string, at: Date): Record<string, unknown> => {
+    const source = sourceByName.get(sourceName);
+    const sourceUrl = String(
+      source?.url ??
+        (sourceName === "override" ? `${baseUrl}/data/overrides.yaml` : (source?.repo ?? "")),
+    );
+    const confidence =
+      sourceName === "local" || sourceName === "override" ? "official" : "aggregator";
+    const originalValue = fmtUTC(at, "%Y-%m-%dT%H:%M:%SZ");
+    return {
+      source_name: sourceName,
+      source_url: sourceUrl,
+      observed_at: observedAt,
+      original_value: originalValue,
+      confidence,
+    };
+  };
   const outConfs: unknown[] = [];
   for (const conf of [...(confs ?? [])].sort((a, b) => cmpStr(a?.key ?? "", b?.key ?? ""))) {
     if (!conf || typeof conf !== "object") continue;
@@ -354,6 +409,16 @@ export function toJson(
           tz_raw: dl.tz_raw,
           round: dl.round,
           comment: dl.comment,
+          status: ed.estimated ? "estimated" : "confirmed",
+          evidence: [evidenceOf(ed.source, dl.at_utc)],
+          ...(dl.conflicts?.length
+            ? {
+                conflicts: dl.conflicts.map((conflict) => ({
+                  at_utc: fmtUTC(conflict.at_utc, "%Y-%m-%dT%H:%M:%SZ"),
+                  evidence: evidenceOf(conflict.source, conflict.at_utc),
+                })),
+              }
+            : {}),
         })),
       });
     }
@@ -389,6 +454,12 @@ function jsonRecords(value: unknown): JsonRecord[] {
   return Array.isArray(value)
     ? value.filter((item): item is JsonRecord => Boolean(item && typeof item === "object"))
     : [];
+}
+
+function jsonStrings(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map((item) => String(item ?? "").trim()).filter(Boolean);
+  if (typeof value === "string" && value.trim()) return [value.trim()];
+  return [];
 }
 
 function jsonTime(value: unknown): number | null {
@@ -503,6 +574,118 @@ export function toRecommendationIndex(
     embedding_manifest: embeddingManifest(data as Parameters<typeof embeddingManifest>[0]),
     conferences,
   };
+}
+
+export interface HealthReport {
+  schema_version: 1;
+  generated_at: string;
+  profile_hash: string;
+  confirmed_future_deadlines: number;
+  estimated_future_deadlines: number;
+  venues_with_confirmed_future_deadline: number;
+  source_failures: string[];
+  snapshot_fallback: boolean;
+  parse_warning_count: number;
+  category_counts: Record<string, number>;
+  required_venues: Record<string, "present" | "missing">;
+}
+
+export interface HealthReportOptions {
+  sourceFailures?: string[];
+  snapshotFallback?: boolean;
+  parseWarningCount?: number;
+  requiredVenues?: string[];
+}
+
+/** Build a deterministic health summary from the exact data payload being published. */
+export function healthReport(
+  data: Record<string, unknown>,
+  now: Date | null | undefined,
+  options: HealthReportOptions = {},
+): HealthReport {
+  const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now.getTime() : Date.now();
+  const conferences = jsonRecords(data.conferences);
+  const categoryCounts: Record<string, number> = {};
+  const present = new Set<string>();
+  let confirmed = 0;
+  let estimated = 0;
+  const confirmedVenues = new Set<string>();
+  for (const conference of conferences) {
+    const key = String(conference.key ?? "");
+    if (key) present.add(key);
+    for (const category of jsonStrings(conference.categories)) {
+      categoryCounts[category] = (categoryCounts[category] ?? 0) + 1;
+    }
+    for (const edition of jsonRecords(conference.editions)) {
+      const isEstimated = Boolean(edition.estimated);
+      for (const deadline of jsonRecords(edition.deadlines)) {
+        const time = jsonTime(deadline.utc);
+        if (time === null || time < safeNow) continue;
+        if (isEstimated) {
+          estimated += 1;
+        } else {
+          confirmed += 1;
+          if (key) confirmedVenues.add(key);
+        }
+      }
+    }
+  }
+  const required = [
+    ...new Set((options.requiredVenues ?? []).map((key) => String(key).trim()).filter(Boolean)),
+  ];
+  return {
+    schema_version: 1,
+    generated_at: String(data.generated_at ?? ""),
+    profile_hash: embeddingProfileHash(data as Parameters<typeof embeddingProfileHash>[0]),
+    confirmed_future_deadlines: confirmed,
+    estimated_future_deadlines: estimated,
+    venues_with_confirmed_future_deadline: confirmedVenues.size,
+    source_failures: [...new Set(options.sourceFailures ?? [])].sort(),
+    snapshot_fallback: Boolean(options.snapshotFallback),
+    parse_warning_count: Math.max(0, Number(options.parseWarningCount ?? 0) || 0),
+    category_counts: Object.fromEntries(
+      Object.entries(categoryCounts).sort(([a], [b]) => cmpStr(a, b)),
+    ),
+    required_venues: Object.fromEntries(
+      required.sort(cmpStr).map((key) => [key, present.has(key) ? "present" : "missing"]),
+    ),
+  };
+}
+
+export interface HealthGateResult {
+  ok: boolean;
+  reasons: string[];
+}
+
+/** Compare a new report with the last known good report before deployment. */
+export function evaluateHealthGate(
+  current: HealthReport,
+  previous: HealthReport | null | undefined,
+): HealthGateResult {
+  const reasons: string[] = [];
+  if (Object.values(current.required_venues).some((status) => status === "missing")) {
+    reasons.push("required venue is missing");
+  }
+  if (current.source_failures.length > 0 && !current.snapshot_fallback) {
+    reasons.push(`source failure without snapshot fallback: ${current.source_failures.join(",")}`);
+  }
+  if (!previous) return { ok: reasons.length === 0, reasons };
+  if (current.generated_at < previous.generated_at) reasons.push("generated_at moved backwards");
+  if (
+    previous.confirmed_future_deadlines > 0 &&
+    current.confirmed_future_deadlines < previous.confirmed_future_deadlines * 0.6
+  ) {
+    reasons.push("confirmed future deadlines dropped by 40% or more");
+  }
+  for (const [category, before] of Object.entries(previous.category_counts)) {
+    const after = current.category_counts[category] ?? 0;
+    if (before > 0 && after < before * 0.25)
+      reasons.push(`category nearly disappeared: ${category}`);
+  }
+  if (current.parse_warning_count > previous.parse_warning_count * 2 + 5) {
+    reasons.push("parse warnings increased sharply");
+  }
+  return { ok: reasons.length === 0, reasons };
 }
 
 export function csvField(value: string | number | boolean | null | undefined): string {
@@ -678,6 +861,7 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "## 出力一覧",
     "",
     "- data.json — 正規化データ全体（機械可読の正）。",
+    "- health.json — 確定/推定締切、ソース失敗、警告、カテゴリ、必須会議の健全性レポート。",
     "- catalog.json — 締切画面向けの現在・近日期間カタログ。",
     "- recommendation-index.json — 投稿先推薦の会議プロフィールと埋め込み参照。",
     "- app.js — ブラウザUI runtime（TypeScript の allowJs 対象）。",
@@ -790,7 +974,7 @@ export async function buildAll(
   config: Record<string, unknown> | null | undefined,
   outdir: string,
   now: Date | null | undefined,
-  opts: { noEmbeddings?: boolean } = {},
+  opts: { noEmbeddings?: boolean; health?: HealthReportOptions } = {},
 ): Promise<BuildStats> {
   mkdirSync(outdir, { recursive: true });
 
@@ -823,7 +1007,13 @@ export async function buildAll(
 
   const data = toJson(safeConfs, safeConfig, nowUtc);
   const jsonText = JSON.stringify(data, null, 2);
+  const warningTotal = Object.values(warningCounts()).reduce((sum, count) => sum + count, 0);
+  const health = healthReport(data, nowUtc, {
+    ...opts.health,
+    parseWarningCount: opts.health?.parseWarningCount ?? warningTotal,
+  });
   write("data.json", `${jsonText}\n`);
+  write("health.json", `${JSON.stringify(health, null, 2)}\n`);
   write("catalog.json", `${JSON.stringify(toCatalog(data, nowUtc, upcomingDays), null, 2)}\n`);
   write(
     "recommendation-index.json",

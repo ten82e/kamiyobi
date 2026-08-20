@@ -4,6 +4,22 @@ interface SiteDeadline {
   utc: string;
   aoe?: string;
   round?: number;
+  status?: "confirmed" | "estimated";
+  evidence?: SiteEvidence[];
+  conflicts?: SiteDeadlineConflict[];
+}
+
+interface SiteEvidence {
+  source_name: string;
+  source_url: string;
+  observed_at: string;
+  original_value: string;
+  confidence: "official" | "aggregator" | "mailing-list";
+}
+
+interface SiteDeadlineConflict {
+  at_utc: string;
+  evidence: SiteEvidence;
 }
 
 interface SiteEdition {
@@ -89,7 +105,7 @@ interface SiteRecommendation {
 interface SiteRecommenderApi {
   buildNameIdf(conferences: SiteConference[]): Record<string, unknown>;
   embeddingProbeMatches(meta: unknown, vector: number[]): boolean;
-  embeddingSetCompatible(embeddings: unknown, language: string): boolean;
+  embeddingSetCompatible(embeddings: unknown, language: string, expectedProfileHash?: string): boolean;
   hasJapanese(text: string): boolean;
   queryText(lines: readonly unknown[]): string;
   matchVenueTag(venue: string, conferences: SiteConference[]): SiteConference[];
@@ -98,6 +114,13 @@ interface SiteRecommenderApi {
   journalRows(conferences: SiteConference[], now: number): SiteRow[];
   pastRepresentatives(rows: SiteRow[], now: number): SiteRow[];
   rankMatches(rankPairs: string[], grade: string): boolean;
+  compareRankPairs(
+    aPairs: string[],
+    bPairs: string[],
+    ascending: boolean,
+    aKey?: string,
+    bKey?: string,
+  ): number;
   comparePapers(a: SiteRow, b: SiteRow, now: number): number;
   safeExternalUrl(value: unknown): string;
   pdfPaperRecord(metadata: unknown, pages: unknown[], fallbackText: string): SitePaperRecord;
@@ -120,6 +143,7 @@ interface SiteCatalog {
   generated_at: string;
   sources: Array<Record<string, unknown>>;
   categories: Record<string, string>;
+  embedding_manifest?: { profile_hash?: string };
   conferences: SiteConference[];
 }
 
