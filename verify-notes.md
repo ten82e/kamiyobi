@@ -189,3 +189,40 @@ R513-R515 で昇格した会議の締切が公式サイトで延長・変更さ�
 
 - 本判定は「昇格 4 日以内・60 件サンプル」での negative finding である。
   経過日数が伸びたら再測定すること (発火条件 1)。
+
+---
+
+# 検証記録 R518 — DBWorld 未抽出 97 件の内訳と discover 内蔵の要否 (2026-08-23)
+
+## 実測
+
+1. **改良抽出器** ("Due <date>" 型・日付先行型・"on/before/by" 型・欧州形式を追加) を
+   未抽出 97 件に適用:
+   - **RESCUED=0** — 追加パターンの効果はゼロ
+   - still_none=88 (本文に機械可読な締切行がそもそも無い。画像・PDF・リンク先参照)
+   - unmatched_cat=5 → 本文テキスト再分類で **全件カテゴリ適合**
+   - past=3, far=1, fetch_fail=0
+
+2. **救出 5 会議を extra.yaml へ昇格** (324 → 337 → 342):
+   - Neurosymbolic AI for Healthcare (2026-09-05)
+   - ICSOC 2026 (2026-09-27)
+   - ACM SAC 2027 DBDM Track (2026-10-02)
+   - BTW 2027 (2026-09-18)
+   - CCNC27 Metaverse Networking Track (2026-08-31)
+
+## 判定 (ponytail ラダー)
+
+- **discover.ts 内蔵はやらない**: 追加抽出パターンの実測効果がゼロ。
+  本文 fetch を discover に組み込むコスト (+70s/run・レート制限リスク) に見合う
+  効果が出ないことが実測で確定した。残り 88 件は源自体が機械可読締切を持たないため、
+  人間にも裏取り不能 (源に情報がない) = これ以上の抽出器改善は無意味。
+- 運用側で見つかった分だけ手動昇格する形で十分 (本ラウンドで 5 会議実施済み)。
+
+## 検証
+
+- typecheck / check / vitest 914 pass (skipped=0) / offline build RC=0
+  (664 conferences / 3163 deadlines)。data.json 反映確認 (btw-2027 等全件 IN)。
+
+## caveat
+
+- 本 5 件もメーリス本文由来のため primary.yaml 登録不可 (時刻なし源)。
