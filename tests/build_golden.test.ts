@@ -744,8 +744,19 @@ it("upcoming.md is a table", () => {
 
 it("llms.txt indexes generated outputs", () => {
   const text = readFileSync(join(site, "llms.txt"), "utf8");
-  for (const name of ["data.json", "health.json", "data.csv", "upcoming.md"]) {
-    expect(text).toContain(name);
+  for (const name of [
+    "data.json",
+    "health.json",
+    "health.md",
+    "data.csv",
+    "upcoming.md",
+    "recommender.js",
+    "publish.json",
+    "catalog.json",
+    "recommendation-index.json",
+    "app.js",
+  ]) {
+    expect(text, `llms.txt 出力一覧は ${name} を載せる`).toContain(name);
   }
   expect(text).not.toMatch(/\.ics/);
 });

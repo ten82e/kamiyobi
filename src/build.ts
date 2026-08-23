@@ -1455,6 +1455,8 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "- catalog.json — 締切画面向けの現在・近日期間カタログ。",
     "- recommendation-index.json — 投稿先推薦の会議プロフィールと埋め込み参照。",
     "- app.js — ブラウザUI runtime（TypeScript の allowJs 対象）。",
+    "- recommender.js — サイトの論文推薦ロジック（site/ から配布）。",
+    "- health.md — health.json の人間向け要約。",
     "- data.csv — 1 行 1 締切のフラット表。",
     `- upcoming.md — 直近 ${String((safeConfig.site as Record<string, unknown> | null)?.upcoming_days ?? 180)} 日の締切と開催の表。`,
   ];
