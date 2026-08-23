@@ -43,3 +43,45 @@ AoE (UTC-12) 当日終了 (23:59:00) と解釈した。日付のみの観測で�
 - 発見ソースの easychair 候補は主催者が EasyChair に登録した CFP であり、
   会議公式サイトが placeholder でも一次情報として扱える (data/primary.yaml
   コメントの SETTA 2026 実例と同じ立場)。
+
+---
+
+# 公式裏取り検証 R514 — wikiCFP 候補 (2026-08-23)
+
+## 経緯
+
+R513 で EasyChair 由来 708 件のうち 45 件を昇格した後、wikiCFP (324) / DBWorld (144)
+由来が短冊ゼロだった原因を調査した。
+
+## 原因切り分け (機械集計)
+
+- wikiCFP 324 件: 全件 `submission_deadline_text` を持たない。このフィールドは
+  EasyChair 経路専用 (`src/discover.ts` easyChairEntriesFromRows のみ設定)。ただし
+  wikiCFP は edition[0].date_text に締切日を持つため、date_text 経路で短冊化できる。
+  - date_text パース結果: 過去締切 87 / 窓外 (>120日) 2 / 日付なし 13 /
+    カテゴリ不一致 138 / **窓内 × 収録カテゴリ適合 84** (+ comsoc 1, resound 1)
+- DBWorld 144 件: editions 自体が空 (メーリス件名のみ。詳細ページは listserv.acm.org
+  アーカイブで、そこからは締切本文が取得可能 — MEDI 2026 で実証)。今回は対象外。
+- dblp 53 件: date_text 無し (venue 発見のみ)。
+
+## 裏取り方法
+
+- wikiCFP の https はこのネットワークから到達不能だが http は到達可能。
+  各イベントページの「Submission Deadline」行の v:startDate microformat (ISO 日付) を抽出。
+- 短冊日付 (一覧ページの deadline 欄) とイベントページの microformat を機械照合。
+
+## 検証結果
+
+- **84/84 が一致** (MISMATCH 0、抽出失敗 0、取得失敗 0)。
+- 同一イベントの eventid 重複 1 組 (CSP 2027: 199953/199954) を発見 → 1 件に畳み **83 会議**。
+- tz 未明記のため AoE 当日終了 (23:59:00) で解釈 (R513 と同じ方針)。
+
+## 判定
+
+- 採用: 83 会議 → data/extra.yaml 追加 (241 → 324 会議)
+- 不採用: カテゴリ不一致 138 件・DBWorld 144 件等は次ラウンドへ
+
+## caveat
+
+- wikiCFP の締切欄は主催者申告であり、公式サイト更新への追随が遅れる可能性がある。
+  昇格会議は primary.yaml への一次ソース登録候補とする。

@@ -4485,3 +4485,1005 @@ conferences:
         date_text: Jun 24, 2027
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-12-20 23:59:00', tz: AoE}
+
+  # ---- conf-deadlines R514 (2026-08-23): wikiCFP 候補の公式裏取り昇格 --------------------
+  # 根拠: wikiCFP 各イベントページの「Submission Deadline」行
+  #   (v:startDate microformat、ISO 日付)。取得日 2026-08-23。84/84 が機械照合一致
+  #   (同イベントの eventid 重複 1 組は 1 件に畳み、計 83 会議)。
+  # tz: wikiCFP は tz を明記しないため AoE 当日終了と解釈した (R513 EasyChair 分と同じ方針)。
+
+  - key: 3rd-amict-2026
+    title: 3rd AMICT 2026
+    full_name: 3rd International Conference on Advances in Machine Intelligence and Cybersecurity Technologies
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200214&copyownerid=199261
+    categories: [security]
+    editions:
+      - year: 2026
+        id: 3rd-amict-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200214&copyownerid=199261
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-01 23:59:00', tz: AoE}
+
+  - key: acm-aiat-2026
+    title: ACM AIAT 2026
+    full_name: ACM--2026 6th International Conference on Artificial Intelligence and Application Technologies (AIAT 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192197&copyownerid=13881
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: acm-aiat-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192197&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-25 23:59:00', tz: AoE}
+
+  - key: acm-aibc-2026
+    title: ACM AIBC 2026
+    full_name: ACM--2026 7th International Artificial Intelligence and Blockchain Conference (AIBC 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194205&copyownerid=13881
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: acm-aibc-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194205&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-20 23:59:00', tz: AoE}
+
+  - key: acm-bdiot-2026
+    title: ACM BDIOT 2026
+    full_name: ACM--2026 10th International Conference on Big Data and Internet of Things (BDIOT 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192164&copyownerid=13881
+    categories: [db]
+    editions:
+      - year: 2026
+        id: acm-bdiot-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192164&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-05 23:59:00', tz: AoE}
+
+  - key: acm-icacs-2026
+    title: ACM ICACS 2026
+    full_name: ACM--2026 The 10th International Conference on Algorithms, Computing and Systems (ICACS 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192791&copyownerid=13881
+    categories: [theory]
+    editions:
+      - year: 2026
+        id: acm-icacs-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192791&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-05 23:59:00', tz: AoE}
+
+  - key: ai-sec-2027
+    title: AI-SEC 2027
+    full_name: The 3rd International Workshop on Artificial Intelligence for Cybersecurity
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201627&copyownerid=199687
+    categories: [ai, security]
+    editions:
+      - year: 2026
+        id: ai-sec-202726
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201627&copyownerid=199687
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-12-10 23:59:00', tz: AoE}
+
+  - key: ai4demons-2026
+    title: AI4DEMONS 2026
+    full_name: The 1st International Workshop on Artificial Intelligence for Data Engineering and Management Of Networked Systems
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201329&copyownerid=199538
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: ai4demons-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201329&copyownerid=199538
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-14 23:59:00', tz: AoE}
+
+  - key: aibt-2026
+    title: AIBT 2026
+    full_name: 2026 The 5th International Conference on Artificial Intelligence and Blockchain Technology (AIBT 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194778&copyownerid=13881
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: aibt-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194778&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-15 23:59:00', tz: AoE}
+
+  - key: aimlm-2026
+    title: AIMLM 2026
+    full_name: 2026 International Conference on Artificial Intelligence, Machine Learning and Multimodality
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191658&copyownerid=182680
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: aimlm-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191658&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-30 23:59:00', tz: AoE}
+
+  - key: aisec4hsg-2026
+    title: AISEC4HSG 2026
+    full_name: 1st International Colloquium on Artificial Intelligence & Cybersecurity for Healthcare and Social Good
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202576&copyownerid=199920
+    categories: [ai, security]
+    editions:
+      - year: 2026
+        id: aisec4hsg-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202576&copyownerid=199920
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+
+  - key: aivrch-2026
+    title: AIVRCH 2026
+    full_name: 2026 International Conference on Artificial Intelligence, Virtual Reality and Cultural Heritage-EI/Scopus
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190620&copyownerid=182680
+    categories: [ai, graphics]
+    editions:
+      - year: 2026
+        id: aivrch-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190620&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+
+  - key: asma-2026
+    title: ASMA 2026
+    full_name: 2026 4th International Conference on Applied Statistics, Modeling and Advanced Algorithms
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201649&copyownerid=182680
+    categories: [theory]
+    editions:
+      - year: 2026
+        id: asma-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201649&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+
+  - key: bdiot-2026
+    title: BDIOT 2026
+    full_name: ACM--2026 10th International Conference on Big Data and Internet of Things (BDIOT 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192165&copyownerid=13881
+    categories: [db]
+    editions:
+      - year: 2026
+        id: bdiot-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192165&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-05 23:59:00', tz: AoE}
+
+  - key: bdmlic-2026
+    title: BDMLIC 2026
+    full_name: 2026 International Conference on Big Data, Machine Learning and Intelligent Computing-EI/Scopus
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190090&copyownerid=182680
+    categories: [ai, db]
+    editions:
+      - year: 2026
+        id: bdmlic-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190090&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+
+  - key: caldam-2027
+    title: CALDAM 2027
+    full_name: International Conference on Algorithms and Discrete Applied Mathematics
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202679&copyownerid=182219
+    categories: [theory]
+    editions:
+      - year: 2026
+        id: caldam-202726
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202679&copyownerid=182219
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-21 23:59:00', tz: AoE}
+
+  - key: ccbdiot-2026
+    title: CCBDIoT 2026
+    full_name: 2026 5th International Conference on Computing, Big Data and Internet of Things (CCBDIoT 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=180624&copyownerid=163993
+    categories: [db]
+    editions:
+      - year: 2026
+        id: ccbdiot-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=180624&copyownerid=163993
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-20 23:59:00', tz: AoE}
+
+  - key: ccns-2026
+    title: CCNS 2026
+    full_name: 2026 7th International Conference on Computer Communication and Network Security
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201643&copyownerid=182680
+    categories: [security]
+    editions:
+      - year: 2026
+        id: ccns-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201643&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+
+  - key: ccpcdl-2026
+    title: CCPCDL 2026
+    full_name: 2026 5th International Conference on Cloud Computing, Performance Computing and Deep Learning
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190827&copyownerid=182680
+    categories: [systems, ai]
+    editions:
+      - year: 2026
+        id: ccpcdl-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190827&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+
+  - key: cisse-2026-cybersecurity-education-con-2026
+    title: CISSE 2026 – Cybersecurity Education Con 2026
+    full_name: 30th Colloquium for Information Systems Security Education
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=195062&copyownerid=198535
+    categories: [security]
+    editions:
+      - year: 2026
+        id: cisse-2026-cybersecurity-education-con-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=195062&copyownerid=198535
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-15 23:59:00', tz: AoE}
+
+  - key: csp-2027
+    title: CSP 2027
+    full_name: 2027 11th International Conference on Cryptography, Security and Privacy (CSP 2027)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199953&copyownerid=13881
+    categories: [security]
+    editions:
+      - year: 2026
+        id: csp-202726
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199953&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-10-05 23:59:00', tz: AoE}
+
+  - key: csp-ei-2027
+    title: CSP--EI 2027
+    full_name: 2027 11th International Conference on Cryptography, Security and Privacy (CSP 2027)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199954&copyownerid=13881
+    categories: [security]
+    editions:
+      - year: 2026
+        id: csp-ei-202726
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199954&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-10-05 23:59:00', tz: AoE}
+
+  - key: csta-2026
+    title: CSTA 2026
+    full_name: The International Conference on Cybersecurity Systems, Technologies and Applications
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201173&copyownerid=196813
+    categories: [security]
+    editions:
+      - year: 2026
+        id: csta-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201173&copyownerid=196813
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+
+  - key: cvaa-2026
+    title: CVAA 2026
+    full_name: IEEE 2026 6th International Conference on Computer Vision, Application and Algorithm
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200081&copyownerid=182680
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: cvaa-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200081&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-04 23:59:00', tz: AoE}
+
+  - key: dm-aisc-2026
+    title: DM-AISC 2026
+    full_name: Data Mining for Ambient Intelligence and Secure Communications
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201751&copyownerid=199790
+    categories: [db]
+    editions:
+      - year: 2026
+        id: dm-aisc-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201751&copyownerid=199790
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+
+  - key: dras-2026
+    title: DRAS  2026
+    full_name: The International Conference on Drones, Robotics and Autonomous Systems
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201174&copyownerid=196813
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: dras-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201174&copyownerid=196813
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+
+  - key: edai-2026
+    title: EDAI 2026
+    full_name: 2026 3rd International Conference on Economic Data Analytics and Artificial Intelligence
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202474&copyownerid=163220
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: edai-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202474&copyownerid=163220
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-23 23:59:00', tz: AoE}
+
+  - key: ei-scopus-ai2a-2026
+    title: Ei/Scopus-AI2A 2026
+    full_name: 2026 IEEE 6th International Conference on Artificial Intelligence, Automation and Algorithms (AI2A 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=127474&copyownerid=165700
+    categories: [ai, theory]
+    editions:
+      - year: 2026
+        id: ei-scopus-ai2a-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=127474&copyownerid=165700
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+
+  - key: ei-scopus-ccnml-2026
+    title: Ei/Scopus-CCNML  2026
+    full_name: 2026 6th International Conference on Communications, Networking and Machine Learning (CCNML 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=195220&copyownerid=165700
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: ei-scopus-ccnml-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=195220&copyownerid=165700
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+
+  - key: ei-scopus-cvgip-2026
+    title: Ei/Scopus-CVGIP 2026
+    full_name: 2026 3rd International Conference on Computer Vision, Graphics and Image Processing (CVGIP 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192875&copyownerid=165700
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: ei-scopus-cvgip-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192875&copyownerid=165700
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+
+  - key: eieai-2026
+    title: EIEAI 2026
+    full_name: 2026 2nd International Conference on Electronic Information Engineering and Artificial Intelligence
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190633&copyownerid=182680
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: eieai-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190633&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+
+  - key: eocon-2026
+    title: EOCON  2026
+    full_name: EyesOpen Cybersecurity Conference - 7th edition
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200227&copyownerid=199287
+    categories: [security]
+    editions:
+      - year: 2026
+        id: eocon-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200227&copyownerid=199287
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-10-30 23:59:00', tz: AoE}
+
+  - key: hcai-2026
+    title: HCAI 2026
+    full_name: "Frontiers in Computer Science: Human-Centered AI in Cyber Security, Privacy, and Trust for Critical Infrastructures"
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194558&copyownerid=198220
+    categories: [security]
+    editions:
+      - year: 2026
+        id: hcai-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194558&copyownerid=198220
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-10-13 23:59:00', tz: AoE}
+
+  - key: hcc-ai-2026
+    title: HCC-AI 2026
+    full_name: WORKSHOP ON HUMAN-CENTERED CYBERSECURITY, DATA PRIVACY, AND AI RISKS
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194929&copyownerid=198438
+    categories: [security]
+    editions:
+      - year: 2026
+        id: hcc-ai-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194929&copyownerid=198438
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-07 23:59:00', tz: AoE}
+
+  - key: iar-2026
+    title: IAR 2026
+    full_name: 2026 3rd International Conference on Intelligent Algorithms and Robotics
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202658&copyownerid=182680
+    categories: [ai, theory]
+    editions:
+      - year: 2026
+        id: iar-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202658&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-20 23:59:00', tz: AoE}
+
+  - key: icadcml-2027
+    title: ICADCML 2027
+    full_name: 8th International Conference on Advances in Distributed Computing and Machine Learning
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201569&copyownerid=174831
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: icadcml-202726
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201569&copyownerid=174831
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+
+  - key: icahn-2026
+    title: ICAHN 2026
+    full_name: 2026 2nd International Conference on Artificial Intelligence, Human-Computer Interaction and Natural Language Processing-EI/Scopus
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190324&copyownerid=182680
+    categories: [ai, hci]
+    editions:
+      - year: 2026
+        id: icahn-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190324&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-04 23:59:00', tz: AoE}
+
+  - key: icaici-2026
+    title: ICAICI 2026
+    full_name: IEEE 2026 International Conference on Artificial Intelligence, Cyber-Physical Systems and Intelligent Computing
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190624&copyownerid=182680
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: icaici-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190624&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+
+  - key: icaidm-2026
+    title: ICAIDM 2026
+    full_name: 026 3rd International Conference on Artificial Intelligence and Digital Management
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200184&copyownerid=182680
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: icaidm-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200184&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+
+  - key: icbda-2027
+    title: ICBDA 2027
+    full_name: IEEE--2027 the 12th International Conference on Big Data Analytics (ICBDA 2027)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201356&copyownerid=13881
+    categories: [db]
+    editions:
+      - year: 2026
+        id: icbda-202726
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201356&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-12-10 23:59:00', tz: AoE}
+
+  - key: icbsr-2026
+    title: ICBSR 2026
+    full_name: 2026 International Conference on Bio-inspired System and Robotics (ICBSR 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200323&copyownerid=96880
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: icbsr-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200323&copyownerid=96880
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-18 23:59:00', tz: AoE}
+
+  - key: iccns-2026
+    title: ICCNS 2026
+    full_name: 2026 The 16th International Conference on Communication and Network Security (ICCNS 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194236&copyownerid=13881
+    categories: [security]
+    editions:
+      - year: 2026
+        id: iccns-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194236&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+
+  - key: iccns-ei-2026
+    title: ICCNS--EI 2026
+    full_name: 2026 The 16th International Conference on Communication and Network Security (ICCNS 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194237&copyownerid=13881
+    categories: [security]
+    editions:
+      - year: 2026
+        id: iccns-ei-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194237&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+
+  - key: iccta-2026
+    title: ICCTA 2026
+    full_name: 36th International Conference on Computer Theory and Applications - Towards Smart Applications and AI-driven Secure Systems
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202646&copyownerid=126913
+    categories: [theory]
+    editions:
+      - year: 2026
+        id: iccta-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202646&copyownerid=126913
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-01 23:59:00', tz: AoE}
+
+  - key: icear-2026
+    title: ICEAR 2026
+    full_name: 2026 International Conference on Embodied AI and Robotics
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190921&copyownerid=182680
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: icear-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190921&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+
+  - key: icecai-2026
+    title: ICECAI 2026
+    full_name: IEEE 2026 7th International Conference on Electronic Communication and Artificial Intelligence
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202650&copyownerid=182680
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: icecai-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202650&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+
+  - key: icimt-2026
+    title: ICIMT 2026
+    full_name: 2026 16th International Conference on Information and Multimedia Technology (ICIMT 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=189565&copyownerid=13881
+    categories: [graphics]
+    editions:
+      - year: 2026
+        id: icimt-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=189565&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-15 23:59:00', tz: AoE}
+
+  - key: icimt-ei-2026
+    title: ICIMT--EI 2026
+    full_name: 2026 16th International Conference on Information and Multimedia Technology (ICIMT 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=189566&copyownerid=13881
+    categories: [graphics]
+    editions:
+      - year: 2026
+        id: icimt-ei-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=189566&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-15 23:59:00', tz: AoE}
+
+  - key: icmip-2027
+    title: ICMIP 2027
+    full_name: SPIE--2027 12th International Conference on Multimedia and Image Processing (ICMIP 2027)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199956&copyownerid=13881
+    categories: [graphics]
+    editions:
+      - year: 2026
+        id: icmip-202726
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199956&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-10-05 23:59:00', tz: AoE}
+
+  - key: icmip-ei-2027
+    title: ICMIP--EI 2027
+    full_name: 2027 12th International Conference on Multimedia and Image Processing (ICMIP 2027)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199956&copyownerid=13881
+    categories: [graphics]
+    editions:
+      - year: 2026
+        id: icmip-ei-202726
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199956&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-10-05 23:59:00', tz: AoE}
+
+  - key: icmra-ei-2026
+    title: ICMRA--EI 2026
+    full_name: 2026 8th International Conference on Mechatronics, Robotics and Automation (ICMRA 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191426&copyownerid=13881
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: icmra-ei-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191426&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+
+  - key: icmsr-2026
+    title: ICMSR 2026
+    full_name: 2026 12th International Conference on Mechatronics Systems and Robotics (ICMSR 2026)--SCI
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192213&copyownerid=13881
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: icmsr-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192213&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-05 23:59:00', tz: AoE}
+
+  - key: icrae-2026
+    title: ICRAE 2026
+    full_name: 2026 11th International Conference on Robotics and Automation Engineering (ICRAE 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194511&copyownerid=13881
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: icrae-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194511&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+
+  - key: icrai-2026
+    title: ICRAI 2026
+    full_name: 2026 12th International Conference on Robotics and Artificial Intelligence (ICRAI 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194513&copyownerid=13881
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: icrai-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194513&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+
+  - key: icrcv-2026
+    title: ICRCV 2026
+    full_name: IEEE--2026 8th International Conference on Robotics and Computer Vision (ICRCV 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191424&copyownerid=13881
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: icrcv-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191424&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-01 23:59:00', tz: AoE}
+
+  - key: icric-2027
+    title: ICRIC 2027
+    full_name: 2027 International Conference on Robotics and Intelligent Control (ICRIC 2027)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199688&copyownerid=13881
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: icric-202726
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199688&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-25 23:59:00', tz: AoE}
+
+  - key: ieee-admit-2026
+    title: IEEE-ADMIT 2026
+    full_name: 2026 5th International Conference on Algorithms, Data Mining, and Information Technology (ADMIT 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=181609&copyownerid=163993
+    categories: [db, theory]
+    editions:
+      - year: 2026
+        id: ieee-admit-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=181609&copyownerid=163993
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-20 23:59:00', tz: AoE}
+
+  - key: ieee-aibdcc-2026
+    title: IEEE-AIBDCC 2026
+    full_name: 2026 IEEE International Conference on Artificial Intelligence, Big Data and Cloud Computing (AIBDCC 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=171242&copyownerid=163993
+    categories: [systems, ai, db]
+    editions:
+      - year: 2026
+        id: ieee-aibdcc-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=171242&copyownerid=163993
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+
+  - key: ieee-ccisc-2026
+    title: IEEE-CCISC 2026
+    full_name: 2026 IEEE International Conference on Computer Communication, Information System and Cybersecurity (CCISC 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194393&copyownerid=163993
+    categories: [security]
+    editions:
+      - year: 2026
+        id: ieee-ccisc-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194393&copyownerid=163993
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+
+  - key: ieee-ceccc-2026
+    title: IEEE CECCC 2026
+    full_name: IEEE--2026 8th International on Communication Engineering and Cloud Computing Conference (CECCC 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194242&copyownerid=13881
+    categories: [systems]
+    editions:
+      - year: 2026
+        id: ieee-ceccc-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194242&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-20 23:59:00', tz: AoE}
+
+  - key: ieee-cret-2026
+    title: IEEE CRET 2026
+    full_name: IEEE--2026 International Conference on Control, Robotics Engineering and Technology (CRET 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190987&copyownerid=13881
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: ieee-cret-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190987&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-25 23:59:00', tz: AoE}
+
+  - key: ieee-csp-2027
+    title: IEEE CSP 2027
+    full_name: IEEE--2027 11th International Conference on Cryptography, Security and Privacy (CSP 2027)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199953&copyownerid=13881
+    categories: [security]
+    editions:
+      - year: 2026
+        id: ieee-csp-202726
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199953&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-10-05 23:59:00', tz: AoE}
+
+  - key: ieee-icacr-2026
+    title: IEEE ICACR 2026
+    full_name: IEEE--2026 10th International Conference on Automation, Control and Robotics (ICACR 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191498&copyownerid=13881
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: ieee-icacr-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191498&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-05 23:59:00', tz: AoE}
+
+  - key: ieee-icaici-2026
+    title: IEEE-ICAICI 2026
+    full_name: 2026 International Conference on Artificial Intelligence, Cyber-Physical Systems and Intelligent Computing
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190816&copyownerid=182680
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: ieee-icaici-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190816&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+
+  - key: ieee-icairs-2026
+    title: IEEE-ICAIRS 2026
+    full_name: 2026 International Conference on Artificial Intelligence and Robotic Systems (ICAIRS 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191487&copyownerid=163993
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: ieee-icairs-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191487&copyownerid=163993
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-10-05 23:59:00', tz: AoE}
+
+  - key: ieee-iccr-2026
+    title: IEEE ICCR 2026
+    full_name: IEEE--2026 8th International Conference on Control and Robotics (ICCR 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192210&copyownerid=13881
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: ieee-iccr-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192210&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-25 23:59:00', tz: AoE}
+
+  - key: ieee-icmre-2027
+    title: IEEE ICMRE 2027
+    full_name: IEEE--2027 the 13th International Conference on Mechatronics and Robotics Engineering (ICMRE 2027)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=195312&copyownerid=13881
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: ieee-icmre-202726
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=195312&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-25 23:59:00', tz: AoE}
+
+  - key: ieee-mlnlp-2026
+    title: IEEE-MLNLP 2026
+    full_name: 2026 IEEE 9th International Conference on Machine Learning and Natural Language Processing (MLNLP 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=175829&copyownerid=163993
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: ieee-mlnlp-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=175829&copyownerid=163993
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-11-30 23:59:00', tz: AoE}
+
+  - key: ieitai-2026
+    title: IEITAI 2026
+    full_name: 2026 2nd International Conference on Information Engineering, Intelligent Information Technology and Artificial Intelligence
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191257&copyownerid=182680
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: ieitai-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191257&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-01 23:59:00', tz: AoE}
+
+  - key: ijgca-2026
+    title: IJGCA 2026
+    full_name: International Journal of Grid Computing & Applications
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199503&copyownerid=33993
+    categories: [hpc]
+    editions:
+      - year: 2026
+        id: ijgca-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199503&copyownerid=33993
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+
+  - key: ijgtt-2026
+    title: IJGTT 2026
+    full_name: International Journal of Game Theory and Technology
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199977&copyownerid=33993
+    categories: [theory]
+    editions:
+      - year: 2026
+        id: ijgtt-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199977&copyownerid=33993
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+
+  - key: iotbds-2027
+    title: IoTBDS 2027
+    full_name: 12th International Conference on Internet of Things, Big Data and Security
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201739&copyownerid=45217
+    categories: [db]
+    editions:
+      - year: 2026
+        id: iotbds-202726
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201739&copyownerid=45217
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-11-17 23:59:00', tz: AoE}
+
+  - key: iotcct-2026
+    title: IoTCCT 2026
+    full_name: IEEE 2026 4th International Conference on Internet of Things and Cloud Computing Technology
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201159&copyownerid=182680
+    categories: [systems]
+    editions:
+      - year: 2026
+        id: iotcct-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201159&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+
+  - key: isrimt-2026
+    title: ISRIMT 2026
+    full_name: IEEE 2026 8th International Symposium on Robotics & Intelligent Manufacturing Technology
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202550&copyownerid=182680
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: isrimt-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202550&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-30 23:59:00', tz: AoE}
+
+  - key: jcrt-book-reviews-2027
+    title: jcrt-book-reviews 2027
+    full_name: Call for Book Reviews - Journal for Cultural and Religious Theory
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202686&copyownerid=44597
+    categories: [theory]
+    editions:
+      - year: 2026
+        id: jcrt-book-reviews-202726
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202686&copyownerid=44597
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+
+  - key: mtel-2026
+    title: MTEL 2026
+    full_name: The 20th IEEE International Workshop on Multimedia Technologies for E-Learning (MTEL)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200317&copyownerid=52207
+    categories: [graphics]
+    editions:
+      - year: 2026
+        id: mtel-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200317&copyownerid=52207
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-10-15 23:59:00', tz: AoE}
+
+  - key: raai-2026
+    title: RAAI 2026
+    full_name: 2026 6th International Conference on Robotics, Automation, and Artificial Intelligence (RAAI 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192215&copyownerid=13881
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: raai-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192215&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-05 23:59:00', tz: AoE}
+
+  - key: ramt-2026
+    title: RAMT 2026
+    full_name: 2026 3rd International Conference on Robotics and Advanced Manufacturing Technology
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201184&copyownerid=182680
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: ramt-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201184&copyownerid=182680
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+
+  - key: rcae-2026
+    title: RCAE 2026
+    full_name: 2026 The 9th International Conference on Robotics, Control and Automation Engineering (RCAE 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191292&copyownerid=13881
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: rcae-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191292&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+
+  - key: robovis-2027
+    title: ROBOVIS 2027
+    full_name: 7th International Conference on Robotics, Computer Vision and Intelligent Systems
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200091&copyownerid=45217
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: robovis-202726
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200091&copyownerid=45217
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-15 23:59:00', tz: AoE}
+
+  - key: secupriv-iot-2026
+    title: SecuPriv-IoT 2026
+    full_name: The International workshop on Security and Privacy for Next-Generation Internet of Things (IoT)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201762&copyownerid=196813
+    categories: [security]
+    editions:
+      - year: 2026
+        id: secupriv-iot-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201762&copyownerid=196813
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-20 23:59:00', tz: AoE}
+
+  - key: spie-mcvr-2026
+    title: SPIE MCVR 2026
+    full_name: SPIE--2026 The 3rd International Conference on Measurement, Communication and Virtual Reality (MCVR 2026)
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192659&copyownerid=13881
+    categories: [graphics]
+    editions:
+      - year: 2026
+        id: spie-mcvr-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192659&copyownerid=13881
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-20 23:59:00', tz: AoE}
+
+  - key: spnna-2026
+    title: SPNNA 2026
+    full_name: 2026 3rd International Conference on Signal Processing and Neural Network Applications
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202512&copyownerid=163220
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: spnna-202626
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202512&copyownerid=163220
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-11 23:59:00', tz: AoE}
+
+  - key: walcom-2027
+    title: WALCOM 2027
+    full_name: The 21st International Conference and Workshops on Algorithms and Computation
+    link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201135&copyownerid=199395
+    categories: [theory]
+    editions:
+      - year: 2026
+        id: walcom-202726
+        link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201135&copyownerid=199395
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-21 23:59:00', tz: AoE}
