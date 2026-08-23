@@ -3837,3 +3837,651 @@ conferences:
         event_start: '2026-10-08'
         event_end: '2026-10-10'
         deadlines: []
+
+  # ---- conf-deadlines R513 (2026-08-23): discover 候補の公式裏取り昇格 -----------------
+  # 根拠: 各会議の EasyChair CFP ページから取得した deadlines テーブルの原文
+  #   (Submission deadline 行)。取得日 2026-08-23。全 45 件が http 200 で裏取り一致
+  #   (短冊の日付とページ表記が全件一致。verify-notes.md 参照)。
+  # tz: EasyChair CFP は締切行に tz を明記しないため AoE (UTC-12) 当日終了と解釈した。
+  #   日付のみの観測であり、時刻は運用慣行からの補完である。
+
+  - key: ieee-aiot-2026
+    title: IEEE AIoT 2026
+    full_name: IEEE Annual Congress on Artificial Intelligence of Things
+    link: https://easychair.org/cfp/AoT-2026
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: ieee-aiot-202626
+        link: https://easychair.org/cfp/AoT-2026
+        place: Kobe, Japan
+        date_text: Dec 14, 2026
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-24 23:59:00', tz: AoE}
+
+  - key: iccr-2026
+    title: ICCR 2026
+    full_name: 2026 8th International Conference on Control and Robotics
+    link: https://easychair.org/cfp/ICCR2026
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: iccr-202626
+        link: https://easychair.org/cfp/ICCR2026
+        place: TOKYO, Japan
+        date_text: Dec 3, 2026
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-25 23:59:00', tz: AoE}
+
+  - key: mdoa-2026
+    title: MDOA 2026
+    full_name: 7th International Conference on Multidisciplinary Design Optimization and Applications
+    link: https://easychair.org/cfp/MDOA2026
+    categories: [theory]
+    editions:
+      - year: 2026
+        id: mdoa-202626
+        link: https://easychair.org/cfp/MDOA2026
+        place: Paris, France
+        date_text: Oct 28, 2026
+        deadlines:
+          - {kind: abstract, label: Abstract registration, date: '2026-07-28 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+
+  - key: dml-icc-2026
+    title: DML-ICC 2026
+    full_name: 6th Workshop on Distributed Machine Learning for the Intelligent Computing Continuum
+    link: https://easychair.org/cfp/dml-icc2026
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: dml-icc-202626
+        link: https://easychair.org/cfp/dml-icc2026
+        place: Florianópolis, Brazil
+        date_text: Dec 1, 2026
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-30 23:59:00', tz: AoE}
+
+  - key: ccisc-2026
+    title: CCISC 2026
+    full_name: 2026 IEEE International Conference on Computer Communication, Information System and Cyber
+    link: https://easychair.org/cfp/ccisc2026
+    categories: [security]
+    editions:
+      - year: 2026
+        id: ccisc-202626
+        link: https://easychair.org/cfp/ccisc2026
+        place: Wuxi, China
+        date_text: Sep 18, 2026
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+
+  - key: gcetai26
+    title: GCETAI26
+    full_name: "Global Conference on Emerging Trends in Artificial Intelligence: Comparative Approaches of"
+    link: https://easychair.org/cfp/GCETAI26
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: gcetai2626
+        link: https://easychair.org/cfp/GCETAI26
+        place: Raipur, India
+        date_text: Nov 20, 2026
+        deadlines:
+          - {kind: abstract, label: Abstract registration, date: '2026-08-15 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+
+  - key: icai-2026
+    title: ICAI 2026
+    full_name: 2026 International Conference on Artificial Intelligence and Information
+    link: https://easychair.org/cfp/ICAI2026
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: icai-202626
+        link: https://easychair.org/cfp/ICAI2026
+        place: Hangzhou, China
+        date_text: Sep 28, 2026
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+
+  - key: icdiacs-2026
+    title: ICDIACS 2026
+    full_name: "International Conference on Digital Intelligence: Ai, Cybersecurity and Computing for a Su"
+    link: https://easychair.org/cfp/ICDIACS2026
+    categories: [security]
+    editions:
+      - year: 2026
+        id: icdiacs-202626
+        link: https://easychair.org/cfp/ICDIACS2026
+        place: Raipur, India
+        date_text: Oct 27, 2026
+        deadlines:
+          - {kind: abstract, label: Abstract registration, date: '2026-08-15 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+
+  - key: mirg-icair-2026
+    title: MIRG-ICAIR 2026
+    full_name: 6th International Conference on Artificial Intelligence and Robotics
+    link: https://easychair.org/cfp/MIRG-ICAIR2026
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: mirg-icair-202626
+        link: https://easychair.org/cfp/MIRG-ICAIR2026
+        place: Lagos, Nigeria
+        date_text: Nov 3, 2026
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+
+  - key: oasis-ai-2026
+    title: OASIS-AI 2026
+    full_name: Open Compute Architecture and Software Infrastructure for Heterogeneous AI Systems
+    link: https://easychair.org/cfp/oasis-ai-2026
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: oasis-ai-202626
+        link: https://easychair.org/cfp/oasis-ai-2026
+        place: Athens, Greece
+        date_text: Nov 1, 2026
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+
+  - key: parallel2026
+    title: Parallel2026
+    full_name: The 5th International Conference on Theory, Applications and Future Trends  for Parallel R
+    link: https://easychair.org/cfp/Parallel2026
+    categories: [theory]
+    editions:
+      - year: 2026
+        id: parallel202626
+        link: https://easychair.org/cfp/Parallel2026
+        place: Abu Dhabi, UAE
+        date_text: Nov 18, 2026
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+
+  - key: slice-2026
+    title: SLICE-2026
+    full_name: The 8th International Workshop on Smart Living with IoT, Cloud, and Edge Computing 20
+    link: https://easychair.org/cfp/slice2026
+    categories: [systems]
+    editions:
+      - year: 2026
+        id: slice-202626
+        link: https://easychair.org/cfp/slice2026
+        place: Hung Hom, Hong Kong
+        date_text: Oct 21, 2026
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+
+  - key: copa-2026
+    title: COPA 2026
+    full_name: 2026 Concurrent Processes Architectures (COPA) and Embedded Systems
+    link: https://easychair.org/cfp/COPA2026
+    categories: [systems]
+    editions:
+      - year: 2026
+        id: copa-202626
+        link: https://easychair.org/cfp/COPA2026
+        place: Oxford, UK
+        date_text: Sep 7, 2026
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-04 23:59:00', tz: AoE}
+
+  - key: raai2026
+    title: RAAI2026
+    full_name: 2026 6th International Conference on Robotics, Automation, and Artificial Intelligence
+    link: https://easychair.org/cfp/RAAI2026
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: raai202626
+        link: https://easychair.org/cfp/RAAI2026
+        place: Singapore, Singapore
+        date_text: Dec 18, 2026
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-05 23:59:00', tz: AoE}
+
+  - key: ai4scisci-2026
+    title: AI4SciSci 2026
+    full_name: The 3nd International Workshop on Artificial Intelligence for the Science of Science
+    link: https://easychair.org/cfp/ai4scisci-26
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: ai4scisci-202626
+        link: https://easychair.org/cfp/ai4scisci-26
+        place: Dallas, Texas, United States
+        date_text: Oct 13, 2026
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-07 23:59:00', tz: AoE}
+
+  - key: eaai-27
+    title: EAAI-27
+    full_name: The 17th Symposium on Educational Advances in Artificial Intelligence
+    link: https://easychair.org/cfp/EAAI-27
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: eaai-2726
+        link: https://easychair.org/cfp/EAAI-27
+        date_text: Feb 21, 2027
+        deadlines:
+          - {kind: abstract, label: Abstract registration, date: '2026-09-01 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-08 23:59:00', tz: AoE}
+
+  - key: csai-2026
+    title: CSAI 2026
+    full_name: The 10th International Conference on Computer Science and Artificial Intelligence
+    link: https://easychair.org/cfp/CSAI2026
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: csai-202626
+        link: https://easychair.org/cfp/CSAI2026
+        place: Beijing, China
+        date_text: Dec 18, 2026
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+
+  - key: keir-cikm2026
+    title: KEIR@CIKM2026
+    full_name: The Third Workshop on Knowledge-Enhanced Information Retrieval
+    link: https://easychair.org/cfp/keir-cikm2026
+    categories: [db]
+    editions:
+      - year: 2026
+        id: keir-cikm202626
+        link: https://easychair.org/cfp/keir-cikm2026
+        place: Rome, Italy
+        date_text: Nov 8, 2026
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-13 23:59:00', tz: AoE}
+
+  - key: icaisg-2026
+    title: ICAISG 2026
+    full_name: 2026 The 2nd International Conference on Artificial Intelligence Security and Governance
+    link: https://easychair.org/cfp/ICAISG2026
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: icaisg-202626
+        link: https://easychair.org/cfp/ICAISG2026
+        place: Hangzhou, China
+        date_text: Nov 20, 2026
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-15 23:59:00', tz: AoE}
+
+  - key: nlp4call-2026
+    title: NLP4CALL-2026
+    full_name: Natural Language Processing for Computer-Assisted language Learning
+    link: https://easychair.org/cfp/nlp4call26
+    categories: [networking, ai]
+    editions:
+      - year: 2026
+        id: nlp4call-202626
+        link: https://easychair.org/cfp/nlp4call26
+        place: Gothenburg, Sweden
+        date_text: Nov 19, 2026
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-24 23:59:00', tz: AoE}
+
+  - key: admit-2026
+    title: ADMIT 2026
+    full_name: 2026 5th International Conference on Algorithms, Data Mining, and Information Technology
+    link: https://easychair.org/cfp/admit2026
+    categories: [db, theory]
+    editions:
+      - year: 2026
+        id: admit-202626
+        link: https://easychair.org/cfp/admit2026
+        place: Wuhan, China
+        date_text: Oct 16, 2026
+        deadlines:
+          - {kind: abstract, label: Abstract registration, date: '2026-09-20 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+
+  - key: bdaa-2026
+    title: BDAA' 2026
+    full_name: "2nd International Conference on Big Data Analytics & Applications"
+    link: https://easychair.org/cfp/BDAA_2026
+    categories: [db]
+    editions:
+      - year: 2026
+        id: bdaa-202626
+        link: https://easychair.org/cfp/BDAA_2026
+        place: Las Palmas de Gran Canaria, Spain
+        date_text: Oct 28, 2026
+        deadlines:
+          - {kind: abstract, label: Abstract registration, date: '2026-09-20 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+
+  - key: cogfintech-2026
+    title: CogFinTech 2026
+    full_name: "Intelligent and Secure FinTech Systems for Cognitive Cities: Machine Learning, Embedded Pl"
+    link: https://easychair.org/cfp/CogFinTech2026
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: cogfintech-202626
+        link: https://easychair.org/cfp/CogFinTech2026
+        date_text: Sep 30, 2026
+        deadlines:
+          - {kind: abstract, label: Abstract registration, date: '2026-08-15 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+
+  - key: ieeebc27
+    title: IEEEBC27
+    full_name: IEEE International Conference on Big Data and Smart Computing 2027
+    link: https://easychair.org/cfp/ieeebc27
+    categories: [db]
+    editions:
+      - year: 2026
+        id: ieeebc2726
+        link: https://easychair.org/cfp/ieeebc27
+        place: Fukuoka, Japan
+        date_text: Jan 25, 2027
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+
+  - key: istai26
+    title: ISTAI26
+    full_name: International Sensor Technologies and Artificial Intelligence
+    link: https://easychair.org/cfp/ISTAI26
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: istai2626
+        link: https://easychair.org/cfp/ISTAI26
+        place: Istanbul, Turkey
+        date_text: Oct 12, 2026
+        deadlines:
+          - {kind: abstract, label: Abstract registration, date: '2026-09-20 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+
+  - key: mlcc-2027
+    title: MLCC 2027
+    full_name: 2027 International Conference on Machine Learning and Cognitive Computing
+    link: https://easychair.org/cfp/MLCC2027
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: mlcc-202726
+        link: https://easychair.org/cfp/MLCC2027
+        place: Chongqing, China
+        date_text: Mar 19, 2027
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+
+  - key: icara-2027
+    title: ICARA 2027
+    full_name: The 13th International Conference on Automation, Robotics and Applications
+    link: https://easychair.org/cfp/ICARA2027
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: icara-202726
+        link: https://easychair.org/cfp/ICARA2027
+        place: Paris, France
+        date_text: Feb 25, 2027
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-10-01 23:59:00', tz: AoE}
+
+  - key: plsc-e-2026
+    title: PLSC-E 2026
+    full_name: Privacy Law Scholars Conference Europe
+    link: https://easychair.org/cfp/PLSC-E2026
+    categories: [security]
+    editions:
+      - year: 2026
+        id: plsc-e-202626
+        link: https://easychair.org/cfp/PLSC-E2026
+        place: Leuven, Belgium
+        date_text: Oct 29, 2026
+        deadlines:
+          - {kind: abstract, label: Abstract registration, date: '2026-05-15 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-04 23:59:00', tz: AoE}
+
+  - key: aipe-2027
+    title: AIPE 2027
+    full_name: 2027 4th International Conference on Artificial Intelligence and Power Engineering
+    link: https://easychair.org/cfp/AIPE2026
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: aipe-202726
+        link: https://easychair.org/cfp/AIPE2026
+        place: Nanjing, China
+        date_text: Feb 26, 2027
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-10-10 23:59:00', tz: AoE}
+
+  - key: ifs-27
+    title: iFS'27
+    full_name: International Conference on Foundations and Formal Methods for Software and Systems
+    link: https://easychair.org/cfp/ifs27
+    categories: [theory]
+    editions:
+      - year: 2026
+        id: ifs-2726
+        link: https://easychair.org/cfp/ifs27
+        place: Copenhagen, Denmark
+        date_text: Apr 12, 2027
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-10-15 23:59:00', tz: AoE}
+
+  - key: icaid-2027
+    title: ICAID 2027
+    full_name: The International Conference on Artificial Intelligence and Data Engineering
+    link: https://easychair.org/cfp/ICAID2027
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: icaid-202726
+        link: https://easychair.org/cfp/ICAID2027
+        place: Paris, France
+        date_text: Mar 17, 2027
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-10-20 23:59:00', tz: AoE}
+
+  - key: greenai2027
+    title: GreenAI2027
+    full_name: International Conference on Green Artificial Intelligence and Industrial Applications
+    link: https://easychair.org/cfp/GreenAI2027
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: greenai202726
+        link: https://easychair.org/cfp/GreenAI2027
+        place: Cuttack, India
+        date_text: Jan 29, 2027
+        deadlines:
+          - {kind: abstract, label: Abstract registration, date: '2026-08-01 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-31 23:59:00', tz: AoE}
+
+  - key: icbdaia27
+    title: ‎‎ICBDAIA27
+    full_name: the 6th International Conference on Big Data and Artificial Intelligence ‎Applications ‎
+    link: https://easychair.org/cfp/ICBDAIA27
+    categories: [ai, db]
+    editions:
+      - year: 2026
+        id: icbdaia2726
+        link: https://easychair.org/cfp/ICBDAIA27
+        place: Sofia, Bulgaria
+        date_text: Apr 21, 2027
+        deadlines:
+          - {kind: abstract, label: Abstract registration, date: '2026-09-30 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-31 23:59:00', tz: AoE}
+
+  - key: evomusart-2027
+    title: EvoMusArt 2027
+    full_name: 16th International Conference on Artificial Intelligence in Music, Sound, Art and Design
+    link: https://easychair.org/cfp/evomusart2027
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: evomusart-202726
+        link: https://easychair.org/cfp/evomusart2027
+        place: Mainz, Germany
+        date_text: Mar 31, 2027
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-11-01 23:59:00', tz: AoE}
+
+  - key: icaie-2026
+    title: ICAIE’2026
+    full_name: The 3rd International Conference on Artificial Intelligence and Engineering 2026
+    link: https://easychair.org/cfp/ICAIE2026
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: icaie-202626
+        link: https://easychair.org/cfp/ICAIE2026
+        place: Ouarzazate, Morocco
+        date_text: Nov 29, 2026
+        deadlines:
+          - {kind: abstract, label: Abstract registration, date: '2026-09-30 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-11-05 23:59:00', tz: AoE}
+
+  - key: airc-2027
+    title: AIRC 2027
+    full_name: 2027 8th International Conference on Artificial Intelligence, Robotics, and Control
+    link: https://easychair.org/cfp/AIRC2027
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: airc-202726
+        link: https://easychair.org/cfp/AIRC2027
+        place: Tempe, Arizona, United States
+        date_text: Apr 6, 2027
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-11-20 23:59:00', tz: AoE}
+
+  - key: aila2027
+    title: AILA2027
+    full_name: The sixth International Conference on Artificial Intelligence Logic and Applications
+    link: https://easychair.org/cfp/AILA2027
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: aila202726
+        link: https://easychair.org/cfp/AILA2027
+        place: Belfast, UK
+        date_text: Apr 8, 2027
+        deadlines:
+          - {kind: abstract, label: Abstract registration, date: '2026-11-15 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-11-30 23:59:00', tz: AoE}
+
+  - key: icaibd-2027
+    title: ICAIBD 2027
+    full_name: 2027 The 10th International Conference on Artificial Intelligence and Big Data
+    link: https://easychair.org/cfp/ICAIBD2027
+    categories: [ai, db]
+    editions:
+      - year: 2026
+        id: icaibd-202726
+        link: https://easychair.org/cfp/ICAIBD2027
+        place: Chengdu, China
+        date_text: May 28, 2027
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-11-30 23:59:00', tz: AoE}
+
+  - key: jvac2027
+    title: JVAC2027
+    full_name: "Jnana Vaani AI Conference 2026: A Bilingual Knowledge Ecosystem for Artificial Intelligenc"
+    link: https://easychair.org/cfp/JVAC2027
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: jvac202726
+        link: https://easychair.org/cfp/JVAC2027
+        place: Shivamogga. Karnataka, India
+        date_text: Jan 7, 2027
+        deadlines:
+          - {kind: abstract, label: Abstract registration, date: '2026-11-15 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-11-30 23:59:00', tz: AoE}
+
+  - key: icccbda-2027
+    title: ICCCBDA 2027
+    full_name: 2027 the 12th International Conference on Cloud Computing and Big Data Analytics
+    link: https://easychair.org/cfp/ICCCBDA2027
+    categories: [systems, db]
+    editions:
+      - year: 2026
+        id: icccbda-202726
+        link: https://easychair.org/cfp/ICCCBDA2027
+        place: Chengdu, China
+        date_text: Apr 23, 2027
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-12-05 23:59:00', tz: AoE}
+
+  - key: eecr-2027
+    title: EECR 2027
+    full_name: 2027 13th International Conference on Electrical Engineering, Control and Robotics
+    link: https://easychair.org/cfp/EECR2027
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: eecr-202726
+        link: https://easychair.org/cfp/EECR2027
+        place: Shenzhen, China
+        date_text: Apr 23, 2027
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-12-10 23:59:00', tz: AoE}
+
+  - key: icbda2027
+    title: ICBDA2027
+    full_name: 2027 the 12th International Conference on Big Data Analytics
+    link: https://easychair.org/cfp/ICBDA2027
+    categories: [db]
+    editions:
+      - year: 2026
+        id: icbda202726
+        link: https://easychair.org/cfp/ICBDA2027
+        place: Bangkok, Thailand
+        date_text: Apr 26, 2027
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-12-10 23:59:00', tz: AoE}
+
+  - key: si-dl2027
+    title: "SI&DL2027"
+    full_name: "Swarm Intelligence and Deep Learning: Algorithms, Analysis and Applications"
+    link: https://easychair.org/cfp/SIDL2027
+    categories: [ai, theory]
+    editions:
+      - year: 2026
+        id: si-dl202726
+        link: https://easychair.org/cfp/SIDL2027
+        date_text: Dec 15, 2026
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-12-15 23:59:00', tz: AoE}
+
+  - key: iccre-2027
+    title: ICCRE 2027
+    full_name: 2027 12th International Conference on Control and Robotics Engineering
+    link: https://easychair.org/cfp/ICCRE2027
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: iccre-202726
+        link: https://easychair.org/cfp/ICCRE2027
+        place: Hong Kong, China
+        date_text: May 7, 2027
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-12-20 23:59:00', tz: AoE}
+
+  - key: sls-optirob-2027
+    title: "SLS&OPTIROB 2027"
+    full_name: "Space Launching Systems (SLS) & Artificial Inteligence applied in the fields of Aerospace,"
+    link: https://easychair.org/cfp/Optirob_2027
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: sls-optirob-202726
+        link: https://easychair.org/cfp/Optirob_2027
+        place: Venus, Romania
+        date_text: Jun 24, 2027
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-12-20 23:59:00', tz: AoE}
