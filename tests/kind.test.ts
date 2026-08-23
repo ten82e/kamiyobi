@@ -133,4 +133,19 @@ describe("refineKindWithLabel (#516)", () => {
   it("abstract rows are never demoted (abstract tracks are small by nature)", () => {
     expect(refineKindWithLabel("abstract", "Poster abstract submission")).toBe("abstract");
   });
+
+  it("explicitly declared paper type is never demoted by label vocabulary (#520)", () => {
+    // overrides.yaml / extra.yaml の明示的な kind:paper は公式裏取り済みの決定。
+    // msn 2026 Industry Paper and Poster Submission（Industry papers も proceedings 論文）。
+    expect(refineKindWithLabel("paper", "Industry Paper and Poster Submission", "paper")).toBe(
+      "paper",
+    );
+    expect(refineKindWithLabel("paper", "Posters deadline", "paper")).toBe("paper");
+    // 一方、汎用語 (deadline/submission/空) のときは従来どおり格下げされる。
+    expect(refineKindWithLabel("paper", "Posters deadline", "deadline")).toBe("other");
+    expect(refineKindWithLabel("paper", "Posters deadline", "")).toBe("other");
+    expect(refineKindWithLabel("paper", "Posters deadline")).toBe("other");
+    // ccfddl の paper_deadline / submission_deadline キーも汎用語扱い。
+    expect(refineKindWithLabel("paper", "Posters Track", "submission_deadline")).toBe("other");
+  });
 });

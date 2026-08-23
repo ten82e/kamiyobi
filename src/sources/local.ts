@@ -58,6 +58,7 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
     const kind = refineKindWithLabel(
       kindOf(String(rec.kind ?? rec.type ?? "")),
       String(rec.label ?? ""),
+      String(rec.kind ?? rec.type ?? ""),
     );
     const label = String(rec.label ?? kind);
     out.push({

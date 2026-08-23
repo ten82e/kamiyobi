@@ -45,6 +45,16 @@ const CAMERA_READY_KEYS = [
   "final submission",
 ];
 
+/** Return the upstream key name that provided this candidate, or "" when unknown. */
+function matchedKey(rec: Record<string, unknown>, keys: string[]): string {
+  for (const key of keys) {
+    if (rec[key] !== null && rec[key] !== undefined && String(rec[key]).trim() !== "") {
+      return key;
+    }
+  }
+  return "";
+}
+
 function extractCandidate(rec: Record<string, unknown>, keys: string[]): unknown {
   for (const key of keys) {
     if (rec[key] !== null && rec[key] !== undefined && String(rec[key]).trim() !== "") {
@@ -72,20 +82,20 @@ export function deadlinesOf(
       const rawPaper = extractCandidate(rec, PAPER_KEYS);
       const rawNotification = extractCandidate(rec, NOTIFICATION_KEYS);
       const rawCameraReady = extractCandidate(rec, CAMERA_READY_KEYS);
-      const candidates: Array<[DeadlineKind, string, unknown]> = [
-        ["abstract", "Abstract submission", rawAbstract],
-        ["paper", "Paper submission", rawPaper],
-        ["notification", "Notification", rawNotification],
-        ["camera_ready", "Camera-ready", rawCameraReady],
+      const candidates: Array<[DeadlineKind, string, unknown, string]> = [
+        ["abstract", "Abstract submission", rawAbstract, "abstract"],
+        ["paper", "Paper submission", rawPaper, matchedKey(rec, PAPER_KEYS)],
+        ["notification", "Notification", rawNotification, "notification"],
+        ["camera_ready", "Camera-ready", rawCameraReady, "camera_ready"],
       ];
-      for (const [kind, label, raw] of candidates) {
+      for (const [kind, label, raw, keyName] of candidates) {
         if (raw === null || raw === undefined) continue;
         const at = parseInstant(raw, entryTz);
         if (at === null) continue;
         // ccfddl の timeline entry は comment にトラック名 (Posters Track 等) を
         // 持つ — 汎用キー由来の kind を label/comment 語彙で精緻化する (#516)。
         out.push({
-          kind: refineKindWithLabel(kind, [comment, label].filter(Boolean).join(" · ")),
+          kind: refineKindWithLabel(kind, [comment, label].filter(Boolean).join(" · "), keyName),
           label,
           at_utc: at,
           tz_raw: entryTz,
@@ -109,18 +119,18 @@ export function deadlinesOf(
     const rawPaper = extractCandidate(rawEdition, PAPER_KEYS);
     const rawNotification = extractCandidate(rawEdition, NOTIFICATION_KEYS);
     const rawCameraReady = extractCandidate(rawEdition, CAMERA_READY_KEYS);
-    const candidates: Array<[DeadlineKind, string, unknown]> = [
-      ["abstract", "Abstract submission", rawAbstract],
-      ["paper", "Paper submission", rawPaper],
-      ["notification", "Notification", rawNotification],
-      ["camera_ready", "Camera-ready", rawCameraReady],
+    const candidates: Array<[DeadlineKind, string, unknown, string]> = [
+      ["abstract", "Abstract submission", rawAbstract, "abstract"],
+      ["paper", "Paper submission", rawPaper, matchedKey(rawEdition ?? {}, PAPER_KEYS)],
+      ["notification", "Notification", rawNotification, "notification"],
+      ["camera_ready", "Camera-ready", rawCameraReady, "camera_ready"],
     ];
-    for (const [kind, label, raw] of candidates) {
+    for (const [kind, label, raw, keyName] of candidates) {
       if (raw === null || raw === undefined) continue;
       const at = parseInstant(raw, entryTz);
       if (at === null) continue;
       out.push({
-        kind: refineKindWithLabel(kind, [comment, label].filter(Boolean).join(" · ")),
+        kind: refineKindWithLabel(kind, [comment, label].filter(Boolean).join(" · "), keyName),
         label,
         at_utc: at,
         tz_raw: entryTz,
