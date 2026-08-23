@@ -15,6 +15,7 @@ import {
   kindOf,
   parseDateRange,
   parseInstant,
+  refineKindWithLabel,
   roundOf,
   slug,
   warn,
@@ -109,7 +110,7 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
       const rawType = String(rec.type ?? rec.kind ?? "");
       const label = String(rec.label ?? rawType);
       out.push({
-        kind: kindOf(rawType),
+        kind: refineKindWithLabel(kindOf(rawType), label),
         label,
         at_utc: at,
         tz_raw: tzRaw,

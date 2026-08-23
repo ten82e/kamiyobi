@@ -813,6 +813,37 @@ const REBUTTAL_END = new Set([
 ]);
 const REGISTRATION = new Set(["registration", "reviewer_registration", "commitment_deadline"]);
 
+/**
+ * Label vocabulary that identifies a non-paper track when the upstream type is
+ * a generic term ("deadline" / "submission" etc.). Posters, art shows, student
+ * volunteering, workshops, competitions, awards and demos are real deadlines
+ * but not paper-submission deadlines; publishing them as kind:paper pollutes
+ * the recommendation index and the UI's 投稿締切 filter (#516).
+ * "Art Papers"-style proceedings tracks are NOT listed: their label keeps the
+ * word "papers" as a whole word, which the patterns below do not match.
+ */
+const NON_PAPER_LABEL_RE =
+  /(?<![\w-])(posters?(?![\w-])|art gallery|student volunteer|workshops?(?![\w-])|student research competition|doctoral consortium|demonstration(?![\w-])|demo session|rising stars|appy hour|real-time live!|frontiers deadline|panels?(?![\w-])|educator)/i;
+
+/** Refine a kind derived from a generic upstream type using the row's own label. */
+export function refineKindWithLabel(
+  kind: DeadlineKind,
+  label: string | null | undefined,
+): DeadlineKind {
+  if (kind !== "paper" && kind !== "abstract") return kind;
+  const s = String(label ?? "").trim();
+  if (!s) return kind;
+  if (NON_PAPER_LABEL_RE.test(s)) return kind === "abstract" ? kind : "other";
+  // An explicit "submission"/"deadline" wording for a named non-paper track.
+  if (
+    /(poster|volunteer|competition|award)/i.test(s) &&
+    !/full[- ]?paper|short[- ]?paper/i.test(s)
+  ) {
+    return "other";
+  }
+  return kind;
+}
+
 /** Normalize an upstream deadline type name into one of the 10 kinds. */
 export function kindOf(rawTypeOrKey: string | null | undefined): DeadlineKind {
   const s = String(rawTypeOrKey ?? "")
@@ -1012,7 +1043,7 @@ export function conferencesFromJson(
           })
           .filter((item): item is DeadlineConflict => item !== null);
         deadlines.push({
-          kind: kindOf(String(dl.kind ?? "other")),
+          kind: refineKindWithLabel(kindOf(String(dl.kind ?? "other")), String(dl.label ?? "")),
           label: String(dl.label ?? ""),
           at_utc: at,
           tz_raw: String(dl.tz_raw ?? ""),
