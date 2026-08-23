@@ -5495,67 +5495,67 @@ conferences:
   # tz: メール本文は tz 未明記のため AoE 当日終了で解釈した (R513/R514 同方針)。
 
   - key: adc-2026-second-round-cfp-and
-    title: "ADC 2026: Second-Round CFP and"
-    full_name: "ADC 2026: Second-Round CFP and"
-    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;98c4e7b0.2608
+    title: ADC 2026
+    full_name: "ADC 2026 (Applied Data Science Conference)"
+    link: https://adc-conference.github.io/2026/
     categories: [ai, security, db]
     editions:
       - year: 2026
         id: adc-2026-second-round-cfp-and26
-        link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;98c4e7b0.2608
+        link: https://adc-conference.github.io/2026/
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-11 23:59:00', tz: AoE}
 
   - key: agentarch-icsa2027
     title: AgentArch @ICSA2027
     full_name: AgentArch @ICSA2027
-    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;31b68fcd.2608
+    link: https://agentarch.org
     categories: [ai]
     editions:
       - year: 2026
         id: agentarch-icsa202726
-        link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;31b68fcd.2608
+        link: https://agentarch.org
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-12-20 23:59:00', tz: AoE}
 
   - key: clinical-mirf-2026-multimodal-information-retrieval-and-fusion-in-clinical-workflows
-    title: "[Clinical-MIRF 2026] - Multimodal Information Retrieval and Fusion in Clinical Workflows"
+    title: Clinical-MIRF 2026
     full_name: "[Clinical-MIRF 2026] - Multimodal Information Retrieval and Fusion in Clinical Workflows"
-    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;3ed40d9d.2607
+    link: https://sites.google.com/view/clinical-mirf
     categories: [db]
     editions:
       - year: 2026
         id: clinical-mirf-2026-multimodal-information-retrieval-and-fusion-in-clinical-workf
-        link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;3ed40d9d.2607
+        link: https://sites.google.com/view/clinical-mirf
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-08-24 23:59:00', tz: AoE}
 
   - key: cods-2026-14th-acm-ikdd-international-conference-on-data-science
     title: CODS 2026 [14th ACM IKDD International Conference on Data Science]
     full_name: CODS 2026 [14th ACM IKDD International Conference on Data Science]
-    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;e1836099.2607
+    link: https://openreview.net/group?id=ACM.org/IKDD/CODS/2026/Conference
     categories: [ai, db]
     editions:
       - year: 2026
         id: cods-2026-14th-acm-ikdd-international-conference-on-data-science26
-        link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;e1836099.2607
+        link: https://openreview.net/group?id=ACM.org/IKDD/CODS/2026/Conference
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-10-06 23:59:00', tz: AoE}
 
   - key: ehacon-2026-springer-lnns-scopus-8th-international-ethical-hacking-conference
     title: eHaCON 2026 (Springer LNNS / Scopus) - 8th International Ethical Hacking Conference
     full_name: eHaCON 2026 (Springer LNNS / Scopus) - 8th International Ethical Hacking Conference
-    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;8f90c4d9.2607
+    link: https://ccoe-uemk.github.io/cyberchain-2026/index.html
     categories: [ai, security]
     editions:
       - year: 2026
         id: ehacon-2026-springer-lnns-scopus-8th-international-ethical-hacking-conference26
-        link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;8f90c4d9.2607
+        link: https://ccoe-uemk.github.io/cyberchain-2026/index.html
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-05 23:59:00', tz: AoE}
 
   - key: ieee-3scea2027-20-22-april-2027-alexandria-egypt
-    title: IEEE 3SCEA2027, 20-22 April 2027 Alexandria, Egypt
+    title: IEEE 3SCEA2027
     full_name: IEEE 3SCEA2027, 20-22 April 2027 Alexandria, Egypt
     link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;d098fb44.2608
     categories: [systems, ai, security]
@@ -5569,12 +5569,12 @@ conferences:
   - key: int-conf-on-data-science-and-digital-innovation-2026-in-lisbon-portugal
     title: Int. Conf. on Data Science and Digital Innovation 2026 in Lisbon, Portugal
     full_name: Int. Conf. on Data Science and Digital Innovation 2026 in Lisbon, Portugal
-    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;bd953dfa.2608
+    link: https://www.datascience-conf.org/
     categories: [ai]
     editions:
       - year: 2026
         id: int-conf-on-data-science-and-digital-innovation-2026-in-lisbon-portugal26
-        link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;bd953dfa.2608
+        link: https://www.datascience-conf.org/
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-04 23:59:00', tz: AoE}
 
@@ -5605,24 +5605,24 @@ conferences:
   - key: soc4ia-icsoc-2026-1st-international-workshop-on-service-oriented-computing-for-intelligent-ag
     title: SOC4IA@ICSOC 2026 - 1st International Workshop on Service-Oriented Computing for Intelligent Ag
     full_name: SOC4IA@ICSOC 2026 - 1st International Workshop on Service-Oriented Computing for Intelligent Ag
-    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;10caf6a5.2608
+    link: https://soc4ia.univ-tours.fr
     categories: [hpc, ai, security]
     editions:
       - year: 2026
         id: soc4ia-icsoc-2026-1st-international-workshop-on-service-oriented-computing-for-i
-        link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;10caf6a5.2608
+        link: https://soc4ia.univ-tours.fr
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-23 23:59:00', tz: AoE}
 
   - key: stacs-2027-first
-    title: STACS 2027 - First
+    title: STACS 2027
     full_name: STACS 2027 - First
-    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;1b72a41f.2606
+    link: https://stacs2027.uni-goettingen.de/
     categories: [ai, security, db]
     editions:
       - year: 2026
         id: stacs-2027-first26
-        link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;1b72a41f.2606
+        link: https://stacs2027.uni-goettingen.de/
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-11 23:59:00', tz: AoE}
 
@@ -5641,12 +5641,12 @@ conferences:
   - key: the-9th-ieee-international-workshop-on-big-spatial-data-bsd-2026
     title: The 9th IEEE International Workshop on Big Spatial Data (BSD 2026)
     full_name: The 9th IEEE International Workshop on Big Spatial Data (BSD 2026)
-    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;c4dea2a1.2608
+    link: https://ckoh04.github.io/BSD-website/
     categories: [hpc, systems, ai, security, db]
     editions:
       - year: 2026
         id: the-9th-ieee-international-workshop-on-big-spatial-data-bsd-202626
-        link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;c4dea2a1.2608
+        link: https://ckoh04.github.io/BSD-website/
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-10-15 23:59:00', tz: AoE}
 
@@ -5671,47 +5671,47 @@ conferences:
   - key: 24th-international-conference-on-service-oriented-computing-icsoc-2026-lodz-po
     title: 24th International Conference on Service-Oriented Computing, ICSOC 2026 Lodz, Po
     full_name: 24th International Conference on Service-Oriented Computing, ICSOC 2026 Lodz, Po
-    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;e5c247fa.2607
+    link: https://icsoc2026.it.p.lodz.pl/
     categories: [systems, networking, ai, security, db]
     editions:
       - year: 2026
         id: 24th-international-conference-on-service-oriented-computing-icsoc-2026-lodz-po26
-        link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;e5c247fa.2607
+        link: https://icsoc2026.it.p.lodz.pl/
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-27 23:59:00', tz: AoE}
 
   - key: acm-sac-2027-dbdm-track
     title: ACM SAC 2027 - DBDM Track
     full_name: ACM SAC 2027 - DBDM Track
-    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;25181ef.2606
+    link: https://www.sigapp.org/sac/sac2027/
     categories: [hpc, systems, ai, security, db]
     editions:
       - year: 2026
         id: acm-sac-2027-dbdm-track26
-        link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;25181ef.2606
+        link: https://www.sigapp.org/sac/sac2027/
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-10-02 23:59:00', tz: AoE}
 
   - key: btw-2027
     title: BTW 2027
     full_name: BTW 2027
-    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;a9f788e1.2607
+    link: https://btw2027.gi.de/calls/papers
     categories: [ai, db]
     editions:
       - year: 2026
         id: btw-202726
-        link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;a9f788e1.2607
+        link: https://btw2027.gi.de/calls/papers
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-18 23:59:00', tz: AoE}
 
   - key: ccnc27-track-on-networking-solutions-for-metaverse-social-applications-multimedia-and-games
     title: CCNC27 track on Networking Solutions for Metaverse, Social Applications, Multimedia, and Games
     full_name: CCNC27 track on Networking Solutions for Metaverse, Social Applications, Multimedia, and Games
-    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;8f166ecb.2608
+    link: https://ccnc2027.ieee-ccnc.org/authors/call-technical-papers
     categories: [systems, ai, security, db]
     editions:
       - year: 2026
         id: ccnc27-track-on-networking-solutions-for-metaverse-social-applications-multimedi
-        link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;8f166ecb.2608
+        link: https://ccnc2027.ieee-ccnc.org/authors/call-technical-papers
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
