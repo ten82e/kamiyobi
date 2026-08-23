@@ -112,3 +112,42 @@ R513 で EasyChair 由来 708 件のうち 45 件を昇格した後、wikiCFP (3
 ## caveat
 
 - メーリス本文の締切は主催者申告。昇格会議は primary.yaml 登録候補 (R514 同様)。
+
+---
+
+# 検証記録 R516 — primary.yaml 一括登録の適性判定 (2026-08-23)
+
+## 問い
+
+R513-R515 で昇格した 141 会議を data/primary.yaml に一括登録し、一次ソース自動訂正の
+対象にできるか。
+
+## 実測
+
+1. **観測ゲートの契約** (src/sources/primary.ts:102-117 resolveObservation):
+   `time === null → null` (日付のみは時刻を捏造しない) + tz は confirmed 必須。
+2. **抽出器の実力** (src/fetch-primary.ts extractDeadline): ページ行に時刻表記がある
+   ときだけ time を載せる。tz はページ内の tz 表記 (AoE/PST 等) を検出したときだけ載る。
+3. **源別実測**:
+   - EasyChair CFP (50 会議): deadlines テーブルは日付のみ (R513 裏取りで全件確認済み)
+   - wikiCFP (83): v:startDate は ISO 日付のみ
+   - listserv アーカイブ (13): 本文は「April 30, 2026 (PST)」型が最多で時刻なし
+     (iaiai.org 実測: time patterns 0 / PST x5)
+   - researchr 系 (icpc/hpca/cgo/icst): 「Thu 19 Nov 2026」形式で時刻なし
+     (extractDeadline 実測 → time フィールド無しで出力)
+4. **既存登録 13 会議の build 実績**: kept ゼロ。10 会議が毎日 dropped 警告を出している。
+
+## 判定
+
+- **一括登録は見送り**。日付のみの源では全行が観測ゲートで棄却され、効果ゼロで
+  警告ノイズと CI 時間だけが増える。
+- 登録適性を持つのは「締切行に時刻 + tz を明記する公式ページ」のみ (現状 SC26 ポータル系
+  のみ実績あり・既に登録済み)。
+- **iiai-aai-2026 をレジストリから削除**: 公式ページは tz (PST) を明記するが時刻を
+  公開しないため永久棄却となる。前回値も全行棄却で使われておらず、削除しても挙動不変、
+  毎日の dropped 警告 4 行が消える (build 実測で警告消失を確認)。fetch-primary --apply
+  済み (registry 12 会議)。
+
+## 今後
+
+- 時刻+tz を明記する新源を個別に発見したときだけ primary.yaml に足す (運用原則)。
