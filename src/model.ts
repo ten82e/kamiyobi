@@ -829,8 +829,30 @@ const NON_PAPER_LABEL_RE =
 export function refineKindWithLabel(
   kind: DeadlineKind,
   label: string | null | undefined,
+  rawType?: string | null | undefined,
 ): DeadlineKind {
   if (kind !== "paper" && kind !== "abstract") return kind;
+  // 明示的な型語 (paper / full_paper / abstract 等) で宣言された行は人間または
+  // ソースの意図を反映するため、label 語彙で格下げしない (#520)。
+  // 汎用語 ("deadline" / "submission" / 空) のときだけ refine を適用する。
+  if (rawType !== undefined) {
+    const t = String(rawType ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, "_");
+    // 汎用語: トラック名を含まないキー/型。ccfddl の paper_deadline /
+    // submission_deadline も「論文締切」の key 表記でしかなく汎用とみなす。
+    const GENERIC = new Set([
+      "",
+      "deadline",
+      "submission",
+      "paper_deadline",
+      "submission_deadline",
+      "due",
+      "due_date",
+    ]);
+    if (!GENERIC.has(t)) return kind;
+  }
   const s = String(label ?? "").trim();
   if (!s) return kind;
   if (NON_PAPER_LABEL_RE.test(s)) return kind === "abstract" ? kind : "other";

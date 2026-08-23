@@ -110,7 +110,7 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
       const rawType = String(rec.type ?? rec.kind ?? "");
       const label = String(rec.label ?? rawType);
       out.push({
-        kind: refineKindWithLabel(kindOf(rawType), label),
+        kind: refineKindWithLabel(kindOf(rawType), label, rawType),
         label,
         at_utc: at,
         tz_raw: tzRaw,
