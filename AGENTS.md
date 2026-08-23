@@ -42,60 +42,10 @@ node src/cli.ts build --out public --offline --cache .cache --now 2026-08-09T00:
 
 ---
 
-## IDD ワークフロー
+## 作業手順
 
-このプロジェクトは Issue-Driven Development (IDD) を採用している。
-
-- クロスエージェントの入り口とフェーズ振り分け: **`docs/idd-workflow.md`**
-- ローカル方針（merge / review / CI / claim / 禁止事項）: **`docs/idd-kamiyobi-policy.md`**
-- IDD 作業を始める前に: `.github/instructions/idd-overview-core.instructions.md` を開き、
-  現在のフェーズが変わったら該当フェーズファイルを手で開くこと。
-- 収録の契約・禁止節は IDD でもそのまま有効。IDD の activity は `ten82e/kamiyobi` 内部のみ。
-
-## 起動時プロローグ（IDD）
-
-このリポジトリの自律実行は **IDD の Discover → Claim → Work → PR → CI →
-Review → Merge** を唯一のループとする。`autonomous-research-loop` はこの
-リポジトリの起動時・各ターンに自動注入しない。調査・実装を続ける場合も、
-必ず既存の GitHub Issue（または明示された Issue URL/番号）に紐付ける。
-
-1. `docs/idd-workflow.md` と `.github/idd/config.json` を読む。
-2. 新しい具体的な作業候補が見つかった場合は、まず `docs/issue-authoring-skill.md`
-   の重複検索・受入条件・authoring hold を適用し、既存 Issue を再利用できない
-   場合だけ Issue を作成する。Obsidian には新しい進捗や次の問いを書かない。
-3. authoring hold 中の Issue は claim しない。Freebuff の自律実行契約では、
-   release checklist と suitability floor を機械的に検証して自動 release し、
-   その後だけ Discover/claim する。検証に失敗したら hold のまま止める。
-4. 現在のリポジトリの open Issue を Discover する。
-5. startable な Issue が 0 件なら、候補なしを報告して停止する（Issue の
-   無制限な自動作成、無関係なビルド調査、無制限のリサーチ再開は行わない）。
-6. Issue を選んだら、状態に対応する `.github/instructions/idd-*.instructions.md`
-   を読み、claim 証拠を作ってから作業する。
-7. すべての変更はこのリポジトリ内だけで行い、上記の外部送信禁止を守る。
-
-Freebuff 等の継続実行ハーネスを使う場合もこの authoring/release と停止条件を継承する。
-キューが空になったときに同じ調査を繰り返さず、次の Discover ラウンドで
-Issue が現れるまで待機する。具体的な候補がある場合だけ、重複検索を通した
-Issue-authoringターンを先にキューへ入れる。
-
-## IDD execution policy
-
-This repository uses the imported Issue-Driven Development (IDD) loop in
-`.github/instructions/`. The selected policy is `fully_autonomous_merge`
-with `no-advisory`: IDD may merge a ready PR automatically, but it never
-requests or waits for a Copilot/advisory review. CI, branch state, required
-reviews configured outside IDD, unresolved conversations, claim ownership,
-and review-watermark freshness remain merge gates.
-
-Start each IDD session with [`docs/idd-workflow.md`](docs/idd-workflow.md)
-and then open [`docs/issue-authoring-skill.md`](docs/issue-authoring-skill.md)
-when a new task candidate needs an Issue. New Issues remain under
-`status:authoring` until the automated release checklist passes; the loop then
-removes the label and continues through Discover, Claim, Work, PR, CI, and
-Merge. When no startable open Issue exists and no concrete candidate is
-available, Discover is a terminal no-candidate result; do not substitute
-autonomous research or an unrelated debugging task.
-
-IDD actions are limited to this repository's own Issues, branches, and PRs.
-The upstream/no-contact rules above remain authoritative and must not be
-weakened by the IDD loop.
+- GitHub Issues が作業台帳。具体的な候補ができたら重複検索のうえ Issue を
+  作成し、受入条件を固定してから着手する。
+- 変更は branch → PR → CI（typecheck / check / test）緑 → merge。
+- 上記の収録契約・禁止節はすべての作業で有効。変更は `ten82e/kamiyobi`
+  内部のみ。
