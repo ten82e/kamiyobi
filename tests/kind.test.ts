@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { KINDS, kindOf } from "../src/model.ts";
+import { KINDS, kindOf, refineKindWithLabel } from "../src/model.ts";
 
 const KINDS_SET = new Set(KINDS);
 
@@ -94,5 +94,43 @@ describe("kind_of", () => {
         "other",
       ]),
     );
+  });
+});
+
+describe("refineKindWithLabel (#516)", () => {
+  it("demotes generic-type paper rows whose label names a non-paper track", () => {
+    expect(refineKindWithLabel("paper", "Posters deadline")).toBe("other");
+    expect(refineKindWithLabel("paper", "Art Gallery deadline")).toBe("other");
+    expect(refineKindWithLabel("paper", "Student Volunteers Applications deadline")).toBe("other");
+    expect(refineKindWithLabel("paper", "Technical Workshops deadline")).toBe("other");
+    expect(refineKindWithLabel("paper", "Student Research Competition deadline")).toBe("other");
+    expect(refineKindWithLabel("paper", "Rising Stars Award applications")).toBe("other");
+    expect(refineKindWithLabel("paper", "Appy Hour deadline")).toBe("other");
+    expect(refineKindWithLabel("paper", "Real-Time Live! deadline")).toBe("other");
+    expect(
+      refineKindWithLabel(
+        "paper",
+        "Talks, Production Sessions, Panels, Courses, Educator Forum deadline",
+      ),
+    ).toBe("other");
+  });
+
+  it("keeps genuine paper rows", () => {
+    expect(refineKindWithLabel("paper", "Paper submission deadline")).toBe("paper");
+    expect(refineKindWithLabel("paper", "Full research papers submission deadline")).toBe("paper");
+    // 論文本体トラック (proceedings あり) は誤爆させない
+    expect(refineKindWithLabel("paper", "Art Papers deadline")).toBe("paper");
+    expect(refineKindWithLabel("paper", "")).toBe("paper");
+    expect(refineKindWithLabel("paper", null)).toBe("paper");
+  });
+
+  it("does not touch non-paper kinds", () => {
+    expect(refineKindWithLabel("abstract", "Posters deadline")).toBe("abstract");
+    expect(refineKindWithLabel("notification", "Posters deadline")).toBe("notification");
+    expect(refineKindWithLabel("other", "anything")).toBe("other");
+  });
+
+  it("abstract rows are never demoted (abstract tracks are small by nature)", () => {
+    expect(refineKindWithLabel("abstract", "Poster abstract submission")).toBe("abstract");
   });
 });

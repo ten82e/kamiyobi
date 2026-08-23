@@ -13,6 +13,7 @@ import {
   type Edition,
   parseDateRange,
   parseInstant,
+  refineKindWithLabel,
   slug,
   warn,
 } from "../model.ts";
@@ -81,8 +82,10 @@ export function deadlinesOf(
         if (raw === null || raw === undefined) continue;
         const at = parseInstant(raw, entryTz);
         if (at === null) continue;
+        // ccfddl の timeline entry は comment にトラック名 (Posters Track 等) を
+        // 持つ — 汎用キー由来の kind を label/comment 語彙で精緻化する (#516)。
         out.push({
-          kind,
+          kind: refineKindWithLabel(kind, [comment, label].filter(Boolean).join(" · ")),
           label,
           at_utc: at,
           tz_raw: entryTz,
@@ -117,7 +120,7 @@ export function deadlinesOf(
       const at = parseInstant(raw, entryTz);
       if (at === null) continue;
       out.push({
-        kind,
+        kind: refineKindWithLabel(kind, [comment, label].filter(Boolean).join(" · ")),
         label,
         at_utc: at,
         tz_raw: entryTz,
