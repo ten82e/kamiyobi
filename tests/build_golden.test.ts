@@ -1746,6 +1746,16 @@ it("global shortcuts respect editable targets and recommendation mode", () => {
   expect(JSON.parse(proc.stdout)).toEqual({ prevented: 2, focused: 1, opened: 0 });
 });
 
+it("keyboard Enter opens external links with noopener (reverse tabnabbing, #517)", () => {
+  const runtime = readFileSync(join(REPO_ROOT, "site", "app.js"), "utf8");
+  // 全 window.open 呼び出しが opener を渡さないこと（第三引数に noopener を含む）
+  const opens = runtime.match(/window\.open\([^)]*\)/g) ?? [];
+  expect(opens.length).toBeGreaterThan(0);
+  for (const call of opens) {
+    expect(call).toMatch(/["'`]noopener/);
+  }
+});
+
 it("meeting past rule is wired to the end date", () => {
   const html =
     readFileSync(join(site, "index.html"), "utf8") +

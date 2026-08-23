@@ -296,7 +296,7 @@
     } else if (e.key === "Enter" && selectedIndex >= 0 && selectedIndex < shown.length) {
       var r = shown[selectedIndex];
       var href = safeExternalUrl(r.ed.link || r.conf.link);
-      if (href) window.open(href, "_blank");
+      if (href) window.open(href, "_blank", "noopener,noreferrer");
     } else if (e.key === "Escape") {
       closeDrawer();
     }
