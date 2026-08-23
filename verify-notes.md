@@ -226,3 +226,40 @@ R513-R515 で昇格した会議の締切が公式サイトで延長・変更さ�
 ## caveat
 
 - 本 5 件もメーリス本文由来のため primary.yaml 登録不可 (時刻なし源)。
+
+---
+
+# 検証記録 R519 — 昇格会議の upcoming.md 表示品質とデータ修正 (2026-08-23)
+
+## 実測
+
+1. **title ノイズ機械スキャン** (R513 以降の昇格 146 会議):
+   CFP/reminder 接頭辞なし。too_long のみ 2 件 (95 文字・94 文字)。
+   ノイズは件名由来の DBWorld 由来 20 会議に集中。
+2. **upcoming.md 実表示の問題** (offline build 後):
+   - DBWorld 由来 18 行が **listserv メーリスアーカイブへ直接リンク**
+     (ユーザーが飛ぶとメール本文が見える。公式サイトではない)
+   - title に「BTW 2027」→「BTW 2027 2026」のような重複年付与
+   - 「ADC 2026: Second-Round CFP and」「STACS 2027 - First」等の途切れ件名
+
+## 修正内容 (extra.yaml データ修正のみ・コード変更なし)
+
+- 各会議のメーリス本文から公式サイト URL を抽出し、品質判定して link を張り替え:
+  - 採用 13 会議 (github.io / 大学 / 学会ドメイン等の会議公式サイト)
+  - 見送り 7 会議 (投稿システム cmt3/openreview・lnkd.in 短縮・Springer シリーズ一覧
+    ・論文ページなど「公式サイトではない」ため listserv のまま)
+- title クリーンアップ 4 件: ADC 2026 / Clinical-MIRF 2026 / IEEE 3SCEA2027 /
+  STACS 2027 (途切れ件名・接頭辞の除去)
+
+## 検証
+
+- typecheck / check / vitest 914 pass (skipped=0) / offline build RC=0
+- 修正後の upcoming.md: 「[ADC 2026](https://adc-conference.github.io/2026/)」等に改善、
+  listserv 直リンクは 18 行 → 5 行 (見送り 7 会議のうち窓内 5 行のみ残存)
+
+## 判定
+
+- コード変更は不要 (title 生成ロジック自体は正常。源のデータ品質問題であり
+  extra.yaml の修正で吸収するのが正)。
+- 今後 DBWorld 由来を昇格するときは、本文から公式サイト URL を抽出して link に
+  使うことを昇格手順に追加 (project-lessons に反映済み)。
