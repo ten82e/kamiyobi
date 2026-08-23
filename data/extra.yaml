@@ -5649,3 +5649,69 @@ conferences:
         link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;c4dea2a1.2608
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-10-15 23:59:00', tz: AoE}
+
+  # ---- conf-deadlines R518 (2026-08-23): DBWorld 改良抽出器の救出分 ----------------------
+  # 根拠: listserv アーカイブ本文から改良パターン (Due 型・日付先行型等) で抽出した
+  #   Submission deadline。取得日 2026-08-23。97 件中機械抽出成功は本 5 件のみ
+  #   (残り 88 件は本文に機械可読な締切行なし)。カテゴリは本文テキストで判定。
+  # tz: メール本文は tz 未明記のため AoE 当日終了で解釈 (R513-R515 同方針)。
+
+  - key: 1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare
+    title: 1st Symposium on Neurosymbolic Artificial Intelligence for Healthcare
+    full_name: 1st Symposium on Neurosymbolic Artificial Intelligence for Healthcare
+    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;ec7f5b3c.2607
+    categories: [ai, security]
+    editions:
+      - year: 2026
+        id: 1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare26
+        link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;ec7f5b3c.2607
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-05 23:59:00', tz: AoE}
+
+  - key: 24th-international-conference-on-service-oriented-computing-icsoc-2026-lodz-po
+    title: 24th International Conference on Service-Oriented Computing, ICSOC 2026 Lodz, Po
+    full_name: 24th International Conference on Service-Oriented Computing, ICSOC 2026 Lodz, Po
+    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;e5c247fa.2607
+    categories: [systems, networking, ai, security, db]
+    editions:
+      - year: 2026
+        id: 24th-international-conference-on-service-oriented-computing-icsoc-2026-lodz-po26
+        link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;e5c247fa.2607
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-27 23:59:00', tz: AoE}
+
+  - key: acm-sac-2027-dbdm-track
+    title: ACM SAC 2027 - DBDM Track
+    full_name: ACM SAC 2027 - DBDM Track
+    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;25181ef.2606
+    categories: [hpc, systems, ai, security, db]
+    editions:
+      - year: 2026
+        id: acm-sac-2027-dbdm-track26
+        link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;25181ef.2606
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-10-02 23:59:00', tz: AoE}
+
+  - key: btw-2027
+    title: BTW 2027
+    full_name: BTW 2027
+    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;a9f788e1.2607
+    categories: [ai, db]
+    editions:
+      - year: 2026
+        id: btw-202726
+        link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;a9f788e1.2607
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-18 23:59:00', tz: AoE}
+
+  - key: ccnc27-track-on-networking-solutions-for-metaverse-social-applications-multimedia-and-games
+    title: CCNC27 track on Networking Solutions for Metaverse, Social Applications, Multimedia, and Games
+    full_name: CCNC27 track on Networking Solutions for Metaverse, Social Applications, Multimedia, and Games
+    link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;8f166ecb.2608
+    categories: [systems, ai, security, db]
+    editions:
+      - year: 2026
+        id: ccnc27-track-on-networking-solutions-for-metaverse-social-applications-multimedi
+        link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;8f166ecb.2608
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
