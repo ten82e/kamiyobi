@@ -11,9 +11,10 @@
     "build": "node src/cli.ts build",
     "discover": "node src/cli.ts discover",
     "bench": "node src/bench-recommender.ts",
+    "validate:data": "node scripts/validate-data.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit && tsc --noEmit -p site/tsconfig.json",
-    "check": "biome check src tests && biome check site/recommender.js site/app.js --files-ignore-unknown=false --javascript-linter-enabled=false --javascript-formatter-enabled=false",
+    "check": "biome check src scripts site/*.ts tests --files-ignore-unknown=false",
     "format": "biome format --write src tests"
   },
   "license": "MIT",

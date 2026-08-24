@@ -5,13 +5,14 @@
  *   node src/fetch-primary.ts --apply    # primary_overrides.yaml に書き込む
  */
 
+import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs as parseNodeArgs } from "node:util";
 import { dump as dumpYaml, load as loadYaml } from "js-yaml";
 import { booleanValue, normalizeShortEquals, stringValue } from "./args.ts";
-import { resolveTzStatus, roundOf, warn } from "./model.ts";
+import { deadlineTrackKey, resolveTzStatus, roundOf, warn } from "./model.ts";
 
 export let ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -189,6 +190,22 @@ export interface PrimaryDeadline {
   time?: string;
   tz?: string;
   round?: number;
+  track?: string;
+  sourceUrl?: string;
+  sourceRevision?: string;
+  contentHash?: string;
+  retrievedAt?: string;
+  verifiedAt?: string;
+  rawExcerpt?: string;
+}
+
+function primarySlot(deadline: PrimaryDeadline): string {
+  const kind = deadline.kind || "paper";
+  return [
+    kind,
+    String(deadline.round ?? 1),
+    deadlineTrackKey(deadline.label, kind, deadline.track),
+  ].join("\0");
 }
 
 interface ExtractedDate {
@@ -382,8 +399,12 @@ export async function runFetchPrimary(
       continue;
     }
     let deadlines: PrimaryDeadline[] = [];
+    let pageHash = "";
+    let observedAt = "";
     try {
       const page = await fetchPage(url);
+      pageHash = createHash("sha256").update(page).digest("hex");
+      observedAt = new Date().toISOString();
       const mismatch = pageYearMismatch(page, Number(year));
       if (mismatch !== null) {
         process.stderr.write(
@@ -424,7 +445,36 @@ export async function runFetchPrimary(
       if (key in previous) generated[key] = previous[key];
       continue;
     }
-    const edition: Record<string, any> = { deadlines };
+    const previousEdition =
+      previous[key]?.editions?.[String(year)] &&
+      typeof previous[key].editions[String(year)] === "object"
+        ? previous[key].editions[String(year)]
+        : {};
+    const previousDeadlines = Array.isArray(previousEdition.deadlines)
+      ? (previousEdition.deadlines as PrimaryDeadline[])
+      : [];
+    const previousBySlot = new Map(
+      previousDeadlines.map((deadline) => [primarySlot(deadline), deadline]),
+    );
+    deadlines = deadlines.map((deadline) => {
+      const held = previousBySlot.get(primarySlot(deadline));
+      const unchanged = held?.contentHash === pageHash;
+      const verifiedAt = unchanged && held.verifiedAt ? held.verifiedAt : observedAt;
+      const retrievedAt = unchanged && held.retrievedAt ? held.retrievedAt : observedAt;
+      return {
+        ...deadline,
+        sourceUrl: String(url),
+        sourceRevision: pageHash,
+        contentHash: pageHash,
+        retrievedAt,
+        verifiedAt,
+        rawExcerpt: `${deadline.label}: ${deadline.date}${deadline.time ? ` ${deadline.time}` : ""}${deadline.tz ? ` ${deadline.tz}` : ""}`,
+      };
+    });
+    const merged = new Map(previousDeadlines.map((deadline) => [primarySlot(deadline), deadline]));
+    for (const deadline of deadlines) merged.set(primarySlot(deadline), deadline);
+    deadlines = [...merged.values()];
+    const edition: Record<string, any> = { ...previousEdition, deadlines };
     for (const field of ["link", "place", "date_text", "event_start", "event_end"]) {
       if (conf[field]) edition[field] = conf[field];
     }

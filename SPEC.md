@@ -158,21 +158,27 @@ kamiyobi/
 │   ├── fetch-primary.ts         # 一次ソース自動抽出
 │   ├── review-candidates.ts     # 候補レビュー支援
 │   ├── recommender-api.ts       # 推薦実行時処理の型境界
+│   ├── promotion.ts             # 候補昇格の観測・検証・決定
 │   ├── embeddings.ts            # 埋め込み生成
 │   ├── bench-recommender.ts     # 推薦ベンチ
 │   ├── build.ts                 # JSON/CSV/MD/llms.txt/HTML 出力
 │   └── cli.ts                   # エントリポイント
 ├── site/
-│   ├── tsconfig.json            # ブラウザ実行時処理の checkJs 設定
+│   ├── tsconfig.json            # strict なブラウザ TypeScript の型検査
+│   ├── tsconfig.build.json      # public/ 用 JavaScript emit
 │   ├── template.html            # コア UI（表・絞り込み。外部 CDN なし）
-│   ├── app.js                   # 型検査対象のブラウザ UI 実行時処理
-│   ├── recommender.js           # 論文推薦（§10。任意 CDN）
-│   ├── recommender.d.ts         # 推薦実行時処理のグローバル型宣言
+│   ├── app.ts                   # ブラウザ UI 実行時処理
+│   ├── recommender.ts           # 論文推薦（§10。任意 CDN）
+│   ├── recommendation-core.ts   # browser / benchmark / test 共通の推薦軸
+│   ├── publish.ts               # publish manifest のブラウザ側検証
 │   └── runtime.d.ts             # ブラウザ・生成データの型境界
 ├── scripts/
 │   ├── compare-head.ts          # snapshot / primary_overrides の実質差分
 │   ├── health-gate.ts           # 直近の健全な公開結果との配信前健全性ゲート
 │   └── generate-venue-profiles.ts # 出典情報付きプロフィール成果物の再生成
+│   ├── validate-data.ts         # 公開データの意味検査
+│   ├── verify-cfp.ts            # CFP 観測の項目別検証
+│   └── promote-candidates.ts    # promotion batch の決定・manifest 生成
 ├── public/                      # 生成物(git 管理外)
 ├── tests/                       # vitest
 └── .github/workflows/
@@ -188,7 +194,7 @@ kamiyobi/
 
 ```ts
 // 型・時刻解決・日付パーサ・snapshot 入出力（src/model.ts）
-interface DeadlineBase { kind: string; label: string; round: number; comment: string | null; }
+interface DeadlineBase { kind: string; label: string; round: number; track?: string; comment: string | null; }
 export interface ExactDeadline extends DeadlineBase { precision?: "exact"; at_utc: Date; tz_raw: string; }
 export interface DateOnlyDeadline extends DeadlineBase { precision: "date-only"; local_date: string; }
 export type Deadline = ExactDeadline | DateOnlyDeadline;
@@ -346,25 +352,14 @@ export async function fetchTarball(
 `cli.build`（`src/cli.ts` の `cmdBuild`）の取得順序を凍結する:
 
 1. 各データ源を順に `load()` する。
-2. **全データ源が失敗した場合に限り** `data/snapshot.json` から
-   `restoreSnapshot()` で復元し、警告を出して処理を継続する（サイトを壊さない）。
-3. 一部のデータ源だけ失敗した場合は、成功した分に snapshot の該当分をマージして継続する。
+2. 失敗したデータ源ごとに、`data/snapshot.json` から該当する venue・edition・deadline slot
+   だけを復元する。成功したデータ源の値と local の現行値は置き換えない。
+3. 複数源を持つ edition では失敗源の欠落 slot だけを補い、local で削除済みの venue は復活させない。
 4. snapshot も空なら異常終了する（黙って空の公開データを公開しない）。
 
-snapshot の書き込みは build の最後に `data.json` を `data/snapshot.json` へ
-コピーする（`generated_at` を含まない・§4.1 と同一スキーマ）。
-
-**退避時の local 再適用**: snapshot は「最後に健全な online ビルドが生成した
-時点」のデータなので、その後に `data/extra.yaml`（ローカルデータ源）へ追加された
-会議・締切（新規収録・通知締切など）を含まない。ローカルデータ源はローカル
-ファイルなので上流障害時も読めるため、`restoreSnapshot()` の復元データに
-`mergeSources()` で local を再マージしてから overrides を再適用する
-（`local` は `source_priority` 最上位なので、snapshot 側の古い締切を正しく
-上書きする）。local グループが空なら再マージを省略する（従来動作と同一）。
-
-**注意**: `--out` がどこでも、`--offline` でなく健全な build なら snapshot を
-上書きする（`--now` 指定の検証 build も例外ではない）。検証で `--now` を
-使ったあとは `git checkout -- data/snapshot.json` で戻すこと。
+snapshot は全データ源が `fresh` の online build に限り、build の最後に `data.json` から
+`generated_at` を除いて書き込む。cache-fallback・snapshot-fallback・failed・offline の
+いずれかを含む build は snapshot を更新しない。
 
 ### 3.6 統合
 
@@ -413,16 +408,19 @@ export function dedupDeadlinesAfterRollforward(
 
 #### 締切の重複統合
 
-対象は同一 Conference・同一 Edition・同一 `kind` の 2 件で、**畳む条件は源が同じか
-異なるかで別**である。`round` は突き合わせに使わない。
+対象は同一 Conference・同一 Edition・同一 deadline slot の 2 件である。
+slot は `kind`・`round`・正規化した非汎用 `track` で識別し、異なる round や track は畳まない。
+**畳む条件は源が同じか異なるかで別**である。
 
 | 2 件の出どころ | 畳む条件 |
 |---|---|
 | **異なる源** | `at_utc` の差が許容幅以内。既定 **90000 秒（25 時間）**。`config['deadline_merge_cross_source_seconds']` で変えられる |
 | **同じ源** | `at_utc` が完全一致し、かつ空白と大小文字を正規化した `label` も一致 |
 
-この時刻幅は `exact` 同士にだけ適用する。
-`date-only` 同士は `local_date` が同じ場合に畳み、`exact` と `date-only` は同一値として畳まない。
+この時刻幅は `exact` 同士に適用する。
+`date-only` 同士は `local_date` が同じ場合に畳む。
+`exact` と `date-only` は exact が date-only の不確実性区間内にある場合に同一slotの精度差として畳み、
+exact を採用して双方の evidence を保持する。区間外なら競合として保持する。
 
 窓の中に候補が複数あるときは**最も近いもの**に畳む。先頭一致にすると、SIGGRAPH 2026 で
 ccfddl の `Paper submission`（`2026-01-22T22:00:00Z`）が aideadlines の
@@ -455,11 +453,8 @@ WACV は Round 1 と Round 2 の通知を同一時刻に置く）。源を問わ
 
 - 残すのは `source_priority` が高い側の値・ラベル・`comment`・リンク。同順位のときは
   和集合に先に入った側（＝上流の記載順）が残る。
-- `round` は**大きい方**を採る。ただし源をまたぐときに限る。aideadlines には
-  round の概念が無く常に 1 を返すので、優先源に決めさせると ccfddl の round 2 が
-  round 1 に潰れる（実測 11 件。WACV 2027 が「概要締切 R2 / 論文締切 R1」という
-  自己矛盾した表示になっていた）。同一源どうしの `round` は比較可能なので勝者のものを残す
-  （GECCO の同時刻 2 トラックは round 1 のままにする）。
+- `round` と、汎用名を除いて正規化した `track` は締切枠の識別子である。
+  どちらかが異なる締切は畳まない。
 - 落とした側の `label` と `comment` は、残した側の `comment` に
   `同時刻の別記載: <label>` として退避する。**文字列を捨ててはならない。**
 - `kind` が違えば畳まない（CVPR の paper と supplementary は同時刻でも別物）。
@@ -537,8 +532,10 @@ node --experimental-strip-types src/cli.ts review [--candidates data/discovered_
 | `upcoming.md` | 直近 N 日の締切と開催日の表（N は `site.upcoming_days`、既定 180） |
 | `llms.txt` | エージェント向け出力索引 |
 | `embeddings.json` | 会議スコープの埋め込み（§10）。`--no-embeddings` で省略可 |
-| `recommender.js` | サイトの推薦ロジック |
-| `app.js` | ブラウザ UI 実行時処理（TypeScript の `allowJs` 対象） |
+| `recommender.js` | `site/recommender.ts` から生成するサイトの推薦ロジック |
+| `recommendation-core.js` | `site/recommendation-core.ts` から生成する共有推薦軸 |
+| `publish.js` | `site/publish.ts` から生成する publish manifest 検証 |
+| `app.js` | `site/app.ts` から生成するブラウザ UI 実行時処理 |
 | `.nojekyll` | Pages の Jekyll 処理を無効化 |
 
 `health.json` は `profile_hash`、`confirmed_future_deadlines`、`estimated_future_deadlines`、
@@ -705,12 +702,16 @@ conferences:
   （自動生成・手編集禁止）を書く。日付と一緒に壁時計の時刻
   (`HH:MM[:SS]`、12h 表記は 24h に正規化) も `time` フィールドで保存する。
   ページが時刻を公表していない場合は `time` を載せない（#504）。
+  各観測にはページ本文の SHA-256、取得・検証時刻、公式 URL を付ける。
+  一部の締切枠だけを抽出できた場合は、その枠だけを更新し、今回見えなかった前回枠を保持する。
 - build (`src/cli.ts` の `cmdBuild`) は読み込んだ primary_overrides を
   `resolvePrimaryObservations` (src/sources/primary.ts) で「検証済み観測」だけに
   フィルタしてから `overrides.yaml` → primary の順に適用する（#504）。観測は次の
   すべてを満たすときだけ確定締切として扱われる:
-  1. 日付に壁時計の時刻が伴う（日付のみの証拠から 23:59 等の時刻を捏造しない）
-  2. tz が confirmed（AoE・IANA 名等。CST/IST/BST 等の曖昧略称は不確認）
+  1. 妥当な日付がある。時刻があれば Exact、無ければ DateOnly とする
+     （日付のみの証拠から 23:59 等の時刻を捏造しない）
+  2. Exact は tz が confirmed（AoE・IANA 名等。CST/IST/BST 等の曖昧略称は不確認）。
+     DateOnly は時刻や tz を補わない
   3. 締切が開催時期と矛盾しない。会期が既知なら `event_start -
      primary.max_lead_days` から `event_end` まで、会期が不明なら開催年または前年を許可する
   検証を通らない行は edition パッチの `deadlines` キーごと消えるため、
@@ -734,7 +735,8 @@ conferences:
   - 取得失敗・抽出 0 件の会議は**前回値を維持**する（一時的なサイト障害で
     データが消えない）。警告は stderr に出るので、レジストリの URL が古くなると
     気づける。
-- CI (`update.yml`) は build の前に `node --experimental-strip-types src/fetch-primary.ts --apply` を
+  - 部分抽出は既存枠を消さない。枠の削除は明示的な `remove` だけで行う。
+- CI (`update.yml`) は build の前に `node src/fetch-primary.ts --apply` を
   実行し、毎日自動で一次ソースを巡回する。
 - 向き不向き: EasyChair CFP (`easychair.org/cfp/...`) と静的 HTML の CFP /
   Important Dates ページは抽出しやすい。JS レンダリングサイト（wacv.thecvf.com /
@@ -748,7 +750,7 @@ conferences:
 ### `.github/workflows/update.yml`
 
 - `on: {schedule: [{cron: '17 20 * * *'}], workflow_dispatch: }`（20:17 UTC = 05:17 JST）
-- `permissions: {contents: write, pages: write, id-token: write}`
+- `permissions: {contents: write, pull-requests: write, pages: write, id-token: write}`
 - 締切ビルドの後、任意の推薦一式をキャッシュから復元・生成・検証する。
   埋め込みの生成または検証に失敗した場合は `public/embeddings.json` を公開物から除き、
   `recommendation-index.json` と締切一覧は、語彙検索のみで動作する形で残す。`scripts/health-gate.ts`
@@ -759,16 +761,15 @@ conferences:
 - `concurrency: {group: pages, cancel-in-progress: false}`（**update.yml にのみ付ける**。
   concurrency group はリポジトリ全体で共有されるため、ci.yml に付けると CI が
   デプロイと直列化して不利益になる）
-- 手順: checkout → setup-node 24 → `npm ci` →
-  `node --experimental-strip-types src/fetch-primary.ts --apply`（一次ソース自動抽出）→
-  `node --experimental-strip-types src/cli.ts build --out public` →
-  `data/snapshot.json` / `data/primary_overrides.yaml` のどちらかに実質差分が
- あれば両方コミット（`scripts/compare-head.ts` が `generated_at` / `_comment` の
- 日付変化を無視して判定）→ `actions/upload-pages-artifact@v5` →
- `actions/deploy-pages@v5`
+- 手順: main checkout → setup-node 24 → `npm ci` → baseline build →
+  一次ソース抽出・候補探索 → online build → `public/data.json` の意味検査 →
+  health gate・推薦 Top-5 差分 → 開始時の main SHA を再確認 →
+  実質差分があるファイルだけを専用 branch へ一度 push して PR 作成 →
+  配信直前に main SHA を再確認 → Pages 配信。
+  `scripts/compare-head.ts` は `generated_at` / `_comment` の日付変化を無視する。
 - 上流取得に失敗しても §3.5 の退避経路でサイトを壊さない。
-- GITHUB_TOKEN による push は workflow を再起動しない（公式明記）ため、
-  無限ループは起きない。`[skip ci]` は不要だが付けても害は無い。
+- 自動更新は main へ直接 push しない。専用 branch の PR に通常の CI を実行し、
+  `[skip ci]` は付けない。
 - update.yml に `pull_request` / `pull_request_target` トリガを**追加しない**
   （`contents: write` と組み合わせると公開リポジトリで危険になる）。
 
@@ -788,32 +789,24 @@ gautamkrishnar/keepalive-workflow は GitHub Staff により利用規約違反�
 
 ### `.github/workflows/ci.yml`
 
-配列形式の `on` はフィルタを受け取れない。次の形で書く。
+push と pull request の両方で、変更ファイルにかかわらず次の七つの job を報告する。
 
-```yaml
-on:
-  push:
-    paths-ignore: [data/snapshot.json]
-  pull_request:
-    paths-ignore: [data/snapshot.json]
-```
-
-- job `test`（外部ネットワーク非依存）:
-  `npm ci` → `npm run typecheck` → `npm run check` → `npm test` →
-  `node src/cli.ts build --out /tmp/kamiyobi-offline-site --offline --no-embeddings ...`。
+- `typecheck`、`lint`、`unit-integration-tests`、`offline-build`、`validate-data`、
+  `health-transition`、`recommendation-regression`。
+- 各 job は外部上流へ依存せず、fixture と `data/snapshot.json` を入力に使う。
+  推薦回帰は PR の base と current をそれぞれ offline build し、同一ケースの順位差を測る。
   `npm test` は明示的に差し替えていない HTTP 通信を拒否し、`tests/fixtures/` と `data/snapshot.json` だけを入力に使う。
-- ネットワークが必要な上流データ取得、配信前の健全性検査、候補探索は日次 `update.yml` に置き、必須 CI から呼び出さない。
-- `paths-ignore` でスキップされたジョブは required check として Pending のまま残るため、
-  ブランチ保護を掛ける場合は required check に指定しない旨を README に注記する。
+- 上流データ取得、配信前の公開成果物検査、候補探索は日次 `update.yml` に置く。
+- 七つの job は main の required check として設定する。
 
 ---
 
 ## 7. 静的サイト（`site/template.html`）
 
-- **コア UI は静的テンプレートと型検査済みの実行時処理に分離**。表・絞り込み・テーマ・フォントは外部 CDN・
-  Web フォント・外部画像を使わない（#223）。同階層の `recommender.js`（§10）は
-  ビルドが `index.html` と同じディレクトリへ同梱する。UI 実行時処理は `app.js` として
-  同梱し、TypeScript のプログラムへ `allowJs` で含める。
+- **コア UI は静的テンプレートと strict TypeScript 実行時処理に分離**。表・絞り込み・テーマ・フォントは外部 CDN・
+  Web フォント・外部画像を使わない（#223）。`site/app.ts` は `recommender.ts`、
+  `recommendation-core.ts`、`publish.ts` を明示 import し、ビルドは同階層の
+  `app.js`、`recommender.js`、`recommendation-core.js`、`publish.js` を生成する。
 - 推薦機能だけ、オフライン時の代替動作を備えた任意 CDN を遅延ロードしてよい。
   許可するのは次の 3 URL に限る。
   `https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/+esm`、
@@ -907,7 +900,7 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 
 ---
 
-## 10. 論文推薦システム（`site/recommender.js`・`src/embeddings.ts`）
+## 10. 論文推薦システム（`site/recommender.ts`・`src/embeddings.ts`）
 
 論文タイトル/キーワード → 会議推薦のスコアリング。実行パスはブラウザ
 （`site/template.html`）と恒久ベンチ（`npm run bench`）が同一コードを共有する。
@@ -931,6 +924,8 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
   `--topk` / `--lang jp` / `--golden-en` オプション。
 - `--golden-en`: 実採択論文タイトル（`GOLDEN_EN`、DBLP 由来・n=92）で真の精度を
   測る（top1 26.1% / top5 70.7% / top10 82.6%）。スコア改変の回帰検出に使用。
+- `--data-delta` はラベル付き63ケースで変更前後を比較する。Recall@1/5、MRR、
+  nDCG@10 のいずれかが低下するか、期待会議が Top-5 から脱落した場合は非ゼロ終了する。
 
 ### 10.3 会議プロファイル拡充手順（`data/venue-profiles.json`）
 
@@ -938,7 +933,7 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 出典情報付きデータから生成する。各論文は `title` / `year` / `source` /
 `source_url` / `collected_at` を持ち、`selection` の `method` /
 `max_prototypes` / `source_year_max` は全会議で共通でなければならない。
-現在の共通方針は、出典リスト順を保つ `source-order-first`、上限 26、source year
+現在の共通方針は、固定した埋め込みモデルによる決定的 k-medoids、代表数 3〜8、source year
 上限 2025 である。`VENUE_PAPERS` はこのデータから派生する互換ビューであり、
 直接編集しない。
 

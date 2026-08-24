@@ -1,10 +1,8 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "allowJs": true,
-    "checkJs": true,
-    "strict": false,
+    "strict": true,
     "types": ["node"]
   },
-  "include": ["app.js", "recommender.d.ts", "runtime.d.ts"]
+  "include": ["app.ts", "recommender.ts", "recommendation-core.ts", "publish.ts", "runtime.d.ts"]
 }

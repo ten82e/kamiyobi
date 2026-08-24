@@ -12,15 +12,19 @@ import {
   DAY_MS,
   type Deadline,
   type DeadlineEstimate,
+  type DeadlineEvidence,
   dateOnly,
   dateOnlyState,
   dateOnlyWindow,
+  deadlineTrackKey,
   type Edition,
   type ExactDeadline,
   fmtDate,
   isDateOnlyDeadline,
   isExactDeadline,
+  KINDS,
   parseDateRange,
+  slug,
   warn,
 } from "./model.ts";
 import { patchDeadlineSemantics } from "./sources/local.ts";
@@ -230,6 +234,12 @@ function mergeEditions(confs: Conference[], windows: Windows, tally: MergeStats)
       out.push(item.edition);
     }
   }
+  const ids = new Map<string, number>();
+  for (const edition of out) ids.set(edition.edition_id, (ids.get(edition.edition_id) ?? 0) + 1);
+  for (const edition of out) {
+    if ((ids.get(edition.edition_id) ?? 0) > 1)
+      edition.edition_id = `${edition.edition_id}-${edition.year}`;
+  }
   return out;
 }
 
@@ -308,16 +318,24 @@ function dedupDeadlines(
     let best: { gap: number; index: number } | null = null;
     for (let index = 0; index < kept.length; index++) {
       const { origins, deadline: held } = kept[index];
-      if (held.kind !== deadline.kind) continue;
-      if (isDateOnlyDeadline(held) !== isDateOnlyDeadline(deadline)) continue;
+      if (held.kind !== deadline.kind || held.round !== deadline.round) continue;
+      if (deadlineSlotKey(held) !== deadlineSlotKey(deadline)) continue;
       const gap =
         isDateOnlyDeadline(held) && isDateOnlyDeadline(deadline)
           ? held.local_date === deadline.local_date
             ? 0
             : Number.POSITIVE_INFINITY
-          : isExactDeadline(held) && isExactDeadline(deadline)
-            ? Math.abs(held.at_utc.getTime() - deadline.at_utc.getTime()) / 1000
-            : Number.POSITIVE_INFINITY;
+          : isDateOnlyDeadline(held) && isExactDeadline(deadline)
+            ? exactInsideDateOnly(deadline, held)
+              ? 0
+              : Number.POSITIVE_INFINITY
+            : isExactDeadline(held) && isDateOnlyDeadline(deadline)
+              ? exactInsideDateOnly(held, deadline)
+                ? 0
+                : Number.POSITIVE_INFINITY
+              : isExactDeadline(held) && isExactDeadline(deadline)
+                ? Math.abs(held.at_utc.getTime() - deadline.at_utc.getTime()) / 1000
+                : Number.POSITIVE_INFINITY;
       if (origins.has(source)) {
         if (gap !== 0 || normLabel(held.label) !== normLabel(deadline.label)) continue;
       } else {
@@ -340,7 +358,35 @@ function dedupDeadlines(
     entry.deadline = absorb(entry.deadline, deadline, sameSource, source);
     tally.merged_deadlines += 1;
   }
-  const out = kept.map((k) => k.deadline);
+  const consolidated: Array<{ origins: Set<string>; deadline: Deadline }> = [];
+  for (const entry of kept) {
+    const matching = consolidated.find(
+      (held) =>
+        deadlineSlotKey(held.deadline) === deadlineSlotKey(entry.deadline) &&
+        isExactDeadline(held.deadline) &&
+        isExactDeadline(entry.deadline),
+    );
+    if (!matching) {
+      consolidated.push(entry);
+      continue;
+    }
+    const incoming = entry.deadline;
+    const source = [...entry.origins].sort(cmpStr)[0] ?? "unknown";
+    const at = isExactDeadline(incoming)
+      ? incoming.at_utc
+      : dateOnlyWindow(incoming.local_date)?.earliestPossibleUtc;
+    if (at) {
+      matching.deadline = {
+        ...matching.deadline,
+        conflicts: [
+          ...(matching.deadline.conflicts ?? []),
+          { at_utc: at, label: incoming.label, source, raw_value: incoming.raw_value },
+        ],
+      } as Deadline;
+    }
+    tally.merged_deadlines += 1;
+  }
+  const out = consolidated.map((k) => k.deadline);
   out.sort(
     (a, b) =>
       a.round - b.round ||
@@ -357,6 +403,7 @@ function absorb(
   sameSource: boolean,
   loserSource: string,
 ): Deadline {
+  const evidence = mergeEvidence(winner.evidence, loser.evidence);
   const notes: string[] = [];
   if (winner.comment) notes.push(winner.comment);
   if (loser.comment && !notes.includes(loser.comment)) notes.push(loser.comment);
@@ -372,9 +419,36 @@ function absorb(
   }
   const comment = notes.length > 0 ? notes.join(" / ") : null;
   const round = sameSource ? winner.round : Math.max(winner.round, loser.round);
+  if (isDateOnlyDeadline(winner) && isExactDeadline(loser)) {
+    return {
+      ...loser,
+      comment,
+      selection_rule: DEADLINE_SELECTION_RULE,
+      ...(evidence.length > 0 ? { evidence } : {}),
+    };
+  }
+  if (isExactDeadline(winner) && isDateOnlyDeadline(loser)) {
+    return {
+      ...winner,
+      comment,
+      selection_rule: DEADLINE_SELECTION_RULE,
+      ...(evidence.length > 0 ? { evidence } : {}),
+    };
+  }
   if (isDateOnlyDeadline(winner) && isDateOnlyDeadline(loser)) {
-    if (comment === winner.comment && round === winner.round) return winner;
-    return { ...winner, comment, round, selection_rule: DEADLINE_SELECTION_RULE };
+    if (
+      comment === winner.comment &&
+      round === winner.round &&
+      evidence.length === (winner.evidence?.length ?? 0)
+    )
+      return winner;
+    return {
+      ...winner,
+      comment,
+      round,
+      selection_rule: DEADLINE_SELECTION_RULE,
+      ...(evidence.length > 0 ? { evidence } : {}),
+    };
   }
   if (!isExactDeadline(winner) || !isExactDeadline(loser)) return winner;
   const priorConflicts = winner.conflicts ?? [];
@@ -408,7 +482,21 @@ function absorb(
     round,
     selection_rule: DEADLINE_SELECTION_RULE,
     ...(conflicts.length > 0 ? { conflicts } : {}),
+    ...(evidence.length > 0 ? { evidence } : {}),
   };
+}
+
+function mergeEvidence(
+  left: DeadlineEvidence[] | undefined,
+  right: DeadlineEvidence[] | undefined,
+): DeadlineEvidence[] {
+  const seen = new Set<string>();
+  return [...(left ?? []), ...(right ?? [])].filter((item) => {
+    const key = JSON.stringify(item);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function deadlineSortTime(deadline: Deadline): number {
@@ -597,7 +685,8 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
       "deadlines" in patch ||
       "deadline" in patch ||
       "paper_deadline" in patch ||
-      "abstract_deadline" in patch
+      "abstract_deadline" in patch ||
+      (patch.mode === "merge-slots" && Array.isArray(patch.remove))
     ) {
       // 置換 (延長・訂正): 上流の古い締切を残さず差し替える (SPEC.md 3.5)。
       // ただし全行棄却のパッチ (timezone 欠落・曖昧で parseInstant が全滅) は
@@ -605,8 +694,32 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
       // 明示的な空は
       // clear_deadlines: true でのみ可能。
       const semantics = patchDeadlineSemantics(patch);
-      if (semantics.action === "replace") {
-        next.deadlines = semantics.accepted;
+      const hasRemoval = patch.mode === "merge-slots" && Array.isArray(patch.remove);
+      if (semantics.action === "replace" || hasRemoval) {
+        const removals: DeadlineSlotObservation[] = Array.isArray(patch.remove)
+          ? patch.remove
+              .filter((item): item is Record<string, unknown> =>
+                Boolean(item && typeof item === "object"),
+              )
+              .map((item) => ({
+                kind: (KINDS as readonly string[]).includes(String(item.kind))
+                  ? (String(item.kind) as Deadline["kind"])
+                  : "other",
+                label: String(item.label ?? item.kind ?? "other"),
+                round: Number(item.round ?? 1) || 1,
+                ...(typeof item.track === "string" && item.track.trim()
+                  ? { track: slug(item.track) }
+                  : {}),
+                precision: "date-only" as const,
+                local_date: "1970-01-01",
+                comment: null,
+                remove: true,
+              }))
+          : [];
+        next.deadlines =
+          patch.mode === "merge-slots"
+            ? mergeDeadlineSlots(next.deadlines, [...semantics.accepted, ...removals])
+            : semantics.accepted;
       } else if (semantics.action === "clear") {
         next.deadlines = [];
       }
@@ -673,6 +786,111 @@ function fillEventFromDateText(edition: Edition): void {
   const [start, end] = parseDateRange(edition.date_text, edition.year);
   if (start) edition.event_start = start;
   if (end) edition.event_end = end;
+}
+
+/** Logical deadline slot: kind + round + normalized non-generic track. */
+export function deadlineSlotKey(deadline: Deadline): string {
+  const kind = deadline.kind || "other";
+  return [
+    kind,
+    String(deadline.round || 1),
+    deadlineTrackKey(deadline.label, kind, deadline.track),
+  ].join("\0");
+}
+
+function exactInsideDateOnly(exact: Deadline, dateOnly: Deadline): boolean {
+  if (!isExactDeadline(exact) || !isDateOnlyDeadline(dateOnly)) return false;
+  const window = dateOnlyWindow(dateOnly.local_date);
+  return Boolean(
+    window &&
+      exact.at_utc.getTime() >= window.earliestPossibleUtc.getTime() &&
+      exact.at_utc.getTime() <= window.latestPossibleUtc.getTime(),
+  );
+}
+
+/** Apply primary observations slot-by-slot without letting lower precision erase exact data. */
+export type DeadlineSlotObservation = Deadline & { remove?: boolean };
+
+export function mergeDeadlineSlots(
+  existing: Deadline[],
+  observed: DeadlineSlotObservation[],
+): Deadline[] {
+  const out = [...existing];
+  for (const incoming of observed) {
+    const index = out.findIndex((held) => deadlineSlotKey(held) === deadlineSlotKey(incoming));
+    if (incoming.remove) {
+      if (index >= 0) out.splice(index, 1);
+      continue;
+    }
+    if (index < 0) {
+      out.push(incoming);
+      continue;
+    }
+    const held = out[index];
+    if (isExactDeadline(held) && isDateOnlyDeadline(incoming)) {
+      if (!exactInsideDateOnly(held, incoming)) {
+        out[index] = {
+          ...held,
+          conflicts: [
+            ...(held.conflicts ?? []),
+            {
+              at_utc: new Date(`${incoming.local_date}T00:00:00Z`),
+              local_date: incoming.local_date,
+              label: incoming.label,
+              source: "primary",
+            },
+          ],
+        };
+      }
+      continue;
+    }
+    if (isDateOnlyDeadline(held) && isExactDeadline(incoming)) {
+      if (exactInsideDateOnly(incoming, held)) {
+        const evidence = mergeEvidence(incoming.evidence, held.evidence);
+        out[index] = {
+          ...incoming,
+          precision: "exact",
+          ...(evidence.length > 0 ? { evidence } : {}),
+        };
+      } else {
+        out[index] = {
+          ...held,
+          conflicts: [
+            ...(held.conflicts ?? []),
+            { at_utc: incoming.at_utc, label: incoming.label, source: "primary" },
+          ],
+        } as Deadline;
+      }
+      continue;
+    }
+    if (
+      (isExactDeadline(held) &&
+        isExactDeadline(incoming) &&
+        held.at_utc.getTime() !== incoming.at_utc.getTime()) ||
+      (isDateOnlyDeadline(held) &&
+        isDateOnlyDeadline(incoming) &&
+        held.local_date !== incoming.local_date)
+    ) {
+      out[index] = {
+        ...held,
+        conflicts: [
+          ...(held.conflicts ?? []),
+          {
+            at_utc: isExactDeadline(incoming)
+              ? incoming.at_utc
+              : new Date(`${incoming.local_date}T00:00:00Z`),
+            ...(isDateOnlyDeadline(incoming) ? { local_date: incoming.local_date } : {}),
+            label: incoming.label,
+            source: "primary",
+          },
+        ],
+      } as Deadline;
+      continue;
+    }
+    const evidence = mergeEvidence(incoming.evidence, held.evidence);
+    out[index] = { ...incoming, ...(evidence.length > 0 ? { evidence } : {}) };
+  }
+  return out.sort((a, b) => deadlineSortTime(a) - deadlineSortTime(b) || cmpStr(a.kind, b.kind));
 }
 
 // --------------------------------------------------------------------------

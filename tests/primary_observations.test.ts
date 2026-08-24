@@ -47,7 +47,7 @@ describe("extractObservationTime", () => {
 });
 
 describe("resolvePrimaryObservations (#504 acceptance)", () => {
-  it("AC1: date-only evidence never becomes a second-level deadline", () => {
+  it("AC1: date-only evidence is retained as a first-class observation", () => {
     const warnSpy = spyWarn();
     try {
       const primary = {
@@ -65,10 +65,18 @@ describe("resolvePrimaryObservations (#504 acceptance)", () => {
       };
       const resolved = resolvePrimaryObservations(primary);
       const edition = resolvedEditions(resolved, "setta")[2026];
-      // deadlines キーごと消える → applyOverrides はメタデータのみパッチする
-      expect("deadlines" in edition).toBe(false);
+      expect(edition.mode).toBe("merge-slots");
+      expect(edition.deadlines).toEqual([
+        {
+          kind: "paper",
+          label: "Paper submission",
+          date: "2026-10-10",
+          precision: "date-only",
+          round: 1,
+        },
+      ]);
       expect(edition.link).toBe("https://example.org/setta26");
-      expect(warnSpy).toHaveBeenCalled();
+      expect(warnSpy).not.toHaveBeenCalled();
     } finally {
       warnSpy.mockRestore();
     }
@@ -308,6 +316,34 @@ describe("resolvePrimaryObservations (#504 acceptance)", () => {
     ]);
   });
 
+  it("preserves explicit track and passes an explicit removal list to merge-slots", () => {
+    const resolved = resolvePrimaryObservations({
+      conferences: {
+        tracked: {
+          editions: {
+            2027: {
+              deadlines: [{ kind: "paper", label: "Paper", track: "industry", date: "2026-10-01" }],
+              remove: [{ kind: "paper", label: "Paper", track: "regular" }],
+            },
+          },
+        },
+      },
+    });
+    const edition = resolvedEditions(resolved, "tracked")[2027];
+    expect(edition.mode).toBe("merge-slots");
+    expect(edition.remove).toEqual([{ kind: "paper", label: "Paper", track: "regular" }]);
+    expect(edition.deadlines).toEqual([
+      {
+        kind: "paper",
+        label: "Paper",
+        track: "industry",
+        date: "2026-10-01",
+        precision: "date-only",
+        round: 1,
+      },
+    ]);
+  });
+
   it("mixed quality: verified rows replace, unverifiable rows are dropped", () => {
     const primary = {
       conferences: {
@@ -334,9 +370,10 @@ describe("resolvePrimaryObservations (#504 acceptance)", () => {
       const resolved = resolvePrimaryObservations(primary);
       const edition = resolvedEditions(resolved, "mix")[2026];
       const dl = edition.deadlines as unknown[] | undefined;
-      expect(dl).toHaveLength(1);
+      expect(dl).toHaveLength(2);
       const first = dl?.[0] as Record<string, string> | undefined;
       expect(first?.kind).toBe("abstract");
+      expect((dl?.[1] as Record<string, string> | undefined)?.precision).toBe("date-only");
       expect(warnSpy).toHaveBeenCalled();
     } finally {
       warnSpy.mockRestore();

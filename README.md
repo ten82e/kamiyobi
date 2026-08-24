@@ -45,7 +45,7 @@
 - **AI による意味検索の補助**: 会議スコープはビルド時に all-MiniLM-L6-v2 で埋め込み済み（`embeddings.json`）。ブラウザで transformers.js が使える環境では、論文入力との意味類似度を計算し、入力言語と内容語数に応じた重みで語彙スコアと合成する。CDN が使えない環境では語彙検索のみで動作する。
 - 埋め込みが未提供・不正・古い場合は、画面に意味検索が利用できず、語彙検索のみ有効であることを表示する。締切一覧はこの状態でも利用できる。
 - AI 補助の実行時処理とモデル取得は固定 URL の外部接続を使う。接続できない場合も語彙検索と TXT 入力は継続する。
-- 適合度は、分野シグナル・会議名・領域タグとの語彙一致と掲載先タグの合算。スコアリングの実装は `site/recommender.js` で、`tests/recommender.test.ts` が実データで回帰検証する。
+- 適合度は、分野シグナル・会議名・領域タグとの語彙一致と掲載先タグの合算。スコアリングの正本は `site/recommender.ts` で、ビルド時に `recommender.js` を生成する。`tests/recommender.test.ts` が実データで回帰検証する。
 
 ## データ源とライセンス
 
@@ -108,12 +108,13 @@ node src/cli.ts review
 
 `.github/workflows/update.yml` が毎日 20:17 UTC（05:17 JST）に動く。
 上流を丸ごと取得して正規化し、`public/` に出力を作り、GitHub Pages に配信する。
-同時に `data/snapshot.json` を更新してコミットする。
+全上流が fresh の場合だけ `data/snapshot.json` を更新する。
+データに実質差分があれば専用 branch へ一度 push し、PR を作成する。main へ直接 commit しない。
 このスナップショットは上流が落ちたときの退避先を兼ねており、取得に失敗した日は前回の内容から生成を続ける。
 スナップショットでも補えないほど収集が縮退した日は、ビルドが非ゼロで終了して配信を行わない。
 その日は前回配信した内容がそのまま残る（縮退した内容で上書きすると、公開データが消えるため）。
 
-自動コミットは `github-actions[bot]` 名義で、メッセージに `[skip ci]` が付く。
+自動 PR の commit は `github-actions[bot]` 名義で、通常の CI をすべて実行する。
 
 公開リポジトリでは、60 日間リポジトリの活動が無いとスケジュール実行が自動で無効化される（[GitHub の公式文書](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows)）。
 対策は上のスナップショット更新の副次効果だけである。
@@ -122,10 +123,10 @@ bot のコミットが「活動」に数えられるかは公式文書に記載�
 停止された場合は、リポジトリの Actions タブから `update` ワークフローを開き、`Run workflow`（`workflow_dispatch`）で手動実行すると再び有効になる。
 
 `.github/workflows/ci.yml` は push と pull request で動く。
-`test` ジョブは外部ネットワークに接続せず、`tests/fixtures/` と `data/snapshot.json` を使って型検査、静的検査、単体テスト、オフラインビルドを行う。
+七つの job が、型検査、静的検査、テスト、オフラインビルド、データ意味検査、health 遷移、推薦回帰を独立して報告する。
+外部上流には接続せず、`tests/fixtures/` と `data/snapshot.json` を使う。
 上流データの取得、配信前の健全性検査、候補探索は、日次の `.github/workflows/update.yml` が行う。
-`ci.yml` は `paths-ignore` を使っており、`data/snapshot.json` だけを変えるコミットではジョブがスキップされる。
-スキップされたジョブは必須チェック（required check）として Pending のまま残るため、ブランチ保護を掛ける場合はこれらを必須チェックに指定しない。
+七つの job は変更ファイルにかかわらず実行し、main の必須チェック（required check）に指定する。
 
 ### 初回セットアップ
 

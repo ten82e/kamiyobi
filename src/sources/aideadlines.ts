@@ -11,6 +11,7 @@ import {
   type Conference,
   type Deadline,
   type DeadlineKind,
+  deadlineEvidence,
   type Edition,
   embeddedTimezone,
   kindOf,
@@ -100,6 +101,7 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
   if (!raw || typeof raw !== "object") return [];
   const out: Deadline[] = [];
   const parentTz = String(raw.timezone ?? raw.tz ?? "");
+  const sourceUrl = String(raw.link ?? raw.url ?? "");
   const entries = raw.deadlines;
   if (Array.isArray(entries)) {
     for (const entry of entries) {
@@ -120,6 +122,12 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
         round: roundOf(label),
         comment: rec.comment === null || rec.comment === undefined ? null : String(rec.comment),
         raw_value: String(rec.date),
+        evidence: deadlineEvidence(rec.evidence ?? raw.evidence, {
+          sourceName: NAME,
+          sourceClass: "aggregator",
+          sourceUrl,
+          originalValue: String(rec.date),
+        }),
       });
     }
     if (out.length > 0) return out;
@@ -136,6 +144,12 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
         round: 1,
         comment: null,
         raw_value: String(raw[key]),
+        evidence: deadlineEvidence(raw.evidence, {
+          sourceName: NAME,
+          sourceClass: "aggregator",
+          sourceUrl,
+          originalValue: String(raw[key]),
+        }),
       });
     }
   }

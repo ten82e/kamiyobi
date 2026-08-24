@@ -4,11 +4,13 @@
  */
 
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
+  readFileSync,
   renameSync,
   rmSync,
   statSync,
@@ -20,6 +22,70 @@ import { warn } from "../model.ts";
 
 export const USER_AGENT = "kamiyobi/1.0 (+https://github.com/ten82e/kamiyobi; node)";
 export const CODELOAD = "https://codeload.github.com/{repo}/tar.gz/refs/heads/{ref}";
+
+export interface FetchMetadata {
+  status: "fresh" | "cache-fallback";
+  revision: string | null;
+  fetchedAt: string | null;
+  contentHash: string | null;
+  cacheAgeSeconds: number | null;
+}
+const fetchMetadata = new Map<string, FetchMetadata>();
+const metadataKey = (repo: string, ref: string): string => `${repo}@${ref}`;
+const CACHE_METADATA = ".kamiyobi-source.json";
+
+type CachedFetchMetadata = Pick<FetchMetadata, "revision" | "fetchedAt" | "contentHash">;
+
+function cacheMetadataPath(slot: string): string {
+  return join(slot, CACHE_METADATA);
+}
+
+/** Read only explicit cache provenance; legacy caches remain honestly unknown. */
+export function cacheMetadata(slot: string): CachedFetchMetadata | null {
+  try {
+    const value = JSON.parse(readFileSync(cacheMetadataPath(slot), "utf8")) as CachedFetchMetadata;
+    if (
+      (value.revision !== null && typeof value.revision !== "string") ||
+      (value.fetchedAt !== null && typeof value.fetchedAt !== "string") ||
+      (value.contentHash !== null && typeof value.contentHash !== "string")
+    ) {
+      return null;
+    }
+    return value;
+  } catch {
+    return null;
+  }
+}
+
+export function writeCacheMetadata(slot: string, value: CachedFetchMetadata): void {
+  writeFileSync(cacheMetadataPath(slot), `${JSON.stringify(value)}\n`, "utf8");
+}
+
+function cacheAgeSeconds(root: string, fetchedAt: string | null): number | null {
+  const fetched = fetchedAt ? Date.parse(fetchedAt) : Number.NaN;
+  const origin = Number.isFinite(fetched) ? fetched : statSync(root).mtimeMs;
+  return Math.max(0, Math.floor((Date.now() - origin) / 1000));
+}
+
+function setMetadata(
+  repo: string,
+  ref: string,
+  root: string,
+  status: FetchMetadata["status"],
+): void {
+  const saved = cacheMetadata(join(root, ".."));
+  fetchMetadata.set(metadataKey(repo, ref), {
+    status,
+    revision: saved?.revision ?? null,
+    fetchedAt: saved?.fetchedAt ?? null,
+    contentHash: saved?.contentHash ?? null,
+    cacheAgeSeconds: cacheAgeSeconds(root, saved?.fetchedAt ?? null),
+  });
+}
+
+export function fetchMetadataFor(repo: string, ref: string): FetchMetadata | null {
+  return fetchMetadata.get(metadataKey(repo, ref)) ?? null;
+}
 
 export function cacheSlot(
   cacheDir: string | null | undefined,
@@ -50,7 +116,19 @@ export function extractedRoot(slot: string | null | undefined): string | null {
   }
 }
 
-async function download(url: string, dest: string): Promise<void> {
+export function archiveMetadata(
+  bytes: Uint8Array,
+  etag: string | null = null,
+): CachedFetchMetadata {
+  const contentHash = createHash("sha256").update(bytes).digest("hex");
+  return {
+    revision: etag ?? `sha256:${contentHash}`,
+    fetchedAt: new Date().toISOString(),
+    contentHash,
+  };
+}
+
+async function download(url: string, dest: string): Promise<CachedFetchMetadata> {
   const response = await fetch(url, {
     headers: { "User-Agent": USER_AGENT },
     redirect: "follow",
@@ -60,6 +138,9 @@ async function download(url: string, dest: string): Promise<void> {
   }
   const buffer = Buffer.from(await response.arrayBuffer());
   writeFileSync(dest, buffer);
+  // GitHub's ETag is a stable response revision where offered; archive bytes
+  // are the deterministic identity when it is not.
+  return archiveMetadata(buffer, response.headers.get("etag"));
 }
 
 /**
@@ -81,6 +162,7 @@ export async function fetchTarball(
     if (cached === null) {
       throw new Error(`no cached copy of ${repo}@${ref} under ${cacheDir}`);
     }
+    setMetadata(repo, ref, cached, "cache-fallback");
     return cached;
   }
 
@@ -89,7 +171,7 @@ export async function fetchTarball(
   const tmp = mkdtempSync(join(cacheDir, ".fetch-"));
   try {
     const archive = join(tmp, "archive.tar.gz");
-    await download(url, archive);
+    const metadata = await download(url, archive);
     const staging = join(tmp, "x");
     mkdirSync(staging);
     // system tar is guaranteed on ubuntu-latest and macOS runners.
@@ -99,9 +181,11 @@ export async function fetchTarball(
     }
     if (existsSync(slot)) rmSync(slot, { recursive: true });
     renameSync(staging, slot);
+    writeCacheMetadata(slot, metadata);
   } catch (exc) {
     if (cached !== null) {
       warn(`fetch of ${repo}@${ref} failed (${String(exc)}); using cached copy`);
+      setMetadata(repo, ref, cached, "cache-fallback");
       return cached;
     }
     throw exc;
@@ -113,6 +197,7 @@ export async function fetchTarball(
   if (root === null) {
     throw new Error(`unexpected tarball layout for ${repo}@${ref}`);
   }
+  setMetadata(repo, ref, root, "fresh");
   return root;
 }
 

@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { writePublishManifest } from "../src/build.ts";
+import { publishBuildId, writePublishManifest } from "../src/build.ts";
 import {
   EMBEDDING_DIM,
   EMBEDDING_MODEL,
@@ -36,13 +36,15 @@ describe("publish manifest", () => {
     })();
 
     expect(first).toEqual({
-      schema_version: 1,
+      schema_version: 2,
       generated_at: "2026-08-09T00:00:00.000Z",
       semantic_status: "lexical-only",
       artifacts: {
         "a.txt": { bytes: 5, sha256: sha256("alpha") },
         "b.txt": { bytes: 4, sha256: sha256("beta") },
       },
+      build_id: publishBuildId(NOW, ""),
+      profile_hash: "",
     });
     expect(firstText).toBe(secondText);
   });

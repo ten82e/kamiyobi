@@ -53,6 +53,7 @@ export function runHealthGate(argv: string[]): number {
       ? (JSON.parse(readFileSync(args.previousPath!, "utf8")) as HealthReport)
       : null;
     const result = evaluateHealthGate(current, previous);
+    for (const warning of result.warnings) console.warn(`health gate warning: ${warning}`);
     if (!result.ok) {
       console.error(`health gate blocked deployment: ${result.reasons.join("; ")}`);
       return 1;

@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "ES2022",
+    "moduleResolution": "Bundler",
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "outDir": "../.site-build",
+    "rootDir": "."
+  },
+  "include": ["app.ts", "recommender.ts", "recommendation-core.ts", "publish.ts", "runtime.d.ts"]
+}

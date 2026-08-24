@@ -14,6 +14,7 @@ import { runHealthGate } from "../scripts/health-gate.ts";
 import type { HealthDeadlineRef, HealthReport } from "../src/build.ts";
 import {
   buildAll,
+  compileSiteRuntime,
   DEFAULT_CATEGORIES,
   deadlineSlotId,
   embeddingsStale,
@@ -57,6 +58,16 @@ import {
 
 let site: string;
 let data: Record<string, any>;
+let compiledRuntime: ReturnType<typeof compileSiteRuntime> | null = null;
+
+function siteRuntime(name: keyof ReturnType<typeof compileSiteRuntime> = "app.js"): string {
+  compiledRuntime ??= compileSiteRuntime();
+  return compiledRuntime[name];
+}
+
+function siteHtmlRuntime(): string {
+  return `${readFileSync(join(site, "index.html"), "utf8")}\n${siteRuntime()}`;
+}
 
 beforeAll(() => {
   const outdir = join(mkdtempSync(join(tmpdir(), "cfp-site-")), "public");
@@ -195,10 +206,13 @@ it("toJson preserves deadline evidence, conflicts, and selection rule", () => {
   expect(deadline.evidence[0]).toMatchObject({
     source_name: "aideadlines",
     source_url: "https://example.org/aideadlines",
-    observed_at: "2026-08-09T00:00:00Z",
+    observed_at: "",
     original_value: "September 1, 2026 23:59 UTC",
     confidence: "aggregator",
   });
+  expect(deadline.evidence[0]).not.toHaveProperty("retrievedAt");
+  expect(deadline.evidence[0]).not.toHaveProperty("verifiedAt");
+  expect(deadline.evidence[0]).not.toHaveProperty("contentHash");
   expect(deadline.conflicts[0]).toMatchObject({
     at_utc: "2026-08-31T00:00:00Z",
     original_value: "2026-08-31T23:59:00Z",
@@ -315,7 +329,7 @@ it("evaluateHealthGate covers normal updates and every fail-closed regression", 
       {
         ...previous,
         source_failures: ["ccfddl"],
-        source_status: { ccfddl: "failed" },
+        source_status: { ccfddl: "snapshot-fallback" },
         snapshot_fallback: true,
       },
       previous,
@@ -500,6 +514,15 @@ it("evaluateHealthGate matches deadline slots independently of timestamps", () =
   const workshop = deadlineSlotId("rtss", "rtss26w", "paper", 1, "workshop-paper");
   const industry = deadlineSlotId("rtss", "rtss26", "paper", 1, "industry");
   const industryTrack = deadlineSlotId("rtss", "rtss26", "paper", 1, "industry-track");
+  const priorEvidence = {
+    sourceClass: "official-cfp" as const,
+    sourceUrl: "https://example.test/cfp",
+    sourceRevision: "r1",
+    contentHash: "old",
+    retrievedAt: "2026-08-01T00:00:00Z",
+    verifiedAt: "2026-08-01T00:00:00Z",
+    verifiedFields: ["date", "time", "timezone"] as Array<"date" | "time" | "timezone">,
+  };
   const base: HealthReport = {
     schema_version: HEALTH_SCHEMA_VERSION,
     generated_at: "2026-08-09T00:00:00Z",
@@ -521,7 +544,7 @@ it("evaluateHealthGate matches deadline slots independently of timestamps", () =
     category_counts: { systems: 1 },
     required_venues: {},
     output_files: {},
-    deadline_refs: [slot(paper1, "2026-09-01T00:00:00.000Z")],
+    deadline_refs: [slot(paper1, "2026-09-01T00:00:00.000Z", { evidence: [priorEvidence] })],
   };
   const withRefs = (
     refs: HealthDeadlineRef[],
@@ -543,7 +566,19 @@ it("evaluateHealthGate matches deadline slots independently of timestamps", () =
   );
   expect(
     evaluateHealthGate(
-      withRefs([slot(paper1, "2026-08-31T00:00:00.000Z", { evidence_hash: "official-1" })]),
+      withRefs([
+        slot(paper1, "2026-08-31T00:00:00.000Z", {
+          evidence: [
+            {
+              ...priorEvidence,
+              sourceRevision: "r2",
+              contentHash: "new",
+              retrievedAt: "2026-08-10T00:00:00Z",
+              verifiedAt: "2026-08-10T00:00:00Z",
+            },
+          ],
+        }),
+      ]),
       base,
     ).ok,
   ).toBe(true);
@@ -580,7 +615,7 @@ it("evaluateHealthGate matches deadline slots independently of timestamps", () =
       withRefs([slot(industryTrack, "2026-09-01T00:00:00.000Z")]),
       withRefs([slot(industry, "2026-09-01T00:00:00.000Z")]),
     ).ok,
-  ).toBe(true);
+  ).toBe(false);
 
   expect(
     evaluateHealthGate(withRefs([slot(paper1, "2026-09-08T00:00:00.000Z")]), {
@@ -591,14 +626,14 @@ it("evaluateHealthGate matches deadline slots independently of timestamps", () =
         { id: "rtss|2026|paper|2026-09-01T00:00:00.000Z", at_utc: "2026-09-01T00:00:00.000Z" },
       ],
     }).ok,
-  ).toBe(true);
+  ).toBe(false);
 
   expect(
     evaluateHealthGate(
       withRefs([{ deadline_id: paper1, local_date: "2026-08-31", edition_year: 2026 }]),
       withRefs([slot(paper1, "2026-09-01T11:59:00.000Z")]),
     ).ok,
-  ).toBe(true);
+  ).toBe(false);
 });
 
 it("scheduled deployments require a usable baseline", () => {
@@ -611,7 +646,11 @@ it("generated health files describe the deterministic build", () => {
     schema_version: HEALTH_SCHEMA_VERSION,
     generated_at: "2026-08-09T00:00:00Z",
     tracked_venues: data.conferences.length,
-    source_status: { ccfddl: "success", aideadlines: "success", local: "success" },
+    source_status: {
+      ccfddl: "cache-fallback",
+      aideadlines: "cache-fallback",
+      local: "fresh",
+    },
   });
   expect(Array.isArray(report.deadline_refs)).toBe(true);
   for (const ref of report.deadline_refs) {
@@ -647,9 +686,11 @@ it("build is deterministic", () => {
 }, 300_000);
 
 it("publishes the same browser runtime that the site typecheck validates", () => {
-  expect(readFileSync(join(site, "app.js"))).toEqual(
-    readFileSync(join(REPO_ROOT, "site", "app.js")),
-  );
+  for (const name of Object.keys(compileSiteRuntime()) as Array<
+    keyof ReturnType<typeof compileSiteRuntime>
+  >) {
+    expect(readFileSync(join(site, name), "utf8")).toEqual(siteRuntime(name));
+  }
 });
 
 // --- data.json -------------------------------------------------------------
@@ -1066,7 +1107,7 @@ it("SPEC §2 tree documents every src / site / data yaml / scripts ts file (#378
     ...readdirSync(join(REPO_ROOT, "scripts")).filter((f) => f.endsWith(".ts")),
   ];
   expect(names).toContain("bench-recommender.ts");
-  expect(names).toContain("recommender.js");
+  expect(names).toContain("recommender.ts");
   expect(names).toContain("primary.yaml");
   expect(names).toContain("compare-head.ts");
   for (const name of names) {
@@ -1093,7 +1134,7 @@ it("index.html has the data injected", () => {
   const text = readFileSync(join(site, "index.html"), "utf8");
   expect(text).not.toContain("/*__DATA__*/null");
   expect(text).toContain("conferences");
-  expect(readFileSync(join(site, "app.js"), "utf8")).toContain("__KAMIYOBI_DATA__");
+  expect(siteRuntime()).toContain("__KAMIYOBI_DATA__");
 });
 
 it("build splits catalog, recommendation, and historical payloads (#468)", () => {
@@ -1135,13 +1176,10 @@ it("conferences without deadlines keep their meeting dates", () => {
 });
 
 it("index.html has no meeting rows", () => {
-  const html =
-    readFileSync(join(site, "index.html"), "utf8") +
-    "\n" +
-    readFileSync(join(site, "app.js"), "utf8");
+  const html = siteHtmlRuntime();
   expect(html).not.toContain('event: "開催"');
   expect(html).toContain("KIND_LABEL[r.kind]");
-  expect(html).toMatch(/r\.kind !== "abstract" && r\.kind !== "paper"/);
+  expect(html).toMatch(/r\.kind !== "abstract"\s*&&\s*r\.kind !== "paper"/);
   for (const title of ["ISC High Performance", "HOTI", "情報処理学会 HPC 研究会"]) {
     expect(html).toContain(title);
   }
@@ -1156,23 +1194,17 @@ it("SPEC §8 no longer claims meeting-only conferences appear as index.html rows
 });
 
 it("index.html 7d preset uses a real 7-day window", () => {
-  const html =
-    readFileSync(join(site, "index.html"), "utf8") +
-    "\n" +
-    readFileSync(join(site, "app.js"), "utf8");
+  const html = siteHtmlRuntime();
   // 「締切直近 (7日以内)」プリセットは 7 日窓で動作し、ドロップダウンに 7d がある
   expect(html).toContain("applyPreset('7d')");
-  expect(html).toContain("if (type === '7d') state.win = \"7d\";");
+  expect(html).toMatch(/if\s*\(type\s*===\s*["']7d["']\)\s*state\.win\s*=\s*["']7d["']/);
   expect(html).toContain('value="7d">直近 7 日以内</option>');
   // 30 日窓への偽代入が残っていない（回帰防止）
-  expect(html).not.toContain("if (type === '7d') state.win = \"30d\";");
+  expect(html).not.toMatch(/if\s*\(type\s*===\s*["']7d["']\)\s*state\.win\s*=\s*["']30d["']/);
 });
 
 it("index.html has domestic filter and tag", () => {
-  const html =
-    readFileSync(join(site, "index.html"), "utf8") +
-    "\n" +
-    readFileSync(join(site, "app.js"), "utf8");
+  const html = siteHtmlRuntime();
   expect(html).toContain('id="domestic"');
   expect(html).toContain("domestic-jp");
   expect(html).toContain('textContent = "国内"');
@@ -1514,9 +1546,20 @@ function jsFunction(html: string, name: string): string {
   }
 }
 
+// filter() is extracted from the emitted module; provide only its explicit module dependencies.
+const FILTER_RUNTIME_STUBS = [
+  "let _lastIsJp = false, _lastLen = 0, semQuery = null, semEmbeddings = null;",
+  "const activeData = { conferences: [] };",
+  "const Recommender = { parsePaperLines: (text) => text ? [{ title: text }] : [], hasJapanese: () => false, contentWordCount: () => 0, autoDetectCats: () => [], venueCategories: () => [], journalRows: () => [], pastRepresentatives: () => [], rankMatches: (pairs, rank) => pairs.includes(rank), venueRecommendations: (rows) => rows.map((row) => ({ row, boosted: false, match: null, availability: null, fit: { score: 10, lexicalScore: 10, label: '', lexicalRank: 0, semanticRank: 0, semanticScore: 0 } })), comparePapers: () => 0 };",
+].join("\n");
+
 it("browser date-only state is independent of the viewer timezone", () => {
-  const app = readFileSync(join(site, "app.js"), "utf8");
+  const app = siteRuntime();
   const script = [
+    // buildRows is a typed runtime delegation; its dependency is supplied
+    // explicitly here so this evaluates the emitted app module, not removed
+    // site/app.js source text.
+    "const Recommender = { candidateRows: (data) => { const dl = data.conferences[0].editions[0].deadlines[0]; return [{ dateOnly: true, localDate: dl.local_date, t: Date.parse(dl.earliest_utc), tLast: Date.parse(dl.latest_utc) }]; } };",
     jsFunction(app, "buildRows"),
     jsFunction(app, "rowDateOnlyState"),
     jsFunction(app, "rowIsPast"),
@@ -1544,10 +1587,7 @@ it("browser date-only state is independent of the viewer timezone", () => {
 });
 
 it("default filter shows only submission deadlines", () => {
-  const html =
-    readFileSync(join(site, "index.html"), "utf8") +
-    "\n" +
-    readFileSync(join(site, "app.js"), "utf8");
+  const html = siteHtmlRuntime();
   const filterSrc = jsFunction(html, "filter");
   const script = [
     "const DAY = 86400000;",
@@ -1565,6 +1605,7 @@ it("default filter shows only submission deadlines", () => {
     "}",
     'const rows = ["paper", "abstract", "event", "notification", "camera_ready"].map(row);',
     'const state = { q: "", cats: [], kind: "", rank: "", win: "all", est: false };',
+    FILTER_RUNTIME_STUBS,
     'const filter = new Function("Date", "DAY", "rows", "state", "sortAsc", "sortKey",',
     '                            "return (" + FILTER + ")")(FakeDate, DAY, rows, state, false, "time");',
     "console.log(JSON.stringify(filter().map(r => r.kind)));",
@@ -1575,10 +1616,7 @@ it("default filter shows only submission deadlines", () => {
 });
 
 it("recommendation filter ignores deadline-only state", () => {
-  const html =
-    readFileSync(join(site, "index.html"), "utf8") +
-    "\n" +
-    readFileSync(join(site, "app.js"), "utf8");
+  const html = siteHtmlRuntime();
   const filterSrc = jsFunction(html, "filter");
   const script = [
     "const DAY = 86400000;",
@@ -1597,6 +1635,7 @@ it("recommendation filter ignores deadline-only state", () => {
     "  row('other', now + 30 * 86400000, 'B', ['systems'], []),",
     "];",
     "const state = { mode: 'deadlines', q: 'topic', cats: ['hpc'], kind: 'paper', rank: 'A', win: '1', est: false, domestic: true, past: false };",
+    FILTER_RUNTIME_STUBS,
     "const filter = new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
     "  'return (' + FILTER + ')')(FakeDate, DAY, rows, state, true, 'rem');",
     "const deadline = filter().length;",
@@ -1611,10 +1650,7 @@ it("recommendation filter ignores deadline-only state", () => {
 });
 
 it("sortable headers are keyboard-operable and expose sort state (aria-sort)", () => {
-  const html =
-    readFileSync(join(site, "index.html"), "utf8") +
-    "\n" +
-    readFileSync(join(site, "app.js"), "utf8");
+  const html = siteHtmlRuntime();
   // 静的検証: ソート可能 4 ヘッダーに tabindex / aria-sort / data-sort がある
   const ths = [...html.matchAll(/<th([^>]*data-sort="([^"]+)"[^>]*)>/g)];
   expect(ths.length).toBe(4);
@@ -1655,10 +1691,7 @@ it("sortable headers are keyboard-operable and expose sort state (aria-sort)", (
 });
 
 it("dark theme via prefers-color-scheme overrides the palette (SPEC §7)", () => {
-  const html =
-    readFileSync(join(site, "index.html"), "utf8") +
-    "\n" +
-    readFileSync(join(site, "app.js"), "utf8");
+  const html = siteHtmlRuntime();
   const style = html.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? "";
   expect(style).toContain("color-scheme: light dark");
   const root = style.match(/:root\s*\{([^}]*)\}/)?.[1] ?? "";
@@ -1688,12 +1721,9 @@ it("dark theme via prefers-color-scheme overrides the palette (SPEC §7)", () =>
 });
 
 it("drawer closes only on ✕ / backdrop click, not on inner elements", () => {
-  const html =
-    readFileSync(join(site, "index.html"), "utf8") +
-    "\n" +
-    readFileSync(join(site, "app.js"), "utf8");
+  const html = siteHtmlRuntime();
   // 静的検証: BUTTON 判定の除去と名前付き関数化がビルド成果に反映されている
-  expect(html).toContain("function closeDrawer(e)");
+  expect(html).toMatch(/function closeDrawer\(e(?:\s*=\s*null)?\)/);
   expect(html).not.toContain('e.target.tagName === "BUTTON"');
   const src = jsFunction(html, "closeDrawer");
   // 実行検証: fake DOM で閉じる / 閉じないの 4 経路を確認する
@@ -1725,10 +1755,7 @@ it("drawer closes only on ✕ / backdrop click, not on inner elements", () => {
 });
 
 it("narrow screens fall back to card layout (SPEC §7)", () => {
-  const html =
-    readFileSync(join(site, "index.html"), "utf8") +
-    "\n" +
-    readFileSync(join(site, "app.js"), "utf8");
+  const html = siteHtmlRuntime();
   // 狭幅向けメディアクエリが存在し、ブレークポイントが 640px 以下
   const mq = html.match(/@media \(max-width: (\d+)px\) \{/);
   expect(mq, "@media (max-width: ...) が存在しない").not.toBeNull();
@@ -1741,10 +1768,7 @@ it("narrow screens fall back to card layout (SPEC §7)", () => {
 });
 
 it("deadline display includes AoE notation (SPEC §7)", () => {
-  const html =
-    readFileSync(join(site, "index.html"), "utf8") +
-    "\n" +
-    readFileSync(join(site, "app.js"), "utf8");
+  const html = siteHtmlRuntime();
   // 静的検証: 表の日時セルとドロワーの両方に AoE 併記がある
   expect(html).toContain('line(c1, fmtAoE(d), "sub nowrap")');
   expect(html).toContain("fmtAoE(new Date(r.t))");
@@ -1763,14 +1787,11 @@ it("deadline display includes AoE notation (SPEC §7)", () => {
 });
 
 it("past-deadline toggle reveals past rows (SPEC §7)", () => {
-  const html =
-    readFileSync(join(site, "index.html"), "utf8") +
-    "\n" +
-    readFileSync(join(site, "app.js"), "utf8");
+  const html = siteHtmlRuntime();
   // 静的検証: トグル UI と URL 状態の配線がある
   expect(html).toContain('id="past"');
   expect(html).toContain('state.past = p.get("past") === "1"');
-  expect(html).toContain('if (state.past) p.set("past", "1");');
+  expect(html).toMatch(/if\s*\(state\.past\)\s*(?:\{\s*)?p\.set\(["']past["'],\s*["']1["']\)/);
   // 実行検証: past=false では過去行が出ず、past=true で出る
   const filterSrc = jsFunction(html, "filter");
   const script = [
@@ -1786,6 +1807,7 @@ it("past-deadline toggle reveals past rows (SPEC §7)", () => {
     "}",
     // 未来の paper と過去の paper
     "const rows = [row(86400000), row(-86400000)];",
+    FILTER_RUNTIME_STUBS,
     "const mk = (past) => new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
     "  'return (' + FILTER + ')')(FakeDate, DAY, rows,",
     "  { q: '', cats: [], kind: '', rank: '', win: 'all', est: false, past: past }, true, 'rem');",
@@ -1797,10 +1819,7 @@ it("past-deadline toggle reveals past rows (SPEC §7)", () => {
 });
 
 it("drawer is a keyboard-operable modal dialog with focus management (#218)", () => {
-  const html =
-    readFileSync(join(site, "index.html"), "utf8") +
-    "\n" +
-    readFileSync(join(site, "app.js"), "utf8");
+  const html = siteHtmlRuntime();
   // 静的検証: dialog セマンティクス・無名アイコンボタンのラベル・キーボード経路・ヒント表記
   expect(html).toContain('role="dialog" aria-modal="true" aria-labelledby="drawerTitle"');
   expect(html).toContain('aria-label="閉じる"');
@@ -1860,10 +1879,7 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
 });
 
 it("global shortcuts respect editable targets and recommendation mode", () => {
-  const html =
-    readFileSync(join(site, "index.html"), "utf8") +
-    "\n" +
-    readFileSync(join(site, "app.js"), "utf8");
+  const html = siteHtmlRuntime();
   const keySrc = jsFunction(html, "onKeydown");
   const script = [
     "const calls = { prevented: 0, focused: 0, opened: 0 };",
@@ -1888,7 +1904,7 @@ it("global shortcuts respect editable targets and recommendation mode", () => {
 });
 
 it("keyboard Enter opens external links with noopener (reverse tabnabbing, #517)", () => {
-  const runtime = readFileSync(join(REPO_ROOT, "site", "app.js"), "utf8");
+  const runtime = siteRuntime();
   // 全 window.open 呼び出しが opener を渡さないこと（第三引数に noopener を含む）
   const opens = runtime.match(/window\.open\([^)]*\)/g) ?? [];
   expect(opens.length).toBeGreaterThan(0);
@@ -1898,10 +1914,7 @@ it("keyboard Enter opens external links with noopener (reverse tabnabbing, #517)
 });
 
 it("meeting past rule is wired to the end date", () => {
-  const html =
-    readFileSync(join(site, "index.html"), "utf8") +
-    "\n" +
-    readFileSync(join(site, "app.js"), "utf8");
+  const html = siteHtmlRuntime();
   expect(html).not.toContain('kind: "event"');
   expect(html).not.toContain('event: "開催"');
 });
@@ -1994,7 +2007,7 @@ it("toLlmsTxt documents outputs and categories correctly", () => {
 
 it("site template statUpcoming counts confirmed submission deadlines only", () => {
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
-  const runtime = readFileSync(join(REPO_ROOT, "site", "app.js"), "utf8");
+  const runtime = siteRuntime();
   expect(template).toMatch(/Content-Security-Policy/);
   expect(template).toMatch(
     /script-src 'self' 'unsafe-inline' https:\/\/cdn\.jsdelivr\.net https:\/\/cdnjs\.cloudflare\.com/,
@@ -2004,24 +2017,31 @@ it("site template statUpcoming counts confirmed submission deadlines only", () =
   );
   expect(template).not.toMatch(/script-src[^>]*\*/);
   // statUpcoming の計算が投稿締切 (abstract/paper) かつ非推定 (!r.est) のみに限定されていること
-  expect(runtime).toContain(
-    'rows.filter((r) => (r.kind === "abstract" || r.kind === "paper") && !r.est',
+  expect(runtime).toMatch(
+    /rows\.filter\(\(r\)\s*=>\s*\(r\.kind\s*===\s*"abstract"\s*\|\|\s*r\.kind\s*===\s*"paper"\)\s*&&\s*!r\.est/,
   );
 });
 
 it("site template lazy-loads recommendation data outside the catalog shell (#468)", () => {
-  const runtime = readFileSync(join(REPO_ROOT, "site", "app.js"), "utf8");
-  expect(runtime).toContain('fetch("recommendation-index.json")');
-  expect(runtime).toContain("setRecommendationProfile(data)");
+  const runtime = siteRuntime();
+  expect(runtime).toContain("loadPublishedRecommendation");
+  expect(siteRuntime("publish.js")).toContain('fetchText("recommendation-index.json")');
+  expect(runtime).toContain("setRecommendationProfile(result.index)");
 });
 
 it("site runtime lazy-loads deadline history with retry and stale-response guards (#491)", () => {
-  const runtime = readFileSync(join(REPO_ROOT, "site", "app.js"), "utf8");
+  const runtime = siteRuntime();
   expect(runtime).toContain("function createHistoryLoader(fetchJson, onState)");
   expect(runtime).toContain("function resolveHistoryRef()");
-  expect(runtime).toContain('if (state.mode === "deadlines" && state.past) loadHistoryData();');
-  expect(runtime).toContain('if (state.mode !== "deadlines" || !state.past) return;');
-  expect(runtime).toContain('if (!response.ok) throw new Error("history " + response.status);');
+  expect(runtime).toMatch(
+    /if\s*\(state\.mode\s*===\s*"deadlines"\s*&&\s*state\.past\)\s*loadHistoryData\(\)/,
+  );
+  expect(runtime).toMatch(
+    /if\s*\(state\.mode\s*!==\s*"deadlines"\s*\|\|\s*!state\.past\)\s*return/,
+  );
+  expect(runtime).toMatch(
+    /if\s*\(!response\.ok\)\s*throw new Error\(`history \$\{response\.status\}`\)/,
+  );
 
   const loaderSrc = jsFunction(runtime, "createHistoryLoader");
   const script = [
@@ -2072,7 +2092,7 @@ it("site runtime lazy-loads deadline history with retry and stale-response guard
 
 it("site template localized shortcuts label and preset button active sync", () => {
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
-  const runtime = readFileSync(join(REPO_ROOT, "site", "app.js"), "utf8");
+  const runtime = siteRuntime();
   // SPEC §7: 日本語 UI。Shortcuts: ではなく ショートカット:
   expect(template).toContain("ショートカット: <kbd>j</kbd>/<kbd>k</kbd> 選択");
   expect(template).not.toContain("Shortcuts: <kbd>j</kbd>");
@@ -2104,7 +2124,7 @@ it("site template does not include external Google Fonts per SPEC §7 (#223)", (
 
 it("site template exposes independent recommendation and deadline render paths (#466)", () => {
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
-  const runtime = readFileSync(join(REPO_ROOT, "site", "app.js"), "utf8");
+  const runtime = siteRuntime();
   expect(template).toContain('id="modeRecommend"');
   expect(template).toContain('id="modeDeadlines"');
   expect(template).toContain('aria-pressed="false"');
@@ -2117,7 +2137,7 @@ it("site template exposes independent recommendation and deadline render paths (
 });
 
 it("openDrawer escapes place, date_text, and official-site href (#390)", () => {
-  const runtime = readFileSync(join(REPO_ROOT, "site", "app.js"), "utf8");
+  const runtime = siteRuntime();
   const start = runtime.indexOf("function openDrawer");
   const end = runtime.indexOf("window.openDrawer", start);
   expect(start).toBeGreaterThanOrEqual(0);
@@ -2130,7 +2150,7 @@ it("openDrawer escapes place, date_text, and official-site href (#390)", () => {
 });
 
 it("openDrawer escapes KIND_LABEL fallback kind (#396)", () => {
-  const runtime = readFileSync(join(REPO_ROOT, "site", "app.js"), "utf8");
+  const runtime = siteRuntime();
   const start = runtime.indexOf("function openDrawer");
   const end = runtime.indexOf("window.openDrawer", start);
   expect(start).toBeGreaterThanOrEqual(0);
@@ -2145,7 +2165,7 @@ it("repolink URL is sanitised via safeExternalUrl (#419)", () => {
   // 経由していないと、javascript:alert(1) 等の不正スキーマがクロスサイト
   // スクリプティングの原因になる。ビルド成果が safeExternalUrl(localSrc.url)
   // を使うことを静的に検証する。
-  const runtime = readFileSync(join(REPO_ROOT, "site", "app.js"), "utf8");
+  const runtime = siteRuntime();
   expect(runtime).toContain("safeExternalUrl(localSrc.url)");
   expect(runtime).not.toMatch(/a\.href\s*=\s*localSrc\.url[^)]/);
 });
@@ -2161,7 +2181,7 @@ it("SPEC §7 carves out recommender CDNs and the site stays on that allowlist (#
   expect(section7).toMatch(/代替動作/);
 
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
-  const runtime = readFileSync(join(REPO_ROOT, "site", "app.js"), "utf8");
+  const runtime = siteRuntime();
   const allowed = [
     "https://cdn.jsdelivr.net",
     "https://cdnjs.cloudflare.com",
@@ -2368,7 +2388,7 @@ it("parseCliArgs parses short flags with equals syntax (-o=dist, -c=config.yaml,
   expect(res3.append).toBe(true);
 });
 
-it("buildAll falls back to site/recommender.js when custom template is in separate directory (#306)", async () => {
+it("buildAll emits recommender.js when custom template is in separate directory (#306)", async () => {
   const tmpDir = mkdtempSync(join(tmpdir(), "cfp-custom-tmpl-"));
   const customTmpl = join(tmpDir, "custom_template.html");
   writeFileSync(customTmpl, "<html><body>/*__DATA__*/null</body></html>", "utf8");

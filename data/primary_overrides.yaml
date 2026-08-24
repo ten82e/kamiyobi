@@ -9,9 +9,6 @@ conferences:
             date: '2026-09-30'
           - kind: paper
             label: Paper submission
-            date: '2026-09-30'
-          - kind: paper
-            label: Paper submission
             date: '2026-10-30'
     _comment: 一次ソース (https://easychair.org/cfp/jornadas-dl2) から自動抽出 (2026-08-23)
   ai4s-2026:

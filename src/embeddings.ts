@@ -10,9 +10,9 @@
 
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
 import { parseArgs as parseNodeArgs } from "node:util";
-import { type FeatureExtractionPipeline, pipeline } from "@huggingface/transformers";
+import { env, type FeatureExtractionPipeline, pipeline } from "@huggingface/transformers";
 import { booleanValue, normalizeShortEquals } from "./args.ts";
 
 export const EMBEDDING_MODEL = "Xenova/all-MiniLM-L6-v2";
@@ -83,14 +83,21 @@ export type VenueProfilePaper = {
   collected_at: string;
 };
 
+export type VenueProfileVectorMap = Record<string, number[]>;
+
 export type VenueProfileSelection = {
   method: string;
   max_prototypes: number;
   source_year_max: number;
+  embedding_model: string;
+  embedding_revision: string;
 };
 
 export type VenueProfileEntry = {
+  /** Complete source provenance; never consumed by runtime recommendation. */
   papers: VenueProfilePaper[];
+  /** Canonical k-medoids selected at generation time for runtime consumers. */
+  prototypes: string[];
   selection: VenueProfileSelection;
 };
 
@@ -120,16 +127,28 @@ function venueProfileSelection(value: unknown, context: string): VenueProfileSel
   if (typeof selection.method !== "string" || !selection.method.trim()) {
     throw new Error(`invalid venue profile selection method: ${context}`);
   }
-  if (!Number.isInteger(selection.max_prototypes) || Number(selection.max_prototypes) < 1) {
+  if (
+    !Number.isInteger(selection.max_prototypes) ||
+    Number(selection.max_prototypes) < 3 ||
+    Number(selection.max_prototypes) > 8
+  ) {
     throw new Error(`invalid venue profile max_prototypes: ${context}`);
   }
   if (!Number.isInteger(selection.source_year_max) || Number(selection.source_year_max) < 1900) {
     throw new Error(`invalid venue profile source_year_max: ${context}`);
   }
+  if (
+    selection.embedding_model !== EMBEDDING_MODEL ||
+    selection.embedding_revision !== EMBEDDING_REVISION
+  ) {
+    throw new Error(`invalid venue profile embedding identity: ${context}`);
+  }
   return {
     method: selection.method.trim(),
     max_prototypes: Number(selection.max_prototypes),
     source_year_max: Number(selection.source_year_max),
+    embedding_model: EMBEDDING_MODEL,
+    embedding_revision: EMBEDDING_REVISION,
   };
 }
 
@@ -198,21 +217,41 @@ function normalizedVenueProfileData(input: VenueProfileArtifactInput): {
     if (JSON.stringify(selection) !== JSON.stringify(policy)) {
       throw new Error(`mixed venue profile selection policy: ${key}`);
     }
-    if (raw.papers.length === 0 || raw.papers.length > selection.max_prototypes) {
+    if (raw.papers.length < selection.max_prototypes) {
       throw new Error(`invalid venue profile paper count: ${key}`);
     }
-    const papers = raw.papers.map((paper, index) => {
-      const normalized = venueProfilePaper(paper, `${key}[${index}]`);
-      if (normalized.year > selection.source_year_max) {
-        throw new Error(`venue profile paper exceeds source cutoff: ${key}[${index}]`);
-      }
-      const titleKey = venueProfileTitleKey(normalized.title);
-      const previous = seenTitles.get(titleKey);
-      if (previous) throw new Error(`duplicate venue profile paper: ${key} / ${previous}`);
-      seenTitles.set(titleKey, `${key}[${index}]`);
-      return normalized;
-    });
-    profiles[key] = { papers, selection };
+    const papers = raw.papers
+      .map((paper, index) => {
+        const normalized = venueProfilePaper(paper, `${key}[${index}]`);
+        if (normalized.year > selection.source_year_max) {
+          throw new Error(`venue profile paper exceeds source cutoff: ${key}[${index}]`);
+        }
+        const titleKey = venueProfileTitleKey(normalized.title);
+        const previous = seenTitles.get(titleKey);
+        if (previous) throw new Error(`duplicate venue profile paper: ${key} / ${previous}`);
+        seenTitles.set(titleKey, `${key}[${index}]`);
+        return normalized;
+      })
+      .sort((a, b) => venueProfileTitleKey(a.title).localeCompare(venueProfileTitleKey(b.title)));
+    if (!Array.isArray(raw.prototypes)) {
+      throw new Error(`missing venue profile prototypes: ${key}`);
+    }
+    const prototypes = raw.prototypes
+      .map((title) => String(title).trim())
+      .filter(Boolean)
+      .sort((a, b) => venueProfileTitleKey(a).localeCompare(venueProfileTitleKey(b)));
+    if (
+      prototypes.length < 3 ||
+      prototypes.length > selection.max_prototypes ||
+      new Set(prototypes.map(venueProfileTitleKey)).size !== prototypes.length
+    ) {
+      throw new Error(`invalid venue profile prototypes: ${key}`);
+    }
+    const titles = new Set(papers.map((paper) => venueProfileTitleKey(paper.title)));
+    if (prototypes.some((title) => !titles.has(venueProfileTitleKey(title)))) {
+      throw new Error(`unknown venue profile prototype: ${key}`);
+    }
+    profiles[key] = { papers, prototypes, selection };
   }
   if (Object.keys(profiles).length === 0) throw new Error("venue profile artifact is empty");
   return { schema: VENUE_PROFILE_SCHEMA_VERSION, policy, profiles };
@@ -252,7 +291,13 @@ export function serializeVenueProfiles(
   return serializeVenueProfileArtifact({
     schema: VENUE_PROFILE_SCHEMA_VERSION,
     policy: policy ??
-      first ?? { method: "source-order-first", max_prototypes: 1, source_year_max: 2100 },
+      first ?? {
+        method: "fixed-title-embedding-k-medoids",
+        max_prototypes: 8,
+        source_year_max: 2100,
+        embedding_model: EMBEDDING_MODEL,
+        embedding_revision: EMBEDDING_REVISION,
+      },
     profiles,
   });
 }
@@ -260,17 +305,104 @@ export function serializeVenueProfiles(
 function loadVenueProfiles(): VenueProfileArtifact {
   const artifact = JSON.parse(
     readFileSync(new URL("../data/venue-profiles.json", import.meta.url), "utf8"),
-  ) as VenueProfileArtifact;
+  ) as VenueProfileArtifactInput;
   return validateVenueProfileArtifact(artifact);
 }
 
 export const VENUE_PROFILE_ARTIFACT = loadVenueProfiles();
 
+function cosineDistance(left: number[], right: number[]): number {
+  const size = Math.min(left.length, right.length);
+  let score = 0;
+  for (let index = 0; index < size; index++) score += left[index]! * right[index]!;
+  return 1 - score;
+}
+
+/** Deterministic embedding k-medoids; generation must provide every title vector. */
+export function selectVenueMedoids(
+  papers: VenueProfilePaper[],
+  max: number,
+  vectors: VenueProfileVectorMap,
+): VenueProfilePaper[] {
+  if (max < 3) throw new Error("venue profile max_prototypes must be at least 3");
+  const canonical = [...papers].sort(
+    (a, b) =>
+      venueProfileTitleKey(a.title).localeCompare(venueProfileTitleKey(b.title)) ||
+      a.year - b.year ||
+      a.source.localeCompare(b.source) ||
+      a.source_url.localeCompare(b.source_url),
+  );
+  const seen = new Set<string>();
+  const unique = canonical.filter((paper) => {
+    const key = venueProfileTitleKey(paper.title);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  const count = Math.min(unique.length, Math.min(8, max));
+  const vectorOf = (paper: VenueProfilePaper) => {
+    const vector = vectors[venueProfileTitleKey(paper.title)];
+    if (!vector?.length || vector.some((value) => !Number.isFinite(value))) {
+      throw new Error(`missing venue profile vector: ${paper.title}`);
+    }
+    return vector;
+  };
+  const distance = (left: VenueProfilePaper, right: VenueProfilePaper) =>
+    cosineDistance(vectorOf(left), vectorOf(right));
+  const selected: VenueProfilePaper[] = [
+    [...unique].sort((a, b) => {
+      const aScore = unique.reduce((sum, other) => sum + distance(a, other), 0);
+      const bScore = unique.reduce((sum, other) => sum + distance(b, other), 0);
+      return (
+        aScore - bScore ||
+        venueProfileTitleKey(a.title).localeCompare(venueProfileTitleKey(b.title))
+      );
+    })[0]!,
+  ];
+  while (selected.length < count) {
+    const candidate = unique
+      .filter((paper) => !selected.includes(paper))
+      .sort((a, b) => {
+        const aScore = Math.min(...selected.map((item) => distance(item, a)));
+        const bScore = Math.min(...selected.map((item) => distance(item, b)));
+        return (
+          bScore - aScore ||
+          venueProfileTitleKey(a.title).localeCompare(venueProfileTitleKey(b.title))
+        );
+      })[0];
+    selected.push(candidate);
+  }
+  for (let iteration = 0; iteration < 3; iteration++) {
+    const clusters = selected.map(() => [] as VenueProfilePaper[]);
+    for (const paper of unique) {
+      const index = selected
+        .map((medoid, candidate) => [candidate, distance(paper, medoid)] as const)
+        .sort((left, right) => left[1] - right[1] || left[0] - right[0])[0]![0];
+      clusters[index]!.push(paper);
+    }
+    const next = clusters.map((cluster, index) =>
+      cluster.length
+        ? [...cluster].sort(
+            (a, b) =>
+              cluster.reduce((sum, other) => sum + distance(a, other), 0) -
+                cluster.reduce((sum, other) => sum + distance(b, other), 0) ||
+              venueProfileTitleKey(a.title).localeCompare(venueProfileTitleKey(b.title)),
+          )[0]!
+        : selected[index]!,
+    );
+    if (next.every((paper, index) => paper === selected[index])) break;
+    selected.splice(0, selected.length, ...next);
+  }
+  return selected.sort((a, b) =>
+    venueProfileTitleKey(a.title).localeCompare(venueProfileTitleKey(b.title)),
+  );
+}
+
 /** Derived compatibility view used by lexical and embedding consumers. */
 export const VENUE_PAPERS: Record<string, string[]> = Object.fromEntries(
   Object.entries(VENUE_PROFILE_ARTIFACT.profiles).map(([key, profile]) => [
     key,
-    profile.papers.map((paper) => paper.title),
+    profile.prototypes,
   ]),
 );
 
@@ -292,7 +424,12 @@ export function venuePapersAtCutoff(
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, profile]) => [
         key,
-        profile.papers.filter((paper) => paper.year <= sourceYearMax).map((paper) => paper.title),
+        profile.prototypes.filter((title) => {
+          const paper = profile.papers.find(
+            (candidate) => venueProfileTitleKey(candidate.title) === venueProfileTitleKey(title),
+          );
+          return paper !== undefined && paper.year <= sourceYearMax;
+        }),
       ]),
   );
 }
@@ -316,6 +453,12 @@ export function benchmarkProfileHash(
             max_prototypes: profile.selection.max_prototypes,
           },
           papers: profile.papers.filter((paper) => paper.year <= sourceYearMax),
+          prototypes: profile.prototypes.filter((title) => {
+            const paper = profile.papers.find(
+              (candidate) => venueProfileTitleKey(candidate.title) === venueProfileTitleKey(title),
+            );
+            return paper !== undefined && paper.year <= sourceYearMax;
+          }),
         },
       ]),
   );
@@ -479,6 +622,28 @@ async function embedEach(model: string, texts: string[], revision: string): Prom
     }
   }
   return out;
+}
+
+/** Generation-only title embeddings for deterministic venue-profile medoids. */
+export async function embedVenueProfileTitles(titles: string[]): Promise<VenueProfileVectorMap> {
+  const canonical = [...new Set(titles.map(venueProfileTitleKey))].sort();
+  // transformers 4.x resolves a pinned cache reliably when it is an explicit
+  // model path. This generator-only path never falls back to an unpinned model.
+  if (!env.cacheDir) throw new Error("transformers cache directory is unavailable");
+  const modelDir = join(env.cacheDir, EMBEDDING_MODEL, EMBEDDING_REVISION);
+  const extractor = (await pipeline("feature-extraction", modelDir)) as FeatureExtractionPipeline;
+  const output = await extractor(canonical, { pooling: "mean", normalize: true });
+  const tensors = Array.isArray(output) ? output : [output];
+  const vectors: number[][] = [];
+  for (const tensor of tensors) {
+    const count = tensor.dims[0] ?? 1;
+    const width = tensor.dims[1] ?? EMBEDDING_DIM;
+    const values = Array.from(tensor.data as Float32Array | ArrayLike<number>);
+    for (let index = 0; index < count; index++) {
+      vectors.push(values.slice(index * width, (index + 1) * width).map(round6));
+    }
+  }
+  return Object.fromEntries(canonical.map((title, index) => [title, vectors[index]!]));
 }
 
 export interface BenchmarkEmbeddingManifest {
