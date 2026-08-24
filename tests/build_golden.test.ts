@@ -27,9 +27,11 @@ import {
   recordsOf,
   setRoot,
   titleWithYear,
+  toCatalog,
   toCsv,
   toJson,
   toLlmsTxt,
+  toRecommendationIndex,
   toUpcomingMd,
 } from "../src/build.ts";
 import { main as cliMain, parseArgs as parseCliArgs, usage } from "../src/cli.ts";
@@ -236,12 +238,30 @@ it("date-only deadlines stay date-only in JSON, CSV, and upcoming output", () =>
   expect(deadline).toMatchObject({
     precision: "date-only",
     local_date: "2026-08-10",
+    earliest_utc: "2026-08-09T10:00:00.000Z",
+    latest_utc: "2026-08-11T11:59:59.999Z",
     utc: null,
     aoe: null,
     tz_raw: null,
   });
+  expect(records[0].start.toISOString()).toBe("2026-08-09T10:00:00.000Z");
+  expect(records[0].end.toISOString()).toBe("2026-08-11T11:59:59.999Z");
   expect(toCsv(records)).toContain("date-only,2026-08-10,,,,");
   expect(toUpcomingMd(records, NOW)).toContain("2026-08-10（時刻未確認）");
+  expect(toUpcomingMd(records, new Date("2026-08-11T11:59:59.999Z"))).toContain("締切日");
+  expect(toUpcomingMd(records, new Date("2026-08-11T12:00:00.000Z"))).not.toContain("Date Only");
+
+  const data = toJson(confs, {}, NOW);
+  const uncertainNow = new Date("2026-08-11T00:00:00.000Z");
+  expect(
+    (toCatalog(data, uncertainNow).conferences as any[])[0].editions[0].deadlines,
+  ).toHaveLength(1);
+  expect(
+    (toRecommendationIndex(data, uncertainNow).conferences as any[])[0].editions[0].deadlines[0]
+      .local_date,
+  ).toBe("2026-08-10");
+  expect(healthReport(data, uncertainNow).confirmed_deadlines).toBe(1);
+  expect(healthReport(data, new Date("2026-08-11T12:00:00.000Z")).confirmed_deadlines).toBe(0);
 });
 
 it("evaluateHealthGate covers normal updates and every fail-closed regression", () => {
@@ -1494,6 +1514,35 @@ function jsFunction(html: string, name: string): string {
   }
 }
 
+it("browser date-only state is independent of the viewer timezone", () => {
+  const app = readFileSync(join(site, "app.js"), "utf8");
+  const script = [
+    jsFunction(app, "buildRows"),
+    jsFunction(app, "rowDateOnlyState"),
+    jsFunction(app, "rowIsPast"),
+    "const data = { conferences: [{ key: 'x', title: 'X', editions: [{ year: 2026, deadlines: [{ kind: 'paper', precision: 'date-only', local_date: '2026-08-24', earliest_utc: '2026-08-23T10:00:00.000Z', latest_utc: '2026-08-25T11:59:59.999Z' }] }] }] };",
+    "const row = buildRows(data)[0];",
+    "const times = ['2026-08-23T09:59:59.999Z', '2026-08-23T10:00:00.000Z', '2026-08-25T11:59:59.999Z', '2026-08-25T12:00:00.000Z'].map(Date.parse);",
+    "console.log(JSON.stringify(times.map((now) => [rowDateOnlyState(row, now), rowIsPast(row, now)])));",
+  ].join("\n");
+  const outputs = ["Asia/Tokyo", "UTC", "America/Los_Angeles"].map((TZ) => {
+    const proc = spawnSync("node", ["-e", script], {
+      encoding: "utf8",
+      env: { ...process.env, TZ },
+      timeout: 60_000,
+    });
+    expect(proc.status, proc.stderr).toBe(0);
+    return JSON.parse(proc.stdout);
+  });
+  const expected = [
+    ["definitely-future", false],
+    ["uncertain-on-date", false],
+    ["uncertain-on-date", false],
+    ["definitely-past", true],
+  ];
+  expect(outputs).toEqual([expected, expected, expected]);
+});
+
 it("default filter shows only submission deadlines", () => {
   const html =
     readFileSync(join(site, "index.html"), "utf8") +
@@ -1789,7 +1838,7 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
     "onKeydown({ key: 'd', preventDefault() {}, target: { tagName: 'BODY' } });",
     "const dOpened = calls.open.length === 1 && calls.open[0] === 'B';",
     "const dFocusedRow = calls.focus[calls.focus.length - 1] === 'row1';",
-    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''));",
+    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null);",
     "document.activeElement = prevEl;",
     "openDrawer({ kind: 'journal', conf: { title: 'X' }, ed: { place: 'P', date_text: 'D' } });",
     "const focusedClose = document.activeElement === closeBtn;",

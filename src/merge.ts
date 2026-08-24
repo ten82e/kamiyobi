@@ -13,6 +13,8 @@ import {
   type Deadline,
   type DeadlineEstimate,
   dateOnly,
+  dateOnlyState,
+  dateOnlyWindow,
   type Edition,
   type ExactDeadline,
   fmtDate,
@@ -411,7 +413,9 @@ function absorb(
 
 function deadlineSortTime(deadline: Deadline): number {
   if (isExactDeadline(deadline)) return deadline.at_utc.getTime();
-  return asDate(deadline.local_date)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+  return (
+    dateOnlyWindow(deadline.local_date)?.earliestPossibleUtc.getTime() ?? Number.MAX_SAFE_INTEGER
+  );
 }
 
 function unique(values: string[]): string[] {
@@ -799,8 +803,8 @@ function isFuture(edition: Edition, today: Date): boolean {
   if (
     edition.deadlines.some((d) => {
       if (d.kind !== "paper") return false;
-      const day = isDateOnlyDeadline(d) ? asDate(d.local_date) : dateOnly(d.at_utc);
-      return day !== null && day.getTime() >= dateOnly(today).getTime();
+      if (isDateOnlyDeadline(d)) return dateOnlyState(d.local_date, today) !== "definitely-past";
+      return dateOnly(d.at_utc).getTime() >= dateOnly(today).getTime();
     })
   ) {
     return true;

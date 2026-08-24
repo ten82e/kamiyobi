@@ -111,7 +111,7 @@ export interface Edition {
   link: string;
   place: string;
   date_text: string;
-  /** Date-only values kept as UTC midnights. */
+  /** Calendar dates kept as UTC midnights. */
   event_start: Date | null;
   event_end: Date | null;
   deadlines: Deadline[];
@@ -157,7 +157,7 @@ export function resetWarnings(): void {
 }
 
 // --------------------------------------------------------------------------
-// date helpers (all values are UTC; date-only values are UTC midnights)
+// date helpers (calendar values are anchored at UTC midnight)
 // --------------------------------------------------------------------------
 
 export function addDays(d: Date | null | undefined, n: number): Date {
@@ -215,6 +215,43 @@ export function asDate(value: unknown): Date | null {
     return null;
   }
   return d;
+}
+
+export interface DateOnlyWindow {
+  earliestPossibleUtc: Date;
+  latestPossibleUtc: Date;
+}
+
+export type DateOnlyState = "definitely-future" | "uncertain-on-date" | "definitely-past";
+export type ExactDeadlineState = "future" | "past";
+
+/** UTC interval in which an unknown timezone can still be on `localDate`. */
+export function dateOnlyWindow(localDate: unknown): DateOnlyWindow | null {
+  const day = asDate(localDate);
+  if (day === null) return null;
+  return {
+    earliestPossibleUtc: new Date(day.getTime() - 14 * 3_600_000),
+    latestPossibleUtc: new Date(day.getTime() + 36 * 3_600_000 - 1),
+  };
+}
+
+export function dateOnlyState(localDate: unknown, now: Date): DateOnlyState | null {
+  const window = dateOnlyWindow(localDate);
+  if (window === null || !(now instanceof Date) || Number.isNaN(now.getTime())) return null;
+  if (now.getTime() < window.earliestPossibleUtc.getTime()) return "definitely-future";
+  if (now.getTime() <= window.latestPossibleUtc.getTime()) return "uncertain-on-date";
+  return "definitely-past";
+}
+
+export function exactDeadlineState(atUtc: Date, now: Date): ExactDeadlineState | null {
+  if (
+    !(atUtc instanceof Date) ||
+    Number.isNaN(atUtc.getTime()) ||
+    !(now instanceof Date) ||
+    Number.isNaN(now.getTime())
+  )
+    return null;
+  return atUtc.getTime() >= now.getTime() ? "future" : "past";
 }
 
 // --------------------------------------------------------------------------

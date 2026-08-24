@@ -3,6 +3,8 @@ interface SiteDeadline {
   label?: string;
   precision?: "exact" | "date-only";
   local_date?: string;
+  earliest_utc?: string;
+  latest_utc?: string;
   utc?: string | null;
   aoe?: string | null;
   tz_raw?: string | null;

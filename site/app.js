@@ -105,13 +105,15 @@
       pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes());
   }
 
-  function localDayKey(ms) {
-    var d = new Date(ms);
-    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  function rowDateOnlyState(r, now) {
+    if (!r.dateOnly) return null;
+    if (now < r.t) return "definitely-future";
+    if (now <= r.tLast) return "uncertain-on-date";
+    return "definitely-past";
   }
 
   function rowIsPast(r, now) {
-    return r.dateOnly ? r.localDate < localDayKey(now) : r.t < now;
+    return r.dateOnly ? rowDateOnlyState(r, now) === "definitely-past" : r.t < now;
   }
 
   function rowIsFuture(r, now) {
@@ -119,7 +121,7 @@
   }
 
   function rowAfter(r, limit) {
-    return r.dateOnly ? r.localDate > localDayKey(limit) : r.t > limit;
+    return r.t > limit;
   }
 
   function fmtJst(d) {
@@ -226,6 +228,10 @@
     $("drawerBackdrop").classList.add("active");
     $("drawerTitle").textContent = titleWithYear(r.conf.title || r.conf.key, r.ed.year);
     $("drawerFullName").textContent = r.conf.full_name || "";
+    var dateState = rowDateOnlyState(r, Date.now());
+    var dateOnlyText = dateState === "uncertain-on-date"
+      ? "（時刻未確認。すでに終了している可能性があります）"
+      : dateState === "definitely-past" ? "（締切日経過）" : "（時刻未確認）";
 
     var html = '<div style="background: var(--chip); padding: 14px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 16px;">' +
       '<div style="font-size: 0.78rem; color: var(--muted);">種別・日時</div>' +
@@ -233,7 +239,7 @@
       (r.kind === "journal"
         ? '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">随時受付（締切なし）</div>'
         : r.dateOnly
-          ? '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">' + esc(r.localDate) + '（時刻未確認）</div>'
+          ? '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">' + esc(r.localDate) + dateOnlyText + '</div>'
           : '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">' + fmtDate(new Date(r.t)) + ' UTC (' + fmtJst(new Date(r.t)) + ' / ' + fmtAoE(new Date(r.t)) + ')</div>') +
       '</div>';
 
@@ -386,12 +392,13 @@
       (e.deadlines || []).forEach((dl) => {
         var dateOnly = dl.precision === "date-only";
         var localDate = dateOnly ? String(dl.local_date || "") : "";
-        var t = dateOnly ? Date.parse(localDate + "T00:00:00Z") : Date.parse(dl.utc);
-        if (isNaN(t)) return;
+        var t = Date.parse(dateOnly ? dl.earliest_utc : dl.utc);
+        var tLast = dateOnly ? Date.parse(dl.latest_utc) : t;
+        if (isNaN(t) || isNaN(tLast)) return;
         out.push({
           conf: conf, ed: e, dl: dl,
           kind: dl.kind, est: e.estimated,
-          t: t, tLast: t,
+          t: t, tLast: tLast,
           dateOnly: dateOnly, localDate: localDate,
           cats: conf.categories || [],
           tags: conf.tags || [],
@@ -634,12 +641,8 @@
   // ---- FILTERING ----
   function filter() {
     var now = Date.now();
-    var dayKey = (ms) => {
-      var d = new Date(ms);
-      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-    };
-    var isPast = (r) => r.dateOnly ? r.localDate < dayKey(now) : r.t < now;
-    var isAfter = (r, limit) => r.dateOnly ? r.localDate > dayKey(limit) : r.t > limit;
+    var isPast = (r) => r.dateOnly ? now > r.tLast : r.t < now;
+    var isAfter = (r, limit) => r.t > limit;
     var q = state.q.toLowerCase();
     var isWinFuture = state.win === "future";
     var limit = (state.win === "all" || isWinFuture) ? Infinity : now + parseInt(state.win, 10) * DAY;
@@ -785,8 +788,13 @@
       }
       if (target.tagName !== "A") { openDrawer(r); }
     };
+    var dateState = rowDateOnlyState(r, Date.now());
     var rem = r.dateOnly
-      ? { text: rowIsPast(r, Date.now()) ? "締切日経過" : "時刻未確認", cls: rowIsPast(r, Date.now()) ? "past" : "" }
+      ? dateState === "definitely-past"
+        ? { text: "締切日経過", cls: "past" }
+        : dateState === "uncertain-on-date"
+          ? { text: "締切日です（終了済みの可能性あり）", cls: "today" }
+          : { text: "時刻未確認", cls: "" }
       : remain(r.t);
     // 常時受付ジャーナルは締切の概念がないため「本日終了」等の誤解を与えない表示にする
     if (r.kind === "journal") { rem = { text: "常時受付", cls: "" }; }
@@ -1018,6 +1026,9 @@
   function recommendationAvailability(r) {
     var a = r._availability || {};
     if (a.status === "ongoing") return "常時受付";
+    if (a.status === "uncertain" && a.local_date) {
+      return "次回締切: " + a.local_date + "（時刻未確認。終了済みの可能性があります）";
+    }
     if (a.status === "open" && a.local_date) {
       return "次回締切: " + a.local_date + "（時刻未確認）";
     }

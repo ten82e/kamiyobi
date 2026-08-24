@@ -28,7 +28,7 @@
 | ファイル | 用途 |
 |---|---|
 | `https://ten82e.github.io/kamiyobi/llms.txt` | 出力ファイルとデータの形を 1 枚にまとめた索引。まずここを読む |
-| `https://ten82e.github.io/kamiyobi/data.json` | 正規化済みの全データ。時刻確認済みの締切は UTC と AoE、日付のみ確認済みの締切は `local_date` で表す |
+| `https://ten82e.github.io/kamiyobi/data.json` | 正規化済みの全データ。時刻確認済みの締切は UTC と AoE、日付のみ確認済みの締切は `local_date` と不確実性区間で表す |
 | `https://ten82e.github.io/kamiyobi/health.json` | 確定/推定締切、ソース失敗、警告数、カテゴリ件数、必須会議の健全性レポート |
 | `https://ten82e.github.io/kamiyobi/publish.json` | 公開直後の成果物ハッシュと `semantic_status`（`ready` または `lexical-only`）。意味検索用の埋め込みが公開物に含まれるかを示す |
 
@@ -206,7 +206,8 @@ rank_filter:
 
 会期は上流では自由文で書かれており、解釈できない書き方のものは開催イベントを作れない。
 日付だけが確認でき、時刻とタイムゾーンが不明な締切は `date-only` として収録する。
-この値は UTC、JST、AoE へ変換せず、サイトでは「時刻未確認」と表示する。
+この値は UTC、JST、AoE の公式時刻へ変換しない。
+サイトは UTC+14 の日付開始から UTC-12 の日付終了までを不確実性区間とし、区間内では終了済みの可能性を表示する。
 上流の誤りはそのまま反映されるので、気づいたときは `data/overrides.yaml` で訂正する。
 
 上流のスキーマが変わればビルドが壊れうる。

@@ -31,7 +31,10 @@ import {
   DAY_MS,
   type Deadline,
   dateOnly,
+  dateOnlyState,
+  dateOnlyWindow,
   type Edition,
+  exactDeadlineState,
   fmtDate,
   fmtUTC,
   isDateOnlyDeadline,
@@ -253,7 +256,9 @@ function sortedDeadlines(edition: Edition): Deadline[] {
 
 function deadlineSortTime(deadline: Deadline): number {
   if (isExactDeadline(deadline)) return deadline.at_utc.getTime();
-  return asDate(deadline.local_date)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+  return (
+    dateOnlyWindow(deadline.local_date)?.earliestPossibleUtc.getTime() ?? Number.MAX_SAFE_INTEGER
+  );
 }
 
 /** `(year, kind, at_utc)` groups holding more than one deadline. */
@@ -310,8 +315,9 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
         if (collides.has(`${ed.year}\u0000${dl.kind}\u0000${dateValue}`) && dl.label) {
           labelJa = `${labelJa}: ${dl.label}`;
         }
-        const anchor = isDateOnlyDeadline(dl) ? asDate(dl.local_date) : dl.at_utc;
-        if (anchor === null) return;
+        const dateWindow = isDateOnlyDeadline(dl) ? dateOnlyWindow(dl.local_date) : null;
+        const anchor = isDateOnlyDeadline(dl) ? dateWindow?.earliestPossibleUtc : dl.at_utc;
+        if (!(anchor instanceof Date)) return;
         records.push({
           type: "deadline",
           categories: cats,
@@ -322,7 +328,7 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
           deadline: dl,
           all_day: isDateOnlyDeadline(dl),
           start: isDateOnlyDeadline(dl) ? anchor : new Date(anchor.getTime() - 30 * 60_000),
-          end: anchor,
+          end: dateWindow?.latestPossibleUtc ?? anchor,
         });
       });
       if (ed.event_start && !ed.estimated) {
@@ -346,7 +352,12 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
 
 function sortKey(rec: DataRecord): [number, string] {
   // 終日項目はその日の 00:00 UTC、それ以外は正確な時刻で並べる。
-  const stamp = rec.all_day ? dateOnly(rec.start).getTime() : rec.start.getTime();
+  const stamp =
+    rec.type === "deadline" && rec.deadline && isDateOnlyDeadline(rec.deadline)
+      ? rec.start.getTime()
+      : rec.all_day
+        ? dateOnly(rec.start).getTime()
+        : rec.start.getTime();
   return [stamp, `${rec.conf.key}:${rec.deadline?.kind ?? "event"}:${rec.start.getTime()}`];
 }
 
@@ -438,10 +449,14 @@ export function toJson(
             evidence,
           };
           if (isDateOnlyDeadline(dl)) {
+            const window = dateOnlyWindow(dl.local_date);
+            if (window === null) throw new Error(`invalid date-only deadline: ${dl.local_date}`);
             return {
               ...common,
               precision: "date-only",
               local_date: dl.local_date,
+              earliest_utc: window.earliestPossibleUtc.toISOString(),
+              latest_utc: window.latestPossibleUtc.toISOString(),
               utc: null,
               aoe: null,
               tz_raw: null,
@@ -522,9 +537,17 @@ function jsonTime(value: unknown): number | null {
 }
 
 function jsonDeadlineTime(deadline: JsonRecord): number | null {
+  return jsonDeadlineRange(deadline)?.[0] ?? null;
+}
+
+function jsonDeadlineRange(deadline: JsonRecord): [number, number] | null {
   const exact = jsonTime(deadline.utc);
-  if (exact !== null) return exact;
-  return asDate(deadline.local_date)?.getTime() ?? null;
+  if (exact !== null) return [exact, exact];
+  const earliest = jsonTime(deadline.earliest_utc);
+  const latest = jsonTime(deadline.latest_utc);
+  if (earliest !== null && latest !== null) return [earliest, latest];
+  const window = dateOnlyWindow(deadline.local_date);
+  return window ? [window.earliestPossibleUtc.getTime(), window.latestPossibleUtc.getTime()] : null;
 }
 
 function compactEdition(edition: JsonRecord, deadlines: JsonRecord[]): JsonRecord {
@@ -575,8 +598,8 @@ export function toCatalog(
     const editions = jsonRecords(conf.editions)
       .map((edition) => {
         const deadlines = jsonRecords(edition.deadlines).filter((deadline) => {
-          const time = jsonDeadlineTime(deadline);
-          return time !== null && time >= lookback && time <= horizon;
+          const range = jsonDeadlineRange(deadline);
+          return range !== null && range[1] >= lookback && range[0] <= horizon;
         });
         const eventStart = jsonTime(edition.event_start);
         const eventEnd = jsonTime(edition.event_end ?? edition.event_start);
@@ -617,11 +640,8 @@ export function toRecommendationIndex(
           );
         if (!deadlines.length) return null;
         const future = deadlines.find((deadline) => {
-          const time = jsonDeadlineTime(deadline);
-          if (time === null) return false;
-          return deadline.precision === "date-only"
-            ? time >= dateOnly(safeNow).getTime()
-            : time >= safeNow.getTime();
+          const range = jsonDeadlineRange(deadline);
+          return range !== null && range[1] >= safeNow.getTime();
         });
         return compactEdition(edition, [future ?? deadlines[deadlines.length - 1]]);
       })
@@ -795,7 +815,6 @@ export function healthReport(
   let estimatedDeadlines = 0;
   const deadlineRefs: HealthDeadlineRef[] = [];
   const lookbackStart = safeNow - HEALTH_DEADLINE_LOOKBACK_MS;
-  const today = dateOnly(new Date(safeNow)).getTime();
   for (const conference of conferences) {
     const key = String(conference.key ?? "").trim();
     if (key) presentVenues.add(key);
@@ -811,14 +830,10 @@ export function healthReport(
         (Number.isInteger(editionYear) && editionYear > 0 ? String(editionYear) : "");
       for (const deadline of jsonRecords(edition.deadlines)) {
         const dateOnlyPrecision = deadline.precision === "date-only";
-        const timestamp = jsonDeadlineTime(deadline);
-        if (timestamp === null) continue;
-        const futureThreshold = dateOnlyPrecision ? today : safeNow;
-        if (
-          !estimated &&
-          key &&
-          timestamp >= (dateOnlyPrecision ? today - HEALTH_DEADLINE_LOOKBACK_MS : lookbackStart)
-        ) {
+        const range = jsonDeadlineRange(deadline);
+        if (range === null) continue;
+        const [timestamp, latest] = range;
+        if (!estimated && key && latest >= lookbackStart) {
           const kind = String(deadline.kind ?? "other").trim() || "other";
           const round = deadlineRound(deadline.round);
           const track = normalizedTrackKey(String(deadline.label ?? ""), kind);
@@ -833,7 +848,7 @@ export function healthReport(
           if (evidenceHash) ref.evidence_hash = evidenceHash;
           deadlineRefs.push(ref);
         }
-        if (timestamp < futureThreshold) continue;
+        if (latest < safeNow) continue;
         hasFuture = true;
         if (estimated) estimatedDeadlines += 1;
         else confirmedDeadlines += 1;
@@ -1450,18 +1465,25 @@ export function toUpcomingMd(
       let left: string;
       let when: string;
       if (isDateOnlyDeadline(dl)) {
-        const deadlineDay = asDate(dl.local_date);
+        const window = dateOnlyWindow(dl.local_date);
+        const state = dateOnlyState(dl.local_date, safeNow);
         if (
-          deadlineDay === null ||
-          deadlineDay.getTime() < today.getTime() ||
-          deadlineDay.getTime() > dateOnly(horizon).getTime()
+          window === null ||
+          state === null ||
+          state === "definitely-past" ||
+          window.earliestPossibleUtc.getTime() > horizon.getTime()
         )
           continue;
-        const remainDays = (deadlineDay.getTime() - today.getTime()) / DAY_MS;
-        left = remainDays === 0 ? "本日" : `${remainDays}日`;
+        left =
+          state === "uncertain-on-date"
+            ? "締切日"
+            : `${Math.max(1, Math.ceil((window.earliestPossibleUtc.getTime() - safeNow.getTime()) / DAY_MS))}日`;
         when = `${dl.local_date}（時刻未確認）`;
       } else {
-        if (safeNow.getTime() > dl.at_utc.getTime() || dl.at_utc.getTime() > horizon.getTime())
+        if (
+          exactDeadlineState(dl.at_utc, safeNow) === "past" ||
+          dl.at_utc.getTime() > horizon.getTime()
+        )
           continue;
         const remainMs = dl.at_utc.getTime() - safeNow.getTime();
         const remainDays = Math.floor(remainMs / DAY_MS);
@@ -1592,7 +1614,7 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "      - label: string：上流の表示用ラベル。",
     "      - precision: 'exact'|'date-only'：締切値の精度。",
     "      - exact は utc: 'YYYY-MM-DDTHH:MM:SSZ'、aoe、tz_raw を持つ。",
-    "      - date-only は local_date: 'YYYY-MM-DD' を持ち、utc/aoe/tz_raw は null。",
+    "      - date-only は local_date: 'YYYY-MM-DD' と earliest_utc/latest_utc を持ち、utc/aoe/tz_raw は null。",
     "      - round: integer：1 起点。複数投稿ラウンドを持つ会議がある。",
     "      - comment: string|null：上流の注記。",
     "      - status: 'confirmed'|'estimated'：開催回の確定/推定状態。",
@@ -1602,8 +1624,8 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "",
     "## 利用上の注意",
     "",
-    "- exact の比較は deadlines[].utc、date-only の比較は local_date で行う。aoe は表示用である。",
-    "- date-only を UTC、JST、AoE の時刻へ変換したり、時刻単位の残り時間へ使ったりしない。",
+    "- exact の比較は deadlines[].utc、date-only の比較は earliest_utc/latest_utc の不確実性区間で行う。aoe は表示用である。",
+    "- date-only の UTC 境界は状態判定用であり、公式時刻や時刻単位の残り時間として扱わない。",
     "- estimated=true の版は推定窓であり、公式サイトで締切を確認してから利用する。",
     "- data.csv は 1 行 1 締切のフラット表で、deadline_precision と deadline_local_date を持つ。",
     "  comment・tags・thcpl ランクは列に無い。全情報が要るときは data.json を使う。",
