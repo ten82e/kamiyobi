@@ -12,6 +12,7 @@ import {
   type Deadline,
   type DeadlineKind,
   type Edition,
+  embeddedTimezone,
   kindOf,
   parseDateRange,
   parseInstant,
@@ -113,7 +114,7 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
         kind: refineKindWithLabel(kindOf(rawType), label, rawType),
         label,
         at_utc: at,
-        tz_raw: tzRaw,
+        tz_raw: embeddedTimezone(rec.date) ?? tzRaw,
         // This schema has no round field; the label is the only place a round
         // is ever stated (SPEC.md 3.3).
         round: roundOf(label),
@@ -131,7 +132,7 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
         kind,
         label,
         at_utc: at,
-        tz_raw: parentTz,
+        tz_raw: embeddedTimezone(raw[key]) ?? parentTz,
         round: 1,
         comment: null,
         raw_value: String(raw[key]),

@@ -248,13 +248,16 @@ export function isConfirmedTimezone(tzRaw: string | null | undefined): boolean;
 // 'UTC+8' 'UTC-08' 'GMT+02' 'UTC+0' 'UTC+05:30' -> 固定オフセット
 //   （ゼロ埋め・1〜2桁・コロン区切りの全てを受ける）
 // 'PT'/'ET'/'CT'/'MT' は IANA 地域帯として DST を観測する
-// 'PST'/'PDT'/'EST'/'EDT'/'CET'/'CEST' 等は文字どおり固定オフセット
+// 'PST'/'PDT'/'CDT'/'EST'/'EDT'/'CET'/'CEST' 等は文字どおり固定オフセット
 // 文脈の無い 'CST'/'IST'/'BST'、未知・欠落は unconfirmed
 // IANA 名（'/' を含む）-> {kind:'iana', name: <そのまま>}
 // resolveTz は互換 API として unconfirmed を UTC に寄せる
 
 export function parseInstant(text: unknown, tzRaw: string | null | undefined): Date | null;
 // 'YYYY-MM-DD HH:MM:SS' / 'YYYY-MM-DD HH:MM' / 'YYYY-MM-DD' を受ける
+// 文字列末尾の Z / ±HH:MM は文字列自身の timezone として別引数より優先する
+// 文字列内 timezone と別引数が同じ時刻を表さない場合は null
+// 文字列内 timezone は Deadline.tz_raw に正規化して保持する
 // confirmed な timezone の naive 値だけを UTC に変換して返す
 // ambiguous / unknown / 欠落 timezone は確定値にしないため null
 // 'TBD' 等パース不能は null（例外にしない）
