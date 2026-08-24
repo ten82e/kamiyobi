@@ -106,6 +106,7 @@ export interface DeadlineEstimate {
 }
 
 export interface Edition {
+  /** Conference or workshop edition year, not the deadline's calendar year. */
   year: number;
   edition_id: string;
   link: string;

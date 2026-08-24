@@ -4059,8 +4059,8 @@ conferences:
     link: https://easychair.org/cfp/EAAI-27
     categories: [ai]
     editions:
-      - year: 2026
-        id: eaai-2726
+      - year: 2027
+        id: eaai-2727
         link: https://easychair.org/cfp/EAAI-27
         date_text: Feb 21, 2027
         deadlines:
@@ -4173,8 +4173,8 @@ conferences:
     link: https://easychair.org/cfp/ieeebc27
     categories: [db]
     editions:
-      - year: 2026
-        id: ieeebc2726
+      - year: 2027
+        id: ieeebc2727
         link: https://easychair.org/cfp/ieeebc27
         place: Fukuoka, Japan
         date_text: Jan 25, 2027
@@ -4202,8 +4202,8 @@ conferences:
     link: https://easychair.org/cfp/MLCC2027
     categories: [ai]
     editions:
-      - year: 2026
-        id: mlcc-202726
+      - year: 2027
+        id: mlcc-202727
         link: https://easychair.org/cfp/MLCC2027
         place: Chongqing, China
         date_text: Mar 19, 2027
@@ -4216,8 +4216,8 @@ conferences:
     link: https://easychair.org/cfp/ICARA2027
     categories: [ai]
     editions:
-      - year: 2026
-        id: icara-202726
+      - year: 2027
+        id: icara-202727
         link: https://easychair.org/cfp/ICARA2027
         place: Paris, France
         date_text: Feb 25, 2027
@@ -4245,8 +4245,8 @@ conferences:
     link: https://easychair.org/cfp/AIPE2026
     categories: [ai]
     editions:
-      - year: 2026
-        id: aipe-202726
+      - year: 2027
+        id: aipe-202727
         link: https://easychair.org/cfp/AIPE2026
         place: Nanjing, China
         date_text: Feb 26, 2027
@@ -4259,8 +4259,8 @@ conferences:
     link: https://easychair.org/cfp/ifs27
     categories: [theory]
     editions:
-      - year: 2026
-        id: ifs-2726
+      - year: 2027
+        id: ifs-2727
         link: https://easychair.org/cfp/ifs27
         place: Copenhagen, Denmark
         date_text: Apr 12, 2027
@@ -4273,8 +4273,8 @@ conferences:
     link: https://easychair.org/cfp/ICAID2027
     categories: [ai]
     editions:
-      - year: 2026
-        id: icaid-202726
+      - year: 2027
+        id: icaid-202727
         link: https://easychair.org/cfp/ICAID2027
         place: Paris, France
         date_text: Mar 17, 2027
@@ -4287,8 +4287,8 @@ conferences:
     link: https://easychair.org/cfp/GreenAI2027
     categories: [ai]
     editions:
-      - year: 2026
-        id: greenai202726
+      - year: 2027
+        id: greenai202727
         link: https://easychair.org/cfp/GreenAI2027
         place: Cuttack, India
         date_text: Jan 29, 2027
@@ -4302,8 +4302,8 @@ conferences:
     link: https://easychair.org/cfp/ICBDAIA27
     categories: [ai, db]
     editions:
-      - year: 2026
-        id: icbdaia2726
+      - year: 2027
+        id: icbdaia2727
         link: https://easychair.org/cfp/ICBDAIA27
         place: Sofia, Bulgaria
         date_text: Apr 21, 2027
@@ -4317,8 +4317,8 @@ conferences:
     link: https://easychair.org/cfp/evomusart2027
     categories: [ai]
     editions:
-      - year: 2026
-        id: evomusart-202726
+      - year: 2027
+        id: evomusart-202727
         link: https://easychair.org/cfp/evomusart2027
         place: Mainz, Germany
         date_text: Mar 31, 2027
@@ -4346,8 +4346,8 @@ conferences:
     link: https://easychair.org/cfp/AIRC2027
     categories: [ai]
     editions:
-      - year: 2026
-        id: airc-202726
+      - year: 2027
+        id: airc-202727
         link: https://easychair.org/cfp/AIRC2027
         place: Tempe, Arizona, United States
         date_text: Apr 6, 2027
@@ -4360,8 +4360,8 @@ conferences:
     link: https://easychair.org/cfp/AILA2027
     categories: [ai]
     editions:
-      - year: 2026
-        id: aila202726
+      - year: 2027
+        id: aila202727
         link: https://easychair.org/cfp/AILA2027
         place: Belfast, UK
         date_text: Apr 8, 2027
@@ -4375,8 +4375,8 @@ conferences:
     link: https://easychair.org/cfp/ICAIBD2027
     categories: [ai, db]
     editions:
-      - year: 2026
-        id: icaibd-202726
+      - year: 2027
+        id: icaibd-202727
         link: https://easychair.org/cfp/ICAIBD2027
         place: Chengdu, China
         date_text: May 28, 2027
@@ -4404,8 +4404,8 @@ conferences:
     link: https://easychair.org/cfp/ICCCBDA2027
     categories: [systems, db]
     editions:
-      - year: 2026
-        id: icccbda-202726
+      - year: 2027
+        id: icccbda-202727
         link: https://easychair.org/cfp/ICCCBDA2027
         place: Chengdu, China
         date_text: Apr 23, 2027
@@ -4418,8 +4418,8 @@ conferences:
     link: https://easychair.org/cfp/EECR2027
     categories: [ai]
     editions:
-      - year: 2026
-        id: eecr-202726
+      - year: 2027
+        id: eecr-202727
         link: https://easychair.org/cfp/EECR2027
         place: Shenzhen, China
         date_text: Apr 23, 2027
@@ -4432,8 +4432,8 @@ conferences:
     link: https://easychair.org/cfp/ICBDA2027
     categories: [db]
     editions:
-      - year: 2026
-        id: icbda202726
+      - year: 2027
+        id: icbda202727
         link: https://easychair.org/cfp/ICBDA2027
         place: Bangkok, Thailand
         date_text: Apr 26, 2027
@@ -4459,8 +4459,8 @@ conferences:
     link: https://easychair.org/cfp/ICCRE2027
     categories: [ai]
     editions:
-      - year: 2026
-        id: iccre-202726
+      - year: 2027
+        id: iccre-202727
         link: https://easychair.org/cfp/ICCRE2027
         place: Hong Kong, China
         date_text: May 7, 2027
@@ -4473,8 +4473,8 @@ conferences:
     link: https://easychair.org/cfp/Optirob_2027
     categories: [ai]
     editions:
-      - year: 2026
-        id: sls-optirob-202726
+      - year: 2027
+        id: sls-optirob-202727
         link: https://easychair.org/cfp/Optirob_2027
         place: Venus, Romania
         date_text: Jun 24, 2027
@@ -4553,8 +4553,8 @@ conferences:
     link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201627&copyownerid=199687
     categories: [ai, security]
     editions:
-      - year: 2026
-        id: ai-sec-202726
+      - year: 2027
+        id: ai-sec-202727
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201627&copyownerid=199687
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-12-10', precision: date-only}
@@ -4661,8 +4661,8 @@ conferences:
     link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202679&copyownerid=182219
     categories: [theory]
     editions:
-      - year: 2026
-        id: caldam-202726
+      - year: 2027
+        id: caldam-202727
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202679&copyownerid=182219
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-21', precision: date-only}
@@ -4721,8 +4721,8 @@ conferences:
     link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199953&copyownerid=13881
     categories: [security]
     editions:
-      - year: 2026
-        id: csp-202726
+      - year: 2027
+        id: csp-202727
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199953&copyownerid=13881
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-10-05', precision: date-only}
@@ -4733,8 +4733,8 @@ conferences:
     link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199954&copyownerid=13881
     categories: [security]
     editions:
-      - year: 2026
-        id: csp-ei-202726
+      - year: 2027
+        id: csp-ei-202727
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199954&copyownerid=13881
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-10-05', precision: date-only}
@@ -4901,8 +4901,8 @@ conferences:
     link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201569&copyownerid=174831
     categories: [ai]
     editions:
-      - year: 2026
-        id: icadcml-202726
+      - year: 2027
+        id: icadcml-202727
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201569&copyownerid=174831
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-10', precision: date-only}
@@ -4949,8 +4949,8 @@ conferences:
     link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201356&copyownerid=13881
     categories: [db]
     editions:
-      - year: 2026
-        id: icbda-202726
+      - year: 2027
+        id: icbda-202727
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201356&copyownerid=13881
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-12-10', precision: date-only}
@@ -5057,8 +5057,8 @@ conferences:
     link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199956&copyownerid=13881
     categories: [graphics]
     editions:
-      - year: 2026
-        id: icmip-202726
+      - year: 2027
+        id: icmip-202727
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199956&copyownerid=13881
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-10-05', precision: date-only}
@@ -5069,8 +5069,8 @@ conferences:
     link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199956&copyownerid=13881
     categories: [graphics]
     editions:
-      - year: 2026
-        id: icmip-ei-202726
+      - year: 2027
+        id: icmip-ei-202727
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199956&copyownerid=13881
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-10-05', precision: date-only}
@@ -5141,8 +5141,8 @@ conferences:
     link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199688&copyownerid=13881
     categories: [ai]
     editions:
-      - year: 2026
-        id: icric-202726
+      - year: 2027
+        id: icric-202727
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199688&copyownerid=13881
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-25', precision: date-only}
@@ -5213,8 +5213,8 @@ conferences:
     link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199953&copyownerid=13881
     categories: [security]
     editions:
-      - year: 2026
-        id: ieee-csp-202726
+      - year: 2027
+        id: ieee-csp-202727
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199953&copyownerid=13881
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-10-05', precision: date-only}
@@ -5273,8 +5273,8 @@ conferences:
     link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=195312&copyownerid=13881
     categories: [ai]
     editions:
-      - year: 2026
-        id: ieee-icmre-202726
+      - year: 2027
+        id: ieee-icmre-202727
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=195312&copyownerid=13881
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-25', precision: date-only}
@@ -5333,8 +5333,8 @@ conferences:
     link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201739&copyownerid=45217
     categories: [db]
     editions:
-      - year: 2026
-        id: iotbds-202726
+      - year: 2027
+        id: iotbds-202727
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201739&copyownerid=45217
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-11-17', precision: date-only}
@@ -5369,8 +5369,8 @@ conferences:
     link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202686&copyownerid=44597
     categories: [theory]
     editions:
-      - year: 2026
-        id: jcrt-book-reviews-202726
+      - year: 2027
+        id: jcrt-book-reviews-202727
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202686&copyownerid=44597
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-08-31', precision: date-only}
@@ -5429,8 +5429,8 @@ conferences:
     link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200091&copyownerid=45217
     categories: [ai]
     editions:
-      - year: 2026
-        id: robovis-202726
+      - year: 2027
+        id: robovis-202727
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200091&copyownerid=45217
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-15', precision: date-only}
@@ -5477,8 +5477,8 @@ conferences:
     link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201135&copyownerid=199395
     categories: [theory]
     editions:
-      - year: 2026
-        id: walcom-202726
+      - year: 2027
+        id: walcom-202727
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201135&copyownerid=199395
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-21', precision: date-only}
@@ -5555,8 +5555,8 @@ conferences:
     link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;d098fb44.2608
     categories: [systems, ai, security]
     editions:
-      - year: 2026
-        id: ieee-3scea2027-20-22-april-2027-alexandria-egypt26
+      - year: 2027
+        id: ieee-3scea2027-20-22-april-2027-alexandria-egypt27
         link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;d098fb44.2608
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-12-20', precision: date-only}
@@ -5591,8 +5591,8 @@ conferences:
     link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;b5f2fd3c.2608
     categories: [hpc, systems, ai, security]
     editions:
-      - year: 2026
-        id: pdp-202726
+      - year: 2027
+        id: pdp-202727
         link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;b5f2fd3c.2608
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-10-26', precision: date-only}
@@ -5615,8 +5615,8 @@ conferences:
     link: https://stacs2027.uni-goettingen.de/
     categories: [ai, security, db]
     editions:
-      - year: 2026
-        id: stacs-2027-first26
+      - year: 2027
+        id: stacs-2027-first27
         link: https://stacs2027.uni-goettingen.de/
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-11', precision: date-only}
@@ -5681,8 +5681,8 @@ conferences:
     link: https://www.sigapp.org/sac/sac2027/
     categories: [hpc, systems, ai, security, db]
     editions:
-      - year: 2026
-        id: acm-sac-2027-dbdm-track26
+      - year: 2027
+        id: acm-sac-2027-dbdm-track27
         link: https://www.sigapp.org/sac/sac2027/
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-10-02', precision: date-only}
@@ -5693,8 +5693,8 @@ conferences:
     link: https://btw2027.gi.de/calls/papers
     categories: [ai, db]
     editions:
-      - year: 2026
-        id: btw-202726
+      - year: 2027
+        id: btw-202727
         link: https://btw2027.gi.de/calls/papers
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-18', precision: date-only}

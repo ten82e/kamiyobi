@@ -9,8 +9,8 @@
  *      捏造しない。
  *   2. tz が resolveTzStatus で confirmed (AoE 等の固定オフセット・IANA 名)。
  *      CST/BST 等の曖昧略称は不確認として公開しない。
- *   3. 観測年が適用先 edition 年と一致する。ページ年の食い違い (過去版の残骸) は
- *      隔離して stderr 警告を出す (warning_counts 経由で health gate も見える)。
+ *   3. 締切日が適用先 edition の開催時期と矛盾しない。会期が不明なら開催年または
+ *      前年を許可する。過去版ページは fetch-primary がページタイトルの開催年で隔離する。
  *
  * 検証を通らない行は edition パッチから除外され、パッチ内の deadlines が空に
  * なった edition は deadlines キーごと消える。これにより applyOverrides はその
@@ -24,7 +24,15 @@
  * 手編集ブロックの機構は持たない (次回 --apply で消えるため)。
  */
 
-import { KINDS, resolveTzStatus, warn } from "../model.ts";
+import {
+  asDate,
+  type Conference,
+  DAY_MS,
+  KINDS,
+  parseDateRange,
+  resolveTzStatus,
+  warn,
+} from "../model.ts";
 
 const TIME_RE = /\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp]\.?[Mm]\.?)?/;
 
@@ -99,10 +107,29 @@ function toObservationRows(rows: unknown): ObservationRow[] {
 }
 
 /** 観測 1 行を確定締切行に解決する。検証を通らないなら null。 */
-export function resolveObservation(row: ObservationRow, editionYear: number): ResolvedRow | null {
+export function resolveObservation(
+  row: ObservationRow,
+  editionYear: number,
+  eventStart: Date | null = null,
+  eventEnd: Date | null = null,
+  maxLeadDays = 550,
+): ResolvedRow | null {
   if (!row.time) return null; // 日付のみ → 時刻を捏造しない
   if (resolveTzStatus(row.tzRaw).status !== "confirmed") return null; // 曖昧 tz
-  if (Number.isFinite(editionYear) && editionYearOf(row.date) !== editionYear) return null; // 年不一致
+  const day = asDate(row.date);
+  const start = eventStart ?? eventEnd;
+  const end = eventEnd ?? eventStart;
+  if (
+    !day ||
+    (start !== null &&
+      end !== null &&
+      (day.getTime() > end.getTime() || day.getTime() < start.getTime() - maxLeadDays * DAY_MS)) ||
+    (start === null &&
+      Number.isFinite(editionYear) &&
+      ![editionYear - 1, editionYear].includes(editionYearOf(row.date)))
+  ) {
+    return null;
+  }
   const out: ResolvedRow = {
     kind: (KINDS as readonly string[]).includes(row.kind) ? row.kind : "other",
     label: row.label,
@@ -122,10 +149,18 @@ export function resolveObservation(row: ObservationRow, editionYear: number): Re
  */
 export function resolvePrimaryObservations(
   primary: Record<string, unknown> | null | undefined,
+  config: Record<string, unknown> | null | undefined = null,
+  knownConferences: Conference[] = [],
 ): Record<string, unknown> {
   if (!primary || typeof primary !== "object") return {};
   const conferences = primary.conferences as Record<string, unknown> | undefined;
   if (!conferences || typeof conferences !== "object") return {};
+  const primaryConfig = config?.primary as Record<string, unknown> | undefined;
+  const configuredMaxLeadDays = Number(primaryConfig?.max_lead_days);
+  const maxLeadDays =
+    Number.isFinite(configuredMaxLeadDays) && configuredMaxLeadDays >= 0
+      ? configuredMaxLeadDays
+      : 550;
   const outConferences: Record<string, unknown> = {};
   for (const [key, confPatch] of Object.entries(conferences)) {
     if (typeof confPatch !== "object" || confPatch === null) continue;
@@ -135,35 +170,42 @@ export function resolvePrimaryObservations(
       outConferences[key] = confPatch;
       continue;
     }
+    const knownConference = knownConferences.find((conference) => conference.key === key);
     const outEditions: Record<string, unknown> = {};
     for (const [yearKey, editionPatch] of Object.entries(editions)) {
       if (typeof editionPatch !== "object" || editionPatch === null) continue;
       const ep = editionPatch as Record<string, unknown>;
       const editionYear = Number(yearKey);
+      const knownEdition = knownConference?.editions.find(
+        (edition) => edition.year === editionYear,
+      );
+      const [parsedStart, parsedEnd] = parseDateRange(String(ep.date_text ?? ""), editionYear);
+      const eventStart = asDate(ep.event_start) ?? parsedStart ?? knownEdition?.event_start ?? null;
+      const eventEnd = asDate(ep.event_end) ?? parsedEnd ?? knownEdition?.event_end ?? null;
       const rows = toObservationRows(ep.deadlines);
       if (rows.length === 0) {
         outEditions[yearKey] = ep;
         continue;
       }
       let ambiguous = 0;
-      let yearMismatch = 0;
+      let outsideWindow = 0;
       const resolved: ResolvedRow[] = [];
       for (const row of rows) {
-        const done = resolveObservation(row, editionYear);
+        const done = resolveObservation(row, editionYear, eventStart, eventEnd, maxLeadDays);
         if (done !== null) {
           resolved.push(done);
-        } else if (Number.isFinite(editionYear) && editionYearOf(row.date) !== editionYear) {
-          yearMismatch += 1;
+        } else if (row.time && resolveTzStatus(row.tzRaw).status === "confirmed") {
+          outsideWindow += 1;
         } else {
           ambiguous += 1;
         }
       }
       if (resolved.length === 0) {
         // 検証を通る行が無い → deadlines キーを外して既存の確定値を保持する。
-        if (yearMismatch > 0) {
+        if (outsideWindow > 0) {
           warn(
-            `primary[${key}/${yearKey}]: quarantined ${yearMismatch} observation(s) ` +
-              "(page year conflicts with edition year)",
+            `primary[${key}/${yearKey}]: quarantined ${outsideWindow} observation(s) ` +
+              "(deadline falls outside edition window)",
           );
         }
         if (ambiguous > 0) {
@@ -176,10 +218,10 @@ export function resolvePrimaryObservations(
         outEditions[yearKey] = rest;
         continue;
       }
-      if (yearMismatch > 0 || ambiguous > 0) {
+      if (outsideWindow > 0 || ambiguous > 0) {
         warn(
           `primary[${key}/${yearKey}]: kept ${resolved.length}/${rows.length} observation(s), ` +
-            `quarantined ${yearMismatch} year-conflict / ${ambiguous} unverifiable`,
+            `quarantined ${outsideWindow} outside-window / ${ambiguous} unverifiable`,
         );
       }
       outEditions[yearKey] = { ...ep, deadlines: resolved };
