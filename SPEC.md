@@ -157,22 +157,22 @@ kamiyobi/
 │   ├── discover.ts              # 穴場会議・ジャーナル自律探索
 │   ├── fetch-primary.ts         # 一次ソース自動抽出
 │   ├── review-candidates.ts     # 候補レビュー支援
-│   ├── recommender-api.ts       # 推薦ランタイムの型境界
+│   ├── recommender-api.ts       # 推薦実行時処理の型境界
 │   ├── embeddings.ts            # 埋め込み生成
 │   ├── bench-recommender.ts     # 推薦ベンチ
 │   ├── build.ts                 # JSON/CSV/MD/llms.txt/HTML 出力
 │   └── cli.ts                   # エントリポイント
 ├── site/
-│   ├── tsconfig.json            # ブラウザ runtime の checkJs 設定
+│   ├── tsconfig.json            # ブラウザ実行時処理の checkJs 設定
 │   ├── template.html            # コア UI（表・絞り込み。外部 CDN なし）
-│   ├── app.js                   # 型検査対象のブラウザ UI runtime
+│   ├── app.js                   # 型検査対象のブラウザ UI 実行時処理
 │   ├── recommender.js           # 論文推薦（§10。任意 CDN）
-│   ├── recommender.d.ts         # 推薦ランタイムのグローバル型宣言
+│   ├── recommender.d.ts         # 推薦実行時処理のグローバル型宣言
 │   └── runtime.d.ts             # ブラウザ・生成データの型境界
 ├── scripts/
 │   ├── compare-head.ts          # snapshot / primary_overrides の実質差分
-│   ├── health-gate.ts           # last-known-good との配信前健全性ゲート
-│   └── generate-venue-profiles.ts # provenance付き profile artifact の再生成
+│   ├── health-gate.ts           # 直近の健全な公開結果との配信前健全性ゲート
+│   └── generate-venue-profiles.ts # 出典情報付きプロフィール成果物の再生成
 ├── public/                      # 生成物(git 管理外)
 ├── tests/                       # vitest
 └── .github/workflows/
@@ -203,7 +203,7 @@ export function slug(title: string): string;
 // 'Hot Interconnects' -> 'hot-interconnects', 'IH&MMSec' -> 'ih-mmsec'
 ```
 
-各 Source の Conference は `key = slug(title)` を持つ（ccfddl・aideadlines・local 共通）。
+各データ源の Conference は `key = slug(title)` を持つ（ccfddl・aideadlines・local 共通）。
 **同一 key に別会議が載ったときは merge_sources が upstream_sub で分割する**
 （§3.6）。`key_overrides` のような設定は持たない。
 
@@ -330,18 +330,18 @@ export async function fetchTarball(
 
 `cli.build`（`src/cli.ts` の `cmdBuild`）の取得順序を凍結する:
 
-1. 各 Source を順に `load()` する。
-2. **全 Source が失敗した場合に限り** `data/snapshot.json` から
+1. 各データ源を順に `load()` する。
+2. **全データ源が失敗した場合に限り** `data/snapshot.json` から
    `restoreSnapshot()` で復元し、警告を出して処理を継続する（サイトを壊さない）。
-3. 一部の Source だけ失敗した場合は、成功した分に snapshot の該当分をマージして継続する。
+3. 一部のデータ源だけ失敗した場合は、成功した分に snapshot の該当分をマージして継続する。
 4. snapshot も空なら異常終了する（黙って空の公開データを公開しない）。
 
 snapshot の書き込みは build の最後に `data.json` を `data/snapshot.json` へ
 コピーする（`generated_at` を含まない・§4.1 と同一スキーマ）。
 
 **退避時の local 再適用**: snapshot は「最後に健全な online ビルドが生成した
-時点」のデータなので、その後に `data/extra.yaml`（local source）へ追加された
-会議・締切（新規収録・通知締切など）を含まない。local source はローカル
+時点」のデータなので、その後に `data/extra.yaml`（ローカルデータ源）へ追加された
+会議・締切（新規収録・通知締切など）を含まない。ローカルデータ源はローカル
 ファイルなので上流障害時も読めるため、`restoreSnapshot()` の復元データに
 `mergeSources()` で local を再マージしてから overrides を再適用する
 （`local` は `source_priority` 最上位なので、snapshot 側の古い締切を正しく
@@ -497,7 +497,7 @@ node --experimental-strip-types src/cli.ts review [--candidates data/discovered_
 （`2026-08-09`）は UTC 0 時とする。
 `--no-embeddings` は `embeddings.json` を書かない（テスト用・高速化）。
 `discover` は穴場の会議・ジャーナルを探索し、`review` は候補を締切昇順・重複・
-predatory 疑い付きで一覧する。
+ハゲタカ会議の疑い付きで一覧する。
 
 ---
 
@@ -520,19 +520,19 @@ predatory 疑い付きで一覧する。
 | `llms.txt` | エージェント向け出力索引 |
 | `embeddings.json` | 会議スコープの埋め込み（§10）。`--no-embeddings` で省略可 |
 | `recommender.js` | サイトの推薦ロジック |
-| `app.js` | ブラウザUI runtime（TypeScript の `allowJs` 対象） |
+| `app.js` | ブラウザ UI 実行時処理（TypeScript の `allowJs` 対象） |
 | `.nojekyll` | Pages の Jekyll 処理を無効化 |
 
 `health.json` は `profile_hash`、`confirmed_future_deadlines`、`estimated_future_deadlines`、
 `source_failures`、`snapshot_fallback`、`parse_warning_count`、カテゴリ別件数、
 必須会議の存在状態、および schema 2 の `deadline_refs` を持つ。各 ref の
 `deadline_id` は `venue|edition_id|kind|round|track` で、時刻は `at_utc` に分離する。
-last-known-good との比較では、同一 slot の延長は通し、公式 evidence のない前倒しと
-根拠のない未来 slot 消失だけを配信阻止対象とする。経過した締切の削除と推定値の増減では
+直近の健全な公開結果との比較では、同一枠の延長は通し、公式根拠のない前倒しと
+根拠のない未来枠の消失だけを配信阻止対象とする。経過した締切の削除と推定値の増減では
 阻止しない。`deadline_refs` は現在未来の確定締切と短い lookback（14 日）に限る。
 
 `publish.json` は最終的な公開セットを検査する。`semantic_status` は埋め込みが有効なとき
-`ready`、省略または検証に失敗したとき `lexical-only` になる。`artifacts` は `publish.json`
+`ready`、省略または検証に失敗したとき `lexical-only` になる。成果物一覧の `artifacts` は `publish.json`
 自身を除く各公開ファイルのバイト数と SHA-256 を持つ。
 
 `index.html` に埋め込む JSON は `catalog.json` と同一である。推薦モードは
@@ -720,12 +720,12 @@ conferences:
 
 - `on: {schedule: [{cron: '17 20 * * *'}], workflow_dispatch: }`（20:17 UTC = 05:17 JST）
 - `permissions: {contents: write, pages: write, id-token: write}`
-- deadline build の後、任意の推薦 bundle を cache から復元・生成・検証する。
+- 締切ビルドの後、任意の推薦一式をキャッシュから復元・生成・検証する。
   埋め込みの生成または検証に失敗した場合は `public/embeddings.json` を公開物から除き、
-  `recommendation-index.json` と締切一覧を語彙 fallback 付きで残す。`scripts/health-gate.ts`
-  は公開済み `health.json` を last-known-good として比較し、確定締切 slot の根拠のない消失や
-  evidence なしの前倒し、必須会議欠落、警告急増、snapshot 無しのソース障害を検出した場合だけ
-  Pages への配信を止める。同一 slot の延長、新 slot の追加、経過した締切の削除、
+  `recommendation-index.json` と締切一覧は、語彙検索のみで動作する形で残す。`scripts/health-gate.ts`
+  は公開済み `health.json` を直近の健全な公開結果として比較し、確定締切枠の根拠のない消失や
+  根拠なしの前倒し、必須会議欠落、警告急増、snapshot 無しのデータ源障害を検出した場合だけ
+  Pages への配信を止める。同一枠の延長、新しい枠の追加、経過した締切の削除、
   `profile_hash` の変化では止めない。
 - `concurrency: {group: pages, cancel-in-progress: false}`（**update.yml にのみ付ける**。
   concurrency group はリポジトリ全体で共有されるため、ci.yml に付けると CI が
@@ -781,23 +781,23 @@ on:
 
 ## 7. 静的サイト（`site/template.html`）
 
-- **コア UI は静的テンプレートと checked runtime に分離**。表・絞り込み・テーマ・フォントは外部 CDN・
-  Web フォント・外部画像を使わない（#223）。sibling の `recommender.js`（§10）は
-  ビルドが `index.html` と同じディレクトリへ同梱する。UI runtime は `app.js` として
+- **コア UI は静的テンプレートと型検査済みの実行時処理に分離**。表・絞り込み・テーマ・フォントは外部 CDN・
+  Web フォント・外部画像を使わない（#223）。同階層の `recommender.js`（§10）は
+  ビルドが `index.html` と同じディレクトリへ同梱する。UI 実行時処理は `app.js` として
   同梱し、TypeScript のプログラムへ `allowJs` で含める。
-- 推薦機能だけ、オフライン時フォールバック付きの任意 CDN を遅延ロードしてよい。
+- 推薦機能だけ、オフライン時の代替動作を備えた任意 CDN を遅延ロードしてよい。
   許可するのは次の 3 URL に限る。
   `https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/+esm`、
   `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js`、
   `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`。
-  CDN または `embeddings.json` が使えないときは画面に AI 類似度の利用不可を表示し、
+  CDN または `embeddings.json` が使えないときは画面に意味検索を利用できないことを表示し、
   語彙スコアと TXT 入力だけで動く。締切モードは推薦用埋め込みの有無に依存しない。
 - `index.html` は `Content-Security-Policy` を持ち、script / worker / model 接続を上記の
   固定 origin に限定する。`unsafe-inline` は単一テンプレート内の既存 inline script/style
   を維持するためだけに使い、外部 origin の wildcard は許可しない。
 - ビルド時に、テンプレート中の文字列 **`/*__DATA__*/null`** が
   `data.json` 相当の JSON リテラルに置換される。これが唯一のマーカーである。
-  ビルドは JSON を JS ソースへ埋めるので `<` を `<` に、
+  ビルドは JSON を JS ソースへ埋めるので `</` を `<\/` に、`<!--` を `\u003c!--` に置換し、
   U+2028 / U+2029 をエスケープすること（実データに `&` を含む文字列が 17 箇所ある）。
   テンプレートが無ければ警告して index.html をスキップする（テストのため）。
 - 表示: 締切までの残り時間（ブラウザのローカル時刻）と AoE 表記を併記。
@@ -830,7 +830,7 @@ on:
 
 - `timezone.test.ts`: `resolveTz` の実在値 19 + 12 種すべて。`AoE` = UTC-12。
   `UTC-08` と `UTC-8` が同じ。IANA 名。**`PT` が夏と冬で異なるオフセットになること**。
-  不明値が UTC にフォールバックすること。
+  不明値では UTC を代替値として使うこと。
 - `parse.test.ts`: `parseInstant` の AoE→UTC 変換
   （`2026-04-08 23:59:00 AoE` → `2026-04-09T11:59:00Z`）。`TBD` が null。
   `parseDateRange` の月跨ぎ・年跨ぎ・略記月・`Sept.`・en dash・単日。
@@ -847,7 +847,7 @@ on:
   NSDI 型の数か月離れたラウンドと、許容幅の外側（3601 秒差）が畳まれないこと。
   締切も開催日も持たない会議が `select` で落ちること。
 - `snapshot.test.ts`: build の最後に `data.json` → `snapshot.json` のコピーで
-  情報が落ちないこと。全 Source が失敗したとき snapshot から復旧すること。
+  情報が落ちないこと。全データ源が失敗したとき snapshot から復旧すること。
 - `build_golden.test.ts`: 小さな固定入力から `--now` 固定でビルドし、
   ファイル一式が生成されること・JSON スキーマが §4.1 どおりであること。
   推定値が `estimated` フラグで確定値と区別されること。
@@ -887,7 +887,7 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 
 - 語彙スコア（`breakdown`）: 会議名・分野シグナル・VENUE_PAPERS 語彙との一致。
   適応ブレンド `vocabWeight`（EN: 内容語数 ≤4→0.25 / ≥5→0.4、JP: 0.6）。
-- セマンティックスコア（`semanticScore`）: 埋め込み cosine。
+- 意味類似度スコア（`semanticScore`）: 埋め込み cosine。
   `public/embeddings.json`（`src/embeddings.ts` で生成、会議セット変化で自動再生成）。
 - PRF（擬似関連性フィードバック）: 掲載先タグ付き論文はタグ会議の埋め込みを
   0.3 ブレンド。
@@ -918,7 +918,7 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 1. 失敗会議の採択リストを一次出典または dblp から取得し、入力 JSON に出典 URL と
    収集時刻を付ける。
 2. `node scripts/generate-venue-profiles.ts <input.json> data/venue-profiles.json`
-   で正規化・検証・hash 付与する。空の provenance、重複タイトル、混在 cutoff、
+   で正規化・検証・hash 付与する。空の出典情報、重複タイトル、混在 cutoff、
    cutoff 超過、収集時点より未来の年は失敗させる。
 3. `GOLDEN_EN`（テストセット）と重複しない論文だけを採用する
    （**同一タイトルを両方に入れるとリークになり、A/B が偽陽性になる**）。

@@ -30,7 +30,7 @@
 | `https://ten82e.github.io/kamiyobi/llms.txt` | 出力ファイルとデータの形を 1 枚にまとめた索引。まずここを読む |
 | `https://ten82e.github.io/kamiyobi/data.json` | 正規化済みの全データ。会議・版・締切の三層構造。締切時刻は UTC と AoE 表記を併記 |
 | `https://ten82e.github.io/kamiyobi/health.json` | 確定/推定締切、ソース失敗、警告数、カテゴリ件数、必須会議の健全性レポート |
-| `https://ten82e.github.io/kamiyobi/publish.json` | 公開直後の成果物ハッシュと `semantic_status`（`ready` または `lexical-only`） |
+| `https://ten82e.github.io/kamiyobi/publish.json` | 公開直後の成果物ハッシュと `semantic_status`（`ready` または `lexical-only`）。意味検索用の埋め込みが公開物に含まれるかを示す |
 
 他に、1 行 1 締切の平坦な表 [`data.csv`](https://ten82e.github.io/kamiyobi/data.csv) と、直近 180 日の締切と開催の表 `upcoming.md` がある。
 
@@ -38,13 +38,13 @@
 
 公開サイト https://ten82e.github.io/kamiyobi/ の上部で、**読んだ論文（似た論文）または投稿予定の論文の PDF / TXT を選ぶだけ**で、合いそうな会議・ジャーナルを適合度順にランク付けする（複数ファイル可）。
 
-- PDF は固定版 pdf.js で先頭 3 ページのタイトル・Abstract・Keywordsを読み取ってマッチングする（未接続環境では TXT のみ対応）。ページには許可済み CDN とモデル接続だけを記した CSP を設定している。
+- PDF は固定版 pdf.js で先頭 3 ページのタイトル・概要・キーワードを読み取って照合する（未接続環境では TXT のみ対応）。ページには許可済み CDN とモデル接続だけを記した CSP を設定している。
 - 内部では 1 ファイルを `タイトル | 本文` の 1 行として処理する。掲載先タグ（`| RTSS` 等）による「掲載先一致」優先は手動の行入力時のみの機能だが、サイト上はアップロードが主経路のため通常は不要。
 - 分野チップが空のときは論文内容から分野を自動判定して表示する（手動でチップを選ぶとその分野に絞る）。
 - 英語・日本語どちらのタイトル/キーワードにも対応。日本語の場合は会議名の日本語表記と部分一致し、国内研究会（情報処理学会・電子情報通信学会等）も拾う。
-- **AI セマンティック補助**: 会議スコープは build 時に all-MiniLM-L6-v2 で埋め込み済み（`embeddings.json`）。ブラウザで transformers.js が使える環境では、論文入力の埋め込みとコサイン類似度を計算し、語彙スコア（70%）と AI 類似度（30%）を合成する。CDN が使えない環境では語彙スコアのみで動作（フォールバック）。
-- 埋め込みが未提供・不正・古い場合は、画面に AI 類似度が利用不可で語彙のみ有効であることを表示する。締切一覧はこの状態でも利用できる。
-- AI 補助の runtime とモデル取得は固定 URL の外部接続を使う。接続できない場合も語彙検索と TXT 入力は継続する。
+- **AI による意味検索の補助**: 会議スコープはビルド時に all-MiniLM-L6-v2 で埋め込み済み（`embeddings.json`）。ブラウザで transformers.js が使える環境では、論文入力との意味類似度を計算し、入力言語と内容語数に応じた重みで語彙スコアと合成する。CDN が使えない環境では語彙検索のみで動作する。
+- 埋め込みが未提供・不正・古い場合は、画面に意味検索が利用できず、語彙検索のみ有効であることを表示する。締切一覧はこの状態でも利用できる。
+- AI 補助の実行時処理とモデル取得は固定 URL の外部接続を使う。接続できない場合も語彙検索と TXT 入力は継続する。
 - 適合度は、分野シグナル・会議名・領域タグとの語彙一致と掲載先タグの合算。スコアリングの実装は `site/recommender.js` で、`tests/recommender.test.ts` が実データで回帰検証する。
 
 ## データ源とライセンス
@@ -88,7 +88,7 @@ node src/cli.ts discover --candidate-out data/discovered_candidates.yaml
 探索対象を分野や年で絞るには `--categories`（例: `hpc,systems`）と
 `--min-year`（省略時は実行時の UTC 年）を使う。
 
-溜まった候補を締切昇順・重複・predatory 疑い付きで一覧するには `review` を使う。
+溜まった候補を締切昇順・重複・ハゲタカ会議の疑い付きで一覧するには `review` を使う。
 
 ```sh
 node src/cli.ts review

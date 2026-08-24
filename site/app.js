@@ -433,7 +433,7 @@
     return { text: "あと " + d + " 日", cls: d <= 14 ? "soon" : "" };
   }
 
-  // Paper Text Matching Score — ロジックは recommender.js (Recommender.breakdown) に移管
+  // Paper Text Matching Score。ロジックは recommender.js (Recommender.breakdown) に移管
 
   // ---- SEMANTIC MATCH (AI 補助: transformers.js + embeddings.json) ----
   // embeddings.json は build 時に生成（src/embeddings.ts）。
@@ -810,7 +810,7 @@
         if (agg.jp > 0) parts.push("日本語一致 +" + agg.jp);
         if (agg.tags > 0) parts.push("領域タグ +" + agg.tags);
         if (agg.venue > 0) parts.push("過去掲載先一致");
-        if (r._semScore > 0) parts.push("AI類似度 " + r._semScore + "点");
+        if (r._semScore > 0) parts.push("意味類似度 " + r._semScore + "点");
         if (parts.length) ms.title = parts.join(" ／ ");
       }
       tags.appendChild(ms);
@@ -907,23 +907,23 @@
     if (agg.jp > 0) chips.push(["日本語一致", "+" + agg.jp, "日本語の会議名・論文語が一致"]);
     if (agg.tags > 0) chips.push(["領域タグ", "+" + agg.tags, "会議の領域タグ（real-time 等）が論文に含まれる"]);
     if (agg.venue > 0) chips.push(["過去掲載先一致", "補助", "過去に同じ掲載先が確認された補助シグナル（トピック一致とは別）"]);
-    if (r._semScore > 0) chips.push(["semantic 候補", "rank " + (r._semanticRank || "—"), "埋め込み検索の候補順位を RRF に加算"]);
+    if (r._semScore > 0) chips.push(["意味検索候補", "順位 " + (r._semanticRank || "—"), "埋め込み検索の候補順位を RRF に加算"]);
     if (r._boosted) chips.push(["同分野ブースト", "+10", "掲載先タグから推定した分野とこの会議が一致"]);
     if (!chips.length) chips.push(["一致要素なし", "—", "低スコアでも閾値を超えたため表示"]);
 
     var html = '<div class="detail-inner">';
-    html += '<div class="detail-head">一致評価 ' + esc(r._fitLabel || "評価保留") + ' の内訳 — この会議が選ばれた理由</div>';
+    html += '<div class="detail-head">一致評価 ' + esc(r._fitLabel || "評価保留") + ' の内訳（この会議が選ばれた理由）</div>';
     var comp;
     if (r._semanticRank) {
-      comp = 'RRF: 語彙 rank ' + (r._lexicalRank || '—') + ' + semantic rank ' + r._semanticRank + ' → 一致評価 ' + esc(r._fitLabel || "評価保留");
+      comp = 'RRF: 語彙検索順位 ' + (r._lexicalRank || '—') + ' + 意味検索順位 ' + r._semanticRank + ' → 一致評価 ' + esc(r._fitLabel || "評価保留");
     } else if (semState === "loading") {
-      comp = '語彙スコア ' + r._vocabScore + '点（AI 類似度 計算中…）';
+      comp = '語彙スコア ' + r._vocabScore + '点（意味検索を実行中…）';
     } else if (semState === "error") {
-      comp = '語彙スコア ' + r._vocabScore + '点（埋め込みが使えないため AI 類似度なし）';
+      comp = '語彙スコア ' + r._vocabScore + '点（埋め込みが使えないため意味検索なし）';
     } else {
       comp = '語彙スコア ' + r._vocabScore + '点';
     }
-    html += '<div class="detail-comp">' + comp + (m.evidence && m.evidence.some(function (e) { return e.rank; }) ? '（rank evidence を RRF 集約）' : '') + '</div>';
+    html += '<div class="detail-comp">' + comp + (m.evidence && m.evidence.some(function (e) { return e.rank; }) ? '（順位情報を RRF で集約）' : '') + '</div>';
     html += '<div class="reason-chips">' + chips.map((c) => '<span class="reason-chip" title="' + esc(c[2]) + '"><b>' + esc(c[0]) + '</b><em>' + esc(c[1]) + '</em></span>').join("") + '</div>';
 
     if (lines.length > 1) {
@@ -1034,7 +1034,7 @@
       ["日本語一致", agg.jp], ["領域タグ", agg.tags]]
       .forEach((item) => { if (item[1] > 0) reasons.push(item[0] + " +" + item[1]); });
     if (agg.venue > 0) reasons.push("過去掲載先一致");
-    if (r._semanticRank) reasons.push("semantic rank " + r._semanticRank);
+    if (r._semanticRank) reasons.push("意味検索順位 " + r._semanticRank);
     if (r._boosted) reasons.push("同分野ブースト");
     line(card, reasons.length ? "選定理由: " + reasons.join(" / ") : "選定理由: 一致要素を確認できる候補", "card-section");
     if (r.conf.link && safeExternalUrl(r.conf.link)) {
@@ -1059,7 +1059,7 @@
     var pe = $("paperText");
     var lines = pe && Recommender ? Recommender.parsePaperLines(pe.value) : [];
     if (!lines.length) {
-      line(cards, "投稿予定論文のタイトル・Abstract・PDF/TXTを入力してください。", "recommendation-card");
+      line(cards, "投稿予定論文のタイトル・概要・PDF/TXTを入力してください。", "recommendation-card");
       return;
     }
     if (!list.length) {
@@ -1090,9 +1090,9 @@
       if (_auto.length && !state.cats.length) {
         cnt += " ｜ 分野自動判定: " + _auto.map((k) => (DATA.categories && DATA.categories[k]) ? DATA.categories[k] : k).join(", ");
       }
-      // AI 類似度の状態を明示（初回はモデル読込に数秒かかる）
-      if (semState === "loading") { cnt += " ｜ AI 類似度 計算中…"; }
-      else if (semState === "error") { cnt += " ｜ AI 類似度 利用不可（埋め込みが使えないため語彙のみ）"; }
+      // 意味検索の状態を明示（初回はモデル読込に数秒かかる）
+      if (semState === "loading") { cnt += " ｜ 意味検索を実行中…"; }
+      else if (semState === "error") { cnt += " ｜ 意味検索は利用不可（埋め込みが使えないため語彙検索のみ）"; }
     }
     $("count").textContent = cnt;
     var showHistoryStatus = !recMode && state.past && (historyStatus === "loading" || historyStatus === "error");

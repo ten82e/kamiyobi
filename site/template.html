@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://cdn-lfs.huggingface.co; worker-src 'self' blob: https://cdnjs.cloudflare.com;">
-<title>kamiyobi — CS国際会議・穴場ワークショップ締切探知</title>
+<title>kamiyobi：CS国際会議・穴場ワークショップ締切探知</title>
 <style>
 :root {
   color-scheme: light dark;
@@ -517,8 +517,8 @@ footer a:hover { text-decoration: underline; }
     <div class="presets-bar deadline-only">
       <span style="font-size: 0.78rem; color: var(--muted); align-self: center; margin-right: 4px;">クイック抽出:</span>
       <button class="preset-btn" data-preset="7d" onclick="applyPreset('7d')">締切直近 (7日以内)</button>
-      <button class="preset-btn" data-preset="a_star" onclick="applyPreset('a_star')">Top Tier (A*)</button>
-      <button class="preset-btn" data-preset="hpc_sys" onclick="applyPreset('hpc_sys')">HPC &amp; Systems</button>
+      <button class="preset-btn" data-preset="a_star" onclick="applyPreset('a_star')">A*ランク</button>
+      <button class="preset-btn" data-preset="hpc_sys" onclick="applyPreset('hpc_sys')">HPC・システム</button>
       <button class="preset-btn" data-preset="domestic" onclick="applyPreset('domestic')">国内研究会</button>
     </div>
 
@@ -549,7 +549,7 @@ footer a:hover { text-decoration: underline; }
 
     <!-- Paper Title / Abstract / Keyword Smart Recommender -->
     <div class="recommend-only" style="margin-top: 14px;">
-      <span style="font-size: 0.78rem; color: var(--muted); font-weight: 500;">投稿先レコメンド</span>
+      <span style="font-size: 0.78rem; color: var(--muted); font-weight: 500;">投稿先推薦</span>
       <div style="margin-top: 4px;">
         <label style="display: inline-block; cursor: pointer; padding: 8px 14px; border: 1px dashed var(--border); border-radius: 8px; font-size: 0.85rem; color: var(--accent);">
           📄 投稿予定の論文を選ぶ（PDF / TXT・複数可。1件目が投稿予定、残りは参考論文）
@@ -558,12 +558,12 @@ footer a:hover { text-decoration: underline; }
         <span id="paperFileLabel" style="font-size: 0.72rem; color: var(--muted); margin-left: 8px;">未選択</span>
         <button id="cancelPdf" type="button" hidden>PDF読み込みをキャンセル</button>
       </div>
-      <div style="font-size: 0.7rem; color: var(--muted); margin-top: 2px;">PDF は先頭3ページのタイトル・Abstract・Keywordsだけを読み取ります。抽出結果は編集してから推薦できます。</div>
+      <div style="font-size: 0.7rem; color: var(--muted); margin-top: 2px;">PDF は先頭3ページのタイトル・概要・キーワードだけを読み取ります。抽出結果は編集してから推薦できます。</div>
       <div style="display: grid; gap: 8px; margin-top: 8px;">
         <label>投稿予定タイトル<input id="paperPrimaryTitle" type="text" placeholder="投稿予定論文のタイトル"></label>
-        <label>投稿予定 Abstract<textarea id="paperPrimaryAbstract" rows="4" placeholder="投稿予定論文の Abstract"></textarea></label>
-        <label>投稿予定 Keywords<input id="paperPrimaryKeywords" type="text" placeholder="keyword, keyword"></label>
-        <label>参考論文<textarea id="paperReferences" rows="3" placeholder="参考論文（1行1件: title | keywords | venue）"></textarea></label>
+        <label>投稿予定概要<textarea id="paperPrimaryAbstract" rows="4" placeholder="投稿予定論文の概要"></textarea></label>
+        <label>投稿予定キーワード<input id="paperPrimaryKeywords" type="text" placeholder="キーワード, キーワード"></label>
+        <label>参考論文<textarea id="paperReferences" rows="3" placeholder="参考論文（1行1件: タイトル | キーワード | 掲載先）"></textarea></label>
       </div>
       <div style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px;">
         <span style="font-size: 0.7rem; color: var(--muted); align-self: center;">動作確認用サンプル:</span>
