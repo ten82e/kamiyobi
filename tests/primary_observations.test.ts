@@ -14,7 +14,7 @@ import {
   resolveObservation,
   resolvePrimaryObservations,
 } from "../src/sources/primary.ts";
-import { makeConference, makeDeadline, makeEdition, utc } from "./helpers.ts";
+import { exactAt, makeConference, makeDeadline, makeEdition, utc } from "./helpers.ts";
 
 function spyWarn(): ReturnType<typeof vi.spyOn> {
   return vi.spyOn(process.stderr, "write").mockImplementation(() => true);
@@ -104,7 +104,7 @@ describe("resolvePrimaryObservations (#504 acceptance)", () => {
     });
     const out = applyOverrides(confs, primary);
     expect(out[0].editions[0].deadlines).toHaveLength(1);
-    expect(out[0].editions[0].deadlines[0].at_utc.getTime()).toBe(
+    expect(exactAt(out[0].editions[0].deadlines[0]).getTime()).toBe(
       utc(2026, 10, 10, 11, 59, 0).getTime(),
     );
   });
@@ -189,7 +189,7 @@ describe("resolvePrimaryObservations (#504 acceptance)", () => {
     out = applyOverrides(out, primary);
     expect(out[0].editions[0].deadlines).toHaveLength(1);
     expect(out[0].editions[0].deadlines[0].label).toBe("Regular paper submission");
-    expect(out[0].editions[0].deadlines[0].at_utc.getTime()).toBe(
+    expect(exactAt(out[0].editions[0].deadlines[0]).getTime()).toBe(
       utc(2026, 8, 31, 11, 59, 0).getTime(),
     );
   });
@@ -350,7 +350,7 @@ describe("applyOverrides merge-layer deadline guard (#504 P0-1)", () => {
       },
     });
     expect(out[0].editions[0].deadlines).toHaveLength(1);
-    expect(out[0].editions[0].deadlines[0].at_utc.getTime()).toBe(
+    expect(exactAt(out[0].editions[0].deadlines[0]).getTime()).toBe(
       utc(2026, 9, 15, 11, 59, 0).getTime(),
     );
   });
@@ -394,7 +394,7 @@ describe("applyOverrides merge-layer deadline guard (#504 P0-1)", () => {
     });
     expect(out[0].editions[0].deadlines).toHaveLength(1);
     expect(out[0].editions[0].deadlines[0].label).toBe("Paper submission (extended)");
-    expect(out[0].editions[0].deadlines[0].at_utc.getTime()).toBe(
+    expect(exactAt(out[0].editions[0].deadlines[0]).getTime()).toBe(
       utc(2026, 9, 23, 11, 59, 0).getTime(),
     );
   });

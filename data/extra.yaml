@@ -3838,8 +3838,7 @@ conferences:
   # 根拠: 各会議の EasyChair CFP ページから取得した deadlines テーブルの原文
   #   (Submission deadline 行)。取得日 2026-08-23。全 45 件が http 200 で裏取り一致
   #   (短冊の日付とページ表記が全件一致。verify-notes.md 参照)。
-  # tz: EasyChair CFP は締切行に tz を明記しないため AoE (UTC-12) 当日終了と解釈した。
-  #   日付のみの観測であり、時刻は運用慣行からの補完である。
+  # 締切行には時刻・タイムゾーンがないため、日付のみとして収録する。
 
   - key: ieee-aiot-2026
     title: IEEE AIoT 2026
@@ -3853,7 +3852,7 @@ conferences:
         place: Kobe, Japan
         date_text: Dec 14, 2026
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-24 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-24', precision: date-only}
 
   - key: iccr-2026
     title: ICCR 2026
@@ -3867,7 +3866,7 @@ conferences:
         place: TOKYO, Japan
         date_text: Dec 3, 2026
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-25 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-25', precision: date-only}
 
   - key: mdoa-2026
     title: MDOA 2026
@@ -3881,8 +3880,8 @@ conferences:
         place: Paris, France
         date_text: Oct 28, 2026
         deadlines:
-          - {kind: abstract, label: Abstract registration, date: '2026-07-28 23:59:00', tz: AoE}
-          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+          - {kind: abstract, label: Abstract registration, date: '2026-07-28', precision: date-only}
+          - {kind: paper, label: Submission deadline, date: '2026-08-28', precision: date-only}
 
   - key: dml-icc-2026
     title: DML-ICC 2026
@@ -3896,7 +3895,7 @@ conferences:
         place: Florianópolis, Brazil
         date_text: Dec 1, 2026
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-30 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-30', precision: date-only}
 
   - key: ccisc-2026
     title: CCISC 2026
@@ -3910,7 +3909,7 @@ conferences:
         place: Wuxi, China
         date_text: Sep 18, 2026
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-31', precision: date-only}
 
   - key: gcetai26
     title: GCETAI26
@@ -3924,8 +3923,8 @@ conferences:
         place: Raipur, India
         date_text: Nov 20, 2026
         deadlines:
-          - {kind: abstract, label: Abstract registration, date: '2026-08-15 23:59:00', tz: AoE}
-          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+          - {kind: abstract, label: Abstract registration, date: '2026-08-15', precision: date-only}
+          - {kind: paper, label: Submission deadline, date: '2026-08-31', precision: date-only}
 
   - key: icai-2026
     title: ICAI 2026
@@ -3939,7 +3938,7 @@ conferences:
         place: Hangzhou, China
         date_text: Sep 28, 2026
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-31', precision: date-only}
 
   - key: icdiacs-2026
     title: ICDIACS 2026
@@ -3953,8 +3952,8 @@ conferences:
         place: Raipur, India
         date_text: Oct 27, 2026
         deadlines:
-          - {kind: abstract, label: Abstract registration, date: '2026-08-15 23:59:00', tz: AoE}
-          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+          - {kind: abstract, label: Abstract registration, date: '2026-08-15', precision: date-only}
+          - {kind: paper, label: Submission deadline, date: '2026-08-31', precision: date-only}
 
   - key: mirg-icair-2026
     title: MIRG-ICAIR 2026
@@ -3968,7 +3967,7 @@ conferences:
         place: Lagos, Nigeria
         date_text: Nov 3, 2026
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-31', precision: date-only}
 
   - key: oasis-ai-2026
     title: OASIS-AI 2026
@@ -3982,7 +3981,7 @@ conferences:
         place: Athens, Greece
         date_text: Nov 1, 2026
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-31', precision: date-only}
 
   - key: parallel2026
     title: Parallel2026
@@ -3996,7 +3995,7 @@ conferences:
         place: Abu Dhabi, UAE
         date_text: Nov 18, 2026
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-31', precision: date-only}
 
   - key: slice-2026
     title: SLICE-2026
@@ -4010,7 +4009,7 @@ conferences:
         place: Hung Hom, Hong Kong
         date_text: Oct 21, 2026
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-31', precision: date-only}
 
   - key: copa-2026
     title: COPA 2026
@@ -4024,7 +4023,7 @@ conferences:
         place: Oxford, UK
         date_text: Sep 7, 2026
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-04 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-04', precision: date-only}
 
   - key: raai2026
     title: RAAI2026
@@ -4038,7 +4037,7 @@ conferences:
         place: Singapore, Singapore
         date_text: Dec 18, 2026
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-05 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-05', precision: date-only}
 
   - key: ai4scisci-2026
     title: AI4SciSci 2026
@@ -4052,7 +4051,7 @@ conferences:
         place: Dallas, Texas, United States
         date_text: Oct 13, 2026
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-07 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-07', precision: date-only}
 
   - key: eaai-27
     title: EAAI-27
@@ -4065,8 +4064,8 @@ conferences:
         link: https://easychair.org/cfp/EAAI-27
         date_text: Feb 21, 2027
         deadlines:
-          - {kind: abstract, label: Abstract registration, date: '2026-09-01 23:59:00', tz: AoE}
-          - {kind: paper, label: Submission deadline, date: '2026-09-08 23:59:00', tz: AoE}
+          - {kind: abstract, label: Abstract registration, date: '2026-09-01', precision: date-only}
+          - {kind: paper, label: Submission deadline, date: '2026-09-08', precision: date-only}
 
   - key: csai-2026
     title: CSAI 2026
@@ -4080,7 +4079,7 @@ conferences:
         place: Beijing, China
         date_text: Dec 18, 2026
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-10', precision: date-only}
 
   - key: keir-cikm2026
     title: KEIR@CIKM2026
@@ -4094,7 +4093,7 @@ conferences:
         place: Rome, Italy
         date_text: Nov 8, 2026
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-13 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-13', precision: date-only}
 
   - key: icaisg-2026
     title: ICAISG 2026
@@ -4108,7 +4107,7 @@ conferences:
         place: Hangzhou, China
         date_text: Nov 20, 2026
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-15 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-15', precision: date-only}
 
   - key: nlp4call-2026
     title: NLP4CALL-2026
@@ -4122,7 +4121,7 @@ conferences:
         place: Gothenburg, Sweden
         date_text: Nov 19, 2026
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-24 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-24', precision: date-only}
 
   - key: admit-2026
     title: ADMIT 2026
@@ -4136,8 +4135,8 @@ conferences:
         place: Wuhan, China
         date_text: Oct 16, 2026
         deadlines:
-          - {kind: abstract, label: Abstract registration, date: '2026-09-20 23:59:00', tz: AoE}
-          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+          - {kind: abstract, label: Abstract registration, date: '2026-09-20', precision: date-only}
+          - {kind: paper, label: Submission deadline, date: '2026-09-30', precision: date-only}
 
   - key: bdaa-2026
     title: BDAA' 2026
@@ -4151,8 +4150,8 @@ conferences:
         place: Las Palmas de Gran Canaria, Spain
         date_text: Oct 28, 2026
         deadlines:
-          - {kind: abstract, label: Abstract registration, date: '2026-09-20 23:59:00', tz: AoE}
-          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+          - {kind: abstract, label: Abstract registration, date: '2026-09-20', precision: date-only}
+          - {kind: paper, label: Submission deadline, date: '2026-09-30', precision: date-only}
 
   - key: cogfintech-2026
     title: CogFinTech 2026
@@ -4165,8 +4164,8 @@ conferences:
         link: https://easychair.org/cfp/CogFinTech2026
         date_text: Sep 30, 2026
         deadlines:
-          - {kind: abstract, label: Abstract registration, date: '2026-08-15 23:59:00', tz: AoE}
-          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+          - {kind: abstract, label: Abstract registration, date: '2026-08-15', precision: date-only}
+          - {kind: paper, label: Submission deadline, date: '2026-09-30', precision: date-only}
 
   - key: ieeebc27
     title: IEEEBC27
@@ -4180,7 +4179,7 @@ conferences:
         place: Fukuoka, Japan
         date_text: Jan 25, 2027
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-30', precision: date-only}
 
   - key: istai26
     title: ISTAI26
@@ -4194,8 +4193,8 @@ conferences:
         place: Istanbul, Turkey
         date_text: Oct 12, 2026
         deadlines:
-          - {kind: abstract, label: Abstract registration, date: '2026-09-20 23:59:00', tz: AoE}
-          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+          - {kind: abstract, label: Abstract registration, date: '2026-09-20', precision: date-only}
+          - {kind: paper, label: Submission deadline, date: '2026-09-30', precision: date-only}
 
   - key: mlcc-2027
     title: MLCC 2027
@@ -4209,7 +4208,7 @@ conferences:
         place: Chongqing, China
         date_text: Mar 19, 2027
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-30', precision: date-only}
 
   - key: icara-2027
     title: ICARA 2027
@@ -4223,7 +4222,7 @@ conferences:
         place: Paris, France
         date_text: Feb 25, 2027
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-10-01 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-01', precision: date-only}
 
   - key: plsc-e-2026
     title: PLSC-E 2026
@@ -4237,8 +4236,8 @@ conferences:
         place: Leuven, Belgium
         date_text: Oct 29, 2026
         deadlines:
-          - {kind: abstract, label: Abstract registration, date: '2026-05-15 23:59:00', tz: AoE}
-          - {kind: paper, label: Submission deadline, date: '2026-10-04 23:59:00', tz: AoE}
+          - {kind: abstract, label: Abstract registration, date: '2026-05-15', precision: date-only}
+          - {kind: paper, label: Submission deadline, date: '2026-10-04', precision: date-only}
 
   - key: aipe-2027
     title: AIPE 2027
@@ -4252,7 +4251,7 @@ conferences:
         place: Nanjing, China
         date_text: Feb 26, 2027
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-10-10 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-10', precision: date-only}
 
   - key: ifs-27
     title: iFS'27
@@ -4266,7 +4265,7 @@ conferences:
         place: Copenhagen, Denmark
         date_text: Apr 12, 2027
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-10-15 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-15', precision: date-only}
 
   - key: icaid-2027
     title: ICAID 2027
@@ -4280,7 +4279,7 @@ conferences:
         place: Paris, France
         date_text: Mar 17, 2027
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-10-20 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-20', precision: date-only}
 
   - key: greenai2027
     title: GreenAI2027
@@ -4294,8 +4293,8 @@ conferences:
         place: Cuttack, India
         date_text: Jan 29, 2027
         deadlines:
-          - {kind: abstract, label: Abstract registration, date: '2026-08-01 23:59:00', tz: AoE}
-          - {kind: paper, label: Submission deadline, date: '2026-10-31 23:59:00', tz: AoE}
+          - {kind: abstract, label: Abstract registration, date: '2026-08-01', precision: date-only}
+          - {kind: paper, label: Submission deadline, date: '2026-10-31', precision: date-only}
 
   - key: icbdaia27
     title: ‎‎ICBDAIA27
@@ -4309,8 +4308,8 @@ conferences:
         place: Sofia, Bulgaria
         date_text: Apr 21, 2027
         deadlines:
-          - {kind: abstract, label: Abstract registration, date: '2026-09-30 23:59:00', tz: AoE}
-          - {kind: paper, label: Submission deadline, date: '2026-10-31 23:59:00', tz: AoE}
+          - {kind: abstract, label: Abstract registration, date: '2026-09-30', precision: date-only}
+          - {kind: paper, label: Submission deadline, date: '2026-10-31', precision: date-only}
 
   - key: evomusart-2027
     title: EvoMusArt 2027
@@ -4324,7 +4323,7 @@ conferences:
         place: Mainz, Germany
         date_text: Mar 31, 2027
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-11-01 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-11-01', precision: date-only}
 
   - key: icaie-2026
     title: ICAIE’2026
@@ -4338,8 +4337,8 @@ conferences:
         place: Ouarzazate, Morocco
         date_text: Nov 29, 2026
         deadlines:
-          - {kind: abstract, label: Abstract registration, date: '2026-09-30 23:59:00', tz: AoE}
-          - {kind: paper, label: Submission deadline, date: '2026-11-05 23:59:00', tz: AoE}
+          - {kind: abstract, label: Abstract registration, date: '2026-09-30', precision: date-only}
+          - {kind: paper, label: Submission deadline, date: '2026-11-05', precision: date-only}
 
   - key: airc-2027
     title: AIRC 2027
@@ -4353,7 +4352,7 @@ conferences:
         place: Tempe, Arizona, United States
         date_text: Apr 6, 2027
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-11-20 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-11-20', precision: date-only}
 
   - key: aila2027
     title: AILA2027
@@ -4367,8 +4366,8 @@ conferences:
         place: Belfast, UK
         date_text: Apr 8, 2027
         deadlines:
-          - {kind: abstract, label: Abstract registration, date: '2026-11-15 23:59:00', tz: AoE}
-          - {kind: paper, label: Submission deadline, date: '2026-11-30 23:59:00', tz: AoE}
+          - {kind: abstract, label: Abstract registration, date: '2026-11-15', precision: date-only}
+          - {kind: paper, label: Submission deadline, date: '2026-11-30', precision: date-only}
 
   - key: icaibd-2027
     title: ICAIBD 2027
@@ -4382,7 +4381,7 @@ conferences:
         place: Chengdu, China
         date_text: May 28, 2027
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-11-30 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-11-30', precision: date-only}
 
   - key: jvac2027
     title: JVAC2027
@@ -4396,8 +4395,8 @@ conferences:
         place: Shivamogga. Karnataka, India
         date_text: Jan 7, 2027
         deadlines:
-          - {kind: abstract, label: Abstract registration, date: '2026-11-15 23:59:00', tz: AoE}
-          - {kind: paper, label: Submission deadline, date: '2026-11-30 23:59:00', tz: AoE}
+          - {kind: abstract, label: Abstract registration, date: '2026-11-15', precision: date-only}
+          - {kind: paper, label: Submission deadline, date: '2026-11-30', precision: date-only}
 
   - key: icccbda-2027
     title: ICCCBDA 2027
@@ -4411,7 +4410,7 @@ conferences:
         place: Chengdu, China
         date_text: Apr 23, 2027
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-12-05 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-12-05', precision: date-only}
 
   - key: eecr-2027
     title: EECR 2027
@@ -4425,7 +4424,7 @@ conferences:
         place: Shenzhen, China
         date_text: Apr 23, 2027
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-12-10 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-12-10', precision: date-only}
 
   - key: icbda2027
     title: ICBDA2027
@@ -4439,7 +4438,7 @@ conferences:
         place: Bangkok, Thailand
         date_text: Apr 26, 2027
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-12-10 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-12-10', precision: date-only}
 
   - key: si-dl2027
     title: "SI&DL2027"
@@ -4452,7 +4451,7 @@ conferences:
         link: https://easychair.org/cfp/SIDL2027
         date_text: Dec 15, 2026
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-12-15 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-12-15', precision: date-only}
 
   - key: iccre-2027
     title: ICCRE 2027
@@ -4466,7 +4465,7 @@ conferences:
         place: Hong Kong, China
         date_text: May 7, 2027
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-12-20 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-12-20', precision: date-only}
 
   - key: sls-optirob-2027
     title: "SLS&OPTIROB 2027"
@@ -4480,13 +4479,13 @@ conferences:
         place: Venus, Romania
         date_text: Jun 24, 2027
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-12-20 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-12-20', precision: date-only}
 
   # ---- wikiCFP 掲載会議の公式裏取り（2026-08-23） --------------------
   # 根拠: wikiCFP 各イベントページの「Submission Deadline」行
   #   (v:startDate microformat、ISO 日付)。取得日 2026-08-23。84/84 が機械照合一致
   #   (同イベントの eventid 重複 1 組は 1 件に畳み、計 83 会議)。
-  # tz: wikiCFP は tz を明記しないため AoE 当日終了と解釈した。
+  # 締切行には時刻・タイムゾーンがないため、日付のみとして収録する。
 
   - key: 3rd-amict-2026
     title: 3rd AMICT 2026
@@ -4498,7 +4497,7 @@ conferences:
         id: 3rd-amict-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200214&copyownerid=199261
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-01 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-01', precision: date-only}
 
   - key: acm-aiat-2026
     title: ACM AIAT 2026
@@ -4510,7 +4509,7 @@ conferences:
         id: acm-aiat-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192197&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-25 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-25', precision: date-only}
 
   - key: acm-aibc-2026
     title: ACM AIBC 2026
@@ -4522,7 +4521,7 @@ conferences:
         id: acm-aibc-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194205&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-20 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-20', precision: date-only}
 
   - key: acm-bdiot-2026
     title: ACM BDIOT 2026
@@ -4534,7 +4533,7 @@ conferences:
         id: acm-bdiot-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192164&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-05 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-05', precision: date-only}
 
   - key: acm-icacs-2026
     title: ACM ICACS 2026
@@ -4546,7 +4545,7 @@ conferences:
         id: acm-icacs-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192791&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-05 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-05', precision: date-only}
 
   - key: ai-sec-2027
     title: AI-SEC 2027
@@ -4558,7 +4557,7 @@ conferences:
         id: ai-sec-202726
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201627&copyownerid=199687
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-12-10 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-12-10', precision: date-only}
 
   - key: ai4demons-2026
     title: AI4DEMONS 2026
@@ -4570,7 +4569,7 @@ conferences:
         id: ai4demons-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201329&copyownerid=199538
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-14 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-14', precision: date-only}
 
   - key: aibt-2026
     title: AIBT 2026
@@ -4582,7 +4581,7 @@ conferences:
         id: aibt-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194778&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-15 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-15', precision: date-only}
 
   - key: aimlm-2026
     title: AIMLM 2026
@@ -4594,7 +4593,7 @@ conferences:
         id: aimlm-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191658&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-30 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-30', precision: date-only}
 
   - key: aisec4hsg-2026
     title: AISEC4HSG 2026
@@ -4606,7 +4605,7 @@ conferences:
         id: aisec4hsg-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202576&copyownerid=199920
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-31', precision: date-only}
 
   - key: aivrch-2026
     title: AIVRCH 2026
@@ -4618,7 +4617,7 @@ conferences:
         id: aivrch-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190620&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-28', precision: date-only}
 
   - key: asma-2026
     title: ASMA 2026
@@ -4630,7 +4629,7 @@ conferences:
         id: asma-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201649&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-28', precision: date-only}
 
   - key: bdiot-2026
     title: BDIOT 2026
@@ -4642,7 +4641,7 @@ conferences:
         id: bdiot-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192165&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-05 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-05', precision: date-only}
 
   - key: bdmlic-2026
     title: BDMLIC 2026
@@ -4654,7 +4653,7 @@ conferences:
         id: bdmlic-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190090&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-28', precision: date-only}
 
   - key: caldam-2027
     title: CALDAM 2027
@@ -4666,7 +4665,7 @@ conferences:
         id: caldam-202726
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202679&copyownerid=182219
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-21 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-21', precision: date-only}
 
   - key: ccbdiot-2026
     title: CCBDIoT 2026
@@ -4678,7 +4677,7 @@ conferences:
         id: ccbdiot-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=180624&copyownerid=163993
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-20 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-20', precision: date-only}
 
   - key: ccns-2026
     title: CCNS 2026
@@ -4690,7 +4689,7 @@ conferences:
         id: ccns-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201643&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-28', precision: date-only}
 
   - key: ccpcdl-2026
     title: CCPCDL 2026
@@ -4702,7 +4701,7 @@ conferences:
         id: ccpcdl-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190827&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-28', precision: date-only}
 
   - key: cisse-2026-cybersecurity-education-con-2026
     title: CISSE 2026 – Cybersecurity Education Con 2026
@@ -4714,7 +4713,7 @@ conferences:
         id: cisse-2026-cybersecurity-education-con-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=195062&copyownerid=198535
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-15 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-15', precision: date-only}
 
   - key: csp-2027
     title: CSP 2027
@@ -4726,7 +4725,7 @@ conferences:
         id: csp-202726
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199953&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-10-05 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-05', precision: date-only}
 
   - key: csp-ei-2027
     title: CSP--EI 2027
@@ -4738,7 +4737,7 @@ conferences:
         id: csp-ei-202726
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199954&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-10-05 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-05', precision: date-only}
 
   - key: csta-2026
     title: CSTA 2026
@@ -4750,7 +4749,7 @@ conferences:
         id: csta-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201173&copyownerid=196813
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-10', precision: date-only}
 
   - key: cvaa-2026
     title: CVAA 2026
@@ -4762,7 +4761,7 @@ conferences:
         id: cvaa-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200081&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-04 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-04', precision: date-only}
 
   - key: dm-aisc-2026
     title: DM-AISC 2026
@@ -4774,7 +4773,7 @@ conferences:
         id: dm-aisc-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201751&copyownerid=199790
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-31', precision: date-only}
 
   - key: dras-2026
     title: DRAS  2026
@@ -4786,7 +4785,7 @@ conferences:
         id: dras-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201174&copyownerid=196813
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-10', precision: date-only}
 
   - key: edai-2026
     title: EDAI 2026
@@ -4798,7 +4797,7 @@ conferences:
         id: edai-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202474&copyownerid=163220
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-23 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-23', precision: date-only}
 
   - key: ei-scopus-ai2a-2026
     title: Ei/Scopus-AI2A 2026
@@ -4810,7 +4809,7 @@ conferences:
         id: ei-scopus-ai2a-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=127474&copyownerid=165700
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-30', precision: date-only}
 
   - key: ei-scopus-ccnml-2026
     title: Ei/Scopus-CCNML  2026
@@ -4822,7 +4821,7 @@ conferences:
         id: ei-scopus-ccnml-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=195220&copyownerid=165700
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-30', precision: date-only}
 
   - key: ei-scopus-cvgip-2026
     title: Ei/Scopus-CVGIP 2026
@@ -4834,7 +4833,7 @@ conferences:
         id: ei-scopus-cvgip-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192875&copyownerid=165700
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-30', precision: date-only}
 
   - key: eieai-2026
     title: EIEAI 2026
@@ -4846,7 +4845,7 @@ conferences:
         id: eieai-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190633&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-28', precision: date-only}
 
   - key: eocon-2026
     title: EOCON  2026
@@ -4858,7 +4857,7 @@ conferences:
         id: eocon-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200227&copyownerid=199287
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-10-30 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-30', precision: date-only}
 
   - key: hcai-2026
     title: HCAI 2026
@@ -4870,7 +4869,7 @@ conferences:
         id: hcai-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194558&copyownerid=198220
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-10-13 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-13', precision: date-only}
 
   - key: hcc-ai-2026
     title: HCC-AI 2026
@@ -4882,7 +4881,7 @@ conferences:
         id: hcc-ai-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194929&copyownerid=198438
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-07 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-07', precision: date-only}
 
   - key: iar-2026
     title: IAR 2026
@@ -4894,7 +4893,7 @@ conferences:
         id: iar-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202658&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-20 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-20', precision: date-only}
 
   - key: icadcml-2027
     title: ICADCML 2027
@@ -4906,7 +4905,7 @@ conferences:
         id: icadcml-202726
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201569&copyownerid=174831
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-10', precision: date-only}
 
   - key: icahn-2026
     title: ICAHN 2026
@@ -4918,7 +4917,7 @@ conferences:
         id: icahn-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190324&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-04 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-04', precision: date-only}
 
   - key: icaici-2026
     title: ICAICI 2026
@@ -4930,7 +4929,7 @@ conferences:
         id: icaici-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190624&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-28', precision: date-only}
 
   - key: icaidm-2026
     title: ICAIDM 2026
@@ -4942,7 +4941,7 @@ conferences:
         id: icaidm-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200184&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-31', precision: date-only}
 
   - key: icbda-2027
     title: ICBDA 2027
@@ -4954,7 +4953,7 @@ conferences:
         id: icbda-202726
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201356&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-12-10 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-12-10', precision: date-only}
 
   - key: icbsr-2026
     title: ICBSR 2026
@@ -4966,7 +4965,7 @@ conferences:
         id: icbsr-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200323&copyownerid=96880
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-18 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-18', precision: date-only}
 
   - key: iccns-2026
     title: ICCNS 2026
@@ -4978,7 +4977,7 @@ conferences:
         id: iccns-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194236&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-10', precision: date-only}
 
   - key: iccns-ei-2026
     title: ICCNS--EI 2026
@@ -4990,7 +4989,7 @@ conferences:
         id: iccns-ei-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194237&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-10', precision: date-only}
 
   - key: iccta-2026
     title: ICCTA 2026
@@ -5002,7 +5001,7 @@ conferences:
         id: iccta-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202646&copyownerid=126913
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-01 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-01', precision: date-only}
 
   - key: icear-2026
     title: ICEAR 2026
@@ -5014,7 +5013,7 @@ conferences:
         id: icear-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190921&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-31', precision: date-only}
 
   - key: icecai-2026
     title: ICECAI 2026
@@ -5026,7 +5025,7 @@ conferences:
         id: icecai-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202650&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-28', precision: date-only}
 
   - key: icimt-2026
     title: ICIMT 2026
@@ -5038,7 +5037,7 @@ conferences:
         id: icimt-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=189565&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-15 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-15', precision: date-only}
 
   - key: icimt-ei-2026
     title: ICIMT--EI 2026
@@ -5050,7 +5049,7 @@ conferences:
         id: icimt-ei-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=189566&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-15 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-15', precision: date-only}
 
   - key: icmip-2027
     title: ICMIP 2027
@@ -5062,7 +5061,7 @@ conferences:
         id: icmip-202726
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199956&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-10-05 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-05', precision: date-only}
 
   - key: icmip-ei-2027
     title: ICMIP--EI 2027
@@ -5074,7 +5073,7 @@ conferences:
         id: icmip-ei-202726
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199956&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-10-05 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-05', precision: date-only}
 
   - key: icmra-ei-2026
     title: ICMRA--EI 2026
@@ -5086,7 +5085,7 @@ conferences:
         id: icmra-ei-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191426&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-10', precision: date-only}
 
   - key: icmsr-2026
     title: ICMSR 2026
@@ -5098,7 +5097,7 @@ conferences:
         id: icmsr-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192213&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-05 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-05', precision: date-only}
 
   - key: icrae-2026
     title: ICRAE 2026
@@ -5110,7 +5109,7 @@ conferences:
         id: icrae-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194511&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-10', precision: date-only}
 
   - key: icrai-2026
     title: ICRAI 2026
@@ -5122,7 +5121,7 @@ conferences:
         id: icrai-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194513&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-10', precision: date-only}
 
   - key: icrcv-2026
     title: ICRCV 2026
@@ -5134,7 +5133,7 @@ conferences:
         id: icrcv-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191424&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-01 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-01', precision: date-only}
 
   - key: icric-2027
     title: ICRIC 2027
@@ -5146,7 +5145,7 @@ conferences:
         id: icric-202726
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199688&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-25 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-25', precision: date-only}
 
   - key: ieee-admit-2026
     title: IEEE-ADMIT 2026
@@ -5158,7 +5157,7 @@ conferences:
         id: ieee-admit-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=181609&copyownerid=163993
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-20 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-20', precision: date-only}
 
   - key: ieee-aibdcc-2026
     title: IEEE-AIBDCC 2026
@@ -5170,7 +5169,7 @@ conferences:
         id: ieee-aibdcc-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=171242&copyownerid=163993
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-30 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-30', precision: date-only}
 
   - key: ieee-ccisc-2026
     title: IEEE-CCISC 2026
@@ -5182,7 +5181,7 @@ conferences:
         id: ieee-ccisc-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194393&copyownerid=163993
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-10', precision: date-only}
 
   - key: ieee-ceccc-2026
     title: IEEE CECCC 2026
@@ -5194,7 +5193,7 @@ conferences:
         id: ieee-ceccc-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194242&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-20 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-20', precision: date-only}
 
   - key: ieee-cret-2026
     title: IEEE CRET 2026
@@ -5206,7 +5205,7 @@ conferences:
         id: ieee-cret-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190987&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-25 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-25', precision: date-only}
 
   - key: ieee-csp-2027
     title: IEEE CSP 2027
@@ -5218,7 +5217,7 @@ conferences:
         id: ieee-csp-202726
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199953&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-10-05 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-05', precision: date-only}
 
   - key: ieee-icacr-2026
     title: IEEE ICACR 2026
@@ -5230,7 +5229,7 @@ conferences:
         id: ieee-icacr-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191498&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-05 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-05', precision: date-only}
 
   - key: ieee-icaici-2026
     title: IEEE-ICAICI 2026
@@ -5242,7 +5241,7 @@ conferences:
         id: ieee-icaici-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190816&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-28', precision: date-only}
 
   - key: ieee-icairs-2026
     title: IEEE-ICAIRS 2026
@@ -5254,7 +5253,7 @@ conferences:
         id: ieee-icairs-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191487&copyownerid=163993
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-10-05 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-05', precision: date-only}
 
   - key: ieee-iccr-2026
     title: IEEE ICCR 2026
@@ -5266,7 +5265,7 @@ conferences:
         id: ieee-iccr-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192210&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-25 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-25', precision: date-only}
 
   - key: ieee-icmre-2027
     title: IEEE ICMRE 2027
@@ -5278,7 +5277,7 @@ conferences:
         id: ieee-icmre-202726
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=195312&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-25 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-25', precision: date-only}
 
   - key: ieee-mlnlp-2026
     title: IEEE-MLNLP 2026
@@ -5290,7 +5289,7 @@ conferences:
         id: ieee-mlnlp-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=175829&copyownerid=163993
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-11-30 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-11-30', precision: date-only}
 
   - key: ieitai-2026
     title: IEITAI 2026
@@ -5302,7 +5301,7 @@ conferences:
         id: ieitai-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191257&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-01 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-01', precision: date-only}
 
   - key: ijgca-2026
     title: IJGCA 2026
@@ -5314,7 +5313,7 @@ conferences:
         id: ijgca-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199503&copyownerid=33993
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-28', precision: date-only}
 
   - key: ijgtt-2026
     title: IJGTT 2026
@@ -5326,7 +5325,7 @@ conferences:
         id: ijgtt-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=199977&copyownerid=33993
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-28', precision: date-only}
 
   - key: iotbds-2027
     title: IoTBDS 2027
@@ -5338,7 +5337,7 @@ conferences:
         id: iotbds-202726
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201739&copyownerid=45217
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-11-17 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-11-17', precision: date-only}
 
   - key: iotcct-2026
     title: IoTCCT 2026
@@ -5350,7 +5349,7 @@ conferences:
         id: iotcct-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201159&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-28', precision: date-only}
 
   - key: isrimt-2026
     title: ISRIMT 2026
@@ -5362,7 +5361,7 @@ conferences:
         id: isrimt-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202550&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-30 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-30', precision: date-only}
 
   - key: jcrt-book-reviews-2027
     title: jcrt-book-reviews 2027
@@ -5374,7 +5373,7 @@ conferences:
         id: jcrt-book-reviews-202726
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202686&copyownerid=44597
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-31', precision: date-only}
 
   - key: mtel-2026
     title: MTEL 2026
@@ -5386,7 +5385,7 @@ conferences:
         id: mtel-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200317&copyownerid=52207
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-10-15 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-15', precision: date-only}
 
   - key: raai-2026
     title: RAAI 2026
@@ -5398,7 +5397,7 @@ conferences:
         id: raai-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192215&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-05 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-05', precision: date-only}
 
   - key: ramt-2026
     title: RAMT 2026
@@ -5410,7 +5409,7 @@ conferences:
         id: ramt-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201184&copyownerid=182680
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-28 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-28', precision: date-only}
 
   - key: rcae-2026
     title: RCAE 2026
@@ -5422,7 +5421,7 @@ conferences:
         id: rcae-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191292&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-10 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-10', precision: date-only}
 
   - key: robovis-2027
     title: ROBOVIS 2027
@@ -5434,7 +5433,7 @@ conferences:
         id: robovis-202726
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200091&copyownerid=45217
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-15 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-15', precision: date-only}
 
   - key: secupriv-iot-2026
     title: SecuPriv-IoT 2026
@@ -5446,7 +5445,7 @@ conferences:
         id: secupriv-iot-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201762&copyownerid=196813
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-20 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-20', precision: date-only}
 
   - key: spie-mcvr-2026
     title: SPIE MCVR 2026
@@ -5458,7 +5457,7 @@ conferences:
         id: spie-mcvr-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=192659&copyownerid=13881
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-20 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-20', precision: date-only}
 
   - key: spnna-2026
     title: SPNNA 2026
@@ -5470,7 +5469,7 @@ conferences:
         id: spnna-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=202512&copyownerid=163220
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-11 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-11', precision: date-only}
 
   - key: walcom-2027
     title: WALCOM 2027
@@ -5482,13 +5481,13 @@ conferences:
         id: walcom-202726
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201135&copyownerid=199395
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-21 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-21', precision: date-only}
 
   # ---- DBWorld アーカイブ本文から確認した締切（2026-08-23） --------
   # 根拠: DBWorld (listserv.acm.org) 各メッセージ本文の Submission Deadline 行。
   #   取得日 2026-08-23。144 件中抽出成功 47、窓内 × 収録カテゴリ適合 (本文ベース再分類
   #   を含む) 13。title はメーリス件名由来である点に注意。
-  # tz: メール本文は tz 未明記のため AoE 当日終了で解釈した。
+  # 締切行には時刻・タイムゾーンがないため、日付のみとして収録する。
 
   - key: adc-2026-second-round-cfp-and
     title: ADC 2026
@@ -5500,7 +5499,7 @@ conferences:
         id: adc-2026-second-round-cfp-and26
         link: https://adc-conference.github.io/2026/
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-11 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-11', precision: date-only}
 
   - key: agentarch-icsa2027
     title: AgentArch @ICSA2027
@@ -5512,7 +5511,7 @@ conferences:
         id: agentarch-icsa202726
         link: https://agentarch.org
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-12-20 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-12-20', precision: date-only}
 
   - key: clinical-mirf-2026-multimodal-information-retrieval-and-fusion-in-clinical-workflows
     title: Clinical-MIRF 2026
@@ -5524,7 +5523,7 @@ conferences:
         id: clinical-mirf-2026-multimodal-information-retrieval-and-fusion-in-clinical-workf
         link: https://sites.google.com/view/clinical-mirf
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-24 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-24', precision: date-only}
 
   - key: cods-2026-14th-acm-ikdd-international-conference-on-data-science
     title: CODS 2026 [14th ACM IKDD International Conference on Data Science]
@@ -5536,7 +5535,7 @@ conferences:
         id: cods-2026-14th-acm-ikdd-international-conference-on-data-science26
         link: https://openreview.net/group?id=ACM.org/IKDD/CODS/2026/Conference
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-10-06 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-06', precision: date-only}
 
   - key: ehacon-2026-springer-lnns-scopus-8th-international-ethical-hacking-conference
     title: eHaCON 2026 (Springer LNNS / Scopus) - 8th International Ethical Hacking Conference
@@ -5548,7 +5547,7 @@ conferences:
         id: ehacon-2026-springer-lnns-scopus-8th-international-ethical-hacking-conference26
         link: https://ccoe-uemk.github.io/cyberchain-2026/index.html
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-05 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-05', precision: date-only}
 
   - key: ieee-3scea2027-20-22-april-2027-alexandria-egypt
     title: IEEE 3SCEA2027
@@ -5560,7 +5559,7 @@ conferences:
         id: ieee-3scea2027-20-22-april-2027-alexandria-egypt26
         link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;d098fb44.2608
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-12-20 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-12-20', precision: date-only}
 
   - key: int-conf-on-data-science-and-digital-innovation-2026-in-lisbon-portugal
     title: Int. Conf. on Data Science and Digital Innovation 2026 in Lisbon, Portugal
@@ -5572,7 +5571,7 @@ conferences:
         id: int-conf-on-data-science-and-digital-innovation-2026-in-lisbon-portugal26
         link: https://www.datascience-conf.org/
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-04 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-04', precision: date-only}
 
   - key: keir-cikm-2026
     title: KEIR @ CIKM 2026
@@ -5584,7 +5583,7 @@ conferences:
         id: keir-cikm-202626
         link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;c0c7be0.2607
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-24 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-24', precision: date-only}
 
   - key: pdp-2027
     title: PDP 2027
@@ -5596,7 +5595,7 @@ conferences:
         id: pdp-202726
         link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;b5f2fd3c.2608
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-10-26 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-26', precision: date-only}
 
   - key: soc4ia-icsoc-2026-1st-international-workshop-on-service-oriented-computing-for-intelligent-ag
     title: SOC4IA@ICSOC 2026 - 1st International Workshop on Service-Oriented Computing for Intelligent Ag
@@ -5608,7 +5607,7 @@ conferences:
         id: soc4ia-icsoc-2026-1st-international-workshop-on-service-oriented-computing-for-i
         link: https://soc4ia.univ-tours.fr
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-23 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-23', precision: date-only}
 
   - key: stacs-2027-first
     title: STACS 2027
@@ -5620,7 +5619,7 @@ conferences:
         id: stacs-2027-first26
         link: https://stacs2027.uni-goettingen.de/
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-11 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-11', precision: date-only}
 
   - key: the-18th-international-conference-on-management-of-digital-ecosystems-medes-2026
     title: The 18th International Conference on Management of Digital EcoSystems (MEDES 2026)
@@ -5632,7 +5631,7 @@ conferences:
         id: the-18th-international-conference-on-management-of-digital-ecosystems-medes-2026
         link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;a2299cc7.2607
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-04 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-04', precision: date-only}
 
   - key: the-9th-ieee-international-workshop-on-big-spatial-data-bsd-2026
     title: The 9th IEEE International Workshop on Big Spatial Data (BSD 2026)
@@ -5644,13 +5643,13 @@ conferences:
         id: the-9th-ieee-international-workshop-on-big-spatial-data-bsd-202626
         link: https://ckoh04.github.io/BSD-website/
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-10-15 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-15', precision: date-only}
 
   # ---- DBWorld アーカイブ本文から確認した追加締切（2026-08-23） ----------------------
   # 根拠: listserv アーカイブ本文から改良パターン (Due 型・日付先行型等) で抽出した
   #   Submission deadline。取得日 2026-08-23。97 件中機械抽出成功は本 5 件のみ
   #   (残り 88 件は本文に機械可読な締切行なし)。カテゴリは本文テキストで判定。
-  # tz: メール本文は tz 未明記のため AoE 当日終了で解釈。
+  # 締切行には時刻・タイムゾーンがないため、日付のみとして収録する。
 
   - key: 1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare
     title: 1st Symposium on Neurosymbolic Artificial Intelligence for Healthcare
@@ -5662,7 +5661,7 @@ conferences:
         id: 1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare26
         link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;ec7f5b3c.2607
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-05 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-05', precision: date-only}
 
   - key: 24th-international-conference-on-service-oriented-computing-icsoc-2026-lodz-po
     title: 24th International Conference on Service-Oriented Computing, ICSOC 2026 Lodz, Po
@@ -5674,7 +5673,7 @@ conferences:
         id: 24th-international-conference-on-service-oriented-computing-icsoc-2026-lodz-po26
         link: https://icsoc2026.it.p.lodz.pl/
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-27 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-27', precision: date-only}
 
   - key: acm-sac-2027-dbdm-track
     title: ACM SAC 2027 - DBDM Track
@@ -5686,7 +5685,7 @@ conferences:
         id: acm-sac-2027-dbdm-track26
         link: https://www.sigapp.org/sac/sac2027/
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-10-02 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-10-02', precision: date-only}
 
   - key: btw-2027
     title: BTW 2027
@@ -5698,7 +5697,7 @@ conferences:
         id: btw-202726
         link: https://btw2027.gi.de/calls/papers
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-09-18 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-09-18', precision: date-only}
 
   - key: ccnc27-track-on-networking-solutions-for-metaverse-social-applications-multimedia-and-games
     title: CCNC27 track on Networking Solutions for Metaverse, Social Applications, Multimedia, and Games
@@ -5710,4 +5709,4 @@ conferences:
         id: ccnc27-track-on-networking-solutions-for-metaverse-social-applications-multimedi
         link: https://ccnc2027.ieee-ccnc.org/authors/call-technical-papers
         deadlines:
-          - {kind: paper, label: Submission deadline, date: '2026-08-31 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission deadline, date: '2026-08-31', precision: date-only}

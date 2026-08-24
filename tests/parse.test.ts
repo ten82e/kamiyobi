@@ -41,7 +41,7 @@ import {
   editionOf as localEditionOf,
   parseFile as localParseFile,
 } from "../src/sources/local.ts";
-import { utc } from "./helpers.ts";
+import { exactAt, utc } from "./helpers.ts";
 
 describe("parse_instant", () => {
   it("AoE boundary case: SC26 '2026-04-08 23:59:00' AoE is 2026-04-09T11:59:00Z", () => {
@@ -797,7 +797,7 @@ describe("ccfddl parsing", () => {
     expect(ed.edition_id).toBe("2027");
     expect(ed.deadlines.length).toBe(1);
     expect(ed.deadlines[0].tz_raw).toBe("AoE");
-    expect(ed.deadlines[0].at_utc.toISOString()).toBe("2026-09-25T11:59:59.000Z");
+    expect(exactAt(ed.deadlines[0]).toISOString()).toBe("2026-09-25T11:59:59.000Z");
   });
 
   it("excludes deadlines with a missing timezone from confirmed output", () => {
@@ -823,9 +823,9 @@ describe("ccfddl parsing", () => {
     const dls = ccfddlDeadlinesOf(timeline, "UTC-8");
     expect(dls.length).toBe(2);
     expect(dls[0].tz_raw).toBe("UTC");
-    expect(dls[0].at_utc.toISOString()).toBe("2026-04-01T23:59:59.000Z");
+    expect(exactAt(dls[0]).toISOString()).toBe("2026-04-01T23:59:59.000Z");
     expect(dls[1].tz_raw).toBe("AoE");
-    expect(dls[1].at_utc.toISOString()).toBe("2026-04-02T11:59:59.000Z");
+    expect(exactAt(dls[1]).toISOString()).toBe("2026-04-02T11:59:59.000Z");
   });
 
   it("parses edition with tz alias instead of timezone", () => {
@@ -837,7 +837,7 @@ describe("ccfddl parsing", () => {
     const ed = ccfddlEditionOf(rawEdition);
     expect(ed).not.toBeNull();
     expect(ed?.deadlines[0].tz_raw).toBe("AoE");
-    expect(ed?.deadlines[0].at_utc.toISOString()).toBe("2026-05-16T11:59:59.000Z");
+    expect(exactAt(ed!.deadlines[0]).toISOString()).toBe("2026-05-16T11:59:59.000Z");
   });
 
   it("extracts camera ready deadlines from final paper/submission variants", () => {
@@ -905,6 +905,31 @@ describe("ccfddl parsing", () => {
 });
 
 describe("local source parsing", () => {
+  it("keeps date-only deadlines without inventing a time or timezone", () => {
+    const dls = localDeadlinesOf({
+      deadlines: [{ date: "2026-08-24", precision: "date-only", kind: "paper" }],
+    });
+    expect(dls).toEqual([
+      expect.objectContaining({
+        kind: "paper",
+        precision: "date-only",
+        local_date: "2026-08-24",
+      }),
+    ]);
+    expect(dls[0]).not.toHaveProperty("at_utc");
+    expect(dls[0]).not.toHaveProperty("tz_raw");
+    expect(
+      localDeadlinesOf({
+        deadlines: [{ date: "2026-02-30", precision: "date-only", kind: "paper" }],
+      }),
+    ).toEqual([]);
+    expect(
+      localDeadlinesOf({
+        deadlines: [{ date: "2026-08-24", precision: "date-only", kind: "paper", tz: "AoE" }],
+      }),
+    ).toEqual([]);
+  });
+
   it("inherits timezone from parent edition when deadline entry has no timezone", () => {
     const raw = {
       tz: "AoE",
@@ -913,7 +938,7 @@ describe("local source parsing", () => {
     const dls = localDeadlinesOf(raw);
     expect(dls.length).toBe(1);
     expect(dls[0].tz_raw).toBe("AoE");
-    expect(dls[0].at_utc.toISOString()).toBe("2026-05-16T11:59:00.000Z");
+    expect(exactAt(dls[0]).toISOString()).toBe("2026-05-16T11:59:00.000Z");
   });
 
   it("falls back to top-level deadline/abstract_deadline when deadlines array is absent", () => {
@@ -998,7 +1023,7 @@ describe("aideadlines deadlinesOf parsing", () => {
     expect(dls[0].kind).toBe("paper");
     expect(dls[0].tz_raw).toBe("AoE");
     expect(dls[0].comment).toBe("main track");
-    expect(dls[0].at_utc.toISOString()).toBe("2026-05-16T11:59:00.000Z");
+    expect(exactAt(dls[0]).toISOString()).toBe("2026-05-16T11:59:00.000Z");
   });
 
   it("handles legacy top-level abstract_deadline and deadline with timezone/tz", () => {
@@ -1023,7 +1048,7 @@ describe("aideadlines deadlinesOf parsing", () => {
     expect(dls.length).toBe(1);
     expect(dls[0].kind).toBe("paper");
     expect(dls[0].tz_raw).toBe("AoE");
-    expect(dls[0].at_utc.toISOString()).toBe("2026-06-02T11:59:00.000Z");
+    expect(exactAt(dls[0]).toISOString()).toBe("2026-06-02T11:59:00.000Z");
   });
 
   it("falls back edition_id to String(year) when raw.id is omitted", () => {

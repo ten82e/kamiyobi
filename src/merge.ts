@@ -14,7 +14,10 @@ import {
   type DeadlineEstimate,
   dateOnly,
   type Edition,
+  type ExactDeadline,
   fmtDate,
+  isDateOnlyDeadline,
+  isExactDeadline,
   parseDateRange,
   warn,
 } from "./model.ts";
@@ -304,7 +307,15 @@ function dedupDeadlines(
     for (let index = 0; index < kept.length; index++) {
       const { origins, deadline: held } = kept[index];
       if (held.kind !== deadline.kind) continue;
-      const gap = Math.abs(held.at_utc.getTime() - deadline.at_utc.getTime()) / 1000;
+      if (isDateOnlyDeadline(held) !== isDateOnlyDeadline(deadline)) continue;
+      const gap =
+        isDateOnlyDeadline(held) && isDateOnlyDeadline(deadline)
+          ? held.local_date === deadline.local_date
+            ? 0
+            : Number.POSITIVE_INFINITY
+          : isExactDeadline(held) && isExactDeadline(deadline)
+            ? Math.abs(held.at_utc.getTime() - deadline.at_utc.getTime()) / 1000
+            : Number.POSITIVE_INFINITY;
       if (origins.has(source)) {
         if (gap !== 0 || normLabel(held.label) !== normLabel(deadline.label)) continue;
       } else {
@@ -331,7 +342,7 @@ function dedupDeadlines(
   out.sort(
     (a, b) =>
       a.round - b.round ||
-      a.at_utc.getTime() - b.at_utc.getTime() ||
+      deadlineSortTime(a) - deadlineSortTime(b) ||
       cmpStr(a.kind, b.kind) ||
       cmpStr(a.label ?? "", b.label ?? ""),
   );
@@ -348,12 +359,22 @@ function absorb(
   if (winner.comment) notes.push(winner.comment);
   if (loser.comment && !notes.includes(loser.comment)) notes.push(loser.comment);
   if (loser.label && loser.label !== winner.label) {
-    const sameInstant = winner.at_utc.getTime() === loser.at_utc.getTime();
+    const sameInstant =
+      isDateOnlyDeadline(winner) && isDateOnlyDeadline(loser)
+        ? winner.local_date === loser.local_date
+        : isExactDeadline(winner) && isExactDeadline(loser)
+          ? winner.at_utc.getTime() === loser.at_utc.getTime()
+          : false;
     const note = `${sameInstant ? "同時刻の" : ""}別記載: ${loser.label}`;
     if (!notes.includes(note)) notes.push(note);
   }
   const comment = notes.length > 0 ? notes.join(" / ") : null;
   const round = sameSource ? winner.round : Math.max(winner.round, loser.round);
+  if (isDateOnlyDeadline(winner) && isDateOnlyDeadline(loser)) {
+    if (comment === winner.comment && round === winner.round) return winner;
+    return { ...winner, comment, round, selection_rule: DEADLINE_SELECTION_RULE };
+  }
+  if (!isExactDeadline(winner) || !isExactDeadline(loser)) return winner;
   const priorConflicts = winner.conflicts ?? [];
   const conflicts =
     sameSource ||
@@ -386,6 +407,11 @@ function absorb(
     selection_rule: DEADLINE_SELECTION_RULE,
     ...(conflicts.length > 0 ? { conflicts } : {}),
   };
+}
+
+function deadlineSortTime(deadline: Deadline): number {
+  if (isExactDeadline(deadline)) return deadline.at_utc.getTime();
+  return asDate(deadline.local_date)?.getTime() ?? Number.MAX_SAFE_INTEGER;
 }
 
 function unique(values: string[]): string[] {
@@ -527,11 +553,11 @@ export function sanitizeEditions(confs: Conference[] | null | undefined): Confer
           edition.deadlines.length === 0
         )
           return edition;
-        const kept = edition.deadlines.filter(
-          (d) =>
-            !(d && (d.kind === "paper" || d.kind === "abstract")) ||
-            dateOnly(d.at_utc).getTime() <= dateOnly(meetingEnd).getTime(),
-        );
+        const kept = edition.deadlines.filter((d) => {
+          if (!(d && (d.kind === "paper" || d.kind === "abstract"))) return true;
+          const day = isDateOnlyDeadline(d) ? asDate(d.local_date) : dateOnly(d.at_utc);
+          return day === null || day.getTime() <= dateOnly(meetingEnd).getTime();
+        });
         if (kept.length === edition.deadlines.length) return edition;
         return { ...edition, deadlines: kept };
       }),
@@ -733,7 +759,8 @@ function estimateEdition(
     return null; // upstream already lists that edition, it just has no dates yet
   }
 
-  const deadlines: Deadline[] = last.edition.deadlines
+  const deadlines: ExactDeadline[] = last.edition.deadlines
+    .filter(isExactDeadline)
     .filter((d) => kinds.has(d.kind))
     .map((d) => ({
       ...d,
@@ -770,9 +797,11 @@ function estimateEdition(
 
 function isFuture(edition: Edition, today: Date): boolean {
   if (
-    edition.deadlines.some(
-      (d) => d.kind === "paper" && dateOnly(d.at_utc).getTime() >= dateOnly(today).getTime(),
-    )
+    edition.deadlines.some((d) => {
+      if (d.kind !== "paper") return false;
+      const day = isDateOnlyDeadline(d) ? asDate(d.local_date) : dateOnly(d.at_utc);
+      return day !== null && day.getTime() >= dateOnly(today).getTime();
+    })
   ) {
     return true;
   }
@@ -782,7 +811,10 @@ function isFuture(edition: Edition, today: Date): boolean {
 }
 
 function paperAt(edition: Edition): Date | null {
-  const papers = edition.deadlines.filter((d) => d.kind === "paper").map((d) => d.at_utc);
+  const papers = edition.deadlines
+    .filter(isExactDeadline)
+    .filter((d) => d.kind === "paper")
+    .map((d) => d.at_utc);
   if (papers.length === 0) return null;
   return papers.reduce((a, b) => (a.getTime() < b.getTime() ? a : b));
 }

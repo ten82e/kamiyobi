@@ -188,7 +188,10 @@ kamiyobi/
 
 ```ts
 // 型・時刻解決・日付パーサ・snapshot 入出力（src/model.ts）
-export interface Deadline { kind: string; label: string; at_utc: Date; tz_raw: string; round: number; comment: string | null; }
+interface DeadlineBase { kind: string; label: string; round: number; comment: string | null; }
+export interface ExactDeadline extends DeadlineBase { precision?: "exact"; at_utc: Date; tz_raw: string; }
+export interface DateOnlyDeadline extends DeadlineBase { precision: "date-only"; local_date: string; }
+export type Deadline = ExactDeadline | DateOnlyDeadline;
 export interface DeadlineEstimate { point_estimate: string; window_start: string; window_end: string; source_editions: number[]; method: "median-interval"; confidence: "low" | "medium"; }
 export interface Edition { year: number; edition_id: string; link: string; place: string; date_text: string; event_start: Date | null; event_end: Date | null; deadlines: Deadline[]; estimated: boolean; estimate?: DeadlineEstimate; source: string; }
 export interface Conference { key: string; title: string; full_name: string; link: string; rank: Record<string, string>; dblp: string | null; upstream_sub: string | null; tags: string[]; categories: string[]; editions: Edition[]; sources: string[]; }
@@ -255,7 +258,7 @@ export function parseInstant(text: unknown, tzRaw: string | null | undefined): D
 // confirmed な timezone の naive 値だけを UTC に変換して返す
 // ambiguous / unknown / 欠落 timezone は確定値にしないため null
 // 'TBD' 等パース不能は null（例外にしない）
-// 日付のみの場合は 23:59:59 とみなす
+// 日付のみでも timezone が確認済みなら 23:59:59 とみなす
 
 export function parseDateRange(
   text: string | null | undefined,
@@ -272,6 +275,15 @@ export function parseDateRange(
 // date 中の明示年が Edition.year と食い違う場合も date を優先する（罠 §1.1-9）
 // 解釈不能 -> [null, null]。例外にしない
 ```
+
+時刻とタイムゾーンを確認できないローカル締切は `parseInstant` へ渡さず、次の形で収録する。
+
+```yaml
+- {kind: paper, label: Submission deadline, date: '2026-08-24', precision: date-only}
+```
+
+`date-only` は暦日だけを表し、UTC、JST、AoE の時刻へ変換しない。
+`estimated` は開催回の推定状態であり、締切値の精度とは別である。
 
 rankings のパースは `src/sources/aideadlines.ts` の内部関数 `rankOf`:
 `'CCF: A, CORE: A*, THCPL: A'` -> `{ccf:'A', core:'A*', thcpl:'A'}`、
@@ -406,6 +418,9 @@ export function dedupDeadlinesAfterRollforward(
 | **異なる源** | `at_utc` の差が許容幅以内。既定 **90000 秒（25 時間）**。`config['deadline_merge_cross_source_seconds']` で変えられる |
 | **同じ源** | `at_utc` が完全一致し、かつ空白と大小文字を正規化した `label` も一致 |
 
+この時刻幅は `exact` 同士にだけ適用する。
+`date-only` 同士は `local_date` が同じ場合に畳み、`exact` と `date-only` は同一値として畳まない。
+
 窓の中に候補が複数あるときは**最も近いもの**に畳む。先頭一致にすると、SIGGRAPH 2026 で
 ccfddl の `Paper submission`（`2026-01-22T22:00:00Z`）が aideadlines の
 `Upload and conflicts deadline`（24 時間後）に吸われうる。
@@ -526,7 +541,7 @@ node --experimental-strip-types src/cli.ts review [--candidates data/discovered_
 `health.json` は `profile_hash`、`confirmed_future_deadlines`、`estimated_future_deadlines`、
 `source_failures`、`snapshot_fallback`、`parse_warning_count`、カテゴリ別件数、
 必須会議の存在状態、および schema 2 の `deadline_refs` を持つ。各 ref の
-`deadline_id` は `venue|edition_id|kind|round|track` で、時刻は `at_utc` に分離する。
+`deadline_id` は `venue|edition_id|kind|round|track` で、`exact` は `at_utc`、`date-only` は `local_date` に値を分離する。
 直近の健全な公開結果との比較では、同一枠の延長は通し、公式根拠のない前倒しと
 根拠のない未来枠の消失だけを配信阻止対象とする。経過した締切の削除と推定値の増減では
 阻止しない。`deadline_refs` は現在未来の確定締切と短い lookback（14 日）に限る。
@@ -544,7 +559,8 @@ node --experimental-strip-types src/cli.ts review [--candidates data/discovered_
 推薦モードは URL に `past=1` があっても履歴を取得しない。推定の表示切替はサイト側の絞り込みで行う。
 `upcoming.md` には締切と開催日の両方を載せる。締切を持たない会議も開催行で確認できる。
 
-**`upcoming.md` の行の選び方**: 締切行は `at_utc` が `now` から N 日以内のもの。
+**`upcoming.md` の行の選び方**: `exact` の締切行は `at_utc` が `now` から N 日以内のもの、`date-only` の締切行は `local_date` が当日から N 日以内のもの。
+`date-only` には時刻単位の残り時間を表示せず、「時刻未確認」と表示する。
 開催行は開始日が N 日以内で、最終日をまだ過ぎていないものを載せる。
 開催行の「残り」欄は開始前が日数、開始日が `本日開催`、会期中が `開催中(残りN日)`。
 
@@ -562,7 +578,8 @@ node --experimental-strip-types src/cli.ts review [--candidates data/discovered_
      "papers":["..."],
      "editions":[{"year":2026,"id":"sigcomm26","place":"...","link":"...",
        "event_start":"2026-08-17","event_end":"2026-08-21","estimated":false,
-       "deadlines":[{"kind":"paper","label":"...","utc":"2026-02-06T23:59:59Z",
+       "deadlines":[{"kind":"paper","label":"...","precision":"exact",
+                     "utc":"2026-02-06T23:59:59Z",
                      "aoe":"2026-02-06 23:59:59 AoE","tz_raw":"AoE","round":1,
                      "status":"confirmed",
                      "selection_rule":"source_priority_then_nearest_within_configured_window",
@@ -582,6 +599,9 @@ node --experimental-strip-types src/cli.ts review [--candidates data/discovered_
   ]
 }
 ```
+
+日付のみの締切は `precision: "date-only"`、`local_date: "YYYY-MM-DD"`、`utc: null`、`aoe: null`、`tz_raw: null` として出力する。
+CSV では `deadline_precision` と `deadline_local_date` に同じ区別を保持する。
 
 ---
 

@@ -48,12 +48,9 @@ export interface DeadlineEvidence {
   confidence: DeadlineConfidence;
 }
 
-export interface Deadline {
+interface DeadlineBase {
   kind: DeadlineKind;
   label: string;
-  /** tz-aware, always UTC. */
-  at_utc: Date;
-  tz_raw: string;
   round: number;
   comment: string | null;
   /** Raw candidate value retained for provenance during serialization. */
@@ -61,6 +58,34 @@ export interface Deadline {
   evidence?: DeadlineEvidence[];
   conflicts?: DeadlineConflict[];
   selection_rule?: string;
+}
+
+export interface ExactDeadline extends DeadlineBase {
+  /** Omitted on legacy in-memory values; serialization always writes it. */
+  precision?: "exact";
+  /** tz-aware, always UTC. */
+  at_utc: Date;
+  tz_raw: string;
+  local_date?: never;
+}
+
+export interface DateOnlyDeadline extends DeadlineBase {
+  precision: "date-only";
+  /** Official calendar date. Time and timezone are unknown. */
+  local_date: string;
+  at_utc?: never;
+  tz_raw?: never;
+  conflicts?: never;
+}
+
+export type Deadline = ExactDeadline | DateOnlyDeadline;
+
+export function isDateOnlyDeadline(deadline: Deadline): deadline is DateOnlyDeadline {
+  return deadline.precision === "date-only";
+}
+
+export function isExactDeadline(deadline: Deadline): deadline is ExactDeadline {
+  return !isDateOnlyDeadline(deadline);
 }
 
 export interface DeadlineConflict {
@@ -999,9 +1024,6 @@ export function conferencesFromJson(
       for (const dlRaw of (ed.deadlines as unknown[] | undefined) ?? []) {
         if (!dlRaw || typeof dlRaw !== "object") continue;
         const dl = dlRaw as Record<string, unknown>;
-        if (!isConfirmedTimezone(String(dl.tz_raw ?? ""))) continue;
-        const at = parseInstant(dl.utc, "UTC");
-        if (at === null) continue;
         const evidence = (Array.isArray(dl.evidence) ? dl.evidence : [])
           .filter((item): item is Record<string, unknown> =>
             Boolean(item && typeof item === "object"),
@@ -1064,16 +1086,33 @@ export function conferencesFromJson(
             return conflict;
           })
           .filter((item): item is DeadlineConflict => item !== null);
-        deadlines.push({
+        const base = {
           kind: refineKindWithLabel(kindOf(String(dl.kind ?? "other")), String(dl.label ?? "")),
           label: String(dl.label ?? ""),
-          at_utc: at,
-          tz_raw: String(dl.tz_raw ?? ""),
           round: Number(dl.round ?? 1) || 1,
           comment: dl.comment === null || dl.comment === undefined ? null : String(dl.comment),
           ...(evidence.length > 0 ? { evidence } : {}),
-          ...(conflicts.length > 0 ? { conflicts } : {}),
           ...(typeof dl.selection_rule === "string" ? { selection_rule: dl.selection_rule } : {}),
+        };
+        if (dl.precision === "date-only") {
+          const localDate = asDate(dl.local_date);
+          if (localDate === null) continue;
+          deadlines.push({
+            ...base,
+            precision: "date-only",
+            local_date: fmtDate(localDate),
+          });
+          continue;
+        }
+        if (!isConfirmedTimezone(String(dl.tz_raw ?? ""))) continue;
+        const at = parseInstant(dl.utc, "UTC");
+        if (at === null) continue;
+        deadlines.push({
+          ...base,
+          precision: "exact",
+          at_utc: at,
+          tz_raw: String(dl.tz_raw ?? ""),
+          ...(conflicts.length > 0 ? { conflicts } : {}),
         });
       }
       editions.push({
