@@ -213,6 +213,7 @@ kamiyobi/
 │   └── snapshot.json            # 生成物(コミットされる。上流障害時の退避) [自動]
 ├── src/
 │   ├── model.ts                 # 型・時刻解決・日付パーサ・snapshot 入出力
+│   ├── args.ts                  # CLI の短縮引数互換
 │   ├── sources/
 │   │   ├── base.ts
 │   │   ├── ccfddl.ts
@@ -241,8 +242,7 @@ kamiyobi/
 ├── public/                      # 生成物(git 管理外)
 ├── tests/                       # vitest
 └── .github/workflows/
-    ├── update.yml               # 日次 cron: 収集→生成→コミット→Pages
-    ├── discover.yml             # 週次 cron: 穴場会議・ジャーナル自律探索
+    ├── update.yml               # 日次 cron: 収集→候補探索→生成→コミット→Pages
     └── ci.yml                   # PR/push: vitest + 出力検証
 ```
 
@@ -416,11 +416,6 @@ export function kindOf(rawTypeOrKey: string | null | undefined): DeadlineKind;
 
 ```ts
 // src/sources/base.ts
-export interface Source {
-  name: string;
-  load(cacheDir: string, opts: { offline?: boolean }): Promise<Conference[]>;
-}
-
 export async function fetchTarball(
   repo: string,
   ref: string,
@@ -890,10 +885,7 @@ on:
   `npm ci` → `npm run typecheck` → `npm run check` → fetch guard 下の `npm test` →
   `node src/cli.ts build --out /tmp/kamiyobi-offline-site --offline --no-embeddings ...`。
   テスト側は `tests/fixtures/` と snapshot だけを源とし、discover の HTTP 呼び出しを含めない。
-- job `smoke`（`continue-on-error: true`・ネットワーク依存）:
-  実行時刻で実際の上流を取りにいく `node src/cli.ts build --out /tmp/site --no-embeddings`。
-  source status と health 件数を表示するが、必須 check ではない。
-- 候補探索の実運用は週次 `discover.yml` に分離し、必須 CI の test job から呼び出さない。
+- ネットワーク依存の build、health gate、候補探索は日次 `update.yml` に置き、必須 CI から呼び出さない。
 - `paths-ignore` でスキップされたジョブは required check として Pending のまま残るため、
   ブランチ保護を掛ける場合は required check に指定しない旨を README に注記する。
 

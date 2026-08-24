@@ -21,11 +21,6 @@ import { warn } from "../model.ts";
 export const USER_AGENT = "kamiyobi/1.0 (+https://github.com/ten82e/kamiyobi; node)";
 export const CODELOAD = "https://codeload.github.com/{repo}/tar.gz/refs/heads/{ref}";
 
-export interface Source {
-  name: string;
-  load(cacheDir: string, options?: { offline?: boolean }): Promise<unknown[]>;
-}
-
 export function cacheSlot(
   cacheDir: string | null | undefined,
   repo: string | null | undefined,

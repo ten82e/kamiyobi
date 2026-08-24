@@ -24,7 +24,7 @@
  * 手編集ブロックの機構は持たない (次回 --apply で消えるため)。
  */
 
-import { type DeadlineKind, KINDS, resolveTzStatus, warn } from "../model.ts";
+import { KINDS, resolveTzStatus, warn } from "../model.ts";
 
 const TIME_RE = /\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp]\.?[Mm]\.?)?/;
 
@@ -187,9 +187,4 @@ export function resolvePrimaryObservations(
     outConferences[key] = { ...rec, editions: outEditions };
   }
   return { conferences: outConferences };
-}
-
-/** テスト補助: 種別の妥当性判定 (KINDS との突合)。 */
-export function isKnownDeadlineKind(kind: string): kind is DeadlineKind {
-  return (KINDS as readonly string[]).includes(kind);
 }

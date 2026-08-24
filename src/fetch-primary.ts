@@ -8,7 +8,9 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseArgs as parseNodeArgs } from "node:util";
 import { dump as dumpYaml, load as loadYaml } from "js-yaml";
+import { booleanValue, normalizeShortEquals, stringValue } from "./args.ts";
 import { resolveTzStatus, roundOf, warn } from "./model.ts";
 
 export let ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -456,76 +458,29 @@ export interface PrimaryArgs {
 }
 
 export function parsePrimaryArgs(argv: string[] | null | undefined): PrimaryArgs {
-  let apply = false;
-  let registryPath = REGISTRY;
-  let outPath = OUT;
-  let help = false;
-
-  if (!argv || !Array.isArray(argv)) {
-    return { apply, registryPath, outPath, help };
-  }
-
-  for (let i = 0; i < argv.length; i++) {
-    const raw = argv[i];
-    let a = raw;
-    let eqVal: string | undefined;
-    const eqIdx = raw.indexOf("=");
-    if (raw.startsWith("-") && eqIdx > 0) {
-      a = raw.slice(0, eqIdx);
-      eqVal = raw.slice(eqIdx + 1);
-    }
-    const boolVal = (): boolean => {
-      if (eqVal === undefined) return true;
-      const low = eqVal.toLowerCase();
-      return low !== "false" && low !== "0" && low !== "no" && low !== "off";
-    };
-
-    if (a === "--help" || a === "-h" || a === "help") {
-      help = true;
-    } else if (a === "--apply" || a === "-a") {
-      apply = boolVal();
-    } else if (a === "--registry" || a === "-r") {
-      if (eqVal !== undefined) {
-        registryPath = eqVal;
-      } else if (argv[i + 1] && !argv[i + 1].startsWith("-")) {
-        registryPath = argv[++i];
-      }
-    } else if (a === "--out" || a === "-o") {
-      if (eqVal !== undefined) {
-        outPath = eqVal;
-      } else if (argv[i + 1] && !argv[i + 1].startsWith("-")) {
-        outPath = argv[++i];
-      }
-    }
-  }
-  return { apply, registryPath, outPath, help };
+  const { values, positionals } = parseNodeArgs({
+    args: normalizeShortEquals(argv, { h: "help", a: "apply", r: "registry", o: "out" }),
+    options: {
+      help: { type: "boolean", short: "h" },
+      apply: { type: "boolean", short: "a" },
+      registry: { type: "string", short: "r" },
+      out: { type: "string", short: "o" },
+    },
+    strict: false,
+    allowPositionals: true,
+  });
+  return {
+    apply: booleanValue(values.apply, false),
+    registryPath: stringValue(values.registry) ?? REGISTRY,
+    outPath: stringValue(values.out) ?? OUT,
+    help: Boolean(values.help || positionals.includes("help")),
+  };
 }
 
-function extractArgvRest(argv: string[] | null | undefined): string[] {
-  if (!argv || !Array.isArray(argv)) return [];
-  if (argv.length === 0) return [];
-  const isNodeBin = (s: string): boolean =>
-    s === "node" || s === "bun" || /(?:^|[/\\])(?:node|bun)(?:\.exe)?$/i.test(s);
-  const isScript = (s: string): boolean =>
-    /(?:^|[/\\])(?:cli|bench|embeddings|discover|review|fetch-primary)(?:[-_a-z0-9]*)?\.[jt]sx?$/i.test(
-      s,
-    );
-
-  if (isNodeBin(argv[0])) {
-    if (argv.length > 1 && (isScript(argv[1]) || !argv[1].startsWith("-"))) {
-      return argv.slice(2);
-    }
-    return argv.slice(1);
-  }
-  if (isScript(argv[0])) {
-    return argv.slice(1);
-  }
-  return argv.slice(0);
-}
-
-export async function main(argv: string[] | null | undefined): Promise<number> {
-  const rest = extractArgvRest(argv);
-  const args = parsePrimaryArgs(rest);
+export async function main(
+  argv: string[] | null | undefined = process.argv.slice(2),
+): Promise<number> {
+  const args = parsePrimaryArgs(argv);
   if (args.help) {
     console.log("usage: node src/fetch-primary.ts [--apply] [--registry <path>] [--out <path>]");
     return 0;
@@ -538,7 +493,7 @@ const isMain = Boolean(
     (process.argv[1].endsWith("fetch-primary.ts") || process.argv[1].endsWith("fetch-primary.js")),
 );
 if (isMain) {
-  main(process.argv).then(
+  main().then(
     (code) => {
       process.exitCode = code;
     },

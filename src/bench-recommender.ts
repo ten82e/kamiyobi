@@ -21,7 +21,9 @@
  */
 
 import { readFileSync } from "node:fs";
+import { parseArgs as parseNodeArgs } from "node:util";
 import { type FeatureExtractionPipeline, pipeline } from "@huggingface/transformers";
+import { booleanValue, normalizeShortEquals, stringValue } from "./args.ts";
 import {
   type BenchmarkEmbeddingManifest,
   buildBenchmarkEmbeddingBundle,
@@ -73,28 +75,6 @@ function toPosInt(raw: string | undefined, fallback: number): number {
   return Number.isFinite(n) && Number.isInteger(n) && n > 0 ? n : fallback;
 }
 
-function extractArgvRest(argv: string[] | null | undefined): string[] {
-  if (!argv || !Array.isArray(argv)) return [];
-  if (argv.length === 0) return [];
-  const isNodeBin = (s: string): boolean =>
-    s === "node" || s === "bun" || /(?:^|[/\\])(?:node|bun)(?:\.exe)?$/i.test(s);
-  const isScript = (s: string): boolean =>
-    /(?:^|[/\\])(?:cli|bench|embeddings|discover|review|fetch-primary)(?:[-_a-z0-9]*)?\.[jt]sx?$/i.test(
-      s,
-    );
-
-  if (isNodeBin(argv[0])) {
-    if (argv.length > 1 && (isScript(argv[1]) || !argv[1].startsWith("-"))) {
-      return argv.slice(2);
-    }
-    return argv.slice(1);
-  }
-  if (isScript(argv[0])) {
-    return argv.slice(1);
-  }
-  return argv.slice(0);
-}
-
 function toStringArray(val: unknown): string[] {
   if (Array.isArray(val)) {
     return val
@@ -133,75 +113,81 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
     realV2Dev: null,
     realV2Heldout: null,
   };
-  if (!argv || !Array.isArray(argv)) return args;
-
-  const parseBool = (v: string | undefined, defaultVal = true): boolean => {
-    if (v === undefined) return defaultVal;
-    const low = v.toLowerCase().trim();
-    return low !== "false" && low !== "0" && low !== "no";
-  };
-
-  const rest = extractArgvRest(argv);
-  for (let i = 0; i < rest.length; i++) {
-    const raw = rest[i];
-    let a = raw;
-    let eqVal: string | undefined;
-    const eqIdx = raw.indexOf("=");
-    if (raw.startsWith("-") && eqIdx > 0) {
-      a = raw.slice(0, eqIdx);
-      eqVal = raw.slice(eqIdx + 1);
-    }
-    const nextVal = (): string | undefined => {
-      if (eqVal !== undefined) return eqVal;
-      const v = rest[i + 1];
-      if (v !== undefined && !v.startsWith("-")) {
-        i += 1;
-        return v;
-      }
-      return undefined;
-    };
-
-    if (a === "--data" || a === "-d") args.data = nextVal() ?? args.data;
-    else if (a === "--emb" || a === "-e") args.emb = nextVal() ?? args.emb;
-    else if (a === "--samples" || a === "-s") args.samples = toPosInt(nextVal(), 0);
-    else if (a === "--failures" || a === "-f") args.failures = toPosInt(nextVal(), 0);
-    else if (a === "--topk" || a === "-k") args.topK = toPosInt(nextVal(), 5);
-    else if (a === "--lang" || a === "-l") {
-      const v = nextVal();
-      if (v === "jp") args.lang = "jp";
-    } else if (a === "--jpw" || a === "--w") {
-      // 0 は「語彙重み 0 = セマンティックのみ」の正当なスイープ端点。
-      // `|| 0.5` だと falsy 判定で 0 が黙って既定値に潰れるため NaN のみ置換する。
-      const jpw = Number(nextVal());
-      args.jpw = Number.isNaN(jpw) ? 0.5 : jpw;
-      args.wGiven = true;
-    } else if (a === "--by-len") args.byLen = parseBool(eqVal, true);
-    else if (a === "--adaptive") args.adaptive = parseBool(eqVal, true);
-    else if (a === "--penalty") args.penalty = parseBool(eqVal, true);
-    else if (a === "--prf") args.prf = parseBool(eqVal, true);
-    else if (a === "--idf") args.idf = parseBool(eqVal, true);
-    else if (a === "--no-idf") args.idf = false;
-    else if (a === "--golden-en") args.goldenEn = parseBool(eqVal, true);
-    else if (a === "--paper-max") args.paperMax = parseBool(eqVal, true);
-    else if (a === "--no-paper-max") args.paperMax = false;
-    else if (a === "--v2" || a === "--bench-v2") args.v2 = nextVal() ?? null;
-    else if (a === "--real-v2-dev") args.realV2Dev = nextVal() ?? null;
-    else if (a === "--real-v2-heldout") args.realV2Heldout = nextVal() ?? null;
-    else if (a === "--sw") {
-      args.sw = nextVal() ?? null;
-      // 例: "name=25,venue=80,domain=0,tags=0" または "nameOnce"（会議名一致を先頭 1 語のみ）
-      for (const kv of (args.sw || "").split(",")) {
-        const [k, v] = kv.split("=");
-        if (!k) continue;
-        if (k === "nameOnce") {
-          Recommender.setSigWeights({ nameOnce: true });
-        } else if (v !== undefined) {
-          const n = Number(v);
-          if (!Number.isNaN(n)) {
-            const key = k as "domain" | "name" | "jp" | "tags" | "venue";
-            Recommender.setSigWeights({ [key]: n });
-          }
-        }
+  const normalized = normalizeShortEquals(argv, {
+    d: "data",
+    e: "emb",
+    s: "samples",
+    f: "failures",
+    k: "topk",
+    l: "lang",
+  });
+  const { values, tokens } = parseNodeArgs({
+    args: normalized,
+    options: {
+      data: { type: "string", short: "d" },
+      emb: { type: "string", short: "e" },
+      samples: { type: "string", short: "s" },
+      failures: { type: "string", short: "f" },
+      topk: { type: "string", short: "k" },
+      lang: { type: "string", short: "l" },
+      jpw: { type: "string" },
+      w: { type: "string" },
+      "by-len": { type: "boolean" },
+      adaptive: { type: "boolean" },
+      penalty: { type: "boolean" },
+      prf: { type: "boolean" },
+      idf: { type: "boolean" },
+      "no-idf": { type: "boolean" },
+      "golden-en": { type: "boolean" },
+      "paper-max": { type: "boolean" },
+      "no-paper-max": { type: "boolean" },
+      v2: { type: "string" },
+      "bench-v2": { type: "string" },
+      "real-v2-dev": { type: "string" },
+      "real-v2-heldout": { type: "string" },
+      sw: { type: "string" },
+    },
+    strict: false,
+    allowPositionals: true,
+    tokens: true,
+  });
+  args.data = stringValue(values.data) ?? args.data;
+  args.emb = stringValue(values.emb) ?? args.emb;
+  args.samples = toPosInt(stringValue(values.samples), 0);
+  args.failures = toPosInt(stringValue(values.failures), 0);
+  args.topK = toPosInt(stringValue(values.topk), 5);
+  if (values.lang === "jp") args.lang = "jp";
+  const jpw = [...tokens]
+    .reverse()
+    .find((token) => token.kind === "option" && (token.name === "jpw" || token.name === "w"));
+  if (jpw?.kind === "option") {
+    const weight = Number(jpw.value);
+    args.jpw = Number.isNaN(weight) ? 0.5 : weight;
+    args.wGiven = true;
+  }
+  if (values["by-len"] !== undefined) args.byLen = booleanValue(values["by-len"]);
+  if (values.adaptive !== undefined) args.adaptive = booleanValue(values.adaptive);
+  if (values.penalty !== undefined) args.penalty = booleanValue(values.penalty);
+  if (values.prf !== undefined) args.prf = booleanValue(values.prf);
+  if (values.idf !== undefined) args.idf = booleanValue(values.idf);
+  if (values["no-idf"] !== undefined) args.idf = false;
+  if (values["golden-en"] !== undefined) args.goldenEn = booleanValue(values["golden-en"]);
+  if (values["paper-max"] !== undefined) args.paperMax = booleanValue(values["paper-max"]);
+  if (values["no-paper-max"] !== undefined) args.paperMax = false;
+  args.v2 = stringValue(values.v2) ?? stringValue(values["bench-v2"]) ?? null;
+  args.realV2Dev = stringValue(values["real-v2-dev"]) ?? null;
+  args.realV2Heldout = stringValue(values["real-v2-heldout"]) ?? null;
+  args.sw = stringValue(values.sw) ?? null;
+  for (const kv of (args.sw || "").split(",")) {
+    const [k, v] = kv.split("=");
+    if (!k) continue;
+    if (k === "nameOnce") {
+      Recommender.setSigWeights({ nameOnce: true });
+    } else if (v !== undefined) {
+      const n = Number(v);
+      if (!Number.isNaN(n)) {
+        const key = k as "domain" | "name" | "jp" | "tags" | "venue";
+        Recommender.setSigWeights({ [key]: n });
       }
     }
   }
@@ -1301,16 +1287,17 @@ function jpChunks(s: string): string[] {
   return out.slice(0, 10);
 }
 
-export async function main(argv: string[] | null | undefined = process.argv): Promise<number> {
-  const safeArgv = argv ?? [];
-  const rawArgs = extractArgvRest(safeArgv);
+export async function main(
+  argv: string[] | null | undefined = process.argv.slice(2),
+): Promise<number> {
+  const rawArgs = Array.isArray(argv) ? argv : [];
   if (rawArgs.includes("--help") || rawArgs.includes("-h") || rawArgs.includes("help")) {
     console.log(
       "usage: node src/bench-recommender.ts [--data <path>] [--emb <path>] [--v2 <fixture>] [--real-v2-dev <fixture>] [--real-v2-heldout <fixture>] [--samples <n>] [--failures <n>] [--topk <n>] [--lang <en|jp>] [--golden-en] [--no-idf]",
     );
     return 0;
   }
-  const args = parseBenchArgs(safeArgv);
+  const args = parseBenchArgs(rawArgs);
   if (args.v2) {
     try {
       const fixture = JSON.parse(readFileSync(args.v2, "utf8")) as BenchV2Fixture;
@@ -1706,7 +1693,7 @@ const isMain = Boolean(
       process.argv[1].endsWith("bench-recommender.js")),
 );
 if (isMain) {
-  main(process.argv).then(
+  main().then(
     (code) => {
       process.exitCode = code;
     },

@@ -6,7 +6,9 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseArgs as parseNodeArgs } from "node:util";
 import { load as loadYaml } from "js-yaml";
+import { booleanValue, normalizeShortEquals, stringValue } from "./args.ts";
 import { buildAll } from "./build.ts";
 import {
   applyAliases,
@@ -458,102 +460,81 @@ function toPosInt(raw: string | undefined, fallback: number): number {
 }
 
 export function parseArgs(argv: string[] | null | undefined): CliArgs {
+  const normalized = normalizeShortEquals(argv, {
+    h: "help",
+    o: "out",
+    c: "config",
+    n: "now",
+    y: "min-year",
+    d: "dry-run",
+    a: "append",
+    C: "candidates",
+    l: "limit",
+  });
+  const options = {
+    help: { type: "boolean", short: "h" },
+    out: { type: "string", short: "o" },
+    "candidate-out": { type: "string" },
+    config: { type: "string", short: "c" },
+    cache: { type: "string" },
+    now: { type: "string", short: "n" },
+    categories: { type: "string" },
+    "min-year": { type: "string", short: "y" },
+    offline: { type: "boolean" },
+    "no-embeddings": { type: "boolean" },
+    "dry-run": { type: "boolean", short: "d" },
+    append: { type: "boolean", short: "a" },
+    candidates: { type: "string", short: "C" },
+    limit: { type: "string", short: "l" },
+  } as const;
+  const { values, positionals, tokens } = parseNodeArgs({
+    args: normalized,
+    options,
+    strict: false,
+    allowPositionals: true,
+    tokens: true,
+  });
+  for (const token of tokens) {
+    if (token.kind === "option" && !(token.name in options)) {
+      throw new Error(`unknown option: ${normalized[token.index]}`);
+    }
+  }
+  const command = positionals[0];
   const args: CliArgs = {};
-  if (!argv || !Array.isArray(argv)) return args;
-  const positional: string[] = [];
-  for (let i = 0; i < argv.length; i++) {
-    const raw = argv[i];
-    let a = raw;
-    let eqVal: string | undefined;
-    const eqIdx = raw.indexOf("=");
-    if (raw.startsWith("-") && eqIdx > 0) {
-      a = raw.slice(0, eqIdx);
-      eqVal = raw.slice(eqIdx + 1);
-    }
-    const nextVal = (): string | undefined => {
-      if (eqVal !== undefined) return eqVal;
-      const v = argv[i + 1];
-      if (v !== undefined && !v.startsWith("-")) {
-        i += 1;
-        return v;
-      }
-      return undefined;
-    };
-    const boolVal = (): boolean => {
-      if (eqVal === undefined) return true;
-      const low = eqVal.toLowerCase();
-      return low !== "false" && low !== "0" && low !== "no" && low !== "off";
-    };
-
-    if (a === "--help" || a === "-h" || a === "help") {
-      args.help = true;
-    } else if (a === "--out" || a === "-o") {
-      args.out = nextVal() ?? "public";
-    } else if (a === "--candidate-out") {
-      args.candidateOut = nextVal() ?? join(ROOT, "data", "discovered_candidates.yaml");
-    } else if (a === "--config" || a === "-c") {
-      args.config = nextVal() ?? "config.yaml";
-    } else if (a === "--cache") {
-      args.cache = nextVal() ?? ".cache";
-    } else if (a === "--now" || a === "-n") {
-      args.now = nextVal() ?? null;
-    } else if (a === "--categories") {
-      args.categories = nextVal() ?? null;
-    } else if (a === "--min-year" || a === "-y") {
-      args.minYear = toPosInt(nextVal(), DEFAULT_MIN_YEAR);
-    } else if (a === "--offline") {
-      args.offline = boolVal();
-    } else if (a === "--no-embeddings") {
-      args.noEmbeddings = boolVal();
-    } else if (a === "--dry-run" || a === "-d") {
-      args.dryRun = boolVal();
-    } else if (a === "--append" || a === "-a") {
-      args.append = boolVal();
-    } else if (a === "--candidates" || a === "-C") {
-      args.candidates = nextVal() ?? join(ROOT, "data", "discovered_candidates.yaml");
-    } else if (a === "--limit" || a === "-l") {
-      args.limit = toPosInt(nextVal(), 60);
-    } else if (a.startsWith("-")) {
-      throw new Error(`unknown option: ${raw}`);
-    } else {
-      positional.push(raw);
-    }
+  if (command && command !== "help") args.command = command;
+  if (command === "help" || values.help) args.help = true;
+  if (values.out !== undefined) args.out = stringValue(values.out) ?? "public";
+  if (values["candidate-out"] !== undefined) {
+    args.candidateOut =
+      stringValue(values["candidate-out"]) ?? join(ROOT, "data", "discovered_candidates.yaml");
   }
-  if (positional[0] === "help") {
-    args.help = true;
-  } else {
-    args.command = positional[0];
+  if (values.config !== undefined) args.config = stringValue(values.config) ?? "config.yaml";
+  if (values.cache !== undefined) args.cache = stringValue(values.cache) ?? ".cache";
+  if (values.now !== undefined) args.now = stringValue(values.now) ?? null;
+  if (values.categories !== undefined) args.categories = stringValue(values.categories) ?? null;
+  if (values["min-year"] !== undefined) {
+    args.minYear = toPosInt(stringValue(values["min-year"]), DEFAULT_MIN_YEAR);
   }
+  if (values.offline !== undefined) args.offline = booleanValue(values.offline);
+  if (values["no-embeddings"] !== undefined) {
+    args.noEmbeddings = booleanValue(values["no-embeddings"]);
+  }
+  if (values["dry-run"] !== undefined) args.dryRun = booleanValue(values["dry-run"]);
+  if (values.append !== undefined) args.append = booleanValue(values.append);
+  if (values.candidates !== undefined) {
+    args.candidates =
+      stringValue(values.candidates) ?? join(ROOT, "data", "discovered_candidates.yaml");
+  }
+  if (values.limit !== undefined) args.limit = toPosInt(stringValue(values.limit), 60);
   return args;
 }
 
-function extractArgvRest(argv: string[] | null | undefined): string[] {
-  if (!argv || !Array.isArray(argv)) return [];
-  if (argv.length === 0) return [];
-  const isNodeBin = (s: string): boolean =>
-    s === "node" || s === "bun" || /(?:^|[/\\])(?:node|bun)(?:\.exe)?$/i.test(s);
-  const isScript = (s: string): boolean =>
-    /(?:^|[/\\])(?:cli|bench|embeddings|discover|review|fetch-primary)(?:[-_a-z0-9]*)?\.[jt]sx?$/i.test(
-      s,
-    );
-
-  if (isNodeBin(argv[0])) {
-    if (argv.length > 1 && (isScript(argv[1]) || !argv[1].startsWith("-"))) {
-      return argv.slice(2);
-    }
-    return argv.slice(1);
-  }
-  if (isScript(argv[0])) {
-    return argv.slice(1);
-  }
-  return argv.slice(0);
-}
-
-export async function main(argv: string[] | null | undefined): Promise<number> {
+export async function main(
+  argv: string[] | null | undefined = process.argv.slice(2),
+): Promise<number> {
   let args: CliArgs;
   try {
-    const rest = extractArgvRest(argv);
-    args = parseArgs(rest);
+    args = parseArgs(argv);
   } catch (exc) {
     process.stderr.write(`error: ${String(exc)}\n\n${usage()}\n`);
     return 2;
@@ -597,7 +578,7 @@ const isMain = Boolean(
   process.argv[1] && (process.argv[1].endsWith("cli.ts") || process.argv[1].endsWith("cli.js")),
 );
 if (isMain) {
-  main(process.argv).then(
+  main().then(
     (code) => {
       process.exitCode = code;
     },

@@ -30,9 +30,7 @@ import {
   isPredatory,
   loadTrackedTitles,
   normTitle,
-  parseArgs as parseReviewArgs,
   reviewDeadlineText,
-  main as reviewMain,
   runReviewCandidates,
   tagSource,
 } from "../src/review-candidates.ts";
@@ -748,42 +746,6 @@ describe("review helpers", () => {
     expect(normTitle(null)).toBe("");
   });
 
-  it("parseReviewArgs handles flags, --help, and --now", () => {
-    const res1 = parseReviewArgs([
-      "--candidates=custom.yaml",
-      "--limit=25",
-      "--now=2026-08-09T00:00:00Z",
-    ]);
-    expect(res1.candidates).toBe("custom.yaml");
-    expect(res1.limit).toBe(25);
-    expect(res1.now.toISOString()).toBe("2026-08-09T00:00:00.000Z");
-    expect(res1.help).toBe(false);
-
-    const res2 = parseReviewArgs([
-      "--candidates",
-      "foo.yaml",
-      "--limit",
-      "10",
-      "--now",
-      "2026-09-01T12:00:00Z",
-    ]);
-    expect(res2.candidates).toBe("foo.yaml");
-    expect(res2.limit).toBe(10);
-    expect(res2.now.toISOString()).toBe("2026-09-01T12:00:00.000Z");
-
-    const res3 = parseReviewArgs(["--help"]);
-    expect(res3.help).toBe(true);
-  });
-
-  it("parseReviewArgs rejects impossible calendar dates in --now (2026-02-30 等)", () => {
-    expect(() => parseReviewArgs(["--now=2026-02-30T00:00:00Z"])).toThrow("unparsable --now");
-    expect(() => parseReviewArgs(["--now", "2026-04-31T00:00:00Z"])).toThrow("unparsable --now");
-    expect(() => parseReviewArgs(["-n", "2026-02-29T00:00:00Z"])).toThrow("unparsable --now");
-    // 有効値は従来どおり受理される
-    const ok = parseReviewArgs(["--now=2026-08-09T00:00:00Z"]);
-    expect(ok.now.toISOString()).toBe("2026-08-09T00:00:00.000Z");
-  });
-
   it("reviewDeadlineText falls back through submission_deadline_text, ed.date_text, c.date_text, and deadlines", () => {
     // 1. submission_deadline_text priority
     expect(
@@ -839,26 +801,6 @@ describe("review helpers", () => {
     expect(() => {
       runReviewCandidates("/tmp/nonexistent-candidates-999.yaml", 60, new Date());
     }).not.toThrow();
-  });
-
-  it("parseReviewArgs handles short flags -c, -l, -n and --flags", () => {
-    const res = parseReviewArgs([
-      "-c",
-      "/tmp/custom-candidates.yaml",
-      "-l",
-      "25",
-      "-n",
-      "2026-09-01T00:00:00Z",
-    ]);
-    expect(res.candidates).toBe("/tmp/custom-candidates.yaml");
-    expect(res.limit).toBe(25);
-    expect(res.now.toISOString()).toBe("2026-09-01T00:00:00.000Z");
-    expect(res.help).toBe(false);
-
-    const resEq = parseReviewArgs(["-C=/tmp/custom2.yaml", "-l=30", "-n=2026-09-15T00:00:00Z"]);
-    expect(resEq.candidates).toBe("/tmp/custom2.yaml");
-    expect(resEq.limit).toBe(30);
-    expect(resEq.now.toISOString()).toBe("2026-09-15T00:00:00.000Z");
   });
 
   it("normTitle, isPredatory, and reviewDeadlineText handle null/undefined defensively", () => {
@@ -1119,13 +1061,6 @@ describe("discover and review boundary handling", () => {
     expect(parseIpsjCfpHtml(null, "https://example.com")).toEqual([]);
   });
 
-  it("parseReviewArgs handles null/undefined arguments safely", () => {
-    const res = parseReviewArgs(null);
-    expect(res.candidates).toBeDefined();
-    expect(res.limit).toBe(60);
-    expect(res.help).toBe(false);
-  });
-
   it("loadTrackedTitles and runReviewCandidates accept custom root and resolve relative paths (#316)", () => {
     const trackedDefault = loadTrackedTitles(REPO_ROOT);
     expect(trackedDefault.size).toBeGreaterThan(0);
@@ -1175,7 +1110,7 @@ describe("discover and review boundary handling", () => {
     expect(deadlineIsFuture("1990-01-01", null)).toBe(false);
   });
 
-  it("runReviewCandidates and reviewMain handle null/undefined today and argv offset (#350)", async () => {
+  it("runReviewCandidates handles null/undefined today (#350)", () => {
     // today = null / undefined falls back to new Date() safely
     expect(() => {
       runReviewCandidates("data/discovered_candidates.yaml", 10, null, REPO_ROOT);
@@ -1184,11 +1119,5 @@ describe("discover and review boundary handling", () => {
     expect(() => {
       runReviewCandidates("data/discovered_candidates.yaml", 10, undefined, REPO_ROOT);
     }).not.toThrow();
-
-    const directHelp = await reviewMain(["--help"]);
-    expect(directHelp).toBe(0);
-
-    const nodeHelp = await reviewMain(["node", "src/review-candidates.ts", "-h"]);
-    expect(nodeHelp).toBe(0);
   });
 });

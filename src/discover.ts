@@ -1423,62 +1423,6 @@ export async function discoverFromIpsjCfps(
   return entries;
 }
 
-/** 購読メーリス (IMAP) の受信トレイから CFP メールを抽出する。 */
-export async function discoverFromImap(minYear: number): Promise<Array<Record<string, unknown>>> {
-  const host = process.env.CFP_IMAP_HOST;
-  const user = process.env.CFP_IMAP_USER;
-  const pw = process.env.CFP_IMAP_PASS;
-  if (!host || !user || !pw) {
-    return []; // GitHub Actions では Secrets 未設定なら自動スキップ
-  }
-  const { ImapFlow } = await import("imapflow");
-  const client = new ImapFlow({
-    host,
-    port: 993,
-    secure: true,
-    auth: { user, pass: pw },
-    logger: false,
-  });
-  const entries: Array<Record<string, unknown>> = [];
-  await client.connect();
-  try {
-    const lock = await client.getMailboxLock("INBOX");
-    try {
-      const searchResult = await client.search({ all: true });
-      const ids = searchResult === false ? [] : searchResult;
-      const recent = ids.slice(-50); // 最近 50 通のみ
-      for (const id of recent) {
-        const msg = await client.fetchOne(id, { envelope: true });
-        if (msg === false) continue;
-        const subject = msg.envelope?.subject ?? "";
-        if (!/call for (papers?|participation)|cfp|deadline|reminder|last call/i.test(subject))
-          continue;
-        const [cleaned, sourceType] = cleanDbworldTitle(subject);
-        if (!cleaned) continue;
-        const m2 = /(20\d\d)/.exec(cleaned);
-        const year = m2 ? Number(m2[1]) : undefined;
-        if (year !== undefined && year < minYear) continue;
-        entries.push({
-          key: slug(cleaned),
-          title: cleaned,
-          full_name: cleaned,
-          link: "", // 本文は持たない。レビュー時に公式サイトで裏取り
-          categories: [],
-          source_type: sourceType,
-          date_text: "",
-          place: "",
-          year,
-        });
-      }
-    } finally {
-      lock.release();
-    }
-  } finally {
-    await client.logout();
-  }
-  return entries;
-}
-
 export class NicheDiscoverer {
   private readonly rootDir: string;
   private readonly discoveredAt: string;
@@ -1646,6 +1590,36 @@ export class NicheDiscoverer {
     return candidates;
   }
 
+  private addEntries(
+    results: Candidate[],
+    entries: Array<Record<string, unknown>>,
+    tags: string[],
+    evidenceUrl = "",
+  ): void {
+    for (const entry of entries) {
+      const key = String(entry.key);
+      if (this.isAlreadyTracked(key) || this.isAlreadyTracked(String(entry.full_name))) continue;
+      const submissionDeadline = String(entry.submission_deadline_text ?? "");
+      results.push(
+        makeCandidate({
+          key,
+          title: String(entry.title),
+          full_name: String(entry.full_name),
+          link: String(entry.link),
+          categories: entry.categories as string[],
+          tags,
+          source_type: String(entry.source_type),
+          evidence_url: evidenceUrl,
+          date_text: String(entry.date_text),
+          ...(submissionDeadline ? { submission_deadline_text: submissionDeadline } : {}),
+          place: String(entry.place),
+          year: parsedCandidateYear(entry.year),
+        }),
+      );
+      this.knownKeys.add(key);
+    }
+  }
+
   /** Run full autonomous discovery across multiple sources. */
   async runDiscovery(
     categories: string[] | null = null,
@@ -1702,164 +1676,50 @@ export class NicheDiscoverer {
 
     // 4. DBWorld
     try {
-      for (const entry of await discoverFromDbworld(minYear)) {
-        const candKey = String(entry.key);
-        if (this.isAlreadyTracked(candKey) || this.isAlreadyTracked(String(entry.full_name)))
-          continue;
-        results.push(
-          makeCandidate({
-            key: candKey,
-            title: String(entry.title),
-            full_name: String(entry.full_name),
-            link: String(entry.link),
-            categories: entry.categories as string[],
-            tags: ["niche", "dbworld"],
-            source_type: String(entry.source_type),
-            evidence_url: "https://dbworld.sigmod.org/browse.html",
-            date_text: String(entry.date_text),
-            place: String(entry.place),
-            year: parsedCandidateYear(entry.year),
-          }),
-        );
-        this.knownKeys.add(candKey);
-      }
+      this.addEntries(
+        results,
+        await discoverFromDbworld(minYear),
+        ["niche", "dbworld"],
+        "https://dbworld.sigmod.org/browse.html",
+      );
     } catch {
       // アーカイブ障害で全体を止めない
     }
 
     // 5. EasyChair Smart CFP
     try {
-      for (const entry of await discoverFromEasyChair(minYear)) {
-        const candKey = String(entry.key);
-        if (this.isAlreadyTracked(candKey) || this.isAlreadyTracked(String(entry.full_name)))
-          continue;
-        results.push(
-          makeCandidate({
-            key: candKey,
-            title: String(entry.title),
-            full_name: String(entry.full_name),
-            link: String(entry.link),
-            categories: entry.categories as string[],
-            tags: ["niche", "easychair"],
-            source_type: String(entry.source_type),
-            evidence_url: "https://easychair.org/cfp/",
-            date_text: String(entry.date_text),
-            submission_deadline_text: String(entry.submission_deadline_text ?? ""),
-            place: String(entry.place),
-            year: parsedCandidateYear(entry.year),
-          }),
-        );
-        this.knownKeys.add(candKey);
-      }
+      this.addEntries(
+        results,
+        await discoverFromEasyChair(minYear),
+        ["niche", "easychair"],
+        "https://easychair.org/cfp/",
+      );
     } catch {
       // 一覧取得失敗で全体を止めない
     }
 
-    // 6. IMAP 購読メーリス (任意)
+    // 6. IEEE ComSoc 誌のオープン特集号 CFP
     try {
-      for (const entry of await discoverFromImap(minYear)) {
-        const candKey = String(entry.key);
-        if (this.isAlreadyTracked(candKey) || this.isAlreadyTracked(String(entry.full_name)))
-          continue;
-        results.push(
-          makeCandidate({
-            key: candKey,
-            title: String(entry.title),
-            full_name: String(entry.full_name),
-            link: String(entry.link),
-            categories: entry.categories as string[],
-            tags: ["niche", "imap"],
-            source_type: String(entry.source_type),
-            date_text: String(entry.date_text),
-            place: String(entry.place),
-            year: parsedCandidateYear(entry.year),
-          }),
-        );
-        this.knownKeys.add(candKey);
-      }
-    } catch {
-      // 認証失敗等で全体を止めない
-    }
-
-    // 7. IEEE ComSoc 誌のオープン特集号 CFP
-    try {
-      for (const entry of await discoverFromComsocCfps(minYear)) {
-        const candKey = String(entry.key);
-        if (this.isAlreadyTracked(candKey) || this.isAlreadyTracked(String(entry.full_name)))
-          continue;
-        results.push(
-          makeCandidate({
-            key: candKey,
-            title: String(entry.title),
-            full_name: String(entry.full_name),
-            link: String(entry.link),
-            categories: entry.categories as string[],
-            tags: ["niche", "special-issue"],
-            source_type: String(entry.source_type),
-            date_text: String(entry.date_text),
-            place: String(entry.place),
-            year: parsedCandidateYear(entry.year),
-          }),
-        );
-        this.knownKeys.add(candKey);
-      }
+      this.addEntries(results, await discoverFromComsocCfps(minYear), ["niche", "special-issue"]);
     } catch {
       // 特集号一覧取得失敗で全体を止めない
     }
 
-    // 8. IEICE 論文誌の特集号 CFP
+    // 7. IEICE 論文誌の特集号 CFP
     try {
-      for (const entry of await discoverFromIeiceCfps(minYear)) {
-        const candKey = String(entry.key);
-        if (this.isAlreadyTracked(candKey) || this.isAlreadyTracked(String(entry.full_name)))
-          continue;
-        results.push(
-          makeCandidate({
-            key: candKey,
-            title: String(entry.title),
-            full_name: String(entry.full_name),
-            link: String(entry.link),
-            categories: entry.categories as string[],
-            tags: ["niche", "special-issue"],
-            source_type: String(entry.source_type),
-            date_text: String(entry.date_text),
-            place: String(entry.place),
-            year: parsedCandidateYear(entry.year),
-          }),
-        );
-        this.knownKeys.add(candKey);
-      }
+      this.addEntries(results, await discoverFromIeiceCfps(minYear), ["niche", "special-issue"]);
     } catch {
       // 特集号一覧取得失敗で全体を止めない
     }
 
-    // 9. IPSJ 論文誌ジャーナルの特集論文募集
+    // 8. IPSJ 論文誌ジャーナルの特集論文募集
     try {
-      for (const entry of await discoverFromIpsjCfps(minYear)) {
-        const candKey = String(entry.key);
-        if (this.isAlreadyTracked(candKey) || this.isAlreadyTracked(String(entry.full_name)))
-          continue;
-        results.push(
-          makeCandidate({
-            key: candKey,
-            title: String(entry.title),
-            full_name: String(entry.full_name),
-            link: String(entry.link),
-            categories: entry.categories as string[],
-            tags: ["niche", "special-issue"],
-            source_type: String(entry.source_type),
-            date_text: String(entry.date_text),
-            place: String(entry.place),
-            year: parsedCandidateYear(entry.year),
-          }),
-        );
-        this.knownKeys.add(candKey);
-      }
+      this.addEntries(results, await discoverFromIpsjCfps(minYear), ["niche", "special-issue"]);
     } catch {
       // 特集号一覧取得失敗で全体を止めない
     }
 
-    // 10. Known niche candidate registry (fallback / curated candidates)
+    // 9. Known niche candidate registry (fallback / curated candidates)
     const curated = [
       makeCandidate({
         key: "resound",
