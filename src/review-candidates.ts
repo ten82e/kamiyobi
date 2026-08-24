@@ -1,7 +1,7 @@
 /**
  * 候補レビュー支援: レビュー優先順位 (締切昇順)・重複グループ・predatory 疑い・
  * 過去締切を一覧する。Ported from scripts/review_candidates.py.
- * 使い方: node src/review-candidates.ts [--limit 60] [--candidates data/discovered_candidates.yaml]
+ * 実行は `node src/cli.ts review` を使う。
  * 出力はレビュー時の判断材料で、収録 (extra.yaml 昇格) は公式サイト裏取り後に人間が行う。
  */
 
@@ -9,7 +9,6 @@ import { readFileSync } from "node:fs";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { load as loadYaml } from "js-yaml";
-import { parseNow } from "./cli.ts";
 import { parseDeadlineText } from "./discover.ts";
 
 export let ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -220,97 +219,4 @@ export function runReviewCandidates(
 
   console.log(`\n=== 過去締切のみ (${past.length} 件・レビュー不要/削除候補) ===`);
   console.log(`=== 締切不明 (${unknown.length} 件・公式サイト確認が必要) ===`);
-}
-
-export interface ReviewArgs {
-  candidates: string;
-  limit: number;
-  now: Date;
-  help?: boolean;
-}
-
-// 不正な数値（負・非整数・非数値）を既定値へフォールバック。
-// --limit=-3 等は下流 future.slice(0, limit) が末尾切り捨て＋誤ヘッダ「上位 -3 件」になるのを防ぐ (#312/#302続編 と同型)。
-function toPosInt(raw: string | undefined, fallback: number): number {
-  const n = Number(raw);
-  return Number.isFinite(n) && Number.isInteger(n) && n > 0 ? n : fallback;
-}
-
-export function parseArgs(argv: string[] | null | undefined): ReviewArgs {
-  let candidates = join(ROOT, "data", "discovered_candidates.yaml");
-  let limit = 60;
-  let now = new Date();
-  let help = false;
-
-  for (let i = 0; i < (argv ?? []).length; i++) {
-    const a = argv![i];
-    if (a === "--help" || a === "-h" || a === "help") {
-      help = true;
-    } else if (a.startsWith("--candidates=") || a.startsWith("-c=") || a.startsWith("-C=")) {
-      candidates = a.slice(a.indexOf("=") + 1);
-    } else if ((a === "--candidates" || a === "-c" || a === "-C") && argv![i + 1]) {
-      candidates = argv![++i];
-    } else if (a.startsWith("--limit=") || a.startsWith("-l=")) {
-      limit = toPosInt(a.slice(a.indexOf("=") + 1), 60);
-    } else if ((a === "--limit" || a === "-l") && argv![i + 1]) {
-      limit = toPosInt(argv![++i], 60);
-    } else if (a.startsWith("--now=") || a.startsWith("-n=")) {
-      now = parseNow(a.slice(a.indexOf("=") + 1));
-    } else if ((a === "--now" || a === "-n") && argv![i + 1]) {
-      now = parseNow(argv![++i]);
-    }
-  }
-  return { candidates, limit, now, help };
-}
-
-function extractArgvRest(argv: string[] | null | undefined): string[] {
-  if (!argv || !Array.isArray(argv)) return [];
-  if (argv.length === 0) return [];
-  const isNodeBin = (s: string): boolean =>
-    s === "node" || s === "bun" || /(?:^|[/\\])(?:node|bun)(?:\.exe)?$/i.test(s);
-  const isScript = (s: string): boolean =>
-    /(?:^|[/\\])(?:cli|bench|embeddings|discover|review|fetch-primary)(?:[-_a-z0-9]*)?\.[jt]sx?$/i.test(
-      s,
-    );
-
-  if (isNodeBin(argv[0])) {
-    if (argv.length > 1 && (isScript(argv[1]) || !argv[1].startsWith("-"))) {
-      return argv.slice(2);
-    }
-    return argv.slice(1);
-  }
-  if (isScript(argv[0])) {
-    return argv.slice(1);
-  }
-  return argv.slice(0);
-}
-
-export async function main(argv: string[] | null | undefined): Promise<number> {
-  const rest = extractArgvRest(argv);
-  const args = parseArgs(rest);
-  if (args.help) {
-    console.log(
-      "usage: node src/review-candidates.ts [--candidates <path>] [--limit <n>] [--now <iso>]",
-    );
-    return 0;
-  }
-  runReviewCandidates(args.candidates, args.limit, args.now);
-  return 0;
-}
-
-const isMain = Boolean(
-  process.argv[1] &&
-    (process.argv[1].endsWith("review-candidates.ts") ||
-      process.argv[1].endsWith("review-candidates.js")),
-);
-if (isMain) {
-  main(process.argv).then(
-    (code) => {
-      process.exitCode = code;
-    },
-    (err) => {
-      console.error(err);
-      process.exitCode = 1;
-    },
-  );
 }

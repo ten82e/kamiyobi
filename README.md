@@ -55,7 +55,11 @@
 | `aideadlines` | [huggingface/ai-deadlines](https://github.com/huggingface/ai-deadlines) | MIT |
 | `local` | 本リポジトリの `data/extra.yaml` | MIT（本リポジトリ） |
 
-発見ソース（候補生成）: `DBLP`・`OpenReview`・`wikiCFP`（70 カテゴリ）・`DBWorld` メーリス公開アーカイブ（[dbworld.sigmod.org](https://dbworld.sigmod.org/)）・`EasyChair` Smart CFP（[easychair.org/cfp](https://easychair.org/cfp/)）・購読メーリス `IMAP`（任意）・`IEEE ComSoc 誌特集号`（IEEE TNSM/TCCN/Network/Communications Magazine/Wireless Communications のオープン特集号 CFP）・`IEICE 論文誌特集号`（[journals.php](https://www.ieice.org/eng_r/information/schedule/journals.php) の特集号 CFP 一覧）・`IPSJ 論文誌特集号`（[論文誌ジャーナル募集一覧](https://www.ipsj.or.jp/journal/index.html) の特集論文募集）。DBWorld は購読不要の公開アーカイブで、wikiCFP に載らない併設ワークショップ・ジャーナル特集号・締切延長通知を拾う。EasyChair は運営者が登録した構造化 CFP（締切・場所・トピック）で、分野フィルタ適用済み。IMAP は GitHub Secrets（`CFP_IMAP_HOST`/`CFP_IMAP_USER`/`CFP_IMAP_PASS`）を設定すると受信トレイ直近 50 通から CFP メールを抽出する（未設定ならスキップ）。候補は締切を公式サイトで裏取りした後、`data/extra.yaml` に昇格する。
+発見ソース（候補生成）は `DBLP`、`OpenReview`、`wikiCFP`（70 カテゴリ）、`DBWorld` メーリス公開アーカイブ、`EasyChair` Smart CFP、IEEE ComSoc 誌特集号、IEICE 論文誌特集号、IPSJ 論文誌特集号である。
+DBWorld は[公開アーカイブ](https://dbworld.sigmod.org/)から、wikiCFP に載らない併設ワークショップ、ジャーナル特集号、締切延長通知を拾う。
+EasyChair は[公開 CFP 一覧](https://easychair.org/cfp)から、運営者が登録した締切、場所、トピックを分野フィルタ付きで取得する。
+IEICE と IPSJ は、それぞれ[特集号 CFP 一覧](https://www.ieice.org/eng_r/information/schedule/journals.php)と[特集論文募集一覧](https://www.ipsj.or.jp/journal/index.html)を使う。
+候補は締切を公式サイトで裏取りした後、`data/extra.yaml` に昇格する。
 
 上流が扱わない会議は `data/extra.yaml` に自前で収録している。
 帰属表示は [NOTICE.md](NOTICE.md) にある。
@@ -121,8 +125,7 @@ bot のコミットが「活動」に数えられるかは公式文書に記載�
 `test` ジョブは依存関係のインストール後、fetch guard、`tests/fixtures/`、snapshot を使う
 上流ネットワーク非依存の必須検証で、
 typecheck・lint・unit test と `--offline --no-embeddings` build を実行する。
-`smoke` ジョブは実際の上流を現在時刻で取りに行き、埋め込み生成を省略して source/health 件数を表示するが、
-上流障害で赤くならないよう必須にしていない。候補探索そのものは週次の `discover.yml` が担当する。
+実際の上流を使う build、health gate、候補探索は、日次の `.github/workflows/update.yml` が担当する。
 なお ci.yml は `paths-ignore` を使っており、`data/snapshot.json` だけを変えるコミットではジョブがスキップされる。
 スキップされたジョブは必須チェック（required check）として Pending のまま残るため、ブランチ保護を掛ける場合はこれらを必須チェックに指定しない。
 

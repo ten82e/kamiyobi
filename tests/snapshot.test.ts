@@ -228,16 +228,14 @@ describe("parseArgs (CLI flag parsing)", () => {
   });
 
   it("main returns 0 on help", async () => {
-    expect(await main(["node", "cli.ts", "--help"])).toBe(0);
-    expect(await main(["node", "cli.ts", "-h"])).toBe(0);
-    expect(await main(["node", "cli.ts", "help"])).toBe(0);
+    expect(await main(["--help"])).toBe(0);
+    expect(await main(["-h"])).toBe(0);
+    expect(await main(["help"])).toBe(0);
   });
 
   it("main executes review subcommand successfully", async () => {
     expect(
       await main([
-        "node",
-        "cli.ts",
         "review",
         "--now=2026-08-09T00:00:00Z",
         "--candidates=data/discovered_candidates.yaml",

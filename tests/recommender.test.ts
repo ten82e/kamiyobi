@@ -1780,13 +1780,11 @@ describe("regression-known と VENUE_PAPERS のリークなし設計 (R12–R17)
 
 describe("bench-recommender argument parsing and helper utilities", () => {
   it("parseBenchArgs accepts the versioned benchmark fixture", () => {
-    expect(
-      parseBenchArgs(["node", "bench-recommender.ts", "--v2", "tests/fixtures/bench-v2.json"]).v2,
-    ).toBe("tests/fixtures/bench-v2.json");
+    expect(parseBenchArgs(["--v2", "tests/fixtures/bench-v2.json"]).v2).toBe(
+      "tests/fixtures/bench-v2.json",
+    );
     expect(
       parseBenchArgs([
-        "node",
-        "bench-recommender.ts",
         "--real-v2-dev",
         "data/benchmarks/real-paper-dev.json",
         "--real-v2-heldout",
@@ -1949,8 +1947,6 @@ describe("bench-recommender argument parsing and helper utilities", () => {
 
   it("parseBenchArgs parses flags and equal-joined options", () => {
     const args = parseBenchArgs([
-      "node",
-      "bench-recommender.ts",
       "--data=public/custom_data.json",
       "--emb=public/custom_emb.json",
       "--samples=20",
@@ -1987,8 +1983,6 @@ describe("bench-recommender argument parsing and helper utilities", () => {
 
   it("parseBenchArgs parses short options", () => {
     const args = parseBenchArgs([
-      "node",
-      "bench-recommender.ts",
       "-d",
       "data.json",
       "-e",
@@ -2013,8 +2007,6 @@ describe("bench-recommender argument parsing and helper utilities", () => {
     expect(args.jpw).toBe(0.6);
 
     const argsEq = parseBenchArgs([
-      "node",
-      "bench-recommender.ts",
       "-d=custom_data.json",
       "-e=custom_emb.json",
       "-s=100",
@@ -2031,18 +2023,18 @@ describe("bench-recommender argument parsing and helper utilities", () => {
   });
 
   it("--jpw 0 keeps zero as a valid sweep endpoint instead of coercing to 0.5", () => {
-    const a = parseBenchArgs(["node", "bench-recommender.ts", "--jpw", "0"]);
+    const a = parseBenchArgs(["--jpw", "0"]);
     expect(a.jpw).toBe(0);
     expect(a.wGiven).toBe(true);
 
-    const b = parseBenchArgs(["node", "bench-recommender.ts", "--w", "0"]);
+    const b = parseBenchArgs(["--w", "0"]);
     expect(b.jpw).toBe(0);
     expect(b.wGiven).toBe(true);
 
     // 非数値・欠落は従来どおり既定値 0.5 へフォールバックする。
-    const c = parseBenchArgs(["node", "bench-recommender.ts", "--jpw", "abc"]);
+    const c = parseBenchArgs(["--jpw", "abc"]);
     expect(c.jpw).toBe(0.5);
-    const d = parseBenchArgs(["node", "bench-recommender.ts", "--jpw"]);
+    const d = parseBenchArgs(["--jpw"]);
     expect(d.jpw).toBe(0.5);
   });
 
@@ -2143,14 +2135,14 @@ describe("bench-recommender argument parsing and helper utilities", () => {
 describe("parseBenchArgs 不正数値のフォールバック (#302 続編)", () => {
   it("イコール構文の負・非整数・非数値を既定値へ (topk/samples/failures)", () => {
     // --topk=-3 等が下流 `rank > args.topK` で全会議を失敗扱いにするのを防ぐ。
-    expect(parseBenchArgs(["node", "bench-recommender.ts", "--topk=-3"]).topK).toBe(5);
-    expect(parseBenchArgs(["node", "bench-recommender.ts", "-s=-1"]).samples).toBe(0);
-    expect(parseBenchArgs(["node", "bench-recommender.ts", "--failures=-5"]).failures).toBe(0);
-    expect(parseBenchArgs(["node", "bench-recommender.ts", "--topk=abc"]).topK).toBe(5);
-    expect(parseBenchArgs(["node", "bench-recommender.ts", "--topk=1.5"]).topK).toBe(5);
+    expect(parseBenchArgs(["--topk=-3"]).topK).toBe(5);
+    expect(parseBenchArgs(["-s=-1"]).samples).toBe(0);
+    expect(parseBenchArgs(["--failures=-5"]).failures).toBe(0);
+    expect(parseBenchArgs(["--topk=abc"]).topK).toBe(5);
+    expect(parseBenchArgs(["--topk=1.5"]).topK).toBe(5);
     // 正整数・ゼロ既定の正当入力・既定値は従来どおり
-    expect(parseBenchArgs(["node", "bench-recommender.ts", "--topk=10"]).topK).toBe(10);
-    expect(parseBenchArgs(["node", "bench-recommender.ts"]).topK).toBe(5);
+    expect(parseBenchArgs(["--topk=10"]).topK).toBe(10);
+    expect(parseBenchArgs([]).topK).toBe(5);
   });
 
   it("handles null, undefined, raw flag arrays, and boolean equals syntax (#338)", () => {
@@ -2185,8 +2177,6 @@ describe("parseBenchArgs 不正数値のフォールバック (#302 続編)", ()
 describe("embeddingsMain 引数パース (#322)", () => {
   it("イコール構文 --force=true / -f=true を認識し非存在ファイルで 1 を返す", async () => {
     const code1 = await embeddingsMain([
-      "node",
-      "embeddings.ts",
       "--force=true",
       "/tmp/nonexistent-data-999.json",
       "/tmp/out-999.json",
@@ -2194,15 +2184,13 @@ describe("embeddingsMain 引数パース (#322)", () => {
     expect(code1).toBe(1); // data not found (not usage error 2)
 
     const code2 = await embeddingsMain([
-      "node",
-      "embeddings.ts",
       "-f=true",
       "/tmp/nonexistent-data-999.json",
       "/tmp/out-999.json",
     ]);
     expect(code2).toBe(1); // data not found (not usage error 2)
 
-    const code3 = await embeddingsMain(["node", "embeddings.ts", "--help"]);
+    const code3 = await embeddingsMain(["--help"]);
     expect(code3).toBe(0);
   });
 

@@ -13,7 +13,9 @@
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { parseArgs as parseNodeArgs } from "node:util";
 import { type FeatureExtractionPipeline, pipeline } from "@huggingface/transformers";
+import { booleanValue, normalizeShortEquals } from "./args.ts";
 
 export const EMBEDDING_MODEL = "Xenova/all-MiniLM-L6-v2";
 export const EMBEDDING_MULTI_MODEL = "Xenova/paraphrase-multilingual-MiniLM-L12-v2";
@@ -765,69 +767,38 @@ export async function buildEmbeddings(
   return out;
 }
 
-function extractArgvRest(argv: string[] | null | undefined): string[] {
-  if (!argv || !Array.isArray(argv)) return [];
-  if (argv.length === 0) return [];
-  const isNodeBin = (s: string): boolean =>
-    s === "node" || s === "bun" || /(?:^|[/\\])(?:node|bun)(?:\.exe)?$/i.test(s);
-  const isScript = (s: string): boolean =>
-    /(?:^|[/\\])(?:cli|bench|embeddings|discover|review|fetch-primary)(?:[-_a-z0-9]*)?\.[jt]sx?$/i.test(
-      s,
-    );
-
-  if (isNodeBin(argv[0])) {
-    if (argv.length > 1 && (isScript(argv[1]) || !argv[1].startsWith("-"))) {
-      return argv.slice(2);
-    }
-    return argv.slice(1);
-  }
-  if (isScript(argv[0])) {
-    return argv.slice(1);
-  }
-  return argv.slice(0);
-}
-
-export async function main(argv: string[] | null | undefined): Promise<number> {
-  const rawArgs = extractArgvRest(argv);
-  if (rawArgs.length === 0) {
-    process.stderr.write(
-      "usage: node src/embeddings.ts [--force|-f] <data.json> <embeddings.json>\n",
-    );
-    return 2;
-  }
-  if (rawArgs.includes("--help") || rawArgs.includes("-h") || rawArgs.includes("help")) {
+export async function main(
+  argv: string[] | null | undefined = process.argv.slice(2),
+): Promise<number> {
+  const { values, positionals, tokens } = parseNodeArgs({
+    args: normalizeShortEquals(argv, { f: "force", h: "help" }),
+    options: {
+      force: { type: "boolean", short: "f" },
+      help: { type: "boolean", short: "h" },
+    },
+    strict: false,
+    allowPositionals: true,
+    tokens: true,
+  });
+  if (values.help || positionals.includes("help")) {
     console.log("usage: node src/embeddings.ts [--force|-f] <data.json> <embeddings.json>");
     return 0;
   }
-  let force = false;
-  const args: string[] = [];
-  for (const raw of rawArgs) {
-    let a = raw;
-    let eqVal: string | undefined;
-    const eqIdx = raw.indexOf("=");
-    if (raw.startsWith("-") && eqIdx > 0) {
-      a = raw.slice(0, eqIdx);
-      eqVal = raw.slice(eqIdx + 1);
-    }
-    const boolVal = (): boolean => {
-      if (eqVal === undefined) return true;
-      const low = eqVal.toLowerCase();
-      return low !== "false" && low !== "0" && low !== "no" && low !== "off";
-    };
-    if (a === "--force" || a === "-f") {
-      force = boolVal();
-    } else {
-      args.push(raw);
-    }
-  }
-  if (args.length !== 2) {
+  const known = new Set(["force", "help"]);
+  if (positionals.length === 0 || tokens.some((t) => t.kind === "option" && !known.has(t.name))) {
     process.stderr.write(
       "usage: node src/embeddings.ts [--force|-f] <data.json> <embeddings.json>\n",
     );
     return 2;
   }
-  const dataPath = args[0];
-  const outPath = args[1];
+  if (positionals.length !== 2) {
+    process.stderr.write(
+      "usage: node src/embeddings.ts [--force|-f] <data.json> <embeddings.json>\n",
+    );
+    return 2;
+  }
+  const force = booleanValue(values.force, false);
+  const [dataPath, outPath] = positionals;
   let dataExists = true;
   try {
     readFileSync(dataPath);
@@ -861,7 +832,7 @@ const isMain = Boolean(
     (process.argv[1].endsWith("embeddings.ts") || process.argv[1].endsWith("embeddings.js")),
 );
 if (isMain) {
-  main(process.argv).then(
+  main().then(
     (code) => {
       process.exitCode = code;
     },

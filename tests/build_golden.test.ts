@@ -1289,24 +1289,18 @@ it("workflow keeps recommendation failure optional while protecting Pages public
   );
 });
 
-it("CI keeps required verification offline and live discovery optional", () => {
+it("CI stays offline while the daily update owns live discovery", () => {
   const ci = readFileSync(join(REPO_ROOT, ".github/workflows/ci.yml"), "utf8");
-  const testJob = ci.slice(ci.indexOf("  test:\n"), ci.indexOf("\n  # 実際の上流"));
-  const smokeJob = ci.slice(ci.indexOf("  # 実際の上流"));
-  const discover = readFileSync(join(REPO_ROOT, ".github/workflows/discover.yml"), "utf8");
+  const update = readFileSync(join(REPO_ROOT, ".github/workflows/update.yml"), "utf8");
 
-  expect(testJob).toContain("npm test");
-  expect(testJob).toContain("--offline");
-  expect(testJob).toContain("--no-embeddings");
-  expect(testJob).toContain("Check offline result");
-  expect(testJob).not.toContain("src/cli.ts discover");
-  expect(smokeJob).toContain("continue-on-error: true");
-  expect(smokeJob).toContain("--no-embeddings");
-  expect(smokeJob).not.toContain("--now 2026-08-09");
-  expect(smokeJob).toContain("source_status");
-  expect(discover).toContain(
-    "node src/cli.ts discover --candidate-out data/discovered_candidates.yaml",
-  );
+  expect(ci).toContain("npm test");
+  expect(ci).toContain("--offline");
+  expect(ci).toContain("--no-embeddings");
+  expect(ci).toContain("Check offline result");
+  expect(ci).not.toContain("src/cli.ts discover");
+  expect(ci).not.toContain("smoke:");
+  expect(update).toContain("node src/cli.ts discover");
+  expect(update).toContain("--candidate-out data/discovered_candidates.yaml");
 });
 
 it("DEFAULT_CATEGORIES contains all 9 taxonomy domains", () => {
@@ -2275,7 +2269,7 @@ it("buildAll handles null and undefined arguments safely and setRoot works (#336
   expect(readdirSync(tmpDir).some((name) => name.endsWith(".ics"))).toBe(false);
 });
 
-it("parseCliArgs and cliMain handle null/undefined and auto-detect argv offset (#340)", async () => {
+it("parseCliArgs and cliMain handle null/undefined and direct arguments (#340)", async () => {
   expect(parseCliArgs(null)).toEqual({});
   expect(parseCliArgs(undefined)).toEqual({});
 
@@ -2284,9 +2278,6 @@ it("parseCliArgs and cliMain handle null/undefined and auto-detect argv offset (
 
   const directFlag = await cliMain(["--help"]);
   expect(directFlag).toBe(0);
-
-  const nodeHelp = await cliMain(["node", "src/cli.ts", "help"]);
-  expect(nodeHelp).toBe(0);
 
   const nullCode = await cliMain(null);
   expect(nullCode).toBe(2);
@@ -2318,7 +2309,7 @@ it("buildAll, toJson, and toUpcomingMd handle null/undefined now and invalid upc
   }
 });
 
-it("profileTexts and embeddingsMain handle non-array tags/categories and argv offset safely (#358)", async () => {
+it("profileTexts and embeddingsMain handle non-array tags/categories safely (#358)", async () => {
   const res = profileTexts([
     {
       key: "test-conf",
@@ -2338,6 +2329,5 @@ it("profileTexts and embeddingsMain handle non-array tags/categories and argv of
   const helpCode = await embeddingsMain(["--help"]);
   expect(helpCode).toBe(0);
 
-  const nodeHelp = await embeddingsMain(["node", "src/embeddings.ts", "-h"]);
-  expect(nodeHelp).toBe(0);
+  expect(await embeddingsMain(["-h"])).toBe(0);
 });
