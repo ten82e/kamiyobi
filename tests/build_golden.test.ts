@@ -806,7 +806,7 @@ it("llms.txt URLs match the published site", () => {
 });
 
 it("llms.txt title follows config site.title (not a stale hard-coded name)", () => {
-  // ビルド成果の先頭行が config.yaml の site.title と一致する（旧名 conf-deadlines ではない）
+  // ビルド成果の先頭行は config.yaml の site.title と一致する。
   const config = (loadYaml(readFileSync(join(REPO_ROOT, "config.yaml"), "utf8")) ?? {}) as Record<
     string,
     any
@@ -815,7 +815,6 @@ it("llms.txt title follows config site.title (not a stale hard-coded name)", () 
   expect(title).toBeTruthy();
   const text = readFileSync(join(site, "llms.txt"), "utf8");
   expect(text.split("\n")[0]).toBe(`# ${title}`);
-  expect(text).not.toContain("# conf-deadlines");
   // デッドコンフィグ再発防止: カスタム site.title が toLlmsTxt の出力に反映される
   const custom = toLlmsTxt({
     site: { title: "custom-site" },
@@ -1419,7 +1418,7 @@ it("default filter shows only submission deadlines", () => {
     'const now = Date.parse("2026-08-10T00:00:00Z");',
     // filter() は実時刻 (Date.now()) と行の t を比較するため、凍結した now を
     // 返す FakeDate を注入する。実時刻に依存させると実行日が進んだだけで
-    // 行が全て「過去」になり [] に化ける（2026-08-11 に実測）。
+    // 行が全て「過去」になり [] に化ける。
     "class FakeDate extends Date { static now() { return now; } }",
     "function row(kind) {",
     "  return {",

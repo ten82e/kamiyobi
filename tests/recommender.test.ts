@@ -392,7 +392,7 @@ describe("venue hit", () => {
 
 const NOW = Date.parse("2026-08-10T00:00:00Z");
 
-describe("sig weights (R11: サブシグナル実測スイープ対応)", () => {
+describe("sig weights: サブシグナルの重み", () => {
   const jpRow = {
     conf: {
       key: "ipsj-sigdps",
@@ -403,7 +403,7 @@ describe("sig weights (R11: サブシグナル実測スイープ対応)", () => 
     cats: ["networking"],
   };
 
-  it("jp signal defaults to 30 (double the R1-era 15)", () => {
+  it("jp signal defaults to 30", () => {
     const b = R.breakdown(
       jpRow,
       R.parsePaperLines("モバイルエッジ向け分散処理ミドルウェア | 分散処理, モバイル, エッジ"),
@@ -481,7 +481,7 @@ describe("sig weights (R11: サブシグナル実測スイープ対応)", () => 
       // 既定（nameOnce=false）: 語数比例 15 × 2 語 = 30
       R.setSigWeights({ nameOnce: false });
       expect(R.breakdown(row, lines).agg.name).toBe(30);
-      // nameOnce=true: 先頭 1 語のみ固定加点 15（#265 以前は boolean が無視され 30 のまま）
+      // nameOnce=true: 先頭 1 語のみ固定加点 15。
       R.setSigWeights({ nameOnce: true });
       expect(R.breakdown(row, lines).agg.name).toBe(15);
     } finally {
@@ -490,7 +490,7 @@ describe("sig weights (R11: サブシグナル実測スイープ対応)", () => 
   });
 });
 
-describe("representative-paper vocabulary (R12: 実論文で会議を拾う)", () => {
+describe("representative-paper vocabulary", () => {
   const row = (papers: string[]) => ({
     conf: {
       key: "icml",
@@ -538,7 +538,7 @@ describe("representative-paper vocabulary (R12: 実論文で会議を拾う)", (
   });
 });
 
-describe("buildNameIdf (R14: 会議名/代表論文語彙の 2 マップ IDF)", () => {
+describe("buildNameIdf: 会議名と代表論文語彙の 2 マップ IDF", () => {
   it("name map: rare words weigh more than generic words", () => {
     const confs = [
       {
@@ -593,7 +593,7 @@ describe("buildNameIdf (R14: 会議名/代表論文語彙の 2 マップ IDF)", 
     }
   });
 
-  it("paperCap caps representative-paper hits per line (R14: rtss 汎用語の 100% 支配対策)", () => {
+  it("paperCap caps representative-paper hits per line", () => {
     R.setSigWeights({ paperCap: 2 });
     try {
       const conf = {
@@ -1141,7 +1141,7 @@ describe("semantic functions", () => {
     expect(R.semanticScore("same", null, emb)).toBe(0); // query 無し → 0
   });
 
-  it("semanticScore は paperVecs の max 類似度を使う (R16)", () => {
+  it("semanticScore は paperVecs の max 類似度を使う", () => {
     const emb = { v: [1, 0, 0] }; // 会議名ベクトル: query と直交
     const paperVecs = {
       v: [
@@ -1441,9 +1441,9 @@ describe.skipIf(!hasData)("real data integration", () => {
     const rows = loadRows();
     const lines = R.parsePaperLines(papers);
     const cats = R.autoDetectCats(lines);
-    // 本番 (venueRecommendations) と同じ経路: breakdown().venueScore で順位付け。
+    // venueRecommendations と同じ経路で breakdown().venueScore を使って順位付けする。
     // scorePapers はタグ付き行を reference 重みで希釈するため、会議数が増えると
-    // 同点タイが崩れて venueHit 会議が圏外に沈む（#514 実測）。
+    // 同点タイが崩れて venueHit 会議が圏外に沈む（#514）。
     const scored = rows
       .map((r) => {
         const b = R.breakdown(r, lines);
@@ -1454,7 +1454,7 @@ describe.skipIf(!hasData)("real data integration", () => {
     return { cats, top: scored.slice(0, topN), n: scored.length };
   };
 
-  it("venuePapersHash は決定的で内容変化を反映する（R29）", () => {
+  it("venuePapersHash は決定的で内容変化を反映する", () => {
     const h1 = venuePapersHash();
     const h2 = venuePapersHash();
     expect(h1).toBe(h2);
@@ -1638,7 +1638,7 @@ describe.skipIf(!hasData)("real data integration", () => {
   });
 });
 
-describe("regression-known と VENUE_PAPERS のリークなし設計 (R12–R17)", () => {
+describe("regression-known と VENUE_PAPERS の分離", () => {
   it("regression-known のタイトルは強化用 VENUE_PAPERS と重複しない", () => {
     // regression-known（実採択論文）と embeddings の VENUE_PAPERS（会議プロファイル強化）は
     // 完全分離が契約（テストに正解を学習させない）。タイトルを正規化して照合する。
@@ -1664,8 +1664,8 @@ describe("regression-known と VENUE_PAPERS のリークなし設計 (R12–R17)
     expect(overlap).toEqual([]); // 完全分離
   });
 
-  it("GENERIC_PAPER_WORDS: papers 語彙の汎用語（self/general/framework 等）は加点されない (R18)", () => {
-    // R18 実測: rtss の papers 語彙（self/general/framework/vision/language）が data2vec
+  it("GENERIC_PAPER_WORDS: papers 語彙の汎用語（self/general/framework 等）は加点されない", () => {
+    // rtss の papers 語彙（self/general/framework/vision/language）が data2vec
     // クエリに 5 ヒットして 49 点を稼ぎ、sem が効く icml を blendScore の減衰で下回って
     // top1 を奪った。self/general/framework は論文タイトルに頻出するが会議の識別に
     // 寄与しない汎用語 — papers 語彙マッチから除外する（名前語マッチには影響しない）。
@@ -1694,11 +1694,11 @@ describe("regression-known と VENUE_PAPERS のリークなし設計 (R12–R17)
     }
   });
 
-  it("wordInText: 略語 trans は Transcompiling に部分マッチしない (R19 QiMeng→ieice 回帰)", () => {
+  it("wordInText: 略語 trans は Transcompiling に部分マッチしない", () => {
     R.setNameIdf(null);
     try {
       // ieice の略語 trans/syst が QiMeng の Transcompiling/Systems に部分一致して
-      // 46 点を稼いだ（R18 発見のバグ）。語境界一致で 0 になるはず。
+      // 語境界一致で 0 になるはず。
       const b = R.breakdown(
         {
           conf: {
@@ -1721,11 +1721,11 @@ describe("regression-known と VENUE_PAPERS のリークなし設計 (R12–R17)
     }
   });
 
-  it("wordInText: 単複形（bandit→bandits）はマッチを維持する (R19)", () => {
+  it("wordInText: 単複形（bandit→bandits）はマッチを維持する", () => {
     R.setNameIdf(null);
     try {
       // 純粋な語境界だと bandit ⊂ Bandits が消え、Batched Dueling Bandits が icml を
-      // 拾えなくなる（実測で top10 -7.2pt 回帰）。末尾 s は許容する。
+      // 末尾 s は許容する。
       const b = R.breakdown(
         {
           conf: {
@@ -1745,7 +1745,7 @@ describe("regression-known と VENUE_PAPERS のリークなし設計 (R12–R17)
     }
   });
 
-  it("GENERIC_PAPER_WORDS は名前語マッチに影響しない (R18)", () => {
+  it("GENERIC_PAPER_WORDS は名前語マッチに影響しない", () => {
     R.setNameIdf(null);
     try {
       // "learning" は GENERIC_PAPER_WORDS にあるが、名前語としては識別力があるので加点される
@@ -1768,10 +1768,9 @@ describe("regression-known と VENUE_PAPERS のリークなし設計 (R12–R17)
     }
   });
 
-  it("paperVecs は skipEmb 会議にのみ付与される (R16/R20)", () => {
+  it("paperVecs は skipEmb 会議にのみ付与される", () => {
     const embSrc = readFileSync(join(REPO_ROOT, "src", "embeddings.ts"), "utf8");
-    // R16: usenix-security のみ paperVecs。R20: rtss を再追加（Timely Classification 対策。
-    // golden top5 68.6→70.0・top10 75.7→78.6 の net プラスを実測）。ecrts は vocab のみ維持。
+    // usenix-security のみ paperVecs。rtss は Timely Classification 対策として追加する。
     expect(embSrc).toMatch(/for \(const key of \["usenix-security", "rtss"\]\)/);
     // rtss/ecrts/usenix-security は埋め込みから除外（vocab + paperVecs）
     expect(embSrc).toMatch(/SKIP_EMB_KEYS\.has\(key\)/);

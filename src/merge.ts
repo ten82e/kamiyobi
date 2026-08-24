@@ -249,7 +249,7 @@ function fillEdition(target: Edition, other: Edition): void {
 
 /** Label form used for equality: case and whitespace carry no meaning. */
 function normLabel(label: string | null | undefined): string {
-  // Python の str.split() 相当: 先頭・末尾の空白も除去される。
+  // 先頭と末尾の空白を除き、連続する空白を 1 個に畳む。
   return (label ?? "").trim().split(/\s+/).join(" ").toLowerCase();
 }
 
@@ -571,7 +571,8 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
     ) {
       // 置換 (延長・訂正): 上流の古い締切を残さず差し替える (SPEC.md 3.5)。
       // ただし全行棄却のパッチ (timezone 欠落・曖昧で parseInstant が全滅) は
-      // 既存確定値を空配列で潰さない (#504 マージ層ガード)。明示的な空は
+      // 既存確定値を空配列で潰さない。
+      // 明示的な空は
       // clear_deadlines: true でのみ可能。
       const semantics = patchDeadlineSemantics(patch);
       if (semantics.action === "replace") {
@@ -592,7 +593,7 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
     if (typeof patch !== "object" || patch === null) continue;
     const rec = patch as Record<string, unknown>;
     if (rec.drop) continue;
-    // 新規 edition 追加 (#504): 受入条件「受理締切も会議/開催メタ情報も無い
+    // 受入条件「受理締切も会議/開催メタ情報も無い
     // edition は追加しない」。全行棄却の deadlines のみで link/place/date_text/
     // event_* も無いブロックは、空の確定版として公開する価値が無く、
     // isFuture 判定や UI を汚すだけなのでスキップする。
@@ -655,8 +656,8 @@ function median(values: number[]): number {
   return (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
 }
 
-/** Python's round(): halves go to the even neighbour. Values are non-negative here. */
-function pyRound(x: number): number {
+/** Round non-negative values to the nearest integer, with ties to even. */
+function roundHalfToEven(x: number): number {
   const r = Math.round(x);
   if (Math.abs(x % 1) === 0.5) return r % 2 === 0 ? r : r - 1;
   return r;
@@ -743,7 +744,7 @@ function estimateEdition(
   const point =
     deadlines.find((deadline) => deadline.kind === "paper")?.at_utc ??
     deadlines.slice().sort((a, b) => a.at_utc.getTime() - b.at_utc.getTime())[0].at_utc;
-  const windowDays = Math.max(14, pyRound(interval / 4 / 7) * 7);
+  const windowDays = Math.max(14, roundHalfToEven(interval / 4 / 7) * 7);
   const estimate: DeadlineEstimate = {
     point_estimate: fmtDate(dateOnly(point)),
     window_start: fmtDate(dateOnly(addDays(point, -windowDays))),
@@ -792,7 +793,7 @@ function intervalDays(instants: Date[], defaultInterval: number): number {
     gaps.push(Math.floor((instants[i + 1].getTime() - instants[i].getTime()) / DAY_MS));
   }
   if (gaps.length === 0) return defaultInterval;
-  const estimate = pyRound(median(gaps) / 7) * 7; // multiples of 7 preserve the weekday
+  const estimate = roundHalfToEven(median(gaps) / 7) * 7; // multiples of 7 preserve the weekday
   return estimate >= 180 && estimate <= 900 ? estimate : defaultInterval;
 }
 
@@ -822,7 +823,7 @@ export function select(
     rankFilter.keep_if_no_rank === undefined ? true : Boolean(rankFilter.keep_if_no_rank);
   const schemes: Record<string, unknown> = {};
   for (const [name, allowed] of Object.entries(rankFilter)) {
-    // Python の `if ... and allowed` に相当: 空リスト (ccf: []) は falsy 扱い。
+    // 空リスト (ccf: []) は通過条件に数えない。
     if (
       name !== "keep_if_no_rank" &&
       name !== "always_keep" &&

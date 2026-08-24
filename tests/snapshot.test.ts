@@ -832,7 +832,7 @@ describe("snapshot fallback", () => {
     expect(live.conferences.length).toBeGreaterThan(100);
   });
 
-  it("every snapshot deadline's aoe is the UTC-12 wall clock of its utc (R37 guard)", () => {
+  it("every snapshot deadline's aoe is the UTC-12 wall clock of its utc", () => {
     const live = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
       conferences: Array<{
         key: string;

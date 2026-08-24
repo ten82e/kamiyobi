@@ -369,32 +369,33 @@
     idfMap = map || null;
   }
 
-  /* skipEmb 会議（rtss/ecrts/usenix-security）の論文個別ベクトル表（R16）。
+  /* skipEmb 会議（rtss/ecrts/usenix-security）の論文個別ベクトル表。
    * semanticScore が max 類似度を取るときに使う。英語クエリのみ（多言語モデルの
-   * クエリに英語モデルの論文ベクトルを混ぜると R12 の言語別分離設計を壊す）。
-   * null なら従来の会議名ベクトルのみ（A/B 用）。
+   * クエリに英語モデルの論文ベクトルを混ぜると言語別分離設計を壊す）。
+   * null なら会議名ベクトルのみ使う。
    */
   var paperVecsState = null;
   function setPaperVecs(pv) {
     paperVecsState = pv || null;
   }
 
-  /* 全会議から IDF 重み表を作る（R14 で {name, paper} の 2 マップ化）。
+  /* 全会議から IDF 重み表を作る。
    * ブラウザ側はデータロード後にこの結果を setNameIdf に渡す（buildNameIdf で計算）。
    * ベンチの --idf と同じ定義。
    *
-   * R12 実測: 代表採択論文語彙（papers）の汎用語（machine/deep/cache 等）は全会議に
-   * 現れ、そのまま 1 語 15 点だと会議間で衝突して誤爆する。IDF で減衰すると
-   * golden EN（実論文）top1 が 25.0→37.5% に改善。
+   * 代表採択論文語彙（papers）の汎用語（machine/deep/cache 等）は全会議に
+   * 現れる。
+   * そのまま 1 語 15 点だと会議間で衝突して誤爆する。
+   * IDF で減衰すると golden EN（実論文）top1 が 25.0→37.5% に改善した。
    *
-   * R14 実測（2 段階）:
-   * 1. 従来の「名前 + papers 同一 df」だと、papers を追加した会議（rtss/ecrts）の
+   * 実測では次の 2 段階で現在の定義にした。
+   * 1. 「名前 + papers 同一 df」だと、papers を追加した会議（rtss/ecrts）の
    *    論文語が名前語の df を汚染し、名前語の IDF が薄まって合成ベンチ top1 が
-   *    84.8→76.9 に悪化 → df を種類別に分離。
+   *    84.8→76.9 に悪化したため、df を種類別に分離する。
    * 2. それでも「名前にも papers にも出る語」（memory 等）は名前 df を優先したため、
    *    papers マッチでも名前由来の高重みになり、rtss/ecrts の papers 語彙が
    *    無関係クエリ（Beehive の memory、private optimization の optimization）を奪った。
-   *    → マッチ元（名前語 / papers 語）ごとに別マップを使う。
+   *    そのため、マッチ元（名前語 / papers 語）ごとに別マップを使う。
    */
   function buildNameIdf(confs) {
     var nameDf = {};
@@ -440,14 +441,13 @@
     return { name: mk(nameDf), paper: mk(paperDf) };
   }
 
-  /* サブシグナルの内部点数。R11 の実測スイープ結果:
-   *   - domain/name/tags/venue は R1 以来の値（15/15/10/40）が最適 — 増減とも悪化
+  /* サブシグナルの内部点数。実測スイープ結果:
+   *   - domain/name/tags/venue は 15/15/10/40 が最適。増減とも悪化
    *     （name=25: -2.7, name=10: -0.4/-1.6, domain=30: top5 -0.9, tags=0: -0.7）
    *   - jp は 15→30 で日本語ゴールデン top1 +2.8pt、EN/JP synthetic は不変
    *     （日本語チャンク一致は日本語クエリでのみ発火するため EN に影響なし）
-   *   - paper（代表採択論文語彙）は name と同額の 15（R12 実測で最適。低い値は
-   *     golden EN を大きく損なう — R14 スイープ: paper=10 で top5 66.7→57.8）。
-   *     配線は R14 に復旧（R12 末〜R13 の編集で SIG_WEIGHTS.paper が未使用化）。
+   *   - paper（代表採択論文語彙）は name と同額の 15 が最適。
+   *     低い値は golden EN を大きく損なう（paper=10 で top5 66.7→57.8）。
    * setSigWeights({domain:.., name:.., paper:.., jp:.., tags:.., venue:.., nameOnce: bool}) で
    * ブラウザ/ベンチから上書きできる。nameOnce は会議名一致を「先頭 1 語のみ固定加点」
    * （語数に比例させない）にする実験用フラグ。
@@ -472,7 +472,7 @@
   }
 
   /* メタデータタグ（本文の英単語と偶然一致して誤加点する汎用語）。
-   * R11 実測: workshop(36 会議)/journal(18)/niche(43)/domestic-jp/special-issue は
+   * workshop(36 会議)/journal(18)/niche(43)/domestic-jp/special-issue は
    * トピックではなく属性のため、tags 語彙一致から除外する（トピックタグは残す）。
    */
   var GENERIC_TAGS = new Set([
@@ -486,7 +486,7 @@
 
   /* 代表採択論文語彙（conf.papers）のマッチで除外する汎用語。
    * 名前語の STOPWORDS とは別 — 論文タイトルに頻出するが会議の識別に寄与しない語。
-   * R18 実測: rtss の papers 語彙（self/general/framework 等）が data2vec クエリに
+   * rtss の papers 語彙（self/general/framework 等）が data2vec クエリに
    * 5 ヒット（self/general/framework/vision/language）して 49 点を稼ぎ、sem が効く
    * icml（vocab 48 + sem 9）を blendScore の減衰で下回って top1 を奪った。
    * vision/language 等は会議名では識別語だが papers では汎用 — マッチ元が papers な
@@ -508,7 +508,7 @@
     "study",
     "design",
     "performance",
-    // efficient/scalable は R19 で一度入れたが撤回 — 論文タイトル頻出語で df が高く
+    // efficient/scalable は論文タイトル頻出語で df が高く
     // IDF で自然減衰される。GENERIC に入れると正当なマッチ（Carbon-efficient ↔ papers の
     // efficient 等）まで消し、GREEN→nsdi の golden が top5 から脱落した（実測）。
   ]);
@@ -523,7 +523,7 @@
       tags: (c.tags || []).map(normKey),
       jp: ((c.title || "") + " " + (c.full_name || "")).match(/[\u3000-\u9fff]+/g) || [],
       // 代表採択論文タイトル（実データが持つ場合のみ）。語彙一致の対象を
-      // 「会議名」から「会議の実際の採択領域」に広げる（R12 実測）。
+      // 「会議名」から「会議の実際の採択領域」に広げる。
       papers: (c.papers || []).map(normKey),
     };
   }
@@ -582,7 +582,7 @@
       [];
 
     // 注: 日本語→英語展開（expandJp）はスコアリングに使わない。
-    // 実測（ベンチマーク A/B）: 展開語が英語名の会議に広く一致して誤爆し、
+    // 実測比較: 展開語が英語名の会議に広く一致して誤爆し、
     // 日本語ゴールデンセット top1 が 42%→16% に悪化した。展開は
     // 分野自動判定（autoDetectCats）の表示用にのみ使う。
 
@@ -600,18 +600,16 @@
     // 会議名（title + full_name）の語彙一致（一般語は STOPWORDS で除外）。
     // 代表採択論文語彙（conf.papers）は「会議の実際の採択領域」を表すが、汎用語
     // （cache/machine/deep 等）が全会議の papers に現れて誤爆する。
-    // R14 実測: SIG_WEIGHTS.paper は定義だけで配線されておらず（name と同額 15 のまま）、
+    // 名前語と papers 語を分離する。
     // rtss/ecrts の papers 語彙（memory/optimization/analysis 等）が無関係クエリ
-    // （memory safety / private optimization 等）へ交差マッチした。名前語と papers 語を
-    // 分離し、papers 語は SIG_WEIGHTS.paper（既定 10）で軽くする。
+    // （memory safety / private optimization 等）へ交差マッチしたため。
     // IDF 重み表があれば希少語を重く、無ければ一律 SIG_WEIGHTS.name / paper 点。
     // nameOnce: 先頭 1 語の固定加点のみ（語数に比例させない実験用）
     // 代表論文語彙は英語クエリでのみ使う（日本語クエリでは日本語チャンク一致が主役で、
     // 英語の代表論文語彙は英語キーワード（nvme/storage 等）を持つ日本語論文クエリと
-    // 衝突して誤爆する — R12 実測で s-p が icml に奪われる等の副作用を確認）。
+    // 衝突して誤爆する）。
     // また、掲載先タグ付き行（p.venue）でも使わない — タグの絶対性（venueHit +40）を
-    // 守るため（R13 実測: nsdi/osdi の papers 語彙 "scheduling" が RTSS タグ付き行を
-    // 超えて順位を乱した）。
+    // 守るため。
     var nameWords = (conf.title + " " + conf.full)
       .split(" ")
       .filter((w) => w.length > 3 && !STOPWORDS.has(w));
@@ -635,7 +633,7 @@
       nameGiven = true;
     });
     // 行あたりの paper 語彙ヒット数に上限（SIG_WEIGHTS.paperCap）。
-    // R14 実測: 論文が多い会議（rtss 22 本等）の汎用語（vision/model/real-time 等）が
+    // 論文が多い会議（rtss 22 本等）の汎用語（vision/model/real-time 等）が
     // 数ヒットでスコア上限 100 に達し、グラフィクス/マルチメディア系の他クエリ
     // （3dv/siggraph/icassp 等 39 件）を奪った。複数ヒットは「採択領域の一致」という
     // 1 信号と見なす（日本語チャンク一致と同じ考え方）。
@@ -1217,10 +1215,10 @@
   /* セマンティック適合度 0..100。
    * query: ユーザー論文の埋め込みベクトル、emb: {key: [...]} の会議埋め込み表。
    * 掲載先タグ付きの行が複数あってもクエリは 1 本に集約して類似度を出す。
-   * paperVecs（R16）: skipEmb 会議（rtss/ecrts/usenix-security）の論文個別ベクトル表。
+   * paperVecs: skipEmb 会議（rtss/ecrts/usenix-security）の論文個別ベクトル表。
    * 与えた場合は「会議名との類似度」と「採択論文どれかとの類似度」の max を取る
-   * （R14 で平均重心の汎用化を避けるため埋め込みから論文を外した副作用 = 論文タイトル
-   * からセマンティックに発見されない、を解消する。R13 の「平均」は却下済み、max は R16 実測）。
+   * （平均重心の汎用化を避けるため埋め込みから論文を外すと、論文タイトルから
+   * セマンティックに発見されないため）。
    */
   function semanticScore(confKey, queryVec, emb, paperVecs) {
     if (!queryVec || !emb) return 0;
@@ -1251,7 +1249,7 @@
     return letters / text.length;
   }
 
-  /* 会議名・代表論文の語がクエリテキストに語境界で現れるか（R19）。
+  /* 会議名・代表論文の語がクエリテキストに語境界で現れるか。
    * 部分文字列一致（indexOf）だと、会議名の略語 trans/syst がクエリの
    * Transcompiling/Systems に誤マッチする（QiMeng→ieice 46 点の実測原因）。
    * 単複形・活用形（bandit/bandits, process/processes, memory/memories, search/searches）は
@@ -1321,8 +1319,8 @@
 
   /* 語彙スコアとセマンティックスコアの合成に使う語彙重み。
    * 英語: クエリの内容語数で適応（実測: 短いクエリは語彙が疎なのでセマンティック寄り 0.25、
-   *   中〜長は 0.4。いずれも従来の 0.5 より上 — EN bench top1 84.4%→グループ別最良で確認）。
-   * 日本語: 会議名の日本語チャンク一致が識別力の主役なので語彙寄り 0.6（JP ベンチ A/B）。
+   *   中〜長は 0.4。EN bench top1 84.4%→グループ別最良で確認）。
+   * 日本語: 会議名の日本語チャンク一致が識別力の主役なので語彙寄り 0.6（JP ベンチ比較）。
    * len: クエリの内容語数（英語のみ。日本語は isJp が優先）。
    */
   function vocabWeight(len, isJp) {
@@ -1475,7 +1473,7 @@
     分散共有: "distributed shared",
   };
 
-  /* 語彙一致に使う日本語→英語展開を有効/無効にする（ベンチマークの A/B 用。
+  /* 語彙一致に使う日本語→英語展開を有効/無効にする（ベンチマーク比較用。
    * 実測: 会議名チャンクの合成クエリでは誤爆するが、実論文の日本語語彙では有効）。 */
   var expandEnabled = true;
   function setExpandEnabled(v) {

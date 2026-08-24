@@ -1,10 +1,8 @@
 /**
  * 会議スコープのセマンティック埋め込みを生成する (public/embeddings.json)。
  *
- * Ported from scripts/embeddings.py.  The Python original used fastembed; the
- * Node version uses @huggingface/transformers with the same model
- * (all-MiniLM-L6-v2), which is also what the browser side loads — one runtime
- * for both generator and consumer.
+ * 生成側とブラウザ側は @huggingface/transformers と同じモデル
+ * (all-MiniLM-L6-v2) を使う。
  *
  * 使い方:
  *   node src/embeddings.ts public/data.json public/embeddings.json
@@ -38,14 +36,14 @@ function getExtractor(model: string, revision: string): Promise<FeatureExtractio
   return p;
 }
 
-/** Round to 6 decimal places like Python's round(float(x), 6). */
+/** Round to 6 decimal places. */
 function round6(x: number): number {
   return Math.round(x * 1e6) / 1e6;
 }
 
 /** 日本語会議（情報処理学会・電子情報通信学会の研究会・特集号等）のプロファイルに
  * 付与する日本語の分野キーワード。多言語モデル用のみ（英語モデルには使わない）。
- * 実測（日本語ベンチ A/B）: これらを付与すると国内研究会のセマンティック検索が
+ * 実測比較: これらを付与すると国内研究会のセマンティック検索が
  * top1 8.3%→25.0%・top5 16.7%→50.0% に改善（クエリの日本語語彙が会議に届く）。 */
 const JP_CAT_KW: Record<string, string> = {
   systems:
@@ -64,7 +62,7 @@ function hasJapanese(text: string): boolean {
   return /[\u3040-\u9fff]/.test(text);
 }
 
-/** 会議のセマンティックプロファイルを実採択論文タイトルで強化する（R12）。
+/** 会議のセマンティックプロファイルを実採択論文タイトルで強化する。
  * 会議名（International Conference on Machine Learning 等）だけでは実論文タイトル
  * （Batched Dueling Bandits 等）に似ず、実論文での正解会議が top5 に入らない
  * （golden EN 実測: top1 0.0%）ことが発端。代表論文タイトルをプロファイルに混ぜると
@@ -379,18 +377,18 @@ export function profileTexts(
     const name = `${String(c.title ?? "")} ${String(c.full_name ?? "")}`;
     // 多言語モデル用: 日本語名の会議に日本語の分野語を付与（クエリ側の日本語語彙と一致させる）
     const jpKw = forMulti && hasJapanese(name) ? cats.map((k) => JP_CAT_KW[k] || "").join(" ") : "";
-    // 実採択論文タイトル（あれば）でプロファイルを強化。英語モデルにのみ付与
-    // （R12 実測: multi にも付けると日本語クエリの sem ランキングを乱す — 言語別分離設計）。
-    // R13 実測: 「タイトル個別ベクトルの平均」方式（会議名 + 各タイトルを別々に埋めて
-    // 平均）は golden top1 +2 エントリだが top5 -2・EN 合成 -3.6 で総合的に悪化 → 不採用。
+    // 実採択論文タイトル（あれば）でプロファイルを強化。
+    // 英語モデルにのみ付与する。
+    // multi にも付けると日本語クエリの sem ランキングを乱すため。
+    // 「タイトル個別ベクトルの平均」方式（会議名 + 各タイトルを別々に埋めて
+    // 平均）は golden top1 +2 エントリだが top5 -2・EN 合成 -3.6 で総合的に悪化した。
     // 連結 mean pooling が最良（golden top5 73.5% / EN 合成 85.0%）。
-    // R14 実測: rtss/ecrts は論文が多様（scheduling/WCET/TSN/AI/FPGA）で平均重心が
+    // rtss/ecrts は論文が多様（scheduling/WCET/TSN/AI/FPGA）で平均重心が
     // 汎用化し、無関係クエリ（memory safety 等）を奪う。埋め込みは会議名中心に保ち、
     // papers は語彙一致（scoreLine）でのみ使う。
     // usenix-security も 24 本が極めて多様（crypto/ML/web/ハードウェア/ブロックチェーン）で
-    // 重心が汎用化しやすいため vocab-only（R15 実測で決定）
-    // R17 A/B: icdcs を vocab-only にすると golden top5 65.7→62.9 に悪化（icdcs 自身の
-    // golden 7 件を sem で拾う正の効果が奪取を上回る）→ 埋め込みは従来どおり維持。
+    // 重心が汎用化しやすいため vocab-only。
+    // icdcs を vocab-only にすると golden top5 65.7→62.9 に悪化するため、埋め込みは維持する。
     const skipEmb = SKIP_EMB_KEYS.has(key);
     const papers = !forMulti && !skipEmb ? (venuePapers[key] ?? []).slice(0, 8).join(" . ") : "";
     const tags = toStringArray(c.tags);
@@ -411,7 +409,7 @@ export function profileTexts(
 
 /** 1 モデルぶんの埋め込み表 {key: number[]} を生成する。
  * keys に同じ key が複数回現れる場合（会議名 + 各代表論文タイトル）は、
- * その平均ベクトルを返す（R13: 会議の採択領域の重心にする）。 */
+ * その平均ベクトルを返し、会議の採択領域の重心にする。 */
 async function embedSet(
   model: string,
   texts: string[],
@@ -710,24 +708,22 @@ export async function buildEmbeddings(
     EMBEDDING_MULTI_REVISION,
   );
 
-  // skipEmb 会議（rtss/ecrts/usenix-security）の論文個別ベクトル（R16）。
-  // R14 で「多様な論文の平均重心の汎用化」が判明し埋め込みから外したが、その副作用で
+  // skipEmb 会議（rtss/ecrts/usenix-security）の論文個別ベクトル。
+  // 多様な論文の平均重心は汎用化しやすいため埋め込みから外したが、その副作用で
   // 会議名のみの埋め込みになり実論文タイトルからセマンティックに発見されなくなった
-  // （golden EN top1 15.8% vs top5 63.2% の乖離の主因）。R13 の「個別ベクトルの平均」は
-  // 却下済みのため、max 類似度（クエリが採択論文のどれかに近ければ会議に近い）を
-  // A/B する。英語モデルのみ（R12 の言語別分離: multi に英語論文語彙を混ぜると
-  // 日本語クエリの順位を乱す）。
+  // （golden EN top1 15.8% vs top5 63.2% の乖離の主因）。
+  // 「個別ベクトルの平均」は採らず、max 類似度（クエリが採択論文のどれかに近ければ
+  // 会議に近い）を使う。
+  // 英語モデルのみ対象にする。
+  // multi に英語論文語彙を混ぜると日本語クエリの順位を乱すため。
   const paperVecs: Record<string, number[][]> = {};
-  // R16 A/B: rtss/ecrts は論文が多様（22+9 本）で max が「1 本でも近い」誤マッチを
-  // 起こす（Beehive→rtss 50%、BULKHEAD→rtss 38% 等の実測）。usenix-security のみ
-  // paperVecs を付与し、rtss/ecrts は R14 の「語彙のみ」を維持する。
-  // R17 A/B 結果: ches を paperVecs に足すと top5 65.7→64.3 に悪化（FPGA/AES 語彙が
-  // BULKHEAD/Beehive 等を奪う）→ usenix-security のみ維持。
-  // R20 A/B: rtss を再追加（Timely Classification 対策）。R16 で「多様な papers の
-  // max 誤爆」（Beehive→rtss 50% 等）で却下されたが、R19 の語境界・GENERIC 導入後に
-  // 再検証する。golden EN 全体で悪化しなければ採用、悪化すれば usenix のみに戻す。
-  // R21 A/B: rtas を試すと top1 +2.5pt だが top5 −2.5pt（既存 2 件
-  // CounterSEVeillance/One-Size-Fits-None を奪い新規獲得 0）→ 不採用。
+  // rtss/ecrts は論文が多様（22+9 本）で max が「1 本でも近い」誤マッチを起こす
+  // （Beehive→rtss 50%、BULKHEAD→rtss 38% 等）。
+  // ches を paperVecs に足すと top5 65.7→64.3 に悪化する。
+  // FPGA/AES 語彙が BULKHEAD/Beehive 等を奪うため。
+  // rtss は語境界・GENERIC 導入後に Timely Classification 対策として使う。
+  // rtas は top1 +2.5pt だが top5 −2.5pt で、既存 2 件
+  // CounterSEVeillance/One-Size-Fits-None を奪い新規獲得 0 のため採らない。
   // rtas は VENUE_PAPERS 語彙のみで 8 件中 6 件 top5 を達成。
   for (const key of ["usenix-security", "rtss"]) {
     const papers = VENUE_PAPERS[key] ?? [];

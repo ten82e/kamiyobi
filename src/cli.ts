@@ -55,7 +55,7 @@ export function parseNow(text: string | null | undefined): Date {
     }
   }
   // Date は時刻あり・offset 無しをローカル時刻にし、T24:00:00Z を翌日へ繰り上げる。
-  // --now は決定的テスト用（SPEC §3.7）なので、どちらも拒否する (#392)。
+  // --now は決定的テスト用（SPEC §3.7）なので、どちらも拒否する。
   const time = /T(\d{1,2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(.*)$/.exec(normalized);
   if (time) {
     const hour = Number(time[1]);
@@ -122,8 +122,7 @@ async function collectImpl(
   return { groups, failed };
 }
 
-// テストから差し替え可能（Python 版の monkeypatch 相当）。ESM の let 束縛は
-// 外部から代入できないためオブジェクト経由にする。
+// テストから差し替えられるよう、ESM の束縛をオブジェクト経由で公開する。
 export const hooks = { collect: collectImpl };
 
 function restoreSnapshot(path: string): Conference[] {
@@ -153,14 +152,15 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
   // 一次ソースからの自動抽出結果 (src/fetch-primary.ts 生成) は手書き
   // overrides の後に適用する: 公式ページの実測が最優先。
   // overrides は手編集なのでパース失敗で中断する（strict）。primary は
-  // 自動生成のため従来どおり警告続行（2026-08-12 whpc の趣旨）。
+  // 自動生成のため、検証失敗は警告に留めて確定値を保持する。
   const overrides = loadYamlFile(join(ROOT, "data", "overrides.yaml"), { strict: true });
-  // 一次ソースの自動抽出は「検証済み観測」だけを確定値として扱う (#504):
+  // 一次ソースの自動抽出は「検証済み観測」だけを確定値として扱う:
   // 日付のみ・曖昧 tz・年不一致の行はここで落とし、既存の確定値を保持する。
   const primary = resolvePrimaryObservations(
     loadYamlFile(join(ROOT, "data", "primary_overrides.yaml")),
   );
-  // data/extra.yaml も手編集入力（#19/#20 の対象外だった）。破損時に
+  // data/extra.yaml も手編集入力。
+  // 破損時に
   // local 会議 ~169 件が消えた縮退サイトを配信してしまうため、overrides と
   // 同格に strict 検証して中断する（2026-08-15 実証: 349 vs 518 会議・exit 0）。
   loadYamlFile(join(ROOT, "data", "extra.yaml"), { strict: true });
@@ -213,7 +213,7 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
         confs = sanitizeEditions(confs);
         // mergeSources は追加・上書きのみで削除を表現できない。snapshot に残る
         // 「sources が local のみ」のキーで extra.yaml に存在しないものは
-        // 削除された会議として除外する（例: ieee-msn 重複削除が snapshot から復活する事故）。
+        // 削除された会議として除外する（例: ieee-msn が snapshot から復活するのを防ぐ）。
         const localKeys = new Set(localGroup.map((c) => c.key));
         confs = confs.filter(
           (c) => !(c.sources.length === 1 && c.sources[0] === "local" && !localKeys.has(c.key)),
@@ -314,7 +314,7 @@ export type DiscoverWriteAction = "append" | "dry-run" | "write" | "none";
 /**
  * cmdDiscover の出力分岐を決める（純関数。テスト可能）。
  * `--append` 指定時に候補が 0 件でも「何もしない」を返し、素通し上書きで
- * 蓄積ファイルが空になる事故（#267）を防ぐ。
+ * 蓄積ファイルが空になるのを防ぐ。
  */
 export function discoverWriteAction(
   count: number,
@@ -438,7 +438,7 @@ export function usage(): string {
     "    --no-embeddings       埋め込み (embeddings.json) を生成しない（テスト用・高速化）",
     "  discover 穴場の会議・ジャーナルを自律探索する",
     "    -o, --out <path>      出力YAMLパス（未指定時は標準出力表示）",
-    "    --candidate-out <path> 候補ライフサイクル artifact (default: data/discovered_candidates.yaml)",
+    "    --candidate-out <path> 候補管理ファイル (default: data/discovered_candidates.yaml)",
     "    --categories <s>      カンマ区切りの対象カテゴリ（例: hpc,systems）",
     `    -y, --min-year <n>    対象の最小年 (default: ${DEFAULT_MIN_YEAR})`,
     "    -d, --dry-run         ファイル出力せず結果をプレビュー表示",
@@ -453,7 +453,7 @@ export function usage(): string {
 
 // 有限正整数の文字列のみ数値化し、不正値・非数値は既定値にフォールバックする。
 // Number("abc") = NaN になり、下流の `?? default` が NaN を拾わないため、
-// 非数値入力が cand.year >= NaN（常に false）へ伝播して discover が 0 件になるのを防ぐ (#312)。
+// 非数値入力が cand.year >= NaN（常に false）へ伝播して discover が 0 件になるのを防ぐ。
 function toPosInt(raw: string | undefined, fallback: number): number {
   const n = Number(raw);
   return Number.isFinite(n) && Number.isInteger(n) && n > 0 ? n : fallback;

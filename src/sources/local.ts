@@ -99,9 +99,9 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
 
 /**
  * パッチの deadlines フィールドを「受理行 / 棄却行」に分解して意味論を返す
- * (#504 マージ層ガード)。parseInstant は timezone 欠落・曖昧で null を返し、
- * deadlinesOf はその行を静かにスキップする。従来は「deadlines キーが在るだけで
- * 配列を丸ごと置換」だったため、全行棄却のパッチが既存確定値を空配列で潰していた。
+ * parseInstant は timezone 欠落・曖昧で null を返し、
+ * deadlinesOf はその行を静かにスキップする。
+ * deadlines キーだけで配列を丸ごと置換すると、全行棄却のパッチが既存確定値を空配列で潰す。
  *
  *   deadline フィールド無し            → keepExisting (メタデータのみパッチ)
  *   deadline フィールド有・受理 >= 1   → replace (受理行のみ)
