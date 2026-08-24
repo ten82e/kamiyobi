@@ -1,6 +1,6 @@
 /**
- * Local source data integrity: every deadline written in data/extra.yaml and
- * data/overrides.yaml must parse to a real instant with a recognized tz.
+ * Local source data integrity: every deadline written in local YAML is either
+ * an exact instant with a recognized tz or a date-only value without a tz.
  *
  * Interactive HPC (SC26) の締切が「date 8/15 + tz UTC」と
  * 入力され、公式「14th August 2026」+ ポータル 8/14 AoE に対し 1 日遅れた。
@@ -30,6 +30,7 @@ interface RawDeadline {
   key: string;
   date: string;
   tz: string;
+  precision: string;
 }
 
 function rawDeadlines(): RawDeadline[] {
@@ -48,6 +49,7 @@ function rawDeadlines(): RawDeadline[] {
           key: conf.key ?? "?",
           date: String(rec.date ?? ""),
           tz: String(rec.tz ?? rec.timezone ?? ""),
+          precision: String(rec.precision ?? "exact"),
         });
       }
     }
@@ -64,6 +66,7 @@ function rawDeadlines(): RawDeadline[] {
           key,
           date: String(rec.date ?? ""),
           tz: String(rec.tz ?? rec.timezone ?? ""),
+          precision: String(rec.precision ?? "exact"),
         });
       }
     }
@@ -85,6 +88,7 @@ function rawDeadlines(): RawDeadline[] {
           key,
           date: String(rec.date ?? ""),
           tz: String(rec.tz ?? rec.timezone ?? ""),
+          precision: String(rec.precision ?? "exact"),
         });
       }
     }
@@ -93,12 +97,21 @@ function rawDeadlines(): RawDeadline[] {
 }
 
 describe("local source data integrity", () => {
-  it("every local deadline parses to an instant with a recognized tz", () => {
+  it("every local deadline has a valid exact or date-only representation", () => {
     resetWarnings();
     const rows = rawDeadlines();
     expect(rows.length).toBeGreaterThan(100);
+    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(160);
 
     for (const row of rows) {
+      if (row.precision === "date-only") {
+        expect(row.date, `${row.src} ${row.key}: invalid date-only value`).toMatch(
+          /^\d{4}-\d{2}-\d{2}$/,
+        );
+        expect(row.tz, `${row.src} ${row.key}: date-only value must not have a timezone`).toBe("");
+        continue;
+      }
+      expect(row.precision).toBe("exact");
       if (row.src === "primary_overrides.yaml" && !isConfirmedTimezone(row.tz)) {
         // fetch-primary records the source verbatim; a missing zone is not UTC.
         expect(parseInstant(row.date, row.tz)).toBeNull();

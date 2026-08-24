@@ -1,8 +1,11 @@
 interface SiteDeadline {
   kind: string;
   label?: string;
-  utc: string;
-  aoe?: string;
+  precision?: "exact" | "date-only";
+  local_date?: string;
+  utc?: string | null;
+  aoe?: string | null;
+  tz_raw?: string | null;
   round?: number;
 }
 
@@ -42,6 +45,8 @@ interface SiteRow {
   est?: boolean;
   t: number;
   tLast?: number;
+  dateOnly?: boolean;
+  localDate?: string;
   cats: string[];
   tags: string[];
   rankPairs: string[];

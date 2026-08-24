@@ -105,6 +105,23 @@
       pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes());
   }
 
+  function localDayKey(ms) {
+    var d = new Date(ms);
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+
+  function rowIsPast(r, now) {
+    return r.dateOnly ? r.localDate < localDayKey(now) : r.t < now;
+  }
+
+  function rowIsFuture(r, now) {
+    return !rowIsPast(r, now);
+  }
+
+  function rowAfter(r, limit) {
+    return r.dateOnly ? r.localDate > localDayKey(limit) : r.t > limit;
+  }
+
   function fmtJst(d) {
     var jst = new Date(d.getTime() + 9 * 3600000);
     return jst.getUTCFullYear() + "-" + pad(jst.getUTCMonth() + 1) + "-" + pad(jst.getUTCDate()) + " " +
@@ -215,7 +232,9 @@
       '<div style="font-size: 1.1rem; font-weight: 600; color: var(--fg); margin-top: 2px;">' + esc(KIND_LABEL[r.kind] || r.kind) + '</div>' +
       (r.kind === "journal"
         ? '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">随時受付（締切なし）</div>'
-        : '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">' + fmtDate(new Date(r.t)) + ' UTC (' + fmtJst(new Date(r.t)) + ' / ' + fmtAoE(new Date(r.t)) + ')</div>') +
+        : r.dateOnly
+          ? '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">' + esc(r.localDate) + '（時刻未確認）</div>'
+          : '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">' + fmtDate(new Date(r.t)) + ' UTC (' + fmtJst(new Date(r.t)) + ' / ' + fmtAoE(new Date(r.t)) + ')</div>') +
       '</div>';
 
     var actionRow = '';
@@ -365,12 +384,15 @@
       ].filter(Boolean).join(" ").toLowerCase();
 
       (e.deadlines || []).forEach((dl) => {
-        var t = Date.parse(dl.utc);
+        var dateOnly = dl.precision === "date-only";
+        var localDate = dateOnly ? String(dl.local_date || "") : "";
+        var t = dateOnly ? Date.parse(localDate + "T00:00:00Z") : Date.parse(dl.utc);
         if (isNaN(t)) return;
         out.push({
           conf: conf, ed: e, dl: dl,
           kind: dl.kind, est: e.estimated,
           t: t, tLast: t,
+          dateOnly: dateOnly, localDate: localDate,
           cats: conf.categories || [],
           tags: conf.tags || [],
           rankPairs: pairs,
@@ -411,7 +433,7 @@
   // Update Summary Dashboard Stats
   $("statConfs").textContent = String((DATA.conferences || []).length);
   var nowMs = Date.now();
-  var next30 = rows.filter((r) => (r.kind === "abstract" || r.kind === "paper") && !r.est && r.t >= nowMs && (r.t - nowMs) <= 30*DAY).length;
+  var next30 = rows.filter((r) => (r.kind === "abstract" || r.kind === "paper") && !r.est && rowIsFuture(r, nowMs) && !rowAfter(r, nowMs + 30*DAY)).length;
   $("statUpcoming").textContent = String(next30);
   var nicheCount = (DATA.conferences || []).filter((c) => (c.tags || []).indexOf("niche") !== -1).length;
   $("statNiche").textContent = String(nicheCount);
@@ -612,6 +634,12 @@
   // ---- FILTERING ----
   function filter() {
     var now = Date.now();
+    var dayKey = (ms) => {
+      var d = new Date(ms);
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    };
+    var isPast = (r) => r.dateOnly ? r.localDate < dayKey(now) : r.t < now;
+    var isAfter = (r, limit) => r.dateOnly ? r.localDate > dayKey(limit) : r.t > limit;
     var q = state.q.toLowerCase();
     var isWinFuture = state.win === "future";
     var limit = (state.win === "all" || isWinFuture) ? Infinity : now + parseInt(state.win, 10) * DAY;
@@ -636,7 +664,7 @@
     var pool = rows;
     if (pLines.length && Rec) {
       pool = rows
-        .filter((r) => r.t >= now)
+        .filter((r) => !isPast(r))
         .concat(Rec.journalRows(activeData.conferences, now), Rec.pastRepresentatives(rows, now));
     } else if (state.kind === "journal" && Rec) {
       pool = rows.concat(Rec.journalRows(activeData.conferences, now));
@@ -650,13 +678,13 @@
       if (!inRecommend && !state.est && r.est && !pLines.length) { return false; }
       // 過去行は通常モードで除外（「過去の締切も表示」トグルで表示）。
       // 論文モードでは「締切済みだが次回予定あり」の会議として許容
-      if (r.t < now && !pLines.length && !state.past) { return false; }
-      if (r.est && r.t < now) { return false; }
+      if (isPast(r) && !pLines.length && !state.past) { return false; }
+      if (r.est && isPast(r)) { return false; }
       // このサイトは「これから投稿できるところ」を探すもの。
       // 投稿締切（概要・論文）以外の種別（開催・採否通知等）は表示しない。
       // 論文モードまたは種別指定時のみ常時受付ジャーナル（kind: journal）を許容する。
       if (r.kind !== "abstract" && r.kind !== "paper" && !((pLines.length || state.kind === "journal") && r.kind === "journal")) { return false; }
-      if (!inRecommend && r.t > limit) { return false; }
+      if (!inRecommend && isAfter(r, limit)) { return false; }
       if (!inRecommend && state.kind && r.kind !== state.kind) { return false; }
       // ランクはグレード厳密比較（indexOf の部分一致だと A が core:A* に誤マッチする）
       if (!inRecommend && state.rank) {
@@ -757,7 +785,9 @@
       }
       if (target.tagName !== "A") { openDrawer(r); }
     };
-    var rem = remain(r.t);
+    var rem = r.dateOnly
+      ? { text: rowIsPast(r, Date.now()) ? "締切日経過" : "時刻未確認", cls: rowIsPast(r, Date.now()) ? "past" : "" }
+      : remain(r.t);
     // 常時受付ジャーナルは締切の概念がないため「本日終了」等の誤解を与えない表示にする
     if (r.kind === "journal") { rem = { text: "常時受付", cls: "" }; }
 
@@ -767,6 +797,9 @@
     var c1 = td(tr, "日時");
     if (r.kind === "journal") {
       line(c1, "随時受付", "nowrap");
+    } else if (r.dateOnly) {
+      line(c1, r.localDate, "nowrap");
+      line(c1, "時刻未確認", "sub nowrap");
     } else {
       var d = new Date(r.t);
       line(c1, fmtDate(d) + " UTC", "nowrap");
@@ -829,7 +862,7 @@
       var jr = document.createElement("span");
       jr.className = "tag match"; jr.textContent = "常時受付";
       tags.appendChild(jr);
-    } else if (r.t < Date.now()) {
+    } else if (rowIsPast(r, Date.now())) {
       var pp = document.createElement("span");
       pp.className = "tag past"; pp.textContent = "締切済み（次回予定）";
       tags.appendChild(pp);
@@ -985,11 +1018,14 @@
   function recommendationAvailability(r) {
     var a = r._availability || {};
     if (a.status === "ongoing") return "常時受付";
+    if (a.status === "open" && a.local_date) {
+      return "次回締切: " + a.local_date + "（時刻未確認）";
+    }
     if (a.status === "open" && a.timestamp) {
       return "次回締切: " + fmtDate(new Date(a.timestamp)) + " UTC / " + fmtAoE(new Date(a.timestamp)) + (a.estimated ? "（推定）" : "");
     }
     if (a.status === "past") {
-      return a.timestamp ? "締切済み" : "締切済み（次回情報なし）";
+      return a.timestamp || a.local_date ? "締切済み" : "締切済み（次回情報なし）";
     }
     return "受付状況不明";
   }

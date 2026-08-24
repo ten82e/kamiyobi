@@ -28,7 +28,7 @@
 | ファイル | 用途 |
 |---|---|
 | `https://ten82e.github.io/kamiyobi/llms.txt` | 出力ファイルとデータの形を 1 枚にまとめた索引。まずここを読む |
-| `https://ten82e.github.io/kamiyobi/data.json` | 正規化済みの全データ。会議・版・締切の三層構造。締切時刻は UTC と AoE 表記を併記 |
+| `https://ten82e.github.io/kamiyobi/data.json` | 正規化済みの全データ。時刻確認済みの締切は UTC と AoE、日付のみ確認済みの締切は `local_date` で表す |
 | `https://ten82e.github.io/kamiyobi/health.json` | 確定/推定締切、ソース失敗、警告数、カテゴリ件数、必須会議の健全性レポート |
 | `https://ten82e.github.io/kamiyobi/publish.json` | 公開直後の成果物ハッシュと `semantic_status`（`ready` または `lexical-only`）。意味検索用の埋め込みが公開物に含まれるかを示す |
 
@@ -205,7 +205,8 @@ rank_filter:
 国内の研究会・シンポジウム（`tags: [domestic-jp]`）は通しやすい発表枠として local 源で維持している。サイトの「国内研究会・国内シンポジウムのみ」で絞れる（`?domestic=1`）。
 
 会期は上流では自由文で書かれており、解釈できない書き方のものは開催イベントを作れない。
-タイムゾーンが不明な締切は協定世界時として扱う。
+日付だけが確認でき、時刻とタイムゾーンが不明な締切は `date-only` として収録する。
+この値は UTC、JST、AoE へ変換せず、サイトでは「時刻未確認」と表示する。
 上流の誤りはそのまま反映されるので、気づいたときは `data/overrides.yaml` で訂正する。
 
 上流のスキーマが変わればビルドが壊れうる。

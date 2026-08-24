@@ -27,6 +27,7 @@ import {
   recordsOf,
   setRoot,
   titleWithYear,
+  toCsv,
   toJson,
   toLlmsTxt,
   toUpcomingMd,
@@ -114,6 +115,42 @@ it("healthReport separates future confirmed and estimated values", () => {
   expect(healthMarkdown(report)).toContain("| data.json | 10 |");
 });
 
+it("healthReport counts date-only deadlines without inventing a UTC instant", () => {
+  const report = healthReport(
+    {
+      conferences: [
+        {
+          key: "date-only",
+          categories: ["systems"],
+          editions: [
+            {
+              year: 2026,
+              id: "date-only26",
+              estimated: false,
+              deadlines: [
+                {
+                  kind: "paper",
+                  precision: "date-only",
+                  local_date: "2026-08-10",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    NOW,
+  );
+  expect(report.confirmed_deadlines).toBe(1);
+  expect(report.deadline_refs).toEqual([
+    expect.objectContaining({
+      deadline_id: deadlineSlotId("date-only", "date-only26", "paper", 1, ""),
+      local_date: "2026-08-10",
+    }),
+  ]);
+  expect(report.deadline_refs?.[0]).not.toHaveProperty("at_utc");
+});
+
 it("toJson preserves deadline evidence, conflicts, and selection rule", () => {
   const payload = toJson(
     [
@@ -169,6 +206,42 @@ it("toJson preserves deadline evidence, conflicts, and selection rule", () => {
       confidence: "aggregator",
     },
   });
+});
+
+it("date-only deadlines stay date-only in JSON, CSV, and upcoming output", () => {
+  const confs = [
+    makeConference({
+      key: "date-only",
+      title: "Date Only",
+      editions: [
+        makeEdition({
+          year: 2026,
+          deadlines: [
+            {
+              kind: "paper",
+              label: "Submission deadline",
+              precision: "date-only",
+              local_date: "2026-08-10",
+              round: 1,
+              comment: null,
+            },
+          ],
+        }),
+      ],
+    }),
+  ];
+  const records = recordsOf(confs);
+  const deadline = (toJson(confs, {}, NOW).conferences as any[])[0].editions[0].deadlines[0];
+
+  expect(deadline).toMatchObject({
+    precision: "date-only",
+    local_date: "2026-08-10",
+    utc: null,
+    aoe: null,
+    tz_raw: null,
+  });
+  expect(toCsv(records)).toContain("date-only,2026-08-10,,,,");
+  expect(toUpcomingMd(records, NOW)).toContain("2026-08-10（時刻未確認）");
 });
 
 it("evaluateHealthGate covers normal updates and every fail-closed regression", () => {
@@ -499,6 +572,13 @@ it("evaluateHealthGate matches deadline slots independently of timestamps", () =
       ],
     }).ok,
   ).toBe(true);
+
+  expect(
+    evaluateHealthGate(
+      withRefs([{ deadline_id: paper1, local_date: "2026-08-31", edition_year: 2026 }]),
+      withRefs([slot(paper1, "2026-09-01T11:59:00.000Z")]),
+    ).ok,
+  ).toBe(true);
 });
 
 it("scheduled deployments require a usable baseline", () => {
@@ -516,7 +596,8 @@ it("generated health files describe the deterministic build", () => {
   expect(Array.isArray(report.deadline_refs)).toBe(true);
   for (const ref of report.deadline_refs) {
     expect(ref.deadline_id).not.toMatch(/T\d{2}:\d{2}:\d{2}/);
-    expect(ref.at_utc).toEqual(new Date(ref.at_utc).toISOString());
+    if (ref.local_date) expect(ref.local_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    else expect(ref.at_utc).toEqual(new Date(ref.at_utc).toISOString());
   }
   const dataBytes = readFileSync(join(site, "data.json"));
   expect(report.output_files["data.json"]).toEqual({
@@ -637,8 +718,15 @@ it("edition and deadline records match the spec", () => {
           "registration",
           "other",
         ]).toContain(dl.kind);
-        expect(dl.utc).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
-        expect(String(dl.aoe).endsWith("AoE")).toBe(true);
+        if (dl.precision === "date-only") {
+          expect(dl.local_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+          expect(dl.utc).toBeNull();
+          expect(dl.aoe).toBeNull();
+          expect(dl.tz_raw).toBeNull();
+        } else {
+          expect(dl.utc).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
+          expect(String(dl.aoe).endsWith("AoE")).toBe(true);
+        }
         expect(typeof dl.round).toBe("number");
         expect(dl.round).toBeGreaterThanOrEqual(1);
       }
@@ -711,7 +799,7 @@ it("no deadline is in the far future by accident", () => {
   for (const c of data.conferences) {
     for (const ed of c.editions) {
       for (const dl of ed.deadlines) {
-        const t = Date.parse(dl.utc);
+        const t = Date.parse(dl.precision === "date-only" ? `${dl.local_date}T00:00:00Z` : dl.utc);
         expect(t).toBeGreaterThanOrEqual(Date.parse("2015-01-01T00:00:00Z"));
         expect(t).toBeLessThanOrEqual(Date.parse("2032-01-01T00:00:00Z"));
       }

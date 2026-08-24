@@ -13,6 +13,7 @@ import {
   type Deadline,
   type DeadlineKind,
   type Edition,
+  fmtDate,
   kindOf,
   parseDateRange,
   parseInstant,
@@ -53,14 +54,31 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
     if (typeof entry !== "object" || entry === null) continue;
     const rec = entry as Record<string, unknown>;
     const tzRaw = String(rec.tz ?? rec.timezone ?? parentTz);
-    const at = parseInstant(rec.date, tzRaw);
-    if (at === null) continue;
     const kind = refineKindWithLabel(
       kindOf(String(rec.kind ?? rec.type ?? "")),
       String(rec.label ?? ""),
       String(rec.kind ?? rec.type ?? ""),
     );
     const label = String(rec.label ?? kind);
+    if (rec.precision === "date-only") {
+      const localDate = asDate(rec.date);
+      if (localDate === null || tzRaw.trim()) {
+        warn(`date-only deadline requires YYYY-MM-DD without timezone: ${String(rec.date ?? "")}`);
+        continue;
+      }
+      out.push({
+        kind,
+        label,
+        precision: "date-only",
+        local_date: fmtDate(localDate),
+        round: roundOf(label, Number(rec.round ?? 1) || 1),
+        comment: rec.comment === null || rec.comment === undefined ? null : String(rec.comment),
+        raw_value: String(rec.date),
+      });
+      continue;
+    }
+    const at = parseInstant(rec.date, tzRaw);
+    if (at === null) continue;
     out.push({
       kind,
       label,

@@ -799,8 +799,8 @@
       if (r.kind !== "abstract" && r.kind !== "paper") return;
       var k = r.conf && r.conf.key;
       if (!k) return;
-      if (r.t >= now) hasFuture[k] = true;
-      if (r.t < now && !r.est && (!byKey[k] || r.t > byKey[k].t)) byKey[k] = r;
+      if (rowIsFuture(r, now)) hasFuture[k] = true;
+      if (!rowIsFuture(r, now) && !r.est && (!byKey[k] || r.t > byKey[k].t)) byKey[k] = r;
     });
     var out = [];
     Object.keys(byKey).forEach((k) => {
@@ -809,12 +809,22 @@
     return out;
   }
 
+  function localDayKey(ms) {
+    var d = new Date(ms);
+    var pad = (n) => String(n).padStart(2, "0");
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+
+  function rowIsFuture(row, now) {
+    return row && row.dateOnly ? row.localDate >= localDayKey(now) : row && row.t >= now;
+  }
+
   /* 論文モード: 会議単位に代表行を選ぶ。
    * 締切行優先 → 未来締切優先 → 早い締切 / 直近の過去。 */
   function pickRepresentative(rows, now) {
     var DAY = 86400000;
     var byKey = {};
-    var isFuture = (r) => (r.kind === "event" ? now < (r.tLast || r.t) + DAY : r.t >= now);
+    var isFuture = (r) => (r.kind === "event" ? now < (r.tLast || r.t) + DAY : rowIsFuture(r, now));
     (rows || []).forEach((r) => {
       var k = r.conf && (r.conf.key || "");
       if (!k) return;
@@ -847,8 +857,8 @@
       return b._matchScore - a._matchScore;
     }
     var DAY = 86400000;
-    var aFut = a.kind === "event" ? now < (a.tLast || a.t) + DAY : a.t >= now;
-    var bFut = b.kind === "event" ? now < (b.tLast || b.t) + DAY : b.t >= now;
+    var aFut = a.kind === "event" ? now < (a.tLast || a.t) + DAY : rowIsFuture(a, now);
+    var bFut = b.kind === "event" ? now < (b.tLast || b.t) + DAY : rowIsFuture(b, now);
     if (aFut !== bFut) {
       return aFut ? -1 : 1;
     }
@@ -1000,16 +1010,17 @@
   }
 
   function availability(row, now) {
-    var time = row && Number.isFinite(row.t) ? row.t : null;
+    var time = row && !row.dateOnly && Number.isFinite(row.t) ? row.t : null;
     var future = row && row.kind === "journal"
       ? true
       : row && row.kind === "event"
         ? now < (row.tLast || row.t) + 86400000
-        : time !== null && time >= now;
+        : rowIsFuture(row, now);
     return {
       kind: (row && row.kind) || "unknown",
       status: row && row.kind === "journal" ? "ongoing" : future ? "open" : "past",
       timestamp: time,
+      local_date: row && row.dateOnly ? row.localDate : null,
       estimated: !!(row && row.est),
     };
   }

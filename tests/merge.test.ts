@@ -20,7 +20,7 @@ import {
 } from "../src/merge.ts";
 import { type Conference, conferencesFromJson, type Deadline, type Edition } from "../src/model.ts";
 import { DEFAULT_PATH, parseFile } from "../src/sources/local.ts";
-import { makeConference, makeDeadline, makeEdition, REPO_ROOT } from "./helpers.ts";
+import { exactAt, makeConference, makeDeadline, makeEdition, REPO_ROOT } from "./helpers.ts";
 
 const TODAY = new Date(Date.UTC(2026, 7, 9));
 let CONFIG: Record<string, unknown> = {};
@@ -145,7 +145,7 @@ describe("merge_sources", () => {
       expect(merged.length).toBe(1);
       const ed27 = editionByYear(merged[0], 2027);
       expect(ed27.estimated).toBe(false);
-      expect(ed27.deadlines.map((d) => [d.kind, d.at_utc.getTime()])).toEqual([
+      expect(ed27.deadlines.map((d) => [d.kind, exactAt(d).getTime()])).toEqual([
         ["paper", utc(2027, 6, 7).getTime()],
       ]);
     }
@@ -215,7 +215,7 @@ describe("merge_sources", () => {
     const config = { source_priority: ["local", "aideadlines", "ccfddl"] };
     const merged = mergeSources([[low], [high]], config);
     const dls = deadlinesOf(merged[0]).filter((d) => d.kind === "paper" && d.round === 1);
-    expect(new Set(dls.map((d) => d.at_utc.getTime()))).toEqual(
+    expect(new Set(dls.map((d) => exactAt(d).getTime()))).toEqual(
       new Set([utc(2026, 2, 6).getTime(), utc(2026, 2, 20).getTime()]),
     );
 
@@ -223,7 +223,7 @@ describe("merge_sources", () => {
       source_priority: ["ccfddl", "aideadlines", "local"],
     });
     const dls2 = deadlinesOf(flipped[0]).filter((d) => d.kind === "paper" && d.round === 1);
-    expect(new Set(dls2.map((d) => d.at_utc.getTime()))).toEqual(
+    expect(new Set(dls2.map((d) => exactAt(d).getTime()))).toEqual(
       new Set([utc(2026, 2, 6).getTime(), utc(2026, 2, 20).getTime()]),
     );
   });
@@ -284,7 +284,7 @@ describe("merge_sources", () => {
       [[ccf], [hf]],
     ]) {
       const merged = mergeSources(groups, PRIORITY);
-      const kept = new Set(deadlinesOf(merged[0]).map((d) => d.at_utc.getTime()));
+      const kept = new Set(deadlinesOf(merged[0]).map((d) => exactAt(d).getTime()));
       expect(kept).toEqual(new Set(days.map((d) => utc(2026, 3, d).getTime())));
     }
   });
@@ -317,9 +317,29 @@ describe("merge_sources", () => {
     const merged = mergeSources([[ccf], [hf]], PRIORITY);
     const dls = deadlinesOf(merged[0]);
     expect(dls.length).toBe(1);
-    expect(dls[0].at_utc.getTime()).toBe(utc(2026, 2, 6, 11, 59, 59).getTime());
+    expect(exactAt(dls[0]).getTime()).toBe(utc(2026, 2, 6, 11, 59, 59).getTime());
     expect(dls[0].label).toBe("Paper submission deadline");
     expect(dls[0].comment ?? "").toContain("Paper submission");
+  });
+
+  it("deduplicates equal date-only deadlines without mixing them with exact instants", () => {
+    const dateOnlyDeadline: Deadline = {
+      kind: "paper",
+      label: "Submission deadline",
+      precision: "date-only",
+      local_date: "2026-08-24",
+      round: 1,
+      comment: null,
+    };
+    const dateOnly = sigcomm("local", [dateOnlyDeadline]);
+    const duplicate = sigcomm("ccfddl", [{ ...dateOnlyDeadline }]);
+    const exact = sigcomm("aideadlines", [
+      makeDeadline("paper", "Submission deadline", utc(2026, 8, 24)),
+    ]);
+    const dls = deadlinesOf(mergeSources([[dateOnly], [duplicate], [exact]], PRIORITY)[0]);
+
+    expect(dls).toHaveLength(2);
+    expect(dls.filter((deadline) => deadline.precision === "date-only")).toHaveLength(1);
   });
 
   it("same instant in two rounds of one source is one deadline", () => {
@@ -351,7 +371,7 @@ describe("merge_sources", () => {
       makeDeadline("paper", "Paper submission", utc(2026, 9, 18), "AoE", 2),
     ]);
     const dls = deadlinesOf(mergeSources([[conf]], PRIORITY)[0]);
-    expect(new Set(dls.map((d) => `${d.round}:${d.at_utc.getTime()}`))).toEqual(
+    expect(new Set(dls.map((d) => `${d.round}:${exactAt(d).getTime()}`))).toEqual(
       new Set([`1:${utc(2026, 4, 24).getTime()}`, `2:${utc(2026, 9, 18).getTime()}`]),
     );
   });
@@ -532,8 +552,8 @@ describe("apply_overrides", () => {
     ];
     const out = applyOverrides(confs, {});
     expect(out.map((c) => c.key)).toEqual(confs.map((c) => c.key));
-    expect(deadlinesOf(out[0]).map((d) => d.at_utc.getTime())).toEqual(
-      deadlinesOf(confs[0]).map((d) => d.at_utc.getTime()),
+    expect(deadlinesOf(out[0]).map((d) => exactAt(d).getTime())).toEqual(
+      deadlinesOf(confs[0]).map((d) => exactAt(d).getTime()),
     );
   });
 
@@ -585,7 +605,7 @@ describe("apply_overrides", () => {
     const out = applyOverrides(confs, overrides);
     const edition = out[0].editions[0];
     expect(edition.deadlines.length).toBe(1);
-    expect(edition.deadlines[0].at_utc.getTime()).toBe(utc(2026, 8, 31, 11, 59, 0).getTime());
+    expect(exactAt(edition.deadlines[0]).getTime()).toBe(utc(2026, 8, 31, 11, 59, 0).getTime());
     expect(edition.deadlines[0].label).toBe("Regular paper submission (extended)");
   });
 
@@ -642,8 +662,8 @@ describe("apply_overrides", () => {
     expect(edition.place).toBe("Melbourne, Australia");
     expect(edition.deadlines.length).toBe(2);
     // AoE = UTC-12: 11/30 23:59:59 AoE → 12/01 11:59:59Z、3/1 23:59:59 AoE → 3/2 11:59:59Z。
-    expect(edition.deadlines[0].at_utc.getTime()).toBe(utc(2026, 12, 1, 11, 59, 59).getTime());
-    expect(edition.deadlines[1].at_utc.getTime()).toBe(utc(2027, 3, 2, 11, 59, 59).getTime());
+    expect(exactAt(edition.deadlines[0]).getTime()).toBe(utc(2026, 12, 1, 11, 59, 59).getTime());
+    expect(exactAt(edition.deadlines[1]).getTime()).toBe(utc(2027, 3, 2, 11, 59, 59).getTime());
     expect(edition.deadlines[0].label).toBe("Paper submission (Round 1)");
     expect(edition.deadlines[1].label).toBe("Paper submission (Round 2)");
     expect(edition.deadlines[0].round).toBe(1);
@@ -687,8 +707,8 @@ describe("apply_overrides", () => {
     expect(added.estimated).toBe(false);
     expect(added.link).toBe("https://www.setta2026.sg");
     expect(added.place).toBe("Singapore");
-    expect(added.deadlines[0].at_utc.getTime()).toBe(utc(2026, 5, 10, 23, 59, 59).getTime());
-    expect(editions[2025].deadlines[0].at_utc.getTime()).toBe(utc(2025, 8, 20).getTime());
+    expect(exactAt(added.deadlines[0]).getTime()).toBe(utc(2026, 5, 10, 23, 59, 59).getTime());
+    expect(exactAt(editions[2025].deadlines[0]).getTime()).toBe(utc(2025, 8, 20).getTime());
   });
 
   it("override date_text fills event_start when missing (#398)", () => {
@@ -834,7 +854,7 @@ describe("apply_overrides", () => {
     expect(ed.edition_id).toBe("testconf26-new");
     expect(ed.deadlines.length).toBe(1);
     expect(ed.deadlines[0].kind).toBe("paper");
-    expect(ed.deadlines[0].at_utc.toISOString()).toBe("2026-03-01T23:59:00.000Z");
+    expect(exactAt(ed.deadlines[0]).toISOString()).toBe("2026-03-01T23:59:00.000Z");
   });
 
   it("override updates or deletes rank schemes cleanly (#288)", () => {
@@ -899,7 +919,7 @@ describe("rollforward", () => {
     const paper = estimated[0].deadlines.filter((d) => d.kind === "paper");
     expect(paper.length).toBeGreaterThan(0);
     const expected = new Date(utc(2025, 9, 12, 11, 59, 0).getTime() + 364 * 86_400_000);
-    expect(paper[0].at_utc.getTime()).toBe(expected.getTime());
+    expect(exactAt(paper[0]).getTime()).toBe(expected.getTime());
     expect(estimated[0].estimate).toMatchObject({
       point_estimate: "2026-09-11",
       window_start: "2026-06-12",
@@ -937,7 +957,7 @@ describe("rollforward", () => {
     const edition = estimated[0];
     expect(edition.deadlines.length).toBeGreaterThan(0);
     for (const dl of edition.deadlines) {
-      expect(Math.abs(dl.at_utc.getUTCFullYear() - edition.year)).toBeLessThanOrEqual(1);
+      expect(Math.abs(exactAt(dl).getUTCFullYear() - edition.year)).toBeLessThanOrEqual(1);
     }
   });
 
@@ -1194,7 +1214,9 @@ describe("sanitize_editions", () => {
       ],
     });
     const out = sanitizeEditions([conf])[0];
-    const kindsTimes = out.editions[0].deadlines.map((d) => [d.kind, d.at_utc.getTime()] as const);
+    const kindsTimes = out.editions[0].deadlines.map(
+      (d) => [d.kind, exactAt(d).getTime()] as const,
+    );
     expect(kindsTimes).toContainEqual(["paper", utc(2024, 9, 12, 6, 59, 59).getTime()]);
     expect(kindsTimes).not.toContainEqual(["paper", utc(2025, 9, 18, 6, 59, 59).getTime()]);
     expect(kindsTimes.some(([k]) => k === "camera_ready")).toBe(true);
@@ -1320,6 +1342,34 @@ describe("apply_aliases", () => {
 });
 
 describe("conferencesFromJson & defensive merge operations", () => {
+  it("conferencesFromJson restores date-only deadlines without an instant", () => {
+    const confs = conferencesFromJson({
+      conferences: [
+        {
+          key: "date-only",
+          title: "Date Only",
+          editions: [
+            {
+              year: 2026,
+              deadlines: [
+                {
+                  kind: "paper",
+                  precision: "date-only",
+                  local_date: "2026-08-24",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    expect(confs[0].editions[0].deadlines[0]).toMatchObject({
+      precision: "date-only",
+      local_date: "2026-08-24",
+    });
+    expect(confs[0].editions[0].deadlines[0]).not.toHaveProperty("at_utc");
+  });
+
   it("conferencesFromJson handles null, undefined, and non-object inputs", () => {
     expect(conferencesFromJson(null)).toEqual([]);
     expect(conferencesFromJson(undefined)).toEqual([]);

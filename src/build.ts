@@ -25,6 +25,7 @@ import {
 import { DEADLINE_SELECTION_RULE } from "./merge.ts";
 import {
   addDays,
+  asDate,
   type Conference,
   cmpStr,
   DAY_MS,
@@ -33,6 +34,8 @@ import {
   type Edition,
   fmtDate,
   fmtUTC,
+  isDateOnlyDeadline,
+  isExactDeadline,
   slug,
   warningCounts,
 } from "./model.ts";
@@ -88,6 +91,8 @@ const CSV_COLUMNS = [
   "kind",
   "label",
   "round",
+  "deadline_precision",
+  "deadline_local_date",
   "deadline_utc",
   "deadline_aoe",
   "tz_raw",
@@ -240,10 +245,15 @@ function sortedDeadlines(edition: Edition): Deadline[] {
   return [...edition.deadlines].sort(
     (a, b) =>
       a.round - b.round ||
-      a.at_utc.getTime() - b.at_utc.getTime() ||
+      deadlineSortTime(a) - deadlineSortTime(b) ||
       cmpStr(a.kind, b.kind) ||
       cmpStr(a.label ?? "", b.label ?? ""),
   );
+}
+
+function deadlineSortTime(deadline: Deadline): number {
+  if (isExactDeadline(deadline)) return deadline.at_utc.getTime();
+  return asDate(deadline.local_date)?.getTime() ?? Number.MAX_SAFE_INTEGER;
 }
 
 /** `(year, kind, at_utc)` groups holding more than one deadline. */
@@ -251,7 +261,10 @@ function collisions(editions: Edition[]): Set<string> {
   const seen = new Map<string, number>();
   for (const ed of editions) {
     for (const dl of ed.deadlines) {
-      const key = `${ed.year}\u0000${dl.kind}\u0000${dl.at_utc.getTime()}`;
+      const value = isDateOnlyDeadline(dl)
+        ? `date:${dl.local_date}`
+        : `instant:${dl.at_utc.getTime()}`;
+      const key = `${ed.year}\u0000${dl.kind}\u0000${value}`;
       seen.set(key, (seen.get(key) ?? 0) + 1);
     }
   }
@@ -290,10 +303,15 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
     const collides = collisions(editions);
     editions.forEach((ed) => {
       sortedDeadlines(ed).forEach((dl) => {
+        const dateValue = isDateOnlyDeadline(dl)
+          ? `date:${dl.local_date}`
+          : `instant:${dl.at_utc.getTime()}`;
         let labelJa = KIND_LABEL_JA[dl.kind] ?? KIND_LABEL_JA.other;
-        if (collides.has(`${ed.year}\u0000${dl.kind}\u0000${dl.at_utc.getTime()}`) && dl.label) {
+        if (collides.has(`${ed.year}\u0000${dl.kind}\u0000${dateValue}`) && dl.label) {
           labelJa = `${labelJa}: ${dl.label}`;
         }
+        const anchor = isDateOnlyDeadline(dl) ? asDate(dl.local_date) : dl.at_utc;
+        if (anchor === null) return;
         records.push({
           type: "deadline",
           categories: cats,
@@ -302,9 +320,9 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
           conf,
           edition: ed,
           deadline: dl,
-          all_day: false,
-          start: new Date(dl.at_utc.getTime() - 30 * 60_000),
-          end: dl.at_utc,
+          all_day: isDateOnlyDeadline(dl),
+          start: isDateOnlyDeadline(dl) ? anchor : new Date(anchor.getTime() - 30 * 60_000),
+          end: anchor,
         });
       });
       if (ed.event_start && !ed.estimated) {
@@ -351,7 +369,7 @@ export function toJson(
   const observedAt = fmtUTC(safeNow, "%Y-%m-%dT%H:%M:%SZ");
   const evidenceOf = (
     sourceName: string,
-    at: Date,
+    at: Date | null,
     rawValue: string,
     estimated: boolean,
   ): Record<string, unknown> => {
@@ -377,7 +395,7 @@ export function toJson(
       source_name: sourceName,
       source_url: sourceUrl,
       observed_at: observedAt,
-      original_value: rawValue || fmtUTC(at, "%Y-%m-%dT%H:%M:%SZ"),
+      original_value: rawValue || (at ? fmtUTC(at, "%Y-%m-%dT%H:%M:%SZ") : ""),
       confidence,
     };
   };
@@ -399,39 +417,63 @@ export function toJson(
         estimated: ed.estimated,
         ...(ed.estimate ? { estimate: { ...ed.estimate } } : {}),
         source: ed.source,
-        deadlines: sortedDeadlines(ed).map((dl) => ({
-          kind: dl.kind,
-          label: dl.label,
-          utc: fmtUTC(dl.at_utc, "%Y-%m-%dT%H:%M:%SZ"),
-          aoe: aoeText(dl.at_utc),
-          tz_raw: dl.tz_raw,
-          round: dl.round,
-          comment: dl.comment,
-          status: ed.estimated ? "estimated" : "confirmed",
-          selection_rule: dl.selection_rule ?? DEADLINE_SELECTION_RULE,
-          evidence: dl.evidence?.length
+        deadlines: sortedDeadlines(ed).map((dl) => {
+          const evidence = dl.evidence?.length
             ? dl.evidence.map((item) => ({ ...item }))
-            : [evidenceOf(ed.source, dl.at_utc, dl.raw_value ?? "", ed.estimated)],
-          ...(dl.conflicts?.length
-            ? {
-                conflicts: dl.conflicts.map((conflict) => ({
-                  at_utc: fmtUTC(conflict.at_utc, "%Y-%m-%dT%H:%M:%SZ"),
-                  label: conflict.label,
-                  source: conflict.source,
-                  original_value:
-                    conflict.raw_value || fmtUTC(conflict.at_utc, "%Y-%m-%dT%H:%M:%SZ"),
-                  evidence:
-                    conflict.evidence ??
-                    evidenceOf(
-                      conflict.source,
-                      conflict.at_utc,
-                      conflict.raw_value ?? "",
-                      ed.estimated,
-                    ),
-                })),
-              }
-            : {}),
-        })),
+            : [
+                evidenceOf(
+                  ed.source,
+                  isExactDeadline(dl) ? dl.at_utc : null,
+                  dl.raw_value ?? "",
+                  ed.estimated,
+                ),
+              ];
+          const common = {
+            kind: dl.kind,
+            label: dl.label,
+            round: dl.round,
+            comment: dl.comment,
+            status: ed.estimated ? "estimated" : "confirmed",
+            selection_rule: dl.selection_rule ?? DEADLINE_SELECTION_RULE,
+            evidence,
+          };
+          if (isDateOnlyDeadline(dl)) {
+            return {
+              ...common,
+              precision: "date-only",
+              local_date: dl.local_date,
+              utc: null,
+              aoe: null,
+              tz_raw: null,
+            };
+          }
+          return {
+            ...common,
+            precision: "exact",
+            utc: fmtUTC(dl.at_utc, "%Y-%m-%dT%H:%M:%SZ"),
+            aoe: aoeText(dl.at_utc),
+            tz_raw: dl.tz_raw,
+            ...(dl.conflicts?.length
+              ? {
+                  conflicts: dl.conflicts.map((conflict) => ({
+                    at_utc: fmtUTC(conflict.at_utc, "%Y-%m-%dT%H:%M:%SZ"),
+                    label: conflict.label,
+                    source: conflict.source,
+                    original_value:
+                      conflict.raw_value || fmtUTC(conflict.at_utc, "%Y-%m-%dT%H:%M:%SZ"),
+                    evidence:
+                      conflict.evidence ??
+                      evidenceOf(
+                        conflict.source,
+                        conflict.at_utc,
+                        conflict.raw_value ?? "",
+                        ed.estimated,
+                      ),
+                  })),
+                }
+              : {}),
+          };
+        }),
       });
     }
     outConfs.push({
@@ -477,6 +519,12 @@ function jsonStrings(value: unknown): string[] {
 function jsonTime(value: unknown): number | null {
   const time = Date.parse(String(value ?? ""));
   return Number.isFinite(time) ? time : null;
+}
+
+function jsonDeadlineTime(deadline: JsonRecord): number | null {
+  const exact = jsonTime(deadline.utc);
+  if (exact !== null) return exact;
+  return asDate(deadline.local_date)?.getTime() ?? null;
 }
 
 function compactEdition(edition: JsonRecord, deadlines: JsonRecord[]): JsonRecord {
@@ -527,7 +575,7 @@ export function toCatalog(
     const editions = jsonRecords(conf.editions)
       .map((edition) => {
         const deadlines = jsonRecords(edition.deadlines).filter((deadline) => {
-          const time = jsonTime(deadline.utc);
+          const time = jsonDeadlineTime(deadline);
           return time !== null && time >= lookback && time <= horizon;
         });
         const eventStart = jsonTime(edition.event_start);
@@ -564,13 +612,17 @@ export function toRecommendationIndex(
           .filter((deadline) => ["abstract", "paper"].includes(String(deadline.kind)))
           .sort(
             (a, b) =>
-              (jsonTime(a.utc) ?? Number.MAX_SAFE_INTEGER) -
-              (jsonTime(b.utc) ?? Number.MAX_SAFE_INTEGER),
+              (jsonDeadlineTime(a) ?? Number.MAX_SAFE_INTEGER) -
+              (jsonDeadlineTime(b) ?? Number.MAX_SAFE_INTEGER),
           );
         if (!deadlines.length) return null;
-        const future = deadlines.find(
-          (deadline) => (jsonTime(deadline.utc) ?? 0) >= safeNow.getTime(),
-        );
+        const future = deadlines.find((deadline) => {
+          const time = jsonDeadlineTime(deadline);
+          if (time === null) return false;
+          return deadline.precision === "date-only"
+            ? time >= dateOnly(safeNow).getTime()
+            : time >= safeNow.getTime();
+        });
         return compactEdition(edition, [future ?? deadlines[deadlines.length - 1]]);
       })
       .filter((edition): edition is JsonRecord => edition !== null);
@@ -614,7 +666,8 @@ export interface PublishManifest {
 
 export interface HealthDeadlineRef {
   deadline_id: string;
-  at_utc: string;
+  at_utc?: string;
+  local_date?: string;
   evidence_hash?: string;
   edition_year?: number;
 }
@@ -742,6 +795,7 @@ export function healthReport(
   let estimatedDeadlines = 0;
   const deadlineRefs: HealthDeadlineRef[] = [];
   const lookbackStart = safeNow - HEALTH_DEADLINE_LOOKBACK_MS;
+  const today = dateOnly(new Date(safeNow)).getTime();
   for (const conference of conferences) {
     const key = String(conference.key ?? "").trim();
     if (key) presentVenues.add(key);
@@ -756,22 +810,30 @@ export function healthReport(
         String(edition.id ?? edition.edition_id ?? "").trim() ||
         (Number.isInteger(editionYear) && editionYear > 0 ? String(editionYear) : "");
       for (const deadline of jsonRecords(edition.deadlines)) {
-        const timestamp = jsonTime(deadline.utc);
+        const dateOnlyPrecision = deadline.precision === "date-only";
+        const timestamp = jsonDeadlineTime(deadline);
         if (timestamp === null) continue;
-        if (!estimated && key && timestamp >= lookbackStart) {
+        const futureThreshold = dateOnlyPrecision ? today : safeNow;
+        if (
+          !estimated &&
+          key &&
+          timestamp >= (dateOnlyPrecision ? today - HEALTH_DEADLINE_LOOKBACK_MS : lookbackStart)
+        ) {
           const kind = String(deadline.kind ?? "other").trim() || "other";
           const round = deadlineRound(deadline.round);
           const track = normalizedTrackKey(String(deadline.label ?? ""), kind);
           const ref: HealthDeadlineRef = {
             deadline_id: deadlineSlotId(key, editionId, kind, round, track),
-            at_utc: new Date(timestamp).toISOString(),
+            ...(dateOnlyPrecision
+              ? { local_date: String(deadline.local_date) }
+              : { at_utc: new Date(timestamp).toISOString() }),
           };
           if (Number.isInteger(editionYear) && editionYear > 0) ref.edition_year = editionYear;
           const evidenceHash = officialEvidenceHash(deadline);
           if (evidenceHash) ref.evidence_hash = evidenceHash;
           deadlineRefs.push(ref);
         }
-        if (timestamp < safeNow) continue;
+        if (timestamp < futureThreshold) continue;
         hasFuture = true;
         if (estimated) estimatedDeadlines += 1;
         else confirmedDeadlines += 1;
@@ -797,7 +859,11 @@ export function healthReport(
     options.profileHash ?? embeddingProfileHash(data as Parameters<typeof embeddingProfileHash>[0]);
   const uniqueDeadlineRefs = [
     ...new Map(deadlineRefs.map((ref) => [ref.deadline_id, ref])).values(),
-  ].sort((a, b) => cmpStr(a.deadline_id, b.deadline_id) || cmpStr(a.at_utc, b.at_utc));
+  ].sort(
+    (a, b) =>
+      cmpStr(a.deadline_id, b.deadline_id) ||
+      cmpStr(a.at_utc ?? a.local_date ?? "", b.at_utc ?? b.local_date ?? ""),
+  );
   return {
     schema_version: HEALTH_SCHEMA_VERSION,
     generated_at: String(data.generated_at ?? ""),
@@ -873,12 +939,17 @@ function reportDeadlineRefs(report: Partial<HealthReport>): HealthDeadlineRef[] 
     const rec = item as unknown as Record<string, unknown>;
     const deadlineId = String(rec.deadline_id ?? rec.id ?? "").trim();
     const atUtc = rec.at_utc;
+    const localDate = String(rec.local_date ?? "");
     if (!deadlineId) return null;
-    if (typeof atUtc !== "string" || !Number.isFinite(Date.parse(atUtc))) return null;
-    const ref: HealthDeadlineRef = {
-      deadline_id: deadlineId,
-      at_utc: new Date(Date.parse(atUtc)).toISOString(),
-    };
+    const parsedLocalDate = asDate(localDate);
+    if (
+      (typeof atUtc !== "string" || !Number.isFinite(Date.parse(atUtc))) &&
+      parsedLocalDate === null
+    )
+      return null;
+    const ref: HealthDeadlineRef = { deadline_id: deadlineId };
+    if (parsedLocalDate !== null) ref.local_date = fmtDate(parsedLocalDate);
+    else ref.at_utc = new Date(Date.parse(String(atUtc))).toISOString();
     if (typeof rec.evidence_hash === "string" && rec.evidence_hash.trim()) {
       ref.evidence_hash = rec.evidence_hash.trim();
     }
@@ -903,7 +974,7 @@ interface DeadlineSlot {
   track: string;
   year: number | null;
   at_ms: number;
-  at_utc: string;
+  precision: "exact" | "date-only";
   evidence_hash?: string;
 }
 
@@ -925,7 +996,8 @@ function parseDeadlineSlot(ref: HealthDeadlineRef): DeadlineSlot | null {
     track = parts.slice(3).join("|");
   }
   const yearFromEdition = /^\d{4}$/.test(edition) ? Number(edition) : null;
-  const atMs = Date.parse(ref.at_utc);
+  const precision = ref.local_date ? "date-only" : "exact";
+  const atMs = Date.parse(ref.local_date ? `${ref.local_date}T00:00:00Z` : String(ref.at_utc));
   if (!Number.isFinite(atMs)) return null;
   return {
     deadline_id: deadlineSlotId(venue, edition, kind, round, track),
@@ -936,7 +1008,7 @@ function parseDeadlineSlot(ref: HealthDeadlineRef): DeadlineSlot | null {
     track,
     year: ref.edition_year ?? yearFromEdition,
     at_ms: atMs,
-    at_utc: new Date(atMs).toISOString(),
+    precision,
     evidence_hash: ref.evidence_hash,
   };
 }
@@ -1074,6 +1146,11 @@ function semanticDeadlineRegressions(
   const { pairs, unmatchedPrevious } = matchDeadlineSlots(previous, current);
   for (const pair of pairs) {
     if (pair.current.at_ms >= pair.previous.at_ms) continue;
+    if (
+      pair.current.precision === "date-only" &&
+      pair.previous.at_ms - pair.current.at_ms <= 48 * 3_600_000
+    )
+      continue;
     if (pair.current.evidence_hash) continue;
     reasons.push(`deadline pulled earlier without evidence: ${pair.previous.deadline_id}`);
   }
@@ -1304,9 +1381,11 @@ export function toCsv(records: DataRecord[] | null | undefined): string {
         dl.kind,
         dl.label ?? "",
         dl.round,
-        fmtUTC(dl.at_utc, "%Y-%m-%dT%H:%M:%SZ"),
-        aoeText(dl.at_utc),
-        dl.tz_raw ?? "",
+        isDateOnlyDeadline(dl) ? "date-only" : "exact",
+        isDateOnlyDeadline(dl) ? dl.local_date : "",
+        isExactDeadline(dl) ? fmtUTC(dl.at_utc, "%Y-%m-%dT%H:%M:%SZ") : "",
+        isExactDeadline(dl) ? aoeText(dl.at_utc) : "",
+        isExactDeadline(dl) ? dl.tz_raw : "",
         ed.event_start ? fmtDate(ed.event_start) : "",
         ed.event_end ? fmtDate(ed.event_end) : "",
         ed.place ?? "",
@@ -1368,26 +1447,40 @@ export function toUpcomingMd(
     if (rec.type === "deadline") {
       const dl = rec.deadline;
       if (dl === null) continue;
-      if (safeNow.getTime() > dl.at_utc.getTime() || dl.at_utc.getTime() > horizon.getTime())
-        continue;
-      const remainMs = dl.at_utc.getTime() - safeNow.getTime();
-      const remainDays = Math.floor(remainMs / DAY_MS);
       let left: string;
-      if (remainDays >= 1) {
-        left = `${remainDays}日`;
+      let when: string;
+      if (isDateOnlyDeadline(dl)) {
+        const deadlineDay = asDate(dl.local_date);
+        if (
+          deadlineDay === null ||
+          deadlineDay.getTime() < today.getTime() ||
+          deadlineDay.getTime() > dateOnly(horizon).getTime()
+        )
+          continue;
+        const remainDays = (deadlineDay.getTime() - today.getTime()) / DAY_MS;
+        left = remainDays === 0 ? "本日" : `${remainDays}日`;
+        when = `${dl.local_date}（時刻未確認）`;
       } else {
-        const hours = Math.floor(remainMs / 3_600_000);
-        if (hours >= 1) {
-          left = `${hours}時間`;
+        if (safeNow.getTime() > dl.at_utc.getTime() || dl.at_utc.getTime() > horizon.getTime())
+          continue;
+        const remainMs = dl.at_utc.getTime() - safeNow.getTime();
+        const remainDays = Math.floor(remainMs / DAY_MS);
+        if (remainDays >= 1) {
+          left = `${remainDays}日`;
         } else {
-          const mins = Math.max(1, Math.floor(remainMs / 60_000));
-          left = `${mins}分`;
+          const hours = Math.floor(remainMs / 3_600_000);
+          if (hours >= 1) {
+            left = `${hours}時間`;
+          } else {
+            const mins = Math.max(1, Math.floor(remainMs / 60_000));
+            left = `${mins}分`;
+          }
         }
+        when =
+          ed.estimated && ed.estimate
+            ? `推定期間 ${ed.estimate.window_start}〜${ed.estimate.window_end}`
+            : aoeText(dl.at_utc);
       }
-      const when =
-        ed.estimated && ed.estimate
-          ? `推定期間 ${ed.estimate.window_start}〜${ed.estimate.window_end}`
-          : aoeText(dl.at_utc);
       const kindText = escapeMdCell(rec.kind_label);
       const roundText = `R${dl.round}`;
       rows.push(
@@ -1497,9 +1590,9 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
       "|'camera_ready'|'rebuttal_start'|'rebuttal_end'|'review_release'" +
       "|'registration'|'other' の 10 種のみ。",
     "      - label: string：上流の表示用ラベル。",
-    "      - utc: string：'YYYY-MM-DDTHH:MM:SSZ'。比較・整列にはこれを使う。",
-    "      - aoe: string：'YYYY-MM-DD HH:MM:SS AoE'（UTC-12 での表記）。",
-    "      - tz_raw: string：上流の元タイムゾーン表記。",
+    "      - precision: 'exact'|'date-only'：締切値の精度。",
+    "      - exact は utc: 'YYYY-MM-DDTHH:MM:SSZ'、aoe、tz_raw を持つ。",
+    "      - date-only は local_date: 'YYYY-MM-DD' を持ち、utc/aoe/tz_raw は null。",
     "      - round: integer：1 起点。複数投稿ラウンドを持つ会議がある。",
     "      - comment: string|null：上流の注記。",
     "      - status: 'confirmed'|'estimated'：開催回の確定/推定状態。",
@@ -1509,9 +1602,10 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "",
     "## 利用上の注意",
     "",
-    "- 締切の比較は必ず deadlines[].utc で行う。aoe は表示用である。",
+    "- exact の比較は deadlines[].utc、date-only の比較は local_date で行う。aoe は表示用である。",
+    "- date-only を UTC、JST、AoE の時刻へ変換したり、時刻単位の残り時間へ使ったりしない。",
     "- estimated=true の版は推定窓であり、公式サイトで締切を確認してから利用する。",
-    "- data.csv は 1 行 1 締切のフラット表で、data.json の部分集合である。",
+    "- data.csv は 1 行 1 締切のフラット表で、deadline_precision と deadline_local_date を持つ。",
     "  comment・tags・thcpl ランクは列に無い。全情報が要るときは data.json を使う。",
     "- 権威は上流と各会議の公式サイトである。重要な判断の前に link 先を確認すること。",
     "",

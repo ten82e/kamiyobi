@@ -7,7 +7,14 @@ import { spawnSync } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { Conference, Deadline, DeadlineKind, Edition } from "../src/model.ts";
+import {
+  type Conference,
+  type Deadline,
+  type DeadlineKind,
+  type Edition,
+  type ExactDeadline,
+  isExactDeadline,
+} from "../src/model.ts";
 
 export const REPO_ROOT = join(import.meta.dirname, "..");
 export const FIXTURES = join(import.meta.dirname, "fixtures");
@@ -47,8 +54,13 @@ export function makeDeadline(
   tzRaw = "AoE",
   round = 1,
   comment: string | null = null,
-): Deadline {
+): ExactDeadline {
   return { kind, label, at_utc: atUtc, tz_raw: tzRaw, round, comment };
+}
+
+export function exactAt(deadline: Deadline): Date {
+  if (!isExactDeadline(deadline)) throw new Error("expected exact deadline");
+  return deadline.at_utc;
 }
 
 export function makeEdition(overrides: Partial<Edition> & { year: number }): Edition {
