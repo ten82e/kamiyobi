@@ -12,6 +12,7 @@ import {
   type Conference,
   type Deadline,
   type DeadlineKind,
+  deadlineEvidence,
   type Edition,
   embeddedTimezone,
   fmtDate,
@@ -50,6 +51,7 @@ const LEGACY_KIND_KEYS: Array<[DeadlineKind, string, string[]]> = [
 export function deadlinesOf(raw: Record<string, unknown> | null | undefined): Deadline[] {
   if (!raw || typeof raw !== "object") return [];
   const out: Deadline[] = [];
+  const sourceUrl = String(raw.source_url ?? raw.sourceUrl ?? raw.link ?? "");
   const parentTz = String(raw.tz ?? raw.timezone ?? "");
   for (const entry of (raw.deadlines as unknown[] | null) ?? []) {
     if (typeof entry !== "object" || entry === null) continue;
@@ -61,6 +63,7 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
       String(rec.kind ?? rec.type ?? ""),
     );
     const label = String(rec.label ?? kind);
+    const track = String(rec.track ?? "").trim();
     if (rec.precision === "date-only") {
       const localDate = asDate(rec.date);
       if (localDate === null || tzRaw.trim()) {
@@ -73,8 +76,15 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
         precision: "date-only",
         local_date: fmtDate(localDate),
         round: roundOf(label, Number(rec.round ?? 1) || 1),
+        ...(track ? { track: slug(track) } : {}),
         comment: rec.comment === null || rec.comment === undefined ? null : String(rec.comment),
         raw_value: String(rec.date),
+        evidence: deadlineEvidence(rec.evidence ?? raw.evidence, {
+          sourceName: NAME,
+          sourceClass: "curated-manual",
+          sourceUrl,
+          originalValue: String(rec.date),
+        }),
       });
       continue;
     }
@@ -87,8 +97,15 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
       tz_raw: embeddedTimezone(rec.date) ?? tzRaw,
       // A round named in the label wins over the explicit field.
       round: roundOf(label, Number(rec.round ?? 1) || 1),
+      ...(track ? { track: slug(track) } : {}),
       comment: rec.comment === null || rec.comment === undefined ? null : String(rec.comment),
       raw_value: String(rec.date),
+      evidence: deadlineEvidence(rec.evidence ?? raw.evidence, {
+        sourceName: NAME,
+        sourceClass: "curated-manual",
+        sourceUrl,
+        originalValue: String(rec.date),
+      }),
     });
   }
   if (out.length === 0) {
@@ -106,6 +123,12 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
               round: roundOf(label, 1),
               comment: null,
               raw_value: String(val),
+              evidence: deadlineEvidence(raw.evidence, {
+                sourceName: NAME,
+                sourceClass: "curated-manual",
+                sourceUrl,
+                originalValue: String(val),
+              }),
             });
           }
           break;

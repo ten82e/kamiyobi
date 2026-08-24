@@ -3,7 +3,7 @@
  *
  * 各会議のトピック（カテゴリ正式名の内容語 + タグ + full_name の内容語）から
  * 合成論文クエリを作り、その会議が全会議の中で top-K に入るかを計測する。
- * スコアリングは本番と同じコードパス（site/recommender.js の breakdown +
+ * スコアリングは本番と同じコードパス（site/recommender.ts の breakdown +
  * semanticScore + blendScore）を使うため、スコア改変の回帰検出に使える。
  *
  * 使い方:
@@ -37,6 +37,7 @@ import {
 } from "./embeddings.ts";
 import {
   loadRecommender,
+  type PaperLine,
   type RecommenderApi,
   type VenueRecommendation,
 } from "./recommender-api.ts";
@@ -66,6 +67,10 @@ export interface BenchArgs {
   v2: string | null;
   realV2Dev: string | null;
   realV2Heldout: string | null;
+  dataDelta: string | null;
+  dataDeltaBefore: string | null;
+  dataDeltaAfter: string | null;
+  json: boolean;
 }
 
 // 不正な数値（負・非整数・非数値）を既定値へフォールバック。
@@ -112,6 +117,10 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
     v2: null,
     realV2Dev: null,
     realV2Heldout: null,
+    dataDelta: null,
+    dataDeltaBefore: null,
+    dataDeltaAfter: null,
+    json: false,
   };
   const normalized = normalizeShortEquals(argv, {
     d: "data",
@@ -145,7 +154,11 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
       "bench-v2": { type: "string" },
       "real-v2-dev": { type: "string" },
       "real-v2-heldout": { type: "string" },
+      "data-delta": { type: "string" },
+      "data-delta-before": { type: "string" },
+      "data-delta-after": { type: "string" },
       sw: { type: "string" },
+      json: { type: "boolean" },
     },
     strict: false,
     allowPositionals: true,
@@ -177,7 +190,11 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
   args.v2 = stringValue(values.v2) ?? stringValue(values["bench-v2"]) ?? null;
   args.realV2Dev = stringValue(values["real-v2-dev"]) ?? null;
   args.realV2Heldout = stringValue(values["real-v2-heldout"]) ?? null;
+  args.dataDelta = stringValue(values["data-delta"]) ?? null;
+  args.dataDeltaBefore = stringValue(values["data-delta-before"]) ?? null;
+  args.dataDeltaAfter = stringValue(values["data-delta-after"]) ?? null;
   args.sw = stringValue(values.sw) ?? null;
+  args.json = booleanValue(values.json);
   for (const kv of (args.sw || "").split(",")) {
     const [k, v] = kv.split("=");
     if (!k) continue;
@@ -260,6 +277,212 @@ export interface BenchV2Result {
       modes: Record<"lexical" | "semantic" | "fused", BenchV2ModeResult>;
     }
   >;
+}
+
+export interface DataDeltaCase {
+  id: string;
+  synthetic: true;
+  title: string;
+  abstract?: string;
+  category: string;
+  language: "en" | "ja";
+  venue_kind: "international" | "domestic" | "workshop" | "journal" | "special-issue";
+  input: "title-only" | "abstract" | "out-of-scope" | "insufficient";
+  expected_venue: string | null;
+}
+
+export interface DataDeltaFixture {
+  schema: 1;
+  synthetic: true;
+  before_candidates: Array<Record<string, unknown>>;
+  after_candidates: Array<Record<string, unknown>>;
+  cases: DataDeltaCase[];
+}
+
+export interface DataDeltaResult {
+  case_count: number;
+  recall_at_1: number;
+  recall_at_5: number;
+  mrr: number;
+  ndcg_at_10: number;
+  abstention_rate: number;
+  changed_top5: string[];
+  new_venues_in_top5: string[];
+  expected_venues_dropped: string[];
+}
+
+function roundDelta(value: number): number {
+  return Number(value.toFixed(6));
+}
+
+const DATA_DELTA_NOW = Date.parse("2026-08-09T00:00:00Z");
+
+/** The data-delta pool is the Browser recommendation pool without UI-only past representatives. */
+export function dataDeltaTop5(
+  candidates: Array<Record<string, unknown>>,
+  lines: Array<{ title: string; abstract: string; keywords: string; venue: string }>,
+): string[] {
+  const rows = Recommender.candidateRows({ conferences: candidates }).concat(
+    Recommender.journalRows(candidates, DATA_DELTA_NOW),
+  );
+  return Recommender.venueRecommendations(rows, lines, null, DATA_DELTA_NOW, { topN: 5 })
+    .slice(0, 5)
+    .map((result) => result.venueKey);
+}
+
+function dataDeltaTop10(
+  candidates: Array<Record<string, unknown>>,
+  lines: Array<{ title: string; abstract: string; keywords: string; venue: string }>,
+): string[] {
+  const rows = Recommender.candidateRows({ conferences: candidates }).concat(
+    Recommender.journalRows(candidates, DATA_DELTA_NOW),
+  );
+  return Recommender.venueRecommendations(rows, lines, null, DATA_DELTA_NOW, { topN: 10 }).map(
+    (result) => result.venueKey,
+  );
+}
+
+export function fellOutOfTop5(
+  beforeTop5: string[],
+  expectedVenue: string,
+  afterTop10: string[],
+): boolean {
+  const index = afterTop10.indexOf(expectedVenue);
+  return beforeTop5.includes(expectedVenue) && (index < 0 || index >= 5);
+}
+
+export function runDataDeltaBenchmark(fixture: DataDeltaFixture): DataDeltaResult {
+  if (
+    fixture.schema !== 1 ||
+    fixture.synthetic !== true ||
+    !Array.isArray(fixture.cases) ||
+    !Array.isArray(fixture.before_candidates) ||
+    !Array.isArray(fixture.after_candidates)
+  ) {
+    throw new Error("data-delta fixture must be synthetic schema 1");
+  }
+  if (fixture.cases.length < 60 || fixture.cases.length > 100) {
+    throw new Error("data-delta fixture must contain 60-100 cases");
+  }
+  const categories = new Set(fixture.cases.map((item) => item.category));
+  const requiredCategories = [
+    "hpc",
+    "systems",
+    "networking",
+    "ai",
+    "security",
+    "db",
+    "graphics",
+    "hci",
+    "theory",
+  ];
+  if (requiredCategories.some((category) => !categories.has(category))) {
+    throw new Error("data-delta fixture lacks a supported category");
+  }
+  const has = <K extends keyof DataDeltaCase>(field: K, value: DataDeltaCase[K]): boolean =>
+    fixture.cases.some((item) => item[field] === value);
+  for (const language of ["en", "ja"] as const) {
+    if (!has("language", language)) throw new Error("data-delta fixture lacks language coverage");
+  }
+  for (const kind of [
+    "international",
+    "domestic",
+    "workshop",
+    "journal",
+    "special-issue",
+  ] as const) {
+    if (!has("venue_kind", kind)) throw new Error("data-delta fixture lacks venue kind coverage");
+  }
+  for (const input of ["title-only", "abstract", "out-of-scope", "insufficient"] as const) {
+    if (!has("input", input)) throw new Error("data-delta fixture lacks input coverage");
+  }
+  const ids = new Set<string>();
+  const changed: string[] = [];
+  const newVenues = new Set<string>();
+  const dropped = new Set<string>();
+  const ranks: Array<number | null> = [];
+  let abstentions = 0;
+  for (const item of fixture.cases) {
+    if (!item.id || !item.title || ids.has(item.id) || item.synthetic !== true) {
+      throw new Error("invalid data-delta case");
+    }
+    ids.add(item.id);
+    const lines = [{ title: item.title, abstract: item.abstract ?? "", keywords: "", venue: "" }];
+    const beforeTop10 = dataDeltaTop10(fixture.before_candidates, lines);
+    const afterTop10 = dataDeltaTop10(fixture.after_candidates, lines);
+    const beforeTop5 = beforeTop10.slice(0, 5);
+    const afterTop5 = afterTop10.slice(0, 5);
+    const rank = item.expected_venue ? afterTop10.indexOf(item.expected_venue) + 1 : 0;
+    if (afterTop10.length === 0) abstentions += 1;
+    // Null explicitly means that the input must abstain, never merely that an
+    // arbitrary expected key was absent from a non-empty recommendation list.
+    if (item.expected_venue === null && afterTop10.length !== 0) ranks.push(null);
+    else if (item.expected_venue === null) ranks.push(0);
+    else ranks.push(rank || null);
+    if (JSON.stringify(beforeTop5) !== JSON.stringify(afterTop5)) changed.push(item.id);
+    for (const venue of afterTop5) if (!beforeTop5.includes(venue)) newVenues.add(venue);
+    if (item.expected_venue && fellOutOfTop5(beforeTop5, item.expected_venue, afterTop10)) {
+      dropped.add(item.expected_venue);
+    }
+  }
+  const n = ranks.length;
+  const mean = (values: number[]): number => values.reduce((sum, value) => sum + value, 0) / n;
+  return {
+    case_count: n,
+    recall_at_1: roundDelta(ranks.filter((rank) => rank === 1).length / n),
+    recall_at_5: roundDelta(
+      ranks.filter((rank) => rank !== null && rank > 0 && rank <= 5).length / n,
+    ),
+    mrr: roundDelta(mean(ranks.map((rank) => (rank ? 1 / rank : 0)))),
+    ndcg_at_10: roundDelta(mean(ranks.map((rank) => (rank ? 1 / Math.log2(rank + 1) : 0)))),
+    abstention_rate: roundDelta(abstentions / n),
+    changed_top5: changed.sort(),
+    new_venues_in_top5: [...newVenues].sort(),
+    expected_venues_dropped: [...dropped].sort(),
+  };
+}
+
+/** Fail a required data check when labeled recommendation quality regresses. */
+export function dataDeltaRegressionReasons(
+  fixture: DataDeltaFixture,
+  result: DataDeltaResult,
+): string[] {
+  const baseline = runDataDeltaBenchmark({
+    ...fixture,
+    after_candidates: fixture.before_candidates,
+  });
+  const reasons = result.expected_venues_dropped.map(
+    (venue) => `expected venue dropped from Top-5: ${venue}`,
+  );
+  for (const metric of ["recall_at_1", "recall_at_5", "mrr", "ndcg_at_10"] as const) {
+    if (result[metric] < baseline[metric]) {
+      reasons.push(`${metric} regressed: ${baseline[metric]} -> ${result[metric]}`);
+    }
+  }
+  return reasons;
+}
+
+/** Substitute built recommendation indexes for the synthetic fixture catalogs. */
+export function dataDeltaWithIndexes(
+  fixture: DataDeltaFixture,
+  before: unknown,
+  after: unknown,
+): DataDeltaFixture {
+  const conferences = (value: unknown): Array<Record<string, unknown>> => {
+    if (
+      !value ||
+      typeof value !== "object" ||
+      !Array.isArray((value as { conferences?: unknown }).conferences)
+    ) {
+      throw new Error("data-delta recommendation index is missing conferences");
+    }
+    return (value as { conferences: Array<Record<string, unknown>> }).conferences;
+  };
+  return {
+    ...fixture,
+    before_candidates: conferences(before),
+    after_candidates: conferences(after),
+  };
 }
 
 function benchV2Text(value: unknown): string {
@@ -668,7 +891,9 @@ export function profileTitlesBefore(
     return Object.fromEntries(
       Object.entries(artifact.profiles).map(([venue, profile]) => [
         venue,
-        profile.papers.filter((paper) => paper.year <= sourceYearMax).map((paper) => paper.title),
+        profile.prototypes.filter((title) =>
+          profile.papers.some((paper) => paper.title === title && paper.year <= sourceYearMax),
+        ),
       ]),
     );
   }
@@ -1299,6 +1524,54 @@ export async function main(
     return 0;
   }
   const args = parseBenchArgs(rawArgs);
+  if (args.dataDelta) {
+    try {
+      const fixture = JSON.parse(readFileSync(args.dataDelta, "utf8")) as DataDeltaFixture;
+      const withIndexes =
+        args.dataDeltaBefore && args.dataDeltaAfter
+          ? dataDeltaWithIndexes(
+              fixture,
+              JSON.parse(readFileSync(args.dataDeltaBefore, "utf8")),
+              JSON.parse(readFileSync(args.dataDeltaAfter, "utf8")),
+            )
+          : fixture;
+      const result = runDataDeltaBenchmark(withIndexes);
+      process.stdout.write(`${JSON.stringify(result, null, args.json ? 0 : 2)}\n`);
+      const regressions = dataDeltaRegressionReasons(withIndexes, result);
+      if (regressions.length === 0) return 0;
+      process.stderr.write(`${regressions.join("\n")}\n`);
+      return 1;
+    } catch (error) {
+      process.stderr.write(
+        `data-delta benchmark failed: ${error instanceof Error ? error.message : String(error)}\n`,
+      );
+      return 1;
+    }
+  }
+  if (args.json && !args.v2 && rawArgs.length === 1) {
+    try {
+      const fixture = JSON.parse(
+        readFileSync(new URL("../tests/fixtures/bench-v2.json", import.meta.url), "utf8"),
+      ) as BenchV2Fixture;
+      const fused = runBenchmarkV2(fixture).splits.heldout.modes.fused;
+      process.stdout.write(
+        `${JSON.stringify({
+          recall_at_1: fused["recall@1"],
+          recall_at_5: fused["recall@5"],
+          mrr: fused.mrr,
+          ndcg_at_10: fused["ndcg@10"],
+          abstention_rate: 1 - fused.coverage,
+          changed_top_5_queries: [],
+          new_top_5_venues: [],
+          expected_venues_falling_out: [],
+        })}\n`,
+      );
+      return 0;
+    } catch (error) {
+      process.stderr.write(`recommendation benchmark failed: ${String(error)}\n`);
+      return 1;
+    }
+  }
   if (args.v2) {
     try {
       const fixture = JSON.parse(readFileSync(args.v2, "utf8")) as BenchV2Fixture;
@@ -1484,7 +1757,7 @@ export async function main(
     },
     cats: c.categories ?? [],
   });
-  const lines = (tw: string[], golden?: boolean): unknown[] =>
+  const lines = (tw: string[], golden?: boolean): PaperLine[] =>
     golden
       ? [{ title: tw.join(" "), keywords: "", venue: "" }]
       : [{ title: "", keywords: tw.join(" "), venue: "" }];

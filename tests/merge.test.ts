@@ -12,13 +12,20 @@ import {
   applyOverrides,
   classify,
   dedupDeadlinesAfterRollforward,
+  mergeDeadlineSlots,
   mergeSources,
   rankOk,
   rollforward,
   sanitizeEditions,
   select,
 } from "../src/merge.ts";
-import { type Conference, conferencesFromJson, type Deadline, type Edition } from "../src/model.ts";
+import {
+  type Conference,
+  conferencesFromJson,
+  type Deadline,
+  type Edition,
+  isExactDeadline,
+} from "../src/model.ts";
 import { DEFAULT_PATH, parseFile } from "../src/sources/local.ts";
 import { exactAt, makeConference, makeDeadline, makeEdition, REPO_ROOT } from "./helpers.ts";
 
@@ -55,6 +62,53 @@ const PRIORITY: Record<string, unknown> = {
 };
 
 describe("merge_sources", () => {
+  it("keeps primary slot updates isolated, supports remove, precision upgrade and conflicts", () => {
+    const exact = makeDeadline("paper", "Paper", utc(2026, 8, 24, 12), "UTC");
+    const abstract = makeDeadline("abstract", "Abstract", utc(2026, 8, 20), "UTC");
+    const dateOnly: Deadline = {
+      kind: "paper",
+      label: "Paper",
+      precision: "date-only",
+      local_date: "2026-08-24",
+      round: 1,
+      comment: null,
+    };
+    expect(mergeDeadlineSlots([exact, abstract], [dateOnly])).toHaveLength(2); // no downgrade; unobserved abstract remains
+    const upgraded = mergeDeadlineSlots([dateOnly], [exact]);
+    expect(upgraded[0].precision).toBe("exact");
+    const conflict = mergeDeadlineSlots(
+      [exact],
+      [makeDeadline("paper", "Paper", utc(2026, 8, 25), "UTC")],
+    );
+    expect(conflict[0].conflicts).toHaveLength(1);
+    const removed = mergeDeadlineSlots([exact, abstract], [{ ...exact, remove: true }]);
+    expect(removed.map((deadline) => deadline.kind)).toEqual(["abstract"]);
+  });
+
+  it("does not merge track or round mismatches and rejects exact outside a date-only interval", () => {
+    const dateOnly: Deadline = {
+      kind: "paper",
+      label: "Paper",
+      precision: "date-only",
+      local_date: "2026-08-24",
+      round: 1,
+      track: "regular",
+      comment: null,
+    };
+    const outside = makeDeadline("paper", "Paper", utc(2026, 8, 26), "UTC");
+    outside.track = "regular";
+    const blocked = mergeDeadlineSlots([dateOnly], [outside]);
+    expect(blocked[0].precision).toBe("date-only");
+    expect(blocked[0].conflicts).toHaveLength(1);
+    const reversed = mergeDeadlineSlots([outside], [dateOnly]);
+    expect(isExactDeadline(reversed[0])).toBe(true);
+    expect(reversed[0].conflicts).toHaveLength(1);
+    const industry = makeDeadline("paper", "Paper", utc(2026, 8, 24), "UTC");
+    industry.track = "industry";
+    const roundTwo = makeDeadline("paper", "Paper", utc(2026, 8, 24), "UTC", 2);
+    roundTwo.track = "regular";
+    expect(mergeDeadlineSlots([dateOnly], [industry, roundTwo])).toHaveLength(3);
+  });
   it("two sources for the same conference are merged", () => {
     const ccf = makeConference({
       key: "acl",
@@ -243,10 +297,13 @@ describe("merge_sources", () => {
           }),
         ],
       });
-    const merged = mergeSources([[one("ccfddl", "ccf")], [one("aideadlines", "hf")]], PRIORITY);
+    const merged = mergeSources(
+      [[one("ccfddl", "Paper submission")], [one("aideadlines", "Paper submission")]],
+      PRIORITY,
+    );
     const dls = deadlinesOf(merged[0]);
     expect(dls.length).toBe(1);
-    expect(dls[0].label).toBe("hf");
+    expect(dls[0].label).toBe("Paper submission");
   });
 
   it("three notifications in one edition survive a merge", () => {
@@ -322,6 +379,42 @@ describe("merge_sources", () => {
     expect(dls[0].comment ?? "").toContain("Paper submission");
   });
 
+  it("uses date-only interval containment for cross-source slots and separates round and track", () => {
+    const regular = makeDeadline("paper", "Paper", utc(2026, 2, 6, 12), "UTC");
+    regular.track = "regular";
+    const inside: Deadline = {
+      kind: "paper",
+      label: "Paper",
+      precision: "date-only",
+      local_date: "2026-02-06",
+      round: 1,
+      track: "regular",
+      comment: null,
+    };
+    const industry: Deadline = { ...inside, track: "industry" };
+    const roundTwo: Deadline = { ...inside, round: 2 };
+    const merged = mergeSources(
+      [[sigcomm("ccfddl", [regular])], [sigcomm("aideadlines", [inside, industry, roundTwo])]],
+      PRIORITY,
+    );
+    const deadlines = deadlinesOf(merged[0]);
+    expect(deadlines).toHaveLength(3);
+    expect(deadlines.some((deadline) => isExactDeadline(deadline))).toBe(true);
+    expect(new Set(deadlines.map((deadline) => `${deadline.track}:${deadline.round}`))).toEqual(
+      new Set(["regular:1", "industry:1", "regular:2"]),
+    );
+
+    const outside: Deadline = { ...inside, local_date: "2026-02-08" };
+    expect(
+      deadlinesOf(
+        mergeSources(
+          [[sigcomm("ccfddl", [regular])], [sigcomm("aideadlines", [outside])]],
+          PRIORITY,
+        )[0],
+      ),
+    ).toHaveLength(2);
+  });
+
   it("deduplicates equal date-only deadlines without mixing them with exact instants", () => {
     const dateOnlyDeadline: Deadline = {
       kind: "paper",
@@ -338,21 +431,20 @@ describe("merge_sources", () => {
     ]);
     const dls = deadlinesOf(mergeSources([[dateOnly], [duplicate], [exact]], PRIORITY)[0]);
 
-    expect(dls).toHaveLength(2);
-    expect(dls.filter((deadline) => deadline.precision === "date-only")).toHaveLength(1);
+    expect(dls).toHaveLength(1);
+    expect(dls[0].precision).not.toBe("date-only");
   });
 
-  it("same instant in two rounds of one source is one deadline", () => {
+  it("same instant in two rounds remains two slots", () => {
     const conf = sigcomm("ccfddl", [
       makeDeadline("paper", "Paper submission", utc(2026, 1, 27), "AoE", 1),
       makeDeadline("paper", "Paper submission", utc(2026, 1, 27), "AoE", 2),
     ]);
     const dls = deadlinesOf(mergeSources([[conf]], PRIORITY)[0]);
-    expect(dls.length).toBe(1);
-    expect(dls[0].round).toBe(1);
+    expect(dls.map((deadline) => deadline.round)).toEqual([1, 2]);
   });
 
-  it("round disagreement between sources is one deadline", () => {
+  it("round disagreement between sources is never merged", () => {
     const ccf = sigcomm("ccfddl", [
       makeDeadline("paper", "Paper submission", utc(2026, 8, 29), "AoE", 2),
     ]);
@@ -360,9 +452,7 @@ describe("merge_sources", () => {
       makeDeadline("paper", "Round 2 Paper Submissions", utc(2026, 8, 29), "AoE", 1),
     ]);
     const dls = deadlinesOf(mergeSources([[ccf], [hf]], PRIORITY)[0]);
-    expect(dls.length).toBe(1);
-    expect(dls[0].label).toBe("Round 2 Paper Submissions");
-    expect(dls[0].round).toBe(2);
+    expect(dls).toHaveLength(2);
   });
 
   it("genuine rounds months apart are not merged", () => {
@@ -401,8 +491,8 @@ describe("merge_sources", () => {
     ]);
     const stats = { merged_deadlines: 0, merged_by_key: {} as Record<string, number> };
     mergeSources([[conf]], PRIORITY, stats);
-    expect(stats.merged_deadlines).toBe(2);
-    expect(stats.merged_by_key.sigcomm).toBe(2);
+    expect(stats.merged_deadlines).toBe(0);
+    expect(stats.merged_by_key.sigcomm).toBeUndefined();
   });
 
   it("cross source tolerance is configurable", () => {
@@ -419,7 +509,9 @@ describe("merge_sources", () => {
       deadline_merge_cross_source_seconds: 0,
       deadline_merge_one_to_one_max_seconds: 0,
     };
-    expect(deadlinesOf(mergeSources([[ccf], [hf]], tight)[0]).length).toBe(3);
+    const tightDeadlines = deadlinesOf(mergeSources([[ccf], [hf]], tight)[0]);
+    expect(tightDeadlines).toHaveLength(2);
+    expect(tightDeadlines.some((deadline) => deadline.conflicts?.length === 1)).toBe(true);
     expect(deadlinesOf(mergeSources([[ccf], [hf]], PRIORITY)[0]).length).toBe(2);
   });
 
@@ -461,9 +553,7 @@ describe("merge_sources", () => {
       makeDeadline("paper", " paper  SUBMISSION ", at, "AoE", 2, "Poster-only papers"),
     ]);
     const dls = deadlinesOf(mergeSources([[conf]], PRIORITY)[0]);
-    expect(dls.length).toBe(1);
-    expect(dls[0].round).toBe(1);
-    expect(dls[0].comment ?? "").toContain("Poster-only papers");
+    expect(dls).toHaveLength(2);
   });
 
   it("a cross source match goes to the nearest candidate", () => {
@@ -478,9 +568,7 @@ describe("merge_sources", () => {
     ]);
     const ccf = sigcomm("ccfddl", [makeDeadline("paper", "Paper submission", at)]);
     const dls = deadlinesOf(mergeSources([[ccf], [hf]], PRIORITY)[0]);
-    expect(dls.length).toBe(2);
-    const absorbed = dls.filter((d) => (d.comment ?? "").includes("Paper submission"));
-    expect(absorbed.map((d) => d.label)).toEqual(["Technical Papers deadline"]);
+    expect(dls.length).toBe(3);
   });
 
   it("dedup runs again behind rollforward", () => {

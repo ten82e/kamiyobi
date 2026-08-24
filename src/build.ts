@@ -6,10 +6,13 @@
  * identical.  Ported from scripts/build.py (kamiyobi).
  */
 
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { recommendationAxes } from "../site/recommendation-core.ts";
 // 代表採択論文タイトル（会議のセマンティック/語彙プロファイル強化）。
 // データパイプラインで conferences に papers として載せ、ブラウザの語彙一致と
 // IDF（buildNameIdf）の両方に使えるようにする。
@@ -30,20 +33,47 @@ import {
   cmpStr,
   DAY_MS,
   type Deadline,
+  type DeadlineEvidence,
   dateOnly,
   dateOnlyState,
   dateOnlyWindow,
+  deadlineTrackKey,
   type Edition,
   exactDeadlineState,
   fmtDate,
   fmtUTC,
   isDateOnlyDeadline,
   isExactDeadline,
-  slug,
   warningCounts,
 } from "./model.ts";
 
 export let ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+export const SITE_RUNTIME_FILES = [
+  "recommender.js",
+  "recommendation-core.js",
+  "publish.js",
+  "app.js",
+] as const;
+
+/** Compile the strict browser sources once; build and runtime tests consume these bytes. */
+export function compileSiteRuntime(
+  root = ROOT,
+): Record<(typeof SITE_RUNTIME_FILES)[number], string> {
+  const siteBuild = mkdtempSync(join(tmpdir(), "kamiyobi-site-runtime-"));
+  try {
+    execFileSync(
+      join(root, "node_modules", ".bin", "tsc"),
+      ["-p", join(root, "site", "tsconfig.build.json"), "--outDir", siteBuild],
+      { stdio: "pipe" },
+    );
+    return Object.fromEntries(
+      SITE_RUNTIME_FILES.map((name) => [name, readFileSync(join(siteBuild, name), "utf8")]),
+    ) as Record<(typeof SITE_RUNTIME_FILES)[number], string>;
+  } finally {
+    rmSync(siteBuild, { recursive: true, force: true });
+  }
+}
 
 export function setRoot(root: string): void {
   ROOT = root;
@@ -377,7 +407,6 @@ export function toJson(
   const sources: Array<Record<string, unknown>> =
     (safeConfig.sources as Array<Record<string, unknown>> | null) ?? DEFAULT_SOURCES;
   const sourceByName = new Map(sources.map((source) => [String(source.name ?? ""), source]));
-  const observedAt = fmtUTC(safeNow, "%Y-%m-%dT%H:%M:%SZ");
   const evidenceOf = (
     sourceName: string,
     at: Date | null,
@@ -397,17 +426,20 @@ export function toJson(
                 ? `https://github.com/${String(source.repo)}`
                 : ""),
     );
-    const confidence = estimated
-      ? "estimated"
+    const sourceClass = estimated
+      ? "assumption"
       : sourceName === "local" || sourceName === "override"
-        ? "official"
+        ? "curated-manual"
         : "aggregator";
     return {
       source_name: sourceName,
       source_url: sourceUrl,
-      observed_at: observedAt,
+      observed_at: "",
       original_value: rawValue || (at ? fmtUTC(at, "%Y-%m-%dT%H:%M:%SZ") : ""),
-      confidence,
+      confidence: estimated ? "estimated" : "aggregator",
+      sourceClass,
+      ...(sourceUrl ? { sourceUrl } : {}),
+      ...(rawValue || at ? { rawExcerpt: rawValue || fmtUTC(at, "%Y-%m-%dT%H:%M:%SZ") } : {}),
     };
   };
   const outConfs: unknown[] = [];
@@ -439,14 +471,35 @@ export function toJson(
                   ed.estimated,
                 ),
               ];
+          const conflicts = dl.conflicts?.length
+            ? dl.conflicts.map((conflict) => ({
+                at_utc: fmtUTC(conflict.at_utc, "%Y-%m-%dT%H:%M:%SZ"),
+                ...(conflict.local_date
+                  ? { precision: "date-only", local_date: conflict.local_date }
+                  : {}),
+                label: conflict.label,
+                source: conflict.source,
+                original_value: conflict.raw_value || fmtUTC(conflict.at_utc, "%Y-%m-%dT%H:%M:%SZ"),
+                evidence:
+                  conflict.evidence ??
+                  evidenceOf(
+                    conflict.source,
+                    conflict.at_utc,
+                    conflict.raw_value ?? "",
+                    ed.estimated,
+                  ),
+              }))
+            : [];
           const common = {
             kind: dl.kind,
             label: dl.label,
             round: dl.round,
+            track: dl.track ?? "",
             comment: dl.comment,
             status: ed.estimated ? "estimated" : "confirmed",
             selection_rule: dl.selection_rule ?? DEADLINE_SELECTION_RULE,
             evidence,
+            ...(conflicts.length > 0 ? { conflicts } : {}),
           };
           if (isDateOnlyDeadline(dl)) {
             const window = dateOnlyWindow(dl.local_date);
@@ -468,25 +521,6 @@ export function toJson(
             utc: fmtUTC(dl.at_utc, "%Y-%m-%dT%H:%M:%SZ"),
             aoe: aoeText(dl.at_utc),
             tz_raw: dl.tz_raw,
-            ...(dl.conflicts?.length
-              ? {
-                  conflicts: dl.conflicts.map((conflict) => ({
-                    at_utc: fmtUTC(conflict.at_utc, "%Y-%m-%dT%H:%M:%SZ"),
-                    label: conflict.label,
-                    source: conflict.source,
-                    original_value:
-                      conflict.raw_value || fmtUTC(conflict.at_utc, "%Y-%m-%dT%H:%M:%SZ"),
-                    evidence:
-                      conflict.evidence ??
-                      evidenceOf(
-                        conflict.source,
-                        conflict.at_utc,
-                        conflict.raw_value ?? "",
-                        ed.estimated,
-                      ),
-                  })),
-                }
-              : {}),
           };
         }),
       });
@@ -646,7 +680,10 @@ export function toRecommendationIndex(
         return compactEdition(edition, [future ?? deadlines[deadlines.length - 1]]);
       })
       .filter((edition): edition is JsonRecord => edition !== null);
-    return compactConference(conf, editions, true);
+    return {
+      ...compactConference(conf, editions, true),
+      recommendation_axes: recommendationAxes(conf, null, safeNow.getTime()),
+    };
   });
   return {
     generated_at: data.generated_at,
@@ -660,7 +697,12 @@ export function toRecommendationIndex(
   };
 }
 
-export type HealthSourceStatus = "success" | "failed";
+export type HealthSourceStatus =
+  | "fresh"
+  | "cache-fallback"
+  | "snapshot-fallback"
+  | "failed"
+  | "success";
 
 export const HEALTH_SCHEMA_VERSION = 2;
 export const HEALTH_DEADLINE_LOOKBACK_MS = 14 * DAY_MS;
@@ -668,6 +710,18 @@ export const HEALTH_DEADLINE_LOOKBACK_MS = 14 * DAY_MS;
 export interface HealthOutputFile {
   bytes: number;
   sha256: string;
+}
+
+export interface HealthSourceMetadata {
+  source: string;
+  status: HealthSourceStatus;
+  revision: string | null;
+  fetchedAt: string | null;
+  contentHash: string | null;
+  cacheAgeSeconds: number | null;
+  conferenceCount: number;
+  editionCount: number;
+  deadlineCount: number;
 }
 
 export type SemanticStatus = "ready" | "lexical-only";
@@ -678,10 +732,19 @@ export interface PublishArtifact {
 }
 
 export interface PublishManifest {
-  schema_version: 1;
+  schema_version: 1 | 2;
   generated_at: string;
   semantic_status: SemanticStatus;
   artifacts: Record<string, PublishArtifact>;
+  build_id?: string;
+  profile_hash?: string;
+}
+
+export function publishBuildId(now: Date, profileHash: string): string {
+  return createHash("sha256")
+    .update(`${now.toISOString()}\0${profileHash}`)
+    .digest("hex")
+    .slice(0, 16);
 }
 
 export interface HealthDeadlineRef {
@@ -690,7 +753,21 @@ export interface HealthDeadlineRef {
   local_date?: string;
   evidence_hash?: string;
   edition_year?: number;
+  earliest_utc?: string;
+  latest_utc?: string;
+  evidence?: HealthDeadlineEvidence[];
 }
+
+export type HealthDeadlineEvidence = Pick<
+  DeadlineEvidence,
+  | "sourceClass"
+  | "sourceUrl"
+  | "sourceRevision"
+  | "retrievedAt"
+  | "verifiedAt"
+  | "contentHash"
+  | "verifiedFields"
+>;
 
 /** Schema 1 last-known-good reports embedded the UTC instant in `id`. */
 export interface LegacyHealthDeadlineRef {
@@ -703,6 +780,7 @@ export interface HealthReport {
   generated_at: string;
   profile_hash: string;
   source_status: Record<string, HealthSourceStatus>;
+  source_metadata?: Record<string, HealthSourceMetadata>;
   source_failures: string[];
   tracked_venues: number;
   future_confirmed_venues: number;
@@ -712,6 +790,11 @@ export interface HealthReport {
   confirmed_future_deadlines: number;
   estimated_future_deadlines: number;
   venues_with_confirmed_future_deadline: number;
+  future_exact_deadlines?: number;
+  future_date_only_deadlines?: number;
+  future_estimated_deadlines?: number;
+  venues_with_exact_future_deadline?: number;
+  venues_with_date_only_future_deadline?: number;
   snapshot_fallback: boolean;
   parse_warnings: Record<string, number>;
   parse_warning_count: number;
@@ -725,6 +808,7 @@ export interface HealthReport {
 
 export interface HealthReportOptions {
   sourceStatus?: Record<string, HealthSourceStatus>;
+  sourceMetadata?: Record<string, HealthSourceMetadata>;
   sourceFailures?: string[];
   snapshotFallback?: boolean;
   parseWarnings?: Record<string, number>;
@@ -734,28 +818,12 @@ export interface HealthReportOptions {
   outputFiles?: Record<string, HealthOutputFile>;
 }
 
-const GENERIC_TRACK_KEYS = new Set([
-  "submission",
-  "deadline",
-  "paper-submission",
-  "paper-deadline",
-  "abstract-submission",
-  "abstract-deadline",
-  "camera-ready",
-  "camera-ready-deadline",
-]);
-
-export function normalizedTrackKey(label: string | null | undefined, kind: string): string {
-  const kindSlug = slug(kind) || "other";
-  const stripped = String(label ?? "")
-    .toLowerCase()
-    .replace(/\bround\s*\d+\b/g, " ")
-    .replace(/\br\s*\d+\b/g, " ");
-  const key = slug(stripped);
-  if (!key || key === kindSlug || key === `${kindSlug}-submission` || GENERIC_TRACK_KEYS.has(key)) {
-    return "";
-  }
-  return key;
+export function normalizedTrackKey(
+  label: string | null | undefined,
+  kind: string,
+  explicitTrack?: string | null | undefined,
+): string {
+  return deadlineTrackKey(label, kind, explicitTrack);
 }
 
 export function deadlineSlotId(
@@ -775,12 +843,43 @@ function deadlineRound(value: unknown): number {
 
 function officialEvidenceHash(deadline: JsonRecord): string | undefined {
   const items = jsonRecords(deadline.evidence)
-    .filter((item) => String(item.confidence ?? "") === "official")
-    .map((item) => `${String(item.source_url ?? "")}\n${String(item.original_value ?? "")}`)
+    .filter((item) => ["official-cfp", "publisher"].includes(String(item.sourceClass ?? "")))
+    .filter((item) => {
+      const fields = jsonStrings(item.verifiedFields);
+      return (
+        fields.includes("date") && (fields.includes("time") ? fields.includes("timezone") : true)
+      );
+    })
+    .map(
+      (item) =>
+        `${String(item.sourceUrl ?? item.source_url ?? "")}\n${String(item.contentHash ?? item.sourceRevision ?? item.original_value ?? "")}`,
+    )
     .filter((row) => row !== "\n")
     .sort(cmpStr);
   if (items.length === 0) return undefined;
   return createHash("sha256").update(items.join("\n")).digest("hex").slice(0, 16);
+}
+
+function healthEvidence(deadline: JsonRecord): HealthDeadlineEvidence[] {
+  return jsonRecords(deadline.evidence)
+    .map((item): HealthDeadlineEvidence | null => {
+      const sourceClass = String(item.sourceClass ?? "");
+      const sourceUrl = String(item.sourceUrl ?? item.source_url ?? "");
+      const fields = jsonStrings(item.verifiedFields).filter((field) =>
+        ["date", "time", "timezone", "kind", "round", "track"].includes(field),
+      ) as NonNullable<DeadlineEvidence["verifiedFields"]>;
+      if (!sourceClass && !sourceUrl && fields.length === 0) return null;
+      return {
+        ...(sourceClass ? { sourceClass: sourceClass as DeadlineEvidence["sourceClass"] } : {}),
+        ...(sourceUrl ? { sourceUrl } : {}),
+        ...(typeof item.sourceRevision === "string" ? { sourceRevision: item.sourceRevision } : {}),
+        ...(typeof item.retrievedAt === "string" ? { retrievedAt: item.retrievedAt } : {}),
+        ...(typeof item.verifiedAt === "string" ? { verifiedAt: item.verifiedAt } : {}),
+        ...(typeof item.contentHash === "string" ? { contentHash: item.contentHash } : {}),
+        ...(fields.length > 0 ? { verifiedFields: fields } : {}),
+      };
+    })
+    .filter((item): item is HealthDeadlineEvidence => item !== null);
 }
 
 /** Build a deterministic health summary from the exact data payload being published. */
@@ -810,9 +909,14 @@ export function healthReport(
   const categoryCounts: Record<string, number> = {};
   const presentVenues = new Set<string>();
   const confirmedVenues = new Set<string>();
+  const exactVenues = new Set<string>();
+  const dateOnlyVenues = new Set<string>();
   const estimatedVenues = new Set<string>();
   let confirmedDeadlines = 0;
   let estimatedDeadlines = 0;
+  let futureExact = 0;
+  let futureDateOnly = 0;
+  let futureEstimated = 0;
   const deadlineRefs: HealthDeadlineRef[] = [];
   const lookbackStart = safeNow - HEALTH_DEADLINE_LOOKBACK_MS;
   for (const conference of conferences) {
@@ -836,7 +940,11 @@ export function healthReport(
         if (!estimated && key && latest >= lookbackStart) {
           const kind = String(deadline.kind ?? "other").trim() || "other";
           const round = deadlineRound(deadline.round);
-          const track = normalizedTrackKey(String(deadline.label ?? ""), kind);
+          const track = normalizedTrackKey(
+            String(deadline.label ?? ""),
+            kind,
+            typeof deadline.track === "string" ? deadline.track : "",
+          );
           const ref: HealthDeadlineRef = {
             deadline_id: deadlineSlotId(key, editionId, kind, round, track),
             ...(dateOnlyPrecision
@@ -844,14 +952,67 @@ export function healthReport(
               : { at_utc: new Date(timestamp).toISOString() }),
           };
           if (Number.isInteger(editionYear) && editionYear > 0) ref.edition_year = editionYear;
+          ref.earliest_utc = new Date(timestamp).toISOString();
+          ref.latest_utc = new Date(latest).toISOString();
           const evidenceHash = officialEvidenceHash(deadline);
           if (evidenceHash) ref.evidence_hash = evidenceHash;
+          const evidence = healthEvidence(deadline);
+          if (evidence.length > 0) ref.evidence = evidence;
           deadlineRefs.push(ref);
+          // A merge conflict is an alternate observed value in this exact slot.
+          // Keep it in health refs so the gate cannot silently bless the winner.
+          for (const conflict of jsonRecords(deadline.conflicts)) {
+            const conflictDate = asDate(conflict.local_date);
+            if (conflictDate !== null) {
+              const localDate = fmtDate(conflictDate);
+              const conflictWindow = dateOnlyWindow(localDate)!;
+              deadlineRefs.push({
+                deadline_id: ref.deadline_id,
+                local_date: localDate,
+                earliest_utc: conflictWindow.earliestPossibleUtc.toISOString(),
+                latest_utc: conflictWindow.latestPossibleUtc.toISOString(),
+                ...(ref.edition_year === undefined ? {} : { edition_year: ref.edition_year }),
+              });
+              continue;
+            }
+            const conflictAt = Date.parse(String(conflict.at_utc ?? ""));
+            // Upstreams normalize an HH:MM deadline to either :00 or :59. Only that
+            // conventional pair is equivalent; other sub-minute differences are real conflicts.
+            const seconds = new Set([conflictAt % 60_000, timestamp % 60_000]);
+            if (
+              !Number.isFinite(conflictAt) ||
+              (Math.floor(conflictAt / 60_000) === Math.floor(timestamp / 60_000) &&
+                seconds.size === 2 &&
+                seconds.has(0) &&
+                seconds.has(59_000))
+            )
+              continue;
+            const alternate: HealthDeadlineRef = {
+              deadline_id: ref.deadline_id,
+              at_utc: new Date(conflictAt).toISOString(),
+              earliest_utc: new Date(conflictAt).toISOString(),
+              latest_utc: new Date(conflictAt).toISOString(),
+              ...(ref.edition_year === undefined ? {} : { edition_year: ref.edition_year }),
+            };
+            const alternateEvidence = healthEvidence(conflict);
+            if (alternateEvidence.length > 0) alternate.evidence = alternateEvidence;
+            deadlineRefs.push(alternate);
+          }
         }
         if (latest < safeNow) continue;
         hasFuture = true;
-        if (estimated) estimatedDeadlines += 1;
-        else confirmedDeadlines += 1;
+        if (estimated) {
+          estimatedDeadlines += 1;
+          futureEstimated += 1;
+        } else if (dateOnlyPrecision) {
+          confirmedDeadlines += 1;
+          futureDateOnly += 1;
+          if (key) dateOnlyVenues.add(key);
+        } else {
+          confirmedDeadlines += 1;
+          futureExact += 1;
+          if (key) exactVenues.add(key);
+        }
       }
       if (hasFuture && key) (estimated ? estimatedVenues : confirmedVenues).add(key);
     }
@@ -872,9 +1033,7 @@ export function healthReport(
     Object.values(parseWarnings).reduce((sum, count) => sum + count, 0);
   const profileHash =
     options.profileHash ?? embeddingProfileHash(data as Parameters<typeof embeddingProfileHash>[0]);
-  const uniqueDeadlineRefs = [
-    ...new Map(deadlineRefs.map((ref) => [ref.deadline_id, ref])).values(),
-  ].sort(
+  const sortedDeadlineRefs = [...deadlineRefs].sort(
     (a, b) =>
       cmpStr(a.deadline_id, b.deadline_id) ||
       cmpStr(a.at_utc ?? a.local_date ?? "", b.at_utc ?? b.local_date ?? ""),
@@ -884,6 +1043,7 @@ export function healthReport(
     generated_at: String(data.generated_at ?? ""),
     profile_hash: profileHash,
     source_status: sourceStatus,
+    source_metadata: options.sourceMetadata,
     source_failures: sourceFailures,
     tracked_venues: conferences.length,
     future_confirmed_venues: confirmedVenues.size,
@@ -893,6 +1053,11 @@ export function healthReport(
     confirmed_future_deadlines: confirmedDeadlines,
     estimated_future_deadlines: estimatedDeadlines,
     venues_with_confirmed_future_deadline: confirmedVenues.size,
+    future_exact_deadlines: futureExact,
+    future_date_only_deadlines: futureDateOnly,
+    future_estimated_deadlines: futureEstimated,
+    venues_with_exact_future_deadline: exactVenues.size,
+    venues_with_date_only_future_deadline: dateOnlyVenues.size,
     snapshot_fallback: Boolean(options.snapshotFallback),
     parse_warnings: parseWarnings,
     parse_warning_count: Math.max(0, Number(parseWarningCount) || 0),
@@ -904,13 +1069,14 @@ export function healthReport(
     output_files: Object.fromEntries(
       Object.entries(options.outputFiles ?? {}).sort(([a], [b]) => cmpStr(a, b)),
     ),
-    deadline_refs: uniqueDeadlineRefs,
+    deadline_refs: sortedDeadlineRefs,
   };
 }
 
 export interface HealthGateResult {
   ok: boolean;
   reasons: string[];
+  warnings: string[];
 }
 
 function reportNumber(report: Partial<HealthReport>, primary: string, fallback: string): number {
@@ -963,11 +1129,27 @@ function reportDeadlineRefs(report: Partial<HealthReport>): HealthDeadlineRef[] 
     )
       return null;
     const ref: HealthDeadlineRef = { deadline_id: deadlineId };
-    if (parsedLocalDate !== null) ref.local_date = fmtDate(parsedLocalDate);
-    else ref.at_utc = new Date(Date.parse(String(atUtc))).toISOString();
+    if (parsedLocalDate !== null) {
+      ref.local_date = fmtDate(parsedLocalDate);
+      const window = dateOnlyWindow(ref.local_date)!;
+      ref.earliest_utc = window.earliestPossibleUtc.toISOString();
+      ref.latest_utc = window.latestPossibleUtc.toISOString();
+    } else {
+      ref.at_utc = new Date(Date.parse(String(atUtc))).toISOString();
+      ref.earliest_utc = ref.at_utc;
+      ref.latest_utc = ref.at_utc;
+    }
+    if (typeof rec.earliest_utc === "string" && Number.isFinite(Date.parse(rec.earliest_utc))) {
+      ref.earliest_utc = new Date(Date.parse(rec.earliest_utc)).toISOString();
+    }
+    if (typeof rec.latest_utc === "string" && Number.isFinite(Date.parse(rec.latest_utc))) {
+      ref.latest_utc = new Date(Date.parse(rec.latest_utc)).toISOString();
+    }
     if (typeof rec.evidence_hash === "string" && rec.evidence_hash.trim()) {
       ref.evidence_hash = rec.evidence_hash.trim();
     }
+    const evidence = healthEvidence(rec);
+    if (evidence.length > 0) ref.evidence = evidence;
     if (typeof rec.edition_year === "number" && Number.isInteger(rec.edition_year)) {
       ref.edition_year = rec.edition_year;
     }
@@ -988,9 +1170,11 @@ interface DeadlineSlot {
   round: number;
   track: string;
   year: number | null;
-  at_ms: number;
+  earliest_ms: number;
+  latest_ms: number;
   precision: "exact" | "date-only";
   evidence_hash?: string;
+  evidence: HealthDeadlineEvidence[];
 }
 
 function parseDeadlineSlot(ref: HealthDeadlineRef): DeadlineSlot | null {
@@ -1012,8 +1196,13 @@ function parseDeadlineSlot(ref: HealthDeadlineRef): DeadlineSlot | null {
   }
   const yearFromEdition = /^\d{4}$/.test(edition) ? Number(edition) : null;
   const precision = ref.local_date ? "date-only" : "exact";
-  const atMs = Date.parse(ref.local_date ? `${ref.local_date}T00:00:00Z` : String(ref.at_utc));
-  if (!Number.isFinite(atMs)) return null;
+  const fallback = ref.local_date ? dateOnlyWindow(ref.local_date) : null;
+  const earliestMs = Date.parse(
+    String(ref.earliest_utc ?? fallback?.earliestPossibleUtc ?? ref.at_utc),
+  );
+  const latestMs = Date.parse(String(ref.latest_utc ?? fallback?.latestPossibleUtc ?? ref.at_utc));
+  if (!Number.isFinite(earliestMs) || !Number.isFinite(latestMs) || earliestMs > latestMs)
+    return null;
   return {
     deadline_id: deadlineSlotId(venue, edition, kind, round, track),
     venue,
@@ -1022,19 +1211,12 @@ function parseDeadlineSlot(ref: HealthDeadlineRef): DeadlineSlot | null {
     round,
     track,
     year: ref.edition_year ?? yearFromEdition,
-    at_ms: atMs,
+    earliest_ms: earliestMs,
+    latest_ms: latestMs,
     precision,
     evidence_hash: ref.evidence_hash,
+    evidence: ref.evidence ?? [],
   };
-}
-
-function slotMatchCost(previous: DeadlineSlot, current: DeadlineSlot): number {
-  const hours = Math.abs(previous.at_ms - current.at_ms) / 3_600_000;
-  return (
-    hours +
-    (previous.round === current.round ? 0 : 100) +
-    (previous.track === current.track ? 0 : 10)
-  );
 }
 
 function matchDeadlineSlots(
@@ -1059,73 +1241,12 @@ function matchDeadlineSlots(
       (index) => !usedCurrent.has(index),
     );
     if (candidates.length === 0) return;
-    candidates.sort(
-      (a, b) =>
-        Math.abs(current[a].at_ms - slot.at_ms) - Math.abs(current[b].at_ms - slot.at_ms) || a - b,
-    );
+    candidates.sort((a, b) => current[a].earliest_ms - current[b].earliest_ms || a - b);
     const currentIndex = candidates[0];
     usedPrevious.add(previousIndex);
     usedCurrent.add(currentIndex);
     pairs.push({ previous: slot, current: current[currentIndex] });
   });
-
-  const greedy = (keyOf: (slot: DeadlineSlot) => string | null): void => {
-    const previousLeft: Array<[DeadlineSlot, number]> = [];
-    const currentLeft: Array<[DeadlineSlot, number]> = [];
-    previous.forEach((slot, index) => {
-      if (!usedPrevious.has(index) && keyOf(slot) !== null) previousLeft.push([slot, index]);
-    });
-    current.forEach((slot, index) => {
-      if (!usedCurrent.has(index) && keyOf(slot) !== null) currentLeft.push([slot, index]);
-    });
-    const previousGroups = new Map<string, Array<[DeadlineSlot, number]>>();
-    for (const item of previousLeft) {
-      const key = keyOf(item[0]);
-      if (key === null) continue;
-      const list = previousGroups.get(key) ?? [];
-      list.push(item);
-      previousGroups.set(key, list);
-    }
-    const currentGroups = new Map<string, Array<[DeadlineSlot, number]>>();
-    for (const item of currentLeft) {
-      const key = keyOf(item[0]);
-      if (key === null) continue;
-      const list = currentGroups.get(key) ?? [];
-      list.push(item);
-      currentGroups.set(key, list);
-    }
-    for (const [key, previousItems] of previousGroups) {
-      const currentItems = currentGroups.get(key);
-      if (!currentItems) continue;
-      const edges: Array<{ previousIndex: number; currentIndex: number; cost: number }> = [];
-      for (const [previousSlot, previousIndex] of previousItems) {
-        for (const [currentSlot, currentIndex] of currentItems) {
-          if (previousSlot.round !== currentSlot.round) continue;
-          edges.push({
-            previousIndex,
-            currentIndex,
-            cost: slotMatchCost(previousSlot, currentSlot),
-          });
-        }
-      }
-      edges.sort(
-        (a, b) =>
-          a.cost - b.cost || a.previousIndex - b.previousIndex || a.currentIndex - b.currentIndex,
-      );
-      for (const edge of edges) {
-        if (usedPrevious.has(edge.previousIndex) || usedCurrent.has(edge.currentIndex)) continue;
-        usedPrevious.add(edge.previousIndex);
-        usedCurrent.add(edge.currentIndex);
-        pairs.push({
-          previous: previous[edge.previousIndex],
-          current: current[edge.currentIndex],
-        });
-      }
-    }
-  };
-
-  greedy((slot) => `${slot.venue}\0${slot.edition}\0${slot.kind}`);
-  greedy((slot) => (slot.year === null ? null : `${slot.venue}\0${slot.year}\0${slot.kind}`));
 
   return {
     pairs,
@@ -1133,20 +1254,114 @@ function matchDeadlineSlots(
   };
 }
 
+function resolveSlotGroups(
+  slots: DeadlineSlot[],
+  side: string,
+): { slots: DeadlineSlot[]; reasons: string[]; warnings: string[] } {
+  const grouped = new Map<string, DeadlineSlot[]>();
+  for (const slot of slots)
+    grouped.set(slot.deadline_id, [...(grouped.get(slot.deadline_id) ?? []), slot]);
+  const resolved: DeadlineSlot[] = [];
+  const reasons: string[] = [];
+  const warnings: string[] = [];
+  for (const [id, members] of grouped) {
+    const exact = members.filter((member) => member.precision === "exact");
+    const dateOnly = members.filter((member) => member.precision === "date-only");
+    const exactValues = new Set(exact.map((member) => `${member.earliest_ms}/${member.latest_ms}`));
+    const dateOnlyValues = new Set(
+      dateOnly.map((member) => `${member.earliest_ms}/${member.latest_ms}`),
+    );
+    if (
+      exactValues.size > 1 ||
+      dateOnlyValues.size > 1 ||
+      exact.length > 1 ||
+      dateOnly.length > 1
+    ) {
+      if (exactValues.size === 1 && dateOnlyValues.size === 0) {
+        warnings.push(`${side} duplicate deadline slot: ${id}`);
+        resolved.push(exact[0]);
+        continue;
+      }
+      if (dateOnlyValues.size === 1 && exactValues.size === 0) {
+        warnings.push(`${side} duplicate deadline slot: ${id}`);
+        resolved.push(dateOnly[0]);
+        continue;
+      }
+    }
+    if (exact.length > 0 && dateOnly.length > 0) {
+      const exactValue = exact[0];
+      const dateValue = dateOnly[0];
+      if (
+        exactValues.size === 1 &&
+        dateOnlyValues.size === 1 &&
+        exactValue.earliest_ms >= dateValue.earliest_ms &&
+        exactValue.latest_ms <= dateValue.latest_ms
+      ) {
+        warnings.push(`${side} deadline slot precision resolved: ${id}`);
+        resolved.push(exactValue);
+        continue;
+      }
+    }
+    if (members.length === 1) {
+      resolved.push(members[0]);
+      continue;
+    }
+    reasons.push(`${side} deadline slot conflict: ${id}`);
+  }
+  return { slots: resolved, reasons, warnings };
+}
+
+function evidenceIdentity(evidence: HealthDeadlineEvidence): string {
+  return `${evidence.sourceClass ?? ""}\n${evidence.sourceUrl ?? ""}\n${evidence.contentHash ?? evidence.sourceRevision ?? ""}`;
+}
+
+function evidenceTime(evidence: HealthDeadlineEvidence): number | null {
+  const value = Date.parse(String(evidence.verifiedAt ?? evidence.retrievedAt ?? ""));
+  return Number.isFinite(value) ? value : null;
+}
+
+function authorizesEarlier(previous: DeadlineSlot, current: DeadlineSlot): boolean {
+  const required = current.precision === "exact" ? ["date", "time", "timezone"] : ["date"];
+  const official = (evidence: HealthDeadlineEvidence): boolean =>
+    (evidence.sourceClass === "official-cfp" || evidence.sourceClass === "publisher") &&
+    Boolean(evidence.contentHash || evidence.sourceRevision) &&
+    evidenceTime(evidence) !== null;
+  const prior = previous.evidence.filter(
+    (evidence) => official(evidence) && evidence.verifiedFields?.includes("date"),
+  );
+  const latestPrior = Math.max(
+    ...prior.map((evidence) => evidenceTime(evidence)!),
+    Number.NEGATIVE_INFINITY,
+  );
+  if (!Number.isFinite(latestPrior)) return false;
+  const priorIds = new Set(prior.map(evidenceIdentity));
+  return current.evidence.some((evidence) => {
+    const time = evidenceTime(evidence);
+    return (
+      official(evidence) &&
+      required.every((field) => evidence.verifiedFields?.includes(field as never)) &&
+      time !== null &&
+      time > latestPrior &&
+      !priorIds.has(evidenceIdentity(evidence))
+    );
+  });
+}
+
 function semanticDeadlineRegressions(
   previousRefs: HealthDeadlineRef[],
   currentRefs: HealthDeadlineRef[],
   previousTime: number,
   currentTime: number,
-): string[] {
+): HealthGateResult {
   const reasons: string[] = [];
+  const warnings: string[] = [];
   const previous: DeadlineSlot[] = [];
   const current: DeadlineSlot[] = [];
   for (const ref of previousRefs) {
     const slot = parseDeadlineSlot(ref);
     if (!slot) {
       reasons.push(`previous confirmed deadline references are malformed`);
-      return reasons;
+      return { ok: false, reasons, warnings };
     }
     previous.push(slot);
   }
@@ -1154,28 +1369,50 @@ function semanticDeadlineRegressions(
     const slot = parseDeadlineSlot(ref);
     if (!slot) {
       reasons.push(`current confirmed deadline references are malformed`);
-      return reasons;
+      return { ok: false, reasons, warnings };
     }
     current.push(slot);
   }
-  const { pairs, unmatchedPrevious } = matchDeadlineSlots(previous, current);
+  const oldGroups = resolveSlotGroups(previous, "previous");
+  const newGroups = resolveSlotGroups(current, "current");
+  reasons.push(...oldGroups.reasons, ...newGroups.reasons);
+  warnings.push(...oldGroups.warnings, ...newGroups.warnings);
+  if (reasons.length > 0) return { ok: false, reasons, warnings };
+  const { pairs, unmatchedPrevious } = matchDeadlineSlots(oldGroups.slots, newGroups.slots);
   for (const pair of pairs) {
-    if (pair.current.at_ms >= pair.previous.at_ms) continue;
+    if (pair.previous.precision === "exact" && pair.current.precision === "date-only") {
+      reasons.push(`deadline precision regressed: ${pair.previous.deadline_id}`);
+      continue;
+    }
     if (
-      pair.current.precision === "date-only" &&
-      pair.previous.at_ms - pair.current.at_ms <= 48 * 3_600_000
+      pair.previous.precision === "date-only" &&
+      pair.current.precision === "exact" &&
+      pair.current.earliest_ms >= pair.previous.earliest_ms &&
+      pair.current.latest_ms <= pair.previous.latest_ms
     )
       continue;
-    if (pair.current.evidence_hash) continue;
+    if (
+      pair.previous.precision === "date-only" &&
+      pair.current.precision === "date-only" &&
+      pair.current.latest_ms >= pair.previous.latest_ms
+    )
+      continue;
+    if (
+      pair.previous.precision === "exact" &&
+      pair.current.precision === "exact" &&
+      pair.current.latest_ms >= pair.previous.latest_ms
+    )
+      continue;
+    if (authorizesEarlier(pair.previous, pair.current)) continue;
     reasons.push(`deadline pulled earlier without evidence: ${pair.previous.deadline_id}`);
   }
   for (const slot of unmatchedPrevious) {
-    if (slot.at_ms <= previousTime) continue;
-    if (!Number.isFinite(currentTime) || slot.at_ms > currentTime) {
+    if (slot.latest_ms <= previousTime) continue;
+    if (!Number.isFinite(currentTime) || slot.latest_ms > currentTime) {
       reasons.push(`future deadline disappeared: ${slot.deadline_id}`);
     }
   }
-  return reasons;
+  return { ok: reasons.length === 0, reasons, warnings };
 }
 
 /** Compare a new report with the last known good report before deployment. */
@@ -1185,6 +1422,7 @@ export function evaluateHealthGate(
 ): HealthGateResult {
   const currentReport = current as Partial<HealthReport>;
   const reasons: string[] = [];
+  const warnings: string[] = [];
   const currentProfile = String(currentReport.profile_hash ?? "");
   if (!currentProfile) reasons.push("profile hash is missing");
   if (
@@ -1206,12 +1444,15 @@ export function evaluateHealthGate(
     reasons.push("required venue is missing");
   }
   const currentFailures = reportSourceFailures(currentReport);
-  if (currentFailures.length > 0 && !currentReport.snapshot_fallback) {
-    reasons.push(`source failure without snapshot fallback: ${currentFailures.join(",")}`);
+  const unbackedFailures = currentFailures.filter(
+    (source) => currentReport.source_status?.[source] !== "snapshot-fallback",
+  );
+  if (unbackedFailures.length > 0) {
+    reasons.push(`source failure without snapshot fallback: ${unbackedFailures.join(",")}`);
   }
   const currentGeneratedAt = Date.parse(String(currentReport.generated_at ?? ""));
   if (!Number.isFinite(currentGeneratedAt)) reasons.push("generated_at is invalid");
-  if (!previous) return { ok: reasons.length === 0, reasons };
+  if (!previous) return { ok: reasons.length === 0, reasons, warnings };
 
   const previousReport = previous as Partial<HealthReport>;
   // Profile hashes intentionally vary with venue-paper/profile updates; they
@@ -1247,14 +1488,14 @@ export function evaluateHealthGate(
     reasons.push("confirmed future deadlines dropped by 40% or more");
   }
   if (hasSemanticRefs) {
-    reasons.push(
-      ...semanticDeadlineRegressions(
-        previousRefs!,
-        currentRefs!,
-        previousGeneratedAt,
-        currentGeneratedAt,
-      ),
+    const semantic = semanticDeadlineRegressions(
+      previousRefs!,
+      currentRefs!,
+      previousGeneratedAt,
+      currentGeneratedAt,
     );
+    reasons.push(...semantic.reasons);
+    warnings.push(...semantic.warnings);
   }
   const previousRequired = reportRequiredVenues(previousReport);
   const currentRequired = reportRequiredVenues(currentReport);
@@ -1267,7 +1508,7 @@ export function evaluateHealthGate(
   if (reportWarningCount(currentReport) > previousWarnings * 2 + 5) {
     reasons.push("parse warnings increased sharply");
   }
-  return { ok: reasons.length === 0, reasons };
+  return { ok: reasons.length === 0, reasons, warnings };
 }
 
 export function healthMarkdown(report: HealthReport): string {
@@ -1283,6 +1524,11 @@ export function healthMarkdown(report: HealthReport): string {
     `| Future estimated venues | ${report.future_estimated_venues} |`,
     `| Confirmed deadlines | ${report.confirmed_deadlines} |`,
     `| Estimated deadlines | ${report.estimated_deadlines} |`,
+    `| Future exact deadlines | ${report.future_exact_deadlines ?? 0} |`,
+    `| Future date-only deadlines | ${report.future_date_only_deadlines ?? 0} |`,
+    `| Future estimated deadlines | ${report.future_estimated_deadlines ?? 0} |`,
+    `| Venues with future exact deadline | ${report.venues_with_exact_future_deadline ?? 0} |`,
+    `| Venues with future date-only deadline | ${report.venues_with_date_only_future_deadline ?? 0} |`,
     `| Parse warning count | ${report.parse_warning_count} |`,
     `| Snapshot fallback | ${report.snapshot_fallback ? "yes" : "no"} |`,
     `| Profile hash | ${report.profile_hash} |`,
@@ -1359,11 +1605,16 @@ export function writePublishManifest(
       }),
   );
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
+  const profileHash = existsSync(join(outdir, "data.json"))
+    ? embeddingProfileHash(JSON.parse(readFileSync(join(outdir, "data.json"), "utf8")))
+    : "";
   const manifest: PublishManifest = {
-    schema_version: 1,
+    schema_version: 2,
     generated_at: safeNow.toISOString(),
     semantic_status: semanticStatus,
     artifacts,
+    build_id: publishBuildId(safeNow, profileHash),
+    profile_hash: profileHash,
   };
   writeFileSync(join(outdir, "publish.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
   return manifest;
@@ -1569,8 +1820,8 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "- publish.json：最終公開セットのハッシュと、意味検索用の埋め込みが公開物に含まれるかを示す semantic_status（ready / lexical-only）。",
     "- catalog.json：締切画面向けの現在・近日期間カタログ。",
     "- recommendation-index.json：投稿先推薦の会議プロフィールと埋め込み参照。",
-    "- app.js：ブラウザでの実行時処理（TypeScript の allowJs 対象）。",
-    "- recommender.js：サイトの論文推薦ロジック（site/ から配布）。",
+    "- app.js：site/app.ts から生成するブラウザ UI 実行時処理。",
+    "- recommender.js：site/recommender.ts から生成する推薦実行時処理。",
     "- health.md：health.json の人間向け要約。",
     "- data.csv：1 行 1 締切のフラット表。",
     `- upcoming.md：直近 ${String((safeConfig.site as Record<string, unknown> | null)?.upcoming_days ?? 180)} 日の締切と開催の表。`,
@@ -1721,9 +1972,10 @@ export async function buildAll(
   const jsonText = JSON.stringify(data, null, 2);
   write("data.json", `${jsonText}\n`);
   write("catalog.json", `${JSON.stringify(toCatalog(data, nowUtc, upcomingDays), null, 2)}\n`);
+  const buildId = publishBuildId(nowUtc, embeddingProfileHash(data));
   write(
     "recommendation-index.json",
-    `${JSON.stringify(toRecommendationIndex(data, nowUtc), null, 2)}\n`,
+    `${JSON.stringify({ ...toRecommendationIndex(data, nowUtc), build_id: buildId }, null, 2)}\n`,
   );
   write("data.csv", toCsv(records));
   write("upcoming.md", toUpcomingMd(records, nowUtc, upcomingDays));
@@ -1776,35 +2028,7 @@ export async function buildAll(
       );
     }
     write("index.html", templateText);
-    // recommender.js をテンプレートと同じ場所から同梱（ブラウザから src 参照。無ければ site/recommender.js へフォールバック）
-    const rec = join(dirname(templatePath), "recommender.js");
-    let recContent: string | null = null;
-    try {
-      recContent = readFileSync(rec, "utf8");
-    } catch {
-      try {
-        recContent = readFileSync(join(ROOT, "site", "recommender.js"), "utf8");
-      } catch {
-        console.warn(`warning: recommender.js が無い。index.html の src 参照が 404 になる`);
-      }
-    }
-    if (recContent !== null) {
-      write("recommender.js", recContent);
-    }
-    const app = join(dirname(templatePath), "app.js");
-    let appContent: string | null = null;
-    try {
-      appContent = readFileSync(app, "utf8");
-    } catch {
-      try {
-        appContent = readFileSync(join(ROOT, "site", "app.js"), "utf8");
-      } catch {
-        console.warn(`warning: app.js が無い。index.html の src 参照が 404 になる`);
-      }
-    }
-    if (appContent !== null) {
-      write("app.js", appContent);
-    }
+    for (const [name, source] of Object.entries(compileSiteRuntime())) write(name, source);
   } else {
     console.warn(`warning: ${templatePath} が無いので index.html を生成しない`);
   }

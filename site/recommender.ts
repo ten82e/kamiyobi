@@ -11,10 +11,278 @@
  *   breakdown(r, lines)        → {score, venueHit, perLine: [...]}  デバッグ/表示用
  *   safeExternalUrl(value)     → HTTP/HTTPS または相対 URL、不正な URL は ""
  */
-((root) => {
+type Vector = number[];
+type VectorMap = Record<string, Vector>;
+type PaperVectorMap = Record<string, Vector[]>;
+
+interface PaperRecord {
+  title: string;
+  abstract?: string;
+  keywords?: string;
+  venue?: string;
+}
+
+interface DeadlineRecord {
+  kind?: string;
+  label?: string;
+  comment?: string | null;
+  precision?: "exact" | "date-only";
+  local_date?: string;
+  earliest_utc?: string;
+  latest_utc?: string;
+  utc?: string | null;
+  round?: number;
+}
+
+interface EditionRecord {
+  year?: number;
+  place?: string;
+  date_text?: string;
+  estimated?: boolean;
+  deadlines?: DeadlineRecord[];
+}
+
+interface ConferenceRecord {
+  key: string;
+  title?: string;
+  full_name?: string;
+  categories?: string[];
+  tags?: string[];
+  papers?: string[];
+  rank?: Record<string, string>;
+  editions?: EditionRecord[];
+}
+
+interface CandidateRow {
+  conf: ConferenceRecord;
+  ed: EditionRecord;
+  dl: DeadlineRecord;
+  kind: string;
+  est: boolean;
+  t: number;
+  tLast: number;
+  dateOnly?: boolean;
+  localDate?: string;
+  cats: string[];
+  categories?: string[];
+  tags: string[];
+  rankPairs: string[];
+  hay: string;
+  dupLabel?: string;
+  name?: string;
+  year?: number | null;
+  _matchScore?: number;
+}
+
+interface ConferenceHay {
+  key: string;
+  title: string;
+  full: string;
+  tags: string[];
+  jp: string[];
+  papers: string[];
+}
+
+type SignalScores = Record<"domain" | "name" | "paper" | "jp" | "tags" | "venue", number>;
+interface LineScore {
+  score: number;
+  venueHit: boolean;
+  details: SignalScores;
+}
+interface PaperWeight {
+  role: "primary" | "reference";
+  weight: number;
+}
+interface LineEvidence extends LineScore, PaperWeight {
+  lineIndex?: number;
+  rank?: number;
+  key?: string;
+}
+interface SignalEvidence {
+  type: string;
+  contribution: number;
+  rank?: number;
+}
+interface ScoreBreakdown {
+  score: number;
+  topicScore: number;
+  venueScore: number;
+  venueHit: boolean;
+  perLine: LineEvidence[];
+  evidence: LineEvidence[];
+  signalEvidence?: SignalEvidence[];
+  agg: SignalScores & { venueName?: number };
+}
+type Confidence = "sufficient" | "ambiguous" | "insufficient";
+interface RecommendationOptions {
+  venueCats?: string[];
+  topN?: number;
+}
+interface RecommendationEntry {
+  key: string;
+  row: CandidateRow;
+  match: ScoreBreakdown;
+  lexicalScore: number;
+  semantic: number;
+  evidenceStrength: number;
+  boosted: boolean;
+}
+interface RecommendationResult {
+  venueKey: string;
+  row: CandidateRow;
+  fit: {
+    score: number;
+    rankingScore: number;
+    evidenceStrength: number;
+    confidence: Confidence;
+    label: string;
+    lexicalScore: number;
+    semanticScore: number;
+    lexicalRank: number | null;
+    semanticRank: number | null;
+    rrf: number;
+    evidence: Array<SignalEvidence | LineEvidence>;
+  };
+  availability: Availability;
+  match: ScoreBreakdown;
+  boosted: boolean;
+}
+interface Availability {
+  kind: string;
+  status: "ongoing" | "uncertain" | "open" | "past";
+  timestamp: number | null;
+  local_date: string | null;
+  date_state: "definitely-future" | "uncertain-on-date" | "definitely-past" | null;
+  estimated: boolean;
+}
+interface PdfItem {
+  str?: string;
+  transform?: number[];
+  height?: number;
+}
+interface EmbeddingProbe {
+  text?: string;
+  vector?: Vector;
+}
+interface EmbeddingModelMeta {
+  model?: string;
+  revision?: string;
+  dim?: number;
+  probe?: EmbeddingProbe;
+}
+interface EmbeddingSet {
+  model?: string;
+  dim?: number;
+  embeddings?: VectorMap;
+}
+interface EmbeddingBundle extends EmbeddingSet {
+  manifest?: {
+    schema?: number;
+    profile_hash?: string;
+    keys?: string[];
+    models?: Record<string, EmbeddingModelMeta>;
+  };
+  multi?: EmbeddingSet;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isPdfItem(value: unknown): value is PdfItem {
+  return (
+    isRecord(value) &&
+    (value.str === undefined || typeof value.str === "string") &&
+    (value.height === undefined || typeof value.height === "number") &&
+    (value.transform === undefined ||
+      (Array.isArray(value.transform) && value.transform.every((item) => typeof item === "number")))
+  );
+}
+
+function isConference(value: unknown): value is ConferenceRecord {
+  return (
+    isRecord(value) &&
+    typeof value.key === "string" &&
+    (value.editions === undefined ||
+      (Array.isArray(value.editions) && value.editions.every(isEdition))) &&
+    (value.categories === undefined ||
+      (Array.isArray(value.categories) &&
+        value.categories.every((item) => typeof item === "string"))) &&
+    (value.tags === undefined ||
+      (Array.isArray(value.tags) && value.tags.every((item) => typeof item === "string"))) &&
+    (value.papers === undefined ||
+      (Array.isArray(value.papers) && value.papers.every((item) => typeof item === "string")))
+  );
+}
+
+function normalizedStrings(value: unknown): string[] {
+  if (typeof value === "string") return value.trim() ? [value.trim()] : [];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string" && item.trim() !== "")
+    : [];
+}
+
+function normalizeConference(value: unknown): ConferenceRecord | null {
+  if (!isRecord(value)) return null;
+  const rank: Record<string, string> = {};
+  if (isRecord(value.rank)) {
+    for (const [key, item] of Object.entries(value.rank)) {
+      if (typeof item === "string") rank[key] = item;
+    }
+  }
+  return {
+    key: typeof value.key === "string" ? value.key : "",
+    title: typeof value.title === "string" ? value.title : "",
+    full_name: typeof value.full_name === "string" ? value.full_name : "",
+    categories: normalizedStrings(value.categories),
+    tags: normalizedStrings(value.tags),
+    papers: normalizedStrings(value.papers),
+    rank,
+    editions: Array.isArray(value.editions) ? value.editions.filter(isEdition) : [],
+  };
+}
+
+function normalizeCandidateLike(value: unknown): CandidateRow | null {
+  if (!isRecord(value)) return null;
+  const conf = normalizeConference(value.conf) ?? normalizeConference(value);
+  if (!conf) return null;
+  return {
+    conf,
+    ed: isEdition(value.ed) ? value.ed : {},
+    dl: isDeadline(value.dl) ? value.dl : {},
+    kind: typeof value.kind === "string" ? value.kind : "other",
+    est: Boolean(value.est),
+    t: typeof value.t === "number" ? value.t : 0,
+    tLast: typeof value.tLast === "number" ? value.tLast : 0,
+    dateOnly: Boolean(value.dateOnly),
+    localDate: typeof value.localDate === "string" ? value.localDate : "",
+    cats: normalizedStrings(value.cats ?? value.categories ?? conf.categories),
+    categories: normalizedStrings(value.categories),
+    tags: normalizedStrings(value.tags ?? conf.tags),
+    rankPairs: normalizedStrings(value.rankPairs),
+    hay: typeof value.hay === "string" ? value.hay : "",
+    dupLabel: typeof value.dupLabel === "string" ? value.dupLabel : undefined,
+    name: typeof value.name === "string" ? value.name : undefined,
+    year: typeof value.year === "number" || value.year === null ? value.year : undefined,
+  };
+}
+
+function isDeadline(value: unknown): value is DeadlineRecord {
+  return isRecord(value) && (value.kind === undefined || typeof value.kind === "string");
+}
+
+function isEdition(value: unknown): value is EditionRecord {
+  return (
+    isRecord(value) &&
+    (value.deadlines === undefined ||
+      (Array.isArray(value.deadlines) && value.deadlines.every(isDeadline)))
+  );
+}
+
+const Recommender = (() => {
   /* 既存 template.html の DOMAIN_SIGNAL と同一（ここが正典）
    * 変更時は template.html 側の重複定義も同じ内容に保つこと。 */
-  var DOMAIN_SIGNAL = {
+  const DOMAIN_SIGNAL: Record<string, string[]> = {
     hpc: [
       "hpc",
       "supercomputing",
@@ -155,7 +423,7 @@
     ],
   };
 
-  var STOPWORDS = new Set(
+  const STOPWORDS = new Set(
     (
       "a an and or the of for in on to with via using based towards toward using design implementation " +
       "analysis study novel can we our this that from at by as is are be it its their these those paper papers " +
@@ -172,44 +440,46 @@
   );
 
   /* 1行: "タイトル | キーワード | 掲載先(任意)" または "タイトル<TAB>キーワード<TAB>掲載先" */
-  function parsePaperLines(text) {
+  function parsePaperLines(text: unknown): PaperRecord[] {
     if (!text) return [];
-    var structured = parseStructuredPapers(text);
+    const structured = parseStructuredPapers(text);
     if (structured) return structured;
     return String(text)
       .split(/\r?\n/)
-      .map((l) => l.trim())
+      .map((line) => line.trim())
       .filter(Boolean)
-      .map((l) => {
-        var parts = l.split(/\s*\|\s*/);
-        if (parts.length === 1) parts = l.split(/\t+/);
+      .map((line) => {
+        let parts = line.split(/\s*\|\s*/);
+        if (parts.length === 1) parts = line.split(/\t+/);
         return {
           title: (parts[0] || "").trim(),
           keywords: (parts[1] || "").trim(),
           venue: (parts[2] || "").trim(),
         };
       })
-      .filter((p) => p.title);
+      .filter((paper) => Boolean(paper.title));
   }
 
-  function parseStructuredPapers(text) {
-    var raw = String(text).trim();
+  function parseStructuredPapers(text: unknown): PaperRecord[] | null {
+    const raw = String(text).trim();
     if (!raw) return [];
     if (raw[0] === "{" || raw[0] === "[") {
       try {
-        var parsed = JSON.parse(raw);
-        var records = Array.isArray(parsed) ? parsed : [parsed];
-        var jsonRows = records.map(normalizePaperRecord).filter(Boolean);
+        const parsed: unknown = JSON.parse(raw);
+        const records = Array.isArray(parsed) ? parsed : [parsed];
+        const jsonRows = records
+          .map(normalizePaperRecord)
+          .filter((paper): paper is PaperRecord => paper !== null);
         return jsonRows.length ? jsonRows : null;
       } catch (_error) {
         return null;
       }
     }
     if (!/^\s*title\s*:/im.test(raw)) return null;
-    var fields = { title: "", abstract: "", keywords: "", venue: "" };
-    var current = "";
+    const fields: Record<string, string> = { title: "", abstract: "", keywords: "", venue: "" };
+    let current = "";
     raw.split(/\r?\n/).forEach((line) => {
-      var match = /^\s*(title|abstract|keywords?|venue)\s*:\s*(.*)$/i.exec(line);
+      const match = /^\s*(title|abstract|keywords?|venue)\s*:\s*(.*)$/i.exec(line);
       if (match) {
         current = match[1].toLowerCase().replace(/^keyword$/, "keywords");
         fields[current] = match[2].trim();
@@ -217,69 +487,124 @@
         fields[current] += (fields[current] ? "\n" : "") + line.trim();
       }
     });
-    var labeled = normalizePaperRecord(fields);
+    const labeled = normalizePaperRecord(fields);
     return labeled ? [labeled] : null;
   }
 
-  function pdfTextLines(pages) {
-    var pageList = Array.isArray(pages) && Array.isArray(pages[0]) ? pages : [pages || []];
-    return pageList.flatMap((items) => {
-      var groups = {};
-      (items || []).forEach((item) => {
-        var text = String(item && item.str || "").replace(/\s+/g, " ").trim();
-        if (!text) return;
-        var transform = item && item.transform || [];
-        var y = Number(transform[5]);
-        var x = Number(transform[4]);
-        var key = Number.isFinite(y) ? Math.round(y / 2) * 2 : Object.keys(groups).length;
-        (groups[key] || (groups[key] = [])).push({ text, x: Number.isFinite(x) ? x : 0 });
-      });
-      return Object.keys(groups).sort((a, b) => Number(b) - Number(a)).map((key) =>
-        groups[key].sort((a, b) => a.x - b.x).map((item) => item.text).join(" ").trim(),
-      );
-    }).filter(Boolean);
+  function pdfTextLines(pages: unknown): string[] {
+    const pageList: unknown[][] =
+      Array.isArray(pages) && Array.isArray(pages[0]) ? pages : [Array.isArray(pages) ? pages : []];
+    return pageList
+      .flatMap((items) => {
+        const groups: Record<string, Array<{ text: string; x: number }>> = {};
+        items.forEach((item) => {
+          if (!isPdfItem(item)) return;
+          const text = String(item.str || "")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (!text) return;
+          const transform = item.transform || [];
+          const y = Number(transform[5]);
+          const x = Number(transform[4]);
+          const key = Number.isFinite(y) ? Math.round(y / 2) * 2 : Object.keys(groups).length;
+          const group = groups[String(key)] || [];
+          groups[String(key)] = group;
+          group.push({ text, x: Number.isFinite(x) ? x : 0 });
+        });
+        return Object.keys(groups)
+          .sort((a, b) => Number(b) - Number(a))
+          .map((key) =>
+            groups[key]
+              .sort((a, b) => a.x - b.x)
+              .map((item) => item.text)
+              .join(" ")
+              .trim(),
+          );
+      })
+      .filter(Boolean);
   }
 
-  function pdfPaperRecord(metadata, pages, fallbackText) {
-    var pageList = Array.isArray(pages) && Array.isArray(pages[0]) ? pages : [pages || []];
-    var lines = pdfTextLines(pageList);
-    var info = (metadata && (metadata.info || metadata)) || {};
-    var title = String(info.Title || info.title || "").trim();
+  function pdfPaperRecord(metadata: unknown, pages: unknown, fallbackText: unknown): PaperRecord {
+    const pageList: unknown[][] =
+      Array.isArray(pages) && Array.isArray(pages[0]) ? pages : [Array.isArray(pages) ? pages : []];
+    const lines = pdfTextLines(pageList);
+    const metadataRecord = isRecord(metadata) ? metadata : {};
+    const info = isRecord(metadataRecord.info) ? metadataRecord.info : metadataRecord;
+    let title = String(info.Title || info.title || "").trim();
     if (!title) {
-      var first = pageList[0] || [];
-      var sizes = first.map((item) => Math.abs(Number((item && item.transform || [])[0]) || Number(item && item.height) || 0));
-      var max = Math.max.apply(null, sizes.concat([0]));
+      const first = pageList[0] || [];
+      const items = first.filter(isPdfItem);
+      const sizes = items.map((item) =>
+        Math.abs(Number((item.transform || [])[0]) || Number(item.height) || 0),
+      );
+      const max = Math.max.apply(null, sizes.concat([0]));
       if (max > 0) {
-        title = first.filter((item, index) => sizes[index] >= max * 0.9).map((item) => String(item.str || "").trim()).filter(Boolean).join(" ");
+        title = items
+          .filter((_item, index) => sizes[index] >= max * 0.9)
+          .map((item) => String(item.str || "").trim())
+          .filter(Boolean)
+          .join(" ");
       }
     }
-    var fallback = String(fallbackText || "").trim();
+    const fallback = String(fallbackText || "").trim();
     if (!title) title = lines[0] || fallback.slice(0, 200);
     title = title.replace(/\s+/g, " ").slice(0, 240);
-    var normalized = lines.map((line) => line.replace(/\s+/g, " ").trim());
-    var abstractAt = normalized.findIndex((line) => /^abstract\s*[:.]?/i.test(line) || /^概要\s*[:：]?/.test(line));
-    var keywordsAt = normalized.findIndex((line) => /^(keywords?|index terms|キーワード)\s*[:：]?/i.test(line));
-    var sectionEnd = (start) => normalized.findIndex((line, index) => index > start && /^(keywords?|index terms|introduction|references|参考文献|1\.?\s+introduction)\b/i.test(line));
-    var abstract = "";
+    const normalized = lines.map((line) => line.replace(/\s+/g, " ").trim());
+    const abstractAt = normalized.findIndex(
+      (line) => /^abstract\s*[:.]?/i.test(line) || /^概要\s*[:：]?/.test(line),
+    );
+    const keywordsAt = normalized.findIndex((line) =>
+      /^(keywords?|index terms|キーワード)\s*[:：]?/i.test(line),
+    );
+    const sectionEnd = (start: number) =>
+      normalized.findIndex(
+        (line, index) =>
+          index > start &&
+          /^(keywords?|index terms|introduction|references|参考文献|1\.?\s+introduction)\b/i.test(
+            line,
+          ),
+      );
+    let abstract = "";
     if (abstractAt >= 0) {
-      var abstractStart = normalized[abstractAt].replace(/^abstract\s*[:.]?/i, "").replace(/^概要\s*[:：]?/, "").trim();
-      var abstractEnd = sectionEnd(abstractAt);
-      abstract = [abstractStart].concat(normalized.slice(abstractAt + 1, abstractEnd < 0 ? (keywordsAt > abstractAt ? keywordsAt : normalized.length) : abstractEnd)).filter(Boolean).join(" ");
+      const abstractStart = normalized[abstractAt]
+        .replace(/^abstract\s*[:.]?/i, "")
+        .replace(/^概要\s*[:：]?/, "")
+        .trim();
+      const abstractEnd = sectionEnd(abstractAt);
+      abstract = [abstractStart]
+        .concat(
+          normalized.slice(
+            abstractAt + 1,
+            abstractEnd < 0
+              ? keywordsAt > abstractAt
+                ? keywordsAt
+                : normalized.length
+              : abstractEnd,
+          ),
+        )
+        .filter(Boolean)
+        .join(" ");
     }
-    var keywords = keywordsAt >= 0
-      ? normalized[keywordsAt].replace(/^(keywords?|index terms|キーワード)\s*[:：]?/i, "").trim()
-      : "";
-    return { title, abstract: abstract.slice(0, 6000), keywords: keywords.slice(0, 1000), venue: "" };
+    const keywords =
+      keywordsAt >= 0
+        ? normalized[keywordsAt].replace(/^(keywords?|index terms|キーワード)\s*[:：]?/i, "").trim()
+        : "";
+    return {
+      title,
+      abstract: abstract.slice(0, 6000),
+      keywords: keywords.slice(0, 1000),
+      venue: "",
+    };
   }
 
-  function normalizePaperRecord(record) {
-    if (!record || typeof record !== "object") return null;
-    var value = (name) => record[name] ?? "";
-    var list = (name) => {
-      var item = value(name);
+  function normalizePaperRecord(record: unknown): PaperRecord | null {
+    if (!isRecord(record)) return null;
+    const value = (name: string): unknown => record[name] ?? "";
+    const list = (name: string) => {
+      const item = value(name);
       return Array.isArray(item) ? item.filter(Boolean).join(", ") : String(item || "").trim();
     };
-    var title = String(value("title") || value("title_text") || value("name") || "").trim();
+    const title = String(value("title") || value("title_text") || value("name") || "").trim();
     if (!title) return null;
     return {
       title: title,
@@ -289,12 +614,15 @@
     };
   }
 
-  function textPaperRecord(text, fallbackText) {
-    var raw = String(text || "").trim();
-    var structured = parseStructuredPapers(raw);
-    if (structured && structured.length) return structured[0];
-    var lines = raw.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-    var title = lines.shift() || String(fallbackText || "").trim();
+  function textPaperRecord(text: unknown, fallbackText: unknown): PaperRecord {
+    const raw = String(text || "").trim();
+    const structured = parseStructuredPapers(raw);
+    if (structured?.length) return structured[0];
+    const lines = raw
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    const title = lines.shift() || String(fallbackText || "").trim();
     return {
       title: title.slice(0, 240),
       abstract: lines.join(" ").slice(0, 6000),
@@ -303,24 +631,32 @@
     };
   }
 
-  function paperText(p) {
-    return [p && p.title, p && p.abstract, p && p.keywords].filter(Boolean).join(" ").trim();
+  function paperText(p: PaperRecord): string {
+    return [p?.title, p?.abstract, p?.keywords].filter(Boolean).join(" ").trim();
   }
 
-  function paperIdentity(p) {
-    var title = String((p && p.title) || "").toLowerCase().replace(/\s+/g, " ").trim();
+  function paperIdentity(p: PaperRecord): string {
+    const title = String(p?.title || "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
     if (title) return title;
-    return [p && p.abstract, p && p.keywords]
-      .map((value) => String(value || "").toLowerCase().replace(/\s+/g, " ").trim())
+    return [p?.abstract, p?.keywords]
+      .map((value) =>
+        String(value || "")
+          .toLowerCase()
+          .replace(/\s+/g, " ")
+          .trim(),
+      )
       .filter(Boolean)
       .join("\u0001");
   }
 
-  function paperWeights(lines) {
-    var seen = new Set();
-    var referenceTotal = 0;
-    return (lines || []).map((paper, index) => {
-      var id = paperIdentity(paper);
+  function paperWeights(lines: readonly PaperRecord[]): PaperWeight[] {
+    const seen = new Set<string>();
+    let referenceTotal = 0;
+    return lines.map((paper, index) => {
+      const id = paperIdentity(paper);
       if (index === 0) {
         if (id) seen.add(id);
         return { role: "primary", weight: 1 };
@@ -329,7 +665,7 @@
         return { role: "reference", weight: 0 };
       }
       seen.add(id);
-      var weight = Math.min(0.2, 0.4 - referenceTotal);
+      const weight = Math.min(0.2, 0.4 - referenceTotal);
       referenceTotal += weight;
       return { role: "reference", weight: weight };
     });
@@ -339,8 +675,8 @@
    * 「Security & Privacy」と「Security and Privacy」のような表記ゆれを吸収する。
    * 両側（venue 側・会議側）を同じ規則で正規化するので一致判定は一貫する。
    */
-  var FILLER = /\b(a|an|the|and|or|of|for|in|on|at|to|by|with)\b/g;
-  function normKey(s) {
+  const FILLER = /\b(a|an|the|and|or|of|for|in|on|at|to|by|with)\b/g;
+  function normKey(s: unknown): string {
     return String(s || "")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, " ")
@@ -353,7 +689,7 @@
    * 例: 「SP」は 2 文字のため完全一致（key）しか効かず、key "s-p" には一致しない。
    * 「s&p」→「s p」はタイトル正規化で拾えるためエイリアス不要。
    */
-  var VENUE_ALIASES = {
+  const VENUE_ALIASES: Record<string, string[]> = {
     sp: ["s-p"], // IEEE Symposium on Security & Privacy
     snp: ["s-p"],
   };
@@ -364,8 +700,8 @@
    * 出現する）で減衰する。ブラウザ/ベンチが setNameIdf で設定する（会議集合は
    * 実行時にしか分からない）。
    */
-  var idfMap = null;
-  function setNameIdf(map) {
+  let idfMap: { name: Record<string, number>; paper: Record<string, number> } | null = null;
+  function setNameIdf(map: { name: Record<string, number>; paper: Record<string, number> } | null) {
     idfMap = map || null;
   }
 
@@ -374,8 +710,8 @@
    * クエリに英語モデルの論文ベクトルを混ぜると言語別分離設計を壊す）。
    * null なら会議名ベクトルのみ使う。
    */
-  var paperVecsState = null;
-  function setPaperVecs(pv) {
+  let paperVecsState: PaperVectorMap | null = null;
+  function setPaperVecs(pv: PaperVectorMap | null) {
     paperVecsState = pv || null;
   }
 
@@ -397,31 +733,33 @@
    *    無関係クエリ（Beehive の memory、private optimization の optimization）を奪った。
    *    そのため、マッチ元（名前語 / papers 語）ごとに別マップを使う。
    */
-  function buildNameIdf(confs) {
-    var nameDf = {};
-    var paperDf = {};
-    var safeConfs = Array.isArray(confs) ? confs : [];
+  function buildNameIdf(confs: unknown): {
+    name: Record<string, number>;
+    paper: Record<string, number>;
+  } {
+    const nameDf: Record<string, number> = {};
+    const paperDf: Record<string, number> = {};
+    const safeConfs = Array.isArray(confs)
+      ? confs.map(normalizeConference).filter((conf): conf is ConferenceRecord => conf !== null)
+      : [];
     safeConfs.forEach((c) => {
-      if (!c || typeof c !== "object") return;
-      var seenName = {};
-      var seenPaper = {};
-      normKey((c.title || "") + " " + (c.full_name || ""))
+      const seenName: Record<string, boolean> = {};
+      const seenPaper: Record<string, boolean> = {};
+      normKey(`${c.title || ""} ${c.full_name || ""}`)
         .split(" ")
-        .forEach((w) => {
+        .forEach((word) => {
+          const w = word;
           if (w.length > 3 && !STOPWORDS.has(w) && !seenName[w]) {
             seenName[w] = true;
             nameDf[w] = (nameDf[w] || 0) + 1;
           }
         });
-      var papers = Array.isArray(c.papers)
-        ? c.papers
-        : typeof c.papers === "string" && c.papers.trim() !== ""
-          ? [c.papers.trim()]
-          : [];
-      papers.forEach((t) => {
-        normKey(t || "")
+      const papers = c.papers || [];
+      papers.forEach((title) => {
+        normKey(title || "")
           .split(" ")
-          .forEach((w) => {
+          .forEach((word) => {
+            const w = word;
             if (w.length > 3 && !STOPWORDS.has(w) && !seenPaper[w]) {
               seenPaper[w] = true;
               paperDf[w] = (paperDf[w] || 0) + 1;
@@ -429,10 +767,10 @@
           });
       });
     });
-    var N = safeConfs.length;
-    var idfOf = (d) => (N <= 0 ? 0 : Math.log(1 + N / (d + 1)) / Math.log(1 + N));
-    var mk = (df) => {
-      var out = {};
+    const N = safeConfs.length;
+    const idfOf = (d: number) => (N <= 0 ? 0 : Math.log(1 + N / (d + 1)) / Math.log(1 + N));
+    const mk = (df: Record<string, number>) => {
+      const out: Record<string, number> = {};
       Object.keys(df).forEach((w) => {
         out[w] = idfOf(df[w]);
       });
@@ -452,7 +790,16 @@
    * ブラウザ/ベンチから上書きできる。nameOnce は会議名一致を「先頭 1 語のみ固定加点」
    * （語数に比例させない）にする実験用フラグ。
    */
-  var SIG_WEIGHTS = {
+  const SIG_WEIGHTS: Record<string, number | boolean> & {
+    domain: number;
+    name: number;
+    paper: number;
+    paperCap: number;
+    jp: number;
+    tags: number;
+    venue: number;
+    nameOnce: boolean;
+  } = {
     domain: 15,
     name: 15,
     paper: 15,
@@ -462,12 +809,13 @@
     venue: 40,
     nameOnce: false,
   };
-  function setSigWeights(w) {
+  function setSigWeights(w: Partial<typeof SIG_WEIGHTS> | null) {
     if (!w) return;
     Object.keys(SIG_WEIGHTS).forEach((k) => {
       // nameOnce は boolean フラグ（先頭 1 語固定加点）なので boolean も適用する。
       // SIG_WEIGHTS の他キーは全て数値で、boolean を許可しても混入しない。
-      if (typeof w[k] === "number" || typeof w[k] === "boolean") SIG_WEIGHTS[k] = w[k];
+      const value = w[k];
+      if (typeof value === "number" || typeof value === "boolean") SIG_WEIGHTS[k] = value;
     });
   }
 
@@ -475,7 +823,7 @@
    * workshop(36 会議)/journal(18)/niche(43)/domestic-jp/special-issue は
    * トピックではなく属性のため、tags 語彙一致から除外する（トピックタグは残す）。
    */
-  var GENERIC_TAGS = new Set([
+  const GENERIC_TAGS = new Set([
     "niche",
     "workshop",
     "domestic-jp",
@@ -492,7 +840,7 @@
    * vision/language 等は会議名では識別語だが papers では汎用 — マッチ元が papers な
    * のでここで除外しても名前語マッチ（nameWords）には影響しない。
    */
-  var GENERIC_PAPER_WORDS = new Set([
+  const GENERIC_PAPER_WORDS = new Set([
     "self",
     "general",
     "framework",
@@ -514,72 +862,68 @@
   ]);
 
   /* 会議側の照合文字列（key / title / full_name / tags / 日本語表記 / 代表論文語彙） */
-  function confHay(r) {
-    var c = (r && r.conf) || r || {};
+  function confHay(r: CandidateRow | ConferenceRecord): ConferenceHay {
+    const c = "conf" in r ? r.conf : r;
     return {
       key: normKey(c.key),
       title: normKey(c.title),
       full: normKey(c.full_name),
-      tags: (c.tags || []).map(normKey),
-      jp: ((c.title || "") + " " + (c.full_name || "")).match(/[\u3000-\u9fff]+/g) || [],
+      tags: (c.tags || []).map((tag) => normKey(tag)),
+      jp: `${c.title || ""} ${c.full_name || ""}`.match(/[\u3000-\u9fff]+/g) || [],
       // 代表採択論文タイトル（実データが持つ場合のみ）。語彙一致の対象を
       // 「会議名」から「会議の実際の採択領域」に広げる。
-      papers: (c.papers || []).map(normKey),
+      papers: (c.papers || []).map((paper) => normKey(paper)),
     };
   }
 
   /* 分野自動判定: 全論文テキストで各分野シグナルのヒット数を数える */
-  function autoDetectCats(lines) {
-    if (!lines || !lines.length) return [];
-    var text = lines
-      .map((p) => paperText(p))
+  function autoDetectCats(lines: readonly PaperRecord[]): string[] {
+    if (!lines?.length) return [];
+    const text = lines
+      .map((paper) => paperText(paper))
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
-    var hits = [];
-    var hay = expandJp(text) + " " + text;
+    const hits: Array<{ dom: string; n: number }> = [];
+    const hay = `${expandJp(text)} ${text}`;
     Object.keys(DOMAIN_SIGNAL).forEach((dom) => {
-      var n = DOMAIN_SIGNAL[dom].filter((kw) => signalInText(hay, kw)).length;
+      const n = DOMAIN_SIGNAL[dom].filter((keyword) => signalInText(hay, keyword)).length;
       if (n > 0) hits.push({ dom: dom, n: n });
     });
     hits.sort((a, b) => b.n - a.n);
-    return hits.map((h) => h.dom);
+    return hits.map((hit) => hit.dom);
   }
 
   /* 1行ぶんのスコア (0..100)。venueHit は掲載先タグ一致なら true */
-  function scoreLine(r, p, conf) {
+  function scoreLine(r: CandidateRow, p: PaperRecord, conf: ConferenceHay): LineScore {
     if (!p)
       return {
         score: 0,
         venueHit: false,
         details: { domain: 0, name: 0, paper: 0, jp: 0, tags: 0, venue: 0 },
       };
-    var pt = paperText(p).toLowerCase();
+    const pt = paperText(p).toLowerCase();
     if (!pt)
       return {
         score: 0,
         venueHit: false,
         details: { domain: 0, name: 0, paper: 0, jp: 0, tags: 0, venue: 0 },
       };
-    var score = 0;
-    var details = { domain: 0, name: 0, paper: 0, jp: 0, tags: 0, venue: 0 };
-    // 内側ブロックで使う var は関数ルートに宣言を集約（biome noInnerDeclarations）
-    var wgt;
-    var jpHay;
-    var jpHit;
-    var rawTag;
-    var nv;
-    var hay;
-    var rawHay;
-    var rt;
-    var aliases;
-    var hl;
-    var c;
-    var categories =
-      (r && Array.isArray(r.cats) && r.cats) ||
-      (r && Array.isArray(r.categories) && r.categories) ||
-      (r && r.conf && Array.isArray(r.conf.categories) && r.conf.categories) ||
-      [];
+    let score = 0;
+    const details = { domain: 0, name: 0, paper: 0, jp: 0, tags: 0, venue: 0 };
+    // 内側ブロックで使う let は関数ルートに宣言を集約（biome noInnerDeclarations）
+    let wgt: number;
+    let jpHay: string;
+    let jpHit: boolean;
+    let rawTag: string;
+    let nv: string;
+    let hay: string[];
+    let rawHay: string[];
+    let rt: string;
+    let aliases: string[] | undefined;
+    let hl: string;
+    let c: ConferenceRecord;
+    const categories = r.cats || r.categories || r.conf.categories || [];
 
     // 注: 日本語→英語展開（expandJp）はスコアリングに使わない。
     // 実測比較: 展開語が英語名の会議に広く一致して誤爆し、
@@ -590,7 +934,7 @@
     // ヒット数ではなく「カテゴリにヒットしたか」で +SIG_WEIGHTS.domain（累積しない）。
     Object.keys(DOMAIN_SIGNAL).forEach((dom) => {
       if (categories.indexOf(dom) === -1) return;
-      var hit = DOMAIN_SIGNAL[dom].some((kw) => signalInText(pt, kw));
+      const hit = DOMAIN_SIGNAL[dom].some((keyword) => signalInText(pt, keyword));
       if (hit) {
         score += SIG_WEIGHTS.domain;
         details.domain += SIG_WEIGHTS.domain;
@@ -610,24 +954,25 @@
     // 衝突して誤爆する）。
     // また、掲載先タグ付き行（p.venue）でも使わない — タグの絶対性（venueHit +40）を
     // 守るため。
-    var nameWords = (conf.title + " " + conf.full)
+    const nameWords = `${conf.title} ${conf.full}`
       .split(" ")
-      .filter((w) => w.length > 3 && !STOPWORDS.has(w));
-    var paperWords =
+      .filter((word) => word.length > 3 && !STOPWORDS.has(word));
+    const paperWords =
       hasJapanese(pt) || p.venue
         ? []
         : conf.papers
             .join(" ")
             .split(" ")
-            .filter((w) => w.length > 3 && !STOPWORDS.has(w) && !GENERIC_PAPER_WORDS.has(w));
-    var nameGiven = false;
+            .filter(
+              (word) => word.length > 3 && !STOPWORDS.has(word) && !GENERIC_PAPER_WORDS.has(word),
+            );
+    let nameGiven = false;
     nameWords.forEach((w) => {
       if (!wordInText(pt, w)) return;
       if (SIG_WEIGHTS.nameOnce && nameGiven) return;
-      wgt =
-        idfMap && idfMap.name && idfMap.name[w]
-          ? Math.max(2, Math.round(SIG_WEIGHTS.name * idfMap.name[w]))
-          : SIG_WEIGHTS.name;
+      wgt = idfMap?.name?.[w]
+        ? Math.max(2, Math.round(SIG_WEIGHTS.name * idfMap.name[w]))
+        : SIG_WEIGHTS.name;
       score += wgt;
       details.name += wgt;
       nameGiven = true;
@@ -637,15 +982,14 @@
     // 数ヒットでスコア上限 100 に達し、グラフィクス/マルチメディア系の他クエリ
     // （3dv/siggraph/icassp 等 39 件）を奪った。複数ヒットは「採択領域の一致」という
     // 1 信号と見なす（日本語チャンク一致と同じ考え方）。
-    var paperHits = 0;
+    let paperHits = 0;
     paperWords.forEach((w) => {
       if (!wordInText(pt, w)) return;
       if (paperHits >= SIG_WEIGHTS.paperCap) return;
       paperHits++;
-      wgt =
-        idfMap && idfMap.paper && idfMap.paper[w]
-          ? Math.max(2, Math.round(SIG_WEIGHTS.paper * idfMap.paper[w]))
-          : SIG_WEIGHTS.paper;
+      wgt = idfMap?.paper?.[w]
+        ? Math.max(2, Math.round(SIG_WEIGHTS.paper * idfMap.paper[w]))
+        : SIG_WEIGHTS.paper;
       score += wgt;
       details.paper += wgt;
     });
@@ -653,7 +997,7 @@
     // 日本語の部分一致: 論文の日本語チャンク（4 文字以上）が会議名の日本語に含まれれば加点
     // 例: 論文に「分散処理」→ DPS 研究会の full_name「マルチメディア通信と分散処理研究会」に含まれる
     // 長いチャンクが複数あっても 1 会議あたり最大 1 回（分野シグナル相当の重み）にする
-    var jpChunks = (pt.match(/[\u3000-\u9fff]+/g) || []).filter((s) => s.length >= 4);
+    const jpChunks = (pt.match(/[\u3000-\u9fff]+/g) || []).filter((chunk) => chunk.length >= 4);
     if (jpChunks.length && conf.jp.length) {
       jpHay = conf.jp.join(" ");
       jpHit = jpChunks.some((chunk) => jpHay.indexOf(chunk) !== -1);
@@ -673,14 +1017,14 @@
     });
 
     // 掲載先タグ一致: この論文がこの会議に載ったことがある
-    var venueHit = false;
+    let venueHit = false;
     if (p.venue) {
       rawTag = String(p.venue).trim().replace(/\s+/g, " ");
       nv = normKey(p.venue);
       hay = [conf.key, conf.title, conf.full].filter(Boolean);
       // 原文（日本語含む）照合: 「情報処理学会 DPS 研究会」タグが会議名に含まれれば一致。
       // 短いタグ（ISC 等）は完全一致のみ（ISCA への部分一致誤爆を防ぐ）
-      c = (r && r.conf) || r || {};
+      c = r.conf;
       rawHay = [(c.title || "").replace(/\s+/g, " "), (c.full_name || "").replace(/\s+/g, " ")];
       rt = rawTag.toLowerCase();
       venueHit =
@@ -700,7 +1044,7 @@
         }
         // 略称エイリアス（例: SP → s-p）は key 単位で照合する（両側を normKey で正規化）
         if (!venueHit && aliases) {
-          venueHit = aliases.some((k) => normKey(k) === conf.key);
+          venueHit = aliases.some((key) => normKey(key) === conf.key);
         }
       }
       if (venueHit) {
@@ -713,63 +1057,102 @@
 
   /* 全行のスコア: 平均と最大の加重平均（0.6×平均 + 0.4×最大）。
    * タグ付き論文 1 本の強シグナルが多数行の平均で薄まらないようにする。 */
-  function scorePapers(r, lines) {
-    if (!r || !lines || !lines.length) return 0;
-    var conf = confHay(r);
-    var weights = paperWeights(lines);
-    var sum = 0;
-    var total = 0;
-    var max = 0;
-    for (var i = 0; i < lines.length; i++) {
-      var s = scoreLine(r, lines[i], conf).score;
-      var weight = weights[i].weight;
+  function scorePapers(r: unknown, lines: readonly PaperRecord[]): number {
+    const row = normalizeCandidateLike(r);
+    if (!row || !lines?.length) return 0;
+    const conf = confHay(row);
+    const weights = paperWeights(lines);
+    let sum = 0;
+    let total = 0;
+    let max = 0;
+    for (let i = 0; i < lines.length; i++) {
+      const s = scoreLine(row, lines[i], conf).score;
+      const weight = weights[i].weight;
       if (!weight) continue;
       sum += s * weight;
       total += weight;
       if (s * weight > max) max = s * weight;
     }
     if (!total) return 0;
-    var avg = sum / total;
+    const avg = sum / total;
     return Math.round(avg * 0.6 + max * 0.4);
   }
 
   /* ランクフィルタ: rankPairs ("ccf:A" 等) のグレードを厳密比較する。
    * indexOf の部分一致だと "A" が "core:A*" に誤マッチする (A* は A ではない)。 */
-  function rankMatches(rankPairs, grade) {
-    return (rankPairs || []).some((p) => p.slice(p.indexOf(":") + 1) === grade);
+  function rankMatches(rankPairs: readonly string[] | null | undefined, grade: string): boolean {
+    return (rankPairs || []).some((pair) => pair.slice(pair.indexOf(":") + 1) === grade);
+  }
+
+  /** Shared candidate-to-row boundary for browser rendering and offline ranking. */
+  function candidateRows(data: unknown): CandidateRow[] {
+    const out: CandidateRow[] = [];
+    const source = isRecord(data) && Array.isArray(data.conferences) ? data.conferences : data;
+    const conferences = Array.isArray(source) ? source.filter(isConference) : [];
+    conferences.forEach((conf) => {
+      (conf.editions || []).forEach((ed) => {
+        const rankPairs: string[] = [];
+        const rank = conf.rank || {};
+        Object.keys(rank).forEach((name) => {
+          if (rank[name]) rankPairs.push(`${name}:${rank[name]}`);
+        });
+        const baseHay = [conf.title, conf.full_name, conf.key, ed.place, ed.date_text]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        (ed.deadlines || []).forEach((dl) => {
+          const dateOnly = dl.precision === "date-only";
+          const t = Date.parse(String(dateOnly ? (dl.earliest_utc ?? "") : (dl.utc ?? "")));
+          const tLast = Date.parse(String(dateOnly ? (dl.latest_utc ?? "") : (dl.utc ?? "")));
+          if (!Number.isFinite(t) || !Number.isFinite(tLast)) return;
+          out.push({
+            conf,
+            ed,
+            dl,
+            kind: dl.kind || "other",
+            est: !!ed.estimated,
+            t,
+            tLast,
+            dateOnly,
+            localDate: dateOnly ? String(dl.local_date || "") : "",
+            cats: conf.categories || [],
+            tags: conf.tags || [],
+            rankPairs,
+            hay: `${baseHay} ${dl.label || ""} ${dl.kind || ""}`,
+            dupLabel: dl.comment || "",
+          });
+        });
+      });
+    });
+    return out;
   }
 
   /* 論文モード・常時受付用: 常時受付ジャーナル（tag: journal で締切なし）の行を合成する。
    * 特集号（締切付き）は通常の締切行で扱うため除外する。 */
-  function journalRows(confs, now) {
-    var out = [];
-    var safeConfs = Array.isArray(confs) ? confs : [];
+  function journalRows(confs: unknown, now: number): CandidateRow[] {
+    const out: CandidateRow[] = [];
+    const safeConfs = Array.isArray(confs)
+      ? confs.map(normalizeConference).filter((conf): conf is ConferenceRecord => conf !== null)
+      : [];
     safeConfs.forEach((conf) => {
-      if (!conf || typeof conf !== "object") return;
-      var tags = Array.isArray(conf.tags)
-        ? conf.tags
-        : typeof conf.tags === "string" && conf.tags.trim() !== ""
-          ? [conf.tags.trim()]
-          : [];
+      const tags = conf.tags || [];
       if (tags.indexOf("journal") === -1) return;
-      var hasDl = (conf.editions || []).some(
-        (e) => e && e.deadlines && Array.isArray(e.deadlines) && e.deadlines.length > 0,
-      );
+      const hasDl = (conf.editions || []).some((edition) => Boolean(edition.deadlines?.length));
       if (hasDl) return;
-      var pairs = [];
-      if (conf.rank && typeof conf.rank === "object") {
-        Object.keys(conf.rank).forEach((rk) => {
-          if (conf.rank[rk]) {
-            pairs.push(rk + ":" + conf.rank[rk]);
+      const pairs: string[] = [];
+      const rank = conf.rank || {};
+      if (Object.keys(rank).length) {
+        Object.keys(rank).forEach((rk) => {
+          if (rank[rk]) {
+            pairs.push(`${rk}:${rank[rk]}`);
           }
         });
       }
-      var baseHay = [conf.title, conf.full_name, conf.key].filter(Boolean).join(" ").toLowerCase();
-      var cats = Array.isArray(conf.categories)
-        ? conf.categories
-        : typeof conf.categories === "string" && conf.categories.trim() !== ""
-          ? [conf.categories.trim()]
-          : [];
+      const baseHay = [conf.title, conf.full_name, conf.key]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      const cats = conf.categories || [];
       out.push({
         conf: conf,
         ed: { place: "", date_text: "" },
@@ -781,7 +1164,7 @@
         cats: cats,
         tags: tags,
         rankPairs: pairs,
-        hay: baseHay + " journal 常時受付",
+        hay: `${baseHay} journal 常時受付`,
         name: conf.title,
         year: null,
       });
@@ -792,46 +1175,50 @@
   /* 論文モード用: 未来の投稿締切（abstract/paper）を持たない会議に限り、
    * 直近の過去投稿締切を 1 行だけ返す（RTSS 等「次回未発表」の会議を推薦圏に残す）。
    * 推定の過去行・開催イベント行は除外する。 */
-  function pastRepresentatives(rows, now) {
-    var byKey = {};
-    var hasFuture = {};
-    (rows || []).forEach((r) => {
+  function pastRepresentatives(rows: readonly CandidateRow[], now: number): CandidateRow[] {
+    const byKey: Record<string, CandidateRow> = {};
+    const hasFuture: Record<string, boolean> = {};
+    rows.forEach((r) => {
       if (r.kind !== "abstract" && r.kind !== "paper") return;
-      var k = r.conf && r.conf.key;
+      const k = r.conf?.key;
       if (!k) return;
       if (rowIsFuture(r, now)) hasFuture[k] = true;
       if (!rowIsFuture(r, now) && !r.est && (!byKey[k] || r.t > byKey[k].t)) byKey[k] = r;
     });
-    var out = [];
+    const out: CandidateRow[] = [];
     Object.keys(byKey).forEach((k) => {
       if (!hasFuture[k]) out.push(byKey[k]);
     });
     return out;
   }
 
-  function rowDateOnlyState(row, now) {
-    if (!row || !row.dateOnly) return null;
+  function rowDateOnlyState(
+    row: CandidateRow | null | undefined,
+    now: number,
+  ): "definitely-future" | "uncertain-on-date" | "definitely-past" | null {
+    if (!row?.dateOnly) return null;
     if (now < row.t) return "definitely-future";
     if (now <= (row.tLast || row.t)) return "uncertain-on-date";
     return "definitely-past";
   }
 
-  function rowIsFuture(row, now) {
-    return row && row.dateOnly
+  function rowIsFuture(row: CandidateRow | null | undefined, now: number): boolean {
+    return row?.dateOnly
       ? rowDateOnlyState(row, now) !== "definitely-past"
-      : row && row.t >= now;
+      : Boolean(row && row.t >= now);
   }
 
   /* 論文モード: 会議単位に代表行を選ぶ。
    * 締切行優先 → 未来締切優先 → 早い締切 / 直近の過去。 */
-  function pickRepresentative(rows, now) {
-    var DAY = 86400000;
-    var byKey = {};
-    var isFuture = (r) => (r.kind === "event" ? now < (r.tLast || r.t) + DAY : rowIsFuture(r, now));
-    (rows || []).forEach((r) => {
-      var k = r.conf && (r.conf.key || "");
+  function pickRepresentative(rows: readonly CandidateRow[], now: number): CandidateRow[] {
+    const DAY = 86400000;
+    const byKey: Record<string, CandidateRow> = {};
+    const isFuture = (r: CandidateRow) =>
+      r.kind === "event" ? now < (r.tLast || r.t) + DAY : rowIsFuture(r, now);
+    rows.forEach((r) => {
+      const k = r.conf && (r.conf.key || "");
       if (!k) return;
-      var cur = byKey[k];
+      const cur = byKey[k];
       if (!cur) {
         byKey[k] = r;
         return;
@@ -843,7 +1230,7 @@
       if (r.kind === "event" && cur.kind !== "event") {
         return;
       }
-      var cf = isFuture(cur),
+      const cf = isFuture(cur),
         rf = isFuture(r);
       if (cf !== rf) {
         if (rf) byKey[k] = r;
@@ -855,19 +1242,19 @@
   }
 
   /* 論文モードの並び: 適合度が第一、同点なら未来締切 → 常時受付ジャーナル → 過去締切。 */
-  function comparePapers(a, b, now) {
-    if (b._matchScore !== a._matchScore) {
-      return b._matchScore - a._matchScore;
+  function comparePapers(a: CandidateRow, b: CandidateRow, now: number): number {
+    if ((b._matchScore ?? 0) !== (a._matchScore ?? 0)) {
+      return (b._matchScore ?? 0) - (a._matchScore ?? 0);
     }
-    var DAY = 86400000;
-    var aFut = a.kind === "event" ? now < (a.tLast || a.t) + DAY : rowIsFuture(a, now);
-    var bFut = b.kind === "event" ? now < (b.tLast || b.t) + DAY : rowIsFuture(b, now);
+    const DAY = 86400000;
+    const aFut = a.kind === "event" ? now < (a.tLast || a.t) + DAY : rowIsFuture(a, now);
+    const bFut = b.kind === "event" ? now < (b.tLast || b.t) + DAY : rowIsFuture(b, now);
     if (aFut !== bFut) {
       return aFut ? -1 : 1;
     }
     // 未来締切の会議をジャーナルより優先（締切がある方が行動可能）
-    var aJ = a.kind === "journal";
-    var bJ = b.kind === "journal";
+    const aJ = a.kind === "journal";
+    const bJ = b.kind === "journal";
     if (aJ !== bJ) {
       return aJ ? 1 : -1;
     }
@@ -876,18 +1263,18 @@
 
   /* 掲載先タグが属するカテゴリを全会議から推定する。
    * 例: lines の venue="RTSS" が systems カテゴリの会議に一致 → ["systems"]。 */
-  function venueCategories(lines, rows) {
-    var out = {};
-    (lines || []).forEach((p) => {
+  function venueCategories(lines: readonly PaperRecord[], rows: readonly CandidateRow[]): string[] {
+    const out: Record<string, boolean> = {};
+    lines.forEach((p) => {
       if (!p.venue) return;
-      var nv = normKey(p.venue);
+      const nv = normKey(p.venue);
       if (nv.length <= 2) return;
-      (rows || []).forEach((r) => {
-        var c = r.conf || {};
-        var hay = [normKey(c.key), normKey(c.title), normKey(c.full_name)].filter(Boolean);
-        var hit = hay.some((h) => h && (h.indexOf(nv) !== -1 || nv.indexOf(h) !== -1));
+      rows.forEach((r) => {
+        const c = r.conf || {};
+        const hay = [normKey(c.key), normKey(c.title), normKey(c.full_name)].filter(Boolean);
+        const hit = hay.some((h) => h && (h.indexOf(nv) !== -1 || nv.indexOf(h) !== -1));
         if (hit)
-          (r.cats || []).forEach((k) => {
+          r.cats.forEach((k) => {
             out[k] = true;
           });
       });
@@ -895,8 +1282,9 @@
     return Object.keys(out);
   }
 
-  function breakdown(r, lines) {
-    if (!r)
+  function breakdown(r: unknown, lines: readonly PaperRecord[]): ScoreBreakdown {
+    const row = normalizeCandidateLike(r);
+    if (!row)
       return {
         score: 0,
         topicScore: 0,
@@ -906,13 +1294,20 @@
         evidence: [],
         agg: { domain: 0, name: 0, paper: 0, jp: 0, tags: 0, venue: 0 },
       };
-    var conf = confHay(r);
-    var weights = paperWeights(lines);
-    var perLine = [];
-    var agg = { domain: 0, name: 0, paper: 0, jp: 0, tags: 0, venue: 0 };
-    for (var i = 0; i < (lines || []).length; i++) {
-      var s = scoreLine(r, lines[i], conf);
-      var weight = weights[i] || { role: "reference", weight: 0 };
+    const conf = confHay(row);
+    const weights = paperWeights(lines);
+    const perLine: LineEvidence[] = [];
+    const agg: SignalScores & { venueName?: number } = {
+      domain: 0,
+      name: 0,
+      paper: 0,
+      jp: 0,
+      tags: 0,
+      venue: 0,
+    };
+    for (let i = 0; i < lines.length; i++) {
+      const s = scoreLine(row, lines[i], conf);
+      const weight = weights[i] || { role: "reference", weight: 0 };
       perLine.push({
         score: s.score,
         role: weight.role,
@@ -921,15 +1316,15 @@
         details: s.details,
       });
       if (!weight.weight) continue;
-      Object.keys(agg).forEach((k) => {
-        if (k !== "venue") agg[k] += s.details[k] * weight.weight;
+      (Object.keys(s.details) as Array<keyof SignalScores>).forEach((key) => {
+        if (key !== "venue") agg[key] += s.details[key] * weight.weight;
       });
     }
-    var venue = venueEvidence(perLine, lines);
+    const venue = venueEvidence(perLine, lines);
     agg.venue = venue.priorVenue;
-    var topicScore = scorePapers(r, lines);
-    var signalEvidence = [];
-    var evidenceTypes = {
+    const topicScore = scorePapers(row, lines);
+    const signalEvidence: SignalEvidence[] = [];
+    const evidenceTypes: Record<string, string> = {
       domain: "domain",
       name: "venue-name",
       paper: "accepted-paper",
@@ -937,10 +1332,11 @@
       tags: "topic-tag",
       venue: "prior-venue",
     };
-    Object.keys(evidenceTypes).forEach((kind) => {
-      if (agg[kind] > 0) signalEvidence.push({ type: evidenceTypes[kind], contribution: agg[kind] });
+    (Object.keys(evidenceTypes) as Array<keyof SignalScores>).forEach((kind) => {
+      if (agg[kind] > 0)
+        signalEvidence.push({ type: evidenceTypes[kind], contribution: agg[kind] });
     });
-    var venueName = agg.name;
+    const venueName = agg.name;
     agg.name += agg.paper;
     agg.venueName = venueName;
     return {
@@ -958,15 +1354,16 @@
   /* Venue-level retrieval: fuse positive paper evidence by reciprocal rank.
    * K=60 keeps one evidence line close to its existing score while rewarding
    * independent matching lines. A tagged venue retains its absolute +venue signal. */
-  function venueEvidence(perLine, lines) {
-    var evidence = (perLine || [])
-      .map((line, index) => ({
+  function venueEvidence(perLine: readonly LineEvidence[], lines: readonly PaperRecord[]) {
+    const evidence: Array<LineEvidence & { lineIndex: number; key: string }> = perLine
+      .map((line, index): LineEvidence & { lineIndex: number; key: string } => ({
         lineIndex: index,
         score: line.score * (line.weight === undefined ? 1 : line.weight),
         weight: line.weight === undefined ? 1 : line.weight,
         venueHit: line.venueHit,
         details: line.details,
-        key: [lines && lines[index] && lines[index].title, lines && lines[index] && lines[index].keywords, lines && lines[index] && lines[index].venue]
+        role: line.role,
+        key: [lines?.[index]?.title, lines?.[index]?.keywords, lines?.[index]?.venue]
           .map((value) => String(value || "").toLowerCase())
           .join("\u0000"),
       }))
@@ -977,84 +1374,106 @@
         if (a.key > b.key) return 1;
         return a.lineIndex - b.lineIndex;
       });
-    var k = 60;
-    var fused = 0;
-    var venueHit = false;
+    const k = 60;
+    let fused = 0;
+    let venueHit = false;
     evidence.forEach((line, index) => {
-      fused += (line.score / 100) / (k + index + 1);
+      fused += line.score / 100 / (k + index + 1);
       if (line.venueHit) venueHit = true;
       line.rank = index + 1;
-      delete line.key;
     });
-    var score = Math.round(100 * k * fused);
-    var priorVenue = venueHit ? SIG_WEIGHTS.venue : 0;
+    const publicEvidence: LineEvidence[] = evidence.map(({ key: _key, ...line }) => line);
+    const score = Math.round(100 * k * fused);
+    const priorVenue = venueHit ? SIG_WEIGHTS.venue : 0;
     return {
       score: Math.min(100, score + priorVenue),
       priorVenue: priorVenue,
       venueHit: venueHit,
-      evidence: evidence,
+      evidence: publicEvidence,
     };
   }
 
-  var CONFIDENCE_TOPIC_MIN = 40;
-  var CONFIDENCE_SUFFICIENT_MIN = 55;
-  var CONFIDENCE_MARGIN_MIN = 10;
+  const CONFIDENCE_TOPIC_MIN = 40;
+  const CONFIDENCE_SUFFICIENT_MIN = 55;
+  const CONFIDENCE_MARGIN_MIN = 10;
 
-  function confidenceState(evidenceStrength, margin) {
-    if (!Number.isFinite(evidenceStrength) || evidenceStrength < CONFIDENCE_TOPIC_MIN) return "insufficient";
-    if (evidenceStrength < CONFIDENCE_SUFFICIENT_MIN || margin < CONFIDENCE_MARGIN_MIN) return "ambiguous";
+  function confidenceState(evidenceStrength: number, margin: number): Confidence {
+    if (!Number.isFinite(evidenceStrength) || evidenceStrength < CONFIDENCE_TOPIC_MIN)
+      return "insufficient";
+    if (evidenceStrength < CONFIDENCE_SUFFICIENT_MIN || margin < CONFIDENCE_MARGIN_MIN)
+      return "ambiguous";
     return "sufficient";
   }
 
-  function fitLabel(confidence) {
+  function fitLabel(confidence: Confidence): string {
     if (confidence === "sufficient") return "十分な一致";
     if (confidence === "ambiguous") return "候補を絞り切れません";
     return "入力内容から十分な一致を確認できません";
   }
 
-  function availability(row, now) {
-    var time = row && !row.dateOnly && Number.isFinite(row.t) ? row.t : null;
-    var dateState = rowDateOnlyState(row, now);
-    var future = row && row.kind === "journal"
-      ? true
-      : row && row.kind === "event"
-        ? now < (row.tLast || row.t) + 86400000
-        : rowIsFuture(row, now);
+  function availability(row: CandidateRow | null | undefined, now: number): Availability {
+    const time = row && !row.dateOnly && Number.isFinite(row.t) ? row.t : null;
+    const dateState = rowDateOnlyState(row, now);
+    const future =
+      row && row.kind === "journal"
+        ? true
+        : row && row.kind === "event"
+          ? now < (row.tLast || row.t) + 86400000
+          : rowIsFuture(row, now);
     return {
-      kind: (row && row.kind) || "unknown",
-      status: row && row.kind === "journal"
-        ? "ongoing"
-        : dateState === "uncertain-on-date" ? "uncertain" : future ? "open" : "past",
+      kind: row?.kind || "unknown",
+      status:
+        row && row.kind === "journal"
+          ? "ongoing"
+          : dateState === "uncertain-on-date"
+            ? "uncertain"
+            : future
+              ? "open"
+              : "past",
       timestamp: time,
-      local_date: row && row.dateOnly ? row.localDate : null,
+      local_date: row?.dateOnly ? (row.localDate ?? null) : null,
       date_state: dateState,
-      estimated: !!(row && row.est),
+      estimated: !!row?.est,
     };
   }
 
   /* Fuse candidate ranks once per venue. Deadline rows are availability records,
    * not independent fit votes. */
-  function venueRecommendations(rows, lines, semanticScores, now, options) {
-    var groups = {};
-    var opts = options || {};
-    var safeNow = Number.isFinite(now) ? now : Date.now();
-    (rows || []).forEach((row) => {
-      var key = normKey(row && row.conf && row.conf.key);
-      if (key) (groups[key] || (groups[key] = [])).push(row);
+  function venueRecommendations(
+    rows: readonly unknown[],
+    lines: readonly PaperRecord[],
+    semanticScores: Record<string, number> | null,
+    now: number,
+    options: RecommendationOptions = {},
+  ): RecommendationResult[] {
+    const groups: Record<string, CandidateRow[]> = {};
+    const opts = options || {};
+    const safeNow = Number.isFinite(now) ? now : Date.now();
+    rows.map(normalizeCandidateLike).forEach((row) => {
+      if (!row) return;
+      const key = normKey(row?.conf?.key);
+      if (key) {
+        const group = groups[key] || [];
+        groups[key] = group;
+        group.push(row);
+      }
     });
-    var entries = Object.keys(groups).map((key) => {
-      var row = pickRepresentative(groups[key], safeNow)[0];
-      var match = breakdown(row, lines);
-      var boosted = false;
-      var lexicalScore = match.venueScore;
-      if (!match.venueHit && Array.isArray(opts.venueCats) && opts.venueCats.length &&
-          (row.cats || []).some((cat) => opts.venueCats.indexOf(cat) >= 0)) {
+    const entries: RecommendationEntry[] = Object.keys(groups).map((key) => {
+      const row = pickRepresentative(groups[key], safeNow)[0];
+      const match = breakdown(row, lines);
+      let boosted = false;
+      let lexicalScore = match.venueScore;
+      if (
+        !match.venueHit &&
+        Array.isArray(opts.venueCats) &&
+        opts.venueCats.length &&
+        row.cats.some((cat) => opts.venueCats?.indexOf(cat) !== -1)
+      ) {
         lexicalScore = Math.min(100, lexicalScore + 10);
         boosted = true;
       }
-      var semantic = semanticScores && Number.isFinite(semanticScores[key])
-        ? semanticScores[key]
-        : 0;
+      const semantic =
+        semanticScores && Number.isFinite(semanticScores[key]) ? semanticScores[key] : 0;
       return {
         key,
         row,
@@ -1065,66 +1484,83 @@
         boosted,
       };
     });
-    var lexical = entries.slice().sort((a, b) => b.lexicalScore - a.lexicalScore || a.key.localeCompare(b.key));
-    var semantic = entries
+    const lexical = entries
+      .slice()
+      .sort((a, b) => b.lexicalScore - a.lexicalScore || a.key.localeCompare(b.key));
+    const semantic = entries
       .filter((entry) => entry.semantic > 0)
       .sort((a, b) => b.semantic - a.semantic || a.key.localeCompare(b.key));
-    var topN = Number.isInteger(opts.topN) && opts.topN > 0 ? opts.topN : 50;
-    var lexicalRanks = {};
-    var semanticRanks = {};
-    lexical.filter((entry) => entry.lexicalScore > 0).slice(0, topN).forEach((entry, index) => {
-      lexicalRanks[entry.key] = index + 1;
-    });
+    const requestedTopN = opts.topN;
+    const topN = Number.isInteger(requestedTopN) && (requestedTopN ?? 0) > 0 ? requestedTopN! : 50;
+    const lexicalRanks: Record<string, number> = {};
+    const semanticRanks: Record<string, number> = {};
+    lexical
+      .filter((entry) => entry.lexicalScore > 0)
+      .slice(0, topN)
+      .forEach((entry, index) => {
+        lexicalRanks[entry.key] = index + 1;
+      });
     semantic.slice(0, topN).forEach((entry, index) => {
       semanticRanks[entry.key] = index + 1;
     });
-    var hasSemantic = Object.keys(semanticRanks).length > 0;
-    var keys = Object.keys(lexicalRanks);
+    const hasSemantic = Object.keys(semanticRanks).length > 0;
+    const keys = Object.keys(lexicalRanks);
     Object.keys(semanticRanks).forEach((key) => {
       if (keys.indexOf(key) < 0) keys.push(key);
     });
-    var evidenceOrder = keys
+    const evidenceOrder = keys
       .map((key) => entries.find((entry) => entry.key === key))
+      .filter((entry): entry is RecommendationEntry => entry !== undefined)
       .sort((a, b) => b.evidenceStrength - a.evidenceStrength || a.key.localeCompare(b.key));
-    var topEvidence = evidenceOrder[0] ? evidenceOrder[0].evidenceStrength : 0;
-    var secondEvidence = evidenceOrder[1] ? evidenceOrder[1].evidenceStrength : 0;
-    var k = 60;
-    return keys.map((key) => {
-      var entry = entries.find((item) => item.key === key);
-      var lexicalRank = lexicalRanks[key] || null;
-      var semanticRank = semanticRanks[key] || null;
-      var rrf = (lexicalRank ? 1 / (k + lexicalRank) : 0) +
-        (semanticRank ? 1 / (k + semanticRank) : 0);
-      var score = hasSemantic
-        ? Math.round(Math.min(100, rrf * 100 * (k + 1) / 2))
-        : entry.lexicalScore;
-      var margin = entry === evidenceOrder[0]
-        ? (evidenceOrder.length > 1 ? topEvidence - secondEvidence : Infinity)
-        : entry.evidenceStrength - topEvidence;
-      var confidence = confidenceState(entry.evidenceStrength, margin);
-      var evidence = (entry.match.signalEvidence || entry.match.evidence).slice();
-      if (semanticRank) evidence.push({ type: "semantic", rank: semanticRank, contribution: entry.semantic });
-      return {
-        venueKey: key,
-        row: entry.row,
-        fit: {
-          score,
-          rankingScore: score,
-          evidenceStrength: entry.evidenceStrength,
-          confidence,
-          label: fitLabel(confidence),
-          lexicalScore: entry.lexicalScore,
-          semanticScore: entry.semantic,
-          lexicalRank,
-          semanticRank,
-          rrf: Number(rrf.toFixed(8)),
-          evidence,
-        },
-        availability: availability(entry.row, safeNow),
-        match: entry.match,
-        boosted: entry.boosted,
-      };
-    }).sort((a, b) => b.fit.score - a.fit.score || a.venueKey.localeCompare(b.venueKey));
+    const topEvidence = evidenceOrder[0] ? evidenceOrder[0].evidenceStrength : 0;
+    const secondEvidence = evidenceOrder[1] ? evidenceOrder[1].evidenceStrength : 0;
+    const k = 60;
+    return keys
+      .map((key): RecommendationResult | null => {
+        const entry = entries.find((item) => item.key === key);
+        if (!entry) return null;
+        const lexicalRank = lexicalRanks[key] || null;
+        const semanticRank = semanticRanks[key] || null;
+        const rrf =
+          (lexicalRank ? 1 / (k + lexicalRank) : 0) + (semanticRank ? 1 / (k + semanticRank) : 0);
+        const score = hasSemantic
+          ? Math.round(Math.min(100, (rrf * 100 * (k + 1)) / 2))
+          : entry.lexicalScore;
+        const margin =
+          entry === evidenceOrder[0]
+            ? evidenceOrder.length > 1
+              ? topEvidence - secondEvidence
+              : Infinity
+            : entry.evidenceStrength - topEvidence;
+        const confidence = confidenceState(entry.evidenceStrength, margin);
+        const evidence: Array<SignalEvidence | LineEvidence> = [
+          ...(entry.match.signalEvidence || entry.match.evidence),
+        ];
+        if (semanticRank)
+          evidence.push({ type: "semantic", rank: semanticRank, contribution: entry.semantic });
+        return {
+          venueKey: String(entry.row.conf?.key || key),
+          row: entry.row,
+          fit: {
+            score,
+            rankingScore: score,
+            evidenceStrength: entry.evidenceStrength,
+            confidence,
+            label: fitLabel(confidence),
+            lexicalScore: entry.lexicalScore,
+            semanticScore: entry.semantic,
+            lexicalRank,
+            semanticRank,
+            rrf: Number(rrf.toFixed(8)),
+            evidence,
+          },
+          availability: availability(entry.row, safeNow),
+          match: entry.match,
+          boosted: entry.boosted,
+        };
+      })
+      .filter((result): result is RecommendationResult => result !== null)
+      .sort((a, b) => b.fit.score - a.fit.score || a.venueKey.localeCompare(b.venueKey));
   }
 
   /* 掲載先タグ（例: "IEEE RTSS"）に一致する会議のリストを返す。
@@ -1134,26 +1570,30 @@
    * 日本語タグ（例: 「情報処理学会 DPS 研究会」）は normKey が日本語を消して
    * 「dps」等の短い断片になり、誤爆（IPDPS 等）の元になるため、原文も照合する。
    */
-  function matchVenueTag(tag, confs) {
-    var raw = String(tag || "")
+  function matchVenueTag<T>(tag: unknown, confs: readonly T[]): T[] {
+    const raw = String(tag || "")
       .trim()
       .replace(/\s+/g, " ");
-    var nv = normKey(tag);
+    const nv = normKey(tag);
     if (raw.length < 2 && nv.length < 2) return [];
-    var out = [];
-    (confs || []).forEach((item) => {
-      if (!item) return;
-      var c = item.conf || item;
-      var key = normKey(c.key);
-      var hay = [key, normKey(c.title), normKey(c.full_name)].filter(Boolean); // 原文（日本語含む）: 空白正規化したタグが会議の名称に含まれれば一致。
+    const out: T[] = [];
+    confs.forEach((item) => {
+      if (!isRecord(item)) return;
+      const c = normalizeConference(item.conf) ?? normalizeConference(item);
+      if (!c) return;
+      const key = normKey(c.key);
+      const hay = [key, normKey(c.title), normKey(c.full_name)].filter(Boolean); // 原文（日本語含む）: 空白正規化したタグが会議の名称に含まれれば一致。
       // 短いタグ（ISC 等）は完全一致のみ（ISCA への部分一致誤爆を防ぐ）
-      var rawHay = [(c.title || "").replace(/\s+/g, " "), (c.full_name || "").replace(/\s+/g, " ")];
-      var rl = raw.toLowerCase();
-      var hit =
+      const rawHay = [
+        (c.title || "").replace(/\s+/g, " "),
+        (c.full_name || "").replace(/\s+/g, " "),
+      ];
+      const rl = raw.toLowerCase();
+      let hit =
         raw.length >= 2 &&
         rawHay.some((h) => {
           if (!h) return false;
-          var hl = h.toLowerCase();
+          const hl = h.toLowerCase();
           return raw.length <= 3 ? hl === rl : hl.indexOf(rl) !== -1 || rl.indexOf(hl) !== -1;
         });
       // normKey 照合: 2〜3 文字は完全一致のみ（「dps」が IPDPS に部分一致する誤爆防止）
@@ -1164,8 +1604,8 @@
           hit = hay.some((h) => h && (h.indexOf(nv) !== -1 || nv.indexOf(h) !== -1));
         }
         if (!hit) {
-          var aliases = VENUE_ALIASES[nv];
-          if (aliases) hit = aliases.some((k) => normKey(k) === key);
+          const aliases = VENUE_ALIASES[nv];
+          if (aliases) hit = aliases.some((alias) => normKey(alias) === key);
         }
       }
       if (hit) out.push(item);
@@ -1175,28 +1615,33 @@
 
   /* 2 つの埋め込みベクトルを重み wA（a の重み）で合成し L2 正規化する。
    * PRF 用: a = 論文クエリ、b = 掲載先会議の埋め込み。 */
-  function blendVectors(a, b, wA) {
-    if (!a || !b || a.length !== b.length) return a;
-    var w = typeof wA === "number" ? wA : 0.7;
-    var out = new Array(a.length);
-    var sum = 0;
-    for (var i = 0; i < a.length; i++) {
+  function numericVector(value: unknown): value is Vector {
+    return Array.isArray(value) && value.every((item) => typeof item === "number");
+  }
+
+  function blendVectors(a: unknown, b: unknown, wA: number): Vector {
+    if (!numericVector(a)) return [];
+    if (!numericVector(b) || a.length !== b.length) return a;
+    const w = typeof wA === "number" ? wA : 0.7;
+    const out = new Array(a.length);
+    let sum = 0;
+    for (let i = 0; i < a.length; i++) {
       out[i] = w * a[i] + (1 - w) * b[i];
       sum += out[i] * out[i];
     }
-    var n2 = Math.sqrt(sum);
+    const n2 = Math.sqrt(sum);
     if (!n2) return a;
-    for (var j = 0; j < out.length; j++) out[j] /= n2;
+    for (let j = 0; j < out.length; j++) out[j] /= n2;
     return out;
   }
 
   /* コサイン類似度（埋め込みベクトル）。0 ベクトルは 0 を返す。 */
-  function cosine(a, b) {
+  function cosine(a: Vector, b: Vector): number {
     if (!a || !b || !a.length || a.length !== b.length) return 0;
-    var dot = 0,
+    let dot = 0,
       na = 0,
       nb = 0;
-    for (var i = 0; i < a.length; i++) {
+    for (let i = 0; i < a.length; i++) {
       dot += a[i] * b[i];
       na += a[i] * a[i];
       nb += b[i] * b[i];
@@ -1205,28 +1650,41 @@
     return dot / (Math.sqrt(na) * Math.sqrt(nb));
   }
 
-  function embeddingSetCompatible(bundle, language) {
-    var manifest = bundle && bundle.manifest;
-    var meta = manifest && manifest.models && manifest.models[language];
-    var set = language === "multi" ? bundle.multi : bundle;
-    if (!manifest || manifest.schema !== 1 || typeof manifest.profile_hash !== "string" || !meta || !set) return false;
+  function embeddingSetCompatible(
+    bundle: EmbeddingBundle | null | undefined,
+    language: string,
+  ): boolean {
+    const manifest = bundle?.manifest;
+    const meta = manifest?.models?.[language];
+    const set = language === "multi" ? bundle?.multi : bundle;
+    if (manifest?.schema !== 1 || typeof manifest.profile_hash !== "string" || !meta || !set)
+      return false;
     if (set.model !== meta.model || set.dim !== meta.dim || !meta.revision) return false;
     if (!Array.isArray(manifest.keys) || !set.embeddings) return false;
-    var keys = Object.keys(set.embeddings).sort();
-    var expected = manifest.keys.slice().sort();
-    if (keys.length !== expected.length || keys.some(function (key, i) { return key !== expected[i]; })) return false;
-    if (!meta.probe || meta.probe.text !== "kamiyobi embedding compatibility probe") return false;
+    const embeddings = set.embeddings;
+    const keys = Object.keys(embeddings).sort();
+    const expected = manifest.keys.slice().sort();
+    if (keys.length !== expected.length || keys.some((key, i) => key !== expected[i])) return false;
+    if (meta.probe?.text !== "kamiyobi embedding compatibility probe") return false;
     if (!Array.isArray(meta.probe.vector) || meta.probe.vector.length !== meta.dim) return false;
-    return keys.every(function (key) {
-      var vector = set.embeddings[key];
+    return keys.every((key) => {
+      const vector = embeddings[key];
       return Array.isArray(vector) && vector.length === meta.dim;
     });
   }
 
-  function embeddingProbeMatches(meta, vector) {
+  function embeddingProbeMatches(
+    meta: EmbeddingModelMeta | null | undefined,
+    vector: unknown,
+  ): boolean {
+    const numericVector =
+      Array.isArray(vector) && vector.every((item) => typeof item === "number") ? vector : null;
     return Boolean(
-      meta && meta.probe && Array.isArray(meta.probe.vector) && Array.isArray(vector) &&
-      meta.probe.vector.length === vector.length && cosine(meta.probe.vector, vector) >= 0.99,
+      meta?.probe &&
+        Array.isArray(meta.probe.vector) &&
+        numericVector &&
+        meta.probe.vector.length === numericVector.length &&
+        cosine(meta.probe.vector, numericVector) >= 0.99,
     );
   }
 
@@ -1238,15 +1696,21 @@
    * （平均重心の汎用化を避けるため埋め込みから論文を外すと、論文タイトルから
    * セマンティックに発見されないため）。
    */
-  function semanticScore(confKey, queryVec, emb, paperVecs) {
+  function semanticScore(
+    confKey: string,
+    queryVec: Vector,
+    emb: VectorMap,
+    paperVecs?: PaperVectorMap | null,
+  ): number {
     if (!queryVec || !emb) return 0;
-    var v = emb[confKey] || emb[(confKey || "").toLowerCase()];
+    const v = emb[confKey] || emb[(confKey || "").toLowerCase()];
     if (!v) return 0;
-    var c = cosine(queryVec, v);
-    var pvs = (paperVecs || paperVecsState) && (paperVecs || paperVecsState)[confKey];
-    if (pvs && pvs.length) {
-      for (var i = 0; i < pvs.length; i++) {
-        var pc = cosine(queryVec, pvs[i]);
+    let c = cosine(queryVec, v);
+    const vectors = paperVecs || paperVecsState;
+    const pvs = vectors?.[confKey];
+    if (pvs?.length) {
+      for (let i = 0; i < pvs.length; i++) {
+        const pc = cosine(queryVec, pvs[i]);
         if (pc > c) c = pc;
       }
     }
@@ -1259,11 +1723,10 @@
    * ぼやけ」になり、英語クエリへの誤マッチの元になる。英語クエリではこの比率で
    * セマンティックスコアを減衰させる（日本語クエリは多言語モデルなので減衰しない）。
    */
-  function englishRatio(conf) {
-    var c = conf || {};
-    var text = [c.title, c.full_name, (c.tags || []).join(" ")].filter(Boolean).join(" ");
+  function englishRatio(c: ConferenceRecord): number {
+    const text = [c.title, c.full_name, (c.tags || []).join(" ")].filter(Boolean).join(" ");
     if (!text) return 1;
-    var letters = text.replace(/[^a-zA-Z]/g, "").length;
+    const letters = text.replace(/[^a-zA-Z]/g, "").length;
     return letters / text.length;
   }
 
@@ -1273,63 +1736,63 @@
    * 単複形・活用形（bandit/bandits, process/processes, memory/memories, search/searches）は
    * 正当なマッチなので双方向に対称照合する。
    */
-  function wordInText(hay, w) {
+  function wordInText(hay: unknown, w: unknown): boolean {
     if (!hay || !w) return false;
-    var safeW = String(w)
+    const safeW = String(w)
       .toLowerCase()
       .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     if (!safeW) return false;
-    var re;
+    let re: string;
     if (safeW.endsWith("ies") && safeW.length > 4) {
-      re = safeW.slice(0, -3) + "(?:y|ies)";
+      re = `${safeW.slice(0, -3)}(?:y|ies)`;
     } else if (safeW.endsWith("y") && safeW.length > 3 && !/[aeiou]y$/.test(safeW)) {
-      re = safeW.slice(0, -1) + "(?:y|ies)";
+      re = `${safeW.slice(0, -1)}(?:y|ies)`;
     } else if (safeW.endsWith("sses") && safeW.length > 5) {
-      re = safeW.slice(0, -2) + "(?:es)?";
+      re = `${safeW.slice(0, -2)}(?:es)?`;
     } else if (safeW.endsWith("ss")) {
-      re = safeW + "(?:es)?";
+      re = `${safeW}(?:es)?`;
     } else if (/(?:ches|shes|xes|zes)$/.test(safeW) && safeW.length > 4) {
-      re = safeW.slice(0, -2) + "(?:es)?";
+      re = `${safeW.slice(0, -2)}(?:es)?`;
     } else if (/(?:ch|sh|x|z)$/.test(safeW)) {
-      re = safeW + "(?:es)?";
+      re = `${safeW}(?:es)?`;
     } else if (safeW.endsWith("s")) {
-      re = safeW.slice(0, -1) + "s?";
+      re = `${safeW.slice(0, -1)}s?`;
     } else {
-      re = safeW + "s?";
+      re = `${safeW}s?`;
     }
-    return new RegExp("\\b" + re + "\\b", "i").test(String(hay));
+    return new RegExp(`\\b${re}\\b`, "i").test(String(hay));
   }
 
   /* Domain/tag signals use token boundaries so short signals such as "ai" do not
    * match unrelated words. Hyphenated phrases are equivalent to space-separated
    * phrases; Japanese signals retain substring matching. */
-  function signalInText(hay, signal) {
+  function signalInText(hay: unknown, signal: unknown): boolean {
     if (!hay || !signal) return false;
-    var normalize = (value) =>
+    const normalize = (value: unknown) =>
       String(value)
         .toLowerCase()
         .replace(/[\u2010-\u2015\u2212-]/g, " ")
         .replace(/\s+/g, " ")
         .trim();
-    var text = normalize(hay);
-    var needle = normalize(signal);
+    const text = normalize(hay);
+    const needle = normalize(signal);
     if (!text || !needle) return false;
     if (/[\u3000-\u9fff]/.test(needle)) return text.indexOf(needle) !== -1;
-    var escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    return new RegExp("(?:^|[^a-z0-9])" + escaped + "(?=$|[^a-z0-9])", "i").test(text);
+    const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`(?:^|[^a-z0-9])${escaped}(?=$|[^a-z0-9])`, "i").test(text);
   }
 
   /* クエリの内容語数（英語）。ブレンドの語彙重みの適応に使う。
    * 一般語（STOPWORDS）と短語は数えない — 入力が短いほど語彙シグナルが疎なので
    * セマンティック寄りに倒すべき、という実測の根拠になる。 */
-  function contentWordCount(text) {
+  function contentWordCount(text: unknown): number {
     if (!text) return 0;
-    var seen = new Set();
-    var m = String(text)
+    const seen = new Set<string>();
+    const m = String(text)
       .toLowerCase()
       .match(/[a-z][a-z0-9-]{2,}/g);
-    (m || []).forEach((w) => {
-      w = w.replace(/[^a-z]/g, "");
+    (m || []).forEach((word) => {
+      const w = word.replace(/[^a-z]/g, "");
       if (w.length > 3 && !STOPWORDS.has(w)) seen.add(w);
     });
     return seen.size;
@@ -1341,7 +1804,7 @@
    * 日本語: 会議名の日本語チャンク一致が識別力の主役なので語彙寄り 0.6（JP ベンチ比較）。
    * len: クエリの内容語数（英語のみ。日本語は isJp が優先）。
    */
-  function vocabWeight(len, isJp) {
+  function vocabWeight(len: number | undefined, isJp: boolean | undefined): number {
     if (isJp) return 0.6;
     return len !== undefined && len <= 4 ? 0.25 : 0.4;
   }
@@ -1351,19 +1814,20 @@
    * （ベンチマークのスイープ用）、無ければ len と jp から vocabWeight で決める。
    * セマンティックが未ロード（オフライン等）なら語彙スコアをそのまま返す。
    */
-  function blendScore(vocab, sem, opts) {
+  function blendScore(
+    vocab: number,
+    sem: number,
+    opts?: { jp?: boolean; jpw?: number; len?: number },
+  ): number {
     if (!sem) return vocab;
-    var w =
-      opts && typeof opts.jpw === "number"
-        ? opts.jpw
-        : vocabWeight(opts && opts.len, opts && opts.jp);
+    const w = opts && typeof opts.jpw === "number" ? opts.jpw : vocabWeight(opts?.len, opts?.jp);
     return Math.round(vocab * w + sem * (1 - w));
   }
 
   /* テキストに日本語（かな・漢字）が含まれるか。
    * 言語適応型モデル選択の判定に使う（日本語論文は多言語モデルで埋め込む）。
    */
-  function hasJapanese(text) {
+  function hasJapanese(text: unknown): boolean {
     return /[\u3040-\u9fff]/.test(String(text || ""));
   }
 
@@ -1373,7 +1837,7 @@
    * 分野シグナル・会議名・タグの一致判定に使う（例: 「低遅延」→ latency real-time）。
    * ブラウザの表示テキストや埋め込み入力は変更しない（語彙一致の内部処理のみ）。
    */
-  var JP_EN = {
+  const JP_EN: Record<string, string> = {
     // システム・分散
     分散処理: "distributed processing",
     分散システム: "distributed system",
@@ -1493,18 +1957,18 @@
 
   /* 語彙一致に使う日本語→英語展開を有効/無効にする（ベンチマーク比較用。
    * 実測: 会議名チャンクの合成クエリでは誤爆するが、実論文の日本語語彙では有効）。 */
-  var expandEnabled = true;
-  function setExpandEnabled(v) {
+  let expandEnabled = true;
+  function setExpandEnabled(v: boolean) {
     expandEnabled = !!v;
   }
 
   /* 日本語テキストに含まれる分野語を英語に展開する（無ければ ""）。 */
-  function expandJp(text) {
+  function expandJp(text: unknown): string {
     if (!expandEnabled) return "";
-    var t = String(text || "").toLowerCase();
-    var out = "";
+    const t = String(text || "").toLowerCase();
+    let out = "";
     Object.keys(JP_EN).forEach((jp) => {
-      if (t.indexOf(jp.toLowerCase()) !== -1) out += " " + JP_EN[jp];
+      if (t.indexOf(jp.toLowerCase()) !== -1) out += ` ${JP_EN[jp]}`;
     });
     return out.trim();
   }
@@ -1513,25 +1977,25 @@
    * 先頭行は「自分の投稿予定論文」とみなし 2 回含めて強調する
    * （参考論文のノイズに自分の論文が埋没しないように）。
    */
-  function queryText(lines) {
-    var all = (lines || []).map((p) => paperText(p).replace(/\s+/g, " ").trim());
-    var joined = all.filter(Boolean).join(" ").trim();
-    var primary = all[0] ? all[0] : "";
-    return (primary ? primary + " " : "") + joined;
+  function queryText(lines: readonly PaperRecord[]): string {
+    const all = lines.map((paper) => paperText(paper).replace(/\s+/g, " ").trim());
+    const joined = all.filter(Boolean).join(" ").trim();
+    const primary = all[0] ? all[0] : "";
+    return (primary ? `${primary} ` : "") + joined;
   }
 
-  function safeExternalUrl(value) {
-    var text = String(value == null ? "" : value).trim();
+  function safeExternalUrl(value: unknown): string {
+    const text = String(value == null ? "" : value).trim();
     if (!text) return "";
     try {
-      var url = new URL(text, "https://kamiyobi.invalid/");
+      const url = new URL(text, "https://kamiyobi.invalid/");
       return url.protocol === "http:" || url.protocol === "https:" ? text : "";
     } catch (_error) {
       return "";
     }
   }
 
-  var api = {
+  const api = {
     DOMAIN_SIGNAL: DOMAIN_SIGNAL,
     STOPWORDS: STOPWORDS,
     parsePaperLines: parsePaperLines,
@@ -1548,6 +2012,7 @@
     fitLabel: fitLabel,
     journalRows: journalRows,
     rankMatches: rankMatches,
+    candidateRows: candidateRows,
     pastRepresentatives: pastRepresentatives,
     pickRepresentative: pickRepresentative,
     comparePapers: comparePapers,
@@ -1575,8 +2040,7 @@
     signalInText: signalInText,
   };
 
-  if (typeof module !== "undefined" && module.exports) {
-    module.exports = api;
-  }
-  root.Recommender = api;
-})(typeof window !== "undefined" ? window : globalThis);
+  return api;
+})();
+
+export default Recommender;

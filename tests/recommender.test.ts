@@ -1,14 +1,12 @@
 /**
- * Recommender (site/recommender.js) の回帰テスト。
+ * Recommender (site/recommender.ts) の回帰テスト。
  * Ported from tests/test_recommender.py（Node 実走の部分を vitest に置換）。
  */
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-// recommender.js は UMD（module.exports あり、DOM 非依存）。型宣言なしのプレーン JS。
-// @ts-expect-error - no declaration file for plain-JS recommender.js
-import recommender from "../site/recommender.js";
+import recommender from "../site/recommender.ts";
 import {
   main as benchMain,
   buildRealPaperResult,
@@ -20,10 +18,13 @@ import {
   topicWords,
   validateRealPaperFixtures,
 } from "../src/bench-recommender.ts";
+import { compileSiteRuntime } from "../src/build.ts";
 import { main as embeddingsMain, venuePapersHash } from "../src/embeddings.ts";
 import { REPO_ROOT } from "./helpers.ts";
 
 const R = recommender as any;
+let emittedApp: string | null = null;
+const appRuntime = () => (emittedApp ??= compileSiteRuntime()["app.js"]);
 const DATA_JSON = join(REPO_ROOT, "public", "data.json");
 const EMB_JSON = join(REPO_ROOT, "public", "embeddings.json");
 const hasData = (() => {
@@ -232,9 +233,7 @@ describe("TXT paper extraction", () => {
     ];
     expect(records[0].title).toBe("primary.txt");
     expect(records[1]).toMatchObject({ title: "Reference title", abstract: "Reference abstract" });
-    expect(readFileSync(join(REPO_ROOT, "site/app.js"), "utf8")).toContain(
-      "return Recommender.textPaperRecord(text, name);",
-    );
+    expect(appRuntime()).toContain("return Recommender.textPaperRecord(text, name);");
   });
 });
 
@@ -886,10 +885,11 @@ describe("venue-level evidence fusion", () => {
 
 describe("score labels and transient UI state", () => {
   it("rejects delayed semantic results from an old generation or text", () => {
-    const app = readFileSync(join(REPO_ROOT, "site/app.js"), "utf8");
+    const app = appRuntime();
     const start = app.indexOf("function semanticIsCurrent(");
-    const end = app.indexOf("\n  function clearSemantic", start);
-    const guard = app.slice(start, end);
+    const guard = app.match(/function semanticIsCurrent\([\s\S]*?\n\s*}/)?.[0] ?? "";
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(guard).toContain("currentPaperText() === text");
     const isCurrent = new Function(
       "semGeneration",
       "currentPaperText",
@@ -902,32 +902,30 @@ describe("score labels and transient UI state", () => {
     expect(app).toContain('clearSemantic("error");');
     expect(app).toContain("Recommender.setPaperVecs(null)");
     expect(app).toContain("意味検索は利用不可（埋め込みが使えないため語彙検索のみ）");
-    expect(app).toContain("var semanticScores = null;");
+    expect(app).toContain("let semanticScores = null;");
   });
 
   it("keeps ordinal score labels out of percentage language", () => {
-    const template =
-      readFileSync(join(REPO_ROOT, "site/template.html"), "utf8") +
-      readFileSync(join(REPO_ROOT, "site/app.js"), "utf8");
-    expect(template).toContain('"一致評価 " + (r._fitLabel || "評価保留")');
+    const template = readFileSync(join(REPO_ROOT, "site/template.html"), "utf8") + appRuntime();
+    expect(template).toMatch(/一致評価\s*\$\{r\._fitLabel\s*\|\|\s*"評価保留"}/);
     expect(template).not.toContain('"適合度 " + r._matchScore + "%');
     expect(template).not.toContain("strong candidate");
     expect(template).toContain("過去掲載先一致");
     expect(template).toContain("r._boosted = false;");
     expect(template).toContain("return (ar === br ? 0 : ar > br ? 1 : -1) * mult;");
-    expect(template).toContain('var PDFJS_VERSION = "3.11.174";');
-    expect(template).toContain("var PDF_PAGE_LIMIT = 3;");
-    expect(template).toContain("var PDF_MAX_BYTES = 20 * 1024 * 1024;");
+    expect(template).toContain('const PDFJS_VERSION = "3.11.174";');
+    expect(template).toContain("const PDF_PAGE_LIMIT = 3;");
+    expect(template).toContain("const PDF_MAX_BYTES = 20 * 1024 * 1024;");
     expect(template).toContain("new AbortController()");
     expect(template).toContain('id="paperPrimaryTitle"');
     expect(template).toContain('id="paperReferences"');
     expect(template).toContain('if (a.status === "open" && a.timestamp)');
-    expect(template).toContain('var isPastOnly = a.status === "past";');
+    expect(template).toContain('const isPastOnly = r._availability?.status === "past";');
     expect(template).toContain(
       'titleWithYear(r.conf.title || r.conf.key || "", isPastOnly ? null : r.ed.year)',
     );
-    expect(template).toContain(
-      "safeExternalUrl(isPastOnly ? r.conf.link : (r.ed.link || r.conf.link))",
+    expect(template).toMatch(
+      /safeExternalUrl\(isPastOnly \? r\.conf\.link : r\.ed\.link \|\| r\.conf\.link\)/,
     );
   });
 });

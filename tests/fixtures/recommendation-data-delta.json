@@ -1,0 +1,2008 @@
+{
+  "schema": 1,
+  "synthetic": true,
+  "before_candidates": [
+    {
+      "key": "sc",
+      "title": "sc",
+      "full_name": "sc hpc",
+      "categories": ["hpc"],
+      "tags": ["international"],
+      "papers": ["sc representative profile"],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "sosp",
+      "title": "sosp",
+      "full_name": "sosp systems",
+      "categories": ["systems"],
+      "tags": ["international"],
+      "papers": ["sosp representative profile"],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "sigcomm",
+      "title": "sigcomm",
+      "full_name": "sigcomm networking",
+      "categories": ["networking"],
+      "tags": ["international"],
+      "papers": ["sigcomm representative profile"],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "icml",
+      "title": "icml",
+      "full_name": "icml ai",
+      "categories": ["ai"],
+      "tags": ["international"],
+      "papers": ["icml representative profile"],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ndss",
+      "title": "ndss",
+      "full_name": "ndss security",
+      "categories": ["security"],
+      "tags": ["international"],
+      "papers": ["ndss representative profile"],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "sigmod",
+      "title": "sigmod",
+      "full_name": "sigmod db",
+      "categories": ["db"],
+      "tags": ["international"],
+      "papers": ["sigmod representative profile"],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "acm-siggraph",
+      "title": "acm-siggraph",
+      "full_name": "acm-siggraph graphics",
+      "categories": ["graphics"],
+      "tags": ["international"],
+      "papers": ["acm-siggraph representative profile"],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "chi",
+      "title": "chi",
+      "full_name": "chi hci",
+      "categories": ["hci"],
+      "tags": ["international"],
+      "papers": ["chi representative profile"],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "stoc",
+      "title": "stoc",
+      "full_name": "stoc theory",
+      "categories": ["theory"],
+      "tags": ["international"],
+      "papers": ["stoc representative profile"],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "after_candidates": [
+    {
+      "key": "sc",
+      "title": "sc",
+      "full_name": "sc hpc",
+      "categories": ["hpc"],
+      "tags": ["international"],
+      "papers": ["sc representative profile"],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ipsj-sighpc",
+      "title": "ipsj-sighpc",
+      "full_name": "ipsj-sighpc hpc",
+      "categories": ["hpc"],
+      "tags": ["domestic"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ccgrid-workshops",
+      "title": "ccgrid-workshops",
+      "full_name": "ccgrid-workshops hpc",
+      "categories": ["hpc"],
+      "tags": ["workshop"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ccpe",
+      "title": "ccpe",
+      "full_name": "ccpe hpc",
+      "categories": ["hpc"],
+      "tags": ["journal"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ipsj-27-r-compsac",
+      "title": "ipsj-27-r-compsac",
+      "full_name": "ipsj-27-r-compsac hpc",
+      "categories": ["hpc"],
+      "tags": ["special-issue"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "sosp",
+      "title": "sosp",
+      "full_name": "sosp systems",
+      "categories": ["systems"],
+      "tags": ["international"],
+      "papers": ["sosp representative profile"],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ipsj-sigos",
+      "title": "ipsj-sigos",
+      "full_name": "ipsj-sigos systems",
+      "categories": ["systems"],
+      "tags": ["domestic"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "apsys",
+      "title": "apsys",
+      "full_name": "apsys systems",
+      "categories": ["systems"],
+      "tags": ["workshop"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "acm-toit",
+      "title": "acm-toit",
+      "full_name": "acm-toit systems",
+      "categories": ["systems"],
+      "tags": ["journal"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ipsj-27-n-info-systems",
+      "title": "ipsj-27-n-info-systems",
+      "full_name": "ipsj-27-n-info-systems systems",
+      "categories": ["systems"],
+      "tags": ["special-issue"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "sigcomm",
+      "title": "sigcomm",
+      "full_name": "sigcomm networking",
+      "categories": ["networking"],
+      "tags": ["international"],
+      "papers": ["sigcomm representative profile"],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ipsj-sigdps",
+      "title": "ipsj-sigdps",
+      "full_name": "ipsj-sigdps networking",
+      "categories": ["networking"],
+      "tags": ["domestic"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "hotnets",
+      "title": "hotnets",
+      "full_name": "hotnets networking",
+      "categories": ["networking"],
+      "tags": ["workshop"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "computer-networks",
+      "title": "computer-networks",
+      "full_name": "computer-networks networking",
+      "categories": ["networking"],
+      "tags": ["journal"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ieice-inf-syst-log-data-special",
+      "title": "ieice-inf-syst-log-data-special",
+      "full_name": "ieice-inf-syst-log-data-special networking",
+      "categories": ["networking"],
+      "tags": ["special-issue"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "icml",
+      "title": "icml",
+      "full_name": "icml ai",
+      "categories": ["ai"],
+      "tags": ["international"],
+      "papers": ["icml representative profile"],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ipsj-sigubi",
+      "title": "ipsj-sigubi",
+      "full_name": "ipsj-sigubi ai",
+      "categories": ["ai"],
+      "tags": ["domestic"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "1st-dl2-international-workshop",
+      "title": "1st-dl2-international-workshop",
+      "full_name": "1st-dl2-international-workshop ai",
+      "categories": ["ai"],
+      "tags": ["workshop"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "fgcs",
+      "title": "fgcs",
+      "full_name": "fgcs ai",
+      "categories": ["ai"],
+      "tags": ["journal"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ipsj-27-l-superintelligence",
+      "title": "ipsj-27-l-superintelligence",
+      "full_name": "ipsj-27-l-superintelligence ai",
+      "categories": ["ai"],
+      "tags": ["special-issue"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ndss",
+      "title": "ndss",
+      "full_name": "ndss security",
+      "categories": ["security"],
+      "tags": ["international"],
+      "papers": ["ndss representative profile"],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ipsj-sigsec",
+      "title": "ipsj-sigsec",
+      "full_name": "ipsj-sigsec security",
+      "categories": ["security"],
+      "tags": ["domestic"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "hotsec",
+      "title": "hotsec",
+      "full_name": "hotsec security",
+      "categories": ["security"],
+      "tags": ["workshop"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "tdsc",
+      "title": "tdsc",
+      "full_name": "tdsc security",
+      "categories": ["security"],
+      "tags": ["journal"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ipsj-27-m-security",
+      "title": "ipsj-27-m-security",
+      "full_name": "ipsj-27-m-security security",
+      "categories": ["security"],
+      "tags": ["special-issue"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "sigmod",
+      "title": "sigmod",
+      "full_name": "sigmod db",
+      "categories": ["db"],
+      "tags": ["international"],
+      "papers": ["sigmod representative profile"],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ipsj-deim",
+      "title": "ipsj-deim",
+      "full_name": "ipsj-deim db",
+      "categories": ["db"],
+      "tags": ["domestic"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "acm-sac-2027-dbdm-track",
+      "title": "acm-sac-2027-dbdm-track",
+      "full_name": "acm-sac-2027-dbdm-track db",
+      "categories": ["db"],
+      "tags": ["workshop"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "jip",
+      "title": "jip",
+      "full_name": "jip db",
+      "categories": ["db"],
+      "tags": ["journal"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ieice-inf-syst-log-data-special",
+      "title": "ieice-inf-syst-log-data-special",
+      "full_name": "ieice-inf-syst-log-data-special db",
+      "categories": ["db"],
+      "tags": ["special-issue"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "acm-siggraph",
+      "title": "acm-siggraph",
+      "full_name": "acm-siggraph graphics",
+      "categories": ["graphics"],
+      "tags": ["international"],
+      "papers": ["acm-siggraph representative profile"],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ipsj-sigubi",
+      "title": "ipsj-sigubi",
+      "full_name": "ipsj-sigubi graphics",
+      "categories": ["graphics"],
+      "tags": ["domestic"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "egsr",
+      "title": "egsr",
+      "full_name": "egsr graphics",
+      "categories": ["graphics"],
+      "tags": ["workshop"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "jip",
+      "title": "jip",
+      "full_name": "jip graphics",
+      "categories": ["graphics"],
+      "tags": ["journal"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ieice-electron-analog-circuits-special",
+      "title": "ieice-electron-analog-circuits-special",
+      "full_name": "ieice-electron-analog-circuits-special graphics",
+      "categories": ["graphics"],
+      "tags": ["special-issue"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "chi",
+      "title": "chi",
+      "full_name": "chi hci",
+      "categories": ["hci"],
+      "tags": ["international"],
+      "papers": ["chi representative profile"],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ipsj-sigubi",
+      "title": "ipsj-sigubi",
+      "full_name": "ipsj-sigubi hci",
+      "categories": ["hci"],
+      "tags": ["domestic"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "iui",
+      "title": "iui",
+      "full_name": "iui hci",
+      "categories": ["hci"],
+      "tags": ["workshop"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "acm-toit",
+      "title": "acm-toit",
+      "full_name": "acm-toit hci",
+      "categories": ["hci"],
+      "tags": ["journal"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ipsj-27-p-ubiquitous",
+      "title": "ipsj-27-p-ubiquitous",
+      "full_name": "ipsj-27-p-ubiquitous hci",
+      "categories": ["hci"],
+      "tags": ["special-issue"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "stoc",
+      "title": "stoc",
+      "full_name": "stoc theory",
+      "categories": ["theory"],
+      "tags": ["international"],
+      "papers": ["stoc representative profile"],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ieice-sita",
+      "title": "ieice-sita",
+      "full_name": "ieice-sita theory",
+      "categories": ["theory"],
+      "tags": ["domestic"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "fmcad",
+      "title": "fmcad",
+      "full_name": "fmcad theory",
+      "categories": ["theory"],
+      "tags": ["workshop"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ieice-trans-funda",
+      "title": "ieice-trans-funda",
+      "full_name": "ieice-trans-funda theory",
+      "categories": ["theory"],
+      "tags": ["journal"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ieice-fundamentals-discrete-math-special",
+      "title": "ieice-fundamentals-discrete-math-special",
+      "full_name": "ieice-fundamentals-discrete-math-special theory",
+      "categories": ["theory"],
+      "tags": ["special-issue"],
+      "papers": [],
+      "editions": [
+        {
+          "year": 2027,
+          "estimated": false,
+          "deadlines": [
+            {
+              "precision": "exact",
+              "utc": "2027-01-02T23:59:00.000Z",
+              "evidence": [
+                {
+                  "sourceClass": "official-cfp"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "case-01-hpc-en",
+      "synthetic": true,
+      "title": "parallel GPU scheduling sc",
+      "category": "hpc",
+      "language": "en",
+      "venue_kind": "international",
+      "input": "title-only",
+      "expected_venue": "sc"
+    },
+    {
+      "id": "case-02-hpc-ja",
+      "synthetic": true,
+      "title": "GPU並列計算の性能最適化 ipsj-sighpc",
+      "abstract": "GPU並列計算の性能最適化",
+      "category": "hpc",
+      "language": "ja",
+      "venue_kind": "domestic",
+      "input": "abstract",
+      "expected_venue": "ipsj-sighpc"
+    },
+    {
+      "id": "case-03-ccgrid-workshops",
+      "synthetic": true,
+      "title": "cluster workshop ccgrid-workshops",
+      "category": "hpc",
+      "language": "en",
+      "venue_kind": "workshop",
+      "input": "title-only",
+      "expected_venue": "ccgrid-workshops"
+    },
+    {
+      "id": "case-04-ccpe",
+      "synthetic": true,
+      "title": "スーパーコンピュータ資源管理 ccpe",
+      "abstract": "スーパーコンピュータ資源管理",
+      "category": "hpc",
+      "language": "ja",
+      "venue_kind": "journal",
+      "input": "abstract",
+      "expected_venue": "ccpe"
+    },
+    {
+      "id": "case-05-ipsj-27-r-compsac",
+      "synthetic": true,
+      "title": "accelerator special issue ipsj-27-r-compsac",
+      "category": "hpc",
+      "language": "en",
+      "venue_kind": "special-issue",
+      "input": "title-only",
+      "expected_venue": "ipsj-27-r-compsac"
+    },
+    {
+      "id": "case-06-hpc-oos",
+      "synthetic": true,
+      "title": "synthetic hpc unrelated",
+      "category": "hpc",
+      "language": "en",
+      "venue_kind": "international",
+      "input": "out-of-scope",
+      "expected_venue": null
+    },
+    {
+      "id": "case-07-hpc-insufficient",
+      "synthetic": true,
+      "title": "GPU",
+      "category": "hpc",
+      "language": "ja",
+      "venue_kind": "domestic",
+      "input": "insufficient",
+      "expected_venue": null
+    },
+    {
+      "id": "case-08-systems-en",
+      "synthetic": true,
+      "title": "kernel storage scheduling sosp",
+      "category": "systems",
+      "language": "en",
+      "venue_kind": "international",
+      "input": "title-only",
+      "expected_venue": "sosp"
+    },
+    {
+      "id": "case-09-systems-ja",
+      "synthetic": true,
+      "title": "カーネルとストレージの最適化 ipsj-sigos",
+      "abstract": "カーネルとストレージの最適化",
+      "category": "systems",
+      "language": "ja",
+      "venue_kind": "domestic",
+      "input": "abstract",
+      "expected_venue": "ipsj-sigos"
+    },
+    {
+      "id": "case-10-apsys",
+      "synthetic": true,
+      "title": "operating system workshop apsys",
+      "category": "systems",
+      "language": "en",
+      "venue_kind": "workshop",
+      "input": "title-only",
+      "expected_venue": "apsys"
+    },
+    {
+      "id": "case-11-acm-toit",
+      "synthetic": true,
+      "title": "分散システムの抽象化 acm-toit",
+      "abstract": "分散システムの抽象化",
+      "category": "systems",
+      "language": "ja",
+      "venue_kind": "journal",
+      "input": "abstract",
+      "expected_venue": "acm-toit"
+    },
+    {
+      "id": "case-12-ipsj-27-n-info-systems",
+      "synthetic": true,
+      "title": "storage special issue ipsj-27-n-info-systems",
+      "category": "systems",
+      "language": "en",
+      "venue_kind": "special-issue",
+      "input": "title-only",
+      "expected_venue": "ipsj-27-n-info-systems"
+    },
+    {
+      "id": "case-13-systems-oos",
+      "synthetic": true,
+      "title": "synthetic systems unrelated",
+      "category": "systems",
+      "language": "en",
+      "venue_kind": "international",
+      "input": "out-of-scope",
+      "expected_venue": null
+    },
+    {
+      "id": "case-14-systems-insufficient",
+      "synthetic": true,
+      "title": "OS",
+      "category": "systems",
+      "language": "ja",
+      "venue_kind": "domestic",
+      "input": "insufficient",
+      "expected_venue": null
+    },
+    {
+      "id": "case-15-networking-en",
+      "synthetic": true,
+      "title": "wireless routing protocol sigcomm",
+      "category": "networking",
+      "language": "en",
+      "venue_kind": "international",
+      "input": "title-only",
+      "expected_venue": "sigcomm"
+    },
+    {
+      "id": "case-16-networking-ja",
+      "synthetic": true,
+      "title": "無線ネットワークの経路制御 ipsj-sigdps",
+      "abstract": "無線ネットワークの経路制御",
+      "category": "networking",
+      "language": "ja",
+      "venue_kind": "domestic",
+      "input": "abstract",
+      "expected_venue": "ipsj-sigdps"
+    },
+    {
+      "id": "case-17-hotnets",
+      "synthetic": true,
+      "title": "network measurement workshop hotnets",
+      "category": "networking",
+      "language": "en",
+      "venue_kind": "workshop",
+      "input": "title-only",
+      "expected_venue": "hotnets"
+    },
+    {
+      "id": "case-18-computer-networks",
+      "synthetic": true,
+      "title": "通信プロトコルの解析 computer-networks",
+      "abstract": "通信プロトコルの解析",
+      "category": "networking",
+      "language": "ja",
+      "venue_kind": "journal",
+      "input": "abstract",
+      "expected_venue": "computer-networks"
+    },
+    {
+      "id": "case-19-ieice-inf-syst-log-data-special",
+      "synthetic": true,
+      "title": "SDN special issue ieice-inf-syst-log-data-special",
+      "category": "networking",
+      "language": "en",
+      "venue_kind": "special-issue",
+      "input": "title-only",
+      "expected_venue": "ieice-inf-syst-log-data-special"
+    },
+    {
+      "id": "case-20-networking-oos",
+      "synthetic": true,
+      "title": "synthetic networking unrelated",
+      "category": "networking",
+      "language": "en",
+      "venue_kind": "international",
+      "input": "out-of-scope",
+      "expected_venue": null
+    },
+    {
+      "id": "case-21-networking-insufficient",
+      "synthetic": true,
+      "title": "5G",
+      "category": "networking",
+      "language": "ja",
+      "venue_kind": "domestic",
+      "input": "insufficient",
+      "expected_venue": null
+    },
+    {
+      "id": "case-22-ai-en",
+      "synthetic": true,
+      "title": "neural language model icml",
+      "category": "ai",
+      "language": "en",
+      "venue_kind": "international",
+      "input": "title-only",
+      "expected_venue": "icml"
+    },
+    {
+      "id": "case-23-ai-ja",
+      "synthetic": true,
+      "title": "深層学習による推論 ipsj-sigubi",
+      "abstract": "深層学習による推論",
+      "category": "ai",
+      "language": "ja",
+      "venue_kind": "domestic",
+      "input": "abstract",
+      "expected_venue": "ipsj-sigubi"
+    },
+    {
+      "id": "case-24-1st-dl2-international-workshop",
+      "synthetic": true,
+      "title": "machine learning workshop 1st-dl2-international-workshop",
+      "category": "ai",
+      "language": "en",
+      "venue_kind": "workshop",
+      "input": "title-only",
+      "expected_venue": "1st-dl2-international-workshop"
+    },
+    {
+      "id": "case-25-fgcs",
+      "synthetic": true,
+      "title": "機械学習の応用 fgcs",
+      "abstract": "機械学習の応用",
+      "category": "ai",
+      "language": "ja",
+      "venue_kind": "journal",
+      "input": "abstract",
+      "expected_venue": "fgcs"
+    },
+    {
+      "id": "case-26-ipsj-27-l-superintelligence",
+      "synthetic": true,
+      "title": "foundation model special issue ipsj-27-l-superintelligence",
+      "category": "ai",
+      "language": "en",
+      "venue_kind": "special-issue",
+      "input": "title-only",
+      "expected_venue": "ipsj-27-l-superintelligence"
+    },
+    {
+      "id": "case-27-ai-oos",
+      "synthetic": true,
+      "title": "synthetic ai unrelated",
+      "category": "ai",
+      "language": "en",
+      "venue_kind": "international",
+      "input": "out-of-scope",
+      "expected_venue": null
+    },
+    {
+      "id": "case-28-ai-insufficient",
+      "synthetic": true,
+      "title": "AI",
+      "category": "ai",
+      "language": "ja",
+      "venue_kind": "domestic",
+      "input": "insufficient",
+      "expected_venue": null
+    },
+    {
+      "id": "case-29-security-en",
+      "synthetic": true,
+      "title": "cryptographic side channel ndss",
+      "category": "security",
+      "language": "en",
+      "venue_kind": "international",
+      "input": "title-only",
+      "expected_venue": "ndss"
+    },
+    {
+      "id": "case-30-security-ja",
+      "synthetic": true,
+      "title": "暗号実装の脆弱性解析 ipsj-sigsec",
+      "abstract": "暗号実装の脆弱性解析",
+      "category": "security",
+      "language": "ja",
+      "venue_kind": "domestic",
+      "input": "abstract",
+      "expected_venue": "ipsj-sigsec"
+    },
+    {
+      "id": "case-31-hotsec",
+      "synthetic": true,
+      "title": "privacy workshop hotsec",
+      "category": "security",
+      "language": "en",
+      "venue_kind": "workshop",
+      "input": "title-only",
+      "expected_venue": "hotsec"
+    },
+    {
+      "id": "case-32-tdsc",
+      "synthetic": true,
+      "title": "セキュリティ検証の手法 tdsc",
+      "abstract": "セキュリティ検証の手法",
+      "category": "security",
+      "language": "ja",
+      "venue_kind": "journal",
+      "input": "abstract",
+      "expected_venue": "tdsc"
+    },
+    {
+      "id": "case-33-ipsj-27-m-security",
+      "synthetic": true,
+      "title": "secure hardware special issue ipsj-27-m-security",
+      "category": "security",
+      "language": "en",
+      "venue_kind": "special-issue",
+      "input": "title-only",
+      "expected_venue": "ipsj-27-m-security"
+    },
+    {
+      "id": "case-34-security-oos",
+      "synthetic": true,
+      "title": "synthetic security unrelated",
+      "category": "security",
+      "language": "en",
+      "venue_kind": "international",
+      "input": "out-of-scope",
+      "expected_venue": null
+    },
+    {
+      "id": "case-35-security-insufficient",
+      "synthetic": true,
+      "title": "AES",
+      "category": "security",
+      "language": "ja",
+      "venue_kind": "domestic",
+      "input": "insufficient",
+      "expected_venue": null
+    },
+    {
+      "id": "case-36-db-en",
+      "synthetic": true,
+      "title": "database query optimizer sigmod",
+      "category": "db",
+      "language": "en",
+      "venue_kind": "international",
+      "input": "title-only",
+      "expected_venue": "sigmod"
+    },
+    {
+      "id": "case-37-db-ja",
+      "synthetic": true,
+      "title": "データベース検索の高速化 ipsj-deim",
+      "abstract": "データベース検索の高速化",
+      "category": "db",
+      "language": "ja",
+      "venue_kind": "domestic",
+      "input": "abstract",
+      "expected_venue": "ipsj-deim"
+    },
+    {
+      "id": "case-38-acm-sac-2027-dbdm-track",
+      "synthetic": true,
+      "title": "data management workshop acm-sac-2027-dbdm-track",
+      "category": "db",
+      "language": "en",
+      "venue_kind": "workshop",
+      "input": "title-only",
+      "expected_venue": "acm-sac-2027-dbdm-track"
+    },
+    {
+      "id": "case-39-jip",
+      "synthetic": true,
+      "title": "データマイニングの評価 jip",
+      "abstract": "データマイニングの評価",
+      "category": "db",
+      "language": "ja",
+      "venue_kind": "journal",
+      "input": "abstract",
+      "expected_venue": "jip"
+    },
+    {
+      "id": "case-40-ieice-inf-syst-log-data-special",
+      "synthetic": true,
+      "title": "vector database special issue ieice-inf-syst-log-data-special",
+      "category": "db",
+      "language": "en",
+      "venue_kind": "special-issue",
+      "input": "title-only",
+      "expected_venue": "ieice-inf-syst-log-data-special"
+    },
+    {
+      "id": "case-41-db-oos",
+      "synthetic": true,
+      "title": "synthetic db unrelated",
+      "category": "db",
+      "language": "en",
+      "venue_kind": "international",
+      "input": "out-of-scope",
+      "expected_venue": null
+    },
+    {
+      "id": "case-42-db-insufficient",
+      "synthetic": true,
+      "title": "SQL",
+      "category": "db",
+      "language": "ja",
+      "venue_kind": "domestic",
+      "input": "insufficient",
+      "expected_venue": null
+    },
+    {
+      "id": "case-43-graphics-en",
+      "synthetic": true,
+      "title": "real-time rendering acm-siggraph",
+      "category": "graphics",
+      "language": "en",
+      "venue_kind": "international",
+      "input": "title-only",
+      "expected_venue": "acm-siggraph"
+    },
+    {
+      "id": "case-44-graphics-ja",
+      "synthetic": true,
+      "title": "画像レンダリングの最適化 ipsj-sigubi",
+      "abstract": "画像レンダリングの最適化",
+      "category": "graphics",
+      "language": "ja",
+      "venue_kind": "domestic",
+      "input": "abstract",
+      "expected_venue": "ipsj-sigubi"
+    },
+    {
+      "id": "case-45-egsr",
+      "synthetic": true,
+      "title": "visualization workshop egsr",
+      "category": "graphics",
+      "language": "en",
+      "venue_kind": "workshop",
+      "input": "title-only",
+      "expected_venue": "egsr"
+    },
+    {
+      "id": "case-46-jip",
+      "synthetic": true,
+      "title": "映像処理の解析 jip",
+      "abstract": "映像処理の解析",
+      "category": "graphics",
+      "language": "ja",
+      "venue_kind": "journal",
+      "input": "abstract",
+      "expected_venue": "jip"
+    },
+    {
+      "id": "case-47-ieice-electron-analog-circuits-special",
+      "synthetic": true,
+      "title": "computer vision special issue ieice-electron-analog-circuits-special",
+      "category": "graphics",
+      "language": "en",
+      "venue_kind": "special-issue",
+      "input": "title-only",
+      "expected_venue": "ieice-electron-analog-circuits-special"
+    },
+    {
+      "id": "case-48-graphics-oos",
+      "synthetic": true,
+      "title": "synthetic graphics unrelated",
+      "category": "graphics",
+      "language": "en",
+      "venue_kind": "international",
+      "input": "out-of-scope",
+      "expected_venue": null
+    },
+    {
+      "id": "case-49-graphics-insufficient",
+      "synthetic": true,
+      "title": "3D",
+      "category": "graphics",
+      "language": "ja",
+      "venue_kind": "domestic",
+      "input": "insufficient",
+      "expected_venue": null
+    },
+    {
+      "id": "case-50-hci-en",
+      "synthetic": true,
+      "title": "accessible user interface chi",
+      "category": "hci",
+      "language": "en",
+      "venue_kind": "international",
+      "input": "title-only",
+      "expected_venue": "chi"
+    },
+    {
+      "id": "case-51-hci-ja",
+      "synthetic": true,
+      "title": "ユーザインタフェースの評価 ipsj-sigubi",
+      "abstract": "ユーザインタフェースの評価",
+      "category": "hci",
+      "language": "ja",
+      "venue_kind": "domestic",
+      "input": "abstract",
+      "expected_venue": "ipsj-sigubi"
+    },
+    {
+      "id": "case-52-iui",
+      "synthetic": true,
+      "title": "interaction workshop iui",
+      "category": "hci",
+      "language": "en",
+      "venue_kind": "workshop",
+      "input": "title-only",
+      "expected_venue": "iui"
+    },
+    {
+      "id": "case-53-acm-toit",
+      "synthetic": true,
+      "title": "人間中心設計の研究 acm-toit",
+      "abstract": "人間中心設計の研究",
+      "category": "hci",
+      "language": "ja",
+      "venue_kind": "journal",
+      "input": "abstract",
+      "expected_venue": "acm-toit"
+    },
+    {
+      "id": "case-54-ipsj-27-p-ubiquitous",
+      "synthetic": true,
+      "title": "accessibility special issue ipsj-27-p-ubiquitous",
+      "category": "hci",
+      "language": "en",
+      "venue_kind": "special-issue",
+      "input": "title-only",
+      "expected_venue": "ipsj-27-p-ubiquitous"
+    },
+    {
+      "id": "case-55-hci-oos",
+      "synthetic": true,
+      "title": "synthetic hci unrelated",
+      "category": "hci",
+      "language": "en",
+      "venue_kind": "international",
+      "input": "out-of-scope",
+      "expected_venue": null
+    },
+    {
+      "id": "case-56-hci-insufficient",
+      "synthetic": true,
+      "title": "UI",
+      "category": "hci",
+      "language": "ja",
+      "venue_kind": "domestic",
+      "input": "insufficient",
+      "expected_venue": null
+    },
+    {
+      "id": "case-57-theory-en",
+      "synthetic": true,
+      "title": "graph algorithm complexity stoc",
+      "category": "theory",
+      "language": "en",
+      "venue_kind": "international",
+      "input": "title-only",
+      "expected_venue": "stoc"
+    },
+    {
+      "id": "case-58-theory-ja",
+      "synthetic": true,
+      "title": "アルゴリズム計算量の解析 ieice-sita",
+      "abstract": "アルゴリズム計算量の解析",
+      "category": "theory",
+      "language": "ja",
+      "venue_kind": "domestic",
+      "input": "abstract",
+      "expected_venue": "ieice-sita"
+    },
+    {
+      "id": "case-59-fmcad",
+      "synthetic": true,
+      "title": "formal methods workshop fmcad",
+      "category": "theory",
+      "language": "en",
+      "venue_kind": "workshop",
+      "input": "title-only",
+      "expected_venue": "fmcad"
+    },
+    {
+      "id": "case-60-ieice-trans-funda",
+      "synthetic": true,
+      "title": "形式検証の理論 ieice-trans-funda",
+      "abstract": "形式検証の理論",
+      "category": "theory",
+      "language": "ja",
+      "venue_kind": "journal",
+      "input": "abstract",
+      "expected_venue": "ieice-trans-funda"
+    },
+    {
+      "id": "case-61-ieice-fundamentals-discrete-math-special",
+      "synthetic": true,
+      "title": "algorithms special issue ieice-fundamentals-discrete-math-special",
+      "category": "theory",
+      "language": "en",
+      "venue_kind": "special-issue",
+      "input": "title-only",
+      "expected_venue": "ieice-fundamentals-discrete-math-special"
+    },
+    {
+      "id": "case-62-theory-oos",
+      "synthetic": true,
+      "title": "synthetic theory unrelated",
+      "category": "theory",
+      "language": "en",
+      "venue_kind": "international",
+      "input": "out-of-scope",
+      "expected_venue": null
+    },
+    {
+      "id": "case-63-theory-insufficient",
+      "synthetic": true,
+      "title": "P",
+      "category": "theory",
+      "language": "ja",
+      "venue_kind": "domestic",
+      "input": "insufficient",
+      "expected_venue": null
+    }
+  ]
+}

@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
   pages: write
   id-token: write
 
@@ -25,6 +26,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Capture starting main SHA
+        id: start-main
+        run: echo "sha=$(git rev-parse origin/main)" >> "$GITHUB_OUTPUT"
 
       - name: Set up Node
         uses: actions/setup-node@v7
@@ -35,17 +43,32 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Fix comparison time
+        run: echo "BUILD_NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+
+      # The committed baseline is built before any generator writes.  The same
+      # fixture and browser recommender are used later for a real Top-5 delta.
+      - name: Build committed baseline
+        run: node src/cli.ts build --out /tmp/kamiyobi-baseline --offline --no-embeddings --cache .cache --now "$BUILD_NOW"
+
       # 一次ソースの自動抽出 (data/primary.yaml → data/primary_overrides.yaml)。
       # 抽出失敗の会議は前回値を維持するので、サイトが一時的に落ちていても安全。
       - name: Fetch primary sources
         run: node src/fetch-primary.ts --apply
+
+      - name: Discover candidates for the single writer
+        # candidate discovery never writes main; this sole job owns any later PR.
+        run: node src/cli.ts discover --candidate-out data/discovered_candidates.yaml || echo 'discovery failed; keeping previous candidates'
 
       # 上流取得に失敗しても、コミット済み data/snapshot.json から生成を続ける
       # (SPEC.md 3.5)。推薦 bundle は後段で cache から復元・検証し、失敗時は
       # recommendation-index.json だけを残してサイトの語彙 fallback を使う。
       - name: Build deadline bundle
         id: build
-        run: node src/cli.ts build --out public --no-embeddings
+        run: node src/cli.ts build --out public --no-embeddings --now "$BUILD_NOW"
+
+      - name: Validate generated production data
+        run: npm run validate:data -- public/data.json --json
 
       - name: Compute recommendation bundle key
         id: recommendation-key
@@ -130,7 +153,23 @@ jobs:
       # SPEC.md 6 のとおり、活動を偽装するハートビートコミットは実装しない。
       # snapshot と primary_overrides のどちらかに実質変更があるときだけ
       # 両方をコミットする（_comment の抽出日付の変化だけではコミットしない）。
-      - name: Commit data
+      - name: Recommendation Top-5 delta
+        if: ${{ steps.build.outcome == 'success' }}
+        run: npm run bench -- --data-delta tests/fixtures/recommendation-data-delta.json --data-delta-before /tmp/kamiyobi-baseline/recommendation-index.json --data-delta-after public/recommendation-index.json --json > /tmp/recommendation-delta.json
+
+      # This is deliberately outside the optional PR API operation: a moved main
+      # invalidates every generated artifact, including the Pages upload.
+      - name: Verify main has not moved
+        id: main-guard
+        if: ${{ !cancelled() && steps.build.outcome == 'success' && steps.health-gate.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "${{ steps.start-main.outputs.sha }}"
+
+      - name: Create guarded data PR
+        if: ${{ !cancelled() && steps.main-guard.outcome == 'success' }}
+        continue-on-error: true
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
@@ -142,84 +181,78 @@ jobs:
           fi
 
           # 実質差分（generated_at / _comment は無視・キー順序は正規化）を
-          # HEAD と比較し、どちらかが変わっていれば両方コミットする。
+          # HEAD と比較し、snapshot / primary / discovery candidate のいずれかが
+          # 実質的に変わったときだけ、この唯一の writer が該当ファイルを残す。
           snap_changed=$(node scripts/compare-head.ts data/snapshot.json)
           primary_changed=$(node scripts/compare-head.ts data/primary_overrides.yaml)
+          candidate_changed=$(node scripts/compare-head.ts data/discovered_candidates.yaml)
 
-          if [ "$snap_changed" != '1' ] && [ "$primary_changed" != '1' ]; then
+          if [ "$snap_changed" != '1' ] && [ "$primary_changed" != '1' ] && [ "$candidate_changed" != '1' ]; then
             echo 'no substantive change; nothing to commit'
             exit 0
           fi
 
-          git add data/snapshot.json data/primary_overrides.yaml
-          git commit -m 'chore: update deadline data [skip ci]'
-          # 実行中に人手のコミットが入ると非 fast-forward で弾かれるので、
-          # 取り込んでから押し直す。
-          for attempt in 1 2 3; do
-            if git push; then
-              exit 0
-            fi
-            echo "push rejected (attempt ${attempt}); rebasing onto origin/${GITHUB_REF_NAME}"
-            git pull --rebase --autostash origin "$GITHUB_REF_NAME"
-          done
-          echo 'could not push the deadline data' >&2
-          exit 1
+          branch="automation/data-${{ github.run_id }}"
+          git switch -c "$branch"
+          if [ "$snap_changed" = '1' ]; then git add data/snapshot.json; fi
+          if [ "$primary_changed" = '1' ]; then git add data/primary_overrides.yaml; fi
+          if [ "$candidate_changed" = '1' ]; then git add data/discovered_candidates.yaml; fi
+          git commit -m 'chore: update deadline data'
+          git push origin "$branch"
+          node --input-type=module <<'NODE' > /tmp/data-pr-body.md
+          import { readFileSync } from "node:fs";
+          const baselineData = JSON.parse(readFileSync("/tmp/kamiyobi-baseline/data.json", "utf8"));
+          const baselineHealth = JSON.parse(readFileSync("/tmp/kamiyobi-baseline/health.json", "utf8"));
+          const health = JSON.parse(readFileSync("public/health.json", "utf8"));
+          const data = JSON.parse(readFileSync("public/data.json", "utf8"));
+          const venueKeys = (value) => new Set((value.conferences || []).map((conference) => conference.key));
+          const beforeKeys = venueKeys(baselineData);
+          const afterKeys = venueKeys(data);
+          const delta = (field) => Number(health[field] || 0) - Number(baselineHealth[field] || 0);
+          const sourceStatus = (value) => value.source_status || {};
+          const beforeStatus = sourceStatus(baselineHealth);
+          const afterStatus = sourceStatus(health);
+          const sourceTransitions = [...new Set([...Object.keys(beforeStatus), ...Object.keys(afterStatus)])]
+            .sort()
+            .map((source) => `${source}: ${beforeStatus[source] || "absent"}→${afterStatus[source] || "absent"}`)
+            .filter((value) => {
+              const [, transition] = value.split(": ");
+              const [before, after] = transition.split("→");
+              return before !== after;
+            });
+          const confirmed = (value) => Number(value.future_exact_deadlines || 0) + Number(value.future_date_only_deadlines || 0);
+          console.log("## Automated data update");
+          console.log(`- conferences: +${[...afterKeys].filter((key) => !beforeKeys.has(key)).length} / -${[...beforeKeys].filter((key) => !afterKeys.has(key)).length} (now ${afterKeys.size})`);
+          console.log(`- precision deltas: exact ${delta("future_exact_deadlines") >= 0 ? "+" : ""}${delta("future_exact_deadlines")}, date-only ${delta("future_date_only_deadlines") >= 0 ? "+" : ""}${delta("future_date_only_deadlines")}, estimated ${delta("future_estimated_deadlines") >= 0 ? "+" : ""}${delta("future_estimated_deadlines")}`);
+          console.log(`- source states: ${Object.entries(health.source_metadata || health.source_status).map(([key, value]) => `${key}=${typeof value === "string" ? value : value.status}`).join(", ")}`);
+          console.log(`- health transitions: sources ${sourceTransitions.length ? sourceTransitions.join(", ") : "none"}; tracked venues ${delta("tracked_venues") >= 0 ? "+" : ""}${delta("tracked_venues")}; future confirmed ${confirmed(health) - confirmed(baselineHealth) >= 0 ? "+" : ""}${confirmed(health) - confirmed(baselineHealth)}; future estimated ${delta("future_estimated_deadlines") >= 0 ? "+" : ""}${delta("future_estimated_deadlines")}`);
+          console.log(`- source failures: ${health.source_failures.length ? health.source_failures.join(", ") : "none"}`);
+          console.log(`- warnings: ${health.parse_warning_count}`);
+          const report = JSON.parse(readFileSync("/tmp/recommendation-delta.json", "utf8"));
+          console.log(`- recommendation Top-5 changes: ${report.changed_top5.length ? report.changed_top5.join(", ") : "none"}`);
+          console.log(`- new venues in Top-5: ${report.new_venues_in_top5.length ? report.new_venues_in_top5.join(", ") : "none"}`);
+          console.log(`- expected venues falling out: ${report.expected_venues_dropped.length ? report.expected_venues_dropped.join(", ") : "none"}`);
+          NODE
+          gh pr create --base main --head "$branch" --title 'chore: update deadline data' --body-file /tmp/data-pr-body.md
 
       # 配信は締切 build と health gate の成否で決める。推薦埋め込みが無い
       # 場合も recommendation-index.json と語彙 fallback は公開する。
       # データ commit/push の失敗でその日の配信ごと落とさない。
       - name: Upload Pages artifact
-        if: ${{ !cancelled() && steps.build.outcome == 'success' && steps.health-gate.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.main-guard.outcome == 'success' }}
         uses: actions/upload-pages-artifact@v5
         with:
           path: public
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        if: ${{ !cancelled() && steps.build.outcome == 'success' && steps.health-gate.outcome == 'success' }}
-        uses: actions/deploy-pages@v5
-
-  # 外部 CFP ソース (wikiCFP / DBLP / OpenReview) から新規会議候補を集め、
-  # data/discovered_candidates.yaml に永続マージする。収録(snapshot/サイト)には
-  # 影響しない。候補を extra.yaml に昇格するときは公式サイトで締切を裏取り
-  # する(SPEC.md 3.7 の原則)。
-  discover-candidates:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Set up Node
-        uses: actions/setup-node@v7
-        with:
-          node-version: '24'
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Discover candidates
-        run: |
-          node src/cli.ts discover \
-            --candidate-out data/discovered_candidates.yaml || echo 'discovery failed; keeping previous candidates'
-
-      - name: Commit candidates
+      - name: Verify main immediately before deploy
+        id: deploy-guard
+        if: ${{ !cancelled() && steps.main-guard.outcome == 'success' }}
         run: |
           set -euo pipefail
-          if ! git diff --quiet -- data/discovered_candidates.yaml; then
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add data/discovered_candidates.yaml
-            git commit -m 'chore: refresh discovered candidates [skip ci]'
-            for attempt in 1 2 3; do
-              if git push; then
-                exit 0
-              fi
-              echo "push rejected (attempt ${attempt}); rebasing onto origin/${GITHUB_REF_NAME}"
-              git pull --rebase --autostash origin "$GITHUB_REF_NAME"
-            done
-            echo 'could not push the candidates' >&2
-            exit 1
-          fi
-          echo 'no new candidates; nothing to commit'
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "${{ steps.start-main.outputs.sha }}"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        if: ${{ !cancelled() && steps.deploy-guard.outcome == 'success' }}
+        uses: actions/deploy-pages@v5

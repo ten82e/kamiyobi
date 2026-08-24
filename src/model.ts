@@ -39,6 +39,14 @@ export const KINDS: readonly string[] = [
 ];
 
 export type DeadlineConfidence = "official" | "aggregator" | "estimated";
+export type EvidenceClass =
+  | "official-cfp"
+  | "publisher"
+  | "curated-manual"
+  | "aggregator"
+  | "assumption";
+
+export type EvidenceField = "date" | "time" | "timezone" | "kind" | "round" | "track";
 
 export interface DeadlineEvidence {
   source_name: string;
@@ -46,12 +54,103 @@ export interface DeadlineEvidence {
   observed_at: string;
   original_value: string;
   confidence: DeadlineConfidence;
+  /** Field-level provenance. Legacy snake_case fields above remain public JSON compatible. */
+  sourceClass?: EvidenceClass;
+  sourceUrl?: string;
+  sourceRevision?: string | null;
+  retrievedAt?: string;
+  verifiedAt?: string | null;
+  contentHash?: string | null;
+  rawExcerpt?: string;
+  verifiedFields?: EvidenceField[];
+}
+
+export interface DeadlineEvidenceFallback {
+  sourceName: string;
+  sourceClass: EvidenceClass;
+  sourceUrl?: string;
+  originalValue: string;
+}
+
+const EVIDENCE_CLASSES = new Set<EvidenceClass>([
+  "official-cfp",
+  "publisher",
+  "curated-manual",
+  "aggregator",
+  "assumption",
+]);
+const EVIDENCE_FIELDS = new Set<EvidenceField>([
+  "date",
+  "time",
+  "timezone",
+  "kind",
+  "round",
+  "track",
+]);
+
+/** Normalize supplied field evidence without manufacturing verification metadata. */
+export function deadlineEvidence(
+  value: unknown,
+  fallback?: DeadlineEvidenceFallback,
+): DeadlineEvidence[] {
+  const items = Array.isArray(value) ? value : [];
+  const out = items
+    .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object"))
+    .map((item) => {
+      const sourceName = String(item.source_name ?? item.sourceName ?? fallback?.sourceName ?? "");
+      const sourceUrl = String(item.source_url ?? item.sourceUrl ?? fallback?.sourceUrl ?? "");
+      const originalValue = String(
+        item.original_value ?? item.rawExcerpt ?? fallback?.originalValue ?? "",
+      );
+      if (!sourceName && !sourceUrl && !originalValue) return null;
+      const sourceClass = String(item.sourceClass ?? fallback?.sourceClass ?? "");
+      const fields = (Array.isArray(item.verifiedFields) ? item.verifiedFields : [])
+        .map((field) => String(field))
+        .filter((field): field is EvidenceField => EVIDENCE_FIELDS.has(field as EvidenceField));
+      const evidence: DeadlineEvidence = {
+        source_name: sourceName,
+        source_url: sourceUrl,
+        observed_at: String(item.observed_at ?? item.observedAt ?? ""),
+        original_value: originalValue,
+        confidence:
+          item.confidence === "official" || item.confidence === "estimated"
+            ? item.confidence
+            : "aggregator",
+        ...(EVIDENCE_CLASSES.has(sourceClass as EvidenceClass)
+          ? { sourceClass: sourceClass as EvidenceClass }
+          : {}),
+        ...(sourceUrl ? { sourceUrl } : {}),
+        ...(typeof item.sourceRevision === "string" ? { sourceRevision: item.sourceRevision } : {}),
+        ...(typeof item.retrievedAt === "string" ? { retrievedAt: item.retrievedAt } : {}),
+        ...(typeof item.verifiedAt === "string" ? { verifiedAt: item.verifiedAt } : {}),
+        ...(typeof item.contentHash === "string" ? { contentHash: item.contentHash } : {}),
+        ...(typeof item.rawExcerpt === "string" ? { rawExcerpt: item.rawExcerpt } : {}),
+        ...(fields.length > 0 ? { verifiedFields: fields } : {}),
+      };
+      return evidence;
+    })
+    .filter((item): item is DeadlineEvidence => item !== null);
+  if (out.length > 0 || !fallback) return out;
+  return [
+    {
+      source_name: fallback.sourceName,
+      source_url: fallback.sourceUrl ?? "",
+      observed_at: "",
+      original_value: fallback.originalValue,
+      confidence: fallback.sourceClass === "assumption" ? "estimated" : "aggregator",
+      sourceClass: fallback.sourceClass,
+      ...(fallback.sourceUrl ? { sourceUrl: fallback.sourceUrl } : {}),
+      ...(fallback.originalValue ? { rawExcerpt: fallback.originalValue } : {}),
+    },
+  ];
 }
 
 interface DeadlineBase {
   kind: DeadlineKind;
   label: string;
   round: number;
+  /** Explicit normalized submission track; empty means the default track. */
+  track?: string;
   comment: string | null;
   /** Raw candidate value retained for provenance during serialization. */
   raw_value?: string;
@@ -75,7 +174,6 @@ export interface DateOnlyDeadline extends DeadlineBase {
   local_date: string;
   at_utc?: never;
   tz_raw?: never;
-  conflicts?: never;
 }
 
 export type Deadline = ExactDeadline | DateOnlyDeadline;
@@ -88,8 +186,33 @@ export function isExactDeadline(deadline: Deadline): deadline is ExactDeadline {
   return !isDateOnlyDeadline(deadline);
 }
 
+/** Normalized non-generic track shared by merge, health, and validation. */
+export function deadlineTrackKey(
+  label: string | null | undefined,
+  kind: string,
+  explicitTrack?: string | null,
+): string {
+  if (explicitTrack?.trim()) return slug(explicitTrack);
+  const type = slug(kind) || "other";
+  const value = slug(String(label ?? "").replace(/\b(?:round|r)\s*\d+\b/gi, " "));
+  const generic = new Set([
+    "",
+    type,
+    `${type}-submission`,
+    `${type}-deadline`,
+    "submission",
+    "deadline",
+  ]);
+  const genericPaper = /^(?:(?:regular|full)-)?paper-(?:submission|deadline)(?:-deadline)?$/.test(
+    value,
+  );
+  return generic.has(value) || genericPaper ? "" : value;
+}
+
 export interface DeadlineConflict {
   at_utc: Date;
+  /** Present when the conflicting observation published only a calendar date. */
+  local_date?: string;
   label: string;
   source: string;
   raw_value?: string;
@@ -1087,25 +1210,7 @@ export function conferencesFromJson(
       for (const dlRaw of (ed.deadlines as unknown[] | undefined) ?? []) {
         if (!dlRaw || typeof dlRaw !== "object") continue;
         const dl = dlRaw as Record<string, unknown>;
-        const evidence = (Array.isArray(dl.evidence) ? dl.evidence : [])
-          .filter((item): item is Record<string, unknown> =>
-            Boolean(item && typeof item === "object"),
-          )
-          .map(
-            (item): DeadlineEvidence => ({
-              source_name: String(item.source_name ?? ""),
-              source_url: String(item.source_url ?? ""),
-              observed_at: String(item.observed_at ?? ""),
-              original_value: String(item.original_value ?? ""),
-              confidence:
-                item.confidence === "official" ||
-                item.confidence === "estimated" ||
-                item.confidence === "aggregator"
-                  ? item.confidence
-                  : "aggregator",
-            }),
-          )
-          .filter((item) => item.source_name && item.original_value);
+        const evidence = deadlineEvidence(dl.evidence).filter((item) => item.original_value);
         const conflicts = (Array.isArray(dl.conflicts) ? dl.conflicts : [])
           .filter((item): item is Record<string, unknown> =>
             Boolean(item && typeof item === "object"),
@@ -1124,23 +1229,14 @@ export function conferencesFromJson(
               item.original_value ?? rawEvidence.original_value ?? conflictAt.toISOString(),
             );
             const source = String(item.source ?? rawEvidence.source_name ?? "");
-            const conflictEvidence: DeadlineEvidence | undefined =
-              rawEvidence.source_name || rawEvidence.original_value
-                ? {
-                    source_name: String(rawEvidence.source_name ?? source),
-                    source_url: String(rawEvidence.source_url ?? ""),
-                    observed_at: String(rawEvidence.observed_at ?? ""),
-                    original_value: String(rawEvidence.original_value ?? rawValue),
-                    confidence:
-                      rawEvidence.confidence === "official" ||
-                      rawEvidence.confidence === "estimated" ||
-                      rawEvidence.confidence === "aggregator"
-                        ? rawEvidence.confidence
-                        : "aggregator",
-                  }
-                : undefined;
+            const conflictEvidence = deadlineEvidence(rawEvidence, {
+              sourceName: source,
+              sourceClass: "aggregator",
+              originalValue: rawValue,
+            })[0];
             const conflict: DeadlineConflict = {
               at_utc: conflictAt,
+              ...(asDate(item.local_date) ? { local_date: fmtDate(asDate(item.local_date)!) } : {}),
               label: String(item.label ?? ""),
               source,
               raw_value: rawValue,
@@ -1153,8 +1249,10 @@ export function conferencesFromJson(
           kind: refineKindWithLabel(kindOf(String(dl.kind ?? "other")), String(dl.label ?? "")),
           label: String(dl.label ?? ""),
           round: Number(dl.round ?? 1) || 1,
+          ...(typeof dl.track === "string" && dl.track.trim() ? { track: slug(dl.track) } : {}),
           comment: dl.comment === null || dl.comment === undefined ? null : String(dl.comment),
           ...(evidence.length > 0 ? { evidence } : {}),
+          ...(conflicts.length > 0 ? { conflicts } : {}),
           ...(typeof dl.selection_rule === "string" ? { selection_rule: dl.selection_rule } : {}),
         };
         if (dl.precision === "date-only") {
@@ -1175,7 +1273,6 @@ export function conferencesFromJson(
           precision: "exact",
           at_utc: at,
           tz_raw: String(dl.tz_raw ?? ""),
-          ...(conflicts.length > 0 ? { conflicts } : {}),
         });
       }
       editions.push({

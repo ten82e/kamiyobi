@@ -2,53 +2,94 @@ name: ci
 
 on:
   push:
-    paths-ignore:
-      - 'data/snapshot.json'
   pull_request:
-    paths-ignore:
-      - 'data/snapshot.json'
 
 permissions:
   contents: read
 
 jobs:
-  test:
+  typecheck:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Set up Node
-        uses: actions/setup-node@v7
-        with:
-          node-version: '24'
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Lint
-        run: npm run check
-
-      - name: Run tests
-        run: npm test
-
-      - name: Offline build
-        run: node src/cli.ts build --out /tmp/kamiyobi-offline-site --offline --no-embeddings --cache /tmp/kamiyobi-offline-cache --now 2026-08-09T00:00:00Z
-
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: '24', cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: '24', cache: npm }
+      - run: npm ci
+      - run: npm run check
+  unit-integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: '24', cache: npm }
+      - run: npm ci
+      - run: npm test
+  offline-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: '24', cache: npm }
+      - run: npm ci
+      - run: node src/cli.ts build --out /tmp/kamiyobi-offline-site --offline --no-embeddings --cache /tmp/kamiyobi-offline-cache --now 2026-08-09T00:00:00Z
       - name: Check offline result
         run: |
-          node -e '
+          node - <<'NODE'
           const fs = require("node:fs");
-          const data = JSON.parse(fs.readFileSync("/tmp/kamiyobi-offline-site/data.json", "utf8"));
-          const health = JSON.parse(fs.readFileSync("/tmp/kamiyobi-offline-site/health.json", "utf8"));
-          const publish = JSON.parse(fs.readFileSync("/tmp/kamiyobi-offline-site/publish.json", "utf8"));
-          if (!Array.isArray(data.conferences) || data.conferences.length < 150) process.exit(1);
-          if (!health || typeof health.confirmed_deadlines !== "number" || !health.output_files) process.exit(1);
-          if (publish?.semantic_status !== "lexical-only" || !publish.artifacts["data.json"]) process.exit(1);
-          console.log(JSON.stringify({ conferences: data.conferences.length, confirmed_deadlines: health.confirmed_deadlines, snapshot_fallback: health.snapshot_fallback, semantic_status: publish.semantic_status }));
-          '
+          const out = "/tmp/kamiyobi-offline-site";
+          for (const name of ["data.json", "health.json", "publish.json", "app.js", "recommender.js", "recommendation-core.js", "publish.js"]) {
+            if (!fs.existsSync(`${out}/${name}`) || fs.statSync(`${out}/${name}`).size === 0) throw new Error(`missing ${name}`);
+          }
+          const data = JSON.parse(fs.readFileSync(`${out}/data.json`, "utf8"));
+          const health = JSON.parse(fs.readFileSync(`${out}/health.json`, "utf8"));
+          const publish = JSON.parse(fs.readFileSync(`${out}/publish.json`, "utf8"));
+          if (data.conferences.length < 150 || health.tracked_venues < 150 || !health.output_files["data.json"]) throw new Error("offline data/health contract failed");
+          if (publish.semantic_status !== "lexical-only" || !publish.artifacts["recommendation-index.json"]) throw new Error("offline publish contract failed");
+          NODE
+  validate-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: '24', cache: npm }
+      - run: npm ci
+      - run: npm run validate:data -- --json
+  health-transition:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: '24', cache: npm }
+      - run: npm ci
+      - run: npm test -- --run tests/health_gate.test.ts
+  recommendation-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: '24', cache: npm }
+      - run: npm ci
+      - name: Build current recommendation index
+        run: node src/cli.ts build --out /tmp/kamiyobi-current-recommendation --offline --no-embeddings --cache /tmp/kamiyobi-cache --now 2026-08-09T00:00:00Z
+      - name: Build pull-request base recommendation index
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          git worktree add --detach /tmp/kamiyobi-base-recommendation "origin/${{ github.base_ref }}"
+          cd /tmp/kamiyobi-base-recommendation
+          npm ci
+          node src/cli.ts build --out /tmp/kamiyobi-base-public --offline --no-embeddings --cache /tmp/kamiyobi-cache --now 2026-08-09T00:00:00Z
+      - name: Compare recommendation indexes
+        if: ${{ github.event_name == 'pull_request' }}
+        run: npm run bench -- --data-delta tests/fixtures/recommendation-data-delta.json --data-delta-before /tmp/kamiyobi-base-public/recommendation-index.json --data-delta-after /tmp/kamiyobi-current-recommendation/recommendation-index.json --json
+      - name: Run deterministic fixture regression
+        if: ${{ github.event_name != 'pull_request' }}
+        run: npm run bench -- --data-delta tests/fixtures/recommendation-data-delta.json --json

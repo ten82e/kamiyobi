@@ -1129,18 +1129,24 @@ conferences:
         date_text: TBD 2027
         deadlines:
           - kind: paper
+            label: Regular Paper
+            track: regular
             date: '2026-11-17 23:59:59'
             tz: AoE
             comment: Regular Paper Submission
           - kind: paper
+            label: Position Paper
+            track: position
             date: '2026-12-21 23:59:59'
             tz: AoE
             comment: Position/Regular Paper Submission
           - kind: notification
+            round: 1
             date: '2027-01-15 23:59:59'
             tz: AoE
             comment: Authors Notification (1st stage, official ImportantDates AoE)
           - kind: notification
+            round: 2
             date: '2027-02-15 23:59:59'
             tz: AoE
             comment: Authors Notification (2nd stage, official ImportantDates AoE)
@@ -1309,10 +1315,10 @@ conferences:
       # 根拠: https://www.ipsj.or.jp/journal/cfp/27-R.html (2026-08-11 取得)
       #   COMPSAC 2026 関連特集号「Applications and the internet」投稿締切 12/1、特集号予定 2027年9月号。
       #   掲載料無料の英文特集号。
-      - year: 2026
-        id: jip-compsac2026-si
+      - year: 2027
+        id: jip-compsac2027-si
         link: https://www.ipsj.or.jp/journal/cfp/27-R.html
-        date_text: 特集号予定 2027年9月号 (COMPSAC 2026 関連)
+        date_text: 特集号予定 2027年9月号
         deadlines:
           - {kind: paper, label: 投稿締切, date: '2026-12-01 23:59:00', tz: UTC+9}
 
@@ -1386,10 +1392,6 @@ conferences:
         event_start: '2026-12-14'
         event_end: '2026-12-18'
         deadlines:
-          - kind: paper
-            date: '2026-09-30 23:59:59'
-            tz: AoE
-            comment: Paper Submission Deadline
           - kind: paper
             date: '2026-11-01 23:59:59'
             tz: AoE
@@ -1956,7 +1958,7 @@ conferences:
     categories: [theory]
     tags: [niche, special-issue, domestic-jp]
     editions:
-      - year: 2026
+      - year: 2027
         id: ieice-fundamentals-discrete-math-2027-09
         link: https://www.ieice.org/eng_r/information/schedule/journals.php
         deadlines:
@@ -1970,7 +1972,7 @@ conferences:
     categories: [systems]
     tags: [niche, special-issue, domestic-jp]
     editions:
-      - year: 2026
+      - year: 2027
         id: ieice-inf-syst-log-data-2027-12
         link: https://www.ieice.org/eng_r/information/schedule/journals.php
         deadlines:
@@ -1984,7 +1986,7 @@ conferences:
     categories: [systems]
     tags: [niche, special-issue, domestic-jp]
     editions:
-      - year: 2026
+      - year: 2027
         id: ieice-electron-microwave-2027-11
         link: https://www.ieice.org/eng_r/information/schedule/journals.php
         deadlines:
@@ -1998,7 +2000,7 @@ conferences:
     categories: [systems]
     tags: [niche, special-issue, domestic-jp]
     editions:
-      - year: 2026
+      - year: 2027
         id: ieice-electron-analog-2027-10
         link: https://www.ieice.org/eng_r/information/schedule/journals.php
         deadlines:
@@ -2108,7 +2110,7 @@ conferences:
     categories: [theory]
     tags: [niche, special-issue, domestic-jp]
     editions:
-      - year: 2026
+      - year: 2027
         id: ieice-nolta-advances-2027-04
         link: https://www.ieice.org/eng_r/information/schedule/journals.php
         deadlines:
@@ -3999,7 +4001,7 @@ conferences:
 
   - key: slice-2026
     title: SLICE-2026
-    full_name: The 8th International Workshop on Smart Living with IoT, Cloud, and Edge Computing 20
+    full_name: The 8th International Workshop on Smart Living with IoT, Cloud, and Edge Computing
     link: https://easychair.org/cfp/slice2026
     categories: [systems]
     editions:
@@ -4297,8 +4299,8 @@ conferences:
           - {kind: paper, label: Submission deadline, date: '2026-10-31', precision: date-only}
 
   - key: icbdaia27
-    title: ‎‎ICBDAIA27
-    full_name: the 6th International Conference on Big Data and Artificial Intelligence ‎Applications ‎
+    title: ICBDAIA27
+    full_name: the 6th International Conference on Big Data and Artificial Intelligence Applications
     link: https://easychair.org/cfp/ICBDAIA27
     categories: [ai, db]
     editions:
@@ -4385,12 +4387,12 @@ conferences:
 
   - key: jvac2027
     title: JVAC2027
-    full_name: "Jnana Vaani AI Conference 2026: A Bilingual Knowledge Ecosystem for Artificial Intelligenc"
+    full_name: "Jnana Vaani AI Conference 2027: A Bilingual Knowledge Ecosystem for Artificial Intelligence"
     link: https://easychair.org/cfp/JVAC2027
     categories: [ai]
     editions:
-      - year: 2026
-        id: jvac202726
+      - year: 2027
+        id: jvac202727
         link: https://easychair.org/cfp/JVAC2027
         place: Shivamogga. Karnataka, India
         date_text: Jan 7, 2027
@@ -4446,10 +4448,9 @@ conferences:
     link: https://easychair.org/cfp/SIDL2027
     categories: [ai, theory]
     editions:
-      - year: 2026
-        id: si-dl202726
+      - year: 2027
+        id: si-dl202727
         link: https://easychair.org/cfp/SIDL2027
-        date_text: Dec 15, 2026
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-12-15', precision: date-only}
 
@@ -5507,8 +5508,8 @@ conferences:
     link: https://agentarch.org
     categories: [ai]
     editions:
-      - year: 2026
-        id: agentarch-icsa202726
+      - year: 2027
+        id: agentarch-icsa202727
         link: https://agentarch.org
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-12-20', precision: date-only}

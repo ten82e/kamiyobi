@@ -84,9 +84,11 @@ export function compareToHead(path: string): 0 | 1 {
   }
   let prev: unknown = null;
   try {
-    prev = parseFile(execFileSync("git", ["show", `HEAD:${path}`], {
-      encoding: "utf8",
-    }));
+    prev = parseFile(
+      execFileSync("git", ["show", `HEAD:${path}`], {
+        encoding: "utf8",
+      }),
+    );
   } catch {
     prev = null;
   }

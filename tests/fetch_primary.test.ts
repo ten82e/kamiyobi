@@ -20,6 +20,7 @@ import {
   runFetchPrimary,
   toLines,
 } from "../src/fetch-primary.ts";
+import { resolvePrimaryObservations } from "../src/sources/primary.ts";
 import { REPO_ROOT } from "./helpers.ts";
 
 let stderrSpy: ReturnType<typeof vi.spyOn> | null = null;
@@ -347,6 +348,54 @@ describe("runFetchPrimary", () => {
     try {
       expect(await runFetchPrimary(true, registryPath, outPath)).toBe(0);
       expect(loadYamlFile(outPath)).toEqual(previous);
+    } finally {
+      globalThis.fetch = oldFetch;
+    }
+  });
+
+  it("keeps unobserved slots and emits revision evidence for observed slots", async () => {
+    spyStderr();
+    const dir = mkdtempSync(join(tmpdir(), "cfp-primary-partial-"));
+    const registryPath = join(dir, "primary.yaml");
+    const outPath = join(dir, "primary_overrides.yaml");
+    writeFileSync(
+      registryPath,
+      "conferences:\n  partial:\n    url: https://example.test/partial\n    year: 2027\n    tz: AoE\n",
+    );
+    writeFileSync(
+      outPath,
+      "conferences:\n  partial:\n    editions:\n      '2027':\n        deadlines:\n          - {kind: abstract, label: Abstract submission, date: '2026-09-01 23:59:00', tz: AoE}\n          - {kind: paper, label: Paper submission, date: '2026-09-08 23:59:00', tz: AoE}\n",
+    );
+    const oldFetch = globalThis.fetch;
+    globalThis.fetch = (async () =>
+      new Response(
+        "<title>Partial 2027</title><p>Abstract deadline: September 2, 2026 23:59 AoE</p>",
+      )) as typeof fetch;
+    try {
+      expect(await runFetchPrimary(true, registryPath, outPath)).toBe(0);
+      const output = loadYamlFile(outPath);
+      const rows = output.conferences.partial.editions[2027].deadlines as Array<
+        Record<string, unknown>
+      >;
+      expect(rows.map((row) => row.kind).sort()).toEqual(["abstract", "paper"]);
+      const abstract = rows.find((row) => row.kind === "abstract")!;
+      expect(abstract).toMatchObject({
+        date: "2026-09-02",
+        sourceUrl: "https://example.test/partial",
+      });
+      expect(abstract.contentHash).toMatch(/^[0-9a-f]{64}$/);
+      expect(abstract.sourceRevision).toBe(abstract.contentHash);
+      expect(Number.isFinite(Date.parse(String(abstract.retrievedAt)))).toBe(true);
+      expect(abstract.verifiedAt).toBe(abstract.retrievedAt);
+      const resolved = resolvePrimaryObservations(output);
+      const evidence = (resolved.conferences as any).partial.editions[2027].deadlines[0]
+        .evidence[0];
+      expect(evidence).toMatchObject({
+        sourceClass: "official-cfp",
+        contentHash: abstract.contentHash,
+        sourceRevision: abstract.contentHash,
+        verifiedFields: ["date", "time", "timezone"],
+      });
     } finally {
       globalThis.fetch = oldFetch;
     }

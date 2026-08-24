@@ -2,12 +2,12 @@
  * Verified-observation stage between primary extraction and merge.
  *
  * data/primary_overrides.yaml は一次ソースからの自動抽出「観測」を載せる。
- * 観測が確定締切 (at_utc 持ちの Deadline) として公開されるのは、次のすべてを
+ * 観測は確認できた精度のまま公開する。日付だけは date-only、時刻と確定 timezone
+ * が揃うときだけ exact とする。
  * 満たすときだけにする (SPEC §5):
  *
- *   1. 日付に壁時計の時刻 (HH:MM[:SS]) が伴う。日付のみの証拠からは時刻を
- *      捏造しない。
- *   2. tz が resolveTzStatus で confirmed (AoE 等の固定オフセット・IANA 名)。
+ *   1. 妥当な日付がある。時刻が無ければ date-only のまま扱い、時刻を捏造しない。
+ *   2. 時刻がある場合だけ、tz が resolveTzStatus で confirmed であることを要求する。
  *      CST/BST 等の曖昧略称は不確認として公開しない。
  *   3. 締切日が適用先 edition の開催時期と矛盾しない。会期が不明なら開催年または
  *      前年を許可する。過去版ページは fetch-primary がページタイトルの開催年で隔離する。
@@ -28,6 +28,8 @@ import {
   asDate,
   type Conference,
   DAY_MS,
+  type DeadlineEvidence,
+  deadlineEvidence,
   KINDS,
   parseDateRange,
   resolveTzStatus,
@@ -71,7 +73,39 @@ interface ObservationRow {
   time: string | null;
   tzRaw: string;
   round: number;
+  track?: string;
   rest: Record<string, unknown>;
+}
+
+function primaryEvidence(
+  row: ObservationRow,
+  conference: Record<string, unknown>,
+): DeadlineEvidence[] {
+  const explicitUrl = String(row.rest.sourceUrl ?? conference.sourceUrl ?? "").trim();
+  const commentUrl = /https?:\/\/[^\s)]+/.exec(String(conference._comment ?? ""))?.[0] ?? "";
+  const sourceUrl = explicitUrl || commentUrl;
+  const originalValue = `${row.date}${row.time ? ` ${row.time} ${row.tzRaw}` : ""}`;
+  const supplied = row.rest.evidence;
+  if (Array.isArray(supplied)) return deadlineEvidence(supplied);
+  if (!sourceUrl) return [];
+  return deadlineEvidence([
+    {
+      source_name: "primary",
+      source_url: sourceUrl,
+      original_value: originalValue,
+      confidence: "official",
+      sourceClass: "official-cfp",
+      sourceUrl,
+      rawExcerpt: String(row.rest.rawExcerpt ?? originalValue),
+      verifiedFields: ["date", ...(row.time ? ["time", "timezone"] : [])],
+      ...(typeof row.rest.sourceRevision === "string"
+        ? { sourceRevision: row.rest.sourceRevision }
+        : {}),
+      ...(typeof row.rest.retrievedAt === "string" ? { retrievedAt: row.rest.retrievedAt } : {}),
+      ...(typeof row.rest.verifiedAt === "string" ? { verifiedAt: row.rest.verifiedAt } : {}),
+      ...(typeof row.rest.contentHash === "string" ? { contentHash: row.rest.contentHash } : {}),
+    },
+  ]);
 }
 
 function toObservationRows(rows: unknown): ObservationRow[] {
@@ -100,6 +134,7 @@ function toObservationRows(rows: unknown): ObservationRow[] {
       time,
       tzRaw: String(rec.tz ?? ""),
       round: Number(rec.round ?? 1) || 1,
+      track: String(rec.track ?? "").trim(),
       rest: rec,
     });
   }
@@ -113,9 +148,10 @@ export function resolveObservation(
   eventStart: Date | null = null,
   eventEnd: Date | null = null,
   maxLeadDays = 550,
+  evidence: DeadlineEvidence[] = [],
 ): ResolvedRow | null {
-  if (!row.time) return null; // 日付のみ → 時刻を捏造しない
-  if (resolveTzStatus(row.tzRaw).status !== "confirmed") return null; // 曖昧 tz
+  // 日付のみは一級の観測であり、時刻を捏造しない。
+  if (row.time && resolveTzStatus(row.tzRaw).status !== "confirmed") return null;
   const day = asDate(row.date);
   const start = eventStart ?? eventEnd;
   const end = eventEnd ?? eventStart;
@@ -133,9 +169,12 @@ export function resolveObservation(
   const out: ResolvedRow = {
     kind: (KINDS as readonly string[]).includes(row.kind) ? row.kind : "other",
     label: row.label,
-    date: `${row.date} ${row.time}`,
-    tz: row.tzRaw,
+    ...(row.time
+      ? { date: `${row.date} ${row.time}`, tz: row.tzRaw }
+      : { date: row.date, precision: "date-only" }),
     round: row.round,
+    ...(row.track ? { track: row.track } : {}),
+    ...(evidence.length > 0 ? { evidence } : {}),
   };
   if (typeof row.rest.comment === "string" && row.rest.comment !== "") {
     out.comment = row.rest.comment;
@@ -184,14 +223,21 @@ export function resolvePrimaryObservations(
       const eventEnd = asDate(ep.event_end) ?? parsedEnd ?? knownEdition?.event_end ?? null;
       const rows = toObservationRows(ep.deadlines);
       if (rows.length === 0) {
-        outEditions[yearKey] = ep;
+        outEditions[yearKey] = Array.isArray(ep.remove) ? { ...ep, mode: "merge-slots" } : ep;
         continue;
       }
       let ambiguous = 0;
       let outsideWindow = 0;
       const resolved: ResolvedRow[] = [];
       for (const row of rows) {
-        const done = resolveObservation(row, editionYear, eventStart, eventEnd, maxLeadDays);
+        const done = resolveObservation(
+          row,
+          editionYear,
+          eventStart,
+          eventEnd,
+          maxLeadDays,
+          primaryEvidence(row, rec),
+        );
         if (done !== null) {
           resolved.push(done);
         } else if (row.time && resolveTzStatus(row.tzRaw).status === "confirmed") {
@@ -211,7 +257,7 @@ export function resolvePrimaryObservations(
         if (ambiguous > 0) {
           warn(
             `primary[${key}/${yearKey}]: dropped ${ambiguous} observation(s) ` +
-              "(date-only evidence or unconfirmed timezone)",
+              "(unconfirmed timezone)",
           );
         }
         const { deadlines: _omit, ...rest } = ep;
@@ -224,7 +270,14 @@ export function resolvePrimaryObservations(
             `quarantined ${outsideWindow} outside-window / ${ambiguous} unverifiable`,
         );
       }
-      outEditions[yearKey] = { ...ep, deadlines: resolved };
+      // Primary is an observation stream: update only the slots it observed.
+      // `remove` is intentionally the only deletion mechanism.
+      outEditions[yearKey] = {
+        ...ep,
+        mode: "merge-slots",
+        deadlines: resolved,
+        ...(Array.isArray(ep.remove) ? { remove: ep.remove } : {}),
+      };
     }
     outConferences[key] = { ...rec, editions: outEditions };
   }

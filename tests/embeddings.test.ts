@@ -18,6 +18,7 @@ import {
   embeddingProfileHash,
   main,
   profileTexts,
+  selectVenueMedoids,
   serializeVenueProfileArtifact,
   VENUE_PAPERS,
   VENUE_PROFILE_ARTIFACT,
@@ -76,7 +77,7 @@ describe("profileTexts", () => {
     expect(en.texts[2]).not.toContain("Pesto");
 
     // SOSP has papers in VENUE_PAPERS -> papers are included in English profile
-    expect(en.texts[3]).toContain("Pesto: Cooking up High Performance BFT Queries");
+    expect(en.texts[3]).toContain("Atmosphere: Practical Verified Kernels with Rust and Verus");
   });
 
   it("builds Multilingual profile texts with Japanese category keywords for Japanese conferences", () => {
@@ -123,7 +124,13 @@ describe("generated venue profile artifact", () => {
     const artifact = JSON.parse(artifactText) as {
       schema: number;
       profiles_hash: string;
-      policy: { method: string; max_prototypes: number; source_year_max: number };
+      policy: {
+        method: string;
+        max_prototypes: number;
+        source_year_max: number;
+        embedding_model: string;
+        embedding_revision: string;
+      };
       profiles: Record<
         string,
         {
@@ -134,7 +141,14 @@ describe("generated venue profile artifact", () => {
             source_url: string;
             collected_at: string;
           }>;
-          selection: { method: string; max_prototypes: number; source_year_max: number };
+          prototypes: string[];
+          selection: {
+            method: string;
+            max_prototypes: number;
+            source_year_max: number;
+            embedding_model: string;
+            embedding_revision: string;
+          };
         }
       >;
     };
@@ -143,10 +157,7 @@ describe("generated venue profile artifact", () => {
     expect(artifact).toEqual(VENUE_PROFILE_ARTIFACT);
     expect(
       Object.fromEntries(
-        Object.entries(artifact.profiles).map(([key, profile]) => [
-          key,
-          profile.papers.map((paper: { title: string }) => paper.title),
-        ]),
+        Object.entries(artifact.profiles).map(([key, profile]) => [key, profile.prototypes]),
       ),
     ).toEqual(VENUE_PAPERS);
     expect(artifactText).toBe(serializeVenueProfileArtifact(artifact));
@@ -155,6 +166,17 @@ describe("generated venue profile artifact", () => {
       new Set(Object.values(artifact.profiles).map((profile) => JSON.stringify(profile.selection)))
         .size,
     ).toBe(1);
+    expect(artifact.policy).toMatchObject({
+      method: "fixed-title-embedding-k-medoids",
+      max_prototypes: 8,
+    });
+    for (const profile of Object.values(artifact.profiles)) {
+      expect(profile.prototypes).toHaveLength(8);
+      expect(new Set(profile.prototypes).size).toBe(8);
+      expect(
+        profile.prototypes.every((title) => profile.papers.some((paper) => paper.title === title)),
+      ).toBe(true);
+    }
   });
 
   it("rejects malformed provenance and protects the full-artifact hash", () => {
@@ -172,6 +194,57 @@ describe("generated venue profile artifact", () => {
     const future = JSON.parse(JSON.stringify(artifact));
     future.profiles.ches.papers[0].year = 2026;
     expect(() => serializeVenueProfileArtifact(future)).toThrow(/cutoff|future/);
+  });
+});
+
+describe("venue profile medoids", () => {
+  const paper = (title: string) => ({
+    title,
+    year: 2025,
+    source: "fixture",
+    source_url: "https://example.test/papers",
+    collected_at: "2026-08-25T00:00:00.000Z",
+  });
+
+  it("is input-order invariant, eliminates duplicate titles, and covers embedding clusters", () => {
+    const papers = [
+      paper("alpha-one"),
+      paper("alpha-two"),
+      paper("beta-one"),
+      paper("beta-two"),
+      paper("gamma-one"),
+      paper("gamma-two"),
+      paper("alpha-one"),
+    ];
+    const vectors = {
+      "alpha-one": [1, 0],
+      "alpha-two": [0.9, 0.1],
+      "beta-one": [0, 1],
+      "beta-two": [0.1, 0.9],
+      "gamma-one": [-1, 0],
+      "gamma-two": [-0.9, 0.1],
+    };
+    const selected = selectVenueMedoids(papers, 3, vectors);
+    expect(selected).toHaveLength(3);
+    expect(selected.map((item) => item.title)).toEqual(
+      selectVenueMedoids([...papers].reverse(), 3, vectors).map((item) => item.title),
+    );
+    expect(selected.some((item) => item.title.startsWith("alpha-"))).toBe(true);
+    expect(selected.some((item) => item.title.startsWith("beta-"))).toBe(true);
+    expect(selected.some((item) => item.title.startsWith("gamma-"))).toBe(true);
+    expect(selectVenueMedoids(papers, 8, vectors)).toHaveLength(6);
+    expect(() => selectVenueMedoids(papers, 2, vectors)).toThrow(/at least 3/);
+  });
+
+  it("keeps complete provenance while runtime consumers use only selected prototypes", () => {
+    for (const [key, profile] of Object.entries(VENUE_PROFILE_ARTIFACT.profiles)) {
+      expect(profile.papers.length).toBeGreaterThan(profile.prototypes.length);
+      expect(VENUE_PAPERS[key]).toEqual(profile.prototypes);
+      const nonPrototype = profile.papers.find(
+        (paper) => !profile.prototypes.includes(paper.title),
+      );
+      expect(nonPrototype && VENUE_PAPERS[key]).not.toContain(nonPrototype?.title);
+    }
   });
 });
 

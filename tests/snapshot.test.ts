@@ -22,10 +22,22 @@ import {
   main,
   parseArgs,
   parseNow,
+  restoreFailedSourceMaterial,
+  restoreFailedSourceMaterialWithCounts,
+  type SourceLoadResult,
   setRoot,
 } from "../src/cli.ts";
 import { type Conference, fmtUTC } from "../src/model.ts";
 import {
+  archiveMetadata,
+  cacheMetadata,
+  cacheSlot,
+  fetchMetadataFor,
+  fetchTarball,
+  writeCacheMetadata,
+} from "../src/sources/base.ts";
+import {
+  exactAt,
   makeConference,
   makeDeadline,
   makeEdition,
@@ -59,6 +71,31 @@ function args(outdir: string, cache?: string): BuildArgs {
     cache: cache ?? join(mkdtempSync("/tmp/cfp-snap-cache-"), ".cache"),
     // 埋め込み生成は 2 モデルで数秒かかるためスナップショット検証ではスキップ
     noEmbeddings: true,
+  };
+}
+
+function sourceResult(
+  source: string,
+  status: SourceLoadResult["status"],
+  conferences: Conference[],
+  values: Partial<SourceLoadResult> = {},
+): SourceLoadResult {
+  return {
+    source,
+    status,
+    revision: null,
+    fetchedAt: null,
+    contentHash: null,
+    cacheAgeSeconds: null,
+    conferences,
+    conferenceCount: conferences.length,
+    editionCount: conferences.reduce((count, conference) => count + conference.editions.length, 0),
+    deadlineCount: conferences.reduce(
+      (count, conference) =>
+        count + conference.editions.reduce((total, edition) => total + edition.deadlines.length, 0),
+      0,
+    ),
+    ...values,
   };
 }
 
@@ -99,6 +136,263 @@ describe("parseNow (CLI --now boundary)", () => {
 
   it("hour 24 is rejected instead of rolling to the next day (#392)", () => {
     expect(() => parseNow("2026-08-09T24:00:00Z")).toThrow("unparsable --now");
+  });
+});
+
+it("restores only failed-source venues, editions, and missing slots", () => {
+  const current = [
+    makeConference({
+      key: "mixed",
+      title: "Mixed",
+      sources: ["ccfddl"],
+      editions: [
+        makeEdition({
+          year: 2026,
+          edition_id: "mixed26",
+          source: "ccfddl",
+          deadlines: [makeDeadline("paper", "Paper", utc(2026, 9, 2))],
+        }),
+      ],
+    }),
+  ];
+  const snapshot = [
+    makeConference({
+      key: "failed-only",
+      title: "Failed",
+      sources: ["aideadlines"],
+      editions: [makeEdition({ year: 2026, edition_id: "failed26", source: "aideadlines" })],
+    }),
+    makeConference({
+      key: "mixed",
+      title: "Mixed",
+      sources: ["ccfddl", "aideadlines"],
+      editions: [
+        makeEdition({
+          year: 2026,
+          edition_id: "mixed26",
+          source: "aideadlines",
+          deadlines: [
+            makeDeadline("abstract", "Abstract", utc(2026, 9, 1)),
+            makeDeadline("paper", "Paper submission", utc(2026, 9, 1)),
+            {
+              ...makeDeadline("notification", "Notification", utc(2026, 9, 3)),
+              evidence: [
+                {
+                  source_name: "ccfddl",
+                  source_url: "https://example.org/ccfddl",
+                  observed_at: "2026-08-01T00:00:00Z",
+                  original_value: "2026-09-03",
+                  confidence: "aggregator",
+                },
+              ],
+            },
+          ],
+        }),
+        makeEdition({ year: 2027, edition_id: "mixed27", source: "aideadlines" }),
+      ],
+    }),
+    makeConference({ key: "removed-local", title: "Removed", sources: ["local"], editions: [] }),
+  ];
+  const restored = restoreFailedSourceMaterial(current, snapshot, new Set(["aideadlines"]));
+  expect(restored.map((conference) => conference.key)).toEqual(["mixed", "failed-only"]);
+  const mixed = restored[0]!;
+  expect(mixed.editions.map((edition) => edition.edition_id)).toEqual(["mixed26", "mixed27"]);
+  expect(mixed.editions[0]!.deadlines.map((deadline) => deadline.kind)).toEqual([
+    "paper",
+    "abstract",
+  ]);
+  expect(exactAt(mixed.editions[0]!.deadlines[0]!).toISOString()).toBe(
+    utc(2026, 9, 2).toISOString(),
+  );
+  const detailed = restoreFailedSourceMaterialWithCounts(
+    current,
+    snapshot,
+    new Set(["aideadlines"]),
+  );
+  expect(detailed.counts.aideadlines).toEqual({
+    conferenceCount: 1,
+    editionCount: 2,
+    deadlineCount: 1,
+  });
+});
+
+describe("source freshness", () => {
+  const conference = (key: string, source: string) =>
+    makeConference({
+      key,
+      title: key,
+      categories: ["ai"],
+      sources: [source],
+      editions: [
+        makeEdition({
+          year: 2027,
+          edition_id: `${key}27`,
+          source,
+          deadlines: [makeDeadline("paper", "Paper", utc(2026, 11, 1))],
+        }),
+      ],
+    });
+
+  it("reports fresh and cache-fallback metadata with its real age and hash", async () => {
+    const root = isolatedRepo();
+    setRoot(root);
+    const fresh = conference("fresh-source", "ccfddl");
+    const cached = conference("cached-source", "aideadlines");
+    hooks.collect = async () => ({
+      groups: [[fresh], [cached], []],
+      failed: new Set<string>(),
+      results: [
+        sourceResult("ccfddl", "fresh", [fresh], {
+          revision: "fresh-revision",
+          fetchedAt: "2026-08-09T00:00:00.000Z",
+          contentHash: "fresh-hash",
+          cacheAgeSeconds: 0,
+        }),
+        sourceResult("aideadlines", "cache-fallback", [cached], {
+          revision: "cached-revision",
+          fetchedAt: "2026-08-08T23:58:00.000Z",
+          contentHash: "cached-hash",
+          cacheAgeSeconds: 120,
+        }),
+        sourceResult("local", "fresh", []),
+      ],
+    });
+    const outdir = join(mkdtempSync("/tmp/cfp-source-meta-"), "out");
+    expect(await cmdBuild({ ...args(outdir), offline: false })).toBe(0);
+    const health = JSON.parse(readFileSync(join(outdir, "health.json"), "utf8")) as {
+      source_status: Record<string, string>;
+      source_metadata: Record<string, SourceLoadResult>;
+    };
+    expect(health.source_status).toMatchObject({ ccfddl: "fresh", aideadlines: "cache-fallback" });
+    expect(health.source_metadata.aideadlines).toMatchObject({
+      status: "cache-fallback",
+      revision: "cached-revision",
+      contentHash: "cached-hash",
+      cacheAgeSeconds: 120,
+      conferenceCount: 1,
+      editionCount: 1,
+      deadlineCount: 1,
+    });
+  });
+
+  it("uses tarball bytes for revision identity and carries cache sidecar provenance", () => {
+    const first = archiveMetadata(Buffer.from("same archive"));
+    const again = archiveMetadata(Buffer.from("same archive"));
+    const changed = archiveMetadata(Buffer.from("changed archive"));
+    expect(first.contentHash).toBe(again.contentHash);
+    expect(first.revision).toBe(`sha256:${first.contentHash}`);
+    expect(changed.contentHash).not.toBe(first.contentHash);
+    const slot = mkdtempSync("/tmp/cfp-cache-meta-");
+    writeCacheMetadata(slot, first);
+    expect(cacheMetadata(slot)).toEqual(first);
+  });
+
+  it("uses the saved cache retrieval time for fallback age without inventing content metadata", async () => {
+    const cache = mkdtempSync("/tmp/cfp-cache-fallback-");
+    const slot = cacheSlot(cache, "fixture/source", "main");
+    const root = join(slot, "source-main");
+    mkdirSync(root, { recursive: true });
+    writeCacheMetadata(slot, {
+      revision: "sha256:known",
+      fetchedAt: "2026-08-09T00:00:00.000Z",
+      contentHash: "known",
+    });
+    await expect(fetchTarball("fixture/source", "main", cache, { offline: true })).resolves.toBe(
+      root,
+    );
+    expect(fetchMetadataFor("fixture/source", "main")).toMatchObject({
+      status: "cache-fallback",
+      revision: "sha256:known",
+      contentHash: "known",
+      cacheAgeSeconds: expect.any(Number),
+    });
+  });
+
+  it("rejects an online build before publishing an over-age cache fallback", async () => {
+    const root = isolatedRepo();
+    setRoot(root);
+    const config = loadYaml(readFileSync(join(root, "config.yaml"), "utf8")) as Record<
+      string,
+      unknown
+    >;
+    config.health = { ...(config.health as Record<string, unknown>), max_cache_age_seconds: 60 };
+    writeFileSync(join(root, "config.yaml"), dumpYaml(config), "utf8");
+    const cached = conference("stale-cache", "ccfddl");
+    hooks.collect = async () => ({
+      groups: [[cached], [], []],
+      failed: new Set<string>(),
+      results: [
+        sourceResult("ccfddl", "cache-fallback", [cached], {
+          revision: "stale-revision",
+          contentHash: "stale-hash",
+          cacheAgeSeconds: 61,
+        }),
+        sourceResult("aideadlines", "fresh", []),
+        sourceResult("local", "fresh", []),
+      ],
+    });
+    const outdir = join(mkdtempSync("/tmp/cfp-source-stale-"), "out");
+    expect(await cmdBuild({ ...args(outdir), offline: false })).toBe(2);
+    expect(existsSync(join(outdir, "data.json"))).toBe(false);
+  });
+
+  it("marks failed source material restored from snapshot as snapshot-fallback", async () => {
+    const root = isolatedRepo();
+    setRoot(root);
+    const live = conference("live-source", "ccfddl");
+    writeFileSync(
+      join(root, "data", "snapshot.json"),
+      JSON.stringify({
+        conferences: [
+          {
+            key: "saved-source",
+            title: "saved-source",
+            full_name: "saved-source",
+            categories: ["ai"],
+            sources: ["aideadlines"],
+            editions: [
+              {
+                year: 2027,
+                id: "saved-source27",
+                source: "aideadlines",
+                deadlines: [
+                  {
+                    kind: "paper",
+                    label: "Paper",
+                    round: 1,
+                    utc: "2026-11-01T00:00:00.000Z",
+                    tz_raw: "AoE",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      "utf8",
+    );
+    hooks.collect = async () => ({
+      groups: [[live], [], []],
+      failed: new Set(["aideadlines"]),
+      results: [
+        sourceResult("ccfddl", "fresh", [live]),
+        sourceResult("aideadlines", "failed", []),
+        sourceResult("local", "fresh", []),
+      ],
+    });
+    const outdir = join(mkdtempSync("/tmp/cfp-source-snapshot-"), "out");
+    expect(await cmdBuild(args(outdir))).toBe(0);
+    const health = JSON.parse(readFileSync(join(outdir, "health.json"), "utf8")) as {
+      source_status: Record<string, string>;
+      source_metadata: Record<string, SourceLoadResult>;
+    };
+    expect(health.source_status.aideadlines).toBe("snapshot-fallback");
+    expect(health.source_metadata.aideadlines.status).toBe("snapshot-fallback");
+    expect(health.source_metadata.aideadlines).toMatchObject({
+      conferenceCount: 1,
+      editionCount: 1,
+      deadlineCount: 1,
+    });
   });
 });
 
@@ -825,6 +1119,41 @@ describe("snapshot fallback", () => {
     }
   });
 
+  it("never refreshes the snapshot from a non-fresh cache fallback", async () => {
+    const root = isolatedRepo();
+    setRoot(root);
+    const target = join(root, "data", "snapshot.json");
+    const kept = { conferences: [{ key: "fresh-baseline", editions: [] }] };
+    writeFileSync(target, JSON.stringify(kept), "utf8");
+    const cached = makeConference({
+      key: "cached-only",
+      title: "Cached Only",
+      sources: ["ccfddl"],
+      editions: [makeEdition({ edition_id: "cached26", year: 2026 })],
+    });
+    const previous = hooks.collect;
+    hooks.collect = async () => ({
+      groups: [[cached], [], []],
+      failed: new Set<string>(),
+      results: [
+        sourceResult("ccfddl", "cache-fallback", [cached], { cacheAgeSeconds: 1 }),
+        sourceResult("aideadlines", "fresh", []),
+        sourceResult("local", "fresh", []),
+      ],
+    });
+    try {
+      expect(
+        await cmdBuild({
+          ...args(join(mkdtempSync("/tmp/cfp-cache-no-snapshot-"), "out")),
+          offline: false,
+        }),
+      ).toBe(0);
+      expect(JSON.parse(readFileSync(target, "utf8"))).toEqual(kept);
+    } finally {
+      hooks.collect = previous;
+    }
+  });
+
   it("the real repository's snapshot is untouched by the test suite", () => {
     const live = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
       conferences: unknown[];
@@ -836,7 +1165,10 @@ describe("snapshot fallback", () => {
     const live = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
       conferences: Array<{
         key: string;
-        editions: Array<{ year: number; deadlines: Array<{ utc: string; aoe: string }> }>;
+        editions: Array<{
+          year: number;
+          deadlines: Array<{ utc: string | null; aoe: string | null; precision?: string }>;
+        }>;
       }>;
     };
     const AOE_MS = 12 * 60 * 60 * 1000;
@@ -844,7 +1176,8 @@ describe("snapshot fallback", () => {
     for (const conf of live.conferences) {
       for (const ed of conf.editions ?? []) {
         for (const dl of ed.deadlines ?? []) {
-          const ms = Date.parse(dl.utc);
+          if (dl.precision === "date-only") continue;
+          const ms = Date.parse(dl.utc ?? "");
           expect(Number.isNaN(ms), `${conf.key}/${ed.year} has bad utc ${dl.utc}`).toBe(false);
           const expected = `${fmtUTC(new Date(ms - AOE_MS), "%Y-%m-%d %H:%M:%S")} AoE`;
           expect(dl.aoe, `${conf.key}/${ed.year} aoe ${dl.aoe} != ${expected}`).toBe(expected);

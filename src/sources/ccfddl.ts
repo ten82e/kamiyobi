@@ -10,6 +10,7 @@ import {
   type Conference,
   type Deadline,
   type DeadlineKind,
+  deadlineEvidence,
   type Edition,
   embeddedTimezone,
   parseDateRange,
@@ -71,6 +72,7 @@ export function deadlinesOf(
   rawEdition?: Record<string, unknown>,
 ): Deadline[] {
   const out: Deadline[] = [];
+  const sourceUrl = String(rawEdition?.link ?? "");
   if (Array.isArray(timeline) && timeline.length > 0) {
     for (const [index, entry] of timeline.entries()) {
       if (typeof entry !== "object" || entry === null) continue;
@@ -104,6 +106,12 @@ export function deadlinesOf(
           round: rnd,
           comment,
           raw_value: String(raw),
+          evidence: deadlineEvidence(rec.evidence ?? rawEdition?.evidence, {
+            sourceName: NAME,
+            sourceClass: "aggregator",
+            sourceUrl,
+            originalValue: String(raw),
+          }),
         });
       }
     }
@@ -139,6 +147,12 @@ export function deadlinesOf(
         round: 1,
         comment,
         raw_value: String(raw),
+        evidence: deadlineEvidence(rawEdition.evidence, {
+          sourceName: NAME,
+          sourceClass: "aggregator",
+          sourceUrl,
+          originalValue: String(raw),
+        }),
       });
     }
   }
