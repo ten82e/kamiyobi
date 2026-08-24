@@ -881,11 +881,11 @@ on:
     paths-ignore: [data/snapshot.json]
 ```
 
-- job `test`（上流ネットワーク非依存）:
-  `npm ci` → `npm run typecheck` → `npm run check` → fetch guard 下の `npm test` →
+- job `test`（外部ネットワーク非依存）:
+  `npm ci` → `npm run typecheck` → `npm run check` → `npm test` →
   `node src/cli.ts build --out /tmp/kamiyobi-offline-site --offline --no-embeddings ...`。
-  テスト側は `tests/fixtures/` と snapshot だけを源とし、discover の HTTP 呼び出しを含めない。
-- ネットワーク依存の build、health gate、候補探索は日次 `update.yml` に置き、必須 CI から呼び出さない。
+  `npm test` は明示的に差し替えていない HTTP 通信を拒否し、`tests/fixtures/` と `data/snapshot.json` だけを入力に使う。
+- ネットワークが必要な上流データ取得、配信前の健全性検査、候補探索は日次 `update.yml` に置き、必須 CI から呼び出さない。
 - `paths-ignore` でスキップされたジョブは required check として Pending のまま残るため、
   ブランチ保護を掛ける場合は required check に指定しない旨を README に注記する。
 

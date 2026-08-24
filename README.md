@@ -122,11 +122,9 @@ bot のコミットが「活動」に数えられるかは公式文書に記載�
 停止された場合は、リポジトリの Actions タブから `update` ワークフローを開き、`Run workflow`（`workflow_dispatch`）で手動実行すると再び有効になる。
 
 `.github/workflows/ci.yml` は push と pull request で動く。
-`test` ジョブは依存関係のインストール後、fetch guard、`tests/fixtures/`、snapshot を使う
-上流ネットワーク非依存の必須検証で、
-typecheck・lint・unit test と `--offline --no-embeddings` build を実行する。
-実際の上流を使う build、health gate、候補探索は、日次の `.github/workflows/update.yml` が担当する。
-なお ci.yml は `paths-ignore` を使っており、`data/snapshot.json` だけを変えるコミットではジョブがスキップされる。
+`test` ジョブは外部ネットワークに接続せず、`tests/fixtures/` と `data/snapshot.json` を使って型検査、静的検査、単体テスト、オフラインビルドを行う。
+上流データの取得、配信前の健全性検査、候補探索は、日次の `.github/workflows/update.yml` が行う。
+`ci.yml` は `paths-ignore` を使っており、`data/snapshot.json` だけを変えるコミットではジョブがスキップされる。
 スキップされたジョブは必須チェック（required check）として Pending のまま残るため、ブランチ保護を掛ける場合はこれらを必須チェックに指定しない。
 
 ### 初回セットアップ
