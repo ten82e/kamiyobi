@@ -155,10 +155,8 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
   // 自動生成のため、検証失敗は警告に留めて確定値を保持する。
   const overrides = loadYamlFile(join(ROOT, "data", "overrides.yaml"), { strict: true });
   // 一次ソースの自動抽出は「検証済み観測」だけを確定値として扱う:
-  // 日付のみ・曖昧 tz・年不一致の行はここで落とし、既存の確定値を保持する。
-  const primary = resolvePrimaryObservations(
-    loadYamlFile(join(ROOT, "data", "primary_overrides.yaml")),
-  );
+  // 日付のみ・曖昧 tz・開催時期と矛盾する行はここで落とし、既存の確定値を保持する。
+  const primaryObservations = loadYamlFile(join(ROOT, "data", "primary_overrides.yaml"));
   // data/extra.yaml も手編集入力。
   // 破損時に
   // local 会議 ~169 件が消えた縮退サイトを配信してしまうため、overrides と
@@ -174,6 +172,7 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
   let confs = mergeSources(aliased, config, mergeStats);
   confs = classify(confs, config);
   confs = applyOverrides(confs, overrides);
+  const primary = resolvePrimaryObservations(primaryObservations, config, confs);
   confs = applyOverrides(confs, primary);
   confs = sanitizeEditions(confs);
   confs = rollforward(

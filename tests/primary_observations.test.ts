@@ -3,7 +3,7 @@
  *
  * 受入条件 (#504):
  *   1. 日付のみの一次証拠は正確な秒単位締切として公開されない
- *   2. ページ年が抽出年と衝突する観測は隔離され、確定出力から除外される
+ *   2. 前年締切は許可し、開催時期と矛盾する観測は隔離する
  *   3. 手動 override の後に低品質観測が来ても override の締切を保持する
  */
 
@@ -109,16 +109,15 @@ describe("resolvePrimaryObservations (#504 acceptance)", () => {
     );
   });
 
-  it("AC2: page-year conflicts are quarantined from confirmed output", () => {
+  it("AC2: a previous-calendar-year deadline is valid for the next edition", () => {
     const warnSpy = spyWarn();
     try {
       const primary = {
         conferences: {
-          oldconf: {
+          nextconf: {
             editions: {
               2027: {
                 deadlines: [
-                  // 過去版ページの残骸: 2026 行が 2027 edition へ混入したケース
                   {
                     kind: "paper",
                     label: "Paper submission",
@@ -132,13 +131,99 @@ describe("resolvePrimaryObservations (#504 acceptance)", () => {
         },
       };
       const resolved = resolvePrimaryObservations(primary);
-      const edition = resolvedEditions(resolved, "oldconf")[2027];
-      expect("deadlines" in edition).toBe(false);
-      const joined = warnSpy.mock.calls.map((c: unknown[]) => String(c[0])).join("");
-      expect(joined).toContain("quarantined");
+      const edition = resolvedEditions(resolved, "nextconf")[2027];
+      expect(edition.deadlines).toEqual([
+        {
+          kind: "paper",
+          label: "Paper submission",
+          date: "2026-03-01 23:59:00",
+          tz: "AoE",
+          round: 1,
+        },
+      ]);
+      expect(warnSpy).not.toHaveBeenCalled();
     } finally {
       warnSpy.mockRestore();
     }
+  });
+
+  it("quarantines deadlines outside the edition window", () => {
+    const primary = {
+      conferences: {
+        bounded: {
+          editions: {
+            2027: {
+              event_start: "2027-03-10",
+              event_end: "2027-03-12",
+              deadlines: [
+                { kind: "paper", label: "Too early", date: "2025-10-01 23:59", tz: "AoE" },
+                { kind: "paper", label: "After event", date: "2027-03-13 23:59", tz: "AoE" },
+              ],
+            },
+          },
+        },
+      },
+    };
+    const resolved = resolvePrimaryObservations(primary, { primary: { max_lead_days: 500 } });
+    expect("deadlines" in resolvedEditions(resolved, "bounded")[2027]).toBe(false);
+  });
+
+  it("uses event dates already known by the merged edition", () => {
+    const known = [
+      makeConference({
+        key: "ai4s-2026",
+        title: "AI4S 2026",
+        editions: [
+          makeEdition({
+            year: 2026,
+            event_start: utc(2026, 11, 15),
+            event_end: utc(2026, 11, 15),
+          }),
+        ],
+      }),
+    ];
+    const primary = {
+      conferences: {
+        "ai4s-2026": {
+          editions: {
+            2026: {
+              deadlines: [{ kind: "paper", label: "Stale", date: "2025-01-01 23:59", tz: "AoE" }],
+            },
+          },
+        },
+      },
+    };
+    const resolved = resolvePrimaryObservations(primary, null, known);
+    expect("deadlines" in resolvedEditions(resolved, "ai4s-2026")[2026]).toBe(false);
+  });
+
+  it("accepts a two-calendar-year span when it remains inside the event window", () => {
+    const known = [
+      makeConference({
+        key: "newyear-2027",
+        title: "New Year 2027",
+        editions: [
+          makeEdition({
+            year: 2027,
+            event_start: utc(2027, 1, 1),
+            event_end: utc(2027, 1, 1),
+          }),
+        ],
+      }),
+    ];
+    const primary = {
+      conferences: {
+        "newyear-2027": {
+          editions: {
+            2027: {
+              deadlines: [{ kind: "paper", label: "Paper", date: "2025-07-01 23:59", tz: "AoE" }],
+            },
+          },
+        },
+      },
+    };
+    const resolved = resolvePrimaryObservations(primary, null, known);
+    expect(resolvedEditions(resolved, "newyear-2027")[2027].deadlines).toHaveLength(1);
   });
 
   it("AC3: a low-quality observation after a manual override keeps the override deadline", () => {
@@ -305,12 +390,25 @@ describe("resolvePrimaryObservations (#504 acceptance)", () => {
       2026,
     );
     expect(odd?.kind).toBe("other");
-    // 年不一致は個行でも null
-    const staleYear = resolveObservation(
+    // 開催年の前年は正常、2 年前は隔離する。
+    const previousYear = resolveObservation(
       {
         kind: "paper",
         label: "P",
         date: "2025-05-01",
+        time: "23:59:00",
+        tzRaw: "AoE",
+        round: 1,
+        rest: {},
+      },
+      2026,
+    );
+    expect(previousYear).not.toBeNull();
+    const staleYear = resolveObservation(
+      {
+        kind: "paper",
+        label: "P",
+        date: "2024-05-01",
         time: "23:59:00",
         tzRaw: "AoE",
         round: 1,

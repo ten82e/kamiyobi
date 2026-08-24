@@ -83,9 +83,10 @@ describe("fetch-primary extraction", () => {
     expect(got?.label).toBe("Round 2 Abstract submission");
   });
 
-  it("ignore stale year", () => {
-    // 2 年前の残骸 (2024) は 2026 edition に拾わない。
-    expect(extractDeadline("Paper submission deadline: August 21, 2024", 2026)).toBeNull();
+  it("defers edition-window validation to the primary resolver", () => {
+    expect(extractDeadline("Paper submission deadline: August 21, 2024", 2026)?.date).toBe(
+      "2024-08-21",
+    );
   });
 
   it("accepts a valid previous-calendar-year deadline", () => {
@@ -95,6 +96,9 @@ describe("fetch-primary extraction", () => {
       date: "2025-12-31",
       round: 1,
     });
+    expect(extractDeadline("Paper submission deadline: July 1, 2025", 2027)?.date).toBe(
+      "2025-07-01",
+    );
   });
 
   it("no keyword is none", () => {
@@ -317,6 +321,35 @@ describe("runFetchPrimary", () => {
     writeFileSync(emptyRegistry, "conferences: {}\n", "utf8");
     const code = await runFetchPrimary(false, emptyRegistry);
     expect(code).toBe(2);
+  });
+
+  it("keeps the previous observation when the page title is an older edition", async () => {
+    spyStderr();
+    const dir = mkdtempSync(join(tmpdir(), "cfp-primary-year-"));
+    const registryPath = join(dir, "primary.yaml");
+    const outPath = join(dir, "primary_overrides.yaml");
+    writeFileSync(
+      registryPath,
+      "conferences:\n  stale:\n    url: https://example.test/stale\n    year: 2027\n",
+      "utf8",
+    );
+    writeFileSync(
+      outPath,
+      "conferences:\n  stale:\n    editions:\n      '2027':\n        deadlines:\n          - kind: paper\n            label: Previous\n            date: 2026-10-01\n",
+      "utf8",
+    );
+    const previous = loadYamlFile(outPath);
+    const oldFetch = globalThis.fetch;
+    globalThis.fetch = (async () =>
+      new Response(
+        "<title>Stale 2026</title><p>Paper deadline: October 2, 2026 23:59 AoE</p>",
+      )) as typeof fetch;
+    try {
+      expect(await runFetchPrimary(true, registryPath, outPath)).toBe(0);
+      expect(loadYamlFile(outPath)).toEqual(previous);
+    } finally {
+      globalThis.fetch = oldFetch;
+    }
   });
 });
 

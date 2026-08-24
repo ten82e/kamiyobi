@@ -257,7 +257,7 @@ export function parsePrimaryDate(window: string | null | undefined): ExtractedDa
 
 export function extractDeadline(
   window: string | null | undefined,
-  year: number,
+  _year: number,
   kindHint = "",
 ): PrimaryDeadline | null {
   if (!window) return null;
@@ -266,7 +266,6 @@ export function extractDeadline(
   const parsed = (kindHint ? parsePrimaryDate(kindHint) : null) || parsePrimaryDate(window);
   if (!parsed) return null;
   const { year: extractedYear, month, day } = parsed;
-  if (extractedYear < year - 1 || extractedYear > year + 1) return null; // 過去版の残骸を拾わない
   const dt = new Date(Date.UTC(extractedYear, month - 1, day));
   if (dt.getUTCMonth() !== month - 1 || dt.getUTCDate() !== day) return null;
   const kind = kindOf(kindHint || window);
@@ -388,8 +387,10 @@ export async function runFetchPrimary(
       const mismatch = pageYearMismatch(page, Number(year));
       if (mismatch !== null) {
         process.stderr.write(
-          `warning: ${key}: title の年が ${mismatch} (registry: ${year}) — registry の year 更新を検討\n`,
+          `warning: ${key}: title の開催年が ${mismatch} (registry: ${year})。前回値を維持\n`,
         );
+        if (key in previous) generated[key] = previous[key];
+        continue;
       }
       const pageYr = pageYear(page, Number(year));
       deadlines = extractDeadlines(toLines(page), pageYr);
@@ -424,7 +425,7 @@ export async function runFetchPrimary(
       continue;
     }
     const edition: Record<string, any> = { deadlines };
-    for (const field of ["link", "place", "date_text"]) {
+    for (const field of ["link", "place", "date_text", "event_start", "event_end"]) {
       if (conf[field]) edition[field] = conf[field];
     }
     const comment = `一次ソース (${url}) から自動抽出 (${today})`;

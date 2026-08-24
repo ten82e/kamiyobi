@@ -18,6 +18,10 @@
 
 source_priority: [local, aideadlines, ccfddl]
 
+# Primary の締切は開催日からこの日数以内に限る。会期不明なら開催年と前年を許可する。
+primary:
+  max_lead_days: 550
+
 # 配信前のデータ健全性レポートで存在を確認する主要会議。
 health:
   required_venues: [rtss, nsdi]
