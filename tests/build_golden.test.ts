@@ -830,9 +830,10 @@ it("llms.txt schema summary documents every key data.json actually emits (site/p
   // エージェントは llms.txt を「最初に読む索引」として使うため、実出力との
   // 乖離をここで回帰検査する。
   const text = readFileSync(join(site, "llms.txt"), "utf8");
+  expect(text).toContain("意味検索用の埋め込みが公開物に含まれるか");
   const summary = text.slice(text.indexOf("## data.json のスキーマ要約"));
   // トップレベル site キー（base_url が公開 URL の基準）
-  expect(summary).toMatch(/- site: object — \{domain: string, base_url: string\}/);
+  expect(summary).toMatch(/- site: object：\{domain: string, base_url: string\}/);
   expect(summary).toMatch(/base_url/);
   // 出典の url キー
   expect(summary).toMatch(/- sources: array of \{name, repo, license, url\}/);
@@ -895,12 +896,11 @@ it("README documents every discover CLI flag (--categories/--min-year regression
 });
 
 it("README documents every CLI command (review command regression)", () => {
-  // #243: usage() は build / discover / review の 3 機能コマンドを定義するが、
-  // README は build と discover しか記載しておらず、候補を締切昇順・重複・
-  // predatory 疑い付きで一覧する review コマンドが完全に未記載だった
-  // （README の「候補の昇格手順」は候補を選ぶ手順を書くのに一覧手段を案内していない）。
-  // ここでは usage() の全コマンド（help を除く）が README に現れることを検証し、
-  // 将来のコマンド追加・削除の乖離を検出する（#239 のフラグ版テストのコマンド版）。
+  // usage() の全機能コマンドを README と同期させる。
+  expect(usage()).toContain("(既定: public)");
+  expect(usage()).toContain("上流アーカイブのキャッシュ先");
+  expect(usage()).toContain("ハゲタカ会議の疑い");
+  expect(usage()).not.toContain("predatory");
   const commands = usage()
     .split("\n")
     .map((l) => /^ {2}([a-z][a-z0-9-]*) /.exec(l)?.[1])
@@ -1939,6 +1939,13 @@ it("site template localized shortcuts label and preset button active sync", () =
   // SPEC §7: 日本語 UI。Shortcuts: ではなく ショートカット:
   expect(template).toContain("ショートカット: <kbd>j</kbd>/<kbd>k</kbd> 選択");
   expect(template).not.toContain("Shortcuts: <kbd>j</kbd>");
+  expect(template).toContain("A*ランク");
+  expect(template).not.toContain("Top Tier");
+  expect(template).toContain("投稿予定概要");
+  expect(template).not.toContain("投稿予定 Abstract");
+  expect(runtime).toContain("意味検索候補");
+  expect(runtime).not.toContain("semantic 候補");
+  expect(runtime).toContain("意味類似度 ");
   // クイック抽出プリセットボタンが data-preset を持ち、updatePresetActive で同期されること
   expect(template).toContain('data-preset="7d"');
   expect(template).toContain('data-preset="a_star"');
@@ -2014,7 +2021,7 @@ it("SPEC §7 carves out recommender CDNs and the site stays on that allowlist (#
   expect(section7).toMatch(/cdnjs\.cloudflare\.com/);
   expect(section7).toMatch(/pdf\.js/);
   expect(section7).toMatch(/recommender\.js/);
-  expect(section7).toMatch(/フォールバック/);
+  expect(section7).toMatch(/代替動作/);
 
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
   const runtime = readFileSync(join(REPO_ROOT, "site", "app.js"), "utf8");

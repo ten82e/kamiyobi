@@ -1,6 +1,6 @@
 /**
- * 候補レビュー支援: レビュー優先順位 (締切昇順)・重複グループ・predatory 疑い・
- * 過去締切を一覧する。Ported from scripts/review_candidates.py.
+ * 候補レビュー支援: レビュー優先順位 (締切昇順)・重複グループ・ハゲタカ会議の疑い・
+ * 過去締切を一覧する。
  * 実行は `node src/cli.ts review` を使う。
  * 出力はレビュー時の判断材料で、収録 (extra.yaml 昇格) は公式サイト裏取り後に人間が行う。
  */
@@ -17,7 +17,7 @@ export function setRoot(root: string): void {
   ROOT = root;
 }
 
-// 名乗りベースの危険フラグ。確定 predatory ではない (IEEE の一部も Ei 名乗り)。
+// 名乗りベースの注意フラグ。ハゲタカ会議の確定判定ではない（IEEE の一部も Ei を名乗る）。
 const PREDATORY_HINTS = ["ei compendex", "scopus", "ieee xplore", "indexed by"];
 
 export function isPredatory(text: string | null | undefined): boolean {
@@ -186,7 +186,7 @@ export function runReviewCandidates(
   const fmt = (d: Date): string => d.toISOString().slice(0, 10);
   console.log(`=== レビュー推奨: 締切昇順 (未来 ${future.length} 件中 上位 ${limit} 件) ===`);
   for (const e of future.slice(0, limit)) {
-    const flag = e.pred ? " [predatory疑い]" : "";
+    const flag = e.pred ? " [ハゲタカ会議の疑い]" : "";
     console.log(`${fmt(e.dl!)}  ${String(e.c.title).slice(0, 44)}${flag}`);
     console.log(`    ${e.c.link ?? ""}  tags=${e.c.tags ?? ""}`);
   }
@@ -207,7 +207,7 @@ export function runReviewCandidates(
   }
 
   const preds = enriched.filter((e) => e.pred);
-  console.log(`\n=== predatory 疑い (${preds.length} / ${cands.length} 件) ===`);
+  console.log(`\n=== ハゲタカ会議の疑い (${preds.length} / ${cands.length} 件) ===`);
   for (const e of preds.slice(0, 20)) {
     console.log(`- ${String(e.c.title).slice(0, 50)}`);
   }

@@ -901,7 +901,7 @@ describe("score labels and transient UI state", () => {
     expect(app).toContain("invalidateSemantic();");
     expect(app).toContain('clearSemantic("error");');
     expect(app).toContain("Recommender.setPaperVecs(null)");
-    expect(app).toContain("AI 類似度 利用不可（埋め込みが使えないため語彙のみ）");
+    expect(app).toContain("意味検索は利用不可（埋め込みが使えないため語彙検索のみ）");
     expect(app).toContain("var semanticScores = null;");
   });
 

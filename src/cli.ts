@@ -339,11 +339,11 @@ export async function cmdDiscover(args: DiscoverArgs): Promise<number> {
   const categories = args.categories ? args.categories.split(",").map((c) => c.trim()) : null;
   const discoverer = new NicheDiscoverer(ROOT);
   console.log(
-    `Running niche venue & journal discovery (categories: ${categories?.join(",") ?? "all"})...`,
+    `穴場の会議・ジャーナルを探索中（カテゴリ: ${categories?.join(",") ?? "すべて"}）...`,
   );
   const candidates = await discoverer.runDiscovery(categories ?? null, args.minYear);
 
-  console.log(`Discovered ${candidates.length} new niche venue/journal candidates.`);
+  console.log(`新しい穴場の会議・ジャーナル候補を ${candidates.length} 件見つけた。`);
   for (const cand of candidates.slice(0, 10)) {
     console.log(`  - [${cand.key}] ${cand.title}: ${cand.full_name} (${cand.link})`);
   }
@@ -370,14 +370,14 @@ export async function cmdDiscover(args: DiscoverArgs): Promise<number> {
     existing.conferences = [...existingConfs, ...newConfs];
     const { dump } = await import("js-yaml");
     writeTextFile(outPath, dump(existing, { skipInvalid: true }));
-    console.log(`\nAppended ${newConfs.length} candidates to ${outPath}`);
+    console.log(`\n${newConfs.length} 件の候補を ${outPath} に追記した`);
   } else if (action === "dry-run") {
-    console.log("\n--- Dry Run Output (extra.yaml format) ---");
+    console.log("\n--- プレビュー出力（extra.yaml 形式） ---");
     console.log(yamlText.slice(0, 1000) + (yamlText.length > 1000 ? "..." : ""));
   } else if (action === "write") {
     const outPath = isAbsolute(args.out!) ? args.out! : join(ROOT, args.out!);
     writeTextFile(outPath, yamlText);
-    console.log(`\nSaved candidates YAML to ${outPath}`);
+    console.log(`\n候補 YAML を ${outPath} に保存した`);
   }
   if (!args.dryRun && candidates.length > 0) {
     writeTextFile(candidatePathResolved, formatCandidateRegistry(registry));
@@ -430,22 +430,22 @@ export function usage(): string {
     "",
     "commands:",
     "  build    収集して public/ を生成する",
-    "    -o, --out <dir>       出力先ディレクトリ (default: public)",
-    "    -c, --config <path>   設定ファイル (default: config.yaml)",
+    "    -o, --out <dir>       出力先ディレクトリ (既定: public)",
+    "    -c, --config <path>   設定ファイル (既定: config.yaml)",
     "    --offline             ネットワークを使わずキャッシュのみ使う",
     "    -n, --now <iso>       基準時刻。例 2026-08-09T00:00:00Z",
-    "    --cache <dir>         上流 tarball のキャッシュ先 (default: .cache)",
+    "    --cache <dir>         上流アーカイブのキャッシュ先 (既定: .cache)",
     "    --no-embeddings       埋め込み (embeddings.json) を生成しない（テスト用・高速化）",
     "  discover 穴場の会議・ジャーナルを自律探索する",
-    "    -o, --out <path>      出力YAMLパス（未指定時は標準出力表示）",
-    "    --candidate-out <path> 候補管理ファイル (default: data/discovered_candidates.yaml)",
+    "    -o, --out <path>      出力 YAML パス（未指定時は標準出力表示）",
+    "    --candidate-out <path> 候補管理ファイル (既定: data/discovered_candidates.yaml)",
     "    --categories <s>      カンマ区切りの対象カテゴリ（例: hpc,systems）",
-    `    -y, --min-year <n>    対象の最小年 (default: ${DEFAULT_MIN_YEAR})`,
+    `    -y, --min-year <n>    対象の最小年 (既定: ${DEFAULT_MIN_YEAR})`,
     "    -d, --dry-run         ファイル出力せず結果をプレビュー表示",
-    "    -a, --append          既存 YAML に key 重複なしで追記",
-    "  review   探索された候補のレビュー順・重複・predatory 疑いを一覧表示する",
-    "    -C, --candidates <p>  候補 YAML パス (default: data/discovered_candidates.yaml)",
-    "    -l, --limit <n>       表示上限件数 (default: 60)",
+    "    -a, --append          既存 YAML にキー重複なしで追記",
+    "  review   探索された候補のレビュー順・重複・ハゲタカ会議の疑いを一覧表示する",
+    "    -C, --candidates <p>  候補 YAML パス (既定: data/discovered_candidates.yaml)",
+    "    -l, --limit <n>       表示上限件数 (既定: 60)",
     "    -n, --now <iso>       基準時刻。例 2026-08-09T00:00:00Z",
     "  help / --help / -h      使い方を表示する",
   ].join("\n");

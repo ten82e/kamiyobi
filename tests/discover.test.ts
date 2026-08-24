@@ -1,6 +1,5 @@
 /**
  * discover.ts / review-candidates.ts のテスト。
- * Ported from tests/test_discover.py.
  */
 
 import { load as loadYaml } from "js-yaml";
@@ -801,6 +800,19 @@ describe("review helpers", () => {
     expect(() => {
       runReviewCandidates("/tmp/nonexistent-candidates-999.yaml", 60, new Date());
     }).not.toThrow();
+  });
+
+  it("runReviewCandidates uses the localized caution label", () => {
+    const originalLog = console.log;
+    const lines: string[] = [];
+    console.log = (...args: unknown[]) => lines.push(args.join(" "));
+    try {
+      runReviewCandidates("data/discovered_candidates.yaml", 1, utcDate(2026, 8, 24), REPO_ROOT);
+    } finally {
+      console.log = originalLog;
+    }
+    expect(lines.join("\n")).toContain("ハゲタカ会議の疑い");
+    expect(lines.join("\n")).not.toContain("predatory");
   });
 
   it("normTitle, isPredatory, and reviewDeadlineText handle null/undefined defensively", () => {
