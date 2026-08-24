@@ -809,14 +809,17 @@
     return out;
   }
 
-  function localDayKey(ms) {
-    var d = new Date(ms);
-    var pad = (n) => String(n).padStart(2, "0");
-    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  function rowDateOnlyState(row, now) {
+    if (!row || !row.dateOnly) return null;
+    if (now < row.t) return "definitely-future";
+    if (now <= (row.tLast || row.t)) return "uncertain-on-date";
+    return "definitely-past";
   }
 
   function rowIsFuture(row, now) {
-    return row && row.dateOnly ? row.localDate >= localDayKey(now) : row && row.t >= now;
+    return row && row.dateOnly
+      ? rowDateOnlyState(row, now) !== "definitely-past"
+      : row && row.t >= now;
   }
 
   /* 論文モード: 会議単位に代表行を選ぶ。
@@ -1011,6 +1014,7 @@
 
   function availability(row, now) {
     var time = row && !row.dateOnly && Number.isFinite(row.t) ? row.t : null;
+    var dateState = rowDateOnlyState(row, now);
     var future = row && row.kind === "journal"
       ? true
       : row && row.kind === "event"
@@ -1018,9 +1022,12 @@
         : rowIsFuture(row, now);
     return {
       kind: (row && row.kind) || "unknown",
-      status: row && row.kind === "journal" ? "ongoing" : future ? "open" : "past",
+      status: row && row.kind === "journal"
+        ? "ongoing"
+        : dateState === "uncertain-on-date" ? "uncertain" : future ? "open" : "past",
       timestamp: time,
       local_date: row && row.dateOnly ? row.localDate : null,
+      date_state: dateState,
       estimated: !!(row && row.est),
     };
   }

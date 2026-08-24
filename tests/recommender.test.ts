@@ -1026,6 +1026,27 @@ describe("venue recommendation fusion", () => {
     expect(result[0].row.t).toBe(NOW + 1000); // future row, not past
   });
 
+  it("keeps a date-only deadline open but uncertain until its latest boundary", () => {
+    const uncertain = {
+      ...row("date-only", "Date Only", NOW - 1000),
+      dateOnly: true,
+      localDate: "2026-08-24",
+      tLast: NOW + 1000,
+    };
+    const result = R.venueRecommendations(
+      [uncertain],
+      R.parsePaperLines("Date Only | hpc"),
+      null,
+      NOW,
+    );
+    expect(result[0].availability).toMatchObject({
+      status: "uncertain",
+      date_state: "uncertain-on-date",
+      local_date: "2026-08-24",
+      timestamp: null,
+    });
+  });
+
   it("estimated future deadline retains estimated flag (#477)", () => {
     const estRow = { ...row("est", "SC", NOW + 2000, ["hpc"]), est: true };
     const result = R.venueRecommendations(

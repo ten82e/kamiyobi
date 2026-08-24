@@ -12,6 +12,9 @@ import {
   addDays,
   cmpStr,
   dateOnly,
+  dateOnlyState,
+  dateOnlyWindow,
+  exactDeadlineState,
   fmtDate,
   fmtUTC,
   monthOf,
@@ -42,6 +45,33 @@ import {
   parseFile as localParseFile,
 } from "../src/sources/local.ts";
 import { exactAt, utc } from "./helpers.ts";
+
+describe("deadline state", () => {
+  it("uses the full UTC+14 through UTC-12 window for date-only deadlines", () => {
+    const window = dateOnlyWindow("2026-08-24");
+    expect(window?.earliestPossibleUtc.toISOString()).toBe("2026-08-23T10:00:00.000Z");
+    expect(window?.latestPossibleUtc.toISOString()).toBe("2026-08-25T11:59:59.999Z");
+    expect(dateOnlyState("2026-08-24", new Date("2026-08-23T09:59:59.999Z"))).toBe(
+      "definitely-future",
+    );
+    expect(dateOnlyState("2026-08-24", new Date("2026-08-23T10:00:00.000Z"))).toBe(
+      "uncertain-on-date",
+    );
+    expect(dateOnlyState("2026-08-24", new Date("2026-08-25T11:59:59.999Z"))).toBe(
+      "uncertain-on-date",
+    );
+    expect(dateOnlyState("2026-08-24", new Date("2026-08-25T12:00:00.000Z"))).toBe(
+      "definitely-past",
+    );
+  });
+
+  it("compares exact deadlines only by their confirmed instant", () => {
+    const at = new Date("2026-08-24T12:00:00.000Z");
+    expect(exactDeadlineState(at, new Date("2026-08-24T11:59:59.999Z"))).toBe("future");
+    expect(exactDeadlineState(at, new Date("2026-08-24T12:00:00.000Z"))).toBe("future");
+    expect(exactDeadlineState(at, new Date("2026-08-24T12:00:00.001Z"))).toBe("past");
+  });
+});
 
 describe("parse_instant", () => {
   it("AoE boundary case: SC26 '2026-04-08 23:59:00' AoE is 2026-04-09T11:59:00Z", () => {

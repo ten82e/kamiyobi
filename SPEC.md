@@ -559,8 +559,9 @@ node --experimental-strip-types src/cli.ts review [--candidates data/discovered_
 推薦モードは URL に `past=1` があっても履歴を取得しない。推定の表示切替はサイト側の絞り込みで行う。
 `upcoming.md` には締切と開催日の両方を載せる。締切を持たない会議も開催行で確認できる。
 
-**`upcoming.md` の行の選び方**: `exact` の締切行は `at_utc` が `now` から N 日以内のもの、`date-only` の締切行は `local_date` が当日から N 日以内のもの。
-`date-only` には時刻単位の残り時間を表示せず、「時刻未確認」と表示する。
+**`upcoming.md` の行の選び方**: `exact` の締切行は `at_utc` が `now` から N 日以内のもの、`date-only` の締切行は不確実性区間が `now` から N 日以内と重なるもの。
+`date-only` には時刻単位の残り時間を表示しない。
+不確実性区間より前は「時刻未確認」、区間内は「締切日」と表示し、区間を過ぎた行は除く。
 開催行は開始日が N 日以内で、最終日をまだ過ぎていないものを載せる。
 開催行の「残り」欄は開始前が日数、開始日が `本日開催`、会期中が `開催中(残りN日)`。
 
@@ -600,7 +601,8 @@ node --experimental-strip-types src/cli.ts review [--candidates data/discovered_
 }
 ```
 
-日付のみの締切は `precision: "date-only"`、`local_date: "YYYY-MM-DD"`、`utc: null`、`aoe: null`、`tz_raw: null` として出力する。
+日付のみの締切は `precision: "date-only"`、`local_date: "YYYY-MM-DD"`、`earliest_utc`、`latest_utc`、`utc: null`、`aoe: null`、`tz_raw: null` として出力する。
+`earliest_utc` は UTC+14 における当日 00:00、`latest_utc` は UTC-12 における当日 23:59:59.999 を UTC で表した不確実性区間であり、公式締切時刻ではない。
 CSV では `deadline_precision` と `deadline_local_date` に同じ区別を保持する。
 
 ---
