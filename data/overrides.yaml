@@ -96,7 +96,7 @@ conferences:
         event_start: '2020-10-19'
         event_end: '2020-10-23'
       2026:
-        # R83: camera-ready 訂正（上流は Aug 20 AoE の旧値 → 公式は **August 23, 2026**）。
+        # camera-ready を公式の August 23, 2026 に訂正（上流は Aug 20 AoE の旧値）。
         # 根拠: https://cikm2026.diag.uniroma1.it/important-dates/ 「All deadlines are at
         #   11:59pm in the Anywhere on Earth (AoE)」+ Camera-ready (Full/Short/Industry Day/
         #   Applied Research/Resource/Demo/Short/PhD Symposium) = August 23, 2026。
@@ -469,7 +469,7 @@ conferences:
   # 根拠: https://sacworkshop.org/SAC26/ (2026-08-12 取得) Important Dates:
   #   「Paper submission deadline (cycle 2): Monday, May 11, 2026 (AoE)」。
   #   上流 ccfddl SC/sac.yml は 2026 版 cycle 2 を 2025-05-11 と年号タイポ
-  #   (cycle 1 2026-02-02 より前になり非単調 — 教訓 37 と同型)→ deadlines 置換で訂正。
+  #   (cycle 1 2026-02-02 より前になり非単調) → deadlines 置換で訂正。
   sac:
     editions:
       2026:
@@ -575,7 +575,7 @@ conferences:
         link: https://2026.declarativeai.net/ruleml-rr
 
   # 次元 11 (同一 tz 内の UTC 時刻不整合) で検出・公式裏取りした 3 件 (全て過去 edition の
-  # データ誤り。教訓 49 と同様に訂正する)。
+  # データ誤りを訂正する。
 
   # 根拠: https://www.systor.org/2025/cfp/ (2026-08-12 取得)「Poster & Abstract
   #   Submission: Thursday, July 10, 2025 (23:59 AoE)」— 7/3 から延長済み。上流 ccfddl は
@@ -617,7 +617,7 @@ conferences:
   #   「Deadline for Abstract: 5PM AOE July 28 (Fri), 2023 / Deadline for PDF uploading:
   #   5PM AOE August 4 (Fri), 2023」→ paper は 19:00 ではなく 17:00 AoE (上流 2h 遅れ)。
   #   （2024 は上記の既存 asp-dac ブロックへ統合。2026-08-12: 追記時に重複キーを
-  #   作り YAML 全体を壊した教訓 — 追記前に既存キー grep 必須）
+  #   追記前に既存キーを確認すること。
 
   # 根拠: https://2026.emnlp.org/calls/industry_track/ (2026-08-12 取得)
   #   「Paper submission deadline: June 16, 2026 (11:59 PM UTC-12:00, AoE)」。
@@ -648,7 +648,7 @@ conferences:
   # 根拠: https://conf.researchr.org/dates/apsec-2026 + ERA track
   #   https://conf.researchr.org/track/apsec-2026/apsec-2026-papers (2026-08-12 取得)
   #   ERA「Submission Deadline: August 10, 2026 / Author Notification: September 28」
-  #   （submissiondates 頁で 8/24 と誤読した旧値 8/24 を 8/10 に訂正 — 教訓 69）。
+  #   （submissiondates 頁で 8/24 と誤読した旧値 8/24 を 8/10 に訂正）。
   #   SEIP submission Aug 24・Doctoral Symposium Oct 5・ERA/SEIP notification Sep 28。
   #   会期 Mon 7 - Thu 10 Dec 2026, Bali。TZ 表記なし → 23:59 UTC (COCOA 前例)。
   #   リンクは apsec-2025 → apsec-2026 に訂正。
@@ -741,7 +741,7 @@ conferences:
   #   UTC-12 (AoE)」: ARR submission (long & short) May 25 / Commitment Aug 2 /
   #   Notification of acceptance Sep 7, 2026・会期 Nov 6-10, 2026。上流 ccfddl の
   #   ijcnlp 2026 は ARR 締切のみで commitment がコメント内 → 明示化。t z は公式の
-  #   AoE (UTC-12) に統一 (R63 の UTC 表記は 12 時間早かった)。
+  #   AoE (UTC-12) に統一（旧 UTC 表記は 12 時間早かった）。
   ijcnlp:
     editions:
       2026:
@@ -818,7 +818,7 @@ conferences:
 
   # 根拠: https://services.conferences.computer.org/2026/sse/ (2026-08-12 取得)
   #   「July 13-18, 2026, Sydney」+ SERVICES 2026 公式「paper submission
-  #   extended from March 8 to March 22 (firm)」・IEEE SERVICES 系は 11pm AoE 慣例 (R54)。
+  #   extended from March 8 to March 22 (firm)」・IEEE SERVICES 系は 11pm AoE 慣例。
   sse:
     editions:
       2026:
@@ -980,7 +980,7 @@ conferences:
         date_text: March 8-12, 2027
         event_start: '2027-03-08'
         event_end: '2027-03-12'
-        # R83: 公式 CFP 頁 (percom.org/call-for-papers/「All deadlines are in AoE」) で通知を追補。
+        # 公式 CFP 頁 (percom.org/call-for-papers/「All deadlines are in AoE」) で通知を追補。
         #   Paper registration Sep 4 / Submission Sep 11 / Early rejection or rebuttal invite
         #   Nov 20 / Rebuttal Nov 27 / **Notification Dec 18** / CR Feb 2027 (TBA → 未収録)。
         deadlines:
@@ -988,7 +988,7 @@ conferences:
           - {kind: paper, label: 'Submission', date: '2026-09-11 23:59:59', tz: AoE}
           - {kind: notification, label: 'Notification', date: '2026-12-18 23:59:59', tz: AoE}
 
-  # --- R83: cgo 2027 Fall 通知追加（締切 2 件は公式一致で pin） ---
+  # --- cgo 2027 Fall 通知追加（締切 2 件は公式一致で pin） ---
   # 根拠: https://2027.cgo.org/track/cgo-2027-papers (conf.researchr.org「Thu 10 Sep 2026
   #   Main Conference Submission」) + 公式 X/LinkedIn「Author Rebuttal Period 27-29 Oct /
   #   Paper Notification: 9 November 2026」。Spring cycle paper Jun 11 2026 AoE も公式。
@@ -1000,7 +1000,7 @@ conferences:
           - {kind: paper, label: 'Paper submission (fall cycle)', date: '2026-09-10 23:59:59', tz: AoE}
           - {kind: notification, label: 'Paper notification (fall cycle)', date: '2026-11-09 23:59:59', tz: AoE}
 
-  # --- R67: 公式 Dates 確認済みの 2027 会期追加（締切は上流と一致のため変更なし） ---
+  # --- 公式 Dates 確認済みの 2027 会期追加（締切は上流と一致のため変更なし） ---
   # 根拠: https://chi2027.acm.org/ (May 10-14, 2027 Pittsburgh) / https://sigchi.org/events/chi-2027/
   chi:
     editions:
@@ -1060,7 +1060,7 @@ conferences:
           - {kind: notification, label: 'Final notification', date: '2026-11-26 23:59:59', tz: AoE}
           - {kind: camera_ready, label: 'Final versions due', date: '2026-12-17 23:59:59', tz: AoE}
 
-  # --- R67: 2027 会期（公式 Dates/CFP 確認済み・締切は上流と一致のため変更なし） ---
+  # --- 2027 会期（公式 Dates/CFP 確認済み・締切は上流と一致のため変更なし） ---
   # 根拠: https://fg2027.ieee-biometrics.org/ (April 26-30, 2027 Marrakesh)
   fg:
     editions:
@@ -1101,8 +1101,8 @@ conferences:
   #   で確認)「Manuscripts must be submitted electronically by October 2, 2026, 11:59pm
   #   U.S. Pacific Time」/ important-dates「Paper Submission Deadline: October 2, 2026 /
   #   Paper-Acceptance Notification: November 22, 2026」。収録済み paper
-  #   (10/2 23:59 PDT = 10/3T06:59:59Z) と一致。通知 11/22 は tz 未表記 → UTC (lesson 43)。
-  #   R137 で通知を追加収録。会期 March 23-26, 2027 Snowbird。
+  #   (10/2 23:59 PDT = 10/3T06:59:59Z) と一致。通知 11/22 は tz 未表記のため UTC と解釈。
+  #   通知を追加収録。会期 March 23-26, 2027 Snowbird。
   dcc:
     editions:
       2027:
@@ -1244,7 +1244,7 @@ conferences:
           - {kind: notification, label: 'Notification Acc/Rej (round 3)', date: '2027-01-27 23:59:00', tz: PT, round: 3}
           - {kind: camera_ready, label: 'Camera-ready (round 3)', date: '2027-02-10 23:59:00', tz: PT, round: 3}
 
-  # --- R128: icdt 2027 2nd cycle 通知追加（締切 4 件は公式一致で pin） ---
+  # --- icdt 2027 2nd cycle 通知追加（締切 4 件は公式一致で pin） ---
   # 根拠: https://edbticdt2027.github.io/?contents=important_dates.html (2026-08-13 取得)
   #   ICDT 1st: abstract Mar 3 / paper Mar 10 / notification Jun 1。
   #   ICDT 2nd: abstract Sep 3 / paper Sep 10 / notification Dec 1。全て AoE。
@@ -1274,7 +1274,7 @@ conferences:
         event_start: '2027-05-09'
         event_end: '2027-05-14'
 
-  # --- R68: icdcn 2027 当日確認（8/13 AoE 前倒し） ---
+  # --- icdcn 2027 当日確認（8/13 AoE 前倒し） ---
   # 根拠: https://cs3-lab.github.io/icdcn/ (2026-08-12 取得)
   #   「Paper submission deadline extended to August 13, 2026 (FIRM)」・
   #   Conference Jan 4-7, 2027 NITK Surathkal・Acceptance Oct 1・Camera-Ready Oct 29（全て AoE）
@@ -1289,7 +1289,7 @@ conferences:
           - {kind: notification, label: 'Acceptance Notifications', date: '2026-10-01 23:59:00', tz: AoE}
           - {kind: camera_ready, label: 'Camera-Ready Due', date: '2026-10-29 23:59:00', tz: AoE}
 
-  # --- R69: ccgrid 2027 推定 → 実値化 ---
+  # --- ccgrid 2027 推定値を公式値に更新 ---
   # 根拠: https://hpcclab.org/ccgrid27/ (2026-08-12 取得)
   #   「Paper submission deadline: Dec 1, 2026 (AoE)・Notification: Feb 2027」
   #   Conference: May 24-27, 2027, Dallas-Fort Worth, Texas, USA（初の米国開催）。
@@ -1339,7 +1339,7 @@ conferences:
   #   「Abstract Submission deadline: 15 January 2027, AoE / Submission deadline:
   #   22 January 2027, AoE」+ series 頁「Tue 15 - Fri 18 June 2027, Hanoi, Vietnam」。
   #   上流は 2027 推定 (abstract 1/9・paper 1/16) で 6-7 日乖離 → 実 edition で置換。
-  #   conf リンクも ease-2026 から 2027 に更新 (教訓 70)。
+  #   conf リンクも ease-2026 から 2027 に更新。
   dis:
     link: https://dis.acm.org/2027/
     editions:
@@ -1452,7 +1452,7 @@ conferences:
           - {kind: notification, label: 'Decision notification', date: '2027-02-27 23:59:59', tz: Europe/London}
           - {kind: camera_ready, label: 'Camera-ready deadline', date: '2027-03-01 23:59:59', tz: Europe/London}
 
-  # --- R83: sibgrapi 2026 main track 現行値（上流 aideadlines が旧値 May 30 のまま） ---
+  # --- sibgrapi 2026 main track 現行値（上流 aideadlines が旧値 May 30 のまま） ---
   # 根拠: https://sibgrapi.sbc.org.br/2026/call-for-papers/ 「All deadlines are 23:59 PDT」明示。
   #   Main Track: Submission ~~May 30~~ Jun 17 (Hard deadline) / Reviews Jul 22 /
   #   Revision Aug 5 / Final Notification Aug 18 / Camera-Ready Sep 4。
@@ -1465,11 +1465,11 @@ conferences:
           - {kind: notification, label: 'Main track final notification', date: '2026-08-18 23:59:00', tz: PDT}
           - {kind: camera_ready, label: 'Main track camera-ready', date: '2026-09-04 23:59:00', tz: PDT}
 
-  # --- R83: mobicom 2027 通知追加（Summer cycle は公式と一致のため pin） ---
+  # --- mobicom 2027 通知追加（Summer cycle は公式と一致のため pin） ---
   # 根拠: https://www.sigmobile.org/mobicom/2027/ 公式 dates 表:
   #   Abstract Registration **August 26, 2026 23:59 AoE** / Paper Submission **September 2, 2026
   #   23:59 AoE** / Early Rejection Notification October 23, 2026 / Final Notifications
-  #   November 19, 2026。Winter (TBD) は教訓 71 により未収録。
+  #   November 19, 2026。Winter (TBD) は未収録。
   mobicom:
     editions:
       2027:
@@ -1479,7 +1479,7 @@ conferences:
           - {kind: notification, label: 'Early Rejection Notification', date: '2026-10-23 23:59:59', tz: AoE}
           - {kind: notification, label: 'Final Notifications', date: '2026-11-19 23:59:59', tz: AoE}
 
-  # --- R83: asplos 2027 September cycle notification 追加（締切 2 件は公式一致で pin） ---
+  # --- asplos 2027 September cycle notification 追加（締切 2 件は公式一致で pin） ---
   # 根拠: https://www.asplos-conference.org/asplos2027/cfp/ 「All dates are expressed as AoE」。
   #   April cycle: Full paper Apr 15, 2026 / notification Jul 27。September cycle: Full paper
   #   Sep 9, 2026 / Author response Dec 1-4 / **Notification Dec 21, 2026**。「No separate
@@ -1492,7 +1492,7 @@ conferences:
           - {kind: paper, label: 'Full paper submission (September cycle)', date: '2026-09-09 23:59:59', tz: AoE}
           - {kind: notification, label: 'Notification (September cycle)', date: '2026-12-21 23:59:59', tz: AoE}
 
-  # --- R83: mmsys 2027 2-round 公式全件（上流は Round 1 のみで通知欠落） ---
+  # --- mmsys 2027 2-round 公式全件（上流は Round 1 のみで通知欠落） ---
   # 根拠: https://2027.acmmmsys.org/research-track.html 「First Submission Round:
   #   Registration Sep 10 / Submission Sep 17 / Notification Oct 24 / CR Feb 19 2027。
   #   Second Submission Round: Registration Nov 12 / Submission Nov 19 /
@@ -1510,7 +1510,7 @@ conferences:
           - {kind: notification, label: 'Notification (second round)', date: '2026-12-22 23:59:59', tz: AoE}
           - {kind: camera_ready, label: 'Camera ready', date: '2027-02-19 23:59:59', tz: AoE}
 
-  # --- R83: eurosys 2027 Fall 通知・CR 追加（締切 4 件は公式一致で pin） ---
+  # --- eurosys 2027 Fall 通知・CR 追加（締切 4 件は公式一致で pin） ---
   # 根拠: https://2027.eurosys.org/cfp.html (Published 2026-07-15):
   #   Spring: titles/abstracts ~~May 7~~ / full papers ~~May 14~~ / notification Aug 21 /
   #   camera-ready Sep 25。Fall: titles/abstracts Sep 17 / full papers Sep 24 /
@@ -1527,7 +1527,7 @@ conferences:
           - {kind: notification, label: 'Notification to authors (fall)', date: '2027-01-29 23:59:59', tz: AoE}
           - {kind: camera_ready, label: 'Camera-ready deadline (fall)', date: '2027-03-05 23:59:59', tz: AoE}
 
-  # --- R83: inlg 2026 公式現行（non-archival 追補 + 上流値 pin） ---
+  # --- inlg 2026 公式現行（non-archival 追補 + 上流値 pin） ---
   # 根拠: https://2026.inlgmeeting.org/ 「All deadlines are Anywhere on Earth (UTC-12)」。
   #   Direct submission 延長 ~~Jul 15~~ Jul 18 AoE / ARR commitment Aug 5 AoE /
   #   Notification Aug 15 AoE / Non-archival Aug 22 AoE。上流 3 件は正確だったため同一値を pin + 1 件追加。
@@ -1540,7 +1540,7 @@ conferences:
           - {kind: notification, label: 'Notification', date: '2026-08-15 23:59:59', tz: AoE}
           - {kind: paper, label: 'Non-archival paper submission', date: '2026-08-22 23:59:59', tz: AoE}
 
-  # --- R101: nsdi 2027 Fall 通知・最終原稿追加（締切 4 件は公式一致で pin） ---
+  # --- nsdi 2027 Fall 通知・最終原稿追加（締切 4 件は公式一致で pin） ---
   # 根拠: https://www.usenix.org/conference/nsdi27/call-for-papers (2026-08-12 取得)
   #   Fall: titles/abstracts Sep 10 / full papers Sep 17 (11:59 pm EDT) /
   #   Notification to authors Dec 8, 2026 / Final paper files Mar 4, 2027。
@@ -1556,7 +1556,7 @@ conferences:
           - {kind: notification, label: 'Notification to authors (fall)', date: '2026-12-08 23:59:59', tz: UTC, round: 2}
           - {kind: camera_ready, label: 'Final paper files due (fall)', date: '2027-03-04 23:59:59', tz: UTC, round: 2}
 
-  # --- R101: fast 2027 通知・最終原稿追加（締切 4 件は公式一致で pin） ---
+  # --- fast 2027 通知・最終原稿追加（締切 4 件は公式一致で pin） ---
   # 根拠: https://www.usenix.org/conference/fast27/call-for-papers (2026-08-12 取得)
   #   Fall: Paper submissions Sep 15, 2026 23:59 AoE / Notification Dec 8 /
   #   Final paper files Jan 26, 2027 23:59 AoE。Spring は過去のため現行値 pin。
@@ -1571,7 +1571,7 @@ conferences:
           - {kind: notification, label: 'Notification to authors (fall)', date: '2026-12-08 23:59:59', tz: UTC, round: 2}
           - {kind: camera_ready, label: 'Final paper files due (fall)', date: '2027-01-26 23:59:00', tz: AoE, round: 2}
 
-  # --- R101: saner 2027 通知追加（締切 2 件は公式一致で pin） ---
+  # --- saner 2027 通知追加（締切 2 件は公式一致で pin） ---
   # 根拠: https://conf.researchr.org/track/saner-2027/saner-2027-papers (2026-08-12 取得)
   #   Abstract Mon 21 Sep 2026 / Paper Fri 25 Sept 2026 / Notifications Tue 1 Dec 2026 (AoE)。
   saner:
@@ -1582,7 +1582,7 @@ conferences:
           - {kind: paper, label: 'Paper submission', date: '2026-09-25 23:59:59', tz: AoE}
           - {kind: notification, label: 'Notifications', date: '2026-12-01 23:59:59', tz: AoE}
 
-  # --- R101: icassp 2027 通知・最終原稿追加（paper は公式一致で pin） ---
+  # --- icassp 2027 通知・最終原稿追加（paper は公式一致で pin） ---
   # 根拠: https://2027.ieeeicassp.org/call-for-papers/ (2026-08-12 取得)
   #   Full Paper Submission Sep 16, 2026 / Paper Acceptance Notification Jan 13, 2027 /
   #   Final Paper Deadline Jan 27, 2027。tz 未表記 → 上流の AoE 変換と一致するため AoE。
@@ -1595,7 +1595,7 @@ conferences:
           - {kind: camera_ready, label: 'Final paper deadline', date: '2027-01-27 23:59:59', tz: AoE}
 
 
-  # --- R104: osdi 2027 通知・最終原稿追加（締切 2 件は公式一致で pin） ---
+  # --- osdi 2027 通知・最終原稿追加（締切 2 件は公式一致で pin） ---
   # 根拠: https://www.usenix.org/conference/osdi27/call-for-papers (2026-08-12 取得)
   #   Abstract registrations Dec 1, 2026 5:59pm EST (10:59pm UTC) /
   #   Complete paper submissions Dec 8, 2026 5:59pm EST (10:59pm UTC) /
@@ -1610,7 +1610,7 @@ conferences:
           - {kind: notification, label: 'Notification to authors', date: '2027-03-16 23:59:59', tz: UTC}
           - {kind: camera_ready, label: 'Final papers due', date: '2027-06-03 23:59:59', tz: UTC}
 
-  # --- R104: sp 2027 通知・CR・レビュー工程を公式 CFP から追加 ---
+  # --- sp 2027 通知・CR・レビュー工程を公式 CFP から追加 ---
   # 根拠: https://sp2027.ieee-security.org/cfpapers.html (2026-08-12 取得)
   #   First: abstract Jun 4 / paper Jun 11 / early-reject Jul 27 /
   #   acceptance Sep 11 / camera-ready Oct 16 (2026)。
@@ -1635,7 +1635,7 @@ conferences:
           - {kind: notification, label: 'Acceptance notification (second)', date: '2027-03-05 23:59:59', tz: AoE}
           - {kind: camera_ready, label: 'Camera-ready deadline (second)', date: '2027-04-08 23:59:59', tz: AoE}
 
-  # --- R105: aaai 2027 通知 2 件追加（締切 2 件は公式一致で pin） ---
+  # --- aaai 2027 通知 2 件追加（締切 2 件は公式一致で pin） ---
   # 根拠: https://aaai.org/conference/aaai/aaai-27/ (2026-08-12 取得)
   #   Abstracts Jul 21 / Full papers Jul 28 (11:59 PM UTC-12) /
   #   Notification of Phase 1 rejections Sep 24 /
@@ -1649,7 +1649,7 @@ conferences:
           - {kind: review_release, label: 'Notification of Phase 1 rejections', date: '2026-09-24 23:59:59', tz: AoE}
           - {kind: notification, label: 'Notification of final acceptance or rejection', date: '2026-11-30 23:59:59', tz: AoE}
 
-  # --- R105: icde 2027 通知・CR 追加（締切 2 件は公式一致で pin） ---
+  # --- icde 2027 通知・CR 追加（締切 2 件は公式一致で pin） ---
   # 根拠: https://icde2027.github.io/cf-research-papers.html (2026-08-12 取得)
   #   R1 due Jun 11 / Notification Sep 10 / CR Oct 10 (2026)。
   #   R2 due Nov 11 / Notification Feb 10 / CR Mar 10 (2027)。全て 5:00pm PT。
@@ -1664,7 +1664,7 @@ conferences:
           - {kind: notification, label: 'Notification (round 2)', date: '2027-02-10 23:59:00', tz: PT, round: 2}
           - {kind: camera_ready, label: 'Camera-ready (round 2)', date: '2027-03-10 23:59:00', tz: PT, round: 2}
 
-  # --- R105: icse 2027 通知・CR 追加（締切 2 件は公式一致で pin） ---
+  # --- icse 2027 通知・CR 追加（締切 2 件は公式一致で pin） ---
   # 根拠: https://conf.researchr.org/track/icse-2027/icse-2027-research-track (2026-08-12 取得)
   #   Notification Oct 20 / CR (direct accept) Nov 24 / Final decision (major revision)
   #   Dec 18 / CR (major revision) Jan 25。全て AoE。
@@ -1679,7 +1679,7 @@ conferences:
           - {kind: notification, label: 'Final decision (major revision)', date: '2026-12-18 23:59:59', tz: AoE}
           - {kind: camera_ready, label: 'Camera-ready (major revision)', date: '2027-01-25 23:59:59', tz: AoE}
 
-  # --- R105: infocom 2027 通知 2 件追加（締切 2 件は公式一致で pin） ---
+  # --- infocom 2027 通知 2 件追加（締切 2 件は公式一致で pin） ---
   # 根拠: https://infocom2027.ieee-infocom.org/ (2026-08-12 取得)
   #   Abstract 24 Jul / Paper 31 Jul / Early-Reject Notification 09 Oct /
   #   Acceptance Notification 08 Dec (2026)。
@@ -1692,7 +1692,7 @@ conferences:
           - {kind: review_release, label: 'Early-reject notification', date: '2026-10-09 23:59:59', tz: AoE}
           - {kind: notification, label: 'Acceptance notification', date: '2026-12-08 23:59:59', tz: AoE}
 
-  # --- R125: pets 2027 4-cycle 通知・revision・CR 追加（submission 4 件は公式一致で pin） ---
+  # --- pets 2027 4-cycle 通知・revision・CR 追加（submission 4 件は公式一致で pin） ---
   # 根拠: https://petsymposium.org/cfp27.php (2026-08-13 取得)
   #   Issue 1: paper May 31 / notification Aug 1 / revision Sep 1 / CR Sep 15。
   #   Issue 2: paper Aug 31 / notification Nov 1 / revision Dec 1 / CR Dec 15。
@@ -1721,7 +1721,7 @@ conferences:
           - {kind: camera_ready, label: 'Camera-ready (issue 4)', date: '2027-06-15 23:59:59', tz: AoE, round: 4}
 
 
-  # --- R106: cidr 2027 通知・CR 追加（paper は公式一致で pin） ---
+  # --- cidr 2027 通知・CR 追加（paper は公式一致で pin） ---
   # 根拠: https://www.cidrdb.org/cidr2027/cfp.html (2026-08-12 取得)
   #   Submission Aug 4 / Author notification Oct 6 / Camera ready Dec 4 (11:59pm PT)。
   cidr:
@@ -1732,7 +1732,7 @@ conferences:
           - {kind: notification, label: 'Author notification', date: '2026-10-06 23:59:00', tz: PT}
           - {kind: camera_ready, label: 'Camera ready', date: '2026-12-04 23:59:00', tz: PT}
 
-  # --- R106: eacl 2027 通知追加（paper は公式一致で pin） ---
+  # --- eacl 2027 通知追加（paper は公式一致で pin） ---
   # 根拠: https://2027.eacl.org/calls/papers/ (2026-08-12 取得)
   #   ARR submission Aug 3 / Commitment Oct 11 / Notification of acceptance Nov 12 (AoE)。
   eacl:
@@ -1743,7 +1743,7 @@ conferences:
           - {kind: registration, label: 'EACL 2027 commitment deadline', date: '2026-10-11 23:59:59', tz: AoE}
           - {kind: notification, label: 'Notification of acceptance (long & short papers)', date: '2026-11-12 23:59:59', tz: AoE}
 
-  # --- R106: sigmetrics 2027 通知 3 件追加（締切 6 件は公式一致で pin） ---
+  # --- sigmetrics 2027 通知 3 件追加（締切 6 件は公式一致で pin） ---
   # 根拠: https://www.sigmetrics.org/sigmetrics2027/ (2026-08-12 取得)
   #   Summer notification Sep 9 / Fall notification Dec 9 / Winter notification Mar 10 (2027)。
   sigmetrics:
@@ -1760,9 +1760,9 @@ conferences:
           - {kind: paper, label: 'Paper submission (winter)', date: '2027-01-11 23:59:00', tz: AoE, round: 3}
           - {kind: notification, label: 'Notification (winter)', date: '2027-03-10 23:59:00', tz: AoE, round: 3}
 
-  # --- R135: dsn 2027 通知/CR 追加 ---
-  # 根拠: https://dsn2027-berlin.github.io/call-for-contributions (2026-08-13 取得。
-  #   R129 では本文空だったが取得可に改善)「Important Dates: November 25, 2026 Abstract
+  # --- dsn 2027 通知/CR 追加 ---
+  # 根拠: https://dsn2027-berlin.github.io/call-for-contributions (2026-08-13 取得)
+  #   「Important Dates: November 25, 2026 Abstract
   #   Submission Deadline / December 2, 2026 Paper Submission Deadline / January 26, 2027
   #   Early Reject Notification / February 12-26, 2027 Author Rebuttal & Revision Period /
   #   March 18, 2027 Notification to Authors / April 24, 2027 Camera Ready Materials /
@@ -1778,7 +1778,7 @@ conferences:
           - {kind: notification, label: 'Notification to Authors', date: '2027-03-18 23:59:59', tz: AoE, round: 1}
           - {kind: camera_ready, label: 'Camera Ready Materials', date: '2027-04-24 23:59:59', tz: AoE, round: 1}
 
-  # --- R137: www 2027 通知・最終版 収録補完 (10/1-10/15 ウィンドウ突合の副産物) ---
+  # --- www 2027 通知・最終版 収録補完 ---
   # 根拠: https://acmweb2027.org/important-dates/ (2026-08-13 取得)「All deadlines are
   #   11:59 PM Anywhere on Earth (AoE) unless otherwise specified: Research & Industry
   #   Track Abstract Submission Deadline 11 October 2026 / Paper Submission Deadline
@@ -1794,7 +1794,7 @@ conferences:
           - {kind: notification, label: 'Paper Result Release', date: '2026-12-10 23:59:59', tz: AoE}
           - {kind: camera_ready, label: 'Paper Final Version Deadline', date: '2027-01-31 23:59:59', tz: AoE}
 
-  # --- R138: ct-rsa 2027 通知 追加 (10/16-10/31 ウィンドウ突合の副産物) ---
+  # --- ct-rsa 2027 通知 追加 ---
   # 根拠: https://www.iacr.org/events/ (2026-08-13 取得)「CT-RSAC 2027 ... Submission
   #   deadline: 22 October 2026 / Notification date: 3 December 2026」。paper 10/22 AoE は
   #   収録済み値 (10/23T11:59:59Z) と一致。通知日を PKC 前例 (IACR 通知は AoE) で追加。
@@ -1804,7 +1804,7 @@ conferences:
         deadlines:
           - {kind: notification, label: 'Notification date', date: '2026-12-03 23:59:59', tz: AoE}
 
-  # --- R139: models 2026 欠落版の追加収録 ---
+  # --- models 2026 欠落版の追加収録 ---
   # 根拠: https://conf.researchr.org/home/models-2026 (2026-08-14 取得)
   #   Málaga, Spain, Oct 4-9, 2026. Abstract: Mar 20, Paper: Mar 27, Notif: Jun 17, Camera-ready: Jul 31 (AoE).
   models:
@@ -1821,7 +1821,7 @@ conferences:
           - {kind: notification, label: 'Author Notification', date: '2026-06-17 23:59:59', tz: AoE}
           - {kind: camera_ready, label: 'Camera Ready Due', date: '2026-07-31 23:59:59', tz: AoE}
 
-  # --- R140: ispa 2026 欠落版の追加収録 ---
+  # --- ispa 2026 欠落版の追加収録 ---
   # 根拠: https://ieee-ai-for-science.org/ispa2026/ (2026-08-14 取得)
   #   Shenyang, China, Dec 27-30, 2026. Paper: Aug 30, Notif: Oct 30, Camera-ready: Nov 30 (AoE).
   ispa:
@@ -1837,7 +1837,7 @@ conferences:
           - {kind: notification, label: 'Author Notification', date: '2026-10-30 23:59:59', tz: AoE}
           - {kind: camera_ready, label: 'Camera-ready Due', date: '2026-11-30 23:59:59', tz: AoE}
 
-  # --- R141: netys 2026 欠落版の追加収録 ---
+  # --- netys 2026 欠落版の追加収録 ---
   # 根拠: https://netys.net/ (2026-08-14 取得)
   #   Agadir, Morocco, Jun 10-12, 2026. Abstract: Mar 11, Paper: Mar 18 (AoE).
   netys:
@@ -1852,7 +1852,7 @@ conferences:
           - {kind: abstract, label: 'Abstract Submission', date: '2026-03-11 23:59:59', tz: AoE}
           - {kind: paper, label: 'Paper Submission', date: '2026-03-18 23:59:59', tz: AoE}
 
-  # --- R142: 休止・終了・統合会議のタグ付与 ---
+  # --- 休止・終了・統合会議のタグ付与 ---
   hotsec:
     tags: [discontinued, workshop, security]
   lisa:
