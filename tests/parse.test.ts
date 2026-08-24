@@ -14,6 +14,7 @@ import {
   dateOnly,
   dateOnlyState,
   dateOnlyWindow,
+  embeddedTimezone,
   exactDeadlineState,
   fmtDate,
   fmtUTC,
@@ -169,13 +170,43 @@ describe("parse_instant", () => {
     ["2026-04-08T23:59:00.5Z", "UTC", "2026-04-08T23:59:00.500Z"],
     ["2026-04-08 23:59:00.123", "UTC", "2026-04-08T23:59:00.123Z"],
     ["2026-04-08 23:59:00.123456", "UTC", "2026-04-08T23:59:00.123Z"],
-    ["2026-04-08T23:59:00.000Z", "AoE", "2026-04-09T11:59:00.000Z"],
+    ["2026-09-01 12:00:00.123", "Asia/Tokyo", "2026-09-01T03:00:00.123Z"],
   ] as Array<[string, string, string]>)(
     "parses ISO timestamp with fractional seconds: %s %s -> %s",
     (text, tz, expected) => {
       expect(parseInstant(text, tz)?.toISOString()).toBe(expected);
     },
   );
+
+  it.each([
+    ["2026-09-01T12:00:00Z", null, "2026-09-01T12:00:00.000Z"],
+    ["2026-09-01T12:00:00+09:00", null, "2026-09-01T03:00:00.000Z"],
+    ["2026-09-01T12:00:00+09:00", "UTC+9", "2026-09-01T03:00:00.000Z"],
+    ["2026-09-01T12:00:00.123+09:00", "Asia/Tokyo", "2026-09-01T03:00:00.123Z"],
+  ] as Array<[string, string | null, string]>)(
+    "uses the timezone embedded in %s",
+    (text, tz, expected) => {
+      expect(parseInstant(text, tz)?.toISOString()).toBe(expected);
+    },
+  );
+
+  it("rejects a supplied timezone that conflicts with the embedded offset", () => {
+    expect(parseInstant("2026-09-01T12:00:00+09:00", "UTC")).toBeNull();
+    expect(parseInstant("2026-09-01T12:00:00Z", "AoE")).toBeNull();
+  });
+
+  it("source adapters preserve an embedded timezone as tz_raw", () => {
+    expect(
+      localDeadlinesOf({ deadlines: [{ kind: "paper", date: "2026-09-01T12:00:00Z" }] })[0].tz_raw,
+    ).toBe("UTC");
+    expect(
+      aideadlinesDeadlinesOf({
+        deadlines: [{ kind: "paper", date: "2026-09-01T12:00:00+09:00" }],
+      })[0].tz_raw,
+    ).toBe("UTC+09:00");
+    expect(ccfddlDeadlinesOf([{ deadline: "2026-09-01T12:00:00Z" }], "")[0].tz_raw).toBe("UTC");
+    expect(embeddedTimezone("2026-09-01 12:00:00")).toBeNull();
+  });
 
   it.each([
     "2026-02-28 24:00:00.000",

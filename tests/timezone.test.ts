@@ -105,6 +105,7 @@ describe("resolve_tz", () => {
     ["PDT", -7 * 60],
     ["EDT", -4 * 60],
     ["MDT", -6 * 60],
+    ["CDT", -5 * 60],
     ["CET", 60],
     ["CEST", 120],
   ] as Array<[string, number]>)("DST-specific abbreviation %j is literal", (raw, minutes) => {
@@ -161,6 +162,27 @@ describe("resolve_tz", () => {
     const pt = parseInstant("2026-07-15 12:00:00", "PT")!.getTime();
     expect(pst).toBe(Date.UTC(2026, 6, 15, 20, 0, 0));
     expect(pt).toBe(Date.UTC(2026, 6, 15, 19, 0, 0));
+  });
+
+  it("CDT stays UTC-05 while CT observes its regional winter offset", () => {
+    expect(parseInstant("2026-01-15 12:00:00", "CDT")?.toISOString()).toBe(
+      "2026-01-15T17:00:00.000Z",
+    );
+    expect(parseInstant("2026-01-15 12:00:00", "CT")?.toISOString()).toBe(
+      "2026-01-15T18:00:00.000Z",
+    );
+    expect(parseInstant("2026-07-15 12:00:00", "CDT")?.toISOString()).toBe(
+      "2026-07-15T17:00:00.000Z",
+    );
+  });
+
+  it("unknown timezone warning says the observation is rejected", () => {
+    resetWarnings();
+    expect(parseInstant("2026-07-15 12:00:00", "Mars/Olympus_Mons")).toBeNull();
+    expect(warningCounts()).toHaveProperty(
+      'unknown IANA timezone "Mars/Olympus_Mons"; observation rejected',
+    );
+    resetWarnings();
   });
 
   it("unknown value is not reported repeatedly", () => {

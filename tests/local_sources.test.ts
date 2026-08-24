@@ -126,7 +126,7 @@ describe("local source data integrity", () => {
       expect(at!.getUTCFullYear()).toBeLessThanOrEqual(2032);
     }
 
-    // 未知 tz は resolveTz が「unknown timezone ...; using UTC」と警告する。
+    // 未知 tz は「unknown timezone ...; observation rejected」と警告する。
     // ゼロであること = tz タイポ（AEO / utc+8 等）が混入していないこと。
     const counts = warningCounts();
     const unknownTz = Object.keys(counts).filter((k) => k.startsWith("unknown timezone"));

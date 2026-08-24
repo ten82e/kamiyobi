@@ -291,13 +291,13 @@ const TZ_FIXED_ABBREVIATIONS: Record<string, number> = {
   akst: -9 * 60,
   akdt: -8 * 60,
   hst: -10 * 60,
+  cdt: -5 * 60,
 };
 
 const TZ_NAMED: Record<string, string> = {
   pt: "America/Los_Angeles",
   mt: "America/Denver",
   ct: "America/Chicago",
-  cdt: "America/Chicago",
   et: "America/New_York",
   jst: "Asia/Tokyo",
   kst: "Asia/Seoul",
@@ -361,12 +361,12 @@ export function resolveTzStatus(tzRaw: string | null | undefined): TzResolution 
       new Intl.DateTimeFormat("en-US", { timeZone: raw });
       return { status: "confirmed", tz: { kind: "iana", name: raw } };
     } catch {
-      warn(`unknown IANA timezone ${JSON.stringify(raw)}; using UTC`);
+      warn(`unknown IANA timezone ${JSON.stringify(raw)}; observation rejected`);
       return { status: "unconfirmed" };
     }
   }
 
-  warn(`unknown timezone ${JSON.stringify(raw)}; using UTC`);
+  warn(`unknown timezone ${JSON.stringify(raw)}; observation rejected`);
   return { status: "unconfirmed" };
 }
 
@@ -432,7 +432,7 @@ function zonedTimeToUtc(
 export function applyTz(naiveMs: number, tz: Tz): Date {
   if (tz.kind === "fixed") return new Date(naiveMs - tz.offsetMinutes * 60_000);
   const d = new Date(naiveMs);
-  return zonedTimeToUtc(
+  const instant = zonedTimeToUtc(
     {
       y: d.getUTCFullYear(),
       m: d.getUTCMonth() + 1,
@@ -443,6 +443,7 @@ export function applyTz(naiveMs: number, tz: Tz): Date {
     },
     tz.name,
   );
+  return new Date(instant.getTime() + d.getUTCMilliseconds());
 }
 
 // --------------------------------------------------------------------------
@@ -459,7 +460,16 @@ interface Naive {
   ms: number;
 }
 
-/** 'YYYY-MM-DD[ HH:MM[:SS[.sss]]]' (after 'T' -> ' ' and trailing 'Z' stripping). */
+const EMBEDDED_TIMEZONE_RE = /(Z|[+-]\d{2}:\d{2})$/i;
+
+/** Canonical timezone carried by an ISO timestamp, if present. */
+export function embeddedTimezone(text: unknown): string | null {
+  const suffix = EMBEDDED_TIMEZONE_RE.exec(String(text ?? "").trim())?.[0];
+  if (!suffix) return null;
+  return suffix.toUpperCase() === "Z" ? "UTC" : `UTC${suffix}`;
+}
+
+/** 'YYYY-MM-DD[ HH:MM[:SS[.sss]]]' after replacing 'T' with a space. */
 function parseNaive(s: string): Naive | null {
   let m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/.exec(s);
   if (m) {
@@ -503,8 +513,10 @@ function naiveToMs(n: Naive): number | null {
 /** Parse an upstream deadline into an aware UTC Date, or null. */
 export function parseInstant(text: unknown, tzRaw: string | null | undefined): Date | null {
   if (text === null || text === undefined) return null;
-  let s = String(text).trim().replace("T", " ").trim();
-  if (s.endsWith("Z")) s = s.slice(0, -1).trim();
+  const original = String(text).trim();
+  const embeddedTzRaw = embeddedTimezone(original);
+  let s = original.replace("T", " ").trim();
+  if (embeddedTzRaw) s = s.replace(EMBEDDED_TIMEZONE_RE, "").trim();
   const naive = parseNaive(s);
   if (!naive) {
     warn(`unparsable deadline ${JSON.stringify(String(text))}`);
@@ -514,6 +526,19 @@ export function parseInstant(text: unknown, tzRaw: string | null | undefined): D
   if (ms === null) {
     warn(`unparsable deadline ${JSON.stringify(String(text))}`);
     return null;
+  }
+  if (embeddedTzRaw) {
+    const embedded = resolveTzStatus(embeddedTzRaw);
+    if (embedded.status !== "confirmed") return null;
+    const instant = applyTz(ms, embedded.tz);
+    if (!String(tzRaw ?? "").trim()) return instant;
+    const supplied = resolveTzStatus(tzRaw);
+    if (supplied.status !== "confirmed") return null;
+    if (applyTz(ms, supplied.tz).getTime() !== instant.getTime()) {
+      warn(`conflicting timezone in deadline ${JSON.stringify(original)}; observation rejected`);
+      return null;
+    }
+    return instant;
   }
   const resolution = resolveTzStatus(tzRaw);
   if (resolution.status !== "confirmed") return null;
