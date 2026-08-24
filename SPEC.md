@@ -4,12 +4,12 @@ HPC・ネットワーク・システム・AI 系会議の投稿締切と開催�
 日次に自動収集し、JSON / CSV / Markdown / 静的サイトとして公開する。
 サーバも外部サービスも使わない。GitHub 内で完結する。
 
-この文書は実装の契約である。ここに書かれた型・関数シグネチャ・ファイル分担から逸脱しない。
+この文書は実装の契約である。ここに書かれた型、関数シグネチャ、ファイル構成から逸脱しない。
 プロジェクト名は kamiyobi（旧称 conf-deadlines / cfp-radar）。
 
 ## 0. 改訂
 
-**rev.2（反証レビュー反映済み）。rev.1 を読んで実装を始めた担当は、本書を読み直すこと。**
+**rev.2（反証レビュー反映済み）。**
 rev.1 には実データ走査で確認された欠陥が 30 件あった。主要な修正:
 
 - `kind_of` に ccfddl の主キー `deadline` の規則が無く、本文締切 1591 件が `other` に落ちていた（§3）
@@ -23,11 +23,11 @@ rev.1 には実データ走査で確認された欠陥が 30 件あった。主�
 - サイトへの差し込みマーカーが 2 通り書かれていた（§7）
 
 **rev.11（§2 scripts）。** `scripts/compare-head.ts` は update.yml の実質差分検出。
-分担ツリーに足す（#380）。
+ディレクトリツリーに足す（#380）。
 
 **rev.10（§2 ツリー）。** 実リポジトリにある `site/recommender.js`・
 `src/bench-recommender.ts`・`data/primary.yaml`・`data/primary_overrides.yaml`・
-`data/discovered_candidates.yaml` を分担ツリーへ足す（#378）。
+`data/discovered_candidates.yaml` をディレクトリツリーへ足す（#378）。
 
 **rev.9（§3.7 CLI）。** §3.7 が `build` だけを書いていた。実装の `usage()` は
 `discover` / `review` と `build --no-embeddings` を持つ。README は #239/#243/#247
@@ -192,66 +192,65 @@ Git API のファイル単位取得はレート制限に当たるので使わな
 
 ---
 
-## 2. ディレクトリ構成とファイル分担
+## 2. ディレクトリ構成
 
 ```
 kamiyobi/
 ├── SPEC.md                      # 本書
-├── README.md                    # 利用手順（手書き。自動更新しない）      [担当E]
-├── LICENSE                      # MIT                                    [担当E]
-├── NOTICE.md                    # 上流 MIT の帰属表示                     [担当E]
-├── package.json                 # 依存・スクリプト (npm test / build)     [担当E]
-├── tsconfig.json                # TS 設定                                [担当E]
-├── biome.json                   # lint/format                            [担当E]
-├── config.yaml                  # 収録範囲・カテゴリ定義                [担当B]
+├── README.md                    # 利用手順（手書き。自動更新しない）
+├── LICENSE                      # MIT
+├── NOTICE.md                    # 上流 MIT の帰属表示
+├── package.json                 # 依存・スクリプト (npm test / build)
+├── tsconfig.json                # TS 設定
+├── biome.json                   # lint/format
+├── config.yaml                  # 収録範囲・カテゴリ定義
 ├── data/
-│   ├── extra.yaml               # 上流に無い会議                          [担当B]
-│   ├── overrides.yaml           # 上流の訂正・別名・カテゴリ上書き        [担当B]
-│   ├── primary.yaml             # 一次ソース URL 一覧                     [担当E]
+│   ├── extra.yaml               # 上流に無い会議
+│   ├── overrides.yaml           # 上流の訂正・別名・カテゴリ上書き
+│   ├── primary.yaml             # 一次ソース URL 一覧
 │   ├── primary_overrides.yaml   # 一次ソース抽出結果（自動）              [自動]
-│   ├── discovered_candidates.yaml # discover の既定出力                   [担当G]
+│   ├── discovered_candidates.yaml # discover の既定出力
 │   └── snapshot.json            # 生成物(コミットされる。上流障害時の退避) [自動]
 ├── src/
-│   ├── model.ts                 # 型・時刻解決・日付パーサ・snapshot 入出力 [担当A]
+│   ├── model.ts                 # 型・時刻解決・日付パーサ・snapshot 入出力
 │   ├── sources/
-│   │   ├── base.ts              #                                        [担当A]
-│   │   ├── ccfddl.ts            #                                        [担当A]
-│   │   ├── aideadlines.ts       #                                        [担当A]
-│   │   └── local.ts             # data/extra.yaml 読み込み                [担当A]
-│   ├── merge.ts                 # 名寄せ・分類・上書き・推定              [担当B]
-│   ├── discover.ts              # 穴場会議・ジャーナル自律探索           [担当G]
-│   ├── fetch-primary.ts         # 一次ソース自動抽出                     [担当E]
-│   ├── review-candidates.ts     # 候補レビュー支援                       [担当G]
-│   ├── recommender-api.ts       # 推薦ランタイムの型境界                 [担当C]
-│   ├── embeddings.ts            # 埋め込み生成                           [担当C]
-│   ├── bench-recommender.ts            # 推薦ベンチ                             [担当C]
-│   ├── build.ts                 # JSON/CSV/MD/llms.txt/HTML 出力          [担当C]
-│   └── cli.ts                   # エントリポイント                        [担当C]
+│   │   ├── base.ts
+│   │   ├── ccfddl.ts
+│   │   ├── aideadlines.ts
+│   │   └── local.ts             # data/extra.yaml 読み込み
+│   ├── merge.ts                 # 名寄せ・分類・上書き・推定
+│   ├── discover.ts              # 穴場会議・ジャーナル自律探索
+│   ├── fetch-primary.ts         # 一次ソース自動抽出
+│   ├── review-candidates.ts     # 候補レビュー支援
+│   ├── recommender-api.ts       # 推薦ランタイムの型境界
+│   ├── embeddings.ts            # 埋め込み生成
+│   ├── bench-recommender.ts     # 推薦ベンチ
+│   ├── build.ts                 # JSON/CSV/MD/llms.txt/HTML 出力
+│   └── cli.ts                   # エントリポイント
 ├── site/
-│   ├── tsconfig.json             # ブラウザ runtime の checkJs 設定         [担当D]
-│   ├── template.html            # コア UI（表・絞り込み。外部 CDN なし）  [担当D]
-│   ├── app.js                   # 型検査対象のブラウザUI runtime       [担当D]
-│   ├── recommender.js           # 論文推薦（§10。任意 CDN）              [担当D]
-│   ├── recommender.d.ts         # 推薦ランタイムのグローバル型宣言       [担当C]
-│   └── runtime.d.ts             # ブラウザ・生成データの型境界           [担当D]
+│   ├── tsconfig.json            # ブラウザ runtime の checkJs 設定
+│   ├── template.html            # コア UI（表・絞り込み。外部 CDN なし）
+│   ├── app.js                   # 型検査対象のブラウザ UI runtime
+│   ├── recommender.js           # 論文推薦（§10。任意 CDN）
+│   ├── recommender.d.ts         # 推薦ランタイムのグローバル型宣言
+│   └── runtime.d.ts             # ブラウザ・生成データの型境界
 ├── scripts/
-│   ├── compare-head.ts          # snapshot / primary_overrides の実質差分 [担当E]
-│   ├── health-gate.ts           # last-known-good との配信前健全性ゲート [担当E]
-│   └── generate-venue-profiles.ts # provenance付き profile artifact の再生成 [担当C]
+│   ├── compare-head.ts          # snapshot / primary_overrides の実質差分
+│   ├── health-gate.ts           # last-known-good との配信前健全性ゲート
+│   └── generate-venue-profiles.ts # provenance付き profile artifact の再生成
 ├── public/                      # 生成物(git 管理外)
-├── tests/                       # vitest                                 [担当F]
+├── tests/                       # vitest
 └── .github/workflows/
-    ├── update.yml               # 日次 cron: 収集→生成→コミット→Pages    [担当E]
-    ├── discover.yml             # 週次 cron: 穴場会議・ジャーナル自律探索 [担当G]
-    └── ci.yml                   # PR/push: vitest + 出力検証             [担当E]
+    ├── update.yml               # 日次 cron: 収集→生成→コミット→Pages
+    ├── discover.yml             # 週次 cron: 穴場会議・ジャーナル自律探索
+    └── ci.yml                   # PR/push: vitest + 出力検証
 ```
 
-**担当は自分のファイルだけを書く。他担当のファイルを作成・編集しない。**
-**ビルドが他担当の所有ファイル（README.md 等）を書き換えることはしない。**
+**ビルドは手書きのファイル（README.md 等）を書き換えない。**
 
 ---
 
-## 3. 凍結インタフェース（`src/model.ts`・担当A が実装、他は前提として使う）
+## 3. 凍結インタフェース（`src/model.ts`）
 
 ```ts
 // 型・時刻解決・日付パーサ・snapshot 入出力（src/model.ts）
@@ -701,7 +700,7 @@ last-known-good との比較では、同一 slot の延長は通し、公式 evi
 
 ---
 
-## 5. 分類とキュレーション（`config.yaml`・担当B）
+## 5. 分類とキュレーション（`config.yaml`）
 
 カテゴリは `hpc` / `networking` / `systems` / `ai` / `security` の 5 つ。
 方針は **上流サブ分野の丸ごと取り込み + 例外リスト**（新規会議が自動で現れることが要件）。
@@ -751,7 +750,7 @@ rank_filter:
 混ざるので、venue_slugs で名指しして拾う。`data/extra.yaml` に MLSys を重複登録しない。
 
 **DS 分野の全数割り当て**: DS 60 会議のうち rev.1 では 44 会議が無カテゴリだった。
-担当B は `conference/DS/` を一件ずつ見て hpc / systems / exclude のいずれかに割り当て、
+`conference/DS/` を一件ずつ見て hpc / systems / exclude のいずれかに割り当て、
 未分類が 0 件であることを検査スクリプトで実測すること。
 
 ### `data/extra.yaml`（上流に無い会議）
@@ -832,7 +831,7 @@ conferences:
 
 ---
 
-## 6. GitHub Actions（担当E）
+## 6. GitHub Actions
 
 ### `.github/workflows/update.yml`
 
@@ -900,7 +899,7 @@ on:
 
 ---
 
-## 7. 静的サイト（`site/template.html`・担当D）
+## 7. 静的サイト（`site/template.html`）
 
 - **コア UI は静的テンプレートと checked runtime に分離**。表・絞り込み・テーマ・フォントは外部 CDN・
   Web フォント・外部画像を使わない（#223）。sibling の `recommender.js`（§10）は
@@ -919,7 +918,7 @@ on:
 - ビルド時に、テンプレート中の文字列 **`/*__DATA__*/null`** が
   `data.json` 相当の JSON リテラルに置換される。これが唯一のマーカーである
   （rev.1 にあった `<!--DATA-->` は削除した）。
-  担当C は JSON を JS ソースへ埋めるので `<` を `<` に、
+  ビルドは JSON を JS ソースへ埋めるので `<` を `<` に、
   U+2028 / U+2029 をエスケープすること（実データに `&` を含む文字列が 17 箇所ある）。
   テンプレートが無ければ警告して index.html をスキップする（テストのため）。
 - 表示: 締切までの残り時間（ブラウザのローカル時刻）と AoE 表記を併記。
@@ -946,7 +945,7 @@ on:
 
 ---
 
-## 8. テスト（`tests/`・担当F）
+## 8. テスト（`tests/`）
 
 実装を読まずに本仕様だけから書く。
 
@@ -994,7 +993,7 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 - ユーザ登録・購読管理。
 - 上流に無い会議の締切を推測で確定値として書くこと（推定は `estimated` フラグで区別する）。
 - ANCS の収録（2021 年以降開催されていない）。
-- README の締切テーブル自動更新（ビルドが他担当の所有ファイルを書き換える設計を避ける。
+- README の締切テーブル自動更新（ビルドが手書きのファイルを書き換える設計を避ける。
   README からは `public/upcoming.md` へリンクする）。
 - 活動を偽装するハートビートコミット（§6 参照）。
 

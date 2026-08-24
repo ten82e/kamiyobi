@@ -1,9 +1,7 @@
-# 公式裏取り検証 — conf-deadlines R513
+# EasyChair 候補の公式裏取り検証（2026-08-23）
 
-方法: 短冊 45 件のうち、締切が近い順に公式ページ (EasyChair CFP) を取得し、
-deadlines テーブルの「Submission deadline」行を原文のまま抽出した。
-抽出スクリプト: /tmp/kamiyobi_verify.py + /tmp/kamiyobi_verify2.py (table 行パース)。
-生データ: /tmp/kamiyobi_verify.json (全 45 件の URL・HTTP status・抽出行)。
+締切が近い EasyChair 候補 45 件の公式ページを取得した。
+deadlines テーブルの「Submission deadline」行を抽出し、候補の日付と機械照合した。
 
 ## 検証結果
 
@@ -23,7 +21,7 @@ deadlines テーブルの「Submission deadline」行を原文のまま抽出し
 | evomusart-2027 | https://easychair.org/cfp/evomusart2027 | `Submission deadline: 1 November 2026 Conference: 31 March – 2 April 2027` |
 | si-dl2027 | https://easychair.org/cfp/SIDL2027 | `Submission deadline: 15 December 2026 Reviews` |
 
-(全 45 件の原文は /tmp/kamiyobi_verify.json を参照。リポジトリには上記代表 5 件を残す)
+代表 5 件の原文を上記に示す。
 
 ## tz 解釈
 
@@ -37,7 +35,7 @@ AoE (UTC-12) 当日終了 (23:59:00) と解釈した。日付のみの観測で�
 - 採用: 45 件 (全件、短冊日付 = 公式ページ表記のため)
 - 不採用: 0 件
 
-## caveat
+## 限界
 
 - Abstract registration 行を持つ会議は abstract kind も併記した。
 - 発見ソースの easychair 候補は主催者が EasyChair に登録した CFP であり、
@@ -46,12 +44,12 @@ AoE (UTC-12) 当日終了 (23:59:00) と解釈した。日付のみの観測で�
 
 ---
 
-# 公式裏取り検証 R514 — wikiCFP 候補 (2026-08-23)
+# wikiCFP 候補の公式裏取り検証（2026-08-23）
 
-## 経緯
+## 対象
 
-R513 で EasyChair 由来 708 件のうち 45 件を昇格した後、wikiCFP (324) / DBWorld (144)
-由来が短冊ゼロだった原因を調査した。
+EasyChair 候補の検証後、wikiCFP 由来 324 件と DBWorld 由来 144 件から
+昇格候補が生成されない原因を調査した。
 
 ## 原因切り分け (機械集計)
 
@@ -61,7 +59,8 @@ R513 で EasyChair 由来 708 件のうち 45 件を昇格した後、wikiCFP (3
   - date_text パース結果: 過去締切 87 / 窓外 (>120日) 2 / 日付なし 13 /
     カテゴリ不一致 138 / **窓内 × 収録カテゴリ適合 84** (+ comsoc 1, resound 1)
 - DBWorld 144 件: editions 自体が空 (メーリス件名のみ。詳細ページは listserv.acm.org
-  アーカイブで、そこからは締切本文が取得可能 — MEDI 2026 で実証)。今回は対象外。
+  アーカイブで、そこから締切本文を取得できることは MEDI 2026 で確認した)。
+  DBWorld は次節で扱う。
 - dblp 53 件: date_text 無し (venue 発見のみ)。
 
 ## 裏取り方法
@@ -74,21 +73,21 @@ R513 で EasyChair 由来 708 件のうち 45 件を昇格した後、wikiCFP (3
 
 - **84/84 が一致** (MISMATCH 0、抽出失敗 0、取得失敗 0)。
 - 同一イベントの eventid 重複 1 組 (CSP 2027: 199953/199954) を発見 → 1 件に畳み **83 会議**。
-- tz 未明記のため AoE 当日終了 (23:59:00) で解釈 (R513 と同じ方針)。
+- tz 未明記のため AoE 当日終了 (23:59:00) で解釈した。
 
 ## 判定
 
 - 採用: 83 会議 → data/extra.yaml 追加 (241 → 324 会議)
-- 不採用: カテゴリ不一致 138 件・DBWorld 144 件等は次ラウンドへ
+- 不採用: カテゴリ不一致 138 件
 
-## caveat
+## 限界
 
 - wikiCFP の締切欄は主催者申告であり、公式サイト更新への追随が遅れる可能性がある。
   昇格会議は primary.yaml への一次ソース登録候補とする。
 
 ---
 
-# 公式裏取り検証 R515 — DBWorld 候補 (2026-08-23)
+# DBWorld 候補の公式裏取り検証（2026-08-23）
 
 ## 方法
 
@@ -102,25 +101,25 @@ R513 で EasyChair 由来 708 件のうち 45 件を昇格した後、wikiCFP (3
 - 過去締切 29 / 窓外 3 / カテゴリ不一致 (再分類後) 2 / 抽出不能 97 / **採用 13**。
 - 抽出不能 97 件の多くは subject 自体が「to July 31 ...」等の日付欠損型ノイズか、
   本文に締切行を持たない転載だった。抽出器の改善余地はあるが今回は採用しない。
-- tz 未明記のため AoE 当日終了で解釈 (R513/R514 同方針)。
+- tz 未明記のため AoE 当日終了で解釈した。
 
 ## 判定
 
 - 採用: 13 会議 → data/extra.yaml 追加 (324 → 337 会議)
 - title はメーリス件名由来 (CFP 接頭辞等のノイズが残る)。ブロック先頭コメントに注意書き。
 
-## caveat
+## 限界
 
-- メーリス本文の締切は主催者申告。昇格会議は primary.yaml 登録候補 (R514 同様)。
+- メーリス本文の締切は主催者申告である。昇格会議は primary.yaml の登録候補とする。
 
 ---
 
-# 検証記録 R516 — primary.yaml 一括登録の適性判定 (2026-08-23)
+# primary.yaml 一括登録の適性（2026-08-23）
 
 ## 問い
 
-R513-R515 で昇格した 141 会議を data/primary.yaml に一括登録し、一次ソース自動訂正の
-対象にできるか。
+EasyChair、wikiCFP、DBWorld から昇格した 141 会議を data/primary.yaml に
+一括登録し、一次ソース自動訂正の対象にできるか。
 
 ## 実測
 
@@ -129,7 +128,7 @@ R513-R515 で昇格した 141 会議を data/primary.yaml に一括登録し、�
 2. **抽出器の実力** (src/fetch-primary.ts extractDeadline): ページ行に時刻表記がある
    ときだけ time を載せる。tz はページ内の tz 表記 (AoE/PST 等) を検出したときだけ載る。
 3. **源別実測**:
-   - EasyChair CFP (50 会議): deadlines テーブルは日付のみ (R513 裏取りで全件確認済み)
+   - EasyChair CFP (50 会議): deadlines テーブルは日付のみ
    - wikiCFP (83): v:startDate は ISO 日付のみ
    - listserv アーカイブ (13): 本文は「April 30, 2026 (PST)」型が最多で時刻なし
      (iaiai.org 実測: time patterns 0 / PST x5)
@@ -154,18 +153,18 @@ R513-R515 で昇格した 141 会議を data/primary.yaml に一括登録し、�
 
 ---
 
-# 検証記録 R517 — 昇格会議の二次裏取りサイクルは要否判定 (2026-08-23)
+# 昇格会議の二次裏取りサイクル（2026-08-23）
 
 ## 問い
 
-R513-R515 で昇格した会議の締切が公式サイトで延長・変更されていないかを検知する
+昇格した会議の締切が公式サイトで延長または変更されていないかを検知する
 二次裏取りサイクルを今すぐ実装すべきか。
 
 ## 実測
 
 1. **既存の変化追跡の整理** (src/discover.ts mergeCandidateFields):
    候補レジストリは毎日の discover で date_text を incoming 値で上書きするため
-   常に最新。primary_overrides は tz+時刻つき源のみ自動訂正 (R516 判定)。
+   常に最新。primary_overrides は tz+時刻つき源のみ自動訂正する。
    追跡されないのは extra.yaml (人手昇格で固定) のみ。
 2. **食い違い率の実測**: 昇格直後の会議について源ページを再取得し、
    extra.yaml 記載値と比較した。
@@ -175,24 +174,24 @@ R513-R515 で昇格した会議の締切が公式サイトで延長・変更さ�
 
 ## 判定
 
-- **二次裏取りサイクルのコードは今は書かない** (ponytail: 発火条件未成立)。
+- **二次裏取りサイクルは実装しない**。発火条件が成立していない。
   昇格から数日しか経過しておらず源が静かで、検知機構が検知すべき事象が存在しない。
 - **再発火条件** (これが揃ったときに実装する):
   1. 昇格会議の締切が近づく (<=30 日) かつ源ページの日付が extra.yaml と食い違う
      サンプルが実測で出たとき
   2. update.yml の日次ビルドで「upcoming.md の行が消えた」health gate アラートが出たとき
-  3. ユーザーが昇格会議の締切誤りを報告したとき
+  3. 昇格会議の締切誤りが報告されたとき
 - 実装する場合の入口: discover.ts の候補レジストリと同じ incoming 上書きパターンを
   「昇格済み会議の軽量ヘルスチェック」として cli に足す (新規パイプラインは作らない)。
 
-## caveat
+## 限界
 
 - 本判定は「昇格 4 日以内・60 件サンプル」での negative finding である。
   経過日数が伸びたら再測定すること (発火条件 1)。
 
 ---
 
-# 検証記録 R518 — DBWorld 未抽出 97 件の内訳と discover 内蔵の要否 (2026-08-23)
+# DBWorld 未抽出 97 件の内訳と discover 内蔵の要否（2026-08-23）
 
 ## 実測
 
@@ -210,35 +209,35 @@ R513-R515 で昇格した会議の締切が公式サイトで延長・変更さ�
    - BTW 2027 (2026-09-18)
    - CCNC27 Metaverse Networking Track (2026-08-31)
 
-## 判定 (ponytail ラダー)
+## 判定
 
 - **discover.ts 内蔵はやらない**: 追加抽出パターンの実測効果がゼロ。
   本文 fetch を discover に組み込むコスト (+70s/run・レート制限リスク) に見合う
   効果が出ないことが実測で確定した。残り 88 件は源自体が機械可読締切を持たないため、
   人間にも裏取り不能 (源に情報がない) = これ以上の抽出器改善は無意味。
-- 運用側で見つかった分だけ手動昇格する形で十分 (本ラウンドで 5 会議実施済み)。
+- 運用側で見つかった分だけ手動昇格する形で十分である。この検証では 5 会議を昇格した。
 
 ## 検証
 
 - typecheck / check / vitest 914 pass (skipped=0) / offline build RC=0
   (664 conferences / 3163 deadlines)。data.json 反映確認 (btw-2027 等全件 IN)。
 
-## caveat
+## 限界
 
 - 本 5 件もメーリス本文由来のため primary.yaml 登録不可 (時刻なし源)。
 
 ---
 
-# 検証記録 R519 — 昇格会議の upcoming.md 表示品質とデータ修正 (2026-08-23)
+# 昇格会議の upcoming.md 表示品質（2026-08-23）
 
 ## 実測
 
-1. **title ノイズ機械スキャン** (R513 以降の昇格 146 会議):
+1. **title ノイズ機械スキャン** (同日に検証した昇格 146 会議):
    CFP/reminder 接頭辞なし。too_long のみ 2 件 (95 文字・94 文字)。
    ノイズは件名由来の DBWorld 由来 20 会議に集中。
 2. **upcoming.md 実表示の問題** (offline build 後):
    - DBWorld 由来 18 行が **listserv メーリスアーカイブへ直接リンク**
-     (ユーザーが飛ぶとメール本文が見える。公式サイトではない)
+     (閲覧者にはメール本文が表示され、公式サイトへ移動できない)
    - title に「BTW 2027」→「BTW 2027 2026」のような重複年付与
    - 「ADC 2026: Second-Round CFP and」「STACS 2027 - First」等の途切れ件名
 
