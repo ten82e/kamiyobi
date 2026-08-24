@@ -76,7 +76,7 @@
     };
   }
 
-  // R12: 会議名 + 代表採択論文語彙の IDF 重みを実行時に計算して有効化する。
+  // 会議名 + 代表採択論文語彙の IDF 重みを実行時に計算して有効化する。
   // 実測（golden EN）: 実論文タイトルで正解会議 top1 が 25.0→37.5% に改善。
   // 汎用語（machine/deep/cache 等）が全会議の語彙に現れて誤爆するのを減衰する。
   function setRecommendationProfile(data) {
@@ -122,7 +122,7 @@
     return (DATA.categories && DATA.categories[key]) ? key.toUpperCase() : key;
   }
 
-  // タイトル + 開催年。タイトルが既にその年で終わっていれば年を二重に付けない (#93, #294)。
+  // タイトル + 開催年。タイトルが既にその年で終わっていれば年を二重に付けない。
   function titleWithYear(title, year) {
     var t = String(title || "").trim();
     if (!t) return "";
@@ -204,7 +204,7 @@
 
   // Drawer Controls
   function openDrawer(r) {
-    // フォーカス管理: 開く直前の要素を保存し、ドロワー内（閉じるボタン）へフォーカスを移す（#218）。
+    // フォーカス管理: 開く直前の要素を保存し、ドロワー内（閉じるボタン）へフォーカスを移す。
     window._prevFocus = /** @type {HTMLElement|null} */ (document.activeElement);
     $("drawerBackdrop").classList.add("active");
     $("drawerTitle").textContent = titleWithYear(r.conf.title || r.conf.key, r.ed.year);
@@ -244,11 +244,11 @@
   window.openDrawer = openDrawer;
 
   // 閉じるのは ✕ ボタン（自前 onclick 経由、引数なし）とバックドロップの直接クリックのみ。
-  // ドロワー内の button がバブルしても閉じない（#207）。
+  // ドロワー内の button がバブルしても閉じない。
   function closeDrawer(e) {
     if (!e || e.target === $("drawerBackdrop")) {
       $("drawerBackdrop").classList.remove("active");
-      // フォーカスを開く直前の要素へ戻す（#218）。
+      // フォーカスを開く直前の要素へ戻す。
       var prev = window._prevFocus;
       window._prevFocus = null;
       if (prev && prev.focus) prev.focus();
@@ -275,7 +275,8 @@
       e.preventDefault();
       $("q").focus();
     } else if (e.key === "d" && selectedIndex >= 0 && selectedIndex < shown.length) {
-      // キーボードで詳細ドロワーを開く（#218）。行にフォーカスしてから開き、
+      // キーボードで詳細ドロワーを開く。
+      // 行にフォーカスしてから開き、
       // openDrawer が _prevFocus として保存する。
       e.preventDefault();
       var dtrs = Array.prototype.filter.call($("tbody").querySelectorAll("tr"), (t) => !t.classList.contains("detail-row"));
@@ -591,8 +592,8 @@
             if (!semanticIsCurrent(generation, text)) return;
             semQuery = nextQuery;
             semEmbeddings = embSet.embeddings;
-            // R16: 論文個別ベクトル（max 類似度）は英語クエリのみ。日本語クエリは
-            // 多言語モデルなので英語モデルの論文ベクトルを混ぜない（言語別分離設計）。
+            // 論文個別ベクトル（max 類似度）は英語クエリのみ。
+            // 日本語クエリは多言語モデルなので英語モデルの論文ベクトルを混ぜない。
             Recommender.setPaperVecs(isJp ? null : EMBEDDINGS.paperVecs);
             semLastText = text;
             semState = "ready";
@@ -747,7 +748,7 @@
 
   function makeRow(r) {
     var tr = document.createElement("tr");
-    tr.tabIndex = -1; // スクリプトからのフォーカス受付（#218: ドロワー開閉時のフォーカス復元先）
+    tr.tabIndex = -1; // スクリプトからのフォーカス受付（ドロワー開閉時のフォーカス復元先）
     tr.onclick = (e) => {
       var target = /** @type {HTMLElement} */ (e.target);
       if (target.classList && target.classList.contains("match-trigger")) {

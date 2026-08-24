@@ -10,7 +10,7 @@ import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
-// 代表採択論文タイトル（R12: 会議のセマンティック/語彙プロファイル強化）。
+// 代表採択論文タイトル（会議のセマンティック/語彙プロファイル強化）。
 // データパイプラインで conferences に papers として載せ、ブラウザの語彙一致と
 // IDF（buildNameIdf）の両方に使えるようにする。
 import {
@@ -106,7 +106,7 @@ const TEMPLATE_MARKER = "/*__DATA__*/null";
 
 /**
  * タイトル + 開催年を組み立てる。タイトルが既にその年（例: `CANOPIE-HPC 2026`）
- * または短縮年（例: `SC '26`, `SC ’26`）で終わっている場合は年を二重に付けない（#93, #276）。
+ * または短縮年（例: `SC '26`, `SC ’26`）で終わっている場合は年を二重に付けない。
  * year が 0 / 未指定の場合はタイトルのみを返す。
  */
 export function titleWithYear(
@@ -327,7 +327,7 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
 }
 
 function sortKey(rec: DataRecord): [number, string] {
-  // Python: all_day はその日の 00:00 UTC、それ以外は正確な時刻で stamp。
+  // 終日項目はその日の 00:00 UTC、それ以外は正確な時刻で並べる。
   const stamp = rec.all_day ? dateOnly(rec.start).getTime() : rec.start.getTime();
   return [stamp, `${rec.conf.key}:${rec.deadline?.kind ?? "event"}:${rec.start.getTime()}`];
 }
@@ -342,7 +342,7 @@ export function toJson(
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
   const safeConfig = config ?? {};
   const site = (safeConfig.site as Record<string, unknown>) ?? {};
-  const domain = String(site.domain ?? "conf-deadlines");
+  const domain = String(site.domain ?? "kamiyobi");
   const baseUrl = String(site.base_url ?? `https://${domain}`).replace(/\/+$/, "");
   const categories = (safeConfig.categories as Record<string, string> | null) ?? DEFAULT_CATEGORIES;
   const sources: Array<Record<string, unknown>> =
@@ -1436,7 +1436,7 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
   const safeConfig = config ?? {};
   const categories = (safeConfig.categories as Record<string, string> | null) ?? DEFAULT_CATEGORIES;
   const sources = (safeConfig.sources as Array<Record<string, unknown>> | null) ?? DEFAULT_SOURCES;
-  // config.yaml の site.title をタイトル行に反映する（旧名 conf-deadlines のハードコードを廃止）。
+  // config.yaml の site.title をタイトル行に反映する。
   const siteTitle = String(
     (safeConfig.site as Record<string, unknown> | null)?.title ?? "kamiyobi",
   );
@@ -1530,16 +1530,16 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
   return lines.join("\n");
 }
 
-/** Python json.dumps(obj, ensure_ascii=False) 互換のコンパクト直列化。 */
-function pyJsonCompact(value: unknown): string {
+/** JSON を空白付きのコンパクト形式で直列化する。 */
+function jsonCompact(value: unknown): string {
   if (value === null) return "null";
   if (typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number" || typeof value === "boolean") return String(value);
   if (Array.isArray(value)) {
-    return `[${value.map(pyJsonCompact).join(", ")}]`;
+    return `[${value.map(jsonCompact).join(", ")}]`;
   }
   const entries = Object.entries(value as Record<string, unknown>);
-  return `{${entries.map(([k, v]) => `${JSON.stringify(k)}: ${pyJsonCompact(v)}`).join(", ")}}`;
+  return `{${entries.map(([k, v]) => `${JSON.stringify(k)}: ${jsonCompact(v)}`).join(", ")}}`;
 }
 
 /** Make a JSON literal safe to paste into a <script> body. */
@@ -1582,7 +1582,7 @@ export async function buildAll(
   // DTSTAMP is derived from --now (floored to the day).
   const site = (safeConfig.site as Record<string, unknown>) ?? {};
   // config.yaml の site.upcoming_days（既定 180）: upcoming.md の窓を決める。
-  // これまで宣言のみで読まれず 180 に固定されていた（#95）。
+  // 設定値を読まないと 180 に固定されるため、site.upcoming_days を反映する。
   const rawUpcomingDays = Number(site.upcoming_days ?? 180);
   const upcomingDays =
     Number.isFinite(rawUpcomingDays) && Number.isInteger(rawUpcomingDays) && rawUpcomingDays > 0
@@ -1656,7 +1656,7 @@ export async function buildAll(
     } else {
       templateText = templateText.replace(
         TEMPLATE_MARKER,
-        embedJson(pyJsonCompact(toCatalog(data, nowUtc, upcomingDays))),
+        embedJson(jsonCompact(toCatalog(data, nowUtc, upcomingDays))),
       );
     }
     write("index.html", templateText);

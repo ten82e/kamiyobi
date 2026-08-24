@@ -1,12 +1,12 @@
 /**
- * Verified-observation stage between primary extraction and merge (#504).
+ * Verified-observation stage between primary extraction and merge.
  *
  * data/primary_overrides.yaml は一次ソースからの自動抽出「観測」を載せる。
  * 観測が確定締切 (at_utc 持ちの Deadline) として公開されるのは、次のすべてを
- * 満たすときだけにする (#504 / SPEC §5):
+ * 満たすときだけにする (SPEC §5):
  *
  *   1. 日付に壁時計の時刻 (HH:MM[:SS]) が伴う。日付のみの証拠からは時刻を
- *      捏造しない (旧挙動は 23:59 AoE を暗黙生成していた)。
+ *      捏造しない。
  *   2. tz が resolveTzStatus で confirmed (AoE 等の固定オフセット・IANA 名)。
  *      CST/BST 等の曖昧略称は不確認として公開しない。
  *   3. 観測年が適用先 edition 年と一致する。ページ年の食い違い (過去版の残骸) は
@@ -74,7 +74,7 @@ function toObservationRows(rows: unknown): ObservationRow[] {
     const rec = row as Record<string, unknown>;
     // date は 'YYYY-MM-DD' 単独か、時刻埋め込み ('YYYY-MM-DD HH:MM[:SS]' /
     // 'YYYY-MM-DD hh:mm am/pm') のどちらも受ける。旧生成物・手マージ由来の
-    // 埋め込み形式でも時刻の有無を正しく判定するため (#504)。
+    // 埋め込み形式でも時刻の有無を正しく判定するため。
     const dm =
       /^(\d{4}-\d{2}-\d{2})(?:[ T](\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AaPp]\.?[Mm]\.)?)?)?$/.exec(
         String(rec.date ?? "").trim(),

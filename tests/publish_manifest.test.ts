@@ -65,7 +65,7 @@ describe("publish manifest", () => {
     expect(lexicalManifest.artifacts.embeddings).toBeUndefined();
     const preRestoreHashes = JSON.stringify(lexicalManifest.artifacts);
 
-    // CI cache restore writes this production-shaped bundle after --no-embeddings build.
+    // CI cache restore writes this bundle after --no-embeddings build.
     const data = JSON.parse(readFileSync(join(outdir, "data.json"), "utf8")) as {
       categories: Record<string, string>;
       conferences: Array<Record<string, unknown>>;

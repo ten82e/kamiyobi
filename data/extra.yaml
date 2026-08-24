@@ -742,7 +742,7 @@ conferences:
   # 根拠: https://satml.org/ (2026-08-13 再取得) 「Paper submission deadline: Tue, Sep 29, 2026
   #   / Early reject notification: Wed, Nov 4, 2026 / Decision notification: Wed, Dec 16, 2026 /
   #   Revisions due: Thu, Jan 21, 2027 / All deadlines 11:59 PM AoE」。paper は収録済みと一致。
-  #   R135 で通知系が未収録と判明 → 3 件追加。会期は「Early May, 2027」のまま維持。
+  #   通知系の欠落を確認して 3 件追加。会期は「Early May, 2027」のまま維持。
   - key: satml
     title: SaTML
     full_name: IEEE Conference on Secure and Trustworthy Machine Learning
@@ -1449,8 +1449,7 @@ conferences:
   # 根拠: https://complexnetworks.org/ (2026-08-10 取得)
   #   Important Dates に「Paper Submission: September 02, 2026 (23:59 AoE)」
   #   開催日は公式サイトで未確認（過去開催は 11 月）→ date_text なし
-  # 根拠: https://complexnetworks.org/ (2026-08-13 再取得、R133 では本文空だったが
-  #   R135 で取得可) 「Important Dates: Submission deadline September 02, 2026 (23:59 AoE)
+  # 根拠: https://complexnetworks.org/ (2026-08-13 再取得)「Important Dates: Submission deadline September 02, 2026 (23:59 AoE)
   #   / Acceptance Notification October 01, 2026 / Camera Ready October 08, 2026 /
   #   Registration October 15, 2026」。ページ内に「23:59 AoE」明記 → 通知/CR も AoE 解釈
   #   (canopie 前例)。registration は会議系のため収録せず (secitc 前例)。
@@ -1545,11 +1544,10 @@ conferences:
         link: https://tps.ieee-cs.org/2026/
         place: San Jose, CA, USA
         date_text: November 4-6, 2026
-        # 公式 CFP (2026-08-13 取得、R117/R118 時は 422 だったが jina 経由で再取得可)
+        # 公式 CFP (2026-08-13 取得)
         #   Round 2「Submission Deadline August 15, 2026 / Notification of Acceptance
         #   Date September 20, 2026 / Camera Ready Due September 30, 2026」。
-        #   Round 1 (6/15) は終了済みのため収録しない。SC26 慣例でなく AoE は
-        #   wikiCFP 引用 (R81 根拠) を維持。
+        #   Round 1 (6/15) は終了済みのため収録しない。AoE は wikiCFP の記載に基づく。
         deadlines:
           - {kind: paper, label: 'Paper Submission (Round 2)', date: '2026-08-15 23:59:00', tz: AoE}
           - {kind: notification, label: 'Notification of Acceptance (Round 2)', date: '2026-09-20 23:59:00', tz: AoE}
@@ -1569,11 +1567,10 @@ conferences:
         link: https://risc.ieee-cs.org/2026/
         place: San Jose, CA, USA
         date_text: November 4-6, 2026
-        # 公式 CFP (2026-08-13 取得、R117/R118 時は 422 だったが jina 経由で再取得可)
+        # 公式 CFP (2026-08-13 取得)
         #   Round 2「Submission Deadline August 15, 2026 / Notification of Acceptance
         #   Date September 20, 2026 / Camera Ready Due September 30, 2026」。
-        #   Round 1 (6/15) は終了済みのため収録しない。AoE は wikiCFP 引用
-        #   (R81 根拠) を維持。
+        #   Round 1 (6/15) は終了済みのため収録しない。AoE は wikiCFP の記載に基づく。
         deadlines:
           - {kind: paper, label: 'Paper Submission (Round 2)', date: '2026-08-15 23:59:00', tz: AoE}
           - {kind: notification, label: 'Notification of Acceptance (Round 2)', date: '2026-09-20 23:59:00', tz: AoE}
@@ -1666,7 +1663,7 @@ conferences:
   # 根拠: https://easychair.org/cfp/WSSE2026 (2026-08-10)
   #   「Submission deadline August 15, 2026」— wikiCFP と一致。開催地は EasyChair に記載なし。
   #   公式に tz 表記なし → 23:59 UTC として解釈。
-  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集。教訓 68）
+  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集）。
   - key: wsse-2026
     title: WSSE
     full_name: World Symposium on Software Engineering
@@ -1682,7 +1679,7 @@ conferences:
   # 根拠: https://easychair.org/cfp/flowchallenge2 (2026-08-10)
   #   「Submission deadline September 15, 2026」— DIMACS 実装チャレンジ (ALENEX/SOSA 併設)。
   #   公式に tz 表記なし → 23:59 UTC として解釈。
-  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集。教訓 68）
+  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集）。
   - key: network-flows-2-0
     title: Network Flows 2.0
     full_name: "DIMACS Implementation Challenge: Network Flows 2.0"
@@ -1697,7 +1694,7 @@ conferences:
 
   # 根拠: https://easychair.org/cfp/jornadas-dl2 (2026-08-10)
   #   「Submission deadline: 30th September 2026」— 公式に tz 表記なし → 23:59 UTC。
-  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集。教訓 68）
+  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集）。
   - key: 1st-dl2-international-workshop
     title: DL2 Workshop
     full_name: 1st DL2 International Workshop
@@ -1733,7 +1730,7 @@ conferences:
           - {kind: camera_ready, label: 'Camera-Ready Deadline', date: '2026-10-01 23:59:00', tz: PT}
 
   # 根拠: https://onspatial.github.io/geo-health-2026/ 「Submission deadline August 15, 2026」
-  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集。教訓 68）
+  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集）。
   - key: geohealth-2026
     title: GeoHealth 2026
     full_name: The 2nd ACM SIGSPATIAL International Workshop on Geospatial Computing for Public Health
@@ -1749,7 +1746,7 @@ conferences:
           - {kind: paper, label: Submission, date: '2026-08-15 23:59:00', tz: UTC}
 
   # 根拠: https://iharp.umbc.edu/polds26/ 「All PolDS submissions are due by August 15, 2026」
-  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集。教訓 68）
+  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集）。
   - key: polds-2026
     title: PolDS 2026
     full_name: The 2nd ACM International Workshop on Polar Data Science
@@ -1834,7 +1831,7 @@ conferences:
 
   # 根拠: https://geoindustry.github.io/geoindustryworkshop2026/
   #   「Submission deadline August 28, 2026, 11:59 PM AoE」— AoE 明記
-  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集。教訓 68）
+  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集）。
   - key: geoindustry-2026
     title: GeoIndustry 2026
     full_name: The 5th ACM SIGSPATIAL International Workshop on Spatial Big Data and AI for Industry
@@ -2173,7 +2170,7 @@ conferences:
         # 公式 hpc-announce (2026-08-12 再確認, r.jina.ai レンダリング):
         #   "*** Paper submission deadline extended to August 12, 2026 ***"
         #   → Aug 12 AoE が確定。本サイトは JS 遮蔽で直接取得不能だったが、
-        #   mailman3.cels.anl.gov の延長アナウンスで裏取り完了 (教訓 67 の SC26 延長波に一致)。
+        #   mailman3.cels.anl.gov の延長アナウンスで裏取り完了。
         deadlines:
           - {kind: paper, label: Full/Short Paper Submission, date: '2026-08-12 23:59:00', tz: AoE}
           - {kind: other, label: Lightning Talk Submission, date: '2026-09-18 23:59:00', tz: AoE}
@@ -2283,7 +2280,7 @@ conferences:
         link: https://canopie-hpc.org/
         place: Chicago, IL, USA
         date_text: 'November 16, 2026'
-        # 公式 CFP (2026-08-13 取得、R112 時は取得不能だったが jina 経由で再取得可)
+        # 公式 CFP (2026-08-13 取得)
         #   「Submission closes (hard deadline - no extensions): August 14th, 2026 /
         #   Papers decisions: September 4th, 2026 / Lightning talks decisions:
         #   September 11th, 2026 / Camera-ready papers deadline: September 25th, 2026 /
@@ -2389,7 +2386,7 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission, date: '2026-08-10 23:59:00', tz: PDT}
 
-  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集。教訓 68）
+  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集）。
   - key: ai4s-2026
     title: AI4S 2026
     full_name: 8th Workshop on Artificial Intelligence and Machine Learning for Scientific Applications (AI4S)
@@ -2420,7 +2417,7 @@ conferences:
         link: https://www.interactivehpc.com/cfp
         place: Chicago, IL, USA
         # Submission deadline: 14th August 2026（公式 cfp ページ、2026-08-12 再取得で確認）
-        # SC26 提出ポータル (R33) も 8/14 AoE。SC26 WS は全て AoE 慣例（agenticai4hpc 等の
+        # SC26 提出ポータルも 8/14 AoE。SC26 WS は全て AoE 慣例（agenticai4hpc 等の
         # PDT/EDT 例外を除く）→ 旧値 (8/15 23:59 UTC = AoE 8/15) は 1 日遅れの誤りを修正。
         # 通知 9/4・CR 9/25（tz 未表記 → AoE 前例）も公式同時取得（2026-08-12）。
         deadlines:
@@ -2525,7 +2522,7 @@ conferences:
         - {kind: notification, label: 'Author notification', date: '2026-09-04 23:59:00', tz: AoE}
         - {kind: camera_ready, label: 'Camera-ready copy due', date: '2026-09-25 23:59:00', tz: AoE}
 
-  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集。教訓 68）
+  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集）。
   - key: llvm-hpc-2026
     title: LLVM-HPC 2026
     full_name: The Twelfth Workshop on the LLVM Compiler Infrastructure in HPC (LLVM-HPC 2026)
@@ -2560,7 +2557,7 @@ conferences:
         # (2026-08-12 再確認) → end of Aug 15 AoE = 8/16T11:59:59Z。
         # 旧値 (8/14 23:59 AoE) はポータル「12am (AoE) Aug 15」表示に引きずられ 1 日早かった
         # (fd9add6 の「8/15 AoE」修正は日付文字列が一致していたが AoE 終端変換対象日が
-        # 1 日ずれていた — 教訓 42/44 の表示日比較では検出不能なパターン)。
+        # 1 日ずれていた）。
         # 公式文言を正として訂正。
         # 2026-08-12 r.jina.ai 再レンダリングでも現行は「postponed to August, 15th, 2026, AOE」
         # + 「Notification of Decisions: September 4th, 2026」を確認 (tz 表記なし → esann 前例で AoE)。
@@ -2633,7 +2630,7 @@ conferences:
         - {kind: paper, label: Application Deadline, date: '2026-08-21 23:59:00', tz: AoE}
         - {kind: notification, label: Application Notifications, date: '2026-09-09 23:59:00', tz: AoE}
 
-  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集。教訓 68）
+  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集）。
   - key: hmem-2026
     title: HMEM 2026
     full_name: 7th Workshop on Heterogeneity and Memory Systems (HMEM)
@@ -2883,11 +2880,10 @@ conferences:
         date_text: November 15, 2026
         event_start: '2026-11-15'
         event_end: '2026-11-15'
-        # 公式 Paper Submission and Dates (2026-08-13 取得、R112 時は 403/取得不能だったが
-        #   jina 経由で再取得可)「Submissions due: August 14th / Author notification:
+        # 公式 Paper Submission and Dates (2026-08-13 取得)「Submissions due: August 14th / Author notification:
         #   August 28th / AD-AE Stage 2 Badge Application: September 4th / Camera-ready
         #   version: September 25th / Workshop @ SC: November 15th」。SC26 WS 慣例で AoE
-        #   (教訓 44)。
+        #   と解釈した。
         deadlines:
           - {kind: paper, label: Paper Submission, date: '2026-08-14 23:59:00', tz: AoE}
           - {kind: notification, label: 'Author notification', date: '2026-08-28 23:59:00', tz: AoE}
@@ -3234,7 +3230,7 @@ conferences:
   #   2026 / Camera-Ready Deadline: October 19, 2026 / Workshop Day: December 8, 2026」。
   #   4th ARTMAN (Workshop on Recent Advances in Resilient and Trustworthy Machine
   #   learning-driven systems)。IEEE ACSAC 2026 併設 (Los Angeles)。tz 表記なし →
-  #   23:59 UTC 解釈 (COCOA 前例・教訓 43)。上流 ccfddl に無し。
+  #   23:59 UTC と解釈。上流 ccfddl に無し。
   - key: artman-2026
     title: ARTMAN 2026
     full_name: "ARTMAN: Workshop on Recent Advances in Resilient and Trustworthy Machine learning-driven systems"
@@ -3286,7 +3282,7 @@ conferences:
   #   Notification: September 15, 2026」。2nd International Workshop on Blockchain for
   #   Decentralized Trust and Digital Identity (B4TI 4.0)。BCCA 2026 併設
   #   (16-20 November 2026, Barcelona, Spain)。tz 表記なし → 23:59 UTC 解釈
-  #   (COCOA 前例・教訓 43)。上流 ccfddl に無し。
+  #   上流 ccfddl に無し。
   - key: b4ti-2026
     title: B4TI 2026
     full_name: "B4TI: International Workshop on Blockchain for Decentralized Trust and Digital Identity"
@@ -3838,7 +3834,7 @@ conferences:
         event_end: '2026-10-10'
         deadlines: []
 
-  # ---- conf-deadlines R513 (2026-08-23): discover 候補の公式裏取り昇格 -----------------
+  # ---- 公式裏取り済みの追加会議（2026-08-23） -----------------
   # 根拠: 各会議の EasyChair CFP ページから取得した deadlines テーブルの原文
   #   (Submission deadline 行)。取得日 2026-08-23。全 45 件が http 200 で裏取り一致
   #   (短冊の日付とページ表記が全件一致。verify-notes.md 参照)。
@@ -4486,11 +4482,11 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-12-20 23:59:00', tz: AoE}
 
-  # ---- conf-deadlines R514 (2026-08-23): wikiCFP 候補の公式裏取り昇格 --------------------
+  # ---- wikiCFP 掲載会議の公式裏取り（2026-08-23） --------------------
   # 根拠: wikiCFP 各イベントページの「Submission Deadline」行
   #   (v:startDate microformat、ISO 日付)。取得日 2026-08-23。84/84 が機械照合一致
   #   (同イベントの eventid 重複 1 組は 1 件に畳み、計 83 会議)。
-  # tz: wikiCFP は tz を明記しないため AoE 当日終了と解釈した (R513 EasyChair 分と同じ方針)。
+  # tz: wikiCFP は tz を明記しないため AoE 当日終了と解釈した。
 
   - key: 3rd-amict-2026
     title: 3rd AMICT 2026
@@ -5488,11 +5484,11 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-21 23:59:00', tz: AoE}
 
-  # ---- conf-deadlines R515 (2026-08-23): DBWorld アーカイブ本文からの締切抽出昇格 --------
+  # ---- DBWorld アーカイブ本文から確認した締切（2026-08-23） --------
   # 根拠: DBWorld (listserv.acm.org) 各メッセージ本文の Submission Deadline 行。
   #   取得日 2026-08-23。144 件中抽出成功 47、窓内 × 収録カテゴリ適合 (本文ベース再分類
   #   を含む) 13。title はメーリス件名由来である点に注意。
-  # tz: メール本文は tz 未明記のため AoE 当日終了で解釈した (R513/R514 同方針)。
+  # tz: メール本文は tz 未明記のため AoE 当日終了で解釈した。
 
   - key: adc-2026-second-round-cfp-and
     title: ADC 2026
@@ -5650,11 +5646,11 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-10-15 23:59:00', tz: AoE}
 
-  # ---- conf-deadlines R518 (2026-08-23): DBWorld 改良抽出器の救出分 ----------------------
+  # ---- DBWorld アーカイブ本文から確認した追加締切（2026-08-23） ----------------------
   # 根拠: listserv アーカイブ本文から改良パターン (Due 型・日付先行型等) で抽出した
   #   Submission deadline。取得日 2026-08-23。97 件中機械抽出成功は本 5 件のみ
   #   (残り 88 件は本文に機械可読な締切行なし)。カテゴリは本文テキストで判定。
-  # tz: メール本文は tz 未明記のため AoE 当日終了で解釈 (R513-R515 同方針)。
+  # tz: メール本文は tz 未明記のため AoE 当日終了で解釈。
 
   - key: 1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare
     title: 1st Symposium on Neurosymbolic Artificial Intelligence for Healthcare

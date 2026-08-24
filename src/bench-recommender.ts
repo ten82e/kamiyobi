@@ -16,7 +16,7 @@
  *   npm run bench -- --sw nameOnce         # 会議名一致を先頭 1 語の固定加点のみに
  *   npm run bench -- --golden-en           # regression-known の実採択論文で回帰を測定
  *   npm run bench -- --no-idf              # IDF 減衰を無効化（既定は本番と同じく有効）
- *   --v2                                   # #454 の合成 smoke/plumbing 評価
+ *   --v2                                   # 合成 smoke/plumbing 評価
  *   --real-v2-dev ... --real-v2-heldout ... # 実論文の固定 revision 評価
  */
 
@@ -69,7 +69,7 @@ export interface BenchArgs {
 }
 
 // 不正な数値（負・非整数・非数値）を既定値へフォールバック。
-// --topk=-3 等（イコール構文）は下流の `rank > args.topK` が全会議を失敗扱いにするのを防ぐ (#302 の続編)。
+// --topk=-3 等（イコール構文）は下流の `rank > args.topK` が全会議を失敗扱いにするのを防ぐ。
 function toPosInt(raw: string | undefined, fallback: number): number {
   const n = Number(raw);
   return Number.isFinite(n) && Number.isInteger(n) && n > 0 ? n : fallback;
@@ -106,8 +106,8 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
     idf: true,
     sw: null,
     goldenEn: false,
-    // R16: usenix-security の論文個別ベクトルを semanticScore の max 類似度に使う
-    // （英語のみ）。実測で golden EN top1 15.8→26.3 / top5 63.2→71.9。既定オン。
+    // usenix-security の論文個別ベクトルを semanticScore の max 類似度に使う。
+    // 英語のみ。実測で golden EN top1 15.8→26.3 / top5 63.2→71.9。既定オン。
     paperMax: true,
     v2: null,
     realV2Dev: null,
@@ -994,9 +994,10 @@ export function contentWords(s: string | null | undefined): string[] {
     .filter((w) => w.length > 3 && !STOP.has(w));
 }
 
-/** メタデータタグ（本文語彙として検索されない属性語）。R11 でスコアリング側の
- * GENERIC_TAGS 除外と対にした — 合成クエリが workshop/journal を含むと、
- * 自己マッチの +10 で「除外がマイナス」という artifact が出るため、クエリ側も除く。 */
+/** メタデータタグ（本文語彙として検索されない属性語）。
+ * スコアリング側の GENERIC_TAGS 除外と対にした。
+ * 合成クエリが workshop/journal を含むと、
+ * 自己マッチの +10 で「除外がマイナス」という見かけの差が出るため、クエリ側も除く。 */
 export const GENERIC_TAGS = new Set([
   "niche",
   "workshop",
@@ -1246,7 +1247,7 @@ const GOLDEN_JP: Array<{ title: string; keywords: string; key: string }> = [
 
 /** regression-known（実採択論文タイトル、タイトルのみで測定）: 合成クエリは会議名の内容語から
  * 作るため実論文より易しい。こちらは会議名チャンクを含まない実際の論文タイトルで
- * 真の精度を測る（R12 追加）。出典: USENIX NSDI/OSDI '25 technical sessions、
+ * 真の精度を測る。出典: USENIX NSDI/OSDI '25 technical sessions、
  * SOSP '25 accepted (sigops.org)、NDSS '25 accepted、ICML (PMLR v162)。 */
 export interface RegressionKnownRecord {
   title: string;
@@ -1385,12 +1386,13 @@ export async function main(
 
   // --idf: 会議名 + 代表論文語彙の IDF 重み表（希少語ほど重い）。
   // 代表論文語彙は汎用語（machine/deep/cache 等）が全会議に出現しやすく、
-  // そのまま語彙一致に使うと会議間で衝突する（R12 実測）ため、df で汎用語を減衰する。
-  // R14 実測で 2 マップ化: (1) 名前と papers の混在 df だと papers 追加（rtss/ecrts）で
-  // 名前語の IDF が薄まり合成 top1 84.8→76.9 に悪化、(2) 名前優先 1 マップだと
-  // 名前にも出る語（memory 等）が papers マッチでも高重みになり rtss/ecrts の papers
-  // 語彙が無関係クエリを奪う。マッチ元ごとに別マップを使う。buildNameIdf
-  // （recommender.js）と同じ定義。
+  // そのまま語彙一致に使うと会議間で衝突するため、df で汎用語を減衰する。
+  // 名前と papers の混在 df だと、papers 追加（rtss/ecrts）で名前語の IDF が薄まり
+  // 合成 top1 84.8→76.9 に悪化する。
+  // 名前優先 1 マップだと、名前にも出る語（memory 等）が papers マッチでも高重みになり、
+  // rtss/ecrts の papers 語彙が無関係クエリを奪う。
+  // マッチ元ごとに別マップを使う。
+  // buildNameIdf（recommender.js）と同じ定義。
   if (args.idf) {
     const nameDf = new Map<string, number>();
     const paperDf = new Map<string, number>();
@@ -1407,7 +1409,7 @@ export async function main(
       }
       const seenPaper = new Set<string>();
       for (const w of contentWords((VENUE_PAPERS[c.key] ?? []).join(" "))) {
-        // paper 語彙の汎用語（self/general/framework 等）はスコアリングで加点されないので df にも数えない（R18）
+        // paper 語彙の汎用語（self/general/framework 等）はスコアリングで加点されないので df にも数えない。
         if (GEN_PAPER.has(w)) continue;
         if (!seenPaper.has(w)) {
           seenPaper.add(w);
@@ -1424,9 +1426,9 @@ export async function main(
     };
     Recommender.setNameIdf({ name: mk(nameDf), paper: mk(paperDf) });
   }
-  // R16: 英語クエリのみ論文個別ベクトル（max 類似度）を有効化。
+  // 英語クエリのみ論文個別ベクトル（max 類似度）を有効化。
   // 日本語クエリは多言語モデルなので英語モデルの論文ベクトルを混ぜない
-  // （R12 の言語別分離設計）。
+  // （言語別分離設計）。
   if (args.paperMax && !isJp && emb.paperVecs) {
     Recommender.setPaperVecs(emb.paperVecs);
   } else {
@@ -1469,7 +1471,6 @@ export async function main(
   };
 
   // 本番と同じスコアリング: Recommender.breakdown（語彙）+ semanticScore + blendScore
-  // 本番と同じスコアリング: Recommender.breakdown（語彙）+ semanticScore + blendScore
   const rowFor = (c: Conf): Record<string, unknown> => ({
     conf: {
       key: c.key,
@@ -1477,7 +1478,8 @@ export async function main(
       full_name: c.full_name,
       tags: c.tags ?? [],
       // 代表論文語彙（embedding 側の VENUE_PAPERS と同じ出典）— 語彙一致にも効かせる。
-      // 本番ではデータパイプラインが conferences に papers を載せる想定（未実装なら空 = 従来動作）。
+      // 本番ではデータパイプラインが conferences に papers を載せる。
+      // 無い場合は空として扱う。
       papers: VENUE_PAPERS[c.key] ?? [],
     },
     cats: c.categories ?? [],
@@ -1588,7 +1590,7 @@ export async function main(
   }
   Recommender.setExpandEnabled(true);
 
-  // ---- 日本語ゴールデンセット（実ユーザーの論文テキスト、A/B: 展開の有無） ----
+  // ---- 日本語ゴールデンセット（実ユーザーの論文テキスト、展開の有無） ----
   if (isJp) {
     const gExtractor = (await pipeline("feature-extraction", model)) as FeatureExtractionPipeline;
     const gTexts = GOLDEN_JP.map((g) => `${g.title} ${g.keywords}`);

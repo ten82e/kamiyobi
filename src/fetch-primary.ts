@@ -55,7 +55,7 @@ const LABELS: Record<string, string> = {
 };
 
 /**
- * 壁時計の時刻 (HH:MM[:SS]、12h 表記は 24h に正規化) を抜き出す (#504)。
+ * 壁時計の時刻 (HH:MM[:SS]、12h 表記は 24h に正規化) を抜き出す。
  * 見つからなければ null — 日付のみの証拠として扱い、時刻は捏造しない。
  * 実装は src/sources/primary.ts と同じ規約。単一実装を輸出し両側から使う。
  */
@@ -283,7 +283,8 @@ export function extractDeadline(
         ? "AoE"
         : raw.toUpperCase();
   }
-  // 日付を含む側の行から壁時計の時刻を取る (#504)。無ければ time を載せない。
+  // 日付を含む側の行から壁時計の時刻を取る。
+  // 無ければ time を載せない。
   const timeSrc = kindHint && parsePrimaryDate(kindHint) ? kindHint : window;
   const obsTime = extractObservationTime(timeSrc);
   const out: PrimaryDeadline = {
@@ -350,8 +351,8 @@ export function loadYamlFile(path: string): Record<string, any> {
     return typeof loaded === "object" && loaded !== null ? (loaded as Record<string, any>) : {};
   } catch (exc) {
     // 静かに {} を返すと primary_overrides の「前回値」が失われ、前回値維持の
-    // 保証（SPEC §data/primary.yaml）が無警告で機能しなくなる。cli.ts の
-    // loadYamlFile と同じ形式で必ず警告する（2026-08-12 whpc の教訓）。
+    // 保証（SPEC §data/primary.yaml）が無警告で機能しなくなる。
+    // cli.ts の loadYamlFile と同じ形式で必ず警告する。
     warn(`cannot parse ${path}: ${String(exc)}`);
     return {};
   }
@@ -399,7 +400,8 @@ export async function runFetchPrimary(
         if (d.tz === undefined && hint) d.tz = String(hint);
         if (d.tz === undefined) delete d.tz;
         if (d.round === 1) delete d.round;
-        // tz ヒントは「公式が明記した」場合だけ補完に使う (#504)。曖昧略称
+        // tz ヒントは「公式が明記した」場合だけ補完に使う。
+        // 曖昧略称
         // (CST/BST 等) を載せても build 側の観測ゲートで落ちるため、ここで
         // 先に外して警告を出す (レジストリの tz を直す契機になる)。
         if (d.tz !== undefined && resolveTzStatus(d.tz).status !== "confirmed") {

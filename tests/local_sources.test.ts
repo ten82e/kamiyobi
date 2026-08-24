@@ -2,7 +2,7 @@
  * Local source data integrity: every deadline written in data/extra.yaml and
  * data/overrides.yaml must parse to a real instant with a recognized tz.
  *
- * R37 (2026-08-12) の背景: Interactive HPC (SC26) の締切が「date 8/15 + tz UTC」と
+ * Interactive HPC (SC26) の締切が「date 8/15 + tz UTC」と
  * 入力され、公式「14th August 2026」+ ポータル 8/14 AoE に対し 1 日遅れた。
  * 変換コード自体は正しかったため、このテストは変換の意味論ではなく
  * 「ローカルデータの各エントリが無言で落ちない・未知 tz にならない」ことを

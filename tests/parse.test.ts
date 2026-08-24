@@ -156,7 +156,7 @@ describe("parse_instant", () => {
     expect(parseInstant(text, "UTC")).toBeNull();
   });
 
-  // R37 (2026-08-12) の教訓: Interactive HPC (SC26) で「8/15 23:59Z = 8/14 AoE」と
+  // Interactive HPC (SC26) では「8/15 23:59Z = 8/14 AoE」と
   // 暗算したため収録値が 1 日遅れた。正しくは AoE 8/14 23:59 = 8/15T11:59Z。
   // 表示日比較（"14th" vs "14th"）では 12h ずれを検出できない — utc/aoe 両フィールド
   // を機械照合すること。この表が変換の意味論を pin する。
@@ -165,11 +165,11 @@ describe("parse_instant", () => {
     ["2026-08-15 23:59:00", "AoE", "2026-08-16T11:59:00.000Z"],
     ["2026-08-15 23:59:00", "UTC", "2026-08-15T23:59:00.000Z"],
     ["2026-08-14 23:59:00", "UTC", "2026-08-14T23:59:00.000Z"],
-  ] as Array<[string, string, string]>)("R37 trap: %s %s -> %s", (date, tz, expected) => {
+  ] as Array<[string, string, string]>)("AoE conversion: %s %s -> %s", (date, tz, expected) => {
     expect(parseInstant(date, tz)?.toISOString()).toBe(expected);
   });
 
-  it("R37 trap: AoE Aug 14 23:59 and UTC Aug 15 23:59 are 12h apart, not a day", () => {
+  it("AoE Aug 14 23:59 and UTC Aug 15 23:59 are 12h apart, not a day", () => {
     const aoe = parseInstant("2026-08-14 23:59:00", "AoE")!.getTime();
     const utc = parseInstant("2026-08-15 23:59:00", "UTC")!.getTime();
     expect(utc - aoe).toBe(12 * 60 * 60 * 1000);

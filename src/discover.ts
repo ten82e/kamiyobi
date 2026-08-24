@@ -1201,7 +1201,7 @@ export function easyChairEntriesFromRows(
   for (const e of rows) {
     if (!e.date_text) continue; // 締切未登録は候補にしない
     // 開催年はタイトルを優先する（wikiCFP 経路と同じ規約）。秋締切（締切が開催年の
-    // 前年、例: DASFAA 2026 の締切 Oct 27, 2025）の会議を締切年で落とさない (#261)。
+    // 前年、例: DASFAA 2026 の締切 Oct 27, 2025）の会議を締切年で落とさない。
     const tm = /20\d\d/.exec(`${e.title} ${e.full_name}`);
     const dm = /(20\d\d)/.exec(e.date_text);
     const year = tm ? Number(tm[0]) : dm ? Number(dm[1]) : undefined;
@@ -1214,7 +1214,8 @@ export function easyChairEntriesFromRows(
       link: e.url,
       categories: [], // レビュー時付与
       source_type: "conference",
-      // 4 列目は提出締切、5 列目は開催日。開催日が無い行は従来どおり締切を使う。
+      // 4 列目は提出締切、5 列目は開催日。
+      // 開催日が無い行は締切を開催日として使う。
       date_text: e.start || e.date_text,
       submission_deadline_text: e.date_text,
       place: e.place,

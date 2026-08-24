@@ -4,10 +4,10 @@ import { load as loadYaml } from "js-yaml";
 import { describe, expect, it } from "vitest";
 import { REPO_ROOT } from "./helpers.js";
 
-// 教訓 66 (I3): overrides.yaml の 2027 以降 edition で
+// overrides.yaml の 2027 以降 edition で
 // 「event 情報のみ・deadlines 無し」のブロックは、意図マーカー
 // （未公開 / CFP 未 / 会期のみ / 上流と一致 等のコメント）を必須とする。
-// 経緯: esann 2027 (教訓 65) — 会期だけの実 edition 追加が merge の
+// esann 2027 の会期だけの実 edition 追加が merge の
 // 「実 edition は推定を置換」ルールで推定締切を消し、締切 0 件になった。
 const OVERRIDES_PATH = join(REPO_ROOT, "data", "overrides.yaml");
 

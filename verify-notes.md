@@ -7,9 +7,9 @@ deadlines テーブルの「Submission deadline」行を抽出し、候補の日
 
 - 全 45/45 件が HTTP 200 で取得成功。
 - 「Submission deadline」行の全件抽出に成功。
-- 短冊日付 (discover の submission_deadline_text) と公式ページ表記の機械照合:
+- 候補日付 (discover の submission_deadline_text) と公式ページ表記の機械照合:
   **45/45 一致** (43 件は "August 24, 2026" 形式、2 件は "1 November 2026" 形式
-  — evomusart-2027, si-dl2027。いずれも正規化後一致)。
+  であり、evomusart-2027 と si-dl2027 は正規化後に一致)。
 
 ### 抽出原文 (代表例)
 
@@ -27,12 +27,12 @@ deadlines テーブルの「Submission deadline」行を抽出し、候補の日
 
 EasyChair CFP は締切行に timezone を明記しない。extra.yaml への記載は
 AoE (UTC-12) 当日終了 (23:59:00) と解釈した。日付のみの観測であり、
-時刻部分は運用慣行からの補完である (推測ではなく、SPEC 9 の「公式で裏が取れた
-日付」の日付部分のみを根拠とする)。
+時刻部分は運用慣行による補完である。
+根拠は SPEC 9 の「公式で裏が取れた日付」における日付部分に限る。
 
 ## 判定
 
-- 採用: 45 件 (全件、短冊日付 = 公式ページ表記のため)
+- 採用: 45 件 (全件、候補日付 = 公式ページ表記のため)
 - 不採用: 0 件
 
 ## 限界
@@ -55,7 +55,7 @@ EasyChair 候補の検証後、wikiCFP 由来 324 件と DBWorld 由来 144 件�
 
 - wikiCFP 324 件: 全件 `submission_deadline_text` を持たない。このフィールドは
   EasyChair 経路専用 (`src/discover.ts` easyChairEntriesFromRows のみ設定)。ただし
-  wikiCFP は edition[0].date_text に締切日を持つため、date_text 経路で短冊化できる。
+  wikiCFP は edition[0].date_text に締切日を持つため、date_text 経路で候補化できる。
   - date_text パース結果: 過去締切 87 / 窓外 (>120日) 2 / 日付なし 13 /
     カテゴリ不一致 138 / **窓内 × 収録カテゴリ適合 84** (+ comsoc 1, resound 1)
 - DBWorld 144 件: editions 自体が空 (メーリス件名のみ。詳細ページは listserv.acm.org
@@ -65,19 +65,19 @@ EasyChair 候補の検証後、wikiCFP 由来 324 件と DBWorld 由来 144 件�
 
 ## 裏取り方法
 
-- wikiCFP の https はこのネットワークから到達不能だが http は到達可能。
+- wikiCFP の https は到達不能だったが、http は到達可能だった。
   各イベントページの「Submission Deadline」行の v:startDate microformat (ISO 日付) を抽出。
-- 短冊日付 (一覧ページの deadline 欄) とイベントページの microformat を機械照合。
+- 候補日付 (一覧ページの deadline 欄) とイベントページの microformat を機械照合。
 
 ## 検証結果
 
 - **84/84 が一致** (MISMATCH 0、抽出失敗 0、取得失敗 0)。
-- 同一イベントの eventid 重複 1 組 (CSP 2027: 199953/199954) を発見 → 1 件に畳み **83 会議**。
+- 同一イベントの eventid 重複 1 組 (CSP 2027: 199953/199954) を発見し、1 件に畳んで **83 会議** とした。
 - tz 未明記のため AoE 当日終了 (23:59:00) で解釈した。
 
 ## 判定
 
-- 採用: 83 会議 → data/extra.yaml 追加 (241 → 324 会議)
+- 採用: 83 会議を data/extra.yaml に追加 (241 から 324 会議)
 - 不採用: カテゴリ不一致 138 件
 
 ## 限界
@@ -93,19 +93,19 @@ EasyChair 候補の検証後、wikiCFP 由来 324 件と DBWorld 由来 144 件�
 
 - DBWorld 144 件の link は listserv.acm.org のメッセージアーカイブ (本文取得可、全件 HTTP 200・fetch 失敗 0)。
 - 本文から Submission Deadline 行を正規表現で抽出 (複数形式対応)。抽出成功 47 / 抽出不能 97。
-- 窓内 (<=120 日) × 収録カテゴリ適合を判定。タイトルのみで分類できなかった 14 件は
-  本文テキストで再分類し 12 件を救済 → 窓内適合 **13 件**。
+- 窓内 (<=120 日) × 収録カテゴリ適合を判定。
+  タイトルのみで分類できなかった 14 件は本文テキストで再分類し、12 件を救済して窓内適合 **13 件** とした。
 
 ## 検証結果
 
 - 過去締切 29 / 窓外 3 / カテゴリ不一致 (再分類後) 2 / 抽出不能 97 / **採用 13**。
-- 抽出不能 97 件の多くは subject 自体が「to July 31 ...」等の日付欠損型ノイズか、
-  本文に締切行を持たない転載だった。抽出器の改善余地はあるが今回は採用しない。
+- 抽出不能 97 件の多くは subject 自体が「to July 31 ...」等の日付欠損型ノイズか、本文に締切行を持たない転載だった。
+  抽出器には改善余地があるが、根拠不足のため採用対象から外した。
 - tz 未明記のため AoE 当日終了で解釈した。
 
 ## 判定
 
-- 採用: 13 会議 → data/extra.yaml 追加 (324 → 337 会議)
+- 採用: 13 会議を data/extra.yaml に追加 (324 から 337 会議)
 - title はメーリス件名由来 (CFP 接頭辞等のノイズが残る)。ブロック先頭コメントに注意書き。
 
 ## 限界
@@ -133,19 +133,19 @@ EasyChair、wikiCFP、DBWorld から昇格した 141 会議を data/primary.yaml
    - listserv アーカイブ (13): 本文は「April 30, 2026 (PST)」型が最多で時刻なし
      (iaiai.org 実測: time patterns 0 / PST x5)
    - researchr 系 (icpc/hpca/cgo/icst): 「Thu 19 Nov 2026」形式で時刻なし
-     (extractDeadline 実測 → time フィールド無しで出力)
+     (extractDeadline 実測では time フィールド無しで出力)
 4. **既存登録 13 会議の build 実績**: kept ゼロ。10 会議が毎日 dropped 警告を出している。
 
 ## 判定
 
-- **一括登録は見送り**。日付のみの源では全行が観測ゲートで棄却され、効果ゼロで
-  警告ノイズと CI 時間だけが増える。
+- **一括登録は対象外**。
+  日付のみの源では全行が観測ゲートで棄却され、効果ゼロのまま警告ノイズと CI 時間だけが増える。
 - 登録適性を持つのは「締切行に時刻 + tz を明記する公式ページ」のみ (現状 SC26 ポータル系
   のみ実績あり・既に登録済み)。
-- **iiai-aai-2026 をレジストリから削除**: 公式ページは tz (PST) を明記するが時刻を
-  公開しないため永久棄却となる。前回値も全行棄却で使われておらず、削除しても挙動不変、
-  毎日の dropped 警告 4 行が消える (build 実測で警告消失を確認)。fetch-primary --apply
-  済み (registry 12 会議)。
+- **iiai-aai-2026 をレジストリから削除**: 公式ページは tz (PST) を明記するが時刻を公開しないため、観測ゲートで継続的に棄却される。
+  既存値も全行棄却で使われておらず、削除しても挙動は変わらない。
+  毎日の dropped 警告 4 行が消えることを build 実測で確認した。
+  fetch-primary --apply 済み (registry 12 会議)。
 
 ## 今後
 
@@ -174,7 +174,8 @@ EasyChair、wikiCFP、DBWorld から昇格した 141 会議を data/primary.yaml
 
 ## 判定
 
-- **二次裏取りサイクルは実装しない**。発火条件が成立していない。
+- **二次裏取りサイクルは追加しない**。
+  発火条件が成立していない。
   昇格から数日しか経過しておらず源が静かで、検知機構が検知すべき事象が存在しない。
 - **再発火条件** (これが揃ったときに実装する):
   1. 昇格会議の締切が近づく (<=30 日) かつ源ページの日付が extra.yaml と食い違う
@@ -197,12 +198,12 @@ EasyChair、wikiCFP、DBWorld から昇格した 141 会議を data/primary.yaml
 
 1. **改良抽出器** ("Due <date>" 型・日付先行型・"on/before/by" 型・欧州形式を追加) を
    未抽出 97 件に適用:
-   - **RESCUED=0** — 追加パターンの効果はゼロ
+   - **RESCUED=0**。追加パターンの効果はゼロ
    - still_none=88 (本文に機械可読な締切行がそもそも無い。画像・PDF・リンク先参照)
-   - unmatched_cat=5 → 本文テキスト再分類で **全件カテゴリ適合**
+   - unmatched_cat=5。本文テキスト再分類で **全件カテゴリ適合**
    - past=3, far=1, fetch_fail=0
 
-2. **救出 5 会議を extra.yaml へ昇格** (324 → 337 → 342):
+2. **救出 5 会議を extra.yaml へ昇格** (324 から 337、続いて 342):
    - Neurosymbolic AI for Healthcare (2026-09-05)
    - ICSOC 2026 (2026-09-27)
    - ACM SAC 2027 DBDM Track (2026-10-02)
@@ -211,7 +212,7 @@ EasyChair、wikiCFP、DBWorld から昇格した 141 会議を data/primary.yaml
 
 ## 判定
 
-- **discover.ts 内蔵はやらない**: 追加抽出パターンの実測効果がゼロ。
+- **discover.ts には組み込まない**: 追加抽出パターンの実測効果がゼロ。
   本文 fetch を discover に組み込むコスト (+70s/run・レート制限リスク) に見合う
   効果が出ないことが実測で確定した。残り 88 件は源自体が機械可読締切を持たないため、
   人間にも裏取り不能 (源に情報がない) = これ以上の抽出器改善は無意味。
@@ -238,14 +239,14 @@ EasyChair、wikiCFP、DBWorld から昇格した 141 会議を data/primary.yaml
 2. **upcoming.md 実表示の問題** (offline build 後):
    - DBWorld 由来 18 行が **listserv メーリスアーカイブへ直接リンク**
      (閲覧者にはメール本文が表示され、公式サイトへ移動できない)
-   - title に「BTW 2027」→「BTW 2027 2026」のような重複年付与
+   - title に「BTW 2027」から「BTW 2027 2026」のような重複年付与
    - 「ADC 2026: Second-Round CFP and」「STACS 2027 - First」等の途切れ件名
 
 ## 修正内容 (extra.yaml データ修正のみ・コード変更なし)
 
 - 各会議のメーリス本文から公式サイト URL を抽出し、品質判定して link を張り替え:
   - 採用 13 会議 (github.io / 大学 / 学会ドメイン等の会議公式サイト)
-  - 見送り 7 会議 (投稿システム cmt3/openreview・lnkd.in 短縮・Springer シリーズ一覧
+  - 登録対象外 7 会議 (投稿システム cmt3/openreview・lnkd.in 短縮・Springer シリーズ一覧
     ・論文ページなど「公式サイトではない」ため listserv のまま)
 - title クリーンアップ 4 件: ADC 2026 / Clinical-MIRF 2026 / IEEE 3SCEA2027 /
   STACS 2027 (途切れ件名・接頭辞の除去)
@@ -254,11 +255,10 @@ EasyChair、wikiCFP、DBWorld から昇格した 141 会議を data/primary.yaml
 
 - typecheck / check / vitest 914 pass (skipped=0) / offline build RC=0
 - 修正後の upcoming.md: 「[ADC 2026](https://adc-conference.github.io/2026/)」等に改善、
-  listserv 直リンクは 18 行 → 5 行 (見送り 7 会議のうち窓内 5 行のみ残存)
+  listserv 直リンクは 18 行から 5 行に減少 (登録対象外 7 会議のうち窓内 5 行のみ残存)
 
 ## 判定
 
 - コード変更は不要 (title 生成ロジック自体は正常。源のデータ品質問題であり
   extra.yaml の修正で吸収するのが正)。
-- 今後 DBWorld 由来を昇格するときは、本文から公式サイト URL を抽出して link に
-  使うことを昇格手順に追加 (project-lessons に反映済み)。
+- DBWorld 由来を昇格するときは、本文から公式サイト URL を抽出して link に使う。

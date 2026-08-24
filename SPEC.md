@@ -5,75 +5,7 @@ HPC・ネットワーク・システム・AI 系会議の投稿締切と開催�
 サーバも外部サービスも使わない。GitHub 内で完結する。
 
 この文書は実装の契約である。ここに書かれた型、関数シグネチャ、ファイル構成から逸脱しない。
-プロジェクト名は kamiyobi（旧称 conf-deadlines / cfp-radar）。
-
-## 0. 改訂
-
-**rev.2（反証レビュー反映済み）。**
-rev.1 には実データ走査で確認された欠陥が 30 件あった。主要な修正:
-
-- `kind_of` に ccfddl の主キー `deadline` の規則が無く、本文締切 1591 件が `other` に落ちていた（§3）
-- `edition_id` が上流で一意でない（`ica3pp` が 4 版で同一、`fse23`〜`fse26` が別会議で重複）。
-- 突き合わせキー `(year, round, kind)` で hf の締切 473 件中 127 件が消えていた（§3）
-- `slug(title)` が別会議を潰す組が実在（`FSE` × 2、`SEC` × 2）。曖昧性解消表を導入（§3, §5）
-- rank_filter で HotNets・APNet が落ち、MX 分野（MLSys, RTSS, EMSOFT）が丸ごと落ちていた（§5）
-- venue の綴りが実データと不一致（`atc` → `sigops-atc`、`europar` → `euro-par`）（§5）
-- **MLSys は上流 ccfddl の `MX/mlsys.yml` に実在する。** extra.yaml に重複登録しない（§5）
-- snapshot からの復旧経路が §3 に存在せず、§6 の障害耐性が実現不能だった（§3, §6）
-- サイトへの差し込みマーカーが 2 通り書かれていた（§7）
-
-**rev.11（§2 scripts）。** `scripts/compare-head.ts` は update.yml の実質差分検出。
-ディレクトリツリーに足す（#380）。
-
-**rev.10（§2 ツリー）。** 実リポジトリにある `site/recommender.js`・
-`src/bench-recommender.ts`・`data/primary.yaml`・`data/primary_overrides.yaml`・
-`data/discovered_candidates.yaml` をディレクトリツリーへ足す（#378）。
-
-**rev.9（§3.7 CLI）。** §3.7 が `build` だけを書いていた。実装の `usage()` は
-`discover` / `review` と `build --no-embeddings` を持つ。README は #239/#243/#247
-で同期済み。SPEC を実装の正に戻す（#374）。
-
-**rev.8（§8 の開催行契約）。** §8 の `build_golden.test.ts` 行が、rev.4 以前の
-「開催回が index.html に届いている」を残していた。実装固定は
-`index.html has no meeting rows`。開催日は `upcoming.md`（#372）。
-
-**rev.7（推薦 CDN の例外）。** §7 の「外部 CDN・依存ライブラリなし」はコア UI
-（表・絞り込み・システムフォント）に限る。§10 の推薦は sibling の
-`recommender.js` と、任意の CDN 遅延ロード（transformers.js / pdf.js）を使う。
-未接続時は語彙スコアと TXT 入力へフォールバックする（#370）。
-
-**rev.6（upcoming.md の窓を設定可能に）。** `config.yaml` の `site.upcoming_days`
-（既定 180）を `upcoming.md` の窓として実際に読むようにした。宣言のみで読まれず
-常に 180 日で固定されていた契約バグ（#95）を解消し、`llms.txt` の説明も同じ値に
-合わせた（§4）。実装・テスト固定は `src/build.ts` と `tests/build_golden.test.ts`。
-
-**rev.5（UI 期間窓の契約整合）。** 「締切直近 (7日以内)」プリセットがラベルと
-裏腹に 30 日窓（`win=30d`）で動作していた不一致（`9bbeabf` 由来）を解消し、
-7 日窓（`win=7d`）を期間ドロップダウンに追加した（§7）。実装・テスト固定は
-`site/template.html` と `tests/build_golden.test.ts`。
-
-**rev.4（契約整合）。** 2026-08-10 のサイト狭小化（`c85fe0a`）後も未更新だった
-SPEC §7 を実装・テスト固定（`tests/build_golden.test.ts`「index.html has no meeting rows」）
-と整合させた。
-
-- サイト表は投稿締切（概要・論文）のみ表示し、開催・採否通知・カメラレディ等の行を
-  出さない（§7）。開催日は `upcoming.md`（§4）で配信する
-- 開催行の過去判定（終了日 + 1 日）・残り日数表示の規則は `upcoming.md` 側（§4）に
-  定めるものとし、§7 からはその参照に改めた
-
-**rev.3（生成物の実測レビュー反映済み）。** rev.2 の規則のうち、生成物を実測して
-誤りが確認されたものを直した。
-
-- 締切の重複統合が源を区別せず一律 3600 秒だった。源をまたぐ食い違いは 24 時間まで
-  分布する一方、同一源の同時刻 2 件は別トラックのことがある。規則を源ごとに分けた（§3.6）
-- 統合時の `round` を優先源から採っていたため、round の概念が無い aideadlines が
-  ccfddl の round 2 を潰していた（実測 11 件）。源をまたぐときは大きい方を採る（§3.6）
-- `rollforward` の後に統合が走らず、残った重複が推定版へ複製されていた（§3.6）
-- 開催回の過去判定が開始日だったため、会期初日から最終日まで一覧から消えていた。
-  終了日 + 1 日で判定する（§7）
-- `upcoming.md` に開催回が 1 行も無かった（§4）
-
----
+プロジェクト名は `kamiyobi` とする。
 
 ## 1. データ源（実データ全件走査で検証済み・2026-08-09 時点）
 
@@ -128,7 +60,9 @@ Git API のファイル単位取得はレート制限に当たるので使わな
    `July 20-23, 2026` / `September 29 - October 3, 2025` / `Oct 12-16, 2025` /
    `June 28 - July 2, 2026`。
    §3 の 6 例をそのまま正規表現化した厳密版で **96.4%**、月略記の `.`・en dash・`Sept`
-   を許した寛容版で **97.4%** が構造化できることを実測済み（rev.2）。rev.4（2026-08-09）で月のみ（`November, 2026`）・月範囲（`March-April, 2025`）・括弧内 TBD 注記・`Septemper` typo を追加し、実測 **99.4%**（1143/1150、残 7 件は TBD/TBA/年のみ）。目標は 95% 以上。
+   を許した寛容版で **97.4%** が構造化できる。
+   月のみ（`November, 2026`）・月範囲（`March-April, 2025`）・括弧内 TBD 注記・`Septemper` typo も受け、実測 **99.4%**（1143/1150、残 7 件は TBD/TBA/年のみ）を満たす。
+   目標は 95% 以上。
 7. 非日付は `deadline` に `TBD` が 4 件、`date` に `TBD` が 3 件（`cgo2027` `iss25` `sp27`）。
    パース失敗はスキップし警告を出す（例外にしない）。
    `confs` 空・`timeline` 空・`deadline` 欠落・不正日付形式は 0 件。
@@ -260,49 +194,6 @@ export interface Edition { year: number; edition_id: string; link: string; place
 export interface Conference { key: string; title: string; full_name: string; link: string; rank: Record<string, string>; dblp: string | null; upstream_sub: string | null; tags: string[]; categories: string[]; editions: Edition[]; sources: string[]; }
 ```
 
-AOE = timezone(timedelta(hours=-12))          # Anywhere on Earth
-
-# 締切種別は 10 種。上流の意味を潰さないことを優先する
-DeadlineKind = str   # 'abstract'|'paper'|'supplementary'|'notification'|'camera_ready'
-                     # |'rebuttal_start'|'rebuttal_end'|'review_release'|'registration'|'other'
-
-@dataclass(frozen=True)
-class Deadline:
-    kind: DeadlineKind
-    label: str                 # 表示用（例 'Paper submission'）。上流の label を優先
-    at_utc: datetime           # tz-aware, UTC。必ず aware
-    tz_raw: str                # 元の文字列（'AoE' 等）
-    round: int = 1             # 1 起点。複数投稿ラウンド
-    comment: str | None = None
-
-@dataclass
-class Edition:
-    year: int
-    edition_id: str            # 'sigcomm26'。表示用。上流で一意ではない
-    link: str
-    place: str                 # 'Denver, Colorado, USA'
-    date_text: str             # 'August 17 - 21, 2026'（自由文のまま保持）
-    event_start: date | None
-    event_end: date | None
-    deadlines: list[Deadline] = field(default_factory=list)
-    estimated: bool = False    # 推定で生成した版
-    source: str = ''           # 'ccfddl' | 'aideadlines' | 'local'
-
-@dataclass
-class Conference:
-    key: str                   # 正規化キー。§3.1 の規則で決まる。例 'sigcomm'
-    title: str                 # 'SIGCOMM'
-    full_name: str
-    link: str
-    rank: dict[str, str] = field(default_factory=dict)   # {'ccf':'A','core':'A*'}
-    dblp: str | None = None
-    upstream_sub: str | None = None    # ccfddl の sub。分類とキー曖昧性解消に使う
-    tags: list[str] = field(default_factory=list)
-    categories: list[str] = field(default_factory=list)  # merge 段階で確定
-    editions: list[Edition] = field(default_factory=list)
-    sources: list[str] = field(default_factory=list)
-```
-
 ### 3.1 キーの決め方（衝突が実在するので規則を凍結する）
 
 ```ts
@@ -357,7 +248,7 @@ export function isConfirmedTimezone(tzRaw: string | null | undefined): boolean;
 // 'PST'/'PDT'/'EST'/'EDT'/'CET'/'CEST' 等は文字どおり固定オフセット
 // 文脈の無い 'CST'/'IST'/'BST'、未知・欠落は unconfirmed
 // IANA 名（'/' を含む）-> {kind:'iana', name: <そのまま>}
-// resolveTz は旧互換フォールバックとして unconfirmed を UTC に寄せる
+// resolveTz は互換 API として unconfirmed を UTC に寄せる
 
 export function parseInstant(text: unknown, tzRaw: string | null | undefined): Date | null;
 // 'YYYY-MM-DD HH:MM:SS' / 'YYYY-MM-DD HH:MM' / 'YYYY-MM-DD' を受ける
@@ -607,7 +498,6 @@ node --experimental-strip-types src/cli.ts review [--candidates data/discovered_
 `--no-embeddings` は `embeddings.json` を書かない（テスト用・高速化）。
 `discover` は穴場の会議・ジャーナルを探索し、`review` は候補を締切昇順・重複・
 predatory 疑い付きで一覧する。
-（rev.1 にあった `--no-fetch` は `--offline` と区別がつかないので削除した。）
 
 ---
 
@@ -700,9 +590,7 @@ last-known-good との比較では、同一 slot の延長は通し、公式 evi
 カテゴリは `hpc` / `networking` / `systems` / `ai` / `security` の 5 つ。
 方針は **上流サブ分野の丸ごと取り込み + 例外リスト**（新規会議が自動で現れることが要件）。
 
-rev.1 の設定を実データに当てたところ、351 会議中カテゴリが付くのは 196、
-rank_filter 通過は 149 で、**HotNets・APNet・SIGMETRICS・MLSys・USENIX ATC・Euro-Par が
-落ちていた**。以下はその実測を踏まえた修正版である。
+実データ全件に対して、HotNets・APNet・SIGMETRICS・MLSys・USENIX ATC・Euro-Par を落とさない設定を契約とする。
 
 ```yaml
 key_overrides:            # §3.1。固定値。勝手に変えない
@@ -734,7 +622,7 @@ rank_filter:
   # 3 つの OR。'N' とキー欠落は「該当ランク無し」であり通過条件に数えない
   venue_allowlist: [hotnets, apnet, apsys, hot-chips, hotstorage, sec-edge]
                           # ランクに関わらず必ず残す
-  keep_sources: [local]   # rev.1 の keep_if_no_rank は hf 全 68 会議を素通りさせるので廃止
+  keep_sources: [local]   # local はランクに関わらず残す
 ```
 
 **綴りの罠（実データと照合済み）**: `atc` は存在せず `sigops-atc`（USENIX ATC 相当、ccf A）、
@@ -744,7 +632,7 @@ rank_filter:
 （実時間システム、TSN/DetNet に近い）も同様。MX 全体を取り込むと `www` `miccai` 等が
 混ざるので、venue_slugs で名指しして拾う。`data/extra.yaml` に MLSys を重複登録しない。
 
-**DS 分野の全数割り当て**: DS 60 会議のうち rev.1 では 44 会議が無カテゴリだった。
+**DS 分野の全数割り当て**: DS 60 会議はすべて分類対象である。
 `conference/DS/` を一件ずつ見て hpc / systems / exclude のいずれかに割り当て、
 未分類が 0 件であることを検査スクリプトで実測すること。
 
@@ -908,8 +796,7 @@ on:
   固定 origin に限定する。`unsafe-inline` は単一テンプレート内の既存 inline script/style
   を維持するためだけに使い、外部 origin の wildcard は許可しない。
 - ビルド時に、テンプレート中の文字列 **`/*__DATA__*/null`** が
-  `data.json` 相当の JSON リテラルに置換される。これが唯一のマーカーである
-  （rev.1 にあった `<!--DATA-->` は削除した）。
+  `data.json` 相当の JSON リテラルに置換される。これが唯一のマーカーである。
   ビルドは JSON を JS ソースへ埋めるので `<` を `<` に、
   U+2028 / U+2029 をエスケープすること（実データに `&` を含む文字列が 17 箇所ある）。
   テンプレートが無ければ警告して index.html をスキップする（テストのため）。
@@ -993,17 +880,18 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 
 ## 10. 論文推薦システム（`site/recommender.js`・`src/embeddings.ts`）
 
-論文タイトル/キーワード → 会議推薦のスコアリング。本番パスはブラウザ
+論文タイトル/キーワード → 会議推薦のスコアリング。実行パスはブラウザ
 （`site/template.html`）と恒久ベンチ（`npm run bench`）が同一コードを共有する。
 
-### 10.1 スコア構成（実測で確定した最終形）
+### 10.1 スコア構成
 
 - 語彙スコア（`breakdown`）: 会議名・分野シグナル・VENUE_PAPERS 語彙との一致。
   適応ブレンド `vocabWeight`（EN: 内容語数 ≤4→0.25 / ≥5→0.4、JP: 0.6）。
 - セマンティックスコア（`semanticScore`）: 埋め込み cosine。
   `public/embeddings.json`（`src/embeddings.ts` で生成、会議セット変化で自動再生成）。
 - PRF（擬似関連性フィードバック）: 掲載先タグ付き論文はタグ会議の埋め込みを
-  0.3 ブレンド。タグ付き top1 79%→97%（R8 実測）。
+  0.3 ブレンド。
+  タグ付き評価の基準値は PRF なし top1 79%、PRF あり top1 97%。
 - 日本語: 多言語モデルを遅延ロード。語彙重み 0.6。normKey の FILLER 除去と
   語境界一致（単複形 s? 許容）を適用。
 
@@ -1018,11 +906,11 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 ### 10.3 会議プロファイル拡充手順（`data/venue-profiles.json`）
 
 失敗会議（golden で top5 外）の語彙を補う代表論文リストは、schema 2 の
-provenance-bearing artifact から生成する。各論文は `title` / `year` / `source` /
+出典情報付きデータから生成する。各論文は `title` / `year` / `source` /
 `source_url` / `collected_at` を持ち、`selection` の `method` /
 `max_prototypes` / `source_year_max` は全会議で共通でなければならない。
 現在の共通方針は、出典リスト順を保つ `source-order-first`、上限 26、source year
-上限 2025 である。`VENUE_PAPERS` はこの artifact から派生する互換ビューであり、
+上限 2025 である。`VENUE_PAPERS` はこのデータから派生する互換ビューであり、
 直接編集しない。
 
 **拡充手順**:
@@ -1033,12 +921,12 @@ provenance-bearing artifact から生成する。各論文は `title` / `year` /
    で正規化・検証・hash 付与する。空の provenance、重複タイトル、混在 cutoff、
    cutoff 超過、収集時点より未来の年は失敗させる。
 3. `GOLDEN_EN`（テストセット）と重複しない論文だけを採用する
-   （**同一タイトルを両方に入れるとリークになり、A/B が偽陽性になる** — R26 事故）。
+   （**同一タイトルを両方に入れるとリークになり、A/B が偽陽性になる**）。
 4. `npx vitest run tests/recommender.test.ts -t "リークなし"` と
    `npm run bench -- --golden-en` で副作用を確認する。失敗例を見て個別に継ぎ足さず、
-   同じ選定方針で artifact を再生成する。
+   同じ選定方針で出典情報付きデータを再生成する。
 
-適用済み: usenix-security / rtss / rtas / icdcs / ndss / osdi / sosp / icml /
-eurosys / ppopp（R22-R24）。rtss・usenix-security は論文個別ベクトル
-（paperVecs）も使用。paperVecs 適用条件は「1 分野に収まる + 語彙非衝突」の
-2 条件（R21 で最終化: usenix-security・rtss のみ）。
+適用対象は usenix-security / rtss / rtas / icdcs / ndss / osdi / sosp / icml /
+eurosys / ppopp。
+rtss・usenix-security は論文個別ベクトル（paperVecs）も使用する。
+paperVecs 適用条件は「1 分野に収まる + 語彙非衝突」の 2 条件であり、対象は usenix-security・rtss のみである。

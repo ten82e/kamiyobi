@@ -92,7 +92,7 @@ export function compareToHead(path: string): 0 | 1 {
   }
   const prevNorm = normalizeData(prev);
   const nextNorm = normalizeData(next);
-  // 読めない側は書きかけとみなしてコミットしない（従来の挙動を維持）。
+  // 読めない側は書きかけとみなし、コミット対象にしない。
   if (prevNorm === null || nextNorm === null) return 0;
   return prevNorm === nextNorm ? 0 : 1;
 }

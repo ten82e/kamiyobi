@@ -148,7 +148,7 @@ export function dateOnly(d: Date | null | undefined): Date {
 
 const PAD2 = (n: number): string => String(n).padStart(2, "0");
 
-/** Python's str ordering: code-point order, locale-independent. */
+/** Compare strings by code point without locale-dependent collation. */
 export function cmpStr(a: string | null | undefined, b: string | null | undefined): number {
   const sa = String(a ?? "");
   const sb = String(b ?? "");
@@ -594,7 +594,7 @@ function parseJapaneseRange(
 ): { matched: boolean; range: [Date | null, Date | null] } {
   // 全角数字・記号を正規化 (２０２６ -> 2026, ～ -> 〜)
   // extra.yaml: '特集号予定 2027年9月号' — drop a leading label before YYYY年
-  // and a trailing 号 (journal-issue marker) so the existing month branch matches (#376).
+  // and a trailing 号 (journal-issue marker) so the existing month branch matches.
   let norm = s.normalize("NFKC").replace(/\s+/g, "");
   norm = norm.replace(/^.*?(?=\d{4}年)/u, "").replace(/号$/u, "");
 
@@ -675,7 +675,7 @@ export function parseDateRange(
   let s = String(text).replace(/[\u2010-\u2015\u2212]/g, "-");
   s = s.replace(/\s+/g, " ").trim();
   // Drop trailing parenthetical notes (回次・併催名・TBD・場所など).
-  // extra.yaml house style: '2026年8月6日-7日 (SWoPP 2026 / 第205回)' (#368).
+  // extra.yaml house style: '2026年8月6日-7日 (SWoPP 2026 / 第205回)'.
   // ASCII and fullwidth parens; repeat so stacked notes fall off.
   for (;;) {
     const stripped = s.replace(/\s*[(（][^)）]*[)）]\s*$/u, "").trim();
@@ -712,7 +712,7 @@ export function parseDateRange(
       // A standalone four-digit year is an intentional year-only value
       // (e.g. data/extra.yaml IPSJ/IEICE editions whose exact dates are
       // not published): keep the null pair silently.  'TBD 2027' is the
-      // same contract with an explicit unpublished marker (#388).
+      // same contract with an explicit unpublished marker.
       // An impossible day (0, 32+, 3-digit) is not: fail closed instead
       // of fabricating a month-only span.
       if (!m1.invalidDay && !/^\d{4}$/.test(s) && !/^TBD\s+\d{4}$/i.test(s)) {
@@ -818,7 +818,7 @@ const REGISTRATION = new Set(["registration", "reviewer_registration", "commitme
  * a generic term ("deadline" / "submission" etc.). Posters, art shows, student
  * volunteering, workshops, competitions, awards and demos are real deadlines
  * but not paper-submission deadlines; publishing them as kind:paper pollutes
- * the recommendation index and the UI's 投稿締切 filter (#516).
+ * the recommendation index and the UI's 投稿締切 filter.
  * "Art Papers"-style proceedings tracks are NOT listed: their label keeps the
  * word "papers" as a whole word, which the patterns below do not match.
  */
@@ -833,7 +833,7 @@ export function refineKindWithLabel(
 ): DeadlineKind {
   if (kind !== "paper" && kind !== "abstract") return kind;
   // 明示的な型語 (paper / full_paper / abstract 等) で宣言された行は人間または
-  // ソースの意図を反映するため、label 語彙で格下げしない (#520)。
+  // ソースの意図を反映するため、label 語彙で格下げしない。
   // 汎用語 ("deadline" / "submission" / 空) のときだけ refine を適用する。
   if (rawType !== undefined) {
     const t = String(rawType ?? "")
