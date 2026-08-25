@@ -142,10 +142,19 @@ interface RecommendationResult {
     semanticRank: number | null;
     rrf: number;
     evidence: Array<SignalEvidence | LineEvidence>;
+    probability: number;
   };
   availability: Availability;
   match: ScoreBreakdown;
   boosted: boolean;
+}
+
+interface LinearRerankerModel {
+  version: 1;
+  intercept: number;
+  weights: Record<string, number>;
+  blend: number;
+  confidence_thresholds: { sufficient: number; ambiguous: number };
 }
 interface Availability {
   kind: string;
@@ -1396,6 +1405,45 @@ const Recommender = (() => {
   const CONFIDENCE_TOPIC_MIN = 40;
   const CONFIDENCE_SUFFICIENT_MIN = 55;
   const CONFIDENCE_MARGIN_MIN = 10;
+  let rerankerModel: LinearRerankerModel | null = null;
+
+  function setReranker(value: unknown) {
+    if (!value || typeof value !== "object") {
+      rerankerModel = null;
+      return;
+    }
+    const model = value as Partial<LinearRerankerModel>;
+    rerankerModel =
+      model.version === 1 &&
+      Number.isFinite(model.intercept) &&
+      model.weights !== null &&
+      typeof model.weights === "object" &&
+      Number.isFinite(model.blend) &&
+      model.confidence_thresholds !== null &&
+      typeof model.confidence_thresholds === "object"
+        ? (model as LinearRerankerModel)
+        : null;
+  }
+
+  function rerankerProbability(entry: RecommendationEntry, lines: readonly PaperRecord[]): number {
+    const weights = rerankerModel?.weights ?? {};
+    const feature = (name: string, value: number) => (weights[name] ?? 0) * value;
+    const languageMatch =
+      lines.some((line) => hasJapanese(paperText(line))) ===
+      hasJapanese(`${entry.row.conf.title ?? ""} ${entry.row.conf.full_name ?? ""}`)
+        ? 1
+        : 0;
+    const z =
+      (rerankerModel?.intercept ?? 0) +
+      feature("lexical_score", entry.lexicalScore / 100) +
+      feature("semantic_score", entry.semantic / 100) +
+      feature("category_overlap", entry.boosted ? 1 : 0) +
+      feature("venue_name_evidence", (entry.match.agg?.name ?? 0) > 0 ? 1 : 0) +
+      feature("prior_venue", entry.match.venueHit ? 1 : 0) +
+      feature("language_match", languageMatch) +
+      feature("venue_kind", ["paper", "journal"].includes(entry.row.kind) ? 1 : 0);
+    return 1 / (1 + Math.exp(-z));
+  }
 
   function confidenceState(evidenceStrength: number, margin: number): Confidence {
     if (!Number.isFinite(evidenceStrength) || evidenceStrength < CONFIDENCE_TOPIC_MIN)
@@ -1532,7 +1580,19 @@ const Recommender = (() => {
               ? topEvidence - secondEvidence
               : Infinity
             : entry.evidenceStrength - topEvidence;
-        const confidence = confidenceState(entry.evidenceStrength, margin);
+        const probability = rerankerProbability(entry, lines);
+        const thresholds = rerankerModel?.confidence_thresholds;
+        const confidence = thresholds
+          ? probability >= thresholds.sufficient
+            ? "sufficient"
+            : probability >= thresholds.ambiguous
+              ? "ambiguous"
+              : "insufficient"
+          : confidenceState(entry.evidenceStrength, margin);
+        const blend = Math.max(0, Math.min(1, rerankerModel?.blend ?? 0));
+        const rankingScore = rerankerModel
+          ? Math.round(score * (1 - blend) + probability * 100 * blend)
+          : score;
         const evidence: Array<SignalEvidence | LineEvidence> = [
           ...(entry.match.signalEvidence || entry.match.evidence),
         ];
@@ -1542,8 +1602,8 @@ const Recommender = (() => {
           venueKey: String(entry.row.conf?.key || key),
           row: entry.row,
           fit: {
-            score,
-            rankingScore: score,
+            score: rankingScore,
+            rankingScore,
             evidenceStrength: entry.evidenceStrength,
             confidence,
             label: fitLabel(confidence),
@@ -1553,6 +1613,7 @@ const Recommender = (() => {
             semanticRank,
             rrf: Number(rrf.toFixed(8)),
             evidence,
+            probability: Number(probability.toFixed(6)),
           },
           availability: availability(entry.row, safeNow),
           match: entry.match,
@@ -2008,6 +2069,7 @@ const Recommender = (() => {
     paperWeights: paperWeights,
     breakdown: breakdown,
     venueRecommendations: venueRecommendations,
+    setReranker: setReranker,
     confidenceState: confidenceState,
     fitLabel: fitLabel,
     journalRows: journalRows,

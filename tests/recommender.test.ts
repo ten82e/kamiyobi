@@ -942,6 +942,28 @@ describe("venue recommendation fusion", () => {
     est: false,
   });
 
+  it("applies the published linear reranker and calibrated probability", () => {
+    R.setReranker({
+      version: 1,
+      intercept: -1,
+      weights: { lexical_score: 2 },
+      blend: 1,
+      confidence_thresholds: { sufficient: 0.7, ambiguous: 0.4 },
+    });
+    try {
+      const result = R.venueRecommendations(
+        [row("gpu", "GPU Systems")],
+        R.parsePaperLines("GPU scheduling | gpu"),
+        null,
+        NOW,
+      )[0];
+      expect(result.fit.probability).toBeGreaterThan(0);
+      expect(result.fit.score).toBe(Math.round(result.fit.probability * 100));
+    } finally {
+      R.setReranker(null);
+    }
+  });
+
   it("unions a semantic-only venue with lexical candidates", () => {
     const result = R.venueRecommendations(
       [row("lexical", "GPU Systems"), row("semantic", "Distributed Inference")],

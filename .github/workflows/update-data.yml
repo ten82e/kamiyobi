@@ -39,12 +39,7 @@ jobs:
       - name: Validate generated production data
         run: npm run validate:data -- public/data.json --json
       - name: Health gate
-        run: |
-          curl --fail --silent --show-error --location --retry 2 \
-            'https://ten82e.github.io/kamiyobi/health.json' \
-            -o /tmp/last-known-good-health.json
-          node scripts/health-gate.ts public/health.json --require-baseline \
-            /tmp/last-known-good-health.json /tmp/next-last-known-good-health.json
+        run: node scripts/health-gate.ts public/health.json --require-baseline /tmp/kamiyobi-baseline/health.json /tmp/next-last-known-good-health.json
       - name: Recommendation Top-5 delta
         run: npm run --silent bench -- --data-delta tests/fixtures/recommendation-data-delta.json --data-delta-before /tmp/kamiyobi-baseline/recommendation-index.json --data-delta-after public/recommendation-index.json --json > /tmp/kamiyobi-update/recommendation-delta.json
       - name: Summarize category changes
@@ -60,6 +55,15 @@ jobs:
           cp public/health.json /tmp/kamiyobi-update/health.json
           cp data/snapshot.json data/primary_overrides.yaml data/discovered_candidates.yaml \
             /tmp/kamiyobi-update/data/
+      - name: Summarize deadline semantic changes
+        run: |
+          node --input-type=module <<'NODE' > /tmp/kamiyobi-update/deadline-delta.md
+          import { readFileSync } from "node:fs";
+          import { summarizeDeadlineChanges } from "./scripts/validate-data.ts";
+          const before = JSON.parse(readFileSync("/tmp/kamiyobi-baseline/data.json", "utf8"));
+          const after = JSON.parse(readFileSync("public/data.json", "utf8"));
+          console.log(summarizeDeadlineChanges(before, after).summary);
+          NODE
       - name: Upload generated update
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -159,12 +163,15 @@ jobs:
           const health = JSON.parse(readFileSync("/tmp/kamiyobi-update/health.json", "utf8"));
           const recommendation = JSON.parse(readFileSync("/tmp/kamiyobi-update/recommendation-delta.json", "utf8"));
           const categoryChanges = readFileSync("/tmp/kamiyobi-update/category-delta.md", "utf8").trim();
+          const deadlineChanges = readFileSync("/tmp/kamiyobi-update/deadline-delta.md", "utf8").trim();
           console.log("## Automated data update");
           console.log(`- health: tracked venues ${health.tracked_venues}; source failures: ${health.source_failures.length ? health.source_failures.join(", ") : "none"}; warnings: ${health.parse_warning_count}`);
           console.log(`- recommendation Top-5 changes: ${recommendation.changed_top5.length ? recommendation.changed_top5.join(", ") : "none"}`);
           console.log(`- new venues in Top-5: ${recommendation.new_venues_in_top5.length ? recommendation.new_venues_in_top5.join(", ") : "none"}`);
           console.log("## Validator category changes");
           console.log(categoryChanges);
+          console.log("## Deadline semantic changes");
+          console.log(deadlineChanges);
           NODE
           if [ -n "$pr_number" ]; then
             if ! gh pr edit "$pr_number" --title 'chore: update deadline data' --body-file /tmp/data-pr-body.md; then

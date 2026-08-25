@@ -188,6 +188,49 @@ it("requires fallback coverage for every failed source", () => {
   expect(evaluateHealthGate(current, null).ok).toBe(true);
 });
 
+it("gates stale observations, new warning codes, and new identity conflicts", () => {
+  const previous = {
+    ...health([]),
+    warning_codes: { KNOWN: { count: 1, messages: ["known"] } },
+    identity_conflicts: { venue: 0, edition: 0, new_since_baseline: 0, details: [] },
+  };
+  const current = {
+    ...health([]),
+    warning_codes: {
+      KNOWN: { count: 1, messages: ["known"] },
+      NEW: { count: 1, messages: ["new"] },
+    },
+    identity_conflicts: {
+      venue: 1,
+      edition: 0,
+      new_since_baseline: 0,
+      details: [{ scope: "venue" as const, reason: "key-collision", subject: "x" }],
+    },
+    source_metadata: {
+      ccfddl: {
+        source: "ccfddl",
+        status: "snapshot-fallback" as const,
+        revision: "r",
+        fetchedAt: "2026-08-01T00:00:00Z",
+        contentHash: "h",
+        cacheAgeSeconds: 90000,
+        conferenceCount: 1,
+        editionCount: 1,
+        deadlineCount: 1,
+        observationStatus: "stale" as const,
+      },
+    },
+  };
+  const result = evaluateHealthGate(current, previous);
+  expect(result.reasons).toEqual(
+    expect.arrayContaining([
+      "source observation is stale: ccfddl",
+      "new warning code: NEW",
+      "identity conflicts increased by 1",
+    ]),
+  );
+});
+
 it("requires newer distinct official field evidence for earlier moves", () => {
   const previous = health(
     [exact("2026-09-01T12:00:00Z", { evidence: [official("old", "2026-08-01T00:00:00Z")] })],

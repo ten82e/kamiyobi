@@ -144,6 +144,7 @@ kamiyobi/
 │   ├── primary.yaml             # 一次ソース URL 一覧
 │   ├── primary_overrides.yaml   # 一次ソース抽出結果（自動）              [自動]
 │   ├── discovered_candidates.yaml # discover の既定出力
+│   ├── recommender-reranker.json # 軽量推薦 reranker の固定係数
 │   └── snapshot.json            # 生成物(コミットされる。上流障害時の退避) [自動]
 ├── src/
 │   ├── model.ts                 # 型・時刻解決・日付パーサ・snapshot 入出力
@@ -177,6 +178,7 @@ kamiyobi/
 │   ├── health-gate.ts           # 直近の健全な公開結果との配信前健全性ゲート
 │   ├── generate-venue-profiles.ts # 出典情報付きプロフィール成果物の再生成
 │   ├── observe-cfp.ts           # CFP 本文・応答・抽出候補の保存
+│   ├── restore-recommendation-bundle.ts # 互換推薦 artifact の検証・復元
 │   ├── validate-data.ts         # 公開データの意味検査
 │   ├── verify-cfp.ts            # CFP 観測の項目別検証
 │   ├── promote-candidates.ts    # promotion batch の決定・manifest 生成
@@ -362,8 +364,9 @@ export async function fetchTarball(
 4. snapshot も空なら異常終了する（黙って空の公開データを公開しない）。
 
 snapshot は全データ源が `fresh` の online build に限り、build の最後に `data.json` から
-`generated_at` を除いて書き込む。cache-fallback・snapshot-fallback・failed・offline の
-いずれかを含む build は snapshot を更新しない。
+`generated_at` を除いて書き込む。各取得源の revision、入力 hash、取得時刻、件数を
+`snapshot_metadata` に保存し、offline build はこの観測時刻から鮮度を判定する。
+cache-fallback・snapshot-fallback・failed・offline のいずれかを含む build は snapshot を更新しない。
 
 ### 3.6 統合
 
@@ -546,7 +549,8 @@ node --experimental-strip-types src/cli.ts review [--candidates data/discovered_
 | `.nojekyll` | Pages の Jekyll 処理を無効化 |
 
 `health.json` は `profile_hash`、`confirmed_future_deadlines`、`estimated_future_deadlines`、
-`source_failures`、`snapshot_fallback`、`parse_warning_count`、カテゴリ別件数、
+`source_failures`、`snapshot_fallback`、`build_input_mode`、観測時刻・観測鮮度、
+安定 warning code、identity conflict、`parse_warning_count`、カテゴリ別件数、
 必須会議の存在状態、および schema 2 の `deadline_refs` を持つ。各 ref の
 `deadline_id` は `venue|edition_id|kind|round|track` で、`exact` は `at_utc`、`date-only` は `local_date` に値を分離する。
 直近の健全な公開結果との比較では、同一枠の延長は通し、公式根拠のない前倒しと
@@ -556,7 +560,9 @@ node --experimental-strip-types src/cli.ts review [--candidates data/discovered_
 `publish.json` は最終的な公開セットを検査する。`semantic_status` は埋め込みが有効なとき
 `ready`、省略または検証に失敗したとき `lexical-only` になる。成果物一覧の `artifacts` は `publish.json`
 自身を除く各公開ファイルのバイト数と SHA-256 を持つ。
-schema 3 は `source_commit`、`data_commit`、`workflow_run_id`、`dirty_worktree`、ビルド入力の SHA-256、promotion batch の SHA-256、build 時刻、Node 版、offline/cache 方針、再実行コマンドを持つ。
+schema 4 は `source_commit`、`data_commit`、`workflow_run_id`、`dirty_worktree`、ビルド入力の SHA-256、promotion batch の SHA-256、build 時刻、Node 版、offline/cache 方針、再実行コマンドを持つ。
+`content_id` は source commit・入力・promotion・profile・モデル revision から計算し、
+`build_id` は `content_id` と生成時刻から計算する。
 固定時刻と同じ入力で生成した公開物はバイト一致しなければならない。
 `data.json` は venue と edition の明示 identity を保持し、snapshot 復元後も名寄せ根拠を失わない。
 
@@ -773,10 +779,10 @@ conferences:
 - GitHub App の client ID と秘密鍵が設定済みなら installation token を使う。
 - App が未設定なら `GITHUB_TOKEN` で PR を更新し、`workflow_dispatch` で CI を明示起動する。
 - PR 作成失敗を成功扱いせず、孤立した自動 branch を残さない。
-- 締切ビルドの後、任意の推薦一式をキャッシュから復元・生成・検証する。
+- 締切ビルドの後、同じ main commit の nightly が生成した推薦 bundle を artifact から復元・検証する。
   埋め込みの生成または検証に失敗した場合は `public/embeddings.json` を公開物から除き、
   `recommendation-index.json` と締切一覧は、語彙検索のみで動作する形で残す。`scripts/health-gate.ts`
-  は公開済み `health.json` を直近の健全な公開結果として比較し、確定締切枠の根拠のない消失や
+  は同一 `BUILD_NOW` で main から再構築した `health.json` を比較対象とし、確定締切枠の根拠のない消失や
   根拠なしの前倒し、必須会議欠落、警告急増、snapshot 無しのデータ源障害を検出した場合だけ
   PR 更新を止める。同一枠の延長、新しい枠の追加、経過した締切の削除、
   `profile_hash` の変化では止めない。
@@ -793,8 +799,11 @@ conferences:
 
 ### `.github/workflows/deploy.yml`
 
-- `main` への push だけで起動する。
-- merge 済みの commit を checkoutし、ビルド、意味検査、health gate、公開物検査を通してから Pages artifact を作る。
+- `main` への push と、main の nightly recommendation bundle 完了で起動する。
+- merge 済みの commit を checkoutし、ネットワークなし・埋め込み生成なしでビルドする。
+  同一 commit・profile・モデル revision の bundle だけを復元し、不一致時は `lexical-only` を公開する。
+- health gate は前回成功 deploy の artifact を比較対象とし、初回だけ親 commit を同一時刻で再構築する。Pages は比較元に使わない。
+- ビルド、意味検査、health gate、公開物検査を通してから Pages artifact を作る。
 - `pages: write`、`id-token: write`、`attestations: write` は配信に必要な job だけへ与える。
 - `public/publish.json` の build provenance を attest し、`source_commit` が示す commit と公開物を結び付ける。
 - required checks が完了して main に入ったデータ以外は公開しない。
@@ -958,6 +967,9 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 - 両 split は9カテゴリ、英語と日本語、国際会議と国内会議、conference・workshop・journal・special issue、title-only・title+abstract・PDF抽出を含む。
 - heldout の単一 venue 比率は25%以下とし、複数の妥当な投稿先を許すケースを含める。
 - 実論文評価は lexical・semantic・fused の MRR、Recall@1/5/10、nDCG@10、95% bootstrap区間、層別値、abstentionを分けて報告する。
+- candidate retrieval は lexical・semantic・union の Recall@50 と oracle reranker Recall@5 を分けて報告する。
+- 軽量線形 reranker は特徴量事前値とdev評価で選んだ係数を `data/recommender-reranker.json` に固定し、
+  ECE、Brier score、precision–coverage、top-1/top-5 reliability を実際の予測確率から報告する。
 - PR の必須検査には小さな `real-paper-required-*.json` を使い、全件評価は nightly で実行する。
 - required と full はそれぞれ記録済みの回帰下限を持ち、heldout fused Recall@5 または negative abstention が下限を割れば失敗する。JSON レポートは Actions artifact に保存する。
 

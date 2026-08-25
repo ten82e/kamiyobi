@@ -30,7 +30,7 @@
 | `https://ten82e.github.io/kamiyobi/llms.txt` | 出力ファイルとデータの形を 1 枚にまとめた索引。まずここを読む |
 | `https://ten82e.github.io/kamiyobi/data.json` | 正規化済みの全データ。時刻確認済みの締切は UTC と AoE、日付のみ確認済みの締切は `local_date` と不確実性区間で表す |
 | `https://ten82e.github.io/kamiyobi/health.json` | 確定/推定締切、ソース失敗、警告数、カテゴリ件数、必須会議の健全性レポート |
-| `https://ten82e.github.io/kamiyobi/publish.json` | 公開成果物のハッシュ、元 commit、入力 hash、workflow run、build 時刻・Node 版・offline/cache 方針、`semantic_status`。公開物の再現元を示す |
+| `https://ten82e.github.io/kamiyobi/publish.json` | 公開成果物のハッシュ、`content_id` / `build_id`、元 commit、入力 hash、workflow run、build 時刻・Node 版・offline/cache 方針、`semantic_status`。公開物の再現元を示す |
 
 他に、1 行 1 締切の平坦な表 [`data.csv`](https://ten82e.github.io/kamiyobi/data.csv) と、直近 180 日の締切と開催の表 `upcoming.md` がある。
 
@@ -131,7 +131,9 @@ bot のコミットが「活動」に数えられるかは公式文書に記載�
 七つの job は変更ファイルにかかわらず実行し、main の必須チェック（required check）に指定する。
 
 `.github/workflows/deploy.yml` は main への push だけで動く。
-merge 済みの main から公開物を再生成し、health gate と manifest 検査を通した後だけ GitHub Pages へ配信する。
+merge 済みの main から公開物をネットワークなしで再生成し、同じ commit の nightly 推薦 bundle が互換なら復元する。不一致時は語彙推薦だけを残す。
+health gate は前回成功 deploy の artifact（初回は親 commit の同時刻 build）と比較し、Pages 自体を正本にしない。
+health gate と manifest 検査を通した後だけ GitHub Pages へ配信する。
 `publish.json` は元 commit、入力 hash、promotion batch、workflow run ID、dirty worktree の有無に加え、build 時刻、Node 版、offline/cache 方針、再実行コマンドを記録する。
 PR 用の小さな実論文評価は必須検査に含め、全80件ずつの dev・heldout 評価は nightly workflow で行う。
 

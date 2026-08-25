@@ -116,6 +116,7 @@ interface SiteRecommenderApi {
   blendVectors(left: number[], right: number[], weight: number): number[];
   setNameIdf(value: Record<string, unknown>): void;
   setPaperVecs(value: Record<string, number[][]> | null): void;
+  setReranker(value: Record<string, unknown> | null): void;
   venueRecommendations(
     rows: SiteRow[],
     lines: readonly unknown[],
@@ -132,6 +133,7 @@ interface SiteCatalog {
   conferences: SiteConference[];
   history_ref?: string;
   recommendation_ref?: string;
+  reranker?: Record<string, unknown>;
 }
 
 interface PdfTextItem {

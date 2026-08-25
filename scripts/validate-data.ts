@@ -128,6 +128,17 @@ export function summarizeCategoryChanges(before: unknown, after: unknown): Categ
     );
   const previous = categories(before);
   const current = categories(after);
+  const reasons = new Map(
+    categoryRecords(after).flatMap((conference) =>
+      records(conference.category_assignments).map(
+        (assignment) =>
+          [
+            `${String(conference.key ?? "")}\0${String(assignment.category ?? "")}`,
+            String(assignment.reason ?? "unknown"),
+          ] as const,
+      ),
+    ),
+  );
   const keys = [...previous.keys()].filter((key) => current.has(key)).sort();
   const changes = keys.flatMap((key) => {
     const previousValues = previous.get(key) ?? [];
@@ -145,7 +156,14 @@ export function summarizeCategoryChanges(before: unknown, after: unknown): Categ
         .map(
           ({ key, added, removed }) =>
             `- ${key}: ${[
-              added.length ? `+${added.join(",")}` : "",
+              added.length
+                ? `+${added
+                    .map(
+                      (category) =>
+                        `${category} (${reasons.get(`${key}\0${category}`) ?? "unknown"})`,
+                    )
+                    .join(",")}`
+                : "",
               removed.length ? `-${removed.join(",")}` : "",
             ]
               .filter(Boolean)
@@ -158,6 +176,124 @@ export function summarizeCategoryChanges(before: unknown, after: unknown): Categ
     added: changes.reduce((count, change) => count + change.added.length, 0),
     removed: changes.reduce((count, change) => count + change.removed.length, 0),
     summary,
+  };
+}
+
+export type DeadlineChangeRisk = "critical" | "high" | "medium" | "low" | "informational";
+
+export interface DeadlineSemanticChange {
+  slot: string;
+  before: string | null;
+  after: string | null;
+  precisionBefore: string | null;
+  precisionAfter: string | null;
+  evidenceBefore: string | null;
+  evidenceAfter: string | null;
+  risk: DeadlineChangeRisk;
+}
+
+function deadlineSemanticRows(value: unknown): Map<string, Record<string, unknown>> {
+  const rows = new Map<string, Record<string, unknown>>();
+  for (const conference of categoryRecords(value)) {
+    const venue = String(conference.key ?? "");
+    for (const edition of records(conference.editions)) {
+      const editionId = String(edition.id ?? edition.edition_id ?? edition.year ?? "");
+      for (const deadline of records(edition.deadlines)) {
+        const kind = String(deadline.kind ?? "other");
+        const slot = [
+          venue,
+          editionId,
+          kind,
+          String(deadlineRound(deadline)),
+          normalizedTrack(deadline.track, deadline.label, kind),
+        ].join(" / ");
+        rows.set(slot, deadline);
+      }
+    }
+  }
+  return rows;
+}
+
+function evidenceClass(deadline: Record<string, unknown> | undefined): string | null {
+  return (
+    records(deadline?.evidence)
+      .map((evidence) => String(evidence.sourceClass ?? evidence.source_name ?? ""))
+      .find(Boolean) ?? null
+  );
+}
+
+function semanticRisk(
+  before: Record<string, unknown> | undefined,
+  after: Record<string, unknown> | undefined,
+): DeadlineChangeRisk {
+  if (before && !after) return "high";
+  if (!before && after) return after.precision === "date-only" ? "medium" : "informational";
+  if (!before || !after) return "informational";
+  if (before.precision !== "date-only" && after.precision === "date-only") return "critical";
+  const oldValue = Date.parse(
+    deadlineValue(before, before.precision === "date-only" ? "date-only" : "exact"),
+  );
+  const newValue = Date.parse(
+    deadlineValue(after, after.precision === "date-only" ? "date-only" : "exact"),
+  );
+  if (Number.isFinite(oldValue) && Number.isFinite(newValue) && newValue < oldValue)
+    return "critical";
+  const oldEvidence = evidenceClass(before);
+  const newEvidence = evidenceClass(after);
+  if (
+    ["official-cfp", "publisher"].includes(oldEvidence ?? "") &&
+    !["official-cfp", "publisher"].includes(newEvidence ?? "")
+  )
+    return "high";
+  return "informational";
+}
+
+export function summarizeDeadlineChanges(
+  before: unknown,
+  after: unknown,
+): { changes: DeadlineSemanticChange[]; summary: string } {
+  const previous = deadlineSemanticRows(before);
+  const current = deadlineSemanticRows(after);
+  const changes = [...new Set([...previous.keys(), ...current.keys()])].sort().flatMap((slot) => {
+    const oldDeadline = previous.get(slot);
+    const newDeadline = current.get(slot);
+    const oldPrecision = oldDeadline ? String(oldDeadline.precision ?? "exact") : null;
+    const newPrecision = newDeadline ? String(newDeadline.precision ?? "exact") : null;
+    const oldValue = oldDeadline
+      ? deadlineValue(oldDeadline, oldPrecision === "date-only" ? "date-only" : "exact")
+      : null;
+    const newValue = newDeadline
+      ? deadlineValue(newDeadline, newPrecision === "date-only" ? "date-only" : "exact")
+      : null;
+    const oldEvidence = evidenceClass(oldDeadline);
+    const newEvidence = evidenceClass(newDeadline);
+    if (oldValue === newValue && oldPrecision === newPrecision && oldEvidence === newEvidence)
+      return [];
+    return [
+      {
+        slot,
+        before: oldValue,
+        after: newValue,
+        precisionBefore: oldPrecision,
+        precisionAfter: newPrecision,
+        evidenceBefore: oldEvidence,
+        evidenceAfter: newEvidence,
+        risk: semanticRisk(oldDeadline, newDeadline),
+      } satisfies DeadlineSemanticChange,
+    ];
+  });
+  return {
+    changes,
+    summary: changes.length
+      ? changes
+          .map(
+            (change) =>
+              `- ${change.slot}\n  date: ${change.before ?? "—"} -> ${change.after ?? "—"}; ` +
+              `precision: ${change.precisionBefore ?? "—"} -> ${change.precisionAfter ?? "—"}; ` +
+              `evidence: ${change.evidenceBefore ?? "—"} -> ${change.evidenceAfter ?? "—"}; risk: ${change.risk}`,
+          )
+          .join("\n")
+      : "- No deadline semantic changes",
   };
 }
 

@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "model": "linear-logit",
+  "coefficient_source": "manual-feature-prior",
+  "selected_on": "real-paper-dev",
+  "selection_metric": "fused-mrr-lcb-without-recall-at-5-regression",
+  "intercept": -1.25,
+  "weights": {
+    "lexical_score": 1.2,
+    "semantic_score": 1,
+    "category_overlap": 0.25,
+    "venue_name_evidence": 0.4,
+    "prior_venue": 0.5,
+    "language_match": 0.1,
+    "venue_kind": 0.1
+  },
+  "blend": 0.01,
+  "confidence_thresholds": {
+    "sufficient": 0.65,
+    "ambiguous": 0.35
+  }
+}

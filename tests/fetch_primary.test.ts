@@ -17,6 +17,7 @@ import {
   pageYearMismatch,
   parsePrimaryArgs,
   parsePrimaryDate,
+  primaryAdapter,
   runFetchPrimary,
   toLines,
 } from "../src/fetch-primary.ts";
@@ -35,6 +36,16 @@ function spyStderr(): void {
 }
 
 describe("fetch-primary extraction", () => {
+  it("selects a stable source-aware adapter before generic fallback", () => {
+    expect(primaryAdapter("https://easychair.org/cfp/example")).toMatchObject({
+      id: "easychair-v1",
+      structured: true,
+    });
+    expect(primaryAdapter("https://example.test/cfp")).toMatchObject({
+      id: "generic-v1",
+      structured: false,
+    });
+  });
   it("keeps TLS certificate verification enabled (#422)", () => {
     const source = readFileSync(join(REPO_ROOT, "src", "fetch-primary.ts"), "utf8");
     expect(source).not.toContain("rejectUnauthorized: false");
@@ -391,7 +402,7 @@ describe("runFetchPrimary", () => {
       const evidence = (resolved.conferences as any).partial.editions[2027].deadlines[0]
         .evidence[0];
       expect(evidence).toMatchObject({
-        sourceClass: "official-cfp",
+        sourceClass: "aggregator",
         contentHash: abstract.contentHash,
         sourceRevision: abstract.contentHash,
         verifiedFields: ["date", "time", "timezone"],
