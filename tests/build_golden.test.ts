@@ -224,6 +224,19 @@ it("toJson preserves deadline evidence, conflicts, and selection rule", () => {
   });
 });
 
+it("omits ambiguous legacy key redirects", () => {
+  const payload = toJson(
+    [
+      makeConference({ key: "fse-sc", title: "FSE", legacy_keys: ["fse"] }),
+      makeConference({ key: "fse-se", title: "FSE", legacy_keys: ["fse"] }),
+      makeConference({ key: "new", title: "New", legacy_keys: ["old"] }),
+    ],
+    {},
+    NOW,
+  );
+  expect(payload.legacy_key_redirects).toEqual({ old: "new" });
+});
+
 it("toJson preserves venue and edition identity for snapshot round-trips", () => {
   const payload = toJson(
     [

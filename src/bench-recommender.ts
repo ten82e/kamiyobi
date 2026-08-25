@@ -283,8 +283,40 @@ export interface BenchV2Result {
     {
       queries: number;
       modes: Record<"lexical" | "semantic" | "fused", BenchV2ModeResult>;
+      candidate_retrieval: {
+        lexical_recall_at_50: number;
+        semantic_recall_at_50: number;
+        union_recall_at_50: number;
+        oracle_reranker_recall_at_5: number;
+      };
+      fused_mrr_lcb: number;
+      calibration: RecommendationCalibration;
     }
   >;
+}
+
+export interface RecommendationCalibration {
+  expected_calibration_error: number;
+  brier_score: number;
+  top1_expected_calibration_error: number;
+  top1_brier_score: number;
+  top5_expected_calibration_error: number;
+  top5_brier_score: number;
+  precision_coverage: Array<{ threshold: number; precision: number | null; coverage: number }>;
+  reliability_top1: Array<{
+    lower: number;
+    upper: number;
+    confidence: number;
+    accuracy: number;
+    count: number;
+  }>;
+  reliability_top5: Array<{
+    lower: number;
+    upper: number;
+    confidence: number;
+    accuracy: number;
+    count: number;
+  }>;
 }
 
 export interface DataDeltaCase {
@@ -583,6 +615,83 @@ function benchV2Metrics(ranks: Array<number | null>): BenchV2ModeResult {
   };
 }
 
+function calibrationMetrics(
+  observations: Array<{
+    top1Probability: number;
+    top5Probability: number;
+    top1: boolean;
+    top5: boolean;
+  }>,
+): RecommendationCalibration {
+  const reliability = (field: "top1" | "top5") =>
+    Array.from({ length: 5 }, (_, index) => {
+      const lower = index / 5;
+      const upper = (index + 1) / 5;
+      const probabilityField = field === "top1" ? "top1Probability" : "top5Probability";
+      const bucket = observations.filter(
+        (item) =>
+          item[probabilityField] >= lower &&
+          (index === 4 ? item[probabilityField] <= upper : item[probabilityField] < upper),
+      );
+      return {
+        lower,
+        upper,
+        confidence: bucket.length
+          ? benchV2Round(
+              bucket.reduce((sum, item) => sum + item[probabilityField], 0) / bucket.length,
+            )
+          : 0,
+        accuracy: bucket.length
+          ? benchV2Round(bucket.filter((item) => item[field]).length / bucket.length)
+          : 0,
+        count: bucket.length,
+      };
+    });
+  const top1Reliability = reliability("top1");
+  const top5Reliability = reliability("top5");
+  const ece = (buckets: RecommendationCalibration["reliability_top1"]) =>
+    benchV2Round(
+      buckets.reduce(
+        (sum, bucket) =>
+          sum +
+          (bucket.count / Math.max(1, observations.length)) *
+            Math.abs(bucket.confidence - bucket.accuracy),
+        0,
+      ),
+    );
+  const brier = (field: "top1" | "top5") => {
+    const probabilityField = field === "top1" ? "top1Probability" : "top5Probability";
+    return benchV2Round(
+      observations.reduce(
+        (sum, item) => sum + (item[probabilityField] - Number(item[field])) ** 2,
+        0,
+      ) / Math.max(1, observations.length),
+    );
+  };
+  const top1Ece = ece(top1Reliability);
+  const top1Brier = brier("top1");
+  return {
+    expected_calibration_error: top1Ece,
+    brier_score: top1Brier,
+    top1_expected_calibration_error: top1Ece,
+    top1_brier_score: top1Brier,
+    top5_expected_calibration_error: ece(top5Reliability),
+    top5_brier_score: brier("top5"),
+    precision_coverage: [0.1, 0.5, 0.8].map((threshold) => {
+      const selected = observations.filter((item) => item.top1Probability >= threshold);
+      return {
+        threshold,
+        precision: selected.length
+          ? benchV2Round(selected.filter((item) => item.top1).length / selected.length)
+          : null,
+        coverage: benchV2Round(selected.length / Math.max(1, observations.length)),
+      };
+    }),
+    reliability_top1: top1Reliability,
+    reliability_top5: top5Reliability,
+  };
+}
+
 export function runBenchmarkV2(fixture: BenchV2Fixture): BenchV2Result {
   validateBenchV2(fixture);
   const rows = fixture.venue_profiles.map((profile) => ({
@@ -609,61 +718,138 @@ export function runBenchmarkV2(fixture: BenchV2Fixture): BenchV2Result {
           semantic: [] as Array<number | null>,
           fused: [] as Array<number | null>,
         },
+        probabilities: [] as Array<{
+          top1Probability: number;
+          top5Probability: number;
+          top1: boolean;
+          top5: boolean;
+        }>,
       },
     ]),
   ) as Record<
     BenchV2Split,
-    { queries: number; ranks: Record<"lexical" | "semantic" | "fused", Array<number | null>> }
+    {
+      queries: number;
+      ranks: Record<"lexical" | "semantic" | "fused", Array<number | null>>;
+      probabilities: Array<{
+        top1Probability: number;
+        top5Probability: number;
+        top1: boolean;
+        top5: boolean;
+      }>;
+    }
   >;
-  for (const query of fixture.queries) {
-    const lines = Recommender.parsePaperLines(
-      JSON.stringify([{ title: query.title, abstract: "", keywords: query.keywords, venue: "" }]),
-    );
-    const recommendations = Recommender.venueRecommendations(
-      rows,
-      lines,
-      query.semantic,
-      Date.parse(query.time),
-      { topN: rows.length },
-    ) as VenueRecommendation[];
-    const rank = (mode: "lexical" | "semantic" | "fused"): number | null => {
-      const ordered =
-        mode === "fused"
-          ? recommendations
-          : recommendations
-              .filter((item) =>
-                mode === "lexical" ? item.fit.lexicalScore > 0 : item.fit.semanticScore > 0,
-              )
-              .sort(
-                (a, b) =>
-                  (mode === "lexical"
-                    ? b.fit.lexicalScore - a.fit.lexicalScore
-                    : b.fit.semanticScore - a.fit.semanticScore) ||
-                  a.venueKey.localeCompare(b.venueKey),
-              );
-      const index = ordered.findIndex((item) => item.venueKey === query.key);
-      return index < 0 ? null : index + 1;
-    };
-    bySplit[query.split].queries += 1;
-    for (const mode of ["lexical", "semantic", "fused"] as const)
-      bySplit[query.split].ranks[mode].push(rank(mode));
-  }
-  return {
-    version: 2,
-    splits: Object.fromEntries(
-      BENCH_V2_SPLITS.map((split) => [
-        split,
-        {
-          queries: bySplit[split].queries,
-          modes: Object.fromEntries(
-            (Object.keys(bySplit[split].ranks) as Array<"lexical" | "semantic" | "fused">).map(
-              (mode) => [mode, benchV2Metrics(bySplit[split].ranks[mode])],
+  Recommender.setReranker(
+    JSON.parse(readFileSync(new URL("../data/recommender-reranker.json", import.meta.url), "utf8")),
+  );
+  try {
+    for (const query of fixture.queries) {
+      const lines = Recommender.parsePaperLines(
+        JSON.stringify([{ title: query.title, abstract: "", keywords: query.keywords, venue: "" }]),
+      );
+      const recommendations = Recommender.venueRecommendations(
+        rows,
+        lines,
+        query.semantic,
+        Date.parse(query.time),
+        { topN: rows.length },
+      ) as VenueRecommendation[];
+      const rank = (mode: "lexical" | "semantic" | "fused"): number | null => {
+        const ordered =
+          mode === "fused"
+            ? recommendations
+            : recommendations
+                .filter((item) =>
+                  mode === "lexical" ? item.fit.lexicalScore > 0 : item.fit.semanticScore > 0,
+                )
+                .sort(
+                  (a, b) =>
+                    (mode === "lexical"
+                      ? b.fit.lexicalScore - a.fit.lexicalScore
+                      : b.fit.semanticScore - a.fit.semanticScore) ||
+                    a.venueKey.localeCompare(b.venueKey),
+                );
+        const index = ordered.findIndex((item) => item.venueKey === query.key);
+        return index < 0 ? null : index + 1;
+      };
+      bySplit[query.split].queries += 1;
+      for (const mode of ["lexical", "semantic", "fused"] as const)
+        bySplit[query.split].ranks[mode].push(rank(mode));
+      const fusedRank = rank("fused");
+      bySplit[query.split].probabilities.push({
+        top1Probability: recommendations[0]?.fit.probability ?? 0,
+        top5Probability: Math.max(
+          0,
+          ...recommendations.slice(0, 5).map((item) => item.fit.probability),
+        ),
+        top1: fusedRank === 1,
+        top5: fusedRank !== null && fusedRank <= 5,
+      });
+    }
+    return {
+      version: 2,
+      splits: Object.fromEntries(
+        BENCH_V2_SPLITS.map((split) => [
+          split,
+          {
+            queries: bySplit[split].queries,
+            modes: Object.fromEntries(
+              (Object.keys(bySplit[split].ranks) as Array<"lexical" | "semantic" | "fused">).map(
+                (mode) => [mode, benchV2Metrics(bySplit[split].ranks[mode])],
+              ),
             ),
-          ),
-        },
-      ]),
-    ) as BenchV2Result["splits"],
-  };
+            candidate_retrieval: (() => {
+              const lexical = bySplit[split].ranks.lexical;
+              const semantic = bySplit[split].ranks.semantic;
+              const recall = (predicate: (index: number) => boolean) =>
+                benchV2Round(
+                  Array.from({ length: bySplit[split].queries }, (_, index) => index).filter(
+                    predicate,
+                  ).length / Math.max(1, bySplit[split].queries),
+                );
+              const union = (index: number) =>
+                (lexical[index] !== null && lexical[index]! <= 50) ||
+                (semantic[index] !== null && semantic[index]! <= 50);
+              return {
+                lexical_recall_at_50: recall(
+                  (index) => lexical[index] !== null && lexical[index]! <= 50,
+                ),
+                semantic_recall_at_50: recall(
+                  (index) => semantic[index] !== null && semantic[index]! <= 50,
+                ),
+                union_recall_at_50: recall(union),
+                oracle_reranker_recall_at_5: recall(union),
+              };
+            })(),
+            fused_mrr_lcb: bootstrapConfidenceInterval(bySplit[split].ranks.fused).metrics.mrr
+              .lower,
+            calibration: calibrationMetrics(bySplit[split].probabilities),
+          },
+        ]),
+      ) as BenchV2Result["splits"],
+    };
+  } finally {
+    Recommender.setReranker(null);
+  }
+}
+
+export function benchV2RequiredRegressionReasons(result: BenchV2Result): string[] {
+  const reasons: string[] = [];
+  for (const split of ["dev", "heldout"] as const) {
+    const value = result.splits[split];
+    if (value.candidate_retrieval.union_recall_at_50 < 1)
+      reasons.push(`fixed ${split} union Recall@50 regressed`);
+    if (value.candidate_retrieval.oracle_reranker_recall_at_5 < 1)
+      reasons.push(`fixed ${split} oracle reranker Recall@5 regressed`);
+    if (value.modes.fused["recall@5"] < 1) reasons.push(`fixed ${split} fused Recall@5 regressed`);
+    if (value.fused_mrr_lcb < 1) reasons.push(`fixed ${split} fused MRR LCB regressed`);
+    if (
+      !Number.isFinite(value.calibration.expected_calibration_error) ||
+      !Number.isFinite(value.calibration.brier_score)
+    )
+      reasons.push(`fixed ${split} calibration is invalid`);
+  }
+  return reasons;
 }
 
 const REAL_PAPER_CATEGORIES = [
@@ -802,25 +988,7 @@ export interface RealPaperSplitResult {
     union_recall_at_50: number;
     oracle_reranker_recall_at_5: number;
   };
-  calibration: {
-    expected_calibration_error: number;
-    brier_score: number;
-    precision_coverage: Array<{ threshold: number; precision: number | null; coverage: number }>;
-    reliability_top1: Array<{
-      lower: number;
-      upper: number;
-      confidence: number;
-      accuracy: number;
-      count: number;
-    }>;
-    reliability_top5: Array<{
-      lower: number;
-      upper: number;
-      confidence: number;
-      accuracy: number;
-      count: number;
-    }>;
-  };
+  calibration: RecommendationCalibration;
 }
 
 export interface RealPaperNegativeRecord {
@@ -1388,42 +1556,23 @@ function realPaperSplitResult(
   records: RealPaperRecord[],
   rankings: Record<string, RealPaperRanks>,
   confidence: Record<string, string>,
-  predictedProbability?: Record<string, number>,
+  predictedProbability?: Record<string, { top1: number; top5: number }>,
 ): RealPaperSplitResult {
   const metrics = realPaperMetrics(records, rankings);
-  const probabilities = records.map((record) => ({
-    probability:
-      predictedProbability?.[record.paper_id] ??
-      (confidence[record.paper_id] === "sufficient"
+  const probabilities = records.map((record) => {
+    const fallback =
+      confidence[record.paper_id] === "sufficient"
         ? 0.8
         : confidence[record.paper_id] === "ambiguous"
           ? 0.5
-          : 0.1),
-    top1: (rankings[record.paper_id]?.fused ?? Infinity) <= 1,
-    top5: (rankings[record.paper_id]?.fused ?? Infinity) <= 5,
-  }));
-  const reliability = (field: "top1" | "top5") =>
-    Array.from({ length: 5 }, (_, index) => {
-      const lower = index / 5;
-      const upper = (index + 1) / 5;
-      const bucket = probabilities.filter(
-        (item) =>
-          item.probability >= lower &&
-          (index === 4 ? item.probability <= upper : item.probability < upper),
-      );
-      return {
-        lower,
-        upper,
-        confidence: bucket.length
-          ? benchV2Round(bucket.reduce((sum, item) => sum + item.probability, 0) / bucket.length)
-          : 0,
-        accuracy: bucket.length
-          ? benchV2Round(bucket.filter((item) => item[field]).length / bucket.length)
-          : 0,
-        count: bucket.length,
-      };
-    });
-  const top5Reliability = reliability("top5");
+          : 0.1;
+    return {
+      top1Probability: predictedProbability?.[record.paper_id]?.top1 ?? fallback,
+      top5Probability: predictedProbability?.[record.paper_id]?.top5 ?? fallback,
+      top1: (rankings[record.paper_id]?.fused ?? Infinity) <= 1,
+      top5: (rankings[record.paper_id]?.fused ?? Infinity) <= 5,
+    };
+  });
   const candidate = records.map((record) => rankings[record.paper_id]!);
   const recall = (predicate: (ranks: RealPaperRanks) => boolean) =>
     benchV2Round(candidate.filter(predicate).length / Math.max(1, candidate.length));
@@ -1447,33 +1596,7 @@ function realPaperSplitResult(
           (ranks.semantic !== null && ranks.semantic <= 50),
       ),
     },
-    calibration: {
-      expected_calibration_error: benchV2Round(
-        top5Reliability.reduce(
-          (sum, bucket) =>
-            sum +
-            (bucket.count / Math.max(1, probabilities.length)) *
-              Math.abs(bucket.confidence - bucket.accuracy),
-          0,
-        ),
-      ),
-      brier_score: benchV2Round(
-        probabilities.reduce((sum, item) => sum + (item.probability - Number(item.top5)) ** 2, 0) /
-          Math.max(1, probabilities.length),
-      ),
-      precision_coverage: [0.1, 0.5, 0.8].map((threshold) => {
-        const selected = probabilities.filter((item) => item.probability >= threshold);
-        return {
-          threshold,
-          precision: selected.length
-            ? benchV2Round(selected.filter((item) => item.top5).length / selected.length)
-            : null,
-          coverage: benchV2Round(selected.length / Math.max(1, probabilities.length)),
-        };
-      }),
-      reliability_top1: reliability("top1"),
-      reliability_top5: top5Reliability,
-    },
+    calibration: calibrationMetrics(probabilities),
   };
 }
 
@@ -1484,12 +1607,12 @@ export function buildRealPaperResult(
     dev: {
       rankings: Record<string, RealPaperRanks>;
       confidence: Record<string, string>;
-      probability?: Record<string, number>;
+      probability?: Record<string, { top1: number; top5: number }>;
     };
     heldout: {
       rankings: Record<string, RealPaperRanks>;
       confidence: Record<string, string>;
-      probability?: Record<string, number>;
+      probability?: Record<string, { top1: number; top5: number }>;
     };
     negative?: { rankings: Record<string, RealPaperRanks>; confidence: Record<string, string> };
   },
@@ -1696,7 +1819,7 @@ export async function runRealPaperBenchmark(
   ): {
     rankings: RealPaperRanks;
     confidence: string;
-    probability: number;
+    probability: { top1: number; top5: number };
   } => {
     const vector = vectors.get(record.paper_id);
     if (!vector) throw new Error(`real paper vector missing: ${record.paper_id}`);
@@ -1753,7 +1876,10 @@ export async function runRealPaperBenchmark(
         fused: realPaperRank(recommendations, acceptable),
       },
       confidence: String(recommendations[0]?.fit.confidence ?? "insufficient"),
-      probability: recommendations[0]?.fit.probability ?? 0,
+      probability: {
+        top1: recommendations[0]?.fit.probability ?? 0,
+        top5: Math.max(0, ...recommendations.slice(0, 5).map((item) => item.fit.probability)),
+      },
     };
   };
   const evaluate = (
@@ -1762,11 +1888,11 @@ export async function runRealPaperBenchmark(
   ): {
     rankings: Record<string, RealPaperRanks>;
     confidence: Record<string, string>;
-    probability: Record<string, number>;
+    probability: Record<string, { top1: number; top5: number }>;
   } => {
     const rankings: Record<string, RealPaperRanks> = {};
     const confidence: Record<string, string> = {};
-    const probability: Record<string, number> = {};
+    const probability: Record<string, { top1: number; top5: number }> = {};
     const rows = rowsFor(fixture.profile_year_max);
     Recommender.setNameIdf(Recommender.buildNameIdf(rows.map((row) => row.conf)));
     for (const record of fixture.records) {
@@ -2181,8 +2307,12 @@ export async function main(
   if (args.v2) {
     try {
       const fixture = JSON.parse(readFileSync(args.v2, "utf8")) as BenchV2Fixture;
-      console.log(JSON.stringify(runBenchmarkV2(fixture), null, 2));
-      return 0;
+      const result = runBenchmarkV2(fixture);
+      console.log(JSON.stringify(result, null, 2));
+      const regressions = benchV2RequiredRegressionReasons(result);
+      if (regressions.length === 0) return 0;
+      process.stderr.write(`${regressions.join("\n")}\n`);
+      return 1;
     } catch (error) {
       process.stderr.write(
         `bench v2 failed: ${error instanceof Error ? error.message : String(error)}\n`,

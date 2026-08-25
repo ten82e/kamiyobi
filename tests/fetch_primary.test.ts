@@ -39,7 +39,7 @@ describe("fetch-primary extraction", () => {
   it("selects a stable source-aware adapter before generic fallback", () => {
     expect(primaryAdapter("https://easychair.org/cfp/example")).toMatchObject({
       id: "easychair-v1",
-      structured: true,
+      structured: false,
     });
     expect(primaryAdapter("https://example.test/cfp")).toMatchObject({
       id: "generic-v1",

@@ -4,6 +4,11 @@
   "coefficient_source": "manual-feature-prior",
   "selected_on": "real-paper-dev",
   "selection_metric": "fused-mrr-lcb-without-recall-at-5-regression",
+  "algorithm_revision": "linear-reranker-v1",
+  "input_hashes": {
+    "data/benchmarks/real-paper-required-dev.json": "c519f54c47ffb32dcf301458a1a0e227628e8da764c0fb49edfeec7d827ec49d",
+    "data/venue-profiles.json": "08aa73b9920b97d157421c776409ff189377cc9dfe58fefef7cd3d9ace2ffbf4"
+  },
   "intercept": -1.25,
   "weights": {
     "lexical_score": 1.2,

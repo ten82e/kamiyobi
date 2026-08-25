@@ -385,7 +385,7 @@ export function extractDeadlines(
 export const PRIMARY_ADAPTERS: PrimaryAdapter[] = [
   {
     id: "easychair-v1",
-    structured: true,
+    structured: false,
     matches: (url) => url.hostname.toLowerCase().replace(/^www\./, "") === "easychair.org",
     extract: extractAdapterDeadlines,
   },
@@ -460,7 +460,7 @@ export async function runFetchPrimary(
         ...deadline,
         adapter: adapter.id,
         structured: adapter.structured,
-        selectorOrField: adapter.structured ? "important-dates" : "deadline-text-window",
+        selectorOrField: "deadline-text-window",
       }));
       // 収録の「締切」を正すのが目的なので、提出締切 (paper/abstract) だけを書く。
       deadlines = deadlines.filter((d) => d.kind === "paper" || d.kind === "abstract");

@@ -571,11 +571,19 @@ export function toJson(
     },
     sources,
     categories: { ...categories },
-    legacy_key_redirects: Object.fromEntries(
-      (confs ?? []).flatMap((conference) =>
-        (conference.legacy_keys ?? []).map((legacy) => [legacy, conference.key] as const),
-      ),
-    ),
+    legacy_key_redirects: (() => {
+      const aliases = new Map<string, string[]>();
+      for (const conference of confs ?? []) {
+        for (const legacy of conference.legacy_keys ?? []) {
+          aliases.set(legacy, [...(aliases.get(legacy) ?? []), conference.key]);
+        }
+      }
+      return Object.fromEntries(
+        [...aliases]
+          .filter(([, targets]) => new Set(targets).size === 1)
+          .map(([legacy, targets]) => [legacy, targets[0]!] as const),
+      );
+    })(),
     conferences: outConfs,
   };
 }
@@ -1020,7 +1028,12 @@ export interface HealthReport {
     venue: number;
     edition: number;
     new_since_baseline: number;
-    details: Array<{ scope: "venue" | "edition"; reason: string; subject: string }>;
+    details: Array<{
+      scope: "venue" | "edition";
+      reason: string;
+      subject: string;
+      candidates: string[];
+    }>;
   };
   parse_warning_count: number;
   category_distribution: Record<string, number>;
@@ -1045,6 +1058,7 @@ export interface HealthReportOptions {
     scope: "venue" | "edition";
     reason: string;
     subject: string;
+    candidates: string[];
   }>;
   requiredVenues?: string[];
   profileHash?: string;
@@ -1816,9 +1830,17 @@ export function evaluateHealthGate(
   const previousConflicts = previousReport.identity_conflicts;
   const currentConflicts = currentReport.identity_conflicts;
   if (previousConflicts && currentConflicts) {
-    const newConflicts =
-      Math.max(0, currentConflicts.venue - previousConflicts.venue) +
-      Math.max(0, currentConflicts.edition - previousConflicts.edition);
+    const conflictKey = (conflict: (typeof currentConflicts.details)[number]) =>
+      JSON.stringify([
+        conflict.scope,
+        conflict.reason,
+        conflict.subject,
+        [...(conflict.candidates ?? [])].sort(cmpStr),
+      ]);
+    const previousKeys = new Set(previousConflicts.details.map(conflictKey));
+    const newConflicts = currentConflicts.details.filter(
+      (conflict) => !previousKeys.has(conflictKey(conflict)),
+    ).length;
     currentConflicts.new_since_baseline = newConflicts;
     if (newConflicts > 0) reasons.push(`identity conflicts increased by ${newConflicts}`);
   }

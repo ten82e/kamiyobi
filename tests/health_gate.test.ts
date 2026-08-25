@@ -204,7 +204,9 @@ it("gates stale observations, new warning codes, and new identity conflicts", ()
       venue: 1,
       edition: 0,
       new_since_baseline: 0,
-      details: [{ scope: "venue" as const, reason: "key-collision", subject: "x" }],
+      details: [
+        { scope: "venue" as const, reason: "key-collision", subject: "x", candidates: ["a"] },
+      ],
     },
     source_metadata: {
       ccfddl: {
@@ -228,6 +230,34 @@ it("gates stale observations, new warning codes, and new identity conflicts", ()
       "new warning code: NEW",
       "identity conflicts increased by 1",
     ]),
+  );
+});
+
+it("gates a different identity conflict even when the total count is unchanged", () => {
+  const previous = {
+    ...health([]),
+    identity_conflicts: {
+      venue: 1,
+      edition: 0,
+      new_since_baseline: 0,
+      details: [
+        { scope: "venue" as const, reason: "key-collision", subject: "old", candidates: ["a"] },
+      ],
+    },
+  };
+  const current = {
+    ...health([]),
+    identity_conflicts: {
+      venue: 1,
+      edition: 0,
+      new_since_baseline: 0,
+      details: [
+        { scope: "venue" as const, reason: "key-collision", subject: "new", candidates: ["b"] },
+      ],
+    },
+  };
+  expect(evaluateHealthGate(current, previous).reasons).toContain(
+    "identity conflicts increased by 1",
   );
 });
 

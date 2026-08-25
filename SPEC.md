@@ -970,7 +970,7 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 - candidate retrieval は lexical・semantic・union の Recall@50 と oracle reranker Recall@5 を分けて報告する。
 - 軽量線形 reranker は特徴量事前値とdev評価で選んだ係数を `data/recommender-reranker.json` に固定し、
   ECE、Brier score、precision–coverage、top-1/top-5 reliability を実際の予測確率から報告する。
-- PR の必須検査には小さな `real-paper-required-*.json` を使い、全件評価は nightly で実行する。
+- PR の必須検査には固定した小型 semantic-score fixture を使い、候補Recall・oracle reranker・校正・MRR LCBをモデルdownloadなしで検査する。実論文全件評価は nightly で実行する。
 - required と full はそれぞれ記録済みの回帰下限を持ち、heldout fused Recall@5 または negative abstention が下限を割れば失敗する。JSON レポートは Actions artifact に保存する。
 
 ### 10.3 会議プロファイル拡充手順（`data/venue-profiles.json`）

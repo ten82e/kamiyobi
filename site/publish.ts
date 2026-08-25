@@ -1,6 +1,7 @@
 export type PublishManifest = {
-  schema_version: 2 | 3;
+  schema_version: 2 | 3 | 4;
   build_id: string;
+  content_id?: string;
   profile_hash: string;
   semantic_status: "ready" | "lexical-only";
   artifacts: Record<string, { bytes: number; sha256: string }>;
@@ -23,6 +24,7 @@ export type SemanticState = { semantic: boolean; reason: string | null };
 
 type RecommendationIndex = {
   build_id?: unknown;
+  content_id?: unknown;
   embedding_manifest?: { profile_hash?: unknown };
   conferences?: unknown;
 };
@@ -83,10 +85,11 @@ export async function loadPublishedRecommendation(
   try {
     manifest = JSON.parse(await fetchText("publish.json")) as PublishManifest;
     if (
-      (manifest.schema_version !== 2 && manifest.schema_version !== 3) ||
+      ![2, 3, 4].includes(manifest.schema_version) ||
       !manifest.build_id ||
       !manifest.profile_hash ||
-      (manifest.schema_version === 3 && !validSchema3Provenance(manifest))
+      (manifest.schema_version >= 3 && !validSchema3Provenance(manifest)) ||
+      (manifest.schema_version === 4 && !manifest.content_id)
     ) {
       throw new Error("manifest schema/build_id/profile_hash mismatch");
     }
@@ -117,6 +120,13 @@ export async function loadPublishedRecommendation(
       index,
       embeddings: null,
       state: { semantic: false, reason: "index build_id mismatch" },
+    };
+  }
+  if (manifest.schema_version === 4 && index.content_id !== manifest.content_id) {
+    return {
+      index,
+      embeddings: null,
+      state: { semantic: false, reason: "index content_id mismatch" },
     };
   }
   if (manifest.semantic_status !== "ready") {
