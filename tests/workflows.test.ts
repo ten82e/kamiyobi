@@ -97,6 +97,7 @@ describe("workflow separation", () => {
     );
     expect(String(step(build!, "Build merged site").run)).toContain("--offline");
     expect(String(step(build!, "Health gate").run)).toContain("--require-baseline");
+    expect(String(step(build!, "Health gate").run)).toContain('cd "$GITHUB_WORKSPACE"');
     expect(String(step(attest!, "Attest publish manifest").with?.["subject-path"])).toBe(
       "public/publish.json",
     );

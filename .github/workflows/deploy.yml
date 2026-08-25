@@ -74,6 +74,7 @@ jobs:
             npm ci
             node src/cli.ts build --out /tmp/kamiyobi-parent-public --offline --no-embeddings --cache /tmp/kamiyobi-parent-cache --now "$BUILD_NOW"
             cp /tmp/kamiyobi-parent-public/health.json /tmp/kamiyobi-health-baseline/health.json
+            cd "$GITHUB_WORKSPACE"
           fi
           node scripts/health-gate.ts public/health.json --require-baseline \
             /tmp/kamiyobi-health-baseline/health.json /tmp/next-last-known-good-health.json
