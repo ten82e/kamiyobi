@@ -422,10 +422,42 @@ describe("merge_sources", () => {
       source: "ccfddl",
     });
     const local = makeEdition({ ...ccf, link: "https://2026.venue.example/", source: "local" });
+    const editions = mergeSources(
+      [[conference("ccfddl", ccf)], [conference("local", local)]],
+      PRIORITY,
+    )[0].editions;
+    expect(editions).toHaveLength(2);
+    expect(new Set(editions.map((edition) => edition.edition_id)).size).toBe(2);
+  });
+
+  it("combines source-scoped edition IDs only with overlapping event evidence", () => {
+    const conference = (source: string, edition: Edition): Conference =>
+      makeConference({
+        key: "venue",
+        title: "Venue",
+        identity: { venueId: "venue" },
+        sources: [source],
+        editions: [edition],
+      });
+    const ccf = makeEdition({
+      year: 2026,
+      edition_id: "venue26",
+      link: "https://venue.example/2026",
+      source: "ccfddl",
+      event_start: new Date(Date.UTC(2026, 6, 1)),
+      event_end: new Date(Date.UTC(2026, 6, 3)),
+      identity: { sourceIds: { ccfddl: "venue26" } },
+    });
+    const local = makeEdition({
+      ...ccf,
+      link: "https://2026.venue.example/",
+      source: "local",
+      identity: { sourceIds: { local: "venue26" } },
+    });
     expect(
       mergeSources([[conference("ccfddl", ccf)], [conference("local", local)]], PRIORITY)[0]
         .editions,
-    ).toHaveLength(2);
+    ).toHaveLength(1);
   });
 
   it("keeps primary slot updates isolated, supports remove, precision upgrade and conflicts", () => {

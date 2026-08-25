@@ -1662,10 +1662,9 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission, date: '2026-08-15 23:59:00', tz: UTC}
 
-  # 根拠: https://easychair.org/cfp/WSSE2026 (2026-08-10)
-  #   「Submission deadline August 15, 2026」— wikiCFP と一致。開催地は EasyChair に記載なし。
-  #   公式に tz 表記なし → 23:59 UTC として解釈。
-  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集）。
+  # 根拠: https://wsse.org/ (2026-08-25)
+  #   本会議の Submission は August 15, 2026。August 30 は特別セッション提案期限。
+  #   公式に時刻・tz 表記なし。
   - key: wsse-2026
     title: WSSE
     full_name: World Symposium on Software Engineering
@@ -1675,8 +1674,24 @@ conferences:
       - year: 2026
         id: wsse2026
         link: https://easychair.org/cfp/WSSE2026
+        place: Nara, Japan
+        date_text: October 16-18, 2026
+        event_start: '2026-10-16'
+        event_end: '2026-10-18'
         deadlines:
-          - {kind: paper, label: Submission, date: '2026-08-15 23:59:00', tz: UTC}
+          - kind: paper
+            label: Submission
+            date: '2026-08-15'
+            precision: date-only
+            evidence:
+              - sourceClass: official-cfp
+                sourceUrl: https://wsse.org/
+                contentHash: 6021ba871ee30f1049ef50f8ed188821f71e6cdb3dbf4b9a3c60e315bdf618a0
+                sourceRevision: 6021ba871ee30f1049ef50f8ed188821f71e6cdb3dbf4b9a3c60e315bdf618a0
+                retrievedAt: '2026-08-25T03:42:00Z'
+                verifiedAt: '2026-08-25T03:42:00Z'
+                verifiedFields: [date]
+                rawExcerpt: 'Submission: August 15, 2026'
 
   # 根拠: https://easychair.org/cfp/flowchallenge2 (2026-08-10)
   #   「Submission deadline September 15, 2026」— DIMACS 実装チャレンジ (ALENEX/SOSA 併設)。
@@ -1694,9 +1709,10 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission, date: '2026-09-15 23:59:00', tz: UTC}
 
-  # 根拠: https://easychair.org/cfp/jornadas-dl2 (2026-08-10)
-  #   「Submission deadline: 30th September 2026」— 公式に tz 表記なし → 23:59 UTC。
-  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集）。
+  # 根拠: https://easychair.org/cfp/jornadas-dl2 (2026-08-25)
+  #   Abstract registration と Submission は September 30, 2026。
+  #   October 30 は通常参加費の期限であり、paper submission ではない。
+  #   公式に時刻・tz 表記なし。
   - key: 1st-dl2-international-workshop
     title: DL2 Workshop
     full_name: 1st DL2 International Workshop
@@ -1706,8 +1722,37 @@ conferences:
       - year: 2026
         id: dl2ws2026
         link: https://easychair.org/cfp/jornadas-dl2
+        place: Alicante, Spain / Online
+        date_text: December 3-4, 2026
+        event_start: '2026-12-03'
+        event_end: '2026-12-04'
         deadlines:
-          - {kind: paper, label: Submission, date: '2026-09-30 23:59:00', tz: UTC}
+          - kind: abstract
+            label: Abstract registration
+            date: '2026-09-30'
+            precision: date-only
+            evidence:
+              - sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/jornadas-dl2
+                contentHash: 40d6dfe7aa108030c09bd2c2c27257f78cc693677c703983341781dd1ad0e787
+                sourceRevision: 40d6dfe7aa108030c09bd2c2c27257f78cc693677c703983341781dd1ad0e787
+                retrievedAt: '2026-08-25T03:42:00Z'
+                verifiedAt: '2026-08-25T03:42:00Z'
+                verifiedFields: [date]
+                rawExcerpt: 'Abstract registration deadline September 30, 2026'
+          - kind: paper
+            label: Submission
+            date: '2026-09-30'
+            precision: date-only
+            evidence:
+              - sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/jornadas-dl2
+                contentHash: 40d6dfe7aa108030c09bd2c2c27257f78cc693677c703983341781dd1ad0e787
+                sourceRevision: 40d6dfe7aa108030c09bd2c2c27257f78cc693677c703983341781dd1ad0e787
+                retrievedAt: '2026-08-25T03:42:00Z'
+                verifiedAt: '2026-08-25T03:42:00Z'
+                verifiedFields: [date]
+                rawExcerpt: 'Submission deadline September 30, 2026'
 
   # ---------------- SIGSPATIAL 2026 併設 WS (2026-08-10 裏取り) ----------------
   # 根拠: https://sigspatial2026.sigspatial.org/workshops.html の accepted WS 一覧
@@ -1731,8 +1776,9 @@ conferences:
           - {kind: notification, label: 'Notification of Decision', date: '2026-09-20 23:59:00', tz: PT}
           - {kind: camera_ready, label: 'Camera-Ready Deadline', date: '2026-10-01 23:59:00', tz: PT}
 
-  # 根拠: https://onspatial.github.io/geo-health-2026/ 「Submission deadline August 15, 2026」
-  # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集）。
+  # 根拠: https://onspatial.github.io/geo-health-2026/ (2026-08-25)
+  #   Submission deadline は August 15, 2026。August 22 は 2025 年版の値。
+  #   公式に時刻・tz 表記なし。
   - key: geohealth-2026
     title: GeoHealth 2026
     full_name: The 2nd ACM SIGSPATIAL International Workshop on Geospatial Computing for Public Health
@@ -1744,8 +1790,22 @@ conferences:
         link: https://onspatial.github.io/geo-health-2026/
         place: Riverside, CA, USA
         date_text: November 3, 2026
+        event_start: '2026-11-03'
+        event_end: '2026-11-03'
         deadlines:
-          - {kind: paper, label: Submission, date: '2026-08-15 23:59:00', tz: UTC}
+          - kind: paper
+            label: Submission
+            date: '2026-08-15'
+            precision: date-only
+            evidence:
+              - sourceClass: official-cfp
+                sourceUrl: https://onspatial.github.io/geo-health-2026/
+                contentHash: d1146b04aa361e2d81e51603a96bf9bb5497eb754651e8dd60d6fd4c99574cc2
+                sourceRevision: d1146b04aa361e2d81e51603a96bf9bb5497eb754651e8dd60d6fd4c99574cc2
+                retrievedAt: '2026-08-25T03:42:00Z'
+                verifiedAt: '2026-08-25T03:42:00Z'
+                verifiedFields: [date]
+                rawExcerpt: 'Submission deadline August 15, 2026'
 
   # 根拠: https://iharp.umbc.edu/polds26/ 「All PolDS submissions are due by August 15, 2026」
   # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集）。
@@ -2647,10 +2707,6 @@ conferences:
         date_text: November 16, 2026
         event_start: '2026-11-16'
         event_end: '2026-11-16'
-        # Paper submission deadline: August 17, 2026
-        # 公式: "Time Zone: AOE (Anywhere One Earth)" 明記 (2026-08-10 確認)
-        deadlines:
-          - {kind: paper, label: Paper Submission, date: '2026-08-17 23:59:00', tz: AoE}
 
   # ---------------- DASFAA 2027 (2026-08-10 裏取り) ----------------
   # 根拠: https://dasfaa2027.github.io/dates/list.htm (Important Dates, "Key Dates Updated"

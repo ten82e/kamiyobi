@@ -6,6 +6,7 @@ import { expect, it } from "vitest";
 import {
   deadlineSlotId,
   evaluateHealthGate,
+  HEALTH_SCHEMA_VERSION,
   type HealthDeadlineRef,
   type HealthReport,
   healthMarkdown,
@@ -148,6 +149,29 @@ it("enforces every interval and precision transition", () => {
   expect(evaluateHealthGate(health([dateOnly("2026-09-02")]), oldDateOnly).ok).toBe(true);
   expect(evaluateHealthGate(health([dateOnly("2026-08-31")]), oldDateOnly).ok).toBe(false);
   expect(evaluateHealthGate(health([dateOnly("2026-09-01")]), oldExact).ok).toBe(false);
+  expect(
+    evaluateHealthGate(
+      health([
+        dateOnly("2026-09-01", {
+          evidence: [official("date-only", "2026-08-02T00:00:00Z", ["date"])],
+        }),
+      ]),
+      oldExact,
+    ).ok,
+  ).toBe(true);
+  expect(evaluateHealthGate(health([dateOnly("2026-09-03")]), oldExact).ok).toBe(true);
+  expect(
+    evaluateHealthGate(
+      {
+        ...health([
+          exact("2026-08-31T12:00:00Z"),
+          { ...exact("2026-09-01T12:00:00Z"), deadline_id: ROUND_SLOT },
+        ]),
+        schema_version: HEALTH_SCHEMA_VERSION,
+      },
+      { ...oldExact, schema_version: 2 },
+    ).ok,
+  ).toBe(true);
   expect(evaluateHealthGate(health([]), oldExact).ok).toBe(false);
   expect(evaluateHealthGate(health([], "2026-09-02T00:00:00Z"), oldExact).ok).toBe(true);
 });

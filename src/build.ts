@@ -730,7 +730,7 @@ export type HealthSourceStatus =
   | "failed"
   | "success";
 
-export const HEALTH_SCHEMA_VERSION = 2;
+export const HEALTH_SCHEMA_VERSION = 3;
 export const HEALTH_DEADLINE_LOOKBACK_MS = 14 * DAY_MS;
 
 export interface HealthOutputFile {
@@ -941,7 +941,7 @@ export interface LegacyHealthDeadlineRef {
 }
 
 export interface HealthReport {
-  schema_version: 1 | typeof HEALTH_SCHEMA_VERSION;
+  schema_version: 1 | 2 | typeof HEALTH_SCHEMA_VERSION;
   generated_at: string;
   profile_hash: string;
   source_status: Record<string, HealthSourceStatus>;
@@ -1388,6 +1388,7 @@ function parseDeadlineSlot(ref: HealthDeadlineRef): DeadlineSlot | null {
 function matchDeadlineSlots(
   previous: DeadlineSlot[],
   current: DeadlineSlot[],
+  allowIdentityMigration: boolean,
 ): {
   pairs: Array<{ previous: DeadlineSlot; current: DeadlineSlot }>;
   unmatchedPrevious: DeadlineSlot[];
@@ -1396,6 +1397,33 @@ function matchDeadlineSlots(
   const usedCurrent = new Set<number>();
   const pairs: Array<{ previous: DeadlineSlot; current: DeadlineSlot }> = [];
 
+  if (allowIdentityMigration)
+    previous.forEach((slot, previousIndex) => {
+      const candidates = current
+        .map((candidate, index) => ({ candidate, index }))
+        .filter(
+          ({ candidate, index }) =>
+            !usedCurrent.has(index) &&
+            candidate.venue === slot.venue &&
+            candidate.earliest_ms === slot.earliest_ms &&
+            candidate.latest_ms === slot.latest_ms,
+        )
+        .sort(
+          (a, b) =>
+            Number(a.candidate.deadline_id !== slot.deadline_id) -
+              Number(b.candidate.deadline_id !== slot.deadline_id) ||
+            Number(a.candidate.edition !== slot.edition) -
+              Number(b.candidate.edition !== slot.edition) ||
+            Number(a.candidate.kind !== slot.kind) - Number(b.candidate.kind !== slot.kind) ||
+            a.index - b.index,
+        );
+      if (candidates.length === 0) return;
+      const currentIndex = candidates[0].index;
+      usedPrevious.add(previousIndex);
+      usedCurrent.add(currentIndex);
+      pairs.push({ previous: slot, current: current[currentIndex] });
+    });
+
   const currentById = new Map<string, number[]>();
   current.forEach((slot, index) => {
     const list = currentById.get(slot.deadline_id) ?? [];
@@ -1403,6 +1431,7 @@ function matchDeadlineSlots(
     currentById.set(slot.deadline_id, list);
   });
   previous.forEach((slot, previousIndex) => {
+    if (usedPrevious.has(previousIndex)) return;
     const candidates = (currentById.get(slot.deadline_id) ?? []).filter(
       (index) => !usedCurrent.has(index),
     );
@@ -1513,11 +1542,24 @@ function authorizesEarlier(previous: DeadlineSlot, current: DeadlineSlot): boole
   });
 }
 
+function authorizesPrecisionCorrection(previous: DeadlineSlot, current: DeadlineSlot): boolean {
+  if (current.earliest_ms > previous.earliest_ms || current.latest_ms < previous.latest_ms)
+    return false;
+  return current.evidence.some(
+    (evidence) =>
+      (evidence.sourceClass === "official-cfp" || evidence.sourceClass === "publisher") &&
+      Boolean(evidence.contentHash || evidence.sourceRevision) &&
+      evidenceTime(evidence) !== null &&
+      evidence.verifiedFields?.includes("date"),
+  );
+}
+
 function semanticDeadlineRegressions(
   previousRefs: HealthDeadlineRef[],
   currentRefs: HealthDeadlineRef[],
   previousTime: number,
   currentTime: number,
+  allowIdentityMigration: boolean,
 ): HealthGateResult {
   const reasons: string[] = [];
   const warnings: string[] = [];
@@ -1544,9 +1586,15 @@ function semanticDeadlineRegressions(
   reasons.push(...oldGroups.reasons, ...newGroups.reasons);
   warnings.push(...oldGroups.warnings, ...newGroups.warnings);
   if (reasons.length > 0) return { ok: false, reasons, warnings };
-  const { pairs, unmatchedPrevious } = matchDeadlineSlots(oldGroups.slots, newGroups.slots);
+  const { pairs, unmatchedPrevious } = matchDeadlineSlots(
+    oldGroups.slots,
+    newGroups.slots,
+    allowIdentityMigration,
+  );
   for (const pair of pairs) {
     if (pair.previous.precision === "exact" && pair.current.precision === "date-only") {
+      if (pair.current.earliest_ms >= pair.previous.latest_ms) continue;
+      if (authorizesPrecisionCorrection(pair.previous, pair.current)) continue;
       reasons.push(`deadline precision regressed: ${pair.previous.deadline_id}`);
       continue;
     }
@@ -1659,6 +1707,7 @@ export function evaluateHealthGate(
       currentRefs!,
       previousGeneratedAt,
       currentGeneratedAt,
+      Number(currentReport.schema_version ?? 1) > Number(previousReport.schema_version ?? 1),
     );
     reasons.push(...semantic.reasons);
     warnings.push(...semantic.warnings);

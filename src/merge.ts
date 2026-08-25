@@ -562,7 +562,11 @@ function mergeEditions(confs: Conference[], windows: Windows, tally: MergeStats)
   const out: Edition[] = [];
   for (const year of [...byYear.keys()].sort((a, b) => a - b)) {
     const bucket = byYear.get(year)!;
-    bucket.sort((a, b) => cmpStr(a.edition.edition_id, b.edition.edition_id));
+    bucket.sort(
+      (a, b) =>
+        cmpStr(a.edition.edition_id, b.edition.edition_id) ||
+        cmpStr(editionSortKey(a.edition), editionSortKey(b.edition)),
+    );
     for (const item of bucket) {
       // Deduplicate after every source has contributed.
       item.edition.deadlines = dedupDeadlines(item.tagged, windows, tally);
@@ -570,10 +574,21 @@ function mergeEditions(confs: Conference[], windows: Windows, tally: MergeStats)
     }
   }
   const ids = new Map<string, number>();
+  const used = new Set(out.map((edition) => edition.edition_id));
   for (const edition of out) ids.set(edition.edition_id, (ids.get(edition.edition_id) ?? 0) + 1);
+  const seen = new Map<string, number>();
   for (const edition of out) {
-    if ((ids.get(edition.edition_id) ?? 0) > 1)
-      edition.edition_id = `${edition.edition_id}-${edition.year}`;
+    const id = edition.edition_id;
+    if ((ids.get(id) ?? 0) <= 1) continue;
+    const index = seen.get(id) ?? 0;
+    seen.set(id, index + 1);
+    if (index === 0) continue;
+    const hint = slug(`${edition.source}-${edition.identity?.sourceIds?.[edition.source] ?? ""}`);
+    const base = `${id}-${hint || index + 1}`;
+    let next = base;
+    for (let suffix = 2; used.has(next); suffix++) next = `${base}-${suffix}`;
+    edition.edition_id = next;
+    used.add(next);
   }
   return out;
 }
@@ -585,6 +600,14 @@ function mergeTarget(left: Edition, right: Edition): boolean {
   const leftUrls = left.identity?.officialUrls ?? [];
   const rightUrls = right.identity?.officialUrls ?? [];
   if (commonIdentity(leftUrls, rightUrls, urlToken).length > 0) return true;
+  if (
+    commonIdentity(
+      Object.values(left.identity?.sourceIds ?? {}),
+      Object.values(right.identity?.sourceIds ?? {}),
+    ).length > 0 &&
+    eventRangesOverlap(left, right)
+  )
+    return true;
   return eventRangesOverlap(left, right) && placesCompatible(left.place, right.place);
 }
 
