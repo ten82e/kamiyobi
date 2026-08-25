@@ -152,7 +152,8 @@ describe("CI contracts", () => {
     expect(nightly).toContain("Run full real-paper benchmark");
     // nightly は評価専用: bundle seal も bundle upload も deploy trigger も持たない。
     expect(nightly).not.toContain("Seal recommendation bundle");
-    expect(nightly).not.toContain("recommendation-bundle-${{ github.sha }}");
+    expect(nightly).not.toContain("name: recommendation-bundle-");
+    expect(nightly).not.toContain("github.sha }}");
     const deployText = workflow("../.github/workflows/deploy.yml").text;
     expect(deployText).toContain("workflows: [recommendation-bundle]");
     expect(deployText).not.toContain("[nightly,");
