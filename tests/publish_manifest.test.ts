@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -74,6 +75,23 @@ describe("publish manifest", () => {
     expect(captured.promotionBatches).toEqual([
       { id: "batch-b", sha256: sha256(JSON.stringify({ id: "batch-b" })) },
     ]);
+  });
+
+  it("reports tracked changes without treating generated files as source dirt", () => {
+    const root = mkdtempSync(join(tmpdir(), "kamiyobi-provenance-git-"));
+    writeFileSync(join(root, "config.yaml"), "site: clean\n", "utf8");
+    execFileSync("git", ["init"], { cwd: root });
+    execFileSync("git", ["add", "config.yaml"], { cwd: root });
+    execFileSync(
+      "git",
+      ["-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-m", "init"],
+      { cwd: root },
+    );
+
+    writeFileSync(join(root, "generated.txt"), "generated\n", "utf8");
+    expect(collectPublishProvenance(root).dirtyWorktree).toBe(false);
+    writeFileSync(join(root, "config.yaml"), "site: changed\n", "utf8");
+    expect(collectPublishProvenance(root).dirtyWorktree).toBe(true);
   });
 
   it("hashes final artifacts deterministically and excludes the manifest itself", () => {

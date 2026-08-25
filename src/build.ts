@@ -808,7 +808,7 @@ function sha256File(path: string): string {
 
 function gitOutput(root: string, args: string[]): string | null {
   try {
-    return execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: "pipe" }).trim() || null;
+    return execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: "pipe" }).trim();
   } catch {
     return null;
   }
@@ -860,7 +860,7 @@ export function collectPublishProvenance(
       .sort(cmpStr)
       .map((path) => [relative(root, path) || path, { sha256: sha256File(path) }]),
   );
-  const dirty = gitOutput(root, ["status", "--porcelain"]);
+  const dirty = gitOutput(root, ["status", "--porcelain", "--untracked-files=no"]);
   return {
     sourceCommit,
     dataCommit: sourceCommit,
