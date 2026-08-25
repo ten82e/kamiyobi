@@ -25,10 +25,10 @@ conferences:
             time: '23:59:00'
             tz: AoE
             sourceUrl: https://complexnetworks.org/
-            sourceRevision: 251953dab98d6a64c9c2e74d587ead93f58f0bd1ceec3cfeebb32c388f46137a
-            contentHash: 251953dab98d6a64c9c2e74d587ead93f58f0bd1ceec3cfeebb32c388f46137a
-            retrievedAt: '2026-08-25T03:58:58.724Z'
-            verifiedAt: '2026-08-25T03:58:58.724Z'
+            sourceRevision: e0572bca08c171207ea2cae1703bcf04d8f9328f04fffb5be705c4a67b79543c
+            contentHash: e0572bca08c171207ea2cae1703bcf04d8f9328f04fffb5be705c4a67b79543c
+            retrievedAt: '2026-08-25T04:12:13.972Z'
+            verifiedAt: '2026-08-25T04:12:13.972Z'
             rawExcerpt: 'Paper submission: 2026-09-02 23:59:00 AoE'
     _comment: 一次ソース (https://complexnetworks.org/) から自動抽出 (2026-08-25)
   geoindustry-2026:
@@ -91,19 +91,19 @@ conferences:
             label: Abstract submission
             date: '2026-09-15'
             sourceUrl: https://easychair.org/cfp/flowchallenge2
-            sourceRevision: 29d1f44d95e87ba6c5bb05671e3741ee5528824ec3ff28e226d07d7b297b7df6
-            contentHash: 29d1f44d95e87ba6c5bb05671e3741ee5528824ec3ff28e226d07d7b297b7df6
-            retrievedAt: '2026-08-25T03:58:59.743Z'
-            verifiedAt: '2026-08-25T03:58:59.743Z'
+            sourceRevision: 59865cb878b2c4c6b6e19a04679ca2cfd9bdd002804bed8373be32bcab0437ae
+            contentHash: 59865cb878b2c4c6b6e19a04679ca2cfd9bdd002804bed8373be32bcab0437ae
+            retrievedAt: '2026-08-25T04:12:14.965Z'
+            verifiedAt: '2026-08-25T04:12:14.965Z'
             rawExcerpt: 'Abstract submission: 2026-09-15'
           - kind: paper
             label: Paper submission
             date: '2026-09-15'
             sourceUrl: https://easychair.org/cfp/flowchallenge2
-            sourceRevision: 29d1f44d95e87ba6c5bb05671e3741ee5528824ec3ff28e226d07d7b297b7df6
-            contentHash: 29d1f44d95e87ba6c5bb05671e3741ee5528824ec3ff28e226d07d7b297b7df6
-            retrievedAt: '2026-08-25T03:58:59.743Z'
-            verifiedAt: '2026-08-25T03:58:59.743Z'
+            sourceRevision: 59865cb878b2c4c6b6e19a04679ca2cfd9bdd002804bed8373be32bcab0437ae
+            contentHash: 59865cb878b2c4c6b6e19a04679ca2cfd9bdd002804bed8373be32bcab0437ae
+            retrievedAt: '2026-08-25T04:12:14.965Z'
+            verifiedAt: '2026-08-25T04:12:14.965Z'
             rawExcerpt: 'Paper submission: 2026-09-15'
     _comment: 一次ソース (https://easychair.org/cfp/flowchallenge2) から自動抽出 (2026-08-25)
   polds-2026:
@@ -128,10 +128,10 @@ conferences:
             label: Paper submission
             date: '2026-05-10'
             sourceUrl: https://easychair.org/cfp/SETTA2026
-            sourceRevision: de868cc73e2683ed4d21538f710bd2bc027a57a1b9d201427cebb13e87c302ee
-            contentHash: de868cc73e2683ed4d21538f710bd2bc027a57a1b9d201427cebb13e87c302ee
-            retrievedAt: '2026-08-25T03:59:00.460Z'
-            verifiedAt: '2026-08-25T03:59:00.460Z'
+            sourceRevision: 4644b7288abb4e248e2f92c63832ce3aa897748bfa7902e506fd9d4f90a64ba0
+            contentHash: 4644b7288abb4e248e2f92c63832ce3aa897748bfa7902e506fd9d4f90a64ba0
+            retrievedAt: '2026-08-25T04:12:15.887Z'
+            verifiedAt: '2026-08-25T04:12:15.887Z'
             rawExcerpt: 'Paper submission: 2026-05-10'
         link: https://www.setta2026.sg
         place: Singapore
@@ -146,9 +146,9 @@ conferences:
             date: '2026-08-14'
             tz: AoE
             sourceUrl: https://womeninhpc.org/events/sc-2026-workshop
-            sourceRevision: b7fd7b5b4071c83c7daa68e97be3eda986e8d011c48ae8fda9b59afb991588c1
-            contentHash: b7fd7b5b4071c83c7daa68e97be3eda986e8d011c48ae8fda9b59afb991588c1
-            retrievedAt: '2026-08-25T03:59:00.995Z'
-            verifiedAt: '2026-08-25T03:59:00.995Z'
+            sourceRevision: 84252147ce0f6d972f98311d82f510fb44c7793b17d6374b5338a11f5f21bec8
+            contentHash: 84252147ce0f6d972f98311d82f510fb44c7793b17d6374b5338a11f5f21bec8
+            retrievedAt: '2026-08-25T04:12:16.537Z'
+            verifiedAt: '2026-08-25T04:12:16.537Z'
             rawExcerpt: 'Paper submission: 2026-08-14 AoE'
     _comment: 一次ソース (https://womeninhpc.org/events/sc-2026-workshop) から自動抽出 (2026-08-25)
