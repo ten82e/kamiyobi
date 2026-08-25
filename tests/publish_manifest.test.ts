@@ -8,6 +8,7 @@ import {
   collectPublishProvenance,
   type PublishProvenance,
   publishBuildId,
+  publishContentId,
   writePublishManifest,
 } from "../src/build.ts";
 import {
@@ -111,15 +112,17 @@ describe("publish manifest", () => {
       return readFileSync(join(outdir, "publish.json"), "utf8");
     })();
 
+    const contentId = publishContentId(provenance, "");
     expect(first).toEqual({
-      schema_version: 3,
+      schema_version: 4,
       generated_at: "2026-08-09T00:00:00.000Z",
       semantic_status: "lexical-only",
       artifacts: {
         "a.txt": { bytes: 5, sha256: sha256("alpha") },
         "b.txt": { bytes: 4, sha256: sha256("beta") },
       },
-      build_id: publishBuildId(NOW, ""),
+      content_id: contentId,
+      build_id: publishBuildId(NOW, contentId),
       profile_hash: "",
       source_commit: "source-sha",
       data_commit: "data-sha",
@@ -130,6 +133,14 @@ describe("publish manifest", () => {
       build: provenance.build,
     });
     expect(firstText).toBe(secondText);
+  });
+
+  it("keeps content identity stable while build identity follows the clock", () => {
+    const content = publishContentId(provenance, "profile");
+    expect(publishContentId(provenance, "profile")).toBe(content);
+    expect(publishBuildId(NOW, content)).not.toBe(
+      publishBuildId(new Date(NOW.getTime() + 1_000), content),
+    );
   });
 
   it("distinguishes a lexical-only build from a restored embedding bundle", () => {

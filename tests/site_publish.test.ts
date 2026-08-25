@@ -15,6 +15,7 @@ const catalog = { conferences: [{ key: "fallback" }] };
 function fixture(overrides: Record<string, unknown> = {}) {
   const index = JSON.stringify({
     build_id: "build-a",
+    content_id: "content-a",
     conferences: [],
     embedding_manifest: { profile_hash: "p" },
   });
@@ -70,6 +71,32 @@ describe("browser publish manifest", () => {
       },
     });
     expect((await loadPublishedRecommendation(data.fetch, catalog)).state.semantic).toBe(true);
+  });
+
+  it("accepts schema 4 only when the content id matches the recommendation index", async () => {
+    const provenance = {
+      schema_version: 4,
+      content_id: "content-a",
+      source_commit: "source",
+      data_commit: "data",
+      workflow_run_id: null,
+      dirty_worktree: false,
+      inputs: { "config.yaml": { sha256: "a".repeat(64) } },
+      promotion_batches: [],
+      build: {
+        now: "2026-08-09T00:00:00.000Z",
+        offline: true,
+        node: "v24.0.0",
+        command: "node src/cli.ts build --offline --now <publish.build.now>",
+        source_cache: "offline-with-snapshot-fallback" as const,
+      },
+    };
+    let data = fixture(provenance);
+    expect((await loadPublishedRecommendation(data.fetch, catalog)).state.semantic).toBe(true);
+    data = fixture({ ...provenance, content_id: "different" });
+    expect((await loadPublishedRecommendation(data.fetch, catalog)).state.reason).toBe(
+      "index content_id mismatch",
+    );
   });
 
   it.each([

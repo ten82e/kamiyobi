@@ -217,6 +217,30 @@ it("restores only failed-source venues, editions, and missing slots", () => {
   });
 });
 
+it("does not merge different source ids through a conflicting DBLP key", () => {
+  const snapshot = [
+    makeConference({
+      key: "asiaccs",
+      title: "AsiaCCS",
+      sources: ["ccfddl"],
+      dblp: "ccs",
+      identity: { dblpKey: "ccs", sourceIds: { ccfddl: "SC/asiaccs" } },
+      editions: [makeEdition({ year: 2026, edition_id: "asiaccs26", source: "ccfddl" })],
+    }),
+    makeConference({
+      key: "ccs",
+      title: "CCS",
+      sources: ["ccfddl"],
+      dblp: "ccs",
+      identity: { dblpKey: "ccs", sourceIds: { ccfddl: "SC/ccs" } },
+      editions: [makeEdition({ year: 2026, edition_id: "ccs26", source: "ccfddl" })],
+    }),
+  ];
+
+  const restored = restoreFailedSourceMaterial([], snapshot, new Set(["ccfddl"]));
+  expect(restored.map((conference) => conference.key).sort()).toEqual(["asiaccs", "ccs"]);
+});
+
 it("restores failed-source deadlines from a mixed edition led by local data", () => {
   const current = [
     makeConference({
@@ -433,6 +457,20 @@ describe("source freshness", () => {
     writeFileSync(
       join(root, "data", "snapshot.json"),
       JSON.stringify({
+        snapshot_metadata: {
+          schema_version: 1,
+          generated_at: NOW_ARG,
+          sources: {
+            aideadlines: {
+              revision: "saved-revision",
+              fetchedAt: NOW_ARG,
+              contentHash: "saved-hash",
+              conferenceCount: 1,
+              editionCount: 1,
+              deadlineCount: 1,
+            },
+          },
+        },
         conferences: [
           {
             key: "saved-source",
@@ -479,10 +517,14 @@ describe("source freshness", () => {
     expect(health.source_status.aideadlines).toBe("snapshot-fallback");
     expect(health.source_metadata.aideadlines.status).toBe("snapshot-fallback");
     expect(health.source_metadata.aideadlines).toMatchObject({
+      revision: "saved-revision",
+      contentHash: "saved-hash",
+      observationStatus: "fresh",
       conferenceCount: 1,
       editionCount: 1,
       deadlineCount: 1,
     });
+    expect((health as any).build_input_mode).toBe("offline-snapshot");
   });
 });
 

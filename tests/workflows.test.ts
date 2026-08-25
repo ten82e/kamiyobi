@@ -3,7 +3,9 @@ import { load as loadYaml } from "js-yaml";
 import { describe, expect, it } from "vitest";
 
 type Step = { name?: string; run?: string; uses?: string; with?: Record<string, unknown> };
-type Workflow = { jobs?: Record<string, { permissions?: Record<string, string>; steps?: Step[] }> };
+type Workflow = {
+  jobs?: Record<string, { if?: string; permissions?: Record<string, string>; steps?: Step[] }>;
+};
 
 const PINS = [
   "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1",
@@ -84,16 +86,21 @@ describe("workflow separation", () => {
     const attest = value.jobs?.attest;
     const deploy = value.jobs?.deploy;
     expect(text).toMatch(/push:\s*\n\s+branches: \[main\]/);
+    expect(text).toMatch(/workflow_run:[\s\S]*branches: \[main\]/);
+    expect(String(build?.if)).toContain("head_branch == 'main'");
     expect(text).not.toContain("workflow_dispatch:");
     expect(text).toContain("name: github-pages");
     expect(text).toContain("attestations: write");
-    expect(String(step(build!, "Checkout merged main").with?.ref)).toBe("$" + "{{ github.sha }}");
+    expect(String(step(build!, "Checkout merged main").with?.ref)).toContain("github.sha");
+    expect(String(step(build!, "Checkout nightly commit").with?.ref)).toContain(
+      "workflow_run.head_sha",
+    );
     expect(String(step(build!, "Build merged site").run)).toContain("--offline");
     expect(String(step(build!, "Health gate").run)).toContain("--require-baseline");
     expect(String(step(attest!, "Attest publish manifest").with?.["subject-path"])).toBe(
       "public/publish.json",
     );
-    expect(build?.permissions).toEqual({ contents: "read" });
+    expect(build?.permissions).toEqual({ actions: "read", contents: "read" });
     expect(attest?.permissions).toEqual({
       contents: "read",
       attestations: "write",
@@ -117,8 +124,13 @@ describe("CI contracts", () => {
       "validate-data",
     ]);
     expect(
-      String(step(value.jobs!["recommendation-regression"]!, "Run required real-paper subset").run),
-    ).toContain("--real-v2-small");
+      String(
+        step(
+          value.jobs!["recommendation-regression"]!,
+          "Run fixed semantic-score recommendation gate",
+        ).run,
+      ),
+    ).toContain("--v2 tests/fixtures/bench-v2.json");
     const nightly = workflow("../.github/workflows/nightly.yml").text;
     expect(nightly).toContain("schedule:");
     expect(nightly).toContain("release:");

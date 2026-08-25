@@ -29,6 +29,9 @@ import {
   EMBEDDING_DIM,
   EMBEDDING_MODEL,
   EMBEDDING_MULTI_MODEL,
+  EMBEDDING_MULTI_REVISION,
+  EMBEDDING_REVISION,
+  EMBEDDING_RUNTIME_VERSION,
   embeddingManifest,
   embeddingProfileHash,
   VENUE_PAPERS,
@@ -54,6 +57,7 @@ import {
   isDateOnlyDeadline,
   isExactDeadline,
   warningCounts,
+  warningSummaries,
 } from "./model.ts";
 
 export let ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -546,6 +550,14 @@ export function toJson(
       sources: [...conf.sources],
       dblp: conf.dblp,
       ...(conf.identity ? { identity: conf.identity } : {}),
+      ...(conf.legacy_keys?.length ? { legacy_keys: [...conf.legacy_keys] } : {}),
+      ...(conf.category_assignments?.length
+        ? {
+            category_assignments: conf.category_assignments.map((assignment) => ({
+              ...assignment,
+            })),
+          }
+        : {}),
       editions,
       // 代表採択論文タイトル（無い会議は空配列）。語彙一致 + IDF + 埋め込み強化に使う
       papers: VENUE_PAPERS[conf.key] ?? [],
@@ -559,6 +571,19 @@ export function toJson(
     },
     sources,
     categories: { ...categories },
+    legacy_key_redirects: (() => {
+      const aliases = new Map<string, string[]>();
+      for (const conference of confs ?? []) {
+        for (const legacy of conference.legacy_keys ?? []) {
+          aliases.set(legacy, [...(aliases.get(legacy) ?? []), conference.key]);
+        }
+      }
+      return Object.fromEntries(
+        [...aliases]
+          .filter(([, targets]) => new Set(targets).size === 1)
+          .map(([legacy, targets]) => [legacy, targets[0]!] as const),
+      );
+    })(),
     conferences: outConfs,
   };
 }
@@ -626,6 +651,7 @@ function compactConference(
     link: conf.link,
     tags: conf.tags,
     sources: conf.sources,
+    ...(conf.category_assignments ? { category_assignments: conf.category_assignments } : {}),
     editions,
     ...(withPapers ? { papers: conf.papers ?? [] } : {}),
   };
@@ -661,6 +687,7 @@ export function toCatalog(
     site: data.site,
     sources: data.sources,
     categories: data.categories,
+    legacy_key_redirects: data.legacy_key_redirects,
     window: { lookback_days: 30, upcoming_days: Math.max(1, days) },
     history_ref: "data.json",
     recommendation_ref: "recommendation-index.json",
@@ -675,6 +702,13 @@ export function toRecommendationIndex(
   sourceStatus: Record<string, string> = {},
 ): Record<string, unknown> {
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
+  const reranker = (() => {
+    try {
+      return JSON.parse(readFileSync(join(ROOT, "data", "recommender-reranker.json"), "utf8"));
+    } catch {
+      return null;
+    }
+  })();
   const conferences = jsonRecords(data.conferences).map((conf) => {
     const editions = jsonRecords(conf.editions)
       .map((edition) => {
@@ -716,9 +750,11 @@ export function toRecommendationIndex(
     site: data.site,
     sources: data.sources,
     categories: data.categories,
+    legacy_key_redirects: data.legacy_key_redirects,
     history_ref: "data.json",
     embedding_ref: "embeddings.json",
     embedding_manifest: embeddingManifest(data as Parameters<typeof embeddingManifest>[0]),
+    ...(reranker ? { reranker } : {}),
     conferences,
   };
 }
@@ -748,6 +784,9 @@ export interface HealthSourceMetadata {
   conferenceCount: number;
   editionCount: number;
   deadlineCount: number;
+  observationStatus?: "fresh" | "stale" | "unknown";
+  observedAt?: string | null;
+  observationAgeSeconds?: number | null;
 }
 
 export type SemanticStatus = "ready" | "lexical-only";
@@ -762,11 +801,12 @@ export interface PublishInput {
 }
 
 export interface PublishManifest {
-  schema_version: 1 | 2 | 3;
+  schema_version: 1 | 2 | 3 | 4;
   generated_at: string;
   semantic_status: SemanticStatus;
   artifacts: Record<string, PublishArtifact>;
   build_id?: string;
+  content_id?: string;
   profile_hash?: string;
   source_commit?: string | null;
   data_commit?: string | null;
@@ -798,6 +838,25 @@ export interface PublishProvenance {
 export function publishBuildId(now: Date, profileHash: string): string {
   return createHash("sha256")
     .update(`${now.toISOString()}\0${profileHash}`)
+    .digest("hex")
+    .slice(0, 16);
+}
+
+export function publishContentId(provenance: PublishProvenance, profileHash: string): string {
+  return createHash("sha256")
+    .update(
+      JSON.stringify({
+        source_commit: provenance.sourceCommit,
+        inputs: Object.entries(provenance.inputs).sort(([left], [right]) => cmpStr(left, right)),
+        promotion_batches: provenance.promotionBatches,
+        profile_hash: profileHash,
+        models: [
+          [EMBEDDING_MODEL, EMBEDDING_REVISION],
+          [EMBEDDING_MULTI_MODEL, EMBEDDING_MULTI_REVISION],
+        ],
+        runtime: EMBEDDING_RUNTIME_VERSION,
+      }),
+    )
     .digest("hex")
     .slice(0, 16);
 }
@@ -852,6 +911,7 @@ export function collectPublishProvenance(
         "extra.yaml",
         "overrides.yaml",
         "primary_overrides.yaml",
+        "recommender-reranker.json",
         "snapshot.json",
         "venue-profiles.json",
       ].map((name) => join(root, "data", name)),
@@ -888,7 +948,7 @@ function priorPublishProvenance(outdir: string): PublishProvenance | null {
   try {
     const value = JSON.parse(readFileSync(join(outdir, "publish.json"), "utf8")) as PublishManifest;
     if (
-      value.schema_version !== 3 ||
+      ![3, 4].includes(value.schema_version) ||
       !value.inputs ||
       !value.promotion_batches ||
       !value.build ||
@@ -947,6 +1007,7 @@ export interface HealthReport {
   source_status: Record<string, HealthSourceStatus>;
   source_metadata?: Record<string, HealthSourceMetadata>;
   source_failures: string[];
+  build_input_mode?: "online-refresh" | "offline-snapshot";
   tracked_venues: number;
   future_confirmed_venues: number;
   future_estimated_venues: number;
@@ -962,6 +1023,18 @@ export interface HealthReport {
   venues_with_date_only_future_deadline?: number;
   snapshot_fallback: boolean;
   parse_warnings: Record<string, number>;
+  warning_codes?: Record<string, { count: number; messages: string[] }>;
+  identity_conflicts?: {
+    venue: number;
+    edition: number;
+    new_since_baseline: number;
+    details: Array<{
+      scope: "venue" | "edition";
+      reason: string;
+      subject: string;
+      candidates: string[];
+    }>;
+  };
   parse_warning_count: number;
   category_distribution: Record<string, number>;
   category_counts: Record<string, number>;
@@ -974,10 +1047,19 @@ export interface HealthReport {
 export interface HealthReportOptions {
   sourceStatus?: Record<string, HealthSourceStatus>;
   sourceMetadata?: Record<string, HealthSourceMetadata>;
+  recommendationSourceStatus?: Record<string, HealthSourceStatus>;
+  buildInputMode?: "online-refresh" | "offline-snapshot";
   sourceFailures?: string[];
   snapshotFallback?: boolean;
   parseWarnings?: Record<string, number>;
   parseWarningCount?: number;
+  warningCodes?: Record<string, { count: number; messages: string[] }>;
+  identityConflicts?: Array<{
+    scope: "venue" | "edition";
+    reason: string;
+    subject: string;
+    candidates: string[];
+  }>;
   requiredVenues?: string[];
   profileHash?: string;
   outputFiles?: Record<string, HealthOutputFile>;
@@ -1204,6 +1286,12 @@ export function healthReport(
       cmpStr(a.deadline_id, b.deadline_id) ||
       cmpStr(a.at_utc ?? a.local_date ?? "", b.at_utc ?? b.local_date ?? ""),
   );
+  const identityConflicts = [...(options.identityConflicts ?? [])].sort(
+    (left, right) =>
+      cmpStr(left.scope, right.scope) ||
+      cmpStr(left.reason, right.reason) ||
+      cmpStr(left.subject, right.subject),
+  );
   return {
     schema_version: HEALTH_SCHEMA_VERSION,
     generated_at: String(data.generated_at ?? ""),
@@ -1211,6 +1299,7 @@ export function healthReport(
     source_status: sourceStatus,
     source_metadata: options.sourceMetadata,
     source_failures: sourceFailures,
+    build_input_mode: options.buildInputMode,
     tracked_venues: conferences.length,
     future_confirmed_venues: confirmedVenues.size,
     future_estimated_venues: estimatedVenues.size,
@@ -1226,6 +1315,13 @@ export function healthReport(
     venues_with_date_only_future_deadline: dateOnlyVenues.size,
     snapshot_fallback: Boolean(options.snapshotFallback),
     parse_warnings: parseWarnings,
+    warning_codes: options.warningCodes,
+    identity_conflicts: {
+      venue: identityConflicts.filter((conflict) => conflict.scope === "venue").length,
+      edition: identityConflicts.filter((conflict) => conflict.scope === "edition").length,
+      new_since_baseline: 0,
+      details: identityConflicts,
+    },
     parse_warning_count: Math.max(0, Number(parseWarningCount) || 0),
     category_distribution: sortedCategories,
     category_counts: sortedCategories,
@@ -1664,6 +1760,14 @@ export function evaluateHealthGate(
   if (unbackedFailures.length > 0) {
     reasons.push(`source failure without snapshot fallback: ${unbackedFailures.join(",")}`);
   }
+  for (const [source, metadata] of Object.entries(currentReport.source_metadata ?? {})) {
+    if (source === "local") continue;
+    if (metadata.observationStatus === "stale") {
+      reasons.push(`source observation is stale: ${source}`);
+    } else if (metadata.status === "snapshot-fallback" && metadata.observationStatus !== "fresh") {
+      reasons.push(`snapshot observation freshness is unknown: ${source}`);
+    }
+  }
   const currentGeneratedAt = Date.parse(String(currentReport.generated_at ?? ""));
   if (!Number.isFinite(currentGeneratedAt)) reasons.push("generated_at is invalid");
   if (!previous) return { ok: reasons.length === 0, reasons, warnings };
@@ -1722,6 +1826,31 @@ export function evaluateHealthGate(
   const previousWarnings = reportWarningCount(previousReport);
   if (reportWarningCount(currentReport) > previousWarnings * 2 + 5) {
     reasons.push("parse warnings increased sharply");
+  }
+  const previousConflicts = previousReport.identity_conflicts;
+  const currentConflicts = currentReport.identity_conflicts;
+  if (previousConflicts && currentConflicts) {
+    const conflictKey = (conflict: (typeof currentConflicts.details)[number]) =>
+      JSON.stringify([
+        conflict.scope,
+        conflict.reason,
+        conflict.subject,
+        [...(conflict.candidates ?? [])].sort(cmpStr),
+      ]);
+    const previousKeys = new Set(previousConflicts.details.map(conflictKey));
+    const newConflicts = currentConflicts.details.filter(
+      (conflict) => !previousKeys.has(conflictKey(conflict)),
+    ).length;
+    currentConflicts.new_since_baseline = newConflicts;
+    if (newConflicts > 0) reasons.push(`identity conflicts increased by ${newConflicts}`);
+  }
+  const previousWarningCodes = previousReport.warning_codes;
+  if (previousWarningCodes) {
+    for (const [code, warning] of Object.entries(currentReport.warning_codes ?? {})) {
+      const prior = previousWarningCodes[code];
+      if (!prior) reasons.push(`new warning code: ${code}`);
+      else if (warning.count > prior.count) reasons.push(`warning code increased: ${code}`);
+    }
   }
   return { ok: reasons.length === 0, reasons, warnings };
 }
@@ -1826,12 +1955,14 @@ export function writePublishManifest(
     : "";
   const resolvedProvenance =
     provenance ?? priorPublishProvenance(outdir) ?? collectPublishProvenance();
+  const contentId = publishContentId(resolvedProvenance, profileHash);
   const manifest: PublishManifest = {
-    schema_version: 3,
+    schema_version: 4,
     generated_at: safeNow.toISOString(),
     semantic_status: semanticStatus,
     artifacts,
-    build_id: publishBuildId(safeNow, profileHash),
+    content_id: contentId,
+    build_id: publishBuildId(safeNow, contentId),
     profile_hash: profileHash,
     source_commit: resolvedProvenance.sourceCommit,
     data_commit: resolvedProvenance.dataCommit,
@@ -2063,6 +2194,7 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "- sources: array of {name, repo, license, url}：出典と授権。",
     "- categories: object：カテゴリ ID から英語名への写像。",
     `  実在値: ${[...Object.keys(categories)].sort().join(", ")}。`,
+    "- legacy_key_redirects: object：旧会議 key から現在の正規 key への写像。",
     "- conferences: array：会議の配列。各要素は次の形である。",
     "  - key: string：正規化キー（slug）。例 'sigcomm'。",
     "  - title: string：略称。例 'SIGCOMM'。",
@@ -2075,6 +2207,8 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "  - sources: array of string：この会議の出典名。",
     "  - dblp: string|null：DBLP の会議キー。無い場合は null。",
     "  - identity: object：明示的な venue ID、DBLP key、公式 domain、alias、source ID。存在時のみ。",
+    "  - legacy_keys: array of string：正規 key へ移行した旧 key。存在時のみ。",
+    "  - category_assignments: array：カテゴリと付与理由。存在時のみ。",
     "  - papers: array of string：代表採択論文タイトル。語彙一致・推薦に使う。",
     "    無い会議は空配列。",
     "  - editions: array：開催回。各要素は次の形である。",
@@ -2204,12 +2338,20 @@ export async function buildAll(
   const jsonText = JSON.stringify(data, null, 2);
   write("data.json", `${jsonText}\n`);
   write("catalog.json", `${JSON.stringify(toCatalog(data, nowUtc, upcomingDays), null, 2)}\n`);
-  const buildId = publishBuildId(nowUtc, embeddingProfileHash(data));
+  const publishProvenance =
+    opts.publishProvenance ?? collectPublishProvenance(ROOT, undefined, { now: nowUtc });
+  const contentId = publishContentId(publishProvenance, embeddingProfileHash(data));
+  const buildId = publishBuildId(nowUtc, contentId);
   write(
     "recommendation-index.json",
     `${JSON.stringify(
       {
-        ...toRecommendationIndex(data, nowUtc, opts.health?.sourceStatus),
+        ...toRecommendationIndex(
+          data,
+          nowUtc,
+          opts.health?.recommendationSourceStatus ?? opts.health?.sourceStatus,
+        ),
+        content_id: contentId,
         build_id: buildId,
       },
       null,
@@ -2275,6 +2417,11 @@ export async function buildAll(
   const report = healthReport(data, nowUtc, {
     ...opts.health,
     parseWarnings: opts.health?.parseWarnings ?? warningCounts(),
+    warningCodes:
+      opts.health?.warningCodes ??
+      Object.fromEntries(
+        warningSummaries().map(({ code, count, messages }) => [code, { count, messages }]),
+      ),
     outputFiles: outputFileManifest(outdir, written),
   });
   write("health.json", `${JSON.stringify(report, null, 2)}\n`);
@@ -2284,7 +2431,7 @@ export async function buildAll(
     written,
     nowUtc,
     written.includes("embeddings.json") ? "ready" : "lexical-only",
-    opts.publishProvenance,
+    publishProvenance,
   );
   if (!written.includes("publish.json")) written.push("publish.json");
 

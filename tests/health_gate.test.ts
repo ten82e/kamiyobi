@@ -188,6 +188,79 @@ it("requires fallback coverage for every failed source", () => {
   expect(evaluateHealthGate(current, null).ok).toBe(true);
 });
 
+it("gates stale observations, new warning codes, and new identity conflicts", () => {
+  const previous = {
+    ...health([]),
+    warning_codes: { KNOWN: { count: 1, messages: ["known"] } },
+    identity_conflicts: { venue: 0, edition: 0, new_since_baseline: 0, details: [] },
+  };
+  const current = {
+    ...health([]),
+    warning_codes: {
+      KNOWN: { count: 1, messages: ["known"] },
+      NEW: { count: 1, messages: ["new"] },
+    },
+    identity_conflicts: {
+      venue: 1,
+      edition: 0,
+      new_since_baseline: 0,
+      details: [
+        { scope: "venue" as const, reason: "key-collision", subject: "x", candidates: ["a"] },
+      ],
+    },
+    source_metadata: {
+      ccfddl: {
+        source: "ccfddl",
+        status: "snapshot-fallback" as const,
+        revision: "r",
+        fetchedAt: "2026-08-01T00:00:00Z",
+        contentHash: "h",
+        cacheAgeSeconds: 90000,
+        conferenceCount: 1,
+        editionCount: 1,
+        deadlineCount: 1,
+        observationStatus: "stale" as const,
+      },
+    },
+  };
+  const result = evaluateHealthGate(current, previous);
+  expect(result.reasons).toEqual(
+    expect.arrayContaining([
+      "source observation is stale: ccfddl",
+      "new warning code: NEW",
+      "identity conflicts increased by 1",
+    ]),
+  );
+});
+
+it("gates a different identity conflict even when the total count is unchanged", () => {
+  const previous = {
+    ...health([]),
+    identity_conflicts: {
+      venue: 1,
+      edition: 0,
+      new_since_baseline: 0,
+      details: [
+        { scope: "venue" as const, reason: "key-collision", subject: "old", candidates: ["a"] },
+      ],
+    },
+  };
+  const current = {
+    ...health([]),
+    identity_conflicts: {
+      venue: 1,
+      edition: 0,
+      new_since_baseline: 0,
+      details: [
+        { scope: "venue" as const, reason: "key-collision", subject: "new", candidates: ["b"] },
+      ],
+    },
+  };
+  expect(evaluateHealthGate(current, previous).reasons).toContain(
+    "identity conflicts increased by 1",
+  );
+});
+
 it("requires newer distinct official field evidence for earlier moves", () => {
   const previous = health(
     [exact("2026-09-01T12:00:00Z", { evidence: [official("old", "2026-08-01T00:00:00Z")] })],

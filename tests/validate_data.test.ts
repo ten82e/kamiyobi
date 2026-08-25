@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   normalizedTrack,
   summarizeCategoryChanges,
+  summarizeDeadlineChanges,
   validateData,
   validateFile,
   validateProduction,
@@ -375,7 +376,36 @@ it("summarizes category changes as a pure data-only comparison", () => {
   ]);
   expect(summary.added).toBe(2);
   expect(summary.removed).toBe(1);
-  expect(summary.summary).toContain("- changed: +security -systems");
+  expect(summary.summary).toContain("- changed: +security (unknown) -systems");
+});
+
+it("classifies deadline semantic risks deterministically", () => {
+  const payload = (date: string, precision = "exact", sourceClass = "official-cfp") => ({
+    conferences: [
+      {
+        key: "venue",
+        editions: [
+          {
+            id: "venue27",
+            deadlines: [
+              {
+                kind: "paper",
+                precision,
+                ...(precision === "date-only" ? { local_date: date } : { utc: date }),
+                evidence: [{ sourceClass }],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  const result = summarizeDeadlineChanges(
+    payload("2026-09-17T00:00:00Z"),
+    payload("2026-09-10", "date-only", "aggregator"),
+  );
+  expect(result.changes[0]).toMatchObject({ risk: "critical", precisionAfter: "date-only" });
+  expect(result.summary).toContain("risk: critical");
 });
 
 it("validates every production input by default", () => {

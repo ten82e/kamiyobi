@@ -3,12 +3,14 @@
  * Ported from tests/test_recommender.py（Node 実走の部分を vitest に置換）。
  */
 
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import recommender from "../site/recommender.ts";
 import {
   main as benchMain,
+  benchV2RequiredRegressionReasons,
   buildRealPaperResult,
   contentWords,
   norm,
@@ -942,6 +944,42 @@ describe("venue recommendation fusion", () => {
     est: false,
   });
 
+  it("applies the published linear reranker and calibrated probability", () => {
+    R.setReranker({
+      version: 1,
+      intercept: -1,
+      weights: { lexical_score: 2 },
+      blend: 1,
+      confidence_thresholds: { sufficient: 0.7, ambiguous: 0.4 },
+    });
+    try {
+      const result = R.venueRecommendations(
+        [row("gpu", "GPU Systems")],
+        R.parsePaperLines("GPU scheduling | gpu"),
+        null,
+        NOW,
+      )[0];
+      expect(result.fit.probability).toBeGreaterThan(0);
+      expect(result.fit.score).toBe(Math.round(result.fit.probability * 100));
+    } finally {
+      R.setReranker(null);
+    }
+  });
+
+  it("pins the reranker development inputs by hash", () => {
+    const model = JSON.parse(
+      readFileSync(join(REPO_ROOT, "data", "recommender-reranker.json"), "utf8"),
+    );
+    expect(model.selected_on).toBe("real-paper-dev");
+    for (const [path, expected] of Object.entries(model.input_hashes)) {
+      expect(
+        createHash("sha256")
+          .update(readFileSync(join(REPO_ROOT, path)))
+          .digest("hex"),
+      ).toBe(expected);
+    }
+  });
+
   it("unions a semantic-only venue with lexical candidates", () => {
     const result = R.venueRecommendations(
       [row("lexical", "GPU Systems"), row("semantic", "Distributed Inference")],
@@ -1843,7 +1881,23 @@ describe("bench-recommender argument parsing and helper utilities", () => {
     }
     expect(result.splits.heldout.queries).toBe(2);
     expect(result.splits.heldout.modes.fused.coverage).toBeGreaterThan(0);
+    expect(result.splits.heldout.candidate_retrieval.union_recall_at_50).toBe(1);
+    expect(result.splits.heldout.fused_mrr_lcb).toBe(1);
+    expect(result.splits.heldout.calibration.brier_score).toBeTypeOf("number");
+    expect(benchV2RequiredRegressionReasons(result)).toEqual([]);
     expect(result).toEqual(runBenchmarkV2(JSON.parse(JSON.stringify(fixture))));
+  });
+
+  it("fails the fixed semantic-score gate when heldout retrieval is mutated", () => {
+    const fixture = JSON.parse(
+      readFileSync(join(REPO_ROOT, "tests", "fixtures", "bench-v2.json"), "utf8"),
+    );
+    for (const query of fixture.queries.filter(
+      (item: { split: string }) => item.split === "heldout",
+    )) {
+      for (const key of Object.keys(query.semantic)) query.semantic[key] = 0;
+    }
+    expect(benchV2RequiredRegressionReasons(runBenchmarkV2(fixture))).not.toEqual([]);
   });
 
   it("runBenchmarkV2 rejects duplicate query titles as leakage", () => {

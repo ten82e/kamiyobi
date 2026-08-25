@@ -104,7 +104,26 @@ describe("merge_sources", () => {
     const forward = mergeSources([[first], [second]], PRIORITY);
     const reversed = mergeSources([[second], [first]], PRIORITY);
     expect(forward).toEqual(reversed);
+    expect(forward.map((conference) => conference.key)).not.toContain("shared");
+    expect(forward.every((conference) => conference.legacy_keys?.includes("shared"))).toBe(true);
     expect(forward.map((conference) => conference.key)).not.toContain("shared-unidentified");
+  });
+
+  it("uses an explicit venue id as the canonical public key", () => {
+    const [conference] = mergeSources(
+      [
+        [
+          makeConference({
+            key: "legacy",
+            title: "Stable Venue",
+            identity: { venueId: "stable-venue" },
+          }),
+        ],
+      ],
+      PRIORITY,
+    );
+    expect(conference.key).toBe("stable-venue");
+    expect(conference.legacy_keys).toEqual(["legacy"]);
   });
 
   it("does not use an ordinary link as identity evidence", () => {

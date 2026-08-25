@@ -197,6 +197,16 @@ export interface PrimaryDeadline {
   retrievedAt?: string;
   verifiedAt?: string;
   rawExcerpt?: string;
+  adapter?: string;
+  structured?: boolean;
+  selectorOrField?: string;
+}
+
+export interface PrimaryAdapter {
+  id: string;
+  structured: boolean;
+  matches(url: URL): boolean;
+  extract(document: string, year: number): PrimaryDeadline[];
 }
 
 function primarySlot(deadline: PrimaryDeadline): string {
@@ -314,6 +324,17 @@ export function extractDeadline(
   return out;
 }
 
+function extractAdapterDeadlines(document: string, year: number): PrimaryDeadline[] {
+  const lines = toLines(document);
+  return extractDeadlines(lines, year).map((deadline) => {
+    const excerpt = lines.find((line) => {
+      const parsed = extractDeadline(line, year, line);
+      return parsed !== null && primarySlot(parsed) === primarySlot(deadline);
+    });
+    return excerpt ? { ...deadline, rawExcerpt: excerpt } : deadline;
+  });
+}
+
 export function pageTitleYear(htmlText: string | null | undefined): number | null {
   if (!htmlText) return null;
   const m = /<title[^>]*>(.*?)<\/title>/is.exec(htmlText);
@@ -359,6 +380,26 @@ export function extractDeadlines(
     if (entry && !out.some((e) => JSON.stringify(e) === JSON.stringify(entry))) out.push(entry);
   }
   return out;
+}
+
+export const PRIMARY_ADAPTERS: PrimaryAdapter[] = [
+  {
+    id: "easychair-v1",
+    structured: false,
+    matches: (url) => url.hostname.toLowerCase().replace(/^www\./, "") === "easychair.org",
+    extract: extractAdapterDeadlines,
+  },
+  {
+    id: "generic-v1",
+    structured: false,
+    matches: () => true,
+    extract: extractAdapterDeadlines,
+  },
+];
+
+export function primaryAdapter(url: string): PrimaryAdapter {
+  const parsed = new URL(url);
+  return PRIMARY_ADAPTERS.find((adapter) => adapter.matches(parsed)) ?? PRIMARY_ADAPTERS.at(-1)!;
 }
 
 export function loadYamlFile(path: string): Record<string, any> {
@@ -414,7 +455,13 @@ export async function runFetchPrimary(
         continue;
       }
       const pageYr = pageYear(page, Number(year));
-      deadlines = extractDeadlines(toLines(page), pageYr);
+      const adapter = primaryAdapter(String(url));
+      deadlines = adapter.extract(page, pageYr).map((deadline) => ({
+        ...deadline,
+        adapter: adapter.id,
+        structured: adapter.structured,
+        selectorOrField: "deadline-text-window",
+      }));
       // 収録の「締切」を正すのが目的なので、提出締切 (paper/abstract) だけを書く。
       deadlines = deadlines.filter((d) => d.kind === "paper" || d.kind === "abstract");
       const hint = conf.tz;
@@ -468,7 +515,9 @@ export async function runFetchPrimary(
         contentHash: pageHash,
         retrievedAt,
         verifiedAt,
-        rawExcerpt: `${deadline.label}: ${deadline.date}${deadline.time ? ` ${deadline.time}` : ""}${deadline.tz ? ` ${deadline.tz}` : ""}`,
+        rawExcerpt:
+          deadline.rawExcerpt ??
+          `${deadline.label}: ${deadline.date}${deadline.time ? ` ${deadline.time}` : ""}${deadline.tz ? ` ${deadline.tz}` : ""}`,
       };
     });
     const merged = new Map(previousDeadlines.map((deadline) => [primarySlot(deadline), deadline]));

@@ -416,18 +416,37 @@ function identityConflictOrder(left: IdentityConflict, right: IdentityConflict):
 
 function uniqueConferenceKeys(confs: Conference[]): Conference[] {
   const byKey = new Map<string, Conference[]>();
-  for (const conf of confs) byKey.set(conf.key, [...(byKey.get(conf.key) ?? []), conf]);
+  for (const conf of confs) {
+    const canonical = slug(conf.identity?.venueId ?? "") || conf.key;
+    const normalized =
+      canonical === conf.key
+        ? conf
+        : {
+            ...conf,
+            key: canonical,
+            legacy_keys: [...new Set([...(conf.legacy_keys ?? []), conf.key])].sort(cmpStr),
+          };
+    byKey.set(normalized.key, [...(byKey.get(normalized.key) ?? []), normalized]);
+  }
   const out: Conference[] = [];
   for (const [key, collisions] of byKey) {
+    if (collisions.length === 1) {
+      out.push(collisions[0]!);
+      continue;
+    }
     const used = new Set<string>();
-    for (const [index, conf] of [...collisions]
-      .sort((a, b) => cmpStr(conferenceSortKey(a), conferenceSortKey(b)))
-      .entries()) {
-      const base = index === 0 ? key : `${key}-${collisionSuffix(conf)}`;
+    for (const conf of [...collisions].sort((a, b) =>
+      cmpStr(conferenceSortKey(a), conferenceSortKey(b)),
+    )) {
+      const base = `${key}-${collisionSuffix(conf)}`;
       let next = base;
       for (let suffix = 2; used.has(next); suffix++) next = `${base}-${suffix}`;
       used.add(next);
-      out.push(next === conf.key ? conf : { ...conf, key: next });
+      out.push({
+        ...conf,
+        key: next,
+        legacy_keys: [...new Set([...(conf.legacy_keys ?? []), conf.key])].sort(cmpStr),
+      });
     }
   }
   return out;
@@ -892,18 +911,34 @@ export function classify(
   const out: Conference[] = [];
   for (const conf of confs) {
     let categories: string[];
+    let assignments = (conf.category_assignments ?? []).filter((assignment) =>
+      conf.categories.includes(assignment.category),
+    );
     if (excluded.has(conf.key)) {
       categories = [];
+      assignments = [];
     } else {
       categories = [...conf.categories];
+      for (const category of categories) {
+        if (!assignments.some((assignment) => assignment.category === category)) {
+          assignments.push({ category, reason: "source-subfield" });
+        }
+      }
       for (const [name, rule] of Object.entries(taxonomy)) {
         if (!categories.includes(name) && matches(conf, (rule as Record<string, unknown>) ?? {})) {
           categories.push(name);
+          assignments.push({
+            category: name,
+            reason: toStringArray((rule as Record<string, unknown>)?.venues).includes(conf.key)
+              ? "explicit-venue-rule"
+              : "source-subfield",
+          });
         }
       }
       categories = known.size === 0 ? categories : categories.filter((c) => known.has(c));
+      assignments = assignments.filter((assignment) => categories.includes(assignment.category));
     }
-    out.push({ ...conf, categories });
+    out.push({ ...conf, categories, category_assignments: assignments });
   }
   return out;
 }
@@ -977,6 +1012,12 @@ export function applyOverrides(
     for (const field of ["tags", "categories"] as const) {
       if (field in patch) {
         next[field] = toStringArray(patch[field]);
+        if (field === "categories") {
+          next.category_assignments = next.categories.map((category) => ({
+            category,
+            reason: "manual-review",
+          }));
+        }
       }
     }
     const editionPatches = (patch.editions as Record<string, unknown>) ?? {};

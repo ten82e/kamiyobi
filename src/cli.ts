@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs as parseNodeArgs } from "node:util";
 import { load as loadYaml } from "js-yaml";
 import { booleanValue, normalizeShortEquals, stringValue } from "./args.ts";
-import { buildAll, collectPublishProvenance } from "./build.ts";
+import { buildAll, collectPublishProvenance, type HealthSourceMetadata } from "./build.ts";
 import {
   applyAliases,
   applyOverrides,
@@ -197,14 +197,44 @@ async function collectImpl(
 // テストから差し替えられるよう、ESM の束縛をオブジェクト経由で公開する。
 export const hooks = { collect: collectImpl };
 
-function restoreSnapshot(path: string): Conference[] {
-  if (!existsSync(path)) return [];
+export interface SnapshotMetadata {
+  schema_version: 1;
+  generated_at: string;
+  sources: Record<
+    string,
+    Pick<
+      SourceLoadResult,
+      | "revision"
+      | "fetchedAt"
+      | "contentHash"
+      | "conferenceCount"
+      | "editionCount"
+      | "deadlineCount"
+    >
+  >;
+}
+
+function readSnapshot(path: string): {
+  conferences: Conference[];
+  metadata: SnapshotMetadata | null;
+} {
+  if (!existsSync(path)) return { conferences: [], metadata: null };
   try {
     const payload = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
-    return conferencesFromJson(payload);
+    const value = payload.snapshot_metadata;
+    const metadata =
+      value &&
+      typeof value === "object" &&
+      (value as Record<string, unknown>).schema_version === 1 &&
+      typeof (value as Record<string, unknown>).generated_at === "string" &&
+      (value as Record<string, unknown>).sources &&
+      typeof (value as Record<string, unknown>).sources === "object"
+        ? (value as unknown as SnapshotMetadata)
+        : null;
+    return { conferences: conferencesFromJson(payload), metadata };
   } catch (exc) {
     process.stderr.write(`warning: ${path} を読めない: ${String(exc)}\n`);
-    return [];
+    return { conferences: [], metadata: null };
   }
 }
 
@@ -214,6 +244,74 @@ export interface SnapshotRestoreResult {
     string,
     Pick<SourceLoadResult, "conferenceCount" | "editionCount" | "deadlineCount">
   >;
+}
+
+function normalizedIdentity(value: unknown): string {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase();
+}
+
+function snapshotConferenceMatch(
+  conferences: Conference[],
+  saved: Conference,
+): Conference | undefined {
+  const sourceIdsCompatible = (conference: Conference): boolean =>
+    !Object.entries(saved.identity?.sourceIds ?? {}).some(
+      ([source, id]) =>
+        conference.identity?.sourceIds?.[source] !== undefined &&
+        normalizedIdentity(conference.identity.sourceIds[source]) !== normalizedIdentity(id),
+    );
+  const criteria: Array<(conference: Conference) => boolean> = [
+    (conference) =>
+      Boolean(saved.identity?.venueId) &&
+      normalizedIdentity(conference.identity?.venueId) ===
+        normalizedIdentity(saved.identity?.venueId),
+    (conference) =>
+      Object.entries(saved.identity?.sourceIds ?? {}).some(
+        ([source, id]) =>
+          normalizedIdentity(conference.identity?.sourceIds?.[source]) === normalizedIdentity(id),
+      ),
+    (conference) =>
+      sourceIdsCompatible(conference) &&
+      Boolean(saved.identity?.dblpKey ?? saved.dblp) &&
+      normalizedIdentity(conference.identity?.dblpKey ?? conference.dblp) ===
+        normalizedIdentity(saved.identity?.dblpKey ?? saved.dblp),
+    (conference) =>
+      conference.key === saved.key ||
+      (conference.legacy_keys ?? []).includes(saved.key) ||
+      (saved.legacy_keys ?? []).includes(conference.key),
+  ];
+  for (const criterion of criteria) {
+    const matches = conferences.filter(criterion);
+    if (matches.length === 1) return matches[0];
+    if (matches.length > 1) return undefined;
+  }
+  return undefined;
+}
+
+function snapshotEditionMatch(
+  editions: Conference["editions"],
+  saved: Conference["editions"][number],
+): Conference["editions"][number] | undefined {
+  const criteria: Array<(edition: Conference["editions"][number]) => boolean> = [
+    (edition) =>
+      Boolean(saved.identity?.editionId) &&
+      normalizedIdentity(edition.identity?.editionId) ===
+        normalizedIdentity(saved.identity?.editionId),
+    (edition) =>
+      Object.entries(saved.identity?.sourceIds ?? {}).some(
+        ([source, id]) =>
+          normalizedIdentity(edition.identity?.sourceIds?.[source]) === normalizedIdentity(id),
+      ),
+    (edition) => edition.edition_id === saved.edition_id,
+  ];
+  for (const criterion of criteria) {
+    const matches = editions.filter(criterion);
+    if (matches.length === 1) return matches[0];
+    if (matches.length > 1) return undefined;
+  }
+  return undefined;
 }
 
 /** Restore only failed upstream material; current slots always win. */
@@ -256,11 +354,10 @@ export function restoreFailedSourceMaterialWithCounts(
     if (sources.includes("local")) return "local";
     return sources.every((source) => failed.has(source)) ? sources[0]! : null;
   };
-  const byKey = new Map(out.map((conference) => [conference.key, conference]));
   for (const saved of snapshot) {
     const savedFailed = saved.sources.some((source) => failed.has(source));
     if (!savedFailed || (saved.sources.length === 1 && saved.sources[0] === "local")) continue;
-    const held = byKey.get(saved.key);
+    const held = snapshotConferenceMatch(out, saved);
     if (!held) {
       // Old snapshots attribute only a conference/edition to a source; retain
       // that ceiling rather than guessing per-field ownership.
@@ -282,7 +379,6 @@ export function restoreFailedSourceMaterialWithCounts(
       if (!sources.length || !editions.length) continue;
       const restoredConference = { ...saved, sources, editions };
       out.push(restoredConference);
-      byKey.set(saved.key, restoredConference);
       for (const source of sources) count(source, "conferenceCount");
       for (const edition of editions) {
         count(edition.source, "editionCount");
@@ -295,9 +391,7 @@ export function restoreFailedSourceMaterialWithCounts(
     let restored = false;
     for (const savedEdition of saved.editions) {
       const savedSource = sourceOf(saved, savedEdition);
-      const heldEdition = held.editions.find(
-        (edition) => edition.edition_id === savedEdition.edition_id,
-      );
+      const heldEdition = snapshotEditionMatch(held.editions, savedEdition);
       if (!heldEdition) {
         if (!savedSource) continue;
         const deadlines = savedEdition.deadlines.filter((deadline) =>
@@ -374,6 +468,7 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
 
   const snapshot = join(ROOT, "data", "snapshot.json");
 
+  const snapshotPayload = readSnapshot(snapshot);
   const collected = await hooks.collect(resolve(args.cache), { offline, now });
   const { groups, failed } = collected;
   const sourceResults =
@@ -439,8 +534,11 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
     Pick<SourceLoadResult, "conferenceCount" | "editionCount" | "deadlineCount">
   > = {};
   if (degraded) {
-    const restored = restoreSnapshot(snapshot);
-    const restoredResult = restoreFailedSourceMaterialWithCounts(confs, restored, failed);
+    const restoredResult = restoreFailedSourceMaterialWithCounts(
+      confs,
+      snapshotPayload.conferences,
+      failed,
+    );
     const restoredMaterial = restoredResult.conferences;
     snapshotFallback = JSON.stringify(restoredMaterial) !== JSON.stringify(confs);
     if (snapshotFallback) {
@@ -475,6 +573,61 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
   const requiredVenues = Array.isArray(healthConfig.required_venues)
     ? healthConfig.required_venues.map((key) => String(key))
     : [];
+  const maxObservationAgeSeconds =
+    Number.isFinite(maxCacheAgeSeconds) && maxCacheAgeSeconds >= 0 ? maxCacheAgeSeconds : 86_400;
+  const sourceMetadata: Record<string, HealthSourceMetadata> = Object.fromEntries(
+    sourceResults.map(({ conferences: _conferences, ...source }) => {
+      const restored = snapshotFallbackCounts[source.source];
+      const saved = snapshotPayload.metadata?.sources[source.source];
+      const usesSnapshot =
+        failed.has(source.source) &&
+        Boolean(
+          restored && restored.conferenceCount + restored.editionCount + restored.deadlineCount > 0,
+        );
+      const observedAt = usesSnapshot ? (saved?.fetchedAt ?? null) : source.fetchedAt;
+      const observedMs = Date.parse(String(observedAt ?? ""));
+      const observationAgeSeconds = Number.isFinite(observedMs)
+        ? Math.max(0, Math.floor((now.getTime() - observedMs) / 1000))
+        : null;
+      const observationStatus =
+        source.source === "local" || source.status === "fresh"
+          ? "fresh"
+          : observationAgeSeconds === null
+            ? "unknown"
+            : observationAgeSeconds > maxObservationAgeSeconds
+              ? "stale"
+              : "fresh";
+      return [
+        source.source,
+        {
+          ...source,
+          ...(usesSnapshot
+            ? {
+                status: "snapshot-fallback" as const,
+                revision: saved?.revision ?? null,
+                fetchedAt: saved?.fetchedAt ?? null,
+                contentHash: saved?.contentHash ?? null,
+                cacheAgeSeconds: observationAgeSeconds,
+                ...restored,
+              }
+            : {}),
+          observationStatus,
+          observedAt,
+          observationAgeSeconds,
+        },
+      ];
+    }),
+  );
+  const recommendationSourceStatus = Object.fromEntries(
+    Object.entries(sourceMetadata).map(([source, metadata]) => [
+      source,
+      metadata.observationStatus === "fresh"
+        ? "fresh"
+        : metadata.status === "cache-fallback"
+          ? "cache-fallback"
+          : "snapshot-fallback",
+    ]),
+  ) as Record<string, SourceStatus>;
   const stats = await buildAll(confs, config, outdir, now, {
     noEmbeddings: Boolean(args.noEmbeddings),
     publishProvenance: collectPublishProvenance(ROOT, configPath, { now, offline }),
@@ -493,26 +646,14 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
             : source.status,
         ]),
       ),
-      sourceMetadata: Object.fromEntries(
-        sourceResults.map(({ conferences: _conferences, ...source }) => [
-          source.source,
-          failed.has(source.source) &&
-          (snapshotFallbackCounts[source.source]?.conferenceCount ?? 0) +
-            (snapshotFallbackCounts[source.source]?.editionCount ?? 0) +
-            (snapshotFallbackCounts[source.source]?.deadlineCount ?? 0) >
-            0
-            ? {
-                ...source,
-                status: "snapshot-fallback" as const,
-                ...snapshotFallbackCounts[source.source],
-              }
-            : source,
-        ]),
-      ),
+      sourceMetadata,
+      recommendationSourceStatus,
+      buildInputMode: offline ? "offline-snapshot" : "online-refresh",
       sourceFailures: [...failed],
       snapshotFallback,
       requiredVenues,
       parseWarnings: warningCounts(),
+      identityConflicts: mergeStats.identity_conflicts,
     },
   });
   // 統合件数は出力に載った会議のぶんだけ数える。
@@ -530,6 +671,23 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
       unknown
     >;
     delete payload.generated_at;
+    payload.snapshot_metadata = {
+      schema_version: 1,
+      generated_at: now.toISOString(),
+      sources: Object.fromEntries(
+        sourceResults.map((source) => [
+          source.source,
+          {
+            revision: source.revision,
+            fetchedAt: source.fetchedAt ?? (source.source === "local" ? now.toISOString() : null),
+            contentHash: source.contentHash,
+            conferenceCount: source.conferenceCount,
+            editionCount: source.editionCount,
+            deadlineCount: source.deadlineCount,
+          },
+        ]),
+      ),
+    } satisfies SnapshotMetadata;
     writeFileSync(snapshot, JSON.stringify(payload), "utf8");
   }
 

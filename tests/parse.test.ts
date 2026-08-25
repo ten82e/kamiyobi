@@ -25,6 +25,7 @@ import {
   roundOf,
   slug,
   warn,
+  warningCode,
   warningCounts,
 } from "../src/model.ts";
 import {
@@ -1363,5 +1364,12 @@ tags: machine-learning
 
     expect(slug(null)).toBe("");
     expect(slug(undefined)).toBe("");
+  });
+
+  it("groups unknown warnings by stable normalized families", () => {
+    expect(warningCode("unexpected row 12 at https://a.example/x")).toBe(
+      warningCode("unexpected row 99 at https://b.example/y"),
+    );
+    expect(warningCode("unexpected row 12")).not.toBe(warningCode("different warning 12"));
   });
 });

@@ -67,6 +67,7 @@ interface Catalog {
   categories: Record<string, string>;
   conferences: ConferenceRecord[];
   history_ref?: string;
+  reranker?: Record<string, unknown>;
 }
 
 type UiMode = "deadlines" | "recommend";
@@ -244,6 +245,7 @@ function catalogFrom(value: unknown): Catalog | null {
     categories,
     conferences,
     history_ref: typeof value.history_ref === "string" ? value.history_ref : undefined,
+    reranker: isRecord(value.reranker) ? value.reranker : undefined,
   };
 }
 
@@ -446,6 +448,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (catalog.conferences.length) {
       Recommender.setNameIdf(Recommender.buildNameIdf(catalog.conferences));
     }
+    Recommender.setReranker(catalog.reranker ?? null);
   }
 
   let state: UiState = {

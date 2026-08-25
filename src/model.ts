@@ -63,6 +63,9 @@ export interface DeadlineEvidence {
   contentHash?: string | null;
   rawExcerpt?: string;
   verifiedFields?: EvidenceField[];
+  adapter?: string;
+  structured?: boolean;
+  selectorOrField?: string;
 }
 
 export interface DeadlineEvidenceFallback {
@@ -125,6 +128,11 @@ export function deadlineEvidence(
         ...(typeof item.verifiedAt === "string" ? { verifiedAt: item.verifiedAt } : {}),
         ...(typeof item.contentHash === "string" ? { contentHash: item.contentHash } : {}),
         ...(typeof item.rawExcerpt === "string" ? { rawExcerpt: item.rawExcerpt } : {}),
+        ...(typeof item.adapter === "string" ? { adapter: item.adapter } : {}),
+        ...(typeof item.structured === "boolean" ? { structured: item.structured } : {}),
+        ...(typeof item.selectorOrField === "string"
+          ? { selectorOrField: item.selectorOrField }
+          : {}),
         ...(fields.length > 0 ? { verifiedFields: fields } : {}),
       };
       return evidence;
@@ -275,6 +283,14 @@ export interface Conference {
   editions: Edition[];
   sources: string[];
   identity?: VenueIdentity;
+  /** Previous public keys retained when deterministic collision handling renames a venue. */
+  legacy_keys?: string[];
+  category_assignments?: CategoryAssignment[];
+}
+
+export interface CategoryAssignment {
+  category: string;
+  reason: "source-subfield" | "explicit-venue-rule" | "manual-review" | "name-keyword";
 }
 
 // --------------------------------------------------------------------------
@@ -282,6 +298,41 @@ export interface Conference {
 // --------------------------------------------------------------------------
 
 const WARNINGS = new Map<string, number>();
+
+export interface WarningSummary {
+  code: string;
+  count: number;
+  messages: string[];
+}
+
+/** Stable warning families; quoted values and counts must not create a new warning kind. */
+export function warningCode(message: string): string {
+  const rules: Array<[RegExp, string]> = [
+    [/^unparsable event date\b/, "EVENT_DATE_UNSTRUCTURED"],
+    [/^unparsable deadline\b/, "DEADLINE_UNSTRUCTURED"],
+    [/^(?:unknown|conflicting) .*timezone\b/, "TIMEZONE_UNRESOLVED"],
+    [/edition without a usable year/, "EDITION_YEAR_MISSING"],
+    [/cannot parse\b/, "SOURCE_PARSE_FAILED"],
+    [/deadline fields but every row was rejected/, "DEADLINE_PATCH_REJECTED"],
+    [/date-only deadline requires/, "DATE_ONLY_INVALID"],
+    [/primary\[.*outside edition window/, "PRIMARY_OUTSIDE_EDITION_WINDOW"],
+    [/primary\[.*unconfirmed timezone/, "PRIMARY_TIMEZONE_UNCONFIRMED"],
+    [/primary\[.*quarantined/, "PRIMARY_OBSERVATION_QUARANTINED"],
+    [/fetch of .* failed/, "SOURCE_FETCH_CACHE_FALLBACK"],
+    [/entry without key or title/, "SOURCE_ENTRY_INVALID"],
+    [/override edition .* no accepted deadline/, "OVERRIDE_DEADLINE_REJECTED"],
+  ];
+  const known = rules.find(([pattern]) => pattern.test(message))?.[1];
+  if (known) return known;
+  const family = message
+    .replace(/https?:\/\/\S+/g, "<url>")
+    .replace(/\b\d+(?:\.\d+)?\b/g, "#")
+    .replace(/\s+/g, " ")
+    .trim();
+  let hash = 2166136261;
+  for (const char of family) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  return `UNCLASSIFIED_${(hash >>> 0).toString(16).padStart(8, "0").toUpperCase()}`;
+}
 
 export function warn(message: string): void {
   const n = (WARNINGS.get(message) ?? 0) + 1;
@@ -293,6 +344,20 @@ export function warn(message: string): void {
 
 export function warningCounts(): Record<string, number> {
   return Object.fromEntries(WARNINGS);
+}
+
+export function warningSummaries(): WarningSummary[] {
+  const grouped = new Map<string, WarningSummary>();
+  for (const [message, count] of WARNINGS) {
+    const code = warningCode(message);
+    const held = grouped.get(code) ?? { code, count: 0, messages: [] };
+    held.count += count;
+    held.messages.push(message);
+    grouped.set(code, held);
+  }
+  return [...grouped.values()]
+    .map((entry) => ({ ...entry, messages: [...new Set(entry.messages)].sort(cmpStr) }))
+    .sort((left, right) => cmpStr(left.code, right.code));
 }
 
 export function resetWarnings(): void {
@@ -1400,6 +1465,20 @@ export function conferencesFromJson(
           ? String(conf.sub).trim()
           : null;
     const identity = venueIdentityOf(conf.identity);
+    const categoryAssignments = (
+      Array.isArray(conf.category_assignments) ? conf.category_assignments : []
+    )
+      .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object"))
+      .flatMap((item) => {
+        const category = String(item.category ?? "").trim();
+        const reason = String(item.reason ?? "");
+        return category &&
+          ["source-subfield", "explicit-venue-rule", "manual-review", "name-keyword"].includes(
+            reason,
+          )
+          ? [{ category, reason: reason as CategoryAssignment["reason"] }]
+          : [];
+      });
     out.push({
       key: String(conf.key ?? ""),
       title: String(conf.title ?? ""),
@@ -1423,6 +1502,10 @@ export function conferencesFromJson(
       editions,
       sources: toStringArray(conf.sources),
       ...(identity ? { identity } : {}),
+      ...(toStringArray(conf.legacy_keys).length
+        ? { legacy_keys: toStringArray(conf.legacy_keys) }
+        : {}),
+      ...(categoryAssignments.length ? { category_assignments: categoryAssignments } : {}),
     });
   }
   return out;

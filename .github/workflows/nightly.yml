@@ -24,7 +24,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Build benchmark data
-        run: node src/cli.ts build --out public --offline --no-embeddings --cache .cache --now 2026-08-09T00:00:00Z
+        run: node src/cli.ts build --out public --offline --cache .cache --now 2026-08-09T00:00:00Z
+      - name: Upload immutable recommendation bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: recommendation-bundle
+          path: public/embeddings.json
+          if-no-files-found: error
       - name: Run full real-paper benchmark
         run: |
           node src/bench-recommender.ts \

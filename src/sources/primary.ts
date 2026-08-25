@@ -94,10 +94,15 @@ function primaryEvidence(
       source_url: sourceUrl,
       original_value: originalValue,
       confidence: "official",
-      sourceClass: "official-cfp",
+      sourceClass: row.rest.structured === false ? "aggregator" : "official-cfp",
       sourceUrl,
       rawExcerpt: String(row.rest.rawExcerpt ?? originalValue),
       verifiedFields: ["date", ...(row.time ? ["time", "timezone"] : [])],
+      ...(typeof row.rest.adapter === "string" ? { adapter: row.rest.adapter } : {}),
+      ...(typeof row.rest.structured === "boolean" ? { structured: row.rest.structured } : {}),
+      ...(typeof row.rest.selectorOrField === "string"
+        ? { selectorOrField: row.rest.selectorOrField }
+        : {}),
       ...(typeof row.rest.sourceRevision === "string"
         ? { sourceRevision: row.rest.sourceRevision }
         : {}),
