@@ -16,7 +16,9 @@ export function restoreRecommendationBundle(bundlePath: string, outdir: string):
   const model = embeddingManifest?.models as { en?: { revision?: unknown } } | undefined;
   const hash = createHash("sha256").update(readFileSync(embeddingsPath)).digest("hex");
   if (
-    attestation.benchmark_status !== "passed" ||
+    // semantic 公開には required gate と full benchmark の両方の合格が必要。
+    attestation.required_gate !== "passed" ||
+    attestation.full_benchmark !== "passed" ||
     attestation.source_commit !== publish.source_commit ||
     attestation.profile_hash !== embeddingManifest?.profile_hash ||
     attestation.runtime_version !== embeddingManifest?.runtime_version ||

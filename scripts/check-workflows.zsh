@@ -42,9 +42,13 @@ rg -Fq 'recommendation-bundle-${{ github.event.workflow_run.head_sha }}' .github
 rg -q 'real-paper-required-dev.json' .github/workflows/ci.yml .github/workflows/recommendation-bundle.yml
 rg -q 'real-paper-negative.json' .github/workflows/ci.yml .github/workflows/recommendation-bundle.yml
 ! rg -q '^\s+paths:' .github/workflows/recommendation-bundle.yml
-benchmark_line=$(rg -n 'Run full real-paper benchmark' .github/workflows/nightly.yml | cut -d: -f1)
-seal_line=$(rg -n 'Seal recommendation bundle' .github/workflows/nightly.yml | cut -d: -f1)
-upload_line=$(rg -n 'Upload immutable recommendation bundle' .github/workflows/nightly.yml | cut -d: -f1)
-(( benchmark_line < seal_line && seal_line < upload_line ))
+# nightly は評価専用: bundle seal/upload を持たず、deploy trigger も recommendation-bundle に限定。
+! rg -q 'Seal recommendation bundle' .github/workflows/nightly.yml
+! rg -q 'recommendation-bundle-\$\{\{ github.sha \}\}' .github/workflows/nightly.yml
+rg -Fq 'workflows: [recommendation-bundle]' .github/workflows/deploy.yml
+! rg -Fq '[nightly,' .github/workflows/deploy.yml
+rg -q 'semantic_content_id' .github/workflows/recommendation-bundle.yml
+rg -q 'full_benchmark: "passed"' .github/workflows/recommendation-bundle.yml
+rg -q 'Run full real-paper benchmark before sealing' .github/workflows/recommendation-bundle.yml
 
 print workflow-policy-ok

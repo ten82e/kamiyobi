@@ -999,7 +999,11 @@ describe("venue recommendation fusion", () => {
     const model = JSON.parse(
       readFileSync(join(REPO_ROOT, "data", "recommender-reranker.json"), "utf8"),
     );
-    expect(model.selected_on).toBe("real-paper-required-dev");
+    // 学習は full dev のみ。required-dev (CI 用 subset) を学習に使ってはいけない。
+    expect(model.selected_on).toBe("real-paper-dev");
+    expect(model.cv.assignment).toBe("primary-venue-grouped-round-robin");
+    expect(model.cv.folds).toBeGreaterThanOrEqual(5);
+    expect(model.confidence_policy.sufficient_enabled).toBe(false);
     expect(model.coefficient_source).toBe("trained");
     expect(model.feature_schema).toContain("semantic_score");
     expect(model.calibration.method).toBe("platt");
@@ -1283,7 +1287,8 @@ describe("recommendation bundle restoration", () => {
       model_revision: manifest.models.en.revision,
       runtime_version: manifest.runtime_version,
       embeddings_sha256: createHash("sha256").update(readFileSync(embeddingPath)).digest("hex"),
-      benchmark_status: "passed",
+      required_gate: "passed",
+      full_benchmark: "passed",
     };
     const restore = (change: Record<string, unknown> = {}) => {
       writeFileSync(
@@ -1299,7 +1304,8 @@ describe("recommendation bundle restoration", () => {
       model_revision: "wrong",
       runtime_version: "wrong",
       embeddings_sha256: "0".repeat(64),
-      benchmark_status: "failed",
+      required_gate: "failed",
+      full_benchmark: "failed",
     })) {
       expect(restore({ [field]: value }), field).toBe(false);
     }

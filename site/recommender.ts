@@ -170,6 +170,8 @@ interface LinearRerankerModel {
   weights: Record<string, number>;
   blend: number;
   confidence_thresholds: { sufficient: number; ambiguous: number };
+  /** 精度保証が取れるまで sufficient 表示は無効 (UI は 候補/情報不足 の2段階)。 */
+  confidence_policy?: { sufficient_enabled: boolean };
   calibration?: { method: "platt"; slope: number; intercept: number };
 }
 interface Availability {
@@ -1617,8 +1619,10 @@ const Recommender = (() => {
         const features = rerankerFeatures(entry, lines);
         const probability = rerankerProbability(features);
         const thresholds = rerankerModel?.confidence_thresholds;
+        // confidence_policy.sufficient_enabled が false の間は sufficient を出さない。
+        const sufficientEnabled = rerankerModel?.confidence_policy?.sufficient_enabled !== false;
         const confidence = thresholds
-          ? probability >= thresholds.sufficient
+          ? probability >= thresholds.sufficient && sufficientEnabled
             ? "sufficient"
             : probability >= thresholds.ambiguous
               ? "ambiguous"

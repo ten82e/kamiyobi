@@ -4,7 +4,8 @@ on:
   push:
     branches: [main]
   workflow_run:
-    workflows: [nightly, recommendation-bundle]
+    # nightly は評価専用。semantic bundle が封印されたときだけ再 deploy する。
+    workflows: [recommendation-bundle]
     types: [completed]
     branches: [main]
 
