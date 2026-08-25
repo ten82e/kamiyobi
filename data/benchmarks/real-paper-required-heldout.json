@@ -1,0 +1,195 @@
+{
+  "version": 1,
+  "split": "heldout",
+  "profile_year_max": 2025,
+  "provenance": {
+    "collected_at": "2026-08-25T03:00:00.000Z",
+    "sources": [
+      {
+        "url": "https://2026.sigmod.org/sigmod_papers.shtml",
+        "revision": "sha256:930bd939a46004832ccea995af69ba7a7e2c4c0bf57289409606f7f592650efd",
+        "sha256": "930bd939a46004832ccea995af69ba7a7e2c4c0bf57289409606f7f592650efd"
+      },
+      {
+        "url": "https://conferences.sigcomm.org/sigcomm/2026/accepted/",
+        "revision": "Fri, 21 Aug 2026 20:52:10 GMT",
+        "sha256": "2b51dc70c9dfc478cf5680f13f3f55c33fce03f1ab1afcd8bf6dfd658ec9c003"
+      },
+      {
+        "url": "https://dblp.org/db/conf/chi/chi2026.xml",
+        "revision": "sha256:95871b5e00c094c83b12918b31cb7438812eeede22a89bab7d45e3866cf877e6",
+        "sha256": "95871b5e00c094c83b12918b31cb7438812eeede22a89bab7d45e3866cf877e6"
+      },
+      {
+        "url": "https://hpdc.sci.utah.edu/2026/program.html",
+        "revision": "\"1e0fa-6581dae0e823e-gzip\"",
+        "sha256": "d033ec6a24884c39f198c9b3b61e2915743a967dbad02fdedea8a86a747eb158"
+      },
+      {
+        "url": "https://ipsj.ixsq.nii.ac.jp/records/2006873",
+        "revision": "sha256:6fc4f23cfe18e165700a970116612e0863f06770a979c0170e8a61f73c5d9e78",
+        "sha256": "6fc4f23cfe18e165700a970116612e0863f06770a979c0170e8a61f73c5d9e78"
+      },
+      {
+        "url": "https://openaccess.thecvf.com/CVPR2026_workshops/SINT4CH",
+        "revision": "sha256:b5a79c0885edeaebef94109aa2ca8678fd41e7dc4ac9fe1cc22c295ed753ed87",
+        "sha256": "b5a79c0885edeaebef94109aa2ca8678fd41e7dc4ac9fe1cc22c295ed753ed87"
+      },
+      {
+        "url": "https://openaccess.thecvf.com/content/CVPR2026/papers/Xiao_Generalizable_Structure-Aware_Keypoint_Correspondence_for_Category-Unified_3D_Single_Object_Tracking_CVPR_2026_paper.pdf",
+        "revision": "\"191609-651f22327a480\"",
+        "sha256": "971b86f9a184b89818aeeb80f349a016ce542aa732f3be0f09f59e82afc9ac39"
+      },
+      {
+        "url": "https://www.jstage.jst.go.jp/browse/nolta/17/3/_contents/-char/en",
+        "revision": "\"072f51c47407e320d86fd3031a8ac07a1\"",
+        "sha256": "fc2fecbbbf5e58395537ad3c9ee170fc25e3d7f3db446c4e2d01f98b1ac03097"
+      },
+      {
+        "url": "https://www.usenix.org/conference/nsdi26/spring-accepted-papers",
+        "revision": "Tue, 25 Aug 2026 02:11:23 GMT",
+        "sha256": "0d724db0312368d38c3cf32af38b0a6aadf7ac8996650635f54940367f82b673"
+      },
+      {
+        "url": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions",
+        "revision": "Tue, 25 Aug 2026 02:11:01 GMT",
+        "sha256": "e0b667c5e46b038026b49aabd2beee3a457d9a90809fe43e806fbbcd6c139265"
+      }
+    ]
+  },
+  "records": [
+    {
+      "paper_id": "heldout-2026-nsdi-02",
+      "year": 2026,
+      "title": "SYMI: Efficient Mixture-of-Experts Training via Model and Optimizer State Decoupling",
+      "primary_venue": "nsdi",
+      "acceptable_venues": ["nsdi"],
+      "language": "en",
+      "domains": ["systems", "networking"],
+      "venue_scope": "international",
+      "venue_kind": "conference",
+      "input_mode": "title-only",
+      "source": "https://www.usenix.org/conference/nsdi26/spring-accepted-papers"
+    },
+    {
+      "paper_id": "heldout-2026-sigcomm-01",
+      "year": 2026,
+      "title": "FlowForm: Scalable Passive Metasurface Network for mmWave Coverage Expansion",
+      "primary_venue": "sigcomm",
+      "acceptable_venues": ["sigcomm", "nsdi"],
+      "language": "en",
+      "domains": ["networking"],
+      "venue_scope": "international",
+      "venue_kind": "conference",
+      "input_mode": "title-only",
+      "source": "https://conferences.sigcomm.org/sigcomm/2026/accepted/"
+    },
+    {
+      "paper_id": "heldout-2026-sigmod-06",
+      "year": 2026,
+      "title": "AgenticScholar: Agentic Data Management with Pipeline Orchestration for Scholarly Corpora",
+      "primary_venue": "sigmod",
+      "acceptable_venues": ["sigmod"],
+      "language": "en",
+      "domains": ["db"],
+      "venue_scope": "international",
+      "venue_kind": "conference",
+      "input_mode": "title-only",
+      "source": "https://2026.sigmod.org/sigmod_papers.shtml"
+    },
+    {
+      "paper_id": "heldout-2026-chi-03",
+      "year": 2026,
+      "title": "From Answer Givers to Design Mentors: Guiding LLMs with the Cognitive Apprenticeship Model.",
+      "primary_venue": "chi",
+      "acceptable_venues": ["chi"],
+      "language": "en",
+      "domains": ["hci"],
+      "venue_scope": "international",
+      "venue_kind": "conference",
+      "input_mode": "title-only",
+      "source": "https://dblp.org/db/conf/chi/chi2026.xml"
+    },
+    {
+      "paper_id": "heldout-2026-usenix-security-01",
+      "year": 2026,
+      "title": "Ajax: Fast Threshold Fully Homomorphic Encryption without Noise Flooding",
+      "primary_venue": "usenix-security",
+      "acceptable_venues": ["usenix-security", "ccs"],
+      "language": "en",
+      "domains": ["security"],
+      "venue_scope": "international",
+      "venue_kind": "conference",
+      "input_mode": "title-only",
+      "source": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions"
+    },
+    {
+      "paper_id": "heldout-2026-cvpr-01",
+      "year": 2026,
+      "title": "Generalizable Structure-Aware Keypoint Correspondence for Category-Unified 3D Single Object Tracking",
+      "primary_venue": "cvpr",
+      "acceptable_venues": ["cvpr", "iccv"],
+      "language": "en",
+      "domains": ["graphics", "ai"],
+      "venue_scope": "international",
+      "venue_kind": "conference",
+      "input_mode": "pdf-extract",
+      "source": "https://openaccess.thecvf.com/content/CVPR2026/papers/Xiao_Generalizable_Structure-Aware_Keypoint_Correspondence_for_Category-Unified_3D_Single_Object_Tracking_CVPR_2026_paper.pdf",
+      "pdf_text": "3D single object tracking (SOT) in point clouds is essential for real-world 3D perception, yet it remains challenging due to data sparsity and large variations in scale and structure across diverse object categories. Most existing methods rely on a category-specific paradigm that trains separate models for each class, severely limiting scalability and generalization in real deployment. Extending these methods to a single model capable of tracking diverse object categories proves inadequate, as the significant variations across categories make it difficult to establish reliable geometric correspondences without category-specific priors. To overcome these limitations, we propose a Unified Structural KeyPoint Tracker (UniKPT), a novel structure-aware and generalizable framework for category-unified 3D point cloud tracking. UniKPT comprises three key modules: (1) an adaptive keypoint extractor that produces scale-aware and semantically meaningful keypoints; (2) a progressive correspondence aligner that establishes robust cross-frame geometric associations; and (3) a confidence-aware structural localization module that suppresses unreliable matches and leverages fine-grained structural relationships for precise 3D localization. Extensive experiments on the nuScenes and KITTI benchmarks show that UniKPT achieves new state-of-the-art performance in category-unified 3D SOT. On the challenging nuScenes dataset, our unified model further surpasses category-specific state-of-the-art trackers by 4.37% in Success and 5.16% in Precision.",
+      "pdf_sha256": "971b86f9a184b89818aeeb80f349a016ce542aa732f3be0f09f59e82afc9ac39"
+    },
+    {
+      "paper_id": "heldout-2026-hpdc-01",
+      "year": 2026,
+      "title": "STAR: Decode-Phase Rescheduling for LLM Inference",
+      "primary_venue": "hpdc",
+      "acceptable_venues": ["hpdc", "ics"],
+      "language": "en",
+      "domains": ["hpc", "systems"],
+      "venue_scope": "international",
+      "venue_kind": "conference",
+      "input_mode": "title-only",
+      "source": "https://hpdc.sci.utah.edu/2026/program.html"
+    },
+    {
+      "paper_id": "heldout-2026-cvprw-01",
+      "year": 2026,
+      "title": "Documentation Infrastructure and Ethical Challenges in Spatial AI for Cultural Heritage",
+      "primary_venue": "cvpr",
+      "acceptable_venues": ["cvpr", "iccv"],
+      "language": "en",
+      "domains": ["graphics", "ai"],
+      "venue_scope": "international",
+      "venue_kind": "workshop",
+      "input_mode": "title-only",
+      "source": "https://openaccess.thecvf.com/CVPR2026_workshops/SINT4CH"
+    },
+    {
+      "paper_id": "heldout-2026-nolta-special-01",
+      "year": 2026,
+      "title": "Two-level quaternion-valued Hopfield networks",
+      "primary_venue": "ieice-nolta-recent-progress-special",
+      "acceptable_venues": ["ieice-nolta-recent-progress-special", "ieice-nolta"],
+      "language": "en",
+      "domains": ["theory", "ai"],
+      "venue_scope": "domestic",
+      "venue_kind": "special-issue",
+      "input_mode": "title-only",
+      "source": "https://www.jstage.jst.go.jp/browse/nolta/17/3/_contents/-char/en"
+    },
+    {
+      "paper_id": "heldout-2026-ipsj-journal-01",
+      "year": 2026,
+      "title": "大規模言語モデルを用いたクエリ拡張と文書拡張による過去会話検索",
+      "primary_venue": "jip",
+      "acceptable_venues": ["jip", "ieice-trans-inf"],
+      "language": "ja",
+      "domains": ["db", "ai"],
+      "venue_scope": "domestic",
+      "venue_kind": "journal",
+      "input_mode": "title+abstract",
+      "source": "https://ipsj.ixsq.nii.ac.jp/records/2006873",
+      "abstract": "本研究では，人間の会話を支援するために，現在の発話途中の内容から会話ログを検索することで，会話中の文脈理解を支援する手法を提案する．会話中の過去会話検索の課題として，発話途中で入力が未完成なため不完全なクエリ，および過去発話の文脈不足に起因する検索精度の低下という2つの課題がある．我々はそれらの課題に対して，(1)発話の続きを大規模言語モデルにより予測してクエリを拡張する「クエリ拡張」，(2)検索対象の発話文に前後の文脈を考慮し大規模言語モデルにより生成した補足情報を付加する「文書拡張」の2手法を組み合わせて対処する．NTCIR-9 SpokenDocデータセットを用いた評価実験により，未完成な発話文を用いた検索性能を評価した．提案手法の「クエリ拡張」では，統計的有意に検索精度が向上することが分かったが，「文書拡張」では検索精度向上が見られなかった．"
+    }
+  ]
+}

@@ -175,15 +175,19 @@ kamiyobi/
 ├── scripts/
 │   ├── compare-head.ts          # snapshot / primary_overrides の実質差分
 │   ├── health-gate.ts           # 直近の健全な公開結果との配信前健全性ゲート
-│   └── generate-venue-profiles.ts # 出典情報付きプロフィール成果物の再生成
+│   ├── generate-venue-profiles.ts # 出典情報付きプロフィール成果物の再生成
+│   ├── observe-cfp.ts           # CFP 本文・応答・抽出候補の保存
 │   ├── validate-data.ts         # 公開データの意味検査
 │   ├── verify-cfp.ts            # CFP 観測の項目別検証
-│   └── promote-candidates.ts    # promotion batch の決定・manifest 生成
+│   ├── promote-candidates.ts    # promotion batch の決定・manifest 生成
+│   └── check-reproducible-build.zsh # 固定時刻ビルドの再現性検査
 ├── public/                      # 生成物(git 管理外)
 ├── tests/                       # vitest
 └── .github/workflows/
-    ├── update.yml               # 日次 cron: 収集→候補探索→生成→コミット→Pages
-    └── ci.yml                   # PR/push: vitest + 出力検証
+    ├── update-data.yml          # 日次 cron: 収集→検査→自動 PR 更新
+    ├── deploy.yml               # main のマージ済み状態だけを Pages へ配信
+    ├── nightly.yml              # 実論文ベンチ全件の定期評価
+    └── ci.yml                   # PR/push: 必須検査
 ```
 
 **ビルドは手書きのファイル（README.md 等）を書き換えない。**
@@ -373,13 +377,16 @@ export function mergeSources(
   config: Record<string, unknown>,
   stats?: MergeStats | null,
 ): Conference[];
-// key で名寄せ（aliases 適用後）。同一 key の Conference をマージ
-// 同一 key で upstream_sub が異なる会議は分割する（§3.1 の FSE/SEC）
-//   sub が辞書順先の bucket が素の key、後続は `<key>-<sub-lowercased>`
-// Edition は year で突き合わせる
+// Venue は venueId、DBLP key、公式 domain + alias、明示 aliases の順で名寄せする
+// slug key だけでは統合せず、identity が不足または競合する候補は分割して統計へ残す
+// Edition は editionId、公式 URL、会期と開催地の一致で名寄せする
+// 同一年の複数開催回や本会議・ワークショップを先頭一致で統合しない
 // Deadline は和集合を取ったあと、下記「締切の重複統合」の許容幅で畳む
 // 競合時の優先順は config['source_priority']（既定 ["local","aideadlines","ccfddl"]）
-// stats は任意の出力引数。merged_deadlines と merged_by_key を受け取る
+// stats は任意の出力引数。merged_deadlines、merged_by_key、identity_conflicts を受け取る
+
+// config.venue_identities は source-local ID を stable venue ID へ明示的に対応付ける。
+// sourceIds の値や slug が偶然一致しただけでは source をまたいで統合しない。
 
 export function classify(confs: Conference[], config: Record<string, unknown>): Conference[];
 export function applyOverrides(
@@ -549,6 +556,9 @@ node --experimental-strip-types src/cli.ts review [--candidates data/discovered_
 `publish.json` は最終的な公開セットを検査する。`semantic_status` は埋め込みが有効なとき
 `ready`、省略または検証に失敗したとき `lexical-only` になる。成果物一覧の `artifacts` は `publish.json`
 自身を除く各公開ファイルのバイト数と SHA-256 を持つ。
+schema 3 は `source_commit`、`data_commit`、`workflow_run_id`、`dirty_worktree`、ビルド入力の SHA-256、promotion batch の SHA-256、build 時刻、Node 版、offline/cache 方針、再実行コマンドを持つ。
+固定時刻と同じ入力で生成した公開物はバイト一致しなければならない。
+`data.json` は venue と edition の明示 identity を保持し、snapshot 復元後も名寄せ根拠を失わない。
 
 `index.html` に埋め込む JSON は `catalog.json` と同一である。推薦モードは
 `recommendation-index.json` を遅延取得し、`embeddings.json` を参照する。
@@ -609,7 +619,7 @@ CSV では `deadline_precision` と `deadline_local_date` に同じ区別を保�
 
 ## 5. 分類とキュレーション（`config.yaml`）
 
-カテゴリは `hpc` / `networking` / `systems` / `ai` / `security` の 5 つ。
+カテゴリは `hpc` / `networking` / `systems` / `ai` / `security` / `db` / `graphics` / `hci` / `theory` の 9 つ。
 方針は **上流サブ分野の丸ごと取り込み + 例外リスト**（新規会議が自動で現れることが要件）。
 
 実データ全件に対して、HotNets・APNet・SIGMETRICS・MLSys・USENIX ATC・Euro-Par を落とさない設定を契約とする。
@@ -736,42 +746,59 @@ conferences:
     データが消えない）。警告は stderr に出るので、レジストリの URL が古くなると
     気づける。
   - 部分抽出は既存枠を消さない。枠の削除は明示的な `remove` だけで行う。
-- CI (`update.yml`) は build の前に `node src/fetch-primary.ts --apply` を
+- 日次更新 (`update-data.yml`) は build の前に `node src/fetch-primary.ts --apply` を
   実行し、毎日自動で一次ソースを巡回する。
 - 向き不向き: EasyChair CFP (`easychair.org/cfp/...`) と静的 HTML の CFP /
   Important Dates ページは抽出しやすい。JS レンダリングサイト（wacv.thecvf.com /
   vldb.org / bigdataieee.org 等）は静的 HTML に締切が無く現行抽出では 0 件になる
   ため登録しない。必要になったら個別の抽出ルールを `src/fetch-primary.ts` に足す。
 
+### CFP 候補の証拠付き昇格
+
+- `scripts/observe-cfp.ts` は `--body` を必須とし、取得先と最終 URL、HTTP 状態、応答ヘッダ、取得時刻、本文 SHA-256、parser version、本文抜粋、抽出候補、source revision、保存本文を一つの capture として記録する。
+- `scripts/verify-cfp.ts` は保存本文を再読して候補を再抽出し、本文 hash、抜粋、公式ドメイン、日付候補、取得時刻、前回 capture より新しい revision を検証する。capture 内の候補配列だけでは昇格できない。
+- 公式 CFP または出版社の capture が無い観測、本文と一致しない観測、会議レビューまたはカテゴリレビューが未完了の観測は昇格しない。
+- `scripts/promote-candidates.ts` は参照本文を batch の `bodies/` へコピーし、本文、observations、resolutions、昇格用 `extra.yaml` の SHA-256 と決定一覧を `manifest.json` に封印する。
+- 保存先は `data/promotions/<batch-id>/` とし、公開 manifest は各 batch manifest の SHA-256 を記録する。
+
 ---
 
 ## 6. GitHub Actions
 
-### `.github/workflows/update.yml`
+### `.github/workflows/update-data.yml`
 
 - `on: {schedule: [{cron: '17 20 * * *'}], workflow_dispatch: }`（20:17 UTC = 05:17 JST）
-- `permissions: {contents: write, pull-requests: write, pages: write, id-token: write}`
+- 上流取得、一次ソース抽出、候補探索、意味検査、health 遷移、推薦差分を検査し、固定 branch `automation/data-update` の PR を作成または更新する。
+- このワークフローは Pages を配信しない。
+- GitHub App の client ID と秘密鍵が設定済みなら installation token を使う。
+- App が未設定なら `GITHUB_TOKEN` で PR を更新し、`workflow_dispatch` で CI を明示起動する。
+- PR 作成失敗を成功扱いせず、孤立した自動 branch を残さない。
 - 締切ビルドの後、任意の推薦一式をキャッシュから復元・生成・検証する。
   埋め込みの生成または検証に失敗した場合は `public/embeddings.json` を公開物から除き、
   `recommendation-index.json` と締切一覧は、語彙検索のみで動作する形で残す。`scripts/health-gate.ts`
   は公開済み `health.json` を直近の健全な公開結果として比較し、確定締切枠の根拠のない消失や
   根拠なしの前倒し、必須会議欠落、警告急増、snapshot 無しのデータ源障害を検出した場合だけ
-  Pages への配信を止める。同一枠の延長、新しい枠の追加、経過した締切の削除、
+  PR 更新を止める。同一枠の延長、新しい枠の追加、経過した締切の削除、
   `profile_hash` の変化では止めない。
-- `concurrency: {group: pages, cancel-in-progress: false}`（**update.yml にのみ付ける**。
-  concurrency group はリポジトリ全体で共有されるため、ci.yml に付けると CI が
-  デプロイと直列化して不利益になる）
 - 手順: main checkout → setup-node 24 → `npm ci` → baseline build →
   一次ソース抽出・候補探索 → online build → `public/data.json` の意味検査 →
-  health gate・推薦 Top-5 差分 → 開始時の main SHA を再確認 →
-  実質差分があるファイルだけを専用 branch へ一度 push して PR 作成 →
-  配信直前に main SHA を再確認 → Pages 配信。
+  health gate・推薦 Top-5 差分・カテゴリ差分 → 開始時の main SHA を再確認 →
+  実質差分があるファイルだけを固定 branch へ pushして PR 作成または更新。
   `scripts/compare-head.ts` は `generated_at` / `_comment` の日付変化を無視する。
 - 上流取得に失敗しても §3.5 の退避経路でサイトを壊さない。
 - 自動更新は main へ直接 push しない。専用 branch の PR に通常の CI を実行し、
   `[skip ci]` は付けない。
-- update.yml に `pull_request` / `pull_request_target` トリガを**追加しない**
+- update-data.yml に `pull_request` / `pull_request_target` トリガを**追加しない**
   （`contents: write` と組み合わせると公開リポジトリで危険になる）。
+
+### `.github/workflows/deploy.yml`
+
+- `main` への push だけで起動する。
+- merge 済みの commit を checkoutし、ビルド、意味検査、health gate、公開物検査を通してから Pages artifact を作る。
+- `pages: write`、`id-token: write`、`attestations: write` は配信に必要な job だけへ与える。
+- `public/publish.json` の build provenance を attest し、`source_commit` が示す commit と公開物を結び付ける。
+- required checks が完了して main に入ったデータ以外は公開しない。
+- Pages 配信の concurrency group は deploy にだけ設定する。
 
 **cron の 60 日無効化について（未検証と明記する）**
 GitHub は公開リポジトリで「60 日間リポジトリ活動が無いと scheduled workflow を自動停止する」
@@ -796,7 +823,8 @@ push と pull request の両方で、変更ファイルにかかわらず次の�
 - 各 job は外部上流へ依存せず、fixture と `data/snapshot.json` を入力に使う。
   推薦回帰は PR の base と current をそれぞれ offline build し、同一ケースの順位差を測る。
   `npm test` は明示的に差し替えていない HTTP 通信を拒否し、`tests/fixtures/` と `data/snapshot.json` だけを入力に使う。
-- 上流データ取得、配信前の公開成果物検査、候補探索は日次 `update.yml` に置く。
+- PR で使う小さな実論文 subset は required check に含め、全件の実論文評価は `nightly.yml` で定期実行する。
+- 上流データ取得、候補探索、自動 PR 更新は日次 `update-data.yml` に置く。
 - 七つの job は main の required check として設定する。
 
 ---
@@ -926,6 +954,12 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
   測る（top1 26.1% / top5 70.7% / top10 82.6%）。スコア改変の回帰検出に使用。
 - `--data-delta` はラベル付き63ケースで変更前後を比較する。Recall@1/5、MRR、
   nDCG@10 のいずれかが低下するか、期待会議が Top-5 から脱落した場合は非ゼロ終了する。
+- `real-paper-dev.json` と `real-paper-heldout.json` は、プロフィールの cutoff より新しい実論文を各80件収録する。
+- 両 split は9カテゴリ、英語と日本語、国際会議と国内会議、conference・workshop・journal・special issue、title-only・title+abstract・PDF抽出を含む。
+- heldout の単一 venue 比率は25%以下とし、複数の妥当な投稿先を許すケースを含める。
+- 実論文評価は lexical・semantic・fused の MRR、Recall@1/5/10、nDCG@10、95% bootstrap区間、層別値、abstentionを分けて報告する。
+- PR の必須検査には小さな `real-paper-required-*.json` を使い、全件評価は nightly で実行する。
+- required と full はそれぞれ記録済みの回帰下限を持ち、heldout fused Recall@5 または negative abstention が下限を割れば失敗する。JSON レポートは Actions artifact に保存する。
 
 ### 10.3 会議プロファイル拡充手順（`data/venue-profiles.json`）
 

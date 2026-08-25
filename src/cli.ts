@@ -3,13 +3,15 @@
  * Ported from scripts/cli.py (kamiyobi).
  */
 
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs as parseNodeArgs } from "node:util";
 import { load as loadYaml } from "js-yaml";
 import { booleanValue, normalizeShortEquals, stringValue } from "./args.ts";
-import { buildAll } from "./build.ts";
+import { buildAll, collectPublishProvenance } from "./build.ts";
 import {
   applyAliases,
   applyOverrides,
@@ -31,7 +33,7 @@ import {
   warningCounts,
 } from "./model.ts";
 import { AideadlinesSource } from "./sources/aideadlines.ts";
-import { fetchMetadataFor } from "./sources/base.ts";
+import { fetchMetadataFor, resetFetchMetadata } from "./sources/base.ts";
 import { CcfddlSource } from "./sources/ccfddl.ts";
 import { LocalSource } from "./sources/local.ts";
 import { resolvePrimaryObservations } from "./sources/primary.ts";
@@ -118,14 +120,18 @@ export interface SourceLoadResult {
 
 function sourceInstances(): Array<{
   name: string;
-  load: (cache: string, opts?: { offline?: boolean }) => Promise<unknown[]>;
+  load: (cache: string, opts?: { offline?: boolean; now?: Date }) => Promise<unknown[]>;
 }> {
-  return [new CcfddlSource(), new AideadlinesSource(), new LocalSource()];
+  return [
+    new CcfddlSource(),
+    new AideadlinesSource(),
+    new LocalSource(join(ROOT, "data", "extra.yaml")),
+  ];
 }
 
 async function collectImpl(
   cacheDir: string,
-  options: { offline?: boolean },
+  options: { offline?: boolean; now?: Date },
 ): Promise<{ groups: Conference[][]; failed: Set<string>; results?: SourceLoadResult[] }> {
   const groups: Conference[][] = [];
   const failed = new Set<string>();
@@ -149,6 +155,19 @@ async function collectImpl(
         : source.name === "aideadlines"
           ? fetchMetadataFor("huggingface/ai-deadlines", "main")
           : null;
+    const localPath = join(ROOT, "data", "extra.yaml");
+    const localContentHash = existsSync(localPath)
+      ? createHash("sha256").update(readFileSync(localPath)).digest("hex")
+      : null;
+    const localRevision = (() => {
+      try {
+        return (
+          execFileSync("git", ["rev-parse", "HEAD"], { cwd: ROOT, encoding: "utf8" }).trim() || null
+        );
+      } catch {
+        return null;
+      }
+    })();
     const status: SourceStatus =
       source.name === "local"
         ? "fresh"
@@ -158,9 +177,9 @@ async function collectImpl(
     results.push({
       source: source.name,
       status,
-      revision: meta?.revision ?? (source.name === "local" ? "local" : null),
+      revision: meta?.revision ?? (source.name === "local" ? localRevision : null),
       fetchedAt: meta?.fetchedAt ?? null,
-      contentHash: meta?.contentHash ?? null,
+      contentHash: meta?.contentHash ?? (source.name === "local" ? localContentHash : null),
       cacheAgeSeconds: meta?.cacheAgeSeconds ?? null,
       conferences,
       conferenceCount: conferences.length,
@@ -335,6 +354,7 @@ export interface BuildArgs {
 
 export async function cmdBuild(args: BuildArgs): Promise<number> {
   const now = parseNow(args.now);
+  resetFetchMetadata();
   const configPath = isAbsolute(args.config) ? args.config : join(ROOT, args.config);
   const config = loadYamlFile(configPath, { strict: true });
   // 一次ソースからの自動抽出結果 (src/fetch-primary.ts 生成) は手書き
@@ -354,7 +374,7 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
 
   const snapshot = join(ROOT, "data", "snapshot.json");
 
-  const collected = await hooks.collect(resolve(args.cache), { offline });
+  const collected = await hooks.collect(resolve(args.cache), { offline, now });
   const { groups, failed } = collected;
   const sourceResults =
     collected.results ??
@@ -457,6 +477,7 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
     : [];
   const stats = await buildAll(confs, config, outdir, now, {
     noEmbeddings: Boolean(args.noEmbeddings),
+    publishProvenance: collectPublishProvenance(ROOT, configPath, { now, offline }),
     health: {
       sourceStatus: Object.fromEntries(
         sourceResults.map((source) => [

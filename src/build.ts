@@ -8,9 +8,18 @@
 
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, isAbsolute, join } from "node:path";
+import { dirname, isAbsolute, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { recommendationAxes } from "../site/recommendation-core.ts";
 // 代表採択論文タイトル（会議のセマンティック/語彙プロファイル強化）。
@@ -460,6 +469,7 @@ export function toJson(
         estimated: ed.estimated,
         ...(ed.estimate ? { estimate: { ...ed.estimate } } : {}),
         source: ed.source,
+        ...(ed.identity ? { identity: ed.identity } : {}),
         deadlines: sortedDeadlines(ed).map((dl) => {
           const evidence = dl.evidence?.length
             ? dl.evidence.map((item) => ({ ...item }))
@@ -534,6 +544,8 @@ export function toJson(
       link: conf.link,
       tags: [...conf.tags],
       sources: [...conf.sources],
+      dblp: conf.dblp,
+      ...(conf.identity ? { identity: conf.identity } : {}),
       editions,
       // 代表採択論文タイトル（無い会議は空配列）。語彙一致 + IDF + 埋め込み強化に使う
       papers: VENUE_PAPERS[conf.key] ?? [],
@@ -660,6 +672,7 @@ export function toCatalog(
 export function toRecommendationIndex(
   data: Record<string, unknown>,
   now: Date | null | undefined,
+  sourceStatus: Record<string, string> = {},
 ): Record<string, unknown> {
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
   const conferences = jsonRecords(data.conferences).map((conf) => {
@@ -682,7 +695,20 @@ export function toRecommendationIndex(
       .filter((edition): edition is JsonRecord => edition !== null);
     return {
       ...compactConference(conf, editions, true),
-      recommendation_axes: recommendationAxes(conf, null, safeNow.getTime()),
+      recommendation_axes: recommendationAxes(
+        {
+          ...conf,
+          sourceFreshness: jsonStrings(conf.sources).some((source) =>
+            ["snapshot-fallback", "failed"].includes(sourceStatus[source] ?? ""),
+          )
+            ? "snapshot-fallback"
+            : jsonStrings(conf.sources).some((source) => sourceStatus[source] === "cache-fallback")
+              ? "cache-fallback"
+              : "fresh",
+        },
+        null,
+        safeNow.getTime(),
+      ),
     };
   });
   return {
@@ -731,13 +757,42 @@ export interface PublishArtifact {
   sha256: string;
 }
 
+export interface PublishInput {
+  sha256: string;
+}
+
 export interface PublishManifest {
-  schema_version: 1 | 2;
+  schema_version: 1 | 2 | 3;
   generated_at: string;
   semantic_status: SemanticStatus;
   artifacts: Record<string, PublishArtifact>;
   build_id?: string;
   profile_hash?: string;
+  source_commit?: string | null;
+  data_commit?: string | null;
+  workflow_run_id?: string | null;
+  dirty_worktree?: boolean | null;
+  inputs?: Record<string, PublishInput>;
+  promotion_batches?: Array<{ id: string; sha256: string }>;
+  build?: PublishBuildContext;
+}
+
+export interface PublishBuildContext {
+  now: string;
+  offline: boolean | null;
+  node: string;
+  command: string;
+  source_cache: "offline-with-snapshot-fallback" | "online-refresh" | "unspecified";
+}
+
+export interface PublishProvenance {
+  sourceCommit: string | null;
+  dataCommit: string | null;
+  workflowRunId: string | null;
+  dirtyWorktree: boolean | null;
+  inputs: Record<string, PublishInput>;
+  promotionBatches: Array<{ id: string; sha256: string }>;
+  build: PublishBuildContext;
 }
 
 export function publishBuildId(now: Date, profileHash: string): string {
@@ -745,6 +800,116 @@ export function publishBuildId(now: Date, profileHash: string): string {
     .update(`${now.toISOString()}\0${profileHash}`)
     .digest("hex")
     .slice(0, 16);
+}
+
+function sha256File(path: string): string {
+  return createHash("sha256").update(readFileSync(path)).digest("hex");
+}
+
+function gitOutput(root: string, args: string[]): string | null {
+  try {
+    return execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: "pipe" }).trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+function promotionBatches(root: string): Array<{ id: string; sha256: string }> {
+  const batches: Array<{ id: string; sha256: string }> = [];
+  const walk = (dir: string): void => {
+    for (const name of readdirSync(dir)) {
+      const path = join(dir, name);
+      if (statSync(path).isDirectory()) {
+        walk(path);
+      } else if (name === "manifest.json") {
+        let id = relative(root, dirname(path));
+        try {
+          const value = JSON.parse(readFileSync(path, "utf8")) as { id?: unknown };
+          if (typeof value.id === "string" && value.id) id = value.id;
+        } catch {
+          // The raw manifest hash is still useful provenance when its optional ID is unreadable.
+        }
+        batches.push({ id, sha256: sha256File(path) });
+      }
+    }
+  };
+  const data = join(root, "data", "promotions");
+  if (existsSync(data)) walk(data);
+  return batches.sort((a, b) => cmpStr(a.id, b.id) || cmpStr(a.sha256, b.sha256));
+}
+
+/** Capture only repository inputs that can affect a fixed-clock publication. */
+export function collectPublishProvenance(
+  root = ROOT,
+  configPath = join(root, "config.yaml"),
+  build?: { now?: Date; offline?: boolean },
+): PublishProvenance {
+  const sourceCommit = process.env.GITHUB_SHA?.trim() || gitOutput(root, ["rev-parse", "HEAD"]);
+  const inputs = Object.fromEntries(
+    [
+      configPath,
+      ...[
+        "extra.yaml",
+        "overrides.yaml",
+        "primary_overrides.yaml",
+        "snapshot.json",
+        "venue-profiles.json",
+      ].map((name) => join(root, "data", name)),
+    ]
+      .filter(existsSync)
+      .sort(cmpStr)
+      .map((path) => [relative(root, path) || path, { sha256: sha256File(path) }]),
+  );
+  const dirty = gitOutput(root, ["status", "--porcelain"]);
+  return {
+    sourceCommit,
+    dataCommit: sourceCommit,
+    workflowRunId: process.env.GITHUB_RUN_ID?.trim() || null,
+    dirtyWorktree: dirty === null ? null : dirty.length > 0,
+    inputs,
+    promotionBatches: promotionBatches(root),
+    build: {
+      now: build?.now?.toISOString() ?? new Date(0).toISOString(),
+      offline: build?.offline ?? null,
+      node: process.version,
+      command:
+        "node src/cli.ts build --out <dir> --cache <dir> --now <publish.build.now> [--offline]",
+      source_cache:
+        build?.offline === true
+          ? "offline-with-snapshot-fallback"
+          : build?.offline === false
+            ? "online-refresh"
+            : "unspecified",
+    },
+  };
+}
+
+function priorPublishProvenance(outdir: string): PublishProvenance | null {
+  try {
+    const value = JSON.parse(readFileSync(join(outdir, "publish.json"), "utf8")) as PublishManifest;
+    if (
+      value.schema_version !== 3 ||
+      !value.inputs ||
+      !value.promotion_batches ||
+      !value.build ||
+      !(value.source_commit === null || typeof value.source_commit === "string") ||
+      !(value.data_commit === null || typeof value.data_commit === "string") ||
+      !(value.workflow_run_id === null || typeof value.workflow_run_id === "string") ||
+      !(value.dirty_worktree === null || typeof value.dirty_worktree === "boolean")
+    )
+      return null;
+    return {
+      sourceCommit: value.source_commit,
+      dataCommit: value.data_commit,
+      workflowRunId: value.workflow_run_id,
+      dirtyWorktree: value.dirty_worktree,
+      inputs: value.inputs,
+      promotionBatches: value.promotion_batches,
+      build: value.build,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export interface HealthDeadlineRef {
@@ -888,7 +1053,8 @@ export function healthReport(
   now: Date | null | undefined,
   options: HealthReportOptions = {},
 ): HealthReport {
-  const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now.getTime() : Date.now();
+  const generatedAt = Date.parse(String(data.generated_at ?? ""));
+  const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now.getTime() : generatedAt;
   const conferences = jsonRecords(data.conferences);
   const sourceNames = jsonRecords(data.sources)
     .map((source) => String(source.name ?? "").trim())
@@ -1591,6 +1757,7 @@ export function writePublishManifest(
   names: string[],
   now: Date | null | undefined,
   semanticStatus: SemanticStatus,
+  provenance?: PublishProvenance,
 ): PublishManifest {
   const artifacts = Object.fromEntries(
     [...new Set(names)]
@@ -1608,13 +1775,22 @@ export function writePublishManifest(
   const profileHash = existsSync(join(outdir, "data.json"))
     ? embeddingProfileHash(JSON.parse(readFileSync(join(outdir, "data.json"), "utf8")))
     : "";
+  const resolvedProvenance =
+    provenance ?? priorPublishProvenance(outdir) ?? collectPublishProvenance();
   const manifest: PublishManifest = {
-    schema_version: 2,
+    schema_version: 3,
     generated_at: safeNow.toISOString(),
     semantic_status: semanticStatus,
     artifacts,
     build_id: publishBuildId(safeNow, profileHash),
     profile_hash: profileHash,
+    source_commit: resolvedProvenance.sourceCommit,
+    data_commit: resolvedProvenance.dataCommit,
+    workflow_run_id: resolvedProvenance.workflowRunId,
+    dirty_worktree: resolvedProvenance.dirtyWorktree,
+    inputs: resolvedProvenance.inputs,
+    promotion_batches: resolvedProvenance.promotionBatches,
+    build: { ...resolvedProvenance.build, now: safeNow.toISOString() },
   };
   writeFileSync(join(outdir, "publish.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
   return manifest;
@@ -1817,7 +1993,7 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "",
     "- data.json：正規化データ全体（機械可読の正）。",
     "- health.json：配信前ゲートにも使う確定/推定締切とソース状態の健全性レポート。",
-    "- publish.json：最終公開セットのハッシュと、意味検索用の埋め込みが公開物に含まれるかを示す semantic_status（ready / lexical-only）。",
+    "- publish.json：最終公開セットのハッシュ、元 commit、入力 hash、build 条件と、意味検索用の埋め込みが公開物に含まれるかを示す semantic_status（ready / lexical-only）。",
     "- catalog.json：締切画面向けの現在・近日期間カタログ。",
     "- recommendation-index.json：投稿先推薦の会議プロフィールと埋め込み参照。",
     "- app.js：site/app.ts から生成するブラウザ UI 実行時処理。",
@@ -1848,6 +2024,8 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "  - link: string：会議の公式サイト。",
     "  - tags: array of string：補助タグ。カテゴリではない。",
     "  - sources: array of string：この会議の出典名。",
+    "  - dblp: string|null：DBLP の会議キー。無い場合は null。",
+    "  - identity: object：明示的な venue ID、DBLP key、公式 domain、alias、source ID。存在時のみ。",
     "  - papers: array of string：代表採択論文タイトル。語彙一致・推薦に使う。",
     "    無い会議は空配列。",
     "  - editions: array：開催回。各要素は次の形である。",
@@ -1858,6 +2036,7 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "    - estimate: object|null：推定版の点推定・日付窓・根拠版・信頼度。確定版には無い。",
     "      window_start / window_end は表示用の日付範囲であり、公式締切ではない。",
     "    - source: string：この開催回を提供した出典名。",
+    "    - identity: object：明示的な edition ID と公式 URL。存在時のみ。",
     "    - deadlines: array：各要素は次の形である。",
     "      - kind: string：'abstract'|'paper'|'supplementary'|'notification'" +
       "|'camera_ready'|'rebuttal_start'|'rebuttal_end'|'review_release'" +
@@ -1937,7 +2116,11 @@ export async function buildAll(
   config: Record<string, unknown> | null | undefined,
   outdir: string,
   now: Date | null | undefined,
-  opts: { noEmbeddings?: boolean; health?: HealthReportOptions } = {},
+  opts: {
+    noEmbeddings?: boolean;
+    health?: HealthReportOptions;
+    publishProvenance?: PublishProvenance;
+  } = {},
 ): Promise<BuildStats> {
   mkdirSync(outdir, { recursive: true });
 
@@ -1975,7 +2158,14 @@ export async function buildAll(
   const buildId = publishBuildId(nowUtc, embeddingProfileHash(data));
   write(
     "recommendation-index.json",
-    `${JSON.stringify({ ...toRecommendationIndex(data, nowUtc), build_id: buildId }, null, 2)}\n`,
+    `${JSON.stringify(
+      {
+        ...toRecommendationIndex(data, nowUtc, opts.health?.sourceStatus),
+        build_id: buildId,
+      },
+      null,
+      2,
+    )}\n`,
   );
   write("data.csv", toCsv(records));
   write("upcoming.md", toUpcomingMd(records, nowUtc, upcomingDays));
@@ -2045,6 +2235,7 @@ export async function buildAll(
     written,
     nowUtc,
     written.includes("embeddings.json") ? "ready" : "lexical-only",
+    opts.publishProvenance,
   );
   if (!written.includes("publish.json")) written.push("publish.json");
 

@@ -61,10 +61,10 @@ export function writeCacheMetadata(slot: string, value: CachedFetchMetadata): vo
   writeFileSync(cacheMetadataPath(slot), `${JSON.stringify(value)}\n`, "utf8");
 }
 
-function cacheAgeSeconds(root: string, fetchedAt: string | null): number | null {
+function cacheAgeSeconds(root: string, fetchedAt: string | null, now: Date): number | null {
   const fetched = fetchedAt ? Date.parse(fetchedAt) : Number.NaN;
   const origin = Number.isFinite(fetched) ? fetched : statSync(root).mtimeMs;
-  return Math.max(0, Math.floor((Date.now() - origin) / 1000));
+  return Math.max(0, Math.floor((now.getTime() - origin) / 1000));
 }
 
 function setMetadata(
@@ -72,6 +72,7 @@ function setMetadata(
   ref: string,
   root: string,
   status: FetchMetadata["status"],
+  now: Date,
 ): void {
   const saved = cacheMetadata(join(root, ".."));
   fetchMetadata.set(metadataKey(repo, ref), {
@@ -79,8 +80,13 @@ function setMetadata(
     revision: saved?.revision ?? null,
     fetchedAt: saved?.fetchedAt ?? null,
     contentHash: saved?.contentHash ?? null,
-    cacheAgeSeconds: cacheAgeSeconds(root, saved?.fetchedAt ?? null),
+    cacheAgeSeconds: cacheAgeSeconds(root, saved?.fetchedAt ?? null, now),
   });
+}
+
+/** Metadata is build-scoped; never carry one command's cache state into the next. */
+export function resetFetchMetadata(): void {
+  fetchMetadata.clear();
 }
 
 export function fetchMetadataFor(repo: string, ref: string): FetchMetadata | null {
@@ -119,16 +125,17 @@ export function extractedRoot(slot: string | null | undefined): string | null {
 export function archiveMetadata(
   bytes: Uint8Array,
   etag: string | null = null,
+  now: Date = new Date(),
 ): CachedFetchMetadata {
   const contentHash = createHash("sha256").update(bytes).digest("hex");
   return {
     revision: etag ?? `sha256:${contentHash}`,
-    fetchedAt: new Date().toISOString(),
+    fetchedAt: now.toISOString(),
     contentHash,
   };
 }
 
-async function download(url: string, dest: string): Promise<CachedFetchMetadata> {
+async function download(url: string, dest: string, now: Date): Promise<CachedFetchMetadata> {
   const response = await fetch(url, {
     headers: { "User-Agent": USER_AGENT },
     redirect: "follow",
@@ -140,7 +147,7 @@ async function download(url: string, dest: string): Promise<CachedFetchMetadata>
   writeFileSync(dest, buffer);
   // GitHub's ETag is a stable response revision where offered; archive bytes
   // are the deterministic identity when it is not.
-  return archiveMetadata(buffer, response.headers.get("etag"));
+  return archiveMetadata(buffer, response.headers.get("etag"), now);
 }
 
 /**
@@ -152,9 +159,11 @@ export async function fetchTarball(
   repo: string,
   ref: string,
   cacheDir: string,
-  options: { offline?: boolean } = {},
+  options: { offline?: boolean; now?: Date } = {},
 ): Promise<string> {
   const offline = Boolean(options.offline);
+  const now =
+    options.now instanceof Date && !Number.isNaN(options.now.getTime()) ? options.now : new Date();
   const slot = cacheSlot(cacheDir, repo, ref);
   const cached = extractedRoot(slot);
 
@@ -162,7 +171,7 @@ export async function fetchTarball(
     if (cached === null) {
       throw new Error(`no cached copy of ${repo}@${ref} under ${cacheDir}`);
     }
-    setMetadata(repo, ref, cached, "cache-fallback");
+    setMetadata(repo, ref, cached, "cache-fallback", now);
     return cached;
   }
 
@@ -171,7 +180,7 @@ export async function fetchTarball(
   const tmp = mkdtempSync(join(cacheDir, ".fetch-"));
   try {
     const archive = join(tmp, "archive.tar.gz");
-    const metadata = await download(url, archive);
+    const metadata = await download(url, archive, now);
     const staging = join(tmp, "x");
     mkdirSync(staging);
     // system tar is guaranteed on ubuntu-latest and macOS runners.
@@ -185,7 +194,7 @@ export async function fetchTarball(
   } catch (exc) {
     if (cached !== null) {
       warn(`fetch of ${repo}@${ref} failed (${String(exc)}); using cached copy`);
-      setMetadata(repo, ref, cached, "cache-fallback");
+      setMetadata(repo, ref, cached, "cache-fallback", now);
       return cached;
     }
     throw exc;
@@ -197,7 +206,7 @@ export async function fetchTarball(
   if (root === null) {
     throw new Error(`unexpected tarball layout for ${repo}@${ref}`);
   }
-  setMetadata(repo, ref, root, "fresh");
+  setMetadata(repo, ref, root, "fresh", now);
   return root;
 }
 

@@ -1,0 +1,177 @@
+{
+  "version": 1,
+  "split": "dev",
+  "profile_year_max": 2024,
+  "provenance": {
+    "collected_at": "2026-08-25T03:00:00.000Z",
+    "sources": [
+      {
+        "url": "https://2025.sigmod.org/sigmod_papers.shtml",
+        "revision": "sha256:2961dd5d3eb7c794abf63b13e99576e312f79a3bb9f0dbf7f0bcfa13091999dc",
+        "sha256": "2961dd5d3eb7c794abf63b13e99576e312f79a3bb9f0dbf7f0bcfa13091999dc"
+      },
+      {
+        "url": "https://ches.iacr.org/2025/acceptedpapers.php",
+        "revision": "sha256:b2d00ab170bbf4fb52532d5a8b0fabf0ccc2f6df79ad02deeb707804db295d37",
+        "sha256": "b2d00ab170bbf4fb52532d5a8b0fabf0ccc2f6df79ad02deeb707804db295d37"
+      },
+      {
+        "url": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/",
+        "revision": "Thu, 07 Aug 2025 15:13:51 GMT",
+        "sha256": "380fae993de24b32de88d820871d79f687657758a963da659d343968c596419f"
+      },
+      {
+        "url": "https://dblp.org/db/conf/chi/chi2025.xml",
+        "revision": "sha256:9309dc4dc7ffa5ad4abc96bef960ece483244fb63d963277a2622c30ee4a6a1d",
+        "sha256": "9309dc4dc7ffa5ad4abc96bef960ece483244fb63d963277a2622c30ee4a6a1d"
+      },
+      {
+        "url": "https://hpdc.sci.utah.edu/2025/program.html",
+        "revision": "\"17b6d-63ef3e7f84731-gzip\"",
+        "sha256": "7d49e1af37b0432a92cdf1fc2e4da6eba5af5b00ec825f5e6f788eac8d25b0cf"
+      },
+      {
+        "url": "https://ipsj.ixsq.nii.ac.jp/records/2006313",
+        "revision": "sha256:9fadbc9a97b52bd4e324d09c39e6435f180da8a76614d5e54fc022248b042f7b",
+        "sha256": "9fadbc9a97b52bd4e324d09c39e6435f180da8a76614d5e54fc022248b042f7b"
+      },
+      {
+        "url": "https://openaccess.thecvf.com/CVPR2025_workshops/LXCV",
+        "revision": "sha256:95958c22a2ed1a1cd942b96dc4ac714b501d8df1738f0b8c421aba4dec859e94",
+        "sha256": "95958c22a2ed1a1cd942b96dc4ac714b501d8df1738f0b8c421aba4dec859e94"
+      },
+      {
+        "url": "https://openaccess.thecvf.com/content/CVPR2025/papers/Xiao_Deterministic_Image-to-Image_Translation_via_Denoising_Brownian_Bridge_Models_with_Dual_CVPR_2025_paper.pdf",
+        "revision": "\"4f5ddd-6369710f95040\"",
+        "sha256": "507c137c91a6191bc0bbc379af5496da272071a231c78fbc8b5026226b538ef7"
+      },
+      {
+        "url": "https://www.jstage.jst.go.jp/browse/nolta/16/3/_contents/-char/en",
+        "revision": "\"06d5555daeed9b05023e59dab11b94361\"",
+        "sha256": "c8392fcfbd760139b36c113e3b70e22c6abb2dc8c77a0c46a83783d57462f846"
+      }
+    ]
+  },
+  "records": [
+    {
+      "paper_id": "dev-2025-ches-01",
+      "year": 2025,
+      "title": "A5/3 make or break: A massively parallel FPGA architecture for exhaustive key search",
+      "primary_venue": "ches",
+      "acceptable_venues": ["ches", "ccs"],
+      "language": "en",
+      "domains": ["security"],
+      "venue_scope": "international",
+      "venue_kind": "conference",
+      "input_mode": "title-only",
+      "source": "https://ches.iacr.org/2025/acceptedpapers.php"
+    },
+    {
+      "paper_id": "dev-2025-sigcomm-01",
+      "year": 2025,
+      "title": "MixNet: A Runtime Reconfigurable Optical-Electrical Fabric for Distributed Mixture-of-Experts Training",
+      "primary_venue": "sigcomm",
+      "acceptable_venues": ["sigcomm", "nsdi"],
+      "language": "en",
+      "domains": ["networking"],
+      "venue_scope": "international",
+      "venue_kind": "conference",
+      "input_mode": "title-only",
+      "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
+    },
+    {
+      "paper_id": "dev-2025-sigmod-01",
+      "year": 2025,
+      "title": "Low-Latency Transaction Scheduling via Userspace Interrupts: Why Wait or Yield When You Can Preempt?",
+      "primary_venue": "sigmod",
+      "acceptable_venues": ["sigmod", "vldb"],
+      "language": "en",
+      "domains": ["db"],
+      "venue_scope": "international",
+      "venue_kind": "conference",
+      "input_mode": "title-only",
+      "source": "https://2025.sigmod.org/sigmod_papers.shtml"
+    },
+    {
+      "paper_id": "dev-2025-chi-01",
+      "year": 2025,
+      "title": "CompAct: Designing Interconnected Compliant Mechanisms with Targeted Actuation Transmissions.",
+      "primary_venue": "chi",
+      "acceptable_venues": ["chi", "uist"],
+      "language": "en",
+      "domains": ["hci"],
+      "venue_scope": "international",
+      "venue_kind": "conference",
+      "input_mode": "title-only",
+      "source": "https://dblp.org/db/conf/chi/chi2025.xml"
+    },
+    {
+      "paper_id": "dev-2025-cvpr-01",
+      "year": 2025,
+      "title": "Deterministic Image-to-Image Translation via Denoising Brownian Bridge Models with Dual Approximators",
+      "primary_venue": "cvpr",
+      "acceptable_venues": ["cvpr", "iccv"],
+      "language": "en",
+      "domains": ["graphics", "ai"],
+      "venue_scope": "international",
+      "venue_kind": "conference",
+      "input_mode": "pdf-extract",
+      "source": "https://openaccess.thecvf.com/content/CVPR2025/papers/Xiao_Deterministic_Image-to-Image_Translation_via_Denoising_Brownian_Bridge_Models_with_Dual_CVPR_2025_paper.pdf",
+      "pdf_text": "Image-to-Image (I2I) translation involves converting an im- age from one domain to another. Deterministic I2I transla- tion, such as in image super-resolution, extends this con- cept by guaranteeing that each input generates a consistent and predictable output, closely matching the ground truth (GT) with high fidelity. In this paper, we propose a denois- ing Brownian bridge model with dual approximators (Dual- approx Bridge), a novel generative model that exploits the Brownian bridge dynamics and two neural network-based approximators (one for forward and one for reverse pro- cess) to produce faithful output with negligible variance and high image quality in I2I translations. Our extensive exper- iments on benchmark datasets including image generation and super-resolution demonstrate the consistent and supe- rior performance of Dual-approx Bridge in terms of im- age quality and faithfulness to GT when compared to both stochastic and deterministic baselines. Project page and code: https://github.com/bohan95/dual-app-bridge",
+      "pdf_sha256": "507c137c91a6191bc0bbc379af5496da272071a231c78fbc8b5026226b538ef7"
+    },
+    {
+      "paper_id": "dev-2025-hpdc-01",
+      "year": 2025,
+      "title": "Virtualization So Light, it Floats! Accelerating Floating Point Virtualization",
+      "primary_venue": "hpdc",
+      "acceptable_venues": ["hpdc", "ics"],
+      "language": "en",
+      "domains": ["hpc", "systems"],
+      "venue_scope": "international",
+      "venue_kind": "conference",
+      "input_mode": "title-only",
+      "source": "https://hpdc.sci.utah.edu/2025/program.html"
+    },
+    {
+      "paper_id": "dev-2025-cvprw-01",
+      "year": 2025,
+      "title": "Enhancing Vision Transformer Explainability Using Artificial Astrocytes",
+      "primary_venue": "cvpr",
+      "acceptable_venues": ["cvpr", "iccv"],
+      "language": "en",
+      "domains": ["graphics", "ai"],
+      "venue_scope": "international",
+      "venue_kind": "workshop",
+      "input_mode": "title-only",
+      "source": "https://openaccess.thecvf.com/CVPR2025_workshops/LXCV"
+    },
+    {
+      "paper_id": "dev-2025-nolta-special-01",
+      "year": 2025,
+      "title": "Brainmorphic computing: Paradigm and hardware",
+      "primary_venue": "ieice-nolta-recent-progress-special",
+      "acceptable_venues": ["ieice-nolta-recent-progress-special", "ieice-nolta"],
+      "language": "en",
+      "domains": ["theory", "ai"],
+      "venue_scope": "domestic",
+      "venue_kind": "special-issue",
+      "input_mode": "title-only",
+      "source": "https://www.jstage.jst.go.jp/browse/nolta/16/3/_contents/-char/en"
+    },
+    {
+      "paper_id": "dev-2025-ipsj-journal-01",
+      "year": 2025,
+      "title": "チャルディーニの法則を用いた標的型メールがAIに及ぼす影響に関する調査",
+      "primary_venue": "jip",
+      "acceptable_venues": ["jip", "ieice-trans-inf"],
+      "language": "ja",
+      "domains": ["security", "ai"],
+      "venue_scope": "domestic",
+      "venue_kind": "journal",
+      "input_mode": "title+abstract",
+      "source": "https://ipsj.ixsq.nii.ac.jp/records/2006313",
+      "abstract": "ソーシャルエンジニアリング攻撃の被害は依然増加傾向にある．近年では，AIエージェントが多くの業務を担うようになり，ソーシャルエンジニアリング攻撃の対象が人間からAIエージェントに拡大する危険性がある．AIエージェントには使用者が使いやすいように，使用者の性格特性に合わせた性格特性チューニングが施されることが考えられる．そのため，AIエージェントも人間の有するような「性格」を持つことになる．西川らの既存研究では，「標的型メールの文面に用いられるチャルディーニの法則」と「個人の性格因子および行動特性」には関係があり，人の性格特性によって効果的なチャルディーニの法則が異なることが確認されている．同様に，チャルディーニの法則を用いた標的型メール攻撃に対するAIエージェントの反応も，その性格特性によって異なる可能性があると考えられる．本論文は，性格特性チューニングを施した大規模言語モデル（LLM）をターゲットとし，性格特性の違いによってチャルディーニの法則が含まれたフィッシングメールを提示した際の反応の違いを調査する．これにより，チャルディーニの法則に対して，同じ性格特性を有する人間とAIエージェント間でどのような反応の違いがあるのかを明らかにする．"
+    }
+  ]
+}

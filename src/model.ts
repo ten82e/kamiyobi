@@ -228,6 +228,23 @@ export interface DeadlineEstimate {
   confidence: "low" | "medium";
 }
 
+/** Explicit, source-backed venue identifiers.  Missing fields never imply identity. */
+export interface VenueIdentity {
+  venueId?: string;
+  dblpKey?: string;
+  officialDomains?: string[];
+  aliases?: string[];
+  sourceIds?: Record<string, string>;
+}
+
+/** Explicit edition identity supplements the legacy public `edition_id` field. */
+export interface EditionIdentity {
+  editionId?: string;
+  officialUrls?: string[];
+  /** Identifiers are scoped to their upstream source and never cross-match by value alone. */
+  sourceIds?: Record<string, string>;
+}
+
 export interface Edition {
   /** Conference or workshop edition year, not the deadline's calendar year. */
   year: number;
@@ -242,6 +259,7 @@ export interface Edition {
   estimated: boolean;
   estimate?: DeadlineEstimate;
   source: string;
+  identity?: EditionIdentity;
 }
 
 export interface Conference {
@@ -256,6 +274,7 @@ export interface Conference {
   categories: string[];
   editions: Edition[];
   sources: string[];
+  identity?: VenueIdentity;
 }
 
 // --------------------------------------------------------------------------
@@ -1191,6 +1210,75 @@ function deadlineEstimateOf(value: unknown): DeadlineEstimate | undefined {
   };
 }
 
+function identityStrings(value: unknown): string[] {
+  return [
+    ...new Set(
+      (Array.isArray(value) ? value : [])
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  ].sort(cmpStr);
+}
+
+function venueIdentityOf(value: unknown): VenueIdentity | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const raw = value as Record<string, unknown>;
+  const venueId = typeof raw.venueId === "string" ? raw.venueId.trim() : "";
+  const dblpKey = typeof raw.dblpKey === "string" ? raw.dblpKey.trim() : "";
+  const officialDomains = identityStrings(raw.officialDomains);
+  const aliases = identityStrings(raw.aliases);
+  const sourceIds = Object.fromEntries(
+    Object.entries(
+      raw.sourceIds && typeof raw.sourceIds === "object"
+        ? (raw.sourceIds as Record<string, unknown>)
+        : {},
+    )
+      .filter(([, sourceId]) => typeof sourceId === "string" && sourceId.trim())
+      .map(([source, sourceId]) => [source.trim(), String(sourceId).trim()])
+      .filter(([source]) => source)
+      .sort(([left], [right]) => cmpStr(left, right)),
+  );
+  return venueId ||
+    dblpKey ||
+    officialDomains.length ||
+    aliases.length ||
+    Object.keys(sourceIds).length
+    ? {
+        ...(venueId ? { venueId } : {}),
+        ...(dblpKey ? { dblpKey } : {}),
+        ...(officialDomains.length ? { officialDomains } : {}),
+        ...(aliases.length ? { aliases } : {}),
+        ...(Object.keys(sourceIds).length ? { sourceIds } : {}),
+      }
+    : undefined;
+}
+
+function editionIdentityOf(value: unknown): EditionIdentity | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const raw = value as Record<string, unknown>;
+  const editionId = typeof raw.editionId === "string" ? raw.editionId.trim() : "";
+  const officialUrls = identityStrings(raw.officialUrls);
+  const sourceIds = Object.fromEntries(
+    Object.entries(
+      raw.sourceIds && typeof raw.sourceIds === "object"
+        ? (raw.sourceIds as Record<string, unknown>)
+        : {},
+    )
+      .filter(([, sourceId]) => typeof sourceId === "string" && sourceId.trim())
+      .map(([source, sourceId]) => [source.trim(), String(sourceId).trim()])
+      .filter(([source]) => source)
+      .sort(([left], [right]) => cmpStr(left, right)),
+  );
+  return editionId || officialUrls.length || Object.keys(sourceIds).length
+    ? {
+        ...(editionId ? { editionId } : {}),
+        ...(officialUrls.length ? { officialUrls } : {}),
+        ...(Object.keys(sourceIds).length ? { sourceIds } : {}),
+      }
+    : undefined;
+}
+
 /** Rebuild conferences from a `data.json`-shaped payload. */
 export function conferencesFromJson(
   payload: Record<string, unknown> | null | undefined,
@@ -1206,6 +1294,7 @@ export function conferencesFromJson(
       const ed = edRaw as Record<string, unknown>;
       const year = Number(ed.year);
       if (!Number.isInteger(year) || year <= 0) continue;
+      const identity = editionIdentityOf(ed.identity);
       const deadlines: Deadline[] = [];
       for (const dlRaw of (ed.deadlines as unknown[] | undefined) ?? []) {
         if (!dlRaw || typeof dlRaw !== "object") continue;
@@ -1287,6 +1376,7 @@ export function conferencesFromJson(
         estimated: Boolean(ed.estimated),
         ...(deadlineEstimateOf(ed.estimate) ? { estimate: deadlineEstimateOf(ed.estimate) } : {}),
         source: String(ed.source ?? ""),
+        ...(identity ? { identity } : {}),
       });
     }
     editions.sort((a, b) => a.year - b.year);
@@ -1309,6 +1399,7 @@ export function conferencesFromJson(
         : conf.sub !== null && conf.sub !== undefined
           ? String(conf.sub).trim()
           : null;
+    const identity = venueIdentityOf(conf.identity);
     out.push({
       key: String(conf.key ?? ""),
       title: String(conf.title ?? ""),
@@ -1331,6 +1422,7 @@ export function conferencesFromJson(
       categories: toStringArray(conf.categories),
       editions,
       sources: toStringArray(conf.sources),
+      ...(identity ? { identity } : {}),
     });
   }
   return out;

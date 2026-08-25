@@ -18,6 +18,7 @@ import {
   dateOnlyWindow,
   deadlineTrackKey,
   type Edition,
+  type EditionIdentity,
   type ExactDeadline,
   fmtDate,
   isDateOnlyDeadline,
@@ -25,6 +26,7 @@ import {
   KINDS,
   parseDateRange,
   slug,
+  type VenueIdentity,
   warn,
 } from "./model.ts";
 import { patchDeadlineSemantics } from "./sources/local.ts";
@@ -44,7 +46,7 @@ interface Windows {
 // merge
 // --------------------------------------------------------------------------
 
-/** Rewrite conference keys before name matching (SPEC.md 3.1). */
+/** Rewrite configured aliases and retain their explicit identity evidence. */
 export function applyAliases(
   groups: Conference[][] | null | undefined,
   aliases: Record<string, unknown> | null | undefined,
@@ -52,26 +54,61 @@ export function applyAliases(
   if (!groups || !Array.isArray(groups)) return [];
   if (!aliases) return groups;
   const table = new Map(Object.entries(aliases).map(([k, v]) => [k, String(v)]));
+  // ponytail: aliases are a small config table; index connected components if this ever becomes large.
+  const aliasGroup = (key: string): string[] => {
+    const seen = new Set<string>();
+    let target = key;
+    while (table.has(target) && !seen.has(target)) {
+      seen.add(target);
+      target = table.get(target)!;
+    }
+    return [...new Set([...table.keys(), ...table.values(), key])]
+      .filter((candidate) => {
+        const path = new Set<string>();
+        let current = candidate;
+        while (table.has(current) && !path.has(current)) {
+          path.add(current);
+          current = table.get(current)!;
+        }
+        return current === target;
+      })
+      .sort(cmpStr);
+  };
   return groups.map((group) =>
     Array.isArray(group)
       ? group.map((conf) => {
           const key = table.get(conf.key);
-          return key === undefined ? conf : { ...conf, key };
+          const explicitAliases = aliasGroup(key ?? conf.key);
+          if (key === undefined && explicitAliases.length <= 1) return conf;
+          return {
+            ...conf,
+            ...(key === undefined ? {} : { key }),
+            identity: mergeVenueIdentity([conf.identity, { aliases: explicitAliases }]),
+          };
         })
       : [],
   );
 }
 
+export interface IdentityConflict {
+  scope: "venue" | "edition";
+  reason: "ambiguous" | "source-collision" | "key-collision";
+  subject: string;
+  candidates: string[];
+}
+
 export interface MergeStats {
   merged_deadlines: number;
   merged_by_key: Record<string, number>;
+  /** Optional public addition: deterministic diagnostics for refused identity matches. */
+  identity_conflicts?: IdentityConflict[];
 }
 
 function freshStats(): MergeStats {
-  return { merged_deadlines: 0, merged_by_key: {} };
+  return { merged_deadlines: 0, merged_by_key: {}, identity_conflicts: [] };
 }
 
-/** Merge per-source conference lists into one list keyed by `Conference.key`. */
+/** Merge only conferences supported by explicit venue identity evidence. */
 export function mergeSources(
   groups: Conference[][] | null | undefined,
   config: Record<string, unknown> | null | undefined,
@@ -82,52 +119,81 @@ export function mergeSources(
   const windows = windowsOf(safeConfig);
   const tally = freshStats();
 
-  const ordered: Array<{ prio: number; seq: number; conf: Conference }> = [];
+  const ordered: Array<{ prio: number; conf: Conference }> = [];
   for (const group of groups ?? []) {
     if (!Array.isArray(group)) continue;
     for (const conf of group) {
       if (!conf || typeof conf !== "object") continue;
-      ordered.push({ prio: priorityOf(conf, priority), seq: ordered.length, conf });
+      ordered.push({
+        prio: priorityOf(conf, priority),
+        conf: configuredIdentity(conf, safeConfig),
+      });
     }
   }
-  ordered.sort((a, b) => a.prio - b.prio || a.seq - b.seq);
+  ordered.sort(
+    (a, b) => a.prio - b.prio || cmpStr(conferenceSortKey(a.conf), conferenceSortKey(b.conf)),
+  );
 
-  const buckets = new Map<string, Conference[][]>();
+  const buckets: Conference[][] = [];
   for (const { conf } of ordered) {
-    const bucketList = buckets.get(conf.key) ?? [];
-    let placed = false;
-    for (const bucket of bucketList) {
-      if (sameConference(bucket, conf)) {
-        bucket.push(conf);
-        placed = true;
-        break;
+    const matching = buckets.filter((bucket) =>
+      bucket.some((candidate) => sameConference(candidate, conf)),
+    );
+    const combinedSources = [conf, ...matching.flat()].flatMap((item) => item.sources);
+    const canCombine =
+      matching.length > 0 && new Set(combinedSources).size === combinedSources.length;
+    if (canCombine) {
+      for (const bucket of matching) buckets.splice(buckets.indexOf(bucket), 1);
+      buckets.push([...matching.flat(), conf]);
+    } else {
+      const keyCollisions = buckets.filter((bucket) => bucket[0].key === conf.key);
+      if (matching.length > 0 || keyCollisions.length > 0) {
+        recordConflict(
+          tally,
+          "venue",
+          matching.length > 0 ? "source-collision" : "key-collision",
+          conferenceIdentityLabel(conf),
+          (matching.length > 0 ? matching : keyCollisions).map((bucket) =>
+            conferenceIdentityLabel(bucket[0]),
+          ),
+        );
       }
+      buckets.push([conf]);
     }
-    if (!placed) bucketList.push([conf]);
-    buckets.set(conf.key, bucketList);
   }
 
-  const merged: Conference[] = [];
-  for (const [key, bucketList] of buckets) {
-    if (bucketList.length === 1) {
-      merged.push(mergeBucket(key, bucketList[0], windows, tally));
-      continue;
-    }
-    const sorted = [...bucketList].sort((a, b) =>
-      cmpStr(a[0].upstream_sub ?? "", b[0].upstream_sub ?? ""),
-    );
-    sorted.forEach((bucket, index) => {
-      const suffix = (bucket[0].upstream_sub ?? String(index)).toLowerCase();
-      merged.push(mergeBucket(index === 0 ? key : `${key}-${suffix}`, bucket, windows, tally));
-    });
-  }
+  const merged = uniqueConferenceKeys(
+    buckets.map((bucket) => mergeBucket(bucket[0].key, bucket, windows, tally)),
+  );
 
   merged.sort((a, b) => cmpStr(a.key, b.key));
   if (stats !== null) {
     stats.merged_deadlines = tally.merged_deadlines;
     stats.merged_by_key = tally.merged_by_key;
+    stats.identity_conflicts = [...(tally.identity_conflicts ?? [])].sort(identityConflictOrder);
   }
   return merged;
+}
+
+function configuredIdentity(conf: Conference, config: Record<string, unknown>): Conference {
+  const registry = config.venue_identities;
+  if (!registry || typeof registry !== "object" || Array.isArray(registry)) return conf;
+  for (const [venueId, value] of Object.entries(registry as Record<string, unknown>)) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+    const sourceIds = (value as Record<string, unknown>).source_ids;
+    if (!sourceIds || typeof sourceIds !== "object" || Array.isArray(sourceIds)) continue;
+    const matches = Object.entries(sourceIds as Record<string, unknown>).some(
+      ([source, id]) =>
+        identityToken(conf.identity?.sourceIds?.[source]) !== "" &&
+        identityToken(conf.identity?.sourceIds?.[source]) === identityToken(String(id)),
+    );
+    if (matches)
+      return {
+        ...conf,
+        identity: mergeVenueIdentity([conf.identity, { venueId }]),
+      };
+  }
+  return conf;
 }
 
 function windowsOf(config: Record<string, unknown>): Windows {
@@ -147,13 +213,260 @@ function priorityOf(conf: Conference, priority: string[]): number {
   return priority.length;
 }
 
-function sameConference(bucket: Conference[], conf: Conference): boolean {
-  for (const existing of bucket) {
-    if (existing.upstream_sub && conf.upstream_sub) {
-      return existing.upstream_sub === conf.upstream_sub;
+function identityToken(value: string | null | undefined): string {
+  return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function urlToken(value: string | null | undefined): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    return `${url.protocol.toLowerCase()}//${url.host.toLowerCase()}${url.pathname.replace(/\/+$/, "")}${url.search}`;
+  } catch {
+    return identityToken(raw).replace(/\/+$/, "");
+  }
+}
+
+function domainToken(value: string | null | undefined): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  try {
+    return new URL(raw.includes("://") ? raw : `https://${raw}`).hostname
+      .toLowerCase()
+      .replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+function aliasToken(value: string | null | undefined): string {
+  return slug(value);
+}
+
+function commonIdentity(
+  left: readonly string[] | null | undefined,
+  right: readonly string[] | null | undefined,
+  token: (value: string | null | undefined) => string = identityToken,
+): string[] {
+  const rightSet = new Set((right ?? []).map(token).filter(Boolean));
+  return [...new Set((left ?? []).map(token).filter((value) => rightSet.has(value)))].sort(cmpStr);
+}
+
+function mergeVenueIdentity(values: Array<VenueIdentity | undefined>): VenueIdentity | undefined {
+  const venueId = values.map((value) => value?.venueId?.trim()).find(Boolean);
+  const dblpKey = values.map((value) => value?.dblpKey?.trim()).find(Boolean);
+  const officialDomains = unique(values.flatMap((value) => value?.officialDomains ?? [])).sort(
+    cmpStr,
+  );
+  const aliases = unique(values.flatMap((value) => value?.aliases ?? [])).sort(cmpStr);
+  const sourceIds: Record<string, string> = {};
+  for (const value of [...values].reverse()) Object.assign(sourceIds, value?.sourceIds ?? {});
+  const sortedSourceIds = Object.fromEntries(
+    Object.entries(sourceIds).sort(([a], [b]) => cmpStr(a, b)),
+  );
+  return venueId ||
+    dblpKey ||
+    officialDomains.length ||
+    aliases.length ||
+    Object.keys(sourceIds).length
+    ? {
+        ...(venueId ? { venueId } : {}),
+        ...(dblpKey ? { dblpKey } : {}),
+        ...(officialDomains.length ? { officialDomains } : {}),
+        ...(aliases.length ? { aliases } : {}),
+        ...(Object.keys(sortedSourceIds).length ? { sourceIds: sortedSourceIds } : {}),
+      }
+    : undefined;
+}
+
+function mergeEditionIdentity(
+  values: Array<EditionIdentity | undefined>,
+): EditionIdentity | undefined {
+  const editionId = values.map((value) => value?.editionId?.trim()).find(Boolean);
+  const officialUrls = unique(values.flatMap((value) => value?.officialUrls ?? [])).sort(cmpStr);
+  const sourceIds: Record<string, string> = {};
+  for (const value of [...values].reverse()) Object.assign(sourceIds, value?.sourceIds ?? {});
+  const sortedSourceIds = Object.fromEntries(
+    Object.entries(sourceIds).sort(([a], [b]) => cmpStr(a, b)),
+  );
+  return editionId || officialUrls.length || Object.keys(sortedSourceIds).length
+    ? {
+        ...(editionId ? { editionId } : {}),
+        ...(officialUrls.length ? { officialUrls } : {}),
+        ...(Object.keys(sortedSourceIds).length ? { sourceIds: sortedSourceIds } : {}),
+      }
+    : undefined;
+}
+
+function conferenceIdentityLabel(conf: Conference): string {
+  return [
+    identityToken(conf.identity?.venueId),
+    identityToken(conf.identity?.dblpKey ?? conf.dblp),
+    ...(conf.identity?.aliases ?? []).map(identityToken),
+    ...Object.entries(conf.identity?.sourceIds ?? {}).map(
+      ([source, sourceId]) => `${identityToken(source)}:${identityToken(sourceId)}`,
+    ),
+    conf.key,
+  ]
+    .filter(Boolean)
+    .sort(cmpStr)
+    .join("|");
+}
+
+function venueDomains(conf: Conference): string[] {
+  return unique(conf.identity?.officialDomains ?? []).filter((value) => domainToken(value));
+}
+
+function compatibleAliases(conf: Conference): string[] {
+  return unique(conf.identity?.aliases ?? []).filter((value) => aliasToken(value));
+}
+
+function conferenceNames(conf: Conference): string[] {
+  return [conf.title, conf.full_name].filter(aliasToken);
+}
+
+function sameSourceId(left: Conference, right: Conference): boolean {
+  return Object.entries(left.identity?.sourceIds ?? {}).some(
+    ([source, id]) =>
+      identityToken(id) !== "" &&
+      identityToken(id) === identityToken(right.identity?.sourceIds?.[source]),
+  );
+}
+
+function editionIdentityLabel(edition: Edition): string {
+  return [
+    identityToken(edition.identity?.editionId),
+    ...Object.entries(edition.identity?.sourceIds ?? {}).map(
+      ([source, sourceId]) => `${identityToken(source)}:${identityToken(sourceId)}`,
+    ),
+    ...(edition.identity?.officialUrls ?? []).map(urlToken),
+    identityToken(edition.edition_id),
+    String(edition.year),
+  ]
+    .filter(Boolean)
+    .sort(cmpStr)
+    .join("|");
+}
+
+function conferenceSortKey(conf: Conference): string {
+  return [
+    conferenceIdentityLabel(conf),
+    conf.key,
+    conf.title,
+    conf.full_name,
+    conf.link,
+    conf.upstream_sub ?? "",
+    conf.sources.join(","),
+    conf.editions.map(editionIdentityLabel).sort(cmpStr).join(","),
+  ].join("\u0000");
+}
+
+function editionSortKey(edition: Edition): string {
+  return [editionIdentityLabel(edition), edition.place, edition.date_text, edition.source].join(
+    "\u0000",
+  );
+}
+
+function eventRangesOverlap(left: Edition, right: Edition): boolean {
+  const leftStart = left.event_start?.getTime();
+  const leftEnd = (left.event_end ?? left.event_start)?.getTime();
+  const rightStart = right.event_start?.getTime();
+  const rightEnd = (right.event_end ?? right.event_start)?.getTime();
+  return (
+    leftStart !== undefined &&
+    leftEnd !== undefined &&
+    rightStart !== undefined &&
+    rightEnd !== undefined &&
+    leftStart <= rightEnd &&
+    rightStart <= leftEnd
+  );
+}
+
+function placesCompatible(left: string, right: string): boolean {
+  return Boolean(identityToken(left) && identityToken(left) === identityToken(right));
+}
+
+function recordConflict(
+  stats: MergeStats,
+  scope: IdentityConflict["scope"],
+  reason: IdentityConflict["reason"],
+  subject: string,
+  candidates: string[],
+): void {
+  stats.identity_conflicts?.push({
+    scope,
+    reason,
+    subject,
+    candidates: [...new Set(candidates)].sort(cmpStr),
+  });
+}
+
+function identityConflictOrder(left: IdentityConflict, right: IdentityConflict): number {
+  return (
+    cmpStr(left.scope, right.scope) ||
+    cmpStr(left.reason, right.reason) ||
+    cmpStr(left.subject, right.subject) ||
+    cmpStr(left.candidates.join("\u0000"), right.candidates.join("\u0000"))
+  );
+}
+
+function uniqueConferenceKeys(confs: Conference[]): Conference[] {
+  const byKey = new Map<string, Conference[]>();
+  for (const conf of confs) byKey.set(conf.key, [...(byKey.get(conf.key) ?? []), conf]);
+  const out: Conference[] = [];
+  for (const [key, collisions] of byKey) {
+    const used = new Set<string>();
+    for (const [index, conf] of [...collisions]
+      .sort((a, b) => cmpStr(conferenceSortKey(a), conferenceSortKey(b)))
+      .entries()) {
+      const base = index === 0 ? key : `${key}-${collisionSuffix(conf)}`;
+      let next = base;
+      for (let suffix = 2; used.has(next); suffix++) next = `${base}-${suffix}`;
+      used.add(next);
+      out.push(next === conf.key ? conf : { ...conf, key: next });
     }
   }
-  return true;
+  return out;
+}
+
+function collisionSuffix(conf: Conference): string {
+  const explicit = [
+    conf.identity?.venueId,
+    conf.identity?.dblpKey ?? conf.dblp,
+    ...Object.entries(conf.identity?.sourceIds ?? {})
+      .sort(([a], [b]) => cmpStr(a, b))
+      .map(([source, sourceId]) => `${source}-${sourceId}`),
+  ].filter(Boolean);
+  const content = [
+    conf.title,
+    conf.full_name,
+    conf.link,
+    ...conf.editions.map((edition) =>
+      [edition.year, edition.source, edition.edition_id, edition.link].join("-"),
+    ),
+  ];
+  return slug(conf.upstream_sub ?? "") || slug(explicit.join("-")) || slug(content.join("-"));
+}
+
+function sameConference(left: Conference, right: Conference): boolean {
+  const leftId = identityToken(left.identity?.venueId);
+  const rightId = identityToken(right.identity?.venueId);
+  if (leftId && rightId) return leftId === rightId;
+  const leftDblp = identityToken(left.identity?.dblpKey ?? left.dblp);
+  const rightDblp = identityToken(right.identity?.dblpKey ?? right.dblp);
+  if (leftDblp && rightDblp) return leftDblp === rightDblp;
+  if (left.key !== right.key) return false;
+  if (sameSourceId(left, right)) return true;
+  if (
+    commonIdentity(venueDomains(left), venueDomains(right), domainToken).length > 0 &&
+    commonIdentity(conferenceNames(left), conferenceNames(right), aliasToken).length > 0
+  )
+    return true;
+  return commonIdentity(compatibleAliases(left), compatibleAliases(right), aliasToken).length > 0;
 }
 
 function mergeBucket(
@@ -163,6 +476,7 @@ function mergeBucket(
   tally: MergeStats,
 ): Conference {
   // `confs` is ordered high priority first.
+  const identity = mergeVenueIdentity(confs.map((conf) => conf.identity));
   const out: Conference = {
     key,
     title: confs[0].title,
@@ -175,6 +489,7 @@ function mergeBucket(
     categories: [],
     editions: [],
     sources: [],
+    ...(identity ? { identity } : {}),
   };
   for (const conf of [...confs].reverse()) {
     // low priority first, higher priority overwrites
@@ -196,29 +511,49 @@ function mergeBucket(
 }
 
 function mergeEditions(confs: Conference[], windows: Windows, tally: MergeStats): Edition[] {
-  const byYear = new Map<number, Array<{ edition: Edition; tagged: Array<[string, Deadline]> }>>();
+  const byYear = new Map<
+    number,
+    Array<{ edition: Edition; tagged: Array<[string, Deadline]>; sources: Set<string> }>
+  >();
   for (const conf of confs) {
     // high priority first
-    for (const edition of conf.editions) {
+    for (const edition of [...conf.editions].sort((a, b) =>
+      cmpStr(editionSortKey(a), editionSortKey(b)),
+    )) {
       const bucket = byYear.get(edition.year) ?? [];
-      const index = mergeTarget(
-        bucket.map((b) => b.edition),
-        edition,
-      );
+      const source = edition.source || conf.sources.join("+") || "unknown";
+      const matching = bucket.filter((item) => mergeTarget(item.edition, edition));
+      const eligible = matching.filter((item) => !item.sources.has(source));
       const tagged: Array<[string, Deadline]> = edition.deadlines.map((d) => [edition.source, d]);
-      if (index === null) {
-        bucket.push({ edition: { ...edition, deadlines: [] }, tagged });
+      if (eligible.length !== 1) {
+        if (matching.length > 0) {
+          recordConflict(
+            tally,
+            "edition",
+            eligible.length > 1 ? "ambiguous" : "source-collision",
+            editionIdentityLabel(edition),
+            matching.map((item) => editionIdentityLabel(item.edition)),
+          );
+        }
+        bucket.push({ edition: { ...edition, deadlines: [] }, tagged, sources: new Set([source]) });
       } else {
-        const held = bucket[index].edition;
+        const heldItem = eligible[0];
+        const held = heldItem.edition;
         if (held.estimated && !edition.estimated) {
           // SPEC.md 3.6: a real edition replaces an estimated one.
-          bucket[index] = { edition: { ...edition, deadlines: [] }, tagged };
+          const preservedSources = new Set([...heldItem.sources, source]);
+          bucket[bucket.indexOf(heldItem)] = {
+            edition: { ...edition, deadlines: [] },
+            tagged,
+            sources: preservedSources,
+          };
         } else if (edition.estimated && !held.estimated) {
           // An estimate joining a real edition contributes nothing.
           continue;
         } else {
           fillEdition(held, edition);
-          bucket[index].tagged.push(...tagged);
+          heldItem.tagged.push(...tagged);
+          heldItem.sources.add(source);
         }
       }
       byYear.set(edition.year, bucket);
@@ -243,14 +578,14 @@ function mergeEditions(confs: Conference[], windows: Windows, tally: MergeStats)
   return out;
 }
 
-function mergeTarget(bucket: Edition[], edition: Edition): number | null {
-  for (let i = 0; i < bucket.length; i++) {
-    if (bucket[i].edition_id === edition.edition_id) return i;
-  }
-  for (let i = 0; i < bucket.length; i++) {
-    if (bucket[i].source !== edition.source) return i;
-  }
-  return null;
+function mergeTarget(left: Edition, right: Edition): boolean {
+  const leftId = identityToken(left.identity?.editionId);
+  const rightId = identityToken(right.identity?.editionId);
+  if (leftId && rightId && leftId === rightId) return true;
+  const leftUrls = left.identity?.officialUrls ?? [];
+  const rightUrls = right.identity?.officialUrls ?? [];
+  if (commonIdentity(leftUrls, rightUrls, urlToken).length > 0) return true;
+  return eventRangesOverlap(left, right) && placesCompatible(left.place, right.place);
 }
 
 function fillEdition(target: Edition, other: Edition): void {
@@ -260,6 +595,8 @@ function fillEdition(target: Edition, other: Edition): void {
   if (!target.date_text && other.date_text) target.date_text = other.date_text;
   if (!target.event_start && other.event_start) target.event_start = other.event_start;
   if (!target.event_end && other.event_end) target.event_end = other.event_end;
+  const identity = mergeEditionIdentity([target.identity, other.identity]);
+  if (identity) target.identity = identity;
 }
 
 /** Label form used for equality: case and whitespace carry no meaning. */

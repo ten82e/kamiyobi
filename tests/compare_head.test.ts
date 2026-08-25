@@ -1,5 +1,5 @@
 /**
- * scripts/compare-head.ts — update.yml が data ファイルの実質差分検出に使う
+ * scripts/compare-head.ts — update-data.yml が data ファイルの実質差分検出に使う
  * ヘルパーのユニットテスト。generated_at / _comment（日々変わる抽出日付）を
  * 無視して、実質変更のときだけ 1 を返すことを保証する。
  */

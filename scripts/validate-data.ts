@@ -3,7 +3,13 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { load as loadYaml } from "js-yaml";
-import { asDate, deadlineTrackKey, isConfirmedTimezone } from "../src/model.ts";
+import {
+  asDate,
+  deadlineTrackKey,
+  embeddedTimezone,
+  isConfirmedTimezone,
+  parseInstant,
+} from "../src/model.ts";
 
 export interface DataValidation {
   errors: string[];
@@ -14,6 +20,34 @@ export interface DataValidation {
 const INVISIBLE = /[\u200b-\u200f\u202a-\u202e\u2060\ufeff\ufffd]/u;
 const YEAR = /\b(20\d{2})\b/g;
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
+const MAX_EVENT_DAYS = 31;
+const CATEGORY_REVIEW_FIELDS = [
+  "review_state",
+  "reviewState",
+  "category_review",
+  "categoryReview",
+  "categoryReviewState",
+  "categoriesReviewState",
+  "promotion",
+  "promotion_state",
+  "promotionState",
+] as const;
+const CATEGORY_STOP_WORDS = new Set([
+  "and",
+  "conference",
+  "for",
+  "in",
+  "international",
+  "of",
+  "on",
+  "symposium",
+  "the",
+  "to",
+  "with",
+  "workshop",
+]);
+
+type CategoryDefinitions = ReadonlyMap<string, string>;
 
 function add(out: string[], message: string): void {
   out.push(message);
@@ -50,6 +84,83 @@ function records(value: unknown): Record<string, unknown>[] {
     : [];
 }
 
+function categoryRecords(value: unknown): Record<string, unknown>[] {
+  if (Array.isArray(value)) return records(value);
+  return value && typeof value === "object"
+    ? records((value as Record<string, unknown>).conferences)
+    : [];
+}
+
+function categoryValues(value: unknown): string[] {
+  return Array.isArray(value)
+    ? [...new Set(value.filter((item): item is string => typeof item === "string"))]
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .sort()
+    : [];
+}
+
+export interface CategoryChange {
+  key: string;
+  before: string[];
+  after: string[];
+  added: string[];
+  removed: string[];
+}
+
+export interface CategoryChangeSummary {
+  changes: CategoryChange[];
+  added: number;
+  removed: number;
+  summary: string;
+}
+
+/** Compare two data.json-shaped values without reading files or mutating input. */
+export function summarizeCategoryChanges(before: unknown, after: unknown): CategoryChangeSummary {
+  const categories = (value: unknown): Map<string, string[]> =>
+    new Map(
+      categoryRecords(value)
+        .map(
+          (conference) =>
+            [String(conference.key ?? ""), categoryValues(conference.categories)] as const,
+        )
+        .filter(([key]) => key),
+    );
+  const previous = categories(before);
+  const current = categories(after);
+  const keys = [...previous.keys()].filter((key) => current.has(key)).sort();
+  const changes = keys.flatMap((key) => {
+    const previousValues = previous.get(key) ?? [];
+    const currentValues = current.get(key) ?? [];
+    const beforeSet = new Set(previousValues);
+    const afterSet = new Set(currentValues);
+    const added = currentValues.filter((value) => !beforeSet.has(value));
+    const removed = previousValues.filter((value) => !afterSet.has(value));
+    return added.length || removed.length
+      ? [{ key, before: previousValues, after: currentValues, added, removed }]
+      : [];
+  });
+  const summary = changes.length
+    ? changes
+        .map(
+          ({ key, added, removed }) =>
+            `- ${key}: ${[
+              added.length ? `+${added.join(",")}` : "",
+              removed.length ? `-${removed.join(",")}` : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}`,
+        )
+        .join("\n")
+    : "- No category changes";
+  return {
+    changes,
+    added: changes.reduce((count, change) => count + change.added.length, 0),
+    removed: changes.reduce((count, change) => count + change.removed.length, 0),
+    summary,
+  };
+}
+
 export function normalizedTrack(track: unknown, label: unknown, kind: unknown): string {
   return deadlineTrackKey(
     String(label ?? ""),
@@ -74,10 +185,137 @@ function deadlineRound(deadline: Record<string, unknown>): number {
   return named ? Number(named[1]) : explicit;
 }
 
+function exactTimezone(deadline: Record<string, unknown>, value: string): string {
+  // `utc`/`at_utc` is already normalized; its trailing Z is not in conflict
+  // with the original source zone retained in `tz_raw`.
+  const timezone = String(deadline.tz_raw ?? deadline.tz ?? deadline.timezone ?? "");
+  if (
+    (deadline.utc !== undefined || deadline.at_utc !== undefined) &&
+    embeddedTimezone(value) === "UTC" &&
+    (!timezone || isConfirmedTimezone(timezone))
+  )
+    return "";
+  return timezone;
+}
+
+function configuredCategories(root = ROOT): Map<string, string> {
+  const raw = load(join(root, "config.yaml")).categories;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return new Map();
+  return new Map(
+    Object.entries(raw as Record<string, unknown>)
+      .filter(([key]) => key.trim())
+      .map(([key, label]) => [key, String(label ?? "")]),
+  );
+}
+
+function words(value: unknown): Set<string> {
+  return new Set(
+    (
+      String(value ?? "")
+        .toLowerCase()
+        .match(/[\p{L}\p{N}]+/gu) ?? []
+    ).filter((word) => !CATEGORY_STOP_WORDS.has(word)),
+  );
+}
+
+function hasMeaningfulValue(value: unknown): boolean {
+  if (typeof value === "string") return value.trim() !== "";
+  if (Array.isArray(value)) return value.some(hasMeaningfulValue);
+  if (value && typeof value === "object") return Object.keys(value).length > 0;
+  return Boolean(value);
+}
+
+function isAutoPromoted(conference: Record<string, unknown>): boolean {
+  return CATEGORY_REVIEW_FIELDS.some((field) => {
+    const value = conference[field];
+    if (value === undefined || value === null || value === false) return false;
+    const text = typeof value === "string" ? value : JSON.stringify(value);
+    return /auto|approv|confirm|promot|reviewed|verified/i.test(text ?? "");
+  });
+}
+
+function categoryDivergence(
+  conference: Record<string, unknown>,
+  categoryDefinitions: CategoryDefinitions,
+): string[] {
+  const assigned = categoryValues(conference.categories).filter((category) =>
+    categoryDefinitions.has(category),
+  );
+  const text = [conference.title, conference.full_name, conference.scope]
+    .filter((value) => typeof value === "string")
+    .join(" ");
+  const textWords = words(text);
+  if (!assigned.length || !textWords.size) return [];
+  const scores = [...categoryDefinitions].map(
+    ([category, label]) =>
+      [
+        category,
+        [...words(`${category} ${label}`)].filter((word) => textWords.has(word)).length,
+      ] as const,
+  );
+  if (assigned.some((category) => scores.find(([name]) => name === category)?.[1])) return [];
+  return scores
+    .filter(([category, score]) => !assigned.includes(category) && score >= 2)
+    .sort(([, left], [, right]) => right - left)
+    .map(([category]) => category);
+}
+
+function validateCategories(
+  key: string,
+  conference: Record<string, unknown>,
+  categoryDefinitions: CategoryDefinitions,
+  result: DataValidation,
+): void {
+  if (!("categories" in conference)) return;
+  const raw = conference.categories;
+  if (!Array.isArray(raw) || raw.length === 0) {
+    add(result.errors, `${key}: categories is empty or invalid`);
+  } else {
+    for (const item of raw) {
+      const category = typeof item === "string" ? item.trim() : "";
+      if (!category) add(result.errors, `${key}: category is empty`);
+      else if (!categoryDefinitions.has(category))
+        add(result.errors, `${key}: unknown category ${category}`);
+    }
+  }
+  if (isAutoPromoted(conference) && !hasMeaningfulValue(conference.category_evidence))
+    add(result.warnings, `${key}: auto-promoted categories lack category_evidence`);
+  const divergent = categoryDivergence(conference, categoryDefinitions);
+  if (divergent.length)
+    add(
+      result.warnings,
+      `${key}: category vocabulary diverges from title/full_name/scope; possible ${divergent.join(", ")}`,
+    );
+}
+
+function parseExactDeadline(
+  value: string,
+  timezone: string,
+  prefix: string,
+  result: DataValidation,
+): Date | null {
+  const embedded = embeddedTimezone(value);
+  const confirmedTimezone = timezone && isConfirmedTimezone(timezone);
+  const confirmedEmbedded = embedded && isConfirmedTimezone(embedded);
+  const parsed = parseInstant(value, timezone || embedded);
+  if (parsed) return parsed;
+  if (
+    (timezone && !confirmedTimezone) ||
+    (embedded && !confirmedEmbedded) ||
+    (!timezone && !embedded)
+  )
+    add(result.errors, `${prefix}: exact has unconfirmed timezone`);
+  else if (timezone && embedded)
+    add(result.errors, `${prefix}: exact timezone conflicts with embedded offset`);
+  else add(result.errors, `${prefix}: invalid exact instant`);
+  return null;
+}
+
 function validateEdition(
   key: string,
   edition: Record<string, unknown>,
   result: DataValidation,
+  allowLegacyBroadEventRange: boolean,
 ): void {
   const year = Number(edition.year);
   const id = String(edition.id ?? edition.edition_id ?? "");
@@ -86,19 +324,39 @@ function validateEdition(
     add(result.errors, `${prefix}: edition year is invalid`);
     return;
   }
-  for (const mentioned of years(edition.date_text))
-    if (mentioned !== year)
-      add(result.errors, `${prefix}: date_text year ${mentioned} conflicts with edition ${year}`);
   for (const idYear of idYears(id))
     if (idYear !== year) add(result.errors, `${prefix}: id year conflicts with edition year`);
   const start = asDate(edition.event_start);
   const end = asDate(edition.event_end);
-  for (const date of [start, end])
-    if (date && date.getUTCFullYear() !== year)
-      add(result.errors, `${prefix}: event date year conflicts with edition ${year}`);
+  if (edition.event_start !== undefined && edition.event_start !== null && !start)
+    add(result.errors, `${prefix}: event_start is invalid`);
+  if (edition.event_end !== undefined && edition.event_end !== null && !end)
+    add(result.errors, `${prefix}: event_end is invalid`);
+  if (start && start.getUTCFullYear() !== year)
+    add(result.errors, `${prefix}: event_start year conflicts with edition ${year}`);
+  if (end && ![year, year + 1].includes(end.getUTCFullYear()))
+    add(result.errors, `${prefix}: event_end year conflicts with edition ${year}`);
+  const allowedTextYears = new Set([year]);
+  if (start?.getUTCFullYear() === year && end?.getUTCFullYear() === year + 1)
+    allowedTextYears.add(year + 1);
+  for (const mentioned of years(edition.date_text))
+    if (!allowedTextYears.has(mentioned))
+      add(result.errors, `${prefix}: date_text year ${mentioned} conflicts with edition ${year}`);
   if ((start === null) !== (end === null))
     add(result.errors, `${prefix}: event range is incomplete`);
-  if (start && end && start > end) add(result.errors, `${prefix}: event range is reversed`);
+  if (start && end) {
+    if (start > end) add(result.errors, `${prefix}: event range is reversed`);
+    if (end.getTime() - start.getTime() > MAX_EVENT_DAYS * 86_400_000) {
+      const hasDayNumber = /(?:^|[^\d])(?:[1-9]|[12]\d|3[01])(?:\D|$)/.test(
+        String(edition.date_text ?? ""),
+      );
+      // ponytail: legacy month-only source text gets a warning; remove this compatibility path once snapshot data is normalized.
+      add(
+        allowLegacyBroadEventRange && !hasDayNumber ? result.warnings : result.errors,
+        `${prefix}: event range exceeds ${MAX_EVENT_DAYS} days`,
+      );
+    }
+  }
   if (!start && !end && String(edition.date_text ?? "").trim())
     add(result.warnings, `${prefix}: event date text is not structured`);
 
@@ -112,6 +370,7 @@ function validateEdition(
       add(result.errors, `${prefix}: unknown deadline precision ${String(deadline.precision)}`);
     const precision = deadline.precision === "date-only" ? "date-only" : "exact";
     const value = deadlineValue(deadline, precision);
+    let deadlineDate: Date | null = null;
     if (precision === "date-only") {
       result.stats.date_only += 1;
       if (
@@ -124,17 +383,15 @@ function validateEdition(
         /[T\s]\d{1,2}:\d{2}/.test(value)
       )
         add(result.errors, `${prefix}: date-only has time/timezone`);
-      if (!asDate(value)) add(result.errors, `${prefix}: invalid date-only value`);
+      deadlineDate = asDate(value);
+      if (!deadlineDate) add(result.errors, `${prefix}: invalid date-only value`);
     } else {
       result.stats.exact += 1;
-      const tz = String(deadline.tz_raw ?? deadline.tz ?? deadline.timezone ?? "");
-      const calendarDate = /^(\d{4}-\d{2}-\d{2})[T ]/.exec(value)?.[1];
+      const tz = exactTimezone(deadline, value);
       if (deadline.local_date !== undefined)
         add(result.errors, `${prefix}: exact mixes local_date with instant`);
-      if ((tz && !isConfirmedTimezone(tz)) || (!tz && !/[zZ]$/.test(value)))
-        add(result.errors, `${prefix}: exact has unconfirmed timezone`);
-      if ((calendarDate && !asDate(calendarDate)) || Number.isNaN(Date.parse(value)))
-        add(result.errors, `${prefix}: invalid exact instant`);
+      const calendarDate = /^(\d{4}-\d{2}-\d{2})[T ]/.exec(value)?.[1];
+      deadlineDate = parseExactDeadline(value, tz, prefix, result) ?? asDate(calendarDate);
     }
     if (edition.estimated) result.stats.estimated += 1;
     const kind = String(deadline.kind ?? "other");
@@ -147,19 +404,24 @@ function validateEdition(
     if (previous !== undefined && previous !== value)
       add(result.errors, `${prefix}: conflicting deadline slot ${slot.replaceAll("\0", "/")}`);
     slots.set(slot, value);
-    const deadlineDate = precision === "date-only" ? asDate(value) : new Date(value);
+    const meetingEnd = end ?? start;
     if (
       start &&
       deadlineDate &&
       !Number.isNaN(deadlineDate.getTime()) &&
       ["paper", "abstract", "supplementary"].includes(kind) &&
-      deadlineDate > end!
+      meetingEnd &&
+      deadlineDate > meetingEnd
     )
       add(result.errors, `${prefix}: deadline appears to be an event date (${kind})`);
   }
 }
 
-export function validateData(payload: Record<string, unknown>): DataValidation {
+export function validateData(
+  payload: Record<string, unknown>,
+  categoryDefinitions: CategoryDefinitions = configuredCategories(),
+  allowLegacyBroadEventRange = false,
+): DataValidation {
   const result: DataValidation = {
     errors: [],
     warnings: [],
@@ -168,6 +430,7 @@ export function validateData(payload: Record<string, unknown>): DataValidation {
   for (const conference of records(payload.conferences)) {
     const key = String(conference.key ?? "?");
     const editions = records(conference.editions);
+    validateCategories(key, conference, categoryDefinitions, result);
     const actualYears = editions
       .filter((edition) => !edition.estimated)
       .map((edition) => Number(edition.year))
@@ -202,7 +465,7 @@ export function validateData(payload: Record<string, unknown>): DataValidation {
       const id = String(edition.id ?? edition.edition_id ?? "");
       if (id && ids.has(id)) add(result.errors, `${key}: duplicate edition id ${id}`);
       ids.add(id);
-      validateEdition(key, edition, result);
+      validateEdition(key, edition, result, allowLegacyBroadEventRange);
     }
   }
   result.errors = [...new Set(result.errors)].sort();
@@ -258,11 +521,15 @@ function payloadForFile(path: string): Record<string, unknown> {
   return value;
 }
 
-export function validateFile(path: string): DataValidation {
-  return validateData(payloadForFile(path));
+export function validateFile(
+  path: string,
+  categoryDefinitions: CategoryDefinitions = configuredCategories(),
+): DataValidation {
+  return validateData(payloadForFile(path), categoryDefinitions);
 }
 
 export function validateProduction(root = ROOT): DataValidation {
+  const categoryDefinitions = configuredCategories(root);
   const inputs = [
     { name: "extra", payload: payloadForFile(join(root, "data", "extra.yaml")) },
     {
@@ -288,7 +555,7 @@ export function validateProduction(root = ROOT): DataValidation {
     stats: { exact: 0, date_only: 0, estimated: 0 },
   };
   for (const input of inputs) {
-    const checked = validateData(input.payload);
+    const checked = validateData(input.payload, categoryDefinitions, true);
     aggregate.errors.push(...checked.errors.map((message) => `${input.name}: ${message}`));
     aggregate.warnings.push(...checked.warnings.map((message) => `${input.name}: ${message}`));
     aggregate.stats.exact += checked.stats.exact;

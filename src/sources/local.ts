@@ -211,10 +211,12 @@ export function editionOf(
     start = start ?? parsedStart;
     end = end ?? parsedEnd;
   }
+  const editionId = String(raw.id ?? `${key}${String(year % 100).padStart(2, "0")}`);
+  const link = String(raw.link ?? "");
   return {
     year,
-    edition_id: String(raw.id ?? `${key}${String(year % 100).padStart(2, "0")}`),
-    link: String(raw.link ?? ""),
+    edition_id: editionId,
+    link,
     place: String(raw.place ?? ""),
     date_text: dateText,
     event_start: start,
@@ -222,6 +224,10 @@ export function editionOf(
     deadlines: deadlinesOf(raw),
     estimated: Boolean(raw.estimated),
     source: NAME,
+    identity: {
+      ...(link ? { officialUrls: [link] } : {}),
+      sourceIds: { [NAME]: editionId },
+    },
   };
 }
 
@@ -295,6 +301,10 @@ export function parseFile(path: string | null | undefined): Conference[] {
       categories: toStringArray(raw.categories),
       editions,
       sources: [NAME],
+      identity: {
+        ...(link ? { officialDomains: [link] } : {}),
+        sourceIds: { [NAME]: key },
+      },
     });
   }
   return out;

@@ -25,6 +25,7 @@ function twoSources(): [Conference, Conference] {
       makeEdition({
         year: 2026,
         edition_id: "kdd26",
+        identity: { editionId: "kdd-2026" },
         source: "aideadlines",
         deadlines: [makeDeadline("abstract", "abs", at(2, 2), "AoE")],
       }),
@@ -40,6 +41,7 @@ function twoSources(): [Conference, Conference] {
       makeEdition({
         year: 2026,
         edition_id: "kdd26",
+        identity: { editionId: "kdd-2026" },
         source: "ccfddl",
         deadlines: [makeDeadline("paper", "paper", at(2, 9), "AoE")],
       }),

@@ -1,6 +1,6 @@
 /**
  * ワークツリーの data ファイルと HEAD 版を「実質的な差」で比較する。
- * update.yml の「Commit snapshot」ステップが data/snapshot.json と
+ * update-data.yml の writer が data/snapshot.json と
  * data/primary_overrides.yaml の両方について呼び、実質変更があるときだけ
  * コミットするために使う（SPEC.md §data/primary.yaml の「前回値維持」保証を
  * 成立させるため、生成物の永続化が必要）。
