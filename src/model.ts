@@ -68,6 +68,15 @@ export interface DeadlineEvidence {
   selectorOrField?: string;
 }
 
+/** Freshness is a property of an observed deadline, never of the whole venue. */
+export interface DeadlineOrigin {
+  source: string;
+  sourceClass?: EvidenceClass;
+  revision: string | null;
+  fetchedAt: string | null;
+  freshness: "fresh" | "cache-fallback" | "snapshot-fallback";
+}
+
 export interface DeadlineEvidenceFallback {
   sourceName: string;
   sourceClass: EvidenceClass;
@@ -163,6 +172,7 @@ interface DeadlineBase {
   /** Raw candidate value retained for provenance during serialization. */
   raw_value?: string;
   evidence?: DeadlineEvidence[];
+  origins?: DeadlineOrigin[];
   conflicts?: DeadlineConflict[];
   selection_rule?: string;
 }
@@ -1365,6 +1375,24 @@ export function conferencesFromJson(
         if (!dlRaw || typeof dlRaw !== "object") continue;
         const dl = dlRaw as Record<string, unknown>;
         const evidence = deadlineEvidence(dl.evidence).filter((item) => item.original_value);
+        const origins = (Array.isArray(dl.origins) ? dl.origins : [])
+          .filter((item): item is Record<string, unknown> =>
+            Boolean(item && typeof item === "object"),
+          )
+          .map((item) => ({
+            source: String(item.source ?? "").trim(),
+            ...(EVIDENCE_CLASSES.has(String(item.sourceClass) as EvidenceClass)
+              ? { sourceClass: String(item.sourceClass) as EvidenceClass }
+              : {}),
+            revision: typeof item.revision === "string" ? item.revision : null,
+            fetchedAt: typeof item.fetchedAt === "string" ? item.fetchedAt : null,
+            freshness: item.freshness,
+          }))
+          .filter(
+            (item): item is DeadlineOrigin =>
+              Boolean(item.source) &&
+              ["fresh", "cache-fallback", "snapshot-fallback"].includes(String(item.freshness)),
+          );
         const conflicts = (Array.isArray(dl.conflicts) ? dl.conflicts : [])
           .filter((item): item is Record<string, unknown> =>
             Boolean(item && typeof item === "object"),
@@ -1406,6 +1434,7 @@ export function conferencesFromJson(
           ...(typeof dl.track === "string" && dl.track.trim() ? { track: slug(dl.track) } : {}),
           comment: dl.comment === null || dl.comment === undefined ? null : String(dl.comment),
           ...(evidence.length > 0 ? { evidence } : {}),
+          ...(origins.length > 0 ? { origins } : {}),
           ...(conflicts.length > 0 ? { conflicts } : {}),
           ...(typeof dl.selection_rule === "string" ? { selection_rule: dl.selection_rule } : {}),
         };

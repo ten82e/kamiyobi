@@ -15,6 +15,18 @@ type Vector = number[];
 type VectorMap = Record<string, Vector>;
 type PaperVectorMap = Record<string, Vector[]>;
 
+export const RERANKER_FEATURE_SCHEMA = [
+  "lexical_score",
+  "semantic_score",
+  "category_overlap",
+  "venue_name_evidence",
+  "prior_venue",
+  "language_match",
+  "venue_kind",
+] as const;
+type RerankerFeatureName = (typeof RERANKER_FEATURE_SCHEMA)[number];
+type RerankerFeatures = Record<RerankerFeatureName, number>;
+
 interface PaperRecord {
   title: string;
   abstract?: string;
@@ -143,6 +155,8 @@ interface RecommendationResult {
     rrf: number;
     evidence: Array<SignalEvidence | LineEvidence>;
     probability: number;
+    baseScore: number;
+    rerankerFeatures: RerankerFeatures;
   };
   availability: Availability;
   match: ScoreBreakdown;
@@ -151,10 +165,12 @@ interface RecommendationResult {
 
 interface LinearRerankerModel {
   version: 1;
+  feature_schema: string[];
   intercept: number;
   weights: Record<string, number>;
   blend: number;
   confidence_thresholds: { sufficient: number; ambiguous: number };
+  calibration?: { method: "platt"; slope: number; intercept: number };
 }
 interface Availability {
   kind: string;
@@ -1415,9 +1431,13 @@ const Recommender = (() => {
     const model = value as Partial<LinearRerankerModel>;
     rerankerModel =
       model.version === 1 &&
+      Array.isArray(model.feature_schema) &&
+      model.feature_schema.join("\0") === RERANKER_FEATURE_SCHEMA.join("\0") &&
       Number.isFinite(model.intercept) &&
       model.weights !== null &&
       typeof model.weights === "object" &&
+      Object.keys(model.weights).join("\0") === RERANKER_FEATURE_SCHEMA.join("\0") &&
+      Object.values(model.weights).every(Number.isFinite) &&
       Number.isFinite(model.blend) &&
       model.confidence_thresholds !== null &&
       typeof model.confidence_thresholds === "object"
@@ -1425,24 +1445,38 @@ const Recommender = (() => {
         : null;
   }
 
-  function rerankerProbability(entry: RecommendationEntry, lines: readonly PaperRecord[]): number {
-    const weights = rerankerModel?.weights ?? {};
-    const feature = (name: string, value: number) => (weights[name] ?? 0) * value;
+  function rerankerFeatures(
+    entry: RecommendationEntry,
+    lines: readonly PaperRecord[],
+  ): RerankerFeatures {
     const languageMatch =
       lines.some((line) => hasJapanese(paperText(line))) ===
       hasJapanese(`${entry.row.conf.title ?? ""} ${entry.row.conf.full_name ?? ""}`)
         ? 1
         : 0;
-    const z =
-      (rerankerModel?.intercept ?? 0) +
-      feature("lexical_score", entry.lexicalScore / 100) +
-      feature("semantic_score", entry.semantic / 100) +
-      feature("category_overlap", entry.boosted ? 1 : 0) +
-      feature("venue_name_evidence", (entry.match.agg?.name ?? 0) > 0 ? 1 : 0) +
-      feature("prior_venue", entry.match.venueHit ? 1 : 0) +
-      feature("language_match", languageMatch) +
-      feature("venue_kind", ["paper", "journal"].includes(entry.row.kind) ? 1 : 0);
-    return 1 / (1 + Math.exp(-z));
+    return {
+      lexical_score: entry.lexicalScore / 100,
+      semantic_score: entry.semantic / 100,
+      category_overlap: entry.boosted ? 1 : 0,
+      venue_name_evidence: (entry.match.agg?.name ?? 0) > 0 ? 1 : 0,
+      prior_venue: entry.match.venueHit ? 1 : 0,
+      language_match: languageMatch,
+      venue_kind: ["paper", "journal"].includes(entry.row.kind) ? 1 : 0,
+    };
+  }
+
+  function rerankerProbability(features: RerankerFeatures): number {
+    const weights = rerankerModel?.weights ?? {};
+    const z = RERANKER_FEATURE_SCHEMA.reduce(
+      (sum, name) => sum + (weights[name] ?? 0) * features[name],
+      rerankerModel?.intercept ?? 0,
+    );
+    const calibration = rerankerModel?.calibration;
+    const calibrated =
+      calibration?.method === "platt" && Number.isFinite(calibration.slope)
+        ? calibration.slope * z + calibration.intercept
+        : z;
+    return 1 / (1 + Math.exp(-calibrated));
   }
 
   function confidenceState(evidenceStrength: number, margin: number): Confidence {
@@ -1580,7 +1614,8 @@ const Recommender = (() => {
               ? topEvidence - secondEvidence
               : Infinity
             : entry.evidenceStrength - topEvidence;
-        const probability = rerankerProbability(entry, lines);
+        const features = rerankerFeatures(entry, lines);
+        const probability = rerankerProbability(features);
         const thresholds = rerankerModel?.confidence_thresholds;
         const confidence = thresholds
           ? probability >= thresholds.sufficient
@@ -1614,6 +1649,8 @@ const Recommender = (() => {
             rrf: Number(rrf.toFixed(8)),
             evidence,
             probability: Number(probability.toFixed(6)),
+            baseScore: score,
+            rerankerFeatures: features,
           },
           availability: availability(entry.row, safeNow),
           match: entry.match,
@@ -2070,6 +2107,7 @@ const Recommender = (() => {
     breakdown: breakdown,
     venueRecommendations: venueRecommendations,
     setReranker: setReranker,
+    RERANKER_FEATURE_SCHEMA: RERANKER_FEATURE_SCHEMA,
     confidenceState: confidenceState,
     fitLabel: fitLabel,
     journalRows: journalRows,

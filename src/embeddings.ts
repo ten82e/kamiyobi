@@ -688,6 +688,15 @@ export function benchmarkEmbeddingManifest(
   };
 }
 
+/** Manifest-only benchmark contract. This never initializes a model or reads a model cache. */
+export function benchmarkEmbeddingManifestAtCutoff(
+  sourceYearMax: number,
+): BenchmarkEmbeddingManifest {
+  const papers = venuePapersAtCutoff(sourceYearMax);
+  const paperVecKeys = ["usenix-security", "rtss"].filter((key) => (papers[key] ?? []).length > 0);
+  return benchmarkEmbeddingManifest(sourceYearMax, paperVecKeys);
+}
+
 /** Build benchmark-only vectors; production embeddings are intentionally not accepted here. */
 export async function buildBenchmarkEmbeddingBundle(
   confs: unknown[],
@@ -712,7 +721,7 @@ export async function buildBenchmarkEmbeddingBundle(
     }
   }
   return {
-    manifest: benchmarkEmbeddingManifest(sourceYearMax, Object.keys(paperVecs)),
+    manifest: benchmarkEmbeddingManifestAtCutoff(sourceYearMax),
     embeddings,
     multi: { embeddings: multiEmbeddings },
     paperVecs,

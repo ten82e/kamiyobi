@@ -20,12 +20,15 @@
  *   --real-v2-dev ... --real-v2-heldout ... # 実論文の固定 revision 評価
  */
 
-import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { readFileSync, writeFileSync } from "node:fs";
 import { parseArgs as parseNodeArgs } from "node:util";
 import { type FeatureExtractionPipeline, pipeline } from "@huggingface/transformers";
 import { booleanValue, normalizeShortEquals, stringValue } from "./args.ts";
 import {
+  type BenchmarkEmbeddingBundle,
   type BenchmarkEmbeddingManifest,
+  benchmarkEmbeddingManifestAtCutoff,
   buildBenchmarkEmbeddingBundle,
   EMBEDDING_MODEL,
   EMBEDDING_MULTI_MODEL,
@@ -68,6 +71,8 @@ export interface BenchArgs {
   realV2Dev: string | null;
   realV2Heldout: string | null;
   realV2Negative: string | null;
+  realV2Features: string | null;
+  writeRequiredFeatures: string | null;
   realV2Small: boolean;
   dataDelta: string | null;
   dataDeltaBefore: string | null;
@@ -120,6 +125,8 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
     realV2Dev: null,
     realV2Heldout: null,
     realV2Negative: null,
+    realV2Features: null,
+    writeRequiredFeatures: null,
     realV2Small: false,
     dataDelta: null,
     dataDeltaBefore: null,
@@ -159,6 +166,8 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
       "real-v2-dev": { type: "string" },
       "real-v2-heldout": { type: "string" },
       "real-v2-negative": { type: "string" },
+      "real-v2-features": { type: "string" },
+      "write-required-features": { type: "string" },
       "real-v2-small": { type: "boolean" },
       "data-delta": { type: "string" },
       "data-delta-before": { type: "string" },
@@ -197,6 +206,8 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
   args.realV2Dev = stringValue(values["real-v2-dev"]) ?? null;
   args.realV2Heldout = stringValue(values["real-v2-heldout"]) ?? null;
   args.realV2Negative = stringValue(values["real-v2-negative"]) ?? null;
+  args.realV2Features = stringValue(values["real-v2-features"]) ?? null;
+  args.writeRequiredFeatures = stringValue(values["write-required-features"]) ?? null;
   args.realV2Small = booleanValue(values["real-v2-small"], false);
   args.dataDelta = stringValue(values["data-delta"]) ?? null;
   args.dataDeltaBefore = stringValue(values["data-delta-before"]) ?? null;
@@ -739,9 +750,9 @@ export function runBenchmarkV2(fixture: BenchV2Fixture): BenchV2Result {
       }>;
     }
   >;
-  Recommender.setReranker(
-    JSON.parse(readFileSync(new URL("../data/recommender-reranker.json", import.meta.url), "utf8")),
-  );
+  // bench-v2 is the stable synthetic retrieval/plumbing gate. The required
+  // real-paper gate below separately exercises the trained production reranker.
+  Recommender.setReranker(null);
   try {
     for (const query of fixture.queries) {
       const lines = Recommender.parsePaperLines(
@@ -898,6 +909,87 @@ type RealPaperMode = (typeof REAL_PAPER_MODES)[number];
 type RealPaperInputMode = (typeof REAL_PAPER_INPUT_MODES)[number];
 type RealPaperNegativeReason = (typeof REAL_PAPER_NEGATIVE_REASONS)[number];
 export type RealPaperCoverage = "full" | "required";
+
+/** Frozen semantic production features.  The benchmark still performs lexical
+ * retrieval and all ranking in the browser recommender; this file only replaces
+ * remote model inference in required CI. */
+export interface RequiredSemanticFeatures {
+  version: 1;
+  feature_schema: string[];
+  minimum_language_counts: Record<"dev" | "heldout", Record<RealPaperLanguage, number>>;
+  provenance: { generator: string; model: string; revision: string; runtime: string };
+  profiles: Record<"dev" | "heldout" | "negative", BenchmarkEmbeddingManifest>;
+  records: Array<{
+    paper_id: string;
+    record_sha256: string;
+    semantic_scores: Record<string, number>;
+    candidates: Array<{
+      venue: string;
+      base_score: number;
+      features: Record<string, number>;
+    }>;
+  }>;
+}
+
+function requiredRecordHash(
+  record: Pick<
+    RequiredSemanticFeatures["records"][number],
+    "paper_id" | "semantic_scores" | "candidates"
+  >,
+): string {
+  return createHash("sha256")
+    .update(JSON.stringify([record.paper_id, record.semantic_scores, record.candidates]))
+    .digest("hex");
+}
+
+export function validateRequiredLanguageCounts(
+  features: RequiredSemanticFeatures,
+  fixtures: readonly RealPaperFixture[],
+): void {
+  for (const fixture of fixtures) {
+    const minimums = features.minimum_language_counts?.[fixture.split];
+    if (!minimums || !Number.isInteger(minimums.en) || !Number.isInteger(minimums.ja))
+      throw new Error(`required feature fixture needs ${fixture.split} language minimums`);
+    for (const language of REAL_PAPER_LANGUAGES) {
+      const actual = fixture.records.filter((record) => record.language === language).length;
+      if (minimums[language] < 1 || actual < minimums[language])
+        throw new Error(`real paper ${fixture.split} ${language} count ${actual} below minimum`);
+    }
+  }
+}
+
+export function fixedFeatureRecord(
+  features: RequiredSemanticFeatures | undefined,
+  paperId: string,
+  expected: BenchmarkEmbeddingManifest,
+  split: "dev" | "heldout" | "negative",
+): RequiredSemanticFeatures["records"][number] | null {
+  if (!features) return null;
+  if (
+    features.version !== 1 ||
+    !Array.isArray(features.feature_schema) ||
+    features.feature_schema.join("\0") !== Recommender.RERANKER_FEATURE_SCHEMA.join("\0") ||
+    JSON.stringify(features.profiles[split]) !== JSON.stringify(expected)
+  ) {
+    throw new Error("required semantic feature schema/profile mismatch");
+  }
+  const found = features.records.find((record) => record.paper_id === paperId);
+  if (
+    !found ||
+    Object.keys(found.semantic_scores).length === 0 ||
+    Object.values(found.semantic_scores).some((value) => !Number.isFinite(value)) ||
+    found.record_sha256 !== requiredRecordHash(found) ||
+    !found.candidates.length ||
+    found.candidates.some(
+      (candidate) =>
+        Object.keys(candidate.features).join("\0") !==
+          Recommender.RERANKER_FEATURE_SCHEMA.join("\0") ||
+        Object.values(candidate.features).some((value) => !Number.isFinite(value)),
+    )
+  )
+    throw new Error(`required production feature missing, altered, or zeroed: ${paperId}`);
+  return found;
+}
 
 export interface RealPaperRecord {
   paper_id: string;
@@ -1725,12 +1817,38 @@ function realPaperRank(
   return index < 0 ? null : index + 1;
 }
 
+export async function realPaperEmbeddingBundles(
+  confs: Conf[],
+  catNames: Record<string, string>,
+  years: { dev: number; heldout: number },
+  frozen: boolean,
+  builder: typeof buildBenchmarkEmbeddingBundle = buildBenchmarkEmbeddingBundle,
+): Promise<Record<"dev" | "heldout", BenchmarkEmbeddingBundle>> {
+  const empty = (manifest: BenchmarkEmbeddingManifest): BenchmarkEmbeddingBundle => ({
+    manifest,
+    embeddings: {},
+    multi: { embeddings: {} },
+    paperVecs: {},
+  });
+  if (frozen)
+    return {
+      dev: empty(benchmarkEmbeddingManifestAtCutoff(years.dev)),
+      heldout: empty(benchmarkEmbeddingManifestAtCutoff(years.heldout)),
+    };
+  return {
+    dev: await builder(confs, catNames, years.dev),
+    heldout: await builder(confs, catNames, years.heldout),
+  };
+}
+
 export async function runRealPaperBenchmark(
   dev: RealPaperFixture,
   heldout: RealPaperFixture,
   data: { conferences: Conf[]; categories?: Record<string, string> },
   negative?: RealPaperNegativeFixture,
   coverage: "full" | "required" = "full",
+  requiredFeatures?: RequiredSemanticFeatures,
+  collectedFeatures?: RequiredSemanticFeatures["records"],
 ): Promise<RealPaperRun> {
   const confs = data.conferences ?? [];
   const venueKeys = new Set(confs.map((conference) => conference.key));
@@ -1745,6 +1863,8 @@ export async function runRealPaperBenchmark(
   );
   const records = [...dev.records, ...heldout.records, ...(negative?.records ?? [])];
   const usedLanguages = [...new Set(records.map((record) => record.language))].sort();
+  const useFrozenFeatures = coverage === "required" && requiredFeatures !== undefined;
+  if (useFrozenFeatures) validateRequiredLanguageCounts(requiredFeatures, [dev, heldout]);
   const modelFor = (
     language: RealPaperLanguage,
   ): { model: string; revision: string; key: string } =>
@@ -1754,11 +1874,13 @@ export async function runRealPaperBenchmark(
   const extractors = new Map<RealPaperLanguage, FeatureExtractionPipeline>();
   const loadStart = performance.now();
   const catNames = data.categories ?? {};
-  const benchmarkEmbeddings = {
-    dev: await buildBenchmarkEmbeddingBundle(confs, catNames, dev.profile_year_max),
-    heldout: await buildBenchmarkEmbeddingBundle(confs, catNames, heldout.profile_year_max),
-  };
-  for (const language of usedLanguages) {
+  const benchmarkEmbeddings = await realPaperEmbeddingBundles(
+    confs,
+    catNames,
+    { dev: dev.profile_year_max, heldout: heldout.profile_year_max },
+    useFrozenFeatures,
+  );
+  for (const language of useFrozenFeatures ? [] : usedLanguages) {
     const model = modelFor(language);
     extractors.set(
       language,
@@ -1769,7 +1891,7 @@ export async function runRealPaperBenchmark(
   }
   const firstLoadMs = Number((performance.now() - loadStart).toFixed(2));
   const vectors = new Map<string, number[]>();
-  for (const language of usedLanguages) {
+  for (const language of useFrozenFeatures ? [] : usedLanguages) {
     const group = records.filter((record) => record.language === language);
     const extractor = extractors.get(language)!;
     const output = await extractor(
@@ -1816,14 +1938,18 @@ export async function runRealPaperBenchmark(
     record: RealPaperRecord | RealPaperNegativeRecord,
     rows: ReturnType<typeof rowsFor>,
     bundle: (typeof benchmarkEmbeddings)["dev"],
+    split: "dev" | "heldout" | "negative",
   ): {
     rankings: RealPaperRanks;
     confidence: string;
     probability: { top1: number; top5: number };
   } => {
     const vector = vectors.get(record.paper_id);
-    if (!vector) throw new Error(`real paper vector missing: ${record.paper_id}`);
-    Recommender.setPaperVecs(record.language === "en" ? bundle.paperVecs : null);
+    if (!useFrozenFeatures && !vector)
+      throw new Error(`real paper vector missing: ${record.paper_id}`);
+    Recommender.setPaperVecs(
+      !useFrozenFeatures && record.language === "en" ? bundle.paperVecs : null,
+    );
     const lines = Recommender.parsePaperLines(
       JSON.stringify([
         {
@@ -1837,23 +1963,49 @@ export async function runRealPaperBenchmark(
         },
       ]),
     );
-    const semanticScores = Object.fromEntries(
-      confs.map((conference) => [
-        conference.key,
-        Recommender.semanticScore(
-          conference.key,
-          vector,
-          record.language === "ja" ? bundle.multi.embeddings : bundle.embeddings,
-        ),
-      ]),
-    );
+    const inferredSemanticScores = useFrozenFeatures
+      ? {}
+      : Object.fromEntries(
+          confs.map((conference) => [
+            conference.key,
+            Recommender.semanticScore(
+              conference.key,
+              vector!,
+              record.language === "ja" ? bundle.multi.embeddings : bundle.embeddings,
+            ),
+          ]),
+        );
+    const fixed = useFrozenFeatures
+      ? fixedFeatureRecord(requiredFeatures, record.paper_id, bundle.manifest, split)
+      : null;
+    const semanticScores = fixed?.semantic_scores ?? inferredSemanticScores;
     const recommendations = Recommender.venueRecommendations(
       rows,
       lines,
       semanticScores,
       Date.UTC(record.year, 0, 1),
-      { topN: rows.length },
+      { topN: rows.length, venueCats: Recommender.autoDetectCats(lines) },
     ) as VenueRecommendation[];
+    const candidateFeatures = recommendations
+      .map((recommendation) => ({
+        venue: recommendation.venueKey,
+        base_score: recommendation.fit.baseScore,
+        features: recommendation.fit.rerankerFeatures,
+      }))
+      .sort((left, right) => left.venue.localeCompare(right.venue));
+    if (fixed && JSON.stringify(fixed.candidates) !== JSON.stringify(candidateFeatures))
+      throw new Error(`required production feature mismatch: ${record.paper_id}`);
+    if (collectedFeatures)
+      collectedFeatures.push({
+        paper_id: record.paper_id,
+        record_sha256: requiredRecordHash({
+          paper_id: record.paper_id,
+          semantic_scores: inferredSemanticScores,
+          candidates: candidateFeatures,
+        }),
+        semantic_scores: inferredSemanticScores,
+        candidates: candidateFeatures,
+      });
     const acceptable = new Set("acceptable_venues" in record ? record.acceptable_venues : []);
     const lexical = recommendations
       .filter((recommendation) => recommendation.fit.lexicalScore > 0)
@@ -1885,6 +2037,7 @@ export async function runRealPaperBenchmark(
   const evaluate = (
     fixture: Pick<RealPaperFixture, "records" | "profile_year_max"> | RealPaperNegativeFixture,
     bundle: (typeof benchmarkEmbeddings)["dev"],
+    split: "dev" | "heldout" | "negative",
   ): {
     rankings: Record<string, RealPaperRanks>;
     confidence: Record<string, string>;
@@ -1896,7 +2049,7 @@ export async function runRealPaperBenchmark(
     const rows = rowsFor(fixture.profile_year_max);
     Recommender.setNameIdf(Recommender.buildNameIdf(rows.map((row) => row.conf)));
     for (const record of fixture.records) {
-      const evaluation = recommend(record, rows, bundle);
+      const evaluation = recommend(record, rows, bundle, split);
       rankings[record.paper_id] = evaluation.rankings;
       confidence[record.paper_id] = evaluation.confidence;
       probability[record.paper_id] = evaluation.probability;
@@ -1908,14 +2061,16 @@ export async function runRealPaperBenchmark(
   );
   try {
     const evaluations = {
-      dev: evaluate(dev, benchmarkEmbeddings.dev),
-      heldout: evaluate(heldout, benchmarkEmbeddings.heldout),
-      ...(negative ? { negative: evaluate(negative, benchmarkEmbeddings.heldout) } : {}),
+      dev: evaluate(dev, benchmarkEmbeddings.dev, "dev"),
+      heldout: evaluate(heldout, benchmarkEmbeddings.heldout, "heldout"),
+      ...(negative
+        ? { negative: evaluate(negative, benchmarkEmbeddings.heldout, "negative") }
+        : {}),
     };
     const repeatStart = performance.now();
     const repeatRows = rowsFor(dev.profile_year_max);
     Recommender.setNameIdf(Recommender.buildNameIdf(repeatRows.map((row) => row.conf)));
-    if (dev.records[0]) recommend(dev.records[0], repeatRows, benchmarkEmbeddings.dev);
+    if (dev.records[0]) recommend(dev.records[0], repeatRows, benchmarkEmbeddings.dev, "dev");
     const repeatRecommendationMs = Number((performance.now() - repeatStart).toFixed(2));
     return {
       result: buildRealPaperResult(
@@ -2353,13 +2508,51 @@ export async function main(
         conferences: Conf[];
         categories?: Record<string, string>;
       };
+      const requiredFeatures = args.realV2Features
+        ? (JSON.parse(readFileSync(args.realV2Features, "utf8")) as RequiredSemanticFeatures)
+        : undefined;
+      const collectedFeatures: RequiredSemanticFeatures["records"] = [];
       const run = await runRealPaperBenchmark(
         dev,
         heldout,
         data,
         negative,
         args.realV2Small ? "required" : "full",
+        requiredFeatures,
+        args.writeRequiredFeatures ? collectedFeatures : undefined,
       );
+      if (args.writeRequiredFeatures) {
+        const benchmarkProfiles = run.result.benchmark_embeddings;
+        if (!benchmarkProfiles) throw new Error("benchmark embedding manifests are missing");
+        const profiles = { ...benchmarkProfiles, negative: benchmarkProfiles.heldout };
+        writeFileSync(
+          args.writeRequiredFeatures,
+          `${JSON.stringify(
+            {
+              version: 1,
+              feature_schema: [...Recommender.RERANKER_FEATURE_SCHEMA],
+              minimum_language_counts: {
+                dev: { en: 8, ja: 1 },
+                heldout: { en: 9, ja: 1 },
+              },
+              provenance: {
+                generator: "src/bench-recommender.ts",
+                model: EMBEDDING_MODEL,
+                revision: EMBEDDING_REVISION,
+                runtime: process.version,
+              },
+              profiles,
+              records: [
+                ...new Map(
+                  collectedFeatures.map((record) => [record.paper_id, record] as const),
+                ).values(),
+              ].sort((a, b) => a.paper_id.localeCompare(b.paper_id)),
+            } satisfies RequiredSemanticFeatures,
+            null,
+            2,
+          )}\n`,
+        );
+      }
       console.log(JSON.stringify(run.result, null, 2));
       process.stderr.write(
         `real-bench: dev=${run.result.splits.dev.queries} heldout=${run.result.splits.heldout.queries} negative=${run.result.splits.negative?.queries ?? 0} ` +

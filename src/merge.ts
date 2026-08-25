@@ -750,6 +750,17 @@ function dedupDeadlines(
       continue;
     }
     const incoming = entry.deadline;
+    if (sameDeadlineValue(matching.deadline, incoming)) {
+      matching.deadline = absorb(
+        matching.deadline,
+        incoming,
+        false,
+        [...entry.origins].sort(cmpStr)[0] ?? "unknown",
+      );
+      matching.origins = new Set([...matching.origins, ...entry.origins]);
+      tally.merged_deadlines += 1;
+      continue;
+    }
     const source = [...entry.origins].sort(cmpStr)[0] ?? "unknown";
     const at = isExactDeadline(incoming)
       ? incoming.at_utc
@@ -776,6 +787,15 @@ function dedupDeadlines(
   return out;
 }
 
+/** Same slot is not enough: only identical precision and value are foldable evidence. */
+function sameDeadlineValue(left: Deadline, right: Deadline): boolean {
+  if (isDateOnlyDeadline(left) || isDateOnlyDeadline(right))
+    return (
+      isDateOnlyDeadline(left) && isDateOnlyDeadline(right) && left.local_date === right.local_date
+    );
+  return left.at_utc.getTime() === right.at_utc.getTime();
+}
+
 function absorb(
   winner: Deadline,
   loser: Deadline,
@@ -783,6 +803,7 @@ function absorb(
   loserSource: string,
 ): Deadline {
   const evidence = mergeEvidence(winner.evidence, loser.evidence);
+  const origins = mergeOrigins(winner.origins, loser.origins);
   const notes: string[] = [];
   if (winner.comment) notes.push(winner.comment);
   if (loser.comment && !notes.includes(loser.comment)) notes.push(loser.comment);
@@ -804,6 +825,7 @@ function absorb(
       comment,
       selection_rule: DEADLINE_SELECTION_RULE,
       ...(evidence.length > 0 ? { evidence } : {}),
+      ...(origins.length > 0 ? { origins } : {}),
     };
   }
   if (isExactDeadline(winner) && isDateOnlyDeadline(loser)) {
@@ -812,6 +834,7 @@ function absorb(
       comment,
       selection_rule: DEADLINE_SELECTION_RULE,
       ...(evidence.length > 0 ? { evidence } : {}),
+      ...(origins.length > 0 ? { origins } : {}),
     };
   }
   if (isDateOnlyDeadline(winner) && isDateOnlyDeadline(loser)) {
@@ -827,12 +850,20 @@ function absorb(
       round,
       selection_rule: DEADLINE_SELECTION_RULE,
       ...(evidence.length > 0 ? { evidence } : {}),
+      ...(origins.length > 0 ? { origins } : {}),
     };
   }
   if (!isExactDeadline(winner) || !isExactDeadline(loser)) return winner;
   const priorConflicts = winner.conflicts ?? [];
+  // An identical instant from another source is corroborating evidence, not a
+  // conflict (SPEC.md 3.6): only genuinely different values are conflicts.
+  const sameInstant =
+    isExactDeadline(winner) &&
+    isExactDeadline(loser) &&
+    winner.at_utc.getTime() === loser.at_utc.getTime();
   const conflicts =
     sameSource ||
+    sameInstant ||
     priorConflicts.some(
       (conflict) =>
         conflict.source === loserSource &&
@@ -852,7 +883,8 @@ function absorb(
   if (
     comment === winner.comment &&
     round === winner.round &&
-    conflicts.length === priorConflicts.length
+    conflicts.length === priorConflicts.length &&
+    evidence.length === (winner.evidence?.length ?? 0)
   )
     return winner;
   return {
@@ -862,6 +894,7 @@ function absorb(
     selection_rule: DEADLINE_SELECTION_RULE,
     ...(conflicts.length > 0 ? { conflicts } : {}),
     ...(evidence.length > 0 ? { evidence } : {}),
+    ...(origins.length > 0 ? { origins } : {}),
   };
 }
 
@@ -869,6 +902,19 @@ function mergeEvidence(
   left: DeadlineEvidence[] | undefined,
   right: DeadlineEvidence[] | undefined,
 ): DeadlineEvidence[] {
+  const seen = new Set<string>();
+  return [...(left ?? []), ...(right ?? [])].filter((item) => {
+    const key = JSON.stringify(item);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function mergeOrigins(
+  left: Deadline["origins"],
+  right: Deadline["origins"],
+): NonNullable<Deadline["origins"]> {
   const seen = new Set<string>();
   return [...(left ?? []), ...(right ?? [])].filter((item) => {
     const key = JSON.stringify(item);

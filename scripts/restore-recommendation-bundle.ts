@@ -1,20 +1,35 @@
+import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, readFileSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import { embeddingsStale, type PublishManifest, writePublishManifest } from "../src/build.ts";
 
 export function restoreRecommendationBundle(bundlePath: string, outdir: string): boolean {
-  if (!existsSync(bundlePath)) return false;
+  const bundleDir = bundlePath.endsWith(".json") ? undefined : bundlePath;
+  const embeddingsPath = bundleDir ? join(bundleDir, "embeddings.json") : bundlePath;
+  const manifestPath = bundleDir ? join(bundleDir, "recommendation-bundle.json") : "";
+  if (!existsSync(embeddingsPath) || !manifestPath || !existsSync(manifestPath)) return false;
   const data = JSON.parse(readFileSync(join(outdir, "data.json"), "utf8"));
-  const bundle = JSON.parse(readFileSync(bundlePath, "utf8"));
+  const bundle = JSON.parse(readFileSync(embeddingsPath, "utf8"));
+  const attestation = JSON.parse(readFileSync(manifestPath, "utf8")) as Record<string, unknown>;
+  const publish = JSON.parse(readFileSync(join(outdir, "publish.json"), "utf8")) as PublishManifest;
+  const embeddingManifest = bundle.manifest as Record<string, unknown> | undefined;
+  const model = embeddingManifest?.models as { en?: { revision?: unknown } } | undefined;
+  const hash = createHash("sha256").update(readFileSync(embeddingsPath)).digest("hex");
+  if (
+    attestation.benchmark_status !== "passed" ||
+    attestation.source_commit !== publish.source_commit ||
+    attestation.profile_hash !== embeddingManifest?.profile_hash ||
+    attestation.runtime_version !== embeddingManifest?.runtime_version ||
+    attestation.model_revision !== model?.en?.revision ||
+    attestation.embeddings_sha256 !== hash
+  )
+    return false;
   if (embeddingsStale(bundle, data)) return false;
-  copyFileSync(bundlePath, join(outdir, "embeddings.json"));
-  const manifest = JSON.parse(
-    readFileSync(join(outdir, "publish.json"), "utf8"),
-  ) as PublishManifest;
+  copyFileSync(embeddingsPath, join(outdir, "embeddings.json"));
   writePublishManifest(
     outdir,
-    [...Object.keys(manifest.artifacts), "embeddings.json"],
-    new Date(manifest.generated_at),
+    [...Object.keys(publish.artifacts), "embeddings.json"],
+    new Date(publish.generated_at),
     "ready",
   );
   return true;

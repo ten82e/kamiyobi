@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  newValidatorWarnings,
   normalizedTrack,
   summarizeCategoryChanges,
   summarizeDeadlineChanges,
@@ -9,6 +10,41 @@ import {
 } from "../scripts/validate-data.ts";
 
 describe("validate:data", () => {
+  it("fails closed on a new stable warning code and subject", () => {
+    expect(
+      newValidatorWarnings(
+        ["venue: event date text is not structured"],
+        [{ code: "EVENT_DATE_UNSTRUCTURED", subject: "other" }],
+      ),
+    ).toEqual([expect.objectContaining({ code: "EVENT_DATE_UNSTRUCTURED", subject: "venue" })]);
+  });
+  it("fails closed when a known warning identity count increases", () => {
+    expect(
+      newValidatorWarnings(
+        [
+          "venue: event date text is not structured",
+          "venue: event date text is not structured (second edition)",
+        ],
+        [{ code: "EVENT_DATE_UNSTRUCTURED", subject: "venue", count: 1 }],
+      ),
+    ).toEqual([
+      expect.objectContaining({ code: "EVENT_DATE_UNSTRUCTURED", subject: "venue", count: 2 }),
+    ]);
+  });
+
+  it("accepts explicit not-announced event date states and exact placeholders", () => {
+    for (const edition of [
+      { year: 2027, id: "status", event_date_status: "not-announced" },
+      { year: 2027, id: "tbd", date_text: "TBD" },
+      { year: 2027, id: "tbd-year", date_text: "TBD 2027" },
+      { year: 2027, id: "not-announced", date_text: "not announced" },
+    ]) {
+      const result = validateData({ conferences: [{ key: "venue", editions: [edition] }] });
+      expect(result.warnings).not.toContain(
+        expect.stringContaining("event date text is not structured"),
+      );
+    }
+  });
   it("rejects precision and conflicting slot errors and supports clean payloads", () => {
     const result = validateData({
       conferences: [

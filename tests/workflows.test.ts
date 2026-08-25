@@ -82,12 +82,13 @@ describe("workflow separation", () => {
 
   it("deploys only main and attests the final publish manifest", () => {
     const { text, value } = workflow("../.github/workflows/deploy.yml");
+    const gate = value.jobs?.gate;
     const build = value.jobs?.build;
     const attest = value.jobs?.attest;
     const deploy = value.jobs?.deploy;
     expect(text).toMatch(/push:\s*\n\s+branches: \[main\]/);
     expect(text).toMatch(/workflow_run:[\s\S]*branches: \[main\]/);
-    expect(String(build?.if)).toContain("head_branch == 'main'");
+    expect(String(gate?.if)).toContain("head_branch == 'main'");
     expect(text).not.toContain("workflow_dispatch:");
     expect(text).toContain("name: github-pages");
     expect(text).toContain("attestations: write");
@@ -96,6 +97,19 @@ describe("workflow separation", () => {
       "workflow_run.head_sha",
     );
     expect(String(step(build!, "Build merged site").run)).toContain("--offline");
+    expect(String(step(gate!, "Check trigger is current main").run)).toContain("TRIGGER_SHA");
+    expect(String(build?.if)).toContain("needs.gate.outputs.current == 'true'");
+    expect(String(step(build!, "Restore immutable recommendation bundle").run)).toContain(
+      "workflow_run.id",
+    );
+    expect(String(step(build!, "Restore immutable recommendation bundle").run)).toContain(
+      "recommendation-bundle-$" + "{{ github.event.workflow_run.head_sha }}",
+    );
+    expect(text).toContain("group: pages-main");
+    expect(text).toContain("cancel-in-progress: false");
+    expect(text).toContain("stale trigger; no build or deployment will run");
+    expect(String(step(deploy!, "Refuse stale main before deploy").run)).toContain("source_commit");
+    expect(String(step(deploy!, "Refuse stale main before deploy").run)).toContain("current_main");
     expect(String(step(build!, "Health gate").run)).toContain("--require-baseline");
     expect(String(step(build!, "Health gate").run)).toContain('cd "$GITHUB_WORKSPACE"');
     expect(String(step(attest!, "Attest publish manifest").with?.["subject-path"])).toBe(
@@ -136,6 +150,13 @@ describe("CI contracts", () => {
     expect(nightly).toContain("schedule:");
     expect(nightly).toContain("release:");
     expect(nightly).toContain("Run full real-paper benchmark");
+    expect(nightly.indexOf("Run full real-paper benchmark")).toBeLessThan(
+      nightly.indexOf("Seal recommendation bundle"),
+    );
+    const bundle = workflow("../.github/workflows/recommendation-bundle.yml").text;
+    expect(bundle).toMatch(/push:\s*\n\s+branches: \[main\]/);
+    expect(bundle).not.toMatch(/^\s+paths:/m);
+    for (const workflow of [text, bundle]) expect(workflow).toContain("real-paper-negative.json");
   });
 
   it("uses approved full-SHA actions and normal npm installs", () => {

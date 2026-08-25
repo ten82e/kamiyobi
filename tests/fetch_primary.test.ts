@@ -39,7 +39,7 @@ describe("fetch-primary extraction", () => {
   it("selects a stable source-aware adapter before generic fallback", () => {
     expect(primaryAdapter("https://easychair.org/cfp/example")).toMatchObject({
       id: "easychair-v1",
-      structured: false,
+      structured: true,
     });
     expect(primaryAdapter("https://example.test/cfp")).toMatchObject({
       id: "generic-v1",
@@ -50,6 +50,11 @@ describe("fetch-primary extraction", () => {
     const source = readFileSync(join(REPO_ROOT, "src", "fetch-primary.ts"), "utf8");
     expect(source).not.toContain("rejectUnauthorized: false");
     expect(source).not.toContain("CERT_NONE");
+  });
+  it("fails closed on a malformed structured EasyChair block", () => {
+    expect(
+      primaryAdapter("https://easychair.org/cfp/example").extract("<tr><td>Paper deadline", 2027),
+    ).toEqual([]);
   });
 
   it("easychair style", () => {
@@ -407,6 +412,31 @@ describe("runFetchPrimary", () => {
         sourceRevision: abstract.contentHash,
         verifiedFields: ["date", "time", "timezone"],
       });
+    } finally {
+      globalThis.fetch = oldFetch;
+    }
+  });
+
+  it("does not let a generic fallback replace an exact deadline", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "cfp-primary-generic-"));
+    const registryPath = join(dir, "primary.yaml");
+    const outPath = join(dir, "primary_overrides.yaml");
+    writeFileSync(
+      registryPath,
+      "conferences:\n  generic:\n    url: https://example.test/generic\n    year: 2027\n",
+    );
+    writeFileSync(
+      outPath,
+      "conferences:\n  generic:\n    editions:\n      '2027':\n        deadlines:\n          - {kind: paper, label: Paper submission, date: '2026-09-01 23:59:00', tz: AoE, structured: true}\n",
+    );
+    const oldFetch = globalThis.fetch;
+    globalThis.fetch = (async () =>
+      new Response("<p>Paper deadline: September 2, 2026 23:59 UTC</p>")) as typeof fetch;
+    try {
+      expect(await runFetchPrimary(true, registryPath, outPath)).toBe(0);
+      const row = loadYamlFile(outPath).conferences.generic.editions[2027].deadlines[0];
+      expect(row.date).toBe("2026-09-01 23:59:00");
+      expect(row.tz).toBe("AoE");
     } finally {
       globalThis.fetch = oldFetch;
     }

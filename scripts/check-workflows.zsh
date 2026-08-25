@@ -4,7 +4,7 @@ set -euo pipefail
 cd "${0:A:h}/.."
 
 [[ ! -e .github/workflows/update.yml ]]
-for workflow in ci.yml update-data.yml deploy.yml nightly.yml; do
+for workflow in ci.yml update-data.yml deploy.yml nightly.yml recommendation-bundle.yml; do
   [[ -f ".github/workflows/$workflow" ]]
 done
 
@@ -33,5 +33,18 @@ rg -q 'GH_TOKEN:' .github/workflows/update-data.yml
 rg -q 'gh workflow run ci.yml --ref automation/data-update' .github/workflows/update-data.yml
 rg -q 'attest-build-provenance' .github/workflows/deploy.yml
 rg -q 'subject-path: public/publish.json' .github/workflows/deploy.yml
+rg -q 'group: pages-main' .github/workflows/deploy.yml
+rg -q 'cancel-in-progress: false' .github/workflows/deploy.yml
+rg -q 'stale trigger; no build or deployment will run' .github/workflows/deploy.yml
+rg -q 'workflow_run.head_sha' .github/workflows/deploy.yml
+rg -q 'workflow_run.id' .github/workflows/deploy.yml
+rg -Fq 'recommendation-bundle-${{ github.event.workflow_run.head_sha }}' .github/workflows/deploy.yml
+rg -q 'real-paper-required-dev.json' .github/workflows/ci.yml .github/workflows/recommendation-bundle.yml
+rg -q 'real-paper-negative.json' .github/workflows/ci.yml .github/workflows/recommendation-bundle.yml
+! rg -q '^\s+paths:' .github/workflows/recommendation-bundle.yml
+benchmark_line=$(rg -n 'Run full real-paper benchmark' .github/workflows/nightly.yml | cut -d: -f1)
+seal_line=$(rg -n 'Seal recommendation bundle' .github/workflows/nightly.yml | cut -d: -f1)
+upload_line=$(rg -n 'Upload immutable recommendation bundle' .github/workflows/nightly.yml | cut -d: -f1)
+(( benchmark_line < seal_line && seal_line < upload_line ))
 
 print workflow-policy-ok

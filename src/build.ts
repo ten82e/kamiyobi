@@ -513,6 +513,7 @@ export function toJson(
             status: ed.estimated ? "estimated" : "confirmed",
             selection_rule: dl.selection_rule ?? DEADLINE_SELECTION_RULE,
             evidence,
+            ...(dl.origins?.length ? { origins: dl.origins.map((origin) => ({ ...origin })) } : {}),
             ...(conflicts.length > 0 ? { conflicts } : {}),
           };
           if (isDateOnlyDeadline(dl)) {
@@ -724,22 +725,34 @@ export function toRecommendationIndex(
           const range = jsonDeadlineRange(deadline);
           return range !== null && range[1] >= safeNow.getTime();
         });
-        return compactEdition(edition, [future ?? deadlines[deadlines.length - 1]]);
+        const selected = future ?? deadlines[deadlines.length - 1];
+        const origins = jsonRecords(selected.evidence)
+          .map((evidence) => {
+            const source = String(
+              evidence.source_name ?? evidence.sourceName ?? edition.source ?? "",
+            );
+            const status = sourceStatus[source];
+            return {
+              source,
+              ...(typeof evidence.sourceClass === "string"
+                ? { sourceClass: evidence.sourceClass }
+                : {}),
+              revision:
+                typeof evidence.sourceRevision === "string" ? evidence.sourceRevision : null,
+              fetchedAt: typeof evidence.retrievedAt === "string" ? evidence.retrievedAt : null,
+              freshness:
+                status === "cache-fallback" || status === "snapshot-fallback" ? status : "fresh",
+            };
+          })
+          .filter((origin) => origin.source);
+        return compactEdition(edition, [{ ...selected, ...(origins.length ? { origins } : {}) }]);
       })
       .filter((edition): edition is JsonRecord => edition !== null);
+    const recommendationConference = compactConference(conf, editions, true);
     return {
-      ...compactConference(conf, editions, true),
+      ...recommendationConference,
       recommendation_axes: recommendationAxes(
-        {
-          ...conf,
-          sourceFreshness: jsonStrings(conf.sources).some((source) =>
-            ["snapshot-fallback", "failed"].includes(sourceStatus[source] ?? ""),
-          )
-            ? "snapshot-fallback"
-            : jsonStrings(conf.sources).some((source) => sourceStatus[source] === "cache-fallback")
-              ? "cache-fallback"
-              : "fresh",
-        },
+        { ...recommendationConference, all_editions: conf.editions },
         null,
         safeNow.getTime(),
       ),

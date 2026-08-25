@@ -226,7 +226,6 @@ describe("recommendation axes", () => {
 
   it("keeps source fallback and conflict trust independent of research ranking", () => {
     const value = conference({
-      sourceFreshness: "snapshot-fallback",
       editions: [
         {
           year: 2027,
@@ -236,6 +235,14 @@ describe("recommendation axes", () => {
               precision: "date-only",
               local_date: "2027-01-02",
               evidence: [{ sourceClass: "assumption", verifiedFields: ["date"] }],
+              origins: [
+                {
+                  source: "ccfddl",
+                  revision: null,
+                  fetchedAt: null,
+                  freshness: "snapshot-fallback",
+                },
+              ],
               conflicts: [{ sourceClass: "aggregator" }],
             },
           ],
@@ -249,6 +256,32 @@ describe("recommendation axes", () => {
       sourceFreshness: "snapshot-fallback",
       conflicts: 1,
     });
+  });
+
+  it("uses the highest-trust displayed-deadline origin before snapshot auxiliaries", () => {
+    const value = conference({
+      editions: [
+        {
+          year: 2027,
+          deadlines: [
+            {
+              kind: "paper",
+              precision: "date-only",
+              local_date: "2027-01-02",
+              origins: [
+                { source: "official", sourceClass: "official-cfp", freshness: "fresh" },
+                {
+                  source: "ccfddl",
+                  sourceClass: "aggregator",
+                  freshness: "snapshot-fallback",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    expect(recommendationAxes(value, 7, NOW).deadline_trust.sourceFreshness).toBe("fresh");
   });
 
   it("publishes the same axes in the browser-facing recommendation index", () => {
@@ -277,7 +310,26 @@ describe("recommendation axes", () => {
         site: {},
         sources: [],
         categories: {},
-        conferences: [conference({ sources: ["ccfddl"], rank: { ccf: "N" } })],
+        conferences: [
+          conference({
+            sources: ["ccfddl"],
+            rank: { ccf: "N" },
+            editions: [
+              {
+                year: 2027,
+                source: "ccfddl",
+                deadlines: [
+                  {
+                    kind: "paper",
+                    precision: "exact",
+                    utc: "2027-01-02T23:59:00.000Z",
+                    evidence: [{ sourceClass: "official-cfp", verifiedFields: ["date"] }],
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
       },
       new Date(NOW),
       { ccfddl: "snapshot-fallback" },

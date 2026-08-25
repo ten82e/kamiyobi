@@ -168,6 +168,42 @@ function sourceFreshnessOf(
   conference: JsonRecord,
   selected: Array<{ deadline: JsonRecord; edition: JsonRecord }>,
 ): SourceFreshness {
+  // A card's freshness belongs to its displayed deadline. Venue-wide source
+  // status would incorrectly mark a fresh paper deadline stale because another
+  // deadline came from a snapshot.
+  const originValues = selected.flatMap(({ deadline }) =>
+    (() => {
+      const origins = records(deadline.origins).sort(
+        (left, right) =>
+          TRUST_RANK[trustLevel(right.sourceClass ?? right.source_class ?? right.confidence)] -
+          TRUST_RANK[trustLevel(left.sourceClass ?? left.source_class ?? left.confidence)],
+      );
+      for (const rank of [
+        ...new Set(
+          origins.map(
+            (origin) =>
+              TRUST_RANK[
+                trustLevel(origin.sourceClass ?? origin.source_class ?? origin.confidence)
+              ],
+          ),
+        ),
+      ].sort((left, right) => right - left)) {
+        const values = origins
+          .filter(
+            (origin) =>
+              TRUST_RANK[
+                trustLevel(origin.sourceClass ?? origin.source_class ?? origin.confidence)
+              ] === rank,
+          )
+          .flatMap(freshnessValues);
+        if (values.length) return values;
+      }
+      return [];
+    })(),
+  );
+  if (originValues.includes("snapshot-fallback")) return "snapshot-fallback";
+  if (originValues.includes("cache-fallback")) return "cache-fallback";
+  if (originValues.length) return "fresh";
   const selectedRecords = selected.length
     ? selected.flatMap(({ deadline, edition }) => [
         ...freshnessValues(edition),
@@ -175,7 +211,7 @@ function sourceFreshnessOf(
         ...records(deadline.evidence).flatMap(freshnessValues),
       ])
     : records(conference.editions).flatMap(freshnessValues);
-  const values = [...freshnessValues(conference), ...selectedRecords];
+  const values = selectedRecords;
   if (values.includes("snapshot-fallback")) return "snapshot-fallback";
   if (values.includes("cache-fallback")) return "cache-fallback";
   return "fresh";
@@ -283,7 +319,7 @@ export function recommendationAxes(
 ): RecommendationAxes {
   const deadlines = deadlineRecords(conference, now);
   const trust = deadlineTrust(conference, deadlines);
-  const editions = records(conference.editions);
+  const editions = records(conference.all_editions ?? conference.editions);
   const maturity = maturityEvidence(conference, editions);
   const hasExact = deadlines.some(
     ({ deadline }) => deadline.precision !== "date-only" && Boolean(deadline.utc),

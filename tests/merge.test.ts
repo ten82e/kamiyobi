@@ -733,6 +733,46 @@ describe("merge_sources", () => {
     expect(dls[0].label).toBe("Paper submission");
   });
 
+  it("folds an identical value from a second source into one deadline with unioned evidence", () => {
+    const at = utc(2026, 2, 6, 11, 59);
+    const evidence = (sourceName: string) => [
+      {
+        source_name: sourceName,
+        source_url: `https://example.org/${sourceName}`,
+        observed_at: "2026-08-01T00:00:00Z",
+        original_value: "2026-02-06 11:59",
+        confidence: "aggregator" as const,
+      },
+    ];
+    const one = (source: string): Conference =>
+      makeConference({
+        key: "sigcomm",
+        title: "SIGCOMM",
+        dblp: "conf/sigcomm",
+        sources: [source],
+        editions: [
+          makeEdition({
+            year: 2026,
+            edition_id: "sigcomm26",
+            identity: { editionId: "sigcomm-2026" },
+            source,
+            deadlines: [
+              {
+                ...makeDeadline("paper", "Paper submission", at),
+                evidence: evidence(source),
+              },
+            ],
+          }),
+        ],
+      });
+    const merged = mergeSources([[one("ccfddl")], [one("aideadlines")]], PRIORITY);
+    const dls = deadlinesOf(merged[0]);
+    expect(dls.length).toBe(1);
+    expect(dls[0].conflicts ?? []).toEqual([]);
+    const names = (dls[0].evidence ?? []).map((item) => item.source_name).sort();
+    expect(names).toEqual(["aideadlines", "ccfddl"]);
+  });
+
   it("three notifications in one edition survive a merge", () => {
     const days = [5, 20, 25];
     const hf = makeConference({

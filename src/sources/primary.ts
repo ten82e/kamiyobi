@@ -93,7 +93,7 @@ function primaryEvidence(
       source_name: "primary",
       source_url: sourceUrl,
       original_value: originalValue,
-      confidence: "official",
+      confidence: row.rest.structured === false ? "aggregator" : "official",
       sourceClass: row.rest.structured === false ? "aggregator" : "official-cfp",
       sourceUrl,
       rawExcerpt: String(row.rest.rawExcerpt ?? originalValue),
