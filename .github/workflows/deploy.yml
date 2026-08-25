@@ -167,6 +167,14 @@ jobs:
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
+          cat > /tmp/kamiyobi-check-deployed.mjs <<'NODE'
+          import { readFileSync } from "node:fs";
+          const expected = JSON.parse(readFileSync("/tmp/kamiyobi-expected/publish.json", "utf8"));
+          const deployed = JSON.parse(readFileSync("/tmp/kamiyobi-deployed.json", "utf8"));
+          for (const key of ["source_commit", "content_id", "build_id"]) {
+            if (!expected[key] || deployed[key] !== expected[key]) throw new Error(`deployed ${key} mismatch`);
+          }
+          NODE
           # CDN propagation can serve the previous deployment briefly after a
           # same-commit semantic re-deploy; poll until the live manifest matches
           # the artifact this run attested, then fail.
@@ -179,13 +187,3 @@ jobs:
           done
           echo "deployed manifest never matched the attested publish manifest"
           exit 1
-      - name: Write deployed-manifest checker
-        run: |
-          cat > /tmp/kamiyobi-check-deployed.mjs <<'NODE'
-          import { readFileSync } from "node:fs";
-          const expected = JSON.parse(readFileSync("/tmp/kamiyobi-expected/publish.json", "utf8"));
-          const deployed = JSON.parse(readFileSync("/tmp/kamiyobi-deployed.json", "utf8"));
-          for (const key of ["source_commit", "content_id", "build_id"]) {
-            if (!expected[key] || deployed[key] !== expected[key]) throw new Error(`deployed ${key} mismatch`);
-          }
-          NODE
