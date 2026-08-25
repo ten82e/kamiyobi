@@ -46,7 +46,7 @@ jobs:
           node scripts/health-gate.ts public/health.json --require-baseline \
             /tmp/last-known-good-health.json /tmp/next-last-known-good-health.json
       - name: Recommendation Top-5 delta
-        run: npm run bench -- --data-delta tests/fixtures/recommendation-data-delta.json --data-delta-before /tmp/kamiyobi-baseline/recommendation-index.json --data-delta-after public/recommendation-index.json --json > /tmp/kamiyobi-update/recommendation-delta.json
+        run: npm run --silent bench -- --data-delta tests/fixtures/recommendation-data-delta.json --data-delta-before /tmp/kamiyobi-baseline/recommendation-index.json --data-delta-after public/recommendation-index.json --json > /tmp/kamiyobi-update/recommendation-delta.json
       - name: Summarize category changes
         run: |
           mkdir -p /tmp/kamiyobi-update/data
