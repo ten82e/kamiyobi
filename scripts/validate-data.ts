@@ -315,7 +315,6 @@ function validateEdition(
   key: string,
   edition: Record<string, unknown>,
   result: DataValidation,
-  allowLegacyBroadEventRange: boolean,
 ): void {
   const year = Number(edition.year);
   const id = String(edition.id ?? edition.edition_id ?? "");
@@ -347,12 +346,15 @@ function validateEdition(
   if (start && end) {
     if (start > end) add(result.errors, `${prefix}: event range is reversed`);
     if (end.getTime() - start.getTime() > MAX_EVENT_DAYS * 86_400_000) {
-      const hasDayNumber = /(?:^|[^\d])(?:[1-9]|[12]\d|3[01])(?:\D|$)/.test(
-        String(edition.date_text ?? ""),
-      );
-      // ponytail: legacy month-only source text gets a warning; remove this compatibility path once snapshot data is normalized.
+      const dateText = String(edition.date_text ?? "");
+      const hasDayNumber = /(?:^|[^\d])(?:[1-9]|[12]\d|3[01])(?:\D|$)/.test(dateText);
+      const isMonthEnvelope =
+        !hasDayNumber &&
+        /\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b|(?:1[0-2]|[1-9])月/i.test(
+          dateText,
+        );
       add(
-        allowLegacyBroadEventRange && !hasDayNumber ? result.warnings : result.errors,
+        isMonthEnvelope ? result.warnings : result.errors,
         `${prefix}: event range exceeds ${MAX_EVENT_DAYS} days`,
       );
     }
@@ -420,7 +422,6 @@ function validateEdition(
 export function validateData(
   payload: Record<string, unknown>,
   categoryDefinitions: CategoryDefinitions = configuredCategories(),
-  allowLegacyBroadEventRange = false,
 ): DataValidation {
   const result: DataValidation = {
     errors: [],
@@ -465,7 +466,7 @@ export function validateData(
       const id = String(edition.id ?? edition.edition_id ?? "");
       if (id && ids.has(id)) add(result.errors, `${key}: duplicate edition id ${id}`);
       ids.add(id);
-      validateEdition(key, edition, result, allowLegacyBroadEventRange);
+      validateEdition(key, edition, result);
     }
   }
   result.errors = [...new Set(result.errors)].sort();
@@ -555,7 +556,7 @@ export function validateProduction(root = ROOT): DataValidation {
     stats: { exact: 0, date_only: 0, estimated: 0 },
   };
   for (const input of inputs) {
-    const checked = validateData(input.payload, categoryDefinitions, true);
+    const checked = validateData(input.payload, categoryDefinitions);
     aggregate.errors.push(...checked.errors.map((message) => `${input.name}: ${message}`));
     aggregate.warnings.push(...checked.warnings.map((message) => `${input.name}: ${message}`));
     aggregate.stats.exact += checked.stats.exact;

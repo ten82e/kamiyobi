@@ -285,6 +285,28 @@ it("uses model instant parsing for offsets and accepts a short year-crossing eve
     ],
   });
   expect(tooLong.errors).toContain("too-long/too-long-2027: event range exceeds 31 days");
+
+  const monthEnvelope = validateData({
+    conferences: [
+      {
+        key: "month-envelope",
+        categories: ["systems"],
+        editions: [
+          {
+            year: 2027,
+            id: "month-envelope-2027",
+            date_text: "March-April, 2027",
+            event_start: "2027-03-01",
+            event_end: "2027-04-30",
+          },
+        ],
+      },
+    ],
+  });
+  expect(monthEnvelope.errors).toEqual([]);
+  expect(monthEnvelope.warnings).toContain(
+    "month-envelope/month-envelope-2027: event range exceeds 31 days",
+  );
 });
 
 it("checks configured categories and reports promotion/evidence and vocabulary drift as warnings", () => {
