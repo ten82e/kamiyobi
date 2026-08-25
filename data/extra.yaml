@@ -1876,7 +1876,8 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission, date: '2026-08-21 23:59:00', tz: UTC}
 
-  # 根拠: https://geosearch-workshop.github.io/geosearch2026/ 「May 26th --> Friday, August 28, 2026」= 延長後
+  # 根拠: https://geosearch-workshop.github.io/geosearch2026/ 「Deadline extended to September 06, 2026」
+  #   （2026-08-25 再確認。初回 08-28、その後 09-06 へ再延長）
   - key: geosearch-2026
     title: GeoSearch 2026
     full_name: The 5th ACM SIGSPATIAL International Workshop on Searching and Mining Large Collections of Geospatial Data
@@ -1889,7 +1890,7 @@ conferences:
         place: Riverside, CA, USA
         date_text: November 3, 2026
         deadlines:
-          - {kind: paper, label: Submission, date: '2026-08-28 23:59:00', tz: UTC}
+          - {kind: paper, label: Submission, date: '2026-09-06 23:59:00', tz: UTC}
 
   # 根拠: https://geoindustry.github.io/geoindustryworkshop2026/
   #   「Submission deadline August 28, 2026, 11:59 PM AoE」— AoE 明記
