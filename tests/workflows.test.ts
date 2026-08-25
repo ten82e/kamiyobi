@@ -162,7 +162,7 @@ describe("CI contracts", () => {
     expect(bundle).not.toMatch(/^\s+paths:/m);
     // semantic 公開には required gate と full benchmark の両方が要る。
     expect(bundle).toContain("full real-paper benchmark before sealing");
-    expect(bundle).toContain('semantic_content_id');
+    expect(bundle).toContain("semantic_content_id");
     expect(bundle).toContain('full_benchmark: "passed"');
     for (const workflow of [text, bundle]) expect(workflow).toContain("real-paper-negative.json");
   });
