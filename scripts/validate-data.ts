@@ -1,5 +1,5 @@
 /** Deterministic semantic validation for every production data input. */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { load as loadYaml } from "js-yaml";
@@ -15,6 +15,77 @@ export interface DataValidation {
   errors: string[];
   warnings: string[];
   stats: { exact: number; date_only: number; estimated: number };
+}
+
+export interface ValidatorWarning {
+  code: string;
+  subject: string;
+  severity: "review";
+  message: string;
+  count?: number;
+}
+
+export function validatorWarnings(warnings: readonly string[]): ValidatorWarning[] {
+  return [...warnings]
+    .map((message) => {
+      const firstSeparator = message.indexOf(":");
+      const secondSeparator = message.indexOf(": ", firstSeparator + 1);
+      const subject =
+        (secondSeparator > firstSeparator
+          ? message.slice(0, secondSeparator)
+          : firstSeparator >= 0
+            ? message.slice(0, firstSeparator)
+            : "global"
+        )
+          .trim()
+          .replace(/:\s*/g, ":") || "global";
+      const text = message.slice(message.indexOf(":") + 1).trim();
+      const code = /category vocabulary diverges/.test(text)
+        ? "CATEGORY_VOCABULARY_DIVERGENCE"
+        : /event date text is not structured/.test(text)
+          ? "EVENT_DATE_UNSTRUCTURED"
+          : /event range exceeds/.test(text)
+            ? "EVENT_RANGE_ANOMALY"
+            : /category_evidence/.test(text)
+              ? "CATEGORY_REVIEW_EVIDENCE_MISSING"
+              : "VALIDATOR_REVIEW";
+      return { code, subject, severity: "review" as const, message };
+    })
+    .sort(
+      (left, right) =>
+        left.code.localeCompare(right.code) || left.subject.localeCompare(right.subject),
+    );
+}
+
+export function newValidatorWarnings(
+  warnings: readonly string[],
+  baseline: readonly Pick<ValidatorWarning, "code" | "subject" | "count">[],
+): ValidatorWarning[] {
+  const baselineCounts = new Map(
+    baseline.map((item) => [`${item.code}\0${item.subject}`, item.count ?? 1]),
+  );
+  const current = new Map<string, ValidatorWarning & { count: number }>();
+  for (const item of validatorWarnings(warnings)) {
+    const key = `${item.code}\0${item.subject}`;
+    const existing = current.get(key);
+    current.set(key, { ...item, count: (existing?.count ?? 0) + 1 });
+  }
+  return [...current].flatMap(([key, item]) =>
+    item.count > (baselineCounts.get(key) ?? 0) ? [item] : [],
+  );
+}
+
+export function validatorWarningBaseline(warnings: readonly string[]): ValidatorWarning[] {
+  const counts = new Map<string, ValidatorWarning & { count: number }>();
+  for (const item of validatorWarnings(warnings)) {
+    const key = `${item.code}\0${item.subject}`;
+    const existing = counts.get(key);
+    counts.set(key, { ...item, count: (existing?.count ?? 0) + 1 });
+  }
+  return [...counts.values()].sort(
+    (left, right) =>
+      left.code.localeCompare(right.code) || left.subject.localeCompare(right.subject),
+  );
 }
 
 const INVISIBLE = /[\u200b-\u200f\u202a-\u202e\u2060\ufeff\ufffd]/u;
@@ -495,7 +566,13 @@ function validateEdition(
       );
     }
   }
-  if (!start && !end && String(edition.date_text ?? "").trim())
+  const dateText = String(edition.date_text ?? "").trim();
+  const eventStatus = String(edition.event_date_status ?? "")
+    .trim()
+    .toLowerCase();
+  const explicitlyNotAnnounced =
+    eventStatus === "not-announced" || /^(?:tbd(?:\s+20\d{2})?|not announced)$/i.test(dateText);
+  if (!start && !end && dateText && !explicitlyNotAnnounced)
     add(result.warnings, `${prefix}: event date text is not structured`);
 
   const slots = new Map<string, string>();
@@ -606,7 +683,7 @@ export function validateData(
     }
   }
   result.errors = [...new Set(result.errors)].sort();
-  result.warnings = [...new Set(result.warnings)].sort();
+  result.warnings.sort();
   return result;
 }
 
@@ -700,7 +777,7 @@ export function validateProduction(root = ROOT): DataValidation {
     aggregate.stats.estimated += checked.stats.estimated;
   }
   aggregate.errors = [...new Set(aggregate.errors)].sort();
-  aggregate.warnings = [...new Set(aggregate.warnings)].sort();
+  aggregate.warnings.sort();
   return aggregate;
 }
 
@@ -709,10 +786,26 @@ export function main(argv = process.argv.slice(2)): number {
   const file = argv.find((value) => !value.startsWith("-"));
   try {
     const result = file ? validateFile(file) : validateProduction();
-    if (json) process.stdout.write(`${JSON.stringify(result)}\n`);
+    const baselinePath = join(ROOT, "data", "validator-warning-baseline.json");
+    const baseline =
+      file || !existsSync(baselinePath)
+        ? []
+        : ((JSON.parse(readFileSync(baselinePath, "utf8")) as { warnings?: ValidatorWarning[] })
+            .warnings ?? []);
+    const newWarnings = file ? [] : newValidatorWarnings(result.warnings, baseline);
+    if (!file && argv.includes("--write-baseline")) {
+      writeFileSync(
+        baselinePath,
+        `${JSON.stringify({ warnings: validatorWarningBaseline(result.warnings) }, null, 2)}\n`,
+      );
+    }
+    if (json)
+      process.stdout.write(
+        `${JSON.stringify({ ...result, warning_identities: validatorWarningBaseline(result.warnings), new_warnings: newWarnings })}\n`,
+      );
     else
       process.stdout.write(`validated ${result.stats.exact + result.stats.date_only} deadlines\n`);
-    return result.errors.length ? 1 : 0;
+    return result.errors.length || newWarnings.length ? 1 : 0;
   } catch (error) {
     process.stderr.write(`validate:data failed: ${String(error)}\n`);
     return 2;

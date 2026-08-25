@@ -179,6 +179,7 @@ kamiyobi/
 │   ├── generate-venue-profiles.ts # 出典情報付きプロフィール成果物の再生成
 │   ├── observe-cfp.ts           # CFP 本文・応答・抽出候補の保存
 │   ├── restore-recommendation-bundle.ts # 互換推薦 artifact の検証・復元
+│   ├── train-reranker.ts       # dev-only reranker 学習・CV・校正 artifact 生成
 │   ├── validate-data.ts         # 公開データの意味検査
 │   ├── verify-cfp.ts            # CFP 観測の項目別検証
 │   ├── promote-candidates.ts    # promotion batch の決定・manifest 生成
@@ -189,6 +190,7 @@ kamiyobi/
     ├── update-data.yml          # 日次 cron: 収集→検査→自動 PR 更新
     ├── deploy.yml               # main のマージ済み状態だけを Pages へ配信
     ├── nightly.yml              # 実論文ベンチ全件の定期評価
+    ├── recommendation-bundle.yml # main ごとの意味推薦 bundle 生成
     └── ci.yml                   # PR/push: 必須検査
 ```
 
@@ -799,7 +801,7 @@ conferences:
 
 ### `.github/workflows/deploy.yml`
 
-- `main` への push と、main の nightly recommendation bundle 完了で起動する。
+- `main` への push と、main の nightly / recommendation-bundle 完了で起動する。
 - merge 済みの commit を checkoutし、ネットワークなし・埋め込み生成なしでビルドする。
   同一 commit・profile・モデル revision の bundle だけを復元し、不一致時は `lexical-only` を公開する。
 - health gate は前回成功 deploy の artifact を比較対象とし、初回だけ親 commit を同一時刻で再構築する。Pages は比較元に使わない。
@@ -807,7 +809,9 @@ conferences:
 - `pages: write`、`id-token: write`、`attestations: write` は配信に必要な job だけへ与える。
 - `public/publish.json` の build provenance を attest し、`source_commit` が示す commit と公開物を結び付ける。
 - required checks が完了して main に入ったデータ以外は公開しない。
-- Pages 配信の concurrency group は deploy にだけ設定する。
+- 全 main push はまず lexical-only deploy と recommendation bundle 生成の両方を起動する。
+  Pages 配信は共有 concurrency group で取消さず直列化し、workflow_run の build 前と deploy 直前に
+  trigger SHA が現在の main であることを再確認する。古い run は失敗ではなく no-deploy で終了する。
 
 **cron の 60 日無効化について（未検証と明記する）**
 GitHub は公開リポジトリで「60 日間リポジトリ活動が無いと scheduled workflow を自動停止する」
@@ -833,6 +837,8 @@ push と pull request の両方で、変更ファイルにかかわらず次の�
   推薦回帰は PR の base と current をそれぞれ offline build し、同一ケースの順位差を測る。
   `npm test` は明示的に差し替えていない HTTP 通信を拒否し、`tests/fixtures/` と `data/snapshot.json` だけを入力に使う。
 - PR で使う小さな実論文 subset は required check に含め、全件の実論文評価は `nightly.yml` で定期実行する。
+- validator warning baseline は安定した code + subject ごとの件数を保持し、新しい identity と既知 identity の件数増加を失敗させる。
+  `event_date_status: not-announced`、`TBD`、`TBD <year>`、`not announced` は未発表状態として通常扱いにする。
 - 上流データ取得、候補探索、自動 PR 更新は日次 `update-data.yml` に置く。
 - 七つの job は main の required check として設定する。
 
@@ -968,9 +974,14 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 - heldout の単一 venue 比率は25%以下とし、複数の妥当な投稿先を許すケースを含める。
 - 実論文評価は lexical・semantic・fused の MRR、Recall@1/5/10、nDCG@10、95% bootstrap区間、層別値、abstentionを分けて報告する。
 - candidate retrieval は lexical・semantic・union の Recall@50 と oracle reranker Recall@5 を分けて報告する。
-- 軽量線形 reranker は特徴量事前値とdev評価で選んだ係数を `data/recommender-reranker.json` に固定し、
-  ECE、Brier score、precision–coverage、top-1/top-5 reliability を実際の予測確率から報告する。
-- PR の必須検査には固定した小型 semantic-score fixture を使い、候補Recall・oracle reranker・校正・MRR LCBをモデルdownloadなしで検査する。実論文全件評価は nightly で実行する。
+- 軽量線形 reranker は本番と同一の固定 feature schema から dev のみで L2 pairwise logistic を学習し、
+  決定的 CV で係数・blend を選択して Platt 校正と confidence threshold を学習する。
+  `data/recommender-reranker.json` は training/input hash、CV、校正、閾値根拠を持ち、heldout は評価にだけ使う。
+- PR の必須検査は dev・heldout・negative の本番 semantic score と本番 reranker feature vector を固定した
+  `real-paper-required-features.json` を使う。frozen required 経路は manifest だけを決定的に検証し、
+  pipeline、モデル cache、ネットワーク、埋め込み生成を一切使わず、lexical retrieval から Top-K まで本番経路を通す。
+  候補Recall・oracle reranker・校正・MRR LCB・negative semantic false-positive abstentionを検査する。
+  実論文全件評価は nightly で実行し、成功後にだけ bundle を seal/upload する。
 - required と full はそれぞれ記録済みの回帰下限を持ち、heldout fused Recall@5 または negative abstention が下限を割れば失敗する。JSON レポートは Actions artifact に保存する。
 
 ### 10.3 会議プロファイル拡充手順（`data/venue-profiles.json`）

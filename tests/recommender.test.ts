@@ -4,9 +4,12 @@
  */
 
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { restoreRecommendationBundle } from "../scripts/restore-recommendation-bundle.ts";
+import { trainRerankerMain } from "../scripts/train-reranker.ts";
 import recommender from "../site/recommender.ts";
 import {
   main as benchMain,
@@ -22,8 +25,8 @@ import {
   topicWords,
   validateRealPaperFixtures,
 } from "../src/bench-recommender.ts";
-import { compileSiteRuntime } from "../src/build.ts";
-import { main as embeddingsMain, venuePapersHash } from "../src/embeddings.ts";
+import { compileSiteRuntime, writePublishManifest } from "../src/build.ts";
+import { embeddingManifest, main as embeddingsMain, venuePapersHash } from "../src/embeddings.ts";
 import { REPO_ROOT } from "./helpers.ts";
 
 const R = recommender as any;
@@ -947,8 +950,11 @@ describe("venue recommendation fusion", () => {
   it("applies the published linear reranker and calibrated probability", () => {
     R.setReranker({
       version: 1,
+      feature_schema: [...R.RERANKER_FEATURE_SCHEMA],
       intercept: -1,
-      weights: { lexical_score: 2 },
+      weights: Object.fromEntries(
+        R.RERANKER_FEATURE_SCHEMA.map((name: string) => [name, name === "lexical_score" ? 2 : 0]),
+      ),
       blend: 1,
       confidence_thresholds: { sufficient: 0.7, ambiguous: 0.4 },
     });
@@ -966,18 +972,106 @@ describe("venue recommendation fusion", () => {
     }
   });
 
+  it("rejects a reranker with a mismatched production feature schema", () => {
+    R.setReranker({
+      version: 1,
+      feature_schema: ["semantic_score"],
+      intercept: 10,
+      weights: { semantic_score: 10 },
+      blend: 1,
+      confidence_thresholds: { sufficient: 0, ambiguous: 0 },
+    });
+    try {
+      const result = R.venueRecommendations(
+        [row("gpu", "GPU Systems")],
+        R.parsePaperLines("GPU scheduling | gpu"),
+        { gpu: 100 },
+        NOW,
+      )[0];
+      expect(result.fit.probability).toBe(0.5);
+      expect(result.fit.score).toBe(result.fit.baseScore);
+    } finally {
+      R.setReranker(null);
+    }
+  });
+
   it("pins the reranker development inputs by hash", () => {
     const model = JSON.parse(
       readFileSync(join(REPO_ROOT, "data", "recommender-reranker.json"), "utf8"),
     );
-    expect(model.selected_on).toBe("real-paper-dev");
+    expect(model.selected_on).toBe("real-paper-required-dev");
+    expect(model.coefficient_source).toBe("trained");
+    expect(model.feature_schema).toContain("semantic_score");
+    expect(model.calibration.method).toBe("platt");
     for (const [path, expected] of Object.entries(model.input_hashes)) {
+      if (path.endsWith("#dev-records")) continue;
       expect(
         createHash("sha256")
           .update(readFileSync(join(REPO_ROOT, path)))
           .digest("hex"),
       ).toBe(expected);
     }
+  });
+
+  it("trains from dev rows only and makes dev input changes visible", () => {
+    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reranker-"));
+    const dev = join(dir, "dev.json");
+    const features = join(dir, "features.json");
+    const profiles = join(REPO_ROOT, "data", "venue-profiles.json");
+    const first = join(dir, "first.json");
+    const second = join(dir, "second.json");
+    writeFileSync(
+      dev,
+      readFileSync(join(REPO_ROOT, "data/benchmarks/real-paper-required-dev.json")),
+    );
+    const fixture = JSON.parse(
+      readFileSync(join(REPO_ROOT, "data/benchmarks/real-paper-required-features.json"), "utf8"),
+    );
+    writeFileSync(features, JSON.stringify(fixture));
+    trainRerankerMain([
+      "--dev",
+      dev,
+      "--features",
+      features,
+      "--profiles",
+      profiles,
+      "--out",
+      first,
+    ]);
+    const baseline = JSON.parse(readFileSync(first, "utf8"));
+    const unrelated = fixture.records.find((item: any) => item.paper_id.startsWith("heldout-"));
+    unrelated.semantic_scores[Object.keys(unrelated.semantic_scores)[0]] += 1;
+    writeFileSync(features, JSON.stringify(fixture));
+    trainRerankerMain([
+      "--dev",
+      dev,
+      "--features",
+      features,
+      "--profiles",
+      profiles,
+      "--out",
+      second,
+    ]);
+    const isolated = JSON.parse(readFileSync(second, "utf8"));
+    expect(readFileSync(second, "utf8")).toBe(readFileSync(first, "utf8"));
+    expect(isolated.weights).toEqual(baseline.weights);
+    expect(isolated.training_data_hash).toBe(baseline.training_data_hash);
+    const devFixture = JSON.parse(readFileSync(dev, "utf8"));
+    devFixture.records[0].acceptable_venues = ["not-a-real-venue"];
+    writeFileSync(dev, JSON.stringify(devFixture));
+    trainRerankerMain([
+      "--dev",
+      dev,
+      "--features",
+      features,
+      "--profiles",
+      profiles,
+      "--out",
+      second,
+    ]);
+    expect(JSON.parse(readFileSync(second, "utf8")).training_data_hash).not.toBe(
+      baseline.training_data_hash,
+    );
   });
 
   it("unions a semantic-only venue with lexical candidates", () => {
@@ -1145,6 +1239,70 @@ describe("venue recommendation fusion", () => {
     expect(prior.fit.confidence).toBe("insufficient");
     expect(prior.fit.lexicalScore).toBe(40);
     expect(prior.fit.evidenceStrength).toBe(0);
+  });
+});
+
+describe("recommendation bundle restoration", () => {
+  it("accepts only the exact source/profile/model/runtime/hash/benchmark binding", () => {
+    const root = mkdtempSync(join(tmpdir(), "kamiyobi-bundle-"));
+    const out = join(root, "out");
+    const bundleDir = join(root, "bundle");
+    mkdirSync(out);
+    mkdirSync(bundleDir);
+    const data = { conferences: [], categories: {} };
+    writeFileSync(join(out, "data.json"), JSON.stringify(data));
+    writeFileSync(join(out, "base.txt"), "base\n");
+    const manifest = embeddingManifest(data);
+    const probe = Array(384).fill(0);
+    const embeddings = {
+      model: "Xenova/all-MiniLM-L6-v2",
+      dim: 384,
+      venuePapersHash: venuePapersHash(),
+      manifest: {
+        ...manifest,
+        models: {
+          en: { ...manifest.models.en, probe: { vector: probe } },
+          multi: { ...manifest.models.multi, probe: { vector: probe } },
+        },
+      },
+      embeddings: {},
+      multi: { model: "Xenova/paraphrase-multilingual-MiniLM-L12-v2", dim: 384, embeddings: {} },
+      paperVecs: {},
+    };
+    const embeddingPath = join(bundleDir, "embeddings.json");
+    writeFileSync(embeddingPath, JSON.stringify(embeddings));
+    const publish = writePublishManifest(
+      out,
+      ["data.json", "base.txt"],
+      new Date("2026-08-09T00:00:00Z"),
+      "lexical-only",
+    );
+    const sealed = {
+      source_commit: publish.source_commit,
+      profile_hash: manifest.profile_hash,
+      model_revision: manifest.models.en.revision,
+      runtime_version: manifest.runtime_version,
+      embeddings_sha256: createHash("sha256").update(readFileSync(embeddingPath)).digest("hex"),
+      benchmark_status: "passed",
+    };
+    const restore = (change: Record<string, unknown> = {}) => {
+      writeFileSync(
+        join(bundleDir, "recommendation-bundle.json"),
+        JSON.stringify({ ...sealed, ...change }),
+      );
+      return restoreRecommendationBundle(bundleDir, out);
+    };
+    expect(restore()).toBe(true);
+    for (const [field, value] of Object.entries({
+      source_commit: "wrong",
+      profile_hash: "wrong",
+      model_revision: "wrong",
+      runtime_version: "wrong",
+      embeddings_sha256: "0".repeat(64),
+      benchmark_status: "failed",
+    })) {
+      expect(restore({ [field]: value }), field).toBe(false);
+    }
   });
 });
 
@@ -2158,7 +2316,7 @@ describe("bench-recommender argument parsing and helper utilities", () => {
     const runStart = benchSource.indexOf("export async function runRealPaperBenchmark");
     const runEnd = benchSource.indexOf("export function norm", runStart);
     const runSource = benchSource.slice(runStart, runEnd);
-    expect(runSource).toContain("buildBenchmarkEmbeddingBundle");
+    expect(runSource).toContain("realPaperEmbeddingBundles");
     expect(runSource).not.toMatch(/\bemb\./);
   });
 

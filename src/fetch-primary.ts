@@ -335,6 +335,27 @@ function extractAdapterDeadlines(document: string, year: number): PrimaryDeadlin
   });
 }
 
+/** EasyChair exposes CFP deadlines as labelled table/list fields; keep that structure. */
+function easyChairDeadlines(document: string, year: number): PrimaryDeadline[] {
+  const blocks = document.match(/<(?:tr|li|p|div)[^>]*>[\s\S]*?<\/(?:tr|li|p|div)>/gi) ?? [];
+  const out: PrimaryDeadline[] = [];
+  for (const block of blocks) {
+    const text = toLines(block).join(" ");
+    if (!isDeadlineLine(text)) continue;
+    const deadline = extractDeadline(text, year, text);
+    if (!deadline) continue;
+    const selectorOrField = /^<tr\b/i.test(block)
+      ? "table-row:deadline"
+      : /^<li\b/i.test(block)
+        ? "list-item:deadline"
+        : "content-block:deadline";
+    const entry = { ...deadline, rawExcerpt: text, selectorOrField };
+    if (!out.some((item) => primarySlot(item) === primarySlot(entry) && item.date === entry.date))
+      out.push(entry);
+  }
+  return out;
+}
+
 export function pageTitleYear(htmlText: string | null | undefined): number | null {
   if (!htmlText) return null;
   const m = /<title[^>]*>(.*?)<\/title>/is.exec(htmlText);
@@ -385,9 +406,9 @@ export function extractDeadlines(
 export const PRIMARY_ADAPTERS: PrimaryAdapter[] = [
   {
     id: "easychair-v1",
-    structured: false,
+    structured: true,
     matches: (url) => url.hostname.toLowerCase().replace(/^www\./, "") === "easychair.org",
-    extract: extractAdapterDeadlines,
+    extract: easyChairDeadlines,
   },
   {
     id: "generic-v1",
@@ -460,7 +481,7 @@ export async function runFetchPrimary(
         ...deadline,
         adapter: adapter.id,
         structured: adapter.structured,
-        selectorOrField: "deadline-text-window",
+        selectorOrField: deadline.selectorOrField ?? "deadline-text-window",
       }));
       // 収録の「締切」を正すのが目的なので、提出締切 (paper/abstract) だけを書く。
       deadlines = deadlines.filter((d) => d.kind === "paper" || d.kind === "abstract");
@@ -505,6 +526,15 @@ export async function runFetchPrimary(
     );
     deadlines = deadlines.map((deadline) => {
       const held = previousBySlot.get(primarySlot(deadline));
+      // generic extraction is a review-level observation: it may add a date-only
+      // candidate but never silently replaces a previously exact official value.
+      if (
+        deadline.structured === false &&
+        held?.structured === true &&
+        held?.tz &&
+        (held.time || /[ T]\d{1,2}:\d{2}/.test(String(held.date ?? "")))
+      )
+        return held;
       const unchanged = held?.contentHash === pageHash;
       const verifiedAt = unchanged && held.verifiedAt ? held.verifiedAt : observedAt;
       const retrievedAt = unchanged && held.retrievedAt ? held.retrievedAt : observedAt;

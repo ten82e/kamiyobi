@@ -1,27 +1,158 @@
 {
   "version": 1,
   "model": "linear-logit",
-  "coefficient_source": "manual-feature-prior",
-  "selected_on": "real-paper-dev",
-  "selection_metric": "fused-mrr-lcb-without-recall-at-5-regression",
-  "algorithm_revision": "linear-reranker-v1",
+  "coefficient_source": "trained",
+  "selected_on": "real-paper-required-dev",
+  "selection_metric": "dev-oof-mrr-then-recall-at-5",
+  "algorithm_revision": "l2-pairwise-logistic-reranker-v2",
+  "feature_schema": [
+    "lexical_score",
+    "semantic_score",
+    "category_overlap",
+    "venue_name_evidence",
+    "prior_venue",
+    "language_match",
+    "venue_kind"
+  ],
+  "training_data_hash": "c519f54c47ffb32dcf301458a1a0e227628e8da764c0fb49edfeec7d827ec49d",
   "input_hashes": {
     "data/benchmarks/real-paper-required-dev.json": "c519f54c47ffb32dcf301458a1a0e227628e8da764c0fb49edfeec7d827ec49d",
+    "data/benchmarks/real-paper-required-features.json#dev-records": "1d1461e0134edd21e7e2c58d5bb009d4da2f7e16eb405e647700e1f3676d0a40",
     "data/venue-profiles.json": "08aa73b9920b97d157421c776409ff189377cc9dfe58fefef7cd3d9ace2ffbf4"
   },
-  "intercept": -1.25,
-  "weights": {
-    "lexical_score": 1.2,
-    "semantic_score": 1,
-    "category_overlap": 0.25,
-    "venue_name_evidence": 0.4,
-    "prior_venue": 0.5,
-    "language_match": 0.1,
-    "venue_kind": 0.1
+  "cv": {
+    "folds": 3,
+    "assignment": "paper-id-hash-mod-3",
+    "selected_lambda": 0.01,
+    "selected_blend": 0.05,
+    "oof_mrr": 0.12827733,
+    "oof_recall_at_5": 0.11111111,
+    "trials": [
+      {
+        "lambda": 0.01,
+        "blend": 0.05,
+        "mrr": 0.12827733,
+        "recall_at_5": 0.11111111
+      },
+      {
+        "lambda": 0.01,
+        "blend": 0.15,
+        "mrr": 0.12827733,
+        "recall_at_5": 0.11111111
+      },
+      {
+        "lambda": 0.08,
+        "blend": 0.05,
+        "mrr": 0.12827733,
+        "recall_at_5": 0.11111111
+      },
+      {
+        "lambda": 0.08,
+        "blend": 0.15,
+        "mrr": 0.12827733,
+        "recall_at_5": 0.11111111
+      },
+      {
+        "lambda": 0.2,
+        "blend": 0.05,
+        "mrr": 0.12827733,
+        "recall_at_5": 0.11111111
+      },
+      {
+        "lambda": 0.2,
+        "blend": 0.15,
+        "mrr": 0.12827733,
+        "recall_at_5": 0.11111111
+      },
+      {
+        "lambda": 0.2,
+        "blend": 0.3,
+        "mrr": 0.12827733,
+        "recall_at_5": 0.11111111
+      },
+      {
+        "lambda": 0.08,
+        "blend": 0.3,
+        "mrr": 0.12766004,
+        "recall_at_5": 0.11111111
+      },
+      {
+        "lambda": 0.01,
+        "blend": 0.3,
+        "mrr": 0.12739549,
+        "recall_at_5": 0.11111111
+      },
+      {
+        "lambda": 0.2,
+        "blend": 0.5,
+        "mrr": 0.12739549,
+        "recall_at_5": 0.11111111
+      },
+      {
+        "lambda": 0.01,
+        "blend": 0.5,
+        "mrr": 0.12566177,
+        "recall_at_5": 0.11111111
+      },
+      {
+        "lambda": 0.08,
+        "blend": 0.5,
+        "mrr": 0.12566177,
+        "recall_at_5": 0.11111111
+      },
+      {
+        "lambda": 0.2,
+        "blend": 1,
+        "mrr": 0.03705312,
+        "recall_at_5": 0.11111111
+      },
+      {
+        "lambda": 0.01,
+        "blend": 1,
+        "mrr": 0.03149756,
+        "recall_at_5": 0.11111111
+      },
+      {
+        "lambda": 0.08,
+        "blend": 1,
+        "mrr": 0.03149756,
+        "recall_at_5": 0.11111111
+      }
+    ]
   },
-  "blend": 0.01,
+  "calibration": {
+    "method": "platt",
+    "slope": 0.4339927137,
+    "intercept": -1.632370949,
+    "comparison": {
+      "platt_brier": 0.03657843,
+      "isotonic": {
+        "eligible": false,
+        "reason": "fewer than 20 dev papers"
+      }
+    }
+  },
+  "threshold_evidence": {
+    "source": "dev-oof-top1",
+    "sufficient_precision": null,
+    "sufficient_coverage": 0,
+    "best_observed_precision": 0.14285714,
+    "best_observed_coverage": 0.77777778,
+    "guard_margin": 0.05
+  },
+  "intercept": 0,
+  "weights": {
+    "lexical_score": 0.0011945475,
+    "semantic_score": 0.1742966502,
+    "category_overlap": -0.0813972375,
+    "venue_name_evidence": 0.3554103229,
+    "prior_venue": 0,
+    "language_match": 0.5059526845,
+    "venue_kind": 0
+  },
+  "blend": 0.05,
   "confidence_thresholds": {
-    "sufficient": 0.65,
-    "ambiguous": 0.35
+    "sufficient": 0.30258582,
+    "ambiguous": 0.1805444
   }
 }
