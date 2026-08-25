@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
 import { beforeAll, describe, expect, it } from "vitest";
+import type { MergeStats } from "../src/merge.ts";
 import {
   applyAliases,
   applyOverrides,
@@ -62,6 +63,371 @@ const PRIORITY: Record<string, unknown> = {
 };
 
 describe("merge_sources", () => {
+  it("keeps different conferences with the same abbreviation apart", () => {
+    const security = makeConference({
+      key: "sc",
+      title: "SC",
+      dblp: "conf/sc",
+      link: "https://sc-conference.example/",
+      sources: ["ccfddl"],
+    });
+    const supercomputing = makeConference({
+      key: "sc",
+      title: "SC",
+      dblp: "conf/supercomputing",
+      link: "https://supercomputing.example/",
+      sources: ["local"],
+    });
+    const stats: MergeStats = { merged_deadlines: 0, merged_by_key: {} };
+    expect(mergeSources([[security], [supercomputing]], PRIORITY, stats)).toHaveLength(2);
+    expect(stats.identity_conflicts?.[0]).toMatchObject({
+      scope: "venue",
+      reason: "key-collision",
+    });
+  });
+
+  it("derives collision keys from content independently of input order", () => {
+    const first = makeConference({
+      key: "shared",
+      title: "First Conference",
+      full_name: "First Conference on Systems",
+      link: "https://first.example/",
+      sources: ["first"],
+    });
+    const second = makeConference({
+      key: "shared",
+      title: "Second Conference",
+      full_name: "Second Conference on Systems",
+      link: "https://second.example/",
+      sources: ["second"],
+    });
+    const forward = mergeSources([[first], [second]], PRIORITY);
+    const reversed = mergeSources([[second], [first]], PRIORITY);
+    expect(forward).toEqual(reversed);
+    expect(forward.map((conference) => conference.key)).not.toContain("shared-unidentified");
+  });
+
+  it("does not use an ordinary link as identity evidence", () => {
+    const local = makeConference({
+      key: "workshop",
+      title: "Workshop",
+      link: "https://local-workshop.example/",
+      sources: ["local"],
+    });
+    const upstream = makeConference({
+      key: "workshop",
+      title: "Workshop",
+      link: "https://local-workshop.example/",
+      sources: ["ccfddl"],
+    });
+    expect(mergeSources([[local], [upstream]], PRIORITY)).toHaveLength(2);
+  });
+
+  it("does not let source IDs merge different keys", () => {
+    const ccf = makeConference({
+      key: "acl",
+      title: "ACL",
+      identity: { sourceIds: { ccfddl: "AI/acl" } },
+      sources: ["ccfddl"],
+    });
+    const other = makeConference({
+      key: "conll",
+      title: "CoNLL",
+      identity: { sourceIds: { aideadlines: "acl" } },
+      sources: ["aideadlines"],
+    });
+    expect(mergeSources([[ccf], [other]], PRIORITY)).toHaveLength(2);
+  });
+
+  it("keeps equal source ID values from different sources scoped", () => {
+    const ccf = makeConference({
+      key: "acl",
+      title: "ACL",
+      identity: { sourceIds: { ccfddl: "acl" } },
+      sources: ["ccfddl"],
+    });
+    const ai = makeConference({
+      key: "acl",
+      title: "ACL",
+      identity: { sourceIds: { aideadlines: "acl" } },
+      sources: ["aideadlines"],
+    });
+    expect(mergeSources([[ccf], [ai]], PRIORITY)).toHaveLength(2);
+    expect(
+      mergeSources([[ccf], [ai]], {
+        ...PRIORITY,
+        venue_identities: {
+          acl: { source_ids: { ccfddl: "acl", aideadlines: "acl" } },
+        },
+      }),
+    ).toHaveLength(1);
+  });
+
+  it("merges local without upstream_sub only with the same explicit official domain and alias", () => {
+    const identity = { officialDomains: ["local-workshop.example"], aliases: ["workshop"] };
+    const local = makeConference({
+      key: "workshop",
+      title: "Workshop",
+      link: "https://local-workshop.example/",
+      identity,
+      sources: ["local"],
+    });
+    const upstream = makeConference({
+      key: "workshop",
+      title: "Workshop",
+      link: "https://local-workshop.example/",
+      identity,
+      sources: ["ccfddl"],
+    });
+    expect(mergeSources([[local], [upstream]], PRIORITY)).toHaveLength(1);
+    expect(
+      mergeSources(
+        [
+          [local],
+          [
+            {
+              ...upstream,
+              link: "https://different-workshop.example/",
+              identity: { officialDomains: ["different-workshop.example"], aliases: ["different"] },
+            },
+          ],
+        ],
+        PRIORITY,
+      ),
+    ).toHaveLength(2);
+  });
+
+  it("keeps same-year spring and fall editions separate", () => {
+    const conference = (source: string, edition: Edition): Conference =>
+      makeConference({
+        key: "venue",
+        title: "Venue",
+        dblp: "conf/venue",
+        sources: [source],
+        editions: [edition],
+      });
+    const spring = makeEdition({
+      year: 2026,
+      edition_id: "venue-spring-26",
+      link: "https://venue.example/spring",
+      event_start: new Date(Date.UTC(2026, 2, 1)),
+      event_end: new Date(Date.UTC(2026, 2, 3)),
+      source: "ccfddl",
+    });
+    const fall = makeEdition({
+      ...spring,
+      edition_id: "venue-fall-26",
+      link: "https://venue.example/fall",
+      event_start: new Date(Date.UTC(2026, 9, 1)),
+      event_end: new Date(Date.UTC(2026, 9, 3)),
+      source: "local",
+    });
+    expect(
+      mergeSources([[conference("ccfddl", spring)], [conference("local", fall)]], PRIORITY)[0]
+        .editions,
+    ).toHaveLength(2);
+  });
+
+  it("keeps a main conference and workshop separate", () => {
+    const conference = (source: string, edition: Edition): Conference =>
+      makeConference({
+        key: "venue",
+        title: "Venue",
+        identity: { venueId: "venue" },
+        sources: [source],
+        editions: [edition],
+      });
+    const main = makeEdition({
+      year: 2026,
+      edition_id: "venue-main-26",
+      link: "https://venue.example/main",
+      place: "Tokyo",
+      event_start: new Date(Date.UTC(2026, 6, 1)),
+      event_end: new Date(Date.UTC(2026, 6, 3)),
+      source: "ccfddl",
+    });
+    const workshop = makeEdition({
+      ...main,
+      edition_id: "venue-workshop-26",
+      link: "https://venue.example/workshop",
+      place: "Kyoto",
+      source: "local",
+    });
+    expect(
+      mergeSources([[conference("ccfddl", main)], [conference("local", workshop)]], PRIORITY)[0]
+        .editions,
+    ).toHaveLength(2);
+  });
+
+  it("is invariant when source B input order is reversed", () => {
+    const spring = makeEdition({
+      year: 2026,
+      edition_id: "venue26",
+      link: "https://venue.example/spring",
+      event_start: new Date(Date.UTC(2026, 2, 1)),
+      event_end: new Date(Date.UTC(2026, 2, 3)),
+      source: "ccfddl",
+    });
+    const fall = makeEdition({
+      year: 2026,
+      edition_id: "venue26-fall",
+      link: "https://venue.example/fall",
+      event_start: new Date(Date.UTC(2026, 9, 1)),
+      event_end: new Date(Date.UTC(2026, 9, 3)),
+      source: "local",
+    });
+    const a = makeConference({
+      key: "venue-a",
+      title: "Venue A",
+      identity: { venueId: "venue" },
+      sources: ["ccfddl"],
+      editions: [spring],
+    });
+    const b = makeConference({
+      key: "venue-b",
+      title: "Venue B",
+      identity: { venueId: "venue" },
+      sources: ["local"],
+      editions: [{ ...spring, source: "local" }, fall],
+    });
+    const reversedB = { ...b, editions: [...b.editions].reverse() };
+    const merged = mergeSources([[a], [b]], PRIORITY);
+    expect(merged).toEqual(mergeSources([[a], [reversedB]], PRIORITY));
+    expect(merged[0].editions).toHaveLength(2);
+  });
+
+  it("matches identity against every member of a bucket", () => {
+    const conference = (source: string, domains: string[], aliases: string[]): Conference =>
+      makeConference({
+        key: "bridge",
+        title: "Bridge",
+        identity: { officialDomains: domains, aliases },
+        sources: [source],
+      });
+    const first = conference("local", ["first.example"], ["first"]);
+    const bridge = conference("aideadlines", ["first.example", "last.example"], ["first", "last"]);
+    const last = conference("ccfddl", ["last.example"], ["last"]);
+    expect(mergeSources([[first], [bridge], [last]], PRIORITY)).toHaveLength(1);
+  });
+
+  it("joins transitive domain evidence across distinct sources deterministically", () => {
+    const conference = (source: string, link: string, editionLinks: string[]): Conference =>
+      makeConference({
+        key: "fg",
+        title: "FG",
+        full_name: "Face and Gesture Recognition",
+        link,
+        identity: {
+          officialDomains: editionLinks.map((url) => new URL(url).hostname),
+          aliases: ["fg"],
+        },
+        sources: [source],
+        editions: editionLinks.map((editionLink, index) =>
+          makeEdition({
+            year: 2025 + index,
+            edition_id: `fg${25 + index}`,
+            link: editionLink,
+            source,
+          }),
+        ),
+      });
+    const local = conference("local", "https://fg2027.example.org", ["https://fg2027.example.org"]);
+    const aideadlines = conference("aideadlines", "https://fg2026.example.org", [
+      "https://fg2026.example.org",
+    ]);
+    const ccfddl = conference("ccfddl", "https://fg2027.example.org", [
+      "https://fg2026.example.org",
+      "https://fg2027.example.org",
+    ]);
+    const forward = mergeSources([[local], [aideadlines], [ccfddl]], PRIORITY);
+    const reversed = mergeSources([[ccfddl], [aideadlines], [local]], PRIORITY);
+    expect(forward).toEqual(reversed);
+    expect(forward).toHaveLength(1);
+    expect(forward[0].key).toBe("fg");
+  });
+
+  it("does not merge editions with different event dates", () => {
+    const conference = (source: string, edition: Edition): Conference =>
+      makeConference({
+        key: "venue",
+        title: "Venue",
+        identity: { venueId: "venue" },
+        sources: [source],
+        editions: [edition],
+      });
+    const early = makeEdition({
+      year: 2026,
+      edition_id: "",
+      link: "",
+      place: "Tokyo",
+      event_start: new Date(Date.UTC(2026, 2, 1)),
+      event_end: new Date(Date.UTC(2026, 2, 3)),
+      source: "ccfddl",
+    });
+    const late = makeEdition({
+      ...early,
+      event_start: new Date(Date.UTC(2026, 9, 1)),
+      event_end: new Date(Date.UTC(2026, 9, 3)),
+      source: "local",
+    });
+    expect(
+      mergeSources([[conference("ccfddl", early)], [conference("local", late)]], PRIORITY)[0]
+        .editions,
+    ).toHaveLength(2);
+  });
+
+  it("merges an edition when its official URL changes but its ID is stable", () => {
+    const conference = (source: string, edition: Edition): Conference =>
+      makeConference({
+        key: "venue",
+        title: "Venue",
+        identity: { venueId: "venue" },
+        sources: [source],
+        editions: [edition],
+      });
+    const oldUrl = makeEdition({
+      year: 2026,
+      edition_id: "venue26",
+      link: "https://venue.example/2026",
+      source: "ccfddl",
+      identity: { editionId: "venue-2026" },
+    });
+    const updated = makeEdition({
+      ...oldUrl,
+      link: "https://2026.venue.example/",
+      source: "local",
+      identity: { editionId: "venue-2026" },
+    });
+    const merged = mergeSources(
+      [[conference("ccfddl", oldUrl)], [conference("local", updated)]],
+      PRIORITY,
+    )[0];
+    expect(merged.editions).toHaveLength(1);
+    expect(merged.editions[0].link).toBe("https://2026.venue.example/");
+  });
+
+  it("does not use legacy edition_id as a cross-source identity", () => {
+    const conference = (source: string, edition: Edition): Conference =>
+      makeConference({
+        key: "venue",
+        title: "Venue",
+        identity: { venueId: "venue" },
+        sources: [source],
+        editions: [edition],
+      });
+    const ccf = makeEdition({
+      year: 2026,
+      edition_id: "venue26",
+      link: "https://venue.example/2026",
+      source: "ccfddl",
+    });
+    const local = makeEdition({ ...ccf, link: "https://2026.venue.example/", source: "local" });
+    expect(
+      mergeSources([[conference("ccfddl", ccf)], [conference("local", local)]], PRIORITY)[0]
+        .editions,
+    ).toHaveLength(2);
+  });
+
   it("keeps primary slot updates isolated, supports remove, precision upgrade and conflicts", () => {
     const exact = makeDeadline("paper", "Paper", utc(2026, 8, 24, 12), "UTC");
     const abstract = makeDeadline("abstract", "Abstract", utc(2026, 8, 20), "UTC");
@@ -113,6 +479,7 @@ describe("merge_sources", () => {
     const ccf = makeConference({
       key: "acl",
       title: "ACL",
+      dblp: "conf/acl",
       upstream_sub: "AI",
       sources: ["ccfddl"],
       rank: { ccf: "A", core: "A*" },
@@ -120,6 +487,7 @@ describe("merge_sources", () => {
         makeEdition({
           year: 2026,
           edition_id: "acl26",
+          identity: { editionId: "acl-2026" },
           date_text: "July 2 - 7, 2026",
           source: "ccfddl",
           deadlines: [makeDeadline("paper", "Paper", utc(2026, 1, 5), "AoE")],
@@ -129,11 +497,13 @@ describe("merge_sources", () => {
     const hf = makeConference({
       key: "acl",
       title: "ACL",
+      dblp: "conf/acl",
       sources: ["aideadlines"],
       editions: [
         makeEdition({
           year: 2026,
           edition_id: "acl26",
+          identity: { editionId: "acl-2026" },
           event_start: new Date(Date.UTC(2026, 6, 2)),
           event_end: new Date(Date.UTC(2026, 6, 7)),
           source: "aideadlines",
@@ -157,6 +527,7 @@ describe("merge_sources", () => {
     const ccf = makeConference({
       key: "dasfaa",
       title: "DASFAA",
+      dblp: "conf/dasfaa",
       sources: ["ccfddl"],
       editions: [
         makeEdition({
@@ -180,6 +551,7 @@ describe("merge_sources", () => {
     const local = makeConference({
       key: "dasfaa",
       title: "DASFAA",
+      dblp: "conf/dasfaa",
       sources: ["local"],
       editions: [
         makeEdition({
@@ -242,6 +614,7 @@ describe("merge_sources", () => {
     const low = makeConference({
       key: "sigcomm",
       title: "SIGCOMM",
+      dblp: "conf/sigcomm",
       sources: ["ccfddl"],
       editions: [
         makeEdition({
@@ -255,6 +628,7 @@ describe("merge_sources", () => {
     const high = makeConference({
       key: "sigcomm",
       title: "SIGCOMM",
+      dblp: "conf/sigcomm",
       sources: ["aideadlines"],
       editions: [
         makeEdition({
@@ -287,11 +661,13 @@ describe("merge_sources", () => {
       makeConference({
         key: "sigcomm",
         title: "SIGCOMM",
+        dblp: "conf/sigcomm",
         sources: [source],
         editions: [
           makeEdition({
             year: 2026,
             edition_id: "sigcomm26",
+            identity: { editionId: "sigcomm-2026" },
             source,
             deadlines: [makeDeadline("paper", label, utc(2026, 2, 6), "AoE", 1)],
           }),
@@ -311,6 +687,7 @@ describe("merge_sources", () => {
     const hf = makeConference({
       key: "sigcomm",
       title: "SIGCOMM",
+      dblp: "conf/sigcomm",
       sources: ["aideadlines"],
       editions: [
         makeEdition({
@@ -326,6 +703,7 @@ describe("merge_sources", () => {
     const ccf = makeConference({
       key: "sigcomm",
       title: "SIGCOMM",
+      dblp: "conf/sigcomm",
       sources: ["ccfddl"],
       editions: [
         makeEdition({
@@ -352,11 +730,13 @@ describe("merge_sources", () => {
     return makeConference({
       key: "sigcomm",
       title: "SIGCOMM",
+      identity: { venueId: "sigcomm" },
       sources: [source],
       editions: [
         makeEdition({
           year,
           edition_id: `sigcomm${year % 100}`,
+          identity: { editionId: `sigcomm-${year}` },
           source,
           deadlines,
         }),
@@ -1374,6 +1754,7 @@ describe("local real edition suppresses same year estimate", () => {
     const upstream = makeConference({
       key: "log",
       title: "LOG",
+      identity: { venueId: "log" },
       rank: { ccf: "N" },
       categories: ["ai"],
       sources: ["ccfddl"],
@@ -1391,6 +1772,7 @@ describe("local real edition suppresses same year estimate", () => {
     const local = makeConference({
       key: "log",
       title: "LOG",
+      identity: { venueId: "log" },
       categories: ["ai"],
       sources: ["local"],
       editions: [
@@ -1456,6 +1838,42 @@ describe("conferencesFromJson & defensive merge operations", () => {
       local_date: "2026-08-24",
     });
     expect(confs[0].editions[0].deadlines[0]).not.toHaveProperty("at_utc");
+  });
+
+  it("conferencesFromJson preserves optional venue and edition identity", () => {
+    const [conf] = conferencesFromJson({
+      conferences: [
+        {
+          key: "venue",
+          title: "Venue",
+          identity: {
+            venueId: "venue-id",
+            dblpKey: "conf/venue",
+            officialDomains: ["venue.example"],
+            aliases: ["venue-conf"],
+            sourceIds: { ccfddl: "venue", aideadlines: "venue-conf" },
+          },
+          editions: [
+            {
+              year: 2026,
+              id: "venue26",
+              identity: { editionId: "venue-2026", officialUrls: ["https://venue.example/2026"] },
+            },
+          ],
+        },
+      ],
+    });
+    expect(conf.identity).toEqual({
+      venueId: "venue-id",
+      dblpKey: "conf/venue",
+      officialDomains: ["venue.example"],
+      aliases: ["venue-conf"],
+      sourceIds: { aideadlines: "venue-conf", ccfddl: "venue" },
+    });
+    expect(conf.editions[0].identity).toEqual({
+      editionId: "venue-2026",
+      officialUrls: ["https://venue.example/2026"],
+    });
   });
 
   it("conferencesFromJson handles null, undefined, and non-object inputs", () => {

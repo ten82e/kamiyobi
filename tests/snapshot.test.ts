@@ -34,6 +34,7 @@ import {
   cacheSlot,
   fetchMetadataFor,
   fetchTarball,
+  resetFetchMetadata,
   writeCacheMetadata,
 } from "../src/sources/base.ts";
 import {
@@ -297,15 +298,47 @@ describe("source freshness", () => {
       fetchedAt: "2026-08-09T00:00:00.000Z",
       contentHash: "known",
     });
-    await expect(fetchTarball("fixture/source", "main", cache, { offline: true })).resolves.toBe(
-      root,
-    );
+    await expect(
+      fetchTarball("fixture/source", "main", cache, {
+        offline: true,
+        now: new Date("2026-08-09T00:00:00.000Z"),
+      }),
+    ).resolves.toBe(root);
     expect(fetchMetadataFor("fixture/source", "main")).toMatchObject({
       status: "cache-fallback",
       revision: "sha256:known",
       contentHash: "known",
-      cacheAgeSeconds: expect.any(Number),
+      cacheAgeSeconds: 0,
     });
+  });
+
+  it("clears process-global source metadata before every build", async () => {
+    const cache = mkdtempSync("/tmp/cfp-cache-reset-");
+    const slot = cacheSlot(cache, "fixture/source", "main");
+    const cached = join(slot, "source-main");
+    mkdirSync(cached, { recursive: true });
+    writeCacheMetadata(slot, {
+      revision: "sha256:known",
+      fetchedAt: "2026-08-09T00:00:00.000Z",
+      contentHash: "known",
+    });
+    await fetchTarball("fixture/source", "main", cache, { offline: true, now: utc(2026, 8, 9) });
+    expect(fetchMetadataFor("fixture/source", "main")).not.toBeNull();
+
+    const previous = hooks.collect;
+    const root = isolatedRepo();
+    setRoot(root);
+    hooks.collect = async () => ({
+      groups: [[conference("live", "ccfddl")], [], []],
+      failed: new Set(["aideadlines"]),
+    });
+    try {
+      expect(await cmdBuild(args(join(mkdtempSync("/tmp/cfp-cache-reset-out-"), "out")))).toBe(0);
+      expect(fetchMetadataFor("fixture/source", "main")).toBeNull();
+    } finally {
+      hooks.collect = previous;
+      resetFetchMetadata();
+    }
   });
 
   it("rejects an online build before publishing an over-age cache fallback", async () => {

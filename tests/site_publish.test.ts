@@ -52,6 +52,26 @@ describe("browser publish manifest", () => {
     expect(result.state).toEqual({ semantic: true, reason: null });
   });
 
+  it("accepts validated schema 3 provenance while retaining schema 2 compatibility", async () => {
+    const data = fixture({
+      schema_version: 3,
+      source_commit: "source",
+      data_commit: "data",
+      workflow_run_id: null,
+      dirty_worktree: false,
+      inputs: { "config.yaml": { sha256: "a".repeat(64) } },
+      promotion_batches: [{ id: "batch", sha256: "b".repeat(64) }],
+      build: {
+        now: "2026-08-09T00:00:00.000Z",
+        offline: true,
+        node: "v24.0.0",
+        command: "node src/cli.ts build --offline --now <publish.build.now>",
+        source_cache: "offline-with-snapshot-fallback",
+      },
+    });
+    expect((await loadPublishedRecommendation(data.fetch, catalog)).state.semantic).toBe(true);
+  });
+
   it.each([
     ["schema", { schema_version: 1 }],
     ["build", { build_id: "wrong" }],

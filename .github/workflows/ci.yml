@@ -3,6 +3,7 @@ name: ci
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -11,32 +12,36 @@ jobs:
   typecheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: '24', cache: npm }
       - run: npm ci
       - run: npm run typecheck
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: '24', cache: npm }
       - run: npm ci
       - run: npm run check
   unit-integration-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: '24', cache: npm }
       - run: npm ci
       - run: npm test
   offline-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: '24', cache: npm }
       - run: npm ci
       - run: node src/cli.ts build --out /tmp/kamiyobi-offline-site --offline --no-embeddings --cache /tmp/kamiyobi-offline-cache --now 2026-08-09T00:00:00Z
@@ -57,24 +62,27 @@ jobs:
   validate-data:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: '24', cache: npm }
       - run: npm ci
       - run: npm run validate:data -- --json
   health-transition:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: '24', cache: npm }
       - run: npm ci
       - run: npm test -- --run tests/health_gate.test.ts
   recommendation-regression:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: '24', cache: npm }
       - run: npm ci
       - name: Build current recommendation index
@@ -93,3 +101,15 @@ jobs:
       - name: Run deterministic fixture regression
         if: ${{ github.event_name != 'pull_request' }}
         run: npm run bench -- --data-delta tests/fixtures/recommendation-data-delta.json --json
+      - name: Run required real-paper subset
+        run: |
+          node src/bench-recommender.ts --data /tmp/kamiyobi-current-recommendation/data.json \
+            --real-v2-small > /tmp/real-paper-required.json
+          jq '{regression_floor, dev: .splits.dev.modes.fused, heldout: .splits.heldout.modes.fused, negative: .splits.negative}' \
+            /tmp/real-paper-required.json
+      - name: Upload required real-paper report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: real-paper-required-report
+          path: /tmp/real-paper-required.json
+          if-no-files-found: error

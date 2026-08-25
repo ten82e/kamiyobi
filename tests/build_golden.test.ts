@@ -224,6 +224,42 @@ it("toJson preserves deadline evidence, conflicts, and selection rule", () => {
   });
 });
 
+it("toJson preserves venue and edition identity for snapshot round-trips", () => {
+  const payload = toJson(
+    [
+      makeConference({
+        key: "identity",
+        title: "Identity",
+        dblp: "conf/identity",
+        identity: {
+          venueId: "identity",
+          dblpKey: "conf/identity",
+          officialDomains: ["identity.example"],
+          aliases: ["Identity Conf"],
+          sourceIds: { local: "identity" },
+        },
+        editions: [
+          makeEdition({
+            year: 2027,
+            edition_id: "identity27",
+            identity: {
+              editionId: "identity-2027",
+              officialUrls: ["https://identity.example/2027"],
+            },
+          }),
+        ],
+      }),
+    ],
+    {},
+    NOW,
+  );
+  expect((payload.conferences as any[])[0]).toMatchObject({
+    dblp: "conf/identity",
+    identity: { venueId: "identity", dblpKey: "conf/identity" },
+    editions: [{ identity: { editionId: "identity-2027" } }],
+  });
+});
+
 it("date-only deadlines stay date-only in JSON, CSV, and upcoming output", () => {
   const confs = [
     makeConference({
@@ -1025,7 +1061,7 @@ it("README documents every discover CLI flag (--categories/--min-year regression
   // #247: usage() の discover セクションは 5 つのオプション（--out / --categories /
   // --min-year / --dry-run / --append）を定義するが、README の探索セクションは
   // --dry-run / --out / --append しか記載しておらず、--categories と --min-year が
-  // 未記載だった（update.yml は --min-year 2026 を実際に使っている）。
+  // 未記載だった（update-data.yml は --min-year 2026 を実際に使っている）。
   // ここでは discover セクションの全 --flag が README に現れることを検証する
   // （#239 の build 版テストと同じパターンの discover 版）。
   const lines = usage().split("\n");
@@ -1401,36 +1437,19 @@ it("embeddingsStale は profile と manifest の不一致を再生成する", ()
   ).toBe(true);
 });
 
-it("workflow keeps recommendation failure optional while protecting Pages publication", () => {
-  const workflow = readFileSync(join(REPO_ROOT, ".github/workflows/update.yml"), "utf8");
-  expect(workflow).toContain("--no-embeddings");
-  expect(workflow).toContain("embeddingBundleKey");
-  expect(workflow).toContain("actions/cache/restore@v4");
-  expect(workflow).toContain("actions/cache/save@v4");
-  expect(workflow).toContain("embeddingsStale");
-  expect(workflow).toContain("steps.restore-recommendation.outputs.cache-hit != 'true'");
-  expect(workflow).toMatch(
-    /name: Generate recommendation bundle[\s\S]*?continue-on-error: true[\s\S]*?run: node src\/embeddings\.ts/,
-  );
-  expect(workflow).toMatch(
-    /name: Validate recommendation bundle[\s\S]*?if: \$\{\{ always\(\) && steps\.build\.outcome == 'success' \}\}[\s\S]*?continue-on-error: true[\s\S]*?rmSync\("public\/embeddings\.json"/,
-  );
-  expect(workflow).toContain("if: $" + "{{ always() && steps.build.outcome == 'success' }}");
-  expect(workflow).toContain("always() && steps.validate-recommendation.outcome == 'success'");
-  expect(workflow).toContain(
-    "always() && steps.validate-recommendation.outcome == 'success' && steps.restore-recommendation.outputs.cache-hit != 'true'",
-  );
-  expect(workflow).toContain(
-    "!cancelled() && steps.build.outcome == 'success' && steps.health-gate.outcome == 'success'",
-  );
-  expect(workflow).not.toContain(
-    "steps.build.outcome == 'success' && steps.validate-recommendation.outcome == 'success' && steps.health-gate.outcome == 'success'",
-  );
+it("deploy builds the merged commit while update-data cannot publish Pages", () => {
+  const deploy = readFileSync(join(REPO_ROOT, ".github/workflows/deploy.yml"), "utf8");
+  const update = readFileSync(join(REPO_ROOT, ".github/workflows/update-data.yml"), "utf8");
+  expect(deploy).toContain("ref: $" + "{{ github.sha }}");
+  expect(deploy).toContain("Build merged site");
+  expect(deploy).toContain("--offline");
+  expect(deploy).toContain("Attest publish manifest");
+  expect(update).not.toMatch(/deploy-pages|upload-pages|pages: write/);
 });
 
 it("CI stays offline while the daily update owns live discovery", () => {
   const ci = readFileSync(join(REPO_ROOT, ".github/workflows/ci.yml"), "utf8");
-  const update = readFileSync(join(REPO_ROOT, ".github/workflows/update.yml"), "utf8");
+  const update = readFileSync(join(REPO_ROOT, ".github/workflows/update-data.yml"), "utf8");
 
   expect(ci).toContain("npm test");
   expect(ci).toContain("--offline");

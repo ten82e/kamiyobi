@@ -1,9 +1,14 @@
 import { createHash } from "node:crypto";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { publishBuildId, writePublishManifest } from "../src/build.ts";
+import {
+  collectPublishProvenance,
+  type PublishProvenance,
+  publishBuildId,
+  writePublishManifest,
+} from "../src/build.ts";
 import {
   EMBEDDING_DIM,
   EMBEDDING_MODEL,
@@ -17,7 +22,60 @@ function sha256(text: string): string {
   return createHash("sha256").update(text, "utf8").digest("hex");
 }
 
+const provenance: PublishProvenance = {
+  sourceCommit: "source-sha",
+  dataCommit: "data-sha",
+  workflowRunId: "run-7",
+  dirtyWorktree: false,
+  inputs: { "config.yaml": { sha256: sha256("config") } },
+  promotionBatches: [{ id: "data/promotions/7", sha256: sha256("batch") }],
+  build: {
+    now: NOW.toISOString(),
+    offline: true,
+    node: process.version,
+    command:
+      "node src/cli.ts build --out <dir> --cache <dir> --now <publish.build.now> [--offline]",
+    source_cache: "offline-with-snapshot-fallback",
+  },
+};
+
 describe("publish manifest", () => {
+  it("hashes every present build input and promotion manifest deterministically", () => {
+    const root = mkdtempSync(join(tmpdir(), "kamiyobi-provenance-"));
+    const data = join(root, "data");
+    mkdirSync(join(data, "promotions", "batch-b"), { recursive: true });
+    for (const name of [
+      "config.yaml",
+      "extra.yaml",
+      "overrides.yaml",
+      "primary_overrides.yaml",
+      "snapshot.json",
+      "venue-profiles.json",
+    ]) {
+      const path = name === "config.yaml" ? join(root, name) : join(data, name);
+      writeFileSync(path, name, "utf8");
+    }
+    writeFileSync(
+      join(data, "promotions", "batch-b", "manifest.json"),
+      JSON.stringify({ id: "batch-b" }),
+      "utf8",
+    );
+
+    const captured = collectPublishProvenance(root);
+    expect(Object.keys(captured.inputs)).toEqual([
+      "config.yaml",
+      "data/extra.yaml",
+      "data/overrides.yaml",
+      "data/primary_overrides.yaml",
+      "data/snapshot.json",
+      "data/venue-profiles.json",
+    ]);
+    expect(captured.inputs["data/extra.yaml"]?.sha256).toBe(sha256("extra.yaml"));
+    expect(captured.promotionBatches).toEqual([
+      { id: "batch-b", sha256: sha256(JSON.stringify({ id: "batch-b" })) },
+    ]);
+  });
+
   it("hashes final artifacts deterministically and excludes the manifest itself", () => {
     const outdir = mkdtempSync(join(tmpdir(), "kamiyobi-publish-"));
     const files = ["b.txt", "a.txt"];
@@ -28,7 +86,7 @@ describe("publish manifest", () => {
       writeFileSync(join(outdir, name), text, "utf8");
     }
 
-    const first = writePublishManifest(outdir, files, NOW, "lexical-only");
+    const first = writePublishManifest(outdir, files, NOW, "lexical-only", provenance);
     const firstText = readFileSync(join(outdir, "publish.json"), "utf8");
     const secondText = (() => {
       writePublishManifest(outdir, ["a.txt", "b.txt", "publish.json"], NOW, "lexical-only");
@@ -36,7 +94,7 @@ describe("publish manifest", () => {
     })();
 
     expect(first).toEqual({
-      schema_version: 2,
+      schema_version: 3,
       generated_at: "2026-08-09T00:00:00.000Z",
       semantic_status: "lexical-only",
       artifacts: {
@@ -45,6 +103,13 @@ describe("publish manifest", () => {
       },
       build_id: publishBuildId(NOW, ""),
       profile_hash: "",
+      source_commit: "source-sha",
+      data_commit: "data-sha",
+      workflow_run_id: "run-7",
+      dirty_worktree: false,
+      inputs: { "config.yaml": { sha256: sha256("config") } },
+      promotion_batches: [{ id: "data/promotions/7", sha256: sha256("batch") }],
+      build: provenance.build,
     });
     expect(firstText).toBe(secondText);
   });
@@ -61,6 +126,13 @@ describe("publish manifest", () => {
       generated_at: string;
       semantic_status: string;
       artifacts: Record<string, { sha256: string }>;
+      source_commit: string | null;
+      data_commit: string | null;
+      workflow_run_id: string | null;
+      dirty_worktree: boolean | null;
+      inputs: Record<string, { sha256: string }>;
+      promotion_batches: Array<{ id: string; sha256: string }>;
+      build: PublishProvenance["build"];
     };
     expect(lexicalManifest.semantic_status).toBe("lexical-only");
     expect(lexicalManifest.artifacts["data.json"]).toBeDefined();
@@ -104,21 +176,30 @@ describe("publish manifest", () => {
         .update(readFileSync(join(outdir, "embeddings.json")))
         .digest("hex"),
     );
+    expect(readyManifest).toMatchObject({
+      source_commit: lexicalManifest.source_commit,
+      data_commit: lexicalManifest.data_commit,
+      workflow_run_id: lexicalManifest.workflow_run_id,
+      dirty_worktree: lexicalManifest.dirty_worktree,
+      inputs: lexicalManifest.inputs,
+      promotion_batches: lexicalManifest.promotion_batches,
+      build: lexicalManifest.build,
+    });
   });
 
-  it("keeps final publish-manifest generation after recommendation restoration in CI", () => {
+  it("attests and uploads the manifest produced by the merged build", () => {
     const workflow = readFileSync(
-      new URL("../.github/workflows/update.yml", import.meta.url),
+      new URL("../.github/workflows/deploy.yml", import.meta.url),
       "utf8",
     );
-    const validateAt = workflow.indexOf("name: Validate recommendation bundle");
-    const saveAt = workflow.indexOf("name: Save recommendation bundle");
-    const manifestAt = workflow.indexOf("name: Write final publish manifest");
+    const buildAt = workflow.indexOf("name: Build merged site");
+    const attestAt = workflow.indexOf("name: Attest publish manifest");
     const uploadAt = workflow.indexOf("name: Upload Pages artifact");
-    expect([validateAt, saveAt, manifestAt, uploadAt].every((value) => value >= 0)).toBe(true);
-    expect(saveAt).toBeLessThan(manifestAt);
-    expect(manifestAt).toBeLessThan(uploadAt);
-    expect(workflow.slice(manifestAt, uploadAt)).toContain('existsSync("public/embeddings.json")');
-    expect(workflow.slice(manifestAt, uploadAt)).toContain("writePublishManifest");
+    expect([buildAt, attestAt, uploadAt].every((value) => value >= 0)).toBe(true);
+    expect(buildAt).toBeLessThan(attestAt);
+    expect(uploadAt).toBeLessThan(attestAt);
+    expect(workflow).toContain("needs: [build, attest]");
+    expect(workflow).not.toContain("Write final publish manifest");
+    expect(workflow).toContain("subject-path: public/publish.json");
   });
 });

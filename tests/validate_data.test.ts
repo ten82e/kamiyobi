@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   normalizedTrack,
+  summarizeCategoryChanges,
   validateData,
   validateFile,
   validateProduction,
@@ -203,6 +204,156 @@ it("rejects glued id years and exact/date-only precision mixtures", () => {
       "precision/evomusart-202726: exact has unconfirmed timezone",
     ]),
   );
+});
+
+it("uses model instant parsing for offsets and accepts a short year-crossing event", () => {
+  const valid = validateData({
+    conferences: [
+      {
+        key: "offset",
+        title: "Offset Systems",
+        full_name: "Offset Systems",
+        categories: ["systems"],
+        editions: [
+          {
+            year: 2027,
+            id: "offset-2027",
+            date_text: "2027-12-31..2028-01-02",
+            event_start: "2027-12-31",
+            event_end: "2028-01-02",
+            deadlines: [
+              {
+                kind: "paper",
+                label: "Paper",
+                utc: "2027-12-01T12:00:00+09:00",
+                tz_raw: "UTC+09:00",
+              },
+              {
+                kind: "abstract",
+                label: "Abstract",
+                utc: "2027-12-02T03:00:00Z",
+                tz_raw: "UTC",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  expect(valid.errors).toEqual([]);
+
+  const conflict = validateData({
+    conferences: [
+      {
+        key: "conflict",
+        categories: ["systems"],
+        editions: [
+          {
+            year: 2027,
+            id: "conflict-2027",
+            deadlines: [
+              {
+                kind: "paper",
+                label: "Paper",
+                date: "2027-12-01T12:00:00+09:00",
+                tz_raw: "UTC",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  expect(conflict.errors).toContain(
+    "conflict/conflict-2027: exact timezone conflicts with embedded offset",
+  );
+
+  const tooLong = validateData({
+    conferences: [
+      {
+        key: "too-long",
+        categories: ["systems"],
+        editions: [
+          {
+            year: 2027,
+            id: "too-long-2027",
+            event_start: "2027-01-01",
+            event_end: "2027-02-03",
+          },
+        ],
+      },
+    ],
+  });
+  expect(tooLong.errors).toContain("too-long/too-long-2027: event range exceeds 31 days");
+});
+
+it("checks configured categories and reports promotion/evidence and vocabulary drift as warnings", () => {
+  const empty = validateData({
+    conferences: [{ key: "empty", categories: [], editions: [] }],
+  });
+  expect(empty.errors).toContain("empty: categories is empty or invalid");
+
+  const unknown = validateData({
+    conferences: [{ key: "unknown", categories: ["not-configured"], editions: [] }],
+  });
+  expect(unknown.errors).toContain("unknown: unknown category not-configured");
+
+  const promoted = validateData({
+    conferences: [
+      {
+        key: "promoted",
+        title: "International Machine Learning Workshop",
+        full_name: "International Machine Learning Workshop",
+        scope: "Machine Learning",
+        categories: ["security"],
+        review_state: "reviewed",
+        editions: [],
+      },
+    ],
+  });
+  expect(promoted.errors).toEqual([]);
+  expect(promoted.warnings).toEqual(
+    expect.arrayContaining([
+      "promoted: auto-promoted categories lack category_evidence",
+      "promoted: category vocabulary diverges from title/full_name/scope; possible ai",
+    ]),
+  );
+});
+
+it("summarizes category changes as a pure data-only comparison", () => {
+  const before = {
+    conferences: [
+      { key: "changed", categories: ["systems", "ai"] },
+      { key: "same", categories: ["hpc"] },
+      { key: "new", categories: [] },
+    ],
+  };
+  const after = {
+    conferences: [
+      { key: "changed", categories: ["ai", "security"] },
+      { key: "new", categories: ["networking"] },
+    ],
+  };
+  const summary = summarizeCategoryChanges(before, after);
+  expect(summary.changes).toEqual([
+    {
+      key: "changed",
+      before: ["ai", "systems"],
+      after: ["ai", "security"],
+      added: ["security"],
+      removed: ["systems"],
+    },
+    {
+      key: "new",
+      before: [],
+      after: ["networking"],
+      added: ["networking"],
+      removed: [],
+    },
+  ]);
+  expect(summary.added).toBe(2);
+  expect(summary.removed).toBe(1);
+  expect(summary.summary).toContain("- changed: +security -systems");
 });
 
 it("validates every production input by default", () => {

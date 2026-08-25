@@ -1,5 +1,5 @@
 import { loadPublishedRecommendation } from "./publish.js";
-import { recommendationAxes } from "./recommendation-core.js";
+import { type RecommendationAxes, recommendationAxes } from "./recommendation-core.js";
 import Recommender from "./recommender.js";
 
 type CandidateRow = ReturnType<typeof Recommender.candidateRows>[number];
@@ -9,6 +9,9 @@ type ScoreBreakdown = ReturnType<typeof Recommender.breakdown>;
 type ConferenceRecord = CandidateRow["conf"] & {
   link?: string;
   editions?: EditionRecord[];
+  dblp?: string | null;
+  sources?: string[];
+  recommendation_axes?: RecommendationAxes;
 };
 type EditionRecord = CandidateRow["ed"] & {
   link?: string;
@@ -132,6 +135,37 @@ function hasOptionalString(record: Record<string, unknown>, key: string): boolea
 
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+const TRUST_LEVELS = new Set([
+  "official",
+  "publisher",
+  "curated-manual",
+  "aggregator",
+  "assumption",
+  "unverified",
+]);
+
+function isRecommendationAxes(value: unknown): value is RecommendationAxes {
+  if (!isRecord(value) || !isRecord(value.research_fit) || !isRecord(value.venue_maturity)) {
+    return false;
+  }
+  const maturity = value.venue_maturity;
+  const maturityEvidence = maturity.evidence;
+  const trust = value.deadline_trust;
+  if (!isRecord(maturityEvidence) || !isRecord(trust)) return false;
+  return (
+    ["established", "emerging", "new", "unverified"].includes(String(maturity.status)) &&
+    ["profiled", "unprofiled"].includes(String(maturity.profile_status)) &&
+    typeof maturityEvidence.yearsObserved === "number" &&
+    typeof maturityEvidence.dblpIndexed === "boolean" &&
+    typeof maturityEvidence.publisherVerified === "boolean" &&
+    typeof maturityEvidence.ranked === "boolean" &&
+    typeof maturityEvidence.profileCoverage === "number" &&
+    ["date", "time", "timezone", "kind"].every((field) => TRUST_LEVELS.has(String(trust[field]))) &&
+    ["fresh", "cache-fallback", "snapshot-fallback"].includes(String(trust.sourceFreshness)) &&
+    typeof trust.conflicts === "number"
+  );
 }
 
 function isDeadlineRecord(value: unknown): value is DeadlineRecord {
@@ -1692,7 +1726,44 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return "受付状況不明";
   }
 
-  function makeRecommendationCard(r: AppRow) {
+  const trustLabel: Record<string, string> = {
+    official: "公式確認",
+    publisher: "出版社確認",
+    "curated-manual": "手動確認",
+    aggregator: "集約情報",
+    assumption: "推定",
+    unverified: "未確認",
+  };
+  const freshnessLabel: Record<string, string> = {
+    fresh: "最新取得",
+    "cache-fallback": "キャッシュ退避",
+    "snapshot-fallback": "スナップショット退避",
+  };
+  const maturityLabel: Record<string, string> = {
+    established: "確立",
+    emerging: "成長中",
+    new: "新規",
+    unverified: "未確認",
+  };
+
+  function axesForRecommendation(r: AppRow, now: number): RecommendationAxes {
+    const published = isRecommendationAxes(r.conf.recommendation_axes)
+      ? r.conf.recommendation_axes
+      : null;
+    if (published) {
+      return {
+        ...published,
+        research_fit: { ...published.research_fit, score: r._matchScore ?? null },
+      };
+    }
+    return recommendationAxes(
+      r.conf as unknown as Record<string, unknown>,
+      r._matchScore ?? null,
+      now,
+    );
+  }
+
+  function makeRecommendationCard(r: AppRow, now: number) {
     const card = document.createElement("article");
     card.className = "recommendation-card";
     const isPastOnly = r._availability?.status === "past";
@@ -1724,29 +1795,32 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     meta.appendChild(availability);
     card.appendChild(meta);
 
-    const axes = recommendationAxes(
-      {
-        categories: r.conf.categories,
-        tags: r.conf.tags,
-        papers: r.conf.papers,
-        editions: r.conf.editions,
-      },
-      r._matchScore || null,
-      Date.now(),
+    const axes = axesForRecommendation(r, now);
+    const maturityEvidence = axes.venue_maturity.evidence;
+    const deadlineTrust = axes.deadline_trust;
+    line(
+      card,
+      `研究適合度: ${r._fitLabel || "評価保留"}（順位評価）`,
+      "card-section recommendation-axes",
     );
     line(
       card,
-      "研究適合度: " +
-        (axes.research_fit.score === null ? "評価保留" : `${axes.research_fit.score}%`) +
-        " ／ 会議確立度: " +
-        axes.venue_maturity.status +
-        "（" +
-        axes.venue_maturity.profile_status +
-        "）" +
-        " ／ 締切精度: " +
-        axes.deadline_precision +
-        " ／ 根拠品質: " +
-        axes.evidence_quality,
+      `会議履歴: ${maturityLabel[axes.venue_maturity.status]}（観測年数 ${maturityEvidence.yearsObserved}年、プロフィール ${maturityEvidence.profileCoverage}件）`,
+      "card-section recommendation-axes",
+    );
+    line(
+      card,
+      `締切: ${recommendationAvailability(r)} ／ 種別: ${KIND_LABEL[r.kind] || r.kind || "未確認"}`,
+      "card-section recommendation-axes",
+    );
+    line(
+      card,
+      `締切の確認状況: 日付 ${trustLabel[deadlineTrust.date]} ／ 時刻 ${trustLabel[deadlineTrust.time]} ／ タイムゾーン ${trustLabel[deadlineTrust.timezone]} ／ 種別 ${trustLabel[deadlineTrust.kind]}`,
+      "card-section recommendation-axes",
+    );
+    line(
+      card,
+      `取得状態: ${freshnessLabel[deadlineTrust.sourceFreshness]} ／ 締切の競合: ${deadlineTrust.conflicts}件`,
       "card-section recommendation-axes",
     );
 
@@ -1789,7 +1863,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return card;
   }
 
-  function renderRecommendationCards(list: AppRow[]) {
+  function renderRecommendationCards(list: AppRow[], now = Date.now()) {
     const cards = $("recommendationCards");
     cards.textContent = "";
     if (!recommendationData) {
@@ -1818,7 +1892,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       return;
     }
     list.slice(0, 5).forEach((r) => {
-      cards.appendChild(makeRecommendationCard(r));
+      cards.appendChild(makeRecommendationCard(r, now));
     });
   }
 

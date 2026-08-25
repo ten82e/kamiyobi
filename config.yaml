@@ -8,15 +8,30 @@
 # 例: atc.yml の title は "SIGOPS ATC" なので key は sigops-atc、
 #     cgo.yml は "IEEE/ACM CGO" なので ieee-acm-cgo。
 #
-# 上流には key が衝突する別会議が 2 組ある(FSE = Fast Software Encryption(SC) と
-# Foundations of Software Engineering(SE)、SEC = Edge Computing(DS) と
-# IFIP Information Security(SC))。merge は sub が違えば別会議として分割し、
-# sub の辞書順で先頭のものが素の key を保持する。したがって
-#   fse  -> SC(Fast Software Encryption) / fse-se -> SE(Foundations of SE)
-#   sec  -> DS(Edge Computing)           / sec-sc -> SC(IFIP Information Security)
-# となる。SE 側は ccfddl_subs で拾うので venues に書く必要はない。
+# 同じ key でも identity が一致しない会議は統合せず、決定的な suffix を付けて残す。
+# 異なる source の同一会議は、下の venue_identities で source-local ID を明示的に結ぶ。
 
 source_priority: [local, aideadlines, ccfddl]
+
+# source をまたぐ会議同一性は明示する。同じ綴りの source-local ID だけでは統合せず、
+# ここで一つの stable venue ID に結び付けた組だけを統合する。
+venue_identities:
+  aamas: {source_ids: {aideadlines: aamas, ccfddl: AI/aamas}}
+  acl: {source_ids: {aideadlines: acl, ccfddl: AI/acl}}
+  coling: {source_ids: {aideadlines: coling, ccfddl: AI/coling}}
+  cvm: {source_ids: {ccfddl: CG/cvm, local: cvm}}
+  dasfaa: {source_ids: {ccfddl: DB/dasfaa, local: dasfaa}}
+  ecai: {source_ids: {aideadlines: ecai, ccfddl: AI/ecai}}
+  fg: {source_ids: {aideadlines: fg, ccfddl: AI/fg, local: fg}}
+  icassp: {source_ids: {aideadlines: icassp, ccfddl: CG/icassp}}
+  icdar: {source_ids: {aideadlines: icdar, ccfddl: AI/icdar}}
+  icra: {source_ids: {aideadlines: icra, ccfddl: AI/icra}}
+  icvrv: {source_ids: {ccfddl: CG/icvrv, local: icvrv}}
+  ijcnn: {source_ids: {aideadlines: ijcnn, ccfddl: AI/ijcnn}}
+  iui: {source_ids: {aideadlines: iui, ccfddl: HI/iui}}
+  ksem: {source_ids: {aideadlines: ksem, ccfddl: AI/ksem}}
+  msr: {source_ids: {ccfddl: SE/msr, local: msr}}
+  pacificvis: {source_ids: {ccfddl: CG/PacificVis, local: pacificvis}}
 
 # Primary の締切は開催日からこの日数以内に限る。会期不明なら開催年と前年を許可する。
 primary:

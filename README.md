@@ -30,7 +30,7 @@
 | `https://ten82e.github.io/kamiyobi/llms.txt` | 出力ファイルとデータの形を 1 枚にまとめた索引。まずここを読む |
 | `https://ten82e.github.io/kamiyobi/data.json` | 正規化済みの全データ。時刻確認済みの締切は UTC と AoE、日付のみ確認済みの締切は `local_date` と不確実性区間で表す |
 | `https://ten82e.github.io/kamiyobi/health.json` | 確定/推定締切、ソース失敗、警告数、カテゴリ件数、必須会議の健全性レポート |
-| `https://ten82e.github.io/kamiyobi/publish.json` | 公開直後の成果物ハッシュと `semantic_status`（`ready` または `lexical-only`）。意味検索用の埋め込みが公開物に含まれるかを示す |
+| `https://ten82e.github.io/kamiyobi/publish.json` | 公開成果物のハッシュ、元 commit、入力 hash、workflow run、build 時刻・Node 版・offline/cache 方針、`semantic_status`。公開物の再現元を示す |
 
 他に、1 行 1 締切の平坦な表 [`data.csv`](https://ten82e.github.io/kamiyobi/data.csv) と、直近 180 日の締切と開催の表 `upcoming.md` がある。
 
@@ -81,7 +81,7 @@ node src/cli.ts discover --candidate-out data/discovered_candidates.yaml
 
 `--out` は明示的に `extra.yaml` 互換の一時出力を作る場合だけ使う。
 旧互換出力を追記する `--append` は、候補レジストリの更新には使わない。
-`.github/workflows/update.yml` の `discover-candidates` ジョブが毎日これを実行し、
+`.github/workflows/update-data.yml` の候補探索処理が毎日これを実行し、
 `data/discovered_candidates.yaml` に既存レコードをマージする。レビュー済みの状態・メモ・
 初回発見時刻は維持され、再発見時は最終発見時刻と証拠だけが更新される。
 候補は公式サイトで裏取りするまで `extra.yaml` には昇格しない。
@@ -100,39 +100,49 @@ node src/cli.ts review
 **候補の昇格手順**（収録の裏取り原則: 締切は公式サイトで HTTP 確認できたもののみ）:
 
 1. `data/discovered_candidates.yaml` から気になる候補を選ぶ
-2. 候補の公式サイトで締切・開催日を確認する（wikiCFP 等の転載情報は裏取りに使わない）
-3. 確認できたら `data/extra.yaml` に書き、`data/discovered_candidates.yaml` から該当行を消す
-4. ビルドして収録されることを確認する
+2. `scripts/observe-cfp.ts --url <公式URL> --body <保存先>` で公式ページの応答と本文を保存する。`--body` は必須
+3. 観測 JSON に会議・カテゴリのレビュー結果を付け、`scripts/verify-cfp.ts` で本文 hash、公式ドメイン、抽出値、取得版を検証する
+4. `scripts/promote-candidates.ts` で本文を同梱した manifest 付き batch を生成し、昇格された `extra.yaml` を確認する
+5. ビルドして収録されることを確認する
 
 ## 更新の仕組み
 
-`.github/workflows/update.yml` が毎日 20:17 UTC（05:17 JST）に動く。
-上流を丸ごと取得して正規化し、`public/` に出力を作り、GitHub Pages に配信する。
+`.github/workflows/update-data.yml` が毎日 20:17 UTC（05:17 JST）に動く。
+上流を取得して正規化し、検査済みのデータ差分を固定 branch `automation/data-update` の PR として作成または更新する。
+この日次処理から Pages へ直接配信することはない。
 全上流が fresh の場合だけ `data/snapshot.json` を更新する。
 データに実質差分があれば専用 branch へ一度 push し、PR を作成する。main へ直接 commit しない。
 このスナップショットは上流が落ちたときの退避先を兼ねており、取得に失敗した日は前回の内容から生成を続ける。
 スナップショットでも補えないほど収集が縮退した日は、ビルドが非ゼロで終了して配信を行わない。
-その日は前回配信した内容がそのまま残る（縮退した内容で上書きすると、公開データが消えるため）。
+その日は PR を更新せず、公開済みの内容を維持する。
 
-自動 PR の commit は `github-actions[bot]` 名義で、通常の CI をすべて実行する。
+自動 PR は GitHub App token を優先し、未設定時は `GITHUB_TOKEN` と明示的な CI 起動を使う。
 
 公開リポジトリでは、60 日間リポジトリの活動が無いとスケジュール実行が自動で無効化される（[GitHub の公式文書](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows)）。
 対策は上のスナップショット更新の副次効果だけである。
 bot のコミットが「活動」に数えられるかは公式文書に記載が無く、この対策が効くかは未検証である。
 活動を偽装する目的のコミットは、利用規約違反として停止された前例があるため実装しない。
-停止された場合は、リポジトリの Actions タブから `update` ワークフローを開き、`Run workflow`（`workflow_dispatch`）で手動実行すると再び有効になる。
+停止された場合は、リポジトリの Actions タブから `update-data` ワークフローを開き、`Run workflow`（`workflow_dispatch`）で手動実行すると再び有効になる。
 
 `.github/workflows/ci.yml` は push と pull request で動く。
 七つの job が、型検査、静的検査、テスト、オフラインビルド、データ意味検査、health 遷移、推薦回帰を独立して報告する。
 外部上流には接続せず、`tests/fixtures/` と `data/snapshot.json` を使う。
-上流データの取得、配信前の健全性検査、候補探索は、日次の `.github/workflows/update.yml` が行う。
+上流データの取得、健全性検査、候補探索、自動 PR 更新は、日次の `.github/workflows/update-data.yml` が行う。
 七つの job は変更ファイルにかかわらず実行し、main の必須チェック（required check）に指定する。
+
+`.github/workflows/deploy.yml` は main への push だけで動く。
+merge 済みの main から公開物を再生成し、health gate と manifest 検査を通した後だけ GitHub Pages へ配信する。
+`publish.json` は元 commit、入力 hash、promotion batch、workflow run ID、dirty worktree の有無に加え、build 時刻、Node 版、offline/cache 方針、再実行コマンドを記録する。
+PR 用の小さな実論文評価は必須検査に含め、全80件ずつの dev・heldout 評価は nightly workflow で行う。
 
 ### 初回セットアップ
 
-`update.yml` はカスタムワークフローから Pages に配信するため、リポジトリの設定が必要である（[GitHub の公式文書](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)）。
+`deploy.yml` はカスタムワークフローから Pages に配信するため、リポジトリの設定が必要である（[GitHub の公式文書](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)）。
 Settings の Pages を開き、Build and deployment の Source を「GitHub Actions」にする。
 既定のままだと Deploy の段階で毎日失敗する。
+
+自動 PR に GitHub App を使う場合は、repository secret `KAMIYOBI_APP_CLIENT_ID` と `KAMIYOBI_APP_PRIVATE_KEY` を設定する。
+未設定時は `GITHUB_TOKEN` を使い、更新後の CI を明示的に起動する。
 
 ## 手元で動かす
 

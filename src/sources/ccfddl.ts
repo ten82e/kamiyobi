@@ -163,6 +163,7 @@ export function deadlinesOf(
 export function editionOf(
   raw: Record<string, unknown> | null | undefined,
   parentTz = "",
+  sourceId = "",
 ): Edition | null {
   if (!raw || typeof raw !== "object") return null;
   const year = Number(raw.year);
@@ -173,10 +174,12 @@ export function editionOf(
   const tzRaw = String(raw.timezone ?? raw.tz ?? parentTz ?? "");
   const dateText = String(raw.date ?? "");
   const [start, end] = parseDateRange(dateText, year);
+  const upstreamId = String(raw.id ?? "").trim() || (sourceId ? `${sourceId}:${year}` : "");
+  const link = String(raw.link ?? "");
   return {
     year,
     edition_id: String(raw.id ?? (year ? String(year) : "")),
-    link: String(raw.link ?? ""),
+    link,
     place: String(raw.place ?? ""),
     date_text: dateText,
     event_start: start,
@@ -184,18 +187,30 @@ export function editionOf(
     deadlines: deadlinesOf(raw.timeline, tzRaw, raw),
     estimated: false,
     source: NAME,
+    ...(upstreamId || link
+      ? {
+          identity: {
+            ...(link ? { officialUrls: [link] } : {}),
+            ...(upstreamId ? { sourceIds: { [NAME]: upstreamId } } : {}),
+          },
+        }
+      : {}),
   };
 }
 
-export function conferenceOf(raw: Record<string, unknown> | null | undefined): Conference | null {
+export function conferenceOf(
+  raw: Record<string, unknown> | null | undefined,
+  sourceId = "",
+): Conference | null {
   if (!raw || typeof raw !== "object") return null;
   const title = String(raw.title ?? "").trim();
   if (!title) return null;
   const parentTz = String(raw.timezone ?? raw.tz ?? "");
+  const venueSourceId = sourceId || String(raw.dblp ?? "").trim();
   const editions = ((raw.confs as unknown[] | null) ?? [])
     .map((c) =>
       typeof c === "object" && c !== null
-        ? editionOf(c as Record<string, unknown>, parentTz)
+        ? editionOf(c as Record<string, unknown>, parentTz, venueSourceId)
         : null,
     )
     .filter((e): e is Edition => e !== null)
@@ -216,18 +231,28 @@ export function conferenceOf(raw: Record<string, unknown> | null | undefined): C
   if (!link && raw.link) {
     link = String(raw.link);
   }
+  const dblp = raw.dblp === null || raw.dblp === undefined ? "" : String(raw.dblp).trim();
   return {
     key: slug(title),
     title,
     full_name: String(raw.description ?? raw.full_name ?? title),
     link,
     rank,
-    dblp: raw.dblp === null || raw.dblp === undefined ? null : String(raw.dblp),
+    dblp: dblp || null,
     upstream_sub: raw.sub === null || raw.sub === undefined ? null : String(raw.sub),
     tags: [],
     categories: [],
     editions,
     sources: [NAME],
+    ...(dblp || venueSourceId
+      ? {
+          identity: {
+            ...(dblp ? { dblpKey: dblp } : {}),
+            ...(link ? { officialDomains: [link] } : {}),
+            ...(venueSourceId ? { sourceIds: { [NAME]: venueSourceId } } : {}),
+          },
+        }
+      : {}),
   };
 }
 
@@ -272,7 +297,8 @@ export function parseTree(conferenceDir: string | null | undefined): Conference[
     const items = Array.isArray(loaded) ? loaded : [loaded];
     for (const item of items) {
       if (typeof item !== "object" || item === null) continue;
-      const conference = conferenceOf(item as Record<string, unknown>);
+      const sourceId = path.slice(conferenceDir.length + 1).replace(/\.ya?ml$/, "");
+      const conference = conferenceOf(item as Record<string, unknown>, sourceId);
       if (conference !== null) out.push(conference);
     }
   }
@@ -282,7 +308,10 @@ export function parseTree(conferenceDir: string | null | undefined): Conference[
 export class CcfddlSource {
   name = NAME;
 
-  async load(cacheDir: string, options: { offline?: boolean } = {}): Promise<Conference[]> {
+  async load(
+    cacheDir: string,
+    options: { offline?: boolean; now?: Date } = {},
+  ): Promise<Conference[]> {
     const root = await fetchTarball(REPO, REF, cacheDir, options);
     return parseTree(join(root, "conference"));
   }

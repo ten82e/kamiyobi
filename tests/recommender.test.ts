@@ -13,7 +13,9 @@ import {
   contentWords,
   norm,
   parseBenchArgs,
+  REAL_PAPER_REGRESSION_FLOORS,
   realPaperMetrics,
+  realPaperRegressionReasons,
   runBenchmarkV2,
   topicWords,
   validateRealPaperFixtures,
@@ -1859,17 +1861,222 @@ describe("bench-recommender argument parsing and helper utilities", () => {
     const heldout = JSON.parse(
       readFileSync(join(REPO_ROOT, "data", "benchmarks", "real-paper-heldout.json"), "utf8"),
     );
-    const venues = new Set(["nsdi", "osdi", "ndss", "usenix-security"]);
+    const negative = JSON.parse(
+      readFileSync(join(REPO_ROOT, "data", "benchmarks", "real-paper-negative.json"), "utf8"),
+    );
+    const venues = new Set(
+      [...dev.records, ...heldout.records].flatMap(
+        (record: { acceptable_venues: string[] }) => record.acceptable_venues,
+      ),
+    );
     validateRealPaperFixtures(dev, heldout, venues, {});
+    validateRealPaperFixtures(dev, heldout, venues, {}, undefined, negative);
+    expect({
+      dev: dev.records.length,
+      heldout: heldout.records.length,
+      negative: negative.records.length,
+    }).toEqual({
+      dev: 80,
+      heldout: 80,
+      negative: 41,
+    });
+    expect(new Set(negative.records.map((record: any) => record.language))).toEqual(
+      new Set(["en", "ja"]),
+    );
+    expect(new Set(negative.records.map((record: any) => record.input_mode))).toEqual(
+      new Set(["title-only", "title+abstract"]),
+    );
+    expect(new Set(negative.records.map((record: any) => record.negative_reason))).toEqual(
+      new Set(["venue-not-in-catalog", "insufficient-content", "ambiguous-scope", "near-boundary"]),
+    );
     expect(dev.records.every((record: Record<string, unknown>) => !("semantic" in record))).toBe(
       true,
     );
+    for (const fixture of [dev, heldout]) {
+      expect(new Set(fixture.records.flatMap((record: any) => record.domains))).toEqual(
+        new Set([
+          "hpc",
+          "systems",
+          "networking",
+          "ai",
+          "security",
+          "db",
+          "graphics",
+          "hci",
+          "theory",
+        ]),
+      );
+      expect(new Set(fixture.records.map((record: any) => record.language))).toEqual(
+        new Set(["en", "ja"]),
+      );
+      expect(new Set(fixture.records.map((record: any) => record.venue_scope))).toEqual(
+        new Set(["international", "domestic"]),
+      );
+      expect(new Set(fixture.records.map((record: any) => record.venue_kind))).toEqual(
+        new Set(["conference", "workshop", "journal", "special-issue"]),
+      );
+      expect(new Set(fixture.records.map((record: any) => record.input_mode))).toEqual(
+        new Set(["title-only", "title+abstract", "pdf-extract"]),
+      );
+      expect(fixture.records.some((record: any) => record.acceptable_venues.length > 1)).toBe(true);
+      expect(
+        fixture.provenance.sources.every(
+          (source: any) =>
+            /^https:\/\//.test(source.url) &&
+            source.revision.length > 0 &&
+            /^[a-f0-9]{64}$/.test(source.sha256),
+        ),
+      ).toBe(true);
+    }
+    const heldoutVenueCounts = Object.values(
+      Object.groupBy(heldout.records, (record: any) => record.primary_venue),
+    ).map((records) => records!.length);
+    expect(Math.max(...heldoutVenueCounts) / heldout.records.length).toBeLessThanOrEqual(0.25);
+    const requiredDev = JSON.parse(
+      readFileSync(join(REPO_ROOT, "data", "benchmarks", "real-paper-required-dev.json"), "utf8"),
+    );
+    const requiredHeldout = JSON.parse(
+      readFileSync(
+        join(REPO_ROOT, "data", "benchmarks", "real-paper-required-heldout.json"),
+        "utf8",
+      ),
+    );
+    validateRealPaperFixtures(
+      requiredDev,
+      requiredHeldout,
+      venues,
+      {},
+      undefined,
+      undefined,
+      "required",
+    );
+    for (const fixture of [requiredDev, requiredHeldout]) {
+      expect(new Set(fixture.records.map((record: any) => record.language))).toEqual(
+        new Set(["en", "ja"]),
+      );
+      expect(
+        new Set(fixture.records.flatMap((record: any) => record.domains)).size,
+      ).toBeGreaterThan(2);
+    }
+
+    const mutate = (fixture: any, change: (copy: any) => void, message: RegExp) => {
+      const copy = JSON.parse(JSON.stringify(fixture));
+      change(copy);
+      expect(() => validateRealPaperFixtures(dev, copy, venues, {})).toThrow(message);
+    };
+    mutate(
+      heldout,
+      (copy) =>
+        copy.records.forEach((record: any) => {
+          record.language = "en";
+        }),
+      /language coverage/,
+    );
+    mutate(
+      heldout,
+      (copy) =>
+        copy.records.forEach((record: any) => {
+          record.venue_scope = "international";
+        }),
+      /venue scope coverage/,
+    );
+    mutate(
+      heldout,
+      (copy) =>
+        copy.records.forEach((record: any) => {
+          record.venue_kind = "conference";
+        }),
+      /venue kind coverage/,
+    );
+    mutate(
+      heldout,
+      (copy) =>
+        copy.records.forEach((record: any) => {
+          delete record.abstract;
+          delete record.pdf_text;
+          delete record.pdf_sha256;
+          record.input_mode = "title-only";
+        }),
+      /input mode coverage/,
+    );
+    mutate(
+      heldout,
+      (copy) =>
+        copy.records.forEach((record: any) => {
+          record.domains = ["systems"];
+        }),
+      /category coverage/,
+    );
+    mutate(
+      heldout,
+      (copy) =>
+        copy.records.slice(0, 21).forEach((record: any) => {
+          record.primary_venue = "nsdi";
+          record.acceptable_venues = ["nsdi"];
+        }),
+      /25%/,
+    );
+    mutate(
+      heldout,
+      (copy) =>
+        copy.records.forEach((record: any) => {
+          record.acceptable_venues = [record.primary_venue];
+        }),
+      /multiple acceptable venues/,
+    );
+    mutate(heldout, (copy) => (copy.provenance.sources[0].sha256 = "bad"), /source provenance/);
+    mutate(
+      heldout,
+      (copy) => {
+        const original = copy.provenance.sources[0].url;
+        copy.provenance.sources[0].url = "https://example.com/paper";
+        copy.records
+          .filter((record: any) => record.source === original)
+          .forEach((record: any) => {
+            record.source = "https://example.com/paper";
+          });
+      },
+      /approved https source/,
+    );
+    mutate(heldout, (copy) => (copy.records[0].paper_id = dev.records[0].paper_id), /duplicate id/);
+    mutate(heldout, (copy) => (copy.records[0].title = ""), /missing title/);
 
     const leaked = JSON.parse(JSON.stringify(heldout));
     leaked.records[0].title = dev.records[0].title;
     expect(() => validateRealPaperFixtures(dev, leaked, venues, {})).toThrow(
       /exact-title|duplicate/,
     );
+
+    const negativeLeaked = JSON.parse(JSON.stringify(negative));
+    negativeLeaked.records[0].title = dev.records[0].title;
+    expect(() =>
+      validateRealPaperFixtures(dev, heldout, venues, {}, undefined, negativeLeaked),
+    ).toThrow(/exact-title|duplicate/);
+
+    const negativeMissingJapanese = JSON.parse(JSON.stringify(negative));
+    negativeMissingJapanese.records.forEach((record: any) => {
+      record.language = "en";
+    });
+    expect(() =>
+      validateRealPaperFixtures(dev, heldout, venues, {}, undefined, negativeMissingJapanese),
+    ).toThrow(/negative real paper lacks language coverage/);
+
+    const negativeMissingAbstract = JSON.parse(JSON.stringify(negative));
+    negativeMissingAbstract.records.forEach((record: any) => {
+      delete record.abstract;
+      record.input_mode = "title-only";
+    });
+    expect(() =>
+      validateRealPaperFixtures(dev, heldout, venues, {}, undefined, negativeMissingAbstract),
+    ).toThrow(/negative real paper lacks input mode coverage/);
+
+    const negativeMissingBoundary = JSON.parse(JSON.stringify(negative));
+    negativeMissingBoundary.records.forEach((record: any) => {
+      record.negative_reason = "venue-not-in-catalog";
+    });
+    expect(() =>
+      validateRealPaperFixtures(dev, heldout, venues, {}, undefined, negativeMissingBoundary),
+    ).toThrow(/negative real paper lacks reason coverage/);
 
     const timeLeaked = JSON.parse(JSON.stringify(heldout));
     timeLeaked.records[0].year = 2024;
@@ -1952,7 +2159,15 @@ describe("bench-recommender argument parsing and helper utilities", () => {
     expect(JSON.stringify(first)).toBe(JSON.stringify(second));
     expect(first.splits.dev.strata.language.en.fused.mrr).toBe(0.5);
     expect(first.splits.dev.strata.language.en.lexical.queries).toBe(2);
-    expect(first.splits.dev.strata.domain.networking.fused.queries).toBe(1);
+    expect(first.splits.dev.strata.domain.security.fused.queries).toBe(2);
+    expect(first.splits.dev.strata.category.security.fused.queries).toBe(2);
+    expect(first.splits.dev.strata.inputMode[records[0]!.input_mode].fused.queries).toBe(2);
+    expect(first.splits.dev.modes.fused.confidence_interval).toMatchObject({
+      method: "bootstrap",
+      confidence_level: 0.95,
+      seed: 0x5eed2026,
+    });
+    expect(first.splits.dev.mode_deltas.lexical_to_fused.mrr).toBe(0);
     expect(first.splits.heldout.abstention).toEqual(
       expect.objectContaining({
         total: heldout.records.length,
@@ -1961,6 +2176,58 @@ describe("bench-recommender argument parsing and helper utilities", () => {
       }),
     );
     expect(first.timing).toEqual({ firstLoadMs: null, repeatRecommendationMs: null });
+  });
+
+  it("emits coverage-specific regression floors and hard-fails floor misses", () => {
+    const dev = JSON.parse(
+      readFileSync(join(REPO_ROOT, "data", "benchmarks", "real-paper-dev.json"), "utf8"),
+    );
+    const heldout = JSON.parse(
+      readFileSync(join(REPO_ROOT, "data", "benchmarks", "real-paper-heldout.json"), "utf8"),
+    );
+    const rankings = Object.fromEntries(
+      [...dev.records, ...heldout.records].map((record: { paper_id: string }) => [
+        record.paper_id,
+        { lexical: 1, semantic: 1, fused: 1 },
+      ]),
+    );
+    const confidence = Object.fromEntries(
+      [...dev.records, ...heldout.records].map((record: { paper_id: string }) => [
+        record.paper_id,
+        "sufficient",
+      ]),
+    );
+    const result = buildRealPaperResult(
+      dev,
+      heldout,
+      { dev: { rankings, confidence }, heldout: { rankings, confidence } },
+      undefined,
+      undefined,
+      "required",
+    );
+    result.splits.negative = {
+      queries: 1,
+      expected_abstention_rate: 1,
+      non_abstain_rate: 0,
+      non_abstain_precision: null,
+    };
+    expect(result.regression_floor).toEqual(REAL_PAPER_REGRESSION_FLOORS.required);
+    expect(REAL_PAPER_REGRESSION_FLOORS.required).not.toEqual(REAL_PAPER_REGRESSION_FLOORS.full);
+    expect(realPaperRegressionReasons(result, "required")).toEqual([]);
+
+    const heldoutMutation = structuredClone(result);
+    heldoutMutation.splits.heldout.modes.fused["recall@5"] =
+      REAL_PAPER_REGRESSION_FLOORS.required.heldout["fusedRecall@5"] - 0.000001;
+    expect(realPaperRegressionReasons(heldoutMutation, "required")).toEqual(
+      expect.arrayContaining([expect.stringMatching(/heldout fused Recall@5/)]),
+    );
+
+    const negativeMutation = structuredClone(result);
+    negativeMutation.splits.negative!.expected_abstention_rate =
+      REAL_PAPER_REGRESSION_FLOORS.required.negative.expected_abstention_rate - 0.000001;
+    expect(realPaperRegressionReasons(negativeMutation, "required")).toEqual(
+      expect.arrayContaining([expect.stringMatching(/negative abstention/)]),
+    );
   });
 
   it("parseBenchArgs parses flags and equal-joined options", () => {
@@ -1996,6 +2263,7 @@ describe("bench-recommender argument parsing and helper utilities", () => {
     expect(args.idf).toBe(false);
     expect(args.goldenEn).toBe(true);
     expect(args.paperMax).toBe(false);
+    expect(args.realV2Small).toBe(false);
     expect(args.sw).toBe("name=30,venue=70");
   });
 

@@ -20,6 +20,7 @@ if (!observations) {
     batchObservations,
     join(outdir, "resolutions.json"),
     join(outdir, "manifest.json"),
+    { sourceBaseDir: dirname(resolve(observations)) },
   );
   process.stdout.write(
     `${JSON.stringify({ promoted: resolutions.filter((item) => item.decision === "promote").length, total: resolutions.length })}\n`,

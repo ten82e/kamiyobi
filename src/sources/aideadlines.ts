@@ -156,7 +156,10 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
   return out;
 }
 
-export function editionOf(raw: Record<string, unknown> | null | undefined): Edition | null {
+export function editionOf(
+  raw: Record<string, unknown> | null | undefined,
+  sourceId = "",
+): Edition | null {
   if (!raw || typeof raw !== "object") return null;
   const year = Number(raw.year);
   if (!Number.isInteger(year) || year <= 0) {
@@ -188,10 +191,12 @@ export function editionOf(raw: Record<string, unknown> | null | undefined): Edit
       .map((k) => (raw[k] !== null && raw[k] !== undefined ? String(raw[k]).trim() : ""))
       .filter((s) => s.length > 0)
       .join(", ");
+  const upstreamId = String(raw.id ?? "").trim() || (sourceId ? `${sourceId}:${year}` : "");
+  const link = String(raw.link ?? "");
   return {
     year,
     edition_id: String(raw.id ?? (year ? String(year) : "")),
-    link: String(raw.link ?? ""),
+    link,
     place,
     date_text: dateText,
     event_start: start,
@@ -199,6 +204,14 @@ export function editionOf(raw: Record<string, unknown> | null | undefined): Edit
     deadlines: deadlinesOf(raw),
     estimated: false,
     source: NAME,
+    ...(upstreamId || link
+      ? {
+          identity: {
+            ...(link ? { officialUrls: [link] } : {}),
+            ...(upstreamId ? { sourceIds: { [NAME]: upstreamId } } : {}),
+          },
+        }
+      : {}),
   };
 }
 
@@ -239,7 +252,8 @@ export function parseTree(conferencesDir: string | null | undefined): Conference
       const raw = item as Record<string, unknown>;
       const title = String(raw.title ?? "").trim();
       if (!title) continue;
-      const edition = editionOf(raw);
+      const sourceId = path.replace(/\.ya?ml$/, "");
+      const edition = editionOf(raw, sourceId);
       if (edition === null) continue;
       const key = slug(title);
       let conference = byKey.get(key);
@@ -256,6 +270,7 @@ export function parseTree(conferencesDir: string | null | undefined): Conference
           categories: [],
           editions: [],
           sources: [NAME],
+          identity: { sourceIds: { [NAME]: sourceId } },
         };
         byKey.set(key, conference);
       }
@@ -265,7 +280,13 @@ export function parseTree(conferencesDir: string | null | undefined): Conference
         conference.full_name = String(raw.full_name ?? title);
         const rank = rankOf(raw.rankings);
         if (Object.keys(rank).length > 0) conference.rank = rank;
-        if (edition.link) conference.link = edition.link;
+        if (edition.link) {
+          conference.link = edition.link;
+          conference.identity = {
+            ...conference.identity,
+            officialDomains: [edition.link],
+          };
+        }
         const tags = toStringArray(raw.tags);
         if (tags.length > 0) conference.tags = tags;
       }
@@ -280,7 +301,10 @@ export function parseTree(conferencesDir: string | null | undefined): Conference
 export class AideadlinesSource {
   name = NAME;
 
-  async load(cacheDir: string, options: { offline?: boolean } = {}): Promise<Conference[]> {
+  async load(
+    cacheDir: string,
+    options: { offline?: boolean; now?: Date } = {},
+  ): Promise<Conference[]> {
     const root = await fetchTarball(REPO, REF, cacheDir, options);
     return parseTree(join(root, "src", "data", "conferences"));
   }
