@@ -379,7 +379,7 @@ export function mergeSources(
 ): Conference[];
 // Venue は venueId、DBLP key、公式 domain + alias、明示 aliases の順で名寄せする
 // slug key だけでは統合せず、identity が不足または競合する候補は分割して統計へ残す
-// Edition は editionId、公式 URL、会期と開催地の一致で名寄せする
+// Edition は editionId、公式 URL、source-local ID + 会期重複、会期 + 開催地で名寄せする
 // 同一年の複数開催回や本会議・ワークショップを先頭一致で統合しない
 // Deadline は和集合を取ったあと、下記「締切の重複統合」の許容幅で畳む
 // 競合時の優先順は config['source_priority']（既定 ["local","aideadlines","ccfddl"]）

@@ -45,14 +45,8 @@ conferences:
   # ---- 2026-08-10 追加: 収録値との一致を dry-run で確認した 11 件 ----
   # 登録基準: 静的 HTML の一次ソースから抽出した paper/abstract 締切が
   # 収録値 (extra.yaml の UTC 解釈 or 上流の UTC-12 解釈) と一致するもののみ。
-  wsse-2026:
-    url: https://easychair.org/cfp/WSSE2026
-    year: 2026
   network-flows-2-0:
     url: https://easychair.org/cfp/flowchallenge2
-    year: 2026
-  1st-dl2-international-workshop:
-    url: https://easychair.org/cfp/jornadas-dl2
     year: 2026
   ai4s-2026:
     url: https://ai4s.github.io/
@@ -72,9 +66,6 @@ conferences:
     year: 2026
     # 公式サイトに "Time Zone: AOE" 明記 (2026-08-10 確認済み)
     tz: AoE
-  geohealth-2026:
-    url: https://onspatial.github.io/geo-health-2026/
-    year: 2026
   geoindustry-2026:
     url: https://geoindustry.github.io/geoindustryworkshop2026/
     year: 2026
@@ -84,4 +75,3 @@ conferences:
   polds-2026:
     url: https://iharp.umbc.edu/polds26/
     year: 2026
-
