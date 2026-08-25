@@ -295,11 +295,11 @@ export function restoreFailedSourceMaterialWithCounts(
     let restored = false;
     for (const savedEdition of saved.editions) {
       const savedSource = sourceOf(saved, savedEdition);
-      if (!savedSource) continue;
       const heldEdition = held.editions.find(
         (edition) => edition.edition_id === savedEdition.edition_id,
       );
       if (!heldEdition) {
+        if (!savedSource) continue;
         const deadlines = savedEdition.deadlines.filter((deadline) =>
           sourceOfDeadline(deadline, savedSource),
         );
@@ -317,7 +317,7 @@ export function restoreFailedSourceMaterialWithCounts(
       }
       const present = new Set(heldEdition.deadlines.map(deadlineSlotKey));
       for (const deadline of savedEdition.deadlines) {
-        const deadlineSource = sourceOfDeadline(deadline, savedSource);
+        const deadlineSource = sourceOfDeadline(deadline, savedSource ?? "");
         if (!deadlineSource) continue;
         if (!present.has(deadlineSlotKey(deadline))) {
           heldEdition.deadlines.push(deadline);
