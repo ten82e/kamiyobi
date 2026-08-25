@@ -164,10 +164,24 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
       - name: Cross-check deployed manifest
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
-          curl --fail --silent --show-error --location --retry 10 --retry-delay 2 \
-            "${{ steps.deployment.outputs.page_url }}publish.json" -o /tmp/kamiyobi-deployed.json
-          node --input-type=module <<'NODE'
+          # CDN propagation can serve the previous deployment briefly after a
+          # same-commit semantic re-deploy; poll until the live manifest matches
+          # the artifact this run attested, then fail.
+          for attempt in $(seq 1 20); do
+            curl --fail --silent --show-error --location "$PAGE_URL"publish.json -o /tmp/kamiyobi-deployed.json
+            if node /tmp/kamiyobi-check-deployed.mjs; then
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "deployed manifest never matched the attested publish manifest"
+          exit 1
+      - name: Write deployed-manifest checker
+        run: |
+          cat > /tmp/kamiyobi-check-deployed.mjs <<'NODE'
           import { readFileSync } from "node:fs";
           const expected = JSON.parse(readFileSync("/tmp/kamiyobi-expected/publish.json", "utf8"));
           const deployed = JSON.parse(readFileSync("/tmp/kamiyobi-deployed.json", "utf8"));
