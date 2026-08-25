@@ -17,9 +17,73 @@ jobs:
         with: { node-version: '24', cache: npm }
       - run: npm ci
       - run: node src/cli.ts build --out public --offline --cache .cache --now 2026-08-09T00:00:00Z
-      - run: node src/bench-recommender.ts --real-v2-dev data/benchmarks/real-paper-required-dev.json --real-v2-heldout data/benchmarks/real-paper-required-heldout.json --real-v2-negative data/benchmarks/real-paper-negative.json --real-v2-features data/benchmarks/real-paper-required-features.json --real-v2-small --json
-      - name: Seal recommendation bundle
+      # semantic_content_id = profile_hash + reranker hash + algorithm revision + feature schema.
+      # Deadline-only pushes keep it stable: the previously sealed bundle is reused and the
+      # embedding model never loads.
+      - name: Reuse sealed bundle or mark semantic change
+        id: bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          content_id=$(node --input-type=module <<'NODE'
+          import { createHash } from "node:crypto";
+          import { readFileSync } from "node:fs";
+          const reranker = JSON.parse(readFileSync("data/recommender-reranker.json", "utf8"));
+          const profileHash = createHash("sha256")
+            .update(readFileSync("data/venue-profiles.json"))
+            .digest("hex");
+          process.stdout.write(
+            createHash("sha256")
+              .update([
+                profileHash,
+                createHash("sha256").update(readFileSync("data/recommender-reranker.json")).digest("hex"),
+                String(reranker.algorithm_revision ?? ""),
+                String(reranker.feature_schema?.join("\0") ?? ""),
+              ].join("\0"))
+              .digest("hex"),
+          );
+          NODE
+          )
+          echo "content_id=$content_id" >> "$GITHUB_OUTPUT"
+          for run in $(gh api "repos/${{ github.repository }}/actions/workflows/recommendation-bundle.yml/runs?branch=main&status=success&per_page=15" --jq '.workflow_runs[] | .id'); do
+            rm -rf /tmp/kamiyobi-reuse && mkdir -p /tmp/kamiyobi-reuse
+            gh run download "$run" --dir /tmp/kamiyobi-reuse 2>/dev/null || continue
+            manifest=$(find /tmp/kamiyobi-reuse -name recommendation-bundle.json | head -1)
+            [ -n "$manifest" ] || continue
+            if CONTENT_ID="$content_id" node -e '
+              const fs = require("node:fs");
+              const m = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+              process.exit(m.semantic_content_id === process.env.CONTENT_ID && m.full_benchmark === "passed" ? 0 : 1);
+            ' "$manifest"; then
+              echo "reusing sealed bundle from run $run (semantic content unchanged)"
+              cp "$(dirname "$manifest")/embeddings.json" public/embeddings.json
+              cp "$manifest" public/recommendation-bundle.json
+              echo "reused=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "reused=false" >> "$GITHUB_OUTPUT"
+          echo "no reusable sealed bundle; building embeddings and running full benchmark"
+      - name: Run required gate (fast subset)
+        if: steps.bundle.outputs.reused != 'true'
+        run: |
+          test -s public/embeddings.json || exit 0
+          node src/bench-recommender.ts --real-v2-dev data/benchmarks/real-paper-required-dev.json --real-v2-heldout data/benchmarks/real-paper-required-heldout.json --real-v2-negative data/benchmarks/real-paper-negative.json --real-v2-features data/benchmarks/real-paper-required-features.json --real-v2-small --json > /dev/null
+      # 推薦内容が変わった push だけ full benchmark を走らせ、合格後でないと seal しない。
+      - name: Run full real-paper benchmark before sealing
+        if: steps.bundle.outputs.reused != 'true'
+        run: |
+          test -s public/embeddings.json || exit 0
+          node src/bench-recommender.ts \
+            --real-v2-dev data/benchmarks/real-paper-dev.json \
+            --real-v2-heldout data/benchmarks/real-paper-heldout.json \
+            --real-v2-negative data/benchmarks/real-paper-negative.json \
+            --json > /tmp/full-bench.json
+          jq '{dev: .splits.dev.modes.fused.recall_at_5, heldout: .splits.heldout.modes.fused.recall_at_5}' /tmp/full-bench.json
+      - name: Seal recommendation bundle
+        if: steps.bundle.outputs.reused != 'true'
+        run: |
+          test -s public/embeddings.json || exit 0
           node --input-type=module <<'NODE'
           import { createHash } from "node:crypto";
           import { readFileSync, writeFileSync } from "node:fs";
@@ -27,7 +91,25 @@ jobs:
           const embedding = JSON.parse(bytes);
           const manifest = embedding.manifest;
           if (!manifest?.profile_hash || !manifest?.runtime_version || !manifest.models?.en?.revision) throw new Error("invalid embedding manifest");
-          writeFileSync("public/recommendation-bundle.json", `${JSON.stringify({ source_commit: process.env.GITHUB_SHA, profile_hash: manifest.profile_hash, model_revision: manifest.models.en.revision, runtime_version: manifest.runtime_version, embeddings_sha256: createHash("sha256").update(bytes).digest("hex"), benchmark_status: "passed" }, null, 2)}\n`);
+          const reranker = JSON.parse(readFileSync("data/recommender-reranker.json", "utf8"));
+          const contentId = createHash("sha256")
+            .update([
+              manifest.profile_hash,
+              createHash("sha256").update(readFileSync("data/recommender-reranker.json")).digest("hex"),
+              String(reranker.algorithm_revision ?? ""),
+              String(reranker.feature_schema?.join("\0") ?? ""),
+            ].join("\0"))
+            .digest("hex");
+          writeFileSync("public/recommendation-bundle.json", `${JSON.stringify({
+            source_commit: process.env.GITHUB_SHA,
+            semantic_content_id: contentId,
+            profile_hash: manifest.profile_hash,
+            model_revision: manifest.models.en.revision,
+            runtime_version: manifest.runtime_version,
+            embeddings_sha256: createHash("sha256").update(bytes).digest("hex"),
+            required_gate: "passed",
+            full_benchmark: "passed",
+          }, null, 2)}\n`);
           NODE
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

@@ -781,7 +781,7 @@ conferences:
 - GitHub App の client ID と秘密鍵が設定済みなら installation token を使う。
 - App が未設定なら `GITHUB_TOKEN` で PR を更新し、`workflow_dispatch` で CI を明示起動する。
 - PR 作成失敗を成功扱いせず、孤立した自動 branch を残さない。
-- 締切ビルドの後、同じ main commit の nightly が生成した推薦 bundle を artifact から復元・検証する。
+- 締切ビルドの後、同じ main commit の recommendation-bundle workflow が封印した推薦 bundle を artifact から復元・検証する。
   埋め込みの生成または検証に失敗した場合は `public/embeddings.json` を公開物から除き、
   `recommendation-index.json` と締切一覧は、語彙検索のみで動作する形で残す。`scripts/health-gate.ts`
   は同一 `BUILD_NOW` で main から再構築した `health.json` を比較対象とし、確定締切枠の根拠のない消失や
@@ -801,7 +801,7 @@ conferences:
 
 ### `.github/workflows/deploy.yml`
 
-- `main` への push と、main の nightly / recommendation-bundle 完了で起動する。
+- `main` への push と、main の recommendation-bundle 完了で起動する。nightly は評価専用で deploy を起こさない。
 - merge 済みの commit を checkoutし、ネットワークなし・埋め込み生成なしでビルドする。
   同一 commit・profile・モデル revision の bundle だけを復元し、不一致時は `lexical-only` を公開する。
 - health gate は前回成功 deploy の artifact を比較対象とし、初回だけ親 commit を同一時刻で再構築する。Pages は比較元に使わない。
@@ -974,14 +974,22 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 - heldout の単一 venue 比率は25%以下とし、複数の妥当な投稿先を許すケースを含める。
 - 実論文評価は lexical・semantic・fused の MRR、Recall@1/5/10、nDCG@10、95% bootstrap区間、層別値、abstentionを分けて報告する。
 - candidate retrieval は lexical・semantic・union の Recall@50 と oracle reranker Recall@5 を分けて報告する。
-- 軽量線形 reranker は本番と同一の固定 feature schema から dev のみで L2 pairwise logistic を学習し、
-  決定的 CV で係数・blend を選択して Platt 校正と confidence threshold を学習する。
+- 軽量線形 reranker は本番と同一の固定 feature schema から full dev (`real-paper-dev`) のみで
+  L2 pairwise logistic を学習し、primary-venue grouped 5-fold CV で係数・blend を選択して
+  Platt 校正と confidence threshold を学習する。required-dev (CI 用 subset) を学習に使ってはならない。
   `data/recommender-reranker.json` は training/input hash、CV、校正、閾値根拠を持ち、heldout は評価にだけ使う。
+  `confidence_policy.sufficient_enabled` は dev OOF 上で precision ≥ 0.80・Wilson 95% LCB ≥ 0.65・
+  coverage ≥ 0.10・positive ≥ 20 を満たすまで false であり、false の間 UI は
+  「候補 / 情報不足」の2段階のみを表示する。
 - PR の必須検査は dev・heldout・negative の本番 semantic score と本番 reranker feature vector を固定した
   `real-paper-required-features.json` を使う。frozen required 経路は manifest だけを決定的に検証し、
   pipeline、モデル cache、ネットワーク、埋め込み生成を一切使わず、lexical retrieval から Top-K まで本番経路を通す。
   候補Recall・oracle reranker・校正・MRR LCB・negative semantic false-positive abstentionを検査する。
-  実論文全件評価は nightly で実行し、成功後にだけ bundle を seal/upload する。
+  semantic bundle の seal には required gate と full real-paper benchmark の両方の合格が要る。
+  推薦内容 (profile_hash・reranker・feature schema) が不変の push は封印済み bundle を再利用し、
+  埋め込みモデルを読み込まない。bundle manifest は `required_gate` と `full_benchmark` を
+  分けて記録し、復元側は両方の `passed` を強制する。nightly は full benchmark の定期評価のみを行い、
+  bundle を seal しない。
 - required と full はそれぞれ記録済みの回帰下限を持ち、heldout fused Recall@5 または negative abstention が下限を割れば失敗する。JSON レポートは Actions artifact に保存する。
 
 ### 10.3 会議プロファイル拡充手順（`data/venue-profiles.json`）

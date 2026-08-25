@@ -10,14 +10,15 @@ on:
 permissions:
   contents: read
 
+# nightly は full benchmark・drift 検出の定期評価専用。bundle の seal/upload と
+# Pages deploy は recommendation-bundle.yml が担当するため、ここでは行わない。
 jobs:
   full-recommendation-benchmark:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
+        with: { persist-credentials: false }
       - name: Set up Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: '24', cache: npm }
@@ -34,25 +35,6 @@ jobs:
             > /tmp/real-paper-full.json
           jq '{regression_floor, dev: .splits.dev.modes.fused, heldout: .splits.heldout.modes.fused, negative: .splits.negative}' \
             /tmp/real-paper-full.json
-      - name: Seal recommendation bundle
-        run: |
-          node --input-type=module <<'NODE'
-          import { createHash } from "node:crypto";
-          import { readFileSync, writeFileSync } from "node:fs";
-          const bytes = readFileSync("public/embeddings.json");
-          const embedding = JSON.parse(bytes);
-          const manifest = embedding.manifest;
-          if (!manifest?.profile_hash || !manifest?.runtime_version || !manifest.models?.en?.revision) throw new Error("invalid embedding manifest");
-          writeFileSync("public/recommendation-bundle.json", `${JSON.stringify({ source_commit: process.env.GITHUB_SHA, profile_hash: manifest.profile_hash, model_revision: manifest.models.en.revision, runtime_version: manifest.runtime_version, embeddings_sha256: createHash("sha256").update(bytes).digest("hex"), benchmark_status: "passed" }, null, 2)}\n`);
-          NODE
-      - name: Upload immutable recommendation bundle
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: recommendation-bundle-${{ github.sha }}
-          path: |
-            public/embeddings.json
-            public/recommendation-bundle.json
-          if-no-files-found: error
       - name: Upload full real-paper report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

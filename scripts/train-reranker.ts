@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { RERANKER_FEATURE_SCHEMA } from "../site/recommender.ts";
 
-type DevRecord = { paper_id: string; acceptable_venues: string[] };
+type DevRecord = { paper_id: string; primary_venue?: string; acceptable_venues: string[] };
 type DevFixture = { records: DevRecord[] };
 type Candidate = { venue: string; base_score: number; features: Record<string, number> };
 type FeatureRecord = { paper_id: string; candidates: Candidate[] };
@@ -13,6 +13,14 @@ type Row = { x: number[]; y: number; paperId: string; venue: string; baseScore: 
 type Model = { intercept: number; weights: number[] };
 const LAMBDAS = [0.01, 0.08, 0.2] as const;
 const BLENDS = [0.05, 0.15, 0.3, 0.5, 1] as const;
+const FOLDS = 5;
+/** sufficient 解禁条件: dev 上でこの精度が証明できるまで「十分な一致」は出さない。 */
+export const SUFFICIENT_POLICY = {
+  min_precision: 0.8,
+  min_wilson_lcb: 0.65,
+  min_coverage: 0.1,
+  min_positives: 20,
+} as const;
 
 function sha(value: string | Uint8Array): string {
   return createHash("sha256").update(value).digest("hex");
@@ -20,10 +28,14 @@ function sha(value: string | Uint8Array): string {
 function sigmoid(value: number): number {
   return 1 / (1 + Math.exp(-Math.max(-35, Math.min(35, value))));
 }
-function splitIndex(id: string): number {
-  let value = 0;
-  for (const byte of Buffer.from(id)) value = (value * 33 + byte) >>> 0;
-  return value % 3;
+/** Venue-family grouped fold assignment: same primary venue never spans train/test. */
+function familyFolds(dev: DevFixture): Map<string, number> {
+  const families = [
+    ...new Set(dev.records.map((record) => record.primary_venue ?? record.paper_id)),
+  ].sort();
+  const assignment = new Map<string, number>();
+  for (const [index, family] of families.entries()) assignment.set(family, index % FOLDS);
+  return assignment;
 }
 function trainLinear(rows: Row[], lambda: number): Model {
   const weights = Array(RERANKER_FEATURE_SCHEMA.length).fill(0);
@@ -69,9 +81,10 @@ function pairwiseRows(rows: Row[]): Row[] {
   return out;
 }
 function modelLogit(model: Model, row: Row): number {
-  return (
-    model.intercept + row.x.reduce((sum, value, index) => sum + value * model.weights[index], 0)
-  );
+  return model.intercept + weights_dot(model.weights, row.x);
+}
+function weights_dot(weights: number[], x: number[]): number {
+  return x.reduce((sum, value, index) => sum + value * weights[index], 0);
 }
 function rankMetrics(
   rows: Row[],
@@ -122,31 +135,53 @@ function fitPlatt(values: Array<{ logit: number; y: number }>): {
   }
   return { slope, intercept };
 }
-function thresholdEvidence(top: Array<{ probability: number; correct: boolean }>) {
-  const thresholds = [...new Set(top.map((item) => item.probability))].sort((a, b) => a - b);
-  const choices = thresholds.map((threshold) => {
-    const selected = top.filter((item) => item.probability >= threshold);
-    return {
-      threshold,
-      precision: selected.filter((item) => item.correct).length / selected.length,
-      coverage: selected.length / top.length,
-    };
-  });
-  choices.sort(
-    (left, right) =>
-      right.precision - left.precision ||
-      right.coverage - left.coverage ||
-      right.threshold - left.threshold,
-  );
-  const selected = choices[0];
-  const sufficient = Math.min(0.99, Math.max(...thresholds) + 0.05);
+function wilsonLowerBound(correct: number, total: number): number {
+  if (total === 0) return 0;
+  const z = 1.96;
+  const p = correct / total;
+  const denominator = 1 + (z * z) / total;
+  const centre = p + (z * z) / (2 * total);
+  const margin = z * Math.sqrt((p * (1 - p)) / total + (z * z) / (4 * total * total));
+  return Math.max(0, (centre - margin) / denominator);
+}
+/**
+ * sufficient threshold は dev OOF top-1 の精度で解禁を判定する。
+ * 条件未達なら sufficient_enabled=false を返し、UI は 2 段階に落ちる。
+ */
+function confidencePolicy(
+  top: Array<{ probability: number; correct: boolean }>,
+  thresholds: {
+    sufficient: number;
+    ambiguous: number;
+  },
+) {
+  const selected = top.filter((item) => item.probability >= thresholds.sufficient);
+  const positives = selected.filter((item) => item.correct).length;
+  const precision = selected.length ? positives / selected.length : null;
+  const coverage = selected.length / Math.max(1, top.length);
+  const wilsonLcb = wilsonLowerBound(positives, selected.length);
+  const policy = SUFFICIENT_POLICY;
+  const checks = {
+    precision_ok: precision !== null && precision >= policy.min_precision,
+    wilson_lcb_ok: selected.length > 0 && wilsonLcb >= policy.min_wilson_lcb,
+    coverage_ok: coverage >= policy.min_coverage,
+    positives_ok: positives >= policy.min_positives,
+  };
+  const enabled = Object.values(checks).every(Boolean);
   return {
-    sufficient,
-    ambiguous: thresholds[Math.floor((thresholds.length - 1) / 3)],
-    precision: null,
-    coverage: 0,
-    best_observed_precision: selected.precision,
-    best_observed_coverage: selected.coverage,
+    sufficient_enabled: enabled,
+    reason: enabled ? "target precision reached" : "target precision not reached",
+    unmet_checks: Object.entries(checks)
+      .filter(([, ok]) => !ok)
+      .map(([name]) => name),
+    evidence: {
+      sufficient_precision: precision === null ? null : Number(precision.toFixed(8)),
+      wilson_95_lcb: Number(wilsonLcb.toFixed(8)),
+      sufficient_coverage: Number(coverage.toFixed(8)),
+      sufficient_positives: positives,
+      best_observed_precision: null,
+      best_observed_coverage: null,
+    },
   };
 }
 
@@ -160,7 +195,7 @@ function main(argv = process.argv.slice(2)): void {
       out: { type: "string" },
     },
   });
-  const devPath = values.dev ?? "data/benchmarks/real-paper-required-dev.json";
+  const devPath = values.dev ?? "data/benchmarks/real-paper-dev.json";
   const featurePath = values.features ?? "data/benchmarks/real-paper-required-features.json";
   const profilePath = values.profiles ?? "data/venue-profiles.json";
   const outPath = values.out ?? "data/recommender-reranker.json";
@@ -175,7 +210,7 @@ function main(argv = process.argv.slice(2)): void {
   )
     throw new Error("production reranker feature schema mismatch");
   const devIds = new Set(dev.records.map((record) => record.paper_id));
-  if (devIds.size < 6) throw new Error("dev training set is too small");
+  if (devIds.size < FOLDS) throw new Error("dev training set is too small for grouped CV");
   const selectedFeatures = [
     ...new Map(
       features.records
@@ -200,6 +235,14 @@ function main(argv = process.argv.slice(2)): void {
       };
     }),
   );
+  // Grouped CV: papers sharing a primary venue stay in the same fold.
+  const foldOfPaper = new Map<string, number>();
+  for (const [family, fold] of familyFolds(dev)) {
+    for (const record of dev.records) {
+      if ((record.primary_venue ?? record.paper_id) === family)
+        foldOfPaper.set(record.paper_id, fold);
+    }
+  }
   const trials: Array<{
     lambda: number;
     blend: number;
@@ -209,20 +252,17 @@ function main(argv = process.argv.slice(2)): void {
   }> = [];
   for (const lambda of LAMBDAS) {
     const logits: Array<{ key: string; logit: number; y: number }> = [];
-    for (let fold = 0; fold < 3; fold++) {
-      const model = trainLinear(
-        pairwiseRows(rows.filter((row) => splitIndex(row.paperId) !== fold)),
-        lambda,
-      );
-      rows
-        .filter((row) => splitIndex(row.paperId) === fold)
-        .forEach((row) => {
-          logits.push({
-            key: `${row.paperId}\0${row.venue}`,
-            logit: modelLogit(model, row),
-            y: row.y,
-          });
+    for (let fold = 0; fold < FOLDS; fold++) {
+      const trainRows = rows.filter((row) => foldOfPaper.get(row.paperId) !== fold);
+      const testRows = rows.filter((row) => foldOfPaper.get(row.paperId) === fold);
+      const model = trainLinear(pairwiseRows(trainRows), lambda);
+      testRows.forEach((row) => {
+        logits.push({
+          key: `${row.paperId}\0${row.venue}`,
+          logit: modelLogit(model, row),
+          y: row.y,
         });
+      });
     }
     const predictions = new Map(logits.map((item) => [item.key, sigmoid(item.logit)]));
     for (const blend of BLENDS) {
@@ -243,7 +283,21 @@ function main(argv = process.argv.slice(2)): void {
     selected.logits.map((item) => [item.key, sigmoid(platt.slope * item.logit + platt.intercept)]),
   );
   const calibratedMetric = rankMetrics(rows, calibrated, selected.blend);
-  const thresholds = thresholdEvidence(calibratedMetric.top);
+  const candidateThresholds = {
+    // provisional sufficient point before the gate decides
+    sufficient: Math.min(
+      0.99,
+      Math.max(...new Set(calibratedMetric.top.map((item) => item.probability))) + 0.05,
+    ),
+    ambiguous:
+      [...new Set(calibratedMetric.top.map((item) => item.probability))].sort((a, b) => a - b)[
+        Math.floor((calibratedMetric.top.length - 1) / 3)
+      ] ?? 0,
+  };
+  const policy = confidencePolicy(calibratedMetric.top, candidateThresholds);
+  const ambiguousThreshold = Number(
+    Math.min(candidateThresholds.ambiguous, candidateThresholds.sufficient).toFixed(8),
+  );
   const model = trainLinear(pairwiseRows(rows), selected.lambda);
   const brier =
     selected.logits.reduce((sum, item) => {
@@ -254,9 +308,9 @@ function main(argv = process.argv.slice(2)): void {
     version: 1,
     model: "linear-logit",
     coefficient_source: "trained",
-    selected_on: "real-paper-required-dev",
+    selected_on: "real-paper-dev",
     selection_metric: "dev-oof-mrr-then-recall-at-5",
-    algorithm_revision: "l2-pairwise-logistic-reranker-v2",
+    algorithm_revision: "l2-pairwise-logistic-reranker-v3-grouped-cv",
     feature_schema: [...RERANKER_FEATURE_SCHEMA],
     training_data_hash: sha(devRaw),
     input_hashes: {
@@ -265,8 +319,9 @@ function main(argv = process.argv.slice(2)): void {
       [profilePath]: sha(profileRaw),
     },
     cv: {
-      folds: 3,
-      assignment: "paper-id-hash-mod-3",
+      folds: FOLDS,
+      assignment: "primary-venue-grouped-round-robin",
+      dev_papers: devIds.size,
       selected_lambda: selected.lambda,
       selected_blend: selected.blend,
       oof_mrr: Number(selected.mrr.toFixed(8)),
@@ -284,15 +339,19 @@ function main(argv = process.argv.slice(2)): void {
       intercept: Number(platt.intercept.toFixed(10)),
       comparison: {
         platt_brier: Number(brier.toFixed(8)),
-        isotonic: { eligible: false, reason: "fewer than 20 dev papers" },
+        isotonic: {
+          eligible: devIds.size >= 20,
+          reason: devIds.size >= 20 ? undefined : "fewer than 20 dev papers",
+        },
       },
     },
+    confidence_policy: {
+      ...policy,
+      unlock_conditions: SUFFICIENT_POLICY,
+    },
     threshold_evidence: {
-      source: "dev-oof-top1",
-      sufficient_precision: thresholds.precision,
-      sufficient_coverage: Number(thresholds.coverage.toFixed(8)),
-      best_observed_precision: Number(thresholds.best_observed_precision.toFixed(8)),
-      best_observed_coverage: Number(thresholds.best_observed_coverage.toFixed(8)),
+      source: "dev-oof-top1-platt-calibrated",
+      ...policy.evidence,
       guard_margin: 0.05,
     },
     intercept: Number(model.intercept.toFixed(10)),
@@ -304,8 +363,8 @@ function main(argv = process.argv.slice(2)): void {
     ),
     blend: selected.blend,
     confidence_thresholds: {
-      sufficient: Number(thresholds.sufficient.toFixed(8)),
-      ambiguous: Number(Math.min(thresholds.ambiguous, thresholds.sufficient).toFixed(8)),
+      sufficient: Number(candidateThresholds.sufficient.toFixed(8)),
+      ambiguous: ambiguousThreshold,
     },
   };
   writeFileSync(outPath, `${JSON.stringify(artifact, null, 2)}\n`);

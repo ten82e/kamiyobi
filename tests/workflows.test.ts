@@ -150,12 +150,20 @@ describe("CI contracts", () => {
     expect(nightly).toContain("schedule:");
     expect(nightly).toContain("release:");
     expect(nightly).toContain("Run full real-paper benchmark");
-    expect(nightly.indexOf("Run full real-paper benchmark")).toBeLessThan(
-      nightly.indexOf("Seal recommendation bundle"),
-    );
+    // nightly は評価専用: bundle seal も bundle upload も deploy trigger も持たない。
+    expect(nightly).not.toContain("Seal recommendation bundle");
+    expect(nightly).not.toContain("name: recommendation-bundle-");
+    expect(nightly).not.toContain("github.sha }}");
+    const deployText = workflow("../.github/workflows/deploy.yml").text;
+    expect(deployText).toContain("workflows: [recommendation-bundle]");
+    expect(deployText).not.toContain("[nightly,");
     const bundle = workflow("../.github/workflows/recommendation-bundle.yml").text;
     expect(bundle).toMatch(/push:\s*\n\s+branches: \[main\]/);
     expect(bundle).not.toMatch(/^\s+paths:/m);
+    // semantic 公開には required gate と full benchmark の両方が要る。
+    expect(bundle).toContain("full real-paper benchmark before sealing");
+    expect(bundle).toContain("semantic_content_id");
+    expect(bundle).toContain('full_benchmark: "passed"');
     for (const workflow of [text, bundle]) expect(workflow).toContain("real-paper-negative.json");
   });
 
