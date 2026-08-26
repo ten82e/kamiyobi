@@ -39,7 +39,7 @@ function stripChurn(v: unknown): unknown {
     const rec = v as Record<string, unknown>;
     const out: Record<string, unknown> = {};
     for (const [k, val] of Object.entries(rec)) {
-      if (k === "generated_at" || k === "_comment") continue;
+      if (k === "generated_at" || k === "observed_at" || k === "_comment") continue;
       out[k] = stripChurn(val);
     }
     return out;
