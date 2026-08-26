@@ -160,10 +160,11 @@ describe("CI contracts", () => {
     const bundle = workflow("../.github/workflows/recommendation-bundle.yml").text;
     expect(bundle).toMatch(/push:\s*\n\s+branches: \[main\]/);
     expect(bundle).not.toMatch(/^\s+paths:/m);
-    // semantic 公開には required gate と full benchmark の両方が要る。
+    // semantic 公開には required gate と full benchmark の両方が要る。seal は共有 script 経由。
     expect(bundle).toContain("full real-paper benchmark before sealing");
     expect(bundle).toContain("semantic_content_id");
-    expect(bundle).toContain('full_benchmark: "passed"');
+    expect(bundle).toContain("seal-recommendation-bundle.ts");
+    expect(bundle).toContain("--no-embeddings");
     for (const workflow of [text, bundle]) expect(workflow).toContain("real-paper-negative.json");
   });
 

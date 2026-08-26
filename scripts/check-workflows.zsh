@@ -48,7 +48,11 @@ rg -q 'real-paper-negative.json' .github/workflows/ci.yml .github/workflows/reco
 rg -Fq 'workflows: [recommendation-bundle]' .github/workflows/deploy.yml
 ! rg -Fq '[nightly,' .github/workflows/deploy.yml
 rg -q 'semantic_content_id' .github/workflows/recommendation-bundle.yml
-rg -q 'full_benchmark: "passed"' .github/workflows/recommendation-bundle.yml
+rg -q 'seal-recommendation-bundle.ts' .github/workflows/recommendation-bundle.yml
+rg -q 'full_benchmark: "passed"' scripts/seal-recommendation-bundle.ts
+rg -Fq 'computeSemanticContentId' src/semantic-content.ts
 rg -q 'Run full real-paper benchmark before sealing' .github/workflows/recommendation-bundle.yml
+# reuse 判定前の build は必ず --no-embeddings
+rg -q 'build --out public --offline --no-embeddings' .github/workflows/recommendation-bundle.yml
 
 print workflow-policy-ok
