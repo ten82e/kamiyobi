@@ -1854,10 +1854,7 @@ export function evaluateHealthGate(
   // warning code は上流取得の有無で数が変わるため比較対象にならない。slot 内容の比較だけを行う。
   const comparableBaseline = previousReport.snapshot_fallback !== true;
   const previousWarnings = reportWarningCount(previousReport);
-  if (
-    comparableBaseline &&
-    reportWarningCount(currentReport) > previousWarnings * 2 + 5
-  ) {
+  if (comparableBaseline && reportWarningCount(currentReport) > previousWarnings * 2 + 5) {
     reasons.push("parse warnings increased sharply");
   }
   const previousConflicts = previousReport.identity_conflicts;

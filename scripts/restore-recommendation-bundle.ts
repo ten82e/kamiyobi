@@ -3,7 +3,13 @@ import { copyFileSync, existsSync, readFileSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import { embeddingsStale, type PublishManifest, writePublishManifest } from "../src/build.ts";
 import { embeddingProfileHash } from "../src/embeddings.ts";
-import { EMBEDDING_MODEL, EMBEDDING_MULTI_MODEL, EMBEDDING_MULTI_REVISION, EMBEDDING_REVISION, EMBEDDING_RUNTIME_VERSION } from "../src/embeddings.ts";
+import {
+  EMBEDDING_MODEL,
+  EMBEDDING_MULTI_MODEL,
+  EMBEDDING_MULTI_REVISION,
+  EMBEDDING_REVISION,
+  EMBEDDING_RUNTIME_VERSION,
+} from "../src/embeddings.ts";
 import { computeSemanticContentId } from "../src/semantic-content.ts";
 
 export function restoreRecommendationBundle(bundlePath: string, outdir: string): boolean {
@@ -20,13 +26,20 @@ export function restoreRecommendationBundle(bundlePath: string, outdir: string):
   // 現在の data から content id を再計算し、semantic 内容が一致することだけを要求する。
   const currentContentId = computeSemanticContentId({
     profileHash: embeddingProfileHash(data),
-    rerankerHash: createHash("sha256").update(readFileSync("data/recommender-reranker.json")).digest("hex"),
+    rerankerHash: createHash("sha256")
+      .update(readFileSync("data/recommender-reranker.json"))
+      .digest("hex"),
     algorithmRevision: String(
-      (JSON.parse(readFileSync("data/recommender-reranker.json", "utf8")) as Record<string, unknown>)
-        .algorithm_revision ?? "",
+      (
+        JSON.parse(readFileSync("data/recommender-reranker.json", "utf8")) as Record<
+          string,
+          unknown
+        >
+      ).algorithm_revision ?? "",
     ),
-    featureSchema: ((JSON.parse(readFileSync("data/recommender-reranker.json", "utf8")) as Record<string, unknown>)
-      .feature_schema ?? []) as string[],
+    featureSchema: ((
+      JSON.parse(readFileSync("data/recommender-reranker.json", "utf8")) as Record<string, unknown>
+    ).feature_schema ?? []) as string[],
     embeddingModel: EMBEDDING_MODEL,
     embeddingRevision: EMBEDDING_REVISION,
     multilingualModel: EMBEDDING_MULTI_MODEL,

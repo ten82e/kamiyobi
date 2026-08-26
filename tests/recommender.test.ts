@@ -1284,7 +1284,7 @@ describe("recommendation bundle restoration", () => {
     };
     const embeddingPath = join(bundleDir, "embeddings.json");
     writeFileSync(embeddingPath, JSON.stringify(embeddings));
-    const publish = writePublishManifest(
+    writePublishManifest(
       out,
       ["data.json", "base.txt"],
       new Date("2026-08-09T00:00:00Z"),
