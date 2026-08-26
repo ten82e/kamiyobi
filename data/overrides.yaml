@@ -507,6 +507,9 @@ conferences:
       2025:
         deadlines:
           - {kind: paper, label: 'Paper submission (extended)', date: '2024-09-16 23:59:59', tz: PST}
+      2027:
+        deadlines:
+          - {kind: paper, label: 'Paper submission', date: '2026-09-15 23:59:59', tz: PST}
 
   # 根拠: https://group.acm.org/conferences/group27/ (2026-08-12 取得) Important Dates:
   #   First Wave 2025-07-08/15 (収録済み) に加え Second Wave「Abstract and Title

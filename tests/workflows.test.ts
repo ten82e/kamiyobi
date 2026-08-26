@@ -129,13 +129,14 @@ describe("workflow separation", () => {
 });
 
 describe("CI contracts", () => {
-  it("keeps seven CI jobs, adds dispatch, and reserves the full benchmark for nightly", () => {
+  it("keeps eight CI jobs, adds dispatch, and reserves the full benchmark for nightly", () => {
     const { text, value } = workflow("../.github/workflows/ci.yml");
     expect(text).toContain("workflow_dispatch:");
     expect(Object.keys(value.jobs ?? {}).sort()).toEqual([
       "health-transition",
       "lint",
       "offline-build",
+      "production-health-self-check",
       "recommendation-regression",
       "typecheck",
       "unit-integration-tests",

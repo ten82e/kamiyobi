@@ -104,6 +104,20 @@ jobs:
           fi
           node scripts/health-gate.ts public/health.json --require-baseline \
             /tmp/kamiyobi-health-baseline/health.json /tmp/next-last-known-good-health.json
+          gate_status=$?
+          # Save current + baseline for diagnostics even on failure.
+          mkdir -p /tmp/kamiyobi-deploy-diagnostics
+          cp public/health.json /tmp/kamiyobi-deploy-diagnostics/current-health.json
+          cp /tmp/kamiyobi-health-baseline/health.json /tmp/kamiyobi-deploy-diagnostics/baseline-health.json
+          echo "$gate_status" > /tmp/kamiyobi-deploy-diagnostics/gate-status
+          exit "$gate_status"
+      - name: Upload deploy health diagnostics
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: deploy-health-diagnostics
+          path: /tmp/kamiyobi-deploy-diagnostics/
+          if-no-files-found: warn
       - name: Upload deploy health baseline
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

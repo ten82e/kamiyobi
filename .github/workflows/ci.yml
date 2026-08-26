@@ -77,6 +77,33 @@ jobs:
         with: { node-version: '24', cache: npm }
       - run: npm ci
       - run: npm test -- --run tests/health_gate.test.ts
+  production-health-self-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: '24', cache: npm }
+      - run: npm ci
+      - name: Build offline production data
+        run: node src/cli.ts build --out /tmp/kamiyobi-self-check --offline --no-embeddings --cache /tmp/kamiyobi-cache --now 2026-08-09T00:00:00Z
+      - name: Validate production data schema
+        run: npm run validate:data -- /tmp/kamiyobi-self-check/data.json --json
+      - name: Health gate (current-state, no baseline)
+        run: node scripts/health-gate.ts /tmp/kamiyobi-self-check/health.json
+      - name: Save diagnostics on failure
+        if: failure()
+        run: |
+          mkdir -p /tmp/kamiyobi-diagnostics
+          cp /tmp/kamiyobi-self-check/health.json /tmp/kamiyobi-diagnostics/health.json
+          cp /tmp/kamiyobi-self-check/data.json /tmp/kamiyobi-diagnostics/data.json
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: production-health-diagnostics
+          path: /tmp/kamiyobi-diagnostics/
+          if-no-files-found: warn
   recommendation-regression:
     runs-on: ubuntu-latest
     steps:
