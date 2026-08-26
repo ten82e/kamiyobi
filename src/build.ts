@@ -1903,10 +1903,8 @@ export function evaluateHealthGate(
     currentConflicts.new_since_baseline = newConflicts;
     if (newConflicts > 0) reasons.push(`identity conflicts increased by ${newConflicts}`);
   }
-  const previousWarningCodes: Record<
-    string,
-    { count: number; messages: string[] }
-  > | undefined = previousIsOnline ? previousReport.warning_codes : observation?.warning_codes;
+  const previousWarningCodes: Record<string, { count: number; messages: string[] }> | undefined =
+    previousIsOnline ? previousReport.warning_codes : observation?.warning_codes;
   if (diagnosticsAvailable && previousWarningCodes) {
     for (const [code, warning] of Object.entries(currentReport.warning_codes ?? {})) {
       const prior = previousWarningCodes[code];

@@ -1,9 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import {
-  evaluateHealthGate,
-  type HealthReport,
-  type ObservationBaseline,
-} from "../src/build.ts";
+import { evaluateHealthGate, type HealthReport, type ObservationBaseline } from "../src/build.ts";
 
 export interface HealthGateArgs {
   currentPath: string;

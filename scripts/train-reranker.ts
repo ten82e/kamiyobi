@@ -157,12 +157,20 @@ function wilsonLowerBound(correct: number, total: number): number {
 function confidencePolicy(top: Array<{ probability: number; correct: boolean }>) {
   const policy = SUFFICIENT_POLICY;
   const candidates = [...new Set(top.map((item) => item.probability))].sort((a, b) => b - a);
-  let chosen:
-    | { threshold: number; precision: number; wilsonLcb: number; coverage: number; positives: number }
-    | null = null;
-  let bestObserved:
-    | { threshold: number; precision: number; wilsonLcb: number; coverage: number; positives: number }
-    | null = null;
+  let chosen: {
+    threshold: number;
+    precision: number;
+    wilsonLcb: number;
+    coverage: number;
+    positives: number;
+  } | null = null;
+  let bestObserved: {
+    threshold: number;
+    precision: number;
+    wilsonLcb: number;
+    coverage: number;
+    positives: number;
+  } | null = null;
   for (const threshold of candidates) {
     const selected = top.filter((item) => item.probability >= threshold);
     if (selected.length === 0) continue;
@@ -219,11 +227,14 @@ function confidencePolicy(top: Array<{ probability: number; correct: boolean }>)
       wilson_95_lcb: chosen === null ? null : Number(chosen.wilsonLcb.toFixed(8)),
       sufficient_coverage: chosen === null ? null : Number(chosen.coverage.toFixed(8)),
       sufficient_positives: chosen === null ? null : chosen.positives,
-      best_observed_threshold: bestObserved === null ? null : Number(bestObserved.threshold.toFixed(8)),
-      best_observed_precision: bestObserved === null ? null : Number(bestObserved.precision.toFixed(8)),
+      best_observed_threshold:
+        bestObserved === null ? null : Number(bestObserved.threshold.toFixed(8)),
+      best_observed_precision:
+        bestObserved === null ? null : Number(bestObserved.precision.toFixed(8)),
       best_observed_wilson_95_lcb:
         bestObserved === null ? null : Number(bestObserved.wilsonLcb.toFixed(8)),
-      best_observed_coverage: bestObserved === null ? null : Number(bestObserved.coverage.toFixed(8)),
+      best_observed_coverage:
+        bestObserved === null ? null : Number(bestObserved.coverage.toFixed(8)),
       best_observed_positives: bestObserved === null ? null : bestObserved.positives,
     },
   };
@@ -328,9 +339,9 @@ function main(argv = process.argv.slice(2)): void {
   );
   const calibratedMetric = rankMetrics(rows, calibrated, selected.blend);
   // ambiguous threshold: OOF top-1 確率の下位 1/3 分位点 (解禁時は sufficient 未満に丸める)。
-  const sortedProbabilities = [...new Set(calibratedMetric.top.map((item) => item.probability))].sort(
-    (a, b) => a - b,
-  );
+  const sortedProbabilities = [
+    ...new Set(calibratedMetric.top.map((item) => item.probability)),
+  ].sort((a, b) => a - b);
   const ambiguousThreshold = Number(
     (sortedProbabilities[Math.floor((sortedProbabilities.length - 1) / 3)] ?? 0).toFixed(8),
   );
