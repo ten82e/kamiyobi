@@ -8,8 +8,8 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { makeFixtureCache, runCli } from "./helpers.ts";
 import { evaluateHealthGate, type HealthReport, type ObservationBaseline } from "../src/build.ts";
+import { makeFixtureCache, runCli } from "./helpers.ts";
 
 const tempDirs: string[] = [];
 function scratch(): string {
