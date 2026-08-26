@@ -1031,6 +1031,63 @@ type RealPaperProfiles = Record<string, string[]> | VenueProfileArtifact;
 
 export type RealPaperRanks = Record<RealPaperMode, number | null>;
 
+/** Per-query failure classification for the recommendation pipeline. */
+export type FailureType =
+  | "none"
+  | "retrieval" // acceptable venue not in candidate set at all
+  | "reranker" // acceptable venue in candidates but not in top-5 fused
+  | "annotation" // recommended venue is valid but not in acceptable_venues
+  | "calibration"; // top-5 has acceptable venue but confidence is wrong
+
+export interface FailureClassification {
+  failure_type: FailureType;
+  /** Rank of best acceptable venue in the union of lexical+semantic candidates */
+  union_rank: number | null;
+  /** Rank of best acceptable venue in the fused (reranker) ranking */
+  fused_rank: number | null;
+  /** Number of acceptable venues found in the candidate set */
+  acceptable_in_candidates: number;
+  /** Total number of acceptable venues for this query */
+  acceptable_total: number;
+  /** Confidence label from the reranker */
+  confidence: string;
+}
+
+export function classifyFailure(
+  lexicalRank: number | null,
+  semanticRank: number | null,
+  fusedRank: number | null,
+  acceptableVenues: ReadonlySet<string>,
+  candidateKeys: ReadonlySet<string>,
+  confidence: string,
+): FailureClassification {
+  const unionRank =
+    lexicalRank !== null && semanticRank !== null
+      ? Math.min(lexicalRank, semanticRank)
+      : (lexicalRank ?? semanticRank);
+  const acceptableInCandidates = [...acceptableVenues].filter((v) => candidateKeys.has(v)).length;
+  const top5Hit = fusedRank !== null && fusedRank <= 5;
+  const candidateHit = unionRank !== null && unionRank <= 50;
+
+  let failureType: FailureType = "none";
+  if (!candidateHit) {
+    failureType = "retrieval";
+  } else if (!top5Hit) {
+    failureType = "reranker";
+  } else if (confidence !== "sufficient") {
+    failureType = "calibration";
+  }
+
+  return {
+    failure_type: failureType,
+    union_rank: unionRank,
+    fused_rank: fusedRank,
+    acceptable_in_candidates: acceptableInCandidates,
+    acceptable_total: acceptableVenues.size,
+    confidence,
+  };
+}
+
 export interface BootstrapConfidenceInterval {
   method: "bootstrap";
   confidence_level: 0.95;
@@ -1081,6 +1138,7 @@ export interface RealPaperSplitResult {
     oracle_reranker_recall_at_5: number;
   };
   calibration: RecommendationCalibration;
+  failure_taxonomy?: Record<FailureType, number>;
 }
 
 export interface RealPaperNegativeRecord {
@@ -1649,6 +1707,7 @@ function realPaperSplitResult(
   rankings: Record<string, RealPaperRanks>,
   confidence: Record<string, string>,
   predictedProbability?: Record<string, { top1: number; top5: number }>,
+  failures?: Record<string, FailureClassification>,
 ): RealPaperSplitResult {
   const metrics = realPaperMetrics(records, rankings);
   const probabilities = records.map((record) => {
@@ -1689,6 +1748,15 @@ function realPaperSplitResult(
       ),
     },
     calibration: calibrationMetrics(probabilities),
+    failure_taxonomy: failures
+      ? Object.values(failures).reduce<Record<FailureType, number>>(
+          (acc, f) => {
+            acc[f.failure_type]++;
+            return acc;
+          },
+          { none: 0, retrieval: 0, reranker: 0, annotation: 0, calibration: 0 },
+        )
+      : undefined,
   };
 }
 
@@ -1700,11 +1768,13 @@ export function buildRealPaperResult(
       rankings: Record<string, RealPaperRanks>;
       confidence: Record<string, string>;
       probability?: Record<string, { top1: number; top5: number }>;
+      failures?: Record<string, FailureClassification>;
     };
     heldout: {
       rankings: Record<string, RealPaperRanks>;
       confidence: Record<string, string>;
       probability?: Record<string, { top1: number; top5: number }>;
+      failures?: Record<string, FailureClassification>;
     };
     negative?: { rankings: Record<string, RealPaperRanks>; confidence: Record<string, string> };
   },
@@ -1725,12 +1795,14 @@ export function buildRealPaperResult(
         evaluations.dev.rankings,
         evaluations.dev.confidence,
         evaluations.dev.probability,
+        evaluations.dev.failures,
       ),
       heldout: realPaperSplitResult(
         heldout.records,
         evaluations.heldout.rankings,
         evaluations.heldout.confidence,
         evaluations.heldout.probability,
+        evaluations.heldout.failures,
       ),
       ...(negative && evaluations.negative
         ? {
@@ -1943,6 +2015,8 @@ export async function runRealPaperBenchmark(
     rankings: RealPaperRanks;
     confidence: string;
     probability: { top1: number; top5: number };
+    failure: FailureClassification;
+    candidateKeys: Set<string>;
   } => {
     const vector = vectors.get(record.paper_id);
     if (!useFrozenFeatures && !vector)
@@ -2021,17 +2095,31 @@ export async function runRealPaperBenchmark(
           right.fit.semanticScore - left.fit.semanticScore ||
           left.venueKey.localeCompare(right.venueKey),
       );
+    const lexicalRank = realPaperRank(lexical, acceptable);
+    const semanticRank = realPaperRank(semantic, acceptable);
+    const fusedRank = realPaperRank(recommendations, acceptable);
+    const conf = String(recommendations[0]?.fit.confidence ?? "insufficient");
+    const candidateKeySet = new Set(recommendations.map((r) => r.venueKey));
     return {
       rankings: {
-        lexical: realPaperRank(lexical, acceptable),
-        semantic: realPaperRank(semantic, acceptable),
-        fused: realPaperRank(recommendations, acceptable),
+        lexical: lexicalRank,
+        semantic: semanticRank,
+        fused: fusedRank,
       },
-      confidence: String(recommendations[0]?.fit.confidence ?? "insufficient"),
+      confidence: conf,
       probability: {
         top1: recommendations[0]?.fit.probability ?? 0,
         top5: Math.max(0, ...recommendations.slice(0, 5).map((item) => item.fit.probability)),
       },
+      failure: classifyFailure(
+        lexicalRank,
+        semanticRank,
+        fusedRank,
+        acceptable,
+        candidateKeySet,
+        conf,
+      ),
+      candidateKeys: candidateKeySet,
     };
   };
   const evaluate = (
@@ -2042,10 +2130,12 @@ export async function runRealPaperBenchmark(
     rankings: Record<string, RealPaperRanks>;
     confidence: Record<string, string>;
     probability: Record<string, { top1: number; top5: number }>;
+    failures: Record<string, FailureClassification>;
   } => {
     const rankings: Record<string, RealPaperRanks> = {};
     const confidence: Record<string, string> = {};
     const probability: Record<string, { top1: number; top5: number }> = {};
+    const failures: Record<string, FailureClassification> = {};
     const rows = rowsFor(fixture.profile_year_max);
     Recommender.setNameIdf(Recommender.buildNameIdf(rows.map((row) => row.conf)));
     for (const record of fixture.records) {
@@ -2053,8 +2143,9 @@ export async function runRealPaperBenchmark(
       rankings[record.paper_id] = evaluation.rankings;
       confidence[record.paper_id] = evaluation.confidence;
       probability[record.paper_id] = evaluation.probability;
+      failures[record.paper_id] = evaluation.failure;
     }
-    return { rankings, confidence, probability };
+    return { rankings, confidence, probability, failures };
   };
   Recommender.setReranker(
     JSON.parse(readFileSync(new URL("../data/recommender-reranker.json", import.meta.url), "utf8")),

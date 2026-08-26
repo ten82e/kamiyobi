@@ -19,7 +19,7 @@
     }
   },
   "identity_conflicts": {
-    "venue": 4,
+    "venue": 3,
     "edition": 11,
     "new_since_baseline": 0,
     "details": [
@@ -116,14 +116,6 @@
         "subject": "2027|https://www.ieice.org/cs/icm/jpn|ieice-icm-2027-03|local:ieice-icm-2027-03",
         "candidates": [
           "2027|https://www.ieice.org/cs/icm/jpn|ieice-icm-2027-01|local:ieice-icm-2027-01"
-        ]
-      },
-      {
-        "scope": "venue",
-        "reason": "key-collision",
-        "subject": "ccfddl:mx/www|www|www",
-        "candidates": [
-          "aideadlines:www|www"
         ]
       },
       {

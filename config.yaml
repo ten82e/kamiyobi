@@ -32,6 +32,7 @@ venue_identities:
   ksem: {source_ids: {aideadlines: ksem, ccfddl: AI/ksem}}
   msr: {source_ids: {ccfddl: SE/msr, local: msr}}
   pacificvis: {source_ids: {ccfddl: CG/PacificVis, local: pacificvis}}
+  www: {source_ids: {aideadlines: www, ccfddl: MX/www}}
 
 # Primary の締切は開催日からこの日数以内に限る。会期不明なら開催年と前年を許可する。
 primary:
