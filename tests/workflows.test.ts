@@ -38,6 +38,9 @@ describe("workflow separation", () => {
     const fallback = value.jobs?.["trigger-fallback-ci"];
     expect(text).toContain("schedule:");
     expect(text).toContain("workflow_dispatch:");
+    // canary: workflow_dispatch は dry_run input を持ち、dry_run 時は writer job を skip する。
+    expect(text).toContain("dry_run:");
+    expect(String(writer?.if)).toContain("!inputs.dry_run");
     expect(text).not.toMatch(/\bpages\b|deploy-pages|upload-pages/i);
     expect(generated?.permissions).toEqual({ contents: "read" });
     expect(writer?.permissions).toEqual({

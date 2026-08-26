@@ -844,6 +844,9 @@ push と pull request の両方で、変更ファイルにかかわらず次の�
 - health gate の観測系比較 (parse warning・warning code・identity conflict) は、baseline が snapshot
   fallback build の場合に `data/source-observation-baseline.json` (最後に成功した online 更新の診断状態)
   を比較源にする。どちらも無い初回 bootstrap だけ観測系検査を skip し、slot 内容の比較は常に実行する。
+- update-data は `workflow_dispatch` の `dry_run: true` (既定) で canary 実行できる。dry_run では
+  writer job (data PR 作成) を skip し、診断 artifact の生成までを検証する。fixture cache 上で
+  edition id 改名・締切消失などの scenario class は `tests/update_data_canary.test.ts` が pin する。
 - 上流データ取得、候補探索、自動 PR 更新は日次 `update-data.yml` に置く。
 - 七つの job は main の required check として設定する。
 
