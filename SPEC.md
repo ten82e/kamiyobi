@@ -179,6 +179,8 @@ kamiyobi/
 │   ├── generate-venue-profiles.ts # 出典情報付きプロフィール成果物の再生成
 │   ├── observe-cfp.ts           # CFP 本文・応答・抽出候補の保存
 │   ├── restore-recommendation-bundle.ts # 互換推薦 artifact の検証・復元
+│   ├── seal-recommendation-bundle.ts # semantic_content_id 付き bundle 封印
+│   ├── semantic-content.ts     # semantic content id の算出 CLI
 │   ├── train-reranker.ts       # dev-only reranker 学習・CV・校正 artifact 生成
 │   ├── validate-data.ts         # 公開データの意味検査
 │   ├── verify-cfp.ts            # CFP 観測の項目別検証

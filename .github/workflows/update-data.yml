@@ -39,10 +39,13 @@ jobs:
       - name: Validate generated production data
         run: npm run validate:data -- public/data.json --json
       - name: Health gate
-        run: node scripts/health-gate.ts public/health.json --require-baseline /tmp/kamiyobi-baseline/health.json /tmp/next-last-known-good-health.json
+        # 失敗時でも違反報告を書いて、後続の always() 診断 step が原因を残せるようにする。
+        run: node scripts/health-gate.ts public/health.json --require-baseline /tmp/kamiyobi-baseline/health.json /tmp/next-last-known-good-health.json --report /tmp/kamiyobi-update/health-violations.json
       - name: Recommendation Top-5 delta
+        if: always() && hashFiles('public/recommendation-index.json') != ''
         run: npm run --silent bench -- --data-delta tests/fixtures/recommendation-data-delta.json --data-delta-before /tmp/kamiyobi-baseline/recommendation-index.json --data-delta-after public/recommendation-index.json --json > /tmp/kamiyobi-update/recommendation-delta.json
       - name: Summarize category changes
+        if: always()
         run: |
           mkdir -p /tmp/kamiyobi-update/data
           node --input-type=module <<'NODE' > /tmp/kamiyobi-update/category-delta.md
@@ -52,10 +55,16 @@ jobs:
           const after = JSON.parse(readFileSync("public/data.json", "utf8"));
           console.log(summarizeCategoryChanges(before, after).summary);
           NODE
-          cp public/health.json /tmp/kamiyobi-update/health.json
+          cp public/health.json /tmp/kamiyobi-update/health.json 2>/dev/null || true
           cp data/snapshot.json data/primary_overrides.yaml data/discovered_candidates.yaml \
             /tmp/kamiyobi-update/data/
+          mkdir -p /tmp/kamiyobi-update/baseline /tmp/kamiyobi-update/current
+          cp /tmp/kamiyobi-baseline/data.json /tmp/kamiyobi-update/baseline/data.json 2>/dev/null || true
+          cp /tmp/kamiyobi-baseline/health.json /tmp/kamiyobi-update/baseline/health.json 2>/dev/null || true
+          cp public/data.json /tmp/kamiyobi-update/current/data.json 2>/dev/null || true
+          test -f /tmp/kamiyobi-update/health-violations.json || echo '{"ok":true,"reasons":[],"warnings":[],"baseline_available":false,"current_path":"public/health.json","previous_path":null}' > /tmp/kamiyobi-update/health-violations.json
       - name: Summarize deadline semantic changes
+        if: always()
         run: |
           node --input-type=module <<'NODE' > /tmp/kamiyobi-update/deadline-delta.md
           import { readFileSync } from "node:fs";
@@ -64,7 +73,24 @@ jobs:
           const after = JSON.parse(readFileSync("public/data.json", "utf8"));
           console.log(summarizeDeadlineChanges(before, after).summary);
           NODE
+      - name: Summarize blocked update
+        if: failure()
+        run: |
+          {
+            echo "### update-data blocked by health gate"
+            echo '```text'
+            node -e '
+              const fs = require("node:fs");
+              try {
+                const r = JSON.parse(fs.readFileSync("/tmp/kamiyobi-update/health-violations.json", "utf8"));
+                for (const reason of r.reasons) console.log("- " + reason);
+              } catch { console.log("- (violation report unavailable)"); }
+            '
+            echo '```'
+            echo "Diagnosis artifacts are in the generated-update artifact (baseline/, current/, health-violations.json)."
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload generated update
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: generated-update
