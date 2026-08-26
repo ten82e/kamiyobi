@@ -1,0 +1,27 @@
+# Reduced copy of ccfddl/ccf-deadlines conference/ED/rtss.yml (MIT).
+# Present so the config.yaml health.required_venues check resolves in fixture builds.
+- title: RTSS
+  description: IEEE Real-Time Systems Symposium
+  sub: ED
+  rank:
+    ccf: A
+    core: A*
+    thcpl: A
+  dblp: rtss
+  confs:
+    - year: 2025
+      id: rtss25
+      link: https://2025.rtss-conference.org/
+      timeline:
+        - deadline: '2025-06-19 23:59:59'
+      timezone: AoE
+      date: December 2-5, 2025
+      place: Bradford, United Kingdom
+    - year: 2026
+      id: rtss26
+      link: https://2026.rtss-conference.org/
+      timeline:
+        - deadline: '2026-06-18 23:59:59'
+      timezone: AoE
+      date: December 1-4, 2026
+      place: San Juan, Puerto Rico, USA

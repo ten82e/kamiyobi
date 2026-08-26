@@ -193,7 +193,8 @@ jobs:
           snap_changed=$(node scripts/compare-head.ts data/snapshot.json)
           primary_changed=$(node scripts/compare-head.ts data/primary_overrides.yaml)
           candidate_changed=$(node scripts/compare-head.ts data/discovered_candidates.yaml)
-          if [ "$snap_changed" != 1 ] && [ "$primary_changed" != 1 ] && [ "$candidate_changed" != 1 ]; then
+          observation_changed=$(node scripts/compare-head.ts data/source-observation-baseline.json)
+          if [ "$snap_changed" != 1 ] && [ "$primary_changed" != 1 ] && [ "$candidate_changed" != 1 ] && [ "$observation_changed" != 1 ]; then
             if [ -n "$pr_number" ]; then gh pr close "$pr_number"; fi
             if [ "$existing_branch" = true ]; then git push origin --delete "$branch"; fi
             exit 0
@@ -203,6 +204,8 @@ jobs:
           if [ "$snap_changed" = 1 ]; then git add data/snapshot.json; fi
           if [ "$primary_changed" = 1 ]; then git add data/primary_overrides.yaml; fi
           if [ "$candidate_changed" = 1 ]; then git add data/discovered_candidates.yaml; fi
+          # observed_at 更新だけでは stage しない (compare-head が除外)。診断内容の変化のみ commit。
+          if [ "$observation_changed" = 1 ]; then git add data/source-observation-baseline.json; fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'chore: update deadline data'
