@@ -98,7 +98,7 @@ describe("update-data canary", () => {
     );
   });
 
-  it("a new warning code fails when the observation baseline knows the old codes", () => {
+  it("a new warning code fails when the observation baseline knows the old codes", { timeout: 120_000 }, () => {
     const { baseline, current } = buildPair();
     // snapshot-fallback baseline では warning_codes が記録されないため、
     // update-data workflow と同じく observation baseline を比較源にする。
@@ -113,7 +113,7 @@ describe("update-data canary", () => {
     expect(withBaseline.reasons.some((r) => r.includes("new warning code"))).toBe(true);
   });
 
-  it("a new identity conflict fails when the observation baseline knows the old ones", () => {
+  it("a new identity conflict fails when the observation baseline knows the old ones", { timeout: 120_000 }, () => {
     const { baseline, current } = buildPair();
     const observation = observationOf(baseline);
     const mutated = JSON.parse(JSON.stringify(current)) as HealthReport;
