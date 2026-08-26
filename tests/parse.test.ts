@@ -18,6 +18,7 @@ import {
   exactDeadlineState,
   fmtDate,
   fmtUTC,
+  isNonDateMarker,
   monthOf,
   parseDateRange,
   parseInstant,
@@ -590,11 +591,12 @@ describe("warning counts", () => {
   it("tallies unparsable event dates", () => {
     resetWarnings();
     expect(warningCounts()).toEqual({});
+    // TBD は未発表の正常状態: warning にならない。
     parseDateRange("TBD", 2026);
     parseDateRange("TBD", 2026);
     warn("custom");
     const counts = warningCounts();
-    expect(counts['unparsable event date "TBD"']).toBe(2);
+    expect(counts["TBD"]).toBeUndefined();
     expect(counts.custom).toBe(1);
     resetWarnings();
     expect(warningCounts()).toEqual({});
@@ -1371,5 +1373,24 @@ tags: machine-learning
       warningCode("unexpected row 99 at https://b.example/y"),
     );
     expect(warningCode("unexpected row 12")).not.toBe(warningCode("different warning 12"));
+  });
+});
+
+describe("non-date markers", () => {
+  it("TBD / TBA / To be announced / Extended are recognized as markers", () => {
+    expect(isNonDateMarker("TBD")).toBe(true);
+    expect(isNonDateMarker("tba")).toBe(true);
+    expect(isNonDateMarker("To be announced")).toBe(true);
+    expect(isNonDateMarker("Extended")).toBe(true);
+    expect(isNonDateMarker("2026-08-28")).toBe(false);
+    expect(isNonDateMarker("September 1-3, 2026")).toBe(false);
+  });
+
+  it("markers parse to null without warning (normal unannounced state)", () => {
+    expect(parseInstant("TBD", "AoE")).toBeNull();
+    expect(parseInstant("To be announced", "UTC")).toBeNull();
+    const [start, end] = parseDateRange("TBA", 2026);
+    expect(start).toBeNull();
+    expect(end).toBeNull();
   });
 });

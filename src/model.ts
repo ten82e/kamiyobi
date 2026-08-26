@@ -728,9 +728,20 @@ function naiveToMs(n: Naive): number | null {
   return ms;
 }
 
+/**
+ * 未発表マーカー (TBD / TBA / To be announced) と状態語 (Extended など) は
+ * パース失敗ではなく、日付がこの field で表現できない正常な状態。
+ * warning を出さずに null を返す (raw observation には元値が残る)。
+ */
+export function isNonDateMarker(text: unknown): boolean {
+  if (text === null || text === undefined) return false;
+  const s = String(text).trim().toLowerCase().replace(/[.:]$/, "");
+  return s === "tbd" || s === "tba" || s === "to be announced" || s === "extended";
+}
+
 /** Parse an upstream deadline into an aware UTC Date, or null. */
 export function parseInstant(text: unknown, tzRaw: string | null | undefined): Date | null {
-  if (text === null || text === undefined) return null;
+  if (text === null || text === undefined || isNonDateMarker(text)) return null;
   const original = String(text).trim();
   const embeddedTzRaw = embeddedTimezone(original);
   let s = original.replace("T", " ").trim();
@@ -975,7 +986,7 @@ export function parseDateRange(
   text: string | null | undefined,
   fallbackYear: number,
 ): [Date | null, Date | null] {
-  if (!text) return [null, null];
+  if (!text || isNonDateMarker(text)) return [null, null];
 
   let s = String(text).replace(/[\u2010-\u2015\u2212]/g, "-");
   s = s.replace(/\s+/g, " ").trim();

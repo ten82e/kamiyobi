@@ -247,6 +247,52 @@ describe("merge_sources", () => {
     ).toHaveLength(2);
   });
 
+
+  it("same-source monthly occurrences sharing a URL produce no edition conflict", () => {
+    const conference = (edition: Edition): Conference =>
+      makeConference({
+        key: "ieice-in",
+        title: "IEICE IN",
+        sources: ["local"],
+        editions: [edition],
+      });
+    const base = {
+      year: 2026,
+      link: "https://ken.ieice.org/ken/program/?tgid=IEICE-IN",
+      source: "local",
+    };
+    const august = makeEdition({
+      ...base,
+      edition_id: "ieice-in-2026-08",
+      event_start: new Date(Date.UTC(2026, 7, 6)),
+      event_end: new Date(Date.UTC(2026, 7, 7)),
+      identity: {
+        officialUrls: ["https://ken.ieice.org/ken/program/?tgid=IEICE-IN"],
+        sourceIds: { local: "ieice-in-2026-08" },
+      },
+    });
+    const september = makeEdition({
+      ...base,
+      edition_id: "ieice-in-2026-09",
+      event_start: new Date(Date.UTC(2026, 8, 3)),
+      event_end: new Date(Date.UTC(2026, 8, 4)),
+      identity: {
+        officialUrls: ["https://ken.ieice.org/ken/program/?tgid=IEICE-IN"],
+        sourceIds: { local: "ieice-in-2026-09" },
+      },
+    });
+    const stats: MergeStats = { merged_deadlines: 0, merged_by_key: {} };
+    const single = makeConference({
+      key: "ieice-in",
+      title: "IEICE IN",
+      sources: ["local"],
+      editions: [august, september],
+    });
+    const merged = mergeSources([[single]], PRIORITY, stats);
+    expect(merged[0].editions).toHaveLength(2);
+    expect(stats.identity_conflicts ?? []).toHaveLength(0);
+  });
+
   it("keeps a main conference and workshop separate", () => {
     const conference = (source: string, edition: Edition): Conference =>
       makeConference({
