@@ -128,26 +128,30 @@
     "comparison": {
       "platt_brier": 0.03553756,
       "isotonic": {
-        "eligible": true
+        "implemented": false,
+        "note": "not implemented; Platt scaling only"
       }
     }
   },
   "confidence_policy": {
     "sufficient_enabled": false,
     "reason": "target precision not reached",
-    "unmet_checks": [
+    "blocking_conditions": [
       "precision_ok",
       "wilson_lcb_ok",
-      "coverage_ok",
       "positives_ok"
     ],
+    "chosen_threshold": null,
     "evidence": {
       "sufficient_precision": null,
-      "wilson_95_lcb": 0,
-      "sufficient_coverage": 0,
-      "sufficient_positives": 0,
-      "best_observed_precision": null,
-      "best_observed_coverage": null
+      "wilson_95_lcb": null,
+      "sufficient_coverage": null,
+      "sufficient_positives": null,
+      "best_observed_threshold": 0.20069908,
+      "best_observed_precision": 0.03703704,
+      "best_observed_wilson_95_lcb": 0.00656798,
+      "best_observed_coverage": 0.3375,
+      "best_observed_positives": 1
     },
     "unlock_conditions": {
       "min_precision": 0.8,
@@ -159,11 +163,14 @@
   "threshold_evidence": {
     "source": "dev-oof-top1-platt-calibrated",
     "sufficient_precision": null,
-    "wilson_95_lcb": 0,
-    "sufficient_coverage": 0,
-    "sufficient_positives": 0,
-    "best_observed_precision": null,
-    "best_observed_coverage": null,
+    "wilson_95_lcb": null,
+    "sufficient_coverage": null,
+    "sufficient_positives": null,
+    "best_observed_threshold": 0.20069908,
+    "best_observed_precision": 0.03703704,
+    "best_observed_wilson_95_lcb": 0.00656798,
+    "best_observed_coverage": 0.3375,
+    "best_observed_positives": 1,
     "guard_margin": 0.05
   },
   "intercept": 0,
@@ -178,7 +185,7 @@
   },
   "blend": 0.15,
   "confidence_thresholds": {
-    "sufficient": 0.26402417,
-    "ambiguous": 0.18650356
+    "sufficient": 0.20069908,
+    "ambiguous": 0.18599498
   }
 }

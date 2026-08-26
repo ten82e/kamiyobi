@@ -148,39 +148,83 @@ function wilsonLowerBound(correct: number, total: number): number {
  * sufficient threshold は dev OOF top-1 の精度で解禁を判定する。
  * 条件未達なら sufficient_enabled=false を返し、UI は 2 段階に落ちる。
  */
-function confidencePolicy(
-  top: Array<{ probability: number; correct: boolean }>,
-  thresholds: {
-    sufficient: number;
-    ambiguous: number;
-  },
-) {
-  const selected = top.filter((item) => item.probability >= thresholds.sufficient);
-  const positives = selected.filter((item) => item.correct).length;
-  const precision = selected.length ? positives / selected.length : null;
-  const coverage = selected.length / Math.max(1, top.length);
-  const wilsonLcb = wilsonLowerBound(positives, selected.length);
+/**
+ * sufficient threshold は OOF top-1 確率の一意な値を全探索して決める。
+ * 解禁条件 (precision / Wilson LCB / coverage / positive 数) を満たす閾値のうち
+ * coverage 最大のものを採用する。どの閾値も満たさなくても best observed と
+ * blocking condition を記録する (探索しないまま解禁されない、を防ぐ)。
+ */
+function confidencePolicy(top: Array<{ probability: number; correct: boolean }>) {
   const policy = SUFFICIENT_POLICY;
-  const checks = {
-    precision_ok: precision !== null && precision >= policy.min_precision,
-    wilson_lcb_ok: selected.length > 0 && wilsonLcb >= policy.min_wilson_lcb,
-    coverage_ok: coverage >= policy.min_coverage,
-    positives_ok: positives >= policy.min_positives,
-  };
-  const enabled = Object.values(checks).every(Boolean);
+  const candidates = [...new Set(top.map((item) => item.probability))].sort((a, b) => b - a);
+  let chosen:
+    | { threshold: number; precision: number; wilsonLcb: number; coverage: number; positives: number }
+    | null = null;
+  let bestObserved:
+    | { threshold: number; precision: number; wilsonLcb: number; coverage: number; positives: number }
+    | null = null;
+  for (const threshold of candidates) {
+    const selected = top.filter((item) => item.probability >= threshold);
+    if (selected.length === 0) continue;
+    const positives = selected.filter((item) => item.correct).length;
+    const point = {
+      threshold,
+      precision: positives / selected.length,
+      wilsonLcb: wilsonLowerBound(positives, selected.length),
+      coverage: selected.length / top.length,
+      positives,
+    };
+    const checks = {
+      precision_ok: point.precision >= policy.min_precision,
+      wilson_lcb_ok: point.wilsonLcb >= policy.min_wilson_lcb,
+      coverage_ok: point.coverage >= policy.min_coverage,
+      positives_ok: point.positives >= policy.min_positives,
+    };
+    const unlocked = Object.values(checks).every(Boolean);
+    if (unlocked && (chosen === null || point.coverage > chosen.coverage)) chosen = point;
+    if (!unlocked || chosen !== null) {
+      // best observed の記録用 (解禁失敗時の診断)
+      if (
+        bestObserved === null ||
+        point.precision > bestObserved.precision ||
+        (point.precision === bestObserved.precision && point.coverage > bestObserved.coverage)
+      )
+        bestObserved = point;
+    }
+  }
+  if (chosen !== null && bestObserved === null) bestObserved = chosen;
+  const unmetChecks =
+    chosen !== null
+      ? []
+      : Object.entries({
+          precision_ok: (bestObserved?.precision ?? 0) >= policy.min_precision,
+          wilson_lcb_ok: (bestObserved?.wilsonLcb ?? 0) >= policy.min_wilson_lcb,
+          coverage_ok: (bestObserved?.coverage ?? 0) >= policy.min_coverage,
+          positives_ok: (bestObserved?.positives ?? 0) >= policy.min_positives,
+        })
+          .filter(([, ok]) => !ok)
+          .map(([name]) => name);
   return {
-    sufficient_enabled: enabled,
-    reason: enabled ? "target precision reached" : "target precision not reached",
-    unmet_checks: Object.entries(checks)
-      .filter(([, ok]) => !ok)
-      .map(([name]) => name),
+    sufficient_enabled: chosen !== null,
+    reason:
+      chosen !== null
+        ? "target precision reached"
+        : bestObserved === null
+          ? "no positive top-1 predictions"
+          : "target precision not reached",
+    ...(chosen === null && bestObserved !== null ? { blocking_conditions: unmetChecks } : {}),
+    chosen_threshold: chosen === null ? null : Number(chosen.threshold.toFixed(8)),
     evidence: {
-      sufficient_precision: precision === null ? null : Number(precision.toFixed(8)),
-      wilson_95_lcb: Number(wilsonLcb.toFixed(8)),
-      sufficient_coverage: Number(coverage.toFixed(8)),
-      sufficient_positives: positives,
-      best_observed_precision: null,
-      best_observed_coverage: null,
+      sufficient_precision: chosen === null ? null : Number(chosen.precision.toFixed(8)),
+      wilson_95_lcb: chosen === null ? null : Number(chosen.wilsonLcb.toFixed(8)),
+      sufficient_coverage: chosen === null ? null : Number(chosen.coverage.toFixed(8)),
+      sufficient_positives: chosen === null ? null : chosen.positives,
+      best_observed_threshold: bestObserved === null ? null : Number(bestObserved.threshold.toFixed(8)),
+      best_observed_precision: bestObserved === null ? null : Number(bestObserved.precision.toFixed(8)),
+      best_observed_wilson_95_lcb:
+        bestObserved === null ? null : Number(bestObserved.wilsonLcb.toFixed(8)),
+      best_observed_coverage: bestObserved === null ? null : Number(bestObserved.coverage.toFixed(8)),
+      best_observed_positives: bestObserved === null ? null : bestObserved.positives,
     },
   };
 }
@@ -283,21 +327,14 @@ function main(argv = process.argv.slice(2)): void {
     selected.logits.map((item) => [item.key, sigmoid(platt.slope * item.logit + platt.intercept)]),
   );
   const calibratedMetric = rankMetrics(rows, calibrated, selected.blend);
-  const candidateThresholds = {
-    // provisional sufficient point before the gate decides
-    sufficient: Math.min(
-      0.99,
-      Math.max(...new Set(calibratedMetric.top.map((item) => item.probability))) + 0.05,
-    ),
-    ambiguous:
-      [...new Set(calibratedMetric.top.map((item) => item.probability))].sort((a, b) => a - b)[
-        Math.floor((calibratedMetric.top.length - 1) / 3)
-      ] ?? 0,
-  };
-  const policy = confidencePolicy(calibratedMetric.top, candidateThresholds);
-  const ambiguousThreshold = Number(
-    Math.min(candidateThresholds.ambiguous, candidateThresholds.sufficient).toFixed(8),
+  // ambiguous threshold: OOF top-1 確率の下位 1/3 分位点 (解禁時は sufficient 未満に丸める)。
+  const sortedProbabilities = [...new Set(calibratedMetric.top.map((item) => item.probability))].sort(
+    (a, b) => a - b,
   );
+  const ambiguousThreshold = Number(
+    (sortedProbabilities[Math.floor((sortedProbabilities.length - 1) / 3)] ?? 0).toFixed(8),
+  );
+  const policy = confidencePolicy(calibratedMetric.top);
   const model = trainLinear(pairwiseRows(rows), selected.lambda);
   const brier =
     selected.logits.reduce((sum, item) => {
@@ -338,11 +375,9 @@ function main(argv = process.argv.slice(2)): void {
       slope: Number(platt.slope.toFixed(10)),
       intercept: Number(platt.intercept.toFixed(10)),
       comparison: {
+        // isotonic regression は未実装のため比較していない。実装するまで単一 method として明示。
         platt_brier: Number(brier.toFixed(8)),
-        isotonic: {
-          eligible: devIds.size >= 20,
-          reason: devIds.size >= 20 ? undefined : "fewer than 20 dev papers",
-        },
+        isotonic: { implemented: false, note: "not implemented; Platt scaling only" },
       },
     },
     confidence_policy: {
@@ -363,7 +398,11 @@ function main(argv = process.argv.slice(2)): void {
     ),
     blend: selected.blend,
     confidence_thresholds: {
-      sufficient: Number(candidateThresholds.sufficient.toFixed(8)),
+      // 解禁済みなら chosen threshold、未解禁なら将来の解禁候補 (best observed) を記録する。
+      // sufficient_enabled=false の間この値は UI で使われない。
+      sufficient: Number(
+        (policy.chosen_threshold ?? policy.evidence.best_observed_threshold ?? 0).toFixed(8),
+      ),
       ambiguous: ambiguousThreshold,
     },
   };

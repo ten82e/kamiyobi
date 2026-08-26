@@ -40,7 +40,8 @@ jobs:
         run: npm run validate:data -- public/data.json --json
       - name: Health gate
         # 失敗時でも違反報告を書いて、後続の always() 診断 step が原因を残せるようにする。
-        run: node scripts/health-gate.ts public/health.json --require-baseline /tmp/kamiyobi-baseline/health.json /tmp/next-last-known-good-health.json --report /tmp/kamiyobi-update/health-violations.json
+        # 観測系 (warning・conflict) は committed observation baseline を比較源にする。
+        run: node scripts/health-gate.ts public/health.json --require-baseline /tmp/kamiyobi-baseline/health.json /tmp/next-last-known-good-health.json --observation-baseline data/source-observation-baseline.json --report /tmp/kamiyobi-update/health-violations.json
       - name: Recommendation Top-5 delta
         if: always() && hashFiles('public/recommendation-index.json') != ''
         run: npm run --silent bench -- --data-delta tests/fixtures/recommendation-data-delta.json --data-delta-before /tmp/kamiyobi-baseline/recommendation-index.json --data-delta-after public/recommendation-index.json --json > /tmp/kamiyobi-update/recommendation-delta.json
@@ -63,6 +64,23 @@ jobs:
           cp /tmp/kamiyobi-baseline/health.json /tmp/kamiyobi-update/baseline/health.json 2>/dev/null || true
           cp public/data.json /tmp/kamiyobi-update/current/data.json 2>/dev/null || true
           test -f /tmp/kamiyobi-update/health-violations.json || echo '{"ok":true,"reasons":[],"warnings":[],"baseline_available":false,"current_path":"public/health.json","previous_path":null}' > /tmp/kamiyobi-update/health-violations.json
+          # gate 通過後の観測状態を次回の observation baseline として data PR に載せる。
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+          const cur = JSON.parse(readFileSync("public/health.json", "utf8"));
+          const obs = {
+            observed_at: cur.generated_at,
+            parse_warning_count: cur.parse_warning_count,
+            warning_codes: cur.warning_codes ?? {},
+            identity_conflicts: cur.identity_conflicts ?? { venue: 0, edition: 0, details: [] },
+          };
+          mkdirSync("/tmp/kamiyobi-update/data", { recursive: true });
+          writeFileSync(
+            "/tmp/kamiyobi-update/data/source-observation-baseline.json",
+            `${JSON.stringify(obs, null, 2)}\n`,
+          );
+          console.log("observation baseline updated:", obs.observed_at);
+          NODE
       - name: Summarize deadline semantic changes
         if: always()
         run: |

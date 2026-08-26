@@ -841,6 +841,9 @@ push と pull request の両方で、変更ファイルにかかわらず次の�
 - PR で使う小さな実論文 subset は required check に含め、全件の実論文評価は `nightly.yml` で定期実行する。
 - validator warning baseline は安定した code + subject ごとの件数を保持し、新しい identity と既知 identity の件数増加を失敗させる。
   `event_date_status: not-announced`、`TBD`、`TBD <year>`、`not announced` は未発表状態として通常扱いにする。
+- health gate の観測系比較 (parse warning・warning code・identity conflict) は、baseline が snapshot
+  fallback build の場合に `data/source-observation-baseline.json` (最後に成功した online 更新の診断状態)
+  を比較源にする。どちらも無い初回 bootstrap だけ観測系検査を skip し、slot 内容の比較は常に実行する。
 - 上流データ取得、候補探索、自動 PR 更新は日次 `update-data.yml` に置く。
 - 七つの job は main の required check として設定する。
 

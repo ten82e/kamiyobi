@@ -1,5 +1,9 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { evaluateHealthGate, type HealthReport } from "../src/build.ts";
+import {
+  evaluateHealthGate,
+  type HealthReport,
+  type ObservationBaseline,
+} from "../src/build.ts";
 
 export interface HealthGateArgs {
   currentPath: string;
@@ -8,6 +12,8 @@ export interface HealthGateArgs {
   requireBaseline: boolean;
   /** 失敗時でも必ず machine-readable な違反報告を書く先。 */
   reportPath?: string;
+  /** 最後に成功した online 更新の診断 baseline (snapshot fallback 時の比較源)。 */
+  observationBaselinePath?: string;
 }
 
 function usage(): never {
@@ -16,6 +22,7 @@ function usage(): never {
       "usage: node scripts/health-gate.ts <current-health.json>",
       "  [--require-baseline]",
       "  [--report <violations.json>]",
+      "  [--observation-baseline <source-observation-baseline.json>]",
       "  [last-known-good.json] [write-last-known-good.json]",
     ].join(" "),
   );
@@ -26,6 +33,7 @@ export function parseHealthGateArgs(argv: string[]): HealthGateArgs | null {
   const positional: string[] = [];
   let requireBaseline = false;
   let reportPath: string | undefined;
+  let observationBaselinePath: string | undefined;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--require-baseline") {
@@ -38,6 +46,12 @@ export function parseHealthGateArgs(argv: string[]): HealthGateArgs | null {
       reportPath = value;
       continue;
     }
+    if (arg === "--observation-baseline") {
+      const value = argv[++i];
+      if (!value) return null;
+      observationBaselinePath = value;
+      continue;
+    }
     positional.push(arg);
   }
   if (positional.length === 0 || positional.length > 3) return null;
@@ -47,6 +61,7 @@ export function parseHealthGateArgs(argv: string[]): HealthGateArgs | null {
     ...(positional[2] ? { lastKnownGoodPath: positional[2] } : {}),
     requireBaseline,
     ...(reportPath ? { reportPath } : {}),
+    ...(observationBaselinePath ? { observationBaselinePath } : {}),
   };
 }
 
@@ -90,7 +105,18 @@ export function runHealthGate(argv: string[]): number {
     const previous = hasUsableBaseline
       ? (JSON.parse(readFileSync(args.previousPath!, "utf8")) as HealthReport)
       : null;
-    const result = evaluateHealthGate(current, previous);
+    let observationBaseline: ObservationBaseline | null = null;
+    if (args.observationBaselinePath && existsSync(args.observationBaselinePath)) {
+      try {
+        observationBaseline = JSON.parse(
+          readFileSync(args.observationBaselinePath, "utf8"),
+        ) as ObservationBaseline;
+      } catch (error) {
+        console.error(`could not read observation baseline: ${String(error)}`);
+        return 1;
+      }
+    }
+    const result = evaluateHealthGate(current, previous, observationBaseline);
     for (const warning of result.warnings) console.warn(`health gate warning: ${warning}`);
     if (!result.ok) {
       console.error(`health gate blocked deployment: ${result.reasons.join("; ")}`);
