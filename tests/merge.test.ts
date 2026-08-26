@@ -247,15 +247,7 @@ describe("merge_sources", () => {
     ).toHaveLength(2);
   });
 
-
   it("same-source monthly occurrences sharing a URL produce no edition conflict", () => {
-    const conference = (edition: Edition): Conference =>
-      makeConference({
-        key: "ieice-in",
-        title: "IEICE IN",
-        sources: ["local"],
-        editions: [edition],
-      });
     const base = {
       year: 2026,
       link: "https://ken.ieice.org/ken/program/?tgid=IEICE-IN",

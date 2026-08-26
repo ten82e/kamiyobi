@@ -596,7 +596,7 @@ describe("warning counts", () => {
     parseDateRange("TBD", 2026);
     warn("custom");
     const counts = warningCounts();
-    expect(counts["TBD"]).toBeUndefined();
+    expect(counts.TBD).toBeUndefined();
     expect(counts.custom).toBe(1);
     resetWarnings();
     expect(warningCounts()).toEqual({});

@@ -619,11 +619,16 @@ function mergeTarget(left: Edition, right: Edition): boolean {
   // 同一 source 内で明示的に異なる edition 識別子 (editionId / sourceIds) を持ち、
   // 会期が重ならないなら、月例研究会など年内複数開催の正当な独立 occurrence。
   // URL 共有は同一開催の証拠にならない (IEICE の ken program page は全研究会共通)。
-  const leftLocal = Object.values(left.identity?.sourceIds ?? {})[0];
-  const rightLocal = Object.values(right.identity?.sourceIds ?? {})[0];
+  // 同一 source 内の比較に限る: 異なる source 間は片方が日付未発表でも統合する。
   if (
+    left.source === right.source &&
+    left.source !== "" &&
     ((leftId && rightId && leftId !== rightId) ||
-      (leftLocal && rightLocal && leftLocal !== rightLocal)) &&
+      (() => {
+        const a = left.identity?.sourceIds?.[left.source];
+        const b = right.identity?.sourceIds?.[right.source];
+        return Boolean(a && b && a !== b);
+      })()) &&
     !eventRangesOverlap(left, right)
   ) {
     return false;
