@@ -1506,8 +1506,22 @@ function matchDeadlineSlots(
   const usedCurrent = new Set<number>();
   const pairs: Array<{ previous: DeadlineSlot; current: DeadlineSlot }> = [];
 
+  // Edition id の改名・重複 (例: override-2027 と mobicom27 が同値で fold) は slot 内容が同一でも
+  // 「future deadline disappeared」の誤検知になる。venue + kind/round/track + 時刻が完全一致する
+  // slot は同一締切として扱う: previous 側の重複を先に潰してから 1:1 で対にする。
+  const identityKey = (slot: DeadlineSlot): string =>
+    [slot.venue, slot.kind, slot.round, slot.track, slot.earliest_ms, slot.latest_ms].join("\0");
+  const representativeOf = new Map<string, number>();
+  previous.forEach((slot, index) => {
+    const key = identityKey(slot);
+    const first = representativeOf.get(key);
+    if (first === undefined) representativeOf.set(key, index);
+    else usedPrevious.add(index); // 同一締切の重複 ref は比較対象から外す
+  });
+
   if (allowIdentityMigration)
     previous.forEach((slot, previousIndex) => {
+      if (usedPrevious.has(previousIndex)) return;
       const candidates = current
         .map((candidate, index) => ({ candidate, index }))
         .filter(
@@ -1836,13 +1850,19 @@ export function evaluateHealthGate(
       reasons.push(`required venue disappeared: ${venue}`);
     }
   }
+  // baseline が snapshot fallback (offline・空 cache) の場合、parse warning / identity conflict /
+  // warning code は上流取得の有無で数が変わるため比較対象にならない。slot 内容の比較だけを行う。
+  const comparableBaseline = previousReport.snapshot_fallback !== true;
   const previousWarnings = reportWarningCount(previousReport);
-  if (reportWarningCount(currentReport) > previousWarnings * 2 + 5) {
+  if (
+    comparableBaseline &&
+    reportWarningCount(currentReport) > previousWarnings * 2 + 5
+  ) {
     reasons.push("parse warnings increased sharply");
   }
   const previousConflicts = previousReport.identity_conflicts;
   const currentConflicts = currentReport.identity_conflicts;
-  if (previousConflicts && currentConflicts) {
+  if (comparableBaseline && previousConflicts && currentConflicts) {
     const conflictKey = (conflict: (typeof currentConflicts.details)[number]) =>
       JSON.stringify([
         conflict.scope,
@@ -1858,7 +1878,7 @@ export function evaluateHealthGate(
     if (newConflicts > 0) reasons.push(`identity conflicts increased by ${newConflicts}`);
   }
   const previousWarningCodes = previousReport.warning_codes;
-  if (previousWarningCodes) {
+  if (comparableBaseline && previousWarningCodes) {
     for (const [code, warning] of Object.entries(currentReport.warning_codes ?? {})) {
       const prior = previousWarningCodes[code];
       if (!prior) reasons.push(`new warning code: ${code}`);

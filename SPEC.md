@@ -988,10 +988,11 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
   pipeline、モデル cache、ネットワーク、埋め込み生成を一切使わず、lexical retrieval から Top-K まで本番経路を通す。
   候補Recall・oracle reranker・校正・MRR LCB・negative semantic false-positive abstentionを検査する。
   semantic bundle の seal には required gate と full real-paper benchmark の両方の合格が要る。
-  推薦内容 (profile_hash・reranker・feature schema) が不変の push は封印済み bundle を再利用し、
-  埋め込みモデルを読み込まない。bundle manifest は `required_gate` と `full_benchmark` を
-  分けて記録し、復元側は両方の `passed` を強制する。nightly は full benchmark の定期評価のみを行い、
-  bundle を seal しない。
+  推薦内容が不変の push は封印済み bundle を再利用し、埋め込みモデルを読み込まない。
+  bundle manifest は公開 commit (`source_commit`) と生成元 commit (`bundle_origin_commit`) を分けて記録し、
+  `semantic_content_id`・`required_gate`・`full_benchmark`・`embeddings_sha256` を持つ。
+  復元側は現在の data から `semantic_content_id` を再計算して一致を要求し (公開 commit の一致は問わない)、
+  両 gate の `passed` も強制する。nightly は full benchmark の定期評価のみを行い、bundle を seal しない。
 - required と full はそれぞれ記録済みの回帰下限を持ち、heldout fused Recall@5 または negative abstention が下限を割れば失敗する。JSON レポートは Actions artifact に保存する。
 
 ### 10.3 会議プロファイル拡充手順（`data/venue-profiles.json`）
