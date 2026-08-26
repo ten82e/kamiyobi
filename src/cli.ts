@@ -31,6 +31,7 @@ import {
   type Deadline,
   warn,
   warningCounts,
+  warningIdentityKeys,
 } from "./model.ts";
 import { AideadlinesSource } from "./sources/aideadlines.ts";
 import { fetchMetadataFor, resetFetchMetadata } from "./sources/base.ts";
@@ -653,6 +654,7 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
       snapshotFallback,
       requiredVenues,
       parseWarnings: warningCounts(),
+      warningIdentityKeys: warningIdentityKeys(),
       identityConflicts: mergeStats.identity_conflicts,
     },
   });

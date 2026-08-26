@@ -58,6 +58,69 @@ describe("normalizeData", () => {
     expect(normalizeData(42)).toBeNull();
     expect(normalizeData("text")).toBeNull();
   });
+
+  it("baseline: only top-level observed_at is stripped", () => {
+    const path = "data/source-observation-baseline.json";
+    const a = normalizeData(
+      {
+        observed_at: "2026-08-26T05:00:00Z",
+        parse_warning_count: 9,
+        nested: { observed_at: "keep" },
+      },
+      path,
+    );
+    const b = normalizeData(
+      {
+        observed_at: "2026-08-27T05:00:00Z",
+        parse_warning_count: 9,
+        nested: { observed_at: "keep" },
+      },
+      path,
+    );
+    expect(a).not.toBeNull();
+    expect(a).toBe(b);
+    // nested observed_at is preserved (not stripped recursively)
+    expect(a).toContain('"observed_at":"keep"');
+  });
+
+  it("baseline: substantive changes are detected", () => {
+    const path = "data/source-observation-baseline.json";
+    const a = normalizeData({ observed_at: "x", parse_warning_count: 9 }, path);
+    const b = normalizeData({ observed_at: "y", parse_warning_count: 10 }, path);
+    expect(a).not.toBe(b);
+  });
+
+  it("snapshot: strips generated_at and _comment but keeps evidence timestamps", () => {
+    const path = "data/snapshot.json";
+    const evidence = { retrievedAt: "2026-08-25T00:00:00Z", verifiedAt: "2026-08-25T00:00:00Z" };
+    const a = normalizeData(
+      { generated_at: "2026-08-26T00:00:00Z", _comment: "old", data: { evidence } },
+      path,
+    );
+    const b = normalizeData(
+      { generated_at: "2026-08-27T00:00:00Z", _comment: "new", data: { evidence } },
+      path,
+    );
+    expect(a).not.toBeNull();
+    expect(a).toBe(b);
+    // evidence timestamps are preserved
+    expect(a).toContain('"retrievedAt"');
+  });
+
+  it("overrides: only _comment is stripped, not other top-level fields", () => {
+    const path = "data/primary_overrides.yaml";
+    const a = normalizeData({ venue: { _comment: "2026-08-26", deadlines: ["2026-09-01"] } }, path);
+    const b = normalizeData({ venue: { _comment: "2026-08-27", deadlines: ["2026-09-01"] } }, path);
+    expect(a).not.toBeNull();
+    expect(a).toBe(b);
+  });
+
+  it("overrides: substantive changes are detected", () => {
+    const path = "data/primary_overrides.yaml";
+    const a = normalizeData({ venue: { _comment: "x", deadlines: ["2026-09-01"] } }, path);
+    const b = normalizeData({ venue: { _comment: "y", deadlines: ["2026-09-02"] } }, path);
+    expect(a).not.toBe(b);
+  });
 });
 
 describe("compareToHead", () => {
