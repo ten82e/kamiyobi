@@ -2,13 +2,13 @@ import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, readFileSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import { embeddingsStale, type PublishManifest, writePublishManifest } from "../src/build.ts";
-import { embeddingProfileHash } from "../src/embeddings.ts";
 import {
   EMBEDDING_MODEL,
   EMBEDDING_MULTI_MODEL,
   EMBEDDING_MULTI_REVISION,
   EMBEDDING_REVISION,
   EMBEDDING_RUNTIME_VERSION,
+  embeddingProfileHash,
 } from "../src/embeddings.ts";
 import { computeSemanticContentId } from "../src/semantic-content.ts";
 
