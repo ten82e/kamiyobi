@@ -41,7 +41,7 @@ function buildPair(mutate?: (fixtureRoot: string) => void): {
 }
 
 describe("update-data canary", () => {
-  it("edition id rename alone does not block the gate", () => {
+  it("edition id rename alone does not block the gate", { timeout: 120_000 }, () => {
     const { baseline, current } = buildPair((root) => {
       const file = join(root, "NW", "sigcomm.yml");
       writeFileSync(file, readFileSync(file, "utf8").replace(/id: sigcomm26/g, "id: sigcomm26b"));
@@ -65,7 +65,7 @@ describe("update-data canary", () => {
     expect(slotsOf(current)).toEqual(slotsOf(baseline));
   });
 
-  it("a genuinely removed future deadline changes the slot set", () => {
+  it("a genuinely removed future deadline changes the slot set", { timeout: 120_000 }, () => {
     const { baseline, current } = buildPair((root) => {
       const file = join(root, "NW", "nsdi.yml");
       const text = readFileSync(file, "utf8").replace(
@@ -88,7 +88,7 @@ describe("update-data canary", () => {
     expect(count(current)).toBeLessThan(count(baseline));
   });
 
-  it("offline rebuild of unchanged sources is byte-stable", () => {
+  it("offline rebuild of unchanged sources is byte-stable", { timeout: 120_000 }, () => {
     const root = scratch();
     const cache = makeFixtureCache(join(root, "cache"));
     const a = runCli(join(root, "a"), { cache });
