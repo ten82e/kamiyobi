@@ -1753,9 +1753,19 @@ function semanticDeadlineRegressions(
 }
 
 /** Compare a new report with the last known good report before deployment. */
+/** 最後に成功した online 更新の診断状態。snapshot fallback の structural baseline では
+ * 観測系 (warning・conflict) が記録されないため、こちらを比較源に使う。 */
+export interface ObservationBaseline {
+  observed_at: string;
+  parse_warning_count?: number;
+  warning_codes?: Record<string, { count: number; messages: string[] }>;
+  identity_conflicts?: HealthReport["identity_conflicts"];
+}
+
 export function evaluateHealthGate(
   current: HealthReport,
   previous: HealthReport | null | undefined,
+  observationBaseline?: ObservationBaseline | null,
 ): HealthGateResult {
   const currentReport = current as Partial<HealthReport>;
   const reasons: string[] = [];
@@ -1850,16 +1860,35 @@ export function evaluateHealthGate(
       reasons.push(`required venue disappeared: ${venue}`);
     }
   }
-  // baseline が snapshot fallback (offline・空 cache) の場合、parse warning / identity conflict /
-  // warning code は上流取得の有無で数が変わるため比較対象にならない。slot 内容の比較だけを行う。
-  const comparableBaseline = previousReport.snapshot_fallback !== true;
+  // 観測系の比較源: structural baseline が snapshot fallback の場合は、最後に成功した online
+  // 更新から引き継いだ committed observation baseline を比較源にする。どちらも無い (初回
+  // bootstrap) 場合だけ観測系検査をスキップする。slot 内容の比較は常に実行される。
+  const previousIsOnline = previousReport.snapshot_fallback !== true;
+  const observation: Partial<ObservationBaseline> | null = previousIsOnline
+    ? null
+    : (observationBaseline ?? null);
+  const diagnosticsAvailable =
+    previousIsOnline || (observation !== null && typeof observation.observed_at === "string");
+
   const previousWarnings = reportWarningCount(previousReport);
-  if (comparableBaseline && reportWarningCount(currentReport) > previousWarnings * 2 + 5) {
+  const observationWarnings = Number(observation?.parse_warning_count ?? NaN);
+  const warningReferenceCount = previousIsOnline
+    ? previousWarnings
+    : Number.isFinite(observationWarnings)
+      ? observationWarnings
+      : null;
+  if (
+    diagnosticsAvailable &&
+    warningReferenceCount !== null &&
+    reportWarningCount(currentReport) > warningReferenceCount * 2 + 5
+  ) {
     reasons.push("parse warnings increased sharply");
   }
-  const previousConflicts = previousReport.identity_conflicts;
   const currentConflicts = currentReport.identity_conflicts;
-  if (comparableBaseline && previousConflicts && currentConflicts) {
+  const previousConflictDetails = previousIsOnline
+    ? previousReport.identity_conflicts?.details
+    : observation?.identity_conflicts?.details;
+  if (diagnosticsAvailable && currentConflicts && previousConflictDetails) {
     const conflictKey = (conflict: (typeof currentConflicts.details)[number]) =>
       JSON.stringify([
         conflict.scope,
@@ -1867,15 +1896,16 @@ export function evaluateHealthGate(
         conflict.subject,
         [...(conflict.candidates ?? [])].sort(cmpStr),
       ]);
-    const previousKeys = new Set(previousConflicts.details.map(conflictKey));
+    const previousKeys = new Set(previousConflictDetails.map(conflictKey));
     const newConflicts = currentConflicts.details.filter(
       (conflict) => !previousKeys.has(conflictKey(conflict)),
     ).length;
     currentConflicts.new_since_baseline = newConflicts;
     if (newConflicts > 0) reasons.push(`identity conflicts increased by ${newConflicts}`);
   }
-  const previousWarningCodes = previousReport.warning_codes;
-  if (comparableBaseline && previousWarningCodes) {
+  const previousWarningCodes: Record<string, { count: number; messages: string[] }> | undefined =
+    previousIsOnline ? previousReport.warning_codes : observation?.warning_codes;
+  if (diagnosticsAvailable && previousWarningCodes) {
     for (const [code, warning] of Object.entries(currentReport.warning_codes ?? {})) {
       const prior = previousWarningCodes[code];
       if (!prior) reasons.push(`new warning code: ${code}`);
