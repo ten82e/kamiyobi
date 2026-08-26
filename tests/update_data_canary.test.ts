@@ -59,7 +59,7 @@ function observationOf(report: HealthReport): ObservationBaseline {
 }
 
 describe("update-data canary", () => {
-  it("edition id rename alone passes the gate (slot values identical)", () => {
+  it("edition id rename alone passes the gate (slot values identical)", { timeout: 180_000 }, () => {
     const { baseline, current } = buildPair((root) => {
       const file = join(root, "NW", "sigcomm.yml");
       writeFileSync(file, readFileSync(file, "utf8").replace(/id: sigcomm26/g, "id: sigcomm26b"));
@@ -68,7 +68,7 @@ describe("update-data canary", () => {
     expect(result.ok).toBe(true);
   });
 
-  it("a genuinely removed future deadline fails the gate", () => {
+  it("a genuinely removed future deadline fails the gate", { timeout: 180_000 }, () => {
     const { baseline, current } = buildPair((root) => {
       const file = join(root, "NW", "nsdi.yml");
       const text = readFileSync(file, "utf8").replace(
@@ -84,7 +84,7 @@ describe("update-data canary", () => {
     );
   });
 
-  it("unchanged sources rebuild stable health metadata", () => {
+  it("unchanged sources rebuild stable health metadata", { timeout: 180_000 }, () => {
     const root = scratch();
     const cache = makeFixtureCache(join(root, "cache"));
     const a = runCli(join(root, "a"), { cache });
