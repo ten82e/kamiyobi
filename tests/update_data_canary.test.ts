@@ -9,11 +9,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { makeFixtureCache, runCli } from "./helpers.ts";
-import {
-  evaluateHealthGate,
-  type HealthReport,
-  type ObservationBaseline,
-} from "../src/build.ts";
+import { evaluateHealthGate, type HealthReport, type ObservationBaseline } from "../src/build.ts";
 
 const tempDirs: string[] = [];
 function scratch(): string {
@@ -59,7 +55,9 @@ function observationOf(report: HealthReport): ObservationBaseline {
 }
 
 describe("update-data canary", () => {
-  it("edition id rename alone passes the gate (slot values identical)", { timeout: 180_000 }, () => {
+  it("edition id rename alone passes the gate (slot values identical)", {
+    timeout: 180_000,
+  }, () => {
     const { baseline, current } = buildPair((root) => {
       const file = join(root, "NW", "sigcomm.yml");
       writeFileSync(file, readFileSync(file, "utf8").replace(/id: sigcomm26/g, "id: sigcomm26b"));
@@ -98,7 +96,9 @@ describe("update-data canary", () => {
     );
   });
 
-  it("a new warning code fails when the observation baseline knows the old codes", { timeout: 120_000 }, () => {
+  it("a new warning code fails when the observation baseline knows the old codes", {
+    timeout: 120_000,
+  }, () => {
     const { baseline, current } = buildPair();
     // snapshot-fallback baseline では warning_codes が記録されないため、
     // update-data workflow と同じく observation baseline を比較源にする。
@@ -113,7 +113,9 @@ describe("update-data canary", () => {
     expect(withBaseline.reasons.some((r) => r.includes("new warning code"))).toBe(true);
   });
 
-  it("a new identity conflict fails when the observation baseline knows the old ones", { timeout: 120_000 }, () => {
+  it("a new identity conflict fails when the observation baseline knows the old ones", {
+    timeout: 120_000,
+  }, () => {
     const { baseline, current } = buildPair();
     const observation = observationOf(baseline);
     const mutated = JSON.parse(JSON.stringify(current)) as HealthReport;
@@ -121,7 +123,12 @@ describe("update-data canary", () => {
       venue: 0,
       edition: 0,
       new_since_baseline: 0,
-      details: [] as Array<{ scope: "venue"; reason: string; subject: string; candidates: string[] }>,
+      details: [] as Array<{
+        scope: "venue";
+        reason: string;
+        subject: string;
+        candidates: string[];
+      }>,
     };
     const conflicts = { ...base, new_since_baseline: 0 };
     conflicts.details = [
