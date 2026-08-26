@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '17 20 * * *'
   workflow_dispatch:
+    # dry_run=true では PR を書かず、診断 artifact の生成までを検証する (canary)。
+    inputs:
+      dry_run:
+        type: boolean
+        default: true
 
 jobs:
   generate-data:
@@ -116,6 +121,7 @@ jobs:
           path: /tmp/kamiyobi-update
 
   write-data-pr:
+    if: ${{ !inputs.dry_run }}
     needs: generate-data
     runs-on: ubuntu-latest
     permissions:
