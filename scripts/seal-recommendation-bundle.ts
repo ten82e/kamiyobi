@@ -49,7 +49,9 @@ writeFileSync(
   outPath,
   `${JSON.stringify(
     {
+      // 公開 commit と生成元 commit を分離: reuse 時は origin commit のまま残る。
       source_commit: sourceCommit,
+      bundle_origin_commit: sourceCommit,
       semantic_content_id: actualContentId,
       profile_hash: embeddingProfileHash(JSON.parse(readFileSync(dataPath, "utf8"))),
       model_revision: manifest.models.en.revision,

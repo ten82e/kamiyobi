@@ -26,7 +26,16 @@ import {
   validateRealPaperFixtures,
 } from "../src/bench-recommender.ts";
 import { compileSiteRuntime, writePublishManifest } from "../src/build.ts";
-import { embeddingManifest, main as embeddingsMain, venuePapersHash } from "../src/embeddings.ts";
+import {
+  EMBEDDING_MODEL,
+  EMBEDDING_MULTI_MODEL,
+  EMBEDDING_MULTI_REVISION,
+  EMBEDDING_REVISION,
+  embeddingManifest,
+  main as embeddingsMain,
+  venuePapersHash,
+} from "../src/embeddings.ts";
+import { computeSemanticContentId } from "../src/semantic-content.ts";
 import { REPO_ROOT } from "./helpers.ts";
 
 const R = recommender as any;
@@ -1275,14 +1284,34 @@ describe("recommendation bundle restoration", () => {
     };
     const embeddingPath = join(bundleDir, "embeddings.json");
     writeFileSync(embeddingPath, JSON.stringify(embeddings));
-    const publish = writePublishManifest(
+    writePublishManifest(
       out,
       ["data.json", "base.txt"],
       new Date("2026-08-09T00:00:00Z"),
       "lexical-only",
     );
+    // restore はリポジトリの本番 reranker artifact から content id を再計算するため、
+    // テストも同一入力で期待値を作る。
+    const rerankerRaw = readFileSync(join(REPO_ROOT, "data", "recommender-reranker.json"));
+    const reranker = JSON.parse(rerankerRaw.toString("utf8")) as Record<string, unknown>;
+    const contentId = computeSemanticContentId({
+      profileHash: manifest.profile_hash,
+      rerankerHash: createHash("sha256").update(rerankerRaw).digest("hex"),
+      algorithmRevision: String(reranker.algorithm_revision ?? ""),
+      featureSchema: Array.isArray(reranker.feature_schema)
+        ? (reranker.feature_schema as string[])
+        : [],
+      embeddingModel: EMBEDDING_MODEL,
+      embeddingRevision: EMBEDDING_REVISION,
+      multilingualModel: EMBEDDING_MULTI_MODEL,
+      multilingualRevision: EMBEDDING_MULTI_REVISION,
+      runtimeVersion: manifest.runtime_version,
+    });
+    // reuse では公開 commit と bundle 生成元 commit が異なるため source_commit は一致要件ではない。
     const sealed = {
-      source_commit: publish.source_commit,
+      source_commit: "origin-commit-not-current",
+      bundle_origin_commit: "origin-commit-not-current",
+      semantic_content_id: contentId,
       profile_hash: manifest.profile_hash,
       model_revision: manifest.models.en.revision,
       runtime_version: manifest.runtime_version,
@@ -1299,10 +1328,7 @@ describe("recommendation bundle restoration", () => {
     };
     expect(restore()).toBe(true);
     for (const [field, value] of Object.entries({
-      source_commit: "wrong",
-      profile_hash: "wrong",
-      model_revision: "wrong",
-      runtime_version: "wrong",
+      semantic_content_id: "wrong",
       embeddings_sha256: "0".repeat(64),
       required_gate: "failed",
       full_benchmark: "failed",
