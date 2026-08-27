@@ -42,3 +42,11 @@ jobs:
           name: real-paper-full-report
           path: /tmp/real-paper-full.json
           if-no-files-found: error
+      - name: Generate reverification manifest
+        run: node scripts/reverification-manifest.ts --data public/data.json --json > /tmp/reverification-manifest.json
+      - name: Upload reverification manifest
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: reverification-manifest
+          path: /tmp/reverification-manifest.json
+          if-no-files-found: warn
