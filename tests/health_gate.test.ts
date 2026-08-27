@@ -254,9 +254,7 @@ it("skips observation staleness check for offline-snapshot builds", () => {
   };
   const result = evaluateHealthGate(current, null);
   expect(result.ok).toBe(true);
-  expect(result.reasons).not.toContainEqual(
-    expect.stringContaining("source observation is stale"),
-  );
+  expect(result.reasons).not.toContainEqual(expect.stringContaining("source observation is stale"));
 });
 
 it("gates a different identity conflict even when the total count is unchanged", () => {
