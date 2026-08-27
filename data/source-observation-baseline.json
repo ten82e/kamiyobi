@@ -1,123 +1,13 @@
 {
-  "observed_at": "2026-08-26T05:26:14Z",
-  "parse_warning_count": 9,
-  "warning_codes": {
-    "DEADLINE_UNSTRUCTURED": {
-      "count": 4,
-      "messages": [
-        "unparsable deadline \"TBD\""
-      ]
-    },
-    "EVENT_DATE_UNSTRUCTURED": {
-      "count": 5,
-      "messages": [
-        "unparsable event date \"Extended\"",
-        "unparsable event date \"TBA\"",
-        "unparsable event date \"TBD\"",
-        "unparsable event date \"To be announced\""
-      ]
-    }
-  },
+  "schema_version": 3,
+  "observed_at": "2026-08-27T02:26:01.254Z",
+  "parse_warning_count": 0,
+  "warning_codes": {},
   "identity_conflicts": {
     "venue": 3,
-    "edition": 11,
+    "edition": 0,
     "new_since_baseline": 0,
     "details": [
-      {
-        "scope": "edition",
-        "reason": "source-collision",
-        "subject": "2026|https://ken.ieice.org/ken/program?tgid=IEICE-IN|ieice-in-2026-09|local:ieice-in-2026-09",
-        "candidates": [
-          "2026|https://ken.ieice.org/ken/program?tgid=IEICE-IN|ieice-in-2026-08|local:ieice-in-2026-08"
-        ]
-      },
-      {
-        "scope": "edition",
-        "reason": "source-collision",
-        "subject": "2026|https://ken.ieice.org/ken/program?tgid=IEICE-IN|ieice-in-2026-12|local:ieice-in-2026-12",
-        "candidates": [
-          "2026|https://ken.ieice.org/ken/program?tgid=IEICE-IN|ieice-in-2026-08|local:ieice-in-2026-08",
-          "2026|https://ken.ieice.org/ken/program?tgid=IEICE-IN|ieice-in-2026-09|local:ieice-in-2026-09"
-        ]
-      },
-      {
-        "scope": "edition",
-        "reason": "source-collision",
-        "subject": "2026|https://ken.ieice.org/ken/program?tgid=IEICE-NS|ieice-ns-2026-10|local:ieice-ns-2026-10",
-        "candidates": [
-          "2026|https://ken.ieice.org/ken/program?tgid=IEICE-NS|ieice-ns-2026-09|local:ieice-ns-2026-09"
-        ]
-      },
-      {
-        "scope": "edition",
-        "reason": "source-collision",
-        "subject": "2026|https://ken.ieice.org/ken/program?tgid=IEICE-NS|ieice-ns-2026-11|local:ieice-ns-2026-11",
-        "candidates": [
-          "2026|https://ken.ieice.org/ken/program?tgid=IEICE-NS|ieice-ns-2026-09|local:ieice-ns-2026-09",
-          "2026|https://ken.ieice.org/ken/program?tgid=IEICE-NS|ieice-ns-2026-10|local:ieice-ns-2026-10"
-        ]
-      },
-      {
-        "scope": "edition",
-        "reason": "source-collision",
-        "subject": "2026|https://ken.ieice.org/ken/program?tgid=IEICE-NS|ieice-ns-2026-12|local:ieice-ns-2026-12",
-        "candidates": [
-          "2026|https://ken.ieice.org/ken/program?tgid=IEICE-NS|ieice-ns-2026-09|local:ieice-ns-2026-09",
-          "2026|https://ken.ieice.org/ken/program?tgid=IEICE-NS|ieice-ns-2026-10|local:ieice-ns-2026-10",
-          "2026|https://ken.ieice.org/ken/program?tgid=IEICE-NS|ieice-ns-2026-11|local:ieice-ns-2026-11"
-        ]
-      },
-      {
-        "scope": "edition",
-        "reason": "source-collision",
-        "subject": "2026|https://www.ieice.org/cs/cq|ieice-cq-2026-11|local:ieice-cq-2026-11",
-        "candidates": [
-          "2026|https://www.ieice.org/cs/cq|ieice-cq-2026-09|local:ieice-cq-2026-09"
-        ]
-      },
-      {
-        "scope": "edition",
-        "reason": "source-collision",
-        "subject": "2026|https://www.ieice.org/cs/ia/jpn/doku.php?id=start|ieice-ia-2026-10|local:ieice-ia-2026-10",
-        "candidates": [
-          "2026|https://www.ieice.org/cs/ia/jpn/doku.php?id=start|ieice-ia-2026-09|local:ieice-ia-2026-09"
-        ]
-      },
-      {
-        "scope": "edition",
-        "reason": "source-collision",
-        "subject": "2026|https://www.ieice.org/cs/ia/jpn/doku.php?id=start|ieice-ia-2026-11|local:ieice-ia-2026-11",
-        "candidates": [
-          "2026|https://www.ieice.org/cs/ia/jpn/doku.php?id=start|ieice-ia-2026-09|local:ieice-ia-2026-09",
-          "2026|https://www.ieice.org/cs/ia/jpn/doku.php?id=start|ieice-ia-2026-10|local:ieice-ia-2026-10"
-        ]
-      },
-      {
-        "scope": "edition",
-        "reason": "source-collision",
-        "subject": "2026|https://www.ieice.org/cs/ia/jpn/doku.php?id=start|ieice-ia-2026-12|local:ieice-ia-2026-12",
-        "candidates": [
-          "2026|https://www.ieice.org/cs/ia/jpn/doku.php?id=start|ieice-ia-2026-09|local:ieice-ia-2026-09",
-          "2026|https://www.ieice.org/cs/ia/jpn/doku.php?id=start|ieice-ia-2026-10|local:ieice-ia-2026-10",
-          "2026|https://www.ieice.org/cs/ia/jpn/doku.php?id=start|ieice-ia-2026-11|local:ieice-ia-2026-11"
-        ]
-      },
-      {
-        "scope": "edition",
-        "reason": "source-collision",
-        "subject": "2027|https://ken.ieice.org/ken/program?tgid=IEICE-NS|ieice-ns-2027-03|local:ieice-ns-2027-03",
-        "candidates": [
-          "2027|https://ken.ieice.org/ken/program?tgid=IEICE-NS|ieice-ns-2027-01|local:ieice-ns-2027-01"
-        ]
-      },
-      {
-        "scope": "edition",
-        "reason": "source-collision",
-        "subject": "2027|https://www.ieice.org/cs/icm/jpn|ieice-icm-2027-03|local:ieice-icm-2027-03",
-        "candidates": [
-          "2027|https://www.ieice.org/cs/icm/jpn|ieice-icm-2027-01|local:ieice-icm-2027-01"
-        ]
-      },
       {
         "scope": "venue",
         "reason": "key-collision",
@@ -143,5 +33,7 @@
         ]
       }
     ]
-  }
+  },
+  "slot_conflicts": [],
+  "observe_hour_slots": []
 }
