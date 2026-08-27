@@ -9,10 +9,14 @@
  *   node scripts/compare-head.ts data/snapshot.json
  *   実質変更あり => 1 / なし（または読めない）=> 0 を stdout に出す。
  *
- * 「実質」の定義:
- *   - `generated_at`（snapshot の生成時刻）は無視する
- *   - `_comment`（primary_overrides の会議ごとの抽出日付・毎日変わる）は無視する
- *   - キーの並び順・YAML/JSON の形式差は正規化して無視する
+ * 「実質」の定義 (path-specific):
+ *   - source-observation-baseline.json: top-level `observed_at` だけ無視
+ *   - snapshot.json: `generated_at` と `_comment` だけ無視
+ *   - primary_overrides.yaml: `_comment` だけ無視
+ *   - discovered_candidates.yaml: `_comment` だけ無視
+ *   - その他: `generated_at` / `observed_at` / `_comment` を無視 (後方互換)
+ *
+ * キーの並び順・YAML/JSON の形式差は正規化して無視する。
  */
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -32,25 +36,69 @@ function sortKeys(v: unknown): unknown {
   return v;
 }
 
-/** 再帰的に generated_at / _comment を除去する。 */
-function stripChurn(v: unknown): unknown {
-  if (Array.isArray(v)) return v.map(stripChurn);
+/**
+ * Path-specific churn key stripping.
+ *
+ * - `baseline`: only top-level `observed_at` (no recursive stripping)
+ * - `overrides`: recursive `_comment` only
+ * - `snapshot`: recursive `generated_at` / `_comment` (but NOT evidence timestamps)
+ * - `default`: recursive `generated_at` / `observed_at` / `_comment` (legacy compat)
+ */
+type ChurnMode = "baseline" | "overrides" | "snapshot" | "default";
+
+function churnMode(path: string): ChurnMode {
+  if (path.endsWith("source-observation-baseline.json")) return "baseline";
+  if (path.endsWith("primary_overrides.yaml") || path.endsWith("discovered_candidates.yaml"))
+    return "overrides";
+  if (path.endsWith("snapshot.json")) return "snapshot";
+  return "default";
+}
+
+/** 再帰的に churn key を除去する (path に応じたモード)。 */
+function stripChurn(v: unknown, mode: ChurnMode): unknown {
+  if (mode === "baseline") return v; // top-level only, handled in normalizeDataForPath
+  if (Array.isArray(v)) return v.map((item) => stripChurn(item, mode));
   if (v !== null && typeof v === "object") {
     const rec = v as Record<string, unknown>;
     const out: Record<string, unknown> = {};
     for (const [k, val] of Object.entries(rec)) {
-      if (k === "generated_at" || k === "observed_at" || k === "_comment") continue;
-      out[k] = stripChurn(val);
+      if (mode === "overrides") {
+        // overrides: only skip _comment
+        if (k === "_comment") continue;
+      } else if (mode === "snapshot") {
+        // snapshot: skip generated_at and _comment, but KEEP evidence timestamps
+        if (k === "generated_at" || k === "_comment") continue;
+      } else {
+        // default (legacy): skip generated_at, observed_at, _comment
+        if (k === "generated_at" || k === "observed_at" || k === "_comment") continue;
+      }
+      out[k] = stripChurn(val, mode);
     }
     return out;
   }
   return v;
 }
 
-/** 文字列を JSON / YAML として解釈し、正規化した文字列を返す。読めなければ null。 */
-export function normalizeData(data: unknown): string | null {
+/**
+ * 文字列を JSON / YAML として解釈し、path に応じて正規化した文字列を返す。
+ * 読めなければ null。
+ */
+export function normalizeData(data: unknown, path?: string): string | null {
   if (data === null || typeof data !== "object") return null;
-  const normalized = sortKeys(stripChurn(data));
+  const mode = path ? churnMode(path) : "default";
+  let normalized: unknown;
+  if (mode === "baseline") {
+    // baseline: only strip top-level observed_at, then recursively sort keys
+    const rec = data as Record<string, unknown>;
+    const filtered: Record<string, unknown> = {};
+    for (const [k, val] of Object.entries(rec)) {
+      if (k === "observed_at") continue;
+      filtered[k] = val;
+    }
+    normalized = sortKeys(filtered);
+  } else {
+    normalized = sortKeys(stripChurn(data, mode));
+  }
   try {
     return JSON.stringify(normalized);
   } catch {
@@ -92,8 +140,8 @@ export function compareToHead(path: string): 0 | 1 {
   } catch {
     prev = null;
   }
-  const prevNorm = normalizeData(prev);
-  const nextNorm = normalizeData(next);
+  const prevNorm = normalizeData(prev, path);
+  const nextNorm = normalizeData(next, path);
   // 読めない側は書きかけとみなし、コミット対象にしない。
   if (prevNorm === null || nextNorm === null) return 0;
   return prevNorm === nextNorm ? 0 : 1;

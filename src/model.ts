@@ -364,6 +364,92 @@ export interface WarningSummary {
   messages: string[];
 }
 
+// --------------------------------------------------------------------------
+// structured warning identities
+// --------------------------------------------------------------------------
+
+/** Identity fields attached to each warning for identity-based comparison. */
+export interface WarningIdentity {
+  code: string;
+  source: string;
+  venueId: string | null;
+  editionId: string | null;
+  field: string;
+  rawFamily: string;
+}
+
+/** Stable string key for set-diff comparison. */
+export function warningIdentityKey(w: WarningIdentity): string {
+  return [w.code, w.source, w.venueId ?? "", w.editionId ?? "", w.field, w.rawFamily].join("\0");
+}
+
+/** Infer the warning field from the message text. */
+function inferField(message: string): string {
+  if (/^unparsable deadline/.test(message)) return "deadline";
+  if (/^unparsable event date/.test(message)) return "event_date";
+  if (/timezone/.test(message)) return "timezone";
+  if (/edition without/.test(message)) return "edition";
+  if (/cannot parse/.test(message)) return "parse";
+  if (/deadline fields/.test(message)) return "deadline";
+  if (/date-only deadline/.test(message)) return "deadline";
+  if (/primary\[/.test(message)) return "primary";
+  if (/fetch of/.test(message)) return "fetch";
+  if (/entry without/.test(message)) return "entry";
+  if (/override edition/.test(message)) return "override";
+  return "other";
+}
+
+/** Normalize the raw value family for a warning (strip URLs, numbers, quotes). */
+function rawFamily(message: string): string {
+  return message
+    .replace(/"[^"]*"/g, '"<val>"')
+    .replace(/https?:\/\/\S+/g, "<url>")
+    .replace(/\b\d+(?:\.\d+)?\b/g, "#")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Scoped warning context: callers may set source/venueId/editionId so that
+// warnings generated during parsing carry identity metadata.
+let _warningContext: {
+  source?: string;
+  venueId?: string | null;
+  editionId?: string | null;
+} = {};
+
+/** Set the warning scope for subsequent warn() calls within this scope. */
+export function setWarningContext(
+  ctx: { source?: string; venueId?: string | null; editionId?: string | null } | null,
+): void {
+  _warningContext = ctx ?? {};
+}
+
+/** Clear the warning scope (revert to defaults). */
+export function clearWarningContext(): void {
+  _warningContext = {};
+}
+
+const _warningIdentities: WarningIdentity[] = [];
+
+/** Return all recorded warning identities for the current build. */
+export function warningIdentities(): WarningIdentity[] {
+  return [..._warningIdentities];
+}
+
+/** Return the deduplicated identity keys (for set-diff in the health gate). */
+export function warningIdentityKeys(): string[] {
+  const seen = new Set<string>();
+  const keys: string[] = [];
+  for (const w of _warningIdentities) {
+    const key = warningIdentityKey(w);
+    if (!seen.has(key)) {
+      seen.add(key);
+      keys.push(key);
+    }
+  }
+  return keys.sort();
+}
+
 /** Stable warning families; quoted values and counts must not create a new warning kind. */
 export function warningCode(message: string): string {
   const rules: Array<[RegExp, string]> = [
@@ -399,6 +485,15 @@ export function warn(message: string): void {
   if (n === 1) {
     process.stderr.write(`warning: ${message}\n`);
   }
+  // Record structured identity alongside the legacy message count.
+  _warningIdentities.push({
+    code: warningCode(message),
+    source: _warningContext.source ?? "unknown",
+    venueId: _warningContext.venueId ?? null,
+    editionId: _warningContext.editionId ?? null,
+    field: inferField(message),
+    rawFamily: rawFamily(message),
+  });
 }
 
 export function warningCounts(): Record<string, number> {
@@ -421,6 +516,7 @@ export function warningSummaries(): WarningSummary[] {
 
 export function resetWarnings(): void {
   WARNINGS.clear();
+  _warningIdentities.length = 0;
 }
 
 // --------------------------------------------------------------------------
@@ -786,6 +882,32 @@ export function isNonDateMarker(text: unknown): boolean {
   if (text === null || text === undefined) return false;
   const s = String(text).trim().toLowerCase().replace(/[.:]$/, "");
   return s === "tbd" || s === "tba" || s === "to be announced" || s === "extended";
+}
+
+// --------------------------------------------------------------------------
+// announcement status
+// --------------------------------------------------------------------------
+
+/** How a source value relates to a concrete date. */
+export type AnnouncementStatus = "announced" | "not-announced" | "source-marker-invalid";
+
+/** Classify a raw text value as announced / unannounced / invalid marker. */
+export function classifyAnnouncementStatus(text: unknown): AnnouncementStatus {
+  if (text === null || text === undefined || text === "") return "announced";
+  const s = String(text).trim().toLowerCase().replace(/[.:]$/, "");
+  if (s === "tbd" || s === "tba" || s === "to be announced") return "not-announced";
+  if (s === "extended") return "source-marker-invalid";
+  return "announced";
+}
+
+/** True for TBD / TBA / To be announced (normal unannounced state). */
+export function isUnannouncedMarker(text: unknown): boolean {
+  return classifyAnnouncementStatus(text) === "not-announced";
+}
+
+/** True for Extended (invalid source marker, not a date). */
+export function isInvalidSourceMarker(text: unknown): boolean {
+  return classifyAnnouncementStatus(text) === "source-marker-invalid";
 }
 
 /** Parse an upstream deadline into an aware UTC Date, or null. */
