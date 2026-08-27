@@ -931,14 +931,17 @@ export interface RequiredSemanticFeatures {
   }>;
 }
 
+/**
+ * Hash only paper_id and semantic_scores (venue-fit features).
+ * The candidate set is snapshot-dependent and must not affect the hash,
+ * so that upstream data changes (venues appearing/disappearing) do not
+ * invalidate the feature record.
+ */
 function requiredRecordHash(
-  record: Pick<
-    RequiredSemanticFeatures["records"][number],
-    "paper_id" | "semantic_scores" | "candidates"
-  >,
+  record: Pick<RequiredSemanticFeatures["records"][number], "paper_id" | "semantic_scores">,
 ): string {
   return createHash("sha256")
-    .update(JSON.stringify([record.paper_id, record.semantic_scores, record.candidates]))
+    .update(JSON.stringify([record.paper_id, record.semantic_scores]))
     .digest("hex");
 }
 
@@ -2075,7 +2078,6 @@ export async function runRealPaperBenchmark(
         record_sha256: requiredRecordHash({
           paper_id: record.paper_id,
           semantic_scores: inferredSemanticScores,
-          candidates: candidateFeatures,
         }),
         semantic_scores: inferredSemanticScores,
         candidates: candidateFeatures,
