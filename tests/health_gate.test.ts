@@ -512,6 +512,44 @@ it("keeps other sub-minute values as a real slot conflict", () => {
   );
 });
 
+it("resolves same-raw-value timezone discrepancies (1h PST/PDT gap)", () => {
+  // ICRA-like scenario: two sources interpret the same raw date with different
+  // timezone offsets (PST vs PDT), creating a 1-hour gap.
+  const report = healthReport(
+    {
+      generated_at: "2026-08-09T00:00:00Z",
+      conferences: [
+        {
+          key: "venue",
+          editions: [
+            {
+              id: "venue26",
+              year: 2026,
+              deadlines: [
+                {
+                  kind: "paper",
+                  precision: "exact",
+                  utc: "2026-09-16T07:59:59Z",
+                  conflicts: [{ at_utc: "2026-09-16T06:59:59Z" }],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    new Date("2026-08-09T00:00:00Z"),
+  );
+  // The conflict creates 2 refs (primary + conflict), but resolveSlotGroups
+  // recognizes the 1h timezone discrepancy and resolves to one slot.
+  expect(report.deadline_refs).toHaveLength(2);
+  const result = evaluateHealthGate(report, report);
+  expect(result.reasons).toEqual([]);
+  expect(result.warnings).toEqual(
+    expect.arrayContaining([`current timezone discrepancy resolved: ${SLOT} (1h gap)`]),
+  );
+});
+
 it("preserves source field evidence without manufacturing manual verification", () => {
   const manual = localDeadlines({
     link: "https://example.test/manual",

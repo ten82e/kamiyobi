@@ -1624,6 +1624,18 @@ function resolveSlotGroups(
       resolved.push(members[0]);
       continue;
     }
+    // Same-raw-value timezone discrepancy: two aggregator sources interpret
+    // the same date string with different timezone offsets (e.g. PST vs PDT).
+    // When the gap is exactly 1 hour and both members are exact precision,
+    // pick the primary (earlier deadline = more conservative) and warn.
+    if (exact.length === members.length && exact.length === 2) {
+      const gap = Math.abs(exact[0].earliest_ms - exact[1].earliest_ms);
+      if (gap === 3_600_000) {
+        warnings.push(`${side} timezone discrepancy resolved: ${id} (1h gap)`);
+        resolved.push(exact[0].earliest_ms <= exact[1].earliest_ms ? exact[0] : exact[1]);
+        continue;
+      }
+    }
     reasons.push(`${side} deadline slot conflict: ${id}`);
   }
   return { slots: resolved, reasons, warnings };
