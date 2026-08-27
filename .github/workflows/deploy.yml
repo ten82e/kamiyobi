@@ -65,7 +65,8 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: '24', cache: npm }
       - name: Install dependencies
-        run: npm ci
+        run: |
+          for i in 1 2 3; do npm ci && break || sleep 15; done
       - name: Capture build time
         run: echo "BUILD_NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
       - name: Build merged site
