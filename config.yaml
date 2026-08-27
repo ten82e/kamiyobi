@@ -43,6 +43,8 @@ health:
   required_venues: [rtss, nsdi]
   # Online cache fallback older than 24 hours may hide a sustained upstream outage.
   max_cache_age_seconds: 86400
+  reverification:
+    enabled: true
 
 # 源が異なる 2 件の締切を「同じ締切の二重記載」とみなす条件 (SPEC.md 3.6)。
 #

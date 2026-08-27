@@ -43,6 +43,7 @@ import {
   asDate,
   type Conference,
   cmpStr,
+  computeNextCheckAt,
   DAY_MS,
   type Deadline,
   type DeadlineEvidence,
@@ -420,6 +421,9 @@ export function toJson(
   const sources: Array<Record<string, unknown>> =
     (safeConfig.sources as Array<Record<string, unknown>> | null) ?? DEFAULT_SOURCES;
   const sourceByName = new Map(sources.map((source) => [String(source.name ?? ""), source]));
+  const healthConfig = (safeConfig.health as Record<string, unknown>) ?? {};
+  const reverificationConfig = (healthConfig.reverification as Record<string, unknown>) ?? {};
+  const reverificationEnabled = Boolean(reverificationConfig.enabled);
   const evidenceOf = (
     sourceName: string,
     at: Date | null,
@@ -515,7 +519,27 @@ export function toJson(
             evidence,
             ...(dl.origins?.length ? { origins: dl.origins.map((origin) => ({ ...origin })) } : {}),
             ...(conflicts.length > 0 ? { conflicts } : {}),
-            ...(dl.verification ? { verification: { ...dl.verification } } : {}),
+            ...(dl.verification
+              ? { verification: { ...dl.verification } }
+              : reverificationEnabled && conf.link
+                ? (() => {
+                    const deadlineDate = isDateOnlyDeadline(dl)
+                      ? new Date(`${dl.local_date}T23:59:59Z`)
+                      : dl.at_utc;
+                    const nextCheck = computeNextCheckAt(deadlineDate, safeNow);
+                    if (nextCheck === null) return {};
+                    return {
+                      verification: {
+                        official_url: conf.link,
+                        last_attempt_at: null,
+                        last_verified_at: null,
+                        next_check_at: nextCheck,
+                        content_hash: null,
+                        status: "pending" as const,
+                      },
+                    };
+                  })()
+                : {}),
           };
           if (isDateOnlyDeadline(dl)) {
             const window = dateOnlyWindow(dl.local_date);
