@@ -15,7 +15,9 @@ jobs:
         with: { persist-credentials: false }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: '24', cache: npm }
-      - run: npm ci
+      - name: Install dependencies (with retry)
+        run: |
+          for i in 1 2 3; do npm ci && break || sleep 15; done
       - name: Build site without embeddings
         run: node src/cli.ts build --out public --offline --no-embeddings --cache .cache --now 2026-08-09T00:00:00Z
       # semantic_content_id = embeddingProfileHash(data.json) + reranker hash + algorithm revision
