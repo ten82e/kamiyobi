@@ -1814,8 +1814,12 @@ export function evaluateHealthGate(
   if (unbackedFailures.length > 0) {
     reasons.push(`source failure without snapshot fallback: ${unbackedFailures.join(",")}`);
   }
+  // Offline builds intentionally use committed snapshot data; observation
+  // staleness (relative to BUILD_NOW) is expected and not actionable.
+  const isOffline = currentReport.build_input_mode === "offline-snapshot";
   for (const [source, metadata] of Object.entries(currentReport.source_metadata ?? {})) {
     if (source === "local") continue;
+    if (isOffline) continue;
     if (metadata.observationStatus === "stale") {
       reasons.push(`source observation is stale: ${source}`);
     } else if (metadata.status === "snapshot-fallback" && metadata.observationStatus !== "fresh") {

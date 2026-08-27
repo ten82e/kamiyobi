@@ -233,6 +233,32 @@ it("gates stale observations, new warning codes, and new identity conflicts", ()
   );
 });
 
+it("skips observation staleness check for offline-snapshot builds", () => {
+  const current = {
+    ...health([]),
+    source_metadata: {
+      ccfddl: {
+        source: "ccfddl",
+        status: "snapshot-fallback" as const,
+        revision: "r",
+        fetchedAt: "2026-08-01T00:00:00Z",
+        contentHash: "h",
+        cacheAgeSeconds: 200_000,
+        conferenceCount: 1,
+        editionCount: 1,
+        deadlineCount: 1,
+        observationStatus: "stale" as const,
+      },
+    },
+    build_input_mode: "offline-snapshot" as const,
+  };
+  const result = evaluateHealthGate(current, null);
+  expect(result.ok).toBe(true);
+  expect(result.reasons).not.toContainEqual(
+    expect.stringContaining("source observation is stale"),
+  );
+});
+
 it("gates a different identity conflict even when the total count is unchanged", () => {
   const previous = {
     ...health([]),
