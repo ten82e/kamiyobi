@@ -261,6 +261,40 @@ it("gates a different identity conflict even when the total count is unchanged",
   );
 });
 
+it("detects new warning identities via set-diff (identity-based comparison)", () => {
+  // When warning_identities are present, the gate uses set-diff instead of code/count.
+  // Same code but different venue should be detected.
+  const previous = {
+    ...health([]),
+    warning_identities: ["DEADLINE_UNSTRUCTURED\0local\0venue-a\0\0deadline\0<val>"],
+  };
+  const current = {
+    ...health([]),
+    warning_identities: [
+      "DEADLINE_UNSTRUCTURED\0local\0venue-a\0\0deadline\0<val>",
+      "DEADLINE_UNSTRUCTURED\0local\0venue-b\0\0deadline\0<val>",
+    ],
+  };
+  const result = evaluateHealthGate(current, previous);
+  expect(result.reasons).toContain("new warning identities: 1");
+});
+
+it("falls back to code/count comparison when warning_identities are absent", () => {
+  const previous = {
+    ...health([]),
+    warning_codes: { KNOWN: { count: 1, messages: ["known"] } },
+  };
+  const current = {
+    ...health([]),
+    warning_codes: {
+      KNOWN: { count: 1, messages: ["known"] },
+      NEW: { count: 1, messages: ["new"] },
+    },
+  };
+  const result = evaluateHealthGate(current, previous);
+  expect(result.reasons).toContain("new warning code: NEW");
+});
+
 it("requires newer distinct official field evidence for earlier moves", () => {
   const previous = health(
     [exact("2026-09-01T12:00:00Z", { evidence: [official("old", "2026-08-01T00:00:00Z")] })],

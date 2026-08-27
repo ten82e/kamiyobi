@@ -1037,6 +1037,7 @@ export interface HealthReport {
   snapshot_fallback: boolean;
   parse_warnings: Record<string, number>;
   warning_codes?: Record<string, { count: number; messages: string[] }>;
+  warning_identities?: string[];
   identity_conflicts?: {
     venue: number;
     edition: number;
@@ -1067,6 +1068,7 @@ export interface HealthReportOptions {
   parseWarnings?: Record<string, number>;
   parseWarningCount?: number;
   warningCodes?: Record<string, { count: number; messages: string[] }>;
+  warningIdentityKeys?: string[];
   identityConflicts?: Array<{
     scope: "venue" | "edition";
     reason: string;
@@ -1329,6 +1331,7 @@ export function healthReport(
     snapshot_fallback: Boolean(options.snapshotFallback),
     parse_warnings: parseWarnings,
     warning_codes: options.warningCodes,
+    warning_identities: options.warningIdentityKeys ?? [],
     identity_conflicts: {
       venue: identityConflicts.filter((conflict) => conflict.scope === "venue").length,
       edition: identityConflicts.filter((conflict) => conflict.scope === "edition").length,
@@ -1771,6 +1774,7 @@ export interface ObservationBaseline {
   observed_at: string;
   parse_warning_count?: number;
   warning_codes?: Record<string, { count: number; messages: string[] }>;
+  warning_identities?: string[];
   identity_conflicts?: HealthReport["identity_conflicts"];
 }
 
@@ -1915,13 +1919,33 @@ export function evaluateHealthGate(
     currentConflicts.new_since_baseline = newConflicts;
     if (newConflicts > 0) reasons.push(`identity conflicts increased by ${newConflicts}`);
   }
-  const previousWarningCodes: Record<string, { count: number; messages: string[] }> | undefined =
-    previousIsOnline ? previousReport.warning_codes : observation?.warning_codes;
-  if (diagnosticsAvailable && previousWarningCodes) {
-    for (const [code, warning] of Object.entries(currentReport.warning_codes ?? {})) {
-      const prior = previousWarningCodes[code];
-      if (!prior) reasons.push(`new warning code: ${code}`);
-      else if (warning.count > prior.count) reasons.push(`warning code increased: ${code}`);
+  // Identity-based warning comparison (set-diff instead of code/count).
+  // When warning_identities are available on both sides, compare by unique
+  // identity keys so that venue A being fixed while venue B breaks is detected.
+  const previousWarningIdentities: string[] | undefined = previousIsOnline
+    ? previousReport.warning_identities
+    : observation?.warning_identities;
+  if (
+    diagnosticsAvailable &&
+    Array.isArray(previousWarningIdentities) &&
+    previousWarningIdentities.length > 0
+  ) {
+    const previousKeySet = new Set(previousWarningIdentities);
+    const currentKeys = currentReport.warning_identities ?? [];
+    const newKeys = currentKeys.filter((key) => !previousKeySet.has(key));
+    if (newKeys.length > 0) {
+      reasons.push(`new warning identities: ${newKeys.length}`);
+    }
+  } else if (diagnosticsAvailable) {
+    // Fallback: legacy code/count comparison for baselines without identities.
+    const previousWarningCodes: Record<string, { count: number; messages: string[] }> | undefined =
+      previousIsOnline ? previousReport.warning_codes : observation?.warning_codes;
+    if (previousWarningCodes) {
+      for (const [code, warning] of Object.entries(currentReport.warning_codes ?? {})) {
+        const prior = previousWarningCodes[code];
+        if (!prior) reasons.push(`new warning code: ${code}`);
+        else if (warning.count > prior.count) reasons.push(`warning code increased: ${code}`);
+      }
     }
   }
   return { ok: reasons.length === 0, reasons, warnings };

@@ -10,6 +10,8 @@ import { describe, expect, it } from "vitest";
 import { parsePrimaryArgs } from "../src/fetch-primary.ts";
 import {
   addDays,
+  classifyAnnouncementStatus,
+  clearWarningContext,
   cmpStr,
   dateOnly,
   dateOnlyState,
@@ -18,16 +20,22 @@ import {
   exactDeadlineState,
   fmtDate,
   fmtUTC,
+  isInvalidSourceMarker,
   isNonDateMarker,
+  isUnannouncedMarker,
   monthOf,
   parseDateRange,
   parseInstant,
   resetWarnings,
   roundOf,
+  setWarningContext,
   slug,
   warn,
   warningCode,
   warningCounts,
+  warningIdentities,
+  warningIdentityKey,
+  warningIdentityKeys,
 } from "../src/model.ts";
 import {
   deadlinesOf as aideadlinesDeadlinesOf,
@@ -1392,5 +1400,81 @@ describe("non-date markers", () => {
     const [start, end] = parseDateRange("TBA", 2026);
     expect(start).toBeNull();
     expect(end).toBeNull();
+  });
+});
+
+describe("announcement status", () => {
+  it("classifies TBD / TBA as not-announced", () => {
+    expect(classifyAnnouncementStatus("TBD")).toBe("not-announced");
+    expect(classifyAnnouncementStatus("tba")).toBe("not-announced");
+    expect(classifyAnnouncementStatus("To be announced")).toBe("not-announced");
+    expect(isUnannouncedMarker("TBD")).toBe(true);
+    expect(isUnannouncedMarker("tba")).toBe(true);
+  });
+
+  it("classifies Extended as source-marker-invalid", () => {
+    expect(classifyAnnouncementStatus("Extended")).toBe("source-marker-invalid");
+    expect(isInvalidSourceMarker("Extended")).toBe(true);
+    expect(isUnannouncedMarker("Extended")).toBe(false);
+  });
+
+  it("classifies concrete dates as announced", () => {
+    expect(classifyAnnouncementStatus("2026-08-28")).toBe("announced");
+    expect(classifyAnnouncementStatus(null)).toBe("announced");
+    expect(classifyAnnouncementStatus("")).toBe("announced");
+    expect(isUnannouncedMarker("2026-08-28")).toBe(false);
+    expect(isInvalidSourceMarker("2026-08-28")).toBe(false);
+  });
+});
+
+describe("warning identities", () => {
+  it("records structured identity for each warn() call", () => {
+    resetWarnings();
+    warn('unparsable deadline "TBD"');
+    const ids = warningIdentities();
+    expect(ids.length).toBe(1);
+    expect(ids[0].code).toBe("DEADLINE_UNSTRUCTURED");
+    expect(ids[0].field).toBe("deadline");
+    expect(ids[0].source).toBe("unknown");
+    expect(ids[0].venueId).toBeNull();
+    expect(ids[0].rawFamily).toContain("<val>");
+    resetWarnings();
+  });
+
+  it("captures scoped context from setWarningContext", () => {
+    resetWarnings();
+    setWarningContext({ source: "local", venueId: "ieice-in", editionId: "ieice-in-2026-08" });
+    warn('unparsable event date "Extended"');
+    const ids = warningIdentities();
+    expect(ids.length).toBe(1);
+    expect(ids[0].source).toBe("local");
+    expect(ids[0].venueId).toBe("ieice-in");
+    expect(ids[0].editionId).toBe("ieice-in-2026-08");
+    expect(ids[0].field).toBe("event_date");
+    clearWarningContext();
+    resetWarnings();
+  });
+
+  it("deduplicates identity keys", () => {
+    resetWarnings();
+    warn('unparsable deadline "TBD"');
+    warn('unparsable deadline "TBD"');
+    warn('unparsable deadline "TBD"');
+    const keys = warningIdentityKeys();
+    expect(keys.length).toBe(1);
+    expect(keys[0]).toBe(warningIdentityKey(warningIdentities()[0]));
+    resetWarnings();
+  });
+
+  it("generates different identity keys for different sources", () => {
+    resetWarnings();
+    setWarningContext({ source: "ccfddl", venueId: "www" });
+    warn('unparsable deadline "TBD"');
+    setWarningContext({ source: "aideadlines", venueId: "www" });
+    warn('unparsable deadline "TBD"');
+    const keys = warningIdentityKeys();
+    expect(keys.length).toBe(2);
+    clearWarningContext();
+    resetWarnings();
   });
 });
