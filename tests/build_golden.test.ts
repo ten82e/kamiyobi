@@ -289,6 +289,33 @@ it("toJson omits verification when not set", () => {
   expect(deadline).not.toHaveProperty("verification");
 });
 
+it("toJson generates verification when reverification.enabled is true", () => {
+  const payload = toJson(
+    [
+      makeConference({
+        key: "testconf",
+        title: "TestConf",
+        link: "https://example.org/testconf",
+        sources: ["local"],
+        editions: [
+          makeEdition({
+            year: 2026,
+            source: "local",
+            deadlines: [makeDeadline("paper", "Paper submission", utc(2026, 10, 1))],
+          }),
+        ],
+      }),
+    ],
+    { health: { reverification: { enabled: true } } },
+    NOW,
+  );
+  const deadline = (payload.conferences as any[])[0].editions[0].deadlines[0];
+  expect(deadline).toHaveProperty("verification");
+  expect(deadline.verification.official_url).toBe("https://example.org/testconf");
+  expect(deadline.verification.status).toBe("pending");
+  expect(deadline.verification.next_check_at).toBeDefined();
+});
+
 it("omits ambiguous legacy key redirects", () => {
   const payload = toJson(
     [
