@@ -74,6 +74,7 @@ export interface BenchArgs {
   realV2Features: string | null;
   writeRequiredFeatures: string | null;
   realV2Small: boolean;
+  taxonomyDetail: boolean;
   dataDelta: string | null;
   dataDeltaBefore: string | null;
   dataDeltaAfter: string | null;
@@ -128,6 +129,7 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
     realV2Features: null,
     writeRequiredFeatures: null,
     realV2Small: false,
+    taxonomyDetail: false,
     dataDelta: null,
     dataDeltaBefore: null,
     dataDeltaAfter: null,
@@ -169,6 +171,7 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
       "real-v2-features": { type: "string" },
       "write-required-features": { type: "string" },
       "real-v2-small": { type: "boolean" },
+      "taxonomy-detail": { type: "boolean" },
       "data-delta": { type: "string" },
       "data-delta-before": { type: "string" },
       "data-delta-after": { type: "string" },
@@ -209,6 +212,7 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
   args.realV2Features = stringValue(values["real-v2-features"]) ?? null;
   args.writeRequiredFeatures = stringValue(values["write-required-features"]) ?? null;
   args.realV2Small = booleanValue(values["real-v2-small"], false);
+  args.taxonomyDetail = booleanValue(values["taxonomy-detail"], false);
   args.dataDelta = stringValue(values["data-delta"]) ?? null;
   args.dataDeltaBefore = stringValue(values["data-delta-before"]) ?? null;
   args.dataDeltaAfter = stringValue(values["data-delta-after"]) ?? null;
@@ -1142,6 +1146,18 @@ export interface RealPaperSplitResult {
   };
   calibration: RecommendationCalibration;
   failure_taxonomy?: Record<FailureType, number>;
+  failure_details?: Record<
+    string,
+    {
+      paper_id: string;
+      failure_type: FailureType;
+      lexical_rank: number | null;
+      semantic_rank: number | null;
+      fused_rank: number | null;
+      confidence: string;
+      acceptable_venues: string[];
+    }
+  >;
 }
 
 export interface RealPaperNegativeRecord {
@@ -1711,6 +1727,7 @@ function realPaperSplitResult(
   confidence: Record<string, string>,
   predictedProbability?: Record<string, { top1: number; top5: number }>,
   failures?: Record<string, FailureClassification>,
+  taxonomyDetail?: boolean,
 ): RealPaperSplitResult {
   const metrics = realPaperMetrics(records, rankings);
   const probabilities = records.map((record) => {
@@ -1760,6 +1777,27 @@ function realPaperSplitResult(
           { none: 0, retrieval: 0, reranker: 0, annotation: 0, calibration: 0 },
         )
       : undefined,
+    failure_details:
+      taxonomyDetail && failures
+        ? Object.fromEntries(
+            records.map((record) => {
+              const f = failures[record.paper_id];
+              const r = rankings[record.paper_id];
+              return [
+                record.paper_id,
+                {
+                  paper_id: record.paper_id,
+                  failure_type: f?.failure_type ?? "none",
+                  lexical_rank: r?.lexical ?? null,
+                  semantic_rank: r?.semantic ?? null,
+                  fused_rank: r?.fused ?? null,
+                  confidence: confidence[record.paper_id] ?? "unknown",
+                  acceptable_venues: [...record.acceptable_venues],
+                },
+              ] as const;
+            }),
+          )
+        : undefined,
   };
 }
 
@@ -1784,6 +1822,7 @@ export function buildRealPaperResult(
   benchmarkEmbeddings?: { dev: BenchmarkEmbeddingManifest; heldout: BenchmarkEmbeddingManifest },
   negative?: RealPaperNegativeFixture,
   coverage: RealPaperCoverage = "full",
+  taxonomyDetail?: boolean,
 ): RealPaperResult {
   return {
     benchmark: "real-paper-v1",
@@ -1799,6 +1838,7 @@ export function buildRealPaperResult(
         evaluations.dev.confidence,
         evaluations.dev.probability,
         evaluations.dev.failures,
+        taxonomyDetail,
       ),
       heldout: realPaperSplitResult(
         heldout.records,
@@ -1806,6 +1846,7 @@ export function buildRealPaperResult(
         evaluations.heldout.confidence,
         evaluations.heldout.probability,
         evaluations.heldout.failures,
+        taxonomyDetail,
       ),
       ...(negative && evaluations.negative
         ? {
@@ -1924,6 +1965,7 @@ export async function runRealPaperBenchmark(
   coverage: "full" | "required" = "full",
   requiredFeatures?: RequiredSemanticFeatures,
   collectedFeatures?: RequiredSemanticFeatures["records"],
+  taxonomyDetail?: boolean,
 ): Promise<RealPaperRun> {
   const confs = data.conferences ?? [];
   const venueKeys = new Set(confs.map((conference) => conference.key));
@@ -2176,6 +2218,7 @@ export async function runRealPaperBenchmark(
         },
         negative,
         coverage,
+        taxonomyDetail,
       ),
       timing: { firstLoadMs, repeatRecommendationMs },
     };
@@ -2499,7 +2542,7 @@ export async function main(
   const rawArgs = Array.isArray(argv) ? argv : [];
   if (rawArgs.includes("--help") || rawArgs.includes("-h") || rawArgs.includes("help")) {
     console.log(
-      "usage: node src/bench-recommender.ts [--data <path>] [--emb <path>] [--v2 <fixture>] [--real-v2-dev <fixture>] [--real-v2-heldout <fixture>] [--real-v2-negative <fixture>] [--real-v2-small] [--samples <n>] [--failures <n>] [--topk <n>] [--lang <en|jp>] [--golden-en] [--no-idf]",
+      "usage: node src/bench-recommender.ts [--data <path>] [--emb <path>] [--v2 <fixture>] [--real-v2-dev <fixture>] [--real-v2-heldout <fixture>] [--real-v2-negative <fixture>] [--real-v2-small] [--taxonomy-detail] [--samples <n>] [--failures <n>] [--topk <n>] [--lang <en|jp>] [--golden-en] [--no-idf]",
     );
     return 0;
   }
@@ -2613,6 +2656,7 @@ export async function main(
         args.realV2Small ? "required" : "full",
         requiredFeatures,
         args.writeRequiredFeatures ? collectedFeatures : undefined,
+        args.taxonomyDetail,
       );
       if (args.writeRequiredFeatures) {
         const benchmarkProfiles = run.result.benchmark_embeddings;
