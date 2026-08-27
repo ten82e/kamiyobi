@@ -224,6 +224,71 @@ it("toJson preserves deadline evidence, conflicts, and selection rule", () => {
   });
 });
 
+it("toJson preserves verification state on deadlines", () => {
+  const payload = toJson(
+    [
+      makeConference({
+        key: "testconf",
+        title: "TestConf",
+        sources: ["local"],
+        editions: [
+          makeEdition({
+            year: 2026,
+            source: "local",
+            deadlines: [
+              {
+                ...makeDeadline("paper", "Paper submission", utc(2026, 10, 1)),
+                verification: {
+                  official_url: "https://testconf.org/cfp",
+                  last_attempt_at: "2026-08-20T10:00:00Z",
+                  last_verified_at: "2026-08-20T10:00:00Z",
+                  next_check_at: "2026-08-27T10:00:00Z",
+                  content_hash: "abc123",
+                  status: "verified",
+                },
+              },
+            ],
+          }),
+        ],
+      }),
+    ],
+    {},
+    NOW,
+  );
+  const deadline = (payload.conferences as any[])[0].editions[0].deadlines[0];
+  expect(deadline.verification).toMatchObject({
+    official_url: "https://testconf.org/cfp",
+    last_attempt_at: "2026-08-20T10:00:00Z",
+    last_verified_at: "2026-08-20T10:00:00Z",
+    next_check_at: "2026-08-27T10:00:00Z",
+    content_hash: "abc123",
+    status: "verified",
+  });
+});
+
+it("toJson omits verification when not set", () => {
+  const payload = toJson(
+    [
+      makeConference({
+        key: "testconf",
+        title: "TestConf",
+        sources: ["local"],
+        editions: [
+          makeEdition({
+            year: 2026,
+            source: "local",
+            deadlines: [makeDeadline("paper", "Paper submission", utc(2026, 10, 1))],
+          }),
+        ],
+      }),
+    ],
+    {},
+    NOW,
+  );
+  const deadline = (payload.conferences as any[])[0].editions[0].deadlines[0];
+  expect(deadline).not.toHaveProperty("verification");
+});
+
 it("omits ambiguous legacy key redirects", () => {
   const payload = toJson(
     [
