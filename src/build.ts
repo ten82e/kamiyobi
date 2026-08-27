@@ -515,6 +515,7 @@ export function toJson(
             evidence,
             ...(dl.origins?.length ? { origins: dl.origins.map((origin) => ({ ...origin })) } : {}),
             ...(conflicts.length > 0 ? { conflicts } : {}),
+            ...(dl.verification ? { verification: { ...dl.verification } } : {}),
           };
           if (isDateOnlyDeadline(dl)) {
             const window = dateOnlyWindow(dl.local_date);

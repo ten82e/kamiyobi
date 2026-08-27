@@ -13,6 +13,7 @@ import {
   classifyAnnouncementStatus,
   clearWarningContext,
   cmpStr,
+  computeNextCheckAt,
   dateOnly,
   dateOnlyState,
   dateOnlyWindow,
@@ -1400,6 +1401,68 @@ describe("non-date markers", () => {
     const [start, end] = parseDateRange("TBA", 2026);
     expect(start).toBeNull();
     expect(end).toBeNull();
+  });
+});
+
+describe("computeNextCheckAt", () => {
+  it("returns null for past deadlines", () => {
+    const past = new Date("2026-01-01T00:00:00Z");
+    const now = new Date("2026-08-27T00:00:00Z");
+    expect(computeNextCheckAt(past, now)).toBeNull();
+  });
+
+  it("returns null for null deadline", () => {
+    const now = new Date("2026-08-27T00:00:00Z");
+    expect(computeNextCheckAt(null, now)).toBeNull();
+  });
+
+  it("schedules 7-day interval for >90 days out", () => {
+    const now = new Date("2026-08-27T00:00:00Z");
+    const deadline = new Date("2026-12-31T00:00:00Z"); // ~126 days
+    const next = computeNextCheckAt(deadline, now);
+    expect(next).not.toBeNull();
+    const nextDate = new Date(next!);
+    const diffDays = (nextDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    expect(diffDays).toBeCloseTo(7, 0);
+  });
+
+  it("schedules 3-day interval for 30-90 days out", () => {
+    const now = new Date("2026-08-27T00:00:00Z");
+    const deadline = new Date("2026-10-15T00:00:00Z"); // ~49 days
+    const next = computeNextCheckAt(deadline, now);
+    expect(next).not.toBeNull();
+    const nextDate = new Date(next!);
+    const diffDays = (nextDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    expect(diffDays).toBeCloseTo(3, 0);
+  });
+
+  it("schedules daily for 7-30 days out", () => {
+    const now = new Date("2026-08-27T00:00:00Z");
+    const deadline = new Date("2026-09-10T00:00:00Z"); // ~14 days
+    const next = computeNextCheckAt(deadline, now);
+    expect(next).not.toBeNull();
+    const nextDate = new Date(next!);
+    const diffDays = (nextDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    expect(diffDays).toBeCloseTo(1, 0);
+  });
+
+  it("schedules daily for <7 days out", () => {
+    const now = new Date("2026-08-27T00:00:00Z");
+    const deadline = new Date("2026-08-30T00:00:00Z"); // ~3 days
+    const next = computeNextCheckAt(deadline, now);
+    expect(next).not.toBeNull();
+    const nextDate = new Date(next!);
+    const diffDays = (nextDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    expect(diffDays).toBeCloseTo(1, 0);
+  });
+
+  it("never schedules past the deadline itself", () => {
+    const now = new Date("2026-08-27T00:00:00Z");
+    const deadline = new Date("2026-08-27T12:00:00Z"); // 12 hours away
+    const next = computeNextCheckAt(deadline, now);
+    expect(next).not.toBeNull();
+    const nextDate = new Date(next!);
+    expect(nextDate.getTime()).toBeLessThan(deadline.getTime());
   });
 });
 

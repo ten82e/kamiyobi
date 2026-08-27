@@ -175,6 +175,8 @@ interface DeadlineBase {
   origins?: DeadlineOrigin[];
   conflicts?: DeadlineConflict[];
   selection_rule?: string;
+  /** Optional re-verification tracking for curated deadlines. */
+  verification?: VerificationState;
 }
 
 export interface ExactDeadline extends DeadlineBase {
@@ -235,6 +237,53 @@ export interface DeadlineConflict {
   source: string;
   raw_value?: string;
   evidence?: DeadlineEvidence;
+}
+
+/** Tracks ongoing re-verification of curated deadlines against their official source. */
+export interface VerificationState {
+  /** Official URL that was checked (CFP page, conference site). */
+  official_url: string;
+  /** ISO 8601 timestamp of last verification attempt (success or failure). */
+  last_attempt_at: string | null;
+  /** ISO 8601 timestamp of last successful confirmation (content unchanged). */
+  last_verified_at: string | null;
+  /** ISO 8601 timestamp of next scheduled check. */
+  next_check_at: string;
+  /** SHA-256 hash of last-seen page content for change detection. */
+  content_hash: string | null;
+  /** Current verification status. */
+  status:
+    | "pending"
+    | "verified"
+    | "changed"
+    | "source-unreachable"
+    | "parser-failed"
+    | "manual-required";
+}
+
+/**
+ * Compute the next verification check time based on days until the deadline.
+ *
+ * Schedule:
+ *  - >90 days: 7-day interval
+ *  - 30-90 days: 3-day interval
+ *  - 7-30 days: daily
+ *  - <7 days: daily (high priority)
+ *  - Past deadline: no further checks (return null)
+ */
+export function computeNextCheckAt(deadlineUtc: Date | null, now: Date): string | null {
+  if (!deadlineUtc) return null;
+  const msUntil = deadlineUtc.getTime() - now.getTime();
+  if (msUntil <= 0) return null;
+  const daysUntil = msUntil / (1000 * 60 * 60 * 24);
+  let intervalDays: number;
+  if (daysUntil > 90) intervalDays = 7;
+  else if (daysUntil > 30) intervalDays = 3;
+  else intervalDays = 1;
+  const nextMs = now.getTime() + intervalDays * 24 * 60 * 60 * 1000;
+  // Never schedule past the deadline itself
+  const clampedMs = Math.min(nextMs, deadlineUtc.getTime() - 1);
+  return new Date(clampedMs).toISOString();
 }
 
 export interface DeadlineEstimate {
