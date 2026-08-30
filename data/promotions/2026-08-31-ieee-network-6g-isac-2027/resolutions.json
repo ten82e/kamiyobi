@@ -1,0 +1,105 @@
+[
+  {
+    "candidate": "ieee-network-6g-isac",
+    "decision": "promote",
+    "verifiedFields": [
+      "venue",
+      "date",
+      "kind",
+      "round"
+    ],
+    "reason": "primary fields and evidence verified",
+    "verification": {
+      "valid": true,
+      "errors": [],
+      "checkedFields": [
+        "requestedUrl",
+        "finalUrl",
+        "status",
+        "headers",
+        "retrievedAt",
+        "sourceRevision",
+        "bodyHash",
+        "excerpt",
+        "officialDomain",
+        "extractionCandidates",
+        "eventYear",
+        "deadlineDate",
+        "deadlineTime",
+        "deadlineTimezone"
+      ],
+      "bodyHash": "94d638e1df49fddab0e7dab40641699f0649e0cc2a88eb574261fddee1561dcc",
+      "sourceRevision": "\"1787962916-gzip\"",
+      "extractedCandidates": [
+        {
+          "rawExcerpt": "Manuscript Submission Deadline: 15 September 2026 (Extended Deadline)",
+          "text": "Manuscript Submission Deadline: 15 September 2026 (Extended Deadline)",
+          "label": "Manuscript Submission Deadline: 15 September 2026 (Extended Deadline)",
+          "kind": "paper",
+          "date": "2026-09-15",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Revision Manuscript Due: 1 January 2027",
+          "text": "Revision Manuscript Due: 1 January 2027",
+          "label": "Revision Manuscript Due: 1 January 2027",
+          "kind": "paper",
+          "date": "2027-01-01",
+          "editionYear": 2027
+        },
+        {
+          "rawExcerpt": "Final Manuscript Due: 15 February 2027",
+          "text": "Final Manuscript Due: 15 February 2027",
+          "label": "Final Manuscript Due: 15 February 2027",
+          "kind": "paper",
+          "date": "2027-02-15",
+          "editionYear": 2027
+        }
+      ]
+    },
+    "normalized": {
+      "venue": {
+        "key": "ieee-network-6g-isac",
+        "title": "IEEE Network Special Issue: High-Reliability and Low-Latency Communications for 6G Network: ISAC-Enabled Architectures, Networking, and Services",
+        "categories": [
+          "networking",
+          "systems"
+        ],
+        "tags": [
+          "niche",
+          "special-issue"
+        ],
+        "review_state": "reviewed"
+      },
+      "edition": {
+        "year": 2027,
+        "edition_id": "ieee-network-6g-isac-2027",
+        "date_text": "2027"
+      },
+      "deadline": {
+        "kind": "paper",
+        "label": "paper",
+        "round": 1,
+        "track": "",
+        "precision": "date-only",
+        "date": "2026-09-15",
+        "evidence": [
+          {
+            "sourceClass": "publisher",
+            "sourceUrl": "https://www.comsoc.org/publications/magazines/ieee-network/cfp/high-reliability-and-low-latency-communications-6g-network-isac-enabled-architectures-networking-and-services",
+            "sourceRevision": "\"1787962916-gzip\"",
+            "retrievedAt": "2026-08-30T20:13:34.822Z",
+            "verifiedAt": "2026-08-30T20:14:00Z",
+            "contentHash": "94d638e1df49fddab0e7dab40641699f0649e0cc2a88eb574261fddee1561dcc",
+            "rawExcerpt": "<strong>Manuscript Submission Deadline:</strong> 15 September 2026 (Extended Deadline)",
+            "verifiedFields": [
+              "date",
+              "kind",
+              "round"
+            ]
+          }
+        ]
+      }
+    }
+  }
+]
