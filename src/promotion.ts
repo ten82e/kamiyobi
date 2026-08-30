@@ -6,7 +6,7 @@ import { asDate, parseInstant } from "./model.ts";
 
 export type PromotionSourceClass = "official-cfp" | "publisher" | "curated-manual" | "aggregator";
 
-export const CFP_PARSER_VERSION = "cfp-observer/1";
+export const CFP_PARSER_VERSION = "cfp-observer/2";
 export const DEFAULT_CAPTURE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 export interface CfpExtractionCandidate {
@@ -296,12 +296,30 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/[ \t\u00a0]+/g, " ");
-  const candidates: CfpExtractionCandidate[] = [];
-  const seen = new Set<string>();
-  for (const raw of text
+  const lines = text
     .split(/\r?\n/)
     .map((line) => line.trim())
-    .filter(Boolean)) {
+    .filter(Boolean);
+  const globalDeadlineTiming = lines.find(
+    (line) =>
+      /^all deadlines?\s+(?:are|at)\s+\d{1,2}:\d{2}(?::\d{2})?\s+(?:AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|JST|PT|ET|CT|MT|[A-Za-z_]+\/[A-Za-z_]+)(?:\s*\(Anywhere on Earth\))?[.!]?$/i.test(
+        line,
+      ) &&
+      extractedTime(line) &&
+      extractedTimezone(line),
+  );
+  const defaultTime = globalDeadlineTiming ? extractedTime(globalDeadlineTiming) : undefined;
+  const defaultTimezone = globalDeadlineTiming
+    ? extractedTimezone(globalDeadlineTiming)
+    : undefined;
+  const candidates: CfpExtractionCandidate[] = [];
+  const seen = new Set<string>();
+  const hasTimeExpression = (value: string) =>
+    Boolean(extractedTime(value)) ||
+    /\b(?:\d{1,2}:\d{2}(?::\d{2})?|\d{1,2}\s*(?:a\.?m\.?|p\.?m\.?)|at\s+\d{3,4}|noon|midnight|end of (?:the )?day|eod)\b/i.test(
+      value,
+    );
+  for (const raw of lines) {
     if (
       !/deadline|due|submission|submit|notification|camera[- ]?ready|call for papers|cfp|event|conference|開催|締切|期限|投稿|募集/i.test(
         raw,
@@ -309,10 +327,18 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
     )
       continue;
     const extracted = extractedDates(raw);
+    const headerHasDeadline = /deadline|due|notification|camera[- ]?ready|締切|期限/i.test(
+      raw.slice(0, extracted[0]?.index),
+    );
+    const hasBareMilitaryTime = extracted.some((date, index) =>
+      /\b(?:[01]?\d|2[0-3])[0-5]\d\b/.test(raw.slice(date.end, extracted[index + 1]?.index)),
+    );
     for (const [index, value] of extracted.entries()) {
       if (!value.date || !value.year) continue;
       const scope =
         extracted.length === 1 ? raw : raw.slice(value.index, extracted[index + 1]?.index);
+      const ambiguousLeadingTime =
+        extracted.length > 1 && hasTimeExpression(raw.slice(0, extracted[0].index));
       const candidate: CfpExtractionCandidate = {
         rawExcerpt: raw,
         text: raw,
@@ -321,8 +347,34 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
         date: value.date,
         editionYear: value.year,
       };
-      const time = extractedTime(scope);
-      const timezone = extractedTimezone(scope);
+      const localTime = ambiguousLeadingTime ? undefined : extractedTime(scope);
+      const localTimezone = ambiguousLeadingTime ? undefined : extractedTimezone(scope);
+      const prefix = raw.slice(extracted[index - 1]?.end ?? 0, value.index);
+      const currentPrefix = prefix.slice(
+        Math.max(prefix.lastIndexOf(";"), prefix.lastIndexOf("|")) + 1,
+      );
+      const suffix = raw.slice(value.end, extracted[index + 1]?.index ?? raw.length);
+      const deadlineSemantics = /deadline|due|notification|camera[- ]?ready|締切|期限/i;
+      const inheritsHeader =
+        headerHasDeadline &&
+        (/\b(?:round|cycle|phase)\b/i.test(currentPrefix) || /^[\s:—–-]*$/.test(currentPrefix)) &&
+        (extracted.length === 1 || /^[\s,;:—–|-]*$/.test(suffix));
+      const hasDeadlineSemantics =
+        ((deadlineSemantics.test(currentPrefix) &&
+          (index === 0 || !/^\s*[—–-]/.test(currentPrefix))) ||
+          (extracted.length === 1 && deadlineSemantics.test(raw.slice(value.end))) ||
+          inheritsHeader) &&
+        !/\b(?:open|opens|opening|start|starts|begin|begins)\b/i.test(`${currentPrefix} ${suffix}`);
+      const hasUnparsedTime = !localTime && hasTimeExpression(scope);
+      const canUseDefault =
+        hasDeadlineSemantics &&
+        !hasUnparsedTime &&
+        !localTimezone &&
+        !hasBareMilitaryTime &&
+        (extracted.length === 1 || !hasTimeExpression(raw)) &&
+        Boolean(defaultTimezone);
+      const time = localTime ?? (canUseDefault ? defaultTime : undefined);
+      const timezone = localTimezone ?? (canUseDefault ? defaultTimezone : undefined);
       if (time) candidate.time = time;
       if (timezone) candidate.timezone = timezone;
       const key = canonicalJson(candidate);

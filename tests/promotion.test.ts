@@ -132,6 +132,161 @@ describe("promotion batch", () => {
     ).toMatchObject([{ date: "2026-03-01", time: "19:00:00", timezone: "UTC" }]);
   });
 
+  it("applies an explicit page-wide deadline time without treating the event date as a deadline", () => {
+    const [deadline, notification, event] = extractCfpCandidates(
+      "<li>Paper Submission Deadline <b>October 10, 2026</b></li>" +
+        "<li>Author Notification <b>November 12, 2026 20:00 UTC</b></li>" +
+        "<li>Conference Dates <b>December 14, 2026</b></li>" +
+        "<p>All deadlines are 23:59 AoE (Anywhere on Earth).</p>",
+    );
+    expect(deadline).toMatchObject({
+      date: "2026-10-10",
+      time: "23:59:00",
+      timezone: "AoE",
+    });
+    expect(notification).toMatchObject({
+      date: "2026-11-12",
+      time: "20:00:00",
+      timezone: "UTC",
+    });
+    expect(event).not.toHaveProperty("time");
+    expect(event).not.toHaveProperty("timezone");
+  });
+
+  it("applies page-wide timing only to the deadline in mixed and opening rows", () => {
+    const rows = extractCfpCandidates(
+      "Submission Deadline: October 10, 2026; Conference Dates: December 14, 2026\n" +
+        "Paper submissions open October 1, 2026\n" +
+        "Conference registration opens October 2, 2026\n" +
+        "All deadlines are 23:59 AoE",
+    );
+    expect(rows[0]).toMatchObject({ time: "23:59:00", timezone: "AoE" });
+    for (const row of rows.slice(1)) {
+      expect(row).not.toHaveProperty("time");
+      expect(row).not.toHaveProperty("timezone");
+    }
+  });
+
+  it("does not combine a named row time with the page-wide default", () => {
+    for (const rowTime of [
+      "noon UTC",
+      "5 PM UTC",
+      "25:00 UTC",
+      "at 1700 UTC",
+      "1700 UTC",
+      "1700",
+    ]) {
+      const [deadline] = extractCfpCandidates(
+        `Paper deadline October 10, 2026 ${rowTime}\nAll deadlines are 23:59 UTC`,
+      );
+      expect(deadline).not.toHaveProperty("time");
+      if (rowTime.includes("UTC")) expect(deadline).toMatchObject({ timezone: "UTC" });
+      else expect(deadline).not.toHaveProperty("timezone");
+    }
+  });
+
+  it.each([
+    "All deadlines are not 23:59 AoE",
+    "All deadlines are never 23:59 AoE",
+    "All deadlines except the abstract deadline are 23:59 AoE",
+    "All deadlines are 23:59 AoE, excluding the abstract deadline",
+    "All deadlines are 23:59 AoE (except the abstract deadline).",
+    "All deadlines are 23:59 AoE unless otherwise noted",
+  ])("ignores a conditional or negated page-wide rule: %s", (rule) => {
+    const [deadline] = extractCfpCandidates(`Paper deadline October 10, 2026\n${rule}`);
+    expect(deadline).not.toHaveProperty("time");
+    expect(deadline).not.toHaveProperty("timezone");
+  });
+
+  it("applies page-wide timing to a row containing only multiple deadlines", () => {
+    expect(
+      extractCfpCandidates(
+        "Paper deadlines: Round 1 October 10, 2026; Round 2 November 10, 2026\n" +
+          "All deadlines are 23:59 AoE",
+      ),
+    ).toMatchObject([
+      { date: "2026-10-10", time: "23:59:00", timezone: "AoE" },
+      { date: "2026-11-10", time: "23:59:00", timezone: "AoE" },
+    ]);
+  });
+
+  it("does not guess timing for multiple dates whose times precede the dates", () => {
+    const rows = extractCfpCandidates(
+      "Paper deadlines: Round 1 at 17:00 UTC October 10, 2026; " +
+        "Round 2 at 18:00 UTC November 10, 2026\nAll deadlines are 23:59 UTC",
+    );
+    for (const row of rows) {
+      expect(row).not.toHaveProperty("time");
+      expect(row).not.toHaveProperty("timezone");
+    }
+  });
+
+  it("keeps main conference paper deadlines eligible for page-wide timing", () => {
+    expect(
+      extractCfpCandidates(
+        "ExampleConf 2026 Main Conference Paper Deadline October 10, 2026\n" +
+          "All deadlines are 23:59 AoE",
+      ),
+    ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
+  });
+
+  it("inherits a deadline header only when the next date has no label", () => {
+    expect(
+      extractCfpCandidates(
+        "Paper deadlines: October 10, 2026; November 10, 2026\n" + "All deadlines are 23:59 AoE",
+      ),
+    ).toMatchObject([
+      { date: "2026-10-10", time: "23:59:00", timezone: "AoE" },
+      { date: "2026-11-10", time: "23:59:00", timezone: "AoE" },
+    ]);
+  });
+
+  it("recognizes a deadline label after the only date", () => {
+    expect(
+      extractCfpCandidates("October 10, 2026 — Paper Deadline\nAll deadlines are 23:59 AoE"),
+    ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
+  });
+
+  it.each([
+    "October 10, 2026 — Paper Deadline; December 14, 2026 — Conference",
+    "Paper Deadline: October 10, 2026; November 1, 2026 — Submissions Open",
+  ])("does not inherit a label that belongs after another date: %s", (row) => {
+    const candidates = extractCfpCandidates(`${row}\nAll deadlines are 23:59 AoE`);
+    expect(candidates.at(-1)).not.toHaveProperty("time");
+    expect(candidates.at(-1)).not.toHaveProperty("timezone");
+  });
+
+  it("recognizes comma-separated labels before multiple dates", () => {
+    expect(
+      extractCfpCandidates(
+        "Paper Deadline, October 10, 2026; Notification, November 12, 2026\n" +
+          "All deadlines are 23:59 AoE",
+      ),
+    ).toMatchObject([
+      { date: "2026-10-10", time: "23:59:00", timezone: "AoE" },
+      { date: "2026-11-12", time: "23:59:00", timezone: "AoE" },
+    ]);
+  });
+
+  it.each(["-", "–", "—"])("recognizes a %s bullet before a deadline", (bullet) => {
+    expect(
+      extractCfpCandidates(
+        `${bullet} Paper Deadline October 10, 2026\nAll deadlines are 23:59 AoE`,
+      ),
+    ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
+  });
+
+  it.each([
+    "Conference: December 14, 2026; Paper Deadline: October 10, 2026",
+    "Conference takes place December 14, 2026; Paper Deadline October 10, 2026",
+    "Workshop: December 14, 2026; Paper Deadline: October 10, 2026",
+  ])("does not apply page-wide timing to mixed event/deadline rows: %s", (row) => {
+    const candidates = extractCfpCandidates(`${row}\nAll deadlines are 23:59 AoE`);
+    expect(candidates[0]).not.toHaveProperty("time");
+    expect(candidates[0]).not.toHaveProperty("timezone");
+    expect(candidates[1]).toMatchObject({ time: "23:59:00", timezone: "AoE" });
+  });
+
   it("requires explicit venue and category review before promotion", () => {
     expect(resolvePromotion(observation({ reviewState: undefined })).decision).toBe("hold");
     expect(resolvePromotion(observation({ categories: [] })).decision).toBe("hold");
