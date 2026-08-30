@@ -4,7 +4,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -1711,17 +1711,14 @@ describe.skipIf(!hasData)("real data integration", () => {
   });
 
   it("embeddings.json covers all conferences", () => {
-    try {
-      const emb = JSON.parse(readFileSync(EMB_JSON, "utf8"));
-      const data = JSON.parse(readFileSync(DATA_JSON, "utf8"));
-      const keys = new Set<string>(data.conferences.map((c: any) => c.key));
-      const embKeys = new Set(Object.keys(emb.embeddings ?? {}));
-      expect([...keys].every((k) => embKeys.has(k))).toBe(true);
-      const dims = new Set(Object.values(emb.embeddings).map((v: any) => v.length));
-      expect(dims).toEqual(new Set([emb.dim]));
-    } catch {
-      // embeddings.json 未生成（transformers.js 依存のため）はスキップ
-    }
+    if (!existsSync(EMB_JSON)) return;
+    const emb = JSON.parse(readFileSync(EMB_JSON, "utf8"));
+    const data = JSON.parse(readFileSync(DATA_JSON, "utf8"));
+    const keys = new Set<string>(data.conferences.map((c: any) => c.key));
+    const embKeys = new Set(Object.keys(emb.embeddings ?? {}));
+    expect([...keys].every((k) => embKeys.has(k))).toBe(true);
+    const dims = new Set(Object.values(emb.embeddings).map((v: any) => v.length));
+    expect(dims).toEqual(new Set([emb.dim]));
   });
 
   it("TSN paper finds real-time venues", () => {
