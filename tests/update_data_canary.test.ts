@@ -182,9 +182,9 @@ describe("update-data canary", () => {
     });
     const result = evaluateHealthGate(current, baseline);
     expect(result.ok).toBe(false);
-    expect(
-      result.reasons.some((reason) => reason.includes("future deadline disappeared")),
-    ).toBe(true);
+    expect(result.reasons.some((reason) => reason.includes("future deadline disappeared"))).toBe(
+      true,
+    );
   });
 
   it("confs array->object drift skips only that conference; the gate still blocks", {
@@ -195,12 +195,7 @@ describe("update-data canary", () => {
     const baselineDir = join(root, "baseline");
     const currentDir = join(root, "current");
     expect(runCli(baselineDir, { cache, extra: ["--no-embeddings"] }).status).toBe(0);
-    const treeRoot = join(
-      cache,
-      "ccfddl__ccf-deadlines__main",
-      "ccf-deadlines-main",
-      "conference",
-    );
+    const treeRoot = join(cache, "ccfddl__ccf-deadlines__main", "ccf-deadlines-main", "conference");
     const file = join(treeRoot, "NW", "nsdi.yml");
     // confs 全体をオブジェクト（配列でない）に置換 — 上流スキーマ drift の模擬。
     // 修正後: その 1 ファイルは skip されソース全体は落ちない (source_failures 空)。

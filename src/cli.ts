@@ -349,7 +349,10 @@ export function restoreFailedSourceMaterialWithCounts(
       //  bis 2025 は evidence が ccfddl のみで aideadlines 由来ではない → 復元不要)
       const hasFailedEvidence = (edition.deadlines ?? []).some((deadline) =>
         (deadline.evidence ?? []).some(
-          (item) => item.source_name !== null && item.source_name !== undefined && failed.has(item.source_name),
+          (item) =>
+            item.source_name !== null &&
+            item.source_name !== undefined &&
+            failed.has(item.source_name),
         ),
       );
       return hasFailedEvidence ? edition.source : null;

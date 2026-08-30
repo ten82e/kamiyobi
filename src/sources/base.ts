@@ -146,7 +146,9 @@ async function download(url: string, dest: string, now: Date): Promise<CachedFet
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     if (attempt > 1) {
       await new Promise((resolve) => setTimeout(resolve, 1_000 * attempt));
-      process.stderr.write(`warning: fetch of ${url} failed; retrying (${attempt}/${maxAttempts})\n`);
+      process.stderr.write(
+        `warning: fetch of ${url} failed; retrying (${attempt}/${maxAttempts})\n`,
+      );
     }
     try {
       const response = await fetch(url, {

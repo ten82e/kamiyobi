@@ -122,9 +122,7 @@ function main(argv: string[] = process.argv) {
   for (const conf of conferences) {
     // 現行 data.json は editions 配下に deadlines を持つ (旧形式は直下)。
     const deadlines =
-      conf.editions?.flatMap((edition) => edition.deadlines ?? []) ??
-      conf.deadlines ??
-      [];
+      conf.editions?.flatMap((edition) => edition.deadlines ?? []) ?? conf.deadlines ?? [];
     for (const dl of deadlines) {
       totalDeadlines++;
       if (!dl.verification) continue;

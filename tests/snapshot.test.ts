@@ -237,7 +237,15 @@ it("does not misattribute non-failed editions when another source failed (bis gh
           deadlines: [
             {
               ...makeDeadline("paper", "Paper submission", utc(2025, 1, 31)),
-              evidence: [{ source_name: "ccfddl", source_url: "", observed_at: "", original_value: "2026-01-31", confidence: "aggregator" }],
+              evidence: [
+                {
+                  source_name: "ccfddl",
+                  source_url: "",
+                  observed_at: "",
+                  original_value: "2026-01-31",
+                  confidence: "aggregator",
+                },
+              ],
             },
           ],
         }),
@@ -248,11 +256,27 @@ it("does not misattribute non-failed editions when another source failed (bis gh
           deadlines: [
             {
               ...makeDeadline("paper", "Paper submission", utc(2026, 1, 25)),
-              evidence: [{ source_name: "ccfddl", source_url: "", observed_at: "", original_value: "2026-01-31", confidence: "aggregator" }],
+              evidence: [
+                {
+                  source_name: "ccfddl",
+                  source_url: "",
+                  observed_at: "",
+                  original_value: "2026-01-31",
+                  confidence: "aggregator",
+                },
+              ],
             },
             {
               ...makeDeadline("notification", "Notification", utc(2026, 3, 9)),
-              evidence: [{ source_name: "aideadlines", source_url: "", observed_at: "", original_value: "2026-03-09", confidence: "aggregator" }],
+              evidence: [
+                {
+                  source_name: "aideadlines",
+                  source_url: "",
+                  observed_at: "",
+                  original_value: "2026-03-09",
+                  confidence: "aggregator",
+                },
+              ],
             },
           ],
         }),
