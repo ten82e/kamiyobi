@@ -649,6 +649,121 @@ describe("source freshness", () => {
     });
     expect((health as any).build_input_mode).toBe("offline-snapshot");
   });
+
+  it("restores snapshot editions before overrides and drops superseded estimates", async () => {
+    const root = isolatedRepo();
+    setRoot(root);
+    writeFileSync(join(root, "data", "extra.yaml"), "conferences: []\n", "utf8");
+    writeFileSync(join(root, "data", "primary_overrides.yaml"), "conferences: {}\n", "utf8");
+    writeFileSync(
+      join(root, "data", "overrides.yaml"),
+      dumpYaml({
+        conferences: {
+          aaai: {
+            editions: {
+              2025: {
+                deadlines: [
+                  { kind: "paper", label: "Paper submission", date: "2026-02-01 23:59", tz: "AoE" },
+                ],
+              },
+              2027: { estimated: false },
+            },
+          },
+        },
+      }),
+      "utf8",
+    );
+    writeFileSync(
+      join(root, "data", "snapshot.json"),
+      JSON.stringify({
+        conferences: [
+          {
+            key: "aaai",
+            title: "AAAI",
+            full_name: "AAAI",
+            categories: ["ai"],
+            sources: ["ccfddl"],
+            editions: [
+              {
+                year: 2025,
+                id: "aaai25",
+                link: "https://aaai.example/2025/",
+                source: "ccfddl",
+                deadlines: [],
+              },
+              {
+                year: 2026,
+                id: "aaai26-est",
+                link: "https://aaai.example/2025/",
+                source: "ccfddl",
+                estimated: true,
+                deadlines: [
+                  {
+                    kind: "paper",
+                    label: "Stale estimate",
+                    precision: "exact",
+                    utc: "2026-01-01T11:59:59Z",
+                    tz_raw: "UTC",
+                  },
+                ],
+              },
+              {
+                year: 2027,
+                id: "aaai27-est",
+                link: "https://aaai.example/2025/",
+                source: "ccfddl",
+                estimated: true,
+                deadlines: [
+                  {
+                    kind: "paper",
+                    label: "Superseded estimate",
+                    precision: "exact",
+                    utc: "2026-03-01T11:59:59Z",
+                    tz_raw: "UTC",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      "utf8",
+    );
+    const local = makeConference({
+      key: "aaai",
+      title: "AAAI",
+      categories: ["ai"],
+      sources: ["local"],
+      editions: [makeEdition({ year: 2027, edition_id: "aaai27", source: "local" })],
+    });
+    const previous = hooks.collect;
+    hooks.collect = async () => ({
+      groups: [[], [], [local]],
+      failed: new Set(["ccfddl", "aideadlines"]),
+    });
+    try {
+      const outdir = join(mkdtempSync("/tmp/cfp-override-restore-"), "out");
+      expect(await cmdBuild(args(outdir))).toBe(0);
+      const data = JSON.parse(readFileSync(join(outdir, "data.json"), "utf8"));
+      const editions = data.conferences.find(
+        (conference: any) => conference.key === "aaai",
+      ).editions;
+      const restored = editions.filter((edition: any) => edition.year === 2025);
+      expect(restored).toHaveLength(1);
+      expect(restored[0].id).toBe("aaai25");
+      expect(restored[0].deadlines[0].evidence[0]).toMatchObject({
+        source_url: "https://aaai.example/2025/",
+        sourceUrl: "https://aaai.example/2025/",
+      });
+      expect(editions.filter((edition: any) => edition.estimated)).toHaveLength(1);
+      const current = editions.filter((edition: any) => edition.year === 2027);
+      expect(current).toHaveLength(1);
+      expect(current[0].id).toBe("aaai27");
+    } finally {
+      hooks.collect = previous;
+      setRoot(REPO_ROOT);
+    }
+  });
 });
 
 describe("parseArgs (CLI flag parsing)", () => {
@@ -950,6 +1065,13 @@ describe("snapshot fallback", () => {
     const snapshot = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
       conferences: unknown[];
     };
+    const savedSatml = (snapshot.conferences as any[]).find(
+      (conference) => conference.key === "satml",
+    );
+    const savedSatml2027 = savedSatml.editions.find((edition: any) => edition.year === 2027);
+    savedSatml2027.deadlines = savedSatml2027.deadlines.filter(
+      (deadline: any) => deadline.kind === "paper",
+    );
     writeFileSync(join(root, "data", "snapshot.json"), JSON.stringify(snapshot), "utf8");
 
     // 上流障害時も local (data/extra.yaml) は読める。復元 snapshot に無い会議と、
@@ -1005,7 +1127,7 @@ describe("snapshot fallback", () => {
             dblp: null,
             upstream_sub: null,
             tags: [],
-            categories: [],
+            categories: ["security", "ai"],
             editions: [
               {
                 year: 2027,
@@ -1109,7 +1231,7 @@ describe("snapshot fallback", () => {
             dblp: null,
             upstream_sub: null,
             tags: [],
-            categories: [],
+            categories: ["security", "ai"],
             editions: [
               {
                 year: 2027,

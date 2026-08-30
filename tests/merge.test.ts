@@ -1202,6 +1202,7 @@ describe("apply_overrides", () => {
           makeEdition({
             year: 2027,
             edition_id: "mmm27",
+            link: "https://mmm.example/2027/",
             deadlines: [makeDeadline("paper", "Paper", utc(2026, 8, 17), "AoE")],
           }),
         ],
@@ -1230,6 +1231,10 @@ describe("apply_overrides", () => {
     expect(edition.deadlines.length).toBe(1);
     expect(exactAt(edition.deadlines[0]).getTime()).toBe(utc(2026, 8, 31, 11, 59, 0).getTime());
     expect(edition.deadlines[0].label).toBe("Regular paper submission (extended)");
+    expect(edition.deadlines[0].evidence?.[0]).toMatchObject({
+      source_url: "https://mmm.example/2027/",
+      sourceUrl: "https://mmm.example/2027/",
+    });
   });
 
   it("override promotes an estimated edition to real and replaces deadlines", () => {

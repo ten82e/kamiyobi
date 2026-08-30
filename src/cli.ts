@@ -529,19 +529,6 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
   const mergeStats: MergeStats = { merged_deadlines: 0, merged_by_key: {} };
   let confs = mergeSources(aliased, config, mergeStats);
   confs = classify(confs, config);
-  confs = applyOverrides(confs, overrides);
-  const primary = resolvePrimaryObservations(primaryObservations, config, confs);
-  confs = applyOverrides(confs, primary);
-  confs = sanitizeEditions(confs);
-  confs = rollforward(
-    confs,
-    new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())),
-    config,
-  );
-  // SPEC.md 3.6: roll-forward copies a real edition's deadlines into the
-  // estimated one, so the fold runs once more behind it.
-  confs = dedupDeadlinesAfterRollforward(confs, config, mergeStats);
-  confs = select(confs, config);
 
   // SPEC.md section 3.5: an upstream outage must not gut the published site.
   const degraded = failed.size > 0;
@@ -576,16 +563,25 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
         `warning: 上流 ${[...failed].sort().join(",")} が取得できないが、成功した ${confs.length} 会議で継続する（SPEC.md 3.5）\n`,
       );
     }
-    // 復元物にも静的な収録方針を再適用する。これで snapshot が exclude 済みでなくても
-    // 設定を破らず、現在成功した source の値は restoreFailedSourceMaterial が保持する。
     // Snapshot keys may carry a collision suffix from an older partial source set.
-    // Re-apply configured source identities before overrides address canonical keys.
+    // Re-apply configured source identities before overrides address canonical keys. Overrides
+    // run only after restoration so a patch cannot manufacture a duplicate placeholder edition.
     confs = classify(normalizeConfiguredVenueIdentities(restoredMaterial, config), config);
-    confs = applyOverrides(confs, overrides);
-    confs = applyOverrides(confs, primary);
-    confs = sanitizeEditions(confs);
-    confs = select(confs, config);
   }
+
+  confs = applyOverrides(confs, overrides);
+  const primary = resolvePrimaryObservations(primaryObservations, config, confs);
+  confs = applyOverrides(confs, primary);
+  confs = sanitizeEditions(confs);
+  confs = rollforward(
+    confs,
+    new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())),
+    config,
+  );
+  // SPEC.md 3.6: roll-forward copies a real edition's deadlines into the
+  // estimated one, so the fold runs once more behind it.
+  confs = dedupDeadlinesAfterRollforward(confs, config, mergeStats);
+  confs = select(confs, config);
 
   const outdir = resolve(args.out);
   const healthConfig = (config.health as Record<string, unknown> | undefined) ?? {};
