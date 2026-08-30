@@ -116,21 +116,6 @@ export const DOMAIN_KEYWORDS: Record<string, string[]> = {
   ],
 };
 
-// Indicators of niche/obscure venues & journals
-export const NICHE_KEYWORDS = [
-  "workshop",
-  "symposium",
-  "journal",
-  "special issue",
-  "letters",
-  "transactions",
-  "regional",
-  "open call",
-  "forum",
-  "work-in-progress",
-  "short papers",
-];
-
 // wikiCFP のカテゴリページ (?conference=<cat>) と kamiyobi カテゴリの対応。
 export const WIKICFP_CATEGORY_MAP: Record<string, string[]> = {
   hpc: ["parallel", "high", "grid", "performance", "computational"],

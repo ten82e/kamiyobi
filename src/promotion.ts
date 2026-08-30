@@ -365,8 +365,6 @@ export function isOfficialUrl(url: string, officialDomains: string[]): boolean {
     .some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
 }
 
-export const isOfficialDomain = isOfficialUrl;
-
 function captureOf(observation: PromotionObservation): CfpCapture | undefined {
   if (observation.capture) return observation.capture;
   const hasCaptureField = [

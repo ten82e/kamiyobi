@@ -215,18 +215,7 @@ export function editionOf(
   };
 }
 
-function toStringArray(val: unknown): string[] {
-  if (Array.isArray(val)) {
-    return val
-      .filter((x) => x !== null && x !== undefined)
-      .map((x) => String(x).trim())
-      .filter(Boolean);
-  }
-  if (typeof val === "string" && val.trim() !== "") {
-    return [val.trim()];
-  }
-  return [];
-}
+import { toStringArray } from "../util.ts";
 
 /** Read `src/data/conferences/*.yml`; each item is one edition. */
 export function parseTree(conferencesDir: string | null | undefined): Conference[] {

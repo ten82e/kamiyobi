@@ -28,6 +28,7 @@ const UA =
 
 const BLOCK_RE =
   /<(?:br|\/p|\/div|\/tr|\/td|\/th|\/li|\/h[1-6]|\/section|\/article|\/table|\/ul|\/ol|\/dl)[^>]*>/gi;
+const DELETED_RE = /<(del|s|strike)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
 const TAG_RE = /<[^>]+>/g;
 const TZ_RE =
   /\b(PDT|PST|EDT|EST|CDT|CST|MDT|MST|AKDT|AKST|HST|UTC|GMT|CET|CEST|JST|AoE|PT|ET|CT|MT)\b|anywhere on (?:the )?(?:inhabited )?earth/gi;
@@ -89,7 +90,7 @@ export async function fetchPage(url: string, timeout = 30_000): Promise<string> 
 
 export function toLines(htmlText: string | null | undefined): string[] {
   if (!htmlText) return [];
-  let text = String(htmlText).replace(BLOCK_RE, "\n").replace(TAG_RE, "");
+  let text = String(htmlText).replace(DELETED_RE, "").replace(BLOCK_RE, "\n").replace(TAG_RE, "");
   const entities: Record<string, string> = {
     "&nbsp;": " ",
     "&amp;": "&",

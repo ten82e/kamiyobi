@@ -1428,18 +1428,7 @@ export function roundOf(label: string | null | undefined, defaultRound = 1): num
 // --------------------------------------------------------------------------
 
 /** 配列・文字列両対応の string[] 正規化（sources 層と同じ挙動: trim・空要素除去）。 */
-function toStringArray(val: unknown): string[] {
-  if (Array.isArray(val)) {
-    return val
-      .filter((x) => x !== null && x !== undefined)
-      .map((x) => String(x).trim())
-      .filter(Boolean);
-  }
-  if (typeof val === "string" && val.trim() !== "") {
-    return [val.trim()];
-  }
-  return [];
-}
+import { toStringArray } from "./util.ts";
 
 function deadlineEstimateOf(value: unknown): DeadlineEstimate | undefined {
   if (!value || typeof value !== "object") return undefined;

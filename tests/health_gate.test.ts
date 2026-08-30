@@ -188,6 +188,30 @@ it("requires fallback coverage for every failed source", () => {
   expect(evaluateHealthGate(current, null).ok).toBe(true);
 });
 
+it("does not match renamed deadline slots across edition years", () => {
+  const previous = health(
+    [
+      {
+        ...exact("2027-09-01T12:00:00Z"),
+        deadline_id: deadlineSlotId("venue", "venue27", "paper", 1, ""),
+        edition_year: 2027,
+      },
+    ],
+    "2026-08-09T00:00:00Z",
+  );
+  const current = health([
+    {
+      ...exact("2027-09-01T12:00:00Z"),
+      deadline_id: deadlineSlotId("venue", "venue28", "paper", 1, ""),
+      edition_year: 2028,
+    },
+  ]);
+
+  expect(evaluateHealthGate(current, previous).reasons).toContain(
+    "future deadline disappeared: venue|venue27|paper|1|",
+  );
+});
+
 it("gates stale observations, new warning codes, and new identity conflicts", () => {
   const previous = {
     ...health([]),

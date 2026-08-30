@@ -27,7 +27,7 @@ import {
   type SourceLoadResult,
   setRoot,
 } from "../src/cli.ts";
-import { type Conference, fmtUTC } from "../src/model.ts";
+import { type Conference, fmtUTC, resetWarnings } from "../src/model.ts";
 import {
   archiveMetadata,
   cacheMetadata,
@@ -217,6 +217,101 @@ it("restores only failed-source venues, editions, and missing slots", () => {
   });
 });
 
+it("does not misattribute non-failed editions when another source failed (bis ghost regression)", () => {
+  // snapshot の bis は sources [aideadlines, ccfddl] の混在 conference。
+  // 2025 edition は ccfddl 由来 (deadline evidence も ccfddl のみ) で、failed でない
+  // ccfddl に属する。aideadlines が failed のとき誤って 2025 を aideadlines と
+  // 誤帰属して「source: aideadlines, deadlines: []」の ghost edition を作る
+  // （2026-08-30 実測: restore 単体では正常・build 全体で bis 2025 が消えた）。
+  // 修正: edition.source 明示 + deadline evidence に failed source が無ければ復元しない。
+  const snapshot = [
+    makeConference({
+      key: "bis",
+      title: "BIS",
+      sources: ["aideadlines", "ccfddl"],
+      editions: [
+        makeEdition({
+          year: 2025,
+          edition_id: "bis2025",
+          source: "ccfddl",
+          deadlines: [
+            {
+              ...makeDeadline("paper", "Paper submission", utc(2025, 1, 31)),
+              evidence: [
+                {
+                  source_name: "ccfddl",
+                  source_url: "",
+                  observed_at: "",
+                  original_value: "2026-01-31",
+                  confidence: "aggregator",
+                },
+              ],
+            },
+          ],
+        }),
+        makeEdition({
+          year: 2026,
+          edition_id: "bis2026",
+          source: "ccfddl",
+          deadlines: [
+            {
+              ...makeDeadline("paper", "Paper submission", utc(2026, 1, 25)),
+              evidence: [
+                {
+                  source_name: "ccfddl",
+                  source_url: "",
+                  observed_at: "",
+                  original_value: "2026-01-31",
+                  confidence: "aggregator",
+                },
+              ],
+            },
+            {
+              ...makeDeadline("notification", "Notification", utc(2026, 3, 9)),
+              evidence: [
+                {
+                  source_name: "aideadlines",
+                  source_url: "",
+                  observed_at: "",
+                  original_value: "2026-03-09",
+                  confidence: "aggregator",
+                },
+              ],
+            },
+          ],
+        }),
+      ],
+    }),
+  ];
+  // current 側に ccfddl のみの bis (2025/2026) が存在する（ccfddl は成功）。
+  const current = [
+    makeConference({
+      key: "bis",
+      title: "BIS",
+      sources: ["ccfddl"],
+      editions: [
+        makeEdition({
+          year: 2025,
+          edition_id: "bis2025",
+          source: "ccfddl",
+          deadlines: [makeDeadline("paper", "Paper submission", utc(2025, 1, 31))],
+        }),
+      ],
+    }),
+  ];
+  const restored = restoreFailedSourceMaterial(current, snapshot, new Set(["aideadlines"]));
+  const bis = restored.find((c) => c.key === "bis");
+  expect(bis).toBeDefined();
+  // ghost edition が作られない: 2025 は ccfddl のまま 1 deadline。
+  const ed2025 = bis!.editions.find((e) => e.year === 2025);
+  expect(ed2025?.source).toBe("ccfddl");
+  expect(ed2025?.deadlines.length).toBe(1);
+  // 2026 は aidelines evidence を含むので復元対象: deadline が追加される。
+  const ed2026 = bis!.editions.find((e) => e.year === 2026);
+  expect(ed2026?.source).toBe("ccfddl");
+  expect(ed2026?.deadlines.some((d) => d.kind === "notification")).toBe(true);
+});
+
 it("does not merge different source ids through a conflicting DBLP key", () => {
   const snapshot = [
     makeConference({
@@ -391,6 +486,34 @@ describe("source freshness", () => {
       contentHash: "known",
       cacheAgeSeconds: 0,
     });
+  });
+
+  it("retries transient HTTP failures but not permanent ones", { timeout: 10_000 }, async () => {
+    const cache = mkdtempSync("/tmp/cfp-cache-retry-");
+    for (const repo of ["fixture/transient", "fixture/permanent"]) {
+      mkdirSync(join(cacheSlot(cache, repo, "main"), "source-main"), { recursive: true });
+    }
+    const originalFetch = globalThis.fetch;
+    let calls = 0;
+    try {
+      globalThis.fetch = (async () => {
+        calls++;
+        return new Response("", { status: 503 });
+      }) as typeof fetch;
+      await fetchTarball("fixture/transient", "main", cache);
+      expect(calls).toBe(3);
+
+      calls = 0;
+      globalThis.fetch = (async () => {
+        calls++;
+        return new Response("", { status: 404 });
+      }) as typeof fetch;
+      await fetchTarball("fixture/permanent", "main", cache);
+      expect(calls).toBe(1);
+    } finally {
+      globalThis.fetch = originalFetch;
+      resetWarnings();
+    }
   });
 
   it("clears process-global source metadata before every build", async () => {

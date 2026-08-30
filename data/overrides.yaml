@@ -36,6 +36,18 @@ aliases:
 drop: []
 
 conferences:
+  # 根拠: https://ieeecec.org/ (2026-08-30 取得)「Full Paper Submission Deadline
+  #   Feb 28, 2027 (No extension will be given)」。上流 aideadlines が 2027-01-15
+  #   (古い延長前値) を持ち、ccfddl の 2027-02-28 と衝突して health gate の
+  #   deadline slot conflict で update-data が 4 日間 block されていた
+  #   (2026-08-26〜08-29 の failures)。公式は時刻・タイムゾーンを示していないため
+  #   date-only の公式値に固定して解消。
+  ieee-cec:
+    editions:
+      2027:
+        deadlines:
+          - {kind: paper, label: 'Full Paper Submission Deadline', date: '2027-02-28', precision: date-only}
+
   # 根拠: https://3dvconf.github.io/2027/ (2026-08-12 取得)「All deadlines are
   #   11:00 am Pacific Time (PDT)」: Abstract Registration Aug 21 / Paper Submission
   #   Aug 28 / Supplementary Material Sep 02 / Preliminary Notification Oct 27 /
@@ -308,7 +320,9 @@ conferences:
   #   Camera ready Jul 22 (AoE)。
   #   会期「Tue 7 - Fri 10 September 2027 Singapore」(researchr トップ。2026-08-12
   #   再確認で 7 月表記から 9/7-10 に確定 — 当初は日レンジ未公開で month-only だった)。
-  #   上流 ccfddl は 2026 まで → 2027 Round 1 を新規 edition で追加。
+  #   注: 上流 ccfddl は 2027 (issta27, abstract/paper) を 2026-08-30 時点で公式収録済み。
+  #   override は詳細締切 (rebuttal/notification/camera_ready) の補完に留める。
+  #   上流の edition id (issta27) と統合され、rename 誤検知は identity 一致で吸収される。
   issta:
     editions:
       2027:

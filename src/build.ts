@@ -1535,16 +1535,50 @@ function matchDeadlineSlots(
   const pairs: Array<{ previous: DeadlineSlot; current: DeadlineSlot }> = [];
 
   // Edition id の改名・重複 (例: override-2027 と mobicom27 が同値で fold) は slot 内容が同一でも
-  // 「future deadline disappeared」の誤検知になる。venue + kind/round/track + 時刻が完全一致する
+  // 「future deadline disappeared」の誤検知になる。venue + year + kind/round/track + 時刻が完全一致する
   // slot は同一締切として扱う: previous 側の重複を先に潰してから 1:1 で対にする。
   const identityKey = (slot: DeadlineSlot): string =>
-    [slot.venue, slot.kind, slot.round, slot.track, slot.earliest_ms, slot.latest_ms].join("\0");
+    [
+      slot.venue,
+      slot.year,
+      slot.kind,
+      slot.round,
+      slot.track,
+      slot.earliest_ms,
+      slot.latest_ms,
+    ].join("\0");
   const representativeOf = new Map<string, number>();
   previous.forEach((slot, index) => {
     const key = identityKey(slot);
     const first = representativeOf.get(key);
     if (first === undefined) representativeOf.set(key, index);
     else usedPrevious.add(index); // 同一締切の重複 ref は比較対象から外す
+  });
+
+  // identityKey 完全一致の current を常にペアにする — schema_version 不変の
+  // edition id rename (例: 上流が override-2027 を公式収録して issta27 に改名) でも
+  // venue/kind/round/track/時刻が全て一致する slot は同一締切であり、
+  // 「future deadline disappeared」の誤検知にしてはならない (2026-08-30 issta 実測)。
+  // 時刻まで完全一致する別締切が同一 venue に同居することはなく、本物の消失
+  // (時刻変化・削除) はここでマッチせず unmatchedPrevious に残る。
+  const currentByIdentity = new Map<string, number[]>();
+  current.forEach((slot, index) => {
+    const key = identityKey(slot);
+    const list = currentByIdentity.get(key) ?? [];
+    list.push(index);
+    currentByIdentity.set(key, list);
+  });
+  previous.forEach((slot, previousIndex) => {
+    if (usedPrevious.has(previousIndex)) return;
+    const candidates = (currentByIdentity.get(identityKey(slot)) ?? []).filter(
+      (index) => !usedCurrent.has(index),
+    );
+    if (candidates.length === 0) return;
+    candidates.sort((a, b) => current[a].earliest_ms - current[b].earliest_ms || a - b);
+    const currentIndex = candidates[0];
+    usedPrevious.add(previousIndex);
+    usedCurrent.add(currentIndex);
+    pairs.push({ previous: slot, current: current[currentIndex] });
   });
 
   if (allowIdentityMigration)

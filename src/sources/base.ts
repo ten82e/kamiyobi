@@ -136,18 +136,54 @@ export function archiveMetadata(
 }
 
 async function download(url: string, dest: string, now: Date): Promise<CachedFetchMetadata> {
-  const response = await fetch(url, {
-    headers: { "User-Agent": USER_AGENT },
-    redirect: "follow",
-  });
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status} for ${url}`);
+  // codeload.github.com は一時的な 5xx / タイムアウトを返すことがある
+  // (2026-08-26〜08-29 の update-data で runner から 3 日連続 fetch 失敗が発生。
+  // ローカルからは同一 URL が成功していた = 一時的なインフラ変動)。
+  // 単発 fetch では degraded (snapshot fallback) に落ちるため、短期リトライで吸収する。
+  // 恒久的な失敗 (404 等) は即 abort し、retry しない。
+  const maxAttempts = 3;
+  let lastError: unknown = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    if (attempt > 1) {
+      await new Promise((resolve) => setTimeout(resolve, 1_000 * attempt));
+      process.stderr.write(
+        `warning: fetch of ${url} failed; retrying (${attempt}/${maxAttempts})\n`,
+      );
+    }
+    try {
+      const response = await fetch(url, {
+        headers: { "User-Agent": USER_AGENT },
+        redirect: "follow",
+      });
+      if (response.status >= 500 || response.status === 429) {
+        lastError = new Error(`HTTP ${response.status} for ${url}`);
+        continue; // 一時的と見做して再試行
+      }
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} for ${url}`); // 恒久的: 即失敗
+      }
+      const buffer = Buffer.from(await response.arrayBuffer());
+      writeFileSync(dest, buffer);
+      // GitHub's ETag is a stable response revision where offered; archive bytes
+      // are the deterministic identity when it is not.
+      return archiveMetadata(buffer, response.headers.get("etag"), now);
+    } catch (exc) {
+      if (attempt < maxAttempts && isRetryable(exc)) {
+        lastError = exc;
+        continue;
+      }
+      throw exc;
+    }
   }
-  const buffer = Buffer.from(await response.arrayBuffer());
-  writeFileSync(dest, buffer);
-  // GitHub's ETag is a stable response revision where offered; archive bytes
-  // are the deterministic identity when it is not.
-  return archiveMetadata(buffer, response.headers.get("etag"), now);
+  throw lastError ?? new Error(`unreachable: download retries exhausted for ${url}`);
+}
+
+/** ネットワーク層の一時的失敗 (fetch failed / ECONNRESET / タイムアウト等) のみリトライ対象。
+ *  HTTP 4xx は Error として投げられるので retry されない (fetch 失敗時 TypeError になる)。 */
+function isRetryable(exc: unknown): boolean {
+  if (exc instanceof Error && exc.name === "AbortError") return true;
+  if (exc instanceof TypeError) return true; // undici fetch failed (network)
+  return false;
 }
 
 /**

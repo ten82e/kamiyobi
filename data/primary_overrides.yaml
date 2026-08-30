@@ -7,6 +7,9 @@ conferences:
           - kind: paper
             label: Paper submission
             date: '2026-08-14'
+            adapter: generic-v1
+            structured: false
+            selectorOrField: deadline-text-window
             tz: AoE
             sourceUrl: https://ai4s.github.io/
             sourceRevision: 69775f65ea3f37e66fea44c039d72b71ae82865d945b48ba8a2a4fdced3511e9
@@ -14,7 +17,7 @@ conferences:
             retrievedAt: '2026-08-25T03:58:56.401Z'
             verifiedAt: '2026-08-25T03:58:56.401Z'
             rawExcerpt: 'Paper submission: 2026-08-14 AoE'
-    _comment: 一次ソース (https://ai4s.github.io/) から自動抽出 (2026-08-25)
+    _comment: 一次ソース (https://ai4s.github.io/) から自動抽出 (2026-08-30)
   cna-2026:
     editions:
       '2026':
@@ -24,31 +27,37 @@ conferences:
             date: '2026-09-02'
             time: '23:59:00'
             tz: AoE
+            adapter: generic-v1
+            structured: false
+            selectorOrField: deadline-text-window
             sourceUrl: https://complexnetworks.org/
-            sourceRevision: e0572bca08c171207ea2cae1703bcf04d8f9328f04fffb5be705c4a67b79543c
-            contentHash: e0572bca08c171207ea2cae1703bcf04d8f9328f04fffb5be705c4a67b79543c
-            retrievedAt: '2026-08-25T04:12:13.972Z'
-            verifiedAt: '2026-08-25T04:12:13.972Z'
+            sourceRevision: 1695ea57ba5dceaa4a74e22a737d12c0690f5796e2cbf7b4def52a4598af87b4
+            contentHash: 1695ea57ba5dceaa4a74e22a737d12c0690f5796e2cbf7b4def52a4598af87b4
+            retrievedAt: '2026-08-30T08:28:53.299Z'
+            verifiedAt: '2026-08-30T08:28:53.299Z'
             rawExcerpt: 'Paper submission: 2026-09-02 23:59:00 AoE'
-    _comment: 一次ソース (https://complexnetworks.org/) から自動抽出 (2026-08-25)
+    _comment: 一次ソース (https://complexnetworks.org/) から自動抽出 (2026-08-30)
   geoindustry-2026:
     editions:
       '2026':
         deadlines:
           - kind: paper
             label: Paper submission
-            date: '2026-08-28'
+            date: '2026-09-04'
             time: '23:59:00'
             tz: AoE
+            adapter: generic-v1
+            structured: false
+            selectorOrField: deadline-text-window
             sourceUrl: https://geoindustry.github.io/geoindustryworkshop2026/
-            sourceRevision: 60abc30a886d5e1f28fd598181f87ce26f8126b308481556a5716ba3fb2e9384
-            contentHash: 60abc30a886d5e1f28fd598181f87ce26f8126b308481556a5716ba3fb2e9384
-            retrievedAt: '2026-08-25T03:58:58.869Z'
-            verifiedAt: '2026-08-25T03:58:58.869Z'
-            rawExcerpt: 'Paper submission: 2026-08-28 23:59:00 AoE'
+            sourceRevision: 4d0008afde1951f645b627c17ef3be4addd8e8e16febc6022f93c546107f8e95
+            contentHash: 4d0008afde1951f645b627c17ef3be4addd8e8e16febc6022f93c546107f8e95
+            retrievedAt: '2026-08-30T08:28:53.541Z'
+            verifiedAt: '2026-08-30T08:28:53.541Z'
+            rawExcerpt: 'Paper submission: 2026-09-04 23:59:00 AoE'
     _comment: >-
       一次ソース (https://geoindustry.github.io/geoindustryworkshop2026/) から自動抽出
-      (2026-08-25)
+      (2026-08-30)
   hmem-2026:
     editions:
       '2026':
@@ -56,14 +65,17 @@ conferences:
           - kind: paper
             label: Paper submission
             date: '2026-08-31'
+            rawExcerpt: 'Submission deadline: August 31, 2026 (extended)'
+            adapter: generic-v1
+            structured: false
+            selectorOrField: deadline-text-window
             tz: AoE
             sourceUrl: https://hmem-workshop.github.io/
             sourceRevision: be8f2a747d4a78729af5dec7da93177e6a1e23b5a06265cd77a7aa3666503e18
             contentHash: be8f2a747d4a78729af5dec7da93177e6a1e23b5a06265cd77a7aa3666503e18
             retrievedAt: '2026-08-25T03:58:59.025Z'
             verifiedAt: '2026-08-25T03:58:59.025Z'
-            rawExcerpt: 'Paper submission: 2026-08-31 AoE'
-    _comment: 一次ソース (https://hmem-workshop.github.io/) から自動抽出 (2026-08-25)
+    _comment: 一次ソース (https://hmem-workshop.github.io/) から自動抽出 (2026-08-30)
   llvm-hpc-2026:
     editions:
       '2026':
@@ -72,17 +84,20 @@ conferences:
             label: Paper submission
             date: '2026-08-14'
             tz: AoE
+            rawExcerpt: 'Paper submissions due: August 14, 2026 (AoE)'
+            adapter: generic-v1
+            structured: false
+            selectorOrField: deadline-text-window
             sourceUrl: >-
               https://llvm-in-hpc-workshop.github.io/LLVM-HPC-2026-Workshop.github.io/
             sourceRevision: cc57e7baa6726f65814e883e95f02b115fb3637ad5bd6a1b02f4209a25f590c0
             contentHash: cc57e7baa6726f65814e883e95f02b115fb3637ad5bd6a1b02f4209a25f590c0
             retrievedAt: '2026-08-25T03:58:59.161Z'
             verifiedAt: '2026-08-25T03:58:59.161Z'
-            rawExcerpt: 'Paper submission: 2026-08-14 AoE'
     _comment: >-
       一次ソース
       (https://llvm-in-hpc-workshop.github.io/LLVM-HPC-2026-Workshop.github.io/)
-      から自動抽出 (2026-08-25)
+      から自動抽出 (2026-08-30)
   network-flows-2-0:
     editions:
       '2026':
@@ -90,36 +105,47 @@ conferences:
           - kind: abstract
             label: Abstract submission
             date: '2026-09-15'
+            rawExcerpt: Abstract registration deadline September 15, 2026
+            selectorOrField: table-row:deadline
+            adapter: easychair-v1
+            structured: true
             sourceUrl: https://easychair.org/cfp/flowchallenge2
-            sourceRevision: 59865cb878b2c4c6b6e19a04679ca2cfd9bdd002804bed8373be32bcab0437ae
-            contentHash: 59865cb878b2c4c6b6e19a04679ca2cfd9bdd002804bed8373be32bcab0437ae
-            retrievedAt: '2026-08-25T04:12:14.965Z'
-            verifiedAt: '2026-08-25T04:12:14.965Z'
-            rawExcerpt: 'Abstract submission: 2026-09-15'
+            sourceRevision: e5bc77144ddd4d8070e064e213b4c3b05453200c0b9dc18f89e050f676accf1c
+            contentHash: e5bc77144ddd4d8070e064e213b4c3b05453200c0b9dc18f89e050f676accf1c
+            retrievedAt: '2026-08-30T08:28:54.900Z'
+            verifiedAt: '2026-08-30T08:28:54.900Z'
           - kind: paper
             label: Paper submission
             date: '2026-09-15'
+            rawExcerpt: Submission deadline September 15, 2026
+            selectorOrField: table-row:deadline
+            adapter: easychair-v1
+            structured: true
             sourceUrl: https://easychair.org/cfp/flowchallenge2
-            sourceRevision: 59865cb878b2c4c6b6e19a04679ca2cfd9bdd002804bed8373be32bcab0437ae
-            contentHash: 59865cb878b2c4c6b6e19a04679ca2cfd9bdd002804bed8373be32bcab0437ae
-            retrievedAt: '2026-08-25T04:12:14.965Z'
-            verifiedAt: '2026-08-25T04:12:14.965Z'
-            rawExcerpt: 'Paper submission: 2026-09-15'
-    _comment: 一次ソース (https://easychair.org/cfp/flowchallenge2) から自動抽出 (2026-08-25)
+            sourceRevision: e5bc77144ddd4d8070e064e213b4c3b05453200c0b9dc18f89e050f676accf1c
+            contentHash: e5bc77144ddd4d8070e064e213b4c3b05453200c0b9dc18f89e050f676accf1c
+            retrievedAt: '2026-08-30T08:28:54.900Z'
+            verifiedAt: '2026-08-30T08:28:54.900Z'
+    _comment: 一次ソース (https://easychair.org/cfp/flowchallenge2) から自動抽出 (2026-08-30)
   polds-2026:
     editions:
       '2026':
         deadlines:
           - kind: paper
             label: Paper submission
-            date: '2026-08-15'
+            date: '2026-08-24'
+            rawExcerpt: >-
+              All PolDS submissions are due by August 24, 2026. Please see full
+              Call for Papers section below for additional details.
+            adapter: generic-v1
+            structured: false
+            selectorOrField: deadline-text-window
             sourceUrl: https://iharp.umbc.edu/polds26/
-            sourceRevision: c7ae0403ef7dcdd343fead1c4e4b7cb1e808e17c0d538e246eab74cc290d1546
-            contentHash: c7ae0403ef7dcdd343fead1c4e4b7cb1e808e17c0d538e246eab74cc290d1546
-            retrievedAt: '2026-08-25T03:58:59.882Z'
-            verifiedAt: '2026-08-25T03:58:59.882Z'
-            rawExcerpt: 'Paper submission: 2026-08-15'
-    _comment: 一次ソース (https://iharp.umbc.edu/polds26/) から自動抽出 (2026-08-25)
+            sourceRevision: 52e1c8dd33dbf19432d6e7cbc8ef4d859cbb56abe12b2debbdaa3dd3b7d7250e
+            contentHash: 52e1c8dd33dbf19432d6e7cbc8ef4d859cbb56abe12b2debbdaa3dd3b7d7250e
+            retrievedAt: '2026-08-30T10:46:10.094Z'
+            verifiedAt: '2026-08-30T10:46:10.094Z'
+    _comment: 一次ソース (https://iharp.umbc.edu/polds26/) から自動抽出 (2026-08-30)
   setta:
     editions:
       '2026':
@@ -127,28 +153,34 @@ conferences:
           - kind: paper
             label: Paper submission
             date: '2026-05-10'
+            rawExcerpt: Submission deadline May 10, 2026
+            selectorOrField: table-row:deadline
+            adapter: easychair-v1
+            structured: true
             sourceUrl: https://easychair.org/cfp/SETTA2026
-            sourceRevision: 4644b7288abb4e248e2f92c63832ce3aa897748bfa7902e506fd9d4f90a64ba0
-            contentHash: 4644b7288abb4e248e2f92c63832ce3aa897748bfa7902e506fd9d4f90a64ba0
-            retrievedAt: '2026-08-25T04:12:15.887Z'
-            verifiedAt: '2026-08-25T04:12:15.887Z'
-            rawExcerpt: 'Paper submission: 2026-05-10'
+            sourceRevision: e39bb127a211bcaa6b1b5ccbea06bfe264531c3952fd21f13e5a8904cf3a922c
+            contentHash: e39bb127a211bcaa6b1b5ccbea06bfe264531c3952fd21f13e5a8904cf3a922c
+            retrievedAt: '2026-08-30T08:28:56.958Z'
+            verifiedAt: '2026-08-30T08:28:56.958Z'
         link: https://www.setta2026.sg
         place: Singapore
         date_text: December 2-4, 2026
-    _comment: 一次ソース (https://easychair.org/cfp/SETTA2026) から自動抽出 (2026-08-25)
+    _comment: 一次ソース (https://easychair.org/cfp/SETTA2026) から自動抽出 (2026-08-30)
   whpc-2026:
     editions:
       '2026':
         deadlines:
           - kind: paper
             label: Paper submission
-            date: '2026-08-14'
+            date: '2026-08-21'
+            rawExcerpt: 'Application deadline: Extended! August 21, 2026'
+            adapter: generic-v1
+            structured: false
+            selectorOrField: deadline-text-window
             tz: AoE
             sourceUrl: https://womeninhpc.org/events/sc-2026-workshop
-            sourceRevision: 84252147ce0f6d972f98311d82f510fb44c7793b17d6374b5338a11f5f21bec8
-            contentHash: 84252147ce0f6d972f98311d82f510fb44c7793b17d6374b5338a11f5f21bec8
-            retrievedAt: '2026-08-25T04:12:16.537Z'
-            verifiedAt: '2026-08-25T04:12:16.537Z'
-            rawExcerpt: 'Paper submission: 2026-08-14 AoE'
-    _comment: 一次ソース (https://womeninhpc.org/events/sc-2026-workshop) から自動抽出 (2026-08-25)
+            sourceRevision: 80ae5c9342ab355170d46d09b0904e9b3756a47f8b8fa148d810e00c7f9c7852
+            contentHash: 80ae5c9342ab355170d46d09b0904e9b3756a47f8b8fa148d810e00c7f9c7852
+            retrievedAt: '2026-08-30T10:46:10.973Z'
+            verifiedAt: '2026-08-30T10:46:10.973Z'
+    _comment: 一次ソース (https://womeninhpc.org/events/sc-2026-workshop) から自動抽出 (2026-08-30)
