@@ -319,7 +319,9 @@ conferences:
   #   Camera ready Jul 22 (AoE)。
   #   会期「Tue 7 - Fri 10 September 2027 Singapore」(researchr トップ。2026-08-12
   #   再確認で 7 月表記から 9/7-10 に確定 — 当初は日レンジ未公開で month-only だった)。
-  #   上流 ccfddl は 2026 まで → 2027 Round 1 を新規 edition で追加。
+  #   注: 上流 ccfddl は 2027 (issta27, abstract/paper) を 2026-08-30 時点で公式収録済み。
+  #   override は詳細締切 (rebuttal/notification/camera_ready) の補完に留める。
+  #   上流の edition id (issta27) と統合され、rename 誤検知は identity 一致で吸収される。
   issta:
     editions:
       2027:
