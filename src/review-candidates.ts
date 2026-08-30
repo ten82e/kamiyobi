@@ -42,9 +42,10 @@ export function tagSource(tags: unknown): string {
 export function normTitle(title: string | null | undefined): string {
   /** 年・記号を落とした正規化タイトル (重複グループ検出用)。Unicode/日本語文字を保持。 */
   if (!title) return "";
-  let t = String(title).normalize("NFKC").toLowerCase();
+  let t = String(title).normalize("NFKC").toLowerCase().replace(/&/g, " and ");
   t = t.replace(/['’]\d\d\b/g, ""); // '26 形式の短縮年
   t = t.replace(/\b20\d\d(?:年|\b)/g, ""); // 2026 / 2026年 形式の年
+  t = t.replace(/^\d+(?:st|nd|rd|th)\s+/i, ""); // 15th International ... 形式の回次
   t = t.replace(/[^\p{L}\p{N}]+/gu, " ");
   return t.trim().split(/\s+/).join(" ");
 }

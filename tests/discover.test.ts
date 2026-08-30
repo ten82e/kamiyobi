@@ -741,6 +741,12 @@ describe("review helpers", () => {
     expect(normTitle("ソフトウェア工学の基礎ワークショップ")).toBe(
       "ソフトウェア工学の基礎ワークショップ",
     );
+    expect(
+      normTitle("15th International Conference on Complex Networks & Their Applications"),
+    ).toBe(normTitle("International Conference on Complex Networks and Their Applications"));
+    expect(normTitle("International Conference on Complex Networks")).not.toBe(
+      normTitle("International Conference on Complex Networks and Their Applications"),
+    );
     expect(normTitle("   ")).toBe("");
     expect(normTitle(null)).toBe("");
   });
@@ -794,6 +800,14 @@ describe("review helpers", () => {
     expect(tracked.size).toBeGreaterThan(0);
     expect(tracked.has("sigcomm")).toBe(true);
     expect(tracked.has("isc hpc")).toBe(true);
+    for (const title of [
+      "15th International Conference on Complex Networks & Their Applications",
+      "37th International Conference on Concurrency Theory",
+      "28th International Conference on Distributed Computing and Networking",
+      "28th International Conference on Information and Communications Security",
+    ]) {
+      expect(tracked.has(normTitle(title))).toBe(true);
+    }
   });
 
   it("runReviewCandidates gracefully handles missing candidate files", () => {
