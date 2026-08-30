@@ -1535,10 +1535,18 @@ function matchDeadlineSlots(
   const pairs: Array<{ previous: DeadlineSlot; current: DeadlineSlot }> = [];
 
   // Edition id の改名・重複 (例: override-2027 と mobicom27 が同値で fold) は slot 内容が同一でも
-  // 「future deadline disappeared」の誤検知になる。venue + kind/round/track + 時刻が完全一致する
+  // 「future deadline disappeared」の誤検知になる。venue + year + kind/round/track + 時刻が完全一致する
   // slot は同一締切として扱う: previous 側の重複を先に潰してから 1:1 で対にする。
   const identityKey = (slot: DeadlineSlot): string =>
-    [slot.venue, slot.kind, slot.round, slot.track, slot.earliest_ms, slot.latest_ms].join("\0");
+    [
+      slot.venue,
+      slot.year,
+      slot.kind,
+      slot.round,
+      slot.track,
+      slot.earliest_ms,
+      slot.latest_ms,
+    ].join("\0");
   const representativeOf = new Map<string, number>();
   previous.forEach((slot, index) => {
     const key = identityKey(slot);
