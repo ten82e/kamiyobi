@@ -1,0 +1,34 @@
+conferences:
+  - categories:
+      - systems
+    editions:
+      - date_text: '2027-07-11'
+        deadlines:
+          - date: '2026-11-17'
+            evidence:
+              - contentHash: 0897bd33c86b3a97f0021ccac945af4a870fc246915caef34644da738dd9117b
+                rawExcerpt: November 17, 2026
+                retrievedAt: '2026-08-30T22:24:34.720Z'
+                sourceClass: official-cfp
+                sourceRevision: W/"6a91eab9-4abc9"
+                sourceUrl: https://dac.com/2026/events/manuscript-submission-deadline
+                verifiedAt: '2026-08-30T22:25:00Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+            kind: paper
+            label: paper
+            precision: date-only
+            round: 1
+            track: ''
+        edition_id: dac-2027
+        event_end: '2027-07-14'
+        event_start: '2027-07-11'
+        id: dac-2027
+        year: 2027
+    key: dac
+    link: https://dac.com/2026/events/manuscript-submission-deadline
+    review_state: reviewed
+    tags: []
+    title: DAC

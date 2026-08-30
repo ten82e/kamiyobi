@@ -891,9 +891,11 @@ conferences:
           - {kind: abstract, label: 'Paper registration and abstract submission', date: '2026-07-24 23:59:59', tz: AoE}
           - {kind: paper, label: 'Paper submission', date: '2026-07-31 23:59:59', tz: AoE}
 
-  # 根拠: https://dac.com/2026 (2026-08-09 取得)「DAC 2027 July 11-14, 2027
-  #   San Jose Convention Center San Jose, CA」。投稿締切は未公開。
-  #   上流 rollforward が 2026-11-11/18 推定を出していた → 会期のみ real で置換。
+  # 会期根拠: https://dac.com/2026 (2026-08-09 取得)「DAC 2027 July 11-14, 2027
+  #   San Jose Convention Center San Jose, CA」。
+  # 締切根拠: https://dac.com/2026/events/manuscript-submission-deadline
+  #   (2026-08-31 取得)「Manuscript Submission Deadline」「November 17, 2026」。
+  #   上流 rollforward の 2026-11-11/18 推定は採用せず、公式日付だけを収録。
   - key: dac
     title: DAC
     full_name: Design Automation Conference
@@ -907,7 +909,21 @@ conferences:
         date_text: July 11-14, 2027
         event_start: '2027-07-11'
         event_end: '2027-07-14'
-        deadlines: []
+        deadlines:
+          - kind: paper
+            label: Manuscript Submission Deadline
+            date: '2026-11-17'
+            precision: date-only
+            round: 1
+            evidence:
+              - sourceClass: official-cfp
+                sourceUrl: https://dac.com/2026/events/manuscript-submission-deadline
+                sourceRevision: W/"6a91eab9-4abc9"
+                retrievedAt: '2026-08-30T22:24:34.720Z'
+                verifiedAt: '2026-08-30T22:25:00Z'
+                contentHash: 0897bd33c86b3a97f0021ccac945af4a870fc246915caef34644da738dd9117b
+                rawExcerpt: November 17, 2026
+                verifiedFields: [date, kind, round]
 
   # 根拠: https://conf.researchr.org/home/cgo-2027 (2026-08-09 取得)
   #   Sat 20 - Wed 24 March 2027, Salt Lake City, co-located HPCA/CGO/PPoPP/CC 2027.
