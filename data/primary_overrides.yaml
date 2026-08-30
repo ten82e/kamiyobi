@@ -18,7 +18,7 @@ conferences:
             verifiedAt: '2026-08-25T03:58:56.401Z'
             rawExcerpt: 'Paper submission: 2026-08-14 AoE'
     _comment: 一次ソース (https://ai4s.github.io/) から自動抽出 (2026-08-30)
-  cna-2026:
+  cna:
     editions:
       '2026':
         deadlines:
@@ -31,10 +31,10 @@ conferences:
             structured: false
             selectorOrField: deadline-text-window
             sourceUrl: https://complexnetworks.org/
-            sourceRevision: 8f82938774cc4a59e3011a926f43edfb0cc80f3db50c5858520daf9c624d052e
-            contentHash: 8f82938774cc4a59e3011a926f43edfb0cc80f3db50c5858520daf9c624d052e
-            retrievedAt: '2026-08-30T11:51:11.443Z'
-            verifiedAt: '2026-08-30T11:51:11.443Z'
+            sourceRevision: 3594f5f91a830ca3f31337903dc8db98aae04ce83c4f7e60028088370a2df88e
+            contentHash: 3594f5f91a830ca3f31337903dc8db98aae04ce83c4f7e60028088370a2df88e
+            retrievedAt: '2026-08-30T13:12:26.136Z'
+            verifiedAt: '2026-08-30T13:12:26.136Z'
             rawExcerpt: 'Paper submission: 2026-09-02 23:59:00 AoE'
     _comment: 一次ソース (https://complexnetworks.org/) から自動抽出 (2026-08-30)
   geoindustry-2026:

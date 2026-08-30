@@ -744,23 +744,27 @@ export function validateFile(
 
 export function validateProduction(root = ROOT): DataValidation {
   const categoryDefinitions = configuredCategories(root);
+  const extra = payloadForFile(join(root, "data", "extra.yaml"));
+  const primary = load(join(root, "data", "primary.yaml"));
+  const primaryOverrides = load(join(root, "data", "primary_overrides.yaml"));
+  const snapshot = payloadForFile(join(root, "data", "snapshot.json"));
   const inputs = [
-    { name: "extra", payload: payloadForFile(join(root, "data", "extra.yaml")) },
+    { name: "extra", payload: extra },
     {
       name: "overrides",
       payload: payloadForFile(join(root, "data", "overrides.yaml")),
     },
     {
       name: "primary",
-      payload: payloadForFile(join(root, "data", "primary.yaml")),
+      payload: { conferences: primaryRegistry(primary) },
     },
     {
       name: "primary_overrides",
-      payload: payloadForFile(join(root, "data", "primary_overrides.yaml")),
+      payload: { conferences: overrideConferences(primaryOverrides, "primary_overrides") },
     },
     {
       name: "snapshot",
-      payload: payloadForFile(join(root, "data", "snapshot.json")),
+      payload: snapshot,
     },
   ];
   const aggregate: DataValidation = {
@@ -776,6 +780,24 @@ export function validateProduction(root = ROOT): DataValidation {
     aggregate.stats.date_only += checked.stats.date_only;
     aggregate.stats.estimated += checked.stats.estimated;
   }
+  const primaryKeys = Object.keys((primary.conferences as Record<string, unknown>) ?? {});
+  const registeredKeys = new Set(primaryKeys);
+  const generatedKeys = new Set(
+    Object.keys((primaryOverrides.conferences as Record<string, unknown>) ?? {}),
+  );
+  const venueKeys = new Set(
+    [...records(extra.conferences), ...records(snapshot.conferences)].map(
+      (conference) => conference.key,
+    ),
+  );
+  for (const key of primaryKeys) {
+    if (!generatedKeys.has(key))
+      add(aggregate.errors, `primary: ${key}: generated override missing`);
+    if (!venueKeys.has(key))
+      add(aggregate.errors, `primary: ${key}: venue key missing from extra/snapshot`);
+  }
+  for (const key of generatedKeys)
+    if (!registeredKeys.has(key)) add(aggregate.errors, `primary: ${key}: registry entry missing`);
   aggregate.errors = [...new Set(aggregate.errors)].sort();
   aggregate.warnings.sort();
   return aggregate;
