@@ -6219,3 +6219,36 @@ conferences:
                 verifiedAt: '2026-08-30T20:14:00Z'
                 verifiedFields: [date, kind, round]
                 rawExcerpt: '<strong>Manuscript Submission Deadline:</strong> 15 September 2026 (Extended Deadline)'
+
+  # 証拠: data/promotions/2026-08-31-icngn-2026/manifest.json
+  # 公式サイトは投稿締切と香港での会期を明記する。
+  # 時刻・タイムゾーンは掲載されない。
+  - key: icngn
+    title: ICNGN 2026
+    full_name: The 5th International Conference on Intelligent Computing and Next Generation Networks
+    link: https://www.icngn.org/
+    categories: [networking, ai]
+    tags: [niche]
+    editions:
+      - year: 2026
+        id: icngn-2026
+        link: https://www.icngn.org/
+        place: Hong Kong, China
+        date_text: December 12-14, 2026
+        event_start: '2026-12-12'
+        event_end: '2026-12-14'
+        deadlines:
+          - kind: paper
+            label: Paper submission deadline
+            round: 1
+            date: '2026-09-26'
+            precision: date-only
+            evidence:
+              - sourceClass: official-cfp
+                sourceUrl: https://www.icngn.org/
+                contentHash: cdb226fa64645300f44f019877355aa756f663f5bdf9198e484f8dea597ad23c
+                sourceRevision: Wed, 22 Jul 2026 07:09:36 GMT
+                retrievedAt: '2026-08-30T20:33:30.613Z'
+                verifiedAt: '2026-08-30T20:34:00Z'
+                verifiedFields: [date, kind, round]
+                rawExcerpt: 'Submission Deadline : September 26, 2026'

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="description" content="The 5th International Conference on Intelligent Computing and Next Generation Networks will be held December 12-14, 2026 in Hong Kong, China.">
+		<meta name="robots" content="index, follow">
+		<link rel="canonical" href="https://icngn.org/">
+		<meta property="og:type" content="website">
+		<meta property="og:site_name" content="ICNGN">
+		<meta property="og:locale" content="en_US">
+		<meta property="og:title" content="ICNGN 2026 | Intelligent Computing and Next Generation Networks">
+		<meta property="og:description" content="The 5th International Conference on Intelligent Computing and Next Generation Networks will be held December 12-14, 2026 in Hong Kong, China.">
+		<meta property="og:url" content="https://icngn.org/">
+		<meta property="og:image" content="https://icngn.org/img/banner.jpg">
+		<meta property="og:image:alt" content="ICNGN conference banner">
+		<meta name="twitter:card" content="summary_large_image">
+		<meta name="twitter:title" content="ICNGN 2026 | Intelligent Computing and Next Generation Networks">
+		<meta name="twitter:description" content="The 5th International Conference on Intelligent Computing and Next Generation Networks will be held December 12-14, 2026 in Hong Kong, China.">
+		<meta name="twitter:image" content="https://icngn.org/img/banner.jpg">
+		<meta name="twitter:image:alt" content="ICNGN conference banner">
+		<title>ICNGN 2026 | Intelligent Computing and Next Generation Networks</title>
+		<link rel="shortcut icon" href="https://www.icngn.org/img/icngn.ico" mce_href="/favicon.ico"
+			type="image/x-icon" />
+
+		<link rel="stylesheet" href="css/list.css">
+		<script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
+		<script src="js/index.js" type="text/javascript" charset="utf-8"></script>
+		<script>
+			var _hmt = _hmt || [];
+			(function() {
+				var hm = document.createElement("script");
+				hm.src = "https://hm.baidu.com/hm.js?4454ba12bddd9f541e4b7021081baed1";
+				var s = document.getElementsByTagName("script")[0];
+				s.parentNode.insertBefore(hm, s);
+			})();
+		</script>
+
+		<script>
+			var _hmt = _hmt || [];
+			(function() {
+				var hm = document.createElement("script");
+				hm.src = "https://hm.baidu.com/hm.js?6f47004c00519e0958ebfb2263c61e1b";
+				var s = document.getElementsByTagName("script")[0];
+				s.parentNode.insertBefore(hm, s);
+			})();
+		</script>
+			<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://icngn.org/#organization",
+      "name": "ICNGN",
+      "url": "https://icngn.org/",
+      "logo": "https://icngn.org/img/Logo.png"
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://icngn.org/#website",
+      "url": "https://icngn.org/",
+      "name": "ICNGN",
+      "publisher": {
+        "@id": "https://icngn.org/#organization"
+      }
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://icngn.org/#webpage",
+      "url": "https://icngn.org/",
+      "name": "ICNGN 2026 | Intelligent Computing and Next Generation Networks",
+      "description": "The 5th International Conference on Intelligent Computing and Next Generation Networks will be held December 12-14, 2026 in Hong Kong, China.",
+      "isPartOf": {
+        "@id": "https://icngn.org/#website"
+      },
+      "about": {
+        "@id": "https://icngn.org/#organization"
+      }
+    },
+    {
+      "@type": "Event",
+      "@id": "https://icngn.org/#event-2026",
+      "name": "ICNGN 2026",
+      "startDate": "2026-12-12",
+      "endDate": "2026-12-14",
+      "eventAttendanceMode": "https://schema.org/MixedEventAttendanceMode",
+      "eventStatus": "https://schema.org/EventScheduled",
+      "location": {
+        "@type": "Place",
+        "name": "Hong Kong, China"
+      },
+      "url": "https://icngn.org/",
+      "organizer": {
+        "@id": "https://icngn.org/#organization"
+      }
+    }
+  ]
+}
+		</script>
+	        <style type="text/css">
+<!--
+.STYLE2 {color: #F9B32B}
+-->
+            </style>
+</head>
+	<body>
+		<div class='top_back'></div>
+		<div class='top_logo'>
+			<img src='img/Logo.png' alt="ICNGN conference logo">
+			<a class="right_img" href="https://icngn.org/openconf/openconf.php" aria-label="Submit a paper to ICNGN"><img src='img/New1.png' alt="Submit a paper to ICNGN"></a>
+		</div>
+		<ul class="top_title" role="navigation" aria-label="Primary navigation">
+			<li><a class='a1' href='index.html'>Home</a></li>
+			<li><a class='a2' href='committee.html'>Committee</a></li>
+			<li class="top_title_a3">
+				<a class='a3'>Speakers</a>
+				<ul class="a3_ul">
+					<li><a href="keynote-speakers.html">Keynote Speakers</a></li>
+					<li><a href="invited-speakers.html">Invited Speakers</a></li>
+				</ul>
+			</li>
+			<li><a class='a4' href='publication.html'>Publication</a></li>
+			<li><a class='a5' href='call_for_paper.html'>Call For Papers</a></li>
+			<li><a class='a6' href='important-dates.html'>Important Dates</a></li>
+			<li><a class='a7' href='submission.html'>Submission</a></li>
+			<li><a class='a8' href='programme.html'>Programme</a></li>
+			<li><a class='a9' href='registration.html'>Registration</a></li>
+			<li><a class='a10' href='venue.html'>Venue</a></li>
+			<li class="top_title_a3">
+				<a class='a11'>History</a>
+				<ul class="a3_ul">
+				    <li><a href="2025.html">ICNGN2025</a></li>
+					<li><a href="2024.html">ICNGN2024</a></li>
+					<li><a href="2023.html">ICNGN2023</a></li>
+					<li><a href="2022.html">ICNGN2022</a></li>
+				</ul>
+			</li>
+			<li><a class='a12' href='contact.html'>Contact</a></li>
+			<!--<li><a class='a13' href='chinese.html'>中文版</a></li>-->
+		</ul>
+		<div class='icngn_border'>
+			<!-- <div class='icngn'>
+				<p>ICNGN2023</p>
+				<div></div>
+				<p>2<sup class='su'>nd</sup> International Conference on</p>
+				<p>Intelligent Computing and Next Generation Networks</p>
+				<p>November 17-18, 2023, Hangzhou, China</p>
+			</div> -->
+			<div>
+				<svg t="1706591372666" class="icon ic_on" viewBox="0 0 1024 1024" version="1.1"
+					xmlns="http://www.w3.org/2000/svg" p-id="4516" width="60" height="60">
+					<path
+						d="M892.928 128q28.672 0 48.64 19.968t19.968 48.64l0 52.224q0 28.672-19.968 48.64t-48.64 19.968l-759.808 0q-28.672 0-48.64-19.968t-19.968-48.64l0-52.224q0-28.672 19.968-48.64t48.64-19.968l759.808 0zM892.928 448.512q28.672 0 48.64 19.968t19.968 48.64l0 52.224q0 28.672-19.968 48.64t-48.64 19.968l-759.808 0q-28.672 0-48.64-19.968t-19.968-48.64l0-52.224q0-28.672 19.968-48.64t48.64-19.968l759.808 0zM892.928 769.024q28.672 0 48.64 19.968t19.968 48.64l0 52.224q0 28.672-19.968 48.64t-48.64 19.968l-759.808 0q-28.672 0-48.64-19.968t-19.968-48.64l0-52.224q0-28.672 19.968-48.64t48.64-19.968l759.808 0z"
+						p-id="4517" fill="#FFFFFF"></path>
+				</svg>
+			</div>
+			<div>
+				<svg t="1706593820691" class="icon ic_onc" viewBox="0 0 1024 1024" version="1.1"
+					xmlns="http://www.w3.org/2000/svg" p-id="6527" width="60" height="60">
+					<path
+						d="M886.784 746.496q29.696 30.72 43.52 56.32t-4.608 58.368q-4.096 6.144-11.264 14.848t-14.848 16.896-15.36 14.848-12.8 9.728q-25.6 15.36-60.416 8.192t-62.464-34.816l-43.008-43.008-57.344-57.344-67.584-67.584-73.728-73.728-131.072 131.072q-60.416 60.416-98.304 99.328-38.912 38.912-77.312 48.128t-68.096-17.408l-7.168-7.168-11.264-11.264-11.264-11.264q-6.144-6.144-7.168-8.192-11.264-14.336-13.312-29.184t2.56-29.184 13.824-27.648 20.48-24.576q9.216-8.192 32.768-30.72l55.296-57.344q33.792-32.768 75.264-73.728t86.528-86.016q-49.152-49.152-93.696-93.184t-79.872-78.848-57.856-56.832-27.648-27.136q-26.624-26.624-27.136-52.736t17.92-52.736q8.192-10.24 23.552-24.064t21.504-17.92q30.72-20.48 55.296-17.92t49.152 28.16l31.744 31.744q23.552 23.552 58.368 57.344t78.336 76.288 90.624 88.576q38.912-38.912 76.288-75.776t69.632-69.12 58.368-57.856 43.52-43.008q24.576-23.552 53.248-31.232t55.296 12.8q1.024 1.024 6.656 5.12t11.264 9.216 10.752 9.728 7.168 5.632q27.648 26.624 27.136 57.856t-27.136 57.856q-18.432 18.432-45.568 46.08t-60.416 60.416-70.144 69.632l-77.824 77.824q37.888 36.864 74.24 72.192t67.584 66.048 56.32 56.32 41.472 41.984z"
+						p-id="6528" fill="#FFFFFF"></path>
+				</svg>
+			</div>
+			<div>
+				<ul class="in_ul" role="navigation" aria-label="Mobile navigation">
+					<li><a class='a1' href='index.html'>Home</a></li>
+					<li><a class='a2' href='committee.html'>Committee</a></li>
+					<li class="top_title_a3">
+					<li><a href="keynote-speakers.html">Keynote Speakers</a></li>
+					<li><a href="invited-speakers.html">Invited Speakers</a></li>
+					<li><a class='a4' href='publication.html'>Publication</a></li>
+					<li><a class='a5' href='call_for_paper.html'>Call For Paper</a></li>
+					<li><a class='a6' href='important-dates.html'>Important Dates</a></li>
+					<li><a class='a7' href='submission.html'>Submission</a></li>
+					<li><a class='a8' href='programme.html'>Programme</a></li>
+					<li><a class='a9' href='registration.html'>Registration</a></li>
+					<li><a class='a10' href='venue.html'>Venue</a></li>
+					<li><a href="2023.html">ICNGN2023</a></li>
+					<li><a href="2022.html">ICNGN2022</a></li>
+					<li><a class='a12' href='contact.html'>Contact</a></li>
+					<li><a class='a13' href='chinese.html'>中文版</a></li>
+				</ul>
+			</div>
+			<img src='img/banner.jpg' alt="ICNGN conference banner">
+		</div>
+
+		<!-- _____________________________________ -->
+		<style>
+			.a1 {
+				background-color: #1437b2;
+				color: #f9b32b !important;
+			}
+		</style>
+		<main>
+		<div class="time">
+		  <div class="time_div">
+				<h2>Coming Soon</h2>
+				<div></div>
+			  <span><strong>Submission Deadline : September 26, 2026</strong></span>			</div>
+		</div>
+		<div class="big_kg">
+			<BR><span class="span_title">News</span>
+			<div class="box_xian"></div>
+    <div class="content_1"><span class="span_con"><strong>Good News: <strong><span class="STYLE2">Sponsored by IEEE Communications Society, the 5<sup>th</sup> International Conference on Intelligent Computing and Next Generation Networks (ICNGN 2026) has been listed on
+						the official website of IEEE with the ID 72925:</span> <a class="news_a1"
+							href="https://conferences.ieee.org/conferences_events/conferences/conferencedetails/72925">https://conferences.ieee.org/conferences_events/conferences/conferencedetails/72925</a></strong><br>
+      Good News: All papers of ICNGN 2025 Conference Proceedings</a> have been indexed in EI and Scopus successfully! <br>
+    Good News: <a href="https://ieeexplore.ieee.org/xpl/conhome/11412344/proceeding">ICNGN 2025 Conference Proceedings</a> has been published officially in IEEE Xplore! <br>
+				Good News: ICNGN 2026 is scheduled to be held from December
+				12-14, 2026 in Hong Kong, China!<br>
+				Good News: ICNGN 2025 has been held successfully in Singapore from December
+				12-14, 2025!<br>
+				<br>
+				    <img src="img/2025/Group Photo.jpg" width="645" height="310" alt="ICNGN conference group photo"> <img
+								src="img/2025/Online Photo.png" width="703" height="310" alt="ICNGN online conference participants"><br>
+			    </strong><br>
+    </span>			</div>
+
+			<br>
+			<h1 class="span_title">ICNGN 2026</h1>
+			<div class="box_xian"></div>
+			<div class="content_1">
+				<br>
+				<span class="span_con">
+					<strong>Building on the success of previous editions, the 5<sup>th</sup> International Conference on
+						Intelligent Computing and Next Generation
+						Networks (ICNGN 2026) is scheduled to be held from December 12-14, 2026, in Hong Kong, China.</strong><br>
+						<br>
+
+					<strong> Since its inception in 2022 in Hangzhou, China, ICNGN has developed into an international forum for researchers, engineers, and industry professionals to exchange ideas and present the latest advances in intelligent computing and next-generation network technologies. The conference has steadily expanded its international participation and academic influence over the years.<br>
+					<br>
+					In 2023, the conference, supported by IEEE (ID 59831), took place in Hangzhou once again. Sponsored by IEEE Communications Society, ICNGN 2024 was was marked by fruitful discussions and productive outcomes in Bangkok, Thailand. Continuing with the support of the IEEE Communications Society, ICNGN 2025 was successfully held in Singapore, further expanding the conference's international reach and academic impact.<br>
+					<br>
+					Continuing the strong support of the IEEE Communications Society, ICNGN 2026 will once again serve as a premier platform for researchers, academics, and industry professionals to present innovative research, exchange ideas, and foster collaborations in intelligent computing and next-generation network technologies.</strong><br>
+				    <br>
+				    <strong>We warmly welcome researchers, practitioners, and students from around the world to join us in Hong Kong!</strong></span><br>
+				<span class="span_title">Hong Kong, China | December 12-14, 2026</span>
+			</div>
+
+			<div class="box_xian"></div>
+		  <div class="content_1">
+				<br>
+		    <span class="span_con">
+				  <strong>The conference will feature a variety of academic activities, including:</strong> <br>
+				  <br>
+		    <strong>· Keynote Speeches <br>
+				  · Invited Speeches<br>
+					  · Oral Presentations<br>
+			    · Poster presentations</strong><br>
+			    <br>
+					  <strong>ICNGN 2026 welcomes original research contributions covering both theoretical advances and practical applications in intelligent computing and next-generation networks.</strong><br>
+				  <br>
+		    <strong><span class="STYLE2">Sponsored by IEEE Communications Society, ICNGN 2026 has been listed on the official website of IEEE with the ID 72925.</span> All accepted papers, after successful registration and presentation, will be included in the ICNGN 2026 Conference Proceedings and submitted for inclusion in IEEE Xplore, EI Compendex, and Scopus.<br>
+				    <br>
+				    We sincerely look forward to your participation and contributions to ICNGN 2026.<br>
+				    <br>
+		    </strong>			  </span>			</div>
+
+
+			<a style="margin: 40px auto;" class="submit_paper" href="https://www.discoverhongkong.com/">Hong Kong, China</a>
+
+			<span class="span_title"><strong>Conference Support</strong></span>
+			<div class="box_xian"></div>
+			<div class='image-wrapper_2 flex-row'>
+			<img class='image_2-0' referrerpolicy='no-referrer' src='img/IEEE.png' />
+				<img class='image_2-0' referrerpolicy='no-referrer' src='img/IECS.png' />
+				<img class='image_2-1'
+					referrerpolicy='no-referrer' src='img/LJ.png' / alt="ICNGN conference support organization logo">
+				<img class='image_2-0' referrerpolicy='no-referrer' src='img/ZD.png' / alt="ICNGN conference support organization logo">
+				<img class='image_2-1' referrerpolicy='no-referrer' src='img/NT.png' / alt="ICNGN conference support organization logo">
+				<img class='image_2-1' referrerpolicy='no-referrer' src='img/SJTU.png' / alt="ICNGN conference support organization logo">
+				<img class='image_2-1' referrerpolicy='no-referrer' src='img/UHA.png' / alt="ICNGN conference support organization logo">
+				<img class='image_2-1' referrerpolicy='no-referrer' src='img/PDT.png' / alt="ICNGN conference support organization logo">
+				<img class='image_2-1' referrerpolicy='no-referrer' src='img/UFSC.png' / alt="ICNGN conference support organization logo">
+			</div>
+	</div>
+			</div>
+		<br />
+		<br />
+		</main>
+		<div class="block_3 flex-col" role="contentinfo">
+
+			<span class='text_14'>Copyright&nbsp;©&nbsp;ICNGN&nbsp;2026</span>
+		</div>
+
+	</body>
+</html>
