@@ -36,6 +36,17 @@ aliases:
 drop: []
 
 conferences:
+  # 根拠: https://ieeecec.org/ (2026-08-30 取得)「Full Paper Submission Deadline
+  #   Feb 28, 2027 (No extension will be given)」。上流 aideadlines が 2027-01-15
+  #   (古い延長前値) を持ち、ccfddl の 2027-02-28 と衝突して health gate の
+  #   deadline slot conflict で update-data が 4 日間 block されていた
+  #   (2026-08-26〜08-29 の failures)。公式値 (AoE 解釈) に固定して解消。
+  ieee-cec:
+    editions:
+      2027:
+        deadlines:
+          - {kind: paper, label: 'Full Paper Submission Deadline', date: '2027-02-28 23:59:59', tz: AoE}
+
   # 根拠: https://3dvconf.github.io/2027/ (2026-08-12 取得)「All deadlines are
   #   11:00 am Pacific Time (PDT)」: Abstract Registration Aug 21 / Paper Submission
   #   Aug 28 / Supplementary Material Sep 02 / Preliminary Notification Oct 27 /

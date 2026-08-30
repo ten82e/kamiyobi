@@ -1893,7 +1893,8 @@ conferences:
           - {kind: paper, label: Submission, date: '2026-09-06 23:59:00', tz: UTC}
 
   # 根拠: https://geoindustry.github.io/geoindustryworkshop2026/
-  #   「Submission deadline August 28, 2026, 11:59 PM AoE」— AoE 明記
+  #   「~~August 28~~ September 4, 2026, 11:59 PM AoE」— AoE 明記 (2026-08-30 再取得、
+  #   08-28 → 09-04 に延長済みを確認)
   # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集）。
   - key: geoindustry-2026
     title: GeoIndustry 2026
@@ -1907,7 +1908,7 @@ conferences:
         place: Riverside, CA, USA
         date_text: November 3, 2026
         deadlines:
-          - {kind: paper, label: Submission, date: '2026-08-28 23:59:00', tz: AoE}
+          - {kind: paper, label: Submission, date: '2026-09-04 23:59:00', tz: AoE}
 
   # 根拠: https://spatialconnect.github.io/2026/
   #   「Submission: September 1, 2026 (11:59PM (AOE)) / Notification of

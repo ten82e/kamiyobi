@@ -37,18 +37,17 @@ conferences:
         deadlines:
           - kind: paper
             label: Paper submission
-            date: '2026-08-28'
+            date: '2026-09-04'
             time: '23:59:00'
             tz: AoE
             sourceUrl: https://geoindustry.github.io/geoindustryworkshop2026/
-            sourceRevision: 60abc30a886d5e1f28fd598181f87ce26f8126b308481556a5716ba3fb2e9384
-            contentHash: 60abc30a886d5e1f28fd598181f87ce26f8126b308481556a5716ba3fb2e9384
-            retrievedAt: '2026-08-25T03:58:58.869Z'
-            verifiedAt: '2026-08-25T03:58:58.869Z'
-            rawExcerpt: 'Paper submission: 2026-08-28 23:59:00 AoE'
+            retrievedAt: '2026-08-30T00:00:00.000Z'
+            verifiedAt: '2026-08-30T00:00:00.000Z'
+            rawExcerpt: 'Submission deadline: September 4, 2026, 11:59 PM AoE (~~August 28~~)'
     _comment: >-
       一次ソース (https://geoindustry.github.io/geoindustryworkshop2026/) から自動抽出
-      (2026-08-25)
+      (2026-08-25)。2026-08-30 再観測で公式が 08-28 → 09-04 (Sep 4 AoE) に延長済みを確認
+      (「~~August 28~~ September 4, 2026, 11:59 PM AoE」)。health gate の slot conflict 解消のため更新。
   hmem-2026:
     editions:
       '2026':

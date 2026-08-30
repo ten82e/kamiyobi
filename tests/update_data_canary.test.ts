@@ -68,6 +68,24 @@ describe("update-data canary", () => {
     expect(result.ok).toBe(true);
   });
 
+  it("future-edition id rename passes the gate (issta-type upstream adoption)", {
+    timeout: 240_000,
+  }, () => {
+    // issta|override-2027 → issta27 型: 上流が従来 override だった 2027 edition を
+    // 公式収録すると edition id が rename される。venue/kind/round/track/時刻が
+    // 全て一致する slot は同一締切であり、future deadline disappeared の誤検知に
+    // してはならない (2026-08-30 実測)。過去締切の sigcomm rename テストは
+    // disappeared 判定の対象外 (L1787: latest_ms <= previousTime で skip) なので、
+    // 未来締切で pin する。
+    const { baseline, current } = buildPair((root) => {
+      const file = join(root, "NW", "nsdi.yml");
+      const text = readFileSync(file, "utf8").replace(/(id: nsdi27\n)/, "id: nsdi27b\n");
+      writeFileSync(file, text);
+    });
+    const result = evaluateHealthGate(current, baseline);
+    expect(result.ok).toBe(true);
+  });
+
   it("a genuinely removed future deadline fails the gate", { timeout: 180_000 }, () => {
     const { baseline, current } = buildPair((root) => {
       const file = join(root, "NW", "nsdi.yml");
