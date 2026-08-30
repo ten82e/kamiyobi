@@ -217,6 +217,73 @@ it("restores only failed-source venues, editions, and missing slots", () => {
   });
 });
 
+it("restores failed-source edition identity into only a unique current match", () => {
+  const currentEdition = makeEdition({
+    year: 2026,
+    edition_id: "venue26",
+    source: "local",
+    identity: {
+      officialUrls: ["https://www.example.org/2026/"],
+      sourceIds: { local: "venue26" },
+    },
+  });
+  const savedEdition = makeEdition({
+    year: 2026,
+    edition_id: "venue26",
+    source: "local",
+    deadlines: [
+      {
+        ...makeDeadline("paper", "Paper", utc(2026, 9, 1)),
+        evidence: [
+          {
+            source_name: "ccfddl",
+            source_url: "https://example.org/ccfddl",
+            observed_at: "2026-08-01T00:00:00Z",
+            original_value: "2026-09-01",
+            confidence: "aggregator",
+          },
+        ],
+      },
+    ],
+    identity: {
+      officialUrls: ["https://example.org/2026/"],
+      sourceIds: { aideadlines: "stale-nonfailed-id", ccfddl: "venue26" },
+    },
+  });
+  const conference = (editions: Conference["editions"], sources: string[]) =>
+    makeConference({ key: "venue", title: "Venue", sources, editions });
+
+  const restored = restoreFailedSourceMaterialWithCounts(
+    [conference([currentEdition], ["local"])],
+    [conference([savedEdition], ["ccfddl"])],
+    new Set(["ccfddl"]),
+  );
+  expect(restored.conferences[0]!.editions).toHaveLength(1);
+  expect(restored.conferences[0]!.editions[0]!.identity).toEqual({
+    officialUrls: ["https://example.org/2026/", "https://www.example.org/2026/"],
+    sourceIds: { ccfddl: "venue26", local: "venue26" },
+  });
+  expect(restored.counts.ccfddl?.editionCount).toBe(1);
+
+  const ambiguous = restoreFailedSourceMaterial(
+    [conference([currentEdition, { ...currentEdition }], ["local"])],
+    [conference([savedEdition], ["ccfddl"])],
+    new Set(["ccfddl"]),
+  );
+  expect(ambiguous[0]!.editions).toHaveLength(3);
+  expect(
+    ambiguous[0]!.editions.slice(0, 2).every((edition) => !edition.identity?.sourceIds?.ccfddl),
+  ).toBe(true);
+
+  const otherYear = restoreFailedSourceMaterial(
+    [conference([{ ...currentEdition, year: 2027 }], ["local"])],
+    [conference([savedEdition], ["ccfddl"])],
+    new Set(["ccfddl"]),
+  );
+  expect(otherYear[0]!.editions).toHaveLength(2);
+  expect(otherYear[0]!.editions[0]!.identity?.sourceIds).toEqual({ local: "venue26" });
+});
+
 it("does not misattribute non-failed editions when another source failed (bis ghost regression)", () => {
   // snapshot の bis は sources [aideadlines, ccfddl] の混在 conference。
   // 2025 edition は ccfddl 由来 (deadline evidence も ccfddl のみ) で、failed でない
