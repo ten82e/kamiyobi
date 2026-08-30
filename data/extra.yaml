@@ -1715,6 +1715,64 @@ conferences:
                 verifiedFields: [date]
                 rawExcerpt: 'Submission: August 15, 2026'
 
+  # 証拠: data/promotions/2026-08-31-lascas-2027/manifest.json
+  # 公式 CFP に時刻・timezone は未掲載。Tutorial Submission と
+  # Special Session Proposal は本会議 paper の締切ではないため収録しない。
+  - key: lascas
+    title: LASCAS
+    full_name: IEEE Latin American Symposium on Circuits and Systems
+    link: https://attend.ieee.org/lascas-2027/
+    categories: [systems]
+    tags: [niche]
+    editions:
+      - year: 2027
+        id: lascas27
+        link: https://attend.ieee.org/lascas-2027/
+        place: Panama City, Panama
+        date_text: February 23-26, 2027
+        event_start: '2027-02-23'
+        event_end: '2027-02-26'
+        deadlines:
+          - kind: paper
+            label: Paper Submission
+            date: '2026-09-01'
+            precision: date-only
+            evidence:
+              - sourceClass: official-cfp
+                sourceUrl: https://attend.ieee.org/lascas-2027/call-for-papers/
+                contentHash: 102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1
+                sourceRevision: Sun, 30 Aug 2026 16:08:56 GMT
+                retrievedAt: '2026-08-30T16:11:29.630Z'
+                verifiedAt: '2026-08-30T16:11:39Z'
+                verifiedFields: [date, kind, round]
+                rawExcerpt: 'Paper Submission: <b>September 1, 2026</b>'
+          - kind: notification
+            label: Notification of Acceptance
+            date: '2026-10-23'
+            precision: date-only
+            evidence:
+              - sourceClass: official-cfp
+                sourceUrl: https://attend.ieee.org/lascas-2027/call-for-papers/
+                contentHash: 102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1
+                sourceRevision: Sun, 30 Aug 2026 16:08:56 GMT
+                retrievedAt: '2026-08-30T16:11:29.630Z'
+                verifiedAt: '2026-08-30T16:11:39Z'
+                verifiedFields: [date, kind, round]
+                rawExcerpt: 'Notification of Acceptance: <b>October 23, 202</b>6'
+          - kind: camera_ready
+            label: Camera-ready
+            date: '2026-11-09'
+            precision: date-only
+            evidence:
+              - sourceClass: official-cfp
+                sourceUrl: https://attend.ieee.org/lascas-2027/call-for-papers/
+                contentHash: 102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1
+                sourceRevision: Sun, 30 Aug 2026 16:08:56 GMT
+                retrievedAt: '2026-08-30T16:11:29.630Z'
+                verifiedAt: '2026-08-30T16:11:39Z'
+                verifiedFields: [date, kind, round]
+                rawExcerpt: 'Camera-ready: <b>November 9, 2026</b>'
+
   # 根拠: https://easychair.org/cfp/flowchallenge2 (2026-08-10)
   #   「Submission deadline September 15, 2026」— DIMACS 実装チャレンジ (ALENEX/SOSA 併設)。
   #   公式に tz 表記なし → 23:59 UTC として解釈。

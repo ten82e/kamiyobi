@@ -270,6 +270,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
   const text = body
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
     .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<\/?(?:b|strong|em|i)\b[^>]*>/gi, "")
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/(?:p|li|tr|td|th|div|h[1-6]|section|article)>/gi, "\n")
     .replace(/<[^>]+>/g, " ")
@@ -283,7 +284,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
     .map((line) => line.trim())
     .filter(Boolean)) {
     if (
-      !/deadline|due|submission|submit|call for papers|cfp|event|conference|開催|締切|期限|投稿|募集/i.test(
+      !/deadline|due|submission|submit|notification|camera[- ]?ready|call for papers|cfp|event|conference|開催|締切|期限|投稿|募集/i.test(
         raw,
       )
     )
@@ -446,6 +447,7 @@ function candidateMatches(
   if (!deadline) return false;
   return candidates.some((candidate) => {
     if (deadline.date && candidate.date !== deadline.date) return false;
+    if (deadline.kind && candidate.kind !== deadline.kind) return false;
     if (deadline.time && normalizedTime(candidate.time) !== normalizedTime(deadline.time))
       return false;
     if (
@@ -913,27 +915,41 @@ export function verifyBatch(
 }
 
 function extraFrom(resolutions: PromotionResolution[]): Record<string, unknown> {
+  const promoted = resolutions
+    .filter((resolution) => resolution.decision === "promote" && resolution.normalized)
+    .map((resolution) => resolution.normalized!);
+  const venues = new Map<string, typeof promoted>();
+  for (const normalized of promoted) {
+    const group = venues.get(normalized.venue.key) ?? [];
+    group.push(normalized);
+    venues.set(normalized.venue.key, group);
+  }
   return {
-    conferences: resolutions
-      .filter((resolution) => resolution.decision === "promote" && resolution.normalized)
-      .map((resolution) => {
-        const normalized = resolution.normalized!;
-        return {
-          key: normalized.venue.key,
-          title: normalized.venue.title,
-          categories: normalized.venue.categories,
-          tags: normalized.venue.tags,
-          review_state: normalized.venue.review_state,
-          link: (normalized.deadline.evidence as Array<{ sourceUrl: string }>)[0]!.sourceUrl,
-          editions: [
-            {
-              ...normalized.edition,
-              id: normalized.edition.edition_id,
-              deadlines: [normalized.deadline],
-            },
-          ],
-        };
-      }),
+    conferences: [...venues.values()].map((venueRows) => {
+      const normalized = venueRows[0]!;
+      const editions = new Map<string, typeof venueRows>();
+      for (const row of venueRows) {
+        const group = editions.get(row.edition.edition_id) ?? [];
+        group.push(row);
+        editions.set(row.edition.edition_id, group);
+      }
+      return {
+        key: normalized.venue.key,
+        title: normalized.venue.title,
+        categories: normalized.venue.categories,
+        tags: normalized.venue.tags,
+        review_state: normalized.venue.review_state,
+        link: (normalized.deadline.evidence as Array<{ sourceUrl: string }>)[0]!.sourceUrl,
+        editions: [...editions.values()].map((editionRows) => {
+          const edition = editionRows[0]!;
+          return {
+            ...edition.edition,
+            id: edition.edition.edition_id,
+            deadlines: editionRows.map((row) => row.deadline),
+          };
+        }),
+      };
+    }),
   };
 }
 

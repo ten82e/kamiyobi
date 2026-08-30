@@ -8,6 +8,7 @@ import { observeCfp } from "../scripts/observe-cfp.ts";
 import {
   type CfpCapture,
   canonicalJson,
+  extractCfpCandidates,
   isOfficialUrl,
   type PromotionObservation,
   resolvePromotion,
@@ -25,7 +26,8 @@ const evidence = {
   contentHash: "",
 };
 
-const capturedBody = "Paper deadline: January 2, 2027 23:59 AoE";
+const capturedBody =
+  "Paper deadline: January 2, 2027 23:59 AoE\nNotification: January 3, 2027 23:59 AoE";
 const capturedBodyPath = join(mkdtempSync(join(tmpdir(), "kamiyobi-promotion-body-")), "cfp.html");
 writeFileSync(capturedBodyPath, capturedBody);
 const capturedHash = createHash("sha256").update(capturedBody).digest("hex");
@@ -83,11 +85,31 @@ function observation(overrides: Partial<PromotionObservation> = {}): PromotionOb
 }
 
 describe("promotion batch", () => {
+  it("extracts notification and camera-ready dates across inline markup", () => {
+    expect(
+      extractCfpCandidates(
+        "<li>Notification of Acceptance: <b>October 23, 202</b>6</li>" +
+          "<li>Camera-ready: <strong>November 9, 2026</strong></li>",
+      ),
+    ).toMatchObject([
+      { date: "2026-10-23", kind: "notification" },
+      { date: "2026-11-09", kind: "camera_ready" },
+    ]);
+  });
+
   it("requires explicit venue and category review before promotion", () => {
     expect(resolvePromotion(observation({ reviewState: undefined })).decision).toBe("hold");
     expect(resolvePromotion(observation({ categories: [] })).decision).toBe("hold");
     expect(resolvePromotion(observation({ categoryReviewState: "pending" })).decision).toBe("hold");
     expect(resolvePromotion(observation()).decision).toBe("promote");
+  });
+
+  it("requires the extracted deadline kind to match", () => {
+    expect(
+      resolvePromotion(
+        observation({ deadline: { ...observation().deadline!, kind: "notification" } }),
+      ).decision,
+    ).toBe("hold");
   });
 
   it("promotes exact and date-only primary observations with normalized field evidence", () => {
@@ -189,12 +211,24 @@ describe("promotion batch", () => {
     const observations = join(dir, "observations.jsonl");
     writeFileSync(
       observations,
-      `${JSON.stringify(observation())}\n${JSON.stringify(observation({ candidate: "hold", title: undefined }))}\n`,
+      `${JSON.stringify(observation())}\n${JSON.stringify(
+        observation({
+          deadline: {
+            date: "2027-01-03",
+            time: "23:59:00",
+            timezone: "AoE",
+            kind: "notification",
+            round: 2,
+            track: "main",
+          },
+          rawExcerpt: "Notification: January 3, 2027 23:59 AoE",
+        }),
+      )}\n${JSON.stringify(observation({ candidate: "hold", title: undefined }))}\n`,
     );
     const files = ["observations.jsonl", "resolutions.json", "manifest.json", "extra.yaml"];
     const run = () =>
       writePromotionBatch(observations, join(dir, "resolutions.json"), join(dir, "manifest.json"));
-    expect(run().map((resolution) => resolution.decision)).toEqual(["promote", "hold"]);
+    expect(run().map((resolution) => resolution.decision)).toEqual(["promote", "promote", "hold"]);
     const first = Object.fromEntries(
       files.map((file) => [file, readFileSync(join(dir, file), "utf8")]),
     );
@@ -203,6 +237,8 @@ describe("promotion batch", () => {
       Object.fromEntries(files.map((file) => [file, readFileSync(join(dir, file), "utf8")])),
     ).toEqual(first);
     expect(first["extra.yaml"]).toContain("precision: exact");
+    expect(first["extra.yaml"].match(/key: exampleconf/g)).toHaveLength(1);
+    expect(first["extra.yaml"].match(/kind: /g)).toHaveLength(2);
     expect(JSON.parse(first["manifest.json"])).toMatchObject({
       id: expect.any(String),
       extra: { sha256: expect.stringMatching(/^[0-9a-f]{64}$/) },
@@ -218,7 +254,7 @@ describe("promotion batch", () => {
       encoding: "utf8",
     });
     expect(verified.status).toBe(1);
-    expect(JSON.parse(verified.stdout)).toHaveLength(2);
+    expect(JSON.parse(verified.stdout)).toHaveLength(3);
 
     const generated = join(dir, "generated");
     const promoted = spawnSync(
@@ -250,7 +286,7 @@ describe("promotion batch", () => {
       fetch: async () =>
         new Response(body, {
           status: 200,
-          headers: { etag: "rev-1", "content-type": "text/html" },
+          headers: { etag: "rev-1", "content-type": "text/html", "set-cookie": "sid=secret" },
         }),
     })) as PromotionObservation & CfpCapture;
     expect(capture).toMatchObject({
@@ -263,6 +299,7 @@ describe("promotion batch", () => {
     expect(capture.candidates).toEqual([
       expect.objectContaining({ date: "2027-01-02", time: "23:59:00", timezone: "AoE" }),
     ]);
+    expect(capture.headers["set-cookie"]).toBeUndefined();
     expect(canonicalJson(capture)).toBe(canonicalJson({ ...capture }));
     expect(readFileSync(bodyPath, "utf8")).toBe(body);
 
