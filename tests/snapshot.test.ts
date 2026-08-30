@@ -27,7 +27,7 @@ import {
   type SourceLoadResult,
   setRoot,
 } from "../src/cli.ts";
-import { type Conference, fmtUTC } from "../src/model.ts";
+import { type Conference, fmtUTC, resetWarnings } from "../src/model.ts";
 import {
   archiveMetadata,
   cacheMetadata,
@@ -486,6 +486,34 @@ describe("source freshness", () => {
       contentHash: "known",
       cacheAgeSeconds: 0,
     });
+  });
+
+  it("retries transient HTTP failures but not permanent ones", { timeout: 10_000 }, async () => {
+    const cache = mkdtempSync("/tmp/cfp-cache-retry-");
+    for (const repo of ["fixture/transient", "fixture/permanent"]) {
+      mkdirSync(join(cacheSlot(cache, repo, "main"), "source-main"), { recursive: true });
+    }
+    const originalFetch = globalThis.fetch;
+    let calls = 0;
+    try {
+      globalThis.fetch = (async () => {
+        calls++;
+        return new Response("", { status: 503 });
+      }) as typeof fetch;
+      await fetchTarball("fixture/transient", "main", cache);
+      expect(calls).toBe(3);
+
+      calls = 0;
+      globalThis.fetch = (async () => {
+        calls++;
+        return new Response("", { status: 404 });
+      }) as typeof fetch;
+      await fetchTarball("fixture/permanent", "main", cache);
+      expect(calls).toBe(1);
+    } finally {
+      globalThis.fetch = originalFetch;
+      resetWarnings();
+    }
   });
 
   it("clears process-global source metadata before every build", async () => {
