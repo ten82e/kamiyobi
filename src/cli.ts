@@ -281,9 +281,10 @@ function snapshotConferenceMatch(
       normalizedIdentity(conference.identity?.dblpKey ?? conference.dblp) ===
         normalizedIdentity(saved.identity?.dblpKey ?? saved.dblp),
     (conference) =>
-      conference.key === saved.key ||
-      (conference.legacy_keys ?? []).includes(saved.key) ||
-      (saved.legacy_keys ?? []).includes(conference.key),
+      sourceIdsCompatible(conference) &&
+      (conference.key === saved.key ||
+        (conference.legacy_keys ?? []).includes(saved.key) ||
+        (saved.legacy_keys ?? []).includes(conference.key)),
   ];
   for (const criterion of criteria) {
     const matches = conferences.filter(criterion);

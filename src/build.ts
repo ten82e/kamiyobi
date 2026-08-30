@@ -600,6 +600,15 @@ export function toJson(
     categories: { ...categories },
     legacy_key_redirects: (() => {
       const aliases = new Map<string, string[]>();
+      const venueIdentities = safeConfig.venue_identities;
+      const canonicalKeys = new Set([
+        ...(confs ?? []).map((conference) => conference.key),
+        ...(venueIdentities &&
+        typeof venueIdentities === "object" &&
+        !Array.isArray(venueIdentities)
+          ? Object.keys(venueIdentities)
+          : []),
+      ]);
       for (const conference of confs ?? []) {
         for (const legacy of conference.legacy_keys ?? []) {
           aliases.set(legacy, [...(aliases.get(legacy) ?? []), conference.key]);
@@ -607,7 +616,7 @@ export function toJson(
       }
       return Object.fromEntries(
         [...aliases]
-          .filter(([, targets]) => new Set(targets).size === 1)
+          .filter(([legacy, targets]) => !canonicalKeys.has(legacy) && new Set(targets).size === 1)
           .map(([legacy, targets]) => [legacy, targets[0]!] as const),
       );
     })(),
