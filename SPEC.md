@@ -394,7 +394,7 @@ export function mergeSources(
 // 競合時の優先順は config['source_priority']（既定 ["local","aideadlines","ccfddl"]）
 // stats は任意の出力引数。merged_deadlines、merged_by_key、identity_conflicts を受け取る
 
-// config.venue_identities は source-local ID を stable venue ID へ明示的に対応付ける。
+// config.venue_identities / edition_identities は source-local ID を stable ID へ明示的に対応付ける。
 // sourceIds の値や slug が偶然一致しただけでは source をまたいで統合しない。
 
 export function classify(confs: Conference[], config: Record<string, unknown>): Conference[];

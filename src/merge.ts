@@ -175,39 +175,90 @@ export function mergeSources(
   return merged;
 }
 
-/** Reapply stable venue IDs without re-merging already serialized source material. */
+/** Reapply configured stable IDs and fold editions made explicit by that registry. */
 export function normalizeConfiguredVenueIdentities(
   confs: Conference[] | null | undefined,
   config: Record<string, unknown> | null | undefined,
 ): Conference[] {
+  const safeConfig = config ?? {};
   const normalized = uniqueConferenceKeys(
-    (confs ?? []).map((conf) => configuredIdentity(conf, config ?? {})),
-  ).map((conf) => ({
-    ...conf,
-    legacy_keys: (conf.legacy_keys ?? []).filter((key) => key !== conf.key),
-  }));
+    (confs ?? []).map((conf) => configuredIdentity(conf, safeConfig)),
+  ).map((conf) => {
+    const merged = mergeConfiguredEditions(conf, safeConfig);
+    return {
+      ...merged,
+      legacy_keys: (merged.legacy_keys ?? []).filter((key) => key !== merged.key),
+    };
+  });
   return normalized.sort((a, b) => cmpStr(a.key, b.key));
 }
 
 function configuredIdentity(conf: Conference, config: Record<string, unknown>): Conference {
+  const editions = conf.editions.map((edition) => configuredEditionIdentity(edition, config));
+  const configured = editions.some((edition, index) => edition !== conf.editions[index])
+    ? { ...conf, editions }
+    : conf;
   const registry = config.venue_identities;
-  if (!registry || typeof registry !== "object" || Array.isArray(registry)) return conf;
+  if (!registry || typeof registry !== "object" || Array.isArray(registry)) return configured;
   for (const [venueId, value] of Object.entries(registry as Record<string, unknown>)) {
     if (!value || typeof value !== "object" || Array.isArray(value)) continue;
     const sourceIds = (value as Record<string, unknown>).source_ids;
     if (!sourceIds || typeof sourceIds !== "object" || Array.isArray(sourceIds)) continue;
     const matches = Object.entries(sourceIds as Record<string, unknown>).some(
       ([source, id]) =>
-        identityToken(conf.identity?.sourceIds?.[source]) !== "" &&
-        identityToken(conf.identity?.sourceIds?.[source]) === identityToken(String(id)),
+        identityToken(configured.identity?.sourceIds?.[source]) !== "" &&
+        identityToken(configured.identity?.sourceIds?.[source]) === identityToken(String(id)),
     );
     if (matches)
       return {
-        ...conf,
-        identity: mergeVenueIdentity([conf.identity, { venueId }]),
+        ...configured,
+        identity: mergeVenueIdentity([configured.identity, { venueId }]),
       };
   }
-  return conf;
+  return configured;
+}
+
+function configuredEditionIdentity(edition: Edition, config: Record<string, unknown>): Edition {
+  const registry = config.edition_identities;
+  if (!registry || typeof registry !== "object" || Array.isArray(registry)) return edition;
+  for (const [editionId, value] of Object.entries(registry as Record<string, unknown>)) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+    const sourceIds = (value as Record<string, unknown>).source_ids;
+    if (!sourceIds || typeof sourceIds !== "object" || Array.isArray(sourceIds)) continue;
+    const matches = Object.entries(sourceIds as Record<string, unknown>).some(
+      ([source, id]) =>
+        identityToken(edition.identity?.sourceIds?.[source]) !== "" &&
+        identityToken(edition.identity?.sourceIds?.[source]) === identityToken(String(id)),
+    );
+    if (matches)
+      return {
+        ...edition,
+        identity: mergeEditionIdentity([edition.identity, { editionId }]),
+      };
+  }
+  return edition;
+}
+
+function mergeConfiguredEditions(conf: Conference, config: Record<string, unknown>): Conference {
+  const groups = new Map<string, Edition[]>();
+  for (const edition of conf.editions) {
+    const editionId = identityToken(edition.identity?.editionId);
+    groups.set(editionId, [...(groups.get(editionId) ?? []), edition]);
+  }
+  if (![...groups.entries()].some(([editionId, editions]) => editionId && editions.length > 1))
+    return conf;
+
+  const priority = (config.source_priority as string[]) ?? DEFAULT_SOURCE_PRIORITY;
+  const tally = freshStats();
+  const editions = [...groups.entries()].flatMap(([editionId, matches]) => {
+    if (!editionId || matches.length === 1) return matches;
+    const sources = matches
+      .map((edition) => ({ ...conf, sources: [edition.source], editions: [edition] }))
+      .sort((a, b) => priorityOf(a, priority) - priorityOf(b, priority));
+    return mergeEditions(sources, windowsOf(config), tally);
+  });
+  editions.sort((a, b) => a.year - b.year || cmpStr(editionSortKey(a), editionSortKey(b)));
+  return { ...conf, editions };
 }
 
 function windowsOf(config: Record<string, unknown>): Windows {
@@ -678,6 +729,13 @@ function normLabel(label: string | null | undefined): string {
   return (label ?? "").trim().split(/\s+/).join(" ").toLowerCase();
 }
 
+function sameGenericSubmissionSlot(left: Deadline, right: Deadline): boolean {
+  if (left.track?.trim() || right.track?.trim()) return false;
+  const kind = normLabel(left.kind || "other");
+  const generic = new Set([`${kind} submission`, `${kind} submission deadline`]);
+  return generic.has(normLabel(left.label)) && generic.has(normLabel(right.label));
+}
+
 /** Re-apply the SPEC.md 3.6 fold after roll-forward. */
 export function dedupDeadlinesAfterRollforward(
   confs: Conference[],
@@ -729,7 +787,12 @@ function dedupDeadlines(
     for (let index = 0; index < kept.length; index++) {
       const { origins, deadline: held } = kept[index];
       if (held.kind !== deadline.kind || held.round !== deadline.round) continue;
-      if (deadlineSlotKey(held) !== deadlineSlotKey(deadline)) continue;
+      const sameSource = origins.has(source);
+      if (
+        deadlineSlotKey(held) !== deadlineSlotKey(deadline) &&
+        (sameSource || !sameGenericSubmissionSlot(held, deadline))
+      )
+        continue;
       const gap =
         isDateOnlyDeadline(held) && isDateOnlyDeadline(deadline)
           ? held.local_date === deadline.local_date
@@ -746,7 +809,7 @@ function dedupDeadlines(
               : isExactDeadline(held) && isExactDeadline(deadline)
                 ? Math.abs(held.at_utc.getTime() - deadline.at_utc.getTime()) / 1000
                 : Number.POSITIVE_INFINITY;
-      if (origins.has(source)) {
+      if (sameSource) {
         if (gap !== 0 || normLabel(held.label) !== normLabel(deadline.label)) continue;
       } else {
         const oneToOne = [...origins, source].every(
