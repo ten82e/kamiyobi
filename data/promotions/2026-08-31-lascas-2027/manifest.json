@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "id": "2026-08-31-lascas-2027",
+  "observations": {
+    "sha256": "76af724567de7ede2f1bdc4810e460bea9bcba12f09f6cf54d2c617a6de548f0"
+  },
+  "resolutions": {
+    "sha256": "4e476646d2c2fe185d4bb2e122b7f83a9c85498b998bd695941027e55740ab00"
+  },
+  "extra": {
+    "sha256": "1998acb3ae5dc99fcc6b4cb95bbe028e6f5b4dca288d379f59ec8517d08a9862"
+  },
+  "bodies": [
+    {
+      "path": "bodies/102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1.body",
+      "sha256": "102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1"
+    }
+  ],
+  "decisions": {
+    "lascas": "promote"
+  }
+}

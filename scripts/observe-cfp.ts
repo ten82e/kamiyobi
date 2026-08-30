@@ -113,7 +113,11 @@ function normalizedList(values: string[]): string[] {
 }
 
 function responseHeaders(response: Response): Record<string, string> {
-  return Object.fromEntries([...response.headers].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+  return Object.fromEntries(
+    [...response.headers]
+      .filter(([key]) => key.toLowerCase() !== "set-cookie")
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+  );
 }
 
 export async function observeCfp(

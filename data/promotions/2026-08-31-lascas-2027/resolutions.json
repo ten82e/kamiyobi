@@ -1,0 +1,365 @@
+[
+  {
+    "candidate": "lascas",
+    "decision": "promote",
+    "verifiedFields": [
+      "venue",
+      "date",
+      "kind",
+      "round",
+      "event_start",
+      "event_end"
+    ],
+    "reason": "primary fields and evidence verified",
+    "verification": {
+      "valid": true,
+      "errors": [],
+      "checkedFields": [
+        "requestedUrl",
+        "finalUrl",
+        "status",
+        "headers",
+        "retrievedAt",
+        "sourceRevision",
+        "bodyHash",
+        "excerpt",
+        "officialDomain",
+        "extractionCandidates",
+        "eventYear",
+        "deadlineDate",
+        "deadlineTime",
+        "deadlineTimezone"
+      ],
+      "bodyHash": "102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1",
+      "sourceRevision": "Sun, 30 Aug 2026 16:08:56 GMT",
+      "extractedCandidates": [
+        {
+          "rawExcerpt": "Paper Submission: September 1, 2026",
+          "text": "Paper Submission: September 1, 2026",
+          "label": "Paper Submission: September 1, 2026",
+          "kind": "paper",
+          "date": "2026-09-01",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Tutorial Submission: September 1, 2026",
+          "text": "Tutorial Submission: September 1, 2026",
+          "label": "Tutorial Submission: September 1, 2026",
+          "kind": "paper",
+          "date": "2026-09-01",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Notification of Acceptance: October 23, 2026",
+          "text": "Notification of Acceptance: October 23, 2026",
+          "label": "Notification of Acceptance: October 23, 2026",
+          "kind": "notification",
+          "date": "2026-10-23",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Camera-ready: November 9, 2026",
+          "text": "Camera-ready: November 9, 2026",
+          "label": "Camera-ready: November 9, 2026",
+          "kind": "camera_ready",
+          "date": "2026-11-09",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Due 9 November 2026",
+          "text": "Due 9 November 2026",
+          "label": "Due 9 November 2026",
+          "kind": "paper",
+          "date": "2026-11-09",
+          "editionYear": 2026
+        }
+      ]
+    },
+    "normalized": {
+      "venue": {
+        "key": "lascas",
+        "title": "LASCAS",
+        "categories": [
+          "systems"
+        ],
+        "tags": [
+          "niche"
+        ],
+        "review_state": "reviewed"
+      },
+      "edition": {
+        "year": 2027,
+        "edition_id": "lascas-2027",
+        "date_text": "2027-02-23",
+        "event_start": "2027-02-23",
+        "event_end": "2027-02-26"
+      },
+      "deadline": {
+        "kind": "paper",
+        "label": "paper",
+        "round": 1,
+        "track": "",
+        "precision": "date-only",
+        "date": "2026-09-01",
+        "evidence": [
+          {
+            "sourceClass": "official-cfp",
+            "sourceUrl": "https://attend.ieee.org/lascas-2027/call-for-papers/",
+            "sourceRevision": "Sun, 30 Aug 2026 16:08:56 GMT",
+            "retrievedAt": "2026-08-30T16:11:29.630Z",
+            "verifiedAt": "2026-08-30T16:11:39Z",
+            "contentHash": "102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1",
+            "rawExcerpt": "Paper Submission: <b>September 1, 2026</b>",
+            "verifiedFields": [
+              "date",
+              "kind",
+              "round"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "candidate": "lascas",
+    "decision": "promote",
+    "verifiedFields": [
+      "venue",
+      "date",
+      "kind",
+      "round",
+      "event_start",
+      "event_end"
+    ],
+    "reason": "primary fields and evidence verified",
+    "verification": {
+      "valid": true,
+      "errors": [],
+      "checkedFields": [
+        "requestedUrl",
+        "finalUrl",
+        "status",
+        "headers",
+        "retrievedAt",
+        "sourceRevision",
+        "bodyHash",
+        "excerpt",
+        "officialDomain",
+        "extractionCandidates",
+        "eventYear",
+        "deadlineDate",
+        "deadlineTime",
+        "deadlineTimezone"
+      ],
+      "bodyHash": "102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1",
+      "sourceRevision": "Sun, 30 Aug 2026 16:08:56 GMT",
+      "extractedCandidates": [
+        {
+          "rawExcerpt": "Paper Submission: September 1, 2026",
+          "text": "Paper Submission: September 1, 2026",
+          "label": "Paper Submission: September 1, 2026",
+          "kind": "paper",
+          "date": "2026-09-01",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Tutorial Submission: September 1, 2026",
+          "text": "Tutorial Submission: September 1, 2026",
+          "label": "Tutorial Submission: September 1, 2026",
+          "kind": "paper",
+          "date": "2026-09-01",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Notification of Acceptance: October 23, 2026",
+          "text": "Notification of Acceptance: October 23, 2026",
+          "label": "Notification of Acceptance: October 23, 2026",
+          "kind": "notification",
+          "date": "2026-10-23",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Camera-ready: November 9, 2026",
+          "text": "Camera-ready: November 9, 2026",
+          "label": "Camera-ready: November 9, 2026",
+          "kind": "camera_ready",
+          "date": "2026-11-09",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Due 9 November 2026",
+          "text": "Due 9 November 2026",
+          "label": "Due 9 November 2026",
+          "kind": "paper",
+          "date": "2026-11-09",
+          "editionYear": 2026
+        }
+      ]
+    },
+    "normalized": {
+      "venue": {
+        "key": "lascas",
+        "title": "LASCAS",
+        "categories": [
+          "systems"
+        ],
+        "tags": [
+          "niche"
+        ],
+        "review_state": "reviewed"
+      },
+      "edition": {
+        "year": 2027,
+        "edition_id": "lascas-2027",
+        "date_text": "2027-02-23",
+        "event_start": "2027-02-23",
+        "event_end": "2027-02-26"
+      },
+      "deadline": {
+        "kind": "notification",
+        "label": "notification",
+        "round": 1,
+        "track": "",
+        "precision": "date-only",
+        "date": "2026-10-23",
+        "evidence": [
+          {
+            "sourceClass": "official-cfp",
+            "sourceUrl": "https://attend.ieee.org/lascas-2027/call-for-papers/",
+            "sourceRevision": "Sun, 30 Aug 2026 16:08:56 GMT",
+            "retrievedAt": "2026-08-30T16:11:29.630Z",
+            "verifiedAt": "2026-08-30T16:11:39Z",
+            "contentHash": "102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1",
+            "rawExcerpt": "Notification of Acceptance: <b>October 23, 202</b>6",
+            "verifiedFields": [
+              "date",
+              "kind",
+              "round"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "candidate": "lascas",
+    "decision": "promote",
+    "verifiedFields": [
+      "venue",
+      "date",
+      "kind",
+      "round",
+      "event_start",
+      "event_end"
+    ],
+    "reason": "primary fields and evidence verified",
+    "verification": {
+      "valid": true,
+      "errors": [],
+      "checkedFields": [
+        "requestedUrl",
+        "finalUrl",
+        "status",
+        "headers",
+        "retrievedAt",
+        "sourceRevision",
+        "bodyHash",
+        "excerpt",
+        "officialDomain",
+        "extractionCandidates",
+        "eventYear",
+        "deadlineDate",
+        "deadlineTime",
+        "deadlineTimezone"
+      ],
+      "bodyHash": "102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1",
+      "sourceRevision": "Sun, 30 Aug 2026 16:08:56 GMT",
+      "extractedCandidates": [
+        {
+          "rawExcerpt": "Paper Submission: September 1, 2026",
+          "text": "Paper Submission: September 1, 2026",
+          "label": "Paper Submission: September 1, 2026",
+          "kind": "paper",
+          "date": "2026-09-01",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Tutorial Submission: September 1, 2026",
+          "text": "Tutorial Submission: September 1, 2026",
+          "label": "Tutorial Submission: September 1, 2026",
+          "kind": "paper",
+          "date": "2026-09-01",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Notification of Acceptance: October 23, 2026",
+          "text": "Notification of Acceptance: October 23, 2026",
+          "label": "Notification of Acceptance: October 23, 2026",
+          "kind": "notification",
+          "date": "2026-10-23",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Camera-ready: November 9, 2026",
+          "text": "Camera-ready: November 9, 2026",
+          "label": "Camera-ready: November 9, 2026",
+          "kind": "camera_ready",
+          "date": "2026-11-09",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Due 9 November 2026",
+          "text": "Due 9 November 2026",
+          "label": "Due 9 November 2026",
+          "kind": "paper",
+          "date": "2026-11-09",
+          "editionYear": 2026
+        }
+      ]
+    },
+    "normalized": {
+      "venue": {
+        "key": "lascas",
+        "title": "LASCAS",
+        "categories": [
+          "systems"
+        ],
+        "tags": [
+          "niche"
+        ],
+        "review_state": "reviewed"
+      },
+      "edition": {
+        "year": 2027,
+        "edition_id": "lascas-2027",
+        "date_text": "2027-02-23",
+        "event_start": "2027-02-23",
+        "event_end": "2027-02-26"
+      },
+      "deadline": {
+        "kind": "camera_ready",
+        "label": "camera_ready",
+        "round": 1,
+        "track": "",
+        "precision": "date-only",
+        "date": "2026-11-09",
+        "evidence": [
+          {
+            "sourceClass": "official-cfp",
+            "sourceUrl": "https://attend.ieee.org/lascas-2027/call-for-papers/",
+            "sourceRevision": "Sun, 30 Aug 2026 16:08:56 GMT",
+            "retrievedAt": "2026-08-30T16:11:29.630Z",
+            "verifiedAt": "2026-08-30T16:11:39Z",
+            "contentHash": "102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1",
+            "rawExcerpt": "Camera-ready: <b>November 9, 2026</b>",
+            "verifiedFields": [
+              "date",
+              "kind",
+              "round"
+            ]
+          }
+        ]
+      }
+    }
+  }
+]

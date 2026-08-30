@@ -105,7 +105,7 @@
   "records": [
     {
       "paper_id": "dev-2025-ches-01",
-      "record_sha256": "24fb2f893b8447e0d24503c244e987405a056b8434413ae620069df7255db06e",
+      "record_sha256": "f3a1c69cdb3d595a70ff659928ef0c8594952e59780cf6a26196f6241513ca27",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -582,6 +582,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 3,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -1126,7 +1127,7 @@
         },
         {
           "venue": "dac",
-          "base_score": 20,
+          "base_score": 19,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -2061,6 +2062,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 21,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.03,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "llvm-hpc-2026",
           "base_score": 28,
           "features": {
@@ -2569,7 +2583,7 @@
         },
         {
           "venue": "sse",
-          "base_score": 21,
+          "base_score": 20,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -2740,7 +2754,7 @@
     },
     {
       "paper_id": "dev-2025-ches-02",
-      "record_sha256": "2c5973d4d7982aee50c2a5cc98de685fb235c457bc1b4657d3abc4a0fc213f68",
+      "record_sha256": "734cfdf12d6a359ea98843ca1f3fd1a7906eb9fe8e1c184c209b5ab273197e0b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -3217,6 +3231,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 8,
         "lisa": 0,
@@ -5323,7 +5338,7 @@
     },
     {
       "paper_id": "dev-2025-ches-03",
-      "record_sha256": "cd50d800bfb5832a922d9866a0dd74ffa043e70fdd379c68707a2c30e81944d2",
+      "record_sha256": "73ad017c709af9bc96df0e25ae4d1c70b251740335a33a59afb4003623363c5b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 1,
@@ -5800,6 +5815,7 @@
         "kicss2026": 0,
         "kr": 1,
         "ksem": 2,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -6905,7 +6921,7 @@
     },
     {
       "paper_id": "dev-2025-ches-04",
-      "record_sha256": "2fc0b4f0775d7b0712e756ca9f2839c19d373f28b1eb098a6897771eef91cf21",
+      "record_sha256": "ff4390005406e5f3c41b41ff2ed0f7ff8caa69a2f2a0d9fd7616476e86c4662f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -7382,6 +7398,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -9514,7 +9531,7 @@
     },
     {
       "paper_id": "dev-2025-ches-05",
-      "record_sha256": "7e911b06537ca2b1b1041ad36878f9f3ecd284f1140e5546180d6e7da855703b",
+      "record_sha256": "f27175ae8768a24d054842cebb3d4bf000e61828eaa155c0ecafccfec107e945",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -9991,6 +10008,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 7,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -10717,7 +10735,7 @@
         },
         {
           "venue": "dac",
-          "base_score": 49,
+          "base_score": 48,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.01,
@@ -11406,7 +11424,7 @@
         },
         {
           "venue": "ics",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -12159,6 +12177,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 34,
+          "features": {
+            "lexical_score": 0.25,
+            "semantic_score": 0.07,
+            "category_overlap": 1,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lisa",
           "base_score": 17,
           "features": {
@@ -12173,7 +12204,7 @@
         },
         {
           "venue": "lpc",
-          "base_score": 34,
+          "base_score": 33,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.06,
@@ -12212,7 +12243,7 @@
         },
         {
           "venue": "middleware",
-          "base_score": 42,
+          "base_score": 41,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.16,
@@ -12264,7 +12295,7 @@
         },
         {
           "venue": "msr",
-          "base_score": 32,
+          "base_score": 31,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.01,
@@ -12277,7 +12308,7 @@
         },
         {
           "venue": "msst",
-          "base_score": 34,
+          "base_score": 33,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.07,
@@ -12472,7 +12503,7 @@
         },
         {
           "venue": "pearc",
-          "base_score": 39,
+          "base_score": 38,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.14,
@@ -12706,7 +12737,7 @@
         },
         {
           "venue": "scam",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -12758,7 +12789,7 @@
         },
         {
           "venue": "seke",
-          "base_score": 35,
+          "base_score": 34,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.11,
@@ -12875,7 +12906,7 @@
         },
         {
           "venue": "spaa",
-          "base_score": 30,
+          "base_score": 29,
           "features": {
             "lexical_score": 0.1,
             "semantic_score": 0.04,
@@ -13083,7 +13114,7 @@
         },
         {
           "venue": "ucc",
-          "base_score": 42,
+          "base_score": 41,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.18,
@@ -13137,7 +13168,7 @@
     },
     {
       "paper_id": "dev-2025-ches-06",
-      "record_sha256": "7f7eb684018b2b652625a8386286dd9763f1d496a13a356c675af533b44165d7",
+      "record_sha256": "1f4d1d42737a415a5f49f992676a26404fd173cea19030d3c9ab18f8298f868a",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -13614,6 +13645,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -13952,7 +13984,7 @@
     },
     {
       "paper_id": "dev-2025-ches-07",
-      "record_sha256": "498b49f928aec1290f247ec766fdc99578d09f58ddeab69523b91bfd754c1c12",
+      "record_sha256": "40a675aac8a527c5c8c40db32b8ac8fd348ac85eff338aca0b33169bad9ce0e6",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -14429,6 +14461,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 7,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -14661,7 +14694,7 @@
         },
         {
           "venue": "cav",
-          "base_score": 28,
+          "base_score": 27,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -14726,7 +14759,7 @@
         },
         {
           "venue": "compsac",
-          "base_score": 36,
+          "base_score": 35,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.06,
@@ -14778,7 +14811,7 @@
         },
         {
           "venue": "emsoft",
-          "base_score": 32,
+          "base_score": 31,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -14817,7 +14850,7 @@
         },
         {
           "venue": "eusipco",
-          "base_score": 34,
+          "base_score": 33,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.05,
@@ -15077,7 +15110,7 @@
         },
         {
           "venue": "hpsr",
-          "base_score": 62,
+          "base_score": 61,
           "features": {
             "lexical_score": 0.08,
             "semantic_score": 0.02,
@@ -15155,7 +15188,7 @@
         },
         {
           "venue": "icdcs",
-          "base_score": 26,
+          "base_score": 25,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -15168,7 +15201,7 @@
         },
         {
           "venue": "iceccs",
-          "base_score": 33,
+          "base_score": 32,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.05,
@@ -15194,7 +15227,7 @@
         },
         {
           "venue": "icpp",
-          "base_score": 35,
+          "base_score": 34,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.06,
@@ -15272,7 +15305,7 @@
         },
         {
           "venue": "internetware",
-          "base_score": 31,
+          "base_score": 30,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -15323,6 +15356,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 36,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.07,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "micro",
           "base_score": 44,
           "features": {
@@ -15350,7 +15396,7 @@
         },
         {
           "venue": "nsdi",
-          "base_score": 27,
+          "base_score": 26,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -15467,7 +15513,7 @@
         },
         {
           "venue": "rtas",
-          "base_score": 29,
+          "base_score": 28,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -15638,7 +15684,7 @@
     },
     {
       "paper_id": "dev-2025-ches-08",
-      "record_sha256": "d1cee3cc9b8f8fe88f71058941a1db2d25cf823a922a6230477f74a3a65f06a4",
+      "record_sha256": "46cd28d38205e64f055091879cc5f1131b25bb4024fc78b3bcbcc67e57f16e4b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 15,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -16115,6 +16161,7 @@
         "kicss2026": 3,
         "kr": 7,
         "ksem": 4,
+        "lascas": 0,
         "lcn": 3,
         "lics": 1,
         "lisa": 0,
@@ -19872,7 +19919,7 @@
     },
     {
       "paper_id": "dev-2025-chi-01",
-      "record_sha256": "0faba08b641a6156d92b7d4bffafd884cbe094f394780c9b814dd3c75764c170",
+      "record_sha256": "f4532d022459f867fdc25d7e42a3c61367409d0d8feb46d00d32235891e6bf73",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -20349,6 +20396,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 4,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -20568,7 +20616,7 @@
         },
         {
           "venue": "asap",
-          "base_score": 31,
+          "base_score": 30,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -20750,7 +20798,7 @@
         },
         {
           "venue": "hoti",
-          "base_score": 33,
+          "base_score": 32,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -20763,7 +20811,7 @@
         },
         {
           "venue": "hotos",
-          "base_score": 30,
+          "base_score": 29,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -20802,7 +20850,7 @@
         },
         {
           "venue": "icc",
-          "base_score": 35,
+          "base_score": 34,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -20906,7 +20954,7 @@
         },
         {
           "venue": "infocom",
-          "base_score": 32,
+          "base_score": 31,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -20936,6 +20984,19 @@
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
+          "venue": "lascas",
+          "base_score": 36,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.04,
             "category_overlap": 0,
             "venue_name_evidence": 0,
             "prior_venue": 0,
@@ -21075,7 +21136,7 @@
         },
         {
           "venue": "rtss",
-          "base_score": 36,
+          "base_score": 35,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -21127,7 +21188,7 @@
         },
         {
           "venue": "spm",
-          "base_score": 34,
+          "base_score": 33,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -21142,7 +21203,7 @@
     },
     {
       "paper_id": "dev-2025-chi-02",
-      "record_sha256": "d219c94c1745dcb12b2e7223c4d65fa770af609b6eab951c89109a272654bf30",
+      "record_sha256": "e982b857111494ffc5fe2c903c542afb368dc5f777eaeeb19313d31b80df4a9e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -21619,6 +21680,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -21827,7 +21889,7 @@
     },
     {
       "paper_id": "dev-2025-chi-03",
-      "record_sha256": "d63b62769cc1b88799f2d5419ae5adc4c452579873136bb6c247a0ae481ef0b9",
+      "record_sha256": "1c527b594b488282b46a41755259c9654143bf366d3340f9f8b2844d3ca9aefc",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -22304,6 +22366,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -23175,7 +23238,7 @@
     },
     {
       "paper_id": "dev-2025-chi-04",
-      "record_sha256": "692a8366528931b64880c2a3ea2414a3fe3e36f4677c43f009dce25fb560476e",
+      "record_sha256": "e1ef784442741c2fe83b4659c62a37d33798941c895eab831dc70b04bbb8ab8e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -23652,6 +23715,7 @@
         "kicss2026": 4,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -24627,7 +24691,7 @@
     },
     {
       "paper_id": "dev-2025-chi-05",
-      "record_sha256": "2d23a206f5c495830c13e2efe90d510714b21216eacea26538c1710f52378b19",
+      "record_sha256": "0b68f23de896108e68a1a2d66ef9e0ba953f8994de8623e23ebf0e38e55a45c9",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -25104,6 +25168,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -25988,7 +26053,7 @@
     },
     {
       "paper_id": "dev-2025-chi-06",
-      "record_sha256": "5c98257864e392b4916a4744897a7cc840be279692fe23f5bf489036c7029e2d",
+      "record_sha256": "5f68dc8e8661ae7392fbfa6516e6f33520bde353f33585795f27e78065c899f8",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -26465,6 +26530,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -27297,7 +27363,7 @@
     },
     {
       "paper_id": "dev-2025-chi-07",
-      "record_sha256": "d5bbdaea25d3dce236fd9bedce12e8fef74f52b8f48f3d43300bb5f9bcdf0c6a",
+      "record_sha256": "84d5aa40dfca1b5c9492cc103b6e49318ecfcdf357d29117aaf3c5a1ff840718",
       "semantic_scores": {
         "1st-dl2-international-workshop": 27,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 16,
@@ -27774,6 +27840,7 @@
         "kicss2026": 26,
         "kr": 26,
         "ksem": 15,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -30933,7 +31000,7 @@
     },
     {
       "paper_id": "dev-2025-chi-08",
-      "record_sha256": "17a9292b5fbd066ff71739a15ad38fe482f2181a3e5afe0e695aa9cc77dd5518",
+      "record_sha256": "66ee931649b1d11522884f32a6537e936c2bd61c2aa4693e0a9d54bd3d72f479",
       "semantic_scores": {
         "1st-dl2-international-workshop": 28,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 15,
@@ -31410,6 +31477,7 @@
         "kicss2026": 20,
         "kr": 15,
         "ksem": 17,
+        "lascas": 0,
         "lcn": 0,
         "lics": 2,
         "lisa": 0,
@@ -34634,7 +34702,7 @@
     },
     {
       "paper_id": "dev-2025-cvpr-01",
-      "record_sha256": "ff191283aa81c40135abef24e05c0073efccd0773856b7f03f79abc118ca2358",
+      "record_sha256": "38e241a17c7240fbd1e9f6daf2c85a13f14e42985ff90d1b4b49f1182e68606e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 6,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -35111,6 +35179,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -39372,6 +39441,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 8,
+          "features": {
+            "lexical_score": 0.25,
+            "semantic_score": 0,
+            "category_overlap": 1,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lcn",
           "base_score": 8,
           "features": {
@@ -39711,7 +39793,7 @@
         },
         {
           "venue": "networking",
-          "base_score": 8,
+          "base_score": 7,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -40829,7 +40911,7 @@
         },
         {
           "venue": "wicon",
-          "base_score": 7,
+          "base_score": 6,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -40896,7 +40978,7 @@
     },
     {
       "paper_id": "dev-2025-cvpr-02",
-      "record_sha256": "b233b92abea928a7dddb6189884af363bf5427986d264bbad2c38a630a1b4feb",
+      "record_sha256": "029b550b04507eadd3ae2a8a20aed8d7194f57719f96bab0f555dd6f4977f29c",
       "semantic_scores": {
         "1st-dl2-international-workshop": 20,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -41373,6 +41455,7 @@
         "kicss2026": 15,
         "kr": 15,
         "ksem": 21,
+        "lascas": 0,
         "lcn": 0,
         "lics": 15,
         "lisa": 0,
@@ -43778,7 +43861,7 @@
     },
     {
       "paper_id": "dev-2025-cvpr-03",
-      "record_sha256": "996b6b91065b337119cad0710f53b46b6865ffb7579f007c88d3a57b706ef794",
+      "record_sha256": "754e9d84790315b973d13b2ab7bed5510c3738740caf2c5684975c5e027c6de0",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -44255,6 +44338,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -45360,7 +45444,7 @@
     },
     {
       "paper_id": "dev-2025-cvpr-04",
-      "record_sha256": "b445b9f859f8d55c215e939ab3a106c04fedbab9d00645f4fe9035ca52a6ea45",
+      "record_sha256": "4718efdcbd766e14abe2c1d76b0277b77cf16ddc361270f82d5def53eeafa092",
       "semantic_scores": {
         "1st-dl2-international-workshop": 8,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -45837,6 +45921,7 @@
         "kicss2026": 10,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -48983,7 +49068,7 @@
     },
     {
       "paper_id": "dev-2025-cvpr-05",
-      "record_sha256": "7e3152dec4dc37e854422e473d6f3c366988f716b691fb216b9ef1d6f9dc4552",
+      "record_sha256": "fcfc843a2621c083dca544779a8e99cbc456073be9f4e9a1589418a8d20f6d28",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -49460,6 +49545,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -50292,7 +50378,7 @@
     },
     {
       "paper_id": "dev-2025-cvpr-06",
-      "record_sha256": "1026b044ece4fb48dfa22774ea4cb4f3391dba1ec7903bd0d5521b9d5f3265bc",
+      "record_sha256": "c8f801c925473b7beb5987fe2d6a9cf572666acdb0b2d522aba5af191e1ed20f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 6,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -50769,6 +50855,7 @@
         "kicss2026": 0,
         "kr": 3,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 1,
         "lisa": 0,
@@ -52095,7 +52182,7 @@
     },
     {
       "paper_id": "dev-2025-cvpr-07",
-      "record_sha256": "4b293115db04695782a0e97d6c91a8937909c5b9ef29fa1c1968091144fb366a",
+      "record_sha256": "8bbb9384e6590612e4bcb9ff94f7a75444e1bd01cb3c4881d4a2bd55f1ac0c03",
       "semantic_scores": {
         "1st-dl2-international-workshop": 3,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -52572,6 +52659,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -53768,7 +53856,7 @@
     },
     {
       "paper_id": "dev-2025-cvpr-08",
-      "record_sha256": "08600c71d2d69da43e7039333446c0909d0f1cd7a282b1ee48f6ca2e2e94eb32",
+      "record_sha256": "342e7011aa2abdf5649ef21b9ef2138fd385121bf144c8f74ebbc743b4f0cc8a",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -54245,6 +54333,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -55389,7 +55478,7 @@
     },
     {
       "paper_id": "dev-2025-cvprw-01",
-      "record_sha256": "f18696a679505798bb4abaaa460afe6f44af7d2d8e93ee23f5c9322c4c46fc90",
+      "record_sha256": "d6584d99a3c88e23d8eef532dd26ef543fbafb6b2fc0245c0f04751ded5f95bf",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 10,
@@ -55866,6 +55955,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -58908,7 +58998,7 @@
     },
     {
       "paper_id": "dev-2025-cvprw-02",
-      "record_sha256": "bba296406dc46637956ec7f370a9b14213c2518893473fbcec75cff7266ee10b",
+      "record_sha256": "9fa82430759db0f423796a63eac2531c3393680eb54137a4b07ac4f627f974fc",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -59385,6 +59475,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -60451,7 +60542,7 @@
     },
     {
       "paper_id": "dev-2025-cvprw-03",
-      "record_sha256": "07c5f9f12d0f099d1dffeece36009f05dcdd6b8726bb4e8ae67fa8fa1c8730b9",
+      "record_sha256": "6396bdff1872dd020a2c2825e596ad6878884a1013f6b76355bba66d864fdc2d",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 20,
@@ -60928,6 +61019,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -62618,7 +62710,7 @@
     },
     {
       "paper_id": "dev-2025-cvprw-04",
-      "record_sha256": "caf9fe853f462c9fefc07d44c0080f315c808fc1c8bd535d522179cf38a9c2b5",
+      "record_sha256": "9a90dc3ffcd512d04d8409365bf131e48ccec281473b79c379f9ae460fbfba51",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -63095,6 +63187,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -65094,8 +65187,21 @@
           }
         },
         {
-          "venue": "lisa",
+          "venue": "lascas",
           "base_score": 17,
+          "features": {
+            "lexical_score": 0.25,
+            "semantic_score": 0,
+            "category_overlap": 1,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
+          "venue": "lisa",
+          "base_score": 16,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -65290,7 +65396,7 @@
         },
         {
           "venue": "nvmw",
-          "base_score": 16,
+          "base_score": 15,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -65550,7 +65656,7 @@
         },
         {
           "venue": "scam",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -65810,7 +65916,7 @@
         },
         {
           "venue": "ucc",
-          "base_score": 14,
+          "base_score": 13,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -65864,7 +65970,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-01",
-      "record_sha256": "882a5fa998f9efe4ccac245f2263340057e47f8dccc6485950e7b6f794cbbd54",
+      "record_sha256": "273c7e910433ffccba40b090a7a2525756f342602c263c9d654d63d5a99c8543",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -66341,6 +66447,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 4,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -66846,7 +66953,7 @@
         },
         {
           "venue": "eurovis",
-          "base_score": 21,
+          "base_score": 20,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -66898,7 +67005,7 @@
         },
         {
           "venue": "focs",
-          "base_score": 23,
+          "base_score": 22,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -66963,7 +67070,7 @@
         },
         {
           "venue": "hoti",
-          "base_score": 24,
+          "base_score": 23,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -67327,7 +67434,7 @@
         },
         {
           "venue": "ispass",
-          "base_score": 22,
+          "base_score": 21,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -67396,6 +67503,19 @@
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.08,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
+          "venue": "lascas",
+          "base_score": 24,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.04,
             "category_overlap": 0,
             "venue_name_evidence": 0,
             "prior_venue": 0,
@@ -67732,7 +67852,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-02",
-      "record_sha256": "6d7fcdfc4eeb50801e23e14d04b9bc7242ec6b4b79a799f92d5a39613aee61a2",
+      "record_sha256": "70ed6d141804916cce95d9a7e724b1b27b94a20a6666ed6a192c47120db37afd",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -68209,6 +68329,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -69236,7 +69357,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-03",
-      "record_sha256": "4ff2843df54d622d923251c63656a56ff0c69a6856655191dc00795736c652bc",
+      "record_sha256": "085ca70c88a9cd19befeaf39682f396f24394b4a39abf17fba2d3dd6af961c66",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -69713,6 +69834,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 2,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -70504,7 +70626,7 @@
         },
         {
           "venue": "icmr",
-          "base_score": 22,
+          "base_score": 21,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -70698,6 +70820,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 23,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.02,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "micro",
           "base_score": 29,
           "features": {
@@ -70777,7 +70912,7 @@
         },
         {
           "venue": "nvmw",
-          "base_score": 23,
+          "base_score": 22,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -71039,7 +71174,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-04",
-      "record_sha256": "74362f7ba45c747f812e89fd9794660de5cb10b95327d7981ac01a5337dc0d41",
+      "record_sha256": "7ef8bc759e42a79889dbc5ac0e9f21dade91453647cdf2b5113615b6fefdec0d",
       "semantic_scores": {
         "1st-dl2-international-workshop": 15,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 8,
@@ -71516,6 +71651,7 @@
         "kicss2026": 0,
         "kr": 3,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -74740,7 +74876,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-05",
-      "record_sha256": "442ebe59b2e7ba9274255b19f5f20e80be8998dbc7b30ed1d02a1905dd34674f",
+      "record_sha256": "67ba98812b3c21af612a7b782d8b7288ff6362a73c940e07dcda644c4dcf307d",
       "semantic_scores": {
         "1st-dl2-international-workshop": 6,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 13,
@@ -75217,6 +75353,7 @@
         "kicss2026": 8,
         "kr": 6,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -76842,7 +76979,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-06",
-      "record_sha256": "87d7cd352515a420b107a6943f17d59290c77f29167018bf98b3270fae04096d",
+      "record_sha256": "2c112ffb7e45e1e237e2ec7d9f5f0c8bb077f221511cc53b2617f7217589122c",
       "semantic_scores": {
         "1st-dl2-international-workshop": 11,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -77319,6 +77456,7 @@
         "kicss2026": 9,
         "kr": 3,
         "ksem": 12,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -78879,7 +79017,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-07",
-      "record_sha256": "b588dd159c6f8c8b08bc0c23c756776b7bfae890da09b6f9b300db7b147e8d75",
+      "record_sha256": "e6bc35f374991456b485157eae167016f6b2bc0c2ae3257ef801d803d8467583",
       "semantic_scores": {
         "1st-dl2-international-workshop": 15,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -79356,6 +79494,7 @@
         "kicss2026": 5,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -80929,7 +81068,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-08",
-      "record_sha256": "fa4b118b5eaad257946b79c41004b9f050253a32291d38406d39baa4d50cc466",
+      "record_sha256": "55380542f510c9d1f06f60fe0a0986496e97cc5335f052b057a5e9052da5d0c8",
       "semantic_scores": {
         "1st-dl2-international-workshop": 6,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -81406,6 +81545,7 @@
         "kicss2026": 5,
         "kr": 13,
         "ksem": 20,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -82496,7 +82636,7 @@
         },
         {
           "venue": "edai-2026",
-          "base_score": 12,
+          "base_score": 11,
           "features": {
             "lexical_score": 0.06,
             "semantic_score": 0,
@@ -83055,7 +83195,7 @@
         },
         {
           "venue": "hppss-2026",
-          "base_score": 13,
+          "base_score": 12,
           "features": {
             "lexical_score": 0.08,
             "semantic_score": 0,
@@ -84393,6 +84533,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 16,
+          "features": {
+            "lexical_score": 0.25,
+            "semantic_score": 0,
+            "category_overlap": 1,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lisa",
           "base_score": 16,
           "features": {
@@ -84576,7 +84729,7 @@
         },
         {
           "venue": "netys",
-          "base_score": 16,
+          "base_score": 15,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -85031,7 +85184,7 @@
         },
         {
           "venue": "scam",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -85343,7 +85496,7 @@
         },
         {
           "venue": "ucc",
-          "base_score": 14,
+          "base_score": 13,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -85436,7 +85589,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-09",
-      "record_sha256": "24b842ea1c40e0e5fa2d7974b91c4d29ef1effc4c0f4801c5b907b12e14d3ab6",
+      "record_sha256": "2b4e9806260478e8577466b6b6d70cf67f73dab3bc7fae1d035ebf2b2fb66b25",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -85913,6 +86066,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 10,
         "lcn": 0,
         "lics": 0,
         "lisa": 14,
@@ -87419,7 +87573,7 @@
         },
         {
           "venue": "iccad",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -87458,7 +87612,7 @@
         },
         {
           "venue": "icce",
-          "base_score": 20,
+          "base_score": 19,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.09,
@@ -87835,7 +87989,7 @@
         },
         {
           "venue": "ipdps",
-          "base_score": 49,
+          "base_score": 48,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.06,
@@ -88068,6 +88222,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 20,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.1,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lisa",
           "base_score": 24,
           "features": {
@@ -88251,7 +88418,7 @@
         },
         {
           "venue": "nvmw",
-          "base_score": 19,
+          "base_score": 18,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.08,
@@ -88511,7 +88678,7 @@
         },
         {
           "venue": "refsq",
-          "base_score": 16,
+          "base_score": 15,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -88771,7 +88938,7 @@
         },
         {
           "venue": "srds",
-          "base_score": 18,
+          "base_score": 17,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -89007,7 +89174,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-10",
-      "record_sha256": "6caaa0b5a70b4f49f4cde894155974bc1725298f895d30fb235bcea72d26c358",
+      "record_sha256": "17403471383f0572557dab429a171eb3d1f5997256298609a659c56a3dfd71cb",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -89484,6 +89651,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 16,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -89729,7 +89897,7 @@
         },
         {
           "venue": "aft",
-          "base_score": 20,
+          "base_score": 19,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -90197,7 +90365,7 @@
         },
         {
           "venue": "emsoft",
-          "base_score": 57,
+          "base_score": 56,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.12,
@@ -90275,7 +90443,7 @@
         },
         {
           "venue": "eusipco",
-          "base_score": 55,
+          "base_score": 54,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.12,
@@ -90327,7 +90495,7 @@
         },
         {
           "venue": "fit",
-          "base_score": 50,
+          "base_score": 49,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.08,
@@ -90366,7 +90534,7 @@
         },
         {
           "venue": "forte",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -90509,7 +90677,7 @@
         },
         {
           "venue": "hoti",
-          "base_score": 26,
+          "base_score": 25,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.14,
@@ -91497,7 +91665,7 @@
         },
         {
           "venue": "jcc",
-          "base_score": 44,
+          "base_score": 43,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.15,
@@ -91566,6 +91734,19 @@
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
+            "category_overlap": 1,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
+          "venue": "lascas",
+          "base_score": 44,
+          "features": {
+            "lexical_score": 0.25,
+            "semantic_score": 0.16,
             "category_overlap": 1,
             "venue_name_evidence": 0,
             "prior_venue": 0,
@@ -91835,7 +92016,7 @@
         },
         {
           "venue": "parallel2026",
-          "base_score": 19,
+          "base_score": 18,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.06,
@@ -91848,7 +92029,7 @@
         },
         {
           "venue": "pdcat",
-          "base_score": 25,
+          "base_score": 24,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.13,
@@ -91926,7 +92107,7 @@
         },
         {
           "venue": "podc",
-          "base_score": 38,
+          "base_score": 37,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.11,
@@ -92056,7 +92237,7 @@
         },
         {
           "venue": "scam",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -92069,7 +92250,7 @@
         },
         {
           "venue": "secon",
-          "base_score": 18,
+          "base_score": 17,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -92251,7 +92432,7 @@
         },
         {
           "venue": "tdsc",
-          "base_score": 51,
+          "base_score": 50,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.24,
@@ -92357,7 +92538,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-11",
-      "record_sha256": "89788e1188309ba41e203fd323b3704711d12c160a5a0d3dfcaa62592792b2b8",
+      "record_sha256": "188c36128fd68295c80f45df9f18e9621a3957f316d7b2e7f911ae548b9c29d5",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -92834,6 +93015,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 22,
         "lcn": 0,
         "lics": 0,
         "lisa": 6,
@@ -93170,7 +93352,7 @@
         },
         {
           "venue": "apsys",
-          "base_score": 60,
+          "base_score": 59,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.15,
@@ -93287,7 +93469,7 @@
         },
         {
           "venue": "bdcat",
-          "base_score": 54,
+          "base_score": 53,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.1,
@@ -93651,7 +93833,7 @@
         },
         {
           "venue": "dac",
-          "base_score": 50,
+          "base_score": 49,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.17,
@@ -93716,7 +93898,7 @@
         },
         {
           "venue": "ease",
-          "base_score": 45,
+          "base_score": 44,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.08,
@@ -93859,7 +94041,7 @@
         },
         {
           "venue": "eurosec",
-          "base_score": 42,
+          "base_score": 41,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.05,
@@ -94080,7 +94262,7 @@
         },
         {
           "venue": "host",
-          "base_score": 19,
+          "base_score": 18,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.1,
@@ -94327,7 +94509,7 @@
         },
         {
           "venue": "icdcn",
-          "base_score": 40,
+          "base_score": 39,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.11,
@@ -94457,7 +94639,7 @@
         },
         {
           "venue": "icpp",
-          "base_score": 22,
+          "base_score": 21,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.16,
@@ -94925,7 +95107,7 @@
         },
         {
           "venue": "ipdps",
-          "base_score": 23,
+          "base_score": 22,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.18,
@@ -95289,7 +95471,7 @@
         },
         {
           "venue": "jss",
-          "base_score": 35,
+          "base_score": 34,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.13,
@@ -95340,6 +95522,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 40,
+          "features": {
+            "lexical_score": 0.25,
+            "semantic_score": 0.22,
+            "category_overlap": 1,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lisa",
           "base_score": 31,
           "features": {
@@ -95354,7 +95549,7 @@
         },
         {
           "venue": "lpc",
-          "base_score": 36,
+          "base_score": 35,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.17,
@@ -95575,7 +95770,7 @@
         },
         {
           "venue": "pact",
-          "base_score": 21,
+          "base_score": 20,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.14,
@@ -95601,7 +95796,7 @@
         },
         {
           "venue": "pdcat",
-          "base_score": 24,
+          "base_score": 23,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.19,
@@ -95783,7 +95978,7 @@
         },
         {
           "venue": "rtas",
-          "base_score": 34,
+          "base_score": 33,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.16,
@@ -95796,7 +95991,7 @@
         },
         {
           "venue": "rtss",
-          "base_score": 36,
+          "base_score": 35,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.19,
@@ -95900,7 +96095,7 @@
         },
         {
           "venue": "sigcomm",
-          "base_score": 16,
+          "base_score": 15,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -96017,7 +96212,7 @@
         },
         {
           "venue": "sosp",
-          "base_score": 46,
+          "base_score": 45,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.28,
@@ -96082,7 +96277,7 @@
         },
         {
           "venue": "stacs-2027-first",
-          "base_score": 12,
+          "base_score": 11,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -96160,7 +96355,7 @@
         },
         {
           "venue": "tmc",
-          "base_score": 33,
+          "base_score": 32,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.16,
@@ -96173,7 +96368,7 @@
         },
         {
           "venue": "ton",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.05,
@@ -96238,7 +96433,7 @@
         },
         {
           "venue": "vee",
-          "base_score": 54,
+          "base_score": 53,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.33,
@@ -96318,7 +96513,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-12",
-      "record_sha256": "8dc58123115d3a9fd255960c87561cae42f8031da8191672bab1a3330f9344c5",
+      "record_sha256": "921b7ee9f37145c140e8edd0eeb9c7a399d2b9d8d9606a69b3805b2e7604cb7a",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -96795,6 +96990,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 1,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -97546,6 +97742,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 27,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.01,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "miccai",
           "base_score": 44,
           "features": {
@@ -97729,7 +97938,7 @@
         },
         {
           "venue": "socc",
-          "base_score": 27,
+          "base_score": 26,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -97796,7 +98005,7 @@
     },
     {
       "paper_id": "dev-2025-icml-01",
-      "record_sha256": "855a09c54364bb6d911c6e184b7702e2b0c38868b8d55b1b13cda8bd20c81d65",
+      "record_sha256": "0121baec3452625f7be50f1172552d7c7ab6482d9945dfd27a79b5cca0dad171",
       "semantic_scores": {
         "1st-dl2-international-workshop": 8,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -98273,6 +98482,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -99079,7 +99289,7 @@
     },
     {
       "paper_id": "dev-2025-icml-02",
-      "record_sha256": "182a413cfff78fbb50ba89a28364cb64a5c16964f99eabfdcbf00f3c2fd720ad",
+      "record_sha256": "0340c6376a6cd60e8aa570f9347a677e05c18a21fe8097b574a7852b8a9b58eb",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -99556,6 +99766,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -100141,7 +100352,7 @@
     },
     {
       "paper_id": "dev-2025-icml-03",
-      "record_sha256": "22a9c7c2b100f2b3386f6fb8c55e9bdba7068782cb4604c3fb1e61ba126f9432",
+      "record_sha256": "1dcc43a94ce4a6d03fc1324a20b31134ba8a1ff8b402d8aad125d998162bc0ab",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 10,
@@ -100618,6 +100829,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -101424,7 +101636,7 @@
     },
     {
       "paper_id": "dev-2025-icml-04",
-      "record_sha256": "d0074c38ef2863601f5a186d8687e357020ad349362f254679ec966c45f24bf8",
+      "record_sha256": "47c0b5a602f08501e52c11f4a7957678d0f2d180688e540c658d7de299d02059",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -101901,6 +102113,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -102512,7 +102725,7 @@
     },
     {
       "paper_id": "dev-2025-icml-05",
-      "record_sha256": "2115b499c12be4ccb82335dc36ecaaacf9f99750a3c84148121541d8eba201f3",
+      "record_sha256": "4bbcea68155fcd08dd7b655703197c1d49cb19b52555d18310305fb6d96bad5f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 2,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -102989,6 +103202,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -103782,7 +103996,7 @@
     },
     {
       "paper_id": "dev-2025-icml-06",
-      "record_sha256": "ef00ff07aff35153cc5d0d00b6a348515c48bd1be5ce39b465f605f72b6ba144",
+      "record_sha256": "c08dd00240a7cbe5068c5027494feda5245f52cbc4386867c4139a523f2019f1",
       "semantic_scores": {
         "1st-dl2-international-workshop": 4,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -104259,6 +104473,7 @@
         "kicss2026": 0,
         "kr": 5,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -105286,7 +105501,7 @@
     },
     {
       "paper_id": "dev-2025-icml-07",
-      "record_sha256": "37e7cc8c239ae8856ce7cf3dfc7e863b167fe2ef44066fc301e8f681cf267482",
+      "record_sha256": "6e48dc89fb87302f5d93c93ab2ddd10727c950b4b7193be67fce8a690814aa24",
       "semantic_scores": {
         "1st-dl2-international-workshop": 9,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 5,
@@ -105763,6 +105978,7 @@
         "kicss2026": 0,
         "kr": 2,
         "ksem": 4,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -109741,7 +109957,7 @@
     },
     {
       "paper_id": "dev-2025-icml-08",
-      "record_sha256": "01569d76f1012f1a2eb8e2c885a8d641f8bf8965d5c45db61022f6c8db647538",
+      "record_sha256": "476cf6e7e783fb28eb2bd42a94fae087fc15bc7cf2d0b36e87169154c43c9d13",
       "semantic_scores": {
         "1st-dl2-international-workshop": 4,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -110218,6 +110434,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 2,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -111050,7 +111267,7 @@
     },
     {
       "paper_id": "dev-2025-ipsj-journal-01",
-      "record_sha256": "726edbe688a22d57824e626e5a2f6fe5cf222927403b9ba2ce687e46f8c79b7d",
+      "record_sha256": "acbcd52259eeb95f0c0dcf335539b1c01bf82df1bfb7bdbb5c2facf11c1a4bd1",
       "semantic_scores": {
         "1st-dl2-international-workshop": 10,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 19,
@@ -111527,6 +111744,7 @@
         "kicss2026": 12,
         "kr": 12,
         "ksem": 0,
+        "lascas": 2,
         "lcn": 0,
         "lics": 11,
         "lisa": 0,
@@ -114579,6 +114797,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 14,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.02,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 0,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lics",
           "base_score": 30,
           "features": {
@@ -115386,7 +115617,7 @@
         },
         {
           "venue": "tdsc",
-          "base_score": 14,
+          "base_score": 13,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -115596,7 +115827,7 @@
     },
     {
       "paper_id": "dev-2025-ipsj-journal-02",
-      "record_sha256": "e3c4a3cd75d826b75619ad473330e456beae69c2203ccc1d432cc165fa58b32f",
+      "record_sha256": "5e00e5541c5afd51f93acbaac0ef527fe9b012527e17e0bad9838adfdbd2b8a2",
       "semantic_scores": {
         "1st-dl2-international-workshop": 7,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 19,
@@ -116073,6 +116304,7 @@
         "kicss2026": 15,
         "kr": 7,
         "ksem": 3,
+        "lascas": 12,
         "lcn": 9,
         "lics": 19,
         "lisa": 0,
@@ -116799,7 +117031,7 @@
         },
         {
           "venue": "ccpe",
-          "base_score": 53,
+          "base_score": 52,
           "features": {
             "lexical_score": 0.1,
             "semantic_score": 0.1,
@@ -117085,7 +117317,7 @@
         },
         {
           "venue": "colt",
-          "base_score": 12,
+          "base_score": 11,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -117124,7 +117356,7 @@
         },
         {
           "venue": "concur",
-          "base_score": 14,
+          "base_score": 13,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.1,
@@ -118281,7 +118513,7 @@
         },
         {
           "venue": "icdcs",
-          "base_score": 40,
+          "base_score": 39,
           "features": {
             "lexical_score": 0.1,
             "semantic_score": 0.11,
@@ -119035,7 +119267,7 @@
         },
         {
           "venue": "inlg",
-          "base_score": 9,
+          "base_score": 8,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -119347,7 +119579,7 @@
         },
         {
           "venue": "iscc",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.11,
@@ -119399,7 +119631,7 @@
         },
         {
           "venue": "iss",
-          "base_score": 13,
+          "base_score": 12,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.09,
@@ -119619,6 +119851,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 32,
+          "features": {
+            "lexical_score": 0.1,
+            "semantic_score": 0.12,
+            "category_overlap": 1,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 0,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lcn",
           "base_score": 12,
           "features": {
@@ -119698,7 +119943,7 @@
         },
         {
           "venue": "miccai",
-          "base_score": 10,
+          "base_score": 9,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -119711,7 +119956,7 @@
         },
         {
           "venue": "micro",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0.1,
             "semantic_score": 0,
@@ -119724,7 +119969,7 @@
         },
         {
           "venue": "mid4cc",
-          "base_score": 30,
+          "base_score": 29,
           "features": {
             "lexical_score": 0.1,
             "semantic_score": 0.1,
@@ -120036,7 +120281,7 @@
         },
         {
           "venue": "osdi",
-          "base_score": 16,
+          "base_score": 15,
           "features": {
             "lexical_score": 0.1,
             "semantic_score": 0,
@@ -120114,7 +120359,7 @@
         },
         {
           "venue": "pearc",
-          "base_score": 47,
+          "base_score": 46,
           "features": {
             "lexical_score": 0.1,
             "semantic_score": 0.23,
@@ -120374,7 +120619,7 @@
         },
         {
           "venue": "rtas",
-          "base_score": 35,
+          "base_score": 34,
           "features": {
             "lexical_score": 0.1,
             "semantic_score": 0.16,
@@ -121195,7 +121440,7 @@
     },
     {
       "paper_id": "dev-2025-ipsj-journal-03",
-      "record_sha256": "311c2bb09c3f1c9d0c56844a3c0cf191981d187df8b21bf7773128e2cf8d78c8",
+      "record_sha256": "4fbb41fd88fad6f87db27deebf5b33cdab473be5cbfe102d324092b127f46930",
       "semantic_scores": {
         "1st-dl2-international-workshop": 2,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 3,
@@ -121672,6 +121917,7 @@
         "kicss2026": 8,
         "kr": 0,
         "ksem": 0,
+        "lascas": 13,
         "lcn": 1,
         "lics": 0,
         "lisa": 0,
@@ -122008,7 +122254,7 @@
         },
         {
           "venue": "ats",
-          "base_score": 23,
+          "base_score": 22,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -122125,7 +122371,7 @@
         },
         {
           "venue": "ches",
-          "base_score": 16,
+          "base_score": 15,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -122229,7 +122475,7 @@
         },
         {
           "venue": "collaboratecom",
-          "base_score": 30,
+          "base_score": 29,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.1,
@@ -122554,7 +122800,7 @@
         },
         {
           "venue": "forte",
-          "base_score": 22,
+          "base_score": 21,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -122593,7 +122839,7 @@
         },
         {
           "venue": "globecom",
-          "base_score": 14,
+          "base_score": 13,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -122866,7 +123112,7 @@
         },
         {
           "venue": "icip",
-          "base_score": 20,
+          "base_score": 19,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.06,
@@ -122918,7 +123164,7 @@
         },
         {
           "venue": "icmlc",
-          "base_score": 18,
+          "base_score": 17,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.05,
@@ -123022,7 +123268,7 @@
         },
         {
           "venue": "icsoc",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -123100,7 +123346,7 @@
         },
         {
           "venue": "infocom",
-          "base_score": 29,
+          "base_score": 28,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.1,
@@ -123139,7 +123385,7 @@
         },
         {
           "venue": "iots",
-          "base_score": 34,
+          "base_score": 33,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.12,
@@ -123204,7 +123450,7 @@
         },
         {
           "venue": "iscc",
-          "base_score": 24,
+          "base_score": 23,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.08,
@@ -123282,7 +123528,7 @@
         },
         {
           "venue": "iui",
-          "base_score": 32,
+          "base_score": 31,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.11,
@@ -123308,7 +123554,7 @@
         },
         {
           "venue": "jcc",
-          "base_score": 27,
+          "base_score": 26,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.09,
@@ -123338,6 +123584,19 @@
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.08,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 0,
+            "venue_kind": 1
+          }
+        },
+        {
+          "venue": "lascas",
+          "base_score": 36,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.13,
             "category_overlap": 0,
             "venue_name_evidence": 0,
             "prior_venue": 0,
@@ -123386,7 +123645,7 @@
         },
         {
           "venue": "mid4cc",
-          "base_score": 36,
+          "base_score": 35,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.13,
@@ -123438,7 +123697,7 @@
         },
         {
           "venue": "mlsys",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -123659,7 +123918,7 @@
         },
         {
           "venue": "pacificvis",
-          "base_score": 19,
+          "base_score": 18,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.06,
@@ -123763,7 +124022,7 @@
         },
         {
           "venue": "ppopp",
-          "base_score": 31,
+          "base_score": 30,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.11,
@@ -123828,7 +124087,7 @@
         },
         {
           "venue": "raai2026",
-          "base_score": 26,
+          "base_score": 25,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.09,
@@ -123880,7 +124139,7 @@
         },
         {
           "venue": "rtss",
-          "base_score": 28,
+          "base_score": 27,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.1,
@@ -124062,7 +124321,7 @@
         },
         {
           "venue": "socg",
-          "base_score": 21,
+          "base_score": 20,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -124088,7 +124347,7 @@
         },
         {
           "venue": "spm",
-          "base_score": 35,
+          "base_score": 34,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.13,
@@ -124101,7 +124360,7 @@
         },
         {
           "venue": "tmc",
-          "base_score": 25,
+          "base_score": 24,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.09,
@@ -124205,7 +124464,7 @@
         },
         {
           "venue": "wowmom",
-          "base_score": 33,
+          "base_score": 32,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.12,
@@ -124220,7 +124479,7 @@
     },
     {
       "paper_id": "dev-2025-ipsj-journal-04",
-      "record_sha256": "c08f2b0b7b41ed311629c4b9112766dc11e0cade84f06608b687145e78e1e9bd",
+      "record_sha256": "070268d2ccf4bc0f623910d60386c69764dca22bfe0d9850a8e26f9a3e1f60ba",
       "semantic_scores": {
         "1st-dl2-international-workshop": 8,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 11,
@@ -124697,6 +124956,7 @@
         "kicss2026": 7,
         "kr": 1,
         "ksem": 0,
+        "lascas": 9,
         "lcn": 0,
         "lics": 5,
         "lisa": 0,
@@ -125293,7 +125553,7 @@
         },
         {
           "venue": "anrw",
-          "base_score": 21,
+          "base_score": 20,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.06,
@@ -125332,7 +125592,7 @@
         },
         {
           "venue": "asap",
-          "base_score": 20,
+          "base_score": 19,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.05,
@@ -125371,7 +125631,7 @@
         },
         {
           "venue": "bdcat",
-          "base_score": 48,
+          "base_score": 47,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.03,
@@ -125761,7 +126021,7 @@
         },
         {
           "venue": "conll",
-          "base_score": 46,
+          "base_score": 45,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.06,
@@ -125813,7 +126073,7 @@
         },
         {
           "venue": "cscwd",
-          "base_score": 24,
+          "base_score": 23,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.08,
@@ -125891,7 +126151,7 @@
         },
         {
           "venue": "dcc",
-          "base_score": 46,
+          "base_score": 45,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.07,
@@ -126034,7 +126294,7 @@
         },
         {
           "venue": "ecscw",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -126307,7 +126567,7 @@
         },
         {
           "venue": "fast",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -126398,7 +126658,7 @@
         },
         {
           "venue": "fpt",
-          "base_score": 22,
+          "base_score": 21,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -126411,7 +126671,7 @@
         },
         {
           "venue": "gcetai26",
-          "base_score": 39,
+          "base_score": 38,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.05,
@@ -127711,7 +127971,7 @@
         },
         {
           "venue": "ipsn",
-          "base_score": 16,
+          "base_score": 15,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -127957,8 +128217,21 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 24,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.09,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 0,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lics",
-          "base_score": 19,
+          "base_score": 18,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.05,
@@ -128361,7 +128634,7 @@
         },
         {
           "venue": "pearc",
-          "base_score": 18,
+          "base_score": 17,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -128972,7 +129245,7 @@
         },
         {
           "venue": "stoc",
-          "base_score": 23,
+          "base_score": 22,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.08,
@@ -129156,7 +129429,7 @@
     },
     {
       "paper_id": "dev-2025-nolta-special-01",
-      "record_sha256": "9487ae3ce14ec396751f3fd8997c8427340d462cdeaa4b578b94a92f7365d262",
+      "record_sha256": "308ea5356320c6712216b16d43b09f64e69e977c7b15474c6952d4dbf6f23177",
       "semantic_scores": {
         "1st-dl2-international-workshop": 1,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 21,
@@ -129633,6 +129906,7 @@
         "kicss2026": 8,
         "kr": 2,
         "ksem": 0,
+        "lascas": 5,
         "lcn": 0,
         "lics": 5,
         "lisa": 0,
@@ -129865,7 +130139,7 @@
         },
         {
           "venue": "alt",
-          "base_score": 19,
+          "base_score": 18,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -129969,7 +130243,7 @@
         },
         {
           "venue": "cade",
-          "base_score": 16,
+          "base_score": 15,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -130151,7 +130425,7 @@
         },
         {
           "venue": "cna",
-          "base_score": 18,
+          "base_score": 17,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -130593,7 +130867,7 @@
         },
         {
           "venue": "hotos",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -131268,6 +131542,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 19,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.05,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lics",
           "base_score": 19,
           "features": {
@@ -131659,7 +131946,7 @@
         },
         {
           "venue": "sgp",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -131830,7 +132117,7 @@
     },
     {
       "paper_id": "dev-2025-nolta-special-02",
-      "record_sha256": "ef8b6d47c147360070ddf71b5a363469a22f3b848ff394afd5ded3ded4fb7496",
+      "record_sha256": "8bca4cb82e2a7bda7db772f75409ca2d6ea9429a0994c9e062b0db05e247d8b9",
       "semantic_scores": {
         "1st-dl2-international-workshop": 1,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -132307,6 +132594,7 @@
         "kicss2026": 1,
         "kr": 3,
         "ksem": 16,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -133191,7 +133479,7 @@
     },
     {
       "paper_id": "dev-2025-nolta-special-03",
-      "record_sha256": "bd5bdddefd41a9f842f70cee22062ba79de7f8a6bdc4eecadc86816655508e16",
+      "record_sha256": "3163146bf7709de056a73e2bce289bed224dd8012b86d76effab2f5afcca699e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -133668,6 +133956,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -135459,6 +135748,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 17,
+          "features": {
+            "lexical_score": 0.25,
+            "semantic_score": 0,
+            "category_overlap": 1,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lisa",
           "base_score": 17,
           "features": {
@@ -135473,7 +135775,7 @@
         },
         {
           "venue": "lpc",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -135655,7 +135957,7 @@
         },
         {
           "venue": "osdi",
-          "base_score": 16,
+          "base_score": 15,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -135837,7 +136139,7 @@
         },
         {
           "venue": "scam",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -136138,7 +136440,7 @@
     },
     {
       "paper_id": "dev-2025-nolta-special-04",
-      "record_sha256": "d5617fe4db69e1b2f5954dad0ee48811fd33fcaababa5c4eed73eb1834bad39a",
+      "record_sha256": "b3aa09d9f3755d108348e7451e0fbae0bdf0b92450afefa5a28d88fc5d98081c",
       "semantic_scores": {
         "1st-dl2-international-workshop": 2,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 24,
@@ -136615,6 +136917,7 @@
         "kicss2026": 8,
         "kr": 6,
         "ksem": 4,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -141191,7 +141494,7 @@
     },
     {
       "paper_id": "dev-2025-sigcomm-01",
-      "record_sha256": "333e16c4295e6898f74d12728fcb7c0025a535d86fc2ce7eb136aebdd815f2bb",
+      "record_sha256": "e7533b4bc0524e70d154a848828dd085e72bd9d85865f36a18adac3994565eb5",
       "semantic_scores": {
         "1st-dl2-international-workshop": 8,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -141668,6 +141971,7 @@
         "kicss2026": 9,
         "kr": 0,
         "ksem": 6,
+        "lascas": 0,
         "lcn": 5,
         "lics": 0,
         "lisa": 0,
@@ -143826,7 +144130,7 @@
     },
     {
       "paper_id": "dev-2025-sigcomm-02",
-      "record_sha256": "5c376b0ffe17bfb56b8c1a9ee1ef6e05d9cdf86673436afc36bf821b116dc508",
+      "record_sha256": "7991da30c6cf0a653c6e9de5514542aeabae8fb2122e0f7bc044ce728af44f64",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -144303,6 +144607,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 4,
         "lcn": 8,
         "lics": 0,
         "lisa": 0,
@@ -144613,7 +144918,7 @@
         },
         {
           "venue": "apsys",
-          "base_score": 66,
+          "base_score": 65,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.01,
@@ -144730,7 +145035,7 @@
         },
         {
           "venue": "ccgrid",
-          "base_score": 21,
+          "base_score": 20,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -144834,7 +145139,7 @@
         },
         {
           "venue": "cloudcom",
-          "base_score": 57,
+          "base_score": 56,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.01,
@@ -145978,7 +146283,7 @@
         },
         {
           "venue": "imc",
-          "base_score": 24,
+          "base_score": 23,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -146043,7 +146348,7 @@
         },
         {
           "venue": "iots",
-          "base_score": 43,
+          "base_score": 42,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.03,
@@ -146380,6 +146685,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 42,
+          "features": {
+            "lexical_score": 0.25,
+            "semantic_score": 0.04,
+            "category_overlap": 1,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lcn",
           "base_score": 35,
           "features": {
@@ -146420,7 +146738,7 @@
         },
         {
           "venue": "micro",
-          "base_score": 37,
+          "base_score": 36,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.01,
@@ -146693,7 +147011,7 @@
         },
         {
           "venue": "ocp-global-summit",
-          "base_score": 16,
+          "base_score": 15,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -146784,7 +147102,7 @@
         },
         {
           "venue": "performance",
-          "base_score": 41,
+          "base_score": 40,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.04,
@@ -146888,7 +147206,7 @@
         },
         {
           "venue": "saner",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -147174,7 +147492,7 @@
         },
         {
           "venue": "tpds",
-          "base_score": 14,
+          "base_score": 13,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -147267,7 +147585,7 @@
     },
     {
       "paper_id": "dev-2025-sigcomm-03",
-      "record_sha256": "8a03c59b7dd492b2958aa30558679e14677e62c897eafb604c803f02aee1323f",
+      "record_sha256": "42f82eb77546f1f1592a91472fa00a7b9f6e656c35f2c35d4f9962d096469af8",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -147744,6 +148062,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 25,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -148418,7 +148737,7 @@
         },
         {
           "venue": "ats",
-          "base_score": 31,
+          "base_score": 30,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.11,
@@ -148613,7 +148932,7 @@
         },
         {
           "venue": "closer",
-          "base_score": 36,
+          "base_score": 35,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.14,
@@ -148990,7 +149309,7 @@
         },
         {
           "venue": "edgesys",
-          "base_score": 38,
+          "base_score": 37,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.15,
@@ -149146,7 +149465,7 @@
         },
         {
           "venue": "escience",
-          "base_score": 41,
+          "base_score": 40,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.17,
@@ -149159,7 +149478,7 @@
         },
         {
           "venue": "ets",
-          "base_score": 33,
+          "base_score": 32,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.13,
@@ -149185,7 +149504,7 @@
         },
         {
           "venue": "eurosys",
-          "base_score": 27,
+          "base_score": 26,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.09,
@@ -149198,7 +149517,7 @@
         },
         {
           "venue": "eusipco",
-          "base_score": 30,
+          "base_score": 29,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.11,
@@ -149250,7 +149569,7 @@
         },
         {
           "venue": "fast",
-          "base_score": 28,
+          "base_score": 27,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.1,
@@ -149263,7 +149582,7 @@
         },
         {
           "venue": "fccm",
-          "base_score": 32,
+          "base_score": 31,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.12,
@@ -149289,7 +149608,7 @@
         },
         {
           "venue": "fgcs",
-          "base_score": 45,
+          "base_score": 44,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.19,
@@ -149536,7 +149855,7 @@
         },
         {
           "venue": "hoti",
-          "base_score": 57,
+          "base_score": 56,
           "features": {
             "lexical_score": 0.08,
             "semantic_score": 0.21,
@@ -149588,7 +149907,7 @@
         },
         {
           "venue": "hpc-fabrics-2026",
-          "base_score": 11,
+          "base_score": 10,
           "features": {
             "lexical_score": 0.08,
             "semantic_score": 0,
@@ -149601,7 +149920,7 @@
         },
         {
           "venue": "hpca",
-          "base_score": 54,
+          "base_score": 53,
           "features": {
             "lexical_score": 0.08,
             "semantic_score": 0.18,
@@ -149627,7 +149946,7 @@
         },
         {
           "venue": "hpdc",
-          "base_score": 43,
+          "base_score": 42,
           "features": {
             "lexical_score": 0.08,
             "semantic_score": 0.13,
@@ -149705,7 +150024,7 @@
         },
         {
           "venue": "icact",
-          "base_score": 43,
+          "base_score": 42,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.18,
@@ -150134,7 +150453,7 @@
         },
         {
           "venue": "iceccs",
-          "base_score": 26,
+          "base_score": 25,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.09,
@@ -150186,7 +150505,7 @@
         },
         {
           "venue": "icin",
-          "base_score": 22,
+          "base_score": 21,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.06,
@@ -150264,7 +150583,7 @@
         },
         {
           "venue": "icoin",
-          "base_score": 19,
+          "base_score": 18,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -150316,7 +150635,7 @@
         },
         {
           "venue": "icpp",
-          "base_score": 25,
+          "base_score": 24,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.08,
@@ -150836,7 +151155,7 @@
         },
         {
           "venue": "ipdps",
-          "base_score": 37,
+          "base_score": 36,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.15,
@@ -150927,7 +151246,7 @@
         },
         {
           "venue": "iscas",
-          "base_score": 58,
+          "base_score": 57,
           "features": {
             "lexical_score": 0.12,
             "semantic_score": 0.22,
@@ -150953,7 +151272,7 @@
         },
         {
           "venue": "ispa",
-          "base_score": 23,
+          "base_score": 22,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -151005,7 +151324,7 @@
         },
         {
           "venue": "itc",
-          "base_score": 42,
+          "base_score": 41,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.18,
@@ -151070,7 +151389,7 @@
         },
         {
           "venue": "jpdc",
-          "base_score": 39,
+          "base_score": 38,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.16,
@@ -151141,6 +151460,19 @@
             "semantic_score": 0,
             "category_overlap": 1,
             "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
+          "venue": "lascas",
+          "base_score": 58,
+          "features": {
+            "lexical_score": 0.12,
+            "semantic_score": 0.25,
+            "category_overlap": 0,
+            "venue_name_evidence": 1,
             "prior_venue": 0,
             "language_match": 1,
             "venue_kind": 1
@@ -151226,7 +151558,7 @@
         },
         {
           "venue": "mid4cc",
-          "base_score": 46,
+          "base_score": 45,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.21,
@@ -151317,7 +151649,7 @@
         },
         {
           "venue": "msst",
-          "base_score": 40,
+          "base_score": 39,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.17,
@@ -151382,7 +151714,7 @@
         },
         {
           "venue": "netys",
-          "base_score": 34,
+          "base_score": 33,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.14,
@@ -151486,7 +151818,7 @@
         },
         {
           "venue": "nvmw",
-          "base_score": 29,
+          "base_score": 28,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.11,
@@ -151733,7 +152065,7 @@
         },
         {
           "venue": "re",
-          "base_score": 20,
+          "base_score": 19,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -151824,7 +152156,7 @@
         },
         {
           "venue": "sc",
-          "base_score": 58,
+          "base_score": 57,
           "features": {
             "lexical_score": 0.08,
             "semantic_score": 0.24,
@@ -152006,7 +152338,7 @@
         },
         {
           "venue": "socc",
-          "base_score": 21,
+          "base_score": 20,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.05,
@@ -152149,7 +152481,7 @@
         },
         {
           "venue": "tmc",
-          "base_score": 24,
+          "base_score": 23,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.08,
@@ -152320,7 +152652,7 @@
     },
     {
       "paper_id": "dev-2025-sigcomm-04",
-      "record_sha256": "b818b63eaf3220cecb65b552e8a8761cd65ceb591acb0603c77b3b9c1de85086",
+      "record_sha256": "7cc49d3c33378fcb8813cb47949c54fb137d1619796f71d8ef40023cc819b331",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -152797,6 +153129,7 @@
         "kicss2026": 3,
         "kr": 0,
         "ksem": 6,
+        "lascas": 3,
         "lcn": 4,
         "lics": 2,
         "lisa": 0,
@@ -153757,7 +154090,7 @@
         },
         {
           "venue": "hipeac",
-          "base_score": 14,
+          "base_score": 13,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -154666,6 +154999,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 14,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.03,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lcn",
           "base_score": 15,
           "features": {
@@ -154693,7 +155039,7 @@
         },
         {
           "venue": "log",
-          "base_score": 13,
+          "base_score": 12,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -155592,7 +155938,7 @@
     },
     {
       "paper_id": "dev-2025-sigcomm-05",
-      "record_sha256": "bd288cdb9098e4bdecef10df064c52f34ddd7d0668c9d10cd95b80105925b711",
+      "record_sha256": "8238bfbb52830ed862384abefa0cf6cd54d7a2672c2124022590d7c6503f8519",
       "semantic_scores": {
         "1st-dl2-international-workshop": 19,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 1,
@@ -156069,6 +156415,7 @@
         "kicss2026": 1,
         "kr": 6,
         "ksem": 6,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -159267,7 +159614,7 @@
     },
     {
       "paper_id": "dev-2025-sigcomm-06",
-      "record_sha256": "bd3080df292cd8799df4a8e14de3fede13961c89eb454fe10e4c0f3aef4ad7f3",
+      "record_sha256": "39f7b7f4c3c92388038b45d0fbe2558f5a55d791912bcc55042148c02ca5a86a",
       "semantic_scores": {
         "1st-dl2-international-workshop": 11,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -159744,6 +160091,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -161395,7 +161743,7 @@
     },
     {
       "paper_id": "dev-2025-sigcomm-07",
-      "record_sha256": "07a1aec547330604d5ac4f1a0806a6e531150fa1dda4eab7c45e222568e8c260",
+      "record_sha256": "4e90d79a46939c347eeaa8664e16d13fdf1895e9cb32fcb314086ebe2276f436",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -161872,6 +162220,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 5,
         "lics": 0,
         "lisa": 0,
@@ -164654,7 +165003,7 @@
     },
     {
       "paper_id": "dev-2025-sigcomm-08",
-      "record_sha256": "f0e7bde2d4e2dad40d2f4a69fa8af93cffb337e402b47d5abbda171917c06c51",
+      "record_sha256": "7a4cbed9c86e279a0ef8b3822782abe379b7ea680118ebb5cc7c4cddf16f7b07",
       "semantic_scores": {
         "1st-dl2-international-workshop": 10,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 10,
@@ -165131,6 +165480,7 @@
         "kicss2026": 10,
         "kr": 2,
         "ksem": 12,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -168524,7 +168874,7 @@
     },
     {
       "paper_id": "dev-2025-sigmod-01",
-      "record_sha256": "3d5e0323a1aad22d4d754b9c9c518f54c453217065fa752875122a086da1923c",
+      "record_sha256": "4c5ef3ea8d16a96d77167af66992511c9ab1da2929a3113b3ad725bdeb1166f6",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -169001,6 +169351,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -169872,7 +170223,7 @@
     },
     {
       "paper_id": "dev-2025-sigmod-02",
-      "record_sha256": "0d7ae34be4993b3d2792d948b26c9b634b39f0af4e155451b3e65d036b2bee90",
+      "record_sha256": "43875915d88d25a3740ed168a50c2e9cf5bce5be7398a0804a240ea14a3dcefc",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -170349,6 +170700,7 @@
         "kicss2026": 0,
         "kr": 5,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 2,
         "lisa": 0,
@@ -171467,7 +171819,7 @@
     },
     {
       "paper_id": "dev-2025-sigmod-03",
-      "record_sha256": "06b3eba977902ce830dd6df3b9e1c9da56e716f1c75a63807358622e227df476",
+      "record_sha256": "5e9d4096da5c18398337506ebbc234fdf4f6a5f975e4f89b9acd68895afb0131",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -171944,6 +172296,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -173569,7 +173922,7 @@
     },
     {
       "paper_id": "dev-2025-sigmod-04",
-      "record_sha256": "4ab4150f1bfda3eeb3120bd2ea82f2b8336c8fd1b07936104565dc91efede199",
+      "record_sha256": "9873a7f0dfdaa66c866be0fe992c0902c73d6dd5eeb732cbdd77352753f65d6f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 2,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -174046,6 +174399,7 @@
         "kicss2026": 0,
         "kr": 11,
         "ksem": 5,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -175619,7 +175973,7 @@
     },
     {
       "paper_id": "dev-2025-sigmod-05",
-      "record_sha256": "4f17b4a8ff9e4be4b73881665f9c61949edfe93fb71189fa5eca8ae0a4eabc85",
+      "record_sha256": "0bf83515cc17b972a8ffa5f891d67a65c84f3528c89fd5d349ce38abf704b310",
       "semantic_scores": {
         "1st-dl2-international-workshop": 12,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 7,
@@ -176096,6 +176450,7 @@
         "kicss2026": 5,
         "kr": 0,
         "ksem": 2,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -177409,7 +177764,7 @@
     },
     {
       "paper_id": "dev-2025-sigmod-06",
-      "record_sha256": "25319490b0049db7d06fc188cacd882c813e07d2eed587fe35ffc174a4480796",
+      "record_sha256": "17853f37a09b7278feb3c18ef846163cb98c2b115ba714e4ba99c5446947a54f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -177886,6 +178241,7 @@
         "kicss2026": 0,
         "kr": 4,
         "ksem": 4,
+        "lascas": 0,
         "lcn": 0,
         "lics": 1,
         "lisa": 0,
@@ -179758,7 +180114,7 @@
     },
     {
       "paper_id": "dev-2025-sigmod-07",
-      "record_sha256": "7d0c2a0f3a82c731bb47f7d9cb418e2b15922a778875b13850516121960bff2f",
+      "record_sha256": "f78245990f713514d054f4827d56209f3535373ab11e6c4f8838d2125ff6bc7c",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -180235,6 +180591,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 2,
         "lcn": 0,
         "lics": 9,
         "lisa": 1,
@@ -182377,6 +182734,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 17,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.02,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lics",
           "base_score": 23,
           "features": {
@@ -182820,7 +183190,7 @@
         },
         {
           "venue": "rlc",
-          "base_score": 16,
+          "base_score": 15,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -182846,7 +183216,7 @@
         },
         {
           "venue": "sat",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -183251,7 +183621,7 @@
     },
     {
       "paper_id": "dev-2025-sigmod-08",
-      "record_sha256": "1a9c65ff3698a4869b323a2700a279881ec698166db788e9b6ed6d69041ad2a5",
+      "record_sha256": "b9e5b26d9855133b83a3c7c6811c09daef6779a91e29ef8fef30760f0de6631f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 10,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -183728,6 +184098,7 @@
         "kicss2026": 10,
         "kr": 5,
         "ksem": 1,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -186575,7 +186946,7 @@
     },
     {
       "paper_id": "dev-2025-stoc-01",
-      "record_sha256": "596d6201d386e6c18233d456301ab6e3a2dab7b49b5ca6a5168684b3f0d14f0c",
+      "record_sha256": "1ecab5585b81b890cf84472a0d655eb2673b48daf5b39ff6d642efec52d6a69b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -187052,6 +187423,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 8,
         "lisa": 0,
@@ -187650,7 +188022,7 @@
     },
     {
       "paper_id": "dev-2025-stoc-02",
-      "record_sha256": "78a20384b75c5090aa5d6f766a315db1c71cbe41991b493ff8de36744a60005e",
+      "record_sha256": "875dafe5f80ff9149ccc63805866ce42da3641b82a5a77e0eb83f47682fdf248",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -188127,6 +188499,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -188413,7 +188786,7 @@
     },
     {
       "paper_id": "dev-2025-stoc-03",
-      "record_sha256": "7e69a411d04cbea0a7af81c04ed02071f5411e5af56786054174b237d1bade29",
+      "record_sha256": "380b337e664d20f4a03d24b0b7c755cfefb7f0ebdc0e3c0ff3db4ef48f315736",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -188890,6 +189263,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -189202,7 +189576,7 @@
     },
     {
       "paper_id": "dev-2025-stoc-04",
-      "record_sha256": "7d18208abf11c11d464225c582821b4c5e616b562da652a970ae31d5b36a840c",
+      "record_sha256": "360314ed5998d50daf3de61f8d7e6bbd6b7616783c4b1ae08bf523796ea93cad",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -189679,6 +190053,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 7,
         "lisa": 0,
@@ -190446,7 +190821,7 @@
     },
     {
       "paper_id": "dev-2025-stoc-05",
-      "record_sha256": "6a36b833d09caec83ef7a51745749076e921bed4978de5e220dbf95f3b9c60a2",
+      "record_sha256": "479df94d6f114e3d81fc1b2cfc5b1336aa3a536acdbf15fd80467213efec2bed",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -190923,6 +191298,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -191430,7 +191806,7 @@
     },
     {
       "paper_id": "dev-2025-stoc-06",
-      "record_sha256": "bdeb01329d234a1869593d00b6b58d30203657d572d24611b9fd715c65be5b85",
+      "record_sha256": "4a31dbd4b3f69b25a907efbd9086e2cdae39457d81fc6a9878e4807d901d54c3",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -191907,6 +192283,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 2,
         "lics": 4,
         "lisa": 0,
@@ -192622,7 +192999,7 @@
     },
     {
       "paper_id": "dev-2025-stoc-07",
-      "record_sha256": "d98255a0dc6a93e2188b49464c6916d3f698fc94c9b952052bad44417bc5194d",
+      "record_sha256": "660d900d84957131d39f4ee46ce250b1d839ab90f4ace6fdbe851f7de13a8faa",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -193099,6 +193476,7 @@
         "kicss2026": 0,
         "kr": 15,
         "ksem": 3,
+        "lascas": 0,
         "lcn": 1,
         "lics": 23,
         "lisa": 0,
@@ -195023,7 +195401,7 @@
     },
     {
       "paper_id": "dev-2025-stoc-08",
-      "record_sha256": "60b86df873884f0a7e3649e277851a002647fa4e1d74ac663d48cc59ab79b64a",
+      "record_sha256": "2c2b362de33a232cf08a5a6e203947759f7ccaa435b123274a282e0c5456e404",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -195500,6 +195878,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -195968,7 +196347,7 @@
     },
     {
       "paper_id": "heldout-2026-chi-01",
-      "record_sha256": "b7efa440a7c0f727e3c3f0fc16e13b35a02dbe7e14e1d3c7ac7b0e35ba487f9c",
+      "record_sha256": "0e1a293e616d2d5bdd38c50c1cb7309b3a8af6c6d5ea8e048d4020d618f4d418",
       "semantic_scores": {
         "1st-dl2-international-workshop": 9,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -196445,6 +196824,7 @@
         "kicss2026": 1,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 8,
@@ -197901,7 +198281,7 @@
     },
     {
       "paper_id": "heldout-2026-chi-02",
-      "record_sha256": "d465b1138c7824c6650a9a7747b3d9d230a0f6a051f3436127612ae74f463f6c",
+      "record_sha256": "7e07873f0c43b012cf7cd37252a5e56e60aa71db0c64bc8f81026a9d6ed0fe4d",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -198378,6 +198758,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -199470,7 +199851,7 @@
     },
     {
       "paper_id": "heldout-2026-chi-03",
-      "record_sha256": "93d628289cc3e3fa446ec6ef356db467379166281f9386b3caf6d584392c4a1a",
+      "record_sha256": "b0ac0dae86bc0884be1f7b25b2d4c47e35f036c82ab0dc74f09e3978aa3d31fe",
       "semantic_scores": {
         "1st-dl2-international-workshop": 10,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -199947,6 +200328,7 @@
         "kicss2026": 11,
         "kr": 4,
         "ksem": 9,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -200753,7 +201135,7 @@
     },
     {
       "paper_id": "heldout-2026-chi-04",
-      "record_sha256": "afdb7b2005f214729cf798f12fb9808fe0f1578ef5daa98fb615cc2655a838cc",
+      "record_sha256": "0ebf68fb12e9f65b894511dc366763f77ac1824ba33d3a5ffebac676adbbf6c2",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -201230,6 +201612,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -202075,7 +202458,7 @@
     },
     {
       "paper_id": "heldout-2026-chi-05",
-      "record_sha256": "f9202148549bec117f88dbd8ef6a4f9235a135f7907a2250443552dedc86a3e3",
+      "record_sha256": "5f7f1eaf3c0f0ce9947aa47195492f67e055fa3f81785488ff4a10464e7ac082",
       "semantic_scores": {
         "1st-dl2-international-workshop": 8,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -202552,6 +202935,7 @@
         "kicss2026": 2,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -204008,7 +204392,7 @@
     },
     {
       "paper_id": "heldout-2026-chi-06",
-      "record_sha256": "cbb0d9d31d70c68ebc71f91389925023969f37df6b7b3aef3f88fb3e07aea0b1",
+      "record_sha256": "39090298b7ce39521efc62292c36e3010a76848fdc673ec05f18c4058e7405e1",
       "semantic_scores": {
         "1st-dl2-international-workshop": 15,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -204485,6 +204869,7 @@
         "kicss2026": 4,
         "kr": 7,
         "ksem": 13,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -206838,7 +207223,7 @@
     },
     {
       "paper_id": "heldout-2026-chi-07",
-      "record_sha256": "d57065937ed181739290a5e5ec1cdafddbac639f6aaac12127002f074ce7841b",
+      "record_sha256": "783e88fd07fce68cf1d0e80ee7d45a075f6cdf9042af76826df48db8cc754b39",
       "semantic_scores": {
         "1st-dl2-international-workshop": 13,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -207315,6 +207700,7 @@
         "kicss2026": 1,
         "kr": 6,
         "ksem": 4,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -210669,7 +211055,7 @@
     },
     {
       "paper_id": "heldout-2026-chi-08",
-      "record_sha256": "631b9f52289e73666b11d57971c3ad78c19b564949e48549d12359c940730a75",
+      "record_sha256": "040a71cb8865504a65565f5528cda2cc4e3c8264ed816327b7b530518409f749",
       "semantic_scores": {
         "1st-dl2-international-workshop": 23,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 10,
@@ -211146,6 +211532,7 @@
         "kicss2026": 19,
         "kr": 18,
         "ksem": 12,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -214292,7 +214679,7 @@
     },
     {
       "paper_id": "heldout-2026-cvpr-01",
-      "record_sha256": "73641dc9622512f173e3d508edbc60e1773a93239bd18ac592362289a466dfc9",
+      "record_sha256": "75d080ebc44baf2c8543df84c6fdf05e6a1c5f041764082fe10eaedee8299716",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -214769,6 +215156,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -217200,7 +217588,7 @@
     },
     {
       "paper_id": "heldout-2026-cvpr-02",
-      "record_sha256": "738278fd6fdc1f707674f216b0c268f38a1790c2a7cb91e6e51491357bf2985c",
+      "record_sha256": "533744b127d6b5393f7aa8a278ec69f532336d5e51115b86ab56b244fc1ab666",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -217677,6 +218065,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -218431,7 +218820,7 @@
     },
     {
       "paper_id": "heldout-2026-cvpr-03",
-      "record_sha256": "d4479764def6f77f2773560b2b35bd761d81fc9fd204aa6e6f51b67e2b240e61",
+      "record_sha256": "1bd4c89998797e7cd0e5e68adbb41a787ce412645db7b94f4528ddab86224d26",
       "semantic_scores": {
         "1st-dl2-international-workshop": 1,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -218908,6 +219297,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -219961,7 +220351,7 @@
     },
     {
       "paper_id": "heldout-2026-cvpr-04",
-      "record_sha256": "41066e8dbd747c1c144a776b87fbe3f4421a9ef32c57937a216eac8bbaf82cb1",
+      "record_sha256": "4491ba4fc1504fa0baebe4393f783222d517d9e1fde423461feee4c4bf468273",
       "semantic_scores": {
         "1st-dl2-international-workshop": 12,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -220438,6 +220828,7 @@
         "kicss2026": 9,
         "kr": 7,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -221907,7 +222298,7 @@
     },
     {
       "paper_id": "heldout-2026-cvpr-05",
-      "record_sha256": "e0561089c954f268bcf073e0febd390b6db3dcddcfa26dadf17dd7a998f4bf07",
+      "record_sha256": "57b7e69d17716c00dfeaa81bcea8ca2a23ff261550da65be951f60dc9ddb621c",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 1,
@@ -222384,6 +222775,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -223658,7 +224050,7 @@
     },
     {
       "paper_id": "heldout-2026-cvpr-06",
-      "record_sha256": "89cc89f6aa6ad32e494b81090adf611e8c9faf1b1ebf323d43926165db63289d",
+      "record_sha256": "19a7b2700b5ad79ebecfe07b22cd7ae370ddbe06afef3f5c5fa57611d514a98a",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -224135,6 +224527,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -224343,7 +224736,7 @@
     },
     {
       "paper_id": "heldout-2026-cvpr-07",
-      "record_sha256": "82e363cec90e69f069c195159b39c4ee3014afaf755e54dc974f7ce071d62826",
+      "record_sha256": "0b3c4026ad8ce4e14846395f81e4e634f6d8040861f2577ccc857ed05af6c778",
       "semantic_scores": {
         "1st-dl2-international-workshop": 7,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -224820,6 +225213,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 5,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -228421,7 +228815,7 @@
     },
     {
       "paper_id": "heldout-2026-cvpr-08",
-      "record_sha256": "e01e607326ed5077777f0cec0dd34b42803a4b59b2412d4d51b695750b1d9e72",
+      "record_sha256": "cdea3d6df3594cfb54133300e753563eb5a851fd83676265700924e55fc0aabf",
       "semantic_scores": {
         "1st-dl2-international-workshop": 1,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -228898,6 +229292,7 @@
         "kicss2026": 1,
         "kr": 8,
         "ksem": 4,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -230289,7 +230684,7 @@
     },
     {
       "paper_id": "heldout-2026-cvprw-01",
-      "record_sha256": "3d28fcb44558ce61da607c97946feca8528552edf7c20bc9aec5a5040d7704a3",
+      "record_sha256": "e9e323c1d8180e34fc4610ffe0663c64a985ec6eee92de387a64e416a61c5c5b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 10,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -230766,6 +231161,7 @@
         "kicss2026": 19,
         "kr": 13,
         "ksem": 3,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -233964,7 +234360,7 @@
     },
     {
       "paper_id": "heldout-2026-cvprw-02",
-      "record_sha256": "48ecdaf032d7fec8534f2d68150a792f0517a0c633c803ca43db01716a28a318",
+      "record_sha256": "fde3bba120aa2c15e7ae71d729370a51251689c2c3ad5c150999cfc8f0b35ed6",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -234441,6 +234837,7 @@
         "kicss2026": 6,
         "kr": 1,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -235455,7 +235852,7 @@
     },
     {
       "paper_id": "heldout-2026-cvprw-03",
-      "record_sha256": "e479689dc55db9af72d0b6323878039246f46e679b005cfc17acaea7f5620b2d",
+      "record_sha256": "d4344615740326a4f7778cda01657334a2e0cee0ae40f331f7e5816fa960bd06",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -235932,6 +236329,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -239468,7 +239866,7 @@
     },
     {
       "paper_id": "heldout-2026-cvprw-04",
-      "record_sha256": "a83704cd6855cc8082ef08fc55570aae838628f20bfcdc799f22c9f73a078c52",
+      "record_sha256": "cf2f4d6ae389ddea483e88c0c10f3dc539bd1d85f4d366eae938aad18cacbc47",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -239945,6 +240343,7 @@
         "kicss2026": 0,
         "kr": 5,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -240647,7 +241046,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-01",
-      "record_sha256": "968755867dbbe7d1784a471ea8da8f64b24004dea59771de7fd55bf8a07b15f4",
+      "record_sha256": "57ce92267c00b551ddd65da2c527a2b314c4212590a511fb4bb62242b9a799cf",
       "semantic_scores": {
         "1st-dl2-international-workshop": 6,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -241124,6 +241523,7 @@
         "kicss2026": 0,
         "kr": 6,
         "ksem": 6,
+        "lascas": 0,
         "lcn": 0,
         "lics": 4,
         "lisa": 0,
@@ -244881,7 +245281,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-02",
-      "record_sha256": "ca56b91e4af4b47c9c874851c917854b133ae995c7be50e8fa4ca5af6816aba0",
+      "record_sha256": "fb78a9a05ed0ea39564aa0928ab6cfd187a21b287c691c8275c1bd8f1ed945b8",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -245358,6 +245758,7 @@
         "kicss2026": 2,
         "kr": 0,
         "ksem": 8,
+        "lascas": 15,
         "lcn": 0,
         "lics": 8,
         "lisa": 0,
@@ -245564,7 +245965,7 @@
         },
         {
           "venue": "asap",
-          "base_score": 23,
+          "base_score": 22,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -245798,7 +246199,7 @@
         },
         {
           "venue": "colt",
-          "base_score": 16,
+          "base_score": 15,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -245941,7 +246342,7 @@
         },
         {
           "venue": "ecscw",
-          "base_score": 19,
+          "base_score": 18,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -245954,7 +246355,7 @@
         },
         {
           "venue": "edgesys",
-          "base_score": 25,
+          "base_score": 24,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.08,
@@ -246032,7 +246433,7 @@
         },
         {
           "venue": "eusipco",
-          "base_score": 20,
+          "base_score": 19,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.05,
@@ -246084,7 +246485,7 @@
         },
         {
           "venue": "fgcs",
-          "base_score": 32,
+          "base_score": 31,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.13,
@@ -246136,7 +246537,7 @@
         },
         {
           "venue": "fpt",
-          "base_score": 26,
+          "base_score": 25,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.09,
@@ -246201,7 +246602,7 @@
         },
         {
           "venue": "hoti",
-          "base_score": 29,
+          "base_score": 28,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.11,
@@ -246396,7 +246797,7 @@
         },
         {
           "venue": "iccd",
-          "base_score": 35,
+          "base_score": 34,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.14,
@@ -246526,7 +246927,7 @@
         },
         {
           "venue": "icomp",
-          "base_score": 34,
+          "base_score": 33,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.14,
@@ -246565,7 +246966,7 @@
         },
         {
           "venue": "icpp",
-          "base_score": 31,
+          "base_score": 30,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.12,
@@ -246734,7 +247135,7 @@
         },
         {
           "venue": "iscas",
-          "base_score": 33,
+          "base_score": 32,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.14,
@@ -246786,7 +247187,7 @@
         },
         {
           "venue": "issre",
-          "base_score": 21,
+          "base_score": 20,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.06,
@@ -246851,7 +247252,7 @@
         },
         {
           "venue": "jpdc",
-          "base_score": 27,
+          "base_score": 26,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.1,
@@ -246890,10 +247291,23 @@
         },
         {
           "venue": "ksem",
-          "base_score": 24,
+          "base_score": 23,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.08,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
+          "venue": "lascas",
+          "base_score": 36,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.15,
             "category_overlap": 0,
             "venue_name_evidence": 0,
             "prior_venue": 0,
@@ -246994,7 +247408,7 @@
         },
         {
           "venue": "mlsys",
-          "base_score": 36,
+          "base_score": 35,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.15,
@@ -247046,7 +247460,7 @@
         },
         {
           "venue": "nossdav",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -247072,7 +247486,7 @@
         },
         {
           "venue": "nvmw",
-          "base_score": 30,
+          "base_score": 29,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.12,
@@ -247332,7 +247746,7 @@
         },
         {
           "venue": "setta",
-          "base_score": 28,
+          "base_score": 27,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.11,
@@ -247358,7 +247772,7 @@
         },
         {
           "venue": "socc",
-          "base_score": 22,
+          "base_score": 21,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -247410,7 +247824,7 @@
         },
         {
           "venue": "systor",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -247436,7 +247850,7 @@
         },
         {
           "venue": "tdsc",
-          "base_score": 18,
+          "base_score": 17,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -247516,7 +247930,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-03",
-      "record_sha256": "8ad9024faccf1f2de6d51d3c7178747f95f1fb25d9b58aa5413d282124292e3c",
+      "record_sha256": "3a48c2b6148b6ee36d2e041b2cb2bffb7f05f36e414636eb7537d27adfd7182b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -247993,6 +248407,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -249306,7 +249721,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-04",
-      "record_sha256": "aeb8e283ee1ffa764b5ac70111dd6f56eff057df9679f67871a0d2483448c1be",
+      "record_sha256": "609fdf2c826435f12da7f84b9eb71854c650057b1fd3c424f80f641b9d057025",
       "semantic_scores": {
         "1st-dl2-international-workshop": 5,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -249783,6 +250198,7 @@
         "kicss2026": 0,
         "kr": 3,
         "ksem": 5,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -253098,7 +253514,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-05",
-      "record_sha256": "6abfd154ac99ea56814c0f61da83774c28bfc64510272b9d58bdb9874095ec25",
+      "record_sha256": "67913827e0aca273866bdd946a63799b76dd49c61ec1483a1236d31efa22b4e5",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -253575,6 +253991,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -255626,6 +256043,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 16,
+          "features": {
+            "lexical_score": 0.25,
+            "semantic_score": 0,
+            "category_overlap": 1,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lisa",
           "base_score": 16,
           "features": {
@@ -255692,7 +256122,7 @@
         },
         {
           "venue": "mipro",
-          "base_score": 16,
+          "base_score": 15,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -255939,7 +256369,7 @@
         },
         {
           "venue": "performance",
-          "base_score": 48,
+          "base_score": 47,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.06,
@@ -256017,7 +256447,7 @@
         },
         {
           "venue": "qrs",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -256381,7 +256811,7 @@
         },
         {
           "venue": "tos",
-          "base_score": 14,
+          "base_score": 13,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -256461,7 +256891,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-06",
-      "record_sha256": "b52e531ffd0200a37c1782dc406d8234e03d4fd9c4a72af000718a14efb0183e",
+      "record_sha256": "a384ad18fd4f9fe59dbf46e5eec6265607d6089d78d3132364ae73c4169d990f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -256938,6 +257368,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 2,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -260929,7 +261360,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-07",
-      "record_sha256": "0e09ccb433425bc0e66f5598a8ab2660f17e4115ca46cc1ab3bc02a43b2fc892",
+      "record_sha256": "119bc24afead7786219b80fe9a5bfa2b667c7ac4403b3cf43aa14a35f99d2490",
       "semantic_scores": {
         "1st-dl2-international-workshop": 17,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 10,
@@ -261406,6 +261837,7 @@
         "kicss2026": 12,
         "kr": 16,
         "ksem": 26,
+        "lascas": 0,
         "lcn": 1,
         "lics": 2,
         "lisa": 5,
@@ -265254,7 +265686,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-08",
-      "record_sha256": "5e7d56131152960fcf73d344fdae8eba6576a1cc759a64c16220b13734e3f8fb",
+      "record_sha256": "767e7cb0d1cf0915e7142ded4261c777f7e289d18216094822af09e13fe6c6c0",
       "semantic_scores": {
         "1st-dl2-international-workshop": 8,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -265731,6 +266163,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 13,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -270073,7 +270506,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-09",
-      "record_sha256": "17679d594c9f69e4e5f8b510bd596a11bf83f76c23e8f10680def1d5359b1f58",
+      "record_sha256": "ada48bc4f24c6fdfefac07c2278862c6fe6cb7ddad3218897f55ba30433ea7af",
       "semantic_scores": {
         "1st-dl2-international-workshop": 7,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 3,
@@ -270550,6 +270983,7 @@
         "kicss2026": 0,
         "kr": 2,
         "ksem": 1,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -275438,7 +275872,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-10",
-      "record_sha256": "d7f2937f9c009f32b73e35eb4c1273ba0928f3aada6a757701ec09a2f0077d42",
+      "record_sha256": "627426e4dcea0bfdb62fd0d2ab753464d309d8ffb02f5bd61f6f87a63996e563",
       "semantic_scores": {
         "1st-dl2-international-workshop": 3,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -275915,6 +276349,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 14,
         "lcn": 0,
         "lics": 23,
         "lisa": 4,
@@ -276342,7 +276777,7 @@
         },
         {
           "venue": "ches",
-          "base_score": 23,
+          "base_score": 22,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.12,
@@ -276511,7 +276946,7 @@
         },
         {
           "venue": "conll",
-          "base_score": 18,
+          "base_score": 17,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -276615,7 +277050,7 @@
         },
         {
           "venue": "ecai",
-          "base_score": 14,
+          "base_score": 13,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -276680,7 +277115,7 @@
         },
         {
           "venue": "esann",
-          "base_score": 16,
+          "base_score": 15,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -277174,7 +277609,7 @@
         },
         {
           "venue": "icin",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.06,
@@ -277278,7 +277713,7 @@
         },
         {
           "venue": "icse",
-          "base_score": 21,
+          "base_score": 20,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.11,
@@ -277317,7 +277752,7 @@
         },
         {
           "venue": "icst",
-          "base_score": 22,
+          "base_score": 21,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.12,
@@ -277576,6 +278011,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 24,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.14,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lics",
           "base_score": 33,
           "features": {
@@ -277798,7 +278246,7 @@
         },
         {
           "venue": "nossdav",
-          "base_score": 20,
+          "base_score": 19,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.1,
@@ -278032,7 +278480,7 @@
         },
         {
           "venue": "raai2026",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -278188,7 +278636,7 @@
         },
         {
           "venue": "sgp",
-          "base_score": 19,
+          "base_score": 18,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.09,
@@ -278411,7 +278859,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-11",
-      "record_sha256": "5a9242bd8a3f65e6d59c477179779c2f633e5694c17e640912f5941e7e6e78a9",
+      "record_sha256": "b03720848dc4ac978a131d04f2ba64a599773b3396ffa4bbcf80a8a2b167b3d5",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -278888,6 +279336,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -279590,7 +280039,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-12",
-      "record_sha256": "800c771733a3c58cd178b880e42ee0fce439bc5ec12be31e6bc648be6cdb9b5a",
+      "record_sha256": "ad6c1b154e8c0d2164e6818038d2b19996550b8c65625f673f90252c17733f73",
       "semantic_scores": {
         "1st-dl2-international-workshop": 9,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -280067,6 +280516,7 @@
         "kicss2026": 5,
         "kr": 0,
         "ksem": 3,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -282264,7 +282714,7 @@
     },
     {
       "paper_id": "heldout-2026-ipsj-journal-01",
-      "record_sha256": "7dd5285ff5cf450b2f9e905bfa88c8df6576c7197b5f20f6c10d4b4083d63df8",
+      "record_sha256": "d3908729b319709ddaeb6da3cd64fdc82be8537f4545cf0dae116e270459e3ef",
       "semantic_scores": {
         "1st-dl2-international-workshop": 22,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 19,
@@ -282741,6 +283191,7 @@
         "kicss2026": 15,
         "kr": 16,
         "ksem": 10,
+        "lascas": 2,
         "lcn": 4,
         "lics": 13,
         "lisa": 0,
@@ -286352,6 +286803,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 11,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.02,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 0,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lcn",
           "base_score": 13,
           "features": {
@@ -287564,7 +288028,7 @@
     },
     {
       "paper_id": "heldout-2026-ipsj-journal-02",
-      "record_sha256": "67680a3492792b2a1d6f1af8dd7182ed75aa2f38347cc167b255ffd3d1291eea",
+      "record_sha256": "2c4c6d66e13ed33bc03cd6f82d5143e76c575636e8d5a8464e704f158d1b1d41",
       "semantic_scores": {
         "1st-dl2-international-workshop": 13,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 21,
@@ -288041,6 +288505,7 @@
         "kicss2026": 12,
         "kr": 21,
         "ksem": 8,
+        "lascas": 0,
         "lcn": 0,
         "lics": 22,
         "lisa": 0,
@@ -290212,7 +290677,7 @@
     },
     {
       "paper_id": "heldout-2026-ipsj-journal-03",
-      "record_sha256": "98222219c14f80b46d0142b6d328a8e5cf6e353c10b69f25a6ab6a675c24546b",
+      "record_sha256": "b6d44ee452a5b0b4345134bffdc945ecd902712be76fd39130487438b8a8b270",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 9,
@@ -290689,6 +291154,7 @@
         "kicss2026": 2,
         "kr": 8,
         "ksem": 4,
+        "lascas": 0,
         "lcn": 0,
         "lics": 23,
         "lisa": 0,
@@ -292262,7 +292728,7 @@
     },
     {
       "paper_id": "heldout-2026-ipsj-journal-04",
-      "record_sha256": "7c62c76e4de4c5c7ee32c8189bcc6cb12a1e3988914b9ed45dc6fdde0fb6f4ba",
+      "record_sha256": "1fa2dba3ed346d47ff34df58ba2cb82295c17edc3ec8ef4d2f588700a665333d",
       "semantic_scores": {
         "1st-dl2-international-workshop": 15,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 10,
@@ -292739,6 +293205,7 @@
         "kicss2026": 15,
         "kr": 17,
         "ksem": 4,
+        "lascas": 3,
         "lcn": 0,
         "lics": 13,
         "lisa": 0,
@@ -293686,7 +294153,7 @@
         },
         {
           "venue": "cloudcom",
-          "base_score": 11,
+          "base_score": 10,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -296493,6 +296960,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 12,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.03,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 0,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lics",
           "base_score": 23,
           "features": {
@@ -297495,7 +297975,7 @@
         },
         {
           "venue": "soups",
-          "base_score": 12,
+          "base_score": 11,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -297796,7 +298276,7 @@
     },
     {
       "paper_id": "heldout-2026-nolta-special-01",
-      "record_sha256": "92cd62dd279197d74bbf156590e59715ca881b308dcac91cef2d7ccba707a6da",
+      "record_sha256": "05e7092f1803ed1686a5b2212d908afe19b72da6ef6ab40072e24c1df76df76e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 3,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 4,
@@ -298273,6 +298753,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 2,
         "lics": 0,
         "lisa": 0,
@@ -299066,7 +299547,7 @@
     },
     {
       "paper_id": "heldout-2026-nolta-special-02",
-      "record_sha256": "1211b599ca945f87d8401f293f20dd6d0dfd3154876cbb7e7cae4f7ccb4b64e0",
+      "record_sha256": "fe921decaccd2ed6273968ef923bebbd0d50147af4b6efa106c35ece3584e917",
       "semantic_scores": {
         "1st-dl2-international-workshop": 7,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -299543,6 +300024,7 @@
         "kicss2026": 4,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -301090,7 +301572,7 @@
     },
     {
       "paper_id": "heldout-2026-nolta-special-03",
-      "record_sha256": "24018d65a0533541d96ea89557d38096e52a54266ab312d78ced148bb8f3f961",
+      "record_sha256": "8a73c4c19fff1320bacc7af2458c6450a63ee7c11c68edec0165d3e17444ebfa",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -301567,6 +302049,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 25,
         "lcn": 0,
         "lics": 1,
         "lisa": 0,
@@ -301786,7 +302269,7 @@
         },
         {
           "venue": "asplos",
-          "base_score": 25,
+          "base_score": 24,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -301799,7 +302282,7 @@
         },
         {
           "venue": "ats",
-          "base_score": 38,
+          "base_score": 37,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.13,
@@ -301838,7 +302321,7 @@
         },
         {
           "venue": "cf",
-          "base_score": 42,
+          "base_score": 41,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.15,
@@ -301864,7 +302347,7 @@
         },
         {
           "venue": "compsac",
-          "base_score": 44,
+          "base_score": 43,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.18,
@@ -301929,7 +302412,7 @@
         },
         {
           "venue": "ecrts",
-          "base_score": 37,
+          "base_score": 36,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.13,
@@ -301955,7 +302438,7 @@
         },
         {
           "venue": "emsoft",
-          "base_score": 26,
+          "base_score": 25,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -301981,7 +302464,7 @@
         },
         {
           "venue": "ets",
-          "base_score": 47,
+          "base_score": 46,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.2,
@@ -301994,7 +302477,7 @@
         },
         {
           "venue": "eurosys",
-          "base_score": 49,
+          "base_score": 48,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.22,
@@ -302007,7 +302490,7 @@
         },
         {
           "venue": "eusipco",
-          "base_score": 29,
+          "base_score": 28,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -302033,7 +302516,7 @@
         },
         {
           "venue": "fccm",
-          "base_score": 36,
+          "base_score": 35,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.13,
@@ -302072,7 +302555,7 @@
         },
         {
           "venue": "fpt",
-          "base_score": 41,
+          "base_score": 40,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.15,
@@ -302085,7 +302568,7 @@
         },
         {
           "venue": "glsvlsi",
-          "base_score": 31,
+          "base_score": 30,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.09,
@@ -302098,7 +302581,7 @@
         },
         {
           "venue": "hipeac",
-          "base_score": 34,
+          "base_score": 33,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.12,
@@ -302163,7 +302646,7 @@
         },
         {
           "venue": "hpca",
-          "base_score": 48,
+          "base_score": 47,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.21,
@@ -302215,7 +302698,7 @@
         },
         {
           "venue": "icce",
-          "base_score": 45,
+          "base_score": 44,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.19,
@@ -302241,7 +302724,7 @@
         },
         {
           "venue": "iceccs",
-          "base_score": 46,
+          "base_score": 45,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.2,
@@ -302280,7 +302763,7 @@
         },
         {
           "venue": "icse",
-          "base_score": 32,
+          "base_score": 31,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.1,
@@ -302306,7 +302789,7 @@
         },
         {
           "venue": "icsoc",
-          "base_score": 24,
+          "base_score": 23,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -302397,7 +302880,7 @@
         },
         {
           "venue": "ispass",
-          "base_score": 28,
+          "base_score": 27,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.06,
@@ -302410,7 +302893,7 @@
         },
         {
           "venue": "issre",
-          "base_score": 35,
+          "base_score": 34,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.13,
@@ -302453,6 +302936,19 @@
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
+          "venue": "lascas",
+          "base_score": 49,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.25,
             "category_overlap": 0,
             "venue_name_evidence": 0,
             "prior_venue": 0,
@@ -302527,7 +303023,7 @@
         },
         {
           "venue": "netys",
-          "base_score": 33,
+          "base_score": 32,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.12,
@@ -302540,7 +303036,7 @@
         },
         {
           "venue": "nvmw",
-          "base_score": 40,
+          "base_score": 39,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.14,
@@ -302592,7 +303088,7 @@
         },
         {
           "venue": "qrs",
-          "base_score": 30,
+          "base_score": 29,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.09,
@@ -302618,7 +303114,7 @@
         },
         {
           "venue": "rtas",
-          "base_score": 39,
+          "base_score": 38,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.14,
@@ -302709,7 +303205,7 @@
         },
         {
           "venue": "tc",
-          "base_score": 43,
+          "base_score": 42,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.16,
@@ -302748,7 +303244,7 @@
         },
         {
           "venue": "tos",
-          "base_score": 27,
+          "base_score": 26,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.05,
@@ -302789,7 +303285,7 @@
     },
     {
       "paper_id": "heldout-2026-nolta-special-04",
-      "record_sha256": "69e731db4446ff038b901ccd4f49e265c07bdd0cb8dc075b5d9e7ed8be305614",
+      "record_sha256": "ee96b39df805873bc98ac7d535d22c363c66990fbfe1b8f7694e437dc1af46bd",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -303266,6 +303762,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 3,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -305554,7 +306051,7 @@
     },
     {
       "paper_id": "heldout-2026-nsdi-01",
-      "record_sha256": "bdbc6bbf3f49792c2b7ea70907a7964055984288d14aeca13f5232d75ec76fab",
+      "record_sha256": "c2564fdd4c79826d893b5eb90c593d74fbf2096a45c4d9d6430c10f09ef89352",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -306031,6 +306528,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 21,
         "lics": 0,
         "lisa": 0,
@@ -307942,7 +308440,7 @@
     },
     {
       "paper_id": "heldout-2026-nsdi-02",
-      "record_sha256": "3cf0c8aaf7368c8365107702b40d98b4a14ed394f1032747bf954eb688f3f59b",
+      "record_sha256": "144f4ca8091dcb46c9a354ddfccf4f2d4958706dc51161a4a3910eb00ff2d547",
       "semantic_scores": {
         "1st-dl2-international-workshop": 18,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 9,
@@ -308419,6 +308917,7 @@
         "kicss2026": 9,
         "kr": 20,
         "ksem": 18,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -310161,7 +310660,7 @@
     },
     {
       "paper_id": "heldout-2026-nsdi-03",
-      "record_sha256": "eb8421feabe9df286040b43e54128fd5cfc04dcbcdee7846c38edebef6333020",
+      "record_sha256": "f0887178e6cd162ba427ed25dfe0a1c1e3d74fe419c2d97eb2059d54fada69b9",
       "semantic_scores": {
         "1st-dl2-international-workshop": 6,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 7,
@@ -310638,6 +311137,7 @@
         "kicss2026": 21,
         "kr": 21,
         "ksem": 4,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -312549,7 +313049,7 @@
     },
     {
       "paper_id": "heldout-2026-nsdi-04",
-      "record_sha256": "df608bb4dffe8053db3a58bed25a80dc539af5b0c4feca8bb7366102c46f21e5",
+      "record_sha256": "34901ceb229eac9b5503d92c64f69e2cbb6b8b4b2c6937b7032d723239a49ead",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -313026,6 +313526,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 30,
         "lics": 12,
         "lisa": 0,
@@ -315756,7 +316257,7 @@
     },
     {
       "paper_id": "heldout-2026-nsdi-05",
-      "record_sha256": "a950c8a4f9bc1fd4c1ab804a251c4a5348abee456e3f7c082f9af8907568ddf6",
+      "record_sha256": "547050561f4818e65b38ce15f5ef6e17427147dd7c03de67cb604dcd8fb02fd3",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -316233,6 +316734,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 2,
         "lcn": 0,
         "lics": 0,
         "lisa": 4,
@@ -317479,7 +317981,7 @@
         },
         {
           "venue": "hpdc",
-          "base_score": 35,
+          "base_score": 34,
           "features": {
             "lexical_score": 0.16,
             "semantic_score": 0.1,
@@ -318596,6 +319098,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 31,
+          "features": {
+            "lexical_score": 0.25,
+            "semantic_score": 0.02,
+            "category_overlap": 1,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lisa",
           "base_score": 32,
           "features": {
@@ -318649,7 +319164,7 @@
         },
         {
           "venue": "middleware",
-          "base_score": 49,
+          "base_score": 48,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.18,
@@ -318740,7 +319255,7 @@
         },
         {
           "venue": "msr",
-          "base_score": 30,
+          "base_score": 29,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.01,
@@ -319104,7 +319619,7 @@
         },
         {
           "venue": "protools-2026",
-          "base_score": 13,
+          "base_score": 12,
           "features": {
             "lexical_score": 0.08,
             "semantic_score": 0,
@@ -319507,7 +320022,7 @@
         },
         {
           "venue": "tos",
-          "base_score": 37,
+          "base_score": 36,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.12,
@@ -319652,7 +320167,7 @@
     },
     {
       "paper_id": "heldout-2026-nsdi-06",
-      "record_sha256": "42a4ab7fb505c7c04f09a97ba0cd7097ce72f23e5e8683935b268be5bd55edcf",
+      "record_sha256": "5fb483f58c7f946980f8a431a69f0bb8687bd878a06729c4767bca6d43ad0d55",
       "semantic_scores": {
         "1st-dl2-international-workshop": 12,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -320129,6 +320644,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 8,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -321767,7 +322283,7 @@
     },
     {
       "paper_id": "heldout-2026-nsdi-07",
-      "record_sha256": "5384f2d3b9c2b4c8e20b8794d08d3bacbfd6e0a0c17c5638a4291fae5d7d6dff",
+      "record_sha256": "2ba46c541b884d15cafefacc1cd59c92a2b82f66f27a37543748d7a2594a43dc",
       "semantic_scores": {
         "1st-dl2-international-workshop": 10,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -322244,6 +322760,7 @@
         "kicss2026": 0,
         "kr": 7,
         "ksem": 6,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -323882,7 +324399,7 @@
     },
     {
       "paper_id": "heldout-2026-nsdi-08",
-      "record_sha256": "030fd5d8af501ddd000e3a4dee6d22b95ec2b86d73129458f32aa8796039988c",
+      "record_sha256": "260ad6e602d063a7855854d5d9998028f78df467c30f68c6965c69e0a7185b99",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -324359,6 +324876,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -325776,7 +326294,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-01",
-      "record_sha256": "38524c4d3d5d641f563318971f267c3a963a5c6871c8c400c1a84c0705b284c5",
+      "record_sha256": "3820e01117fa854d19f5f55407db48d3e2bca34479a0f3d41b57f85045069016",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -326253,6 +326771,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 14,
         "lics": 0,
         "lisa": 0,
@@ -327501,7 +328020,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-02",
-      "record_sha256": "752abd0119718782cb7905d1f46075c73b6c967f6361a05f54bd72d5a0335234",
+      "record_sha256": "70b7bbcfda029e5b2908bf0fc7b7e10c6d221baf0e42084ba48bf18f3e29097f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 4,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -327978,6 +328497,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -328472,7 +328992,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-03",
-      "record_sha256": "2fe4129903507642eb2af86557b8705add18982fd77abdfcbd0f1fc377a54f7b",
+      "record_sha256": "7fc3f11eca452abb9e5c60d038639dcda487bb95aee9ac696c1d8f89aa6ddf96",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -328949,6 +329469,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -329170,7 +329691,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-04",
-      "record_sha256": "1f41e03d9bcd3c1e9129ec43f3635134a858b04bdeec24060081754c3f365f25",
+      "record_sha256": "5c58f82eadd4091b38468fa842768ceee4fa03fe958517388fec2c9e631bbe06",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -329647,6 +330168,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 25,
         "lics": 0,
         "lisa": 0,
@@ -331298,7 +331820,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-05",
-      "record_sha256": "4b99dd1a45668f084d77d951fee39e2f04cd249e23fab2c307a264c7003ede77",
+      "record_sha256": "d89e3945ff18e00f59c0fc22ddd218a701e83994728a30fc9090675fa124f62e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 24,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -331775,6 +332297,7 @@
         "kicss2026": 14,
         "kr": 8,
         "ksem": 16,
+        "lascas": 0,
         "lcn": 16,
         "lics": 1,
         "lisa": 0,
@@ -336052,7 +336575,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-06",
-      "record_sha256": "8ef10a34f62ae7b2eabe6cf11e30ac5ee82b991e3cce30b58062212ac11f0bba",
+      "record_sha256": "314cf9db0196b08d40f30ec3fde7d790df293570c3944a340f70e632c3c680ae",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -336529,6 +337052,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -338349,7 +338873,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-07",
-      "record_sha256": "89b25da7f84e5a2a1a20ccc765f8ccd710aa699e16c6e27777ffb4c219c94b25",
+      "record_sha256": "640e0defe52e2ce881d0652e99f7810d383ffd871c1e0390316e60f7ea335056",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -338826,6 +339350,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -339671,7 +340196,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-08",
-      "record_sha256": "565fbc8902f56a22956a73d3d3e5a339965fae78feb6d6fdd1b0156cb8791287",
+      "record_sha256": "2f2e947b1314ae7a0b37805b8ff020276637e5c58d03b9da57cf407c9e514e34",
       "semantic_scores": {
         "1st-dl2-international-workshop": 3,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -340148,6 +340673,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 9,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -341708,7 +342234,7 @@
     },
     {
       "paper_id": "heldout-2026-sigmod-01",
-      "record_sha256": "7ae9c318278a950a94cdac2b7e810bd89f32d115d668c3cec834d228384ad1c0",
+      "record_sha256": "86bf2452cbc12b11b5ed89e7d885f8f900f546201cb48bf8b094d54b33349620",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -342185,6 +342711,7 @@
         "kicss2026": 0,
         "kr": 8,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 2,
         "lisa": 0,
@@ -344665,6 +345192,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 14,
+          "features": {
+            "lexical_score": 0.25,
+            "semantic_score": 0,
+            "category_overlap": 1,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lics",
           "base_score": 27,
           "features": {
@@ -344770,7 +345310,7 @@
         },
         {
           "venue": "middleware",
-          "base_score": 14,
+          "base_score": 13,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -345121,7 +345661,7 @@
         },
         {
           "venue": "qrs",
-          "base_score": 13,
+          "base_score": 12,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -345446,7 +345986,7 @@
         },
         {
           "venue": "stacs-2027-first",
-          "base_score": 12,
+          "base_score": 11,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -345708,7 +346248,7 @@
     },
     {
       "paper_id": "heldout-2026-sigmod-02",
-      "record_sha256": "b17401e5717549167ed26baafa63ed60a40fab32f0e0c9c0f7ed0896954afcaf",
+      "record_sha256": "575337a533fc7e09db198c31aabd20255fed2af1e1e88381339225fd7eacb422",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -346185,6 +346725,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -347615,7 +348156,7 @@
     },
     {
       "paper_id": "heldout-2026-sigmod-03",
-      "record_sha256": "43255ac740af0cff438d9dee34efdd1de3186bc45eb0ebbf21b10c4870aa3d33",
+      "record_sha256": "3717629b37fa5521a4d9b4dd72c94971b41815524ead4b54ebdab142da320f71",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -348092,6 +348633,7 @@
         "kicss2026": 0,
         "kr": 2,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 14,
         "lisa": 0,
@@ -349353,7 +349895,7 @@
     },
     {
       "paper_id": "heldout-2026-sigmod-04",
-      "record_sha256": "1861fc310598c3d114958a325ff0d31da828ad509f1017ceaba132e3a97f59f2",
+      "record_sha256": "a80f0e736c7d0a24a4d68fe7c11ee827608bac3832af95ac0e44c160e8a1415e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 4,
@@ -349830,6 +350372,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 2,
         "lisa": 0,
@@ -351728,7 +352271,7 @@
     },
     {
       "paper_id": "heldout-2026-sigmod-05",
-      "record_sha256": "3af9760b29cd1e9ce3a775f4b56e229546ee740b3300e0040c3961697aa93b88",
+      "record_sha256": "9cc30e01a2b7a6ad6fd291038c55ea88683ec3ce18dee91946f83af979bdf2cd",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -352205,6 +352748,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -353219,7 +353763,7 @@
     },
     {
       "paper_id": "heldout-2026-sigmod-06",
-      "record_sha256": "f5f0ce9ae0905da9a0e83d92b46984af6f903ef1aa1a3d4f9d3a31b0b49c4543",
+      "record_sha256": "e89c634e51852807972b57d317565d293cce7f4699ab49fb345e39d0abff0de0",
       "semantic_scores": {
         "1st-dl2-international-workshop": 1,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -353696,6 +354240,7 @@
         "kicss2026": 4,
         "kr": 1,
         "ksem": 13,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 6,
@@ -356023,7 +356568,7 @@
     },
     {
       "paper_id": "heldout-2026-sigmod-07",
-      "record_sha256": "82fee04d2e087e6c8cc8453c427ad8f4f0caa6d4d7e147d8919d2465f790770b",
+      "record_sha256": "7fb23fa061b5dbab7f7e8cd4dfeb471131ace716fdb716472d3101880412b5c5",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -356500,6 +357045,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 8,
@@ -361492,7 +362038,7 @@
     },
     {
       "paper_id": "heldout-2026-sigmod-08",
-      "record_sha256": "ea1a9ca642a2f7b1f1315abe139d2d9f93a2e71656de977b7fc6048f54d3b2d9",
+      "record_sha256": "55eb9eae9a80068387b033f5707a071fceddd87808f3515a5beb8f002eb8c0d1",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -361969,6 +362515,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -363087,7 +363634,7 @@
     },
     {
       "paper_id": "heldout-2026-stoc-01",
-      "record_sha256": "b484b9f05df0f12d0910f508715ba5198643ac483322da7ed5b37fbeff1cf335",
+      "record_sha256": "78b83d345be4187b6b73ec0791fc81dec3e110574b1550b48a40ab9086e7baa6",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -363564,6 +364111,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 8,
         "lisa": 0,
@@ -364149,7 +364697,7 @@
     },
     {
       "paper_id": "heldout-2026-stoc-02",
-      "record_sha256": "b04450542e3ac2d65afd98af28849605dbf962fa7ac438f9e416c22199477062",
+      "record_sha256": "29717b8146eb79a62d4c092184896e14ae536db6e913c0ef9b3929955f1de92d",
       "semantic_scores": {
         "1st-dl2-international-workshop": 1,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -364626,6 +365174,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 4,
         "lisa": 0,
@@ -366586,6 +367135,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 17,
+          "features": {
+            "lexical_score": 0.25,
+            "semantic_score": 0,
+            "category_overlap": 1,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lics",
           "base_score": 39,
           "features": {
@@ -366626,7 +367188,7 @@
         },
         {
           "venue": "micro",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -367042,7 +367604,7 @@
         },
         {
           "venue": "scam",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -367302,7 +367864,7 @@
         },
         {
           "venue": "ucc",
-          "base_score": 14,
+          "base_score": 13,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -367369,7 +367931,7 @@
     },
     {
       "paper_id": "heldout-2026-stoc-03",
-      "record_sha256": "58066947642d61597e5a84d650a9a4e9a109ab7532e060c2adddca374fdff2a6",
+      "record_sha256": "5937ecca69537535b754136cd0983c27dc5b3d2c5f37372e38919fa93ce2db23",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -367846,6 +368408,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 2,
         "lisa": 0,
@@ -368314,7 +368877,7 @@
     },
     {
       "paper_id": "heldout-2026-stoc-04",
-      "record_sha256": "600f37c58e14459a12b5d966de21186d98b70f435cbcad30497e6407a9a3d652",
+      "record_sha256": "59c1df495fb3aded0d2d06b6290b3fc1f7d098531272d8d977fdf67b565706ce",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 4,
@@ -368791,6 +369354,7 @@
         "kicss2026": 0,
         "kr": 4,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 29,
         "lisa": 0,
@@ -369844,7 +370408,7 @@
     },
     {
       "paper_id": "heldout-2026-stoc-05",
-      "record_sha256": "4b4bb1d80444e7aaab74a54dd140cdcc741b5c56c3976eb104d6f377c5973730",
+      "record_sha256": "799e6fa906d5ae113ba3233eb912499a5ae88ea398feb96bc9fbc29c489f5670",
       "semantic_scores": {
         "1st-dl2-international-workshop": 8,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -370321,6 +370885,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 7,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -371582,7 +372147,7 @@
     },
     {
       "paper_id": "heldout-2026-stoc-06",
-      "record_sha256": "f16125ecfe8dc476902e586cc11600df66f22fb36ce105f70a759710bf281a16",
+      "record_sha256": "f8a33e8827d26208cd22bd2ab591f2baccf96c04ab8d429fe228f2a5b9238cd6",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -372059,6 +372624,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -372566,7 +373132,7 @@
     },
     {
       "paper_id": "heldout-2026-stoc-07",
-      "record_sha256": "7cd0d871a0f6845db89bb27e765b08ee9f79200b1a91e5c4bdf84ff705f3298b",
+      "record_sha256": "b0778f88ad1e9f94d2e25c90ad62a0c6f25ee7452cf05df025686ef235df6871",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -373043,6 +373609,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 1,
         "lisa": 0,
@@ -373563,7 +374130,7 @@
     },
     {
       "paper_id": "heldout-2026-stoc-08",
-      "record_sha256": "2b388bb4bfc995f934737df777fdb96c8087be80e61a4246cbb9a6a7b3d9f42f",
+      "record_sha256": "22cc3eade40b339c2ca8911886dae10831ea4b97e657a6109cb0bf661b8f23a7",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -374040,6 +374607,7 @@
         "kicss2026": 0,
         "kr": 1,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 5,
         "lisa": 0,
@@ -375054,7 +375622,7 @@
     },
     {
       "paper_id": "heldout-2026-usenix-security-01",
-      "record_sha256": "c942acfdca257c518c474eb7f8075afd0aba5c5d3717ca7a4d95e30a75e84ebf",
+      "record_sha256": "1e2346573657c4c7f871388e381b8e5c68242cabe5ee8791f7baf7b3f4cdc5d6",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 7,
@@ -375531,6 +376099,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 4,
         "lisa": 0,
@@ -376870,7 +377439,7 @@
     },
     {
       "paper_id": "heldout-2026-usenix-security-02",
-      "record_sha256": "80f245434c7e311a958f2f824c3338af592d2961193624982d4807b4c7d32228",
+      "record_sha256": "8e0e55fe4ad084c6198df423c1352f50392547d01d9ca5ac87297824b3ef9540",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -377347,6 +377916,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 6,
@@ -378530,7 +379100,7 @@
     },
     {
       "paper_id": "heldout-2026-usenix-security-03",
-      "record_sha256": "27f67d22629b67cc19799f7bab05b84edb5fa9c930e22f758900923d0a59429a",
+      "record_sha256": "10a34e90a04efba572b1ed44b3ffd739f07295d9d3523b12bec1fc089f6a41c6",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -379007,6 +379577,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 7,
         "lisa": 0,
@@ -380346,7 +380917,7 @@
     },
     {
       "paper_id": "heldout-2026-usenix-security-04",
-      "record_sha256": "d55f41d9692d3284c657a25596b7dda1a25e75d6873798521f06cf3af3fdb346",
+      "record_sha256": "327b86c821b85c4dbd6e591da7081dfe9e45b57348fc048a51b8830ca8d37ac6",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -380823,6 +381394,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 8,
         "lisa": 1,
@@ -382851,7 +383423,7 @@
     },
     {
       "paper_id": "heldout-2026-usenix-security-05",
-      "record_sha256": "016b3b9c9bc1322dca2b40cfa41e1c4dc06aacd72f1e25494a65f0e475d1749a",
+      "record_sha256": "02fb131d8df48809843b2b4513faa91832cdf34e1b5005480189fd475fd4d41c",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -383328,6 +383900,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 4,
         "lisa": 0,
@@ -384927,7 +385500,7 @@
     },
     {
       "paper_id": "heldout-2026-usenix-security-06",
-      "record_sha256": "7c58a584bf80305f40760a30502bd266ef8971be919c0e87cfd55bc5f7d11e06",
+      "record_sha256": "d1fd5a55fa4a8d1cab44633b2c92e26d4f3967e1054e3570ffc98d60cba8b24d",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 4,
@@ -385404,6 +385977,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 9,
         "lisa": 0,
@@ -387315,7 +387889,7 @@
     },
     {
       "paper_id": "heldout-2026-usenix-security-07",
-      "record_sha256": "14871482711f143068fc02d4f0375adf13e3156ff5dc688c337366a8f274636f",
+      "record_sha256": "0b378c7019dd3af357a0631869aedcbc82ef43e5cbe9b1ac4d026d0198f5eef3",
       "semantic_scores": {
         "1st-dl2-international-workshop": 6,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 10,
@@ -387792,6 +388366,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 1,
         "lisa": 0,
@@ -391965,7 +392540,7 @@
     },
     {
       "paper_id": "heldout-2026-usenix-security-08",
-      "record_sha256": "0999e6039e0f8e4833d704f141409be36f935e44073b8d7894167df164ef1b39",
+      "record_sha256": "cf11ec313c119a99e0767b078448fd65b5a38c2df1393aa6feb7f5edc1452975",
       "semantic_scores": {
         "1st-dl2-international-workshop": 3,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 11,
@@ -392442,6 +393017,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 2,
         "lisa": 0,
@@ -395208,6 +395784,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 15,
+          "features": {
+            "lexical_score": 0.25,
+            "semantic_score": 0,
+            "category_overlap": 1,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lics",
           "base_score": 18,
           "features": {
@@ -395326,7 +395915,7 @@
         },
         {
           "venue": "mlsys",
-          "base_score": 53,
+          "base_score": 52,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.14,
@@ -396223,7 +396812,7 @@
         },
         {
           "venue": "uist",
-          "base_score": 13,
+          "base_score": 12,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0,
@@ -396277,7 +396866,7 @@
     },
     {
       "paper_id": "jstage-2026-jsceiii-7-20",
-      "record_sha256": "9dfb4805986a45894c3f014edad09a029c5e3ebf94717f9a4482db950ffeddba",
+      "record_sha256": "685af741afc4c4397c1fb7dff09c509ba95298cc70d025e181607d6b10ab9c9e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 26,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 42,
@@ -396754,6 +397343,7 @@
         "kicss2026": 36,
         "kr": 22,
         "ksem": 16,
+        "lascas": 0,
         "lcn": 0,
         "lics": 17,
         "lisa": 0,
@@ -401395,7 +401985,7 @@
     },
     {
       "paper_id": "pubmed-42058264",
-      "record_sha256": "536205420325848d11c550ebfb13426a2cf34df94b97749638a3f6e7b791766b",
+      "record_sha256": "6d2190cae22b92785d51379d7f1e8efbe7f450842571329ef322b855093eeea0",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -401872,6 +402462,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -402119,7 +402710,7 @@
     },
     {
       "paper_id": "pubmed-42256611",
-      "record_sha256": "2edc842092285d3b37d7ba9a66d12b60547dba131c825a312926597da936276f",
+      "record_sha256": "4d2438e6de79b0cb26f1b936d4644a89a9452f6468d02c4b3c04bafd4686df74",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -402596,6 +403187,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -402830,7 +403422,7 @@
     },
     {
       "paper_id": "pubmed-42265983",
-      "record_sha256": "9e4267bd9d66808f804d4980b16f13f3c4cc14ef54994050cfe9aacc3d2a1314",
+      "record_sha256": "4b3a1ecb122ec4288f961c68089985fc8a64899b82eee0c38e81bfd5b0a15392",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -403307,6 +403899,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -403567,7 +404160,7 @@
     },
     {
       "paper_id": "pubmed-42275298",
-      "record_sha256": "728e5cabf5a7d0537c2ba4b5874192779f7390cd7f86a940dbe4965544a17e60",
+      "record_sha256": "1030f122f246af22fcc6c4091238f3a7679acceea710b75b487d01275e163a0e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -404044,6 +404637,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -404304,7 +404898,7 @@
     },
     {
       "paper_id": "pubmed-42285793",
-      "record_sha256": "6a2014b1cda3e771b6f3d55d52a73452c41a4fc68ae3ec8a6b6384c7675e047c",
+      "record_sha256": "835806583df81ec3d0a2717642d7b7cb7d014de205ca6b4025eac6bcd81f1e2b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -404781,6 +405375,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -406068,7 +406663,7 @@
     },
     {
       "paper_id": "pubmed-42296148",
-      "record_sha256": "fff31cd33284a1ab44400fe222c6f5941200c84945f41bf652f5be3693e6eb63",
+      "record_sha256": "df6120dc06d506fc0c5954b52e951bbd8077b3c9792cef97df44c0d8c68bdd9f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -406545,6 +407140,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -406753,7 +407349,7 @@
     },
     {
       "paper_id": "pubmed-42304957",
-      "record_sha256": "70afa3bb4cf642403d654fe7058f5322b848a9e0fd504fb612afe9a990284add",
+      "record_sha256": "3b4ef358d6a903599a988c0d443f285cedd5033bfc617b3e1d220f4ca2876c56",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -407230,6 +407826,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -407451,7 +408048,7 @@
     },
     {
       "paper_id": "pubmed-42308349",
-      "record_sha256": "95d8cf63d960ec3ccdb7f2d38c2058d9b7a4bf4ddc236848f2552300f9833f3e",
+      "record_sha256": "00b40a5b9817e76bce6edef271eaf101791945d5f7558ca0feef1f18d3234212",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -407928,6 +408525,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -408162,7 +408760,7 @@
     },
     {
       "paper_id": "pubmed-42319344",
-      "record_sha256": "a0e25ada8bea2ed6e068c3972805a8a911c367d89573cb5d22ccb7f1b28533bc",
+      "record_sha256": "445614a0d995a4aaad16881c8a865b68bab279cab358841ed0818afe31edfabf",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -408639,6 +409237,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -408886,7 +409485,7 @@
     },
     {
       "paper_id": "pubmed-42322272",
-      "record_sha256": "447650c303783c0419944f9a6a1788fb1b4adacb6b690fff0f52f01d8b03b8f5",
+      "record_sha256": "eca4e4fca4ac42cb93b6a0fc4fd383d5dc053c00562ba254d3c25b3ec5dce7b4",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -409363,6 +409962,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -409649,7 +410249,7 @@
     },
     {
       "paper_id": "pubmed-42324593",
-      "record_sha256": "b5dbdf9b247b8aa6749547613b56b6d469a8194111cf513577cd33e1ea5dd6c6",
+      "record_sha256": "861b19b6d7cb679f29f546b0bb681300a47df445fe7cd575eb2a31c44506447f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -410126,6 +410726,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -410386,7 +410987,7 @@
     },
     {
       "paper_id": "pubmed-42329179",
-      "record_sha256": "dedd32e4fc81ba500b9cf95358a5424b34712aaf5f55e7ce067a17388a2ebd8c",
+      "record_sha256": "6b40112ff823c8b9a1c5b2129750336df85b887290c31528eec0e4c9b416be0a",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -410863,6 +411464,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -411071,7 +411673,7 @@
     },
     {
       "paper_id": "pubmed-42337391",
-      "record_sha256": "994ac0d8eb41eae733dcadebd85666837d56597d51cf229df8e879e6dd59f902",
+      "record_sha256": "a7866a2c24dbfd121bda711b2acbda02aeff23d17f9fa50444f43471121b1d63",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -411548,6 +412150,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -412185,7 +412788,7 @@
     },
     {
       "paper_id": "pubmed-42342482",
-      "record_sha256": "5f9955766122d7d17dcff7d65720cbb2b4b0eff541337ca838a3c1c32eed1b77",
+      "record_sha256": "96c0c94ece914de5dbd18712a092491a73b023f13356d215522fd05f4999ee73",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -412662,6 +413265,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -414846,7 +415450,7 @@
     },
     {
       "paper_id": "pubmed-42345355",
-      "record_sha256": "de1971a228a8f54debf43aed17a7598a6c4940e9f70b4be605a158828e8d35eb",
+      "record_sha256": "80938893ca987e63fadd1effda21cd420abaa04f55282f07cbf5fb0d0c011fa6",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -415323,6 +415927,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -415739,7 +416344,7 @@
     },
     {
       "paper_id": "pubmed-42359636",
-      "record_sha256": "f5ab6215d1e2040364ee8f4271d40bc38df68eb693a541b16106c70712e90658",
+      "record_sha256": "a6d4f660d992e919e2c66a1102dcd9671fa2989617f9c8889c2f506d3dfa9e8f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -416216,6 +416821,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -416463,7 +417069,7 @@
     },
     {
       "paper_id": "pubmed-42371677",
-      "record_sha256": "799e2d111550f71d52716504f2f7ef06c3bece8447116ec6d41c07f85521193e",
+      "record_sha256": "252a38c451aae69af168ca5ce5504d75d9eff42a9457da135efe29aeeb902b01",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -416940,6 +417546,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -417161,7 +417768,7 @@
     },
     {
       "paper_id": "pubmed-42376755",
-      "record_sha256": "b760fdb6f2f2e42d65ee92c1924c011ebc1e6ded493e701a37cf16363f1849c3",
+      "record_sha256": "9103996993a8106e220634f09ad19a942ade417622944d4b2688ee415475f6a4",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -417638,6 +418245,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -417846,7 +418454,7 @@
     },
     {
       "paper_id": "pubmed-42377119",
-      "record_sha256": "f5ed97733b60e1a47dd87ca3f61e6709c625a3d799454d7359be300e341b80a5",
+      "record_sha256": "65503b62a3b303387f704767067250fac3a3a923e93fce370c61982261c04f8a",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -418323,6 +418931,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -418531,7 +419140,7 @@
     },
     {
       "paper_id": "pubmed-42393830",
-      "record_sha256": "a965fbd6687931f7491c4ffcfb5de1bb0b08ed46ae701c142710a72cc42da7b1",
+      "record_sha256": "b617ec89b5fbc0e524d17223c1739b8ec633f91fea38a6c31489e03df5003ca3",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -419008,6 +419617,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -419307,7 +419917,7 @@
     },
     {
       "paper_id": "pubmed-42393838",
-      "record_sha256": "c116a8d3cefd35b575d821363cd63c5de0bd23273a221f9f66b2d1ee73a1fa10",
+      "record_sha256": "86c59b241fbf0cf935d4cfa5d8d16e0242ff767da57e30be5b94a60c8decaff1",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -419784,6 +420394,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -420096,7 +420707,7 @@
     },
     {
       "paper_id": "pubmed-42411636",
-      "record_sha256": "b1cb1ee81ad176ace004f057472adbcbb47863135c4e424c6d2ae7b9db1931bd",
+      "record_sha256": "3f5b5ba071c023697d5298e3ef8e4a757e8a9a3264486c465846a07b77148137",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -420573,6 +421184,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -420937,7 +421549,7 @@
     },
     {
       "paper_id": "pubmed-42421228",
-      "record_sha256": "56461d7c1dbb0f818cc367d2272365346afdac21c91c1a49447361ca55f2de39",
+      "record_sha256": "3c808a11f55179b21fcf5042e4b96411d92a69a38d91b6c78d0333d354f2c101",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -421414,6 +422026,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -421648,7 +422261,7 @@
     },
     {
       "paper_id": "pubmed-42424525",
-      "record_sha256": "699fe4248f114f743a7ccf0fdc77d24379e0c5dd94175cae71c5ca642e8ffddc",
+      "record_sha256": "abc05ddcd9a5a410d72e5cfea19e3478dcc7127c958ed62ec03898e5ba0cc8d5",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -422125,6 +422738,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -422619,7 +423233,7 @@
     },
     {
       "paper_id": "pubmed-42430190",
-      "record_sha256": "1c76f8f47b0c81e9dfda2987eee082925401720b218f5eec16a9d31106bc788e",
+      "record_sha256": "5224a549d13c2d071f981e640608deac73884284780eab3d4bbda6cbc427808b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -423096,6 +423710,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -423343,7 +423958,7 @@
     },
     {
       "paper_id": "pubmed-42441083",
-      "record_sha256": "190e1edcf533f070a177422e52404c77243e45e741937b13a591ed980c1c5a7d",
+      "record_sha256": "5634fe880f1a2cb3d24dce8a3166606bd8ab9fa8a5df4a2617aab09a01adaabf",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -423820,6 +424435,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -424041,7 +424657,7 @@
     },
     {
       "paper_id": "pubmed-42454507",
-      "record_sha256": "516190fe6e31059f37cd03471510912d327f21e99c0453d87ed4e4ded8c69f1c",
+      "record_sha256": "a9f676472fde85916a72e81d886cd1fdd3e1e9684331a8f1ee6f658e2f6bb0f2",
       "semantic_scores": {
         "1st-dl2-international-workshop": 4,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 4,
@@ -424518,6 +425134,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -427677,7 +428294,7 @@
     },
     {
       "paper_id": "pubmed-42476202",
-      "record_sha256": "039b70ce84262c1af85a59d2a8b1e0b94badf4170e44a6adfb822ce168b6aa38",
+      "record_sha256": "ef2249a27cd17ead0a8788a9c399550526f19effa68c180e1b6a0f7b9983663e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -428154,6 +428771,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -428375,7 +428993,7 @@
     },
     {
       "paper_id": "pubmed-42502958",
-      "record_sha256": "f93c93c14a7fece4ecb9904b9bfd4469d7f61cdd4cc2d4696f270c1cbbb56d23",
+      "record_sha256": "2cd9f7b0cca2f47e2bcec2c9c9d9b96af1ffe27b9dfb04e2466935e7d3bc8549",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -428852,6 +429470,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -429151,7 +429770,7 @@
     },
     {
       "paper_id": "pubmed-42518517",
-      "record_sha256": "53efe76bfc45003848822b139b1753e73e39d31466e8ab33f10f2a823b0aedc0",
+      "record_sha256": "949e6f4c7a3228f1706d580bcd3826768cc4ddaa082cede511902b4cbc9e50de",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -429628,6 +430247,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -431458,6 +432078,19 @@
           }
         },
         {
+          "venue": "lascas",
+          "base_score": 25,
+          "features": {
+            "lexical_score": 0.25,
+            "semantic_score": 0,
+            "category_overlap": 1,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
+        },
+        {
           "venue": "lisa",
           "base_score": 25,
           "features": {
@@ -432111,7 +432744,7 @@
     },
     {
       "paper_id": "pubmed-42522093",
-      "record_sha256": "c658d0dab5298680275d31658983b01b0cd75213b6b23d08f08bce5a6644d329",
+      "record_sha256": "70ef4bad57c47b500fe4c7db5b1ac40efb4c2d869cfc2d222f6fd0a123604781",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -432588,6 +433221,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -432796,7 +433430,7 @@
     },
     {
       "paper_id": "pubmed-42522137",
-      "record_sha256": "ffcc114e242a77f5b62e7b66d2f296c656b2bcc90399d788d68e463ddd7a4eb6",
+      "record_sha256": "c4b454559fabb42b99a8be7c2d8d020731441578344cc73c6fa341ad086f85fd",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -433273,6 +433907,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -433637,7 +434272,7 @@
     },
     {
       "paper_id": "pubmed-42524027",
-      "record_sha256": "a1db20310e0239a0d1957b485990865b32a2ac5efe2f24d16046ca23543d7275",
+      "record_sha256": "be136ad83c681fd3233aa984043d531b12b0231f36d9ab1913bb6ddaf7df558b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 6,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 17,
@@ -434114,6 +434749,7 @@
         "kicss2026": 7,
         "kr": 5,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -437338,7 +437974,7 @@
     },
     {
       "paper_id": "pubmed-42525450",
-      "record_sha256": "381dfbaeac77ffc445bf4e3f92168c385a7b90dcc05d9a1d3e5e129ed42a040e",
+      "record_sha256": "cae62cb5b7b259d1d8fa0e5af33fc98ff82c56a1dccea74e41173f99ea8fb4f4",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -437815,6 +438451,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -438023,7 +438660,7 @@
     },
     {
       "paper_id": "pubmed-42530085",
-      "record_sha256": "a0ac0c3afcf74474ffff863ffd8b70d0f119ad7ed6d6b7c517cfa6d85dc3f11d",
+      "record_sha256": "3ae454bab01f3b3143b608ccacf9dd33123af8425ea98edc945b491dfeb7f487",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -438500,6 +439137,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -438734,7 +439372,7 @@
     },
     {
       "paper_id": "pubmed-42592018",
-      "record_sha256": "92d6f031000cf168ea849bc1546eef48a17143fd73dd5e456a5af3438661589e",
+      "record_sha256": "08e954fc5efd7271d00e6e7ce3ffca3937a1b3d96281a1a0b5b945f89de8b130",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -439211,6 +439849,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -439445,7 +440084,7 @@
     },
     {
       "paper_id": "pubmed-42596076",
-      "record_sha256": "83524792853a2ab43531eebe3c4b4f0184cf4e7553b7cfdac886c3fdadc03637",
+      "record_sha256": "596aad40feebc7ccc9a183afb7471715d33794aaff4932c85bb8c04a38d70db7",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -439922,6 +440561,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -440130,7 +440770,7 @@
     },
     {
       "paper_id": "pubmed-42602348",
-      "record_sha256": "a86d138ff7997505ead7e4f54871690a071ebda896ece8830f9af7fb7bfaf048",
+      "record_sha256": "ec956771bb7505fceb1351739a1f8d391b0179b920253506f29ceff81f840737",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -440607,6 +441247,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -440841,7 +441482,7 @@
     },
     {
       "paper_id": "pubmed-42609944",
-      "record_sha256": "5cecd917ddc9bb46dcce7543753dd61814a47a81da76bd08e25d9d5365ff9bcf",
+      "record_sha256": "cc14fc5b279525caad39e7b18db6ad656ac7f21c24a8b2316ff9051d6427f1a9",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 7,
@@ -441318,6 +441959,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
@@ -444724,7 +445366,7 @@
     },
     {
       "paper_id": "pubmed-42621251",
-      "record_sha256": "75e46d14d4b8d5658a7266ba5cf5b3b702e497807d573e6e077becdc37a5e288",
+      "record_sha256": "29eabc036c807d002ac086fdb143a6baea2f1ba74d5b3a30d78cd0d28cfe4938",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -445201,6 +445843,7 @@
         "kicss2026": 0,
         "kr": 0,
         "ksem": 0,
+        "lascas": 0,
         "lcn": 0,
         "lics": 0,
         "lisa": 0,
