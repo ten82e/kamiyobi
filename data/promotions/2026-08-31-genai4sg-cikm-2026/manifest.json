@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "2026-08-31-genai4sg-cikm-2026",
+  "observations": {
+    "sha256": "04386e1d4fecd54d165d3cf86f1620e0bf5be5b019062036e90c61af089401ed"
+  },
+  "resolutions": {
+    "sha256": "ab04140f136393e31a9ae0066f10fca1233d459069acfbe8d6ec915254a22b6d"
+  },
+  "extra": {
+    "sha256": "5eaab9c173c0086c1055250e9393449dfdc4ce399ada7db05736c7fa457a3567"
+  },
+  "bodies": [
+    {
+      "path": "bodies/78e838df21338c35405deb432ec11c68d4c17ffbc9e55a964a9921df7915eab1.body",
+      "sha256": "78e838df21338c35405deb432ec11c68d4c17ffbc9e55a964a9921df7915eab1"
+    },
+    {
+      "path": "bodies/b8eaad25f2fd07862684f630e200c51d94564ba54e0658905bed0456748de3dc.body",
+      "sha256": "b8eaad25f2fd07862684f630e200c51d94564ba54e0658905bed0456748de3dc"
+    }
+  ],
+  "decisions": {
+    "genai4sg": "promote"
+  }
+}

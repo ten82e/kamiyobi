@@ -1,0 +1,36 @@
+conferences:
+  - categories:
+      - ai
+    editions:
+      - date_text: '2026-11-08'
+        deadlines:
+          - date: '2026-09-13'
+            evidence:
+              - contentHash: 78e838df21338c35405deb432ec11c68d4c17ffbc9e55a964a9921df7915eab1
+                rawExcerpt: <tr><td>Submission deadline</td><td>September 13, 2026</td></tr>
+                retrievedAt: '2026-08-30T18:15:21.044Z'
+                sourceClass: official-cfp
+                sourceRevision: sha256:78e838df21338c35405deb432ec11c68d4c17ffbc9e55a964a9921df7915eab1
+                sourceUrl: https://easychair.org/cfp/genai4sg-cikm2026
+                verifiedAt: '2026-08-30T18:16:00Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+            kind: paper
+            label: paper
+            precision: date-only
+            round: 1
+            track: ''
+        edition_id: genai4sg-2026
+        event_end: '2026-11-08'
+        event_start: '2026-11-08'
+        id: genai4sg-2026
+        year: 2026
+    key: genai4sg
+    link: https://easychair.org/cfp/genai4sg-cikm2026
+    review_state: reviewed
+    tags:
+      - niche
+      - workshop
+    title: GenAI4SG @ CIKM 2026

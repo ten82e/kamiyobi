@@ -1,0 +1,108 @@
+[
+  {
+    "candidate": "genai4sg",
+    "decision": "promote",
+    "verifiedFields": [
+      "venue",
+      "date",
+      "kind",
+      "round",
+      "event_start",
+      "event_end"
+    ],
+    "reason": "primary fields and evidence verified",
+    "verification": {
+      "valid": true,
+      "errors": [],
+      "checkedFields": [
+        "requestedUrl",
+        "finalUrl",
+        "status",
+        "headers",
+        "retrievedAt",
+        "sourceRevision",
+        "bodyHash",
+        "excerpt",
+        "officialDomain",
+        "extractionCandidates",
+        "eventYear",
+        "deadlineDate",
+        "deadlineTime",
+        "deadlineTimezone"
+      ],
+      "bodyHash": "78e838df21338c35405deb432ec11c68d4c17ffbc9e55a964a9921df7915eab1",
+      "sourceRevision": "sha256:78e838df21338c35405deb432ec11c68d4c17ffbc9e55a964a9921df7915eab1",
+      "extractedCandidates": [
+        {
+          "rawExcerpt": "Submission deadline September 13, 2026",
+          "text": "Submission deadline September 13, 2026",
+          "label": "Submission deadline September 13, 2026",
+          "kind": "paper",
+          "date": "2026-09-13",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Tentative paper submission deadline: September 13, 2026",
+          "text": "Tentative paper submission deadline: September 13, 2026",
+          "label": "Tentative paper submission deadline: September 13, 2026",
+          "kind": "paper",
+          "date": "2026-09-13",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Tentative acceptance notification: September 23, 2026",
+          "text": "Tentative acceptance notification: September 23, 2026",
+          "label": "Tentative acceptance notification: September 23, 2026",
+          "kind": "notification",
+          "date": "2026-09-23",
+          "editionYear": 2026
+        }
+      ]
+    },
+    "normalized": {
+      "venue": {
+        "key": "genai4sg",
+        "title": "GenAI4SG @ CIKM 2026",
+        "categories": [
+          "ai"
+        ],
+        "tags": [
+          "niche",
+          "workshop"
+        ],
+        "review_state": "reviewed"
+      },
+      "edition": {
+        "year": 2026,
+        "edition_id": "genai4sg-2026",
+        "date_text": "2026-11-08",
+        "event_start": "2026-11-08",
+        "event_end": "2026-11-08"
+      },
+      "deadline": {
+        "kind": "paper",
+        "label": "paper",
+        "round": 1,
+        "track": "",
+        "precision": "date-only",
+        "date": "2026-09-13",
+        "evidence": [
+          {
+            "sourceClass": "official-cfp",
+            "sourceUrl": "https://easychair.org/cfp/genai4sg-cikm2026",
+            "sourceRevision": "sha256:78e838df21338c35405deb432ec11c68d4c17ffbc9e55a964a9921df7915eab1",
+            "retrievedAt": "2026-08-30T18:15:21.044Z",
+            "verifiedAt": "2026-08-30T18:16:00Z",
+            "contentHash": "78e838df21338c35405deb432ec11c68d4c17ffbc9e55a964a9921df7915eab1",
+            "rawExcerpt": "<tr><td>Submission deadline</td><td>September 13, 2026</td></tr>",
+            "verifiedFields": [
+              "date",
+              "kind",
+              "round"
+            ]
+          }
+        ]
+      }
+    }
+  }
+]
