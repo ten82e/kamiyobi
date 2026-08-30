@@ -1,8 +1,8 @@
 {
-  "schema_version": 3,
-  "observed_at": "2026-08-27T02:26:01.254Z",
+  "observed_at": "2026-08-30T11:51:07Z",
   "parse_warning_count": 0,
   "warning_codes": {},
+  "warning_identities": [],
   "identity_conflicts": {
     "venue": 3,
     "edition": 0,
@@ -33,7 +33,5 @@
         ]
       }
     ]
-  },
-  "slot_conflicts": [],
-  "observe_hour_slots": []
+  }
 }
