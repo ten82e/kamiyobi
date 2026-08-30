@@ -1,0 +1,105 @@
+[
+  {
+    "candidate": "wcm-agentic-ai-unmanned",
+    "decision": "promote",
+    "verifiedFields": [
+      "venue",
+      "date",
+      "kind",
+      "round"
+    ],
+    "reason": "primary fields and evidence verified",
+    "verification": {
+      "valid": true,
+      "errors": [],
+      "checkedFields": [
+        "requestedUrl",
+        "finalUrl",
+        "status",
+        "headers",
+        "retrievedAt",
+        "sourceRevision",
+        "bodyHash",
+        "excerpt",
+        "officialDomain",
+        "extractionCandidates",
+        "eventYear",
+        "deadlineDate",
+        "deadlineTime",
+        "deadlineTimezone"
+      ],
+      "bodyHash": "7238cfba9ecf5eaffae6ecb6b86a1fdae90e4c2c28669f5a458965491c5d06a2",
+      "sourceRevision": "\"1787966809-gzip\"",
+      "extractedCandidates": [
+        {
+          "rawExcerpt": "Manuscript Submission Deadline: 15 September 2026 (Extended Deadline)",
+          "text": "Manuscript Submission Deadline: 15 September 2026 (Extended Deadline)",
+          "label": "Manuscript Submission Deadline: 15 September 2026 (Extended Deadline)",
+          "kind": "paper",
+          "date": "2026-09-15",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Revised Manuscript Due: 1 December 2026",
+          "text": "Revised Manuscript Due: 1 December 2026",
+          "label": "Revised Manuscript Due: 1 December 2026",
+          "kind": "paper",
+          "date": "2026-12-01",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Final Manuscript Due: 1 March 2027",
+          "text": "Final Manuscript Due: 1 March 2027",
+          "label": "Final Manuscript Due: 1 March 2027",
+          "kind": "paper",
+          "date": "2027-03-01",
+          "editionYear": 2027
+        }
+      ]
+    },
+    "normalized": {
+      "venue": {
+        "key": "wcm-agentic-ai-unmanned",
+        "title": "IEEE WCM Special Issue: Agentic AI-Enabled Networking for Heterogeneous Unmanned Systems in Low-Altitude Environments",
+        "categories": [
+          "ai",
+          "networking"
+        ],
+        "tags": [
+          "niche",
+          "special-issue"
+        ],
+        "review_state": "reviewed"
+      },
+      "edition": {
+        "year": 2027,
+        "edition_id": "wcm-agentic-ai-unmanned-2027",
+        "date_text": "2027"
+      },
+      "deadline": {
+        "kind": "paper",
+        "label": "paper",
+        "round": 1,
+        "track": "",
+        "precision": "date-only",
+        "date": "2026-09-15",
+        "evidence": [
+          {
+            "sourceClass": "publisher",
+            "sourceUrl": "https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp/agentic-ai-enabled-networking-heterogeneous-unmanned-systems-low-altitude-environments",
+            "sourceRevision": "\"1787966809-gzip\"",
+            "retrievedAt": "2026-08-30T19:13:23.748Z",
+            "verifiedAt": "2026-08-30T19:15:00Z",
+            "contentHash": "7238cfba9ecf5eaffae6ecb6b86a1fdae90e4c2c28669f5a458965491c5d06a2",
+            "rawExcerpt": "<strong>Manuscript Submission Deadline:</strong> 15 September 2026 (Extended Deadline)",
+            "verifiedFields": [
+              "date",
+              "kind",
+              "round"
+            ]
+          }
+        ]
+      }
+    }
+  }
+]

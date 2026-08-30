@@ -6132,3 +6132,32 @@ conferences:
                 verifiedAt: '2026-08-30T18:47:30Z'
                 verifiedFields: [date]
                 rawExcerpt: '→ <strong>07.09.2026 (Extended)</strong>'
+
+  # 証拠: data/promotions/2026-08-31-wcm-agentic-ai-2027/manifest.json
+  # IEEE ComSoc 公式 CFP は投稿締切を 2026-09-15 へ延長し、
+  # 発行予定を June 2027 と明記する。時刻・タイムゾーンは掲載されない。
+  - key: wcm-agentic-ai-unmanned
+    title: 'IEEE WCM Special Issue: Agentic AI-Enabled Networking'
+    full_name: Agentic AI-Enabled Networking for Heterogeneous Unmanned Systems in Low-Altitude Environments (IEEE Wireless Communications Special Issue)
+    link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp/agentic-ai-enabled-networking-heterogeneous-unmanned-systems-low-altitude-environments
+    categories: [ai, networking]
+    tags: [niche, special-issue]
+    editions:
+      - year: 2027
+        id: wcm-agentic-ai-unmanned-2027
+        link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp/agentic-ai-enabled-networking-heterogeneous-unmanned-systems-low-altitude-environments
+        deadlines:
+          - kind: paper
+            label: Manuscript submission deadline (extended)
+            round: 1
+            date: '2026-09-15'
+            precision: date-only
+            evidence:
+              - sourceClass: publisher
+                sourceUrl: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp/agentic-ai-enabled-networking-heterogeneous-unmanned-systems-low-altitude-environments
+                contentHash: 7238cfba9ecf5eaffae6ecb6b86a1fdae90e4c2c28669f5a458965491c5d06a2
+                sourceRevision: '"1787966809-gzip"'
+                retrievedAt: '2026-08-30T19:13:23.748Z'
+                verifiedAt: '2026-08-30T19:15:00Z'
+                verifiedFields: [date, kind, round]
+                rawExcerpt: '<strong>Manuscript Submission Deadline:</strong> 15 September 2026 (Extended Deadline)'
