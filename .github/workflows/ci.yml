@@ -18,7 +18,7 @@ jobs:
         with: { node-version: '24', cache: npm }
       - name: Install dependencies (with retry)
         run: |
-          for i in 1 2 3; do npm ci && break || sleep 15; done
+          for i in 1 2 3; do npm ci && break; [ "$i" -lt 3 ] || exit 1; sleep 15; done
       - run: npm run typecheck
   lint:
     runs-on: ubuntu-latest
@@ -29,7 +29,7 @@ jobs:
         with: { node-version: '24', cache: npm }
       - name: Install dependencies (with retry)
         run: |
-          for i in 1 2 3; do npm ci && break || sleep 15; done
+          for i in 1 2 3; do npm ci && break; [ "$i" -lt 3 ] || exit 1; sleep 15; done
       - run: npm run check
   unit-integration-tests:
     runs-on: ubuntu-latest
@@ -40,7 +40,7 @@ jobs:
         with: { node-version: '24', cache: npm }
       - name: Install dependencies (with retry)
         run: |
-          for i in 1 2 3; do npm ci && break || sleep 15; done
+          for i in 1 2 3; do npm ci && break; [ "$i" -lt 3 ] || exit 1; sleep 15; done
       - name: Build real-data test fixture
         run: node src/cli.ts build --out public --offline --no-embeddings --cache /tmp/kamiyobi-test-cache --now 2026-08-09T00:00:00Z
       - run: npm test
@@ -53,7 +53,7 @@ jobs:
         with: { node-version: '24', cache: npm }
       - name: Install dependencies (with retry)
         run: |
-          for i in 1 2 3; do npm ci && break || sleep 15; done
+          for i in 1 2 3; do npm ci && break; [ "$i" -lt 3 ] || exit 1; sleep 15; done
       - run: node src/cli.ts build --out /tmp/kamiyobi-offline-site --offline --no-embeddings --cache /tmp/kamiyobi-offline-cache --now 2026-08-09T00:00:00Z
       - name: Check offline result
         run: |
@@ -78,7 +78,7 @@ jobs:
         with: { node-version: '24', cache: npm }
       - name: Install dependencies (with retry)
         run: |
-          for i in 1 2 3; do npm ci && break || sleep 15; done
+          for i in 1 2 3; do npm ci && break; [ "$i" -lt 3 ] || exit 1; sleep 15; done
       - run: npm run validate:data -- --json
   health-transition:
     runs-on: ubuntu-latest
@@ -89,7 +89,7 @@ jobs:
         with: { node-version: '24', cache: npm }
       - name: Install dependencies (with retry)
         run: |
-          for i in 1 2 3; do npm ci && break || sleep 15; done
+          for i in 1 2 3; do npm ci && break; [ "$i" -lt 3 ] || exit 1; sleep 15; done
       - run: npm test -- --run tests/health_gate.test.ts
   production-health-self-check:
     runs-on: ubuntu-latest
@@ -100,7 +100,7 @@ jobs:
         with: { node-version: '24', cache: npm }
       - name: Install dependencies (with retry)
         run: |
-          for i in 1 2 3; do npm ci && break || sleep 15; done
+          for i in 1 2 3; do npm ci && break; [ "$i" -lt 3 ] || exit 1; sleep 15; done
       - name: Build offline production data
         run: node src/cli.ts build --out /tmp/kamiyobi-self-check --offline --no-embeddings --cache /tmp/kamiyobi-cache --now 2026-08-09T00:00:00Z
       - name: Validate production data schema
@@ -129,7 +129,7 @@ jobs:
         with: { node-version: '24', cache: npm }
       - name: Install dependencies (with retry)
         run: |
-          for i in 1 2 3; do npm ci && break || sleep 15; done
+          for i in 1 2 3; do npm ci && break; [ "$i" -lt 3 ] || exit 1; sleep 15; done
       - name: Build current recommendation index
         run: node src/cli.ts build --out /tmp/kamiyobi-current-recommendation --offline --no-embeddings --cache /tmp/kamiyobi-cache --now 2026-08-09T00:00:00Z
       - name: Build pull-request base recommendation index
