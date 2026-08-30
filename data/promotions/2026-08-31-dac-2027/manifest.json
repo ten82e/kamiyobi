@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "id": "2026-08-31-dac-2027",
+  "observations": {
+    "sha256": "46af036be7bb31ab77803c38b1b4c06d738b7ec2cb735a8d1ecc5a02fd5c5607"
+  },
+  "resolutions": {
+    "sha256": "28fda8edecb3a07ed05f0592206273f2de8cdb17f86fd9a56ea84a3bef34be10"
+  },
+  "extra": {
+    "sha256": "15be924ae6b2639beeb10c97fce3c1a30e35f13a8d2d8ac5a9ccd4b302113d22"
+  },
+  "bodies": [
+    {
+      "path": "bodies/0897bd33c86b3a97f0021ccac945af4a870fc246915caef34644da738dd9117b.body",
+      "sha256": "0897bd33c86b3a97f0021ccac945af4a870fc246915caef34644da738dd9117b"
+    }
+  ],
+  "decisions": {
+    "dac": "promote"
+  }
+}

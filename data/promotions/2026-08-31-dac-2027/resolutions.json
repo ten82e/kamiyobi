@@ -1,0 +1,89 @@
+[
+  {
+    "candidate": "dac",
+    "decision": "promote",
+    "verifiedFields": [
+      "venue",
+      "date",
+      "kind",
+      "round",
+      "event_start",
+      "event_end"
+    ],
+    "reason": "primary fields and evidence verified",
+    "verification": {
+      "valid": true,
+      "errors": [],
+      "checkedFields": [
+        "requestedUrl",
+        "finalUrl",
+        "status",
+        "headers",
+        "retrievedAt",
+        "sourceRevision",
+        "bodyHash",
+        "excerpt",
+        "officialDomain",
+        "extractionCandidates",
+        "eventYear",
+        "deadlineDate",
+        "deadlineTime",
+        "deadlineTimezone"
+      ],
+      "bodyHash": "0897bd33c86b3a97f0021ccac945af4a870fc246915caef34644da738dd9117b",
+      "sourceRevision": "W/\"6a91eab9-4abc9\"",
+      "extractedCandidates": [
+        {
+          "rawExcerpt": "Manuscript Submission Deadline November 17, 2026",
+          "text": "Manuscript Submission Deadline November 17, 2026",
+          "label": "Manuscript Submission Deadline November 17, 2026",
+          "kind": "paper",
+          "date": "2026-11-17",
+          "editionYear": 2026
+        }
+      ]
+    },
+    "normalized": {
+      "venue": {
+        "key": "dac",
+        "title": "DAC",
+        "categories": [
+          "systems"
+        ],
+        "tags": [],
+        "review_state": "reviewed"
+      },
+      "edition": {
+        "year": 2027,
+        "edition_id": "dac-2027",
+        "date_text": "2027-07-11",
+        "event_start": "2027-07-11",
+        "event_end": "2027-07-14"
+      },
+      "deadline": {
+        "kind": "paper",
+        "label": "paper",
+        "round": 1,
+        "track": "",
+        "precision": "date-only",
+        "date": "2026-11-17",
+        "evidence": [
+          {
+            "sourceClass": "official-cfp",
+            "sourceUrl": "https://dac.com/2026/events/manuscript-submission-deadline",
+            "sourceRevision": "W/\"6a91eab9-4abc9\"",
+            "retrievedAt": "2026-08-30T22:24:34.720Z",
+            "verifiedAt": "2026-08-30T22:25:00Z",
+            "contentHash": "0897bd33c86b3a97f0021ccac945af4a870fc246915caef34644da738dd9117b",
+            "rawExcerpt": "November 17, 2026",
+            "verifiedFields": [
+              "date",
+              "kind",
+              "round"
+            ]
+          }
+        ]
+      }
+    }
+  }
+]
