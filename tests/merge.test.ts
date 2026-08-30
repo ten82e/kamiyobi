@@ -15,6 +15,7 @@ import {
   dedupDeadlinesAfterRollforward,
   mergeDeadlineSlots,
   mergeSources,
+  normalizeConfiguredVenueIdentities,
   rankOk,
   rollforward,
   sanitizeEditions,
@@ -515,6 +516,87 @@ describe("merge_sources", () => {
       mergeSources([[conference("ccfddl", ccf)], [conference("local", local)]], PRIORITY)[0]
         .editions,
     ).toHaveLength(1);
+  });
+
+  it("merges only explicitly configured cross-source edition IDs after a schedule change", () => {
+    const evidence = (sourceName: string) => [
+      {
+        source_name: sourceName,
+        source_url: `https://example.org/${sourceName}`,
+        observed_at: "2026-08-30T00:00:00Z",
+        original_value: "2025-05-14 23:59:59",
+        confidence: "aggregator" as const,
+      },
+    ];
+    const conference = (source: string, edition: Edition): Conference =>
+      makeConference({
+        key: "venue",
+        title: "Venue",
+        identity: { venueId: "venue" },
+        sources: [source],
+        editions: [edition],
+      });
+    const oldSchedule = makeEdition({
+      year: 2026,
+      edition_id: "venue26",
+      source: "ccfddl",
+      event_start: new Date(Date.UTC(2026, 2, 23)),
+      event_end: new Date(Date.UTC(2026, 2, 26)),
+      deadlines: [
+        {
+          ...makeDeadline("abstract", "Abstract submission", utc(2025, 5, 14, 23, 59, 59)),
+          evidence: evidence("ccfddl"),
+        },
+      ],
+      identity: { sourceIds: { ccfddl: "venue26" } },
+    });
+    const currentSchedule = makeEdition({
+      ...oldSchedule,
+      source: "aideadlines",
+      event_start: new Date(Date.UTC(2026, 6, 13)),
+      event_end: new Date(Date.UTC(2026, 6, 16)),
+      deadlines: [
+        {
+          ...makeDeadline("abstract", "Abstract submission deadline", utc(2025, 5, 14, 23, 59, 59)),
+          evidence: evidence("aideadlines"),
+        },
+      ],
+      identity: { sourceIds: { aideadlines: "venue26" } },
+    });
+    const config = {
+      ...PRIORITY,
+      edition_identities: {
+        "venue-2026": { source_ids: { aideadlines: "venue26", ccfddl: "venue26" } },
+      },
+    };
+
+    const merged = mergeSources(
+      [[conference("ccfddl", oldSchedule)], [conference("aideadlines", currentSchedule)]],
+      config,
+    )[0];
+    expect(merged.editions).toHaveLength(1);
+    expect(merged.editions[0].event_start).toEqual(currentSchedule.event_start);
+    expect(merged.editions[0].deadlines).toHaveLength(1);
+    expect(
+      (merged.editions[0].deadlines[0].evidence ?? []).map((item) => item.source_name).sort(),
+    ).toEqual(["aideadlines", "ccfddl"]);
+
+    const restored = normalizeConfiguredVenueIdentities(
+      [
+        makeConference({
+          ...merged,
+          editions: [oldSchedule, currentSchedule],
+          sources: ["aideadlines", "ccfddl"],
+        }),
+      ],
+      config,
+    )[0];
+    expect(restored.editions).toHaveLength(1);
+    expect(restored.editions[0].event_start).toEqual(currentSchedule.event_start);
+    expect(restored.editions[0].deadlines).toHaveLength(1);
+    expect(
+      (restored.editions[0].deadlines[0].evidence ?? []).map((item) => item.source_name).sort(),
+    ).toEqual(["aideadlines", "ccfddl"]);
   });
 
   it("keeps primary slot updates isolated, supports remove, precision upgrade and conflicts", () => {

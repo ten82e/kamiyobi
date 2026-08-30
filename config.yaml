@@ -34,6 +34,13 @@ venue_identities:
   pacificvis: {source_ids: {ccfddl: CG/PacificVis, local: pacificvis}}
   www: {source_ids: {aideadlines: www, ccfddl: MX/www}}
 
+# URL・会期・開催地が上流間で変わった同一開催回だけを明示的に結ぶ。
+# 年や source-local ID の偶然一致だけでは統合しない。
+edition_identities:
+  iui-2026: {source_ids: {aideadlines: iui26, ccfddl: iui26}}
+  miccai-2026: {source_ids: {aideadlines: miccai26, ccfddl: miccai26}}
+  neurips-2025: {source_ids: {aideadlines: neurips25, ccfddl: nips25}}
+
 # Primary の締切は開催日からこの日数以内に限る。会期不明なら開催年と前年を許可する。
 primary:
   max_lead_days: 550
