@@ -4,8 +4,9 @@
  * 無視して、実質変更のときだけ 1 を返すことを保証する。
  */
 
+import { statSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { compareToHead, normalizeData } from "../scripts/compare-head.ts";
+import { compareToHead, normalizeData, readFromHead } from "../scripts/compare-head.ts";
 
 describe("normalizeData", () => {
   it("drops top-level generated_at", () => {
@@ -124,6 +125,12 @@ describe("normalizeData", () => {
 });
 
 describe("compareToHead", () => {
+  it("reads tracked files larger than execFileSync's default buffer", () => {
+    const path = "data/snapshot.json";
+    expect(statSync(path).size).toBeGreaterThan(1024 * 1024);
+    expect(readFromHead(path)).not.toBeNull();
+  });
+
   it("returns 0 when the working tree matches HEAD", () => {
     // data/snapshot.json は HEAD と同一（このテストが変更を加えていない前提）。
     expect(compareToHead("data/snapshot.json")).toBe(0);

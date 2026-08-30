@@ -119,6 +119,20 @@ function parseFile(text: string): unknown {
   }
 }
 
+/** HEAD 版を読む。snapshot.json は Node の既定 1 MiB バッファを超える。 */
+export function readFromHead(path: string): unknown {
+  try {
+    return parseFile(
+      execFileSync("git", ["show", `HEAD:${path}`], {
+        encoding: "utf8",
+        maxBuffer: 64 * 1024 * 1024,
+      }),
+    );
+  } catch {
+    return null;
+  }
+}
+
 /**
  * ワークツリーの path と HEAD 版を実質比較する。
  * 1 = 実質変更あり / 0 = 変更なし・どちらかが読めない（コミットしない）。
@@ -130,16 +144,7 @@ export function compareToHead(path: string): 0 | 1 {
   } catch {
     next = null;
   }
-  let prev: unknown = null;
-  try {
-    prev = parseFile(
-      execFileSync("git", ["show", `HEAD:${path}`], {
-        encoding: "utf8",
-      }),
-    );
-  } catch {
-    prev = null;
-  }
+  const prev = readFromHead(path);
   const prevNorm = normalizeData(prev, path);
   const nextNorm = normalizeData(next, path);
   // 読めない側は書きかけとみなし、コミット対象にしない。
