@@ -153,6 +153,49 @@ describe("promotion batch", () => {
     expect(event).not.toHaveProperty("timezone");
   });
 
+  it("extracts a deadline whose label and date are in adjacent blocks", () => {
+    expect(
+      extractCfpCandidates("<h1>Manuscript Submission Deadline</h1><p>November 17, 2026</p>"),
+    ).toMatchObject([{ date: "2026-11-17", kind: "paper" }]);
+  });
+
+  it.each(["Preconference", "Eventual"])(
+    "consumes a combined adjacent date line once: %s",
+    (prefix) => {
+      expect(
+        extractCfpCandidates(`<h1>Paper Deadline</h1><p>${prefix} November 20, 2026</p>`),
+      ).toHaveLength(1);
+    },
+  );
+
+  it.each(["Conference Date", "Submissions Open", "Workshop starts", "Another milestone begins"])(
+    "does not treat an adjacent %s label as a deadline",
+    (label) => {
+      expect(extractCfpCandidates(`<h1>${label}</h1><p>November 17, 2026</p>`)).toEqual([]);
+    },
+  );
+
+  it.each([
+    "Submissions open November 20, 2026",
+    "Event November 20, 2026",
+    "Conference begins November 20, 2026",
+  ])("does not fall through to a blocked adjacent date line: %s", (line) => {
+    expect(extractCfpCandidates(`<h1>Paper Deadline</h1><p>${line}</p>`)).toEqual([]);
+  });
+
+  it("does not treat a page-wide timing rule as an adjacent deadline label", () => {
+    expect(
+      extractCfpCandidates("<p>All deadlines are 23:59 AoE</p><p>November 17, 2026</p>"),
+    ).toEqual([]);
+  });
+
+  it.each([
+    ["Notification: November 18, 2026", "notification"],
+    ["Camera-ready: November 19, 2026", "camera_ready"],
+  ])("preserves an independent adjacent deadline milestone: %s", (line, kind) => {
+    expect(extractCfpCandidates(`<h1>Paper Deadline</h1><p>${line}</p>`)).toMatchObject([{ kind }]);
+  });
+
   it("applies page-wide timing only to the deadline in mixed and opening rows", () => {
     const rows = extractCfpCandidates(
       "Submission Deadline: October 10, 2026; Conference Dates: December 14, 2026\n" +

@@ -296,9 +296,33 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/[ \t\u00a0]+/g, " ");
-  const lines = text
+  const rawLines = text
     .split(/\r?\n/)
     .map((line) => line.trim())
+    .filter(Boolean);
+  const deadlineLabel = /deadline|due|notification|camera[- ]?ready|締切|期限/i;
+  const blockedAdjacentDate =
+    /\b(?:submissions?|events?|conferences?|open(?:s|ing)?|starts?|begins?)\b|開催/i;
+  const isAdjacentDeadlineLabel = (line: string) =>
+    deadlineLabel.test(line) &&
+    !/^all deadlines?\b/i.test(line) &&
+    !extractedDates(line).length &&
+    !/\b(?:open|opens|opening|event|conference)\b|開催/i.test(line);
+  const lines = rawLines
+    .map((line, index) => {
+      const next = rawLines[index + 1];
+      if (isAdjacentDeadlineLabel(line) && next && extractedDates(next).length === 1)
+        return deadlineLabel.test(next) || blockedAdjacentDate.test(next)
+          ? line
+          : `${line} ${next}`;
+      const previous = rawLines[index - 1];
+      return previous &&
+        isAdjacentDeadlineLabel(previous) &&
+        extractedDates(line).length === 1 &&
+        !deadlineLabel.test(line)
+        ? ""
+        : line;
+    })
     .filter(Boolean);
   const globalDeadlineTiming = lines.find(
     (line) =>
@@ -354,7 +378,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
         Math.max(prefix.lastIndexOf(";"), prefix.lastIndexOf("|")) + 1,
       );
       const suffix = raw.slice(value.end, extracted[index + 1]?.index ?? raw.length);
-      const deadlineSemantics = /deadline|due|notification|camera[- ]?ready|締切|期限/i;
+      const deadlineSemantics = deadlineLabel;
       const inheritsHeader =
         headerHasDeadline &&
         (/\b(?:round|cycle|phase)\b/i.test(currentPrefix) || /^[\s:—–-]*$/.test(currentPrefix)) &&
