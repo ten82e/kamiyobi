@@ -97,6 +97,29 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("extracts multiple round dates and their following times from one line", () => {
+    expect(
+      extractCfpCandidates(
+        "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), " +
+          "6 September 2026, 19:30 CEST (Second Intake)",
+      ),
+    ).toMatchObject([
+      { date: "2026-07-31", time: "18:00:00", timezone: "CEST" },
+      { date: "2026-09-06", time: "19:30:00", timezone: "CEST" },
+    ]);
+    expect(
+      extractCfpCandidates(
+        "Submission Deadline: 6 September 2026, 19:30 CEST, 31 July 2026, 18:00 CEST",
+      ),
+    ).toMatchObject([
+      { date: "2026-09-06", time: "19:30:00" },
+      { date: "2026-07-31", time: "18:00:00" },
+    ]);
+    expect(
+      extractCfpCandidates("Submission Deadline: 2026-02-30 18:00 UTC, 2026-03-01 19:00 UTC"),
+    ).toMatchObject([{ date: "2026-03-01", time: "19:00:00", timezone: "UTC" }]);
+  });
+
   it("requires explicit venue and category review before promotion", () => {
     expect(resolvePromotion(observation({ reviewState: undefined })).decision).toBe("hold");
     expect(resolvePromotion(observation({ categories: [] })).decision).toBe("hold");

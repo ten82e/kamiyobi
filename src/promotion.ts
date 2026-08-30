@@ -183,6 +183,13 @@ const MONTHS: Record<string, number> = {
   dec: 12,
 };
 
+const DATE_PATTERNS = [
+  /\b20\d{2}[-/]\d{1,2}[-/]\d{1,2}\b/g,
+  /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+\d{1,2}(?:st|nd|rd|th)?(?:,|\s)\s*20\d{2}\b/gi,
+  /\b\d{1,2}(?:st|nd|rd|th)?\s+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[,]?\s+20\d{2}\b/gi,
+  /\b20\d{2}年\d{1,2}月\d{1,2}日/g,
+];
+
 function extractedDate(text: string): { date: string; year: number } | null {
   const iso = /\b(20\d{2})[-/](\d{1,2})[-/](\d{1,2})\b/.exec(text);
   const monthFirst =
@@ -233,6 +240,18 @@ function extractedDate(text: string): { date: string; year: number } | null {
     date: `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
     year,
   };
+}
+
+function extractedDates(
+  text: string,
+): Array<{ date?: string; year?: number; index: number; end: number }> {
+  return DATE_PATTERNS.flatMap((pattern) =>
+    [...text.matchAll(pattern)].map((match) => {
+      const value = extractedDate(match[0]);
+      const index = match.index ?? 0;
+      return { ...value, index, end: index + match[0].length };
+    }),
+  ).sort((a, b) => a.index - b.index || a.end - b.end);
 }
 
 function extractedTime(text: string): string | undefined {
@@ -289,27 +308,31 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
       )
     )
       continue;
-    const extracted = extractedDate(raw);
-    if (!extracted) continue;
-    const candidate: CfpExtractionCandidate = {
-      rawExcerpt: raw,
-      text: raw,
-      label: raw,
-      kind: candidateKind(raw),
-      date: extracted.date,
-      editionYear: extracted.year,
-    };
-    const time = extractedTime(raw);
-    const timezone = extractedTimezone(raw);
-    if (time) candidate.time = time;
-    if (timezone) candidate.timezone = timezone;
-    const key = canonicalJson(candidate);
-    if (!seen.has(key)) {
-      seen.add(key);
-      candidates.push(candidate);
+    const extracted = extractedDates(raw);
+    for (const [index, value] of extracted.entries()) {
+      if (!value.date || !value.year) continue;
+      const scope =
+        extracted.length === 1 ? raw : raw.slice(value.index, extracted[index + 1]?.index);
+      const candidate: CfpExtractionCandidate = {
+        rawExcerpt: raw,
+        text: raw,
+        label: raw,
+        kind: candidateKind(raw),
+        date: value.date,
+        editionYear: value.year,
+      };
+      const time = extractedTime(scope);
+      const timezone = extractedTimezone(scope);
+      if (time) candidate.time = time;
+      if (timezone) candidate.timezone = timezone;
+      const key = canonicalJson(candidate);
+      if (!seen.has(key)) {
+        seen.add(key);
+        candidates.push(candidate);
+      }
     }
   }
-  return candidates.sort((a, b) => cmp(canonicalJson(a), canonicalJson(b)));
+  return candidates;
 }
 
 function ordered(values: string[] | undefined): string[] {
