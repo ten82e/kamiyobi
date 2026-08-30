@@ -295,14 +295,14 @@ conferences:
           - {kind: paper, label: 'Cycle 2 paper submission', date: '2027-01-21 23:59:00', tz: AoE}
           - {kind: notification, label: 'Cycle 2 author notification', date: '2027-03-25 23:59:00', tz: AoE}
 
-  # 根拠: https://fse.iacr.org/2027/ (2026-08-12 取得)
+  # 根拠: https://fse.iacr.org/2027/ (2026-08-30 再取得)
   #   「1 Sep 2026: ToSC 2026 issue 4 submission date」「1 Dec 2026: ToSC 2027 issue 1
   #   submission date」、会期 24-28 May 2027 @ Maastricht, Netherlands。
   #   タイムゾーンは https://tosc.iacr.org/ 「The deadline for Volume ... is <date>
-  #   23:59 AoE」で AoE 明記 (2026-08-12 取得)。
+  #   23:59 AoE」で AoE 明記 (2026-08-30 再取得)。
   #   上流 ccfddl conference/SC/fse.yml は 2026 までで 2027 版なし → 新規 edition として
   #   追加 (merge.ts patchEditions の year 追加パス)。
-  fse:
+  fse-sc:
     editions:
       2027:
         link: https://fse.iacr.org/2027/
