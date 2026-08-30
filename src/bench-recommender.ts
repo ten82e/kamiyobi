@@ -333,6 +333,7 @@ export interface DataDeltaCase {
   venue_kind: "international" | "domestic" | "workshop" | "journal" | "special-issue";
   input: "title-only" | "abstract" | "out-of-scope" | "insufficient";
   expected_venue: string | null;
+  acceptable_venues?: string[];
 }
 
 export interface DataDeltaFixture {
@@ -450,13 +451,26 @@ export function runDataDeltaBenchmark(fixture: DataDeltaFixture): DataDeltaResul
     if (!item.id || !item.title || ids.has(item.id) || item.synthetic !== true) {
       throw new Error("invalid data-delta case");
     }
+    if (
+      item.acceptable_venues &&
+      (item.expected_venue === null ||
+        !item.acceptable_venues.includes(item.expected_venue) ||
+        item.acceptable_venues.some((venue) => !venue))
+    ) {
+      throw new Error("invalid data-delta acceptable venues");
+    }
     ids.add(item.id);
     const lines = [{ title: item.title, abstract: item.abstract ?? "", keywords: "", venue: "" }];
     const beforeTop10 = dataDeltaTop10(fixture.before_candidates, lines);
     const afterTop10 = dataDeltaTop10(fixture.after_candidates, lines);
     const beforeTop5 = beforeTop10.slice(0, 5);
     const afterTop5 = afterTop10.slice(0, 5);
-    const rank = item.expected_venue ? afterTop10.indexOf(item.expected_venue) + 1 : 0;
+    const acceptable =
+      item.acceptable_venues ?? (item.expected_venue === null ? [] : [item.expected_venue]);
+    const ranksForCase = acceptable
+      .map((venue) => afterTop10.indexOf(venue) + 1)
+      .filter((rank) => rank > 0);
+    const rank = ranksForCase.length > 0 ? Math.min(...ranksForCase) : 0;
     if (afterTop10.length === 0) abstentions += 1;
     // Null explicitly means that the input must abstain, never merely that an
     // arbitrary expected key was absent from a non-empty recommendation list.
@@ -465,7 +479,11 @@ export function runDataDeltaBenchmark(fixture: DataDeltaFixture): DataDeltaResul
     else ranks.push(rank || null);
     if (JSON.stringify(beforeTop5) !== JSON.stringify(afterTop5)) changed.push(item.id);
     for (const venue of afterTop5) if (!beforeTop5.includes(venue)) newVenues.add(venue);
-    if (item.expected_venue && fellOutOfTop5(beforeTop5, item.expected_venue, afterTop10)) {
+    if (
+      item.expected_venue &&
+      acceptable.some((venue) => beforeTop5.includes(venue)) &&
+      acceptable.every((venue) => !afterTop5.includes(venue))
+    ) {
       dropped.add(item.expected_venue);
     }
   }

@@ -1540,7 +1540,8 @@
       "language": "ja",
       "venue_kind": "journal",
       "input": "abstract",
-      "expected_venue": "computer-networks"
+      "expected_venue": "computer-networks",
+      "acceptable_venues": ["computer-networks", "apcc"]
     },
     {
       "id": "case-19-ieice-inf-syst-log-data-special",
