@@ -342,6 +342,18 @@ export function restoreFailedSourceMaterialWithCounts(
     edition: Conference["editions"][number],
   ): string | null => {
     if (failed.has(edition.source)) return edition.source;
+    if (edition.source) {
+      // edition.source は明示されているが failed でない場合、その edition が
+      // failed source 由来の deadline を混在させているかで復元を決める。
+      // (satml27 は source=local でも ccfddl evidence の paper を持つ → 復元対象。
+      //  bis 2025 は evidence が ccfddl のみで aideadlines 由来ではない → 復元不要)
+      const hasFailedEvidence = (edition.deadlines ?? []).some((deadline) =>
+        (deadline.evidence ?? []).some(
+          (item) => item.source_name !== null && item.source_name !== undefined && failed.has(item.source_name),
+        ),
+      );
+      return hasFailedEvidence ? edition.source : null;
+    }
     const candidates = conference.sources.filter((source) => failed.has(source));
     // Legacy snapshots identify only a one-source conference; infer that source,
     // never guess when provenance is mixed.
