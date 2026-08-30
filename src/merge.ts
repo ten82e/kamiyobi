@@ -1127,7 +1127,11 @@ export function sanitizeEditions(confs: Conference[] | null | undefined): Confer
 function patchEditions(editions: Edition[], patches: Record<string, unknown>): Edition[] {
   const kept: Edition[] = [];
   const patchedYears = new Set<number>();
+  const realYears = new Set(
+    editions.filter((edition) => !edition.estimated).map(({ year }) => year),
+  );
   for (const edition of editions) {
+    if (edition.estimated && realYears.has(edition.year)) continue;
     const patch = patches[String(edition.year)] as Record<string, unknown> | undefined;
     if (patch === undefined) {
       kept.push(edition);
@@ -1161,7 +1165,7 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
       // 既存確定値を空配列で潰さない。
       // 明示的な空は
       // clear_deadlines: true でのみ可能。
-      const semantics = patchDeadlineSemantics(patch);
+      const semantics = patchDeadlineSemantics({ ...patch, link: next.link });
       const hasRemoval = patch.mode === "merge-slots" && Array.isArray(patch.remove);
       if (semantics.action === "replace" || hasRemoval) {
         const removals: DeadlineSlotObservation[] = Array.isArray(patch.remove)
@@ -1396,11 +1400,12 @@ export function rollforward(
 
   const out: Conference[] = [];
   for (const conf of confs) {
-    const estimated = estimateEdition(conf, today, kinds, defaultInterval, lookback, maxStale);
+    const current = { ...conf, editions: conf.editions.filter((edition) => !edition.estimated) };
+    const estimated = estimateEdition(current, today, kinds, defaultInterval, lookback, maxStale);
     if (estimated !== null) {
-      out.push({ ...conf, editions: [...conf.editions, estimated] });
+      out.push({ ...current, editions: [...current.editions, estimated] });
     } else {
-      out.push(conf);
+      out.push(current);
     }
   }
   return out;
