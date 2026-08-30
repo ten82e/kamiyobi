@@ -13,7 +13,11 @@ import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 interface DeadlineBase {
-  deadline: string;
+  /** 表示用締切文字列。data.json では precision に応じて utc / local_date に分かれる。 */
+  deadline?: string;
+  precision?: "exact" | "date-only";
+  utc?: string | null;
+  local_date?: string | null;
   kind: string;
   official_url?: string;
   verification?: {
@@ -26,11 +30,21 @@ interface DeadlineBase {
   };
 }
 
+/** data.json の deadline 文字列表現 (exact → utc ISO、date-only → local_date 終日)。 */
+function deadlineText(dl: DeadlineBase): string {
+  if (dl.precision === "date-only" && dl.local_date) return `${dl.local_date}T23:59:59Z`;
+  return dl.utc ?? dl.deadline ?? "";
+}
+
 interface Conference {
   key: string;
   title: string;
   full_name: string;
-  deadlines: DeadlineBase[];
+  editions?: Array<{
+    deadlines?: DeadlineBase[];
+  }>;
+  /** 旧形式: 直接 deadline を持つ。現行 data.json は editions 配下。 */
+  deadlines?: DeadlineBase[];
 }
 
 interface ManifestEntry {
@@ -106,19 +120,24 @@ function main(argv: string[] = process.argv) {
   const entries: ManifestEntry[] = [];
 
   for (const conf of conferences) {
-    for (const dl of conf.deadlines ?? []) {
+    // 現行 data.json は editions 配下に deadlines を持つ (旧形式は直下)。
+    const deadlines =
+      conf.editions?.flatMap((edition) => edition.deadlines ?? []) ??
+      conf.deadlines ??
+      [];
+    for (const dl of deadlines) {
       totalDeadlines++;
       if (!dl.verification) continue;
 
       // Only include deadlines with a future deadline
-      const deadlineDate = new Date(dl.deadline);
+      const deadlineDate = new Date(deadlineText(dl));
       if (deadlineDate.getTime() <= now.getTime()) continue;
 
       deadlinesWithVerification++;
       entries.push({
         venue_key: conf.key,
         venue_title: conf.title,
-        deadline: dl.deadline,
+        deadline: deadlineText(dl),
         kind: dl.kind,
         official_url: dl.verification.official_url,
         next_check_at: dl.verification.next_check_at,
