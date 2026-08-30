@@ -58,6 +58,9 @@ describe("workflow separation", () => {
       "--candidate-out data/discovered_candidates.yaml",
     );
     expect(String(step(generated!, "Health gate").run)).toContain("--require-baseline");
+    expect(String(step(generated!, "Summarize category changes").run)).toContain(
+      "warning_identities: cur.warning_identities ?? []",
+    );
     expect(String(step(generated!, "Recommendation Top-5 delta").run)).toContain(
       "--data-delta-before",
     );

@@ -78,6 +78,7 @@ jobs:
             observed_at: cur.generated_at,
             parse_warning_count: cur.parse_warning_count,
             warning_codes: cur.warning_codes ?? {},
+            warning_identities: cur.warning_identities ?? [],
             identity_conflicts: cur.identity_conflicts ?? { venue: 0, edition: 0, details: [] },
           };
           mkdirSync("/tmp/kamiyobi-update/data", { recursive: true });
