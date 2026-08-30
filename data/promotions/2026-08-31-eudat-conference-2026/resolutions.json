@@ -1,0 +1,588 @@
+[
+  {
+    "candidate": "eudat-conference",
+    "decision": "promote",
+    "verifiedFields": [
+      "venue",
+      "date",
+      "time",
+      "timezone",
+      "kind",
+      "round",
+      "track",
+      "event_start",
+      "event_end"
+    ],
+    "reason": "primary fields and evidence verified",
+    "verification": {
+      "valid": true,
+      "errors": [],
+      "checkedFields": [
+        "requestedUrl",
+        "finalUrl",
+        "status",
+        "headers",
+        "retrievedAt",
+        "sourceRevision",
+        "bodyHash",
+        "excerpt",
+        "officialDomain",
+        "extractionCandidates",
+        "eventYear",
+        "deadlineDate",
+        "deadlineTime",
+        "deadlineTimezone"
+      ],
+      "bodyHash": "0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89",
+      "sourceRevision": "sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89",
+      "extractedCandidates": [
+        {
+          "rawExcerpt": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "text": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "label": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "kind": "paper",
+          "date": "2026-07-31",
+          "editionYear": 2026,
+          "time": "18:00:00",
+          "timezone": "CEST"
+        },
+        {
+          "rawExcerpt": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "text": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "label": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "kind": "paper",
+          "date": "2026-07-31",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "text": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "label": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "kind": "notification",
+          "date": "2026-09-06",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "text": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "label": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "kind": "paper",
+          "date": "2026-09-06",
+          "editionYear": 2026,
+          "time": "18:00:00",
+          "timezone": "CEST"
+        },
+        {
+          "rawExcerpt": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "text": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "label": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "kind": "paper",
+          "date": "2026-09-06",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "text": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "label": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "kind": "notification",
+          "date": "2026-10-06",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "The EUDAT Conference 2026 is heading to Prague from 25-27 November, 2026. As the flagshp event for EUDAT Conference, this event gathers researchers, data managers, service providers to discuss the latest advancements and best practices in open science, as well as the wider research data management community.",
+          "text": "The EUDAT Conference 2026 is heading to Prague from 25-27 November, 2026. As the flagshp event for EUDAT Conference, this event gathers researchers, data managers, service providers to discuss the latest advancements and best practices in open science, as well as the wider research data management community.",
+          "label": "The EUDAT Conference 2026 is heading to Prague from 25-27 November, 2026. As the flagshp event for EUDAT Conference, this event gathers researchers, data managers, service providers to discuss the latest advancements and best practices in open science, as well as the wider research data management community.",
+          "kind": "paper",
+          "date": "2026-11-27",
+          "editionYear": 2026
+        }
+      ]
+    },
+    "normalized": {
+      "venue": {
+        "key": "eudat-conference",
+        "title": "EUDAT Conference 2026",
+        "categories": [
+          "db",
+          "systems"
+        ],
+        "tags": [
+          "niche"
+        ],
+        "review_state": "reviewed"
+      },
+      "edition": {
+        "year": 2026,
+        "edition_id": "eudat-conference-2026",
+        "date_text": "2026-11-25",
+        "event_start": "2026-11-25",
+        "event_end": "2026-11-27"
+      },
+      "deadline": {
+        "kind": "paper",
+        "label": "paper",
+        "round": 1,
+        "track": "First Intake",
+        "precision": "exact",
+        "date": "2026-07-31 18:00:00",
+        "tz": "CEST",
+        "evidence": [
+          {
+            "sourceClass": "official-cfp",
+            "sourceUrl": "https://eudat.eu/eudat-conference-2026/open-calls",
+            "sourceRevision": "sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89",
+            "retrievedAt": "2026-08-30T16:37:12.855Z",
+            "verifiedAt": "2026-08-30T16:38:00Z",
+            "contentHash": "0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89",
+            "rawExcerpt": "<strong>Submission Deadline:</strong> 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+            "verifiedFields": [
+              "date",
+              "time",
+              "timezone",
+              "kind",
+              "round",
+              "track"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "candidate": "eudat-conference",
+    "decision": "promote",
+    "verifiedFields": [
+      "venue",
+      "date",
+      "time",
+      "timezone",
+      "kind",
+      "round",
+      "track",
+      "event_start",
+      "event_end"
+    ],
+    "reason": "primary fields and evidence verified",
+    "verification": {
+      "valid": true,
+      "errors": [],
+      "checkedFields": [
+        "requestedUrl",
+        "finalUrl",
+        "status",
+        "headers",
+        "retrievedAt",
+        "sourceRevision",
+        "bodyHash",
+        "excerpt",
+        "officialDomain",
+        "extractionCandidates",
+        "eventYear",
+        "deadlineDate",
+        "deadlineTime",
+        "deadlineTimezone"
+      ],
+      "bodyHash": "0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89",
+      "sourceRevision": "sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89",
+      "extractedCandidates": [
+        {
+          "rawExcerpt": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "text": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "label": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "kind": "paper",
+          "date": "2026-07-31",
+          "editionYear": 2026,
+          "time": "18:00:00",
+          "timezone": "CEST"
+        },
+        {
+          "rawExcerpt": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "text": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "label": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "kind": "paper",
+          "date": "2026-07-31",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "text": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "label": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "kind": "notification",
+          "date": "2026-09-06",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "text": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "label": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "kind": "paper",
+          "date": "2026-09-06",
+          "editionYear": 2026,
+          "time": "18:00:00",
+          "timezone": "CEST"
+        },
+        {
+          "rawExcerpt": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "text": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "label": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "kind": "paper",
+          "date": "2026-09-06",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "text": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "label": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "kind": "notification",
+          "date": "2026-10-06",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "The EUDAT Conference 2026 is heading to Prague from 25-27 November, 2026. As the flagshp event for EUDAT Conference, this event gathers researchers, data managers, service providers to discuss the latest advancements and best practices in open science, as well as the wider research data management community.",
+          "text": "The EUDAT Conference 2026 is heading to Prague from 25-27 November, 2026. As the flagshp event for EUDAT Conference, this event gathers researchers, data managers, service providers to discuss the latest advancements and best practices in open science, as well as the wider research data management community.",
+          "label": "The EUDAT Conference 2026 is heading to Prague from 25-27 November, 2026. As the flagshp event for EUDAT Conference, this event gathers researchers, data managers, service providers to discuss the latest advancements and best practices in open science, as well as the wider research data management community.",
+          "kind": "paper",
+          "date": "2026-11-27",
+          "editionYear": 2026
+        }
+      ]
+    },
+    "normalized": {
+      "venue": {
+        "key": "eudat-conference",
+        "title": "EUDAT Conference 2026",
+        "categories": [
+          "db",
+          "systems"
+        ],
+        "tags": [
+          "niche"
+        ],
+        "review_state": "reviewed"
+      },
+      "edition": {
+        "year": 2026,
+        "edition_id": "eudat-conference-2026",
+        "date_text": "2026-11-25",
+        "event_start": "2026-11-25",
+        "event_end": "2026-11-27"
+      },
+      "deadline": {
+        "kind": "paper",
+        "label": "paper",
+        "round": 2,
+        "track": "Second Intake",
+        "precision": "exact",
+        "date": "2026-09-06 18:00:00",
+        "tz": "CEST",
+        "evidence": [
+          {
+            "sourceClass": "official-cfp",
+            "sourceUrl": "https://eudat.eu/eudat-conference-2026/open-calls",
+            "sourceRevision": "sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89",
+            "retrievedAt": "2026-08-30T16:37:12.855Z",
+            "verifiedAt": "2026-08-30T16:38:00Z",
+            "contentHash": "0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89",
+            "rawExcerpt": "<strong>Submission Deadline:</strong> 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+            "verifiedFields": [
+              "date",
+              "time",
+              "timezone",
+              "kind",
+              "round",
+              "track"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "candidate": "eudat-conference",
+    "decision": "promote",
+    "verifiedFields": [
+      "venue",
+      "date",
+      "kind",
+      "round",
+      "track",
+      "event_start",
+      "event_end"
+    ],
+    "reason": "primary fields and evidence verified",
+    "verification": {
+      "valid": true,
+      "errors": [],
+      "checkedFields": [
+        "requestedUrl",
+        "finalUrl",
+        "status",
+        "headers",
+        "retrievedAt",
+        "sourceRevision",
+        "bodyHash",
+        "excerpt",
+        "officialDomain",
+        "extractionCandidates",
+        "eventYear",
+        "deadlineDate",
+        "deadlineTime",
+        "deadlineTimezone"
+      ],
+      "bodyHash": "0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89",
+      "sourceRevision": "sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89",
+      "extractedCandidates": [
+        {
+          "rawExcerpt": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "text": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "label": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "kind": "paper",
+          "date": "2026-07-31",
+          "editionYear": 2026,
+          "time": "18:00:00",
+          "timezone": "CEST"
+        },
+        {
+          "rawExcerpt": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "text": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "label": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "kind": "paper",
+          "date": "2026-07-31",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "text": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "label": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "kind": "notification",
+          "date": "2026-09-06",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "text": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "label": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "kind": "paper",
+          "date": "2026-09-06",
+          "editionYear": 2026,
+          "time": "18:00:00",
+          "timezone": "CEST"
+        },
+        {
+          "rawExcerpt": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "text": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "label": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "kind": "paper",
+          "date": "2026-09-06",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "text": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "label": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "kind": "notification",
+          "date": "2026-10-06",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "The EUDAT Conference 2026 is heading to Prague from 25-27 November, 2026. As the flagshp event for EUDAT Conference, this event gathers researchers, data managers, service providers to discuss the latest advancements and best practices in open science, as well as the wider research data management community.",
+          "text": "The EUDAT Conference 2026 is heading to Prague from 25-27 November, 2026. As the flagshp event for EUDAT Conference, this event gathers researchers, data managers, service providers to discuss the latest advancements and best practices in open science, as well as the wider research data management community.",
+          "label": "The EUDAT Conference 2026 is heading to Prague from 25-27 November, 2026. As the flagshp event for EUDAT Conference, this event gathers researchers, data managers, service providers to discuss the latest advancements and best practices in open science, as well as the wider research data management community.",
+          "kind": "paper",
+          "date": "2026-11-27",
+          "editionYear": 2026
+        }
+      ]
+    },
+    "normalized": {
+      "venue": {
+        "key": "eudat-conference",
+        "title": "EUDAT Conference 2026",
+        "categories": [
+          "db",
+          "systems"
+        ],
+        "tags": [
+          "niche"
+        ],
+        "review_state": "reviewed"
+      },
+      "edition": {
+        "year": 2026,
+        "edition_id": "eudat-conference-2026",
+        "date_text": "2026-11-25",
+        "event_start": "2026-11-25",
+        "event_end": "2026-11-27"
+      },
+      "deadline": {
+        "kind": "notification",
+        "label": "notification",
+        "round": 1,
+        "track": "First Intake",
+        "precision": "date-only",
+        "date": "2026-09-06",
+        "evidence": [
+          {
+            "sourceClass": "official-cfp",
+            "sourceUrl": "https://eudat.eu/eudat-conference-2026/open-calls",
+            "sourceRevision": "sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89",
+            "retrievedAt": "2026-08-30T16:37:12.855Z",
+            "verifiedAt": "2026-08-30T16:38:00Z",
+            "contentHash": "0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89",
+            "rawExcerpt": "<strong>Acceptance Notification: </strong>6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+            "verifiedFields": [
+              "date",
+              "kind",
+              "round",
+              "track"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "candidate": "eudat-conference",
+    "decision": "promote",
+    "verifiedFields": [
+      "venue",
+      "date",
+      "kind",
+      "round",
+      "track",
+      "event_start",
+      "event_end"
+    ],
+    "reason": "primary fields and evidence verified",
+    "verification": {
+      "valid": true,
+      "errors": [],
+      "checkedFields": [
+        "requestedUrl",
+        "finalUrl",
+        "status",
+        "headers",
+        "retrievedAt",
+        "sourceRevision",
+        "bodyHash",
+        "excerpt",
+        "officialDomain",
+        "extractionCandidates",
+        "eventYear",
+        "deadlineDate",
+        "deadlineTime",
+        "deadlineTimezone"
+      ],
+      "bodyHash": "0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89",
+      "sourceRevision": "sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89",
+      "extractedCandidates": [
+        {
+          "rawExcerpt": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "text": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "label": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "kind": "paper",
+          "date": "2026-07-31",
+          "editionYear": 2026,
+          "time": "18:00:00",
+          "timezone": "CEST"
+        },
+        {
+          "rawExcerpt": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "text": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "label": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "kind": "paper",
+          "date": "2026-07-31",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "text": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "label": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "kind": "notification",
+          "date": "2026-09-06",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "text": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "label": "Submission Deadline: 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)",
+          "kind": "paper",
+          "date": "2026-09-06",
+          "editionYear": 2026,
+          "time": "18:00:00",
+          "timezone": "CEST"
+        },
+        {
+          "rawExcerpt": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "text": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "label": "Submission Period: 29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission",
+          "kind": "paper",
+          "date": "2026-09-06",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "text": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "label": "Acceptance Notification: 6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+          "kind": "notification",
+          "date": "2026-10-06",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "The EUDAT Conference 2026 is heading to Prague from 25-27 November, 2026. As the flagshp event for EUDAT Conference, this event gathers researchers, data managers, service providers to discuss the latest advancements and best practices in open science, as well as the wider research data management community.",
+          "text": "The EUDAT Conference 2026 is heading to Prague from 25-27 November, 2026. As the flagshp event for EUDAT Conference, this event gathers researchers, data managers, service providers to discuss the latest advancements and best practices in open science, as well as the wider research data management community.",
+          "label": "The EUDAT Conference 2026 is heading to Prague from 25-27 November, 2026. As the flagshp event for EUDAT Conference, this event gathers researchers, data managers, service providers to discuss the latest advancements and best practices in open science, as well as the wider research data management community.",
+          "kind": "paper",
+          "date": "2026-11-27",
+          "editionYear": 2026
+        }
+      ]
+    },
+    "normalized": {
+      "venue": {
+        "key": "eudat-conference",
+        "title": "EUDAT Conference 2026",
+        "categories": [
+          "db",
+          "systems"
+        ],
+        "tags": [
+          "niche"
+        ],
+        "review_state": "reviewed"
+      },
+      "edition": {
+        "year": 2026,
+        "edition_id": "eudat-conference-2026",
+        "date_text": "2026-11-25",
+        "event_start": "2026-11-25",
+        "event_end": "2026-11-27"
+      },
+      "deadline": {
+        "kind": "notification",
+        "label": "notification",
+        "round": 2,
+        "track": "Second Intake",
+        "precision": "date-only",
+        "date": "2026-10-06",
+        "evidence": [
+          {
+            "sourceClass": "official-cfp",
+            "sourceUrl": "https://eudat.eu/eudat-conference-2026/open-calls",
+            "sourceRevision": "sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89",
+            "retrievedAt": "2026-08-30T16:37:12.855Z",
+            "verifiedAt": "2026-08-30T16:38:00Z",
+            "contentHash": "0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89",
+            "rawExcerpt": "<strong>Acceptance Notification: </strong>6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)",
+            "verifiedFields": [
+              "date",
+              "kind",
+              "round",
+              "track"
+            ]
+          }
+        ]
+      }
+    }
+  }
+]

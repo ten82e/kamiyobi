@@ -1,0 +1,100 @@
+conferences:
+  - categories:
+      - db
+      - systems
+    editions:
+      - date_text: '2026-11-25'
+        deadlines:
+          - date: '2026-07-31 18:00:00'
+            evidence:
+              - contentHash: 0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
+                rawExcerpt: <strong>Submission Deadline:</strong> 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)
+                retrievedAt: '2026-08-30T16:37:12.855Z'
+                sourceClass: official-cfp
+                sourceRevision: sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
+                sourceUrl: https://eudat.eu/eudat-conference-2026/open-calls
+                verifiedAt: '2026-08-30T16:38:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+                  - kind
+                  - round
+                  - track
+            kind: paper
+            label: paper
+            precision: exact
+            round: 1
+            track: First Intake
+            tz: CEST
+          - date: '2026-09-06 18:00:00'
+            evidence:
+              - contentHash: 0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
+                rawExcerpt: <strong>Submission Deadline:</strong> 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)
+                retrievedAt: '2026-08-30T16:37:12.855Z'
+                sourceClass: official-cfp
+                sourceRevision: sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
+                sourceUrl: https://eudat.eu/eudat-conference-2026/open-calls
+                verifiedAt: '2026-08-30T16:38:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+                  - kind
+                  - round
+                  - track
+            kind: paper
+            label: paper
+            precision: exact
+            round: 2
+            track: Second Intake
+            tz: CEST
+          - date: '2026-09-06'
+            evidence:
+              - contentHash: 0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
+                rawExcerpt: '<strong>Acceptance Notification: </strong>6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)'
+                retrievedAt: '2026-08-30T16:37:12.855Z'
+                sourceClass: official-cfp
+                sourceRevision: sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
+                sourceUrl: https://eudat.eu/eudat-conference-2026/open-calls
+                verifiedAt: '2026-08-30T16:38:00Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                  - track
+            kind: notification
+            label: notification
+            precision: date-only
+            round: 1
+            track: First Intake
+          - date: '2026-10-06'
+            evidence:
+              - contentHash: 0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
+                rawExcerpt: '<strong>Acceptance Notification: </strong>6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)'
+                retrievedAt: '2026-08-30T16:37:12.855Z'
+                sourceClass: official-cfp
+                sourceRevision: sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
+                sourceUrl: https://eudat.eu/eudat-conference-2026/open-calls
+                verifiedAt: '2026-08-30T16:38:00Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                  - track
+            kind: notification
+            label: notification
+            precision: date-only
+            round: 2
+            track: Second Intake
+        edition_id: eudat-conference-2026
+        event_end: '2026-11-27'
+        event_start: '2026-11-25'
+        id: eudat-conference-2026
+        year: 2026
+    key: eudat-conference
+    link: https://eudat.eu/eudat-conference-2026/open-calls
+    review_state: reviewed
+    tags:
+      - niche
+    title: EUDAT Conference 2026

@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" prefix="og: https://ogp.me/ns#">
+  <head>
+    <meta charset="utf-8" />
+<script type="text/javascript">window.dataLayer = window.dataLayer || [];
+                                window.dataLayer.push({
+                                'ad_storage': 'denied',
+                                'analytics_storage': 'denied',
+                                'personalization_storage': 'denied',
+                                'logged-in': 'false',
+                                'drupal-role':'anonymous' 
+                                });</script>
+<script type="text/javascript">(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&amp;l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer','GTM-K5T7KBF');</script>
+<meta name="description" content="Share your knowledge and define the next steps for Research Data Management community!The EUDAT Conference 2026 is heading to Prague from 25-27 November, 2026. As the flagshp event for EUDAT Conference, this event gathers researchers, data managers, service providers to discuss the latest advancements and best practices in open science, as well as the wider research data management community." />
+<link rel="canonical" href="https://eudat.eu/eudat-conference-2026/open-calls" />
+<meta name="Generator" content="Drupal 9 (https://www.drupal.org)" />
+<meta name="MobileOptimized" content="width" />
+<meta name="HandheldFriendly" content="true" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+<link rel="icon" href="/themes/eudat/favicon.ico" type="image/vnd.microsoft.icon" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous" />
+
+    <title>Open Calls for Contributions | EUDAT</title>
+    <link rel="stylesheet" media="all" href="/core/modules/system/css/components/ajax-progress.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/align.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/autocomplete-loading.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/fieldgroup.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/container-inline.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/clearfix.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/details.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/hidden.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/item-list.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/js.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/nowrap.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/position-container.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/progress.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/reset-appearance.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/resize.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/sticky-header.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/system-status-counter.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/system-status-report-counters.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/system-status-report-general-info.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/tabledrag.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/tablesort.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/tree-child.module.css?tces0i" />
+<link rel="stylesheet" media="all" href="/modules/custom/trust_ppg/css/main.css?tces0i" />
+<link rel="stylesheet" media="all" href="/modules/custom/trust_ppg/css/modal.css?tces0i" />
+<link rel="stylesheet" media="all" href="/modules/contrib/ckeditor_accordion/css/accordion.frontend.css?tces0i" />
+<link rel="stylesheet" media="all" href="/themes/eudat/css/bootstrap/bootstrap.min.css?tces0i" />
+<link rel="stylesheet" media="all" href="/themes/eudat/css/aos/aos.css?tces0i" />
+<link rel="stylesheet" media="all" href="/themes/eudat/css/animatecss/animatecss.css?tces0i" />
+<link rel="stylesheet" media="all" href="/themes/eudat/css/swiper/swiper.css?tces0i" />
+<link rel="stylesheet" media="all" href="/themes/eudat/css/fontawesome/css/all.min.css?tces0i" />
+<link rel="stylesheet" media="all" href="/themes/eudat/css/style.min.css?tces0i" />
+
+    
+
+  </head>
+  <body class="layout-no-sidebars path-node page-node-type-page">
+        <a href="#main-content" class="visually-hidden focusable skip-link">
+
+    </a>
+    <noscript aria-hidden="true"><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K5T7KBF" height="0" width="0" style="display:none;visibility:hidden;"></iframe>
+</noscript>
+
+      <div class="dialog-off-canvas-main-canvas" data-off-canvas-main-canvas>
+    <div id="page internal">
+  
+
+  	
+<header class="page_header headerInternal">
+	<div class="container">
+		<div class="row align-items-center" >
+			<div class="col-md-3 col-10">
+				<a href="/" rel="home"><img src="/themes/eudat/Logo_EUDAT_payoff.png" alt="Home" class="brand_logo"></a>
+			</div>
+			<div class="menu_btn_wrap col-2">
+				<i class="fa-solid fa-bars" id="menu-activator"></i>
+			</div>
+			
+			<div class="col-md-9">
+				<div class="menu_wrap">
+					  <div class="region region-primary-menu">
+    <nav role="navigation" aria-labelledby="block-eudat-main-menu-menu" id="block-eudat-main-menu">
+            
+  <h2 class="visually-hidden" id="block-eudat-main-menu-menu">Main navigation</h2>
+  
+
+                
+    
+
+              <ul class="navigation__menu navigation--level-1">
+                                                    <li class="navigation__item navigation__item--level-1 navigation__item--has-children">
+                          <a href="/about" class="navigation__link navigation__link--level-1" data-drupal-link-system-path="node/863">About</a>
+                                        <ul class="navigation__sub-menu navigation--level-2">
+                                                    <li class="navigation__item navigation__item--level-2">
+                          <a href="/about" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/863">EUDAT</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="/governance" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/1269">Governance</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="/members" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/1535">Members</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="/collaborations" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/935">Collaborations</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="/projects" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="projects">Projects</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2  navigation__item--last">
+                          <a href="https://eudat.eu/sites/default/files/2024-01/EUDAT%20Visual%20Guidelines%20WEB%20Jan2024%20%281%29.pdf" class="navigation__link navigation__link--level-2">Communications Kit</a>
+                          </li>
+        </ul>
+  
+              </li>
+                                                <li class="navigation__item navigation__item--level-1">
+                          <a href="/membership" class="navigation__link navigation__link--level-1" data-drupal-link-system-path="node/894">Membership</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-1 navigation__item--has-children">
+                          <a href="/catalogue" class="navigation__link navigation__link--level-1" data-drupal-link-system-path="catalogue">Services &amp; Support</a>
+                                        <ul class="navigation__sub-menu navigation--level-2">
+                                                    <li class="navigation__item navigation__item--level-2">
+                          <a href="/catalogue" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="catalogue">Service Catalogue</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="/eudat-eosc-node" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/1659">EOSC EUDAT Node</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="https://docs.eudat.eu/" class="navigation__link navigation__link--level-2">User Documentation</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="/eudat-training" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/639">Training</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2  navigation__item--last">
+                          <a href="/contact-support-request" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/154">Help Desk</a>
+                          </li>
+        </ul>
+  
+              </li>
+                                                <li class="navigation__item navigation__item--level-1">
+                          <a href="/use-cases" class="navigation__link navigation__link--level-1" data-drupal-link-system-path="use-cases">Research Communities</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-1 navigation__item--has-children">
+                          <a href="" class="navigation__link navigation__link--level-1">News &amp; Events</a>
+                                        <ul class="navigation__sub-menu navigation--level-2">
+                                                    <li class="navigation__item navigation__item--level-2">
+                          <a href="/news" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/1526">News</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2  navigation__item--last">
+                          <a href="/events" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="events">Events</a>
+                          </li>
+        </ul>
+  
+              </li>
+                                                <li class="navigation__item navigation__item--level-1  navigation__item--last">
+                          <a href="/contact-support-request" class="navigation__link navigation__link--level-1" data-drupal-link-system-path="node/154">Contact us</a>
+                          </li>
+        </ul>
+  
+
+
+  </nav>
+
+  </div>
+
+				</div>
+			</div>
+			
+				
+		</div>
+	</div>
+</header>
+
+<header class="page_header headerInternal stickyMenu container-fluid" id="stickyMenu">
+	<div class="row align-items-center">
+		<div class="col-md-3 col-10">
+			<a href="/" rel="home"><img src="/themes/eudat/Logo_EUDAT_payoff.png" alt="Home" class="brand_logo"></a>
+		</div>
+		<div class="menu_btn_wrap col-2">
+			<i class="fa-solid fa-bars" id="menu-activator"></i>
+		</div>
+
+		<div class="col-md-9">
+			<div class="menu_wrap">
+				  <div class="region region-primary-menu">
+    <nav role="navigation" aria-labelledby="block-eudat-main-menu-menu" id="block-eudat-main-menu">
+            
+  <h2 class="visually-hidden" id="block-eudat-main-menu-menu">Main navigation</h2>
+  
+
+                
+    
+
+              <ul class="navigation__menu navigation--level-1">
+                                                    <li class="navigation__item navigation__item--level-1 navigation__item--has-children">
+                          <a href="/about" class="navigation__link navigation__link--level-1" data-drupal-link-system-path="node/863">About</a>
+                                        <ul class="navigation__sub-menu navigation--level-2">
+                                                    <li class="navigation__item navigation__item--level-2">
+                          <a href="/about" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/863">EUDAT</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="/governance" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/1269">Governance</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="/members" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/1535">Members</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="/collaborations" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/935">Collaborations</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="/projects" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="projects">Projects</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2  navigation__item--last">
+                          <a href="https://eudat.eu/sites/default/files/2024-01/EUDAT%20Visual%20Guidelines%20WEB%20Jan2024%20%281%29.pdf" class="navigation__link navigation__link--level-2">Communications Kit</a>
+                          </li>
+        </ul>
+  
+              </li>
+                                                <li class="navigation__item navigation__item--level-1">
+                          <a href="/membership" class="navigation__link navigation__link--level-1" data-drupal-link-system-path="node/894">Membership</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-1 navigation__item--has-children">
+                          <a href="/catalogue" class="navigation__link navigation__link--level-1" data-drupal-link-system-path="catalogue">Services &amp; Support</a>
+                                        <ul class="navigation__sub-menu navigation--level-2">
+                                                    <li class="navigation__item navigation__item--level-2">
+                          <a href="/catalogue" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="catalogue">Service Catalogue</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="/eudat-eosc-node" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/1659">EOSC EUDAT Node</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="https://docs.eudat.eu/" class="navigation__link navigation__link--level-2">User Documentation</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="/eudat-training" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/639">Training</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2  navigation__item--last">
+                          <a href="/contact-support-request" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/154">Help Desk</a>
+                          </li>
+        </ul>
+  
+              </li>
+                                                <li class="navigation__item navigation__item--level-1">
+                          <a href="/use-cases" class="navigation__link navigation__link--level-1" data-drupal-link-system-path="use-cases">Research Communities</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-1 navigation__item--has-children">
+                          <a href="" class="navigation__link navigation__link--level-1">News &amp; Events</a>
+                                        <ul class="navigation__sub-menu navigation--level-2">
+                                                    <li class="navigation__item navigation__item--level-2">
+                          <a href="/news" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/1526">News</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2  navigation__item--last">
+                          <a href="/events" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="events">Events</a>
+                          </li>
+        </ul>
+  
+              </li>
+                                                <li class="navigation__item navigation__item--level-1  navigation__item--last">
+                          <a href="/contact-support-request" class="navigation__link navigation__link--level-1" data-drupal-link-system-path="node/154">Contact us</a>
+                          </li>
+        </ul>
+  
+
+
+  </nav>
+
+  </div>
+
+			</div>
+		</div>
+	</div>
+</header>
+
+<div class="mobile-menu" id="prim_menu_container-mobile" data-attributes="menu_mobile">
+	<div class="background"></div>
+	<i class="fa-solid fa-xmark close-menu"></i>
+	  <div class="region region-primary-menu">
+    <nav role="navigation" aria-labelledby="block-eudat-main-menu-menu" id="block-eudat-main-menu">
+            
+  <h2 class="visually-hidden" id="block-eudat-main-menu-menu">Main navigation</h2>
+  
+
+                
+    
+
+              <ul class="navigation__menu navigation--level-1">
+                                                    <li class="navigation__item navigation__item--level-1 navigation__item--has-children">
+                          <a href="/about" class="navigation__link navigation__link--level-1" data-drupal-link-system-path="node/863">About</a>
+                                        <ul class="navigation__sub-menu navigation--level-2">
+                                                    <li class="navigation__item navigation__item--level-2">
+                          <a href="/about" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/863">EUDAT</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="/governance" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/1269">Governance</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="/members" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/1535">Members</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="/collaborations" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/935">Collaborations</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="/projects" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="projects">Projects</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2  navigation__item--last">
+                          <a href="https://eudat.eu/sites/default/files/2024-01/EUDAT%20Visual%20Guidelines%20WEB%20Jan2024%20%281%29.pdf" class="navigation__link navigation__link--level-2">Communications Kit</a>
+                          </li>
+        </ul>
+  
+              </li>
+                                                <li class="navigation__item navigation__item--level-1">
+                          <a href="/membership" class="navigation__link navigation__link--level-1" data-drupal-link-system-path="node/894">Membership</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-1 navigation__item--has-children">
+                          <a href="/catalogue" class="navigation__link navigation__link--level-1" data-drupal-link-system-path="catalogue">Services &amp; Support</a>
+                                        <ul class="navigation__sub-menu navigation--level-2">
+                                                    <li class="navigation__item navigation__item--level-2">
+                          <a href="/catalogue" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="catalogue">Service Catalogue</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="/eudat-eosc-node" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/1659">EOSC EUDAT Node</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="https://docs.eudat.eu/" class="navigation__link navigation__link--level-2">User Documentation</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2">
+                          <a href="/eudat-training" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/639">Training</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2  navigation__item--last">
+                          <a href="/contact-support-request" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/154">Help Desk</a>
+                          </li>
+        </ul>
+  
+              </li>
+                                                <li class="navigation__item navigation__item--level-1">
+                          <a href="/use-cases" class="navigation__link navigation__link--level-1" data-drupal-link-system-path="use-cases">Research Communities</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-1 navigation__item--has-children">
+                          <a href="" class="navigation__link navigation__link--level-1">News &amp; Events</a>
+                                        <ul class="navigation__sub-menu navigation--level-2">
+                                                    <li class="navigation__item navigation__item--level-2">
+                          <a href="/news" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="node/1526">News</a>
+                          </li>
+                                                <li class="navigation__item navigation__item--level-2  navigation__item--last">
+                          <a href="/events" class="navigation__link navigation__link--level-2" data-drupal-link-system-path="events">Events</a>
+                          </li>
+        </ul>
+  
+              </li>
+                                                <li class="navigation__item navigation__item--level-1  navigation__item--last">
+                          <a href="/contact-support-request" class="navigation__link navigation__link--level-1" data-drupal-link-system-path="node/154">Contact us</a>
+                          </li>
+        </ul>
+  
+
+
+  </nav>
+
+  </div>
+
+</div>
+  
+        
+        
+
+  <div id="main-wrapper" class="layout-main-wrapper mb-5 pb-5">
+    <div id="main" class="container">
+      <div class="breadcrumb">
+          <div class="region region-breadcrumb">
+    <div id="block-eudat-breadcrumbs" class="block block-system block-system-breadcrumb-block">
+  
+    
+      <div class="content">
+        <nav role="navigation" aria-labelledby="system-breadcrumb">
+    <h2 id="system-breadcrumb" class="visually-hidden">Breadcrumb</h2>
+    <ol>
+          <li>
+                  <a href="/">Home</a>
+              </li>
+          <li>
+                  <a href="/eudat-conference-2026">EUDAT Conference 2026</a>
+              </li>
+          <li>
+                  Open Calls for Contributions
+              </li>
+        </ol>
+  </nav>
+
+    </div>
+  </div>
+
+  </div>
+
+      </div>
+      <div class="page-title">
+          <div class="region region-page-title">
+    <div id="block-eudat-page-title" class="block block-core block-page-title-block">
+  
+    
+      <div class="content">
+      
+
+  <h1 class="title page-title">
+<span>Open Calls for Contributions</span>
+</h1>
+
+
+    </div>
+  </div>
+
+  </div>
+
+      </div>
+
+      
+
+    <div id="content" class="content content-full pt30 pb60">
+      <div class="container container-bg">
+        <div class="content-main-inner">
+	<div class="row">
+		
+				 
+
+		<div id="page-main-content" class="main-content col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 order-xl-2 order-lg-2 order-md-1 order-sm-1 order-xs-1 ">
+
+			<div class="main-content-inner">
+				
+				
+									<div class="content-main">
+						  <div class="region region-content">
+    <div id="block-eudat-specialone-system-main" class="block block-system block-system-main-block">
+  
+    
+      <div class="content">
+      
+<article data-history-node-id="1677" role="article" class="node node--type-page node--view-mode-full clearfix mb-5">
+  <header>
+    
+          
+      </header>
+  <div class="node__content clearfix">
+    
+
+
+            <h2>Share your knowledge and define the next steps for Research Data Management community!</h2><p>The EUDAT Conference 2026 is heading to Prague from <strong>25-27 November, 2026. </strong>As the flagshp event for EUDAT Conference, this event gathers researchers, data managers, service providers to discuss the latest advancements and best practices in open science, as well as the wider research data management community.</p><p>We are delighted to officially launch our open call for contributions! This is your opportunity to showcase the work of your institution, propose and lead key discussions or present innovative solutions to a pan-European audience.</p><h3>Timeline for submissions</h3><ul><li><strong>Submission Period: </strong>29 May - 31 July 2026 (First Intake), 31 July - 6 September 2026 (Second Intake)Submission </li><li><strong>Submission Deadline:</strong> 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)</li><li><strong>Acceptance Notification: </strong>6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)</li></ul><p>There are two open calls currently active : </p><ul><li><strong>Open calls for workshops, presentations and community-driven sessions</strong><ul><li>Includes interactive sessions, presentations or workshop proposals that connect closely to this years' topics, including : EOSC Federation, data spaces, AI compliance, AI-enhanced data management, RDM solutions, integration of EUDAT services, trust, security &amp; sensitive data in RDM and many more. </li></ul></li></ul><p><a class="btn btn-primary" href="https://eudat.eu/form/eudat-conference-open-call-for-s">Submit your workshop/presentation/ session proposal</a></p><ul><li><strong>Open calls for poster exhibitions &amp; demos</strong><ul><li>A selected number of slots are available for live demos allowing the successful applicants to showcase their software, platforms, or service to the audience in real-time.</li><li>The conference will also feature a dedicated poster and booth exhibition, providing high visibility of applicants' institutions and solutions, and allowing for ample networking opportunities with innovators in the field.</li><li>Submissions should centre and address any of the selected topics listed in the submission form: EOSC Federation, data spaces, AI compliance, AI-enhanced data management, RDM solutions, integration of EUDAT services, trust, security &amp; sensitive data in RDM and many more. </li></ul></li></ul><p><a class="btn btn-primary" href="https://eudat.eu/form/eudat-con-open-call-for-p">Submit your poster/demo proposal</a></p>
+      
+  </div>
+</article>
+
+    </div>
+  </div>
+
+  </div>
+
+					</div>
+				
+							</div>
+
+		</div>
+
+		<!-- Sidebar Left -->
+				<!-- End Sidebar Left -->
+
+		<!-- Sidebar Right -->
+				<!-- End Sidebar Right -->
+		
+	</div>
+</div>      </div>
+    </div>
+
+
+
+          </div>
+  </div>
+    
+ 
+      
+
+<footer class="footer page_footer">
+<div class="container">
+
+</div>
+<img class="separator2_up" src="/themes/eudat/images/separator3_up.svg" alt=""/>
+
+  <div class="bg-dark pb-5">
+    <div class="container">
+      <div class="row mobile-gap">
+        <div class="col-md-4">
+            <div class="region region-footer-first">
+    <div id="block-eudat-specialone-block-64" class="block block-block-content block-block-contentb8371d77-03d0-413c-be7b-492dccb4a5ab">
+  
+    
+      <div class="content">
+      
+
+
+            <h2 class="block-title text-color-white">EUDAT</h2>
+<p>EUDAT is a pan-European network consisting of more than 20 research organisations, data and computing centers.</p>
+
+
+      
+    </div>
+  </div>
+<div id="block-eudat-specialone-block-17" class="block block-block-content block-block-contentd01efb15-9247-42a3-9ddf-d5fdbf469a11">
+  
+    
+      <div class="content">
+      
+
+
+            <br>
+<img src="/sites/default/files/EUDAT%20Logo%20-%20compact%20for%20dark%20bg.png" width="30%">
+
+
+
+
+      
+    </div>
+  </div>
+
+  </div>
+
+        </div>
+        <div class="col-md-2">
+            <div class="region region-footer-second">
+    <div id="block-eudat-specialone-block-63" class="block block-block-content block-block-content8533b089-c5e0-4f64-af37-4afbbf96b7bb">
+  
+    
+      <div class="content">
+      
+
+
+            <div class="item-footer"><h2 class="block-title text-color-white text-color-grayDark1">EUDAT Ltd</h2><p><strong>CONTACTS</strong><br /><a href="mailto:info@eudat.eu">info@eudat.eu</a><br />EUDAT Ltd<br />Keilaranta 14<br />02150 Espoo<br />Finland,<br />VAT number: FI 28953559</p></div>
+      
+    </div>
+  </div>
+
+  </div>
+
+        </div>
+        <div class="col-md-6">
+            <div class="region region-footer-third">
+    <div id="block-blockfooter3" class="block block-block-content block-block-content80bb8917-19bd-4702-82f4-d8954cd23cfb">
+  
+    
+      <div class="content">
+      
+
+
+            <div class="text-end">
+<div class="privacy">
+<a href="https://www.eudat.eu/eudat-cdi-aup" target="_blank" class="text-color-theme">EUDAT AUP</a>
+<a href="/privacy-policy-summary" target="_blank" class="text-color-theme">Privacy Policy</a>
+<a href="/accessibility-statement" class="text-color-theme">Accessibility Statement</a>
+<a href="/frequently-asked-questions" class="text-color-theme">FAQs</a>
+</div>
+<div class="social-footer d-flex">
+<a target="_blank" href="https://twitter.com/Eudat_eu"><i class="fa-brands fa-x-twitter"></i></i></a>
+<a target="_blank" href="http://www.slideshare.net/EUDAT/"><i class="fa-brands fa-slideshare"></i></a>
+<a target="_blank" href="https://www.youtube.com/user/EUDATTraining"><i class="fa-brands fa-youtube"></i></i></a>
+<a target="_blank" href="https://www.linkedin.com/company/eudat/"><i class="fa-brands fa-linkedin-in"></i></i></a>
+</div>
+</div>
+      
+    </div>
+  </div>
+
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  </footer>
+
+
+</div>
+
+  </div>
+
+    
+      <span class="c-scrollbar"></span>
+    <script type="application/json" data-drupal-selector="drupal-settings-json">{"path":{"baseUrl":"\/","scriptPath":null,"pathPrefix":"","currentPath":"node\/1677","currentPathIsAdmin":false,"isFront":false,"currentLanguage":"en"},"pluralDelimiter":"\u0003","suppressDeprecationErrors":true,"trust_ppgm":{"general_popup_data":{"gtm_cid":"GTM-K5T7KBF","popup_label":"We value your privacy","popup_link_label":"Read the full privacy policy","popup_text":"\u003Cp\u003ECookies consist of portions of code installed in the browser that assist the owner in providing the service based on the purposes described. To continue with navigation, it is required to accept at least the technical cookies. Other cookies are optional and require the user\u0027s consent. When the installation of cookies takes place on the basis of consent, this consent can be revoked freely at any time following the instructions contained in this document.\u003C\/p\u003E","policy_form_url":"\/ppgm-privacy-policy-full"},"policy_popup_data":{"terms_of_use":{"guid":"866"},"privacy":{"guid":"552"},"technical_cookies":{"guid":"551","popup_label":"Strictly Necessary Cookies","popup_text":"These cookies are necessary for the website to function and cannot be switched off in our systems. They are usually only set in response to actions made by you which amount to a request for services, such as setting your privacy preferences, logging in or filling in forms. You can set your browser to block or alert you about these cookies, but some parts of the site will not then work. These cookies do not store any personally identifiable information."},"measurement_cookies":{"guid":"553","popup_label":"Measurement","popup_text":"These trackers help us to measure traffic and analyze your behavior with the goal of improving our service."}},"project_pk":"48"},"ckeditorAccordion":{"accordionStyle":{"collapseAll":null,"keepRowsOpen":null,"animateAccordionOpenAndClose":1,"openTabsWithHash":1}},"user":{"uid":0,"permissionsHash":"274c4e2ba62507cacb88ed8039183ff85b9ec564bbfdff1f8445da38f7938ff3"}}</script>
+<script src="/core/assets/vendor/jquery/jquery.min.js?v=3.6.3"></script>
+<script src="/core/misc/polyfills/element.matches.js?v=9.5.11"></script>
+<script src="/core/assets/vendor/once/once.min.js?v=1.0.1"></script>
+<script src="/core/misc/drupalSettingsLoader.js?v=9.5.11"></script>
+<script src="/core/misc/drupal.js?v=9.5.11"></script>
+<script src="/core/misc/drupal.init.js?v=9.5.11"></script>
+<script src="/themes/eudat/script/swiper/swiper.js?v=9.5.11"></script>
+<script src="/themes/eudat/script/aos/aos.js?v=9.5.11"></script>
+<script src="/themes/eudat/script/main.js?v=9.5.11"></script>
+<script src="/themes/eudat/script/bootstrap/bootstrap.min.js?tces0i"></script>
+<script src="/themes/eudat/theme?tces0i"></script>
+<script src="/modules/custom/trust_ppg/js/classes/Consent.js?v=1.x"></script>
+<script src="/modules/custom/trust_ppg/js/classes/Cookies.js?v=1.x"></script>
+<script src="/modules/custom/trust_ppg/js/controllers/gtm.js?v=1.x"></script>
+<script src="/modules/custom/trust_ppg/js/classes/Modal.js?v=1.x"></script>
+<script src="/modules/custom/trust_ppg/js/controllers/modal.js?v=1.x"></script>
+<script src="/modules/contrib/ckeditor_accordion/js/accordion.frontend.min.js?tces0i"></script>
+
+  </body>
+</html>
