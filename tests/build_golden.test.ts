@@ -2610,7 +2610,7 @@ it("profileTexts and embeddingsMain handle non-array tags/categories safely (#35
   ]);
   expect(res.keys).toEqual(["test-conf"]);
   expect(res.texts[0]).toContain("systems");
-  expect(res.texts[0]).toContain("niche");
+  expect(res.texts[0]).not.toContain("niche");
 
   const nullCode = await embeddingsMain(null);
   expect(nullCode).toBe(2);

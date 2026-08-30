@@ -6045,3 +6045,45 @@ conferences:
                 verifiedAt: '2026-08-30T17:53:00Z'
                 verifiedFields: [date, time, timezone, kind, round]
                 rawExcerpt: "<span class=\"dl-label\">Paper submission deadline</span>\n          <p class=\"dl-date\"><span>August 31</span><span class=\"dl-yr\">2026</span></p>\n          <a class=\"btn\" href=\"https://easychair.org/conferences/?conf=sovereignai2026\">Submit via EasyChair<span class=\"arr\">&rarr;</span></a>\n        </div>\n        <dl class=\"dl-rest\">\n          <div><dt>Acceptance notification</dt><dd>September 6, 2026</dd></div>\n          <div><dt>Workshop day</dt><dd>September 27, 2026</dd></div>\n          <div><dt>Deadlines close</dt><dd>11:59&#8202;pm Anywhere on Earth</dd></div>"
+
+  # 証拠: data/promotions/2026-08-31-genai4sg-cikm-2026/manifest.json
+  # CIKM 2026 accepted workshops 掲載の公式サイトは 2026-11-08開催、
+  # Paper submission deadline を 2026-09-13 23:59 AoE と明記する
+  # （2026-08-30T18:14:02.806Z取得、sha256:b8eaad25f2fd07862684f630e200c51d94564ba54e0658905bed0456748de3dc）。
+  - key: genai4sg
+    title: GenAI4SG
+    full_name: 1st Workshop on Generative AI for Social Good and Vulnerable Populations
+    link: https://genai4sg.github.io/CIKM2026/
+    categories: [ai]
+    tags: [niche, workshop]
+    editions:
+      - year: 2026
+        id: genai4sg26
+        link: https://genai4sg.github.io/CIKM2026/
+        place: Rome, Italy
+        date_text: November 8, 2026
+        event_start: '2026-11-08'
+        event_end: '2026-11-08'
+        deadlines:
+          - kind: paper
+            label: Paper submission deadline
+            round: 1
+            date: '2026-09-13 23:59:00'
+            tz: AoE
+            evidence:
+              - sourceClass: official-cfp
+                sourceUrl: https://genai4sg.github.io/CIKM2026/
+                contentHash: b8eaad25f2fd07862684f630e200c51d94564ba54e0658905bed0456748de3dc
+                sourceRevision: 'W/"6a887f2b-8339"'
+                retrievedAt: '2026-08-30T18:14:02.806Z'
+                verifiedAt: '2026-08-30T18:16:00Z'
+                verifiedFields: [date, kind, round]
+                rawExcerpt: "<strong>September 13, 2026</strong>\n            <span>Paper submission deadline</span>"
+              - sourceClass: official-cfp
+                sourceUrl: https://genai4sg.github.io/CIKM2026/
+                contentHash: b8eaad25f2fd07862684f630e200c51d94564ba54e0658905bed0456748de3dc
+                sourceRevision: 'W/"6a887f2b-8339"'
+                retrievedAt: '2026-08-30T18:14:02.806Z'
+                verifiedAt: '2026-08-30T18:16:00Z'
+                verifiedFields: [time, timezone]
+                rawExcerpt: 'All deadlines are 11:59 PM Anywhere on Earth unless stated otherwise.'

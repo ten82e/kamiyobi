@@ -58,6 +58,15 @@ const JP_CAT_KW: Record<string, string> = {
   theory: "アルゴリズム 計算量 複雑性 グラフ",
 };
 
+const ATTRIBUTE_TAGS = new Set([
+  "niche",
+  "workshop",
+  "domestic-jp",
+  "journal",
+  "special-issue",
+  "niche-jp",
+]);
+
 function hasJapanese(text: string): boolean {
   return /[\u3040-\u9fff]/.test(text);
 }
@@ -443,7 +452,14 @@ export function benchmarkProfileHash(
       ]),
   );
   return createHash("sha256")
-    .update(JSON.stringify({ schema: artifact.schema, source_year_max: sourceYearMax, profiles }))
+    .update(
+      JSON.stringify({
+        schema: artifact.schema,
+        source_year_max: sourceYearMax,
+        profiles,
+        profile_rules: { excluded_attribute_tags: [...ATTRIBUTE_TAGS].sort() },
+      }),
+    )
     .digest("hex")
     .slice(0, 16);
 }
@@ -503,7 +519,7 @@ export function profileTexts(
     // icdcs を vocab-only にすると golden top5 65.7→62.9 に悪化するため、埋め込みは維持する。
     const skipEmb = SKIP_EMB_KEYS.has(key);
     const papers = !forMulti && !skipEmb ? (venuePapers[key] ?? []).slice(0, 8).join(" . ") : "";
-    const tags = toStringArray(c.tags);
+    const tags = toStringArray(c.tags).filter((tag) => !ATTRIBUTE_TAGS.has(tag));
     const parts = [
       String(c.title ?? ""),
       String(c.full_name ?? ""),
@@ -782,6 +798,7 @@ export function embeddingProfileHash(data: EmbeddingData | null | undefined): st
     profile_rules: {
       jp_category_keywords: JP_CAT_KW,
       skip_embedding_keys: [...SKIP_EMB_KEYS].sort(),
+      excluded_attribute_tags: [...ATTRIBUTE_TAGS].sort(),
       english_papers: "first-eight-concatenated",
       multilingual_papers: "excluded",
     },

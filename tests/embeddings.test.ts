@@ -95,6 +95,13 @@ describe("profileTexts", () => {
     expect(multi.texts[3]).not.toContain("Pesto: Cooking up High Performance BFT Queries");
   });
 
+  it("keeps topic tags but excludes venue attributes from semantic profiles", () => {
+    const [text] = profileTexts([
+      { key: "workshop", title: "Workshop", tags: ["workshop", "niche", "social-good"] },
+    ]).texts;
+    expect(text).toBe("Workshop social-good");
+  });
+
   it("handles null, undefined, invalid entries, and empty keys defensively", () => {
     expect(profileTexts(null)).toEqual({ keys: [], texts: [] });
     expect(profileTexts(undefined)).toEqual({ keys: [], texts: [] });
