@@ -1095,15 +1095,6 @@ it("llms.txt URLs match the published site", () => {
   for (const u of urls) {
     expect(u.startsWith(`${base}/`)).toBe(true);
   }
-  const readme = join(REPO_ROOT, "README.md");
-  try {
-    const text = readFileSync(readme, "utf8");
-    for (const name of ["data.json", "llms.txt"]) {
-      expect(text).toContain(`${base}/${name}`);
-    }
-  } catch {
-    // README が無い場合はスキップ
-  }
 });
 
 it("llms.txt title follows config site.title (not a stale hard-coded name)", () => {

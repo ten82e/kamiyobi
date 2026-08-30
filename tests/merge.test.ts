@@ -1156,12 +1156,7 @@ describe("apply_overrides", () => {
 
   it("repo overrides file applies without error", () => {
     const path = join(REPO_ROOT, "data", "overrides.yaml");
-    let overrides: Record<string, unknown> = {};
-    try {
-      overrides = (loadYaml(readFileSync(path, "utf8")) as Record<string, unknown>) ?? {};
-    } catch {
-      return; // ファイルが無い環境ではスキップ
-    }
+    const overrides = (loadYaml(readFileSync(path, "utf8")) as Record<string, unknown>) ?? {};
     const confs = [
       makeConference({ key: "sigcomm", title: "SIGCOMM" }),
       makeConference({
