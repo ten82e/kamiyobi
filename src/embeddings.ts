@@ -282,26 +282,6 @@ export function serializeVenueProfileArtifact(input: VenueProfileArtifactInput):
   return `${JSON.stringify({ ...normalized, profiles_hash }, null, 2)}\n`;
 }
 
-/** Compatibility helper retained for callers that already hold the profile map. */
-export function serializeVenueProfiles(
-  profiles: Record<string, VenueProfileEntry>,
-  policy?: VenueProfileSelection,
-): string {
-  const first = Object.values(profiles)[0]?.selection;
-  return serializeVenueProfileArtifact({
-    schema: VENUE_PROFILE_SCHEMA_VERSION,
-    policy: policy ??
-      first ?? {
-        method: "fixed-title-embedding-k-medoids",
-        max_prototypes: 8,
-        source_year_max: 2100,
-        embedding_model: EMBEDDING_MODEL,
-        embedding_revision: EMBEDDING_REVISION,
-      },
-    profiles,
-  });
-}
-
 function loadVenueProfiles(): VenueProfileArtifact {
   const artifact = JSON.parse(
     readFileSync(new URL("../data/venue-profiles.json", import.meta.url), "utf8"),
@@ -482,18 +462,7 @@ export function benchmarkEmbeddingCacheKey(sourceYearMax: number): string {
   ].join("-");
 }
 
-function toStringArray(val: unknown): string[] {
-  if (Array.isArray(val)) {
-    return val
-      .filter((x) => x !== null && x !== undefined)
-      .map((x) => String(x).trim())
-      .filter(Boolean);
-  }
-  if (typeof val === "string" && val.trim() !== "") {
-    return [val.trim()];
-  }
-  return [];
-}
+import { toStringArray } from "./util.ts";
 
 /** 会議プロファイル文（カテゴリは正式名で展開）。
  * 多言語モデル用（forMulti）は、日本語名の会議にカテゴリの日本語キーワードを付与して

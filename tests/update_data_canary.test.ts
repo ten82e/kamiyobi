@@ -29,11 +29,13 @@ function buildPair(mutate?: (fixtureRoot: string) => void): {
   const cache = makeFixtureCache(join(root, "cache"));
   const baselineDir = join(root, "baseline");
   const currentDir = join(root, "current");
-  expect(runCli(baselineDir, { cache }).status).toBe(0);
+  // health.json のみを検証対象とし、embeddings (ONNX 推論) は並列ワーカ下で
+  // 競合してタイムアウトするため省略。他の build テストと同じ慣習。
+  expect(runCli(baselineDir, { cache, extra: ["--no-embeddings"] }).status).toBe(0);
   if (mutate) {
     mutate(join(cache, "ccfddl__ccf-deadlines__main", "ccf-deadlines-main", "conference"));
   }
-  expect(runCli(currentDir, { cache }).status).toBe(0);
+  expect(runCli(currentDir, { cache, extra: ["--no-embeddings"] }).status).toBe(0);
   return {
     baseline: JSON.parse(readFileSync(join(baselineDir, "health.json"), "utf8")) as HealthReport,
     current: JSON.parse(readFileSync(join(currentDir, "health.json"), "utf8")) as HealthReport,
@@ -85,8 +87,8 @@ describe("update-data canary", () => {
   it("unchanged sources rebuild stable health metadata", { timeout: 180_000 }, () => {
     const root = scratch();
     const cache = makeFixtureCache(join(root, "cache"));
-    const a = runCli(join(root, "a"), { cache });
-    const b = runCli(join(root, "b"), { cache });
+    const a = runCli(join(root, "a"), { cache, extra: ["--no-embeddings"] });
+    const b = runCli(join(root, "b"), { cache, extra: ["--no-embeddings"] });
     expect(a.status).toBe(0);
     expect(b.status).toBe(0);
     const read = (dir: string) =>

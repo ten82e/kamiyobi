@@ -88,18 +88,7 @@ function toPosInt(raw: string | undefined, fallback: number): number {
   return Number.isFinite(n) && Number.isInteger(n) && n > 0 ? n : fallback;
 }
 
-function toStringArray(val: unknown): string[] {
-  if (Array.isArray(val)) {
-    return val
-      .filter((x) => x !== null && x !== undefined)
-      .map((x) => String(x).trim())
-      .filter(Boolean);
-  }
-  if (typeof val === "string" && val.trim() !== "") {
-    return [val.trim()];
-  }
-  return [];
-}
+import { toStringArray } from "./util.ts";
 
 export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
   const args: BenchArgs = {

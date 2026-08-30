@@ -149,6 +149,7 @@ kamiyobi/
 ├── src/
 │   ├── model.ts                 # 型・時刻解決・日付パーサ・snapshot 入出力
 │   ├── args.ts                  # CLI の短縮引数互換
+│   ├── util.ts                  # 共有ユーティリティ（配列正規化等）
 │   ├── sources/
 │   │   ├── base.ts
 │   │   ├── ccfddl.ts
