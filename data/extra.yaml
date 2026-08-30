@@ -6161,3 +6161,32 @@ conferences:
                 verifiedAt: '2026-08-30T19:15:00Z'
                 verifiedFields: [date, kind, round]
                 rawExcerpt: '<strong>Manuscript Submission Deadline:</strong> 15 September 2026 (Extended Deadline)'
+
+  # 証拠: data/promotions/2026-08-31-tsc-llm-service-ecosystems-2027/manifest.json
+  # IEEE Computer Society 公式 CFP は投稿締切を 2026-10-31、
+  # 発行予定を Mid 2027 と明記する。時刻・タイムゾーンは掲載されない。
+  - key: tsc-llm-service-ecosystems
+    title: 'IEEE TSC: LLMs in Service-Oriented Ecosystems Design'
+    full_name: 'Large Language Models in Service-Oriented Ecosystems Design: Advances and Applications (IEEE Transactions on Services Computing Special Issue)'
+    link: https://www.computer.org/digital-library/journals/tsc/cfp-language-models-ecosystems-design
+    categories: [ai, systems]
+    tags: [niche, special-issue]
+    editions:
+      - year: 2027
+        id: tsc-llm-service-ecosystems-2027
+        link: https://www.computer.org/digital-library/journals/tsc/cfp-language-models-ecosystems-design
+        deadlines:
+          - kind: paper
+            label: Manuscript submission deadline
+            round: 1
+            date: '2026-10-31'
+            precision: date-only
+            evidence:
+              - sourceClass: publisher
+                sourceUrl: https://www.computer.org/digital-library/journals/tsc/cfp-language-models-ecosystems-design
+                contentHash: 8646e62b7b863709f586c7d12b76ce187fcdf1845049828bc421da61e6c389c7
+                sourceRevision: sha256:8646e62b7b863709f586c7d12b76ce187fcdf1845049828bc421da61e6c389c7
+                retrievedAt: '2026-08-30T19:49:57.284Z'
+                verifiedAt: '2026-08-30T19:51:00Z'
+                verifiedFields: [date, kind, round]
+                rawExcerpt: 'Manuscript Submission Deadline: October 31, 2026'

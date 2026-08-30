@@ -1,0 +1,129 @@
+[
+  {
+    "candidate": "tsc-llm-service-ecosystems",
+    "decision": "promote",
+    "verifiedFields": [
+      "venue",
+      "date",
+      "kind",
+      "round"
+    ],
+    "reason": "primary fields and evidence verified",
+    "verification": {
+      "valid": true,
+      "errors": [],
+      "checkedFields": [
+        "requestedUrl",
+        "finalUrl",
+        "status",
+        "headers",
+        "retrievedAt",
+        "sourceRevision",
+        "bodyHash",
+        "excerpt",
+        "officialDomain",
+        "extractionCandidates",
+        "eventYear",
+        "deadlineDate",
+        "deadlineTime",
+        "deadlineTimezone"
+      ],
+      "bodyHash": "8646e62b7b863709f586c7d12b76ce187fcdf1845049828bc421da61e6c389c7",
+      "sourceRevision": "sha256:8646e62b7b863709f586c7d12b76ce187fcdf1845049828bc421da61e6c389c7",
+      "extractedCandidates": [
+        {
+          "rawExcerpt": "Submission Deadline: 31 October 2026",
+          "text": "Submission Deadline: 31 October 2026",
+          "label": "Submission Deadline: 31 October 2026",
+          "kind": "paper",
+          "date": "2026-10-31",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "Manuscript Submission Deadline: October 31, 2026",
+          "text": "Manuscript Submission Deadline: October 31, 2026",
+          "label": "Manuscript Submission Deadline: October 31, 2026",
+          "kind": "paper",
+          "date": "2026-10-31",
+          "editionYear": 2026
+        },
+        {
+          "rawExcerpt": "First Round Notification: March 1, 2027",
+          "text": "First Round Notification: March 1, 2027",
+          "label": "First Round Notification: March 1, 2027",
+          "kind": "notification",
+          "date": "2027-03-01",
+          "editionYear": 2027
+        },
+        {
+          "rawExcerpt": "Revised Manuscript Due: May 1, 2027",
+          "text": "Revised Manuscript Due: May 1, 2027",
+          "label": "Revised Manuscript Due: May 1, 2027",
+          "kind": "paper",
+          "date": "2027-05-01",
+          "editionYear": 2027
+        },
+        {
+          "rawExcerpt": "Final Decision Notification: June 1, 2027",
+          "text": "Final Decision Notification: June 1, 2027",
+          "label": "Final Decision Notification: June 1, 2027",
+          "kind": "notification",
+          "date": "2027-06-01",
+          "editionYear": 2027
+        },
+        {
+          "rawExcerpt": "Final Manuscript Submission Due: June 15, 2027",
+          "text": "Final Manuscript Submission Due: June 15, 2027",
+          "label": "Final Manuscript Submission Due: June 15, 2027",
+          "kind": "paper",
+          "date": "2027-06-15",
+          "editionYear": 2027
+        }
+      ]
+    },
+    "normalized": {
+      "venue": {
+        "key": "tsc-llm-service-ecosystems",
+        "title": "IEEE TSC Special Issue: Large Language Models in Service-Oriented Ecosystems Design: Advances and Applications",
+        "categories": [
+          "ai",
+          "systems"
+        ],
+        "tags": [
+          "niche",
+          "special-issue"
+        ],
+        "review_state": "reviewed"
+      },
+      "edition": {
+        "year": 2027,
+        "edition_id": "tsc-llm-service-ecosystems-2027",
+        "date_text": "2027"
+      },
+      "deadline": {
+        "kind": "paper",
+        "label": "paper",
+        "round": 1,
+        "track": "",
+        "precision": "date-only",
+        "date": "2026-10-31",
+        "evidence": [
+          {
+            "sourceClass": "publisher",
+            "sourceUrl": "https://www.computer.org/digital-library/journals/tsc/cfp-language-models-ecosystems-design",
+            "sourceRevision": "sha256:8646e62b7b863709f586c7d12b76ce187fcdf1845049828bc421da61e6c389c7",
+            "retrievedAt": "2026-08-30T19:49:57.284Z",
+            "verifiedAt": "2026-08-30T19:51:00Z",
+            "contentHash": "8646e62b7b863709f586c7d12b76ce187fcdf1845049828bc421da61e6c389c7",
+            "rawExcerpt": "Manuscript Submission Deadline: October 31, 2026",
+            "verifiedFields": [
+              "date",
+              "kind",
+              "round"
+            ]
+          }
+        ]
+      }
+    }
+  }
+]
