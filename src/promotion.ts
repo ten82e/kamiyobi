@@ -291,7 +291,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
     .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
     .replace(/<\/?(?:b|strong|em|i)\b[^>]*>/gi, "")
     .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/(?:p|li|tr|td|th|div|h[1-6]|section|article)>/gi, "\n")
+    .replace(/<\/(?:p|li|tr|div|h[1-6]|section|article)>/gi, "\n")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")

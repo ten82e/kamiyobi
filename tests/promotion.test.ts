@@ -97,6 +97,18 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("extracts labels and dates from cells in the same table row", () => {
+    expect(
+      extractCfpCandidates(
+        "<table><tr><th>Abstract registration deadline</th><td>September 1, 2026</td></tr>" +
+          "<tr><td>Submission deadline</td><td>September 8, 2026</td></tr></table>",
+      ),
+    ).toMatchObject([
+      { kind: "abstract", date: "2026-09-01" },
+      { kind: "paper", date: "2026-09-08" },
+    ]);
+  });
+
   it("extracts multiple round dates and their following times from one line", () => {
     expect(
       extractCfpCandidates(

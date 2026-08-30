@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "id": "2026-08-31-wqs-2026",
+  "observations": {
+    "sha256": "b77bff89d0dfd30ed1d9405ff9f12904f06bf88d292e6b0f20bb4fc28b0ba840"
+  },
+  "resolutions": {
+    "sha256": "fabfb6b241c82fda934df22dee21c7e98e1c4230d1097c2fb670a80993d53c99"
+  },
+  "extra": {
+    "sha256": "8940e121fdbd3210925742f4e07e53750dc9ce1c35c3c5c368217fb0ce192aac"
+  },
+  "bodies": [
+    {
+      "path": "bodies/dc13ed46653fa4f2330f09aa2babacdb34a9df603549e1d0fd3ea15d59e8a8ba.body",
+      "sha256": "dc13ed46653fa4f2330f09aa2babacdb34a9df603549e1d0fd3ea15d59e8a8ba"
+    }
+  ],
+  "decisions": {
+    "wqs": "promote"
+  }
+}
