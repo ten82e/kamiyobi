@@ -52,6 +52,28 @@ describe("data-delta recommendation benchmark", () => {
     expect(fellOutOfTop5(["venue"], "venue", ["a", "b", "c", "d", "e", "venue"])).toBe(true);
   });
 
+  it("uses the best rank among explicitly acceptable venues", () => {
+    const changed = JSON.parse(JSON.stringify(fixture)) as DataDeltaFixture;
+    const item = changed.cases.find((entry) => {
+      if (!entry.expected_venue || entry.acceptable_venues) return false;
+      const top = dataDeltaTop5(changed.after_candidates, [
+        { title: entry.title, abstract: entry.abstract ?? "", keywords: "", venue: "" },
+      ]);
+      return top.includes(entry.expected_venue) && top[0] !== entry.expected_venue;
+    })!;
+    const alternative = dataDeltaTop5(changed.after_candidates, [
+      { title: item.title, abstract: item.abstract ?? "", keywords: "", venue: "" },
+    ])[0]!;
+    item.acceptable_venues = [item.expected_venue!, alternative];
+    const single = runDataDeltaBenchmark({
+      ...changed,
+      cases: changed.cases.map((entry) =>
+        entry.id === item.id ? { ...entry, acceptable_venues: undefined } : entry,
+      ),
+    });
+    expect(runDataDeltaBenchmark(changed).mrr).toBeGreaterThan(single.mrr);
+  });
+
   it("derives the delta from candidate input rather than stored rankings", () => {
     const changed = JSON.parse(JSON.stringify(fixture)) as DataDeltaFixture;
     changed.after_candidates = [];

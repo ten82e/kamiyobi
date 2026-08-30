@@ -101,7 +101,7 @@ describe("local source data integrity", () => {
     resetWarnings();
     const rows = rawDeadlines();
     expect(rows.length).toBeGreaterThan(100);
-    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(166);
+    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(168);
 
     for (const row of rows) {
       if (row.precision === "date-only") {
