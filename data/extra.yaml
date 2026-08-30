@@ -5977,3 +5977,37 @@ conferences:
                 verifiedAt: '2026-08-30T17:04:00Z'
                 verifiedFields: [date, kind, round]
                 rawExcerpt: '<tr><td>Submission deadline</td><td>September 8, 2026</td></tr>'
+
+  # 証拠: data/promotions/2026-08-31-conversations-2026/manifest.json
+  # 公式CFPは第10回、University of Amsterdam開催、2026-11-23〜25の会期、
+  # 2026-09-05のfirm deadlineを明記する（2026-08-30T17:21:30.800Z取得、
+  # sha256:4a41e3acf4f8e5be14c218b8abc2b31d5c4fbbbaf2728f88072051365e79bcbd）。
+  - key: conversations
+    title: CONVERSATIONS
+    full_name: 10th International Symposium on Chatbots and Human-centred AI
+    link: https://2026.conversations.ws/
+    categories: [ai]
+    tags: [niche]
+    editions:
+      - year: 2026
+        id: conversations26
+        link: https://2026.conversations.ws/call-for-papers/
+        place: Amsterdam, Netherlands
+        date_text: November 23-25, 2026
+        event_start: '2026-11-23'
+        event_end: '2026-11-25'
+        deadlines:
+          - kind: paper
+            label: Paper submission
+            round: 1
+            date: '2026-09-05'
+            precision: date-only
+            evidence:
+              - sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/conversations2026
+                contentHash: 5f77a214d1a00f47dc38b70a6353936b9cdaa48ae320bf0da72bdc1b389d8759
+                sourceRevision: sha256:5f77a214d1a00f47dc38b70a6353936b9cdaa48ae320bf0da72bdc1b389d8759
+                retrievedAt: '2026-08-30T17:21:31.883Z'
+                verifiedAt: '2026-08-30T17:22:00Z'
+                verifiedFields: [date, kind, round]
+                rawExcerpt: '<tr><td>Submission deadline</td><td>September 5, 2026</td></tr>'
