@@ -6190,3 +6190,32 @@ conferences:
                 verifiedAt: '2026-08-30T19:51:00Z'
                 verifiedFields: [date, kind, round]
                 rawExcerpt: 'Manuscript Submission Deadline: October 31, 2026'
+
+  # 証拠: data/promotions/2026-08-31-ieee-network-6g-isac-2027/manifest.json
+  # IEEE Communications Society 公式 CFP は延長投稿締切を 2026-09-15、
+  # 発行予定を May 2027 と明記する。時刻・タイムゾーンは掲載されない。
+  - key: ieee-network-6g-isac
+    title: 'IEEE Network: High-Reliability and Low-Latency 6G Communications'
+    full_name: 'High-Reliability and Low-Latency Communications for 6G Network: ISAC-Enabled Architectures, Networking, and Services (IEEE Network Special Issue)'
+    link: https://www.comsoc.org/publications/magazines/ieee-network/cfp/high-reliability-and-low-latency-communications-6g-network-isac-enabled-architectures-networking-and-services
+    categories: [networking, systems]
+    tags: [niche, special-issue]
+    editions:
+      - year: 2027
+        id: ieee-network-6g-isac-2027
+        link: https://www.comsoc.org/publications/magazines/ieee-network/cfp/high-reliability-and-low-latency-communications-6g-network-isac-enabled-architectures-networking-and-services
+        deadlines:
+          - kind: paper
+            label: Manuscript submission deadline (extended)
+            round: 1
+            date: '2026-09-15'
+            precision: date-only
+            evidence:
+              - sourceClass: publisher
+                sourceUrl: https://www.comsoc.org/publications/magazines/ieee-network/cfp/high-reliability-and-low-latency-communications-6g-network-isac-enabled-architectures-networking-and-services
+                contentHash: 94d638e1df49fddab0e7dab40641699f0649e0cc2a88eb574261fddee1561dcc
+                sourceRevision: '"1787962916-gzip"'
+                retrievedAt: '2026-08-30T20:13:34.822Z'
+                verifiedAt: '2026-08-30T20:14:00Z'
+                verifiedFields: [date, kind, round]
+                rawExcerpt: '<strong>Manuscript Submission Deadline:</strong> 15 September 2026 (Extended Deadline)'

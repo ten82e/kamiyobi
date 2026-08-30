@@ -1,0 +1,2098 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" prefix="og: https://ogp.me/ns#">
+  <head>
+    <meta charset="utf-8" />
+<meta name="description" content="This Special Issue (SI) focuses on high-reliability and low-latency 6G networking from an ISAC perspective, emphasizing network-centric architectures, protocols, and services. Contributions addressing theory, system design, standardization, and experimental validation are welcome to advance scalable and intelligent 6G systems." />
+<link rel="canonical" href="https://www.comsoc.org/publications/magazines/ieee-network/cfp/high-reliability-and-low-latency-communications-6g-network-isac-enabled-architectures-networking-and-services" />
+<meta name="rights" content="Copyright ©2026 All rights reserved." />
+<link rel="icon" href="/themes/custom/betterment/images/favicons/favicon.ico" />
+<link rel="icon" sizes="16x16" href="/themes/custom/betterment/images/favicons/favicon-16x16.png" />
+<link rel="icon" sizes="32x32" href="/themes/custom/betterment/images/favicons/favicon-32x32.png" />
+<link rel="icon" sizes="96x96" href="/themes/custom/betterment/images/favicons/favicon-96x96.png" />
+<link rel="icon" sizes="192x192" href="/themes/custom/betterment/images/favicons/android-icon-192x192.png" />
+<link rel="apple-touch-icon" href="/themes/custom/betterment/images/favicons/apple-icon-60x60.png" />
+<link rel="apple-touch-icon" sizes="72x72" href="/themes/custom/betterment/images/favicons/apple-icon-72x72.png" />
+<link rel="apple-touch-icon" sizes="76x76" href="/themes/custom/betterment/images/favicons/apple-icon-76x76.png" />
+<link rel="apple-touch-icon" sizes="114x114" href="/themes/custom/betterment/images/favicons/apple-icon-114x114.png" />
+<link rel="apple-touch-icon" sizes="120x120" href="/themes/custom/betterment/images/favicons/apple-icon-120x120.png" />
+<link rel="apple-touch-icon" sizes="144x144" href="/themes/custom/betterment/images/favicons/apple-icon-144x144.png" />
+<link rel="apple-touch-icon" sizes="152x152" href="/themes/custom/betterment/images/favicons/apple-icon-152x152.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="/themes/custom/betterment/images/favicons/apple-icon-180x180.png" />
+<meta property="og:site_name" content="IEEE Communications Society" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://www.comsoc.org/publications/magazines/ieee-network/cfp/high-reliability-and-low-latency-communications-6g-network-isac-enabled-architectures-networking-and-services" />
+<meta property="og:title" content="High-Reliability and Low-Latency Communications for 6G Network: ISAC-Enabled Architectures, Networking, and Services | IEEE Communications Society" />
+<meta property="og:description" content="This Special Issue (SI) focuses on high-reliability and low-latency 6G networking from an ISAC perspective, emphasizing network-centric architectures, protocols, and services. Contributions addressing theory, system design, standardization, and experimental validation are welcome to advance scalable and intelligent 6G systems." />
+<meta property="article:modified_time" content="2026-08-24T10:43:25-04:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="High-Reliability and Low-Latency Communications for 6G Network: ISAC-Enabled Architectures, Networking, and Services | IEEE Communications Society" />
+<meta name="twitter:description" content="This Special Issue (SI) focuses on high-reliability and low-latency 6G networking from an ISAC perspective, emphasizing network-centric architectures, protocols, and services. Contributions addressing theory, system design, standardization, and experimental validation are welcome to advance scalable and intelligent 6G systems." />
+<meta name="twitter:site" content="@comsoc" />
+<meta name="twitter:site:id" content="24043036" />
+<meta name="twitter:creator" content="24043036" />
+<meta name="twitter:creator:id" content="@comsoc" />
+<meta name="Generator" content="Drupal 11 (https://www.drupal.org)" />
+<meta name="MobileOptimized" content="width" />
+<meta name="HandheldFriendly" content="true" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="alternate" hreflang="en" href="https://www.comsoc.org/publications/magazines/ieee-network/cfp/high-reliability-and-low-latency-communications-6g-network-isac-enabled-architectures-networking-and-services" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+
+    <title>High-Reliability and Low-Latency Communications for 6G Network: ISAC-Enabled Architectures, Networking, and Services | IEEE Communications Society</title>
+    <link rel="stylesheet" media="all" href="/sites/default/files/css/css_5ujFGdPp3d49r2II4MvrbTxbP-MuITCthqiMTDGbO9o.css?delta=0&amp;language=en&amp;theme=betterment&amp;include=eJxtjV0KwyAQhC9k41PPI6tOk21cV1wD6e2bBEop9GUGPuYnYgx0QR1-LhqpuKRimkLSDk9ZuIaxQBDSisxD-z08eIe5K5D71qhM9KT9B_CA3ArbcAwcXdWVT5NWmGqC_4-dcNLqL51OMdeo09ypLfbZ_pJpq22Lx82C7Oxlx6mPZHgDvGNTJQ" />
+<link rel="stylesheet" media="all" href="https://cookie-consent.ieee.org/ieee-cookie-banner.css" />
+<link rel="stylesheet" media="all" href="/sites/default/files/css/css_PsryQn_aVvbrnS5i5HlGpQFP1iMH9UldrCh6EaQFrwM.css?delta=2&amp;language=en&amp;theme=betterment&amp;include=eJxtjV0KwyAQhC9k41PPI6tOk21cV1wD6e2bBEop9GUGPuYnYgx0QR1-LhqpuKRimkLSDk9ZuIaxQBDSisxD-z08eIe5K5D71qhM9KT9B_CA3ArbcAwcXdWVT5NWmGqC_4-dcNLqL51OMdeo09ypLfbZ_pJpq22Lx82C7Oxlx6mPZHgDvGNTJQ" />
+<link rel="stylesheet" media="all" href="//fonts.googleapis.com/css2?family=Open+Sans:wght@300..800&amp;family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,400;1,700&amp;display=swap" />
+<link rel="stylesheet" media="all" href="/sites/default/files/css/css_tpdQWaSCCREPAPmgcF7OnpWCcBr-dHJpAYmRNlK-GWw.css?delta=4&amp;language=en&amp;theme=betterment&amp;include=eJxtjV0KwyAQhC9k41PPI6tOk21cV1wD6e2bBEop9GUGPuYnYgx0QR1-LhqpuKRimkLSDk9ZuIaxQBDSisxD-z08eIe5K5D71qhM9KT9B_CA3ArbcAwcXdWVT5NWmGqC_4-dcNLqL51OMdeo09ypLfbZ_pJpq22Lx82C7Oxlx6mPZHgDvGNTJQ" />
+
+    <script type="application/json" data-drupal-selector="drupal-settings-json">{"path":{"baseUrl":"\/","pathPrefix":"","currentPath":"node\/32706","currentPathIsAdmin":false,"isFront":false,"currentLanguage":"en"},"pluralDelimiter":"\u0003","suppressDeprecationErrors":true,"gtag":{"tagId":"","consentMode":false,"otherIds":[],"events":[],"additionalConfigInfo":[]},"ajaxPageState":{"libraries":"eJxtkFFSxSAMRTeE7ZfrYQK9QnxAmISOz92LdfS16k9CTpjcmwSMAa1oY6XN0AwuPFAqEqicSYbKueZWuMHP937Glbj9gZ2UklLPnlrMoueegTTmC-nK4-JmSP-aGaWaRB9FMV3XKTUyKny8YeMh-uxf-A67_Gt4s3LM8rYHi8oB7uhsuncqyxSrT4VtuCSSCvygtKYZftcLvdL9CqtjYOqL3Pgz1V547oj1f-wqR2nrEd3PVezbyYMse-t7mKYyNmfvNi2ugQwfFbSsFA","theme":"betterment","theme_token":null},"ajaxTrustedUrl":{"\/search":true},"gtm":{"tagId":null,"settings":{"data_layer":"dataLayer","include_classes":false,"allowlist_classes":"google\nnonGooglePixels\nnonGoogleScripts\nnonGoogleIframes","blocklist_classes":"customScripts\ncustomPixels","include_environment":false,"environment_id":"","environment_token":""},"tagIds":["GTM-PWX9HTH"]},"user":{"uid":0,"permissionsHash":"7ccaded0115035ac636d822ecd656e34f0693bbc81a03d4d7d5a5c19d076e17d"}}</script>
+<script src="/sites/default/files/js/js_WdwPA9vj_c2AQFNcst9ntFj4wnMe_-ApRzYzIZhWfrA.js?scope=header&amp;delta=0&amp;language=en&amp;theme=betterment&amp;include=eJxtzlsOAiEMBdANTWRJpDQ3UAVKChNdvqgfMqM_fZw2TQPGgBXU4WLWQHkLX0kwXXupWSr8rPeVC0n9wUZG0aglT5WT2jrrION0kGYysMrQ9rnJWrqyZzW4invP7x3f99DZJGCLqjHDD4ouznDuL3SlxxHLJgDmSb3JK5WWZX4J95-fF-RzKw"></script>
+<script src="/modules/contrib/google_tag/js/gtag.js?tjz1bd"></script>
+<script src="/modules/contrib/google_tag/js/gtm.js?tjz1bd"></script>
+
+  </head>
+  <body class="path--publications-magazines-ieee-network-cfp-high-reliability-and-low-latency-communications-6g-network-isac-enabled-architectures-networking-and-services path-node page-node-type-call-for-papers">
+    <a href="#main-content" class="visually-hidden focusable">
+      Skip to main content
+    </a>
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PWX9HTH"
+                  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+      <div class="dialog-off-canvas-main-canvas" data-off-canvas-main-canvas>
+    
+
+
+          
+
+<div  class="layout-container layout-container--">
+      
+
+<div class="site-header--top-bar" id="site-header-top-bar">
+  <div class="top-bar">
+    <div id="top-menu" class="top-menu">
+      <div class="site-top__menu">
+            <nav role="navigation" aria-labelledby="block-betterment-ieeemenus-menu" id="block-betterment-ieeemenus">
+            
+  <h2 class="visually-hidden" id="block-betterment-ieeemenus-menu">IEEE Menus</h2>
+  
+
+        
+
+<nav id="block-betterment-ieeemenu" class="inline-menu">
+  <ul class="inline-menu inline-menu--dark">
+    
+                  <li class="inline-menu__item">
+                  <a href="https://www.ieee.org" class="inline-menu__link dropdown-item">IEEE.org</a>
+                                  <button class="inline-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+              <ul class="main-menu main-menu--sub">
+      
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="https://spectrum.ieee.org" class="inline-menu__link inline-menu__link--sub ">IEEE Spectrum</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://standards.ieee.org" class="inline-menu__link inline-menu__link--sub ">IEEE Standards</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://www.ieee.org" class="inline-menu__link inline-menu__link--sub ">IEEE Xplore Digital Library</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://www.ieee.org/sitemap.html" class="inline-menu__link inline-menu__link--sub ">More Sites</a>
+                                  </li>
+              </ul>
+
+    
+                    </li>
+                      <li class="inline-menu__item">
+                  <a href="/about" class="inline-menu__link dropdown-item" data-drupal-link-system-path="node/6926">About</a>
+                                  <button class="inline-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+              <ul class="main-menu main-menu--sub">
+      
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/about/board-governors" class="inline-menu__link inline-menu__link--sub " data-drupal-link-system-path="node/30056">Board of Governors</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/about/brand-experience-advertise-sponsorship" class="inline-menu__link inline-menu__link--sub " data-drupal-link-system-path="node/30061">Brand Experience, Advertise &amp; Sponsorship</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/comsoc-history/" class="inline-menu__link inline-menu__link--sub ">Communications History Guide</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/about/comsoc-corporate-program" class="inline-menu__link inline-menu__link--sub " data-drupal-link-system-path="node/30086">Corporate Program</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/councils-boards-committees" class="inline-menu__link inline-menu__link--sub " data-drupal-link-system-path="node/30076">Councils, Boards, &amp; Committees</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/about/news" class="inline-menu__link inline-menu__link--sub " data-drupal-link-system-path="node/96">News</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/about/staff-listing" class="inline-menu__link inline-menu__link--sub " data-drupal-link-system-path="node/91">Staff Listing</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/about/volunteer-opportunities" class="inline-menu__link inline-menu__link--sub " data-drupal-link-system-path="node/211">Volunteer Opportunities</a>
+                                  </li>
+              </ul>
+
+    
+                    </li>
+                      <li class="inline-menu__item">
+                  <a href="/membership" class="inline-menu__link" data-drupal-link-system-path="node/1">Become a Member</a>
+                                  </li>
+              </ul>
+
+    </nav>
+
+
+
+  </nav>
+
+              <nav role="navigation" aria-labelledby="block-betterment-ieeeglobalmenu-menu" id="block-betterment-ieeeglobalmenu">
+            
+  <h2 class="visually-hidden" id="block-betterment-ieeeglobalmenu-menu">IEEE Global Menu</h2>
+  
+
+        
+
+<nav id="block-betterment-ieeeglobalmenu" class="inline-menu">
+  <ul class="inline-menu inline-menu--dark">
+    
+                  <li class="inline-menu__item">
+                  <a href="/contact-us-and-support" class="inline-menu__link" data-drupal-link-system-path="node/106">Contact</a>
+                                  </li>
+                      <li class="inline-menu__item">
+                  <a href="https://www.ieee.org/cart/public/myCart/page.html" class="cart inline-menu__link" target="_blank">Cart (0)</a>
+                                  </li>
+                      <li class="inline-menu__item">
+                  <a href="https://www.comsoc.org/saml_login?destination=/user" class="contact inline-menu__link">Sign in</a>
+                                  </li>
+                      <li class="inline-menu__item">
+                  <a href="https://www.ieee.org" class="ieeeLogo inline-menu__link" target="_blank">IEEE</a>
+                                  </li>
+              </ul>
+
+    </nav>
+
+
+
+  </nav>
+
+        </div>
+    </div>
+  </div>
+</div>
+
+  
+
+  <header id="site-header"  class="site-header">
+  <div class="site-header__inner">
+
+    
+
+        <div class="column-one">
+    
+    
+      <div class="site-header--logo">
+        
+<figure
+   class="figure"
+>
+      <a  class="logo" href="/">
+                
+  
+<picture
+   class="figure__image"
+>
+      <img
+   class="figure__img"
+      src="/themes/custom/betterment/components/images/comsoc-logo.svg"
+      alt="IEEE Communications Society"
+    />
+</picture>
+            </a>
+  
+  </figure>
+      </div>
+
+      <!-- wrap the comsoc logo and other elements on mini sites -->
+      
+      
+          </div><!--column-one-->
+    
+        <div class="column-two">
+    
+      <div class="site-header--main-menu">
+              <nav role="navigation" aria-labelledby="block-betterment-mainnavigation-menu" id="block-betterment-mainnavigation">
+            
+  <h2 class="visually-hidden" id="block-betterment-mainnavigation-menu">Main navigation dropdown</h2>
+  
+
+        
+
+<a href="#" id="toggle-expand" class="toggle-expand">
+  <span class="toggle-expand__open">
+
+    <svg width="22" height="19" viewBox="0 0 22 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M1.55375 4.385H18.3888C18.7465 4.385 19.0362 4.09524 19.0362 3.7375V1.1475C19.0362 0.789756 18.7465 0.5 18.3888 0.5H1.55375C1.19601 0.5 0.90625 0.789756 0.90625 1.1475V3.7375C0.90625 4.09524 1.19601 4.385 1.55375 4.385ZM20.9788 7.6225H4.14375C3.78601 7.6225 3.49625 7.91226 3.49625 8.27V10.86C3.49625 11.2177 3.78601 11.5075 4.14375 11.5075H20.9788C21.3365 11.5075 21.6262 11.2177 21.6262 10.86V8.27C21.6262 7.91226 21.3365 7.6225 20.9788 7.6225ZM18.3888 14.745H1.55375C1.19601 14.745 0.90625 15.0348 0.90625 15.3925V17.9825C0.90625 18.3402 1.19601 18.63 1.55375 18.63H18.3888C18.7465 18.63 19.0362 18.3402 19.0362 17.9825V15.3925C19.0362 15.0348 18.7465 14.745 18.3888 14.745Z" fill="white"/>
+    </svg>
+  </span>
+  <span class="toggle-expand__close">
+
+    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="3.80469" y="1" width="30" height="4" transform="rotate(45 3.80469 1)" fill="white"/>
+    <rect x="0.976562" y="22" width="30" height="4" transform="rotate(-45 0.976562 22)" fill="white"/>
+    </svg>
+
+  </span>
+</a>
+<nav id="main-nav" class="main-nav">
+
+      <ul class="main-menu">
+    
+<div  data-drupal-selector="views-exposed-form-acquia-search-page" id="block-betterment-exposedformacquia-searchpage" class="block-facet collapsible-element views-exposed-form">
+  
+    
+      <form  action="/search" method="get" id="views-exposed-form-acquia-search-page" accept-charset="UTF-8" class="search" id="views-exposed-form-acquia-search-page">
+        
+<div  class="search__item form-no-label">
+        <input placeholder="Search" data-drupal-selector="edit-search" type="text" id="edit-search" name="search" value="" size="30" maxlength="128" class="form-text form-item__textfield" />
+
+        </div>
+<div data-drupal-selector="edit-actions" class="form-actions search__item--submit js-form-wrapper form-wrapper" id="edit-actions"><input class="search__submit button js-form-submit form-submit" data-drupal-selector="edit-submit-acquia-search" type="submit" id="edit-submit-acquia-search" value="Search" />
+  
+    
+
+<svg  class="search__search search__icon">
+  <use xlink:href="/themes/custom/betterment/dist/sprite.svg#search"></use>
+</svg>
+  
+    
+
+<svg  class="search__close search__icon">
+  <use xlink:href="/themes/custom/betterment/dist/sprite.svg#close"></use>
+</svg>
+  
+</div>
+
+
+
+  </form>
+
+  </div>
+
+  
+                  <li class="main-menu__item">
+                  <a href="/publications" class="main-menu__link dropdown-item" data-drupal-link-system-path="node/14">Publications</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/30336">Magazines</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-magazine" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/931">IEEE Communications Magazine</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-magazine/ieee-communications-magazine-editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/326">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-magazine/cfp" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/931/cfp">Call for Papers</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-magazine/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/30246">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-magazine/presidents-page" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/651">The President&#039;s Page</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-magazine/presidents-page/presidents-page-august-2026" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/33726">August 2026</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-magazine/presidents-page/presidents-page-july-2026" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/33511">July 2026</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-magazine/presidents-page/presidents-page-june-2026" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/33381">June 2026</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-magazine/presidents-page/presidents-page-may-2026" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/32971">May 2026</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-magazine/presidents-page/presidents-page-april-2026" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/32766">April 2026</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-magazine/presidents-page/presidents-page-march-2026" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/32626">March 2026</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-magazine/presidents-page/presidents-page-february-2026" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/32231">February 2026</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-magazine/presidents-page/presidents-page-january-2026" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/31801">January 2026</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-magazine/gcn" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/656">Global Communications Newsletter (GCN)</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="http://gcn.comsoc.org/" class="main-menu__link main-menu__link--sub ">GCN Online Version</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-magazine/gcn/pdf" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/1766">GCN PDF Version</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieee.atyponrex.com/journal/COMMAG-IEEE" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-network" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/946">IEEE Network</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-network/editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/681">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-network/cfp" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/946/cfp">Call for Papers</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-network/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/30366">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieee.atyponrex.com/journal/network-ieee" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-wireless-communications" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/956">IEEE Wireless Communications</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-wireless-communications/editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/706">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-wireless-communications/cfp" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/956/cfp">Call for Papers</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-wireless-communications/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/30581">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieee.atyponrex.com/journal/ieee-wcm" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-standards-magazine" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/951">IEEE Communications Standards Magazine</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-standards-magazine/editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/611">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-standards-magazine/cfp" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/951/cfp">Call for Papers</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-standards-magazine/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/30486">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieee.atyponrex.com/journal/m-comstd" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-internet-things-magazine" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/7036">IEEE Internet of Things Magazine</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-internet-things-magazine/editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/7041">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-internet-things-magazine/cfp" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/7036/cfp">Call for Papers</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-internet-things-magazine/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/30611">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieee.atyponrex.com/journal/iotmag" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/30341">Journals</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-communications-letters" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/6931">IEEE COMML</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="http://ieeexplore.ieee.org/xpl/mostRecentIssue.jsp?punumber=4234" class="main-menu__link main-menu__link--sub ">Current Issue</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-comml/ieee-communications-letters-editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/1236">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-comml/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/1241">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="http://mc.manuscriptcentral.com/comml-ieee" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-communications-surveys-tutorials" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/6936">IEEE COMST</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="http://ieeexplore.ieee.org/xpl/mostRecentIssue.jsp?punumber=9739" class="main-menu__link main-menu__link--sub ">Current Issue</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="http://ieeexplore.ieee.org/xpl/tocresult.jsp?isnumber=5451756" class="main-menu__link main-menu__link--sub ">Early Access</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-comst/ieee-communications-surveys-tutorials-editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/1256">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-comst/call-for-papers" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/1251">Call for Papers</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-comst/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/1261">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieee.atyponrex.com/journal/comst-ieee" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-journal-selected-areas-communications" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/3456">IEEE JSAC</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="http://ieeexplore.ieee.org/xpl/mostRecentIssue.jsp?punumber=49" class="main-menu__link main-menu__link--sub ">Current Issue</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-jsac/ieee-journal-selected-areas-communications-editorial-board" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/1476">Editorial Board</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-jsac/editorial-board/responsibilities-editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/1516">Responsibilities of Editorial Board</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-jsac/cfp" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/3456/cfp">Call for Papers</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-jsac/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/1436">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://mc.manuscriptcentral.com/jsac-ieee" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/blogs/selected-ideas-communications" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/16751">Selected Ideas in Communications Blog</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-lnet" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/6036">IEEE LNET</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieeexplore.ieee.org/xpl/mostRecentIssue.jsp?punumber=8253410" class="main-menu__link main-menu__link--sub ">Current Issue</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-lnet/ieee-networking-letters-editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/6041">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-lnet/cfp" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/6036/cfp">Call for Papers</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-lnet/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/6046">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://mc.manuscriptcentral.com/l-net" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-ojcoms" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/9326">IEEE OJCOMS</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=8782661" class="main-menu__link main-menu__link--sub ">Current Issue</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-ojcoms/ieee-open-journal-communications-society-editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/9421">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-ojcoms/cfp" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/9326/cfp">Call for Papers</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-ojcoms/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/9416">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieee.atyponrex.com/dashboard?siteName=oj-coms" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-transactions-cognitive-communications-and-networking" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/6941">IEEE TCCN</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="http://ieeexplore.ieee.org/xpl/mostRecentIssue.jsp?punumber=6687307" class="main-menu__link main-menu__link--sub ">Current Issue</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tccn/ieee-transactions-cognitive-communications-and-networking-editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/1426">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tccn/cfp" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/6941/cfp">Call for Papers</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tccn/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/1431">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieee.atyponrex.com/journal/tccn" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-transactions-communications" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/6946">IEEE TCOM</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="http://ieeexplore.ieee.org/xpl/mostRecentIssue.jsp?punumber=26" class="main-menu__link main-menu__link--sub ">Current Issue</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tcom/ieee-transactions-communications-editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/1771">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tcom/policies-and-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/1776">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieee.atyponrex.com/journal/tcom" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-transactions-green-communications-and-networking" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/6951">IEEE TGCN</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="http://ieeexplore.ieee.org/xpl/mostRecentIssue.jsp?punumber=7511293" class="main-menu__link main-menu__link--sub ">Current Issue</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tgcn/editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/1816">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tgcn/cfp" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/6951/cfp">Call for Papers</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tgcn/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/1831">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://mc.manuscriptcentral.com/tgcn" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tmbmc" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/6971">IEEE TMBMC</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="http://ieeexplore.ieee.org/xpl/mostRecentIssue.jsp?punumber=6687308" class="main-menu__link main-menu__link--sub ">Current Issue</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tmbmc/editoral-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/1846">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tmbmc/cfp" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/6971/cfp">Call for Papers</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tmbmc/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/1861">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://mc.manuscriptcentral.com/tmbmc" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tmlcn" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/18316">IEEE TMLCN</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=9882533" class="main-menu__link main-menu__link--sub ">Current Issue</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tmlcn/IEEE-transactions-machine-learning-communications-networking-editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/18326">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tmlcn/cfp" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/18321">Call for Papers</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tmlcn/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/18431">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieee.atyponrex.com/journal/MLCN" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tnet" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/26046">IEEE TNET</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieeexplore.ieee.org/xpl/mostRecentIssue.jsp?punumber=10723154" class="main-menu__link main-menu__link--sub ">Current Issue</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tnet/ieee-transactions-networking-editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/26161">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tnet/ieee-transactions-networking-call-papers" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/26156">Call for Papers</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tnet/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/26166">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieee.atyponrex.com/journal/TNET" class="main-menu__link main-menu__link--sub ">Submit a Paper</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-transactions-network-science-and-engineering" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/7996">IEEE TNSE</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=6488902" class="main-menu__link main-menu__link--sub ">Current Issue</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tnse/ieee-transactions-network-science-and-engineering-editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/8001">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tnse/cfp" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/7996/cfp">Call for Papers</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tnse/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/9171">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieee.atyponrex.com/journal/tnse-cs" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-transactions-network-and-service-management" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/6956">IEEE TNSM</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="http://ieeexplore.ieee.org/xpl/mostRecentIssue.jsp?punumber=4275028" class="main-menu__link main-menu__link--sub ">Current Issue</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tnsm/ieee-transactions-network-and-service-management-editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/1926">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tnsm/cfp" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/6956/cfp">Call for Papers</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-tnsm/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/3131">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieee.atyponrex.com/journal/tnsm" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-twc" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/6961">IEEE TWC</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="http://ieeexplore.ieee.org/xpl/mostRecentIssue.jsp?punumber=7693" class="main-menu__link main-menu__link--sub ">Current Issues</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-twc/ieee-transactions-wireless-communications-editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/4846">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-twc/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/3136">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieee.atyponrex.com/journal/twc" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-wireless-communications-letters" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/6966">IEEE WCL</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="http://ieeexplore.ieee.org/xpl/mostRecentIssue.jsp?punumber=5962382" class="main-menu__link main-menu__link--sub ">Current Issue</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-wcl/ieee-wireless-communications-letters-editorial-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/4606">Editorial Board</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/journals/ieee-wcl/policies-guidelines" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/4866">Policies and Guidelines</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="https://ieee.atyponrex.com/journal/wcl" class="main-menu__link main-menu__link--sub ">Submit a Manuscript</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/publications-contents-digest" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/3106">Publications Contents Digest</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/newsletters" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/29236">Newsletters</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/magazines/ieee-communications-magazine/gcn" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/656">Global Communications Newsletter</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/tcn" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/9706">IEEE ComSoc Technical Committees Newsletter</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/tcn/2019-nov" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/10091">November 2019</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/ieee-comsoc-technical-committees-newsletter/author-kit" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/9731">Author Kit</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/newsletters/ieee-comsoc-educational-activities-newsletter" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/8071">Educational Activities Newsletter</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/ieee-communications-society-digital-library" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/6196">IEEE Xplore Digital Library</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/submit-paper" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/976">Submit a Paper</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/comsoc-technology-news-ctn" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/401">Communications Technology News (CTN)</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/best-readings" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/5531">Best Readings</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/ieee-comsoc-blogs" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/30101">Blogs</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/blogs/selected-ideas-communications" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/16751">Selected Ideas in Communications</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/best-practices-and-guidelines-ieee-comsoc-publications" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/30791">Best Practices and Guidelines for IEEE ComSoc Publications</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                      <li class="main-menu__item">
+                  <a href="/conferences-events" class="main-menu__link dropdown-item" data-drupal-link-system-path="node/5551">Conferences &amp; Events</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/conferences-events/portfolio-conferences-events" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/30031">Portfolio of Conferences &amp; Events</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/conferences-events/event-sponsorship" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/336">Events Sponsorship &amp; FAQs</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/conferences-events/information-organizers-authors-and-attendees" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/276">Information for Organizers, Authors and Attendees</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                      <li class="main-menu__item">
+                  <a href="/engagement-community" class="main-menu__link dropdown-item" data-drupal-link-system-path="node/28936">Engagement &amp; Community</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/awards" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/29231">Awards</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/chapters" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/30371">Chapters</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/comsoc-connector" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/32491">ComSoc Connector</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/comsoc-day" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/33901">ComSoc Day</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/yp" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/29366">ComSoc Young Professionals</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/competitions" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/28946">Competitions</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/competitions/ieee-comsoc-75th-logo-competition" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/33656">ComSoc’s 75th Anniversary Logo Design Contest</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/competitions/ieee-comsoc-student-competition" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/261">Student Competition</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/competitions/communication-for-all" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/16291">Communication for All</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/competitions/research-collaboration-pitch-session" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/30396">Research Collaboration Pitch Session</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/competitions/ieee-comsoc-four-minute-thesis-4mt-competition" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/28526">Four Minute Thesis (4MT) Competition</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/councils-boards-committees" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/30076">Councils, Boards &amp; Committees</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/distinguished-lecturers" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/29361">Distinguished Lecturers</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/students" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/30071">For Students</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/ieee-fellows" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/29351">IEEE Fellows</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/notable-achievements" class="main-menu__link main-menu__link--sub flyout-menu" data-drupal-link-system-path="node/30786">Notable Achievements</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/notable-achievements/ieee-comsoc-quiet-heroes" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/25306">IEEE ComSoc Quiet Heroes</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/notable-achievements/celebrating-women-communications-engineering" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/25311">Celebrating Women in Communications Engineering</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/sister-societies" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/206">Sister Societies</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/women-communications-engineering-wice" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/29346">Women in Communications Engineering (WICE)</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/membership-loyalty" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/28401">Membership Loyalty</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                      <li class="main-menu__item">
+                  <a href="/education-training" class="main-menu__link dropdown-item" data-drupal-link-system-path="node/16">Education &amp; Training</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/publications/newsletters/ieee-comsoc-educational-activities-newsletter" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/8071">Educational Activities Newsletter</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/education-training/career-resources" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/296">Career Resources</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/education-training/certification" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/29246">Certification</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/education-training/media-center" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/29341">Media Center</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/education-training/demand-training" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/286">On-Demand Training</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/education-training/live-online-courses" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/29426">Live Online Courses</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/education-training/comsoc-education-talks" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/30836">Education Talks</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/education-training/pre-university-stem" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/29356">Pre-University STEM</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/education-training/school-series" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/29376">School Series</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/education-training/student-program" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/29421">Student Program</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/education-training/university-students" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/29536">University Students</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                      <li class="main-menu__item">
+                  <a href="/technical-activities" class="main-menu__link dropdown-item" data-drupal-link-system-path="node/17">Technical Activities</a>
+                                  <button class="main-menu__expand-sub" aria-label="Toggle Sub Menu">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996" stroke="" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+        <ul class="main-menu main-menu--sub">
+  
+                              <li class="main-menu__item main-menu__item--sub">
+            <a href="/technical-activities/standards" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/6921">Standards</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/boards-councils-committees?f%5B0%5D=committee%3A6736" class="main-menu__link main-menu__link--sub " data-drupal-link-query="{&quot;f&quot;:[&quot;committee:6736&quot;]}">Emerging Technologies Initiatives</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/boards-councils-committees/board/industry-communities-board" class="main-menu__link main-menu__link--sub " data-drupal-link-system-path="node/30011">Industry Communities</a>
+                                  </li>
+                                  <li class="main-menu__item main-menu__item--sub">
+            <a href="/engagement-community/boards-councils-committees?f%5B0%5D=committee%3A6721" class="main-menu__link main-menu__link--sub " data-drupal-link-query="{&quot;f&quot;:[&quot;committee:6721&quot;]}">Technical Committees</a>
+                                  </li>
+          
+          </ul>
+
+
+                    </li>
+                      <li class="main-menu__item">
+                  <a href="/resources-help-center" class="main-menu__link" data-drupal-link-system-path="node/29241">Resources &amp; Help Center</a>
+                                  </li>
+          
+            <div class="mobile-utility-menu">
+        <nav role="navigation" aria-labelledby="block-betterment-ieeemobilemenu-menu" id="block-betterment-ieeemobilemenu">
+            
+  <h2 class="visually-hidden" id="block-betterment-ieeemobilemenu-menu">IEEE Mobile menu</h2>
+  
+
+        
+  
+          <nav class="mobile-utility-menu">
+        <ul class="mobile-menu">
+    
+          <li class="mobile-menu__item ">
+
+                        
+        
+        <a
+          href="/about"
+          class="mobile-menu__link"
+        >
+          About
+        </a>
+
+                          <button
+            class="main-menu__expand-sub"
+            aria-label="Toggle Sub Menu"
+            aria-expanded="false">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+                      
+            <ul class="main-menu--sub level-1">
+    
+          <li class="mobile-menu__item ">
+
+                        
+        
+        <a
+          href="/about/board-governors"
+          class="mobile-menu__link"
+        >
+          Board of Governors
+        </a>
+
+                      </li>
+          <li class="mobile-menu__item ">
+
+                        
+        
+        <a
+          href="/about/brand-experience-advertise-sponsorship"
+          class="mobile-menu__link"
+        >
+          Brand Experience, Advertise &amp; Sponsorship
+        </a>
+
+                      </li>
+          <li class="mobile-menu__item ">
+
+                        
+        
+        <a
+          href="https://www.comsoc.org/comsoc-history/"
+          class="mobile-menu__link"
+        >
+          Communications History Guide
+        </a>
+
+                      </li>
+          <li class="mobile-menu__item ">
+
+                        
+        
+        <a
+          href="/about/comsoc-corporate-program"
+          class="mobile-menu__link"
+        >
+          Corporate Program
+        </a>
+
+                      </li>
+          <li class="mobile-menu__item ">
+
+                        
+        
+        <a
+          href="/engagement-community/councils-boards-committees"
+          class="mobile-menu__link"
+        >
+          Councils, Boards, &amp; Committees
+        </a>
+
+                      </li>
+          <li class="mobile-menu__item ">
+
+                        
+        
+        <a
+          href="/about/news"
+          class="mobile-menu__link"
+        >
+          News
+        </a>
+
+                      </li>
+          <li class="mobile-menu__item ">
+
+                        
+        
+        <a
+          href="/about/staff-listing"
+          class="mobile-menu__link"
+        >
+          Staff Listing
+        </a>
+
+                      </li>
+          <li class="mobile-menu__item ">
+
+                        
+        
+        <a
+          href="/about/volunteer-opportunities"
+          class="mobile-menu__link"
+        >
+          Volunteer Opportunities
+        </a>
+
+                      </li>
+        </ul>
+
+      
+              </li>
+          <li class="mobile-menu__item ">
+
+                        
+        
+        <a
+          href="/membership"
+          class="mobile-menu__link"
+        >
+          Become a Member
+        </a>
+
+                      </li>
+          <li class="mobile-menu__item ">
+
+                        
+        
+        <a
+          href="https://www.ieee.org"
+          class="mobile-menu__link"
+        >
+          IEEE.org
+        </a>
+
+                          <button
+            class="main-menu__expand-sub"
+            aria-label="Toggle Sub Menu"
+            aria-expanded="false">
+            <svg width="11" height="7" viewBox="0 0 11 7" fill="none">
+              <path d="M9.48532 1.49996L5.24268 5.74261L1.00004 1.49996"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+                      
+            <ul class="main-menu--sub level-1">
+    
+          <li class="mobile-menu__item ">
+
+                        
+        
+        <a
+          href="https://spectrum.ieee.org"
+          class="mobile-menu__link"
+        >
+          IEEE Spectrum
+        </a>
+
+                      </li>
+          <li class="mobile-menu__item ">
+
+                        
+        
+        <a
+          href="https://standards.ieee.org"
+          class="mobile-menu__link"
+        >
+          IEEE Standards
+        </a>
+
+                      </li>
+          <li class="mobile-menu__item ">
+
+                        
+        
+        <a
+          href="https://www.ieee.org"
+          class="mobile-menu__link"
+        >
+          IEEE Xplore Digital Library
+        </a>
+
+                      </li>
+          <li class="mobile-menu__item ">
+
+                        
+        
+        <a
+          href="https://www.ieee.org/sitemap.html"
+          class="mobile-menu__link"
+        >
+          More Sites
+        </a>
+
+                      </li>
+        </ul>
+
+      
+              </li>
+          <li class="mobile-menu__item ">
+
+                        
+        
+        <a
+          href="/contact-us-and-support"
+          class="mobile-menu__link"
+        >
+          Contact
+        </a>
+
+                      </li>
+          <li class="mobile-menu__item ">
+
+                        
+                          
+        <a
+          href="https://www.ieee.org/cart/public/myCart/page.html"
+          class="mobile-menu__link cart"
+        >
+          Cart (0)
+        </a>
+
+                      </li>
+          <li class="mobile-menu__item ">
+
+                        
+                          
+        <a
+          href="https://www.comsoc.org/saml_login?destination=/user"
+          class="mobile-menu__link contact"
+        >
+          Sign in
+        </a>
+
+                      </li>
+        </ul>
+
+          </nav>
+      
+  </nav>
+
+      </div>
+          </ul>
+
+</nav>
+
+
+
+  </nav>
+
+          </div>
+
+            <div class="site-header--search">
+              
+<div  data-drupal-selector="views-exposed-form-acquia-search-page" id="block-betterment-exposedformacquia-searchpage" class="block-facet collapsible-element views-exposed-form">
+  
+    
+      <form  action="/search" method="get" id="views-exposed-form-acquia-search-page" accept-charset="UTF-8" class="search" id="views-exposed-form-acquia-search-page">
+        
+<div  class="search__item form-no-label">
+        <input placeholder="Search" data-drupal-selector="edit-search" type="text" id="edit-search" name="search" value="" size="30" maxlength="128" class="form-text form-item__textfield" />
+
+        </div>
+<div data-drupal-selector="edit-actions" class="form-actions search__item--submit js-form-wrapper form-wrapper" id="edit-actions"><input class="search__submit button js-form-submit form-submit" data-drupal-selector="edit-submit-acquia-search" type="submit" id="edit-submit-acquia-search" value="Search" />
+  
+    
+
+<svg  class="search__search search__icon">
+  <use xlink:href="/themes/custom/betterment/dist/sprite.svg#search"></use>
+</svg>
+  
+    
+
+<svg  class="search__close search__icon">
+  <use xlink:href="/themes/custom/betterment/dist/sprite.svg#close"></use>
+</svg>
+  
+</div>
+
+
+
+  </form>
+
+  </div>
+
+          </div>
+      
+          </div><!--column-two-->
+    
+  </div><!--site-header-inner-->
+</header>
+
+    
+  <div class="title">
+    
+  
+    
+      
+
+<div class="hero">
+  <div class="hero__inner">
+    <div class="hero__left">
+        
+      <h2>
+      Call For Papers
+    </h2>
+    
+
+      <div class="call-for-papers-links">
+              <a class="btn-white" href="https://ieee.atyponrex.com/journal/network-ieee">Submit a Paper</a>
+                    <a class="btn-white" href="/publications/magazines/ieee-network/policies-guidelines">Submission Guidelines</a>
+          </div>
+      </div>
+
+    <div class="hero__right">
+          </div>
+  </div>
+</div>
+
+  
+  </div>
+
+
+      
+  
+<picture
+   class="image"
+>
+      <img
+   class="img img--lead"
+      src=""
+    />
+</picture>
+  
+      
+  
+  
+
+  
+
+  
+
+  <main role="main"  class="site-main site-main--">
+    <a id="main-content" tabindex="-1"></a>
+    
+    
+    <div  class="main-content">
+
+        
+  <div class="content">
+    <div data-drupal-messages-fallback class="hidden"></div>
+
+  
+    
+      
+    <nav role="navigation" aria-labelledby="system-breadcrumb" class="breadcrumb-nav">
+        <h2 class="visually-hidden">Breadcrumb</h2>
+        <ol class="breadcrumb">
+                                                <li class="breadcrumb__item">
+                        <a class="breadcrumb__link" href="/">Home</a>
+                    </li>
+                                                                <li class="breadcrumb__item">
+                        <a class="breadcrumb__link" href="/publications">Publications</a>
+                    </li>
+                                                                <li class="breadcrumb__item">
+                        <a class="breadcrumb__link" href="/publications/magazines">Magazines</a>
+                    </li>
+                                                                <li class="breadcrumb__item">
+                        <a class="breadcrumb__link" href="/publications/magazines/ieee-network">IEEE Network</a>
+                    </li>
+                                                                <li class="breadcrumb__item">
+                        <a class="breadcrumb__link" href="/publications/magazines/ieee-network/cfp">Call For Papers</a>
+                    </li>
+                                                                </ol>
+    </nav>
+
+  
+  
+    
+      
+
+  <div class="outer-wrapper page-title">
+    
+<h1  class="h1 h1--with-wrapper h1--page-title">
+  
+  
+    <span>High-Reliability and Low-Latency Communications for 6G Network: ISAC-Enabled Architectures, Networking, and Services </span>
+
+  </h1>
+  </div>
+
+
+  
+  
+    
+      <article  class="node node--type-call-for-papers  node--view-mode-full">
+
+  
+    
+
+      <div class="outer-wrapper outer-wrapper-menu">
+      <div class="cpf-type">Special Issue</div>
+    </div>
+  
+  
+  <div class="outer-wrapper outer-wrapper-menu">
+
+            
+  
+  <div id="p-77861" class="paragraph-anchor-wrapper">
+  <a href="#p-77861" class="paragraph-anchor-link " aria-label="Copy link to this section" title="Copy link to this section">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+</a>
+<div>
+  
+
+            <div class="text-long"><h2>Important Dates</h2><p><strong>Manuscript Submission Deadline:</strong> 15 September 2026 (Extended Deadline)<br><strong>Initial Decision:</strong> 1 December 2026<br><strong>Revision Manuscript Due:</strong> 1 January 2027<br><strong>Final Decision:</strong> 1 February 2027<br><strong>Final Manuscript Due:</strong> 15 February 2027<br><strong>Publication Date:</strong> May 2027</p><h2>Scope</h2><p>The rise of mission-critical 6G applications, such as autonomous systems, intelligent transportation, industrial automation, emergency response, and large-scale sensing, imposes stringent requirements on ultra-high reliability, ultra-low latency, and real-time situational awareness, exceeding the capabilities of existing terrestrial networks. In line with the IMT-2030 vision, 6G calls for tight latency guarantees, extreme reliability, and deep integration of communication, sensing, computation, and control. Integrated sensing and communication (ISAC) have thus emerged as a key enabler, empowering networks with joint connectivity and environmental awareness.&nbsp;</p><p>This Special Issue (SI) focuses on high-reliability and low-latency 6G networking from an ISAC perspective, emphasizing network-centric architectures, protocols, and services. Contributions addressing theory, system design, standardization, and experimental validation are welcome to advance scalable and intelligent 6G systems.</p><p>Topics of interest include, but are not limited to:&nbsp;</p><ul><li>6G network architectures for high-reliability and low-latency services.</li><li>Integrated heterogeneous communication and networking.&nbsp;</li><li>ISAC-enabled network architectures, protocols, and services.&nbsp;</li><li>Advanced waveform design for ISAC systems.&nbsp;</li><li>Coding, modulation, and HARQ mechanisms for URLLC.&nbsp;</li><li>Passive, semi-passive, and network-based sensing and localization.&nbsp;</li><li>Deterministic and time-sensitive networking for mission-critical 6G services.&nbsp;</li><li>AI-native communication and sensing for reliability and latency optimization.&nbsp;</li><li>Joint communication-sensing-computation networking architectures.&nbsp;</li><li>Mobility management and ultra-fast handover for aerial platforms.&nbsp;</li><li>Security, safety, and resilience in ISAC-enabled 6G networks.&nbsp;</li><li>Standardization, regulation, and spectrum challenges for 6G networking.&nbsp;</li><li>Experimental testbeds, prototyping platforms, field trials, and system validation.&nbsp;</li></ul><h2>Submission Guidelines</h2><p>Manuscripts should conform to the standard format as indicated in the “Information for Authors” section of the&nbsp;<a href="/publications/magazines/ieee-network/policies-guidelines">Policies and Guidelines</a>.</p><p>All manuscripts to be considered for publication must be submitted by the deadline through the magazine’s&nbsp;<a href="https://ieee.atyponrex.com/journal/network-ieee" target="_blank">IEEE Author Portal</a>&nbsp;submission site. Select the appropriate issue date and topic from the “Please Select an Article Type” drop-down menu.</p><h2>Guest Editors</h2><p><a href="mailto:markku.juntti@oulu.fi"><strong>Markku Juntti </strong></a><strong>(Co-Lead Guest Editor)</strong>, University of Oulu, Finland&nbsp;<br><a href="mailto:fangyi@gdut.edu.cn"><strong>Yi Fang</strong></a><strong> (Co-Lead Guest Editor)</strong>, Guangdong University of Technology, China&nbsp;<br><a href="mailto: jiguang.he@gbu.edu.cn"><strong>Jiguang He</strong></a>, Great Bay University, China&nbsp;<br><a href="mailto:yonghui.li@sydney.edu.au"><strong>Yonghui Li</strong></a>, The University of Sydney, Australia<br><a href="mailto:merouane.debbah@ku.ac.ae"><strong>Merouane Debbah</strong></a>, Khalifa University of Science and Technology, UAE&nbsp;<br><a href="mailto:xianbin.wang@uwo.ca"><strong>Xianbin Wang</strong></a>, Western University, Canada<br><a href="mailto:iqbal.hussain@ericsson.com"><strong>Iqbal Hussain</strong></a><strong>,&nbsp;</strong>Ericsson, Sweden&nbsp;</p></div>
+      
+</div>
+
+  </div>
+
+      </div>
+
+      <div class="important-dates">
+      <div class="outer-wrapper outer-wrapper-menu content">
+        <h3 class="title">Important Dates</h3>
+
+        <div class="dates">
+                                                                  
+      
+<div  class="card card--side-by-side">
+                
+<div class="calendar-icon">
+  <div class="month">May</div>
+  <div class="day">01</div>
+</div>        
+    <div  class="card__copy">
+          
+      
+<h2  class="card__title">
+  
+  
+    Publication Date
+  </h2>
+      
+                  
+  <span
+     class="card__body"
+  >
+        1 May 2027
+  </span>
+              </div><!-- copy -->
+</div>
+      
+                                                                  
+      
+<div  class="card card--side-by-side">
+                
+<div class="calendar-icon">
+  <div class="month">Sep</div>
+  <div class="day">15</div>
+</div>        
+    <div  class="card__copy">
+          
+      
+<h2  class="card__title">
+  
+  
+    Manuscript Submission Date
+  </h2>
+      
+                  
+  <span
+     class="card__body"
+  >
+        15 September 2026
+  </span>
+              </div><!-- copy -->
+</div>
+      
+        </div>
+      </div>
+    </div>
+  
+  </article>
+
+  
+  </div>
+
+  
+    </div>
+    
+    
+  </main>
+    <div class="container-fluid below-content" role="complementary">
+        
+    </div>
+
+        
+            <footer class="site-footer">
+  <div class="site-footer__social-menu">
+    <div class="site-footer__social-wrapper">
+
+      <div class="">
+        <a href="/"><img src="/themes/custom/betterment/components/images/comsoc-logo.svg" alt="IEEE Communications Society" height="113" width="305"></a>
+        
+<ul  class="ul ul--social-menu">
+            
+<li  class="list-item list-item--social">
+            
+<a
+   class="link link--social"
+    href="http://x.com/comsoc" 
+  aria-label="Twitter"
+>
+                
+    
+
+<svg  class="icon icon--social">
+  <use xlink:href="/themes/custom/betterment/dist/sprite.svg#twitter-x"></use>
+</svg>
+            </a>
+        </li>
+          
+<li  class="list-item list-item--social">
+            
+<a
+   class="link link--social"
+    href="http://www.facebook.com/IEEEComSoc" 
+  aria-label="Facebook"
+>
+                
+    
+
+<svg  class="icon icon--social">
+  <use xlink:href="/themes/custom/betterment/dist/sprite.svg#facebook"></use>
+</svg>
+            </a>
+        </li>
+          
+<li  class="list-item list-item--social">
+            
+<a
+   class="link link--social"
+    href="http://www.linkedin.com/company/222076?trk=tyah&amp;trkInfo=tarId%3A1409063757067%2Ctas%3AIEEE%20Communications%2Cidx%3A2-1-3" 
+  aria-label="LinkedIn"
+>
+                
+    
+
+<svg  class="icon icon--social">
+  <use xlink:href="/themes/custom/betterment/dist/sprite.svg#linkedin"></use>
+</svg>
+            </a>
+        </li>
+          
+<li  class="list-item list-item--social">
+            
+<a
+   class="link link--social"
+    href="https://www.youtube.com/channel/UCumALaUizr9Ow7giZ39WoAQ" 
+  aria-label="YouTube"
+>
+                
+    
+
+<svg  class="icon icon--social">
+  <use xlink:href="/themes/custom/betterment/dist/sprite.svg#youtube"></use>
+</svg>
+            </a>
+        </li>
+          
+<li  class="list-item list-item--social">
+            
+<a
+   class="link link--social"
+    href="https://www.instagram.com/ieeecomsoc/?hl=en" 
+  aria-label="Instagram"
+>
+                
+    
+
+<svg  class="icon icon--social">
+  <use xlink:href="/themes/custom/betterment/dist/sprite.svg#instagram"></use>
+</svg>
+            </a>
+        </li>
+      </ul>
+      </div>
+
+      <div class="footer-menu">
+          <nav role="navigation" aria-labelledby="block-betterment-footer-menu" id="block-betterment-footer">
+            
+  <h2 class="visually-hidden" id="block-betterment-footer-menu">Footer Menu</h2>
+  
+
+        
+
+    
+                
+        
+<ul  class="menu menu--light">
+                      
+
+<li  class="menu__item menu__item--light">
+              
+<a
+   class="menu__link menu__link--light"
+    href="/" 
+  aria-label=""
+>
+      Home
+  </a>
+      </li>
+                    
+
+<li  class="menu__item menu__item--light">
+              
+<a
+   class="menu__link menu__link--light"
+    href="/sitemap" 
+  aria-label=""
+>
+      Sitemap
+  </a>
+      </li>
+                    
+
+<li  class="menu__item menu__item--light">
+              
+<a
+   class="menu__link menu__link--light"
+    href="/contact-us-and-support" 
+  aria-label=""
+>
+      Contact &amp; Support
+  </a>
+      </li>
+                    
+
+<li  class="menu__item menu__item--light">
+              
+<a
+   class="menu__link menu__link--light"
+    href="https://www.ieee.org/accessibility_statement.html" 
+  aria-label=""
+>
+      Accessibility
+  </a>
+      </li>
+                    
+
+<li  class="menu__item menu__item--light">
+              
+<a
+   class="menu__link menu__link--light"
+    href="https://www.ieee.org/about/corporate/governance/p9-26.html" 
+  aria-label=""
+>
+      Nondiscrimination Policy
+  </a>
+      </li>
+                    
+
+<li  class="menu__item menu__item--light">
+              
+<a
+   class="menu__link menu__link--light"
+    href="http://www.ieee-ethics-reporting.org/" 
+  aria-label=""
+>
+      IEEE Ethics Reporting
+  </a>
+      </li>
+                    
+
+<li  class="menu__item menu__item--light">
+              
+<a
+   class="menu__link menu__link--light"
+    href="https://www.ieee.org/site_terms_conditions.html" 
+  aria-label=""
+>
+      Terms
+  </a>
+      </li>
+                    
+
+<li  class="menu__item menu__item--light">
+              
+<a
+   class="menu__link menu__link--light"
+    href="https://www.ieee.org/security-privacy.html" 
+  aria-label=""
+>
+      IEEE Privacy Policy
+  </a>
+      </li>
+              </ul>
+  
+
+
+  </nav>
+
+  
+    
+      
+        <form id="mktoForm_1021"></form>
+        <button id="subscribe" class="btn-secondary">
+          Sign up for our Newsletter
+        </button>
+      
+  
+      </div>
+
+      <div class="IEEEMobileLogo">
+        
+<figure
+   class="figure"
+>
+      <a  class="IEEElogo" href="https://www.ieee.org/">
+                
+  <img
+   class="figure__image"
+      src="/themes/custom/betterment/components/images/ieee-logo--white.svg"
+      alt="IEEE"
+    />
+            </a>
+  
+  </figure>
+      </div>
+    </div>
+  </div>
+  <div class="site-footer__menu">
+    <div class="site-footer__menu-wrapper">
+      <div class="legal-menu">
+        
+      </div>
+    </div>
+  </div>
+  <div class="site-footer__info-wrapper">
+    <div class="site-footer--copyright">
+      &copy; 2026 IEEE Communications Society. All Rights Reserved.
+    </div>
+    <div class="site-footer--terms">
+      Use of this website signifies your agreement to the <a href="https://www.ieee.org/site_terms_conditions.html">IEEE Terms and Conditions</a>.
+    </div>
+    <div class="site-footer--descriptor">
+      A public charity, IEEE is the world's largest technical professional organization dedicated to advancing technology for the benefit of humanity.
+    </div>
+  </div>
+</footer>
+
+      </div>
+
+  </div>
+
+    
+    <script src="/core/assets/vendor/jquery/jquery.min.js?v=4.0.0"></script>
+<script src="/sites/default/files/js/js_4h9nY0kjRzn90SF9w61HcNepI8DIdRBQ25XgOYSmUOE.js?scope=footer&amp;delta=1&amp;language=en&amp;theme=betterment&amp;include=eJxtzlsOAiEMBdANTWRJpDQ3UAVKChNdvqgfMqM_fZw2TQPGgBXU4WLWQHkLX0kwXXupWSr8rPeVC0n9wUZG0aglT5WT2jrrION0kGYysMrQ9rnJWrqyZzW4invP7x3f99DZJGCLqjHDD4ouznDuL3SlxxHLJgDmSb3JK5WWZX4J95-fF-RzKw"></script>
+<script src="/themes/custom/betterment/components/js/svgxuse.min.js?tjz1bd" defer></script>
+<script src="/sites/default/files/js/js_1X5CXZzduPwlzM8JoDPwEQskY9_J4TnMHJV7L0nLO1g.js?scope=footer&amp;delta=3&amp;language=en&amp;theme=betterment&amp;include=eJxtzlsOAiEMBdANTWRJpDQ3UAVKChNdvqgfMqM_fZw2TQPGgBXU4WLWQHkLX0kwXXupWSr8rPeVC0n9wUZG0aglT5WT2jrrION0kGYysMrQ9rnJWrqyZzW4invP7x3f99DZJGCLqjHDD4ouznDuL3SlxxHLJgDmSb3JK5WWZX4J95-fF-RzKw"></script>
+<script src="//engage.ieee.org/js/forms2/js/forms2.min.js"></script>
+<script src="/sites/default/files/js/js_4KaW1lXlvpgs0Fjb7vekBxdo-fg00FRG-9_vMCRawso.js?scope=footer&amp;delta=5&amp;language=en&amp;theme=betterment&amp;include=eJxtzlsOAiEMBdANTWRJpDQ3UAVKChNdvqgfMqM_fZw2TQPGgBXU4WLWQHkLX0kwXXupWSr8rPeVC0n9wUZG0aglT5WT2jrrION0kGYysMrQ9rnJWrqyZzW4invP7x3f99DZJGCLqjHDD4ouznDuL3SlxxHLJgDmSb3JK5WWZX4J95-fF-RzKw"></script>
+<script src="//cmp.osano.com/AzyzptTmRlqVd2LRf/846514cc-6ea5-4058-8982-b4bac4efc08c/osano.js" defer async></script>
+
+  <script>
+	jQuery('.locality, .administrative-area, #block-eventaddresssubdivisionofthecountry-2 select.facets-dropdown option, #block-eventaddresssubdivisionofthecountry select.facets-dropdown option, #block-eventaddresssubdivisionofthecountry-2 .facet-item__value,  #block-eventaddresssubdivisionofthecountry .facet-item__value').each(function() {
+		var text = jQuery(this).text();
+		if (text.endsWith(" Sheng")) {
+			text = text.replace(" Sheng", "");
+		}
+		if (text.endsWith(" Shi")) {
+			text = text.replace(" Shi", "");
+		}
+		jQuery(this).text(text);
+	});
+
+	setTimeout(function(){
+
+		jQuery('.locality, .administrative-area, #block-eventaddresssubdivisionofthecountry-2 select.facets-dropdown option, #block-eventaddresssubdivisionofthecountry select.facets-dropdown option, #block-eventaddresssubdivisionofthecountry-2 .facet-item__value,  #block-eventaddresssubdivisionofthecountry .facet-item__value').each(function() {
+			var text = jQuery(this).text();
+			if (text.endsWith(" Sheng")) {
+				text = text.replace(" Sheng", "");
+			}
+			if (text.endsWith(" Shi")) {
+				text = text.replace(" Shi", "");
+			}
+			jQuery(this).text(text);
+		});
+
+	}, 500);
+
+  </script>
+  </body>
+</html>

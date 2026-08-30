@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "id": "2026-08-31-ieee-network-6g-isac-2027",
+  "observations": {
+    "sha256": "737e2c121c79aa83d7b84fefffaf76fe6b1eece281f79d686549ff515a03575c"
+  },
+  "resolutions": {
+    "sha256": "3bfdb626fd1144a22ae992d001136d1cfe56b04939916a327885335a36f8c413"
+  },
+  "extra": {
+    "sha256": "36acf4faaac48b57906bfc390e8d590b2f027e2b525b57c3a9b3b4768448c423"
+  },
+  "bodies": [
+    {
+      "path": "bodies/94d638e1df49fddab0e7dab40641699f0649e0cc2a88eb574261fddee1561dcc.body",
+      "sha256": "94d638e1df49fddab0e7dab40641699f0649e0cc2a88eb574261fddee1561dcc"
+    }
+  ],
+  "decisions": {
+    "ieee-network-6g-isac": "promote"
+  }
+}
