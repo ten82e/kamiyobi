@@ -466,10 +466,11 @@ export function toJson(
     for (const ed of [...(conf.editions ?? [])].sort(
       (a, b) => (a.year ?? 0) - (b.year ?? 0) || cmpStr(a.edition_id ?? "", b.edition_id ?? ""),
     )) {
+      const officialUrl = ed.link || conf.link;
       editions.push({
         year: ed.year,
         id: ed.edition_id,
-        link: ed.link || conf.link,
+        link: officialUrl,
         place: ed.place,
         date_text: ed.date_text,
         event_start: ed.event_start ? fmtDate(ed.event_start) : null,
@@ -521,7 +522,7 @@ export function toJson(
             ...(conflicts.length > 0 ? { conflicts } : {}),
             ...(dl.verification
               ? { verification: { ...dl.verification } }
-              : reverificationEnabled && conf.link
+              : reverificationEnabled && officialUrl
                 ? (() => {
                     const deadlineDate = isDateOnlyDeadline(dl)
                       ? new Date(`${dl.local_date}T23:59:59Z`)
@@ -530,7 +531,7 @@ export function toJson(
                     if (nextCheck === null) return {};
                     return {
                       verification: {
-                        official_url: conf.link,
+                        official_url: officialUrl,
                         last_attempt_at: null,
                         last_verified_at: null,
                         next_check_at: nextCheck,

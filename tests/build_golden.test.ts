@@ -300,8 +300,15 @@ it("toJson generates verification when reverification.enabled is true", () => {
         editions: [
           makeEdition({
             year: 2026,
+            link: "",
             source: "local",
             deadlines: [makeDeadline("paper", "Paper submission", utc(2026, 10, 1))],
+          }),
+          makeEdition({
+            year: 2027,
+            link: "https://example.org/testconf/2027",
+            source: "local",
+            deadlines: [makeDeadline("paper", "Paper submission", utc(2027, 10, 1))],
           }),
         ],
       }),
@@ -309,11 +316,15 @@ it("toJson generates verification when reverification.enabled is true", () => {
     { health: { reverification: { enabled: true } } },
     NOW,
   );
-  const deadline = (payload.conferences as any[])[0].editions[0].deadlines[0];
-  expect(deadline).toHaveProperty("verification");
-  expect(deadline.verification.official_url).toBe("https://example.org/testconf");
-  expect(deadline.verification.status).toBe("pending");
-  expect(deadline.verification.next_check_at).toBeDefined();
+  const deadlines = (payload.conferences as any[])[0].editions.map(
+    (edition: any) => edition.deadlines[0],
+  );
+  expect(deadlines.map((deadline: any) => deadline.verification.official_url)).toEqual([
+    "https://example.org/testconf",
+    "https://example.org/testconf/2027",
+  ]);
+  expect(deadlines.every((deadline: any) => deadline.verification.status === "pending")).toBe(true);
+  expect(deadlines.every((deadline: any) => deadline.verification.next_check_at)).toBe(true);
 });
 
 it("omits ambiguous legacy key redirects", () => {
