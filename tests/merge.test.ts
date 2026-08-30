@@ -127,6 +127,46 @@ describe("merge_sources", () => {
     expect(conference.legacy_keys).toEqual(["legacy"]);
   });
 
+  it("retains both SEC venues under configured stable identities", () => {
+    const sec = (upstreamSub: string, sourceId: string, fullName: string) =>
+      makeConference({
+        key: "sec",
+        title: "SEC",
+        full_name: fullName,
+        upstream_sub: upstreamSub,
+        sources: ["ccfddl"],
+        identity: { sourceIds: { ccfddl: sourceId } },
+        editions: [
+          makeEdition({
+            year: 2026,
+            edition_id: `${upstreamSub.toLowerCase()}-sec26`,
+            event_start: new Date(Date.UTC(2026, 9, 13)),
+            event_end: new Date(Date.UTC(2026, 9, 16)),
+            source: "ccfddl",
+          }),
+        ],
+      });
+    const merged = mergeSources(
+      [
+        [
+          sec("DS", "DS/sec", "ACM/IEEE Symposium on Edge Computing"),
+          sec("SC", "SC/sec", "IFIP International Information Security Conference"),
+        ],
+      ],
+      CONFIG,
+    );
+    const classified = classify(merged, CONFIG);
+
+    expect(classified.map((conference) => conference.key)).toEqual(["sec", "sec-sc"]);
+    expect(byKey(classified).sec.categories).toContain("systems");
+    expect(byKey(classified)["sec-sc"].categories).toContain("security");
+    expect(byKey(classified)["sec-sc"].legacy_keys ?? []).not.toContain("sec");
+    expect(select(classified, CONFIG).map((conference) => conference.key)).toEqual([
+      "sec",
+      "sec-sc",
+    ]);
+  });
+
   it("does not use an ordinary link as identity evidence", () => {
     const local = makeConference({
       key: "workshop",

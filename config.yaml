@@ -32,6 +32,8 @@ venue_identities:
   ksem: {source_ids: {aideadlines: ksem, ccfddl: AI/ksem}}
   msr: {source_ids: {ccfddl: SE/msr, local: msr}}
   pacificvis: {source_ids: {ccfddl: CG/PacificVis, local: pacificvis}}
+  sec: {source_ids: {ccfddl: DS/sec}}
+  sec-sc: {source_ids: {ccfddl: SC/sec}}
   www: {source_ids: {aideadlines: www, ccfddl: MX/www}}
 
 # URL・会期・開催地が上流間で変わった同一開催回だけを明示的に結ぶ。

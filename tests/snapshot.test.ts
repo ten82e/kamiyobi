@@ -217,6 +217,29 @@ it("restores only failed-source venues, editions, and missing slots", () => {
   });
 });
 
+it("does not merge snapshot venues through a conflicting legacy key", () => {
+  const conference = (key: string, sourceId: string, editionId: string, legacy_keys?: string[]) =>
+    makeConference({
+      key,
+      title: "SEC",
+      sources: ["ccfddl"],
+      identity: { sourceIds: { ccfddl: sourceId } },
+      legacy_keys,
+      editions: [makeEdition({ year: 2026, edition_id: editionId, source: "ccfddl" })],
+    });
+  const restored = restoreFailedSourceMaterial(
+    [],
+    [conference("sec", "DS/sec", "edge26"), conference("sec-sc", "SC/sec", "ifip26", ["sec"])],
+    new Set(["ccfddl"]),
+  );
+
+  expect(restored.map((item) => item.key)).toEqual(["sec", "sec-sc"]);
+  expect(restored.map((item) => item.editions.map((edition) => edition.edition_id))).toEqual([
+    ["edge26"],
+    ["ifip26"],
+  ]);
+});
+
 it("restores failed-source edition identity into only a unique current match", () => {
   const currentEdition = makeEdition({
     year: 2026,

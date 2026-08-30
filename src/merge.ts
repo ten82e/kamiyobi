@@ -164,6 +164,7 @@ export function mergeSources(
 
   const merged = uniqueConferenceKeys(
     buckets.map((bucket) => mergeBucket(bucket[0].key, bucket, windows, tally)),
+    configuredVenueKeys(safeConfig),
   );
 
   merged.sort((a, b) => cmpStr(a.key, b.key));
@@ -183,6 +184,7 @@ export function normalizeConfiguredVenueIdentities(
   const safeConfig = config ?? {};
   const normalized = uniqueConferenceKeys(
     (confs ?? []).map((conf) => configuredIdentity(conf, safeConfig)),
+    configuredVenueKeys(safeConfig),
   ).map((conf) => {
     const merged = mergeConfiguredEditions(conf, safeConfig);
     return {
@@ -191,6 +193,12 @@ export function normalizeConfiguredVenueIdentities(
     };
   });
   return normalized.sort((a, b) => cmpStr(a.key, b.key));
+}
+
+function configuredVenueKeys(config: Record<string, unknown>): Set<string> {
+  const registry = config.venue_identities;
+  if (!registry || typeof registry !== "object" || Array.isArray(registry)) return new Set();
+  return new Set(Object.keys(registry).map(slug).filter(Boolean));
 }
 
 function configuredIdentity(conf: Conference, config: Record<string, unknown>): Conference {
@@ -479,7 +487,10 @@ function identityConflictOrder(left: IdentityConflict, right: IdentityConflict):
   );
 }
 
-function uniqueConferenceKeys(confs: Conference[]): Conference[] {
+function uniqueConferenceKeys(
+  confs: Conference[],
+  reservedKeys: ReadonlySet<string>,
+): Conference[] {
   const byKey = new Map<string, Conference[]>();
   for (const conf of confs) {
     const canonical = slug(conf.identity?.venueId ?? "") || conf.key;
@@ -514,7 +525,15 @@ function uniqueConferenceKeys(confs: Conference[]): Conference[] {
       });
     }
   }
-  return out;
+  const canonicalKeys = new Set([...out.map((conference) => conference.key), ...reservedKeys]);
+  return out.map((conference) => {
+    const legacyKeys = (conference.legacy_keys ?? []).filter((key) => !canonicalKeys.has(key));
+    if (legacyKeys.length === (conference.legacy_keys ?? []).length) return conference;
+    const { legacy_keys: _legacyKeys, ...withoutLegacyKeys } = conference;
+    return legacyKeys.length
+      ? { ...withoutLegacyKeys, legacy_keys: legacyKeys }
+      : withoutLegacyKeys;
+  });
 }
 
 function collisionSuffix(conf: Conference): string {

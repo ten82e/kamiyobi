@@ -228,15 +228,15 @@ export function slug(title: string): string;
 **同一 key に別会議が載ったときは merge_sources が upstream_sub で分割する**
 （§3.6）。`key_overrides` のような設定は持たない。
 
-実データで確認された衝突は 2 組。`data/overrides.yaml` の `aliases` と
+実データで確認された衝突は 2 組。`venue_identities` と
 `merge_sources` の分割で解決する。
 
 | 上流 | title | 実体 | 解決後 key |
 |---|---|---|---|
-| `SC/fse.yml` | FSE | Fast Software Encryption | `fse`（sub が辞書順先） |
+| `SC/fse.yml` | FSE | Fast Software Encryption | `fse-sc` |
 | `SE/fse.yml` | FSE | Foundations of Software Engineering | `fse-se` |
 | `DS/sec.yml` | SEC | ACM/IEEE Symposium on Edge Computing | `sec` |
-| `SC/sec.yml` | SEC | IFIP Information Security Conference | `sec-ifip` |
+| `SC/sec.yml` | SEC | IFIP Information Security Conference | `sec-sc` |
 
 **新たな衝突が上流に生じたら CI を落とす。** `tests/merge.test.ts` で
 「同じ key を共有する会議が 0 件（sub 分割後）」を検査する。
@@ -637,36 +637,28 @@ CSV では `deadline_precision` と `deadline_local_date` に同じ区別を保�
 実データ全件に対して、HotNets・APNet・SIGMETRICS・MLSys・USENIX ATC・Euro-Par を落とさない設定を契約とする。
 
 ```yaml
-key_overrides:            # §3.1。固定値。勝手に変えない
-  SC/fse: fse-crypto
-  SE/fse: fse-se
-  DS/sec: sec-edge
-  SC/sec: sec-ifip
+venue_identities:         # §3.1。source-local ID を stable venue ID に対応付ける
+  sec: {source_ids: {ccfddl: DS/sec}}
+  sec-sc: {source_ids: {ccfddl: SC/sec}}
 
 taxonomy:
   networking: {ccfddl_subs: [NW]}
-  ai:         {ccfddl_subs: [AI], include_sources: [aideadlines]}   # OR 合成
+  ai:         {ccfddl_subs: [AI], sources: [aideadlines]}   # OR 合成
   security:   {ccfddl_subs: [SC]}
-  hpc:        {venue_slugs: [sc, ipdps, hpdc, icpp, cluster, ppopp, ics, euro-par,
+  hpc:        {venues: [sc, ipdps, hpdc, icpp, cluster, ppopp, ics, euro-par,
                              ccgrid, pact, hpcc, ica3pp, ispa, pdcat, appt, mlsys, ...]}
-  systems:    {ccfddl_subs: [SE], venue_slugs: [asplos, isca, micro, hpca, fast,
+  systems:    {ccfddl_subs: [SE], venues: [asplos, isca, micro, hpca, fast,
                              sigops-atc, eurosys, socc, sigmetrics, icdcs, podc, rtas,
-                             msst, vee, apsys, hot-chips, hotstorage, lisa, ...]}
+                             msst, vee, apsys, hot-chips, hotstorage, lisa, sec, ...]}
 
 # taxonomy 内の条件は OR 合成。exclude が最優先で打ち消す
 exclude: [popl, pldi, icfp, oopsla, ecoop, aplas, cp, sas, vmcai, ...]
 
-category_overrides:       # 上流の分野割り当てが実態と合わない会議
-  pam: [networking]       # ccfddl は sub=SC。実体は Passive and Active Measurement
-
 rank_filter:
-  ccf: [A, B]
-  core: ['A*', A, B]
-  thcpl: [A, B]           # HotNets は ccf C / core N / thcpl B。thcpl 無しだと落ちる
-  # 3 つの OR。'N' とキー欠落は「該当ランク無し」であり通過条件に数えない
-  venue_allowlist: [hotnets, apnet, apsys, hot-chips, hotstorage, sec-edge]
-                          # ランクに関わらず必ず残す
-  keep_sources: [local]   # local はランクに関わらず残す
+  ccf: []
+  core: []
+  keep_if_no_rank: true
+  always_keep: [hotnets, apnet, apsys, hot-chips, hotstorage]
 ```
 
 **綴りの罠（実データと照合済み）**: `atc` は存在せず `sigops-atc`（USENIX ATC 相当、ccf A）、
@@ -674,7 +666,7 @@ rank_filter:
 
 **MX 分野の扱い**: `MX/mlsys.yml` に **MLSys が実在する**。`MX/rtss.yml` `MX/emsoft.yml`
 （実時間システム、TSN/DetNet に近い）も同様。MX 全体を取り込むと `www` `miccai` 等が
-混ざるので、venue_slugs で名指しして拾う。`data/extra.yaml` に MLSys を重複登録しない。
+混ざるので、venues で名指しして拾う。`data/extra.yaml` に MLSys を重複登録しない。
 
 **DS 分野の全数割り当て**: DS 60 会議はすべて分類対象である。
 `conference/DS/` を一件ずつ見て hpc / systems / exclude のいずれかに割り当て、

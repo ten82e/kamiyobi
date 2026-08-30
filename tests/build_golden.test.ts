@@ -333,8 +333,9 @@ it("omits ambiguous legacy key redirects", () => {
       makeConference({ key: "fse-sc", title: "FSE", legacy_keys: ["fse"] }),
       makeConference({ key: "fse-se", title: "FSE", legacy_keys: ["fse"] }),
       makeConference({ key: "new", title: "New", legacy_keys: ["old"] }),
+      makeConference({ key: "sec-sc", title: "SEC", legacy_keys: ["sec"] }),
     ],
-    {},
+    { venue_identities: { sec: { source_ids: { ccfddl: "DS/sec" } } } },
     NOW,
   );
   expect(payload.legacy_key_redirects).toEqual({ old: "new" });
