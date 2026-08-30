@@ -31,10 +31,10 @@ conferences:
             structured: false
             selectorOrField: deadline-text-window
             sourceUrl: https://complexnetworks.org/
-            sourceRevision: 513d23e67c6fba3d7ff8a5feb2c86e72f6b2785ec07e8142115fa89c74f11797
-            contentHash: 513d23e67c6fba3d7ff8a5feb2c86e72f6b2785ec07e8142115fa89c74f11797
-            retrievedAt: '2026-08-30T13:30:08.638Z'
-            verifiedAt: '2026-08-30T13:30:08.638Z'
+            sourceRevision: acc216eefb4539548669105c0323f59203f097a27978ff632602fb345adac5ab
+            contentHash: acc216eefb4539548669105c0323f59203f097a27978ff632602fb345adac5ab
+            retrievedAt: '2026-08-30T22:49:02.074Z'
+            verifiedAt: '2026-08-30T22:49:02.074Z'
             rawExcerpt: 'Paper submission: 2026-09-02 23:59:00 AoE'
     _comment: 一次ソース (https://complexnetworks.org/) から自動抽出 (2026-08-30)
   geoindustry-2026:
@@ -110,10 +110,10 @@ conferences:
             adapter: easychair-v1
             structured: true
             sourceUrl: https://easychair.org/cfp/flowchallenge2
-            sourceRevision: 5f8dc40225d530ea7c4389b582007ccc58d5352ae81f8252e041db6e2c5c63c7
-            contentHash: 5f8dc40225d530ea7c4389b582007ccc58d5352ae81f8252e041db6e2c5c63c7
-            retrievedAt: '2026-08-30T13:30:09.982Z'
-            verifiedAt: '2026-08-30T13:30:09.982Z'
+            sourceRevision: e5310d3f9155eac61252c768eb30ef49d4d6b3f2f0be14e7fb16bb8ecd5a6388
+            contentHash: e5310d3f9155eac61252c768eb30ef49d4d6b3f2f0be14e7fb16bb8ecd5a6388
+            retrievedAt: '2026-08-30T22:49:02.904Z'
+            verifiedAt: '2026-08-30T22:49:02.904Z'
           - kind: paper
             label: Paper submission
             date: '2026-09-15'
@@ -122,10 +122,10 @@ conferences:
             adapter: easychair-v1
             structured: true
             sourceUrl: https://easychair.org/cfp/flowchallenge2
-            sourceRevision: 5f8dc40225d530ea7c4389b582007ccc58d5352ae81f8252e041db6e2c5c63c7
-            contentHash: 5f8dc40225d530ea7c4389b582007ccc58d5352ae81f8252e041db6e2c5c63c7
-            retrievedAt: '2026-08-30T13:30:09.982Z'
-            verifiedAt: '2026-08-30T13:30:09.982Z'
+            sourceRevision: e5310d3f9155eac61252c768eb30ef49d4d6b3f2f0be14e7fb16bb8ecd5a6388
+            contentHash: e5310d3f9155eac61252c768eb30ef49d4d6b3f2f0be14e7fb16bb8ecd5a6388
+            retrievedAt: '2026-08-30T22:49:02.904Z'
+            verifiedAt: '2026-08-30T22:49:02.904Z'
     _comment: 一次ソース (https://easychair.org/cfp/flowchallenge2) から自動抽出 (2026-08-30)
   polds-2026:
     editions:
@@ -141,10 +141,10 @@ conferences:
             structured: false
             selectorOrField: deadline-text-window
             sourceUrl: https://iharp.umbc.edu/polds26/
-            sourceRevision: 10c4b5727002e365bdadea171c78706f3b2a1fa2180933684b1e602415e8f217
-            contentHash: 10c4b5727002e365bdadea171c78706f3b2a1fa2180933684b1e602415e8f217
-            retrievedAt: '2026-08-30T13:30:10.396Z'
-            verifiedAt: '2026-08-30T13:30:10.396Z'
+            sourceRevision: f5461feac1aad911907d5c2a2ce0063193a17f346823e988d13f8aedbf2a6037
+            contentHash: f5461feac1aad911907d5c2a2ce0063193a17f346823e988d13f8aedbf2a6037
+            retrievedAt: '2026-08-30T22:49:03.660Z'
+            verifiedAt: '2026-08-30T22:49:03.660Z'
     _comment: 一次ソース (https://iharp.umbc.edu/polds26/) から自動抽出 (2026-08-30)
   setta:
     editions:
@@ -158,10 +158,10 @@ conferences:
             adapter: easychair-v1
             structured: true
             sourceUrl: https://easychair.org/cfp/SETTA2026
-            sourceRevision: c7f913509101d6d39eb2078b46061a22e4ba236e71a6a2f3951f7eddf34a82e3
-            contentHash: c7f913509101d6d39eb2078b46061a22e4ba236e71a6a2f3951f7eddf34a82e3
-            retrievedAt: '2026-08-30T13:30:10.828Z'
-            verifiedAt: '2026-08-30T13:30:10.828Z'
+            sourceRevision: 15da8e2b80e01885ec074e3a15e3aaa7c99ef09cd332b13f460691e0ce0f6111
+            contentHash: 15da8e2b80e01885ec074e3a15e3aaa7c99ef09cd332b13f460691e0ce0f6111
+            retrievedAt: '2026-08-30T22:49:04.367Z'
+            verifiedAt: '2026-08-30T22:49:04.367Z'
         link: https://www.setta2026.sg
         place: Singapore
         date_text: December 2-4, 2026
@@ -179,8 +179,8 @@ conferences:
             selectorOrField: deadline-text-window
             tz: AoE
             sourceUrl: https://womeninhpc.org/events/sc-2026-workshop
-            sourceRevision: cf51b9fec1c0f163937f0411d3b5aee65679208e4e4e3fef814098ba4be4db74
-            contentHash: cf51b9fec1c0f163937f0411d3b5aee65679208e4e4e3fef814098ba4be4db74
-            retrievedAt: '2026-08-30T13:30:11.768Z'
-            verifiedAt: '2026-08-30T13:30:11.768Z'
+            sourceRevision: a7c4c0b18c8e7c10d5d28dbed0982ecc0336a2afb6c7435dc5d3c0dca441249d
+            contentHash: a7c4c0b18c8e7c10d5d28dbed0982ecc0336a2afb6c7435dc5d3c0dca441249d
+            retrievedAt: '2026-08-30T22:49:05.487Z'
+            verifiedAt: '2026-08-30T22:49:05.487Z'
     _comment: 一次ソース (https://womeninhpc.org/events/sc-2026-workshop) から自動抽出 (2026-08-30)
