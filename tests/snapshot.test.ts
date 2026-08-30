@@ -864,8 +864,36 @@ describe("snapshot fallback", () => {
     const root = isolatedRepo();
     setRoot(root);
     const snapshot = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
-      conferences: unknown[];
+      conferences: Array<Record<string, unknown>>;
     };
+    const snapshotWww = snapshot.conferences.find(
+      (conference) =>
+        conference.key === "www" ||
+        (Array.isArray(conference.legacy_keys) && conference.legacy_keys.includes("www")),
+    );
+    if (!snapshotWww) throw new Error("snapshot fixture needs WWW");
+    const snapshotWww2027 = (snapshotWww.editions as Array<Record<string, unknown>>).find(
+      (edition) => edition.year === 2027,
+    );
+    if (!snapshotWww2027) throw new Error("snapshot fixture needs WWW 2027");
+    snapshotWww.key = "www-aideadlines-www";
+    snapshotWww.legacy_keys = ["www"];
+    snapshotWww.sources = ["aideadlines"];
+    snapshotWww.identity = {
+      officialDomains: ["https://www2026.thewebconf.org/"],
+      sourceIds: { aideadlines: "www" },
+    };
+    snapshotWww2027.link = "https://www2026.thewebconf.org/";
+    snapshotWww2027.estimated = true;
+    snapshotWww2027.estimate = {
+      point_estimate: "2026-10-07",
+      window_start: "2026-07-08",
+      window_end: "2027-01-06",
+      source_editions: [2026],
+      method: "median-interval",
+      confidence: "low",
+    };
+    snapshotWww2027.source = "aideadlines";
     writeFileSync(join(root, "data", "snapshot.json"), JSON.stringify(snapshot), "utf8");
 
     allUpstreamsDown();
@@ -874,9 +902,16 @@ describe("snapshot fallback", () => {
     expect(code).toBe(0);
 
     const data = JSON.parse(readFileSync(join(outdir, "data.json"), "utf8")) as {
+      legacy_key_redirects: Record<string, string>;
       conferences: Array<{
         key: string;
-        editions: Array<{ year: number; estimated: boolean; deadlines: Array<{ utc: string }> }>;
+        editions: Array<{
+          year: number;
+          estimated: boolean;
+          estimate?: unknown;
+          link: string;
+          deadlines: Array<{ kind: string; utc: string }>;
+        }>;
       }>;
     };
     // 退避 snapshot は overrides 未反映の推定版を含むことがある（merge から
@@ -888,6 +923,24 @@ describe("snapshot fallback", () => {
     expect(e2027?.deadlines.map((d) => d.utc).sort()).toEqual([
       "2026-11-25T11:59:59Z",
       "2026-12-02T11:59:59Z",
+    ]);
+
+    const www = data.conferences.find((c) => c.key === "www");
+    const www2027 = www?.editions.find((e) => e.year === 2027);
+    expect(data.conferences.some((c) => c.key.startsWith("www-"))).toBe(false);
+    expect(data.legacy_key_redirects.www).toBeUndefined();
+    expect(data.legacy_key_redirects["www-aideadlines-www"]).toBe("www");
+    expect(www2027?.estimated).toBe(false);
+    expect(www2027?.estimate).toBeUndefined();
+    expect(www2027?.link).toBe("https://acmweb2027.org/");
+    expect(www2027?.deadlines.map((d) => `${d.kind}:${d.utc}`).sort()).toEqual([
+      "abstract:2026-10-19T11:59:59Z",
+      "camera_ready:2027-02-01T11:59:59Z",
+      "notification:2027-01-05T11:59:59Z",
+      "paper:2026-10-26T11:59:59Z",
+      "rebuttal_end:2027-01-01T11:59:59Z",
+      "rebuttal_start:2026-12-22T11:59:59Z",
+      "review_release:2026-12-22T11:59:59Z",
     ]);
   });
 

@@ -175,6 +175,20 @@ export function mergeSources(
   return merged;
 }
 
+/** Reapply stable venue IDs without re-merging already serialized source material. */
+export function normalizeConfiguredVenueIdentities(
+  confs: Conference[] | null | undefined,
+  config: Record<string, unknown> | null | undefined,
+): Conference[] {
+  const normalized = uniqueConferenceKeys(
+    (confs ?? []).map((conf) => configuredIdentity(conf, config ?? {})),
+  ).map((conf) => ({
+    ...conf,
+    legacy_keys: (conf.legacy_keys ?? []).filter((key) => key !== conf.key),
+  }));
+  return normalized.sort((a, b) => cmpStr(a.key, b.key));
+}
+
 function configuredIdentity(conf: Conference, config: Record<string, unknown>): Conference {
   const registry = config.venue_identities;
   if (!registry || typeof registry !== "object" || Array.isArray(registry)) return conf;
@@ -1132,6 +1146,7 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
     if ("estimated" in patch) {
       // 推定版 (rollforward 生成) を実版へ昇格 / 降格させるための上書き。
       next.estimated = Boolean(patch.estimated);
+      if (!next.estimated) next.estimate = undefined;
     }
     if (
       patch.clear_deadlines === true ||

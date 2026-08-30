@@ -20,6 +20,7 @@ import {
   dedupDeadlinesAfterRollforward,
   type MergeStats,
   mergeSources,
+  normalizeConfiguredVenueIdentities,
   rollforward,
   sanitizeEditions,
   select,
@@ -577,7 +578,9 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
     }
     // 復元物にも静的な収録方針を再適用する。これで snapshot が exclude 済みでなくても
     // 設定を破らず、現在成功した source の値は restoreFailedSourceMaterial が保持する。
-    confs = classify(restoredMaterial, config);
+    // Snapshot keys may carry a collision suffix from an older partial source set.
+    // Re-apply configured source identities before overrides address canonical keys.
+    confs = classify(normalizeConfiguredVenueIdentities(restoredMaterial, config), config);
     confs = applyOverrides(confs, overrides);
     confs = applyOverrides(confs, primary);
     confs = sanitizeEditions(confs);
