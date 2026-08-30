@@ -33,6 +33,29 @@ function step(job: { steps?: Step[] }, name: string): Step {
 }
 
 describe("workflow separation", () => {
+  it("fails closed after the final dependency-install retry", () => {
+    let installs = 0;
+    for (const path of [
+      "ci.yml",
+      "update-data.yml",
+      "deploy.yml",
+      "nightly.yml",
+      "recommendation-bundle.yml",
+    ]) {
+      const { value } = workflow(`../.github/workflows/${path}`);
+      for (const job of Object.values(value.jobs ?? {})) {
+        for (const candidate of job.steps ?? []) {
+          const run = String(candidate.run ?? "");
+          if (!candidate.name?.startsWith("Install dependencies")) continue;
+          installs += 1;
+          expect(run).toContain('[ "$i" -lt 3 ] || exit 1');
+          expect(run).not.toContain("npm ci && break || sleep");
+        }
+      }
+    }
+    expect(installs).toBeGreaterThan(0);
+  });
+
   it("replaces update.yml with a fixed-branch update writer and no Pages access", () => {
     expect(existsSync(new URL("../.github/workflows/update.yml", import.meta.url))).toBe(false);
     const { text, value } = workflow("../.github/workflows/update-data.yml");
