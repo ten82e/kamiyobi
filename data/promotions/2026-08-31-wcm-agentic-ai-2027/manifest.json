@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "id": "2026-08-31-wcm-agentic-ai-2027",
+  "observations": {
+    "sha256": "1ebdb197a9c29e86bb277dfcd2719227812e9a8c67bc58ad7ad75e3b41f1bbbc"
+  },
+  "resolutions": {
+    "sha256": "a5cbd8a2bbb2eae0074771e861a79b07209cee526d615504d32118a7aac2f1f2"
+  },
+  "extra": {
+    "sha256": "4654510c65a4631cb3e9256b479aa31d263338f42618b91ee759034813889b3e"
+  },
+  "bodies": [
+    {
+      "path": "bodies/7238cfba9ecf5eaffae6ecb6b86a1fdae90e4c2c28669f5a458965491c5d06a2.body",
+      "sha256": "7238cfba9ecf5eaffae6ecb6b86a1fdae90e4c2c28669f5a458965491c5d06a2"
+    }
+  ],
+  "decisions": {
+    "wcm-agentic-ai-unmanned": "promote"
+  }
+}
