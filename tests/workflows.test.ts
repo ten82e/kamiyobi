@@ -4,7 +4,10 @@ import { describe, expect, it } from "vitest";
 
 type Step = { name?: string; run?: string; uses?: string; with?: Record<string, unknown> };
 type Workflow = {
-  jobs?: Record<string, { if?: string; permissions?: Record<string, string>; steps?: Step[] }>;
+  jobs?: Record<
+    string,
+    { if?: string; needs?: string[]; permissions?: Record<string, string>; steps?: Step[] }
+  >;
 };
 
 const PINS = [
@@ -132,7 +135,7 @@ describe("workflow separation", () => {
 });
 
 describe("CI contracts", () => {
-  it("keeps eight CI jobs, adds dispatch, and reserves the full benchmark for nightly", () => {
+  it("keeps eight CI checks, reports dispatch statuses, and reserves the full benchmark for nightly", () => {
     const { text, value } = workflow("../.github/workflows/ci.yml");
     expect(text).toContain("workflow_dispatch:");
     expect(Object.keys(value.jobs ?? {}).sort()).toEqual([
@@ -141,10 +144,31 @@ describe("CI contracts", () => {
       "offline-build",
       "production-health-self-check",
       "recommendation-regression",
+      "report-dispatch-statuses",
       "typecheck",
       "unit-integration-tests",
       "validate-data",
     ]);
+    const reporter = value.jobs?.["report-dispatch-statuses"];
+    const required = [
+      "typecheck",
+      "lint",
+      "unit-integration-tests",
+      "offline-build",
+      "validate-data",
+      "health-transition",
+      "recommendation-regression",
+    ];
+    expect(String(reporter?.if)).toContain("always()");
+    expect(String(reporter?.if)).toContain("github.event_name == 'workflow_dispatch'");
+    expect(reporter?.needs).toEqual(required);
+    expect(reporter?.permissions).toEqual({ contents: "read", statuses: "write" });
+    const report = String(step(reporter!, "Report required dispatch statuses").run);
+    expect(report).toContain("'.[$context].result'");
+    expect(report).toContain('if [ "$result" != success ]');
+    expect(report).toContain(`statuses/\${GITHUB_SHA}`);
+    expect(report).toContain('test "$overall" = success');
+    for (const context of required) expect(report).toContain(context);
     expect(
       String(
         step(
