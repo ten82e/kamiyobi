@@ -348,7 +348,7 @@ function mergeVenueIdentity(values: Array<VenueIdentity | undefined>): VenueIden
     : undefined;
 }
 
-function mergeEditionIdentity(
+export function mergeEditionIdentity(
   values: Array<EditionIdentity | undefined>,
 ): EditionIdentity | undefined {
   const editionId = values.map((value) => value?.editionId?.trim()).find(Boolean);

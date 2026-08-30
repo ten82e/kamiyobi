@@ -8,7 +8,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseArgs as parseNodeArgs } from "node:util";
+import { isDeepStrictEqual, parseArgs as parseNodeArgs } from "node:util";
 import { load as loadYaml } from "js-yaml";
 import { booleanValue, normalizeShortEquals, stringValue } from "./args.ts";
 import { buildAll, collectPublishProvenance, type HealthSourceMetadata } from "./build.ts";
@@ -19,6 +19,7 @@ import {
   deadlineSlotKey,
   dedupDeadlinesAfterRollforward,
   type MergeStats,
+  mergeEditionIdentity,
   mergeSources,
   normalizeConfiguredVenueIdentities,
   rollforward,
@@ -296,6 +297,7 @@ function snapshotEditionMatch(
   editions: Conference["editions"],
   saved: Conference["editions"][number],
 ): Conference["editions"][number] | undefined {
+  const sameYear = editions.filter((edition) => edition.year === saved.year);
   const criteria: Array<(edition: Conference["editions"][number]) => boolean> = [
     (edition) =>
       Boolean(saved.identity?.editionId) &&
@@ -309,7 +311,7 @@ function snapshotEditionMatch(
     (edition) => edition.edition_id === saved.edition_id,
   ];
   for (const criterion of criteria) {
-    const matches = editions.filter(criterion);
+    const matches = sameYear.filter(criterion);
     if (matches.length === 1) return matches[0];
     if (matches.length > 1) return undefined;
   }
@@ -425,6 +427,33 @@ export function restoreFailedSourceMaterialWithCounts(
           count(sourceOfDeadline(deadline, savedSource)!, "deadlineCount");
         }
         continue;
+      }
+      const identitySources = [
+        ...new Set([
+          ...Object.keys(savedEdition.identity?.sourceIds ?? {}).filter((source) =>
+            failed.has(source),
+          ),
+          ...(savedSource && failed.has(savedSource) ? [savedSource] : []),
+        ]),
+      ];
+      if (identitySources.length > 0) {
+        const failedSourceIds = Object.fromEntries(
+          Object.entries(savedEdition.identity?.sourceIds ?? {}).filter(([source]) =>
+            failed.has(source),
+          ),
+        );
+        const identity = mergeEditionIdentity([
+          heldEdition.identity,
+          {
+            officialUrls: savedEdition.identity?.officialUrls,
+            sourceIds: failedSourceIds,
+          },
+        ]);
+        if (!isDeepStrictEqual(heldEdition.identity, identity)) {
+          heldEdition.identity = identity;
+          restored = true;
+          for (const source of identitySources) count(source, "editionCount");
+        }
       }
       const present = new Set(heldEdition.deadlines.map(deadlineSlotKey));
       for (const deadline of savedEdition.deadlines) {
