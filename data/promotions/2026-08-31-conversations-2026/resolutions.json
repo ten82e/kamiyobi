@@ -1,0 +1,91 @@
+[
+  {
+    "candidate": "conversations",
+    "decision": "promote",
+    "verifiedFields": [
+      "venue",
+      "date",
+      "kind",
+      "round",
+      "event_start",
+      "event_end"
+    ],
+    "reason": "primary fields and evidence verified",
+    "verification": {
+      "valid": true,
+      "errors": [],
+      "checkedFields": [
+        "requestedUrl",
+        "finalUrl",
+        "status",
+        "headers",
+        "retrievedAt",
+        "sourceRevision",
+        "bodyHash",
+        "excerpt",
+        "officialDomain",
+        "extractionCandidates",
+        "eventYear",
+        "deadlineDate",
+        "deadlineTime",
+        "deadlineTimezone"
+      ],
+      "bodyHash": "5f77a214d1a00f47dc38b70a6353936b9cdaa48ae320bf0da72bdc1b389d8759",
+      "sourceRevision": "sha256:5f77a214d1a00f47dc38b70a6353936b9cdaa48ae320bf0da72bdc1b389d8759",
+      "extractedCandidates": [
+        {
+          "rawExcerpt": "Submission deadline September 5, 2026",
+          "text": "Submission deadline September 5, 2026",
+          "label": "Submission deadline September 5, 2026",
+          "kind": "paper",
+          "date": "2026-09-05",
+          "editionYear": 2026
+        }
+      ]
+    },
+    "normalized": {
+      "venue": {
+        "key": "conversations",
+        "title": "CONVERSATIONS 2026",
+        "categories": [
+          "ai"
+        ],
+        "tags": [
+          "niche"
+        ],
+        "review_state": "reviewed"
+      },
+      "edition": {
+        "year": 2026,
+        "edition_id": "conversations-2026",
+        "date_text": "2026-11-23",
+        "event_start": "2026-11-23",
+        "event_end": "2026-11-25"
+      },
+      "deadline": {
+        "kind": "paper",
+        "label": "paper",
+        "round": 1,
+        "track": "",
+        "precision": "date-only",
+        "date": "2026-09-05",
+        "evidence": [
+          {
+            "sourceClass": "official-cfp",
+            "sourceUrl": "https://easychair.org/cfp/conversations2026",
+            "sourceRevision": "sha256:5f77a214d1a00f47dc38b70a6353936b9cdaa48ae320bf0da72bdc1b389d8759",
+            "retrievedAt": "2026-08-30T17:21:31.883Z",
+            "verifiedAt": "2026-08-30T17:22:00Z",
+            "contentHash": "5f77a214d1a00f47dc38b70a6353936b9cdaa48ae320bf0da72bdc1b389d8759",
+            "rawExcerpt": "<tr><td>Submission deadline</td><td>September 5, 2026</td></tr>",
+            "verifiedFields": [
+              "date",
+              "kind",
+              "round"
+            ]
+          }
+        ]
+      }
+    }
+  }
+]
