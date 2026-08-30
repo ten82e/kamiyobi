@@ -112,6 +112,28 @@ conferences:
         date_text: October 12, 2026
         deadlines: []
 
+  # 根拠: https://apcc2026.org/ と https://apcc2026.org/sub.html
+  #   （2026-08-31 取得）。現行ページは Paper Submission Deadline を
+  #   August 31, 2026 23:59 AoE、会期を November 10-12, 2026 と明記する。
+  #   Notification / Camera-ready は時刻・timezone 未記載のため date-only。
+  - key: apcc
+    title: APCC
+    full_name: Asia-Pacific Conference on Communications
+    link: https://apcc2026.org/
+    categories: [networking]
+    editions:
+      - year: 2026
+        id: apcc26
+        link: https://apcc2026.org/
+        place: Xi'an, China
+        date_text: November 10-12, 2026
+        event_start: '2026-11-10'
+        event_end: '2026-11-12'
+        deadlines:
+          - {kind: paper, label: Paper Submission Deadline, date: '2026-08-31 23:59:00', tz: AoE}
+          - {kind: notification, label: Acceptance Notification, date: '2026-09-30', precision: date-only}
+          - {kind: camera_ready, label: Camera-Ready Manuscript, date: '2026-10-15', precision: date-only}
+
   # 根拠: 公式 https://hpsr2026.ieee-hpsr.org/ は WebFetch に対し HTTP 418 を返し未取得。
   #   IEEE ComSoc の告知に HPSR 2026 の final submission deadline が 30 January 2026 と
   #   あるが一次情報で未確認、かつ既に経過済み。開催日も未確認のため版を持たせない。
