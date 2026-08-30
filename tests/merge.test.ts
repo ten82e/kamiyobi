@@ -1162,9 +1162,40 @@ describe("apply_overrides", () => {
     } catch {
       return; // ファイルが無い環境ではスキップ
     }
-    const confs = [makeConference({ key: "sigcomm", title: "SIGCOMM" })];
+    const confs = [
+      makeConference({ key: "sigcomm", title: "SIGCOMM" }),
+      makeConference({
+        key: "fse-sc",
+        title: "FSE",
+        full_name: "Fast Software Encryption",
+      }),
+      makeConference({
+        key: "fse-se",
+        title: "FSE",
+        full_name: "Foundations of Software Engineering",
+      }),
+    ];
     const out = applyOverrides(confs, overrides);
     expect(Array.isArray(out)).toBe(true);
+    const keyed = byKey(out);
+    const fse2027 = editionByYear(keyed["fse-sc"], 2027);
+    expect(fse2027).toMatchObject({
+      link: "https://fse.iacr.org/2027/",
+      place: "Maastricht, Netherlands",
+      event_start: utc(2027, 5, 24, 0, 0, 0),
+      event_end: utc(2027, 5, 28, 0, 0, 0),
+      estimated: false,
+    });
+    expect(
+      fse2027.deadlines.map((deadline) => ({
+        label: deadline.label,
+        at: exactAt(deadline).toISOString(),
+      })),
+    ).toEqual([
+      { label: "ToSC 2026 Issue 4 submission", at: "2026-09-02T11:59:59.000Z" },
+      { label: "ToSC 2027 Issue 1 submission", at: "2026-12-02T11:59:59.000Z" },
+    ]);
+    expect(keyed["fse-se"].editions).toEqual([]);
   });
 
   it("override replaces deadlines", () => {
