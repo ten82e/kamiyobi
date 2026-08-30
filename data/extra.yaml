@@ -6011,3 +6011,37 @@ conferences:
                 verifiedAt: '2026-08-30T17:22:00Z'
                 verifiedFields: [date, kind, round]
                 rawExcerpt: '<tr><td>Submission deadline</td><td>September 5, 2026</td></tr>'
+
+  # 証拠: data/promotions/2026-08-31-sovereignai-2026/manifest.json
+  # 公式サイトは HCOMP 2026 併設の初回ワークショップ、2026-09-27開催、
+  # Paper submission deadline を 2026-08-31 23:59 AoE と明記する
+  # （2026-08-30T17:52:29.160Z取得、sha256:3df25f395b304760d846a06aebf4a3f726bfda1edf0398a6ceccf3be771538b0）。
+  - key: sovereignai
+    title: SovereignAI
+    full_name: The First Workshop on Sovereign AI for Collaborative and Pluralistic AI Ecosystems
+    link: https://sovereignai-workshop.github.io/
+    categories: [ai]
+    tags: [niche, workshop]
+    editions:
+      - year: 2026
+        id: sovereignai26
+        link: https://sovereignai-workshop.github.io/
+        place: Virginia Tech Academic Building One, Alexandria, Virginia, United States
+        date_text: September 27, 2026
+        event_start: '2026-09-27'
+        event_end: '2026-09-27'
+        deadlines:
+          - kind: paper
+            label: Paper submission deadline
+            round: 1
+            date: '2026-08-31 23:59:00'
+            tz: AoE
+            evidence:
+              - sourceClass: official-cfp
+                sourceUrl: https://sovereignai-workshop.github.io/
+                contentHash: 3df25f395b304760d846a06aebf4a3f726bfda1edf0398a6ceccf3be771538b0
+                sourceRevision: 'W/"6a8fb967-11d43"'
+                retrievedAt: '2026-08-30T17:52:29.160Z'
+                verifiedAt: '2026-08-30T17:53:00Z'
+                verifiedFields: [date, time, timezone, kind, round]
+                rawExcerpt: "<span class=\"dl-label\">Paper submission deadline</span>\n          <p class=\"dl-date\"><span>August 31</span><span class=\"dl-yr\">2026</span></p>\n          <a class=\"btn\" href=\"https://easychair.org/conferences/?conf=sovereignai2026\">Submit via EasyChair<span class=\"arr\">&rarr;</span></a>\n        </div>\n        <dl class=\"dl-rest\">\n          <div><dt>Acceptance notification</dt><dd>September 6, 2026</dd></div>\n          <div><dt>Workshop day</dt><dd>September 27, 2026</dd></div>\n          <div><dt>Deadlines close</dt><dd>11:59&#8202;pm Anywhere on Earth</dd></div>"

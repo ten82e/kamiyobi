@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "2026-08-31-sovereignai-2026",
+  "observations": {
+    "sha256": "51418a5a354f1810306a1d6afb8afa74f099a8896b0e59dea39841a7bd626cfb"
+  },
+  "resolutions": {
+    "sha256": "ef494cbf0c525ee2cc868f58afd1def2631cbd39fccc2f03d44549a998c1eccf"
+  },
+  "extra": {
+    "sha256": "c17fcf45f8888a64b7ed53738c74b571f6d280cdeae04264a7bcca2e1eff96ea"
+  },
+  "bodies": [
+    {
+      "path": "bodies/07c39722e2187fca7dfce689ae338119476343eb548eb8c1ed7ee60e0fc2201a.body",
+      "sha256": "07c39722e2187fca7dfce689ae338119476343eb548eb8c1ed7ee60e0fc2201a"
+    },
+    {
+      "path": "bodies/3df25f395b304760d846a06aebf4a3f726bfda1edf0398a6ceccf3be771538b0.body",
+      "sha256": "3df25f395b304760d846a06aebf4a3f726bfda1edf0398a6ceccf3be771538b0"
+    }
+  ],
+  "decisions": {
+    "sovereignai": "promote"
+  }
+}
