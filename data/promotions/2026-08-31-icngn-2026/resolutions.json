@@ -1,0 +1,92 @@
+[
+  {
+    "candidate": "icngn",
+    "decision": "promote",
+    "verifiedFields": [
+      "venue",
+      "date",
+      "kind",
+      "round",
+      "event_start",
+      "event_end"
+    ],
+    "reason": "primary fields and evidence verified",
+    "verification": {
+      "valid": true,
+      "errors": [],
+      "checkedFields": [
+        "requestedUrl",
+        "finalUrl",
+        "status",
+        "headers",
+        "retrievedAt",
+        "sourceRevision",
+        "bodyHash",
+        "excerpt",
+        "officialDomain",
+        "extractionCandidates",
+        "eventYear",
+        "deadlineDate",
+        "deadlineTime",
+        "deadlineTimezone"
+      ],
+      "bodyHash": "cdb226fa64645300f44f019877355aa756f663f5bdf9198e484f8dea597ad23c",
+      "sourceRevision": "Wed, 22 Jul 2026 07:09:36 GMT",
+      "extractedCandidates": [
+        {
+          "rawExcerpt": "Submission Deadline : September 26, 2026",
+          "text": "Submission Deadline : September 26, 2026",
+          "label": "Submission Deadline : September 26, 2026",
+          "kind": "paper",
+          "date": "2026-09-26",
+          "editionYear": 2026
+        }
+      ]
+    },
+    "normalized": {
+      "venue": {
+        "key": "icngn",
+        "title": "ICNGN 2026",
+        "categories": [
+          "ai",
+          "networking"
+        ],
+        "tags": [
+          "niche"
+        ],
+        "review_state": "reviewed"
+      },
+      "edition": {
+        "year": 2026,
+        "edition_id": "icngn-2026",
+        "date_text": "2026-12-12",
+        "event_start": "2026-12-12",
+        "event_end": "2026-12-14"
+      },
+      "deadline": {
+        "kind": "paper",
+        "label": "paper",
+        "round": 1,
+        "track": "",
+        "precision": "date-only",
+        "date": "2026-09-26",
+        "evidence": [
+          {
+            "sourceClass": "official-cfp",
+            "sourceUrl": "https://www.icngn.org/",
+            "sourceRevision": "Wed, 22 Jul 2026 07:09:36 GMT",
+            "retrievedAt": "2026-08-30T20:33:30.613Z",
+            "verifiedAt": "2026-08-30T20:34:00Z",
+            "contentHash": "cdb226fa64645300f44f019877355aa756f663f5bdf9198e484f8dea597ad23c",
+            "rawExcerpt": "Submission Deadline : September 26, 2026",
+            "verifiedFields": [
+              "date",
+              "kind",
+              "round"
+            ]
+          }
+        ]
+      }
+    }
+  }
+]

@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "id": "2026-08-31-icngn-2026",
+  "observations": {
+    "sha256": "e1f611766764b187eae5e83ffe9dae27516caed1166bbb78953c1edda2888735"
+  },
+  "resolutions": {
+    "sha256": "4086ca214b5403c528caf3b3028585827b503661682cd59dd25dd09d67ced12d"
+  },
+  "extra": {
+    "sha256": "00c3ad05e9d84fbeb110e57951f46febb9592a56d1bf1faad8217863b709b747"
+  },
+  "bodies": [
+    {
+      "path": "bodies/cdb226fa64645300f44f019877355aa756f663f5bdf9198e484f8dea597ad23c.body",
+      "sha256": "cdb226fa64645300f44f019877355aa756f663f5bdf9198e484f8dea597ad23c"
+    }
+  ],
+  "decisions": {
+    "icngn": "promote"
+  }
+}
