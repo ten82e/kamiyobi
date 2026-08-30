@@ -6087,3 +6087,48 @@ conferences:
                 verifiedAt: '2026-08-30T18:16:00Z'
                 verifiedFields: [time, timezone]
                 rawExcerpt: 'All deadlines are 11:59 PM Anywhere on Earth unless stated otherwise.'
+
+  # 証拠: data/promotions/2026-08-31-sesame-jcdl-2026/manifest.json
+  # 公式サイトは JCDL 2026 併設の第2回ワークショップ、論文締切の
+  # 2026-09-07への延長とAoE、2026-10-16開催を明記する
+  # （2026-08-30T18:46:37.603Z取得、sha256:6c94db3b66fd1b4e3ffaa52819dca36d770b039e01dbfdbb8d614197bac34ab5）。
+  # 締切時刻は明記されないため、23:59を補わずdate-onlyとする。
+  # JCDL公式一覧はOnline Only・2026-10-16を明記する
+  # （2026-08-30T18:47:25.108Z取得、sha256:8a48e8e43a6e07457730db37f0171ff7779b6510f22467b05fdcb1774e3f806c）。
+  - key: sesame
+    title: SESAME
+    full_name: 2nd Workshop on Smarter Extraction of Scholarly Metadata using Knowledge Graphs, Language Models, and Agents
+    link: https://sesame-workshop.github.io/SESAME/
+    categories: [ai, db]
+    tags: [niche, workshop]
+    editions:
+      - year: 2026
+        id: sesame26
+        link: https://sesame-workshop.github.io/SESAME/
+        place: Online Only
+        date_text: October 16, 2026
+        event_start: '2026-10-16'
+        event_end: '2026-10-16'
+        deadlines:
+          - kind: paper
+            label: Paper submission
+            round: 1
+            date: '2026-09-07'
+            precision: date-only
+            evidence:
+              - sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/sesame26
+                contentHash: 79d4d461e30d517f72da7e0c7550cee5dfb37dc3998ef4e4c29229d9886c408f
+                sourceRevision: sha256:79d4d461e30d517f72da7e0c7550cee5dfb37dc3998ef4e4c29229d9886c408f
+                retrievedAt: '2026-08-30T18:46:44.821Z'
+                verifiedAt: '2026-08-30T18:47:30Z'
+                verifiedFields: [date, kind, round]
+                rawExcerpt: '<tr><td>Submission deadline</td><td>September 7, 2026</td></tr>'
+              - sourceClass: official-cfp
+                sourceUrl: https://sesame-workshop.github.io/SESAME/
+                contentHash: 6c94db3b66fd1b4e3ffaa52819dca36d770b039e01dbfdbb8d614197bac34ab5
+                sourceRevision: 'W/"6a82b30f-378d"'
+                retrievedAt: '2026-08-30T18:46:37.603Z'
+                verifiedAt: '2026-08-30T18:47:30Z'
+                verifiedFields: [date]
+                rawExcerpt: '→ <strong>07.09.2026 (Extended)</strong>'

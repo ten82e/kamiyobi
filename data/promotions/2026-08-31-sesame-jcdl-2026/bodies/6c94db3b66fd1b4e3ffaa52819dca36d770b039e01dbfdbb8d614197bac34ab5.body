@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>2nd Workshop on Smarter Extraction of ScholArly MEtadata using Knowledge Graphs, Language Models and Agents at JCDL 2026 | SESAME workshop co-located with JCDL 2026</title>
+<meta name="generator" content="Jekyll v3.10.0" />
+<meta property="og:title" content="2nd Workshop on Smarter Extraction of ScholArly MEtadata using Knowledge Graphs, Language Models and Agents at JCDL 2026" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="SESAME workshop co-located with JCDL 2026" />
+<meta property="og:description" content="SESAME workshop co-located with JCDL 2026" />
+<link rel="canonical" href="https://sesame-workshop.github.io/SESAME/SESAME/" />
+<meta property="og:url" content="https://sesame-workshop.github.io/SESAME/SESAME/" />
+<meta property="og:site_name" content="2nd Workshop on Smarter Extraction of ScholArly MEtadata using Knowledge Graphs, Language Models and Agents at JCDL 2026" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="2nd Workshop on Smarter Extraction of ScholArly MEtadata using Knowledge Graphs, Language Models and Agents at JCDL 2026" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","description":"SESAME workshop co-located with JCDL 2026","headline":"2nd Workshop on Smarter Extraction of ScholArly MEtadata using Knowledge Graphs, Language Models and Agents at JCDL 2026","name":"2nd Workshop on Smarter Extraction of ScholArly MEtadata using Knowledge Graphs, Language Models and Agents at JCDL 2026","url":"https://sesame-workshop.github.io/SESAME/SESAME/"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link rel="preload" href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap" as="style" type="text/css" crossorigin>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#157878">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="stylesheet" href="/SESAME/assets/css/style.css?v=d27fc8d200e49e3dbcb36c49ecf6b4d83f02fc9e">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', '', 'auto');
+    ga('send', 'pageview');
+  </script>
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/SESAME/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <a id="skip-to-content" href="#content">Skip to the content.</a>
+
+    <header class="page-header" role="banner">
+      <h1 class="project-name">2nd Workshop on Smarter Extraction of ScholArly MEtadata using Knowledge Graphs, Language Models and Agents at JCDL 2026</h1>
+      <h2 class="project-tagline">SESAME workshop co-located with JCDL 2026</h2>
+      
+      
+    </header>
+
+    <main id="content" class="main-content" role="main">
+      <hr />
+<p><a id="top"></a></p>
+
+<!-- Sticky mini navigation -->
+
+<div class="mini-nav" align="center">
+  <a href="#overview">Overview</a> •
+  <a href="#topics">Topics</a> •
+  <a href="#call-for-papers">CFP</a> •
+  <a href="#important-dates-aoe">Dates</a> •
+  <a href="#submission">Submission</a> •
+  <a href="#program">Program</a> •
+  <a href="#organizers">Organizers</a> •
+  <a href="previous-editions/2025/">Previous Editions</a> •
+  <a href="#contact">Contact</a>
+</div>
+
+<section id="overview" class="container band band--alt">
+  <h2>Overview</h2>
+
+  <p>
+    The workshop <strong>Smarter Extraction of ScholArly MEtadata using Knowledge Graphs, Language Models and Agents (SESAME)</strong>
+    brings together researchers and practitioners interested in improving scholarly metadata through large language models, Agents,
+    knowledge graphs, natural language processing, and linked-data technologies.
+  </p>
+
+  <p>
+    High-quality scholarly metadata is essential for search, discovery, research assessment, reproducibility, and the
+    long-term operation of digital-library infrastructures. However, metadata about publications, authors, affiliations,
+    datasets, software, models, citations, and other research objects is frequently incomplete, inconsistent, or distributed
+    across heterogeneous sources.
+  </p>
+
+  <p>
+    SESAME focuses on methods that combine language models and structured knowledge to support reliable metadata extraction,
+    normalization, enrichment, linking, validation, and evaluation. The workshop provides a platform for researchers,
+    digital-library professionals, data curators, infrastructure providers, and policy experts to exchange methods,
+    datasets, systems, evaluation practices, and lessons learned.
+  </p>
+
+  <p>
+    The workshop particularly welcomes work connecting large language models with linked data and knowledge graphs for
+    tasks such as author disambiguation, affiliation normalization, citation-context understanding, persistent-identifier
+    linking, provenance tracking, and transparent metadata curation.
+  </p>
+</section>
+
+<section id="topics" class="container">
+  <h2>Topics of Interest</h2>
+  
+  <p>Topics include, but are not limited to:</p>
+
+  <ul>
+    <li>
+      <strong>Research Artifact Metadata Modeling and Granularity</strong>
+      <ul>
+        <li>Metadata of Scholarly Publications, Datasets, Software, and Models</li>
+        <li>Metadata Quality Assessment, Enrichment, and Curation</li>
+        <li>Research Artifacts Provenance across Digital Libraries</li>
+        <li>Cross-disciplinary Scholarly Metadata Interoperability</li>
+        <li>Persistent identifiers, including DOI, ORCID, ROR, and related identifier systems</li>
+      </ul>
+    </li>
+
+<li>
+  <strong>Large Language Modelsa and Agents for Natural Language Processing (NLP) for Scholarly Metadata</strong>
+  <ul>
+    <li>Research Artifacts Metadata Extraction using LLMs and Agents</li> 
+    <li>Prompt Engineering, fine-tuning for Scholarly Information Extraction </li>
+    <li>Skill Development in Agents for Scholarly Information Extraction</li>
+    <li>Evaluation, Reliability, and Issues for LLM-generated Scholarly Metadata</li>
+    <li>Agentic approaches for Evaluating Scholarly Metadata</li>
+    <li>Comparative Studies of LLM-based vs Agentic vs Traditional Methods</li>
+    <li>LLMs and Agents for Scholarly Metadata Curation and Normalization</li>
+    <li>AI-driven Curation, Preservation at scale, and long-term accessibility</li>
+  </ul>
+</li>
+
+<li>
+  <strong>Knowledge Graphs and Linked Data</strong>
+  <ul>
+    <li>Construction of Scholarly Knowledge Graphs from Heterogeneous Metadata</li>
+    <li>Linking and Aligning Entities across Repositories and Research Infrastructures</li>
+    <li>Applications of KGs for Discovery, Recommendations and Impact</li>
+  </ul>
+</li>
+
+<li>
+  <strong>Digital Libraries and Research Infrastructures</strong>
+  <ul>
+    <li>Integration of Metadata workflows into Digital Library Systems</li>
+    <li>Benchmarks, Datasets, and Shared tasks for Metadata Extraction and Modeling</li>
+    <li>System Design for Metadata-intensive Digital Library Applications</li>
+  </ul>
+</li>
+
+<li>
+  <strong>Societal, Ethical Impact and Future Policy Directions</strong>
+  <ul>
+    <li>Ethical Implications of AI-driven Metadata Generation and Curation</li>
+    <li>Metadata for Open Science, Reproducibility, and Research integrity</li>
+    <li>Societal Impacts of Metadata Granularity on Scholarly Evaluation and Equity</li>
+    <li>Policy Frameworks and Governance for Interoperable Metadata Infrastructures</li>
+  </ul>
+</li>
+
+  </ul>
+</section>
+
+<section id="call-for-papers" class="container">
+  <h2>Call for Papers</h2>
+
+  <p>
+    SESAME 2026 invites original research contributions addressing the above listed topics in three categories. 
+  </p>
+  <ul>
+    <li><strong>Long Papers:</strong> 6–8 pages, excluding references</li>
+    <li><strong>Short or Position Papers:</strong> 2–4 pages, excluding references</li>
+    <li><strong>Demo, Dataset, or Benchmark Papers:</strong> 2–4 pages, excluding references</li>
+  </ul>
+
+</section>
+
+<section id="important-dates-aoe" class="container band band--alt">
+  <h2>Important Dates (AoE)</h2>
+
+  <p>
+    All deadlines will use <strong>Anywhere on Earth (AoE)</strong> time.
+  </p>
+
+ <ul class="dates">
+  <li>
+    <strong>Paper submission:</strong>
+    <span style="color:red;"><s>15.08.2026</s></span>
+    → <strong>07.09.2026 (Extended)</strong>
+  </li>
+  <li>
+    <strong>Author notification:</strong>
+    <span style="color:red;"><s>01.09.2026</s></span>
+    → <strong>21.09.2026 (Extended)</strong>
+  </li>
+  <li>
+    <strong>Camera-ready submission:</strong>
+    <span style="color:red;"><s>10.09.2026</s></span>
+    → <strong>05.10.2026 (Extended)</strong>
+  </li>
+  <li>
+    <strong>Workshop date:</strong> 16.10.2026
+  </li>
+</ul>
+</section>
+
+<section id="submission" class="container">
+  <h2>Submission</h2>
+
+  <ul>
+    <li><strong>Submission site:</strong> <a href="https://easychair.org/conferences/?conf=sesame26" target="_blank" rel="noopener">EasyChair</a></li>
+    <li><strong>Language:</strong> All submissions must be written in English.</li>
+    <li><strong>Format:</strong> All submissions must follow the <a href="https://www.overleaf.com/latex/templates/template-for-submissions-to-ceur-workshop-proceedings-ceur-ws-dot-org/wqyfdgftmcfw" target="_blank" rel="noopener">CEUR Workshop Proceedings style</a>.</li>
+    <li><strong>Review Policy:</strong> Double-blind peer review.</li>
+    <li><strong>Supplementary Material:</strong> Data, source code, and models are encouraged where appropriate.</li>
+  </ul>
+
+  <p>
+    Submissions should contain original work and should not be simultaneously under review elsewhere.
+  </p>
+
+  <style>
+    /* Local styles for the submission button */
+    #submit-btn {
+      display: inline-block;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      background-color: #0969da;
+      border: 1px solid #0969da;
+      color: #ffffff;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    #submit-btn:hover,
+    #submit-btn:focus {
+      background-color: #0550ae;
+      border-color: #0550ae;
+      color: #ffffff;
+      text-decoration: none;
+    }
+  </style>
+
+  <p align="center">
+    <a id="submit-btn" class="btn btn-primary" href="https://easychair.org/conferences/?conf=sesame26" target="_blank" rel="noopener">
+      Submit Paper
+    </a>
+  </p>
+
+</section>
+<section id="program" class="container band band--alt">
+  <h2>Program</h2>
+
+  <p>
+    The SESAME 2026 workshop program will be published after the paper-review process.
+  </p>
+
+  <p>
+    The workshop program will comprise of:
+  </p>
+
+  <ul>
+    <li>Invited Keynotes Talks;</li>
+    <li>Research Paper Presentations;</li>
+    <li>Interactive Discussion Sessions</li>
+  </ul>
+
+</section>
+
+<section id="organizers" class="container">
+  <h2>Organizers</h2>
+
+  <p>
+    <strong>Dr. Muhammad Asif Suryani</strong><br />
+    Knowledge Technologies for the Social Sciences (KTS),<br />
+    GESIS – Leibniz Institute for the Social Sciences, Cologne, Germany
+  </p>
+
+  <p>
+    <strong>Dr. Brigitte Mathiak</strong><br />
+    Knowledge Technologies for the Social Sciences (KTS),<br />
+    GESIS – Leibniz Institute for the Social Sciences, Cologne, Germany
+  </p>
+
+  <p>
+    <strong>Dr. Florian Reitz</strong><br />
+    Schloss Dagstuhl – Leibniz Center for Informatics,<br />
+    Wadern, Germany
+  </p>
+
+  <p>
+    <strong>Dr. Florian Jäckel</strong><br />
+    Schloss Dagstuhl – Leibniz Center for Informatics,<br />
+    Wadern, Germany
+  </p>
+
+  <p>
+    <strong>Florian Hauss</strong><br />
+    Data Science and Big Data Analytics,<br />
+    Ulm University, Ulm, Germany
+  </p>
+
+  <p>
+    <strong>Prof. Dr. Ansgar Scherp</strong><br />
+    Data Science and Big Data Analytics,<br />
+    Ulm University, Ulm, Germany
+  </p>
+
+  <h3>Program Committee</h3>
+
+  <p>
+    The SESAME 2026 Program Committee will be announced soon.
+  </p>
+</section>
+
+<section class="container band band--alt">
+  <h2>Registration</h2>
+
+  <p>
+    Registration information will be published later.
+  </p>
+
+  <h2>Venue and Participation</h2>
+
+  <p>
+    The workshop mode, participation format and further details will be shared later.
+  </p>
+
+  <h2>Code of Conduct</h2>
+
+  <p>
+    SESAME 2026 will follow the code of conduct as per JCDL guidelines.
+  </p>
+</section>
+
+<section id="previous-editions" class="container">
+  <h2>Previous Editions</h2>
+
+  <ul>
+    <li>
+      <a href="previous-editions/2025/">
+        SESAME 2025 — 1st Workshop
+      </a>
+    </li>
+  </ul>
+</section>
+
+<section id="contact" class="container band band--alt">
+  <h2>Contact</h2>
+
+  <p>
+    Questions? Email
+    <a href="mailto:asif.suryani@gesis.org">asif.suryani@gesis.org</a>
+    or open an issue in the
+    <a href="https://github.com/sesame-workshop/SESAME">SESAME GitHub repository</a>.
+  </p>
+</section>
+
+<hr />
+
+<p align="center">
+  <strong>Website Visitors:</strong>
+  <img src="https://visitor-badge.laobi.icu/badge?page_id=sesame-workshop.SESAME" alt="SESAME website visitor count" />
+</p>
+
+<p align="center" style="font-size:0.95rem;">
+  © 2026 SESAME Organizers •
+  <a href="previous-editions/2025/">Previous Edition</a> •
+  <a href="mailto:asif.suryani@gesis.org">Contact</a> •
+  <a href="https://github.com/sesame-workshop/SESAME">GitHub Repository</a>
+</p>
+
+<p align="center">
+  <a href="#top">Back to top ↑</a>
+</p>
+
+
+      <footer class="site-footer">
+        
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a>.</span>
+      </footer>
+    </main>
+  </body>
+</html>

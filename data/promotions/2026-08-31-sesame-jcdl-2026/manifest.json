@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "id": "2026-08-31-sesame-jcdl-2026",
+  "observations": {
+    "sha256": "fc8473a4e03e1e35c9b86e045ffe8b74ef4ab838ff4887418a4355913116399a"
+  },
+  "resolutions": {
+    "sha256": "d47cedc8e7883fb49d25b196da0365d7b021e1d0fb9fc9f9a41e7f814b226c05"
+  },
+  "extra": {
+    "sha256": "64108d84341798df07f9c8de28acfd3e8ec67e2e7ed4184f02ecc14426b6a052"
+  },
+  "bodies": [
+    {
+      "path": "bodies/6c94db3b66fd1b4e3ffaa52819dca36d770b039e01dbfdbb8d614197bac34ab5.body",
+      "sha256": "6c94db3b66fd1b4e3ffaa52819dca36d770b039e01dbfdbb8d614197bac34ab5"
+    },
+    {
+      "path": "bodies/79d4d461e30d517f72da7e0c7550cee5dfb37dc3998ef4e4c29229d9886c408f.body",
+      "sha256": "79d4d461e30d517f72da7e0c7550cee5dfb37dc3998ef4e4c29229d9886c408f"
+    },
+    {
+      "path": "bodies/8a48e8e43a6e07457730db37f0171ff7779b6510f22467b05fdcb1774e3f806c.body",
+      "sha256": "8a48e8e43a6e07457730db37f0171ff7779b6510f22467b05fdcb1774e3f806c"
+    }
+  ],
+  "decisions": {
+    "sesame": "promote"
+  }
+}
