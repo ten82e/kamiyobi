@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARC 2027 — The 23rd International Symposium on Applied Reconfigurable Computing</title>
+<meta name="description" content="ARC 2027 · Berlin, Germany · March 31 – April 2, 2027 · Preliminary Call for Papers">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <div class="brand-lockup">
+      <img src="assets/arc_logo.png" alt="">
+      ARC<span class="yr">2027</span>
+    </div>
+    <div class="navlinks" id="navlinks">
+      <a href="#cfp">Call for Papers</a>
+      <a href="#dates">Dates</a>
+      <a href="#topics">Topics</a>
+      <a href="#committee">Committee</a>
+      <a href="#venue">Venue</a>
+      <a href="registration.html" class="navcta">Registration</a>
+    </div>
+    <button class="menu-btn" id="menuBtn" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="fabric" id="fabric"></div>
+  <div class="wrap">
+    <div class="hero-inner">
+      <span class="eyebrow">Preliminary Call for Papers</span>
+      <h1>The 23rd International Symposium on <em>Applied Reconfigurable Computing</em></h1>
+      <div class="hero-meta">
+        <span><b>Berlin, Germany</b></span>
+        <span>·</span>
+        <span>March 31 – April 2, 2027</span>
+        <span>·</span>
+        <span>Hosted by Humboldt-Universität zu Berlin</span>
+      </div>
+      <p class="hero-lede">ARC brings together researchers and practitioners of reconfigurable computing with an emphasis on practical applications — from high-level compilation and design-space exploration to fine-grained fabrics and safety-critical systems.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary" href="#cfp">Read the Call for Papers</a>
+        <a class="btn btn-ghost" href="#dates">Key Dates</a>
+        <a class="btn btn-ghost" href="assets/ARC2027_Preliminary_CFP.pdf" target="_blank" rel="noopener">Download CFP (PDF)</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="intro">
+  <div class="wrap">
+    <p>Reconfigurable computing technologies promise substantial performance gains over traditional architectures by customizing, even at runtime, the topology of the underlying architecture to match the needs of a given application. Contemporary configurable architectures allow functional and storage units to be matched in function, bit-width, and control structure to the specific needs of a computation. The flexibility enabled by reconfiguration is also a key technique for overcoming transient failures in emerging device structures.</p>
+    <p>ARC 2027 will feature a series of international invited speakers sharing their view on the future of reconfigurable technology.</p>
+  </div>
+</section>
+
+<section class="dates-strip" id="dates">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Don't miss the window</span>
+        <h2>Important Dates</h2>
+      </div>
+    </div>
+    <div class="dates-grid">
+      <div class="date-card">
+        <div class="d">25 Oct 2026</div>
+        <div class="l">Submission deadline</div>
+      </div>
+      <div class="date-card">
+        <div class="d">7 Dec 2026</div>
+        <div class="l">Author notification</div>
+      </div>
+      <div class="date-card">
+        <div class="d">8 Jan 2027</div>
+        <div class="l">Camera-ready &amp; author registration</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="cfp">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">What to submit</span>
+        <h2>Call for Papers</h2>
+      </div>
+    </div>
+    <div class="cfp-grid" style="grid-template-columns:1fr; max-width:640px;">
+      <div>
+        <p style="margin:0 0 22px; color:#333; font-size:15.5px;">Authors are invited to submit original contributions in English, including but not limited to the areas of interest listed below. Submissions must be uploaded to the ARC website, identifying the format of the contribution as either:</p>
+
+        <div class="paper-type">
+          <h3>Long Papers</h3>
+          <p>14 pages maximum. Mainly accomplished results, presented orally.</p>
+        </div>
+        <div class="paper-type">
+          <h3>Short Papers</h3>
+          <p>8 pages maximum (or 10, with a 50 EUR/page surcharge). Work in progress or recent developments, presented as a poster.</p>
+        </div>
+
+        <div class="fmt-note">
+          Papers must follow the Springer-Verlag LNCS format rules, as described at
+          <a href="https://link.springer.com/series/558/information-for-authors-and-editors" target="_blank" rel="noopener">link.springer.com/series/558/information-for-authors-and-editors</a>.
+        </div>
+
+        <div class="fmt-note">
+          Submissions must be fully anonymous, but authors should not hide previous work, instead, they need to make self-references in the third person.
+        </div>
+
+        <h3 style="font-size:17px; font-family:'Inter'; font-weight:700; margin-top:34px;">Paper Submission</h3>
+        <p style="margin:8px 0 0; font-size:14.5px;"><a href="https://easychair.org/conferences/?conf=arc2027" target="_blank" rel="noopener" style="color:var(--brand); font-weight:600;">Submit via EasyChair</a></p>
+        <p style="margin:10px 0 0; font-size:14.5px;"><a href="assets/ARC2027_Preliminary_CFP.pdf" target="_blank" rel="noopener" style="color:var(--brand); font-weight:600;">Download the Call for Papers (PDF)</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="topics" style="background:var(--paper-raised); border-top:1px solid var(--line); border-bottom:1px solid var(--line);">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Scope</span>
+        <h2>Topics of Interest</h2>
+      </div>
+    </div>
+    <div class="topics-grid">
+      <div class="topic-col">
+        <h3>Design Methods &amp; Tools</h3>
+        <ul>
+          <li>High-level Compilation</li>
+          <li>Simulation</li>
+          <li>Estimation Techniques</li>
+          <li>Design Space Exploration</li>
+          <li>Programming Languages &amp; Paradigms</li>
+          <li>Run-Time Systems</li>
+          <li>Compilation and Synthesis</li>
+        </ul>
+      </div>
+      <div class="topic-col">
+        <h3>Architectures</h3>
+        <ul>
+          <li>Fine-grained and Mixed-grained</li>
+          <li>Multi-Processor based</li>
+          <li>Embedded Multi-Core</li>
+          <li>Reconfigurable Fabrics</li>
+          <li>Resilient through Reconfiguration</li>
+          <li>System Architectures &amp; Integration</li>
+        </ul>
+      </div>
+      <div class="topic-col">
+        <h3>Applications</h3>
+        <ul>
+          <li>High-Performance Systems</li>
+          <li>Embedded Computing</li>
+          <li>Robotics</li>
+          <li>Digital Signal Processing</li>
+          <li>Safety and Mission Critical Systems</li>
+        </ul>
+      </div>
+      <div class="topic-col">
+        <h3>Critical Issues</h3>
+        <ul>
+          <li>Teaching Reconfigurable Computing</li>
+          <li>Surveys and Future Trends</li>
+          <li>Benchmarks</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pub-strip">
+  <div class="wrap pub-inner">
+    <img src="assets/lncs_logo.png" alt="Lecture Notes in Computer Science">
+    <img src="assets/acm_logo.jpeg" alt="ACM">
+    <p>ARC 2027 proceedings will be published by Springer-Verlag as a Lecture Notes in Computer Science (LNCS) volume, also available via SpringerLink. Selected papers will additionally be invited for a special issue of ACM Transactions on Reconfigurable Technology and Systems (TRETS).</p>
+  </div>
+</section>
+
+<section id="committee">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Organization</span>
+        <h2>Committee</h2>
+      </div>
+    </div>
+    <div class="committee-grid">
+      <div class="person">
+        <div class="role">General Chair</div>
+        <h3>João M. P. Cardoso</h3>
+        <div class="aff">University of Porto, Portugal</div>
+      </div>
+      <div class="person">
+        <div class="role">General Chair</div>
+        <h3>Michael Huebner</h3>
+        <div class="aff">from Sept. 1st at Humboldt-Universität zu Berlin, Germany</div>
+      </div>
+      <div class="person">
+        <div class="role">Program Chair</div>
+        <h3>Dr.-Ing. Ahmed Kamaledin</h3>
+        <div class="aff">Dresden University of Technology, Germany</div>
+      </div>
+      <div class="person">
+        <div class="role">Program Chair</div>
+        <h3>Prof. Christos P. Antonopoulos</h3>
+        <div class="aff">University of Peloponnese, Greece</div>
+      </div>
+      <div class="person">
+        <div class="role">Publicity Chair</div>
+        <h3>Prof. Diana Göhringer</h3>
+        <div class="aff">Dresden University of Technology, Germany</div>
+      </div>
+      <div class="person">
+        <div class="role">Publicity Chair</div>
+        <h3>Prof. Shinya Takamaeda-Yamazaki</h3>
+        <div class="aff">The University of Tokyo, Japan</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="venue" style="background:var(--paper-raised); border-top:1px solid var(--line); border-bottom:1px solid var(--line);">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Where</span>
+        <h2>Venue</h2>
+      </div>
+    </div>
+    <div class="venue-grid">
+      <div class="venue-photo"><img src="assets/venue_law_faculty.jpg" alt="Humboldt-Universität zu Berlin building at Bebelplatz"></div>
+      <div class="venue-text">
+        <h3>Festsaal, Humboldt-Universität zu Berlin</h3>
+        <p>ARC 2027 is hosted by the Computer Engineering Group at Humboldt-Universität zu Berlin. The symposium takes place in the Festsaal — the university's historic ceremonial hall — at the Humboldt Graduate School, within walking distance of the Brandenburg Gate.</p>
+        <div class="venue-addr">
+          Festsaal · Humboldt Graduate School<br>
+          Luisenstraße 56<br>
+          10117 Berlin, Germany
+        </div>
+      </div>
+    </div>
+    <div class="venue-grid" style="margin-top:20px;">
+      <div class="venue-photo"><img src="assets/berlin2.jpg" alt="Festsaal lecture hall"></div>
+      <div class="venue-photo"><img src="assets/venue_fernsehturm.jpg" alt="Fernsehturm and Berlin skyline near Bebelplatz"></div>
+    </div>
+
+    <h3 style="margin-top:44px; font-size:22px;">Discover Berlin</h3>
+    <p style="margin-top:10px; color:#333; font-size:15px; max-width:640px;">Beyond the Festsaal, Berlin-Mitte puts the city's icons within easy walking or public-transit reach of the venue. For more on what to see and do, visit <a href="https://www.visitberlin.de/en" target="_blank" rel="noopener" style="color:var(--brand); font-weight:600;">visitberlin.de</a>.</p>
+    <div class="venue-grid" style="margin-top:20px;">
+      <div class="venue-photo"><img src="assets/venue_brandenburg_gate.jpg" alt="Brandenburg Gate, Berlin"></div>
+      <div class="venue-photo"><img src="assets/berlin1.jpg" alt="Humboldt-Universität zu Berlin main building"></div>
+    </div>
+    <div class="venue-grid" style="margin-top:20px;">
+      <div class="venue-photo"><img src="assets/berlin_schloss_night.jpg" alt="Berliner Schloss / Humboldt Forum at night"></div>
+      <div class="venue-photo"><img src="assets/berlin_spree_dom.jpg" alt="Spree river with Berliner Dom"></div>
+    </div>
+  </div>
+</section>
+
+<section id="registration">
+  <div class="wrap">
+    <div class="reg-box">
+      <span class="eyebrow" style="color:#9fd8c9;">Registration</span>
+      <h2>Coming soon</h2>
+      <p><a href="registration.html" style="color:#fff; text-decoration:underline;">See planned fees &amp; policies</a></p>
+    </div>
+  </div>
+</section>
+
+<section class="final-cta">
+  <div class="wrap">
+    <span class="eyebrow">Ready when you are</span>
+    <h2>Submit your work to ARC 2027 in Berlin</h2>
+    <p>Long and short papers welcome. Submission deadline: 25 October 2026.</p>
+    <div class="hero-ctas">
+      <a class="btn btn-primary" href="#cfp">View submission formats</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-inner">
+    <div class="brand-lockup">
+      <img src="assets/arc_logo.png" alt="">
+      ARC<span class="yr">2027</span>
+    </div>
+    <div class="fine">Computer Engineering Group · Prof. Dr.-Ing. habil. Michael Hübner · from Sept. 1st at Humboldt-Universität zu Berlin</div>
+  </div>
+</footer>
+
+<script>
+  // mobile nav
+  const btn = document.getElementById('menuBtn');
+  const nav = document.getElementById('navlinks');
+  btn.addEventListener('click', () => nav.classList.toggle('open'));
+  nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => nav.classList.remove('open')));
+
+  // reconfigurable fabric hero motif: light up a random sparse subset of cells
+  const fabric = document.getElementById('fabric');
+  const COLS = 24, ROWS = 10;
+  const total = COLS * ROWS;
+  const litCount = Math.round(total * 0.09);
+  const lit2Count = Math.round(total * 0.06);
+  const indices = [...Array(total).keys()];
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  const litSet = new Set(indices.slice(0, litCount));
+  const lit2Set = new Set(indices.slice(litCount, litCount + lit2Count));
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < total; i++) {
+    const cell = document.createElement('i');
+    if (litSet.has(i)) cell.className = 'lit';
+    else if (lit2Set.has(i)) cell.className = 'lit2';
+    cell.style.animationDelay = (Math.random() * 5).toFixed(2) + 's';
+    frag.appendChild(cell);
+  }
+  fabric.appendChild(frag);
+</script>
+
+</body>
+</html>

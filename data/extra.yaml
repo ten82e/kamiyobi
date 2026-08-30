@@ -6252,3 +6252,36 @@ conferences:
                 verifiedAt: '2026-08-30T20:34:00Z'
                 verifiedFields: [date, kind, round]
                 rawExcerpt: 'Submission Deadline : September 26, 2026'
+
+  # 証拠: data/promotions/2026-08-31-arc-2027/manifest.json
+  # Humboldt-Universität zu Berlin の公式サイトは投稿締切とベルリンでの会期を明記する。
+  # 時刻・タイムゾーンは掲載されない。
+  - key: arc
+    title: ARC 2027
+    full_name: The 23rd International Symposium on Applied Reconfigurable Computing
+    link: https://amor.cms.hu-berlin.de/~hubnermi/index.html
+    categories: [hpc, systems]
+    tags: [niche]
+    editions:
+      - year: 2027
+        id: arc-2027
+        link: https://amor.cms.hu-berlin.de/~hubnermi/index.html
+        place: Berlin, Germany
+        date_text: March 31-April 2, 2027
+        event_start: '2027-03-31'
+        event_end: '2027-04-02'
+        deadlines:
+          - kind: paper
+            label: Paper submission deadline
+            round: 1
+            date: '2026-10-25'
+            precision: date-only
+            evidence:
+              - sourceClass: official-cfp
+                sourceUrl: https://amor.cms.hu-berlin.de/~hubnermi/index.html
+                contentHash: efb31692c1c015580f9a41fac2a74666c580e3e7d2701f1d9021934e49ae7714
+                sourceRevision: '"381e-6568d45154fdb-gzip"'
+                retrievedAt: '2026-08-30T20:58:40.676Z'
+                verifiedAt: '2026-08-30T20:59:00Z'
+                verifiedFields: [date, kind, round]
+                rawExcerpt: 'Long and short papers welcome. Submission deadline: 25 October 2026.'
