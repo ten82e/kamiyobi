@@ -298,7 +298,15 @@ export function parseTree(conferenceDir: string | null | undefined): Conference[
     for (const item of items) {
       if (typeof item !== "object" || item === null) continue;
       const sourceId = path.slice(conferenceDir.length + 1).replace(/\.ya?ml$/, "");
-      const conference = conferenceOf(item as Record<string, unknown>, sourceId);
+      // 1 ファイルの構造 drift（例: confs が配列でない）でソース全体を落とさない。
+      // その会議だけ skip し、締切消失は health gate の slot 比較が検出する。
+      let conference: Conference | null;
+      try {
+        conference = conferenceOf(item as Record<string, unknown>, sourceId);
+      } catch (exc) {
+        warn(`ccfddl: cannot map ${path}: ${String(exc)}`);
+        continue;
+      }
       if (conference !== null) out.push(conference);
     }
   }

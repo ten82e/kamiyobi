@@ -147,4 +147,78 @@ describe("update-data canary", () => {
     expect(result.ok).toBe(false);
     expect(result.reasons.some((r) => r.includes("identity conflicts increased"))).toBe(true);
   });
+
+  it("timeline array->object drift (valid YAML) is detected as future deadline disappearance", {
+    timeout: 240_000,
+  }, () => {
+    const { baseline, current } = buildPair((root) => {
+      const file = join(root, "NW", "nsdi.yml");
+      // timeline を完全オブジェクト化（valid YAML）。deadlinesOf は配列以外を
+      // 無視して fallback（top-level にも deadline が無い）→ deadlines=0 になる経路。
+      // 例外・パース失敗は起こらないため「行削除」シナリオとは別経路の drift。
+      const text = readFileSync(file, "utf8").replace(
+        /timeline:\n(\s+)- abstract_deadline: '2026-04-16 23:59:59'\n\s+deadline: '2026-04-23 23:59:59'\n(\s+)- abstract_deadline: '2026-09-10 23:59:59'\n\s+deadline: '2026-09-17 23:59:59'\n/,
+        "timeline:\n$1  abstract_deadline: '2026-04-16 23:59:59'\n$1  deadline: '2026-04-23 23:59:59'\n$1  abstract_deadline: '2026-09-10 23:59:59'\n$1  deadline: '2026-09-17 23:59:59'\n",
+      );
+      writeFileSync(file, text);
+    });
+    const result = evaluateHealthGate(current, baseline);
+    expect(result.ok).toBe(false);
+    expect(
+      result.reasons.some((reason) => reason.includes("future deadline disappeared")),
+    ).toBe(true);
+  });
+
+  it("confs array->object drift skips only that conference; the gate still blocks", {
+    timeout: 240_000,
+  }, () => {
+    const root = scratch();
+    const cache = makeFixtureCache(join(root, "cache"));
+    const baselineDir = join(root, "baseline");
+    const currentDir = join(root, "current");
+    expect(runCli(baselineDir, { cache, extra: ["--no-embeddings"] }).status).toBe(0);
+    const treeRoot = join(
+      cache,
+      "ccfddl__ccf-deadlines__main",
+      "ccf-deadlines-main",
+      "conference",
+    );
+    const file = join(treeRoot, "NW", "nsdi.yml");
+    // confs 全体をオブジェクト（配列でない）に置換 — 上流スキーマ drift の模擬。
+    // 修正後: その 1 ファイルは skip されソース全体は落ちない (source_failures 空)。
+    // 代わりに該当会議の締切消失として gate が検出する。
+    writeFileSync(
+      file,
+      `- title: NSDI
+  description: USENIX Symposium on Networked Systems Design and Implementation
+  sub: NW
+  dblp: nsdi
+  confs:
+    year: 2027
+    id: nsdi27
+    link: https://www.usenix.org/conference/nsdi27
+    timeline:
+      - abstract_deadline: '2026-09-10 23:59:59'
+        deadline: '2026-09-17 23:59:59'
+    timezone: UTC-4
+    date: May 11-13, 2027
+    place: Providence, RI, USA
+`,
+    );
+    expect(runCli(currentDir, { cache, extra: ["--no-embeddings"] }).status).toBe(0);
+    const health = JSON.parse(
+      readFileSync(join(currentDir, "health.json"), "utf8"),
+    ) as HealthReport;
+    expect(health.source_failures ?? []).toEqual([]);
+    const baseline = JSON.parse(
+      readFileSync(join(baselineDir, "health.json"), "utf8"),
+    ) as HealthReport;
+    const result = evaluateHealthGate(health, baseline);
+    expect(result.ok).toBe(false);
+    expect(
+      result.reasons.some(
+        (r) => r.includes("future deadline disappeared") || r.includes("required venue"),
+      ),
+    ).toBe(true);
+  });
 });
