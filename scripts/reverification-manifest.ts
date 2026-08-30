@@ -18,6 +18,7 @@ interface DeadlineBase {
   precision?: "exact" | "date-only";
   utc?: string | null;
   local_date?: string | null;
+  latest_utc?: string | null;
   kind: string;
   official_url?: string;
   verification?: {
@@ -30,10 +31,11 @@ interface DeadlineBase {
   };
 }
 
-/** data.json の deadline 文字列表現 (exact → utc ISO、date-only → local_date 終日)。 */
-function deadlineText(dl: DeadlineBase): string {
-  if (dl.precision === "date-only" && dl.local_date) return `${dl.local_date}T23:59:59Z`;
-  return dl.utc ?? dl.deadline ?? "";
+/** 表示値と未来判定境界。date-only は時刻を作らず、公開済みの不確実性上限を使う。 */
+function deadlineMoment(dl: DeadlineBase): { display: string; cutoff: string } | null {
+  const display = dl.precision === "date-only" ? dl.local_date : (dl.utc ?? dl.deadline);
+  const cutoff = dl.precision === "date-only" ? dl.latest_utc : display;
+  return display && cutoff && Number.isFinite(Date.parse(cutoff)) ? { display, cutoff } : null;
 }
 
 interface Conference {
@@ -128,14 +130,16 @@ function main(argv: string[] = process.argv) {
       if (!dl.verification) continue;
 
       // Only include deadlines with a future deadline
-      const deadlineDate = new Date(deadlineText(dl));
+      const moment = deadlineMoment(dl);
+      if (!moment) continue;
+      const deadlineDate = new Date(moment.cutoff);
       if (deadlineDate.getTime() <= now.getTime()) continue;
 
       deadlinesWithVerification++;
       entries.push({
         venue_key: conf.key,
         venue_title: conf.title,
-        deadline: deadlineText(dl),
+        deadline: moment.display,
         kind: dl.kind,
         official_url: dl.verification.official_url,
         next_check_at: dl.verification.next_check_at,
@@ -205,4 +209,4 @@ if (basename(process.argv[1] ?? "") === basename(new URL(import.meta.url).pathna
 }
 
 export type { Manifest, ManifestEntry };
-export { classifyPriority, main, parseArgs };
+export { classifyPriority, deadlineMoment, main, parseArgs };
