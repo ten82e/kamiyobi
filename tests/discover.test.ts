@@ -744,6 +744,9 @@ describe("review helpers", () => {
     expect(
       normTitle("15th International Conference on Complex Networks & Their Applications"),
     ).toBe(normTitle("International Conference on Complex Networks and Their Applications"));
+    expect(normTitle("The 19th ACM International Systems and Storage Conference")).toBe(
+      normTitle("ACM International Systems and Storage Conference"),
+    );
     expect(normTitle("International Conference on Complex Networks")).not.toBe(
       normTitle("International Conference on Complex Networks and Their Applications"),
     );

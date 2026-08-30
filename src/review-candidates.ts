@@ -45,7 +45,7 @@ export function normTitle(title: string | null | undefined): string {
   let t = String(title).normalize("NFKC").toLowerCase().replace(/&/g, " and ");
   t = t.replace(/['’]\d\d\b/g, ""); // '26 形式の短縮年
   t = t.replace(/\b20\d\d(?:年|\b)/g, ""); // 2026 / 2026年 形式の年
-  t = t.replace(/^\d+(?:st|nd|rd|th)\s+/i, ""); // 15th International ... 形式の回次
+  t = t.replace(/^(?:the\s+)?\d+(?:st|nd|rd|th)\s+/i, ""); // The 15th International ... 形式の回次
   t = t.replace(/[^\p{L}\p{N}]+/gu, " ");
   return t.trim().split(/\s+/).join(" ");
 }
