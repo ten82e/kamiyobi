@@ -1789,8 +1789,8 @@ function semanticDeadlineRegressions(
     allowIdentityMigration,
   );
   for (const pair of pairs) {
+    if (pair.current.earliest_ms >= pair.previous.latest_ms) continue;
     if (pair.previous.precision === "exact" && pair.current.precision === "date-only") {
-      if (pair.current.earliest_ms >= pair.previous.latest_ms) continue;
       if (authorizesPrecisionCorrection(pair.previous, pair.current)) continue;
       reasons.push(`deadline precision regressed: ${pair.previous.deadline_id}`);
       continue;
@@ -1805,12 +1805,6 @@ function semanticDeadlineRegressions(
     if (
       pair.previous.precision === "date-only" &&
       pair.current.precision === "date-only" &&
-      pair.current.latest_ms >= pair.previous.latest_ms
-    )
-      continue;
-    if (
-      pair.previous.precision === "exact" &&
-      pair.current.precision === "exact" &&
       pair.current.latest_ms >= pair.previous.latest_ms
     )
       continue;

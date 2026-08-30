@@ -134,11 +134,12 @@ it("enforces every interval and precision transition", () => {
     "2026-08-09T00:00:00Z",
   );
   expect(evaluateHealthGate(health([exact("2026-09-01T12:00:00Z")]), oldDateOnly).ok).toBe(true);
-  expect(evaluateHealthGate(health([exact("2026-09-02T12:00:00Z")]), oldDateOnly).ok).toBe(false);
+  expect(evaluateHealthGate(health([exact("2026-09-02T12:00:00Z")]), oldDateOnly).ok).toBe(true);
+  expect(evaluateHealthGate(health([exact("2026-08-31T09:00:00Z")]), oldDateOnly).ok).toBe(false);
   expect(
     evaluateHealthGate(
       health([
-        exact("2026-09-02T12:00:00Z", {
+        exact("2026-08-31T09:00:00Z", {
           evidence: [official("new", "2026-08-02T00:00:00Z")],
         }),
       ]),
