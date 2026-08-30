@@ -1795,21 +1795,24 @@ conferences:
           - {kind: notification, label: 'Notification to Authors', date: '2027-03-18 23:59:59', tz: AoE, round: 1}
           - {kind: camera_ready, label: 'Camera Ready Materials', date: '2027-04-24 23:59:59', tz: AoE, round: 1}
 
-  # --- www 2027 通知・最終版 収録補完 ---
-  # 根拠: https://acmweb2027.org/important-dates/ (2026-08-13 取得)「All deadlines are
-  #   11:59 PM Anywhere on Earth (AoE) unless otherwise specified: Research & Industry
-  #   Track Abstract Submission Deadline 11 October 2026 / Paper Submission Deadline
-  #   18 October 2026 / Paper Result Release 10 December 2026 / Paper Final Version
-  #   Deadline 31 January 2027」。abstract/paper は収録済み値と一致 (10/11・10/18 AoE)。
-  #   result/final を追加収録。
+  # --- www 2027 Research & Industry Track ---
+  # 根拠: https://acmweb2027.org/important-dates/ (2026-08-30 取得)「All deadlines are
+  #   11:59 PM Anywhere on Earth (AoE) unless otherwise specified」。Abstract 10/18、
+  #   Paper 10/25、Result Release 12/21、Rebuttal 12/21-31、Notification 1/4、
+  #   Final Version 1/31。旧公開値 (Abstract 10/11、Paper 10/18、Result 12/10) を更新。
   www:
     editions:
       2027:
+        link: https://acmweb2027.org/
+        estimated: false
         deadlines:
-          - {kind: abstract, label: 'Abstract submission', date: '2026-10-11 23:59:59', tz: AoE}
-          - {kind: paper, label: 'Paper submission', date: '2026-10-18 23:59:59', tz: AoE}
-          - {kind: notification, label: 'Paper Result Release', date: '2026-12-10 23:59:59', tz: AoE}
-          - {kind: camera_ready, label: 'Paper Final Version Deadline', date: '2027-01-31 23:59:59', tz: AoE}
+          - {kind: abstract, label: 'Abstract Submission', date: '2026-10-18 23:59:59', tz: AoE}
+          - {kind: paper, label: 'Paper Submission', date: '2026-10-25 23:59:59', tz: AoE}
+          - {kind: review_release, label: 'Result Release', date: '2026-12-21 23:59:59', tz: AoE}
+          - {kind: rebuttal_start, label: 'Rebuttal Period Start', date: '2026-12-21 23:59:59', tz: AoE}
+          - {kind: rebuttal_end, label: 'Rebuttal Period End', date: '2026-12-31 23:59:59', tz: AoE}
+          - {kind: notification, label: 'Notification', date: '2027-01-04 23:59:59', tz: AoE}
+          - {kind: camera_ready, label: 'Final Version Deadline', date: '2027-01-31 23:59:59', tz: AoE}
 
   # --- ct-rsa 2027 通知 追加 ---
   # 根拠: https://www.iacr.org/events/ (2026-08-13 取得)「CT-RSAC 2027 ... Submission

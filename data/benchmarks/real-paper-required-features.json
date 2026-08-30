@@ -23,7 +23,7 @@
     "generator": "src/bench-recommender.ts",
     "model": "Xenova/all-MiniLM-L6-v2",
     "revision": "751bff37182d3f1213fa05d7196b954e230abad9",
-    "runtime": "v26.7.0"
+    "runtime": "v26.8.1"
   },
   "profiles": {
     "dev": {
@@ -105,7 +105,7 @@
   "records": [
     {
       "paper_id": "dev-2025-ches-01",
-      "record_sha256": "18ae750f204ad3bdbfb161df659a3f5e48910e0e1d40fe7cd1cfbee88b99b7af",
+      "record_sha256": "3f0694bc669db1a0c2d1029d7046bce6edca177af5cf20e9b44c4ea1ad920fa1",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -768,7 +768,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 2,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 22
       },
       "candidates": [
@@ -2739,7 +2739,7 @@
     },
     {
       "paper_id": "dev-2025-ches-02",
-      "record_sha256": "400683744cafe60a938749913111fdec848cebaa5700b168abee0cdb63b892e9",
+      "record_sha256": "1e04b4c4be770edd27d34549b878ebc2ce5e79fcdba643d04aa939a29233ee1f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -3402,7 +3402,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 3
       },
       "candidates": [
@@ -5321,7 +5321,7 @@
     },
     {
       "paper_id": "dev-2025-ches-03",
-      "record_sha256": "e9298afb91801fcc858e3378cc131e63684981846be8cc2e9452ba80fd6abdb6",
+      "record_sha256": "22cfee0d2f60fb7a4a542ed62a648526564979e44bd33d5edac139da70108a86",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 1,
@@ -5984,7 +5984,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -6902,7 +6902,7 @@
     },
     {
       "paper_id": "dev-2025-ches-04",
-      "record_sha256": "17ed367459e14c65e1e48785837671035dcd3d34985d3124aa3c0ebc68b04afc",
+      "record_sha256": "4346bd94c589f3097b472533902f18ec2fd2146e74024b2467bd6e8b5d5f5b38",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -7565,7 +7565,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 10
       },
       "candidates": [
@@ -9510,7 +9510,7 @@
     },
     {
       "paper_id": "dev-2025-ches-05",
-      "record_sha256": "454f54d48933fd1a7b0cbe660e8cce6b771a546601623544585123129635dfe2",
+      "record_sha256": "48ac151e60df68a82e8f3213fc3d93366e6380898660e73e4165b37528f3fde7",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -10173,7 +10173,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 16,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 6
       },
       "candidates": [
@@ -13132,7 +13132,7 @@
     },
     {
       "paper_id": "dev-2025-ches-06",
-      "record_sha256": "c782317a3d3f71b6c6ed00f5fdba5ca6893894eef3c07c3fb49cc80c79ad3ea9",
+      "record_sha256": "cd8e8d384a6b1c29be4998639dc94f20f453866204210649c93311583fb8826e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -13795,7 +13795,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -13946,7 +13946,7 @@
     },
     {
       "paper_id": "dev-2025-ches-07",
-      "record_sha256": "eee1915918020767cdf32cbb5b5ae647f84f78dc0e270e3fd4ae16871b66bd5e",
+      "record_sha256": "b4497d0807f22a5743593b588350e98b62fbf7bc3fb87e0fab6d08afad765e1e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -14609,7 +14609,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 4
       },
       "candidates": [
@@ -15631,7 +15631,7 @@
     },
     {
       "paper_id": "dev-2025-ches-08",
-      "record_sha256": "d1fd6748cae463080127e8adb753f0908ce63ef7d773cd7e52d57bc1e5c80f5d",
+      "record_sha256": "53eb9daa539a5145fc67080cf17e67e3ac72aeeaecc7191daa32fc1104d71d87",
       "semantic_scores": {
         "1st-dl2-international-workshop": 15,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -16294,7 +16294,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -19835,7 +19835,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 11,
           "features": {
             "lexical_score": 0.25,
@@ -19851,7 +19851,7 @@
     },
     {
       "paper_id": "dev-2025-chi-01",
-      "record_sha256": "19d7f954be7372bcf57386ae1471b7949b38064b16435fc8d5a5e2e6e617eee4",
+      "record_sha256": "fd70b4680c09bf2e81a9e15f14126282976a7c8a8d423c73c78eb0d1a7e0a287",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -20514,7 +20514,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -21120,7 +21120,7 @@
     },
     {
       "paper_id": "dev-2025-chi-02",
-      "record_sha256": "cc10246780145fcdef50f46963efffbf4090bd99bdddf90b5dd2a59823ac9e94",
+      "record_sha256": "471ccbd13ae2bb5fd7523e46b47dcef7b69bf859124160260c2f750a33ea54f3",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -21783,7 +21783,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -21804,7 +21804,7 @@
     },
     {
       "paper_id": "dev-2025-chi-03",
-      "record_sha256": "2bb047ff874b27f74a55ca093620c9b8ebf1e29171803fa474d5a3cdd54de8f2",
+      "record_sha256": "6fc81dd320a4af640b6fa257d37f84bbeb6b7f2092a9e1e548b96b6f26271008",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -22467,7 +22467,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -23151,7 +23151,7 @@
     },
     {
       "paper_id": "dev-2025-chi-04",
-      "record_sha256": "f70d39f6694629f82c2402bb76bea3fb7667c9d7604b71696b19ba00137be14e",
+      "record_sha256": "9bedcaa894bdd02be45b03d6a81eaa628a37190ad7b777dd6ab937436fb86c07",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -23814,7 +23814,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -24602,7 +24602,7 @@
     },
     {
       "paper_id": "dev-2025-chi-05",
-      "record_sha256": "91d159c1f290c53c47bfe4b66e17a7e1384cd2dcf7197c2e06615d26f71572e4",
+      "record_sha256": "8b03bc91f5b4e4f3a58f0ac62f50eca05e14c7c029fe7c69a3433d9c7e532298",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -25265,7 +25265,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -25962,7 +25962,7 @@
     },
     {
       "paper_id": "dev-2025-chi-06",
-      "record_sha256": "f032238bae8c1ac64d292391742b56646eb2154809d197119d8be2753113a1b1",
+      "record_sha256": "9fabfb98146592d40a83a74f1119337a94103690ed6c800e8298eb28bff439d1",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -26625,7 +26625,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -27270,7 +27270,7 @@
     },
     {
       "paper_id": "dev-2025-chi-07",
-      "record_sha256": "1a83c0f367862790e60ce8dace2f6276497a3fe9a4e62300ed72d55993fed48f",
+      "record_sha256": "7b8934db63e42911378135e10a3fb667acaa47e06d5e620282238ff9c742b365",
       "semantic_scores": {
         "1st-dl2-international-workshop": 27,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 16,
@@ -27933,7 +27933,7 @@
         "wowmom": 0,
         "wsdm": 2,
         "wsse-2026": 0,
-        "www-aideadlines-www": 4,
+        "www": 4,
         "xloop-2026": 0
       },
       "candidates": [
@@ -28758,7 +28758,7 @@
         },
         {
           "venue": "dis",
-          "base_score": 20,
+          "base_score": 19,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -30889,11 +30889,11 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
-          "base_score": 11,
+          "venue": "www",
+          "base_score": 31,
           "features": {
             "lexical_score": 0.25,
-            "semantic_score": 0,
+            "semantic_score": 0.04,
             "category_overlap": 1,
             "venue_name_evidence": 0,
             "prior_venue": 0,
@@ -30905,7 +30905,7 @@
     },
     {
       "paper_id": "dev-2025-chi-08",
-      "record_sha256": "b12c44fb97b5dd3d9e3388f1946386f6772fcd9438e651c5e451699bd8556eac",
+      "record_sha256": "2f2144a415adda5b086b4de0d66ee67731d9e3aa12093e5133461545b73b1349",
       "semantic_scores": {
         "1st-dl2-international-workshop": 28,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 15,
@@ -31568,7 +31568,7 @@
         "wowmom": 0,
         "wsdm": 8,
         "wsse-2026": 0,
-        "www-aideadlines-www": 1,
+        "www": 1,
         "xloop-2026": 0
       },
       "candidates": [
@@ -34589,11 +34589,11 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
-          "base_score": 11,
+          "venue": "www",
+          "base_score": 29,
           "features": {
             "lexical_score": 0.25,
-            "semantic_score": 0,
+            "semantic_score": 0.01,
             "category_overlap": 1,
             "venue_name_evidence": 0,
             "prior_venue": 0,
@@ -34605,7 +34605,7 @@
     },
     {
       "paper_id": "dev-2025-cvpr-01",
-      "record_sha256": "aae7629a92a2ec2417dcdd4668e51ff8302aa7e7af19ec6fcf18fd0b5f59f531",
+      "record_sha256": "b9a28b560b91b0d31d52682982000fd4dacdbb6e94e99aa97bd00e66d777be5b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 6,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -35268,7 +35268,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -40837,7 +40837,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 6,
           "features": {
             "lexical_score": 0.25,
@@ -40853,7 +40853,7 @@
     },
     {
       "paper_id": "dev-2025-cvpr-02",
-      "record_sha256": "99be171e78675e076560866c2ec710ce750848d81b58eea92ee27df5ea6e41ec",
+      "record_sha256": "93752c5fb8efb6748246019e3ab592f2d86b0bf701973beea2c5243be946fd75",
       "semantic_scores": {
         "1st-dl2-international-workshop": 20,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -41516,7 +41516,7 @@
         "wowmom": 0,
         "wsdm": 9,
         "wsse-2026": 3,
-        "www-aideadlines-www": 9,
+        "www": 9,
         "xloop-2026": 6
       },
       "candidates": [
@@ -41600,7 +41600,7 @@
         },
         {
           "venue": "adma",
-          "base_score": 21,
+          "base_score": 20,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.08,
@@ -41782,7 +41782,7 @@
         },
         {
           "venue": "bmvc",
-          "base_score": 65,
+          "base_score": 64,
           "features": {
             "lexical_score": 0.08,
             "semantic_score": 0.08,
@@ -42432,7 +42432,7 @@
         },
         {
           "venue": "hotstorage",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -42913,7 +42913,7 @@
         },
         {
           "venue": "isit",
-          "base_score": 18,
+          "base_score": 17,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.05,
@@ -43264,7 +43264,7 @@
         },
         {
           "venue": "parallel2026",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -43485,7 +43485,7 @@
         },
         {
           "venue": "seke",
-          "base_score": 20,
+          "base_score": 19,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.08,
@@ -43511,7 +43511,7 @@
         },
         {
           "venue": "sigcse",
-          "base_score": 19,
+          "base_score": 18,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -43667,7 +43667,7 @@
         },
         {
           "venue": "wacv",
-          "base_score": 16,
+          "base_score": 15,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -43716,12 +43716,25 @@
             "language_match": 1,
             "venue_kind": 1
           }
+        },
+        {
+          "venue": "www",
+          "base_score": 21,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.09,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
         }
       ]
     },
     {
       "paper_id": "dev-2025-cvpr-03",
-      "record_sha256": "84ee92d82ffbe24d4aa8874a6c609f03358ce8fd90e2a53405012f52ca51c48f",
+      "record_sha256": "35e4d46b3fc4d3fb04156596652e46e1955b8a94accbcfc1efc35fa7253afcc7",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -44384,7 +44397,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -45302,7 +45315,7 @@
     },
     {
       "paper_id": "dev-2025-cvpr-04",
-      "record_sha256": "5ece62bfd0c7118371e13de64a2912ebfcee74908fda1b79665f1990088fc0bd",
+      "record_sha256": "9af660195483d1c8413a8b0e369fc72ee9655e513782afd2f7294be65325de2b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 8,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -45965,7 +45978,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -48908,7 +48921,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 11,
           "features": {
             "lexical_score": 0.25,
@@ -48924,7 +48937,7 @@
     },
     {
       "paper_id": "dev-2025-cvpr-05",
-      "record_sha256": "9ec52aea5d48326c937506fd20a072a4cb89b3759cb64b1d195f7cbcb5415866",
+      "record_sha256": "a4331b0fad5ae220093d7ae07ea05eb5594bf72afae95c5b86897a4c2ac897c0",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -49587,7 +49600,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -50232,7 +50245,7 @@
     },
     {
       "paper_id": "dev-2025-cvpr-06",
-      "record_sha256": "1b24deb7544007e5c3fcdc1c7cef7265239ce53abeeafd37db3b42f905a13384",
+      "record_sha256": "29169a162ff767c9346bb4251685f919d63c1620f094a61b1e845cb603c198dd",
       "semantic_scores": {
         "1st-dl2-international-workshop": 6,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -50895,7 +50908,7 @@
         "wowmom": 0,
         "wsdm": 12,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -52034,7 +52047,7 @@
     },
     {
       "paper_id": "dev-2025-cvpr-07",
-      "record_sha256": "ed6121caeac41f75c702659ac572e8ec9bdd2f2af33f9438a883a83c683e79ef",
+      "record_sha256": "e27715090485d69a85af9b94a021cf94244841d9983d0fa71fcc0217187abca6",
       "semantic_scores": {
         "1st-dl2-international-workshop": 3,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -52697,7 +52710,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -53706,7 +53719,7 @@
     },
     {
       "paper_id": "dev-2025-cvpr-08",
-      "record_sha256": "8383ef22ab92e94dfcd4cad58c256edc6802b6b3ebb90956c6d0c37882be43d5",
+      "record_sha256": "7498b68d3e33820c34d4a790d8fba0cf73f087407c8f9f22191ff27d0a17f395",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -54369,7 +54382,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -55326,7 +55339,7 @@
     },
     {
       "paper_id": "dev-2025-cvprw-01",
-      "record_sha256": "d04bb609c92173668b432ade8bb106b2237d22f2f28f6e59eaa6765343b61b01",
+      "record_sha256": "352180ae3c0cb2485969d294710827e582ac82d6ad907a409f405ef263d45454",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 10,
@@ -55989,7 +56002,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -58828,7 +58841,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 11,
           "features": {
             "lexical_score": 0.25,
@@ -58844,7 +58857,7 @@
     },
     {
       "paper_id": "dev-2025-cvprw-02",
-      "record_sha256": "a53c4db7735771df037e0036b3dfb4ce7a69649b622c3638a404fba337aeead1",
+      "record_sha256": "251711bb2876d4257ad6ea8fc099269ebfa0aef83a7f1f4e90e68365097e631c",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -59507,7 +59520,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -60386,7 +60399,7 @@
     },
     {
       "paper_id": "dev-2025-cvprw-03",
-      "record_sha256": "1605843ea4e151cb041c0e3eb42d9b2143a86faf47601251093084e731beaa04",
+      "record_sha256": "cc0c80c8ce094cb03948468bb0df24dde1ae57b28492b7433a7d77ce97e9fa91",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 20,
@@ -61049,7 +61062,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -62539,7 +62552,7 @@
     },
     {
       "paper_id": "dev-2025-cvprw-04",
-      "record_sha256": "65283735c14050dd71e5e160e3b548680edf26f3b9ead0d02a4979bb7a8a8714",
+      "record_sha256": "e972861b3ca3745100d381df9cceac5dfa02c6ea5c3636e7d95d19cd6b1f7be3",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -63202,7 +63215,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -65784,7 +65797,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-01",
-      "record_sha256": "ef182dd44a49b0f6638715534c8f869035a6097089b758ba11ba86bd1410649a",
+      "record_sha256": "462c194f5d76b4ad621151ba3285289b95dff341e828e03e7ab44903f4e0786f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -66447,7 +66460,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 2,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 28
       },
       "candidates": [
@@ -67651,7 +67664,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-02",
-      "record_sha256": "e08e731f793d33ec7735018d0223ea6276d77dab68b4cc120eb2073f0b9d4e54",
+      "record_sha256": "74585a10b7be52e425cfc2931f45e4c8c2b8e98c38a29e00a8c88b0c2a5abfc4",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -68314,7 +68327,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 15
       },
       "candidates": [
@@ -69154,7 +69167,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-03",
-      "record_sha256": "967a2fa5b6975209009eecc55614abb700dcbf96260938d27fba0d9bb59163a6",
+      "record_sha256": "db8b220e44f0110475dc7fc3e17d8291a47287265fc5e08efb0aa2d45e34c59c",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -69817,7 +69830,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 19
       },
       "candidates": [
@@ -70956,7 +70969,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-04",
-      "record_sha256": "852b7b022386626762e673a6011d9c125f5edd28b71501839f0bd9096ae400eb",
+      "record_sha256": "166847b1b522d6b551e33c37de83be8583d8487163b533cbb038f449b56353c4",
       "semantic_scores": {
         "1st-dl2-international-workshop": 15,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 8,
@@ -71619,7 +71632,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -74640,7 +74653,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 11,
           "features": {
             "lexical_score": 0.25,
@@ -74656,7 +74669,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-05",
-      "record_sha256": "3fddb6d86ef2d1b2b9213dcdff8a35ed699a82f0087e4e560f9ed7395ce94029",
+      "record_sha256": "e7b800b261288b8af112154d2ba70072f65c4110c818c342e72bbb4e92c566b9",
       "semantic_scores": {
         "1st-dl2-international-workshop": 6,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 13,
@@ -75319,7 +75332,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 9
       },
       "candidates": [
@@ -76757,7 +76770,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-06",
-      "record_sha256": "2252b46093f116c49b8c183c975d37516a5bc983baec87d270a67946db35cd2f",
+      "record_sha256": "ddeb94fb136543b65559cf8d24cbf75a95430b79fed2b5c10aaa93e64216e973",
       "semantic_scores": {
         "1st-dl2-international-workshop": 11,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -77420,7 +77433,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -78793,7 +78806,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-07",
-      "record_sha256": "fa409644ee22bfc5d95cca6e38a92320996a0a500ccdb072166a2a6e22012f7c",
+      "record_sha256": "98df058c719c20593d1166f132509b4e5d85e871c2f5e425fb9329165b85bf0f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 15,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -79456,7 +79469,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 7
       },
       "candidates": [
@@ -80842,7 +80855,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-08",
-      "record_sha256": "065c01293b815ae8b8486e0fb52197da6dd6e2661adb70ef52837f19b35709d7",
+      "record_sha256": "35b54c5d531d61af7add702b86f48a8312805183c5e52be97bfa0dcc4948d992",
       "semantic_scores": {
         "1st-dl2-international-workshop": 6,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -81505,7 +81518,7 @@
         "wowmom": 0,
         "wsdm": 6,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -85348,7 +85361,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-09",
-      "record_sha256": "0107897cd2194d6c6ca7f5230f1c0bce83f240f00d7c907d8c86d9c5922f0cbe",
+      "record_sha256": "f71a112f0390f14f4095ae70ca514f05b5609b6b730b3c263db12fe9b4a36417",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -86011,7 +86024,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 25,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 19
       },
       "candidates": [
@@ -88918,7 +88931,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-10",
-      "record_sha256": "c05c7f26f6ae86d5adad214d7b27c6ab2cf1234ef0c68beb4af5d1adfe00a71e",
+      "record_sha256": "092e4a5c87d3df206003ee5d69887cbfebf468338e799c9cb04c601d3b7dcbe5",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -89581,7 +89594,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 7,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 26
       },
       "candidates": [
@@ -92267,7 +92280,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-11",
-      "record_sha256": "eac97ba3d37a40082b0b384bdd8ae611c00273cc5d750dfcb1223543b699d0bc",
+      "record_sha256": "ded942e0fd9c0118fa0de912bd6e0e9617cdb60552c1a9339c4f0bb71aa31223",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -92930,7 +92943,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 27,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 28
       },
       "candidates": [
@@ -96227,7 +96240,7 @@
     },
     {
       "paper_id": "dev-2025-hpdc-12",
-      "record_sha256": "95b50045b923e715a4caef69cfc42948477c901132e1b114f91dd2612c9faaa1",
+      "record_sha256": "c0cf37a6a3ff5393efdefba507f6515b324013132276f578423ef9b97a1b9a27",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -96890,7 +96903,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 20
       },
       "candidates": [
@@ -97704,7 +97717,7 @@
     },
     {
       "paper_id": "dev-2025-icml-01",
-      "record_sha256": "236d222eaa2dad3c5d7f07138bf2e80b8a4d1d628ea503f7184ffa91e123163c",
+      "record_sha256": "91580331943d6a9e0a8d8be67ddf9c299aacb146224a3babb53394e815c23e7b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 8,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -98367,7 +98380,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -98986,7 +98999,7 @@
     },
     {
       "paper_id": "dev-2025-icml-02",
-      "record_sha256": "4b0fd130ceca3e210a33ed969a38ddd5a63766d668b72b074619e66c71ca6038",
+      "record_sha256": "38e1e6429a581b17e15448e33ea5d8ebec9c0c4a546598b36e5788aaec19badf",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -99649,7 +99662,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -100047,7 +100060,7 @@
     },
     {
       "paper_id": "dev-2025-icml-03",
-      "record_sha256": "b89b722698e7bc4047a8dd1bdc402844798d4ca3296a0bef401566b6f612f69d",
+      "record_sha256": "1165093cdf74059338ee6acc527fb71577f8c3ac63835d098214cad18b07d896",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 10,
@@ -100710,7 +100723,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -101329,7 +101342,7 @@
     },
     {
       "paper_id": "dev-2025-icml-04",
-      "record_sha256": "f827c28de001231295108ce79f604885379d7097c4f5667113f8886029c5eea5",
+      "record_sha256": "0a67b9cc6ca540af5b61ab74c5ead1a262282ca1dfca7fe099840dc676765a20",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -101992,7 +102005,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -102416,7 +102429,7 @@
     },
     {
       "paper_id": "dev-2025-icml-05",
-      "record_sha256": "49d35d4a1b2116c4b9c569f627df5839aea1da9cece60402801555a84bd87f33",
+      "record_sha256": "db94188f5ce245885fb0e7538a823f1a3e8ef6c19487669ff751671cabd368af",
       "semantic_scores": {
         "1st-dl2-international-workshop": 2,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -103079,7 +103092,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -103685,7 +103698,7 @@
     },
     {
       "paper_id": "dev-2025-icml-06",
-      "record_sha256": "0a2591a2b98a42342050243acfb3b118f216dce9e28687c3b1d83c363122aca6",
+      "record_sha256": "05852c565075c6f1da20e02dbf60a2bcf365ace154ac50a0f9940dba66dbd3cf",
       "semantic_scores": {
         "1st-dl2-international-workshop": 4,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -104348,7 +104361,7 @@
         "wowmom": 0,
         "wsdm": 4,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -105188,7 +105201,7 @@
     },
     {
       "paper_id": "dev-2025-icml-07",
-      "record_sha256": "43a23e156e9eaf917db60029b62c71829815159e2093860ce8d3328a84570725",
+      "record_sha256": "cb2a9a2f1828f7b03013ce21057db5f833d506fb362fb365d376264354ca4039",
       "semantic_scores": {
         "1st-dl2-international-workshop": 9,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 5,
@@ -105851,7 +105864,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -109613,7 +109626,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 9,
           "features": {
             "lexical_score": 0.25,
@@ -109629,7 +109642,7 @@
     },
     {
       "paper_id": "dev-2025-icml-08",
-      "record_sha256": "3a20b4ac20ca52680f886960451693217b6499b17ab303967b73afb2ceae7010",
+      "record_sha256": "4d7c9820df1efd2858ae8cb3a0409a0723cbd70673b8a4b8a6b58650ed480cca",
       "semantic_scores": {
         "1st-dl2-international-workshop": 4,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -110292,7 +110305,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -110937,7 +110950,7 @@
     },
     {
       "paper_id": "dev-2025-ipsj-journal-01",
-      "record_sha256": "afbf170c69a7c9c321c9dac364f9f051b4318b380a2de0ce36c1ab45217c0ae9",
+      "record_sha256": "739315f7a76a68190a3b21e023b6b2739e7c8f294672063ce79607aec71a743b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 10,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 19,
@@ -111600,7 +111613,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 5,
+        "www": 5,
         "xloop-2026": 0
       },
       "candidates": [
@@ -114063,7 +114076,7 @@
         },
         {
           "venue": "iiswc",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -114271,7 +114284,7 @@
         },
         {
           "venue": "isbra",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -115441,7 +115454,7 @@
         },
         {
           "venue": "wisec",
-          "base_score": 14,
+          "base_score": 13,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -115466,11 +115479,11 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
-          "base_score": 11,
+          "venue": "www",
+          "base_score": 28,
           "features": {
             "lexical_score": 0.25,
-            "semantic_score": 0,
+            "semantic_score": 0.05,
             "category_overlap": 1,
             "venue_name_evidence": 0,
             "prior_venue": 0,
@@ -115482,7 +115495,7 @@
     },
     {
       "paper_id": "dev-2025-ipsj-journal-02",
-      "record_sha256": "6a2d2593daf2b46aa7bf2872ffb2e49156f11be05429e936c3ef81025d0435d9",
+      "record_sha256": "9ba7f972a5622c3f8c5877f3b0e688bd897a1d0bdcb1148628954b45f407ef76",
       "semantic_scores": {
         "1st-dl2-international-workshop": 7,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 19,
@@ -116145,7 +116158,7 @@
         "wowmom": 7,
         "wsdm": 24,
         "wsse-2026": 11,
-        "www-aideadlines-www": 35,
+        "www": 35,
         "xloop-2026": 25
       },
       "candidates": [
@@ -116242,7 +116255,7 @@
         },
         {
           "venue": "acsac",
-          "base_score": 28,
+          "base_score": 27,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.19,
@@ -116424,7 +116437,7 @@
         },
         {
           "venue": "asiaccs",
-          "base_score": 23,
+          "base_score": 22,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.17,
@@ -116515,7 +116528,7 @@
         },
         {
           "venue": "bibm",
-          "base_score": 20,
+          "base_score": 19,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.15,
@@ -116606,7 +116619,7 @@
         },
         {
           "venue": "cascade",
-          "base_score": 44,
+          "base_score": 43,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.29,
@@ -116632,7 +116645,7 @@
         },
         {
           "venue": "ccgrid",
-          "base_score": 25,
+          "base_score": 24,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.18,
@@ -117139,7 +117152,7 @@
         },
         {
           "venue": "csfw",
-          "base_score": 48,
+          "base_score": 47,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.31,
@@ -117217,7 +117230,7 @@
         },
         {
           "venue": "dfrws",
-          "base_score": 43,
+          "base_score": 42,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.29,
@@ -117230,7 +117243,7 @@
         },
         {
           "venue": "dimva",
-          "base_score": 33,
+          "base_score": 32,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.23,
@@ -117256,7 +117269,7 @@
         },
         {
           "venue": "dsn",
-          "base_score": 38,
+          "base_score": 37,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.27,
@@ -117295,7 +117308,7 @@
         },
         {
           "venue": "ecir",
-          "base_score": 14,
+          "base_score": 13,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.1,
@@ -117438,7 +117451,7 @@
         },
         {
           "venue": "esorics",
-          "base_score": 49,
+          "base_score": 48,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.32,
@@ -117451,7 +117464,7 @@
         },
         {
           "venue": "ets",
-          "base_score": 56,
+          "base_score": 55,
           "features": {
             "lexical_score": 0.1,
             "semantic_score": 0.18,
@@ -117477,7 +117490,7 @@
         },
         {
           "venue": "eurographics",
-          "base_score": 12,
+          "base_score": 11,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -117503,7 +117516,7 @@
         },
         {
           "venue": "eurosys",
-          "base_score": 45,
+          "base_score": 44,
           "features": {
             "lexical_score": 0.1,
             "semantic_score": 0.1,
@@ -117841,7 +117854,7 @@
         },
         {
           "venue": "host",
-          "base_score": 42,
+          "base_score": 41,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.29,
@@ -117880,7 +117893,7 @@
         },
         {
           "venue": "hotos",
-          "base_score": 36,
+          "base_score": 35,
           "features": {
             "lexical_score": 0.1,
             "semantic_score": 0.01,
@@ -117893,7 +117906,7 @@
         },
         {
           "venue": "hotsec",
-          "base_score": 36,
+          "base_score": 35,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.25,
@@ -118504,7 +118517,7 @@
         },
         {
           "venue": "icst",
-          "base_score": 44,
+          "base_score": 43,
           "features": {
             "lexical_score": 0.1,
             "semantic_score": 0.16,
@@ -118530,7 +118543,7 @@
         },
         {
           "venue": "icws",
-          "base_score": 73,
+          "base_score": 72,
           "features": {
             "lexical_score": 0.1,
             "semantic_score": 0.34,
@@ -118660,7 +118673,7 @@
         },
         {
           "venue": "ieeebc27",
-          "base_score": 39,
+          "base_score": 38,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.28,
@@ -118894,7 +118907,7 @@
         },
         {
           "venue": "indocrypt",
-          "base_score": 22,
+          "base_score": 21,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.17,
@@ -118959,7 +118972,7 @@
         },
         {
           "venue": "internetware",
-          "base_score": 54,
+          "base_score": 53,
           "features": {
             "lexical_score": 0.1,
             "semantic_score": 0.24,
@@ -119154,7 +119167,7 @@
         },
         {
           "venue": "ipsn",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.13,
@@ -119323,7 +119336,7 @@
         },
         {
           "venue": "istai26",
-          "base_score": 9,
+          "base_score": 8,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -119388,7 +119401,7 @@
         },
         {
           "venue": "iui",
-          "base_score": 13,
+          "base_score": 12,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.09,
@@ -119466,7 +119479,7 @@
         },
         {
           "venue": "kicss2026",
-          "base_score": 36,
+          "base_score": 35,
           "features": {
             "lexical_score": 0.1,
             "semantic_score": 0.15,
@@ -119544,7 +119557,7 @@
         },
         {
           "venue": "log",
-          "base_score": 27,
+          "base_score": 26,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.19,
@@ -119843,7 +119856,7 @@
         },
         {
           "venue": "noms",
-          "base_score": 37,
+          "base_score": 36,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.27,
@@ -119856,7 +119869,7 @@
         },
         {
           "venue": "nordsec",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.11,
@@ -119960,7 +119973,7 @@
         },
         {
           "venue": "pam",
-          "base_score": 32,
+          "base_score": 31,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.23,
@@ -120064,7 +120077,7 @@
         },
         {
           "venue": "pkc",
-          "base_score": 30,
+          "base_score": 29,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.21,
@@ -120389,7 +120402,7 @@
         },
         {
           "venue": "secitc",
-          "base_score": 18,
+          "base_score": 17,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.14,
@@ -120506,7 +120519,7 @@
         },
         {
           "venue": "sigcse",
-          "base_score": 41,
+          "base_score": 40,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.29,
@@ -120519,7 +120532,7 @@
         },
         {
           "venue": "sigir",
-          "base_score": 31,
+          "base_score": 30,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.22,
@@ -120649,7 +120662,7 @@
         },
         {
           "venue": "soups",
-          "base_score": 46,
+          "base_score": 45,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.3,
@@ -120753,7 +120766,7 @@
         },
         {
           "venue": "tc",
-          "base_score": 40,
+          "base_score": 39,
           "features": {
             "lexical_score": 0.1,
             "semantic_score": 0.19,
@@ -120766,7 +120779,7 @@
         },
         {
           "venue": "tcc",
-          "base_score": 26,
+          "base_score": 25,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.19,
@@ -120857,7 +120870,7 @@
         },
         {
           "venue": "trustcom",
-          "base_score": 29,
+          "base_score": 28,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.21,
@@ -120922,7 +120935,7 @@
         },
         {
           "venue": "vee",
-          "base_score": 30,
+          "base_score": 29,
           "features": {
             "lexical_score": 0.1,
             "semantic_score": 0.13,
@@ -120974,7 +120987,7 @@
         },
         {
           "venue": "wine",
-          "base_score": 45,
+          "base_score": 44,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.3,
@@ -121000,7 +121013,7 @@
         },
         {
           "venue": "wise",
-          "base_score": 47,
+          "base_score": 46,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.31,
@@ -121039,7 +121052,7 @@
         },
         {
           "venue": "wsdm",
-          "base_score": 34,
+          "base_score": 33,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.24,
@@ -121062,12 +121075,25 @@
             "language_match": 0,
             "venue_kind": 1
           }
+        },
+        {
+          "venue": "www",
+          "base_score": 50,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.35,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 0,
+            "venue_kind": 1
+          }
         }
       ]
     },
     {
       "paper_id": "dev-2025-ipsj-journal-03",
-      "record_sha256": "c0323170506efce2e10c8ffb9e994630172253d5545408aeaf75ab1778749fb2",
+      "record_sha256": "0624dd9bc4da5381399090a913313fabf381d47660118712c4950511c0df8214",
       "semantic_scores": {
         "1st-dl2-international-workshop": 2,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 3,
@@ -121730,7 +121756,7 @@
         "wowmom": 12,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 6
       },
       "candidates": [
@@ -124078,7 +124104,7 @@
     },
     {
       "paper_id": "dev-2025-ipsj-journal-04",
-      "record_sha256": "54d620bae9fd5c7604238eb114ef11877ec425ac5246eb0486ffb1b7bdf52170",
+      "record_sha256": "f1fe30a9c5ddc94419ec69c39d072fd7e95bee6dd74f2619d861f5a8fedc7698",
       "semantic_scores": {
         "1st-dl2-international-workshop": 8,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 11,
@@ -124741,7 +124767,7 @@
         "wowmom": 4,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 14
       },
       "candidates": [
@@ -128997,7 +129023,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 10,
           "features": {
             "lexical_score": 0.25,
@@ -129013,7 +129039,7 @@
     },
     {
       "paper_id": "dev-2025-nolta-special-01",
-      "record_sha256": "98e9fc83be14f20af949d99ef1deaf3ca917f7fd01832bcd359ae4c3da9c361f",
+      "record_sha256": "24e8a861ea57a14a9c5cb21492ad3006e74860145de2ba3f5baf66f1cfbbfa10",
       "semantic_scores": {
         "1st-dl2-international-workshop": 1,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 21,
@@ -129676,7 +129702,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 12
       },
       "candidates": [
@@ -131686,7 +131712,7 @@
     },
     {
       "paper_id": "dev-2025-nolta-special-02",
-      "record_sha256": "3436646409f00c4abf92ee4a294b7a33c5b20d12d331ed4b28499d91c4bc3824",
+      "record_sha256": "6fc836470ce4b95c14fcf22aa3a4979d51a7a41508ee5fbc85bced74d5a48c1a",
       "semantic_scores": {
         "1st-dl2-international-workshop": 1,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -132349,7 +132375,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -133046,7 +133072,7 @@
     },
     {
       "paper_id": "dev-2025-nolta-special-03",
-      "record_sha256": "aa796c1088b0b1bdc06af2b2c3b75cc8cbcfa985cc54fdd593ac5829b4ae7378",
+      "record_sha256": "30ce1d53fdac806ff2d3e56b5aef11f4b6a60648adbaca73bd2a26fb3b54cd00",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -133709,7 +133735,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -135992,7 +136018,7 @@
     },
     {
       "paper_id": "dev-2025-nolta-special-04",
-      "record_sha256": "f82e85653968cb6974d3ad66afb4cf0227e6367e652dc6d4e5b860ad1736ba04",
+      "record_sha256": "a560249c90893320df000da38931448d8c1ee41f396c49d234f85f038bcc3512",
       "semantic_scores": {
         "1st-dl2-international-workshop": 2,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 24,
@@ -136655,7 +136681,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 1
       },
       "candidates": [
@@ -141028,7 +141054,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 11,
           "features": {
             "lexical_score": 0.25,
@@ -141044,7 +141070,7 @@
     },
     {
       "paper_id": "dev-2025-sigcomm-01",
-      "record_sha256": "1831ece3f155d12801291ebcae9415818cdf755e2281f2804c2b1ee7c688062e",
+      "record_sha256": "b4cb2286af00d737a3bd0fdde95a823f16c973ec78e263edd964654ddb226bc4",
       "semantic_scores": {
         "1st-dl2-international-workshop": 8,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -141707,7 +141733,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 1
       },
       "candidates": [
@@ -143678,7 +143704,7 @@
     },
     {
       "paper_id": "dev-2025-sigcomm-02",
-      "record_sha256": "9e8b9d1f12407046d7100bc4d074db89e0feffd5a498969bf5aee142ab69e187",
+      "record_sha256": "555099b849b96d7e3d5455ff8222750c3c7bdfbfcb372601e76cf6bfdf84b808",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -144341,7 +144367,7 @@
         "wowmom": 11,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 3
       },
       "candidates": [
@@ -147118,7 +147144,7 @@
     },
     {
       "paper_id": "dev-2025-sigcomm-03",
-      "record_sha256": "26e8f2596c3c8daa160f9c5cb6cdaddcb9a14147885b844e084ce31e6a670dd7",
+      "record_sha256": "b12367fdb65bfee36ca4d6fd0d72c33d8ec4f442d6bb056c9d34300d02167562",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -147781,7 +147807,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 12
       },
       "candidates": [
@@ -152128,7 +152154,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 11,
           "features": {
             "lexical_score": 0.25,
@@ -152157,7 +152183,7 @@
     },
     {
       "paper_id": "dev-2025-sigcomm-04",
-      "record_sha256": "8139e071c483fc2bb05aaf617d53f5ea24a8f94918cc523a01058e590adc9c47",
+      "record_sha256": "727c724486f561d26614a11afed15674b1238adceec851fed6b5a4cfe3a570bc",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -152820,7 +152846,7 @@
         "wowmom": 18,
         "wsdm": 0,
         "wsse-2026": 11,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 21
       },
       "candidates": [
@@ -155415,7 +155441,7 @@
     },
     {
       "paper_id": "dev-2025-sigcomm-05",
-      "record_sha256": "9806fd251598a5305ded8173b6bf555285e30575720854494478d70e2773fba1",
+      "record_sha256": "5c839bcaa931b12ee4b081937dccb36544347e172b302bb1e72ee028731e683a",
       "semantic_scores": {
         "1st-dl2-international-workshop": 19,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 1,
@@ -156078,7 +156104,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -159073,7 +159099,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 11,
           "features": {
             "lexical_score": 0.25,
@@ -159089,7 +159115,7 @@
     },
     {
       "paper_id": "dev-2025-sigcomm-06",
-      "record_sha256": "ebe4f2b4c75bdb9b719ab9a5963e28ea15f20876433996a6f004bda921832963",
+      "record_sha256": "492a153ca1a8287a93641fdb01547152b57ec14fa7e1b5e4f3b93df2e2b7a72b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 11,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -159752,7 +159778,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -161216,7 +161242,7 @@
     },
     {
       "paper_id": "dev-2025-sigcomm-07",
-      "record_sha256": "1d201e8deea93c97274b98ff1c6243d788cb83ee7e2aac434eca3839588b42ad",
+      "record_sha256": "ced970541ff6196a287104fac7c05c4685b4995d18ac6d32fa75356e70ad0315",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -161879,7 +161905,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 25
       },
       "candidates": [
@@ -164461,7 +164487,7 @@
     },
     {
       "paper_id": "dev-2025-sigcomm-08",
-      "record_sha256": "ab0258427573090feba1d09888394deb22d95651248dd85a4ef6b0b614d573ae",
+      "record_sha256": "73995ebafab30fde09fed9cf095dff3172b89ab07d326bb952755e34697ad161",
       "semantic_scores": {
         "1st-dl2-international-workshop": 10,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 10,
@@ -165124,7 +165150,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 6
       },
       "candidates": [
@@ -168314,7 +168340,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 11,
           "features": {
             "lexical_score": 0.25,
@@ -168330,7 +168356,7 @@
     },
     {
       "paper_id": "dev-2025-sigmod-01",
-      "record_sha256": "b1eee3885d1a21eb26d9a260cdb29e8d82534115d1df3786a1b722441fbb641e",
+      "record_sha256": "84012f59bb62362d25548afcdc1af1127926f963f857d3735565df87bcb3fccb",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -168993,7 +169019,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 3
       },
       "candidates": [
@@ -169677,7 +169703,7 @@
     },
     {
       "paper_id": "dev-2025-sigmod-02",
-      "record_sha256": "1705faf0a44cc5fa386fadd8c000d2f9ec231e6f8b09d5aff95b6d7a4441946b",
+      "record_sha256": "1786d63617efbec28df7cd9d29415817f5e579d0cb44cd259819bd65e676cd53",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -170340,7 +170366,7 @@
         "wowmom": 0,
         "wsdm": 8,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -171271,7 +171297,7 @@
     },
     {
       "paper_id": "dev-2025-sigmod-03",
-      "record_sha256": "4a81a5518c0566cf594b6edda006371da7149b812361e425a18ef8546f2e5566",
+      "record_sha256": "2baa53f352a09c1ded2bfdfa21751e351b96d976f15673afb2f7cf20869d655c",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -171934,7 +171960,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -173372,7 +173398,7 @@
     },
     {
       "paper_id": "dev-2025-sigmod-04",
-      "record_sha256": "7602407b8a38281d8d7e3c4b69d3bfe7d9ad037e565c326165dd4555bc8c2e23",
+      "record_sha256": "1e256832e419023fbe658729fb09e2e31d02c4f84bd598c04ffdb7c7e487fa83",
       "semantic_scores": {
         "1st-dl2-international-workshop": 2,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -174035,7 +174061,7 @@
         "wowmom": 0,
         "wsdm": 17,
         "wsse-2026": 0,
-        "www-aideadlines-www": 5,
+        "www": 5,
         "xloop-2026": 5
       },
       "candidates": [
@@ -174054,7 +174080,7 @@
         },
         {
           "venue": "acl",
-          "base_score": 29,
+          "base_score": 28,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -174158,7 +174184,7 @@
         },
         {
           "venue": "aistats",
-          "base_score": 26,
+          "base_score": 25,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -174847,7 +174873,7 @@
         },
         {
           "venue": "ijcar",
-          "base_score": 24,
+          "base_score": 23,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -175133,7 +175159,7 @@
         },
         {
           "venue": "ppsn",
-          "base_score": 27,
+          "base_score": 26,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -175403,12 +175429,25 @@
             "language_match": 1,
             "venue_kind": 1
           }
+        },
+        {
+          "venue": "www",
+          "base_score": 29,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.05,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
         }
       ]
     },
     {
       "paper_id": "dev-2025-sigmod-05",
-      "record_sha256": "aff04682f43908f7537d2a8804d1e933d59934a2038684b62e0e7c10d40e4e22",
+      "record_sha256": "af2f47562ff3650b7024be60dbd8af0a74d5be05ff79016d2c5130b9fcf2cabb",
       "semantic_scores": {
         "1st-dl2-international-workshop": 12,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 7,
@@ -176071,7 +176110,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -177197,7 +177236,7 @@
     },
     {
       "paper_id": "dev-2025-sigmod-06",
-      "record_sha256": "b67484a7f6db0132e1c774179b36b8b895f533b6de500bb0a9c2b29e766b9b26",
+      "record_sha256": "a5ba42fbc714839ff78b966ddadb951a5fb0e4dd38cd966807c3496147c21b2a",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -177860,7 +177899,7 @@
         "wowmom": 0,
         "wsdm": 12,
         "wsse-2026": 0,
-        "www-aideadlines-www": 5,
+        "www": 5,
         "xloop-2026": 6
       },
       "candidates": [
@@ -178334,7 +178373,7 @@
         },
         {
           "venue": "esem",
-          "base_score": 23,
+          "base_score": 22,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -178451,7 +178490,7 @@
         },
         {
           "venue": "hotstorage",
-          "base_score": 27,
+          "base_score": 26,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -178607,7 +178646,7 @@
         },
         {
           "venue": "icdm",
-          "base_score": 59,
+          "base_score": 58,
           "features": {
             "lexical_score": 0.06,
             "semantic_score": 0.04,
@@ -178659,7 +178698,7 @@
         },
         {
           "venue": "icomp",
-          "base_score": 21,
+          "base_score": 20,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -178932,7 +178971,7 @@
         },
         {
           "venue": "kr",
-          "base_score": 26,
+          "base_score": 25,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -179075,7 +179114,7 @@
         },
         {
           "venue": "pact",
-          "base_score": 24,
+          "base_score": 23,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -179179,7 +179218,7 @@
         },
         {
           "venue": "recomb",
-          "base_score": 22,
+          "base_score": 21,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -179439,7 +179478,7 @@
         },
         {
           "venue": "tos",
-          "base_score": 25,
+          "base_score": 24,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -179527,12 +179566,25 @@
             "language_match": 1,
             "venue_kind": 1
           }
+        },
+        {
+          "venue": "www",
+          "base_score": 27,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.05,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
         }
       ]
     },
     {
       "paper_id": "dev-2025-sigmod-07",
-      "record_sha256": "7bfc2a4f978218f3a32dd00eaed5890725f8fb2df9d54689ea567409f692861d",
+      "record_sha256": "e96eb00604c008dafedc6258a256152c87beeffa17c408dbe6d5a8bf86cfa2d5",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -180195,7 +180247,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 9,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 27
       },
       "candidates": [
@@ -183024,7 +183076,7 @@
     },
     {
       "paper_id": "dev-2025-sigmod-08",
-      "record_sha256": "ef12c9ce399537eb4de10024b14e898db133bc384675aa681e7cb9d542c86c1e",
+      "record_sha256": "22d2a24b0c0a71a7f5213f01ef4621114e0a216dbc0bf067529107e168ce5252",
       "semantic_scores": {
         "1st-dl2-international-workshop": 10,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -183687,7 +183739,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -186347,7 +186399,7 @@
     },
     {
       "paper_id": "dev-2025-stoc-01",
-      "record_sha256": "d06eb024637623ecfd1faa531258a746bbc2f90913baef2092b16e8d4beae3a0",
+      "record_sha256": "9dceb6d6d660c5d596f0124bd2d3d81926205479cdfbe2becc7bc8f543519db1",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -187010,7 +187062,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -187421,7 +187473,7 @@
     },
     {
       "paper_id": "dev-2025-stoc-02",
-      "record_sha256": "49d6b19061be0cfb2122b8edfcc255dca52ed8de6bf6a45f94dc55c743e9707f",
+      "record_sha256": "ca339f561926dc4377995b5ab1b988c01aee4adeed0a0ab9358e9a7a75b88e45",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -188084,7 +188136,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -188183,7 +188235,7 @@
     },
     {
       "paper_id": "dev-2025-stoc-03",
-      "record_sha256": "4ffe108dc7804e0ffc3c12657636fd92f19beff9050da8e301ca890a5dbe9bf0",
+      "record_sha256": "4f23cac95a790e2c7f80613898d07dd40e25c4801e559058fb3c397b9448b229",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -188846,7 +188898,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -188971,7 +189023,7 @@
     },
     {
       "paper_id": "dev-2025-stoc-04",
-      "record_sha256": "3f382bc60cfe342ca2e770774dcf9bbdc371e2ada9ea3c0c995e502820653941",
+      "record_sha256": "31842c633bc0ab1931189c6487bed120ef443753c5ea9d9941f90a032e1f75b6",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -189634,7 +189686,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 3
       },
       "candidates": [
@@ -190214,7 +190266,7 @@
     },
     {
       "paper_id": "dev-2025-stoc-05",
-      "record_sha256": "01ca33a8ae5ba93c7e344e45100ebe11a947c627e2fec6badb1b27ed9b49f581",
+      "record_sha256": "61122b961538f17191eb23a39fda607970dc27215a7725dc96ca2eae52ff06d2",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -190877,7 +190929,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 2
       },
       "candidates": [
@@ -191197,7 +191249,7 @@
     },
     {
       "paper_id": "dev-2025-stoc-06",
-      "record_sha256": "d3d64294f17e3e6725fdec0dba737b42bf3f9974e7255c2c80f1a75fa4866a4b",
+      "record_sha256": "02bb673009cfd8f97ac0dca6edb27ae6c6f9132d3cd50f9d29bde36abe487e42",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -191860,7 +191912,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -192388,7 +192440,7 @@
     },
     {
       "paper_id": "dev-2025-stoc-07",
-      "record_sha256": "d88a9a2635f31ca00bb17057d2944d710b308591aea33590a03729e2511de654",
+      "record_sha256": "2a4054b54294e0a0586bc05296c033779cc660d0c7df25b4d6ae8d10d1ccde53",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -193051,7 +193103,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -194788,7 +194840,7 @@
     },
     {
       "paper_id": "dev-2025-stoc-08",
-      "record_sha256": "da39cbbe888600984b5766ce3e7a6874060a81b7bca3c79a520b545ea60f7eb4",
+      "record_sha256": "9da77cceac0854f960cd80fb2d4621f32cbbafc4ce215993c87773d23db9c326",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -195451,7 +195503,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -195732,7 +195784,7 @@
     },
     {
       "paper_id": "heldout-2026-chi-01",
-      "record_sha256": "11f07a942ec4a19571dbe6a6b8383e4c0a7e129b1ca7a7479b9b4a77f0fb4ab4",
+      "record_sha256": "8edb1caf37df94c76a4e94e32bfad20c9218b6e2f31f7aa7a3715288f233a371",
       "semantic_scores": {
         "1st-dl2-international-workshop": 9,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -196395,7 +196447,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 7
       },
       "candidates": [
@@ -197664,7 +197716,7 @@
     },
     {
       "paper_id": "heldout-2026-chi-02",
-      "record_sha256": "567610f7d3db57401c1449736a4bd432fa66559b7efb6f9c01e5fbe6c910c78f",
+      "record_sha256": "001297e2867b87889c9f8a1def1ef1e0883fabdc4958fba55ffd5bbc857ba849",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -198327,7 +198379,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -199232,7 +199284,7 @@
     },
     {
       "paper_id": "heldout-2026-chi-03",
-      "record_sha256": "4714abbabc17e46ec6d8f049e0edb74041b99c38ffc8a6d56c97c2bf14fceca3",
+      "record_sha256": "cb20aa20d222340b658eb3f39e60918a415ed78a815bce6c21a961ce1a9330f4",
       "semantic_scores": {
         "1st-dl2-international-workshop": 10,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -199895,7 +199947,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -200514,7 +200566,7 @@
     },
     {
       "paper_id": "heldout-2026-chi-04",
-      "record_sha256": "571532b55ed37a37e3387a03e580c1b0e40ba7d482c0bbb7c38e6fa29b6ba003",
+      "record_sha256": "065c1b6e4f580f9adf72cf7d4eaeecbac5d2d741099b285495b7a5bb57cc0ff6",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -201177,7 +201229,7 @@
         "wowmom": 3,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 8
       },
       "candidates": [
@@ -201835,7 +201887,7 @@
     },
     {
       "paper_id": "heldout-2026-chi-05",
-      "record_sha256": "7ae4e9daed5cc154243f18bcdd63822d4b73c3dd74a47130d2430daaf97d5233",
+      "record_sha256": "cee866ff8241505d7fd16a106245d7aa556f462ec9fe7ff1fa601b77f0810183",
       "semantic_scores": {
         "1st-dl2-international-workshop": 8,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -202498,7 +202550,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -203767,7 +203819,7 @@
     },
     {
       "paper_id": "heldout-2026-chi-06",
-      "record_sha256": "87368a3bf7f65cf3e1a06451cbbdff119d9c31eb6d464ef388cd1b7d1ef93e2a",
+      "record_sha256": "c6b0dd25add3e113bf2a9b26dcce8a59632a017c10ec452748a2e2082d81f78e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 15,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -204430,7 +204482,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -206596,7 +206648,7 @@
     },
     {
       "paper_id": "heldout-2026-chi-07",
-      "record_sha256": "89cf9e85f2e381d2da94f7603dd8e32692ba8779e5f1ec4f51f3bc36eefde5a0",
+      "record_sha256": "bd4f6669520ae52c71adcafafb4be070f0058ff3d8186ac51bb155ec3420299d",
       "semantic_scores": {
         "1st-dl2-international-workshop": 13,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -207259,7 +207311,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -210410,7 +210462,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 11,
           "features": {
             "lexical_score": 0.25,
@@ -210426,7 +210478,7 @@
     },
     {
       "paper_id": "heldout-2026-chi-08",
-      "record_sha256": "60de059d7db636ad5b36d2ded14a9c4015d10714c8495e5d4c2e8e284a7a0d3b",
+      "record_sha256": "6035ed05a9f6c3d0374d0b485243d086a144384ec6cdd497f345f8c8f225e79f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 23,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 10,
@@ -211089,7 +211141,7 @@
         "wowmom": 0,
         "wsdm": 10,
         "wsse-2026": 0,
-        "www-aideadlines-www": 7,
+        "www": 7,
         "xloop-2026": 0
       },
       "candidates": [
@@ -211849,7 +211901,7 @@
         },
         {
           "venue": "dis",
-          "base_score": 19,
+          "base_score": 18,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -212499,7 +212551,7 @@
         },
         {
           "venue": "icaps",
-          "base_score": 38,
+          "base_score": 37,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.04,
@@ -213760,7 +213812,7 @@
         },
         {
           "venue": "sgp",
-          "base_score": 32,
+          "base_score": 31,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.05,
@@ -214032,11 +214084,11 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
-          "base_score": 11,
+          "venue": "www",
+          "base_score": 31,
           "features": {
             "lexical_score": 0.25,
-            "semantic_score": 0,
+            "semantic_score": 0.07,
             "category_overlap": 1,
             "venue_name_evidence": 0,
             "prior_venue": 0,
@@ -214048,7 +214100,7 @@
     },
     {
       "paper_id": "heldout-2026-cvpr-01",
-      "record_sha256": "c97de3c5f97966f70941c79ab25eed0c5b0cb4f25c828b09c0299f538bd9fda0",
+      "record_sha256": "740991cf6613f6330328d1f5439045a8c06440430dc1e08ece547d548925d0ab",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -214711,7 +214763,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -216955,7 +217007,7 @@
     },
     {
       "paper_id": "heldout-2026-cvpr-02",
-      "record_sha256": "afe10312c0d9139498149ac08ea22e2d4aeb48979354a157bbb6b7a79ae6cc12",
+      "record_sha256": "a04bc4b025b2f6d784c4c662e87c6cc2c70274f1d668157a9c42a4d74f5f27eb",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -217618,7 +217670,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -218185,7 +218237,7 @@
     },
     {
       "paper_id": "heldout-2026-cvpr-03",
-      "record_sha256": "86880013b89315189a28c8f36e49f356e13edc8cf216f34506509f85c8110b51",
+      "record_sha256": "790418171e6c0a12a394d62d923eb2a8ac07f3c4db14623aa90e984193552c83",
       "semantic_scores": {
         "1st-dl2-international-workshop": 1,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -218848,7 +218900,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 9
       },
       "candidates": [
@@ -219714,7 +219766,7 @@
     },
     {
       "paper_id": "heldout-2026-cvpr-04",
-      "record_sha256": "aaf80c3d6bea04d61efd7d8b17655ac5f451034ff2e5ce7f6c407f2b0d23d0ea",
+      "record_sha256": "aa5855bc0d2913f81fd28fc2adbd779293e31419f3b20ac01a13dfafb68afcb3",
       "semantic_scores": {
         "1st-dl2-international-workshop": 12,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -220377,7 +220429,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -221659,7 +221711,7 @@
     },
     {
       "paper_id": "heldout-2026-cvpr-05",
-      "record_sha256": "e665f693f2c56821cfbac72b03aa03adf2f87daf96a78f4db9ca7a6bb3755877",
+      "record_sha256": "d9e85ddac9689415f68a7746073427429b4a86b9a86b5b4e4342dd22a29a0df9",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 1,
@@ -222322,7 +222374,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -223409,7 +223461,7 @@
     },
     {
       "paper_id": "heldout-2026-cvpr-06",
-      "record_sha256": "47eb25a03574ea1429b767bf40ba3add3f43ce1fce1d2f1adff61d259070b06e",
+      "record_sha256": "7a690a2745d13946b2377cb52df8a8f4fe074303257853b119dbbd08f2b6e6f6",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -224072,7 +224124,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -224093,7 +224145,7 @@
     },
     {
       "paper_id": "heldout-2026-cvpr-07",
-      "record_sha256": "59792c16efd9f9855f544264035911a2007e4b9427c067083a2d27bd4ba86fc5",
+      "record_sha256": "08d97bab8ba430bb6e67cb5fadd69b4fd16077b5e12efffd5c575cd5bf230cee",
       "semantic_scores": {
         "1st-dl2-international-workshop": 7,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -224756,7 +224808,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -228154,7 +228206,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 10,
           "features": {
             "lexical_score": 0.25,
@@ -228170,7 +228222,7 @@
     },
     {
       "paper_id": "heldout-2026-cvpr-08",
-      "record_sha256": "5dc4394b3d3c28d0529436d0ace0e32c5b6a2fbc16601290c4f8e40324196577",
+      "record_sha256": "ad89010f6edd33456e6e0c92706be5f9e35f480acd8c820167b7a3c73c9313c9",
       "semantic_scores": {
         "1st-dl2-international-workshop": 1,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -228833,7 +228885,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -230037,7 +230089,7 @@
     },
     {
       "paper_id": "heldout-2026-cvprw-01",
-      "record_sha256": "ca3a810ac2b7b0af4cf41626d80ca1753d3497cc7d66032219dd08f6ddc3d157",
+      "record_sha256": "53cb444ed3d71e98061af45dc9d99230a4db112587dec141db04919f4d532ab5",
       "semantic_scores": {
         "1st-dl2-international-workshop": 10,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -230700,7 +230752,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -233695,7 +233747,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 11,
           "features": {
             "lexical_score": 0.25,
@@ -233711,7 +233763,7 @@
     },
     {
       "paper_id": "heldout-2026-cvprw-02",
-      "record_sha256": "dcc865ab778325a3ce702c6a4549570f02ccb4c2645e2a672a42e16164bf3b10",
+      "record_sha256": "dccb22a9ace890d30d6324b822caaa9d22e0a34a29395704ed64d0e5d3f42654",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -234374,7 +234426,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -235185,7 +235237,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 38,
           "features": {
             "lexical_score": 0.1,
@@ -235201,7 +235253,7 @@
     },
     {
       "paper_id": "heldout-2026-cvprw-03",
-      "record_sha256": "11960194f0e9431280fd04021cf249350a08b383dd9f00754464d71fe2f4da8a",
+      "record_sha256": "9beb0581f8808755a31b58bbb0defb708571243c4d7a97dc628878dae5469903",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -235864,7 +235916,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -239197,7 +239249,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 10,
           "features": {
             "lexical_score": 0.25,
@@ -239213,7 +239265,7 @@
     },
     {
       "paper_id": "heldout-2026-cvprw-04",
-      "record_sha256": "f4abe88c17b1e04805d420f1db69e4e70fefa212096ee3f1c1e06e5381e1120e",
+      "record_sha256": "691d72d35608e908757c14733ec42614eaf46a6a41d06519a0e26d43f821ac22",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -239876,7 +239928,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -240391,7 +240443,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-01",
-      "record_sha256": "600863c11d1c7694f4f2261980758837acfcafeed4c21ded5da8e07064bd2f69",
+      "record_sha256": "2870c7665997c76e42018705a2560a3450feb99362af3c2dfdda5c5560e9d6f1",
       "semantic_scores": {
         "1st-dl2-international-workshop": 6,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -241054,7 +241106,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 11
       },
       "candidates": [
@@ -244608,7 +244660,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 11,
           "features": {
             "lexical_score": 0.25,
@@ -244624,7 +244676,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-02",
-      "record_sha256": "47450a0cc0b74d1ce4a4e7ef0cbd99cc959c0c6238592ae4344ef57d6ee3f4d9",
+      "record_sha256": "31bcd136b343d508a247ce245424f11ab0b552bc280c196b54d701bf5dea29a0",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -245287,7 +245339,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 10,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 24
       },
       "candidates": [
@@ -247258,7 +247310,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-03",
-      "record_sha256": "51d6b4719287d6453d704947ea751b12bf49eb897d82e2aa93a88709e6234cec",
+      "record_sha256": "9434ba65ea09534db78c0d1661452c5b97de354a1422257ce6729f5619a6048e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -247921,7 +247973,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 10,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 25
       },
       "candidates": [
@@ -249047,7 +249099,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-04",
-      "record_sha256": "780362121581ba7965bd717daaa914690547dcef24138951dcc86617c3802d15",
+      "record_sha256": "3757e146f80ab4869f1e7e111408d614bc6c1a27e859e7d50f2d5e3cb4799e07",
       "semantic_scores": {
         "1st-dl2-international-workshop": 5,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -249710,7 +249762,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 17
       },
       "candidates": [
@@ -252822,7 +252874,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 11,
           "features": {
             "lexical_score": 0.25,
@@ -252838,7 +252890,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-05",
-      "record_sha256": "3cf4cbac65fb5104b48c105fa6e9c18c21795b7d315281134a38fa0e46f64d7d",
+      "record_sha256": "c054c2abbebaeb095dd474cc1941143bac9c4d12a00a21658598cced3f01ff8d",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -253501,7 +253553,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 17
       },
       "candidates": [
@@ -256200,7 +256252,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-06",
-      "record_sha256": "86a47b06f3f758a2a5698bce3ae52fb788c96ab92582594ab8358dd125ae5c72",
+      "record_sha256": "800f696e0a8d945ac10dd7758a2bc2c799862b17e7944b92b17cc9ac6168b432",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -256863,7 +256915,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 14
       },
       "candidates": [
@@ -260651,7 +260703,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 11,
           "features": {
             "lexical_score": 0.25,
@@ -260667,7 +260719,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-07",
-      "record_sha256": "6b9b4bb5600def14892798f384b6b8fd184391142cc1c3be02924e7c32f29e19",
+      "record_sha256": "5ba7ecf89606ee76bbb04264e297ef648941769be78236669796f727d519388e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 17,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 10,
@@ -261330,7 +261382,7 @@
         "wowmom": 5,
         "wsdm": 1,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 28
       },
       "candidates": [
@@ -264991,7 +265043,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-08",
-      "record_sha256": "f6810cd29fe76bcbe8665054f858070a5832449bc00438cd046628ee8b3bf9df",
+      "record_sha256": "2ac7b0068d0c66020a9a842dd419e492b266e61d391a0fd6e49809b8b3f4f83a",
       "semantic_scores": {
         "1st-dl2-international-workshop": 8,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -265654,7 +265706,7 @@
         "wowmom": 8,
         "wsdm": 0,
         "wsse-2026": 2,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 27
       },
       "candidates": [
@@ -269793,7 +269845,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 11,
           "features": {
             "lexical_score": 0.25,
@@ -269809,7 +269861,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-09",
-      "record_sha256": "b610ace46ec7b81d31482a6db23a7cd2e81a9754c28c2e6245800e82d05bc601",
+      "record_sha256": "c614348bee471f1bd9f65156449c5252a80594a52c589aa3b5b43486d7b3ecd2",
       "semantic_scores": {
         "1st-dl2-international-workshop": 7,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 3,
@@ -270472,7 +270524,7 @@
         "wowmom": 7,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 10
       },
       "candidates": [
@@ -275131,7 +275183,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 9,
           "features": {
             "lexical_score": 0.25,
@@ -275160,7 +275212,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-10",
-      "record_sha256": "1f2d75ec2a560ebcc99a990a1ddfc9c910364f11a215bdf00ee3851f75acf942",
+      "record_sha256": "c25cea56a0408d41e2a82b943cfeb8fd0857d2516e408cf60427d4ab7457764a",
       "semantic_scores": {
         "1st-dl2-international-workshop": 3,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -275823,7 +275875,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 13,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 47
       },
       "candidates": [
@@ -278132,7 +278184,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-11",
-      "record_sha256": "408268f6a5dabe0d0633951ac7f46229dba3ae59b91fb2622683ed449fd61240",
+      "record_sha256": "34fc2a61f0a65b398a7be698530c5dd9669005cef12747496cb2f0031c10310b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -278795,7 +278847,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 14
       },
       "candidates": [
@@ -279310,7 +279362,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-12",
-      "record_sha256": "822da45d7837d424821f8743b807adffa393b60f2714fb7bae07a89adafb2aee",
+      "record_sha256": "46b853b62231bbb85c618089d5ff221862c745e8807e83998f257bdf70860c86",
       "semantic_scores": {
         "1st-dl2-international-workshop": 9,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -279973,7 +280025,7 @@
         "wowmom": 2,
         "wsdm": 0,
         "wsse-2026": 5,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 18
       },
       "candidates": [
@@ -281983,7 +282035,7 @@
     },
     {
       "paper_id": "heldout-2026-ipsj-journal-01",
-      "record_sha256": "7cd0a8b5664f6c4e41a6fb7fbeb2dfa95c619a9fdeba6e67e1ef7274af94d8fc",
+      "record_sha256": "2765169aac5d22484bc9bda9e282504591300f3acdba740b10c2476607182b92",
       "semantic_scores": {
         "1st-dl2-international-workshop": 22,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 19,
@@ -282646,7 +282698,7 @@
         "wowmom": 2,
         "wsdm": 16,
         "wsse-2026": 0,
-        "www-aideadlines-www": 22,
+        "www": 22,
         "xloop-2026": 25
       },
       "candidates": [
@@ -282704,7 +282756,7 @@
         },
         {
           "venue": "aaai",
-          "base_score": 66,
+          "base_score": 65,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.16,
@@ -283055,7 +283107,7 @@
         },
         {
           "venue": "alt",
-          "base_score": 44,
+          "base_score": 43,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.08,
@@ -283172,7 +283224,7 @@
         },
         {
           "venue": "assets",
-          "base_score": 25,
+          "base_score": 24,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.14,
@@ -283315,7 +283367,7 @@
         },
         {
           "venue": "cade",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.09,
@@ -283484,7 +283536,7 @@
         },
         {
           "venue": "cluster",
-          "base_score": 27,
+          "base_score": 26,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.15,
@@ -283835,7 +283887,7 @@
         },
         {
           "venue": "dis",
-          "base_score": 19,
+          "base_score": 18,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.11,
@@ -283939,7 +283991,7 @@
         },
         {
           "venue": "ecir",
-          "base_score": 72,
+          "base_score": 71,
           "features": {
             "lexical_score": 0.4,
             "semantic_score": 0.16,
@@ -283991,7 +284043,7 @@
         },
         {
           "venue": "edbt",
-          "base_score": 52,
+          "base_score": 51,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.18,
@@ -284173,7 +284225,7 @@
         },
         {
           "venue": "euvip",
-          "base_score": 32,
+          "base_score": 31,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.04,
@@ -284199,7 +284251,7 @@
         },
         {
           "venue": "facct",
-          "base_score": 43,
+          "base_score": 42,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.14,
@@ -284264,7 +284316,7 @@
         },
         {
           "venue": "focs",
-          "base_score": 29,
+          "base_score": 28,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.16,
@@ -284420,7 +284472,7 @@
         },
         {
           "venue": "hpcc",
-          "base_score": 26,
+          "base_score": 25,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.15,
@@ -284433,7 +284485,7 @@
         },
         {
           "venue": "hpdc",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -284654,7 +284706,7 @@
         },
         {
           "venue": "icalp",
-          "base_score": 24,
+          "base_score": 23,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.14,
@@ -285109,7 +285161,7 @@
         },
         {
           "venue": "icomp",
-          "base_score": 40,
+          "base_score": 39,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.15,
@@ -285915,7 +285967,7 @@
         },
         {
           "venue": "iswc",
-          "base_score": 40,
+          "base_score": 39,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.16,
@@ -285928,7 +285980,7 @@
         },
         {
           "venue": "itc",
-          "base_score": 12,
+          "base_score": 11,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -286032,7 +286084,7 @@
         },
         {
           "venue": "kicss2026",
-          "base_score": 37,
+          "base_score": 36,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.15,
@@ -286084,7 +286136,7 @@
         },
         {
           "venue": "lics",
-          "base_score": 21,
+          "base_score": 20,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.13,
@@ -286279,7 +286331,7 @@
         },
         {
           "venue": "networking",
-          "base_score": 13,
+          "base_score": 12,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -286305,7 +286357,7 @@
         },
         {
           "venue": "neurips",
-          "base_score": 45,
+          "base_score": 44,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.19,
@@ -286435,7 +286487,7 @@
         },
         {
           "venue": "parallel2026",
-          "base_score": 23,
+          "base_score": 22,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.14,
@@ -286721,7 +286773,7 @@
         },
         {
           "venue": "sat",
-          "base_score": 31,
+          "base_score": 30,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.18,
@@ -286903,7 +286955,7 @@
         },
         {
           "venue": "sigkdd",
-          "base_score": 69,
+          "base_score": 68,
           "features": {
             "lexical_score": 0.4,
             "semantic_score": 0.17,
@@ -287124,7 +287176,7 @@
         },
         {
           "venue": "uic",
-          "base_score": 33,
+          "base_score": 32,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.19,
@@ -287266,11 +287318,11 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
-          "base_score": 10,
+          "venue": "www",
+          "base_score": 47,
           "features": {
             "lexical_score": 0.25,
-            "semantic_score": 0,
+            "semantic_score": 0.22,
             "category_overlap": 1,
             "venue_name_evidence": 0,
             "prior_venue": 0,
@@ -287282,7 +287334,7 @@
     },
     {
       "paper_id": "heldout-2026-ipsj-journal-02",
-      "record_sha256": "5f7b675c5b6a3b1ebc14cbf74a72efa24aecc966cabd708cf6789b72e90d4d32",
+      "record_sha256": "772e260c6ae8d2ddd9318e756f5747cb772ce37d1ac6c0fd6dcd205937c8c0a0",
       "semantic_scores": {
         "1st-dl2-international-workshop": 13,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 21,
@@ -287945,7 +287997,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 4,
+        "www": 4,
         "xloop-2026": 5
       },
       "candidates": [
@@ -288627,7 +288679,7 @@
         },
         {
           "venue": "forte",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -288848,7 +288900,7 @@
         },
         {
           "venue": "icin",
-          "base_score": 16,
+          "base_score": 15,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -288978,7 +289030,7 @@
         },
         {
           "venue": "icra",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -289911,12 +289963,25 @@
             "language_match": 0,
             "venue_kind": 1
           }
+        },
+        {
+          "venue": "www",
+          "base_score": 17,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.04,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 0,
+            "venue_kind": 1
+          }
         }
       ]
     },
     {
       "paper_id": "heldout-2026-ipsj-journal-03",
-      "record_sha256": "f0e9da37c9ef412312da2dc0f71fc569c332df187b30138c7085943c35126257",
+      "record_sha256": "9f886f74db094e6091ae142de72b4b0c67b0735e13bb9add1eb61f5cfd82042a",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 9,
@@ -290579,13 +290644,13 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 2,
-        "www-aideadlines-www": 10,
+        "www": 10,
         "xloop-2026": 0
       },
       "candidates": [
         {
           "venue": "aaai",
-          "base_score": 26,
+          "base_score": 25,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.05,
@@ -290611,7 +290676,7 @@
         },
         {
           "venue": "acml",
-          "base_score": 21,
+          "base_score": 20,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -290663,7 +290728,7 @@
         },
         {
           "venue": "apbc",
-          "base_score": 20,
+          "base_score": 19,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -290689,7 +290754,7 @@
         },
         {
           "venue": "asplos",
-          "base_score": 32,
+          "base_score": 31,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.08,
@@ -290702,7 +290767,7 @@
         },
         {
           "venue": "ats",
-          "base_score": 28,
+          "base_score": 27,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.06,
@@ -290767,7 +290832,7 @@
         },
         {
           "venue": "cade",
-          "base_score": 22,
+          "base_score": 21,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -290845,7 +290910,7 @@
         },
         {
           "venue": "colt",
-          "base_score": 24,
+          "base_score": 23,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -291209,7 +291274,7 @@
         },
         {
           "venue": "icdm",
-          "base_score": 30,
+          "base_score": 29,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -291456,7 +291521,7 @@
         },
         {
           "venue": "iswc",
-          "base_score": 19,
+          "base_score": 18,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -291469,7 +291534,7 @@
         },
         {
           "venue": "itcs",
-          "base_score": 29,
+          "base_score": 28,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -291560,7 +291625,7 @@
         },
         {
           "venue": "ksem",
-          "base_score": 23,
+          "base_score": 22,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -291612,7 +291677,7 @@
         },
         {
           "venue": "mlsys",
-          "base_score": 25,
+          "base_score": 24,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.05,
@@ -291664,7 +291729,7 @@
         },
         {
           "venue": "nlpcc",
-          "base_score": 27,
+          "base_score": 26,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.06,
@@ -291703,7 +291768,7 @@
         },
         {
           "venue": "probml",
-          "base_score": 31,
+          "base_score": 30,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.08,
@@ -291947,12 +292012,25 @@
             "language_match": 0,
             "venue_kind": 1
           }
+        },
+        {
+          "venue": "www",
+          "base_score": 32,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.1,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 0,
+            "venue_kind": 1
+          }
         }
       ]
     },
     {
       "paper_id": "heldout-2026-ipsj-journal-04",
-      "record_sha256": "4730184c2da01b730b6d0034673342bd51365b0ea9a6f4108b0deeae21e00359",
+      "record_sha256": "c3f8dc7e675d33e58faa19ae6c78cc895acf0ad2178af8d2d18c8531c83befa3",
       "semantic_scores": {
         "1st-dl2-international-workshop": 15,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 10,
@@ -292615,7 +292693,7 @@
         "wowmom": 2,
         "wsdm": 3,
         "wsse-2026": 2,
-        "www-aideadlines-www": 17,
+        "www": 17,
         "xloop-2026": 14
       },
       "candidates": [
@@ -292673,7 +292751,7 @@
         },
         {
           "venue": "aaai",
-          "base_score": 68,
+          "base_score": 67,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.16,
@@ -292803,7 +292881,7 @@
         },
         {
           "venue": "acml",
-          "base_score": 52,
+          "base_score": 51,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.05,
@@ -293128,7 +293206,7 @@
         },
         {
           "venue": "ats",
-          "base_score": 20,
+          "base_score": 19,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.1,
@@ -293466,7 +293544,7 @@
         },
         {
           "venue": "collaboratecom",
-          "base_score": 24,
+          "base_score": 23,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.13,
@@ -293583,7 +293661,7 @@
         },
         {
           "venue": "corl",
-          "base_score": 36,
+          "base_score": 35,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.01,
@@ -293674,7 +293752,7 @@
         },
         {
           "venue": "cvpr",
-          "base_score": 46,
+          "base_score": 45,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.12,
@@ -294740,7 +294818,7 @@
         },
         {
           "venue": "iccbr",
-          "base_score": 40,
+          "base_score": 39,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.13,
@@ -295325,7 +295403,7 @@
         },
         {
           "venue": "icst",
-          "base_score": 17,
+          "base_score": 16,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.08,
@@ -295884,7 +295962,7 @@
         },
         {
           "venue": "isaac",
-          "base_score": 14,
+          "base_score": 13,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.05,
@@ -296196,7 +296274,7 @@
         },
         {
           "venue": "log",
-          "base_score": 35,
+          "base_score": 34,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.13,
@@ -296729,7 +296807,7 @@
         },
         {
           "venue": "qrs",
-          "base_score": 15,
+          "base_score": 14,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.06,
@@ -296755,7 +296833,7 @@
         },
         {
           "venue": "raai2026",
-          "base_score": 23,
+          "base_score": 22,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.03,
@@ -296963,7 +297041,7 @@
         },
         {
           "venue": "secon",
-          "base_score": 25,
+          "base_score": 24,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.15,
@@ -296976,7 +297054,7 @@
         },
         {
           "venue": "seke",
-          "base_score": 13,
+          "base_score": 12,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -297067,7 +297145,7 @@
         },
         {
           "venue": "sigcomm",
-          "base_score": 18,
+          "base_score": 17,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.09,
@@ -297262,7 +297340,7 @@
         },
         {
           "venue": "tc",
-          "base_score": 12,
+          "base_score": 11,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -297469,11 +297547,11 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
-          "base_score": 10,
+          "venue": "www",
+          "base_score": 36,
           "features": {
             "lexical_score": 0.25,
-            "semantic_score": 0,
+            "semantic_score": 0.17,
             "category_overlap": 1,
             "venue_name_evidence": 0,
             "prior_venue": 0,
@@ -297485,7 +297563,7 @@
     },
     {
       "paper_id": "heldout-2026-nolta-special-01",
-      "record_sha256": "0ba2c967196a7a5f882422b9c8a25b45aeee3f576a4259e6d4e10bec613f6dc2",
+      "record_sha256": "32c61066d2d5c406e2366eb10b04c9dc4328f374d5f24b02222f50de91fb083c",
       "semantic_scores": {
         "1st-dl2-international-workshop": 3,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 4,
@@ -298148,7 +298226,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -298754,7 +298832,7 @@
     },
     {
       "paper_id": "heldout-2026-nolta-special-02",
-      "record_sha256": "5b5cb7e85cf910811f631b2fd9f76cac4868f1296f49d80804a7d101048c61c2",
+      "record_sha256": "0063307ddd4e25d004bc4c1aa601cf5c15cc35b97c71a66451b7d358c8e8a7ff",
       "semantic_scores": {
         "1st-dl2-international-workshop": 7,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -299417,7 +299495,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -300777,7 +300855,7 @@
     },
     {
       "paper_id": "heldout-2026-nolta-special-03",
-      "record_sha256": "74610cfcc0cb1c0dbfae377f8f3aa0c323e5785bb6e03c65cfe33972c5e8a7d9",
+      "record_sha256": "b4a823c45fa4ee2205feedd38641bb5bc9d8171026c69c0bb7e1398fc1c0344a",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -301440,7 +301518,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 9,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 4
       },
       "candidates": [
@@ -302475,7 +302553,7 @@
     },
     {
       "paper_id": "heldout-2026-nolta-special-04",
-      "record_sha256": "28df5cc2956c95602789717a23d55de8460b747f24092ea4cacdea4eec00fe72",
+      "record_sha256": "aa466dd1400f0ec09dadbff2e3ed3d10864496593a8ed9317991cb352b77f224",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -303138,7 +303216,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 12
       },
       "candidates": [
@@ -305226,7 +305304,7 @@
     },
     {
       "paper_id": "heldout-2026-nsdi-01",
-      "record_sha256": "f1b6bc91c07fc2fa35cce9f2c32334835270de205bd44d2b8461cb5e1da76262",
+      "record_sha256": "db488e6dbff792ad9c06e0fbc6952f3d31daeef4899a7e72163b6e9202144b4c",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -305889,7 +305967,7 @@
         "wowmom": 13,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -307600,7 +307678,7 @@
     },
     {
       "paper_id": "heldout-2026-nsdi-02",
-      "record_sha256": "c3eab2b054d08aaf8ec0ae756d048a79dff920172d58b93d71520f3e5581c644",
+      "record_sha256": "7eb3244330b2b48bf4d599ae4dfe2a23765fd9f13e2d3990971448488cdf56b7",
       "semantic_scores": {
         "1st-dl2-international-workshop": 18,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 9,
@@ -308263,7 +308341,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -309818,7 +309896,7 @@
     },
     {
       "paper_id": "heldout-2026-nsdi-03",
-      "record_sha256": "31ecc370e9a986fbf29f9dab20509ebb24506972864680f319f4eb08b1d1e786",
+      "record_sha256": "5dd83ec1d6c65b444b52d742fa79988063f444d327f2194c748bfd1ad694de34",
       "semantic_scores": {
         "1st-dl2-international-workshop": 6,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 7,
@@ -310481,7 +310559,7 @@
         "wowmom": 0,
         "wsdm": 5,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -312205,7 +312283,7 @@
     },
     {
       "paper_id": "heldout-2026-nsdi-04",
-      "record_sha256": "b3933f809d44aaee8180fac1c58fb5b23c21cf6bc7ce8c6f122ee164c45036b9",
+      "record_sha256": "00dbc0ea177fc31f286b1b700d404828495077729767d27841137f4f897ba41b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -312868,7 +312946,7 @@
         "wowmom": 26,
         "wsdm": 0,
         "wsse-2026": 1,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -315398,7 +315476,7 @@
     },
     {
       "paper_id": "heldout-2026-nsdi-05",
-      "record_sha256": "c736500a4e78bfb4accc2f56b4bfd53fa6cab2809e1fb22bdc5fa0a7e7bf0d27",
+      "record_sha256": "9932f62c4167c616fb1b928e9ee8fc928f7ea2e425eb36f73afbc74f205d4bce",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -316061,7 +316139,7 @@
         "wowmom": 11,
         "wsdm": 0,
         "wsse-2026": 12,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 29
       },
       "candidates": [
@@ -319280,7 +319358,7 @@
     },
     {
       "paper_id": "heldout-2026-nsdi-06",
-      "record_sha256": "ecad0ada3e97f82c81c9692bdd7b2c727c7f302f53809e0f6d699d5d2981e0f0",
+      "record_sha256": "784cdf3ab393a444100533b3929e238cd4eedf0e7dd38911636ffa609edc04ca",
       "semantic_scores": {
         "1st-dl2-international-workshop": 12,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -319943,7 +320021,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -321381,7 +321459,7 @@
     },
     {
       "paper_id": "heldout-2026-nsdi-07",
-      "record_sha256": "e6a070e630693aecfeccf3f68a612c419aa03769850090f03c7f5627f43f80e5",
+      "record_sha256": "fa879c69ec2fc769ee1f70ee84fd64944783aca485992c5fcfed70d80b3556b6",
       "semantic_scores": {
         "1st-dl2-international-workshop": 10,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -322044,7 +322122,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 20
       },
       "candidates": [
@@ -323495,7 +323573,7 @@
     },
     {
       "paper_id": "heldout-2026-nsdi-08",
-      "record_sha256": "0f23db3d820be24e311680c68b75e76c25ac7d5aa4ea7e9ab33ff9e79fa8e72a",
+      "record_sha256": "1e98a7c289599ad113df57398eb06fa5b8c4fed2a0b1ac479d9400679f9493a5",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -324158,7 +324236,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 9,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 16
       },
       "candidates": [
@@ -325388,7 +325466,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-01",
-      "record_sha256": "88d5dce8f7e708206f604ceaccb465a9233b474305e4ee8f73a7f134c84bf27a",
+      "record_sha256": "b61339b7ddf50042eaa7d2c1284d2f6efb96ba691f3ce36e268b4f7f3d6e4369",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -326051,7 +326129,7 @@
         "wowmom": 18,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -327099,7 +327177,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-02",
-      "record_sha256": "86805487249f09385c4be5671eda1814d0af7e50f2d9abe74abd4f6b96bf8c94",
+      "record_sha256": "2b836a6bcf7e01b3e8925039189225f53f1a9e6812f51f9ced16eb928ecaac5f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 4,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -327762,7 +327840,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -328069,7 +328147,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-03",
-      "record_sha256": "1ae517ef5b98a14a1a256e8dd1e2738d0c49edb065a6d42074f119238a3df031",
+      "record_sha256": "9fdf47efbebfca9449a996746239ebd4363bf5b53afedabae25fe6ce588de358",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -328732,7 +328810,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -328766,7 +328844,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-04",
-      "record_sha256": "0980f4145e63fb1bed887d46a09d928cfe3e967b7ff5eb496c317d326c0e6a74",
+      "record_sha256": "508f23b2f4c78cd877af26fbea5392df2474202e18efd9148ed710852bced4e5",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -329429,7 +329507,7 @@
         "wowmom": 19,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -330880,7 +330958,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-05",
-      "record_sha256": "df1e09e4dd972fa82d0aad612693b47acdb0cad9ef0f58b4d31fd9282b7bd004",
+      "record_sha256": "4554280ff96e0eb34f091ff0f2bfde8081094b938f01837718f00f8d19f72846",
       "semantic_scores": {
         "1st-dl2-international-workshop": 24,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -331543,7 +331621,7 @@
         "wowmom": 14,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 1
       },
       "candidates": [
@@ -335604,7 +335682,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 9,
           "features": {
             "lexical_score": 0.25,
@@ -335620,7 +335698,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-06",
-      "record_sha256": "ee6988a58711b9ad094b190492a4a23fa592421104cae2b7f8382dd17eda780e",
+      "record_sha256": "db664789348880d337dcff84d55c86c4f03dab9372cd98d98fdc70ff64055a43",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -336283,7 +336361,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 9
       },
       "candidates": [
@@ -337916,7 +337994,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-07",
-      "record_sha256": "823fd717c95ff2d3f4dfe9b26e73c24b1f2811ddc3d0f011e59d533781ce0ab1",
+      "record_sha256": "7d3d7fc5b15ad2e48341bd697640bfb87318f6c45de061e7d15249fcf4146a86",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -338579,7 +338657,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -339237,7 +339315,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-08",
-      "record_sha256": "2768916ec825764aeec1de10f02ca861e8ee1257c67f55acde0842d3cee43a4e",
+      "record_sha256": "844f7243311acd774a1c362919d8811835fa8dd8e154f40768ec621f90963f7d",
       "semantic_scores": {
         "1st-dl2-international-workshop": 3,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -339900,7 +339978,7 @@
         "wowmom": 9,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 13
       },
       "candidates": [
@@ -341273,7 +341351,7 @@
     },
     {
       "paper_id": "heldout-2026-sigmod-01",
-      "record_sha256": "d545d842659e3c480eebf1b61021258aab830ede3df06c9a8eab681d8e81a543",
+      "record_sha256": "09d700acfe741bf53fd452794e969dcf3e3d0d037a934e185a48293cf556b1d4",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -341936,7 +342014,7 @@
         "wowmom": 0,
         "wsdm": 4,
         "wsse-2026": 0,
-        "www-aideadlines-www": 8,
+        "www": 8,
         "xloop-2026": 0
       },
       "candidates": [
@@ -342020,7 +342098,7 @@
         },
         {
           "venue": "adma",
-          "base_score": 74,
+          "base_score": 73,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.04,
@@ -342228,7 +342306,7 @@
         },
         {
           "venue": "bdcat",
-          "base_score": 65,
+          "base_score": 64,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.03,
@@ -342579,7 +342657,7 @@
         },
         {
           "venue": "concur",
-          "base_score": 37,
+          "base_score": 36,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -342670,7 +342748,7 @@
         },
         {
           "venue": "eacl",
-          "base_score": 32,
+          "base_score": 31,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -343047,7 +343125,7 @@
         },
         {
           "venue": "hipeac",
-          "base_score": 82,
+          "base_score": 81,
           "features": {
             "lexical_score": 0.38,
             "semantic_score": 0.07,
@@ -343177,7 +343255,7 @@
         },
         {
           "venue": "icbda2027",
-          "base_score": 57,
+          "base_score": 56,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.07,
@@ -343216,7 +343294,7 @@
         },
         {
           "venue": "iccbr",
-          "base_score": 34,
+          "base_score": 33,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.05,
@@ -344295,7 +344373,7 @@
         },
         {
           "venue": "mathai",
-          "base_score": 35,
+          "base_score": 34,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.06,
@@ -344360,7 +344438,7 @@
         },
         {
           "venue": "mlsys",
-          "base_score": 49,
+          "base_score": 48,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.07,
@@ -344620,7 +344698,7 @@
         },
         {
           "venue": "pods",
-          "base_score": 42,
+          "base_score": 41,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.03,
@@ -344659,7 +344737,7 @@
         },
         {
           "venue": "ppsn",
-          "base_score": 33,
+          "base_score": 32,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.05,
@@ -344711,7 +344789,7 @@
         },
         {
           "venue": "recomb",
-          "base_score": 47,
+          "base_score": 46,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.06,
@@ -344880,7 +344958,7 @@
         },
         {
           "venue": "sigmod",
-          "base_score": 41,
+          "base_score": 40,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.03,
@@ -345140,7 +345218,7 @@
         },
         {
           "venue": "uai",
-          "base_score": 27,
+          "base_score": 26,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -345231,7 +345309,7 @@
         },
         {
           "venue": "wsdm",
-          "base_score": 42,
+          "base_score": 41,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.04,
@@ -345254,12 +345332,25 @@
             "language_match": 1,
             "venue_kind": 1
           }
+        },
+        {
+          "venue": "www",
+          "base_score": 37,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.08,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
         }
       ]
     },
     {
       "paper_id": "heldout-2026-sigmod-02",
-      "record_sha256": "2e9caa00093646d3bf9c724c12784ca98dd254d1c13baa509820d1144731982f",
+      "record_sha256": "ca269cd5cc0c6f6d99d67cd11a7fb9a94317b51e616df9014528ce6dd382b476",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -345922,7 +346013,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 5
       },
       "candidates": [
@@ -347165,7 +347256,7 @@
     },
     {
       "paper_id": "heldout-2026-sigmod-03",
-      "record_sha256": "e33a6e76f1419b2a29d05b4ca3e0e717e5a3ad5319c740d633fbbae332af036d",
+      "record_sha256": "de9d3ac798523ac874385df84f5e38b7ce8105f441840da17292d12eda495c67",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -347828,7 +347919,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 2
       },
       "candidates": [
@@ -348902,7 +348993,7 @@
     },
     {
       "paper_id": "heldout-2026-sigmod-04",
-      "record_sha256": "34393057627248e2ec799d1c1abe58fbb354377e2e907b1b5e159971c473daa2",
+      "record_sha256": "3d11dfd24d82dfd716bc8e4aa01e11853f606982437db9bf563447627306d90f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 4,
@@ -349565,7 +349656,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -351276,7 +351367,7 @@
     },
     {
       "paper_id": "heldout-2026-sigmod-05",
-      "record_sha256": "2797f310e96205b3f6b907f99fd8874e3caf69a57fce864815b3a5fae4009221",
+      "record_sha256": "eed90f3939d76160c41b036ca44914431b7afa645f807f16d942be005edb8b25",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -351939,7 +352030,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -352766,7 +352857,7 @@
     },
     {
       "paper_id": "heldout-2026-sigmod-06",
-      "record_sha256": "a4d10c81ceec04c63476efb97a16dafd610f7df275e0563a7bd002ec987696f0",
+      "record_sha256": "b01e0face4ba7bb5b16f3659a04b81ea77fcca24f06677caaa1589b4380e281a",
       "semantic_scores": {
         "1st-dl2-international-workshop": 1,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -353429,7 +353520,7 @@
         "wowmom": 0,
         "wsdm": 8,
         "wsse-2026": 0,
-        "www-aideadlines-www": 8,
+        "www": 8,
         "xloop-2026": 2
       },
       "candidates": [
@@ -353851,7 +353942,7 @@
         },
         {
           "venue": "cicai",
-          "base_score": 27,
+          "base_score": 26,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -353903,7 +353994,7 @@
         },
         {
           "venue": "closer",
-          "base_score": 29,
+          "base_score": 28,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.05,
@@ -354371,7 +354462,7 @@
         },
         {
           "venue": "icann",
-          "base_score": 24,
+          "base_score": 23,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.03,
@@ -354449,7 +354540,7 @@
         },
         {
           "venue": "icdar",
-          "base_score": 26,
+          "base_score": 25,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.04,
@@ -354527,7 +354618,7 @@
         },
         {
           "venue": "iconip",
-          "base_score": 31,
+          "base_score": 30,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.06,
@@ -354644,7 +354735,7 @@
         },
         {
           "venue": "ijcai",
-          "base_score": 21,
+          "base_score": 20,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.01,
@@ -354657,7 +354748,7 @@
         },
         {
           "venue": "ijcar",
-          "base_score": 33,
+          "base_score": 32,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -354930,7 +355021,7 @@
         },
         {
           "venue": "lrec",
-          "base_score": 32,
+          "base_score": 31,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.07,
@@ -354982,7 +355073,7 @@
         },
         {
           "venue": "models",
-          "base_score": 28,
+          "base_score": 27,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.05,
@@ -355177,7 +355268,7 @@
         },
         {
           "venue": "re",
-          "base_score": 30,
+          "base_score": 29,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.06,
@@ -355216,7 +355307,7 @@
         },
         {
           "venue": "rlc",
-          "base_score": 22,
+          "base_score": 21,
           "features": {
             "lexical_score": 0,
             "semantic_score": 0.02,
@@ -355528,7 +355619,7 @@
         },
         {
           "venue": "wise",
-          "base_score": 51,
+          "base_score": 50,
           "features": {
             "lexical_score": 0.25,
             "semantic_score": 0.04,
@@ -355551,12 +355642,25 @@
             "language_match": 1,
             "venue_kind": 1
           }
+        },
+        {
+          "venue": "www",
+          "base_score": 33,
+          "features": {
+            "lexical_score": 0,
+            "semantic_score": 0.08,
+            "category_overlap": 0,
+            "venue_name_evidence": 0,
+            "prior_venue": 0,
+            "language_match": 1,
+            "venue_kind": 1
+          }
         }
       ]
     },
     {
       "paper_id": "heldout-2026-sigmod-07",
-      "record_sha256": "247f5a0b3cca2ca673b0586a478e393d99af91f2fdf746204e2824b875fd4f29",
+      "record_sha256": "df279886bf0ac94bf9922233dae3c21ba8df7c4c9c5113f7c259b2bea3e6b928",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -356219,7 +356323,7 @@
         "wowmom": 7,
         "wsdm": 0,
         "wsse-2026": 10,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 36
       },
       "candidates": [
@@ -361008,7 +361112,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 11,
           "features": {
             "lexical_score": 0.25,
@@ -361024,7 +361128,7 @@
     },
     {
       "paper_id": "heldout-2026-sigmod-08",
-      "record_sha256": "03a5eea38875d7f01fd717317b5c30df781780a46f7f4ae31c218f9c3f7989ca",
+      "record_sha256": "4314e32329569c5e2607a7391d63cdfdc7aa8c015245a0ad8fd4a24d2cb10102",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -361687,7 +361791,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -362618,7 +362722,7 @@
     },
     {
       "paper_id": "heldout-2026-stoc-01",
-      "record_sha256": "c69a950eac13804c7531504ba8fc0a23baa6c4256118f679a0023a5e988cc46c",
+      "record_sha256": "f23ee12a9313d16b09cb9d78434968257023270374ec5e420ca5e7fed3b894e4",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -363281,7 +363385,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -363679,7 +363783,7 @@
     },
     {
       "paper_id": "heldout-2026-stoc-02",
-      "record_sha256": "6dea885ac4969725d00312d8553afa691215d977ecdd5ca678b131bc98d41946",
+      "record_sha256": "89ffd636eb00496ba05b92593b63ede738e9a000975e6229edc1061071840a9e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 1,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -364342,7 +364446,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -366898,7 +367002,7 @@
     },
     {
       "paper_id": "heldout-2026-stoc-03",
-      "record_sha256": "c0a975fc364fc247c2508c6979b28e7f27787cf2ba8828425cfced2d67f05067",
+      "record_sha256": "8dfe3469bea14dcfbf242d5bbbdea21456c07780ab0e0ca85ab5ebdf2d8042a6",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -367561,7 +367665,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -367842,7 +367946,7 @@
     },
     {
       "paper_id": "heldout-2026-stoc-04",
-      "record_sha256": "27f5139aeb716e7a93e7798b228887429bada0a400401b54fd2d642d5c7c2bd5",
+      "record_sha256": "56de29ec4a454aa99cb6a140e2b26ab7cdee9a53eb65e00035cacead25b396a5",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 4,
@@ -368505,7 +368609,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -369371,7 +369475,7 @@
     },
     {
       "paper_id": "heldout-2026-stoc-05",
-      "record_sha256": "ff966e8450c7f52ed1aa4d1135979a4e2b907f25b1ffdb11477befc43aba1cb8",
+      "record_sha256": "dffbc9af7d2a213d6213f4e110b659e812ee2d7156bc6345de091cb4bd3c4742",
       "semantic_scores": {
         "1st-dl2-international-workshop": 8,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -370034,7 +370138,7 @@
         "wowmom": 0,
         "wsdm": 2,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -371108,7 +371212,7 @@
     },
     {
       "paper_id": "heldout-2026-stoc-06",
-      "record_sha256": "fb32bd1bf2395de9ffa0710539d37ea9c6f9352b7a615764617b0e05dcdad473",
+      "record_sha256": "6fce9c64d03f16eb64eaac2185821a582e96848c08c1d0770f9b32f294b03bd4",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -371771,7 +371875,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -372091,7 +372195,7 @@
     },
     {
       "paper_id": "heldout-2026-stoc-07",
-      "record_sha256": "912a38033b8bbe1bf344b5e4ea4658ee05cb8217142bb5e37f7981198e22b842",
+      "record_sha256": "e69a039420af3ef7eed3a6211253f45e1b60d1d25de1302cd8e7365e18da9972",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -372754,7 +372858,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -373087,7 +373191,7 @@
     },
     {
       "paper_id": "heldout-2026-stoc-08",
-      "record_sha256": "80761cd3e0121acbcb03da95c86cc1ef4e25c5463adba26d513274d3473e8757",
+      "record_sha256": "1dfaac9c513593f3311f0021a1b94cc7e17f17b7a8a3d0a4da4fbfea196979c5",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -373750,7 +373854,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -374577,7 +374681,7 @@
     },
     {
       "paper_id": "heldout-2026-usenix-security-01",
-      "record_sha256": "1f6b01b74de0bee6fffdc93c9dcee214ee38327923d2ff556b7b0d517edb5729",
+      "record_sha256": "24ef724645464629a6b4278d0a1b4b0dbaf0d99873ca7accc66c87ff68d8277f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 7,
@@ -375240,7 +375344,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 8
       },
       "candidates": [
@@ -376392,7 +376496,7 @@
     },
     {
       "paper_id": "heldout-2026-usenix-security-02",
-      "record_sha256": "537459feb9060bdf5d7e545213c9a8eb1a907d837c22e28d5c1ebcae5cbb41f0",
+      "record_sha256": "30cdd56d6237d686b5f13e381909fb7e55cb1ae1d6ef343378c665c2ba57ed66",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -377055,7 +377159,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 21
       },
       "candidates": [
@@ -378051,7 +378155,7 @@
     },
     {
       "paper_id": "heldout-2026-usenix-security-03",
-      "record_sha256": "913c0d7e4d451f3d723f73028ee7f5eeb44279f9efa8811b683b6252d124f840",
+      "record_sha256": "660324408c5f7e4d8160697e50d569e8f6d3dc2780e6c2eaddf82c9ee8abd247",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -378714,7 +378818,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 4,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 20
       },
       "candidates": [
@@ -379866,7 +379970,7 @@
     },
     {
       "paper_id": "heldout-2026-usenix-security-04",
-      "record_sha256": "52b32fa498e7eee1535e9c898f540725ff9227c596164ecda1ef27592b8114f4",
+      "record_sha256": "94c03fdf400d16cb066fc1f5486e63794cb03597a32770d27ad8f30d03c1f626",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -380529,7 +380633,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 5,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 9
       },
       "candidates": [
@@ -382370,7 +382474,7 @@
     },
     {
       "paper_id": "heldout-2026-usenix-security-05",
-      "record_sha256": "2b61ff426f6ff40cfaf7e74b548f63da5d98e10537326cdc777d1efb91a63441",
+      "record_sha256": "26816a251156d580a030bc46e3bc952a4204d4fd1ca1e31851e6adbc73ee0fd6",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -383033,7 +383137,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 4,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 19
       },
       "candidates": [
@@ -384445,7 +384549,7 @@
     },
     {
       "paper_id": "heldout-2026-usenix-security-06",
-      "record_sha256": "e518edf031479eb0266a9b83fc4b29117f6e1f321b1159494cc89ad543f8c06f",
+      "record_sha256": "4b002e551bd7e563a1daba282e8055e174fc36b7f9a9ce149c513ac68794f4c9",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 4,
@@ -385108,7 +385212,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 1
       },
       "candidates": [
@@ -386832,7 +386936,7 @@
     },
     {
       "paper_id": "heldout-2026-usenix-security-07",
-      "record_sha256": "d30ec5077034d0cda9a99cfea1cca489b1b77f3ea18c79ca98bdd69abf74d8dc",
+      "record_sha256": "9b4c8f4157600ddfde9916fd470c3972a36f24368bc0781c22fe90ef65be0b20",
       "semantic_scores": {
         "1st-dl2-international-workshop": 6,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 10,
@@ -387495,7 +387599,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 7
       },
       "candidates": [
@@ -391452,7 +391556,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 9,
           "features": {
             "lexical_score": 0.25,
@@ -391468,7 +391572,7 @@
     },
     {
       "paper_id": "heldout-2026-usenix-security-08",
-      "record_sha256": "cb0d3c16b36753e523a48182190ba2fe3b272471d15941403e202da3faa6e491",
+      "record_sha256": "e6815d9f4e13e9e9d5c83d8c38b403cbbae734d1d15032abf06304ee5b2f2a16",
       "semantic_scores": {
         "1st-dl2-international-workshop": 3,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 11,
@@ -392131,7 +392235,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 8
       },
       "candidates": [
@@ -395779,7 +395883,7 @@
     },
     {
       "paper_id": "jstage-2026-jsceiii-7-20",
-      "record_sha256": "e031ef9f20424f8bc5ac2fbdeeeab1740ff26364ed9ac798cea9c18d57f3f413",
+      "record_sha256": "638d04d8018b08c3baad7ca373460688c2203991315acd0a94135fb445269b8e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 26,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 42,
@@ -396442,7 +396546,7 @@
         "wowmom": 0,
         "wsdm": 15,
         "wsse-2026": 0,
-        "www-aideadlines-www": 2,
+        "www": 2,
         "xloop-2026": 12
       },
       "candidates": [
@@ -400880,11 +400984,11 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
-          "base_score": 11,
+          "venue": "www",
+          "base_score": 22,
           "features": {
             "lexical_score": 0.25,
-            "semantic_score": 0,
+            "semantic_score": 0.02,
             "category_overlap": 1,
             "venue_name_evidence": 0,
             "prior_venue": 0,
@@ -400896,7 +401000,7 @@
     },
     {
       "paper_id": "pubmed-42058264",
-      "record_sha256": "dc9e4bea0842444fb66dfd1a8db677073d2b6476055e20682db124131f544757",
+      "record_sha256": "6cd73d351a839e997620696cb04068b55276e56fa17ec9db6fe6cfd3fdf7fb4e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -401559,7 +401663,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -401619,7 +401723,7 @@
     },
     {
       "paper_id": "pubmed-42256611",
-      "record_sha256": "0d5f7bcaa10796fd5514fb831f9f37ba2f6ccec5a02d2d093e5ce81ff77c372a",
+      "record_sha256": "3fc04846478b3f825d05ec19b9743236fdbca1e1dfbf985eec8766b9d06327ad",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -402282,7 +402386,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -402329,7 +402433,7 @@
     },
     {
       "paper_id": "pubmed-42265983",
-      "record_sha256": "df2195f7a950dba4e16887ca3f88f5e84e7d19223703b1fbfbaa8a1afc408977",
+      "record_sha256": "3aab934ae3568f33fafbc79620beadfcf56ae11db37953a62d9fdee9ef6d64a8",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -402992,7 +403096,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -403065,7 +403169,7 @@
     },
     {
       "paper_id": "pubmed-42275298",
-      "record_sha256": "e8b71211587dece7b3d9fb80e893d86a970d36b6fcb9b398bf11ea0c6b5f64bf",
+      "record_sha256": "0fbf5fae976a6ab14fe17e8be101c7484b2edba7ce0ad17c96bb9a1433275c4f",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -403728,7 +403832,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -403801,7 +403905,7 @@
     },
     {
       "paper_id": "pubmed-42285793",
-      "record_sha256": "06056bf93cbd1ad00a1c35c0a13256dbf1d04057e36967f0f205a2e758665b3b",
+      "record_sha256": "6f9661bdac12f07b67f029f59d3bbb19e9158d677f2b03aa28755fb9d59eda51",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -404464,7 +404568,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -405551,7 +405655,7 @@
     },
     {
       "paper_id": "pubmed-42296148",
-      "record_sha256": "d32dc5b535e9c8e0ba107372a651a1789b4b502a7492229a8eccfd3be633e3cf",
+      "record_sha256": "4d099fbbf0df85036201394f27c0ddde7b1f14a207a3ba28f0c7adeca18f812d",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -406214,7 +406318,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -406235,7 +406339,7 @@
     },
     {
       "paper_id": "pubmed-42304957",
-      "record_sha256": "6f5f30cbf486ec1407b5372cff73acc1ff9a1ec0999e7f5397b96524ebf0dfc8",
+      "record_sha256": "439721830f4e9ab53dc36a427c11fc10cdd1a7ae5c9a06003b22bf1962be8e15",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -406898,7 +407002,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -406932,7 +407036,7 @@
     },
     {
       "paper_id": "pubmed-42308349",
-      "record_sha256": "b22eafa8c50a02680097745c63d27bffcfa1caf6e4ecdb2c933cfdc4c48534d5",
+      "record_sha256": "ae578aed20ea2d3a9d54d0942c174aa192749631cd5a7f384b51548b45271993",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -407595,7 +407699,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -407642,7 +407746,7 @@
     },
     {
       "paper_id": "pubmed-42319344",
-      "record_sha256": "d75399c4050d9ccc5992b44c07f8618686ba5fc0c84789caab07a17af31d49ba",
+      "record_sha256": "706d99f03819ffa305ab2da95ccd3b3b6a4c0c01431aa6831dfb1be93f55b42d",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -408305,7 +408409,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -408365,7 +408469,7 @@
     },
     {
       "paper_id": "pubmed-42322272",
-      "record_sha256": "cf416c155677288d37cc73da8cee6705d7c6395969e923454ec3a70df17dcc0d",
+      "record_sha256": "a90eabc8a626bfd99d660d97851c52d053dba9c43d6cce0496319814f214730b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -409028,7 +409132,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -409127,7 +409231,7 @@
     },
     {
       "paper_id": "pubmed-42324593",
-      "record_sha256": "8f7ad52bac6592416065acc02fe5066ecb0aed117f9a9718e34f5a56371c2663",
+      "record_sha256": "7c30c534eb080c0fbcd5020e79dcee07552a03e22708597e19a424ff14327e1e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -409790,7 +409894,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -409863,7 +409967,7 @@
     },
     {
       "paper_id": "pubmed-42329179",
-      "record_sha256": "2336fee0500fc0c27755b6292d8cf4dac1391fb015b1269ac971f0edb19db65d",
+      "record_sha256": "048207c315b20bd91173ee1076e2d09ff3aca96d0aca43a6a18c7ea24f456b28",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -410526,7 +410630,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -410547,7 +410651,7 @@
     },
     {
       "paper_id": "pubmed-42337391",
-      "record_sha256": "35c611cd53e9617d0ef98976019363add9a4235aae34cc85eb41a2dfa28a3782",
+      "record_sha256": "33577efeb45863cf72c34fe5875493f382301583fc3b021d62e177fa6ee9ba02",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -411210,7 +411314,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -411660,7 +411764,7 @@
     },
     {
       "paper_id": "pubmed-42342482",
-      "record_sha256": "f6e0b1f0ab53c15d54d6eaa0dcd6b4e16bb7b1aec61cf9f1c24cfc2a40bc916b",
+      "record_sha256": "10fcbc3e6dd8d65ce71e91acd5dc27e4f848c3507f979af0fd3eead704b4932c",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -412323,7 +412427,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -414320,7 +414424,7 @@
     },
     {
       "paper_id": "pubmed-42345355",
-      "record_sha256": "9de29d19a813731a146e1f63eaf3499461f4985cd8275b43b853384097f45609",
+      "record_sha256": "7d4d8eccf8e10a5faaeffe58e960683a9b728e30c2ab0a2e5a246bab4e7a4a6e",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -414983,7 +415087,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -415212,7 +415316,7 @@
     },
     {
       "paper_id": "pubmed-42359636",
-      "record_sha256": "21725adf4287f9857d1a95b802d927ad301204e50b33cd711e856adf77c9b058",
+      "record_sha256": "2684cd8f685dd515a2dcc6ec77df4cb1b4c30181ef3962cd15e0d88e03e485b0",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -415875,7 +415979,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -415935,7 +416039,7 @@
     },
     {
       "paper_id": "pubmed-42371677",
-      "record_sha256": "85d3da54713a49752d1dc4ace7ffb998d78baf0ef0786a8aa6161340ab89ee39",
+      "record_sha256": "7ad00de9677121c5f7701d617a3355927d772700d1c998a9ded12c672dd4b725",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -416598,7 +416702,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -416632,7 +416736,7 @@
     },
     {
       "paper_id": "pubmed-42376755",
-      "record_sha256": "3fa2496b242a2f1e2205b1d14929b68c4688ac792119c4165810ba7e8e8671a9",
+      "record_sha256": "95a3f92980147b3d5124defa80c49c2362c6be7764811ebd53854571bbf9d010",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -417295,7 +417399,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -417316,7 +417420,7 @@
     },
     {
       "paper_id": "pubmed-42377119",
-      "record_sha256": "c261a0683585757ff2f7f24ce9ae45aac6fb6335145f695acef1b0074aefc5c6",
+      "record_sha256": "507ec4987fda0e21d79407ba4aedabf9c8d5ee8aedb8501d649b8f63e6afed7a",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -417979,7 +418083,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -418000,7 +418104,7 @@
     },
     {
       "paper_id": "pubmed-42393830",
-      "record_sha256": "0ed4c7efe4dc01b723366220cfba97827b8a521d2a76daa1103e425b38058406",
+      "record_sha256": "d3fe7c9ae30899f3177340808a16abaea632bfc14d26a71c93384caaf19d417d",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -418663,7 +418767,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -418775,7 +418879,7 @@
     },
     {
       "paper_id": "pubmed-42393838",
-      "record_sha256": "e2b5d0a524a0f7b878c7a554dc8b0ca54c52fb66a58acb5a1e9f8124dd5d8450",
+      "record_sha256": "5573b5adb40725118958e5ca6eb204d013ff0bc91194c421d848f4f80b93a7b7",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -419438,7 +419542,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -419563,7 +419667,7 @@
     },
     {
       "paper_id": "pubmed-42411636",
-      "record_sha256": "69e72b979d09272dffc20ce581c9f75c81cf1de430e6571e7850a7b62c050b23",
+      "record_sha256": "40057d43b739cd40f1fa0e4045f1683c8ea406b8510ab05980c19ab128782b6b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -420226,7 +420330,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -420403,7 +420507,7 @@
     },
     {
       "paper_id": "pubmed-42421228",
-      "record_sha256": "7cf9d49a52a2e085a7e843816d279de800e2807477a6a95ac2db97cf919ba4ce",
+      "record_sha256": "cba436773e48eb367edf8778b7adbc3f18366826f57002223cd2e14737d542e5",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -421066,7 +421170,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -421113,7 +421217,7 @@
     },
     {
       "paper_id": "pubmed-42424525",
-      "record_sha256": "30dad0a6f12f72c5143bba6b863640ab53da5eb324a03b908e79de301626c7fc",
+      "record_sha256": "67967e17e1cd398013eeb23f9cf6610daa734f64d21ce62f1b6af9811e8d04a2",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -421776,7 +421880,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -422083,7 +422187,7 @@
     },
     {
       "paper_id": "pubmed-42430190",
-      "record_sha256": "94d5b6e6f1401a6361a24e80bed88be172c5111695edbb02dee7cce370f6a517",
+      "record_sha256": "4efbc1ac584cd1901e56c237a09adae611732c29a32bb4f850c89071335ce1b1",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -422746,7 +422850,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -422806,7 +422910,7 @@
     },
     {
       "paper_id": "pubmed-42441083",
-      "record_sha256": "ace936b5836df9a1f71eacf3edd421d57be828d263da717b9578af1302bd219f",
+      "record_sha256": "37faae5d1f34112224ff5d963cd73e342d8fd52a21c4976e2976b13c46abd88b",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -423469,7 +423573,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -423503,7 +423607,7 @@
     },
     {
       "paper_id": "pubmed-42454507",
-      "record_sha256": "fd6e44bfb86fa496bc5046d94c32588bc1b0e8721a1d8e2ced4e11f3026f1f54",
+      "record_sha256": "026fe0b7825f1eb7d0a503f6b2bee739ce32b7557593415ef6f9b6c9b0b99298",
       "semantic_scores": {
         "1st-dl2-international-workshop": 4,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 4,
@@ -424166,7 +424270,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -427122,7 +427226,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 27,
           "features": {
             "lexical_score": 0.35,
@@ -427138,7 +427242,7 @@
     },
     {
       "paper_id": "pubmed-42476202",
-      "record_sha256": "69537ded8f30d777b394eb93f999dca07737679bb5edab5aec744aa7c2bcebfc",
+      "record_sha256": "635f44364fcc150dbe46c2361cfce3c70106dd08966e00544e3efa0a64e8c1da",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -427801,7 +427905,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -427835,7 +427939,7 @@
     },
     {
       "paper_id": "pubmed-42502958",
-      "record_sha256": "fde1b7a31ede92d48b595cb862aef260762b6a43f6ed673d3e34c46b3624b15d",
+      "record_sha256": "4a4377339847711f1c06afa71b128424ef75d7ef7e0c81431b69ec6d887b2112",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -428498,7 +428602,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -428610,7 +428714,7 @@
     },
     {
       "paper_id": "pubmed-42518517",
-      "record_sha256": "2421513a8ab53aadb307ea9cdcdf20f300fc550d11d1f006418786df7ef1b6c6",
+      "record_sha256": "08e151c322277042b325a4b864edf037892f1e81450f3d46dbed76ace56bf902",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -429273,7 +429377,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -431569,7 +431673,7 @@
     },
     {
       "paper_id": "pubmed-42522093",
-      "record_sha256": "65f5a6b7f4a0a949decb99d1ee992d632f7f3a39da723974c934d4515f720186",
+      "record_sha256": "20ff439ac6ffab0ca208a2023134067194656f906b863163e1307c55ec0ccb02",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -432232,7 +432336,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -432253,7 +432357,7 @@
     },
     {
       "paper_id": "pubmed-42522137",
-      "record_sha256": "7d6b2a2f11965798c23acdbfe28d41729a008209ecaa82c6395cc8e14667fe66",
+      "record_sha256": "a249075a41f3dc42cf44e0473951d68e46763260d97cc3fad4d97935c656cfcd",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -432916,7 +433020,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -433093,7 +433197,7 @@
     },
     {
       "paper_id": "pubmed-42524027",
-      "record_sha256": "eb6c22fc6655f1016c8e0e45f162b6d23cacf5425d0bacdeccc976a375ae8011",
+      "record_sha256": "abe9074cd765ec37f00a38e29e5588ccd4da7ed13e682bc9875f2bdfa893b840",
       "semantic_scores": {
         "1st-dl2-international-workshop": 6,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 17,
@@ -433756,7 +433860,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -436777,7 +436881,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 11,
           "features": {
             "lexical_score": 0.25,
@@ -436793,7 +436897,7 @@
     },
     {
       "paper_id": "pubmed-42525450",
-      "record_sha256": "9d4e9b98f260e37d171c8880c310f203ddc300d32fcf8bb58a54ae7c9ab6b98a",
+      "record_sha256": "e2df4993541ceff4d4a23f477e0a788947aa28b2780370ebe7b4bd5074280e7d",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -437456,7 +437560,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -437477,7 +437581,7 @@
     },
     {
       "paper_id": "pubmed-42530085",
-      "record_sha256": "e4603c53fb3b7710086c1fa948abedbf47294b334ee2c47035babeb0533f76ad",
+      "record_sha256": "942e74c5dfaf4fcafef8b2dc2a24b6dcd0d687eb48d75060d12f9bb147952aed",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -438140,7 +438244,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -438187,7 +438291,7 @@
     },
     {
       "paper_id": "pubmed-42592018",
-      "record_sha256": "88d446ac382fb617ac1f6112ebd5806d7d3c950a3167b22da2c1604e544dd53e",
+      "record_sha256": "a2294b0b8741f29226839d9c3be3e4aff020e7f0da32a02834094d5c8ec4aaf3",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -438850,7 +438954,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -438897,7 +439001,7 @@
     },
     {
       "paper_id": "pubmed-42596076",
-      "record_sha256": "e6c67bb9885feb653433a4e30c1ac6be71dbc55d1e00626603e231946b180f5e",
+      "record_sha256": "0831664462fca4662b77ad9b22b54b845f9ac25128707a20f408fbca46cee20c",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -439560,7 +439664,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -439581,7 +439685,7 @@
     },
     {
       "paper_id": "pubmed-42602348",
-      "record_sha256": "258ef9829c86247489910e4b7d738e81f5f2a2f16374ad8b2135efb918e82464",
+      "record_sha256": "8edb247bbcf0bd33b221fd12c196a4bfcf0cea650e937cba2647f2efee349bf7",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -440244,7 +440348,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -440291,7 +440395,7 @@
     },
     {
       "paper_id": "pubmed-42609944",
-      "record_sha256": "437fd53f470376282696daf3015bee8ddcbcfcfa08c3e3f8867968ff080b2c4f",
+      "record_sha256": "bd5da29876285e0fb02b167093d0d8c5015f1392a56814ccf7757476339df61c",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 7,
@@ -440954,7 +441058,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
@@ -444157,7 +444261,7 @@
           }
         },
         {
-          "venue": "www-aideadlines-www",
+          "venue": "www",
           "base_score": 11,
           "features": {
             "lexical_score": 0.25,
@@ -444173,7 +444277,7 @@
     },
     {
       "paper_id": "pubmed-42621251",
-      "record_sha256": "1e16b6c34029f019d7a1843ee37d9671e180f46047e3f60237ba3f0f1c6f7ea6",
+      "record_sha256": "67ba53f19ee261e588a44452ce0f6796d34a19d15c4c18c065d7ae87ffa22bac",
       "semantic_scores": {
         "1st-dl2-international-workshop": 0,
         "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare": 0,
@@ -444836,7 +444940,7 @@
         "wowmom": 0,
         "wsdm": 0,
         "wsse-2026": 0,
-        "www-aideadlines-www": 0,
+        "www": 0,
         "xloop-2026": 0
       },
       "candidates": [
