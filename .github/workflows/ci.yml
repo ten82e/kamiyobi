@@ -41,6 +41,8 @@ jobs:
       - name: Install dependencies (with retry)
         run: |
           for i in 1 2 3; do npm ci && break || sleep 15; done
+      - name: Build real-data test fixture
+        run: node src/cli.ts build --out public --offline --no-embeddings --cache /tmp/kamiyobi-test-cache --now 2026-08-09T00:00:00Z
       - run: npm test
   offline-build:
     runs-on: ubuntu-latest

@@ -163,6 +163,12 @@ describe("CI contracts", () => {
     expect(String(reporter?.if)).toContain("github.event_name == 'workflow_dispatch'");
     expect(reporter?.needs).toEqual(required);
     expect(reporter?.permissions).toEqual({ contents: "read", statuses: "write" });
+    const integrationBuild = String(
+      step(value.jobs!["unit-integration-tests"]!, "Build real-data test fixture").run,
+    );
+    expect(integrationBuild).toContain("--out public");
+    expect(integrationBuild).toContain("--offline");
+    expect(integrationBuild).toContain("--no-embeddings");
     const report = String(step(reporter!, "Report required dispatch statuses").run);
     expect(report).toContain("'.[$context].result'");
     expect(report).toContain('if [ "$result" != success ]');
