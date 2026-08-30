@@ -1807,7 +1807,8 @@ conferences:
                 verifiedFields: [date]
                 rawExcerpt: 'Submission deadline August 15, 2026'
 
-  # 根拠: https://iharp.umbc.edu/polds26/ 「All PolDS submissions are due by August 15, 2026」
+  # 根拠: https://iharp.umbc.edu/polds26/ 「All PolDS submissions are due by
+  #   ~~August 15, 2026~~ August 24, 2026」(2026-08-30 再確認)。時刻・timezone は未掲載。
   # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集）。
   - key: polds-2026
     title: PolDS 2026
@@ -1821,7 +1822,7 @@ conferences:
         place: Riverside, CA, USA
         date_text: November 3, 2026
         deadlines:
-          - {kind: paper, label: Submission, date: '2026-08-15 23:59:00', tz: UTC}
+          - {kind: paper, label: Submission, date: '2026-08-24', precision: date-only}
 
   # 根拠: https://geoanomalies.github.io/ 「August 9, 2026 --> August 16, 2026」= 延長後
   # 2026-08-12 r.jina.ai 再確認: Paper ~~Aug 9~~ Aug 16 / Notification ~~Sep 11~~ Sep 14 /
@@ -2691,7 +2692,7 @@ conferences:
         # （公式 womeninhpc.org、2026-08-12 確認）。通知 9/9・受諾確認 10/2。
         # 注: 実際の収録は data/primary_overrides.yaml が優先（ここの deadline は影）。
         deadlines:
-        - {kind: paper, label: Application Deadline, date: '2026-08-21 23:59:00', tz: AoE}
+        - {kind: paper, label: Paper submission, date: '2026-08-21 23:59:00', tz: AoE}
         - {kind: notification, label: Application Notifications, date: '2026-09-09 23:59:00', tz: AoE}
 
   # 注: このキーは data/primary_overrides.yaml が優先（締切を変更するときはそちらを編集）。

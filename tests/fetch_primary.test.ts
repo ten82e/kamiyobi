@@ -215,6 +215,28 @@ describe("fetch-primary extraction", () => {
     expect(lines).toContain("Aug 16, 2026");
   });
 
+  it("ignores superseded dates in HTML deletion markup", () => {
+    const adapter = primaryAdapter("https://example.test/cfp");
+    expect(
+      adapter.extract(
+        "<p>All submissions are due by <del>August 15, 2026</del> August 24, 2026.</p>",
+        2026,
+      )[0]?.date,
+    ).toBe("2026-08-24");
+    expect(
+      adapter.extract(
+        '<p>Submission deadline <s class="previous-deadline">August 28</s> September 4, 2026, 11:59 PM AoE</p>',
+        2026,
+      )[0],
+    ).toMatchObject({ date: "2026-09-04", time: "23:59:00", tz: "AoE" });
+    expect(
+      adapter.extract(
+        "<li>Application deadline: <strike>August 14, 2026</strike> Extended! <strong>August 21, 2026</strong></li>",
+        2026,
+      )[0]?.date,
+    ).toBe("2026-08-21");
+  });
+
   it("to_lines decodes decimal and hex numeric character references and entities", () => {
     const lines = toLines(
       "<p>Paper submission deadline:&#160;May&#8211;June &#x2013; August 16th, 2026 &ndash; &mdash; &apos;quoted&apos;</p>",

@@ -133,19 +133,18 @@ conferences:
         deadlines:
           - kind: paper
             label: Paper submission
-            date: '2026-08-15'
+            date: '2026-08-24'
             rawExcerpt: >-
-              All PolDS submissions are due by August 15, 2026 August 24, 2026.
-              Please see full Call for Papers section below for additional
-              details.
+              All PolDS submissions are due by August 24, 2026. Please see full
+              Call for Papers section below for additional details.
             adapter: generic-v1
             structured: false
             selectorOrField: deadline-text-window
             sourceUrl: https://iharp.umbc.edu/polds26/
-            sourceRevision: 1f0899971d1273f55302c403c06f885868c7a59158fd1eeff099ab5305f8469e
-            contentHash: 1f0899971d1273f55302c403c06f885868c7a59158fd1eeff099ab5305f8469e
-            retrievedAt: '2026-08-30T08:28:56.086Z'
-            verifiedAt: '2026-08-30T08:28:56.086Z'
+            sourceRevision: 52e1c8dd33dbf19432d6e7cbc8ef4d859cbb56abe12b2debbdaa3dd3b7d7250e
+            contentHash: 52e1c8dd33dbf19432d6e7cbc8ef4d859cbb56abe12b2debbdaa3dd3b7d7250e
+            retrievedAt: '2026-08-30T10:46:10.094Z'
+            verifiedAt: '2026-08-30T10:46:10.094Z'
     _comment: 一次ソース (https://iharp.umbc.edu/polds26/) から自動抽出 (2026-08-30)
   setta:
     editions:
@@ -173,15 +172,15 @@ conferences:
         deadlines:
           - kind: paper
             label: Paper submission
-            date: '2026-08-14'
-            rawExcerpt: 'Application deadline: August 14, 2026 Extended! August 21, 2026'
+            date: '2026-08-21'
+            rawExcerpt: 'Application deadline: Extended! August 21, 2026'
             adapter: generic-v1
             structured: false
             selectorOrField: deadline-text-window
             tz: AoE
             sourceUrl: https://womeninhpc.org/events/sc-2026-workshop
-            sourceRevision: 07472db8bd99111a670e3a3a9b249023664a3800d6db2953b34d06ba00c26081
-            contentHash: 07472db8bd99111a670e3a3a9b249023664a3800d6db2953b34d06ba00c26081
-            retrievedAt: '2026-08-30T08:28:58.932Z'
-            verifiedAt: '2026-08-30T08:28:58.932Z'
+            sourceRevision: 80ae5c9342ab355170d46d09b0904e9b3756a47f8b8fa148d810e00c7f9c7852
+            contentHash: 80ae5c9342ab355170d46d09b0904e9b3756a47f8b8fa148d810e00c7f9c7852
+            retrievedAt: '2026-08-30T10:46:10.973Z'
+            verifiedAt: '2026-08-30T10:46:10.973Z'
     _comment: 一次ソース (https://womeninhpc.org/events/sc-2026-workshop) から自動抽出 (2026-08-30)
