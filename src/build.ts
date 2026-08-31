@@ -479,6 +479,8 @@ export function toJson(
         ...(ed.estimate ? { estimate: { ...ed.estimate } } : {}),
         source: ed.source,
         ...(ed.identity ? { identity: ed.identity } : {}),
+        ...(ed.legacy_ids?.length ? { legacy_ids: [...ed.legacy_ids] } : {}),
+        ...(ed.event_date_precision ? { event_date_precision: ed.event_date_precision } : {}),
         deadlines: sortedDeadlines(ed).map((dl) => {
           const evidence = dl.evidence?.length
             ? dl.evidence.map((item) => ({ ...item }))
@@ -520,6 +522,12 @@ export function toJson(
             evidence,
             ...(dl.origins?.length ? { origins: dl.origins.map((origin) => ({ ...origin })) } : {}),
             ...(conflicts.length > 0 ? { conflicts } : {}),
+            ...(dl.superseded_deadlines?.length
+              ? {
+                  superseded_deadlines: dl.superseded_deadlines.map((item) => ({ ...item })),
+                }
+              : {}),
+            ...(dl.promotion_ref ? { promotion_ref: { ...dl.promotion_ref } } : {}),
             ...(dl.verification
               ? { verification: { ...dl.verification } }
               : reverificationEnabled && officialUrl
@@ -2378,6 +2386,7 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "    - year: integer, id: string（例 'sigcomm26'）, link: string, place: string",
     "    - date_text: string：上流の自由文の会期表記。構造化されていないことがある。",
     "    - event_start / event_end: string|null：'YYYY-MM-DD'。パース不能なら null。",
+    "    - event_date_precision: 'exact-range'|'single-day'|'month-only'|'not-announced'|'unverified'。状態判定用。存在時のみ。",
     "    - estimated: boolean：true は過去実績からの推定。実データではない。",
     "    - estimate: object|null：推定版の点推定・日付窓・根拠版・信頼度。確定版には無い。",
     "      window_start / window_end は表示用の日付範囲であり、公式締切ではない。",
@@ -2397,6 +2406,9 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "      - selection_rule: string：採用値を選んだ決定規則。",
     "      - evidence: array：source_name/source_url/observed_at/original_value/confidence。",
     "      - conflicts: array：採用しなかった候補値とその evidence（存在時のみ）。",
+    "      - superseded_deadlines: 公式更新・重複昇格で置き換えた旧値の履歴（存在時のみ）。",
+    "      - promotion_ref: 公式証拠付き昇格の batch/resolution 参照（存在時のみ）。",
+    "      - verification: 公式ページ再確認の永続状態（存在時のみ）。",
     "",
     "## 利用上の注意",
     "",

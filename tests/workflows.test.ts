@@ -83,6 +83,18 @@ describe("workflow separation", () => {
     expect(String(step(generated!, "Discover candidates").run)).toContain(
       "--candidate-out data/discovered_candidates.yaml",
     );
+    expect(String(step(generated!, "Discover candidates").run)).toContain(
+      "--archive-out data/discovered_candidates.archive.yaml",
+    );
+    expect(String(step(generated!, "Reverify due official deadlines").run)).toContain(
+      "--ledger data/verification-ledger.json",
+    );
+    expect(String(step(generated!, "Reverify due official deadlines").run)).toContain(
+      "--evidence data/evidence/blobs",
+    );
+    expect(String(step(generated!, "Build source data with refreshed verification").run)).toContain(
+      "--no-embeddings",
+    );
     expect(String(step(generated!, "Health gate").run)).toContain("--require-baseline");
     expect(String(step(generated!, "Summarize category changes").run)).toContain(
       "warning_identities: cur.warning_identities ?? []",

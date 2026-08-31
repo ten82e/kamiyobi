@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "2026-08-31-tsc-llm-service-ecosystems-2027",
   "observations": {
-    "sha256": "c35d23395c9c925ac08770e95340fc1c4bcbd43b88178f2c2894ba29d83a7e60"
+    "sha256": "7e4ae24a6f0e72f7f1247bb002d53e62d66a77ae2c16b9ddb46211c8c16ec311"
   },
   "resolutions": {
     "sha256": "6b9220413ffe8e5aebaa57e00309185a1d729266f2893892b44d0fd5ddab6bea"
@@ -12,7 +12,7 @@
   },
   "bodies": [
     {
-      "path": "bodies/8646e62b7b863709f586c7d12b76ce187fcdf1845049828bc421da61e6c389c7.body",
+      "path": "../../evidence/blobs/8646e62b7b863709f586c7d12b76ce187fcdf1845049828bc421da61e6c389c7.body",
       "sha256": "8646e62b7b863709f586c7d12b76ce187fcdf1845049828bc421da61e6c389c7"
     }
   ],

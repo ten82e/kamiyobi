@@ -1,0 +1,1628 @@
+{
+  "findings": [
+    {
+      "code": "CATEGORY_VOCABULARY_DIVERGENCE",
+      "venueId": "ai4s-2026",
+      "editionId": null,
+      "field": "categories",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ai4s-2026"
+        },
+        {
+          "source": "snapshot",
+          "path": "ai4s-2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ai4s-2026: category vocabulary diverges from title/full_name/scope; possible ai"
+    },
+    {
+      "code": "CATEGORY_VOCABULARY_DIVERGENCE",
+      "venueId": "geosearch-2026",
+      "editionId": null,
+      "field": "categories",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "geosearch-2026"
+        },
+        {
+          "source": "snapshot",
+          "path": "geosearch-2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: geosearch-2026: category vocabulary diverges from title/full_name/scope; possible db"
+    },
+    {
+      "code": "CATEGORY_VOCABULARY_DIVERGENCE",
+      "venueId": "hipeac",
+      "editionId": null,
+      "field": "categories",
+      "locations": [
+        {
+          "source": "snapshot",
+          "path": "hipeac"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "snapshot: hipeac: category vocabulary diverges from title/full_name/scope; possible hpc"
+    },
+    {
+      "code": "CATEGORY_VOCABULARY_DIVERGENCE",
+      "venueId": "hot-chips",
+      "editionId": null,
+      "field": "categories",
+      "locations": [
+        {
+          "source": "snapshot",
+          "path": "hot-chips"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "snapshot: hot-chips: category vocabulary diverges from title/full_name/scope; possible hpc"
+    },
+    {
+      "code": "CATEGORY_VOCABULARY_DIVERGENCE",
+      "venueId": "hpsr",
+      "editionId": null,
+      "field": "categories",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "hpsr"
+        },
+        {
+          "source": "snapshot",
+          "path": "hpsr"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: hpsr: category vocabulary diverges from title/full_name/scope; possible hpc"
+    },
+    {
+      "code": "CATEGORY_VOCABULARY_DIVERGENCE",
+      "venueId": "icdm",
+      "editionId": null,
+      "field": "categories",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "icdm"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: icdm: category vocabulary diverges from title/full_name/scope; possible db"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "admit-2026",
+      "editionId": "admit-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "admit-2026/admit-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: admit-2026/admit-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ai4scisci-2026",
+      "editionId": "ai4scisci-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ai4scisci-2026/ai4scisci-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ai4scisci-2026/ai4scisci-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "aila2027",
+      "editionId": "aila202727",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "aila2027/aila202727"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: aila2027/aila202727: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "aipe-2027",
+      "editionId": "aipe-202727",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "aipe-2027/aipe-202727"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: aipe-2027/aipe-202727: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "airc-2027",
+      "editionId": "airc-202727",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "airc-2027/airc-202727"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: airc-2027/airc-202727: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "bdaa-2026",
+      "editionId": "bdaa-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "bdaa-2026/bdaa-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: bdaa-2026/bdaa-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "cafcw-2026",
+      "editionId": "cafcw-2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "cafcw-2026/cafcw-2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: cafcw-2026/cafcw-2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "canopie-2026",
+      "editionId": "canopie-2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "canopie-2026/canopie-2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: canopie-2026/canopie-2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ccisc-2026",
+      "editionId": "ccisc-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ccisc-2026/ccisc-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ccisc-2026/ccisc-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "cocoa",
+      "editionId": "cocoa2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "cocoa/cocoa2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: cocoa/cocoa2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "cogfintech-2026",
+      "editionId": "cogfintech-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "cogfintech-2026/cogfintech-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: cogfintech-2026/cogfintech-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "compsac",
+      "editionId": "compsac27",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "compsac/compsac27"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: compsac/compsac27: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "copa-2026",
+      "editionId": "copa-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "copa-2026/copa-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: copa-2026/copa-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "csai-2026",
+      "editionId": "csai-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "csai-2026/csai-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: csai-2026/csai-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "cvm",
+      "editionId": "cvm27",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "cvm/cvm27"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: cvm/cvm27: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "dml-icc-2026",
+      "editionId": "dml-icc-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "dml-icc-2026/dml-icc-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: dml-icc-2026/dml-icc-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "eaai-27",
+      "editionId": "eaai-2727",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "eaai-27/eaai-2727"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: eaai-27/eaai-2727: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "eecr-2027",
+      "editionId": "eecr-202727",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "eecr-2027/eecr-202727"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: eecr-2027/eecr-202727: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "evomusart-2027",
+      "editionId": "evomusart-202727",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "evomusart-2027/evomusart-202727"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: evomusart-2027/evomusart-202727: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ftxs-2026",
+      "editionId": "ftxs26",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ftxs-2026/ftxs26"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ftxs-2026/ftxs26: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "gcetai26",
+      "editionId": "gcetai2626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "gcetai26/gcetai2626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: gcetai26/gcetai2626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "geoai-2026",
+      "editionId": "geoai2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "geoai-2026/geoai2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: geoai-2026/geoai2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "geoanomalies-2026",
+      "editionId": "geoanomalies2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "geoanomalies-2026/geoanomalies2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: geoanomalies-2026/geoanomalies2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "geoindustry-2026",
+      "editionId": "geoindustry2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "geoindustry-2026/geoindustry2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: geoindustry-2026/geoindustry2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "geosearch-2026",
+      "editionId": "geosearch2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "geosearch-2026/geosearch2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: geosearch-2026/geosearch2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "geosim-2026",
+      "editionId": "geosim2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "geosim-2026/geosim2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: geosim-2026/geosim2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "greenai2027",
+      "editionId": "greenai202727",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "greenai2027/greenai202727"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: greenai2027/greenai202727: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "h2rc-2026",
+      "editionId": "h2rc26",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "h2rc-2026/h2rc26"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: h2rc-2026/h2rc26: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "hoti",
+      "editionId": "hoti26",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "hoti/hoti26"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: hoti/hoti26: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "hotsec",
+      "editionId": "hotsec21",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "snapshot",
+          "path": "hotsec/hotsec21"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "snapshot: hotsec/hotsec21: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "hpc-oda-2026",
+      "editionId": "hpc-oda-2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "hpc-oda-2026/hpc-oda-2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: hpc-oda-2026/hpc-oda-2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "humob-2026",
+      "editionId": "humob2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "humob-2026/humob2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: humob-2026/humob2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "hust-26-2026",
+      "editionId": "hust26",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "hust-26-2026/hust26"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: hust-26-2026/hust26: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "icai-2026",
+      "editionId": "icai-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "icai-2026/icai-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: icai-2026/icai-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "icaibd-2027",
+      "editionId": "icaibd-202727",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "icaibd-2027/icaibd-202727"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: icaibd-2027/icaibd-202727: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "icaid-2027",
+      "editionId": "icaid-202727",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "icaid-2027/icaid-202727"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: icaid-2027/icaid-202727: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "icaie-2026",
+      "editionId": "icaie-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "icaie-2026/icaie-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: icaie-2026/icaie-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "icaisg-2026",
+      "editionId": "icaisg-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "icaisg-2026/icaisg-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: icaisg-2026/icaisg-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "icara-2027",
+      "editionId": "icara-202727",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "icara-2027/icara-202727"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: icara-2027/icara-202727: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "icbdaia27",
+      "editionId": "icbdaia2727",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "icbdaia27/icbdaia2727"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: icbdaia27/icbdaia2727: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "icccbda-2027",
+      "editionId": "icccbda-202727",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "icccbda-2027/icccbda-202727"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: icccbda-2027/icccbda-202727: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "iccr-2026",
+      "editionId": "iccr-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "iccr-2026/iccr-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: iccr-2026/iccr-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "iccre-2027",
+      "editionId": "iccre-202727",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "iccre-2027/iccre-202727"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: iccre-2027/iccre-202727: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "icdiacs-2026",
+      "editionId": "icdiacs-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "icdiacs-2026/icdiacs-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: icdiacs-2026/icdiacs-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "icdm",
+      "editionId": "icdm26",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "icdm/icdm26"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: icdm/icdm26: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "icin",
+      "editionId": "icin2027",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "icin/icin2027"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: icin/icin2027: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "icst",
+      "editionId": "icst27",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "icst/icst27"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: icst/icst27: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ictdse2026",
+      "editionId": "ictdse202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ictdse2026/ictdse202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ictdse2026/ictdse202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "icvrv",
+      "editionId": "icvrv26",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "icvrv/icvrv26"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: icvrv/icvrv26: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ieee-aiot-2026",
+      "editionId": "ieee-aiot-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ieee-aiot-2026/ieee-aiot-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ieee-aiot-2026/ieee-aiot-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ieee-risc",
+      "editionId": "risc2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ieee-risc/risc2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ieee-risc/risc2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ieee-tps",
+      "editionId": "tps2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ieee-tps/tps2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ieee-tps/tps2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ieee-wsce-2026",
+      "editionId": "wsce2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ieee-wsce-2026/wsce2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ieee-wsce-2026/wsce2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ieeebc27",
+      "editionId": "ieeebc2727",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ieeebc27/ieeebc2727"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ieeebc27/ieeebc2727: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ieice-cpsy",
+      "editionId": "ieice-cpsy-2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ieice-cpsy/ieice-cpsy-2026"
+        },
+        {
+          "source": "snapshot",
+          "path": "ieice-cpsy/ieice-cpsy-2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ieice-cpsy/ieice-cpsy-2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ieice-cys",
+      "editionId": "ieice-cys-2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ieice-cys/ieice-cys-2026"
+        },
+        {
+          "source": "snapshot",
+          "path": "ieice-cys/ieice-cys-2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ieice-cys/ieice-cys-2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ieice-isec",
+      "editionId": "ieice-isec-2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ieice-isec/ieice-isec-2026"
+        },
+        {
+          "source": "snapshot",
+          "path": "ieice-isec/ieice-isec-2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ieice-isec/ieice-isec-2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ieice-nolta",
+      "editionId": "nolta2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ieice-nolta/nolta2026"
+        },
+        {
+          "source": "snapshot",
+          "path": "ieice-nolta/nolta2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ieice-nolta/nolta2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ieice-rcs",
+      "editionId": "ieice-rcs-2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ieice-rcs/ieice-rcs-2026"
+        },
+        {
+          "source": "snapshot",
+          "path": "ieice-rcs/ieice-rcs-2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ieice-rcs/ieice-rcs-2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ieice-sita",
+      "editionId": "sita2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ieice-sita/sita2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ieice-sita/sita2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ifs-27",
+      "editionId": "ifs-2727",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ifs-27/ifs-2727"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ifs-27/ifs-2727: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ipsj-css",
+      "editionId": "css2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ipsj-css/css2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ipsj-css/css2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ipsj-deim",
+      "editionId": "deim2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ipsj-deim/deim2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ipsj-deim/deim2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ipsj-dicomo",
+      "editionId": "dicomo2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ipsj-dicomo/dicomo2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ipsj-dicomo/dicomo2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ipsj-sigemb",
+      "editionId": "ipsj-emb-2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ipsj-sigemb/ipsj-emb-2026"
+        },
+        {
+          "source": "snapshot",
+          "path": "ipsj-sigemb/ipsj-emb-2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ipsj-sigemb/ipsj-emb-2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ipsj-sigkbs",
+      "editionId": "ipsj-kbs-2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ipsj-sigkbs/ipsj-kbs-2026"
+        },
+        {
+          "source": "snapshot",
+          "path": "ipsj-sigkbs/ipsj-kbs-2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ipsj-sigkbs/ipsj-kbs-2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ipsj-sigpro",
+      "editionId": "ipsj-pro-2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ipsj-sigpro/ipsj-pro-2026"
+        },
+        {
+          "source": "snapshot",
+          "path": "ipsj-sigpro/ipsj-pro-2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ipsj-sigpro/ipsj-pro-2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ipsj-sigse",
+      "editionId": "ipsj-se-2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ipsj-sigse/ipsj-se-2026"
+        },
+        {
+          "source": "snapshot",
+          "path": "ipsj-sigse/ipsj-se-2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ipsj-sigse/ipsj-se-2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ipsj-sigsec",
+      "editionId": "ipsj-csec-2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ipsj-sigsec/ipsj-csec-2026"
+        },
+        {
+          "source": "snapshot",
+          "path": "ipsj-sigsec/ipsj-csec-2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ipsj-sigsec/ipsj-csec-2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ipsj-sigubi",
+      "editionId": "ipsj-ubi-2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ipsj-sigubi/ipsj-ubi-2026"
+        },
+        {
+          "source": "snapshot",
+          "path": "ipsj-sigubi/ipsj-ubi-2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ipsj-sigubi/ipsj-ubi-2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ipsj-wiss",
+      "editionId": "wiss2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ipsj-wiss/wiss2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ipsj-wiss/wiss2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "isc-hpc",
+      "editionId": "isc27",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "isc-hpc/isc27"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: isc-hpc/isc27: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "istai26",
+      "editionId": "istai2626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "istai26/istai2626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: istai26/istai2626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "itcs",
+      "editionId": "itcs2027",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "itcs/itcs2027"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: itcs/itcs2027: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "jip",
+      "editionId": "jip-compsac2027-si",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "jip/jip-compsac2027-si"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: jip/jip-compsac2027-si: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "jvac2027",
+      "editionId": "jvac202727",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "jvac2027/jvac202727"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: jvac2027/jvac202727: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "llvm-hpc-2026",
+      "editionId": "llvm-hpc26",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "llvm-hpc-2026/llvm-hpc26"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: llvm-hpc-2026/llvm-hpc26: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "lpc",
+      "editionId": "lpc26",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "lpc/lpc26"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: lpc/lpc26: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "mdoa-2026",
+      "editionId": "mdoa-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "mdoa-2026/mdoa-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: mdoa-2026/mdoa-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "mirg-icair-2026",
+      "editionId": "mirg-icair-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "mirg-icair-2026/mirg-icair-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: mirg-icair-2026/mirg-icair-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "mlcc-2027",
+      "editionId": "mlcc-202727",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "mlcc-2027/mlcc-202727"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: mlcc-2027/mlcc-202727: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "netdev",
+      "editionId": "netdev-0x1a",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "netdev/netdev-0x1a"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: netdev/netdev-0x1a: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "nlp4call-2026",
+      "editionId": "nlp4call-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "nlp4call-2026/nlp4call-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: nlp4call-2026/nlp4call-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "oasis-ai-2026",
+      "editionId": "oasis-ai-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "oasis-ai-2026/oasis-ai-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: oasis-ai-2026/oasis-ai-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ocp-global-summit",
+      "editionId": "ocp-summit26",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ocp-global-summit/ocp-summit26"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ocp-global-summit/ocp-summit26: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "overrides:mmm",
+      "editionId": "2027",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "overrides",
+          "path": "overrides:mmm/2027"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "overrides: overrides:mmm/2027: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "p4-workshop",
+      "editionId": "p4ws26",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "p4-workshop/p4ws26"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: p4-workshop/p4ws26: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "pacificvis",
+      "editionId": "pacificvis27",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "pacificvis/pacificvis27"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: pacificvis/pacificvis27: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "parallel2026",
+      "editionId": "parallel202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "parallel2026/parallel202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: parallel2026/parallel202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "percom",
+      "editionId": "percom27",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "percom/percom27"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: percom/percom27: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "plsc-e-2026",
+      "editionId": "plsc-e-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "plsc-e-2026/plsc-e-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: plsc-e-2026/plsc-e-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "polds-2026",
+      "editionId": "polds2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "polds-2026/polds2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: polds-2026/polds2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "primary_overrides:setta",
+      "editionId": "2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "primary_overrides",
+          "path": "primary_overrides:setta/2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "primary_overrides: primary_overrides:setta/2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "qspatial-2026",
+      "editionId": "qspatial2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "qspatial-2026/qspatial2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: qspatial-2026/qspatial2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "resdis-2026",
+      "editionId": "resdis-2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "resdis-2026/resdis-2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: resdis-2026/resdis-2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "secitc",
+      "editionId": "secitc2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "secitc/secitc2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: secitc/secitc2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "securecomm",
+      "editionId": "securecomm27",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "securecomm/securecomm27"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: securecomm/securecomm27: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "slice-2026",
+      "editionId": "slice-202626",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "slice-2026/slice-202626"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: slice-2026/slice-202626: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "sls-optirob-2027",
+      "editionId": "sls-optirob-202727",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "sls-optirob-2027/sls-optirob-202727"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: sls-optirob-2027/sls-optirob-202727: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "spatialconnect-2026",
+      "editionId": "spatialconnect2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "spatialconnect-2026/spatialconnect2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: spatialconnect-2026/spatialconnect2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "ssr",
+      "editionId": "ssr2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "ssr/ssr2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: ssr/ssr2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "trustcom",
+      "editionId": "trustcom21",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "snapshot",
+          "path": "trustcom/trustcom21"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "snapshot: trustcom/trustcom21: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "urbanai-2026",
+      "editionId": "urbanai2026",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "urbanai-2026/urbanai2026"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: urbanai-2026/urbanai2026: event date text is not structured"
+    },
+    {
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "venueId": "whpc-2026",
+      "editionId": "whpc26",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "extra",
+          "path": "whpc-2026/whpc26"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "extra: whpc-2026/whpc26: event date text is not structured"
+    },
+    {
+      "code": "EVENT_RANGE_ANOMALY",
+      "venueId": "asplos",
+      "editionId": "asplos25",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "snapshot",
+          "path": "asplos/asplos25"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "snapshot: asplos/asplos25: event range exceeds 31 days"
+    },
+    {
+      "code": "EVENT_RANGE_ANOMALY",
+      "venueId": "eurosys",
+      "editionId": "eurosys2025",
+      "field": "event_date",
+      "locations": [
+        {
+          "source": "snapshot",
+          "path": "eurosys/eurosys2025"
+        }
+      ],
+      "status": "unreviewed",
+      "message": "snapshot: eurosys/eurosys2025: event range exceeds 31 days"
+    }
+  ]
+}

@@ -39,11 +39,17 @@ jobs:
       - name: Fetch primary sources
         run: node src/fetch-primary.ts --apply
       - name: Discover candidates
-        run: node src/cli.ts discover --candidate-out data/discovered_candidates.yaml
+        run: node src/cli.ts discover --candidate-out data/discovered_candidates.yaml --archive-out data/discovered_candidates.archive.yaml
       - name: Build source data
+        run: node src/cli.ts build --out public --no-embeddings --now "$BUILD_NOW"
+      - name: Reverify due official deadlines
+        run: node src/cli.ts reverify --due --data public/data.json --ledger data/verification-ledger.json --resolutions data/reverification-resolutions.json --evidence data/evidence/blobs --now "$BUILD_NOW"
+      - name: Build source data with refreshed verification
         run: node src/cli.ts build --out public --no-embeddings --now "$BUILD_NOW"
       - name: Validate generated production data
         run: npm run validate:data -- public/data.json --json
+      - name: Persist canonical data-quality findings
+        run: node scripts/validate-data.ts --write-findings --json > /tmp/kamiyobi-update/validator-findings.json
       - name: Health gate
         # 失敗時でも違反報告を書いて、後続の always() 診断 step が原因を残せるようにする。
         # 観測系 (warning・conflict) は committed observation baseline を比較源にする。
@@ -65,6 +71,10 @@ jobs:
           cp public/health.json /tmp/kamiyobi-update/health.json 2>/dev/null || true
           cp data/snapshot.json data/primary_overrides.yaml data/discovered_candidates.yaml \
             /tmp/kamiyobi-update/data/
+          for path in data/discovered_candidates.archive.yaml data/verification-ledger.json data/reverification-resolutions.json data/validator-findings.json; do
+            test -f "$path" && cp "$path" /tmp/kamiyobi-update/data/
+          done
+          if [ -d data/evidence ]; then cp -R data/evidence /tmp/kamiyobi-update/data/; fi
           mkdir -p /tmp/kamiyobi-update/baseline /tmp/kamiyobi-update/current
           cp /tmp/kamiyobi-baseline/data.json /tmp/kamiyobi-update/baseline/data.json 2>/dev/null || true
           cp /tmp/kamiyobi-baseline/health.json /tmp/kamiyobi-update/baseline/health.json 2>/dev/null || true
@@ -166,7 +176,7 @@ jobs:
           name: generated-update
           path: /tmp/kamiyobi-update
       - name: Restore generated data
-        run: cp /tmp/kamiyobi-update/data/* data/
+        run: cp -R /tmp/kamiyobi-update/data/. data/
       - name: Create or update guarded data PR
         id: write
         env:
@@ -196,8 +206,45 @@ jobs:
           snap_changed=$(node scripts/compare-head.ts data/snapshot.json)
           primary_changed=$(node scripts/compare-head.ts data/primary_overrides.yaml)
           candidate_changed=$(node scripts/compare-head.ts data/discovered_candidates.yaml)
+          archive_changed=0
+          if [ -f data/discovered_candidates.archive.yaml ]; then
+            if git cat-file -e "HEAD:data/discovered_candidates.archive.yaml" 2>/dev/null; then
+              archive_changed=$(node scripts/compare-head.ts data/discovered_candidates.archive.yaml)
+            else
+              archive_changed=1
+            fi
+          fi
+          ledger_changed=0
+          if [ -f data/verification-ledger.json ]; then
+            if git cat-file -e "HEAD:data/verification-ledger.json" 2>/dev/null; then
+              ledger_changed=$(node scripts/compare-head.ts data/verification-ledger.json)
+            else
+              ledger_changed=1
+            fi
+          fi
+          resolutions_changed=0
+          if [ -f data/reverification-resolutions.json ]; then
+            if git cat-file -e "HEAD:data/reverification-resolutions.json" 2>/dev/null; then
+              resolutions_changed=$(node scripts/compare-head.ts data/reverification-resolutions.json)
+            else
+              resolutions_changed=1
+            fi
+          fi
+          findings_changed=0
+          if [ -f data/validator-findings.json ]; then
+            if git cat-file -e "HEAD:data/validator-findings.json" 2>/dev/null; then
+              findings_changed=$(node scripts/compare-head.ts data/validator-findings.json)
+            else
+              findings_changed=1
+            fi
+          fi
           observation_changed=$(node scripts/compare-head.ts data/source-observation-baseline.json)
-          if [ "$snap_changed" != 1 ] && [ "$primary_changed" != 1 ] && [ "$candidate_changed" != 1 ] && [ "$observation_changed" != 1 ]; then
+          evidence_changed=0
+          if [ -d data/evidence ]; then
+            if ! git diff --quiet -- data/evidence; then evidence_changed=1; fi
+            if ! git ls-tree -r --name-only HEAD -- data/evidence | grep -q .; then evidence_changed=1; fi
+          fi
+          if [ "$snap_changed" != 1 ] && [ "$primary_changed" != 1 ] && [ "$candidate_changed" != 1 ] && [ "$archive_changed" != 1 ] && [ "$ledger_changed" != 1 ] && [ "$resolutions_changed" != 1 ] && [ "$findings_changed" != 1 ] && [ "$evidence_changed" != 1 ] && [ "$observation_changed" != 1 ]; then
             if [ -n "$pr_number" ]; then gh pr close "$pr_number"; fi
             if [ "$existing_branch" = true ]; then git push origin --delete "$branch"; fi
             exit 0
@@ -207,6 +254,11 @@ jobs:
           if [ "$snap_changed" = 1 ]; then git add data/snapshot.json; fi
           if [ "$primary_changed" = 1 ]; then git add data/primary_overrides.yaml; fi
           if [ "$candidate_changed" = 1 ]; then git add data/discovered_candidates.yaml; fi
+          if [ "$archive_changed" = 1 ]; then git add data/discovered_candidates.archive.yaml; fi
+          if [ "$ledger_changed" = 1 ]; then git add data/verification-ledger.json; fi
+          if [ "$resolutions_changed" = 1 ]; then git add data/reverification-resolutions.json; fi
+          if [ "$findings_changed" = 1 ]; then git add data/validator-findings.json; fi
+          if [ "$evidence_changed" = 1 ]; then git add data/evidence; fi
           # observed_at 更新だけでは stage しない (compare-head が除外)。診断内容の変化のみ commit。
           if [ "$observation_changed" = 1 ]; then git add data/source-observation-baseline.json; fi
           git config user.name 'github-actions[bot]'

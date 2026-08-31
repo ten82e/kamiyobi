@@ -9,11 +9,32 @@ type DevFixture = { records: DevRecord[] };
 type Candidate = { venue: string; base_score: number; features: Record<string, number> };
 type FeatureRecord = { paper_id: string; candidates: Candidate[] };
 type Features = { version: number; feature_schema: string[]; records: FeatureRecord[] };
-type Row = { x: number[]; y: number; paperId: string; venue: string; baseScore: number };
+export type RerankerTrainingRow = {
+  x: number[];
+  y: number;
+  paperId: string;
+  venue: string;
+  baseScore: number;
+  features: Record<string, number>;
+};
 type Model = { intercept: number; weights: number[] };
 const LAMBDAS = [0.01, 0.08, 0.2] as const;
 const BLENDS = [0.05, 0.15, 0.3, 0.5, 1] as const;
 const FOLDS = 5;
+export interface HardNegativeQuotas {
+  lexical: number;
+  semantic: number;
+  base: number;
+  category_confusable: number;
+  random: number;
+}
+export const HARD_NEGATIVE_QUOTAS = {
+  lexical: 25,
+  semantic: 25,
+  base: 25,
+  category_confusable: 15,
+  random: 10,
+} as const satisfies HardNegativeQuotas;
 /** sufficient 解禁条件: dev 上でこの精度が証明できるまで「十分な一致」は出さない。 */
 export const SUFFICIENT_POLICY = {
   min_precision: 0.8,
@@ -28,16 +49,141 @@ function sha(value: string | Uint8Array): string {
 function sigmoid(value: number): number {
   return 1 / (1 + Math.exp(-Math.max(-35, Math.min(35, value))));
 }
-/** Venue-family grouped fold assignment: same primary venue never spans train/test. */
+function numericFeature(row: RerankerTrainingRow, name: string): number {
+  const value = row.features[name];
+  return Number.isFinite(value) ? value : 0;
+}
+
+function deterministicRowOrder(left: RerankerTrainingRow, right: RerankerTrainingRow): number {
+  return left.venue.localeCompare(right.venue) || left.paperId.localeCompare(right.paperId);
+}
+
+function takeNegativeBucket(
+  source: readonly RerankerTrainingRow[],
+  selected: Set<string>,
+  count: number,
+  score: (row: RerankerTrainingRow) => number,
+  out: RerankerTrainingRow[],
+): void {
+  for (const row of [...source].sort(
+    (left, right) => score(right) - score(left) || deterministicRowOrder(left, right),
+  )) {
+    if (out.length >= count || selected.has(row.venue)) continue;
+    selected.add(row.venue);
+    out.push(row);
+  }
+}
+
+/**
+ * Pick a deterministic mixture of difficult negatives for one paper.
+ *
+ * The buckets are intentionally disjoint.  If the same venue is high in more
+ * than one signal it is assigned to the first bucket that still has capacity;
+ * the remaining slots continue down that signal's ranking.  This preserves
+ * the requested mix without training repeatedly on the same easy negative.
+ */
+export function selectHardNegatives(
+  negatives: readonly RerankerTrainingRow[],
+  quotas: HardNegativeQuotas = HARD_NEGATIVE_QUOTAS,
+): RerankerTrainingRow[] {
+  const unique = [
+    ...new Map(
+      [...negatives].sort(deterministicRowOrder).map((row) => [row.venue, row] as const),
+    ).values(),
+  ];
+  const selected = new Set<string>();
+  const out: RerankerTrainingRow[] = [];
+  takeNegativeBucket(
+    unique,
+    selected,
+    quotas.lexical,
+    (row) => numericFeature(row, "lexical_score"),
+    out,
+  );
+  takeNegativeBucket(
+    unique,
+    selected,
+    out.length + quotas.semantic,
+    (row) => numericFeature(row, "semantic_score"),
+    out,
+  );
+  takeNegativeBucket(unique, selected, out.length + quotas.base, (row) => row.baseScore, out);
+  takeNegativeBucket(
+    unique,
+    selected,
+    out.length + quotas.category_confusable,
+    (row) =>
+      numericFeature(row, "category_overlap") * 10 +
+      numericFeature(row, "lexical_score") +
+      numericFeature(row, "semantic_score"),
+    out,
+  );
+  takeNegativeBucket(
+    unique,
+    selected,
+    out.length + quotas.random,
+    (row) => Number.parseInt(sha(`${row.paperId}\0${row.venue}`).slice(0, 12), 16),
+    out,
+  );
+  return out.slice(
+    0,
+    quotas.lexical + quotas.semantic + quotas.base + quotas.category_confusable + quotas.random,
+  );
+}
+
+function sharedAcceptableVenue(left: DevRecord, right: DevRecord): boolean {
+  const rightVenues = new Set(right.acceptable_venues);
+  return left.acceptable_venues.some((venue) => rightVenues.has(venue));
+}
+
+/**
+ * Group papers by connected acceptable-venue components before assigning folds.
+ * This is stricter than primary-venue grouping: two papers with different
+ * primary labels but a shared acceptable venue cannot leak the same target
+ * series across train and evaluation.
+ */
 function familyFolds(dev: DevFixture): Map<string, number> {
-  const families = [
-    ...new Set(dev.records.map((record) => record.primary_venue ?? record.paper_id)),
-  ].sort();
+  const parent = new Map(dev.records.map((record) => [record.paper_id, record.paper_id]));
+  const find = (paperId: string): string => {
+    let root = parent.get(paperId) ?? paperId;
+    while (parent.get(root) !== root) {
+      root = parent.get(root)!;
+    }
+    let current = paperId;
+    while (parent.get(current) !== current) {
+      const next = parent.get(current)!;
+      parent.set(current, root);
+      current = next;
+    }
+    return root;
+  };
+  const union = (left: string, right: string): void => {
+    const leftRoot = find(left);
+    const rightRoot = find(right);
+    if (leftRoot !== rightRoot) parent.set(rightRoot, leftRoot);
+  };
+  for (let left = 0; left < dev.records.length; left++) {
+    for (let right = left + 1; right < dev.records.length; right++) {
+      if (sharedAcceptableVenue(dev.records[left]!, dev.records[right]!))
+        union(dev.records[left]!.paper_id, dev.records[right]!.paper_id);
+    }
+  }
+  const components = new Map<string, string[]>();
+  for (const record of dev.records) {
+    const root = find(record.paper_id);
+    components.set(root, [...(components.get(root) ?? []), record.paper_id]);
+  }
   const assignment = new Map<string, number>();
-  for (const [index, family] of families.entries()) assignment.set(family, index % FOLDS);
+  for (const [index, paperIds] of [...components.values()]
+    .map((ids) => ids.sort())
+    .sort((left, right) => left[0]!.localeCompare(right[0]!))
+    .entries()) {
+    for (const paperId of paperIds) assignment.set(paperId, index % FOLDS);
+  }
   return assignment;
 }
-function trainLinear(rows: Row[], lambda: number): Model {
+
+function trainLinear(rows: RerankerTrainingRow[], lambda: number): Model {
   const weights = Array(RERANKER_FEATURE_SCHEMA.length).fill(0);
   let intercept = 0;
   const positives = rows.filter((row) => row.y === 1).length;
@@ -64,12 +210,12 @@ function trainLinear(rows: Row[], lambda: number): Model {
   }
   return { intercept, weights };
 }
-function pairwiseRows(rows: Row[]): Row[] {
-  const out: Row[] = [];
+function pairwiseRows(rows: RerankerTrainingRow[]): RerankerTrainingRow[] {
+  const out: RerankerTrainingRow[] = [];
   for (const paperId of new Set(rows.map((row) => row.paperId))) {
     const group = rows.filter((row) => row.paperId === paperId);
     const positives = group.filter((row) => row.y === 1);
-    const negatives = group.filter((row) => row.y === 0).slice(0, 100);
+    const negatives = selectHardNegatives(group.filter((row) => row.y === 0));
     for (const positive of positives) {
       for (const negative of negatives) {
         const difference = positive.x.map((value, index) => value - negative.x[index]);
@@ -80,14 +226,14 @@ function pairwiseRows(rows: Row[]): Row[] {
   }
   return out;
 }
-function modelLogit(model: Model, row: Row): number {
+function modelLogit(model: Model, row: RerankerTrainingRow): number {
   return model.intercept + weights_dot(model.weights, row.x);
 }
 function weights_dot(weights: number[], x: number[]): number {
   return x.reduce((sum, value, index) => sum + value * weights[index], 0);
 }
 function rankMetrics(
-  rows: Row[],
+  rows: RerankerTrainingRow[],
   predictions: Map<string, number>,
   blend: number,
 ): { mrr: number; recall5: number; top: Array<{ probability: number; correct: boolean }> } {
@@ -277,7 +423,7 @@ function main(argv = process.argv.slice(2)): void {
   const acceptable = new Map(
     dev.records.map((record) => [record.paper_id, record.acceptable_venues]),
   );
-  const rows: Row[] = selectedFeatures.flatMap((record) =>
+  const rows: RerankerTrainingRow[] = selectedFeatures.flatMap((record) =>
     record.candidates.map((candidate) => {
       if (Object.keys(candidate.features).join("\0") !== RERANKER_FEATURE_SCHEMA.join("\0"))
         throw new Error(`candidate feature schema mismatch: ${record.paper_id}/${candidate.venue}`);
@@ -287,17 +433,12 @@ function main(argv = process.argv.slice(2)): void {
         y: acceptable.get(record.paper_id)?.includes(candidate.venue) ? 1 : 0,
         x: RERANKER_FEATURE_SCHEMA.map((name) => candidate.features[name]),
         baseScore: candidate.base_score,
+        features: { ...candidate.features },
       };
     }),
   );
-  // Grouped CV: papers sharing a primary venue stay in the same fold.
-  const foldOfPaper = new Map<string, number>();
-  for (const [family, fold] of familyFolds(dev)) {
-    for (const record of dev.records) {
-      if ((record.primary_venue ?? record.paper_id) === family)
-        foldOfPaper.set(record.paper_id, fold);
-    }
-  }
+  // Grouped CV: papers sharing any acceptable venue stay in the same fold.
+  const foldOfPaper = familyFolds(dev);
   const trials: Array<{
     lambda: number;
     blend: number;
@@ -358,7 +499,7 @@ function main(argv = process.argv.slice(2)): void {
     coefficient_source: "trained",
     selected_on: "real-paper-dev",
     selection_metric: "dev-oof-mrr-then-recall-at-5",
-    algorithm_revision: "l2-pairwise-logistic-reranker-v3-grouped-cv",
+    algorithm_revision: "l2-pairwise-logistic-reranker-v4-hard-negative-mix",
     feature_schema: [...RERANKER_FEATURE_SCHEMA],
     training_data_hash: sha(devRaw),
     input_hashes: {
@@ -368,7 +509,10 @@ function main(argv = process.argv.slice(2)): void {
     },
     cv: {
       folds: FOLDS,
+      // Keep the old assignment field for artifact readers; grouping records the
+      // stricter acceptable-venue connected-component policy introduced in v4.
       assignment: "primary-venue-grouped-round-robin",
+      grouping: "acceptable-venue-connected-components-round-robin",
       dev_papers: devIds.size,
       selected_lambda: selected.lambda,
       selected_blend: selected.blend,
@@ -380,6 +524,10 @@ function main(argv = process.argv.slice(2)): void {
         mrr: Number(mrr.toFixed(8)),
         recall_at_5: Number(recall5.toFixed(8)),
       })),
+    },
+    negative_sampling: {
+      strategy: "disjoint-score-mix",
+      quotas: { ...HARD_NEGATIVE_QUOTAS },
     },
     calibration: {
       method: "platt",

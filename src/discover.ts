@@ -248,6 +248,35 @@ export interface Candidate {
 export const CANDIDATE_REGISTRY_SCHEMA = 2 as const;
 export const CANDIDATE_STALE_AFTER_DAYS = 90;
 
+/** The archive intentionally stores only a compact fingerprint and decision. */
+export const CANDIDATE_ARCHIVE_SCHEMA = 1 as const;
+
+export type CandidateArchiveReason =
+  | "expired"
+  | "out-of-scope"
+  | "already-registered"
+  | "no-official-evidence"
+  | "rejected"
+  | "superseded"
+  | "stale";
+
+export interface CandidateArchiveRecord {
+  fingerprint: string;
+  reason: CandidateArchiveReason;
+  last_checked_at: string;
+  source_url_hash: string;
+}
+
+export interface CandidateArchive {
+  schema: 1;
+  candidates: CandidateArchiveRecord[];
+}
+
+export interface CandidateQueueSplit {
+  active: CandidateRegistry;
+  archive: CandidateArchive;
+}
+
 const CANDIDATE_STATUSES = new Set<CandidateStatus>([
   "discovered",
   "reviewed",
@@ -333,6 +362,192 @@ function candidateId(candidate: Candidate): string {
     normalizedTitle: normalizeCandidateTitle(candidate.title || candidate.full_name),
     targetYear: candidateYear(candidate),
   });
+}
+
+const AGGREGATOR_HOSTS = new Set([
+  "wikicfp.com",
+  "www.wikicfp.com",
+  "dblp.org",
+  "www.dblp.org",
+  "dbworld.org",
+  "www.dbworld.org",
+  "listserv.acm.org",
+]);
+
+function urlHost(value: string): string {
+  try {
+    return new URL(value).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function candidateUrls(candidate: Candidate): string[] {
+  return [
+    candidate.link,
+    candidate.evidence_url,
+    ...(candidate.evidence ?? []).map((evidence) => evidence.source_url),
+  ].filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+}
+
+/** Whether discovery has a non-aggregator URL that a reviewer can inspect. */
+export function hasOfficialUrlCandidate(candidate: Candidate): boolean {
+  return candidateUrls(candidate).some((value) => {
+    const host = urlHost(value);
+    if (!host) return false;
+    return !AGGREGATOR_HOSTS.has(host) && !host.endsWith(".wikicfp.com");
+  });
+}
+
+/** Hash the source URL without retaining the URL in the archive. */
+export function candidateSourceUrlHash(candidate: Candidate): string {
+  return createHash("sha256")
+    .update(candidateUrls(candidate)[0] ?? "")
+    .digest("hex");
+}
+
+function registeredCandidate(candidate: Candidate, registeredKeys: Set<string>): boolean {
+  const key = slug(candidate.key);
+  const yearless = key.replace(/(?:[-_]?20\d{2}|[-_]?\d{2})$/, "");
+  return registeredKeys.has(key) || (yearless.length > 0 && registeredKeys.has(yearless));
+}
+
+function candidateDeadlineText(candidate: Candidate): string {
+  if (candidate.submission_deadline_text) return candidate.submission_deadline_text;
+  if (candidate.date_text) return candidate.date_text;
+  for (const deadline of candidate.deadlines) {
+    const record = deadline as Record<string, unknown>;
+    const value = record.date ?? record.utc ?? record.deadline;
+    if (typeof value === "string" && value.trim()) return value;
+  }
+  return "";
+}
+
+function archiveReason(
+  candidate: Candidate,
+  now: Date,
+  registeredKeys: Set<string>,
+): CandidateArchiveReason | null {
+  if (candidate.status === "accepted") return "already-registered";
+  if (candidate.status === "rejected") return "rejected";
+  if (candidate.status === "superseded") return "superseded";
+  if (candidate.status === "stale") return "stale";
+  if (registeredCandidate(candidate, registeredKeys)) return "already-registered";
+  const deadline = parseDeadlineText(candidateDeadlineText(candidate));
+  if (deadline && deadline.getTime() < now.getTime()) return "expired";
+  if (!hasOfficialUrlCandidate(candidate)) return "no-official-evidence";
+  return null;
+}
+
+function archiveRecord(
+  candidate: Candidate,
+  reason: CandidateArchiveReason,
+  checkedAt: string,
+): CandidateArchiveRecord {
+  return {
+    fingerprint: candidate.id ?? candidateId(candidate),
+    reason,
+    last_checked_at: checkedAt,
+    source_url_hash: candidateSourceUrlHash(candidate),
+  };
+}
+
+function archiveSort(left: CandidateArchiveRecord, right: CandidateArchiveRecord): number {
+  return left.fingerprint.localeCompare(right.fingerprint);
+}
+
+export function parseCandidateArchive(value: unknown): CandidateArchive {
+  if (typeof value !== "object" || value === null) {
+    return { schema: CANDIDATE_ARCHIVE_SCHEMA, candidates: [] };
+  }
+  const record = value as Record<string, unknown>;
+  const raw = Array.isArray(record.candidates)
+    ? record.candidates
+    : Array.isArray(record.archive)
+      ? record.archive
+      : [];
+  const candidates = raw
+    .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
+    .map((item) => ({
+      fingerprint: String(item.fingerprint ?? "").trim(),
+      reason: String(item.reason ?? "no-official-evidence") as CandidateArchiveReason,
+      last_checked_at: String(item.last_checked_at ?? ""),
+      source_url_hash: String(item.source_url_hash ?? ""),
+    }))
+    .filter(
+      (item): item is CandidateArchiveRecord =>
+        item.fingerprint.length > 0 &&
+        item.source_url_hash.length > 0 &&
+        [
+          "expired",
+          "out-of-scope",
+          "already-registered",
+          "no-official-evidence",
+          "rejected",
+          "superseded",
+          "stale",
+        ].includes(item.reason),
+    )
+    .sort(archiveSort);
+  return { schema: CANDIDATE_ARCHIVE_SCHEMA, candidates };
+}
+
+export function mergeCandidateArchive(
+  existing: CandidateArchive | null | undefined,
+  incoming: CandidateArchiveRecord[] | null | undefined,
+): CandidateArchive {
+  const byFingerprint = new Map<string, CandidateArchiveRecord>();
+  for (const record of existing?.candidates ?? []) byFingerprint.set(record.fingerprint, record);
+  for (const record of incoming ?? []) {
+    const previous = byFingerprint.get(record.fingerprint);
+    if (!previous || record.last_checked_at >= previous.last_checked_at)
+      byFingerprint.set(record.fingerprint, record);
+  }
+  return {
+    schema: CANDIDATE_ARCHIVE_SCHEMA,
+    candidates: [...byFingerprint.values()].sort(archiveSort),
+  };
+}
+
+export function formatCandidateArchive(archive: CandidateArchive | null | undefined): string {
+  return dumpYaml(
+    {
+      schema: CANDIDATE_ARCHIVE_SCHEMA,
+      candidates: [...(archive?.candidates ?? [])].sort(archiveSort),
+    },
+    { skipInvalid: true },
+  ) as string;
+}
+
+/** Split the discovery registry into a small review queue and a compact archive. */
+export function splitCandidateRegistry(
+  registry: CandidateRegistry | null | undefined,
+  now: Date = new Date(),
+  registeredKeys: Iterable<string> = [],
+): CandidateQueueSplit {
+  const safeNow = Number.isNaN(now.getTime()) ? new Date() : now;
+  const registered = new Set([...registeredKeys].map((key) => slug(String(key))));
+  const active: Candidate[] = [];
+  const archived: CandidateArchiveRecord[] = [];
+  for (const original of registry?.candidates ?? []) {
+    const candidate = recordCandidate(original);
+    const reason = archiveReason(candidate, safeNow, registered);
+    if (!reason) {
+      active.push(candidate);
+      continue;
+    }
+    archived.push(
+      archiveRecord(
+        candidate,
+        reason,
+        candidate.last_seen_at || candidate.discovered_at || safeNow.toISOString(),
+      ),
+    );
+  }
+  return {
+    active: { schema: CANDIDATE_REGISTRY_SCHEMA, candidates: active.sort(candidateSort) },
+    archive: { schema: CANDIDATE_ARCHIVE_SCHEMA, candidates: archived.sort(archiveSort) },
+  };
 }
 
 function parseStatus(value: unknown): CandidateStatus {

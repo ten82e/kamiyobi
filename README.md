@@ -76,14 +76,17 @@ node src/cli.ts discover --dry-run
 候補レジストリを永続化する場合:
 
 ```sh
-node src/cli.ts discover --candidate-out data/discovered_candidates.yaml
+node src/cli.ts discover --candidate-out data/discovered_candidates.yaml \
+  --archive-out data/discovered_candidates.archive.yaml
 ```
 
 `--out` は明示的に `extra.yaml` 互換の一時出力を作る場合だけ使う。
 旧互換出力を追記する `--append` は、候補レジストリの更新には使わない。
 `.github/workflows/update-data.yml` の候補探索処理が毎日これを実行し、
 `data/discovered_candidates.yaml` に既存レコードをマージする。レビュー済みの状態・メモ・
-初回発見時刻は維持され、再発見時は最終発見時刻と証拠だけが更新される。
+初回発見時刻は維持され、再発見時は最終発見時刻と証拠だけが更新される。期限切れ・収録済み・
+公式 URL のない候補は、本文を複製せず fingerprint、判定理由、確認日時、source URL hash だけを
+`data/discovered_candidates.archive.yaml`（`--archive-out` で変更可能）へ移し、通常の作業キューを小さく保つ。
 候補は公式サイトで裏取りするまで `extra.yaml` には昇格しない。
 探索対象を分野や年で絞るには `--categories`（例: `hpc,systems`）と
 `--min-year`（省略時は実行時の UTC 年）を使う。
@@ -97,12 +100,25 @@ node src/cli.ts review
 `--limit` で表示件数を絞り、`--candidates` で候補 YAML の場所を変えられる。
 候補の昇格（下記）の前に、ここで重複や怪しい候補を確認する。
 
+登録済みの公式締切を継続再確認するには、ビルド済みカタログに対して `reverify --due` を実行する。
+公式本文は SHA-256 の content-addressed blob として `data/evidence/blobs/` に一度だけ保存され、
+状態は `data/verification-ledger.json`、締切変更の提案は `data/reverification-resolutions.json` に残る。
+変更は live record へ自動上書きせず、旧値・新値・本文抜粋・公式 URL を確認してから反映する。
+
+```sh
+node src/cli.ts reverify --due --now 2026-08-31T00:00:00Z
+```
+
+`--data` で対象 `data.json`、`--ledger`、`--resolutions`、`--evidence` で保存先を差し替えられる。
+再確認で得た `verified` / `changed` / `source-unreachable` / `parser-failed` /
+`manual-required` は次回の build と詳細 drawer に反映される。
+
 **候補の昇格手順**（収録の裏取り原則: 締切は公式サイトで HTTP 確認できたもののみ）:
 
 1. `data/discovered_candidates.yaml` から気になる候補を選ぶ
 2. `scripts/observe-cfp.ts --url <公式URL> --body <保存先>` で公式ページの応答と本文を保存する。`--body` は必須
 3. 観測 JSON に会議・カテゴリのレビュー結果を付け、`scripts/verify-cfp.ts` で本文 hash、公式ドメイン、抽出値、取得版を検証する
-4. `scripts/promote-candidates.ts` で本文を同梱した manifest 付き batch を生成し、昇格された `extra.yaml` を確認する
+4. `scripts/promote-candidates.ts` で global evidence blob を参照する manifest 付き batch を生成し、昇格された `extra.yaml` を確認する（`--evidence` で保存先を変更可能）
 5. ビルドして収録されることを確認する
 
 ## 更新の仕組み
