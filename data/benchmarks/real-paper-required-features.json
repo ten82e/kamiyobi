@@ -23,7 +23,7 @@
     "generator": "src/bench-recommender.ts",
     "model": "Xenova/all-MiniLM-L6-v2",
     "revision": "751bff37182d3f1213fa05d7196b954e230abad9",
-    "runtime": "v24.20.0"
+    "runtime": "v26.8.1"
   },
   "profiles": {
     "dev": {
