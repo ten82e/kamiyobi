@@ -1,8 +1,8 @@
 # kamiyobi
 
-高性能計算・ネットワーク・システム・人工知能・セキュリティ・データベース・グラフィックス・HCI・理論の国際会議および穴場ワークショップ・ジャーナルについて、論文投稿の締切と開催日を全自動で探知・配信する。
-毎日 1 回自動で上流データを取得・自律探索し、JSON / CSV / Markdown と静的サイトを生成して GitHub Pages で公開する。
-サーバも外部サービスも使わず、GitHub の中だけで完結している。
+高性能計算・ネットワーク・システム・人工知能・セキュリティ・データベース・グラフィックス・HCI・理論の国際会議および穴場ワークショップ・ジャーナルについて、論文投稿の締切と開催日を収集・正規化する。
+上流データの取得、候補探索、ビルド、公開は必要なときに手動で行い、JSON / CSV / Markdown と静的サイトを生成する。
+生成した静的サイトは GitHub Pages で公開できる。
 
 公開先は https://ten82e.github.io/kamiyobi/ である。
 
@@ -30,7 +30,7 @@
 | `https://ten82e.github.io/kamiyobi/llms.txt` | 出力ファイルとデータの形を 1 枚にまとめた索引。まずここを読む |
 | `https://ten82e.github.io/kamiyobi/data.json` | 正規化済みの全データ。時刻確認済みの締切は UTC と AoE、日付のみ確認済みの締切は `local_date` と不確実性区間で表す |
 | `https://ten82e.github.io/kamiyobi/health.json` | 確定/推定締切、ソース失敗、警告数、カテゴリ件数、必須会議の健全性レポート |
-| `https://ten82e.github.io/kamiyobi/publish.json` | 公開成果物のハッシュ、`content_id` / `build_id`、元 commit、入力 hash、workflow run、build 時刻・Node 版・offline/cache 方針、`semantic_status`。公開物の再現元を示す |
+| `https://ten82e.github.io/kamiyobi/publish.json` | 公開成果物のハッシュ、`content_id` / `build_id`、元 commit、入力 hash、実行元、build 時刻・Node 版・offline/cache 方針、`semantic_status`。公開物の再現元を示す |
 
 他に、1 行 1 締切の平坦な表 [`data.csv`](https://ten82e.github.io/kamiyobi/data.csv) と、直近 180 日の締切と開催の表 `upcoming.md` がある。
 
@@ -81,9 +81,9 @@ node src/cli.ts discover --candidate-out data/discovered_candidates.yaml
 
 `--out` は明示的に `extra.yaml` 互換の一時出力を作る場合だけ使う。
 旧互換出力を追記する `--append` は、候補レジストリの更新には使わない。
-`.github/workflows/update-data.yml` の候補探索処理が毎日これを実行し、
-`data/discovered_candidates.yaml` に既存レコードをマージする。レビュー済みの状態・メモ・
-初回発見時刻は維持され、再発見時は最終発見時刻と証拠だけが更新される。
+候補レジストリはこのコマンドで更新する。`data/discovered_candidates.yaml` に既存レコードを
+マージし、レビュー済みの状態・メモ・初回発見時刻は維持する。再発見時は最終発見時刻と
+証拠だけが更新される。
 候補は公式サイトで裏取りするまで `extra.yaml` には昇格しない。
 探索対象を分野や年で絞るには `--categories`（例: `hpc,systems`）と
 `--min-year`（省略時は実行時の UTC 年）を使う。
@@ -107,7 +107,7 @@ node src/cli.ts review
 
 ## 更新の仕組み
 
-更新は手動で行う（CI/CD は 2026-08-31 に削除した）。
+更新は手動で行う。
 
 ```sh
 # 1. 上流を取得して正規化し、一次ソース観測を適用する

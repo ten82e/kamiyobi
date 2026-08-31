@@ -1169,8 +1169,7 @@ it("README documents every discover CLI flag (--categories/--min-year regression
   // #247: usage() の discover セクションは 5 つのオプション（--out / --categories /
   // --min-year / --dry-run / --append）を定義するが、README の探索セクションは
   // --dry-run / --out / --append しか記載しておらず、--categories と --min-year が
-  // 未記載だった（update-data.yml は --min-year 2026 を実際に使っている）。
-  // ここでは discover セクションの全 --flag が README に現れることを検証する
+  // 未記載だった。ここでは discover セクションの全 --flag が README に現れることを検証する
   // （#239 の build 版テストと同じパターンの discover 版）。
   const lines = usage().split("\n");
   const discStart = lines.findIndex((l) => l.trim().startsWith("discover "));
@@ -1546,8 +1545,7 @@ it("embeddingsStale は profile と manifest の不一致を再生成する", ()
 });
 
 it("offline build is reproducible from fixtures without live discovery", () => {
-  // CI/CD 削除 (2026-08-31) 後も、offline build が fixture + snapshot だけで
-  // 再現できることは build_golden の他テストでpinされている。
+  // offline build が fixture + snapshot だけで再現できることを確認する。
   // ここでは discover と build が分離されていることだけを確認する。
   const cli = readFileSync(join(REPO_ROOT, "src/cli.ts"), "utf8");
   expect(cli).toContain("discover");
@@ -1660,7 +1658,7 @@ function jsFunction(html: string, name: string): string {
 
 // filter() is extracted from the emitted module; provide only its explicit module dependencies.
 const FILTER_RUNTIME_STUBS = [
-  "let _lastIsJp = false, _lastLen = 0, semQuery = null, semEmbeddings = null;",
+  "let semQuery = null, semEmbeddings = null;",
   "const activeData = { conferences: [] };",
   "const Recommender = { parsePaperLines: (text) => text ? [{ title: text }] : [], hasJapanese: () => false, contentWordCount: () => 0, autoDetectCats: () => [], venueCategories: () => [], journalRows: () => [], pastRepresentatives: () => [], rankMatches: (pairs, rank) => pairs.includes(rank), venueRecommendations: (rows) => rows.map((row) => ({ row, boosted: false, match: null, availability: null, fit: { score: 10, lexicalScore: 10, label: '', lexicalRank: 0, semanticRank: 0, semanticScore: 0 } })), comparePapers: () => 0 };",
 ].join("\n");

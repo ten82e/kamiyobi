@@ -983,9 +983,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   let semState: SemanticStatus = "idle"; // idle | loading | ready | error（AI 状態の表示用）
   let semanticReason: string | null = null;
   const semProbeCache: Record<string, boolean> = {}; // model@revision -> probe compatibility
-  let _semLastText = ""; // 最後に埋め込み計算したテキスト（再計算判定用）
-  let _lastIsJp = false; // 直近の論文テキストが日本語か（合成比・閾値の表示用）
-  let _lastLen = 0; // 直近の論文テキストの内容語数（英語の合成比の適応用）
 
   function currentPaperText() {
     return valueElement("paperText").value;
@@ -998,7 +995,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function clearSemantic(nextState?: SemanticStatus) {
     semQuery = null;
     semEmbeddings = null;
-    _semLastText = "";
     Recommender.setPaperVecs(null);
     if (nextState) semState = nextState;
   }
@@ -1170,7 +1166,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
               // 論文個別ベクトル（max 類似度）は英語クエリのみ。
               // 日本語クエリは多言語モデルなので英語モデルの論文ベクトルを混ぜない。
               Recommender.setPaperVecs(isJp ? null : (bundle.paperVecs ?? null));
-              _semLastText = text;
               semState = "ready";
               render();
             })
@@ -1205,14 +1200,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       : pText
         ? [{ title: pText, keywords: "", venue: "" }]
         : [];
-    const isJp = Rec ? Rec.hasJapanese(pText) : false;
-    _lastIsJp = isJp;
-    _lastLen = Rec ? Rec.contentWordCount(pText) : 0;
 
     // 分野: 手動チップがあればそれで絞る。論文モードでチップが空なら絞らない
-    // （スコア順ソートで自然に候補が上位に来る。自動判定は表示用に留める）。
+    // （スコア順ソートで自然に候補が上位に来る）。
     const cats = state.cats;
-    const _autoCats = !cats.length && pLines.length && Rec ? Rec.autoDetectCats(pLines) : [];
     // 掲載先タグの属するカテゴリ（例: RTSS タグ → systems）。同カテゴリの会議を僅かにブースト
     const venueCats = pLines.length && Rec ? Rec.venueCategories(pLines, rows) : [];
 

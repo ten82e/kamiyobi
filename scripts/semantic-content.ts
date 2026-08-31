@@ -1,4 +1,4 @@
-/** CLI: print the semantic_content_id for the current tree (workflow reuse + seal share this).
+/** CLI: print the semantic_content_id for the current tree (bundle reuse + seal share this).
  * usage: node scripts/semantic-content.ts [data.json] [reranker.json]
  * profile hash は embeddings.ts の embeddingProfileHash と同一定義 (built data から計算)。 */
 import { createHash } from "node:crypto";

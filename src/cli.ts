@@ -740,7 +740,7 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
   console.log(
     `built ${stats.conferences} conferences / ${stats.editions} editions / ${stats.deadlines} deadlines / ${stats.events} events (${stats.estimated} estimated, ${stats.merged} merged) -> ${outdir}`,
   );
-  // Surface parse/fetch soft-warnings so CI logs and operators can see them.
+  // Surface parse/fetch soft-warnings so execution logs and operators can see them.
   const counts = warningCounts();
   if (Object.keys(counts).length > 0) {
     const top = Object.entries(counts)

@@ -923,7 +923,7 @@ export type RealPaperCoverage = "full" | "required";
 
 /** Frozen semantic production features.  The benchmark still performs lexical
  * retrieval and all ranking in the browser recommender; this file only replaces
- * remote model inference in required CI. */
+ * remote model inference in required checks. */
 export interface RequiredSemanticFeatures {
   version: 1;
   feature_schema: string[];

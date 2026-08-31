@@ -1008,7 +1008,7 @@ describe("venue recommendation fusion", () => {
     const model = JSON.parse(
       readFileSync(join(REPO_ROOT, "data", "recommender-reranker.json"), "utf8"),
     );
-    // 学習は full dev のみ。required-dev (CI 用 subset) を学習に使ってはいけない。
+    // 学習は full dev のみ。required-dev（短縮検査用 subset）を学習に使ってはいけない。
     expect(model.selected_on).toBe("real-paper-dev");
     expect(model.cv.assignment).toBe("primary-venue-grouped-round-robin");
     expect(model.cv.folds).toBeGreaterThanOrEqual(5);
@@ -1822,7 +1822,6 @@ describe.skipIf(!hasData)("real data integration", () => {
     // 論文モード: 未来締切 + 未来の無い会議の過去代表 + 常時受付ジャーナルを網羅し、
     // 会議単位に集約してスコア降順で並ぶ（網羅性を優先する設計）
     const data = JSON.parse(readFileSync(DATA_JSON, "utf8"));
-    const _DAY = 86400000;
     const rows: any[] = [];
     for (const c of data.conferences) {
       for (const ed of c.editions ?? []) {

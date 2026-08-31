@@ -12,7 +12,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { decode } from "html-entities";
 import { dump as dumpYaml, load as loadYaml } from "js-yaml";
-import { slug } from "./model.ts";
+import { monthOf, slug } from "./model.ts";
 
 const ROOT = join(import.meta.dirname, "..");
 
@@ -686,21 +686,6 @@ function validUtcDate(year: number, month: number, day: number): Date | null {
   return d;
 }
 
-const MONTHS_MAP: Record<string, number> = {
-  jan: 1,
-  feb: 2,
-  mar: 3,
-  apr: 4,
-  may: 5,
-  jun: 6,
-  jul: 7,
-  aug: 8,
-  sep: 9,
-  oct: 10,
-  nov: 11,
-  dec: 12,
-};
-
 interface FoundDate {
   index: number;
   isoDate: string;
@@ -743,9 +728,9 @@ export function extractDeadlinesFromText(
   while (true) {
     m = reMdy.exec(norm);
     if (!m) break;
-    const moKey = m[1].toLowerCase().slice(0, 3);
-    if (moKey in MONTHS_MAP) {
-      recordDate(m.index, Number(m[3]), MONTHS_MAP[moKey], Number(m[2]));
+    const month = monthOf(m[1].slice(0, 3));
+    if (month !== null) {
+      recordDate(m.index, Number(m[3]), month, Number(m[2]));
     }
   }
 
@@ -755,9 +740,9 @@ export function extractDeadlinesFromText(
   while (true) {
     m = reDmy.exec(norm);
     if (!m) break;
-    const moKey = m[2].toLowerCase().slice(0, 3);
-    if (moKey in MONTHS_MAP) {
-      recordDate(m.index, Number(m[3]), MONTHS_MAP[moKey], Number(m[1]));
+    const month = monthOf(m[2].slice(0, 3));
+    if (month !== null) {
+      recordDate(m.index, Number(m[3]), month, Number(m[1]));
     }
   }
 
@@ -902,9 +887,9 @@ export function parseDeadlineText(dateText: string): Date | null {
       norm,
     );
   if (m) {
-    const moKey = m[2].toLowerCase().slice(0, 3);
-    if (moKey in MONTHS_MAP) {
-      return validUtcDate(Number(m[3]), MONTHS_MAP[moKey], Number(m[1]));
+    const month = monthOf(m[2].slice(0, 3));
+    if (month !== null) {
+      return validUtcDate(Number(m[3]), month, Number(m[1]));
     }
   }
 
@@ -913,10 +898,10 @@ export function parseDeadlineText(dateText: string): Date | null {
     norm,
   );
   if (m) {
-    const moKey = m[1].toLowerCase().slice(0, 3);
-    if (moKey in MONTHS_MAP) {
+    const month = monthOf(m[1].slice(0, 3));
+    if (month !== null) {
       const year = m[3] ? Number(m[3]) : new Date().getUTCFullYear();
-      return validUtcDate(year, MONTHS_MAP[moKey], Number(m[2]));
+      return validUtcDate(year, month, Number(m[2]));
     }
   }
 

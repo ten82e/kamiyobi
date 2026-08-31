@@ -42,7 +42,7 @@ function buildPair(mutate?: (fixtureRoot: string) => void): {
   };
 }
 
-/** 現在の data から観測系 baseline を作る (update-data workflow と同じ内容)。 */
+/** 現在の data から観測系 baseline を作る。 */
 function observationOf(report: HealthReport): ObservationBaseline {
   const conflicts = report.identity_conflicts;
   return {
@@ -121,7 +121,7 @@ describe("update-data canary", () => {
   }, () => {
     const { baseline, current } = buildPair();
     // snapshot-fallback baseline では warning_codes が記録されないため、
-    // update-data workflow と同じく observation baseline を比較源にする。
+    // observation baseline を比較源にする。
     const observation = observationOf(baseline);
     const mutated = JSON.parse(JSON.stringify(current)) as HealthReport;
     mutated.warning_codes = {

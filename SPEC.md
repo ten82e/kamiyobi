@@ -2,8 +2,8 @@
 
 HPC・ネットワーク・システム・AI 系会議の投稿締切と開催日を、ローカルの CLI で
 収集・検査し、JSON / CSV / Markdown / 静的サイトとして公開する。
-サーバも外部サービスも使わない。日次自動更新の CI/CD は 2026-08-31 に削除した
-（`README.md` の「更新の仕組み」を参照）。
+上流データの取得、候補探索、ビルド、公開は手動で行う。手順は `README.md` の
+「更新の仕組み」に定める。
 
 この文書は実装の契約である。ここに書かれた型、関数シグネチャ、ファイル構成から逸脱しない。
 プロジェクト名は `kamiyobi` とする。
@@ -233,7 +233,7 @@ export function slug(title: string): string;
 | `DS/sec.yml` | SEC | ACM/IEEE Symposium on Edge Computing | `sec` |
 | `SC/sec.yml` | SEC | IFIP Information Security Conference | `sec-sc` |
 
-**新たな衝突が上流に生じたら CI を落とす。** `tests/merge.test.ts` で
+**新たな衝突が上流に生じたら検証を失敗させる。** `tests/merge.test.ts` で
 「同じ key を共有する会議が 0 件（sub 分割後）」を検査する。
 自動で `-{sub}` を付けて回避してはならない（既存 key が動いて識別子が変わり、
 公開データの識別子が変わる）。
@@ -762,48 +762,17 @@ conferences:
 
 ---
 
-## 6. 更新・配信（削除履歴）
+## 6. 更新・配信
 
-日次自動更新・Pages 自動配信の CI/CD（`update-data.yml` / `deploy.yml` / `nightly.yml` /
-`recommendation-bundle.yml` / `ci.yml`）は 2026-08-31 に削除した（ユーザー指示）。
+更新・配信は手動で行う。README.md の「更新の仕組み」に示す順序で、上流取得、候補探索、
+ビルド、データ検証、health gate を実行する。
 
-削除に伴う仕様の変更点:
-
-- `publish.json` の `workflow_run_id` はローカル実行では `null` になる（環境変数
-  `GITHUB_RUN_ID` が無いため）。schema 4 の型は `string | null` のまま変更しない。
-- `data/next-last-known-good-health.json` は手動更新のたびに `health-gate.ts` の
-  出力を保存して更新する（CI の artifact 経由ではもう来ない）。
-- nightly 実論文ベンチ（dev/heldout 全件）はローカルで
-  `node src/bench-recommender.ts` により実行する。
-- snapshot fallback / health gate / 意味検査の仕様は削除前と同一。CI が担っていた
-  検査は手動で同じコマンドを実行する（README.md「更新の仕組み」）。
-
-### （削除済み）日次 cron: 収集→検査→自動 PR 更新
-
-以下の機能は `update-data.yml` が担っていたが、削除により失われた:
-
-- 毎日 20:17 UTC の自動収集・自動 PR 作成/更新
-- 上流取得失敗時の snapshot 退避による継続生成
-- `workflow_dispatch` による手動再実行
-
-~~これらは手動更新手順（§README）で代替する。~~
-
-### （削除済み）main push 時の Pages 配信
-
-`deploy.yml` が担っていた以下の機能は削除により失われた:
-
-- main への push を契機とする自動再ビルド・health gate・Pages 配信
-- lexical-only フォールバック（bundle 不一致時）
-- build provenance の attest と `publish.json` への記録
-
-~~Pages への配信が必要なら、`public/` のビルド結果を手動でアップロードする。~~
-
-### （削除済み）PR/push の必須検査
-
-`ci.yml` が担っていた七つの job（typecheck / lint / unit-integration-tests /
-offline-build / validate-data / health-transition / recommendation-regression）は
-削除により失われた。検査コマンドは `npm run typecheck` / `npm run check` /
-`npm test` / `npm run validate:data` としてローカルで実行できる。
+- `publish.json` の `workflow_run_id` はローカル実行では `null` になる。schema 4 の型は
+  `string | null` のまま維持する。
+- `data/next-last-known-good-health.json` は更新のたびに `health-gate.ts` の出力を保存して
+  更新する。
+- 実論文ベンチ（dev / heldout 全件）は `node src/bench-recommender.ts` で実行する。
+- snapshot fallback、health gate、意味検査に合格した `public/` を配信先へ手動で反映する。
 
 ---
 
@@ -832,9 +801,8 @@ offline-build / validate-data / health-transition / recommendation-regression）
 - 絞り込み: カテゴリ / 締切種別 / ランク / フリーテキスト / 推定の表示切替 / 期間(7・30・90・180・全)。
   「締切直近 (7日以内)」プリセットは 7 日窓（`win=7d`）で動作する。
   絞り込み状態は URL のクエリに反映する（`replaceState` で履歴を汚さない）。
-- **サイト表は投稿締切のみ表示する。** 2026-08-10 の意図的な狭小化
-  （commit `c85fe0a`「投稿締切以外の機能を完全除去」）により、サイトの表は
-  投稿締切（`abstract`・`paper`。論文モードのみ常時受付ジャーナル `journal`）だけを描き、
+- **サイト表は投稿締切のみ表示する。** サイトの表は投稿締切（`abstract`・`paper`。
+  論文モードのみ常時受付ジャーナル `journal`）だけを描き、
   開催・採否通知・カメラレディ等の行は出さない（種別の絞り込みにも含めない）。
   開催日だけを持つ会議（ISC High Performance・HOTI・情報処理学会 HPC 研究会・
   P4 Workshop・Netdev・LPC など）がサイト表から消えるのは仕様であり、利用者は
@@ -902,7 +870,6 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 - ANCS の収録（2021 年以降開催されていない）。
 - README の締切テーブル自動更新（ビルドが手書きのファイルを書き換える設計を避ける。
   README からは `public/upcoming.md` へリンクする）。
-- 活動を偽装するハートビートコミット（§6 参照）。
 
 ---
 
@@ -939,22 +906,22 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 - candidate retrieval は lexical・semantic・union の Recall@50 と oracle reranker Recall@5 を分けて報告する。
 - 軽量線形 reranker は本番と同一の固定 feature schema から full dev (`real-paper-dev`) のみで
   L2 pairwise logistic を学習し、primary-venue grouped 5-fold CV で係数・blend を選択して
-  Platt 校正と confidence threshold を学習する。required-dev (CI 用 subset) を学習に使ってはならない。
+  Platt 校正と confidence threshold を学習する。required-dev（短縮検査用 subset）を学習に使ってはならない。
   `data/recommender-reranker.json` は training/input hash、CV、校正、閾値根拠を持ち、heldout は評価にだけ使う。
   `confidence_policy.sufficient_enabled` は dev OOF 上で precision ≥ 0.80・Wilson 95% LCB ≥ 0.65・
   coverage ≥ 0.10・positive ≥ 20 を満たすまで false であり、false の間 UI は
   「候補 / 情報不足」の2段階のみを表示する。
-- PR の必須検査は dev・heldout・negative の本番 semantic score と本番 reranker feature vector を固定した
+- 必須検査は dev・heldout・negative の本番 semantic score と本番 reranker feature vector を固定した
   `real-paper-required-features.json` を使う。frozen required 経路は manifest だけを決定的に検証し、
   pipeline、モデル cache、ネットワーク、埋め込み生成を一切使わず、lexical retrieval から Top-K まで本番経路を通す。
   候補Recall・oracle reranker・校正・MRR LCB・negative semantic false-positive abstentionを検査する。
   semantic bundle の seal には required gate と full real-paper benchmark の両方の合格が要る。
-  推薦内容が不変の push は封印済み bundle を再利用し、埋め込みモデルを読み込まない。
+  推薦内容が不変の更新では封印済み bundle を再利用し、埋め込みモデルを読み込まない。
   bundle manifest は公開 commit (`source_commit`) と生成元 commit (`bundle_origin_commit`) を分けて記録し、
   `semantic_content_id`・`required_gate`・`full_benchmark`・`embeddings_sha256` を持つ。
   復元側は現在の data から `semantic_content_id` を再計算して一致を要求し (公開 commit の一致は問わない)、
-  両 gate の `passed` も強制する。nightly は full benchmark の定期評価のみを行い、bundle を seal しない。
-- required と full はそれぞれ記録済みの回帰下限を持ち、heldout fused Recall@5 または negative abstention が下限を割れば失敗する。JSON レポートは Actions artifact に保存する。
+  両 gate の `passed` も強制する。
+- required と full はそれぞれ記録済みの回帰下限を持ち、heldout fused Recall@5 または negative abstention が下限を割れば失敗する。JSON レポートは検査結果としてファイルに保存する。
 
 ### 10.3 会議プロファイル拡充手順（`data/venue-profiles.json`）
 

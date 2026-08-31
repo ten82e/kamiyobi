@@ -1,9 +1,6 @@
 /**
  * ワークツリーの data ファイルと HEAD 版を「実質的な差」で比較する。
- * update-data.yml の writer が data/snapshot.json と
- * data/primary_overrides.yaml の両方について呼び、実質変更があるときだけ
- * コミットするために使う（SPEC.md §data/primary.yaml の「前回値維持」保証を
- * 成立させるため、生成物の永続化が必要）。
+ * 生成日時やコメントなどの運用メタデータを除外し、内容の変更だけを判定する。
  *
  * 使い方:
  *   node scripts/compare-head.ts data/snapshot.json

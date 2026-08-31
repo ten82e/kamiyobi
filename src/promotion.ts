@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve as resolvePath } from "node:path";
 import { dump as dumpYaml } from "js-yaml";
-import { asDate, parseInstant } from "./model.ts";
+import { asDate, cmpStr, monthOf, parseInstant } from "./model.ts";
 
 export type PromotionSourceClass = "official-cfp" | "publisher" | "curated-manual" | "aggregator";
 
@@ -136,10 +136,6 @@ const TIME = /^\d{2}:\d{2}(?::\d{2})?$/;
 const TITLE_YEAR = /\b(20\d{2})\b/;
 const SHA256 = /^[0-9a-f]{64}$/i;
 
-function cmp(a: string, b: string): number {
-  return a < b ? -1 : a > b ? 1 : 0;
-}
-
 function validDate(value: string): boolean {
   return DATE.test(value) && asDate(value) !== null;
 }
@@ -163,25 +159,10 @@ export function canonicalJson(value: unknown): string {
   if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null";
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
   return `{${Object.entries(value as Record<string, unknown>)
-    .sort(([a], [b]) => cmp(a, b))
+    .sort(([a], [b]) => cmpStr(a, b))
     .map(([key, item]) => `${JSON.stringify(key)}:${canonicalJson(item)}`)
     .join(",")}}`;
 }
-
-const MONTHS: Record<string, number> = {
-  jan: 1,
-  feb: 2,
-  mar: 3,
-  apr: 4,
-  may: 5,
-  jun: 6,
-  jul: 7,
-  aug: 8,
-  sep: 9,
-  oct: 10,
-  nov: 11,
-  dec: 12,
-};
 
 const DATE_PATTERNS = [
   /\b20\d{2}[-/]\d{1,2}[-/]\d{1,2}\b/g,
@@ -213,9 +194,9 @@ function extractedDate(text: string): { date: string; year: number } | null {
   const month = iso
     ? Number(iso[2])
     : monthFirst
-      ? MONTHS[monthFirst[1].slice(0, 3).toLowerCase()]
+      ? monthOf(monthFirst[1].slice(0, 3))
       : dayFirst
-        ? MONTHS[dayFirst[2].slice(0, 3).toLowerCase()]
+        ? monthOf(dayFirst[2].slice(0, 3))
         : japanese
           ? Number(japanese[2])
           : 0;
@@ -424,7 +405,7 @@ function ordered(values: string[] | undefined): string[] {
         })
         .filter(Boolean),
     ),
-  ].sort(cmp);
+  ].sort(cmpStr);
 }
 
 function httpUrl(value: string, field: string): URL {
@@ -1010,7 +991,7 @@ export function verifyBatch(
           : {}),
       });
     })
-    .sort((a, b) => cmp(a.candidate, b.candidate));
+    .sort((a, b) => cmpStr(a.candidate, b.candidate));
 }
 
 function extraFrom(resolutions: PromotionResolution[]): Record<string, unknown> {
@@ -1098,7 +1079,7 @@ export function writePromotionBatch(
     observations: { sha256: createHash("sha256").update(observationText).digest("hex") },
     resolutions: { sha256: createHash("sha256").update(resolutionText).digest("hex") },
     extra: { sha256: createHash("sha256").update(extraText).digest("hex") },
-    bodies: [...bodies.values()].sort((a, b) => cmp(a.path, b.path)),
+    bodies: [...bodies.values()].sort((a, b) => cmpStr(a.path, b.path)),
     decisions: Object.fromEntries(resolutions.map((item) => [item.candidate, item.decision])),
   };
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
