@@ -34,6 +34,29 @@ interface PaperRecord {
   venue?: string;
 }
 
+type VerificationStatus =
+  | "pending"
+  | "verified"
+  | "changed"
+  | "source-unreachable"
+  | "parser-failed"
+  | "manual-required";
+
+interface DeadlineEvidenceRecord {
+  sourceClass?: string;
+  sourceUrl?: string;
+  verifiedFields?: string[];
+}
+
+interface VerificationRecord {
+  official_url: string;
+  last_attempt_at: string | null;
+  last_verified_at: string | null;
+  next_check_at: string;
+  content_hash: string | null;
+  status: VerificationStatus;
+}
+
 interface DeadlineRecord {
   kind?: string;
   label?: string;
@@ -44,6 +67,8 @@ interface DeadlineRecord {
   latest_utc?: string;
   utc?: string | null;
   round?: number;
+  evidence?: DeadlineEvidenceRecord[];
+  verification?: VerificationRecord;
 }
 
 interface EditionRecord {
@@ -126,6 +151,24 @@ interface ScoreBreakdown {
   agg: SignalScores & { venueName?: number };
 }
 type Confidence = "sufficient" | "ambiguous" | "insufficient";
+export interface QueryConfidenceFeatures {
+  top1Score: number;
+  top2Score: number;
+  margin: number;
+  top5Entropy: number;
+  lexicalSemanticAgreement: boolean;
+  candidateCoverage: number;
+  inputHasAbstract: boolean;
+  inputTokenCount: number;
+}
+export interface QueryConfidence {
+  /** Query-level probabilities are diagnostic until independently calibrated. */
+  top1Probability: number;
+  top5Probability: number;
+  calibrated: false;
+  modelRevision: "query-confidence-heuristic-v1";
+  features: QueryConfidenceFeatures;
+}
 interface RecommendationOptions {
   venueCats?: string[];
   topN?: number;
@@ -157,6 +200,7 @@ interface RecommendationResult {
     probability: number;
     baseScore: number;
     rerankerFeatures: RerankerFeatures;
+    queryConfidence: QueryConfidence;
   };
   availability: Availability;
   match: ScoreBreakdown;
@@ -1481,6 +1525,73 @@ const Recommender = (() => {
     return 1 / (1 + Math.exp(-calibrated));
   }
 
+  function queryConfidenceFor(
+    lines: readonly PaperRecord[],
+    evidenceOrder: readonly RecommendationEntry[],
+    keys: readonly string[],
+    lexical: readonly RecommendationEntry[],
+    semantic: readonly RecommendationEntry[],
+    allCandidateCount: number,
+  ): QueryConfidence {
+    const scores = evidenceOrder.slice(0, 5).map((entry) => entry.evidenceStrength);
+    const top1Score = scores[0] ?? 0;
+    const top2Score = scores[1] ?? 0;
+    const total = scores.reduce((sum, score) => sum + Math.max(0, score), 0);
+    const entropy =
+      scores.length > 1 && total > 0
+        ? -scores.reduce((sum, score) => {
+            const probability = Math.max(0, score) / total;
+            return probability > 0 ? sum + probability * Math.log(probability) : sum;
+          }, 0) / Math.log(scores.length)
+        : 0;
+    const lexicalTop = lexical.find((entry) => entry.lexicalScore > 0);
+    const features: QueryConfidenceFeatures = {
+      top1Score,
+      top2Score,
+      margin: Math.max(0, top1Score - top2Score),
+      top5Entropy: Number(entropy.toFixed(6)),
+      lexicalSemanticAgreement: Boolean(
+        lexicalTop && semantic[0] && lexicalTop.key === semantic[0].key,
+      ),
+      candidateCoverage: allCandidateCount
+        ? Number((keys.length / allCandidateCount).toFixed(6))
+        : 0,
+      inputHasAbstract: lines.some((line) => Boolean(line.abstract?.trim())),
+      inputTokenCount: queryTokenCount(lines),
+    };
+    // This intentionally remains a transparent diagnostic prior.  It is not
+    // used for labels or ranking until query-level calibration is trained and
+    // passes the same precision gate as the candidate reranker.
+    const normalizedTokens = Math.min(features.inputTokenCount, 120) / 120;
+    const agreement = features.lexicalSemanticAgreement ? 1 : 0;
+    const top1Logit =
+      -2.4 +
+      features.top1Score * 0.018 +
+      features.margin * 0.035 +
+      agreement * 0.85 +
+      (features.inputHasAbstract ? 0.25 : 0) +
+      normalizedTokens * 0.45 +
+      features.candidateCoverage * 0.35 -
+      features.top5Entropy * 0.45;
+    const top5Logit =
+      -0.8 +
+      features.top1Score * 0.012 +
+      features.margin * 0.02 +
+      agreement * 0.9 +
+      (features.inputHasAbstract ? 0.35 : 0) +
+      normalizedTokens * 0.55 +
+      features.candidateCoverage * 0.3 -
+      features.top5Entropy * 0.35;
+    const probability = (logit: number): number => 1 / (1 + Math.exp(-logit));
+    return {
+      top1Probability: Number(probability(top1Logit).toFixed(6)),
+      top5Probability: Number(probability(top5Logit).toFixed(6)),
+      calibrated: false,
+      modelRevision: "query-confidence-heuristic-v1",
+      features,
+    };
+  }
+
   function confidenceState(evidenceStrength: number, margin: number): Confidence {
     if (!Number.isFinite(evidenceStrength) || evidenceStrength < CONFIDENCE_TOPIC_MIN)
       return "insufficient";
@@ -1596,6 +1707,14 @@ const Recommender = (() => {
       .map((key) => entries.find((entry) => entry.key === key))
       .filter((entry): entry is RecommendationEntry => entry !== undefined)
       .sort((a, b) => b.evidenceStrength - a.evidenceStrength || a.key.localeCompare(b.key));
+    const queryConfidence = queryConfidenceFor(
+      lines,
+      evidenceOrder,
+      keys,
+      lexical,
+      semantic,
+      entries.length,
+    );
     const topEvidence = evidenceOrder[0] ? evidenceOrder[0].evidenceStrength : 0;
     const secondEvidence = evidenceOrder[1] ? evidenceOrder[1].evidenceStrength : 0;
     const k = 60;
@@ -1655,6 +1774,7 @@ const Recommender = (() => {
             probability: Number(probability.toFixed(6)),
             baseScore: score,
             rerankerFeatures: features,
+            queryConfidence,
           },
           availability: availability(entry.row, safeNow),
           match: entry.match,
@@ -1898,6 +2018,14 @@ const Recommender = (() => {
       if (w.length > 3 && !STOPWORDS.has(w)) seen.add(w);
     });
     return seen.size;
+  }
+
+  function queryTokenCount(lines: readonly PaperRecord[]): number {
+    const tokens = paperText(lines[0] ?? { title: "" })
+      .concat(" ", lines.slice(1).map(paperText).join(" "))
+      .toLowerCase()
+      .match(/[\p{L}\p{N}][\p{L}\p{N}'-]*/gu);
+    return new Set(tokens ?? []).size;
   }
 
   /* 語彙スコアとセマンティックスコアの合成に使う語彙重み。

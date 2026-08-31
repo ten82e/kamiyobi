@@ -143,7 +143,8 @@ kamiyobi/
 │   ├── overrides.yaml           # 上流の訂正・別名・カテゴリ上書き
 │   ├── primary.yaml             # 一次ソース URL 一覧
 │   ├── primary_overrides.yaml   # 一次ソース抽出結果（自動）              [自動]
-│   ├── discovered_candidates.yaml # discover の既定出力
+│   ├── discovered_candidates.yaml # discover の active queue
+│   ├── discovered_candidates.archive.yaml # discover の compact archive
 │   ├── recommender-reranker.json # 軽量推薦 reranker の固定係数
 │   └── snapshot.json            # 生成物(コミットされる。上流障害時の退避) [自動]
 ├── src/
@@ -161,6 +162,7 @@ kamiyobi/
 │   ├── review-candidates.ts     # 候補レビュー支援
 │   ├── recommender-api.ts       # 推薦実行時処理の型境界
 │   ├── promotion.ts             # 候補昇格の観測・検証・決定
+│   ├── reverification.ts        # 永続 verification ledger と公式ページ再確認
 │   ├── embeddings.ts            # 埋め込み生成
 │   ├── bench-recommender.ts     # 推薦ベンチ
 │   ├── build.ts                 # JSON/CSV/MD/llms.txt/HTML 出力
@@ -211,7 +213,8 @@ export interface ExactDeadline extends DeadlineBase { precision?: "exact"; at_ut
 export interface DateOnlyDeadline extends DeadlineBase { precision: "date-only"; local_date: string; }
 export type Deadline = ExactDeadline | DateOnlyDeadline;
 export interface DeadlineEstimate { point_estimate: string; window_start: string; window_end: string; source_editions: number[]; method: "median-interval"; confidence: "low" | "medium"; }
-export interface Edition { year: number; edition_id: string; link: string; place: string; date_text: string; event_start: Date | null; event_end: Date | null; deadlines: Deadline[]; estimated: boolean; estimate?: DeadlineEstimate; source: string; }
+export type EventDatePrecision = "exact-range" | "single-day" | "month-only" | "not-announced" | "unverified";
+export interface Edition { year: number; edition_id: string; link: string; place: string; date_text: string; event_start: Date | null; event_end: Date | null; event_date_precision?: EventDatePrecision; deadlines: Deadline[]; estimated: boolean; estimate?: DeadlineEstimate; source: string; legacy_ids?: string[]; }
 export interface Conference { key: string; title: string; full_name: string; link: string; rank: Record<string, string>; dblp: string | null; upstream_sub: string | null; tags: string[]; categories: string[]; editions: Edition[]; sources: string[]; }
 ```
 
@@ -513,9 +516,15 @@ node --experimental-strip-types src/cli.ts build [--out public] [--config config
                               [--offline] [--now 2026-08-09T00:00:00Z] [--cache .cache]
                               [--no-embeddings]
 node --experimental-strip-types src/cli.ts discover [--out path] [--categories hpc,systems]
-                              [--candidate-out path] [--min-year year] [--dry-run] [--append]
+                              [--candidate-out path] [--archive-out path]
+                              [--min-year year] [--dry-run] [--append]
 node --experimental-strip-types src/cli.ts review [--candidates data/discovered_candidates.yaml]
                               [--limit 60] [--now 2026-08-09T00:00:00Z]
+node --experimental-strip-types src/cli.ts reverify --due [--data public/data.json]
+                              [--ledger data/verification-ledger.json]
+                              [--resolutions data/reverification-resolutions.json]
+                              [--evidence data/evidence/blobs]
+                              [--now 2026-08-31T00:00:00Z]
 ```
 
 `--offline` は「新規取得をせず、キャッシュ → snapshot の順で退避する」。
@@ -526,7 +535,13 @@ node --experimental-strip-types src/cli.ts review [--candidates data/discovered_
 （`2026-08-09`）は UTC 0 時とする。
 `--no-embeddings` は `embeddings.json` を書かない（テスト用・高速化）。
 `discover` は穴場の会議・ジャーナルを探索し、`review` は候補を締切昇順・重複・
-ハゲタカ会議の疑い付きで一覧する。
+ハゲタカ会議の疑い付きで一覧する。候補レジストリは未来の締切、レビュー可能な公式 URL を
+持つ active queue と、期限切れ・収録済み・公式根拠なし等を fingerprint と判定理由だけで保持する
+archive に分離する。`--archive-out` は archive の保存先を指定する。
+`reverify --due` は次回確認時刻に到達した公式ページを取得し、本文 hash と締切候補を
+永続 ledger へ記録する。締切変更は旧値・新値・本文抜粋・公式 URL を resolution として残し、
+自動で live record を上書きしない。`--data`、`--ledger`、`--resolutions`、`--evidence`、
+`--now` はそれぞれ入力カタログ、状態、変更提案、本文 blob、基準時刻を指定する。
 
 ---
 
@@ -558,7 +573,7 @@ node --experimental-strip-types src/cli.ts review [--candidates data/discovered_
 `source_failures`、`snapshot_fallback`、`build_input_mode`、観測時刻・観測鮮度、
 安定 warning code、identity conflict、`parse_warning_count`、カテゴリ別件数、
 必須会議の存在状態、および schema 2 の `deadline_refs` を持つ。各 ref の
-`deadline_id` は `venue|edition_id|kind|round|track` で、`exact` は `at_utc`、`date-only` は `local_date` に値を分離する。
+`deadline_id` は `venue|edition_id|kind|round|track` で、`exact` は `at_utc`、`date-only` は `local_date` に値を分離する。公式再確認の ledger では call ID を track のフォールバックに使う。
 直近の健全な公開結果との比較では、同一枠の延長は通し、公式根拠のない前倒しと
 根拠のない未来枠の消失だけを配信阻止対象とする。経過した締切の削除と推定値の増減では
 阻止しない。`deadline_refs` は現在未来の確定締切と短い lookback（14 日）に限る。
@@ -626,6 +641,12 @@ schema 4 は `source_commit`、`data_commit`、`workflow_run_id`、`dirty_worktr
 日付のみの締切は `precision: "date-only"`、`local_date: "YYYY-MM-DD"`、`earliest_utc`、`latest_utc`、`utc: null`、`aoe: null`、`tz_raw: null` として出力する。
 `earliest_utc` は UTC+14 における当日 00:00、`latest_utc` は UTC-12 における当日 23:59:59.999 を UTC で表した不確実性区間であり、公式締切時刻ではない。
 CSV では `deadline_precision` と `deadline_local_date` に同じ区別を保持する。
+
+開催日の `date_text` は表示用原文であり、状態判定には `event_date_precision` を使う。
+`event_date_precision` は `exact-range` / `single-day` / `month-only` / `not-announced` /
+`unverified` のいずれかである。`superseded_deadlines` は公式更新または重複昇格で置き換えた
+旧値の履歴、`promotion_ref` は公式証拠を含む昇格 batch と resolution への参照である。
+`verification` は公式 URL、試行・成功日時、次回確認日時、本文 hash、状態を持つ。
 
 ---
 
@@ -762,7 +783,7 @@ conferences:
 - `scripts/observe-cfp.ts` は `--body` を必須とし、取得先と最終 URL、HTTP 状態、応答ヘッダ、取得時刻、本文 SHA-256、parser version、本文抜粋、抽出候補、source revision、保存本文を一つの capture として記録する。
 - `scripts/verify-cfp.ts` は保存本文を再読して候補を再抽出し、本文 hash、抜粋、公式ドメイン、日付候補、取得時刻、前回 capture より新しい revision を検証する。capture 内の候補配列だけでは昇格できない。
 - 公式 CFP または出版社の capture が無い観測、本文と一致しない観測、会議レビューまたはカテゴリレビューが未完了の観測は昇格しない。
-- `scripts/promote-candidates.ts` は参照本文を batch の `bodies/` へコピーし、本文、observations、resolutions、昇格用 `extra.yaml` の SHA-256 と決定一覧を `manifest.json` に封印する。
+- `scripts/promote-candidates.ts` は参照本文を `data/evidence/blobs/<sha256>.body` の global content-addressed store へ保存し、同じ本文を batch 間で複製しない。本文、observations、resolutions、昇格用 `extra.yaml` の SHA-256 と決定一覧を `manifest.json` に封印する。既存 batch の `bodies/` 参照も検証可能なまま維持する。
 - 保存先は `data/promotions/<batch-id>/` とし、公開 manifest は各 batch manifest の SHA-256 を記録する。
 
 ---

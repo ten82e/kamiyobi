@@ -174,6 +174,10 @@ interface DeadlineBase {
   evidence?: DeadlineEvidence[];
   origins?: DeadlineOrigin[];
   conflicts?: DeadlineConflict[];
+  /** Older observed values kept for auditability after an official update. */
+  superseded_deadlines?: SupersededDeadline[];
+  /** Promotion evidence is the source of truth for curated additions. */
+  promotion_ref?: PromotionRef;
   selection_rule?: string;
   /** Optional re-verification tracking for curated deadlines. */
   verification?: VerificationState;
@@ -237,6 +241,21 @@ export interface DeadlineConflict {
   source: string;
   raw_value?: string;
   evidence?: DeadlineEvidence;
+}
+
+/** A previous deadline value retained instead of silently deleting history. */
+export interface SupersededDeadline {
+  value: string;
+  source: string;
+  status: "superseded";
+  supersededBy: string;
+  reason: "official-update" | "duplicate-promotion";
+}
+
+/** Stable link from a live deadline back to its promotion evidence bundle. */
+export interface PromotionRef {
+  batch: string;
+  resolution: string;
 }
 
 /** Tracks ongoing re-verification of curated deadlines against their official source. */
@@ -304,12 +323,29 @@ export interface VenueIdentity {
   sourceIds?: Record<string, string>;
 }
 
+/** Stable identity for a call, including workshops attached to a parent event. */
+export interface CallIdentity {
+  seriesId: string;
+  editionId: string;
+  callId: string;
+  parentEventId: string | null;
+}
+
+/** Precision of an edition's event date, separate from the display text. */
+export type EventDatePrecision =
+  | "exact-range"
+  | "single-day"
+  | "month-only"
+  | "not-announced"
+  | "unverified";
+
 /** Explicit edition identity supplements the legacy public `edition_id` field. */
 export interface EditionIdentity {
   editionId?: string;
   officialUrls?: string[];
   /** Identifiers are scoped to their upstream source and never cross-match by value alone. */
   sourceIds?: Record<string, string>;
+  callIdentity?: CallIdentity;
 }
 
 export interface Edition {
@@ -327,6 +363,9 @@ export interface Edition {
   estimate?: DeadlineEstimate;
   source: string;
   identity?: EditionIdentity;
+  /** Previous source-local edition IDs retained when a stable ID is introduced. */
+  legacy_ids?: string[];
+  event_date_precision?: EventDatePrecision;
 }
 
 export interface Conference {
@@ -1456,6 +1495,47 @@ function deadlineEstimateOf(value: unknown): DeadlineEstimate | undefined {
   };
 }
 
+const VERIFICATION_STATUSES = new Set<VerificationState["status"]>([
+  "pending",
+  "verified",
+  "changed",
+  "source-unreachable",
+  "parser-failed",
+  "manual-required",
+]);
+
+function verificationOf(value: unknown): VerificationState | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const raw = value as Record<string, unknown>;
+  const officialUrl = String(raw.official_url ?? raw.officialUrl ?? "").trim();
+  const nextCheckAt = String(raw.next_check_at ?? raw.nextCheckAt ?? "").trim();
+  const status = String(raw.status ?? "");
+  if (
+    !officialUrl ||
+    !nextCheckAt ||
+    !VERIFICATION_STATUSES.has(status as VerificationState["status"])
+  ) {
+    return undefined;
+  }
+  const optionalTimestamp = (candidate: unknown): string | null => {
+    const text = String(candidate ?? "").trim();
+    return text || null;
+  };
+  return {
+    official_url: officialUrl,
+    last_attempt_at: optionalTimestamp(raw.last_attempt_at ?? raw.lastAttemptAt),
+    last_verified_at: optionalTimestamp(raw.last_verified_at ?? raw.lastVerifiedAt),
+    next_check_at: nextCheckAt,
+    content_hash:
+      typeof raw.content_hash === "string"
+        ? raw.content_hash
+        : typeof raw.contentHash === "string"
+          ? raw.contentHash
+          : null,
+    status: status as VerificationState["status"],
+  };
+}
+
 function identityStrings(value: unknown): string[] {
   return [
     ...new Set(
@@ -1500,11 +1580,26 @@ function venueIdentityOf(value: unknown): VenueIdentity | undefined {
     : undefined;
 }
 
+function callIdentityOf(value: unknown): CallIdentity | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const raw = value as Record<string, unknown>;
+  const seriesId = String(raw.seriesId ?? raw.series_id ?? "").trim();
+  const editionId = String(raw.editionId ?? raw.edition_id ?? "").trim();
+  const callId = String(raw.callId ?? raw.call_id ?? "").trim();
+  const parentValue = raw.parentEventId ?? raw.parent_event_id ?? null;
+  const parentEventId =
+    parentValue === null || parentValue === undefined ? null : String(parentValue).trim() || null;
+  return seriesId && editionId && callId
+    ? { seriesId, editionId, callId, parentEventId }
+    : undefined;
+}
+
 function editionIdentityOf(value: unknown): EditionIdentity | undefined {
   if (!value || typeof value !== "object") return undefined;
   const raw = value as Record<string, unknown>;
   const editionId = typeof raw.editionId === "string" ? raw.editionId.trim() : "";
   const officialUrls = identityStrings(raw.officialUrls);
+  const callIdentity = callIdentityOf(raw.callIdentity ?? raw.call_identity);
   const sourceIds = Object.fromEntries(
     Object.entries(
       raw.sourceIds && typeof raw.sourceIds === "object"
@@ -1516,12 +1611,58 @@ function editionIdentityOf(value: unknown): EditionIdentity | undefined {
       .filter(([source]) => source)
       .sort(([left], [right]) => cmpStr(left, right)),
   );
-  return editionId || officialUrls.length || Object.keys(sourceIds).length
+  return editionId || officialUrls.length || Object.keys(sourceIds).length || callIdentity
     ? {
         ...(editionId ? { editionId } : {}),
         ...(officialUrls.length ? { officialUrls } : {}),
         ...(Object.keys(sourceIds).length ? { sourceIds } : {}),
+        ...(callIdentity ? { callIdentity } : {}),
       }
+    : undefined;
+}
+
+function supersededDeadlinesOf(value: unknown): SupersededDeadline[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object"))
+    .map((item) => {
+      const result = {
+        value: String(item.value ?? "").trim(),
+        source: String(item.source ?? "").trim(),
+        status: "superseded" as const,
+        supersededBy: String(item.supersededBy ?? item.superseded_by ?? "").trim(),
+        reason: String(item.reason ?? ""),
+      };
+      return result.reason === "official-update" || result.reason === "duplicate-promotion"
+        ? result
+        : null;
+    })
+    .filter(
+      (item): item is SupersededDeadline =>
+        item !== null && Boolean(item.value && item.source && item.supersededBy),
+    );
+}
+
+function promotionRefOf(value: unknown): PromotionRef | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const raw = value as Record<string, unknown>;
+  const batch = String(raw.batch ?? "").trim();
+  const resolution = String(raw.resolution ?? "").trim();
+  return batch && resolution ? { batch, resolution } : undefined;
+}
+
+const EVENT_DATE_PRECISIONS = new Set<EventDatePrecision>([
+  "exact-range",
+  "single-day",
+  "month-only",
+  "not-announced",
+  "unverified",
+]);
+
+function eventDatePrecisionOf(value: unknown): EventDatePrecision | undefined {
+  const precision = String(value ?? "").trim();
+  return EVENT_DATE_PRECISIONS.has(precision as EventDatePrecision)
+    ? (precision as EventDatePrecision)
     : undefined;
 }
 
@@ -1598,6 +1739,10 @@ export function conferencesFromJson(
             return conflict;
           })
           .filter((item): item is DeadlineConflict => item !== null);
+        const supersededDeadlines = supersededDeadlinesOf(
+          dl.superseded_deadlines ?? dl.supersededDeadlines,
+        );
+        const promotionRef = promotionRefOf(dl.promotion_ref ?? dl.promotionRef);
         const base = {
           kind: refineKindWithLabel(kindOf(String(dl.kind ?? "other")), String(dl.label ?? "")),
           label: String(dl.label ?? ""),
@@ -1607,7 +1752,12 @@ export function conferencesFromJson(
           ...(evidence.length > 0 ? { evidence } : {}),
           ...(origins.length > 0 ? { origins } : {}),
           ...(conflicts.length > 0 ? { conflicts } : {}),
+          ...(supersededDeadlines.length > 0 ? { superseded_deadlines: supersededDeadlines } : {}),
+          ...(promotionRef ? { promotion_ref: promotionRef } : {}),
           ...(typeof dl.selection_rule === "string" ? { selection_rule: dl.selection_rule } : {}),
+          ...(verificationOf(dl.verification)
+            ? { verification: verificationOf(dl.verification) }
+            : {}),
         };
         if (dl.precision === "date-only") {
           const localDate = asDate(dl.local_date);
@@ -1642,6 +1792,16 @@ export function conferencesFromJson(
         ...(deadlineEstimateOf(ed.estimate) ? { estimate: deadlineEstimateOf(ed.estimate) } : {}),
         source: String(ed.source ?? ""),
         ...(identity ? { identity } : {}),
+        ...(toStringArray(ed.legacy_ids).length
+          ? { legacy_ids: toStringArray(ed.legacy_ids) }
+          : {}),
+        ...(eventDatePrecisionOf(ed.event_date_precision ?? ed.eventDatePrecision)
+          ? {
+              event_date_precision: eventDatePrecisionOf(
+                ed.event_date_precision ?? ed.eventDatePrecision,
+              ),
+            }
+          : {}),
       });
     }
     editions.sort((a, b) => a.year - b.year);

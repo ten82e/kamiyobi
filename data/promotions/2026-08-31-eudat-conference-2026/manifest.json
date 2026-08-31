@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "2026-08-31-eudat-conference-2026",
   "observations": {
-    "sha256": "4a7e134760bbf80f5afb32762a9336d98cfb2505e00039b14ac1bfa61008ad2b"
+    "sha256": "67a7f162e17cd8116c0c9e894c8ec20e7ab8b431254bfc6e7a1cb5fcda87e266"
   },
   "resolutions": {
     "sha256": "fa5ea2df17bab4b9923980baa00ae5da5879ac09c28f820ac76e4bba1d8f265e"
@@ -12,7 +12,7 @@
   },
   "bodies": [
     {
-      "path": "bodies/0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89.body",
+      "path": "../../evidence/blobs/0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89.body",
       "sha256": "0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89"
     }
   ],

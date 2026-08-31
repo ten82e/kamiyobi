@@ -101,7 +101,10 @@ describe("local source data integrity", () => {
     resetWarnings();
     const rows = rawDeadlines();
     expect(rows.length).toBeGreaterThan(100);
-    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(183);
+    // The #677 duplicate editions are intentionally collapsed into their
+    // canonical records; keep the count explicit so an accidental re-addition
+    // of a duplicate is caught by the fixture-level integrity check.
+    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(170);
 
     for (const row of rows) {
       if (row.precision === "date-only") {

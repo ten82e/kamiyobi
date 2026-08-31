@@ -35,6 +35,7 @@ import {
   warningCounts,
   warningIdentityKeys,
 } from "./model.ts";
+import { applyVerificationLedger, readVerificationLedger, reverifyDue } from "./reverification.ts";
 import { AideadlinesSource } from "./sources/aideadlines.ts";
 import { fetchMetadataFor, resetFetchMetadata } from "./sources/base.ts";
 import { CcfddlSource } from "./sources/ccfddl.ts";
@@ -613,6 +614,14 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
   confs = dedupDeadlinesAfterRollforward(confs, config, mergeStats);
   confs = select(confs, config);
 
+  // Re-verification is intentionally persisted outside the source YAML.  Apply the
+  // latest ledger only after all source/edition canonicalization has finished so
+  // stable deadline IDs continue to follow the canonical record.
+  const verificationLedgerPath = join(ROOT, "data", "verification-ledger.json");
+  if (existsSync(verificationLedgerPath)) {
+    confs = applyVerificationLedger(confs, readVerificationLedger(verificationLedgerPath));
+  }
+
   const outdir = resolve(args.out);
   const healthConfig = (config.health as Record<string, unknown> | undefined) ?? {};
   const requiredVenues = Array.isArray(healthConfig.required_venues)
@@ -757,6 +766,7 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
 interface DiscoverArgs {
   out: string | null;
   candidateOut: string | null;
+  archiveOut?: string | null;
   categories: string | null;
   minYear: number;
   dryRun: boolean;
@@ -786,9 +796,13 @@ export async function cmdDiscover(args: DiscoverArgs): Promise<number> {
   const {
     NicheDiscoverer,
     formatCandidateRegistry,
+    formatCandidateArchive,
     formatDiscoveredYaml,
+    mergeCandidateArchive,
     mergeCandidateRegistry,
+    parseCandidateArchive,
     parseCandidateRegistry,
+    splitCandidateRegistry,
   } = await import("./discover.ts");
   const categories = args.categories ? args.categories.split(",").map((c) => c.trim()) : null;
   const discoverer = new NicheDiscoverer(ROOT);
@@ -811,6 +825,27 @@ export async function cmdDiscover(args: DiscoverArgs): Promise<number> {
     loadYamlFile(candidatePathResolved, { strict: true }),
   );
   const registry = mergeCandidateRegistry(existingRegistry, candidates, new Date().toISOString());
+  const { active, archive: newlyArchived } = splitCandidateRegistry(
+    registry,
+    new Date(),
+    discoverer.knownKeys,
+  );
+  const archivePath = args.archiveOut ?? join(ROOT, "data", "discovered_candidates.archive.yaml");
+  const archivePathResolved = isAbsolute(archivePath) ? archivePath : join(ROOT, archivePath);
+  const existingArchive = parseCandidateArchive(
+    loadYamlFile(archivePathResolved, { strict: true }),
+  );
+  const activeFingerprints = new Set(active.candidates.map((candidate) => candidate.id));
+  const reactivatedArchive = {
+    ...existingArchive,
+    candidates: existingArchive.candidates.filter(
+      (record) => !activeFingerprints.has(record.fingerprint),
+    ),
+  };
+  const archive = mergeCandidateArchive(
+    reactivatedArchive,
+    newlyArchived.candidates.filter((record) => !activeFingerprints.has(record.fingerprint)),
+  );
   const action = discoverWriteAction(candidates.length, args.append, args.out, args.dryRun);
 
   if (action === "append") {
@@ -830,11 +865,18 @@ export async function cmdDiscover(args: DiscoverArgs): Promise<number> {
     console.log(yamlText.slice(0, 1000) + (yamlText.length > 1000 ? "..." : ""));
   } else if (action === "write") {
     const outPath = isAbsolute(args.out!) ? args.out! : join(ROOT, args.out!);
-    writeTextFile(outPath, yamlText);
+    writeTextFile(outPath, formatCandidateRegistry(active));
     console.log(`\n候補 YAML を ${outPath} に保存した`);
   }
-  if (!args.dryRun && candidates.length > 0) {
-    writeTextFile(candidatePathResolved, formatCandidateRegistry(registry));
+  // Re-split the complete active registry on every non-dry run.  This lets a
+  // scheduled run archive candidates that expired since the previous run even
+  // when discovery found no new records today.
+  if (!args.dryRun) {
+    writeTextFile(candidatePathResolved, formatCandidateRegistry(active));
+    writeTextFile(archivePathResolved, formatCandidateArchive(archive));
+    console.log(
+      `active queue ${active.candidates.length} 件 / archive ${archive.candidates.length} 件 に整理した`,
+    );
   }
   return 0;
 }
@@ -855,6 +897,52 @@ export async function cmdReview(args: ReviewCliArgs): Promise<number> {
   return 0;
 }
 
+export interface ReverifyCliArgs {
+  data?: string;
+  ledger?: string;
+  resolutions?: string;
+  evidence?: string;
+  now?: string | null;
+  due?: boolean;
+}
+
+function rootPath(value: string): string {
+  return isAbsolute(value) ? value : join(ROOT, value);
+}
+
+export async function cmdReverify(args: ReverifyCliArgs): Promise<number> {
+  const dataPath = rootPath(args.data ?? join(ROOT, "public", "data.json"));
+  if (!existsSync(dataPath)) {
+    process.stderr.write(
+      `error: 再確認対象の data.json が見つからない: ${dataPath}（先に build を実行するか --data を指定してください）\n`,
+    );
+    return 2;
+  }
+  const result = await reverifyDue({
+    dataPath,
+    ledgerPath: rootPath(args.ledger ?? join(ROOT, "data", "verification-ledger.json")),
+    resolutionsPath: rootPath(
+      args.resolutions ?? join(ROOT, "data", "reverification-resolutions.json"),
+    ),
+    evidenceDir: rootPath(args.evidence ?? join(ROOT, "data", "evidence", "blobs")),
+    now: args.now ? parseNow(args.now) : new Date(),
+    dueOnly: args.due ?? true,
+  });
+  console.log(
+    `reverified ${result.processed} deadlines (${result.changed} changed) -> ${rootPath(args.ledger ?? join(ROOT, "data", "verification-ledger.json"))}`,
+  );
+  console.log(
+    JSON.stringify({
+      processed: result.processed,
+      due: result.due,
+      updated: result.updated,
+      changed: result.changed,
+      statuses: result.statuses,
+    }),
+  );
+  return 0;
+}
+
 function writeTextFile(path: string, text: string): void {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, text, "utf8");
@@ -864,6 +952,7 @@ export interface CliArgs {
   command?: string;
   out?: string;
   candidateOut?: string | null;
+  archiveOut?: string | null;
   config?: string;
   offline?: boolean;
   now?: string | null;
@@ -875,6 +964,11 @@ export interface CliArgs {
   noEmbeddings?: boolean;
   candidates?: string;
   limit?: number;
+  data?: string;
+  ledger?: string;
+  resolutions?: string;
+  evidence?: string;
+  due?: boolean;
   help?: boolean;
 }
 
@@ -893,6 +987,7 @@ export function usage(): string {
     "  discover 穴場の会議・ジャーナルを自律探索する",
     "    -o, --out <path>      出力 YAML パス（未指定時は標準出力表示）",
     "    --candidate-out <path> 候補管理ファイル (既定: data/discovered_candidates.yaml)",
+    "    --archive-out <path>  archive 保存先 (既定: data/discovered_candidates.archive.yaml)",
     "    --categories <s>      カンマ区切りの対象カテゴリ（例: hpc,systems）",
     `    -y, --min-year <n>    対象の最小年 (既定: ${DEFAULT_MIN_YEAR})`,
     "    -d, --dry-run         ファイル出力せず結果をプレビュー表示",
@@ -901,6 +996,13 @@ export function usage(): string {
     "    -C, --candidates <p>  候補 YAML パス (既定: data/discovered_candidates.yaml)",
     "    -l, --limit <n>       表示上限件数 (既定: 60)",
     "    -n, --now <iso>       基準時刻。例 2026-08-09T00:00:00Z",
+    "  reverify 再確認期限に到達した公式ページを取得し、状態ledgerを更新する",
+    "    --data <path>         入力カタログ (既定: public/data.json)",
+    "    --ledger <path>       永続状態ledger (既定: data/verification-ledger.json)",
+    "    --resolutions <path>  変更提案 (既定: data/reverification-resolutions.json)",
+    "    --evidence <dir>      本文blob保存先 (既定: data/evidence/blobs)",
+    "    --due                 次回確認時刻に到達したものだけ処理（既定）",
+    "    -n, --now <iso>       基準時刻。例 2026-08-31T00:00:00Z",
     "  help / --help / -h      使い方を表示する",
   ].join("\n");
 }
@@ -929,6 +1031,7 @@ export function parseArgs(argv: string[] | null | undefined): CliArgs {
     help: { type: "boolean", short: "h" },
     out: { type: "string", short: "o" },
     "candidate-out": { type: "string" },
+    "archive-out": { type: "string" },
     config: { type: "string", short: "c" },
     cache: { type: "string" },
     now: { type: "string", short: "n" },
@@ -940,6 +1043,11 @@ export function parseArgs(argv: string[] | null | undefined): CliArgs {
     append: { type: "boolean", short: "a" },
     candidates: { type: "string", short: "C" },
     limit: { type: "string", short: "l" },
+    data: { type: "string" },
+    ledger: { type: "string" },
+    resolutions: { type: "string" },
+    evidence: { type: "string" },
+    due: { type: "boolean" },
   } as const;
   const { values, positionals, tokens } = parseNodeArgs({
     args: normalized,
@@ -962,6 +1070,11 @@ export function parseArgs(argv: string[] | null | undefined): CliArgs {
     args.candidateOut =
       stringValue(values["candidate-out"]) ?? join(ROOT, "data", "discovered_candidates.yaml");
   }
+  if (values["archive-out"] !== undefined) {
+    args.archiveOut =
+      stringValue(values["archive-out"]) ??
+      join(ROOT, "data", "discovered_candidates.archive.yaml");
+  }
   if (values.config !== undefined) args.config = stringValue(values.config) ?? "config.yaml";
   if (values.cache !== undefined) args.cache = stringValue(values.cache) ?? ".cache";
   if (values.now !== undefined) args.now = stringValue(values.now) ?? null;
@@ -980,6 +1093,13 @@ export function parseArgs(argv: string[] | null | undefined): CliArgs {
       stringValue(values.candidates) ?? join(ROOT, "data", "discovered_candidates.yaml");
   }
   if (values.limit !== undefined) args.limit = toPosInt(stringValue(values.limit), 60);
+  if (values.data !== undefined) args.data = stringValue(values.data) ?? undefined;
+  if (values.ledger !== undefined) args.ledger = stringValue(values.ledger) ?? undefined;
+  if (values.resolutions !== undefined) {
+    args.resolutions = stringValue(values.resolutions) ?? undefined;
+  }
+  if (values.evidence !== undefined) args.evidence = stringValue(values.evidence) ?? undefined;
+  if (values.due !== undefined) args.due = booleanValue(values.due);
   return args;
 }
 
@@ -1011,6 +1131,7 @@ export async function main(
     return cmdDiscover({
       out: args.out ?? null,
       candidateOut: args.candidateOut ?? null,
+      archiveOut: args.archiveOut ?? null,
       categories: args.categories ?? null,
       minYear: args.minYear ?? DEFAULT_MIN_YEAR,
       dryRun: Boolean(args.dryRun),
@@ -1022,6 +1143,16 @@ export async function main(
       candidates: args.candidates,
       limit: args.limit,
       now: args.now,
+    });
+  }
+  if (args.command === "reverify") {
+    return cmdReverify({
+      data: args.data,
+      ledger: args.ledger,
+      resolutions: args.resolutions,
+      evidence: args.evidence,
+      now: args.now,
+      due: args.due,
     });
   }
   process.stderr.write(`${usage()}\n`);

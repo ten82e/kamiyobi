@@ -1,3 +1,43 @@
+interface SiteDeadlineEvidence {
+  sourceClass?: string;
+  sourceUrl?: string;
+  verifiedFields?: string[];
+}
+
+interface SiteVerification {
+  official_url: string;
+  last_attempt_at: string | null;
+  last_verified_at: string | null;
+  next_check_at: string;
+  content_hash: string | null;
+  status:
+    | "pending"
+    | "verified"
+    | "changed"
+    | "source-unreachable"
+    | "parser-failed"
+    | "manual-required";
+}
+
+interface SiteQueryConfidenceFeatures {
+  top1Score: number;
+  top2Score: number;
+  margin: number;
+  top5Entropy: number;
+  lexicalSemanticAgreement: boolean;
+  candidateCoverage: number;
+  inputHasAbstract: boolean;
+  inputTokenCount: number;
+}
+
+interface SiteQueryConfidence {
+  top1Probability: number;
+  top5Probability: number;
+  calibrated: false;
+  modelRevision: "query-confidence-heuristic-v1";
+  features: SiteQueryConfidenceFeatures;
+}
+
 interface SiteDeadline {
   kind: string;
   label?: string;
@@ -9,6 +49,8 @@ interface SiteDeadline {
   aoe?: string | null;
   tz_raw?: string | null;
   round?: number;
+  evidence?: SiteDeadlineEvidence[];
+  verification?: SiteVerification;
 }
 
 interface SiteEdition {
@@ -89,6 +131,7 @@ interface SiteRecommendation {
     label?: string;
     lexicalRank?: number | null;
     semanticRank?: number | null;
+    queryConfidence?: SiteQueryConfidence;
   };
   availability?: unknown;
 }

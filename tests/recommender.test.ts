@@ -15,6 +15,8 @@ import {
   main as benchMain,
   benchV2RequiredRegressionReasons,
   buildRealPaperResult,
+  candidateDepthAudit,
+  candidateDepthSummaries,
   contentWords,
   norm,
   parseBenchArgs,
@@ -1002,6 +1004,26 @@ describe("venue recommendation fusion", () => {
     } finally {
       R.setReranker(null);
     }
+  });
+
+  it("emits query-level confidence as an uncalibrated diagnostic", () => {
+    const result = R.venueRecommendations(
+      [row("gpu", "GPU Systems"), row("net", "Network Systems")],
+      R.parsePaperLines("GPU scheduling | gpu"),
+      { gpu: 0.9, net: 0.2 },
+      NOW,
+    )[0];
+    expect(result.fit.queryConfidence).toMatchObject({
+      calibrated: false,
+      modelRevision: "query-confidence-heuristic-v1",
+      features: {
+        lexicalSemanticAgreement: true,
+        candidateCoverage: 1,
+        inputHasAbstract: false,
+      },
+    });
+    expect(result.fit.queryConfidence.top1Probability).toBeGreaterThanOrEqual(0);
+    expect(result.fit.queryConfidence.top1Probability).toBeLessThanOrEqual(1);
   });
 
   it("pins the reranker development inputs by hash", () => {
@@ -2417,6 +2439,34 @@ describe("bench-recommender argument parsing and helper utilities", () => {
       }),
     );
     expect(first.timing).toEqual({ firstLoadMs: null, repeatRecommendationMs: null });
+  });
+
+  it("audits candidate depth without changing the fused ranking", () => {
+    const recommendations = [
+      { venueKey: "early", fit: { lexicalRank: 1, semanticRank: null } },
+      { venueKey: "middle", fit: { lexicalRank: null, semanticRank: 75 } },
+      { venueKey: "late", fit: { lexicalRank: 201, semanticRank: null } },
+    ] as any;
+    const audits = candidateDepthAudit(recommendations, new Set(["late"]));
+    expect(audits["50"]).toMatchObject({
+      candidate_count: 1,
+      union_hit: false,
+      oracle_reranker_hit: false,
+      reranker_hit: false,
+    });
+    expect(audits["100"]).toMatchObject({ candidate_count: 2, union_hit: false });
+    expect(audits.all).toMatchObject({
+      candidate_count: 3,
+      union_hit: true,
+      oracle_reranker_hit: true,
+      fused_rank: 3,
+      reranker_hit: true,
+    });
+    expect(candidateDepthSummaries({ paper: audits }).all).toMatchObject({
+      average_candidate_count: 3,
+      union_recall: 1,
+      oracle_reranker_recall_at_5: 1,
+    });
   });
 
   it("emits coverage-specific regression floors and hard-fails floor misses", () => {
