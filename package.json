@@ -15,7 +15,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit && tsc --noEmit -p site/tsconfig.json",
     "check": "biome check src scripts site/*.ts tests --files-ignore-unknown=false",
-    "format": "biome format --write src tests"
+    "format": "biome format --write src tests",
+    "update": "node src/fetch-primary.ts --apply && node src/cli.ts discover && node src/cli.ts build --out public && node scripts/validate-data.ts -- public/data.json && node scripts/health-gate.ts public/health.json --observation-baseline data/source-observation-baseline.json"
   },
   "license": "MIT",
   "overrides": {

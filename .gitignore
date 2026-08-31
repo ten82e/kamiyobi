@@ -8,3 +8,7 @@ __pycache__/
 
 # ローカルデータ
 .freebuff/
+
+# 他セッションの作業中間ファイル (自律ループ・Codex CLI 等の round-result)
+# 追跡しない。CI/CD 削除(2026-08-31)後は手動運用。
+work/
