@@ -107,44 +107,26 @@ node src/cli.ts review
 
 ## 更新の仕組み
 
-`.github/workflows/update-data.yml` が毎日 20:17 UTC（05:17 JST）に動く。
-上流を取得して正規化し、検査済みのデータ差分を固定 branch `automation/data-update` の PR として作成または更新する。
-この日次処理から Pages へ直接配信することはない。
-全上流が fresh の場合だけ `data/snapshot.json` を更新する。
-データに実質差分があれば専用 branch へ一度 push し、PR を作成する。main へ直接 commit しない。
-このスナップショットは上流が落ちたときの退避先を兼ねており、取得に失敗した日は前回の内容から生成を続ける。
-スナップショットでも補えないほど収集が縮退した日は、ビルドが非ゼロで終了して配信を行わない。
-その日は PR を更新せず、公開済みの内容を維持する。
+更新は手動で行う（CI/CD は 2026-08-31 に削除した）。
 
-自動 PR は GitHub App token を優先し、未設定時は `GITHUB_TOKEN` と明示的な CI 起動を使う。
+```sh
+# 1. 上流を取得して正規化し、一次ソース観測を適用する
+node src/fetch-primary.ts --apply
+# 2. 候補探索（新規会議の発見）
+node src/cli.ts discover
+# 3. フルビルド（public/ を生成）
+node src/cli.ts build --out public
+# 4. 意味検査
+npm run validate:data -- public/data.json
+# 5. health gate（前回成功時の health.json と比較）
+node scripts/health-gate.ts public/health.json --require-baseline data/next-last-known-good-health.json data/next-last-known-good-health.json
+```
 
-公開リポジトリでは、60 日間リポジトリの活動が無いとスケジュール実行が自動で無効化される（[GitHub の公式文書](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows)）。
-対策は上のスナップショット更新の副次効果だけである。
-bot のコミットが「活動」に数えられるかは公式文書に記載が無く、この対策が効くかは未検証である。
-活動を偽装する目的のコミットは、利用規約違反として停止された前例があるため実装しない。
-停止された場合は、リポジトリの Actions タブから `update-data` ワークフローを開き、`Run workflow`（`workflow_dispatch`）で手動実行すると再び有効になる。
+全上流が fresh の場合だけ `data/snapshot.json` を更新する。このスナップショットは上流が
+落ちたときの退避先を兼ねており、取得に失敗した日は前回の内容から生成を続ける。
+スナップショットでも補えないほど収集が縮退した場合は、ビルドが非ゼロで終了して公開物を作らない。
 
-`.github/workflows/ci.yml` は push と pull request で動く。
-七つの job が、型検査、静的検査、テスト、オフラインビルド、データ意味検査、health 遷移、推薦回帰を独立して報告する。
-外部上流には接続せず、`tests/fixtures/` と `data/snapshot.json` を使う。
-上流データの取得、健全性検査、候補探索、自動 PR 更新は、日次の `.github/workflows/update-data.yml` が行う。
-七つの job は変更ファイルにかかわらず実行し、main の必須チェック（required check）に指定する。
-
-`.github/workflows/deploy.yml` は main への push だけで動く。
-merge 済みの main から公開物をネットワークなしで再生成し、同じ commit の nightly 推薦 bundle が互換なら復元する。不一致時は語彙推薦だけを残す。
-health gate は前回成功 deploy の artifact（初回は親 commit の同時刻 build）と比較し、Pages 自体を正本にしない。
-health gate と manifest 検査を通した後だけ GitHub Pages へ配信する。
-`publish.json` は元 commit、入力 hash、promotion batch、workflow run ID、dirty worktree の有無に加え、build 時刻、Node 版、offline/cache 方針、再実行コマンドを記録する。
-PR 用の小さな実論文評価は必須検査に含め、全80件ずつの dev・heldout 評価は nightly workflow で行う。
-
-### 初回セットアップ
-
-`deploy.yml` はカスタムワークフローから Pages に配信するため、リポジトリの設定が必要である（[GitHub の公式文書](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)）。
-Settings の Pages を開き、Build and deployment の Source を「GitHub Actions」にする。
-既定のままだと Deploy の段階で毎日失敗する。
-
-自動 PR に GitHub App を使う場合は、repository secret `KAMIYOBI_APP_CLIENT_ID` と `KAMIYOBI_APP_PRIVATE_KEY` を設定する。
-未設定時は `GITHUB_TOKEN` を使い、更新後の CI を明示的に起動する。
+変更は `git branch` → ローカルで `npm run typecheck && npm run check && npm test` → `git merge` の順で main に反映する。
 
 ## 手元で動かす
 

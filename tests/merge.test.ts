@@ -64,6 +64,14 @@ const PRIORITY: Record<string, unknown> = {
 };
 
 describe("merge_sources", () => {
+  it("preserves legacy keys", () => {
+    const [conference] = mergeSources(
+      [[makeConference({ key: "current", title: "Current", legacy_keys: ["legacy"] })]],
+      PRIORITY,
+    );
+    expect(conference.legacy_keys).toEqual(["legacy"]);
+  });
+
   it("keeps different conferences with the same abbreviation apart", () => {
     const security = makeConference({
       key: "sc",
