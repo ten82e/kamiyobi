@@ -12,12 +12,13 @@ import {
   isOfficialUrl,
   type PromotionObservation,
   resolvePromotion,
+  resolvePromotionAgainst,
   verifyBatch,
   verifyCapture,
   verifyPromotionObservation,
   writePromotionBatch,
 } from "../src/promotion.ts";
-import { REPO_ROOT } from "./helpers.ts";
+import { makeConference, makeDeadline, makeEdition, REPO_ROOT } from "./helpers.ts";
 
 const evidence = {
   sourceRevision: "rev-1",
@@ -371,6 +372,54 @@ describe("promotion batch", () => {
       contentHash: capturedHash,
       verifiedFields: ["date", "kind", "round"],
     });
+  });
+
+  it("canonicalizes verified promotions against existing venue and edition identities", () => {
+    const existing = makeConference({
+      key: "exampleconf",
+      title: "ExampleConf",
+      link: "https://example.test/cfp",
+      identity: { officialDomains: ["example.test"] },
+      editions: [
+        makeEdition({
+          year: 2027,
+          link: "https://example.test/cfp",
+          event_start: new Date("2027-04-01T00:00:00Z"),
+          event_end: new Date("2027-04-03T00:00:00Z"),
+          deadlines: [
+            {
+              ...makeDeadline("paper", "Paper", new Date("2027-01-03T11:59:00Z"), "AoE", 2),
+              track: "main",
+            },
+          ],
+        }),
+      ],
+    });
+    expect(
+      resolvePromotionAgainst(observation(), {
+        now: "2026-08-25T00:03:00.000Z",
+        existingConferences: [existing],
+      }).canonicalization,
+    ).toMatchObject({ decision: "duplicate", matchedVenueKey: "exampleconf" });
+    expect(
+      resolvePromotionAgainst(observation({ deadline: { ...observation().deadline!, round: 3 } }), {
+        now: "2026-08-25T00:03:00.000Z",
+        existingConferences: [existing],
+      }).canonicalization?.decision,
+    ).toBe("enrich-existing-edition");
+    expect(
+      resolvePromotionAgainst(observation(), {
+        now: "2026-08-25T00:03:00.000Z",
+        existingConferences: [
+          makeConference({
+            key: "exampleconf-2026",
+            title: "ExampleConf",
+            link: "https://other.test/cfp",
+            identity: { officialDomains: ["other.test"] },
+          }),
+        ],
+      }).canonicalization?.decision,
+    ).toBe("hold");
   });
 
   it("holds missing primary fields and rejects non-primary observations", () => {

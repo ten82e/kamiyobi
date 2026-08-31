@@ -1200,6 +1200,7 @@ it("README documents every CLI command (review command regression)", () => {
   expect(commands).toContain("build");
   expect(commands).toContain("discover");
   expect(commands).toContain("review");
+  expect(commands).toContain("reverify");
   const readme = readFileSync(join(REPO_ROOT, "README.md"), "utf8");
   for (const cmd of commands) {
     expect(readme, `README must document the CLI command ${cmd}`).toContain(cmd);
@@ -1214,7 +1215,7 @@ it("SPEC §3.7 documents every CLI command and flag from usage() (#374)", () => 
   const commands = lines
     .map((l) => /^ {2}([a-z][a-z0-9-]*) /.exec(l)?.[1])
     .filter((c): c is string => Boolean(c) && c !== "help");
-  expect(commands).toEqual(["build", "discover", "review"]);
+  expect(commands).toEqual(["build", "discover", "review", "reverify"]);
   for (const cmd of commands) {
     expect(section, `SPEC §3.7 must document the CLI command ${cmd}`).toContain(cmd);
   }

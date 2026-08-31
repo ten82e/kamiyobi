@@ -1575,7 +1575,7 @@ const Recommender = (() => {
       .filter((entry) => entry.semantic > 0)
       .sort((a, b) => b.semantic - a.semantic || a.key.localeCompare(b.key));
     const requestedTopN = opts.topN;
-    const topN = Number.isInteger(requestedTopN) && (requestedTopN ?? 0) > 0 ? requestedTopN! : 50;
+    const topN = Number.isInteger(requestedTopN) && (requestedTopN ?? 0) > 0 ? requestedTopN! : 100;
     const lexicalRanks: Record<string, number> = {};
     const semanticRanks: Record<string, number> = {};
     lexical

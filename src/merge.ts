@@ -147,15 +147,16 @@ export function mergeSources(
       buckets.push([...matching.flat(), conf]);
     } else {
       const keyCollisions = buckets.filter((bucket) => bucket[0].key === conf.key);
-      if (matching.length > 0 || keyCollisions.length > 0) {
+      const unexplainedCollisions = (matching.length > 0 ? matching : keyCollisions).filter(
+        (bucket) => !explicitIdentitySplit(bucket[0], conf),
+      );
+      if (unexplainedCollisions.length > 0) {
         recordConflict(
           tally,
           "venue",
           matching.length > 0 ? "source-collision" : "key-collision",
           conferenceIdentityLabel(conf),
-          (matching.length > 0 ? matching : keyCollisions).map((bucket) =>
-            conferenceIdentityLabel(bucket[0]),
-          ),
+          unexplainedCollisions.map((bucket) => conferenceIdentityLabel(bucket[0])),
         );
       }
       buckets.push([conf]);
@@ -556,6 +557,7 @@ function collisionSuffix(conf: Conference): string {
 }
 
 function sameConference(left: Conference, right: Conference): boolean {
+  if (explicitIdentitySplit(left, right)) return false;
   const leftId = identityToken(left.identity?.venueId);
   const rightId = identityToken(right.identity?.venueId);
   if (leftId && rightId) return leftId === rightId;
@@ -570,6 +572,22 @@ function sameConference(left: Conference, right: Conference): boolean {
   )
     return true;
   return commonIdentity(compatibleAliases(left), compatibleAliases(right), aliasToken).length > 0;
+}
+
+/** Distinct source identities are an explicit split, not an unresolved collision. */
+function explicitIdentitySplit(left: Conference, right: Conference): boolean {
+  const leftVenueId = identityToken(left.identity?.venueId);
+  const rightVenueId = identityToken(right.identity?.venueId);
+  if (leftVenueId && rightVenueId && leftVenueId !== rightVenueId) return true;
+  const sources = new Set([
+    ...Object.keys(left.identity?.sourceIds ?? {}),
+    ...Object.keys(right.identity?.sourceIds ?? {}),
+  ]);
+  return [...sources].some((source) => {
+    const leftId = identityToken(left.identity?.sourceIds?.[source]);
+    const rightId = identityToken(right.identity?.sourceIds?.[source]);
+    return leftId !== "" && rightId !== "" && leftId !== rightId;
+  });
 }
 
 function mergeBucket(

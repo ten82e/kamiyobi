@@ -1102,6 +1102,20 @@ describe("venue recommendation fusion", () => {
     expect(semantic.fit.evidence.some((item: any) => item.type === "semantic")).toBe(true);
   });
 
+  it("uses the measured 100-item candidate depth by default", () => {
+    const rows = Array.from({ length: 75 }, (_, index) => row(`venue${index}`, `Venue ${index}`));
+    const semanticScores = Object.fromEntries(
+      rows.map((item, index) => [item.conf.key, rows.length - index]),
+    );
+    const result = R.venueRecommendations(
+      rows,
+      R.parsePaperLines("unrelated topic"),
+      semanticScores,
+      NOW,
+    );
+    expect(result.some((item: any) => item.venueKey === "venue74")).toBe(true);
+  });
+
   it("falls back to lexical fit and keeps one availability row per venue", () => {
     const result = R.venueRecommendations(
       [row("same", "GPU Systems", NOW + 20), row("same", "GPU Systems", NOW + 10)],

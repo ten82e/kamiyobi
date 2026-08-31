@@ -24,6 +24,8 @@ interface VenueRecord {
   key?: string;
   title?: string;
   full_name?: string;
+  link?: string;
+  legacy_keys?: string[];
   editions?: Array<{ year?: number }>;
 }
 
@@ -231,6 +233,40 @@ describe("invariants", () => {
       conferences?: VenueRecord[];
     };
     expect(likelyDuplicateVenues(extra.conferences ?? [])).toEqual([]);
+  });
+
+  it("I6: 旧昇格12グループは公式リンク付きの正規キー1件へ収束している", () => {
+    const extra = loadYaml(readFileSync(join(REPO_ROOT, "data", "extra.yaml"), "utf8")) as {
+      conferences?: VenueRecord[];
+    };
+    const targets: Record<string, string[]> = {
+      "bdiot-2026": ["acm-bdiot-2026"],
+      "admit-2026": ["ieee-admit-2026"],
+      "ccisc-2026": ["ieee-ccisc-2026"],
+      "csp-2027": ["csp-ei-2027", "ieee-csp-2027"],
+      "icaici-2026": ["ieee-icaici-2026"],
+      icbda2027: ["icbda-2027"],
+      "iccns-2026": ["iccns-ei-2026"],
+      "iccr-2026": ["ieee-iccr-2026"],
+      "icimt-2026": ["icimt-ei-2026"],
+      "icmip-2027": ["icmip-ei-2027"],
+      "keir-cikm2026": ["keir-cikm-2026"],
+      raai2026: ["raai-2026"],
+    };
+    const records = extra.conferences ?? [];
+    const liveKeys = new Set(records.map((conference) => conference.key));
+    for (const [key, legacyKeys] of Object.entries(targets)) {
+      const matches = records.filter((conference) => conference.key === key);
+      expect(matches, `${key} must have one live record`).toHaveLength(1);
+      expect(matches[0]?.link, `${key} must point at an official page`).toMatch(/^https?:\/\//);
+      expect(matches[0]?.link, `${key} must not use an aggregator link`).not.toMatch(
+        /easychair|wikicfp|dbworld|listserv/i,
+      );
+      for (const legacy of legacyKeys) {
+        expect(liveKeys.has(legacy), `${legacy} must not remain a live key`).toBe(false);
+        expect(matches[0]?.legacy_keys ?? []).toContain(legacy);
+      }
+    }
   });
 
   it("I5: 同一会議の表記揺れを検出し、同じ略称の別会議は許す", () => {

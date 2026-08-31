@@ -146,6 +146,8 @@ kamiyobi/
 │   ├── primary_overrides.yaml   # 一次ソース抽出結果（自動）              [自動]
 │   ├── discovered_candidates.yaml # discover の既定出力
 │   ├── recommender-reranker.json # 軽量推薦 reranker の固定係数
+│   ├── verification-ledger.json # 公式ページ再確認の永続台帳
+│   ├── evidence/blobs/            # 再確認本文の content-addressed 保存
 │   └── snapshot.json            # 生成物(コミットされる。上流障害時の退避) [自動]
 ├── src/
 │   ├── model.ts                 # 型・時刻解決・日付パーサ・snapshot 入出力
@@ -162,6 +164,7 @@ kamiyobi/
 │   ├── review-candidates.ts     # 候補レビュー支援
 │   ├── recommender-api.ts       # 推薦実行時処理の型境界
 │   ├── promotion.ts             # 候補昇格の観測・検証・決定
+│   ├── reverify.ts               # 公式ページ再確認と台帳更新
 │   ├── embeddings.ts            # 埋め込み生成
 │   ├── bench-recommender.ts     # 推薦ベンチ
 │   ├── build.ts                 # JSON/CSV/MD/llms.txt/HTML 出力
@@ -511,6 +514,9 @@ node --experimental-strip-types src/cli.ts discover [--out path] [--categories h
                               [--candidate-out path] [--min-year year] [--dry-run] [--append]
 node --experimental-strip-types src/cli.ts review [--candidates data/discovered_candidates.yaml]
                               [--limit 60] [--now 2026-08-09T00:00:00Z]
+node --experimental-strip-types src/cli.ts reverify [--data public/data.json]
+                              [--ledger data/verification-ledger.json] [--due]
+                              [--now 2026-08-09T00:00:00Z]
 ```
 
 `--offline` は「新規取得をせず、キャッシュ → snapshot の順で退避する」。
@@ -522,6 +528,10 @@ node --experimental-strip-types src/cli.ts review [--candidates data/discovered_
 `--no-embeddings` は `embeddings.json` を書かない（テスト用・高速化）。
 `discover` は穴場の会議・ジャーナルを探索し、`review` は候補を締切昇順・重複・
 ハゲタカ会議の疑い付きで一覧する。
+`reverify --due` は `verification.next_check_at` が到来した公式 URL を取得し、
+`data/verification-ledger.json` と `data/evidence/blobs/` を更新する。
+取得本文が示す日付が現行値と異なる場合は `changed` resolution を記録するが、
+公開データを自動上書きしない。
 
 ---
 
@@ -904,6 +914,8 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 - heldout の単一 venue 比率は25%以下とし、複数の妥当な投稿先を許すケースを含める。
 - 実論文評価は lexical・semantic・fused の MRR、Recall@1/5/10、nDCG@10、95% bootstrap区間、層別値、abstentionを分けて報告する。
 - candidate retrieval は lexical・semantic・union の Recall@50 と oracle reranker Recall@5 を分けて報告する。
+  required 実測では候補深度 50 / 100 / 200 / 全件も比較し、実運用の既定深度は
+  100 とする（100 で改善せず処理負荷だけ増える場合は 50 に戻す）。
 - 軽量線形 reranker は本番と同一の固定 feature schema から full dev (`real-paper-dev`) のみで
   L2 pairwise logistic を学習し、primary-venue grouped 5-fold CV で係数・blend を選択して
   Platt 校正と confidence threshold を学習する。required-dev（短縮検査用 subset）を学習に使ってはならない。

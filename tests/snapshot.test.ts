@@ -941,6 +941,25 @@ describe("parseArgs (CLI flag parsing)", () => {
     expect(res4.minYear).toBe(2027);
   });
 
+  it("parses reverify options", () => {
+    const result = parseArgs([
+      "reverify",
+      "--data",
+      "tmp/data.json",
+      "--ledger=tmp/ledger.json",
+      "--due",
+      "--now",
+      "2026-08-31T00:00:00Z",
+    ]);
+    expect(result).toMatchObject({
+      command: "reverify",
+      data: "tmp/data.json",
+      ledger: "tmp/ledger.json",
+      due: true,
+      now: "2026-08-31T00:00:00Z",
+    });
+  });
+
   it("discoverWriteAction: --append 候補 0 件は何もしない (none) — #267 回帰", () => {
     // 候補 0 件 + --append --out: 素通し上書きに落ちず既存ファイルを維持する
     expect(discoverWriteAction(0, true, "data/discovered_candidates.yaml", false)).toBe("none");

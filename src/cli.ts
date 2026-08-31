@@ -35,6 +35,7 @@ import {
   warningCounts,
   warningIdentityKeys,
 } from "./model.ts";
+import { applyVerificationLedger, loadVerificationLedger, reverifyData } from "./reverify.ts";
 import { AideadlinesSource } from "./sources/aideadlines.ts";
 import { fetchMetadataFor, resetFetchMetadata } from "./sources/base.ts";
 import { CcfddlSource } from "./sources/ccfddl.ts";
@@ -514,6 +515,10 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
   const offline = Boolean(args.offline);
 
   const snapshot = join(ROOT, "data", "snapshot.json");
+  const verificationLedgerPath = resolve(join(ROOT, "data", "verification-ledger.json"));
+  const verificationLedger = existsSync(verificationLedgerPath)
+    ? loadVerificationLedger(verificationLedgerPath)
+    : null;
 
   const snapshotPayload = readSnapshot(snapshot);
   const collected = await hooks.collect(resolve(args.cache), { offline, now });
@@ -612,6 +617,7 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
   // estimated one, so the fold runs once more behind it.
   confs = dedupDeadlinesAfterRollforward(confs, config, mergeStats);
   confs = select(confs, config);
+  if (verificationLedger) confs = applyVerificationLedger(confs, verificationLedger);
 
   const outdir = resolve(args.out);
   const healthConfig = (config.health as Record<string, unknown> | undefined) ?? {};
@@ -855,6 +861,32 @@ export async function cmdReview(args: ReviewCliArgs): Promise<number> {
   return 0;
 }
 
+export interface ReverifyCliArgs {
+  data?: string;
+  ledger?: string;
+  now?: string | null;
+  due?: boolean;
+}
+
+export async function cmdReverify(args: ReverifyCliArgs): Promise<number> {
+  const dataPath = resolve(args.data ?? join(ROOT, "public", "data.json"));
+  const ledgerPath = resolve(args.ledger ?? join(ROOT, "data", "verification-ledger.json"));
+  try {
+    const result = await reverifyData({
+      dataPath,
+      ledgerPath,
+      now: args.now ? parseNow(args.now) : new Date(),
+      due: Boolean(args.due),
+      bodyRoot: join(ROOT, "data", "evidence", "blobs"),
+    });
+    console.log(JSON.stringify({ processed: result.processed, statuses: result.statuses }));
+    return 0;
+  } catch (error) {
+    process.stderr.write(`reverify failed: ${String(error)}\n`);
+    return 1;
+  }
+}
+
 function writeTextFile(path: string, text: string): void {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, text, "utf8");
@@ -875,6 +907,9 @@ export interface CliArgs {
   noEmbeddings?: boolean;
   candidates?: string;
   limit?: number;
+  data?: string;
+  ledger?: string;
+  due?: boolean;
   help?: boolean;
 }
 
@@ -901,6 +936,11 @@ export function usage(): string {
     "    -C, --candidates <p>  候補 YAML パス (既定: data/discovered_candidates.yaml)",
     "    -l, --limit <n>       表示上限件数 (既定: 60)",
     "    -n, --now <iso>       基準時刻。例 2026-08-09T00:00:00Z",
+    "  reverify 再確認台帳を公式ページから更新する",
+    "    --data <path>         対象 data.json (既定: public/data.json)",
+    "    --ledger <path>       台帳 (既定: data/verification-ledger.json)",
+    "    --due                 次回確認時刻を過ぎた締切だけ確認する",
+    "    -n, --now <iso>       基準時刻",
     "  help / --help / -h      使い方を表示する",
   ].join("\n");
 }
@@ -940,6 +980,9 @@ export function parseArgs(argv: string[] | null | undefined): CliArgs {
     append: { type: "boolean", short: "a" },
     candidates: { type: "string", short: "C" },
     limit: { type: "string", short: "l" },
+    data: { type: "string" },
+    ledger: { type: "string" },
+    due: { type: "boolean" },
   } as const;
   const { values, positionals, tokens } = parseNodeArgs({
     args: normalized,
@@ -980,6 +1023,9 @@ export function parseArgs(argv: string[] | null | undefined): CliArgs {
       stringValue(values.candidates) ?? join(ROOT, "data", "discovered_candidates.yaml");
   }
   if (values.limit !== undefined) args.limit = toPosInt(stringValue(values.limit), 60);
+  if (values.data !== undefined) args.data = stringValue(values.data) ?? undefined;
+  if (values.ledger !== undefined) args.ledger = stringValue(values.ledger) ?? undefined;
+  if (values.due !== undefined) args.due = booleanValue(values.due);
   return args;
 }
 
@@ -1006,6 +1052,9 @@ export async function main(
       cache: args.cache ?? ".cache",
       noEmbeddings: Boolean(args.noEmbeddings),
     });
+  }
+  if (args.command === "reverify") {
+    return cmdReverify({ data: args.data, ledger: args.ledger, now: args.now, due: args.due });
   }
   if (args.command === "discover") {
     return cmdDiscover({

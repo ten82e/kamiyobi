@@ -175,6 +175,35 @@ describe("merge_sources", () => {
     ]);
   });
 
+  it("does not report explicit source identity splits as collisions", () => {
+    const stats: MergeStats = { merged_deadlines: 0, merged_by_key: {} };
+    const sec = (sourceId: string) =>
+      makeConference({
+        key: "sec",
+        title: "SEC",
+        sources: ["ccfddl"],
+        identity: { sourceIds: { ccfddl: sourceId } },
+      });
+    const ccs = makeConference({
+      key: "ccs",
+      title: "CCS",
+      dblp: "ccs",
+      sources: ["ccfddl"],
+      identity: { dblpKey: "ccs", sourceIds: { ccfddl: "SC/ccs" } },
+    });
+    const asiaCcs = makeConference({
+      key: "asiaccs",
+      title: "AsiaCCS",
+      dblp: "ccs",
+      sources: ["ccfddl"],
+      identity: { dblpKey: "ccs", sourceIds: { ccfddl: "SC/asiaccs" } },
+    });
+
+    expect(mergeSources([[sec("DS/sec"), sec("SC/sec")]], CONFIG, stats)).toHaveLength(2);
+    expect(mergeSources([[ccs, asiaCcs]], CONFIG, stats)).toHaveLength(2);
+    expect(stats.identity_conflicts ?? []).toHaveLength(0);
+  });
+
   it("does not use an ordinary link as identity evidence", () => {
     const local = makeConference({
       key: "workshop",

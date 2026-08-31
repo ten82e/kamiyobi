@@ -105,6 +105,14 @@ node src/cli.ts review
 4. `scripts/promote-candidates.ts` で本文を同梱した manifest 付き batch を生成し、昇格された `extra.yaml` を確認する
 5. ビルドして収録されることを確認する
 
+公式ページの再確認は、公開済み `data.json` の次回確認時刻を過ぎた締切だけを対象にする。
+本文は SHA-256 付きで `data/evidence/blobs/` に保存し、日付の変更は台帳へ記録する。
+公開データを自動上書きしないため、変更後の値は台帳の resolution を確認してから反映する。
+
+```sh
+node src/cli.ts reverify --due --now 2026-08-31T00:00:00Z
+```
+
 ## 更新の仕組み
 
 更新は手動で行う。
