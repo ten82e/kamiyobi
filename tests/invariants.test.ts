@@ -20,6 +20,70 @@ interface EventOnlyBlock {
   year: number;
 }
 
+interface VenueRecord {
+  key?: string;
+  title?: string;
+  full_name?: string;
+  editions?: Array<{ year?: number }>;
+}
+
+function shortTitle(value: string): string {
+  return value
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/20\d\d/g, " ")
+    .replace(/\b(?:acm|ieee|ei)\b/g, " ")
+    .replace(/[^\p{L}\p{N}]+/gu, "");
+}
+
+function nameTokens(value: string): Set<string> {
+  return new Set(
+    value
+      .normalize("NFKC")
+      .toLowerCase()
+      .replace(/20\d\d/g, " ")
+      .replace(/\b(?:acm|ieee|ei|the)\b/g, " ")
+      .match(/[\p{L}\p{N}]+/gu) ?? [],
+  );
+}
+
+function tokenJaccard(left: string, right: string): number {
+  const a = nameTokens(left);
+  const b = nameTokens(right);
+  if (a.size === 0 || b.size === 0) return 0;
+  const intersection = [...a].filter((token) => b.has(token)).length;
+  return intersection / (a.size + b.size - intersection);
+}
+
+function likelyDuplicateVenues(conferences: VenueRecord[]): string[] {
+  const rows = conferences.flatMap((conference) =>
+    (conference.editions ?? []).map((edition) => ({
+      key: conference.key ?? "?",
+      title: conference.title ?? "",
+      fullName: conference.full_name ?? "",
+      year: edition.year ?? 0,
+    })),
+  );
+  const duplicates = new Set<string>();
+  for (let i = 0; i < rows.length; i++) {
+    for (let j = i + 1; j < rows.length; j++) {
+      const left = rows[i];
+      const right = rows[j];
+      if (left.key === right.key || left.year !== right.year) continue;
+      const title = shortTitle(left.title);
+      if (!title || title !== shortTitle(right.title)) continue;
+      if (
+        tokenJaccard(left.fullName, right.fullName) < 0.7 &&
+        shortTitle(left.fullName) !== title &&
+        shortTitle(right.fullName) !== title
+      )
+        continue;
+      duplicates.add([left.key, right.key].sort().join(" / "));
+    }
+  }
+  return [...duplicates].sort();
+}
+
 /**
  * overrides.yaml の生テキストを走査し、2027+ の edition で
  * `deadlines:` キーを持たないブロックを列挙する。
@@ -160,5 +224,60 @@ describe("invariants", () => {
 
     const unknown = referenced.filter(([, cat]) => !known.has(cat));
     expect(unknown).toEqual([]);
+  });
+
+  it("I5: local の表記違い同一開催回を二重公開しない (#677)", () => {
+    const extra = loadYaml(readFileSync(join(REPO_ROOT, "data", "extra.yaml"), "utf8")) as {
+      conferences?: VenueRecord[];
+    };
+    expect(likelyDuplicateVenues(extra.conferences ?? [])).toEqual([]);
+  });
+
+  it("I5: 同一会議の表記揺れを検出し、同じ略称の別会議は許す", () => {
+    const edition = [{ year: 2027 }];
+    expect(
+      likelyDuplicateVenues([
+        {
+          key: "icbda-2027",
+          title: "IEEE ICBDA 2027",
+          full_name: "IEEE 12th International Conference on Big Data Analytics (ICBDA 2027)",
+          editions: edition,
+        },
+        {
+          key: "icbda2027",
+          title: "ICBDA2027",
+          full_name: "12th International Conference on Big Data Analytics",
+          editions: edition,
+        },
+      ]),
+    ).toEqual(["icbda-2027 / icbda2027"]);
+    expect(
+      likelyDuplicateVenues([
+        {
+          key: "sec",
+          title: "SEC 2027",
+          full_name: "ACM/IEEE Symposium on Edge Computing",
+          editions: edition,
+        },
+        {
+          key: "sec-sc",
+          title: "SEC 2027",
+          full_name: "IFIP International Information Security Conference",
+          editions: edition,
+        },
+        {
+          key: "fse-se",
+          title: "FSE 2027",
+          full_name: "ACM International Conference on the Foundations of Software Engineering",
+          editions: edition,
+        },
+        {
+          key: "fse-sc",
+          title: "FSE 2027",
+          full_name: "Fast Software Encryption",
+          editions: edition,
+        },
+      ]),
+    ).toEqual([]);
   });
 });

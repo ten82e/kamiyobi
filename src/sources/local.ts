@@ -288,6 +288,9 @@ export function parseFile(path: string | null | undefined): Conference[] {
       upstream_sub: null,
       tags: toStringArray(raw.tags),
       categories: toStringArray(raw.categories),
+      ...(toStringArray(raw.legacy_keys).length
+        ? { legacy_keys: toStringArray(raw.legacy_keys) }
+        : {}),
       editions,
       sources: [NAME],
       identity: {
