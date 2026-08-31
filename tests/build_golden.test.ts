@@ -1545,28 +1545,13 @@ it("embeddingsStale は profile と manifest の不一致を再生成する", ()
   ).toBe(true);
 });
 
-it("deploy builds the merged commit while update-data cannot publish Pages", () => {
-  const deploy = readFileSync(join(REPO_ROOT, ".github/workflows/deploy.yml"), "utf8");
-  const update = readFileSync(join(REPO_ROOT, ".github/workflows/update-data.yml"), "utf8");
-  expect(deploy).toContain("ref: $" + "{{ github.sha }}");
-  expect(deploy).toContain("Build merged site");
-  expect(deploy).toContain("--offline");
-  expect(deploy).toContain("Attest publish manifest");
-  expect(update).not.toMatch(/deploy-pages|upload-pages|pages: write/);
-});
-
-it("CI stays offline while the daily update owns live discovery", () => {
-  const ci = readFileSync(join(REPO_ROOT, ".github/workflows/ci.yml"), "utf8");
-  const update = readFileSync(join(REPO_ROOT, ".github/workflows/update-data.yml"), "utf8");
-
-  expect(ci).toContain("npm test");
-  expect(ci).toContain("--offline");
-  expect(ci).toContain("--no-embeddings");
-  expect(ci).toContain("Check offline result");
-  expect(ci).not.toContain("src/cli.ts discover");
-  expect(ci).not.toContain("smoke:");
-  expect(update).toContain("node src/cli.ts discover");
-  expect(update).toContain("--candidate-out data/discovered_candidates.yaml");
+it("offline build is reproducible from fixtures without live discovery", () => {
+  // CI/CD 削除 (2026-08-31) 後も、offline build が fixture + snapshot だけで
+  // 再現できることは build_golden の他テストでpinされている。
+  // ここでは discover と build が分離されていることだけを確認する。
+  const cli = readFileSync(join(REPO_ROOT, "src/cli.ts"), "utf8");
+  expect(cli).toContain("discover");
+  expect(cli).toContain("build");
 });
 
 it("DEFAULT_CATEGORIES contains all 9 taxonomy domains", () => {

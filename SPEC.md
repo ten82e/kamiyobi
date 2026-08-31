@@ -1,8 +1,9 @@
 # kamiyobi 設計仕様（実装の正）
 
-HPC・ネットワーク・システム・AI 系会議の投稿締切と開催日を、GitHub Actions だけで
-日次に自動収集し、JSON / CSV / Markdown / 静的サイトとして公開する。
-サーバも外部サービスも使わない。GitHub 内で完結する。
+HPC・ネットワーク・システム・AI 系会議の投稿締切と開催日を、ローカルの CLI で
+収集・検査し、JSON / CSV / Markdown / 静的サイトとして公開する。
+サーバも外部サービスも使わない。日次自動更新の CI/CD は 2026-08-31 に削除した
+（`README.md` の「更新の仕組み」を参照）。
 
 この文書は実装の契約である。ここに書かれた型、関数シグネチャ、ファイル構成から逸脱しない。
 プロジェクト名は `kamiyobi` とする。
@@ -190,12 +191,6 @@ kamiyobi/
 │   └── check-reproducible-build.zsh # 固定時刻ビルドの再現性検査
 ├── public/                      # 生成物(git 管理外)
 ├── tests/                       # vitest
-└── .github/workflows/
-    ├── update-data.yml          # 日次 cron: 収集→検査→自動 PR 更新
-    ├── deploy.yml               # main のマージ済み状態だけを Pages へ配信
-    ├── nightly.yml              # 実論文ベンチ全件の定期評価
-    ├── recommendation-bundle.yml # main ごとの意味推薦 bundle 生成
-    └── ci.yml                   # PR/push: 必須検査
 ```
 
 **ビルドは手書きのファイル（README.md 等）を書き換えない。**
@@ -358,7 +353,7 @@ export async function fetchTarball(
 
 ### 3.5 スナップショット（上流障害時の復旧経路）
 
-`.cache/` は git 管理外であり、GitHub Actions の checkout には存在しない。
+`.cache/` は git 管理外であり、新規クローンには存在しない。
 上流取得が失敗したときに頼れるのはコミット済みの `data/snapshot.json` だけである。
 
 `cli.build`（`src/cli.ts` の `cmdBuild`）の取得順序を凍結する:
@@ -750,8 +745,8 @@ conferences:
     データが消えない）。警告は stderr に出るので、レジストリの URL が古くなると
     気づける。
   - 部分抽出は既存枠を消さない。枠の削除は明示的な `remove` だけで行う。
-- 日次更新 (`update-data.yml`) は build の前に `node src/fetch-primary.ts --apply` を
-  実行し、毎日自動で一次ソースを巡回する。
+- 手動更新 (`README.md` の手順) は build の前に `node src/fetch-primary.ts --apply` を
+  実行し、一次ソースを巡回する。
 - 向き不向き: EasyChair CFP (`easychair.org/cfp/...`) と静的 HTML の CFP /
   Important Dates ページは抽出しやすい。JS レンダリングサイト（wacv.thecvf.com /
   vldb.org / bigdataieee.org 等）は静的 HTML に締切が無く現行抽出では 0 件になる
@@ -767,90 +762,48 @@ conferences:
 
 ---
 
-## 6. GitHub Actions
+## 6. 更新・配信（削除履歴）
 
-### `.github/workflows/update-data.yml`
+日次自動更新・Pages 自動配信の CI/CD（`update-data.yml` / `deploy.yml` / `nightly.yml` /
+`recommendation-bundle.yml` / `ci.yml`）は 2026-08-31 に削除した（ユーザー指示）。
 
-- `on: {schedule: [{cron: '17 20 * * *'}], workflow_dispatch: }`（20:17 UTC = 05:17 JST）
-- 上流取得、一次ソース抽出、候補探索、意味検査、health 遷移、推薦差分を検査し、固定 branch `automation/data-update` の PR を作成または更新する。
-- このワークフローは Pages を配信しない。
-- GitHub App の client ID と秘密鍵が設定済みなら installation token を使う。
-- App が未設定なら `GITHUB_TOKEN` で PR を更新し、`workflow_dispatch` で CI を明示起動する。
-- PR 作成失敗を成功扱いせず、孤立した自動 branch を残さない。
-- 締切ビルドの後、同じ main commit の recommendation-bundle workflow が封印した推薦 bundle を artifact から復元・検証する。
-  埋め込みの生成または検証に失敗した場合は `public/embeddings.json` を公開物から除き、
-  `recommendation-index.json` と締切一覧は、語彙検索のみで動作する形で残す。`scripts/health-gate.ts`
-  は同一 `BUILD_NOW` で main から再構築した `health.json` を比較対象とし、確定締切枠の根拠のない消失や
-  根拠なしの前倒し、必須会議欠落、警告急増、snapshot 無しのデータ源障害を検出した場合だけ
-  PR 更新を止める。同一枠の延長、新しい枠の追加、経過した締切の削除、
-  `profile_hash` の変化では止めない。
-- 手順: main checkout → setup-node 24 → `npm ci` → baseline build →
-  一次ソース抽出・候補探索 → online build → `public/data.json` の意味検査 →
-  health gate・推薦 Top-5 差分・カテゴリ差分 → 開始時の main SHA を再確認 →
-  実質差分があるファイルだけを固定 branch へ pushして PR 作成または更新。
-  `scripts/compare-head.ts` は `generated_at` / `_comment` の日付変化を無視する。
-- 上流取得に失敗しても §3.5 の退避経路でサイトを壊さない。
-- 自動更新は main へ直接 push しない。専用 branch の PR に通常の CI を実行し、
-  `[skip ci]` は付けない。
-- update-data.yml に `pull_request` / `pull_request_target` トリガを**追加しない**
-  （`contents: write` と組み合わせると公開リポジトリで危険になる）。
+削除に伴う仕様の変更点:
 
-### `.github/workflows/deploy.yml`
+- `publish.json` の `workflow_run_id` はローカル実行では `null` になる（環境変数
+  `GITHUB_RUN_ID` が無いため）。schema 4 の型は `string | null` のまま変更しない。
+- `data/next-last-known-good-health.json` は手動更新のたびに `health-gate.ts` の
+  出力を保存して更新する（CI の artifact 経由ではもう来ない）。
+- nightly 実論文ベンチ（dev/heldout 全件）はローカルで
+  `node src/bench-recommender.ts` により実行する。
+- snapshot fallback / health gate / 意味検査の仕様は削除前と同一。CI が担っていた
+  検査は手動で同じコマンドを実行する（README.md「更新の仕組み」）。
 
-- `main` への push と、main の recommendation-bundle 完了で起動する。nightly は評価専用で deploy を起こさない。
-- merge 済みの commit を checkoutし、ネットワークなし・埋め込み生成なしでビルドする。
-  同一 commit・profile・モデル revision の bundle だけを復元し、不一致時は `lexical-only` を公開する。
-- health gate は前回成功 deploy の artifact を比較対象とし、初回だけ親 commit を同一時刻で再構築する。Pages は比較元に使わない。
-- ビルド、意味検査、health gate、公開物検査を通してから Pages artifact を作る。
-- `pages: write`、`id-token: write`、`attestations: write` は配信に必要な job だけへ与える。
-- `public/publish.json` の build provenance を attest し、`source_commit` が示す commit と公開物を結び付ける。
-- required checks が完了して main に入ったデータ以外は公開しない。
-- 全 main push はまず lexical-only deploy と recommendation bundle 生成の両方を起動する。
-  Pages 配信は共有 concurrency group で取消さず直列化し、workflow_run の build 前と deploy 直前に
-  trigger SHA が現在の main であることを再確認する。古い run は失敗ではなく no-deploy で終了する。
+### （削除済み）日次 cron: 収集→検査→自動 PR 更新
 
-**cron の 60 日無効化について（未検証と明記する）**
-GitHub は公開リポジトリで「60 日間リポジトリ活動が無いと scheduled workflow を自動停止する」
-と公式に述べている。しかし **「活動」の定義も、GITHUB_TOKEN による bot コミットが
-それに数えられるかも公式ドキュメントに記載が無い**。
-既知の keepalive 実装のうち、PhrozenByte は GITHUB_TOKEN では権限不足として PAT を要求し、
-gautamkrishnar/keepalive-workflow は GitHub Staff により利用規約違反として無効化されている。
+以下の機能は `update-data.yml` が担っていたが、削除により失われた:
 
-したがって:
+- 毎日 20:17 UTC の自動収集・自動 PR 作成/更新
+- 上流取得失敗時の snapshot 退避による継続生成
+- `workflow_dispatch` による手動再実行
 
-- 活動を偽装する目的のハートビートコミットは実装しない。
-- `data/snapshot.json` は上流が変わるたびに更新されるので、副次効果として活動が発生する。
-  これを唯一の対策とし、**効果は未検証であると README に明記する。**
-- `workflow_dispatch` を残し、停止した場合の手動再有効化手順を README に書く。
+~~これらは手動更新手順（§README）で代替する。~~
 
-### `.github/workflows/ci.yml`
+### （削除済み）main push 時の Pages 配信
 
-push と pull request の両方で、変更ファイルにかかわらず次の七つの job を報告する。
+`deploy.yml` が担っていた以下の機能は削除により失われた:
 
-- `typecheck`、`lint`、`unit-integration-tests`、`offline-build`、`validate-data`、
-  `health-transition`、`recommendation-regression`。
-- 各 job は外部上流へ依存せず、fixture と `data/snapshot.json` を入力に使う。
-  推薦回帰は PR の base と current をそれぞれ offline build し、同一ケースの順位差を測る。
-  `npm test` は明示的に差し替えていない HTTP 通信を拒否し、`tests/fixtures/` と `data/snapshot.json` だけを入力に使う。
-- PR で使う小さな実論文 subset は required check に含め、全件の実論文評価は `nightly.yml` で定期実行する。
-- validator warning baseline は安定した code + subject ごとの件数を保持し、新しい identity と既知 identity の件数増加を失敗させる。
-  `event_date_status: not-announced`、`TBD`、`TBD <year>`、`not announced` は未発表状態として通常扱いにする。
-- `TBD` / `TBA` / `To be announced` / `Extended` はパース失敗ではなく未発表の正常状態として扱い、
-  warning を出さずに null (event date 無し) へ正規化する (`isNonDateMarker`)。
-- 同一 source 内で edition 識別子 (`editionId` または source-local ID) が異なり、会期が重ならない
-  edition は、URL を共有していても別開催の独立 occurrence として扱う。IEICE 研究会などの月例開催は
-  identity conflict に数えない。
-- venue key collision のうち同一会議と分かったものは `venue_identities` で統合し、残る既知衝突だけを
-  observation baseline に保持する。
+- main への push を契機とする自動再ビルド・health gate・Pages 配信
+- lexical-only フォールバック（bundle 不一致時）
+- build provenance の attest と `publish.json` への記録
 
-- health gate の観測系比較 (parse warning・warning code・identity conflict) は、baseline が snapshot
-  fallback build の場合に `data/source-observation-baseline.json` (最後に成功した online 更新の診断状態)
-  を比較源にする。どちらも無い初回 bootstrap だけ観測系検査を skip し、slot 内容の比較は常に実行する。
-- update-data は `workflow_dispatch` の `dry_run: true` (既定) で canary 実行できる。dry_run では
-  writer job (data PR 作成) を skip し、診断 artifact の生成までを検証する。fixture cache 上で
-  edition id 改名・締切消失などの scenario class は `tests/update_data_canary.test.ts` が pin する。
-- 上流データ取得、候補探索、自動 PR 更新は日次 `update-data.yml` に置く。
-- 七つの job は main の required check として設定する。
+~~Pages への配信が必要なら、`public/` のビルド結果を手動でアップロードする。~~
+
+### （削除済み）PR/push の必須検査
+
+`ci.yml` が担っていた七つの job（typecheck / lint / unit-integration-tests /
+offline-build / validate-data / health-transition / recommendation-regression）は
+削除により失われた。検査コマンドは `npm run typecheck` / `npm run check` /
+`npm test` / `npm run validate:data` としてローカルで実行できる。
 
 ---
 
