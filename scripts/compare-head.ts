@@ -63,8 +63,21 @@ function stripChurn(v: unknown, mode: ChurnMode): unknown {
         // overrides: only skip _comment
         if (k === "_comment") continue;
       } else if (mode === "snapshot") {
-        // snapshot: skip generated_at and _comment, but KEEP evidence timestamps
-        if (k === "generated_at" || k === "_comment") continue;
+        // snapshot: skip generated_at and _comment, and the entire
+        // snapshot_metadata block (build-time metadata: generated_at /
+        // fetchedAt / source revisions change on every build regardless of
+        // content). Evidence timestamps inside conferences are kept.
+        // `verification` blocks are build-time-derived scheduling metadata
+        // (last_attempt_at / last_verified_at / next_check_at) — they change
+        // on every build and may be absent in older committed snapshots, so
+        // they are not content either.
+        if (
+          k === "generated_at" ||
+          k === "_comment" ||
+          k === "snapshot_metadata" ||
+          k === "verification"
+        )
+          continue;
       } else {
         // default (legacy): skip generated_at, observed_at, _comment
         if (k === "generated_at" || k === "observed_at" || k === "_comment") continue;
