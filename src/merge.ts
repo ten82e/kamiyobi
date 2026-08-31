@@ -606,6 +606,8 @@ function mergeBucket(
   out.tags = unique(confs.flatMap((c) => c.tags));
   out.categories = unique(confs.flatMap((c) => c.categories));
   out.sources = unique(confs.flatMap((c) => c.sources));
+  const legacyKeys = unique(confs.flatMap((c) => c.legacy_keys ?? []));
+  if (legacyKeys.length > 0) out.legacy_keys = legacyKeys;
   const before = tally.merged_deadlines;
   out.editions = mergeEditions(confs, windows, tally);
   const mergedHere = tally.merged_deadlines - before;
