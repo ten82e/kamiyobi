@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "benchmark": "real-paper-v1",
+  "dataset": {
+    "dev": "data/benchmarks/real-paper-dev.json",
+    "heldout": "data/benchmarks/real-paper-heldout.json",
+    "negative": "data/benchmarks/real-paper-negative.json",
+    "feature_store": "data/benchmarks/real-paper-features.jsonl"
+  },
+  "production": {
+    "trainer_revision": "l2-pairwise-logistic-reranker-v3-grouped-cv",
+    "oof_mrr": 0.05781014,
+    "oof_recall_at_5": 0.0625,
+    "dev": {
+      "mrr": 0.052489,
+      "recall_at_5": 0.075,
+      "top1_brier": 0.047103,
+      "top5_brier": 0.092801,
+      "top1_ece": 0.203618,
+      "top5_ece": 0.128618
+    },
+    "heldout": {
+      "mrr": 0.076905,
+      "recall_at_5": 0.1,
+      "top1_brier": 0.07629,
+      "top5_brier": 0.104642,
+      "top1_ece": 0.204221,
+      "top5_ece": 0.155923
+    },
+    "negative": {
+      "abstention_rate": 1,
+      "false_positive_rate": 0
+    }
+  },
+  "candidate": {
+    "trainer_revision": "l2-pairwise-logistic-reranker-v4-component-greedy-cv",
+    "oof_mrr": 0.05844785,
+    "oof_recall_at_5": 0.0625,
+    "dev": {
+      "mrr": 0.052471,
+      "recall_at_5": 0.075,
+      "top1_brier": 0.047103,
+      "top5_brier": 0.092801,
+      "top1_ece": 0.203618,
+      "top5_ece": 0.128618
+    },
+    "heldout": {
+      "mrr": 0.077091,
+      "recall_at_5": 0.1,
+      "top1_brier": 0.07629,
+      "top5_brier": 0.104642,
+      "top1_ece": 0.204221,
+      "top5_ece": 0.155923
+    },
+    "negative": {
+      "abstention_rate": 1,
+      "false_positive_rate": 0
+    }
+  },
+  "acceptance": {
+    "heldout_mrr_non_degraded": true,
+    "heldout_recall_at_5_non_degraded": true,
+    "negative_false_positive_rate_non_degraded": true,
+    "calibration_non_degraded": true
+  },
+  "decision": "adopt-v4",
+  "artifact": {
+    "path": "data/recommender-reranker.json",
+    "algorithm_revision": "l2-pairwise-logistic-reranker-v4-component-greedy-cv",
+    "training_data_hash": "f4e6613e9d382dd403e128dc8e7651ae816dfcfea6ff425e28f0e498f06afa80",
+    "feature_store": "data/benchmarks/real-paper-features.jsonl"
+  }
+}

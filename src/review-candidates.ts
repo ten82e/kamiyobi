@@ -10,6 +10,7 @@ import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { load as loadYaml } from "js-yaml";
 import { parseDeadlineText } from "./discover.ts";
+import { localSourcePaths } from "./sources/local.ts";
 
 export let ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -51,7 +52,7 @@ export function normTitle(title: string | null | undefined): string {
 }
 
 export function loadTrackedTitles(root: string = ROOT): Set<string> {
-  /** 収録済み (snapshot.json + data/extra.yaml + data/overrides.yaml) の正規化タイトル・フルネーム・キー集合。 */
+  /** 収録済み (snapshot + local canonical inputs + overrides) の名称集合。 */
   const tracked = new Set<string>();
   const add = (c: Record<string, unknown>): void => {
     if (typeof c.title === "string" && c.title) {
@@ -78,16 +79,15 @@ export function loadTrackedTitles(root: string = ROOT): Set<string> {
   } catch {
     // snapshot が無い/壊れている場合も extra.yaml 側で拾う
   }
-  try {
-    const extra = loadYaml(readFileSync(join(root, "data", "extra.yaml"), "utf8")) as Record<
-      string,
-      any
-    >;
-    for (const c of (extra.conferences as unknown[] | null) ?? []) {
-      if (typeof c === "object" && c !== null) add(c as Record<string, unknown>);
+  for (const path of localSourcePaths(root)) {
+    try {
+      const local = loadYaml(readFileSync(path, "utf8")) as Record<string, any>;
+      for (const c of (local.conferences as unknown[] | null) ?? []) {
+        if (typeof c === "object" && c !== null) add(c as Record<string, unknown>);
+      }
+    } catch {
+      // local input が無い場合
     }
-  } catch {
-    // extra.yaml が無い場合
   }
   try {
     const overrides = loadYaml(

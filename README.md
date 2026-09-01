@@ -1,8 +1,8 @@
 # kamiyobi
 
-高性能計算・ネットワーク・システム・人工知能・セキュリティ・データベース・グラフィックス・HCI・理論の国際会議および穴場ワークショップ・ジャーナルについて、論文投稿の締切と開催日を全自動で探知・配信する。
-毎日 1 回自動で上流データを取得・自律探索し、JSON / CSV / Markdown と静的サイトを生成して GitHub Pages で公開する。
-サーバも外部サービスも使わず、GitHub の中だけで完結している。
+高性能計算・ネットワーク・システム・人工知能・セキュリティ・データベース・グラフィックス・HCI・理論の国際会議および穴場ワークショップ・ジャーナルについて、論文投稿の締切と開催日を収集・正規化する。
+上流データの取得、候補探索、ビルド、公開は必要なときに手動で行い、JSON / CSV / Markdown と静的サイトを生成する。
+生成した静的サイトは GitHub Pages で公開できる。
 
 公開先は https://ten82e.github.io/kamiyobi/ である。
 
@@ -16,7 +16,7 @@
 
 投稿判断に使う正規化データ全体は `data.json`、一覧画面用の現在・近日期間カタログは
 `catalog.json`、推薦モード用の会議プロフィールは `recommendation-index.json`、締切だけを扱う表は
-`data.csv`、品質監視用の健全性レポートは `health.json`、直近の締切と開催日は `upcoming.md` にある。静的サイトでは会議名・締切・公式サイトを
+`data.csv`、品質監視用の健全性レポートは `health.json`、直近の締切と開催日は `upcoming.md` にある。`data.json` と `health.json` には、旧 slot の統合を許可する明示的な `identity_migrations` 契約も含まれる。静的サイトでは会議名・締切・公式サイトを
 検索でき、推薦機能は必要時に推薦インデックスを取得して論文の PDF/TXT をブラウザ内で処理する。
 推薦インデックスは締切データと同じ公開物として維持され、埋め込みを取得・検証できない場合も
 サイト全体は公開され、語彙スコアのみの推薦に切り替わる。
@@ -30,7 +30,7 @@
 | `https://ten82e.github.io/kamiyobi/llms.txt` | 出力ファイルとデータの形を 1 枚にまとめた索引。まずここを読む |
 | `https://ten82e.github.io/kamiyobi/data.json` | 正規化済みの全データ。時刻確認済みの締切は UTC と AoE、日付のみ確認済みの締切は `local_date` と不確実性区間で表す |
 | `https://ten82e.github.io/kamiyobi/health.json` | 確定/推定締切、ソース失敗、警告数、カテゴリ件数、必須会議の健全性レポート |
-| `https://ten82e.github.io/kamiyobi/publish.json` | 公開成果物のハッシュ、`content_id` / `build_id`、元 commit、入力 hash、workflow run、build 時刻・Node 版・offline/cache 方針、`semantic_status`。公開物の再現元を示す |
+| `https://ten82e.github.io/kamiyobi/publish.json` | 公開成果物のハッシュ、`content_id` / `build_id`、元 commit、入力 hash、実行元、build 時刻・Node 版・offline/cache 方針、`semantic_status`。公開物の再現元を示す |
 
 他に、1 行 1 締切の平坦な表 [`data.csv`](https://ten82e.github.io/kamiyobi/data.csv) と、直近 180 日の締切と開催の表 `upcoming.md` がある。
 
@@ -53,15 +53,17 @@
 |---|---|---|
 | `ccfddl` | [ccfddl/ccf-deadlines](https://github.com/ccfddl/ccf-deadlines) | MIT |
 | `aideadlines` | [huggingface/ai-deadlines](https://github.com/huggingface/ai-deadlines) | MIT |
-| `local` | 本リポジトリの `data/extra.yaml` | MIT（本リポジトリ） |
+| `local` | 本リポジトリの `data/manual.yaml` と `data/curated.generated.yaml` | MIT（本リポジトリ） |
 
 発見ソース（候補生成）は `DBLP`、`OpenReview`、`wikiCFP`（70 カテゴリ）、`DBWorld` メーリス公開アーカイブ、`EasyChair` Smart CFP、IEEE ComSoc 誌特集号、IEICE 論文誌特集号、IPSJ 論文誌特集号である。
 DBWorld は[公開アーカイブ](https://dbworld.sigmod.org/)から、wikiCFP に載らない併設ワークショップ、ジャーナル特集号、締切延長通知を拾う。
 EasyChair は[公開 CFP 一覧](https://easychair.org/cfp)から、運営者が登録した締切、場所、トピックを分野フィルタ付きで取得する。
 IEICE と IPSJ は、それぞれ[特集号 CFP 一覧](https://www.ieice.org/eng_r/information/schedule/journals.php)と[特集論文募集一覧](https://www.ipsj.or.jp/journal/index.html)を使う。
-候補は締切を公式サイトで裏取りした後、`data/extra.yaml` に昇格する。
+候補は締切を公式サイトで裏取りした後、promotion batch を経て `data/curated.generated.yaml` に昇格する。
 
-上流が扱わない会議は `data/extra.yaml` に自前で収録している。
+手入力の会議は `data/manual.yaml` に記録する。
+`data/extra.yaml` は既存データからの移行入力として残し、正典にはしない。
+promotion から生成した正典を更新するには `npm run generate:curated` を実行する。
 帰属表示は [NOTICE.md](NOTICE.md) にある。
 本リポジトリ自体のライセンスは MIT で、全文は [LICENSE](LICENSE) にある。
 
@@ -76,18 +78,17 @@ node src/cli.ts discover --dry-run
 候補レジストリを永続化する場合:
 
 ```sh
-node src/cli.ts discover --candidate-out data/discovered_candidates.yaml \
-  --archive-out data/discovered_candidates.archive.yaml
+node src/cli.ts discover --candidate-out data/discovered_candidates.yaml
 ```
 
 `--out` は明示的に `extra.yaml` 互換の一時出力を作る場合だけ使う。
 旧互換出力を追記する `--append` は、候補レジストリの更新には使わない。
-`.github/workflows/update-data.yml` の候補探索処理が毎日これを実行し、
-`data/discovered_candidates.yaml` に既存レコードをマージする。レビュー済みの状態・メモ・
-初回発見時刻は維持され、再発見時は最終発見時刻と証拠だけが更新される。期限切れ・収録済み・
-公式 URL のない候補は、本文を複製せず fingerprint、判定理由、確認日時、source URL hash だけを
-`data/discovered_candidates.archive.yaml`（`--archive-out` で変更可能）へ移し、通常の作業キューを小さく保つ。
-候補は公式サイトで裏取りするまで `extra.yaml` には昇格しない。
+候補レジストリはこのコマンドで更新する。`data/discovered_candidates.yaml` に既存レコードを
+マージし、レビュー済みの状態・メモ・初回発見時刻は維持する。再発見時は最終発見時刻と
+証拠だけが更新される。
+運用上の確認対象は `data/discovery/active.yaml` であり、期限切れ・重複・対象外などの候補は
+`data/discovery/archive.json` に理由付きで移す。
+候補は公式サイトで裏取りするまで `manual.yaml` または `curated.generated.yaml` には昇格しない。
 探索対象を分野や年で絞るには `--categories`（例: `hpc,systems`）と
 `--min-year`（省略時は実行時の UTC 年）を使う。
 
@@ -100,67 +101,49 @@ node src/cli.ts review
 `--limit` で表示件数を絞り、`--candidates` で候補 YAML の場所を変えられる。
 候補の昇格（下記）の前に、ここで重複や怪しい候補を確認する。
 
-登録済みの公式締切を継続再確認するには、ビルド済みカタログに対して `reverify --due` を実行する。
-公式本文は SHA-256 の content-addressed blob として `data/evidence/blobs/` に一度だけ保存され、
-状態は `data/verification-ledger.json`、締切変更の提案は `data/reverification-resolutions.json` に残る。
-変更は live record へ自動上書きせず、旧値・新値・本文抜粋・公式 URL を確認してから反映する。
+**候補の昇格手順**（収録の裏取り原則: 締切は公式サイトで HTTP 確認できたもののみ）:
+
+1. `data/discovery/active.yaml` から気になる候補を選ぶ
+2. `scripts/observe-cfp.ts --url <公式URL> --body <保存先>` で公式ページの応答と本文を保存する。`--body` は必須
+3. 観測 JSON に会議・カテゴリのレビュー結果を付け、`scripts/verify-cfp.ts` で本文 hash、公式ドメイン、抽出値、取得版を検証する
+4. `scripts/promote-candidates.ts` で本文を同梱した manifest 付き batch を生成し、`npm run generate:curated` で生成された正典を確認する
+5. ビルドして収録されることを確認する
+
+公式ページの再確認は、公開済み `data.json` の次回確認時刻を過ぎた締切だけを対象にする。
+本文は SHA-256 付きで `data/evidence/blobs/` に保存し、日付の変更は台帳へ記録する。
+公開データを自動上書きしないため、変更後の値は台帳の resolution を確認してから反映する。
+
+上流の取得結果は `data/source-snapshots/` に源ごとに保存する。
+一次ソースの退避は `data/source-snapshots/primary.json` を使い、オフラインビルドでも検証済み観測を復元できる。
 
 ```sh
 node src/cli.ts reverify --due --now 2026-08-31T00:00:00Z
 ```
 
-`--data` で対象 `data.json`、`--ledger`、`--resolutions`、`--evidence` で保存先を差し替えられる。
-再確認で得た `verified` / `changed` / `source-unreachable` / `parser-failed` /
-`manual-required` は次回の build と詳細 drawer に反映される。
-
-**候補の昇格手順**（収録の裏取り原則: 締切は公式サイトで HTTP 確認できたもののみ）:
-
-1. `data/discovered_candidates.yaml` から気になる候補を選ぶ
-2. `scripts/observe-cfp.ts --url <公式URL> --body <保存先>` で公式ページの応答と本文を保存する。`--body` は必須
-3. 観測 JSON に会議・カテゴリのレビュー結果を付け、`scripts/verify-cfp.ts` で本文 hash、公式ドメイン、抽出値、取得版を検証する
-4. `scripts/promote-candidates.ts` で global evidence blob を参照する manifest 付き batch を生成し、昇格された `extra.yaml` を確認する（`--evidence` で保存先を変更可能）
-5. ビルドして収録されることを確認する
-
 ## 更新の仕組み
 
-`.github/workflows/update-data.yml` が毎日 20:17 UTC（05:17 JST）に動く。
-上流を取得して正規化し、検査済みのデータ差分を固定 branch `automation/data-update` の PR として作成または更新する。
-この日次処理から Pages へ直接配信することはない。
-全上流が fresh の場合だけ `data/snapshot.json` を更新する。
-データに実質差分があれば専用 branch へ一度 push し、PR を作成する。main へ直接 commit しない。
-このスナップショットは上流が落ちたときの退避先を兼ねており、取得に失敗した日は前回の内容から生成を続ける。
-スナップショットでも補えないほど収集が縮退した日は、ビルドが非ゼロで終了して配信を行わない。
-その日は PR を更新せず、公開済みの内容を維持する。
+更新は手動で行う。
 
-自動 PR は GitHub App token を優先し、未設定時は `GITHUB_TOKEN` と明示的な CI 起動を使う。
+```sh
+# 1. 上流を取得して正規化し、一次ソース観測を適用する
+node src/fetch-primary.ts --apply
+# 2. 候補探索（新規会議の発見）
+node src/cli.ts discover
+# 3. promotion batch から local 正典を生成
+npm run generate:curated
+# 4. フルビルド（public/ を生成）
+node src/cli.ts build --out public
+# 5. 意味検査
+npm run validate:data -- public/data.json
+# 6. health gate（前回成功時の health.json と比較）
+node scripts/health-gate.ts public/health.json --report work/health-gate-violations.json --require-baseline data/next-last-known-good-health.json
+```
 
-公開リポジトリでは、60 日間リポジトリの活動が無いとスケジュール実行が自動で無効化される（[GitHub の公式文書](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows)）。
-対策は上のスナップショット更新の副次効果だけである。
-bot のコミットが「活動」に数えられるかは公式文書に記載が無く、この対策が効くかは未検証である。
-活動を偽装する目的のコミットは、利用規約違反として停止された前例があるため実装しない。
-停止された場合は、リポジトリの Actions タブから `update-data` ワークフローを開き、`Run workflow`（`workflow_dispatch`）で手動実行すると再び有効になる。
+全上流が fresh の場合だけ `data/snapshot.json` を更新する。このスナップショットは上流が
+落ちたときの退避先を兼ねており、取得に失敗した日は前回の内容から生成を続ける。
+スナップショットでも補えないほど収集が縮退した場合は、ビルドが非ゼロで終了して公開物を作らない。
 
-`.github/workflows/ci.yml` は push と pull request で動く。
-七つの job が、型検査、静的検査、テスト、オフラインビルド、データ意味検査、health 遷移、推薦回帰を独立して報告する。
-外部上流には接続せず、`tests/fixtures/` と `data/snapshot.json` を使う。
-上流データの取得、健全性検査、候補探索、自動 PR 更新は、日次の `.github/workflows/update-data.yml` が行う。
-七つの job は変更ファイルにかかわらず実行し、main の必須チェック（required check）に指定する。
-
-`.github/workflows/deploy.yml` は main への push だけで動く。
-merge 済みの main から公開物をネットワークなしで再生成し、同じ commit の nightly 推薦 bundle が互換なら復元する。不一致時は語彙推薦だけを残す。
-health gate は前回成功 deploy の artifact（初回は親 commit の同時刻 build）と比較し、Pages 自体を正本にしない。
-health gate と manifest 検査を通した後だけ GitHub Pages へ配信する。
-`publish.json` は元 commit、入力 hash、promotion batch、workflow run ID、dirty worktree の有無に加え、build 時刻、Node 版、offline/cache 方針、再実行コマンドを記録する。
-PR 用の小さな実論文評価は必須検査に含め、全80件ずつの dev・heldout 評価は nightly workflow で行う。
-
-### 初回セットアップ
-
-`deploy.yml` はカスタムワークフローから Pages に配信するため、リポジトリの設定が必要である（[GitHub の公式文書](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)）。
-Settings の Pages を開き、Build and deployment の Source を「GitHub Actions」にする。
-既定のままだと Deploy の段階で毎日失敗する。
-
-自動 PR に GitHub App を使う場合は、repository secret `KAMIYOBI_APP_CLIENT_ID` と `KAMIYOBI_APP_PRIVATE_KEY` を設定する。
-未設定時は `GITHUB_TOKEN` を使い、更新後の CI を明示的に起動する。
+変更は `git branch` → ローカルで `npm run typecheck && npm run check && npm test` → `git merge` の順で main に反映する。
 
 ## 手元で動かす
 
@@ -206,7 +189,7 @@ taxonomy:
 
 ランクによる絞り込みは `rank_filter` にある。
 空にすれば無条件で通る。
-`keep_if_no_rank` を真にしておくと、ランク情報を持たない会議（`data/extra.yaml` 由来のものなど）が落ちない。
+`keep_if_no_rank` を真にしておくと、ランク情報を持たない会議（local 正典由来のものなど）が落ちない。
 
 ```yaml
 rank_filter:
@@ -215,7 +198,7 @@ rank_filter:
   keep_if_no_rank: true
 ```
 
-上流に無い会議を足したいときは `data/extra.yaml` に書く。
+上流に無い会議を手入力で足したいときは `data/manual.yaml` に書く。
 上流の記述が誤っているときは `data/overrides.yaml` で訂正するか、除外する。
 どちらも編集後は手元でビルドし直して結果を確かめる。
 
@@ -230,7 +213,7 @@ rank_filter:
 
 締切を持たず開催日だけがわかっている会議（ISC High Performance・HOTI・P4 Workshop・Linux Plumbers Conference・情報処理学会 HPC 研究会など）は、種別「開催」の項目としてサイトと `upcoming.md` に出る。
 開催の行は会期の最終日を過ぎるまで既定の表示に残る。
-締切も開催日も裏が取れていない会議は、どこにも出さない（`data/extra.yaml` には未確認である旨のコメントだけを残してある）。
+締切も開催日も裏が取れていない会議は、どこにも出さない（手入力ファイルには未確認である旨のコメントだけを残せる）。
 国内の研究会・シンポジウム（`tags: [domestic-jp]`）は通しやすい発表枠として local 源で維持している。サイトの「国内研究会・国内シンポジウムのみ」で絞れる（`?domestic=1`）。
 
 会期は上流では自由文で書かれており、解釈できない書き方のものは開催イベントを作れない。

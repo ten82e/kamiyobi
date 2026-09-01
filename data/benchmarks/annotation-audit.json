@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "benchmark": "real-paper-v1",
+  "annotation_revision": 1,
+  "splits": {
+    "dev": {
+      "records": 80,
+      "records_with_evidence": 80,
+      "missing_evidence": 0
+    },
+    "heldout": {
+      "records": 80,
+      "records_with_evidence": 80,
+      "missing_evidence": 0
+    }
+  },
+  "annotation_failures": [],
+  "policy": "acceptable_venues are retained only with a cited source and curator reason; heldout labels are not used for training."
+}

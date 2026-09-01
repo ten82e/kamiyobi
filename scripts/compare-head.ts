@@ -1,9 +1,6 @@
 /**
  * ワークツリーの data ファイルと HEAD 版を「実質的な差」で比較する。
- * update-data.yml の writer が data/snapshot.json と
- * data/primary_overrides.yaml の両方について呼び、実質変更があるときだけ
- * コミットするために使う（SPEC.md §data/primary.yaml の「前回値維持」保証を
- * 成立させるため、生成物の永続化が必要）。
+ * 生成日時やコメントなどの運用メタデータを除外し、内容の変更だけを判定する。
  *
  * 使い方:
  *   node scripts/compare-head.ts data/snapshot.json
@@ -66,8 +63,21 @@ function stripChurn(v: unknown, mode: ChurnMode): unknown {
         // overrides: only skip _comment
         if (k === "_comment") continue;
       } else if (mode === "snapshot") {
-        // snapshot: skip generated_at and _comment, but KEEP evidence timestamps
-        if (k === "generated_at" || k === "_comment") continue;
+        // snapshot: skip generated_at and _comment, and the entire
+        // snapshot_metadata block (build-time metadata: generated_at /
+        // fetchedAt / source revisions change on every build regardless of
+        // content). Evidence timestamps inside conferences are kept.
+        // `verification` blocks are build-time-derived scheduling metadata
+        // (last_attempt_at / last_verified_at / next_check_at) — they change
+        // on every build and may be absent in older committed snapshots, so
+        // they are not content either.
+        if (
+          k === "generated_at" ||
+          k === "_comment" ||
+          k === "snapshot_metadata" ||
+          k === "verification"
+        )
+          continue;
       } else {
         // default (legacy): skip generated_at, observed_at, _comment
         if (k === "generated_at" || k === "observed_at" || k === "_comment") continue;

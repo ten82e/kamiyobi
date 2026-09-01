@@ -13,7 +13,6 @@ import {
   main as fetchPrimaryMain,
   loadYamlFile,
   pageTitleYear,
-  pageYear,
   pageYearMismatch,
   parsePrimaryArgs,
   parsePrimaryDate,
@@ -311,18 +310,6 @@ describe("fetch-primary extraction", () => {
   });
 });
 
-describe("pageYear", () => {
-  it("matches the registry year from the title", () => {
-    expect(pageYear("<title>SETTA 2026: International Symposium on ...</title>", 2026)).toBe(2026);
-    // レジストリが 2027 なのに title が古い版のまま → default が勝つ
-    expect(pageYear("<title>SETTA 2025 (archived)</title>", 2026)).toBe(2026);
-    // title に年が無い
-    expect(pageYear("<title>Call for Papers</title>", 2026)).toBe(2026);
-    // 未来版の誤検出防止
-    expect(pageYear("<title>SETTA 2030</title>", 2026)).toBe(2026);
-  });
-});
-
 describe("page-year diagnostics", () => {
   it.each([
     ["matching", "<title>SETTA 2026</title>", 2026, null],
@@ -333,7 +320,6 @@ describe("page-year diagnostics", () => {
     "detects %s title years without changing the safe fallback",
     (_name, html, registryYear, mismatch) => {
       expect(pageYearMismatch(html, registryYear)).toBe(mismatch);
-      expect(pageYear(html, registryYear)).toBe(registryYear);
     },
   );
 

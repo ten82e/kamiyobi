@@ -21,6 +21,9 @@ conferences:
             kind: abstract
             label: abstract
             precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-wqs-2026
+              resolution: resolution-56a197c666f4770d
             round: 1
             track: ''
           - date: '2026-09-08'
@@ -39,6 +42,9 @@ conferences:
             kind: paper
             label: paper
             precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-wqs-2026
+              resolution: resolution-10ca3445da0e3aea
             round: 1
             track: ''
         edition_id: wqs-2026

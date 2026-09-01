@@ -1,0 +1,397 @@
+{
+  "schema_version": 2,
+  "generated_at": "2026-09-01T00:00:00Z",
+  "issue": 677,
+  "latest_main": "1abb59745f97bcc5a80e305c4b0161065698293a",
+  "current": {
+    "source": "offline build at 2026-09-01T00:00:00Z",
+    "conferences": 664,
+    "editions": 1615,
+    "deadlines": 3234,
+    "semantic_slot_rows": 3234,
+    "legacy_key_redirects": 13,
+    "legacy_target_groups": 14,
+    "call_identity_editions": 12,
+    "issue_target_groups": 12
+  },
+  "comparisons": [
+    {
+      "pull_request": 672,
+      "head": "a8e449d446d5448318c0b8f490e7019463655299",
+      "reference_source": "data/snapshot.json",
+      "reference": {
+        "conferences": 676,
+        "editions": 1627,
+        "deadlines": 3240,
+        "semantic_slot_rows": 3240,
+        "legacy_key_redirects": 1,
+        "legacy_target_groups": 3
+      },
+      "current_only_count": 13,
+      "reference_only_count": 19,
+      "current_only_slots": [
+        [
+          "admit-2026",
+          "admit-202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-09-20"
+        ],
+        [
+          "ccisc-2026",
+          "ccisc-202626",
+          2026,
+          "abstract",
+          1,
+          "",
+          "date-only",
+          "2026-08-31"
+        ],
+        [
+          "ccisc-2026",
+          "ccisc-202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-09-10"
+        ],
+        [
+          "corl",
+          "corl26",
+          2026,
+          "camera_ready",
+          1,
+          "",
+          "exact",
+          "2026-10-13T11:59:59Z"
+        ],
+        [
+          "dac",
+          "dac27",
+          2027,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-11-17"
+        ],
+        [
+          "icaici-2026",
+          "icaici-202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-06-27"
+        ],
+        [
+          "icbda2027",
+          "icbda202727",
+          2027,
+          "abstract",
+          1,
+          "",
+          "date-only",
+          "2026-12-10"
+        ],
+        [
+          "iccns-2026",
+          "iccns-202626",
+          2026,
+          "abstract",
+          1,
+          "",
+          "date-only",
+          "2026-09-10"
+        ],
+        [
+          "iccr-2026",
+          "iccr-202626",
+          2026,
+          "abstract",
+          1,
+          "",
+          "date-only",
+          "2026-10-01"
+        ],
+        [
+          "iccr-2026",
+          "iccr-202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-10-01"
+        ],
+        [
+          "keir-cikm2026",
+          "keir-cikm202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "exact",
+          "2026-09-17T11:59:00Z"
+        ],
+        [
+          "sec",
+          "sec2026",
+          2026,
+          "abstract",
+          1,
+          "",
+          "exact",
+          "2026-04-25T11:59:59Z"
+        ],
+        [
+          "sec",
+          "sec2026",
+          2026,
+          "paper",
+          1,
+          "",
+          "exact",
+          "2026-05-02T11:59:59Z"
+        ]
+      ],
+      "reference_only_slots": [
+        [
+          "acm-bdiot-2026",
+          "acm-bdiot-202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-09-05"
+        ],
+        [
+          "admit-2026",
+          "admit-202626",
+          2026,
+          "abstract",
+          1,
+          "",
+          "date-only",
+          "2026-09-20"
+        ],
+        [
+          "admit-2026",
+          "admit-202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-09-30"
+        ],
+        [
+          "ccisc-2026",
+          "ccisc-202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-08-31"
+        ],
+        [
+          "csp-ei-2027",
+          "csp-ei-202727",
+          2027,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-10-05"
+        ],
+        [
+          "icaici-2026",
+          "icaici-202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-08-28"
+        ],
+        [
+          "icbda-2027",
+          "icbda-202727",
+          2027,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-12-10"
+        ],
+        [
+          "iccns-ei-2026",
+          "iccns-ei-202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-09-10"
+        ],
+        [
+          "iccr-2026",
+          "iccr-202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-08-25"
+        ],
+        [
+          "icimt-ei-2026",
+          "icimt-ei-202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-09-15"
+        ],
+        [
+          "icmip-ei-2027",
+          "icmip-ei-202727",
+          2027,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-10-05"
+        ],
+        [
+          "ieee-admit-2026",
+          "ieee-admit-202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-09-20"
+        ],
+        [
+          "ieee-ccisc-2026",
+          "ieee-ccisc-202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-09-10"
+        ],
+        [
+          "ieee-csp-2027",
+          "ieee-csp-202727",
+          2027,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-10-05"
+        ],
+        [
+          "ieee-icaici-2026",
+          "ieee-icaici-202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-08-28"
+        ],
+        [
+          "ieee-iccr-2026",
+          "ieee-iccr-202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-08-25"
+        ],
+        [
+          "keir-cikm-2026",
+          "keir-cikm-202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-08-24"
+        ],
+        [
+          "keir-cikm2026",
+          "keir-cikm202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-09-13"
+        ],
+        [
+          "raai-2026",
+          "raai-202626",
+          2026,
+          "paper",
+          1,
+          "",
+          "date-only",
+          "2026-09-05"
+        ]
+      ],
+      "decision": "retain-current-canonical-data-no-rescue",
+      "decision_reason": "The PR snapshot is older auto-generated data with legacy aliases and stale values; current official/manual canonical records already cover the valid Issue #677 groups, so no PR data was rescued.",
+      "issue_target_groups": 12
+    },
+    {
+      "pull_request": 678,
+      "head": "204ed4df24a9f4f437f60f51c72d7e8233d5c44c",
+      "reference_source": "data/snapshot.json",
+      "reference": {
+        "conferences": 664,
+        "editions": 1615,
+        "deadlines": 3233,
+        "semantic_slot_rows": 3233,
+        "legacy_key_redirects": 13,
+        "legacy_target_groups": 14
+      },
+      "current_only_count": 1,
+      "reference_only_count": 0,
+      "current_only_slots": [
+        [
+          "corl",
+          "corl26",
+          2026,
+          "camera_ready",
+          1,
+          "",
+          "exact",
+          "2026-10-13T11:59:59Z"
+        ]
+      ],
+      "reference_only_slots": [],
+      "decision": "retain-current-only-slots-for-review",
+      "decision_reason": "CoRL 2026 camera-ready remains current-only; reconciliation does not authorize deletion.",
+      "issue_target_groups": 12
+    }
+  ],
+  "external_actions": {
+    "issue_closed": false,
+    "pull_requests_closed": false,
+    "reason": "AGENTS.md forbids outward issue, pull request, comment, and review writes."
+  }
+}

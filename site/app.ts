@@ -17,8 +17,22 @@ type EditionRecord = CandidateRow["ed"] & {
   link?: string;
   event_start?: string | null;
   event_end?: string | null;
+  event_date_precision?: string;
 };
-type DeadlineRecord = CandidateRow["dl"];
+type DeadlineRecord = CandidateRow["dl"] & {
+  verification?: {
+    official_url?: string;
+    source_class?: string;
+    source_name?: string;
+    selector_or_field?: string;
+    status?: string;
+    last_attempt_at?: string | null;
+    last_verified_at?: string | null;
+    next_check_at?: string;
+  };
+  source_name?: string;
+  evidence?: Array<Record<string, unknown>>;
+};
 type AppRow = Omit<CandidateRow, "conf" | "ed" | "dl"> & {
   conf: ConferenceRecord;
   ed: EditionRecord;
@@ -47,7 +61,6 @@ interface DrawerRow {
     date_text?: string;
     event_start?: string | null;
   };
-  dl?: DeadlineRecord;
   kind: string;
   dateOnly?: boolean;
   localDate?: string;
@@ -172,23 +185,6 @@ function isRecommendationAxes(value: unknown): value is RecommendationAxes {
 
 function isDeadlineRecord(value: unknown): value is DeadlineRecord {
   if (!isRecord(value)) return false;
-  const verification = value.verification;
-  const verificationValid =
-    verification === undefined ||
-    (isRecord(verification) &&
-      typeof verification.official_url === "string" &&
-      hasOptionalString(verification, "last_attempt_at") &&
-      hasOptionalString(verification, "last_verified_at") &&
-      typeof verification.next_check_at === "string" &&
-      hasOptionalString(verification, "content_hash") &&
-      [
-        "pending",
-        "verified",
-        "changed",
-        "source-unreachable",
-        "parser-failed",
-        "manual-required",
-      ].includes(String(verification.status)));
   return (
     hasOptionalString(value, "kind") &&
     hasOptionalString(value, "label") &&
@@ -198,8 +194,7 @@ function isDeadlineRecord(value: unknown): value is DeadlineRecord {
     hasOptionalString(value, "earliest_utc") &&
     hasOptionalString(value, "latest_utc") &&
     hasOptionalString(value, "utc") &&
-    (value.round === undefined || typeof value.round === "number") &&
-    verificationValid
+    (value.round === undefined || typeof value.round === "number")
   );
 }
 
@@ -766,42 +761,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         '" target="_blank" style="display: block; text-align: center; background: let(--accent); color: #fff; text-decoration: none; padding: 10px; border-radius: 6px; font-weight: 600; margin-bottom: 20px;">公式サイトを開く</a>';
     }
 
-    const verification = r.dl?.verification;
-    if (verification) {
-      const statusLabel: Record<string, string> = {
-        pending: "再確認待ち",
-        verified: "確認済み",
-        changed: "変更検出（要確認）",
-        "source-unreachable": "公式ページ取得不能",
-        "parser-failed": "本文から締切を抽出できず",
-        "manual-required": "手動確認が必要",
-      };
-      const verifiedAt = verification.last_verified_at
-        ? `${fmtDate(new Date(verification.last_verified_at))} UTC`
-        : "未確認";
-      const evidence = r.dl?.evidence?.find(
-        (item) => item.sourceClass === "official-cfp" || item.sourceClass === "publisher",
-      );
-      const fields = evidence?.verifiedFields?.length
-        ? evidence.verifiedFields.join("・")
-        : "日付・時刻・タイムゾーン";
-      html +=
-        '<div style="background: var(--chip); padding: 12px; border-radius: 6px; border: 1px solid var(--border); margin: 16px 0; font-size: 0.85rem;">' +
-        '<div style="font-weight: 600; margin-bottom: 8px;">公式確認</div>' +
-        '<p style="margin-bottom: 6px;"><strong>確認日時:</strong> ' +
-        esc(verifiedAt) +
-        "</p>" +
-        '<p style="margin-bottom: 6px;"><strong>根拠:</strong> ' +
-        (evidence ? "公式CFP" : "公式サイト") +
-        "</p>" +
-        '<p style="margin-bottom: 6px;"><strong>確認範囲:</strong> ' +
-        esc(fields) +
-        "</p>" +
-        '<p style="margin-bottom: 0;"><strong>状態:</strong> ' +
-        esc(statusLabel[verification.status] || verification.status) +
-        "</p></div>";
-    }
-
     html +=
       '<div style="font-size: 0.85rem;">' +
       '<p style="margin-bottom: 8px;"><strong>開催地:</strong> ' +
@@ -1038,9 +997,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   let semState: SemanticStatus = "idle"; // idle | loading | ready | error（AI 状態の表示用）
   let semanticReason: string | null = null;
   const semProbeCache: Record<string, boolean> = {}; // model@revision -> probe compatibility
-  let _semLastText = ""; // 最後に埋め込み計算したテキスト（再計算判定用）
-  let _lastIsJp = false; // 直近の論文テキストが日本語か（合成比・閾値の表示用）
-  let _lastLen = 0; // 直近の論文テキストの内容語数（英語の合成比の適応用）
 
   function currentPaperText() {
     return valueElement("paperText").value;
@@ -1053,7 +1009,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function clearSemantic(nextState?: SemanticStatus) {
     semQuery = null;
     semEmbeddings = null;
-    _semLastText = "";
     Recommender.setPaperVecs(null);
     if (nextState) semState = nextState;
   }
@@ -1225,7 +1180,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
               // 論文個別ベクトル（max 類似度）は英語クエリのみ。
               // 日本語クエリは多言語モデルなので英語モデルの論文ベクトルを混ぜない。
               Recommender.setPaperVecs(isJp ? null : (bundle.paperVecs ?? null));
-              _semLastText = text;
               semState = "ready";
               render();
             })
@@ -1260,14 +1214,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       : pText
         ? [{ title: pText, keywords: "", venue: "" }]
         : [];
-    const isJp = Rec ? Rec.hasJapanese(pText) : false;
-    _lastIsJp = isJp;
-    _lastLen = Rec ? Rec.contentWordCount(pText) : 0;
 
     // 分野: 手動チップがあればそれで絞る。論文モードでチップが空なら絞らない
-    // （スコア順ソートで自然に候補が上位に来る。自動判定は表示用に留める）。
+    // （スコア順ソートで自然に候補が上位に来る）。
     const cats = state.cats;
-    const _autoCats = !cats.length && pLines.length && Rec ? Rec.autoDetectCats(pLines) : [];
     // 掲載先タグの属するカテゴリ（例: RTSS タグ → systems）。同カテゴリの会議を僅かにブースト
     const venueCats = pLines.length && Rec ? Rec.venueCategories(pLines, rows) : [];
 
@@ -1360,7 +1310,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         });
         semanticScores = scores;
       }
-      out = Rec.venueRecommendations(out, pLines, semanticScores, now, { venueCats: venueCats })
+      out = Rec.venueRecommendations(out, pLines, semanticScores, now, {
+        venueCats: venueCats,
+        fieldedLexical: true,
+      })
         .filter((recommendation) => recommendation.fit.score >= 10)
         .map(
           (recommendation): AppRow => ({
@@ -1424,6 +1377,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     d.textContent = String(text);
     parent.appendChild(d);
     return d;
+  }
+
+  function verificationAlert(status: string | undefined): string | null {
+    if (!status || status === "verified") return null;
+    if (status === "changed") return "変更を検出";
+    if (status === "source-unreachable") return "公式ページ取得不能";
+    if (status === "manual-required" || status === "parser-failed") return "複数候補のため要確認";
+    return "再確認待ち";
   }
 
   function makeRow(r: AppRow) {
@@ -1524,6 +1485,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       es.className = "tag est";
       es.textContent = "推定";
       tags.appendChild(es);
+    }
+    const verificationTag = verificationAlert(r.dl.verification?.status);
+    if (verificationTag) {
+      const vs = document.createElement("span");
+      vs.className = "tag est";
+      vs.textContent = verificationTag;
+      tags.appendChild(vs);
     }
     if (r.kind === "journal") {
       const jr = document.createElement("span");
@@ -1725,6 +1693,45 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           "</div>";
       }
       html += "</div>";
+    }
+    const verification = r.dl.verification;
+    if (verification) {
+      const sourceLabels: Record<string, string> = {
+        "official-cfp": "公式CFP",
+        publisher: "出版社ページ",
+        "official-homepage": "公式ホームページ",
+        aggregator: "集約サイト",
+      };
+      const statusLabels: Record<string, string> = {
+        verified: "確認済み",
+        pending: "再確認待ち",
+        changed: "変更を検出",
+        retryable: "再試行待ち",
+        "source-unreachable": "公式ページ取得不能",
+        "parser-failed": "複数候補のため要確認",
+        "manual-required": "複数候補のため要確認",
+      };
+      const evidence = (r.dl.evidence ?? []).find((item) => item.verifiedFields);
+      const fields = Array.isArray(evidence?.verifiedFields)
+        ? evidence.verifiedFields.join("・")
+        : verification.selector_or_field || "日付・時刻・タイムゾーン";
+      const verifiedAt = verification.last_verified_at
+        ? new Date(verification.last_verified_at).toLocaleString("ja-JP")
+        : "未確認";
+      html +=
+        '<div class="verification-summary"><b>公式確認</b> ' +
+        esc(verifiedAt) +
+        "<br><b>確認元</b> " +
+        esc(sourceLabels[verification.source_class || ""] || verification.source_class || "公式") +
+        "<br><b>確認範囲</b> " +
+        esc(fields) +
+        "<br><b>状態</b> " +
+        esc(statusLabels[verification.status || ""] || verification.status || "未確認") +
+        (verification.next_check_at
+          ? "<br><b>次回確認予定</b> " +
+            esc(new Date(verification.next_check_at).toLocaleString("ja-JP"))
+          : "") +
+        "</div>";
     }
     html += "</div>";
     td.innerHTML = html;

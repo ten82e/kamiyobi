@@ -24,6 +24,9 @@ conferences:
             kind: paper
             label: paper
             precision: exact
+            promotion_ref:
+              batch: 2026-08-31-eudat-conference-2026
+              resolution: resolution-16ce89dac71c88af
             round: 1
             track: First Intake
             tz: CEST
@@ -46,6 +49,9 @@ conferences:
             kind: paper
             label: paper
             precision: exact
+            promotion_ref:
+              batch: 2026-08-31-eudat-conference-2026
+              resolution: resolution-84d25e13a08db91a
             round: 2
             track: Second Intake
             tz: CEST
@@ -66,6 +72,9 @@ conferences:
             kind: notification
             label: notification
             precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-eudat-conference-2026
+              resolution: resolution-4a21326e67264bb1
             round: 1
             track: First Intake
           - date: '2026-10-06'
@@ -85,6 +94,9 @@ conferences:
             kind: notification
             label: notification
             precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-eudat-conference-2026
+              resolution: resolution-6ce337fe127d5619
             round: 2
             track: Second Intake
         edition_id: eudat-conference-2026

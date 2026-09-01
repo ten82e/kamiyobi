@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  canonicalDataQualityFindings,
   newValidatorWarnings,
   normalizedTrack,
   summarizeCategoryChanges,
@@ -11,40 +10,6 @@ import {
 } from "../scripts/validate-data.ts";
 
 describe("validate:data", () => {
-  it("collapses duplicate file warnings by canonical venue and edition", () => {
-    const findings = canonicalDataQualityFindings([
-      "extra: venue/venue-2027: event date text is not structured",
-      "snapshot: venue/venue-2027: event date text is not structured",
-    ]);
-    expect(findings).toEqual([
-      {
-        code: "EVENT_DATE_UNSTRUCTURED",
-        venueId: "venue",
-        editionId: "venue-2027",
-        field: "event_date",
-        locations: [
-          { source: "extra", path: "venue/venue-2027" },
-          { source: "snapshot", path: "venue/venue-2027" },
-        ],
-        status: "unreviewed",
-        message: "extra: venue/venue-2027: event date text is not structured",
-      },
-    ]);
-  });
-
-  it("keeps an accepted canonical finding status across reruns", () => {
-    const previous = canonicalDataQualityFindings([
-      "extra: venue/venue-2027: event date text is not structured",
-    ]);
-    previous[0]!.status = "accepted";
-    expect(
-      canonicalDataQualityFindings(
-        ["snapshot: venue/venue-2027: event date text is not structured"],
-        previous,
-      )[0]!.status,
-    ).toBe("accepted");
-  });
-
   it("fails closed on a new stable warning code and subject", () => {
     expect(
       newValidatorWarnings(

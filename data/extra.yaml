@@ -901,8 +901,6 @@ conferences:
     full_name: Design Automation Conference
     link: https://www.dac.com/
     categories: [systems]
-    category_assignments:
-      - {category: systems, reason: manual-review}
     editions:
       - year: 2027
         id: dac27
@@ -915,9 +913,6 @@ conferences:
           - kind: paper
             label: Manuscript Submission Deadline
             date: '2026-11-17'
-            promotion_ref:
-              batch: 2026-08-31-dac-2027
-              resolution: dac-2027-paper-r1
             precision: date-only
             round: 1
             evidence:
@@ -1744,8 +1739,6 @@ conferences:
     full_name: IEEE Latin American Symposium on Circuits and Systems
     link: https://attend.ieee.org/lascas-2027/
     categories: [systems]
-    category_assignments:
-      - {category: systems, reason: manual-review}
     tags: [niche]
     editions:
       - year: 2027
@@ -1759,9 +1752,6 @@ conferences:
           - kind: paper
             label: Paper Submission
             date: '2026-09-01'
-            promotion_ref:
-              batch: 2026-08-31-lascas-2027
-              resolution: lascas-2027-paper-r1
             precision: date-only
             evidence:
               - sourceClass: official-cfp
@@ -1775,9 +1765,6 @@ conferences:
           - kind: notification
             label: Notification of Acceptance
             date: '2026-10-23'
-            promotion_ref:
-              batch: 2026-08-31-lascas-2027
-              resolution: lascas-2027-notification-r1
             precision: date-only
             evidence:
               - sourceClass: official-cfp
@@ -1791,9 +1778,6 @@ conferences:
           - kind: camera_ready
             label: Camera-ready
             date: '2026-11-09'
-            promotion_ref:
-              batch: 2026-08-31-lascas-2027
-              resolution: lascas-2027-camera-ready-r1
             precision: date-only
             evidence:
               - sourceClass: official-cfp
@@ -1813,9 +1797,6 @@ conferences:
     full_name: EUDAT Conference 2026
     link: https://www.eudat.eu/eudat-conference-2026
     categories: [systems, db]
-    category_assignments:
-      - {category: systems, reason: manual-review}
-      - {category: db, reason: manual-review}
     tags: [niche]
     editions:
       - year: 2026
@@ -1831,9 +1812,6 @@ conferences:
             round: 1
             track: First Intake
             date: '2026-07-31 18:00:00'
-            promotion_ref:
-              batch: 2026-08-31-eudat-conference-2026
-              resolution: eudat-conference-2026-paper-r1-first-intake
             tz: CEST
             evidence:
               - sourceClass: official-cfp
@@ -1849,9 +1827,6 @@ conferences:
             round: 2
             track: Second Intake
             date: '2026-09-06 18:00:00'
-            promotion_ref:
-              batch: 2026-08-31-eudat-conference-2026
-              resolution: eudat-conference-2026-paper-r2-second-intake
             tz: CEST
             evidence:
               - sourceClass: official-cfp
@@ -1867,9 +1842,6 @@ conferences:
             round: 1
             track: First Intake
             date: '2026-09-06'
-            promotion_ref:
-              batch: 2026-08-31-eudat-conference-2026
-              resolution: eudat-conference-2026-notification-r1-first-intake
             precision: date-only
             evidence:
               - sourceClass: official-cfp
@@ -1885,9 +1857,6 @@ conferences:
             round: 2
             track: Second Intake
             date: '2026-10-06'
-            promotion_ref:
-              batch: 2026-08-31-eudat-conference-2026
-              resolution: eudat-conference-2026-notification-r2-second-intake
             precision: date-only
             evidence:
               - sourceClass: official-cfp
@@ -4121,32 +4090,26 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-08-24', precision: date-only}
 
+  # 2026-08-31: https://iccr.net/ — full paper / abstract 10/1、会期 12/11-13。
   - key: iccr-2026
     title: ICCR 2026
     full_name: 2026 8th International Conference on Control and Robotics
-    link: https://easychair.org/cfp/ICCR2026
+    link: https://iccr.net/
     legacy_keys: [ieee-iccr-2026]
     categories: [ai]
     editions:
       - year: 2026
         id: iccr-202626
-        link: https://easychair.org/cfp/ICCR2026
-        place: TOKYO, Japan
-        date_text: Dec 3, 2026
+        call_identity: {seriesId: iccr, editionId: iccr-202626, callId: iccr-2026, parentEventId: null}
+        legacy_ids: [ieee-iccr-202626]
+        link: https://iccr.net/sub.html
+        place: Tokyo, Japan
+        date_text: December 11-13, 2026
+        event_start: '2026-12-11'
+        event_end: '2026-12-13'
         deadlines:
-          - kind: paper
-            label: Submission deadline
-            date: '2026-10-01'
-            precision: date-only
-            superseded_deadlines:
-              - {value: '2026-08-25', source: easychair/wikicfp, status: superseded, supersededBy: '2026-10-01', reason: official-update}
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://easychair.org/cfp/ICCR2026
-                retrievedAt: '2026-08-31T00:00:00Z'
-                verifiedAt: '2026-08-31T00:00:00Z'
-                verifiedFields: [date, kind]
-                rawExcerpt: 'Paper submission deadline: October 1, 2026'
+          - {kind: abstract, label: Abstract submission deadline, date: '2026-10-01', precision: date-only}
+          - {kind: paper, label: Submission deadline, date: '2026-10-01', precision: date-only}
 
   - key: mdoa-2026
     title: MDOA 2026
@@ -4177,32 +4140,46 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-08-30', precision: date-only}
 
+  # 2026-08-31: https://www.ccisc2026.net/ / https://easychair.org/cfp/ccisc2026 — abstract 8/31、paper 9/10、会期 9/18-20。
   - key: ccisc-2026
     title: CCISC 2026
-    full_name: 2026 IEEE International Conference on Computer Communication, Information System and Cyber
+    full_name: 2026 IEEE International Conference on Computer Communication, Information System and Cybersecurity
     link: https://www.ccisc2026.net/
     legacy_keys: [ieee-ccisc-2026]
     categories: [security]
     editions:
       - year: 2026
         id: ccisc-202626
+        call_identity: {seriesId: ccisc, editionId: ccisc-202626, callId: ccisc-2026, parentEventId: null}
+        legacy_ids: [ieee-ccisc-202626]
         link: https://www.ccisc2026.net/
         place: Wuxi, China
-        date_text: Sep 18, 2026
+        date_text: September 18-20, 2026
+        event_start: '2026-09-18'
+        event_end: '2026-09-20'
         deadlines:
+          - kind: abstract
+            label: Abstract registration deadline
+            date: '2026-08-31'
+            precision: date-only
+            evidence:
+              - sourceClass: aggregator
+                sourceUrl: https://easychair.org/cfp/ccisc2026
+                retrievedAt: '2026-08-31T00:00:00Z'
+                rawExcerpt: Abstract registration deadline August 31, 2026
+                verifiedFields: [date, kind]
           - kind: paper
-            label: Submission deadline
+            label: Paper submission deadline
             date: '2026-09-10'
             precision: date-only
-            superseded_deadlines:
-              - {value: '2026-08-31', source: easychair, status: superseded, supersededBy: '2026-09-10', reason: official-update}
             evidence:
               - sourceClass: official-cfp
+                confidence: official
                 sourceUrl: https://www.ccisc2026.net/
                 retrievedAt: '2026-08-31T00:00:00Z'
                 verifiedAt: '2026-08-31T00:00:00Z'
+                rawExcerpt: 'Paper Submission Deadline: September 10, 2026'
                 verifiedFields: [date, kind]
-                rawExcerpt: 'Paper submission deadline: September 10, 2026'
 
   - key: gcetai26
     title: GCETAI26
@@ -4318,6 +4295,26 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-04', precision: date-only}
 
+  # 2026-08-31: https://www.raai.net/ — submission 9/5、会期 12/18-20。
+  - key: raai2026
+    title: RAAI 2026
+    full_name: 2026 6th International Conference on Robotics, Automation, and Artificial Intelligence
+    link: https://www.raai.net/
+    legacy_keys: [raai-2026]
+    categories: [ai]
+    editions:
+      - year: 2026
+        id: raai202626
+        call_identity: {seriesId: raai, editionId: raai202626, callId: raai-2026, parentEventId: null}
+        legacy_ids: [raai-202626]
+        link: https://www.raai.net/
+        place: Singapore, Singapore
+        date_text: December 18-20, 2026
+        event_start: '2026-12-18'
+        event_end: '2026-12-20'
+        deadlines:
+          - {kind: paper, label: Submission deadline, date: '2026-09-05', precision: date-only}
+
   - key: ai4scisci-2026
     title: AI4SciSci 2026
     full_name: The 3nd International Workshop on Artificial Intelligence for the Science of Science
@@ -4360,6 +4357,26 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-10', precision: date-only}
 
+  # 2026-08-31: https://keir-workshop.github.io/ — final deadline 9/16 AoE、会期 11/8。
+  - key: keir-cikm2026
+    title: KEIR @ CIKM 2026
+    full_name: The Third Workshop on Knowledge-Enhanced Information Retrieval
+    link: https://keir-workshop.github.io/
+    legacy_keys: [keir-cikm-2026]
+    categories: [db]
+    editions:
+      - year: 2026
+        id: keir-cikm202626
+        call_identity: {seriesId: keir, editionId: keir-cikm202626, callId: keir-cikm-2026, parentEventId: null}
+        legacy_ids: [keir-cikm-202626]
+        link: https://keir-workshop.github.io/
+        place: Rome, Italy
+        date_text: November 8, 2026
+        event_start: '2026-11-08'
+        event_end: '2026-11-08'
+        deadlines:
+          - {kind: paper, label: Final submission deadline, date: '2026-09-16 23:59:00', tz: AoE}
+
   - key: icaisg-2026
     title: ICAISG 2026
     full_name: 2026 The 2nd International Conference on Artificial Intelligence Security and Governance
@@ -4388,6 +4405,7 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-24', precision: date-only}
 
+  # 2026-08-31: https://www.admit2026.net/ — paper submission 9/20、会期 10/16-18。
   - key: admit-2026
     title: ADMIT 2026
     full_name: 2026 5th International Conference on Algorithms, Data Mining, and Information Technology
@@ -4397,24 +4415,15 @@ conferences:
     editions:
       - year: 2026
         id: admit-202626
+        call_identity: {seriesId: admit, editionId: admit-202626, callId: admit-2026, parentEventId: null}
+        legacy_ids: [ieee-admit-202626]
         link: https://www.admit2026.net/
         place: Wuhan, China
-        date_text: Oct 16, 2026
+        date_text: October 16-18, 2026
+        event_start: '2026-10-16'
+        event_end: '2026-10-18'
         deadlines:
-          - {kind: abstract, label: Abstract registration, date: '2026-09-20', precision: date-only}
-          - kind: paper
-            label: Submission deadline
-            date: '2026-09-30'
-            precision: date-only
-            superseded_deadlines:
-              - {value: '2026-09-20', source: wikicfp, status: superseded, supersededBy: '2026-09-30', reason: duplicate-promotion}
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://easychair.org/cfp/admit2026
-                retrievedAt: '2026-08-31T00:00:00Z'
-                verifiedAt: '2026-08-31T00:00:00Z'
-                verifiedFields: [date, kind]
-                rawExcerpt: 'Submission deadline: September 30, 2026'
+          - {kind: paper, label: Paper submission deadline, date: '2026-09-20', precision: date-only}
 
   - key: bdaa-2026
     title: BDAA' 2026
@@ -4704,6 +4713,27 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-12-10', precision: date-only}
 
+  # 2026-08-31: https://icbda.org/ — full paper / abstract 12/10、会期 4/26-29。
+  - key: icbda2027
+    title: ICBDA 2027
+    full_name: 2027 the 12th International Conference on Big Data Analytics
+    link: https://icbda.org/
+    legacy_keys: [icbda-2027]
+    categories: [db]
+    editions:
+      - year: 2027
+        id: icbda202727
+        call_identity: {seriesId: icbda, editionId: icbda202727, callId: icbda-2027, parentEventId: null}
+        legacy_ids: [icbda-202727]
+        link: https://icbda.org/
+        place: Bangkok, Thailand
+        date_text: April 26-29, 2027
+        event_start: '2027-04-26'
+        event_end: '2027-04-29'
+        deadlines:
+          - {kind: abstract, label: Abstract submission deadline, date: '2026-12-10', precision: date-only}
+          - {kind: paper, label: Full-paper submission deadline, date: '2026-12-10', precision: date-only}
+
   - key: si-dl2027
     title: "SI&DL2027"
     full_name: "Swarm Intelligence and Deep Learning: Algorithms, Analysis and Applications"
@@ -4882,6 +4912,7 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-08-28', precision: date-only}
 
+  # 2026-08-31: https://www.bdiot.org/ — submission 9/5、会期 10/23-25。
   - key: bdiot-2026
     title: BDIOT 2026
     full_name: ACM--2026 10th International Conference on Big Data and Internet of Things (BDIOT 2026)
@@ -4891,19 +4922,15 @@ conferences:
     editions:
       - year: 2026
         id: bdiot-202626
-        link: https://www.bdiot.org/submission.html
+        call_identity: {seriesId: bdiot, editionId: bdiot-202626, callId: bdiot-2026, parentEventId: null}
+        legacy_ids: [acm-bdiot-202626]
+        link: https://www.bdiot.org/
+        place: Shanghai, China
+        date_text: October 23-25, 2026
+        event_start: '2026-10-23'
+        event_end: '2026-10-25'
         deadlines:
-          - kind: paper
-            label: Submission deadline
-            date: '2026-09-05'
-            precision: date-only
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://www.bdiot.org/submission.html
-                retrievedAt: '2026-08-31T00:00:00Z'
-                verifiedAt: '2026-08-31T00:00:00Z'
-                verifiedFields: [date, kind]
-                rawExcerpt: 'Paper submission deadline: September 5, 2026'
+          - {kind: paper, label: Submission deadline, date: '2026-09-05', precision: date-only}
 
   - key: bdmlic-2026
     title: BDMLIC 2026
@@ -4977,28 +5004,25 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-15', precision: date-only}
 
+  # 2026-08-31: https://iccsp.org/ — submission 10/5、会期 3/27-30。
   - key: csp-2027
     title: CSP 2027
     full_name: 2027 11th International Conference on Cryptography, Security and Privacy (CSP 2027)
-    link: https://www.iccsp.org/
+    link: https://iccsp.org/
     legacy_keys: [csp-ei-2027, ieee-csp-2027]
     categories: [security]
     editions:
       - year: 2027
         id: csp-202727
-        link: https://www.iccsp.org/
+        call_identity: {seriesId: csp, editionId: csp-202727, callId: csp-2027, parentEventId: null}
+        legacy_ids: [csp-ei-202727, ieee-csp-202727]
+        link: https://iccsp.org/
+        place: Nagoya, Japan
+        date_text: March 27-30, 2027
+        event_start: '2027-03-27'
+        event_end: '2027-03-30'
         deadlines:
-          - kind: paper
-            label: Submission deadline
-            date: '2026-10-05'
-            precision: date-only
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://www.iccsp.org/
-                retrievedAt: '2026-08-31T00:00:00Z'
-                verifiedAt: '2026-08-31T00:00:00Z'
-                verifiedFields: [date, kind]
-                rawExcerpt: 'Paper submission deadline: October 5, 2026'
+          - {kind: paper, label: Submission deadline, date: '2026-10-05', precision: date-only}
 
   - key: csta-2026
     title: CSTA 2026
@@ -5180,30 +5204,25 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-04', precision: date-only}
 
+  # 2026-08-31: https://ic-aci.net/ — submission 6/27、会期 9/11-13。
   - key: icaici-2026
     title: ICAICI 2026
     full_name: IEEE 2026 International Conference on Artificial Intelligence, Cyber-Physical Systems and Intelligent Computing
-    link: https://www.ic-aci.net/
+    link: https://ic-aci.net/
     legacy_keys: [ieee-icaici-2026]
     categories: [ai]
     editions:
       - year: 2026
         id: icaici-202626
-        link: https://www.ic-aci.net/
+        call_identity: {seriesId: icaici, editionId: icaici-202626, callId: icaici-2026, parentEventId: null}
+        legacy_ids: [ieee-icaici-202626]
+        link: https://ic-aci.net/
+        place: Chengdu, China
+        date_text: September 11-13, 2026
+        event_start: '2026-09-11'
+        event_end: '2026-09-13'
         deadlines:
-          - kind: paper
-            label: Submission deadline
-            date: '2026-06-27'
-            precision: date-only
-            superseded_deadlines:
-              - {value: '2026-08-28', source: wikicfp, status: superseded, supersededBy: '2026-06-27', reason: official-update}
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://www.ic-aci.net/
-                retrievedAt: '2026-08-31T00:00:00Z'
-                verifiedAt: '2026-08-31T00:00:00Z'
-                verifiedFields: [date, kind]
-                rawExcerpt: 'Paper submission deadline: June 27, 2026'
+          - {kind: paper, label: Full paper submission date, date: '2026-06-27', precision: date-only}
 
   - key: icaidm-2026
     title: ICAIDM 2026
@@ -5217,29 +5236,6 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-08-31', precision: date-only}
 
-  - key: icbda-2027
-    title: ICBDA 2027
-    full_name: IEEE--2027 the 12th International Conference on Big Data Analytics (ICBDA 2027)
-    link: https://www.icbda.org/
-    legacy_keys: [icbda2027]
-    categories: [db]
-    editions:
-      - year: 2027
-        id: icbda-202727
-        link: https://www.icbda.org/
-        deadlines:
-          - kind: paper
-            label: Submission deadline
-            date: '2026-12-10'
-            precision: date-only
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://www.icbda.org/
-                retrievedAt: '2026-08-31T00:00:00Z'
-                verifiedAt: '2026-08-31T00:00:00Z'
-                verifiedFields: [date, kind]
-                rawExcerpt: 'Paper submission deadline: December 10, 2026'
-
   - key: icbsr-2026
     title: ICBSR 2026
     full_name: 2026 International Conference on Bio-inspired System and Robotics (ICBSR 2026)
@@ -5252,6 +5248,7 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-18', precision: date-only}
 
+  # 2026-08-31: https://www.iccns.org/ — paper / abstract 9/10、会期 12/19-21。
   - key: iccns-2026
     title: ICCNS 2026
     full_name: 2026 The 16th International Conference on Communication and Network Security (ICCNS 2026)
@@ -5261,21 +5258,16 @@ conferences:
     editions:
       - year: 2026
         id: iccns-202626
-        link: https://www.iccns.org/sub.html
+        call_identity: {seriesId: iccns, editionId: iccns-202626, callId: iccns-2026, parentEventId: null}
+        legacy_ids: [iccns-ei-202626]
+        link: https://www.iccns.org/
+        place: Harbin, China
+        date_text: December 19-21, 2026
+        event_start: '2026-12-19'
+        event_end: '2026-12-21'
         deadlines:
-          - kind: paper
-            label: Submission deadline
-            date: '2026-08-01'
-            precision: date-only
-            superseded_deadlines:
-              - {value: '2026-09-10', source: wikicfp, status: superseded, supersededBy: '2026-08-01', reason: official-update}
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://www.iccns.org/sub.html
-                retrievedAt: '2026-08-31T00:00:00Z'
-                verifiedAt: '2026-08-31T00:00:00Z'
-                verifiedFields: [date, kind]
-                rawExcerpt: 'Paper submission deadline: August 1, 2026'
+          - {kind: abstract, label: Abstract submission deadline, date: '2026-09-10', precision: date-only}
+          - {kind: paper, label: Submission deadline, date: '2026-09-10', precision: date-only}
 
   - key: iccta-2026
     title: ICCTA 2026
@@ -5313,6 +5305,7 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-08-28', precision: date-only}
 
+  # 2026-08-31: https://www.icimt.org/submission.html — submission 9/15、会期 11/6-8。
   - key: icimt-2026
     title: ICIMT 2026
     full_name: 2026 16th International Conference on Information and Multimedia Technology (ICIMT 2026)
@@ -5322,20 +5315,17 @@ conferences:
     editions:
       - year: 2026
         id: icimt-202626
-        link: https://www.icimt.org/
+        call_identity: {seriesId: icimt, editionId: icimt-202626, callId: icimt-2026, parentEventId: null}
+        legacy_ids: [icimt-ei-202626]
+        link: https://www.icimt.org/submission.html
+        place: Shenzhen, China
+        date_text: November 6-8, 2026
+        event_start: '2026-11-06'
+        event_end: '2026-11-08'
         deadlines:
-          - kind: paper
-            label: Submission deadline
-            date: '2026-09-15'
-            precision: date-only
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://www.icimt.org/
-                retrievedAt: '2026-08-31T00:00:00Z'
-                verifiedAt: '2026-08-31T00:00:00Z'
-                verifiedFields: [date, kind]
-                rawExcerpt: 'Paper submission deadline: September 15, 2026'
+          - {kind: paper, label: Submission deadline, date: '2026-09-15', precision: date-only}
 
+  # 2026-08-31: https://www.icmip.org/ — submission 10/5、会期 3/27-30。
   - key: icmip-2027
     title: ICMIP 2027
     full_name: SPIE--2027 12th International Conference on Multimedia and Image Processing (ICMIP 2027)
@@ -5345,19 +5335,15 @@ conferences:
     editions:
       - year: 2027
         id: icmip-202727
+        call_identity: {seriesId: icmip, editionId: icmip-202727, callId: icmip-2027, parentEventId: null}
+        legacy_ids: [icmip-ei-202727]
         link: https://www.icmip.org/
+        place: Nagoya, Japan
+        date_text: March 27-30, 2027
+        event_start: '2027-03-27'
+        event_end: '2027-03-30'
         deadlines:
-          - kind: paper
-            label: Submission deadline
-            date: '2026-10-05'
-            precision: date-only
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://www.icmip.org/
-                retrievedAt: '2026-08-31T00:00:00Z'
-                verifiedAt: '2026-08-31T00:00:00Z'
-                verifiedFields: [date, kind]
-                rawExcerpt: 'Paper submission deadline: October 5, 2026'
+          - {kind: paper, label: Submission deadline, date: '2026-10-05', precision: date-only}
 
   - key: icmra-ei-2026
     title: ICMRA--EI 2026
@@ -5611,29 +5597,6 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-10-15', precision: date-only}
 
-  - key: raai-2026
-    title: RAAI 2026
-    full_name: 2026 6th International Conference on Robotics, Automation, and Artificial Intelligence (RAAI 2026)
-    link: https://www.raai.net/
-    legacy_keys: [raai2026]
-    categories: [ai]
-    editions:
-      - year: 2026
-        id: raai-202626
-        link: https://www.raai.net/
-        deadlines:
-          - kind: paper
-            label: Submission deadline
-            date: '2026-09-05'
-            precision: date-only
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://www.raai.net/
-                retrievedAt: '2026-08-31T00:00:00Z'
-                verifiedAt: '2026-08-31T00:00:00Z'
-                verifiedFields: [date, kind]
-                rawExcerpt: 'Paper submission deadline: September 5, 2026'
-
   - key: ramt-2026
     title: RAMT 2026
     full_name: 2026 3rd International Conference on Robotics and Advanced Manufacturing Technology
@@ -5808,31 +5771,6 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-04', precision: date-only}
 
-  - key: keir-cikm-2026
-    title: KEIR @ CIKM 2026
-    full_name: KEIR @ CIKM 2026
-    link: https://keir-workshop.github.io/
-    legacy_keys: [keir-cikm2026]
-    categories: [ai, db]
-    editions:
-      - year: 2026
-        id: keir-cikm-202626
-        link: https://keir-workshop.github.io/
-        deadlines:
-          - kind: paper
-            label: Submission deadline
-            date: '2026-09-16'
-            precision: date-only
-            superseded_deadlines:
-              - {value: '2026-08-24', source: dbworld, status: superseded, supersededBy: '2026-09-16', reason: duplicate-promotion}
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://keir-workshop.github.io/
-                retrievedAt: '2026-08-31T00:00:00Z'
-                verifiedAt: '2026-08-31T00:00:00Z'
-                verifiedFields: [date, kind]
-                rawExcerpt: 'Paper submission deadline: September 16, 2026 (Anywhere on Earth)'
-
   - key: pdp-2027
     title: PDP 2027
     full_name: PDP 2027
@@ -5968,9 +5906,6 @@ conferences:
     full_name: 4th Workshop on Quantum Software
     link: https://data-cybernetics.com/en/wqs-2026
     categories: [systems, theory]
-    category_assignments:
-      - {category: systems, reason: manual-review}
-      - {category: theory, reason: manual-review}
     tags: [niche]
     editions:
       - year: 2026
@@ -5985,9 +5920,6 @@ conferences:
             label: Abstract registration
             round: 1
             date: '2026-09-01'
-            promotion_ref:
-              batch: 2026-08-31-wqs-2026
-              resolution: wqs-2026-abstract-r1
             precision: date-only
             evidence:
               - sourceClass: official-cfp
@@ -6002,9 +5934,6 @@ conferences:
             label: Extended abstract submission
             round: 1
             date: '2026-09-08'
-            promotion_ref:
-              batch: 2026-08-31-wqs-2026
-              resolution: wqs-2026-paper-r1
             precision: date-only
             evidence:
               - sourceClass: official-cfp
@@ -6025,8 +5954,6 @@ conferences:
     full_name: 10th International Symposium on Chatbots and Human-centred AI
     link: https://2026.conversations.ws/
     categories: [ai]
-    category_assignments:
-      - {category: ai, reason: manual-review}
     tags: [niche]
     editions:
       - year: 2026
@@ -6041,9 +5968,6 @@ conferences:
             label: Paper submission
             round: 1
             date: '2026-09-05'
-            promotion_ref:
-              batch: 2026-08-31-conversations-2026
-              resolution: conversations-2026-paper-r1
             precision: date-only
             evidence:
               - sourceClass: official-cfp
@@ -6064,8 +5988,6 @@ conferences:
     full_name: The First Workshop on Sovereign AI for Collaborative and Pluralistic AI Ecosystems
     link: https://sovereignai-workshop.github.io/
     categories: [ai]
-    category_assignments:
-      - {category: ai, reason: manual-review}
     tags: [niche, workshop]
     editions:
       - year: 2026
@@ -6081,9 +6003,6 @@ conferences:
             round: 1
             date: '2026-08-31 23:59:00'
             tz: AoE
-            promotion_ref:
-              batch: 2026-08-31-sovereignai-2026
-              resolution: sovereignai-2026-paper-r1
             evidence:
               - sourceClass: official-cfp
                 sourceUrl: https://sovereignai-workshop.github.io/
@@ -6103,8 +6022,6 @@ conferences:
     full_name: 1st Workshop on Generative AI for Social Good and Vulnerable Populations
     link: https://genai4sg.github.io/CIKM2026/
     categories: [ai]
-    category_assignments:
-      - {category: ai, reason: manual-review}
     tags: [niche, workshop]
     editions:
       - year: 2026
@@ -6120,9 +6037,6 @@ conferences:
             round: 1
             date: '2026-09-13 23:59:00'
             tz: AoE
-            promotion_ref:
-              batch: 2026-08-31-genai4sg-cikm-2026
-              resolution: genai4sg-2026-paper-r1
             evidence:
               - sourceClass: official-cfp
                 sourceUrl: https://genai4sg.github.io/CIKM2026/
@@ -6153,9 +6067,6 @@ conferences:
     full_name: 2nd Workshop on Smarter Extraction of Scholarly Metadata using Knowledge Graphs, Language Models, and Agents
     link: https://sesame-workshop.github.io/SESAME/
     categories: [ai, db]
-    category_assignments:
-      - {category: ai, reason: manual-review}
-      - {category: db, reason: manual-review}
     tags: [niche, workshop]
     editions:
       - year: 2026
@@ -6170,9 +6081,6 @@ conferences:
             label: Paper submission
             round: 1
             date: '2026-09-07'
-            promotion_ref:
-              batch: 2026-08-31-sesame-jcdl-2026
-              resolution: sesame-2026-paper-r1
             precision: date-only
             evidence:
               - sourceClass: official-cfp
@@ -6200,9 +6108,6 @@ conferences:
     full_name: Agentic AI-Enabled Networking for Heterogeneous Unmanned Systems in Low-Altitude Environments (IEEE Wireless Communications Special Issue)
     link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp/agentic-ai-enabled-networking-heterogeneous-unmanned-systems-low-altitude-environments
     categories: [ai, networking]
-    category_assignments:
-      - {category: ai, reason: manual-review}
-      - {category: networking, reason: manual-review}
     tags: [niche, special-issue]
     editions:
       - year: 2027
@@ -6213,9 +6118,6 @@ conferences:
             label: Manuscript submission deadline (extended)
             round: 1
             date: '2026-09-15'
-            promotion_ref:
-              batch: 2026-08-31-wcm-agentic-ai-2027
-              resolution: wcm-agentic-ai-unmanned-2027-paper-r1
             precision: date-only
             evidence:
               - sourceClass: publisher
@@ -6235,9 +6137,6 @@ conferences:
     full_name: 'Large Language Models in Service-Oriented Ecosystems Design: Advances and Applications (IEEE Transactions on Services Computing Special Issue)'
     link: https://www.computer.org/digital-library/journals/tsc/cfp-language-models-ecosystems-design
     categories: [ai, systems]
-    category_assignments:
-      - {category: ai, reason: manual-review}
-      - {category: systems, reason: manual-review}
     tags: [niche, special-issue]
     editions:
       - year: 2027
@@ -6248,9 +6147,6 @@ conferences:
             label: Manuscript submission deadline
             round: 1
             date: '2026-10-31'
-            promotion_ref:
-              batch: 2026-08-31-tsc-llm-service-ecosystems-2027
-              resolution: tsc-llm-service-ecosystems-2027-paper-r1
             precision: date-only
             evidence:
               - sourceClass: publisher
@@ -6270,9 +6166,6 @@ conferences:
     full_name: 'High-Reliability and Low-Latency Communications for 6G Network: ISAC-Enabled Architectures, Networking, and Services (IEEE Network Special Issue)'
     link: https://www.comsoc.org/publications/magazines/ieee-network/cfp/high-reliability-and-low-latency-communications-6g-network-isac-enabled-architectures-networking-and-services
     categories: [networking, systems]
-    category_assignments:
-      - {category: networking, reason: manual-review}
-      - {category: systems, reason: manual-review}
     tags: [niche, special-issue]
     editions:
       - year: 2027
@@ -6283,9 +6176,6 @@ conferences:
             label: Manuscript submission deadline (extended)
             round: 1
             date: '2026-09-15'
-            promotion_ref:
-              batch: 2026-08-31-ieee-network-6g-isac-2027
-              resolution: ieee-network-6g-isac-2027-paper-r1
             precision: date-only
             evidence:
               - sourceClass: publisher
@@ -6305,9 +6195,6 @@ conferences:
     full_name: The 5th International Conference on Intelligent Computing and Next Generation Networks
     link: https://www.icngn.org/
     categories: [networking, ai]
-    category_assignments:
-      - {category: networking, reason: manual-review}
-      - {category: ai, reason: manual-review}
     tags: [niche]
     editions:
       - year: 2026
@@ -6322,9 +6209,6 @@ conferences:
             label: Paper submission deadline
             round: 1
             date: '2026-09-26'
-            promotion_ref:
-              batch: 2026-08-31-icngn-2026
-              resolution: icngn-2026-paper-r1
             precision: date-only
             evidence:
               - sourceClass: official-cfp
@@ -6344,9 +6228,6 @@ conferences:
     full_name: The 23rd International Symposium on Applied Reconfigurable Computing
     link: https://amor.cms.hu-berlin.de/~hubnermi/index.html
     categories: [hpc, systems]
-    category_assignments:
-      - {category: hpc, reason: manual-review}
-      - {category: systems, reason: manual-review}
     tags: [niche]
     editions:
       - year: 2027
@@ -6361,9 +6242,6 @@ conferences:
             label: Paper submission deadline
             round: 1
             date: '2026-10-25'
-            promotion_ref:
-              batch: 2026-08-31-arc-2027
-              resolution: arc-2027-paper-r1
             precision: date-only
             evidence:
               - sourceClass: official-cfp

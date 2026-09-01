@@ -21,6 +21,9 @@ conferences:
             kind: paper
             label: paper
             precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-sesame-jcdl-2026
+              resolution: resolution-66d47f081fcd2b72
             round: 1
             track: ''
         edition_id: sesame-2026

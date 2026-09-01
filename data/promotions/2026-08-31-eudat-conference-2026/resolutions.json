@@ -146,7 +146,8 @@
           }
         ]
       }
-    }
+    },
+    "resolution_id": "resolution-16ce89dac71c88af"
   },
   {
     "candidate": "eudat-conference",
@@ -295,7 +296,8 @@
           }
         ]
       }
-    }
+    },
+    "resolution_id": "resolution-84d25e13a08db91a"
   },
   {
     "candidate": "eudat-conference",
@@ -439,7 +441,8 @@
           }
         ]
       }
-    }
+    },
+    "resolution_id": "resolution-4a21326e67264bb1"
   },
   {
     "candidate": "eudat-conference",
@@ -583,6 +586,7 @@
           }
         ]
       }
-    }
+    },
+    "resolution_id": "resolution-6ce337fe127d5619"
   }
 ]

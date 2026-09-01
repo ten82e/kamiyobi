@@ -23,6 +23,7 @@ import {
   resetWarnings,
   warningCounts,
 } from "../src/model.ts";
+import { parseFile } from "../src/sources/local.ts";
 import { REPO_ROOT } from "./helpers.ts";
 
 interface RawDeadline {
@@ -97,14 +98,23 @@ function rawDeadlines(): RawDeadline[] {
 }
 
 describe("local source data integrity", () => {
+  it("preserves legacy keys for consolidated local conferences (#677)", () => {
+    const conferences = new Map(
+      parseFile(join(REPO_ROOT, "data", "extra.yaml")).map((conference) => [
+        conference.key,
+        conference,
+      ]),
+    );
+    expect(conferences.get("csp-2027")?.legacy_keys).toEqual(["csp-ei-2027", "ieee-csp-2027"]);
+    expect(conferences.get("keir-cikm2026")?.legacy_keys).toEqual(["keir-cikm-2026"]);
+  });
+
   it("every local deadline has a valid exact or date-only representation", () => {
     resetWarnings();
     const rows = rawDeadlines();
     expect(rows.length).toBeGreaterThan(100);
-    // The #677 duplicate editions are intentionally collapsed into their
-    // canonical records; keep the count explicit so an accidental re-addition
-    // of a duplicate is caught by the fixture-level integrity check.
-    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(170);
+    // #677: 13 source-specific duplicate records were collapsed into legacy redirects.
+    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(172);
 
     for (const row of rows) {
       if (row.precision === "date-only") {

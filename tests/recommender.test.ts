@@ -15,12 +15,11 @@ import {
   main as benchMain,
   benchV2RequiredRegressionReasons,
   buildRealPaperResult,
-  candidateDepthAudit,
-  candidateDepthSummaries,
   contentWords,
   norm,
   parseBenchArgs,
   REAL_PAPER_REGRESSION_FLOORS,
+  readFeatureStore,
   realPaperMetrics,
   realPaperRegressionReasons,
   runBenchmarkV2,
@@ -1006,33 +1005,13 @@ describe("venue recommendation fusion", () => {
     }
   });
 
-  it("emits query-level confidence as an uncalibrated diagnostic", () => {
-    const result = R.venueRecommendations(
-      [row("gpu", "GPU Systems"), row("net", "Network Systems")],
-      R.parsePaperLines("GPU scheduling | gpu"),
-      { gpu: 0.9, net: 0.2 },
-      NOW,
-    )[0];
-    expect(result.fit.queryConfidence).toMatchObject({
-      calibrated: false,
-      modelRevision: "query-confidence-heuristic-v1",
-      features: {
-        lexicalSemanticAgreement: true,
-        candidateCoverage: 1,
-        inputHasAbstract: false,
-      },
-    });
-    expect(result.fit.queryConfidence.top1Probability).toBeGreaterThanOrEqual(0);
-    expect(result.fit.queryConfidence.top1Probability).toBeLessThanOrEqual(1);
-  });
-
   it("pins the reranker development inputs by hash", () => {
     const model = JSON.parse(
       readFileSync(join(REPO_ROOT, "data", "recommender-reranker.json"), "utf8"),
     );
-    // 学習は full dev のみ。required-dev (CI 用 subset) を学習に使ってはいけない。
+    // 学習は full dev のみ。required-dev（短縮検査用 subset）を学習に使ってはいけない。
     expect(model.selected_on).toBe("real-paper-dev");
-    expect(model.cv.assignment).toBe("primary-venue-grouped-round-robin");
+    expect(model.cv.assignment).toBe("acceptable-venue-component-greedy-balanced");
     expect(model.cv.folds).toBeGreaterThanOrEqual(5);
     expect(model.confidence_policy.sufficient_enabled).toBe(false);
     expect(model.coefficient_source).toBe("trained");
@@ -1059,9 +1038,7 @@ describe("venue recommendation fusion", () => {
       dev,
       readFileSync(join(REPO_ROOT, "data/benchmarks/real-paper-required-dev.json")),
     );
-    const fixture = JSON.parse(
-      readFileSync(join(REPO_ROOT, "data/benchmarks/real-paper-required-features.json"), "utf8"),
-    );
+    const fixture = readFeatureStore(join(REPO_ROOT, "data/benchmarks/real-paper-features.jsonl"));
     writeFileSync(features, JSON.stringify(fixture));
     trainRerankerMain([
       "--dev",
@@ -1074,7 +1051,7 @@ describe("venue recommendation fusion", () => {
       first,
     ]);
     const baseline = JSON.parse(readFileSync(first, "utf8"));
-    const unrelated = fixture.records.find((item: any) => item.paper_id.startsWith("heldout-"));
+    const unrelated = fixture.records.find((item: any) => item.paper_id.startsWith("heldout-"))!;
     unrelated.semantic_scores[Object.keys(unrelated.semantic_scores)[0]] += 1;
     writeFileSync(features, JSON.stringify(fixture));
     trainRerankerMain([
@@ -1122,6 +1099,20 @@ describe("venue recommendation fusion", () => {
     expect(semantic.fit.lexicalRank).toBeNull();
     expect(semantic.fit.semanticRank).toBe(1);
     expect(semantic.fit.evidence.some((item: any) => item.type === "semantic")).toBe(true);
+  });
+
+  it("uses the measured 100-item candidate depth by default", () => {
+    const rows = Array.from({ length: 75 }, (_, index) => row(`venue${index}`, `Venue ${index}`));
+    const semanticScores = Object.fromEntries(
+      rows.map((item, index) => [item.conf.key, rows.length - index]),
+    );
+    const result = R.venueRecommendations(
+      rows,
+      R.parsePaperLines("unrelated topic"),
+      semanticScores,
+      NOW,
+    );
+    expect(result.some((item: any) => item.venueKey === "venue74")).toBe(true);
   });
 
   it("falls back to lexical fit and keeps one availability row per venue", () => {
@@ -1844,7 +1835,6 @@ describe.skipIf(!hasData)("real data integration", () => {
     // 論文モード: 未来締切 + 未来の無い会議の過去代表 + 常時受付ジャーナルを網羅し、
     // 会議単位に集約してスコア降順で並ぶ（網羅性を優先する設計）
     const data = JSON.parse(readFileSync(DATA_JSON, "utf8"));
-    const _DAY = 86400000;
     const rows: any[] = [];
     for (const c of data.conferences) {
       for (const ed of c.editions ?? []) {
@@ -2439,34 +2429,6 @@ describe("bench-recommender argument parsing and helper utilities", () => {
       }),
     );
     expect(first.timing).toEqual({ firstLoadMs: null, repeatRecommendationMs: null });
-  });
-
-  it("audits candidate depth without changing the fused ranking", () => {
-    const recommendations = [
-      { venueKey: "early", fit: { lexicalRank: 1, semanticRank: null } },
-      { venueKey: "middle", fit: { lexicalRank: null, semanticRank: 75 } },
-      { venueKey: "late", fit: { lexicalRank: 201, semanticRank: null } },
-    ] as any;
-    const audits = candidateDepthAudit(recommendations, new Set(["late"]));
-    expect(audits["50"]).toMatchObject({
-      candidate_count: 1,
-      union_hit: false,
-      oracle_reranker_hit: false,
-      reranker_hit: false,
-    });
-    expect(audits["100"]).toMatchObject({ candidate_count: 2, union_hit: false });
-    expect(audits.all).toMatchObject({
-      candidate_count: 3,
-      union_hit: true,
-      oracle_reranker_hit: true,
-      fused_rank: 3,
-      reranker_hit: true,
-    });
-    expect(candidateDepthSummaries({ paper: audits }).all).toMatchObject({
-      average_candidate_count: 3,
-      union_recall: 1,
-      oracle_reranker_recall_at_5: 1,
-    });
   });
 
   it("emits coverage-specific regression floors and hard-fails floor misses", () => {

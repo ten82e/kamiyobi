@@ -2,17 +2,17 @@
   "schema": 1,
   "id": "2026-08-31-wqs-2026",
   "observations": {
-    "sha256": "626d904402c2f10fccf7bf3b50f8c67cb8647085b6403c40660a148892487e58"
+    "sha256": "b77bff89d0dfd30ed1d9405ff9f12904f06bf88d292e6b0f20bb4fc28b0ba840"
   },
   "resolutions": {
-    "sha256": "fabfb6b241c82fda934df22dee21c7e98e1c4230d1097c2fb670a80993d53c99"
+    "sha256": "9b00ff8c411afa460c3f0242888edb40c9591e9275c5c9b76b03b19f6edc03a8"
   },
   "extra": {
-    "sha256": "8940e121fdbd3210925742f4e07e53750dc9ce1c35c3c5c368217fb0ce192aac"
+    "sha256": "ec845bf0ef243644ad880cf000075bf4dea744004e6d641248520ee5c2e246ad"
   },
   "bodies": [
     {
-      "path": "../../evidence/blobs/dc13ed46653fa4f2330f09aa2babacdb34a9df603549e1d0fd3ea15d59e8a8ba.body",
+      "path": "bodies/dc13ed46653fa4f2330f09aa2babacdb34a9df603549e1d0fd3ea15d59e8a8ba.body",
       "sha256": "dc13ed46653fa4f2330f09aa2babacdb34a9df603549e1d0fd3ea15d59e8a8ba"
     }
   ],

@@ -118,7 +118,8 @@
           }
         ]
       }
-    }
+    },
+    "resolution_id": "resolution-7745ca16ae605083"
   },
   {
     "candidate": "lascas",
@@ -239,7 +240,8 @@
           }
         ]
       }
-    }
+    },
+    "resolution_id": "resolution-4d13bbcf0d214cdb"
   },
   {
     "candidate": "lascas",
@@ -360,6 +362,7 @@
           }
         ]
       }
-    }
+    },
+    "resolution_id": "resolution-fa06799cff614f62"
   }
 ]

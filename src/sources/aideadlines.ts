@@ -14,12 +14,14 @@ import {
   deadlineEvidence,
   type Edition,
   embeddedTimezone,
+  eventDatePrecisionOf,
   kindOf,
   parseDateRange,
   parseInstant,
   refineKindWithLabel,
   roundOf,
   slug,
+  supersededDeadlinesOf,
   warn,
 } from "../model.ts";
 import { fetchTarball } from "./base.ts";
@@ -27,6 +29,11 @@ import { fetchTarball } from "./base.ts";
 export const REPO = "huggingface/ai-deadlines";
 export const REF = "main";
 export const NAME = "aideadlines";
+
+function deadlineHistory(value: unknown): Pick<Deadline, "superseded_deadlines"> {
+  const items = supersededDeadlinesOf(value);
+  return items.length ? { superseded_deadlines: items } : {};
+}
 
 // Old-format editions carry the deadlines at the top level.
 const LEGACY: Array<[DeadlineKind, string, string]> = [
@@ -128,6 +135,7 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
           sourceUrl,
           originalValue: String(rec.date),
         }),
+        ...deadlineHistory(rec.superseded_deadlines ?? raw.superseded_deadlines),
       });
     }
     if (out.length > 0) return out;
@@ -150,6 +158,7 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
           sourceUrl,
           originalValue: String(raw[key]),
         }),
+        ...deadlineHistory(raw.superseded_deadlines),
       });
     }
   }
@@ -199,6 +208,7 @@ export function editionOf(
     link,
     place,
     date_text: dateText,
+    event_date_precision: eventDatePrecisionOf(raw.event_date_precision, dateText, start, end),
     event_start: start,
     event_end: end,
     deadlines: deadlinesOf(raw),

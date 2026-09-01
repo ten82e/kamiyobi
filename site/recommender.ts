@@ -34,29 +34,6 @@ interface PaperRecord {
   venue?: string;
 }
 
-type VerificationStatus =
-  | "pending"
-  | "verified"
-  | "changed"
-  | "source-unreachable"
-  | "parser-failed"
-  | "manual-required";
-
-interface DeadlineEvidenceRecord {
-  sourceClass?: string;
-  sourceUrl?: string;
-  verifiedFields?: string[];
-}
-
-interface VerificationRecord {
-  official_url: string;
-  last_attempt_at: string | null;
-  last_verified_at: string | null;
-  next_check_at: string;
-  content_hash: string | null;
-  status: VerificationStatus;
-}
-
 interface DeadlineRecord {
   kind?: string;
   label?: string;
@@ -67,8 +44,6 @@ interface DeadlineRecord {
   latest_utc?: string;
   utc?: string | null;
   round?: number;
-  evidence?: DeadlineEvidenceRecord[];
-  verification?: VerificationRecord;
 }
 
 interface EditionRecord {
@@ -86,6 +61,11 @@ interface ConferenceRecord {
   categories?: string[];
   tags?: string[];
   papers?: string[];
+  acronym?: string;
+  scope?: string;
+  official_scope?: string;
+  paper_abstracts?: string[];
+  keywords?: string[];
   rank?: Record<string, string>;
   editions?: EditionRecord[];
 }
@@ -118,13 +98,30 @@ interface ConferenceHay {
   tags: string[];
   jp: string[];
   papers: string[];
+  acronym: string[];
+  scope: string[];
+  categories: string[];
+  paperAbstracts: string[];
+  keywords: string[];
 }
 
 type SignalScores = Record<"domain" | "name" | "paper" | "jp" | "tags" | "venue", number>;
+type FieldName =
+  | "acronym"
+  | "full_name"
+  | "scope"
+  | "tags"
+  | "categories"
+  | "representative_papers"
+  | "paper_title"
+  | "paper_abstract"
+  | "keywords";
+type FieldScores = Record<FieldName, number>;
 interface LineScore {
   score: number;
   venueHit: boolean;
   details: SignalScores;
+  fieldScores: FieldScores;
 }
 interface PaperWeight {
   role: "primary" | "reference";
@@ -149,29 +146,13 @@ interface ScoreBreakdown {
   evidence: LineEvidence[];
   signalEvidence?: SignalEvidence[];
   agg: SignalScores & { venueName?: number };
+  fieldScores: FieldScores;
 }
 type Confidence = "sufficient" | "ambiguous" | "insufficient";
-export interface QueryConfidenceFeatures {
-  top1Score: number;
-  top2Score: number;
-  margin: number;
-  top5Entropy: number;
-  lexicalSemanticAgreement: boolean;
-  candidateCoverage: number;
-  inputHasAbstract: boolean;
-  inputTokenCount: number;
-}
-export interface QueryConfidence {
-  /** Query-level probabilities are diagnostic until independently calibrated. */
-  top1Probability: number;
-  top5Probability: number;
-  calibrated: false;
-  modelRevision: "query-confidence-heuristic-v1";
-  features: QueryConfidenceFeatures;
-}
 interface RecommendationOptions {
   venueCats?: string[];
   topN?: number;
+  fieldedLexical?: boolean;
 }
 interface RecommendationEntry {
   key: string;
@@ -197,10 +178,22 @@ interface RecommendationResult {
     semanticRank: number | null;
     rrf: number;
     evidence: Array<SignalEvidence | LineEvidence>;
+    confidenceScore: number;
+    queryConfidence: {
+      top1Score: number;
+      top2Score: number;
+      margin: number;
+      top5Entropy: number;
+      lexicalSemanticAgreement: number;
+      candidateCoverage: number;
+      inputHasAbstract: number;
+      inputTokenCount: number;
+      calibrated: boolean;
+    };
+    /** Compatibility alias; not rendered as a probability in the UI. */
     probability: number;
     baseScore: number;
     rerankerFeatures: RerankerFeatures;
-    queryConfidence: QueryConfidence;
   };
   availability: Availability;
   match: ScoreBreakdown;
@@ -308,6 +301,11 @@ function normalizeConference(value: unknown): ConferenceRecord | null {
     categories: normalizedStrings(value.categories),
     tags: normalizedStrings(value.tags),
     papers: normalizedStrings(value.papers),
+    acronym: typeof value.acronym === "string" ? value.acronym : undefined,
+    scope: typeof value.scope === "string" ? value.scope : undefined,
+    official_scope: typeof value.official_scope === "string" ? value.official_scope : undefined,
+    paper_abstracts: normalizedStrings(value.paper_abstracts),
+    keywords: normalizedStrings(value.keywords),
     rank,
     editions: Array.isArray(value.editions) ? value.editions.filter(isEdition) : [],
   };
@@ -932,6 +930,83 @@ const Recommender = (() => {
     // efficient 等）まで消し、GREEN→nsdi の golden が top5 から脱落した（実測）。
   ]);
 
+  const FIELD_WEIGHTS: Record<FieldName, number> = {
+    acronym: 3,
+    full_name: 2.5,
+    scope: 1.5,
+    tags: 1.5,
+    categories: 1,
+    representative_papers: 1.5,
+    paper_title: 1.5,
+    paper_abstract: 1,
+    keywords: 1.2,
+  };
+
+  function lexicalTerms(value: unknown): string[] {
+    return [
+      ...new Set(
+        String(value ?? "")
+          .toLowerCase()
+          .match(/[a-z0-9]+|[\u3040-\u30ff\u3400-\u9fff]{2,}/g)
+          ?.filter((term) => !STOPWORDS.has(term)) ?? [],
+      ),
+    ];
+  }
+
+  function overlapScore(query: unknown, documents: readonly string[]): number {
+    const queryTerms = lexicalTerms(query);
+    const documentTerms = new Set(documents.flatMap((document) => lexicalTerms(document)));
+    if (!queryTerms.length || !documentTerms.size) return 0;
+    return Math.round(
+      (100 * queryTerms.filter((term) => documentTerms.has(term)).length) / queryTerms.length,
+    );
+  }
+
+  function fieldedLexicalScore(
+    paper: PaperRecord,
+    conf: ConferenceHay,
+  ): { score: number; fields: FieldScores } {
+    const title = paper.title ?? "";
+    const abstract = paper.abstract ?? "";
+    const keywords = paper.keywords ?? "";
+    const all = [title, abstract, keywords].join(" ");
+    const fields: FieldScores = {
+      acronym: overlapScore(title, conf.acronym),
+      full_name: overlapScore(all, [conf.title, conf.full]),
+      scope: overlapScore(all, conf.scope),
+      tags: overlapScore(all, conf.tags),
+      categories: overlapScore(all, conf.categories),
+      representative_papers: overlapScore(all, conf.papers),
+      paper_title: overlapScore(title, conf.papers),
+      paper_abstract: overlapScore(abstract, [...conf.papers, ...conf.paperAbstracts]),
+      keywords: overlapScore(keywords, [...conf.keywords, ...conf.papers]),
+    };
+    const active = (Object.keys(fields) as FieldName[]).filter((field) => {
+      const documents =
+        field === "full_name"
+          ? [conf.title, conf.full]
+          : field === "scope"
+            ? conf.scope
+            : field === "tags"
+              ? conf.tags
+              : field === "categories"
+                ? conf.categories
+                : field === "representative_papers" || field === "paper_title"
+                  ? conf.papers
+                  : field === "paper_abstract"
+                    ? [...conf.papers, ...conf.paperAbstracts]
+                    : field === "keywords"
+                      ? [...conf.keywords, ...conf.papers]
+                      : conf.acronym;
+      return documents.length > 0;
+    });
+    const weight = active.reduce((sum, field) => sum + FIELD_WEIGHTS[field], 0);
+    const score = weight
+      ? active.reduce((sum, field) => sum + fields[field] * FIELD_WEIGHTS[field], 0) / weight
+      : 0;
+    return { score: Math.round(score), fields };
+  }
+
   /* 会議側の照合文字列（key / title / full_name / tags / 日本語表記 / 代表論文語彙） */
   function confHay(r: CandidateRow | ConferenceRecord): ConferenceHay {
     const c = "conf" in r ? r.conf : r;
@@ -944,6 +1019,11 @@ const Recommender = (() => {
       // 代表採択論文タイトル（実データが持つ場合のみ）。語彙一致の対象を
       // 「会議名」から「会議の実際の採択領域」に広げる。
       papers: (c.papers || []).map((paper) => normKey(paper)),
+      acronym: normalizedStrings(c.acronym).map((value) => normKey(value)),
+      scope: normalizedStrings(c.scope ?? c.official_scope).map((value) => normKey(value)),
+      categories: normalizedStrings(c.categories).map((value) => normKey(value)),
+      paperAbstracts: normalizedStrings(c.paper_abstracts).map((value) => normKey(value)),
+      keywords: normalizedStrings(c.keywords).map((value) => normKey(value)),
     };
   }
 
@@ -965,13 +1045,33 @@ const Recommender = (() => {
     return hits.map((hit) => hit.dom);
   }
 
+  function emptyFieldScores(): FieldScores {
+    return {
+      acronym: 0,
+      full_name: 0,
+      scope: 0,
+      tags: 0,
+      categories: 0,
+      representative_papers: 0,
+      paper_title: 0,
+      paper_abstract: 0,
+      keywords: 0,
+    };
+  }
+
   /* 1行ぶんのスコア (0..100)。venueHit は掲載先タグ一致なら true */
-  function scoreLine(r: CandidateRow, p: PaperRecord, conf: ConferenceHay): LineScore {
+  function scoreLine(
+    r: CandidateRow,
+    p: PaperRecord,
+    conf: ConferenceHay,
+    useFielded = false,
+  ): LineScore {
     if (!p)
       return {
         score: 0,
         venueHit: false,
         details: { domain: 0, name: 0, paper: 0, jp: 0, tags: 0, venue: 0 },
+        fieldScores: emptyFieldScores(),
       };
     const pt = paperText(p).toLowerCase();
     if (!pt)
@@ -979,9 +1079,14 @@ const Recommender = (() => {
         score: 0,
         venueHit: false,
         details: { domain: 0, name: 0, paper: 0, jp: 0, tags: 0, venue: 0 },
+        fieldScores: emptyFieldScores(),
       };
     let score = 0;
     const details = { domain: 0, name: 0, paper: 0, jp: 0, tags: 0, venue: 0 };
+    const fielded = fieldedLexicalScore(p, conf);
+    // ponytail: keep the new fielded retrieval contribution bounded at 20 points;
+    // replace the handcrafted scorer only after a measured benchmark win.
+    if (useFielded) score += Math.min(20, Math.round(fielded.score * 0.2));
     // 内側ブロックで使う let は関数ルートに宣言を集約（biome noInnerDeclarations）
     let wgt: number;
     let jpHay: string;
@@ -1123,12 +1228,17 @@ const Recommender = (() => {
       }
     }
 
-    return { score: Math.min(100, score), venueHit: venueHit, details: details };
+    return {
+      score: Math.min(100, score),
+      venueHit: venueHit,
+      details: details,
+      fieldScores: fielded.fields,
+    };
   }
 
   /* 全行のスコア: 平均と最大の加重平均（0.6×平均 + 0.4×最大）。
    * タグ付き論文 1 本の強シグナルが多数行の平均で薄まらないようにする。 */
-  function scorePapers(r: unknown, lines: readonly PaperRecord[]): number {
+  function scorePapers(r: unknown, lines: readonly PaperRecord[], useFielded = false): number {
     const row = normalizeCandidateLike(r);
     if (!row || !lines?.length) return 0;
     const conf = confHay(row);
@@ -1137,7 +1247,7 @@ const Recommender = (() => {
     let total = 0;
     let max = 0;
     for (let i = 0; i < lines.length; i++) {
-      const s = scoreLine(row, lines[i], conf).score;
+      const s = scoreLine(row, lines[i], conf, useFielded).score;
       const weight = weights[i].weight;
       if (!weight) continue;
       sum += s * weight;
@@ -1353,7 +1463,11 @@ const Recommender = (() => {
     return Object.keys(out);
   }
 
-  function breakdown(r: unknown, lines: readonly PaperRecord[]): ScoreBreakdown {
+  function breakdown(
+    r: unknown,
+    lines: readonly PaperRecord[],
+    useFielded = false,
+  ): ScoreBreakdown {
     const row = normalizeCandidateLike(r);
     if (!row)
       return {
@@ -1364,6 +1478,7 @@ const Recommender = (() => {
         perLine: [],
         evidence: [],
         agg: { domain: 0, name: 0, paper: 0, jp: 0, tags: 0, venue: 0 },
+        fieldScores: emptyFieldScores(),
       };
     const conf = confHay(row);
     const weights = paperWeights(lines);
@@ -1376,8 +1491,9 @@ const Recommender = (() => {
       tags: 0,
       venue: 0,
     };
+    const fieldScores = emptyFieldScores();
     for (let i = 0; i < lines.length; i++) {
-      const s = scoreLine(row, lines[i], conf);
+      const s = scoreLine(row, lines[i], conf, useFielded);
       const weight = weights[i] || { role: "reference", weight: 0 };
       perLine.push({
         score: s.score,
@@ -1385,15 +1501,19 @@ const Recommender = (() => {
         weight: weight.weight,
         venueHit: s.venueHit,
         details: s.details,
+        fieldScores: s.fieldScores,
       });
       if (!weight.weight) continue;
       (Object.keys(s.details) as Array<keyof SignalScores>).forEach((key) => {
         if (key !== "venue") agg[key] += s.details[key] * weight.weight;
       });
+      (Object.keys(s.fieldScores) as FieldName[]).forEach((key) => {
+        fieldScores[key] += s.fieldScores[key] * weight.weight;
+      });
     }
     const venue = venueEvidence(perLine, lines);
     agg.venue = venue.priorVenue;
-    const topicScore = scorePapers(row, lines);
+    const topicScore = scorePapers(row, lines, useFielded);
     const signalEvidence: SignalEvidence[] = [];
     const evidenceTypes: Record<string, string> = {
       domain: "domain",
@@ -1419,6 +1539,7 @@ const Recommender = (() => {
       evidence: venue.evidence,
       signalEvidence: signalEvidence,
       agg: agg,
+      fieldScores,
     };
   }
 
@@ -1433,6 +1554,7 @@ const Recommender = (() => {
         weight: line.weight === undefined ? 1 : line.weight,
         venueHit: line.venueHit,
         details: line.details,
+        fieldScores: line.fieldScores,
         role: line.role,
         key: [lines?.[index]?.title, lines?.[index]?.keywords, lines?.[index]?.venue]
           .map((value) => String(value || "").toLowerCase())
@@ -1525,73 +1647,6 @@ const Recommender = (() => {
     return 1 / (1 + Math.exp(-calibrated));
   }
 
-  function queryConfidenceFor(
-    lines: readonly PaperRecord[],
-    evidenceOrder: readonly RecommendationEntry[],
-    keys: readonly string[],
-    lexical: readonly RecommendationEntry[],
-    semantic: readonly RecommendationEntry[],
-    allCandidateCount: number,
-  ): QueryConfidence {
-    const scores = evidenceOrder.slice(0, 5).map((entry) => entry.evidenceStrength);
-    const top1Score = scores[0] ?? 0;
-    const top2Score = scores[1] ?? 0;
-    const total = scores.reduce((sum, score) => sum + Math.max(0, score), 0);
-    const entropy =
-      scores.length > 1 && total > 0
-        ? -scores.reduce((sum, score) => {
-            const probability = Math.max(0, score) / total;
-            return probability > 0 ? sum + probability * Math.log(probability) : sum;
-          }, 0) / Math.log(scores.length)
-        : 0;
-    const lexicalTop = lexical.find((entry) => entry.lexicalScore > 0);
-    const features: QueryConfidenceFeatures = {
-      top1Score,
-      top2Score,
-      margin: Math.max(0, top1Score - top2Score),
-      top5Entropy: Number(entropy.toFixed(6)),
-      lexicalSemanticAgreement: Boolean(
-        lexicalTop && semantic[0] && lexicalTop.key === semantic[0].key,
-      ),
-      candidateCoverage: allCandidateCount
-        ? Number((keys.length / allCandidateCount).toFixed(6))
-        : 0,
-      inputHasAbstract: lines.some((line) => Boolean(line.abstract?.trim())),
-      inputTokenCount: queryTokenCount(lines),
-    };
-    // This intentionally remains a transparent diagnostic prior.  It is not
-    // used for labels or ranking until query-level calibration is trained and
-    // passes the same precision gate as the candidate reranker.
-    const normalizedTokens = Math.min(features.inputTokenCount, 120) / 120;
-    const agreement = features.lexicalSemanticAgreement ? 1 : 0;
-    const top1Logit =
-      -2.4 +
-      features.top1Score * 0.018 +
-      features.margin * 0.035 +
-      agreement * 0.85 +
-      (features.inputHasAbstract ? 0.25 : 0) +
-      normalizedTokens * 0.45 +
-      features.candidateCoverage * 0.35 -
-      features.top5Entropy * 0.45;
-    const top5Logit =
-      -0.8 +
-      features.top1Score * 0.012 +
-      features.margin * 0.02 +
-      agreement * 0.9 +
-      (features.inputHasAbstract ? 0.35 : 0) +
-      normalizedTokens * 0.55 +
-      features.candidateCoverage * 0.3 -
-      features.top5Entropy * 0.35;
-    const probability = (logit: number): number => 1 / (1 + Math.exp(-logit));
-    return {
-      top1Probability: Number(probability(top1Logit).toFixed(6)),
-      top5Probability: Number(probability(top5Logit).toFixed(6)),
-      calibrated: false,
-      modelRevision: "query-confidence-heuristic-v1",
-      features,
-    };
-  }
-
   function confidenceState(evidenceStrength: number, margin: number): Confidence {
     if (!Number.isFinite(evidenceStrength) || evidenceStrength < CONFIDENCE_TOPIC_MIN)
       return "insufficient";
@@ -1655,7 +1710,7 @@ const Recommender = (() => {
     });
     const entries: RecommendationEntry[] = Object.keys(groups).map((key) => {
       const row = pickRepresentative(groups[key], safeNow)[0];
-      const match = breakdown(row, lines);
+      const match = breakdown(row, lines, Boolean(opts.fieldedLexical));
       let boosted = false;
       let lexicalScore = match.venueScore;
       if (
@@ -1686,7 +1741,7 @@ const Recommender = (() => {
       .filter((entry) => entry.semantic > 0)
       .sort((a, b) => b.semantic - a.semantic || a.key.localeCompare(b.key));
     const requestedTopN = opts.topN;
-    const topN = Number.isInteger(requestedTopN) && (requestedTopN ?? 0) > 0 ? requestedTopN! : 50;
+    const topN = Number.isInteger(requestedTopN) && (requestedTopN ?? 0) > 0 ? requestedTopN! : 100;
     const lexicalRanks: Record<string, number> = {};
     const semanticRanks: Record<string, number> = {};
     lexical
@@ -1707,16 +1762,45 @@ const Recommender = (() => {
       .map((key) => entries.find((entry) => entry.key === key))
       .filter((entry): entry is RecommendationEntry => entry !== undefined)
       .sort((a, b) => b.evidenceStrength - a.evidenceStrength || a.key.localeCompare(b.key));
-    const queryConfidence = queryConfidenceFor(
-      lines,
-      evidenceOrder,
-      keys,
-      lexical,
-      semantic,
-      entries.length,
-    );
     const topEvidence = evidenceOrder[0] ? evidenceOrder[0].evidenceStrength : 0;
     const secondEvidence = evidenceOrder[1] ? evidenceOrder[1].evidenceStrength : 0;
+    const topFiveEvidence = evidenceOrder.slice(0, 5).map((entry) => entry.evidenceStrength);
+    const totalEvidence = topFiveEvidence.reduce((sum, value) => sum + value, 0);
+    const top5Entropy =
+      topFiveEvidence.length > 1 && totalEvidence > 0
+        ? -topFiveEvidence.reduce((sum, value) => {
+            const p = value / totalEvidence;
+            return sum + (p ? p * Math.log(p) : 0);
+          }, 0) / Math.log(topFiveEvidence.length)
+        : 0;
+    const lexicalTop = lexical.find((entry) => entry.lexicalScore > 0)?.key;
+    const semanticTop = semantic[0]?.key;
+    const inputHasAbstract = lines.some((line) => Boolean(line.abstract?.trim())) ? 1 : 0;
+    const inputTokenCount = lexicalTerms(lines.map((line) => paperText(line)).join(" ")).length;
+    const queryConfidence = {
+      top1Score: topEvidence,
+      top2Score: secondEvidence,
+      margin: Math.max(0, topEvidence - secondEvidence),
+      top5Entropy: Number(top5Entropy.toFixed(6)),
+      lexicalSemanticAgreement:
+        lexicalTop && semanticTop && lexicalTop === semanticTop ? 1 : semanticTop ? 0 : 0.5,
+      candidateCoverage: entries.length ? Number((keys.length / entries.length).toFixed(6)) : 0,
+      inputHasAbstract,
+      inputTokenCount,
+      calibrated: false,
+    };
+    const confidenceScore = Number(
+      Math.max(
+        0,
+        Math.min(
+          1,
+          (topEvidence / 100) * 0.45 +
+            Math.min(1, queryConfidence.margin / 50) * 0.25 +
+            queryConfidence.candidateCoverage * 0.2 +
+            queryConfidence.lexicalSemanticAgreement * 0.1,
+        ),
+      ).toFixed(6),
+    );
     const k = 60;
     return keys
       .map((key): RecommendationResult | null => {
@@ -1771,10 +1855,11 @@ const Recommender = (() => {
             semanticRank,
             rrf: Number(rrf.toFixed(8)),
             evidence,
+            confidenceScore,
+            queryConfidence,
             probability: Number(probability.toFixed(6)),
             baseScore: score,
             rerankerFeatures: features,
-            queryConfidence,
           },
           availability: availability(entry.row, safeNow),
           match: entry.match,
@@ -2020,14 +2105,6 @@ const Recommender = (() => {
     return seen.size;
   }
 
-  function queryTokenCount(lines: readonly PaperRecord[]): number {
-    const tokens = paperText(lines[0] ?? { title: "" })
-      .concat(" ", lines.slice(1).map(paperText).join(" "))
-      .toLowerCase()
-      .match(/[\p{L}\p{N}][\p{L}\p{N}'-]*/gu);
-    return new Set(tokens ?? []).size;
-  }
-
   /* 語彙スコアとセマンティックスコアの合成に使う語彙重み。
    * 英語: クエリの内容語数で適応（実測: 短いクエリは語彙が疎なのでセマンティック寄り 0.25、
    *   中〜長は 0.4。EN bench top1 84.4%→グループ別最良で確認）。
@@ -2270,6 +2347,18 @@ const Recommender = (() => {
     queryText: queryText,
     wordInText: wordInText,
     signalInText: signalInText,
+    fieldedLexicalScore: (paper: unknown, candidate: unknown) => {
+      const normalizedPaper = isRecord(paper)
+        ? {
+            title: String(paper.title ?? ""),
+            abstract: typeof paper.abstract === "string" ? paper.abstract : "",
+            keywords: typeof paper.keywords === "string" ? paper.keywords : "",
+          }
+        : { title: "" };
+      const normalized = normalizeConference(candidate);
+      if (!normalized) return { score: 0, fields: emptyFieldScores() };
+      return fieldedLexicalScore(normalizedPaper, confHay(normalized));
+    },
   };
 
   return api;

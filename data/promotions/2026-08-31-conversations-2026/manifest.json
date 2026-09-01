@@ -2,21 +2,21 @@
   "schema": 1,
   "id": "2026-08-31-conversations-2026",
   "observations": {
-    "sha256": "bf8d1d8563c36fcd99f39cb4ced33f1caa1ec199914a78ef5c81426420b18d78"
+    "sha256": "6b2d1db9bc51fbb6bf5bd31291a8c168de1f8724b2aaa337e1e325408ddb2673"
   },
   "resolutions": {
-    "sha256": "440d553f0e93bef059da427c9f806972e8ce0194af80c8c9e9ac19b0b54ffb45"
+    "sha256": "c9e4820f88e1fa4df8f6c5ddcdd9609e1222b235bc472cbb611dc6de54640068"
   },
   "extra": {
-    "sha256": "b8fe0681671d6e748f28c6feef14e582883a552d9df287ef08d0d2a2603de827"
+    "sha256": "79f7bdb26b091f42b212691620ca9ff6e9e73c7477c3dfa1537dd8b6d8927cdf"
   },
   "bodies": [
     {
-      "path": "../../evidence/blobs/4a41e3acf4f8e5be14c218b8abc2b31d5c4fbbbaf2728f88072051365e79bcbd.body",
+      "path": "bodies/4a41e3acf4f8e5be14c218b8abc2b31d5c4fbbbaf2728f88072051365e79bcbd.body",
       "sha256": "4a41e3acf4f8e5be14c218b8abc2b31d5c4fbbbaf2728f88072051365e79bcbd"
     },
     {
-      "path": "../../evidence/blobs/5f77a214d1a00f47dc38b70a6353936b9cdaa48ae320bf0da72bdc1b389d8759.body",
+      "path": "bodies/5f77a214d1a00f47dc38b70a6353936b9cdaa48ae320bf0da72bdc1b389d8759.body",
       "sha256": "5f77a214d1a00f47dc38b70a6353936b9cdaa48ae320bf0da72bdc1b389d8759"
     }
   ],

@@ -20,6 +20,9 @@ conferences:
             kind: paper
             label: paper
             precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-genai4sg-cikm-2026
+              resolution: resolution-645a8760f35fc632
             round: 1
             track: ''
         edition_id: genai4sg-2026

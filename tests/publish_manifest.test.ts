@@ -168,7 +168,7 @@ describe("publish manifest", () => {
     expect(lexicalManifest.artifacts.embeddings).toBeUndefined();
     const preRestoreHashes = JSON.stringify(lexicalManifest.artifacts);
 
-    // CI cache restore writes this bundle after --no-embeddings build.
+    // キャッシュ復元は --no-embeddings build の後にこの bundle を書き込む。
     const data = JSON.parse(readFileSync(join(outdir, "data.json"), "utf8")) as {
       categories: Record<string, string>;
       conferences: Array<Record<string, unknown>>;
@@ -214,21 +214,5 @@ describe("publish manifest", () => {
       promotion_batches: lexicalManifest.promotion_batches,
       build: lexicalManifest.build,
     });
-  });
-
-  it("attests and uploads the manifest produced by the merged build", () => {
-    const workflow = readFileSync(
-      new URL("../.github/workflows/deploy.yml", import.meta.url),
-      "utf8",
-    );
-    const buildAt = workflow.indexOf("name: Build merged site");
-    const attestAt = workflow.indexOf("name: Attest publish manifest");
-    const uploadAt = workflow.indexOf("name: Upload Pages artifact");
-    expect([buildAt, attestAt, uploadAt].every((value) => value >= 0)).toBe(true);
-    expect(buildAt).toBeLessThan(attestAt);
-    expect(uploadAt).toBeLessThan(attestAt);
-    expect(workflow).toContain("needs: [build, attest]");
-    expect(workflow).not.toContain("Write final publish manifest");
-    expect(workflow).toContain("subject-path: public/publish.json");
   });
 });

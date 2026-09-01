@@ -9,10 +9,12 @@ import {
   dataDeltaTop5,
   fellOutOfTop5,
   fixedFeatureRecord,
+  readFeatureStore,
   realPaperEmbeddingBundles,
   runDataDeltaBenchmark,
   validateRequiredLanguageCounts,
 } from "../src/bench-recommender.ts";
+import { benchmarkEmbeddingManifestAtCutoff } from "../src/embeddings.ts";
 import { REPO_ROOT } from "./helpers.ts";
 
 const fixture = JSON.parse(
@@ -147,22 +149,17 @@ describe("required frozen semantic features", () => {
     ["heldout-2026-nsdi-02", "heldout"],
     ["pubmed-42609944", "negative"],
   ] as const)("rejects a removed or zeroed %s semantic feature", (paperId, split) => {
-    const fixture = JSON.parse(
-      readFileSync(join(REPO_ROOT, "data/benchmarks/real-paper-required-features.json"), "utf8"),
-    );
-    const expected = fixture.profiles[split];
-    const record = fixture.records.find((item: any) => item.paper_id === paperId);
+    const fixture = readFeatureStore(join(REPO_ROOT, "data/benchmarks/real-paper-features.jsonl"));
+    const record = fixture.records.find((item) => item.paper_id === paperId)!;
     const changed = JSON.parse(JSON.stringify(fixture));
     changed.records.find((item: any) => item.paper_id === record.paper_id).semantic_scores = {};
-    expect(() => fixedFeatureRecord(changed, record.paper_id, expected, split)).toThrow(
-      /missing|altered|zeroed/,
-    );
+    expect(() =>
+      fixedFeatureRecord(changed, record.paper_id, benchmarkEmbeddingManifestAtCutoff(2025), split),
+    ).toThrow(/missing|altered|zeroed/);
   });
 
   it("enforces explicit required English and Japanese minimum counts", () => {
-    const features = JSON.parse(
-      readFileSync(join(REPO_ROOT, "data/benchmarks/real-paper-required-features.json"), "utf8"),
-    );
+    const features = readFeatureStore(join(REPO_ROOT, "data/benchmarks/real-paper-features.jsonl"));
     const dev = JSON.parse(
       readFileSync(join(REPO_ROOT, "data/benchmarks/real-paper-required-dev.json"), "utf8"),
     );
@@ -170,7 +167,7 @@ describe("required frozen semantic features", () => {
       readFileSync(join(REPO_ROOT, "data/benchmarks/real-paper-required-heldout.json"), "utf8"),
     );
     validateRequiredLanguageCounts(features, [dev, heldout]);
-    features.minimum_language_counts.heldout.ja = 2;
+    features.minimum_language_counts!.heldout.ja = 2;
     expect(() => validateRequiredLanguageCounts(features, [dev, heldout])).toThrow(
       "heldout ja count",
     );

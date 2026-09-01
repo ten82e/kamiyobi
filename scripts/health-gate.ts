@@ -1,4 +1,5 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 import { evaluateHealthGate, type HealthReport, type ObservationBaseline } from "../src/build.ts";
 
 export interface HealthGateArgs {
@@ -64,6 +65,7 @@ export function parseHealthGateArgs(argv: string[]): HealthGateArgs | null {
 /** gate 判定の機械可読記録。失敗時の診断 artifact としてそのまま保存する。 */
 export interface HealthGateViolationReport {
   ok: boolean;
+  exit_status: number;
   reasons: string[];
   warnings: string[];
   baseline_available: boolean;
@@ -75,18 +77,22 @@ export function runHealthGate(argv: string[]): number {
   const args = parseHealthGateArgs(argv);
   if (!args) usage();
   const hasUsableBaseline = Boolean(args.previousPath && existsSync(args.previousPath));
-  const writeReport = (report: HealthGateViolationReport) => {
-    if (!args.reportPath) return;
+  const writeReport = (report: HealthGateViolationReport): boolean => {
+    if (!args.reportPath) return true;
     try {
+      mkdirSync(dirname(args.reportPath), { recursive: true });
       writeFileSync(args.reportPath, `${JSON.stringify(report, null, 2)}\n`);
+      return true;
     } catch (error) {
       console.error(`health gate could not write its violation report: ${String(error)}`);
+      return false;
     }
   };
   if (args.requireBaseline && !hasUsableBaseline) {
     console.error("health gate blocked deployment: usable baseline is unavailable");
     writeReport({
       ok: false,
+      exit_status: 1,
       reasons: ["usable baseline is unavailable"],
       warnings: [],
       baseline_available: false,
@@ -109,6 +115,15 @@ export function runHealthGate(argv: string[]): number {
         ) as ObservationBaseline;
       } catch (error) {
         console.error(`could not read observation baseline: ${String(error)}`);
+        writeReport({
+          ok: false,
+          exit_status: 1,
+          reasons: [`could not read observation baseline: ${String(error)}`],
+          warnings: [],
+          baseline_available: hasUsableBaseline,
+          current_path: args.currentPath,
+          previous_path: hasUsableBaseline ? args.previousPath! : null,
+        });
         return 1;
       }
     }
@@ -118,6 +133,7 @@ export function runHealthGate(argv: string[]): number {
       console.error(`health gate blocked deployment: ${result.reasons.join("; ")}`);
       writeReport({
         ok: false,
+        exit_status: 1,
         reasons: [...result.reasons],
         warnings: [...result.warnings],
         baseline_available: hasUsableBaseline,
@@ -126,17 +142,19 @@ export function runHealthGate(argv: string[]): number {
       });
       return 1;
     }
-    if (args.lastKnownGoodPath) {
-      writeFileSync(args.lastKnownGoodPath, `${JSON.stringify(current, null, 2)}\n`);
-    }
-    writeReport({
+    const reportWritten = writeReport({
       ok: true,
+      exit_status: 0,
       reasons: [],
       warnings: [...result.warnings],
       baseline_available: hasUsableBaseline,
       current_path: args.currentPath,
       previous_path: hasUsableBaseline ? args.previousPath! : null,
     });
+    if (!reportWritten) return 1;
+    if (args.lastKnownGoodPath) {
+      writeFileSync(args.lastKnownGoodPath, `${JSON.stringify(current, null, 2)}\n`);
+    }
     console.log(
       previous
         ? "health gate passed against last-known-good"
@@ -147,6 +165,7 @@ export function runHealthGate(argv: string[]): number {
     console.error(`health gate could not read its report: ${String(error)}`);
     writeReport({
       ok: false,
+      exit_status: 1,
       reasons: [`could not read health report: ${String(error)}`],
       warnings: [],
       baseline_available: hasUsableBaseline,

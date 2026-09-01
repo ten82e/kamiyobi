@@ -21,6 +21,9 @@ conferences:
             kind: paper
             label: paper
             precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-arc-2027
+              resolution: resolution-16ec4b40cb5cb99d
             round: 1
             track: ''
         edition_id: arc-2027

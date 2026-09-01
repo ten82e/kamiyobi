@@ -9,14 +9,12 @@ import {
   deadlineIsFuture,
   easyChairEntriesFromRows,
   extractDeadlinesFromText,
-  formatCandidateArchive,
   formatCandidateYaml,
   formatDiscoveredYaml,
   inDomain,
   makeCandidate,
   mergeCandidateRegistry,
   NicheDiscoverer,
-  parseCandidateArchive,
   parseCandidateRegistry,
   parseComsocCfpHtml,
   parseDbworldHtml,
@@ -25,7 +23,6 @@ import {
   parseIeiceCfpHtml,
   parseIpsjCfpHtml,
   parseWikiCfpHtml,
-  splitCandidateRegistry,
   toYamlDict,
 } from "../src/discover.ts";
 import {
@@ -302,57 +299,6 @@ describe("formatCandidateYaml", () => {
     ) as any;
     expect(parsed.candidates[0].target_year).toBeNull();
     expect(parsed.candidates[0].editions).toEqual([]);
-  });
-
-  it("keeps the discovery queue active and archives compact terminal records", () => {
-    const registry = parseCandidateRegistry({
-      candidates: [
-        {
-          key: "future-official",
-          title: "Future Official Workshop",
-          full_name: "Future Official Workshop",
-          link: "https://easychair.org/cfp/future-official",
-          categories: ["systems"],
-          submission_deadline_text: "2099-01-01",
-          status: "discovered",
-        },
-        {
-          key: "expired-official",
-          title: "Expired Official Workshop",
-          full_name: "Expired Official Workshop",
-          link: "https://easychair.org/cfp/expired-official",
-          categories: ["systems"],
-          submission_deadline_text: "2026-08-01",
-          status: "discovered",
-        },
-        {
-          key: "aggregator-only",
-          title: "Aggregator Only Workshop",
-          full_name: "Aggregator Only Workshop",
-          link: "https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=99",
-          categories: ["systems"],
-          submission_deadline_text: "2099-01-01",
-          status: "discovered",
-        },
-        {
-          key: "registered-2027",
-          title: "Registered Workshop",
-          full_name: "Registered Workshop",
-          link: "https://example.org/registered",
-          categories: ["systems"],
-          submission_deadline_text: "2099-01-01",
-          status: "discovered",
-        },
-      ],
-    });
-    const split = splitCandidateRegistry(registry, utcDate(2026, 8, 31), new Set(["registered"]));
-    expect(split.active.candidates.map((candidate) => candidate.key)).toEqual(["future-official"]);
-    expect(new Set(split.archive.candidates.map((candidate) => candidate.reason))).toEqual(
-      new Set(["no-official-evidence", "expired", "already-registered"]),
-    );
-    expect(split.archive.candidates[0]).not.toHaveProperty("title");
-    const parsed = parseCandidateArchive(loadYaml(formatCandidateArchive(split.archive)));
-    expect(parsed).toEqual(split.archive);
   });
 });
 

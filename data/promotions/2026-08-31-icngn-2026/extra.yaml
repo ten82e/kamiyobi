@@ -21,6 +21,9 @@ conferences:
             kind: paper
             label: paper
             precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-icngn-2026
+              resolution: resolution-1ddfc08db13ebb2d
             round: 1
             track: ''
         edition_id: icngn-2026

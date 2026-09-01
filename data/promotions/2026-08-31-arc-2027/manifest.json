@@ -2,17 +2,17 @@
   "schema": 1,
   "id": "2026-08-31-arc-2027",
   "observations": {
-    "sha256": "f771d06f6c34c082375842eb133d6984122f88a67d02c0dbc6cfe0a43e87ae56"
+    "sha256": "2374b2ce711a01498bc869698a4b16216971293f84795a55b4d71e58dd7b5de8"
   },
   "resolutions": {
-    "sha256": "c4a9cd435c3c49cc726ae9d6b261a4d9d69f686dd25e25366f247134804f79a6"
+    "sha256": "91d21e3b2189d24d1454ef2a3ba51350b332a8c5afe783cd921103f5571db0fb"
   },
   "extra": {
-    "sha256": "64efbeb3711b75c31e80923e89a9432d4f2ba2aad985b8d6691ccfb55bf22ca7"
+    "sha256": "de05aebabe2e1196eb667367220d6c911edee9267d719da47aa7524035d1ae2e"
   },
   "bodies": [
     {
-      "path": "../../evidence/blobs/efb31692c1c015580f9a41fac2a74666c580e3e7d2701f1d9021934e49ae7714.body",
+      "path": "bodies/efb31692c1c015580f9a41fac2a74666c580e3e7d2701f1d9021934e49ae7714.body",
       "sha256": "efb31692c1c015580f9a41fac2a74666c580e3e7d2701f1d9021934e49ae7714"
     }
   ],

@@ -10,9 +10,11 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs as parseNodeArgs } from "node:util";
+import { decode } from "html-entities";
 import { dump as dumpYaml, load as loadYaml } from "js-yaml";
 import { booleanValue, normalizeShortEquals, stringValue } from "./args.ts";
-import { deadlineTrackKey, resolveTzStatus, roundOf, warn } from "./model.ts";
+import { deadlineTrackKey, monthOf, resolveTzStatus, roundOf, warn } from "./model.ts";
+import { extractObservationTime } from "./sources/primary.ts";
 
 export let ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -32,20 +34,6 @@ const DELETED_RE = /<(del|s|strike)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
 const TAG_RE = /<[^>]+>/g;
 const TZ_RE =
   /\b(PDT|PST|EDT|EST|CDT|CST|MDT|MST|AKDT|AKST|HST|UTC|GMT|CET|CEST|JST|AoE|PT|ET|CT|MT)\b|anywhere on (?:the )?(?:inhabited )?earth/gi;
-const MONTHS: Record<string, number> = {
-  jan: 1,
-  feb: 2,
-  mar: 3,
-  apr: 4,
-  may: 5,
-  jun: 6,
-  jul: 7,
-  aug: 8,
-  sep: 9,
-  oct: 10,
-  nov: 11,
-  dec: 12,
-};
 const LABELS: Record<string, string> = {
   paper: "Paper submission",
   abstract: "Abstract submission",
@@ -55,29 +43,6 @@ const LABELS: Record<string, string> = {
   supplementary: "Supplementary material",
   rebuttal_end: "Rebuttal deadline",
 };
-
-/**
- * 壁時計の時刻 (HH:MM[:SS]、12h 表記は 24h に正規化) を抜き出す。
- * 見つからなければ null — 日付のみの証拠として扱い、時刻は捏造しない。
- * 実装は src/sources/primary.ts と同じ規約。単一実装を輸出し両側から使う。
- */
-const OBS_TIME_RE = /\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp]\.?[Mm]\.?)?/;
-
-export function extractObservationTime(text: string | null | undefined): string | null {
-  if (!text) return null;
-  const m = OBS_TIME_RE.exec(String(text).trim());
-  if (!m) return null;
-  let h = Number(m[1]);
-  const min = Number(m[2]);
-  const sec = m[3] ? Number(m[3]) : 0;
-  const ap = (m[4] ?? "").replace(/\./g, "").toLowerCase();
-  if (min > 59 || sec > 59 || h > 23) return null;
-  if (ap === "pm" && h < 12) h += 12;
-  if (ap === "am" && h === 12) h = 0;
-  if (h > 23) return null;
-  const pad = (n: number): string => String(n).padStart(2, "0");
-  return `${pad(h)}:${pad(min)}:${pad(sec)}`;
-}
 
 export async function fetchPage(url: string, timeout = 30_000): Promise<string> {
   const res = await fetch(url, {
@@ -91,27 +56,7 @@ export async function fetchPage(url: string, timeout = 30_000): Promise<string> 
 export function toLines(htmlText: string | null | undefined): string[] {
   if (!htmlText) return [];
   let text = String(htmlText).replace(DELETED_RE, "").replace(BLOCK_RE, "\n").replace(TAG_RE, "");
-  const entities: Record<string, string> = {
-    "&nbsp;": " ",
-    "&amp;": "&",
-    "&lt;": "<",
-    "&gt;": ">",
-    "&quot;": '"',
-    "&#39;": "'",
-    "&apos;": "'",
-    "&ndash;": "-",
-    "&mdash;": "-",
-    "&minus;": "-",
-  };
-  text = text.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => {
-    const code = Number.parseInt(hex, 16);
-    return Number.isFinite(code) && code > 0 ? String.fromCharCode(code) : "";
-  });
-  text = text.replace(/&#(\d+);/g, (_, dec) => {
-    const code = Number.parseInt(dec, 10);
-    return Number.isFinite(code) && code > 0 ? String.fromCharCode(code) : "";
-  });
-  text = text.replace(/&[a-zA-Z]+;/g, (m) => entities[m] ?? m);
+  text = decode(text.replace(/&(?:ndash|mdash|minus);/gi, "-"), { scope: "strict" });
   text = text.replace(/[ \t\u00a0\u2000-\u200b]+/g, " ");
   return text
     .split("\n")
@@ -244,7 +189,7 @@ export function parsePrimaryDate(window: string | null | undefined): ExtractedDa
       norm,
     );
   if (m) {
-    const month = MONTHS[m[1].toLowerCase().slice(0, 3)];
+    const month = monthOf(m[1].slice(0, 3)) ?? 0;
     const day = Number(m[2]);
     const year = Number(m[3]);
     return { year, month, day };
@@ -256,7 +201,7 @@ export function parsePrimaryDate(window: string | null | undefined): ExtractedDa
     );
   if (m) {
     const day = Number(m[1]);
-    const month = MONTHS[m[2].toLowerCase().slice(0, 3)];
+    const month = monthOf(m[2].slice(0, 3)) ?? 0;
     const year = Number(m[3]);
     return { year, month, day };
   }
@@ -361,10 +306,7 @@ export function pageTitleYear(htmlText: string | null | undefined): number | nul
   if (!htmlText) return null;
   const m = /<title[^>]*>(.*?)<\/title>/is.exec(htmlText);
   if (!m) return null;
-  const title = m[1].replace(
-    /&[a-zA-Z#0-9]+;/g,
-    (x) => ({ "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'" })[x] ?? x,
-  );
+  const title = decode(m[1], { scope: "strict" });
   const years = [...title.matchAll(/\b(20\d{2})\b/g)].map((x) => Number(x[1]));
   if (years.length === 0) {
     const shortYears = [...title.matchAll(/['’](\d{2})\b/g)]
@@ -380,10 +322,6 @@ export function pageTitleYear(htmlText: string | null | undefined): number | nul
 export function pageYearMismatch(htmlText: string, registryYear: number): number | null {
   const titleYear = pageTitleYear(htmlText);
   return titleYear !== null && titleYear !== registryYear ? titleYear : null;
-}
-
-export function pageYear(_htmlText: string, fallback: number): number {
-  return fallback;
 }
 
 export function extractDeadlines(
@@ -476,7 +414,7 @@ export async function runFetchPrimary(
         if (key in previous) generated[key] = previous[key];
         continue;
       }
-      const pageYr = pageYear(page, Number(year));
+      const pageYr = Number(year);
       const adapter = primaryAdapter(String(url));
       deadlines = adapter.extract(page, pageYr).map((deadline) => ({
         ...deadline,

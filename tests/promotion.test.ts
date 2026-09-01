@@ -1,11 +1,10 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { observeCfp } from "../scripts/observe-cfp.ts";
-import { type Conference, parseInstant } from "../src/model.ts";
 import {
   type CfpCapture,
   canonicalJson,
@@ -13,6 +12,7 @@ import {
   isOfficialUrl,
   type PromotionObservation,
   resolvePromotion,
+  resolvePromotionAgainst,
   verifyBatch,
   verifyCapture,
   verifyPromotionObservation,
@@ -83,47 +83,6 @@ function observation(overrides: Partial<PromotionObservation> = {}): PromotionOb
     capture: defaultCapture,
     ...overrides,
   };
-}
-
-function existingConference(
-  year: number,
-  deadlineAt: Date,
-  overrides: Partial<Conference> = {},
-): Conference {
-  const deadline = makeDeadline("paper", "Paper deadline", deadlineAt, "AoE", 2, null);
-  deadline.track = "main";
-  deadline.evidence = [
-    {
-      source_name: "official-cfp",
-      source_url: "https://example.test/cfp",
-      observed_at: "2026-08-25T00:00:00.000Z",
-      original_value: "existing",
-      confidence: "official",
-      sourceClass: "official-cfp",
-    },
-  ];
-  return makeConference({
-    key: "example-canonical",
-    title: "ExampleConf",
-    full_name: "Example Conference",
-    link: "https://example.test/cfp",
-    identity: {
-      venueId: "example-canonical",
-      officialDomains: ["example.test"],
-      aliases: ["ExampleConf"],
-    },
-    editions: [
-      makeEdition({
-        year,
-        edition_id: `example-canonical-${year}`,
-        identity: { editionId: `example-canonical-${year}` },
-        event_start: new Date(Date.UTC(year, 3, 1)),
-        event_end: new Date(Date.UTC(year, 3, 3)),
-        deadlines: [deadline],
-      }),
-    ],
-    ...overrides,
-  });
 }
 
 describe("promotion batch", () => {
@@ -415,51 +374,52 @@ describe("promotion batch", () => {
     });
   });
 
-  it("canonicalizes verified promotions into duplicate, enrich, supersede, or hold", () => {
-    const current = parseInstant("2027-01-02 23:59", "AoE")!;
-    const duplicate = resolvePromotion(observation(), {
-      existingConferences: [existingConference(2027, current)],
-    });
-    expect(duplicate).toMatchObject({
-      decision: "duplicate",
-      canonical: { existingKey: "example-canonical", strongEvidence: true },
-      normalized: {
-        venue: { key: "example-canonical" },
-        edition: { edition_id: "example-canonical-2027" },
-      },
-    });
-
-    const superseded = resolvePromotion(observation(), {
-      existingConferences: [existingConference(2027, parseInstant("2027-01-01 23:59", "AoE")!)],
-    });
-    expect(superseded.decision).toBe("supersede-existing-deadline");
-    expect(superseded.normalized?.deadline.superseded_deadlines).toMatchObject([
-      {
-        value: "2027-01-02T11:59:00.000Z",
-        status: "superseded",
-        supersededBy: "2027-01-03T11:59:00.000Z",
-      },
-    ]);
-
-    const newEdition = resolvePromotion(
-      observation({ editionYear: 2028, eventDate: "2028-04-01", eventEndDate: "2028-04-03" }),
-      {
-        existingConferences: [existingConference(2027, current)],
-      },
-    );
-    expect(newEdition.decision).toBe("add-new-edition");
-    expect(newEdition.normalized?.venue.key).toBe("example-canonical");
-
-    const weak = resolvePromotion(observation(), {
-      existingConferences: [
-        existingConference(2027, current, {
-          link: "https://different.test/cfp",
-          identity: { aliases: ["ExampleConf"] },
+  it("canonicalizes verified promotions against existing venue and edition identities", () => {
+    const existing = makeConference({
+      key: "exampleconf",
+      title: "ExampleConf",
+      link: "https://example.test/cfp",
+      identity: { officialDomains: ["example.test"] },
+      editions: [
+        makeEdition({
+          year: 2027,
+          link: "https://example.test/cfp",
+          event_start: new Date("2027-04-01T00:00:00Z"),
+          event_end: new Date("2027-04-03T00:00:00Z"),
+          deadlines: [
+            {
+              ...makeDeadline("paper", "Paper", new Date("2027-01-03T11:59:00Z"), "AoE", 2),
+              track: "main",
+            },
+          ],
         }),
       ],
     });
-    expect(weak.decision).toBe("hold");
-    expect(weak.reason).toContain("explicit identity");
+    expect(
+      resolvePromotionAgainst(observation(), {
+        now: "2026-08-25T00:03:00.000Z",
+        existingConferences: [existing],
+      }).canonicalization,
+    ).toMatchObject({ decision: "duplicate", matchedVenueKey: "exampleconf" });
+    expect(
+      resolvePromotionAgainst(observation({ deadline: { ...observation().deadline!, round: 3 } }), {
+        now: "2026-08-25T00:03:00.000Z",
+        existingConferences: [existing],
+      }).canonicalization?.decision,
+    ).toBe("enrich-existing-edition");
+    expect(
+      resolvePromotionAgainst(observation(), {
+        now: "2026-08-25T00:03:00.000Z",
+        existingConferences: [
+          makeConference({
+            key: "exampleconf-2026",
+            title: "ExampleConf",
+            link: "https://other.test/cfp",
+            identity: { officialDomains: ["other.test"] },
+          }),
+        ],
+      }).canonicalization?.decision,
+    ).toBe("hold");
   });
 
   it("holds missing primary fields and rejects non-primary observations", () => {
@@ -579,76 +539,15 @@ describe("promotion batch", () => {
     expect(JSON.parse(verified.stdout)).toHaveLength(3);
 
     const generated = join(dir, "generated");
-    const globalEvidence = join(dir, "evidence", "blobs");
     const promoted = spawnSync(
       "node",
-      [
-        "scripts/promote-candidates.ts",
-        observations,
-        "--out",
-        generated,
-        "--evidence",
-        globalEvidence,
-      ],
+      ["scripts/promote-candidates.ts", observations, "--out", generated],
       { cwd: REPO_ROOT, encoding: "utf8" },
     );
     expect(promoted.status).toBe(0);
     for (const file of files) expect(existsSync(join(generated, file))).toBe(true);
     const generatedManifest = JSON.parse(readFileSync(join(generated, "manifest.json"), "utf8"));
     expect(existsSync(join(generated, generatedManifest.bodies[0].path))).toBe(true);
-    expect(generatedManifest.bodies[0].path).toMatch(
-      /^(?:\.\.\/)+evidence\/blobs\/[0-9a-f]{64}\.body$/,
-    );
-  });
-
-  it("stores identical CFP bodies once across promotion batches", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-global-body-"));
-    const sourceBody = join(root, "source.body");
-    writeFileSync(sourceBody, capturedBody);
-    const evidenceDir = join(root, "evidence", "blobs");
-    const writeBatch = (name: string) => {
-      const batchDir = join(root, "promotions", name);
-      const observationsPath = join(batchDir, "observations.jsonl");
-      mkdirSync(batchDir, { recursive: true });
-      writeFileSync(
-        observationsPath,
-        `${JSON.stringify(observation({ capture: { ...defaultCapture, bodyPath: sourceBody } }))}\n`,
-      );
-      return writePromotionBatch(
-        observationsPath,
-        join(batchDir, "resolutions.json"),
-        join(batchDir, "manifest.json"),
-        { sourceBaseDir: root, evidenceDir },
-      );
-    };
-    expect(writeBatch("first")[0]?.decision).toBe("promote");
-    expect(writeBatch("second")[0]?.decision).toBe("promote");
-    const manifest = JSON.parse(
-      readFileSync(join(root, "promotions", "second", "manifest.json"), "utf8"),
-    );
-    expect(manifest.bodies[0].path).toMatch(/^(?:\.\.\/)+evidence\/blobs\/[0-9a-f]{64}\.body$/);
-    expect(readFileSync(join(evidenceDir, `${capturedHash}.body`), "utf8")).toBe(capturedBody);
-  });
-
-  it("relocates top-level observe-cfp captures without losing manifest verification", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-top-level-capture-"));
-    const observations = join(root, "observations.jsonl");
-    const evidenceDir = join(root, "evidence", "blobs");
-    const topLevel = {
-      ...observation({ candidate: "top-level", capture: undefined }),
-      ...defaultCapture,
-    };
-    writeFileSync(observations, `${JSON.stringify(topLevel)}\n`);
-    const resolutions = writePromotionBatch(
-      observations,
-      join(root, "resolutions.json"),
-      join(root, "manifest.json"),
-      { evidenceDir },
-    );
-    expect(resolutions[0]?.decision).toBe("promote");
-    const saved = JSON.parse(readFileSync(observations, "utf8"));
-    expect(saved.bodyPath).toMatch(/^(?:\.\.\/)*evidence\/blobs\/[0-9a-f]{64}\.body$/);
-    expect(verifyBatch(observations)[0]?.decision).toBe("promote");
   });
 
   it("captures a deterministic body and verifies hash, excerpt, domain, extraction, and freshness", async () => {
