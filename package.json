@@ -13,11 +13,13 @@
     "generate:curated": "node scripts/generate-curated.ts",
     "bench": "node src/bench-recommender.ts",
     "validate:data": "node scripts/validate-data.ts",
+    "health-gate": "node scripts/health-gate.ts public/health.json --report work/health-gate-violations.json --observation-baseline data/source-observation-baseline.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit && tsc --noEmit -p site/tsconfig.json",
     "check": "biome check src scripts site/*.ts tests --files-ignore-unknown=false",
     "format": "biome format --write src tests",
-    "update": "node src/fetch-primary.ts --apply && node src/cli.ts discover && npm run generate:curated && node src/cli.ts build --out public && node scripts/validate-data.ts -- public/data.json && node scripts/health-gate.ts public/health.json --report work/health-gate-violations.json --observation-baseline data/source-observation-baseline.json"
+    "update": "npm run validate:data -- public/data.json && npm run health-gate",
+    "build:manual": "node src/cli.ts build --out public"
   },
   "license": "MIT",
   "overrides": {
