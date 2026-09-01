@@ -13,6 +13,7 @@ import { join } from "node:path";
 import { decode } from "html-entities";
 import { dump as dumpYaml, load as loadYaml } from "js-yaml";
 import { monthOf, slug } from "./model.ts";
+import { localSourcePaths } from "./sources/local.ts";
 
 const ROOT = join(import.meta.dirname, "..");
 
@@ -208,6 +209,26 @@ export interface CandidateEvidence {
 export interface CandidateRegistry {
   schema: 2;
   candidates: Candidate[];
+}
+
+export type CandidateArchiveDecision =
+  | "expired"
+  | "duplicate"
+  | "out-of-scope"
+  | "already-curated"
+  | "no-official-evidence"
+  | "no-reviewable-deadline";
+
+export interface CandidateArchiveRecord {
+  fingerprint: string;
+  decision: CandidateArchiveDecision;
+  last_reviewed: string;
+  source_url_hash: string;
+}
+
+export interface CandidateLifecycleSplit {
+  active: Candidate[];
+  archive: CandidateArchiveRecord[];
 }
 
 export interface CandidateFingerprintInput {
@@ -668,6 +689,113 @@ export function formatCandidateRegistry(registry: CandidateRegistry | null | und
     { schema: CANDIDATE_REGISTRY_SCHEMA, candidates: records },
     { skipInvalid: true },
   ) as string;
+}
+
+function candidateReviewDate(candidate: Candidate): Date | null {
+  const text = candidate.submission_deadline_text || candidate.date_text;
+  const parsed = parseDeadlineText(text);
+  return parsed && !Number.isNaN(parsed.getTime()) ? parsed : null;
+}
+
+function candidateNameKeys(candidate: Candidate): string[] {
+  return [candidate.title, candidate.full_name, candidate.key]
+    .map((value) =>
+      normalizeCandidateTitle(value)
+        .replace(/\b20\d{2}\b/g, "")
+        .trim(),
+    )
+    .filter(Boolean);
+}
+
+function candidateIsTracked(candidate: Candidate, tracked: Set<string>): boolean {
+  return candidateNameKeys(candidate).some((key) => tracked.has(key));
+}
+
+function candidateHasOfficialUrl(candidate: Candidate): boolean {
+  try {
+    const url = new URL(candidate.link || "");
+    if (url.protocol !== "https:" && url.protocol !== "http:") return false;
+    const host = url.hostname.toLowerCase();
+    return !/(?:^|\.)(?:wikicfp|dbworld|cfpcalendar|conferencealerts)\./.test(host);
+  } catch {
+    return false;
+  }
+}
+
+const DISCOVERY_CATEGORIES = new Set(Object.keys(DOMAIN_KEYWORDS));
+
+export function splitCandidateLifecycle(
+  candidates: Candidate[] | null | undefined,
+  now: Date,
+  tracked: Set<string> = new Set(),
+): CandidateLifecycleSplit {
+  const safeNow = Number.isNaN(now.getTime()) ? new Date() : now;
+  const sorted = [...(candidates ?? [])]
+    .map((candidate) => recordCandidate(candidate))
+    .sort(candidateSort);
+  const active: Candidate[] = [];
+  const archive: CandidateArchiveRecord[] = [];
+  const seen = new Set<string>();
+  for (const candidate of sorted) {
+    const normalizedTitle = normalizeCandidateTitle(candidate.title || candidate.full_name).replace(
+      /\b20\d{2}\b/g,
+      "",
+    );
+    const duplicate = seen.has(`${normalizedTitle}\0${candidateYear(candidate) ?? ""}`);
+    if (normalizedTitle) seen.add(`${normalizedTitle}\0${candidateYear(candidate) ?? ""}`);
+    const date = candidateReviewDate(candidate);
+    const decision: CandidateArchiveDecision | null = candidateIsTracked(candidate, tracked)
+      ? "already-curated"
+      : duplicate
+        ? "duplicate"
+        : !DISCOVERY_CATEGORIES.has(
+              candidate.categories.find((category) => DISCOVERY_CATEGORIES.has(category)) ?? "",
+            )
+          ? "out-of-scope"
+          : !candidateHasOfficialUrl(candidate)
+            ? "no-official-evidence"
+            : !date
+              ? "no-reviewable-deadline"
+              : date.getTime() < safeNow.getTime()
+                ? "expired"
+                : null;
+    if (decision) {
+      archive.push({
+        fingerprint:
+          candidate.id ??
+          candidateFingerprint({
+            source: candidateSource(candidate),
+            sourceItemId: candidateSourceItemId(candidate, candidateSource(candidate)),
+            normalizedTitle: normalizeCandidateTitle(candidate.title || candidate.full_name),
+            targetYear: candidateYear(candidate),
+          }),
+        decision,
+        last_reviewed: safeNow.toISOString(),
+        source_url_hash: createHash("sha256")
+          .update(candidate.link || candidate.evidence_url || "")
+          .digest("hex"),
+      });
+    } else {
+      active.push(candidate);
+    }
+  }
+  return { active, archive };
+}
+
+export function formatActiveCandidates(candidates: Candidate[] | null | undefined): string {
+  const parsed = loadYaml(
+    formatCandidateRegistry({ schema: CANDIDATE_REGISTRY_SCHEMA, candidates: candidates ?? [] }),
+  ) as Record<string, unknown>;
+  return dumpYaml(
+    { schema: CANDIDATE_REGISTRY_SCHEMA, lifecycle: "active", candidates: parsed.candidates ?? [] },
+    { skipInvalid: true },
+  ) as string;
+}
+
+export function formatCandidateArchive(
+  records: CandidateArchiveRecord[] | null | undefined,
+): string {
+  return `${JSON.stringify({ schema: 1, lifecycle: "archive", records: records ?? [] }, null, 2)}\n`;
 }
 
 /** Backwards-compatible formatter for a single discovery batch. */
@@ -1406,7 +1534,7 @@ export class NicheDiscoverer {
     this.loadKnownVenues();
   }
 
-  /** Load tracked keys and titles from config.yaml, extra.yaml, and snapshot. */
+  /** Load tracked keys and titles from config.yaml, the local canonical inputs, and snapshot. */
   private loadKnownVenues(): void {
     // 1. config.yaml taxonomy
     const configPath = join(this.rootDir, "config.yaml");
@@ -1424,19 +1552,20 @@ export class NicheDiscoverer {
       // config.yaml が無い環境 (テスト) では空のまま
     }
 
-    // 2. data/extra.yaml
-    const extraPath = join(this.rootDir, "data", "extra.yaml");
-    try {
-      const extra = (loadYaml(readFileSync(extraPath, "utf8")) as Record<string, unknown>) ?? {};
-      for (const c of (extra.conferences as unknown[] | null) ?? []) {
-        if (typeof c === "object" && c !== null) {
-          const rec = c as Record<string, unknown>;
-          if ("key" in rec) this.knownKeys.add(slug(String(rec.key)));
-          if ("title" in rec) this.knownTitles.add(String(rec.title).toLowerCase());
+    // 2. local canonical inputs (legacy extra.yaml is selected when they are absent)
+    for (const path of localSourcePaths(this.rootDir)) {
+      try {
+        const local = (loadYaml(readFileSync(path, "utf8")) as Record<string, unknown>) ?? {};
+        for (const c of (local.conferences as unknown[] | null) ?? []) {
+          if (typeof c === "object" && c !== null) {
+            const rec = c as Record<string, unknown>;
+            if ("key" in rec) this.knownKeys.add(slug(String(rec.key)));
+            if ("title" in rec) this.knownTitles.add(String(rec.title).toLowerCase());
+          }
         }
+      } catch {
+        // ファイルが無いテスト環境では空のまま
       }
-    } catch {
-      // ファイルが無いテスト環境では空のまま
     }
 
     // 3. data/snapshot.json

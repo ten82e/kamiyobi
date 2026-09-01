@@ -20,6 +20,9 @@ conferences:
             kind: paper
             label: paper
             precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-lascas-2027
+              resolution: resolution-7745ca16ae605083
             round: 1
             track: ''
           - date: '2026-10-23'
@@ -38,6 +41,9 @@ conferences:
             kind: notification
             label: notification
             precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-lascas-2027
+              resolution: resolution-4d13bbcf0d214cdb
             round: 1
             track: ''
           - date: '2026-11-09'
@@ -56,6 +62,9 @@ conferences:
             kind: camera_ready
             label: camera_ready
             precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-lascas-2027
+              resolution: resolution-fa06799cff614f62
             round: 1
             track: ''
         edition_id: lascas-2027

@@ -21,7 +21,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { parseArgs as parseNodeArgs } from "node:util";
 import { type FeatureExtractionPipeline, pipeline } from "@huggingface/transformers";
 import { booleanValue, normalizeShortEquals, stringValue } from "./args.ts";
@@ -639,8 +639,8 @@ function benchV2Metrics(ranks: Array<number | null>): BenchV2ModeResult {
 
 function calibrationMetrics(
   observations: Array<{
-    top1Probability: number;
-    top5Probability: number;
+    top1ConfidenceScore: number;
+    top5ConfidenceScore: number;
     top1: boolean;
     top5: boolean;
   }>,
@@ -649,7 +649,7 @@ function calibrationMetrics(
     Array.from({ length: 5 }, (_, index) => {
       const lower = index / 5;
       const upper = (index + 1) / 5;
-      const probabilityField = field === "top1" ? "top1Probability" : "top5Probability";
+      const probabilityField = field === "top1" ? "top1ConfidenceScore" : "top5ConfidenceScore";
       const bucket = observations.filter(
         (item) =>
           item[probabilityField] >= lower &&
@@ -682,7 +682,7 @@ function calibrationMetrics(
       ),
     );
   const brier = (field: "top1" | "top5") => {
-    const probabilityField = field === "top1" ? "top1Probability" : "top5Probability";
+    const probabilityField = field === "top1" ? "top1ConfidenceScore" : "top5ConfidenceScore";
     return benchV2Round(
       observations.reduce(
         (sum, item) => sum + (item[probabilityField] - Number(item[field])) ** 2,
@@ -700,7 +700,7 @@ function calibrationMetrics(
     top5_expected_calibration_error: ece(top5Reliability),
     top5_brier_score: brier("top5"),
     precision_coverage: [0.1, 0.5, 0.8].map((threshold) => {
-      const selected = observations.filter((item) => item.top1Probability >= threshold);
+      const selected = observations.filter((item) => item.top1ConfidenceScore >= threshold);
       return {
         threshold,
         precision: selected.length
@@ -741,8 +741,8 @@ export function runBenchmarkV2(fixture: BenchV2Fixture): BenchV2Result {
           fused: [] as Array<number | null>,
         },
         probabilities: [] as Array<{
-          top1Probability: number;
-          top5Probability: number;
+          top1ConfidenceScore: number;
+          top5ConfidenceScore: number;
           top1: boolean;
           top5: boolean;
         }>,
@@ -754,8 +754,8 @@ export function runBenchmarkV2(fixture: BenchV2Fixture): BenchV2Result {
       queries: number;
       ranks: Record<"lexical" | "semantic" | "fused", Array<number | null>>;
       probabilities: Array<{
-        top1Probability: number;
-        top5Probability: number;
+        top1ConfidenceScore: number;
+        top5ConfidenceScore: number;
         top1: boolean;
         top5: boolean;
       }>;
@@ -799,10 +799,10 @@ export function runBenchmarkV2(fixture: BenchV2Fixture): BenchV2Result {
         bySplit[query.split].ranks[mode].push(rank(mode));
       const fusedRank = rank("fused");
       bySplit[query.split].probabilities.push({
-        top1Probability: recommendations[0]?.fit.probability ?? 0,
-        top5Probability: Math.max(
+        top1ConfidenceScore: recommendations[0]?.fit.confidenceScore ?? 0,
+        top5ConfidenceScore: Math.max(
           0,
-          ...recommendations.slice(0, 5).map((item) => item.fit.probability),
+          ...recommendations.slice(0, 5).map((item) => item.fit.confidenceScore),
         ),
         top1: fusedRank === 1,
         top5: fusedRank !== null && fusedRank <= 5,
@@ -925,21 +925,126 @@ export type RealPaperCoverage = "full" | "required";
  * retrieval and all ranking in the browser recommender; this file only replaces
  * remote model inference in required checks. */
 export interface RequiredSemanticFeatures {
-  version: 1;
+  version: 1 | 2;
   feature_schema: string[];
-  minimum_language_counts: Record<"dev" | "heldout", Record<RealPaperLanguage, number>>;
-  provenance: { generator: string; model: string; revision: string; runtime: string };
-  profiles: Record<"dev" | "heldout" | "negative", BenchmarkEmbeddingManifest>;
+  minimum_language_counts?: Record<"dev" | "heldout", Record<RealPaperLanguage, number>>;
+  provenance?: { generator: string; model: string; revision: string; runtime: string };
+  profiles?: Record<"dev" | "heldout" | "negative", BenchmarkEmbeddingManifest>;
   records: Array<{
     paper_id: string;
     record_sha256: string;
     semantic_scores: Record<string, number>;
+    feature_schema?: 2;
+    profile_hash?: string;
+    model_revision?: string;
     candidates: Array<{
       venue: string;
       base_score: number;
       features: Record<string, number>;
     }>;
   }>;
+}
+
+export interface FeatureStoreManifest {
+  schema_version: 2;
+  feature_schema: 2;
+  model_revision?: string;
+  profile_hash?: string;
+  records: Array<{ paper_id: string; record_sha256: string }>;
+  minimum_language_counts?: Record<"dev" | "heldout", Record<RealPaperLanguage, number>>;
+}
+
+type CanonicalFeatureRecord = RequiredSemanticFeatures["records"][number] & {
+  feature_schema: 2;
+  profile_hash: string;
+  model_revision: string;
+};
+
+function featureManifestPaths(path: string): string[] {
+  const stem = path.replace(/\.jsonl$/, "").replace(/-features$/, "");
+  return ["dev", "heldout", "required"].map((split) => `${stem}-${split}-manifest.json`);
+}
+
+/** Read the canonical one-record-per-line store, with V1 JSON migration support. */
+export function readFeatureStore(path: string): RequiredSemanticFeatures {
+  const text = readFileSync(path, "utf8");
+  if (!path.endsWith(".jsonl")) return JSON.parse(text) as RequiredSemanticFeatures;
+  const records = text
+    .split(/\r?\n/)
+    .map((line, index) => {
+      if (!line.trim()) return null;
+      let value: unknown;
+      try {
+        value = JSON.parse(line);
+      } catch (error) {
+        throw new Error(`invalid feature store line ${index + 1}: ${String(error)}`);
+      }
+      if (!value || typeof value !== "object" || Array.isArray(value))
+        throw new Error(`invalid feature store line ${index + 1}: record must be an object`);
+      const record = value as Partial<CanonicalFeatureRecord>;
+      if (
+        record.feature_schema !== 2 ||
+        typeof record.paper_id !== "string" ||
+        typeof record.profile_hash !== "string" ||
+        typeof record.model_revision !== "string"
+      )
+        throw new Error(`invalid feature store line ${index + 1}: missing V2 identity fields`);
+      return record as CanonicalFeatureRecord;
+    })
+    .filter((record): record is CanonicalFeatureRecord => record !== null)
+    .sort((left, right) => left.paper_id.localeCompare(right.paper_id));
+  const manifestPaths = featureManifestPaths(path);
+  if (manifestPaths.some((manifestPath) => !existsSync(manifestPath)))
+    throw new Error(
+      `canonical feature store manifests are incomplete: ${manifestPaths.join(", ")}`,
+    );
+  const manifests = manifestPaths.map(
+    (manifestPath) => JSON.parse(readFileSync(manifestPath, "utf8")) as FeatureStoreManifest,
+  );
+  const recordsById = new Map(records.map((record) => [record.paper_id, record]));
+  for (const manifest of manifests) {
+    if (manifest.schema_version !== 2 || manifest.feature_schema !== 2)
+      throw new Error("invalid feature store manifest schema");
+    if (!Array.isArray(manifest.records)) throw new Error("invalid feature store manifest records");
+    for (const expected of manifest.records) {
+      const record = recordsById.get(expected.paper_id);
+      if (!record || record.record_sha256 !== expected.record_sha256)
+        throw new Error(`feature store manifest mismatch: ${expected.paper_id}`);
+      if (manifest.profile_hash && record.profile_hash !== manifest.profile_hash)
+        throw new Error(`feature store profile mismatch: ${expected.paper_id}`);
+      if (manifest.model_revision && record.model_revision !== manifest.model_revision)
+        throw new Error(`feature store model revision mismatch: ${expected.paper_id}`);
+    }
+  }
+  const required = manifests.find((manifest) => manifest.minimum_language_counts !== undefined);
+  const first = records[0];
+  return {
+    version: 2,
+    feature_schema: [...Recommender.RERANKER_FEATURE_SCHEMA],
+    minimum_language_counts: required?.minimum_language_counts ?? {
+      dev: { en: 8, ja: 1 },
+      heldout: { en: 9, ja: 1 },
+    },
+    provenance: {
+      generator: "src/bench-recommender.ts",
+      model: "Xenova/all-MiniLM-L6-v2",
+      revision: first?.model_revision ?? "",
+      runtime: process.version,
+    },
+    records,
+  };
+}
+
+export function writeFeatureStore(path: string, records: readonly CanonicalFeatureRecord[]): void {
+  writeFileSync(
+    path,
+    `${records
+      .slice()
+      .sort((left, right) => left.paper_id.localeCompare(right.paper_id))
+      .map((record) => JSON.stringify(record))
+      .join("\n")}\n`,
+    "utf8",
+  );
 }
 
 /**
@@ -979,17 +1084,28 @@ export function fixedFeatureRecord(
   split: "dev" | "heldout" | "negative",
 ): RequiredSemanticFeatures["records"][number] | null {
   if (!features) return null;
+  const found = features.records.find((record) => record.paper_id === paperId);
+  if (!found)
+    throw new Error(`required production feature missing, altered, or zeroed: ${paperId}`);
   if (
-    features.version !== 1 ||
     !Array.isArray(features.feature_schema) ||
-    features.feature_schema.join("\0") !== Recommender.RERANKER_FEATURE_SCHEMA.join("\0") ||
-    JSON.stringify(features.profiles[split]) !== JSON.stringify(expected)
+    features.feature_schema.join("\0") !== Recommender.RERANKER_FEATURE_SCHEMA.join("\0")
+  )
+    throw new Error("required semantic feature schema/profile mismatch");
+  if (features.version !== 1 && features.version !== 2)
+    throw new Error("required semantic feature schema/profile mismatch");
+  if (features.version === 1) {
+    if (!features.profiles || JSON.stringify(features.profiles[split]) !== JSON.stringify(expected))
+      throw new Error("required semantic feature schema/profile mismatch");
+  } else if (
+    found.feature_schema !== 2 ||
+    found.profile_hash !== expected.profile_hash_at_cutoff ||
+    (found.model_revision !== undefined &&
+      ![expected.models.en.revision, expected.models.multi.revision].includes(found.model_revision))
   ) {
     throw new Error("required semantic feature schema/profile mismatch");
   }
-  const found = features.records.find((record) => record.paper_id === paperId);
   if (
-    !found ||
     Object.keys(found.semantic_scores).length === 0 ||
     Object.values(found.semantic_scores).some((value) => !Number.isFinite(value)) ||
     found.record_sha256 !== requiredRecordHash(found) ||
@@ -1020,6 +1136,8 @@ export interface RealPaperRecord {
   venue_kind: RealPaperKind;
   input_mode: RealPaperInputMode;
   source: string;
+  annotation_revision?: number;
+  annotation_evidence?: Array<{ venue: string; reason: string; source: string }>;
 }
 
 export interface RealPaperSourceSnapshot {
@@ -1395,6 +1513,24 @@ function validateRealPaperRecord(
   }
   if (!toStringArray(record.domains).length)
     throw new Error(`real paper ${record.paper_id} needs domains`);
+  if (
+    record.annotation_revision !== undefined &&
+    (!Number.isInteger(record.annotation_revision) || record.annotation_revision < 1)
+  )
+    throw new Error(`real paper ${record.paper_id} has invalid annotation_revision`);
+  if (record.annotation_evidence !== undefined) {
+    if (!record.annotation_revision || !Array.isArray(record.annotation_evidence))
+      throw new Error(`real paper ${record.paper_id} annotation evidence needs a revision`);
+    for (const evidence of record.annotation_evidence) {
+      if (
+        !evidence ||
+        !record.acceptable_venues.includes(evidence.venue) ||
+        !evidence.reason?.trim() ||
+        !evidence.source?.trim()
+      )
+        throw new Error(`real paper ${record.paper_id} has invalid annotation evidence`);
+    }
+  }
 }
 
 function validateRealPaperCoverage(fixture: RealPaperFixture, coverage: "full" | "required"): void {
@@ -1797,8 +1933,8 @@ function realPaperSplitResult(
           ? 0.5
           : 0.1;
     return {
-      top1Probability: predictedProbability?.[record.paper_id]?.top1 ?? fallback,
-      top5Probability: predictedProbability?.[record.paper_id]?.top5 ?? fallback,
+      top1ConfidenceScore: predictedProbability?.[record.paper_id]?.top1 ?? fallback,
+      top5ConfidenceScore: predictedProbability?.[record.paper_id]?.top5 ?? fallback,
       top1: (rankings[record.paper_id]?.fused ?? Infinity) <= 1,
       top5: (rankings[record.paper_id]?.fused ?? Infinity) <= 5,
     };
@@ -2168,7 +2304,11 @@ export async function runRealPaperBenchmark(
       lines,
       semanticScores,
       Date.UTC(record.year, 0, 1),
-      { topN: candidateDepth, venueCats: Recommender.autoDetectCats(lines) },
+      {
+        topN: candidateDepth,
+        venueCats: Recommender.autoDetectCats(lines),
+        fieldedLexical: true,
+      },
     ) as VenueRecommendation[];
     const candidateFeatures = recommendations
       .map((recommendation) => ({
@@ -2186,6 +2326,12 @@ export async function runRealPaperBenchmark(
     if (collectedFeatures && candidateDepth === rows.length)
       collectedFeatures.push({
         paper_id: record.paper_id,
+        feature_schema: 2,
+        profile_hash: bundle.manifest.profile_hash_at_cutoff,
+        model_revision:
+          record.language === "ja"
+            ? bundle.manifest.models.multi.revision
+            : bundle.manifest.models.en.revision,
         record_sha256: requiredRecordHash({
           paper_id: record.paper_id,
           semantic_scores: inferredSemanticScores,
@@ -2221,8 +2367,8 @@ export async function runRealPaperBenchmark(
       },
       confidence: conf,
       probability: {
-        top1: recommendations[0]?.fit.probability ?? 0,
-        top5: Math.max(0, ...recommendations.slice(0, 5).map((item) => item.fit.probability)),
+        top1: recommendations[0]?.fit.confidenceScore ?? 0,
+        top5: Math.max(0, ...recommendations.slice(0, 5).map((item) => item.fit.confidenceScore)),
       },
       failure: classifyFailure(
         lexicalRank,
@@ -2802,7 +2948,7 @@ export async function main(
         categories?: Record<string, string>;
       };
       const requiredFeatures = args.realV2Features
-        ? (JSON.parse(readFileSync(args.realV2Features, "utf8")) as RequiredSemanticFeatures)
+        ? readFeatureStore(args.realV2Features)
         : undefined;
       const collectedFeatures: RequiredSemanticFeatures["records"] = [];
       const run = await runRealPaperBenchmark(
@@ -2819,33 +2965,70 @@ export async function main(
         const benchmarkProfiles = run.result.benchmark_embeddings;
         if (!benchmarkProfiles) throw new Error("benchmark embedding manifests are missing");
         const profiles = { ...benchmarkProfiles, negative: benchmarkProfiles.heldout };
-        writeFileSync(
-          args.writeRequiredFeatures,
-          `${JSON.stringify(
-            {
-              version: 1,
-              feature_schema: [...Recommender.RERANKER_FEATURE_SCHEMA],
-              minimum_language_counts: {
-                dev: { en: 8, ja: 1 },
-                heldout: { en: 9, ja: 1 },
-              },
-              provenance: {
-                generator: "src/bench-recommender.ts",
-                model: EMBEDDING_MODEL,
-                revision: EMBEDDING_REVISION,
-                runtime: process.version,
-              },
-              profiles,
-              records: [
-                ...new Map(
-                  collectedFeatures.map((record) => [record.paper_id, record] as const),
-                ).values(),
-              ].sort((a, b) => a.paper_id.localeCompare(b.paper_id)),
-            } satisfies RequiredSemanticFeatures,
-            null,
-            2,
-          )}\n`,
-        );
+        const records = [
+          ...new Map(
+            collectedFeatures.map((record) => [record.paper_id, record] as const),
+          ).values(),
+        ].sort((a, b) => a.paper_id.localeCompare(b.paper_id));
+        if (args.writeRequiredFeatures.endsWith(".jsonl")) {
+          writeFeatureStore(args.writeRequiredFeatures, records as CanonicalFeatureRecord[]);
+          const storeBase = args.writeRequiredFeatures
+            .replace(/\.jsonl$/, "")
+            .replace(/-features$/, "");
+          const minimumLanguageCounts = {
+            dev: { en: 8, ja: 1 },
+            heldout: { en: 9, ja: 1 },
+          } satisfies Record<"dev" | "heldout", Record<RealPaperLanguage, number>>;
+          for (const [split] of Object.entries(profiles)) {
+            const splitRecords = records.filter((record) =>
+              split === "negative"
+                ? record.paper_id.startsWith("pubmed-") || record.paper_id.startsWith("jstage-")
+                : record.paper_id.startsWith(`${split}-`),
+            );
+            writeFileSync(
+              `${storeBase}-${split}-manifest.json`,
+              `${JSON.stringify(
+                {
+                  schema_version: 2,
+                  feature_schema: 2,
+                  ...(split === "required"
+                    ? { minimum_language_counts: minimumLanguageCounts }
+                    : {}),
+                  records: splitRecords.map(({ paper_id, record_sha256 }) => ({
+                    paper_id,
+                    record_sha256,
+                  })),
+                } satisfies FeatureStoreManifest,
+                null,
+                2,
+              )}\n`,
+            );
+          }
+        } else {
+          writeFileSync(
+            args.writeRequiredFeatures,
+            `${JSON.stringify(
+              {
+                version: 1,
+                feature_schema: [...Recommender.RERANKER_FEATURE_SCHEMA],
+                minimum_language_counts: {
+                  dev: { en: 8, ja: 1 },
+                  heldout: { en: 9, ja: 1 },
+                },
+                provenance: {
+                  generator: "src/bench-recommender.ts",
+                  model: EMBEDDING_MODEL,
+                  revision: EMBEDDING_REVISION,
+                  runtime: process.version,
+                },
+                profiles,
+                records,
+              } satisfies RequiredSemanticFeatures,
+              null,
+              2,
+            )}\n`,
+          );
+        }
       }
       console.log(JSON.stringify(run.result, null, 2));
       process.stderr.write(

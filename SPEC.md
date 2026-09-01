@@ -14,7 +14,7 @@ HPC・ネットワーク・システム・AI 系会議の投稿締切と開催�
 |---|---|---|---|
 | `ccfddl` | `ccfddl/ccf-deadlines` (main) | MIT | `conference/**/*.yml` **353 本 / 1150 版** |
 | `aideadlines` | `huggingface/ai-deadlines` (main) | MIT | `src/data/conferences/*.yml` 68 本 / 122 版 |
-| `local` | 本リポジトリ `data/extra.yaml` | - | 上流が扱わない会議 |
+| `local` | 本リポジトリ `data/manual.yaml` + `data/curated.generated.yaml` | - | 上流が扱わない会議 |
 
 取得方法は **tarball 一括ダウンロード**（`https://codeload.github.com/<repo>/tar.gz/refs/heads/main`）。
 Git API のファイル単位取得はレート制限に当たるので使わない。
@@ -140,24 +140,35 @@ kamiyobi/
 ├── biome.json                   # lint/format
 ├── config.yaml                  # 収録範囲・カテゴリ定義
 ├── data/
-│   ├── extra.yaml               # 上流に無い会議
+│   ├── extra.yaml               # 旧データからの移行入力
+│   ├── manual.yaml              # 手入力の local 正典
+│   ├── curated.generated.yaml   # promotion batch から生成する local 正典 [自動]
 │   ├── overrides.yaml           # 上流の訂正・別名・カテゴリ上書き
 │   ├── primary.yaml             # 一次ソース URL 一覧
 │   ├── primary_overrides.yaml   # 一次ソース抽出結果（自動）              [自動]
 │   ├── discovered_candidates.yaml # discover の既定出力
+│   ├── discovery/                # active 候補と archive 候補
+│   ├── promotions/                # 証拠付き promotion batch
 │   ├── recommender-reranker.json # 軽量推薦 reranker の固定係数
 │   ├── verification-ledger.json # 公式ページ再確認の永続台帳
-│   ├── evidence/blobs/            # 再確認本文の content-addressed 保存
+│   ├── source-snapshots/          # データ源ごとの復元用スナップショット
+│   ├── validator-findings.json    # 検証警告のレビュー状態
+│   ├── semantic-reconciliation.json # Issue/PR の意味照合結果
+│   ├── evidence/blobs/             # 再確認本文の content-addressed 保存
+│   ├── evidence/index.json         # 証拠本文の参照整合性インデックス
+│   ├── benchmarks/real-paper-features.jsonl # 論文特徴量の正典ストア
+│   ├── benchmarks/*-manifest.json # 特徴量 split のハッシュ・件数契約
 │   └── snapshot.json            # 生成物(コミットされる。上流障害時の退避) [自動]
-├── src/
-│   ├── model.ts                 # 型・時刻解決・日付パーサ・snapshot 入出力
+ ├── src/
+ │   ├── capture.ts               # raw-byte page取得・制限・SSRF/redirect防御
+ │   ├── model.ts                 # 型・時刻解決・日付パーサ・snapshot 入出力
 │   ├── args.ts                  # CLI の短縮引数互換
 │   ├── util.ts                  # 共有ユーティリティ（配列正規化等）
 │   ├── sources/
 │   │   ├── base.ts
 │   │   ├── ccfddl.ts
 │   │   ├── aideadlines.ts
-│   │   └── local.ts             # data/extra.yaml 読み込み
+│   │   └── local.ts             # manual + curated.generated 読み込み
 │   ├── merge.ts                 # 名寄せ・分類・上書き・推定
 │   ├── discover.ts              # 穴場会議・ジャーナル自律探索
 │   ├── fetch-primary.ts         # 一次ソース自動抽出
@@ -165,6 +176,8 @@ kamiyobi/
 │   ├── recommender-api.ts       # 推薦実行時処理の型境界
 │   ├── promotion.ts             # 候補昇格の観測・検証・決定
 │   ├── reverify.ts               # 公式ページ再確認と台帳更新
+│   ├── evidence.ts              # 証拠本文の検証・インデックス・回収
+│   ├── identity-migration.ts     # health gate 用の明示的 identity 移行契約
 │   ├── embeddings.ts            # 埋め込み生成
 │   ├── bench-recommender.ts     # 推薦ベンチ
 │   ├── build.ts                 # JSON/CSV/MD/llms.txt/HTML 出力
@@ -178,10 +191,11 @@ kamiyobi/
 │   ├── recommendation-core.ts   # browser / benchmark / test 共通の推薦軸
 │   ├── publish.ts               # publish manifest のブラウザ側検証
 │   └── runtime.d.ts             # ブラウザ・生成データの型境界
-├── scripts/
-│   ├── compare-head.ts          # snapshot / primary_overrides の実質差分
-│   ├── health-gate.ts           # 直近の健全な公開結果との配信前健全性ゲート
-│   ├── generate-venue-profiles.ts # 出典情報付きプロフィール成果物の再生成
+ ├── scripts/
+ │   ├── compare-head.ts          # snapshot / primary_overrides の実質差分
+ │   ├── health-gate.ts           # 直近の健全な公開結果との配信前健全性ゲート
+ │   ├── generate-curated.ts      # promotion 正典から local 正典を再生成
+ │   ├── generate-venue-profiles.ts # 出典情報付きプロフィール成果物の再生成
 │   ├── observe-cfp.ts           # CFP 本文・応答・抽出候補の保存
 │   ├── restore-recommendation-bundle.ts # 互換推薦 artifact の検証・復元
 │   ├── seal-recommendation-bundle.ts # semantic_content_id 付き bundle 封印
@@ -352,7 +366,8 @@ export async function fetchTarball(
 
 実装: `src/sources/ccfddl.ts`（`NAME = "ccfddl"`・`REPO = "ccfddl/ccf-deadlines"`）、
 `src/sources/aideadlines.ts`（`NAME = "aideadlines"`・`REPO = "huggingface/ai-deadlines"`）、
-`src/sources/local.ts`（`NAME = "local"`・`data/extra.yaml`）。
+`src/sources/local.ts`（`NAME = "local"`・`data/manual.yaml` と `data/curated.generated.yaml`）。
+両ファイルがない移行途中の checkout だけは `data/extra.yaml` を読み込む。
 
 ### 3.5 スナップショット（上流障害時の復旧経路）
 
@@ -371,6 +386,13 @@ snapshot は全データ源が `fresh` の online build に限り、build の最
 `generated_at` を除いて書き込む。各取得源の revision、入力 hash、取得時刻、件数を
 `snapshot_metadata` に保存し、offline build はこの観測時刻から鮮度を判定する。
 cache-fallback・snapshot-fallback・failed・offline のいずれかを含む build は snapshot を更新しない。
+
+各データ源の新鮮な parser 出力は `data/source-snapshots/<source>.json` にも保存する。
+source snapshot は他の源と統合する前の会議・版・締切配列、source revision、取得時刻、入力 hash を持つ。
+offline build は失敗した源に対応する source snapshot を優先し、無い場合だけ統合済み snapshot の源情報へ退避する。
+source snapshot の parser 形式は `conferencesFromJson` が読み戻せる契約とする。
+一次ソースの手動訂正は `data/source-snapshots/primary.json` に同じ形式で保存し、
+`primary_overrides.yaml` がないオフライン build からも復元する。
 
 ### 3.6 統合
 
@@ -512,11 +534,16 @@ node --experimental-strip-types src/cli.ts build [--out public] [--config config
                               [--no-embeddings]
 node --experimental-strip-types src/cli.ts discover [--out path] [--categories hpc,systems]
                               [--candidate-out path] [--min-year year] [--dry-run] [--append]
-node --experimental-strip-types src/cli.ts review [--candidates data/discovered_candidates.yaml]
+node --experimental-strip-types src/cli.ts review [--candidates data/discovery/active.yaml]
                               [--limit 60] [--now 2026-08-09T00:00:00Z]
-node --experimental-strip-types src/cli.ts reverify [--data public/data.json]
-                              [--ledger data/verification-ledger.json] [--due]
-                              [--now 2026-08-09T00:00:00Z]
+node --experimental-strip-types src/cli.ts reverify [plan|run|review|accept|apply|reject]
+                               [--data public/data.json]
+                               [--ledger data/verification-ledger.json] [--due]
+                               [--max-pages 40] [--max-deadlines 200] [--max-per-host 5]
+                               [--concurrency 4] [--timeout-ms 15000] [--max-body-bytes 5242880]
+                               [--resolution id] [--reason text]
+                               [--now 2026-08-09T00:00:00Z]
+node --experimental-strip-types src/cli.ts evidence [verify|gc] [--dry-run]
 ```
 
 `--offline` は「新規取得をせず、キャッシュ → snapshot の順で退避する」。
@@ -530,8 +557,12 @@ node --experimental-strip-types src/cli.ts reverify [--data public/data.json]
 ハゲタカ会議の疑い付きで一覧する。
 `reverify --due` は `verification.next_check_at` が到来した公式 URL を取得し、
 `data/verification-ledger.json` と `data/evidence/blobs/` を更新する。
-取得本文が示す日付が現行値と異なる場合は `changed` resolution を記録するが、
-公開データを自動上書きしない。
+`reverify` の取得上限はページ40、締切200、hostあたり5、同時4、タイムアウト15000 ms、本文5 MiBで、各値は上記フラグで上書きできる。
+台帳はページ、締切枠、別名、resolution を分離した schema 2 とし、schema 1 は読み込み時に移行する。
+同じ公式 URL の複数枠は一度だけ取得し、ETag または Last-Modified がある場合は条件付き取得を行う。
+取得本文が示す日付が現行値と異なる場合は変更種別付きの resolution を記録するが、公開データを自動上書きしない。
+精度向上と本文に明示された締切延長だけを `changed` とし、前倒し、精度低下、別トラック、曖昧な候補は `manual-required` とする。
+`evidence verify` は content hash、本文参照、サイズ、秘密情報を含むヘッダ、孤立本文を検査し、`evidence gc` は未参照本文を dry-run で確認した後にゴミ箱へ移す。
 
 ---
 
@@ -562,11 +593,15 @@ node --experimental-strip-types src/cli.ts reverify [--data public/data.json]
 `health.json` は `profile_hash`、`confirmed_future_deadlines`、`estimated_future_deadlines`、
 `source_failures`、`snapshot_fallback`、`build_input_mode`、観測時刻・観測鮮度、
 安定 warning code、identity conflict、`parse_warning_count`、カテゴリ別件数、
-必須会議の存在状態、および schema 2 の `deadline_refs` を持つ。各 ref の
+必須会議の存在状態、`deadline_refs`、`identity_migrations` を持つ。各 ref の
 `deadline_id` は `venue|edition_id|kind|round|track` で、`exact` は `at_utc`、`date-only` は `local_date` に値を分離する。
 直近の健全な公開結果との比較では、同一枠の延長は通し、公式根拠のない前倒しと
 根拠のない未来枠の消失だけを配信阻止対象とする。経過した締切の削除と推定値の増減では
 阻止しない。`deadline_refs` は現在未来の確定締切と短い lookback（14 日）に限る。
+`identity_migrations` は旧 slot から現行 slot への明示的な写像であり、`rename` と
+`duplicate-collapse`（N 件を 1 件へ統合）だけが対応する slot の消失判定を緩和する。
+schema version の増加だけでは緩和しない。移行先欠落、同一 source の複数移行先、
+不正な action、循環は fail-closed である。
 
 `publish.json` は最終的な公開セットを検査する。`semantic_status` は埋め込みが有効なとき
 `ready`、省略または検証に失敗したとき `lexical-only` になる。成果物一覧の `artifacts` は `publish.json`
@@ -671,13 +706,21 @@ rank_filter:
 
 **MX 分野の扱い**: `MX/mlsys.yml` に **MLSys が実在する**。`MX/rtss.yml` `MX/emsoft.yml`
 （実時間システム、TSN/DetNet に近い）も同様。MX 全体を取り込むと `www` `miccai` 等が
-混ざるので、venues で名指しして拾う。`data/extra.yaml` に MLSys を重複登録しない。
+混ざるので、venues で名指しして拾う。local 正典に MLSys を重複登録しない。
 
 **DS 分野の全数割り当て**: DS 60 会議はすべて分類対象である。
 `conference/DS/` を一件ずつ見て hpc / systems / exclude のいずれかに割り当て、
 未分類が 0 件であることを検査スクリプトで実測すること。
 
-### `data/extra.yaml`（上流に無い会議）
+### `data/manual.yaml` と `data/curated.generated.yaml`（local 正典）
+
+`data/manual.yaml` は手入力した local 会議を保持する。
+`data/curated.generated.yaml` は `data/promotions/*/resolutions.json` から生成し、
+各掲載締切に `promotion_ref: {batch, resolution}` を付ける。
+生成手順は `npm run generate:curated` であり、生成物を直接編集しない。
+既存データを移行するための `data/extra.yaml` は入力として残すが、build は両正典を優先する。
+
+### `data/extra.yaml`（移行入力）
 
 収録対象: ISC High Performance / Hot Interconnects (HOTI) / OCP Global Summit /
 Netdev / Linux Plumbers Conference / P4 Workshop / IEEE HPSR /
@@ -768,6 +811,7 @@ conferences:
 - `scripts/verify-cfp.ts` は保存本文を再読して候補を再抽出し、本文 hash、抜粋、公式ドメイン、日付候補、取得時刻、前回 capture より新しい revision を検証する。capture 内の候補配列だけでは昇格できない。
 - 公式 CFP または出版社の capture が無い観測、本文と一致しない観測、会議レビューまたはカテゴリレビューが未完了の観測は昇格しない。
 - `scripts/promote-candidates.ts` は参照本文を batch の `bodies/` へコピーし、本文、observations、resolutions、昇格用 `extra.yaml` の SHA-256 と決定一覧を `manifest.json` に封印する。
+- `npm run generate:curated` は各 resolution に安定した ID を割り当て、batch の決定を `curated.generated.yaml` と `promotion_ref` で参照可能にする。
 - 保存先は `data/promotions/<batch-id>/` とし、公開 manifest は各 batch manifest の SHA-256 を記録する。
 
 ---
@@ -819,6 +863,8 @@ conferences:
   `upcoming.md`（§4）で開催日を追う。
   開催行の過去判定（終了日 + 1 日）と残り日数の表示規則は §4 に定める。
   推定版には開催日を持たせないので、開催行が推定になることはない。
+- 一覧には確認済みでない締切の警告だけを表示し、確認済みの根拠本文や変更履歴は詳細画面に限定する。
+  詳細画面では確認元、確認範囲、状態、次回確認予定、根拠本文の抜粋を表示し、未確認の値を確認済みと表示しない。
 - 過去の締切は既定で非表示、トグルで表示。トグルを締切モードで有効にしたときだけ
   `catalog.json.history_ref` の全履歴を遅延取得し、既定の並びは締切が近い順。
 - ライト/ダーク両対応（`prefers-color-scheme`）。表は `overflow-x: auto` の中でだけ
@@ -891,6 +937,8 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 ### 10.1 スコア構成
 
 - 語彙スコア（`breakdown`）: 会議名・分野シグナル・VENUE_PAPERS 語彙との一致。
+- 語彙スコアは会議名、略称、スコープ、タグ、カテゴリ、代表論文のタイトル、概要、キーワードをフィールド別に計算し、
+  フィールド重みと一致根拠を保持する。
   適応ブレンド `vocabWeight`（EN: 内容語数 ≤4→0.25 / ≥5→0.4、JP: 0.6）。
 - 意味類似度スコア（`semanticScore`）: 埋め込み cosine。
   `public/embeddings.json`（`src/embeddings.ts` で生成、会議セット変化で自動再生成）。
@@ -917,14 +965,14 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
   required 実測では候補深度 50 / 100 / 200 / 全件も比較し、実運用の既定深度は
   100 とする（100 で改善せず処理負荷だけ増える場合は 50 に戻す）。
 - 軽量線形 reranker は本番と同一の固定 feature schema から full dev (`real-paper-dev`) のみで
-  L2 pairwise logistic を学習し、primary-venue grouped 5-fold CV で係数・blend を選択して
+  L2 pairwise logistic を学習し、受理 venue の連結成分を保った greedy 5-fold 分割で係数・blend を選択して
   Platt 校正と confidence threshold を学習する。required-dev（短縮検査用 subset）を学習に使ってはならない。
   `data/recommender-reranker.json` は training/input hash、CV、校正、閾値根拠を持ち、heldout は評価にだけ使う。
   `confidence_policy.sufficient_enabled` は dev OOF 上で precision ≥ 0.80・Wilson 95% LCB ≥ 0.65・
   coverage ≥ 0.10・positive ≥ 20 を満たすまで false であり、false の間 UI は
   「候補 / 情報不足」の2段階のみを表示する。
 - 必須検査は dev・heldout・negative の本番 semantic score と本番 reranker feature vector を固定した
-  `real-paper-required-features.json` を使う。frozen required 経路は manifest だけを決定的に検証し、
+  `real-paper-features.jsonl` と split 別 manifest を使う。frozen required 経路は manifest と各行の hash を決定的に検証し、
   pipeline、モデル cache、ネットワーク、埋め込み生成を一切使わず、lexical retrieval から Top-K まで本番経路を通す。
   候補Recall・oracle reranker・校正・MRR LCB・negative semantic false-positive abstentionを検査する。
   semantic bundle の seal には required gate と full real-paper benchmark の両方の合格が要る。
@@ -934,6 +982,10 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
   復元側は現在の data から `semantic_content_id` を再計算して一致を要求し (公開 commit の一致は問わない)、
   両 gate の `passed` も強制する。
 - required と full はそれぞれ記録済みの回帰下限を持ち、heldout fused Recall@5 または negative abstention が下限を割れば失敗する。JSON レポートは検査結果としてファイルに保存する。
+- `data/benchmarks/retrieval-audit.json` は候補深度、カテゴリ、言語、会議種別、失敗分類を保存し、
+  `data/benchmarks/annotation-audit.json` は受理 venue の出典、理由、注釈 revision を監査する。
+- クエリ信頼度は top-1 と top-2 の差、上位エントロピー、語彙と意味の一致、候補被覆率、入力概要の有無で記録する。
+  校正済み確率を算出できない場合、画面は確率として表示せず「候補」または「情報不足」と表示する。
 
 ### 10.3 会議プロファイル拡充手順（`data/venue-profiles.json`）
 

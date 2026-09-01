@@ -17,8 +17,22 @@ type EditionRecord = CandidateRow["ed"] & {
   link?: string;
   event_start?: string | null;
   event_end?: string | null;
+  event_date_precision?: string;
 };
-type DeadlineRecord = CandidateRow["dl"];
+type DeadlineRecord = CandidateRow["dl"] & {
+  verification?: {
+    official_url?: string;
+    source_class?: string;
+    source_name?: string;
+    selector_or_field?: string;
+    status?: string;
+    last_attempt_at?: string | null;
+    last_verified_at?: string | null;
+    next_check_at?: string;
+  };
+  source_name?: string;
+  evidence?: Array<Record<string, unknown>>;
+};
 type AppRow = Omit<CandidateRow, "conf" | "ed" | "dl"> & {
   conf: ConferenceRecord;
   ed: EditionRecord;
@@ -1296,7 +1310,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         });
         semanticScores = scores;
       }
-      out = Rec.venueRecommendations(out, pLines, semanticScores, now, { venueCats: venueCats })
+      out = Rec.venueRecommendations(out, pLines, semanticScores, now, {
+        venueCats: venueCats,
+        fieldedLexical: true,
+      })
         .filter((recommendation) => recommendation.fit.score >= 10)
         .map(
           (recommendation): AppRow => ({
@@ -1360,6 +1377,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     d.textContent = String(text);
     parent.appendChild(d);
     return d;
+  }
+
+  function verificationAlert(status: string | undefined): string | null {
+    if (!status || status === "verified") return null;
+    if (status === "changed") return "変更を検出";
+    if (status === "source-unreachable") return "公式ページ取得不能";
+    if (status === "manual-required" || status === "parser-failed") return "複数候補のため要確認";
+    return "再確認待ち";
   }
 
   function makeRow(r: AppRow) {
@@ -1460,6 +1485,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       es.className = "tag est";
       es.textContent = "推定";
       tags.appendChild(es);
+    }
+    const verificationTag = verificationAlert(r.dl.verification?.status);
+    if (verificationTag) {
+      const vs = document.createElement("span");
+      vs.className = "tag est";
+      vs.textContent = verificationTag;
+      tags.appendChild(vs);
     }
     if (r.kind === "journal") {
       const jr = document.createElement("span");
@@ -1661,6 +1693,45 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           "</div>";
       }
       html += "</div>";
+    }
+    const verification = r.dl.verification;
+    if (verification) {
+      const sourceLabels: Record<string, string> = {
+        "official-cfp": "公式CFP",
+        publisher: "出版社ページ",
+        "official-homepage": "公式ホームページ",
+        aggregator: "集約サイト",
+      };
+      const statusLabels: Record<string, string> = {
+        verified: "確認済み",
+        pending: "再確認待ち",
+        changed: "変更を検出",
+        retryable: "再試行待ち",
+        "source-unreachable": "公式ページ取得不能",
+        "parser-failed": "複数候補のため要確認",
+        "manual-required": "複数候補のため要確認",
+      };
+      const evidence = (r.dl.evidence ?? []).find((item) => item.verifiedFields);
+      const fields = Array.isArray(evidence?.verifiedFields)
+        ? evidence.verifiedFields.join("・")
+        : verification.selector_or_field || "日付・時刻・タイムゾーン";
+      const verifiedAt = verification.last_verified_at
+        ? new Date(verification.last_verified_at).toLocaleString("ja-JP")
+        : "未確認";
+      html +=
+        '<div class="verification-summary"><b>公式確認</b> ' +
+        esc(verifiedAt) +
+        "<br><b>確認元</b> " +
+        esc(sourceLabels[verification.source_class || ""] || verification.source_class || "公式") +
+        "<br><b>確認範囲</b> " +
+        esc(fields) +
+        "<br><b>状態</b> " +
+        esc(statusLabels[verification.status || ""] || verification.status || "未確認") +
+        (verification.next_check_at
+          ? "<br><b>次回確認予定</b> " +
+            esc(new Date(verification.next_check_at).toLocaleString("ja-JP"))
+          : "") +
+        "</div>";
     }
     html += "</div>";
     td.innerHTML = html;

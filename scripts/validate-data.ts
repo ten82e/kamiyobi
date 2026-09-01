@@ -25,6 +25,19 @@ export interface ValidatorWarning {
   count?: number;
 }
 
+export type ValidatorFindingStatus = "unreviewed" | "accepted" | "fixed";
+
+export interface ValidatorFinding extends ValidatorWarning {
+  finding_id: string;
+  status: ValidatorFindingStatus;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  review_reason?: string;
+  evidence_ref?: string;
+  expires_at?: string;
+  fixed_at?: string;
+}
+
 export function validatorWarnings(warnings: readonly string[]): ValidatorWarning[] {
   return [...warnings]
     .map((message) => {
@@ -86,6 +99,70 @@ export function validatorWarningBaseline(warnings: readonly string[]): Validator
     (left, right) =>
       left.code.localeCompare(right.code) || left.subject.localeCompare(right.subject),
   );
+}
+
+export function validateFindings(findings: readonly ValidatorFinding[]): string[] {
+  const errors: string[] = [];
+  const ids = new Set<string>();
+  for (const finding of findings) {
+    if (!finding.finding_id || ids.has(finding.finding_id))
+      errors.push(`${finding.finding_id || "<missing>"}: finding_id is missing or duplicated`);
+    ids.add(finding.finding_id);
+    if (!finding.code || !finding.subject)
+      errors.push(`${finding.finding_id}: code/subject is required`);
+    if (!["unreviewed", "accepted", "fixed"].includes(finding.status))
+      errors.push(`${finding.finding_id}: invalid status`);
+    if (finding.status === "unreviewed")
+      errors.push(`${finding.finding_id}: finding is unreviewed`);
+    if (finding.status === "accepted") {
+      if (!finding.reviewed_by)
+        errors.push(`${finding.finding_id}: accepted finding lacks reviewed_by`);
+      if (!finding.reviewed_at || !Number.isFinite(Date.parse(finding.reviewed_at)))
+        errors.push(`${finding.finding_id}: accepted finding lacks valid reviewed_at`);
+      if (!finding.review_reason)
+        errors.push(`${finding.finding_id}: accepted finding lacks review_reason`);
+      if (!finding.evidence_ref)
+        errors.push(`${finding.finding_id}: accepted finding lacks evidence_ref`);
+      if (!finding.expires_at || !Number.isFinite(Date.parse(finding.expires_at)))
+        errors.push(`${finding.finding_id}: accepted finding lacks valid expires_at`);
+    }
+    if (
+      finding.status === "fixed" &&
+      (!finding.fixed_at || !Number.isFinite(Date.parse(finding.fixed_at)))
+    )
+      errors.push(`${finding.finding_id}: fixed finding lacks valid fixed_at`);
+  }
+  return errors;
+}
+
+export function findingsBaseline(findings: readonly ValidatorFinding[]): ValidatorWarning[] {
+  const counts = new Map<string, ValidatorWarning>();
+  for (const finding of findings) {
+    const key = `${finding.code}\0${finding.subject}`;
+    const previous = counts.get(key);
+    counts.set(key, {
+      code: finding.code,
+      subject: finding.subject,
+      severity: "review",
+      message: finding.message,
+      count: (previous?.count ?? 0) + (finding.count ?? 1),
+    });
+  }
+  return [...counts.values()].sort(
+    (left, right) =>
+      left.code.localeCompare(right.code) || left.subject.localeCompare(right.subject),
+  );
+}
+
+function readFindings(root: string): ValidatorFinding[] {
+  const path = join(root, "data", "validator-findings.json");
+  if (!existsSync(path)) return [];
+  const parsed = JSON.parse(readFileSync(path, "utf8")) as { findings?: ValidatorFinding[] };
+  if (!Array.isArray(parsed.findings))
+    throw new Error("validator-findings.json: findings is not an array");
+  const errors = validateFindings(parsed.findings);
+  if (errors.length) throw new Error(`invalid validator findings:\n${errors.join("\n")}`);
+  return parsed.findings;
 }
 
 const INVISIBLE = /[\u200b-\u200f\u202a-\u202e\u2060\ufeff\ufffd]/u;
@@ -567,12 +644,20 @@ function validateEdition(
     }
   }
   const dateText = String(edition.date_text ?? "").trim();
+  const eventPrecision = String(edition.event_date_precision ?? "").trim();
+  if (
+    eventPrecision &&
+    !["exact-range", "single-day", "month-only", "not-announced", "unverified"].includes(
+      eventPrecision,
+    )
+  )
+    add(result.errors, `${prefix}: unknown event date precision ${eventPrecision}`);
   const eventStatus = String(edition.event_date_status ?? "")
     .trim()
     .toLowerCase();
   const explicitlyNotAnnounced =
     eventStatus === "not-announced" || /^(?:tbd(?:\s+20\d{2})?|not announced)$/i.test(dateText);
-  if (!start && !end && dateText && !explicitlyNotAnnounced)
+  if (!start && !end && dateText && !explicitlyNotAnnounced && !eventPrecision)
     add(result.warnings, `${prefix}: event date text is not structured`);
 
   const slots = new Map<string, string>();
@@ -809,21 +894,33 @@ export function main(argv = process.argv.slice(2)): number {
   try {
     const result = file ? validateFile(file) : validateProduction();
     const baselinePath = join(ROOT, "data", "validator-warning-baseline.json");
-    const baseline =
-      file || !existsSync(baselinePath)
-        ? []
-        : ((JSON.parse(readFileSync(baselinePath, "utf8")) as { warnings?: ValidatorWarning[] })
-            .warnings ?? []);
+    const findings = file ? [] : readFindings(ROOT);
+    const baseline = file
+      ? []
+      : findings.length
+        ? findingsBaseline(findings)
+        : !existsSync(baselinePath)
+          ? []
+          : ((JSON.parse(readFileSync(baselinePath, "utf8")) as { warnings?: ValidatorWarning[] })
+              .warnings ?? []);
     const newWarnings = file ? [] : newValidatorWarnings(result.warnings, baseline);
     if (!file && argv.includes("--write-baseline")) {
       writeFileSync(
         baselinePath,
-        `${JSON.stringify({ warnings: validatorWarningBaseline(result.warnings) }, null, 2)}\n`,
+        `${JSON.stringify({ warnings: findings.length ? baseline : validatorWarningBaseline(result.warnings) }, null, 2)}\n`,
       );
     }
     if (json)
       process.stdout.write(
-        `${JSON.stringify({ ...result, warning_identities: validatorWarningBaseline(result.warnings), new_warnings: newWarnings })}\n`,
+        `${JSON.stringify({
+          ...result,
+          warning_identities: validatorWarningBaseline(result.warnings),
+          new_warnings: newWarnings,
+          finding_counts: {
+            total: findings.length,
+            unreviewed: findings.filter((item) => item.status === "unreviewed").length,
+          },
+        })}\n`,
       );
     else
       process.stdout.write(`validated ${result.stats.exact + result.stats.date_only} deadlines\n`);

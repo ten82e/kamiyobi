@@ -9,9 +9,10 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual, parseArgs as parseNodeArgs } from "node:util";
-import { load as loadYaml } from "js-yaml";
+import { dump as dumpYaml, load as loadYaml } from "js-yaml";
 import { booleanValue, normalizeShortEquals, stringValue } from "./args.ts";
-import { buildAll, collectPublishProvenance, type HealthSourceMetadata } from "./build.ts";
+import { buildAll, collectPublishProvenance, type HealthSourceMetadata, toJson } from "./build.ts";
+import { gcEvidence, verifyEvidence, writeEvidenceIndex } from "./evidence.ts";
 import {
   applyAliases,
   applyOverrides,
@@ -31,15 +32,23 @@ import {
   cmpStr,
   conferencesFromJson,
   type Deadline,
+  deadlineTrackKey,
   warn,
   warningCounts,
   warningIdentityKeys,
 } from "./model.ts";
-import { applyVerificationLedger, loadVerificationLedger, reverifyData } from "./reverify.ts";
+import {
+  applyVerificationLedger,
+  assertResolutionCanApply,
+  collectVerificationTargets,
+  loadVerificationLedger,
+  reverifyData,
+  transitionVerificationResolution,
+} from "./reverify.ts";
 import { AideadlinesSource } from "./sources/aideadlines.ts";
 import { fetchMetadataFor, resetFetchMetadata } from "./sources/base.ts";
 import { CcfddlSource } from "./sources/ccfddl.ts";
-import { LocalSource } from "./sources/local.ts";
+import { LocalSource, localSourcePaths } from "./sources/local.ts";
 import { resolvePrimaryObservations } from "./sources/primary.ts";
 
 // ROOT はテストから差し替え可能（let）。
@@ -126,11 +135,7 @@ function sourceInstances(): Array<{
   name: string;
   load: (cache: string, opts?: { offline?: boolean; now?: Date }) => Promise<unknown[]>;
 }> {
-  return [
-    new CcfddlSource(),
-    new AideadlinesSource(),
-    new LocalSource(join(ROOT, "data", "extra.yaml")),
-  ];
+  return [new CcfddlSource(), new AideadlinesSource(), new LocalSource(localSourcePaths(ROOT))];
 }
 
 async function collectImpl(
@@ -140,7 +145,8 @@ async function collectImpl(
   const groups: Conference[][] = [];
   const failed = new Set<string>();
   const results: SourceLoadResult[] = [];
-  for (const source of sourceInstances()) {
+  const sources = sourceInstances();
+  for (const source of sources) {
     let group: unknown[] = [];
     try {
       group = await source.load(cacheDir, options);
@@ -159,10 +165,13 @@ async function collectImpl(
         : source.name === "aideadlines"
           ? fetchMetadataFor("huggingface/ai-deadlines", "main")
           : null;
-    const localPath = join(ROOT, "data", "extra.yaml");
-    const localContentHash = existsSync(localPath)
-      ? createHash("sha256").update(readFileSync(localPath)).digest("hex")
-      : null;
+    const localInputs = localSourcePaths(ROOT).filter((path) => existsSync(path));
+    const localContentHash =
+      source.name === "local" && localInputs.length > 0
+        ? createHash("sha256")
+            .update(localInputs.map((path) => `${path}\0${readFileSync(path)}`).join("\0"))
+            .digest("hex")
+        : null;
     const localRevision = (() => {
       try {
         return (
@@ -216,6 +225,192 @@ export interface SnapshotMetadata {
       | "deadlineCount"
     >
   >;
+}
+
+export interface SourceSnapshot {
+  schemaVersion: 1;
+  source: string;
+  sourceRevision: string | null;
+  fetchedAt: string;
+  contentHash: string;
+  conferences: unknown[];
+}
+
+interface PrimarySnapshot extends SourceSnapshot {
+  source: "primary";
+}
+
+const SHA256 = /^[0-9a-f]{64}$/i;
+
+function validSourceSnapshot(value: unknown, source: string): value is SourceSnapshot {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const snapshot = value as Record<string, unknown>;
+  if (
+    snapshot.schemaVersion !== 1 ||
+    snapshot.source !== source ||
+    (snapshot.sourceRevision !== null && typeof snapshot.sourceRevision !== "string") ||
+    typeof snapshot.fetchedAt !== "string" ||
+    !Number.isFinite(Date.parse(snapshot.fetchedAt)) ||
+    typeof snapshot.contentHash !== "string" ||
+    !SHA256.test(snapshot.contentHash) ||
+    !Array.isArray(snapshot.conferences)
+  )
+    return false;
+  const contentHash = createHash("sha256")
+    .update(JSON.stringify(snapshot.conferences))
+    .digest("hex");
+  return contentHash === snapshot.contentHash.toLowerCase();
+}
+
+function sourceSnapshotDir(root = ROOT): string {
+  return join(root, "data", "source-snapshots");
+}
+
+function sourceSnapshotPath(source: string, root = ROOT): string {
+  return join(sourceSnapshotDir(root), `${source}.json`);
+}
+
+function sourceSnapshotCounts(
+  conferences: Conference[],
+): Pick<SourceLoadResult, "conferenceCount" | "editionCount" | "deadlineCount"> {
+  return {
+    conferenceCount: conferences.length,
+    editionCount: conferences.reduce((n, conference) => n + conference.editions.length, 0),
+    deadlineCount: conferences.reduce(
+      (n, conference) =>
+        n + conference.editions.reduce((m, edition) => m + edition.deadlines.length, 0),
+      0,
+    ),
+  };
+}
+
+function readSourceSnapshots(
+  root = ROOT,
+): Map<string, { conferences: Conference[]; metadata: SourceSnapshot }> {
+  const out = new Map<string, { conferences: Conference[]; metadata: SourceSnapshot }>();
+  const dir = sourceSnapshotDir(root);
+  if (!existsSync(dir)) return out;
+  for (const source of ["ccfddl", "aideadlines", "local"]) {
+    const path = sourceSnapshotPath(source, root);
+    if (!existsSync(path)) continue;
+    try {
+      const metadata: unknown = JSON.parse(readFileSync(path, "utf8"));
+      if (!validSourceSnapshot(metadata, source)) continue;
+      const conferences = conferencesFromJson({ conferences: metadata.conferences });
+      out.set(source, { conferences, metadata });
+    } catch (exc) {
+      process.stderr.write(`warning: source snapshot ${path} を読めない: ${String(exc)}\n`);
+    }
+  }
+  return out;
+}
+
+function writeSourceSnapshots(
+  results: SourceLoadResult[],
+  config: Record<string, unknown>,
+  now: Date,
+  root = ROOT,
+): void {
+  mkdirSync(sourceSnapshotDir(root), { recursive: true });
+  for (const result of results) {
+    if (result.status !== "fresh") continue;
+    const payload = toJson(result.conferences, config, now);
+    const conferences = Array.isArray(payload.conferences) ? payload.conferences : [];
+    const canonical = JSON.stringify(conferences);
+    const snapshot: SourceSnapshot = {
+      schemaVersion: 1,
+      source: result.source,
+      sourceRevision: result.revision,
+      fetchedAt: result.fetchedAt ?? now.toISOString(),
+      contentHash: createHash("sha256").update(canonical).digest("hex"),
+      conferences,
+    };
+    writeFileSync(sourceSnapshotPath(result.source, root), `${JSON.stringify(snapshot)}\n`, "utf8");
+  }
+}
+
+function primarySnapshotPath(root = ROOT): string {
+  return sourceSnapshotPath("primary", root);
+}
+
+function primarySnapshotConferences(primary: Record<string, unknown>): unknown[] {
+  const conferences = primary.conferences;
+  if (!conferences || typeof conferences !== "object" || Array.isArray(conferences)) return [];
+  return Object.entries(conferences as Record<string, unknown>)
+    .sort(([left], [right]) => cmpStr(left, right))
+    .flatMap(([key, value]) => {
+      if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+      const conference = value as Record<string, unknown>;
+      const editions = conference.editions;
+      const editionRows =
+        editions && typeof editions === "object" && !Array.isArray(editions)
+          ? Object.entries(editions as Record<string, unknown>)
+              .sort(([left], [right]) => cmpStr(left, right))
+              .flatMap(([year, edition]) => {
+                const numericYear = Number(year);
+                return numericYear > 0 &&
+                  Number.isInteger(numericYear) &&
+                  edition &&
+                  typeof edition === "object" &&
+                  !Array.isArray(edition)
+                  ? [{ year: numericYear, ...(edition as Record<string, unknown>) }]
+                  : [];
+              })
+          : [];
+      return [{ key, ...conference, editions: editionRows }];
+    });
+}
+
+function writePrimarySnapshot(primary: Record<string, unknown>, now: Date, root = ROOT): void {
+  const conferences = primarySnapshotConferences(primary);
+  if (conferences.length === 0) return;
+  const canonical = JSON.stringify(conferences);
+  const snapshot: PrimarySnapshot = {
+    schemaVersion: 1,
+    source: "primary",
+    sourceRevision: (() => {
+      try {
+        return execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+      } catch {
+        return null;
+      }
+    })(),
+    fetchedAt: now.toISOString(),
+    contentHash: createHash("sha256").update(canonical).digest("hex"),
+    conferences,
+  };
+  writeFileSync(primarySnapshotPath(root), `${JSON.stringify(snapshot)}\n`, "utf8");
+}
+
+function readPrimarySnapshot(root = ROOT): Record<string, unknown> {
+  const path = primarySnapshotPath(root);
+  if (!existsSync(path)) return {};
+  try {
+    const snapshot: unknown = JSON.parse(readFileSync(path, "utf8"));
+    if (!validSourceSnapshot(snapshot, "primary")) return {};
+    const conferences: Record<string, unknown> = {};
+    for (const raw of snapshot.conferences) {
+      if (!raw || typeof raw !== "object") continue;
+      const row = raw as Record<string, unknown>;
+      const key = String(row.key ?? "").trim();
+      if (!key) continue;
+      const editions: Record<string, unknown> = {};
+      for (const rawEdition of Array.isArray(row.editions) ? row.editions : []) {
+        if (!rawEdition || typeof rawEdition !== "object") continue;
+        const edition = rawEdition as Record<string, unknown>;
+        const year = Number(edition.year);
+        if (!Number.isInteger(year) || year <= 0) continue;
+        const { year: _year, ...rest } = edition;
+        editions[String(year)] = rest;
+      }
+      const { key: _key, editions: _editions, ...rest } = row;
+      conferences[key] = { ...rest, ...(Object.keys(editions).length ? { editions } : {}) };
+    }
+    return Object.keys(conferences).length > 0 ? { conferences } : {};
+  } catch (exc) {
+    process.stderr.write(`warning: primary snapshot ${path} を読めない: ${String(exc)}\n`);
+    return {};
+  }
 }
 
 function readSnapshot(path: string): {
@@ -506,12 +701,17 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
   const overrides = loadYamlFile(join(ROOT, "data", "overrides.yaml"), { strict: true });
   // 一次ソースの自動抽出は「検証済み観測」だけを確定値として扱う:
   // 日付のみ・曖昧 tz・開催時期と矛盾する行はここで落とし、既存の確定値を保持する。
-  const primaryObservations = loadYamlFile(join(ROOT, "data", "primary_overrides.yaml"));
-  // data/extra.yaml も手編集入力。
-  // 破損時に
-  // local 会議 ~169 件が消えた縮退サイトを配信してしまうため、overrides と
-  // 同格に strict 検証して中断する（2026-08-15 実証: 349 vs 518 会議・exit 0）。
-  loadYamlFile(join(ROOT, "data", "extra.yaml"), { strict: true });
+  const primaryPath = join(ROOT, "data", "primary_overrides.yaml");
+  const primaryFile = loadYamlFile(primaryPath);
+  const primaryObservations =
+    primaryFile.conferences &&
+    typeof primaryFile.conferences === "object" &&
+    !Array.isArray(primaryFile.conferences)
+      ? primaryFile
+      : readPrimarySnapshot();
+  // 現行の local 正典は manual + curated.generated。旧 extra.yaml は、正典が
+  // まだ無い checkout の互換入力としてだけ使う。
+  for (const path of localSourcePaths(ROOT)) loadYamlFile(path, { strict: true });
   const offline = Boolean(args.offline);
 
   const snapshot = join(ROOT, "data", "snapshot.json");
@@ -523,10 +723,19 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
   const snapshotPayload = readSnapshot(snapshot);
   const collected = await hooks.collect(resolve(args.cache), { offline, now });
   const { groups, failed } = collected;
-  const sourceResults =
+  const sourceSnapshots = readSourceSnapshots();
+  const sourceSnapshotFallbacks = new Set<string>();
+  const sourceGroups = groups.map((group, index) => {
+    const source = sourceInstances()[index]?.name;
+    const saved = source ? sourceSnapshots.get(source) : undefined;
+    if (!source || !failed.has(source) || !saved || saved.conferences.length === 0) return group;
+    sourceSnapshotFallbacks.add(source);
+    return saved.conferences;
+  });
+  const sourceResults = (
     collected.results ??
     sourceInstances().map((source, index) => {
-      const conferences = groups[index] ?? [];
+      const conferences = sourceGroups[index] ?? [];
       return {
         source: source.name,
         status: failed.has(source.name) ? "failed" : offline ? "cache-fallback" : "fresh",
@@ -542,7 +751,20 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
           0,
         ),
       } satisfies SourceLoadResult;
-    });
+    })
+  ).map((result, index) => {
+    if (!sourceSnapshotFallbacks.has(result.source)) return result;
+    const conferences = sourceGroups[index] ?? [];
+    return {
+      ...result,
+      conferences,
+      ...sourceSnapshotCounts(conferences),
+    };
+  });
+  if (!offline) {
+    writeSourceSnapshots(sourceResults, config, now);
+    if (primaryObservations === primaryFile) writePrimarySnapshot(primaryFile, now);
+  }
   const maxCacheAgeSeconds = Number(
     (config.health as Record<string, unknown> | undefined)?.max_cache_age_seconds,
   );
@@ -560,7 +782,10 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
       return 2;
     }
   }
-  const aliased = applyAliases(groups, overrides.aliases as Record<string, unknown> | undefined);
+  const aliased = applyAliases(
+    sourceGroups,
+    overrides.aliases as Record<string, unknown> | undefined,
+  );
   const mergeStats: MergeStats = { merged_deadlines: 0, merged_by_key: {} };
   let confs = mergeSources(aliased, config, mergeStats);
   confs = classify(confs, config);
@@ -576,12 +801,19 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
     const restoredResult = restoreFailedSourceMaterialWithCounts(
       confs,
       snapshotPayload.conferences,
-      failed,
+      new Set([...failed].filter((source) => !sourceSnapshotFallbacks.has(source))),
     );
     const restoredMaterial = restoredResult.conferences;
-    snapshotFallback = JSON.stringify(restoredMaterial) !== JSON.stringify(confs);
+    snapshotFallback =
+      sourceSnapshotFallbacks.size > 0 ||
+      JSON.stringify(restoredMaterial) !== JSON.stringify(confs);
     if (snapshotFallback) {
       snapshotFallbackCounts = restoredResult.counts;
+      for (const source of sourceSnapshotFallbacks) {
+        snapshotFallbackCounts[source] = sourceSnapshotCounts(
+          sourceSnapshots.get(source)!.conferences,
+        );
+      }
     }
     if (confs.length === 0 && !snapshotFallback) {
       process.stderr.write(
@@ -791,11 +1023,15 @@ export function discoverWriteAction(
 export async function cmdDiscover(args: DiscoverArgs): Promise<number> {
   const {
     NicheDiscoverer,
+    formatActiveCandidates,
+    formatCandidateArchive,
     formatCandidateRegistry,
     formatDiscoveredYaml,
     mergeCandidateRegistry,
     parseCandidateRegistry,
+    splitCandidateLifecycle,
   } = await import("./discover.ts");
+  const { loadTrackedTitles } = await import("./review-candidates.ts");
   const categories = args.categories ? args.categories.split(",").map((c) => c.trim()) : null;
   const discoverer = new NicheDiscoverer(ROOT);
   console.log(
@@ -842,6 +1078,21 @@ export async function cmdDiscover(args: DiscoverArgs): Promise<number> {
   if (!args.dryRun && candidates.length > 0) {
     writeTextFile(candidatePathResolved, formatCandidateRegistry(registry));
   }
+  if (!args.dryRun) {
+    const lifecycle = splitCandidateLifecycle(
+      registry.candidates,
+      new Date(),
+      loadTrackedTitles(ROOT),
+    );
+    writeTextFile(
+      join(ROOT, "data", "discovery", "active.yaml"),
+      formatActiveCandidates(lifecycle.active),
+    );
+    writeTextFile(
+      join(ROOT, "data", "discovery", "archive.json"),
+      formatCandidateArchive(lifecycle.archive),
+    );
+  }
   return 0;
 }
 
@@ -853,7 +1104,10 @@ export interface ReviewCliArgs {
 
 export async function cmdReview(args: ReviewCliArgs): Promise<number> {
   const { runReviewCandidates } = await import("./review-candidates.ts");
-  const rawPath = args.candidates ?? join(ROOT, "data", "discovered_candidates.yaml");
+  const defaultActive = join(ROOT, "data", "discovery", "active.yaml");
+  const rawPath =
+    args.candidates ??
+    (existsSync(defaultActive) ? defaultActive : join(ROOT, "data", "discovered_candidates.yaml"));
   const candidatesPath = isAbsolute(rawPath) ? rawPath : join(ROOT, rawPath);
   const limit = args.limit ?? 60;
   const now = args.now ? parseNow(args.now) : new Date();
@@ -862,29 +1116,294 @@ export async function cmdReview(args: ReviewCliArgs): Promise<number> {
 }
 
 export interface ReverifyCliArgs {
+  action?: "plan" | "run" | "review" | "accept" | "apply" | "reject";
   data?: string;
   ledger?: string;
   now?: string | null;
   due?: boolean;
+  resolution?: string;
+  reason?: string;
+  maxPages?: number;
+  maxDeadlines?: number;
+  maxPerHost?: number;
+  concurrency?: number;
+  timeoutMs?: number;
+  maxBodyBytes?: number;
 }
 
 export async function cmdReverify(args: ReverifyCliArgs): Promise<number> {
   const dataPath = resolve(args.data ?? join(ROOT, "public", "data.json"));
   const ledgerPath = resolve(args.ledger ?? join(ROOT, "data", "verification-ledger.json"));
   try {
+    const action = args.action ?? "run";
+    if (action === "review") {
+      const ledger = loadVerificationLedger(ledgerPath);
+      console.log(
+        JSON.stringify(
+          ledger.resolutions.filter((item) => item.state === "open" || item.state === "accepted"),
+          null,
+          2,
+        ),
+      );
+      return 0;
+    }
+    if (action === "accept" || action === "apply" || action === "reject") {
+      if (!args.resolution) throw new Error(`reverify ${action} requires --resolution <id>`);
+      if (action === "apply") {
+        assertResolutionCanApply(ledgerPath, args.resolution);
+        applyResolutionSource(ledgerPath, args.resolution, args.now);
+      }
+      transitionVerificationResolution(
+        ledgerPath,
+        args.resolution,
+        action === "accept" ? "accepted" : action === "apply" ? "applied" : "rejected",
+        args.reason,
+        args.now ? parseNow(args.now) : new Date(),
+      );
+      console.log(
+        JSON.stringify({
+          resolution_id: args.resolution,
+          state: action === "accept" ? "accepted" : action === "apply" ? "applied" : "rejected",
+        }),
+      );
+      return 0;
+    }
+    if (action === "plan") {
+      const data = JSON.parse(readFileSync(dataPath, "utf8")) as { conferences?: unknown[] };
+      const ledger = loadVerificationLedger(ledgerPath);
+      const now = args.now ? parseNow(args.now) : new Date();
+      const targets = collectVerificationTargets(data as never, ledger, now, Boolean(args.due));
+      const pages = [...new Set(targets.map((target) => target.url))].sort();
+      console.log(
+        JSON.stringify(
+          {
+            deadlines: targets.length,
+            pages: pages.length,
+            targets: targets.map((target) => ({
+              deadline_id: target.deadlineId,
+              page_id: target.pageId,
+              url: target.url,
+              source_class: target.sourceClass,
+              priority: target.priority,
+            })),
+          },
+          null,
+          2,
+        ),
+      );
+      return 0;
+    }
     const result = await reverifyData({
       dataPath,
       ledgerPath,
       now: args.now ? parseNow(args.now) : new Date(),
       due: Boolean(args.due),
       bodyRoot: join(ROOT, "data", "evidence", "blobs"),
+      limits: {
+        maxPages: args.maxPages,
+        maxDeadlines: args.maxDeadlines,
+        maxPerHost: args.maxPerHost,
+        concurrency: args.concurrency,
+        timeoutMs: args.timeoutMs,
+        maxBodyBytes: args.maxBodyBytes,
+      },
     });
-    console.log(JSON.stringify({ processed: result.processed, statuses: result.statuses }));
+    console.log(
+      JSON.stringify({
+        processed: result.processed,
+        pages: result.pages,
+        statuses: result.statuses,
+      }),
+    );
     return 0;
   } catch (error) {
     process.stderr.write(`reverify failed: ${String(error)}\n`);
     return 1;
   }
+}
+
+export interface EvidenceCliArgs {
+  action?: "verify" | "gc";
+  dryRun?: boolean;
+}
+
+export function cmdEvidence(args: EvidenceCliArgs): number {
+  try {
+    if (args.action === "gc") {
+      const result = gcEvidence(ROOT, Boolean(args.dryRun));
+      console.log(JSON.stringify({ ...result, dry_run: Boolean(args.dryRun) }, null, 2));
+      if (!args.dryRun) writeEvidenceIndex(ROOT);
+      return 0;
+    }
+    const report = verifyEvidence(ROOT);
+    writeEvidenceIndex(ROOT);
+    console.log(JSON.stringify(report, null, 2));
+    return report.issues.length ? 1 : 0;
+  } catch (error) {
+    process.stderr.write(`evidence failed: ${String(error)}\n`);
+    return 1;
+  }
+}
+
+function resolutionSourcePath(entry: {
+  source_name?: string;
+  promotion_ref?: { batch: string; resolution: string };
+}): string {
+  if (entry.source_name === "local") {
+    if (entry.promotion_ref && existsSync(join(ROOT, "data", "curated.generated.yaml")))
+      return join(ROOT, "data", "curated.generated.yaml");
+    if (existsSync(join(ROOT, "data", "manual.yaml"))) return join(ROOT, "data", "manual.yaml");
+    return join(ROOT, "data", "extra.yaml");
+  }
+  return entry.source_name === "primary"
+    ? join(ROOT, "data", "primary_overrides.yaml")
+    : join(ROOT, "data", "overrides.yaml");
+}
+
+function resolutionDeadlineValue(value: string): { date: string; time?: string; tz?: string } {
+  const text = value.trim();
+  const date = /^(\d{4}-\d{2}-\d{2})/.exec(text)?.[1] ?? text.slice(0, 10);
+  const time = /\b(\d{2}:\d{2}(?::\d{2})?)\b/.exec(text)?.[1];
+  const tz =
+    /\b(AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|[A-Za-z_]+\/[A-Za-z_]+)\b/i.exec(
+      text,
+    )?.[1];
+  return { date, ...(time ? { time } : {}), ...(tz ? { tz } : {}) };
+}
+
+function applyResolutionSource(
+  ledgerPath: string,
+  resolutionId: string,
+  nowText?: string | null,
+): void {
+  const ledger = loadVerificationLedger(ledgerPath);
+  const resolution = ledger.resolutions.find((item) => item.resolution_id === resolutionId);
+  if (!resolution) throw new Error(`unknown verification resolution: ${resolutionId}`);
+  const entry =
+    ledger.deadlines[resolution.deadline_id] ??
+    ledger.deadlines[ledger.aliases[resolution.deadline_id] ?? ""];
+  if (!entry)
+    throw new Error(`resolution target is missing from ledger: ${resolution.deadline_id}`);
+  const path = resolutionSourcePath(entry);
+  const parsed = existsSync(path) ? loadYaml(readFileSync(path, "utf8")) : {};
+  const value = resolutionDeadlineValue(resolution.new_value);
+  const row: Record<string, unknown> = {
+    kind: entry.kind,
+    label: entry.label ?? entry.kind,
+    round: entry.round,
+    date: value.time && value.tz ? `${value.date} ${value.time}` : value.date,
+    ...(value.time && value.tz ? { tz: value.tz } : { precision: "date-only" }),
+    ...(entry.track ? { track: entry.track } : {}),
+    ...(entry.promotion_ref ? { promotion_ref: entry.promotion_ref } : {}),
+    superseded_deadlines: [
+      {
+        value: resolution.old_value,
+        precision: /\b\d{2}:\d{2}\b/.test(resolution.old_value) ? "exact" : "date-only",
+        source: resolution.official_url,
+        ...(resolution.evidence_ref ? { evidenceRef: resolution.evidence_ref } : {}),
+        status: "superseded",
+        supersededBy: resolution.deadline_id,
+        reason: resolution.change_kind === "extension" ? "official-extension" : "manual-resolution",
+        supersededAt: nowText ? parseNow(nowText).toISOString() : new Date().toISOString(),
+      },
+    ],
+  };
+  const matchesEntry = (item: unknown): boolean => {
+    if (!item || typeof item !== "object") return false;
+    const raw = item as Record<string, unknown>;
+    const rawTrack = String(raw.track ?? "");
+    const normalizedTrack = deadlineTrackKey(
+      String(raw.label ?? ""),
+      String(raw.kind ?? "other"),
+      rawTrack,
+    );
+    return (
+      String(raw.kind ?? "") === entry.kind &&
+      Number(raw.round ?? 1) === entry.round &&
+      (rawTrack === entry.track || normalizedTrack === entry.track)
+    );
+  };
+  const preserveSourceHistory = (previous: unknown): void => {
+    if (!previous || typeof previous !== "object") return;
+    const history = (previous as Record<string, unknown>).superseded_deadlines;
+    if (Array.isArray(history)) {
+      row.superseded_deadlines = [...history, ...(row.superseded_deadlines as unknown[])];
+    }
+  };
+  const parsedRoot = (parsed && typeof parsed === "object" ? parsed : {}) as Record<
+    string,
+    unknown
+  >;
+  if (Array.isArray(parsedRoot.conferences)) {
+    const root = parsedRoot;
+    const conferences = Array.isArray(root.conferences) ? root.conferences : [];
+    let conference = conferences.find(
+      (item) => (item as Record<string, unknown>)?.key === entry.venue_key,
+    ) as Record<string, unknown> | undefined;
+    if (!conference) {
+      conference = { key: entry.venue_key, title: entry.venue_key, editions: [] };
+      conferences.push(conference);
+    }
+    const editions = Array.isArray(conference.editions) ? conference.editions : [];
+    let edition = editions.find(
+      (item) =>
+        String((item as Record<string, unknown>)?.id ?? (item as Record<string, unknown>)?.year) ===
+        entry.edition_id,
+    ) as Record<string, unknown> | undefined;
+    if (!edition) {
+      edition = {
+        year: Number(entry.edition_id.match(/20\d{2}/)?.[0] ?? 0),
+        id: entry.edition_id,
+        deadlines: [],
+      };
+      editions.push(edition);
+    }
+    const deadlines = Array.isArray(edition.deadlines) ? edition.deadlines : [];
+    const index = deadlines.findIndex((item) => {
+      return matchesEntry(item);
+    });
+    if (index >= 0) {
+      preserveSourceHistory(deadlines[index]);
+      deadlines[index] = row;
+    } else deadlines.push(row);
+    edition.deadlines = deadlines;
+    conference.editions = editions;
+    root.conferences = conferences;
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, `${dumpYaml(root, { lineWidth: -1, noRefs: true })}`, "utf8");
+    return;
+  }
+  const root = (parsed && typeof parsed === "object" ? parsed : {}) as Record<string, unknown>;
+  const conferences = (
+    root.conferences && typeof root.conferences === "object" ? root.conferences : {}
+  ) as Record<string, unknown>;
+  const conference = (
+    conferences[entry.venue_key] && typeof conferences[entry.venue_key] === "object"
+      ? conferences[entry.venue_key]
+      : {}
+  ) as Record<string, unknown>;
+  const editions = (
+    conference.editions && typeof conference.editions === "object" ? conference.editions : {}
+  ) as Record<string, unknown>;
+  const year = String(entry.edition_id.match(/20\d{2}/)?.[0] ?? entry.edition_id);
+  const edition = (
+    editions[year] && typeof editions[year] === "object" ? editions[year] : {}
+  ) as Record<string, unknown>;
+  const deadlines = Array.isArray(edition.deadlines) ? edition.deadlines : [];
+  const index = deadlines.findIndex((item) => {
+    return matchesEntry(item);
+  });
+  if (index >= 0) {
+    preserveSourceHistory(deadlines[index]);
+    deadlines[index] = row;
+  } else deadlines.push(row);
+  edition.deadlines = deadlines;
+  editions[year] = edition;
+  conference.editions = editions;
+  conferences[entry.venue_key] = conference;
+  root.conferences = conferences;
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, `${dumpYaml(root, { lineWidth: -1, noRefs: true })}`, "utf8");
 }
 
 function writeTextFile(path: string, text: string): void {
@@ -894,6 +1413,8 @@ function writeTextFile(path: string, text: string): void {
 
 export interface CliArgs {
   command?: string;
+  reverifyAction?: ReverifyCliArgs["action"];
+  evidenceAction?: EvidenceCliArgs["action"];
   out?: string;
   candidateOut?: string | null;
   config?: string;
@@ -910,6 +1431,14 @@ export interface CliArgs {
   data?: string;
   ledger?: string;
   due?: boolean;
+  resolution?: string;
+  reason?: string;
+  maxPages?: number;
+  maxDeadlines?: number;
+  maxPerHost?: number;
+  concurrency?: number;
+  timeoutMs?: number;
+  maxBodyBytes?: number;
   help?: boolean;
 }
 
@@ -927,20 +1456,30 @@ export function usage(): string {
     "    --no-embeddings       埋め込み (embeddings.json) を生成しない（テスト用・高速化）",
     "  discover 穴場の会議・ジャーナルを自律探索する",
     "    -o, --out <path>      出力 YAML パス（未指定時は標準出力表示）",
-    "    --candidate-out <path> 候補管理ファイル (既定: data/discovered_candidates.yaml)",
+    "    --candidate-out <path> 候補管理ファイル (既定: data/discovered_candidates.yaml; active/archive も更新)",
     "    --categories <s>      カンマ区切りの対象カテゴリ（例: hpc,systems）",
     `    -y, --min-year <n>    対象の最小年 (既定: ${DEFAULT_MIN_YEAR})`,
     "    -d, --dry-run         ファイル出力せず結果をプレビュー表示",
     "    -a, --append          既存 YAML にキー重複なしで追記",
     "  review   探索された候補のレビュー順・重複・ハゲタカ会議の疑いを一覧表示する",
-    "    -C, --candidates <p>  候補 YAML パス (既定: data/discovered_candidates.yaml)",
+    "    -C, --candidates <p>  候補 YAML パス (既定: data/discovery/active.yaml)",
     "    -l, --limit <n>       表示上限件数 (既定: 60)",
     "    -n, --now <iso>       基準時刻。例 2026-08-09T00:00:00Z",
-    "  reverify 再確認台帳を公式ページから更新する",
+    "  reverify [plan|run|review|accept|apply|reject] 再確認台帳を管理する",
     "    --data <path>         対象 data.json (既定: public/data.json)",
     "    --ledger <path>       台帳 (既定: data/verification-ledger.json)",
     "    --due                 次回確認時刻を過ぎた締切だけ確認する",
+    "    --max-pages <n>       取得ページ上限 (既定: 40)",
+    "    --max-deadlines <n>   対象締切上限 (既定: 200)",
+    "    --max-per-host <n>    host別取得上限 (既定: 5)",
+    "    --concurrency <n>     同時取得数 (既定: 4)",
+    "    --timeout-ms <n>      取得タイムアウト (既定: 15000)",
+    "    --max-body-bytes <n>  本文上限 (既定: 5242880)",
+    "    --resolution <id>     accept/apply/reject対象 resolution",
+    "    --reason <text>       状態変更の理由",
     "    -n, --now <iso>       基準時刻",
+    "  evidence [verify|gc] 証拠本文の参照整合性を検査・回収する",
+    "    -d, --dry-run         gc対象だけ表示して削除しない",
     "  help / --help / -h      使い方を表示する",
   ].join("\n");
 }
@@ -983,6 +1522,14 @@ export function parseArgs(argv: string[] | null | undefined): CliArgs {
     data: { type: "string" },
     ledger: { type: "string" },
     due: { type: "boolean" },
+    resolution: { type: "string" },
+    reason: { type: "string" },
+    "max-pages": { type: "string" },
+    "max-deadlines": { type: "string" },
+    "max-per-host": { type: "string" },
+    concurrency: { type: "string" },
+    "timeout-ms": { type: "string" },
+    "max-body-bytes": { type: "string" },
   } as const;
   const { values, positionals, tokens } = parseNodeArgs({
     args: normalized,
@@ -997,8 +1544,20 @@ export function parseArgs(argv: string[] | null | undefined): CliArgs {
     }
   }
   const command = positionals[0];
+  const reverifyAction = command === "reverify" ? positionals[1] : undefined;
+  const evidenceAction = command === "evidence" ? positionals[1] : undefined;
   const args: CliArgs = {};
   if (command && command !== "help") args.command = command;
+  if (reverifyAction) {
+    if (!["plan", "run", "review", "accept", "apply", "reject"].includes(reverifyAction))
+      throw new Error(`unknown reverify action: ${reverifyAction}`);
+    args.reverifyAction = reverifyAction as ReverifyCliArgs["action"];
+  }
+  if (evidenceAction) {
+    if (!["verify", "gc"].includes(evidenceAction))
+      throw new Error(`unknown evidence action: ${evidenceAction}`);
+    args.evidenceAction = evidenceAction as EvidenceCliArgs["action"];
+  }
   if (command === "help" || values.help) args.help = true;
   if (values.out !== undefined) args.out = stringValue(values.out) ?? "public";
   if (values["candidate-out"] !== undefined) {
@@ -1026,6 +1585,21 @@ export function parseArgs(argv: string[] | null | undefined): CliArgs {
   if (values.data !== undefined) args.data = stringValue(values.data) ?? undefined;
   if (values.ledger !== undefined) args.ledger = stringValue(values.ledger) ?? undefined;
   if (values.due !== undefined) args.due = booleanValue(values.due);
+  if (values.resolution !== undefined)
+    args.resolution = stringValue(values.resolution) ?? undefined;
+  if (values.reason !== undefined) args.reason = stringValue(values.reason) ?? undefined;
+  if (values["max-pages"] !== undefined)
+    args.maxPages = toPosInt(stringValue(values["max-pages"]), 40);
+  if (values["max-deadlines"] !== undefined)
+    args.maxDeadlines = toPosInt(stringValue(values["max-deadlines"]), 200);
+  if (values["max-per-host"] !== undefined)
+    args.maxPerHost = toPosInt(stringValue(values["max-per-host"]), 5);
+  if (values.concurrency !== undefined)
+    args.concurrency = toPosInt(stringValue(values.concurrency), 4);
+  if (values["timeout-ms"] !== undefined)
+    args.timeoutMs = toPosInt(stringValue(values["timeout-ms"]), 15_000);
+  if (values["max-body-bytes"] !== undefined)
+    args.maxBodyBytes = toPosInt(stringValue(values["max-body-bytes"]), 5 * 1024 * 1024);
   return args;
 }
 
@@ -1054,7 +1628,24 @@ export async function main(
     });
   }
   if (args.command === "reverify") {
-    return cmdReverify({ data: args.data, ledger: args.ledger, now: args.now, due: args.due });
+    return cmdReverify({
+      action: args.reverifyAction,
+      data: args.data,
+      ledger: args.ledger,
+      now: args.now,
+      due: args.due,
+      resolution: args.resolution,
+      reason: args.reason,
+      maxPages: args.maxPages,
+      maxDeadlines: args.maxDeadlines,
+      maxPerHost: args.maxPerHost,
+      concurrency: args.concurrency,
+      timeoutMs: args.timeoutMs,
+      maxBodyBytes: args.maxBodyBytes,
+    });
+  }
+  if (args.command === "evidence") {
+    return cmdEvidence({ action: args.evidenceAction ?? "verify", dryRun: args.dryRun });
   }
   if (args.command === "discover") {
     return cmdDiscover({

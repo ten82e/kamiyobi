@@ -19,6 +19,7 @@ import {
   norm,
   parseBenchArgs,
   REAL_PAPER_REGRESSION_FLOORS,
+  readFeatureStore,
   realPaperMetrics,
   realPaperRegressionReasons,
   runBenchmarkV2,
@@ -1010,7 +1011,7 @@ describe("venue recommendation fusion", () => {
     );
     // 学習は full dev のみ。required-dev（短縮検査用 subset）を学習に使ってはいけない。
     expect(model.selected_on).toBe("real-paper-dev");
-    expect(model.cv.assignment).toBe("primary-venue-grouped-round-robin");
+    expect(model.cv.assignment).toBe("acceptable-venue-component-greedy-balanced");
     expect(model.cv.folds).toBeGreaterThanOrEqual(5);
     expect(model.confidence_policy.sufficient_enabled).toBe(false);
     expect(model.coefficient_source).toBe("trained");
@@ -1037,9 +1038,7 @@ describe("venue recommendation fusion", () => {
       dev,
       readFileSync(join(REPO_ROOT, "data/benchmarks/real-paper-required-dev.json")),
     );
-    const fixture = JSON.parse(
-      readFileSync(join(REPO_ROOT, "data/benchmarks/real-paper-required-features.json"), "utf8"),
-    );
+    const fixture = readFeatureStore(join(REPO_ROOT, "data/benchmarks/real-paper-features.jsonl"));
     writeFileSync(features, JSON.stringify(fixture));
     trainRerankerMain([
       "--dev",
@@ -1052,7 +1051,7 @@ describe("venue recommendation fusion", () => {
       first,
     ]);
     const baseline = JSON.parse(readFileSync(first, "utf8"));
-    const unrelated = fixture.records.find((item: any) => item.paper_id.startsWith("heldout-"));
+    const unrelated = fixture.records.find((item: any) => item.paper_id.startsWith("heldout-"))!;
     unrelated.semantic_scores[Object.keys(unrelated.semantic_scores)[0]] += 1;
     writeFileSync(features, JSON.stringify(fixture));
     trainRerankerMain([

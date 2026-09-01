@@ -1,0 +1,67 @@
+schema: 2
+lifecycle: active
+candidates:
+  - key: netpl
+    title: NetPL
+    full_name: Workshop on Networking and Programming Languages
+    link: https://netpl.github.io/
+    categories:
+      - networking
+      - systems
+    tags:
+      - niche
+      - workshop
+    editions:
+      - year: 2026
+        id: netpl26
+        link: https://netpl.github.io/
+        place: Virtual
+        date_text: October 10, 2026
+        deadlines: []
+    id: candidate-1b0d25bcb1f9b8e1489b74d4
+    source: netpl.github.io
+    source_item_id: netpl
+    status: discovered
+    discovered_at: '2026-08-19T20:44:41.199Z'
+    first_seen_at: '2026-08-19T20:44:41.199Z'
+    last_seen_at: '2026-08-31T11:36:17.023Z'
+    target_year: 2026
+    evidence:
+      - source: netpl.github.io
+        source_item_id: netpl
+        source_url: https://netpl.github.io/
+        observed_at: '2026-08-31T11:36:17.023Z'
+    evidence_url: ''
+  - key: resound
+    title: RESOUND
+    full_name: >-
+      International Workshop on Resilient Systems and Dependable Operating
+      Systems
+    link: https://www.resound-workshop.org/
+    categories:
+      - systems
+      - security
+    tags:
+      - niche
+      - workshop
+    editions:
+      - year: 2026
+        id: resound26
+        link: https://www.resound-workshop.org/
+        place: Europe
+        date_text: September 14, 2026
+        deadlines: []
+    id: candidate-73ea5da4ad6fe63b64c423e4
+    source: www.resound-workshop.org
+    source_item_id: resound
+    status: discovered
+    discovered_at: '2026-08-19T20:44:41.199Z'
+    first_seen_at: '2026-08-19T20:44:41.199Z'
+    last_seen_at: '2026-08-31T11:36:17.023Z'
+    target_year: 2026
+    evidence:
+      - source: www.resound-workshop.org
+        source_item_id: resound
+        source_url: https://www.resound-workshop.org/
+        observed_at: '2026-08-31T11:36:17.023Z'
+    evidence_url: ''

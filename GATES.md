@@ -24,7 +24,7 @@ npm run update
 2. `node src/cli.ts discover` — 候補探索
 3. `node src/cli.ts build --out public` — ビルド
 4. `node scripts/validate-data.ts -- public/data.json` — 意味検査 (`errors: 0`)
-5. `node scripts/health-gate.ts public/health.json --observation-baseline data/source-observation-baseline.json` — health gate (baseline なしでも `passed without baseline`)
+5. `node scripts/health-gate.ts public/health.json --report work/health-gate-violations.json --observation-baseline data/source-observation-baseline.json` — health gate (baseline なしでも `passed without baseline`; 判定は常に report に保存)
 
 全ステップが rc=0 でなければ `public/` を破棄し、前回の `data/snapshot.json` から
 再生成する（SPEC.md §3.5）。

@@ -1,0 +1,256 @@
+{
+  "schema_version": 2,
+  "feature_schema": 2,
+  "records": [
+    {
+      "paper_id": "dev-2025-ches-01",
+      "record_sha256": "c0b55e654fa143db507971d363b589d8e6a96fe63651b24457ef9d69b8cc0958"
+    },
+    {
+      "paper_id": "dev-2025-chi-01",
+      "record_sha256": "8145d160128137929e7fedfb7f81efbd8d0f41ce10dff1ee68b73637cd28d565"
+    },
+    {
+      "paper_id": "dev-2025-cvpr-01",
+      "record_sha256": "af4151dd02b49299e0445b903df21e20c316f16d180b2080c233361a8b36eaa1"
+    },
+    {
+      "paper_id": "dev-2025-cvprw-01",
+      "record_sha256": "7c78e41d3a77dfc4f55f90fcbbbfcf90a9dd46bd7c76ff44c848046f66bcdba4"
+    },
+    {
+      "paper_id": "dev-2025-hpdc-01",
+      "record_sha256": "877dd8e7a90dd58a8331225b053916cc7e8bf2f4fbf8e0e20255fe46a8c7c17b"
+    },
+    {
+      "paper_id": "dev-2025-ipsj-journal-01",
+      "record_sha256": "4ae007082172660eef28263fdea96646d14a9745786faa6c49b85dba7142fc12"
+    },
+    {
+      "paper_id": "dev-2025-nolta-special-01",
+      "record_sha256": "7ca955cebb418d87a1064526866ba846e8a8f89a8295ac7bb415a501cc39485e"
+    },
+    {
+      "paper_id": "dev-2025-sigcomm-01",
+      "record_sha256": "7e153016fec07c4d80744701279d4dd9a6ca3e131b10ead6794a6e03e5f2f86d"
+    },
+    {
+      "paper_id": "dev-2025-sigmod-01",
+      "record_sha256": "6eec75824a1ef7719c518ca36ff26305415551f824a8183178ba5cca0adbee51"
+    },
+    {
+      "paper_id": "heldout-2026-chi-03",
+      "record_sha256": "9979de804ee1e1ebb9a60ce7bd8d4959fe010a7488ad30f34902be75c3a46afa"
+    },
+    {
+      "paper_id": "heldout-2026-cvpr-01",
+      "record_sha256": "0d25fd1c9225c120ffd601fa3220f0c6c8fc2d71d3b0b14d08f4e4257046288f"
+    },
+    {
+      "paper_id": "heldout-2026-cvprw-01",
+      "record_sha256": "e2e1354950f5bdbd6fc447a7618ff301aac3d074ca912d83ef5fc36e0609a63c"
+    },
+    {
+      "paper_id": "heldout-2026-hpdc-01",
+      "record_sha256": "09d67775d3c1e1608cb51213c57e8ee08ff4736e1b35ed0d981f625a293108af"
+    },
+    {
+      "paper_id": "heldout-2026-ipsj-journal-01",
+      "record_sha256": "d215e8807e0580bdbdb133c21147b407f8eb62d1d96efd5be6e21dbb4d87f892"
+    },
+    {
+      "paper_id": "heldout-2026-nolta-special-01",
+      "record_sha256": "c82f2174b5a2deb95dbbd5de7dc738860fb5d8281867a20cca5feaf7526da4ad"
+    },
+    {
+      "paper_id": "heldout-2026-nsdi-02",
+      "record_sha256": "58e01d2d289bccf2294e39ffb640572a6dd5368561de11491a1ffd1d77be49c6"
+    },
+    {
+      "paper_id": "heldout-2026-sigcomm-01",
+      "record_sha256": "1a23cacbf5ab8d68d3d74e612a017f2952e2ee9170dbd80e8dc197331b26a029"
+    },
+    {
+      "paper_id": "heldout-2026-sigmod-06",
+      "record_sha256": "8e0ea83534372609ebba3b0ff91e663246405b57a5c469988da630b73f4c8a0d"
+    },
+    {
+      "paper_id": "heldout-2026-usenix-security-01",
+      "record_sha256": "ec4268714fd32a5c6ef9e3d51651350c7adf16659c2c388c7a6b7d890558e134"
+    },
+    {
+      "paper_id": "jstage-2026-jsceiii-7-20",
+      "record_sha256": "d92e2abe7815b1ef7ac364b0355a3a5a20933b9da68cfd06a78b4a417158525a"
+    },
+    {
+      "paper_id": "pubmed-42058264",
+      "record_sha256": "79c95bd504585c26af9fbb67530a5cd7d7923bed29c17a966388e69ff7dd47c6"
+    },
+    {
+      "paper_id": "pubmed-42256611",
+      "record_sha256": "47fb86b0d5e6d18e64535c76cc4357ada2b523c6310789b0a389a2826ae8779c"
+    },
+    {
+      "paper_id": "pubmed-42265983",
+      "record_sha256": "1b8637c0dcb6d2ecabfc1690fda8f2ad3223e895d72d73d18a2c6d014f4864ca"
+    },
+    {
+      "paper_id": "pubmed-42275298",
+      "record_sha256": "c34de3e28b771f24a7ef9ee5a32a13d0cad2ebbe12d9db804f0924f03c114129"
+    },
+    {
+      "paper_id": "pubmed-42285793",
+      "record_sha256": "cc5e93e5de5867ef00b964fe3d927e7812ef78bf5244512f8dd938596cb50711"
+    },
+    {
+      "paper_id": "pubmed-42296148",
+      "record_sha256": "aec1c363845f324921acb0a1fecb656dc7d84c216eaab03684a0fd91b1fdf674"
+    },
+    {
+      "paper_id": "pubmed-42304957",
+      "record_sha256": "44d5bcf1e2b0b8832703072e0ac7b42615774e16ff638cfc324da78a02cc38b7"
+    },
+    {
+      "paper_id": "pubmed-42308349",
+      "record_sha256": "35c2e9055b14dc527a64d60f8296ce5fa38854a878a869ceba6683c39da9e9f3"
+    },
+    {
+      "paper_id": "pubmed-42319344",
+      "record_sha256": "390ee86a24e8512d0851326e66035376518fb8d8f2d08b01e324fa6f76bf3764"
+    },
+    {
+      "paper_id": "pubmed-42322272",
+      "record_sha256": "11854b6d48091adcb4923e1abbda813112b5e375ae500ea3da3c0aa8457797eb"
+    },
+    {
+      "paper_id": "pubmed-42324593",
+      "record_sha256": "17c96716fc0d7a2c7a4002daaf6f2ff3c49e4f64d2c39e062e4c408cc6018489"
+    },
+    {
+      "paper_id": "pubmed-42329179",
+      "record_sha256": "105b397271ccbcaa2a74ce59e93590e5d1abf34f9b86e3d976d257b181896d78"
+    },
+    {
+      "paper_id": "pubmed-42337391",
+      "record_sha256": "9f2a2e1b892e638601d49a909cc898d4750ac56287dd69f829a483b87ea4e9a5"
+    },
+    {
+      "paper_id": "pubmed-42342482",
+      "record_sha256": "27f9246e881ebfe3c928637da43f2739440dc63d6b4b7889fe51ccb758a0204f"
+    },
+    {
+      "paper_id": "pubmed-42345355",
+      "record_sha256": "76f77d5be6db35e5483c545df48cf1c91929212b0f55a9c88aef45be8b345bcd"
+    },
+    {
+      "paper_id": "pubmed-42359636",
+      "record_sha256": "2c9d945a97690a4038c4c8bbd78eb56999d88c327e46bbcab41f13a25936aedc"
+    },
+    {
+      "paper_id": "pubmed-42371677",
+      "record_sha256": "330eb15d02633e8e198e5a0e9b853ed60fc51abcebc5fb70b2d3cfb5d8585c20"
+    },
+    {
+      "paper_id": "pubmed-42376755",
+      "record_sha256": "246cf02904fd12b0f8fc33ee69cb71120f4c0ff28f65ba8cbf2ae18d341bdbca"
+    },
+    {
+      "paper_id": "pubmed-42377119",
+      "record_sha256": "00c4efc412c14041631b0711fc0f4edfad898feba3388703602a6f6689487ccd"
+    },
+    {
+      "paper_id": "pubmed-42393830",
+      "record_sha256": "41d366eb2aea01050191676f45e3c4884d85a62ad4e9a368b108ef6165440324"
+    },
+    {
+      "paper_id": "pubmed-42393838",
+      "record_sha256": "250abf416f9f3f8810e3ea096489b243bf3bdd7755964cdfd703084a7ea4161f"
+    },
+    {
+      "paper_id": "pubmed-42411636",
+      "record_sha256": "ff36191b53b242396408f457e39ec6bb5b2da6016dcab78525241480bcf20055"
+    },
+    {
+      "paper_id": "pubmed-42421228",
+      "record_sha256": "22a7d9e7fdafef4992d8fb9b3a7bb6dadd85a8b2dc7505d8743468d13e29d4b9"
+    },
+    {
+      "paper_id": "pubmed-42424525",
+      "record_sha256": "15e001596a1ddc5167add87f283c3c8ccb2864fadb9cebc99d50aabe068b13b2"
+    },
+    {
+      "paper_id": "pubmed-42430190",
+      "record_sha256": "1f55b2bdcc4a52586b4a08315c8cf27735df168ecca2694d203367ba5482144f"
+    },
+    {
+      "paper_id": "pubmed-42441083",
+      "record_sha256": "befbbd9202bc97153573ba3e5b110c3fcc534947382450c48f48a1acc97811ee"
+    },
+    {
+      "paper_id": "pubmed-42454507",
+      "record_sha256": "08f7c81fcbc33b2382ee5224fc82dca26e58d90e7711fa5dbab02dec61acefd6"
+    },
+    {
+      "paper_id": "pubmed-42476202",
+      "record_sha256": "068b6375bc2bd0548de04fc6d7e75d3666bee963e216421b5aa58134c282c0a7"
+    },
+    {
+      "paper_id": "pubmed-42502958",
+      "record_sha256": "6b88937e5dde6c496b03620bac48b79a867cdb76c8e635613fb5650ca77fa378"
+    },
+    {
+      "paper_id": "pubmed-42518517",
+      "record_sha256": "8c34c4181c0c3914642d3ccc6229bffa1775697b7b152588eb2a7ca43c7e180a"
+    },
+    {
+      "paper_id": "pubmed-42522093",
+      "record_sha256": "53af5fefbe2db7484afe9a8ced6e4e61630dc285c8db2a4f6725043327e1051f"
+    },
+    {
+      "paper_id": "pubmed-42522137",
+      "record_sha256": "514e4f588f2f1a85199ec74917832b44a1e33d77208eaa16c81b4cc4e927bb60"
+    },
+    {
+      "paper_id": "pubmed-42524027",
+      "record_sha256": "52d4e30df6a0c2fc15fabff17fab8536b5c91a7bf18fd2b4d42f34c5487d8483"
+    },
+    {
+      "paper_id": "pubmed-42525450",
+      "record_sha256": "2105c9153f1b6058c28d5211315404d6c4e4b67fbc1798daabf8c103e5c00234"
+    },
+    {
+      "paper_id": "pubmed-42530085",
+      "record_sha256": "96989429089dd5a6d2c2228be1671043c8bad758b37e6af95ff00403cbc2ead4"
+    },
+    {
+      "paper_id": "pubmed-42592018",
+      "record_sha256": "a78a9c6b0aea7924a139888f49747ded76d8b28c94bf356146df0318ae25abe7"
+    },
+    {
+      "paper_id": "pubmed-42596076",
+      "record_sha256": "27efc41e769d34b022ff2fea702ccd0cac69b1d3695383f08e78d9a2bd1f78dd"
+    },
+    {
+      "paper_id": "pubmed-42602348",
+      "record_sha256": "2737cce0dbfd3462471b9560a9df1ee13bf685628f7c156ada6098953f9c2440"
+    },
+    {
+      "paper_id": "pubmed-42609944",
+      "record_sha256": "98161e064fb6f2a0a31da39d22ed57142d83d115defc1cdf6abc720e1417a3aa"
+    },
+    {
+      "paper_id": "pubmed-42621251",
+      "record_sha256": "e11f09ff3709761eb5517af609fc93ec09d217adcbfdb5850f233db99083444b"
+    }
+  ],
+  "minimum_language_counts": {
+    "dev": {
+      "en": 8,
+      "ja": 1
+    },
+    "heldout": {
+      "en": 9,
+      "ja": 1
+    }
+  }
+}

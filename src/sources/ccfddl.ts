@@ -13,10 +13,12 @@ import {
   deadlineEvidence,
   type Edition,
   embeddedTimezone,
+  eventDatePrecisionOf,
   parseDateRange,
   parseInstant,
   refineKindWithLabel,
   slug,
+  supersededDeadlinesOf,
   warn,
 } from "../model.ts";
 import { fetchTarball } from "./base.ts";
@@ -24,6 +26,11 @@ import { fetchTarball } from "./base.ts";
 export const REPO = "ccfddl/ccf-deadlines";
 export const REF = "main";
 export const NAME = "ccfddl";
+
+function deadlineHistory(value: unknown): Pick<Deadline, "superseded_deadlines"> {
+  const items = supersededDeadlinesOf(value);
+  return items.length ? { superseded_deadlines: items } : {};
+}
 
 // 'abstract deadline' (with a space) exists once upstream.
 const ABSTRACT_KEYS = ["abstract_deadline", "abstract deadline", "abstract"];
@@ -112,6 +119,7 @@ export function deadlinesOf(
             sourceUrl,
             originalValue: String(raw),
           }),
+          ...deadlineHistory(rec.superseded_deadlines ?? rawEdition?.superseded_deadlines),
         });
       }
     }
@@ -153,6 +161,7 @@ export function deadlinesOf(
           sourceUrl,
           originalValue: String(raw),
         }),
+        ...deadlineHistory(rawEdition.superseded_deadlines),
       });
     }
   }
@@ -182,6 +191,7 @@ export function editionOf(
     link,
     place: String(raw.place ?? ""),
     date_text: dateText,
+    event_date_precision: eventDatePrecisionOf(raw.event_date_precision, dateText, start, end),
     event_start: start,
     event_end: end,
     deadlines: deadlinesOf(raw.timeline, tzRaw, raw),

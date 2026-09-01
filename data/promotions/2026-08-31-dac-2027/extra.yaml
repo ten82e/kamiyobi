@@ -20,6 +20,9 @@ conferences:
             kind: paper
             label: paper
             precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-dac-2027
+              resolution: resolution-1d1e72f4eecff3cd
             round: 1
             track: ''
         edition_id: dac-2027

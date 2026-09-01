@@ -24,6 +24,7 @@ import {
   isDateOnlyDeadline,
   isExactDeadline,
   KINDS,
+  type ProviderIdentity,
   parseDateRange,
   slug,
   type VenueIdentity,
@@ -337,6 +338,15 @@ function mergeVenueIdentity(values: Array<VenueIdentity | undefined>): VenueIden
     cmpStr,
   );
   const aliases = unique(values.flatMap((value) => value?.aliases ?? [])).sort(cmpStr);
+  const providerIdentities = [
+    ...new Map(
+      values
+        .flatMap((value) => value?.providerIdentities ?? [])
+        .map((identity) => [`${identity.provider}\0${identity.providerKey}`, identity] as const),
+    ).values(),
+  ].sort((left, right) =>
+    cmpStr(`${left.provider}\0${left.providerKey}`, `${right.provider}\0${right.providerKey}`),
+  ) as ProviderIdentity[];
   const sourceIds: Record<string, string> = {};
   for (const value of [...values].reverse()) Object.assign(sourceIds, value?.sourceIds ?? {});
   const sortedSourceIds = Object.fromEntries(
@@ -346,13 +356,15 @@ function mergeVenueIdentity(values: Array<VenueIdentity | undefined>): VenueIden
     dblpKey ||
     officialDomains.length ||
     aliases.length ||
-    Object.keys(sourceIds).length
+    Object.keys(sourceIds).length ||
+    providerIdentities.length
     ? {
         ...(venueId ? { venueId } : {}),
         ...(dblpKey ? { dblpKey } : {}),
         ...(officialDomains.length ? { officialDomains } : {}),
         ...(aliases.length ? { aliases } : {}),
         ...(Object.keys(sortedSourceIds).length ? { sourceIds: sortedSourceIds } : {}),
+        ...(providerIdentities.length ? { providerIdentities } : {}),
       }
     : undefined;
 }
@@ -929,6 +941,21 @@ function sameDeadlineValue(left: Deadline, right: Deadline): boolean {
   return left.at_utc.getTime() === right.at_utc.getTime();
 }
 
+function mergeSuperseded(
+  left: Deadline["superseded_deadlines"],
+  right: Deadline["superseded_deadlines"],
+): NonNullable<Deadline["superseded_deadlines"]> {
+  const seen = new Set<string>();
+  return [...(left ?? []), ...(right ?? [])]
+    .filter((item) => {
+      const key = JSON.stringify(item);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => a.supersededAt.localeCompare(b.supersededAt) || cmpStr(a.value, b.value));
+}
+
 function absorb(
   winner: Deadline,
   loser: Deadline,
@@ -937,6 +964,9 @@ function absorb(
 ): Deadline {
   const evidence = mergeEvidence(winner.evidence, loser.evidence);
   const origins = mergeOrigins(winner.origins, loser.origins);
+  const superseded = mergeSuperseded(winner.superseded_deadlines, loser.superseded_deadlines);
+  const withHistory = (deadline: Deadline): Deadline =>
+    superseded.length ? { ...deadline, superseded_deadlines: superseded } : deadline;
   const notes: string[] = [];
   if (winner.comment) notes.push(winner.comment);
   if (loser.comment && !notes.includes(loser.comment)) notes.push(loser.comment);
@@ -953,22 +983,22 @@ function absorb(
   const comment = notes.length > 0 ? notes.join(" / ") : null;
   const round = sameSource ? winner.round : Math.max(winner.round, loser.round);
   if (isDateOnlyDeadline(winner) && isExactDeadline(loser)) {
-    return {
+    return withHistory({
       ...loser,
       comment,
       selection_rule: DEADLINE_SELECTION_RULE,
       ...(evidence.length > 0 ? { evidence } : {}),
       ...(origins.length > 0 ? { origins } : {}),
-    };
+    });
   }
   if (isExactDeadline(winner) && isDateOnlyDeadline(loser)) {
-    return {
+    return withHistory({
       ...winner,
       comment,
       selection_rule: DEADLINE_SELECTION_RULE,
       ...(evidence.length > 0 ? { evidence } : {}),
       ...(origins.length > 0 ? { origins } : {}),
-    };
+    });
   }
   if (isDateOnlyDeadline(winner) && isDateOnlyDeadline(loser)) {
     if (
@@ -976,17 +1006,17 @@ function absorb(
       round === winner.round &&
       evidence.length === (winner.evidence?.length ?? 0)
     )
-      return winner;
-    return {
+      return withHistory(winner);
+    return withHistory({
       ...winner,
       comment,
       round,
       selection_rule: DEADLINE_SELECTION_RULE,
       ...(evidence.length > 0 ? { evidence } : {}),
       ...(origins.length > 0 ? { origins } : {}),
-    };
+    });
   }
-  if (!isExactDeadline(winner) || !isExactDeadline(loser)) return winner;
+  if (!isExactDeadline(winner) || !isExactDeadline(loser)) return withHistory(winner);
   const priorConflicts = winner.conflicts ?? [];
   // An identical instant from another source is corroborating evidence, not a
   // conflict (SPEC.md 3.6): only genuinely different values are conflicts.
@@ -1019,8 +1049,8 @@ function absorb(
     conflicts.length === priorConflicts.length &&
     evidence.length === (winner.evidence?.length ?? 0)
   )
-    return winner;
-  return {
+    return withHistory(winner);
+  return withHistory({
     ...winner,
     comment,
     round,
@@ -1028,7 +1058,7 @@ function absorb(
     ...(conflicts.length > 0 ? { conflicts } : {}),
     ...(evidence.length > 0 ? { evidence } : {}),
     ...(origins.length > 0 ? { origins } : {}),
-  };
+  });
 }
 
 function mergeEvidence(
@@ -1464,7 +1494,20 @@ export function mergeDeadlineSlots(
     const evidence = mergeEvidence(incoming.evidence, held.evidence);
     out[index] = { ...incoming, ...(evidence.length > 0 ? { evidence } : {}) };
   }
-  return out.sort((a, b) => deadlineSortTime(a) - deadlineSortTime(b) || cmpStr(a.kind, b.kind));
+  const histories = new Map<string, NonNullable<Deadline["superseded_deadlines"]>>();
+  for (const deadline of [...existing, ...observed]) {
+    const merged = mergeSuperseded(
+      histories.get(deadlineSlotKey(deadline)),
+      deadline.superseded_deadlines,
+    );
+    if (merged.length) histories.set(deadlineSlotKey(deadline), merged);
+  }
+  return out
+    .map((deadline) => {
+      const history = histories.get(deadlineSlotKey(deadline));
+      return history?.length ? { ...deadline, superseded_deadlines: history } : deadline;
+    })
+    .sort((a, b) => deadlineSortTime(a) - deadlineSortTime(b) || cmpStr(a.kind, b.kind));
 }
 
 // --------------------------------------------------------------------------

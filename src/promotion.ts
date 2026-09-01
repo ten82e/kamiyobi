@@ -5,12 +5,18 @@ import { dump as dumpYaml } from "js-yaml";
 import {
   asDate,
   type Conference,
+  classifyDeadlineChange,
   cmpStr,
   type Deadline,
+  type DeadlineChangeKind,
   deadlineTrackKey,
+  explicitDeadlineExtension,
+  type IdentityProvider,
   isDateOnlyDeadline,
   monthOf,
+  type ProviderIdentity,
   parseInstant,
+  roundOf,
   slug,
 } from "./model.ts";
 
@@ -30,6 +36,11 @@ export interface CfpExtractionCandidate {
   eventDate?: string;
   eventEndDate?: string;
   editionYear?: number;
+  round?: number;
+  track?: string;
+  labelSignature?: string;
+  adapter?: string;
+  selectorOrField?: string;
 }
 
 export interface CfpCapture {
@@ -45,6 +56,7 @@ export interface CfpCapture {
   candidates: CfpExtractionCandidate[];
   sourceRevision: string;
   officialDomains?: string[];
+  providerIdentity?: ProviderIdentity;
 }
 
 export interface PromotionEvidence {
@@ -94,9 +106,13 @@ export interface PromotionObservation {
   candidates?: CfpExtractionCandidate[];
   sourceRevision?: string;
   officialDomains?: string[];
+  providerIdentity?: ProviderIdentity;
+  editionId?: string;
+  callIdentity?: string;
 }
 
 export interface PromotionResolution {
+  resolution_id?: string;
   candidate: string;
   decision: "promote" | "hold" | "reject";
   verifiedFields: string[];
@@ -138,6 +154,23 @@ export interface PromotionCanonicalization {
   matchedVenueKey?: string;
   matchedEditionId?: string;
   reason: string;
+  changeKind?: DeadlineChangeKind;
+  alternatives?: PromotionCanonicalMatch[];
+  margin?: number | null;
+  autoApplicable?: boolean;
+}
+
+export interface PromotionCanonicalMatch {
+  venueKey: string;
+  score: number;
+  matchedBy: string[];
+}
+
+export interface CanonicalizationDecision {
+  best: PromotionCanonicalMatch | null;
+  alternatives: PromotionCanonicalMatch[];
+  margin: number | null;
+  autoApplicable: boolean;
 }
 
 export interface CaptureVerificationOptions {
@@ -150,6 +183,7 @@ export interface CaptureVerificationOptions {
   manifestBodyHash?: string;
   requireManifestBody?: boolean;
   existingConferences?: readonly Conference[];
+  canonicalizationMargin?: number;
 }
 
 export interface CaptureVerification {
@@ -295,6 +329,11 @@ function candidateKind(text: string): string {
   return "paper";
 }
 
+function candidateTrack(text: string): string | undefined {
+  const match = /\b(?:track|stream)\s*[:-]\s*([A-Za-z][A-Za-z0-9_-]*)/i.exec(text);
+  return match ? slug(match[1]) : undefined;
+}
+
 /** Extract only date-bearing CFP/deadline lines; ambiguous values stay candidates for review. */
 export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
   const text = body
@@ -381,6 +420,8 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
         kind: candidateKind(raw),
         date: value.date,
         editionYear: value.year,
+        round: roundOf(raw),
+        ...(candidateTrack(raw) ? { track: candidateTrack(raw) } : {}),
       };
       const localTime = ambiguousLeadingTime ? undefined : extractedTime(scope);
       const localTimezone = ambiguousLeadingTime ? undefined : extractedTimezone(scope);
@@ -463,6 +504,77 @@ function domainName(value: string): string {
   }
 }
 
+const SHARED_PROVIDER_HOSTS: Array<[IdentityProvider, RegExp]> = [
+  ["easychair", /(?:^|\.)easychair\.org$/i],
+  ["openreview", /(?:^|\.)openreview\.net$/i],
+  ["hotcrp", /(?:^|\.)hotcrp\.com$/i],
+  ["acm", /(?:^|\.)acm\.org$/i],
+  ["ieee", /(?:^|\.)ieee\.org$/i],
+];
+
+function cleanProviderKey(value: string): string {
+  return decodeURIComponent(value)
+    .toLowerCase()
+    .replace(/[?#].*$/, "")
+    .replace(/^\/+|\/+$/g, "");
+}
+
+/** Extract a provider-scoped identity without treating a shared host as a venue. */
+export function providerIdentityFromUrl(value: string): ProviderIdentity {
+  let url: URL;
+  try {
+    url = httpUrl(value, "provider URL");
+  } catch {
+    return { provider: "unknown", providerKey: "", strength: "weak" };
+  }
+  const host = url.hostname.toLowerCase().replace(/\.$/, "");
+  const shared = SHARED_PROVIDER_HOSTS.find(([, pattern]) => pattern.test(host));
+  if (shared) {
+    const [provider] = shared;
+    let providerKey = `${url.pathname}${url.search}`;
+    if (provider === "openreview") {
+      providerKey = url.searchParams.get("id") ?? url.pathname;
+    } else if (provider === "easychair") {
+      providerKey = url.pathname;
+    } else if (provider === "hotcrp") {
+      providerKey = `${host}${url.pathname}`;
+    }
+    return { provider, providerKey: cleanProviderKey(providerKey), strength: "provider-scoped" };
+  }
+  if (host === "github.io" || host.endsWith(".github.io"))
+    return {
+      provider: "github-pages",
+      providerKey: cleanProviderKey(`${host}${url.pathname}`),
+      strength: "provider-scoped",
+    };
+  if (host === "acm.org" || host.endsWith(".acm.org"))
+    return {
+      provider: "acm",
+      providerKey: cleanProviderKey(`${url.pathname}${url.search}`),
+      strength: "provider-scoped",
+    };
+  if (host === "ieee.org" || host.endsWith(".ieee.org"))
+    return {
+      provider: "ieee",
+      providerKey: cleanProviderKey(`${url.pathname}${url.search}`),
+      strength: "provider-scoped",
+    };
+  return { provider: "dedicated-domain", providerKey: host, strength: "dedicated-domain" };
+}
+
+function providerIdentityFromObservation(observation: PromotionObservation): ProviderIdentity {
+  return (
+    observation.providerIdentity ??
+    captureOf(observation)?.providerIdentity ??
+    providerIdentityFromUrl(normalizedEvidence(observation).sourceUrl)
+  );
+}
+
+function providerIdentityMatches(left: ProviderIdentity, right: ProviderIdentity): boolean {
+  if (!left.providerKey || !right.providerKey || left.provider !== right.provider) return false;
+  return left.providerKey === right.providerKey;
+}
+
 export function isOfficialUrl(url: string, officialDomains: string[]): boolean {
   let hostname: string;
   try {
@@ -490,6 +602,7 @@ function captureOf(observation: PromotionObservation): CfpCapture | undefined {
     observation.excerpt,
     observation.candidates,
     observation.sourceRevision,
+    observation.providerIdentity,
   ].some((value) => value !== undefined);
   if (!hasCaptureField) return undefined;
   return {
@@ -505,6 +618,7 @@ function captureOf(observation: PromotionObservation): CfpCapture | undefined {
     candidates: observation.candidates as CfpExtractionCandidate[],
     sourceRevision: observation.sourceRevision as string,
     officialDomains: observation.officialDomains,
+    providerIdentity: observation.providerIdentity,
   };
 }
 
@@ -965,7 +1079,7 @@ export function resolvePromotion(
       },
       edition: {
         year: editionYear,
-        edition_id: `${key}-${editionYear}`,
+        edition_id: observation.editionId?.trim() || `${key}-${editionYear}`,
         date_text: observation.eventDate ?? String(editionYear),
         ...(eventStart ? { event_start: eventStart } : {}),
         ...(eventEnd ? { event_end: observation.eventEndDate } : {}),
@@ -980,6 +1094,7 @@ interface PromotionVenueMatch {
   kind: "strong" | "caution";
   score: number;
   matchedBy: string[];
+  providerIdentity?: ProviderIdentity;
 }
 
 function promotionUrlToken(value: string | undefined): string {
@@ -1012,6 +1127,66 @@ function promotionNamesMatch(left: string | undefined, right: string | undefined
   return shared / (a.size + b.size - shared) >= 0.7;
 }
 
+function conferenceProviderIdentities(conference: Conference): ProviderIdentity[] {
+  const urls = [
+    conference.link,
+    ...(conference.identity?.officialDomains ?? []),
+    ...conference.editions.flatMap((edition) => [
+      edition.link,
+      ...(edition.identity?.officialUrls ?? []),
+    ]),
+  ].filter(Boolean);
+  const identities = [
+    ...(conference.identity?.providerIdentities ?? []),
+    ...urls.map((url) => providerIdentityFromUrl(url)),
+  ];
+  return [
+    ...new Map(
+      identities
+        .filter((item) => item.providerKey)
+        .map((item) => [`${item.provider}\0${item.providerKey}`, item]),
+    ).values(),
+  ];
+}
+
+function publicCanonicalMatch(match: PromotionVenueMatch): PromotionCanonicalMatch {
+  return {
+    venueKey: match.conference.key,
+    score: match.score,
+    matchedBy: [...match.matchedBy],
+  };
+}
+
+function matchDecision(
+  matches: PromotionVenueMatch[],
+  margin = 40,
+): { strong: PromotionVenueMatch[]; decision: CanonicalizationDecision } {
+  const sorted = [...matches].sort(
+    (left, right) => right.score - left.score || cmpStr(left.conference.key, right.conference.key),
+  );
+  const best = sorted[0] ? publicCanonicalMatch(sorted[0]) : null;
+  const second = sorted[1] ? sorted[1].score : null;
+  const scoreMargin = best && second !== null ? best.score - second : best ? Infinity : null;
+  const strong = sorted.filter((match) => match.kind === "strong");
+  const bestStrong = strong[0] ? publicCanonicalMatch(strong[0]) : null;
+  const secondStrong = strong[1] ? strong[1].score : null;
+  const strongMargin =
+    bestStrong && secondStrong !== null
+      ? bestStrong.score - secondStrong
+      : bestStrong
+        ? Infinity
+        : null;
+  return {
+    strong,
+    decision: {
+      best: bestStrong ?? best,
+      alternatives: sorted.slice(1).map(publicCanonicalMatch),
+      margin: strongMargin ?? scoreMargin,
+      autoApplicable: Boolean(bestStrong && (strongMargin === null || strongMargin >= margin)),
+    },
+  };
+}
+
 function promotionVenueMatch(
   observation: PromotionObservation,
   normalized: NonNullable<PromotionResolution["normalized"]>,
@@ -1034,6 +1209,20 @@ function promotionVenueMatch(
   );
   const officialDomains = [...(conference.identity?.officialDomains ?? []), ...officialUrls];
   const domainMatch = Boolean(sourceUrl && isOfficialUrl(sourceUrl, officialDomains));
+  const providerIdentity = providerIdentityFromObservation(observation);
+  const providerMatch = conferenceProviderIdentities(conference).find((candidate) =>
+    providerIdentityMatches(providerIdentity, candidate),
+  );
+  const dedicatedDomainMatch =
+    providerIdentity.provider === "dedicated-domain" &&
+    providerMatch?.provider === "dedicated-domain" &&
+    conference.editions.some((edition) => edition.year === normalized.edition.year);
+  const sharedHostMatch = conferenceProviderIdentities(conference).some(
+    (candidate) =>
+      candidate.provider === providerIdentity.provider &&
+      candidate.provider !== "dedicated-domain" &&
+      domainMatch,
+  );
   const nameMatch =
     promotionNamesMatch(observation.title, conference.title) ||
     promotionNamesMatch(observation.title, conference.full_name) ||
@@ -1044,16 +1233,33 @@ function promotionVenueMatch(
     ...(keyMatch ? ["canonical-key"] : []),
     ...(exactUrl ? ["official-url"] : []),
     ...(domainMatch ? ["official-domain"] : []),
+    ...(providerMatch ? ["provider-identity"] : []),
+    ...(sharedHostMatch && !providerMatch ? ["shared-provider-host"] : []),
     ...(nameMatch ? ["name"] : []),
   ];
   if (!matchedBy.length) return null;
-  if (keyMatch || exactUrl || (domainMatch && nameMatch)) {
+  const strongIdentity =
+    keyMatch ||
+    (providerMatch !== undefined &&
+      (providerIdentity.provider === "github-pages" ||
+        providerIdentity.provider === "easychair" ||
+        providerIdentity.provider === "openreview" ||
+        providerIdentity.provider === "hotcrp" ||
+        providerIdentity.provider === "acm" ||
+        providerIdentity.provider === "ieee" ||
+        dedicatedDomainMatch));
+  if (strongIdentity) {
     return {
       conference,
       kind: "strong",
       score:
-        (keyMatch ? 100 : 0) + (exactUrl ? 100 : 0) + (domainMatch ? 80 : 0) + (nameMatch ? 30 : 0),
+        (keyMatch ? 220 : 0) +
+        (providerMatch ? 180 : 0) +
+        (exactUrl ? 40 : 0) +
+        (dedicatedDomainMatch ? 80 : 0) +
+        (nameMatch ? 30 : 0),
       matchedBy,
+      providerIdentity,
     };
   }
   // Shared names or domains are review signals only; they do not authorize a merge.
@@ -1140,6 +1346,7 @@ function canonicalizePromotion(
   observation: PromotionObservation,
   resolution: PromotionResolution,
   existingConferences: readonly Conference[],
+  marginThreshold = 40,
 ): PromotionCanonicalization {
   if (resolution.decision === "reject")
     return { decision: "reject", score: 0, matchedBy: [], reason: resolution.reason };
@@ -1149,15 +1356,23 @@ function canonicalizePromotion(
   const matches = existingConferences
     .map((conference) => promotionVenueMatch(observation, resolution.normalized!, conference))
     .filter((match): match is PromotionVenueMatch => match !== null);
-  const strong = matches
-    .filter((match) => match.kind === "strong")
-    .sort((a, b) => b.score - a.score);
-  if (strong.length > 1)
+  const selected = matchDecision(matches, marginThreshold);
+  const strong = selected.strong;
+  const matchMeta = {
+    alternatives: selected.decision.alternatives,
+    margin: selected.decision.margin,
+    autoApplicable: selected.decision.autoApplicable,
+  };
+  if (
+    strong.length > 1 &&
+    (selected.decision.margin === null || selected.decision.margin < marginThreshold)
+  )
     return {
       decision: "hold",
       score: strong[0]!.score,
       matchedBy: strong[0]!.matchedBy,
       reason: "multiple existing venues match official promotion evidence",
+      ...matchMeta,
     };
   if (strong.length === 0) {
     const caution = matches.sort((a, b) => b.score - a.score)[0];
@@ -1168,12 +1383,14 @@ function canonicalizePromotion(
         matchedBy: caution.matchedBy,
         matchedVenueKey: caution.conference.key,
         reason: "name or domain similarity requires manual identity review",
+        ...matchMeta,
       };
     return {
       decision: "add-new-venue",
       score: 0,
       matchedBy: [],
       reason: "no existing venue identity matched",
+      ...matchMeta,
     };
   }
 
@@ -1191,6 +1408,7 @@ function canonicalizePromotion(
       matchedBy: [...strong[0]!.matchedBy],
       matchedVenueKey: venue.key,
       reason: "multiple editions match official promotion evidence",
+      ...matchMeta,
     };
   if (editionMatches.length === 0)
     return {
@@ -1199,6 +1417,7 @@ function canonicalizePromotion(
       matchedBy: [...strong[0]!.matchedBy],
       matchedVenueKey: venue.key,
       reason: "existing venue matched but no existing edition did",
+      ...matchMeta,
     };
 
   const edition = editionMatches[0]!.edition;
@@ -1214,6 +1433,7 @@ function canonicalizePromotion(
       matchedVenueKey: venue.key,
       matchedEditionId: edition.edition_id,
       reason: "multiple existing deadlines share the promotion slot",
+      ...matchMeta,
     };
   if (deadlineMatches.length === 0)
     return {
@@ -1223,9 +1443,11 @@ function canonicalizePromotion(
       matchedVenueKey: venue.key,
       matchedEditionId: edition.edition_id,
       reason: "existing edition matched but deadline slot is new",
+      ...matchMeta,
     };
 
   const existing = deadlineMatches[0]!;
+  const changeKind = classifyDeadlineChange(existing, resolution.normalized.deadline);
   const candidateInstant = normalizedDeadlineInstant(resolution.normalized.deadline);
   const existingInstant = existingDeadlineInstant(existing);
   const sameDateOnly =
@@ -1243,6 +1465,27 @@ function canonicalizePromotion(
       matchedVenueKey: venue.key,
       matchedEditionId: edition.edition_id,
       reason: "existing deadline slot and value are identical",
+      changeKind,
+      ...matchMeta,
+    };
+  const official =
+    observation.sourceClass === "official-cfp" || observation.sourceClass === "publisher";
+  const extensionEvidence = normalizedEvidence(observation).rawExcerpt;
+  const autoApplicable =
+    changeKind === "precision-upgrade" ||
+    changeKind === "unchanged" ||
+    (changeKind === "extension" && official && explicitDeadlineExtension(extensionEvidence));
+  if (!autoApplicable)
+    return {
+      decision: "hold",
+      score: strong[0]!.score,
+      matchedBy,
+      matchedVenueKey: venue.key,
+      matchedEditionId: edition.edition_id,
+      reason: `deadline change requires manual resolution: ${changeKind}`,
+      changeKind,
+      ...matchMeta,
+      autoApplicable: false,
     };
   return {
     decision: "supersede-existing-deadline",
@@ -1250,7 +1493,10 @@ function canonicalizePromotion(
     matchedBy,
     matchedVenueKey: venue.key,
     matchedEditionId: edition.edition_id,
-    reason: "official evidence changes an existing deadline value",
+    reason: `official evidence changes an existing deadline value: ${changeKind}`,
+    changeKind,
+    ...matchMeta,
+    autoApplicable: true,
   };
 }
 
@@ -1262,7 +1508,12 @@ export function resolvePromotionAgainst(
   const resolution = resolvePromotion(observation, options);
   return {
     ...resolution,
-    canonicalization: canonicalizePromotion(observation, resolution, options.existingConferences),
+    canonicalization: canonicalizePromotion(
+      observation,
+      resolution,
+      options.existingConferences,
+      options.canonicalizationMargin ?? 40,
+    ),
   };
 }
 
@@ -1321,7 +1572,7 @@ export function verifyBatch(
     .sort((a, b) => cmpStr(a.candidate, b.candidate));
 }
 
-function extraFrom(resolutions: PromotionResolution[]): Record<string, unknown> {
+function extraFrom(resolutions: PromotionResolution[], batchId: string): Record<string, unknown> {
   const promoted = resolutions
     .filter(
       (resolution) =>
@@ -1330,7 +1581,10 @@ function extraFrom(resolutions: PromotionResolution[]): Record<string, unknown> 
         (!resolution.canonicalization ||
           ["add-new-venue", "add-new-edition"].includes(resolution.canonicalization.decision)),
     )
-    .map((resolution) => resolution.normalized!);
+    .map((resolution) => ({
+      ...resolution.normalized!,
+      resolution_id: resolution.resolution_id,
+    }));
   const venues = new Map<string, typeof promoted>();
   for (const normalized of promoted) {
     const group = venues.get(normalized.venue.key) ?? [];
@@ -1358,12 +1612,31 @@ function extraFrom(resolutions: PromotionResolution[]): Record<string, unknown> 
           return {
             ...edition.edition,
             id: edition.edition.edition_id,
-            deadlines: editionRows.map((row) => row.deadline),
+            deadlines: editionRows.map((row) => ({
+              ...row.deadline,
+              ...(row.resolution_id
+                ? {
+                    promotion_ref: {
+                      batch: batchId,
+                      resolution: row.resolution_id,
+                    },
+                  }
+                : {}),
+            })),
           };
         }),
       };
     }),
   };
+}
+
+function addResolutionIds(resolutions: PromotionResolution[]): PromotionResolution[] {
+  return resolutions.map((resolution) => {
+    const body = { ...resolution };
+    delete body.resolution_id;
+    const digest = createHash("sha256").update(canonicalJson(body)).digest("hex").slice(0, 16);
+    return { ...resolution, resolution_id: `resolution-${digest}` };
+  });
 }
 
 export function writePromotionBatch(
@@ -1397,11 +1670,13 @@ export function writePromotionBatch(
     .join("\n");
   const observationText = observations ? `${observations}\n` : "";
   writeFileSync(observationsPath, observationText);
-  const resolutions = verifyBatch(observationsPath, {
-    existingConferences: options.existingConferences,
-  });
+  const resolutions = addResolutionIds(
+    verifyBatch(observationsPath, {
+      existingConferences: options.existingConferences,
+    }),
+  );
   const resolutionText = `${JSON.stringify(resolutions, null, 2)}\n`;
-  const extraText = dumpYaml(extraFrom(resolutions), {
+  const extraText = dumpYaml(extraFrom(resolutions, basename(dirname(manifestPath))), {
     lineWidth: -1,
     noRefs: true,
     sortKeys: true,

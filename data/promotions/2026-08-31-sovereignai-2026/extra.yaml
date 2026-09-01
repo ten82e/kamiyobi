@@ -20,6 +20,9 @@ conferences:
             kind: paper
             label: paper
             precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-sovereignai-2026
+              resolution: resolution-8d7afae56bdf4646
             round: 1
             track: ''
         edition_id: sovereignai-2026

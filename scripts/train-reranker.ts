@@ -4,7 +4,14 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { RERANKER_FEATURE_SCHEMA } from "../site/recommender.ts";
 
-type DevRecord = { paper_id: string; primary_venue?: string; acceptable_venues: string[] };
+type DevRecord = {
+  paper_id: string;
+  primary_venue?: string;
+  acceptable_venues: string[];
+  domains?: string[];
+  language?: string;
+  venue_kind?: string;
+};
 type DevFixture = { records: DevRecord[] };
 type Candidate = { venue: string; base_score: number; features: Record<string, number> };
 type FeatureRecord = { paper_id: string; candidates: Candidate[] };
@@ -30,11 +37,134 @@ function sigmoid(value: number): number {
 }
 /** Venue-family grouped fold assignment: same primary venue never spans train/test. */
 function familyFolds(dev: DevFixture): Map<string, number> {
-  const families = [
-    ...new Set(dev.records.map((record) => record.primary_venue ?? record.paper_id)),
-  ].sort();
+  const parent = new Map<string, string>();
+  const find = (key: string): string => {
+    const root = parent.get(key);
+    if (!root || root === key) return key;
+    const next = find(root);
+    parent.set(key, next);
+    return next;
+  };
+  const union = (left: string, right: string): void => {
+    const a = find(left);
+    const b = find(right);
+    if (a !== b) parent.set(a, b);
+  };
+  for (const record of dev.records) {
+    const venues = [record.primary_venue ?? record.paper_id, ...record.acceptable_venues]
+      .filter(Boolean)
+      .map((venue) => `venue:${venue}`);
+    for (const venue of venues) {
+      if (!parent.has(venue)) parent.set(venue, venue);
+      union(venues[0]!, venue);
+    }
+  }
+  type Stats = {
+    key: string;
+    papers: number;
+    positives: number;
+    categories: Map<string, number>;
+    languages: Map<string, number>;
+    kinds: Map<string, number>;
+    records: DevRecord[];
+  };
+  const components = new Map<string, Stats>();
+  for (const record of dev.records) {
+    const key = find(`venue:${record.primary_venue ?? record.paper_id}`);
+    const stats: Stats = components.get(key) ?? {
+      key,
+      papers: 0,
+      positives: 0,
+      categories: new Map(),
+      languages: new Map(),
+      kinds: new Map(),
+      records: [] as DevRecord[],
+    };
+    stats.papers++;
+    stats.positives += record.acceptable_venues.length;
+    stats.records.push(record);
+    for (const category of record.domains ?? [])
+      stats.categories.set(category, (stats.categories.get(category) ?? 0) + 1);
+    if (record.language)
+      stats.languages.set(record.language, (stats.languages.get(record.language) ?? 0) + 1);
+    if (record.venue_kind)
+      stats.kinds.set(record.venue_kind, (stats.kinds.get(record.venue_kind) ?? 0) + 1);
+    components.set(key, stats);
+  }
+  const folds = Array.from({ length: FOLDS }, () => ({
+    papers: 0,
+    positives: 0,
+    categories: new Map<string, number>(),
+    languages: new Map<string, number>(),
+    kinds: new Map<string, number>(),
+  }));
+  const totals = (name: "papers" | "positives") =>
+    [...components.values()].reduce((sum, component) => sum + Number(component[name]), 0) / FOLDS;
+  const target = {
+    papers: totals("papers"),
+    positives: totals("positives"),
+  };
+  const targetMap = (field: "categories" | "languages" | "kinds") => {
+    const out = new Map<string, number>();
+    for (const component of components.values())
+      for (const [key, count] of component[field])
+        out.set(key, (out.get(key) ?? 0) + count / FOLDS);
+    return out;
+  };
+  const targets = {
+    categories: targetMap("categories"),
+    languages: targetMap("languages"),
+    kinds: targetMap("kinds"),
+  };
+  const distance = (actual: number, expected: number, weight: number): number =>
+    ((actual - expected) ** 2 / Math.max(1, expected)) * weight;
+  const cost = (fold: (typeof folds)[number], component: Stats): number => {
+    const value =
+      distance(fold.papers + component.papers, target.papers, 4) +
+      distance(fold.positives + component.positives, target.positives, 1);
+    const mapCost = (
+      current: Map<string, number>,
+      incoming: Map<string, number>,
+      expected: Map<string, number>,
+    ) =>
+      [...new Set([...current.keys(), ...incoming.keys(), ...expected.keys()])].reduce(
+        (sum, key) =>
+          sum +
+          distance((current.get(key) ?? 0) + (incoming.get(key) ?? 0), expected.get(key) ?? 0, 1),
+        0,
+      );
+    return (
+      value +
+      mapCost(fold.categories, component.categories, targets.categories) +
+      mapCost(fold.languages, component.languages, targets.languages) +
+      mapCost(fold.kinds, component.kinds, targets.kinds)
+    );
+  };
+  const add = (fold: (typeof folds)[number], component: Stats): void => {
+    fold.papers += component.papers;
+    fold.positives += component.positives;
+    for (const [key, count] of component.categories)
+      fold.categories.set(key, (fold.categories.get(key) ?? 0) + count);
+    for (const [key, count] of component.languages)
+      fold.languages.set(key, (fold.languages.get(key) ?? 0) + count);
+    for (const [key, count] of component.kinds)
+      fold.kinds.set(key, (fold.kinds.get(key) ?? 0) + count);
+  };
   const assignment = new Map<string, number>();
-  for (const [index, family] of families.entries()) assignment.set(family, index % FOLDS);
+  for (const component of [...components.values()].sort(
+    (left, right) => right.papers - left.papers || left.key.localeCompare(right.key),
+  )) {
+    const fold = folds
+      .map((value, index) => ({ index, value, cost: cost(value, component) }))
+      .sort(
+        (left, right) =>
+          left.cost - right.cost ||
+          left.value.papers - right.value.papers ||
+          left.index - right.index,
+      )[0]!;
+    add(fold.value, component);
+    for (const record of component.records) assignment.set(record.paper_id, fold.index);
+  }
   return assignment;
 }
 function trainLinear(rows: Row[], lambda: number): Model {
@@ -251,16 +381,25 @@ function main(argv = process.argv.slice(2)): void {
     },
   });
   const devPath = values.dev ?? "data/benchmarks/real-paper-dev.json";
-  const featurePath = values.features ?? "data/benchmarks/real-paper-required-features.json";
+  const featurePath = values.features ?? "data/benchmarks/real-paper-features.jsonl";
   const profilePath = values.profiles ?? "data/venue-profiles.json";
   const outPath = values.out ?? "data/recommender-reranker.json";
   const devRaw = readFileSync(devPath, "utf8");
   const featureRaw = readFileSync(featurePath, "utf8");
   const profileRaw = readFileSync(profilePath, "utf8");
   const dev = JSON.parse(devRaw) as DevFixture;
-  const features = JSON.parse(featureRaw) as Features;
+  const features = featurePath.endsWith(".jsonl")
+    ? ({
+        version: 2,
+        feature_schema: [...RERANKER_FEATURE_SCHEMA],
+        records: featureRaw
+          .split(/\r?\n/)
+          .filter((line) => line.trim())
+          .map((line) => JSON.parse(line) as FeatureRecord),
+      } satisfies Features)
+    : (JSON.parse(featureRaw) as Features);
   if (
-    features.version !== 1 ||
+    ![1, 2].includes(features.version) ||
     features.feature_schema.join("\0") !== RERANKER_FEATURE_SCHEMA.join("\0")
   )
     throw new Error("production reranker feature schema mismatch");
@@ -290,14 +429,9 @@ function main(argv = process.argv.slice(2)): void {
       };
     }),
   );
-  // Grouped CV: papers sharing a primary venue stay in the same fold.
-  const foldOfPaper = new Map<string, number>();
-  for (const [family, fold] of familyFolds(dev)) {
-    for (const record of dev.records) {
-      if ((record.primary_venue ?? record.paper_id) === family)
-        foldOfPaper.set(record.paper_id, fold);
-    }
-  }
+  // Grouped CV: acceptable-venue connected components stay in one fold and
+  // component sizes/label strata are greedily balanced across folds.
+  const foldOfPaper = familyFolds(dev);
   const trials: Array<{
     lambda: number;
     blend: number;
@@ -358,7 +492,7 @@ function main(argv = process.argv.slice(2)): void {
     coefficient_source: "trained",
     selected_on: "real-paper-dev",
     selection_metric: "dev-oof-mrr-then-recall-at-5",
-    algorithm_revision: "l2-pairwise-logistic-reranker-v3-grouped-cv",
+    algorithm_revision: "l2-pairwise-logistic-reranker-v4-component-greedy-cv",
     feature_schema: [...RERANKER_FEATURE_SCHEMA],
     training_data_hash: sha(devRaw),
     input_hashes: {
@@ -368,7 +502,7 @@ function main(argv = process.argv.slice(2)): void {
     },
     cv: {
       folds: FOLDS,
-      assignment: "primary-venue-grouped-round-robin",
+      assignment: "acceptable-venue-component-greedy-balanced",
       dev_papers: devIds.size,
       selected_lambda: selected.lambda,
       selected_blend: selected.blend,

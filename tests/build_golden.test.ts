@@ -302,13 +302,47 @@ it("toJson generates verification when reverification.enabled is true", () => {
             year: 2026,
             link: "",
             source: "local",
-            deadlines: [makeDeadline("paper", "Paper submission", utc(2026, 10, 1))],
+            deadlines: [
+              {
+                ...makeDeadline("paper", "Paper submission", utc(2026, 10, 1)),
+                evidence: [
+                  {
+                    source_name: "test",
+                    source_url: "https://example.org/testconf",
+                    observed_at: "2026-08-31T00:00:00.000Z",
+                    original_value: "2026-10-01T00:00:00Z",
+                    confidence: "official",
+                    sourceClass: "official-cfp",
+                    sourceUrl: "https://example.org/testconf",
+                    sourceRevision: "test-revision",
+                    verifiedAt: "2026-08-31T00:00:00.000Z",
+                  },
+                ],
+              },
+            ],
           }),
           makeEdition({
             year: 2027,
             link: "https://example.org/testconf/2027",
             source: "local",
-            deadlines: [makeDeadline("paper", "Paper submission", utc(2027, 10, 1))],
+            deadlines: [
+              {
+                ...makeDeadline("paper", "Paper submission", utc(2027, 10, 1)),
+                evidence: [
+                  {
+                    source_name: "test",
+                    source_url: "https://example.org/testconf/2027",
+                    observed_at: "2026-08-31T00:00:00.000Z",
+                    original_value: "2027-10-01T00:00:00Z",
+                    confidence: "official",
+                    sourceClass: "official-cfp",
+                    sourceUrl: "https://example.org/testconf/2027",
+                    sourceRevision: "test-revision",
+                    verifiedAt: "2026-08-31T00:00:00.000Z",
+                  },
+                ],
+              },
+            ],
           }),
         ],
       }),
@@ -339,6 +373,40 @@ it("omits ambiguous legacy key redirects", () => {
     NOW,
   );
   expect(payload.legacy_key_redirects).toEqual({ old: "new" });
+});
+
+it("emits an explicit identity migration manifest for legacy slots", () => {
+  const payload = toJson(
+    [
+      makeConference({
+        key: "new",
+        title: "New",
+        legacy_keys: ["old"],
+        editions: [
+          makeEdition({
+            year: 2026,
+            edition_id: "new26",
+            deadlines: [makeDeadline("paper", "Paper", new Date("2026-09-01T12:00:00Z"))],
+          }),
+        ],
+      }),
+    ],
+    {},
+    NOW,
+  );
+  expect(payload.identity_migrations).toMatchObject({
+    schema_version: 1,
+    from_identity_revision: "legacy-public-key",
+    to_identity_revision: "identity-v1",
+  });
+  expect((payload.identity_migrations as any).migrations).toEqual([
+    expect.objectContaining({
+      action: "rename",
+      from: expect.objectContaining({ venue: "old", edition: "*" }),
+      to: expect.objectContaining({ venue: "new", edition: "new26" }),
+    }),
+  ]);
+  expect(healthReport(payload, NOW).identity_migrations?.migrations).toHaveLength(1);
 });
 
 it("toJson preserves venue and edition identity for snapshot round-trips", () => {
@@ -1215,7 +1283,7 @@ it("SPEC §3.7 documents every CLI command and flag from usage() (#374)", () => 
   const commands = lines
     .map((l) => /^ {2}([a-z][a-z0-9-]*) /.exec(l)?.[1])
     .filter((c): c is string => Boolean(c) && c !== "help");
-  expect(commands).toEqual(["build", "discover", "review", "reverify"]);
+  expect(commands).toEqual(["build", "discover", "review", "reverify", "evidence"]);
   for (const cmd of commands) {
     expect(section, `SPEC §3.7 must document the CLI command ${cmd}`).toContain(cmd);
   }

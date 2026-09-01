@@ -4100,6 +4100,8 @@ conferences:
     editions:
       - year: 2026
         id: iccr-202626
+        call_identity: {seriesId: iccr, editionId: iccr-202626, callId: iccr-2026, parentEventId: null}
+        legacy_ids: [ieee-iccr-202626]
         link: https://iccr.net/sub.html
         place: Tokyo, Japan
         date_text: December 11-13, 2026
@@ -4148,6 +4150,8 @@ conferences:
     editions:
       - year: 2026
         id: ccisc-202626
+        call_identity: {seriesId: ccisc, editionId: ccisc-202626, callId: ccisc-2026, parentEventId: null}
+        legacy_ids: [ieee-ccisc-202626]
         link: https://www.ccisc2026.net/
         place: Wuxi, China
         date_text: September 18-20, 2026
@@ -4301,6 +4305,8 @@ conferences:
     editions:
       - year: 2026
         id: raai202626
+        call_identity: {seriesId: raai, editionId: raai202626, callId: raai-2026, parentEventId: null}
+        legacy_ids: [raai-202626]
         link: https://www.raai.net/
         place: Singapore, Singapore
         date_text: December 18-20, 2026
@@ -4361,6 +4367,8 @@ conferences:
     editions:
       - year: 2026
         id: keir-cikm202626
+        call_identity: {seriesId: keir, editionId: keir-cikm202626, callId: keir-cikm-2026, parentEventId: null}
+        legacy_ids: [keir-cikm-202626]
         link: https://keir-workshop.github.io/
         place: Rome, Italy
         date_text: November 8, 2026
@@ -4407,6 +4415,8 @@ conferences:
     editions:
       - year: 2026
         id: admit-202626
+        call_identity: {seriesId: admit, editionId: admit-202626, callId: admit-2026, parentEventId: null}
+        legacy_ids: [ieee-admit-202626]
         link: https://www.admit2026.net/
         place: Wuhan, China
         date_text: October 16-18, 2026
@@ -4713,6 +4723,8 @@ conferences:
     editions:
       - year: 2027
         id: icbda202727
+        call_identity: {seriesId: icbda, editionId: icbda202727, callId: icbda-2027, parentEventId: null}
+        legacy_ids: [icbda-202727]
         link: https://icbda.org/
         place: Bangkok, Thailand
         date_text: April 26-29, 2027
@@ -4910,6 +4922,8 @@ conferences:
     editions:
       - year: 2026
         id: bdiot-202626
+        call_identity: {seriesId: bdiot, editionId: bdiot-202626, callId: bdiot-2026, parentEventId: null}
+        legacy_ids: [acm-bdiot-202626]
         link: https://www.bdiot.org/
         place: Shanghai, China
         date_text: October 23-25, 2026
@@ -5000,6 +5014,8 @@ conferences:
     editions:
       - year: 2027
         id: csp-202727
+        call_identity: {seriesId: csp, editionId: csp-202727, callId: csp-2027, parentEventId: null}
+        legacy_ids: [csp-ei-202727, ieee-csp-202727]
         link: https://iccsp.org/
         place: Nagoya, Japan
         date_text: March 27-30, 2027
@@ -5198,6 +5214,8 @@ conferences:
     editions:
       - year: 2026
         id: icaici-202626
+        call_identity: {seriesId: icaici, editionId: icaici-202626, callId: icaici-2026, parentEventId: null}
+        legacy_ids: [ieee-icaici-202626]
         link: https://ic-aci.net/
         place: Chengdu, China
         date_text: September 11-13, 2026
@@ -5240,6 +5258,8 @@ conferences:
     editions:
       - year: 2026
         id: iccns-202626
+        call_identity: {seriesId: iccns, editionId: iccns-202626, callId: iccns-2026, parentEventId: null}
+        legacy_ids: [iccns-ei-202626]
         link: https://www.iccns.org/
         place: Harbin, China
         date_text: December 19-21, 2026
@@ -5295,6 +5315,8 @@ conferences:
     editions:
       - year: 2026
         id: icimt-202626
+        call_identity: {seriesId: icimt, editionId: icimt-202626, callId: icimt-2026, parentEventId: null}
+        legacy_ids: [icimt-ei-202626]
         link: https://www.icimt.org/submission.html
         place: Shenzhen, China
         date_text: November 6-8, 2026
@@ -5313,6 +5335,8 @@ conferences:
     editions:
       - year: 2027
         id: icmip-202727
+        call_identity: {seriesId: icmip, editionId: icmip-202727, callId: icmip-2027, parentEventId: null}
+        legacy_ids: [icmip-ei-202727]
         link: https://www.icmip.org/
         place: Nagoya, Japan
         date_text: March 27-30, 2027

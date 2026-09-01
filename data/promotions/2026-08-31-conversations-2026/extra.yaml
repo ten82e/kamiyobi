@@ -20,6 +20,9 @@ conferences:
             kind: paper
             label: paper
             precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-conversations-2026
+              resolution: resolution-1ce0a3de2c705a0f
             round: 1
             track: ''
         edition_id: conversations-2026

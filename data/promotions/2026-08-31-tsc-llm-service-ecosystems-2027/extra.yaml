@@ -21,6 +21,9 @@ conferences:
             kind: paper
             label: paper
             precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-tsc-llm-service-ecosystems-2027
+              resolution: resolution-0c8d7d7f0fd8dbe1
             round: 1
             track: ''
         edition_id: tsc-llm-service-ecosystems-2027

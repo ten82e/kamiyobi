@@ -13,6 +13,7 @@ import {
   healthReport,
   toJson,
 } from "../src/build.ts";
+import { validateIdentityMigrationManifest } from "../src/identity-migration.ts";
 import { mergeDeadlineSlots } from "../src/merge.ts";
 import { deadlinesOf as localDeadlines } from "../src/sources/local.ts";
 import { resolvePrimaryObservations } from "../src/sources/primary.ts";
@@ -50,14 +51,40 @@ it("health-gate reads last-known-good and writes the next explicit artifact", ()
 
   const blocked = join(dir, "blocked.json");
   const blockedNext = join(dir, "blocked-next.json");
+  const violationReport = join(dir, "nested", "violations.json");
   writeFileSync(blocked, `${JSON.stringify({ ...report, source_failures: ["ccfddl"] })}\n`);
   const failed = spawnSync(
     process.execPath,
-    ["scripts/health-gate.ts", blocked, previous, blockedNext],
+    ["scripts/health-gate.ts", "--report", violationReport, blocked, previous, blockedNext],
     { cwd: REPO_ROOT, encoding: "utf8" },
   );
   expect(failed.status).toBe(1);
   expect(existsSync(blockedNext)).toBe(false);
+  expect(JSON.parse(readFileSync(violationReport, "utf8"))).toMatchObject({
+    ok: false,
+    exit_status: 1,
+  });
+
+  const malformedObservation = join(dir, "observation.json");
+  const observationViolationReport = join(dir, "nested", "observation-violations.json");
+  writeFileSync(malformedObservation, "{\n");
+  const observationFailed = spawnSync(
+    process.execPath,
+    [
+      "scripts/health-gate.ts",
+      "--report",
+      observationViolationReport,
+      "--observation-baseline",
+      malformedObservation,
+      blocked,
+    ],
+    { cwd: REPO_ROOT, encoding: "utf8" },
+  );
+  expect(observationFailed.status).toBe(1);
+  expect(JSON.parse(readFileSync(observationViolationReport, "utf8"))).toMatchObject({
+    ok: false,
+    exit_status: 1,
+  });
 });
 
 const SLOT = deadlineSlotId("venue", "venue26", "paper", 1, "");
@@ -172,9 +199,175 @@ it("enforces every interval and precision transition", () => {
       },
       { ...oldExact, schema_version: 2 },
     ).ok,
-  ).toBe(true);
+  ).toBe(false);
   expect(evaluateHealthGate(health([]), oldExact).ok).toBe(false);
   expect(evaluateHealthGate(health([], "2026-09-02T00:00:00Z"), oldExact).ok).toBe(true);
+});
+
+it("allows only explicit identity renames and duplicate collapses", () => {
+  const at = "2026-09-01T12:00:00.000Z";
+  const oldSlot = (venue: string): HealthDeadlineRef => ({
+    deadline_id: deadlineSlotId(venue, "venue26", "paper", 1, ""),
+    at_utc: at,
+    edition_year: 2026,
+  });
+  const currentSlot = exact(at, {
+    deadline_id: deadlineSlotId("venue", "venue26", "paper", 1, ""),
+  });
+  const migration = (from: string, action: "rename" | "duplicate-collapse") => ({
+    from: {
+      venue: from,
+      edition: "*",
+      kind: "paper",
+      round: 1,
+      track: "",
+      earliest_utc: at,
+      latest_utc: at,
+    },
+    to: { venue: "venue", edition: "venue26", kind: "paper", round: 1, track: "" },
+    action,
+    evidence_ref: `data://migration/${from}`,
+  });
+  const manifest = {
+    schema_version: 1 as const,
+    from_identity_revision: "legacy-public-key",
+    to_identity_revision: "identity-v1",
+    migrations: [migration("legacy", "rename")],
+  };
+  expect(
+    evaluateHealthGate(
+      { ...health([currentSlot]), identity_migrations: manifest },
+      health([oldSlot("legacy")]),
+    ).ok,
+  ).toBe(true);
+  const missingManifest = evaluateHealthGate(health([currentSlot]), health([oldSlot("legacy")]));
+  expect(missingManifest.ok).toBe(false);
+  expect(missingManifest.reasons).toContain(
+    `identity migration required: ${oldSlot("legacy").deadline_id}`,
+  );
+
+  const collapsed = {
+    ...manifest,
+    migrations: [
+      migration("legacy-a", "duplicate-collapse"),
+      migration("legacy-b", "duplicate-collapse"),
+    ],
+  };
+  expect(
+    evaluateHealthGate(
+      { ...health([currentSlot]), identity_migrations: collapsed },
+      health([oldSlot("legacy-a"), oldSlot("legacy-b")]),
+    ).ok,
+  ).toBe(true);
+
+  const invalid = {
+    ...manifest,
+    migrations: [migration("legacy", "rename")],
+  };
+  invalid.migrations[0].to = {
+    venue: "missing",
+    edition: "venue26",
+    kind: "paper",
+    round: 1,
+    track: "",
+  };
+  expect(
+    evaluateHealthGate(
+      { ...health([currentSlot]), identity_migrations: invalid },
+      health([oldSlot("legacy")]),
+    ).reasons,
+  ).toContain(
+    "identity migration manifest invalid: migration target does not exist: missing|venue26|paper|1|",
+  );
+});
+
+it("rejects ambiguous and cyclic migration manifests", () => {
+  const endpoint = (venue: string, edition: string) => ({
+    venue,
+    edition,
+    kind: "paper",
+    round: 1,
+    track: "",
+  });
+  const common = {
+    schema_version: 1 as const,
+    from_identity_revision: "old",
+    to_identity_revision: "new",
+    evidence_ref: "test://identity",
+  };
+  expect(validateIdentityMigrationManifest(null)).toContain(
+    "identity migration manifest must be an object",
+  );
+  expect(
+    validateIdentityMigrationManifest({
+      ...common,
+      migrations: [
+        {
+          from: endpoint("old", "e"),
+          to: { ...endpoint("new", "e"), track: "*" },
+          action: "rename",
+          evidence_ref: common.evidence_ref,
+        },
+      ],
+    }),
+  ).toContain("migrations[0].to: to track cannot be a wildcard");
+  expect(
+    validateIdentityMigrationManifest({
+      ...common,
+      migrations: [
+        {
+          from: endpoint("old", "e"),
+          to: endpoint("a", "e"),
+          action: "rename",
+          evidence_ref: common.evidence_ref,
+        },
+        {
+          from: endpoint("old", "e"),
+          to: endpoint("b", "e"),
+          action: "rename",
+          evidence_ref: common.evidence_ref,
+        },
+      ],
+    }),
+  ).toContain("multiple migration targets for old|e|paper|1|\0\0");
+  expect(
+    validateIdentityMigrationManifest({
+      ...common,
+      migrations: [
+        {
+          from: endpoint("a", "e"),
+          to: endpoint("b", "e"),
+          action: "rename",
+          evidence_ref: common.evidence_ref,
+        },
+        {
+          from: endpoint("b", "e"),
+          to: endpoint("a", "e"),
+          action: "rename",
+          evidence_ref: common.evidence_ref,
+        },
+      ],
+    }),
+  ).toContain("identity migration cycle detected");
+  expect(
+    validateIdentityMigrationManifest({
+      ...common,
+      migrations: [
+        {
+          from: endpoint("a", "*"),
+          to: endpoint("b", "e"),
+          action: "rename",
+          evidence_ref: common.evidence_ref,
+        },
+        {
+          from: endpoint("b", "e"),
+          to: endpoint("a", "e"),
+          action: "rename",
+          evidence_ref: common.evidence_ref,
+        },
+      ],
+    }),
+  ).toContain("identity migration cycle detected");
 });
 
 it("requires fallback coverage for every failed source", () => {

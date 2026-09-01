@@ -3,25 +3,30 @@
  * Ported from scripts/sources/local.py.
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { load as loadYaml } from "js-yaml";
 import {
   asDate,
+  type CategoryAssignment,
   type Conference,
+  callIdentityOf,
   type Deadline,
   type DeadlineKind,
   deadlineEvidence,
   type Edition,
   embeddedTimezone,
+  eventDatePrecisionOf,
   fmtDate,
   kindOf,
   parseDateRange,
   parseInstant,
+  promotionRefOf,
   refineKindWithLabel,
   roundOf,
   slug,
+  supersededDeadlinesOf,
   warn,
 } from "../model.ts";
 
@@ -29,6 +34,16 @@ export const NAME = "local";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 export const DEFAULT_PATH = join(ROOT, "data", "extra.yaml");
+export const MANUAL_PATH = join(ROOT, "data", "manual.yaml");
+export const CURATED_PATH = join(ROOT, "data", "curated.generated.yaml");
+
+export function localSourcePaths(root = ROOT): string[] {
+  const manual = join(root, "data", "manual.yaml");
+  const curated = join(root, "data", "curated.generated.yaml");
+  return existsSync(manual) && existsSync(curated)
+    ? [manual, curated]
+    : [join(root, "data", "extra.yaml")];
+}
 
 const LEGACY_KIND_KEYS: Array<[DeadlineKind, string, string[]]> = [
   ["abstract", "Abstract submission", ["abstract_deadline", "abstract"]],
@@ -63,6 +78,8 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
       String(rec.kind ?? rec.type ?? ""),
     );
     const label = String(rec.label ?? kind);
+    const superseded = supersededDeadlinesOf(rec.superseded_deadlines);
+    const promotionRef = promotionRefOf(rec.promotion_ref ?? rec.promotionRef);
     const track = String(rec.track ?? "").trim();
     if (rec.precision === "date-only") {
       const localDate = asDate(rec.date);
@@ -85,6 +102,8 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
           sourceUrl,
           originalValue: String(rec.date),
         }),
+        ...(superseded.length ? { superseded_deadlines: superseded } : {}),
+        ...(promotionRef ? { promotion_ref: promotionRef } : {}),
       });
       continue;
     }
@@ -106,6 +125,8 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
         sourceUrl,
         originalValue: String(rec.date),
       }),
+      ...(superseded.length ? { superseded_deadlines: superseded } : {}),
+      ...(promotionRef ? { promotion_ref: promotionRef } : {}),
     });
   }
   if (out.length === 0) {
@@ -129,6 +150,12 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
                 sourceUrl,
                 originalValue: String(val),
               }),
+              ...(supersededDeadlinesOf(raw.superseded_deadlines).length
+                ? { superseded_deadlines: supersededDeadlinesOf(raw.superseded_deadlines) }
+                : {}),
+              ...(promotionRefOf(raw.promotion_ref ?? raw.promotionRef)
+                ? { promotion_ref: promotionRefOf(raw.promotion_ref ?? raw.promotionRef) }
+                : {}),
             });
           }
           break;
@@ -213,12 +240,15 @@ export function editionOf(
   }
   const editionId = String(raw.id ?? `${key}${String(year % 100).padStart(2, "0")}`);
   const link = String(raw.link ?? "");
+  const callIdentity = callIdentityOf(raw.call_identity ?? raw.callIdentity);
+  const legacyIds = toStringArray(raw.legacy_ids ?? raw.legacyIds);
   return {
     year,
     edition_id: editionId,
     link,
     place: String(raw.place ?? ""),
     date_text: dateText,
+    event_date_precision: eventDatePrecisionOf(raw.event_date_precision, dateText, start, end),
     event_start: start,
     event_end: end,
     deadlines: deadlinesOf(raw),
@@ -228,6 +258,8 @@ export function editionOf(
       ...(link ? { officialUrls: [link] } : {}),
       sourceIds: { [NAME]: editionId },
     },
+    ...(callIdentity ? { call_identity: callIdentity } : {}),
+    ...(legacyIds.length ? { legacy_ids: legacyIds } : {}),
   };
 }
 
@@ -278,6 +310,30 @@ export function parseFile(path: string | null | undefined): Conference[] {
         }
       }
     }
+    const categoryAssignments: CategoryAssignment[] = Array.isArray(raw.category_assignments)
+      ? raw.category_assignments
+          .filter((item): item is Record<string, unknown> =>
+            Boolean(item && typeof item === "object"),
+          )
+          .flatMap((item) => {
+            const category = String(item.category ?? "").trim();
+            const reason = String(item.reason ?? "");
+            return category &&
+              ["source-subfield", "explicit-venue-rule", "manual-review", "name-keyword"].includes(
+                reason,
+              )
+              ? [
+                  {
+                    category,
+                    reason: reason as CategoryAssignment["reason"],
+                    ...(typeof item.evidence === "string" && item.evidence.trim()
+                      ? { evidence: item.evidence.trim() }
+                      : {}),
+                  },
+                ]
+              : [];
+          })
+      : [];
     out.push({
       key,
       title: title || key,
@@ -297,6 +353,7 @@ export function parseFile(path: string | null | undefined): Conference[] {
         ...(link ? { officialDomains: [link] } : {}),
         sourceIds: { [NAME]: key },
       },
+      ...(categoryAssignments.length ? { category_assignments: categoryAssignments } : {}),
     });
   }
   return out;
@@ -304,13 +361,15 @@ export function parseFile(path: string | null | undefined): Conference[] {
 
 export class LocalSource {
   name = NAME;
+  readonly paths: string[];
   readonly path: string;
 
-  constructor(path: string = DEFAULT_PATH) {
-    this.path = path;
+  constructor(path: string | string[] = DEFAULT_PATH) {
+    this.paths = (Array.isArray(path) ? path : [path]).filter(Boolean);
+    this.path = this.paths[0] ?? DEFAULT_PATH;
   }
 
   async load(): Promise<Conference[]> {
-    return parseFile(this.path);
+    return this.paths.flatMap((path) => parseFile(path));
   }
 }

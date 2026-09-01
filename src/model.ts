@@ -48,6 +48,78 @@ export type EvidenceClass =
 
 export type EvidenceField = "date" | "time" | "timezone" | "kind" | "round" | "track";
 
+export type IdentityProvider =
+  | "easychair"
+  | "openreview"
+  | "hotcrp"
+  | "github-pages"
+  | "acm"
+  | "ieee"
+  | "dedicated-domain"
+  | "unknown";
+
+export interface ProviderIdentity {
+  provider: IdentityProvider;
+  providerKey: string;
+  strength: "explicit" | "provider-scoped" | "dedicated-domain" | "weak";
+}
+
+export type DeadlineChangeKind =
+  | "unchanged"
+  | "precision-upgrade"
+  | "extension"
+  | "pull-in"
+  | "precision-downgrade"
+  | "different-track"
+  | "ambiguous";
+
+export interface SupersededDeadline {
+  value: string;
+  precision: "exact" | "date-only";
+  source: string;
+  evidenceRef?: string;
+  status: "superseded";
+  supersededBy: string;
+  reason: "official-extension" | "precision-upgrade" | "duplicate-promotion" | "manual-resolution";
+  supersededAt: string;
+}
+
+export type EventDatePrecision =
+  | "exact-range"
+  | "single-day"
+  | "month-only"
+  | "not-announced"
+  | "unverified";
+
+const EVENT_DATE_PRECISIONS = new Set<EventDatePrecision>([
+  "exact-range",
+  "single-day",
+  "month-only",
+  "not-announced",
+  "unverified",
+]);
+
+/** Preserve source wording while making the amount of date knowledge explicit. */
+export function eventDatePrecisionOf(
+  explicit: unknown,
+  dateText: string,
+  start: Date | null,
+  end: Date | null,
+): EventDatePrecision {
+  if (typeof explicit === "string" && EVENT_DATE_PRECISIONS.has(explicit as EventDatePrecision))
+    return explicit as EventDatePrecision;
+  if (start && end) return start.getTime() === end.getTime() ? "single-day" : "exact-range";
+  if (/\b(?:tbd|tba|not announced|to be announced)\b|未定|未発表/i.test(dateText))
+    return "not-announced";
+  if (
+    /\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b(?:\s+20\d{2})?|20\d{2}\s*[年/-]\s*\d{1,2}\s*月?/i.test(
+      dateText,
+    )
+  )
+    return "month-only";
+  return "unverified";
+}
+
 export interface DeadlineEvidence {
   source_name: string;
   source_url: string;
@@ -174,6 +246,8 @@ interface DeadlineBase {
   evidence?: DeadlineEvidence[];
   origins?: DeadlineOrigin[];
   conflicts?: DeadlineConflict[];
+  superseded_deadlines?: SupersededDeadline[];
+  promotion_ref?: PromotionRef;
   selection_rule?: string;
   /** Optional re-verification tracking for curated deadlines. */
   verification?: VerificationState;
@@ -220,6 +294,7 @@ export function deadlineTrackKey(
     type,
     `${type}-submission`,
     `${type}-deadline`,
+    `${type}-submission-deadline`,
     "submission",
     "deadline",
   ]);
@@ -256,9 +331,17 @@ export interface VerificationState {
     | "pending"
     | "verified"
     | "changed"
+    | "retryable"
     | "source-unreachable"
     | "parser-failed"
     | "manual-required";
+  page_id?: string;
+  source_name?: string;
+  source_class?: "official-cfp" | "publisher" | "official-homepage" | "aggregator" | "unknown";
+  provider_identity?: ProviderIdentity;
+  label_signature?: string;
+  selector_or_field?: string;
+  adapter?: string;
 }
 
 /**
@@ -286,6 +369,97 @@ export function computeNextCheckAt(deadlineUtc: Date | null, now: Date): string 
   return new Date(clampedMs).toISOString();
 }
 
+type DeadlineChangeRecord = Record<string, unknown>;
+
+function changePrecision(value: DeadlineChangeRecord): "exact" | "date-only" {
+  return value.precision === "date-only" || value.local_date !== undefined ? "date-only" : "exact";
+}
+
+function changeKind(value: DeadlineChangeRecord): string {
+  return String(value.kind ?? "other").trim() || "other";
+}
+
+function changeRound(value: DeadlineChangeRecord): number {
+  const round = Number(value.round ?? 1);
+  return Number.isInteger(round) && round > 0 ? round : 1;
+}
+
+function changeTrack(value: DeadlineChangeRecord): string {
+  return deadlineTrackKey(
+    String(value.label ?? ""),
+    changeKind(value),
+    typeof value.track === "string" ? value.track : "",
+  );
+}
+
+function changeDate(value: DeadlineChangeRecord): string | null {
+  if (changePrecision(value) === "date-only") {
+    const local = String(value.local_date ?? value.date ?? "");
+    return /^\d{4}-\d{2}-\d{2}$/.test(local) ? local : null;
+  }
+  const normalized =
+    typeof value.date === "string" && typeof value.tz === "string"
+      ? parseInstant(value.date, value.tz)
+      : null;
+  const raw =
+    normalized ??
+    (value.at_utc instanceof Date ? value.at_utc.toISOString() : (value.utc ?? value.date));
+  const parsed = raw instanceof Date ? raw : new Date(String(raw ?? ""));
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}
+
+function changeTime(value: DeadlineChangeRecord): number | null {
+  const parsedWithZone =
+    typeof value.date === "string" && typeof value.tz === "string"
+      ? parseInstant(value.date, value.tz)
+      : null;
+  if (parsedWithZone) return parsedWithZone.getTime();
+  const raw = value.at_utc instanceof Date ? value.at_utc : (value.utc ?? value.date);
+  if (raw instanceof Date) return raw.getTime();
+  const parsed = new Date(String(raw ?? ""));
+  return Number.isNaN(parsed.getTime()) ? null : parsed.getTime();
+}
+
+/** Classify a changed slot before any value is replaced. */
+export function classifyDeadlineChange(
+  previous: Deadline | Record<string, unknown>,
+  next: Deadline | Record<string, unknown>,
+): DeadlineChangeKind {
+  const oldValue = previous as unknown as DeadlineChangeRecord;
+  const newValue = next as unknown as DeadlineChangeRecord;
+  if (
+    changeKind(oldValue) !== changeKind(newValue) ||
+    changeRound(oldValue) !== changeRound(newValue)
+  )
+    return "ambiguous";
+  if (changeTrack(oldValue) !== changeTrack(newValue)) return "different-track";
+  const oldPrecision = changePrecision(oldValue);
+  const newPrecision = changePrecision(newValue);
+  const oldDate = changeDate(oldValue);
+  const newDate = changeDate(newValue);
+  if (oldPrecision === newPrecision && oldDate !== null && oldDate === newDate) return "unchanged";
+  if (oldPrecision === "date-only" && newPrecision === "exact") {
+    const exactDate = newDate?.slice(0, 10);
+    return exactDate === oldDate ? "precision-upgrade" : "ambiguous";
+  }
+  if (oldPrecision === "exact" && newPrecision === "date-only") return "precision-downgrade";
+  if (oldPrecision === "date-only" && newPrecision === "date-only") {
+    if (oldDate === null || newDate === null) return "ambiguous";
+    return newDate > oldDate ? "extension" : "pull-in";
+  }
+  const oldTime = changeTime(oldValue);
+  const newTime = changeTime(newValue);
+  if (oldTime === null || newTime === null) return "ambiguous";
+  if (Math.abs(newTime - oldTime) > 30 * DAY_MS) return "ambiguous";
+  return newTime > oldTime ? "extension" : "pull-in";
+}
+
+export function explicitDeadlineExtension(evidence: string | undefined): boolean {
+  return /\b(?:extend(?:ed|s|ing)?|extension|new deadline|deadline changed|再延長|延長|延期)\b/i.test(
+    evidence ?? "",
+  );
+}
+
 export interface DeadlineEstimate {
   point_estimate: string;
   window_start: string;
@@ -302,6 +476,7 @@ export interface VenueIdentity {
   officialDomains?: string[];
   aliases?: string[];
   sourceIds?: Record<string, string>;
+  providerIdentities?: ProviderIdentity[];
 }
 
 /** Explicit edition identity supplements the legacy public `edition_id` field. */
@@ -312,6 +487,20 @@ export interface EditionIdentity {
   sourceIds?: Record<string, string>;
 }
 
+/** Identity of one call for papers, distinct from a venue/edition label. */
+export interface CallIdentity {
+  seriesId: string;
+  editionId: string;
+  callId: string;
+  parentEventId: string | null;
+}
+
+/** Stable reference from a published deadline to its promotion evidence. */
+export interface PromotionRef {
+  batch: string;
+  resolution: string;
+}
+
 export interface Edition {
   /** Conference or workshop edition year, not the deadline's calendar year. */
   year: number;
@@ -319,6 +508,7 @@ export interface Edition {
   link: string;
   place: string;
   date_text: string;
+  event_date_precision?: EventDatePrecision;
   /** Calendar dates kept as UTC midnights. */
   event_start: Date | null;
   event_end: Date | null;
@@ -327,6 +517,8 @@ export interface Edition {
   estimate?: DeadlineEstimate;
   source: string;
   identity?: EditionIdentity;
+  call_identity?: CallIdentity;
+  legacy_ids?: string[];
 }
 
 export interface Conference {
@@ -350,6 +542,7 @@ export interface Conference {
 export interface CategoryAssignment {
   category: string;
   reason: "source-subfield" | "explicit-venue-rule" | "manual-review" | "name-keyword";
+  evidence?: string;
 }
 
 // --------------------------------------------------------------------------
@@ -568,16 +761,21 @@ export function asDate(value: unknown): Date | null {
   if (value instanceof Date) return dateOnly(value);
   const s = String(value).trim();
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
-  if (!m) return null;
-  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
-  if (
-    d.getUTCFullYear() !== Number(m[1]) ||
-    d.getUTCMonth() !== Number(m[2]) - 1 ||
-    d.getUTCDate() !== Number(m[3])
-  ) {
-    return null;
+  if (m) {
+    const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+    if (
+      d.getUTCFullYear() !== Number(m[1]) ||
+      d.getUTCMonth() !== Number(m[2]) - 1 ||
+      d.getUTCDate() !== Number(m[3])
+    ) {
+      return null;
+    }
+    return d;
   }
-  return d;
+  // Source snapshots retain parser-native ISO timestamps; normalize them to
+  // the date-only representation used by the public JSON contract.
+  const parsed = Date.parse(s);
+  return Number.isFinite(parsed) ? dateOnly(new Date(parsed)) : null;
 }
 
 export interface DateOnlyWindow {
@@ -1467,6 +1665,42 @@ function identityStrings(value: unknown): string[] {
   ].sort(cmpStr);
 }
 
+function providerIdentityOf(value: unknown): ProviderIdentity | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const raw = value as Record<string, unknown>;
+  const providers = new Set<IdentityProvider>([
+    "easychair",
+    "openreview",
+    "hotcrp",
+    "github-pages",
+    "acm",
+    "ieee",
+    "dedicated-domain",
+    "unknown",
+  ]);
+  const strengths = new Set<ProviderIdentity["strength"]>([
+    "explicit",
+    "provider-scoped",
+    "dedicated-domain",
+    "weak",
+  ]);
+  const provider = String(raw.provider ?? "") as IdentityProvider;
+  const key = String(raw.providerKey ?? raw.provider_key ?? "").trim();
+  const strength = String(raw.strength ?? "weak") as ProviderIdentity["strength"];
+  return providers.has(provider) && key && strengths.has(strength)
+    ? { provider, providerKey: key, strength }
+    : undefined;
+}
+
+function providerIdentitiesOf(value: unknown): ProviderIdentity[] {
+  return (Array.isArray(value) ? value : [])
+    .map(providerIdentityOf)
+    .filter((item): item is ProviderIdentity => item !== undefined)
+    .sort((left, right) =>
+      cmpStr(`${left.provider}\0${left.providerKey}`, `${right.provider}\0${right.providerKey}`),
+    );
+}
+
 function venueIdentityOf(value: unknown): VenueIdentity | undefined {
   if (!value || typeof value !== "object") return undefined;
   const raw = value as Record<string, unknown>;
@@ -1485,17 +1719,22 @@ function venueIdentityOf(value: unknown): VenueIdentity | undefined {
       .filter(([source]) => source)
       .sort(([left], [right]) => cmpStr(left, right)),
   );
+  const providerIdentities = providerIdentitiesOf(
+    raw.providerIdentities ?? raw.provider_identities,
+  );
   return venueId ||
     dblpKey ||
     officialDomains.length ||
     aliases.length ||
-    Object.keys(sourceIds).length
+    Object.keys(sourceIds).length ||
+    providerIdentities.length
     ? {
         ...(venueId ? { venueId } : {}),
         ...(dblpKey ? { dblpKey } : {}),
         ...(officialDomains.length ? { officialDomains } : {}),
         ...(aliases.length ? { aliases } : {}),
         ...(Object.keys(sourceIds).length ? { sourceIds } : {}),
+        ...(providerIdentities.length ? { providerIdentities } : {}),
       }
     : undefined;
 }
@@ -1523,6 +1762,119 @@ function editionIdentityOf(value: unknown): EditionIdentity | undefined {
         ...(Object.keys(sourceIds).length ? { sourceIds } : {}),
       }
     : undefined;
+}
+
+export function callIdentityOf(value: unknown): CallIdentity | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const raw = value as Record<string, unknown>;
+  const seriesId = String(raw.seriesId ?? raw.series_id ?? "").trim();
+  const editionId = String(raw.editionId ?? raw.edition_id ?? "").trim();
+  const callId = String(raw.callId ?? raw.call_id ?? "").trim();
+  const parent = raw.parentEventId ?? raw.parent_event_id;
+  const parentEventId = parent === null || parent === undefined ? null : String(parent).trim();
+  return seriesId &&
+    editionId &&
+    callId &&
+    (parent === null || parent === undefined || parentEventId)
+    ? { seriesId, editionId, callId, parentEventId: parentEventId || null }
+    : undefined;
+}
+
+export function promotionRefOf(value: unknown): PromotionRef | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const raw = value as Record<string, unknown>;
+  const batch = String(raw.batch ?? "").trim();
+  const resolution = String(raw.resolution ?? raw.resolution_id ?? "").trim();
+  return batch && resolution ? { batch, resolution } : undefined;
+}
+
+function verificationStateOf(value: unknown): VerificationState | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const raw = value as Record<string, unknown>;
+  const status = String(raw.status ?? "") as VerificationState["status"];
+  const statuses = new Set<VerificationState["status"]>([
+    "pending",
+    "verified",
+    "changed",
+    "retryable",
+    "source-unreachable",
+    "parser-failed",
+    "manual-required",
+  ]);
+  const officialUrl = String(raw.official_url ?? raw.officialUrl ?? "").trim();
+  const nextCheck = String(raw.next_check_at ?? raw.nextCheckAt ?? "").trim();
+  if (
+    !officialUrl ||
+    !nextCheck ||
+    !statuses.has(status) ||
+    !Number.isFinite(Date.parse(nextCheck))
+  )
+    return undefined;
+  const providerIdentity = providerIdentityOf(raw.provider_identity ?? raw.providerIdentity);
+  return {
+    official_url: officialUrl,
+    last_attempt_at:
+      raw.last_attempt_at === null || raw.last_attempt_at === undefined
+        ? null
+        : String(raw.last_attempt_at),
+    last_verified_at:
+      raw.last_verified_at === null || raw.last_verified_at === undefined
+        ? null
+        : String(raw.last_verified_at),
+    next_check_at: new Date(Date.parse(nextCheck)).toISOString(),
+    content_hash:
+      raw.content_hash === null || raw.content_hash === undefined ? null : String(raw.content_hash),
+    status,
+    ...(typeof raw.page_id === "string" ? { page_id: raw.page_id } : {}),
+    ...(typeof raw.source_name === "string" ? { source_name: raw.source_name } : {}),
+    ...(typeof raw.source_class === "string"
+      ? { source_class: raw.source_class as VerificationState["source_class"] }
+      : {}),
+    ...(providerIdentity ? { provider_identity: providerIdentity } : {}),
+    ...(typeof raw.label_signature === "string" ? { label_signature: raw.label_signature } : {}),
+    ...(typeof raw.selector_or_field === "string"
+      ? { selector_or_field: raw.selector_or_field }
+      : {}),
+    ...(typeof raw.adapter === "string" ? { adapter: raw.adapter } : {}),
+  };
+}
+
+export function supersededDeadlinesOf(value: unknown): SupersededDeadline[] {
+  const reasons = new Set<SupersededDeadline["reason"]>([
+    "official-extension",
+    "precision-upgrade",
+    "duplicate-promotion",
+    "manual-resolution",
+  ]);
+  return (Array.isArray(value) ? value : [])
+    .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object"))
+    .flatMap((item) => {
+      const reason = String(item.reason ?? "") as SupersededDeadline["reason"];
+      const value = String(item.value ?? "").trim();
+      const source = String(item.source ?? "").trim();
+      const supersededBy = String(item.supersededBy ?? item.superseded_by ?? "").trim();
+      const supersededAt = String(item.supersededAt ?? item.superseded_at ?? "").trim();
+      return value &&
+        source &&
+        supersededBy &&
+        Number.isFinite(Date.parse(supersededAt)) &&
+        reasons.has(reason)
+        ? [
+            {
+              value,
+              precision: item.precision === "date-only" ? "date-only" : "exact",
+              source,
+              ...(typeof item.evidenceRef === "string" || typeof item.evidence_ref === "string"
+                ? { evidenceRef: String(item.evidenceRef ?? item.evidence_ref) }
+                : {}),
+              status: "superseded" as const,
+              supersededBy,
+              reason,
+              supersededAt: new Date(Date.parse(supersededAt)).toISOString(),
+            },
+          ]
+        : [];
+    });
 }
 
 /** Rebuild conferences from a `data.json`-shaped payload. */
@@ -1607,7 +1959,16 @@ export function conferencesFromJson(
           ...(evidence.length > 0 ? { evidence } : {}),
           ...(origins.length > 0 ? { origins } : {}),
           ...(conflicts.length > 0 ? { conflicts } : {}),
+          ...(supersededDeadlinesOf(dl.superseded_deadlines).length > 0
+            ? { superseded_deadlines: supersededDeadlinesOf(dl.superseded_deadlines) }
+            : {}),
+          ...(promotionRefOf(dl.promotion_ref ?? dl.promotionRef)
+            ? { promotion_ref: promotionRefOf(dl.promotion_ref ?? dl.promotionRef) }
+            : {}),
           ...(typeof dl.selection_rule === "string" ? { selection_rule: dl.selection_rule } : {}),
+          ...(verificationStateOf(dl.verification)
+            ? { verification: verificationStateOf(dl.verification) }
+            : {}),
         };
         if (dl.precision === "date-only") {
           const localDate = asDate(dl.local_date);
@@ -1620,7 +1981,7 @@ export function conferencesFromJson(
           continue;
         }
         if (!isConfirmedTimezone(String(dl.tz_raw ?? ""))) continue;
-        const at = parseInstant(dl.utc, "UTC");
+        const at = parseInstant(dl.utc ?? dl.at_utc ?? dl.atUtc, "UTC");
         if (at === null) continue;
         deadlines.push({
           ...base,
@@ -1631,10 +1992,13 @@ export function conferencesFromJson(
       }
       editions.push({
         year,
-        edition_id: String(ed.id ?? ""),
+        edition_id: String(ed.id ?? ed.edition_id ?? ""),
         link: String(ed.link ?? ""),
         place: String(ed.place ?? ""),
         date_text: String(ed.date_text ?? ""),
+        ...(typeof ed.event_date_precision === "string"
+          ? { event_date_precision: ed.event_date_precision as EventDatePrecision }
+          : {}),
         event_start: asDate(ed.event_start),
         event_end: asDate(ed.event_end),
         deadlines,
@@ -1642,6 +2006,12 @@ export function conferencesFromJson(
         ...(deadlineEstimateOf(ed.estimate) ? { estimate: deadlineEstimateOf(ed.estimate) } : {}),
         source: String(ed.source ?? ""),
         ...(identity ? { identity } : {}),
+        ...(callIdentityOf(ed.call_identity ?? ed.callIdentity)
+          ? { call_identity: callIdentityOf(ed.call_identity ?? ed.callIdentity) }
+          : {}),
+        ...(identityStrings(ed.legacy_ids ?? ed.legacyIds).length
+          ? { legacy_ids: identityStrings(ed.legacy_ids ?? ed.legacyIds) }
+          : {}),
       });
     }
     editions.sort((a, b) => a.year - b.year);
@@ -1676,7 +2046,15 @@ export function conferencesFromJson(
           ["source-subfield", "explicit-venue-rule", "manual-review", "name-keyword"].includes(
             reason,
           )
-          ? [{ category, reason: reason as CategoryAssignment["reason"] }]
+          ? [
+              {
+                category,
+                reason: reason as CategoryAssignment["reason"],
+                ...(typeof item.evidence === "string" && item.evidence.trim()
+                  ? { evidence: item.evidence.trim() }
+                  : {}),
+              },
+            ]
           : [];
       });
     out.push({

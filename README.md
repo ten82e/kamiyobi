@@ -16,7 +16,7 @@
 
 投稿判断に使う正規化データ全体は `data.json`、一覧画面用の現在・近日期間カタログは
 `catalog.json`、推薦モード用の会議プロフィールは `recommendation-index.json`、締切だけを扱う表は
-`data.csv`、品質監視用の健全性レポートは `health.json`、直近の締切と開催日は `upcoming.md` にある。静的サイトでは会議名・締切・公式サイトを
+`data.csv`、品質監視用の健全性レポートは `health.json`、直近の締切と開催日は `upcoming.md` にある。`data.json` と `health.json` には、旧 slot の統合を許可する明示的な `identity_migrations` 契約も含まれる。静的サイトでは会議名・締切・公式サイトを
 検索でき、推薦機能は必要時に推薦インデックスを取得して論文の PDF/TXT をブラウザ内で処理する。
 推薦インデックスは締切データと同じ公開物として維持され、埋め込みを取得・検証できない場合も
 サイト全体は公開され、語彙スコアのみの推薦に切り替わる。
@@ -53,15 +53,17 @@
 |---|---|---|
 | `ccfddl` | [ccfddl/ccf-deadlines](https://github.com/ccfddl/ccf-deadlines) | MIT |
 | `aideadlines` | [huggingface/ai-deadlines](https://github.com/huggingface/ai-deadlines) | MIT |
-| `local` | 本リポジトリの `data/extra.yaml` | MIT（本リポジトリ） |
+| `local` | 本リポジトリの `data/manual.yaml` と `data/curated.generated.yaml` | MIT（本リポジトリ） |
 
 発見ソース（候補生成）は `DBLP`、`OpenReview`、`wikiCFP`（70 カテゴリ）、`DBWorld` メーリス公開アーカイブ、`EasyChair` Smart CFP、IEEE ComSoc 誌特集号、IEICE 論文誌特集号、IPSJ 論文誌特集号である。
 DBWorld は[公開アーカイブ](https://dbworld.sigmod.org/)から、wikiCFP に載らない併設ワークショップ、ジャーナル特集号、締切延長通知を拾う。
 EasyChair は[公開 CFP 一覧](https://easychair.org/cfp)から、運営者が登録した締切、場所、トピックを分野フィルタ付きで取得する。
 IEICE と IPSJ は、それぞれ[特集号 CFP 一覧](https://www.ieice.org/eng_r/information/schedule/journals.php)と[特集論文募集一覧](https://www.ipsj.or.jp/journal/index.html)を使う。
-候補は締切を公式サイトで裏取りした後、`data/extra.yaml` に昇格する。
+候補は締切を公式サイトで裏取りした後、promotion batch を経て `data/curated.generated.yaml` に昇格する。
 
-上流が扱わない会議は `data/extra.yaml` に自前で収録している。
+手入力の会議は `data/manual.yaml` に記録する。
+`data/extra.yaml` は既存データからの移行入力として残し、正典にはしない。
+promotion から生成した正典を更新するには `npm run generate:curated` を実行する。
 帰属表示は [NOTICE.md](NOTICE.md) にある。
 本リポジトリ自体のライセンスは MIT で、全文は [LICENSE](LICENSE) にある。
 
@@ -84,7 +86,9 @@ node src/cli.ts discover --candidate-out data/discovered_candidates.yaml
 候補レジストリはこのコマンドで更新する。`data/discovered_candidates.yaml` に既存レコードを
 マージし、レビュー済みの状態・メモ・初回発見時刻は維持する。再発見時は最終発見時刻と
 証拠だけが更新される。
-候補は公式サイトで裏取りするまで `extra.yaml` には昇格しない。
+運用上の確認対象は `data/discovery/active.yaml` であり、期限切れ・重複・対象外などの候補は
+`data/discovery/archive.json` に理由付きで移す。
+候補は公式サイトで裏取りするまで `manual.yaml` または `curated.generated.yaml` には昇格しない。
 探索対象を分野や年で絞るには `--categories`（例: `hpc,systems`）と
 `--min-year`（省略時は実行時の UTC 年）を使う。
 
@@ -99,15 +103,18 @@ node src/cli.ts review
 
 **候補の昇格手順**（収録の裏取り原則: 締切は公式サイトで HTTP 確認できたもののみ）:
 
-1. `data/discovered_candidates.yaml` から気になる候補を選ぶ
+1. `data/discovery/active.yaml` から気になる候補を選ぶ
 2. `scripts/observe-cfp.ts --url <公式URL> --body <保存先>` で公式ページの応答と本文を保存する。`--body` は必須
 3. 観測 JSON に会議・カテゴリのレビュー結果を付け、`scripts/verify-cfp.ts` で本文 hash、公式ドメイン、抽出値、取得版を検証する
-4. `scripts/promote-candidates.ts` で本文を同梱した manifest 付き batch を生成し、昇格された `extra.yaml` を確認する
+4. `scripts/promote-candidates.ts` で本文を同梱した manifest 付き batch を生成し、`npm run generate:curated` で生成された正典を確認する
 5. ビルドして収録されることを確認する
 
 公式ページの再確認は、公開済み `data.json` の次回確認時刻を過ぎた締切だけを対象にする。
 本文は SHA-256 付きで `data/evidence/blobs/` に保存し、日付の変更は台帳へ記録する。
 公開データを自動上書きしないため、変更後の値は台帳の resolution を確認してから反映する。
+
+上流の取得結果は `data/source-snapshots/` に源ごとに保存する。
+一次ソースの退避は `data/source-snapshots/primary.json` を使い、オフラインビルドでも検証済み観測を復元できる。
 
 ```sh
 node src/cli.ts reverify --due --now 2026-08-31T00:00:00Z
@@ -122,12 +129,14 @@ node src/cli.ts reverify --due --now 2026-08-31T00:00:00Z
 node src/fetch-primary.ts --apply
 # 2. 候補探索（新規会議の発見）
 node src/cli.ts discover
-# 3. フルビルド（public/ を生成）
+# 3. promotion batch から local 正典を生成
+npm run generate:curated
+# 4. フルビルド（public/ を生成）
 node src/cli.ts build --out public
-# 4. 意味検査
+# 5. 意味検査
 npm run validate:data -- public/data.json
-# 5. health gate（前回成功時の health.json と比較）
-node scripts/health-gate.ts public/health.json --require-baseline data/next-last-known-good-health.json data/next-last-known-good-health.json
+# 6. health gate（前回成功時の health.json と比較）
+node scripts/health-gate.ts public/health.json --report work/health-gate-violations.json --require-baseline data/next-last-known-good-health.json
 ```
 
 全上流が fresh の場合だけ `data/snapshot.json` を更新する。このスナップショットは上流が
@@ -180,7 +189,7 @@ taxonomy:
 
 ランクによる絞り込みは `rank_filter` にある。
 空にすれば無条件で通る。
-`keep_if_no_rank` を真にしておくと、ランク情報を持たない会議（`data/extra.yaml` 由来のものなど）が落ちない。
+`keep_if_no_rank` を真にしておくと、ランク情報を持たない会議（local 正典由来のものなど）が落ちない。
 
 ```yaml
 rank_filter:
@@ -189,7 +198,7 @@ rank_filter:
   keep_if_no_rank: true
 ```
 
-上流に無い会議を足したいときは `data/extra.yaml` に書く。
+上流に無い会議を手入力で足したいときは `data/manual.yaml` に書く。
 上流の記述が誤っているときは `data/overrides.yaml` で訂正するか、除外する。
 どちらも編集後は手元でビルドし直して結果を確かめる。
 
@@ -204,7 +213,7 @@ rank_filter:
 
 締切を持たず開催日だけがわかっている会議（ISC High Performance・HOTI・P4 Workshop・Linux Plumbers Conference・情報処理学会 HPC 研究会など）は、種別「開催」の項目としてサイトと `upcoming.md` に出る。
 開催の行は会期の最終日を過ぎるまで既定の表示に残る。
-締切も開催日も裏が取れていない会議は、どこにも出さない（`data/extra.yaml` には未確認である旨のコメントだけを残してある）。
+締切も開催日も裏が取れていない会議は、どこにも出さない（手入力ファイルには未確認である旨のコメントだけを残せる）。
 国内の研究会・シンポジウム（`tags: [domestic-jp]`）は通しやすい発表枠として local 源で維持している。サイトの「国内研究会・国内シンポジウムのみ」で絞れる（`?domestic=1`）。
 
 会期は上流では自由文で書かれており、解釈できない書き方のものは開催イベントを作れない。
