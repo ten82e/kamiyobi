@@ -1,0 +1,205 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    # nightly は評価専用。semantic bundle が封印されたときだけ再 deploy する。
+    workflows: [recommendation-bundle]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-main
+  # A late workflow_run must not cancel the newer main push before its stale-SHA
+  # gate runs.  Pages deployments are serialized; both SHA gates below make the
+  # resulting publication monotonic with main.
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    if: ${{ github.event_name == 'push' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
+    runs-on: ubuntu-latest
+    outputs:
+      current: ${{ steps.main.outputs.current }}
+    steps:
+      - id: main
+        name: Check trigger is current main
+        env:
+          TRIGGER_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          current_main="$(git ls-remote "https://github.com/${{ github.repository }}.git" refs/heads/main | cut -f1)"
+          if [ "$current_main" = "$TRIGGER_SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "stale trigger; no build or deployment will run"
+          fi
+
+  build:
+    needs: gate
+    if: ${{ needs.gate.outputs.current == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Checkout merged main
+        if: ${{ github.event_name == 'push' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Checkout nightly commit
+        if: ${{ github.event_name == 'workflow_run' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: '24', cache: npm }
+      - name: Install dependencies
+        run: |
+          for i in 1 2 3; do npm ci && break; [ "$i" -lt 3 ] || exit 1; sleep 15; done
+      - name: Capture build time
+        run: echo "BUILD_NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+      - name: Build merged site
+        run: node src/cli.ts build --out public --offline --no-embeddings --cache .cache --now "$BUILD_NOW"
+      - name: Restore immutable recommendation bundle
+        if: ${{ github.event_name == 'workflow_run' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/kamiyobi-recommendation-bundle
+          gh run download "${{ github.event.workflow_run.id }}" \
+            --name "recommendation-bundle-${{ github.event.workflow_run.head_sha }}" \
+            --dir /tmp/kamiyobi-recommendation-bundle
+          node scripts/restore-recommendation-bundle.ts /tmp/kamiyobi-recommendation-bundle public
+      - name: Validate generated production data
+        run: npm run validate:data -- public/data.json --json
+      - name: Health gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/kamiyobi-health-baseline
+          current_sha=$(git rev-parse HEAD)
+          run_id=$(gh run list --workflow deploy.yml --branch main --status success --limit 5 --json databaseId,headSha | jq -r --arg sha "$current_sha" 'map(select(.headSha != $sha))[0].databaseId // empty')
+          if [ -n "$run_id" ]; then
+            if ! gh run download "$run_id" --name deploy-health-baseline --dir /tmp/kamiyobi-health-baseline; then
+              echo "previous deploy health artifact unavailable; building parent baseline"
+            fi
+          fi
+          if [ ! -s /tmp/kamiyobi-health-baseline/health.json ]; then
+            git worktree add --detach /tmp/kamiyobi-parent HEAD^
+            cd /tmp/kamiyobi-parent
+            npm ci
+            node src/cli.ts build --out /tmp/kamiyobi-parent-public --offline --no-embeddings --cache /tmp/kamiyobi-parent-cache --now "$BUILD_NOW"
+            cp /tmp/kamiyobi-parent-public/health.json /tmp/kamiyobi-health-baseline/health.json
+            cd "$GITHUB_WORKSPACE"
+          fi
+          node scripts/health-gate.ts public/health.json --require-baseline \
+            /tmp/kamiyobi-health-baseline/health.json /tmp/next-last-known-good-health.json
+          gate_status=$?
+          # Save current + baseline for diagnostics even on failure.
+          mkdir -p /tmp/kamiyobi-deploy-diagnostics
+          cp public/health.json /tmp/kamiyobi-deploy-diagnostics/current-health.json
+          cp /tmp/kamiyobi-health-baseline/health.json /tmp/kamiyobi-deploy-diagnostics/baseline-health.json
+          echo "$gate_status" > /tmp/kamiyobi-deploy-diagnostics/gate-status
+          exit "$gate_status"
+      - name: Upload deploy health diagnostics
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: deploy-health-diagnostics
+          path: /tmp/kamiyobi-deploy-diagnostics/
+          if-no-files-found: warn
+      - name: Upload deploy health baseline
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: deploy-health-baseline
+          path: public/health.json
+          if-no-files-found: error
+      - name: Upload publish manifest for attestation
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: publish-manifest
+          path: public/publish.json
+          if-no-files-found: error
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: public
+
+  attest:
+    needs: build
+    if: ${{ needs.build.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
+    steps:
+      - name: Download publish manifest
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: publish-manifest
+          path: public
+      - name: Attest publish manifest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: public/publish.json
+
+  deploy:
+    needs: [build, attest]
+    if: ${{ needs.build.result == 'success' && needs.attest.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download expected publish manifest
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: publish-manifest
+          path: /tmp/kamiyobi-expected
+      - name: Refuse stale main before deploy
+        run: |
+          expected=$(node -p 'JSON.parse(require("node:fs").readFileSync("/tmp/kamiyobi-expected/publish.json")).source_commit')
+          current_main="$(git ls-remote "https://github.com/${{ github.repository }}.git" refs/heads/main | cut -f1)"
+          test "$current_main" = "$expected"
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+      - name: Cross-check deployed manifest
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          cat > /tmp/kamiyobi-check-deployed.mjs <<'NODE'
+          import { readFileSync } from "node:fs";
+          const expected = JSON.parse(readFileSync("/tmp/kamiyobi-expected/publish.json", "utf8"));
+          const deployed = JSON.parse(readFileSync("/tmp/kamiyobi-deployed.json", "utf8"));
+          for (const key of ["source_commit", "content_id", "build_id"]) {
+            if (!expected[key] || deployed[key] !== expected[key]) throw new Error(`deployed ${key} mismatch`);
+          }
+          NODE
+          # CDN propagation can serve the previous deployment briefly after a
+          # same-commit semantic re-deploy; poll until the live manifest matches
+          # the artifact this run attested, then fail.
+          for attempt in $(seq 1 20); do
+            curl --fail --silent --show-error --location "$PAGE_URL"publish.json -o /tmp/kamiyobi-deployed.json
+            if node /tmp/kamiyobi-check-deployed.mjs; then
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "deployed manifest never matched the attested publish manifest"
+          exit 1

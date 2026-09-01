@@ -1169,7 +1169,8 @@ it("README documents every discover CLI flag (--categories/--min-year regression
   // #247: usage() の discover セクションは 5 つのオプション（--out / --categories /
   // --min-year / --dry-run / --append）を定義するが、README の探索セクションは
   // --dry-run / --out / --append しか記載しておらず、--categories と --min-year が
-  // 未記載だった。ここでは discover セクションの全 --flag が README に現れることを検証する
+  // 未記載だった（update-data.yml は --min-year 2026 を実際に使っている）。
+  // ここでは discover セクションの全 --flag が README に現れることを検証する
   // （#239 の build 版テストと同じパターンの discover 版）。
   const lines = usage().split("\n");
   const discStart = lines.findIndex((l) => l.trim().startsWith("discover "));
@@ -1200,7 +1201,6 @@ it("README documents every CLI command (review command regression)", () => {
   expect(commands).toContain("build");
   expect(commands).toContain("discover");
   expect(commands).toContain("review");
-  expect(commands).toContain("reverify");
   const readme = readFileSync(join(REPO_ROOT, "README.md"), "utf8");
   for (const cmd of commands) {
     expect(readme, `README must document the CLI command ${cmd}`).toContain(cmd);
@@ -1545,12 +1545,28 @@ it("embeddingsStale は profile と manifest の不一致を再生成する", ()
   ).toBe(true);
 });
 
-it("offline build is reproducible from fixtures without live discovery", () => {
-  // offline build が fixture + snapshot だけで再現できることを確認する。
-  // ここでは discover と build が分離されていることだけを確認する。
-  const cli = readFileSync(join(REPO_ROOT, "src/cli.ts"), "utf8");
-  expect(cli).toContain("discover");
-  expect(cli).toContain("build");
+it("deploy builds the merged commit while update-data cannot publish Pages", () => {
+  const deploy = readFileSync(join(REPO_ROOT, ".github/workflows/deploy.yml"), "utf8");
+  const update = readFileSync(join(REPO_ROOT, ".github/workflows/update-data.yml"), "utf8");
+  expect(deploy).toContain("ref: $" + "{{ github.sha }}");
+  expect(deploy).toContain("Build merged site");
+  expect(deploy).toContain("--offline");
+  expect(deploy).toContain("Attest publish manifest");
+  expect(update).not.toMatch(/deploy-pages|upload-pages|pages: write/);
+});
+
+it("CI stays offline while the daily update owns live discovery", () => {
+  const ci = readFileSync(join(REPO_ROOT, ".github/workflows/ci.yml"), "utf8");
+  const update = readFileSync(join(REPO_ROOT, ".github/workflows/update-data.yml"), "utf8");
+
+  expect(ci).toContain("npm test");
+  expect(ci).toContain("--offline");
+  expect(ci).toContain("--no-embeddings");
+  expect(ci).toContain("Check offline result");
+  expect(ci).not.toContain("src/cli.ts discover");
+  expect(ci).not.toContain("smoke:");
+  expect(update).toContain("node src/cli.ts discover");
+  expect(update).toContain("--candidate-out data/discovered_candidates.yaml");
 });
 
 it("DEFAULT_CATEGORIES contains all 9 taxonomy domains", () => {
@@ -1659,7 +1675,7 @@ function jsFunction(html: string, name: string): string {
 
 // filter() is extracted from the emitted module; provide only its explicit module dependencies.
 const FILTER_RUNTIME_STUBS = [
-  "let semQuery = null, semEmbeddings = null;",
+  "let _lastIsJp = false, _lastLen = 0, semQuery = null, semEmbeddings = null;",
   "const activeData = { conferences: [] };",
   "const Recommender = { parsePaperLines: (text) => text ? [{ title: text }] : [], hasJapanese: () => false, contentWordCount: () => 0, autoDetectCats: () => [], venueCategories: () => [], journalRows: () => [], pastRepresentatives: () => [], rankMatches: (pairs, rank) => pairs.includes(rank), venueRecommendations: (rows) => rows.map((row) => ({ row, boosted: false, match: null, availability: null, fit: { score: 10, lexicalScore: 10, label: '', lexicalRank: 0, semanticRank: 0, semanticScore: 0 } })), comparePapers: () => 0 };",
 ].join("\n");

@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "2026-08-31-lascas-2027",
   "observations": {
-    "sha256": "76af724567de7ede2f1bdc4810e460bea9bcba12f09f6cf54d2c617a6de548f0"
+    "sha256": "97ee7cebe89c5a32ef61cb7c363fc6f3398fe8c0f57d27476ea429dad0135db9"
   },
   "resolutions": {
     "sha256": "4e476646d2c2fe185d4bb2e122b7f83a9c85498b998bd695941027e55740ab00"
@@ -12,7 +12,7 @@
   },
   "bodies": [
     {
-      "path": "bodies/102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1.body",
+      "path": "../../evidence/blobs/102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1.body",
       "sha256": "102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1"
     }
   ],

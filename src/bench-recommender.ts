@@ -923,7 +923,7 @@ export type RealPaperCoverage = "full" | "required";
 
 /** Frozen semantic production features.  The benchmark still performs lexical
  * retrieval and all ranking in the browser recommender; this file only replaces
- * remote model inference in required checks. */
+ * remote model inference in required CI. */
 export interface RequiredSemanticFeatures {
   version: 1;
   feature_schema: string[];
@@ -1067,6 +1067,37 @@ export interface FailureClassification {
   confidence: string;
 }
 
+export type FailureTaxonomyCounts = Record<FailureType, number>;
+
+export interface FailureTaxonomyByDimension {
+  language: Record<string, FailureTaxonomyCounts>;
+  category: Record<string, FailureTaxonomyCounts>;
+  venue_kind: Record<string, FailureTaxonomyCounts>;
+}
+
+/** Candidate cutoffs used to diagnose early retrieval pruning. */
+export type CandidateDepth = 50 | 100 | 200 | "all";
+export const CANDIDATE_DEPTHS = [50, 100, 200, "all"] as const satisfies readonly CandidateDepth[];
+
+export interface CandidateDepthQueryAudit {
+  candidate_count: number;
+  lexical_hit: boolean;
+  semantic_hit: boolean;
+  union_hit: boolean;
+  oracle_reranker_hit: boolean;
+  fused_rank: number | null;
+  reranker_hit: boolean;
+}
+
+export interface CandidateDepthSummary {
+  average_candidate_count: number;
+  lexical_recall: number;
+  semantic_recall: number;
+  union_recall: number;
+  oracle_reranker_recall_at_5: number;
+  reranker_recall_at_5: number;
+}
+
 export function classifyFailure(
   lexicalRank: number | null,
   semanticRank: number | null,
@@ -1084,7 +1115,9 @@ export function classifyFailure(
   const candidateHit = unionRank !== null && unionRank <= 50;
 
   let failureType: FailureType = "none";
-  if (!candidateHit) {
+  if (acceptableVenues.size === 0) {
+    failureType = "annotation";
+  } else if (!candidateHit) {
     failureType = "retrieval";
   } else if (!top5Hit) {
     failureType = "reranker";
@@ -1100,6 +1133,115 @@ export function classifyFailure(
     acceptable_total: acceptableVenues.size,
     confidence,
   };
+}
+
+function emptyFailureTaxonomyCounts(): FailureTaxonomyCounts {
+  return { none: 0, retrieval: 0, reranker: 0, annotation: 0, calibration: 0 };
+}
+
+function failureTaxonomyByDimension(
+  records: readonly RealPaperRecord[],
+  failures: Record<string, FailureClassification>,
+): FailureTaxonomyByDimension {
+  const output: FailureTaxonomyByDimension = { language: {}, category: {}, venue_kind: {} };
+  const add = (
+    dimension: keyof FailureTaxonomyByDimension,
+    label: string,
+    failure: FailureType,
+  ) => {
+    const current = output[dimension][label] ?? emptyFailureTaxonomyCounts();
+    current[failure] += 1;
+    output[dimension][label] = current;
+  };
+  for (const record of records) {
+    const failure = failures[record.paper_id]?.failure_type ?? "none";
+    add("language", record.language, failure);
+    add("venue_kind", record.venue_kind, failure);
+    const categories = record.domains.length > 0 ? record.domains : ["unknown"];
+    for (const category of categories) add("category", category, failure);
+  }
+  for (const dimension of Object.keys(output) as Array<keyof FailureTaxonomyByDimension>) {
+    output[dimension] = Object.fromEntries(
+      Object.entries(output[dimension]).sort(([left], [right]) => left.localeCompare(right)),
+    );
+  }
+  return output;
+}
+
+/**
+ * Compare lexical/semantic candidate cutoffs without changing the production
+ * score or reranker. The benchmark asks the recommender for the full ranked
+ * list once, then simulates the browser's early-pruning boundary here.
+ */
+export function candidateDepthAudit(
+  recommendations: VenueRecommendation[],
+  acceptable: ReadonlySet<string>,
+  depths: readonly CandidateDepth[] = CANDIDATE_DEPTHS,
+): Record<string, CandidateDepthQueryAudit> {
+  return Object.fromEntries(
+    depths.map((depth) => {
+      const candidateRecommendations = recommendations.filter((recommendation) => {
+        if (depth === "all") return true;
+        return (
+          (recommendation.fit.lexicalRank !== null && recommendation.fit.lexicalRank <= depth) ||
+          (recommendation.fit.semanticRank !== null && recommendation.fit.semanticRank <= depth)
+        );
+      });
+      const lexicalHit = recommendations.some(
+        (recommendation) =>
+          acceptable.has(recommendation.venueKey) &&
+          recommendation.fit.lexicalRank !== null &&
+          (depth === "all" || recommendation.fit.lexicalRank <= depth),
+      );
+      const semanticHit = recommendations.some(
+        (recommendation) =>
+          acceptable.has(recommendation.venueKey) &&
+          recommendation.fit.semanticRank !== null &&
+          (depth === "all" || recommendation.fit.semanticRank <= depth),
+      );
+      const unionHit = lexicalHit || semanticHit;
+      const fusedRank = realPaperRank(candidateRecommendations, acceptable);
+      return [
+        String(depth),
+        {
+          candidate_count: candidateRecommendations.length,
+          lexical_hit: lexicalHit,
+          semantic_hit: semanticHit,
+          union_hit: unionHit,
+          // An oracle reranker can put any acceptable candidate in the first 5
+          // slots, so its recall is exactly candidate-set coverage.
+          oracle_reranker_hit: unionHit,
+          fused_rank: fusedRank,
+          reranker_hit: fusedRank !== null && fusedRank <= 5,
+        },
+      ] as const;
+    }),
+  );
+}
+
+export function candidateDepthSummaries(
+  audits: Record<string, Record<string, CandidateDepthQueryAudit>>,
+): Record<string, CandidateDepthSummary> {
+  const paperAudits = Object.values(audits);
+  return Object.fromEntries(
+    CANDIDATE_DEPTHS.map((depth) => {
+      const values = paperAudits.map((audit) => audit[String(depth)]).filter(Boolean);
+      const count = Math.max(1, values.length);
+      const mean = (selector: (value: CandidateDepthQueryAudit) => number): number =>
+        benchV2Round(values.reduce((sum, value) => sum + selector(value), 0) / count);
+      return [
+        String(depth),
+        {
+          average_candidate_count: mean((value) => value.candidate_count),
+          lexical_recall: mean((value) => (value.lexical_hit ? 1 : 0)),
+          semantic_recall: mean((value) => (value.semantic_hit ? 1 : 0)),
+          union_recall: mean((value) => (value.union_hit ? 1 : 0)),
+          oracle_reranker_recall_at_5: mean((value) => (value.oracle_reranker_hit ? 1 : 0)),
+          reranker_recall_at_5: mean((value) => (value.reranker_hit ? 1 : 0)),
+        },
+      ] as const;
+    }),
+  );
 }
 
 export interface BootstrapConfidenceInterval {
@@ -1151,9 +1293,11 @@ export interface RealPaperSplitResult {
     union_recall_at_50: number;
     oracle_reranker_recall_at_5: number;
   };
-  candidate_depths?: Record<string, RealPaperCandidateDepthResult>;
+  /** Simulated browser candidate cutoffs, keyed by 50/100/200/all. */
+  candidate_depths?: Record<string, CandidateDepthSummary>;
   calibration: RecommendationCalibration;
   failure_taxonomy?: Record<FailureType, number>;
+  failure_taxonomy_by?: FailureTaxonomyByDimension;
   failure_details?: Record<
     string,
     {
@@ -1166,18 +1310,6 @@ export interface RealPaperSplitResult {
       acceptable_venues: string[];
     }
   >;
-}
-
-export interface RealPaperCandidateDepthResult {
-  queries: number;
-  effective_top_n: number;
-  mean_candidates: number;
-  lexical_recall: number;
-  semantic_recall: number;
-  union_recall: number;
-  /** Candidate-set ceiling assuming a perfect reranker. */
-  oracle_reranker_recall_at_5: number;
-  fused_recall_at_5: number;
 }
 
 export interface RealPaperNegativeRecord {
@@ -1250,11 +1382,7 @@ export interface RealPaperResult {
 
 export interface RealPaperRun {
   result: RealPaperResult;
-  timing: {
-    firstLoadMs: number;
-    repeatRecommendationMs: number;
-    candidateDepthMs: Record<string, number>;
-  };
+  timing: { firstLoadMs: number; repeatRecommendationMs: number };
 }
 
 function realPaperText(value: unknown): string {
@@ -1745,48 +1873,14 @@ function realPaperAbstention(
   };
 }
 
-interface CandidateDepthCounters {
-  queries: number;
-  candidateCount: number;
-  lexicalHits: number;
-  semanticHits: number;
-  unionHits: number;
-  fusedTop5Hits: number;
-}
-
-function candidateDepthResults(
-  counters: Record<string, CandidateDepthCounters>,
-  candidateRows: Record<string, number>,
-): Record<string, RealPaperCandidateDepthResult> {
-  return Object.fromEntries(
-    Object.entries(counters).map(([depth, value]) => {
-      const queries = Math.max(1, value.queries);
-      const round = (hits: number): number => benchV2Round(hits / queries);
-      return [
-        depth,
-        {
-          queries: value.queries,
-          effective_top_n: candidateRows[depth] ?? 0,
-          mean_candidates: benchV2Round(value.candidateCount / queries),
-          lexical_recall: round(value.lexicalHits),
-          semantic_recall: round(value.semanticHits),
-          union_recall: round(value.unionHits),
-          oracle_reranker_recall_at_5: round(value.unionHits),
-          fused_recall_at_5: round(value.fusedTop5Hits),
-        },
-      ];
-    }),
-  );
-}
-
 function realPaperSplitResult(
   records: RealPaperRecord[],
   rankings: Record<string, RealPaperRanks>,
   confidence: Record<string, string>,
   predictedProbability?: Record<string, { top1: number; top5: number }>,
   failures?: Record<string, FailureClassification>,
+  candidateDepthAudits?: Record<string, Record<string, CandidateDepthQueryAudit>>,
   taxonomyDetail?: boolean,
-  candidateDepths?: Record<string, RealPaperCandidateDepthResult>,
 ): RealPaperSplitResult {
   const metrics = realPaperMetrics(records, rankings);
   const probabilities = records.map((record) => {
@@ -1826,7 +1920,9 @@ function realPaperSplitResult(
           (ranks.semantic !== null && ranks.semantic <= 50),
       ),
     },
-    ...(candidateDepths ? { candidate_depths: candidateDepths } : {}),
+    ...(candidateDepthAudits
+      ? { candidate_depths: candidateDepthSummaries(candidateDepthAudits) }
+      : {}),
     calibration: calibrationMetrics(probabilities),
     failure_taxonomy: failures
       ? Object.values(failures).reduce<Record<FailureType, number>>(
@@ -1837,6 +1933,7 @@ function realPaperSplitResult(
           { none: 0, retrieval: 0, reranker: 0, annotation: 0, calibration: 0 },
         )
       : undefined,
+    failure_taxonomy_by: failures ? failureTaxonomyByDimension(records, failures) : undefined,
     failure_details:
       taxonomyDetail && failures
         ? Object.fromEntries(
@@ -1870,14 +1967,14 @@ export function buildRealPaperResult(
       confidence: Record<string, string>;
       probability?: Record<string, { top1: number; top5: number }>;
       failures?: Record<string, FailureClassification>;
-      candidate_depths?: Record<string, RealPaperCandidateDepthResult>;
+      candidateDepths?: Record<string, Record<string, CandidateDepthQueryAudit>>;
     };
     heldout: {
       rankings: Record<string, RealPaperRanks>;
       confidence: Record<string, string>;
       probability?: Record<string, { top1: number; top5: number }>;
       failures?: Record<string, FailureClassification>;
-      candidate_depths?: Record<string, RealPaperCandidateDepthResult>;
+      candidateDepths?: Record<string, Record<string, CandidateDepthQueryAudit>>;
     };
     negative?: { rankings: Record<string, RealPaperRanks>; confidence: Record<string, string> };
   },
@@ -1900,8 +1997,8 @@ export function buildRealPaperResult(
         evaluations.dev.confidence,
         evaluations.dev.probability,
         evaluations.dev.failures,
+        evaluations.dev.candidateDepths,
         taxonomyDetail,
-        evaluations.dev.candidate_depths,
       ),
       heldout: realPaperSplitResult(
         heldout.records,
@@ -1909,8 +2006,8 @@ export function buildRealPaperResult(
         evaluations.heldout.confidence,
         evaluations.heldout.probability,
         evaluations.heldout.failures,
+        evaluations.heldout.candidateDepths,
         taxonomyDetail,
-        evaluations.heldout.candidate_depths,
       ),
       ...(negative && evaluations.negative
         ? {
@@ -2120,13 +2217,13 @@ export async function runRealPaperBenchmark(
     rows: ReturnType<typeof rowsFor>,
     bundle: (typeof benchmarkEmbeddings)["dev"],
     split: "dev" | "heldout" | "negative",
-    candidateDepth = rows.length,
   ): {
     rankings: RealPaperRanks;
     confidence: string;
     probability: { top1: number; top5: number };
     failure: FailureClassification;
     candidateKeys: Set<string>;
+    candidateDepths: Record<string, CandidateDepthQueryAudit>;
   } => {
     const vector = vectors.get(record.paper_id);
     if (!useFrozenFeatures && !vector)
@@ -2168,7 +2265,7 @@ export async function runRealPaperBenchmark(
       lines,
       semanticScores,
       Date.UTC(record.year, 0, 1),
-      { topN: candidateDepth, venueCats: Recommender.autoDetectCats(lines) },
+      { topN: rows.length, venueCats: Recommender.autoDetectCats(lines) },
     ) as VenueRecommendation[];
     const candidateFeatures = recommendations
       .map((recommendation) => ({
@@ -2177,13 +2274,9 @@ export async function runRealPaperBenchmark(
         features: recommendation.fit.rerankerFeatures,
       }))
       .sort((left, right) => left.venue.localeCompare(right.venue));
-    if (
-      fixed &&
-      candidateDepth === rows.length &&
-      JSON.stringify(fixed.candidates) !== JSON.stringify(candidateFeatures)
-    )
+    if (fixed && JSON.stringify(fixed.candidates) !== JSON.stringify(candidateFeatures))
       throw new Error(`required production feature mismatch: ${record.paper_id}`);
-    if (collectedFeatures && candidateDepth === rows.length)
+    if (collectedFeatures)
       collectedFeatures.push({
         paper_id: record.paper_id,
         record_sha256: requiredRecordHash({
@@ -2233,6 +2326,7 @@ export async function runRealPaperBenchmark(
         conf,
       ),
       candidateKeys: candidateKeySet,
+      candidateDepths: candidateDepthAudit(recommendations, acceptable),
     };
   };
   const evaluate = (
@@ -2244,92 +2338,24 @@ export async function runRealPaperBenchmark(
     confidence: Record<string, string>;
     probability: Record<string, { top1: number; top5: number }>;
     failures: Record<string, FailureClassification>;
-    candidate_depths?: Record<string, RealPaperCandidateDepthResult>;
-    candidate_depth_ms?: Record<string, number>;
+    candidateDepths: Record<string, Record<string, CandidateDepthQueryAudit>>;
   } => {
     const rankings: Record<string, RealPaperRanks> = {};
     const confidence: Record<string, string> = {};
     const probability: Record<string, { top1: number; top5: number }> = {};
     const failures: Record<string, FailureClassification> = {};
-    const depthKeys = ["50", "100", "200", "all"] as const;
-    const depthCounters = Object.fromEntries(
-      depthKeys.map((depth) => [
-        depth,
-        {
-          queries: 0,
-          candidateCount: 0,
-          lexicalHits: 0,
-          semanticHits: 0,
-          unionHits: 0,
-          fusedTop5Hits: 0,
-        },
-      ]),
-    ) as Record<string, CandidateDepthCounters>;
-    const depthElapsed = Object.fromEntries(depthKeys.map((depth) => [depth, 0])) as Record<
-      string,
-      number
-    >;
+    const candidateDepths: Record<string, Record<string, CandidateDepthQueryAudit>> = {};
     const rows = rowsFor(fixture.profile_year_max);
     Recommender.setNameIdf(Recommender.buildNameIdf(rows.map((row) => row.conf)));
-    const recordDepth = (
-      depth: (typeof depthKeys)[number],
-      evaluation: ReturnType<typeof recommend>,
-      acceptable: ReadonlySet<string>,
-      elapsedMs: number,
-    ): void => {
-      const counter = depthCounters[depth]!;
-      counter.queries++;
-      counter.candidateCount += evaluation.candidateKeys.size;
-      if (evaluation.rankings.lexical !== null) counter.lexicalHits++;
-      if (evaluation.rankings.semantic !== null) counter.semanticHits++;
-      if ([...acceptable].some((key) => evaluation.candidateKeys.has(key))) counter.unionHits++;
-      if (evaluation.rankings.fused !== null && evaluation.rankings.fused <= 5)
-        counter.fusedTop5Hits++;
-      depthElapsed[depth] = (depthElapsed[depth] ?? 0) + elapsedMs;
-    };
     for (const record of fixture.records) {
-      const started = performance.now();
       const evaluation = recommend(record, rows, bundle, split);
-      const elapsed = performance.now() - started;
       rankings[record.paper_id] = evaluation.rankings;
       confidence[record.paper_id] = evaluation.confidence;
       probability[record.paper_id] = evaluation.probability;
       failures[record.paper_id] = evaluation.failure;
-      if (split !== "negative") {
-        const acceptable = new Set("acceptable_venues" in record ? record.acceptable_venues : []);
-        recordDepth("all", evaluation, acceptable, elapsed);
-        for (const depth of [50, 100, 200] as const) {
-          const depthStart = performance.now();
-          const depthEvaluation = recommend(record, rows, bundle, split, depth);
-          recordDepth(
-            String(depth) as (typeof depthKeys)[number],
-            depthEvaluation,
-            acceptable,
-            performance.now() - depthStart,
-          );
-        }
-      }
+      candidateDepths[record.paper_id] = evaluation.candidateDepths;
     }
-    return {
-      rankings,
-      confidence,
-      probability,
-      failures,
-      ...(split !== "negative"
-        ? {
-            candidate_depths: candidateDepthResults(
-              depthCounters,
-              Object.fromEntries(
-                depthKeys.map((depth) => [
-                  depth,
-                  depth === "all" ? rows.length : Math.min(Number(depth), rows.length),
-                ]),
-              ),
-            ),
-            candidate_depth_ms: depthElapsed,
-          }
-        : {}),
-    };
+    return { rankings, confidence, probability, failures, candidateDepths };
   };
   Recommender.setReranker(
     JSON.parse(readFileSync(new URL("../data/recommender-reranker.json", import.meta.url), "utf8")),
@@ -2360,24 +2386,7 @@ export async function runRealPaperBenchmark(
         coverage,
         taxonomyDetail,
       ),
-      timing: {
-        firstLoadMs,
-        repeatRecommendationMs,
-        candidateDepthMs: {
-          ...Object.fromEntries(
-            Object.entries(evaluations.dev.candidate_depth_ms ?? {}).map(([depth, ms]) => [
-              `dev:${depth}`,
-              Number(ms.toFixed(2)),
-            ]),
-          ),
-          ...Object.fromEntries(
-            Object.entries(evaluations.heldout.candidate_depth_ms ?? {}).map(([depth, ms]) => [
-              `heldout:${depth}`,
-              Number(ms.toFixed(2)),
-            ]),
-          ),
-        },
-      },
+      timing: { firstLoadMs, repeatRecommendationMs },
     };
   } finally {
     Recommender.setNameIdf(null);
@@ -2850,8 +2859,7 @@ export async function main(
       console.log(JSON.stringify(run.result, null, 2));
       process.stderr.write(
         `real-bench: dev=${run.result.splits.dev.queries} heldout=${run.result.splits.heldout.queries} negative=${run.result.splits.negative?.queries ?? 0} ` +
-          `first_load_ms=${run.timing.firstLoadMs} repeat_recommendation_ms=${run.timing.repeatRecommendationMs} ` +
-          `candidate_depth_ms=${JSON.stringify(run.timing.candidateDepthMs)}\n`,
+          `first_load_ms=${run.timing.firstLoadMs} repeat_recommendation_ms=${run.timing.repeatRecommendationMs}\n`,
       );
       const regressions = realPaperRegressionReasons(
         run.result,

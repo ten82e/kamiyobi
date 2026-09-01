@@ -25,6 +25,16 @@ export interface ValidatorWarning {
   count?: number;
 }
 
+export interface DataQualityFinding {
+  code: string;
+  venueId: string;
+  editionId: string | null;
+  field: string;
+  locations: Array<{ source: string; path: string }>;
+  status: "unreviewed" | "accepted" | "fixed";
+  message: string;
+}
+
 export function validatorWarnings(warnings: readonly string[]): ValidatorWarning[] {
   return [...warnings]
     .map((message) => {
@@ -88,6 +98,88 @@ export function validatorWarningBaseline(warnings: readonly string[]): Validator
   );
 }
 
+function warningLocation(message: string): {
+  source: string;
+  path: string;
+  detail: string;
+} {
+  const sourceEnd = message.indexOf(": ");
+  const source = sourceEnd >= 0 ? message.slice(0, sourceEnd).trim() : "global";
+  const rest = sourceEnd >= 0 ? message.slice(sourceEnd + 2) : message;
+  const pathEnd = rest.indexOf(": ");
+  if (pathEnd < 0) return { source, path: "", detail: rest.trim() };
+  return {
+    source,
+    path: rest.slice(0, pathEnd).trim(),
+    detail: rest.slice(pathEnd + 2).trim(),
+  };
+}
+
+function qualityField(code: string): string {
+  return (
+    {
+      EVENT_DATE_UNSTRUCTURED: "event_date",
+      EVENT_RANGE_ANOMALY: "event_date",
+      CATEGORY_VOCABULARY_DIVERGENCE: "categories",
+      CATEGORY_REVIEW_EVIDENCE_MISSING: "categories",
+    }[code] ?? "unknown"
+  );
+}
+
+/** Collapse duplicate file/line warnings into one canonical identity issue. */
+export function canonicalDataQualityFindings(
+  warnings: readonly string[],
+  previous: readonly DataQualityFinding[] = [],
+): DataQualityFinding[] {
+  const prior = new Map(
+    previous.map((finding) => [
+      [finding.code, finding.venueId, finding.editionId ?? "", finding.field].join("\0"),
+      finding,
+    ]),
+  );
+  const grouped = new Map<string, DataQualityFinding>();
+  for (const warning of warnings) {
+    const parsed = validatorWarnings([warning])[0];
+    if (!parsed) continue;
+    const location = warningLocation(warning);
+    const pathParts = location.path.split("/").filter(Boolean);
+    const venueId = pathParts[0] || parsed.subject || "global";
+    const editionId = pathParts.length > 1 ? (pathParts[1] ?? null) : null;
+    const field = qualityField(parsed.code);
+    const key = [parsed.code, venueId, editionId ?? "", field].join("\0");
+    const existing = grouped.get(key);
+    const locations = [
+      ...(existing?.locations ?? []),
+      { source: location.source, path: location.path || venueId },
+    ].filter(
+      (item, index, values) =>
+        values.findIndex(
+          (candidate) => candidate.source === item.source && candidate.path === item.path,
+        ) === index,
+    );
+    const priorFinding = prior.get(key);
+    grouped.set(key, {
+      code: parsed.code,
+      venueId,
+      editionId,
+      field,
+      locations: locations.sort(
+        (left, right) =>
+          left.source.localeCompare(right.source) || left.path.localeCompare(right.path),
+      ),
+      status: priorFinding?.status ?? "unreviewed",
+      message: existing?.message ?? parsed.message,
+    });
+  }
+  return [...grouped.values()].sort(
+    (left, right) =>
+      left.code.localeCompare(right.code) ||
+      left.venueId.localeCompare(right.venueId) ||
+      (left.editionId ?? "").localeCompare(right.editionId ?? "") ||
+      left.field.localeCompare(right.field),
+  );
+}
+
 const INVISIBLE = /[\u200b-\u200f\u202a-\u202e\u2060\ufeff\ufffd]/u;
 const YEAR = /\b(20\d{2})\b/g;
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -103,6 +195,13 @@ const CATEGORY_REVIEW_FIELDS = [
   "promotion_state",
   "promotionState",
 ] as const;
+const EVENT_DATE_PRECISIONS = new Set([
+  "exact-range",
+  "single-day",
+  "month-only",
+  "not-announced",
+  "unverified",
+]);
 const CATEGORY_STOP_WORDS = new Set([
   "and",
   "conference",
@@ -485,8 +584,17 @@ function validateCategories(
         add(result.errors, `${key}: unknown category ${category}`);
     }
   }
-  if (isAutoPromoted(conference) && !hasMeaningfulValue(conference.category_evidence))
+  const categoryAssignments = records(conference.category_assignments);
+  const hasReviewedAssignments = categoryAssignments.some(
+    (assignment) => String(assignment.reason ?? "") === "manual-review",
+  );
+  if (
+    isAutoPromoted(conference) &&
+    !hasMeaningfulValue(conference.category_evidence) &&
+    !hasReviewedAssignments
+  )
     add(result.warnings, `${key}: auto-promoted categories lack category_evidence`);
+  if (hasReviewedAssignments) return;
   const divergent = categoryDivergence(conference, categoryDefinitions);
   if (divergent.length)
     add(
@@ -567,12 +675,15 @@ function validateEdition(
     }
   }
   const dateText = String(edition.date_text ?? "").trim();
+  const eventDatePrecision = String(edition.event_date_precision ?? "").trim();
+  if (eventDatePrecision && !EVENT_DATE_PRECISIONS.has(eventDatePrecision))
+    add(result.errors, `${prefix}: unknown event date precision ${eventDatePrecision}`);
   const eventStatus = String(edition.event_date_status ?? "")
     .trim()
     .toLowerCase();
   const explicitlyNotAnnounced =
     eventStatus === "not-announced" || /^(?:tbd(?:\s+20\d{2})?|not announced)$/i.test(dateText);
-  if (!start && !end && dateText && !explicitlyNotAnnounced)
+  if (!start && !end && dateText && !explicitlyNotAnnounced && !eventDatePrecision)
     add(result.warnings, `${prefix}: event date text is not structured`);
 
   const slots = new Map<string, string>();
@@ -815,15 +926,25 @@ export function main(argv = process.argv.slice(2)): number {
         : ((JSON.parse(readFileSync(baselinePath, "utf8")) as { warnings?: ValidatorWarning[] })
             .warnings ?? []);
     const newWarnings = file ? [] : newValidatorWarnings(result.warnings, baseline);
+    const findingsPath = join(ROOT, "data", "validator-findings.json");
+    const previousFindings =
+      !file && existsSync(findingsPath)
+        ? ((JSON.parse(readFileSync(findingsPath, "utf8")) as { findings?: DataQualityFinding[] })
+            .findings ?? [])
+        : [];
+    const qualityFindings = canonicalDataQualityFindings(result.warnings, previousFindings);
     if (!file && argv.includes("--write-baseline")) {
       writeFileSync(
         baselinePath,
         `${JSON.stringify({ warnings: validatorWarningBaseline(result.warnings) }, null, 2)}\n`,
       );
     }
+    if (!file && argv.includes("--write-findings")) {
+      writeFileSync(findingsPath, `${JSON.stringify({ findings: qualityFindings }, null, 2)}\n`);
+    }
     if (json)
       process.stdout.write(
-        `${JSON.stringify({ ...result, warning_identities: validatorWarningBaseline(result.warnings), new_warnings: newWarnings })}\n`,
+        `${JSON.stringify({ ...result, warning_identities: validatorWarningBaseline(result.warnings), quality_findings: qualityFindings, new_warnings: newWarnings })}\n`,
       );
     else
       process.stdout.write(`validated ${result.stats.exact + result.stats.date_only} deadlines\n`);
