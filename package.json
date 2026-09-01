@@ -8,7 +8,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "build": "node src/cli.ts build",
+    "build": "git stash push -q -- data/snapshot.json && node src/cli.ts build; rc=$?; git checkout -- data/snapshot.json 2>/dev/null; exit $rc",
     "discover": "node src/cli.ts discover",
     "generate:curated": "node scripts/generate-curated.ts",
     "bench": "node src/bench-recommender.ts",
