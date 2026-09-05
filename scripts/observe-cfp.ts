@@ -1,13 +1,14 @@
-import { createHash } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { capturePage } from "../src/capture.ts";
 import {
   CFP_PARSER_VERSION,
   type CfpCapture,
   canonicalJson,
   extractCfpCandidates,
   type PromotionObservation,
+  providerIdentityFromUrl,
 } from "../src/promotion.ts";
 
 export interface ObserveOptions {
@@ -112,14 +113,6 @@ function normalizedList(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort();
 }
 
-function responseHeaders(response: Response): Record<string, string> {
-  return Object.fromEntries(
-    [...response.headers]
-      .filter(([key]) => key.toLowerCase() !== "set-cookie")
-      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
-  );
-}
-
 export async function observeCfp(
   input: ObserveOptions | string[] = process.argv.slice(2),
 ): Promise<CfpCapture> {
@@ -127,11 +120,16 @@ export async function observeCfp(
   if (!options.url) fail("usage: node scripts/observe-cfp.ts <url> [options]");
   if (!options.bodyPath) fail("saved body path is required (--body)");
   const requestedUrl = options.url;
-  const response = await (options.fetch ?? fetch)(requestedUrl, { redirect: "follow" });
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  const contentHash = createHash("sha256").update(bytes).digest("hex");
-  const headers = responseHeaders(response);
-  const finalUrl = response.url || requestedUrl;
+  const captured = await capturePage(requestedUrl, {
+    fetchImpl: options.fetch,
+    parserVersion: CFP_PARSER_VERSION,
+  });
+  const bytes = captured.body ?? new Uint8Array();
+  const headers: Record<string, string> = {};
+  if (captured.headers.etag) headers.etag = captured.headers.etag;
+  if (captured.headers.lastModified) headers["last-modified"] = captured.headers.lastModified;
+  if (captured.headers.retryAfter) headers["retry-after"] = captured.headers.retryAfter;
+  const finalUrl = captured.finalUrl;
   const retrievedAt = options.retrievedAt
     ? parseTimestamp(options.retrievedAt)
     : new Date().toISOString();
@@ -140,19 +138,19 @@ export async function observeCfp(
   const candidateExcerpt = candidates[0]?.rawExcerpt;
   const excerpt =
     candidateExcerpt && body.includes(candidateExcerpt) ? candidateExcerpt : body.slice(0, 280);
-  const sourceRevision = headers.etag ?? headers["last-modified"] ?? `sha256:${contentHash}`;
   const capture: CfpCapture = {
     requestedUrl,
     finalUrl,
-    status: response.status,
+    status: captured.status,
     headers,
     retrievedAt,
-    contentHash,
+    contentHash: captured.contentHash,
     parserVersion: CFP_PARSER_VERSION,
     excerpt,
     candidates,
-    sourceRevision,
+    sourceRevision: captured.sourceRevision,
     bodyPath: options.bodyPath,
+    providerIdentity: providerIdentityFromUrl(finalUrl),
     ...(options.officialDomains?.length
       ? { officialDomains: normalizedList(options.officialDomains) }
       : {}),

@@ -5,6 +5,9 @@
   "selected_on": "real-paper-dev",
   "selection_metric": "dev-oof-mrr-then-recall-at-5",
   "algorithm_revision": "l2-pairwise-logistic-reranker-v3-grouped-cv",
+  "production_trainer_revision": "l2-pairwise-logistic-reranker-v3-grouped-cv",
+  "candidate_trainer_revision": "l2-pairwise-logistic-reranker-v4-component-greedy-cv",
+  "candidate_rejected_reason": "heldout MRR and Recall@5 regressed",
   "feature_schema": [
     "lexical_score",
     "semantic_score",
@@ -14,119 +17,123 @@
     "language_match",
     "venue_kind"
   ],
-  "training_data_hash": "9caf63e006d62c57361159e852f467bd4d4caec646df247fa93f1b45c658f38c",
+  "training_data_hash": "dd2cc261d388bfa93a0d0c7972eb2b3e86960ccea09cb5429cf13f286b179c81",
   "input_hashes": {
-    "data/benchmarks/real-paper-dev.json": "9caf63e006d62c57361159e852f467bd4d4caec646df247fa93f1b45c658f38c",
-    "data/benchmarks/real-paper-full-features.json#dev-records": "2f25a5ee465b8d33aff7bbb1a8f2ff561eb22422b8569050bcfc4435d054c8ad",
+    "data/benchmarks/real-paper-dev.json": "dd2cc261d388bfa93a0d0c7972eb2b3e86960ccea09cb5429cf13f286b179c81",
+    "data/benchmarks/real-paper-features.jsonl#dev-records": "f2e02edc97b195b0dce7124be404416384f410f1dd151c586a7041be634b2e17",
     "data/venue-profiles.json": "08aa73b9920b97d157421c776409ff189377cc9dfe58fefef7cd3d9ace2ffbf4"
   },
   "cv": {
     "folds": 5,
     "assignment": "primary-venue-grouped-round-robin",
     "dev_papers": 80,
-    "selected_lambda": 0.01,
+    "selected_lambda": 0.2,
     "selected_blend": 0.15,
-    "oof_mrr": 0.05781014,
+    "oof_mrr": 0.054518,
     "oof_recall_at_5": 0.0625,
     "trials": [
       {
-        "lambda": 0.01,
-        "blend": 0.15,
-        "mrr": 0.05781014,
-        "recall_at_5": 0.0625
-      },
-      {
         "lambda": 0.2,
-        "blend": 0.3,
-        "mrr": 0.057785,
-        "recall_at_5": 0.0625
-      },
-      {
-        "lambda": 0.08,
         "blend": 0.15,
-        "mrr": 0.05778191,
+        "mrr": 0.054518,
         "recall_at_5": 0.0625
       },
       {
         "lambda": 0.01,
         "blend": 0.05,
-        "mrr": 0.05777232,
+        "mrr": 0.05450157,
         "recall_at_5": 0.0625
       },
       {
         "lambda": 0.08,
         "blend": 0.05,
-        "mrr": 0.05776933,
+        "mrr": 0.05449898,
         "recall_at_5": 0.0625
       },
       {
         "lambda": 0.2,
         "blend": 0.05,
-        "mrr": 0.05776933,
+        "mrr": 0.05449898,
+        "recall_at_5": 0.0625
+      },
+      {
+        "lambda": 0.01,
+        "blend": 0.15,
+        "mrr": 0.05438475,
+        "recall_at_5": 0.0625
+      },
+      {
+        "lambda": 0.08,
+        "blend": 0.15,
+        "mrr": 0.05436936,
         "recall_at_5": 0.0625
       },
       {
         "lambda": 0.2,
-        "blend": 0.15,
-        "mrr": 0.0577692,
+        "blend": 0.3,
+        "mrr": 0.0531683,
         "recall_at_5": 0.0625
       },
       {
         "lambda": 0.08,
         "blend": 0.3,
-        "mrr": 0.05774035,
+        "mrr": 0.05313133,
         "recall_at_5": 0.0625
       },
       {
         "lambda": 0.01,
         "blend": 0.3,
-        "mrr": 0.05695547,
+        "mrr": 0.05306193,
         "recall_at_5": 0.0625
       },
       {
         "lambda": 0.2,
         "blend": 0.5,
-        "mrr": 0.05694257,
+        "mrr": 0.05275067,
         "recall_at_5": 0.0625
       },
       {
         "lambda": 0.08,
         "blend": 0.5,
-        "mrr": 0.05642452,
+        "mrr": 0.05253733,
+        "recall_at_5": 0.0625
+      },
+      {
+        "lambda": 0.01,
+        "blend": 0.5,
+        "mrr": 0.05239742,
+        "recall_at_5": 0.0625
+      },
+      {
+        "lambda": 0.01,
+        "blend": 1,
+        "mrr": 0.04061398,
+        "recall_at_5": 0.0625
+      },
+      {
+        "lambda": 0.2,
+        "blend": 1,
+        "mrr": 0.04019829,
         "recall_at_5": 0.05
       },
       {
-        "lambda": 0.01,
-        "blend": 0.5,
-        "mrr": 0.05571512,
-        "recall_at_5": 0.05
-      },
-      {
-        "lambda": 0.01,
-        "blend": 1,
-        "mrr": 0.03804208,
-        "recall_at_5": 0.0375
-      },
-      {
         "lambda": 0.08,
         "blend": 1,
-        "mrr": 0.03804208,
-        "recall_at_5": 0.0375
-      },
-      {
-        "lambda": 0.2,
-        "blend": 1,
-        "mrr": 0.03801177,
-        "recall_at_5": 0.0375
+        "mrr": 0.04018499,
+        "recall_at_5": 0.05
       }
     ]
   },
+  "negative_sampling": {
+    "strategy": "stable-first",
+    "limit_per_paper": 100
+  },
   "calibration": {
     "method": "platt",
-    "slope": 0.3844948785,
-    "intercept": -1.6425101975,
+    "slope": 0.6435539442,
+    "intercept": -1.6065571054,
     "comparison": {
-      "platt_brier": 0.03553756,
+      "platt_brier": 0.03621871,
       "isotonic": {
         "implemented": false,
         "note": "not implemented; Platt scaling only"
@@ -147,10 +154,10 @@
       "wilson_95_lcb": null,
       "sufficient_coverage": null,
       "sufficient_positives": null,
-      "best_observed_threshold": 0.20069908,
-      "best_observed_precision": 0.03703704,
-      "best_observed_wilson_95_lcb": 0.00656798,
-      "best_observed_coverage": 0.3375,
+      "best_observed_threshold": 0.20572977,
+      "best_observed_precision": 0.05882353,
+      "best_observed_wilson_95_lcb": 0.01046013,
+      "best_observed_coverage": 0.2125,
       "best_observed_positives": 1
     },
     "unlock_conditions": {
@@ -166,26 +173,26 @@
     "wilson_95_lcb": null,
     "sufficient_coverage": null,
     "sufficient_positives": null,
-    "best_observed_threshold": 0.20069908,
-    "best_observed_precision": 0.03703704,
-    "best_observed_wilson_95_lcb": 0.00656798,
-    "best_observed_coverage": 0.3375,
+    "best_observed_threshold": 0.20572977,
+    "best_observed_precision": 0.05882353,
+    "best_observed_wilson_95_lcb": 0.01046013,
+    "best_observed_coverage": 0.2125,
     "best_observed_positives": 1,
     "guard_margin": 0.05
   },
   "intercept": 0,
   "weights": {
-    "lexical_score": -0.0625901745,
-    "semantic_score": 0.252168834,
-    "category_overlap": -0.3119359371,
-    "venue_name_evidence": 0.1702503087,
+    "lexical_score": 0.0147316468,
+    "semantic_score": 0.1244319766,
+    "category_overlap": -0.1596704724,
+    "venue_name_evidence": 0.1144142035,
     "prior_venue": 0,
-    "language_match": 0.4087494451,
+    "language_match": 0.2052986316,
     "venue_kind": 0
   },
   "blend": 0.15,
   "confidence_thresholds": {
-    "sufficient": 0.20069908,
-    "ambiguous": 0.18599498
+    "sufficient": 0.20572977,
+    "ambiguous": 0.19068852
   }
 }

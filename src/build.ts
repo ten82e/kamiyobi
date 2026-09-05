@@ -2,8 +2,7 @@
  * Output generation: JSON / CSV / Markdown / llms.txt / HTML.
  *
  * Everything under public/ is produced here.  Rendering is a pure function of
- * (conferences, config, now) so that two runs with the same input are byte
- * identical.  Ported from scripts/build.py (kamiyobi).
+ * (conferences, config, now) so that two runs with the same input are byte-identical.
  */
 
 import { execFileSync } from "node:child_process";
@@ -22,6 +21,7 @@ import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { recommendationAxes } from "../site/recommendation-core.ts";
+import { isValidRerankerModel } from "../site/recommender.ts";
 // 代表採択論文タイトル（会議のセマンティック/語彙プロファイル強化）。
 // データパイプラインで conferences に papers として載せ、ブラウザの語彙一致と
 // IDF（buildNameIdf）の両方に使えるようにする。
@@ -37,6 +37,15 @@ import {
   VENUE_PAPERS,
   venuePapersHash,
 } from "./embeddings.ts";
+import {
+  type IdentityMigration,
+  type IdentityMigrationManifest,
+  identityKey,
+  identityMigrationManifestForData,
+  isIdentityMigrationManifest,
+  matchesIdentitySelector,
+  validateIdentityMigrationManifest,
+} from "./identity-migration.ts";
 import { DEADLINE_SELECTION_RULE } from "./merge.ts";
 import {
   addDays,
@@ -52,6 +61,7 @@ import {
   dateOnlyWindow,
   deadlineTrackKey,
   type Edition,
+  eventDatePrecisionOf,
   exactDeadlineState,
   fmtDate,
   fmtUTC,
@@ -69,6 +79,29 @@ export const SITE_RUNTIME_FILES = [
   "publish.js",
   "app.js",
 ] as const;
+
+const MANAGED_OUTPUT_FILES = [
+  "index.html",
+  "data.json",
+  "health.json",
+  "health.md",
+  "publish.json",
+  "catalog.json",
+  "recommendation-index.json",
+  "data.csv",
+  "upcoming.md",
+  "llms.txt",
+  ".nojekyll",
+  "embeddings.json",
+  ...SITE_RUNTIME_FILES,
+] as const;
+
+function clearManagedOutput(outdir: string, removeEmbeddings: boolean): void {
+  for (const name of MANAGED_OUTPUT_FILES) {
+    if (name === "embeddings.json" && !removeEmbeddings) continue;
+    rmSync(join(outdir, name), { force: true });
+  }
+}
 
 /** Compile the strict browser sources once; build and runtime tests consume these bytes. */
 export function compileSiteRuntime(
@@ -123,7 +156,7 @@ export const DEFAULT_CATEGORIES: Record<string, string> = {
 export const DEFAULT_SOURCES = [
   { name: "ccfddl", repo: "ccfddl/ccf-deadlines", license: "MIT" },
   { name: "aideadlines", repo: "huggingface/ai-deadlines", license: "MIT" },
-  { name: "local", repo: "data/extra.yaml", license: "MIT" },
+  { name: "local", repo: "data/manual.yaml + data/curated.generated.yaml", license: "MIT" },
 ];
 
 const CSV_COLUMNS = [
@@ -436,7 +469,7 @@ export function toJson(
         (sourceName === "override"
           ? `${baseUrl}/data/overrides.yaml`
           : sourceName === "local"
-            ? `${baseUrl}/data/extra.yaml`
+            ? `${baseUrl}/data/manual.yaml`
             : String(source?.repo ?? "").startsWith("http")
               ? String(source?.repo)
               : source?.repo
@@ -459,6 +492,53 @@ export function toJson(
       ...(rawValue || at ? { rawExcerpt: rawValue || fmtUTC(at, "%Y-%m-%dT%H:%M:%SZ") } : {}),
     };
   };
+  const bootstrapVerification = (
+    deadline: Deadline,
+    evidence: Array<Record<string, unknown>>,
+  ): Record<string, unknown> | undefined => {
+    const source = evidence.find((item) =>
+      ["official-cfp", "publisher", "aggregator"].includes(String(item.sourceClass ?? "")),
+    );
+    if (!source) return undefined;
+    const sourceUrl = String(source.sourceUrl ?? source.source_url ?? "").trim();
+    if (!sourceUrl) return undefined;
+    const sourceClass = String(source.sourceClass ?? "aggregator");
+    const verifiedAt = String(source.verifiedAt ?? source.retrievedAt ?? "").trim();
+    const hasVerifiedEvidence =
+      ["official-cfp", "publisher"].includes(sourceClass) &&
+      Boolean(source.contentHash) &&
+      Number.isFinite(Date.parse(verifiedAt));
+    const deadlineDate = isDateOnlyDeadline(deadline)
+      ? (dateOnlyWindow(deadline.local_date)?.latestPossibleUtc ?? null)
+      : deadline.at_utc;
+    const nextCheck =
+      computeNextCheckAt(deadlineDate, safeNow) ??
+      new Date(safeNow.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    return {
+      official_url: sourceUrl,
+      last_attempt_at: Number.isFinite(Date.parse(String(source.retrievedAt ?? "")))
+        ? String(source.retrievedAt)
+        : null,
+      last_verified_at: hasVerifiedEvidence ? new Date(Date.parse(verifiedAt)).toISOString() : null,
+      next_check_at: nextCheck,
+      content_hash: typeof source.contentHash === "string" ? source.contentHash : null,
+      ...(typeof source.sourceName === "string"
+        ? { source_name: source.sourceName }
+        : typeof source.source_name === "string"
+          ? { source_name: source.source_name }
+          : {}),
+      status: hasVerifiedEvidence
+        ? "verified"
+        : sourceClass === "aggregator"
+          ? "manual-required"
+          : "pending",
+      source_class: sourceClass,
+      ...(typeof source.adapter === "string" ? { adapter: source.adapter } : {}),
+      ...(typeof source.selectorOrField === "string"
+        ? { selector_or_field: source.selectorOrField }
+        : {}),
+    };
+  };
   const outConfs: unknown[] = [];
   for (const conf of [...(confs ?? [])].sort((a, b) => cmpStr(a?.key ?? "", b?.key ?? ""))) {
     if (!conf || typeof conf !== "object") continue;
@@ -473,14 +553,20 @@ export function toJson(
         link: officialUrl,
         place: ed.place,
         date_text: ed.date_text,
+        event_date_precision: eventDatePrecisionOf(
+          ed.event_date_precision,
+          ed.date_text,
+          ed.event_start,
+          ed.event_end,
+        ),
         event_start: ed.event_start ? fmtDate(ed.event_start) : null,
         event_end: ed.event_end ? fmtDate(ed.event_end) : null,
         estimated: ed.estimated,
         ...(ed.estimate ? { estimate: { ...ed.estimate } } : {}),
         source: ed.source,
         ...(ed.identity ? { identity: ed.identity } : {}),
+        ...(ed.call_identity ? { call_identity: { ...ed.call_identity } } : {}),
         ...(ed.legacy_ids?.length ? { legacy_ids: [...ed.legacy_ids] } : {}),
-        ...(ed.event_date_precision ? { event_date_precision: ed.event_date_precision } : {}),
         deadlines: sortedDeadlines(ed).map((dl) => {
           const evidence = dl.evidence?.length
             ? dl.evidence.map((item) => ({ ...item }))
@@ -521,32 +607,17 @@ export function toJson(
             selection_rule: dl.selection_rule ?? DEADLINE_SELECTION_RULE,
             evidence,
             ...(dl.origins?.length ? { origins: dl.origins.map((origin) => ({ ...origin })) } : {}),
-            ...(conflicts.length > 0 ? { conflicts } : {}),
             ...(dl.superseded_deadlines?.length
-              ? {
-                  superseded_deadlines: dl.superseded_deadlines.map((item) => ({ ...item })),
-                }
+              ? { superseded_deadlines: dl.superseded_deadlines.map((item) => ({ ...item })) }
               : {}),
             ...(dl.promotion_ref ? { promotion_ref: { ...dl.promotion_ref } } : {}),
+            ...(conflicts.length > 0 ? { conflicts } : {}),
             ...(dl.verification
               ? { verification: { ...dl.verification } }
-              : reverificationEnabled && officialUrl
+              : reverificationEnabled
                 ? (() => {
-                    const deadlineDate = isDateOnlyDeadline(dl)
-                      ? new Date(`${dl.local_date}T23:59:59Z`)
-                      : dl.at_utc;
-                    const nextCheck = computeNextCheckAt(deadlineDate, safeNow);
-                    if (nextCheck === null) return {};
-                    return {
-                      verification: {
-                        official_url: officialUrl,
-                        last_attempt_at: null,
-                        last_verified_at: null,
-                        next_check_at: nextCheck,
-                        content_hash: null,
-                        status: "pending" as const,
-                      },
-                    };
+                    const verification = bootstrapVerification(dl, evidence);
+                    return verification ? { verification } : {};
                   })()
                 : {}),
           };
@@ -578,12 +649,18 @@ export function toJson(
       key: conf.key,
       title: conf.title,
       full_name: conf.full_name,
+      acronym: conf.acronym || conf.title,
+      ...(conf.scope?.length ? { scope: [...conf.scope] } : {}),
+      ...(conf.official_scope?.length ? { official_scope: [...conf.official_scope] } : {}),
+      ...(conf.paper_abstracts?.length ? { paper_abstracts: [...conf.paper_abstracts] } : {}),
+      ...(conf.keywords?.length ? { keywords: [...conf.keywords] } : {}),
       categories: [...conf.categories],
       rank: { ...conf.rank },
       link: conf.link,
       tags: [...conf.tags],
       sources: [...conf.sources],
       dblp: conf.dblp,
+      ...(conf.upstream_sub ? { upstream_sub: conf.upstream_sub } : {}),
       ...(conf.identity ? { identity: conf.identity } : {}),
       ...(conf.legacy_keys?.length ? { legacy_keys: [...conf.legacy_keys] } : {}),
       ...(conf.category_assignments?.length
@@ -598,7 +675,7 @@ export function toJson(
       papers: VENUE_PAPERS[conf.key] ?? [],
     });
   }
-  return {
+  const data: Record<string, unknown> = {
     generated_at: fmtUTC(safeNow, "%Y-%m-%dT%H:%M:%SZ"),
     site: {
       domain,
@@ -630,6 +707,8 @@ export function toJson(
     })(),
     conferences: outConfs,
   };
+  data.identity_migrations = identityMigrationManifestForData(data);
+  return data;
 }
 
 type JsonRecord = Record<string, unknown>;
@@ -672,11 +751,21 @@ function compactEdition(edition: JsonRecord, deadlines: JsonRecord[]): JsonRecor
     link: edition.link,
     place: edition.place,
     date_text: edition.date_text,
+    event_date_precision: eventDatePrecisionOf(
+      edition.event_date_precision,
+      String(edition.date_text ?? ""),
+      asDate(edition.event_start),
+      asDate(edition.event_end),
+    ),
     event_start: edition.event_start,
     event_end: edition.event_end,
     estimated: edition.estimated,
     ...(edition.estimate ? { estimate: edition.estimate } : {}),
     source: edition.source,
+    ...(edition.call_identity ? { call_identity: edition.call_identity } : {}),
+    ...(Array.isArray(edition.legacy_ids) && edition.legacy_ids.length
+      ? { legacy_ids: edition.legacy_ids }
+      : {}),
     deadlines,
   };
 }
@@ -690,6 +779,11 @@ function compactConference(
     key: conf.key,
     title: conf.title,
     full_name: conf.full_name,
+    ...(conf.acronym ? { acronym: conf.acronym } : {}),
+    ...(conf.scope ? { scope: conf.scope } : {}),
+    ...(conf.official_scope ? { official_scope: conf.official_scope } : {}),
+    ...(conf.paper_abstracts ? { paper_abstracts: conf.paper_abstracts } : {}),
+    ...(conf.keywords ? { keywords: conf.keywords } : {}),
     categories: conf.categories,
     rank: conf.rank,
     link: conf.link,
@@ -746,11 +840,14 @@ export function toRecommendationIndex(
   sourceStatus: Record<string, string> = {},
 ): Record<string, unknown> {
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
+  const rerankerPath = join(ROOT, "data", "recommender-reranker.json");
   const reranker = (() => {
     try {
-      return JSON.parse(readFileSync(join(ROOT, "data", "recommender-reranker.json"), "utf8"));
-    } catch {
-      return null;
+      const value = JSON.parse(readFileSync(rerankerPath, "utf8"));
+      if (!isValidRerankerModel(value)) throw new Error("model contract is invalid");
+      return value;
+    } catch (error) {
+      throw new Error(`recommender reranker ${rerankerPath} を読めない: ${String(error)}`);
     }
   })();
   const conferences = jsonRecords(data.conferences).map((conf) => {
@@ -810,7 +907,7 @@ export function toRecommendationIndex(
     history_ref: "data.json",
     embedding_ref: "embeddings.json",
     embedding_manifest: embeddingManifest(data as Parameters<typeof embeddingManifest>[0]),
-    ...(reranker ? { reranker } : {}),
+    reranker,
     conferences,
   };
 }
@@ -823,7 +920,7 @@ export type HealthSourceStatus =
   | "success";
 
 export const HEALTH_SCHEMA_VERSION = 3;
-export const HEALTH_DEADLINE_LOOKBACK_MS = 14 * DAY_MS;
+const HEALTH_DEADLINE_LOOKBACK_MS = 14 * DAY_MS;
 
 export interface HealthOutputFile {
   bytes: number;
@@ -965,6 +1062,8 @@ export function collectPublishProvenance(
       configPath,
       ...[
         "extra.yaml",
+        "manual.yaml",
+        "curated.generated.yaml",
         "overrides.yaml",
         "primary_overrides.yaml",
         "recommender-reranker.json",
@@ -1051,7 +1150,7 @@ export type HealthDeadlineEvidence = Pick<
 >;
 
 /** Schema 1 last-known-good reports embedded the UTC instant in `id`. */
-export interface LegacyHealthDeadlineRef {
+interface LegacyHealthDeadlineRef {
   id: string;
   at_utc: string;
 }
@@ -1099,6 +1198,7 @@ export interface HealthReport {
   output_files: Record<string, HealthOutputFile>;
   deadline_refs?: HealthDeadlineRef[];
   confirmed_deadline_refs?: Array<HealthDeadlineRef | LegacyHealthDeadlineRef>;
+  identity_migrations?: IdentityMigrationManifest;
 }
 
 export interface HealthReportOptions {
@@ -1123,7 +1223,7 @@ export interface HealthReportOptions {
   outputFiles?: Record<string, HealthOutputFile>;
 }
 
-export function normalizedTrackKey(
+function normalizedTrackKey(
   label: string | null | undefined,
   kind: string,
   explicitTrack?: string | null | undefined,
@@ -1350,6 +1450,22 @@ export function healthReport(
       cmpStr(left.reason, right.reason) ||
       cmpStr(left.subject, right.subject),
   );
+  const providedIdentityManifest = data.identity_migrations;
+  if (
+    providedIdentityManifest !== undefined &&
+    !isIdentityMigrationManifest(providedIdentityManifest)
+  ) {
+    throw new Error("invalid identity migration manifest in data payload");
+  }
+  const identityManifest =
+    providedIdentityManifest === undefined
+      ? identityMigrationManifestForData(data)
+      : providedIdentityManifest;
+  const currentIdentityKeys = new Set(
+    sortedDeadlineRefs
+      .map((ref) => parseDeadlineSlot(ref)?.deadline_id)
+      .filter((key): key is string => Boolean(key)),
+  );
   return {
     schema_version: HEALTH_SCHEMA_VERSION,
     generated_at: String(data.generated_at ?? ""),
@@ -1391,6 +1507,14 @@ export function healthReport(
       Object.entries(options.outputFiles ?? {}).sort(([a], [b]) => cmpStr(a, b)),
     ),
     deadline_refs: sortedDeadlineRefs,
+    identity_migrations: {
+      ...identityManifest,
+      // health refs intentionally exclude old/past deadlines; keep only
+      // migrations whose target can participate in this transition.
+      migrations: identityManifest.migrations.filter((migration) =>
+        currentIdentityKeys.has(identityKey(migration.to)),
+      ),
+    },
   };
 }
 
@@ -1543,19 +1667,24 @@ function parseDeadlineSlot(ref: HealthDeadlineRef): DeadlineSlot | null {
 function matchDeadlineSlots(
   previous: DeadlineSlot[],
   current: DeadlineSlot[],
-  allowIdentityMigration: boolean,
+  manifest: IdentityMigrationManifest | null | undefined,
 ): {
-  pairs: Array<{ previous: DeadlineSlot; current: DeadlineSlot }>;
+  pairs: Array<{ previous: DeadlineSlot; current: DeadlineSlot; migration?: IdentityMigration }>;
   unmatchedPrevious: DeadlineSlot[];
 } {
   const usedPrevious = new Set<number>();
   const usedCurrent = new Set<number>();
-  const pairs: Array<{ previous: DeadlineSlot; current: DeadlineSlot }> = [];
+  const currentUse = new Map<number, "exact" | "migration">();
+  const pairs: Array<{
+    previous: DeadlineSlot;
+    current: DeadlineSlot;
+    migration?: IdentityMigration;
+  }> = [];
 
   // Edition id の改名・重複 (例: override-2027 と mobicom27 が同値で fold) は slot 内容が同一でも
   // 「future deadline disappeared」の誤検知になる。venue + year + kind/round/track + 時刻が完全一致する
   // slot は同一締切として扱う: previous 側の重複を先に潰してから 1:1 で対にする。
-  const identityKey = (slot: DeadlineSlot): string =>
+  const sameValueKey = (slot: DeadlineSlot): string =>
     [
       slot.venue,
       slot.year,
@@ -1567,7 +1696,7 @@ function matchDeadlineSlots(
     ].join("\0");
   const representativeOf = new Map<string, number>();
   previous.forEach((slot, index) => {
-    const key = identityKey(slot);
+    const key = sameValueKey(slot);
     const first = representativeOf.get(key);
     if (first === undefined) representativeOf.set(key, index);
     else usedPrevious.add(index); // 同一締切の重複 ref は比較対象から外す
@@ -1581,14 +1710,14 @@ function matchDeadlineSlots(
   // (時刻変化・削除) はここでマッチせず unmatchedPrevious に残る。
   const currentByIdentity = new Map<string, number[]>();
   current.forEach((slot, index) => {
-    const key = identityKey(slot);
+    const key = sameValueKey(slot);
     const list = currentByIdentity.get(key) ?? [];
     list.push(index);
     currentByIdentity.set(key, list);
   });
   previous.forEach((slot, previousIndex) => {
     if (usedPrevious.has(previousIndex)) return;
-    const candidates = (currentByIdentity.get(identityKey(slot)) ?? []).filter(
+    const candidates = (currentByIdentity.get(sameValueKey(slot)) ?? []).filter(
       (index) => !usedCurrent.has(index),
     );
     if (candidates.length === 0) return;
@@ -1596,35 +1725,45 @@ function matchDeadlineSlots(
     const currentIndex = candidates[0];
     usedPrevious.add(previousIndex);
     usedCurrent.add(currentIndex);
+    currentUse.set(currentIndex, "exact");
     pairs.push({ previous: slot, current: current[currentIndex] });
   });
 
-  if (allowIdentityMigration)
+  if (manifest)
     previous.forEach((slot, previousIndex) => {
       if (usedPrevious.has(previousIndex)) return;
+      const matching = manifest.migrations.filter((migration) =>
+        matchesIdentitySelector(
+          migration.from,
+          {
+            venue: slot.venue,
+            edition: slot.edition,
+            kind: slot.kind,
+            round: slot.round,
+            track: slot.track,
+          },
+          new Date(slot.earliest_ms).toISOString(),
+          new Date(slot.latest_ms).toISOString(),
+        ),
+      );
+      if (matching.length !== 1) return;
       const candidates = current
         .map((candidate, index) => ({ candidate, index }))
         .filter(
           ({ candidate, index }) =>
-            !usedCurrent.has(index) &&
-            candidate.venue === slot.venue &&
-            candidate.earliest_ms === slot.earliest_ms &&
-            candidate.latest_ms === slot.latest_ms,
-        )
-        .sort(
-          (a, b) =>
-            Number(a.candidate.deadline_id !== slot.deadline_id) -
-              Number(b.candidate.deadline_id !== slot.deadline_id) ||
-            Number(a.candidate.edition !== slot.edition) -
-              Number(b.candidate.edition !== slot.edition) ||
-            Number(a.candidate.kind !== slot.kind) - Number(b.candidate.kind !== slot.kind) ||
-            a.index - b.index,
+            identityKey(candidate) === identityKey(matching[0].to) &&
+            (!usedCurrent.has(index) ||
+              currentUse.get(index) === "exact" ||
+              matching[0].action === "duplicate-collapse"),
         );
-      if (candidates.length === 0) return;
+      if (candidates.length !== 1) return;
       const currentIndex = candidates[0].index;
       usedPrevious.add(previousIndex);
-      usedCurrent.add(currentIndex);
-      pairs.push({ previous: slot, current: current[currentIndex] });
+      if (!usedCurrent.has(currentIndex)) {
+        usedCurrent.add(currentIndex);
+        currentUse.set(currentIndex, "migration");
+      }
+      pairs.push({ previous: slot, current: current[currentIndex], migration: matching[0] });
     });
 
   const currentById = new Map<string, number[]>();
@@ -1643,6 +1782,7 @@ function matchDeadlineSlots(
     const currentIndex = candidates[0];
     usedPrevious.add(previousIndex);
     usedCurrent.add(currentIndex);
+    currentUse.set(currentIndex, "exact");
     pairs.push({ previous: slot, current: current[currentIndex] });
   });
 
@@ -1774,7 +1914,7 @@ function semanticDeadlineRegressions(
   currentRefs: HealthDeadlineRef[],
   previousTime: number,
   currentTime: number,
-  allowIdentityMigration: boolean,
+  manifest: IdentityMigrationManifest | null | undefined,
 ): HealthGateResult {
   const reasons: string[] = [];
   const warnings: string[] = [];
@@ -1801,10 +1941,20 @@ function semanticDeadlineRegressions(
   reasons.push(...oldGroups.reasons, ...newGroups.reasons);
   warnings.push(...oldGroups.warnings, ...newGroups.warnings);
   if (reasons.length > 0) return { ok: false, reasons, warnings };
+  const migrationErrors = validateIdentityMigrationManifest(
+    manifest,
+    new Set(newGroups.slots.map((slot) => identityKey(slot))),
+  );
+  if (migrationErrors.length > 0) {
+    reasons.push(
+      ...migrationErrors.map((error) => `identity migration manifest invalid: ${error}`),
+    );
+    return { ok: false, reasons, warnings };
+  }
   const { pairs, unmatchedPrevious } = matchDeadlineSlots(
     oldGroups.slots,
     newGroups.slots,
-    allowIdentityMigration,
+    manifest,
   );
   for (const pair of pairs) {
     if (pair.current.earliest_ms >= pair.previous.latest_ms) continue;
@@ -1832,7 +1982,21 @@ function semanticDeadlineRegressions(
   for (const slot of unmatchedPrevious) {
     if (slot.latest_ms <= previousTime) continue;
     if (!Number.isFinite(currentTime) || slot.latest_ms > currentTime) {
-      reasons.push(`future deadline disappeared: ${slot.deadline_id}`);
+      const identityCandidate = newGroups.slots.some(
+        (candidate) =>
+          candidate.venue !== slot.venue &&
+          candidate.year === slot.year &&
+          candidate.kind === slot.kind &&
+          candidate.round === slot.round &&
+          candidate.track === slot.track &&
+          candidate.earliest_ms === slot.earliest_ms &&
+          candidate.latest_ms === slot.latest_ms,
+      );
+      reasons.push(
+        identityCandidate
+          ? `identity migration required: ${slot.deadline_id}`
+          : `future deadline disappeared: ${slot.deadline_id}`,
+      );
     }
   }
   return { ok: reasons.length === 0, reasons, warnings };
@@ -1939,7 +2103,7 @@ export function evaluateHealthGate(
       currentRefs!,
       previousGeneratedAt,
       currentGeneratedAt,
-      Number(currentReport.schema_version ?? 1) > Number(previousReport.schema_version ?? 1),
+      currentReport.identity_migrations,
     );
     reasons.push(...semantic.reasons);
     warnings.push(...semantic.warnings);
@@ -2044,6 +2208,7 @@ export function healthMarkdown(report: HealthReport): string {
     `| Future estimated deadlines | ${report.future_estimated_deadlines ?? 0} |`,
     `| Venues with future exact deadline | ${report.venues_with_exact_future_deadline ?? 0} |`,
     `| Venues with future date-only deadline | ${report.venues_with_date_only_future_deadline ?? 0} |`,
+    `| Identity migrations | ${report.identity_migrations?.migrations.length ?? 0} |`,
     `| Parse warning count | ${report.parse_warning_count} |`,
     `| Snapshot fallback | ${report.snapshot_fallback ? "yes" : "no"} |`,
     `| Profile hash | ${report.profile_hash} |`,
@@ -2147,7 +2312,7 @@ export function writePublishManifest(
   return manifest;
 }
 
-export function csvField(value: string | number | boolean | null | undefined): string {
+function csvField(value: string | number | boolean | null | undefined): string {
   if (value === null || value === undefined) return "";
   const s = String(value);
   if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
@@ -2366,10 +2531,14 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "- categories: object：カテゴリ ID から英語名への写像。",
     `  実在値: ${[...Object.keys(categories)].sort().join(", ")}。`,
     "- legacy_key_redirects: object：旧会議 key から現在の正規 key への写像。",
+    "- identity_migrations: object：旧 slot から現在の slot への明示的な移行契約。",
     "- conferences: array：会議の配列。各要素は次の形である。",
     "  - key: string：正規化キー（slug）。例 'sigcomm'。",
     "  - title: string：略称。例 'SIGCOMM'。",
     "  - full_name: string：正式名称。",
+    "  - acronym: string：検索用の会議略称。存在時のみ。",
+    "  - scope / official_scope: array of string：検索用の対象分野。存在時のみ。",
+    "  - paper_abstracts / keywords: array of string：検索用の代表概要・キーワード。存在時のみ。",
     "  - categories: array of string：上記 categories のキー。",
     "  - rank: object：{'ccf': 'A', 'core': 'A*'} 等。欠けうる。",
     "    値 'N' は上流でランクが付いていないことを表す番兵であり、等級ではない。",
@@ -2386,7 +2555,6 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "    - year: integer, id: string（例 'sigcomm26'）, link: string, place: string",
     "    - date_text: string：上流の自由文の会期表記。構造化されていないことがある。",
     "    - event_start / event_end: string|null：'YYYY-MM-DD'。パース不能なら null。",
-    "    - event_date_precision: 'exact-range'|'single-day'|'month-only'|'not-announced'|'unverified'。状態判定用。存在時のみ。",
     "    - estimated: boolean：true は過去実績からの推定。実データではない。",
     "    - estimate: object|null：推定版の点推定・日付窓・根拠版・信頼度。確定版には無い。",
     "      window_start / window_end は表示用の日付範囲であり、公式締切ではない。",
@@ -2406,9 +2574,6 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "      - selection_rule: string：採用値を選んだ決定規則。",
     "      - evidence: array：source_name/source_url/observed_at/original_value/confidence。",
     "      - conflicts: array：採用しなかった候補値とその evidence（存在時のみ）。",
-    "      - superseded_deadlines: 公式更新・重複昇格で置き換えた旧値の履歴（存在時のみ）。",
-    "      - promotion_ref: 公式証拠付き昇格の batch/resolution 参照（存在時のみ）。",
-    "      - verification: 公式ページ再確認の永続状態（存在時のみ）。",
     "",
     "## 利用上の注意",
     "",
@@ -2476,11 +2641,13 @@ export async function buildAll(
   now: Date | null | undefined,
   opts: {
     noEmbeddings?: boolean;
+    localEmbeddingsOnly?: boolean;
     health?: HealthReportOptions;
     publishProvenance?: PublishProvenance;
   } = {},
 ): Promise<BuildStats> {
   mkdirSync(outdir, { recursive: true });
+  clearManagedOutput(outdir, opts.noEmbeddings === true);
 
   const safeConfs = Array.isArray(confs) ? confs : [];
   const safeConfig = config ?? {};
@@ -2551,10 +2718,15 @@ export async function buildAll(
       }
       if (needEmb) {
         const { buildEmbeddings } = await import("./embeddings.ts");
-        await buildEmbeddings(join(outdir, "data.json"), embPath);
+        await buildEmbeddings(
+          join(outdir, "data.json"),
+          embPath,
+          opts.localEmbeddingsOnly === true,
+        );
       }
       written.push("embeddings.json");
     } catch (exc) {
+      rmSync(join(outdir, "embeddings.json"), { force: true });
       console.warn(
         `warning: embeddings を生成しなかった（${(exc as Error).constructor.name}: ${String(exc)}）`,
       );
@@ -2574,19 +2746,16 @@ export async function buildAll(
   }
   if (templateText !== null) {
     if (!templateText.includes(TEMPLATE_MARKER)) {
-      console.warn(
-        `warning: ${templatePath} に ${TEMPLATE_MARKER} が見つからない。index.html を素通しする`,
-      );
-    } else {
-      templateText = templateText.replace(
-        TEMPLATE_MARKER,
-        embedJson(jsonCompact(toCatalog(data, nowUtc, upcomingDays))),
-      );
+      throw new Error(`required site template marker missing: ${templatePath}`);
     }
+    templateText = templateText.replace(
+      TEMPLATE_MARKER,
+      embedJson(jsonCompact(toCatalog(data, nowUtc, upcomingDays))),
+    );
     write("index.html", templateText);
     for (const [name, source] of Object.entries(compileSiteRuntime())) write(name, source);
   } else {
-    console.warn(`warning: ${templatePath} が無いので index.html を生成しない`);
+    throw new Error(`required site template missing: ${templatePath}`);
   }
 
   const report = healthReport(data, nowUtc, {

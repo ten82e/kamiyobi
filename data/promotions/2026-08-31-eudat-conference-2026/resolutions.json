@@ -109,18 +109,22 @@
         "tags": [
           "niche"
         ],
-        "review_state": "reviewed"
+        "review_state": "reviewed",
+        "full_name": "EUDAT Conference 2026",
+        "link": "https://www.eudat.eu/eudat-conference-2026"
       },
       "edition": {
         "year": 2026,
         "edition_id": "eudat-conference-2026",
         "date_text": "2026-11-25",
         "event_start": "2026-11-25",
-        "event_end": "2026-11-27"
+        "event_end": "2026-11-27",
+        "link": "https://www.eudat.eu/eudat-conference-2026",
+        "place": "Prague, Czechia"
       },
       "deadline": {
         "kind": "paper",
-        "label": "paper",
+        "label": "Contribution submission (First Intake)",
         "round": 1,
         "track": "First Intake",
         "precision": "exact",
@@ -146,7 +150,8 @@
           }
         ]
       }
-    }
+    },
+    "resolution_id": "resolution-16ce89dac71c88af"
   },
   {
     "candidate": "eudat-conference",
@@ -258,18 +263,22 @@
         "tags": [
           "niche"
         ],
-        "review_state": "reviewed"
+        "review_state": "reviewed",
+        "full_name": "EUDAT Conference 2026",
+        "link": "https://www.eudat.eu/eudat-conference-2026"
       },
       "edition": {
         "year": 2026,
         "edition_id": "eudat-conference-2026",
         "date_text": "2026-11-25",
         "event_start": "2026-11-25",
-        "event_end": "2026-11-27"
+        "event_end": "2026-11-27",
+        "link": "https://www.eudat.eu/eudat-conference-2026",
+        "place": "Prague, Czechia"
       },
       "deadline": {
         "kind": "paper",
-        "label": "paper",
+        "label": "Contribution submission (Second Intake)",
         "round": 2,
         "track": "Second Intake",
         "precision": "exact",
@@ -295,7 +304,8 @@
           }
         ]
       }
-    }
+    },
+    "resolution_id": "resolution-84d25e13a08db91a"
   },
   {
     "candidate": "eudat-conference",
@@ -405,18 +415,22 @@
         "tags": [
           "niche"
         ],
-        "review_state": "reviewed"
+        "review_state": "reviewed",
+        "full_name": "EUDAT Conference 2026",
+        "link": "https://www.eudat.eu/eudat-conference-2026"
       },
       "edition": {
         "year": 2026,
         "edition_id": "eudat-conference-2026",
         "date_text": "2026-11-25",
         "event_start": "2026-11-25",
-        "event_end": "2026-11-27"
+        "event_end": "2026-11-27",
+        "link": "https://www.eudat.eu/eudat-conference-2026",
+        "place": "Prague, Czechia"
       },
       "deadline": {
         "kind": "notification",
-        "label": "notification",
+        "label": "Acceptance notification (First Intake)",
         "round": 1,
         "track": "First Intake",
         "precision": "date-only",
@@ -439,7 +453,8 @@
           }
         ]
       }
-    }
+    },
+    "resolution_id": "resolution-4a21326e67264bb1"
   },
   {
     "candidate": "eudat-conference",
@@ -549,18 +564,22 @@
         "tags": [
           "niche"
         ],
-        "review_state": "reviewed"
+        "review_state": "reviewed",
+        "full_name": "EUDAT Conference 2026",
+        "link": "https://www.eudat.eu/eudat-conference-2026"
       },
       "edition": {
         "year": 2026,
         "edition_id": "eudat-conference-2026",
         "date_text": "2026-11-25",
         "event_start": "2026-11-25",
-        "event_end": "2026-11-27"
+        "event_end": "2026-11-27",
+        "link": "https://www.eudat.eu/eudat-conference-2026",
+        "place": "Prague, Czechia"
       },
       "deadline": {
         "kind": "notification",
-        "label": "notification",
+        "label": "Acceptance notification (Second Intake)",
         "round": 2,
         "track": "Second Intake",
         "precision": "date-only",
@@ -583,6 +602,7 @@
           }
         ]
       }
-    }
+    },
+    "resolution_id": "resolution-6ce337fe127d5619"
   }
 ]

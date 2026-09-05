@@ -1,6 +1,5 @@
 /**
  * ccfddl/ccf-deadlines source.
- * Ported from scripts/sources/ccfddl.py.
  */
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -13,17 +12,26 @@ import {
   deadlineEvidence,
   type Edition,
   embeddedTimezone,
+  eventDatePrecisionOf,
+  isNonDateMarker,
   parseDateRange,
   parseInstant,
   refineKindWithLabel,
   slug,
+  supersededDeadlinesOf,
   warn,
 } from "../model.ts";
+import { toStringArray } from "../util.ts";
 import { fetchTarball } from "./base.ts";
 
-export const REPO = "ccfddl/ccf-deadlines";
-export const REF = "main";
-export const NAME = "ccfddl";
+const REPO = "ccfddl/ccf-deadlines";
+const REF = "main";
+const NAME = "ccfddl";
+
+function deadlineHistory(value: unknown): Pick<Deadline, "superseded_deadlines"> {
+  const items = supersededDeadlinesOf(value);
+  return items.length ? { superseded_deadlines: items } : {};
+}
 
 // 'abstract deadline' (with a space) exists once upstream.
 const ABSTRACT_KEYS = ["abstract_deadline", "abstract deadline", "abstract"];
@@ -73,9 +81,12 @@ export function deadlinesOf(
 ): Deadline[] {
   const out: Deadline[] = [];
   const sourceUrl = String(rawEdition?.link ?? "");
+  if (timeline !== undefined && timeline !== null && !Array.isArray(timeline))
+    throw new TypeError("ccfddl timeline must be an array");
   if (Array.isArray(timeline) && timeline.length > 0) {
     for (const [index, entry] of timeline.entries()) {
-      if (typeof entry !== "object" || entry === null) continue;
+      if (typeof entry !== "object" || entry === null)
+        throw new TypeError("ccfddl timeline entries must be objects");
       const rec = entry as Record<string, unknown>;
       const rnd = index + 1;
       const entryTz = String(rec.timezone ?? rec.tz ?? tzRaw ?? "");
@@ -94,6 +105,12 @@ export function deadlinesOf(
       for (const [kind, label, raw, keyName] of candidates) {
         if (raw === null || raw === undefined) continue;
         const at = parseInstant(raw, entryTz);
+        if (
+          at === null &&
+          !isNonDateMarker(raw) &&
+          (entryTz.trim() !== "" || embeddedTimezone(String(raw)) !== null)
+        )
+          throw new TypeError(`ccfddl deadline is not parseable: ${String(raw)}`);
         if (at === null) continue;
         // ccfddl の timeline entry は comment にトラック名 (Posters Track 等) を
         // 持つ。
@@ -112,6 +129,7 @@ export function deadlinesOf(
             sourceUrl,
             originalValue: String(raw),
           }),
+          ...deadlineHistory(rec.superseded_deadlines ?? rawEdition?.superseded_deadlines),
         });
       }
     }
@@ -138,6 +156,12 @@ export function deadlinesOf(
     for (const [kind, label, raw, keyName] of candidates) {
       if (raw === null || raw === undefined) continue;
       const at = parseInstant(raw, entryTz);
+      if (
+        at === null &&
+        !isNonDateMarker(raw) &&
+        (entryTz.trim() !== "" || embeddedTimezone(String(raw)) !== null)
+      )
+        throw new TypeError(`ccfddl deadline is not parseable: ${String(raw)}`);
       if (at === null) continue;
       out.push({
         kind: refineKindWithLabel(kind, [comment, label].filter(Boolean).join(" · "), keyName),
@@ -153,6 +177,7 @@ export function deadlinesOf(
           sourceUrl,
           originalValue: String(raw),
         }),
+        ...deadlineHistory(rawEdition.superseded_deadlines),
       });
     }
   }
@@ -182,6 +207,7 @@ export function editionOf(
     link,
     place: String(raw.place ?? ""),
     date_text: dateText,
+    event_date_precision: eventDatePrecisionOf(raw.event_date_precision, dateText, start, end),
     event_start: start,
     event_end: end,
     deadlines: deadlinesOf(raw.timeline, tzRaw, raw),
@@ -207,12 +233,15 @@ export function conferenceOf(
   if (!title) return null;
   const parentTz = String(raw.timezone ?? raw.tz ?? "");
   const venueSourceId = sourceId || String(raw.dblp ?? "").trim();
-  const editions = ((raw.confs as unknown[] | null) ?? [])
-    .map((c) =>
-      typeof c === "object" && c !== null
-        ? editionOf(c as Record<string, unknown>, parentTz, venueSourceId)
-        : null,
-    )
+  const rawConfs = raw.confs;
+  if (rawConfs !== undefined && rawConfs !== null && !Array.isArray(rawConfs))
+    throw new TypeError("ccfddl confs must be an array");
+  const editions = (Array.isArray(rawConfs) ? rawConfs : [])
+    .map((c) => {
+      if (typeof c !== "object" || c === null)
+        throw new TypeError("ccfddl conference editions must be objects");
+      return editionOf(c as Record<string, unknown>, parentTz, venueSourceId);
+    })
     .filter((e): e is Edition => e !== null)
     .sort((a, b) => a.year - b.year);
   const rank: Record<string, string> = {};
@@ -236,6 +265,11 @@ export function conferenceOf(
     key: slug(title),
     title,
     full_name: String(raw.description ?? raw.full_name ?? title),
+    acronym: String(raw.acronym ?? title),
+    scope: toStringArray(raw.scope),
+    official_scope: toStringArray(raw.official_scope),
+    paper_abstracts: toStringArray(raw.paper_abstracts),
+    keywords: toStringArray(raw.keywords),
     link,
     rank,
     dblp: dblp || null,
@@ -268,8 +302,10 @@ export function parseTree(conferenceDir: string | null | undefined): Conference[
     let entries: string[];
     try {
       entries = readdirSync(cur);
-    } catch {
-      continue;
+    } catch (error) {
+      warn(`ccfddl: cannot read directory ${cur}: ${String(error)}`);
+      if (cur === conferenceDir && (error as NodeJS.ErrnoException).code === "ENOENT") return [];
+      throw new Error(`ccfddl: cannot read directory ${cur}: ${String(error)}`);
     }
     for (const name of entries) {
       const p = join(cur, name);
@@ -283,7 +319,10 @@ export function parseTree(conferenceDir: string | null | undefined): Conference[
         ) {
           files.push(p);
         }
-      } catch {}
+      } catch (error) {
+        warn(`ccfddl: cannot inspect ${p}: ${String(error)}`);
+        throw new Error(`ccfddl: cannot inspect ${p}: ${String(error)}`);
+      }
     }
   }
   for (const path of files.sort()) {
@@ -291,12 +330,15 @@ export function parseTree(conferenceDir: string | null | undefined): Conference[
     try {
       loaded = loadYaml(readFileSync(path, "utf8"));
     } catch (exc) {
-      warn(`ccfddl: cannot parse ${path}: ${String(exc)}`);
-      continue;
+      const message = `ccfddl: cannot parse ${path}: ${String(exc)}`;
+      warn(message);
+      throw new Error(message);
     }
     const items = Array.isArray(loaded) ? loaded : [loaded];
+    if (items.some((item) => item === null || typeof item !== "object" || Array.isArray(item))) {
+      throw new TypeError(`ccfddl source ${path}: entries must be objects`);
+    }
     for (const item of items) {
-      if (typeof item !== "object" || item === null) continue;
       const sourceId = path.slice(conferenceDir.length + 1).replace(/\.ya?ml$/, "");
       // 1 ファイルの構造 drift（例: confs が配列でない）でソース全体を落とさない。
       // その会議だけ skip し、締切消失は health gate の slot 比較が検出する。
@@ -304,8 +346,9 @@ export function parseTree(conferenceDir: string | null | undefined): Conference[
       try {
         conference = conferenceOf(item as Record<string, unknown>, sourceId);
       } catch (exc) {
-        warn(`ccfddl: cannot map ${path}: ${String(exc)}`);
-        continue;
+        const message = `ccfddl: cannot map ${path}: ${String(exc)}`;
+        warn(message);
+        throw new Error(message);
       }
       if (conference !== null) out.push(conference);
     }

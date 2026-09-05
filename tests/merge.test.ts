@@ -1,6 +1,5 @@
 /**
  * merge / classify / overrides / rollforward / select: SPEC.md sections 3 and 5.
- * Ported from tests/test_merge.py.
  */
 
 import { readFileSync } from "node:fs";
@@ -64,6 +63,14 @@ const PRIORITY: Record<string, unknown> = {
 };
 
 describe("merge_sources", () => {
+  it("preserves legacy keys", () => {
+    const [conference] = mergeSources(
+      [[makeConference({ key: "current", title: "Current", legacy_keys: ["legacy"] })]],
+      PRIORITY,
+    );
+    expect(conference.legacy_keys).toEqual(["legacy"]);
+  });
+
   it("keeps different conferences with the same abbreviation apart", () => {
     const security = makeConference({
       key: "sc",
@@ -127,28 +134,6 @@ describe("merge_sources", () => {
     expect(conference.legacy_keys).toEqual(["legacy"]);
   });
 
-  it("retains legacy keys declared in the stable identity registry", () => {
-    const [conference] = normalizeConfiguredVenueIdentities(
-      [
-        makeConference({
-          key: "keir-cikm2026",
-          title: "KEIR@CIKM2026",
-          identity: { sourceIds: { local: "keir-cikm2026" } },
-        }),
-      ],
-      {
-        venue_identities: {
-          keir: {
-            source_ids: { local: ["keir-cikm2026"] },
-            legacy_keys: ["keir2026"],
-          },
-        },
-      },
-    );
-    expect(conference.key).toBe("keir");
-    expect(conference.legacy_keys).toEqual(["keir-cikm2026", "keir2026"]);
-  });
-
   it("retains both SEC venues under configured stable identities", () => {
     const sec = (upstreamSub: string, sourceId: string, fullName: string) =>
       makeConference({
@@ -189,40 +174,33 @@ describe("merge_sources", () => {
     ]);
   });
 
-  it("collapses all Issue #677 duplicate promotions and keeps legacy redirects", () => {
-    const duplicateGroups = [
-      "bdiot",
-      "admit",
-      "ccisc",
-      "csp",
-      "icaici",
-      "icbda",
-      "iccns",
-      "iccr",
-      "icimt",
-      "icmip",
-      "keir",
-      "raai",
-    ];
-    const merged = mergeSources([parseFile(DEFAULT_PATH)], CONFIG);
-    const byStableKey = new Map(merged.map((conference) => [conference.key, conference]));
-    for (const key of duplicateGroups) {
-      const conference = byStableKey.get(key);
-      expect(conference, `missing canonical venue ${key}`).toBeDefined();
-      expect(conference!.editions).toHaveLength(1);
-      expect(conference!.identity?.venueId).toBe(key);
-    }
-    expect(byStableKey.get("keir")?.editions[0]?.identity?.callIdentity).toMatchObject({
-      seriesId: "keir",
-      editionId: "keir-2026",
-      callId: "keir-2026-workshop",
-      parentEventId: "cikm-2026",
+  it("does not report explicit source identity splits as collisions", () => {
+    const stats: MergeStats = { merged_deadlines: 0, merged_by_key: {} };
+    const sec = (sourceId: string) =>
+      makeConference({
+        key: "sec",
+        title: "SEC",
+        sources: ["ccfddl"],
+        identity: { sourceIds: { ccfddl: sourceId } },
+      });
+    const ccs = makeConference({
+      key: "ccs",
+      title: "CCS",
+      dblp: "ccs",
+      sources: ["ccfddl"],
+      identity: { dblpKey: "ccs", sourceIds: { ccfddl: "SC/ccs" } },
     });
-    expect(byStableKey.get("keir")?.legacy_keys).toEqual([
-      "keir-cikm-2026",
-      "keir-cikm2026",
-      "keir2026",
-    ]);
+    const asiaCcs = makeConference({
+      key: "asiaccs",
+      title: "AsiaCCS",
+      dblp: "ccs",
+      sources: ["ccfddl"],
+      identity: { dblpKey: "ccs", sourceIds: { ccfddl: "SC/asiaccs" } },
+    });
+
+    expect(mergeSources([[sec("DS/sec"), sec("SC/sec")]], CONFIG, stats)).toHaveLength(2);
+    expect(mergeSources([[ccs, asiaCcs]], CONFIG, stats)).toHaveLength(2);
+    expect(stats.identity_conflicts ?? []).toHaveLength(0);
   });
 
   it("does not use an ordinary link as identity evidence", () => {

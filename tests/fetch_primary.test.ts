@@ -1,24 +1,24 @@
 /**
  * fetch-primary.ts の抽出ロジックの最小テスト。
- * Ported from tests/test_fetch_primary.py.
  */
 
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   extractDeadline,
   extractDeadlines,
+  ROOT as FETCH_PRIMARY_ROOT,
   main as fetchPrimaryMain,
   loadYamlFile,
   pageTitleYear,
-  pageYear,
   pageYearMismatch,
   parsePrimaryArgs,
   parsePrimaryDate,
   primaryAdapter,
   runFetchPrimary,
+  setRoot as setFetchPrimaryRoot,
   toLines,
 } from "../src/fetch-primary.ts";
 import { resolvePrimaryObservations } from "../src/sources/primary.ts";
@@ -311,18 +311,6 @@ describe("fetch-primary extraction", () => {
   });
 });
 
-describe("pageYear", () => {
-  it("matches the registry year from the title", () => {
-    expect(pageYear("<title>SETTA 2026: International Symposium on ...</title>", 2026)).toBe(2026);
-    // レジストリが 2027 なのに title が古い版のまま → default が勝つ
-    expect(pageYear("<title>SETTA 2025 (archived)</title>", 2026)).toBe(2026);
-    // title に年が無い
-    expect(pageYear("<title>Call for Papers</title>", 2026)).toBe(2026);
-    // 未来版の誤検出防止
-    expect(pageYear("<title>SETTA 2030</title>", 2026)).toBe(2026);
-  });
-});
-
 describe("page-year diagnostics", () => {
   it.each([
     ["matching", "<title>SETTA 2026</title>", 2026, null],
@@ -333,7 +321,6 @@ describe("page-year diagnostics", () => {
     "detects %s title years without changing the safe fallback",
     (_name, html, registryYear, mismatch) => {
       expect(pageYearMismatch(html, registryYear)).toBe(mismatch);
-      expect(pageYear(html, registryYear)).toBe(registryYear);
     },
   );
 
@@ -354,6 +341,29 @@ describe("page-year diagnostics", () => {
 });
 
 describe("runFetchPrimary", () => {
+  it("resolves default input paths after the root is changed", async () => {
+    const root = mkdtempSync(join(tmpdir(), "cfp-primary-root-"));
+    mkdirSync(join(root, "data"), { recursive: true });
+    writeFileSync(
+      join(root, "data", "primary.yaml"),
+      "conferences:\n  default-root:\n    url: https://example.test/cfp\n    year: 2027\n",
+      "utf8",
+    );
+    const previousRoot = FETCH_PRIMARY_ROOT;
+    const oldFetch = globalThis.fetch;
+    setFetchPrimaryRoot(root);
+    globalThis.fetch = (async () =>
+      new Response(
+        "<title>Default root 2027</title><p>Paper deadline: January 2, 2027</p>",
+      )) as typeof fetch;
+    try {
+      expect(await runFetchPrimary(false)).toBe(0);
+    } finally {
+      globalThis.fetch = oldFetch;
+      setFetchPrimaryRoot(previousRoot);
+    }
+  });
+
   it("returns 2 when registry has no conferences", async () => {
     spyStderr();
     const emptyRegistry = join(mkdtempSync(join(tmpdir(), "cfp-reg-")), "empty.yaml");

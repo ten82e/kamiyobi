@@ -1,14 +1,11 @@
 /**
  * Name matching, classification, overrides, roll-forward and selection.
- * Ported from scripts/merge.py (kamiyobi).  Consumes the frozen interface
- * of src/model.ts (SPEC.md section 3) only.
+ * The implementation consumes the frozen interface of src/model.ts (SPEC.md section 3).
  */
 
 import {
   addDays,
   asDate,
-  type CallIdentity,
-  type CategoryAssignment,
   type Conference,
   cmpStr,
   DAY_MS,
@@ -26,6 +23,7 @@ import {
   isDateOnlyDeadline,
   isExactDeadline,
   KINDS,
+  type ProviderIdentity,
   parseDateRange,
   slug,
   type VenueIdentity,
@@ -34,10 +32,10 @@ import {
 import { patchDeadlineSemantics } from "./sources/local.ts";
 
 export const DEFAULT_SOURCE_PRIORITY = ["local", "aideadlines", "ccfddl"];
-export const DEFAULT_ONE_TO_ONE_MAX_S = 604800; // 7 d
-export const DEFAULT_CROSS_SOURCE_TOLERANCE_S = 90000; // 25 h
+const DEFAULT_ONE_TO_ONE_MAX_S = 604800; // 7 d
+const DEFAULT_CROSS_SOURCE_TOLERANCE_S = 90000; // 25 h
 export const DEADLINE_SELECTION_RULE = "source_priority_then_nearest_within_configured_window";
-export const ABSENT_RANKS = new Set(["N", "-", "none", "None", "NONE", "null", "NULL", ""]);
+const ABSENT_RANKS = new Set(["N", "-", "none", "None", "NONE", "null", "NULL", ""]);
 
 interface Windows {
   one_to_one: number;
@@ -143,23 +141,22 @@ export function mergeSources(
     );
     const combinedSources = [conf, ...matching.flat()].flatMap((item) => item.sources);
     const canCombine =
-      matching.length > 0 &&
-      (new Set(combinedSources).size === combinedSources.length ||
-        matching.every((bucket) => bucket.every((candidate) => sameStableVenue(candidate, conf))));
+      matching.length > 0 && new Set(combinedSources).size === combinedSources.length;
     if (canCombine) {
       for (const bucket of matching) buckets.splice(buckets.indexOf(bucket), 1);
       buckets.push([...matching.flat(), conf]);
     } else {
       const keyCollisions = buckets.filter((bucket) => bucket[0].key === conf.key);
-      if (matching.length > 0 || keyCollisions.length > 0) {
+      const unexplainedCollisions = (matching.length > 0 ? matching : keyCollisions).filter(
+        (bucket) => !explicitIdentitySplit(bucket[0], conf),
+      );
+      if (unexplainedCollisions.length > 0) {
         recordConflict(
           tally,
           "venue",
           matching.length > 0 ? "source-collision" : "key-collision",
           conferenceIdentityLabel(conf),
-          (matching.length > 0 ? matching : keyCollisions).map((bucket) =>
-            conferenceIdentityLabel(bucket[0]),
-          ),
+          unexplainedCollisions.map((bucket) => conferenceIdentityLabel(bucket[0])),
         );
       }
       buckets.push([conf]);
@@ -219,32 +216,13 @@ function configuredIdentity(conf: Conference, config: Record<string, unknown>): 
     const matches = Object.entries(sourceIds as Record<string, unknown>).some(
       ([source, id]) =>
         identityToken(configured.identity?.sourceIds?.[source]) !== "" &&
-        configuredValues(id).some(
-          (candidate) =>
-            identityToken(configured.identity?.sourceIds?.[source]) === identityToken(candidate),
-        ),
+        identityToken(configured.identity?.sourceIds?.[source]) === identityToken(String(id)),
     );
-    if (matches) {
-      const record = value as Record<string, unknown>;
-      const officialDomains = configuredValues(record.official_domains ?? record.officialDomains);
-      const aliases = configuredValues(record.aliases);
-      const legacyKeys = configuredValues(record.legacy_keys ?? record.legacyKeys);
+    if (matches)
       return {
         ...configured,
-        ...(legacyKeys.length
-          ? { legacy_keys: unique([...(configured.legacy_keys ?? []), ...legacyKeys]).sort(cmpStr) }
-          : {}),
-        identity: mergeVenueIdentity([
-          configured.identity,
-          {
-            venueId: slug(venueId),
-            ...(typeof record.dblp_key === "string" ? { dblpKey: record.dblp_key } : {}),
-            ...(officialDomains.length ? { officialDomains } : {}),
-            ...(aliases.length ? { aliases } : {}),
-          },
-        ]),
+        identity: mergeVenueIdentity([configured.identity, { venueId }]),
       };
-    }
   }
   return configured;
 }
@@ -259,55 +237,15 @@ function configuredEditionIdentity(edition: Edition, config: Record<string, unkn
     const matches = Object.entries(sourceIds as Record<string, unknown>).some(
       ([source, id]) =>
         identityToken(edition.identity?.sourceIds?.[source]) !== "" &&
-        configuredValues(id).some(
-          (candidate) =>
-            identityToken(edition.identity?.sourceIds?.[source]) === identityToken(candidate),
-        ),
+        identityToken(edition.identity?.sourceIds?.[source]) === identityToken(String(id)),
     );
-    if (matches) {
-      const record = value as Record<string, unknown>;
-      const officialUrls = configuredValues(record.official_urls ?? record.officialUrls);
-      const callIdentity = configuredCallIdentity(record.call_identity ?? record.callIdentity);
-      const canonicalId = String(editionId).trim();
-      const legacyIds = unique([
-        ...(edition.legacy_ids ?? []),
-        ...(edition.edition_id && edition.edition_id !== canonicalId ? [edition.edition_id] : []),
-      ]).sort(cmpStr);
+    if (matches)
       return {
         ...edition,
-        edition_id: canonicalId || edition.edition_id,
-        ...(legacyIds.length ? { legacy_ids: legacyIds } : {}),
-        identity: mergeEditionIdentity([
-          edition.identity,
-          {
-            editionId: canonicalId,
-            ...(officialUrls.length ? { officialUrls } : {}),
-            ...(callIdentity ? { callIdentity } : {}),
-          },
-        ]),
+        identity: mergeEditionIdentity([edition.identity, { editionId }]),
       };
-    }
   }
   return edition;
-}
-
-function configuredValues(value: unknown): string[] {
-  const values = Array.isArray(value) ? value : [value];
-  return [...new Set(values.map((item) => String(item ?? "").trim()).filter(Boolean))];
-}
-
-function configuredCallIdentity(value: unknown): CallIdentity | undefined {
-  if (!value || typeof value !== "object") return undefined;
-  const raw = value as Record<string, unknown>;
-  const seriesId = String(raw.seriesId ?? raw.series_id ?? "").trim();
-  const editionId = String(raw.editionId ?? raw.edition_id ?? "").trim();
-  const callId = String(raw.callId ?? raw.call_id ?? "").trim();
-  const parentValue = raw.parentEventId ?? raw.parent_event_id ?? null;
-  const parentEventId =
-    parentValue === null || parentValue === undefined ? null : String(parentValue).trim() || null;
-  return seriesId && editionId && callId
-    ? { seriesId, editionId, callId, parentEventId }
-    : undefined;
 }
 
 function mergeConfiguredEditions(conf: Conference, config: Record<string, unknown>): Conference {
@@ -399,6 +337,15 @@ function mergeVenueIdentity(values: Array<VenueIdentity | undefined>): VenueIden
     cmpStr,
   );
   const aliases = unique(values.flatMap((value) => value?.aliases ?? [])).sort(cmpStr);
+  const providerIdentities = [
+    ...new Map(
+      values
+        .flatMap((value) => value?.providerIdentities ?? [])
+        .map((identity) => [`${identity.provider}\0${identity.providerKey}`, identity] as const),
+    ).values(),
+  ].sort((left, right) =>
+    cmpStr(`${left.provider}\0${left.providerKey}`, `${right.provider}\0${right.providerKey}`),
+  ) as ProviderIdentity[];
   const sourceIds: Record<string, string> = {};
   for (const value of [...values].reverse()) Object.assign(sourceIds, value?.sourceIds ?? {});
   const sortedSourceIds = Object.fromEntries(
@@ -408,22 +355,17 @@ function mergeVenueIdentity(values: Array<VenueIdentity | undefined>): VenueIden
     dblpKey ||
     officialDomains.length ||
     aliases.length ||
-    Object.keys(sourceIds).length
+    Object.keys(sourceIds).length ||
+    providerIdentities.length
     ? {
         ...(venueId ? { venueId } : {}),
         ...(dblpKey ? { dblpKey } : {}),
         ...(officialDomains.length ? { officialDomains } : {}),
         ...(aliases.length ? { aliases } : {}),
         ...(Object.keys(sortedSourceIds).length ? { sourceIds: sortedSourceIds } : {}),
+        ...(providerIdentities.length ? { providerIdentities } : {}),
       }
     : undefined;
-}
-
-function callIdentityKey(value: CallIdentity | undefined): string {
-  if (!value) return "";
-  return [value.seriesId, value.editionId, value.callId, value.parentEventId ?? ""]
-    .map(identityToken)
-    .join("|");
 }
 
 export function mergeEditionIdentity(
@@ -431,18 +373,16 @@ export function mergeEditionIdentity(
 ): EditionIdentity | undefined {
   const editionId = values.map((value) => value?.editionId?.trim()).find(Boolean);
   const officialUrls = unique(values.flatMap((value) => value?.officialUrls ?? [])).sort(cmpStr);
-  const callIdentity = values.map((value) => value?.callIdentity).find(Boolean);
   const sourceIds: Record<string, string> = {};
   for (const value of [...values].reverse()) Object.assign(sourceIds, value?.sourceIds ?? {});
   const sortedSourceIds = Object.fromEntries(
     Object.entries(sourceIds).sort(([a], [b]) => cmpStr(a, b)),
   );
-  return editionId || officialUrls.length || Object.keys(sortedSourceIds).length || callIdentity
+  return editionId || officialUrls.length || Object.keys(sortedSourceIds).length
     ? {
         ...(editionId ? { editionId } : {}),
         ...(officialUrls.length ? { officialUrls } : {}),
         ...(Object.keys(sortedSourceIds).length ? { sourceIds: sortedSourceIds } : {}),
-        ...(callIdentity ? { callIdentity } : {}),
       }
     : undefined;
 }
@@ -628,6 +568,7 @@ function collisionSuffix(conf: Conference): string {
 }
 
 function sameConference(left: Conference, right: Conference): boolean {
+  if (explicitIdentitySplit(left, right)) return false;
   const leftId = identityToken(left.identity?.venueId);
   const rightId = identityToken(right.identity?.venueId);
   if (leftId && rightId) return leftId === rightId;
@@ -644,30 +585,20 @@ function sameConference(left: Conference, right: Conference): boolean {
   return commonIdentity(compatibleAliases(left), compatibleAliases(right), aliasToken).length > 0;
 }
 
-/** Same configured stable venue ID is strong enough to fold same-source observations. */
-function sameStableVenue(left: Conference, right: Conference): boolean {
-  const leftId = identityToken(left.identity?.venueId);
-  const rightId = identityToken(right.identity?.venueId);
-  return Boolean(leftId && rightId && leftId === rightId);
-}
-
-function mergedCategoryAssignments(confs: readonly Conference[]): CategoryAssignment[] {
-  const priority: Record<CategoryAssignment["reason"], number> = {
-    "manual-review": 4,
-    "explicit-venue-rule": 3,
-    "source-subfield": 2,
-    "name-keyword": 1,
-  };
-  const byCategory = new Map<string, CategoryAssignment>();
-  for (const conf of confs) {
-    for (const assignment of conf.category_assignments ?? []) {
-      const previous = byCategory.get(assignment.category);
-      if (!previous || priority[assignment.reason] > priority[previous.reason]) {
-        byCategory.set(assignment.category, { ...assignment });
-      }
-    }
-  }
-  return [...byCategory.values()].sort((left, right) => cmpStr(left.category, right.category));
+/** Distinct source identities are an explicit split, not an unresolved collision. */
+function explicitIdentitySplit(left: Conference, right: Conference): boolean {
+  const leftVenueId = identityToken(left.identity?.venueId);
+  const rightVenueId = identityToken(right.identity?.venueId);
+  if (leftVenueId && rightVenueId && leftVenueId !== rightVenueId) return true;
+  const sources = new Set([
+    ...Object.keys(left.identity?.sourceIds ?? {}),
+    ...Object.keys(right.identity?.sourceIds ?? {}),
+  ]);
+  return [...sources].some((source) => {
+    const leftId = identityToken(left.identity?.sourceIds?.[source]);
+    const rightId = identityToken(right.identity?.sourceIds?.[source]);
+    return leftId !== "" && rightId !== "" && leftId !== rightId;
+  });
 }
 
 function mergeBucket(
@@ -682,6 +613,11 @@ function mergeBucket(
     key,
     title: confs[0].title,
     full_name: confs[0].full_name,
+    acronym: confs[0].acronym,
+    scope: [],
+    official_scope: [],
+    paper_abstracts: [],
+    keywords: [],
     link: confs[0].link,
     rank: {},
     dblp: null,
@@ -691,17 +627,12 @@ function mergeBucket(
     editions: [],
     sources: [],
     ...(identity ? { identity } : {}),
-    ...(() => {
-      const legacyKeys = unique(
-        confs.flatMap((conf) => [conf.key, ...(conf.legacy_keys ?? [])]).filter(Boolean),
-      ).sort(cmpStr);
-      return legacyKeys.length ? { legacy_keys: legacyKeys } : {};
-    })(),
   };
   for (const conf of [...confs].reverse()) {
     // low priority first, higher priority overwrites
     if (conf.title) out.title = conf.title;
     if (conf.full_name) out.full_name = conf.full_name;
+    if (conf.acronym) out.acronym = conf.acronym;
     if (conf.link) out.link = conf.link;
     if (Object.keys(conf.rank).length > 0) out.rank = { ...out.rank, ...conf.rank };
     if (conf.dblp) out.dblp = conf.dblp;
@@ -709,9 +640,13 @@ function mergeBucket(
   }
   out.tags = unique(confs.flatMap((c) => c.tags));
   out.categories = unique(confs.flatMap((c) => c.categories));
+  out.scope = unique(confs.flatMap((c) => c.scope ?? []));
+  out.official_scope = unique(confs.flatMap((c) => c.official_scope ?? []));
+  out.paper_abstracts = unique(confs.flatMap((c) => c.paper_abstracts ?? []));
+  out.keywords = unique(confs.flatMap((c) => c.keywords ?? []));
   out.sources = unique(confs.flatMap((c) => c.sources));
-  const categoryAssignments = mergedCategoryAssignments(confs);
-  if (categoryAssignments.length > 0) out.category_assignments = categoryAssignments;
+  const legacyKeys = unique(confs.flatMap((c) => c.legacy_keys ?? []));
+  if (legacyKeys.length > 0) out.legacy_keys = legacyKeys;
   const before = tally.merged_deadlines;
   out.editions = mergeEditions(confs, windows, tally);
   const mergedHere = tally.merged_deadlines - before;
@@ -732,9 +667,7 @@ function mergeEditions(confs: Conference[], windows: Windows, tally: MergeStats)
       const bucket = byYear.get(edition.year) ?? [];
       const source = edition.source || conf.sources.join("+") || "unknown";
       const matching = bucket.filter((item) => mergeTarget(item.edition, edition));
-      const eligible = matching.filter(
-        (item) => !item.sources.has(source) || sameExplicitEditionIdentity(item.edition, edition),
-      );
+      const eligible = matching.filter((item) => !item.sources.has(source));
       const tagged: Array<[string, Deadline]> = edition.deadlines.map((d) => [edition.source, d]);
       if (eligible.length !== 1) {
         if (matching.length > 0) {
@@ -807,11 +740,7 @@ function mergeEditions(confs: Conference[], windows: Windows, tally: MergeStats)
 function mergeTarget(left: Edition, right: Edition): boolean {
   const leftId = identityToken(left.identity?.editionId);
   const rightId = identityToken(right.identity?.editionId);
-  if (leftId && rightId && leftId === rightId) {
-    const leftCall = callIdentityKey(left.identity?.callIdentity);
-    const rightCall = callIdentityKey(right.identity?.callIdentity);
-    return !leftCall || !rightCall || leftCall === rightCall;
-  }
+  if (leftId && rightId && leftId === rightId) return true;
   // 同一 source 内で明示的に異なる edition 識別子 (editionId / sourceIds) を持ち、
   // 会期が重ならないなら、月例研究会など年内複数開催の正当な独立 occurrence。
   // URL 共有は同一開催の証拠にならない (IEICE の ken program page は全研究会共通)。
@@ -843,31 +772,13 @@ function mergeTarget(left: Edition, right: Edition): boolean {
   return eventRangesOverlap(left, right) && placesCompatible(left.place, right.place);
 }
 
-function sameExplicitEditionIdentity(left: Edition, right: Edition): boolean {
-  const leftId = identityToken(left.identity?.editionId);
-  const rightId = identityToken(right.identity?.editionId);
-  if (!leftId || !rightId || leftId !== rightId) return false;
-  const leftCall = callIdentityKey(left.identity?.callIdentity);
-  const rightCall = callIdentityKey(right.identity?.callIdentity);
-  return !leftCall || !rightCall || leftCall === rightCall;
-}
-
 function fillEdition(target: Edition, other: Edition): void {
   if (!target.edition_id && other.edition_id) target.edition_id = other.edition_id;
-  if (other.legacy_ids?.length || (other.edition_id && other.edition_id !== target.edition_id)) {
-    target.legacy_ids = unique([
-      ...(target.legacy_ids ?? []),
-      ...(other.legacy_ids ?? []),
-      ...(other.edition_id && other.edition_id !== target.edition_id ? [other.edition_id] : []),
-    ]).sort(cmpStr);
-  }
   if (!target.link && other.link) target.link = other.link;
   if (!target.place && other.place) target.place = other.place;
   if (!target.date_text && other.date_text) target.date_text = other.date_text;
   if (!target.event_start && other.event_start) target.event_start = other.event_start;
   if (!target.event_end && other.event_end) target.event_end = other.event_end;
-  if (!target.event_date_precision && other.event_date_precision)
-    target.event_date_precision = other.event_date_precision;
   const identity = mergeEditionIdentity([target.identity, other.identity]);
   if (identity) target.identity = identity;
 }
@@ -1039,6 +950,21 @@ function sameDeadlineValue(left: Deadline, right: Deadline): boolean {
   return left.at_utc.getTime() === right.at_utc.getTime();
 }
 
+function mergeSuperseded(
+  left: Deadline["superseded_deadlines"],
+  right: Deadline["superseded_deadlines"],
+): NonNullable<Deadline["superseded_deadlines"]> {
+  const seen = new Set<string>();
+  return [...(left ?? []), ...(right ?? [])]
+    .filter((item) => {
+      const key = JSON.stringify(item);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => a.supersededAt.localeCompare(b.supersededAt) || cmpStr(a.value, b.value));
+}
+
 function absorb(
   winner: Deadline,
   loser: Deadline,
@@ -1047,28 +973,9 @@ function absorb(
 ): Deadline {
   const evidence = mergeEvidence(winner.evidence, loser.evidence);
   const origins = mergeOrigins(winner.origins, loser.origins);
-  const supersededDeadlines = [
-    ...(winner.superseded_deadlines ?? []),
-    ...(loser.superseded_deadlines ?? []),
-  ].filter(
-    (item, index, values) =>
-      values.findIndex(
-        (candidate) =>
-          candidate.value === item.value &&
-          candidate.source === item.source &&
-          candidate.supersededBy === item.supersededBy &&
-          candidate.reason === item.reason,
-      ) === index,
-  );
-  const provenance = {
-    ...(supersededDeadlines.length ? { superseded_deadlines: supersededDeadlines } : {}),
-    ...((winner.promotion_ref ?? loser.promotion_ref)
-      ? { promotion_ref: winner.promotion_ref ?? loser.promotion_ref }
-      : {}),
-    ...((winner.verification ?? loser.verification)
-      ? { verification: winner.verification ?? loser.verification }
-      : {}),
-  };
+  const superseded = mergeSuperseded(winner.superseded_deadlines, loser.superseded_deadlines);
+  const withHistory = (deadline: Deadline): Deadline =>
+    superseded.length ? { ...deadline, superseded_deadlines: superseded } : deadline;
   const notes: string[] = [];
   if (winner.comment) notes.push(winner.comment);
   if (loser.comment && !notes.includes(loser.comment)) notes.push(loser.comment);
@@ -1085,24 +992,22 @@ function absorb(
   const comment = notes.length > 0 ? notes.join(" / ") : null;
   const round = sameSource ? winner.round : Math.max(winner.round, loser.round);
   if (isDateOnlyDeadline(winner) && isExactDeadline(loser)) {
-    return {
+    return withHistory({
       ...loser,
       comment,
       selection_rule: DEADLINE_SELECTION_RULE,
       ...(evidence.length > 0 ? { evidence } : {}),
       ...(origins.length > 0 ? { origins } : {}),
-      ...provenance,
-    };
+    });
   }
   if (isExactDeadline(winner) && isDateOnlyDeadline(loser)) {
-    return {
+    return withHistory({
       ...winner,
       comment,
       selection_rule: DEADLINE_SELECTION_RULE,
       ...(evidence.length > 0 ? { evidence } : {}),
       ...(origins.length > 0 ? { origins } : {}),
-      ...provenance,
-    };
+    });
   }
   if (isDateOnlyDeadline(winner) && isDateOnlyDeadline(loser)) {
     if (
@@ -1110,20 +1015,17 @@ function absorb(
       round === winner.round &&
       evidence.length === (winner.evidence?.length ?? 0)
     )
-      return Object.keys(provenance).length ? { ...winner, ...provenance } : winner;
-    return {
+      return withHistory(winner);
+    return withHistory({
       ...winner,
       comment,
       round,
       selection_rule: DEADLINE_SELECTION_RULE,
       ...(evidence.length > 0 ? { evidence } : {}),
       ...(origins.length > 0 ? { origins } : {}),
-      ...provenance,
-    };
+    });
   }
-  if (!isExactDeadline(winner) || !isExactDeadline(loser)) {
-    return Object.keys(provenance).length ? { ...winner, ...provenance } : winner;
-  }
+  if (!isExactDeadline(winner) || !isExactDeadline(loser)) return withHistory(winner);
   const priorConflicts = winner.conflicts ?? [];
   // An identical instant from another source is corroborating evidence, not a
   // conflict (SPEC.md 3.6): only genuinely different values are conflicts.
@@ -1156,8 +1058,8 @@ function absorb(
     conflicts.length === priorConflicts.length &&
     evidence.length === (winner.evidence?.length ?? 0)
   )
-    return Object.keys(provenance).length ? { ...winner, ...provenance } : winner;
-  return {
+    return withHistory(winner);
+  return withHistory({
     ...winner,
     comment,
     round,
@@ -1165,8 +1067,7 @@ function absorb(
     ...(conflicts.length > 0 ? { conflicts } : {}),
     ...(evidence.length > 0 ? { evidence } : {}),
     ...(origins.length > 0 ? { origins } : {}),
-    ...provenance,
-  };
+  });
 }
 
 function mergeEvidence(
@@ -1602,7 +1503,20 @@ export function mergeDeadlineSlots(
     const evidence = mergeEvidence(incoming.evidence, held.evidence);
     out[index] = { ...incoming, ...(evidence.length > 0 ? { evidence } : {}) };
   }
-  return out.sort((a, b) => deadlineSortTime(a) - deadlineSortTime(b) || cmpStr(a.kind, b.kind));
+  const histories = new Map<string, NonNullable<Deadline["superseded_deadlines"]>>();
+  for (const deadline of [...existing, ...observed]) {
+    const merged = mergeSuperseded(
+      histories.get(deadlineSlotKey(deadline)),
+      deadline.superseded_deadlines,
+    );
+    if (merged.length) histories.set(deadlineSlotKey(deadline), merged);
+  }
+  return out
+    .map((deadline) => {
+      const history = histories.get(deadlineSlotKey(deadline));
+      return history?.length ? { ...deadline, superseded_deadlines: history } : deadline;
+    })
+    .sort((a, b) => deadlineSortTime(a) - deadlineSortTime(b) || cmpStr(a.kind, b.kind));
 }
 
 // --------------------------------------------------------------------------

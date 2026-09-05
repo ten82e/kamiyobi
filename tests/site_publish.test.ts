@@ -143,12 +143,9 @@ describe("browser publish manifest", () => {
     expect(readFileSync(join(REPO_ROOT, "site", "app.ts"), "utf8")).toContain(
       'from "./recommender.js"',
     );
-    expect(readFileSync(join(REPO_ROOT, "src", "bench-recommender.ts"), "utf8")).toContain(
-      "loadRecommender",
-    );
-    expect(readFileSync(join(REPO_ROOT, "src", "recommender-api.ts"), "utf8")).toContain(
-      "../site/recommender.ts",
-    );
+    const benchSource = readFileSync(join(REPO_ROOT, "src", "bench-recommender.ts"), "utf8");
+    expect(benchSource).toContain('import("../site/recommender.ts")');
+    expect(benchSource).not.toContain("recommender-api");
   });
 
   it("emits every module referenced by the template in an offline build", () => {

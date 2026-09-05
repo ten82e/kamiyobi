@@ -1,43 +1,3 @@
-interface SiteDeadlineEvidence {
-  sourceClass?: string;
-  sourceUrl?: string;
-  verifiedFields?: string[];
-}
-
-interface SiteVerification {
-  official_url: string;
-  last_attempt_at: string | null;
-  last_verified_at: string | null;
-  next_check_at: string;
-  content_hash: string | null;
-  status:
-    | "pending"
-    | "verified"
-    | "changed"
-    | "source-unreachable"
-    | "parser-failed"
-    | "manual-required";
-}
-
-interface SiteQueryConfidenceFeatures {
-  top1Score: number;
-  top2Score: number;
-  margin: number;
-  top5Entropy: number;
-  lexicalSemanticAgreement: boolean;
-  candidateCoverage: number;
-  inputHasAbstract: boolean;
-  inputTokenCount: number;
-}
-
-interface SiteQueryConfidence {
-  top1Probability: number;
-  top5Probability: number;
-  calibrated: false;
-  modelRevision: "query-confidence-heuristic-v1";
-  features: SiteQueryConfidenceFeatures;
-}
-
 interface SiteDeadline {
   kind: string;
   label?: string;
@@ -49,8 +9,21 @@ interface SiteDeadline {
   aoe?: string | null;
   tz_raw?: string | null;
   round?: number;
-  evidence?: SiteDeadlineEvidence[];
   verification?: SiteVerification;
+  source_name?: string;
+  evidence?: Array<Record<string, unknown>>;
+}
+
+interface SiteVerification {
+  official_url: string;
+  source_class?: string;
+  source_name?: string;
+  selector_or_field?: string;
+  status: string;
+  last_attempt_at?: string | null;
+  last_verified_at?: string | null;
+  next_check_at?: string;
+  content_hash?: string | null;
 }
 
 interface SiteEdition {
@@ -59,6 +32,12 @@ interface SiteEdition {
   link?: string;
   place?: string;
   date_text?: string;
+  event_date_precision?:
+    | "exact-range"
+    | "single-day"
+    | "month-only"
+    | "not-announced"
+    | "unverified";
   event_start?: string | null;
   event_end?: string | null;
   estimated?: boolean;
@@ -80,6 +59,12 @@ interface SiteConference {
   rank?: Record<string, string>;
   editions?: SiteEdition[];
   papers?: string[];
+  acronym?: string;
+  scope?: string | string[];
+  official_scope?: string | string[];
+  representative_papers?: string[];
+  paper_abstracts?: string[];
+  keywords?: string[];
 }
 
 interface SiteRow {
@@ -127,11 +112,15 @@ interface SiteRecommendation {
   fit: {
     score: number;
     lexicalScore: number;
+    fieldScores?: Record<string, number>;
+    fieldRanks?: Record<string, number>;
+    fieldRrf?: number;
     semanticScore: number;
     label?: string;
     lexicalRank?: number | null;
     semanticRank?: number | null;
-    queryConfidence?: SiteQueryConfidence;
+    confidenceScore?: number;
+    queryConfidence?: Record<string, number | boolean>;
   };
   availability?: unknown;
 }
@@ -154,6 +143,10 @@ interface SiteRecommenderApi {
   pdfPaperRecord(metadata: unknown, pages: unknown[], fallbackText: string): SitePaperRecord;
   textPaperRecord(text: string, fallbackText: string): SitePaperRecord;
   parsePaperLines(text: string): SitePaperRecord[];
+  fieldedLexicalScore(
+    paper: SitePaperRecord,
+    conference: SiteConference,
+  ): { score: number; fields: Record<string, number> };
   contentWordCount(text: string): number;
   semanticScore(key: string, vector: number[], embeddings: Record<string, number[]>): number;
   blendVectors(left: number[], right: number[], weight: number): number[];

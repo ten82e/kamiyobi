@@ -1,34 +1,33 @@
 /**
- * Local source: conferences the upstreams do not carry (data/extra.yaml).
- * Ported from scripts/sources/local.py.
+ * Local source: manual and generated curated data, with extra.yaml as a legacy fallback.
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { load as loadYaml } from "js-yaml";
 import {
   asDate,
-  type CallIdentity,
+  type CategoryAssignment,
   type Conference,
+  callIdentityOf,
   type Deadline,
   type DeadlineKind,
-  type DeadlineOrigin,
   deadlineEvidence,
   type Edition,
-  type EditionIdentity,
-  type EventDatePrecision,
+  editionIdentityOf,
   embeddedTimezone,
+  eventDatePrecisionOf,
   fmtDate,
   kindOf,
-  type PromotionRef,
   parseDateRange,
   parseInstant,
+  promotionRefOf,
   refineKindWithLabel,
   roundOf,
-  type SupersededDeadline,
   slug,
-  type VerificationState,
+  supersededDeadlinesOf,
+  venueIdentityOf,
   warn,
 } from "../model.ts";
 
@@ -36,6 +35,13 @@ export const NAME = "local";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 export const DEFAULT_PATH = join(ROOT, "data", "extra.yaml");
+
+export function localSourcePaths(root = ROOT): string[] {
+  const manual = join(root, "data", "manual.yaml");
+  const curated = join(root, "data", "curated.generated.yaml");
+  const canonical = [manual, curated].filter((path) => existsSync(path));
+  return canonical.length > 0 ? canonical : [join(root, "data", "extra.yaml")];
+}
 
 const LEGACY_KIND_KEYS: Array<[DeadlineKind, string, string[]]> = [
   ["abstract", "Abstract submission", ["abstract_deadline", "abstract"]],
@@ -55,194 +61,15 @@ const LEGACY_KIND_KEYS: Array<[DeadlineKind, string, string[]]> = [
   ["registration", "Registration", ["registration_deadline", "registration"]],
 ];
 
-const VERIFICATION_STATUSES = new Set<VerificationState["status"]>([
-  "pending",
-  "verified",
-  "changed",
-  "source-unreachable",
-  "parser-failed",
-  "manual-required",
-]);
-const EVENT_DATE_PRECISIONS = new Set<EventDatePrecision>([
-  "exact-range",
-  "single-day",
-  "month-only",
-  "not-announced",
-  "unverified",
-]);
-
-function eventDatePrecisionOf(value: unknown): EventDatePrecision | undefined {
-  const precision = String(value ?? "").trim();
-  return EVENT_DATE_PRECISIONS.has(precision as EventDatePrecision)
-    ? (precision as EventDatePrecision)
-    : undefined;
-}
-
-function verificationOf(value: unknown): VerificationState | undefined {
-  if (!value || typeof value !== "object") return undefined;
-  const raw = value as Record<string, unknown>;
-  const officialUrl = String(raw.official_url ?? raw.officialUrl ?? "").trim();
-  const nextCheckAt = String(raw.next_check_at ?? raw.nextCheckAt ?? "").trim();
-  const status = String(raw.status ?? "");
-  if (
-    !officialUrl ||
-    !nextCheckAt ||
-    !VERIFICATION_STATUSES.has(status as VerificationState["status"])
-  ) {
-    return undefined;
-  }
-  const timestamp = (candidate: unknown): string | null => {
-    const text = String(candidate ?? "").trim();
-    return text || null;
-  };
-  return {
-    official_url: officialUrl,
-    last_attempt_at: timestamp(raw.last_attempt_at ?? raw.lastAttemptAt),
-    last_verified_at: timestamp(raw.last_verified_at ?? raw.lastVerifiedAt),
-    next_check_at: nextCheckAt,
-    content_hash:
-      typeof raw.content_hash === "string"
-        ? raw.content_hash
-        : typeof raw.contentHash === "string"
-          ? raw.contentHash
-          : null,
-    status: status as VerificationState["status"],
-  };
-}
-
-function supersededDeadlinesOf(value: unknown): SupersededDeadline[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object"))
-    .map((item) => {
-      const reason = String(item.reason ?? "");
-      return reason === "official-update" || reason === "duplicate-promotion"
-        ? {
-            value: String(item.value ?? "").trim(),
-            source: String(item.source ?? "").trim(),
-            status: "superseded" as const,
-            supersededBy: String(item.supersededBy ?? item.superseded_by ?? "").trim(),
-            reason,
-          }
-        : null;
-    })
-    .filter(
-      (item): item is SupersededDeadline =>
-        item !== null && Boolean(item.value && item.source && item.supersededBy),
-    );
-}
-
-function promotionRefOf(value: unknown): PromotionRef | undefined {
-  if (!value || typeof value !== "object") return undefined;
-  const raw = value as Record<string, unknown>;
-  const batch = String(raw.batch ?? "").trim();
-  const resolution = String(raw.resolution ?? "").trim();
-  return batch && resolution ? { batch, resolution } : undefined;
-}
-
-function callIdentityOf(value: unknown): CallIdentity | undefined {
-  if (!value || typeof value !== "object") return undefined;
-  const raw = value as Record<string, unknown>;
-  const seriesId = String(raw.seriesId ?? raw.series_id ?? "").trim();
-  const editionId = String(raw.editionId ?? raw.edition_id ?? "").trim();
-  const callId = String(raw.callId ?? raw.call_id ?? "").trim();
-  const parentValue = raw.parentEventId ?? raw.parent_event_id ?? null;
-  const parentEventId =
-    parentValue === null || parentValue === undefined ? null : String(parentValue).trim() || null;
-  return seriesId && editionId && callId
-    ? { seriesId, editionId, callId, parentEventId }
-    : undefined;
-}
-
-function editionIdentityOf(value: unknown): EditionIdentity | undefined {
-  if (!value || typeof value !== "object") return undefined;
-  const raw = value as Record<string, unknown>;
-  const editionId = String(raw.editionId ?? raw.edition_id ?? "").trim();
-  const officialUrls = toStringArray(raw.officialUrls ?? raw.official_urls);
-  const sourceIdsRaw = raw.sourceIds ?? raw.source_ids;
-  const sourceIds =
-    sourceIdsRaw && typeof sourceIdsRaw === "object" && !Array.isArray(sourceIdsRaw)
-      ? Object.fromEntries(
-          Object.entries(sourceIdsRaw as Record<string, unknown>)
-            .flatMap(([source, value]) => {
-              const values = toStringArray(value);
-              return values.length ? [[source.trim(), values[0]!] as const] : [];
-            })
-            .filter(([source]) => source),
-        )
-      : {};
-  const callIdentity = callIdentityOf(raw.callIdentity ?? raw.call_identity);
-  return editionId || officialUrls.length || Object.keys(sourceIds).length || callIdentity
-    ? {
-        ...(editionId ? { editionId } : {}),
-        ...(officialUrls.length ? { officialUrls } : {}),
-        ...(Object.keys(sourceIds).length ? { sourceIds } : {}),
-        ...(callIdentity ? { callIdentity } : {}),
-      }
-    : undefined;
-}
-
-function identityOf(value: unknown): Conference["identity"] {
-  if (!value || typeof value !== "object") return undefined;
-  const raw = value as Record<string, unknown>;
-  const venueId = String(raw.venueId ?? raw.venue_id ?? "").trim();
-  const dblpKey = String(raw.dblpKey ?? raw.dblp_key ?? "").trim();
-  const officialDomains = toStringArray(raw.officialDomains ?? raw.official_domains);
-  const aliases = toStringArray(raw.aliases);
-  const sourceIdsRaw = raw.sourceIds ?? raw.source_ids;
-  const sourceIds =
-    sourceIdsRaw && typeof sourceIdsRaw === "object" && !Array.isArray(sourceIdsRaw)
-      ? Object.fromEntries(
-          Object.entries(sourceIdsRaw as Record<string, unknown>)
-            .flatMap(([source, value]) => {
-              const values = toStringArray(value);
-              return values.length ? [[source.trim(), values[0]!] as const] : [];
-            })
-            .filter(([source]) => source),
-        )
-      : {};
-  return venueId ||
-    dblpKey ||
-    officialDomains.length ||
-    aliases.length ||
-    Object.keys(sourceIds).length
-    ? {
-        ...(venueId ? { venueId } : {}),
-        ...(dblpKey ? { dblpKey } : {}),
-        ...(officialDomains.length ? { officialDomains } : {}),
-        ...(aliases.length ? { aliases } : {}),
-        ...(Object.keys(sourceIds).length ? { sourceIds } : {}),
-      }
-    : undefined;
-}
-
-function originsOf(value: unknown): DeadlineOrigin[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object"))
-    .map((item) => {
-      const freshness = String(item.freshness ?? "");
-      return item.source && ["fresh", "cache-fallback", "snapshot-fallback"].includes(freshness)
-        ? {
-            source: String(item.source),
-            ...(typeof item.sourceClass === "string"
-              ? { sourceClass: item.sourceClass as DeadlineOrigin["sourceClass"] }
-              : {}),
-            revision: typeof item.revision === "string" ? item.revision : null,
-            fetchedAt: typeof item.fetchedAt === "string" ? item.fetchedAt : null,
-            freshness: freshness as DeadlineOrigin["freshness"],
-          }
-        : null;
-    })
-    .filter((item): item is DeadlineOrigin => item !== null);
-}
-
 export function deadlinesOf(raw: Record<string, unknown> | null | undefined): Deadline[] {
   if (!raw || typeof raw !== "object") return [];
   const out: Deadline[] = [];
   const sourceUrl = String(raw.source_url ?? raw.sourceUrl ?? raw.link ?? "");
   const parentTz = String(raw.tz ?? raw.timezone ?? "");
-  for (const entry of (raw.deadlines as unknown[] | null) ?? []) {
+  const entries = raw.deadlines;
+  if (entries !== undefined && entries !== null && !Array.isArray(entries))
+    throw new TypeError("local deadlines must be an array");
+  for (const entry of Array.isArray(entries) ? entries : []) {
     if (typeof entry !== "object" || entry === null) continue;
     const rec = entry as Record<string, unknown>;
     const tzRaw = String(rec.tz ?? rec.timezone ?? parentTz);
@@ -252,6 +79,8 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
       String(rec.kind ?? rec.type ?? ""),
     );
     const label = String(rec.label ?? kind);
+    const superseded = supersededDeadlinesOf(rec.superseded_deadlines);
+    const promotionRef = promotionRefOf(rec.promotion_ref ?? rec.promotionRef);
     const track = String(rec.track ?? "").trim();
     if (rec.precision === "date-only") {
       const localDate = asDate(rec.date);
@@ -259,14 +88,6 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
         warn(`date-only deadline requires YYYY-MM-DD without timezone: ${String(rec.date ?? "")}`);
         continue;
       }
-      const verification = verificationOf(rec.verification ?? raw.verification);
-      const supersededDeadlines = supersededDeadlinesOf(
-        rec.superseded_deadlines ?? rec.supersededDeadlines ?? raw.superseded_deadlines,
-      );
-      const promotionRef = promotionRefOf(
-        rec.promotion_ref ?? rec.promotionRef ?? raw.promotion_ref,
-      );
-      const origins = originsOf(rec.origins ?? raw.origins);
       out.push({
         kind,
         label,
@@ -282,21 +103,13 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
           sourceUrl,
           originalValue: String(rec.date),
         }),
-        ...(origins.length ? { origins } : {}),
-        ...(supersededDeadlines.length ? { superseded_deadlines: supersededDeadlines } : {}),
+        ...(superseded.length ? { superseded_deadlines: superseded } : {}),
         ...(promotionRef ? { promotion_ref: promotionRef } : {}),
-        ...(verification ? { verification } : {}),
       });
       continue;
     }
     const at = parseInstant(rec.date, tzRaw);
     if (at === null) continue;
-    const verification = verificationOf(rec.verification ?? raw.verification);
-    const supersededDeadlines = supersededDeadlinesOf(
-      rec.superseded_deadlines ?? rec.supersededDeadlines ?? raw.superseded_deadlines,
-    );
-    const promotionRef = promotionRefOf(rec.promotion_ref ?? rec.promotionRef ?? raw.promotion_ref);
-    const origins = originsOf(rec.origins ?? raw.origins);
     out.push({
       kind,
       label,
@@ -313,10 +126,8 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
         sourceUrl,
         originalValue: String(rec.date),
       }),
-      ...(origins.length ? { origins } : {}),
-      ...(supersededDeadlines.length ? { superseded_deadlines: supersededDeadlines } : {}),
+      ...(superseded.length ? { superseded_deadlines: superseded } : {}),
       ...(promotionRef ? { promotion_ref: promotionRef } : {}),
-      ...(verification ? { verification } : {}),
     });
   }
   if (out.length === 0) {
@@ -340,6 +151,12 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
                 sourceUrl,
                 originalValue: String(val),
               }),
+              ...(supersededDeadlinesOf(raw.superseded_deadlines).length
+                ? { superseded_deadlines: supersededDeadlinesOf(raw.superseded_deadlines) }
+                : {}),
+              ...(promotionRefOf(raw.promotion_ref ?? raw.promotionRef)
+                ? { promotion_ref: promotionRefOf(raw.promotion_ref ?? raw.promotionRef) }
+                : {}),
             });
           }
           break;
@@ -424,32 +241,28 @@ export function editionOf(
   }
   const editionId = String(raw.id ?? `${key}${String(year % 100).padStart(2, "0")}`);
   const link = String(raw.link ?? "");
-  const providedIdentity = editionIdentityOf(raw.identity);
   const callIdentity = callIdentityOf(raw.call_identity ?? raw.callIdentity);
-  const sourceIds = providedIdentity?.sourceIds ?? {};
-  const identity = {
-    ...(providedIdentity ?? {}),
-    ...(link && !providedIdentity?.officialUrls?.length ? { officialUrls: [link] } : {}),
-    sourceIds: { ...sourceIds, [NAME]: sourceIds[NAME] ?? editionId },
-    ...(callIdentity ? { callIdentity } : {}),
-  };
-  const eventDatePrecision = eventDatePrecisionOf(
-    raw.event_date_precision ?? raw.eventDatePrecision,
-  );
+  const legacyIds = toStringArray(raw.legacy_ids ?? raw.legacyIds);
+  const declaredIdentity = editionIdentityOf(raw.identity);
   return {
     year,
     edition_id: editionId,
     link,
     place: String(raw.place ?? ""),
     date_text: dateText,
+    event_date_precision: eventDatePrecisionOf(raw.event_date_precision, dateText, start, end),
     event_start: start,
     event_end: end,
     deadlines: deadlinesOf(raw),
     estimated: Boolean(raw.estimated),
     source: NAME,
-    ...(Object.keys(identity).length ? { identity } : {}),
-    ...(toStringArray(raw.legacy_ids).length ? { legacy_ids: toStringArray(raw.legacy_ids) } : {}),
-    ...(eventDatePrecision ? { event_date_precision: eventDatePrecision } : {}),
+    identity: {
+      ...declaredIdentity,
+      ...(declaredIdentity?.officialUrls?.length ? {} : link ? { officialUrls: [link] } : {}),
+      sourceIds: { ...declaredIdentity?.sourceIds, [NAME]: editionId },
+    },
+    ...(callIdentity ? { call_identity: callIdentity } : {}),
+    ...(legacyIds.length ? { legacy_ids: legacyIds } : {}),
   };
 }
 
@@ -463,27 +276,47 @@ export function parseFile(path: string | null | undefined): Conference[] {
     loaded = loadYaml(readFileSync(path, "utf8"));
   } catch (exc) {
     warn(`local: cannot parse ${path}: ${String(exc)}`);
+    if (existsSync(path)) throw new Error(`local: cannot parse ${path}: ${String(exc)}`);
     return [];
   }
-  const conferences =
-    typeof loaded === "object" && loaded !== null
-      ? (((loaded as Record<string, unknown>).conferences as unknown[] | null) ?? [])
-      : [];
+  if (
+    typeof loaded !== "object" ||
+    loaded === null ||
+    !Array.isArray((loaded as Record<string, unknown>).conferences)
+  ) {
+    throw new TypeError(`local source ${path}: conferences must be an array`);
+  }
+  const conferences = (loaded as Record<string, unknown>).conferences as unknown[];
   const out: Conference[] = [];
-  for (const item of conferences) {
-    if (typeof item !== "object" || item === null) continue;
+  for (const [index, item] of conferences.entries()) {
+    if (typeof item !== "object" || item === null || Array.isArray(item)) {
+      throw new TypeError(`local source ${path}: conference entry ${index} must be an object`);
+    }
     const raw = item as Record<string, unknown>;
     const title = String(raw.title ?? "").trim();
     const key = String(raw.key ?? slug(title)).trim();
     if (!key) {
-      warn(`local source: entry without key or title in ${path}`);
-      continue;
+      throw new TypeError(`local source ${path}: conference entry ${index} needs key or title`);
     }
-    const editions = ((raw.editions as unknown[] | null) ?? [])
-      .map((e) =>
-        typeof e === "object" && e !== null ? editionOf(e as Record<string, unknown>, key) : null,
-      )
-      .filter((e): e is Edition => e !== null)
+    const rawEditions = raw.editions;
+    if (rawEditions !== undefined && rawEditions !== null && !Array.isArray(rawEditions)) {
+      throw new TypeError(`local source ${path}: conference ${key} editions must be an array`);
+    }
+    const editions = (Array.isArray(rawEditions) ? rawEditions : [])
+      .map((e, editionIndex) => {
+        if (typeof e !== "object" || e === null || Array.isArray(e)) {
+          throw new TypeError(
+            `local source ${path}: conference ${key} edition ${editionIndex} must be an object`,
+          );
+        }
+        const edition = editionOf(e as Record<string, unknown>, key);
+        if (edition === null) {
+          throw new TypeError(
+            `local source ${path}: conference ${key} edition ${editionIndex} has no usable year`,
+          );
+        }
+        return edition;
+      })
       .sort((a, b) => a.year - b.year);
     const rank: Record<string, string> = {};
     for (const [k, v] of Object.entries((raw.rank as Record<string, unknown> | null) ?? {})) {
@@ -500,34 +333,61 @@ export function parseFile(path: string | null | undefined): Conference[] {
         }
       }
     }
-    const configuredIdentity = identityOf(raw.identity);
-    const conferenceIdentity = {
-      ...(configuredIdentity ?? {}),
-      ...(link && !configuredIdentity?.officialDomains?.length ? { officialDomains: [link] } : {}),
-      sourceIds: {
-        ...(configuredIdentity?.sourceIds ?? {}),
-        [NAME]: configuredIdentity?.sourceIds?.[NAME] ?? key,
-      },
-    };
+    const categoryAssignments: CategoryAssignment[] = Array.isArray(raw.category_assignments)
+      ? raw.category_assignments
+          .filter((item): item is Record<string, unknown> =>
+            Boolean(item && typeof item === "object"),
+          )
+          .flatMap((item) => {
+            const category = String(item.category ?? "").trim();
+            const reason = String(item.reason ?? "");
+            return category &&
+              ["source-subfield", "explicit-venue-rule", "manual-review", "name-keyword"].includes(
+                reason,
+              )
+              ? [
+                  {
+                    category,
+                    reason: reason as CategoryAssignment["reason"],
+                    ...(typeof item.evidence === "string" && item.evidence.trim()
+                      ? { evidence: item.evidence.trim() }
+                      : {}),
+                  },
+                ]
+              : [];
+          })
+      : [];
+    const declaredIdentity = venueIdentityOf(raw.identity);
     out.push({
       key,
       title: title || key,
       full_name: String(raw.full_name ?? "") || title || key,
+      acronym: String(raw.acronym ?? (title || key)),
+      scope: toStringArray(raw.scope),
+      official_scope: toStringArray(raw.official_scope),
+      paper_abstracts: toStringArray(raw.paper_abstracts),
+      keywords: toStringArray(raw.keywords),
       link,
       rank,
       dblp: raw.dblp === null || raw.dblp === undefined ? null : String(raw.dblp),
       upstream_sub: null,
       tags: toStringArray(raw.tags),
       categories: toStringArray(raw.categories),
-      editions,
-      sources: [NAME],
-      identity: conferenceIdentity,
       ...(toStringArray(raw.legacy_keys).length
         ? { legacy_keys: toStringArray(raw.legacy_keys) }
         : {}),
-      ...(Array.isArray(raw.category_assignments)
-        ? { category_assignments: raw.category_assignments as Conference["category_assignments"] }
-        : {}),
+      editions,
+      sources: [NAME],
+      identity: {
+        ...declaredIdentity,
+        ...(declaredIdentity?.officialDomains?.length
+          ? {}
+          : link
+            ? { officialDomains: [link] }
+            : {}),
+        sourceIds: { ...declaredIdentity?.sourceIds, [NAME]: key },
+      },
+      ...(categoryAssignments.length ? { category_assignments: categoryAssignments } : {}),
     });
   }
   return out;
@@ -535,13 +395,52 @@ export function parseFile(path: string | null | undefined): Conference[] {
 
 export class LocalSource {
   name = NAME;
+  readonly paths: string[];
   readonly path: string;
 
-  constructor(path: string = DEFAULT_PATH) {
-    this.path = path;
+  constructor(path: string | string[] = DEFAULT_PATH) {
+    this.paths = (Array.isArray(path) ? path : [path]).filter(Boolean);
+    this.path = this.paths[0] ?? DEFAULT_PATH;
   }
 
   async load(): Promise<Conference[]> {
-    return parseFile(this.path);
+    const byKey = new Map<string, Conference>();
+    for (const conference of this.paths.flatMap((path) => parseFile(path))) {
+      const existing = byKey.get(conference.key);
+      if (!existing) {
+        byKey.set(conference.key, conference);
+        continue;
+      }
+      const editionKeys = new Set(
+        existing.editions.map((edition) => `${edition.year}\0${edition.edition_id}`),
+      );
+      const duplicate = conference.editions.find((edition) =>
+        editionKeys.has(`${edition.year}\0${edition.edition_id}`),
+      );
+      if (duplicate)
+        throw new Error(`duplicate local edition ${conference.key}/${duplicate.edition_id}`);
+      byKey.set(conference.key, {
+        ...existing,
+        identity: {
+          ...conference.identity,
+          ...existing.identity,
+          officialDomains: [
+            ...new Set([
+              ...(existing.identity?.officialDomains ?? []),
+              ...(conference.identity?.officialDomains ?? []),
+            ]),
+          ],
+          sourceIds: {
+            ...conference.identity?.sourceIds,
+            ...existing.identity?.sourceIds,
+          },
+        },
+        editions: [...existing.editions, ...conference.editions].sort(
+          (left, right) =>
+            left.year - right.year || left.edition_id.localeCompare(right.edition_id),
+        ),
+      });
+    }
+    return [...byKey.values()];
   }
 }

@@ -4,15 +4,18 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { generateCurated } from "../scripts/generate-curated.ts";
 import { observeCfp } from "../scripts/observe-cfp.ts";
-import { type Conference, parseInstant } from "../src/model.ts";
+import type { Conference } from "../src/model.ts";
 import {
   type CfpCapture,
   canonicalJson,
   extractCfpCandidates,
   isOfficialUrl,
   type PromotionObservation,
+  providerIdentityFromUrl,
   resolvePromotion,
+  resolvePromotionAgainst,
   verifyBatch,
   verifyCapture,
   verifyPromotionObservation,
@@ -83,47 +86,6 @@ function observation(overrides: Partial<PromotionObservation> = {}): PromotionOb
     capture: defaultCapture,
     ...overrides,
   };
-}
-
-function existingConference(
-  year: number,
-  deadlineAt: Date,
-  overrides: Partial<Conference> = {},
-): Conference {
-  const deadline = makeDeadline("paper", "Paper deadline", deadlineAt, "AoE", 2, null);
-  deadline.track = "main";
-  deadline.evidence = [
-    {
-      source_name: "official-cfp",
-      source_url: "https://example.test/cfp",
-      observed_at: "2026-08-25T00:00:00.000Z",
-      original_value: "existing",
-      confidence: "official",
-      sourceClass: "official-cfp",
-    },
-  ];
-  return makeConference({
-    key: "example-canonical",
-    title: "ExampleConf",
-    full_name: "Example Conference",
-    link: "https://example.test/cfp",
-    identity: {
-      venueId: "example-canonical",
-      officialDomains: ["example.test"],
-      aliases: ["ExampleConf"],
-    },
-    editions: [
-      makeEdition({
-        year,
-        edition_id: `example-canonical-${year}`,
-        identity: { editionId: `example-canonical-${year}` },
-        event_start: new Date(Date.UTC(year, 3, 1)),
-        event_end: new Date(Date.UTC(year, 3, 3)),
-        deadlines: [deadline],
-      }),
-    ],
-    ...overrides,
-  });
 }
 
 describe("promotion batch", () => {
@@ -415,51 +377,364 @@ describe("promotion batch", () => {
     });
   });
 
-  it("canonicalizes verified promotions into duplicate, enrich, supersede, or hold", () => {
-    const current = parseInstant("2027-01-02 23:59", "AoE")!;
-    const duplicate = resolvePromotion(observation(), {
-      existingConferences: [existingConference(2027, current)],
-    });
-    expect(duplicate).toMatchObject({
-      decision: "duplicate",
-      canonical: { existingKey: "example-canonical", strongEvidence: true },
-      normalized: {
-        venue: { key: "example-canonical" },
-        edition: { edition_id: "example-canonical-2027" },
-      },
-    });
-
-    const superseded = resolvePromotion(observation(), {
-      existingConferences: [existingConference(2027, parseInstant("2027-01-01 23:59", "AoE")!)],
-    });
-    expect(superseded.decision).toBe("supersede-existing-deadline");
-    expect(superseded.normalized?.deadline.superseded_deadlines).toMatchObject([
-      {
-        value: "2027-01-02T11:59:00.000Z",
-        status: "superseded",
-        supersededBy: "2027-01-03T11:59:00.000Z",
-      },
-    ]);
-
-    const newEdition = resolvePromotion(
-      observation({ editionYear: 2028, eventDate: "2028-04-01", eventEndDate: "2028-04-03" }),
-      {
-        existingConferences: [existingConference(2027, current)],
-      },
-    );
-    expect(newEdition.decision).toBe("add-new-edition");
-    expect(newEdition.normalized?.venue.key).toBe("example-canonical");
-
-    const weak = resolvePromotion(observation(), {
-      existingConferences: [
-        existingConference(2027, current, {
-          link: "https://different.test/cfp",
-          identity: { aliases: ["ExampleConf"] },
+  it("canonicalizes verified promotions against existing venue and edition identities", () => {
+    const existing = makeConference({
+      key: "exampleconf",
+      title: "ExampleConf",
+      link: "https://example.test/cfp",
+      identity: { officialDomains: ["example.test"] },
+      editions: [
+        makeEdition({
+          year: 2027,
+          link: "https://example.test/cfp",
+          event_start: new Date("2027-04-01T00:00:00Z"),
+          event_end: new Date("2027-04-03T00:00:00Z"),
+          deadlines: [
+            {
+              ...makeDeadline("paper", "Paper", new Date("2027-01-03T11:59:00Z"), "AoE", 2),
+              track: "main",
+            },
+          ],
         }),
       ],
     });
-    expect(weak.decision).toBe("hold");
-    expect(weak.reason).toContain("explicit identity");
+    expect(
+      resolvePromotionAgainst(observation(), {
+        now: "2026-08-25T00:03:00.000Z",
+        existingConferences: [existing],
+      }).canonicalization,
+    ).toMatchObject({ decision: "duplicate", matchedVenueKey: "exampleconf" });
+    expect(
+      resolvePromotionAgainst(observation({ deadline: { ...observation().deadline!, round: 3 } }), {
+        now: "2026-08-25T00:03:00.000Z",
+        existingConferences: [existing],
+      }).canonicalization?.decision,
+    ).toBe("enrich-existing-edition");
+    expect(
+      resolvePromotionAgainst(observation(), {
+        now: "2026-08-25T00:03:00.000Z",
+        existingConferences: [
+          makeConference({
+            key: "exampleconf-2026",
+            title: "ExampleConf",
+            link: "https://other.test/cfp",
+            identity: { officialDomains: ["other.test"] },
+          }),
+        ],
+      }).canonicalization?.decision,
+    ).toBe("hold");
+    const acronymOnly = makeConference({
+      key: "exampleconf",
+      title: "Entirely Different Conference",
+      link: "https://different.example/cfp",
+      identity: { venueId: "exampleconf", officialDomains: ["different.example"] },
+      editions: [
+        makeEdition({
+          year: 2027,
+          link: "https://different.example/cfp",
+          event_start: new Date("2027-04-01T00:00:00Z"),
+          event_end: new Date("2027-04-03T00:00:00Z"),
+          deadlines: [
+            {
+              ...makeDeadline("paper", "Paper", new Date("2027-01-03T11:59:00Z"), "AoE", 2),
+              track: "main",
+            },
+          ],
+        }),
+      ],
+    });
+    expect(
+      resolvePromotionAgainst(observation(), {
+        now: "2026-08-25T00:03:00.000Z",
+        existingConferences: [acronymOnly],
+      }).canonicalization,
+    ).toMatchObject({ decision: "hold", autoApplicable: false });
+  });
+
+  it("keeps shared providers scoped and honors explicit catalog identities", () => {
+    const providerObservation = (
+      url: string,
+      overrides: Partial<PromotionObservation> = {},
+    ): PromotionObservation => {
+      const providerIdentity = providerIdentityFromUrl(url);
+      const hostname = new URL(url).hostname;
+      return observation({
+        candidate: "incoming",
+        sourceUrl: url,
+        officialDomains: [hostname],
+        providerIdentity,
+        evidence: { ...evidence, sourceUrl: url },
+        capture: {
+          ...defaultCapture,
+          requestedUrl: url,
+          finalUrl: url,
+          officialDomains: [hostname],
+          providerIdentity,
+        },
+        ...overrides,
+      });
+    };
+    const existing = (link: string, overrides: Partial<Conference> = {}) =>
+      makeConference({
+        key: "existing",
+        title: "ExampleConf",
+        full_name: "ExampleConf",
+        link,
+        identity: { officialDomains: [new URL(link).hostname] },
+        editions: [
+          makeEdition({
+            year: 2027,
+            edition_id: "existing-2027",
+            link,
+            deadlines: [
+              {
+                ...makeDeadline(
+                  "paper",
+                  "Paper submission deadline",
+                  new Date("2027-01-03T11:59:00Z"),
+                  "AoE",
+                  2,
+                ),
+                track: "main",
+              },
+            ],
+          }),
+        ],
+        ...overrides,
+      });
+
+    expect(providerIdentityFromUrl("https://easychair.org/cfp/ICCR2026")).toMatchObject({
+      provider: "easychair",
+      providerKey: "cfp/iccr2026",
+      strength: "provider-scoped",
+    });
+    expect(
+      providerIdentityFromUrl("https://openreview.net/group?id=ICLR.cc/2027/Conference"),
+    ).toMatchObject({
+      provider: "openreview",
+      providerKey: "iclr.cc/2027/conference",
+      strength: "provider-scoped",
+    });
+    expect(providerIdentityFromUrl("https://foo2027.github.io/cfp/")).toMatchObject({
+      provider: "github-pages",
+      providerKey: "foo2027.github.io/cfp",
+      strength: "provider-scoped",
+    });
+    expect(providerIdentityFromUrl("https://conference-example.org/cfp")).toMatchObject({
+      provider: "dedicated-domain",
+      providerKey: "conference-example.org",
+      strength: "dedicated-domain",
+    });
+    expect(
+      providerIdentityFromUrl("https://ieeexplore.ieee.org/xpl/conhome.jsp?punumber=111"),
+    ).not.toEqual(
+      providerIdentityFromUrl("https://ieeexplore.ieee.org/xpl/conhome.jsp?punumber=222"),
+    );
+    expect(providerIdentityFromUrl("https://dl.acm.org/event.cfm?id=111")).not.toEqual(
+      providerIdentityFromUrl("https://dl.acm.org/event.cfm?id=222"),
+    );
+    expect(providerIdentityFromUrl("https://sigcomm2027.acm.org/cfp")).not.toEqual(
+      providerIdentityFromUrl("https://sigmod2027.acm.org/cfp"),
+    );
+    expect(providerIdentityFromUrl("https://infocom2027.ieee.org/cfp")).not.toEqual(
+      providerIdentityFromUrl("https://ispa2027.ieee.org/cfp"),
+    );
+
+    const easychair = "https://easychair.org/cfp/ICCR2026";
+    expect(
+      resolvePromotionAgainst(providerObservation(easychair), {
+        existingConferences: [existing("https://easychair.org/cfp/other2026")],
+      }).canonicalization,
+    ).toMatchObject({ decision: "hold" });
+    expect(
+      resolvePromotionAgainst(providerObservation(easychair), {
+        existingConferences: [existing(easychair)],
+      }).canonicalization,
+    ).toMatchObject({
+      decision: "duplicate",
+      matchedBy: expect.arrayContaining(["provider-identity"]),
+    });
+
+    const openReview = "https://openreview.net/group?id=ICLR.cc/2027/Conference";
+    expect(
+      resolvePromotionAgainst(providerObservation(openReview), {
+        existingConferences: [existing("https://openreview.net/group?id=ICLR.cc/2027/Workshop")],
+      }).canonicalization,
+    ).toMatchObject({ decision: "hold" });
+
+    expect(
+      resolvePromotionAgainst(providerObservation("https://sigcomm2027.acm.org/cfp"), {
+        existingConferences: [existing("https://sigmod2027.acm.org/cfp")],
+      }).canonicalization,
+    ).toMatchObject({ decision: "hold" });
+
+    const dedicated = "https://conference-example.org/cfp";
+    expect(
+      resolvePromotionAgainst(providerObservation(dedicated), {
+        existingConferences: [existing(dedicated)],
+      }).canonicalization,
+    ).toMatchObject({
+      decision: "duplicate",
+      matchedBy: expect.arrayContaining(["provider-identity"]),
+    });
+    expect(
+      resolvePromotionAgainst(providerObservation(dedicated), {
+        existingConferences: [
+          existing("https://conference-example.org/other-event", {
+            key: "other-event",
+            title: "Other Event",
+            full_name: "Other Event",
+          }),
+        ],
+      }).canonicalization,
+    ).toMatchObject({ decision: "hold", autoApplicable: false });
+
+    const stableVenue = existing("https://easychair.org/cfp/other", {
+      identity: { venueId: "venue-1", officialDomains: ["easychair.org"] },
+    });
+    expect(
+      resolvePromotionAgainst(
+        providerObservation("https://easychair.org/cfp/incoming", { venueId: "venue-1" }),
+        { existingConferences: [stableVenue] },
+      ).canonicalization,
+    ).toMatchObject({
+      decision: "duplicate",
+      matchedBy: expect.arrayContaining(["stable-venue-id"]),
+    });
+
+    const stableEdition = existing("https://example.test/cfp", {
+      editions: [
+        makeEdition({
+          year: 2027,
+          edition_id: "stable-edition",
+          link: "https://edition.example.test/cfp",
+          deadlines: [
+            {
+              ...makeDeadline(
+                "paper",
+                "Paper submission deadline",
+                new Date("2027-01-03T11:59:00Z"),
+                "AoE",
+                2,
+              ),
+              track: "main",
+            },
+          ],
+        }),
+      ],
+    });
+    expect(
+      resolvePromotionAgainst(
+        providerObservation("https://example.test/cfp", { editionId: "stable-edition" }),
+        { existingConferences: [stableEdition] },
+      ).canonicalization,
+    ).toMatchObject({
+      decision: "duplicate",
+      matchedBy: expect.arrayContaining(["stable-edition-id"]),
+    });
+    expect(
+      resolvePromotionAgainst(
+        providerObservation("https://incoming.example/cfp", {
+          candidate: "old-example",
+          title: "Unrelated Conference",
+          officialDomains: ["incoming.example"],
+        }),
+        {
+          existingConferences: [
+            existing("https://existing.example/cfp", { legacy_keys: ["old-example"] }),
+          ],
+        },
+      ).canonicalization,
+    ).toMatchObject({
+      decision: "add-new-edition",
+      matchedVenueKey: "existing",
+      matchedBy: expect.arrayContaining(["legacy-key"]),
+    });
+    expect(
+      resolvePromotionAgainst(
+        providerObservation("https://incoming.example/cfp", {
+          candidate: "unrelated",
+          title: "Unrelated Conference",
+          officialDomains: ["incoming.example"],
+          editionId: "stable-edition",
+        }),
+        { existingConferences: [stableEdition] },
+      ).canonicalization,
+    ).toMatchObject({
+      decision: "duplicate",
+      matchedVenueKey: "existing",
+      matchedBy: expect.arrayContaining(["stable-edition-id"]),
+    });
+
+    const callIdentity = {
+      seriesId: "example",
+      editionId: "call-edition",
+      callId: "call-1",
+      parentEventId: null,
+    } as const;
+    const callExisting = existing("https://example.test/cfp", {
+      editions: [
+        makeEdition({
+          year: 2027,
+          edition_id: "other-edition",
+          link: "https://edition.example.test/cfp",
+          call_identity: callIdentity,
+          deadlines: [
+            {
+              ...makeDeadline(
+                "paper",
+                "Paper submission deadline",
+                new Date("2027-01-03T11:59:00Z"),
+                "AoE",
+                2,
+              ),
+              track: "main",
+            },
+          ],
+        }),
+      ],
+    });
+    expect(
+      resolvePromotionAgainst(providerObservation("https://example.test/cfp", { callIdentity }), {
+        existingConferences: [callExisting],
+      }).canonicalization,
+    ).toMatchObject({
+      decision: "duplicate",
+      matchedBy: expect.arrayContaining(["call-identity"]),
+    });
+    expect(
+      resolvePromotionAgainst(
+        providerObservation("https://incoming.example/cfp", {
+          candidate: "unrelated",
+          title: "Unrelated Conference",
+          officialDomains: ["incoming.example"],
+          callIdentity,
+        }),
+        { existingConferences: [callExisting] },
+      ).canonicalization,
+    ).toMatchObject({
+      decision: "duplicate",
+      matchedBy: expect.arrayContaining(["call-identity"]),
+    });
+    expect(
+      resolvePromotionAgainst(
+        providerObservation("https://example.test/cfp", {
+          callIdentity: { ...callIdentity, callId: "other-call" },
+        }),
+        { existingConferences: [callExisting] },
+      ).canonicalization,
+    ).toMatchObject({ decision: "add-new-edition" });
+
+    const ambiguous = [
+      existing(dedicated),
+      makeConference({ ...existing(dedicated), key: "other" }),
+    ];
+    expect(
+      resolvePromotionAgainst(providerObservation(dedicated), {
+        existingConferences: ambiguous,
+        canonicalizationMargin: 40,
+      }).canonicalization,
+    ).toMatchObject({ decision: "hold", margin: 0, autoApplicable: false });
   });
 
   it("holds missing primary fields and rejects non-primary observations", () => {
@@ -547,7 +822,7 @@ describe("promotion batch", () => {
         }),
       )}\n${JSON.stringify(observation({ candidate: "hold", title: undefined }))}\n`,
     );
-    const files = ["observations.jsonl", "resolutions.json", "manifest.json", "extra.yaml"];
+    const files = ["observations.jsonl", "resolutions.json", "manifest.json"];
     const run = () =>
       writePromotionBatch(observations, join(dir, "resolutions.json"), join(dir, "manifest.json"));
     expect(run().map((resolution) => resolution.decision)).toEqual(["promote", "promote", "hold"]);
@@ -558,19 +833,17 @@ describe("promotion batch", () => {
     expect(
       Object.fromEntries(files.map((file) => [file, readFileSync(join(dir, file), "utf8")])),
     ).toEqual(first);
-    expect(first["extra.yaml"]).toContain("precision: exact");
-    expect(first["extra.yaml"].match(/key: exampleconf/g)).toHaveLength(1);
-    expect(first["extra.yaml"].match(/kind: /g)).toHaveLength(2);
     expect(JSON.parse(first["manifest.json"])).toMatchObject({
       id: expect.any(String),
-      extra: { sha256: expect.stringMatching(/^[0-9a-f]{64}$/) },
       bodies: [
         {
-          path: expect.stringMatching(/^bodies\/[0-9a-f]{64}\.body$/),
+          path: expect.stringMatching(/^evidence\/blobs\/[0-9a-f]{64}\.body$/),
           sha256: expect.stringMatching(/^[0-9a-f]{64}$/),
         },
       ],
     });
+    expect(JSON.parse(first["manifest.json"]).extra).toBeUndefined();
+    expect(existsSync(join(dir, "extra.yaml"))).toBe(false);
     const verified = spawnSync("node", ["scripts/verify-cfp.ts", "--file", observations], {
       cwd: REPO_ROOT,
       encoding: "utf8",
@@ -579,76 +852,164 @@ describe("promotion batch", () => {
     expect(JSON.parse(verified.stdout)).toHaveLength(3);
 
     const generated = join(dir, "generated");
-    const globalEvidence = join(dir, "evidence", "blobs");
     const promoted = spawnSync(
       "node",
-      [
-        "scripts/promote-candidates.ts",
-        observations,
-        "--out",
-        generated,
-        "--evidence",
-        globalEvidence,
-      ],
+      ["scripts/promote-candidates.ts", observations, "--out", generated],
       { cwd: REPO_ROOT, encoding: "utf8" },
     );
     expect(promoted.status).toBe(0);
     for (const file of files) expect(existsSync(join(generated, file))).toBe(true);
+    expect(existsSync(join(generated, "extra.yaml"))).toBe(false);
     const generatedManifest = JSON.parse(readFileSync(join(generated, "manifest.json"), "utf8"));
     expect(existsSync(join(generated, generatedManifest.bodies[0].path))).toBe(true);
-    expect(generatedManifest.bodies[0].path).toMatch(
-      /^(?:\.\.\/)+evidence\/blobs\/[0-9a-f]{64}\.body$/,
+
+    const withoutOut = spawnSync(
+      "node",
+      [
+        "scripts/promote-candidates.ts",
+        observations,
+        "--existing",
+        join(REPO_ROOT, "data/snapshot.json"),
+      ],
+      { cwd: REPO_ROOT, encoding: "utf8" },
     );
+    expect(withoutOut.status).toBe(0);
+    expect(existsSync(join(dir, "manifest.json"))).toBe(true);
   });
 
-  it("stores identical CFP bodies once across promotion batches", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-global-body-"));
-    const sourceBody = join(root, "source.body");
-    writeFileSync(sourceBody, capturedBody);
-    const evidenceDir = join(root, "evidence", "blobs");
-    const writeBatch = (name: string) => {
-      const batchDir = join(root, "promotions", name);
-      const observationsPath = join(batchDir, "observations.jsonl");
-      mkdirSync(batchDir, { recursive: true });
-      writeFileSync(
-        observationsPath,
-        `${JSON.stringify(observation({ capture: { ...defaultCapture, bodyPath: sourceBody } }))}\n`,
-      );
-      return writePromotionBatch(
-        observationsPath,
-        join(batchDir, "resolutions.json"),
-        join(batchDir, "manifest.json"),
-        { sourceBaseDir: root, evidenceDir },
-      );
-    };
-    expect(writeBatch("first")[0]?.decision).toBe("promote");
-    expect(writeBatch("second")[0]?.decision).toBe("promote");
-    const manifest = JSON.parse(
-      readFileSync(join(root, "promotions", "second", "manifest.json"), "utf8"),
-    );
-    expect(manifest.bodies[0].path).toMatch(/^(?:\.\.\/)+evidence\/blobs\/[0-9a-f]{64}\.body$/);
-    expect(readFileSync(join(evidenceDir, `${capturedHash}.body`), "utf8")).toBe(capturedBody);
-  });
+  it("does not verify a replacement batch against its stale output manifest", () => {
+    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-replace-"));
+    const observations = join(dir, "observations.jsonl");
+    const resolutions = join(dir, "resolutions.json");
+    const manifest = join(dir, "manifest.json");
+    writeFileSync(observations, `${JSON.stringify(observation())}\n`);
+    expect(writePromotionBatch(observations, resolutions, manifest)[0]?.decision).toBe("promote");
 
-  it("relocates top-level observe-cfp captures without losing manifest verification", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-top-level-capture-"));
-    const observations = join(root, "observations.jsonl");
-    const evidenceDir = join(root, "evidence", "blobs");
-    const topLevel = {
-      ...observation({ candidate: "top-level", capture: undefined }),
-      ...defaultCapture,
-    };
-    writeFileSync(observations, `${JSON.stringify(topLevel)}\n`);
-    const resolutions = writePromotionBatch(
+    const body = "Paper deadline: February 2, 2027 23:59 AoE";
+    const bodyPath = join(dir, "updated.html");
+    const contentHash = createHash("sha256").update(body).digest("hex");
+    writeFileSync(bodyPath, body);
+    writeFileSync(
       observations,
-      join(root, "resolutions.json"),
-      join(root, "manifest.json"),
-      { evidenceDir },
+      `${JSON.stringify(
+        observation({
+          deadline: {
+            date: "2027-02-02",
+            time: "23:59:00",
+            timezone: "AoE",
+            kind: "paper",
+            round: 2,
+            track: "main",
+          },
+          rawExcerpt: body,
+          evidence: {
+            ...evidence,
+            sourceRevision: `sha256:${contentHash}`,
+            contentHash,
+          },
+          capture: {
+            ...defaultCapture,
+            headers: {},
+            bodyPath,
+            excerpt: body,
+            candidates: extractCfpCandidates(body),
+            sourceRevision: `sha256:${contentHash}`,
+            contentHash,
+          },
+        }),
+      )}\n`,
     );
-    expect(resolutions[0]?.decision).toBe("promote");
-    const saved = JSON.parse(readFileSync(observations, "utf8"));
-    expect(saved.bodyPath).toMatch(/^(?:\.\.\/)*evidence\/blobs\/[0-9a-f]{64}\.body$/);
-    expect(verifyBatch(observations)[0]?.decision).toBe("promote");
+
+    expect(writePromotionBatch(observations, resolutions, manifest)[0]?.decision).toBe("promote");
+  });
+
+  it("does not rewrite batch files when replacement validation throws", () => {
+    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-invalid-replace-"));
+    const observations = join(dir, "observations.jsonl");
+    const resolutions = join(dir, "resolutions.json");
+    const manifest = join(dir, "manifest.json");
+    const invalidObservation = JSON.stringify(
+      observation({ categoryReviewState: { systems: "invalid" } as never, capture: undefined }),
+    );
+    writeFileSync(observations, invalidObservation);
+    writeFileSync(resolutions, "previous resolutions\n");
+    writeFileSync(manifest, "previous manifest\n");
+
+    expect(() => writePromotionBatch(observations, resolutions, manifest)).toThrow(
+      /category review state/,
+    );
+    expect(readFileSync(observations, "utf8")).toBe(invalidObservation);
+    expect(readFileSync(resolutions, "utf8")).toBe("previous resolutions\n");
+    expect(readFileSync(manifest, "utf8")).toBe("previous manifest\n");
+  });
+
+  it("relocates a flat capture when the CLI writes to another directory", () => {
+    const sourceDir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-flat-source-"));
+    const outDir = join(mkdtempSync(join(tmpdir(), "kamiyobi-promotion-flat-out-")), "batch");
+    const bodyPath = join(sourceDir, "capture.body");
+    writeFileSync(bodyPath, capturedBody);
+    const { bodyPath: _ignored, ...flatCapture } = defaultCapture;
+    const source = join(sourceDir, "observations.jsonl");
+    writeFileSync(
+      source,
+      `${JSON.stringify(
+        observation({ capture: undefined, ...flatCapture, bodyPath: "capture.body" }),
+      )}\n`,
+    );
+
+    const promoted = spawnSync(
+      "node",
+      [
+        "scripts/promote-candidates.ts",
+        source,
+        "--out",
+        outDir,
+        "--existing",
+        join(sourceDir, "missing.json"),
+      ],
+      { cwd: REPO_ROOT, encoding: "utf8" },
+    );
+
+    expect(promoted.status).toBe(0);
+    const written = JSON.parse(readFileSync(join(outDir, "observations.jsonl"), "utf8"));
+    expect(written.capture).toBeUndefined();
+    expect(written.bodyPath).toMatch(/^evidence\/blobs\/[0-9a-f]{64}\.body$/);
+    expect(verifyBatch(join(outDir, "observations.jsonl"))[0]?.decision).toBe("promote");
+  });
+
+  it("does not rewrite CLI batch files when validation throws", () => {
+    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-cli-invalid-"));
+    const source = join(dir, "invalid.jsonl");
+    const outDir = join(dir, "batch");
+    const files = ["observations.jsonl", "resolutions.json", "manifest.json"];
+    writeFileSync(
+      source,
+      JSON.stringify(
+        observation({ categoryReviewState: { systems: "invalid" } as never, capture: undefined }),
+      ),
+    );
+    for (const file of files) {
+      const path = join(outDir, file);
+      mkdirSync(outDir, { recursive: true });
+      writeFileSync(path, `previous ${file}\n`);
+    }
+
+    const promoted = spawnSync(
+      "node",
+      [
+        "scripts/promote-candidates.ts",
+        source,
+        "--out",
+        outDir,
+        "--existing",
+        join(dir, "missing.json"),
+      ],
+      { cwd: REPO_ROOT, encoding: "utf8" },
+    );
+
+    expect(promoted.status).not.toBe(0);
+    for (const file of files)
+      expect(readFileSync(join(outDir, file), "utf8")).toBe(`previous ${file}\n`);
   });
 
   it("captures a deterministic body and verifies hash, excerpt, domain, extraction, and freshness", async () => {
@@ -773,8 +1134,86 @@ describe("promotion batch", () => {
 
     writeFileSync(bodyPath, capturedBody);
     const observations = join(dir, "observations.jsonl");
-    writeFileSync(observations, `${JSON.stringify(observation({ capture }))}\n`);
+    writeFileSync(
+      observations,
+      `${JSON.stringify(observation({ capture }))}\n${JSON.stringify(
+        observation({ candidate: "hold", title: undefined, capture }),
+      )}\n`,
+    );
     writePromotionBatch(observations, join(dir, "resolutions.json"), join(dir, "manifest.json"));
+    const originalObservation = readFileSync(observations, "utf8");
+    const [firstObservation, ...remainingObservations] = originalObservation.trimEnd().split("\n");
+    const changedObservation = JSON.parse(firstObservation!);
+    changedObservation.candidate = "tampered";
+    writeFileSync(
+      observations,
+      `${[JSON.stringify(changedObservation), ...remainingObservations].join("\n")}\n`,
+    );
+    const tampered = spawnSync("node", ["scripts/verify-cfp.ts", "--file", observations], {
+      cwd: REPO_ROOT,
+      encoding: "utf8",
+    });
+    expect(tampered.status).toBe(1);
+    expect(tampered.stderr).toContain("manifest observations hash mismatch");
+    writeFileSync(observations, originalObservation);
+    const resolutions = join(dir, "resolutions.json");
+    const originalResolutions = readFileSync(resolutions, "utf8");
+    writeFileSync(
+      resolutions,
+      originalResolutions.replace('"candidate": "exampleconf"', '"candidate": "tampered"'),
+    );
+    const tamperedResolutions = spawnSync(
+      "node",
+      ["scripts/verify-cfp.ts", "--file", observations],
+      { cwd: REPO_ROOT, encoding: "utf8" },
+    );
+    expect(tamperedResolutions.status).toBe(1);
+    expect(tamperedResolutions.stderr).toContain("manifest resolutions hash mismatch");
+    writeFileSync(resolutions, originalResolutions);
+    const semanticTamper = JSON.parse(originalResolutions);
+    semanticTamper[0].normalized.deadline.date = "2099-01-01";
+    const semanticTamperText = `${JSON.stringify(semanticTamper, null, 2)}\n`;
+    writeFileSync(resolutions, semanticTamperText);
+    const manifestPath = join(dir, "manifest.json");
+    const semanticManifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+    semanticManifest.resolutions.sha256 = createHash("sha256")
+      .update(semanticTamperText)
+      .digest("hex");
+    writeFileSync(manifestPath, `${JSON.stringify(semanticManifest, null, 2)}\n`);
+    const semanticallyTampered = spawnSync(
+      "node",
+      ["scripts/verify-cfp.ts", "--file", observations],
+      { cwd: REPO_ROOT, encoding: "utf8" },
+    );
+    expect(semanticallyTampered.status).toBe(1);
+    expect(semanticallyTampered.stderr).toContain("stored promotion resolution semantics mismatch");
+    const evidenceTamper = JSON.parse(originalResolutions);
+    evidenceTamper[0].normalized.deadline.evidence[0].sourceUrl = "https://evil.test/cfp";
+    const evidenceTamperText = `${JSON.stringify(evidenceTamper, null, 2)}\n`;
+    writeFileSync(resolutions, evidenceTamperText);
+    semanticManifest.resolutions.sha256 = createHash("sha256")
+      .update(evidenceTamperText)
+      .digest("hex");
+    writeFileSync(manifestPath, `${JSON.stringify(semanticManifest, null, 2)}\n`);
+    expect(() => verifyBatch(observations)).toThrow(
+      "stored promotion resolution evidence mismatch",
+    );
+    const duplicateIds = JSON.parse(originalResolutions);
+    duplicateIds[1].resolution_id = duplicateIds[0].resolution_id;
+    const duplicateIdsText = `${JSON.stringify(duplicateIds, null, 2)}\n`;
+    writeFileSync(resolutions, duplicateIdsText);
+    semanticManifest.resolutions.sha256 = createHash("sha256")
+      .update(duplicateIdsText)
+      .digest("hex");
+    writeFileSync(manifestPath, `${JSON.stringify(semanticManifest, null, 2)}\n`);
+    expect(() => verifyBatch(observations)).toThrow(
+      "stored promotion resolution IDs must be present and unique",
+    );
+    writeFileSync(resolutions, originalResolutions);
+    semanticManifest.resolutions.sha256 = createHash("sha256")
+      .update(originalResolutions)
+      .digest("hex");
+    writeFileSync(manifestPath, `${JSON.stringify(semanticManifest, null, 2)}\n`);
     const manifest = JSON.parse(readFileSync(join(dir, "manifest.json"), "utf8"));
     manifest.bodies[0].sha256 = "0".repeat(64);
     writeFileSync(join(dir, "manifest.json"), `${JSON.stringify(manifest)}\n`);
@@ -782,8 +1221,122 @@ describe("promotion batch", () => {
       decision: "hold",
       verification: { errors: expect.arrayContaining(["manifest body hash mismatch"]) },
     });
+    const verified = spawnSync("node", ["scripts/verify-cfp.ts", "--file", observations], {
+      cwd: REPO_ROOT,
+      encoding: "utf8",
+    });
+    expect(verified.status).toBe(1);
+    expect(JSON.parse(verified.stdout)[0]).toMatchObject({
+      decision: "hold",
+      verification: { errors: expect.arrayContaining(["manifest body hash mismatch"]) },
+    });
     manifest.bodies[0].path = "../outside.body";
     writeFileSync(join(dir, "manifest.json"), `${JSON.stringify(manifest)}\n`);
     expect(() => verifyBatch(observations)).toThrow("manifest bodies must contain path and sha256");
+  });
+
+  it("does not rewrite curated data from a semantically altered resolution", () => {
+    const root = mkdtempSync(join(tmpdir(), "kamiyobi-curated-semantic-tamper-"));
+    const dataDir = join(root, "data");
+    const batchDir = join(dataDir, "promotions", "batch");
+    mkdirSync(batchDir, { recursive: true });
+    const emptyYaml = "schema_version: 1\nconferences: []\n";
+    const extra = join(dataDir, "extra.yaml");
+    const manual = join(dataDir, "manual.yaml");
+    const curated = join(dataDir, "curated.generated.yaml");
+    writeFileSync(extra, emptyYaml);
+    writeFileSync(manual, emptyYaml);
+    writeFileSync(curated, emptyYaml);
+    const observations = join(batchDir, "observations.jsonl");
+    const resolutions = join(batchDir, "resolutions.json");
+    const manifest = join(batchDir, "manifest.json");
+    writeFileSync(observations, `${JSON.stringify(observation())}\n`);
+    writePromotionBatch(observations, resolutions, manifest);
+
+    const changed = JSON.parse(readFileSync(resolutions, "utf8"));
+    changed[0].canonicalization = {
+      decision: "add-new-edition",
+      matchedVenueKey: "missing",
+      score: 100,
+      matchedBy: ["tampered"],
+      reason: "tampered",
+    };
+    const changedText = `${JSON.stringify(changed, null, 2)}\n`;
+    writeFileSync(resolutions, changedText);
+    const changedManifest = JSON.parse(readFileSync(manifest, "utf8"));
+    changedManifest.resolutions.sha256 = createHash("sha256").update(changedText).digest("hex");
+    writeFileSync(manifest, `${JSON.stringify(changedManifest, null, 2)}\n`);
+    const files = [extra, manual, curated, observations, resolutions, manifest];
+    const before = files.map((path) => readFileSync(path, "utf8"));
+
+    expect(() => generateCurated(root)).toThrow(
+      "stored promotion resolution ID does not match its semantics",
+    );
+    expect(files.map((path) => readFileSync(path, "utf8"))).toEqual(before);
+  });
+
+  it("rejects deleting an applied add-new-edition decision", () => {
+    const root = mkdtempSync(join(tmpdir(), "kamiyobi-curated-canonical-deletion-"));
+    const dataDir = join(root, "data");
+    const batchDir = join(dataDir, "promotions", "batch");
+    mkdirSync(batchDir, { recursive: true });
+    const catalog = [
+      "conferences:",
+      "  - key: demo",
+      "    title: ExampleConf",
+      "    link: https://example.test/",
+      "    identity:",
+      "      venueId: demo-series",
+      "      sourceIds: {official: demo}",
+      "    editions:",
+      "      - {year: 2026, id: demo-2026}",
+      "",
+    ].join("\n");
+    const extra = join(dataDir, "extra.yaml");
+    const manual = join(dataDir, "manual.yaml");
+    const curated = join(dataDir, "curated.generated.yaml");
+    writeFileSync(extra, catalog);
+    writeFileSync(manual, catalog);
+    const observations = join(batchDir, "observations.jsonl");
+    const resolutions = join(batchDir, "resolutions.json");
+    const manifest = join(batchDir, "manifest.json");
+    const promoted = observation({
+      candidate: "old-demo",
+      venueIdentity: { venueId: "demo-series", sourceIds: { official: "demo" } },
+    });
+    writeFileSync(observations, `${JSON.stringify(promoted)}\n`);
+    const existing = makeConference({
+      key: "demo",
+      title: "ExampleConf",
+      link: "https://example.test/",
+      identity: { venueId: "demo-series", sourceIds: { official: "demo" } },
+      editions: [makeEdition({ year: 2026, edition_id: "demo-2026" })],
+    });
+    const [written] = writePromotionBatch(observations, resolutions, manifest, {
+      existingConferences: [existing],
+    });
+    expect(written?.canonicalization).toMatchObject({
+      decision: "add-new-edition",
+      matchedVenueKey: "demo",
+    });
+    writeFileSync(
+      curated,
+      `conferences:\n  - key: demo\n    editions:\n      - year: 2027\n        id: old-demo-2027\n        deadlines:\n          - {kind: paper, round: 2, track: main, promotion_ref: {batch: batch, resolution: ${written!.resolution_id}}}\n`,
+    );
+
+    const changed = JSON.parse(readFileSync(resolutions, "utf8"));
+    delete changed[0].canonicalization;
+    const changedText = `${JSON.stringify(changed, null, 2)}\n`;
+    writeFileSync(resolutions, changedText);
+    const changedManifest = JSON.parse(readFileSync(manifest, "utf8"));
+    changedManifest.resolutions.sha256 = createHash("sha256").update(changedText).digest("hex");
+    writeFileSync(manifest, `${JSON.stringify(changedManifest, null, 2)}\n`);
+    const files = [extra, manual, curated, observations, resolutions, manifest];
+    const before = files.map((path) => readFileSync(path, "utf8"));
+
+    expect(() => generateCurated(root)).toThrow(
+      "stored promotion resolution ID does not match its published deadline",
+    );
+    expect(files.map((path) => readFileSync(path, "utf8"))).toEqual(before);
   });
 });

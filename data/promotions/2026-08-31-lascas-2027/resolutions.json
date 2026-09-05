@@ -85,18 +85,22 @@
         "tags": [
           "niche"
         ],
-        "review_state": "reviewed"
+        "review_state": "reviewed",
+        "full_name": "IEEE Latin American Symposium on Circuits and Systems",
+        "link": "https://attend.ieee.org/lascas-2027/"
       },
       "edition": {
         "year": 2027,
         "edition_id": "lascas-2027",
         "date_text": "2027-02-23",
         "event_start": "2027-02-23",
-        "event_end": "2027-02-26"
+        "event_end": "2027-02-26",
+        "link": "https://attend.ieee.org/lascas-2027/",
+        "place": "Panama City, Panama"
       },
       "deadline": {
         "kind": "paper",
-        "label": "paper",
+        "label": "Paper Submission",
         "round": 1,
         "track": "",
         "precision": "date-only",
@@ -118,7 +122,8 @@
           }
         ]
       }
-    }
+    },
+    "resolution_id": "resolution-7745ca16ae605083"
   },
   {
     "candidate": "lascas",
@@ -206,18 +211,22 @@
         "tags": [
           "niche"
         ],
-        "review_state": "reviewed"
+        "review_state": "reviewed",
+        "full_name": "IEEE Latin American Symposium on Circuits and Systems",
+        "link": "https://attend.ieee.org/lascas-2027/"
       },
       "edition": {
         "year": 2027,
         "edition_id": "lascas-2027",
         "date_text": "2027-02-23",
         "event_start": "2027-02-23",
-        "event_end": "2027-02-26"
+        "event_end": "2027-02-26",
+        "link": "https://attend.ieee.org/lascas-2027/",
+        "place": "Panama City, Panama"
       },
       "deadline": {
         "kind": "notification",
-        "label": "notification",
+        "label": "Notification of Acceptance",
         "round": 1,
         "track": "",
         "precision": "date-only",
@@ -239,7 +248,8 @@
           }
         ]
       }
-    }
+    },
+    "resolution_id": "resolution-4d13bbcf0d214cdb"
   },
   {
     "candidate": "lascas",
@@ -327,18 +337,22 @@
         "tags": [
           "niche"
         ],
-        "review_state": "reviewed"
+        "review_state": "reviewed",
+        "full_name": "IEEE Latin American Symposium on Circuits and Systems",
+        "link": "https://attend.ieee.org/lascas-2027/"
       },
       "edition": {
         "year": 2027,
         "edition_id": "lascas-2027",
         "date_text": "2027-02-23",
         "event_start": "2027-02-23",
-        "event_end": "2027-02-26"
+        "event_end": "2027-02-26",
+        "link": "https://attend.ieee.org/lascas-2027/",
+        "place": "Panama City, Panama"
       },
       "deadline": {
         "kind": "camera_ready",
-        "label": "camera_ready",
+        "label": "Camera-ready",
         "round": 1,
         "track": "",
         "precision": "date-only",
@@ -360,6 +374,7 @@
           }
         ]
       }
-    }
+    },
+    "resolution_id": "resolution-fa06799cff614f62"
   }
 ]

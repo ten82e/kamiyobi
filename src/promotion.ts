@@ -1,19 +1,33 @@
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve as resolvePath } from "node:path";
-import { dump as dumpYaml } from "js-yaml";
+import { writeCasBody } from "./capture.ts";
 import {
   asDate,
+  type CallIdentity,
   type Conference,
+  callIdentityOf,
+  classifyDeadlineChange,
+  cmpStr,
   type Deadline,
+  type DeadlineChangeKind,
+  deadlineTrackKey,
+  type EditionIdentity,
+  explicitDeadlineExtension,
+  type IdentityProvider,
   isDateOnlyDeadline,
+  monthOf,
+  type ProviderIdentity,
   parseInstant,
+  roundOf,
+  slug,
+  type VenueIdentity,
 } from "./model.ts";
 
 export type PromotionSourceClass = "official-cfp" | "publisher" | "curated-manual" | "aggregator";
 
 export const CFP_PARSER_VERSION = "cfp-observer/2";
-export const DEFAULT_CAPTURE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+const DEFAULT_CAPTURE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 export interface CfpExtractionCandidate {
   rawExcerpt: string;
@@ -26,7 +40,11 @@ export interface CfpExtractionCandidate {
   eventDate?: string;
   eventEndDate?: string;
   editionYear?: number;
-  place?: string;
+  round?: number;
+  track?: string;
+  labelSignature?: string;
+  adapter?: string;
+  selectorOrField?: string;
 }
 
 export interface CfpCapture {
@@ -42,6 +60,7 @@ export interface CfpCapture {
   candidates: CfpExtractionCandidate[];
   sourceRevision: string;
   officialDomains?: string[];
+  providerIdentity?: ProviderIdentity;
 }
 
 export interface PromotionEvidence {
@@ -75,7 +94,6 @@ export interface PromotionObservation {
   };
   eventDate?: string;
   eventEndDate?: string;
-  place?: string;
   rawExcerpt: string;
   evidence?: Partial<PromotionEvidence>;
   capture?: CfpCapture;
@@ -92,17 +110,46 @@ export interface PromotionObservation {
   candidates?: CfpExtractionCandidate[];
   sourceRevision?: string;
   officialDomains?: string[];
-  parentEventId?: string | null;
-  callIdentity?: {
-    seriesId: string;
-    editionId: string;
-    callId: string;
-    parentEventId: string | null;
+  providerIdentity?: ProviderIdentity;
+  venueId?: string;
+  venueIdentity?: Pick<VenueIdentity, "venueId" | "sourceIds">;
+  editionId?: string;
+  editionIdentity?: Pick<EditionIdentity, "editionId" | "sourceIds">;
+  callIdentity?: string | CallIdentity;
+}
+
+export interface PromotionResolution {
+  resolution_id?: string;
+  candidate: string;
+  decision: "promote" | "hold" | "reject";
+  verifiedFields: string[];
+  reason: string;
+  verification?: CaptureVerification;
+  canonicalization?: PromotionCanonicalization;
+  normalized?: {
+    venue: {
+      key: string;
+      title: string;
+      categories: string[];
+      tags: string[];
+      review_state: string;
+      identity?: Pick<VenueIdentity, "venueId" | "sourceIds">;
+    };
+    edition: {
+      year: number;
+      edition_id: string;
+      date_text: string;
+      event_start?: string;
+      event_end?: string;
+      identity?: Pick<EditionIdentity, "editionId" | "sourceIds">;
+      call_identity?: CallIdentity;
+      call_id?: string;
+    };
+    deadline: Record<string, unknown>;
   };
 }
 
-export type PromotionDecision =
-  | "promote"
+export type PromotionCanonicalDecision =
   | "add-new-venue"
   | "add-new-edition"
   | "enrich-existing-edition"
@@ -111,44 +158,30 @@ export type PromotionDecision =
   | "hold"
   | "reject";
 
-export interface PromotionCanonicalMatch {
-  existingKey: string;
-  existingEditionId?: string;
+export interface PromotionCanonicalization {
+  decision: PromotionCanonicalDecision;
   score: number;
-  reasons: string[];
-  strongEvidence: boolean;
+  matchedBy: string[];
+  matchedVenueKey?: string;
+  matchedEditionId?: string;
+  reason: string;
+  changeKind?: DeadlineChangeKind;
+  alternatives?: PromotionCanonicalMatch[];
+  margin?: number | null;
+  autoApplicable?: boolean;
 }
 
-export interface PromotionResolution {
-  candidate: string;
-  decision: PromotionDecision;
-  verifiedFields: string[];
-  reason: string;
-  verification?: CaptureVerification;
-  normalized?: {
-    venue: {
-      key: string;
-      title: string;
-      categories: string[];
-      tags: string[];
-      review_state: string;
-      category_assignments?: Array<{ category: string; reason: "manual-review" }>;
-    };
-    edition: {
-      year: number;
-      edition_id: string;
-      date_text: string;
-      event_start?: string;
-      event_end?: string;
-      place?: string;
-      identity?: {
-        editionId: string;
-        callIdentity?: PromotionObservation["callIdentity"];
-      };
-    };
-    deadline: Record<string, unknown>;
-  };
-  canonical?: PromotionCanonicalMatch;
+export interface PromotionCanonicalMatch {
+  venueKey: string;
+  score: number;
+  matchedBy: string[];
+}
+
+export interface CanonicalizationDecision {
+  best: PromotionCanonicalMatch | null;
+  alternatives: PromotionCanonicalMatch[];
+  margin: number | null;
+  autoApplicable: boolean;
 }
 
 export interface CaptureVerificationOptions {
@@ -160,8 +193,8 @@ export interface CaptureVerificationOptions {
   maxAgeMs?: number;
   manifestBodyHash?: string;
   requireManifestBody?: boolean;
-  /** Existing live records used by promotion canonicalization. */
-  existingConferences?: Conference[];
+  existingConferences?: readonly Conference[];
+  canonicalizationMargin?: number;
 }
 
 export interface CaptureVerification {
@@ -177,16 +210,6 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME = /^\d{2}:\d{2}(?::\d{2})?$/;
 const TITLE_YEAR = /\b(20\d{2})\b/;
 const SHA256 = /^[0-9a-f]{64}$/i;
-const BATCH_BODY_PATH = /^bodies\/[0-9a-f]{64}\.body$/;
-const GLOBAL_BODY_PATH = /^(?:\.\.\/)*evidence\/blobs\/[0-9a-f]{64}\.body$/;
-
-function cmp(a: string, b: string): number {
-  return a < b ? -1 : a > b ? 1 : 0;
-}
-
-function manifestBodyPath(value: string): boolean {
-  return BATCH_BODY_PATH.test(value) || GLOBAL_BODY_PATH.test(value);
-}
 
 function validDate(value: string): boolean {
   return DATE.test(value) && asDate(value) !== null;
@@ -211,25 +234,10 @@ export function canonicalJson(value: unknown): string {
   if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null";
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
   return `{${Object.entries(value as Record<string, unknown>)
-    .sort(([a], [b]) => cmp(a, b))
+    .sort(([a], [b]) => cmpStr(a, b))
     .map(([key, item]) => `${JSON.stringify(key)}:${canonicalJson(item)}`)
     .join(",")}}`;
 }
-
-const MONTHS: Record<string, number> = {
-  jan: 1,
-  feb: 2,
-  mar: 3,
-  apr: 4,
-  may: 5,
-  jun: 6,
-  jul: 7,
-  aug: 8,
-  sep: 9,
-  oct: 10,
-  nov: 11,
-  dec: 12,
-};
 
 const DATE_PATTERNS = [
   /\b20\d{2}[-/]\d{1,2}[-/]\d{1,2}\b/g,
@@ -261,9 +269,9 @@ function extractedDate(text: string): { date: string; year: number } | null {
   const month = iso
     ? Number(iso[2])
     : monthFirst
-      ? MONTHS[monthFirst[1].slice(0, 3).toLowerCase()]
+      ? monthOf(monthFirst[1].slice(0, 3))
       : dayFirst
-        ? MONTHS[dayFirst[2].slice(0, 3).toLowerCase()]
+        ? monthOf(dayFirst[2].slice(0, 3))
         : japanese
           ? Number(japanese[2])
           : 0;
@@ -330,6 +338,11 @@ function candidateKind(text: string): string {
   if (value.includes("rebuttal") || value.includes("author response")) return "rebuttal_end";
   if (value.includes("registration") || value.includes("参加登録")) return "registration";
   return "paper";
+}
+
+function candidateTrack(text: string): string | undefined {
+  const match = /\b(?:track|stream)\s*[:-]\s*([A-Za-z][A-Za-z0-9_-]*)/i.exec(text);
+  return match ? slug(match[1]) : undefined;
 }
 
 /** Extract only date-bearing CFP/deadline lines; ambiguous values stay candidates for review. */
@@ -418,6 +431,8 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
         kind: candidateKind(raw),
         date: value.date,
         editionYear: value.year,
+        round: roundOf(raw),
+        ...(candidateTrack(raw) ? { track: candidateTrack(raw) } : {}),
       };
       const localTime = ambiguousLeadingTime ? undefined : extractedTime(scope);
       const localTimezone = ambiguousLeadingTime ? undefined : extractedTimezone(scope);
@@ -472,7 +487,7 @@ function ordered(values: string[] | undefined): string[] {
         })
         .filter(Boolean),
     ),
-  ].sort(cmp);
+  ].sort(cmpStr);
 }
 
 function httpUrl(value: string, field: string): URL {
@@ -498,6 +513,67 @@ function domainName(value: string): string {
   } catch {
     return "";
   }
+}
+
+const SHARED_PROVIDER_HOSTS: Array<[IdentityProvider, RegExp]> = [
+  ["easychair", /(?:^|\.)easychair\.org$/i],
+  ["openreview", /(?:^|\.)openreview\.net$/i],
+  ["hotcrp", /(?:^|\.)hotcrp\.com$/i],
+  ["acm", /(?:^|\.)acm\.org$/i],
+  ["ieee", /(?:^|\.)ieee\.org$/i],
+];
+
+function cleanProviderKey(value: string): string {
+  return decodeURIComponent(value)
+    .toLowerCase()
+    .replace(/#.*/, "")
+    .replace(/^\/+|\/+$/g, "");
+}
+
+/** Extract a provider-scoped identity without treating a shared host as a venue. */
+export function providerIdentityFromUrl(value: string): ProviderIdentity {
+  let url: URL;
+  try {
+    url = httpUrl(value, "provider URL");
+  } catch {
+    return { provider: "unknown", providerKey: "", strength: "weak" };
+  }
+  const host = url.hostname.toLowerCase().replace(/\.$/, "");
+  const shared = SHARED_PROVIDER_HOSTS.find(([, pattern]) => pattern.test(host));
+  if (shared) {
+    const [provider] = shared;
+    let providerKey = `${url.pathname}${url.search}`;
+    if (provider === "openreview") {
+      providerKey = url.searchParams.get("id") ?? url.pathname;
+    } else if (provider === "easychair") {
+      providerKey = url.pathname;
+    } else if (provider === "hotcrp") {
+      providerKey = `${host}${url.pathname}`;
+    } else if (provider === "acm" || provider === "ieee") {
+      providerKey = `${host}${url.pathname}${url.search}`;
+    }
+    return { provider, providerKey: cleanProviderKey(providerKey), strength: "provider-scoped" };
+  }
+  if (host === "github.io" || host.endsWith(".github.io"))
+    return {
+      provider: "github-pages",
+      providerKey: cleanProviderKey(`${host}${url.pathname}`),
+      strength: "provider-scoped",
+    };
+  return { provider: "dedicated-domain", providerKey: host, strength: "dedicated-domain" };
+}
+
+function providerIdentityFromObservation(observation: PromotionObservation): ProviderIdentity {
+  return (
+    observation.providerIdentity ??
+    captureOf(observation)?.providerIdentity ??
+    providerIdentityFromUrl(normalizedEvidence(observation).sourceUrl)
+  );
+}
+
+function providerIdentityMatches(left: ProviderIdentity, right: ProviderIdentity): boolean {
+  if (!left.providerKey || !right.providerKey || left.provider !== right.provider) return false;
+  return left.providerKey === right.providerKey;
 }
 
 export function isOfficialUrl(url: string, officialDomains: string[]): boolean {
@@ -527,6 +603,7 @@ function captureOf(observation: PromotionObservation): CfpCapture | undefined {
     observation.excerpt,
     observation.candidates,
     observation.sourceRevision,
+    observation.providerIdentity,
   ].some((value) => value !== undefined);
   if (!hasCaptureField) return undefined;
   return {
@@ -542,6 +619,7 @@ function captureOf(observation: PromotionObservation): CfpCapture | undefined {
     candidates: observation.candidates as CfpExtractionCandidate[],
     sourceRevision: observation.sourceRevision as string,
     officialDomains: observation.officialDomains,
+    providerIdentity: observation.providerIdentity,
   };
 }
 
@@ -585,6 +663,91 @@ function normalizedTime(value: string | undefined): string | undefined {
   if (!value) return undefined;
   const [hour, minute, second = "0"] = value.split(":");
   return `${hour.padStart(2, "0")}:${minute.padStart(2, "0")}:${second.padStart(2, "0")}`;
+}
+
+function identityValue(value: unknown, field: string): string {
+  if (value === undefined) return "";
+  if (typeof value !== "string") throw new TypeError(`${field} must be a string`);
+  return value.trim();
+}
+
+function identitySourceIds(value: unknown, field: string): Record<string, string> {
+  if (value === undefined) return {};
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new TypeError(`${field} must be an object`);
+  const result: Record<string, string> = {};
+  for (const [source, sourceId] of Object.entries(value)) {
+    const normalizedSource = identityValue(source, `${field} source`);
+    const normalizedId = identityValue(sourceId, `${field}.${normalizedSource}`);
+    if (normalizedSource && normalizedId) result[normalizedSource] = normalizedId;
+  }
+  return result;
+}
+
+function promotionVenueIdentity(
+  observation: PromotionObservation,
+): Pick<VenueIdentity, "venueId" | "sourceIds"> | undefined {
+  const raw = observation.venueIdentity as unknown;
+  if (raw !== undefined && (!raw || typeof raw !== "object" || Array.isArray(raw)))
+    throw new TypeError("venueIdentity must be an object");
+  const value = raw as { venueId?: unknown; sourceIds?: unknown } | undefined;
+  const venueId = identityValue(observation.venueId ?? value?.venueId, "venueId");
+  const sourceIds = identitySourceIds(value?.sourceIds, "venueIdentity.sourceIds");
+  return venueId || Object.keys(sourceIds).length
+    ? {
+        ...(venueId ? { venueId } : {}),
+        ...(Object.keys(sourceIds).length ? { sourceIds } : {}),
+      }
+    : undefined;
+}
+
+function promotionEditionIdentity(
+  observation: PromotionObservation,
+): Pick<EditionIdentity, "editionId" | "sourceIds"> | undefined {
+  const raw = observation.editionIdentity as unknown;
+  if (raw !== undefined && (!raw || typeof raw !== "object" || Array.isArray(raw)))
+    throw new TypeError("editionIdentity must be an object");
+  const value = raw as { editionId?: unknown; sourceIds?: unknown } | undefined;
+  const editionId = identityValue(observation.editionId ?? value?.editionId, "editionId");
+  const sourceIds = identitySourceIds(value?.sourceIds, "editionIdentity.sourceIds");
+  return editionId || Object.keys(sourceIds).length
+    ? {
+        ...(editionId ? { editionId } : {}),
+        ...(Object.keys(sourceIds).length ? { sourceIds } : {}),
+      }
+    : undefined;
+}
+
+function promotionCallIdentity(
+  observation: PromotionObservation,
+): string | CallIdentity | undefined {
+  const value = observation.callIdentity;
+  if (value === undefined) return undefined;
+  if (typeof value === "string") return identityValue(value, "callIdentity") || undefined;
+  const normalized = callIdentityOf(value);
+  if (!normalized) throw new TypeError("callIdentity must contain seriesId, editionId, and callId");
+  return normalized;
+}
+
+function sourceIdentityMatches(
+  observed: Record<string, string> | undefined,
+  existing: Record<string, string> | undefined,
+): boolean {
+  if (!observed || !existing) return false;
+  return Object.entries(observed).some(
+    ([source, sourceId]) => existing[source]?.trim() === sourceId,
+  );
+}
+
+function sourceIdentityConflicts(
+  observed: Record<string, string> | undefined,
+  existing: Record<string, string> | undefined,
+): boolean {
+  if (!observed || !existing) return false;
+  return Object.entries(observed).some(
+    ([source, sourceId]) =>
+      Boolean(existing[source]?.trim()) && existing[source]!.trim() !== sourceId,
+  );
 }
 
 function candidateMatches(
@@ -849,6 +1012,9 @@ export function resolvePromotion(
   observation: PromotionObservation,
   options: CaptureVerificationOptions = {},
 ): PromotionResolution {
+  const observedVenueIdentity = promotionVenueIdentity(observation);
+  const observedEditionIdentity = promotionEditionIdentity(observation);
+  const observedCallIdentity = promotionCallIdentity(observation);
   const date = observation.deadline?.date ?? "";
   const time = observation.deadline?.time ?? "";
   const timezone = observation.deadline?.timezone ?? "";
@@ -986,7 +1152,7 @@ export function resolvePromotion(
       },
     ],
   };
-  const resolution: PromotionResolution = {
+  return {
     candidate: key,
     decision: "promote",
     verifiedFields: fields,
@@ -999,347 +1165,552 @@ export function resolvePromotion(
         categories,
         tags: ordered(observation.tags),
         review_state: observation.reviewState ?? "pending",
-        ...(observation.reviewState === "reviewed"
-          ? {
-              category_assignments: categories.map((category) => ({
-                category,
-                reason: "manual-review" as const,
-              })),
-            }
-          : {}),
+        ...(observedVenueIdentity ? { identity: observedVenueIdentity } : {}),
       },
       edition: {
         year: editionYear,
-        edition_id: `${key}-${editionYear}`,
+        edition_id: observedEditionIdentity?.editionId || `${key}-${editionYear}`,
         date_text: observation.eventDate ?? String(editionYear),
         ...(eventStart ? { event_start: eventStart } : {}),
         ...(eventEnd ? { event_end: observation.eventEndDate } : {}),
-        ...(observation.place?.trim() ? { place: observation.place.trim() } : {}),
-        identity: {
-          editionId: `${key}-${editionYear}`,
-          ...(observation.callIdentity ? { callIdentity: observation.callIdentity } : {}),
-        },
+        ...(observedEditionIdentity ? { identity: observedEditionIdentity } : {}),
+        ...(typeof observedCallIdentity === "string"
+          ? { call_id: observedCallIdentity }
+          : observedCallIdentity
+            ? { call_identity: observedCallIdentity }
+            : {}),
       },
       deadline,
     },
   };
-  return options.existingConferences
-    ? canonicalizePromotionResolution(resolution, options.existingConferences)
-    : resolution;
 }
 
-function normalizedWords(value: string | null | undefined): Set<string> {
-  return new Set(
-    String(value ?? "")
-      .normalize("NFKC")
-      .toLowerCase()
-      .replace(/[^\p{L}\p{N}]+/gu, " ")
-      .split(/\s+/)
-      .filter((word) => word.length >= 2),
-  );
+interface PromotionVenueMatch {
+  conference: Conference;
+  kind: "strong" | "caution";
+  score: number;
+  matchedBy: string[];
+  providerIdentity?: ProviderIdentity;
 }
 
-function wordSimilarity(left: string, right: string): number {
-  const a = normalizedWords(left);
-  const b = normalizedWords(right);
-  if (!a.size || !b.size) return 0;
-  let intersection = 0;
-  for (const word of a) if (b.has(word)) intersection += 1;
-  return intersection / (a.size + b.size - intersection);
-}
-
-function samePlace(left: string | undefined, right: string): boolean {
-  return Boolean(left?.trim() && right.trim() && wordSimilarity(left, right) >= 0.8);
-}
-
-function dateRangeOverlap(
-  leftStart: string | undefined,
-  leftEnd: string | undefined,
-  rightStart: Date | null,
-  rightEnd: Date | null,
-): boolean {
-  const start = leftStart ? asDate(leftStart) : null;
-  const end = leftEnd ? asDate(leftEnd) : start;
-  const rightActualEnd = rightEnd ?? rightStart;
-  return Boolean(
-    start &&
-      end &&
-      rightStart &&
-      rightActualEnd &&
-      start.getTime() <= rightActualEnd.getTime() &&
-      rightStart.getTime() <= end.getTime(),
-  );
-}
-
-function promotionDeadlineValue(deadline: Record<string, unknown>): string | null {
-  if (deadline.precision === "date-only") {
-    const date = String(deadline.date ?? "").trim();
-    return validDate(date) ? date : null;
+function promotionUrlToken(value: string | undefined): string {
+  if (!value) return "";
+  try {
+    const url = new URL(value);
+    return `${url.protocol.toLowerCase()}//${url.host.toLowerCase()}${url.pathname.replace(/\/+$/, "")}${url.search}`;
+  } catch {
+    return value.trim().toLowerCase().replace(/\/+$/, "");
   }
-  const rawDate = String(deadline.date ?? "").trim();
-  const date = rawDate.slice(0, 10);
-  const time = String(deadline.time ?? rawDate.slice(10).trim()).trim();
-  const timezone = String(deadline.tz ?? "").trim();
-  const at =
-    validDate(date) && validTime(time) && timezone
-      ? parseInstant(`${date} ${time}`, timezone)
-      : null;
-  return at?.toISOString() ?? (validDate(date) ? date : null);
 }
 
-function existingDeadlineValue(deadline: Deadline): string {
-  return isDateOnlyDeadline(deadline) ? deadline.local_date : deadline.at_utc.toISOString();
+function promotionNameTokens(value: string | undefined): Set<string> {
+  return new Set(
+    slug(value)
+      .replace(/(^|-)20\d{2}(?=-|$)/g, "$1")
+      .split("-")
+      .filter(Boolean),
+  );
 }
 
-function deadlineSlotMatchesPromotion(
-  deadline: Deadline,
-  normalized: Record<string, unknown>,
-): boolean {
-  if (deadline.kind !== String(normalized.kind ?? "paper")) return false;
-  if (deadline.round !== Number(normalized.round ?? 1)) return false;
-  const leftTrack = String(deadline.track ?? "")
-    .trim()
-    .toLowerCase();
-  const rightTrack = String(normalized.track ?? "")
-    .trim()
-    .toLowerCase();
-  return leftTrack === rightTrack;
+function promotionNamesMatch(left: string | undefined, right: string | undefined): boolean {
+  const leftKey = slug(left).replace(/-20\d{2}(?=-|$)/g, "");
+  const rightKey = slug(right).replace(/-20\d{2}(?=-|$)/g, "");
+  if (leftKey && leftKey === rightKey) return true;
+  const a = promotionNameTokens(left);
+  const b = promotionNameTokens(right);
+  if (a.size === 0 || b.size === 0) return false;
+  const shared = [...a].filter((token) => b.has(token)).length;
+  return shared / (a.size + b.size - shared) >= 0.7;
 }
 
-function deadlineMatchesPromotion(
-  deadline: Deadline,
-  normalized: Record<string, unknown>,
-): boolean {
-  if (!deadlineSlotMatchesPromotion(deadline, normalized)) return false;
-  const left = existingDeadlineValue(deadline);
-  const right = promotionDeadlineValue(normalized);
-  if (!right) return false;
-  if (left === right) return true;
-  if (isDateOnlyDeadline(deadline) && right.length === 10) return left === right;
-  return false;
-}
-
-function existingOfficialDomainMatch(
-  sourceUrl: string,
-  conference: Conference,
-  edition: Conference["editions"][number] | undefined,
-): boolean {
-  const domains = [
-    ...(conference.identity?.officialDomains ?? []),
-    ...(edition?.identity?.officialUrls ?? []),
+function conferenceProviderIdentities(conference: Conference): ProviderIdentity[] {
+  const urls = [
     conference.link,
-    edition?.link ?? "",
+    ...(conference.identity?.officialDomains ?? []),
+    ...conference.editions.flatMap((edition) => [
+      edition.link,
+      ...(edition.identity?.officialUrls ?? []),
+    ]),
   ].filter(Boolean);
-  return domains.some((value) => {
-    const domain = domainName(value);
-    return Boolean(domain && isOfficialUrl(sourceUrl, [domain]));
-  });
+  const identities = [
+    ...(conference.identity?.providerIdentities ?? []),
+    ...urls.map((url) => providerIdentityFromUrl(url)),
+  ];
+  return [
+    ...new Map(
+      identities
+        .filter((item) => item.providerKey)
+        .map((item) => [`${item.provider}\0${item.providerKey}`, item]),
+    ).values(),
+  ];
 }
 
-function canonicalMatchFor(
+function publicCanonicalMatch(match: PromotionVenueMatch): PromotionCanonicalMatch {
+  return {
+    venueKey: match.conference.key,
+    score: match.score,
+    matchedBy: [...match.matchedBy],
+  };
+}
+
+function matchDecision(
+  matches: PromotionVenueMatch[],
+  margin = 40,
+): { strong: PromotionVenueMatch[]; decision: CanonicalizationDecision } {
+  const sorted = [...matches].sort(
+    (left, right) => right.score - left.score || cmpStr(left.conference.key, right.conference.key),
+  );
+  const best = sorted[0] ? publicCanonicalMatch(sorted[0]) : null;
+  const second = sorted[1] ? sorted[1].score : null;
+  const scoreMargin = best && second !== null ? best.score - second : best ? Infinity : null;
+  const strong = sorted.filter((match) => match.kind === "strong");
+  const bestStrong = strong[0] ? publicCanonicalMatch(strong[0]) : null;
+  const secondStrong = strong[1] ? strong[1].score : null;
+  const strongMargin =
+    bestStrong && secondStrong !== null
+      ? bestStrong.score - secondStrong
+      : bestStrong
+        ? Infinity
+        : null;
+  return {
+    strong,
+    decision: {
+      best: bestStrong ?? best,
+      alternatives: sorted.slice(1).map(publicCanonicalMatch),
+      margin: strongMargin ?? scoreMargin,
+      autoApplicable: Boolean(bestStrong && (strongMargin === null || strongMargin >= margin)),
+    },
+  };
+}
+
+function promotionVenueMatch(
+  observation: PromotionObservation,
   normalized: NonNullable<PromotionResolution["normalized"]>,
   conference: Conference,
-  edition: Conference["editions"][number] | undefined,
-): PromotionCanonicalMatch | null {
-  const sourceUrl = String(
-    (normalized.deadline.evidence as Array<Record<string, unknown>> | undefined)?.[0]?.sourceUrl ??
-      "",
+): PromotionVenueMatch | null {
+  const candidateKey = slug(normalized.venue.key || observation.candidate);
+  const canonicalKeyMatch = candidateKey === slug(conference.key);
+  const legacyKeyMatch = Boolean(
+    candidateKey && (conference.legacy_keys ?? []).map(slug).includes(candidateKey),
   );
-  const candidateKey = normalized.venue.key.trim().toLowerCase();
-  const explicitKey =
-    conference.key.toLowerCase() === candidateKey ||
-    (conference.legacy_keys ?? []).some((key) => key.toLowerCase() === candidateKey);
-  const explicitEdition = Boolean(
-    edition &&
-      [edition.edition_id, edition.identity?.editionId, ...(edition.legacy_ids ?? [])].some((id) =>
-        Boolean(id && id.toLowerCase() === normalized.edition.edition_id.toLowerCase()),
+  const observedVenueIdentity = normalized.venue.identity ?? promotionVenueIdentity(observation);
+  const observedEditionIdentity =
+    normalized.edition.identity ?? promotionEditionIdentity(observation);
+  const stableEditionId = observedEditionIdentity?.editionId;
+  const stableEditionIdMatch = Boolean(
+    stableEditionId &&
+      conference.editions.some(
+        (edition) =>
+          edition.year === normalized.edition.year &&
+          [edition.edition_id, edition.identity?.editionId, ...(edition.legacy_ids ?? [])]
+            .filter(Boolean)
+            .includes(stableEditionId),
       ),
   );
-  if (edition && edition.year !== normalized.edition.year && !explicitEdition) return null;
-  const candidateCall = normalized.edition.identity?.callIdentity;
-  const existingCall = edition?.identity?.callIdentity;
-  if (
-    candidateCall &&
-    existingCall &&
-    (candidateCall.seriesId.toLowerCase() !== existingCall.seriesId.toLowerCase() ||
-      candidateCall.editionId.toLowerCase() !== existingCall.editionId.toLowerCase() ||
-      candidateCall.callId.toLowerCase() !== existingCall.callId.toLowerCase() ||
-      (candidateCall.parentEventId ?? "").toLowerCase() !==
-        (existingCall.parentEventId ?? "").toLowerCase())
-  )
-    return null;
-  const officialDomain = existingOfficialDomainMatch(sourceUrl, conference, edition);
-  const parentEvent = Boolean(
-    normalized.edition.identity?.callIdentity?.parentEventId &&
-      edition?.identity?.callIdentity?.parentEventId &&
-      normalized.edition.identity.callIdentity.parentEventId.toLowerCase() ===
-        edition.identity.callIdentity.parentEventId.toLowerCase(),
+  const venueIdentityConflict = Boolean(
+    (observedVenueIdentity?.venueId &&
+      conference.identity?.venueId &&
+      observedVenueIdentity.venueId !== conference.identity.venueId) ||
+      sourceIdentityConflicts(observedVenueIdentity?.sourceIds, conference.identity?.sourceIds),
   );
-  const eventOverlap = dateRangeOverlap(
+  if (venueIdentityConflict) return null;
+  const stableVenueIdMatch = Boolean(
+    conference.identity?.venueId &&
+      observedVenueIdentity?.venueId &&
+      observedVenueIdentity.venueId === conference.identity.venueId,
+  );
+  const venueSourceIdMatch = sourceIdentityMatches(
+    observedVenueIdentity?.sourceIds,
+    conference.identity?.sourceIds,
+  );
+  const sourceUrl = normalizedEvidence(observation).sourceUrl;
+  const officialUrls = [
+    conference.link,
+    ...conference.editions.flatMap((edition) => [
+      edition.link,
+      ...(edition.identity?.officialUrls ?? []),
+    ]),
+  ].filter(Boolean);
+  const exactUrl = Boolean(
+    sourceUrl &&
+      officialUrls.some((url) => promotionUrlToken(url) === promotionUrlToken(sourceUrl)),
+  );
+  const officialDomains = [...(conference.identity?.officialDomains ?? []), ...officialUrls];
+  const domainMatch = Boolean(sourceUrl && isOfficialUrl(sourceUrl, officialDomains));
+  const providerIdentity = providerIdentityFromObservation(observation);
+  const providerMatch = conferenceProviderIdentities(conference).find((candidate) =>
+    providerIdentityMatches(providerIdentity, candidate),
+  );
+  const observedCallIdentity = promotionCallIdentity(observation);
+  const callIdentityMatch = Boolean(
+    observedCallIdentity &&
+      typeof observedCallIdentity !== "string" &&
+      conference.editions.some((edition) => {
+        const existing = edition.call_identity;
+        return Boolean(
+          edition.year === normalized.edition.year &&
+            existing &&
+            existing.seriesId === observedCallIdentity.seriesId &&
+            existing.editionId === observedCallIdentity.editionId &&
+            existing.callId === observedCallIdentity.callId &&
+            existing.parentEventId === observedCallIdentity.parentEventId,
+        );
+      }),
+  );
+  const dedicatedDomainMatch =
+    providerIdentity.provider === "dedicated-domain" &&
+    providerMatch?.provider === "dedicated-domain" &&
+    conference.editions.some((edition) => edition.year === normalized.edition.year);
+  const sharedHostMatch = conferenceProviderIdentities(conference).some(
+    (candidate) =>
+      candidate.provider === providerIdentity.provider &&
+      candidate.provider !== "dedicated-domain" &&
+      domainMatch,
+  );
+  const nameMatch =
+    promotionNamesMatch(observation.title, conference.title) ||
+    promotionNamesMatch(observation.title, conference.full_name) ||
+    (conference.identity?.aliases ?? []).some((alias) =>
+      promotionNamesMatch(observation.candidate, alias),
+    );
+  const matchedBy = [
+    ...(canonicalKeyMatch ? ["canonical-key"] : []),
+    ...(legacyKeyMatch ? ["legacy-key"] : []),
+    ...(stableVenueIdMatch ? ["stable-venue-id"] : []),
+    ...(stableEditionIdMatch ? ["stable-edition-id"] : []),
+    ...(venueSourceIdMatch ? ["stable-venue-source-id"] : []),
+    ...(callIdentityMatch ? ["call-identity"] : []),
+    ...(exactUrl ? ["official-url"] : []),
+    ...(domainMatch ? ["official-domain"] : []),
+    ...(providerMatch ? ["provider-identity"] : []),
+    ...(sharedHostMatch && !providerMatch ? ["shared-provider-host"] : []),
+    ...(nameMatch ? ["name"] : []),
+  ];
+  if (!matchedBy.length) return null;
+  const strongIdentity =
+    legacyKeyMatch ||
+    stableVenueIdMatch ||
+    stableEditionIdMatch ||
+    venueSourceIdMatch ||
+    callIdentityMatch ||
+    (providerMatch !== undefined &&
+      (providerIdentity.provider === "github-pages" ||
+        providerIdentity.provider === "easychair" ||
+        providerIdentity.provider === "openreview" ||
+        providerIdentity.provider === "hotcrp" ||
+        providerIdentity.provider === "acm" ||
+        providerIdentity.provider === "ieee" ||
+        (dedicatedDomainMatch && (exactUrl || nameMatch))));
+  if (strongIdentity) {
+    return {
+      conference,
+      kind: "strong",
+      score:
+        (legacyKeyMatch ? 220 : 0) +
+        (stableVenueIdMatch ? 240 : 0) +
+        (stableEditionIdMatch ? 240 : 0) +
+        (venueSourceIdMatch ? 220 : 0) +
+        (callIdentityMatch ? 260 : 0) +
+        (providerMatch ? 180 : 0) +
+        (exactUrl ? 40 : 0) +
+        (dedicatedDomainMatch ? 80 : 0) +
+        (nameMatch ? 30 : 0),
+      matchedBy,
+      providerIdentity,
+    };
+  }
+  // Shared names or domains are review signals only; they do not authorize a merge.
+  return { conference, kind: "caution", score: nameMatch ? 30 : 20, matchedBy };
+}
+
+function promotionDateRangeOverlap(
+  start: string | undefined,
+  end: string | undefined,
+  edition: Conference["editions"][number],
+): boolean {
+  const leftStart = asDate(start);
+  const leftEnd = asDate(end ?? start);
+  const rightStart = edition.event_start;
+  const rightEnd = edition.event_end ?? edition.event_start;
+  return Boolean(
+    leftStart &&
+      leftEnd &&
+      rightStart &&
+      rightEnd &&
+      leftStart.getTime() <= rightEnd.getTime() &&
+      rightStart.getTime() <= leftEnd.getTime(),
+  );
+}
+
+function promotionEditionMatch(
+  observation: PromotionObservation,
+  normalized: NonNullable<PromotionResolution["normalized"]>,
+  edition: Conference["editions"][number],
+): string[] {
+  if (edition.year !== normalized.edition.year) return [];
+  const observedEditionIdentity =
+    normalized.edition.identity ?? promotionEditionIdentity(observation);
+  const stableEditionId = observedEditionIdentity?.editionId;
+  const existingEditionIds = [
+    edition.edition_id,
+    edition.identity?.editionId,
+    ...(edition.legacy_ids ?? []),
+  ].filter((value): value is string => Boolean(value?.trim()));
+  const editionIdentityConflict = Boolean(
+    (stableEditionId &&
+      existingEditionIds.length > 0 &&
+      !existingEditionIds.includes(stableEditionId)) ||
+      sourceIdentityConflicts(observedEditionIdentity?.sourceIds, edition.identity?.sourceIds),
+  );
+  if (editionIdentityConflict) return [];
+  const stableEditionIdMatch = Boolean(
+    stableEditionId && existingEditionIds.includes(stableEditionId),
+  );
+  const editionSourceIdMatch = sourceIdentityMatches(
+    observedEditionIdentity?.sourceIds,
+    edition.identity?.sourceIds,
+  );
+  const observedCallIdentity = promotionCallIdentity(observation);
+  const existingCallIdentity = edition.call_identity;
+  const callIdentityMatch =
+    typeof observedCallIdentity === "string"
+      ? Boolean(existingCallIdentity?.callId === observedCallIdentity)
+      : Boolean(
+          observedCallIdentity &&
+            existingCallIdentity &&
+            observedCallIdentity.seriesId === existingCallIdentity.seriesId &&
+            observedCallIdentity.editionId === existingCallIdentity.editionId &&
+            observedCallIdentity.callId === existingCallIdentity.callId &&
+            observedCallIdentity.parentEventId === existingCallIdentity.parentEventId,
+        );
+  if (observedCallIdentity && existingCallIdentity && !callIdentityMatch) return [];
+  const sourceUrl = normalizedEvidence(observation).sourceUrl;
+  const editionUrls = [edition.link, ...(edition.identity?.officialUrls ?? [])].filter(Boolean);
+  const exactUrl = Boolean(
+    sourceUrl && editionUrls.some((url) => promotionUrlToken(url) === promotionUrlToken(sourceUrl)),
+  );
+  const domainMatch = Boolean(sourceUrl && isOfficialUrl(sourceUrl, editionUrls));
+  const eventOverlap = promotionDateRangeOverlap(
     normalized.edition.event_start,
     normalized.edition.event_end,
-    edition?.event_start ?? null,
-    edition?.event_end ?? null,
+    edition,
   );
-  const aliasMatch = [
-    conference.title,
-    conference.full_name,
-    ...(conference.identity?.aliases ?? []),
-  ].some((value) => wordSimilarity(value, normalized.venue.title) >= 0.8);
-  const formalSimilarity = Math.max(
-    wordSimilarity(conference.full_name, normalized.venue.title),
-    wordSimilarity(conference.title, normalized.venue.title),
+  return [
+    ...(stableEditionIdMatch ? ["stable-edition-id"] : []),
+    ...(editionSourceIdMatch ? ["stable-edition-source-id"] : []),
+    ...(callIdentityMatch ? ["call-identity"] : []),
+    ...(exactUrl ? ["official-edition-url"] : []),
+    ...(domainMatch ? ["official-edition-domain"] : []),
+    ...(eventOverlap ? ["event-date"] : []),
+  ];
+}
+
+function normalizedDeadlineInstant(deadline: Record<string, unknown>): number | null {
+  if (deadline.precision === "date-only") return null;
+  const date = typeof deadline.date === "string" ? deadline.date : "";
+  const tz = typeof deadline.tz === "string" ? deadline.tz : "";
+  return parseInstant(date, tz)?.getTime() ?? null;
+}
+
+function existingDeadlineInstant(deadline: Deadline): number | null {
+  return isDateOnlyDeadline(deadline) ? null : deadline.at_utc.getTime();
+}
+
+function normalizedDeadlineDate(deadline: Record<string, unknown>): string {
+  return String(deadline.precision === "date-only" ? deadline.date : "");
+}
+
+function existingDeadlineDate(deadline: Deadline): string {
+  return isDateOnlyDeadline(deadline)
+    ? deadline.local_date
+    : deadline.at_utc.toISOString().slice(0, 10);
+}
+
+function samePromotionDeadlineSlot(
+  normalized: NonNullable<PromotionResolution["normalized"]>,
+  existing: Deadline,
+): boolean {
+  const deadline = normalized.deadline;
+  const kind = String(deadline.kind ?? "other");
+  const round = Number(deadline.round ?? 1) || 1;
+  const track = deadlineTrackKey(String(deadline.label ?? ""), kind, String(deadline.track ?? ""));
+  const existingTrack = deadlineTrackKey(existing.label, existing.kind, existing.track);
+  return existing.kind === kind && existing.round === round && existingTrack === track;
+}
+
+function canonicalizePromotion(
+  observation: PromotionObservation,
+  resolution: PromotionResolution,
+  existingConferences: readonly Conference[],
+  marginThreshold = 40,
+): PromotionCanonicalization {
+  if (resolution.decision === "reject")
+    return { decision: "reject", score: 0, matchedBy: [], reason: resolution.reason };
+  if (resolution.decision !== "promote" || !resolution.normalized)
+    return { decision: "hold", score: 0, matchedBy: [], reason: resolution.reason };
+
+  const matches = existingConferences
+    .map((conference) => promotionVenueMatch(observation, resolution.normalized!, conference))
+    .filter((match): match is PromotionVenueMatch => match !== null);
+  const selected = matchDecision(matches, marginThreshold);
+  const strong = selected.strong;
+  const matchMeta = {
+    alternatives: selected.decision.alternatives,
+    margin: selected.decision.margin,
+    autoApplicable: selected.decision.autoApplicable,
+  };
+  if (
+    strong.length > 1 &&
+    (selected.decision.margin === null || selected.decision.margin < marginThreshold)
+  )
+    return {
+      decision: "hold",
+      score: strong[0]!.score,
+      matchedBy: strong[0]!.matchedBy,
+      reason: "multiple existing venues match official promotion evidence",
+      ...matchMeta,
+    };
+  if (strong.length === 0) {
+    const caution = matches.sort((a, b) => b.score - a.score)[0];
+    if (caution)
+      return {
+        decision: "hold",
+        score: caution.score,
+        matchedBy: caution.matchedBy,
+        matchedVenueKey: caution.conference.key,
+        reason: "name or domain similarity requires manual identity review",
+        ...matchMeta,
+      };
+    return {
+      decision: "add-new-venue",
+      score: 0,
+      matchedBy: [],
+      reason: "no existing venue identity matched",
+      ...matchMeta,
+    };
+  }
+
+  const venue = strong[0]!.conference;
+  const editionMatches = venue.editions
+    .map((edition) => ({
+      edition,
+      matchedBy: promotionEditionMatch(observation, resolution.normalized!, edition),
+    }))
+    .filter(({ matchedBy }) => matchedBy.length > 0);
+  if (editionMatches.length > 1)
+    return {
+      decision: "hold",
+      score: strong[0]!.score,
+      matchedBy: [...strong[0]!.matchedBy],
+      matchedVenueKey: venue.key,
+      reason: "multiple editions match official promotion evidence",
+      ...matchMeta,
+    };
+  if (editionMatches.length === 0)
+    return {
+      decision: "add-new-edition",
+      score: strong[0]!.score,
+      matchedBy: [...strong[0]!.matchedBy],
+      matchedVenueKey: venue.key,
+      reason: "existing venue matched but no existing edition did",
+      ...matchMeta,
+    };
+
+  const edition = editionMatches[0]!.edition;
+  const matchedBy = [...strong[0]!.matchedBy, ...editionMatches[0]!.matchedBy];
+  const deadlineMatches = edition.deadlines.filter((existing) =>
+    samePromotionDeadlineSlot(resolution.normalized!, existing),
   );
-  const normalizedDeadline = normalized.deadline;
-  const deadlineDate = promotionDeadlineValue(normalizedDeadline);
-  const deadlineMatch = Boolean(
-    edition?.deadlines.some(
-      (deadline) =>
-        deadlineMatchesPromotion(deadline, normalizedDeadline) &&
-        existingDeadlineValue(deadline) === deadlineDate,
-    ),
-  );
-  const placeMatch = samePlace(normalized.edition.place, edition?.place ?? "");
-  const reasons: string[] = [];
-  let score = 0;
-  if (officialDomain) {
-    score += 100;
-    reasons.push("official-domain");
-  }
-  if (parentEvent) {
-    score += 80;
-    reasons.push("parent-event");
-  }
-  if (eventOverlap) {
-    score += 60;
-    reasons.push("event-date-overlap");
-  }
-  if (aliasMatch) {
-    score += 30;
-    reasons.push("alias-match");
-  }
-  if (formalSimilarity >= 0.45) {
-    score += 30;
-    reasons.push("formal-name-similarity");
-  }
-  if (deadlineMatch) {
-    score += 20;
-    reasons.push("deadline-match");
-  }
-  if (placeMatch) {
-    score += 10;
-    reasons.push("place-match");
-  }
-  if (explicitKey) {
-    score += 100;
-    reasons.push("explicit-legacy-key");
-  }
-  if (explicitEdition) {
-    score += 100;
-    reasons.push("explicit-edition-id");
-  }
-  if (!score) return null;
+  if (deadlineMatches.length > 1)
+    return {
+      decision: "hold",
+      score: strong[0]!.score,
+      matchedBy,
+      matchedVenueKey: venue.key,
+      matchedEditionId: edition.edition_id,
+      reason: "multiple existing deadlines share the promotion slot",
+      ...matchMeta,
+    };
+  if (deadlineMatches.length === 0)
+    return {
+      decision: "enrich-existing-edition",
+      score: strong[0]!.score,
+      matchedBy,
+      matchedVenueKey: venue.key,
+      matchedEditionId: edition.edition_id,
+      reason: "existing edition matched but deadline slot is new",
+      ...matchMeta,
+    };
+
+  const existing = deadlineMatches[0]!;
+  const changeKind = classifyDeadlineChange(existing, resolution.normalized.deadline);
+  const candidateInstant = normalizedDeadlineInstant(resolution.normalized.deadline);
+  const existingInstant = existingDeadlineInstant(existing);
+  const sameDateOnly =
+    normalizedDeadlineDate(resolution.normalized.deadline) === existingDeadlineDate(existing);
+  if (
+    (candidateInstant !== null &&
+      existingInstant !== null &&
+      candidateInstant === existingInstant) ||
+    (candidateInstant === null && existingInstant === null && sameDateOnly)
+  )
+    return {
+      decision: "duplicate",
+      score: strong[0]!.score,
+      matchedBy,
+      matchedVenueKey: venue.key,
+      matchedEditionId: edition.edition_id,
+      reason: "existing deadline slot and value are identical",
+      changeKind,
+      ...matchMeta,
+    };
+  const official =
+    observation.sourceClass === "official-cfp" || observation.sourceClass === "publisher";
+  const extensionEvidence = normalizedEvidence(observation).rawExcerpt;
+  const autoApplicable =
+    changeKind === "precision-upgrade" ||
+    changeKind === "unchanged" ||
+    (changeKind === "extension" && official && explicitDeadlineExtension(extensionEvidence));
+  if (!autoApplicable)
+    return {
+      decision: "hold",
+      score: strong[0]!.score,
+      matchedBy,
+      matchedVenueKey: venue.key,
+      matchedEditionId: edition.edition_id,
+      reason: `deadline change requires manual resolution: ${changeKind}`,
+      changeKind,
+      ...matchMeta,
+      autoApplicable: false,
+    };
   return {
-    existingKey: conference.key,
-    ...(edition ? { existingEditionId: edition.edition_id } : {}),
-    score,
-    reasons,
-    strongEvidence: officialDomain || parentEvent || explicitKey || explicitEdition,
+    decision: "supersede-existing-deadline",
+    score: strong[0]!.score,
+    matchedBy,
+    matchedVenueKey: venue.key,
+    matchedEditionId: edition.edition_id,
+    reason: `official evidence changes an existing deadline value: ${changeKind}`,
+    changeKind,
+    ...matchMeta,
+    autoApplicable: true,
   };
 }
 
-/** Resolve a verified promotion against existing venue/edition records. */
-export function canonicalizePromotionResolution(
-  resolution: PromotionResolution,
-  existingConferences: Conference[] | null | undefined,
+/** Resolve a verified promotion against the current catalog without mutating it. */
+export function resolvePromotionAgainst(
+  observation: PromotionObservation,
+  options: CaptureVerificationOptions & { existingConferences: readonly Conference[] },
 ): PromotionResolution {
-  if (resolution.decision !== "promote" || !resolution.normalized) return resolution;
-  const matches = (existingConferences ?? [])
-    .flatMap((conference) => {
-      // Keep one venue-level candidate so a known series can receive a new
-      // edition without accidentally attaching it to the nearest old year.
-      const editions = [undefined, ...conference.editions];
-      return editions
-        .map((edition) => canonicalMatchFor(resolution.normalized!, conference, edition))
-        .filter((match): match is PromotionCanonicalMatch => match !== null);
-    })
-    .sort(
-      (left, right) =>
-        right.score - left.score ||
-        (left.existingEditionId ? 0 : 1) - (right.existingEditionId ? 0 : 1) ||
-        left.existingKey.localeCompare(right.existingKey),
-    );
-  const best = matches[0];
-  if (!best) {
-    return { ...resolution, decision: "add-new-venue" };
-  }
-  if (!best.strongEvidence) {
-    return {
-      ...resolution,
-      decision: "hold",
-      reason: "canonicalization requires explicit identity evidence",
-      canonical: best,
-    };
-  }
-  const existing = (existingConferences ?? []).find(
-    (conference) => conference.key === best.existingKey,
-  );
-  const existingEdition = existing?.editions.find(
-    (edition) => edition.edition_id === best.existingEditionId,
-  );
-  const normalized = {
-    ...resolution.normalized,
-    venue: { ...resolution.normalized.venue, key: best.existingKey },
-    ...(existingEdition
-      ? {
-          edition: {
-            ...resolution.normalized.edition,
-            edition_id: existingEdition.edition_id,
-            ...(existingEdition.identity?.editionId
-              ? {
-                  identity: {
-                    ...resolution.normalized.edition.identity,
-                    editionId: existingEdition.identity.editionId,
-                  },
-                }
-              : {}),
-          },
-        }
-      : {}),
+  const resolution = resolvePromotion(observation, options);
+  return {
+    ...resolution,
+    canonicalization: canonicalizePromotion(
+      observation,
+      resolution,
+      options.existingConferences,
+      options.canonicalizationMargin ?? 40,
+    ),
   };
-  if (!existingEdition) {
-    return { ...resolution, decision: "add-new-edition", normalized, canonical: best };
-  }
-  const matchingDeadline = existingEdition.deadlines.find((deadline) =>
-    deadlineSlotMatchesPromotion(deadline, normalized.deadline),
-  );
-  if (
-    matchingDeadline &&
-    existingDeadlineValue(matchingDeadline) === promotionDeadlineValue(normalized.deadline)
-  ) {
-    return { ...resolution, decision: "duplicate", normalized, canonical: best };
-  }
-  if (matchingDeadline) {
-    const oldValue = existingDeadlineValue(matchingDeadline);
-    const newValue = promotionDeadlineValue(normalized.deadline) ?? "";
-    normalized.deadline = {
-      ...normalized.deadline,
-      superseded_deadlines: [
-        {
-          value: oldValue,
-          source:
-            matchingDeadline.evidence?.[0]?.source_url ??
-            matchingDeadline.evidence?.[0]?.source_name ??
-            "existing-live-record",
-          status: "superseded",
-          supersededBy: newValue,
-          reason: "official-update",
-        },
-      ],
-    };
-    return { ...resolution, decision: "supersede-existing-deadline", normalized, canonical: best };
-  }
-  return { ...resolution, decision: "enrich-existing-edition", normalized, canonical: best };
 }
 
 export function verifyBatch(
@@ -1349,16 +1720,40 @@ export function verifyBatch(
   const manifestPath = join(dirname(path), "manifest.json");
   const manifestBodies = new Map<string, string>();
   const hasManifest = existsSync(manifestPath);
+  const observationText = readFileSync(path, "utf8");
   if (hasManifest) {
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+      observations?: { sha256?: unknown };
+      resolutions?: { sha256?: unknown };
       bodies?: Array<{ path?: unknown; sha256?: unknown }>;
     };
+    if (
+      typeof manifest.observations?.sha256 !== "string" ||
+      !SHA256.test(manifest.observations.sha256)
+    )
+      throw new TypeError("manifest observations must contain sha256");
+    if (
+      createHash("sha256").update(observationText).digest("hex") !==
+      manifest.observations.sha256.toLowerCase()
+    )
+      throw new Error("manifest observations hash mismatch");
+    if (
+      typeof manifest.resolutions?.sha256 !== "string" ||
+      !SHA256.test(manifest.resolutions.sha256)
+    )
+      throw new TypeError("manifest resolutions must contain sha256");
+    if (
+      createHash("sha256")
+        .update(readFileSync(join(dirname(path), "resolutions.json")))
+        .digest("hex") !== manifest.resolutions.sha256.toLowerCase()
+    )
+      throw new Error("manifest resolutions hash mismatch");
     if (!Array.isArray(manifest.bodies)) throw new TypeError("manifest.bodies must be an array");
     for (const body of manifest.bodies) {
       const sha256 = body.sha256;
       if (
         typeof body.path !== "string" ||
-        !manifestBodyPath(body.path) ||
+        !/^(?:\.\.\/\.\.\/)?evidence\/blobs\/[0-9a-f]{64}\.body$/.test(body.path) ||
         typeof sha256 !== "string" ||
         !SHA256.test(sha256)
       )
@@ -1370,13 +1765,13 @@ export function verifyBatch(
     ...options,
     baseDir: options.baseDir ?? dirname(path),
   };
-  return readFileSync(path, "utf8")
+  const resolutions = observationText
     .split(/\r?\n/)
     .filter((line) => line.trim() !== "")
     .map((line) => {
       const observation = JSON.parse(line) as PromotionObservation;
       const capture = captureOf(observation);
-      return resolvePromotion(observation, {
+      const resolvedOptions = {
         ...verificationOptions,
         ...(hasManifest
           ? {
@@ -1386,92 +1781,244 @@ export function verifyBatch(
                 : undefined,
             }
           : {}),
-      });
+      };
+      return verificationOptions.existingConferences
+        ? resolvePromotionAgainst(observation, {
+            ...resolvedOptions,
+            existingConferences: verificationOptions.existingConferences,
+          })
+        : resolvePromotion(observation, resolvedOptions);
     })
-    .sort((a, b) => cmp(a.candidate, b.candidate));
+    .sort((a, b) => cmpStr(a.candidate, b.candidate));
+  if (hasManifest)
+    assertStoredResolutionSemantics(
+      path,
+      readFileSync(join(dirname(path), "resolutions.json"), "utf8"),
+      resolutions,
+      {
+        allowCaptureFailures: true,
+        compareCanonicalization: Boolean(verificationOptions.existingConferences),
+      },
+    );
+  return resolutions;
 }
 
-function promotionResolutionRef(
-  resolution: PromotionResolution,
-  batchId: string,
-): { batch: string; resolution: string } {
+function addResolutionIds(resolutions: PromotionResolution[]): PromotionResolution[] {
+  return resolutions.map((resolution) => {
+    const body = { ...resolution };
+    delete body.resolution_id;
+    const digest = createHash("sha256").update(canonicalJson(body)).digest("hex").slice(0, 16);
+    return { ...resolution, resolution_id: `resolution-${digest}` };
+  });
+}
+
+function resolutionEvidenceCore(resolution: PromotionResolution): unknown {
   const normalized = resolution.normalized;
-  const kind = String(normalized?.deadline.kind ?? "other");
-  const round = String(normalized?.deadline.round ?? 1);
-  const track = String(normalized?.deadline.track ?? "").trim();
-  const editionYear = String(normalized?.edition.year ?? "");
-  const suffix = [editionYear, kind, `r${round}`, track].filter(Boolean).join("-");
-  const resolutionId = `${resolution.candidate}-${suffix}`
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return { batch: batchId, resolution: resolutionId || resolution.candidate };
+  if (!normalized)
+    return { candidate: resolution.candidate, decision: resolution.decision, normalized: null };
+  const venue = normalized.venue;
+  const edition = normalized.edition;
+  const deadline = normalized.deadline;
+  return {
+    candidate: resolution.candidate,
+    decision: resolution.decision,
+    normalized: {
+      venue: {
+        key: venue.key,
+        title: venue.title,
+        categories: venue.categories,
+        tags: venue.tags,
+        review_state: venue.review_state,
+        identity: venue.identity,
+      },
+      edition: {
+        year: edition.year,
+        edition_id: edition.edition_id,
+        date_text: edition.date_text,
+        event_start: edition.event_start,
+        event_end: edition.event_end,
+        identity: edition.identity,
+        call_identity: edition.call_identity,
+        call_id: edition.call_id,
+      },
+      deadline: {
+        kind: deadline.kind,
+        round: deadline.round,
+        track: deadline.track,
+      },
+    },
+  };
 }
 
-function extraFrom(
-  resolutions: PromotionResolution[],
-  batchId = "unknown-batch",
-): Record<string, unknown> {
-  const promoted = resolutions
-    .filter(
-      (resolution) =>
-        [
-          "promote",
-          "add-new-venue",
-          "add-new-edition",
-          "enrich-existing-edition",
-          "supersede-existing-deadline",
-        ].includes(resolution.decision) && resolution.normalized,
-    )
-    .map((resolution) => {
-      const normalized = resolution.normalized!;
-      return {
-        ...normalized,
-        deadline: {
-          ...normalized.deadline,
-          promotion_ref: promotionResolutionRef(resolution, batchId),
-        },
-      };
-    });
-  const venues = new Map<string, typeof promoted>();
-  for (const normalized of promoted) {
-    const group = venues.get(normalized.venue.key) ?? [];
-    group.push(normalized);
-    venues.set(normalized.venue.key, group);
+function resolutionDeadlineProof(deadline: Record<string, unknown>): string {
+  const date = String(deadline.date ?? deadline.value ?? "");
+  if (deadline.precision === "date-only") return `date:${date.slice(0, 10)}`;
+  const instant = parseInstant(date, String(deadline.tz ?? ""));
+  return instant ? `instant:${instant.toISOString()}` : `exact:${date}\0${deadline.tz ?? ""}`;
+}
+
+function evidenceBodyPath(observationsPath: string, hash: string): string | null {
+  let root = dirname(observationsPath);
+  for (;;) {
+    const candidate = join(root, "evidence", "blobs", `${hash}.body`);
+    if (existsSync(candidate)) return candidate;
+    const parent = dirname(root);
+    if (parent === root) return null;
+    root = parent;
   }
-  return {
-    conferences: [...venues.values()].map((venueRows) => {
-      const normalized = venueRows[0]!;
-      const editions = new Map<string, typeof venueRows>();
-      for (const row of venueRows) {
-        const group = editions.get(row.edition.edition_id) ?? [];
-        group.push(row);
-        editions.set(row.edition.edition_id, group);
-      }
-      return {
-        key: normalized.venue.key,
-        title: normalized.venue.title,
-        categories: normalized.venue.categories,
-        tags: normalized.venue.tags,
-        review_state: normalized.venue.review_state,
-        ...(normalized.venue.category_assignments
-          ? { category_assignments: normalized.venue.category_assignments }
-          : {}),
-        link: (
-          (normalized.deadline as Record<string, unknown>).evidence as Array<{ sourceUrl: string }>
-        )[0]!.sourceUrl,
-        editions: [...editions.values()].map((editionRows) => {
-          const edition = editionRows[0]!;
-          return {
-            ...edition.edition,
-            id: edition.edition.edition_id,
-            ...(edition.edition.identity ? { identity: edition.edition.identity } : {}),
-            deadlines: editionRows.map((row) => row.deadline),
-          };
-        }),
-      };
-    }),
-  };
+}
+
+function assertReverifiedResolution(
+  observationsPath: string,
+  stored: PromotionResolution,
+  recomputed: PromotionResolution,
+): void {
+  const deadline = stored.normalized?.deadline;
+  const original = recomputed.normalized?.deadline;
+  if (!deadline || !original) throw new Error("stored promotion resolution semantics mismatch");
+  const originalProof = resolutionDeadlineProof(original);
+  const superseded = Array.isArray(deadline.superseded_deadlines)
+    ? deadline.superseded_deadlines
+    : [];
+  if (!superseded.some((item) => resolutionDeadlineProof(item) === originalProof))
+    throw new Error("stored promotion resolution semantics mismatch");
+  const evidence = Array.isArray(deadline.evidence) ? deadline.evidence[0] : undefined;
+  const hash = String(evidence?.contentHash ?? "").toLowerCase();
+  const excerpt = String(evidence?.rawExcerpt ?? "");
+  const bodyPath = SHA256.test(hash) ? evidenceBodyPath(observationsPath, hash) : null;
+  if (!bodyPath) throw new Error("stored promotion resolution evidence body is missing");
+  const body = readFileSync(bodyPath, "utf8");
+  if (
+    createHash("sha256").update(body).digest("hex") !== hash ||
+    !excerpt ||
+    !body.includes(excerpt)
+  )
+    throw new Error("stored promotion resolution evidence mismatch");
+  const proof = resolutionDeadlineProof(deadline);
+  const supported = extractCfpCandidates(body).some((candidate) =>
+    candidate.time && candidate.timezone
+      ? resolutionDeadlineProof({
+          precision: "exact",
+          date: `${candidate.date} ${candidate.time}`,
+          tz: candidate.timezone,
+        }) === proof
+      : proof === `date:${candidate.date}`,
+  );
+  if (!supported) throw new Error("stored promotion resolution value is not supported by evidence");
+}
+
+function assertStoredResolutionSemantics(
+  observationsPath: string,
+  resolutionText: string,
+  recomputed: PromotionResolution[],
+  options: {
+    allowCaptureFailures?: boolean;
+    compareCanonicalization?: boolean;
+    appliedResolutionEffects?: ReadonlyMap<string, string>;
+  } = {},
+): void {
+  const stored = JSON.parse(resolutionText) as PromotionResolution[];
+  if (!Array.isArray(stored) || stored.length !== recomputed.length)
+    throw new Error("stored promotion resolution count mismatch");
+  const resolutionIds = stored.map((resolution) => resolution.resolution_id);
+  if (
+    resolutionIds.some((id) => typeof id !== "string" || !id) ||
+    new Set(resolutionIds).size !== resolutionIds.length
+  )
+    throw new Error("stored promotion resolution IDs must be present and unique");
+  for (let index = 0; index < stored.length; index += 1) {
+    const current = stored[index]!;
+    const original = recomputed[index]!;
+    if (current.candidate !== original.candidate)
+      throw new Error("stored promotion resolution semantics mismatch");
+    if (
+      options.allowCaptureFailures &&
+      original.decision === "hold" &&
+      original.reason === "capture verification failed"
+    )
+      continue;
+    if (options.compareCanonicalization) {
+      const appliedEffect = current.resolution_id
+        ? options.appliedResolutionEffects?.get(current.resolution_id)
+        : undefined;
+      const effectiveVenueKey =
+        current.canonicalization?.decision === "add-new-edition"
+          ? current.canonicalization.matchedVenueKey
+          : current.canonicalization?.decision === "add-new-venue" ||
+              current.canonicalization === undefined
+            ? current.normalized?.venue.key
+            : undefined;
+      const deadline = current.normalized?.deadline;
+      const kind = String(deadline?.kind ?? "paper");
+      const effectiveEffect = effectiveVenueKey
+        ? [
+            effectiveVenueKey,
+            String(current.normalized?.edition.edition_id ?? ""),
+            kind,
+            String(Number(deadline?.round ?? 1) || 1),
+            deadlineTrackKey(String(deadline?.label ?? ""), kind, String(deadline?.track ?? "")),
+          ].join("\0")
+        : undefined;
+      if (appliedEffect && effectiveEffect !== appliedEffect)
+        throw new Error("stored promotion resolution ID does not match its published deadline");
+      if (!appliedEffect && current.resolution_id !== addResolutionIds([current])[0]?.resolution_id)
+        throw new Error("stored promotion resolution ID does not match its semantics");
+      const canonicalizationMatches = current.canonicalization
+        ? canonicalJson(current.canonicalization) === canonicalJson(original.canonicalization) ||
+          (Boolean(appliedEffect) && effectiveEffect === appliedEffect)
+        : original.canonicalization?.decision === "add-new-venue" ||
+          (Boolean(appliedEffect) && effectiveEffect === appliedEffect);
+      if (!canonicalizationMatches) throw new Error("stored promotion canonicalization mismatch");
+    }
+    if (
+      canonicalJson(resolutionEvidenceCore(current)) !==
+      canonicalJson(resolutionEvidenceCore(original))
+    )
+      throw new Error("stored promotion resolution semantics mismatch");
+    const currentDeadline = current.normalized?.deadline;
+    const originalDeadline = original.normalized?.deadline;
+    if (!currentDeadline || !originalDeadline) continue;
+    if (resolutionDeadlineProof(currentDeadline) !== resolutionDeadlineProof(originalDeadline)) {
+      assertReverifiedResolution(observationsPath, current, original);
+    } else if (
+      canonicalJson({
+        evidence: currentDeadline.evidence,
+        superseded_deadlines: currentDeadline.superseded_deadlines,
+      }) !==
+      canonicalJson({
+        evidence: originalDeadline.evidence,
+        superseded_deadlines: originalDeadline.superseded_deadlines,
+      })
+    ) {
+      throw new Error("stored promotion resolution evidence mismatch");
+    }
+  }
+}
+
+export function verifyPromotionResolutionBatch(
+  observationsPath: string,
+  resolutionText = readFileSync(join(dirname(observationsPath), "resolutions.json"), "utf8"),
+  context: {
+    existingConferences?: readonly Conference[];
+    appliedResolutionEffects?: ReadonlyMap<string, string>;
+  } = {},
+): void {
+  const { existingConferences } = context;
+  const options = { baseDir: dirname(observationsPath), existingConferences };
+  const recomputed = readFileSync(observationsPath, "utf8")
+    .split(/\r?\n/)
+    .filter((line) => line.trim() !== "")
+    .map((line) => {
+      const observation = JSON.parse(line) as PromotionObservation;
+      return existingConferences
+        ? resolvePromotionAgainst(observation, { ...options, existingConferences })
+        : resolvePromotion(observation, options);
+    })
+    .sort((left, right) => cmpStr(left.candidate, right.candidate));
+  assertStoredResolutionSemantics(observationsPath, resolutionText, recomputed, {
+    compareCanonicalization: Boolean(existingConferences),
+    appliedResolutionEffects: context.appliedResolutionEffects,
+  });
 }
 
 export function writePromotionBatch(
@@ -1480,70 +2027,69 @@ export function writePromotionBatch(
   manifestPath: string,
   options: {
     sourceBaseDir?: string;
-    existingConferences?: Conference[];
-    /** Optional global content-addressed store for deduplicating CFP bodies. */
-    evidenceDir?: string;
+    outputObservationsPath?: string;
+    existingConferences?: readonly Conference[];
+    canonicalizationMargin?: number;
   } = {},
 ): PromotionResolution[] {
   const batchDir = dirname(manifestPath);
+  const promotionsDir = dirname(batchDir);
+  const bodyRoot =
+    basename(promotionsDir) === "promotions"
+      ? join(dirname(promotionsDir), "evidence", "blobs")
+      : join(batchDir, "evidence", "blobs");
+  const outputObservationsPath = options.outputObservationsPath ?? observationsPath;
   const bodies = new Map<string, { path: string; sha256: string }>();
-  const observations = readFileSync(observationsPath, "utf8")
+  const staged = readFileSync(observationsPath, "utf8")
     .split(/\r?\n/)
     .filter((line) => line.trim() !== "")
     .map((line) => {
       const observation = JSON.parse(line) as PromotionObservation;
       const capture = captureOf(observation);
-      if (!capture) return canonicalJson(observation);
+      if (!capture) return { observation };
       const saved = savedBody(capture, {
         baseDir: options.sourceBaseDir ?? dirname(observationsPath),
       });
       if (!saved) throw new TypeError(`saved body missing: ${capture.bodyPath ?? ""}`);
       const sha256 = createHash("sha256").update(saved.bytes).digest("hex");
-      const target = options.evidenceDir
-        ? join(resolvePath(options.evidenceDir), `${sha256}.body`)
-        : resolvePath(batchDir, `bodies/${sha256}.body`);
-      const path = options.evidenceDir
-        ? relative(batchDir, target).split("\\").join("/")
-        : `bodies/${sha256}.body`;
-      mkdirSync(dirname(target), { recursive: true });
-      if (existsSync(target)) {
-        const existingHash = createHash("sha256").update(readFileSync(target)).digest("hex");
-        if (existingHash !== sha256)
-          throw new TypeError(`content-addressed body hash mismatch: ${target}`);
-      } else {
-        writeFileSync(target, saved.bytes);
-      }
-      bodies.set(path, { path, sha256 });
-      const normalizedBodyPath = relative(dirname(observationsPath), target) || ".";
-      capture.bodyPath = normalizedBodyPath;
-      // observe-cfp emits a top-level capture, while hand-authored batches
-      // often nest it under `capture`. Keep whichever input shape was used in
-      // sync so verifyBatch can resolve the manifest body after relocation.
-      if (observation.capture) observation.capture.bodyPath = normalizedBodyPath;
-      else observation.bodyPath = normalizedBodyPath;
-      return canonicalJson(observation);
-    })
-    .join("\n");
+      const path = `${relative(batchDir, bodyRoot).replaceAll("\\", "/")}/${sha256}.body`;
+      return { observation, body: { path, sha256, bytes: saved.bytes } };
+    });
+  const baseDir = options.sourceBaseDir ?? dirname(observationsPath);
+  const resolutions = addResolutionIds(
+    staged
+      .map(({ observation }) =>
+        options.existingConferences
+          ? resolvePromotionAgainst(observation, {
+              baseDir,
+              existingConferences: options.existingConferences,
+              canonicalizationMargin: options.canonicalizationMargin,
+            })
+          : resolvePromotion(observation, { baseDir }),
+      )
+      .sort((a, b) => cmpStr(a.candidate, b.candidate)),
+  );
+  for (const { observation, body } of staged) {
+    if (!body) continue;
+    const target = writeCasBody(bodyRoot, body.sha256, body.bytes);
+    bodies.set(body.path, { path: body.path, sha256: body.sha256 });
+    const bodyPath = relative(dirname(outputObservationsPath), target) || ".";
+    if (observation.capture) observation.capture.bodyPath = bodyPath;
+    else observation.bodyPath = bodyPath;
+  }
+  const observations = staged.map(({ observation }) => canonicalJson(observation)).join("\n");
   const observationText = observations ? `${observations}\n` : "";
-  writeFileSync(observationsPath, observationText);
-  const resolutions = verifyBatch(observationsPath, {
-    existingConferences: options.existingConferences,
-  });
   const resolutionText = `${JSON.stringify(resolutions, null, 2)}\n`;
-  const extraText = dumpYaml(extraFrom(resolutions, basename(batchDir)), {
-    lineWidth: -1,
-    noRefs: true,
-    sortKeys: true,
-  });
+  for (const path of [outputObservationsPath, resolutionsPath, manifestPath])
+    mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(outputObservationsPath, observationText);
   writeFileSync(resolutionsPath, resolutionText);
-  writeFileSync(join(dirname(manifestPath), "extra.yaml"), extraText);
   const manifest = {
     schema: 1,
     id: basename(dirname(manifestPath)),
     observations: { sha256: createHash("sha256").update(observationText).digest("hex") },
     resolutions: { sha256: createHash("sha256").update(resolutionText).digest("hex") },
-    extra: { sha256: createHash("sha256").update(extraText).digest("hex") },
-    bodies: [...bodies.values()].sort((a, b) => cmp(a.path, b.path)),
+    bodies: [...bodies.values()].sort((a, b) => cmpStr(a.path, b.path)),
     decisions: Object.fromEntries(resolutions.map((item) => [item.candidate, item.decision])),
   };
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);

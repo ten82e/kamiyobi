@@ -93,16 +93,19 @@
           "niche",
           "special-issue"
         ],
-        "review_state": "reviewed"
+        "review_state": "reviewed",
+        "full_name": "Large Language Models in Service-Oriented Ecosystems Design: Advances and Applications (IEEE Transactions on Services Computing Special Issue)",
+        "link": "https://www.computer.org/digital-library/journals/tsc/cfp-language-models-ecosystems-design"
       },
       "edition": {
         "year": 2027,
         "edition_id": "tsc-llm-service-ecosystems-2027",
-        "date_text": "2027"
+        "date_text": "2027",
+        "link": "https://www.computer.org/digital-library/journals/tsc/cfp-language-models-ecosystems-design"
       },
       "deadline": {
         "kind": "paper",
-        "label": "paper",
+        "label": "Manuscript submission deadline",
         "round": 1,
         "track": "",
         "precision": "date-only",
@@ -124,6 +127,7 @@
           }
         ]
       }
-    }
+    },
+    "resolution_id": "resolution-0c8d7d7f0fd8dbe1"
   }
 ]

@@ -69,16 +69,19 @@
           "niche",
           "special-issue"
         ],
-        "review_state": "reviewed"
+        "review_state": "reviewed",
+        "full_name": "High-Reliability and Low-Latency Communications for 6G Network: ISAC-Enabled Architectures, Networking, and Services (IEEE Network Special Issue)",
+        "link": "https://www.comsoc.org/publications/magazines/ieee-network/cfp/high-reliability-and-low-latency-communications-6g-network-isac-enabled-architectures-networking-and-services"
       },
       "edition": {
         "year": 2027,
         "edition_id": "ieee-network-6g-isac-2027",
-        "date_text": "2027"
+        "date_text": "2027",
+        "link": "https://www.comsoc.org/publications/magazines/ieee-network/cfp/high-reliability-and-low-latency-communications-6g-network-isac-enabled-architectures-networking-and-services"
       },
       "deadline": {
         "kind": "paper",
-        "label": "paper",
+        "label": "Manuscript submission deadline (extended)",
         "round": 1,
         "track": "",
         "precision": "date-only",
@@ -100,6 +103,7 @@
           }
         ]
       }
-    }
+    },
+    "resolution_id": "resolution-9bc4707a578dfb92"
   }
 ]

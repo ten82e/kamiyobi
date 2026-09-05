@@ -1,6 +1,5 @@
 /**
  * Source protocol and tarball fetching (Node built-ins only, no HTTP dep).
- * Ported from scripts/sources/base.py.
  */
 
 import { execFileSync } from "node:child_process";
@@ -16,12 +15,11 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { warn } from "../model.ts";
 
-export const USER_AGENT = "kamiyobi/1.0 (+https://github.com/ten82e/kamiyobi; node)";
-export const CODELOAD = "https://codeload.github.com/{repo}/tar.gz/refs/heads/{ref}";
+const USER_AGENT = "kamiyobi/1.0 (+https://github.com/ten82e/kamiyobi; node)";
+const CODELOAD = "https://codeload.github.com/{repo}/tar.gz/refs/heads/{ref}";
 
 export interface FetchMetadata {
   status: "fresh" | "cache-fallback";
@@ -245,5 +243,3 @@ export async function fetchTarball(
   setMetadata(repo, ref, root, "fresh", now);
   return root;
 }
-
-export { tmpdir };

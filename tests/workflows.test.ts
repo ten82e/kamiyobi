@@ -192,6 +192,7 @@ describe("CI contracts", () => {
       "offline-build",
       "validate-data",
       "health-transition",
+      "production-health-self-check",
       "recommendation-regression",
     ];
     expect(String(reporter?.if)).toContain("always()");
@@ -238,6 +239,30 @@ describe("CI contracts", () => {
     expect(bundle).toContain("seal-recommendation-bundle.ts");
     expect(bundle).toContain("--no-embeddings");
     for (const workflow of [text, bundle]) expect(workflow).toContain("real-paper-negative.json");
+  });
+
+  it("only feeds benchmark and gate inputs that exist in the repository", () => {
+    for (const path of [
+      "ci.yml",
+      "update-data.yml",
+      "deploy.yml",
+      "nightly.yml",
+      "recommendation-bundle.yml",
+    ]) {
+      const { text } = workflow(`../.github/workflows/${path}`);
+      const referenced =
+        text.match(
+          /--(?:real-v2-(?:dev|heldout|negative|features)|data-delta|observation-baseline) +(\S+)/g,
+        ) ?? [];
+      for (const flag of new Set(referenced)) {
+        const file = flag.split(/ +/)[1]!;
+        if (!/^(?:data|tests)\//.test(file)) continue;
+        expect(
+          existsSync(new URL(`../${file}`, import.meta.url)),
+          `${path} references missing ${file}`,
+        ).toBe(true);
+      }
+    }
   });
 
   it("uses approved full-SHA actions and normal npm installs", () => {

@@ -102,25 +102,30 @@ if (!options.source) {
 } else if (options.sourceIsFile || existsSync(options.source)) {
   const path = options.source;
   const fileOptions = { ...options, baseDir: options.baseDir ?? dirname(path) };
-  const text = readFileSync(path, "utf8").trim();
-  if (!text) finish([]);
-  else if (text.startsWith("[")) {
-    const values = JSON.parse(text) as unknown;
-    if (!Array.isArray(values)) throw new TypeError("JSON batch must be an array");
-    const results = values.map((value) => one(value, fileOptions));
+  if (path.endsWith(".jsonl")) {
+    const results = verifyBatch(path, fileOptions);
     finish(results, results.some(isInvalidVerification));
   } else {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(text) as unknown;
-    } catch {
-      const results = verifyBatch(path, fileOptions);
+    const text = readFileSync(path, "utf8").trim();
+    if (!text) finish([]);
+    else if (text.startsWith("[")) {
+      const values = JSON.parse(text) as unknown;
+      if (!Array.isArray(values)) throw new TypeError("JSON batch must be an array");
+      const results = values.map((value) => one(value, fileOptions));
       finish(results, results.some(isInvalidVerification));
-      parsed = undefined;
-    }
-    if (parsed !== undefined) {
-      const result = one(parsed, fileOptions);
-      finish(result, isInvalidVerification(result));
+    } else {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(text) as unknown;
+      } catch {
+        const results = verifyBatch(path, fileOptions);
+        finish(results, results.some(isInvalidVerification));
+        parsed = undefined;
+      }
+      if (parsed !== undefined) {
+        const result = one(parsed, fileOptions);
+        finish(result, isInvalidVerification(result));
+      }
     }
   }
 } else {

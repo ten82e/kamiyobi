@@ -1,0 +1,1025 @@
+{
+  "schema_version": 2,
+  "generated_at": "2026-09-01T00:00:00Z",
+  "issue": 677,
+  "latest_main": "1abb59745f97bcc5a80e305c4b0161065698293a",
+  "current": {
+    "source": "offline build at 2026-09-01T00:00:00Z",
+    "conferences": 664,
+    "editions": 1615,
+    "deadlines": 3233,
+    "semantic_slot_rows": 3233,
+    "legacy_key_redirects": 13,
+    "legacy_target_groups": 14,
+    "call_identity_editions": 12,
+    "issue_target_groups": 12
+  },
+  "comparisons": [
+    {
+      "pull_request": 672,
+      "head": "a8e449d446d5448318c0b8f490e7019463655299",
+      "reference_source": "data/snapshot.json",
+      "reference": {
+        "conferences": 676,
+        "editions": 1627,
+        "deadlines": 3240,
+        "semantic_slot_rows": 3240,
+        "legacy_key_redirects": 1,
+        "legacy_target_groups": 3
+      },
+      "current_only_count": 13,
+      "reference_only_count": 20,
+      "current_only_slots": [
+        {
+          "venue_id": "admit-2026",
+          "edition_id": "admit-202626",
+          "year": 2026,
+          "call_id": "admit-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-09-20",
+          "event_start": "2026-10-16",
+          "event_end": "2026-10-18",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "admit-2026",
+            "canonical_edition_id": "admit-202626",
+            "legacy_keys": [
+              "ieee-admit-2026"
+            ],
+            "legacy_edition_ids": [
+              "ieee-admit-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "ccisc-2026",
+          "edition_id": "ccisc-202626",
+          "year": 2026,
+          "call_id": "ccisc-2026",
+          "parent_event_id": null,
+          "deadline_kind": "abstract",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-08-31",
+          "event_start": "2026-09-18",
+          "event_end": "2026-09-20",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "ccisc-2026",
+            "canonical_edition_id": "ccisc-202626",
+            "legacy_keys": [
+              "ieee-ccisc-2026"
+            ],
+            "legacy_edition_ids": [
+              "ieee-ccisc-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "ccisc-2026",
+          "edition_id": "ccisc-202626",
+          "year": 2026,
+          "call_id": "ccisc-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-09-10",
+          "event_start": "2026-09-18",
+          "event_end": "2026-09-20",
+          "official_evidence": [
+            {
+              "source_class": "official-cfp",
+              "source_url": "https://www.ccisc2026.net/",
+              "verified_fields": [
+                "date",
+                "kind"
+              ],
+              "original_value": "Paper Submission Deadline: September 10, 2026"
+            }
+          ],
+          "legacy_mapping": {
+            "canonical_venue_id": "ccisc-2026",
+            "canonical_edition_id": "ccisc-202626",
+            "legacy_keys": [
+              "ieee-ccisc-2026"
+            ],
+            "legacy_edition_ids": [
+              "ieee-ccisc-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "corl",
+          "edition_id": "corl26",
+          "year": 2026,
+          "call_id": null,
+          "parent_event_id": null,
+          "deadline_kind": "camera_ready",
+          "round": 1,
+          "track": "",
+          "precision": "exact",
+          "normalized_value": "2026-10-13T11:59:59Z",
+          "event_start": "2026-11-09",
+          "event_end": "2026-11-12",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "corl",
+            "canonical_edition_id": "corl26",
+            "legacy_keys": [],
+            "legacy_edition_ids": []
+          }
+        },
+        {
+          "venue_id": "dac",
+          "edition_id": "dac27",
+          "year": 2027,
+          "call_id": null,
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-11-17",
+          "event_start": "2027-07-11",
+          "event_end": "2027-07-14",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "dac",
+            "canonical_edition_id": "dac-2027",
+            "legacy_keys": [],
+            "legacy_edition_ids": []
+          }
+        },
+        {
+          "venue_id": "icaici-2026",
+          "edition_id": "icaici-202626",
+          "year": 2026,
+          "call_id": "icaici-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-06-27",
+          "event_start": "2026-09-11",
+          "event_end": "2026-09-13",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "icaici-2026",
+            "canonical_edition_id": "icaici-202626",
+            "legacy_keys": [
+              "ieee-icaici-2026"
+            ],
+            "legacy_edition_ids": [
+              "ieee-icaici-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "icbda2027",
+          "edition_id": "icbda202727",
+          "year": 2027,
+          "call_id": "icbda-2027",
+          "parent_event_id": null,
+          "deadline_kind": "abstract",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-12-10",
+          "event_start": "2027-04-26",
+          "event_end": "2027-04-29",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "icbda2027",
+            "canonical_edition_id": "icbda202727",
+            "legacy_keys": [
+              "icbda-2027"
+            ],
+            "legacy_edition_ids": [
+              "icbda-202727"
+            ]
+          }
+        },
+        {
+          "venue_id": "iccns-2026",
+          "edition_id": "iccns-202626",
+          "year": 2026,
+          "call_id": "iccns-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-08-01",
+          "event_start": "2026-12-19",
+          "event_end": "2026-12-21",
+          "official_evidence": [
+            {
+              "source_class": "official-cfp",
+              "source_url": "https://www.iccns.org/iccns_cfp.pdf",
+              "verified_fields": [
+                "date",
+                "kind"
+              ],
+              "original_value": "Submission Deadline: August 1, 2026"
+            }
+          ],
+          "legacy_mapping": {
+            "canonical_venue_id": "iccns-2026",
+            "canonical_edition_id": "iccns-202626",
+            "legacy_keys": [
+              "iccns-ei-2026"
+            ],
+            "legacy_edition_ids": [
+              "iccns-ei-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "iccr-2026",
+          "edition_id": "iccr-202626",
+          "year": 2026,
+          "call_id": "iccr-2026",
+          "parent_event_id": null,
+          "deadline_kind": "abstract",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-10-01",
+          "event_start": "2026-12-11",
+          "event_end": "2026-12-13",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "iccr-2026",
+            "canonical_edition_id": "iccr-202626",
+            "legacy_keys": [
+              "ieee-iccr-2026"
+            ],
+            "legacy_edition_ids": [
+              "ieee-iccr-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "iccr-2026",
+          "edition_id": "iccr-202626",
+          "year": 2026,
+          "call_id": "iccr-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-10-01",
+          "event_start": "2026-12-11",
+          "event_end": "2026-12-13",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "iccr-2026",
+            "canonical_edition_id": "iccr-202626",
+            "legacy_keys": [
+              "ieee-iccr-2026"
+            ],
+            "legacy_edition_ids": [
+              "ieee-iccr-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "keir-cikm2026",
+          "edition_id": "keir-cikm202626",
+          "year": 2026,
+          "call_id": "keir-cikm-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "exact",
+          "normalized_value": "2026-09-17T11:59:00Z",
+          "event_start": "2026-11-08",
+          "event_end": "2026-11-08",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "keir-cikm2026",
+            "canonical_edition_id": "keir-cikm202626",
+            "legacy_keys": [
+              "keir-cikm-2026"
+            ],
+            "legacy_edition_ids": [
+              "keir-cikm-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "sec",
+          "edition_id": "sec2026",
+          "year": 2026,
+          "call_id": null,
+          "parent_event_id": null,
+          "deadline_kind": "abstract",
+          "round": 1,
+          "track": "",
+          "precision": "exact",
+          "normalized_value": "2026-04-25T11:59:59Z",
+          "event_start": "2026-10-13",
+          "event_end": "2026-10-16",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "sec",
+            "canonical_edition_id": "sec2026",
+            "legacy_keys": [],
+            "legacy_edition_ids": []
+          }
+        },
+        {
+          "venue_id": "sec",
+          "edition_id": "sec2026",
+          "year": 2026,
+          "call_id": null,
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "exact",
+          "normalized_value": "2026-05-02T11:59:59Z",
+          "event_start": "2026-10-13",
+          "event_end": "2026-10-16",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "sec",
+            "canonical_edition_id": "sec2026",
+            "legacy_keys": [],
+            "legacy_edition_ids": []
+          }
+        }
+      ],
+      "reference_only_slots": [
+        {
+          "venue_id": "acm-bdiot-2026",
+          "edition_id": "acm-bdiot-202626",
+          "year": 2026,
+          "call_id": "bdiot-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-09-05",
+          "event_start": "2026-10-23",
+          "event_end": "2026-10-25",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "bdiot-2026",
+            "canonical_edition_id": "bdiot-202626",
+            "legacy_keys": [
+              "acm-bdiot-2026"
+            ],
+            "legacy_edition_ids": [
+              "acm-bdiot-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "admit-2026",
+          "edition_id": "admit-202626",
+          "year": 2026,
+          "call_id": "admit-2026",
+          "parent_event_id": null,
+          "deadline_kind": "abstract",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-09-20",
+          "event_start": "2026-10-16",
+          "event_end": "2026-10-16",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "admit-2026",
+            "canonical_edition_id": "admit-202626",
+            "legacy_keys": [
+              "ieee-admit-2026"
+            ],
+            "legacy_edition_ids": [
+              "ieee-admit-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "admit-2026",
+          "edition_id": "admit-202626",
+          "year": 2026,
+          "call_id": "admit-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-09-30",
+          "event_start": "2026-10-16",
+          "event_end": "2026-10-16",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "admit-2026",
+            "canonical_edition_id": "admit-202626",
+            "legacy_keys": [
+              "ieee-admit-2026"
+            ],
+            "legacy_edition_ids": [
+              "ieee-admit-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "ccisc-2026",
+          "edition_id": "ccisc-202626",
+          "year": 2026,
+          "call_id": "ccisc-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-08-31",
+          "event_start": "2026-09-18",
+          "event_end": "2026-09-18",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "ccisc-2026",
+            "canonical_edition_id": "ccisc-202626",
+            "legacy_keys": [
+              "ieee-ccisc-2026"
+            ],
+            "legacy_edition_ids": [
+              "ieee-ccisc-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "csp-ei-2027",
+          "edition_id": "csp-ei-202727",
+          "year": 2027,
+          "call_id": "csp-2027",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-10-05",
+          "event_start": "2027-03-27",
+          "event_end": "2027-03-30",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "csp-2027",
+            "canonical_edition_id": "csp-202727",
+            "legacy_keys": [
+              "csp-ei-2027",
+              "ieee-csp-2027"
+            ],
+            "legacy_edition_ids": [
+              "csp-ei-202727",
+              "ieee-csp-202727"
+            ]
+          }
+        },
+        {
+          "venue_id": "icaici-2026",
+          "edition_id": "icaici-202626",
+          "year": 2026,
+          "call_id": "icaici-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-08-28",
+          "event_start": "2026-09-11",
+          "event_end": "2026-09-13",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "icaici-2026",
+            "canonical_edition_id": "icaici-202626",
+            "legacy_keys": [
+              "ieee-icaici-2026"
+            ],
+            "legacy_edition_ids": [
+              "ieee-icaici-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "icbda-2027",
+          "edition_id": "icbda-202727",
+          "year": 2027,
+          "call_id": "icbda-2027",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-12-10",
+          "event_start": "2027-04-26",
+          "event_end": "2027-04-29",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "icbda2027",
+            "canonical_edition_id": "icbda202727",
+            "legacy_keys": [
+              "icbda-2027"
+            ],
+            "legacy_edition_ids": [
+              "icbda-202727"
+            ]
+          }
+        },
+        {
+          "venue_id": "iccns-2026",
+          "edition_id": "iccns-202626",
+          "year": 2026,
+          "call_id": "iccns-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-09-10",
+          "event_start": "2026-12-19",
+          "event_end": "2026-12-21",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "iccns-2026",
+            "canonical_edition_id": "iccns-202626",
+            "legacy_keys": [
+              "iccns-ei-2026"
+            ],
+            "legacy_edition_ids": [
+              "iccns-ei-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "iccns-ei-2026",
+          "edition_id": "iccns-ei-202626",
+          "year": 2026,
+          "call_id": "iccns-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-09-10",
+          "event_start": "2026-12-19",
+          "event_end": "2026-12-21",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "iccns-2026",
+            "canonical_edition_id": "iccns-202626",
+            "legacy_keys": [
+              "iccns-ei-2026"
+            ],
+            "legacy_edition_ids": [
+              "iccns-ei-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "iccr-2026",
+          "edition_id": "iccr-202626",
+          "year": 2026,
+          "call_id": "iccr-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-08-25",
+          "event_start": "2026-12-03",
+          "event_end": "2026-12-03",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "iccr-2026",
+            "canonical_edition_id": "iccr-202626",
+            "legacy_keys": [
+              "ieee-iccr-2026"
+            ],
+            "legacy_edition_ids": [
+              "ieee-iccr-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "icimt-ei-2026",
+          "edition_id": "icimt-ei-202626",
+          "year": 2026,
+          "call_id": "icimt-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-09-15",
+          "event_start": "2026-11-06",
+          "event_end": "2026-11-08",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "icimt-2026",
+            "canonical_edition_id": "icimt-202626",
+            "legacy_keys": [
+              "icimt-ei-2026"
+            ],
+            "legacy_edition_ids": [
+              "icimt-ei-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "icmip-ei-2027",
+          "edition_id": "icmip-ei-202727",
+          "year": 2027,
+          "call_id": "icmip-2027",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-10-05",
+          "event_start": "2027-03-27",
+          "event_end": "2027-03-30",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "icmip-2027",
+            "canonical_edition_id": "icmip-202727",
+            "legacy_keys": [
+              "icmip-ei-2027"
+            ],
+            "legacy_edition_ids": [
+              "icmip-ei-202727"
+            ]
+          }
+        },
+        {
+          "venue_id": "ieee-admit-2026",
+          "edition_id": "ieee-admit-202626",
+          "year": 2026,
+          "call_id": "admit-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-09-20",
+          "event_start": "2026-10-16",
+          "event_end": "2026-10-18",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "admit-2026",
+            "canonical_edition_id": "admit-202626",
+            "legacy_keys": [
+              "ieee-admit-2026"
+            ],
+            "legacy_edition_ids": [
+              "ieee-admit-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "ieee-ccisc-2026",
+          "edition_id": "ieee-ccisc-202626",
+          "year": 2026,
+          "call_id": "ccisc-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-09-10",
+          "event_start": "2026-09-18",
+          "event_end": "2026-09-20",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "ccisc-2026",
+            "canonical_edition_id": "ccisc-202626",
+            "legacy_keys": [
+              "ieee-ccisc-2026"
+            ],
+            "legacy_edition_ids": [
+              "ieee-ccisc-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "ieee-csp-2027",
+          "edition_id": "ieee-csp-202727",
+          "year": 2027,
+          "call_id": "csp-2027",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-10-05",
+          "event_start": "2027-03-27",
+          "event_end": "2027-03-30",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "csp-2027",
+            "canonical_edition_id": "csp-202727",
+            "legacy_keys": [
+              "csp-ei-2027",
+              "ieee-csp-2027"
+            ],
+            "legacy_edition_ids": [
+              "csp-ei-202727",
+              "ieee-csp-202727"
+            ]
+          }
+        },
+        {
+          "venue_id": "ieee-icaici-2026",
+          "edition_id": "ieee-icaici-202626",
+          "year": 2026,
+          "call_id": "icaici-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-08-28",
+          "event_start": "2026-09-11",
+          "event_end": "2026-09-13",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "icaici-2026",
+            "canonical_edition_id": "icaici-202626",
+            "legacy_keys": [
+              "ieee-icaici-2026"
+            ],
+            "legacy_edition_ids": [
+              "ieee-icaici-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "ieee-iccr-2026",
+          "edition_id": "ieee-iccr-202626",
+          "year": 2026,
+          "call_id": "iccr-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-08-25",
+          "event_start": "2026-12-11",
+          "event_end": "2026-12-13",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "iccr-2026",
+            "canonical_edition_id": "iccr-202626",
+            "legacy_keys": [
+              "ieee-iccr-2026"
+            ],
+            "legacy_edition_ids": [
+              "ieee-iccr-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "keir-cikm-2026",
+          "edition_id": "keir-cikm-202626",
+          "year": 2026,
+          "call_id": "keir-cikm-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-08-24",
+          "event_start": "2026-11-08",
+          "event_end": "2026-11-08",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "keir-cikm2026",
+            "canonical_edition_id": "keir-cikm202626",
+            "legacy_keys": [
+              "keir-cikm-2026"
+            ],
+            "legacy_edition_ids": [
+              "keir-cikm-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "keir-cikm2026",
+          "edition_id": "keir-cikm202626",
+          "year": 2026,
+          "call_id": "keir-cikm-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-09-13",
+          "event_start": "2026-11-08",
+          "event_end": "2026-11-08",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "keir-cikm2026",
+            "canonical_edition_id": "keir-cikm202626",
+            "legacy_keys": [
+              "keir-cikm-2026"
+            ],
+            "legacy_edition_ids": [
+              "keir-cikm-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "raai-2026",
+          "edition_id": "raai-202626",
+          "year": 2026,
+          "call_id": "raai-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-09-05",
+          "event_start": "2026-12-18",
+          "event_end": "2026-12-20",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "raai2026",
+            "canonical_edition_id": "raai202626",
+            "legacy_keys": [
+              "raai-2026"
+            ],
+            "legacy_edition_ids": [
+              "raai-202626"
+            ]
+          }
+        }
+      ],
+      "decision": "retain-current-canonical-data-no-rescue",
+      "decision_reason": "The PR snapshot is older auto-generated data with legacy aliases and stale values; current official/manual canonical records already cover the valid Issue #677 groups, so no PR data was rescued.",
+      "issue_target_groups": 12
+    },
+    {
+      "pull_request": 678,
+      "head": "204ed4df24a9f4f437f60f51c72d7e8233d5c44c",
+      "reference_source": "data/snapshot.json",
+      "reference": {
+        "conferences": 664,
+        "editions": 1615,
+        "deadlines": 3233,
+        "semantic_slot_rows": 3233,
+        "legacy_key_redirects": 13,
+        "legacy_target_groups": 14
+      },
+      "current_only_count": 2,
+      "reference_only_count": 2,
+      "current_only_slots": [
+        {
+          "venue_id": "corl",
+          "edition_id": "corl26",
+          "year": 2026,
+          "call_id": null,
+          "parent_event_id": null,
+          "deadline_kind": "camera_ready",
+          "round": 1,
+          "track": "",
+          "precision": "exact",
+          "normalized_value": "2026-10-13T11:59:59Z",
+          "event_start": "2026-11-09",
+          "event_end": "2026-11-12",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "corl",
+            "canonical_edition_id": "corl26",
+            "legacy_keys": [],
+            "legacy_edition_ids": []
+          }
+        },
+        {
+          "venue_id": "iccns-2026",
+          "edition_id": "iccns-202626",
+          "year": 2026,
+          "call_id": "iccns-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-08-01",
+          "event_start": "2026-12-19",
+          "event_end": "2026-12-21",
+          "official_evidence": [
+            {
+              "source_class": "official-cfp",
+              "source_url": "https://www.iccns.org/iccns_cfp.pdf",
+              "verified_fields": [
+                "date",
+                "kind"
+              ],
+              "original_value": "Submission Deadline: August 1, 2026"
+            }
+          ],
+          "legacy_mapping": {
+            "canonical_venue_id": "iccns-2026",
+            "canonical_edition_id": "iccns-202626",
+            "legacy_keys": [
+              "iccns-ei-2026"
+            ],
+            "legacy_edition_ids": [
+              "iccns-ei-202626"
+            ]
+          }
+        }
+      ],
+      "reference_only_slots": [
+        {
+          "venue_id": "iccns-2026",
+          "edition_id": "iccns-202626",
+          "year": 2026,
+          "call_id": "iccns-2026",
+          "parent_event_id": null,
+          "deadline_kind": "abstract",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-09-10",
+          "event_start": "2026-12-19",
+          "event_end": "2026-12-21",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "iccns-2026",
+            "canonical_edition_id": "iccns-202626",
+            "legacy_keys": [
+              "iccns-ei-2026"
+            ],
+            "legacy_edition_ids": [
+              "iccns-ei-202626"
+            ]
+          }
+        },
+        {
+          "venue_id": "iccns-2026",
+          "edition_id": "iccns-202626",
+          "year": 2026,
+          "call_id": "iccns-2026",
+          "parent_event_id": null,
+          "deadline_kind": "paper",
+          "round": 1,
+          "track": "",
+          "precision": "date-only",
+          "normalized_value": "2026-09-10",
+          "event_start": "2026-12-19",
+          "event_end": "2026-12-21",
+          "official_evidence": [],
+          "legacy_mapping": {
+            "canonical_venue_id": "iccns-2026",
+            "canonical_edition_id": "iccns-202626",
+            "legacy_keys": [
+              "iccns-ei-2026"
+            ],
+            "legacy_edition_ids": [
+              "iccns-ei-202626"
+            ]
+          }
+        }
+      ],
+      "decision": "retain-current-canonical-data-no-rescue",
+      "decision_reason": "Current data retains the official ICCNS submission date of August 1 and the independent CoRL camera-ready slot; the PR snapshot's unsupported ICCNS September 10 slots were not rescued.",
+      "issue_target_groups": 12
+    }
+  ],
+  "external_actions": {
+    "issue_closed": false,
+    "pull_requests_closed": false,
+    "reason": "AGENTS.md forbids outward issue, pull request, comment, and review writes."
+  },
+  "semantic_record_schema": {
+    "required_fields": [
+      "venue_id",
+      "edition_id",
+      "year",
+      "call_id",
+      "parent_event_id",
+      "deadline_kind",
+      "round",
+      "track",
+      "precision",
+      "normalized_value",
+      "event_start",
+      "event_end",
+      "official_evidence",
+      "legacy_mapping"
+    ]
+  }
+}

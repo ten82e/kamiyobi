@@ -88,1046 +88,2036 @@
       "year": 2025,
       "title": "A5/3 make or break: A massively parallel FPGA architecture for exhaustive key search",
       "primary_venue": "ches",
-      "acceptable_venues": ["ches", "ccs"],
+      "acceptable_venues": [
+        "ches"
+      ],
       "language": "en",
-      "domains": ["security"],
+      "domains": [
+        "security"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://ches.iacr.org/2025/acceptedpapers.php"
+      "source": "https://ches.iacr.org/2025/acceptedpapers.php",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "ches",
+          "reason": "published primary venue in the cited source",
+          "source": "https://ches.iacr.org/2025/acceptedpapers.php"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-ches-02",
       "year": 2025,
       "title": "Accelerating NTT with RISC-V Vector Extension for Fully Homomorphic Encryption",
       "primary_venue": "ches",
-      "acceptable_venues": ["ches"],
+      "acceptable_venues": [
+        "ches"
+      ],
       "language": "en",
-      "domains": ["security"],
+      "domains": [
+        "security"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://ches.iacr.org/2025/acceptedpapers.php"
+      "source": "https://ches.iacr.org/2025/acceptedpapers.php",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "ches",
+          "reason": "published primary venue in the cited source",
+          "source": "https://ches.iacr.org/2025/acceptedpapers.php"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-ches-03",
       "year": 2025,
       "title": "Adaptive Template Attacks on the Kyber Binomial Sampler",
       "primary_venue": "ches",
-      "acceptable_venues": ["ches"],
+      "acceptable_venues": [
+        "ches"
+      ],
       "language": "en",
-      "domains": ["security"],
+      "domains": [
+        "security"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://ches.iacr.org/2025/acceptedpapers.php"
+      "source": "https://ches.iacr.org/2025/acceptedpapers.php",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "ches",
+          "reason": "published primary venue in the cited source",
+          "source": "https://ches.iacr.org/2025/acceptedpapers.php"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-ches-04",
       "year": 2025,
       "title": "AETHER: An Ultra-High Throughput and Low Energy Authenticated Encryption Scheme",
       "primary_venue": "ches",
-      "acceptable_venues": ["ches"],
+      "acceptable_venues": [
+        "ches"
+      ],
       "language": "en",
-      "domains": ["security"],
+      "domains": [
+        "security"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://ches.iacr.org/2025/acceptedpapers.php"
+      "source": "https://ches.iacr.org/2025/acceptedpapers.php",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "ches",
+          "reason": "published primary venue in the cited source",
+          "source": "https://ches.iacr.org/2025/acceptedpapers.php"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-ches-05",
       "year": 2025,
       "title": "CHERI-Crypt: Transparent Memory Encryption on Capability Architectures",
       "primary_venue": "ches",
-      "acceptable_venues": ["ches"],
+      "acceptable_venues": [
+        "ches"
+      ],
       "language": "en",
-      "domains": ["security"],
+      "domains": [
+        "security"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://ches.iacr.org/2025/acceptedpapers.php"
+      "source": "https://ches.iacr.org/2025/acceptedpapers.php",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "ches",
+          "reason": "published primary venue in the cited source",
+          "source": "https://ches.iacr.org/2025/acceptedpapers.php"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-ches-06",
       "year": 2025,
       "title": "Constant time lattice reduction in dimension 4 with application to SQIsign",
       "primary_venue": "ches",
-      "acceptable_venues": ["ches"],
+      "acceptable_venues": [
+        "ches"
+      ],
       "language": "en",
-      "domains": ["security"],
+      "domains": [
+        "security"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://ches.iacr.org/2025/acceptedpapers.php"
+      "source": "https://ches.iacr.org/2025/acceptedpapers.php",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "ches",
+          "reason": "published primary venue in the cited source",
+          "source": "https://ches.iacr.org/2025/acceptedpapers.php"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-ches-07",
       "year": 2025,
       "title": "FalconSign: An Efficient and High-Throughput Hardware Architecture for Falcon Signature Generation",
       "primary_venue": "ches",
-      "acceptable_venues": ["ches"],
+      "acceptable_venues": [
+        "ches"
+      ],
       "language": "en",
-      "domains": ["security"],
+      "domains": [
+        "security"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://ches.iacr.org/2025/acceptedpapers.php"
+      "source": "https://ches.iacr.org/2025/acceptedpapers.php",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "ches",
+          "reason": "published primary venue in the cited source",
+          "source": "https://ches.iacr.org/2025/acceptedpapers.php"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-ches-08",
       "year": 2025,
       "title": "FANNG-MPC: Framework for Artificial Neural Networks and Generic MPC",
       "primary_venue": "ches",
-      "acceptable_venues": ["ches"],
+      "acceptable_venues": [
+        "ches"
+      ],
       "language": "en",
-      "domains": ["security"],
+      "domains": [
+        "security"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://ches.iacr.org/2025/acceptedpapers.php"
+      "source": "https://ches.iacr.org/2025/acceptedpapers.php",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "ches",
+          "reason": "published primary venue in the cited source",
+          "source": "https://ches.iacr.org/2025/acceptedpapers.php"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-icml-01",
       "year": 2025,
       "title": "A Natural Actor-Critic Framework for Zero-Sum Markov Games",
       "primary_venue": "icml",
-      "acceptable_venues": ["icml", "neurips"],
+      "acceptable_venues": [
+        "icml"
+      ],
       "language": "en",
-      "domains": ["ai"],
+      "domains": [
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://proceedings.mlr.press/v267/"
+      "source": "https://proceedings.mlr.press/v267/",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "icml",
+          "reason": "published primary venue in the cited source",
+          "source": "https://proceedings.mlr.press/v267/"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-icml-02",
       "year": 2025,
       "title": "Active Sampling for Min-Max Fairness",
       "primary_venue": "icml",
-      "acceptable_venues": ["icml"],
+      "acceptable_venues": [
+        "icml"
+      ],
       "language": "en",
-      "domains": ["ai"],
+      "domains": [
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://proceedings.mlr.press/v267/"
+      "source": "https://proceedings.mlr.press/v267/",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "icml",
+          "reason": "published primary venue in the cited source",
+          "source": "https://proceedings.mlr.press/v267/"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-icml-03",
       "year": 2025,
       "title": "Deploying Convolutional Networks on Untrusted Platforms Using 2D Holographic Reduced Representations",
       "primary_venue": "icml",
-      "acceptable_venues": ["icml"],
+      "acceptable_venues": [
+        "icml"
+      ],
       "language": "en",
-      "domains": ["ai"],
+      "domains": [
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://proceedings.mlr.press/v267/"
+      "source": "https://proceedings.mlr.press/v267/",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "icml",
+          "reason": "published primary venue in the cited source",
+          "source": "https://proceedings.mlr.press/v267/"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-icml-04",
       "year": 2025,
       "title": "Do More Negative Samples Necessarily Hurt In Contrastive Learning?",
       "primary_venue": "icml",
-      "acceptable_venues": ["icml"],
+      "acceptable_venues": [
+        "icml"
+      ],
       "language": "en",
-      "domains": ["ai"],
+      "domains": [
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://proceedings.mlr.press/v267/"
+      "source": "https://proceedings.mlr.press/v267/",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "icml",
+          "reason": "published primary venue in the cited source",
+          "source": "https://proceedings.mlr.press/v267/"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-icml-05",
       "year": 2025,
       "title": "Do Not Mimic My Voice: Speaker Identity Unlearning for Zero-Shot Text-to-Speech",
       "primary_venue": "icml",
-      "acceptable_venues": ["icml"],
+      "acceptable_venues": [
+        "icml"
+      ],
       "language": "en",
-      "domains": ["ai"],
+      "domains": [
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://proceedings.mlr.press/v267/"
+      "source": "https://proceedings.mlr.press/v267/",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "icml",
+          "reason": "published primary venue in the cited source",
+          "source": "https://proceedings.mlr.press/v267/"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-icml-06",
       "year": 2025,
       "title": "Gradient Based Clustering",
       "primary_venue": "icml",
-      "acceptable_venues": ["icml"],
+      "acceptable_venues": [
+        "icml"
+      ],
       "language": "en",
-      "domains": ["ai"],
+      "domains": [
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://proceedings.mlr.press/v267/"
+      "source": "https://proceedings.mlr.press/v267/",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "icml",
+          "reason": "published primary venue in the cited source",
+          "source": "https://proceedings.mlr.press/v267/"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-icml-07",
       "year": 2025,
       "title": "HGOT: Self-supervised Heterogeneous Graph Neural Network with Optimal Transport",
       "primary_venue": "icml",
-      "acceptable_venues": ["icml"],
+      "acceptable_venues": [
+        "icml"
+      ],
       "language": "en",
-      "domains": ["ai"],
+      "domains": [
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://proceedings.mlr.press/v267/"
+      "source": "https://proceedings.mlr.press/v267/",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "icml",
+          "reason": "published primary venue in the cited source",
+          "source": "https://proceedings.mlr.press/v267/"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-icml-08",
       "year": 2025,
       "title": "Hierarchical Shrinkage: Improving the accuracy and interpretability of tree-based models",
       "primary_venue": "icml",
-      "acceptable_venues": ["icml"],
+      "acceptable_venues": [
+        "icml"
+      ],
       "language": "en",
-      "domains": ["ai"],
+      "domains": [
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://proceedings.mlr.press/v267/"
+      "source": "https://proceedings.mlr.press/v267/",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "icml",
+          "reason": "published primary venue in the cited source",
+          "source": "https://proceedings.mlr.press/v267/"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-sigcomm-01",
       "year": 2025,
       "title": "MixNet: A Runtime Reconfigurable Optical-Electrical Fabric for Distributed Mixture-of-Experts Training",
       "primary_venue": "sigcomm",
-      "acceptable_venues": ["sigcomm", "nsdi"],
+      "acceptable_venues": [
+        "sigcomm"
+      ],
       "language": "en",
-      "domains": ["networking"],
+      "domains": [
+        "networking"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
+      "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "sigcomm",
+          "reason": "published primary venue in the cited source",
+          "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-sigcomm-02",
       "year": 2025,
       "title": "Nezha: SmartNIC-based Virtual Switch Load Sharing",
       "primary_venue": "sigcomm",
-      "acceptable_venues": ["sigcomm"],
+      "acceptable_venues": [
+        "sigcomm"
+      ],
       "language": "en",
-      "domains": ["networking"],
+      "domains": [
+        "networking"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
+      "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "sigcomm",
+          "reason": "published primary venue in the cited source",
+          "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-sigcomm-03",
       "year": 2025,
       "title": "InfiniteHBD: Building Datacenter-Scale High-Bandwidth Domain for LLM with Optical Circuit Switching Transceivers",
       "primary_venue": "sigcomm",
-      "acceptable_venues": ["sigcomm"],
+      "acceptable_venues": [
+        "sigcomm"
+      ],
       "language": "en",
-      "domains": ["networking"],
+      "domains": [
+        "networking"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
+      "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "sigcomm",
+          "reason": "published primary venue in the cited source",
+          "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-sigcomm-04",
       "year": 2025,
       "title": "Hermes: Enhancing Layer-7 Cloud Load Balancers with Userspace-Directed I/O Event Notification",
       "primary_venue": "sigcomm",
-      "acceptable_venues": ["sigcomm"],
+      "acceptable_venues": [
+        "sigcomm"
+      ],
       "language": "en",
-      "domains": ["networking"],
+      "domains": [
+        "networking"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
+      "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "sigcomm",
+          "reason": "published primary venue in the cited source",
+          "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-sigcomm-05",
       "year": 2025,
       "title": "Hattrick: Solving Multi-Class TE using Neural Models",
       "primary_venue": "sigcomm",
-      "acceptable_venues": ["sigcomm"],
+      "acceptable_venues": [
+        "sigcomm"
+      ],
       "language": "en",
-      "domains": ["networking"],
+      "domains": [
+        "networking"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
+      "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "sigcomm",
+          "reason": "published primary venue in the cited source",
+          "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-sigcomm-06",
       "year": 2025,
       "title": "DistTrain: Addressing Model and Data Heterogeneity with Disaggregated Training for Multimodal Large Language Models",
       "primary_venue": "sigcomm",
-      "acceptable_venues": ["sigcomm"],
+      "acceptable_venues": [
+        "sigcomm"
+      ],
       "language": "en",
-      "domains": ["networking"],
+      "domains": [
+        "networking"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
+      "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "sigcomm",
+          "reason": "published primary venue in the cited source",
+          "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-sigcomm-07",
       "year": 2025,
       "title": "Albatross: A Containerized Cloud Gateway Platform with FPGA-accelerated Packet-level Load Balancing",
       "primary_venue": "sigcomm",
-      "acceptable_venues": ["sigcomm"],
+      "acceptable_venues": [
+        "sigcomm"
+      ],
       "language": "en",
-      "domains": ["networking"],
+      "domains": [
+        "networking"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
+      "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "sigcomm",
+          "reason": "published primary venue in the cited source",
+          "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-sigcomm-08",
       "year": 2025,
       "title": "Enabling Over-the-Air AI for Edge Computing via Metasurface-Driven Physical Neural Networks",
       "primary_venue": "sigcomm",
-      "acceptable_venues": ["sigcomm"],
+      "acceptable_venues": [
+        "sigcomm"
+      ],
       "language": "en",
-      "domains": ["networking"],
+      "domains": [
+        "networking"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
+      "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "sigcomm",
+          "reason": "published primary venue in the cited source",
+          "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-sigmod-01",
       "year": 2025,
       "title": "Low-Latency Transaction Scheduling via Userspace Interrupts: Why Wait or Yield When You Can Preempt?",
       "primary_venue": "sigmod",
-      "acceptable_venues": ["sigmod", "vldb"],
+      "acceptable_venues": [
+        "sigmod"
+      ],
       "language": "en",
-      "domains": ["db"],
+      "domains": [
+        "db"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://2025.sigmod.org/sigmod_papers.shtml"
+      "source": "https://2025.sigmod.org/sigmod_papers.shtml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "sigmod",
+          "reason": "published primary venue in the cited source",
+          "source": "https://2025.sigmod.org/sigmod_papers.shtml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-sigmod-02",
       "year": 2025,
       "title": "Fast Maximum Common Subgraph Search: A Redundancy-Reduced Backtracking Approach",
       "primary_venue": "sigmod",
-      "acceptable_venues": ["sigmod"],
+      "acceptable_venues": [
+        "sigmod"
+      ],
       "language": "en",
-      "domains": ["db"],
+      "domains": [
+        "db"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://2025.sigmod.org/sigmod_papers.shtml"
+      "source": "https://2025.sigmod.org/sigmod_papers.shtml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "sigmod",
+          "reason": "published primary venue in the cited source",
+          "source": "https://2025.sigmod.org/sigmod_papers.shtml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-sigmod-03",
       "year": 2025,
       "title": "RM^2: Answer Counting Queries Efficiently under Shuffle Differential Privacy",
       "primary_venue": "sigmod",
-      "acceptable_venues": ["sigmod"],
+      "acceptable_venues": [
+        "sigmod"
+      ],
       "language": "en",
-      "domains": ["db"],
+      "domains": [
+        "db"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://2025.sigmod.org/sigmod_papers.shtml"
+      "source": "https://2025.sigmod.org/sigmod_papers.shtml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "sigmod",
+          "reason": "published primary venue in the cited source",
+          "source": "https://2025.sigmod.org/sigmod_papers.shtml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-sigmod-04",
       "year": 2025,
       "title": "Hydro: Adaptive Query Processing of ML Queries",
       "primary_venue": "sigmod",
-      "acceptable_venues": ["sigmod"],
+      "acceptable_venues": [
+        "sigmod"
+      ],
       "language": "en",
-      "domains": ["db"],
+      "domains": [
+        "db"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://2025.sigmod.org/sigmod_papers.shtml"
+      "source": "https://2025.sigmod.org/sigmod_papers.shtml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "sigmod",
+          "reason": "published primary venue in the cited source",
+          "source": "https://2025.sigmod.org/sigmod_papers.shtml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-sigmod-05",
       "year": 2025,
       "title": "Alsatian: Optimizing Model Search for Deep Transfer Learning",
       "primary_venue": "sigmod",
-      "acceptable_venues": ["sigmod"],
+      "acceptable_venues": [
+        "sigmod"
+      ],
       "language": "en",
-      "domains": ["db"],
+      "domains": [
+        "db"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://2025.sigmod.org/sigmod_papers.shtml"
+      "source": "https://2025.sigmod.org/sigmod_papers.shtml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "sigmod",
+          "reason": "published primary venue in the cited source",
+          "source": "https://2025.sigmod.org/sigmod_papers.shtml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-sigmod-06",
       "year": 2025,
       "title": "AJOSC: Adaptive join order selection for continuous queries on data streams",
       "primary_venue": "sigmod",
-      "acceptable_venues": ["sigmod"],
+      "acceptable_venues": [
+        "sigmod"
+      ],
       "language": "en",
-      "domains": ["db"],
+      "domains": [
+        "db"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://2025.sigmod.org/sigmod_papers.shtml"
+      "source": "https://2025.sigmod.org/sigmod_papers.shtml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "sigmod",
+          "reason": "published primary venue in the cited source",
+          "source": "https://2025.sigmod.org/sigmod_papers.shtml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-sigmod-07",
       "year": 2025,
       "title": "Using Process Calculus for Optimizing Data and Computation Sharing in Complex Stateful Parallel Computations",
       "primary_venue": "sigmod",
-      "acceptable_venues": ["sigmod"],
+      "acceptable_venues": [
+        "sigmod"
+      ],
       "language": "en",
-      "domains": ["db"],
+      "domains": [
+        "db"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://2025.sigmod.org/sigmod_papers.shtml"
+      "source": "https://2025.sigmod.org/sigmod_papers.shtml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "sigmod",
+          "reason": "published primary venue in the cited source",
+          "source": "https://2025.sigmod.org/sigmod_papers.shtml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-sigmod-08",
       "year": 2025,
       "title": "Self-Enhancing Video Data Management System for Compositional Events with Large Language Models",
       "primary_venue": "sigmod",
-      "acceptable_venues": ["sigmod"],
+      "acceptable_venues": [
+        "sigmod"
+      ],
       "language": "en",
-      "domains": ["db"],
+      "domains": [
+        "db"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://2025.sigmod.org/sigmod_papers.shtml"
+      "source": "https://2025.sigmod.org/sigmod_papers.shtml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "sigmod",
+          "reason": "published primary venue in the cited source",
+          "source": "https://2025.sigmod.org/sigmod_papers.shtml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-cvpr-01",
       "year": 2025,
       "title": "Deterministic Image-to-Image Translation via Denoising Brownian Bridge Models with Dual Approximators",
       "primary_venue": "cvpr",
-      "acceptable_venues": ["cvpr", "iccv"],
+      "acceptable_venues": [
+        "cvpr"
+      ],
       "language": "en",
-      "domains": ["graphics", "ai"],
+      "domains": [
+        "graphics",
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "pdf-extract",
       "source": "https://openaccess.thecvf.com/content/CVPR2025/papers/Xiao_Deterministic_Image-to-Image_Translation_via_Denoising_Brownian_Bridge_Models_with_Dual_CVPR_2025_paper.pdf",
       "pdf_text": "Image-to-Image (I2I) translation involves converting an im- age from one domain to another. Deterministic I2I transla- tion, such as in image super-resolution, extends this con- cept by guaranteeing that each input generates a consistent and predictable output, closely matching the ground truth (GT) with high fidelity. In this paper, we propose a denois- ing Brownian bridge model with dual approximators (Dual- approx Bridge), a novel generative model that exploits the Brownian bridge dynamics and two neural network-based approximators (one for forward and one for reverse pro- cess) to produce faithful output with negligible variance and high image quality in I2I translations. Our extensive exper- iments on benchmark datasets including image generation and super-resolution demonstrate the consistent and supe- rior performance of Dual-approx Bridge in terms of im- age quality and faithfulness to GT when compared to both stochastic and deterministic baselines. Project page and code: https://github.com/bohan95/dual-app-bridge",
-      "pdf_sha256": "507c137c91a6191bc0bbc379af5496da272071a231c78fbc8b5026226b538ef7"
+      "pdf_sha256": "507c137c91a6191bc0bbc379af5496da272071a231c78fbc8b5026226b538ef7",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "cvpr",
+          "reason": "published primary venue in the cited source",
+          "source": "https://openaccess.thecvf.com/content/CVPR2025/papers/Xiao_Deterministic_Image-to-Image_Translation_via_Denoising_Brownian_Bridge_Models_with_Dual_CVPR_2025_paper.pdf"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-cvpr-02",
       "year": 2025,
       "title": "Towards Source-Free Machine Unlearning",
       "primary_venue": "cvpr",
-      "acceptable_venues": ["cvpr"],
+      "acceptable_venues": [
+        "cvpr"
+      ],
       "language": "en",
-      "domains": ["graphics", "ai"],
+      "domains": [
+        "graphics",
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://openaccess.thecvf.com/CVPR2025?day=all"
+      "source": "https://openaccess.thecvf.com/CVPR2025?day=all",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "cvpr",
+          "reason": "published primary venue in the cited source",
+          "source": "https://openaccess.thecvf.com/CVPR2025?day=all"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-cvpr-03",
       "year": 2025,
       "title": "Uni4D: Unifying Visual Foundation Models for 4D Modeling from a Single Video",
       "primary_venue": "cvpr",
-      "acceptable_venues": ["cvpr"],
+      "acceptable_venues": [
+        "cvpr"
+      ],
       "language": "en",
-      "domains": ["graphics", "ai"],
+      "domains": [
+        "graphics",
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://openaccess.thecvf.com/CVPR2025?day=all"
+      "source": "https://openaccess.thecvf.com/CVPR2025?day=all",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "cvpr",
+          "reason": "published primary venue in the cited source",
+          "source": "https://openaccess.thecvf.com/CVPR2025?day=all"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-cvpr-04",
       "year": 2025,
       "title": "DynScene: Scalable Generation of Dynamic Robotic Manipulation Scenes for Embodied AI",
       "primary_venue": "cvpr",
-      "acceptable_venues": ["cvpr"],
+      "acceptable_venues": [
+        "cvpr"
+      ],
       "language": "en",
-      "domains": ["graphics", "ai"],
+      "domains": [
+        "graphics",
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://openaccess.thecvf.com/CVPR2025?day=all"
+      "source": "https://openaccess.thecvf.com/CVPR2025?day=all",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "cvpr",
+          "reason": "published primary venue in the cited source",
+          "source": "https://openaccess.thecvf.com/CVPR2025?day=all"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-cvpr-05",
       "year": 2025,
       "title": "DiffLocks: Generating 3D Hair from a Single Image using Diffusion Models",
       "primary_venue": "cvpr",
-      "acceptable_venues": ["cvpr"],
+      "acceptable_venues": [
+        "cvpr"
+      ],
       "language": "en",
-      "domains": ["graphics", "ai"],
+      "domains": [
+        "graphics",
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://openaccess.thecvf.com/CVPR2025?day=all"
+      "source": "https://openaccess.thecvf.com/CVPR2025?day=all",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "cvpr",
+          "reason": "published primary venue in the cited source",
+          "source": "https://openaccess.thecvf.com/CVPR2025?day=all"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-cvpr-06",
       "year": 2025,
       "title": "Hyperbolic Category Discovery",
       "primary_venue": "cvpr",
-      "acceptable_venues": ["cvpr"],
+      "acceptable_venues": [
+        "cvpr"
+      ],
       "language": "en",
-      "domains": ["graphics", "ai"],
+      "domains": [
+        "graphics",
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://openaccess.thecvf.com/CVPR2025?day=all"
+      "source": "https://openaccess.thecvf.com/CVPR2025?day=all",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "cvpr",
+          "reason": "published primary venue in the cited source",
+          "source": "https://openaccess.thecvf.com/CVPR2025?day=all"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-cvpr-07",
       "year": 2025,
       "title": "The Language of Motion: Unifying Verbal and Non-verbal Language of 3D Human Motion",
       "primary_venue": "cvpr",
-      "acceptable_venues": ["cvpr"],
+      "acceptable_venues": [
+        "cvpr"
+      ],
       "language": "en",
-      "domains": ["graphics", "ai"],
+      "domains": [
+        "graphics",
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://openaccess.thecvf.com/CVPR2025?day=all"
+      "source": "https://openaccess.thecvf.com/CVPR2025?day=all",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "cvpr",
+          "reason": "published primary venue in the cited source",
+          "source": "https://openaccess.thecvf.com/CVPR2025?day=all"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-cvpr-08",
       "year": 2025,
       "title": "CALICO: Part-Focused Semantic Co-Segmentation with Large Vision-Language Models",
       "primary_venue": "cvpr",
-      "acceptable_venues": ["cvpr"],
+      "acceptable_venues": [
+        "cvpr"
+      ],
       "language": "en",
-      "domains": ["graphics", "ai"],
+      "domains": [
+        "graphics",
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://openaccess.thecvf.com/CVPR2025?day=all"
+      "source": "https://openaccess.thecvf.com/CVPR2025?day=all",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "cvpr",
+          "reason": "published primary venue in the cited source",
+          "source": "https://openaccess.thecvf.com/CVPR2025?day=all"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-chi-01",
       "year": 2025,
       "title": "CompAct: Designing Interconnected Compliant Mechanisms with Targeted Actuation Transmissions.",
       "primary_venue": "chi",
-      "acceptable_venues": ["chi", "uist"],
+      "acceptable_venues": [
+        "chi"
+      ],
       "language": "en",
-      "domains": ["hci"],
+      "domains": [
+        "hci"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://dblp.org/db/conf/chi/chi2025.xml"
+      "source": "https://dblp.org/db/conf/chi/chi2025.xml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "chi",
+          "reason": "published primary venue in the cited source",
+          "source": "https://dblp.org/db/conf/chi/chi2025.xml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-chi-02",
       "year": 2025,
       "title": "Crafting the Curve: Automating Plaster Mold Design for Ceramic Slip Casting with Shape Cast.",
       "primary_venue": "chi",
-      "acceptable_venues": ["chi"],
+      "acceptable_venues": [
+        "chi"
+      ],
       "language": "en",
-      "domains": ["hci"],
+      "domains": [
+        "hci"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://dblp.org/db/conf/chi/chi2025.xml"
+      "source": "https://dblp.org/db/conf/chi/chi2025.xml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "chi",
+          "reason": "published primary venue in the cited source",
+          "source": "https://dblp.org/db/conf/chi/chi2025.xml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-chi-03",
       "year": 2025,
       "title": "Dreamcrafter: Immersive Editing of 3D Radiance Fields Through Flexible, Generative Inputs and Outputs.",
       "primary_venue": "chi",
-      "acceptable_venues": ["chi"],
+      "acceptable_venues": [
+        "chi"
+      ],
       "language": "en",
-      "domains": ["hci"],
+      "domains": [
+        "hci"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://dblp.org/db/conf/chi/chi2025.xml"
+      "source": "https://dblp.org/db/conf/chi/chi2025.xml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "chi",
+          "reason": "published primary venue in the cited source",
+          "source": "https://dblp.org/db/conf/chi/chi2025.xml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-chi-04",
       "year": 2025,
       "title": "GenPara: Enhancing the 3D Design Editing Process by Inferring Users' Regions of Interest with Text-Conditional Shape Parameters.",
       "primary_venue": "chi",
-      "acceptable_venues": ["chi"],
+      "acceptable_venues": [
+        "chi"
+      ],
       "language": "en",
-      "domains": ["hci"],
+      "domains": [
+        "hci"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://dblp.org/db/conf/chi/chi2025.xml"
+      "source": "https://dblp.org/db/conf/chi/chi2025.xml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "chi",
+          "reason": "published primary venue in the cited source",
+          "source": "https://dblp.org/db/conf/chi/chi2025.xml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-chi-05",
       "year": 2025,
       "title": "Spatial Hand Actions: Exploring the Hand Actions used to Represent Spatial Thinking for 3D Assembling Tasks.",
       "primary_venue": "chi",
-      "acceptable_venues": ["chi"],
+      "acceptable_venues": [
+        "chi"
+      ],
       "language": "en",
-      "domains": ["hci"],
+      "domains": [
+        "hci"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://dblp.org/db/conf/chi/chi2025.xml"
+      "source": "https://dblp.org/db/conf/chi/chi2025.xml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "chi",
+          "reason": "published primary venue in the cited source",
+          "source": "https://dblp.org/db/conf/chi/chi2025.xml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-chi-06",
       "year": 2025,
       "title": "Xstrings: 3D Printing Cable-Driven Mechanism for Actuation, Deformation, and Manipulation.",
       "primary_venue": "chi",
-      "acceptable_venues": ["chi"],
+      "acceptable_venues": [
+        "chi"
+      ],
       "language": "en",
-      "domains": ["hci"],
+      "domains": [
+        "hci"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://dblp.org/db/conf/chi/chi2025.xml"
+      "source": "https://dblp.org/db/conf/chi/chi2025.xml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "chi",
+          "reason": "published primary venue in the cited source",
+          "source": "https://dblp.org/db/conf/chi/chi2025.xml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-chi-07",
       "year": 2025,
       "title": "\"The Conduit by which Change Happens\": Processes, Barriers, and Support for Interpersonal Learning about Responsible AI.",
       "primary_venue": "chi",
-      "acceptable_venues": ["chi"],
+      "acceptable_venues": [
+        "chi"
+      ],
       "language": "en",
-      "domains": ["hci"],
+      "domains": [
+        "hci"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://dblp.org/db/conf/chi/chi2025.xml"
+      "source": "https://dblp.org/db/conf/chi/chi2025.xml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "chi",
+          "reason": "published primary venue in the cited source",
+          "source": "https://dblp.org/db/conf/chi/chi2025.xml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-chi-08",
       "year": 2025,
       "title": "AI Mismatches: Identifying Potential Algorithmic Harms Before AI Development.",
       "primary_venue": "chi",
-      "acceptable_venues": ["chi"],
+      "acceptable_venues": [
+        "chi"
+      ],
       "language": "en",
-      "domains": ["hci"],
+      "domains": [
+        "hci"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://dblp.org/db/conf/chi/chi2025.xml"
+      "source": "https://dblp.org/db/conf/chi/chi2025.xml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "chi",
+          "reason": "published primary venue in the cited source",
+          "source": "https://dblp.org/db/conf/chi/chi2025.xml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-stoc-01",
       "year": 2025,
       "title": "Explicit Folded Reed-Solomon and Multiplicity Codes Achieve Relaxed Generalized Singleton Bounds.",
       "primary_venue": "stoc",
-      "acceptable_venues": ["stoc", "focs"],
+      "acceptable_venues": [
+        "stoc"
+      ],
       "language": "en",
-      "domains": ["theory"],
+      "domains": [
+        "theory"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://dblp.org/db/conf/stoc/stoc2025.xml"
+      "source": "https://dblp.org/db/conf/stoc/stoc2025.xml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "stoc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://dblp.org/db/conf/stoc/stoc2025.xml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-stoc-02",
       "year": 2025,
       "title": "Simulating Time with Square-Root Space.",
       "primary_venue": "stoc",
-      "acceptable_venues": ["stoc"],
+      "acceptable_venues": [
+        "stoc"
+      ],
       "language": "en",
-      "domains": ["theory"],
+      "domains": [
+        "theory"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://dblp.org/db/conf/stoc/stoc2025.xml"
+      "source": "https://dblp.org/db/conf/stoc/stoc2025.xml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "stoc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://dblp.org/db/conf/stoc/stoc2025.xml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-stoc-03",
       "year": 2025,
       "title": "Vizing's Theorem in Near-Linear Time.",
       "primary_venue": "stoc",
-      "acceptable_venues": ["stoc"],
+      "acceptable_venues": [
+        "stoc"
+      ],
       "language": "en",
-      "domains": ["theory"],
+      "domains": [
+        "theory"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://dblp.org/db/conf/stoc/stoc2025.xml"
+      "source": "https://dblp.org/db/conf/stoc/stoc2025.xml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "stoc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://dblp.org/db/conf/stoc/stoc2025.xml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-stoc-04",
       "year": 2025,
       "title": "Breaking the Sorting Barrier for Directed Single-Source Shortest Paths.",
       "primary_venue": "stoc",
-      "acceptable_venues": ["stoc"],
+      "acceptable_venues": [
+        "stoc"
+      ],
       "language": "en",
-      "domains": ["theory"],
+      "domains": [
+        "theory"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://dblp.org/db/conf/stoc/stoc2025.xml"
+      "source": "https://dblp.org/db/conf/stoc/stoc2025.xml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "stoc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://dblp.org/db/conf/stoc/stoc2025.xml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-stoc-05",
       "year": 2025,
       "title": "Quasi-Linear Size PCPs with Small Soundness from HDX.",
       "primary_venue": "stoc",
-      "acceptable_venues": ["stoc"],
+      "acceptable_venues": [
+        "stoc"
+      ],
       "language": "en",
-      "domains": ["theory"],
+      "domains": [
+        "theory"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://dblp.org/db/conf/stoc/stoc2025.xml"
+      "source": "https://dblp.org/db/conf/stoc/stoc2025.xml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "stoc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://dblp.org/db/conf/stoc/stoc2025.xml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-stoc-06",
       "year": 2025,
       "title": "Asymptotically Optimal Hardness for k-Set Packing and k-Matroid Intersection.",
       "primary_venue": "stoc",
-      "acceptable_venues": ["stoc"],
+      "acceptable_venues": [
+        "stoc"
+      ],
       "language": "en",
-      "domains": ["theory"],
+      "domains": [
+        "theory"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://dblp.org/db/conf/stoc/stoc2025.xml"
+      "source": "https://dblp.org/db/conf/stoc/stoc2025.xml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "stoc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://dblp.org/db/conf/stoc/stoc2025.xml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-stoc-07",
       "year": 2025,
       "title": "On Approximability of Satisfiable k-CSPs: V.",
       "primary_venue": "stoc",
-      "acceptable_venues": ["stoc"],
+      "acceptable_venues": [
+        "stoc"
+      ],
       "language": "en",
-      "domains": ["theory"],
+      "domains": [
+        "theory"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://dblp.org/db/conf/stoc/stoc2025.xml"
+      "source": "https://dblp.org/db/conf/stoc/stoc2025.xml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "stoc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://dblp.org/db/conf/stoc/stoc2025.xml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-stoc-08",
       "year": 2025,
       "title": "Hardness of 4-Colouring k-Colourable Graphs.",
       "primary_venue": "stoc",
-      "acceptable_venues": ["stoc"],
+      "acceptable_venues": [
+        "stoc"
+      ],
       "language": "en",
-      "domains": ["theory"],
+      "domains": [
+        "theory"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://dblp.org/db/conf/stoc/stoc2025.xml"
+      "source": "https://dblp.org/db/conf/stoc/stoc2025.xml",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "stoc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://dblp.org/db/conf/stoc/stoc2025.xml"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-hpdc-01",
       "year": 2025,
       "title": "Virtualization So Light, it Floats! Accelerating Floating Point Virtualization",
       "primary_venue": "hpdc",
-      "acceptable_venues": ["hpdc", "ics"],
+      "acceptable_venues": [
+        "hpdc"
+      ],
       "language": "en",
-      "domains": ["hpc", "systems"],
+      "domains": [
+        "hpc",
+        "systems"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://hpdc.sci.utah.edu/2025/program.html"
+      "source": "https://hpdc.sci.utah.edu/2025/program.html",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "hpdc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://hpdc.sci.utah.edu/2025/program.html"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-hpdc-02",
       "year": 2025,
       "title": "FloatGuard: Efficient Whole-Program Detection of Floating-Point Exceptions in AMD GPUs",
       "primary_venue": "hpdc",
-      "acceptable_venues": ["hpdc"],
+      "acceptable_venues": [
+        "hpdc"
+      ],
       "language": "en",
-      "domains": ["hpc", "systems"],
+      "domains": [
+        "hpc",
+        "systems"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://hpdc.sci.utah.edu/2025/program.html"
+      "source": "https://hpdc.sci.utah.edu/2025/program.html",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "hpdc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://hpdc.sci.utah.edu/2025/program.html"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-hpdc-03",
       "year": 2025,
       "title": "LiteForm: Lightweight and Automatic Format Composition for Sparse Matrix-Matrix Multiplication on GPUs",
       "primary_venue": "hpdc",
-      "acceptable_venues": ["hpdc"],
+      "acceptable_venues": [
+        "hpdc"
+      ],
       "language": "en",
-      "domains": ["hpc", "systems"],
+      "domains": [
+        "hpc",
+        "systems"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://hpdc.sci.utah.edu/2025/program.html"
+      "source": "https://hpdc.sci.utah.edu/2025/program.html",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "hpdc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://hpdc.sci.utah.edu/2025/program.html"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-hpdc-04",
       "year": 2025,
       "title": "Optimization of GNN Training Through Half-precision",
       "primary_venue": "hpdc",
-      "acceptable_venues": ["hpdc"],
+      "acceptable_venues": [
+        "hpdc"
+      ],
       "language": "en",
-      "domains": ["hpc", "systems"],
+      "domains": [
+        "hpc",
+        "systems"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://hpdc.sci.utah.edu/2025/program.html"
+      "source": "https://hpdc.sci.utah.edu/2025/program.html",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "hpdc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://hpdc.sci.utah.edu/2025/program.html"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-hpdc-05",
       "year": 2025,
       "title": "SAFusion: Efficient Tensor Fusion with Sparsification Ahead for High-Performance Distributed DNN Training",
       "primary_venue": "hpdc",
-      "acceptable_venues": ["hpdc"],
+      "acceptable_venues": [
+        "hpdc"
+      ],
       "language": "en",
-      "domains": ["hpc", "systems"],
+      "domains": [
+        "hpc",
+        "systems"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://hpdc.sci.utah.edu/2025/program.html"
+      "source": "https://hpdc.sci.utah.edu/2025/program.html",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "hpdc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://hpdc.sci.utah.edu/2025/program.html"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-hpdc-06",
       "year": 2025,
       "title": "ModelX: A Novel Transfer Learning Approach Across Heterogeneous Datasets",
       "primary_venue": "hpdc",
-      "acceptable_venues": ["hpdc"],
+      "acceptable_venues": [
+        "hpdc"
+      ],
       "language": "en",
-      "domains": ["hpc", "systems"],
+      "domains": [
+        "hpc",
+        "systems"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://hpdc.sci.utah.edu/2025/program.html"
+      "source": "https://hpdc.sci.utah.edu/2025/program.html",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "hpdc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://hpdc.sci.utah.edu/2025/program.html"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-hpdc-07",
       "year": 2025,
       "title": "FT2: First-Token-Inspired Online Fault Tolerance on Critical Layers for Generative Large Language Models",
       "primary_venue": "hpdc",
-      "acceptable_venues": ["hpdc"],
+      "acceptable_venues": [
+        "hpdc"
+      ],
       "language": "en",
-      "domains": ["hpc", "systems"],
+      "domains": [
+        "hpc",
+        "systems"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://hpdc.sci.utah.edu/2025/program.html"
+      "source": "https://hpdc.sci.utah.edu/2025/program.html",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "hpdc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://hpdc.sci.utah.edu/2025/program.html"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-hpdc-08",
       "year": 2025,
       "title": "Optimizing Data Distribution and Kernel Performance for Efficient Training of Chemistry Foundation Models: A Case Study with MACE",
       "primary_venue": "hpdc",
-      "acceptable_venues": ["hpdc"],
+      "acceptable_venues": [
+        "hpdc"
+      ],
       "language": "en",
-      "domains": ["hpc", "systems"],
+      "domains": [
+        "hpc",
+        "systems"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://hpdc.sci.utah.edu/2025/program.html"
+      "source": "https://hpdc.sci.utah.edu/2025/program.html",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "hpdc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://hpdc.sci.utah.edu/2025/program.html"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-hpdc-09",
       "year": 2025,
       "title": "TSUE: A Two-Stage Data Update Method for an Erasure Coded Cluster File System",
       "primary_venue": "hpdc",
-      "acceptable_venues": ["hpdc"],
+      "acceptable_venues": [
+        "hpdc"
+      ],
       "language": "en",
-      "domains": ["hpc", "systems"],
+      "domains": [
+        "hpc",
+        "systems"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://hpdc.sci.utah.edu/2025/program.html"
+      "source": "https://hpdc.sci.utah.edu/2025/program.html",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "hpdc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://hpdc.sci.utah.edu/2025/program.html"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-hpdc-10",
       "year": 2025,
       "title": "AutoSSD: CXL-Enhanced Autonomous SSDs for Low Tail Latency",
       "primary_venue": "hpdc",
-      "acceptable_venues": ["hpdc"],
+      "acceptable_venues": [
+        "hpdc"
+      ],
       "language": "en",
-      "domains": ["hpc", "systems"],
+      "domains": [
+        "hpc",
+        "systems"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://hpdc.sci.utah.edu/2025/program.html"
+      "source": "https://hpdc.sci.utah.edu/2025/program.html",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "hpdc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://hpdc.sci.utah.edu/2025/program.html"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-hpdc-11",
       "year": 2025,
       "title": "DPU-KV: On the Benefits of DPU Offloading for In-Memory Key-Value Stores at the Edge",
       "primary_venue": "hpdc",
-      "acceptable_venues": ["hpdc"],
+      "acceptable_venues": [
+        "hpdc"
+      ],
       "language": "en",
-      "domains": ["hpc", "systems"],
+      "domains": [
+        "hpc",
+        "systems"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://hpdc.sci.utah.edu/2025/program.html"
+      "source": "https://hpdc.sci.utah.edu/2025/program.html",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "hpdc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://hpdc.sci.utah.edu/2025/program.html"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-hpdc-12",
       "year": 2025,
       "title": "CarbonEdge: Leveraging Mesoscale Spatial Carbon-Intensity Variations for Low Carbon Edge Computing",
       "primary_venue": "hpdc",
-      "acceptable_venues": ["hpdc"],
+      "acceptable_venues": [
+        "hpdc"
+      ],
       "language": "en",
-      "domains": ["hpc", "systems"],
+      "domains": [
+        "hpc",
+        "systems"
+      ],
       "venue_scope": "international",
       "venue_kind": "conference",
       "input_mode": "title-only",
-      "source": "https://hpdc.sci.utah.edu/2025/program.html"
+      "source": "https://hpdc.sci.utah.edu/2025/program.html",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "hpdc",
+          "reason": "published primary venue in the cited source",
+          "source": "https://hpdc.sci.utah.edu/2025/program.html"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-cvprw-01",
       "year": 2025,
       "title": "Enhancing Vision Transformer Explainability Using Artificial Astrocytes",
       "primary_venue": "cvpr",
-      "acceptable_venues": ["cvpr", "iccv"],
+      "acceptable_venues": [
+        "cvpr"
+      ],
       "language": "en",
-      "domains": ["graphics", "ai"],
+      "domains": [
+        "graphics",
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "workshop",
       "input_mode": "title-only",
-      "source": "https://openaccess.thecvf.com/CVPR2025_workshops/LXCV"
+      "source": "https://openaccess.thecvf.com/CVPR2025_workshops/LXCV",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "cvpr",
+          "reason": "published primary venue in the cited source",
+          "source": "https://openaccess.thecvf.com/CVPR2025_workshops/LXCV"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-cvprw-02",
       "year": 2025,
       "title": "Slot Attention-based Feature Filtering for Few-Shot Learning",
       "primary_venue": "cvpr",
-      "acceptable_venues": ["cvpr"],
+      "acceptable_venues": [
+        "cvpr"
+      ],
       "language": "en",
-      "domains": ["graphics", "ai"],
+      "domains": [
+        "graphics",
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "workshop",
       "input_mode": "title-only",
-      "source": "https://openaccess.thecvf.com/CVPR2025_workshops/LXCV"
+      "source": "https://openaccess.thecvf.com/CVPR2025_workshops/LXCV",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "cvpr",
+          "reason": "published primary venue in the cited source",
+          "source": "https://openaccess.thecvf.com/CVPR2025_workshops/LXCV"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-cvprw-03",
       "year": 2025,
       "title": "NExNet Seg: Neuron Expansion Network for Medical Image Segmentation",
       "primary_venue": "cvpr",
-      "acceptable_venues": ["cvpr"],
+      "acceptable_venues": [
+        "cvpr"
+      ],
       "language": "en",
-      "domains": ["graphics", "ai"],
+      "domains": [
+        "graphics",
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "workshop",
       "input_mode": "title-only",
-      "source": "https://openaccess.thecvf.com/CVPR2025_workshops/LXCV"
+      "source": "https://openaccess.thecvf.com/CVPR2025_workshops/LXCV",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "cvpr",
+          "reason": "published primary venue in the cited source",
+          "source": "https://openaccess.thecvf.com/CVPR2025_workshops/LXCV"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-cvprw-04",
       "year": 2025,
       "title": "PineSORT: A Simple Online Real-time Tracking Framework for Drone Videos in Agriculture",
       "primary_venue": "cvpr",
-      "acceptable_venues": ["cvpr"],
+      "acceptable_venues": [
+        "cvpr"
+      ],
       "language": "en",
-      "domains": ["graphics", "ai"],
+      "domains": [
+        "graphics",
+        "ai"
+      ],
       "venue_scope": "international",
       "venue_kind": "workshop",
       "input_mode": "title-only",
-      "source": "https://openaccess.thecvf.com/CVPR2025_workshops/LXCV"
+      "source": "https://openaccess.thecvf.com/CVPR2025_workshops/LXCV",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "cvpr",
+          "reason": "published primary venue in the cited source",
+          "source": "https://openaccess.thecvf.com/CVPR2025_workshops/LXCV"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-nolta-special-01",
       "year": 2025,
       "title": "Brainmorphic computing: Paradigm and hardware",
       "primary_venue": "ieice-nolta-recent-progress-special",
-      "acceptable_venues": ["ieice-nolta-recent-progress-special", "ieice-nolta"],
+      "acceptable_venues": [
+        "ieice-nolta-recent-progress-special"
+      ],
       "language": "en",
-      "domains": ["theory", "ai"],
+      "domains": [
+        "theory",
+        "ai"
+      ],
       "venue_scope": "domestic",
       "venue_kind": "special-issue",
       "input_mode": "title-only",
-      "source": "https://www.jstage.jst.go.jp/browse/nolta/16/3/_contents/-char/en"
+      "source": "https://www.jstage.jst.go.jp/browse/nolta/16/3/_contents/-char/en",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "ieice-nolta-recent-progress-special",
+          "reason": "published primary venue in the cited source",
+          "source": "https://www.jstage.jst.go.jp/browse/nolta/16/3/_contents/-char/en"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-nolta-special-02",
       "year": 2025,
       "title": "Particle-LSTM: Advancing wind energy forecasting through a synergistic fusion of LSTM-VAR model and particle filter",
       "primary_venue": "ieice-nolta-recent-progress-special",
-      "acceptable_venues": ["ieice-nolta-recent-progress-special"],
+      "acceptable_venues": [
+        "ieice-nolta-recent-progress-special"
+      ],
       "language": "en",
-      "domains": ["theory", "ai"],
+      "domains": [
+        "theory",
+        "ai"
+      ],
       "venue_scope": "domestic",
       "venue_kind": "special-issue",
       "input_mode": "title-only",
-      "source": "https://www.jstage.jst.go.jp/browse/nolta/16/3/_contents/-char/en"
+      "source": "https://www.jstage.jst.go.jp/browse/nolta/16/3/_contents/-char/en",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "ieice-nolta-recent-progress-special",
+          "reason": "published primary venue in the cited source",
+          "source": "https://www.jstage.jst.go.jp/browse/nolta/16/3/_contents/-char/en"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-nolta-special-03",
       "year": 2025,
       "title": "Cyclic-group-ring-valued Hopfield associative memory of order three",
       "primary_venue": "ieice-nolta-recent-progress-special",
-      "acceptable_venues": ["ieice-nolta-recent-progress-special"],
+      "acceptable_venues": [
+        "ieice-nolta-recent-progress-special"
+      ],
       "language": "en",
-      "domains": ["theory", "ai"],
+      "domains": [
+        "theory",
+        "ai"
+      ],
       "venue_scope": "domestic",
       "venue_kind": "special-issue",
       "input_mode": "title-only",
-      "source": "https://www.jstage.jst.go.jp/browse/nolta/16/3/_contents/-char/en"
+      "source": "https://www.jstage.jst.go.jp/browse/nolta/16/3/_contents/-char/en",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "ieice-nolta-recent-progress-special",
+          "reason": "published primary venue in the cited source",
+          "source": "https://www.jstage.jst.go.jp/browse/nolta/16/3/_contents/-char/en"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-nolta-special-04",
       "year": 2025,
       "title": "Neural Gas method using autonomous and secure distributed processing with decomposed data",
       "primary_venue": "ieice-nolta-recent-progress-special",
-      "acceptable_venues": ["ieice-nolta-recent-progress-special"],
+      "acceptable_venues": [
+        "ieice-nolta-recent-progress-special"
+      ],
       "language": "en",
-      "domains": ["theory", "ai"],
+      "domains": [
+        "theory",
+        "ai"
+      ],
       "venue_scope": "domestic",
       "venue_kind": "special-issue",
       "input_mode": "title-only",
-      "source": "https://www.jstage.jst.go.jp/browse/nolta/16/3/_contents/-char/en"
+      "source": "https://www.jstage.jst.go.jp/browse/nolta/16/3/_contents/-char/en",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "ieice-nolta-recent-progress-special",
+          "reason": "published primary venue in the cited source",
+          "source": "https://www.jstage.jst.go.jp/browse/nolta/16/3/_contents/-char/en"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-ipsj-journal-01",
       "year": 2025,
       "title": "チャルディーニの法則を用いた標的型メールがAIに及ぼす影響に関する調査",
       "primary_venue": "jip",
-      "acceptable_venues": ["jip", "ieice-trans-inf"],
+      "acceptable_venues": [
+        "jip"
+      ],
       "language": "ja",
-      "domains": ["security", "ai"],
+      "domains": [
+        "security",
+        "ai"
+      ],
       "venue_scope": "domestic",
       "venue_kind": "journal",
       "input_mode": "title+abstract",
       "source": "https://ipsj.ixsq.nii.ac.jp/records/2006313",
-      "abstract": "ソーシャルエンジニアリング攻撃の被害は依然増加傾向にある．近年では，AIエージェントが多くの業務を担うようになり，ソーシャルエンジニアリング攻撃の対象が人間からAIエージェントに拡大する危険性がある．AIエージェントには使用者が使いやすいように，使用者の性格特性に合わせた性格特性チューニングが施されることが考えられる．そのため，AIエージェントも人間の有するような「性格」を持つことになる．西川らの既存研究では，「標的型メールの文面に用いられるチャルディーニの法則」と「個人の性格因子および行動特性」には関係があり，人の性格特性によって効果的なチャルディーニの法則が異なることが確認されている．同様に，チャルディーニの法則を用いた標的型メール攻撃に対するAIエージェントの反応も，その性格特性によって異なる可能性があると考えられる．本論文は，性格特性チューニングを施した大規模言語モデル（LLM）をターゲットとし，性格特性の違いによってチャルディーニの法則が含まれたフィッシングメールを提示した際の反応の違いを調査する．これにより，チャルディーニの法則に対して，同じ性格特性を有する人間とAIエージェント間でどのような反応の違いがあるのかを明らかにする．"
+      "abstract": "ソーシャルエンジニアリング攻撃の被害は依然増加傾向にある．近年では，AIエージェントが多くの業務を担うようになり，ソーシャルエンジニアリング攻撃の対象が人間からAIエージェントに拡大する危険性がある．AIエージェントには使用者が使いやすいように，使用者の性格特性に合わせた性格特性チューニングが施されることが考えられる．そのため，AIエージェントも人間の有するような「性格」を持つことになる．西川らの既存研究では，「標的型メールの文面に用いられるチャルディーニの法則」と「個人の性格因子および行動特性」には関係があり，人の性格特性によって効果的なチャルディーニの法則が異なることが確認されている．同様に，チャルディーニの法則を用いた標的型メール攻撃に対するAIエージェントの反応も，その性格特性によって異なる可能性があると考えられる．本論文は，性格特性チューニングを施した大規模言語モデル（LLM）をターゲットとし，性格特性の違いによってチャルディーニの法則が含まれたフィッシングメールを提示した際の反応の違いを調査する．これにより，チャルディーニの法則に対して，同じ性格特性を有する人間とAIエージェント間でどのような反応の違いがあるのかを明らかにする．",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "jip",
+          "reason": "published primary venue in the cited source",
+          "source": "https://ipsj.ixsq.nii.ac.jp/records/2006313"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-ipsj-journal-02",
       "year": 2025,
       "title": "Webページ表示後のリアルタイム検出によるフィッシング対策の強化",
       "primary_venue": "jip",
-      "acceptable_venues": ["jip"],
+      "acceptable_venues": [
+        "jip"
+      ],
       "language": "ja",
-      "domains": ["security", "ai"],
+      "domains": [
+        "security",
+        "ai"
+      ],
       "venue_scope": "domestic",
       "venue_kind": "journal",
       "input_mode": "title+abstract",
       "source": "https://ipsj.ixsq.nii.ac.jp/records/2004343",
-      "abstract": "フィッシング詐欺は増加傾向にあり，インターネット上の重要な課題となっている．フィッシング詐欺への対策は行われているが，フィッシング詐欺が増加傾向であることを考慮すると現状のフィッシング対策は十分だとはいいがたい．既存対策の1つであるWebブロックリストではすべてのフィッシングページに対応できず，アクセスしたユーザ自身による判定も各ユーザの能力の違いから有効とはいえない．そこで本研究では，Webブラウザ内で動作するフィッシング検出システムを提案する．本システムはユーザのWebブラウザでフィッシングページが表示された後に検出処理を行うものであり，Webブロックリストで防げなかったフィッシングページを検出可能である．フィッシングページ表示後にはユーザのみが行っていたフィッシングページ判定に，本システムが追加されることでフィッシング対策を強化することができる．本研究ではこのシステムをWebブラウザ拡張機能として実装するとともに，検出率と検出時間について評価を行った．"
+      "abstract": "フィッシング詐欺は増加傾向にあり，インターネット上の重要な課題となっている．フィッシング詐欺への対策は行われているが，フィッシング詐欺が増加傾向であることを考慮すると現状のフィッシング対策は十分だとはいいがたい．既存対策の1つであるWebブロックリストではすべてのフィッシングページに対応できず，アクセスしたユーザ自身による判定も各ユーザの能力の違いから有効とはいえない．そこで本研究では，Webブラウザ内で動作するフィッシング検出システムを提案する．本システムはユーザのWebブラウザでフィッシングページが表示された後に検出処理を行うものであり，Webブロックリストで防げなかったフィッシングページを検出可能である．フィッシングページ表示後にはユーザのみが行っていたフィッシングページ判定に，本システムが追加されることでフィッシング対策を強化することができる．本研究ではこのシステムをWebブラウザ拡張機能として実装するとともに，検出率と検出時間について評価を行った．",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "jip",
+          "reason": "published primary venue in the cited source",
+          "source": "https://ipsj.ixsq.nii.ac.jp/records/2004343"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-ipsj-journal-03",
       "year": 2025,
       "title": "フラフープ型ゲームコントローラ“Connected Hoop”の提案",
       "primary_venue": "jip",
-      "acceptable_venues": ["jip"],
+      "acceptable_venues": [
+        "jip"
+      ],
       "language": "ja",
-      "domains": ["hci"],
+      "domains": [
+        "hci"
+      ],
       "venue_scope": "domestic",
       "venue_kind": "journal",
       "input_mode": "title+abstract",
       "source": "https://ipsj.ixsq.nii.ac.jp/records/2006333",
-      "abstract": "本稿では，新たなゲーム体験を提供するためのデバイスであるフラフープ型ゲームコントローラ“Connected Hoop”を提案する．このデバイスは，一般的なフラフープと同じ形状を持ち，同じ操作性を保持しながらも，内蔵されたセンシングユニットにより「回す」「転がす」「揺らす」などの状態をデバイス単体で識別することが可能である．さらにこのデバイスは，一般的なBluetoothゲームコントローラとしてのインタフェースを有し，フラフープの状態をボタンの押し込みやスティックの傾きとしてプラットフォームに伝達できる．本稿では，Connected Hoopの利用面と開発面での特徴や利便性について述べるとともに，このデバイスを活用したゲームが提供しうる体験について報告する．"
+      "abstract": "本稿では，新たなゲーム体験を提供するためのデバイスであるフラフープ型ゲームコントローラ“Connected Hoop”を提案する．このデバイスは，一般的なフラフープと同じ形状を持ち，同じ操作性を保持しながらも，内蔵されたセンシングユニットにより「回す」「転がす」「揺らす」などの状態をデバイス単体で識別することが可能である．さらにこのデバイスは，一般的なBluetoothゲームコントローラとしてのインタフェースを有し，フラフープの状態をボタンの押し込みやスティックの傾きとしてプラットフォームに伝達できる．本稿では，Connected Hoopの利用面と開発面での特徴や利便性について述べるとともに，このデバイスを活用したゲームが提供しうる体験について報告する．",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "jip",
+          "reason": "published primary venue in the cited source",
+          "source": "https://ipsj.ixsq.nii.ac.jp/records/2006333"
+        }
+      ]
     },
     {
       "paper_id": "dev-2025-ipsj-journal-04",
       "year": 2025,
       "title": "物体振動とLED照射点滅を用いた実物体への視覚効果適用システム：Tangible VFX",
       "primary_venue": "jip",
-      "acceptable_venues": ["jip"],
+      "acceptable_venues": [
+        "jip"
+      ],
       "language": "ja",
-      "domains": ["hci"],
+      "domains": [
+        "hci"
+      ],
       "venue_scope": "domestic",
       "venue_kind": "journal",
       "input_mode": "title+abstract",
       "source": "https://ipsj.ixsq.nii.ac.jp/records/2006329",
-      "abstract": "本研究では，実物体振動とLED照射点滅を組み合わせることで，映像由来の視覚効果であるブラー，グリッチ，色ズレの実現手法を提案する．従来のプロジェクションマッピングや先行研究・作品では，視覚効果が光の投射や回転運動に制限され，2次元的なピクセル移動をともなう表現が困難であった．それに対し我々は，実物体の振動とLED照射点滅を活用することで，非装着型で視認可能な映像由来の視覚効果を実現する手法Tangible VFXを開発した．本稿では，提案手法のアクチュエーション技術および視覚効果生成手法について述べる．さらに，過去に行った展示から得られた評価を基に，本研究の芸術，エンタテインメント，広告分野への応用可能性を考察した．"
+      "abstract": "本研究では，実物体振動とLED照射点滅を組み合わせることで，映像由来の視覚効果であるブラー，グリッチ，色ズレの実現手法を提案する．従来のプロジェクションマッピングや先行研究・作品では，視覚効果が光の投射や回転運動に制限され，2次元的なピクセル移動をともなう表現が困難であった．それに対し我々は，実物体の振動とLED照射点滅を活用することで，非装着型で視認可能な映像由来の視覚効果を実現する手法Tangible VFXを開発した．本稿では，提案手法のアクチュエーション技術および視覚効果生成手法について述べる．さらに，過去に行った展示から得られた評価を基に，本研究の芸術，エンタテインメント，広告分野への応用可能性を考察した．",
+      "annotation_revision": 1,
+      "annotation_evidence": [
+        {
+          "venue": "jip",
+          "reason": "published primary venue in the cited source",
+          "source": "https://ipsj.ixsq.nii.ac.jp/records/2006329"
+        }
+      ]
     }
   ]
 }

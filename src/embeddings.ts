@@ -23,15 +23,28 @@ export const EMBEDDING_MULTI_REVISION = "2c4055b12046f11709e9df2c122e59ffbdc2f90
 export const EMBEDDING_RUNTIME_VERSION = "transformers-4.2.0";
 export const EMBEDDING_SCHEMA_VERSION = 1;
 export const EMBEDDING_PROBE = "kamiyobi embedding compatibility probe";
+export const PAPER_VEC_KEYS: readonly string[] = ["usenix-security", "rtss"];
 
 const extractorPromises = new Map<string, Promise<FeatureExtractionPipeline>>();
 
-function getExtractor(model: string, revision: string): Promise<FeatureExtractionPipeline> {
-  const cacheKey = `${model}@${revision}`;
+function getExtractor(
+  model: string,
+  revision: string,
+  localFilesOnly = false,
+): Promise<FeatureExtractionPipeline> {
+  if (localFilesOnly && !env.cacheDir)
+    return Promise.reject(new Error("transformers cache directory is unavailable"));
+  const modelPath = localFilesOnly ? join(env.cacheDir!, model, revision) : model;
+  const cacheKey = `${modelPath}@${revision}:${localFilesOnly ? "local" : "remote"}`;
   let p = extractorPromises.get(cacheKey);
   if (!p) {
-    p = pipeline("feature-extraction", model, { revision }) as Promise<FeatureExtractionPipeline>;
+    p = pipeline(
+      "feature-extraction",
+      modelPath,
+      localFilesOnly ? { local_files_only: true } : { revision },
+    ) as Promise<FeatureExtractionPipeline>;
     extractorPromises.set(cacheKey, p);
+    void p.catch(() => extractorPromises.delete(cacheKey));
   }
   return p;
 }
@@ -457,7 +470,10 @@ export function benchmarkProfileHash(
         schema: artifact.schema,
         source_year_max: sourceYearMax,
         profiles,
-        profile_rules: { excluded_attribute_tags: [...ATTRIBUTE_TAGS].sort() },
+        profile_rules: {
+          excluded_attribute_tags: [...ATTRIBUTE_TAGS].sort(),
+          paper_vector_keys: [...PAPER_VEC_KEYS].sort(),
+        },
       }),
     )
     .digest("hex")
@@ -479,6 +495,21 @@ export function benchmarkEmbeddingCacheKey(sourceYearMax: number): string {
 }
 
 import { toStringArray } from "./util.ts";
+
+function extractScopeText(c: Record<string, unknown>): string {
+  const parts: string[] = [];
+  if (typeof c.scope === "string" && c.scope.trim()) {
+    parts.push(c.scope.trim());
+  } else if (Array.isArray(c.scope)) {
+    parts.push(...toStringArray(c.scope));
+  }
+  if (typeof c.official_scope === "string" && c.official_scope.trim()) {
+    parts.push(c.official_scope.trim());
+  } else if (Array.isArray(c.official_scope)) {
+    parts.push(...toStringArray(c.official_scope));
+  }
+  return parts.filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+}
 
 /** 会議プロファイル文（カテゴリは正式名で展開）。
  * 多言語モデル用（forMulti）は、日本語名の会議にカテゴリの日本語キーワードを付与して
@@ -504,7 +535,11 @@ export function profileTexts(
     const catText = cats.map((k) => safeCats[k] || k).join(" ");
     const name = `${String(c.title ?? "")} ${String(c.full_name ?? "")}`;
     // 多言語モデル用: 日本語名の会議に日本語の分野語を付与（クエリ側の日本語語彙と一致させる）
-    const jpKw = forMulti && hasJapanese(name) ? cats.map((k) => JP_CAT_KW[k] || "").join(" ") : "";
+    const isJpVenue =
+      hasJapanese(name) ||
+      toStringArray(c.tags).includes("domestic-jp") ||
+      toStringArray(c.tags).includes("niche-jp");
+    const jpKw = forMulti && isJpVenue ? cats.map((k) => JP_CAT_KW[k] || "").join(" ") : "";
     // 実採択論文タイトル（あれば）でプロファイルを強化。
     // 英語モデルにのみ付与する。
     // multi にも付けると日本語クエリの sem ランキングを乱すため。
@@ -520,10 +555,12 @@ export function profileTexts(
     const skipEmb = SKIP_EMB_KEYS.has(key);
     const papers = !forMulti && !skipEmb ? (venuePapers[key] ?? []).slice(0, 8).join(" . ") : "";
     const tags = toStringArray(c.tags).filter((tag) => !ATTRIBUTE_TAGS.has(tag));
+    const scopeText = extractScopeText(c);
     const parts = [
       String(c.title ?? ""),
       String(c.full_name ?? ""),
       catText,
+      scopeText,
       jpKw,
       tags.join(" "),
       papers,
@@ -543,8 +580,9 @@ async function embedSet(
   texts: string[],
   keys: string[],
   revision: string,
+  localFilesOnly = false,
 ): Promise<Record<string, number[]>> {
-  const extractor = await getExtractor(model, revision);
+  const extractor = await getExtractor(model, revision, localFilesOnly);
   const sums = new Map<string, number[]>();
   const counts = new Map<string, number>();
   // メモリ節約のためバッチで処理
@@ -586,8 +624,13 @@ async function embedSet(
 }
 
 /** 各テキストを個別ベクトルとして埋め込む（平均しない）。max 類似度用。 */
-async function embedEach(model: string, texts: string[], revision: string): Promise<number[][]> {
-  const extractor = await getExtractor(model, revision);
+async function embedEach(
+  model: string,
+  texts: string[],
+  revision: string,
+  localFilesOnly = false,
+): Promise<number[][]> {
+  const extractor = await getExtractor(model, revision, localFilesOnly);
   const out: number[][] = [];
   const batch = 128;
   for (let start = 0; start < texts.length; start += batch) {
@@ -678,7 +721,7 @@ export function benchmarkEmbeddingManifestAtCutoff(
   sourceYearMax: number,
 ): BenchmarkEmbeddingManifest {
   const papers = venuePapersAtCutoff(sourceYearMax);
-  const paperVecKeys = ["usenix-security", "rtss"].filter((key) => (papers[key] ?? []).length > 0);
+  const paperVecKeys = PAPER_VEC_KEYS.filter((key) => (papers[key] ?? []).length > 0);
   return benchmarkEmbeddingManifest(sourceYearMax, paperVecKeys);
 }
 
@@ -699,7 +742,7 @@ export async function buildBenchmarkEmbeddingBundle(
     EMBEDDING_MULTI_REVISION,
   );
   const paperVecs: Record<string, number[][]> = {};
-  for (const key of ["usenix-security", "rtss"]) {
+  for (const key of PAPER_VEC_KEYS) {
     const titles = papers[key] ?? [];
     if (titles.length > 0) {
       paperVecs[key] = await embedEach(EMBEDDING_MODEL, titles, EMBEDDING_REVISION);
@@ -713,7 +756,7 @@ export async function buildBenchmarkEmbeddingBundle(
   };
 }
 
-const SKIP_EMB_KEYS = new Set(["rtss", "ecrts", "usenix-security"]);
+const SKIP_EMB_KEYS = new Set([...PAPER_VEC_KEYS, "ecrts"]);
 
 type EmbeddingData = {
   categories?: Record<string, unknown>;
@@ -758,6 +801,18 @@ function dataConferences(data: EmbeddingData | null | undefined): Array<Record<s
       full_name: String(c.full_name ?? ""),
       categories: toStringArray(c.categories),
       tags: toStringArray(c.tags),
+      scope:
+        typeof c.scope === "string"
+          ? c.scope
+          : Array.isArray(c.scope)
+            ? toStringArray(c.scope)
+            : "",
+      official_scope:
+        typeof c.official_scope === "string"
+          ? c.official_scope
+          : Array.isArray(c.official_scope)
+            ? toStringArray(c.official_scope)
+            : "",
     }))
     .filter((c) => c.key)
     .sort((a, b) => String(a.key).localeCompare(String(b.key)));
@@ -767,7 +822,8 @@ function expectedPaperKeys(data: EmbeddingData | null | undefined): string[] {
   return dataConferences(data)
     .map((c) => String(c.key))
     .filter(
-      (key) => ["usenix-security", "rtss"].includes(key) && (VENUE_PAPERS[key]?.length ?? 0) > 0,
+      (key) =>
+        (PAPER_VEC_KEYS as readonly string[]).includes(key) && (VENUE_PAPERS[key]?.length ?? 0) > 0,
     )
     .sort();
 }
@@ -798,6 +854,7 @@ export function embeddingProfileHash(data: EmbeddingData | null | undefined): st
     profile_rules: {
       jp_category_keywords: JP_CAT_KW,
       skip_embedding_keys: [...SKIP_EMB_KEYS].sort(),
+      paper_vector_keys: [...PAPER_VEC_KEYS].sort(),
       excluded_attribute_tags: [...ATTRIBUTE_TAGS].sort(),
       english_papers: "first-eight-concatenated",
       multilingual_papers: "excluded",
@@ -841,6 +898,7 @@ export function embeddingManifest(
 export async function buildEmbeddings(
   dataPath: string,
   outPath: string,
+  localFilesOnly = false,
 ): Promise<Record<string, number[]>> {
   const data = JSON.parse(readFileSync(dataPath, "utf8")) as {
     conferences: Array<Record<string, unknown>>;
@@ -854,21 +912,34 @@ export async function buildEmbeddings(
   // 英語は all-MiniLM-L6-v2（EN top1 80.1%）、日本語は paraphrase-multilingual
   // （JP top1 19.0% → 42.9%）。一方だけだと他方が落ちるため両方持つ。
   // 多言語側は日本語会議に日本語キーワードを付与（国内研究会の検索改善、実測済み）。
-  const out = await embedSet(EMBEDDING_MODEL, en.texts, en.keys, EMBEDDING_REVISION);
+  const out = await embedSet(
+    EMBEDDING_MODEL,
+    en.texts,
+    en.keys,
+    EMBEDDING_REVISION,
+    localFilesOnly,
+  );
   const multi = await embedSet(
     EMBEDDING_MULTI_MODEL,
     multiTexts.texts,
     multiTexts.keys,
     EMBEDDING_MULTI_REVISION,
+    localFilesOnly,
   );
-  const [enProbe] = await embedEach(EMBEDDING_MODEL, [EMBEDDING_PROBE], EMBEDDING_REVISION);
+  const [enProbe] = await embedEach(
+    EMBEDDING_MODEL,
+    [EMBEDDING_PROBE],
+    EMBEDDING_REVISION,
+    localFilesOnly,
+  );
   const [multiProbe] = await embedEach(
     EMBEDDING_MULTI_MODEL,
     [EMBEDDING_PROBE],
     EMBEDDING_MULTI_REVISION,
+    localFilesOnly,
   );
 
-  // skipEmb 会議（rtss/ecrts/usenix-security）の論文個別ベクトル。
+  // skipEmb 会議のうち rtss/usenix-security に論文個別ベクトルを付与する。
   // 多様な論文の平均重心は汎用化しやすいため埋め込みから外したが、その副作用で
   // 会議名のみの埋め込みになり実論文タイトルからセマンティックに発見されなくなった
   // （golden EN top1 15.8% vs top5 63.2% の乖離の主因）。
@@ -877,7 +948,7 @@ export async function buildEmbeddings(
   // 英語モデルのみ対象にする。
   // multi に英語論文語彙を混ぜると日本語クエリの順位を乱すため。
   const paperVecs: Record<string, number[][]> = {};
-  // rtss/ecrts は論文が多様（22+9 本）で max が「1 本でも近い」誤マッチを起こす
+  // rtss は論文が多様で max が「1 本でも近い」誤マッチを起こす
   // （Beehive→rtss 50%、BULKHEAD→rtss 38% 等）。
   // ches を paperVecs に足すと top5 65.7→64.3 に悪化する。
   // FPGA/AES 語彙が BULKHEAD/Beehive 等を奪うため。
@@ -885,12 +956,12 @@ export async function buildEmbeddings(
   // rtas は top1 +2.5pt だが top5 −2.5pt で、既存 2 件
   // CounterSEVeillance/One-Size-Fits-None を奪い新規獲得 0 のため採らない。
   // rtas は VENUE_PAPERS 語彙のみで 8 件中 6 件 top5 を達成。
-  for (const key of ["usenix-security", "rtss"]) {
+  for (const key of PAPER_VEC_KEYS) {
     const papers = VENUE_PAPERS[key] ?? [];
     if (!papers.length) continue;
     // 論文タイトルを**個別に**埋め込む（平均しない — max 類似度で使うため）。
     // embedSet は key ごとに平均するので使えない。
-    const vecs = await embedEach(EMBEDDING_MODEL, papers, EMBEDDING_REVISION);
+    const vecs = await embedEach(EMBEDDING_MODEL, papers, EMBEDDING_REVISION, localFilesOnly);
     paperVecs[key] = vecs;
   }
 

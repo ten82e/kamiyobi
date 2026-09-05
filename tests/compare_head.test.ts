@@ -1,6 +1,6 @@
 /**
- * scripts/compare-head.ts — update-data.yml が data ファイルの実質差分検出に使う
- * ヘルパーのユニットテスト。generated_at / _comment（日々変わる抽出日付）を
+ * scripts/compare-head.ts — data ファイルの実質差分を検出する
+ * ヘルパーのユニットテスト。generated_at / _comment（変動する運用メタデータ）を
  * 無視して、実質変更のときだけ 1 を返すことを保証する。
  */
 
@@ -132,12 +132,12 @@ describe("compareToHead", () => {
   });
 
   it("returns 0 when the working tree matches HEAD", () => {
-    // data/snapshot.json は HEAD と同一（このテストが変更を加えていない前提）。
-    expect(compareToHead("data/snapshot.json")).toBe(0);
+    // snapshot.json は offline 退避データなので正当な訂正で dirty になり得る。
+    // ここでは変更していない JSON で compareToHead の 0 を確認する。
+    expect(compareToHead("tsconfig.json")).toBe(0);
   });
 
-  it("returns 0 for a path that does not parse", () => {
-    // 存在しないファイルは「コミットしない」側（読めない = 0）に倒す。
-    expect(compareToHead("data/no-such-file.json")).toBe(0);
+  it("fails closed for a path that does not parse", () => {
+    expect(() => compareToHead("data/no-such-file.json")).toThrow(/cannot read or parse/);
   });
 });

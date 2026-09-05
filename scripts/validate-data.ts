@@ -1,5 +1,5 @@
 /** Deterministic semantic validation for every production data input. */
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { load as loadYaml } from "js-yaml";
@@ -9,6 +9,7 @@ import {
   embeddedTimezone,
   isConfirmedTimezone,
   parseInstant,
+  truncatedVenueName,
 } from "../src/model.ts";
 
 export interface DataValidation {
@@ -25,14 +26,24 @@ export interface ValidatorWarning {
   count?: number;
 }
 
-export interface DataQualityFinding {
-  code: string;
-  venueId: string;
-  editionId: string | null;
-  field: string;
-  locations: Array<{ source: string; path: string }>;
-  status: "unreviewed" | "accepted" | "fixed";
-  message: string;
+export type ValidatorFindingStatus = "unreviewed" | "accepted" | "fixed";
+
+export interface ValidatorFinding extends ValidatorWarning {
+  finding_id: string;
+  status: ValidatorFindingStatus;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  review_reason?: string;
+  evidence_ref?: string;
+  expires_at?: string;
+  fixed_at?: string;
+}
+
+function canonicalWarningSubject(subject: string): string {
+  return subject.replace(
+    /^(?:extra|manual|curated|overrides|primary|primary_overrides|snapshot):/,
+    "",
+  );
 }
 
 export function validatorWarnings(warnings: readonly string[]): ValidatorWarning[] {
@@ -59,7 +70,12 @@ export function validatorWarnings(warnings: readonly string[]): ValidatorWarning
             : /category_evidence/.test(text)
               ? "CATEGORY_REVIEW_EVIDENCE_MISSING"
               : "VALIDATOR_REVIEW";
-      return { code, subject, severity: "review" as const, message };
+      return {
+        code,
+        subject: canonicalWarningSubject(subject),
+        severity: "review" as const,
+        message,
+      };
     })
     .sort(
       (left, right) =>
@@ -69,26 +85,34 @@ export function validatorWarnings(warnings: readonly string[]): ValidatorWarning
 
 export function newValidatorWarnings(
   warnings: readonly string[],
-  baseline: readonly Pick<ValidatorWarning, "code" | "subject" | "count">[],
+  baseline: readonly Pick<ValidatorFinding, "code" | "subject" | "count" | "status">[],
 ): ValidatorWarning[] {
-  const baselineCounts = new Map(
-    baseline.map((item) => [`${item.code}\0${item.subject}`, item.count ?? 1]),
-  );
-  const current = new Map<string, ValidatorWarning & { count: number }>();
-  for (const item of validatorWarnings(warnings)) {
-    const key = `${item.code}\0${item.subject}`;
-    const existing = current.get(key);
-    current.set(key, { ...item, count: (existing?.count ?? 0) + 1 });
+  const baselineCounts = new Map<string, number>();
+  for (const item of baseline) {
+    if (item.status !== "accepted") continue;
+    baselineCounts.set(`${item.code}\0${item.subject}`, item.count ?? 1);
   }
-  return [...current].flatMap(([key, item]) =>
-    item.count > (baselineCounts.get(key) ?? 0) ? [item] : [],
-  );
+  return warningIdentities(warnings).flatMap((item) => {
+    const key = `${item.code}\0${item.subject}`;
+    return item.count! > (baselineCounts.get(key) ?? 0) ? [item] : [];
+  });
 }
 
-export function validatorWarningBaseline(warnings: readonly string[]): ValidatorWarning[] {
+function warningSource(message: string): string | undefined {
+  return /^(extra|manual|curated|overrides|primary|primary_overrides|snapshot):/.exec(
+    message.trim(),
+  )?.[1];
+}
+
+export function warningIdentities(warnings: readonly string[]): ValidatorWarning[] {
   const counts = new Map<string, ValidatorWarning & { count: number }>();
+  const sourceByKey = new Map<string, string>();
   for (const item of validatorWarnings(warnings)) {
     const key = `${item.code}\0${item.subject}`;
+    const source = warningSource(item.message);
+    const previousSource = sourceByKey.get(key);
+    if (source && previousSource && source !== previousSource) continue;
+    if (source && !previousSource) sourceByKey.set(key, source);
     const existing = counts.get(key);
     counts.set(key, { ...item, count: (existing?.count ?? 0) + 1 });
   }
@@ -98,86 +122,59 @@ export function validatorWarningBaseline(warnings: readonly string[]): Validator
   );
 }
 
-function warningLocation(message: string): {
-  source: string;
-  path: string;
-  detail: string;
-} {
-  const sourceEnd = message.indexOf(": ");
-  const source = sourceEnd >= 0 ? message.slice(0, sourceEnd).trim() : "global";
-  const rest = sourceEnd >= 0 ? message.slice(sourceEnd + 2) : message;
-  const pathEnd = rest.indexOf(": ");
-  if (pathEnd < 0) return { source, path: "", detail: rest.trim() };
-  return {
-    source,
-    path: rest.slice(0, pathEnd).trim(),
-    detail: rest.slice(pathEnd + 2).trim(),
-  };
-}
-
-function qualityField(code: string): string {
-  return (
-    {
-      EVENT_DATE_UNSTRUCTURED: "event_date",
-      EVENT_RANGE_ANOMALY: "event_date",
-      CATEGORY_VOCABULARY_DIVERGENCE: "categories",
-      CATEGORY_REVIEW_EVIDENCE_MISSING: "categories",
-    }[code] ?? "unknown"
-  );
-}
-
-/** Collapse duplicate file/line warnings into one canonical identity issue. */
-export function canonicalDataQualityFindings(
-  warnings: readonly string[],
-  previous: readonly DataQualityFinding[] = [],
-): DataQualityFinding[] {
-  const prior = new Map(
-    previous.map((finding) => [
-      [finding.code, finding.venueId, finding.editionId ?? "", finding.field].join("\0"),
-      finding,
-    ]),
-  );
-  const grouped = new Map<string, DataQualityFinding>();
-  for (const warning of warnings) {
-    const parsed = validatorWarnings([warning])[0];
-    if (!parsed) continue;
-    const location = warningLocation(warning);
-    const pathParts = location.path.split("/").filter(Boolean);
-    const venueId = pathParts[0] || parsed.subject || "global";
-    const editionId = pathParts.length > 1 ? (pathParts[1] ?? null) : null;
-    const field = qualityField(parsed.code);
-    const key = [parsed.code, venueId, editionId ?? "", field].join("\0");
-    const existing = grouped.get(key);
-    const locations = [
-      ...(existing?.locations ?? []),
-      { source: location.source, path: location.path || venueId },
-    ].filter(
-      (item, index, values) =>
-        values.findIndex(
-          (candidate) => candidate.source === item.source && candidate.path === item.path,
-        ) === index,
-    );
-    const priorFinding = prior.get(key);
-    grouped.set(key, {
-      code: parsed.code,
-      venueId,
-      editionId,
-      field,
-      locations: locations.sort(
-        (left, right) =>
-          left.source.localeCompare(right.source) || left.path.localeCompare(right.path),
-      ),
-      status: priorFinding?.status ?? "unreviewed",
-      message: existing?.message ?? parsed.message,
-    });
+export function validateFindings(
+  findings: readonly ValidatorFinding[],
+  now = Date.now(),
+): string[] {
+  const errors: string[] = [];
+  const ids = new Set<string>();
+  const activeSubjects = new Set<string>();
+  for (const finding of findings) {
+    if (!finding.finding_id || ids.has(finding.finding_id))
+      errors.push(`${finding.finding_id || "<missing>"}: finding_id is missing or duplicated`);
+    ids.add(finding.finding_id);
+    if (!finding.code || !finding.subject)
+      errors.push(`${finding.finding_id}: code/subject is required`);
+    const subjectKey = `${finding.code}\0${finding.subject}`;
+    if (finding.status !== "fixed" && activeSubjects.has(subjectKey))
+      errors.push(`${finding.finding_id}: canonical finding is duplicated`);
+    if (finding.status !== "fixed") activeSubjects.add(subjectKey);
+    if (!["unreviewed", "accepted", "fixed"].includes(finding.status))
+      errors.push(`${finding.finding_id}: invalid status`);
+    if (finding.status === "unreviewed")
+      errors.push(`${finding.finding_id}: finding is unreviewed`);
+    if (finding.status === "accepted") {
+      if (!finding.reviewed_by)
+        errors.push(`${finding.finding_id}: accepted finding lacks reviewed_by`);
+      if (!finding.reviewed_at || !Number.isFinite(Date.parse(finding.reviewed_at)))
+        errors.push(`${finding.finding_id}: accepted finding lacks valid reviewed_at`);
+      if (!finding.review_reason)
+        errors.push(`${finding.finding_id}: accepted finding lacks review_reason`);
+      if (!finding.evidence_ref)
+        errors.push(`${finding.finding_id}: accepted finding lacks evidence_ref`);
+      const expiresAt = Date.parse(finding.expires_at ?? "");
+      if (!Number.isFinite(expiresAt))
+        errors.push(`${finding.finding_id}: accepted finding lacks valid expires_at`);
+      else if (expiresAt <= now) errors.push(`${finding.finding_id}: accepted finding has expired`);
+    }
+    if (
+      finding.status === "fixed" &&
+      (!finding.fixed_at || !Number.isFinite(Date.parse(finding.fixed_at)))
+    )
+      errors.push(`${finding.finding_id}: fixed finding lacks valid fixed_at`);
   }
-  return [...grouped.values()].sort(
-    (left, right) =>
-      left.code.localeCompare(right.code) ||
-      left.venueId.localeCompare(right.venueId) ||
-      (left.editionId ?? "").localeCompare(right.editionId ?? "") ||
-      left.field.localeCompare(right.field),
-  );
+  return errors;
+}
+
+function readFindings(root: string): ValidatorFinding[] {
+  const path = join(root, "data", "validator-findings.json");
+  if (!existsSync(path)) return [];
+  const parsed = JSON.parse(readFileSync(path, "utf8")) as { findings?: ValidatorFinding[] };
+  if (!Array.isArray(parsed.findings))
+    throw new Error("validator-findings.json: findings is not an array");
+  const errors = validateFindings(parsed.findings);
+  if (errors.length) throw new Error(`invalid validator findings:\n${errors.join("\n")}`);
+  return parsed.findings;
 }
 
 const INVISIBLE = /[\u200b-\u200f\u202a-\u202e\u2060\ufeff\ufffd]/u;
@@ -195,13 +192,6 @@ const CATEGORY_REVIEW_FIELDS = [
   "promotion_state",
   "promotionState",
 ] as const;
-const EVENT_DATE_PRECISIONS = new Set([
-  "exact-range",
-  "single-day",
-  "month-only",
-  "not-announced",
-  "unverified",
-]);
 const CATEGORY_STOP_WORDS = new Set([
   "and",
   "conference",
@@ -252,6 +242,71 @@ function records(value: unknown): Record<string, unknown>[] {
         Boolean(item && typeof item === "object"),
       )
     : [];
+}
+
+function shortTitle(value: string): string {
+  return value
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/20\d\d/g, " ")
+    .replace(/\b(?:acm|ieee|ei)\b/g, " ")
+    .replace(/[^\p{L}\p{N}]+/gu, "");
+}
+
+function nameTokens(value: string): Set<string> {
+  return new Set(
+    value
+      .normalize("NFKC")
+      .toLowerCase()
+      .replace(/20\d\d/g, " ")
+      .replace(/\b(?:acm|ieee|ei|the)\b/g, " ")
+      .match(/[\p{L}\p{N}]+/gu) ?? [],
+  );
+}
+
+function tokenJaccard(left: string, right: string): number {
+  const a = nameTokens(left);
+  const b = nameTokens(right);
+  if (a.size === 0 || b.size === 0) return 0;
+  const intersection = [...a].filter((token) => b.has(token)).length;
+  return intersection / (a.size + b.size - intersection);
+}
+
+/** Same-year local records whose short titles match and whose names overlap. */
+export function likelyDuplicateVenues(
+  conferences: ReadonlyArray<{
+    key?: unknown;
+    title?: unknown;
+    full_name?: unknown;
+    editions?: unknown;
+  }>,
+): string[] {
+  const rows = conferences.flatMap((conference) =>
+    records(conference.editions).map((edition) => ({
+      key: String(conference.key ?? "?"),
+      title: String(conference.title ?? ""),
+      fullName: String(conference.full_name ?? ""),
+      year: Number(edition.year ?? 0),
+    })),
+  );
+  const duplicates = new Set<string>();
+  for (let i = 0; i < rows.length; i++) {
+    for (let j = i + 1; j < rows.length; j++) {
+      const left = rows[i];
+      const right = rows[j];
+      if (left.key === right.key || left.year !== right.year) continue;
+      const title = shortTitle(left.title);
+      if (!title || title !== shortTitle(right.title)) continue;
+      if (
+        tokenJaccard(left.fullName, right.fullName) < 0.7 &&
+        shortTitle(left.fullName) !== title &&
+        shortTitle(right.fullName) !== title
+      )
+        continue;
+      duplicates.add([left.key, right.key].sort().join(" / "));
+    }
+  }
+  return [...duplicates].sort();
 }
 
 function categoryRecords(value: unknown): Record<string, unknown>[] {
@@ -584,17 +639,8 @@ function validateCategories(
         add(result.errors, `${key}: unknown category ${category}`);
     }
   }
-  const categoryAssignments = records(conference.category_assignments);
-  const hasReviewedAssignments = categoryAssignments.some(
-    (assignment) => String(assignment.reason ?? "") === "manual-review",
-  );
-  if (
-    isAutoPromoted(conference) &&
-    !hasMeaningfulValue(conference.category_evidence) &&
-    !hasReviewedAssignments
-  )
+  if (isAutoPromoted(conference) && !hasMeaningfulValue(conference.category_evidence))
     add(result.warnings, `${key}: auto-promoted categories lack category_evidence`);
-  if (hasReviewedAssignments) return;
   const divergent = categoryDivergence(conference, categoryDefinitions);
   if (divergent.length)
     add(
@@ -675,15 +721,20 @@ function validateEdition(
     }
   }
   const dateText = String(edition.date_text ?? "").trim();
-  const eventDatePrecision = String(edition.event_date_precision ?? "").trim();
-  if (eventDatePrecision && !EVENT_DATE_PRECISIONS.has(eventDatePrecision))
-    add(result.errors, `${prefix}: unknown event date precision ${eventDatePrecision}`);
+  const eventPrecision = String(edition.event_date_precision ?? "").trim();
+  if (
+    eventPrecision &&
+    !["exact-range", "single-day", "month-only", "not-announced", "unverified"].includes(
+      eventPrecision,
+    )
+  )
+    add(result.errors, `${prefix}: unknown event date precision ${eventPrecision}`);
   const eventStatus = String(edition.event_date_status ?? "")
     .trim()
     .toLowerCase();
   const explicitlyNotAnnounced =
     eventStatus === "not-announced" || /^(?:tbd(?:\s+20\d{2})?|not announced)$/i.test(dateText);
-  if (!start && !end && dateText && !explicitlyNotAnnounced && !eventDatePrecision)
+  if (!start && !end && dateText && !explicitlyNotAnnounced && !eventPrecision)
     add(result.warnings, `${prefix}: event date text is not structured`);
 
   const slots = new Map<string, string>();
@@ -752,6 +803,14 @@ export function validateData(
     warnings: [],
     stats: { exact: 0, date_only: 0, estimated: 0 },
   };
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    add(result.errors, "top-level payload must be an object");
+    return result;
+  }
+  if (!Array.isArray(payload.conferences)) {
+    add(result.errors, "conferences must be an array");
+    return result;
+  }
   for (const conference of records(payload.conferences)) {
     const key = String(conference.key ?? "?");
     const editions = records(conference.editions);
@@ -771,8 +830,7 @@ export function validateData(
       const value = String(conference[field] ?? "");
       if (INVISIBLE.test(value))
         add(result.errors, `${key}: ${field} contains invisible/replacement characters`);
-      if (/\b\p{L}{3,}\s+20$/u.test(value))
-        add(result.errors, `${key}: ${field} appears truncated`);
+      if (truncatedVenueName(value)) add(result.errors, `${key}: ${field} appears truncated`);
       const mentioned = years(value);
       const actual = actualYears;
       if (mentioned.length && actual.length) {
@@ -793,6 +851,8 @@ export function validateData(
       validateEdition(key, edition, result);
     }
   }
+  for (const pair of likelyDuplicateVenues(records(payload.conferences)))
+    add(result.errors, `duplicate venue edition ${pair}`);
   result.errors = [...new Set(result.errors)].sort();
   result.warnings.sort();
   return result;
@@ -859,6 +919,8 @@ export function validateProduction(root = ROOT): DataValidation {
   const primary = load(join(root, "data", "primary.yaml"));
   const primaryOverrides = load(join(root, "data", "primary_overrides.yaml"));
   const snapshot = payloadForFile(join(root, "data", "snapshot.json"));
+  const manualPath = join(root, "data", "manual.yaml");
+  const curatedPath = join(root, "data", "curated.generated.yaml");
   const inputs = [
     { name: "extra", payload: extra },
     {
@@ -877,6 +939,8 @@ export function validateProduction(root = ROOT): DataValidation {
       name: "snapshot",
       payload: snapshot,
     },
+    ...(existsSync(manualPath) ? [{ name: "manual", payload: payloadForFile(manualPath) }] : []),
+    ...(existsSync(curatedPath) ? [{ name: "curated", payload: payloadForFile(curatedPath) }] : []),
   ];
   const aggregate: DataValidation = {
     errors: [],
@@ -919,32 +983,20 @@ export function main(argv = process.argv.slice(2)): number {
   const file = argv.find((value) => !value.startsWith("-"));
   try {
     const result = file ? validateFile(file) : validateProduction();
-    const baselinePath = join(ROOT, "data", "validator-warning-baseline.json");
-    const baseline =
-      file || !existsSync(baselinePath)
-        ? []
-        : ((JSON.parse(readFileSync(baselinePath, "utf8")) as { warnings?: ValidatorWarning[] })
-            .warnings ?? []);
+    const findings = file ? [] : readFindings(ROOT);
+    const baseline = file ? [] : findings;
     const newWarnings = file ? [] : newValidatorWarnings(result.warnings, baseline);
-    const findingsPath = join(ROOT, "data", "validator-findings.json");
-    const previousFindings =
-      !file && existsSync(findingsPath)
-        ? ((JSON.parse(readFileSync(findingsPath, "utf8")) as { findings?: DataQualityFinding[] })
-            .findings ?? [])
-        : [];
-    const qualityFindings = canonicalDataQualityFindings(result.warnings, previousFindings);
-    if (!file && argv.includes("--write-baseline")) {
-      writeFileSync(
-        baselinePath,
-        `${JSON.stringify({ warnings: validatorWarningBaseline(result.warnings) }, null, 2)}\n`,
-      );
-    }
-    if (!file && argv.includes("--write-findings")) {
-      writeFileSync(findingsPath, `${JSON.stringify({ findings: qualityFindings }, null, 2)}\n`);
-    }
     if (json)
       process.stdout.write(
-        `${JSON.stringify({ ...result, warning_identities: validatorWarningBaseline(result.warnings), quality_findings: qualityFindings, new_warnings: newWarnings })}\n`,
+        `${JSON.stringify({
+          ...result,
+          warning_identities: warningIdentities(result.warnings),
+          new_warnings: newWarnings,
+          finding_counts: {
+            total: findings.length,
+            unreviewed: findings.filter((item) => item.status === "unreviewed").length,
+          },
+        })}\n`,
       );
     else
       process.stdout.write(`validated ${result.stats.exact + result.stats.date_only} deadlines\n`);

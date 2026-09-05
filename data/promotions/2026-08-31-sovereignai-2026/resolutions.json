@@ -62,18 +62,22 @@
           "niche",
           "workshop"
         ],
-        "review_state": "reviewed"
+        "review_state": "reviewed",
+        "full_name": "The First Workshop on Sovereign AI for Collaborative and Pluralistic AI Ecosystems",
+        "link": "https://sovereignai-workshop.github.io/"
       },
       "edition": {
         "year": 2026,
         "edition_id": "sovereignai-2026",
         "date_text": "2026-09-27",
         "event_start": "2026-09-27",
-        "event_end": "2026-09-27"
+        "event_end": "2026-09-27",
+        "link": "https://sovereignai-workshop.github.io/",
+        "place": "Virginia Tech Academic Building One, Alexandria, Virginia, United States"
       },
       "deadline": {
         "kind": "paper",
-        "label": "paper",
+        "label": "Paper submission deadline",
         "round": 1,
         "track": "",
         "precision": "date-only",
@@ -95,6 +99,7 @@
           }
         ]
       }
-    }
+    },
+    "resolution_id": "resolution-8d7afae56bdf4646"
   }
 ]

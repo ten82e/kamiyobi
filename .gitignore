@@ -8,3 +8,9 @@ __pycache__/
 
 # ローカルデータ
 .freebuff/
+
+# サイトビルド出力
+.site-build/
+
+# 他セッションの作業中間ファイル (自律ループ・Codex CLI 等の round-result)
+work/

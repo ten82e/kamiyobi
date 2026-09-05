@@ -13,6 +13,9 @@
 
 source_priority: [local, aideadlines, ccfddl]
 
+promotion:
+  canonicalization_margin: 40
+
 # source をまたぐ会議同一性は明示する。同じ綴りの source-local ID だけでは統合せず、
 # ここで一つの stable venue ID に結び付けた組だけを統合する。
 venue_identities:
@@ -35,57 +38,6 @@ venue_identities:
   sec: {source_ids: {ccfddl: DS/sec}}
   sec-sc: {source_ids: {ccfddl: SC/sec}}
   www: {source_ids: {aideadlines: www, ccfddl: MX/www}}
-  # Issue #677: source-local promotions that describe the same call are bound
-  # explicitly.  Arrays are intentional: they are the legacy IDs that must
-  # resolve to one stable venue without relying on name similarity alone.
-  bdiot:
-    source_ids: {local: [acm-bdiot-2026, bdiot-2026]}
-    official_domains: [bdiot.org]
-    aliases: [BDIOT, "Big Data and Internet of Things"]
-  admit:
-    source_ids: {local: [admit-2026, ieee-admit-2026]}
-    official_domains: [admit2026.net]
-    aliases: [ADMIT, "Algorithms, Data Mining, and Information Technology"]
-  ccisc:
-    source_ids: {local: [ccisc-2026, ieee-ccisc-2026]}
-    official_domains: [ccisc2026.net]
-    aliases: [CCISC, "Computer Communication, Information System and Cybersecurity"]
-  csp:
-    source_ids: {local: [csp-2027, csp-ei-2027, ieee-csp-2027]}
-    official_domains: [iccsp.org]
-    aliases: [CSP, "Cryptography, Security and Privacy"]
-  icaici:
-    source_ids: {local: [icaici-2026, ieee-icaici-2026]}
-    official_domains: [ic-aci.net]
-    aliases: [ICAICI, "Artificial Intelligence, Cyber-Physical Systems and Intelligent Computing"]
-  icbda:
-    source_ids: {local: [icbda-2027, icbda2027]}
-    official_domains: [icbda.org]
-    aliases: [ICBDA, "Big Data Analytics"]
-  iccns:
-    source_ids: {local: [iccns-2026, iccns-ei-2026]}
-    official_domains: [iccns.org]
-    aliases: [ICCNS, "Communication and Network Security"]
-  iccr:
-    source_ids: {local: [iccr-2026, ieee-iccr-2026]}
-    aliases: [ICCR, "Control and Robotics"]
-  icimt:
-    source_ids: {local: [icimt-2026, icimt-ei-2026]}
-    official_domains: [icimt.org]
-    aliases: [ICIMT, "Information and Multimedia Technology"]
-  icmip:
-    source_ids: {local: [icmip-2027, icmip-ei-2027]}
-    official_domains: [icmip.org]
-    aliases: [ICMIP, "Multimedia and Image Processing"]
-  keir:
-    source_ids: {local: [keir-cikm2026, keir-cikm-2026]}
-    official_domains: [keir-workshop.github.io]
-    aliases: [KEIR, "Knowledge-Enhanced Information Retrieval"]
-    legacy_keys: [keir-cikm-2026, keir2026]
-  raai:
-    source_ids: {local: [raai2026, raai-2026]}
-    official_domains: [raai.net]
-    aliases: [RAAI, "Robotics, Automation, and Artificial Intelligence"]
 
 # URL・会期・開催地が上流間で変わった同一開催回だけを明示的に結ぶ。
 # 年や source-local ID の偶然一致だけでは統合しない。
@@ -94,54 +46,6 @@ edition_identities:
   miccai-2026: {source_ids: {aideadlines: miccai26, ccfddl: miccai26}}
   mobicom-2026: {source_ids: {ccfddl: mobicom26, local: mobicom26}}
   neurips-2025: {source_ids: {aideadlines: neurips25, ccfddl: nips25}}
-  bdiot-2026:
-    source_ids: {local: [acm-bdiot-202626, bdiot-202626]}
-    official_urls: [https://www.bdiot.org/submission.html]
-    call_identity: {series_id: bdiot, edition_id: bdiot-2026, call_id: bdiot-2026-main, parent_event_id: null}
-  admit-2026:
-    source_ids: {local: [admit-202626, ieee-admit-202626]}
-    official_urls: [https://www.admit2026.net/]
-    call_identity: {series_id: admit, edition_id: admit-2026, call_id: admit-2026-main, parent_event_id: null}
-  ccisc-2026:
-    source_ids: {local: [ccisc-202626, ieee-ccisc-202626]}
-    official_urls: [https://www.ccisc2026.net/]
-    call_identity: {series_id: ccisc, edition_id: ccisc-2026, call_id: ccisc-2026-main, parent_event_id: null}
-  csp-2027:
-    source_ids: {local: [csp-202727, csp-ei-202727, ieee-csp-202727]}
-    official_urls: [https://www.iccsp.org/]
-    call_identity: {series_id: csp, edition_id: csp-2027, call_id: csp-2027-main, parent_event_id: null}
-  icaici-2026:
-    source_ids: {local: [icaici-202626, ieee-icaici-202626]}
-    official_urls: [https://www.ic-aci.net/]
-    call_identity: {series_id: icaici, edition_id: icaici-2026, call_id: icaici-2026-main, parent_event_id: null}
-  icbda-2027:
-    source_ids: {local: [icbda-202727, icbda202727]}
-    official_urls: [https://www.icbda.org/]
-    call_identity: {series_id: icbda, edition_id: icbda-2027, call_id: icbda-2027-main, parent_event_id: null}
-  iccns-2026:
-    source_ids: {local: [iccns-202626, iccns-ei-202626]}
-    official_urls: [https://www.iccns.org/sub.html]
-    call_identity: {series_id: iccns, edition_id: iccns-2026, call_id: iccns-2026-main, parent_event_id: null}
-  iccr-2026:
-    source_ids: {local: [iccr-202626, ieee-iccr-202626]}
-    official_urls: [https://easychair.org/cfp/ICCR2026]
-    call_identity: {series_id: iccr, edition_id: iccr-2026, call_id: iccr-2026-main, parent_event_id: null}
-  icimt-2026:
-    source_ids: {local: [icimt-202626, icimt-ei-202626]}
-    official_urls: [https://www.icimt.org/]
-    call_identity: {series_id: icimt, edition_id: icimt-2026, call_id: icimt-2026-main, parent_event_id: null}
-  icmip-2027:
-    source_ids: {local: [icmip-202727, icmip-ei-202727]}
-    official_urls: [https://www.icmip.org/]
-    call_identity: {series_id: icmip, edition_id: icmip-2027, call_id: icmip-2027-main, parent_event_id: null}
-  keir-2026:
-    source_ids: {local: [keir-cikm202626, keir-cikm-202626]}
-    official_urls: [https://keir-workshop.github.io/]
-    call_identity: {series_id: keir, edition_id: keir-2026, call_id: keir-2026-workshop, parent_event_id: cikm-2026}
-  raai-2026:
-    source_ids: {local: [raai202626, raai-202626]}
-    official_urls: [https://www.raai.net/]
-    call_identity: {series_id: raai, edition_id: raai-2026, call_id: raai-2026-main, parent_event_id: null}
 
 # Primary の締切は開催日からこの日数以内に限る。会期不明なら開催年と前年を許可する。
 primary:

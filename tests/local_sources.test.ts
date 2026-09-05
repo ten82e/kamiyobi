@@ -23,6 +23,7 @@ import {
   resetWarnings,
   warningCounts,
 } from "../src/model.ts";
+import { parseFile } from "../src/sources/local.ts";
 import { REPO_ROOT } from "./helpers.ts";
 
 interface RawDeadline {
@@ -36,24 +37,28 @@ interface RawDeadline {
 function rawDeadlines(): RawDeadline[] {
   const out: RawDeadline[] = [];
 
-  // data/extra.yaml: conferences は配列（各エントリに key）。
-  const extra = loadYaml(readFileSync(join(REPO_ROOT, "data", "extra.yaml"), "utf8")) as {
-    conferences?: Array<{ key?: string; editions?: Array<{ deadlines?: unknown[] }> }>;
-  };
-  for (const conf of extra?.conferences ?? []) {
-    for (const ed of conf.editions ?? []) {
-      for (const dl of ed.deadlines ?? []) {
-        const rec = dl as Record<string, unknown>;
-        out.push({
-          src: "extra.yaml",
-          key: conf.key ?? "?",
-          date: String(rec.date ?? ""),
-          tz: String(rec.tz ?? rec.timezone ?? ""),
-          precision: String(rec.precision ?? "exact"),
-        });
+  // Canonical local inputs: conferences は配列（各エントリに key）。
+  for (const filename of ["manual.yaml", "curated.generated.yaml"]) {
+    const source = loadYaml(readFileSync(join(REPO_ROOT, "data", filename), "utf8")) as {
+      conferences?: Array<{ key?: string; editions?: Array<{ deadlines?: unknown[] }> }>;
+    };
+    for (const conf of source?.conferences ?? []) {
+      for (const ed of conf.editions ?? []) {
+        for (const dl of ed.deadlines ?? []) {
+          const rec = dl as Record<string, unknown>;
+          out.push({
+            src: filename,
+            key: conf.key ?? "?",
+            date: String(rec.date ?? ""),
+            tz: String(rec.tz ?? rec.timezone ?? ""),
+            precision: String(rec.precision ?? "exact"),
+          });
+        }
       }
     }
-  } // data/overrides.yaml: conferences はキー → { editions: { <年>: { deadlines } } }。
+  }
+
+  // data/overrides.yaml: conferences はキー → { editions: { <年>: { deadlines } } }。
   const ovr = loadYaml(readFileSync(join(REPO_ROOT, "data", "overrides.yaml"), "utf8")) as {
     conferences?: Record<string, { editions?: Record<string, { deadlines?: unknown[] }> }>;
   };
@@ -97,14 +102,22 @@ function rawDeadlines(): RawDeadline[] {
 }
 
 describe("local source data integrity", () => {
+  it("preserves legacy keys for consolidated local conferences (#677)", () => {
+    const conferences = new Map(
+      parseFile(join(REPO_ROOT, "data", "extra.yaml")).map((conference) => [
+        conference.key,
+        conference,
+      ]),
+    );
+    expect(conferences.get("csp-2027")?.legacy_keys).toEqual(["csp-ei-2027", "ieee-csp-2027"]);
+    expect(conferences.get("keir-cikm2026")?.legacy_keys).toEqual(["keir-cikm-2026"]);
+  });
+
   it("every local deadline has a valid exact or date-only representation", () => {
     resetWarnings();
     const rows = rawDeadlines();
     expect(rows.length).toBeGreaterThan(100);
-    // The #677 duplicate editions are intentionally collapsed into their
-    // canonical records; keep the count explicit so an accidental re-addition
-    // of a duplicate is caught by the fixture-level integrity check.
-    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(170);
+    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(173);
 
     for (const row of rows) {
       if (row.precision === "date-only") {

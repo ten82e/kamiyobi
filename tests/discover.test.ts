@@ -2,21 +2,21 @@
  * discover.ts / review-candidates.ts のテスト。
  */
 
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   cleanDbworldTitle,
   deadlineIsFuture,
   easyChairEntriesFromRows,
   extractDeadlinesFromText,
-  formatCandidateArchive,
   formatCandidateYaml,
   formatDiscoveredYaml,
   inDomain,
   makeCandidate,
   mergeCandidateRegistry,
   NicheDiscoverer,
-  parseCandidateArchive,
   parseCandidateRegistry,
   parseComsocCfpHtml,
   parseDbworldHtml,
@@ -25,7 +25,6 @@ import {
   parseIeiceCfpHtml,
   parseIpsjCfpHtml,
   parseWikiCfpHtml,
-  splitCandidateRegistry,
   toYamlDict,
 } from "../src/discover.ts";
 import {
@@ -52,6 +51,19 @@ describe("NicheDiscoverer", () => {
     expect(discoverer.isAlreadyTracked("sigcomm")).toBe(true);
     expect(discoverer.isAlreadyTracked("isc-hpc")).toBe(true);
     expect(discoverer.isAlreadyTracked("completely-unknown-fake-niche-venue-999")).toBe(false);
+  });
+
+  it("tracks local full names when the display title is abbreviated", () => {
+    const root = mkdtempSync("/tmp/kamiyobi-discover-known-");
+    const dataDir = join(root, "data");
+    mkdirSync(dataDir, { recursive: true });
+    writeFileSync(
+      join(dataDir, "extra.yaml"),
+      "conferences:\n  - key: short\n    title: Short\n    full_name: The Full Existing Venue Name\n",
+      "utf8",
+    );
+    const isolated = new NicheDiscoverer(root);
+    expect(isolated.isAlreadyTracked("The Full Existing Venue Name")).toBe(true);
   });
 
   it("classify category across taxonomy domains", () => {
@@ -84,6 +96,20 @@ describe("NicheDiscoverer", () => {
     await expect(fetch("https://example.invalid")).rejects.toThrow(
       "network access is disabled in required tests",
     );
+  });
+
+  it("fails when every discovery source is unavailable", async () => {
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (async () => {
+      throw new Error("network down");
+    }) as typeof fetch;
+    try {
+      await expect(new NicheDiscoverer(REPO_ROOT).runDiscovery(["hpc"], 2026)).rejects.toThrow(
+        /all discovery sources failed/,
+      );
+    } finally {
+      globalThis.fetch = realFetch;
+    }
   });
 
   it("discoverFromDblp decodes HTML entities and trims leading whitespace", async () => {
@@ -302,57 +328,6 @@ describe("formatCandidateYaml", () => {
     ) as any;
     expect(parsed.candidates[0].target_year).toBeNull();
     expect(parsed.candidates[0].editions).toEqual([]);
-  });
-
-  it("keeps the discovery queue active and archives compact terminal records", () => {
-    const registry = parseCandidateRegistry({
-      candidates: [
-        {
-          key: "future-official",
-          title: "Future Official Workshop",
-          full_name: "Future Official Workshop",
-          link: "https://easychair.org/cfp/future-official",
-          categories: ["systems"],
-          submission_deadline_text: "2099-01-01",
-          status: "discovered",
-        },
-        {
-          key: "expired-official",
-          title: "Expired Official Workshop",
-          full_name: "Expired Official Workshop",
-          link: "https://easychair.org/cfp/expired-official",
-          categories: ["systems"],
-          submission_deadline_text: "2026-08-01",
-          status: "discovered",
-        },
-        {
-          key: "aggregator-only",
-          title: "Aggregator Only Workshop",
-          full_name: "Aggregator Only Workshop",
-          link: "https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=99",
-          categories: ["systems"],
-          submission_deadline_text: "2099-01-01",
-          status: "discovered",
-        },
-        {
-          key: "registered-2027",
-          title: "Registered Workshop",
-          full_name: "Registered Workshop",
-          link: "https://example.org/registered",
-          categories: ["systems"],
-          submission_deadline_text: "2099-01-01",
-          status: "discovered",
-        },
-      ],
-    });
-    const split = splitCandidateRegistry(registry, utcDate(2026, 8, 31), new Set(["registered"]));
-    expect(split.active.candidates.map((candidate) => candidate.key)).toEqual(["future-official"]);
-    expect(new Set(split.archive.candidates.map((candidate) => candidate.reason))).toEqual(
-      new Set(["no-official-evidence", "expired", "already-registered"]),
-    );
-    expect(split.archive.candidates[0]).not.toHaveProperty("title");
-    const parsed = parseCandidateArchive(loadYaml(formatCandidateArchive(split.archive)));
-    expect(parsed).toEqual(split.archive);
   });
 });
 
@@ -867,10 +842,27 @@ describe("review helpers", () => {
     }
   });
 
+  it("warns when tracked-input files exist but cannot be parsed", () => {
+    const root = mkdtempSync("/tmp/kamiyobi-tracked-input-");
+    const dataDir = join(root, "data");
+    mkdirSync(dataDir, { recursive: true });
+    for (const name of ["snapshot.json", "extra.yaml", "overrides.yaml"]) {
+      writeFileSync(join(dataDir, name), "invalid: [", "utf8");
+    }
+    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      expect(loadTrackedTitles(root)).toEqual(new Set());
+      expect(consoleWarn).toHaveBeenCalledTimes(3);
+      expect(consoleWarn.mock.calls.map(([message]) => String(message))).toEqual(
+        expect.arrayContaining([expect.stringContaining("snapshot.json")]),
+      );
+    } finally {
+      consoleWarn.mockRestore();
+    }
+  });
+
   it("runReviewCandidates gracefully handles missing candidate files", () => {
-    expect(() => {
-      runReviewCandidates("/tmp/nonexistent-candidates-999.yaml", 60, new Date());
-    }).not.toThrow();
+    expect(runReviewCandidates("/tmp/nonexistent-candidates-999.yaml", 60, new Date())).toBe(false);
   });
 
   it("runReviewCandidates uses the localized caution label", () => {
@@ -961,6 +953,20 @@ describe("parseWikiCfpHtml", () => {
     expect(e.year).toBe(2026);
   });
 
+  it("repairs a truncated leading year in the full_name cell", () => {
+    const html =
+      "<table>" +
+      '<tr><td><a href="/cfp/servlet/event.showcfp?eventid=200184">ICAIDM 2026</a></td>' +
+      "<td>026 3rd International Conference on Artificial Intelligence and Digital Management</td></tr>" +
+      "<tr><td>Aug 31, 2026 - Sep 2, 2026</td><td>Cambridge, UK</td><td>Apr 1, 2026</td></tr>" +
+      "</table>";
+    const entries = parseWikiCfpHtml(html, ["networking"], 2026);
+    expect(entries).toHaveLength(1);
+    expect(entries[0].full_name).toBe(
+      "2026 3rd International Conference on Artificial Intelligence and Digital Management",
+    );
+  });
+
   it("decodes HTML entities in the full_name cell", () => {
     const html =
       "<table>" +
@@ -1019,6 +1025,23 @@ describe("parseWikiCfpHtml", () => {
     const edition = (dict.editions as Array<Record<string, unknown>>)[0];
     expect(edition.year).toBe(2027);
     expect(edition.id).toBe("tconf27");
+  });
+});
+
+describe("makeCandidate", () => {
+  it("repairs clipped years in title and full_name", () => {
+    const candidate = makeCandidate({
+      key: "slice-2026",
+      title: "SLICE-2026",
+      full_name:
+        "The 8th International Workshop on Smart Living with IoT, Cloud, and Edge Computing 20",
+      link: "https://easychair.org/cfp/slice2026",
+      categories: [],
+      year: 2026,
+    });
+    expect(candidate.full_name).toBe(
+      "The 8th International Workshop on Smart Living with IoT, Cloud, and Edge Computing 2026",
+    );
   });
 });
 

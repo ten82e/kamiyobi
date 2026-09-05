@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "benchmark": "real-paper-v1",
+  "annotation_revision": 2,
+  "splits": {
+    "dev": {
+      "records": 80,
+      "records_with_evidence": 80,
+      "missing_evidence": 0
+    },
+    "heldout": {
+      "records": 80,
+      "records_with_evidence": 80,
+      "missing_evidence": 0
+    }
+  },
+  "annotation_failures": [],
+  "policy": "acceptable_venues retain only published primary venues unless an alternate has independent record-level evidence; heldout labels are not used for training."
+}

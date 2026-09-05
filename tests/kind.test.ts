@@ -1,6 +1,5 @@
 /**
  * kind_of: SPEC.md section 3.3, against the upstream type names listed in 1.1 / 1.2.
- * Ported from tests/test_kind.py.
  */
 
 import { describe, expect, it } from "vitest";

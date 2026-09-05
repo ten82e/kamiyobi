@@ -33,6 +33,7 @@ jobs:
             --real-v2-dev data/benchmarks/real-paper-dev.json \
             --real-v2-heldout data/benchmarks/real-paper-heldout.json \
             --real-v2-negative data/benchmarks/real-paper-negative.json \
+            --real-v2-features data/benchmarks/real-paper-features.jsonl \
             > /tmp/real-paper-full.json
           jq '{regression_floor, dev: .splits.dev.modes.fused, heldout: .splits.heldout.modes.fused, negative: .splits.negative}' \
             /tmp/real-paper-full.json

@@ -155,7 +155,7 @@ jobs:
             --real-v2-dev data/benchmarks/real-paper-required-dev.json \
             --real-v2-heldout data/benchmarks/real-paper-required-heldout.json \
             --real-v2-negative data/benchmarks/real-paper-negative.json \
-            --real-v2-features data/benchmarks/real-paper-required-features.json \
+            --real-v2-features data/benchmarks/real-paper-features.jsonl \
             --real-v2-small \
             --json > /tmp/real-paper-required.json
       - name: Upload fixed recommendation gate report
@@ -173,7 +173,7 @@ jobs:
 
   report-dispatch-statuses:
     if: ${{ always() && github.event_name == 'workflow_dispatch' }}
-    needs: [typecheck, lint, unit-integration-tests, offline-build, validate-data, health-transition, recommendation-regression]
+    needs: [typecheck, lint, unit-integration-tests, offline-build, validate-data, health-transition, production-health-self-check, recommendation-regression]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -186,7 +186,7 @@ jobs:
         run: |
           set -euo pipefail
           overall=success
-          for context in typecheck lint unit-integration-tests offline-build validate-data health-transition recommendation-regression; do
+          for context in typecheck lint unit-integration-tests offline-build validate-data health-transition production-health-self-check recommendation-regression; do
             result=$(jq -r --arg context "$context" '.[$context].result' <<< "$RESULTS")
             state=success
             if [ "$result" != success ]; then state=failure; overall=failure; fi

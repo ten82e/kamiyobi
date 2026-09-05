@@ -8,14 +8,19 @@
     "node": ">=24"
   },
   "scripts": {
-    "build": "node src/cli.ts build",
+    "build": "b=$(mktemp) && cp data/snapshot.json \"$b\" && trap 'rc=$?; cp \"$b\" data/snapshot.json || rc=1; rm -f \"$b\" || rc=1; exit \"$rc\"' 0 && node src/cli.ts build",
     "discover": "node src/cli.ts discover",
-    "bench": "node src/bench-recommender.ts",
+    "generate:curated": "node scripts/generate-curated.ts",
+    "bench": "node src/bench-recommender.ts --real-v2-dev data/benchmarks/real-paper-dev.json --real-v2-heldout data/benchmarks/real-paper-heldout.json --real-v2-negative data/benchmarks/real-paper-negative.json --real-v2-features data/benchmarks/real-paper-features.jsonl",
+    "bench:synthetic": "node src/bench-recommender.ts --v2 tests/fixtures/bench-v2.json",
     "validate:data": "node scripts/validate-data.ts",
+    "health-gate": "node scripts/health-gate.ts public/health.json --report work/health-gate-violations.json --observation-baseline data/source-observation-baseline.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit && tsc --noEmit -p site/tsconfig.json",
     "check": "biome check src scripts site/*.ts tests --files-ignore-unknown=false",
-    "format": "biome format --write src tests"
+    "format": "biome format --write src scripts site/*.ts tests",
+    "update": "npm run validate:data && npm run validate:data -- public/data.json && npm run health-gate",
+    "build:manual": "node src/cli.ts build --out public"
   },
   "license": "MIT",
   "overrides": {

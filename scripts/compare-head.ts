@@ -1,13 +1,10 @@
 /**
  * ワークツリーの data ファイルと HEAD 版を「実質的な差」で比較する。
- * update-data.yml の writer が data/snapshot.json と
- * data/primary_overrides.yaml の両方について呼び、実質変更があるときだけ
- * コミットするために使う（SPEC.md §data/primary.yaml の「前回値維持」保証を
- * 成立させるため、生成物の永続化が必要）。
+ * 生成日時やコメントなどの運用メタデータを除外し、内容の変更だけを判定する。
  *
  * 使い方:
  *   node scripts/compare-head.ts data/snapshot.json
- *   実質変更あり => 1 / なし（または読めない）=> 0 を stdout に出す。
+ *   実質変更あり => 1 / なし => 0 を stdout に出し、読めない場合は失敗する。
  *
  * 「実質」の定義 (path-specific):
  *   - source-observation-baseline.json: top-level `observed_at` だけ無視
@@ -66,8 +63,21 @@ function stripChurn(v: unknown, mode: ChurnMode): unknown {
         // overrides: only skip _comment
         if (k === "_comment") continue;
       } else if (mode === "snapshot") {
-        // snapshot: skip generated_at and _comment, but KEEP evidence timestamps
-        if (k === "generated_at" || k === "_comment") continue;
+        // snapshot: skip generated_at and _comment, and the entire
+        // snapshot_metadata block (build-time metadata: generated_at /
+        // fetchedAt / source revisions change on every build regardless of
+        // content). Evidence timestamps inside conferences are kept.
+        // `verification` blocks are build-time-derived scheduling metadata
+        // (last_attempt_at / last_verified_at / next_check_at) — they change
+        // on every build and may be absent in older committed snapshots, so
+        // they are not content either.
+        if (
+          k === "generated_at" ||
+          k === "_comment" ||
+          k === "snapshot_metadata" ||
+          k === "verification"
+        )
+          continue;
       } else {
         // default (legacy): skip generated_at, observed_at, _comment
         if (k === "generated_at" || k === "observed_at" || k === "_comment") continue;
@@ -135,7 +145,7 @@ export function readFromHead(path: string): unknown {
 
 /**
  * ワークツリーの path と HEAD 版を実質比較する。
- * 1 = 実質変更あり / 0 = 変更なし・どちらかが読めない（コミットしない）。
+ * 1 = 実質変更あり / 0 = 変更なし。比較対象が読めない場合は失敗する。
  */
 export function compareToHead(path: string): 0 | 1 {
   let next: unknown = null;
@@ -147,8 +157,8 @@ export function compareToHead(path: string): 0 | 1 {
   const prev = readFromHead(path);
   const prevNorm = normalizeData(prev, path);
   const nextNorm = normalizeData(next, path);
-  // 読めない側は書きかけとみなし、コミット対象にしない。
-  if (prevNorm === null || nextNorm === null) return 0;
+  if (prevNorm === null) throw new Error(`cannot read or parse HEAD:${path}`);
+  if (nextNorm === null) throw new Error(`cannot read or parse ${path}`);
   return prevNorm === nextNorm ? 0 : 1;
 }
 
@@ -159,6 +169,11 @@ if (isMain) {
     process.stderr.write("usage: node scripts/compare-head.ts <path>\n");
     process.exitCode = 2;
   } else {
-    process.stdout.write(`${compareToHead(path)}\n`);
+    try {
+      process.stdout.write(`${compareToHead(path)}\n`);
+    } catch (error) {
+      process.stderr.write(`compare-head failed: ${String(error)}\n`);
+      process.exitCode = 1;
+    }
   }
 }

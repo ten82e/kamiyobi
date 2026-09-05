@@ -4,7 +4,7 @@
  * This module searches external academic CFP sources (DBLP, wikiCFP, DBWorld,
  * EasyChair, OpenReview, IEEE ComSoc, IEICE, IPSJ) for niche conferences,
  * workshops, symposia, and journal Call for Papers in HPC, Systems, Networking,
- * AI, and Security.  Ported from scripts/discover.py (kamiyobi).
+ * AI, and Security.
  */
 
 import { createHash } from "node:crypto";
@@ -12,7 +12,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { decode } from "html-entities";
 import { dump as dumpYaml, load as loadYaml } from "js-yaml";
-import { slug } from "./model.ts";
+import { monthOf, repairTruncatedVenueName, slug } from "./model.ts";
+import { localSourcePaths } from "./sources/local.ts";
 
 const ROOT = join(import.meta.dirname, "..");
 
@@ -117,7 +118,7 @@ export const DOMAIN_KEYWORDS: Record<string, string[]> = {
 };
 
 // wikiCFP のカテゴリページ (?conference=<cat>) と kamiyobi カテゴリの対応。
-export const WIKICFP_CATEGORY_MAP: Record<string, string[]> = {
+const WIKICFP_CATEGORY_MAP: Record<string, string[]> = {
   hpc: ["parallel", "high", "grid", "performance", "computational"],
   networking: [
     "networks",
@@ -210,6 +211,26 @@ export interface CandidateRegistry {
   candidates: Candidate[];
 }
 
+export type CandidateArchiveDecision =
+  | "expired"
+  | "duplicate"
+  | "out-of-scope"
+  | "already-curated"
+  | "no-official-evidence"
+  | "no-reviewable-deadline";
+
+export interface CandidateArchiveRecord {
+  fingerprint: string;
+  decision: CandidateArchiveDecision;
+  last_reviewed: string;
+  source_url_hash: string;
+}
+
+export interface CandidateLifecycleSplit {
+  active: Candidate[];
+  archive: CandidateArchiveRecord[];
+}
+
 export interface CandidateFingerprintInput {
   source: string;
   sourceItemId: string | null;
@@ -246,36 +267,7 @@ export interface Candidate {
 }
 
 export const CANDIDATE_REGISTRY_SCHEMA = 2 as const;
-export const CANDIDATE_STALE_AFTER_DAYS = 90;
-
-/** The archive intentionally stores only a compact fingerprint and decision. */
-export const CANDIDATE_ARCHIVE_SCHEMA = 1 as const;
-
-export type CandidateArchiveReason =
-  | "expired"
-  | "out-of-scope"
-  | "already-registered"
-  | "no-official-evidence"
-  | "rejected"
-  | "superseded"
-  | "stale";
-
-export interface CandidateArchiveRecord {
-  fingerprint: string;
-  reason: CandidateArchiveReason;
-  last_checked_at: string;
-  source_url_hash: string;
-}
-
-export interface CandidateArchive {
-  schema: 1;
-  candidates: CandidateArchiveRecord[];
-}
-
-export interface CandidateQueueSplit {
-  active: CandidateRegistry;
-  archive: CandidateArchive;
-}
+const CANDIDATE_STALE_AFTER_DAYS = 90;
 
 const CANDIDATE_STATUSES = new Set<CandidateStatus>([
   "discovered",
@@ -364,192 +356,6 @@ function candidateId(candidate: Candidate): string {
   });
 }
 
-const AGGREGATOR_HOSTS = new Set([
-  "wikicfp.com",
-  "www.wikicfp.com",
-  "dblp.org",
-  "www.dblp.org",
-  "dbworld.org",
-  "www.dbworld.org",
-  "listserv.acm.org",
-]);
-
-function urlHost(value: string): string {
-  try {
-    return new URL(value).hostname.toLowerCase();
-  } catch {
-    return "";
-  }
-}
-
-function candidateUrls(candidate: Candidate): string[] {
-  return [
-    candidate.link,
-    candidate.evidence_url,
-    ...(candidate.evidence ?? []).map((evidence) => evidence.source_url),
-  ].filter((value): value is string => typeof value === "string" && value.trim().length > 0);
-}
-
-/** Whether discovery has a non-aggregator URL that a reviewer can inspect. */
-export function hasOfficialUrlCandidate(candidate: Candidate): boolean {
-  return candidateUrls(candidate).some((value) => {
-    const host = urlHost(value);
-    if (!host) return false;
-    return !AGGREGATOR_HOSTS.has(host) && !host.endsWith(".wikicfp.com");
-  });
-}
-
-/** Hash the source URL without retaining the URL in the archive. */
-export function candidateSourceUrlHash(candidate: Candidate): string {
-  return createHash("sha256")
-    .update(candidateUrls(candidate)[0] ?? "")
-    .digest("hex");
-}
-
-function registeredCandidate(candidate: Candidate, registeredKeys: Set<string>): boolean {
-  const key = slug(candidate.key);
-  const yearless = key.replace(/(?:[-_]?20\d{2}|[-_]?\d{2})$/, "");
-  return registeredKeys.has(key) || (yearless.length > 0 && registeredKeys.has(yearless));
-}
-
-function candidateDeadlineText(candidate: Candidate): string {
-  if (candidate.submission_deadline_text) return candidate.submission_deadline_text;
-  if (candidate.date_text) return candidate.date_text;
-  for (const deadline of candidate.deadlines) {
-    const record = deadline as Record<string, unknown>;
-    const value = record.date ?? record.utc ?? record.deadline;
-    if (typeof value === "string" && value.trim()) return value;
-  }
-  return "";
-}
-
-function archiveReason(
-  candidate: Candidate,
-  now: Date,
-  registeredKeys: Set<string>,
-): CandidateArchiveReason | null {
-  if (candidate.status === "accepted") return "already-registered";
-  if (candidate.status === "rejected") return "rejected";
-  if (candidate.status === "superseded") return "superseded";
-  if (candidate.status === "stale") return "stale";
-  if (registeredCandidate(candidate, registeredKeys)) return "already-registered";
-  const deadline = parseDeadlineText(candidateDeadlineText(candidate));
-  if (deadline && deadline.getTime() < now.getTime()) return "expired";
-  if (!hasOfficialUrlCandidate(candidate)) return "no-official-evidence";
-  return null;
-}
-
-function archiveRecord(
-  candidate: Candidate,
-  reason: CandidateArchiveReason,
-  checkedAt: string,
-): CandidateArchiveRecord {
-  return {
-    fingerprint: candidate.id ?? candidateId(candidate),
-    reason,
-    last_checked_at: checkedAt,
-    source_url_hash: candidateSourceUrlHash(candidate),
-  };
-}
-
-function archiveSort(left: CandidateArchiveRecord, right: CandidateArchiveRecord): number {
-  return left.fingerprint.localeCompare(right.fingerprint);
-}
-
-export function parseCandidateArchive(value: unknown): CandidateArchive {
-  if (typeof value !== "object" || value === null) {
-    return { schema: CANDIDATE_ARCHIVE_SCHEMA, candidates: [] };
-  }
-  const record = value as Record<string, unknown>;
-  const raw = Array.isArray(record.candidates)
-    ? record.candidates
-    : Array.isArray(record.archive)
-      ? record.archive
-      : [];
-  const candidates = raw
-    .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
-    .map((item) => ({
-      fingerprint: String(item.fingerprint ?? "").trim(),
-      reason: String(item.reason ?? "no-official-evidence") as CandidateArchiveReason,
-      last_checked_at: String(item.last_checked_at ?? ""),
-      source_url_hash: String(item.source_url_hash ?? ""),
-    }))
-    .filter(
-      (item): item is CandidateArchiveRecord =>
-        item.fingerprint.length > 0 &&
-        item.source_url_hash.length > 0 &&
-        [
-          "expired",
-          "out-of-scope",
-          "already-registered",
-          "no-official-evidence",
-          "rejected",
-          "superseded",
-          "stale",
-        ].includes(item.reason),
-    )
-    .sort(archiveSort);
-  return { schema: CANDIDATE_ARCHIVE_SCHEMA, candidates };
-}
-
-export function mergeCandidateArchive(
-  existing: CandidateArchive | null | undefined,
-  incoming: CandidateArchiveRecord[] | null | undefined,
-): CandidateArchive {
-  const byFingerprint = new Map<string, CandidateArchiveRecord>();
-  for (const record of existing?.candidates ?? []) byFingerprint.set(record.fingerprint, record);
-  for (const record of incoming ?? []) {
-    const previous = byFingerprint.get(record.fingerprint);
-    if (!previous || record.last_checked_at >= previous.last_checked_at)
-      byFingerprint.set(record.fingerprint, record);
-  }
-  return {
-    schema: CANDIDATE_ARCHIVE_SCHEMA,
-    candidates: [...byFingerprint.values()].sort(archiveSort),
-  };
-}
-
-export function formatCandidateArchive(archive: CandidateArchive | null | undefined): string {
-  return dumpYaml(
-    {
-      schema: CANDIDATE_ARCHIVE_SCHEMA,
-      candidates: [...(archive?.candidates ?? [])].sort(archiveSort),
-    },
-    { skipInvalid: true },
-  ) as string;
-}
-
-/** Split the discovery registry into a small review queue and a compact archive. */
-export function splitCandidateRegistry(
-  registry: CandidateRegistry | null | undefined,
-  now: Date = new Date(),
-  registeredKeys: Iterable<string> = [],
-): CandidateQueueSplit {
-  const safeNow = Number.isNaN(now.getTime()) ? new Date() : now;
-  const registered = new Set([...registeredKeys].map((key) => slug(String(key))));
-  const active: Candidate[] = [];
-  const archived: CandidateArchiveRecord[] = [];
-  for (const original of registry?.candidates ?? []) {
-    const candidate = recordCandidate(original);
-    const reason = archiveReason(candidate, safeNow, registered);
-    if (!reason) {
-      active.push(candidate);
-      continue;
-    }
-    archived.push(
-      archiveRecord(
-        candidate,
-        reason,
-        candidate.last_seen_at || candidate.discovered_at || safeNow.toISOString(),
-      ),
-    );
-  }
-  return {
-    active: { schema: CANDIDATE_REGISTRY_SCHEMA, candidates: active.sort(candidateSort) },
-    archive: { schema: CANDIDATE_ARCHIVE_SCHEMA, candidates: archived.sort(archiveSort) },
-  };
-}
-
 function parseStatus(value: unknown): CandidateStatus {
   const status = String(value ?? "discovered") as CandidateStatus;
   return CANDIDATE_STATUSES.has(status) ? status : "discovered";
@@ -636,6 +442,7 @@ export function makeCandidate(
     categories: string[];
   },
 ): Candidate {
+  const year = partial.year;
   return {
     tags: ["niche"],
     source_type: "conference",
@@ -646,6 +453,8 @@ export function makeCandidate(
     place: "",
     deadlines: [],
     ...partial,
+    title: repairTruncatedVenueName(partial.title, year),
+    full_name: repairTruncatedVenueName(partial.full_name, year),
   };
 }
 
@@ -885,6 +694,113 @@ export function formatCandidateRegistry(registry: CandidateRegistry | null | und
   ) as string;
 }
 
+function candidateReviewDate(candidate: Candidate): Date | null {
+  const text = candidate.submission_deadline_text || candidate.date_text;
+  const parsed = parseDeadlineText(text);
+  return parsed && !Number.isNaN(parsed.getTime()) ? parsed : null;
+}
+
+function candidateNameKeys(candidate: Candidate): string[] {
+  return [candidate.title, candidate.full_name, candidate.key]
+    .map((value) =>
+      normalizeCandidateTitle(value)
+        .replace(/\b20\d{2}\b/g, "")
+        .trim(),
+    )
+    .filter(Boolean);
+}
+
+function candidateIsTracked(candidate: Candidate, tracked: Set<string>): boolean {
+  return candidateNameKeys(candidate).some((key) => tracked.has(key));
+}
+
+function candidateHasOfficialUrl(candidate: Candidate): boolean {
+  try {
+    const url = new URL(candidate.link || "");
+    if (url.protocol !== "https:" && url.protocol !== "http:") return false;
+    const host = url.hostname.toLowerCase();
+    return !/(?:^|\.)(?:wikicfp|dbworld|cfpcalendar|conferencealerts)\./.test(host);
+  } catch {
+    return false;
+  }
+}
+
+const DISCOVERY_CATEGORIES = new Set(Object.keys(DOMAIN_KEYWORDS));
+
+export function splitCandidateLifecycle(
+  candidates: Candidate[] | null | undefined,
+  now: Date,
+  tracked: Set<string> = new Set(),
+): CandidateLifecycleSplit {
+  const safeNow = Number.isNaN(now.getTime()) ? new Date() : now;
+  const sorted = [...(candidates ?? [])]
+    .map((candidate) => recordCandidate(candidate))
+    .sort(candidateSort);
+  const active: Candidate[] = [];
+  const archive: CandidateArchiveRecord[] = [];
+  const seen = new Set<string>();
+  for (const candidate of sorted) {
+    const normalizedTitle = normalizeCandidateTitle(candidate.title || candidate.full_name).replace(
+      /\b20\d{2}\b/g,
+      "",
+    );
+    const duplicate = seen.has(`${normalizedTitle}\0${candidateYear(candidate) ?? ""}`);
+    if (normalizedTitle) seen.add(`${normalizedTitle}\0${candidateYear(candidate) ?? ""}`);
+    const date = candidateReviewDate(candidate);
+    const decision: CandidateArchiveDecision | null = candidateIsTracked(candidate, tracked)
+      ? "already-curated"
+      : duplicate
+        ? "duplicate"
+        : !DISCOVERY_CATEGORIES.has(
+              candidate.categories.find((category) => DISCOVERY_CATEGORIES.has(category)) ?? "",
+            )
+          ? "out-of-scope"
+          : !candidateHasOfficialUrl(candidate)
+            ? "no-official-evidence"
+            : !date
+              ? "no-reviewable-deadline"
+              : date.getTime() < safeNow.getTime()
+                ? "expired"
+                : null;
+    if (decision) {
+      archive.push({
+        fingerprint:
+          candidate.id ??
+          candidateFingerprint({
+            source: candidateSource(candidate),
+            sourceItemId: candidateSourceItemId(candidate, candidateSource(candidate)),
+            normalizedTitle: normalizeCandidateTitle(candidate.title || candidate.full_name),
+            targetYear: candidateYear(candidate),
+          }),
+        decision,
+        last_reviewed: safeNow.toISOString(),
+        source_url_hash: createHash("sha256")
+          .update(candidate.link || candidate.evidence_url || "")
+          .digest("hex"),
+      });
+    } else {
+      active.push(candidate);
+    }
+  }
+  return { active, archive };
+}
+
+export function formatActiveCandidates(candidates: Candidate[] | null | undefined): string {
+  const parsed = loadYaml(
+    formatCandidateRegistry({ schema: CANDIDATE_REGISTRY_SCHEMA, candidates: candidates ?? [] }),
+  ) as Record<string, unknown>;
+  return dumpYaml(
+    { schema: CANDIDATE_REGISTRY_SCHEMA, lifecycle: "active", candidates: parsed.candidates ?? [] },
+    { skipInvalid: true },
+  ) as string;
+}
+
+export function formatCandidateArchive(
+  records: CandidateArchiveRecord[] | null | undefined,
+): string {
+  return `${JSON.stringify({ schema: 1, lifecycle: "archive", records: records ?? [] }, null, 2)}\n`;
+}
+
 /** Backwards-compatible formatter for a single discovery batch. */
 export function formatCandidateYaml(candidates: Candidate[] | null | undefined): string {
   return formatCandidateRegistry(
@@ -900,21 +816,6 @@ function validUtcDate(year: number, month: number, day: number): Date | null {
   }
   return d;
 }
-
-const MONTHS_MAP: Record<string, number> = {
-  jan: 1,
-  feb: 2,
-  mar: 3,
-  apr: 4,
-  may: 5,
-  jun: 6,
-  jul: 7,
-  aug: 8,
-  sep: 9,
-  oct: 10,
-  nov: 11,
-  dec: 12,
-};
 
 interface FoundDate {
   index: number;
@@ -958,9 +859,9 @@ export function extractDeadlinesFromText(
   while (true) {
     m = reMdy.exec(norm);
     if (!m) break;
-    const moKey = m[1].toLowerCase().slice(0, 3);
-    if (moKey in MONTHS_MAP) {
-      recordDate(m.index, Number(m[3]), MONTHS_MAP[moKey], Number(m[2]));
+    const month = monthOf(m[1].slice(0, 3));
+    if (month !== null) {
+      recordDate(m.index, Number(m[3]), month, Number(m[2]));
     }
   }
 
@@ -970,9 +871,9 @@ export function extractDeadlinesFromText(
   while (true) {
     m = reDmy.exec(norm);
     if (!m) break;
-    const moKey = m[2].toLowerCase().slice(0, 3);
-    if (moKey in MONTHS_MAP) {
-      recordDate(m.index, Number(m[3]), MONTHS_MAP[moKey], Number(m[1]));
+    const month = monthOf(m[2].slice(0, 3));
+    if (month !== null) {
+      recordDate(m.index, Number(m[3]), month, Number(m[1]));
     }
   }
 
@@ -1086,8 +987,8 @@ export function parseWikiCfpHtml(
     if (year !== undefined && year < minYear) continue;
     entries.push({
       key: slug(title),
-      title,
-      full_name: fullName,
+      title: repairTruncatedVenueName(title, year),
+      full_name: repairTruncatedVenueName(fullName, year),
       link: `https://www.wikicfp.com${href}`,
       categories: [...cats],
       date_text: deadline,
@@ -1117,9 +1018,9 @@ export function parseDeadlineText(dateText: string): Date | null {
       norm,
     );
   if (m) {
-    const moKey = m[2].toLowerCase().slice(0, 3);
-    if (moKey in MONTHS_MAP) {
-      return validUtcDate(Number(m[3]), MONTHS_MAP[moKey], Number(m[1]));
+    const month = monthOf(m[2].slice(0, 3));
+    if (month !== null) {
+      return validUtcDate(Number(m[3]), month, Number(m[1]));
     }
   }
 
@@ -1128,10 +1029,10 @@ export function parseDeadlineText(dateText: string): Date | null {
     norm,
   );
   if (m) {
-    const moKey = m[1].toLowerCase().slice(0, 3);
-    if (moKey in MONTHS_MAP) {
+    const month = monthOf(m[1].slice(0, 3));
+    if (month !== null) {
       const year = m[3] ? Number(m[3]) : new Date().getUTCFullYear();
-      return validUtcDate(year, MONTHS_MAP[moKey], Number(m[2]));
+      return validUtcDate(year, month, Number(m[2]));
     }
   }
 
@@ -1189,14 +1090,9 @@ async function discoverFromWikiCfpUrls(
   for (const cat of categories) {
     for (let page = 1; page <= 3; page++) {
       const url = `http://www.wikicfp.com/cfp/call?conference=${cat}&page=${page}`;
-      let pageEntries: WikiCfpEntry[] = [];
-      try {
-        await sleep(400); // リクエスト過多での一時ブロック回避
-        const html = await fetchText(url, DISCOVER_UA, 15_000);
-        pageEntries = parseWikiCfpHtml(html, [cat], minYear);
-      } catch {
-        break; // 1 カテゴリ 1 ページの失敗で全体を止めない
-      }
+      await sleep(400); // リクエスト過多での一時ブロック回避
+      const html = await fetchText(url, DISCOVER_UA, 15_000);
+      const pageEntries = parseWikiCfpHtml(html, [cat], minYear);
       const future = pageEntries.filter((e) => deadlineIsFuture(e.date_text, today));
       entries.push(...future);
       if (future.length === 0) break; // 締切昇順: ここから先はすべて過去締切
@@ -1409,8 +1305,8 @@ export function easyChairEntriesFromRows(
     if (!inDomain(`${e.title} ${e.full_name} ${e.topics.join(" ")}`)) continue;
     entries.push({
       key: slug(e.title),
-      title: e.title,
-      full_name: e.full_name,
+      title: repairTruncatedVenueName(e.title, year),
+      full_name: repairTruncatedVenueName(e.full_name, year),
       link: e.url,
       categories: [], // レビュー時付与
       source_type: "conference",
@@ -1493,13 +1389,8 @@ export async function discoverFromComsocCfps(
   const entries: Array<Record<string, unknown>> = [];
   for (const [path, jname] of pages) {
     const url = `https://www.comsoc.org/publications/${path}/cfp`;
-    let html: string;
-    try {
-      await sleep(500);
-      html = await fetchText(url, DISCOVER_UA, 20_000);
-    } catch {
-      continue; // 1 誌の失敗で全体を止めない
-    }
+    await sleep(500);
+    const html = await fetchText(url, DISCOVER_UA, 20_000);
     for (const e of parseComsocCfpHtml(html, jname, url)) {
       const dm = /(20\d\d)/.exec(String(e.date_text));
       if (dm && Number(dm[1]) < minYear) continue; // 過去締切
@@ -1552,13 +1443,8 @@ export async function discoverFromIeiceCfps(
 ): Promise<Array<Record<string, unknown>>> {
   const url = "https://www.ieice.org/eng_r/information/schedule/journals.php";
   const entries: Array<Record<string, unknown>> = [];
-  let html: string;
-  try {
-    // IEICE はカスタム UA を 403 で拒否するため Mozilla 系 UA を使う
-    html = await fetchText(url, MAC_UA, 20_000);
-  } catch {
-    return entries; // 取得失敗で全体を止めない
-  }
+  // IEICE はカスタム UA を 403 で拒否するため Mozilla 系 UA を使う
+  const html = await fetchText(url, MAC_UA, 20_000);
   for (const e of parseIeiceCfpHtml(html, url)) {
     if (Number(e.year) < minYear) continue;
     entries.push(e);
@@ -1611,12 +1497,7 @@ export async function discoverFromIpsjCfps(
 ): Promise<Array<Record<string, unknown>>> {
   const url = "https://www.ipsj.or.jp/journal/index.html";
   const entries: Array<Record<string, unknown>> = [];
-  let html: string;
-  try {
-    html = await fetchText(url, MAC_UA, 20_000);
-  } catch {
-    return entries; // 取得失敗で全体を止めない
-  }
+  const html = await fetchText(url, MAC_UA, 20_000);
   for (const e of parseIpsjCfpHtml(html, url)) {
     if (Number(e.year) < minYear) continue;
     entries.push(e);
@@ -1628,7 +1509,10 @@ export class NicheDiscoverer {
   private readonly rootDir: string;
   private readonly discoveredAt: string;
   readonly knownKeys = new Set<string>();
+  readonly discoveryFailures: string[] = [];
   private readonly knownTitles = new Set<string>();
+  private discoveryAttempts = 0;
+  private discoverySuccesses = 0;
 
   constructor(rootDir: string = ROOT, discoveredAt = new Date().toISOString()) {
     this.rootDir = rootDir;
@@ -1636,7 +1520,7 @@ export class NicheDiscoverer {
     this.loadKnownVenues();
   }
 
-  /** Load tracked keys and titles from config.yaml, extra.yaml, and snapshot. */
+  /** Load tracked keys and titles from config.yaml, the local canonical inputs, and snapshot. */
   private loadKnownVenues(): void {
     // 1. config.yaml taxonomy
     const configPath = join(this.rootDir, "config.yaml");
@@ -1654,19 +1538,21 @@ export class NicheDiscoverer {
       // config.yaml が無い環境 (テスト) では空のまま
     }
 
-    // 2. data/extra.yaml
-    const extraPath = join(this.rootDir, "data", "extra.yaml");
-    try {
-      const extra = (loadYaml(readFileSync(extraPath, "utf8")) as Record<string, unknown>) ?? {};
-      for (const c of (extra.conferences as unknown[] | null) ?? []) {
-        if (typeof c === "object" && c !== null) {
-          const rec = c as Record<string, unknown>;
-          if ("key" in rec) this.knownKeys.add(slug(String(rec.key)));
-          if ("title" in rec) this.knownTitles.add(String(rec.title).toLowerCase());
+    // 2. local canonical inputs (legacy extra.yaml is selected when they are absent)
+    for (const path of localSourcePaths(this.rootDir)) {
+      try {
+        const local = (loadYaml(readFileSync(path, "utf8")) as Record<string, unknown>) ?? {};
+        for (const c of (local.conferences as unknown[] | null) ?? []) {
+          if (typeof c === "object" && c !== null) {
+            const rec = c as Record<string, unknown>;
+            if ("key" in rec) this.knownKeys.add(slug(String(rec.key)));
+            if ("title" in rec) this.knownTitles.add(String(rec.title).toLowerCase());
+            if ("full_name" in rec) this.knownTitles.add(String(rec.full_name).toLowerCase());
+          }
         }
+      } catch {
+        // ファイルが無いテスト環境では空のまま
       }
-    } catch {
-      // ファイルが無いテスト環境では空のまま
     }
 
     // 3. data/snapshot.json
@@ -1678,6 +1564,7 @@ export class NicheDiscoverer {
           const rec = c as Record<string, unknown>;
           if ("key" in rec) this.knownKeys.add(slug(String(rec.key)));
           if ("title" in rec) this.knownTitles.add(String(rec.title).toLowerCase());
+          if ("full_name" in rec) this.knownTitles.add(String(rec.full_name).toLowerCase());
         }
       }
     } catch {
@@ -1713,46 +1600,42 @@ export class NicheDiscoverer {
   async discoverFromDblp(query = "workshop", maxResults = 30): Promise<Candidate[]> {
     const url = `https://dblp.org/search/venue/api?q=${encodeURIComponent(query)}&format=json&h=${maxResults}`;
     const candidates: Candidate[] = [];
-    try {
-      const html = await fetchText(url, DISCOVER_UA, 10_000);
-      const data = JSON.parse(html) as {
-        result?: { hits?: { hit?: Array<{ info?: Record<string, unknown> }> } };
-      };
-      const hits = data.result?.hits?.hit ?? [];
-      for (const hit of hits) {
-        const info = hit.info ?? {};
-        const venueTitle = decode(String(info.venue ?? info.acronym ?? "")).trim();
-        const venueUrl = String(info.url ?? "");
-        const venueName = decode(String(info.acronym ?? venueTitle)).trim();
+    const html = await fetchText(url, DISCOVER_UA, 10_000);
+    const data = JSON.parse(html) as {
+      result?: { hits?: { hit?: Array<{ info?: Record<string, unknown> }> } };
+    };
+    const hits = data.result?.hits?.hit ?? [];
+    for (const hit of hits) {
+      const info = hit.info ?? {};
+      const venueTitle = decode(String(info.venue ?? info.acronym ?? "")).trim();
+      const venueUrl = String(info.url ?? "");
+      const venueName = decode(String(info.acronym ?? venueTitle)).trim();
 
-        if (!venueTitle || this.isAlreadyTracked(venueTitle)) continue;
+      if (!venueTitle || this.isAlreadyTracked(venueTitle)) continue;
 
-        const candKey = slug(venueName || venueTitle);
-        if (!candKey || this.isAlreadyTracked(candKey)) continue;
+      const candKey = slug(venueName || venueTitle);
+      if (!candKey || this.isAlreadyTracked(candKey)) continue;
 
-        const categories = this.classifyCategory(venueTitle);
-        const sourceType =
-          venueTitle.toLowerCase().includes("journal") ||
-          venueTitle.toLowerCase().includes("transactions")
-            ? "journal"
-            : "conference";
+      const categories = this.classifyCategory(venueTitle);
+      const sourceType =
+        venueTitle.toLowerCase().includes("journal") ||
+        venueTitle.toLowerCase().includes("transactions")
+          ? "journal"
+          : "conference";
 
-        candidates.push(
-          makeCandidate({
-            key: candKey,
-            title: venueName || venueTitle.toUpperCase(),
-            full_name: venueTitle,
-            link: venueUrl || `https://dblp.org/db/conf/${candKey}/index.html`,
-            categories,
-            tags: ["niche", sourceType],
-            source_type: sourceType,
-            evidence_url: venueUrl,
-          }),
-        );
-        this.knownKeys.add(candKey);
-      }
-    } catch {
-      // Soft fallback on network error
+      candidates.push(
+        makeCandidate({
+          key: candKey,
+          title: venueName || venueTitle.toUpperCase(),
+          full_name: venueTitle,
+          link: venueUrl || `https://dblp.org/db/conf/${candKey}/index.html`,
+          categories,
+          tags: ["niche", sourceType],
+          source_type: sourceType,
+          evidence_url: venueUrl,
+        }),
+      );
+      this.knownKeys.add(candKey);
     }
     return candidates;
   }
@@ -1761,32 +1644,28 @@ export class NicheDiscoverer {
   async discoverFromOpenreview(query = "workshop"): Promise<Candidate[]> {
     const url = "https://api2.openreview.net/venues";
     const candidates: Candidate[] = [];
-    try {
-      const html = await fetchText(url, DISCOVER_UA, 10_000);
-      const data = JSON.parse(html) as { venues?: unknown[] };
-      for (const v of data.venues ?? []) {
-        if (typeof v !== "string") continue;
-        if (!v.toLowerCase().includes(query.toLowerCase())) continue;
-        const candKey = slug(v);
-        if (!candKey || this.isAlreadyTracked(candKey) || this.isAlreadyTracked(v)) continue;
+    const html = await fetchText(url, DISCOVER_UA, 10_000);
+    const data = JSON.parse(html) as { venues?: unknown[] };
+    for (const v of data.venues ?? []) {
+      if (typeof v !== "string") continue;
+      if (!v.toLowerCase().includes(query.toLowerCase())) continue;
+      const candKey = slug(v);
+      if (!candKey || this.isAlreadyTracked(candKey) || this.isAlreadyTracked(v)) continue;
 
-        const categories = this.classifyCategory(v);
-        candidates.push(
-          makeCandidate({
-            key: candKey,
-            title: v.split("/").pop()?.toUpperCase() ?? candKey,
-            full_name: v,
-            link: `https://openreview.net/group?id=${v}`,
-            categories,
-            tags: ["niche", "workshop", "openreview"],
-            source_type: "conference",
-            evidence_url: `https://openreview.net/group?id=${v}`,
-          }),
-        );
-        this.knownKeys.add(candKey);
-      }
-    } catch {
-      // Soft fallback on network error
+      const categories = this.classifyCategory(v);
+      candidates.push(
+        makeCandidate({
+          key: candKey,
+          title: v.split("/").pop()?.toUpperCase() ?? candKey,
+          full_name: v,
+          link: `https://openreview.net/group?id=${v}`,
+          categories,
+          tags: ["niche", "workshop", "openreview"],
+          source_type: "conference",
+          evidence_url: `https://openreview.net/group?id=${v}`,
+        }),
+      );
+      this.knownKeys.add(candKey);
     }
     return candidates;
   }
@@ -1827,6 +1706,23 @@ export class NicheDiscoverer {
     minYear = new Date().getUTCFullYear(),
   ): Promise<Candidate[]> {
     const results: Candidate[] = [];
+    this.discoveryFailures.length = 0;
+    this.discoveryAttempts = 0;
+    this.discoverySuccesses = 0;
+    const collect = async <T extends unknown[]>(
+      source: string,
+      task: () => Promise<T>,
+    ): Promise<T> => {
+      this.discoveryAttempts += 1;
+      try {
+        const value = await task();
+        this.discoverySuccesses += 1;
+        return value;
+      } catch (error) {
+        this.discoveryFailures.push(`${source}: ${String(error)}`);
+        return [] as unknown as T;
+      }
+    };
 
     // 1. DBLP queries
     const queries = [
@@ -1839,19 +1735,22 @@ export class NicheDiscoverer {
       "security",
     ];
     for (const q of queries) {
-      results.push(...(await this.discoverFromDblp(q, 20)));
+      results.push(...(await collect(`dblp:${q}`, () => this.discoverFromDblp(q, 20))));
     }
 
     // 2. OpenReview queries
     const orQueries = ["workshop", "symposium", `workshop ${minYear}`];
     for (const q of orQueries) {
-      results.push(...(await this.discoverFromOpenreview(q)));
+      results.push(...(await collect(`openreview:${q}`, () => this.discoverFromOpenreview(q))));
     }
 
     // 3. wikiCFP: 各 kamiyobi カテゴリの wikiCFP カテゴリ全部を取得。
     for (const [cat, wikicfpCats] of Object.entries(WIKICFP_CATEGORY_MAP)) {
       if (categories && !categories.includes(cat)) continue;
-      for (const entry of await discoverFromWikiCfpUrls(wikicfpCats, minYear)) {
+      const entries = await collect(`wikicfp:${cat}`, () =>
+        discoverFromWikiCfpUrls(wikicfpCats, minYear),
+      );
+      for (const entry of entries) {
         const candKey = entry.key;
         if (this.isAlreadyTracked(candKey) || this.isAlreadyTracked(entry.full_name)) continue;
         results.push(
@@ -1876,48 +1775,41 @@ export class NicheDiscoverer {
     }
 
     // 4. DBWorld
-    try {
-      this.addEntries(
-        results,
-        await discoverFromDbworld(minYear),
-        ["niche", "dbworld"],
-        "https://dbworld.sigmod.org/browse.html",
-      );
-    } catch {
-      // アーカイブ障害で全体を止めない
-    }
+    this.addEntries(
+      results,
+      await collect("dbworld", () => discoverFromDbworld(minYear)),
+      ["niche", "dbworld"],
+      "https://dbworld.sigmod.org/browse.html",
+    );
 
     // 5. EasyChair Smart CFP
-    try {
-      this.addEntries(
-        results,
-        await discoverFromEasyChair(minYear),
-        ["niche", "easychair"],
-        "https://easychair.org/cfp/",
-      );
-    } catch {
-      // 一覧取得失敗で全体を止めない
-    }
+    this.addEntries(
+      results,
+      await collect("easychair", () => discoverFromEasyChair(minYear)),
+      ["niche", "easychair"],
+      "https://easychair.org/cfp/",
+    );
 
     // 6. IEEE ComSoc 誌のオープン特集号 CFP
-    try {
-      this.addEntries(results, await discoverFromComsocCfps(minYear), ["niche", "special-issue"]);
-    } catch {
-      // 特集号一覧取得失敗で全体を止めない
-    }
+    this.addEntries(results, await collect("comsoc", () => discoverFromComsocCfps(minYear)), [
+      "niche",
+      "special-issue",
+    ]);
 
     // 7. IEICE 論文誌の特集号 CFP
-    try {
-      this.addEntries(results, await discoverFromIeiceCfps(minYear), ["niche", "special-issue"]);
-    } catch {
-      // 特集号一覧取得失敗で全体を止めない
-    }
+    this.addEntries(results, await collect("ieice", () => discoverFromIeiceCfps(minYear)), [
+      "niche",
+      "special-issue",
+    ]);
 
     // 8. IPSJ 論文誌ジャーナルの特集論文募集
-    try {
-      this.addEntries(results, await discoverFromIpsjCfps(minYear), ["niche", "special-issue"]);
-    } catch {
-      // 特集号一覧取得失敗で全体を止めない
+    this.addEntries(results, await collect("ipsj", () => discoverFromIpsjCfps(minYear)), [
+      "niche",
+      "special-issue",
+    ]);
+
+    if (this.discoveryAttempts > 0 && this.discoverySuccesses === 0) {
+      throw new Error(`all discovery sources failed: ${this.discoveryFailures.join("; ")}`);
     }
 
     // 9. Known niche candidate registry (fallback / curated candidates)

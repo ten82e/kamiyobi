@@ -1,6 +1,5 @@
 /**
  * parse_instant / parse_date_range / slug: SPEC.md section 3.
- * Ported from tests/test_parse.py.
  */
 
 import { existsSync, mkdtempSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
@@ -27,10 +26,12 @@ import {
   monthOf,
   parseDateRange,
   parseInstant,
+  repairTruncatedVenueName,
   resetWarnings,
   roundOf,
   setWarningContext,
   slug,
+  truncatedVenueName,
   warn,
   warningCode,
   warningCounts,
@@ -217,6 +218,15 @@ describe("parse_instant", () => {
     ).toBe("UTC+09:00");
     expect(ccfddlDeadlinesOf([{ deadline: "2026-09-01T12:00:00Z" }], "")[0].tz_raw).toBe("UTC");
     expect(embeddedTimezone("2026-09-01 12:00:00")).toBeNull();
+  });
+
+  it("rejects malformed source collections instead of treating them as empty", () => {
+    expect(() => localDeadlinesOf({ deadlines: {} })).toThrow(/deadlines must be an array/);
+    expect(() => aideadlinesDeadlinesOf({ deadlines: {} })).toThrow(/deadlines must be an array/);
+    expect(() => ccfddlDeadlinesOf({}, "UTC")).toThrow(/timeline must be an array/);
+    expect(() => ccfddlConferenceOf({ title: "Demo", confs: {} })).toThrow(
+      /confs must be an array/,
+    );
   });
 
   it.each([
@@ -557,6 +567,36 @@ describe("slug", () => {
   });
 });
 
+describe("truncatedVenueName", () => {
+  it("repairs a missing leading 2 and a clipped trailing year", () => {
+    expect(
+      truncatedVenueName(
+        "026 3rd International Conference on Artificial Intelligence and Digital Management",
+      ),
+    ).toBe(true);
+    expect(
+      repairTruncatedVenueName(
+        "026 3rd International Conference on Artificial Intelligence and Digital Management",
+        2026,
+      ),
+    ).toBe("2026 3rd International Conference on Artificial Intelligence and Digital Management");
+    expect(
+      truncatedVenueName(
+        "The 8th International Workshop on Smart Living with IoT, Cloud, and Edge Computing 20",
+      ),
+    ).toBe(true);
+    expect(
+      repairTruncatedVenueName(
+        "The 8th International Workshop on Smart Living with IoT, Cloud, and Edge Computing 20",
+        2026,
+      ),
+    ).toBe(
+      "The 8th International Workshop on Smart Living with IoT, Cloud, and Edge Computing 2026",
+    );
+    expect(repairTruncatedVenueName("SIGCOMM 2026", 2026)).toBe("SIGCOMM 2026");
+  });
+});
+
 describe("aideadlines edition parsing", () => {
   it("lifts stale year in date_text", () => {
     const ed = editionOf({
@@ -718,6 +758,17 @@ describe("aideadlines rankOf", () => {
   it("parseTree gracefully returns empty array for non-existent directory", () => {
     expect(aideadlinesParseTree("/tmp/nonexistent-aideadlines-12345")).toEqual([]);
   });
+
+  it("rejects an existing scalar YAML file instead of treating it as an empty source", () => {
+    const tmpDir = mkdtempSync(join(tmpdir(), "aideadlines-shape-"));
+    const path = join(tmpDir, "broken.yml");
+    writeFileSync(path, "not-a-conference\n", "utf8");
+    try {
+      expect(() => aideadlinesParseTree(tmpDir)).toThrow(/entries must be objects/);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("local source utilities and defensive parsing", () => {
@@ -754,6 +805,27 @@ describe("local source utilities and defensive parsing", () => {
     expect(localParseFile(null)).toEqual([]);
     expect(localParseFile(undefined)).toEqual([]);
     expect(localParseFile("/tmp/nonexistent-extra-12345.yaml")).toEqual([]);
+  });
+
+  it("fails closed on malformed conference and edition entries", () => {
+    const tmpDir = mkdtempSync(join(tmpdir(), "kamiyobi-local-entry-shape-"));
+    const path = join(tmpDir, "broken.yaml");
+    try {
+      writeFileSync(path, "conferences:\n  - bad\n", "utf8");
+      expect(() => localParseFile(path)).toThrow(/conference entry 0 must be an object/);
+
+      writeFileSync(path, "conferences:\n  - key: demo\n    editions: broken\n", "utf8");
+      expect(() => localParseFile(path)).toThrow(/editions must be an array/);
+
+      writeFileSync(
+        path,
+        "conferences:\n  - key: demo\n    editions:\n      - year: invalid\n",
+        "utf8",
+      );
+      expect(() => localParseFile(path)).toThrow(/has no usable year/);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
 });
 
@@ -974,6 +1046,17 @@ describe("ccfddl parsing", () => {
 
   it("parseTree gracefully returns empty array for non-existent directory", () => {
     expect(ccfddlParseTree("/tmp/nonexistent-ccfddl-tree-12345")).toEqual([]);
+  });
+
+  it("rejects an existing scalar YAML file instead of treating it as an empty source", () => {
+    const tmpDir = mkdtempSync(join(tmpdir(), "ccfddl-shape-"));
+    const path = join(tmpDir, "broken.yml");
+    writeFileSync(path, "not-a-conference\n", "utf8");
+    try {
+      expect(() => ccfddlParseTree(tmpDir)).toThrow(/entries must be objects/);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
 });
 

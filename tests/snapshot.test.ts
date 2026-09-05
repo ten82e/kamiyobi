@@ -1,8 +1,8 @@
 /**
  * Snapshot fallback: SPEC.md section 3.5.
- * Ported from tests/test_snapshot.py.
  */
 
+import { createHash } from "node:crypto";
 import {
   copyFileSync,
   existsSync,
@@ -13,7 +13,7 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import { dump as dumpYaml, load as loadYaml } from "js-yaml";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   type BuildArgs,
   cmdBuild,
@@ -22,6 +22,7 @@ import {
   main,
   parseArgs,
   parseNow,
+  ROOT,
   restoreFailedSourceMaterial,
   restoreFailedSourceMaterialWithCounts,
   type SourceLoadResult,
@@ -740,6 +741,202 @@ describe("source freshness", () => {
     expect((health as any).build_input_mode).toBe("offline-snapshot");
   });
 
+  it("reports source-snapshot provenance instead of legacy snapshot metadata", async () => {
+    const root = isolatedRepo();
+    setRoot(root);
+    const conferences = [
+      {
+        key: "source-snapshot",
+        title: "Source Snapshot",
+        full_name: "Source Snapshot",
+        categories: ["ai"],
+        sources: ["aideadlines"],
+        editions: [
+          {
+            year: 2027,
+            id: "source-snapshot27",
+            source: "aideadlines",
+            link: "https://example.org/cfp",
+            deadlines: [
+              {
+                kind: "paper",
+                label: "Paper",
+                round: 1,
+                utc: "2026-11-01T00:00:00.000Z",
+                tz_raw: "AoE",
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    const canonical = JSON.stringify(conferences);
+    const contentHash = createHash("sha256").update(canonical).digest("hex");
+    mkdirSync(join(root, "data", "source-snapshots"), { recursive: true });
+    writeFileSync(
+      join(root, "data", "source-snapshots", "aideadlines.json"),
+      JSON.stringify({
+        schemaVersion: 1,
+        source: "aideadlines",
+        sourceRevision: "source-snapshot-revision",
+        fetchedAt: NOW_ARG,
+        contentHash,
+        conferences,
+      }),
+      "utf8",
+    );
+    const live = conference("live-source", "ccfddl");
+    const previous = hooks.collect;
+    hooks.collect = async () => ({
+      groups: [[live], [], []],
+      failed: new Set(["aideadlines"]),
+      results: [
+        sourceResult("ccfddl", "fresh", [live]),
+        sourceResult("aideadlines", "failed", []),
+        sourceResult("local", "fresh", []),
+      ],
+    });
+    try {
+      const outdir = join(mkdtempSync("/tmp/cfp-source-snapshot-provenance-"), "out");
+      expect(await cmdBuild(args(outdir))).toBe(0);
+      const health = JSON.parse(readFileSync(join(outdir, "health.json"), "utf8")) as {
+        source_metadata: Record<string, SourceLoadResult>;
+      };
+      expect(health.source_metadata.aideadlines).toMatchObject({
+        revision: "source-snapshot-revision",
+        fetchedAt: NOW_ARG,
+        contentHash,
+        status: "snapshot-fallback",
+      });
+    } finally {
+      hooks.collect = previous;
+    }
+  });
+
+  it("warns when a parseable source snapshot fails integrity validation", async () => {
+    const root = isolatedRepo();
+    setRoot(root);
+    const snapshotDir = join(root, "data", "source-snapshots");
+    mkdirSync(snapshotDir, { recursive: true });
+    for (const [source, file] of [
+      ["aideadlines", "aideadlines.json"],
+      ["primary", "primary.json"],
+    ] as const) {
+      writeFileSync(
+        join(snapshotDir, file),
+        JSON.stringify({
+          schemaVersion: 1,
+          source,
+          sourceRevision: null,
+          fetchedAt: NOW_ARG,
+          contentHash: "0".repeat(64),
+          conferences: [],
+        }),
+        "utf8",
+      );
+    }
+    const live = conference("live-source", "ccfddl");
+    const previous = hooks.collect;
+    const stderrWrite = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    hooks.collect = async () => ({
+      groups: [[live], [], []],
+      failed: new Set(["aideadlines"]),
+    });
+    try {
+      expect(
+        await cmdBuild(args(join(mkdtempSync("/tmp/cfp-invalid-source-snapshot-"), "out"))),
+      ).toBe(0);
+      const warnings = stderrWrite.mock.calls.flat().map(String).join("");
+      expect(warnings).toContain("source snapshot");
+      expect(warnings).toContain("primary snapshot");
+      expect(warnings).toContain("invalid schema or content hash");
+    } finally {
+      hooks.collect = previous;
+      stderrWrite.mockRestore();
+    }
+  });
+
+  it("rejects source snapshots whose shape or timestamp would cause silent fallback", async () => {
+    const root = isolatedRepo();
+    setRoot(root);
+    const conferences = [
+      {
+        key: "broken-source",
+        title: "Broken Source",
+        editions: [{ year: 2027, deadlines: [null] }],
+      },
+    ];
+    mkdirSync(join(root, "data", "source-snapshots"), { recursive: true });
+    writeFileSync(
+      join(root, "data", "source-snapshots", "aideadlines.json"),
+      JSON.stringify({
+        schemaVersion: 1,
+        source: "aideadlines",
+        sourceRevision: null,
+        fetchedAt: NOW_ARG,
+        contentHash: createHash("sha256").update(JSON.stringify(conferences)).digest("hex"),
+        conferences,
+      }),
+      "utf8",
+    );
+    const live = conference("live-source", "ccfddl");
+    const previous = hooks.collect;
+    const stderrWrite = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    hooks.collect = async () => ({
+      groups: [[live], [], []],
+      failed: new Set(["aideadlines"]),
+    });
+    try {
+      expect(await cmdBuild(args(join(mkdtempSync("/tmp/cfp-invalid-source-shape-"), "out")))).toBe(
+        0,
+      );
+      expect(stderrWrite.mock.calls.flat().map(String).join("")).toContain("source snapshot");
+
+      for (const malformedConferences of [
+        [{ title: "Missing key", editions: [{ year: 2027, deadlines: [] }] }],
+        [{ key: "bad-year", editions: [{ year: "2027", deadlines: [] }] }],
+      ]) {
+        writeFileSync(
+          join(root, "data", "source-snapshots", "aideadlines.json"),
+          JSON.stringify({
+            schemaVersion: 1,
+            source: "aideadlines",
+            sourceRevision: null,
+            fetchedAt: NOW_ARG,
+            contentHash: createHash("sha256")
+              .update(JSON.stringify(malformedConferences))
+              .digest("hex"),
+            conferences: malformedConferences,
+          }),
+          "utf8",
+        );
+        expect(
+          await cmdBuild(args(join(mkdtempSync("/tmp/cfp-invalid-source-identity-"), "out"))),
+        ).toBe(0);
+      }
+
+      writeFileSync(
+        join(root, "data", "source-snapshots", "aideadlines.json"),
+        JSON.stringify({
+          schemaVersion: 1,
+          source: "aideadlines",
+          sourceRevision: null,
+          fetchedAt: "2026-02-30T00:00:00.000Z",
+          contentHash: createHash("sha256").update("[]").digest("hex"),
+          conferences: [],
+        }),
+        "utf8",
+      );
+      expect(await cmdBuild(args(join(mkdtempSync("/tmp/cfp-invalid-source-time-"), "out")))).toBe(
+        0,
+      );
+      expect(stderrWrite.mock.calls.flat().map(String).join("")).toContain("source snapshot");
+    } finally {
+      hooks.collect = previous;
+      stderrWrite.mockRestore();
+    }
+  });
+
   it("restores snapshot editions before overrides and drops superseded estimates", async () => {
     const root = isolatedRepo();
     setRoot(root);
@@ -941,6 +1138,25 @@ describe("parseArgs (CLI flag parsing)", () => {
     expect(res4.minYear).toBe(2027);
   });
 
+  it("parses reverify options", () => {
+    const result = parseArgs([
+      "reverify",
+      "--data",
+      "tmp/data.json",
+      "--ledger=tmp/ledger.json",
+      "--due",
+      "--now",
+      "2026-08-31T00:00:00Z",
+    ]);
+    expect(result).toMatchObject({
+      command: "reverify",
+      data: "tmp/data.json",
+      ledger: "tmp/ledger.json",
+      due: true,
+      now: "2026-08-31T00:00:00Z",
+    });
+  });
+
   it("discoverWriteAction: --append 候補 0 件は何もしない (none) — #267 回帰", () => {
     // 候補 0 件 + --append --out: 素通し上書きに落ちず既存ファイルを維持する
     expect(discoverWriteAction(0, true, "data/discovered_candidates.yaml", false)).toBe("none");
@@ -948,6 +1164,7 @@ describe("parseArgs (CLI flag parsing)", () => {
     expect(discoverWriteAction(3, true, "data/discovered_candidates.yaml", false)).toBe("append");
     // dry-run / out 単体の従来挙動は不変
     expect(discoverWriteAction(0, false, null, true)).toBe("dry-run");
+    expect(discoverWriteAction(3, true, "out.yaml", true)).toBe("dry-run");
     expect(discoverWriteAction(5, false, "out.yaml", false)).toBe("write");
     expect(discoverWriteAction(0, false, null, false)).toBe("none");
     // --append だが out 無し: 追記先が無いので何もしない
@@ -1556,6 +1773,20 @@ describe("snapshot fallback", () => {
     expect(existsSync(join(outdir, "data.json"))).toBe(false);
   });
 
+  it("build aborts when a canonical local source has no conferences array", async () => {
+    const root = isolatedRepo();
+    const originalRoot = ROOT;
+    setRoot(root);
+    writeFileSync(join(root, "data", "manual.yaml"), "not_conferences: true\n", "utf8");
+    const outdir = join(mkdtempSync("/tmp/cfp-snap-out-shape-"), "out");
+    try {
+      await expect(cmdBuild(args(outdir))).rejects.toThrow(/conferences must be an array/);
+      expect(existsSync(join(outdir, "data.json"))).toBe(false);
+    } finally {
+      setRoot(originalRoot);
+    }
+  });
+
   it("build aborts when hand-edited config.yaml is unparsable", async () => {
     const root = isolatedRepo();
     setRoot(root);
@@ -1563,6 +1794,20 @@ describe("snapshot fallback", () => {
     const outdir = join(mkdtempSync("/tmp/cfp-snap-out6-"), "out");
     await expect(cmdBuild(args(outdir))).rejects.toThrow(/cannot parse .*config\.yaml/);
     expect(existsSync(join(outdir, "data.json"))).toBe(false);
+  });
+
+  it("build aborts when hand-edited config.yaml is not a mapping", async () => {
+    const root = isolatedRepo();
+    const originalRoot = ROOT;
+    setRoot(root);
+    writeFileSync(join(root, "config.yaml"), "- invalid-root\n", "utf8");
+    const outdir = join(mkdtempSync("/tmp/cfp-snap-config-shape-"), "out");
+    try {
+      await expect(cmdBuild(args(outdir))).rejects.toThrow(/YAML mapping/);
+      expect(existsSync(join(outdir, "data.json"))).toBe(false);
+    } finally {
+      setRoot(originalRoot);
+    }
   });
 
   it("auto-generated primary_overrides.yaml keeps warn-and-continue", async () => {

@@ -42,7 +42,7 @@ function buildPair(mutate?: (fixtureRoot: string) => void): {
   };
 }
 
-/** 現在の data から観測系 baseline を作る (update-data workflow と同じ内容)。 */
+/** 現在の data から観測系 baseline を作る。 */
 function observationOf(report: HealthReport): ObservationBaseline {
   const conflicts = report.identity_conflicts;
   return {
@@ -87,15 +87,18 @@ describe("update-data canary", () => {
   });
 
   it("a genuinely removed future deadline fails the gate", { timeout: 180_000 }, () => {
-    const { baseline, current } = buildPair((root) => {
-      const file = join(root, "NW", "nsdi.yml");
-      const text = readFileSync(file, "utf8").replace(
-        /- abstract_deadline: '[^']+'\n\s+deadline: '[^']+'\n/,
-        "",
-      );
-      writeFileSync(file, text);
-    });
-    const result = evaluateHealthGate(current, baseline);
+    const { baseline, current } = buildPair();
+    const removed = current.deadline_refs?.find(
+      (ref) => ref.deadline_id.includes("nsdi|nsdi27") && ref.at_utc,
+    );
+    expect(removed).toBeDefined();
+    const mutated = {
+      ...current,
+      deadline_refs: current.deadline_refs?.filter(
+        (ref) => ref.deadline_id !== removed?.deadline_id,
+      ),
+    };
+    const result = evaluateHealthGate(mutated, baseline);
     expect(result.ok).toBe(false);
     expect(result.reasons.some((reason) => reason.includes("future deadline disappeared"))).toBe(
       true,
@@ -121,7 +124,7 @@ describe("update-data canary", () => {
   }, () => {
     const { baseline, current } = buildPair();
     // snapshot-fallback baseline では warning_codes が記録されないため、
-    // update-data workflow と同じく observation baseline を比較源にする。
+    // observation baseline を比較源にする。
     const observation = observationOf(baseline);
     const mutated = JSON.parse(JSON.stringify(current)) as HealthReport;
     mutated.warning_codes = {
@@ -166,7 +169,7 @@ describe("update-data canary", () => {
     expect(result.reasons.some((r) => r.includes("identity conflicts increased"))).toBe(true);
   });
 
-  it("timeline array->object drift (valid YAML) is detected as future deadline disappearance", {
+  it("timeline array->object drift (valid YAML) fails closed as a source failure", {
     timeout: 240_000,
   }, () => {
     const { baseline, current } = buildPair((root) => {
@@ -182,12 +185,10 @@ describe("update-data canary", () => {
     });
     const result = evaluateHealthGate(current, baseline);
     expect(result.ok).toBe(false);
-    expect(result.reasons.some((reason) => reason.includes("future deadline disappeared"))).toBe(
-      true,
-    );
+    expect(current.source_failures).toContain("ccfddl");
   });
 
-  it("confs array->object drift skips only that conference; the gate still blocks", {
+  it("confs array->object drift fails closed as a source failure", {
     timeout: 240_000,
   }, () => {
     const root = scratch();
@@ -198,8 +199,7 @@ describe("update-data canary", () => {
     const treeRoot = join(cache, "ccfddl__ccf-deadlines__main", "ccf-deadlines-main", "conference");
     const file = join(treeRoot, "NW", "nsdi.yml");
     // confs 全体をオブジェクト（配列でない）に置換 — 上流スキーマ drift の模擬。
-    // 修正後: その 1 ファイルは skip されソース全体は落ちない (source_failures 空)。
-    // 代わりに該当会議の締切消失として gate が検出する。
+    // 構造 drift は部分データとして扱わず、ソース全体を失敗にする。
     writeFileSync(
       file,
       `- title: NSDI
@@ -222,16 +222,11 @@ describe("update-data canary", () => {
     const health = JSON.parse(
       readFileSync(join(currentDir, "health.json"), "utf8"),
     ) as HealthReport;
-    expect(health.source_failures ?? []).toEqual([]);
+    expect(health.source_failures ?? []).toContain("ccfddl");
     const baseline = JSON.parse(
       readFileSync(join(baselineDir, "health.json"), "utf8"),
     ) as HealthReport;
     const result = evaluateHealthGate(health, baseline);
     expect(result.ok).toBe(false);
-    expect(
-      result.reasons.some(
-        (r) => r.includes("future deadline disappeared") || r.includes("required venue"),
-      ),
-    ).toBe(true);
   });
 });

@@ -1,0 +1,636 @@
+conferences:
+  - categories:
+      - hpc
+      - systems
+    editions:
+      - date_text: '2027-03-31'
+        deadlines:
+          - date: '2026-10-25'
+            evidence:
+              - contentHash: efb31692c1c015580f9a41fac2a74666c580e3e7d2701f1d9021934e49ae7714
+                rawExcerpt: 'Long and short papers welcome. Submission deadline: 25 October 2026.'
+                retrievedAt: '2026-08-30T20:58:40.676Z'
+                sourceClass: official-cfp
+                sourceRevision: '"381e-6568d45154fdb-gzip"'
+                sourceUrl: https://amor.cms.hu-berlin.de/~hubnermi/index.html
+                verifiedAt: '2026-08-30T20:59:00Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+            kind: paper
+            label: Paper submission deadline
+            precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-arc-2027
+              resolution: resolution-16ec4b40cb5cb99d
+            round: 1
+            track: ''
+        event_end: '2027-04-02'
+        event_start: '2027-03-31'
+        id: arc-2027
+        link: https://amor.cms.hu-berlin.de/~hubnermi/index.html
+        place: Berlin, Germany
+        year: 2027
+    full_name: The 23rd International Symposium on Applied Reconfigurable Computing
+    key: arc
+    link: https://amor.cms.hu-berlin.de/~hubnermi/index.html
+    tags:
+      - niche
+    title: ARC 2027
+  - categories:
+      - ai
+    editions:
+      - date_text: '2026-11-23'
+        deadlines:
+          - date: '2026-09-05'
+            evidence:
+              - contentHash: 5f77a214d1a00f47dc38b70a6353936b9cdaa48ae320bf0da72bdc1b389d8759
+                rawExcerpt: <tr><td>Submission deadline</td><td>September 5, 2026</td></tr>
+                retrievedAt: '2026-08-30T17:21:31.883Z'
+                sourceClass: official-cfp
+                sourceRevision: sha256:5f77a214d1a00f47dc38b70a6353936b9cdaa48ae320bf0da72bdc1b389d8759
+                sourceUrl: https://easychair.org/cfp/conversations2026
+                verifiedAt: '2026-08-30T17:22:00Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+            kind: paper
+            label: Paper submission
+            precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-conversations-2026
+              resolution: resolution-1ce0a3de2c705a0f
+            round: 1
+            track: ''
+        event_end: '2026-11-25'
+        event_start: '2026-11-23'
+        id: conversations-2026
+        link: https://2026.conversations.ws/call-for-papers/
+        place: Amsterdam, Netherlands
+        year: 2026
+    full_name: 10th International Symposium on Chatbots and Human-centred AI
+    key: conversations
+    link: https://2026.conversations.ws/
+    tags:
+      - niche
+    title: CONVERSATIONS 2026
+  - categories:
+      - systems
+    editions:
+      - date_text: '2027-07-11'
+        deadlines:
+          - date: '2026-11-17'
+            evidence:
+              - contentHash: 0897bd33c86b3a97f0021ccac945af4a870fc246915caef34644da738dd9117b
+                rawExcerpt: November 17, 2026
+                retrievedAt: '2026-08-30T22:24:34.720Z'
+                sourceClass: official-cfp
+                sourceRevision: W/"6a91eab9-4abc9"
+                sourceUrl: https://dac.com/2026/events/manuscript-submission-deadline
+                verifiedAt: '2026-08-30T22:25:00Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+            kind: paper
+            label: Manuscript Submission Deadline
+            precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-dac-2027
+              resolution: resolution-1d1e72f4eecff3cd
+            round: 1
+            track: ''
+        event_end: '2027-07-14'
+        event_start: '2027-07-11'
+        id: dac-2027
+        link: https://www.dac.com/
+        place: San Jose Convention Center, San Jose, CA, USA
+        year: 2027
+    full_name: Design Automation Conference
+    key: dac
+    link: https://www.dac.com/
+    title: DAC
+  - categories:
+      - db
+      - systems
+    editions:
+      - date_text: '2026-11-25'
+        deadlines:
+          - date: '2026-09-06'
+            evidence:
+              - contentHash: 0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
+                rawExcerpt: '<strong>Acceptance Notification: </strong>6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)'
+                retrievedAt: '2026-08-30T16:37:12.855Z'
+                sourceClass: official-cfp
+                sourceRevision: sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
+                sourceUrl: https://eudat.eu/eudat-conference-2026/open-calls
+                verifiedAt: '2026-08-30T16:38:00Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                  - track
+            kind: notification
+            label: Acceptance notification (First Intake)
+            precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-eudat-conference-2026
+              resolution: resolution-4a21326e67264bb1
+            round: 1
+            track: First Intake
+          - date: '2026-10-06'
+            evidence:
+              - contentHash: 0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
+                rawExcerpt: '<strong>Acceptance Notification: </strong>6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)'
+                retrievedAt: '2026-08-30T16:37:12.855Z'
+                sourceClass: official-cfp
+                sourceRevision: sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
+                sourceUrl: https://eudat.eu/eudat-conference-2026/open-calls
+                verifiedAt: '2026-08-30T16:38:00Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                  - track
+            kind: notification
+            label: Acceptance notification (Second Intake)
+            precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-eudat-conference-2026
+              resolution: resolution-6ce337fe127d5619
+            round: 2
+            track: Second Intake
+          - date: '2026-07-31 18:00:00'
+            evidence:
+              - contentHash: 0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
+                rawExcerpt: <strong>Submission Deadline:</strong> 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)
+                retrievedAt: '2026-08-30T16:37:12.855Z'
+                sourceClass: official-cfp
+                sourceRevision: sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
+                sourceUrl: https://eudat.eu/eudat-conference-2026/open-calls
+                verifiedAt: '2026-08-30T16:38:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+                  - kind
+                  - round
+                  - track
+            kind: paper
+            label: Contribution submission (First Intake)
+            precision: exact
+            promotion_ref:
+              batch: 2026-08-31-eudat-conference-2026
+              resolution: resolution-16ce89dac71c88af
+            round: 1
+            track: First Intake
+            tz: CEST
+          - date: '2026-09-06 18:00:00'
+            evidence:
+              - contentHash: 0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
+                rawExcerpt: <strong>Submission Deadline:</strong> 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)
+                retrievedAt: '2026-08-30T16:37:12.855Z'
+                sourceClass: official-cfp
+                sourceRevision: sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
+                sourceUrl: https://eudat.eu/eudat-conference-2026/open-calls
+                verifiedAt: '2026-08-30T16:38:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+                  - kind
+                  - round
+                  - track
+            kind: paper
+            label: Contribution submission (Second Intake)
+            precision: exact
+            promotion_ref:
+              batch: 2026-08-31-eudat-conference-2026
+              resolution: resolution-84d25e13a08db91a
+            round: 2
+            track: Second Intake
+            tz: CEST
+        event_end: '2026-11-27'
+        event_start: '2026-11-25'
+        id: eudat-conference-2026
+        link: https://www.eudat.eu/eudat-conference-2026
+        place: Prague, Czechia
+        year: 2026
+    full_name: EUDAT Conference 2026
+    key: eudat-conference
+    link: https://www.eudat.eu/eudat-conference-2026
+    tags:
+      - niche
+    title: EUDAT Conference 2026
+  - categories:
+      - ai
+    editions:
+      - date_text: '2026-11-08'
+        deadlines:
+          - date: '2026-09-13'
+            evidence:
+              - contentHash: 78e838df21338c35405deb432ec11c68d4c17ffbc9e55a964a9921df7915eab1
+                rawExcerpt: <tr><td>Submission deadline</td><td>September 13, 2026</td></tr>
+                retrievedAt: '2026-08-30T18:15:21.044Z'
+                sourceClass: official-cfp
+                sourceRevision: sha256:78e838df21338c35405deb432ec11c68d4c17ffbc9e55a964a9921df7915eab1
+                sourceUrl: https://easychair.org/cfp/genai4sg-cikm2026
+                verifiedAt: '2026-08-30T18:16:00Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+            kind: paper
+            label: Paper submission deadline
+            precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-genai4sg-cikm-2026
+              resolution: resolution-645a8760f35fc632
+            round: 1
+            track: ''
+        event_end: '2026-11-08'
+        event_start: '2026-11-08'
+        id: genai4sg-2026
+        link: https://genai4sg.github.io/CIKM2026/
+        place: Rome, Italy
+        year: 2026
+    full_name: 1st Workshop on Generative AI for Social Good and Vulnerable Populations
+    key: genai4sg
+    link: https://genai4sg.github.io/CIKM2026/
+    tags:
+      - niche
+      - workshop
+    title: GenAI4SG @ CIKM 2026
+  - categories:
+      - ai
+      - networking
+    editions:
+      - date_text: '2026-12-12'
+        deadlines:
+          - date: '2026-09-26'
+            evidence:
+              - contentHash: cdb226fa64645300f44f019877355aa756f663f5bdf9198e484f8dea597ad23c
+                rawExcerpt: 'Submission Deadline : September 26, 2026'
+                retrievedAt: '2026-08-30T20:33:30.613Z'
+                sourceClass: official-cfp
+                sourceRevision: Wed, 22 Jul 2026 07:09:36 GMT
+                sourceUrl: https://www.icngn.org/
+                verifiedAt: '2026-08-30T20:34:00Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+            kind: paper
+            label: Paper submission deadline
+            precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-icngn-2026
+              resolution: resolution-1ddfc08db13ebb2d
+            round: 1
+            track: ''
+        event_end: '2026-12-14'
+        event_start: '2026-12-12'
+        id: icngn-2026
+        link: https://www.icngn.org/
+        place: Hong Kong, China
+        year: 2026
+    full_name: The 5th International Conference on Intelligent Computing and Next Generation Networks
+    key: icngn
+    link: https://www.icngn.org/
+    tags:
+      - niche
+    title: ICNGN 2026
+  - categories:
+      - networking
+      - systems
+    editions:
+      - date_text: '2027'
+        deadlines:
+          - date: '2026-09-15'
+            evidence:
+              - contentHash: 94d638e1df49fddab0e7dab40641699f0649e0cc2a88eb574261fddee1561dcc
+                rawExcerpt: <strong>Manuscript Submission Deadline:</strong> 15 September 2026 (Extended Deadline)
+                retrievedAt: '2026-08-30T20:13:34.822Z'
+                sourceClass: publisher
+                sourceRevision: '"1787962916-gzip"'
+                sourceUrl: https://www.comsoc.org/publications/magazines/ieee-network/cfp/high-reliability-and-low-latency-communications-6g-network-isac-enabled-architectures-networking-and-services
+                verifiedAt: '2026-08-30T20:14:00Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+            kind: paper
+            label: Manuscript submission deadline (extended)
+            precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-ieee-network-6g-isac-2027
+              resolution: resolution-9bc4707a578dfb92
+            round: 1
+            track: ''
+        id: ieee-network-6g-isac-2027
+        link: https://www.comsoc.org/publications/magazines/ieee-network/cfp/high-reliability-and-low-latency-communications-6g-network-isac-enabled-architectures-networking-and-services
+        year: 2027
+    full_name: 'High-Reliability and Low-Latency Communications for 6G Network: ISAC-Enabled Architectures, Networking, and Services (IEEE Network Special Issue)'
+    key: ieee-network-6g-isac
+    link: https://www.comsoc.org/publications/magazines/ieee-network/cfp/high-reliability-and-low-latency-communications-6g-network-isac-enabled-architectures-networking-and-services
+    tags:
+      - niche
+      - special-issue
+    title: 'IEEE Network Special Issue: High-Reliability and Low-Latency Communications for 6G Network: ISAC-Enabled Architectures, Networking, and Services'
+  - categories:
+      - systems
+    editions:
+      - date_text: '2027-02-23'
+        deadlines:
+          - date: '2026-11-09'
+            evidence:
+              - contentHash: 102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1
+                rawExcerpt: 'Camera-ready: <b>November 9, 2026</b>'
+                retrievedAt: '2026-08-30T16:11:29.630Z'
+                sourceClass: official-cfp
+                sourceRevision: Sun, 30 Aug 2026 16:08:56 GMT
+                sourceUrl: https://attend.ieee.org/lascas-2027/call-for-papers/
+                verifiedAt: '2026-08-30T16:11:39Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+            kind: camera_ready
+            label: Camera-ready
+            precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-lascas-2027
+              resolution: resolution-fa06799cff614f62
+            round: 1
+            track: ''
+          - date: '2026-10-23'
+            evidence:
+              - contentHash: 102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1
+                rawExcerpt: 'Notification of Acceptance: <b>October 23, 202</b>6'
+                retrievedAt: '2026-08-30T16:11:29.630Z'
+                sourceClass: official-cfp
+                sourceRevision: Sun, 30 Aug 2026 16:08:56 GMT
+                sourceUrl: https://attend.ieee.org/lascas-2027/call-for-papers/
+                verifiedAt: '2026-08-30T16:11:39Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+            kind: notification
+            label: Notification of Acceptance
+            precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-lascas-2027
+              resolution: resolution-4d13bbcf0d214cdb
+            round: 1
+            track: ''
+          - date: '2026-09-01'
+            evidence:
+              - contentHash: 102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1
+                rawExcerpt: 'Paper Submission: <b>September 1, 2026</b>'
+                retrievedAt: '2026-08-30T16:11:29.630Z'
+                sourceClass: official-cfp
+                sourceRevision: Sun, 30 Aug 2026 16:08:56 GMT
+                sourceUrl: https://attend.ieee.org/lascas-2027/call-for-papers/
+                verifiedAt: '2026-08-30T16:11:39Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+            kind: paper
+            label: Paper Submission
+            precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-lascas-2027
+              resolution: resolution-7745ca16ae605083
+            round: 1
+            track: ''
+        event_end: '2027-02-26'
+        event_start: '2027-02-23'
+        id: lascas-2027
+        link: https://attend.ieee.org/lascas-2027/
+        place: Panama City, Panama
+        year: 2027
+    full_name: IEEE Latin American Symposium on Circuits and Systems
+    key: lascas
+    link: https://attend.ieee.org/lascas-2027/
+    tags:
+      - niche
+    title: LASCAS
+  - categories:
+      - ai
+      - db
+    editions:
+      - date_text: '2026-10-16'
+        deadlines:
+          - date: '2026-09-07'
+            evidence:
+              - contentHash: 79d4d461e30d517f72da7e0c7550cee5dfb37dc3998ef4e4c29229d9886c408f
+                rawExcerpt: <tr><td>Submission deadline</td><td>September 7, 2026</td></tr>
+                retrievedAt: '2026-08-30T18:46:44.821Z'
+                sourceClass: official-cfp
+                sourceRevision: sha256:79d4d461e30d517f72da7e0c7550cee5dfb37dc3998ef4e4c29229d9886c408f
+                sourceUrl: https://easychair.org/cfp/sesame26
+                verifiedAt: '2026-08-30T18:47:30Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+            kind: paper
+            label: Paper submission
+            precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-sesame-jcdl-2026
+              resolution: resolution-66d47f081fcd2b72
+            round: 1
+            track: ''
+        event_end: '2026-10-16'
+        event_start: '2026-10-16'
+        id: sesame-2026
+        link: https://sesame-workshop.github.io/SESAME/
+        place: Online Only
+        year: 2026
+    full_name: 2nd Workshop on Smarter Extraction of Scholarly Metadata using Knowledge Graphs, Language Models, and Agents
+    key: sesame
+    link: https://sesame-workshop.github.io/SESAME/
+    tags:
+      - niche
+      - workshop
+    title: SESAME @ JCDL 2026
+  - categories:
+      - ai
+    editions:
+      - date_text: '2026-09-27'
+        deadlines:
+          - date: '2026-08-31'
+            evidence:
+              - contentHash: 07c39722e2187fca7dfce689ae338119476343eb548eb8c1ed7ee60e0fc2201a
+                rawExcerpt: <tr><td>Submission deadline</td><td>August 31, 2026</td></tr>
+                retrievedAt: '2026-08-30T17:52:35.310Z'
+                sourceClass: official-cfp
+                sourceRevision: sha256:07c39722e2187fca7dfce689ae338119476343eb548eb8c1ed7ee60e0fc2201a
+                sourceUrl: https://easychair.org/cfp/SovereignAI-2026
+                verifiedAt: '2026-08-30T17:53:00Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+            kind: paper
+            label: Paper submission deadline
+            precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-sovereignai-2026
+              resolution: resolution-8d7afae56bdf4646
+            round: 1
+            track: ''
+        event_end: '2026-09-27'
+        event_start: '2026-09-27'
+        id: sovereignai-2026
+        link: https://sovereignai-workshop.github.io/
+        place: Virginia Tech Academic Building One, Alexandria, Virginia, United States
+        year: 2026
+    full_name: The First Workshop on Sovereign AI for Collaborative and Pluralistic AI Ecosystems
+    key: sovereignai
+    link: https://sovereignai-workshop.github.io/
+    tags:
+      - niche
+      - workshop
+    title: SovereignAI 2026
+  - categories:
+      - ai
+      - systems
+    editions:
+      - date_text: '2027'
+        deadlines:
+          - date: '2026-10-31'
+            evidence:
+              - contentHash: 8646e62b7b863709f586c7d12b76ce187fcdf1845049828bc421da61e6c389c7
+                rawExcerpt: 'Manuscript Submission Deadline: October 31, 2026'
+                retrievedAt: '2026-08-30T19:49:57.284Z'
+                sourceClass: publisher
+                sourceRevision: sha256:8646e62b7b863709f586c7d12b76ce187fcdf1845049828bc421da61e6c389c7
+                sourceUrl: https://www.computer.org/digital-library/journals/tsc/cfp-language-models-ecosystems-design
+                verifiedAt: '2026-08-30T19:51:00Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+            kind: paper
+            label: Manuscript submission deadline
+            precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-tsc-llm-service-ecosystems-2027
+              resolution: resolution-0c8d7d7f0fd8dbe1
+            round: 1
+            track: ''
+        id: tsc-llm-service-ecosystems-2027
+        link: https://www.computer.org/digital-library/journals/tsc/cfp-language-models-ecosystems-design
+        year: 2027
+    full_name: 'Large Language Models in Service-Oriented Ecosystems Design: Advances and Applications (IEEE Transactions on Services Computing Special Issue)'
+    key: tsc-llm-service-ecosystems
+    link: https://www.computer.org/digital-library/journals/tsc/cfp-language-models-ecosystems-design
+    tags:
+      - niche
+      - special-issue
+    title: 'IEEE TSC Special Issue: Large Language Models in Service-Oriented Ecosystems Design: Advances and Applications'
+  - categories:
+      - ai
+      - networking
+    editions:
+      - date_text: '2027'
+        deadlines:
+          - date: '2026-09-15'
+            evidence:
+              - contentHash: 7238cfba9ecf5eaffae6ecb6b86a1fdae90e4c2c28669f5a458965491c5d06a2
+                rawExcerpt: <strong>Manuscript Submission Deadline:</strong> 15 September 2026 (Extended Deadline)
+                retrievedAt: '2026-08-30T19:13:23.748Z'
+                sourceClass: publisher
+                sourceRevision: '"1787966809-gzip"'
+                sourceUrl: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp/agentic-ai-enabled-networking-heterogeneous-unmanned-systems-low-altitude-environments
+                verifiedAt: '2026-08-30T19:15:00Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+            kind: paper
+            label: Manuscript submission deadline (extended)
+            precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-wcm-agentic-ai-2027
+              resolution: resolution-497379f4b662c11b
+            round: 1
+            track: ''
+        id: wcm-agentic-ai-unmanned-2027
+        link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp/agentic-ai-enabled-networking-heterogeneous-unmanned-systems-low-altitude-environments
+        year: 2027
+    full_name: Agentic AI-Enabled Networking for Heterogeneous Unmanned Systems in Low-Altitude Environments (IEEE Wireless Communications Special Issue)
+    key: wcm-agentic-ai-unmanned
+    link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp/agentic-ai-enabled-networking-heterogeneous-unmanned-systems-low-altitude-environments
+    tags:
+      - niche
+      - special-issue
+    title: 'IEEE WCM Special Issue: Agentic AI-Enabled Networking for Heterogeneous Unmanned Systems in Low-Altitude Environments'
+  - categories:
+      - systems
+      - theory
+    editions:
+      - date_text: '2026-12-12'
+        deadlines:
+          - date: '2026-09-01'
+            evidence:
+              - contentHash: dc13ed46653fa4f2330f09aa2babacdb34a9df603549e1d0fd3ea15d59e8a8ba
+                rawExcerpt: <tr><td>Abstract registration deadline</td><td>September 1, 2026</td></tr>
+                retrievedAt: '2026-08-30T17:03:09.910Z'
+                sourceClass: official-cfp
+                sourceRevision: sha256:dc13ed46653fa4f2330f09aa2babacdb34a9df603549e1d0fd3ea15d59e8a8ba
+                sourceUrl: https://easychair.org/cfp/WQS26
+                verifiedAt: '2026-08-30T17:04:00Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+            kind: abstract
+            label: Abstract registration
+            precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-wqs-2026
+              resolution: resolution-56a197c666f4770d
+            round: 1
+            track: ''
+          - date: '2026-09-08'
+            evidence:
+              - contentHash: dc13ed46653fa4f2330f09aa2babacdb34a9df603549e1d0fd3ea15d59e8a8ba
+                rawExcerpt: <tr><td>Submission deadline</td><td>September 8, 2026</td></tr>
+                retrievedAt: '2026-08-30T17:03:09.910Z'
+                sourceClass: official-cfp
+                sourceRevision: sha256:dc13ed46653fa4f2330f09aa2babacdb34a9df603549e1d0fd3ea15d59e8a8ba
+                sourceUrl: https://easychair.org/cfp/WQS26
+                verifiedAt: '2026-08-30T17:04:00Z'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+            kind: paper
+            label: Extended abstract submission
+            precision: date-only
+            promotion_ref:
+              batch: 2026-08-31-wqs-2026
+              resolution: resolution-10ca3445da0e3aea
+            round: 1
+            track: ''
+        event_end: '2026-12-12'
+        event_start: '2026-12-12'
+        id: wqs-2026
+        link: https://data-cybernetics.com/en/wqs-2026
+        place: Stellenbosch, South Africa
+        year: 2026
+    full_name: 4th Workshop on Quantum Software
+    key: wqs
+    link: https://data-cybernetics.com/en/wqs-2026
+    tags:
+      - niche
+    title: WQS 2026
+generated_from: data/promotions/*/resolutions.json
+schema_version: 1

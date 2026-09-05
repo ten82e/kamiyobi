@@ -1,6 +1,5 @@
 /**
  * Shared fixtures and helpers for the vitest suite.
- * Ported from tests/conftest.py (kamiyobi).
  */
 
 import { spawnSync } from "node:child_process";

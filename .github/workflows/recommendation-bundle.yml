@@ -62,7 +62,7 @@ jobs:
         run: node src/embeddings.ts public/data.json public/embeddings.json
       - name: Run required gate (fast subset)
         if: steps.bundle.outputs.reused != 'true'
-        run: node src/bench-recommender.ts --real-v2-dev data/benchmarks/real-paper-required-dev.json --real-v2-heldout data/benchmarks/real-paper-required-heldout.json --real-v2-negative data/benchmarks/real-paper-negative.json --real-v2-features data/benchmarks/real-paper-required-features.json --real-v2-small --json > /dev/null
+        run: node src/bench-recommender.ts --real-v2-dev data/benchmarks/real-paper-required-dev.json --real-v2-heldout data/benchmarks/real-paper-required-heldout.json --real-v2-negative data/benchmarks/real-paper-negative.json --real-v2-features data/benchmarks/real-paper-features.jsonl --real-v2-small --json > /dev/null
       # 推薦内容が変わった push だけ full benchmark を走らせ、合格後でないと seal しない。
       - name: Run full real-paper benchmark before sealing
         if: steps.bundle.outputs.reused != 'true'
@@ -72,6 +72,7 @@ jobs:
             --real-v2-dev data/benchmarks/real-paper-dev.json \
             --real-v2-heldout data/benchmarks/real-paper-heldout.json \
             --real-v2-negative data/benchmarks/real-paper-negative.json \
+            --real-v2-features data/benchmarks/real-paper-features.jsonl \
             --json > /tmp/full-bench.json
           jq '{dev: .splits.dev.modes.fused.recall_at_5, heldout: .splits.heldout.modes.fused.recall_at_5}' /tmp/full-bench.json
       - name: Seal recommendation bundle
