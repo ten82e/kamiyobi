@@ -999,9 +999,14 @@ export interface RequiredSemanticFeatures {
 export interface FeatureStoreManifest {
   schema_version: 2;
   feature_schema: 2;
-  model_revision?: string;
-  profile_hash?: string;
-  records: Array<{ paper_id: string; record_sha256: string }>;
+  // provenance は record ごとに固定する: profile_hash は split の年カットオフ別、
+  // model_revision は言語 (en/ja) 別に正当に異なるため、manifest 単一値では表せない。
+  records: Array<{
+    paper_id: string;
+    record_sha256: string;
+    profile_hash: string;
+    model_revision: string;
+  }>;
   minimum_language_counts?: Record<"dev" | "heldout", Record<RealPaperLanguage, number>>;
 }
 
@@ -1083,9 +1088,15 @@ export function readFeatureStore(path: string): RequiredSemanticFeatures {
       const record = recordsById.get(expected.paper_id);
       if (!record || record.record_sha256 !== expected.record_sha256)
         throw new Error(`feature store manifest mismatch: ${expected.paper_id}`);
-      if (manifest.profile_hash && record.profile_hash !== manifest.profile_hash)
+      // provenance の欠落は検査のスキップではなくエラーにする (欠落を truthy ガードで
+      // 許すと、manifest の provenance 改竄・欠落が無音で素通りする)。
+      if (typeof expected.profile_hash !== "string" || !expected.profile_hash)
+        throw new Error(`feature store manifest is missing profile_hash: ${expected.paper_id}`);
+      if (typeof expected.model_revision !== "string" || !expected.model_revision)
+        throw new Error(`feature store manifest is missing model_revision: ${expected.paper_id}`);
+      if (record.profile_hash !== expected.profile_hash)
         throw new Error(`feature store profile mismatch: ${expected.paper_id}`);
-      if (manifest.model_revision && record.model_revision !== manifest.model_revision)
+      if (record.model_revision !== expected.model_revision)
         throw new Error(`feature store model revision mismatch: ${expected.paper_id}`);
     }
   }
@@ -1172,8 +1183,10 @@ export function fixedFeatureRecord(
   } else if (
     found.feature_schema !== 2 ||
     found.profile_hash !== expected.profile_hash_at_cutoff ||
-    (found.model_revision !== undefined &&
-      ![expected.models.en.revision, expected.models.multi.revision].includes(found.model_revision))
+    // model_revision 未定義を許すと provenance 検査ごと迂回できるため fail-closed にする。
+    ![expected.models.en.revision, expected.models.multi.revision].includes(
+      found.model_revision as string,
+    )
   ) {
     throw new Error("required semantic feature schema/profile mismatch");
   }
@@ -1572,7 +1585,7 @@ function validateRealPaperModeResult(
   }
 }
 
-function realPaperText(value: unknown): string {
+export function realPaperText(value: unknown): string {
   return String(value ?? "")
     .normalize("NFKC")
     .toLowerCase()
@@ -1588,7 +1601,7 @@ function realPaperTitleTokens(value: unknown): Set<string> {
   );
 }
 
-function realPaperNearDuplicate(left: string, right: string): boolean {
+export function realPaperNearDuplicate(left: string, right: string): boolean {
   const a = realPaperTitleTokens(left);
   const b = realPaperTitleTokens(right);
   if (a.size < 3 || b.size < 3) return false;
@@ -3430,6 +3443,7 @@ export async function main(
                 ? requiredPaperIds.has(record.paper_id)
                 : record.paper_id.startsWith(`${split}-`),
             );
+            if (!splitRecords.length) throw new Error(`feature store split is empty: ${split}`);
             writeFileSync(
               `${storeBase}-${split}-manifest.json`,
               `${JSON.stringify(
@@ -3439,10 +3453,13 @@ export async function main(
                   ...(split === "required"
                     ? { minimum_language_counts: minimumLanguageCounts }
                     : {}),
-                  records: splitRecords.map(({ paper_id, record_sha256 }) => ({
-                    paper_id,
-                    record_sha256,
-                  })),
+                  records: splitRecords.map(
+                    ({ paper_id, record_sha256, profile_hash, model_revision }) => {
+                      if (!profile_hash || !model_revision)
+                        throw new Error(`feature store record lacks provenance: ${paper_id}`);
+                      return { paper_id, record_sha256, profile_hash, model_revision };
+                    },
+                  ),
                 } satisfies FeatureStoreManifest,
                 null,
                 2,

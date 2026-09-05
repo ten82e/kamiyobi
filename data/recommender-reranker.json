@@ -5,9 +5,6 @@
   "selected_on": "real-paper-dev",
   "selection_metric": "dev-oof-mrr-then-recall-at-5",
   "algorithm_revision": "l2-pairwise-logistic-reranker-v3-grouped-cv",
-  "production_trainer_revision": "l2-pairwise-logistic-reranker-v3-grouped-cv",
-  "candidate_trainer_revision": "l2-pairwise-logistic-reranker-v4-component-greedy-cv",
-  "candidate_rejected_reason": "heldout acceptance gate: MRR -0.000565 / Recall@5 -0.0125 vs production (noise-level; kept incumbent v3 per non-degradation policy)",
   "feature_schema": [
     "lexical_score",
     "semantic_score",
@@ -20,107 +17,107 @@
   "training_data_hash": "dd2cc261d388bfa93a0d0c7972eb2b3e86960ccea09cb5429cf13f286b179c81",
   "input_hashes": {
     "data/benchmarks/real-paper-dev.json": "dd2cc261d388bfa93a0d0c7972eb2b3e86960ccea09cb5429cf13f286b179c81",
-    "data/benchmarks/real-paper-features.jsonl#dev-records": "a9e4cc87c890c3e7e24237bacbb6e03aa922d60152cbbf6cc4e95d74f28a8ea4",
-    "data/venue-profiles.json": "092459cf3d26adddba47533b038838e34786b366b74aafe7e3f605881449a40c"
+    "data/benchmarks/real-paper-features.jsonl#dev-records": "573e3105430b5aec9e31ec624a61b75c467d1ccb8f30c9b3be8d51687dea04ec",
+    "data/venue-profiles.json": "41b8648067326eb3540367d352ced693fde5fbafed1713ec9c6e8c6c01aedd0a"
   },
   "cv": {
     "folds": 5,
     "assignment": "primary-venue-grouped-round-robin",
     "dev_papers": 80,
-    "selected_lambda": 0.01,
-    "selected_blend": 0.05,
-    "oof_mrr": 0.30252318,
-    "oof_recall_at_5": 0.3875,
+    "selected_lambda": 0.2,
+    "selected_blend": 0.3,
+    "oof_mrr": 0.30972193,
+    "oof_recall_at_5": 0.425,
     "trials": [
       {
+        "lambda": 0.2,
+        "blend": 0.3,
+        "mrr": 0.30972193,
+        "recall_at_5": 0.425
+      },
+      {
         "lambda": 0.01,
         "blend": 0.05,
-        "mrr": 0.30252318,
-        "recall_at_5": 0.3875
-      },
-      {
-        "lambda": 0.08,
-        "blend": 0.15,
-        "mrr": 0.3021327,
-        "recall_at_5": 0.3875
-      },
-      {
-        "lambda": 0.2,
-        "blend": 0.15,
-        "mrr": 0.30212239,
-        "recall_at_5": 0.4
+        "mrr": 0.3082936,
+        "recall_at_5": 0.425
       },
       {
         "lambda": 0.08,
         "blend": 0.05,
-        "mrr": 0.30212057,
-        "recall_at_5": 0.3875
+        "mrr": 0.30777277,
+        "recall_at_5": 0.425
       },
       {
         "lambda": 0.2,
         "blend": 0.05,
-        "mrr": 0.30212057,
-        "recall_at_5": 0.3875
+        "mrr": 0.30776699,
+        "recall_at_5": 0.425
+      },
+      {
+        "lambda": 0.2,
+        "blend": 0.15,
+        "mrr": 0.30608713,
+        "recall_at_5": 0.4375
+      },
+      {
+        "lambda": 0.08,
+        "blend": 0.15,
+        "mrr": 0.3055258,
+        "recall_at_5": 0.425
       },
       {
         "lambda": 0.01,
         "blend": 0.15,
-        "mrr": 0.30209346,
-        "recall_at_5": 0.3875
-      },
-      {
-        "lambda": 0.2,
-        "blend": 0.3,
-        "mrr": 0.29731452,
-        "recall_at_5": 0.4
+        "mrr": 0.30511313,
+        "recall_at_5": 0.425
       },
       {
         "lambda": 0.08,
         "blend": 0.3,
-        "mrr": 0.29674244,
-        "recall_at_5": 0.4
+        "mrr": 0.30465226,
+        "recall_at_5": 0.425
       },
       {
         "lambda": 0.01,
         "blend": 0.3,
-        "mrr": 0.29640322,
-        "recall_at_5": 0.4
-      },
-      {
-        "lambda": 0.2,
-        "blend": 0.5,
-        "mrr": 0.29601969,
-        "recall_at_5": 0.4
-      },
-      {
-        "lambda": 0.01,
-        "blend": 0.5,
-        "mrr": 0.2945591,
-        "recall_at_5": 0.4
+        "mrr": 0.30361008,
+        "recall_at_5": 0.425
       },
       {
         "lambda": 0.08,
         "blend": 0.5,
-        "mrr": 0.29437487,
-        "recall_at_5": 0.4
+        "mrr": 0.30299622,
+        "recall_at_5": 0.425
+      },
+      {
+        "lambda": 0.01,
+        "blend": 0.5,
+        "mrr": 0.30282317,
+        "recall_at_5": 0.425
+      },
+      {
+        "lambda": 0.2,
+        "blend": 0.5,
+        "mrr": 0.302236,
+        "recall_at_5": 0.425
       },
       {
         "lambda": 0.01,
         "blend": 1,
-        "mrr": 0.25979268,
-        "recall_at_5": 0.3875
+        "mrr": 0.27630444,
+        "recall_at_5": 0.4
       },
       {
         "lambda": 0.08,
         "blend": 1,
-        "mrr": 0.25979237,
-        "recall_at_5": 0.3875
+        "mrr": 0.27526278,
+        "recall_at_5": 0.4
       },
       {
         "lambda": 0.2,
         "blend": 1,
-        "mrr": 0.2597713,
-        "recall_at_5": 0.3875
+        "mrr": 0.27408378,
+        "recall_at_5": 0.4
       }
     ]
   },
@@ -130,10 +127,10 @@
   },
   "calibration": {
     "method": "platt",
-    "slope": 0.220954971,
-    "intercept": -1.638862526,
+    "slope": 0.5730413237,
+    "intercept": -1.6116511885,
     "comparison": {
-      "platt_brier": 0.03417533,
+      "platt_brier": 0.03723588,
       "isotonic": {
         "implemented": false,
         "note": "not implemented; Platt scaling only"
@@ -146,6 +143,7 @@
     "blocking_conditions": [
       "precision_ok",
       "wilson_lcb_ok",
+      "coverage_ok",
       "positives_ok"
     ],
     "chosen_threshold": null,
@@ -154,11 +152,11 @@
       "wilson_95_lcb": null,
       "sufficient_coverage": null,
       "sufficient_positives": null,
-      "best_observed_threshold": 0.22734673,
-      "best_observed_precision": 0.45454545,
-      "best_observed_wilson_95_lcb": 0.21270958,
-      "best_observed_coverage": 0.1375,
-      "best_observed_positives": 5
+      "best_observed_threshold": 0.27879718,
+      "best_observed_precision": 0.5,
+      "best_observed_wilson_95_lcb": 0.09452865,
+      "best_observed_coverage": 0.025,
+      "best_observed_positives": 1
     },
     "unlock_conditions": {
       "min_precision": 0.8,
@@ -173,26 +171,29 @@
     "wilson_95_lcb": null,
     "sufficient_coverage": null,
     "sufficient_positives": null,
-    "best_observed_threshold": 0.22734673,
-    "best_observed_precision": 0.45454545,
-    "best_observed_wilson_95_lcb": 0.21270958,
-    "best_observed_coverage": 0.1375,
-    "best_observed_positives": 5,
+    "best_observed_threshold": 0.27879718,
+    "best_observed_precision": 0.5,
+    "best_observed_wilson_95_lcb": 0.09452865,
+    "best_observed_coverage": 0.025,
+    "best_observed_positives": 1,
     "guard_margin": 0.05
   },
   "intercept": 0,
   "weights": {
-    "lexical_score": 0.6596179793,
-    "semantic_score": 0.2782933591,
-    "category_overlap": -0.4451733555,
-    "venue_name_evidence": 0.9601943762,
+    "lexical_score": 0.3545455971,
+    "semantic_score": 0.1284941121,
+    "category_overlap": -0.2306444573,
+    "venue_name_evidence": 0.560303801,
     "prior_venue": 0,
-    "language_match": 0.3493888449,
+    "language_match": 0.1638454471,
     "venue_kind": 0
   },
-  "blend": 0.05,
+  "blend": 0.3,
   "confidence_thresholds": {
-    "sufficient": 0.22734673,
-    "ambiguous": 0.21109094
-  }
+    "sufficient": 0.27879718,
+    "ambiguous": 0.24264076
+  },
+  "production_trainer_revision": "l2-pairwise-logistic-reranker-v3-grouped-cv",
+  "candidate_trainer_revision": "l2-pairwise-logistic-reranker-v4-component-greedy-cv",
+  "candidate_rejected_reason": "heldout acceptance gate: MRR -0.000448 / Recall@5 -0.0250 vs production (noise-level; kept incumbent v3 per non-degradation policy)"
 }

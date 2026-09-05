@@ -14,243 +14,363 @@
   "records": [
     {
       "paper_id": "dev-2025-ches-01",
-      "record_sha256": "e21f20104d22e97141b3c7d2e9af7591f7376476d2d385cd21ab97b5d67060e4"
+      "record_sha256": "d68005eba7160ec1a6efaf47c53158d4761b772c642a85f4a6843024abff800e",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-chi-01",
-      "record_sha256": "e91d26d3c78cfcfe3cff7bc5e1603d5896cfd2c9171ac930b778cd510303c491"
+      "record_sha256": "e91d26d3c78cfcfe3cff7bc5e1603d5896cfd2c9171ac930b778cd510303c491",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-cvpr-01",
-      "record_sha256": "78695a3f2ebe0586f951ea9efe80c7246be1f6a323a092fe6aac8daa3453b027"
+      "record_sha256": "f3489f5a0ff77d0502abdb790b5e2d094cf5d8fdf6f0a8ec6879103e28757567",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-cvprw-01",
-      "record_sha256": "9e2fb35dde2da5b14e158d1e17ff17c44206e9aad04b3da3a856f99c6b85e2b6"
+      "record_sha256": "98905c8b957ee90acd5a163373c8b6acb6bd12a8a9b6000e8985f4a5c2789d51",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-hpdc-01",
-      "record_sha256": "39ea51fc1d919cb31986e3a0d495334afaeb52deecb1a0e08c6bfa5d54cb0e4e"
+      "record_sha256": "b51d03ae9e634820876188aecaaffc3280c7986cf7b579e7c0f047315946608f",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-ipsj-journal-01",
-      "record_sha256": "0e1158fa8d319c67777729b65fb54bd99de1d67d89a544758a335b287990f5d1"
+      "record_sha256": "0e1158fa8d319c67777729b65fb54bd99de1d67d89a544758a335b287990f5d1",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "2c4055b12046f11709e9df2c122e59ffbdc2f900"
     },
     {
       "paper_id": "dev-2025-nolta-special-01",
-      "record_sha256": "d6d3a9d48fbc19c53043f3eddd97ba78a1e47310684a68d507dbaf0e70f98798"
+      "record_sha256": "e8beb7884287aa0db09eecb2c380d67a3e7359801f38c7188279f6bad853c0dc",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-sigcomm-01",
-      "record_sha256": "2cbc578f0918c4052e10ca34a45b6bdf544a7b169da8c2039db8ee5ab8ef0bbf"
+      "record_sha256": "5eab969898c8910873666e849f21ce321bfa99c3461ceb2f065a6fad959fe9c9",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-sigmod-01",
-      "record_sha256": "b405e09ea9c1caf74811409ac3949ab530d3f14a9aa746a218c05eab01e4f1ba"
+      "record_sha256": "b405e09ea9c1caf74811409ac3949ab530d3f14a9aa746a218c05eab01e4f1ba",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-chi-03",
-      "record_sha256": "667d49c287209f46f806af4d6f41a21067d1e1d1ee2cb9c1b35c6702cc0bf929"
+      "record_sha256": "667d49c287209f46f806af4d6f41a21067d1e1d1ee2cb9c1b35c6702cc0bf929",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-cvpr-01",
-      "record_sha256": "9e81891480a5de243256f2af61a40589921ed248138fa9319d1a23338ca4e31f"
+      "record_sha256": "9e81891480a5de243256f2af61a40589921ed248138fa9319d1a23338ca4e31f",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-cvprw-01",
-      "record_sha256": "ea18f96cf67ed500b423412b33fc390e6f47f8ab1de8203908321b6f97a6ff69"
+      "record_sha256": "916aaf6b8b867c079d0609765f3f35eef17232cd9cd0e3c48b0db7bbfbe2bb74",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-hpdc-01",
-      "record_sha256": "e8cb8ce1aa0d2d35b5dbcb687ddc747e70e5453a01e1a0be82ab098b992c3995"
+      "record_sha256": "bf233fb99a27ffc8ae9c4b3e346c79e2b9ff96d48617ece8a3d12c55a41f5b04",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-ipsj-journal-01",
-      "record_sha256": "89c982d9c2ccaa79b63e3f41fca55a1ab416524fe0cb08830c992c7e24c6a0f5"
+      "record_sha256": "89c982d9c2ccaa79b63e3f41fca55a1ab416524fe0cb08830c992c7e24c6a0f5",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "2c4055b12046f11709e9df2c122e59ffbdc2f900"
     },
     {
       "paper_id": "heldout-2026-nolta-special-01",
-      "record_sha256": "2e2086a9675de33dd4ef305517bbf884a9b7ea2ad34ba906f074a2c963ab7afc"
+      "record_sha256": "2e2086a9675de33dd4ef305517bbf884a9b7ea2ad34ba906f074a2c963ab7afc",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-nsdi-02",
-      "record_sha256": "52d0683535d3ae99e0eefc4e872b4d285bf08baf54267bd6a6ec5ee658f704e4"
+      "record_sha256": "2c18f4462f1d4f9c9eab54fc467009df9e7f0161fa9e4c03429a64471f4373ed",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-sigcomm-01",
-      "record_sha256": "04b4bb606264292e1331f354642717433981db8954a077abf950838d46469ff8"
+      "record_sha256": "04b4bb606264292e1331f354642717433981db8954a077abf950838d46469ff8",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-sigmod-06",
-      "record_sha256": "2233e6050f4a502c754d8642145d9e73757960cb420c15a072e0acf8641976d2"
+      "record_sha256": "2233e6050f4a502c754d8642145d9e73757960cb420c15a072e0acf8641976d2",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-usenix-security-01",
-      "record_sha256": "988d6aeedb1031a9b36af4c48054a61f961ab657bda38f512a91f5746bd33c42"
+      "record_sha256": "bbabf15818164b8a1c5b93e474dbf52d2a41ae29d8c1197c3b1e2816272cca4d",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "jstage-2026-jsceiii-7-20",
-      "record_sha256": "d6fadde500dfb6eae52ac2333220e525126dafa3cb70e3a401a10e9dea1e312b"
+      "record_sha256": "d6fadde500dfb6eae52ac2333220e525126dafa3cb70e3a401a10e9dea1e312b",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "2c4055b12046f11709e9df2c122e59ffbdc2f900"
     },
     {
       "paper_id": "pubmed-42058264",
-      "record_sha256": "79c95bd504585c26af9fbb67530a5cd7d7923bed29c17a966388e69ff7dd47c6"
+      "record_sha256": "79c95bd504585c26af9fbb67530a5cd7d7923bed29c17a966388e69ff7dd47c6",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42256611",
-      "record_sha256": "47fb86b0d5e6d18e64535c76cc4357ada2b523c6310789b0a389a2826ae8779c"
+      "record_sha256": "47fb86b0d5e6d18e64535c76cc4357ada2b523c6310789b0a389a2826ae8779c",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42265983",
-      "record_sha256": "1b8637c0dcb6d2ecabfc1690fda8f2ad3223e895d72d73d18a2c6d014f4864ca"
+      "record_sha256": "1b8637c0dcb6d2ecabfc1690fda8f2ad3223e895d72d73d18a2c6d014f4864ca",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42275298",
-      "record_sha256": "c34de3e28b771f24a7ef9ee5a32a13d0cad2ebbe12d9db804f0924f03c114129"
+      "record_sha256": "c34de3e28b771f24a7ef9ee5a32a13d0cad2ebbe12d9db804f0924f03c114129",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42285793",
-      "record_sha256": "cc5e93e5de5867ef00b964fe3d927e7812ef78bf5244512f8dd938596cb50711"
+      "record_sha256": "cc5e93e5de5867ef00b964fe3d927e7812ef78bf5244512f8dd938596cb50711",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42296148",
-      "record_sha256": "aec1c363845f324921acb0a1fecb656dc7d84c216eaab03684a0fd91b1fdf674"
+      "record_sha256": "aec1c363845f324921acb0a1fecb656dc7d84c216eaab03684a0fd91b1fdf674",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42304957",
-      "record_sha256": "44d5bcf1e2b0b8832703072e0ac7b42615774e16ff638cfc324da78a02cc38b7"
+      "record_sha256": "44d5bcf1e2b0b8832703072e0ac7b42615774e16ff638cfc324da78a02cc38b7",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42308349",
-      "record_sha256": "35c2e9055b14dc527a64d60f8296ce5fa38854a878a869ceba6683c39da9e9f3"
+      "record_sha256": "35c2e9055b14dc527a64d60f8296ce5fa38854a878a869ceba6683c39da9e9f3",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42319344",
-      "record_sha256": "390ee86a24e8512d0851326e66035376518fb8d8f2d08b01e324fa6f76bf3764"
+      "record_sha256": "390ee86a24e8512d0851326e66035376518fb8d8f2d08b01e324fa6f76bf3764",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42322272",
-      "record_sha256": "11854b6d48091adcb4923e1abbda813112b5e375ae500ea3da3c0aa8457797eb"
+      "record_sha256": "11854b6d48091adcb4923e1abbda813112b5e375ae500ea3da3c0aa8457797eb",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42324593",
-      "record_sha256": "17c96716fc0d7a2c7a4002daaf6f2ff3c49e4f64d2c39e062e4c408cc6018489"
+      "record_sha256": "17c96716fc0d7a2c7a4002daaf6f2ff3c49e4f64d2c39e062e4c408cc6018489",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42329179",
-      "record_sha256": "105b397271ccbcaa2a74ce59e93590e5d1abf34f9b86e3d976d257b181896d78"
+      "record_sha256": "105b397271ccbcaa2a74ce59e93590e5d1abf34f9b86e3d976d257b181896d78",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42337391",
-      "record_sha256": "9f2a2e1b892e638601d49a909cc898d4750ac56287dd69f829a483b87ea4e9a5"
+      "record_sha256": "9f2a2e1b892e638601d49a909cc898d4750ac56287dd69f829a483b87ea4e9a5",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42342482",
-      "record_sha256": "27f9246e881ebfe3c928637da43f2739440dc63d6b4b7889fe51ccb758a0204f"
+      "record_sha256": "27f9246e881ebfe3c928637da43f2739440dc63d6b4b7889fe51ccb758a0204f",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42345355",
-      "record_sha256": "553d3b0ae803e3a25cb549ab0f158dbf7df3baa6b7fd65270065f32db1058b53"
+      "record_sha256": "553d3b0ae803e3a25cb549ab0f158dbf7df3baa6b7fd65270065f32db1058b53",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42359636",
-      "record_sha256": "2c9d945a97690a4038c4c8bbd78eb56999d88c327e46bbcab41f13a25936aedc"
+      "record_sha256": "2c9d945a97690a4038c4c8bbd78eb56999d88c327e46bbcab41f13a25936aedc",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42371677",
-      "record_sha256": "330eb15d02633e8e198e5a0e9b853ed60fc51abcebc5fb70b2d3cfb5d8585c20"
+      "record_sha256": "330eb15d02633e8e198e5a0e9b853ed60fc51abcebc5fb70b2d3cfb5d8585c20",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42376755",
-      "record_sha256": "246cf02904fd12b0f8fc33ee69cb71120f4c0ff28f65ba8cbf2ae18d341bdbca"
+      "record_sha256": "246cf02904fd12b0f8fc33ee69cb71120f4c0ff28f65ba8cbf2ae18d341bdbca",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42377119",
-      "record_sha256": "00c4efc412c14041631b0711fc0f4edfad898feba3388703602a6f6689487ccd"
+      "record_sha256": "00c4efc412c14041631b0711fc0f4edfad898feba3388703602a6f6689487ccd",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42393830",
-      "record_sha256": "41d366eb2aea01050191676f45e3c4884d85a62ad4e9a368b108ef6165440324"
+      "record_sha256": "41d366eb2aea01050191676f45e3c4884d85a62ad4e9a368b108ef6165440324",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42393838",
-      "record_sha256": "250abf416f9f3f8810e3ea096489b243bf3bdd7755964cdfd703084a7ea4161f"
+      "record_sha256": "250abf416f9f3f8810e3ea096489b243bf3bdd7755964cdfd703084a7ea4161f",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42411636",
-      "record_sha256": "575878f0470d81a7d636a56fa20f492935f3b0a5928df419a23d58fd4c0b68f9"
+      "record_sha256": "575878f0470d81a7d636a56fa20f492935f3b0a5928df419a23d58fd4c0b68f9",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42421228",
-      "record_sha256": "22a7d9e7fdafef4992d8fb9b3a7bb6dadd85a8b2dc7505d8743468d13e29d4b9"
+      "record_sha256": "22a7d9e7fdafef4992d8fb9b3a7bb6dadd85a8b2dc7505d8743468d13e29d4b9",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42424525",
-      "record_sha256": "15e001596a1ddc5167add87f283c3c8ccb2864fadb9cebc99d50aabe068b13b2"
+      "record_sha256": "15e001596a1ddc5167add87f283c3c8ccb2864fadb9cebc99d50aabe068b13b2",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42430190",
-      "record_sha256": "1f55b2bdcc4a52586b4a08315c8cf27735df168ecca2694d203367ba5482144f"
+      "record_sha256": "1f55b2bdcc4a52586b4a08315c8cf27735df168ecca2694d203367ba5482144f",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42441083",
-      "record_sha256": "befbbd9202bc97153573ba3e5b110c3fcc534947382450c48f48a1acc97811ee"
+      "record_sha256": "befbbd9202bc97153573ba3e5b110c3fcc534947382450c48f48a1acc97811ee",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42454507",
-      "record_sha256": "80e6963d5a65f1fd6779e31dd3ddba7e57eb180e3b32b059807fbd77e556ae59"
+      "record_sha256": "0fca6f8d6f89f541f640cfe3572873f6430aa09fce128e51224819e955da5afc",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42476202",
-      "record_sha256": "068b6375bc2bd0548de04fc6d7e75d3666bee963e216421b5aa58134c282c0a7"
+      "record_sha256": "068b6375bc2bd0548de04fc6d7e75d3666bee963e216421b5aa58134c282c0a7",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42502958",
-      "record_sha256": "6b88937e5dde6c496b03620bac48b79a867cdb76c8e635613fb5650ca77fa378"
+      "record_sha256": "6b88937e5dde6c496b03620bac48b79a867cdb76c8e635613fb5650ca77fa378",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42518517",
-      "record_sha256": "8c34c4181c0c3914642d3ccc6229bffa1775697b7b152588eb2a7ca43c7e180a"
+      "record_sha256": "8c34c4181c0c3914642d3ccc6229bffa1775697b7b152588eb2a7ca43c7e180a",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42522093",
-      "record_sha256": "53af5fefbe2db7484afe9a8ced6e4e61630dc285c8db2a4f6725043327e1051f"
+      "record_sha256": "53af5fefbe2db7484afe9a8ced6e4e61630dc285c8db2a4f6725043327e1051f",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42522137",
-      "record_sha256": "514e4f588f2f1a85199ec74917832b44a1e33d77208eaa16c81b4cc4e927bb60"
+      "record_sha256": "514e4f588f2f1a85199ec74917832b44a1e33d77208eaa16c81b4cc4e927bb60",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42524027",
-      "record_sha256": "c7974dae949ec6b806f28e402c08ce904acbf5d6170443338266fd8b268ebb18"
+      "record_sha256": "0e7b5dda9fa4d81ff5cfcce54a0cef4580a5818b921c60961b3a3395272ffdc5",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42525450",
-      "record_sha256": "2105c9153f1b6058c28d5211315404d6c4e4b67fbc1798daabf8c103e5c00234"
+      "record_sha256": "2105c9153f1b6058c28d5211315404d6c4e4b67fbc1798daabf8c103e5c00234",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42530085",
-      "record_sha256": "96989429089dd5a6d2c2228be1671043c8bad758b37e6af95ff00403cbc2ead4"
+      "record_sha256": "96989429089dd5a6d2c2228be1671043c8bad758b37e6af95ff00403cbc2ead4",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42592018",
-      "record_sha256": "a78a9c6b0aea7924a139888f49747ded76d8b28c94bf356146df0318ae25abe7"
+      "record_sha256": "a78a9c6b0aea7924a139888f49747ded76d8b28c94bf356146df0318ae25abe7",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42596076",
-      "record_sha256": "27efc41e769d34b022ff2fea702ccd0cac69b1d3695383f08e78d9a2bd1f78dd"
+      "record_sha256": "27efc41e769d34b022ff2fea702ccd0cac69b1d3695383f08e78d9a2bd1f78dd",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42602348",
-      "record_sha256": "2737cce0dbfd3462471b9560a9df1ee13bf685628f7c156ada6098953f9c2440"
+      "record_sha256": "2737cce0dbfd3462471b9560a9df1ee13bf685628f7c156ada6098953f9c2440",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42609944",
-      "record_sha256": "82cc09a2501df5aee9c945f4d493331b294d9b6e79fe0c369a877326518bb215"
+      "record_sha256": "82cc09a2501df5aee9c945f4d493331b294d9b6e79fe0c369a877326518bb215",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "pubmed-42621251",
-      "record_sha256": "e11f09ff3709761eb5517af609fc93ec09d217adcbfdb5850f233db99083444b"
+      "record_sha256": "e11f09ff3709761eb5517af609fc93ec09d217adcbfdb5850f233db99083444b",
+      "profile_hash": "a2833cad186e92e6",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     }
   ]
 }

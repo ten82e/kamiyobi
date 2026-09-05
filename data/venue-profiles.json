@@ -25,34 +25,6 @@
           "collected_at": "2026-09-05T09:20:00.000Z"
         },
         {
-          "title": "A5/3 make or break: A massively parallel FPGA architecture for exhaustive key search",
-          "year": 2025,
-          "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
-        },
-        {
-          "title": "Accelerating NTT with RISC-V Vector Extension for Fully Homomorphic Encryption",
-          "year": 2025,
-          "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
-        },
-        {
-          "title": "Adaptive Template Attacks on the Kyber Binomial Sampler",
-          "year": 2025,
-          "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
-        },
-        {
-          "title": "AETHER: An Ultra-High Throughput and Low Energy Authenticated Encryption Scheme",
-          "year": 2025,
-          "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
-        },
-        {
           "title": "All You Need Is Fault: Zero-Value Attacks on AES and a New λ-Detection M&M",
           "year": 2024,
           "source": "dblp",
@@ -67,20 +39,6 @@
           "collected_at": "2026-09-05T09:20:00.000Z"
         },
         {
-          "title": "CHERI-Crypt: Transparent Memory Encryption on Capability Architectures",
-          "year": 2025,
-          "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
-        },
-        {
-          "title": "Constant time lattice reduction in dimension 4 with application to SQIsign",
-          "year": 2025,
-          "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
-        },
-        {
           "title": "EstraNet: An Efficient Shift-Invariant Transformer Network for Side-Channel Analysis",
           "year": 2024,
           "source": "dblp",
@@ -88,25 +46,11 @@
           "collected_at": "2026-09-05T09:20:00.000Z"
         },
         {
-          "title": "FalconSign: An Efficient and High-Throughput Hardware Architecture for Falcon Signature Generation",
-          "year": 2025,
-          "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
-        },
-        {
           "title": "Fallen Sanctuary: A Higher-Order and Leakage-Resilient Rekeying Scheme",
           "year": 2024,
           "source": "dblp",
           "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
           "collected_at": "2026-09-05T09:20:00.000Z"
-        },
-        {
-          "title": "FANNG-MPC: Framework for Artificial Neural Networks and Generic MPC",
-          "year": 2025,
-          "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
           "title": "Fast and Accurate: Efficient Full-Domain Functional Bootstrap and Digit Decomposition for Homomorphic Computation",
@@ -292,12 +236,12 @@
         }
       ],
       "prototypes": [
+        "1LUTSensor: Detecting FPGA Voltage Fluctuations using LookUp Tables",
         "A Tale of Snakes and Horses: Amplifying Correlation Power Analysis on Quadratic Maps",
-        "A5/3 make or break: A massively parallel FPGA architecture for exhaustive key search",
-        "Constant time lattice reduction in dimension 4 with application to SQIsign",
         "EstraNet: An Efficient Shift-Invariant Transformer Network for Side-Channel Analysis",
         "GPU Acceleration for FHEW/TFHE Bootstrapping",
         "KyberSlash: Exploiting Secret-Dependent Division Timings in Kyber Implementations",
+        "OPTIMSM: FPGA hardware accelerator for Zero-Knowledge MSM",
         "Quasi-linear masking against SCA and FIA, with cost amortization",
         "TPUXtract: An Exhaustive Hyperparameter Extraction Framework"
       ],
@@ -1348,13 +1292,6 @@
     "icml": {
       "papers": [
         {
-          "title": "A Natural Actor-Critic Framework for Zero-Sum Markov Games",
-          "year": 2025,
-          "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
-        },
-        {
           "title": "A Unified Framework for Learning with Nonlinear Model Classes from Arbitrary Linear Samples",
           "year": 2024,
           "source": "pmlr",
@@ -1367,13 +1304,6 @@
           "source": "pmlr",
           "source_url": "https://proceedings.mlr.press/v235/",
           "collected_at": "2026-09-05T09:20:00.000Z"
-        },
-        {
-          "title": "Active Sampling for Min-Max Fairness",
-          "year": 2025,
-          "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
           "title": "Adaptively Perturbed Mirror Descent for Learning in Games",
@@ -1425,32 +1355,11 @@
           "collected_at": "2026-09-05T09:20:00.000Z"
         },
         {
-          "title": "Deploying Convolutional Networks on Untrusted Platforms Using 2D Holographic Reduced Representations",
-          "year": 2025,
-          "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
-        },
-        {
           "title": "Discovering Bias in Latent Space: An Unsupervised Debiasing Approach",
           "year": 2024,
           "source": "pmlr",
           "source_url": "https://proceedings.mlr.press/v235/",
           "collected_at": "2026-09-05T09:20:00.000Z"
-        },
-        {
-          "title": "Do More Negative Samples Necessarily Hurt In Contrastive Learning?",
-          "year": 2025,
-          "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
-        },
-        {
-          "title": "Do Not Mimic My Voice: Speaker Identity Unlearning for Zero-Shot Text-to-Speech",
-          "year": 2025,
-          "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
           "title": "FrameQuant: Flexible Low-Bit Quantization for Transformers",
@@ -1460,32 +1369,11 @@
           "collected_at": "2026-09-05T09:20:00.000Z"
         },
         {
-          "title": "Gradient Based Clustering",
-          "year": 2025,
-          "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
-        },
-        {
-          "title": "HGOT: Self-supervised Heterogeneous Graph Neural Network with Optimal Transport",
-          "year": 2025,
-          "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
-        },
-        {
-          "title": "Hierarchical Shrinkage: Improving the accuracy and interpretability of tree-based models",
-          "year": 2025,
-          "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
-        },
-        {
           "title": "How Faithful is your Synthetic Data? Sample-level Metrics for Evaluating and Auditing Generative Models",
-          "year": 2025,
+          "year": 2022,
           "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://proceedings.mlr.press/v162/",
+          "collected_at": "2026-09-05T12:30:00.000Z"
         },
         {
           "title": "Improved Differentially Private and Lazy Online Convex Optimization: Lower Regret without Smoothness Requirements",
@@ -1510,10 +1398,10 @@
         },
         {
           "title": "Learning of Cluster-based Feature Importance for Electronic Health Record Time-series",
-          "year": 2025,
+          "year": 2022,
           "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://proceedings.mlr.press/v162/",
+          "collected_at": "2026-09-05T12:30:00.000Z"
         },
         {
           "title": "Learning to Play Atari in a World of Tokens",
@@ -1524,17 +1412,17 @@
         },
         {
           "title": "Neuro-Symbolic Language Modeling with Automaton-augmented Retrieval",
-          "year": 2025,
+          "year": 2022,
           "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://proceedings.mlr.press/v162/",
+          "collected_at": "2026-09-05T12:30:00.000Z"
         },
         {
           "title": "On the Convergence of the Shapley Value in Parametric Bayesian Learning Games",
-          "year": 2025,
+          "year": 2022,
           "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://proceedings.mlr.press/v162/",
+          "collected_at": "2026-09-05T12:30:00.000Z"
         },
         {
           "title": "Optimal Coresets for Low-Dimensional Geometric Median",
@@ -1545,10 +1433,10 @@
         },
         {
           "title": "Optimistic Linear Support and Successor Features as a Basis for Optimal Policy Transfer",
-          "year": 2025,
+          "year": 2022,
           "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://proceedings.mlr.press/v162/",
+          "collected_at": "2026-09-05T12:30:00.000Z"
         },
         {
           "title": "Probabilistic Generating Circuits - Demystified",
@@ -1559,10 +1447,10 @@
         },
         {
           "title": "Proving Theorems using Incremental Learning and Hindsight Experience Replay",
-          "year": 2025,
+          "year": 2022,
           "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://proceedings.mlr.press/v162/",
+          "collected_at": "2026-09-05T12:30:00.000Z"
         },
         {
           "title": "REST: Efficient and Accelerated EEG Seizure Analysis through Residual State Updates",
@@ -1580,10 +1468,10 @@
         },
         {
           "title": "Scalable First-Order Bayesian Optimization via Structured Automatic Differentiation",
-          "year": 2025,
+          "year": 2022,
           "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://proceedings.mlr.press/v162/",
+          "collected_at": "2026-09-05T12:30:00.000Z"
         },
         {
           "title": "Self-supervised Adversarial Purification for Graph Neural Networks",
@@ -1594,17 +1482,17 @@
         },
         {
           "title": "Sharp-MAML: Sharpness-Aware Model-Agnostic Meta Learning",
-          "year": 2025,
+          "year": 2022,
           "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://proceedings.mlr.press/v162/",
+          "collected_at": "2026-09-05T12:30:00.000Z"
         },
         {
           "title": "Structured Stochastic Gradient MCMC",
-          "year": 2025,
+          "year": 2022,
           "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://proceedings.mlr.press/v162/",
+          "collected_at": "2026-09-05T12:30:00.000Z"
         },
         {
           "title": "The Non-linear $F$-Design and Applications to Interactive Learning",
@@ -1615,33 +1503,33 @@
         },
         {
           "title": "Thresholded Lasso Bandit",
-          "year": 2025,
+          "year": 2022,
           "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://proceedings.mlr.press/v162/",
+          "collected_at": "2026-09-05T12:30:00.000Z"
         },
         {
           "title": "Understanding Gradient Descent on the Edge of Stability in Deep Learning",
-          "year": 2025,
+          "year": 2022,
           "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://proceedings.mlr.press/v162/",
+          "collected_at": "2026-09-05T12:30:00.000Z"
         },
         {
           "title": "XAI for Transformers: Better Explanations through Conservative Propagation",
-          "year": 2025,
+          "year": 2022,
           "source": "pmlr",
-          "source_url": "https://proceedings.mlr.press/v267/",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://proceedings.mlr.press/v162/",
+          "collected_at": "2026-09-05T12:30:00.000Z"
         }
       ],
       "prototypes": [
         "A Unified Framework for Learning with Nonlinear Model Classes from Arbitrary Linear Samples",
-        "Active Sampling for Min-Max Fairness",
-        "Adaptively Perturbed Mirror Descent for Learning in Games",
+        "ACPO: A Policy Optimization Algorithm for Average MDPs with Constraints",
+        "Balancing Feature Similarity and Label Variability for Optimal Size-Aware One-shot Subset Selection",
         "CosPGD: an efficient white-box adversarial attack for pixel-wise prediction tasks",
-        "Do More Negative Samples Necessarily Hurt In Contrastive Learning?",
         "Neuro-Symbolic Language Modeling with Automaton-augmented Retrieval",
+        "Probabilistic Generating Circuits - Demystified",
         "REST: Efficient and Accelerated EEG Seizure Analysis through Residual State Updates",
         "XAI for Transformers: Better Explanations through Conservative Propagation"
       ],
@@ -3859,5 +3747,5 @@
       }
     }
   },
-  "profiles_hash": "a582a1eec1ff60cf"
+  "profiles_hash": "aece9b3fe61ee757"
 }
