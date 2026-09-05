@@ -43,7 +43,40 @@ jobs:
       - name: Build source data
         run: node src/cli.ts build --out public --no-embeddings --now "$BUILD_NOW"
       - name: Reverify due official deadlines
-        run: node src/cli.ts reverify --due --data public/data.json --ledger data/verification-ledger.json --resolutions data/reverification-resolutions.json --evidence data/evidence/blobs --now "$BUILD_NOW"
+        # resolutions (data/reverification-resolutions.json) と evidence (data/evidence/blobs)
+        # は新 CLI の既定パス。run は source-unreachable / retryable / parser-failed が
+        # 1 件でもあると exit 1 を返すが、それらは台帳へ記録済みの通常運転なので、統計
+        # JSON が出た完走は warning に落とす。例外が 2 つ: (1) 統計すら出ない失敗
+        # (クラッシュ・入力台帳の破損) は step 失敗。(2) 取得失敗 (unreachable+retryable)
+        # が処理数の 9 割以上を占める夜は上流一斉障害・runner 網断の疑いが強く、全締切を
+        # unreachable として固定した台帳で data PR を出さないよう step 失敗にする。
+        # run 自身が書いた台帳の整合は次段 build の loadVerificationLedger が fail-closed に
+        # 検査する。
+        run: |
+          set +e
+          node src/cli.ts reverify run --due --data public/data.json --ledger data/verification-ledger.json --now "$BUILD_NOW" | tee /tmp/kamiyobi-reverify.json
+          rc=${PIPESTATUS[0]}
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            set +e
+            node -e '
+              const s = JSON.parse(require("node:fs").readFileSync("/tmp/kamiyobi-reverify.json", "utf8")).statuses;
+              if (!s || !Object.keys(s).length) process.exit(1);
+              const bad = (s["source-unreachable"] ?? 0) + (s["retryable"] ?? 0);
+              const total = Object.values(s).reduce((sum, count) => sum + count, 0);
+              if (total >= 10 && bad / total >= 0.9) process.exit(2);
+            ' 2>/dev/null
+            verdict=$?
+            set -e
+            if [ "$verdict" -eq 0 ]; then
+              echo "::warning::reverify recorded per-page failures (see statuses above); ledger updated, retry is scheduled"
+            elif [ "$verdict" -eq 2 ]; then
+              echo "::error::reverify: fetch failures dominate this run (suspected upstream or network outage); not persisting a mass-unreachable ledger"
+              exit 1
+            else
+              exit "$rc"
+            fi
+          fi
       - name: Build source data with refreshed verification
         run: node src/cli.ts build --out public --no-embeddings --now "$BUILD_NOW"
       - name: Validate generated production data

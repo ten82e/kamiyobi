@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { load as loadYaml } from "js-yaml";
 import { describe, expect, it } from "vitest";
+import { parseArgs } from "../src/cli.ts";
 
 type Step = { name?: string; run?: string; uses?: string; with?: Record<string, unknown> };
 type Workflow = {
@@ -86,12 +87,25 @@ describe("workflow separation", () => {
     expect(String(step(generated!, "Discover candidates").run)).toContain(
       "--archive-out data/discovered_candidates.archive.yaml",
     );
-    expect(String(step(generated!, "Reverify due official deadlines").run)).toContain(
-      "--ledger data/verification-ledger.json",
-    );
-    expect(String(step(generated!, "Reverify due official deadlines").run)).toContain(
-      "--evidence data/evidence/blobs",
-    );
+    const reverifyRun = String(step(generated!, "Reverify due official deadlines").run);
+    // 実行可能契約: workflow の CLI 呼び出しを実際のパーサに通す。#680 の CLI 改編後も
+    // workflow が旧フラグのまま残り unknown option (exit 2) で夜間が全滅した事故の再発防止。
+    const commandLine = reverifyRun
+      .split("\n")
+      .map((line) => line.trim())
+      .find((line) => line.startsWith("node src/cli.ts reverify"));
+    expect(commandLine).toBeTruthy();
+    const argv = commandLine!
+      .split("|")[0]!
+      .trim()
+      .split(/\s+/)
+      .slice(2)
+      .map((token) => (token === '"$BUILD_NOW"' ? "2026-08-09T00:00:00Z" : token));
+    const parsedReverify = parseArgs(argv);
+    expect(parsedReverify.command).toBe("reverify");
+    expect(parsedReverify.reverifyAction ?? "run").toBe("run");
+    expect(parsedReverify.due).toBe(true);
+    expect(parsedReverify.ledger).toBe("data/verification-ledger.json");
     expect(String(step(generated!, "Build source data with refreshed verification").run)).toContain(
       "--no-embeddings",
     );
