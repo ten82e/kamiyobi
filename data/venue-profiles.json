@@ -77,15 +77,15 @@
           "title": "Fault Attacks on ECC Signature Verification",
           "year": 2025,
           "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://dblp.org/db/journals/tches/tches2025.html",
+          "collected_at": "2026-09-05T12:50:00.000Z"
         },
         {
           "title": "FusionMSM: A Collision-Free and Arithmetic-Optimized FPGA-based Accelerator for Multi-Scalar Multiplication",
           "year": 2025,
           "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://dblp.org/db/journals/tches/tches2025.html",
+          "collected_at": "2026-09-05T12:50:00.000Z"
         },
         {
           "title": "Gadget-based Masking of Streamlined NTRU Prime Decapsulation in Hardware",
@@ -98,8 +98,8 @@
           "title": "GPU Acceleration for FHEW/TFHE Bootstrapping",
           "year": 2025,
           "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://dblp.org/db/journals/tches/tches2025.html",
+          "collected_at": "2026-09-05T12:50:00.000Z"
         },
         {
           "title": "High-assurance zeroization",
@@ -112,8 +112,8 @@
           "title": "KyberSlash: Exploiting Secret-Dependent Division Timings in Kyber Implementations",
           "year": 2025,
           "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://dblp.org/db/journals/tches/tches2025.html",
+          "collected_at": "2026-09-05T12:50:00.000Z"
         },
         {
           "title": "Low Cost and Precise Jitter Measurement Method for TRNG Entropy Assessment",
@@ -133,29 +133,29 @@
           "title": "New Quantum Cryptanalysis of Binary Elliptic Curves",
           "year": 2025,
           "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://dblp.org/db/journals/tches/tches2025.html",
+          "collected_at": "2026-09-05T12:50:00.000Z"
         },
         {
           "title": "OPTIMSM: FPGA hardware accelerator for Zero-Knowledge MSM",
           "year": 2025,
           "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://dblp.org/db/journals/tches/tches2025.html",
+          "collected_at": "2026-09-05T12:50:00.000Z"
         },
         {
           "title": "POTA: A Pipelined Oblivious Transfer Acceleration Architecture for Secure Multi-Party Computation",
           "year": 2025,
           "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://dblp.org/db/journals/tches/tches2025.html",
+          "collected_at": "2026-09-05T12:50:00.000Z"
         },
         {
           "title": "Practical Opcode-based Fault Attack on AES-NI",
           "year": 2025,
           "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://dblp.org/db/journals/tches/tches2025.html",
+          "collected_at": "2026-09-05T12:50:00.000Z"
         },
         {
           "title": "Quantile: Quantifying Information Leakage",
@@ -189,8 +189,8 @@
           "title": "SoK: FHE-Friendly Symmetric Ciphers and Transciphering",
           "year": 2025,
           "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://dblp.org/db/journals/tches/tches2025.html",
+          "collected_at": "2026-09-05T12:50:00.000Z"
         },
         {
           "title": "StaTI: Protecting against Fault Attacks Using Stable Threshold Implementations",
@@ -210,22 +210,22 @@
           "title": "TFHE Gets Real: An Efficient and Flexible Homomorphic Floating-Point Arithmetic",
           "year": 2025,
           "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://dblp.org/db/journals/tches/tches2025.html",
+          "collected_at": "2026-09-05T12:50:00.000Z"
         },
         {
           "title": "TPUXtract: An Exhaustive Hyperparameter Extraction Framework",
           "year": 2025,
           "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://dblp.org/db/journals/tches/tches2025.html",
+          "collected_at": "2026-09-05T12:50:00.000Z"
         },
         {
           "title": "Trace Copilot: Automatically Locating Cryptographic Operations in Side-Channel Traces by Firmware Binary Instrumenting",
           "year": 2025,
           "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "source_url": "https://dblp.org/db/journals/tches/tches2025.html",
+          "collected_at": "2026-09-05T12:50:00.000Z"
         },
         {
           "title": "Who Watches the Watchers: Attacking Glitch Detection Circuits",
@@ -1229,11 +1229,11 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
-          "title": "RAPIDSCRIBE: Bandwidth-aware Parallel Snapshots for Distributed Neural-Network Training",
+          "title": "RapidScribe: Bandwidth-aware Parallel Checkpoint for Distributed Neural-Network Training",
           "year": 2025,
           "source": "dblp",
           "source_url": "https://dblp.org/db/conf/icdcs/icdcs2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "collected_at": "2026-09-05T13:20:00.000Z"
         },
         {
           "title": "S2M3: Split-and-Share Multi-Modal Models for Distributed Multi-Task Inference on the Edge",
@@ -1272,13 +1272,13 @@
         }
       ],
       "prototypes": [
+        "ECCheck: Enhancing In-Memory Checkpoint with Erasure Coding in Distributed DNN Training",
         "Efficient Serverless Cold Start: Reducing Library Loading Overhead by Profile-guided Optimization",
         "Elastic Scheduling for Mix-Flow in Time-Sensitive Networking",
         "Enabling Bitcoin Smart Contracts on the Internet Computer",
         "FedLTH: A Privacy-preserving Federated Learning Framework with Model Pruning on Edge Clients",
         "Mahi-Mahi: Low-Latency Asynchronous BFT DAG-Based Consensus",
         "Mast: Efficient Training of Mixture-of-Experts Transformers with Task Pipelining and Ordering",
-        "SOLB: Synchronization-Objective Load Balancing for Distributed DNN Training",
         "Too Clever by Half: Detecting Sampling-based Model Stealing Attacks by Their Own Cleverness"
       ],
       "selection": {
@@ -1873,11 +1873,11 @@
     "nsdi": {
       "papers": [
         {
-          "title": "BCP: A Unified Checkpointing System for Large Foundation Model Development",
+          "title": "ByteCheckpoint: A Unified Checkpointing System for Large Foundation Model Development",
           "year": 2025,
           "source": "dblp",
           "source_url": "https://dblp.org/db/conf/nsdi/nsdi2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "collected_at": "2026-09-05T13:20:00.000Z"
         },
         {
           "title": "Eden: Developer-Friendly Application-Integrated Far Memory",
@@ -1894,11 +1894,11 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
-          "title": "Evolution of Aegis: Fault Diagnosis for AI Model Training Cloud Service in Production",
+          "title": "Evolution of Aegis: Fault Diagnosis for AI Model Training Service in Production",
           "year": 2025,
           "source": "dblp",
           "source_url": "https://dblp.org/db/conf/nsdi/nsdi2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "collected_at": "2026-09-05T13:20:00.000Z"
         },
         {
           "title": "GPU-Disaggregated Serving for Deep Learning Recommendation Models at Scale",
@@ -1922,11 +1922,11 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
-          "title": "Mowgli: A Passive Approach to Learning Real-Time Rate Control for Video Conferencing",
+          "title": "Mowgli: Passively Learned Rate Control for Real-Time Video",
           "year": 2025,
           "source": "dblp",
           "source_url": "https://dblp.org/db/conf/nsdi/nsdi2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "collected_at": "2026-09-05T13:20:00.000Z"
         },
         {
           "title": "ONCache: A Cache-Based Low-Overhead Container Overlay Network",
@@ -1964,11 +1964,11 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
-          "title": "SimAI: Unifying Architecture Design and Performance Tuning for Large-Scale Large Language Model Training",
+          "title": "SimAI: Unifying Architecture Design and Performance Tuning for Large-Scale Large Language Model Training with Scalability and Precision",
           "year": 2025,
           "source": "dblp",
           "source_url": "https://dblp.org/db/conf/nsdi/nsdi2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "collected_at": "2026-09-05T14:40:00.000Z"
         },
         {
           "title": "SuperServe: Fine-Grained Inference Serving for Unpredictable Workloads",
@@ -1986,14 +1986,14 @@
         }
       ],
       "prototypes": [
-        "BCP: A Unified Checkpointing System for Large Foundation Model Development",
         "Efficient Direct-Connect Topologies for Collective Communications",
+        "Evolution of Aegis: Fault Diagnosis for AI Model Training Service in Production",
+        "Holmes: Localizing Irregularities in LLM Training with Mega-scale GPU Clusters",
         "Making Serverless Pay-For-Use a Reality with Leopard",
-        "Mowgli: A Passive Approach to Learning Real-Time Rate Control for Video Conferencing",
-        "OptiReduce: Resilient and Tail-Optimal AllReduce for Distributed Deep Learning in the Cloud",
+        "Mowgli: Passively Learned Rate Control for Real-Time Video",
+        "Optimizing RLHF Training for Large Language Models with Stage Fusion",
         "Preventing Network Bottlenecks: Accelerating Datacenter Services with Hotspot-Aware Placement for Compute and Storage",
-        "SimAI: Unifying Architecture Design and Performance Tuning for Large-Scale Large Language Model Training",
-        "White-Boxing RDMA with Packet-Granular Software Control"
+        "SuperServe: Fine-Grained Inference Serving for Unpredictable Workloads"
       ],
       "selection": {
         "method": "fixed-title-embedding-k-medoids",
@@ -2062,11 +2062,11 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
-          "title": "KPerfIR: Towards an Open and Compiler-centric Ecosystem for GPU Kernel Performance Tooling",
+          "title": "KPerfIR: Towards a Open and Compiler-centric Ecosystem for GPU Kernel Performance Tooling on Modern AI Workloads",
           "year": 2025,
           "source": "dblp",
           "source_url": "https://dblp.org/db/conf/osdi/osdi2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "collected_at": "2026-09-05T13:20:00.000Z"
         },
         {
           "title": "Neutrino: Fine-grained GPU Kernel Profiling via Programmable Probing",
@@ -2104,11 +2104,11 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
-          "title": "XQueue: Preemptive Scheduling for Diverse XPUs using Multi-level Hardware Model",
+          "title": "XSched: Preemptive Scheduling for Diverse XPUs",
           "year": 2025,
           "source": "dblp",
           "source_url": "https://dblp.org/db/conf/osdi/osdi2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "collected_at": "2026-09-05T13:20:00.000Z"
         },
         {
           "title": "ZEN: Empowering Distributed Training with Sparsity-driven Data Synchronization",
@@ -2120,10 +2120,10 @@
       ],
       "prototypes": [
         "Achieving Low-Latency Graph-Based Vector Search via Aligning Best-First Search Algorithm with SSD",
-        "BlitzScale: Fast and Live Large Model Autoscaling with O(1) Host Caching",
         "DecDEC: A Systems Approach to Advancing Low-Bit LLM Quantization",
+        "Decouple and Decompose: Scaling Resource Allocation with DeDe",
         "Fork in the Road: Reflections and Optimizations for Cold Start Latency in Production Serverless Systems",
-        "KPerfIR: Towards an Open and Compiler-centric Ecosystem for GPU Kernel Performance Tooling",
+        "KPerfIR: Towards a Open and Compiler-centric Ecosystem for GPU Kernel Performance Tooling on Modern AI Workloads",
         "Tigon: A Distributed Database for a CXL Pod",
         "Training with Confidence: Catching Silent Errors in Deep Learning Training with Automated Proactive Checks",
         "Understanding Stragglers in Large Model Training Using What-if Analysis"
@@ -2916,13 +2916,6 @@
     "sosp": {
       "papers": [
         {
-          "title": "A Programmable Serving System for Emerging LLM Applications",
-          "year": 2025,
-          "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/sosp/sosp2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
-        },
-        {
           "title": "Aegaeon: Effective GPU Pooling for Concurrent LLM Serving on the Market",
           "year": 2025,
           "source": "dblp",
@@ -2945,13 +2938,6 @@
         },
         {
           "title": "cache_ext: Customizing the Page Cache with eBPF",
-          "year": 2025,
-          "source": "dblp",
-          "source_url": "https://dblp.org/db/conf/sosp/sosp2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
-        },
-        {
-          "title": "Concurrent OS-level GPU Checkpoint and Restore with Validated Speculation",
           "year": 2025,
           "source": "dblp",
           "source_url": "https://dblp.org/db/conf/sosp/sosp2025.html",
@@ -3007,11 +2993,11 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
-          "title": "Managing Scalable Direct Storage Accesses for GPUs",
+          "title": "Managing Scalable Direct Storage Accesses for GPUs with GoFS",
           "year": 2025,
           "source": "dblp",
           "source_url": "https://dblp.org/db/conf/sosp/sosp2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "collected_at": "2026-09-05T14:40:00.000Z"
         },
         {
           "title": "Moirai: Optimizing Placement of Data and Compute in Hybrid Clouds",
@@ -3035,14 +3021,21 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
-          "title": "Spirit: Fair Allocation of Interdependent Resources in Remote Memory Systems",
+          "title": "PhoenixOS: Concurrent OS-level GPU Checkpoint and Restore with Validated Speculation",
           "year": 2025,
           "source": "dblp",
           "source_url": "https://dblp.org/db/conf/sosp/sosp2025.html",
-          "collected_at": "2026-08-19T15:05:00.000Z"
+          "collected_at": "2026-09-05T14:40:00.000Z"
         },
         {
-          "title": "Supporting POSIX fork Within a Single-Address-Space OS",
+          "title": "Pie: A Programmable Serving System for Emerging LLM Applications",
+          "year": 2025,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sosp/sosp2025.html",
+          "collected_at": "2026-09-05T14:40:00.000Z"
+        },
+        {
+          "title": "Spirit: Fair Allocation of Interdependent Resources in Remote Memory Systems",
           "year": 2025,
           "source": "dblp",
           "source_url": "https://dblp.org/db/conf/sosp/sosp2025.html",
@@ -3054,6 +3047,13 @@
           "source": "dblp",
           "source_url": "https://dblp.org/db/conf/sosp/sosp2025.html",
           "collected_at": "2026-08-19T15:05:00.000Z"
+        },
+        {
+          "title": "μFork: Supporting POSIX fork Within a Single-Address-Space OS",
+          "year": 2025,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sosp/sosp2025.html",
+          "collected_at": "2026-09-05T14:40:00.000Z"
         }
       ],
       "prototypes": [
@@ -3747,5 +3747,5 @@
       }
     }
   },
-  "profiles_hash": "aece9b3fe61ee757"
+  "profiles_hash": "1f03ac8fd2719226"
 }

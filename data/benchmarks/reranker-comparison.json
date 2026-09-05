@@ -20,12 +20,12 @@
       "top5_ece": 0.206853
     },
     "heldout": {
-      "mrr": 0.422379,
-      "recall_at_5": 0.625,
-      "top1_brier": 0.198699,
-      "top5_brier": 0.373748,
-      "top1_ece": 0.064974,
-      "top5_ece": 0.389974
+      "mrr": 0.40285,
+      "recall_at_5": 0.5375,
+      "top1_brier": 0.200329,
+      "top5_brier": 0.323301,
+      "top1_ece": 0.06715,
+      "top5_ece": 0.30465
     },
     "negative": {
       "abstention_rate": 1,
@@ -45,12 +45,12 @@
       "top5_ece": 0.194353
     },
     "heldout": {
-      "mrr": 0.421931,
-      "recall_at_5": 0.6,
-      "top1_brier": 0.198699,
-      "top5_brier": 0.359173,
-      "top1_ece": 0.064974,
-      "top5_ece": 0.364974
+      "mrr": 0.403059,
+      "recall_at_5": 0.5375,
+      "top1_brier": 0.200329,
+      "top5_brier": 0.323301,
+      "top1_ece": 0.06715,
+      "top5_ece": 0.30465
     },
     "negative": {
       "abstention_rate": 1,
@@ -58,8 +58,8 @@
     }
   },
   "acceptance": {
-    "heldout_mrr_non_degraded": false,
-    "heldout_recall_at_5_non_degraded": false,
+    "heldout_mrr_non_degraded": true,
+    "heldout_recall_at_5_non_degraded": true,
     "negative_false_positive_rate_non_degraded": true,
     "calibration_non_degraded": true,
     "calibration_checks": {
@@ -70,7 +70,7 @@
     }
   },
   "decision": "keep-v3",
-  "candidate_rejected_reason": "heldout acceptance gate: MRR -0.000448 / Recall@5 -0.0250 vs production (noise-level; kept incumbent v3 per non-degradation policy)",
+  "candidate_rejected_reason": "deferred promotion: v4 leads only oof_mrr (+0.00247; oof recall tied) and heldout MRR by +0.000209 (noise-level); dev Recall@5 degrades (0.425 vs 0.4375) and the calibration gates cannot distinguish the two models (bench confidence is not Platt-calibrated). Kept incumbent v3; promotion decision is #687",
   "artifact": {
     "path": "data/recommender-reranker.json",
     "algorithm_revision": "l2-pairwise-logistic-reranker-v3-grouped-cv",
