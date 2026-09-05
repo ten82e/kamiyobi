@@ -217,7 +217,9 @@ export type CandidateArchiveDecision =
   | "out-of-scope"
   | "already-curated"
   | "no-official-evidence"
-  | "no-reviewable-deadline";
+  | "no-reviewable-deadline"
+  | "rejected"
+  | "superseded";
 
 export interface CandidateArchiveRecord {
   fingerprint: string;
@@ -731,8 +733,22 @@ export function splitCandidateLifecycle(
   candidates: Candidate[] | null | undefined,
   now: Date,
   tracked: Set<string> = new Set(),
+  previousArchive: CandidateArchiveRecord[] | null | undefined = undefined,
 ): CandidateLifecycleSplit {
   const safeNow = Number.isNaN(now.getTime()) ? new Date() : now;
+  // 判定が変わっていないレコードは前回の last_reviewed を温存する。毎回再スタンプすると
+  // 実行のたびに archive 全件が diff になり、夜間 data PR の実質変更が埋もれる。
+  const previousReviewed = new Map(
+    (previousArchive ?? [])
+      // 手で編集された archive.json の破損要素 (null 等) でクラッシュしない。
+      .filter(
+        (record): record is CandidateArchiveRecord => Boolean(record) && typeof record === "object",
+      )
+      .map((record) => [
+        `${record.fingerprint}\u0000${record.decision}\u0000${record.source_url_hash}`,
+        record.last_reviewed,
+      ]),
+  );
   const sorted = [...(candidates ?? [])]
     .map((candidate) => recordCandidate(candidate))
     .sort(candidateSort);
@@ -747,36 +763,48 @@ export function splitCandidateLifecycle(
     const duplicate = seen.has(`${normalizedTitle}\0${candidateYear(candidate) ?? ""}`);
     if (normalizedTitle) seen.add(`${normalizedTitle}\0${candidateYear(candidate) ?? ""}`);
     const date = candidateReviewDate(candidate);
-    const decision: CandidateArchiveDecision | null = candidateIsTracked(candidate, tracked)
-      ? "already-curated"
-      : duplicate
-        ? "duplicate"
-        : !DISCOVERY_CATEGORIES.has(
-              candidate.categories.find((category) => DISCOVERY_CATEGORIES.has(category)) ?? "",
-            )
-          ? "out-of-scope"
-          : !candidateHasOfficialUrl(candidate)
-            ? "no-official-evidence"
-            : !date
-              ? "no-reviewable-deadline"
-              : date.getTime() < safeNow.getTime()
-                ? "expired"
-                : null;
+    // status: rejected (人手の却下) / superseded (別候補へ置換) は終端状態。
+    // 機械導出の判定より優先し、レビュー待ち行列 (active) へ戻さない。
+    const decision: CandidateArchiveDecision | null =
+      candidate.status === "rejected"
+        ? "rejected"
+        : candidate.status === "superseded"
+          ? "superseded"
+          : candidateIsTracked(candidate, tracked)
+            ? "already-curated"
+            : duplicate
+              ? "duplicate"
+              : !DISCOVERY_CATEGORIES.has(
+                    candidate.categories.find((category) => DISCOVERY_CATEGORIES.has(category)) ??
+                      "",
+                  )
+                ? "out-of-scope"
+                : !candidateHasOfficialUrl(candidate)
+                  ? "no-official-evidence"
+                  : !date
+                    ? "no-reviewable-deadline"
+                    : date.getTime() < safeNow.getTime()
+                      ? "expired"
+                      : null;
     if (decision) {
+      const fingerprint =
+        candidate.id ??
+        candidateFingerprint({
+          source: candidateSource(candidate),
+          sourceItemId: candidateSourceItemId(candidate, candidateSource(candidate)),
+          normalizedTitle: normalizeCandidateTitle(candidate.title || candidate.full_name),
+          targetYear: candidateYear(candidate),
+        });
+      const sourceUrlHash = createHash("sha256")
+        .update(candidate.link || candidate.evidence_url || "")
+        .digest("hex");
       archive.push({
-        fingerprint:
-          candidate.id ??
-          candidateFingerprint({
-            source: candidateSource(candidate),
-            sourceItemId: candidateSourceItemId(candidate, candidateSource(candidate)),
-            normalizedTitle: normalizeCandidateTitle(candidate.title || candidate.full_name),
-            targetYear: candidateYear(candidate),
-          }),
+        fingerprint,
         decision,
-        last_reviewed: safeNow.toISOString(),
-        source_url_hash: createHash("sha256")
-          .update(candidate.link || candidate.evidence_url || "")
-          .digest("hex"),
+        last_reviewed:
+          previousReviewed.get(`${fingerprint}\u0000${decision}\u0000${sourceUrlHash}`) ??
+          safeNow.toISOString(),
+        source_url_hash: sourceUrlHash,
       });
     } else {
       active.push(candidate);
@@ -1813,29 +1841,12 @@ export class NicheDiscoverer {
     }
 
     // 9. Known niche candidate registry (fallback / curated candidates)
+    // 注意: ここへ足す seed は実在確認済みの会場に限り、date_text をテンプレートで
+    // 合成しない (年を差し込んだ架空の締切は「公式で裏が取れた日付だけ」の契約に反し、
+    // 年が変わるたび新 id でレビュー待ちへ湧き続ける)。resound (ドメイン未解決・実在の
+    // 痕跡なし) と netpl (URL 404・2019 以降の開催記録なし) は 2026-09-06 の検証で
+    // 除去した。復活の際は実 CFP の観測に基づいて discovery ソース経由で拾い直すこと。
     const curated = [
-      makeCandidate({
-        key: "resound",
-        title: "RESOUND",
-        full_name: "International Workshop on Resilient Systems and Dependable Operating Systems",
-        link: "https://www.resound-workshop.org/",
-        categories: ["systems", "security"],
-        tags: ["niche", "workshop"],
-        place: "Europe",
-        date_text: `September 14, ${minYear}`,
-        year: minYear,
-      }),
-      makeCandidate({
-        key: "netpl",
-        title: "NetPL",
-        full_name: "Workshop on Networking and Programming Languages",
-        link: "https://netpl.github.io/",
-        categories: ["networking", "systems"],
-        tags: ["niche", "workshop"],
-        place: "Virtual",
-        date_text: `October 10, ${minYear}`,
-        year: minYear,
-      }),
       makeCandidate({
         key: "taco-special",
         title: "ACM TACO Special Issues",

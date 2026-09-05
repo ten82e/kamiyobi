@@ -477,9 +477,18 @@ describe("discovery lifecycle split", () => {
     const archive = JSON.parse(
       readFileSync(join(REPO_ROOT, "data", "discovery", "archive.json"), "utf8"),
     ) as { lifecycle: string; records: Array<Record<string, string>> };
-    expect(active.candidates.length).toBeGreaterThan(0);
+    // active はレビュー待ちが捌けていれば空になりうる (0 件は正当な状態)。
+    // 真の不変条件: registry の全候補は active と archive にちょうど一度ずつ分配される。
+    const registry = parseCandidateRegistry(
+      loadYaml(readFileSync(join(REPO_ROOT, "data", "discovered_candidates.yaml"), "utf8")),
+    );
+    expect(active.candidates.length + archive.records.length).toBe(registry.candidates.length);
+    const activeIds = new Set(active.candidates.map((candidate) => candidate.id));
+    const archiveFingerprints = new Set(archive.records.map((record) => record.fingerprint));
+    expect(archiveFingerprints.size).toBe(archive.records.length);
+    for (const id of activeIds) expect(archiveFingerprints.has(String(id))).toBe(false);
     expect(archive.lifecycle).toBe("archive");
-    expect(archive.records.length).toBeGreaterThan(active.candidates.length);
+    expect(archive.records.length).toBeGreaterThan(0);
     for (const record of archive.records) {
       expect(Object.keys(record).sort()).toEqual([
         "decision",
@@ -510,6 +519,84 @@ describe("discovery lifecycle split", () => {
     const split = splitCandidateLifecycle([candidate], new Date("2026-09-01T00:00:00Z"));
     expect(split.active).toHaveLength(1);
     expect(split.archive).toHaveLength(0);
+  });
+
+  it("archives a rejected candidate even when it looks otherwise reviewable", () => {
+    // 人手で却下した候補 (登録 URL が死んでいる等) が active のレビュー待ち行列へ
+    // 戻り続けないこと。status: rejected は機械導出の判定より優先する。
+    const candidate: Candidate = {
+      key: "dead-workshop",
+      title: "Dead Workshop",
+      full_name: "Dead Workshop",
+      link: "https://dead.example/",
+      categories: ["systems"],
+      tags: [],
+      source_type: "conference",
+      evidence_url: "",
+      status: "rejected",
+      discovered_at: "2026-09-01T00:00:00Z",
+      date_text: "2099-01-01",
+      place: "",
+      deadlines: [],
+    };
+    const split = splitCandidateLifecycle([candidate], new Date("2026-09-01T00:00:00Z"));
+    expect(split.active).toHaveLength(0);
+    expect(split.archive).toHaveLength(1);
+    expect(split.archive[0]).toMatchObject({ decision: "rejected" });
+    // superseded も同じ終端状態としてレビュー待ちへ戻さない。
+    const superseded = splitCandidateLifecycle(
+      [{ ...candidate, status: "superseded" }],
+      new Date("2026-09-01T00:00:00Z"),
+    );
+    expect(superseded.active).toHaveLength(0);
+    expect(superseded.archive[0]).toMatchObject({ decision: "superseded" });
+    // 手編集で破損した前回 archive (null 要素) でもクラッシュしない。
+    const survived = splitCandidateLifecycle(
+      [candidate],
+      new Date("2026-09-02T00:00:00Z"),
+      new Set(),
+      [null as unknown as (typeof split.archive)[number], ...split.archive],
+    );
+    expect(survived.archive[0]).toMatchObject({ last_reviewed: "2026-09-01T00:00:00.000Z" });
+  });
+
+  it("preserves last_reviewed for unchanged archive records across runs", () => {
+    // 毎回再スタンプすると実行のたびに archive 全件が diff になり、
+    // 夜間 data PR の実質変更が埋もれる。判定が変わった記録だけ再スタンプする。
+    const candidate: Candidate = {
+      key: "scoped-out",
+      title: "Scoped Out",
+      full_name: "Scoped Out",
+      link: "https://scoped.example/",
+      categories: ["unknown-category"],
+      tags: [],
+      source_type: "conference",
+      evidence_url: "",
+      status: "discovered",
+      discovered_at: "2026-09-01T00:00:00Z",
+      date_text: "2099-01-01",
+      place: "",
+      deadlines: [],
+    };
+    const first = splitCandidateLifecycle([candidate], new Date("2026-09-01T00:00:00Z"));
+    expect(first.archive[0]?.last_reviewed).toBe("2026-09-01T00:00:00.000Z");
+    const second = splitCandidateLifecycle(
+      [candidate],
+      new Date("2026-09-06T00:00:00Z"),
+      new Set(),
+      first.archive,
+    );
+    expect(second.archive[0]?.last_reviewed).toBe("2026-09-01T00:00:00.000Z");
+    const changed = splitCandidateLifecycle(
+      [{ ...candidate, status: "rejected" }],
+      new Date("2026-09-06T00:00:00Z"),
+      new Set(),
+      first.archive,
+    );
+    expect(changed.archive[0]).toMatchObject({
+      decision: "rejected",
+      last_reviewed: "2026-09-06T00:00:00.000Z",
+    });
   });
 });
 
