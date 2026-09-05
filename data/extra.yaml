@@ -4250,7 +4250,8 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-24', precision: date-only}
 
-  # 2026-08-31: https://www.admit2026.net/ — paper submission 9/20、会期 10/16-18。
+  # 2026-09-05: 9/20 単独への訂正は根拠サイト www.admit2026.net が検証不能となり撤回。
+  # 検証可能な easychair CFP (abstract 9/20 + submission 9/30) に揃える (manual.yaml と同一)。
   - key: admit-2026
     title: ADMIT 2026
     full_name: 2026 5th International Conference on Algorithms, Data Mining, and Information Technology
@@ -4268,12 +4269,14 @@ conferences:
         event_start: '2026-10-16'
         event_end: '2026-10-18'
         deadlines:
-          - kind: paper
-            label: Paper submission deadline
+          - kind: abstract
+            label: Abstract registration deadline
             date: '2026-09-20'
             precision: date-only
-            superseded_deadlines:
-              - {value: '2026-09-30', precision: date-only, source: https://easychair.org/cfp/admit2026, evidenceRef: https://easychair.org/cfp/admit2026, status: superseded, supersededBy: 'admit-2026|admit-202626|paper|1|', reason: manual-resolution, supersededAt: '2026-08-31T00:00:00Z'}
+          - kind: paper
+            label: Submission deadline
+            date: '2026-09-30'
+            precision: date-only
 
   - key: bdaa-2026
     title: BDAA' 2026

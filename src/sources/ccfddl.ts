@@ -18,7 +18,6 @@ import {
   parseInstant,
   refineKindWithLabel,
   slug,
-  supersededDeadlinesOf,
   warn,
 } from "../model.ts";
 import { toStringArray } from "../util.ts";
@@ -28,10 +27,8 @@ const REPO = "ccfddl/ccf-deadlines";
 const REF = "main";
 const NAME = "ccfddl";
 
-function deadlineHistory(value: unknown): Pick<Deadline, "superseded_deadlines"> {
-  const items = supersededDeadlinesOf(value);
-  return items.length ? { superseded_deadlines: items } : {};
-}
+// supersession 台帳は正典 (manual/curated) 専用。上流アグリゲータの
+// superseded_deadlines は取り込まない (gate の自己免責注入を防ぐ)。
 
 // 'abstract deadline' (with a space) exists once upstream.
 const ABSTRACT_KEYS = ["abstract_deadline", "abstract deadline", "abstract"];
@@ -129,7 +126,6 @@ export function deadlinesOf(
             sourceUrl,
             originalValue: String(raw),
           }),
-          ...deadlineHistory(rec.superseded_deadlines ?? rawEdition?.superseded_deadlines),
         });
       }
     }
@@ -177,7 +173,6 @@ export function deadlinesOf(
           sourceUrl,
           originalValue: String(raw),
         }),
-        ...deadlineHistory(rawEdition.superseded_deadlines),
       });
     }
   }

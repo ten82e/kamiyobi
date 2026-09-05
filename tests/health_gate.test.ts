@@ -896,3 +896,218 @@ it("preserves source field evidence without manufacturing manual verification", 
     "curated-manual",
   ]);
 });
+
+it("pairs same-instant track renames but keeps changed-value track renames fail-closed", () => {
+  const previous = health([
+    dateOnly("2026-09-13", {
+      deadline_id: deadlineSlotId("venue", "venue26", "paper", 1, "submission-deadline"),
+    }),
+  ]);
+  // 同時刻の track 改名 (ラベル正規化) は同一締切として通す。
+  const renamed = health([
+    dateOnly("2026-09-13", {
+      deadline_id: deadlineSlotId("venue", "venue26", "paper", 1, "final-submission-deadline"),
+    }),
+  ]);
+  expect(evaluateHealthGate(renamed, previous).ok).toBe(true);
+  // track と値が同時に変わる場合は supersession 台帳なしでは阻止する (fail-closed)。
+  const moved = health([
+    exact("2026-09-17T11:59:00.000Z", {
+      deadline_id: deadlineSlotId("venue", "venue26", "paper", 1, "final-submission-deadline"),
+    }),
+  ]);
+  expect(evaluateHealthGate(moved, previous).ok).toBe(false);
+  // 同時刻でも同 family に複数候補があれば一意性が崩れ、発動しない。
+  const ambiguous = health([
+    dateOnly("2026-09-13", {
+      deadline_id: deadlineSlotId("venue", "venue26", "paper", 1, "track-a"),
+    }),
+    dateOnly("2026-09-13", {
+      deadline_id: deadlineSlotId("venue", "venue26", "paper", 1, "track-b"),
+    }),
+  ]);
+  expect(evaluateHealthGate(ambiguous, ambiguous).ok).toBe(true);
+});
+
+it("pairs edition renames with identical track and enforces the evidence checks", () => {
+  const official = {
+    sourceClass: "official-cfp" as const,
+    sourceUrl: "https://example.test/cfp",
+    sourceRevision: "r1",
+    contentHash: "hash-1",
+    retrievedAt: "2026-08-05T00:00:00Z",
+    verifiedAt: "2026-08-05T00:00:00Z",
+    verifiedFields: ["date"] as Array<"date">,
+  };
+  const previous = health([
+    {
+      deadline_id: deadlineSlotId("venue", "venue26", "paper", 1, ""),
+      at_utc: "2026-09-14T11:59:00.000Z",
+      edition_year: 2026,
+      evidence: [official],
+    },
+  ]);
+  // edition id 改名 + exact→date-only の精度変更は、窓が旧値を包含し
+  // official 証拠 (contentHash + date verified) があるときだけ通る。
+  const renamed = health([
+    {
+      deadline_id: deadlineSlotId("venue", "venue-2026", "paper", 1, ""),
+      local_date: "2026-09-13",
+      edition_year: 2026,
+      evidence: [official],
+    },
+  ]);
+  expect(evaluateHealthGate(renamed, previous).ok).toBe(true);
+  // 同じ改名でも official 証拠が無ければ精度後退として阻止する。
+  const unverified = health([
+    {
+      deadline_id: deadlineSlotId("venue", "venue-2026", "paper", 1, ""),
+      local_date: "2026-09-13",
+      edition_year: 2026,
+    },
+  ]);
+  expect(evaluateHealthGate(unverified, previous).ok).toBe(false);
+  // track が違えば edition 改名としては対応付けず、消失として阻止する。
+  const differentTrack = health([
+    {
+      deadline_id: deadlineSlotId("venue", "venue-2026", "paper", 1, "industry"),
+      local_date: "2026-12-01",
+      edition_year: 2026,
+    },
+  ]);
+  expect(evaluateHealthGate(differentTrack, previous).ok).toBe(false);
+});
+
+it("waives pulls and disappearances only for scoped, fresh supersession ledger entries", () => {
+  const ledger = (extra: Partial<(typeof base)[number]> = {}) => [{ ...base[0], ...extra }];
+  const base = [
+    {
+      value: "2026-09-10",
+      precision: "date-only" as const,
+      reason: "manual-resolution",
+      superseded_at: "2026-08-05T00:00:00Z",
+      superseded_by: deadlineSlotId("venue", "venue26", "paper", 1, ""),
+    },
+  ];
+  const previous = health([dateOnly("2026-09-10")]);
+  // 正典台帳による公式訂正 (過去日への前倒し) は免責される。
+  const corrected = health([dateOnly("2026-08-01", { superseded_values: ledger() })]);
+  expect(evaluateHealthGate(corrected, previous).ok).toBe(true);
+  // 台帳なしの同じ前倒しは阻止する。
+  expect(evaluateHealthGate(health([dateOnly("2026-08-01")]), previous).ok).toBe(false);
+  // 旧値と一致しない台帳では免責しない。
+  expect(
+    evaluateHealthGate(
+      health([dateOnly("2026-08-01", { superseded_values: ledger({ value: "2026-09-11" }) })]),
+      previous,
+    ).ok,
+  ).toBe(false);
+  // 時効切れ (lookback 外) の台帳では免責しない。
+  expect(
+    evaluateHealthGate(
+      health([
+        dateOnly("2026-08-01", {
+          superseded_values: ledger({ superseded_at: "2019-01-01T00:00:00Z" }),
+        }),
+      ]),
+      previous,
+    ).ok,
+  ).toBe(false);
+  // superseded_by が別 edition / 別 kind を指す台帳では免責しない (slot スコープ強制)。
+  expect(
+    evaluateHealthGate(
+      health([
+        dateOnly("2026-08-01", {
+          superseded_values: ledger({
+            superseded_by: deadlineSlotId("venue", "venue27", "paper", 1, ""),
+          }),
+        }),
+      ]),
+      previous,
+    ).ok,
+  ).toBe(false);
+  expect(
+    evaluateHealthGate(
+      health([
+        dateOnly("2026-08-01", {
+          superseded_values: ledger({
+            superseded_by: deadlineSlotId("venue", "venue26", "camera_ready", 1, ""),
+          }),
+        }),
+      ]),
+      previous,
+    ).ok,
+  ).toBe(false);
+  // 旧 slot と kind が異なる消失 (段階統合) は免責しない (kind/round 一致を要求)。
+  const abstractGone = health([
+    {
+      deadline_id: deadlineSlotId("venue", "venue26", "abstract", 1, "abstract-registration"),
+      local_date: "2026-09-10",
+      edition_year: 2026,
+    },
+  ]);
+  expect(
+    evaluateHealthGate(
+      health([dateOnly("2026-09-20", { superseded_values: ledger() })]),
+      abstractGone,
+    ).ok,
+  ).toBe(false);
+  // 別 venue の台帳では免責しない。
+  expect(
+    evaluateHealthGate(
+      health([
+        {
+          deadline_id: deadlineSlotId("other", "other26", "paper", 1, ""),
+          local_date: "2026-08-01",
+          edition_year: 2026,
+          superseded_values: ledger({
+            superseded_by: deadlineSlotId("other", "other26", "paper", 1, ""),
+          }),
+        },
+      ]),
+      previous,
+    ).ok,
+  ).toBe(false);
+});
+
+it("waives a legacy-venue disappearance only through its migration target's scoped ledger", () => {
+  const previous = health([
+    {
+      deadline_id: deadlineSlotId("legacy", "legacy26", "paper", 1, "submission-deadline"),
+      local_date: "2026-09-10",
+      edition_year: 2026,
+    },
+  ]);
+  const currentSlot: HealthDeadlineRef = {
+    deadline_id: deadlineSlotId("venue", "venue26", "paper", 1, ""),
+    local_date: "2026-08-01",
+    edition_year: 2026,
+    superseded_values: [
+      {
+        value: "2026-09-10",
+        precision: "date-only",
+        reason: "manual-resolution",
+        superseded_at: "2026-08-05T00:00:00Z",
+        superseded_by: deadlineSlotId("venue", "venue26", "paper", 1, ""),
+      },
+    ],
+  };
+  const manifest = {
+    schema_version: 1 as const,
+    from_identity_revision: "legacy-public-key",
+    to_identity_revision: "identity-v1",
+    migrations: [
+      {
+        from: { venue: "legacy", edition: "*", kind: "paper", round: 1, track: "*" },
+        to: { venue: "venue", edition: "venue26", kind: "paper", round: 1, track: "" },
+        action: "rename" as const,
+        evidence_ref: "data://legacy-key-redirect/legacy->venue",
+      },
+    ],
+  };
+  expect(
+    evaluateHealthGate({ ...health([currentSlot]), identity_migrations: manifest }, previous).ok,
+  ).toBe(true);
+  // manifest なしでは venue 境界を越えず、従来どおり阻止する。
+  expect(evaluateHealthGate(health([currentSlot]), previous).ok).toBe(false);
+});

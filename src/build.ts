@@ -67,6 +67,7 @@ import {
   fmtUTC,
   isDateOnlyDeadline,
   isExactDeadline,
+  supersededDeadlinesOf,
   warningCounts,
   warningSummaries,
 } from "./model.ts";
@@ -1136,6 +1137,17 @@ export interface HealthDeadlineRef {
   earliest_utc?: string;
   latest_utc?: string;
   evidence?: HealthDeadlineEvidence[];
+  /** 正典の supersession 台帳 (旧値→現行値の公式訂正) を gate へ渡す。 */
+  superseded_values?: HealthSupersededValue[];
+}
+
+export interface HealthSupersededValue {
+  value: string;
+  precision: "exact" | "date-only";
+  reason: string;
+  superseded_at: string;
+  /** 訂正先 slot id。免責をこの slot family に限定するための必須スコープ。 */
+  superseded_by: string;
 }
 
 export type HealthDeadlineEvidence = Pick<
@@ -1343,7 +1355,21 @@ export function healthReport(
         const range = jsonDeadlineRange(deadline);
         if (range === null) continue;
         const [timestamp, latest] = range;
-        if (!estimated && key && latest >= lookbackStart) {
+        const supersededValues = supersededDeadlinesOf(deadline.superseded_deadlines).map(
+          (item) => ({
+            value: item.value,
+            precision: item.precision,
+            reason: item.reason,
+            superseded_at: item.supersededAt,
+            superseded_by: item.supersededBy,
+          }),
+        );
+        // 公式訂正で過去日へ移った締切も、訂正が lookback 内なら gate が旧 slot と
+        // 突き合わせられるよう refs に残す。
+        const recentlySuperseded = supersededValues.some(
+          (item) => Date.parse(item.superseded_at) >= lookbackStart,
+        );
+        if (!estimated && key && (latest >= lookbackStart || recentlySuperseded)) {
           const kind = String(deadline.kind ?? "other").trim() || "other";
           const round = deadlineRound(deadline.round);
           const track = normalizedTrackKey(
@@ -1364,6 +1390,7 @@ export function healthReport(
           if (evidenceHash) ref.evidence_hash = evidenceHash;
           const evidence = healthEvidence(deadline);
           if (evidence.length > 0) ref.evidence = evidence;
+          if (supersededValues.length > 0) ref.superseded_values = supersededValues;
           deadlineRefs.push(ref);
           // A merge conflict is an alternate observed value in this exact slot.
           // Keep it in health refs so the gate cannot silently bless the winner.
@@ -1593,6 +1620,8 @@ function reportDeadlineRefs(report: Partial<HealthReport>): HealthDeadlineRef[] 
     if (typeof rec.evidence_hash === "string" && rec.evidence_hash.trim()) {
       ref.evidence_hash = rec.evidence_hash.trim();
     }
+    const supersededValues = healthSupersededValues(rec.superseded_values);
+    if (supersededValues.length > 0) ref.superseded_values = supersededValues;
     const evidence = healthEvidence(rec);
     if (evidence.length > 0) ref.evidence = evidence;
     if (typeof rec.edition_year === "number" && Number.isInteger(rec.edition_year)) {
@@ -1620,6 +1649,7 @@ interface DeadlineSlot {
   precision: "exact" | "date-only";
   evidence_hash?: string;
   evidence: HealthDeadlineEvidence[];
+  superseded_values: HealthSupersededValue[];
 }
 
 function parseDeadlineSlot(ref: HealthDeadlineRef): DeadlineSlot | null {
@@ -1661,7 +1691,75 @@ function parseDeadlineSlot(ref: HealthDeadlineRef): DeadlineSlot | null {
     precision,
     evidence_hash: ref.evidence_hash,
     evidence: ref.evidence ?? [],
+    superseded_values: ref.superseded_values ?? [],
   };
+}
+
+/** health.json から読み戻した superseded_values を検証付きで正規化する。 */
+function healthSupersededValues(value: unknown): HealthSupersededValue[] {
+  if (!Array.isArray(value)) return [];
+  const parsed: HealthSupersededValue[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+    const rec = item as Record<string, unknown>;
+    const entryValue = String(rec.value ?? "").trim();
+    const precision = rec.precision === "exact" ? "exact" : "date-only";
+    const reason = String(rec.reason ?? "").trim();
+    const supersededAt = String(rec.superseded_at ?? "").trim();
+    const supersededBy = String(rec.superseded_by ?? "").trim();
+    if (!entryValue || !reason || !supersededBy || !Number.isFinite(Date.parse(supersededAt)))
+      continue;
+    parsed.push({
+      value: entryValue,
+      precision,
+      reason,
+      superseded_at: supersededAt,
+      superseded_by: supersededBy,
+    });
+  }
+  return parsed;
+}
+
+/**
+ * 正典の supersession 台帳が、baseline slot の値を現行 slot への公式訂正として
+ * 記録しているか。免責は (1) 旧値の完全一致、(2) superseded_by が台帳を持つ現行
+ * slot 自身の family (venue/edition/kind/round) を指すこと、(3) 旧 slot と現行 slot
+ * の kind/round 一致、(4) 訂正が lookback 内であること、をすべて要求する。
+ */
+function supersededCovers(
+  previous: DeadlineSlot,
+  current: DeadlineSlot,
+  currentTime: number,
+): boolean {
+  if (previous.kind !== current.kind || previous.round !== current.round) return false;
+  return current.superseded_values.some((item) => {
+    const supersededAt = Date.parse(item.superseded_at);
+    if (
+      !Number.isFinite(supersededAt) ||
+      !Number.isFinite(currentTime) ||
+      supersededAt < currentTime - HEALTH_DEADLINE_LOOKBACK_MS ||
+      supersededAt > currentTime + DAY_MS
+    )
+      return false;
+    const target = item.superseded_by.split("|");
+    if (
+      (target[0] ?? "") !== current.venue ||
+      (target[1] ?? "") !== current.edition ||
+      (target[2] ?? "") !== current.kind ||
+      deadlineRound(target[3]) !== current.round
+    )
+      return false;
+    if (item.precision === "date-only") {
+      const window = dateOnlyWindow(item.value);
+      return (
+        window !== null &&
+        window.earliestPossibleUtc.getTime() === previous.earliest_ms &&
+        window.latestPossibleUtc.getTime() === previous.latest_ms
+      );
+    }
+    const at = Date.parse(item.value);
+    return Number.isFinite(at) && at === previous.earliest_ms && at === previous.latest_ms;
+  });
 }
 
 function matchDeadlineSlots(
@@ -1722,6 +1820,77 @@ function matchDeadlineSlots(
     );
     if (candidates.length === 0) return;
     candidates.sort((a, b) => current[a].earliest_ms - current[b].earliest_ms || a - b);
+    const currentIndex = candidates[0];
+    usedPrevious.add(previousIndex);
+    usedCurrent.add(currentIndex);
+    currentUse.set(currentIndex, "exact");
+    pairs.push({ previous: slot, current: current[currentIndex] });
+  });
+
+  // track キー(ラベル由来)の正規化だけが変わった slot も同一締切として扱う —
+  // venue/year/kind/round と時刻が完全一致し、両側で候補が一意な場合に限る。
+  // 同一 venue の同一時刻に track 違いの別締切が同居する場合は一意性が崩れ、
+  // ここではマッチせず従来どおり unmatchedPrevious に残る。
+  const trackFreeKey = (slot: DeadlineSlot): string =>
+    [slot.venue, slot.year, slot.kind, slot.round, slot.earliest_ms, slot.latest_ms].join("\0");
+  // edition id の改名 (例: genai4sg26 → genai4sg-2026) で時刻表現も変わる場合、
+  // track まで一致し両側一意なら同一枠として対応付け、値・精度の検査
+  // (authorizesEarlier / authorizesPrecisionCorrection) へ回す。ペア化は容認ではない。
+  const editionFreeKey = (slot: DeadlineSlot): string =>
+    [slot.venue, slot.year, slot.kind, slot.round, slot.track].join("\0");
+  const currentByTrackFree = new Map<string, number[]>();
+  current.forEach((slot, index) => {
+    if (usedCurrent.has(index)) return;
+    const key = trackFreeKey(slot);
+    const list = currentByTrackFree.get(key) ?? [];
+    list.push(index);
+    currentByTrackFree.set(key, list);
+  });
+  const previousByTrackFree = new Map<string, number[]>();
+  previous.forEach((slot, index) => {
+    if (usedPrevious.has(index)) return;
+    const key = trackFreeKey(slot);
+    const list = previousByTrackFree.get(key) ?? [];
+    list.push(index);
+    previousByTrackFree.set(key, list);
+  });
+  previous.forEach((slot, previousIndex) => {
+    if (usedPrevious.has(previousIndex)) return;
+    const key = trackFreeKey(slot);
+    if ((previousByTrackFree.get(key) ?? []).length !== 1) return;
+    const candidates = (currentByTrackFree.get(key) ?? []).filter(
+      (index) => !usedCurrent.has(index),
+    );
+    if (candidates.length !== 1) return;
+    const currentIndex = candidates[0];
+    usedPrevious.add(previousIndex);
+    usedCurrent.add(currentIndex);
+    currentUse.set(currentIndex, "exact");
+    pairs.push({ previous: slot, current: current[currentIndex] });
+  });
+
+  const currentByEditionFree = new Map<string, number[]>();
+  current.forEach((slot, index) => {
+    if (usedCurrent.has(index)) return;
+    const list = currentByEditionFree.get(editionFreeKey(slot)) ?? [];
+    list.push(index);
+    currentByEditionFree.set(editionFreeKey(slot), list);
+  });
+  const previousByEditionFree = new Map<string, number[]>();
+  previous.forEach((slot, index) => {
+    if (usedPrevious.has(index)) return;
+    const list = previousByEditionFree.get(editionFreeKey(slot)) ?? [];
+    list.push(index);
+    previousByEditionFree.set(editionFreeKey(slot), list);
+  });
+  previous.forEach((slot, previousIndex) => {
+    if (usedPrevious.has(previousIndex)) return;
+    const key = editionFreeKey(slot);
+    if ((previousByEditionFree.get(key) ?? []).length !== 1) return;
+    const candidates = (currentByEditionFree.get(key) ?? []).filter(
+      (index) => !usedCurrent.has(index),
+    );
+    if (candidates.length !== 1) return;
     const currentIndex = candidates[0];
     usedPrevious.add(previousIndex);
     usedCurrent.add(currentIndex);
@@ -1958,6 +2127,9 @@ function semanticDeadlineRegressions(
   );
   for (const pair of pairs) {
     if (pair.current.earliest_ms >= pair.previous.latest_ms) continue;
+    // 正典の supersession 台帳が旧値を現行値への公式訂正として記録している場合、
+    // 前倒し・精度後退は根拠付きの訂正であり配信阻止しない。
+    if (supersededCovers(pair.previous, pair.current, currentTime)) continue;
     if (pair.previous.precision === "exact" && pair.current.precision === "date-only") {
       if (authorizesPrecisionCorrection(pair.previous, pair.current)) continue;
       reasons.push(`deadline precision regressed: ${pair.previous.deadline_id}`);
@@ -1982,6 +2154,22 @@ function semanticDeadlineRegressions(
   for (const slot of unmatchedPrevious) {
     if (slot.latest_ms <= previousTime) continue;
     if (!Number.isFinite(currentTime) || slot.latest_ms > currentTime) {
+      // 消えた旧 slot が同一 venue (または legacy 移行先 venue) の現行 slot の
+      // supersession 台帳に旧値として記録されている場合 (公式訂正による段階統合・
+      // 値の置換) は消失と扱わない。
+      const migratedVenues = new Set(
+        (manifest?.migrations ?? [])
+          .filter((migration) => migration.from.venue === slot.venue)
+          .map((migration) => migration.to.venue),
+      );
+      if (
+        newGroups.slots.some(
+          (candidate) =>
+            (candidate.venue === slot.venue || migratedVenues.has(candidate.venue)) &&
+            supersededCovers(slot, candidate, currentTime),
+        )
+      )
+        continue;
       const identityCandidate = newGroups.slots.some(
         (candidate) =>
           candidate.venue !== slot.venue &&

@@ -386,7 +386,8 @@ describe("canonical local inputs", () => {
     const conferences = parseFile(join(REPO_ROOT, "data", "manual.yaml"));
     const byKey = new Map(conferences.map((conference) => [conference.key, conference]));
     const expected = new Map([
-      ["admit-2026", ["2026-09-30"]],
+      // admit-2026 は 2026-09-05 の再検証で訂正を撤回 (訂正根拠サイトが検証不能となり、
+      // 検証可能な easychair CFP の 2段階締切へ復帰) したため履歴なし。
       ["ccisc-2026", ["2026-08-31"]],
       ["icaici-2026", ["2026-08-28"]],
       ["iccr-2026", ["2026-08-25"]],

@@ -220,6 +220,35 @@ describe("parse_instant", () => {
     expect(embeddedTimezone("2026-09-01 12:00:00")).toBeNull();
   });
 
+  it("never ingests supersession ledgers from upstream aggregators", () => {
+    // supersession 台帳は health gate の免責に使われる正典専用フィールド。
+    // 上流 YAML に superseded_deadlines が現れても取り込まない (自己免責注入の防止)。
+    const ledger = [
+      {
+        value: "2026-10-09T11:59:00.000Z",
+        precision: "exact",
+        source: "https://attacker.example/cfp",
+        status: "superseded",
+        supersededBy: "aamas|aamas27|paper|1|",
+        reason: "official-extension",
+        supersededAt: "2026-09-01T00:00:00Z",
+      },
+    ];
+    const ccfddl = ccfddlDeadlinesOf(
+      [{ deadline: "2026-09-08T11:59:00Z", superseded_deadlines: ledger }],
+      "UTC",
+    );
+    expect(ccfddl).toHaveLength(1);
+    expect(ccfddl[0].superseded_deadlines).toBeUndefined();
+    const aideadlines = aideadlinesDeadlinesOf({
+      deadlines: [{ date: "2026-09-08 11:59:00", type: "paper", superseded_deadlines: ledger }],
+      timezone: "UTC",
+      superseded_deadlines: ledger,
+    });
+    expect(aideadlines.length).toBeGreaterThan(0);
+    for (const deadline of aideadlines) expect(deadline.superseded_deadlines).toBeUndefined();
+  });
+
   it("rejects malformed source collections instead of treating them as empty", () => {
     expect(() => localDeadlinesOf({ deadlines: {} })).toThrow(/deadlines must be an array/);
     expect(() => aideadlinesDeadlinesOf({ deadlines: {} })).toThrow(/deadlines must be an array/);

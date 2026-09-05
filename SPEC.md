@@ -606,9 +606,22 @@ node --experimental-strip-types src/cli.ts evidence [verify|gc] [--dry-run]
 `deadline_id` は `venue|edition_id|kind|round|track` で、`exact` は `at_utc`、`date-only` は `local_date` に値を分離する。
 直近の健全な公開結果との比較では、同一枠の延長は通し、公式根拠のない前倒しと
 根拠のない未来枠の消失だけを配信阻止対象とする。経過した締切の削除と推定値の増減では
-阻止しない。`deadline_refs` は現在未来の確定締切と短い lookback（14 日）に限る。
+阻止しない。`deadline_refs` は現在未来の確定締切と短い lookback（14 日）に限るが、
+正典の supersession 訂正が lookback 内にある締切は過去日でも ref に残し、
+`superseded_values`（旧値・精度・reason・訂正時刻・訂正先 slot id）を添える。
+track キーはラベル由来で変動するため、venue/年/kind/round と時刻が完全一致し
+両側で一意な track 改名は同一締切として対応付ける。track と値が同時に変わる遷移は
+対応付けず、従来どおり fail-closed である。
+正典（manual.yaml / curated.generated.yaml）の `superseded_deadlines` は公式訂正の
+台帳であり、消えた旧 slot・前倒し・精度後退が台帳の旧値と完全一致する場合だけ
+配信阻止を免責する。免責は (1) 台帳を持つ現行 slot 自身の family
+（venue/edition/kind/round）を `supersededBy` が指すこと、(2) 旧 slot と現行 slot の
+kind/round 一致、(3) 訂正時刻が lookback（14 日）内であること、を全て要求する。
+上流アグリゲータ（ccfddl / aideadlines）の `superseded_deadlines` は取り込まない
+（gate の自己免責注入を防ぐ）。
 `identity_migrations` は旧 slot から現行 slot への明示的な写像であり、`rename` と
 `duplicate-collapse`（N 件を 1 件へ統合）だけが対応する slot の消失判定を緩和する。
+legacy venue の消失は、移行先 venue の supersession 台帳によっても免責できる。
 schema version の増加だけでは緩和しない。移行先欠落、同一 source の複数移行先、
 不正な action、循環は fail-closed である。
 
