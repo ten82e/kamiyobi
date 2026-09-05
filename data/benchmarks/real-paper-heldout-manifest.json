@@ -24,11 +24,11 @@
     },
     {
       "paper_id": "heldout-2026-chi-06",
-      "record_sha256": "22ee6f1e2cdcaac800e62ed5426206d55c5d5003e2696a30bd6371d6750dbd44"
+      "record_sha256": "a762f3b9fe33ca056b572595f752b86b324e54902c52667a64a851cecd2c5c64"
     },
     {
       "paper_id": "heldout-2026-chi-07",
-      "record_sha256": "84ba5fc9cd5afc9e703e6c0ccd63e27936b5f27fa60ddf0075bdbfe3a7fd0e37"
+      "record_sha256": "e081e221132082d77dab4bcbac5e47266ecec5336bb8571c75ff1ccf09f1a467"
     },
     {
       "paper_id": "heldout-2026-chi-08",
@@ -60,7 +60,7 @@
     },
     {
       "paper_id": "heldout-2026-cvpr-07",
-      "record_sha256": "9878d84ef9ee2fbdcfab3288ff423ef52d82afd8fa5f36293ac1d9f0b823ca27"
+      "record_sha256": "04ea5832fd5f809a4042bd7aec7c057eade6d80ade12067f4ecf8903e7e866d6"
     },
     {
       "paper_id": "heldout-2026-cvpr-08",
@@ -68,7 +68,7 @@
     },
     {
       "paper_id": "heldout-2026-cvprw-01",
-      "record_sha256": "f11947a66b64d5d9cd4758301fb8eb4f1063b0fd5c49ac4a19dd8d6df3341af2"
+      "record_sha256": "c138837659259f52e9d001eb55beacd22b8f29406a32711a5748f16ac9709687"
     },
     {
       "paper_id": "heldout-2026-cvprw-02",
@@ -84,11 +84,11 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-01",
-      "record_sha256": "03e8ce14b1e97570dcfb2c9f813abdb46eb01dc853e6fe3938c69b4b03768449"
+      "record_sha256": "b02abfbed5fb8f9a9ed460471d9255e80c68ff42c6c36fb3cc59dccd99367a65"
     },
     {
       "paper_id": "heldout-2026-hpdc-02",
-      "record_sha256": "8edf4613eb96fb158b7e38ad3387c62f626dc827db1f5bf3693dc33300cee6f4"
+      "record_sha256": "2cba56303dd33cfa872f3fd63344ee2b30dba2f29f3423da7dc1d925f213eaa4"
     },
     {
       "paper_id": "heldout-2026-hpdc-03",
@@ -104,7 +104,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-06",
-      "record_sha256": "88c63d0a4a35a052a122147de45124034681c56c7e0d2c173e7d39e535563f5b"
+      "record_sha256": "f9a5c7d2954dd6f9a8b1e766028da4fa3f4fb2dc80616d15733b209f8c754174"
     },
     {
       "paper_id": "heldout-2026-hpdc-07",
@@ -112,11 +112,11 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-08",
-      "record_sha256": "a4677f98ea4559b74387ec1dc3ca3771f91afcf10a2d4def29ca843511ac4861"
+      "record_sha256": "70b1300537093a8fac308aa6b6c727bdeef876683342ce1df48180a92fd86cad"
     },
     {
       "paper_id": "heldout-2026-hpdc-09",
-      "record_sha256": "a9560a21546889fc6fbfa99ddb37f3acdd9b473406bfb5e10cc7bea54e39f94f"
+      "record_sha256": "9c3d37b60c429d61fbd05a16c1dc176e405aceeea10eedbd2eaf06d90de60c38"
     },
     {
       "paper_id": "heldout-2026-hpdc-10",
@@ -128,7 +128,7 @@
     },
     {
       "paper_id": "heldout-2026-hpdc-12",
-      "record_sha256": "79db81e37d46abbd44f78eb9a59be5e14f7b2e1fb778be8adaa303d7002eb914"
+      "record_sha256": "be12e15eef4cbac050b30caa64878b1b6be53673c40321102767b0236127d29e"
     },
     {
       "paper_id": "heldout-2026-ipsj-journal-01",
@@ -144,7 +144,7 @@
     },
     {
       "paper_id": "heldout-2026-ipsj-journal-04",
-      "record_sha256": "bab0b971bd4bca7d23ecd03ea4fb70f755da30879d60ebaa1fa776c6ccbc019e"
+      "record_sha256": "03e22031c7f83d3906a332c4fa8b9f3edcdce4149d9f0a4b14014c9292163e04"
     },
     {
       "paper_id": "heldout-2026-nolta-special-01",
@@ -160,7 +160,7 @@
     },
     {
       "paper_id": "heldout-2026-nolta-special-04",
-      "record_sha256": "ef32a72977f784964100d2a94a8ca993d3af6fe17d3f8af8acd28e0b3152b69b"
+      "record_sha256": "70dbb5f0fbe8d926c707bb286a7f97dd4e5202eb661372c0f3f1342cd90a7fc2"
     },
     {
       "paper_id": "heldout-2026-nsdi-01",
@@ -168,11 +168,11 @@
     },
     {
       "paper_id": "heldout-2026-nsdi-02",
-      "record_sha256": "e4e56a583a6a25fe61a2364016c0bf785728e0392e4499d5d3b009563480e16e"
+      "record_sha256": "280c6dfc4611883240d291e55fa5a5073e4135187652cb1d2e54bb0c17ada5b6"
     },
     {
       "paper_id": "heldout-2026-nsdi-03",
-      "record_sha256": "35b13d6292dfbe45e110006e20a6f09840e8a0f4fb2ed7b094dd261db31eadb9"
+      "record_sha256": "a6bf70ac73db625fd9c016dba0726ca047f79e5d71fcdc6b097fcb393b45b1e4"
     },
     {
       "paper_id": "heldout-2026-nsdi-04",
@@ -184,11 +184,11 @@
     },
     {
       "paper_id": "heldout-2026-nsdi-06",
-      "record_sha256": "393c42ccfd84cade52bd6c1b6a6a2c307ce6a75f8b1ff1626b370e7ee72bbca3"
+      "record_sha256": "9bd4fabf1f6407aa5979d0dbd40a7042c3056f4a87b8d42362599d6d29d33b37"
     },
     {
       "paper_id": "heldout-2026-nsdi-07",
-      "record_sha256": "b56a613095d2f22c362c82b530395f9d8bfc23bb67587a42f53df0043694bbec"
+      "record_sha256": "526bde70f2e87d8caa9c09b9874c928e2688ac78992d66615b1e3538fc46cd78"
     },
     {
       "paper_id": "heldout-2026-nsdi-08",
@@ -200,7 +200,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-02",
-      "record_sha256": "a7770e6e141f19fb86428ac65fdf43687593a1c5a6766b5f163aaccf1b61b94b"
+      "record_sha256": "96fb8595972ba45af9bc64cac791ded8a7aed8f25d6e5d0405bf12ceb0e18a35"
     },
     {
       "paper_id": "heldout-2026-sigcomm-03",
@@ -212,7 +212,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-05",
-      "record_sha256": "1ff1e7e31b717fe5d6a25fa0184e6eb2e33821b2393ee331124de2ab06aa20a4"
+      "record_sha256": "b120062eea34d7be3c466c64b541ab7bc6ea95dca1bd56a03bbe9c4f96e1a10f"
     },
     {
       "paper_id": "heldout-2026-sigcomm-06",
@@ -224,7 +224,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-08",
-      "record_sha256": "5fb92968528748c8f7c80ccd368dffd43a36c1e3ab03a06cb41f3484f3c67f36"
+      "record_sha256": "bad72fa96a498014f680b7703517fbf4c4671b0e8cd27e459b520a214034093f"
     },
     {
       "paper_id": "heldout-2026-sigmod-01",
@@ -248,7 +248,7 @@
     },
     {
       "paper_id": "heldout-2026-sigmod-06",
-      "record_sha256": "8a9f2a3fdf8b2aee7271a14f814f49f6ef4ce25bc525c1d17ea30c40ab2b4522"
+      "record_sha256": "65817824b97e24890b2448757040e8d7564f3b6365a31e3682b10ed07087e05e"
     },
     {
       "paper_id": "heldout-2026-sigmod-07",
@@ -276,7 +276,7 @@
     },
     {
       "paper_id": "heldout-2026-stoc-05",
-      "record_sha256": "adb7b62efd964975aedb878f19244e006ebd18e1ccfe26578be4be1d0e000085"
+      "record_sha256": "0062a44ccf54db5cf07d97d32361a19b50bd12ebce2fbce7867bbe047807091b"
     },
     {
       "paper_id": "heldout-2026-stoc-06",

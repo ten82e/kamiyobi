@@ -257,7 +257,10 @@ describe("CI contracts", () => {
       for (const flag of new Set(referenced)) {
         const file = flag.split(/ +/)[1]!;
         if (!/^(?:data|tests)\//.test(file)) continue;
-        expect(existsSync(new URL(`../${file}`, import.meta.url)), `${path} references missing ${file}`).toBe(true);
+        expect(
+          existsSync(new URL(`../${file}`, import.meta.url)),
+          `${path} references missing ${file}`,
+        ).toBe(true);
       }
     }
   });

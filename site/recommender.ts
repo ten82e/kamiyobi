@@ -548,7 +548,9 @@ const Recommender = (() => {
       "ieee acm usenix journal letters transactions magazine association machinery electronics engineers " +
       "special interest group review about applications application computer computing science institute technical " +
       // 会議名によく出るが内容語としては弱い語（Signal Processing 等の誤爆防止）
-      "processing technology advanced modern research recent emerging"
+      "processing technology advanced modern research recent emerging " +
+      // 特集号タイトルの "Special Issue" が special issue を含むクエリを浚う誤爆防止
+      "issue issues"
     ).split(/\s+/),
   );
 

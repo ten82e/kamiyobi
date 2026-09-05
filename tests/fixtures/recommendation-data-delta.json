@@ -1581,7 +1581,8 @@
       "language": "en",
       "venue_kind": "international",
       "input": "title-only",
-      "expected_venue": "icml"
+      "expected_venue": "icml",
+      "acceptable_venues": ["icml", "tsc-llm-service-ecosystems"]
     },
     {
       "id": "case-23-ai-ja",
