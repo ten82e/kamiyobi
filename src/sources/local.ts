@@ -1,6 +1,5 @@
 /**
- * Local source: conferences the upstreams do not carry (data/extra.yaml).
- * Ported from scripts/sources/local.py.
+ * Local source: manual and generated curated data, with extra.yaml as a legacy fallback.
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -16,6 +15,7 @@ import {
   type DeadlineKind,
   deadlineEvidence,
   type Edition,
+  editionIdentityOf,
   embeddedTimezone,
   eventDatePrecisionOf,
   fmtDate,
@@ -27,6 +27,7 @@ import {
   roundOf,
   slug,
   supersededDeadlinesOf,
+  venueIdentityOf,
   warn,
 } from "../model.ts";
 
@@ -34,15 +35,12 @@ export const NAME = "local";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 export const DEFAULT_PATH = join(ROOT, "data", "extra.yaml");
-export const MANUAL_PATH = join(ROOT, "data", "manual.yaml");
-export const CURATED_PATH = join(ROOT, "data", "curated.generated.yaml");
 
 export function localSourcePaths(root = ROOT): string[] {
   const manual = join(root, "data", "manual.yaml");
   const curated = join(root, "data", "curated.generated.yaml");
-  return existsSync(manual) && existsSync(curated)
-    ? [manual, curated]
-    : [join(root, "data", "extra.yaml")];
+  const canonical = [manual, curated].filter((path) => existsSync(path));
+  return canonical.length > 0 ? canonical : [join(root, "data", "extra.yaml")];
 }
 
 const LEGACY_KIND_KEYS: Array<[DeadlineKind, string, string[]]> = [
@@ -68,7 +66,10 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
   const out: Deadline[] = [];
   const sourceUrl = String(raw.source_url ?? raw.sourceUrl ?? raw.link ?? "");
   const parentTz = String(raw.tz ?? raw.timezone ?? "");
-  for (const entry of (raw.deadlines as unknown[] | null) ?? []) {
+  const entries = raw.deadlines;
+  if (entries !== undefined && entries !== null && !Array.isArray(entries))
+    throw new TypeError("local deadlines must be an array");
+  for (const entry of Array.isArray(entries) ? entries : []) {
     if (typeof entry !== "object" || entry === null) continue;
     const rec = entry as Record<string, unknown>;
     const tzRaw = String(rec.tz ?? rec.timezone ?? parentTz);
@@ -242,6 +243,7 @@ export function editionOf(
   const link = String(raw.link ?? "");
   const callIdentity = callIdentityOf(raw.call_identity ?? raw.callIdentity);
   const legacyIds = toStringArray(raw.legacy_ids ?? raw.legacyIds);
+  const declaredIdentity = editionIdentityOf(raw.identity);
   return {
     year,
     edition_id: editionId,
@@ -255,8 +257,9 @@ export function editionOf(
     estimated: Boolean(raw.estimated),
     source: NAME,
     identity: {
-      ...(link ? { officialUrls: [link] } : {}),
-      sourceIds: { [NAME]: editionId },
+      ...declaredIdentity,
+      ...(declaredIdentity?.officialUrls?.length ? {} : link ? { officialUrls: [link] } : {}),
+      sourceIds: { ...declaredIdentity?.sourceIds, [NAME]: editionId },
     },
     ...(callIdentity ? { call_identity: callIdentity } : {}),
     ...(legacyIds.length ? { legacy_ids: legacyIds } : {}),
@@ -273,27 +276,47 @@ export function parseFile(path: string | null | undefined): Conference[] {
     loaded = loadYaml(readFileSync(path, "utf8"));
   } catch (exc) {
     warn(`local: cannot parse ${path}: ${String(exc)}`);
+    if (existsSync(path)) throw new Error(`local: cannot parse ${path}: ${String(exc)}`);
     return [];
   }
-  const conferences =
-    typeof loaded === "object" && loaded !== null
-      ? (((loaded as Record<string, unknown>).conferences as unknown[] | null) ?? [])
-      : [];
+  if (
+    typeof loaded !== "object" ||
+    loaded === null ||
+    !Array.isArray((loaded as Record<string, unknown>).conferences)
+  ) {
+    throw new TypeError(`local source ${path}: conferences must be an array`);
+  }
+  const conferences = (loaded as Record<string, unknown>).conferences as unknown[];
   const out: Conference[] = [];
-  for (const item of conferences) {
-    if (typeof item !== "object" || item === null) continue;
+  for (const [index, item] of conferences.entries()) {
+    if (typeof item !== "object" || item === null || Array.isArray(item)) {
+      throw new TypeError(`local source ${path}: conference entry ${index} must be an object`);
+    }
     const raw = item as Record<string, unknown>;
     const title = String(raw.title ?? "").trim();
     const key = String(raw.key ?? slug(title)).trim();
     if (!key) {
-      warn(`local source: entry without key or title in ${path}`);
-      continue;
+      throw new TypeError(`local source ${path}: conference entry ${index} needs key or title`);
     }
-    const editions = ((raw.editions as unknown[] | null) ?? [])
-      .map((e) =>
-        typeof e === "object" && e !== null ? editionOf(e as Record<string, unknown>, key) : null,
-      )
-      .filter((e): e is Edition => e !== null)
+    const rawEditions = raw.editions;
+    if (rawEditions !== undefined && rawEditions !== null && !Array.isArray(rawEditions)) {
+      throw new TypeError(`local source ${path}: conference ${key} editions must be an array`);
+    }
+    const editions = (Array.isArray(rawEditions) ? rawEditions : [])
+      .map((e, editionIndex) => {
+        if (typeof e !== "object" || e === null || Array.isArray(e)) {
+          throw new TypeError(
+            `local source ${path}: conference ${key} edition ${editionIndex} must be an object`,
+          );
+        }
+        const edition = editionOf(e as Record<string, unknown>, key);
+        if (edition === null) {
+          throw new TypeError(
+            `local source ${path}: conference ${key} edition ${editionIndex} has no usable year`,
+          );
+        }
+        return edition;
+      })
       .sort((a, b) => a.year - b.year);
     const rank: Record<string, string> = {};
     for (const [k, v] of Object.entries((raw.rank as Record<string, unknown> | null) ?? {})) {
@@ -334,10 +357,16 @@ export function parseFile(path: string | null | undefined): Conference[] {
               : [];
           })
       : [];
+    const declaredIdentity = venueIdentityOf(raw.identity);
     out.push({
       key,
       title: title || key,
       full_name: String(raw.full_name ?? "") || title || key,
+      acronym: String(raw.acronym ?? (title || key)),
+      scope: toStringArray(raw.scope),
+      official_scope: toStringArray(raw.official_scope),
+      paper_abstracts: toStringArray(raw.paper_abstracts),
+      keywords: toStringArray(raw.keywords),
       link,
       rank,
       dblp: raw.dblp === null || raw.dblp === undefined ? null : String(raw.dblp),
@@ -350,8 +379,13 @@ export function parseFile(path: string | null | undefined): Conference[] {
       editions,
       sources: [NAME],
       identity: {
-        ...(link ? { officialDomains: [link] } : {}),
-        sourceIds: { [NAME]: key },
+        ...declaredIdentity,
+        ...(declaredIdentity?.officialDomains?.length
+          ? {}
+          : link
+            ? { officialDomains: [link] }
+            : {}),
+        sourceIds: { ...declaredIdentity?.sourceIds, [NAME]: key },
       },
       ...(categoryAssignments.length ? { category_assignments: categoryAssignments } : {}),
     });
@@ -370,6 +404,43 @@ export class LocalSource {
   }
 
   async load(): Promise<Conference[]> {
-    return this.paths.flatMap((path) => parseFile(path));
+    const byKey = new Map<string, Conference>();
+    for (const conference of this.paths.flatMap((path) => parseFile(path))) {
+      const existing = byKey.get(conference.key);
+      if (!existing) {
+        byKey.set(conference.key, conference);
+        continue;
+      }
+      const editionKeys = new Set(
+        existing.editions.map((edition) => `${edition.year}\0${edition.edition_id}`),
+      );
+      const duplicate = conference.editions.find((edition) =>
+        editionKeys.has(`${edition.year}\0${edition.edition_id}`),
+      );
+      if (duplicate)
+        throw new Error(`duplicate local edition ${conference.key}/${duplicate.edition_id}`);
+      byKey.set(conference.key, {
+        ...existing,
+        identity: {
+          ...conference.identity,
+          ...existing.identity,
+          officialDomains: [
+            ...new Set([
+              ...(existing.identity?.officialDomains ?? []),
+              ...(conference.identity?.officialDomains ?? []),
+            ]),
+          ],
+          sourceIds: {
+            ...conference.identity?.sourceIds,
+            ...existing.identity?.sourceIds,
+          },
+        },
+        editions: [...existing.editions, ...conference.editions].sort(
+          (left, right) =>
+            left.year - right.year || left.edition_id.localeCompare(right.edition_id),
+        ),
+      });
+    }
+    return [...byKey.values()];
   }
 }

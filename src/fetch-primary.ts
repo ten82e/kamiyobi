@@ -1,6 +1,5 @@
 /**
  * 一次ソースから締切を一発どりする (data/primary.yaml → data/primary_overrides.yaml)。
- * Ported from scripts/fetch_primary.py. 使い方:
  *   node src/fetch-primary.ts            # dry-run（差分を表示）
  *   node src/fetch-primary.ts --apply    # primary_overrides.yaml に書き込む
  */
@@ -22,9 +21,6 @@ export function setRoot(root: string): void {
   ROOT = root;
 }
 
-const REGISTRY = join(ROOT, "data", "primary.yaml");
-const OUT = join(ROOT, "data", "primary_overrides.yaml");
-
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36";
 
@@ -44,7 +40,7 @@ const LABELS: Record<string, string> = {
   rebuttal_end: "Rebuttal deadline",
 };
 
-export async function fetchPage(url: string, timeout = 30_000): Promise<string> {
+async function fetchPage(url: string, timeout = 30_000): Promise<string> {
   const res = await fetch(url, {
     headers: { "User-Agent": UA },
     signal: AbortSignal.timeout(timeout),
@@ -377,8 +373,8 @@ export function loadYamlFile(path: string): Record<string, any> {
 
 export async function runFetchPrimary(
   apply: boolean,
-  registryPath = REGISTRY,
-  outPath = OUT,
+  registryPath = join(ROOT, "data", "primary.yaml"),
+  outPath = join(ROOT, "data", "primary_overrides.yaml"),
 ): Promise<number> {
   const resolvedRegistry = isAbsolute(registryPath) ? registryPath : join(ROOT, registryPath);
   const resolvedOut = isAbsolute(outPath) ? outPath : join(ROOT, outPath);
@@ -521,7 +517,7 @@ export async function runFetchPrimary(
   return 0;
 }
 
-export interface PrimaryArgs {
+interface PrimaryArgs {
   apply: boolean;
   registryPath: string;
   outPath: string;
@@ -542,8 +538,8 @@ export function parsePrimaryArgs(argv: string[] | null | undefined): PrimaryArgs
   });
   return {
     apply: booleanValue(values.apply, false),
-    registryPath: stringValue(values.registry) ?? REGISTRY,
-    outPath: stringValue(values.out) ?? OUT,
+    registryPath: stringValue(values.registry) ?? join(ROOT, "data", "primary.yaml"),
+    outPath: stringValue(values.out) ?? join(ROOT, "data", "primary_overrides.yaml"),
     help: Boolean(values.help || positionals.includes("help")),
   };
 }

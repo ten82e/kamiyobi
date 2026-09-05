@@ -1,6 +1,5 @@
 /**
  * huggingface/ai-deadlines source.
- * Ported from scripts/sources/aideadlines.py.
  */
 
 import { readdirSync, readFileSync } from "node:fs";
@@ -15,6 +14,7 @@ import {
   type Edition,
   embeddedTimezone,
   eventDatePrecisionOf,
+  isNonDateMarker,
   kindOf,
   parseDateRange,
   parseInstant,
@@ -26,9 +26,9 @@ import {
 } from "../model.ts";
 import { fetchTarball } from "./base.ts";
 
-export const REPO = "huggingface/ai-deadlines";
-export const REF = "main";
-export const NAME = "aideadlines";
+const REPO = "huggingface/ai-deadlines";
+const REF = "main";
+const NAME = "aideadlines";
 
 function deadlineHistory(value: unknown): Pick<Deadline, "superseded_deadlines"> {
   const items = supersededDeadlinesOf(value);
@@ -110,12 +110,21 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
   const parentTz = String(raw.timezone ?? raw.tz ?? "");
   const sourceUrl = String(raw.link ?? raw.url ?? "");
   const entries = raw.deadlines;
+  if (entries !== undefined && entries !== null && !Array.isArray(entries))
+    throw new TypeError("aideadlines deadlines must be an array");
   if (Array.isArray(entries)) {
     for (const entry of entries) {
-      if (typeof entry !== "object" || entry === null) continue;
+      if (typeof entry !== "object" || entry === null)
+        throw new TypeError("aideadlines deadline entries must be objects");
       const rec = entry as Record<string, unknown>;
       const tzRaw = String(rec.timezone ?? rec.tz ?? parentTz);
       const at = parseInstant(rec.date, tzRaw);
+      if (
+        at === null &&
+        !isNonDateMarker(rec.date) &&
+        (tzRaw.trim() !== "" || embeddedTimezone(String(rec.date)) !== null)
+      )
+        throw new TypeError(`aideadlines deadline is not parseable: ${String(rec.date)}`);
       if (at === null) continue;
       const rawType = String(rec.type ?? rec.kind ?? "");
       const label = String(rec.label ?? rawType);
@@ -143,6 +152,14 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
 
   for (const [kind, label, key] of LEGACY) {
     const at = parseInstant(raw[key], parentTz);
+    if (
+      at === null &&
+      raw[key] !== undefined &&
+      raw[key] !== null &&
+      !isNonDateMarker(raw[key]) &&
+      (parentTz.trim() !== "" || embeddedTimezone(String(raw[key])) !== null)
+    )
+      throw new TypeError(`aideadlines deadline is not parseable: ${String(raw[key])}`);
     if (at !== null) {
       out.push({
         kind,
@@ -234,20 +251,25 @@ export function parseTree(conferencesDir: string | null | undefined): Conference
   let fileList: string[];
   try {
     fileList = readdirSync(conferencesDir);
-  } catch {
-    return [];
+  } catch (error) {
+    warn(`aideadlines: cannot read directory ${conferencesDir}: ${String(error)}`);
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
+    throw new Error(`aideadlines: cannot read directory ${conferencesDir}: ${String(error)}`);
   }
   for (const path of fileList.filter((n) => n.endsWith(".yml") || n.endsWith(".yaml")).sort()) {
     let loaded: unknown;
     try {
       loaded = loadYaml(readFileSync(join(conferencesDir, path), "utf8"));
     } catch (exc) {
-      warn(`aideadlines: cannot parse ${path}: ${String(exc)}`);
-      continue;
+      const message = `aideadlines: cannot parse ${path}: ${String(exc)}`;
+      warn(message);
+      throw new Error(message);
     }
     const items = Array.isArray(loaded) ? loaded : [loaded];
+    if (items.some((item) => item === null || typeof item !== "object" || Array.isArray(item))) {
+      throw new TypeError(`aideadlines source ${path}: entries must be objects`);
+    }
     for (const item of items) {
-      if (typeof item !== "object" || item === null) continue;
       const raw = item as Record<string, unknown>;
       const title = String(raw.title ?? "").trim();
       if (!title) continue;
@@ -261,6 +283,11 @@ export function parseTree(conferencesDir: string | null | undefined): Conference
           key,
           title,
           full_name: String(raw.full_name ?? title),
+          acronym: String(raw.acronym ?? title),
+          scope: toStringArray(raw.scope),
+          official_scope: toStringArray(raw.official_scope),
+          paper_abstracts: toStringArray(raw.paper_abstracts),
+          keywords: toStringArray(raw.keywords),
           link: "",
           rank: {},
           dblp: null,
@@ -277,6 +304,11 @@ export function parseTree(conferencesDir: string | null | undefined): Conference
       // Conference-level facts come from the newest edition seen.
       if (edition.year >= Math.max(...conference.editions.map((e) => e.year))) {
         conference.full_name = String(raw.full_name ?? title);
+        conference.acronym = String(raw.acronym ?? title);
+        conference.scope = toStringArray(raw.scope);
+        conference.official_scope = toStringArray(raw.official_scope);
+        conference.paper_abstracts = toStringArray(raw.paper_abstracts);
+        conference.keywords = toStringArray(raw.keywords);
         const rank = rankOf(raw.rankings);
         if (Object.keys(rank).length > 0) conference.rank = rank;
         if (edition.link) {

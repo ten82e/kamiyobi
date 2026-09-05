@@ -1,14 +1,19 @@
 import { createHash } from "node:crypto";
 import { lookup } from "node:dns/promises";
-import { mkdirSync, writeFileSync } from "node:fs";
-import { isIP } from "node:net";
+import { lstatSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { request as httpRequest, type IncomingMessage } from "node:http";
+import { request as httpsRequest } from "node:https";
+import { isIP, type LookupFunction } from "node:net";
 import { dirname, join } from "node:path";
+import { Readable } from "node:stream";
 
 export const DEFAULT_CAPTURE_LIMITS = {
   maxBodyBytes: 5 * 1024 * 1024,
   timeoutMs: 15_000,
   maxRedirects: 5,
 } as const;
+
+const SHA256 = /^[0-9a-f]{64}$/i;
 
 export interface PageObservation {
   requestedUrl: string;
@@ -57,6 +62,23 @@ export class PageCaptureError extends Error {
   }
 }
 
+export function writeCasBody(bodyRoot: string, contentHash: string, bytes: Uint8Array): string {
+  if (!SHA256.test(contentHash)) throw new TypeError("contentHash must be a SHA-256 hex digest");
+  const target = join(bodyRoot, `${contentHash}.body`);
+  mkdirSync(dirname(target), { recursive: true });
+  try {
+    writeFileSync(target, bytes, { flag: "wx" });
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+    if (!lstatSync(target).isFile())
+      throw new Error(`content-addressed body must be a regular file: ${target}`);
+    const existingHash = createHash("sha256").update(readFileSync(target)).digest("hex");
+    if (existingHash !== contentHash.toLowerCase())
+      throw new Error(`content-addressed body mismatch: ${target}`);
+  }
+  return target;
+}
+
 function blockedIpv4(value: string): boolean {
   const octets = value.split(".").map(Number);
   if (octets.length !== 4 || octets.some((octet) => !Number.isInteger(octet))) return true;
@@ -86,13 +108,24 @@ function blockedIpv6(value: string): boolean {
   )
     return true;
   const mapped = lower.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-  return Boolean(mapped && blockedIpv4(mapped[1]));
+  if (mapped) return blockedIpv4(mapped[1]);
+  const mappedHex = lower.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+  if (!mappedHex) return false;
+  const first = Number.parseInt(mappedHex[1], 16);
+  const second = Number.parseInt(mappedHex[2], 16);
+  return blockedIpv4(`${first >> 8}.${first & 0xff}.${second >> 8}.${second & 0xff}`);
 }
 
 function assertPublicAddress(address: string): void {
   const addressType = isIP(address);
   if ((addressType === 4 && blockedIpv4(address)) || (addressType === 6 && blockedIpv6(address)))
     throw new PageCaptureError("unsafe-url", `private page address: ${address}`);
+}
+
+function assertResolvedPublicAddress(address: string): void {
+  if (isIP(address) === 0)
+    throw new PageCaptureError("unsafe-url", `invalid resolved page address: ${address}`);
+  assertPublicAddress(address);
 }
 
 function normalizedHost(url: URL): string {
@@ -125,21 +158,100 @@ export function assertSafePageUrl(value: string, allowHttpHosts: string[] = []):
 async function assertSafeResolvedPageUrl(
   value: string,
   options: Pick<CapturePageOptions, "allowHttpHosts" | "dnsLookup">,
-): Promise<URL> {
+  requireDns: boolean,
+  signal?: AbortSignal,
+): Promise<{ url: URL; address?: string }> {
   const url = assertSafePageUrl(value, options.allowHttpHosts);
-  if (isIP(normalizedHost(url))) return url;
+  const host = normalizedHost(url);
+  if (isIP(host)) return { url, address: host };
+  if (!requireDns) return { url };
   const resolveDns =
     options.dnsLookup ??
     (async (hostname: string) =>
       (await lookup(hostname, { all: true, verbatim: true })).map(({ address }) => ({ address })));
   try {
-    for (const { address } of await resolveDns(url.hostname)) assertPublicAddress(address);
+    const addresses = await raceAbort(
+      resolveDns(url.hostname),
+      signal,
+      "page DNS lookup timed out",
+    );
+    if (!addresses.length)
+      throw new PageCaptureError("unsafe-url", `page hostname did not resolve: ${host}`);
+    for (const { address } of addresses) assertResolvedPublicAddress(address);
+    return { url, address: addresses[0]!.address };
   } catch (error) {
     if (error instanceof PageCaptureError) throw error;
-    // DNS failures are reported by fetch as a network error; they are not proof
-    // that a hostname resolves to a private address.
+    throw new PageCaptureError(
+      "unsafe-url",
+      `page DNS lookup failed for ${host}: ${String(error)}`,
+    );
   }
-  return url;
+}
+
+function raceAbort<T>(
+  promise: Promise<T>,
+  signal: AbortSignal | undefined,
+  message: string,
+): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) return Promise.reject(new PageCaptureError("timeout", message));
+  return new Promise((resolve, reject) => {
+    const onAbort = (): void => reject(new PageCaptureError("timeout", message));
+    signal.addEventListener("abort", onAbort, { once: true });
+    promise.then(
+      (value) => {
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (error) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(error);
+      },
+    );
+  });
+}
+
+async function cancelBody(response: Response, signal?: AbortSignal): Promise<void> {
+  if (!response.body) return;
+  await raceAbort(response.body.cancel(), signal, "page response cleanup timed out").catch(
+    () => undefined,
+  );
+}
+
+function fetchPinned(url: URL, address: string, init: RequestInit): Promise<Response> {
+  const headers = new Headers(init.headers);
+  const lookup: LookupFunction = (_hostname, _options, callback) =>
+    callback(null, address, isIP(address));
+  return new Promise((resolve, reject) => {
+    const options = {
+      protocol: url.protocol,
+      hostname: normalizedHost(url),
+      ...(url.port ? { port: url.port } : {}),
+      path: `${url.pathname}${url.search}`,
+      headers: Object.fromEntries(headers),
+      lookup,
+      agent: false,
+      ...(init.signal ? { signal: init.signal } : {}),
+    };
+    const onResponse = (incoming: IncomingMessage): void => {
+      const responseHeaders = new Headers();
+      for (let i = 0; i < incoming.rawHeaders.length; i += 2)
+        responseHeaders.append(incoming.rawHeaders[i]!, incoming.rawHeaders[i + 1]!);
+      resolve(
+        new Response(Readable.toWeb(incoming) as unknown as ReadableStream<Uint8Array>, {
+          status: incoming.statusCode ?? 0,
+          statusText: incoming.statusMessage,
+          headers: responseHeaders,
+        }),
+      );
+    };
+    const request =
+      url.protocol === "https:"
+        ? httpsRequest(options, onResponse)
+        : httpRequest(options, onResponse);
+    request.once("error", reject);
+    request.end();
+  });
 }
 
 function safeHeaders(response: Response): PageObservation["headers"] {
@@ -153,7 +265,11 @@ function safeHeaders(response: Response): PageObservation["headers"] {
   return headers;
 }
 
-async function bytesOf(response: Response, maxBytes: number): Promise<Uint8Array> {
+async function bytesOf(
+  response: Response,
+  maxBytes: number,
+  signal?: AbortSignal,
+): Promise<Uint8Array> {
   const declared = Number(response.headers.get("content-length") ?? "");
   if (Number.isFinite(declared) && declared > maxBytes)
     throw new PageCaptureError("body-too-large", `response body exceeds ${maxBytes} bytes`);
@@ -168,15 +284,20 @@ async function bytesOf(response: Response, maxBytes: number): Promise<Uint8Array
   let size = 0;
   try {
     while (true) {
-      const next = await reader.read();
+      const next = await raceAbort(reader.read(), signal, "page body read timed out");
       if (next.done) break;
       size += next.value.byteLength;
       if (size > maxBytes) {
-        await reader.cancel();
+        await raceAbort(reader.cancel(), signal, "page body cleanup timed out").catch(
+          () => undefined,
+        );
         throw new PageCaptureError("body-too-large", `response body exceeds ${maxBytes} bytes`);
       }
       chunks.push(next.value);
     }
+  } catch (error) {
+    if (signal?.aborted) await reader.cancel().catch(() => undefined);
+    throw error;
   } finally {
     reader.releaseLock();
   }
@@ -204,35 +325,62 @@ export async function capturePage(
   const maxBytes = options.maxBodyBytes ?? DEFAULT_CAPTURE_LIMITS.maxBodyBytes;
   const timeoutMs = options.timeoutMs ?? DEFAULT_CAPTURE_LIMITS.timeoutMs;
   const maxRedirects = options.maxRedirects ?? DEFAULT_CAPTURE_LIMITS.maxRedirects;
-  const fetchImpl = options.fetchImpl ?? fetch;
   const now = options.now ?? new Date();
   if (Number.isNaN(now.getTime())) throw new TypeError("capture now must be a valid date");
-  let url = await assertSafeResolvedPageUrl(requestedUrl, options);
+  const signal = AbortSignal.timeout(timeoutMs);
+  // A supplied fetch is an in-process test seam; the default path pins DNS before connecting.
+  let resolved = await assertSafeResolvedPageUrl(
+    requestedUrl,
+    options,
+    !options.fetchImpl || Boolean(options.dnsLookup),
+    signal,
+  );
   let response: Response | null = null;
   for (let redirect = 0; redirect <= maxRedirects; redirect += 1) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      response = await fetchImpl(url, {
-        redirect: "manual",
-        headers: conditionalHeaders(options.previous),
-        signal: controller.signal,
-      });
+      response = await raceAbort(
+        options.fetchImpl
+          ? options.fetchImpl(resolved.url, {
+              redirect: "manual",
+              headers: conditionalHeaders(options.previous),
+              signal,
+            })
+          : fetchPinned(resolved.url, resolved.address!, {
+              redirect: "manual",
+              headers: conditionalHeaders(options.previous),
+              signal,
+            }),
+        signal,
+        `page request timed out after ${timeoutMs} ms`,
+      );
     } catch (error) {
+      if (error instanceof PageCaptureError) throw error;
       if (error instanceof Error && error.name === "AbortError")
         throw new PageCaptureError("timeout", `page request timed out after ${timeoutMs} ms`);
       throw new PageCaptureError("network", `page request failed: ${String(error)}`);
-    } finally {
-      clearTimeout(timer);
     }
     if (response.status === 304 || response.status < 300 || response.status >= 400) break;
     const location = response.headers.get("location");
-    if (!location || redirect === maxRedirects)
+    if (!location || redirect === maxRedirects) {
+      await cancelBody(response, signal);
       throw new PageCaptureError("network", `redirect chain exceeded ${maxRedirects} hops`);
-    url = await assertSafeResolvedPageUrl(new URL(location, url).toString(), options);
+    }
+    await cancelBody(response, signal);
+    resolved = await assertSafeResolvedPageUrl(
+      new URL(location, resolved.url).toString(),
+      options,
+      !options.fetchImpl || Boolean(options.dnsLookup),
+      signal,
+    );
   }
   if (!response) throw new PageCaptureError("network", "page request returned no response");
-  if (response.url) await assertSafeResolvedPageUrl(response.url, options);
+  if (response.url)
+    resolved = await assertSafeResolvedPageUrl(
+      response.url,
+      options,
+      !options.fetchImpl || Boolean(options.dnsLookup),
+      signal,
+    );
   const headers = safeHeaders(response);
   const contentType = response.headers.get("content-type") ?? "";
   const retryable = response.status === 429 || response.status === 503;
@@ -241,14 +389,13 @@ export async function capturePage(
   let contentHash = options.previous?.contentHash ?? "";
   let bodyRef = options.previous?.bodyRef ?? "";
   if (!notModified && !retryable) {
-    bytes = await bytesOf(response, maxBytes);
+    bytes = await bytesOf(response, maxBytes, signal);
     contentHash = createHash("sha256").update(bytes).digest("hex");
     if (options.bodyRoot) {
-      const target = join(options.bodyRoot, `${contentHash}.body`);
-      mkdirSync(dirname(target), { recursive: true });
-      writeFileSync(target, bytes);
-      bodyRef = target;
+      bodyRef = writeCasBody(options.bodyRoot, contentHash, bytes);
     }
+  } else {
+    await cancelBody(response, signal);
   }
   const sourceRevision =
     headers.etag ??
@@ -256,7 +403,7 @@ export async function capturePage(
     (contentHash ? `sha256:${contentHash}` : (options.previous?.sourceRevision ?? ""));
   return {
     requestedUrl,
-    finalUrl: response.url || url.toString(),
+    finalUrl: response.url || resolved.url.toString(),
     status: response.status,
     retrievedAt: now.toISOString(),
     contentType,

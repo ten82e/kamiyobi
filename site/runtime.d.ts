@@ -59,8 +59,9 @@ interface SiteConference {
   rank?: Record<string, string>;
   editions?: SiteEdition[];
   papers?: string[];
-  scope?: string;
-  official_scope?: string;
+  acronym?: string;
+  scope?: string | string[];
+  official_scope?: string | string[];
   representative_papers?: string[];
   paper_abstracts?: string[];
   keywords?: string[];
@@ -111,6 +112,9 @@ interface SiteRecommendation {
   fit: {
     score: number;
     lexicalScore: number;
+    fieldScores?: Record<string, number>;
+    fieldRanks?: Record<string, number>;
+    fieldRrf?: number;
     semanticScore: number;
     label?: string;
     lexicalRank?: number | null;

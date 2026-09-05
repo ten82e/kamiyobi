@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "benchmark": "real-paper-v1",
-  "annotation_revision": 1,
+  "annotation_revision": 2,
   "splits": {
     "dev": {
       "records": 80,
@@ -15,5 +15,5 @@
     }
   },
   "annotation_failures": [],
-  "policy": "acceptable_venues are retained only with a cited source and curator reason; heldout labels are not used for training."
+  "policy": "acceptable_venues retain only published primary venues unless an alternate has independent record-level evidence; heldout labels are not used for training."
 }

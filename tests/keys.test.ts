@@ -1,6 +1,5 @@
 /**
  * Conference keys: SPEC.md section 3.1.
- * Ported from tests/test_keys.py.
  */
 
 import { mkdtempSync, readFileSync } from "node:fs";

@@ -2,7 +2,8 @@
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
-import { RERANKER_FEATURE_SCHEMA } from "../site/recommender.ts";
+import { RERANKER_ALGORITHM_REVISION, RERANKER_FEATURE_SCHEMA } from "../site/recommender.ts";
+import { readFeatureStore } from "../src/bench-recommender.ts";
 
 type DevRecord = {
   paper_id: string;
@@ -18,8 +19,11 @@ type FeatureRecord = { paper_id: string; candidates: Candidate[] };
 type Features = { version: number; feature_schema: string[]; records: FeatureRecord[] };
 type Row = { x: number[]; y: number; paperId: string; venue: string; baseScore: number };
 type Model = { intercept: number; weights: number[] };
-const LAMBDAS = [0.01, 0.08, 0.2] as const;
-const BLENDS = [0.05, 0.15, 0.3, 0.5, 1] as const;
+const V3_LAMBDAS = [0.01, 0.08, 0.2] as const;
+const V3_BLENDS = [0.05, 0.15, 0.3, 0.5, 1] as const;
+const V4_LAMBDAS = [0.001, 0.005, 0.01, 0.04, 0.08, 0.2] as const;
+const V4_BLENDS = [0.05, 0.15, 0.3, 0.5, 0.7, 1] as const;
+const V4_REVISION = "l2-pairwise-logistic-reranker-v4-component-greedy-cv";
 const FOLDS = 5;
 /** sufficient 解禁条件: dev 上でこの精度が証明できるまで「十分な一致」は出さない。 */
 export const SUFFICIENT_POLICY = {
@@ -32,11 +36,30 @@ export const SUFFICIENT_POLICY = {
 function sha(value: string | Uint8Array): string {
   return createHash("sha256").update(value).digest("hex");
 }
+export function trainingFeatureHash(records: readonly { paper_id: string }[]): string {
+  return sha(
+    JSON.stringify([...records].sort((left, right) => left.paper_id.localeCompare(right.paper_id))),
+  );
+}
 function sigmoid(value: number): number {
   return 1 / (1 + Math.exp(-Math.max(-35, Math.min(35, value))));
 }
-/** Venue-family grouped fold assignment: same primary venue never spans train/test. */
-function familyFolds(dev: DevFixture): Map<string, number> {
+function primaryVenueFolds(dev: DevFixture): Map<string, number> {
+  const families = [
+    ...new Set(dev.records.map((record) => record.primary_venue ?? record.paper_id)),
+  ].sort();
+  const assignment = new Map<string, number>();
+  for (const [index, family] of families.entries()) assignment.set(family, index % FOLDS);
+  return new Map(
+    dev.records.map((record) => [
+      record.paper_id,
+      assignment.get(record.primary_venue ?? record.paper_id)!,
+    ]),
+  );
+}
+
+/** Acceptable-venue connected components stay together and balance label strata. */
+function componentFolds(dev: DevFixture): Map<string, number> {
   const parent = new Map<string, string>();
   const find = (key: string): string => {
     const root = parent.get(key);
@@ -167,7 +190,7 @@ function familyFolds(dev: DevFixture): Map<string, number> {
   }
   return assignment;
 }
-function trainLinear(rows: Row[], lambda: number): Model {
+function trainLinear(rows: Row[], lambda: number, nonNegative: boolean): Model {
   const weights = Array(RERANKER_FEATURE_SCHEMA.length).fill(0);
   let intercept = 0;
   const positives = rows.filter((row) => row.y === 1).length;
@@ -189,17 +212,41 @@ function trainLinear(rows: Row[], lambda: number): Model {
     const rate = 0.18 / Math.sqrt(step + 1);
     intercept -= (rate * biasGradient) / rows.length;
     weights.forEach((value, index) => {
-      weights[index] = value - rate * (gradient[index] / rows.length + lambda * value);
+      const next = value - rate * (gradient[index] / rows.length + lambda * value);
+      weights[index] = nonNegative ? Math.max(0, next) : next;
     });
   }
   return { intercept, weights };
 }
-function pairwiseRows(rows: Row[]): Row[] {
+function hardNegativeMix(rows: Row[], limit = 100): Row[] {
+  const lexical = RERANKER_FEATURE_SCHEMA.indexOf("lexical_score");
+  const semantic = RERANKER_FEATURE_SCHEMA.indexOf("semantic_score");
+  const selected = new Map<string, Row>();
+  const take = (score: (row: Row) => number, count: number): void => {
+    rows
+      .slice()
+      .sort((left, right) => score(right) - score(left) || left.venue.localeCompare(right.venue))
+      .slice(0, count)
+      .forEach((row) => {
+        selected.set(row.venue, row);
+      });
+  };
+  take((row) => row.baseScore, Math.ceil(limit / 2));
+  take((row) => row.x[lexical] ?? 0, Math.floor(limit / 4));
+  take((row) => row.x[semantic] ?? 0, Math.floor(limit / 4));
+  take((row) => row.baseScore + (row.x[lexical] ?? 0) + (row.x[semantic] ?? 0), rows.length);
+  return [...selected.values()].slice(0, limit);
+}
+
+function pairwiseRows(rows: Row[], hardNegatives = false): Row[] {
   const out: Row[] = [];
   for (const paperId of new Set(rows.map((row) => row.paperId))) {
     const group = rows.filter((row) => row.paperId === paperId);
     const positives = group.filter((row) => row.y === 1);
-    const negatives = group.filter((row) => row.y === 0).slice(0, 100);
+    const availableNegatives = group.filter((row) => row.y === 0);
+    const negatives = hardNegatives
+      ? hardNegativeMix(availableNegatives)
+      : availableNegatives.slice(0, 100);
     for (const positive of positives) {
       for (const negative of negatives) {
         const difference = positive.x.map((value, index) => value - negative.x[index]);
@@ -378,25 +425,22 @@ function main(argv = process.argv.slice(2)): void {
       features: { type: "string" },
       profiles: { type: "string" },
       out: { type: "string" },
+      "candidate-v4": { type: "boolean" },
     },
   });
   const devPath = values.dev ?? "data/benchmarks/real-paper-dev.json";
   const featurePath = values.features ?? "data/benchmarks/real-paper-features.jsonl";
   const profilePath = values.profiles ?? "data/venue-profiles.json";
   const outPath = values.out ?? "data/recommender-reranker.json";
+  const candidateV4 = values["candidate-v4"] ?? false;
+  const lambdas = candidateV4 ? V4_LAMBDAS : V3_LAMBDAS;
+  const blends = candidateV4 ? V4_BLENDS : V3_BLENDS;
   const devRaw = readFileSync(devPath, "utf8");
   const featureRaw = readFileSync(featurePath, "utf8");
   const profileRaw = readFileSync(profilePath, "utf8");
   const dev = JSON.parse(devRaw) as DevFixture;
   const features = featurePath.endsWith(".jsonl")
-    ? ({
-        version: 2,
-        feature_schema: [...RERANKER_FEATURE_SCHEMA],
-        records: featureRaw
-          .split(/\r?\n/)
-          .filter((line) => line.trim())
-          .map((line) => JSON.parse(line) as FeatureRecord),
-      } satisfies Features)
+    ? (readFeatureStore(featurePath) as Features)
     : (JSON.parse(featureRaw) as Features);
   if (
     ![1, 2].includes(features.version) ||
@@ -431,7 +475,7 @@ function main(argv = process.argv.slice(2)): void {
   );
   // Grouped CV: acceptable-venue connected components stay in one fold and
   // component sizes/label strata are greedily balanced across folds.
-  const foldOfPaper = familyFolds(dev);
+  const foldOfPaper = candidateV4 ? componentFolds(dev) : primaryVenueFolds(dev);
   const trials: Array<{
     lambda: number;
     blend: number;
@@ -439,12 +483,12 @@ function main(argv = process.argv.slice(2)): void {
     recall5: number;
     logits: Array<{ key: string; logit: number; y: number }>;
   }> = [];
-  for (const lambda of LAMBDAS) {
+  for (const lambda of lambdas) {
     const logits: Array<{ key: string; logit: number; y: number }> = [];
     for (let fold = 0; fold < FOLDS; fold++) {
       const trainRows = rows.filter((row) => foldOfPaper.get(row.paperId) !== fold);
       const testRows = rows.filter((row) => foldOfPaper.get(row.paperId) === fold);
-      const model = trainLinear(pairwiseRows(trainRows), lambda);
+      const model = trainLinear(pairwiseRows(trainRows, candidateV4), lambda, candidateV4);
       testRows.forEach((row) => {
         logits.push({
           key: `${row.paperId}\0${row.venue}`,
@@ -454,7 +498,7 @@ function main(argv = process.argv.slice(2)): void {
       });
     }
     const predictions = new Map(logits.map((item) => [item.key, sigmoid(item.logit)]));
-    for (const blend of BLENDS) {
+    for (const blend of blends) {
       const metric = rankMetrics(rows, predictions, blend);
       trials.push({ lambda, blend, mrr: metric.mrr, recall5: metric.recall5, logits });
     }
@@ -480,7 +524,7 @@ function main(argv = process.argv.slice(2)): void {
     (sortedProbabilities[Math.floor((sortedProbabilities.length - 1) / 3)] ?? 0).toFixed(8),
   );
   const policy = confidencePolicy(calibratedMetric.top);
-  const model = trainLinear(pairwiseRows(rows), selected.lambda);
+  const model = trainLinear(pairwiseRows(rows, candidateV4), selected.lambda, candidateV4);
   const brier =
     selected.logits.reduce((sum, item) => {
       const probability = sigmoid(platt.slope * item.logit + platt.intercept);
@@ -492,17 +536,19 @@ function main(argv = process.argv.slice(2)): void {
     coefficient_source: "trained",
     selected_on: "real-paper-dev",
     selection_metric: "dev-oof-mrr-then-recall-at-5",
-    algorithm_revision: "l2-pairwise-logistic-reranker-v4-component-greedy-cv",
+    algorithm_revision: candidateV4 ? V4_REVISION : RERANKER_ALGORITHM_REVISION,
     feature_schema: [...RERANKER_FEATURE_SCHEMA],
     training_data_hash: sha(devRaw),
     input_hashes: {
       [devPath]: sha(devRaw),
-      [`${featurePath}#dev-records`]: sha(JSON.stringify(selectedFeatures)),
+      [`${featurePath}#dev-records`]: trainingFeatureHash(selectedFeatures),
       [profilePath]: sha(profileRaw),
     },
     cv: {
       folds: FOLDS,
-      assignment: "acceptable-venue-component-greedy-balanced",
+      assignment: candidateV4
+        ? "acceptable-venue-component-greedy-balanced"
+        : "primary-venue-grouped-round-robin",
       dev_papers: devIds.size,
       selected_lambda: selected.lambda,
       selected_blend: selected.blend,
@@ -515,6 +561,13 @@ function main(argv = process.argv.slice(2)): void {
         recall_at_5: Number(recall5.toFixed(8)),
       })),
     },
+    negative_sampling: candidateV4
+      ? {
+          strategy: "hard-negative-mix",
+          limit_per_paper: 100,
+          mix: { base_score: 50, lexical_score: 25, semantic_score: 25 },
+        }
+      : { strategy: "stable-first", limit_per_paper: 100 },
     calibration: {
       method: "platt",
       slope: Number(platt.slope.toFixed(10)),
@@ -556,4 +609,4 @@ function main(argv = process.argv.slice(2)): void {
 
 if (import.meta.main) main();
 
-export { main as trainRerankerMain };
+export { hardNegativeMix, main as trainRerankerMain };

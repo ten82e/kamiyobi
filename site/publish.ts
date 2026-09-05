@@ -1,4 +1,4 @@
-export type PublishManifest = {
+type PublishManifest = {
   schema_version: 2 | 3 | 4;
   build_id: string;
   content_id?: string;
@@ -20,7 +20,7 @@ export type PublishManifest = {
   };
 };
 
-export type SemanticState = { semantic: boolean; reason: string | null };
+type SemanticState = { semantic: boolean; reason: string | null };
 
 type RecommendationIndex = {
   build_id?: unknown;
@@ -61,7 +61,7 @@ function validSchema3Provenance(manifest: PublishManifest): boolean {
   );
 }
 
-export async function verifyPublishArtifact(
+async function verifyPublishArtifact(
   manifest: PublishManifest,
   name: string,
   text: string,

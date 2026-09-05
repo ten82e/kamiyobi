@@ -2,25 +2,22 @@
   "schema": 1,
   "id": "2026-08-31-sesame-jcdl-2026",
   "observations": {
-    "sha256": "fc8473a4e03e1e35c9b86e045ffe8b74ef4ab838ff4887418a4355913116399a"
+    "sha256": "582286fc229058109182e49b0d276c6091f2637c514f47edffe68ea6dfbb0778"
   },
   "resolutions": {
-    "sha256": "197708518f8e36f12a6c0804c7e6cdf40882d2abdc865e0be05f8572ac6ff623"
-  },
-  "extra": {
-    "sha256": "b585cddc2d0d2e4139937d5cc7e971f6540d40243206876805b01da7bff36d33"
+    "sha256": "931d0a0ffabdd7368f194da667b3a653e6bea7e83b6d3ea85025072f6d3a604b"
   },
   "bodies": [
     {
-      "path": "bodies/6c94db3b66fd1b4e3ffaa52819dca36d770b039e01dbfdbb8d614197bac34ab5.body",
+      "path": "../../evidence/blobs/6c94db3b66fd1b4e3ffaa52819dca36d770b039e01dbfdbb8d614197bac34ab5.body",
       "sha256": "6c94db3b66fd1b4e3ffaa52819dca36d770b039e01dbfdbb8d614197bac34ab5"
     },
     {
-      "path": "bodies/79d4d461e30d517f72da7e0c7550cee5dfb37dc3998ef4e4c29229d9886c408f.body",
+      "path": "../../evidence/blobs/79d4d461e30d517f72da7e0c7550cee5dfb37dc3998ef4e4c29229d9886c408f.body",
       "sha256": "79d4d461e30d517f72da7e0c7550cee5dfb37dc3998ef4e4c29229d9886c408f"
     },
     {
-      "path": "bodies/8a48e8e43a6e07457730db37f0171ff7779b6510f22467b05fdcb1774e3f806c.body",
+      "path": "../../evidence/blobs/8a48e8e43a6e07457730db37f0171ff7779b6510f22467b05fdcb1774e3f806c.body",
       "sha256": "8a48e8e43a6e07457730db37f0171ff7779b6510f22467b05fdcb1774e3f806c"
     }
   ],

@@ -2,8 +2,9 @@
 
 HPC・ネットワーク・システム・AI 系会議の投稿締切と開催日を、ローカルの CLI で
 収集・検査し、JSON / CSV / Markdown / 静的サイトとして公開する。
-上流データの取得、候補探索、ビルド、公開は手動で行う。手順は `README.md` の
-「更新の仕組み」に定める。
+手元の更新手順は `README.md` の「更新の仕組み」に定める。
+`.github/workflows/` の GitHub Actions は同じ検査を CI で実行し、main への push で
+Pages 配信とデータ更新 PR を扱える。
 
 この文書は実装の契約である。ここに書かれた型、関数シグネチャ、ファイル構成から逸脱しない。
 プロジェクト名は `kamiyobi` とする。
@@ -139,6 +140,12 @@ kamiyobi/
 ├── tsconfig.json                # TS 設定
 ├── biome.json                   # lint/format
 ├── config.yaml                  # 収録範囲・カテゴリ定義
+├── .github/workflows/
+│   ├── ci.yml                   # typecheck / lint / test / offline build / データ検査
+│   ├── deploy.yml               # main の Pages 配信
+│   ├── nightly.yml             # 実論文ベンチと再確認マニフェスト
+│   ├── recommendation-bundle.yml # 埋め込み bundle の封印
+│   └── update-data.yml          # 上流取得とデータ更新 PR
 ├── data/
 │   ├── extra.yaml               # 旧データからの移行入力
 │   ├── manual.yaml              # 手入力の local 正典
@@ -154,30 +161,31 @@ kamiyobi/
 │   ├── source-snapshots/          # データ源ごとの復元用スナップショット
 │   ├── validator-findings.json    # 検証警告のレビュー状態
 │   ├── semantic-reconciliation.json # Issue/PR の意味照合結果
-│   ├── evidence/blobs/             # 再確認本文の content-addressed 保存
+│   ├── evidence/blobs/             # promotion・再確認本文の共通 content-addressed 保存
 │   ├── evidence/index.json         # 証拠本文の参照整合性インデックス
 │   ├── benchmarks/real-paper-features.jsonl # 論文特徴量の正典ストア
 │   ├── benchmarks/*-manifest.json # 特徴量 split のハッシュ・件数契約
 │   └── snapshot.json            # 生成物(コミットされる。上流障害時の退避) [自動]
- ├── src/
- │   ├── capture.ts               # raw-byte page取得・制限・SSRF/redirect防御
- │   ├── model.ts                 # 型・時刻解決・日付パーサ・snapshot 入出力
+├── src/
+│   ├── capture.ts               # raw-byte page取得・制限・SSRF/redirect防御
+│   ├── model.ts                 # 型・時刻解決・日付パーサ・snapshot 入出力
 │   ├── args.ts                  # CLI の短縮引数互換
 │   ├── util.ts                  # 共有ユーティリティ（配列正規化等）
 │   ├── sources/
 │   │   ├── base.ts
 │   │   ├── ccfddl.ts
 │   │   ├── aideadlines.ts
-│   │   └── local.ts             # manual + curated.generated 読み込み
+│   │   ├── local.ts             # manual + curated.generated 読み込み
+│   │   └── primary.ts           # 一次ソース観測の検証済み適用
 │   ├── merge.ts                 # 名寄せ・分類・上書き・推定
 │   ├── discover.ts              # 穴場会議・ジャーナル自律探索
 │   ├── fetch-primary.ts         # 一次ソース自動抽出
 │   ├── review-candidates.ts     # 候補レビュー支援
-│   ├── recommender-api.ts       # 推薦実行時処理の型境界
 │   ├── promotion.ts             # 候補昇格の観測・検証・決定
 │   ├── reverify.ts               # 公式ページ再確認と台帳更新
 │   ├── evidence.ts              # 証拠本文の検証・インデックス・回収
 │   ├── identity-migration.ts     # health gate 用の明示的 identity 移行契約
+│   ├── semantic-content.ts     # sealed bundle の semantic_content_id 算出
 │   ├── embeddings.ts            # 埋め込み生成
 │   ├── bench-recommender.ts     # 推薦ベンチ
 │   ├── build.ts                 # JSON/CSV/MD/llms.txt/HTML 出力
@@ -191,11 +199,11 @@ kamiyobi/
 │   ├── recommendation-core.ts   # browser / benchmark / test 共通の推薦軸
 │   ├── publish.ts               # publish manifest のブラウザ側検証
 │   └── runtime.d.ts             # ブラウザ・生成データの型境界
- ├── scripts/
- │   ├── compare-head.ts          # snapshot / primary_overrides の実質差分
- │   ├── health-gate.ts           # 直近の健全な公開結果との配信前健全性ゲート
- │   ├── generate-curated.ts      # promotion 正典から local 正典を再生成
- │   ├── generate-venue-profiles.ts # 出典情報付きプロフィール成果物の再生成
+├── scripts/
+│   ├── compare-head.ts          # snapshot / primary_overrides の実質差分
+│   ├── health-gate.ts           # 直近の健全な公開結果との配信前健全性ゲート
+│   ├── generate-curated.ts      # promotion 正典から local 正典を再生成
+│   ├── generate-venue-profiles.ts # 出典情報付きプロフィール成果物の再生成
 │   ├── observe-cfp.ts           # CFP 本文・応答・抽出候補の保存
 │   ├── restore-recommendation-bundle.ts # 互換推薦 artifact の検証・復元
 │   ├── seal-recommendation-bundle.ts # semantic_content_id 付き bundle 封印
@@ -546,7 +554,8 @@ node --experimental-strip-types src/cli.ts reverify [plan|run|review|accept|appl
 node --experimental-strip-types src/cli.ts evidence [verify|gc] [--dry-run]
 ```
 
-`--offline` は「新規取得をせず、キャッシュ → snapshot の順で退避する」。
+`--offline` は新規の上流データ・埋め込みモデルを取得しない。上流データは cache → snapshot
+の順で退避し、埋め込みモデルはローカル cache が無ければ警告して生成を省略する。
 `--now` は決定的テストのため必須で実装する。既定は実時刻 UTC。
 時刻成分がある値は `Z` または `±HH:MM` offset を必須とする。offset 無し
 （`2026-08-09T00:00:00`）はローカル時刻になり決定性を壊すので拒否する。
@@ -610,6 +619,8 @@ schema 4 は `source_commit`、`data_commit`、`workflow_run_id`、`dirty_worktr
 `content_id` は source commit・入力・promotion・profile・モデル revision から計算し、
 `build_id` は `content_id` と生成時刻から計算する。
 固定時刻と同じ入力で生成した公開物はバイト一致しなければならない。
+`scripts/check-reproducible-build.zsh` は、呼出時点の作業ツリーを
+`--offline --no-embeddings` で一時出力先へ2回生成してこれを検査する。
 `data.json` は venue と edition の明示 identity を保持し、snapshot 復元後も名寄せ根拠を失わない。
 
 `index.html` に埋め込む JSON は `catalog.json` と同一である。推薦モードは
@@ -717,6 +728,8 @@ rank_filter:
 `data/manual.yaml` は手入力した local 会議を保持する。
 `data/curated.generated.yaml` は `data/promotions/*/resolutions.json` から生成し、
 各掲載締切に `promotion_ref: {batch, resolution}` を付ける。
+手入力済み会議へ新年度だけを昇格するときは既存年度を `manual.yaml` に残し、local 読み込み時に
+同じ会議の重複しない edition ID を一つへ結合する。
 生成手順は `npm run generate:curated` であり、生成物を直接編集しない。
 既存データを移行するための `data/extra.yaml` は入力として残すが、build は両正典を優先する。
 
@@ -810,7 +823,8 @@ conferences:
 - `scripts/observe-cfp.ts` は `--body` を必須とし、取得先と最終 URL、HTTP 状態、応答ヘッダ、取得時刻、本文 SHA-256、parser version、本文抜粋、抽出候補、source revision、保存本文を一つの capture として記録する。
 - `scripts/verify-cfp.ts` は保存本文を再読して候補を再抽出し、本文 hash、抜粋、公式ドメイン、日付候補、取得時刻、前回 capture より新しい revision を検証する。capture 内の候補配列だけでは昇格できない。
 - 公式 CFP または出版社の capture が無い観測、本文と一致しない観測、会議レビューまたはカテゴリレビューが未完了の観測は昇格しない。
-- `scripts/promote-candidates.ts` は参照本文を batch の `bodies/` へコピーし、本文、observations、resolutions、昇格用 `extra.yaml` の SHA-256 と決定一覧を `manifest.json` に封印する。
+- `scripts/promote-candidates.ts` は参照本文を共通 CAS の `data/evidence/blobs/` へ保存し、本文参照、observations、resolutions の SHA-256 と決定一覧を `manifest.json` に封印する。本文は batch ごとに複製しない。
+- provider-aware canonicalization の最良候補と第2候補の許容差は `config.yaml` の `promotion.canonicalization_margin` で設定し、差が未満なら `hold` にする。
 - `npm run generate:curated` は各 resolution に安定した ID を割り当て、batch の決定を `curated.generated.yaml` と `promotion_ref` で参照可能にする。
 - 保存先は `data/promotions/<batch-id>/` とし、公開 manifest は各 batch manifest の SHA-256 を記録する。
 
@@ -818,15 +832,22 @@ conferences:
 
 ## 6. 更新・配信
 
-更新・配信は手動で行う。README.md の「更新の仕組み」に示す順序で、上流取得、候補探索、
+手元では README.md の「更新の仕組み」に示す順序で、上流取得、候補探索、
 ビルド、データ検証、health gate を実行する。
+`.github/workflows/` は同じ検査を GitHub Actions で実行する。
 
+- `ci.yml` は typecheck、lint、テスト、offline build、データ検査、health、推薦回帰を実行する。
+- `deploy.yml` は main の現行 SHA だけを GitHub Pages に配信し、`publish.json` を証明する。
+- `update-data.yml` は上流取得と再確認の結果を data PR にする。
+- `recommendation-bundle.yml` は埋め込み bundle を封印し、`nightly.yml` は実論文ベンチを残す。
 - `publish.json` の `workflow_run_id` はローカル実行では `null` になる。schema 4 の型は
   `string | null` のまま維持する。
-- `data/next-last-known-good-health.json` は更新のたびに `health-gate.ts` の出力を保存して
-  更新する。
+- health gate の比較用 baseline と保存先は、`health-gate.ts` の第2、第3位置引数で明示する。
+  `npm run update` は既存の `public/` を baseline なしで検証し、baseline を保存しない。
+- `validator-findings.json` は warning 抑制の正本である。`accepted` は `expires_at` を過ぎると
+  再レビュー対象として検証を失敗させ、履歴用の `fixed` は現行 warning の baseline にしない。
 - 実論文ベンチ（dev / heldout 全件）は `node src/bench-recommender.ts` で実行する。
-- snapshot fallback、health gate、意味検査に合格した `public/` を配信先へ手動で反映する。
+- 手元確認は `public/` を使う。main の現行 SHA は `deploy.yml` が Pages へ配信する。
 
 ---
 
@@ -962,8 +983,9 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 - heldout の単一 venue 比率は25%以下とし、複数の妥当な投稿先を許すケースを含める。
 - 実論文評価は lexical・semantic・fused の MRR、Recall@1/5/10、nDCG@10、95% bootstrap区間、層別値、abstentionを分けて報告する。
 - candidate retrieval は lexical・semantic・union の Recall@50 と oracle reranker Recall@5 を分けて報告する。
-  required 実測では候補深度 50 / 100 / 200 / 全件も比較し、実運用の既定深度は
-  100 とする（100 で改善せず処理負荷だけ増える場合は 50 に戻す）。
+  required 実測では候補深度 50 / 100 / 200 / 全件を比較し、Union Recall@K が
+  Union Recall@all - 0.01 以上となる最小 K を実運用の既定深度とする。
+  現行の実測では dev・heldout ともに K=200 がこの条件を満たす。
 - 軽量線形 reranker は本番と同一の固定 feature schema から full dev (`real-paper-dev`) のみで
   L2 pairwise logistic を学習し、受理 venue の連結成分を保った greedy 5-fold 分割で係数・blend を選択して
   Platt 校正と confidence threshold を学習する。required-dev（短縮検査用 subset）を学習に使ってはならない。
@@ -979,6 +1001,9 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
   推薦内容が不変の更新では封印済み bundle を再利用し、埋め込みモデルを読み込まない。
   bundle manifest は公開 commit (`source_commit`) と生成元 commit (`bundle_origin_commit`) を分けて記録し、
   `semantic_content_id`・`required_gate`・`full_benchmark`・`embeddings_sha256` を持つ。
+  `gate_provenance.mode` は、渡された両レポートを封緘時に再検証した `verified-reports` と、
+  同じ fail-fast pipeline 内での直前合格を呼出元の責任で保証する `trusted-pipeline` を区別する。
+  `verified-reports` は required / full レポートそれぞれの SHA-256 と benchmark content ID も記録する。
   復元側は現在の data から `semantic_content_id` を再計算して一致を要求し (公開 commit の一致は問わない)、
   両 gate の `passed` も強制する。
 - required と full はそれぞれ記録済みの回帰下限を持ち、heldout fused Recall@5 または negative abstention が下限を割れば失敗する。JSON レポートは検査結果としてファイルに保存する。

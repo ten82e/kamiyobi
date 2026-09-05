@@ -1,6 +1,5 @@
 /**
  * merge / classify / overrides / rollforward / select: SPEC.md sections 3 and 5.
- * Ported from tests/test_merge.py.
  */
 
 import { readFileSync } from "node:fs";

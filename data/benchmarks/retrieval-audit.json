@@ -2,49 +2,63 @@
   "schema_version": 1,
   "benchmark": "real-paper-v1",
   "generated_from": "data/benchmarks/real-paper-dev.json + data/benchmarks/real-paper-heldout.json + data/benchmarks/real-paper-negative.json",
+  "candidate_depth_selection": {
+    "rule": "minimum K where Union Recall@K >= Union Recall@all - 0.01",
+    "selected": 200,
+    "evidence": {
+      "dev": {
+        "union_recall_at_selected": 0.6375,
+        "union_recall_at_all": 0.6375
+      },
+      "heldout": {
+        "union_recall_at_selected": 0.8375,
+        "union_recall_at_all": 0.8375
+      }
+    }
+  },
   "by_split": {
     "dev": {
       "queries": 80,
       "fused": {
-        "mrr": 0.052471,
-        "recall_at_1": 0,
-        "recall_at_5": 0.075,
-        "recall_at_10": 0.175
+        "mrr": 0.054624,
+        "recall_at_1": 0.0125,
+        "recall_at_5": 0.0625,
+        "recall_at_10": 0.15
       },
       "candidate_retrieval": {
         "lexical_recall_at_50": 0.1375,
-        "semantic_recall_at_50": 0.45,
+        "semantic_recall_at_50": 0.4625,
         "union_recall_at_50": 0.5125,
         "oracle_reranker_recall_at_5": 0.5125
       },
       "failure_taxonomy": {
         "none": 0,
         "retrieval": 39,
-        "reranker": 35,
+        "reranker": 36,
         "annotation": 0,
-        "calibration": 6
+        "calibration": 5
       }
     },
     "heldout": {
       "queries": 80,
       "fused": {
-        "mrr": 0.077091,
-        "recall_at_1": 0.025,
-        "recall_at_5": 0.1,
-        "recall_at_10": 0.1375
+        "mrr": 0.146726,
+        "recall_at_1": 0.0625,
+        "recall_at_5": 0.225,
+        "recall_at_10": 0.3625
       },
       "candidate_retrieval": {
-        "lexical_recall_at_50": 0.2,
-        "semantic_recall_at_50": 0.45,
-        "union_recall_at_50": 0.525,
-        "oracle_reranker_recall_at_5": 0.525
+        "lexical_recall_at_50": 0.325,
+        "semantic_recall_at_50": 0.675,
+        "union_recall_at_50": 0.7375,
+        "oracle_reranker_recall_at_5": 0.7375
       },
       "failure_taxonomy": {
         "none": 0,
-        "retrieval": 38,
-        "reranker": 34,
+        "retrieval": 21,
+        "reranker": 41,
         "annotation": 0,
-        "calibration": 8
+        "calibration": 18
       }
     },
     "negative": {
@@ -59,14 +73,14 @@
       "dev": {
         "lexical": {
           "queries": 26,
-          "mrr": 0.01403,
+          "mrr": 0.0234,
           "top1Accuracy": 0,
           "coverage": 0.384615,
           "recall@1": 0,
-          "recall@5": 0,
-          "recall@10": 0.038462,
-          "ndcg@5": 0,
-          "ndcg@10": 0.0137,
+          "recall@5": 0.038462,
+          "recall@10": 0.115385,
+          "ndcg@5": 0.016564,
+          "ndcg@10": 0.041383,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -74,8 +88,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.003546,
-                "upper": 0.029429
+                "lower": 0.004214,
+                "upper": 0.049486
               },
               "recall@1": {
                 "lower": 0,
@@ -83,29 +97,29 @@
               },
               "recall@5": {
                 "lower": 0,
-                "upper": 0
+                "upper": 0.115385
               },
               "recall@10": {
                 "lower": 0,
-                "upper": 0.115385
+                "upper": 0.269231
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.041101
+                "upper": 0.09394
               }
             }
           }
         },
         "semantic": {
           "queries": 26,
-          "mrr": 0.045893,
+          "mrr": 0.044895,
           "top1Accuracy": 0,
           "coverage": 0.653846,
           "recall@1": 0,
           "recall@5": 0.038462,
           "recall@10": 0.153846,
           "ndcg@5": 0.016564,
-          "ndcg@10": 0.051949,
+          "ndcg@10": 0.052081,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -113,8 +127,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.025806,
-                "upper": 0.06893
+                "lower": 0.02485,
+                "upper": 0.068356
               },
               "recall@1": {
                 "lower": 0,
@@ -130,21 +144,21 @@
               },
               "ndcg@10": {
                 "lower": 0.011118,
-                "upper": 0.100627
+                "upper": 0.10166
               }
             }
           }
         },
         "fused": {
           "queries": 26,
-          "mrr": 0.051935,
-          "top1Accuracy": 0,
+          "mrr": 0.07683,
+          "top1Accuracy": 0.038462,
           "coverage": 0.692308,
-          "recall@1": 0,
+          "recall@1": 0.038462,
           "recall@5": 0.076923,
-          "recall@10": 0.153846,
-          "ndcg@5": 0.03411,
-          "ndcg@10": 0.058048,
+          "recall@10": 0.115385,
+          "ndcg@5": 0.055026,
+          "ndcg@10": 0.066144,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -152,24 +166,24 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.026628,
-                "upper": 0.083118
+                "lower": 0.024911,
+                "upper": 0.162263
               },
               "recall@1": {
                 "lower": 0,
-                "upper": 0
+                "upper": 0.115385
               },
               "recall@5": {
                 "lower": 0,
                 "upper": 0.192308
               },
               "recall@10": {
-                "lower": 0.038462,
-                "upper": 0.307692
+                "lower": 0,
+                "upper": 0.269231
               },
               "ndcg@10": {
-                "lower": 0.011118,
-                "upper": 0.115385
+                "lower": 0,
+                "upper": 0.15997
               }
             }
           }
@@ -178,9 +192,9 @@
       "heldout": {
         "lexical": {
           "queries": 17,
-          "mrr": 0.005793,
+          "mrr": 0.00669,
           "top1Accuracy": 0,
-          "coverage": 0.294118,
+          "coverage": 0.352941,
           "recall@1": 0,
           "recall@5": 0,
           "recall@10": 0,
@@ -193,8 +207,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.001194,
-                "upper": 0.013214
+                "lower": 0.001774,
+                "upper": 0.014867
               },
               "recall@1": {
                 "lower": 0,
@@ -217,14 +231,14 @@
         },
         "semantic": {
           "queries": 17,
-          "mrr": 0.026895,
+          "mrr": 0.046,
           "top1Accuracy": 0,
-          "coverage": 0.411765,
+          "coverage": 0.529412,
           "recall@1": 0,
-          "recall@5": 0,
+          "recall@5": 0.058824,
           "recall@10": 0.117647,
-          "ndcg@5": 0,
-          "ndcg@10": 0.038661,
+          "ndcg@5": 0.025334,
+          "ndcg@10": 0.046287,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -232,8 +246,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.008115,
-                "upper": 0.053139
+                "lower": 0.019758,
+                "upper": 0.081509
               },
               "recall@1": {
                 "lower": 0,
@@ -241,7 +255,7 @@
               },
               "recall@5": {
                 "lower": 0,
-                "upper": 0
+                "upper": 0.176471
               },
               "recall@10": {
                 "lower": 0,
@@ -249,21 +263,21 @@
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.098275
+                "upper": 0.117908
               }
             }
           }
         },
         "fused": {
           "queries": 17,
-          "mrr": 0.071502,
+          "mrr": 0.084865,
           "top1Accuracy": 0.058824,
-          "coverage": 0.529412,
+          "coverage": 0.647059,
           "recall@1": 0.058824,
           "recall@5": 0.058824,
-          "recall@10": 0.058824,
+          "recall@10": 0.117647,
           "ndcg@5": 0.058824,
-          "ndcg@10": 0.058824,
+          "ndcg@10": 0.079777,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -271,8 +285,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.007785,
-                "upper": 0.193378
+                "lower": 0.014496,
+                "upper": 0.211897
               },
               "recall@1": {
                 "lower": 0,
@@ -284,11 +298,11 @@
               },
               "recall@10": {
                 "lower": 0,
-                "upper": 0.176471
+                "upper": 0.294118
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.176471
+                "upper": 0.218377
               }
             }
           }
@@ -299,14 +313,14 @@
       "dev": {
         "lexical": {
           "queries": 8,
-          "mrr": 0.038196,
+          "mrr": 0.017363,
           "top1Accuracy": 0,
           "coverage": 0.5,
           "recall@1": 0,
-          "recall@5": 0.125,
-          "recall@10": 0.125,
-          "ndcg@5": 0.053835,
-          "ndcg@10": 0.053835,
+          "recall@5": 0,
+          "recall@10": 0,
+          "ndcg@5": 0,
+          "ndcg@10": 0,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -314,8 +328,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.003409,
-                "upper": 0.099559
+                "lower": 0.004287,
+                "upper": 0.036461
               },
               "recall@1": {
                 "lower": 0,
@@ -323,22 +337,22 @@
               },
               "recall@5": {
                 "lower": 0,
-                "upper": 0.375
+                "upper": 0
               },
               "recall@10": {
                 "lower": 0,
-                "upper": 0.375
+                "upper": 0
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.161504
+                "upper": 0
               }
             }
           }
         },
         "semantic": {
           "queries": 8,
-          "mrr": 0.055556,
+          "mrr": 0.055882,
           "top1Accuracy": 0,
           "coverage": 0.625,
           "recall@1": 0,
@@ -353,8 +367,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.005556,
-                "upper": 0.126678
+                "lower": 0.005636,
+                "upper": 0.126838
               },
               "recall@1": {
                 "lower": 0,
@@ -377,14 +391,14 @@
         },
         "fused": {
           "queries": 8,
-          "mrr": 0.082357,
+          "mrr": 0.04524,
           "top1Accuracy": 0,
           "coverage": 0.625,
           "recall@1": 0,
-          "recall@5": 0.25,
+          "recall@5": 0,
           "recall@10": 0.25,
-          "ndcg@5": 0.110857,
-          "ndcg@10": 0.110857,
+          "ndcg@5": 0,
+          "ndcg@10": 0.0778,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -392,8 +406,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.015691,
-                "upper": 0.16521
+                "lower": 0.014693,
+                "upper": 0.083631
               },
               "recall@1": {
                 "lower": 0,
@@ -401,7 +415,7 @@
               },
               "recall@5": {
                 "lower": 0,
-                "upper": 0.625
+                "upper": 0
               },
               "recall@10": {
                 "lower": 0,
@@ -409,7 +423,7 @@
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.255926
+                "upper": 0.191733
               }
             }
           }
@@ -418,14 +432,14 @@
       "heldout": {
         "lexical": {
           "queries": 9,
-          "mrr": 0.061677,
+          "mrr": 0.016365,
           "top1Accuracy": 0,
           "coverage": 0.555556,
           "recall@1": 0,
-          "recall@5": 0.111111,
+          "recall@5": 0,
           "recall@10": 0.111111,
-          "ndcg@5": 0.070103,
-          "ndcg@10": 0.070103,
+          "ndcg@5": 0,
+          "ndcg@10": 0.032118,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -433,8 +447,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.002809,
-                "upper": 0.173341
+                "lower": 0.002502,
+                "upper": 0.03912
               },
               "recall@1": {
                 "lower": 0,
@@ -442,7 +456,7 @@
               },
               "recall@5": {
                 "lower": 0,
-                "upper": 0.333333
+                "upper": 0
               },
               "recall@10": {
                 "lower": 0,
@@ -450,21 +464,21 @@
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.21031
+                "upper": 0.096355
               }
             }
           }
         },
         "semantic": {
           "queries": 9,
-          "mrr": 0.100272,
-          "top1Accuracy": 0,
-          "coverage": 0.666667,
-          "recall@1": 0,
-          "recall@5": 0.222222,
-          "recall@10": 0.222222,
-          "ndcg@5": 0.117956,
-          "ndcg@10": 0.117956,
+          "mrr": 0.221672,
+          "top1Accuracy": 0.111111,
+          "coverage": 0.888889,
+          "recall@1": 0.111111,
+          "recall@5": 0.333333,
+          "recall@10": 0.333333,
+          "ndcg@5": 0.229067,
+          "ndcg@10": 0.229067,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -472,38 +486,38 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.013572,
-                "upper": 0.23165
+                "lower": 0.057735,
+                "upper": 0.4577
               },
               "recall@1": {
                 "lower": 0,
-                "upper": 0
+                "upper": 0.333333
               },
               "recall@5": {
-                "lower": 0,
-                "upper": 0.555556
+                "lower": 0.111111,
+                "upper": 0.666667
               },
               "recall@10": {
-                "lower": 0,
-                "upper": 0.555556
+                "lower": 0.111111,
+                "upper": 0.666667
               },
               "ndcg@10": {
-                "lower": 0,
-                "upper": 0.306016
+                "lower": 0.047853,
+                "upper": 0.492297
               }
             }
           }
         },
         "fused": {
           "queries": 9,
-          "mrr": 0.093805,
+          "mrr": 0.077093,
           "top1Accuracy": 0,
-          "coverage": 0.666667,
+          "coverage": 0.888889,
           "recall@1": 0,
           "recall@5": 0.111111,
-          "recall@10": 0.222222,
-          "ndcg@5": 0.070103,
-          "ndcg@10": 0.10714,
+          "recall@10": 0.333333,
+          "ndcg@5": 0.042984,
+          "ndcg@10": 0.119599,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -511,8 +525,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.020847,
-                "upper": 0.208514
+                "lower": 0.036531,
+                "upper": 0.122639
               },
               "recall@1": {
                 "lower": 0,
@@ -523,12 +537,12 @@
                 "upper": 0.333333
               },
               "recall@10": {
-                "lower": 0,
-                "upper": 0.555556
+                "lower": 0.111111,
+                "upper": 0.666667
               },
               "ndcg@10": {
-                "lower": 0,
-                "upper": 0.280413
+                "lower": 0.037037,
+                "upper": 0.238335
               }
             }
           }
@@ -539,14 +553,14 @@
       "dev": {
         "lexical": {
           "queries": 12,
-          "mrr": 0.024051,
+          "mrr": 0.040716,
           "top1Accuracy": 0,
           "coverage": 0.5,
           "recall@1": 0,
-          "recall@5": 0,
-          "recall@10": 0.083333,
-          "ndcg@5": 0,
-          "ndcg@10": 0.029684,
+          "recall@5": 0.083333,
+          "recall@10": 0.166667,
+          "ndcg@5": 0.03589,
+          "ndcg@10": 0.065574,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -554,8 +568,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.004884,
-                "upper": 0.053035
+                "lower": 0.005222,
+                "upper": 0.091873
               },
               "recall@1": {
                 "lower": 0,
@@ -563,29 +577,29 @@
               },
               "recall@5": {
                 "lower": 0,
-                "upper": 0
+                "upper": 0.25
               },
               "recall@10": {
                 "lower": 0,
-                "upper": 0.25
+                "upper": 0.416667
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.089052
+                "upper": 0.167037
               }
             }
           }
         },
         "semantic": {
           "queries": 12,
-          "mrr": 0.068306,
+          "mrr": 0.065205,
           "top1Accuracy": 0,
           "coverage": 0.833333,
           "recall@1": 0,
           "recall@5": 0.083333,
           "recall@10": 0.25,
           "ndcg@5": 0.03589,
-          "ndcg@10": 0.086267,
+          "ndcg@10": 0.087756,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -593,8 +607,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.034116,
-                "upper": 0.110514
+                "lower": 0.030635,
+                "upper": 0.109328
               },
               "recall@1": {
                 "lower": 0,
@@ -617,14 +631,14 @@
         },
         "fused": {
           "queries": 12,
-          "mrr": 0.079841,
-          "top1Accuracy": 0,
+          "mrr": 0.135044,
+          "top1Accuracy": 0.083333,
           "coverage": 0.833333,
-          "recall@1": 0,
+          "recall@1": 0.083333,
           "recall@5": 0.166667,
-          "recall@10": 0.25,
-          "ndcg@5": 0.073904,
-          "ndcg@10": 0.097993,
+          "recall@10": 0.166667,
+          "ndcg@5": 0.119223,
+          "ndcg@10": 0.119223,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -632,12 +646,12 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.032402,
-                "upper": 0.139156
+                "lower": 0.028714,
+                "upper": 0.310559
               },
               "recall@1": {
                 "lower": 0,
-                "upper": 0
+                "upper": 0.25
               },
               "recall@5": {
                 "lower": 0,
@@ -645,11 +659,11 @@
               },
               "recall@10": {
                 "lower": 0,
-                "upper": 0.5
+                "upper": 0.416667
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.210646
+                "upper": 0.321779
               }
             }
           }
@@ -658,9 +672,9 @@
       "heldout": {
         "lexical": {
           "queries": 12,
-          "mrr": 0.007783,
+          "mrr": 0.009048,
           "top1Accuracy": 0,
-          "coverage": 0.333333,
+          "coverage": 0.416667,
           "recall@1": 0,
           "recall@5": 0,
           "recall@10": 0,
@@ -673,8 +687,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.001142,
-                "upper": 0.017578
+                "lower": 0.002124,
+                "upper": 0.018658
               },
               "recall@1": {
                 "lower": 0,
@@ -697,14 +711,14 @@
         },
         "semantic": {
           "queries": 12,
-          "mrr": 0.032545,
+          "mrr": 0.059611,
           "top1Accuracy": 0,
-          "coverage": 0.5,
+          "coverage": 0.666667,
           "recall@1": 0,
-          "recall@5": 0,
+          "recall@5": 0.083333,
           "recall@10": 0.166667,
-          "ndcg@5": 0,
-          "ndcg@10": 0.05477,
+          "ndcg@5": 0.03589,
+          "ndcg@10": 0.065574,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -712,8 +726,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.007835,
-                "upper": 0.065236
+                "lower": 0.022432,
+                "upper": 0.109266
               },
               "recall@1": {
                 "lower": 0,
@@ -721,7 +735,7 @@
               },
               "recall@5": {
                 "lower": 0,
-                "upper": 0
+                "upper": 0.25
               },
               "recall@10": {
                 "lower": 0,
@@ -729,21 +743,21 @@
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.134625
+                "upper": 0.167037
               }
             }
           }
         },
         "fused": {
           "queries": 12,
-          "mrr": 0.098517,
+          "mrr": 0.117249,
           "top1Accuracy": 0.083333,
-          "coverage": 0.666667,
+          "coverage": 0.833333,
           "recall@1": 0.083333,
           "recall@5": 0.083333,
-          "recall@10": 0.083333,
+          "recall@10": 0.166667,
           "ndcg@5": 0.083333,
-          "ndcg@10": 0.083333,
+          "ndcg@10": 0.113017,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -751,8 +765,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.008609,
-                "upper": 0.266502
+                "lower": 0.020253,
+                "upper": 0.287086
               },
               "recall@1": {
                 "lower": 0,
@@ -764,11 +778,11 @@
               },
               "recall@10": {
                 "lower": 0,
-                "upper": 0.25
+                "upper": 0.416667
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.25
+                "upper": 0.285402
               }
             }
           }
@@ -779,7 +793,7 @@
       "dev": {
         "lexical": {
           "queries": 10,
-          "mrr": 0.003437,
+          "mrr": 0.002997,
           "top1Accuracy": 0,
           "coverage": 0.3,
           "recall@1": 0,
@@ -795,7 +809,7 @@
             "metrics": {
               "mrr": {
                 "lower": 0,
-                "upper": 0.007344
+                "upper": 0.006324
               },
               "recall@1": {
                 "lower": 0,
@@ -818,46 +832,7 @@
         },
         "semantic": {
           "queries": 10,
-          "mrr": 0.018095,
-          "top1Accuracy": 0,
-          "coverage": 0.4,
-          "recall@1": 0,
-          "recall@5": 0,
-          "recall@10": 0.1,
-          "ndcg@5": 0,
-          "ndcg@10": 0.028906,
-          "confidence_interval": {
-            "method": "bootstrap",
-            "confidence_level": 0.95,
-            "seed": 1592598566,
-            "resamples": 1000,
-            "metrics": {
-              "mrr": {
-                "lower": 0.002857,
-                "upper": 0.038571
-              },
-              "recall@1": {
-                "lower": 0,
-                "upper": 0
-              },
-              "recall@5": {
-                "lower": 0,
-                "upper": 0
-              },
-              "recall@10": {
-                "lower": 0,
-                "upper": 0.3
-              },
-              "ndcg@10": {
-                "lower": 0,
-                "upper": 0.086719
-              }
-            }
-          }
-        },
-        "fused": {
-          "queries": 10,
-          "mrr": 0.014762,
+          "mrr": 0.017107,
           "top1Accuracy": 0,
           "coverage": 0.4,
           "recall@1": 0,
@@ -872,8 +847,47 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.004167,
-                "upper": 0.026786
+                "lower": 0.002778,
+                "upper": 0.035606
+              },
+              "recall@1": {
+                "lower": 0,
+                "upper": 0
+              },
+              "recall@5": {
+                "lower": 0,
+                "upper": 0
+              },
+              "recall@10": {
+                "lower": 0,
+                "upper": 0
+              },
+              "ndcg@10": {
+                "lower": 0,
+                "upper": 0
+              }
+            }
+          }
+        },
+        "fused": {
+          "queries": 10,
+          "mrr": 0.013731,
+          "top1Accuracy": 0,
+          "coverage": 0.4,
+          "recall@1": 0,
+          "recall@5": 0,
+          "recall@10": 0,
+          "ndcg@5": 0,
+          "ndcg@10": 0,
+          "confidence_interval": {
+            "method": "bootstrap",
+            "confidence_level": 0.95,
+            "seed": 1592598566,
+            "resamples": 1000,
+            "metrics": {
+              "mrr": {
+                "lower": 0.003846,
+                "upper": 0.025269
               },
               "recall@1": {
                 "lower": 0,
@@ -898,14 +912,14 @@
       "heldout": {
         "lexical": {
           "queries": 10,
-          "mrr": 0.026677,
+          "mrr": 0.018112,
           "top1Accuracy": 0,
-          "coverage": 0.3,
+          "coverage": 0.4,
           "recall@1": 0,
-          "recall@5": 0.1,
+          "recall@5": 0,
           "recall@10": 0.1,
-          "ndcg@5": 0.043068,
-          "ndcg@10": 0.043068,
+          "ndcg@5": 0,
+          "ndcg@10": 0.033333,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -913,8 +927,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0,
-                "upper": 0.076677
+                "lower": 0.00101,
+                "upper": 0.04676
               },
               "recall@1": {
                 "lower": 0,
@@ -922,7 +936,7 @@
               },
               "recall@5": {
                 "lower": 0,
-                "upper": 0.3
+                "upper": 0
               },
               "recall@10": {
                 "lower": 0,
@@ -930,21 +944,21 @@
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.129203
+                "upper": 0.1
               }
             }
           }
         },
         "semantic": {
           "queries": 10,
-          "mrr": 0.101763,
+          "mrr": 0.136316,
           "top1Accuracy": 0,
-          "coverage": 0.7,
+          "coverage": 0.9,
           "recall@1": 0,
-          "recall@5": 0.2,
-          "recall@10": 0.3,
-          "ndcg@5": 0.106161,
-          "ndcg@10": 0.141781,
+          "recall@5": 0.4,
+          "recall@10": 0.4,
+          "ndcg@5": 0.187914,
+          "ndcg@10": 0.187914,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -952,38 +966,38 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.018495,
-                "upper": 0.212381
+                "lower": 0.052532,
+                "upper": 0.249923
               },
               "recall@1": {
                 "lower": 0,
                 "upper": 0
               },
               "recall@5": {
-                "lower": 0,
-                "upper": 0.5
+                "lower": 0.1,
+                "upper": 0.7
               },
               "recall@10": {
-                "lower": 0,
-                "upper": 0.6
+                "lower": 0.1,
+                "upper": 0.7
               },
               "ndcg@10": {
-                "lower": 0,
-                "upper": 0.299158
+                "lower": 0.043068,
+                "upper": 0.352785
               }
             }
           }
         },
         "fused": {
           "queries": 10,
-          "mrr": 0.08403,
+          "mrr": 0.082982,
           "top1Accuracy": 0,
-          "coverage": 0.7,
+          "coverage": 0.9,
           "recall@1": 0,
-          "recall@5": 0.2,
+          "recall@5": 0.1,
           "recall@10": 0.2,
-          "ndcg@5": 0.101778,
-          "ndcg@10": 0.101778,
+          "ndcg@5": 0.063093,
+          "ndcg@10": 0.094639,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -991,8 +1005,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.014216,
-                "upper": 0.188894
+                "lower": 0.022433,
+                "upper": 0.183
               },
               "recall@1": {
                 "lower": 0,
@@ -1000,7 +1014,7 @@
               },
               "recall@5": {
                 "lower": 0,
-                "upper": 0.5
+                "upper": 0.3
               },
               "recall@10": {
                 "lower": 0,
@@ -1019,206 +1033,9 @@
       "dev": {
         "lexical": {
           "queries": 12,
-          "mrr": 0.044885,
+          "mrr": 0.019508,
           "top1Accuracy": 0,
           "coverage": 0.25,
-          "recall@1": 0,
-          "recall@5": 0.083333,
-          "recall@10": 0.083333,
-          "ndcg@5": 0.052577,
-          "ndcg@10": 0.052577,
-          "confidence_interval": {
-            "method": "bootstrap",
-            "confidence_level": 0.95,
-            "seed": 1592598566,
-            "resamples": 1000,
-            "metrics": {
-              "mrr": {
-                "lower": 0,
-                "upper": 0.12866
-              },
-              "recall@1": {
-                "lower": 0,
-                "upper": 0
-              },
-              "recall@5": {
-                "lower": 0,
-                "upper": 0.25
-              },
-              "recall@10": {
-                "lower": 0,
-                "upper": 0.25
-              },
-              "ndcg@10": {
-                "lower": 0,
-                "upper": 0.157732
-              }
-            }
-          }
-        },
-        "semantic": {
-          "queries": 12,
-          "mrr": 0.015789,
-          "top1Accuracy": 0,
-          "coverage": 0.583333,
-          "recall@1": 0,
-          "recall@5": 0,
-          "recall@10": 0,
-          "ndcg@5": 0,
-          "ndcg@10": 0,
-          "confidence_interval": {
-            "method": "bootstrap",
-            "confidence_level": 0.95,
-            "seed": 1592598566,
-            "resamples": 1000,
-            "metrics": {
-              "mrr": {
-                "lower": 0.005371,
-                "upper": 0.028476
-              },
-              "recall@1": {
-                "lower": 0,
-                "upper": 0
-              },
-              "recall@5": {
-                "lower": 0,
-                "upper": 0
-              },
-              "recall@10": {
-                "lower": 0,
-                "upper": 0
-              },
-              "ndcg@10": {
-                "lower": 0,
-                "upper": 0
-              }
-            }
-          }
-        },
-        "fused": {
-          "queries": 12,
-          "mrr": 0.026943,
-          "top1Accuracy": 0,
-          "coverage": 0.75,
-          "recall@1": 0,
-          "recall@5": 0,
-          "recall@10": 0.083333,
-          "ndcg@5": 0,
-          "ndcg@10": 0.027778,
-          "confidence_interval": {
-            "method": "bootstrap",
-            "confidence_level": 0.95,
-            "seed": 1592598566,
-            "resamples": 1000,
-            "metrics": {
-              "mrr": {
-                "lower": 0.009732,
-                "upper": 0.051445
-              },
-              "recall@1": {
-                "lower": 0,
-                "upper": 0
-              },
-              "recall@5": {
-                "lower": 0,
-                "upper": 0
-              },
-              "recall@10": {
-                "lower": 0,
-                "upper": 0.25
-              },
-              "ndcg@10": {
-                "lower": 0,
-                "upper": 0.083333
-              }
-            }
-          }
-        }
-      },
-      "heldout": {
-        "lexical": {
-          "queries": 12,
-          "mrr": 0.020658,
-          "top1Accuracy": 0,
-          "coverage": 0.25,
-          "recall@1": 0,
-          "recall@5": 0,
-          "recall@10": 0.083333,
-          "ndcg@5": 0,
-          "ndcg@10": 0.029684,
-          "confidence_interval": {
-            "method": "bootstrap",
-            "confidence_level": 0.95,
-            "seed": 1592598566,
-            "resamples": 1000,
-            "metrics": {
-              "mrr": {
-                "lower": 0,
-                "upper": 0.054487
-              },
-              "recall@1": {
-                "lower": 0,
-                "upper": 0
-              },
-              "recall@5": {
-                "lower": 0,
-                "upper": 0
-              },
-              "recall@10": {
-                "lower": 0,
-                "upper": 0.25
-              },
-              "ndcg@10": {
-                "lower": 0,
-                "upper": 0.089052
-              }
-            }
-          }
-        },
-        "semantic": {
-          "queries": 12,
-          "mrr": 0.039536,
-          "top1Accuracy": 0,
-          "coverage": 0.833333,
-          "recall@1": 0,
-          "recall@5": 0,
-          "recall@10": 0.083333,
-          "ndcg@5": 0,
-          "ndcg@10": 0.024089,
-          "confidence_interval": {
-            "method": "bootstrap",
-            "confidence_level": 0.95,
-            "seed": 1592598566,
-            "resamples": 1000,
-            "metrics": {
-              "mrr": {
-                "lower": 0.022747,
-                "upper": 0.056746
-              },
-              "recall@1": {
-                "lower": 0,
-                "upper": 0
-              },
-              "recall@5": {
-                "lower": 0,
-                "upper": 0
-              },
-              "recall@10": {
-                "lower": 0,
-                "upper": 0.25
-              },
-              "ndcg@10": {
-                "lower": 0,
-                "upper": 0.072266
-              }
-            }
-          }
-        },
-        "fused": {
-          "queries": 12,
-          "mrr": 0.041156,
-          "top1Accuracy": 0,
-          "coverage": 0.833333,
           "recall@1": 0,
           "recall@5": 0.083333,
           "recall@10": 0.083333,
@@ -1231,8 +1048,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.015986,
-                "upper": 0.074557
+                "lower": 0,
+                "upper": 0.05391
               },
               "recall@1": {
                 "lower": 0,
@@ -1252,6 +1069,203 @@
               }
             }
           }
+        },
+        "semantic": {
+          "queries": 12,
+          "mrr": 0.01436,
+          "top1Accuracy": 0,
+          "coverage": 0.583333,
+          "recall@1": 0,
+          "recall@5": 0,
+          "recall@10": 0,
+          "ndcg@5": 0,
+          "ndcg@10": 0,
+          "confidence_interval": {
+            "method": "bootstrap",
+            "confidence_level": 0.95,
+            "seed": 1592598566,
+            "resamples": 1000,
+            "metrics": {
+              "mrr": {
+                "lower": 0.005016,
+                "upper": 0.027039
+              },
+              "recall@1": {
+                "lower": 0,
+                "upper": 0
+              },
+              "recall@5": {
+                "lower": 0,
+                "upper": 0
+              },
+              "recall@10": {
+                "lower": 0,
+                "upper": 0
+              },
+              "ndcg@10": {
+                "lower": 0,
+                "upper": 0
+              }
+            }
+          }
+        },
+        "fused": {
+          "queries": 12,
+          "mrr": 0.024354,
+          "top1Accuracy": 0,
+          "coverage": 0.75,
+          "recall@1": 0,
+          "recall@5": 0,
+          "recall@10": 0,
+          "ndcg@5": 0,
+          "ndcg@10": 0,
+          "confidence_interval": {
+            "method": "bootstrap",
+            "confidence_level": 0.95,
+            "seed": 1592598566,
+            "resamples": 1000,
+            "metrics": {
+              "mrr": {
+                "lower": 0.01044,
+                "upper": 0.042232
+              },
+              "recall@1": {
+                "lower": 0,
+                "upper": 0
+              },
+              "recall@5": {
+                "lower": 0,
+                "upper": 0
+              },
+              "recall@10": {
+                "lower": 0,
+                "upper": 0
+              },
+              "ndcg@10": {
+                "lower": 0,
+                "upper": 0
+              }
+            }
+          }
+        }
+      },
+      "heldout": {
+        "lexical": {
+          "queries": 12,
+          "mrr": 0.031247,
+          "top1Accuracy": 0,
+          "coverage": 0.416667,
+          "recall@1": 0,
+          "recall@5": 0,
+          "recall@10": 0.166667,
+          "ndcg@5": 0,
+          "ndcg@10": 0.054067,
+          "confidence_interval": {
+            "method": "bootstrap",
+            "confidence_level": 0.95,
+            "seed": 1592598566,
+            "resamples": 1000,
+            "metrics": {
+              "mrr": {
+                "lower": 0.002688,
+                "upper": 0.062497
+              },
+              "recall@1": {
+                "lower": 0,
+                "upper": 0
+              },
+              "recall@5": {
+                "lower": 0,
+                "upper": 0
+              },
+              "recall@10": {
+                "lower": 0,
+                "upper": 0.416667
+              },
+              "ndcg@10": {
+                "lower": 0,
+                "upper": 0.134422
+              }
+            }
+          }
+        },
+        "semantic": {
+          "queries": 12,
+          "mrr": 0.065374,
+          "top1Accuracy": 0,
+          "coverage": 0.916667,
+          "recall@1": 0,
+          "recall@5": 0.083333,
+          "recall@10": 0.166667,
+          "ndcg@5": 0.041667,
+          "ndcg@10": 0.065755,
+          "confidence_interval": {
+            "method": "bootstrap",
+            "confidence_level": 0.95,
+            "seed": 1592598566,
+            "resamples": 1000,
+            "metrics": {
+              "mrr": {
+                "lower": 0.027147,
+                "upper": 0.122992
+              },
+              "recall@1": {
+                "lower": 0,
+                "upper": 0
+              },
+              "recall@5": {
+                "lower": 0,
+                "upper": 0.25
+              },
+              "recall@10": {
+                "lower": 0,
+                "upper": 0.416667
+              },
+              "ndcg@10": {
+                "lower": 0,
+                "upper": 0.173177
+              }
+            }
+          }
+        },
+        "fused": {
+          "queries": 12,
+          "mrr": 0.056225,
+          "top1Accuracy": 0,
+          "coverage": 0.916667,
+          "recall@1": 0,
+          "recall@5": 0.083333,
+          "recall@10": 0.25,
+          "ndcg@5": 0.03589,
+          "ndcg@10": 0.086267,
+          "confidence_interval": {
+            "method": "bootstrap",
+            "confidence_level": 0.95,
+            "seed": 1592598566,
+            "resamples": 1000,
+            "metrics": {
+              "mrr": {
+                "lower": 0.022349,
+                "upper": 0.10004
+              },
+              "recall@1": {
+                "lower": 0,
+                "upper": 0
+              },
+              "recall@5": {
+                "lower": 0,
+                "upper": 0.25
+              },
+              "recall@10": {
+                "lower": 0,
+                "upper": 0.5
+              },
+              "ndcg@10": {
+                "lower": 0,
+                "upper": 0.175221
+              }
+            }
+          }
         }
       }
     },
@@ -1259,7 +1273,7 @@
       "dev": {
         "lexical": {
           "queries": 8,
-          "mrr": 0.000984,
+          "mrr": 0.000899,
           "top1Accuracy": 0,
           "coverage": 0.125,
           "recall@1": 0,
@@ -1275,7 +1289,7 @@
             "metrics": {
               "mrr": {
                 "lower": 0,
-                "upper": 0.002953
+                "upper": 0.002698
               },
               "recall@1": {
                 "lower": 0,
@@ -1298,9 +1312,9 @@
         },
         "semantic": {
           "queries": 8,
-          "mrr": 0.014703,
+          "mrr": 0.013695,
           "top1Accuracy": 0,
-          "coverage": 0.625,
+          "coverage": 0.5,
           "recall@1": 0,
           "recall@5": 0,
           "recall@10": 0,
@@ -1313,8 +1327,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.005475,
-                "upper": 0.025719
+                "lower": 0.002451,
+                "upper": 0.0256
               },
               "recall@1": {
                 "lower": 0,
@@ -1337,9 +1351,9 @@
         },
         "fused": {
           "queries": 8,
-          "mrr": 0.00934,
+          "mrr": 0.008572,
           "top1Accuracy": 0,
-          "coverage": 0.625,
+          "coverage": 0.5,
           "recall@1": 0,
           "recall@5": 0,
           "recall@10": 0,
@@ -1352,8 +1366,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.003115,
-                "upper": 0.017159
+                "lower": 0.001316,
+                "upper": 0.016703
               },
               "recall@1": {
                 "lower": 0,
@@ -1378,14 +1392,14 @@
       "heldout": {
         "lexical": {
           "queries": 16,
-          "mrr": 0.191344,
-          "top1Accuracy": 0.0625,
-          "coverage": 0.6875,
-          "recall@1": 0.0625,
-          "recall@5": 0.3125,
-          "recall@10": 0.375,
-          "ndcg@5": 0.212049,
-          "ndcg@10": 0.232883,
+          "mrr": 0.348567,
+          "top1Accuracy": 0.1875,
+          "coverage": 0.9375,
+          "recall@1": 0.1875,
+          "recall@5": 0.5,
+          "recall@10": 0.6875,
+          "ndcg@5": 0.355784,
+          "ndcg@10": 0.416946,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1393,38 +1407,38 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.066046,
-                "upper": 0.33599
+                "lower": 0.192642,
+                "upper": 0.524554
               },
               "recall@1": {
                 "lower": 0,
-                "upper": 0.1875
+                "upper": 0.375
               },
               "recall@5": {
-                "lower": 0.125,
-                "upper": 0.5625
+                "lower": 0.25,
+                "upper": 0.75
               },
               "recall@10": {
-                "lower": 0.125,
-                "upper": 0.625
+                "lower": 0.4375,
+                "upper": 0.875
               },
               "ndcg@10": {
-                "lower": 0.078866,
-                "upper": 0.404016
+                "lower": 0.245,
+                "upper": 0.58875
               }
             }
           }
         },
         "semantic": {
           "queries": 16,
-          "mrr": 0.092509,
+          "mrr": 0.132457,
           "top1Accuracy": 0.0625,
-          "coverage": 0.625,
+          "coverage": 0.6875,
           "recall@1": 0.0625,
-          "recall@5": 0.125,
-          "recall@10": 0.125,
-          "ndcg@5": 0.089417,
-          "ndcg@10": 0.089417,
+          "recall@5": 0.25,
+          "recall@10": 0.25,
+          "ndcg@5": 0.149178,
+          "ndcg@10": 0.149178,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1432,38 +1446,38 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.011688,
-                "upper": 0.225017
+                "lower": 0.034728,
+                "upper": 0.272024
               },
               "recall@1": {
                 "lower": 0,
                 "upper": 0.1875
               },
               "recall@5": {
-                "lower": 0,
-                "upper": 0.3125
+                "lower": 0.0625,
+                "upper": 0.5
               },
               "recall@10": {
-                "lower": 0,
-                "upper": 0.3125
+                "lower": 0.0625,
+                "upper": 0.5
               },
               "ndcg@10": {
-                "lower": 0,
-                "upper": 0.241335
+                "lower": 0.024178,
+                "upper": 0.305428
               }
             }
           }
         },
         "fused": {
           "queries": 16,
-          "mrr": 0.14448,
-          "top1Accuracy": 0.0625,
-          "coverage": 0.75,
-          "recall@1": 0.0625,
-          "recall@5": 0.1875,
-          "recall@10": 0.3125,
-          "ndcg@5": 0.133183,
-          "ndcg@10": 0.175163,
+          "mrr": 0.333146,
+          "top1Accuracy": 0.1875,
+          "coverage": 0.9375,
+          "recall@1": 0.1875,
+          "recall@5": 0.625,
+          "recall@10": 0.6875,
+          "ndcg@5": 0.390513,
+          "ndcg@10": 0.410229,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1471,24 +1485,24 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.040118,
-                "upper": 0.294213
+                "lower": 0.182105,
+                "upper": 0.493748
               },
               "recall@1": {
                 "lower": 0,
-                "upper": 0.1875
-              },
-              "recall@5": {
-                "lower": 0,
                 "upper": 0.375
               },
+              "recall@5": {
+                "lower": 0.375,
+                "upper": 0.8125
+              },
               "recall@10": {
-                "lower": 0.125,
-                "upper": 0.5625
+                "lower": 0.4375,
+                "upper": 0.875
               },
               "ndcg@10": {
-                "lower": 0.050967,
-                "upper": 0.333699
+                "lower": 0.245185,
+                "upper": 0.572053
               }
             }
           }
@@ -1499,14 +1513,14 @@
       "dev": {
         "lexical": {
           "queries": 10,
-          "mrr": 0.018088,
+          "mrr": 0.021322,
           "top1Accuracy": 0,
           "coverage": 0.3,
           "recall@1": 0,
-          "recall@5": 0,
+          "recall@5": 0.1,
           "recall@10": 0.1,
-          "ndcg@5": 0,
-          "ndcg@10": 0.035621,
+          "ndcg@5": 0.038685,
+          "ndcg@10": 0.038685,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1515,7 +1529,7 @@
             "metrics": {
               "mrr": {
                 "lower": 0,
-                "upper": 0.051667
+                "upper": 0.061538
               },
               "recall@1": {
                 "lower": 0,
@@ -1523,7 +1537,7 @@
               },
               "recall@5": {
                 "lower": 0,
-                "upper": 0
+                "upper": 0.3
               },
               "recall@10": {
                 "lower": 0,
@@ -1531,14 +1545,14 @@
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.106862
+                "upper": 0.116056
               }
             }
           }
         },
         "semantic": {
           "queries": 10,
-          "mrr": 0.347132,
+          "mrr": 0.34932,
           "top1Accuracy": 0.3,
           "coverage": 0.8,
           "recall@1": 0.3,
@@ -1553,8 +1567,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.093799,
-                "upper": 0.637549
+                "lower": 0.097828,
+                "upper": 0.640356
               },
               "recall@1": {
                 "lower": 0,
@@ -1577,14 +1591,14 @@
         },
         "fused": {
           "queries": 10,
-          "mrr": 0.131152,
+          "mrr": 0.104514,
           "top1Accuracy": 0,
           "coverage": 0.8,
           "recall@1": 0,
           "recall@5": 0.2,
-          "recall@10": 0.5,
-          "ndcg@5": 0.113093,
-          "ndcg@10": 0.209863,
+          "recall@10": 0.4,
+          "ndcg@5": 0.1,
+          "ndcg@10": 0.161649,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1592,8 +1606,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.046083,
-                "upper": 0.232688
+                "lower": 0.037548,
+                "upper": 0.17929
               },
               "recall@1": {
                 "lower": 0,
@@ -1604,12 +1618,12 @@
                 "upper": 0.4
               },
               "recall@10": {
-                "lower": 0.2,
-                "upper": 0.8
+                "lower": 0.1,
+                "upper": 0.7
               },
               "ndcg@10": {
-                "lower": 0.066667,
-                "upper": 0.349142
+                "lower": 0.05,
+                "upper": 0.291752
               }
             }
           }
@@ -1618,14 +1632,14 @@
       "heldout": {
         "lexical": {
           "queries": 8,
-          "mrr": 0.021875,
-          "top1Accuracy": 0,
-          "coverage": 0.25,
-          "recall@1": 0,
-          "recall@5": 0,
-          "recall@10": 0.125,
-          "ndcg@5": 0,
-          "ndcg@10": 0.039433,
+          "mrr": 0.30625,
+          "top1Accuracy": 0.125,
+          "coverage": 0.625,
+          "recall@1": 0.125,
+          "recall@5": 0.625,
+          "recall@10": 0.625,
+          "ndcg@5": 0.384924,
+          "ndcg@10": 0.384924,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1633,38 +1647,38 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0,
-                "upper": 0.053125
+                "lower": 0.08125,
+                "upper": 0.55
               },
               "recall@1": {
                 "lower": 0,
-                "upper": 0
-              },
-              "recall@5": {
-                "lower": 0,
-                "upper": 0
-              },
-              "recall@10": {
-                "lower": 0,
                 "upper": 0.375
               },
+              "recall@5": {
+                "lower": 0.25,
+                "upper": 0.875
+              },
+              "recall@10": {
+                "lower": 0.25,
+                "upper": 0.875
+              },
               "ndcg@10": {
-                "lower": 0,
-                "upper": 0.118299
+                "lower": 0.127223,
+                "upper": 0.627223
               }
             }
           }
         },
         "semantic": {
           "queries": 8,
-          "mrr": 0.003676,
-          "top1Accuracy": 0,
-          "coverage": 0.125,
-          "recall@1": 0,
-          "recall@5": 0,
-          "recall@10": 0,
-          "ndcg@5": 0,
-          "ndcg@10": 0,
+          "mrr": 0.290193,
+          "top1Accuracy": 0.125,
+          "coverage": 1,
+          "recall@1": 0.125,
+          "recall@5": 0.5,
+          "recall@10": 0.625,
+          "ndcg@5": 0.320201,
+          "ndcg@10": 0.359634,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1672,38 +1686,38 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0,
-                "upper": 0.011029
+                "lower": 0.106725,
+                "upper": 0.535282
               },
               "recall@1": {
                 "lower": 0,
-                "upper": 0
+                "upper": 0.375
               },
               "recall@5": {
-                "lower": 0,
-                "upper": 0
+                "lower": 0.125,
+                "upper": 0.875
               },
               "recall@10": {
-                "lower": 0,
-                "upper": 0
+                "lower": 0.25,
+                "upper": 1
               },
               "ndcg@10": {
-                "lower": 0,
-                "upper": 0
+                "lower": 0.125,
+                "upper": 0.624035
               }
             }
           }
         },
         "fused": {
           "queries": 8,
-          "mrr": 0.01255,
-          "top1Accuracy": 0,
-          "coverage": 0.375,
-          "recall@1": 0,
-          "recall@5": 0,
-          "recall@10": 0,
-          "ndcg@5": 0,
-          "ndcg@10": 0,
+          "mrr": 0.293056,
+          "top1Accuracy": 0.125,
+          "coverage": 1,
+          "recall@1": 0.125,
+          "recall@5": 0.5,
+          "recall@10": 0.875,
+          "ndcg@5": 0.300579,
+          "ndcg@10": 0.422167,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1711,24 +1725,24 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.003125,
-                "upper": 0.025446
+                "lower": 0.124653,
+                "upper": 0.519792
               },
               "recall@1": {
                 "lower": 0,
-                "upper": 0
+                "upper": 0.375
               },
               "recall@5": {
-                "lower": 0,
-                "upper": 0
+                "lower": 0.125,
+                "upper": 0.875
               },
               "recall@10": {
-                "lower": 0,
-                "upper": 0
+                "lower": 0.625,
+                "upper": 1
               },
               "ndcg@10": {
-                "lower": 0,
-                "upper": 0
+                "lower": 0.248811,
+                "upper": 0.622745
               }
             }
           }
@@ -1739,14 +1753,14 @@
       "dev": {
         "lexical": {
           "queries": 12,
-          "mrr": 0.044885,
+          "mrr": 0.019508,
           "top1Accuracy": 0,
           "coverage": 0.25,
           "recall@1": 0,
           "recall@5": 0.083333,
           "recall@10": 0.083333,
-          "ndcg@5": 0.052577,
-          "ndcg@10": 0.052577,
+          "ndcg@5": 0.032238,
+          "ndcg@10": 0.032238,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1755,7 +1769,7 @@
             "metrics": {
               "mrr": {
                 "lower": 0,
-                "upper": 0.12866
+                "upper": 0.05391
               },
               "recall@1": {
                 "lower": 0,
@@ -1771,14 +1785,14 @@
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.157732
+                "upper": 0.096713
               }
             }
           }
         },
         "semantic": {
           "queries": 12,
-          "mrr": 0.015789,
+          "mrr": 0.01436,
           "top1Accuracy": 0,
           "coverage": 0.583333,
           "recall@1": 0,
@@ -1793,8 +1807,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.005371,
-                "upper": 0.028476
+                "lower": 0.005016,
+                "upper": 0.027039
               },
               "recall@1": {
                 "lower": 0,
@@ -1817,14 +1831,14 @@
         },
         "fused": {
           "queries": 12,
-          "mrr": 0.026943,
+          "mrr": 0.024354,
           "top1Accuracy": 0,
           "coverage": 0.75,
           "recall@1": 0,
           "recall@5": 0,
-          "recall@10": 0.083333,
+          "recall@10": 0,
           "ndcg@5": 0,
-          "ndcg@10": 0.027778,
+          "ndcg@10": 0,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1832,8 +1846,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.009732,
-                "upper": 0.051445
+                "lower": 0.01044,
+                "upper": 0.042232
               },
               "recall@1": {
                 "lower": 0,
@@ -1845,11 +1859,11 @@
               },
               "recall@10": {
                 "lower": 0,
-                "upper": 0.25
+                "upper": 0
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.083333
+                "upper": 0
               }
             }
           }
@@ -1858,14 +1872,14 @@
       "heldout": {
         "lexical": {
           "queries": 21,
-          "mrr": 0.132952,
+          "mrr": 0.130107,
           "top1Accuracy": 0.047619,
-          "coverage": 0.52381,
+          "coverage": 0.619048,
           "recall@1": 0.047619,
           "recall@5": 0.190476,
-          "recall@10": 0.285714,
-          "ndcg@5": 0.131517,
-          "ndcg@10": 0.164352,
+          "recall@10": 0.333333,
+          "ndcg@5": 0.121981,
+          "ndcg@10": 0.166641,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1873,8 +1887,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.04317,
-                "upper": 0.246072
+                "lower": 0.046562,
+                "upper": 0.247365
               },
               "recall@1": {
                 "lower": 0,
@@ -1885,26 +1899,26 @@
                 "upper": 0.380952
               },
               "recall@10": {
-                "lower": 0.095238,
-                "upper": 0.47619
+                "lower": 0.142857,
+                "upper": 0.52381
               },
               "ndcg@10": {
-                "lower": 0.053854,
-                "upper": 0.293515
+                "lower": 0.06179,
+                "upper": 0.296901
               }
             }
           }
         },
         "semantic": {
           "queries": 21,
-          "mrr": 0.093243,
+          "mrr": 0.112716,
           "top1Accuracy": 0.047619,
-          "coverage": 0.857143,
+          "coverage": 0.904762,
           "recall@1": 0.047619,
-          "recall@5": 0.095238,
-          "recall@10": 0.142857,
-          "ndcg@5": 0.068127,
-          "ndcg@10": 0.081892,
+          "recall@5": 0.142857,
+          "recall@10": 0.190476,
+          "ndcg@5": 0.095238,
+          "ndcg@10": 0.109003,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1912,8 +1926,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.031648,
-                "upper": 0.190134
+                "lower": 0.038925,
+                "upper": 0.214915
               },
               "recall@1": {
                 "lower": 0,
@@ -1921,29 +1935,29 @@
               },
               "recall@5": {
                 "lower": 0,
-                "upper": 0.238095
-              },
-              "recall@10": {
-                "lower": 0,
                 "upper": 0.285714
               },
+              "recall@10": {
+                "lower": 0.047619,
+                "upper": 0.333333
+              },
               "ndcg@10": {
-                "lower": 0,
-                "upper": 0.190896
+                "lower": 0.013765,
+                "upper": 0.218006
               }
             }
           }
         },
         "fused": {
           "queries": 21,
-          "mrr": 0.133109,
-          "top1Accuracy": 0.047619,
-          "coverage": 0.904762,
-          "recall@1": 0.047619,
-          "recall@5": 0.190476,
-          "recall@10": 0.285714,
-          "ndcg@5": 0.119894,
-          "ndcg@10": 0.151879,
+          "mrr": 0.180354,
+          "top1Accuracy": 0.095238,
+          "coverage": 0.952381,
+          "recall@1": 0.095238,
+          "recall@5": 0.285714,
+          "recall@10": 0.380952,
+          "ndcg@5": 0.183874,
+          "ndcg@10": 0.212661,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1951,24 +1965,24 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.053473,
-                "upper": 0.236248
+                "lower": 0.077,
+                "upper": 0.314478
               },
               "recall@1": {
                 "lower": 0,
-                "upper": 0.142857
+                "upper": 0.238095
               },
               "recall@5": {
-                "lower": 0.047619,
-                "upper": 0.333333
-              },
-              "recall@10": {
                 "lower": 0.095238,
                 "upper": 0.47619
               },
+              "recall@10": {
+                "lower": 0.190476,
+                "upper": 0.571429
+              },
               "ndcg@10": {
-                "lower": 0.048466,
-                "upper": 0.26814
+                "lower": 0.088914,
+                "upper": 0.355518
               }
             }
           }
@@ -2057,14 +2071,14 @@
         },
         "fused": {
           "queries": 12,
-          "mrr": 0.041005,
+          "mrr": 0.046225,
           "top1Accuracy": 0,
           "coverage": 0.416667,
           "recall@1": 0,
-          "recall@5": 0,
+          "recall@5": 0.083333,
           "recall@10": 0.25,
-          "ndcg@5": 0,
-          "ndcg@10": 0.076952,
+          "ndcg@5": 0.032238,
+          "ndcg@10": 0.081412,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2073,7 +2087,7 @@
             "metrics": {
               "mrr": {
                 "lower": 0.013889,
-                "upper": 0.071429
+                "upper": 0.084188
               },
               "recall@1": {
                 "lower": 0,
@@ -2081,7 +2095,7 @@
               },
               "recall@5": {
                 "lower": 0,
-                "upper": 0
+                "upper": 0.25
               },
               "recall@10": {
                 "lower": 0,
@@ -2089,7 +2103,7 @@
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.157594
+                "upper": 0.169977
               }
             }
           }
@@ -2137,14 +2151,14 @@
         },
         "semantic": {
           "queries": 12,
-          "mrr": 0.058449,
+          "mrr": 0.070707,
           "top1Accuracy": 0,
           "coverage": 0.416667,
           "recall@1": 0,
-          "recall@5": 0.083333,
+          "recall@5": 0.166667,
           "recall@10": 0.25,
-          "ndcg@5": 0.03589,
-          "ndcg@10": 0.095258,
+          "ndcg@5": 0.071779,
+          "ndcg@10": 0.101463,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2152,8 +2166,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.018519,
-                "upper": 0.109375
+                "lower": 0.021465,
+                "upper": 0.126894
               },
               "recall@1": {
                 "lower": 0,
@@ -2161,7 +2175,7 @@
               },
               "recall@5": {
                 "lower": 0,
-                "upper": 0.25
+                "upper": 0.416667
               },
               "recall@10": {
                 "lower": 0,
@@ -2169,21 +2183,21 @@
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.196721
+                "upper": 0.209132
               }
             }
           }
         },
         "fused": {
           "queries": 12,
-          "mrr": 0.027978,
+          "mrr": 0.033778,
           "top1Accuracy": 0,
           "coverage": 0.416667,
           "recall@1": 0,
           "recall@5": 0,
-          "recall@10": 0,
+          "recall@10": 0.083333,
           "ndcg@5": 0,
-          "ndcg@10": 0,
+          "ndcg@10": 0.026289,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2191,8 +2205,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.00974,
-                "upper": 0.049082
+                "lower": 0.011742,
+                "upper": 0.059222
               },
               "recall@1": {
                 "lower": 0,
@@ -2204,11 +2218,11 @@
               },
               "recall@10": {
                 "lower": 0,
-                "upper": 0
+                "upper": 0.25
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0
+                "upper": 0.078866
               }
             }
           }
@@ -2221,14 +2235,14 @@
       "dev": {
         "lexical": {
           "queries": 76,
-          "mrr": 0.018398,
+          "mrr": 0.015789,
           "top1Accuracy": 0,
           "coverage": 0.25,
           "recall@1": 0,
-          "recall@5": 0.026316,
-          "recall@10": 0.052632,
-          "ndcg@5": 0.013969,
-          "ndcg@10": 0.023342,
+          "recall@5": 0.039474,
+          "recall@10": 0.065789,
+          "ndcg@5": 0.015847,
+          "ndcg@10": 0.024338,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2236,8 +2250,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.005615,
-                "upper": 0.036973
+                "lower": 0.006654,
+                "upper": 0.028435
               },
               "recall@1": {
                 "lower": 0,
@@ -2245,29 +2259,29 @@
               },
               "recall@5": {
                 "lower": 0,
-                "upper": 0.065789
+                "upper": 0.092105
               },
               "recall@10": {
                 "lower": 0.013158,
-                "upper": 0.105263
+                "upper": 0.131579
               },
               "ndcg@10": {
-                "lower": 0.004687,
-                "upper": 0.0503
+                "lower": 0.00509,
+                "upper": 0.050058
               }
             }
           }
         },
         "semantic": {
           "queries": 76,
-          "mrr": 0.078914,
+          "mrr": 0.077771,
           "top1Accuracy": 0.039474,
-          "coverage": 0.592105,
+          "coverage": 0.578947,
           "recall@1": 0.039474,
           "recall@5": 0.105263,
-          "recall@10": 0.197368,
+          "recall@10": 0.184211,
           "ndcg@5": 0.066078,
-          "ndcg@10": 0.093902,
+          "ndcg@10": 0.090143,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2275,8 +2289,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.039634,
-                "upper": 0.127727
+                "lower": 0.038947,
+                "upper": 0.126784
               },
               "recall@1": {
                 "lower": 0,
@@ -2287,26 +2301,26 @@
                 "upper": 0.184211
               },
               "recall@10": {
-                "lower": 0.118421,
-                "upper": 0.289474
+                "lower": 0.105263,
+                "upper": 0.276316
               },
               "ndcg@10": {
-                "lower": 0.046967,
-                "upper": 0.148572
+                "lower": 0.042748,
+                "upper": 0.144867
               }
             }
           }
         },
         "fused": {
           "queries": 76,
-          "mrr": 0.052351,
-          "top1Accuracy": 0,
-          "coverage": 0.631579,
-          "recall@1": 0,
-          "recall@5": 0.078947,
-          "recall@10": 0.171053,
-          "ndcg@5": 0.038219,
-          "ndcg@10": 0.066906,
+          "mrr": 0.055661,
+          "top1Accuracy": 0.013158,
+          "coverage": 0.618421,
+          "recall@1": 0.013158,
+          "recall@5": 0.065789,
+          "recall@10": 0.157895,
+          "ndcg@5": 0.037073,
+          "ndcg@10": 0.064942,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2314,24 +2328,24 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.033925,
-                "upper": 0.07562
+                "lower": 0.03245,
+                "upper": 0.089176
               },
               "recall@1": {
                 "lower": 0,
-                "upper": 0
+                "upper": 0.039474
               },
               "recall@5": {
-                "lower": 0.026316,
-                "upper": 0.144737
+                "lower": 0.013158,
+                "upper": 0.131579
               },
               "recall@10": {
-                "lower": 0.092105,
-                "upper": 0.263158
+                "lower": 0.078947,
+                "upper": 0.25
               },
               "ndcg@10": {
-                "lower": 0.034192,
-                "upper": 0.107387
+                "lower": 0.0314,
+                "upper": 0.108691
               }
             }
           }
@@ -2340,14 +2354,14 @@
       "heldout": {
         "lexical": {
           "queries": 76,
-          "mrr": 0.057752,
-          "top1Accuracy": 0.013158,
-          "coverage": 0.342105,
-          "recall@1": 0.013158,
-          "recall@5": 0.092105,
-          "recall@10": 0.131579,
-          "ndcg@5": 0.05861,
-          "ndcg@10": 0.071834,
+          "mrr": 0.116163,
+          "top1Accuracy": 0.052632,
+          "coverage": 0.486842,
+          "recall@1": 0.052632,
+          "recall@5": 0.171053,
+          "recall@10": 0.263158,
+          "ndcg@5": 0.11542,
+          "ndcg@10": 0.145023,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2355,38 +2369,38 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.025012,
-                "upper": 0.097923
+                "lower": 0.064132,
+                "upper": 0.173779
               },
               "recall@1": {
-                "lower": 0,
-                "upper": 0.039474
+                "lower": 0.013158,
+                "upper": 0.105263
               },
               "recall@5": {
-                "lower": 0.026316,
-                "upper": 0.157895
+                "lower": 0.092105,
+                "upper": 0.263158
               },
               "recall@10": {
-                "lower": 0.065789,
-                "upper": 0.210526
+                "lower": 0.171053,
+                "upper": 0.368421
               },
               "ndcg@10": {
-                "lower": 0.030232,
-                "upper": 0.119704
+                "lower": 0.084028,
+                "upper": 0.208161
               }
             }
           }
         },
         "semantic": {
           "queries": 76,
-          "mrr": 0.064084,
-          "top1Accuracy": 0.013158,
-          "coverage": 0.552632,
-          "recall@1": 0.013158,
-          "recall@5": 0.092105,
-          "recall@10": 0.171053,
-          "ndcg@5": 0.052428,
-          "ndcg@10": 0.078941,
+          "mrr": 0.131825,
+          "top1Accuracy": 0.039474,
+          "coverage": 0.75,
+          "recall@1": 0.039474,
+          "recall@5": 0.25,
+          "recall@10": 0.302632,
+          "ndcg@5": 0.140543,
+          "ndcg@10": 0.157871,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2394,38 +2408,38 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.035675,
-                "upper": 0.101422
+                "lower": 0.088187,
+                "upper": 0.187939
               },
               "recall@1": {
                 "lower": 0,
-                "upper": 0.039474
+                "upper": 0.092105
               },
               "recall@5": {
-                "lower": 0.026316,
-                "upper": 0.171053
+                "lower": 0.157895,
+                "upper": 0.342105
               },
               "recall@10": {
-                "lower": 0.092105,
-                "upper": 0.263158
+                "lower": 0.210526,
+                "upper": 0.407895
               },
               "ndcg@10": {
-                "lower": 0.039963,
-                "upper": 0.12682
+                "lower": 0.103751,
+                "upper": 0.22371
               }
             }
           }
         },
         "fused": {
           "queries": 76,
-          "mrr": 0.079235,
-          "top1Accuracy": 0.026316,
-          "coverage": 0.631579,
-          "recall@1": 0.026316,
-          "recall@5": 0.105263,
-          "recall@10": 0.144737,
-          "ndcg@5": 0.06798,
-          "ndcg@10": 0.081204,
+          "mrr": 0.152651,
+          "top1Accuracy": 0.065789,
+          "coverage": 0.828947,
+          "recall@1": 0.065789,
+          "recall@5": 0.236842,
+          "recall@10": 0.381579,
+          "ndcg@5": 0.14607,
+          "ndcg@10": 0.193035,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2433,24 +2447,24 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.042514,
-                "upper": 0.122622
+                "lower": 0.098031,
+                "upper": 0.207273
               },
               "recall@1": {
-                "lower": 0,
-                "upper": 0.065789
+                "lower": 0.013158,
+                "upper": 0.118421
               },
               "recall@5": {
-                "lower": 0.039474,
-                "upper": 0.171053
+                "lower": 0.144737,
+                "upper": 0.328947
               },
               "recall@10": {
-                "lower": 0.065789,
-                "upper": 0.223684
+                "lower": 0.263158,
+                "upper": 0.486842
               },
               "ndcg@10": {
-                "lower": 0.035087,
-                "upper": 0.1303
+                "lower": 0.129209,
+                "upper": 0.256589
               }
             }
           }
@@ -2461,7 +2475,7 @@
       "dev": {
         "lexical": {
           "queries": 4,
-          "mrr": 0.004905,
+          "mrr": 0.004656,
           "top1Accuracy": 0,
           "coverage": 0.75,
           "recall@1": 0,
@@ -2476,8 +2490,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.001471,
-                "upper": 0.007601
+                "lower": 0.001381,
+                "upper": 0.007121
               },
               "recall@1": {
                 "lower": 0,
@@ -2500,7 +2514,7 @@
         },
         "semantic": {
           "queries": 4,
-          "mrr": 0.03497,
+          "mrr": 0.041257,
           "top1Accuracy": 0,
           "coverage": 1,
           "recall@1": 0,
@@ -2515,8 +2529,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.01875,
-                "upper": 0.058929
+                "lower": 0.019203,
+                "upper": 0.07711
               },
               "recall@1": {
                 "lower": 0,
@@ -2539,14 +2553,14 @@
         },
         "fused": {
           "queries": 4,
-          "mrr": 0.054762,
+          "mrr": 0.034929,
           "top1Accuracy": 0,
           "coverage": 1,
           "recall@1": 0,
           "recall@5": 0,
-          "recall@10": 0.25,
+          "recall@10": 0,
           "ndcg@5": 0,
-          "ndcg@10": 0.083333,
+          "ndcg@10": 0,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2554,8 +2568,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.017262,
-                "upper": 0.11756
+                "lower": 0.014914,
+                "upper": 0.063187
               },
               "recall@1": {
                 "lower": 0,
@@ -2567,11 +2581,11 @@
               },
               "recall@10": {
                 "lower": 0,
-                "upper": 0.75
+                "upper": 0
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.25
+                "upper": 0
               }
             }
           }
@@ -2580,7 +2594,7 @@
       "heldout": {
         "lexical": {
           "queries": 4,
-          "mrr": 0.00262,
+          "mrr": 0.002647,
           "top1Accuracy": 0,
           "coverage": 0.5,
           "recall@1": 0,
@@ -2596,7 +2610,7 @@
             "metrics": {
               "mrr": {
                 "lower": 0,
-                "upper": 0.005241
+                "upper": 0.005295
               },
               "recall@1": {
                 "lower": 0,
@@ -2619,7 +2633,7 @@
         },
         "semantic": {
           "queries": 4,
-          "mrr": 0.044568,
+          "mrr": 0.045332,
           "top1Accuracy": 0,
           "coverage": 1,
           "recall@1": 0,
@@ -2634,7 +2648,7 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.029487,
+                "lower": 0.031015,
                 "upper": 0.059649
               },
               "recall@1": {
@@ -2658,7 +2672,7 @@
         },
         "fused": {
           "queries": 4,
-          "mrr": 0.036345,
+          "mrr": 0.034162,
           "top1Accuracy": 0,
           "coverage": 1,
           "recall@1": 0,
@@ -2673,8 +2687,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.02619,
-                "upper": 0.051471
+                "lower": 0.024152,
+                "upper": 0.04623
               },
               "recall@1": {
                 "lower": 0,
@@ -2703,14 +2717,14 @@
       "dev": {
         "lexical": {
           "queries": 68,
-          "mrr": 0.017744,
+          "mrr": 0.013602,
           "top1Accuracy": 0,
           "coverage": 0.25,
           "recall@1": 0,
           "recall@5": 0.029412,
-          "recall@10": 0.044118,
-          "ndcg@5": 0.015612,
-          "ndcg@10": 0.02085,
+          "recall@10": 0.058824,
+          "ndcg@5": 0.011378,
+          "ndcg@10": 0.020867,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2718,8 +2732,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.004295,
-                "upper": 0.036872
+                "lower": 0.004946,
+                "upper": 0.024041
               },
               "recall@1": {
                 "lower": 0,
@@ -2730,26 +2744,26 @@
                 "upper": 0.073529
               },
               "recall@10": {
-                "lower": 0,
-                "upper": 0.088235
+                "lower": 0.014706,
+                "upper": 0.117647
               },
               "ndcg@10": {
-                "lower": 0,
-                "upper": 0.04759
+                "lower": 0.004251,
+                "upper": 0.041735
               }
             }
           }
         },
         "semantic": {
           "queries": 68,
-          "mrr": 0.080232,
+          "mrr": 0.078753,
           "top1Accuracy": 0.044118,
-          "coverage": 0.602941,
+          "coverage": 0.588235,
           "recall@1": 0.044118,
           "recall@5": 0.102941,
-          "recall@10": 0.176471,
+          "recall@10": 0.161765,
           "ndcg@5": 0.067518,
-          "ndcg@10": 0.089725,
+          "ndcg@10": 0.085262,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2757,8 +2771,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.037548,
-                "upper": 0.133927
+                "lower": 0.036207,
+                "upper": 0.13275
               },
               "recall@1": {
                 "lower": 0,
@@ -2770,25 +2784,25 @@
               },
               "recall@10": {
                 "lower": 0.088235,
-                "upper": 0.264706
+                "upper": 0.25
               },
               "ndcg@10": {
-                "lower": 0.042746,
-                "upper": 0.14629
+                "lower": 0.039528,
+                "upper": 0.141741
               }
             }
           }
         },
         "fused": {
           "queries": 68,
-          "mrr": 0.05048,
+          "mrr": 0.044875,
           "top1Accuracy": 0,
-          "coverage": 0.647059,
+          "coverage": 0.632353,
           "recall@1": 0,
-          "recall@5": 0.073529,
+          "recall@5": 0.058824,
           "recall@10": 0.161765,
-          "ndcg@5": 0.035362,
-          "ndcg@10": 0.063173,
+          "ndcg@5": 0.026728,
+          "ndcg@10": 0.057876,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2796,8 +2810,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.032183,
-                "upper": 0.071385
+                "lower": 0.02983,
+                "upper": 0.061573
               },
               "recall@1": {
                 "lower": 0,
@@ -2805,15 +2819,15 @@
               },
               "recall@5": {
                 "lower": 0.014706,
-                "upper": 0.132353
+                "upper": 0.117647
               },
               "recall@10": {
-                "lower": 0.073529,
+                "lower": 0.088235,
                 "upper": 0.25
               },
               "ndcg@10": {
-                "lower": 0.029561,
-                "upper": 0.09626
+                "lower": 0.028897,
+                "upper": 0.090363
               }
             }
           }
@@ -2822,14 +2836,14 @@
       "heldout": {
         "lexical": {
           "queries": 68,
-          "mrr": 0.064149,
-          "top1Accuracy": 0.014706,
-          "coverage": 0.352941,
-          "recall@1": 0.014706,
-          "recall@5": 0.102941,
-          "recall@10": 0.147059,
-          "ndcg@5": 0.065506,
-          "ndcg@10": 0.080285,
+          "mrr": 0.129464,
+          "top1Accuracy": 0.058824,
+          "coverage": 0.514706,
+          "recall@1": 0.058824,
+          "recall@5": 0.191176,
+          "recall@10": 0.294118,
+          "ndcg@5": 0.128999,
+          "ndcg@10": 0.162084,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2837,38 +2851,38 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.0276,
-                "upper": 0.107748
+                "lower": 0.075637,
+                "upper": 0.197568
               },
               "recall@1": {
-                "lower": 0,
-                "upper": 0.044118
+                "lower": 0.014706,
+                "upper": 0.117647
               },
               "recall@5": {
-                "lower": 0.044118,
-                "upper": 0.176471
+                "lower": 0.102941,
+                "upper": 0.279412
               },
               "recall@10": {
-                "lower": 0.073529,
-                "upper": 0.235294
+                "lower": 0.191176,
+                "upper": 0.411765
               },
               "ndcg@10": {
-                "lower": 0.034768,
-                "upper": 0.133082
+                "lower": 0.100451,
+                "upper": 0.234646
               }
             }
           }
         },
         "semantic": {
           "queries": 68,
-          "mrr": 0.071177,
-          "top1Accuracy": 0.014706,
-          "coverage": 0.602941,
-          "recall@1": 0.014706,
-          "recall@5": 0.102941,
-          "recall@10": 0.191176,
-          "ndcg@5": 0.058597,
-          "ndcg@10": 0.088228,
+          "mrr": 0.145997,
+          "top1Accuracy": 0.044118,
+          "coverage": 0.823529,
+          "recall@1": 0.044118,
+          "recall@5": 0.279412,
+          "recall@10": 0.338235,
+          "ndcg@5": 0.157077,
+          "ndcg@10": 0.176444,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2876,38 +2890,38 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.040631,
-                "upper": 0.113945
+                "lower": 0.099407,
+                "upper": 0.206502
               },
               "recall@1": {
                 "lower": 0,
-                "upper": 0.044118
+                "upper": 0.102941
               },
               "recall@5": {
-                "lower": 0.044118,
-                "upper": 0.191176
+                "lower": 0.176471,
+                "upper": 0.397059
               },
               "recall@10": {
-                "lower": 0.102941,
-                "upper": 0.279412
+                "lower": 0.220588,
+                "upper": 0.455882
               },
               "ndcg@10": {
-                "lower": 0.04623,
-                "upper": 0.145283
+                "lower": 0.114907,
+                "upper": 0.248651
               }
             }
           }
         },
         "fused": {
           "queries": 68,
-          "mrr": 0.087942,
-          "top1Accuracy": 0.029412,
-          "coverage": 0.661765,
-          "recall@1": 0.029412,
-          "recall@5": 0.117647,
-          "recall@10": 0.161765,
-          "ndcg@5": 0.075978,
-          "ndcg@10": 0.090757,
+          "mrr": 0.169671,
+          "top1Accuracy": 0.073529,
+          "coverage": 0.882353,
+          "recall@1": 0.073529,
+          "recall@5": 0.264706,
+          "recall@10": 0.426471,
+          "ndcg@5": 0.163254,
+          "ndcg@10": 0.215745,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2915,24 +2929,24 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.049495,
-                "upper": 0.141035
+                "lower": 0.112993,
+                "upper": 0.238793
               },
               "recall@1": {
-                "lower": 0,
-                "upper": 0.073529
+                "lower": 0.014706,
+                "upper": 0.147059
               },
               "recall@5": {
-                "lower": 0.044118,
-                "upper": 0.191176
+                "lower": 0.161765,
+                "upper": 0.367647
               },
               "recall@10": {
-                "lower": 0.088235,
-                "upper": 0.25
+                "lower": 0.323529,
+                "upper": 0.544118
               },
               "ndcg@10": {
-                "lower": 0.043854,
-                "upper": 0.148193
+                "lower": 0.15174,
+                "upper": 0.293208
               }
             }
           }
@@ -2943,7 +2957,7 @@
       "dev": {
         "lexical": {
           "queries": 4,
-          "mrr": 0.004905,
+          "mrr": 0.004656,
           "top1Accuracy": 0,
           "coverage": 0.75,
           "recall@1": 0,
@@ -2958,8 +2972,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.001471,
-                "upper": 0.007601
+                "lower": 0.001381,
+                "upper": 0.007121
               },
               "recall@1": {
                 "lower": 0,
@@ -2982,7 +2996,7 @@
         },
         "semantic": {
           "queries": 4,
-          "mrr": 0.03497,
+          "mrr": 0.041257,
           "top1Accuracy": 0,
           "coverage": 1,
           "recall@1": 0,
@@ -2997,8 +3011,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.01875,
-                "upper": 0.058929
+                "lower": 0.019203,
+                "upper": 0.07711
               },
               "recall@1": {
                 "lower": 0,
@@ -3021,14 +3035,14 @@
         },
         "fused": {
           "queries": 4,
-          "mrr": 0.054762,
+          "mrr": 0.034929,
           "top1Accuracy": 0,
           "coverage": 1,
           "recall@1": 0,
           "recall@5": 0,
-          "recall@10": 0.25,
+          "recall@10": 0,
           "ndcg@5": 0,
-          "ndcg@10": 0.083333,
+          "ndcg@10": 0,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -3036,8 +3050,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.017262,
-                "upper": 0.11756
+                "lower": 0.014914,
+                "upper": 0.063187
               },
               "recall@1": {
                 "lower": 0,
@@ -3049,11 +3063,11 @@
               },
               "recall@10": {
                 "lower": 0,
-                "upper": 0.75
+                "upper": 0
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.25
+                "upper": 0
               }
             }
           }
@@ -3062,7 +3076,7 @@
       "heldout": {
         "lexical": {
           "queries": 4,
-          "mrr": 0.00262,
+          "mrr": 0.002647,
           "top1Accuracy": 0,
           "coverage": 0.5,
           "recall@1": 0,
@@ -3078,7 +3092,7 @@
             "metrics": {
               "mrr": {
                 "lower": 0,
-                "upper": 0.005241
+                "upper": 0.005295
               },
               "recall@1": {
                 "lower": 0,
@@ -3101,7 +3115,7 @@
         },
         "semantic": {
           "queries": 4,
-          "mrr": 0.044568,
+          "mrr": 0.045332,
           "top1Accuracy": 0,
           "coverage": 1,
           "recall@1": 0,
@@ -3116,7 +3130,7 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.029487,
+                "lower": 0.031015,
                 "upper": 0.059649
               },
               "recall@1": {
@@ -3140,7 +3154,7 @@
         },
         "fused": {
           "queries": 4,
-          "mrr": 0.036345,
+          "mrr": 0.034162,
           "top1Accuracy": 0,
           "coverage": 1,
           "recall@1": 0,
@@ -3155,8 +3169,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.02619,
-                "upper": 0.051471
+                "lower": 0.024152,
+                "upper": 0.04623
               },
               "recall@1": {
                 "lower": 0,
@@ -3423,14 +3437,14 @@
       "dev": {
         "lexical": {
           "queries": 4,
-          "mrr": 0.047917,
+          "mrr": 0.06875,
           "top1Accuracy": 0,
           "coverage": 0.5,
           "recall@1": 0,
-          "recall@5": 0,
+          "recall@5": 0.25,
           "recall@10": 0.25,
-          "ndcg@5": 0,
-          "ndcg@10": 0.089052,
+          "ndcg@5": 0.107669,
+          "ndcg@10": 0.107669,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -3439,7 +3453,7 @@
             "metrics": {
               "mrr": {
                 "lower": 0,
-                "upper": 0.125
+                "upper": 0.1875
               },
               "recall@1": {
                 "lower": 0,
@@ -3447,7 +3461,7 @@
               },
               "recall@5": {
                 "lower": 0,
-                "upper": 0
+                "upper": 0.75
               },
               "recall@10": {
                 "lower": 0,
@@ -3455,21 +3469,21 @@
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.267155
+                "upper": 0.323007
               }
             }
           }
         },
         "semantic": {
           "queries": 4,
-          "mrr": 0.135417,
+          "mrr": 0.138839,
           "top1Accuracy": 0,
           "coverage": 1,
           "recall@1": 0,
           "recall@5": 0.25,
           "recall@10": 0.75,
           "ndcg@5": 0.107669,
-          "ndcg@10": 0.258802,
+          "ndcg@10": 0.263269,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -3493,7 +3507,7 @@
                 "upper": 1
               },
               "ndcg@10": {
-                "lower": 0.078866,
+                "lower": 0.083333,
                 "upper": 0.395274
               }
             }
@@ -3501,14 +3515,14 @@
         },
         "fused": {
           "queries": 4,
-          "mrr": 0.136493,
-          "top1Accuracy": 0,
+          "mrr": 0.294681,
+          "top1Accuracy": 0.25,
           "coverage": 1,
-          "recall@1": 0,
+          "recall@1": 0.25,
           "recall@5": 0.25,
-          "recall@10": 0.5,
-          "ndcg@5": 0.125,
-          "ndcg@10": 0.197266,
+          "recall@10": 0.25,
+          "ndcg@5": 0.25,
+          "ndcg@10": 0.25,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -3516,12 +3530,12 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.051786,
-                "upper": 0.269231
+                "lower": 0.043907,
+                "upper": 0.763889
               },
               "recall@1": {
                 "lower": 0,
-                "upper": 0
+                "upper": 0.75
               },
               "recall@5": {
                 "lower": 0,
@@ -3529,11 +3543,11 @@
               },
               "recall@10": {
                 "lower": 0,
-                "upper": 1
+                "upper": 0.75
               },
               "ndcg@10": {
                 "lower": 0,
-                "upper": 0.394532
+                "upper": 0.75
               }
             }
           }
@@ -3542,7 +3556,7 @@
       "heldout": {
         "lexical": {
           "queries": 4,
-          "mrr": 0.006768,
+          "mrr": 0.006223,
           "top1Accuracy": 0,
           "coverage": 0.5,
           "recall@1": 0,
@@ -3558,7 +3572,7 @@
             "metrics": {
               "mrr": {
                 "lower": 0,
-                "upper": 0.013536
+                "upper": 0.012446
               },
               "recall@1": {
                 "lower": 0,
@@ -3581,7 +3595,7 @@
         },
         "semantic": {
           "queries": 4,
-          "mrr": 0.007576,
+          "mrr": 0.022727,
           "top1Accuracy": 0,
           "coverage": 0.25,
           "recall@1": 0,
@@ -3597,7 +3611,7 @@
             "metrics": {
               "mrr": {
                 "lower": 0,
-                "upper": 0.022727
+                "upper": 0.068182
               },
               "recall@1": {
                 "lower": 0,
@@ -3620,7 +3634,7 @@
         },
         "fused": {
           "queries": 4,
-          "mrr": 0.010454,
+          "mrr": 0.015948,
           "top1Accuracy": 0,
           "coverage": 0.75,
           "recall@1": 0,
@@ -3636,7 +3650,7 @@
             "metrics": {
               "mrr": {
                 "lower": 0.002907,
-                "upper": 0.019952
+                "upper": 0.036998
               },
               "recall@1": {
                 "lower": 0,
@@ -3665,96 +3679,97 @@
       "50": {
         "queries": 80,
         "effective_top_n": 50,
-        "mean_candidates": 66.4625,
+        "mean_candidates": 66.025,
         "lexical_recall": 0.2375,
-        "semantic_recall": 0.475,
+        "semantic_recall": 0.4875,
         "union_recall": 0.5125,
         "oracle_reranker_recall_at_5": 0.5125,
-        "fused_recall_at_5": 0.0875
+        "fused_recall_at_5": 0.075
       },
       "100": {
         "queries": 80,
         "effective_top_n": 100,
-        "mean_candidates": 102.35,
-        "lexical_recall": 0.2625,
+        "mean_candidates": 101.7125,
+        "lexical_recall": 0.275,
         "semantic_recall": 0.575,
         "union_recall": 0.6125,
         "oracle_reranker_recall_at_5": 0.6125,
-        "fused_recall_at_5": 0.0875
+        "fused_recall_at_5": 0.075
       },
       "200": {
         "queries": 80,
         "effective_top_n": 200,
-        "mean_candidates": 133.7125,
+        "mean_candidates": 133.075,
         "lexical_recall": 0.275,
-        "semantic_recall": 0.6125,
-        "union_recall": 0.65,
-        "oracle_reranker_recall_at_5": 0.65,
-        "fused_recall_at_5": 0.075
+        "semantic_recall": 0.6,
+        "union_recall": 0.6375,
+        "oracle_reranker_recall_at_5": 0.6375,
+        "fused_recall_at_5": 0.0625
       },
       "all": {
         "queries": 80,
         "effective_top_n": 664,
-        "mean_candidates": 142.3,
+        "mean_candidates": 141.6375,
         "lexical_recall": 0.275,
-        "semantic_recall": 0.6125,
-        "union_recall": 0.65,
-        "oracle_reranker_recall_at_5": 0.65,
-        "fused_recall_at_5": 0.075
+        "semantic_recall": 0.6,
+        "union_recall": 0.6375,
+        "oracle_reranker_recall_at_5": 0.6375,
+        "fused_recall_at_5": 0.0625
       }
     },
     "heldout": {
       "50": {
         "queries": 80,
         "effective_top_n": 50,
-        "mean_candidates": 67.2625,
-        "lexical_recall": 0.3125,
-        "semantic_recall": 0.475,
-        "union_recall": 0.525,
-        "oracle_reranker_recall_at_5": 0.525,
-        "fused_recall_at_5": 0.1
+        "mean_candidates": 66.55,
+        "lexical_recall": 0.4625,
+        "semantic_recall": 0.6875,
+        "union_recall": 0.7375,
+        "oracle_reranker_recall_at_5": 0.7375,
+        "fused_recall_at_5": 0.2375
       },
       "100": {
         "queries": 80,
         "effective_top_n": 100,
-        "mean_candidates": 105.3875,
-        "lexical_recall": 0.3375,
-        "semantic_recall": 0.5625,
-        "union_recall": 0.6375,
-        "oracle_reranker_recall_at_5": 0.6375,
-        "fused_recall_at_5": 0.1
+        "mean_candidates": 104.3625,
+        "lexical_recall": 0.4875,
+        "semantic_recall": 0.7625,
+        "union_recall": 0.8375,
+        "oracle_reranker_recall_at_5": 0.8375,
+        "fused_recall_at_5": 0.225
       },
       "200": {
         "queries": 80,
         "effective_top_n": 200,
-        "mean_candidates": 137.5625,
-        "lexical_recall": 0.35,
-        "semantic_recall": 0.575,
-        "union_recall": 0.65,
-        "oracle_reranker_recall_at_5": 0.65,
-        "fused_recall_at_5": 0.1
+        "mean_candidates": 136.9,
+        "lexical_recall": 0.4875,
+        "semantic_recall": 0.7625,
+        "union_recall": 0.8375,
+        "oracle_reranker_recall_at_5": 0.8375,
+        "fused_recall_at_5": 0.225
       },
       "all": {
         "queries": 80,
         "effective_top_n": 664,
-        "mean_candidates": 146.0875,
-        "lexical_recall": 0.35,
-        "semantic_recall": 0.575,
-        "union_recall": 0.65,
-        "oracle_reranker_recall_at_5": 0.65,
-        "fused_recall_at_5": 0.1
+        "mean_candidates": 146.6625,
+        "lexical_recall": 0.4875,
+        "semantic_recall": 0.7625,
+        "union_recall": 0.8375,
+        "oracle_reranker_recall_at_5": 0.8375,
+        "fused_recall_at_5": 0.225
       }
     }
   },
   "failure_taxonomy": {
     "counts": {
       "none": 0,
-      "retrieval": 77,
-      "reranker": 69,
+      "retrieval": 60,
+      "reranker": 77,
       "annotation": 0,
-      "calibration": 14
+      "calibration": 23
     },
     "queries": {
+      "none": [],
       "retrieval": [
         {
           "split": "dev",
@@ -3775,7 +3790,7 @@
           "lexical_rank": null,
           "semantic_rank": null,
           "fused_rank": null,
-          "confidence": "ambiguous",
+          "confidence": "insufficient",
           "acceptable_venues": [
             "ches"
           ]
@@ -3809,12 +3824,11 @@
           "paper_id": "dev-2025-sigcomm-01",
           "failure_type": "retrieval",
           "lexical_rank": null,
-          "semantic_rank": 124,
-          "fused_rank": 147,
+          "semantic_rank": null,
+          "fused_rank": null,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "sigcomm",
-            "nsdi"
+            "sigcomm"
           ]
         },
         {
@@ -3823,8 +3837,8 @@
           "failure_type": "retrieval",
           "lexical_rank": null,
           "semantic_rank": 51,
-          "fused_rank": 114,
-          "confidence": "ambiguous",
+          "fused_rank": 116,
+          "confidence": "insufficient",
           "acceptable_venues": [
             "sigcomm"
           ]
@@ -3835,7 +3849,7 @@
           "failure_type": "retrieval",
           "lexical_rank": null,
           "semantic_rank": 51,
-          "fused_rank": 107,
+          "fused_rank": 95,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "sigcomm"
@@ -3848,7 +3862,7 @@
           "lexical_rank": null,
           "semantic_rank": null,
           "fused_rank": null,
-          "confidence": "ambiguous",
+          "confidence": "insufficient",
           "acceptable_venues": [
             "sigcomm"
           ]
@@ -3886,8 +3900,7 @@
           "fused_rank": null,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "sigmod",
-            "vldb"
+            "sigmod"
           ]
         },
         {
@@ -3896,7 +3909,7 @@
           "failure_type": "retrieval",
           "lexical_rank": null,
           "semantic_rank": 53,
-          "fused_rank": 65,
+          "fused_rank": 57,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "sigmod"
@@ -3909,7 +3922,7 @@
           "lexical_rank": null,
           "semantic_rank": null,
           "fused_rank": null,
-          "confidence": "ambiguous",
+          "confidence": "insufficient",
           "acceptable_venues": [
             "sigmod"
           ]
@@ -3930,10 +3943,10 @@
           "split": "dev",
           "paper_id": "dev-2025-sigmod-07",
           "failure_type": "retrieval",
-          "lexical_rank": 110,
-          "semantic_rank": 149,
-          "fused_rank": 52,
-          "confidence": "ambiguous",
+          "lexical_rank": 72,
+          "semantic_rank": 136,
+          "fused_rank": 55,
+          "confidence": "insufficient",
           "acceptable_venues": [
             "sigmod"
           ]
@@ -3956,7 +3969,7 @@
           "failure_type": "retrieval",
           "lexical_rank": null,
           "semantic_rank": 80,
-          "fused_rank": 73,
+          "fused_rank": 81,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "cvpr"
@@ -3969,7 +3982,7 @@
           "lexical_rank": null,
           "semantic_rank": null,
           "fused_rank": null,
-          "confidence": "ambiguous",
+          "confidence": "insufficient",
           "acceptable_venues": [
             "cvpr"
           ]
@@ -3983,8 +3996,7 @@
           "fused_rank": null,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "chi",
-            "uist"
+            "chi"
           ]
         },
         {
@@ -4018,7 +4030,7 @@
           "lexical_rank": null,
           "semantic_rank": null,
           "fused_rank": null,
-          "confidence": "ambiguous",
+          "confidence": "insufficient",
           "acceptable_venues": [
             "chi"
           ]
@@ -4066,7 +4078,7 @@
           "lexical_rank": null,
           "semantic_rank": null,
           "fused_rank": null,
-          "confidence": "ambiguous",
+          "confidence": "insufficient",
           "acceptable_venues": [
             "stoc"
           ]
@@ -4078,7 +4090,7 @@
           "lexical_rank": null,
           "semantic_rank": null,
           "fused_rank": null,
-          "confidence": "ambiguous",
+          "confidence": "insufficient",
           "acceptable_venues": [
             "stoc"
           ]
@@ -4102,7 +4114,7 @@
           "lexical_rank": null,
           "semantic_rank": null,
           "fused_rank": null,
-          "confidence": "ambiguous",
+          "confidence": "insufficient",
           "acceptable_venues": [
             "hpdc"
           ]
@@ -4133,12 +4145,12 @@
         },
         {
           "split": "dev",
-          "paper_id": "dev-2025-hpdc-08",
+          "paper_id": "dev-2025-hpdc-09",
           "failure_type": "retrieval",
-          "lexical_rank": 189,
-          "semantic_rank": 69,
-          "fused_rank": 56,
-          "confidence": "ambiguous",
+          "lexical_rank": 78,
+          "semantic_rank": null,
+          "fused_rank": 157,
+          "confidence": "insufficient",
           "acceptable_venues": [
             "hpdc"
           ]
@@ -4148,8 +4160,8 @@
           "paper_id": "dev-2025-hpdc-10",
           "failure_type": "retrieval",
           "lexical_rank": null,
-          "semantic_rank": 99,
-          "fused_rank": 140,
+          "semantic_rank": 101,
+          "fused_rank": 158,
           "confidence": "insufficient",
           "acceptable_venues": [
             "hpdc"
@@ -4161,8 +4173,8 @@
           "failure_type": "retrieval",
           "lexical_rank": null,
           "semantic_rank": 110,
-          "fused_rank": 165,
-          "confidence": "ambiguous",
+          "fused_rank": 178,
+          "confidence": "insufficient",
           "acceptable_venues": [
             "hpdc"
           ]
@@ -4176,8 +4188,7 @@
           "fused_rank": null,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "ieice-nolta-recent-progress-special",
-            "ieice-nolta"
+            "ieice-nolta-recent-progress-special"
           ]
         },
         {
@@ -4211,7 +4222,7 @@
           "lexical_rank": null,
           "semantic_rank": null,
           "fused_rank": null,
-          "confidence": "ambiguous",
+          "confidence": "insufficient",
           "acceptable_venues": [
             "ieice-nolta-recent-progress-special"
           ]
@@ -4222,82 +4233,10 @@
           "failure_type": "retrieval",
           "lexical_rank": 185,
           "semantic_rank": 60,
-          "fused_rank": 60,
+          "fused_rank": 73,
           "confidence": "insufficient",
           "acceptable_venues": [
             "jip"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-usenix-security-02",
-          "failure_type": "retrieval",
-          "lexical_rank": null,
-          "semantic_rank": null,
-          "fused_rank": null,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "usenix-security"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-usenix-security-03",
-          "failure_type": "retrieval",
-          "lexical_rank": null,
-          "semantic_rank": null,
-          "fused_rank": null,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "usenix-security"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-usenix-security-06",
-          "failure_type": "retrieval",
-          "lexical_rank": null,
-          "semantic_rank": null,
-          "fused_rank": null,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "usenix-security"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-usenix-security-07",
-          "failure_type": "retrieval",
-          "lexical_rank": null,
-          "semantic_rank": null,
-          "fused_rank": null,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "usenix-security"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-usenix-security-08",
-          "failure_type": "retrieval",
-          "lexical_rank": null,
-          "semantic_rank": null,
-          "fused_rank": null,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "usenix-security"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-sigcomm-02",
-          "failure_type": "retrieval",
-          "lexical_rank": null,
-          "semantic_rank": null,
-          "fused_rank": null,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "sigcomm"
           ]
         },
         {
@@ -4309,67 +4248,8 @@
           "fused_rank": null,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "sigcomm"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-sigcomm-05",
-          "failure_type": "retrieval",
-          "lexical_rank": 269,
-          "semantic_rank": 126,
-          "fused_rank": 165,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "sigcomm"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-sigcomm-06",
-          "failure_type": "retrieval",
-          "lexical_rank": null,
-          "semantic_rank": 92,
-          "fused_rank": 116,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "sigcomm"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-sigcomm-07",
-          "failure_type": "retrieval",
-          "lexical_rank": null,
-          "semantic_rank": null,
-          "fused_rank": null,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "sigcomm"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-sigcomm-08",
-          "failure_type": "retrieval",
-          "lexical_rank": null,
-          "semantic_rank": null,
-          "fused_rank": null,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "sigcomm"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-sigmod-03",
-          "failure_type": "retrieval",
-          "lexical_rank": null,
-          "semantic_rank": null,
-          "fused_rank": null,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "sigmod"
+            "sigcomm",
+            "nsdi"
           ]
         },
         {
@@ -4379,9 +4259,10 @@
           "lexical_rank": null,
           "semantic_rank": null,
           "fused_rank": null,
-          "confidence": "ambiguous",
+          "confidence": "insufficient",
           "acceptable_venues": [
-            "sigmod"
+            "sigmod",
+            "vldb"
           ]
         },
         {
@@ -4389,35 +4270,12 @@
           "paper_id": "heldout-2026-sigmod-07",
           "failure_type": "retrieval",
           "lexical_rank": null,
-          "semantic_rank": 83,
-          "fused_rank": 175,
+          "semantic_rank": 79,
+          "fused_rank": 148,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "sigmod"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-sigmod-08",
-          "failure_type": "retrieval",
-          "lexical_rank": null,
-          "semantic_rank": null,
-          "fused_rank": null,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "sigmod"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-cvpr-03",
-          "failure_type": "retrieval",
-          "lexical_rank": null,
-          "semantic_rank": null,
-          "fused_rank": null,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "cvpr"
+            "sigmod",
+            "vldb"
           ]
         },
         {
@@ -4429,19 +4287,8 @@
           "fused_rank": 78,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "cvpr"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-cvpr-05",
-          "failure_type": "retrieval",
-          "lexical_rank": null,
-          "semantic_rank": null,
-          "fused_rank": null,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "cvpr"
+            "cvpr",
+            "iccv"
           ]
         },
         {
@@ -4451,21 +4298,10 @@
           "lexical_rank": null,
           "semantic_rank": null,
           "fused_rank": null,
-          "confidence": "ambiguous",
+          "confidence": "insufficient",
           "acceptable_venues": [
-            "cvpr"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-cvpr-08",
-          "failure_type": "retrieval",
-          "lexical_rank": null,
-          "semantic_rank": 78,
-          "fused_rank": 79,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "cvpr"
+            "cvpr",
+            "iccv"
           ]
         },
         {
@@ -4477,31 +4313,8 @@
           "fused_rank": null,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "chi"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-chi-04",
-          "failure_type": "retrieval",
-          "lexical_rank": null,
-          "semantic_rank": null,
-          "fused_rank": null,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "chi"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-chi-05",
-          "failure_type": "retrieval",
-          "lexical_rank": null,
-          "semantic_rank": 55,
-          "fused_rank": 88,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "chi"
+            "chi",
+            "uist"
           ]
         },
         {
@@ -4509,11 +4322,12 @@
           "paper_id": "heldout-2026-chi-06",
           "failure_type": "retrieval",
           "lexical_rank": null,
-          "semantic_rank": null,
-          "fused_rank": null,
-          "confidence": "ambiguous",
+          "semantic_rank": 74,
+          "fused_rank": 127,
+          "confidence": "insufficient",
           "acceptable_venues": [
-            "chi"
+            "chi",
+            "uist"
           ]
         },
         {
@@ -4525,7 +4339,8 @@
           "fused_rank": null,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "stoc"
+            "stoc",
+            "focs"
           ]
         },
         {
@@ -4537,7 +4352,8 @@
           "fused_rank": null,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "stoc"
+            "stoc",
+            "focs"
           ]
         },
         {
@@ -4549,7 +4365,8 @@
           "fused_rank": null,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "stoc"
+            "stoc",
+            "focs"
           ]
         },
         {
@@ -4558,10 +4375,11 @@
           "failure_type": "retrieval",
           "lexical_rank": null,
           "semantic_rank": 56,
-          "fused_rank": 53,
+          "fused_rank": 57,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "hpdc"
+            "hpdc",
+            "ipdps"
           ]
         },
         {
@@ -4569,11 +4387,12 @@
           "paper_id": "heldout-2026-hpdc-03",
           "failure_type": "retrieval",
           "lexical_rank": null,
-          "semantic_rank": null,
-          "fused_rank": null,
+          "semantic_rank": 84,
+          "fused_rank": 85,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "hpdc"
+            "hpdc",
+            "ipdps"
           ]
         },
         {
@@ -4585,7 +4404,8 @@
           "fused_rank": null,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "hpdc"
+            "hpdc",
+            "ipdps"
           ]
         },
         {
@@ -4593,20 +4413,21 @@
           "paper_id": "heldout-2026-hpdc-12",
           "failure_type": "retrieval",
           "lexical_rank": null,
-          "semantic_rank": 94,
-          "fused_rank": 93,
+          "semantic_rank": 76,
+          "fused_rank": 83,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "hpdc"
+            "hpdc",
+            "ipdps"
           ]
         },
         {
           "split": "heldout",
           "paper_id": "heldout-2026-cvprw-01",
           "failure_type": "retrieval",
-          "lexical_rank": 71,
+          "lexical_rank": 84,
           "semantic_rank": null,
-          "fused_rank": 134,
+          "fused_rank": 149,
           "confidence": "insufficient",
           "acceptable_venues": [
             "cvpr",
@@ -4622,7 +4443,8 @@
           "fused_rank": 86,
           "confidence": "insufficient",
           "acceptable_venues": [
-            "cvpr"
+            "cvpr",
+            "iccv"
           ]
         },
         {
@@ -4634,7 +4456,8 @@
           "fused_rank": null,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "cvpr"
+            "cvpr",
+            "iccv"
           ]
         },
         {
@@ -4646,8 +4469,7 @@
           "fused_rank": null,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "ieice-nolta-recent-progress-special",
-            "ieice-nolta"
+            "ieice-nolta-recent-progress-special"
           ]
         },
         {
@@ -4657,7 +4479,7 @@
           "lexical_rank": null,
           "semantic_rank": null,
           "fused_rank": null,
-          "confidence": "ambiguous",
+          "confidence": "insufficient",
           "acceptable_venues": [
             "ieice-nolta-recent-progress-special"
           ]
@@ -4693,12 +4515,11 @@
           "paper_id": "dev-2025-ches-01",
           "failure_type": "reranker",
           "lexical_rank": null,
-          "semantic_rank": 17,
-          "fused_rank": 32,
+          "semantic_rank": 18,
+          "fused_rank": 36,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "ches",
-            "ccs"
+            "ches"
           ]
         },
         {
@@ -4719,7 +4540,7 @@
           "failure_type": "reranker",
           "lexical_rank": null,
           "semantic_rank": 1,
-          "fused_rank": 7,
+          "fused_rank": 8,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "ches"
@@ -4731,8 +4552,8 @@
           "failure_type": "reranker",
           "lexical_rank": null,
           "semantic_rank": 1,
-          "fused_rank": 31,
-          "confidence": "ambiguous",
+          "fused_rank": 37,
+          "confidence": "insufficient",
           "acceptable_venues": [
             "ches"
           ]
@@ -4746,8 +4567,7 @@
           "fused_rank": 40,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "icml",
-            "neurips"
+            "icml"
           ]
         },
         {
@@ -4766,9 +4586,9 @@
           "split": "dev",
           "paper_id": "dev-2025-icml-04",
           "failure_type": "reranker",
-          "lexical_rank": 18,
+          "lexical_rank": 10,
           "semantic_rank": null,
-          "fused_rank": 21,
+          "fused_rank": 10,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "icml"
@@ -4780,8 +4600,8 @@
           "failure_type": "reranker",
           "lexical_rank": null,
           "semantic_rank": 38,
-          "fused_rank": 41,
-          "confidence": "ambiguous",
+          "fused_rank": 38,
+          "confidence": "insufficient",
           "acceptable_venues": [
             "icml"
           ]
@@ -4790,9 +4610,9 @@
           "split": "dev",
           "paper_id": "dev-2025-icml-07",
           "failure_type": "reranker",
-          "lexical_rank": 156,
+          "lexical_rank": 152,
           "semantic_rank": 19,
-          "fused_rank": 30,
+          "fused_rank": 27,
           "confidence": "insufficient",
           "acceptable_venues": [
             "icml"
@@ -4803,7 +4623,7 @@
           "paper_id": "dev-2025-icml-08",
           "failure_type": "reranker",
           "lexical_rank": null,
-          "semantic_rank": 8,
+          "semantic_rank": 9,
           "fused_rank": 15,
           "confidence": "ambiguous",
           "acceptable_venues": [
@@ -4816,7 +4636,7 @@
           "failure_type": "reranker",
           "lexical_rank": null,
           "semantic_rank": 21,
-          "fused_rank": 31,
+          "fused_rank": 32,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "sigcomm"
@@ -4826,9 +4646,9 @@
           "split": "dev",
           "paper_id": "dev-2025-sigcomm-07",
           "failure_type": "reranker",
-          "lexical_rank": 127,
+          "lexical_rank": 139,
           "semantic_rank": 44,
-          "fused_rank": 57,
+          "fused_rank": 55,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "sigcomm"
@@ -4838,10 +4658,34 @@
           "split": "dev",
           "paper_id": "dev-2025-sigmod-04",
           "failure_type": "reranker",
-          "lexical_rank": 48,
+          "lexical_rank": 49,
           "semantic_rank": 5,
-          "fused_rank": 11,
+          "fused_rank": 10,
           "confidence": "insufficient",
+          "acceptable_venues": [
+            "sigmod"
+          ]
+        },
+        {
+          "split": "dev",
+          "paper_id": "dev-2025-sigmod-06",
+          "failure_type": "reranker",
+          "lexical_rank": 47,
+          "semantic_rank": 5,
+          "fused_rank": 7,
+          "confidence": "ambiguous",
+          "acceptable_venues": [
+            "sigmod"
+          ]
+        },
+        {
+          "split": "dev",
+          "paper_id": "dev-2025-sigmod-08",
+          "failure_type": "reranker",
+          "lexical_rank": 12,
+          "semantic_rank": 48,
+          "fused_rank": 12,
+          "confidence": "ambiguous",
           "acceptable_venues": [
             "sigmod"
           ]
@@ -4850,22 +4694,21 @@
           "split": "dev",
           "paper_id": "dev-2025-cvpr-01",
           "failure_type": "reranker",
-          "lexical_rank": 148,
-          "semantic_rank": 11,
-          "fused_rank": 19,
+          "lexical_rank": 133,
+          "semantic_rank": 21,
+          "fused_rank": 20,
           "confidence": "insufficient",
           "acceptable_venues": [
-            "cvpr",
-            "iccv"
+            "cvpr"
           ]
         },
         {
           "split": "dev",
           "paper_id": "dev-2025-cvpr-02",
           "failure_type": "reranker",
-          "lexical_rank": 37,
+          "lexical_rank": 36,
           "semantic_rank": 152,
-          "fused_rank": 38,
+          "fused_rank": 41,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "cvpr"
@@ -4876,9 +4719,9 @@
           "paper_id": "dev-2025-cvpr-03",
           "failure_type": "reranker",
           "lexical_rank": null,
-          "semantic_rank": 23,
-          "fused_rank": 35,
-          "confidence": "ambiguous",
+          "semantic_rank": 25,
+          "fused_rank": 46,
+          "confidence": "insufficient",
           "acceptable_venues": [
             "cvpr"
           ]
@@ -4887,10 +4730,10 @@
           "split": "dev",
           "paper_id": "dev-2025-cvpr-04",
           "failure_type": "reranker",
-          "lexical_rank": 95,
-          "semantic_rank": 21,
-          "fused_rank": 11,
-          "confidence": "ambiguous",
+          "lexical_rank": 86,
+          "semantic_rank": 23,
+          "fused_rank": 12,
+          "confidence": "insufficient",
           "acceptable_venues": [
             "cvpr"
           ]
@@ -4899,10 +4742,10 @@
           "split": "dev",
           "paper_id": "dev-2025-chi-07",
           "failure_type": "reranker",
-          "lexical_rank": 99,
-          "semantic_rank": 10,
-          "fused_rank": 24,
-          "confidence": "ambiguous",
+          "lexical_rank": 115,
+          "semantic_rank": 11,
+          "fused_rank": 23,
+          "confidence": "insufficient",
           "acceptable_venues": [
             "chi"
           ]
@@ -4911,25 +4754,12 @@
           "split": "dev",
           "paper_id": "dev-2025-chi-08",
           "failure_type": "reranker",
-          "lexical_rank": 53,
-          "semantic_rank": 35,
-          "fused_rank": 21,
+          "lexical_rank": 63,
+          "semantic_rank": 36,
+          "fused_rank": 24,
           "confidence": "insufficient",
           "acceptable_venues": [
             "chi"
-          ]
-        },
-        {
-          "split": "dev",
-          "paper_id": "dev-2025-stoc-01",
-          "failure_type": "reranker",
-          "lexical_rank": null,
-          "semantic_rank": 4,
-          "fused_rank": 7,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "stoc",
-            "focs"
           ]
         },
         {
@@ -4938,7 +4768,7 @@
           "failure_type": "reranker",
           "lexical_rank": null,
           "semantic_rank": 12,
-          "fused_rank": 14,
+          "fused_rank": 13,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "stoc"
@@ -4951,7 +4781,7 @@
           "lexical_rank": null,
           "semantic_rank": 9,
           "fused_rank": 9,
-          "confidence": "ambiguous",
+          "confidence": "insufficient",
           "acceptable_venues": [
             "stoc"
           ]
@@ -4985,12 +4815,11 @@
           "paper_id": "dev-2025-hpdc-01",
           "failure_type": "reranker",
           "lexical_rank": null,
-          "semantic_rank": 23,
-          "fused_rank": 25,
-          "confidence": "ambiguous",
+          "semantic_rank": 39,
+          "fused_rank": 39,
+          "confidence": "insufficient",
           "acceptable_venues": [
-            "hpdc",
-            "ics"
+            "hpdc"
           ]
         },
         {
@@ -4999,7 +4828,7 @@
           "failure_type": "reranker",
           "lexical_rank": null,
           "semantic_rank": 14,
-          "fused_rank": 16,
+          "fused_rank": 15,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "hpdc"
@@ -5009,9 +4838,9 @@
           "split": "dev",
           "paper_id": "dev-2025-hpdc-05",
           "failure_type": "reranker",
-          "lexical_rank": 2,
+          "lexical_rank": 5,
           "semantic_rank": null,
-          "fused_rank": 7,
+          "fused_rank": 12,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "hpdc"
@@ -5019,11 +4848,11 @@
         },
         {
           "split": "dev",
-          "paper_id": "dev-2025-hpdc-09",
+          "paper_id": "dev-2025-hpdc-08",
           "failure_type": "reranker",
-          "lexical_rank": 30,
-          "semantic_rank": null,
-          "fused_rank": 84,
+          "lexical_rank": 47,
+          "semantic_rank": 65,
+          "fused_rank": 16,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "hpdc"
@@ -5035,7 +4864,7 @@
           "failure_type": "reranker",
           "lexical_rank": null,
           "semantic_rank": 40,
-          "fused_rank": 51,
+          "fused_rank": 49,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "hpdc"
@@ -5046,8 +4875,8 @@
           "paper_id": "dev-2025-cvprw-02",
           "failure_type": "reranker",
           "lexical_rank": 40,
-          "semantic_rank": 8,
-          "fused_rank": 10,
+          "semantic_rank": 7,
+          "fused_rank": 11,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "cvpr"
@@ -5058,8 +4887,8 @@
           "paper_id": "dev-2025-cvprw-03",
           "failure_type": "reranker",
           "lexical_rank": null,
-          "semantic_rank": 15,
-          "fused_rank": 28,
+          "semantic_rank": 16,
+          "fused_rank": 31,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "cvpr"
@@ -5071,8 +4900,8 @@
           "failure_type": "reranker",
           "lexical_rank": null,
           "semantic_rank": 10,
-          "fused_rank": 13,
-          "confidence": "ambiguous",
+          "fused_rank": 18,
+          "confidence": "insufficient",
           "acceptable_venues": [
             "cvpr"
           ]
@@ -5081,22 +4910,21 @@
           "split": "dev",
           "paper_id": "dev-2025-ipsj-journal-01",
           "failure_type": "reranker",
-          "lexical_rank": 170,
-          "semantic_rank": 48,
-          "fused_rank": 56,
+          "lexical_rank": 181,
+          "semantic_rank": 46,
+          "fused_rank": 62,
           "confidence": "insufficient",
           "acceptable_venues": [
-            "jip",
-            "ieice-trans-inf"
+            "jip"
           ]
         },
         {
           "split": "dev",
           "paper_id": "dev-2025-ipsj-journal-02",
           "failure_type": "reranker",
-          "lexical_rank": 120,
-          "semantic_rank": 15,
-          "fused_rank": 7,
+          "lexical_rank": 130,
+          "semantic_rank": 11,
+          "fused_rank": 14,
           "confidence": "insufficient",
           "acceptable_venues": [
             "jip"
@@ -5108,8 +4936,8 @@
           "failure_type": "reranker",
           "lexical_rank": null,
           "semantic_rank": 28,
-          "fused_rank": 24,
-          "confidence": "ambiguous",
+          "fused_rank": 26,
+          "confidence": "insufficient",
           "acceptable_venues": [
             "jip"
           ]
@@ -5118,34 +4946,21 @@
           "split": "heldout",
           "paper_id": "heldout-2026-nsdi-01",
           "failure_type": "reranker",
-          "lexical_rank": 67,
-          "semantic_rank": 44,
-          "fused_rank": 40,
+          "lexical_rank": 73,
+          "semantic_rank": 42,
+          "fused_rank": 41,
           "confidence": "insufficient",
-          "acceptable_venues": [
-            "nsdi",
-            "osdi"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-nsdi-03",
-          "failure_type": "reranker",
-          "lexical_rank": 7,
-          "semantic_rank": null,
-          "fused_rank": 27,
-          "confidence": "ambiguous",
           "acceptable_venues": [
             "nsdi"
           ]
         },
         {
           "split": "heldout",
-          "paper_id": "heldout-2026-nsdi-05",
+          "paper_id": "heldout-2026-nsdi-03",
           "failure_type": "reranker",
-          "lexical_rank": 187,
-          "semantic_rank": 1,
-          "fused_rank": 18,
+          "lexical_rank": 3,
+          "semantic_rank": null,
+          "fused_rank": 21,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "nsdi"
@@ -5155,21 +4970,9 @@
           "split": "heldout",
           "paper_id": "heldout-2026-nsdi-07",
           "failure_type": "reranker",
-          "lexical_rank": 3,
-          "semantic_rank": 32,
-          "fused_rank": 8,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "nsdi"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-nsdi-08",
-          "failure_type": "reranker",
-          "lexical_rank": 21,
-          "semantic_rank": 25,
-          "fused_rank": 6,
+          "lexical_rank": 12,
+          "semantic_rank": 28,
+          "fused_rank": 14,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "nsdi"
@@ -5180,45 +4983,60 @@
           "paper_id": "heldout-2026-usenix-security-01",
           "failure_type": "reranker",
           "lexical_rank": null,
-          "semantic_rank": 34,
-          "fused_rank": 36,
+          "semantic_rank": 4,
+          "fused_rank": 9,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "usenix-security",
-            "ccs"
+            "ches"
           ]
         },
         {
           "split": "heldout",
-          "paper_id": "heldout-2026-usenix-security-04",
+          "paper_id": "heldout-2026-usenix-security-02",
           "failure_type": "reranker",
-          "lexical_rank": 8,
-          "semantic_rank": null,
-          "fused_rank": 21,
+          "lexical_rank": 2,
+          "semantic_rank": 31,
+          "fused_rank": 6,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "usenix-security"
+            "usenix-security",
+            "ches"
           ]
         },
         {
           "split": "heldout",
-          "paper_id": "heldout-2026-usenix-security-05",
+          "paper_id": "heldout-2026-usenix-security-06",
           "failure_type": "reranker",
-          "lexical_rank": 20,
-          "semantic_rank": null,
-          "fused_rank": 40,
+          "lexical_rank": null,
+          "semantic_rank": 1,
+          "fused_rank": 8,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "usenix-security"
+            "usenix-security",
+            "ches"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-usenix-security-08",
+          "failure_type": "reranker",
+          "lexical_rank": null,
+          "semantic_rank": 2,
+          "fused_rank": 24,
+          "confidence": "ambiguous",
+          "acceptable_venues": [
+            "usenix-security",
+            "ches"
           ]
         },
         {
           "split": "heldout",
           "paper_id": "heldout-2026-sigcomm-01",
           "failure_type": "reranker",
-          "lexical_rank": 2,
+          "lexical_rank": 1,
           "semantic_rank": null,
-          "fused_rank": 34,
+          "fused_rank": 35,
           "confidence": "insufficient",
           "acceptable_venues": [
             "sigcomm",
@@ -5227,23 +5045,24 @@
         },
         {
           "split": "heldout",
-          "paper_id": "heldout-2026-sigcomm-04",
+          "paper_id": "heldout-2026-sigcomm-06",
           "failure_type": "reranker",
-          "lexical_rank": 73,
-          "semantic_rank": 33,
-          "fused_rank": 40,
+          "lexical_rank": 6,
+          "semantic_rank": 44,
+          "fused_rank": 8,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "sigcomm"
+            "sigcomm",
+            "nsdi"
           ]
         },
         {
           "split": "heldout",
           "paper_id": "heldout-2026-sigmod-01",
           "failure_type": "reranker",
-          "lexical_rank": 199,
+          "lexical_rank": 201,
           "semantic_rank": 2,
-          "fused_rank": 14,
+          "fused_rank": 13,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "sigmod",
@@ -5252,36 +5071,90 @@
         },
         {
           "split": "heldout",
-          "paper_id": "heldout-2026-sigmod-02",
+          "paper_id": "heldout-2026-sigmod-03",
           "failure_type": "reranker",
-          "lexical_rank": 43,
-          "semantic_rank": 18,
-          "fused_rank": 11,
+          "lexical_rank": null,
+          "semantic_rank": 14,
+          "fused_rank": 24,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "sigmod"
+            "sigmod",
+            "vldb"
           ]
         },
         {
           "split": "heldout",
           "paper_id": "heldout-2026-sigmod-05",
           "failure_type": "reranker",
-          "lexical_rank": 46,
+          "lexical_rank": 57,
           "semantic_rank": 4,
           "fused_rank": 7,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "sigmod"
+            "sigmod",
+            "vldb"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-sigmod-06",
+          "failure_type": "reranker",
+          "lexical_rank": 10,
+          "semantic_rank": 19,
+          "fused_rank": 6,
+          "confidence": "insufficient",
+          "acceptable_venues": [
+            "sigmod",
+            "vldb"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-sigmod-08",
+          "failure_type": "reranker",
+          "lexical_rank": null,
+          "semantic_rank": 24,
+          "fused_rank": 43,
+          "confidence": "ambiguous",
+          "acceptable_venues": [
+            "sigmod",
+            "vldb"
           ]
         },
         {
           "split": "heldout",
           "paper_id": "heldout-2026-cvpr-01",
           "failure_type": "reranker",
-          "lexical_rank": null,
+          "lexical_rank": 64,
           "semantic_rank": 6,
-          "fused_rank": 23,
-          "confidence": "insufficient",
+          "fused_rank": 6,
+          "confidence": "ambiguous",
+          "acceptable_venues": [
+            "cvpr",
+            "iccv"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-cvpr-03",
+          "failure_type": "reranker",
+          "lexical_rank": null,
+          "semantic_rank": 47,
+          "fused_rank": 53,
+          "confidence": "ambiguous",
+          "acceptable_venues": [
+            "cvpr",
+            "iccv"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-cvpr-05",
+          "failure_type": "reranker",
+          "lexical_rank": null,
+          "semantic_rank": 14,
+          "fused_rank": 29,
+          "confidence": "ambiguous",
           "acceptable_venues": [
             "cvpr",
             "iccv"
@@ -5291,12 +5164,26 @@
           "split": "heldout",
           "paper_id": "heldout-2026-cvpr-07",
           "failure_type": "reranker",
-          "lexical_rank": 73,
-          "semantic_rank": 9,
-          "fused_rank": 14,
+          "lexical_rank": 80,
+          "semantic_rank": 4,
+          "fused_rank": 12,
+          "confidence": "insufficient",
+          "acceptable_venues": [
+            "cvpr",
+            "iccv"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-cvpr-08",
+          "failure_type": "reranker",
+          "lexical_rank": null,
+          "semantic_rank": 26,
+          "fused_rank": 37,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "cvpr"
+            "cvpr",
+            "iccv"
           ]
         },
         {
@@ -5305,7 +5192,46 @@
           "failure_type": "reranker",
           "lexical_rank": null,
           "semantic_rank": 2,
-          "fused_rank": 28,
+          "fused_rank": 26,
+          "confidence": "ambiguous",
+          "acceptable_venues": [
+            "chi",
+            "uist"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-chi-03",
+          "failure_type": "reranker",
+          "lexical_rank": null,
+          "semantic_rank": 4,
+          "fused_rank": 8,
+          "confidence": "ambiguous",
+          "acceptable_venues": [
+            "chi",
+            "uist"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-chi-04",
+          "failure_type": "reranker",
+          "lexical_rank": null,
+          "semantic_rank": 21,
+          "fused_rank": 33,
+          "confidence": "ambiguous",
+          "acceptable_venues": [
+            "chi",
+            "uist"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-chi-05",
+          "failure_type": "reranker",
+          "lexical_rank": 44,
+          "semantic_rank": 25,
+          "fused_rank": 21,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "chi",
@@ -5316,12 +5242,13 @@
           "split": "heldout",
           "paper_id": "heldout-2026-chi-07",
           "failure_type": "reranker",
-          "lexical_rank": 88,
-          "semantic_rank": 42,
-          "fused_rank": 25,
+          "lexical_rank": 99,
+          "semantic_rank": 4,
+          "fused_rank": 31,
           "confidence": "insufficient",
           "acceptable_venues": [
-            "chi"
+            "chi",
+            "uist"
           ]
         },
         {
@@ -5330,7 +5257,7 @@
           "failure_type": "reranker",
           "lexical_rank": null,
           "semantic_rank": 6,
-          "fused_rank": 14,
+          "fused_rank": 11,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "stoc",
@@ -5343,10 +5270,11 @@
           "failure_type": "reranker",
           "lexical_rank": null,
           "semantic_rank": 4,
-          "fused_rank": 11,
+          "fused_rank": 13,
           "confidence": "insufficient",
           "acceptable_venues": [
-            "stoc"
+            "stoc",
+            "focs"
           ]
         },
         {
@@ -5354,11 +5282,12 @@
           "paper_id": "heldout-2026-stoc-03",
           "failure_type": "reranker",
           "lexical_rank": null,
-          "semantic_rank": 18,
-          "fused_rank": 27,
+          "semantic_rank": 11,
+          "fused_rank": 20,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "stoc"
+            "stoc",
+            "focs"
           ]
         },
         {
@@ -5366,11 +5295,12 @@
           "paper_id": "heldout-2026-stoc-04",
           "failure_type": "reranker",
           "lexical_rank": null,
-          "semantic_rank": 16,
-          "fused_rank": 22,
+          "semantic_rank": 11,
+          "fused_rank": 16,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "stoc"
+            "stoc",
+            "focs"
           ]
         },
         {
@@ -5378,36 +5308,38 @@
           "paper_id": "heldout-2026-stoc-08",
           "failure_type": "reranker",
           "lexical_rank": null,
-          "semantic_rank": 6,
-          "fused_rank": 11,
+          "semantic_rank": 4,
+          "fused_rank": 8,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "stoc"
+            "stoc",
+            "focs"
           ]
         },
         {
           "split": "heldout",
           "paper_id": "heldout-2026-hpdc-01",
           "failure_type": "reranker",
-          "lexical_rank": null,
-          "semantic_rank": 36,
-          "fused_rank": 88,
+          "lexical_rank": 124,
+          "semantic_rank": 49,
+          "fused_rank": 45,
           "confidence": "insufficient",
           "acceptable_venues": [
             "hpdc",
-            "ics"
+            "ipdps"
           ]
         },
         {
           "split": "heldout",
           "paper_id": "heldout-2026-hpdc-04",
           "failure_type": "reranker",
-          "lexical_rank": null,
-          "semantic_rank": 15,
-          "fused_rank": 58,
-          "confidence": "ambiguous",
+          "lexical_rank": 123,
+          "semantic_rank": 13,
+          "fused_rank": 22,
+          "confidence": "insufficient",
           "acceptable_venues": [
-            "hpdc"
+            "hpdc",
+            "ipdps"
           ]
         },
         {
@@ -5416,34 +5348,24 @@
           "failure_type": "reranker",
           "lexical_rank": null,
           "semantic_rank": 10,
-          "fused_rank": 32,
+          "fused_rank": 37,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "hpdc"
+            "hpdc",
+            "ipdps"
           ]
         },
         {
           "split": "heldout",
           "paper_id": "heldout-2026-hpdc-06",
           "failure_type": "reranker",
-          "lexical_rank": 232,
+          "lexical_rank": 11,
           "semantic_rank": 21,
-          "fused_rank": 21,
-          "confidence": "ambiguous",
+          "fused_rank": 8,
+          "confidence": "insufficient",
           "acceptable_venues": [
-            "hpdc"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-hpdc-07",
-          "failure_type": "reranker",
-          "lexical_rank": 6,
-          "semantic_rank": 26,
-          "fused_rank": 11,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "hpdc"
+            "hpdc",
+            "ipdps"
           ]
         },
         {
@@ -5451,11 +5373,25 @@
           "paper_id": "heldout-2026-hpdc-08",
           "failure_type": "reranker",
           "lexical_rank": null,
-          "semantic_rank": 17,
-          "fused_rank": 49,
+          "semantic_rank": 18,
+          "fused_rank": 55,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "hpdc"
+            "hpdc",
+            "ipdps"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-hpdc-09",
+          "failure_type": "reranker",
+          "lexical_rank": 8,
+          "semantic_rank": 41,
+          "fused_rank": 10,
+          "confidence": "insufficient",
+          "acceptable_venues": [
+            "hpdc",
+            "ipdps"
           ]
         },
         {
@@ -5467,7 +5403,8 @@
           "fused_rank": 22,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "hpdc"
+            "hpdc",
+            "ipdps"
           ]
         },
         {
@@ -5475,24 +5412,24 @@
           "paper_id": "heldout-2026-cvprw-02",
           "failure_type": "reranker",
           "lexical_rank": null,
-          "semantic_rank": 33,
-          "fused_rank": 44,
+          "semantic_rank": 11,
+          "fused_rank": 22,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "cvpr"
+            "cvpr",
+            "iccv"
           ]
         },
         {
           "split": "heldout",
           "paper_id": "heldout-2026-ipsj-journal-01",
           "failure_type": "reranker",
-          "lexical_rank": 197,
+          "lexical_rank": 194,
           "semantic_rank": 15,
-          "fused_rank": 30,
+          "fused_rank": 28,
           "confidence": "insufficient",
           "acceptable_venues": [
-            "jip",
-            "ieice-trans-inf"
+            "jip"
           ]
         },
         {
@@ -5500,8 +5437,8 @@
           "paper_id": "heldout-2026-ipsj-journal-02",
           "failure_type": "reranker",
           "lexical_rank": null,
-          "semantic_rank": 39,
-          "fused_rank": 34,
+          "semantic_rank": 38,
+          "fused_rank": 37,
           "confidence": "insufficient",
           "acceptable_venues": [
             "jip"
@@ -5513,7 +5450,7 @@
           "failure_type": "reranker",
           "lexical_rank": null,
           "semantic_rank": 19,
-          "fused_rank": 17,
+          "fused_rank": 19,
           "confidence": "insufficient",
           "acceptable_venues": [
             "jip"
@@ -5523,9 +5460,9 @@
           "split": "heldout",
           "paper_id": "heldout-2026-ipsj-journal-04",
           "failure_type": "reranker",
-          "lexical_rank": 185,
-          "semantic_rank": 30,
-          "fused_rank": 42,
+          "lexical_rank": 184,
+          "semantic_rank": 28,
+          "fused_rank": 47,
           "confidence": "insufficient",
           "acceptable_venues": [
             "jip"
@@ -5540,7 +5477,7 @@
           "failure_type": "calibration",
           "lexical_rank": null,
           "semantic_rank": 1,
-          "fused_rank": 2,
+          "fused_rank": 3,
           "confidence": "insufficient",
           "acceptable_venues": [
             "ches"
@@ -5550,7 +5487,7 @@
           "split": "dev",
           "paper_id": "dev-2025-ches-07",
           "failure_type": "calibration",
-          "lexical_rank": 6,
+          "lexical_rank": 5,
           "semantic_rank": 5,
           "fused_rank": 3,
           "confidence": "ambiguous",
@@ -5560,35 +5497,11 @@
         },
         {
           "split": "dev",
-          "paper_id": "dev-2025-sigmod-06",
-          "failure_type": "calibration",
-          "lexical_rank": 39,
-          "semantic_rank": 5,
-          "fused_rank": 5,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "sigmod"
-          ]
-        },
-        {
-          "split": "dev",
-          "paper_id": "dev-2025-sigmod-08",
-          "failure_type": "calibration",
-          "lexical_rank": 4,
-          "semantic_rank": 53,
-          "fused_rank": 3,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "sigmod"
-          ]
-        },
-        {
-          "split": "dev",
           "paper_id": "dev-2025-cvpr-08",
           "failure_type": "calibration",
-          "lexical_rank": 19,
+          "lexical_rank": 6,
           "semantic_rank": 13,
-          "fused_rank": 5,
+          "fused_rank": 4,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "cvpr"
@@ -5596,15 +5509,26 @@
         },
         {
           "split": "dev",
+          "paper_id": "dev-2025-stoc-01",
+          "failure_type": "calibration",
+          "lexical_rank": null,
+          "semantic_rank": 4,
+          "fused_rank": 5,
+          "confidence": "ambiguous",
+          "acceptable_venues": [
+            "stoc"
+          ]
+        },
+        {
+          "split": "dev",
           "paper_id": "dev-2025-cvprw-01",
           "failure_type": "calibration",
-          "lexical_rank": 6,
+          "lexical_rank": 4,
           "semantic_rank": 4,
-          "fused_rank": 3,
+          "fused_rank": 1,
           "confidence": "insufficient",
           "acceptable_venues": [
-            "cvpr",
-            "iccv"
+            "cvpr"
           ]
         },
         {
@@ -5612,7 +5536,7 @@
           "paper_id": "heldout-2026-nsdi-02",
           "failure_type": "calibration",
           "lexical_rank": 2,
-          "semantic_rank": 64,
+          "semantic_rank": 60,
           "fused_rank": 3,
           "confidence": "ambiguous",
           "acceptable_venues": [
@@ -5624,9 +5548,21 @@
           "paper_id": "heldout-2026-nsdi-04",
           "failure_type": "calibration",
           "lexical_rank": 1,
-          "semantic_rank": 14,
-          "fused_rank": 2,
+          "semantic_rank": 13,
+          "fused_rank": 1,
           "confidence": "insufficient",
+          "acceptable_venues": [
+            "nsdi"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-nsdi-05",
+          "failure_type": "calibration",
+          "lexical_rank": 10,
+          "semantic_rank": 1,
+          "fused_rank": 1,
+          "confidence": "ambiguous",
           "acceptable_venues": [
             "nsdi"
           ]
@@ -5635,9 +5571,9 @@
           "split": "heldout",
           "paper_id": "heldout-2026-nsdi-06",
           "failure_type": "calibration",
-          "lexical_rank": 2,
-          "semantic_rank": 4,
-          "fused_rank": 1,
+          "lexical_rank": 13,
+          "semantic_rank": 3,
+          "fused_rank": 3,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "nsdi"
@@ -5645,62 +5581,183 @@
         },
         {
           "split": "heldout",
-          "paper_id": "heldout-2026-sigmod-06",
+          "paper_id": "heldout-2026-nsdi-08",
           "failure_type": "calibration",
-          "lexical_rank": 2,
-          "semantic_rank": 55,
+          "lexical_rank": 4,
+          "semantic_rank": 23,
+          "fused_rank": 4,
+          "confidence": "insufficient",
+          "acceptable_venues": [
+            "nsdi"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-usenix-security-03",
+          "failure_type": "calibration",
+          "lexical_rank": 1,
+          "semantic_rank": 8,
+          "fused_rank": 1,
+          "confidence": "ambiguous",
+          "acceptable_venues": [
+            "usenix-security",
+            "ches"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-usenix-security-04",
+          "failure_type": "calibration",
+          "lexical_rank": 4,
+          "semantic_rank": 3,
           "fused_rank": 2,
           "confidence": "ambiguous",
           "acceptable_venues": [
-            "sigmod"
+            "usenix-security",
+            "ches"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-usenix-security-05",
+          "failure_type": "calibration",
+          "lexical_rank": 5,
+          "semantic_rank": 30,
+          "fused_rank": 5,
+          "confidence": "ambiguous",
+          "acceptable_venues": [
+            "usenix-security",
+            "ches"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-usenix-security-07",
+          "failure_type": "calibration",
+          "lexical_rank": 2,
+          "semantic_rank": 21,
+          "fused_rank": 5,
+          "confidence": "ambiguous",
+          "acceptable_venues": [
+            "usenix-security",
+            "ches"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-sigcomm-02",
+          "failure_type": "calibration",
+          "lexical_rank": 2,
+          "semantic_rank": null,
+          "fused_rank": 3,
+          "confidence": "ambiguous",
+          "acceptable_venues": [
+            "sigcomm",
+            "nsdi"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-sigcomm-04",
+          "failure_type": "calibration",
+          "lexical_rank": 1,
+          "semantic_rank": 30,
+          "fused_rank": 4,
+          "confidence": "insufficient",
+          "acceptable_venues": [
+            "sigcomm",
+            "nsdi"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-sigcomm-05",
+          "failure_type": "calibration",
+          "lexical_rank": 7,
+          "semantic_rank": 3,
+          "fused_rank": 1,
+          "confidence": "insufficient",
+          "acceptable_venues": [
+            "sigcomm",
+            "nsdi"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-sigcomm-07",
+          "failure_type": "calibration",
+          "lexical_rank": 3,
+          "semantic_rank": null,
+          "fused_rank": 5,
+          "confidence": "ambiguous",
+          "acceptable_venues": [
+            "sigcomm",
+            "nsdi"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-sigcomm-08",
+          "failure_type": "calibration",
+          "lexical_rank": 13,
+          "semantic_rank": 5,
+          "fused_rank": 3,
+          "confidence": "ambiguous",
+          "acceptable_venues": [
+            "sigcomm",
+            "nsdi"
+          ]
+        },
+        {
+          "split": "heldout",
+          "paper_id": "heldout-2026-sigmod-02",
+          "failure_type": "calibration",
+          "lexical_rank": 51,
+          "semantic_rank": 1,
+          "fused_rank": 5,
+          "confidence": "ambiguous",
+          "acceptable_venues": [
+            "sigmod",
+            "vldb"
           ]
         },
         {
           "split": "heldout",
           "paper_id": "heldout-2026-cvpr-02",
           "failure_type": "calibration",
-          "lexical_rank": 19,
-          "semantic_rank": 18,
+          "lexical_rank": 18,
+          "semantic_rank": 16,
           "fused_rank": 1,
-          "confidence": "ambiguous",
+          "confidence": "insufficient",
           "acceptable_venues": [
-            "cvpr"
-          ]
-        },
-        {
-          "split": "heldout",
-          "paper_id": "heldout-2026-chi-03",
-          "failure_type": "calibration",
-          "lexical_rank": null,
-          "semantic_rank": 4,
-          "fused_rank": 5,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "chi"
+            "cvpr",
+            "iccv"
           ]
         },
         {
           "split": "heldout",
           "paper_id": "heldout-2026-chi-08",
           "failure_type": "calibration",
-          "lexical_rank": 4,
-          "semantic_rank": 6,
+          "lexical_rank": 7,
+          "semantic_rank": 5,
           "fused_rank": 2,
-          "confidence": "ambiguous",
+          "confidence": "insufficient",
           "acceptable_venues": [
-            "chi"
+            "chi",
+            "uist"
           ]
         },
         {
           "split": "heldout",
-          "paper_id": "heldout-2026-hpdc-09",
+          "paper_id": "heldout-2026-hpdc-07",
           "failure_type": "calibration",
-          "lexical_rank": 13,
-          "semantic_rank": 43,
-          "fused_rank": 5,
-          "confidence": "ambiguous",
+          "lexical_rank": 7,
+          "semantic_rank": 3,
+          "fused_rank": 4,
+          "confidence": "insufficient",
           "acceptable_venues": [
-            "hpdc"
+            "hpdc",
+            "ipdps"
           ]
         }
       ]

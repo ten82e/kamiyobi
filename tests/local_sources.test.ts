@@ -37,24 +37,28 @@ interface RawDeadline {
 function rawDeadlines(): RawDeadline[] {
   const out: RawDeadline[] = [];
 
-  // data/extra.yaml: conferences は配列（各エントリに key）。
-  const extra = loadYaml(readFileSync(join(REPO_ROOT, "data", "extra.yaml"), "utf8")) as {
-    conferences?: Array<{ key?: string; editions?: Array<{ deadlines?: unknown[] }> }>;
-  };
-  for (const conf of extra?.conferences ?? []) {
-    for (const ed of conf.editions ?? []) {
-      for (const dl of ed.deadlines ?? []) {
-        const rec = dl as Record<string, unknown>;
-        out.push({
-          src: "extra.yaml",
-          key: conf.key ?? "?",
-          date: String(rec.date ?? ""),
-          tz: String(rec.tz ?? rec.timezone ?? ""),
-          precision: String(rec.precision ?? "exact"),
-        });
+  // Canonical local inputs: conferences は配列（各エントリに key）。
+  for (const filename of ["manual.yaml", "curated.generated.yaml"]) {
+    const source = loadYaml(readFileSync(join(REPO_ROOT, "data", filename), "utf8")) as {
+      conferences?: Array<{ key?: string; editions?: Array<{ deadlines?: unknown[] }> }>;
+    };
+    for (const conf of source?.conferences ?? []) {
+      for (const ed of conf.editions ?? []) {
+        for (const dl of ed.deadlines ?? []) {
+          const rec = dl as Record<string, unknown>;
+          out.push({
+            src: filename,
+            key: conf.key ?? "?",
+            date: String(rec.date ?? ""),
+            tz: String(rec.tz ?? rec.timezone ?? ""),
+            precision: String(rec.precision ?? "exact"),
+          });
+        }
       }
     }
-  } // data/overrides.yaml: conferences はキー → { editions: { <年>: { deadlines } } }。
+  }
+
+  // data/overrides.yaml: conferences はキー → { editions: { <年>: { deadlines } } }。
   const ovr = loadYaml(readFileSync(join(REPO_ROOT, "data", "overrides.yaml"), "utf8")) as {
     conferences?: Record<string, { editions?: Record<string, { deadlines?: unknown[] }> }>;
   };
@@ -113,8 +117,7 @@ describe("local source data integrity", () => {
     resetWarnings();
     const rows = rawDeadlines();
     expect(rows.length).toBeGreaterThan(100);
-    // #677: 13 source-specific duplicate records were collapsed into legacy redirects.
-    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(172);
+    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(173);
 
     for (const row of rows) {
       if (row.precision === "date-only") {

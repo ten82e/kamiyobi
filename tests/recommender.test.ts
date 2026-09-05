@@ -1,6 +1,5 @@
 /**
  * Recommender (site/recommender.ts) の回帰テスト。
- * Ported from tests/test_recommender.py（Node 実走の部分を vitest に置換）。
  */
 
 import { createHash } from "node:crypto";
@@ -9,8 +8,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { restoreRecommendationBundle } from "../scripts/restore-recommendation-bundle.ts";
-import { trainRerankerMain } from "../scripts/train-reranker.ts";
-import recommender from "../site/recommender.ts";
+import {
+  hardNegativeMix,
+  trainingFeatureHash,
+  trainRerankerMain,
+} from "../scripts/train-reranker.ts";
+import recommender, { isValidRerankerModel } from "../site/recommender.ts";
 import {
   main as benchMain,
   benchV2RequiredRegressionReasons,
@@ -20,6 +23,7 @@ import {
   parseBenchArgs,
   REAL_PAPER_REGRESSION_FLOORS,
   readFeatureStore,
+  realPaperBenchmarkContentId,
   realPaperMetrics,
   realPaperRegressionReasons,
   runBenchmarkV2,
@@ -271,6 +275,12 @@ describe("safeExternalUrl", () => {
 });
 
 describe("autoDetectCats", () => {
+  it("detects LLM inference as an HPC workload", () => {
+    expect(
+      R.autoDetectCats(R.parsePaperLines("Decode-phase scheduling for LLM inference")),
+    ).toContain("hpc");
+  });
+
   it("detects networking", () => {
     const cats = R.autoDetectCats(
       R.parsePaperLines(
@@ -294,6 +304,28 @@ describe("autoDetectCats", () => {
   it("empty input yields no categories", () => {
     expect(R.autoDetectCats([])).toEqual([]);
   });
+});
+
+it("breaks equal semantic scores with the strongest detected category", () => {
+  const rows = [
+    {
+      conf: { key: "alpha", title: "Alpha", full_name: "Unrelated", categories: ["ai"] },
+      cats: ["ai"],
+    },
+    {
+      conf: { key: "zeta", title: "Zeta", full_name: "Unrelated", categories: ["hpc"] },
+      cats: ["hpc"],
+    },
+  ];
+  const ranked = R.venueRecommendations(
+    rows,
+    R.parsePaperLines("LLM inference"),
+    { alpha: 10, zeta: 10 },
+    Date.UTC(2026, 0, 1),
+    { fieldedLexical: true, venueCats: ["hpc", "ai"] },
+  );
+  expect(ranked.find((item: any) => item.venueKey === "zeta")?.fit.semanticRank).toBe(1);
+  expect(ranked.find((item: any) => item.venueKey === "alpha")?.fit.semanticRank).toBe(2);
 });
 
 describe("domain and topic signal boundaries", () => {
@@ -960,6 +992,7 @@ describe("venue recommendation fusion", () => {
   it("applies the published linear reranker and calibrated probability", () => {
     R.setReranker({
       version: 1,
+      algorithm_revision: R.RERANKER_ALGORITHM_REVISION,
       feature_schema: [...R.RERANKER_FEATURE_SCHEMA],
       intercept: -1,
       weights: Object.fromEntries(
@@ -967,6 +1000,7 @@ describe("venue recommendation fusion", () => {
       ),
       blend: 1,
       confidence_thresholds: { sufficient: 0.7, ambiguous: 0.4 },
+      confidence_policy: { sufficient_enabled: true },
     });
     try {
       const result = R.venueRecommendations(
@@ -1005,26 +1039,185 @@ describe("venue recommendation fusion", () => {
     }
   });
 
+  it("rejects a reranker from a different algorithm revision", () => {
+    R.setReranker({
+      version: 1,
+      algorithm_revision: "old-reranker",
+      feature_schema: [...R.RERANKER_FEATURE_SCHEMA],
+      intercept: 10,
+      weights: Object.fromEntries(R.RERANKER_FEATURE_SCHEMA.map((name: string) => [name, 10])),
+      blend: 1,
+      confidence_thresholds: { sufficient: 0, ambiguous: 0 },
+    });
+    try {
+      const result = R.venueRecommendations(
+        [row("gpu", "GPU Systems")],
+        R.parsePaperLines("GPU scheduling | gpu"),
+        { gpu: 100 },
+        NOW,
+      )[0];
+      expect(result.fit.probability).toBe(0.5);
+      expect(result.fit.score).toBe(result.fit.baseScore);
+    } finally {
+      R.setReranker(null);
+    }
+  });
+
+  it("never reports sufficient confidence without a valid reranker policy", () => {
+    R.setReranker(null);
+    const result = R.venueRecommendations(
+      [row("gpu", "GPU Systems")],
+      R.parsePaperLines("GPU scheduling | gpu"),
+      { gpu: 100 },
+      NOW,
+    )[0];
+    expect(result.fit.confidence).toBe("ambiguous");
+    expect(isValidRerankerModel({})).toBe(false);
+  });
+
+  it("rejects unsafe reranker calibration, blend, and confidence thresholds", () => {
+    const model = JSON.parse(
+      readFileSync(join(REPO_ROOT, "data", "recommender-reranker.json"), "utf8"),
+    );
+    expect(isValidRerankerModel(model)).toBe(true);
+    for (const invalid of [
+      { ...model, blend: 2 },
+      { ...model, calibration: { method: "platt", slope: "bad", intercept: 0 } },
+      { ...model, confidence_thresholds: { sufficient: 0.4, ambiguous: 0.7 } },
+      { ...model, confidence_thresholds: { sufficient: 1.1, ambiguous: 0.7 } },
+    ]) {
+      expect(isValidRerankerModel(invalid)).toBe(false);
+    }
+  });
+
+  it("keeps every trained reranker weight finite and bounded", () => {
+    const model = JSON.parse(
+      readFileSync(join(REPO_ROOT, "data", "recommender-reranker.json"), "utf8"),
+    );
+    expect(model.weights).toBeDefined();
+    for (const feature of R.RERANKER_FEATURE_SCHEMA) {
+      expect(Number.isFinite(model.weights[feature])).toBe(true);
+      expect(Math.abs(model.weights[feature])).toBeLessThanOrEqual(10);
+    }
+  });
+
+  it("evaluates refined confidence score incorporating entropy, token richness, and agreement", () => {
+    const sparseQuery = R.parsePaperLines("GPU");
+    const richQuery = R.parsePaperLines(
+      "High performance GPU scheduling with low latency kernel execution for distributed machine learning systems | gpu, scheduling, hpc",
+    );
+
+    const singleVenue = [row("gpu", "GPU Systems")];
+    const multipleVenues = [
+      row("gpu1", "GPU Systems 1"),
+      row("gpu2", "GPU Systems 2"),
+      row("gpu3", "GPU Systems 3"),
+      row("gpu4", "GPU Systems 4"),
+      row("gpu5", "GPU Systems 5"),
+    ];
+
+    const sparseRes = R.venueRecommendations(singleVenue, sparseQuery, { gpu: 50 }, NOW);
+    const richRes = R.venueRecommendations(singleVenue, richQuery, { gpu: 50 }, NOW);
+
+    expect(sparseRes[0].fit.confidenceScore).toBeGreaterThanOrEqual(0);
+    expect(sparseRes[0].fit.confidenceScore).toBeLessThanOrEqual(1);
+    expect(richRes[0].fit.confidenceScore).toBeGreaterThanOrEqual(0);
+    expect(richRes[0].fit.confidenceScore).toBeLessThanOrEqual(1);
+
+    expect(richRes[0].fit.queryConfidence.inputTokenCount).toBeGreaterThan(
+      sparseRes[0].fit.queryConfidence.inputTokenCount,
+    );
+    expect(richRes[0].fit.confidenceScore).toBeGreaterThan(sparseRes[0].fit.confidenceScore);
+
+    const flatRes = R.venueRecommendations(
+      multipleVenues,
+      richQuery,
+      { gpu1: 50, gpu2: 50, gpu3: 50, gpu4: 50, gpu5: 50 },
+      NOW,
+    );
+    expect(flatRes[0].fit.queryConfidence.top5Entropy).toBeGreaterThan(0.9);
+    expect(richRes[0].fit.queryConfidence.top5Entropy).toBe(0);
+  });
+
   it("pins the reranker development inputs by hash", () => {
     const model = JSON.parse(
       readFileSync(join(REPO_ROOT, "data", "recommender-reranker.json"), "utf8"),
     );
     // 学習は full dev のみ。required-dev（短縮検査用 subset）を学習に使ってはいけない。
     expect(model.selected_on).toBe("real-paper-dev");
-    expect(model.cv.assignment).toBe("acceptable-venue-component-greedy-balanced");
+    expect(model.cv.assignment).toBe("primary-venue-grouped-round-robin");
     expect(model.cv.folds).toBeGreaterThanOrEqual(5);
     expect(model.confidence_policy.sufficient_enabled).toBe(false);
     expect(model.coefficient_source).toBe("trained");
     expect(model.feature_schema).toContain("semantic_score");
     expect(model.calibration.method).toBe("platt");
+    const comparison = JSON.parse(
+      readFileSync(join(REPO_ROOT, "data/benchmarks/reranker-comparison.json"), "utf8"),
+    );
+    const calibrationMetrics = ["top1_brier", "top5_brier", "top1_ece", "top5_ece"];
+    expect(comparison.acceptance.calibration_non_degraded).toBe(
+      calibrationMetrics.every(
+        (metric) => comparison.candidate.heldout[metric] <= comparison.production.heldout[metric],
+      ),
+    );
+    expect(comparison).toMatchObject({
+      decision: "keep-v3",
+      acceptance: {
+        heldout_mrr_non_degraded: false,
+        heldout_recall_at_5_non_degraded: false,
+        calibration_non_degraded: true,
+      },
+      artifact: { algorithm_revision: model.algorithm_revision },
+    });
+    expect(model).toMatchObject({
+      production_trainer_revision: comparison.production.trainer_revision,
+      candidate_trainer_revision: comparison.candidate.trainer_revision,
+      candidate_rejected_reason: comparison.candidate_rejected_reason,
+    });
+    const audit = JSON.parse(
+      readFileSync(join(REPO_ROOT, "data/benchmarks/retrieval-audit.json"), "utf8"),
+    );
+    expect(audit.by_split.dev.fused).toMatchObject({
+      mrr: comparison.production.dev.mrr,
+      recall_at_5: comparison.production.dev.recall_at_5,
+    });
+    expect(audit.by_split.heldout.fused).toMatchObject({
+      mrr: comparison.production.heldout.mrr,
+      recall_at_5: comparison.production.heldout.recall_at_5,
+    });
+    expect(
+      Object.values(audit.failure_taxonomy.counts).reduce(
+        (sum: number, count) => sum + Number(count),
+        0,
+      ),
+    ).toBe(160);
+    const devIds = new Set(
+      JSON.parse(
+        readFileSync(join(REPO_ROOT, "data/benchmarks/real-paper-dev.json"), "utf8"),
+      ).records.map((record: { paper_id: string }) => record.paper_id),
+    );
     for (const [path, expected] of Object.entries(model.input_hashes)) {
-      if (path.endsWith("#dev-records")) continue;
+      if (path.endsWith("#dev-records")) {
+        const features = readFeatureStore(join(REPO_ROOT, path.replace(/#dev-records$/, "")));
+        expect(
+          trainingFeatureHash(features.records.filter((record) => devIds.has(record.paper_id))),
+        ).toBe(expected);
+        continue;
+      }
       expect(
         createHash("sha256")
           .update(readFileSync(join(REPO_ROOT, path)))
           .digest("hex"),
       ).toBe(expected);
     }
+  });
+
+  it("runs the full real-paper benchmark by default and keeps synthetic explicit", () => {
+    const scripts = JSON.parse(readFileSync(join(REPO_ROOT, "package.json"), "utf8")).scripts;
+    expect(scripts.bench).toContain("--real-v2-dev data/benchmarks/real-paper-dev.json");
+    expect(scripts.bench).toContain("--real-v2-heldout data/benchmarks/real-paper-heldout.json");
+    expect(scripts.bench).toContain("--real-v2-negative data/benchmarks/real-paper-negative.json");
+    expect(scripts["bench:synthetic"]).toContain("--v2 tests/fixtures/bench-v2.json");
   });
 
   it("trains from dev rows only and makes dev input changes visible", () => {
@@ -1034,6 +1227,7 @@ describe("venue recommendation fusion", () => {
     const profiles = join(REPO_ROOT, "data", "venue-profiles.json");
     const first = join(dir, "first.json");
     const second = join(dir, "second.json");
+    const candidate = join(dir, "candidate.json");
     writeFileSync(
       dev,
       readFileSync(join(REPO_ROOT, "data/benchmarks/real-paper-required-dev.json")),
@@ -1051,6 +1245,22 @@ describe("venue recommendation fusion", () => {
       first,
     ]);
     const baseline = JSON.parse(readFileSync(first, "utf8"));
+    trainRerankerMain([
+      "--candidate-v4",
+      "--dev",
+      dev,
+      "--features",
+      features,
+      "--profiles",
+      profiles,
+      "--out",
+      candidate,
+    ]);
+    expect(JSON.parse(readFileSync(candidate, "utf8"))).toMatchObject({
+      algorithm_revision: "l2-pairwise-logistic-reranker-v4-component-greedy-cv",
+      cv: { assignment: "acceptable-venue-component-greedy-balanced" },
+      negative_sampling: { strategy: "hard-negative-mix", limit_per_paper: 100 },
+    });
     const unrelated = fixture.records.find((item: any) => item.paper_id.startsWith("heldout-"))!;
     unrelated.semantic_scores[Object.keys(unrelated.semantic_scores)[0]] += 1;
     writeFileSync(features, JSON.stringify(fixture));
@@ -1086,6 +1296,59 @@ describe("venue recommendation fusion", () => {
     );
   });
 
+  it("selects v4 hard negatives by retrieval signals, independent of input order", () => {
+    const rows = Array.from({ length: 120 }, (_, index) => ({
+      paperId: "paper",
+      venue: `venue-${String(index).padStart(3, "0")}`,
+      y: 0,
+      baseScore: index,
+      x: [index / 120, (119 - index) / 120, 0, 0, 0, 0, 0],
+    }));
+    const selected = hardNegativeMix(rows).map((row) => row.venue);
+    const reversed = hardNegativeMix(rows.slice().reverse()).map((row) => row.venue);
+    expect(selected).toHaveLength(100);
+    expect(selected).toContain("venue-119");
+    expect(selected).toContain("venue-000");
+    expect(reversed).toEqual(selected);
+  });
+
+  it("keeps frozen benchmark identity independent of the reader runtime", () => {
+    const fixture = (name: string) =>
+      JSON.parse(readFileSync(join(REPO_ROOT, "data/benchmarks", name), "utf8"));
+    const dev = fixture("real-paper-required-dev.json");
+    const heldout = fixture("real-paper-required-heldout.json");
+    const negative = fixture("real-paper-negative.json");
+    const features = readFeatureStore(join(REPO_ROOT, "data/benchmarks/real-paper-features.jsonl"));
+    const baseline = realPaperBenchmarkContentId("required", dev, heldout, negative, features);
+    features.provenance!.runtime = "different-node-runtime";
+    expect(realPaperBenchmarkContentId("required", dev, heldout, negative, features)).toBe(
+      baseline,
+    );
+  });
+
+  it("rejects duplicate feature rows and altered record hashes", () => {
+    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-feature-store-"));
+    const path = join(dir, "features.jsonl");
+    const record = {
+      paper_id: "paper-1",
+      feature_schema: 2,
+      profile_hash: "profile",
+      model_revision: "model",
+      semantic_scores: { venue: 0.5 },
+      candidates: [],
+    };
+    const hash = createHash("sha256")
+      .update(JSON.stringify([record.paper_id, record.semantic_scores]))
+      .digest("hex");
+    writeFileSync(
+      path,
+      `${JSON.stringify({ ...record, record_sha256: hash })}\n${JSON.stringify({ ...record, record_sha256: hash })}\n`,
+    );
+    expect(() => readFeatureStore(path)).toThrow(/duplicate paper_id/);
+    writeFileSync(path, `${JSON.stringify({ ...record, record_sha256: "0".repeat(64) })}\n`);
+    expect(() => readFeatureStore(path)).toThrow(/record hash mismatch/);
+  });
+
   it("unions a semantic-only venue with lexical candidates", () => {
     const result = R.venueRecommendations(
       [row("lexical", "GPU Systems"), row("semantic", "Distributed Inference")],
@@ -1101,8 +1364,19 @@ describe("venue recommendation fusion", () => {
     expect(semantic.fit.evidence.some((item: any) => item.type === "semantic")).toBe(true);
   });
 
-  it("uses the measured 100-item candidate depth by default", () => {
-    const rows = Array.from({ length: 75 }, (_, index) => row(`venue${index}`, `Venue ${index}`));
+  it("looks up semantic scores by the normalized conference key", () => {
+    const result = R.venueRecommendations(
+      [row("foo-bar", "Unrelated venue")],
+      R.parsePaperLines("unrelated topic"),
+      { "foo bar": 100 },
+      NOW,
+    );
+    expect(result[0]?.venueKey).toBe("foo-bar");
+    expect(result[0]?.fit.semanticScore).toBe(100);
+  });
+
+  it("uses the measured 200-item candidate depth by default", () => {
+    const rows = Array.from({ length: 205 }, (_, index) => row(`venue${index}`, `Venue ${index}`));
     const semanticScores = Object.fromEntries(
       rows.map((item, index) => [item.conf.key, rows.length - index]),
     );
@@ -1112,7 +1386,7 @@ describe("venue recommendation fusion", () => {
       semanticScores,
       NOW,
     );
-    expect(result.some((item: any) => item.venueKey === "venue74")).toBe(true);
+    expect(result.some((item: any) => item.venueKey === "venue199")).toBe(true);
   });
 
   it("falls back to lexical fit and keeps one availability row per venue", () => {
@@ -1155,6 +1429,86 @@ describe("venue recommendation fusion", () => {
     );
     expect(result.map((item: any) => item.venueKey)).toEqual(["alpha", "zeta"]);
     expect(result.map((item: any) => item.fit.lexicalRank)).toEqual([1, 2]);
+  });
+
+  it("fuses and exposes per-field lexical ranks before semantic union", () => {
+    const result = R.venueRecommendations(
+      [
+        {
+          ...row("one-field", "One Field"),
+          conf: { key: "one-field", title: "One Field", full_name: "quantum banana" },
+        },
+        {
+          ...row("two-fields", "Two Fields"),
+          conf: {
+            key: "two-fields",
+            title: "Two Fields",
+            full_name: "quantum",
+            tags: ["banana"],
+          },
+        },
+      ],
+      R.parsePaperLines("quantum banana"),
+      null,
+      NOW,
+      { fieldedLexical: true },
+    );
+    expect(result.map((item: any) => item.venueKey)).toEqual(["two-fields", "one-field"]);
+    expect(result[0].fit.fieldRanks).toMatchObject({ full_name: 2, tags: 1 });
+    expect(result[0].fit.fieldRrf).toBeGreaterThan(result[1].fit.fieldRrf);
+    expect(result[0].fit.fieldScores.tags).toBeGreaterThan(0);
+  });
+
+  it("weights higher-value fields when fusing equal field ranks", () => {
+    const result = R.venueRecommendations(
+      [
+        {
+          ...row("acronym", "Unrelated One", NOW, []),
+          conf: {
+            key: "acronym",
+            title: "Unrelated One",
+            full_name: "Unrelated One",
+            acronym: "X",
+          },
+        },
+        {
+          ...row("category", "Unrelated Two", NOW, ["x"]),
+          conf: {
+            key: "category",
+            title: "Unrelated Two",
+            full_name: "Unrelated Two",
+            categories: ["x"],
+          },
+        },
+      ],
+      R.parsePaperLines("X"),
+      null,
+      NOW,
+      { fieldedLexical: true },
+    );
+    expect(result.map((item: any) => item.venueKey)).toEqual(["acronym", "category"]);
+    expect(result[0].fit.fieldRrf).toBeGreaterThan(result[1].fit.fieldRrf);
+  });
+
+  it("matches array scope and official_scope without one hiding the other", () => {
+    const result = R.venueRecommendations(
+      [
+        {
+          ...row("scope", "Unrelated", NOW, []),
+          conf: {
+            key: "scope",
+            title: "Unrelated",
+            scope: [],
+            official_scope: ["Reliable storage"],
+          },
+        },
+      ],
+      R.parsePaperLines("Reliable storage"),
+      null,
+      NOW,
+      { fieldedLexical: true },
+    );
+    expect(result[0].fit.fieldScores.scope).toBe(100);
   });
 
   it("past-only venue reports status=past, not open (#477)", () => {
@@ -1533,6 +1887,19 @@ describe("semantic functions", () => {
     const lines = R.parsePaperLines("Paper A | kw1");
     expect(R.queryText(lines)).toBe("Paper A kw1 Paper A kw1");
   });
+
+  it("query text bounds long inputs within 1800 chars while preserving title and keyword emphasis", () => {
+    const longAbstract = "distributed system evaluation and fault tolerance ".repeat(50); // > 2500 chars
+    const lines = R.parsePaperLines(`Ultra Scale Consensus | raft, paxos | OSDI\n${longAbstract}`);
+    const q = R.queryText(lines);
+    expect(q.length).toBeLessThanOrEqual(1800);
+    expect(q.startsWith("Ultra Scale Consensus raft, paxos")).toBe(true);
+    expect(q).toContain("distributed system evaluation");
+  });
+
+  it("query text handles empty lines gracefully", () => {
+    expect(R.queryText([])).toBe("");
+  });
 });
 
 describe("blendScore", () => {
@@ -1589,8 +1956,29 @@ describe("expandJp (表示用の日本語→英語展開)", () => {
     expect(out).toContain("real-time");
   });
 
-  it("returns empty for English or empty text", () => {
+  it("expands modern systems and AI domain terms (eBPF, CXL, confidential computing, LLM inference, RAG, tensor parallelism, RDMA)", () => {
+    expect(R.expandJp("カーネル拡張とトレーシング")).toContain("ebpf kernel tracing");
+    expect(R.expandJp("メモリアーキテクチャの評価")).toContain(
+      "cxl compute express link interconnect",
+    );
+    expect(R.expandJp("機密計算と信頼実行環境の評価")).toContain(
+      "confidential computing tee secure enclave",
+    );
+    expect(R.expandJp("LLM推論の高速化と大規模言語モデル")).toContain(
+      "large language model llm inference kv cache",
+    );
+    expect(R.expandJp("検索拡張生成システム")).toContain("retrieval augmented generation rag");
+    expect(R.expandJp("テンソル並列と分散学習")).toContain(
+      "tensor parallelism pipeline distributed training",
+    );
+    expect(R.expandJp("高速通信による最適化")).toContain(
+      "rdma remote direct memory access infiniband",
+    );
+  });
+
+  it("returns empty for English or empty text without domain keywords", () => {
     expect(R.expandJp("Kubernetes with eBPF")).toBe("");
+    expect(R.expandJp("Kubernetes on Container Engine")).toBe("");
     expect(R.expandJp("")).toBe("");
   });
 
@@ -2028,15 +2416,20 @@ describe("regression-known と VENUE_PAPERS の分離", () => {
 
   it("paperVecs は skipEmb 会議にのみ付与される", () => {
     const embSrc = readFileSync(join(REPO_ROOT, "src", "embeddings.ts"), "utf8");
-    // usenix-security のみ paperVecs。rtss は Timely Classification 対策として追加する。
-    expect(embSrc).toMatch(/for \(const key of \["usenix-security", "rtss"\]\)/);
-    // rtss/ecrts/usenix-security は埋め込みから除外（vocab + paperVecs）
-    expect(embSrc).toMatch(/SKIP_EMB_KEYS\.has\(key\)/);
+    // usenix-security, rtss に paperVecs を付与
+    expect(embSrc).toContain("for (const key of PAPER_VEC_KEYS)");
+    // ecrts も paperVecs は持たないが埋め込み本文からは除外
+    expect(embSrc).toContain('const SKIP_EMB_KEYS = new Set([...PAPER_VEC_KEYS, "ecrts"]);');
   });
 });
 
 describe("bench-recommender argument parsing and helper utilities", () => {
-  it("parseBenchArgs accepts the versioned benchmark fixture", () => {
+  it("parseBenchArgs accepts the versioned benchmark fixture and defaults json to false", () => {
+    expect(parseBenchArgs([]).json).toBe(false);
+    expect(parseBenchArgs(["--samples", "0"]).json).toBe(false);
+    expect(parseBenchArgs(["--json"]).json).toBe(true);
+    expect(parseBenchArgs(["--json=true"]).json).toBe(true);
+    expect(parseBenchArgs(["--json=false"]).json).toBe(false);
     expect(parseBenchArgs(["--v2", "tests/fixtures/bench-v2.json"]).v2).toBe(
       "tests/fixtures/bench-v2.json",
     );
@@ -2171,7 +2564,14 @@ describe("bench-recommender argument parsing and helper utilities", () => {
       expect(new Set(fixture.records.map((record: any) => record.input_mode))).toEqual(
         new Set(["title-only", "title+abstract", "pdf-extract"]),
       );
-      expect(fixture.records.some((record: any) => record.acceptable_venues.length > 1)).toBe(true);
+      expect(
+        fixture.records.every((record: any) =>
+          record.annotation_evidence.every(
+            (evidence: any) =>
+              evidence.reason !== "curated acceptable alternate venue for the benchmark label",
+          ),
+        ),
+      ).toBe(true);
       expect(
         fixture.provenance.sources.every(
           (source: any) =>
@@ -2185,6 +2585,10 @@ describe("bench-recommender argument parsing and helper utilities", () => {
       Object.groupBy(heldout.records, (record: any) => record.primary_venue),
     ).map((records) => records!.length);
     expect(Math.max(...heldoutVenueCounts) / heldout.records.length).toBeLessThanOrEqual(0.25);
+    expect(
+      heldout.records.filter((record: any) => record.acceptable_venues.length === 1).length /
+        heldout.records.length,
+    ).toBeLessThanOrEqual(0.25);
     const requiredDev = JSON.parse(
       readFileSync(join(REPO_ROOT, "data", "benchmarks", "real-paper-required-dev.json"), "utf8"),
     );
@@ -2271,11 +2675,15 @@ describe("bench-recommender argument parsing and helper utilities", () => {
     );
     mutate(
       heldout,
-      (copy) =>
-        copy.records.forEach((record: any) => {
-          record.acceptable_venues = [record.primary_venue];
-        }),
-      /multiple acceptable venues/,
+      (copy) => {
+        copy.records[0].acceptable_venues.push("sigcomm");
+        copy.records[0].annotation_evidence.push({
+          venue: "sigcomm",
+          reason: "curated acceptable alternate venue for the benchmark label",
+          source: copy.records[0].source,
+        });
+      },
+      /independent record-level evidence/,
     );
     mutate(heldout, (copy) => (copy.provenance.sources[0].sha256 = "bad"), /source provenance/);
     mutate(
@@ -2459,18 +2867,43 @@ describe("bench-recommender argument parsing and helper utilities", () => {
       "required",
     );
     result.splits.negative = {
-      queries: 1,
+      queries: 41,
       expected_abstention_rate: 1,
       non_abstain_rate: 0,
       non_abstain_precision: null,
     };
+    for (const [split, queries] of [
+      [result.splits.dev, 9],
+      [result.splits.heldout, 10],
+    ] as const) {
+      split.queries = queries;
+      for (const mode of Object.values(split.modes)) mode.queries = queries;
+      split.abstention.total = queries;
+      split.abstention.abstained = Math.min(split.abstention.abstained, queries);
+      for (const dimension of Object.keys(split.strata) as Array<keyof typeof split.strata>)
+        split.strata[dimension] = {};
+    }
     expect(result.regression_floor).toEqual(REAL_PAPER_REGRESSION_FLOORS.required);
+    expect(result.coverage).toBe("required");
     expect(REAL_PAPER_REGRESSION_FLOORS.required).not.toEqual(REAL_PAPER_REGRESSION_FLOORS.full);
     expect(realPaperRegressionReasons(result, "required")).toEqual([]);
 
     const heldoutMutation = structuredClone(result);
-    heldoutMutation.splits.heldout.modes.fused["recall@5"] =
-      REAL_PAPER_REGRESSION_FLOORS.required.heldout["fusedRecall@5"] - 0.000001;
+    const lowRecall = REAL_PAPER_REGRESSION_FLOORS.required.heldout["fusedRecall@5"] - 0.000001;
+    heldoutMutation.splits.heldout.modes.fused.top1Accuracy = lowRecall;
+    for (const metric of ["recall@1", "recall@5", "recall@10"] as const) {
+      heldoutMutation.splits.heldout.modes.fused[metric] = lowRecall;
+      heldoutMutation.splits.heldout.modes.fused.confidence_interval.metrics[metric] = {
+        lower: lowRecall,
+        upper: lowRecall,
+      };
+      heldoutMutation.splits.heldout.mode_deltas.lexical_to_fused[metric] = Number(
+        (lowRecall - 1).toFixed(6),
+      );
+      heldoutMutation.splits.heldout.mode_deltas.semantic_to_fused[metric] = Number(
+        (lowRecall - 1).toFixed(6),
+      );
+    }
     expect(realPaperRegressionReasons(heldoutMutation, "required")).toEqual(
       expect.arrayContaining([expect.stringMatching(/heldout fused Recall@5/)]),
     );
@@ -2478,8 +2911,61 @@ describe("bench-recommender argument parsing and helper utilities", () => {
     const negativeMutation = structuredClone(result);
     negativeMutation.splits.negative!.expected_abstention_rate =
       REAL_PAPER_REGRESSION_FLOORS.required.negative.expected_abstention_rate - 0.000001;
+    negativeMutation.splits.negative!.non_abstain_rate = 0.000001;
+    negativeMutation.splits.negative!.non_abstain_precision = 0;
     expect(realPaperRegressionReasons(negativeMutation, "required")).toEqual(
       expect.arrayContaining([expect.stringMatching(/negative abstention/)]),
+    );
+
+    const malformedMutation = structuredClone(result);
+    (malformedMutation.splits.dev.modes.fused as { "recall@5": unknown })["recall@5"] = "1";
+    expect(realPaperRegressionReasons(malformedMutation as never, "required")).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/dev fused Recall@5 must be a finite number from 0 to 1/),
+      ]),
+    );
+
+    const outOfRangeMutation = structuredClone(result);
+    outOfRangeMutation.splits.dev.modes.fused["recall@5"] = 2;
+    expect(realPaperRegressionReasons(outOfRangeMutation, "required")).toEqual(
+      expect.arrayContaining([expect.stringMatching(/dev fused Recall@5.*from 0 to 1/)]),
+    );
+
+    const incompleteMutation = structuredClone(result) as any;
+    delete incompleteMutation.models;
+    delete incompleteMutation.timing;
+    incompleteMutation.splits.dev.modes.lexical["recall@1"] = 2;
+    expect(realPaperRegressionReasons(incompleteMutation, "required")).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/models must match/),
+        expect.stringMatching(/timing must contain/),
+        expect.stringMatching(/dev lexical recall@1.*from 0 to 1/),
+      ]),
+    );
+
+    const strataMutation = structuredClone(result);
+    strataMutation.splits.dev.strata.language.en = structuredClone(strataMutation.splits.dev.modes);
+    const stratum = strataMutation.splits.dev.strata.language.en;
+    stratum.fused.mrr = 0;
+    expect(realPaperRegressionReasons(strataMutation, "required")).toEqual(
+      expect.arrayContaining([expect.stringMatching(/strata language.*interval excludes/)]),
+    );
+
+    const strataModeMutation = structuredClone(result);
+    strataModeMutation.splits.dev.strata.language.en = structuredClone(
+      strataModeMutation.splits.dev.modes,
+    );
+    const mode = strataModeMutation.splits.dev.strata.language.en.fused;
+    mode.top1Accuracy = 0;
+    mode["recall@5"] = 0;
+    mode["ndcg@5"] = 1;
+    mode["ndcg@10"] = 0;
+    expect(realPaperRegressionReasons(strataModeMutation, "required")).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/strata language.*top1 accuracy is inconsistent/),
+        expect.stringMatching(/strata language.*recall must be monotonic/),
+        expect.stringMatching(/strata language.*NDCG must be monotonic/),
+      ]),
     );
   });
 

@@ -9,23 +9,23 @@
   },
   "production": {
     "trainer_revision": "l2-pairwise-logistic-reranker-v3-grouped-cv",
-    "oof_mrr": 0.05781014,
+    "oof_mrr": 0.054518,
     "oof_recall_at_5": 0.0625,
     "dev": {
-      "mrr": 0.052489,
-      "recall_at_5": 0.075,
-      "top1_brier": 0.047103,
-      "top5_brier": 0.092801,
-      "top1_ece": 0.203618,
-      "top5_ece": 0.128618
+      "mrr": 0.054624,
+      "recall_at_5": 0.0625,
+      "top1_brier": 0.05801,
+      "top5_brier": 0.084594,
+      "top1_ece": 0.194588,
+      "top5_ece": 0.144588
     },
     "heldout": {
-      "mrr": 0.076905,
-      "recall_at_5": 0.1,
-      "top1_brier": 0.07629,
-      "top5_brier": 0.104642,
-      "top1_ece": 0.204221,
-      "top5_ece": 0.155923
+      "mrr": 0.146726,
+      "recall_at_5": 0.225,
+      "top1_brier": 0.094961,
+      "top5_brier": 0.187686,
+      "top1_ece": 0.16533,
+      "top5_ece": 0.019143
     },
     "negative": {
       "abstention_rate": 1,
@@ -34,23 +34,23 @@
   },
   "candidate": {
     "trainer_revision": "l2-pairwise-logistic-reranker-v4-component-greedy-cv",
-    "oof_mrr": 0.05844785,
-    "oof_recall_at_5": 0.0625,
+    "oof_mrr": 0.08263338,
+    "oof_recall_at_5": 0.125,
     "dev": {
-      "mrr": 0.052471,
-      "recall_at_5": 0.075,
-      "top1_brier": 0.047103,
-      "top5_brier": 0.092801,
-      "top1_ece": 0.203618,
-      "top5_ece": 0.128618
+      "mrr": 0.050696,
+      "recall_at_5": 0.0625,
+      "top1_brier": 0.050541,
+      "top5_brier": 0.084594,
+      "top1_ece": 0.207088,
+      "top5_ece": 0.144588
     },
     "heldout": {
-      "mrr": 0.077091,
-      "recall_at_5": 0.1,
-      "top1_brier": 0.07629,
-      "top5_brier": 0.104642,
-      "top1_ece": 0.204221,
-      "top5_ece": 0.155923
+      "mrr": 0.145119,
+      "recall_at_5": 0.2125,
+      "top1_brier": 0.094961,
+      "top5_brier": 0.180316,
+      "top1_ece": 0.16533,
+      "top5_ece": 0.015329
     },
     "negative": {
       "abstention_rate": 1,
@@ -58,16 +58,23 @@
     }
   },
   "acceptance": {
-    "heldout_mrr_non_degraded": true,
-    "heldout_recall_at_5_non_degraded": true,
+    "heldout_mrr_non_degraded": false,
+    "heldout_recall_at_5_non_degraded": false,
     "negative_false_positive_rate_non_degraded": true,
-    "calibration_non_degraded": true
+    "calibration_non_degraded": true,
+    "calibration_checks": {
+      "heldout_top1_brier_non_degraded": true,
+      "heldout_top5_brier_non_degraded": true,
+      "heldout_top1_ece_non_degraded": true,
+      "heldout_top5_ece_non_degraded": true
+    }
   },
-  "decision": "adopt-v4",
+  "decision": "keep-v3",
+  "candidate_rejected_reason": "heldout MRR and Recall@5 regressed",
   "artifact": {
     "path": "data/recommender-reranker.json",
-    "algorithm_revision": "l2-pairwise-logistic-reranker-v4-component-greedy-cv",
-    "training_data_hash": "f4e6613e9d382dd403e128dc8e7651ae816dfcfea6ff425e28f0e498f06afa80",
+    "algorithm_revision": "l2-pairwise-logistic-reranker-v3-grouped-cv",
+    "training_data_hash": "dd2cc261d388bfa93a0d0c7972eb2b3e86960ccea09cb5429cf13f286b179c81",
     "feature_store": "data/benchmarks/real-paper-features.jsonl"
   }
 }

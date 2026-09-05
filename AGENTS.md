@@ -10,7 +10,7 @@ npm ci
 npm run typecheck
 npm run check       # biome lint
 npm test            # vitest
-node src/cli.ts build --out public --offline --cache .cache --now 2026-08-09T00:00:00Z
+node src/cli.ts build --out public --offline --no-embeddings --cache .cache --now 2026-08-09T00:00:00Z
 ```
 
 - `public/` は `.gitignore`（CI が生成）。`data/snapshot.json` は健全な online ビルドが更新する。
@@ -19,7 +19,9 @@ node src/cli.ts build --out public --offline --cache .cache --now 2026-08-09T00:
 ## 収録の契約
 
 - `taxonomy.*.venues` に書いた会議は **rank_filter を迂回して必ず残る**（名指し＝収録意思）。
-- 上流に無い会議は `data/extra.yaml`。上流の誤りは `data/overrides.yaml`。
+- 上流に無い会議は `data/manual.yaml`（手入力）または promotion 経由の `data/curated.generated.yaml`。
+- `data/extra.yaml` は旧データからの移行入力であり、正典ではない。
+- 上流の誤りは `data/overrides.yaml`。
 - 締切の推測はしない。公式で裏が取れた日付だけ。
 
 ## 上流との境界
@@ -28,7 +30,7 @@ node src/cli.ts build --out public --offline --cache .cache --now 2026-08-09T00:
 - ccfddl/ccf-deadlines は上流データソースとしてだけ扱う。
 - 第三者に届く送信は行わない。
   PR、issue、コメント、レビュー返信、リアクション、既存 PR の再オープン、fork への push、メール、問い合わせフォーム、SNS 送信を含む。
-- 上流の誤り・欠落は `data/overrides.yaml` / `data/extra.yaml` で吸収する。
+- 上流の誤りは `data/overrides.yaml` で吸収する。欠落する会議は `data/manual.yaml` または promotion 正典で吸収する。
 - `upstream-patches/` は内部メモであり、上流へ提出しない。
 - このリポジトリは `origin = ten82e/kamiyobi` を維持する。
 

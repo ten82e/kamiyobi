@@ -2,17 +2,14 @@
   "schema": 1,
   "id": "2026-08-31-icngn-2026",
   "observations": {
-    "sha256": "e1f611766764b187eae5e83ffe9dae27516caed1166bbb78953c1edda2888735"
+    "sha256": "093e2192bb96680f88cb7310bd280e291b9755ac71dcc505c323781bf5e15ecb"
   },
   "resolutions": {
-    "sha256": "e9c3700ba4178c27fbb7255229079be24374c874b71605c68b71f349f59687fa"
-  },
-  "extra": {
-    "sha256": "7905b946b7c05bf7c142540e9d0169f10e3a8a0b7dc76899f320db948707ba89"
+    "sha256": "110d32112f16c27ab180e433ad663d39259317f0c36c7d250d745b6a34c9e4aa"
   },
   "bodies": [
     {
-      "path": "bodies/cdb226fa64645300f44f019877355aa756f663f5bdf9198e484f8dea597ad23c.body",
+      "path": "../../evidence/blobs/cdb226fa64645300f44f019877355aa756f663f5bdf9198e484f8dea597ad23c.body",
       "sha256": "cdb226fa64645300f44f019877355aa756f663f5bdf9198e484f8dea597ad23c"
     }
   ],

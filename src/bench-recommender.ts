@@ -22,9 +22,10 @@
 
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { parseArgs as parseNodeArgs } from "node:util";
+import { fileURLToPath } from "node:url";
+import { isDeepStrictEqual, parseArgs as parseNodeArgs } from "node:util";
 import { type FeatureExtractionPipeline, pipeline } from "@huggingface/transformers";
-import { booleanValue, normalizeShortEquals, stringValue } from "./args.ts";
+import { booleanValue, normalizeShortEquals, positiveIntegerValue, stringValue } from "./args.ts";
 import {
   type BenchmarkEmbeddingBundle,
   type BenchmarkEmbeddingManifest,
@@ -38,14 +39,11 @@ import {
   VENUE_PROFILE_ARTIFACT,
   type VenueProfileArtifact,
 } from "./embeddings.ts";
-import {
-  loadRecommender,
-  type PaperLine,
-  type RecommenderApi,
-  type VenueRecommendation,
-} from "./recommender-api.ts";
+import { semanticContentIdForArtifacts } from "./semantic-content.ts";
 
-const Recommender: RecommenderApi = await loadRecommender();
+const Recommender = (await import("../site/recommender.ts")).default;
+type PaperLine = ReturnType<typeof Recommender.parsePaperLines>[number];
+type VenueRecommendation = ReturnType<typeof Recommender.venueRecommendations>[number];
 
 const STOP = Recommender.STOPWORDS;
 const GEN_PAPER = Recommender.GENERIC_PAPER_WORDS ?? new Set<string>();
@@ -79,13 +77,6 @@ export interface BenchArgs {
   dataDeltaBefore: string | null;
   dataDeltaAfter: string | null;
   json: boolean;
-}
-
-// 不正な数値（負・非整数・非数値）を既定値へフォールバック。
-// --topk=-3 等（イコール構文）は下流の `rank > args.topK` が全会議を失敗扱いにするのを防ぐ。
-function toPosInt(raw: string | undefined, fallback: number): number {
-  const n = Number(raw);
-  return Number.isFinite(n) && Number.isInteger(n) && n > 0 ? n : fallback;
 }
 
 import { toStringArray } from "./util.ts";
@@ -173,9 +164,9 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
   });
   args.data = stringValue(values.data) ?? args.data;
   args.emb = stringValue(values.emb) ?? args.emb;
-  args.samples = toPosInt(stringValue(values.samples), 0);
-  args.failures = toPosInt(stringValue(values.failures), 0);
-  args.topK = toPosInt(stringValue(values.topk), 5);
+  args.samples = positiveIntegerValue(stringValue(values.samples), 0);
+  args.failures = positiveIntegerValue(stringValue(values.failures), 0);
+  args.topK = positiveIntegerValue(stringValue(values.topk), 5);
   if (values.lang === "jp") args.lang = "jp";
   const jpw = [...tokens]
     .reverse()
@@ -206,7 +197,7 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
   args.dataDeltaBefore = stringValue(values["data-delta-before"]) ?? null;
   args.dataDeltaAfter = stringValue(values["data-delta-after"]) ?? null;
   args.sw = stringValue(values.sw) ?? null;
-  args.json = booleanValue(values.json);
+  args.json = booleanValue(values.json, false);
   for (const kv of (args.sw || "").split(",")) {
     const [k, v] = kv.split("=");
     if (!k) continue;
@@ -227,6 +218,11 @@ export interface Conf {
   key: string;
   title: string;
   full_name: string;
+  acronym?: string;
+  scope?: string[];
+  official_scope?: string[];
+  paper_abstracts?: string[];
+  keywords?: string[];
   categories: string[];
   tags: string[];
 }
@@ -525,7 +521,7 @@ export function dataDeltaRegressionReasons(
 }
 
 /** Substitute built recommendation indexes for the synthetic fixture catalogs. */
-export function dataDeltaWithIndexes(
+function dataDeltaWithIndexes(
   fixture: DataDeltaFixture,
   before: unknown,
   after: unknown,
@@ -921,6 +917,61 @@ type RealPaperInputMode = (typeof REAL_PAPER_INPUT_MODES)[number];
 type RealPaperNegativeReason = (typeof REAL_PAPER_NEGATIVE_REASONS)[number];
 export type RealPaperCoverage = "full" | "required";
 
+const REAL_PAPER_COVERAGE_SIZE_RANGE: Record<RealPaperCoverage, readonly [number, number]> = {
+  required: [6, 20],
+  full: [80, 120],
+};
+const REAL_PAPER_REPORT_QUERY_COUNTS: Record<
+  RealPaperCoverage,
+  Readonly<Record<"dev" | "heldout" | "negative", number>>
+> = {
+  required: { dev: 9, heldout: 10, negative: 41 },
+  full: { dev: 80, heldout: 80, negative: 41 },
+};
+
+function realPaperFixture(name: string): URL {
+  return new URL(`../data/benchmarks/${name}`, import.meta.url);
+}
+
+export function realPaperBenchmarkContentId(
+  coverage: RealPaperCoverage,
+  dev: RealPaperFixture,
+  heldout: RealPaperFixture,
+  negative: RealPaperNegativeFixture,
+  requiredFeatures?: RequiredSemanticFeatures,
+): string {
+  const stableFeatures = requiredFeatures
+    ? {
+        ...requiredFeatures,
+        provenance: requiredFeatures.provenance
+          ? {
+              generator: requiredFeatures.provenance.generator,
+              model: requiredFeatures.provenance.model,
+              revision: requiredFeatures.provenance.revision,
+            }
+          : undefined,
+      }
+    : undefined;
+  return createHash("sha256")
+    .update(JSON.stringify({ coverage, dev, heldout, negative, requiredFeatures: stableFeatures }))
+    .digest("hex");
+}
+
+export function canonicalRealPaperBenchmarkContentId(coverage: RealPaperCoverage): string {
+  const fixture = (name: string) => JSON.parse(readFileSync(realPaperFixture(name), "utf8"));
+  return realPaperBenchmarkContentId(
+    coverage,
+    fixture(coverage === "required" ? "real-paper-required-dev.json" : "real-paper-dev.json"),
+    fixture(
+      coverage === "required" ? "real-paper-required-heldout.json" : "real-paper-heldout.json",
+    ),
+    fixture("real-paper-negative.json"),
+    coverage === "required"
+      ? readFeatureStore(fileURLToPath(realPaperFixture("real-paper-features.jsonl")))
+      : undefined,
+  );
+}
+
 /** Frozen semantic production features.  The benchmark still performs lexical
  * retrieval and all ranking in the browser recommender; this file only replaces
  * remote model inference in required checks. */
@@ -969,6 +1020,7 @@ function featureManifestPaths(path: string): string[] {
 export function readFeatureStore(path: string): RequiredSemanticFeatures {
   const text = readFileSync(path, "utf8");
   if (!path.endsWith(".jsonl")) return JSON.parse(text) as RequiredSemanticFeatures;
+  const seen = new Set<string>();
   const records = text
     .split(/\r?\n/)
     .map((line, index) => {
@@ -982,13 +1034,34 @@ export function readFeatureStore(path: string): RequiredSemanticFeatures {
       if (!value || typeof value !== "object" || Array.isArray(value))
         throw new Error(`invalid feature store line ${index + 1}: record must be an object`);
       const record = value as Partial<CanonicalFeatureRecord>;
+      const paperId = record.paper_id;
+      const semanticScores = record.semantic_scores;
       if (
         record.feature_schema !== 2 ||
-        typeof record.paper_id !== "string" ||
+        typeof paperId !== "string" ||
         typeof record.profile_hash !== "string" ||
-        typeof record.model_revision !== "string"
+        typeof record.model_revision !== "string" ||
+        !semanticScores ||
+        typeof semanticScores !== "object" ||
+        Array.isArray(semanticScores) ||
+        Object.values(semanticScores).some(
+          (value) => typeof value !== "number" || !Number.isFinite(value),
+        )
       )
         throw new Error(`invalid feature store line ${index + 1}: missing V2 identity fields`);
+      if (seen.has(paperId))
+        throw new Error(`invalid feature store line ${index + 1}: duplicate paper_id ${paperId}`);
+      seen.add(paperId);
+      if (
+        typeof record.record_sha256 !== "string" ||
+        !/^[a-f0-9]{64}$/i.test(record.record_sha256) ||
+        record.record_sha256 !==
+          requiredRecordHash({
+            paper_id: paperId,
+            semantic_scores: semanticScores,
+          })
+      )
+        throw new Error(`invalid feature store line ${index + 1}: record hash mismatch`);
       return record as CanonicalFeatureRecord;
     })
     .filter((record): record is CanonicalFeatureRecord => record !== null)
@@ -1035,16 +1108,15 @@ export function readFeatureStore(path: string): RequiredSemanticFeatures {
   };
 }
 
-export function writeFeatureStore(path: string, records: readonly CanonicalFeatureRecord[]): void {
-  writeFileSync(
-    path,
-    `${records
-      .slice()
-      .sort((left, right) => left.paper_id.localeCompare(right.paper_id))
-      .map((record) => JSON.stringify(record))
-      .join("\n")}\n`,
-    "utf8",
-  );
+function writeFeatureStore(path: string, records: readonly CanonicalFeatureRecord[]): void {
+  const ordered = records
+    .slice()
+    .sort((left, right) => left.paper_id.localeCompare(right.paper_id));
+  for (let index = 1; index < ordered.length; index += 1) {
+    if (ordered[index - 1]!.paper_id === ordered[index]!.paper_id)
+      throw new Error(`duplicate feature store paper_id ${ordered[index]!.paper_id}`);
+  }
+  writeFileSync(path, `${ordered.map((record) => JSON.stringify(record)).join("\n")}\n`, "utf8");
 }
 
 /**
@@ -1185,7 +1257,7 @@ export interface FailureClassification {
   confidence: string;
 }
 
-export function classifyFailure(
+function classifyFailure(
   lexicalRank: number | null,
   semanticRank: number | null,
   fusedRank: number | null,
@@ -1333,10 +1405,14 @@ export interface RealPaperRegressionFloor {
 }
 
 // Measured by the real CLI; values are tightened only with a new baseline.
+// required floors re-baselined 2026-09-05 under annotation_revision 2
+// (acceptable_venues keep only published primary venues; see
+// data/benchmarks/annotation-audit.json). The old floors were exact-fit to
+// annotation_revision 1 labels and are unreachable under the stricter labels.
 export const REAL_PAPER_REGRESSION_FLOORS: Record<RealPaperCoverage, RealPaperRegressionFloor> = {
   required: {
-    dev: { "fusedRecall@5": 0.111111, "unionRecall@50": 0.444444, fusedMrrLcb: 0.009 },
-    heldout: { "fusedRecall@5": 0.3, "unionRecall@50": 0.8, fusedMrrLcb: 0.027 },
+    dev: { "fusedRecall@5": 0.111111, "unionRecall@50": 0.555556, fusedMrrLcb: 0.006671 },
+    heldout: { "fusedRecall@5": 0.1, "unionRecall@50": 0.6, fusedMrrLcb: 0.027714 },
     negative: { expected_abstention_rate: 1 },
   },
   full: {
@@ -1349,6 +1425,8 @@ export const REAL_PAPER_REGRESSION_FLOORS: Record<RealPaperCoverage, RealPaperRe
 export interface RealPaperResult {
   benchmark: "real-paper-v1";
   version: 1;
+  coverage: RealPaperCoverage;
+  benchmark_content_id?: string;
   models: {
     en: { model: string; revision: string };
     ja: { model: string; revision: string };
@@ -1373,6 +1451,125 @@ export interface RealPaperRun {
     repeatRecommendationMs: number;
     candidateDepthMs: Record<string, number>;
   };
+}
+
+type UnknownRecord = Record<string, unknown>;
+
+function realPaperRecord(value: unknown): UnknownRecord | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as UnknownRecord)
+    : null;
+}
+
+function validateRealPaperRate(
+  invalid: string[],
+  label: string,
+  value: unknown,
+  minimum = 0,
+): void {
+  if (
+    typeof value !== "number" ||
+    !Number.isFinite(value) ||
+    value < minimum ||
+    value > 1 ||
+    value !== benchV2Round(value)
+  )
+    invalid.push(`${label} must be a finite number from ${minimum} to 1 with at most six decimals`);
+}
+
+function validateRealPaperEquality(
+  invalid: string[],
+  label: string,
+  actual: unknown,
+  expected: unknown,
+): void {
+  if (
+    typeof actual === "number" &&
+    typeof expected === "number" &&
+    actual !== benchV2Round(expected)
+  )
+    invalid.push(`${label} is inconsistent`);
+}
+
+const REAL_PAPER_MODE_METRICS = [
+  "mrr",
+  "top1Accuracy",
+  "coverage",
+  "recall@1",
+  "recall@5",
+  "recall@10",
+  "ndcg@5",
+  "ndcg@10",
+] as const;
+const REAL_PAPER_INTERVAL_METRICS = [
+  "mrr",
+  "recall@1",
+  "recall@5",
+  "recall@10",
+  "ndcg@10",
+] as const;
+const REAL_PAPER_ROUNDING_TOLERANCE = 0.000002;
+
+function validateRealPaperModeResult(
+  invalid: string[],
+  label: string,
+  value: unknown,
+  queries: unknown,
+): void {
+  const mode = realPaperRecord(value);
+  if (!mode) {
+    invalid.push(`${label} must be an object`);
+    return;
+  }
+  if (mode.queries !== queries) invalid.push(`${label} queries must match the split`);
+  for (const metric of REAL_PAPER_MODE_METRICS)
+    validateRealPaperRate(invalid, `${label} ${metric}`, mode[metric]);
+  validateRealPaperEquality(invalid, `${label} top1 accuracy`, mode.top1Accuracy, mode["recall@1"]);
+  const ordered = [mode["recall@1"], mode["recall@5"], mode["recall@10"], mode.coverage];
+  if (
+    ordered.every((entry): entry is number => typeof entry === "number") &&
+    ordered.some((entry, index) => index > 0 && entry < ordered[index - 1]!)
+  )
+    invalid.push(`${label} recall must be monotonic`);
+  if (
+    typeof mode["ndcg@5"] === "number" &&
+    typeof mode["ndcg@10"] === "number" &&
+    mode["ndcg@5"] > mode["ndcg@10"]
+  )
+    invalid.push(`${label} NDCG must be monotonic`);
+
+  const interval = realPaperRecord(mode.confidence_interval);
+  const metrics = realPaperRecord(interval?.metrics);
+  if (
+    interval?.method !== "bootstrap" ||
+    interval.confidence_level !== 0.95 ||
+    interval.seed !== BOOTSTRAP_SEED ||
+    interval.resamples !== BOOTSTRAP_RESAMPLES ||
+    !metrics
+  ) {
+    invalid.push(`${label} confidence interval is invalid`);
+    return;
+  }
+  for (const metric of REAL_PAPER_INTERVAL_METRICS) {
+    const bounds = realPaperRecord(metrics[metric]);
+    validateRealPaperRate(invalid, `${label} ${metric} lower`, bounds?.lower);
+    validateRealPaperRate(invalid, `${label} ${metric} upper`, bounds?.upper);
+    if (
+      typeof bounds?.lower === "number" &&
+      typeof bounds.upper === "number" &&
+      bounds.lower > bounds.upper
+    )
+      invalid.push(`${label} ${metric} confidence interval is reversed`);
+    const estimate = mode[metric];
+    if (
+      typeof estimate === "number" &&
+      typeof bounds?.lower === "number" &&
+      typeof bounds.upper === "number" &&
+      (estimate + REAL_PAPER_ROUNDING_TOLERANCE < bounds.lower ||
+        estimate > bounds.upper + REAL_PAPER_ROUNDING_TOLERANCE)
+    )
+      invalid.push(`${label} ${metric} confidence interval excludes the estimate`);
+  }
 }
 
 function realPaperText(value: unknown): string {
@@ -1533,8 +1730,8 @@ function validateRealPaperRecord(
   }
 }
 
-function validateRealPaperCoverage(fixture: RealPaperFixture, coverage: "full" | "required"): void {
-  const expectedSize = coverage === "full" ? [80, 120] : [6, 20];
+function validateRealPaperCoverage(fixture: RealPaperFixture, coverage: RealPaperCoverage): void {
+  const expectedSize = REAL_PAPER_COVERAGE_SIZE_RANGE[coverage];
   if (fixture.records.length < expectedSize[0] || fixture.records.length > expectedSize[1]) {
     throw new Error(
       `real paper ${fixture.split} ${coverage} fixture must contain ${expectedSize[0]}-${expectedSize[1]} records`,
@@ -1572,9 +1769,6 @@ function validateRealPaperCoverage(fixture: RealPaperFixture, coverage: "full" |
     REAL_PAPER_INPUT_MODES,
     fixture.records.map((record) => record.input_mode),
   );
-  if (!fixture.records.some((record) => record.acceptable_venues.length > 1)) {
-    throw new Error(`real paper ${fixture.split} lacks multiple acceptable venues`);
-  }
   if (fixture.split === "heldout") {
     const counts = new Map<string, number>();
     for (const record of fixture.records) {
@@ -1666,6 +1860,21 @@ export function validateRealPaperFixtures(
     }
     for (const [index, record] of fixture.records.entries()) {
       validateRealPaperRecord(record, fixture.split, index, venueKeys);
+      if (coverage === "full") {
+        for (const venue of record.acceptable_venues.filter(
+          (venue) => venue !== record.primary_venue,
+        )) {
+          const evidence = record.annotation_evidence?.find((item) => item.venue === venue);
+          if (
+            !evidence ||
+            evidence.source === record.source ||
+            evidence.reason === "curated acceptable alternate venue for the benchmark label"
+          )
+            throw new Error(
+              `real paper ${record.paper_id} alternate venue needs independent record-level evidence`,
+            );
+        }
+      }
     }
   }
   const devEnd = Math.max(...dev.records.map((record) => record.year));
@@ -1724,7 +1933,7 @@ export function validateRealPaperFixtures(
 }
 
 /** Return only profile records that were available at a fixture's cutoff. */
-export function profileTitlesBefore(
+function profileTitlesBefore(
   profiles: RealPaperProfiles,
   sourceYearMax: number,
 ): Record<string, string[]> {
@@ -2025,6 +2234,7 @@ export function buildRealPaperResult(
   return {
     benchmark: "real-paper-v1",
     version: 1,
+    coverage,
     models: {
       en: { model: EMBEDDING_MODEL, revision: EMBEDDING_REVISION },
       ja: { model: EMBEDDING_MULTI_MODEL, revision: EMBEDDING_MULTI_REVISION },
@@ -2073,53 +2283,272 @@ export function buildRealPaperResult(
 }
 
 export function realPaperRegressionReasons(
-  result: RealPaperResult,
+  result: Partial<RealPaperResult> | null | undefined,
   coverage: RealPaperCoverage,
+  expectedBenchmarkContentId?: string,
 ): string[] {
   const floor = REAL_PAPER_REGRESSION_FLOORS[coverage];
   const actual = {
-    dev: result.splits.dev.modes.fused["recall@5"],
-    heldout: result.splits.heldout.modes.fused["recall@5"],
-    negative: result.splits.negative?.expected_abstention_rate,
-    devUnion: result.splits.dev.candidate_retrieval.union_recall_at_50,
-    heldoutUnion: result.splits.heldout.candidate_retrieval.union_recall_at_50,
-    devMrrLcb: result.splits.dev.modes.fused.confidence_interval.metrics.mrr.lower,
-    heldoutMrrLcb: result.splits.heldout.modes.fused.confidence_interval.metrics.mrr.lower,
+    devQueries: result?.splits?.dev?.queries,
+    heldoutQueries: result?.splits?.heldout?.queries,
+    negativeQueries: result?.splits?.negative?.queries,
+    dev: result?.splits?.dev?.modes?.fused?.["recall@5"],
+    heldout: result?.splits?.heldout?.modes?.fused?.["recall@5"],
+    negative: result?.splits?.negative?.expected_abstention_rate,
+    devUnion: result?.splits?.dev?.candidate_retrieval?.union_recall_at_50,
+    heldoutUnion: result?.splits?.heldout?.candidate_retrieval?.union_recall_at_50,
+    devMrrLcb: result?.splits?.dev?.modes?.fused?.confidence_interval?.metrics?.mrr?.lower,
+    heldoutMrrLcb: result?.splits?.heldout?.modes?.fused?.confidence_interval?.metrics?.mrr?.lower,
   };
+  const invalid = [
+    ...(result?.benchmark === "real-paper-v1" ? [] : ["benchmark must be real-paper-v1"]),
+    ...(result?.version === 1 ? [] : ["version must be 1"]),
+    ...(result?.coverage === coverage ? [] : [`coverage must be ${coverage}`]),
+    ...(expectedBenchmarkContentId === undefined ||
+    result?.benchmark_content_id === expectedBenchmarkContentId
+      ? []
+      : ["benchmark content does not match the frozen corpus"]),
+    ...(isDeepStrictEqual(result?.regression_floor, floor)
+      ? []
+      : [`regression floor must match ${coverage}`]),
+    ...(isDeepStrictEqual(result?.models, {
+      en: { model: EMBEDDING_MODEL, revision: EMBEDDING_REVISION },
+      ja: { model: EMBEDDING_MULTI_MODEL, revision: EMBEDDING_MULTI_REVISION },
+    })
+      ? []
+      : ["models must match the benchmark runtime"]),
+    ...(isDeepStrictEqual(result?.timing, { firstLoadMs: null, repeatRecommendationMs: null })
+      ? []
+      : ["timing must contain stable null values"]),
+  ];
+  const expectedQueries = REAL_PAPER_REPORT_QUERY_COUNTS[coverage];
+  for (const [split, queries] of [
+    ["dev", actual.devQueries],
+    ["heldout", actual.heldoutQueries],
+  ] as const) {
+    if (queries !== expectedQueries[split])
+      invalid.push(`${split} queries must be ${expectedQueries[split]}`);
+  }
+  if (actual.negativeQueries !== expectedQueries.negative)
+    invalid.push(`negative queries must be ${expectedQueries.negative}`);
+
+  for (const [splitName, splitValue] of [
+    ["dev", result?.splits?.dev],
+    ["heldout", result?.splits?.heldout],
+  ] as const) {
+    const split = realPaperRecord(splitValue);
+    const modes = realPaperRecord(split?.modes);
+    if (!split || !modes) {
+      invalid.push(`${splitName} split must contain modes`);
+      continue;
+    }
+    for (const mode of REAL_PAPER_MODES)
+      validateRealPaperModeResult(invalid, `${splitName} ${mode}`, modes[mode], split.queries);
+
+    const retrieval = realPaperRecord(split.candidate_retrieval);
+    for (const metric of [
+      "lexical_recall_at_50",
+      "semantic_recall_at_50",
+      "union_recall_at_50",
+      "oracle_reranker_recall_at_5",
+    ])
+      validateRealPaperRate(invalid, `${splitName} candidate ${metric}`, retrieval?.[metric]);
+    const lexicalRecall = retrieval?.lexical_recall_at_50;
+    const semanticRecall = retrieval?.semantic_recall_at_50;
+    const unionRecall = retrieval?.union_recall_at_50;
+    if (
+      typeof lexicalRecall === "number" &&
+      typeof semanticRecall === "number" &&
+      typeof unionRecall === "number" &&
+      (unionRecall + REAL_PAPER_ROUNDING_TOLERANCE < Math.max(lexicalRecall, semanticRecall) ||
+        unionRecall > Math.min(1, lexicalRecall + semanticRecall) + REAL_PAPER_ROUNDING_TOLERANCE)
+    )
+      invalid.push(`${splitName} candidate union recall is inconsistent`);
+    validateRealPaperEquality(
+      invalid,
+      `${splitName} candidate oracle recall`,
+      retrieval?.oracle_reranker_recall_at_5,
+      unionRecall,
+    );
+
+    const abstention = realPaperRecord(split.abstention);
+    if (
+      abstention?.mode !== "fused" ||
+      abstention.total !== split.queries ||
+      !Number.isInteger(abstention.abstained) ||
+      Number(abstention.abstained) < 0 ||
+      Number(abstention.abstained) > Number(split.queries)
+    )
+      invalid.push(`${splitName} abstention summary is invalid`);
+    validateRealPaperRate(invalid, `${splitName} abstention coverage`, abstention?.coverage);
+    if (typeof abstention?.abstained === "number" && typeof abstention.total === "number")
+      validateRealPaperEquality(
+        invalid,
+        `${splitName} abstention coverage`,
+        abstention.coverage,
+        1 - abstention.abstained / abstention.total,
+      );
+    for (const metric of ["conditionalPrecision", "conditionalRecall@5"]) {
+      const value = abstention?.[metric];
+      if (value !== null)
+        validateRealPaperRate(invalid, `${splitName} abstention ${metric}`, value);
+    }
+
+    const calibration = realPaperRecord(split.calibration);
+    for (const metric of [
+      "expected_calibration_error",
+      "brier_score",
+      "top1_expected_calibration_error",
+      "top1_brier_score",
+      "top5_expected_calibration_error",
+      "top5_brier_score",
+    ])
+      validateRealPaperRate(invalid, `${splitName} calibration ${metric}`, calibration?.[metric]);
+
+    const deltas = realPaperRecord(split.mode_deltas);
+    for (const transition of ["lexical_to_semantic", "lexical_to_fused", "semantic_to_fused"]) {
+      const values = realPaperRecord(deltas?.[transition]);
+      for (const metric of REAL_PAPER_INTERVAL_METRICS)
+        validateRealPaperRate(
+          invalid,
+          `${splitName} ${transition} ${metric}`,
+          values?.[metric],
+          -1,
+        );
+    }
+    for (const [transition, from, to] of [
+      ["lexical_to_semantic", "lexical", "semantic"],
+      ["lexical_to_fused", "lexical", "fused"],
+      ["semantic_to_fused", "semantic", "fused"],
+    ] as const) {
+      const values = realPaperRecord(deltas?.[transition]);
+      const fromMode = realPaperRecord(modes[from]);
+      const toMode = realPaperRecord(modes[to]);
+      for (const metric of REAL_PAPER_INTERVAL_METRICS) {
+        const before = fromMode?.[metric];
+        const after = toMode?.[metric];
+        if (typeof before === "number" && typeof after === "number")
+          validateRealPaperEquality(
+            invalid,
+            `${splitName} ${transition} ${metric}`,
+            values?.[metric],
+            after - before,
+          );
+      }
+    }
+
+    const strata = realPaperRecord(split.strata);
+    for (const dimension of [
+      "language",
+      "category",
+      "domain",
+      "venueScope",
+      "venueKind",
+      "inputMode",
+    ]) {
+      const groups = realPaperRecord(strata?.[dimension]);
+      if (!groups) {
+        invalid.push(`${splitName} strata ${dimension} must be an object`);
+        continue;
+      }
+      for (const [groupName, groupValue] of Object.entries(groups)) {
+        const groupModes = realPaperRecord(groupValue);
+        const groupQueries = realPaperRecord(groupModes?.lexical)?.queries;
+        if (
+          !groupModes ||
+          !Number.isInteger(groupQueries) ||
+          Number(groupQueries) < 1 ||
+          Number(groupQueries) > Number(split.queries)
+        ) {
+          invalid.push(`${splitName} strata ${dimension}.${groupName} is invalid`);
+          continue;
+        }
+        for (const mode of REAL_PAPER_MODES)
+          validateRealPaperModeResult(
+            invalid,
+            `${splitName} strata ${dimension}.${groupName} ${mode}`,
+            groupModes[mode],
+            groupQueries,
+          );
+      }
+    }
+  }
+
+  const negative = realPaperRecord(result?.splits?.negative);
+  validateRealPaperRate(invalid, "negative non-abstain rate", negative?.non_abstain_rate);
+  if (negative?.non_abstain_precision !== null)
+    validateRealPaperRate(
+      invalid,
+      "negative non-abstain precision",
+      negative?.non_abstain_precision,
+    );
+  if (
+    typeof negative?.expected_abstention_rate === "number" &&
+    typeof negative.non_abstain_rate === "number"
+  )
+    validateRealPaperEquality(
+      invalid,
+      "negative abstention rates",
+      negative.expected_abstention_rate + negative.non_abstain_rate,
+      1,
+    );
+  if (
+    typeof negative?.non_abstain_rate === "number" &&
+    ((negative.non_abstain_rate === 0) !== (negative.non_abstain_precision === null) ||
+      (negative.non_abstain_rate > 0 && negative.non_abstain_precision !== 0))
+  )
+    invalid.push("negative non-abstain precision is inconsistent");
+  for (const [metric, value] of [
+    ["dev fused Recall@5", actual.dev],
+    ["heldout fused Recall@5", actual.heldout],
+    ["negative abstention", actual.negative],
+    ["dev union Recall@50", actual.devUnion],
+    ["heldout union Recall@50", actual.heldoutUnion],
+    ["dev fused MRR LCB", actual.devMrrLcb],
+    ["heldout fused MRR LCB", actual.heldoutMrrLcb],
+  ] as const) {
+    if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1)
+      invalid.push(`${metric} must be a finite number from 0 to 1`);
+  }
+  if (invalid.length) return invalid.map((reason) => `real bench ${coverage} ${reason}`);
+  const measured = actual as Record<keyof typeof actual, number>;
+
   return [
-    ...(actual.dev < floor.dev["fusedRecall@5"]
-      ? [`real bench ${coverage} dev fused Recall@5 ${actual.dev} < ${floor.dev["fusedRecall@5"]}`]
-      : []),
-    ...(actual.heldout < floor.heldout["fusedRecall@5"]
+    ...(measured.dev < floor.dev["fusedRecall@5"]
       ? [
-          `real bench ${coverage} heldout fused Recall@5 ${actual.heldout} < ${floor.heldout["fusedRecall@5"]}`,
+          `real bench ${coverage} dev fused Recall@5 ${measured.dev} < ${floor.dev["fusedRecall@5"]}`,
         ]
       : []),
-    ...(actual.devUnion < floor.dev["unionRecall@50"]
+    ...(measured.heldout < floor.heldout["fusedRecall@5"]
       ? [
-          `real bench ${coverage} dev union Recall@50 ${actual.devUnion} < ${floor.dev["unionRecall@50"]}`,
+          `real bench ${coverage} heldout fused Recall@5 ${measured.heldout} < ${floor.heldout["fusedRecall@5"]}`,
         ]
       : []),
-    ...(actual.heldoutUnion < floor.heldout["unionRecall@50"]
+    ...(measured.devUnion < floor.dev["unionRecall@50"]
       ? [
-          `real bench ${coverage} heldout union Recall@50 ${actual.heldoutUnion} < ${floor.heldout["unionRecall@50"]}`,
+          `real bench ${coverage} dev union Recall@50 ${measured.devUnion} < ${floor.dev["unionRecall@50"]}`,
         ]
       : []),
-    ...(actual.devMrrLcb < floor.dev.fusedMrrLcb
-      ? [`real bench ${coverage} dev fused MRR LCB ${actual.devMrrLcb} < ${floor.dev.fusedMrrLcb}`]
-      : []),
-    ...(actual.heldoutMrrLcb < floor.heldout.fusedMrrLcb
+    ...(measured.heldoutUnion < floor.heldout["unionRecall@50"]
       ? [
-          `real bench ${coverage} heldout fused MRR LCB ${actual.heldoutMrrLcb} < ${floor.heldout.fusedMrrLcb}`,
+          `real bench ${coverage} heldout union Recall@50 ${measured.heldoutUnion} < ${floor.heldout["unionRecall@50"]}`,
         ]
       : []),
-    ...(actual.negative === undefined
-      ? [`real bench ${coverage} negative result is missing`]
-      : actual.negative < floor.negative.expected_abstention_rate
-        ? [
-            `real bench ${coverage} negative abstention ${actual.negative} < ${floor.negative.expected_abstention_rate}`,
-          ]
-        : []),
+    ...(measured.devMrrLcb < floor.dev.fusedMrrLcb
+      ? [
+          `real bench ${coverage} dev fused MRR LCB ${measured.devMrrLcb} < ${floor.dev.fusedMrrLcb}`,
+        ]
+      : []),
+    ...(measured.heldoutMrrLcb < floor.heldout.fusedMrrLcb
+      ? [
+          `real bench ${coverage} heldout fused MRR LCB ${measured.heldoutMrrLcb} < ${floor.heldout.fusedMrrLcb}`,
+        ]
+      : []),
+    ...(measured.negative < floor.negative.expected_abstention_rate
+      ? [
+          `real bench ${coverage} negative abstention ${measured.negative} < ${floor.negative.expected_abstention_rate}`,
+        ]
+      : []),
   ];
 }
 
@@ -2180,7 +2609,7 @@ export async function runRealPaperBenchmark(
   );
   const records = [...dev.records, ...heldout.records, ...(negative?.records ?? [])];
   const usedLanguages = [...new Set(records.map((record) => record.language))].sort();
-  const useFrozenFeatures = coverage === "required" && requiredFeatures !== undefined;
+  const useFrozenFeatures = requiredFeatures !== undefined;
   if (useFrozenFeatures) validateRequiredLanguageCounts(requiredFeatures, [dev, heldout]);
   const modelFor = (
     language: RealPaperLanguage,
@@ -2241,8 +2670,13 @@ export async function runRealPaperBenchmark(
         key: conference.key,
         title: conference.title,
         full_name: conference.full_name,
+        acronym: conference.acronym,
+        scope: conference.scope,
+        official_scope: conference.official_scope,
         tags: conference.tags ?? [],
         papers: papers[conference.key] ?? [],
+        paper_abstracts: conference.paper_abstracts,
+        keywords: conference.keywords,
       },
       cats: conference.categories ?? [],
       kind: "paper",
@@ -2319,6 +2753,7 @@ export async function runRealPaperBenchmark(
       .sort((left, right) => left.venue.localeCompare(right.venue));
     if (
       fixed &&
+      !collectedFeatures &&
       candidateDepth === rows.length &&
       JSON.stringify(fixed.candidates) !== JSON.stringify(candidateFeatures)
     )
@@ -2334,9 +2769,9 @@ export async function runRealPaperBenchmark(
             : bundle.manifest.models.en.revision,
         record_sha256: requiredRecordHash({
           paper_id: record.paper_id,
-          semantic_scores: inferredSemanticScores,
+          semantic_scores: semanticScores,
         }),
-        semantic_scores: inferredSemanticScores,
+        semantic_scores: semanticScores,
         candidates: candidateFeatures,
       });
     const acceptable = new Set("acceptable_venues" in record ? record.acceptable_venues : []);
@@ -2351,8 +2786,8 @@ export async function runRealPaperBenchmark(
       .filter((recommendation) => recommendation.fit.semanticScore > 0)
       .sort(
         (left, right) =>
-          right.fit.semanticScore - left.fit.semanticScore ||
-          left.venueKey.localeCompare(right.venueKey),
+          (left.fit.semanticRank ?? Number.MAX_SAFE_INTEGER) -
+          (right.fit.semanticRank ?? Number.MAX_SAFE_INTEGER),
       );
     const lexicalRank = realPaperRank(lexical, acceptable);
     const semanticRank = realPaperRank(semantic, acceptable);
@@ -2549,7 +2984,7 @@ export function contentWords(s: string | null | undefined): string[] {
  * スコアリング側の GENERIC_TAGS 除外と対にした。
  * 合成クエリが workshop/journal を含むと、
  * 自己マッチの +10 で「除外がマイナス」という見かけの差が出るため、クエリ側も除く。 */
-export const GENERIC_TAGS = new Set([
+const GENERIC_TAGS = new Set([
   "niche",
   "workshop",
   "domestic-jp",
@@ -2811,7 +3246,7 @@ export interface RegressionKnownFixture {
   records: RegressionKnownRecord[];
 }
 
-export const REGRESSION_KNOWN = JSON.parse(
+const REGRESSION_KNOWN = JSON.parse(
   readFileSync(new URL("../data/benchmarks/regression-known.json", import.meta.url), "utf8"),
 ) as RegressionKnownFixture;
 
@@ -2845,7 +3280,7 @@ export async function main(
   const rawArgs = Array.isArray(argv) ? argv : [];
   if (rawArgs.includes("--help") || rawArgs.includes("-h") || rawArgs.includes("help")) {
     console.log(
-      "usage: node src/bench-recommender.ts [--data <path>] [--emb <path>] [--v2 <fixture>] [--real-v2-dev <fixture>] [--real-v2-heldout <fixture>] [--real-v2-negative <fixture>] [--real-v2-small] [--taxonomy-detail] [--samples <n>] [--failures <n>] [--topk <n>] [--lang <en|jp>] [--golden-en] [--no-idf]",
+      "usage: node src/bench-recommender.ts [--data <path>] [--emb <path>] [--v2 <fixture>] [--real-v2-dev <fixture>] [--real-v2-heldout <fixture>] [--real-v2-negative <fixture>] [--real-v2-features <path>] [--write-required-features <path>] [--real-v2-small] [--taxonomy-detail] [--data-delta <fixture>] [--data-delta-before <path>] [--data-delta-after <path>] [--samples <n>] [--failures <n>] [--topk <n>] [--lang <en|jp>] [--jpw <n>] [--by-len] [--adaptive] [--penalty] [--prf] [--sw <weights>] [--golden-en] [--no-idf] [--no-paper-max] [--json]",
     );
     return 0;
   }
@@ -2920,12 +3355,10 @@ export async function main(
       return 1;
     }
     try {
-      const defaultFixture = (name: string) =>
-        new URL(`../data/benchmarks/${name}`, import.meta.url);
       const dev = JSON.parse(
         readFileSync(
           args.realV2Dev ??
-            defaultFixture(
+            realPaperFixture(
               args.realV2Small ? "real-paper-required-dev.json" : "real-paper-dev.json",
             ),
           "utf8",
@@ -2934,14 +3367,14 @@ export async function main(
       const heldout = JSON.parse(
         readFileSync(
           args.realV2Heldout ??
-            defaultFixture(
+            realPaperFixture(
               args.realV2Small ? "real-paper-required-heldout.json" : "real-paper-heldout.json",
             ),
           "utf8",
         ),
       ) as RealPaperFixture;
       const negative = JSON.parse(
-        readFileSync(args.realV2Negative ?? defaultFixture("real-paper-negative.json"), "utf8"),
+        readFileSync(args.realV2Negative ?? realPaperFixture("real-paper-negative.json"), "utf8"),
       ) as RealPaperNegativeFixture;
       const data = JSON.parse(readFileSync(args.data, "utf8")) as {
         conferences: Conf[];
@@ -2975,14 +3408,26 @@ export async function main(
           const storeBase = args.writeRequiredFeatures
             .replace(/\.jsonl$/, "")
             .replace(/-features$/, "");
+          const requiredPaperIds = new Set(
+            [
+              "real-paper-required-dev.json",
+              "real-paper-required-heldout.json",
+              "real-paper-negative.json",
+            ].flatMap((fixtureName) => {
+              const fixture = JSON.parse(readFileSync(realPaperFixture(fixtureName), "utf8")) as
+                | RealPaperFixture
+                | RealPaperNegativeFixture;
+              return fixture.records.map((record) => record.paper_id);
+            }),
+          );
           const minimumLanguageCounts = {
             dev: { en: 8, ja: 1 },
             heldout: { en: 9, ja: 1 },
           } satisfies Record<"dev" | "heldout", Record<RealPaperLanguage, number>>;
-          for (const [split] of Object.entries(profiles)) {
+          for (const split of ["dev", "heldout", "required"] as const) {
             const splitRecords = records.filter((record) =>
-              split === "negative"
-                ? record.paper_id.startsWith("pubmed-") || record.paper_id.startsWith("jstage-")
+              split === "required"
+                ? requiredPaperIds.has(record.paper_id)
                 : record.paper_id.startsWith(`${split}-`),
             );
             writeFileSync(
@@ -3030,15 +3475,34 @@ export async function main(
           );
         }
       }
-      console.log(JSON.stringify(run.result, null, 2));
+      const regressions = realPaperRegressionReasons(run.result, run.result.coverage);
+      const semanticContentId = semanticContentIdForArtifacts(
+        data,
+        readFileSync(new URL("../data/recommender-reranker.json", import.meta.url)),
+      );
+      const benchmarkContentId = realPaperBenchmarkContentId(
+        run.result.coverage,
+        dev,
+        heldout,
+        negative,
+        requiredFeatures,
+      );
+      console.log(
+        JSON.stringify(
+          {
+            ...run.result,
+            benchmark_content_id: benchmarkContentId,
+            semantic_content_id: semanticContentId,
+            passed: regressions.length === 0,
+          },
+          null,
+          2,
+        ),
+      );
       process.stderr.write(
         `real-bench: dev=${run.result.splits.dev.queries} heldout=${run.result.splits.heldout.queries} negative=${run.result.splits.negative?.queries ?? 0} ` +
           `first_load_ms=${run.timing.firstLoadMs} repeat_recommendation_ms=${run.timing.repeatRecommendationMs} ` +
           `candidate_depth_ms=${JSON.stringify(run.timing.candidateDepthMs)}\n`,
-      );
-      const regressions = realPaperRegressionReasons(
-        run.result,
-        args.realV2Small ? "required" : "full",
       );
       if (regressions.length === 0) return 0;
       process.stderr.write(`${regressions.join("\n")}\n`);

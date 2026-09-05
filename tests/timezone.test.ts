@@ -1,6 +1,5 @@
 /**
  * resolveTz: SPEC.md section 3 + the timezone values listed in sections 1.1 / 1.2.
- * Ported from tests/test_timezone.py.
  */
 
 import { describe, expect, it, vi } from "vitest";

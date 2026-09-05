@@ -2,17 +2,14 @@
   "schema": 1,
   "id": "2026-08-31-dac-2027",
   "observations": {
-    "sha256": "46af036be7bb31ab77803c38b1b4c06d738b7ec2cb735a8d1ecc5a02fd5c5607"
+    "sha256": "954ffc8a6dd458c30ad5d2a404d76b4345bd4cab07f1233542095590d7f1f2b0"
   },
   "resolutions": {
-    "sha256": "19a4af238c245f662a7b2eab9b5580e043d7158184ef7f980171a99b7abdaa72"
-  },
-  "extra": {
-    "sha256": "3ea480defeb3b6b07bbd57fdf82c484203b1f0196d706a0df7df09e6cd951a8f"
+    "sha256": "0de671ed5087569f286fdd1f1d901d1417bab60492b80f137b42747618eb1444"
   },
   "bodies": [
     {
-      "path": "bodies/0897bd33c86b3a97f0021ccac945af4a870fc246915caef34644da738dd9117b.body",
+      "path": "../../evidence/blobs/0897bd33c86b3a97f0021ccac945af4a870fc246915caef34644da738dd9117b.body",
       "sha256": "0897bd33c86b3a97f0021ccac945af4a870fc246915caef34644da738dd9117b"
     }
   ],

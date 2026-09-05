@@ -2,21 +2,18 @@
   "schema": 1,
   "id": "2026-08-31-sovereignai-2026",
   "observations": {
-    "sha256": "51418a5a354f1810306a1d6afb8afa74f099a8896b0e59dea39841a7bd626cfb"
+    "sha256": "58d68b2b21c9f9d2c4ea3ee4f0164282ffbc9633495c32a73d5412850bd472d7"
   },
   "resolutions": {
-    "sha256": "4995b14242e1aa0dff404f7e744a2d1336fff623d1b879571f8d787bbb93d847"
-  },
-  "extra": {
-    "sha256": "fe62592479a0ee978028708e2ada418aff80357e55da24fbe785a2a62d229714"
+    "sha256": "e1b6c059c9c3084fd0fceeb690855ddd43b5f19d67b924196d445188d2da12b8"
   },
   "bodies": [
     {
-      "path": "bodies/07c39722e2187fca7dfce689ae338119476343eb548eb8c1ed7ee60e0fc2201a.body",
+      "path": "../../evidence/blobs/07c39722e2187fca7dfce689ae338119476343eb548eb8c1ed7ee60e0fc2201a.body",
       "sha256": "07c39722e2187fca7dfce689ae338119476343eb548eb8c1ed7ee60e0fc2201a"
     },
     {
-      "path": "bodies/3df25f395b304760d846a06aebf4a3f726bfda1edf0398a6ceccf3be771538b0.body",
+      "path": "../../evidence/blobs/3df25f395b304760d846a06aebf4a3f726bfda1edf0398a6ceccf3be771538b0.body",
       "sha256": "3df25f395b304760d846a06aebf4a3f726bfda1edf0398a6ceccf3be771538b0"
     }
   ],

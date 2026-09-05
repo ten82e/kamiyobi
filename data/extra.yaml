@@ -891,40 +891,6 @@ conferences:
           - {kind: abstract, label: 'Paper registration and abstract submission', date: '2026-07-24 23:59:59', tz: AoE}
           - {kind: paper, label: 'Paper submission', date: '2026-07-31 23:59:59', tz: AoE}
 
-  # 会期根拠: https://dac.com/2026 (2026-08-09 取得)「DAC 2027 July 11-14, 2027
-  #   San Jose Convention Center San Jose, CA」。
-  # 締切根拠: https://dac.com/2026/events/manuscript-submission-deadline
-  #   (2026-08-31 取得)「Manuscript Submission Deadline」「November 17, 2026」。
-  #   上流 rollforward の 2026-11-11/18 推定は採用せず、公式日付だけを収録。
-  - key: dac
-    title: DAC
-    full_name: Design Automation Conference
-    link: https://www.dac.com/
-    categories: [systems]
-    editions:
-      - year: 2027
-        id: dac27
-        link: https://www.dac.com/
-        place: San Jose Convention Center, San Jose, CA, USA
-        date_text: July 11-14, 2027
-        event_start: '2027-07-11'
-        event_end: '2027-07-14'
-        deadlines:
-          - kind: paper
-            label: Manuscript Submission Deadline
-            date: '2026-11-17'
-            precision: date-only
-            round: 1
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://dac.com/2026/events/manuscript-submission-deadline
-                sourceRevision: W/"6a91eab9-4abc9"
-                retrievedAt: '2026-08-30T22:24:34.720Z'
-                verifiedAt: '2026-08-30T22:25:00Z'
-                contentHash: 0897bd33c86b3a97f0021ccac945af4a870fc246915caef34644da738dd9117b
-                rawExcerpt: November 17, 2026
-                verifiedFields: [date, kind, round]
-
   # 根拠: https://conf.researchr.org/home/cgo-2027 (2026-08-09 取得)
   #   Sat 20 - Wed 24 March 2027, Salt Lake City, co-located HPCA/CGO/PPoPP/CC 2027.
   #   上流は place のみで event_start/end が空。R2 paper は 10 Sep 2026（上流 9/11 UTC で整合）。
@@ -1730,143 +1696,6 @@ conferences:
                 verifiedAt: '2026-08-25T03:42:00Z'
                 verifiedFields: [date]
                 rawExcerpt: 'Submission: August 15, 2026'
-
-  # 証拠: data/promotions/2026-08-31-lascas-2027/manifest.json
-  # 公式 CFP に時刻・timezone は未掲載。Tutorial Submission と
-  # Special Session Proposal は本会議 paper の締切ではないため収録しない。
-  - key: lascas
-    title: LASCAS
-    full_name: IEEE Latin American Symposium on Circuits and Systems
-    link: https://attend.ieee.org/lascas-2027/
-    categories: [systems]
-    tags: [niche]
-    editions:
-      - year: 2027
-        id: lascas27
-        link: https://attend.ieee.org/lascas-2027/
-        place: Panama City, Panama
-        date_text: February 23-26, 2027
-        event_start: '2027-02-23'
-        event_end: '2027-02-26'
-        deadlines:
-          - kind: paper
-            label: Paper Submission
-            date: '2026-09-01'
-            precision: date-only
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://attend.ieee.org/lascas-2027/call-for-papers/
-                contentHash: 102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1
-                sourceRevision: Sun, 30 Aug 2026 16:08:56 GMT
-                retrievedAt: '2026-08-30T16:11:29.630Z'
-                verifiedAt: '2026-08-30T16:11:39Z'
-                verifiedFields: [date, kind, round]
-                rawExcerpt: 'Paper Submission: <b>September 1, 2026</b>'
-          - kind: notification
-            label: Notification of Acceptance
-            date: '2026-10-23'
-            precision: date-only
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://attend.ieee.org/lascas-2027/call-for-papers/
-                contentHash: 102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1
-                sourceRevision: Sun, 30 Aug 2026 16:08:56 GMT
-                retrievedAt: '2026-08-30T16:11:29.630Z'
-                verifiedAt: '2026-08-30T16:11:39Z'
-                verifiedFields: [date, kind, round]
-                rawExcerpt: 'Notification of Acceptance: <b>October 23, 202</b>6'
-          - kind: camera_ready
-            label: Camera-ready
-            date: '2026-11-09'
-            precision: date-only
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://attend.ieee.org/lascas-2027/call-for-papers/
-                contentHash: 102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1
-                sourceRevision: Sun, 30 Aug 2026 16:08:56 GMT
-                retrievedAt: '2026-08-30T16:11:29.630Z'
-                verifiedAt: '2026-08-30T16:11:39Z'
-                verifiedFields: [date, kind, round]
-                rawExcerpt: 'Camera-ready: <b>November 9, 2026</b>'
-
-  # 証拠: data/promotions/2026-08-31-eudat-conference-2026/manifest.json
-  # workshop/session/presentation/poster/demo は同じ intake timeline を共有するため、
-  # 形式別に重複させず contribution submission として収録する。
-  - key: eudat-conference
-    title: EUDAT Conference
-    full_name: EUDAT Conference 2026
-    link: https://www.eudat.eu/eudat-conference-2026
-    categories: [systems, db]
-    tags: [niche]
-    editions:
-      - year: 2026
-        id: eudat-conference26
-        link: https://www.eudat.eu/eudat-conference-2026
-        place: Prague, Czechia
-        date_text: November 25-27, 2026
-        event_start: '2026-11-25'
-        event_end: '2026-11-27'
-        deadlines:
-          - kind: paper
-            label: Contribution submission (First Intake)
-            round: 1
-            track: First Intake
-            date: '2026-07-31 18:00:00'
-            tz: CEST
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://eudat.eu/eudat-conference-2026/open-calls
-                contentHash: 0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
-                sourceRevision: sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
-                retrievedAt: '2026-08-30T16:37:12.855Z'
-                verifiedAt: '2026-08-30T16:38:00Z'
-                verifiedFields: [date, time, timezone, kind, round, track]
-                rawExcerpt: '<strong>Submission Deadline:</strong> 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)'
-          - kind: paper
-            label: Contribution submission (Second Intake)
-            round: 2
-            track: Second Intake
-            date: '2026-09-06 18:00:00'
-            tz: CEST
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://eudat.eu/eudat-conference-2026/open-calls
-                contentHash: 0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
-                sourceRevision: sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
-                retrievedAt: '2026-08-30T16:37:12.855Z'
-                verifiedAt: '2026-08-30T16:38:00Z'
-                verifiedFields: [date, time, timezone, kind, round, track]
-                rawExcerpt: '<strong>Submission Deadline:</strong> 31 July 2026, 18:00 CEST (First intake), 6 September 2026, 18:00 CEST (Second Intake)'
-          - kind: notification
-            label: Acceptance notification (First Intake)
-            round: 1
-            track: First Intake
-            date: '2026-09-06'
-            precision: date-only
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://eudat.eu/eudat-conference-2026/open-calls
-                contentHash: 0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
-                sourceRevision: sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
-                retrievedAt: '2026-08-30T16:37:12.855Z'
-                verifiedAt: '2026-08-30T16:38:00Z'
-                verifiedFields: [date, kind, round, track]
-                rawExcerpt: '<strong>Acceptance Notification: </strong>6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)'
-          - kind: notification
-            label: Acceptance notification (Second Intake)
-            round: 2
-            track: Second Intake
-            date: '2026-10-06'
-            precision: date-only
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://eudat.eu/eudat-conference-2026/open-calls
-                contentHash: 0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
-                sourceRevision: sha256:0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89
-                retrievedAt: '2026-08-30T16:37:12.855Z'
-                verifiedAt: '2026-08-30T16:38:00Z'
-                verifiedFields: [date, kind, round, track]
-                rawExcerpt: '<strong>Acceptance Notification: </strong>6 September 2026 (For First Intake Submissions), 6 October 2026 (For Second Intake Submissions)'
 
   # 根拠: https://easychair.org/cfp/flowchallenge2 (2026-08-10)
   #   「Submission deadline September 15, 2026」— DIMACS 実装チャレンジ (ALENEX/SOSA 併設)。
@@ -4108,8 +3937,16 @@ conferences:
         event_start: '2026-12-11'
         event_end: '2026-12-13'
         deadlines:
-          - {kind: abstract, label: Abstract submission deadline, date: '2026-10-01', precision: date-only}
-          - {kind: paper, label: Submission deadline, date: '2026-10-01', precision: date-only}
+          - kind: abstract
+            label: Abstract submission deadline
+            date: '2026-10-01'
+            precision: date-only
+          - kind: paper
+            label: Submission deadline
+            date: '2026-10-01'
+            precision: date-only
+            superseded_deadlines:
+              - {value: '2026-08-25', precision: date-only, source: https://easychair.org/cfp/ICCR2026, evidenceRef: https://easychair.org/cfp/ICCR2026, status: superseded, supersededBy: 'iccr-2026|iccr-202626|paper|1|', reason: manual-resolution, supersededAt: '2026-08-31T00:00:00Z'}
 
   - key: mdoa-2026
     title: MDOA 2026
@@ -4172,6 +4009,8 @@ conferences:
             label: Paper submission deadline
             date: '2026-09-10'
             precision: date-only
+            superseded_deadlines:
+              - {value: '2026-08-31', precision: date-only, source: https://easychair.org/cfp/ccisc2026, evidenceRef: https://easychair.org/cfp/ccisc2026, status: superseded, supersededBy: 'ccisc-2026|ccisc-202626|paper|1|', reason: official-extension, supersededAt: '2026-08-31T00:00:00Z'}
             evidence:
               - sourceClass: official-cfp
                 confidence: official
@@ -4375,7 +4214,13 @@ conferences:
         event_start: '2026-11-08'
         event_end: '2026-11-08'
         deadlines:
-          - {kind: paper, label: Final submission deadline, date: '2026-09-16 23:59:00', tz: AoE}
+          - kind: paper
+            label: Final submission deadline
+            date: '2026-09-16 23:59:00'
+            tz: AoE
+            superseded_deadlines:
+              - {value: '2026-09-13', precision: date-only, source: https://easychair.org/cfp/keir-cikm2026, evidenceRef: https://easychair.org/cfp/keir-cikm2026, status: superseded, supersededBy: 'keir-cikm2026|keir-cikm202626|paper|1|', reason: official-extension, supersededAt: '2026-08-31T00:00:00Z'}
+              - {value: '2026-08-24', precision: date-only, source: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;c0c7be0.2607, evidenceRef: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;c0c7be0.2607, status: superseded, supersededBy: 'keir-cikm2026|keir-cikm202626|paper|1|', reason: manual-resolution, supersededAt: '2026-08-31T00:00:00Z'}
 
   - key: icaisg-2026
     title: ICAISG 2026
@@ -4423,7 +4268,12 @@ conferences:
         event_start: '2026-10-16'
         event_end: '2026-10-18'
         deadlines:
-          - {kind: paper, label: Paper submission deadline, date: '2026-09-20', precision: date-only}
+          - kind: paper
+            label: Paper submission deadline
+            date: '2026-09-20'
+            precision: date-only
+            superseded_deadlines:
+              - {value: '2026-09-30', precision: date-only, source: https://easychair.org/cfp/admit2026, evidenceRef: https://easychair.org/cfp/admit2026, status: superseded, supersededBy: 'admit-2026|admit-202626|paper|1|', reason: manual-resolution, supersededAt: '2026-08-31T00:00:00Z'}
 
   - key: bdaa-2026
     title: BDAA' 2026
@@ -5222,11 +5072,16 @@ conferences:
         event_start: '2026-09-11'
         event_end: '2026-09-13'
         deadlines:
-          - {kind: paper, label: Full paper submission date, date: '2026-06-27', precision: date-only}
+          - kind: paper
+            label: Full paper submission date
+            date: '2026-06-27'
+            precision: date-only
+            superseded_deadlines:
+              - {value: '2026-08-28', precision: date-only, source: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190624&copyownerid=182680, evidenceRef: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190624&copyownerid=182680, status: superseded, supersededBy: 'icaici-2026|icaici-202626|paper|1|', reason: manual-resolution, supersededAt: '2026-08-31T00:00:00Z'}
 
   - key: icaidm-2026
     title: ICAIDM 2026
-    full_name: 026 3rd International Conference on Artificial Intelligence and Digital Management
+    full_name: 2026 3rd International Conference on Artificial Intelligence and Digital Management
     link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200184&copyownerid=182680
     categories: [ai]
     editions:
@@ -5248,7 +5103,7 @@ conferences:
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-09-18', precision: date-only}
 
-  # 2026-08-31: https://www.iccns.org/ — paper / abstract 9/10、会期 12/19-21。
+  # 2026-08-31: https://www.iccns.org/iccns_cfp.pdf — submission 8/1、会期 12/19-21。
   - key: iccns-2026
     title: ICCNS 2026
     full_name: 2026 The 16th International Conference on Communication and Network Security (ICCNS 2026)
@@ -5266,8 +5121,20 @@ conferences:
         event_start: '2026-12-19'
         event_end: '2026-12-21'
         deadlines:
-          - {kind: abstract, label: Abstract submission deadline, date: '2026-09-10', precision: date-only}
-          - {kind: paper, label: Submission deadline, date: '2026-09-10', precision: date-only}
+          - kind: paper
+            label: Submission deadline
+            date: '2026-08-01'
+            precision: date-only
+            superseded_deadlines:
+              - {value: '2026-09-10', precision: date-only, source: 'https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194237&copyownerid=13881', evidenceRef: 'https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194237&copyownerid=13881', status: superseded, supersededBy: 'iccns-2026|iccns-202626|paper|1|', reason: manual-resolution, supersededAt: '2026-09-01T00:00:00Z'}
+            evidence:
+              - sourceClass: official-cfp
+                confidence: official
+                sourceUrl: https://www.iccns.org/iccns_cfp.pdf
+                retrievedAt: '2026-08-31T00:00:00Z'
+                verifiedAt: '2026-08-31T00:00:00Z'
+                rawExcerpt: 'Submission Deadline: August 1, 2026'
+                verifiedFields: [date, kind]
 
   - key: iccta-2026
     title: ICCTA 2026
@@ -5896,359 +5763,3 @@ conferences:
         link: https://ccnc2027.ieee-ccnc.org/authors/call-technical-papers
         deadlines:
           - {kind: paper, label: Submission deadline, date: '2026-08-31', precision: date-only}
-
-  # 証拠: data/promotions/2026-08-31-wqs-2026/manifest.json
-  # 公式サイト https://data-cybernetics.com/en/wqs-2026 は第4回、QTML 2026併設、
-  # 2026-12-12開催を明記し、本CFPへ直接リンクする（2026-08-30T17:02:05.883Z取得、
-  # sha256:5f580a8e0a5c87e22751131195986c5d808d683461581fccaee51c94ec47e47e）。
-  - key: wqs
-    title: WQS
-    full_name: 4th Workshop on Quantum Software
-    link: https://data-cybernetics.com/en/wqs-2026
-    categories: [systems, theory]
-    tags: [niche]
-    editions:
-      - year: 2026
-        id: wqs26
-        link: https://data-cybernetics.com/en/wqs-2026
-        place: Stellenbosch, South Africa
-        date_text: December 12, 2026
-        event_start: '2026-12-12'
-        event_end: '2026-12-12'
-        deadlines:
-          - kind: abstract
-            label: Abstract registration
-            round: 1
-            date: '2026-09-01'
-            precision: date-only
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://easychair.org/cfp/WQS26
-                contentHash: dc13ed46653fa4f2330f09aa2babacdb34a9df603549e1d0fd3ea15d59e8a8ba
-                sourceRevision: sha256:dc13ed46653fa4f2330f09aa2babacdb34a9df603549e1d0fd3ea15d59e8a8ba
-                retrievedAt: '2026-08-30T17:03:09.910Z'
-                verifiedAt: '2026-08-30T17:04:00Z'
-                verifiedFields: [date, kind, round]
-                rawExcerpt: '<tr><td>Abstract registration deadline</td><td>September 1, 2026</td></tr>'
-          - kind: paper
-            label: Extended abstract submission
-            round: 1
-            date: '2026-09-08'
-            precision: date-only
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://easychair.org/cfp/WQS26
-                contentHash: dc13ed46653fa4f2330f09aa2babacdb34a9df603549e1d0fd3ea15d59e8a8ba
-                sourceRevision: sha256:dc13ed46653fa4f2330f09aa2babacdb34a9df603549e1d0fd3ea15d59e8a8ba
-                retrievedAt: '2026-08-30T17:03:09.910Z'
-                verifiedAt: '2026-08-30T17:04:00Z'
-                verifiedFields: [date, kind, round]
-                rawExcerpt: '<tr><td>Submission deadline</td><td>September 8, 2026</td></tr>'
-
-  # 証拠: data/promotions/2026-08-31-conversations-2026/manifest.json
-  # 公式CFPは第10回、University of Amsterdam開催、2026-11-23〜25の会期、
-  # 2026-09-05のfirm deadlineを明記する（2026-08-30T17:21:30.800Z取得、
-  # sha256:4a41e3acf4f8e5be14c218b8abc2b31d5c4fbbbaf2728f88072051365e79bcbd）。
-  - key: conversations
-    title: CONVERSATIONS
-    full_name: 10th International Symposium on Chatbots and Human-centred AI
-    link: https://2026.conversations.ws/
-    categories: [ai]
-    tags: [niche]
-    editions:
-      - year: 2026
-        id: conversations26
-        link: https://2026.conversations.ws/call-for-papers/
-        place: Amsterdam, Netherlands
-        date_text: November 23-25, 2026
-        event_start: '2026-11-23'
-        event_end: '2026-11-25'
-        deadlines:
-          - kind: paper
-            label: Paper submission
-            round: 1
-            date: '2026-09-05'
-            precision: date-only
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://easychair.org/cfp/conversations2026
-                contentHash: 5f77a214d1a00f47dc38b70a6353936b9cdaa48ae320bf0da72bdc1b389d8759
-                sourceRevision: sha256:5f77a214d1a00f47dc38b70a6353936b9cdaa48ae320bf0da72bdc1b389d8759
-                retrievedAt: '2026-08-30T17:21:31.883Z'
-                verifiedAt: '2026-08-30T17:22:00Z'
-                verifiedFields: [date, kind, round]
-                rawExcerpt: '<tr><td>Submission deadline</td><td>September 5, 2026</td></tr>'
-
-  # 証拠: data/promotions/2026-08-31-sovereignai-2026/manifest.json
-  # 公式サイトは HCOMP 2026 併設の初回ワークショップ、2026-09-27開催、
-  # Paper submission deadline を 2026-08-31 23:59 AoE と明記する
-  # （2026-08-30T17:52:29.160Z取得、sha256:3df25f395b304760d846a06aebf4a3f726bfda1edf0398a6ceccf3be771538b0）。
-  - key: sovereignai
-    title: SovereignAI
-    full_name: The First Workshop on Sovereign AI for Collaborative and Pluralistic AI Ecosystems
-    link: https://sovereignai-workshop.github.io/
-    categories: [ai]
-    tags: [niche, workshop]
-    editions:
-      - year: 2026
-        id: sovereignai26
-        link: https://sovereignai-workshop.github.io/
-        place: Virginia Tech Academic Building One, Alexandria, Virginia, United States
-        date_text: September 27, 2026
-        event_start: '2026-09-27'
-        event_end: '2026-09-27'
-        deadlines:
-          - kind: paper
-            label: Paper submission deadline
-            round: 1
-            date: '2026-08-31 23:59:00'
-            tz: AoE
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://sovereignai-workshop.github.io/
-                contentHash: 3df25f395b304760d846a06aebf4a3f726bfda1edf0398a6ceccf3be771538b0
-                sourceRevision: 'W/"6a8fb967-11d43"'
-                retrievedAt: '2026-08-30T17:52:29.160Z'
-                verifiedAt: '2026-08-30T17:53:00Z'
-                verifiedFields: [date, time, timezone, kind, round]
-                rawExcerpt: "<span class=\"dl-label\">Paper submission deadline</span>\n          <p class=\"dl-date\"><span>August 31</span><span class=\"dl-yr\">2026</span></p>\n          <a class=\"btn\" href=\"https://easychair.org/conferences/?conf=sovereignai2026\">Submit via EasyChair<span class=\"arr\">&rarr;</span></a>\n        </div>\n        <dl class=\"dl-rest\">\n          <div><dt>Acceptance notification</dt><dd>September 6, 2026</dd></div>\n          <div><dt>Workshop day</dt><dd>September 27, 2026</dd></div>\n          <div><dt>Deadlines close</dt><dd>11:59&#8202;pm Anywhere on Earth</dd></div>"
-
-  # 証拠: data/promotions/2026-08-31-genai4sg-cikm-2026/manifest.json
-  # CIKM 2026 accepted workshops 掲載の公式サイトは 2026-11-08開催、
-  # Paper submission deadline を 2026-09-13 23:59 AoE と明記する
-  # （2026-08-30T18:14:02.806Z取得、sha256:b8eaad25f2fd07862684f630e200c51d94564ba54e0658905bed0456748de3dc）。
-  - key: genai4sg
-    title: GenAI4SG
-    full_name: 1st Workshop on Generative AI for Social Good and Vulnerable Populations
-    link: https://genai4sg.github.io/CIKM2026/
-    categories: [ai]
-    tags: [niche, workshop]
-    editions:
-      - year: 2026
-        id: genai4sg26
-        link: https://genai4sg.github.io/CIKM2026/
-        place: Rome, Italy
-        date_text: November 8, 2026
-        event_start: '2026-11-08'
-        event_end: '2026-11-08'
-        deadlines:
-          - kind: paper
-            label: Paper submission deadline
-            round: 1
-            date: '2026-09-13 23:59:00'
-            tz: AoE
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://genai4sg.github.io/CIKM2026/
-                contentHash: b8eaad25f2fd07862684f630e200c51d94564ba54e0658905bed0456748de3dc
-                sourceRevision: 'W/"6a887f2b-8339"'
-                retrievedAt: '2026-08-30T18:14:02.806Z'
-                verifiedAt: '2026-08-30T18:16:00Z'
-                verifiedFields: [date, kind, round]
-                rawExcerpt: "<strong>September 13, 2026</strong>\n            <span>Paper submission deadline</span>"
-              - sourceClass: official-cfp
-                sourceUrl: https://genai4sg.github.io/CIKM2026/
-                contentHash: b8eaad25f2fd07862684f630e200c51d94564ba54e0658905bed0456748de3dc
-                sourceRevision: 'W/"6a887f2b-8339"'
-                retrievedAt: '2026-08-30T18:14:02.806Z'
-                verifiedAt: '2026-08-30T18:16:00Z'
-                verifiedFields: [time, timezone]
-                rawExcerpt: 'All deadlines are 11:59 PM Anywhere on Earth unless stated otherwise.'
-
-  # 証拠: data/promotions/2026-08-31-sesame-jcdl-2026/manifest.json
-  # 公式サイトは JCDL 2026 併設の第2回ワークショップ、論文締切の
-  # 2026-09-07への延長とAoE、2026-10-16開催を明記する
-  # （2026-08-30T18:46:37.603Z取得、sha256:6c94db3b66fd1b4e3ffaa52819dca36d770b039e01dbfdbb8d614197bac34ab5）。
-  # 締切時刻は明記されないため、23:59を補わずdate-onlyとする。
-  # JCDL公式一覧はOnline Only・2026-10-16を明記する
-  # （2026-08-30T18:47:25.108Z取得、sha256:8a48e8e43a6e07457730db37f0171ff7779b6510f22467b05fdcb1774e3f806c）。
-  - key: sesame
-    title: SESAME
-    full_name: 2nd Workshop on Smarter Extraction of Scholarly Metadata using Knowledge Graphs, Language Models, and Agents
-    link: https://sesame-workshop.github.io/SESAME/
-    categories: [ai, db]
-    tags: [niche, workshop]
-    editions:
-      - year: 2026
-        id: sesame26
-        link: https://sesame-workshop.github.io/SESAME/
-        place: Online Only
-        date_text: October 16, 2026
-        event_start: '2026-10-16'
-        event_end: '2026-10-16'
-        deadlines:
-          - kind: paper
-            label: Paper submission
-            round: 1
-            date: '2026-09-07'
-            precision: date-only
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://easychair.org/cfp/sesame26
-                contentHash: 79d4d461e30d517f72da7e0c7550cee5dfb37dc3998ef4e4c29229d9886c408f
-                sourceRevision: sha256:79d4d461e30d517f72da7e0c7550cee5dfb37dc3998ef4e4c29229d9886c408f
-                retrievedAt: '2026-08-30T18:46:44.821Z'
-                verifiedAt: '2026-08-30T18:47:30Z'
-                verifiedFields: [date, kind, round]
-                rawExcerpt: '<tr><td>Submission deadline</td><td>September 7, 2026</td></tr>'
-              - sourceClass: official-cfp
-                sourceUrl: https://sesame-workshop.github.io/SESAME/
-                contentHash: 6c94db3b66fd1b4e3ffaa52819dca36d770b039e01dbfdbb8d614197bac34ab5
-                sourceRevision: 'W/"6a82b30f-378d"'
-                retrievedAt: '2026-08-30T18:46:37.603Z'
-                verifiedAt: '2026-08-30T18:47:30Z'
-                verifiedFields: [date]
-                rawExcerpt: '→ <strong>07.09.2026 (Extended)</strong>'
-
-  # 証拠: data/promotions/2026-08-31-wcm-agentic-ai-2027/manifest.json
-  # IEEE ComSoc 公式 CFP は投稿締切を 2026-09-15 へ延長し、
-  # 発行予定を June 2027 と明記する。時刻・タイムゾーンは掲載されない。
-  - key: wcm-agentic-ai-unmanned
-    title: 'IEEE WCM Special Issue: Agentic AI-Enabled Networking'
-    full_name: Agentic AI-Enabled Networking for Heterogeneous Unmanned Systems in Low-Altitude Environments (IEEE Wireless Communications Special Issue)
-    link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp/agentic-ai-enabled-networking-heterogeneous-unmanned-systems-low-altitude-environments
-    categories: [ai, networking]
-    tags: [niche, special-issue]
-    editions:
-      - year: 2027
-        id: wcm-agentic-ai-unmanned-2027
-        link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp/agentic-ai-enabled-networking-heterogeneous-unmanned-systems-low-altitude-environments
-        deadlines:
-          - kind: paper
-            label: Manuscript submission deadline (extended)
-            round: 1
-            date: '2026-09-15'
-            precision: date-only
-            evidence:
-              - sourceClass: publisher
-                sourceUrl: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp/agentic-ai-enabled-networking-heterogeneous-unmanned-systems-low-altitude-environments
-                contentHash: 7238cfba9ecf5eaffae6ecb6b86a1fdae90e4c2c28669f5a458965491c5d06a2
-                sourceRevision: '"1787966809-gzip"'
-                retrievedAt: '2026-08-30T19:13:23.748Z'
-                verifiedAt: '2026-08-30T19:15:00Z'
-                verifiedFields: [date, kind, round]
-                rawExcerpt: '<strong>Manuscript Submission Deadline:</strong> 15 September 2026 (Extended Deadline)'
-
-  # 証拠: data/promotions/2026-08-31-tsc-llm-service-ecosystems-2027/manifest.json
-  # IEEE Computer Society 公式 CFP は投稿締切を 2026-10-31、
-  # 発行予定を Mid 2027 と明記する。時刻・タイムゾーンは掲載されない。
-  - key: tsc-llm-service-ecosystems
-    title: 'IEEE TSC: LLMs in Service-Oriented Ecosystems Design'
-    full_name: 'Large Language Models in Service-Oriented Ecosystems Design: Advances and Applications (IEEE Transactions on Services Computing Special Issue)'
-    link: https://www.computer.org/digital-library/journals/tsc/cfp-language-models-ecosystems-design
-    categories: [ai, systems]
-    tags: [niche, special-issue]
-    editions:
-      - year: 2027
-        id: tsc-llm-service-ecosystems-2027
-        link: https://www.computer.org/digital-library/journals/tsc/cfp-language-models-ecosystems-design
-        deadlines:
-          - kind: paper
-            label: Manuscript submission deadline
-            round: 1
-            date: '2026-10-31'
-            precision: date-only
-            evidence:
-              - sourceClass: publisher
-                sourceUrl: https://www.computer.org/digital-library/journals/tsc/cfp-language-models-ecosystems-design
-                contentHash: 8646e62b7b863709f586c7d12b76ce187fcdf1845049828bc421da61e6c389c7
-                sourceRevision: sha256:8646e62b7b863709f586c7d12b76ce187fcdf1845049828bc421da61e6c389c7
-                retrievedAt: '2026-08-30T19:49:57.284Z'
-                verifiedAt: '2026-08-30T19:51:00Z'
-                verifiedFields: [date, kind, round]
-                rawExcerpt: 'Manuscript Submission Deadline: October 31, 2026'
-
-  # 証拠: data/promotions/2026-08-31-ieee-network-6g-isac-2027/manifest.json
-  # IEEE Communications Society 公式 CFP は延長投稿締切を 2026-09-15、
-  # 発行予定を May 2027 と明記する。時刻・タイムゾーンは掲載されない。
-  - key: ieee-network-6g-isac
-    title: 'IEEE Network: High-Reliability and Low-Latency 6G Communications'
-    full_name: 'High-Reliability and Low-Latency Communications for 6G Network: ISAC-Enabled Architectures, Networking, and Services (IEEE Network Special Issue)'
-    link: https://www.comsoc.org/publications/magazines/ieee-network/cfp/high-reliability-and-low-latency-communications-6g-network-isac-enabled-architectures-networking-and-services
-    categories: [networking, systems]
-    tags: [niche, special-issue]
-    editions:
-      - year: 2027
-        id: ieee-network-6g-isac-2027
-        link: https://www.comsoc.org/publications/magazines/ieee-network/cfp/high-reliability-and-low-latency-communications-6g-network-isac-enabled-architectures-networking-and-services
-        deadlines:
-          - kind: paper
-            label: Manuscript submission deadline (extended)
-            round: 1
-            date: '2026-09-15'
-            precision: date-only
-            evidence:
-              - sourceClass: publisher
-                sourceUrl: https://www.comsoc.org/publications/magazines/ieee-network/cfp/high-reliability-and-low-latency-communications-6g-network-isac-enabled-architectures-networking-and-services
-                contentHash: 94d638e1df49fddab0e7dab40641699f0649e0cc2a88eb574261fddee1561dcc
-                sourceRevision: '"1787962916-gzip"'
-                retrievedAt: '2026-08-30T20:13:34.822Z'
-                verifiedAt: '2026-08-30T20:14:00Z'
-                verifiedFields: [date, kind, round]
-                rawExcerpt: '<strong>Manuscript Submission Deadline:</strong> 15 September 2026 (Extended Deadline)'
-
-  # 証拠: data/promotions/2026-08-31-icngn-2026/manifest.json
-  # 公式サイトは投稿締切と香港での会期を明記する。
-  # 時刻・タイムゾーンは掲載されない。
-  - key: icngn
-    title: ICNGN 2026
-    full_name: The 5th International Conference on Intelligent Computing and Next Generation Networks
-    link: https://www.icngn.org/
-    categories: [networking, ai]
-    tags: [niche]
-    editions:
-      - year: 2026
-        id: icngn-2026
-        link: https://www.icngn.org/
-        place: Hong Kong, China
-        date_text: December 12-14, 2026
-        event_start: '2026-12-12'
-        event_end: '2026-12-14'
-        deadlines:
-          - kind: paper
-            label: Paper submission deadline
-            round: 1
-            date: '2026-09-26'
-            precision: date-only
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://www.icngn.org/
-                contentHash: cdb226fa64645300f44f019877355aa756f663f5bdf9198e484f8dea597ad23c
-                sourceRevision: Wed, 22 Jul 2026 07:09:36 GMT
-                retrievedAt: '2026-08-30T20:33:30.613Z'
-                verifiedAt: '2026-08-30T20:34:00Z'
-                verifiedFields: [date, kind, round]
-                rawExcerpt: 'Submission Deadline : September 26, 2026'
-
-  # 証拠: data/promotions/2026-08-31-arc-2027/manifest.json
-  # Humboldt-Universität zu Berlin の公式サイトは投稿締切とベルリンでの会期を明記する。
-  # 時刻・タイムゾーンは掲載されない。
-  - key: arc
-    title: ARC 2027
-    full_name: The 23rd International Symposium on Applied Reconfigurable Computing
-    link: https://amor.cms.hu-berlin.de/~hubnermi/index.html
-    categories: [hpc, systems]
-    tags: [niche]
-    editions:
-      - year: 2027
-        id: arc-2027
-        link: https://amor.cms.hu-berlin.de/~hubnermi/index.html
-        place: Berlin, Germany
-        date_text: March 31-April 2, 2027
-        event_start: '2027-03-31'
-        event_end: '2027-04-02'
-        deadlines:
-          - kind: paper
-            label: Paper submission deadline
-            round: 1
-            date: '2026-10-25'
-            precision: date-only
-            evidence:
-              - sourceClass: official-cfp
-                sourceUrl: https://amor.cms.hu-berlin.de/~hubnermi/index.html
-                contentHash: efb31692c1c015580f9a41fac2a74666c580e3e7d2701f1d9021934e49ae7714
-                sourceRevision: '"381e-6568d45154fdb-gzip"'
-                retrievedAt: '2026-08-30T20:58:40.676Z'
-                verifiedAt: '2026-08-30T20:59:00Z'
-                verifiedFields: [date, kind, round]
-                rawExcerpt: 'Long and short papers welcome. Submission deadline: 25 October 2026.'

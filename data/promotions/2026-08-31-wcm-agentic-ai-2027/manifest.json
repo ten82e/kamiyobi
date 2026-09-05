@@ -2,17 +2,14 @@
   "schema": 1,
   "id": "2026-08-31-wcm-agentic-ai-2027",
   "observations": {
-    "sha256": "1ebdb197a9c29e86bb277dfcd2719227812e9a8c67bc58ad7ad75e3b41f1bbbc"
+    "sha256": "d882a2ca0a6a335688527dfb1a25d21033ee3b60a2e37d3935a852177537a24c"
   },
   "resolutions": {
-    "sha256": "27ecfd7e2e198c097538a8ac9f3106348a7e8e25b05ce4b755ff365a32851d73"
-  },
-  "extra": {
-    "sha256": "79860ae7ec5d2d9603dd6f7336581d2fbd8423d724cdceacd4423602e469496b"
+    "sha256": "bd2193b7a54006c4ff78eacfee04cc4510f25d20ddaff625913166a08cf2035a"
   },
   "bodies": [
     {
-      "path": "bodies/7238cfba9ecf5eaffae6ecb6b86a1fdae90e4c2c28669f5a458965491c5d06a2.body",
+      "path": "../../evidence/blobs/7238cfba9ecf5eaffae6ecb6b86a1fdae90e4c2c28669f5a458965491c5d06a2.body",
       "sha256": "7238cfba9ecf5eaffae6ecb6b86a1fdae90e4c2c28669f5a458965491c5d06a2"
     }
   ],

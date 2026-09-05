@@ -99,8 +99,7 @@
       "title": "Net-P4ct: Enhanced WAN Bandwidth Fair Sharing Using P4 Programmable Switches",
       "primary_venue": "nsdi",
       "acceptable_venues": [
-        "nsdi",
-        "osdi"
+        "nsdi"
       ],
       "language": "en",
       "domains": [
@@ -116,11 +115,6 @@
         {
           "venue": "nsdi",
           "reason": "published primary venue in the cited source",
-          "source": "https://www.usenix.org/conference/nsdi26/spring-accepted-papers"
-        },
-        {
-          "venue": "osdi",
-          "reason": "curated acceptable alternate venue for the benchmark label",
           "source": "https://www.usenix.org/conference/nsdi26/spring-accepted-papers"
         }
       ]
@@ -314,7 +308,7 @@
       "primary_venue": "usenix-security",
       "acceptable_venues": [
         "usenix-security",
-        "ccs"
+        "ches"
       ],
       "language": "en",
       "domains": [
@@ -324,7 +318,7 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "usenix-security",
@@ -332,9 +326,9 @@
           "source": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions"
         },
         {
-          "venue": "ccs",
-          "reason": "curated acceptable alternate venue for the benchmark label",
-          "source": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions"
+          "venue": "ches",
+          "reason": "Independent scope match: “Ajax: Fast Threshold Fully Homomorphic Encryption without Noise Flooding” addresses security; the official call covers cryptographic hardware, embedded systems, and implementation security, making it a reasonable submission venue independent of model output.",
+          "source": "https://ches.iacr.org/2026/cfp_ches2026.pdf"
         }
       ]
     },
@@ -344,7 +338,8 @@
       "title": "BatchBoot: Fast Batched Bootstrapping for TFHE scheme and Practical Applications",
       "primary_venue": "usenix-security",
       "acceptable_venues": [
-        "usenix-security"
+        "usenix-security",
+        "ches"
       ],
       "language": "en",
       "domains": [
@@ -354,12 +349,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "usenix-security",
           "reason": "published primary venue in the cited source",
           "source": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions"
+        },
+        {
+          "venue": "ches",
+          "reason": "Independent scope match: “BatchBoot: Fast Batched Bootstrapping for TFHE scheme and Practical Applications” addresses security; the official call covers cryptographic hardware, embedded systems, and implementation security, making it a reasonable submission venue independent of model output.",
+          "source": "https://ches.iacr.org/2026/cfp_ches2026.pdf"
         }
       ]
     },
@@ -369,7 +369,8 @@
       "title": "HasteBoots: Proving TFHE Programmable Bootstrapping in Seconds",
       "primary_venue": "usenix-security",
       "acceptable_venues": [
-        "usenix-security"
+        "usenix-security",
+        "ches"
       ],
       "language": "en",
       "domains": [
@@ -379,12 +380,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "usenix-security",
           "reason": "published primary venue in the cited source",
           "source": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions"
+        },
+        {
+          "venue": "ches",
+          "reason": "Independent scope match: “HasteBoots: Proving TFHE Programmable Bootstrapping in Seconds” addresses security; the official call covers cryptographic hardware, embedded systems, and implementation security, making it a reasonable submission venue independent of model output.",
+          "source": "https://ches.iacr.org/2026/cfp_ches2026.pdf"
         }
       ]
     },
@@ -394,7 +400,8 @@
       "title": "Orbit: Optimizing Rescale and Bootstrap Placement with Integer Linear Programming Techniques for Secure Inference",
       "primary_venue": "usenix-security",
       "acceptable_venues": [
-        "usenix-security"
+        "usenix-security",
+        "ches"
       ],
       "language": "en",
       "domains": [
@@ -404,12 +411,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "usenix-security",
           "reason": "published primary venue in the cited source",
           "source": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions"
+        },
+        {
+          "venue": "ches",
+          "reason": "Independent scope match: “Orbit: Optimizing Rescale and Bootstrap Placement with Integer Linear Programming Techniques for Secure Inference” addresses security; the official call covers cryptographic hardware, embedded systems, and implementation security, making it a reasonable submission venue independent of model output.",
+          "source": "https://ches.iacr.org/2026/cfp_ches2026.pdf"
         }
       ]
     },
@@ -419,7 +431,8 @@
       "title": "Libra: Pattern-Scheduling Co-Optimization for Cross-Scheme FHE Code Generation over GPGPU",
       "primary_venue": "usenix-security",
       "acceptable_venues": [
-        "usenix-security"
+        "usenix-security",
+        "ches"
       ],
       "language": "en",
       "domains": [
@@ -429,12 +442,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "usenix-security",
           "reason": "published primary venue in the cited source",
           "source": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions"
+        },
+        {
+          "venue": "ches",
+          "reason": "Independent scope match: “Libra: Pattern-Scheduling Co-Optimization for Cross-Scheme FHE Code Generation over GPGPU” addresses security; the official call covers cryptographic hardware, embedded systems, and implementation security, making it a reasonable submission venue independent of model output.",
+          "source": "https://ches.iacr.org/2026/cfp_ches2026.pdf"
         }
       ]
     },
@@ -444,7 +462,8 @@
       "title": "VROOM: Accelerating (Almost All) Number-Theoretic Cryptography Using Vectorization and the Residue Number System",
       "primary_venue": "usenix-security",
       "acceptable_venues": [
-        "usenix-security"
+        "usenix-security",
+        "ches"
       ],
       "language": "en",
       "domains": [
@@ -454,12 +473,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "usenix-security",
           "reason": "published primary venue in the cited source",
           "source": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions"
+        },
+        {
+          "venue": "ches",
+          "reason": "Independent scope match: “VROOM: Accelerating (Almost All) Number-Theoretic Cryptography Using Vectorization and the Residue Number System” addresses security; the official call covers cryptographic hardware, embedded systems, and implementation security, making it a reasonable submission venue independent of model output.",
+          "source": "https://ches.iacr.org/2026/cfp_ches2026.pdf"
         }
       ]
     },
@@ -469,7 +493,8 @@
       "title": "RBOOT: Accelerating Homomorphic Neural Network Inference by Fusing ReLU within Bootstrapping",
       "primary_venue": "usenix-security",
       "acceptable_venues": [
-        "usenix-security"
+        "usenix-security",
+        "ches"
       ],
       "language": "en",
       "domains": [
@@ -479,12 +504,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "usenix-security",
           "reason": "published primary venue in the cited source",
           "source": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions"
+        },
+        {
+          "venue": "ches",
+          "reason": "Independent scope match: “RBOOT: Accelerating Homomorphic Neural Network Inference by Fusing ReLU within Bootstrapping” addresses security; the official call covers cryptographic hardware, embedded systems, and implementation security, making it a reasonable submission venue independent of model output.",
+          "source": "https://ches.iacr.org/2026/cfp_ches2026.pdf"
         }
       ]
     },
@@ -494,7 +524,8 @@
       "title": "Bridging Usability and Performance: A Tensor Compiler for Autovectorizing Homomorphic Encryption",
       "primary_venue": "usenix-security",
       "acceptable_venues": [
-        "usenix-security"
+        "usenix-security",
+        "ches"
       ],
       "language": "en",
       "domains": [
@@ -504,12 +535,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "usenix-security",
           "reason": "published primary venue in the cited source",
           "source": "https://www.usenix.org/conference/usenixsecurity26/technical-sessions"
+        },
+        {
+          "venue": "ches",
+          "reason": "Independent scope match: “Bridging Usability and Performance: A Tensor Compiler for Autovectorizing Homomorphic Encryption” addresses security; the official call covers cryptographic hardware, embedded systems, and implementation security, making it a reasonable submission venue independent of model output.",
+          "source": "https://ches.iacr.org/2026/cfp_ches2026.pdf"
         }
       ]
     },
@@ -530,7 +566,7 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://conferences.sigcomm.org/sigcomm/2026/accepted/",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "sigcomm",
@@ -539,8 +575,8 @@
         },
         {
           "venue": "nsdi",
-          "reason": "curated acceptable alternate venue for the benchmark label",
-          "source": "https://conferences.sigcomm.org/sigcomm/2026/accepted/"
+          "reason": "Independent scope match: “FlowForm: Scalable Passive Metasurface Network for mmWave Coverage Expansion” addresses networking; the official call covers networked and distributed systems design and implementation, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.usenix.org/conference/nsdi26/call-for-papers"
         }
       ]
     },
@@ -550,7 +586,8 @@
       "title": "Critical Path Guided Decision Making with CALLIGATOR",
       "primary_venue": "sigcomm",
       "acceptable_venues": [
-        "sigcomm"
+        "sigcomm",
+        "nsdi"
       ],
       "language": "en",
       "domains": [
@@ -560,12 +597,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://conferences.sigcomm.org/sigcomm/2026/accepted/",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "sigcomm",
           "reason": "published primary venue in the cited source",
           "source": "https://conferences.sigcomm.org/sigcomm/2026/accepted/"
+        },
+        {
+          "venue": "nsdi",
+          "reason": "Independent scope match: “Critical Path Guided Decision Making with CALLIGATOR” addresses networking; the official call covers networked and distributed systems design and implementation, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.usenix.org/conference/nsdi26/call-for-papers"
         }
       ]
     },
@@ -575,7 +617,8 @@
       "title": "Honey, I Shrunk the Headers With Flow.ZIP",
       "primary_venue": "sigcomm",
       "acceptable_venues": [
-        "sigcomm"
+        "sigcomm",
+        "nsdi"
       ],
       "language": "en",
       "domains": [
@@ -585,12 +628,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://conferences.sigcomm.org/sigcomm/2026/accepted/",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "sigcomm",
           "reason": "published primary venue in the cited source",
           "source": "https://conferences.sigcomm.org/sigcomm/2026/accepted/"
+        },
+        {
+          "venue": "nsdi",
+          "reason": "Independent scope match: “Honey, I Shrunk the Headers With Flow.ZIP” addresses networking; the official call covers networked and distributed systems design and implementation, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.usenix.org/conference/nsdi26/call-for-papers"
         }
       ]
     },
@@ -600,7 +648,8 @@
       "title": "OmniPath Ping: Active Network Measurement in the Era of Packet Spraying",
       "primary_venue": "sigcomm",
       "acceptable_venues": [
-        "sigcomm"
+        "sigcomm",
+        "nsdi"
       ],
       "language": "en",
       "domains": [
@@ -610,12 +659,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://conferences.sigcomm.org/sigcomm/2026/accepted/",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "sigcomm",
           "reason": "published primary venue in the cited source",
           "source": "https://conferences.sigcomm.org/sigcomm/2026/accepted/"
+        },
+        {
+          "venue": "nsdi",
+          "reason": "Independent scope match: “OmniPath Ping: Active Network Measurement in the Era of Packet Spraying” addresses networking; the official call covers networked and distributed systems design and implementation, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.usenix.org/conference/nsdi26/call-for-papers"
         }
       ]
     },
@@ -625,7 +679,8 @@
       "title": "Nüwa: A Generative Control Plane for AI Network Simulation",
       "primary_venue": "sigcomm",
       "acceptable_venues": [
-        "sigcomm"
+        "sigcomm",
+        "nsdi"
       ],
       "language": "en",
       "domains": [
@@ -635,12 +690,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://conferences.sigcomm.org/sigcomm/2026/accepted/",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "sigcomm",
           "reason": "published primary venue in the cited source",
           "source": "https://conferences.sigcomm.org/sigcomm/2026/accepted/"
+        },
+        {
+          "venue": "nsdi",
+          "reason": "Independent scope match: “Nüwa: A Generative Control Plane for AI Network Simulation” addresses networking; the official call covers networked and distributed systems design and implementation, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.usenix.org/conference/nsdi26/call-for-papers"
         }
       ]
     },
@@ -650,7 +710,8 @@
       "title": "Towards High-Performance Intrusion Detection with Robustness Guarantees on Programmable Switches at ISP Scale",
       "primary_venue": "sigcomm",
       "acceptable_venues": [
-        "sigcomm"
+        "sigcomm",
+        "nsdi"
       ],
       "language": "en",
       "domains": [
@@ -660,12 +721,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://conferences.sigcomm.org/sigcomm/2026/accepted/",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "sigcomm",
           "reason": "published primary venue in the cited source",
           "source": "https://conferences.sigcomm.org/sigcomm/2026/accepted/"
+        },
+        {
+          "venue": "nsdi",
+          "reason": "Independent scope match: “Towards High-Performance Intrusion Detection with Robustness Guarantees on Programmable Switches at ISP Scale” addresses networking; the official call covers networked and distributed systems design and implementation, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.usenix.org/conference/nsdi26/call-for-papers"
         }
       ]
     },
@@ -675,7 +741,8 @@
       "title": "Comprehensive Revocation Checking at Scale: the Deployment of CRLite in Mozilla Firefox",
       "primary_venue": "sigcomm",
       "acceptable_venues": [
-        "sigcomm"
+        "sigcomm",
+        "nsdi"
       ],
       "language": "en",
       "domains": [
@@ -685,12 +752,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://conferences.sigcomm.org/sigcomm/2026/accepted/",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "sigcomm",
           "reason": "published primary venue in the cited source",
           "source": "https://conferences.sigcomm.org/sigcomm/2026/accepted/"
+        },
+        {
+          "venue": "nsdi",
+          "reason": "Independent scope match: “Comprehensive Revocation Checking at Scale: the Deployment of CRLite in Mozilla Firefox” addresses networking; the official call covers networked and distributed systems design and implementation, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.usenix.org/conference/nsdi26/call-for-papers"
         }
       ]
     },
@@ -700,7 +772,8 @@
       "title": "CausalTune: Causal Learning based Automated Cellular RAN Configuration Tuning Framework",
       "primary_venue": "sigcomm",
       "acceptable_venues": [
-        "sigcomm"
+        "sigcomm",
+        "nsdi"
       ],
       "language": "en",
       "domains": [
@@ -710,12 +783,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://conferences.sigcomm.org/sigcomm/2026/accepted/",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "sigcomm",
           "reason": "published primary venue in the cited source",
           "source": "https://conferences.sigcomm.org/sigcomm/2026/accepted/"
+        },
+        {
+          "venue": "nsdi",
+          "reason": "Independent scope match: “CausalTune: Causal Learning based Automated Cellular RAN Configuration Tuning Framework” addresses networking; the official call covers networked and distributed systems design and implementation, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.usenix.org/conference/nsdi26/call-for-papers"
         }
       ]
     },
@@ -736,7 +814,7 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://2026.sigmod.org/sigmod_papers.shtml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "sigmod",
@@ -745,8 +823,8 @@
         },
         {
           "venue": "vldb",
-          "reason": "curated acceptable alternate venue for the benchmark label",
-          "source": "https://2026.sigmod.org/sigmod_papers.shtml"
+          "reason": "Independent scope match: “A Backend-Agnostic Compiler for Approximate Query Processing with Probabilistic Tensor Algebra” addresses db; the official call covers data management systems and information infrastructures, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.vldb.org/2026/call-for-research-track.html"
         }
       ]
     },
@@ -756,7 +834,8 @@
       "title": "Accelerating Approximate Analytical Join Queries over Unstructured Data with Statistical Guarantees",
       "primary_venue": "sigmod",
       "acceptable_venues": [
-        "sigmod"
+        "sigmod",
+        "vldb"
       ],
       "language": "en",
       "domains": [
@@ -766,12 +845,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://2026.sigmod.org/sigmod_papers.shtml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "sigmod",
           "reason": "published primary venue in the cited source",
           "source": "https://2026.sigmod.org/sigmod_papers.shtml"
+        },
+        {
+          "venue": "vldb",
+          "reason": "Independent scope match: “Accelerating Approximate Analytical Join Queries over Unstructured Data with Statistical Guarantees” addresses db; the official call covers data management systems and information infrastructures, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.vldb.org/2026/call-for-research-track.html"
         }
       ]
     },
@@ -781,7 +865,8 @@
       "title": "Accelerating Maximum Common Subgraph Computation by Exploiting Symmetries",
       "primary_venue": "sigmod",
       "acceptable_venues": [
-        "sigmod"
+        "sigmod",
+        "vldb"
       ],
       "language": "en",
       "domains": [
@@ -791,12 +876,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://2026.sigmod.org/sigmod_papers.shtml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "sigmod",
           "reason": "published primary venue in the cited source",
           "source": "https://2026.sigmod.org/sigmod_papers.shtml"
+        },
+        {
+          "venue": "vldb",
+          "reason": "Independent scope match: “Accelerating Maximum Common Subgraph Computation by Exploiting Symmetries” addresses db; the official call covers data management systems and information infrastructures, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.vldb.org/2026/call-for-research-track.html"
         }
       ]
     },
@@ -806,7 +896,8 @@
       "title": "Acyclic Graph Pattern Counting under Local Differential Privacy",
       "primary_venue": "sigmod",
       "acceptable_venues": [
-        "sigmod"
+        "sigmod",
+        "vldb"
       ],
       "language": "en",
       "domains": [
@@ -816,12 +907,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://2026.sigmod.org/sigmod_papers.shtml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "sigmod",
           "reason": "published primary venue in the cited source",
           "source": "https://2026.sigmod.org/sigmod_papers.shtml"
+        },
+        {
+          "venue": "vldb",
+          "reason": "Independent scope match: “Acyclic Graph Pattern Counting under Local Differential Privacy” addresses db; the official call covers data management systems and information infrastructures, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.vldb.org/2026/call-for-research-track.html"
         }
       ]
     },
@@ -831,7 +927,8 @@
       "title": "Adaptive Outlier Detection over Data Stream",
       "primary_venue": "sigmod",
       "acceptable_venues": [
-        "sigmod"
+        "sigmod",
+        "vldb"
       ],
       "language": "en",
       "domains": [
@@ -841,12 +938,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://2026.sigmod.org/sigmod_papers.shtml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "sigmod",
           "reason": "published primary venue in the cited source",
           "source": "https://2026.sigmod.org/sigmod_papers.shtml"
+        },
+        {
+          "venue": "vldb",
+          "reason": "Independent scope match: “Adaptive Outlier Detection over Data Stream” addresses db; the official call covers data management systems and information infrastructures, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.vldb.org/2026/call-for-research-track.html"
         }
       ]
     },
@@ -856,7 +958,8 @@
       "title": "AgenticScholar: Agentic Data Management with Pipeline Orchestration for Scholarly Corpora",
       "primary_venue": "sigmod",
       "acceptable_venues": [
-        "sigmod"
+        "sigmod",
+        "vldb"
       ],
       "language": "en",
       "domains": [
@@ -866,12 +969,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://2026.sigmod.org/sigmod_papers.shtml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "sigmod",
           "reason": "published primary venue in the cited source",
           "source": "https://2026.sigmod.org/sigmod_papers.shtml"
+        },
+        {
+          "venue": "vldb",
+          "reason": "Independent scope match: “AgenticScholar: Agentic Data Management with Pipeline Orchestration for Scholarly Corpora” addresses db; the official call covers data management systems and information infrastructures, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.vldb.org/2026/call-for-research-track.html"
         }
       ]
     },
@@ -881,7 +989,8 @@
       "title": "AlignedServe: Orchestrating Prefix-aware Batching to Build a High-throughput and Computing-efficient LLM Serving System",
       "primary_venue": "sigmod",
       "acceptable_venues": [
-        "sigmod"
+        "sigmod",
+        "vldb"
       ],
       "language": "en",
       "domains": [
@@ -891,12 +1000,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://2026.sigmod.org/sigmod_papers.shtml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "sigmod",
           "reason": "published primary venue in the cited source",
           "source": "https://2026.sigmod.org/sigmod_papers.shtml"
+        },
+        {
+          "venue": "vldb",
+          "reason": "Independent scope match: “AlignedServe: Orchestrating Prefix-aware Batching to Build a High-throughput and Computing-efficient LLM Serving System” addresses db; the official call covers data management systems and information infrastructures, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.vldb.org/2026/call-for-research-track.html"
         }
       ]
     },
@@ -906,7 +1020,8 @@
       "title": "An Efficient Streaming Algorithm for Approximating Graphlet Distributions",
       "primary_venue": "sigmod",
       "acceptable_venues": [
-        "sigmod"
+        "sigmod",
+        "vldb"
       ],
       "language": "en",
       "domains": [
@@ -916,12 +1031,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://2026.sigmod.org/sigmod_papers.shtml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "sigmod",
           "reason": "published primary venue in the cited source",
           "source": "https://2026.sigmod.org/sigmod_papers.shtml"
+        },
+        {
+          "venue": "vldb",
+          "reason": "Independent scope match: “An Efficient Streaming Algorithm for Approximating Graphlet Distributions” addresses db; the official call covers data management systems and information infrastructures, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.vldb.org/2026/call-for-research-track.html"
         }
       ]
     },
@@ -945,7 +1065,7 @@
       "source": "https://openaccess.thecvf.com/content/CVPR2026/papers/Xiao_Generalizable_Structure-Aware_Keypoint_Correspondence_for_Category-Unified_3D_Single_Object_Tracking_CVPR_2026_paper.pdf",
       "pdf_text": "3D single object tracking (SOT) in point clouds is essential for real-world 3D perception, yet it remains challenging due to data sparsity and large variations in scale and structure across diverse object categories. Most existing methods rely on a category-specific paradigm that trains separate models for each class, severely limiting scalability and generalization in real deployment. Extending these methods to a single model capable of tracking diverse object categories proves inadequate, as the significant variations across categories make it difficult to establish reliable geometric correspondences without category-specific priors. To overcome these limitations, we propose a Unified Structural KeyPoint Tracker (UniKPT), a novel structure-aware and generalizable framework for category-unified 3D point cloud tracking. UniKPT comprises three key modules: (1) an adaptive keypoint extractor that produces scale-aware and semantically meaningful keypoints; (2) a progressive correspondence aligner that establishes robust cross-frame geometric associations; and (3) a confidence-aware structural localization module that suppresses unreliable matches and leverages fine-grained structural relationships for precise 3D localization. Extensive experiments on the nuScenes and KITTI benchmarks show that UniKPT achieves new state-of-the-art performance in category-unified 3D SOT. On the challenging nuScenes dataset, our unified model further surpasses category-specific state-of-the-art trackers by 4.37% in Success and 5.16% in Precision.",
       "pdf_sha256": "971b86f9a184b89818aeeb80f349a016ce542aa732f3be0f09f59e82afc9ac39",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "cvpr",
@@ -954,8 +1074,8 @@
         },
         {
           "venue": "iccv",
-          "reason": "curated acceptable alternate venue for the benchmark label",
-          "source": "https://openaccess.thecvf.com/content/CVPR2026/papers/Xiao_Generalizable_Structure-Aware_Keypoint_Correspondence_for_Category-Unified_3D_Single_Object_Tracking_CVPR_2026_paper.pdf"
+          "reason": "Independent scope match: “Generalizable Structure-Aware Keypoint Correspondence for Category-Unified 3D Single Object Tracking” addresses graphics/ai; the official call covers computer vision and pattern recognition, making it a reasonable submission venue independent of model output.",
+          "source": "https://iccv.thecvf.com/Conferences/2025/CallForPapers"
         }
       ]
     },
@@ -965,7 +1085,8 @@
       "title": "DirectFisheye-GS: Enabling Native Fisheye Input in Gaussian Splatting with Cross-View Joint Optimization",
       "primary_venue": "cvpr",
       "acceptable_venues": [
-        "cvpr"
+        "cvpr",
+        "iccv"
       ],
       "language": "en",
       "domains": [
@@ -976,12 +1097,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://openaccess.thecvf.com/CVPR2026?day=all",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "cvpr",
           "reason": "published primary venue in the cited source",
           "source": "https://openaccess.thecvf.com/CVPR2026?day=all"
+        },
+        {
+          "venue": "iccv",
+          "reason": "Independent scope match: “DirectFisheye-GS: Enabling Native Fisheye Input in Gaussian Splatting with Cross-View Joint Optimization” addresses graphics/ai; the official call covers computer vision and pattern recognition, making it a reasonable submission venue independent of model output.",
+          "source": "https://iccv.thecvf.com/Conferences/2025/CallForPapers"
         }
       ]
     },
@@ -991,7 +1117,8 @@
       "title": "CompBench: Benchmarking Complex Instruction-guided Image Editing",
       "primary_venue": "cvpr",
       "acceptable_venues": [
-        "cvpr"
+        "cvpr",
+        "iccv"
       ],
       "language": "en",
       "domains": [
@@ -1002,12 +1129,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://openaccess.thecvf.com/CVPR2026?day=all",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "cvpr",
           "reason": "published primary venue in the cited source",
           "source": "https://openaccess.thecvf.com/CVPR2026?day=all"
+        },
+        {
+          "venue": "iccv",
+          "reason": "Independent scope match: “CompBench: Benchmarking Complex Instruction-guided Image Editing” addresses graphics/ai; the official call covers computer vision and pattern recognition, making it a reasonable submission venue independent of model output.",
+          "source": "https://iccv.thecvf.com/Conferences/2025/CallForPapers"
         }
       ]
     },
@@ -1017,7 +1149,8 @@
       "title": "Choreographing a World of Dynamic Objects",
       "primary_venue": "cvpr",
       "acceptable_venues": [
-        "cvpr"
+        "cvpr",
+        "iccv"
       ],
       "language": "en",
       "domains": [
@@ -1028,12 +1161,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://openaccess.thecvf.com/CVPR2026?day=all",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "cvpr",
           "reason": "published primary venue in the cited source",
           "source": "https://openaccess.thecvf.com/CVPR2026?day=all"
+        },
+        {
+          "venue": "iccv",
+          "reason": "Independent scope match: “Choreographing a World of Dynamic Objects” addresses graphics/ai; the official call covers computer vision and pattern recognition, making it a reasonable submission venue independent of model output.",
+          "source": "https://iccv.thecvf.com/Conferences/2025/CallForPapers"
         }
       ]
     },
@@ -1043,7 +1181,8 @@
       "title": "Spk2VidNet: A Hierarchical Recurrent Architecture for High-Fidelity Video Reconstruction from Long Spike-Camera Streams",
       "primary_venue": "cvpr",
       "acceptable_venues": [
-        "cvpr"
+        "cvpr",
+        "iccv"
       ],
       "language": "en",
       "domains": [
@@ -1054,12 +1193,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://openaccess.thecvf.com/CVPR2026?day=all",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "cvpr",
           "reason": "published primary venue in the cited source",
           "source": "https://openaccess.thecvf.com/CVPR2026?day=all"
+        },
+        {
+          "venue": "iccv",
+          "reason": "Independent scope match: “Spk2VidNet: A Hierarchical Recurrent Architecture for High-Fidelity Video Reconstruction from Long Spike-Camera Streams” addresses graphics/ai; the official call covers computer vision and pattern recognition, making it a reasonable submission venue independent of model output.",
+          "source": "https://iccv.thecvf.com/Conferences/2025/CallForPapers"
         }
       ]
     },
@@ -1069,7 +1213,8 @@
       "title": "Continual Distillation of Teachers from Different Domains",
       "primary_venue": "cvpr",
       "acceptable_venues": [
-        "cvpr"
+        "cvpr",
+        "iccv"
       ],
       "language": "en",
       "domains": [
@@ -1080,12 +1225,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://openaccess.thecvf.com/CVPR2026?day=all",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "cvpr",
           "reason": "published primary venue in the cited source",
           "source": "https://openaccess.thecvf.com/CVPR2026?day=all"
+        },
+        {
+          "venue": "iccv",
+          "reason": "Independent scope match: “Continual Distillation of Teachers from Different Domains” addresses graphics/ai; the official call covers computer vision and pattern recognition, making it a reasonable submission venue independent of model output.",
+          "source": "https://iccv.thecvf.com/Conferences/2025/CallForPapers"
         }
       ]
     },
@@ -1095,7 +1245,8 @@
       "title": "GT-SVJ: Generative-Transformer-Based Self-Supervised Video Judge For Efficient Video Reward Modeling",
       "primary_venue": "cvpr",
       "acceptable_venues": [
-        "cvpr"
+        "cvpr",
+        "iccv"
       ],
       "language": "en",
       "domains": [
@@ -1106,12 +1257,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://openaccess.thecvf.com/CVPR2026?day=all",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "cvpr",
           "reason": "published primary venue in the cited source",
           "source": "https://openaccess.thecvf.com/CVPR2026?day=all"
+        },
+        {
+          "venue": "iccv",
+          "reason": "Independent scope match: “GT-SVJ: Generative-Transformer-Based Self-Supervised Video Judge For Efficient Video Reward Modeling” addresses graphics/ai; the official call covers computer vision and pattern recognition, making it a reasonable submission venue independent of model output.",
+          "source": "https://iccv.thecvf.com/Conferences/2025/CallForPapers"
         }
       ]
     },
@@ -1121,7 +1277,8 @@
       "title": "Beyond Euclidean Gossip: KL-Barycentric Consensus on Heterogeneous and Imbalanced Images",
       "primary_venue": "cvpr",
       "acceptable_venues": [
-        "cvpr"
+        "cvpr",
+        "iccv"
       ],
       "language": "en",
       "domains": [
@@ -1132,12 +1289,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://openaccess.thecvf.com/CVPR2026?day=all",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "cvpr",
           "reason": "published primary venue in the cited source",
           "source": "https://openaccess.thecvf.com/CVPR2026?day=all"
+        },
+        {
+          "venue": "iccv",
+          "reason": "Independent scope match: “Beyond Euclidean Gossip: KL-Barycentric Consensus on Heterogeneous and Imbalanced Images” addresses graphics/ai; the official call covers computer vision and pattern recognition, making it a reasonable submission venue independent of model output.",
+          "source": "https://iccv.thecvf.com/Conferences/2025/CallForPapers"
         }
       ]
     },
@@ -1158,7 +1320,7 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://dblp.org/db/conf/chi/chi2026.xml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "chi",
@@ -1167,8 +1329,8 @@
         },
         {
           "venue": "uist",
-          "reason": "curated acceptable alternate venue for the benchmark label",
-          "source": "https://dblp.org/db/conf/chi/chi2026.xml"
+          "reason": "Independent scope match: “\"Hey Dashboard!\": Supporting Voice, Text, and Pointing Modalities in Dashboard Onboarding using Large Language Models.” addresses hci; the official call covers interactive systems and user-interface research, making it a reasonable submission venue independent of model output.",
+          "source": "https://uist.acm.org/2026/cfp/"
         }
       ]
     },
@@ -1178,7 +1340,8 @@
       "title": "Contrastive Learning for Large-scale Color-Name Dataset: Tackling Sparsity with Negative Sampling.",
       "primary_venue": "chi",
       "acceptable_venues": [
-        "chi"
+        "chi",
+        "uist"
       ],
       "language": "en",
       "domains": [
@@ -1188,12 +1351,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://dblp.org/db/conf/chi/chi2026.xml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "chi",
           "reason": "published primary venue in the cited source",
           "source": "https://dblp.org/db/conf/chi/chi2026.xml"
+        },
+        {
+          "venue": "uist",
+          "reason": "Independent scope match: “Contrastive Learning for Large-scale Color-Name Dataset: Tackling Sparsity with Negative Sampling.” addresses hci; the official call covers interactive systems and user-interface research, making it a reasonable submission venue independent of model output.",
+          "source": "https://uist.acm.org/2026/cfp/"
         }
       ]
     },
@@ -1203,7 +1371,8 @@
       "title": "From Answer Givers to Design Mentors: Guiding LLMs with the Cognitive Apprenticeship Model.",
       "primary_venue": "chi",
       "acceptable_venues": [
-        "chi"
+        "chi",
+        "uist"
       ],
       "language": "en",
       "domains": [
@@ -1213,12 +1382,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://dblp.org/db/conf/chi/chi2026.xml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "chi",
           "reason": "published primary venue in the cited source",
           "source": "https://dblp.org/db/conf/chi/chi2026.xml"
+        },
+        {
+          "venue": "uist",
+          "reason": "Independent scope match: “From Answer Givers to Design Mentors: Guiding LLMs with the Cognitive Apprenticeship Model.” addresses hci; the official call covers interactive systems and user-interface research, making it a reasonable submission venue independent of model output.",
+          "source": "https://uist.acm.org/2026/cfp/"
         }
       ]
     },
@@ -1228,7 +1402,8 @@
       "title": "HyPockeTuner: Bringing Hyperparameter Optimization to Mobile Devices.",
       "primary_venue": "chi",
       "acceptable_venues": [
-        "chi"
+        "chi",
+        "uist"
       ],
       "language": "en",
       "domains": [
@@ -1238,12 +1413,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://dblp.org/db/conf/chi/chi2026.xml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "chi",
           "reason": "published primary venue in the cited source",
           "source": "https://dblp.org/db/conf/chi/chi2026.xml"
+        },
+        {
+          "venue": "uist",
+          "reason": "Independent scope match: “HyPockeTuner: Bringing Hyperparameter Optimization to Mobile Devices.” addresses hci; the official call covers interactive systems and user-interface research, making it a reasonable submission venue independent of model output.",
+          "source": "https://uist.acm.org/2026/cfp/"
         }
       ]
     },
@@ -1253,7 +1433,8 @@
       "title": "Lexara: A User-Centered Toolkit for Evaluating Large Language Models for Conversational Visual Analytics.",
       "primary_venue": "chi",
       "acceptable_venues": [
-        "chi"
+        "chi",
+        "uist"
       ],
       "language": "en",
       "domains": [
@@ -1263,12 +1444,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://dblp.org/db/conf/chi/chi2026.xml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "chi",
           "reason": "published primary venue in the cited source",
           "source": "https://dblp.org/db/conf/chi/chi2026.xml"
+        },
+        {
+          "venue": "uist",
+          "reason": "Independent scope match: “Lexara: A User-Centered Toolkit for Evaluating Large Language Models for Conversational Visual Analytics.” addresses hci; the official call covers interactive systems and user-interface research, making it a reasonable submission venue independent of model output.",
+          "source": "https://uist.acm.org/2026/cfp/"
         }
       ]
     },
@@ -1278,7 +1464,8 @@
       "title": "Making Multimodal LLMs Reliable Chart Data Extractors: A Benchmark and Training Framework.",
       "primary_venue": "chi",
       "acceptable_venues": [
-        "chi"
+        "chi",
+        "uist"
       ],
       "language": "en",
       "domains": [
@@ -1288,12 +1475,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://dblp.org/db/conf/chi/chi2026.xml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "chi",
           "reason": "published primary venue in the cited source",
           "source": "https://dblp.org/db/conf/chi/chi2026.xml"
+        },
+        {
+          "venue": "uist",
+          "reason": "Independent scope match: “Making Multimodal LLMs Reliable Chart Data Extractors: A Benchmark and Training Framework.” addresses hci; the official call covers interactive systems and user-interface research, making it a reasonable submission venue independent of model output.",
+          "source": "https://uist.acm.org/2026/cfp/"
         }
       ]
     },
@@ -1303,7 +1495,8 @@
       "title": "Transformer Explainer: Learning LLM Transformers with Interactive Visual Explanation and Experimentation.",
       "primary_venue": "chi",
       "acceptable_venues": [
-        "chi"
+        "chi",
+        "uist"
       ],
       "language": "en",
       "domains": [
@@ -1313,12 +1506,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://dblp.org/db/conf/chi/chi2026.xml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "chi",
           "reason": "published primary venue in the cited source",
           "source": "https://dblp.org/db/conf/chi/chi2026.xml"
+        },
+        {
+          "venue": "uist",
+          "reason": "Independent scope match: “Transformer Explainer: Learning LLM Transformers with Interactive Visual Explanation and Experimentation.” addresses hci; the official call covers interactive systems and user-interface research, making it a reasonable submission venue independent of model output.",
+          "source": "https://uist.acm.org/2026/cfp/"
         }
       ]
     },
@@ -1328,7 +1526,8 @@
       "title": "AI-exhibited Personality Traits Can Shape Human Self-concept through Conversations.",
       "primary_venue": "chi",
       "acceptable_venues": [
-        "chi"
+        "chi",
+        "uist"
       ],
       "language": "en",
       "domains": [
@@ -1338,12 +1537,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://dblp.org/db/conf/chi/chi2026.xml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "chi",
           "reason": "published primary venue in the cited source",
           "source": "https://dblp.org/db/conf/chi/chi2026.xml"
+        },
+        {
+          "venue": "uist",
+          "reason": "Independent scope match: “AI-exhibited Personality Traits Can Shape Human Self-concept through Conversations.” addresses hci; the official call covers interactive systems and user-interface research, making it a reasonable submission venue independent of model output.",
+          "source": "https://uist.acm.org/2026/cfp/"
         }
       ]
     },
@@ -1364,7 +1568,7 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://dblp.org/db/conf/stoc/stoc2026.xml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "stoc",
@@ -1373,8 +1577,8 @@
         },
         {
           "venue": "focs",
-          "reason": "curated acceptable alternate venue for the benchmark label",
-          "source": "https://dblp.org/db/conf/stoc/stoc2026.xml"
+          "reason": "Independent scope match: “Lower Bounds against the Ideal Proof System in Finite Fields.” addresses theory; the official call covers foundations of computer science, making it a reasonable submission venue independent of model output.",
+          "source": "https://focs.computer.org/2026/call-for-papers-2/"
         }
       ]
     },
@@ -1384,7 +1588,8 @@
       "title": "Deterministic Padded Decompositions and Negative-Weight Shortest Paths.",
       "primary_venue": "stoc",
       "acceptable_venues": [
-        "stoc"
+        "stoc",
+        "focs"
       ],
       "language": "en",
       "domains": [
@@ -1394,12 +1599,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://dblp.org/db/conf/stoc/stoc2026.xml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "stoc",
           "reason": "published primary venue in the cited source",
           "source": "https://dblp.org/db/conf/stoc/stoc2026.xml"
+        },
+        {
+          "venue": "focs",
+          "reason": "Independent scope match: “Deterministic Padded Decompositions and Negative-Weight Shortest Paths.” addresses theory; the official call covers foundations of computer science, making it a reasonable submission venue independent of model output.",
+          "source": "https://focs.computer.org/2026/call-for-papers-2/"
         }
       ]
     },
@@ -1409,7 +1619,8 @@
       "title": "Forbidden Subgraphs of Graphs with Low Bandwidth.",
       "primary_venue": "stoc",
       "acceptable_venues": [
-        "stoc"
+        "stoc",
+        "focs"
       ],
       "language": "en",
       "domains": [
@@ -1419,12 +1630,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://dblp.org/db/conf/stoc/stoc2026.xml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "stoc",
           "reason": "published primary venue in the cited source",
           "source": "https://dblp.org/db/conf/stoc/stoc2026.xml"
+        },
+        {
+          "venue": "focs",
+          "reason": "Independent scope match: “Forbidden Subgraphs of Graphs with Low Bandwidth.” addresses theory; the official call covers foundations of computer science, making it a reasonable submission venue independent of model output.",
+          "source": "https://focs.computer.org/2026/call-for-papers-2/"
         }
       ]
     },
@@ -1434,7 +1650,8 @@
       "title": "SNARGs for NP from Unprovability of Mathematical Theorems (Or: How to Use the Simplicity of Cryptographic Reasoning).",
       "primary_venue": "stoc",
       "acceptable_venues": [
-        "stoc"
+        "stoc",
+        "focs"
       ],
       "language": "en",
       "domains": [
@@ -1444,12 +1661,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://dblp.org/db/conf/stoc/stoc2026.xml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "stoc",
           "reason": "published primary venue in the cited source",
           "source": "https://dblp.org/db/conf/stoc/stoc2026.xml"
+        },
+        {
+          "venue": "focs",
+          "reason": "Independent scope match: “SNARGs for NP from Unprovability of Mathematical Theorems (Or: How to Use the Simplicity of Cryptographic Reasoning).” addresses theory; the official call covers foundations of computer science, making it a reasonable submission venue independent of model output.",
+          "source": "https://focs.computer.org/2026/call-for-papers-2/"
         }
       ]
     },
@@ -1459,7 +1681,8 @@
       "title": "Smoothed Analysis of Learning from Positive Samples.",
       "primary_venue": "stoc",
       "acceptable_venues": [
-        "stoc"
+        "stoc",
+        "focs"
       ],
       "language": "en",
       "domains": [
@@ -1469,12 +1692,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://dblp.org/db/conf/stoc/stoc2026.xml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "stoc",
           "reason": "published primary venue in the cited source",
           "source": "https://dblp.org/db/conf/stoc/stoc2026.xml"
+        },
+        {
+          "venue": "focs",
+          "reason": "Independent scope match: “Smoothed Analysis of Learning from Positive Samples.” addresses theory; the official call covers foundations of computer science, making it a reasonable submission venue independent of model output.",
+          "source": "https://focs.computer.org/2026/call-for-papers-2/"
         }
       ]
     },
@@ -1484,7 +1712,8 @@
       "title": "Few Single-Qubit Measurements Suffice to Certify Any Quantum State.",
       "primary_venue": "stoc",
       "acceptable_venues": [
-        "stoc"
+        "stoc",
+        "focs"
       ],
       "language": "en",
       "domains": [
@@ -1494,12 +1723,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://dblp.org/db/conf/stoc/stoc2026.xml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "stoc",
           "reason": "published primary venue in the cited source",
           "source": "https://dblp.org/db/conf/stoc/stoc2026.xml"
+        },
+        {
+          "venue": "focs",
+          "reason": "Independent scope match: “Few Single-Qubit Measurements Suffice to Certify Any Quantum State.” addresses theory; the official call covers foundations of computer science, making it a reasonable submission venue independent of model output.",
+          "source": "https://focs.computer.org/2026/call-for-papers-2/"
         }
       ]
     },
@@ -1509,7 +1743,8 @@
       "title": "Separator Theorem for Minor-Free Graphs in Linear Time.",
       "primary_venue": "stoc",
       "acceptable_venues": [
-        "stoc"
+        "stoc",
+        "focs"
       ],
       "language": "en",
       "domains": [
@@ -1519,12 +1754,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://dblp.org/db/conf/stoc/stoc2026.xml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "stoc",
           "reason": "published primary venue in the cited source",
           "source": "https://dblp.org/db/conf/stoc/stoc2026.xml"
+        },
+        {
+          "venue": "focs",
+          "reason": "Independent scope match: “Separator Theorem for Minor-Free Graphs in Linear Time.” addresses theory; the official call covers foundations of computer science, making it a reasonable submission venue independent of model output.",
+          "source": "https://focs.computer.org/2026/call-for-papers-2/"
         }
       ]
     },
@@ -1534,7 +1774,8 @@
       "title": "Near Optimal Hardness of Approximating k-CSP.",
       "primary_venue": "stoc",
       "acceptable_venues": [
-        "stoc"
+        "stoc",
+        "focs"
       ],
       "language": "en",
       "domains": [
@@ -1544,12 +1785,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://dblp.org/db/conf/stoc/stoc2026.xml",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "stoc",
           "reason": "published primary venue in the cited source",
           "source": "https://dblp.org/db/conf/stoc/stoc2026.xml"
+        },
+        {
+          "venue": "focs",
+          "reason": "Independent scope match: “Near Optimal Hardness of Approximating k-CSP.” addresses theory; the official call covers foundations of computer science, making it a reasonable submission venue independent of model output.",
+          "source": "https://focs.computer.org/2026/call-for-papers-2/"
         }
       ]
     },
@@ -1560,7 +1806,7 @@
       "primary_venue": "hpdc",
       "acceptable_venues": [
         "hpdc",
-        "ics"
+        "ipdps"
       ],
       "language": "en",
       "domains": [
@@ -1571,7 +1817,7 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://hpdc.sci.utah.edu/2026/program.html",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "hpdc",
@@ -1579,9 +1825,9 @@
           "source": "https://hpdc.sci.utah.edu/2026/program.html"
         },
         {
-          "venue": "ics",
-          "reason": "curated acceptable alternate venue for the benchmark label",
-          "source": "https://hpdc.sci.utah.edu/2026/program.html"
+          "venue": "ipdps",
+          "reason": "Independent scope match: “STAR: Decode-Phase Rescheduling for LLM Inference” addresses hpc/systems; the official call covers parallel and distributed computing systems and applications, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.ipdps.org/ipdps2026/2026-call-for-papers.html"
         }
       ]
     },
@@ -1591,7 +1837,8 @@
       "title": "PKAS: Predictive KVCache-Aware Scheduling",
       "primary_venue": "hpdc",
       "acceptable_venues": [
-        "hpdc"
+        "hpdc",
+        "ipdps"
       ],
       "language": "en",
       "domains": [
@@ -1602,12 +1849,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://hpdc.sci.utah.edu/2026/program.html",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "hpdc",
           "reason": "published primary venue in the cited source",
           "source": "https://hpdc.sci.utah.edu/2026/program.html"
+        },
+        {
+          "venue": "ipdps",
+          "reason": "Independent scope match: “PKAS: Predictive KVCache-Aware Scheduling” addresses hpc/systems; the official call covers parallel and distributed computing systems and applications, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.ipdps.org/ipdps2026/2026-call-for-papers.html"
         }
       ]
     },
@@ -1617,7 +1869,8 @@
       "title": "Omnia: RAG Serving through Speculative Scheduling",
       "primary_venue": "hpdc",
       "acceptable_venues": [
-        "hpdc"
+        "hpdc",
+        "ipdps"
       ],
       "language": "en",
       "domains": [
@@ -1628,12 +1881,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://hpdc.sci.utah.edu/2026/program.html",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "hpdc",
           "reason": "published primary venue in the cited source",
           "source": "https://hpdc.sci.utah.edu/2026/program.html"
+        },
+        {
+          "venue": "ipdps",
+          "reason": "Independent scope match: “Omnia: RAG Serving through Speculative Scheduling” addresses hpc/systems; the official call covers parallel and distributed computing systems and applications, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.ipdps.org/ipdps2026/2026-call-for-papers.html"
         }
       ]
     },
@@ -1643,7 +1901,8 @@
       "title": "Scaling Attention Beyond GPUs for LLM Inference",
       "primary_venue": "hpdc",
       "acceptable_venues": [
-        "hpdc"
+        "hpdc",
+        "ipdps"
       ],
       "language": "en",
       "domains": [
@@ -1654,12 +1913,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://hpdc.sci.utah.edu/2026/program.html",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "hpdc",
           "reason": "published primary venue in the cited source",
           "source": "https://hpdc.sci.utah.edu/2026/program.html"
+        },
+        {
+          "venue": "ipdps",
+          "reason": "Independent scope match: “Scaling Attention Beyond GPUs for LLM Inference” addresses hpc/systems; the official call covers parallel and distributed computing systems and applications, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.ipdps.org/ipdps2026/2026-call-for-papers.html"
         }
       ]
     },
@@ -1669,7 +1933,8 @@
       "title": "Accelerating Block Low-Rank Foundation Model Inference on Memory-Constrained GPUs",
       "primary_venue": "hpdc",
       "acceptable_venues": [
-        "hpdc"
+        "hpdc",
+        "ipdps"
       ],
       "language": "en",
       "domains": [
@@ -1680,12 +1945,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://hpdc.sci.utah.edu/2026/program.html",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "hpdc",
           "reason": "published primary venue in the cited source",
           "source": "https://hpdc.sci.utah.edu/2026/program.html"
+        },
+        {
+          "venue": "ipdps",
+          "reason": "Independent scope match: “Accelerating Block Low-Rank Foundation Model Inference on Memory-Constrained GPUs” addresses hpc/systems; the official call covers parallel and distributed computing systems and applications, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.ipdps.org/ipdps2026/2026-call-for-papers.html"
         }
       ]
     },
@@ -1695,7 +1965,8 @@
       "title": "MoE-Lens: High-Throughput MoE LLM Inference at the Hardware Limit",
       "primary_venue": "hpdc",
       "acceptable_venues": [
-        "hpdc"
+        "hpdc",
+        "ipdps"
       ],
       "language": "en",
       "domains": [
@@ -1706,12 +1977,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://hpdc.sci.utah.edu/2026/program.html",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "hpdc",
           "reason": "published primary venue in the cited source",
           "source": "https://hpdc.sci.utah.edu/2026/program.html"
+        },
+        {
+          "venue": "ipdps",
+          "reason": "Independent scope match: “MoE-Lens: High-Throughput MoE LLM Inference at the Hardware Limit” addresses hpc/systems; the official call covers parallel and distributed computing systems and applications, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.ipdps.org/ipdps2026/2026-call-for-papers.html"
         }
       ]
     },
@@ -1721,7 +1997,8 @@
       "title": "UniEP: Unified Expert-Parallel MoE MegaKernel for Training",
       "primary_venue": "hpdc",
       "acceptable_venues": [
-        "hpdc"
+        "hpdc",
+        "ipdps"
       ],
       "language": "en",
       "domains": [
@@ -1732,12 +2009,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://hpdc.sci.utah.edu/2026/program.html",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "hpdc",
           "reason": "published primary venue in the cited source",
           "source": "https://hpdc.sci.utah.edu/2026/program.html"
+        },
+        {
+          "venue": "ipdps",
+          "reason": "Independent scope match: “UniEP: Unified Expert-Parallel MoE MegaKernel for Training” addresses hpc/systems; the official call covers parallel and distributed computing systems and applications, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.ipdps.org/ipdps2026/2026-call-for-papers.html"
         }
       ]
     },
@@ -1747,7 +2029,8 @@
       "title": "ResiHP: Taming LLM Training Failures with Dynamic Hybrid Parallelism",
       "primary_venue": "hpdc",
       "acceptable_venues": [
-        "hpdc"
+        "hpdc",
+        "ipdps"
       ],
       "language": "en",
       "domains": [
@@ -1758,12 +2041,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://hpdc.sci.utah.edu/2026/program.html",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "hpdc",
           "reason": "published primary venue in the cited source",
           "source": "https://hpdc.sci.utah.edu/2026/program.html"
+        },
+        {
+          "venue": "ipdps",
+          "reason": "Independent scope match: “ResiHP: Taming LLM Training Failures with Dynamic Hybrid Parallelism” addresses hpc/systems; the official call covers parallel and distributed computing systems and applications, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.ipdps.org/ipdps2026/2026-call-for-papers.html"
         }
       ]
     },
@@ -1773,7 +2061,8 @@
       "title": "TACO: Communication Compression for Tensor-Parallel LLM Training",
       "primary_venue": "hpdc",
       "acceptable_venues": [
-        "hpdc"
+        "hpdc",
+        "ipdps"
       ],
       "language": "en",
       "domains": [
@@ -1784,12 +2073,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://hpdc.sci.utah.edu/2026/program.html",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "hpdc",
           "reason": "published primary venue in the cited source",
           "source": "https://hpdc.sci.utah.edu/2026/program.html"
+        },
+        {
+          "venue": "ipdps",
+          "reason": "Independent scope match: “TACO: Communication Compression for Tensor-Parallel LLM Training” addresses hpc/systems; the official call covers parallel and distributed computing systems and applications, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.ipdps.org/ipdps2026/2026-call-for-papers.html"
         }
       ]
     },
@@ -1799,7 +2093,8 @@
       "title": "SYCL++: Unified Programming for Heterogeneous Supercomputers at Scale",
       "primary_venue": "hpdc",
       "acceptable_venues": [
-        "hpdc"
+        "hpdc",
+        "ipdps"
       ],
       "language": "en",
       "domains": [
@@ -1810,12 +2105,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://hpdc.sci.utah.edu/2026/program.html",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "hpdc",
           "reason": "published primary venue in the cited source",
           "source": "https://hpdc.sci.utah.edu/2026/program.html"
+        },
+        {
+          "venue": "ipdps",
+          "reason": "Independent scope match: “SYCL++: Unified Programming for Heterogeneous Supercomputers at Scale” addresses hpc/systems; the official call covers parallel and distributed computing systems and applications, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.ipdps.org/ipdps2026/2026-call-for-papers.html"
         }
       ]
     },
@@ -1825,7 +2125,8 @@
       "title": "Floating Point Virtualization With Tiny Numbers",
       "primary_venue": "hpdc",
       "acceptable_venues": [
-        "hpdc"
+        "hpdc",
+        "ipdps"
       ],
       "language": "en",
       "domains": [
@@ -1836,12 +2137,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://hpdc.sci.utah.edu/2026/program.html",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "hpdc",
           "reason": "published primary venue in the cited source",
           "source": "https://hpdc.sci.utah.edu/2026/program.html"
+        },
+        {
+          "venue": "ipdps",
+          "reason": "Independent scope match: “Floating Point Virtualization With Tiny Numbers” addresses hpc/systems; the official call covers parallel and distributed computing systems and applications, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.ipdps.org/ipdps2026/2026-call-for-papers.html"
         }
       ]
     },
@@ -1851,7 +2157,8 @@
       "title": "FAME: Framework for Multi-Agent RL on Heterogeneous Platforms",
       "primary_venue": "hpdc",
       "acceptable_venues": [
-        "hpdc"
+        "hpdc",
+        "ipdps"
       ],
       "language": "en",
       "domains": [
@@ -1862,12 +2169,17 @@
       "venue_kind": "conference",
       "input_mode": "title-only",
       "source": "https://hpdc.sci.utah.edu/2026/program.html",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "hpdc",
           "reason": "published primary venue in the cited source",
           "source": "https://hpdc.sci.utah.edu/2026/program.html"
+        },
+        {
+          "venue": "ipdps",
+          "reason": "Independent scope match: “FAME: Framework for Multi-Agent RL on Heterogeneous Platforms” addresses hpc/systems; the official call covers parallel and distributed computing systems and applications, making it a reasonable submission venue independent of model output.",
+          "source": "https://www.ipdps.org/ipdps2026/2026-call-for-papers.html"
         }
       ]
     },
@@ -1889,7 +2201,7 @@
       "venue_kind": "workshop",
       "input_mode": "title-only",
       "source": "https://openaccess.thecvf.com/CVPR2026_workshops/SINT4CH",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "cvpr",
@@ -1898,8 +2210,8 @@
         },
         {
           "venue": "iccv",
-          "reason": "curated acceptable alternate venue for the benchmark label",
-          "source": "https://openaccess.thecvf.com/CVPR2026_workshops/SINT4CH"
+          "reason": "Independent scope match: “Documentation Infrastructure and Ethical Challenges in Spatial AI for Cultural Heritage” addresses graphics/ai; the official call covers computer vision and pattern recognition, making it a reasonable submission venue independent of model output.",
+          "source": "https://iccv.thecvf.com/Conferences/2025/CallForPapers"
         }
       ]
     },
@@ -1909,7 +2221,8 @@
       "title": "Bag of Bags: Adaptive Visual Vocabularies for Genizah Join Image Retrieval",
       "primary_venue": "cvpr",
       "acceptable_venues": [
-        "cvpr"
+        "cvpr",
+        "iccv"
       ],
       "language": "en",
       "domains": [
@@ -1920,12 +2233,17 @@
       "venue_kind": "workshop",
       "input_mode": "title-only",
       "source": "https://openaccess.thecvf.com/CVPR2026_workshops/SINT4CH",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "cvpr",
           "reason": "published primary venue in the cited source",
           "source": "https://openaccess.thecvf.com/CVPR2026_workshops/SINT4CH"
+        },
+        {
+          "venue": "iccv",
+          "reason": "Independent scope match: “Bag of Bags: Adaptive Visual Vocabularies for Genizah Join Image Retrieval” addresses graphics/ai; the official call covers computer vision and pattern recognition, making it a reasonable submission venue independent of model output.",
+          "source": "https://iccv.thecvf.com/Conferences/2025/CallForPapers"
         }
       ]
     },
@@ -1935,7 +2253,8 @@
       "title": "Text Reconstruction in 3D Scenes: An Empirical Study of Gaussian Splatting vs. Neural Radiance Fields",
       "primary_venue": "cvpr",
       "acceptable_venues": [
-        "cvpr"
+        "cvpr",
+        "iccv"
       ],
       "language": "en",
       "domains": [
@@ -1946,12 +2265,17 @@
       "venue_kind": "workshop",
       "input_mode": "title-only",
       "source": "https://openaccess.thecvf.com/CVPR2026_workshops/USM3D",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "cvpr",
           "reason": "published primary venue in the cited source",
           "source": "https://openaccess.thecvf.com/CVPR2026_workshops/USM3D"
+        },
+        {
+          "venue": "iccv",
+          "reason": "Independent scope match: “Text Reconstruction in 3D Scenes: An Empirical Study of Gaussian Splatting vs. Neural Radiance Fields” addresses graphics/ai; the official call covers computer vision and pattern recognition, making it a reasonable submission venue independent of model output.",
+          "source": "https://iccv.thecvf.com/Conferences/2025/CallForPapers"
         }
       ]
     },
@@ -1961,7 +2285,8 @@
       "title": "GS4City: Hierarchical Semantic Gaussian Splatting via City-Model Priors",
       "primary_venue": "cvpr",
       "acceptable_venues": [
-        "cvpr"
+        "cvpr",
+        "iccv"
       ],
       "language": "en",
       "domains": [
@@ -1972,12 +2297,17 @@
       "venue_kind": "workshop",
       "input_mode": "title-only",
       "source": "https://openaccess.thecvf.com/CVPR2026_workshops/USM3D",
-      "annotation_revision": 1,
+      "annotation_revision": 2,
       "annotation_evidence": [
         {
           "venue": "cvpr",
           "reason": "published primary venue in the cited source",
           "source": "https://openaccess.thecvf.com/CVPR2026_workshops/USM3D"
+        },
+        {
+          "venue": "iccv",
+          "reason": "Independent scope match: “GS4City: Hierarchical Semantic Gaussian Splatting via City-Model Priors” addresses graphics/ai; the official call covers computer vision and pattern recognition, making it a reasonable submission venue independent of model output.",
+          "source": "https://iccv.thecvf.com/Conferences/2025/CallForPapers"
         }
       ]
     },
@@ -1987,8 +2317,7 @@
       "title": "Two-level quaternion-valued Hopfield networks",
       "primary_venue": "ieice-nolta-recent-progress-special",
       "acceptable_venues": [
-        "ieice-nolta-recent-progress-special",
-        "ieice-nolta"
+        "ieice-nolta-recent-progress-special"
       ],
       "language": "en",
       "domains": [
@@ -2004,11 +2333,6 @@
         {
           "venue": "ieice-nolta-recent-progress-special",
           "reason": "published primary venue in the cited source",
-          "source": "https://www.jstage.jst.go.jp/browse/nolta/17/3/_contents/-char/en"
-        },
-        {
-          "venue": "ieice-nolta",
-          "reason": "curated acceptable alternate venue for the benchmark label",
           "source": "https://www.jstage.jst.go.jp/browse/nolta/17/3/_contents/-char/en"
         }
       ]
@@ -2097,8 +2421,7 @@
       "title": "大規模言語モデルを用いたクエリ拡張と文書拡張による過去会話検索",
       "primary_venue": "jip",
       "acceptable_venues": [
-        "jip",
-        "ieice-trans-inf"
+        "jip"
       ],
       "language": "ja",
       "domains": [
@@ -2115,11 +2438,6 @@
         {
           "venue": "jip",
           "reason": "published primary venue in the cited source",
-          "source": "https://ipsj.ixsq.nii.ac.jp/records/2006873"
-        },
-        {
-          "venue": "ieice-trans-inf",
-          "reason": "curated acceptable alternate venue for the benchmark label",
           "source": "https://ipsj.ixsq.nii.ac.jp/records/2006873"
         }
       ]

@@ -4,39 +4,39 @@
   "records": [
     {
       "paper_id": "dev-2025-ches-01",
-      "record_sha256": "c0b55e654fa143db507971d363b589d8e6a96fe63651b24457ef9d69b8cc0958"
+      "record_sha256": "0f83d6e4a9af7641ceeff26fd21f55aac96d1de4819f258479e8a543b00f50a7"
     },
     {
       "paper_id": "dev-2025-ches-02",
-      "record_sha256": "ce7f5fc923e0205e0d26f8df7ecdfa9acc714e835002c8daa3651bf9ac2f0e7f"
+      "record_sha256": "c05755863ed6f1c1033eee21125acb45f8b1435e6afc6a28d2ae17f5c41bee68"
     },
     {
       "paper_id": "dev-2025-ches-03",
-      "record_sha256": "c1c57f658c65094860b2e2641d79ca2aef49638efd047578caa9d53d32d9a3d0"
+      "record_sha256": "9eae921988df6d6403b92661433f2b3f1acda21dee476b1481e4b3f1a572bf3b"
     },
     {
       "paper_id": "dev-2025-ches-04",
-      "record_sha256": "583239ad295cb6e705b0e47d00728c81b07354bce3f56e93f597ed0997dc8446"
+      "record_sha256": "f9274bcb243fa978ac737ae5fa60cf3d82e8805e1eef96c884ffd4679acadb86"
     },
     {
       "paper_id": "dev-2025-ches-05",
-      "record_sha256": "1bb43068f76ae340e02553affbe0cecd5d1653d62a29bff0997b11c514a6e15c"
+      "record_sha256": "203bd099658d3b77771836f8c48b59152b8c5b47dd80ec9eb94b197675296b01"
     },
     {
       "paper_id": "dev-2025-ches-06",
-      "record_sha256": "74bd0d5aa1a44a822fadbde2307761bfa2953f081c6701334a068afca0b765ec"
+      "record_sha256": "f6f362e9cd4b87d3fd22f1ccbda6e35e7fd3606dda98736939e049ae267b0079"
     },
     {
       "paper_id": "dev-2025-ches-07",
-      "record_sha256": "15536a8d02f16321e1f723a2d136b2cf24116259eb56f21e079f4f1d09fd32fe"
+      "record_sha256": "9c1e636b1caf82763c39c7fa9a465f4b5c225a1fad3e927ff76c2cd88ed1d67a"
     },
     {
       "paper_id": "dev-2025-ches-08",
-      "record_sha256": "738613cf74c13b9a3cc06505d6222713f2575409cadd2262deb5abd22c0e6663"
+      "record_sha256": "77bcb7b288674cb33c50ae5620cd54e65d1ffabfaa30f56767ea194feb7eeb40"
     },
     {
       "paper_id": "dev-2025-chi-01",
-      "record_sha256": "8145d160128137929e7fedfb7f81efbd8d0f41ce10dff1ee68b73637cd28d565"
+      "record_sha256": "0b4937d5996b32c36032834430f886f03514d7675b2613efb22a5ef92ee1e62c"
     },
     {
       "paper_id": "dev-2025-chi-02",
@@ -48,7 +48,7 @@
     },
     {
       "paper_id": "dev-2025-chi-04",
-      "record_sha256": "f54e1837410f3288a703da871f6e893d6248847fdf530f0dbcac3166fab54712"
+      "record_sha256": "18eeeee631a5cd5ed8297fd24092339829c654564011be5fe925b5c90bba2e5d"
     },
     {
       "paper_id": "dev-2025-chi-05",
@@ -60,19 +60,19 @@
     },
     {
       "paper_id": "dev-2025-chi-07",
-      "record_sha256": "44e055c100e43ca7cf405e777b7b1078b6e786d64fcfc46ceeb938f291209dc2"
+      "record_sha256": "64f88b8c6f322a14da44eefea551ba5408130c4da62ac99feea9d769f37bfe2b"
     },
     {
       "paper_id": "dev-2025-chi-08",
-      "record_sha256": "e914b953ededca02ab29b8edf26a1ef7ff60dd5ff935a10ca2772fb6ddeecf7c"
+      "record_sha256": "4932e3e0d15974d48a2edbeb72cac577c4c299f88b1925c008deb8064dba9f06"
     },
     {
       "paper_id": "dev-2025-cvpr-01",
-      "record_sha256": "af4151dd02b49299e0445b903df21e20c316f16d180b2080c233361a8b36eaa1"
+      "record_sha256": "a238a92895570e442db60f259b73772039fe211f9c9ca6f18a9188058570d1ae"
     },
     {
       "paper_id": "dev-2025-cvpr-02",
-      "record_sha256": "a039566ff259b7d39377c1da75288ad34acfcf99eb8920a7826d8a383f644981"
+      "record_sha256": "b6dabcc95d7a8693b8bd24d84a09db96508dd61e64dcf0d89473f4b581a79659"
     },
     {
       "paper_id": "dev-2025-cvpr-03",
@@ -80,7 +80,7 @@
     },
     {
       "paper_id": "dev-2025-cvpr-04",
-      "record_sha256": "5d0dd40308bcd2f4ae65108eb4b080609e88b33a961170dd92b14864fda5c3b1"
+      "record_sha256": "79224ac576af74864aea503b8344263af0fb4c61754ec709357c67c13da9bb76"
     },
     {
       "paper_id": "dev-2025-cvpr-05",
@@ -88,15 +88,15 @@
     },
     {
       "paper_id": "dev-2025-cvpr-06",
-      "record_sha256": "393d539f03a66f7b807cdac94b8b05a713722dd2278772c35efdc0ee35c9b764"
+      "record_sha256": "758795bd27b28bd279bce5d328ba83d4f5e101e8858856d79299658e2f93d68b"
     },
     {
       "paper_id": "dev-2025-cvpr-07",
-      "record_sha256": "042489e58e1ed8d39822113d747b486852bed3ba98c78e22cd11f413da33fcb9"
+      "record_sha256": "4e981b9e7ed7674ffc61f1cb81f4c89da4064e9f0c7787eb2ecdd14c7801f688"
     },
     {
       "paper_id": "dev-2025-cvpr-08",
-      "record_sha256": "f079bba17a93517322797a7f4014e8107c6c00703371f2f7391a719c67f369ff"
+      "record_sha256": "0d72c113b2bbdeb67337d99a4f418dd06ef9759c4d988a9e86ab2944f138a607"
     },
     {
       "paper_id": "dev-2025-cvprw-01",
@@ -108,7 +108,7 @@
     },
     {
       "paper_id": "dev-2025-cvprw-03",
-      "record_sha256": "17711a564f8ed688afecb837aabbaf50e384ede51c9192ceb22f8274bf2a5a3e"
+      "record_sha256": "73ebc83d2f46a026a1d9a558287c594e2d08ede8c5125c9558872dd6cc4e3ba2"
     },
     {
       "paper_id": "dev-2025-cvprw-04",
@@ -116,47 +116,47 @@
     },
     {
       "paper_id": "dev-2025-hpdc-01",
-      "record_sha256": "877dd8e7a90dd58a8331225b053916cc7e8bf2f4fbf8e0e20255fe46a8c7c17b"
+      "record_sha256": "077c44bbe21c8f523dd13715c52c635564b35786c67908214e7922940b09e362"
     },
     {
       "paper_id": "dev-2025-hpdc-02",
-      "record_sha256": "8f65bf89c5f1b0cf0f7f0754901a24c6820f10fa3096ef86fea8ed21a75ed568"
+      "record_sha256": "199025e2e8e1ad2f27c60bbb1d3e30f409a0294041444cb20e7c1e304c59c201"
     },
     {
       "paper_id": "dev-2025-hpdc-03",
-      "record_sha256": "8e722b99473abe96aca3c02df8a506835445965792f7e864eba42c1bfb13085f"
+      "record_sha256": "87dd75680d6223320d77c7b37e81eb0f9de58ed8d112050bd29de5d3a25d1808"
     },
     {
       "paper_id": "dev-2025-hpdc-04",
-      "record_sha256": "3eaaa8b55022eaa698e4d4c0cb5a51b72bab56b6b92459704282ca33d740b64c"
+      "record_sha256": "1744833cd6be1a754ea3e3ee15b961f829c1ae1d2b8dadd987a81986bbd9f569"
     },
     {
       "paper_id": "dev-2025-hpdc-05",
-      "record_sha256": "5d45bfd4b1398ac9a7504a3740f3ff276a9e26d7394884b02a000e5bbecac535"
+      "record_sha256": "70967a34688f1f3d539c617e8a9e8bdbc64674607d4f8f6338dea743ed89b30e"
     },
     {
       "paper_id": "dev-2025-hpdc-06",
-      "record_sha256": "f97a20ccfdf5df4bb96e49c023beeaae563a46fb4a27517c63ff55750c78fd9d"
+      "record_sha256": "28c570261f821729d0c42c28a3f74b9ea11aba1519b5a969e62247730de16a0d"
     },
     {
       "paper_id": "dev-2025-hpdc-07",
-      "record_sha256": "041135e17e4cdc77bda1dbdc06acdfd89345483772f717be336387d0dccdda33"
+      "record_sha256": "43694650b51f4010179fce1ff4b22dbda0c7822dfd0ac9ab85c9b383bea8b158"
     },
     {
       "paper_id": "dev-2025-hpdc-08",
-      "record_sha256": "f2a90065d7724671d835be040f472a0543607723c038e347104b11d09dc94fba"
+      "record_sha256": "a072228a8f207c86f8e087f3333bb3a800360d114d6dff73bafd10d3221990d6"
     },
     {
       "paper_id": "dev-2025-hpdc-09",
-      "record_sha256": "7e0aea52eec8f1eaa10bd0a80b8017207378ae602299d384384ba70f286cfb50"
+      "record_sha256": "2cf1a83bab32c331677b3b2d0f9fef223d468362dd6789043dbd4a763e7cf8c3"
     },
     {
       "paper_id": "dev-2025-hpdc-10",
-      "record_sha256": "c901cadd9b3ed81aa57e99d30da9f505b2b852b9e3dd282c130a606906ebf41a"
+      "record_sha256": "a0d5a04eb273465716db5a3560c2475bd781c8131ab3356547cc45e275ca467f"
     },
     {
       "paper_id": "dev-2025-hpdc-11",
-      "record_sha256": "072d9a0611c9abeff23c7935bcc7421171c8f87855c468a25e1830c7628ce77b"
+      "record_sha256": "288531c49a7de37cfe7a281df38191edaa9c8652c63290fd4aab7aee12336a63"
     },
     {
       "paper_id": "dev-2025-hpdc-12",
@@ -164,7 +164,7 @@
     },
     {
       "paper_id": "dev-2025-icml-01",
-      "record_sha256": "a8ed3fd43f51c517a128ed8a92dce75fb3d451bf8c1b6d0d6893cf98049d34ee"
+      "record_sha256": "46c18011702bf49df8da2d29183e63041b86f7378ca90ad5f579d631ebfe8bd8"
     },
     {
       "paper_id": "dev-2025-icml-02",
@@ -172,7 +172,7 @@
     },
     {
       "paper_id": "dev-2025-icml-03",
-      "record_sha256": "03a6e89ffaeeab205acb56870e59fb1fb83b80bd1f6f97b74f09adbd2cee81a1"
+      "record_sha256": "37eeb91b4f2f0e8e87a7daa8d7ced2815916c379d19ac66ea8a2000e324361c5"
     },
     {
       "paper_id": "dev-2025-icml-04",
@@ -180,43 +180,43 @@
     },
     {
       "paper_id": "dev-2025-icml-05",
-      "record_sha256": "7b082e230f3c391d599dcf11698c52088976ec1c9a76551e684ef1d91158e22a"
+      "record_sha256": "024fa3b884c7504b0c0df9b5c18aae0327d98ad78c6ead89504be112cb6d2a75"
     },
     {
       "paper_id": "dev-2025-icml-06",
-      "record_sha256": "f07ffd8ccec3cd071ddb8b7cc9d58817f2dd4c6726d5c40fafcfd06352bc4300"
+      "record_sha256": "84212c71e84e37090788f147aacf24ecd1617a0bd56b974fbeeacf456eecbe5a"
     },
     {
       "paper_id": "dev-2025-icml-07",
-      "record_sha256": "e30fad72894ce832d0b7d12336ff2b3b1c1eccc2640b75884dc4bf20aa27c1c7"
+      "record_sha256": "7ff1dc053787cc27bfc91af70b7243c5bb90fb52db712bf945d2d0f450ffdf87"
     },
     {
       "paper_id": "dev-2025-icml-08",
-      "record_sha256": "4468100dfeb938f8ac8d93c69dc9c5d622edf8c9766ef5681c81bf05d51c1906"
+      "record_sha256": "99598590e0d0ca5dd0d6353ebd6de043f20c5d10759c62b3106bc5d2f39de306"
     },
     {
       "paper_id": "dev-2025-ipsj-journal-01",
-      "record_sha256": "4ae007082172660eef28263fdea96646d14a9745786faa6c49b85dba7142fc12"
+      "record_sha256": "0e1158fa8d319c67777729b65fb54bd99de1d67d89a544758a335b287990f5d1"
     },
     {
       "paper_id": "dev-2025-ipsj-journal-02",
-      "record_sha256": "2edb0107a0b6070ada43e8d7cd73fcd2e462e34e128a9426212da771b6d9ed47"
+      "record_sha256": "de5f89ec4b4a25446dcac97a0ffc3b388b7633952005223fe6babd06d40afd5f"
     },
     {
       "paper_id": "dev-2025-ipsj-journal-03",
-      "record_sha256": "94790bc452060238a736ca8971c8c1c9be41739a1b71bb0b1c13eb03aa7118fc"
+      "record_sha256": "e76a1d5a41981e73d1b8a3cadcc69ffb468409a0ea75d08a3354baea8e13ce7e"
     },
     {
       "paper_id": "dev-2025-ipsj-journal-04",
-      "record_sha256": "ae085415f618b400fa6e7468ba6a95ca7ed9e3441ea62bc9c9f428960172fcbf"
+      "record_sha256": "72345e6d715c673aa8bdffa0ffb62186e22020d225c381dffc606c25e7034bdb"
     },
     {
       "paper_id": "dev-2025-nolta-special-01",
-      "record_sha256": "7ca955cebb418d87a1064526866ba846e8a8f89a8295ac7bb415a501cc39485e"
+      "record_sha256": "af85ff7f197f9ab8c1861bfe2c8a56440980c7ea740ae649ed630a358add7b10"
     },
     {
       "paper_id": "dev-2025-nolta-special-02",
-      "record_sha256": "34068ba30a193900d9d4abef26fcf09c68717bf8cca632977efcbf7cb81bee96"
+      "record_sha256": "3217b42a4c3083dcbb5c59d3325f3f069006125dc6ca4383a89a7341a573ed8a"
     },
     {
       "paper_id": "dev-2025-nolta-special-03",
@@ -224,75 +224,75 @@
     },
     {
       "paper_id": "dev-2025-nolta-special-04",
-      "record_sha256": "288965f20ff4dd4bed28dffabc8c9bf18247a76af3a5f08616aa1eb8e5d5456a"
+      "record_sha256": "ae657c4338a6d614d1ee1cc6e1a6b3f62acbc587c05a201855630d3fa2a13338"
     },
     {
       "paper_id": "dev-2025-sigcomm-01",
-      "record_sha256": "7e153016fec07c4d80744701279d4dd9a6ca3e131b10ead6794a6e03e5f2f86d"
+      "record_sha256": "dcf538db173dbc966886eaa8b5fad723943779028f4c37ba341da438636c877c"
     },
     {
       "paper_id": "dev-2025-sigcomm-02",
-      "record_sha256": "9148b167638202cd72999602ee3d26b230211e19a1425a8aa0896d1475eb0ff0"
+      "record_sha256": "fedee904e1d9d0d99de242e483672f82755febad371cc1fd2d24b7dec50d175d"
     },
     {
       "paper_id": "dev-2025-sigcomm-03",
-      "record_sha256": "4d99527da0f206a148c657c6c7aaa3ab09749c73750ddb477828800c6091f2f1"
+      "record_sha256": "9b63222bad7cfec435d10f6bf3040d477596a8a298d8c7b98476a1da9145eca0"
     },
     {
       "paper_id": "dev-2025-sigcomm-04",
-      "record_sha256": "b9a9eb8e9316eab50d6a278f2f6a7b94394838d4f8d3bfe8ea25e67cf3f174ca"
+      "record_sha256": "621f53a2afe82eba10a1107d93522f0a77d2f2ced3117d8ffd754b2fd5f8e1aa"
     },
     {
       "paper_id": "dev-2025-sigcomm-05",
-      "record_sha256": "47f9e4d573c6d9a4e2cba663a0f48963de5007fb359ce6f4e5f07c3707f4a255"
+      "record_sha256": "6f73e8145989613ab977130dcb6db40761cafac86e1381c49771ad25584bcef5"
     },
     {
       "paper_id": "dev-2025-sigcomm-06",
-      "record_sha256": "3908f0e7c00b969e67216a805883ee5e8bdffcb2f6a419db8f7e312b1c078ecf"
+      "record_sha256": "e5f64ed766a5cb0bfe0a9ff14571315bb0eda455e137ac5da6877001fa01e3f9"
     },
     {
       "paper_id": "dev-2025-sigcomm-07",
-      "record_sha256": "ef1a6ee072b4217988965dd2f5c50c58fc875cce97527965057bd613be71bb58"
+      "record_sha256": "da0145d6a0cb67ed784e89fdb3faf7421e323c8e557e9074fbe9619f97590110"
     },
     {
       "paper_id": "dev-2025-sigcomm-08",
-      "record_sha256": "12ae7af3d6929cefbebc1bb9dceebdbdc4d603c9a954441bccfc03de7dd15524"
+      "record_sha256": "8b41a0176c84459c3a92e595294410a90420e2c82e9bd3e9c27f0773ad6bcffe"
     },
     {
       "paper_id": "dev-2025-sigmod-01",
-      "record_sha256": "6eec75824a1ef7719c518ca36ff26305415551f824a8183178ba5cca0adbee51"
+      "record_sha256": "9c24f36e52f794f2cca953c9b52ee6ac5c42a0cc41c3ced00cc1efad3233eb95"
     },
     {
       "paper_id": "dev-2025-sigmod-02",
-      "record_sha256": "2a88912a79dd3527d03e10186c6a0152084ac702f4ddd256a9d787c0216bc3e9"
+      "record_sha256": "d467b95b6dd6aa481112d325289b0c61f680a70986a900a158e794fc97e525d4"
     },
     {
       "paper_id": "dev-2025-sigmod-03",
-      "record_sha256": "60901da8416e0139b4cb79b2a2d82ae41a58eed69c07715c7203fef299a9c11d"
+      "record_sha256": "ca1bc3cb6ffc49a5f543294a48a3eba8c6b99e522acf9075bb990612dac3ddae"
     },
     {
       "paper_id": "dev-2025-sigmod-04",
-      "record_sha256": "bd4643316929406ab77d361b184ee85763e204f41c3766dcd536d23e15a21db8"
+      "record_sha256": "2eff2d768630991387760f70eeb11b2426032f0ef289770f0b398a56826e20d5"
     },
     {
       "paper_id": "dev-2025-sigmod-05",
-      "record_sha256": "842f81fb7f04411d4815c2becbf6988bce5e9fcf816c8a32e4cef8e6e4008184"
+      "record_sha256": "9f268b5c54ff04869c3f1d22d74a09ec9fae72317d38e188cf83e5e31f5be32e"
     },
     {
       "paper_id": "dev-2025-sigmod-06",
-      "record_sha256": "2c3c13726a39524aad41879cf8978b959c5b5acd2b411ba0551be1ca1d286f59"
+      "record_sha256": "51e9b04ee057defeae84704b67eedc332dca2ea8bd0a929578153d98b2a45297"
     },
     {
       "paper_id": "dev-2025-sigmod-07",
-      "record_sha256": "6f0a65643d7f5a67ae4cc1637302654af42b6cf658e4267c6859fd1e883c475f"
+      "record_sha256": "7fffd65c331e8e40b5b00d71fa3995b246ea0ed3e5ba8094e9ce598b8cfcd7bd"
     },
     {
       "paper_id": "dev-2025-sigmod-08",
-      "record_sha256": "38c4094eb66432ce92d13aa24d8194bb502001ac44bd41077b3de111bdb74cbd"
+      "record_sha256": "fe237fe385d7e5f945bd8db5a1cff1d9cfafee44da1aca9e2fbdc3828b7af5f3"
     },
     {
       "paper_id": "dev-2025-stoc-01",
-      "record_sha256": "44498cee5ad52a1373a364ec90d8dfaf65784d128cbd3ad280dbb3f596296dc7"
+      "record_sha256": "5479f3c61f7200eebda90cca1fb8f4505da0130997afd5c79c51dba61c8b15da"
     },
     {
       "paper_id": "dev-2025-stoc-02",
@@ -304,7 +304,7 @@
     },
     {
       "paper_id": "dev-2025-stoc-04",
-      "record_sha256": "0cd05d4fcb72ba54e88febe20b6fcbea7ac5b7b64f5cc3620c85bccb8bb14bfb"
+      "record_sha256": "3430a45e0a1789fa4b5c2a7ffd3286ce46f23d1d8d84c4764ee4d63eedcc5264"
     },
     {
       "paper_id": "dev-2025-stoc-05",
@@ -312,15 +312,15 @@
     },
     {
       "paper_id": "dev-2025-stoc-06",
-      "record_sha256": "199ab9b79e4de3756a08a85561dfd429400a0f0b1ecb71957f04b4f6ea0376d9"
+      "record_sha256": "09b1b17b8efb8d33a739892e735f50359890c01a1a9cd774c5cd1314e3863f58"
     },
     {
       "paper_id": "dev-2025-stoc-07",
-      "record_sha256": "0dc6c3fed92b3116e0568389f24dc9ec09dbfe350a5a3034a19fe67b6c03a658"
+      "record_sha256": "d60aeba041541cc1f94dc643cef53a08d4e49699f60b4302f2de91ffd0cd3dc3"
     },
     {
       "paper_id": "dev-2025-stoc-08",
-      "record_sha256": "d9595aa8458591c9304562cdf63b8998add6800f82627d08be4bee381053187d"
+      "record_sha256": "25c23a608d7e310a653bc8a2b196dbeb95f5ec76b4376945d8caec82d779023a"
     }
   ]
 }

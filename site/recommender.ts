@@ -24,6 +24,7 @@ export const RERANKER_FEATURE_SCHEMA = [
   "language_match",
   "venue_kind",
 ] as const;
+export const RERANKER_ALGORITHM_REVISION = "l2-pairwise-logistic-reranker-v3-grouped-cv";
 type RerankerFeatureName = (typeof RERANKER_FEATURE_SCHEMA)[number];
 type RerankerFeatures = Record<RerankerFeatureName, number>;
 
@@ -62,8 +63,8 @@ interface ConferenceRecord {
   tags?: string[];
   papers?: string[];
   acronym?: string;
-  scope?: string;
-  official_scope?: string;
+  scope?: string | string[];
+  official_scope?: string | string[];
   paper_abstracts?: string[];
   keywords?: string[];
   rank?: Record<string, string>;
@@ -117,6 +118,7 @@ type FieldName =
   | "paper_abstract"
   | "keywords";
 type FieldScores = Record<FieldName, number>;
+type FieldRanks = Partial<Record<FieldName, number>>;
 interface LineScore {
   score: number;
   venueHit: boolean;
@@ -173,6 +175,9 @@ interface RecommendationResult {
     confidence: Confidence;
     label: string;
     lexicalScore: number;
+    fieldScores: FieldScores;
+    fieldRanks: FieldRanks;
+    fieldRrf: number;
     semanticScore: number;
     lexicalRank: number | null;
     semanticRank: number | null;
@@ -202,14 +207,52 @@ interface RecommendationResult {
 
 interface LinearRerankerModel {
   version: 1;
+  algorithm_revision: string;
   feature_schema: string[];
   intercept: number;
   weights: Record<string, number>;
   blend: number;
   confidence_thresholds: { sufficient: number; ambiguous: number };
   /** 精度保証が取れるまで sufficient 表示は無効 (UI は 候補/情報不足 の2段階)。 */
-  confidence_policy?: { sufficient_enabled: boolean };
+  confidence_policy: { sufficient_enabled: boolean };
   calibration?: { method: "platt"; slope: number; intercept: number };
+}
+
+export function isValidRerankerModel(value: unknown): value is LinearRerankerModel {
+  if (!value || typeof value !== "object") return false;
+  const model = value as Partial<LinearRerankerModel>;
+  const thresholds = model.confidence_thresholds;
+  const calibration = model.calibration;
+  return Boolean(
+    model.version === 1 &&
+      model.algorithm_revision === RERANKER_ALGORITHM_REVISION &&
+      Array.isArray(model.feature_schema) &&
+      model.feature_schema.join("\0") === RERANKER_FEATURE_SCHEMA.join("\0") &&
+      Number.isFinite(model.intercept) &&
+      model.weights !== null &&
+      typeof model.weights === "object" &&
+      Object.keys(model.weights).join("\0") === RERANKER_FEATURE_SCHEMA.join("\0") &&
+      Object.values(model.weights).every(Number.isFinite) &&
+      Number.isFinite(model.blend) &&
+      model.blend! >= 0 &&
+      model.blend! <= 1 &&
+      thresholds !== null &&
+      typeof thresholds === "object" &&
+      Number.isFinite(thresholds.sufficient) &&
+      Number.isFinite(thresholds.ambiguous) &&
+      thresholds.ambiguous >= 0 &&
+      thresholds.sufficient <= 1 &&
+      thresholds.ambiguous <= thresholds.sufficient &&
+      model.confidence_policy !== null &&
+      typeof model.confidence_policy === "object" &&
+      typeof model.confidence_policy.sufficient_enabled === "boolean" &&
+      (calibration === undefined ||
+        (calibration !== null &&
+          typeof calibration === "object" &&
+          calibration.method === "platt" &&
+          Number.isFinite(calibration.slope) &&
+          Number.isFinite(calibration.intercept))),
+  );
 }
 interface Availability {
   kind: string;
@@ -302,8 +345,8 @@ function normalizeConference(value: unknown): ConferenceRecord | null {
     tags: normalizedStrings(value.tags),
     papers: normalizedStrings(value.papers),
     acronym: typeof value.acronym === "string" ? value.acronym : undefined,
-    scope: typeof value.scope === "string" ? value.scope : undefined,
-    official_scope: typeof value.official_scope === "string" ? value.official_scope : undefined,
+    scope: normalizedStrings(value.scope),
+    official_scope: normalizedStrings(value.official_scope),
     paper_abstracts: normalizedStrings(value.paper_abstracts),
     keywords: normalizedStrings(value.keywords),
     rank,
@@ -362,6 +405,7 @@ const Recommender = (() => {
       "mpi",
       "interconnect",
       "cluster",
+      "llm inference",
       "ハイパフォーマンス",
       "スーパーコンピュータ",
       "並列",
@@ -941,6 +985,7 @@ const Recommender = (() => {
     paper_abstract: 1,
     keywords: 1.2,
   };
+  const FIELD_NAMES = Object.keys(FIELD_WEIGHTS) as FieldName[];
 
   function lexicalTerms(value: unknown): string[] {
     return [
@@ -1020,7 +1065,9 @@ const Recommender = (() => {
       // 「会議名」から「会議の実際の採択領域」に広げる。
       papers: (c.papers || []).map((paper) => normKey(paper)),
       acronym: normalizedStrings(c.acronym).map((value) => normKey(value)),
-      scope: normalizedStrings(c.scope ?? c.official_scope).map((value) => normKey(value)),
+      scope: [
+        ...new Set([...normalizedStrings(c.scope), ...normalizedStrings(c.official_scope)]),
+      ].map((value) => normKey(value)),
       categories: normalizedStrings(c.categories).map((value) => normKey(value)),
       paperAbstracts: normalizedStrings(c.paper_abstracts).map((value) => normKey(value)),
       keywords: normalizedStrings(c.keywords).map((value) => normKey(value)),
@@ -1592,25 +1639,7 @@ const Recommender = (() => {
   let rerankerModel: LinearRerankerModel | null = null;
 
   function setReranker(value: unknown) {
-    if (!value || typeof value !== "object") {
-      rerankerModel = null;
-      return;
-    }
-    const model = value as Partial<LinearRerankerModel>;
-    rerankerModel =
-      model.version === 1 &&
-      Array.isArray(model.feature_schema) &&
-      model.feature_schema.join("\0") === RERANKER_FEATURE_SCHEMA.join("\0") &&
-      Number.isFinite(model.intercept) &&
-      model.weights !== null &&
-      typeof model.weights === "object" &&
-      Object.keys(model.weights).join("\0") === RERANKER_FEATURE_SCHEMA.join("\0") &&
-      Object.values(model.weights).every(Number.isFinite) &&
-      Number.isFinite(model.blend) &&
-      model.confidence_thresholds !== null &&
-      typeof model.confidence_thresholds === "object"
-        ? (model as LinearRerankerModel)
-        : null;
+    rerankerModel = isValidRerankerModel(value) ? value : null;
   }
 
   function rerankerFeatures(
@@ -1701,7 +1730,7 @@ const Recommender = (() => {
     const safeNow = Number.isFinite(now) ? now : Date.now();
     rows.map(normalizeCandidateLike).forEach((row) => {
       if (!row) return;
-      const key = normKey(row?.conf?.key);
+      const key = normKey(row.conf.key);
       if (key) {
         const group = groups[key] || [];
         groups[key] = group;
@@ -1734,14 +1763,64 @@ const Recommender = (() => {
         boosted,
       };
     });
+    const requestedTopN = opts.topN;
+    const topN = Number.isInteger(requestedTopN) && (requestedTopN ?? 0) > 0 ? requestedTopN! : 200;
+    const k = 60;
+    const fieldRanks: Record<string, FieldRanks> = Object.fromEntries(
+      entries.map((entry) => [entry.key, {}]),
+    );
+    const fieldRrf: Record<string, number> = Object.fromEntries(
+      entries.map((entry) => [entry.key, 0]),
+    );
+    let activeWeight = 0;
+    if (opts.fieldedLexical) {
+      FIELD_NAMES.forEach((field) => {
+        const ranked = entries
+          .filter((entry) => entry.match.fieldScores[field] > 0)
+          .sort(
+            (a, b) =>
+              b.match.fieldScores[field] - a.match.fieldScores[field] || a.key.localeCompare(b.key),
+          )
+          .slice(0, topN);
+        if (ranked.length) activeWeight += FIELD_WEIGHTS[field];
+        ranked.forEach((entry, index) => {
+          const rank = index + 1;
+          fieldRanks[entry.key][field] = rank;
+          fieldRrf[entry.key] += FIELD_WEIGHTS[field] / (k + rank);
+        });
+      });
+      entries.forEach((entry) => {
+        const fused = activeWeight
+          ? Math.round(Math.min(100, (fieldRrf[entry.key] * 100 * (k + 1)) / activeWeight))
+          : 0;
+        entry.lexicalScore = Math.min(
+          100,
+          Math.max(fused, entry.match.venueHit ? entry.match.venueScore : 0) +
+            (entry.boosted ? 10 : 0),
+        );
+      });
+    }
     const lexical = entries
       .slice()
-      .sort((a, b) => b.lexicalScore - a.lexicalScore || a.key.localeCompare(b.key));
+      .sort(
+        (a, b) =>
+          (opts.fieldedLexical ? fieldRrf[b.key] - fieldRrf[a.key] : 0) ||
+          b.lexicalScore - a.lexicalScore ||
+          a.key.localeCompare(b.key),
+      );
+    const categoryRank = (entry: RecommendationEntry) => {
+      const rank = opts.venueCats?.findIndex((category) => entry.row.cats.includes(category)) ?? -1;
+      return rank < 0 ? Number.MAX_SAFE_INTEGER : rank;
+    };
     const semantic = entries
       .filter((entry) => entry.semantic > 0)
-      .sort((a, b) => b.semantic - a.semantic || a.key.localeCompare(b.key));
-    const requestedTopN = opts.topN;
-    const topN = Number.isInteger(requestedTopN) && (requestedTopN ?? 0) > 0 ? requestedTopN! : 100;
+      .sort(
+        (a, b) =>
+          b.semantic - a.semantic ||
+          categoryRank(a) - categoryRank(b) ||
+          b.lexicalScore - a.lexicalScore ||
+          a.key.localeCompare(b.key),
+      );
     const lexicalRanks: Record<string, number> = {};
     const semanticRanks: Record<string, number> = {};
     lexical
@@ -1789,19 +1868,23 @@ const Recommender = (() => {
       inputTokenCount,
       calibrated: false,
     };
+    const entropyFactor = Math.max(0, 1 - top5Entropy);
+    const tokenRichness = Math.min(1, inputTokenCount / 20);
     const confidenceScore = Number(
       Math.max(
         0,
         Math.min(
           1,
-          (topEvidence / 100) * 0.45 +
-            Math.min(1, queryConfidence.margin / 50) * 0.25 +
-            queryConfidence.candidateCoverage * 0.2 +
-            queryConfidence.lexicalSemanticAgreement * 0.1,
+          (topEvidence / 100) * 0.4 +
+            Math.min(1, queryConfidence.margin / 50) * 0.2 +
+            queryConfidence.candidateCoverage * 0.15 +
+            queryConfidence.lexicalSemanticAgreement * 0.1 +
+            entropyFactor * 0.1 +
+            tokenRichness * 0.05,
         ),
       ).toFixed(6),
     );
-    const k = 60;
+    const blend = Math.max(0, Math.min(1, rerankerModel?.blend ?? 0));
     return keys
       .map((key): RecommendationResult | null => {
         const entry = entries.find((item) => item.key === key);
@@ -1823,15 +1906,17 @@ const Recommender = (() => {
         const probability = rerankerProbability(features);
         const thresholds = rerankerModel?.confidence_thresholds;
         // confidence_policy.sufficient_enabled が false の間は sufficient を出さない。
-        const sufficientEnabled = rerankerModel?.confidence_policy?.sufficient_enabled !== false;
+        const sufficientEnabled = rerankerModel?.confidence_policy.sufficient_enabled === true;
+        const heuristicConfidence = confidenceState(entry.evidenceStrength, margin);
         const confidence = thresholds
           ? probability >= thresholds.sufficient && sufficientEnabled
             ? "sufficient"
             : probability >= thresholds.ambiguous
               ? "ambiguous"
               : "insufficient"
-          : confidenceState(entry.evidenceStrength, margin);
-        const blend = Math.max(0, Math.min(1, rerankerModel?.blend ?? 0));
+          : heuristicConfidence === "sufficient"
+            ? "ambiguous"
+            : heuristicConfidence;
         const rankingScore = rerankerModel
           ? Math.round(score * (1 - blend) + probability * 100 * blend)
           : score;
@@ -1850,6 +1935,9 @@ const Recommender = (() => {
             confidence,
             label: fitLabel(confidence),
             lexicalScore: entry.lexicalScore,
+            fieldScores: entry.match.fieldScores,
+            fieldRanks: fieldRanks[key],
+            fieldRrf: Number(fieldRrf[key].toFixed(8)),
             semanticScore: entry.semantic,
             lexicalRank,
             semanticRank,
@@ -1867,7 +1955,11 @@ const Recommender = (() => {
         };
       })
       .filter((result): result is RecommendationResult => result !== null)
-      .sort((a, b) => b.fit.score - a.fit.score || a.venueKey.localeCompare(b.venueKey));
+      .sort((a, b) => {
+        const rawA = a.fit.baseScore * (1 - blend) + a.fit.probability * 100 * blend;
+        const rawB = b.fit.baseScore * (1 - blend) + b.fit.probability * 100 * blend;
+        return rawB - rawA || b.fit.score - a.fit.score || a.venueKey.localeCompare(b.venueKey);
+      });
   }
 
   /* 掲載先タグ（例: "IEEE RTSS"）に一致する会議のリストを返す。
@@ -2153,6 +2245,7 @@ const Recommender = (() => {
     リアルタイム: "real-time realtime",
     組み込み: "embedded",
     カーネル: "kernel",
+    カーネル拡張: "ebpf kernel tracing",
     オペレーティングシステム: "operating system",
     仮想化: "virtualization",
     スケジューリング: "scheduling",
@@ -2160,6 +2253,7 @@ const Recommender = (() => {
     ミドルウェア: "middleware",
     ストレージ: "storage",
     メモリ: "memory",
+    メモリアーキテクチャ: "cxl compute express link interconnect",
     キャッシュ: "cache",
     コンパイラ: "compiler",
     プロセッサ: "processor",
@@ -2170,6 +2264,7 @@ const Recommender = (() => {
     サーバレス: "serverless",
     コンテナ: "container",
     マイクロサービス: "microservice",
+    高速通信: "rdma remote direct memory access infiniband",
     // ネットワーク
     ネットワーク: "network networking",
     通信: "communication",
@@ -2190,6 +2285,10 @@ const Recommender = (() => {
     ニューラルネットワーク: "neural network",
     ニューラル: "neural",
     大規模言語モデル: "large language model",
+    LLM推論: "large language model llm inference kv cache",
+    検索拡張生成: "retrieval augmented generation rag",
+    テンソル並列: "tensor parallelism pipeline distributed training",
+    分散学習: "distributed training tensor parallelism pipeline",
     生成: "generative generation",
     推論: "inference",
     異常検知: "anomaly detection",
@@ -2211,6 +2310,8 @@ const Recommender = (() => {
     // セキュリティ
     セキュリティ: "security",
     プライバシー: "privacy",
+    機密計算: "confidential computing tee secure enclave",
+    信頼実行環境: "confidential computing tee secure enclave",
     暗号: "cryptography encryption",
     認証: "authentication",
     攻撃: "attack",
@@ -2281,14 +2382,34 @@ const Recommender = (() => {
   }
 
   /* 論文テキスト（全行連結）を埋め込み用の単一クエリ文にする。
-   * 先頭行は「自分の投稿予定論文」とみなし 2 回含めて強調する
-   * （参考論文のノイズに自分の論文が埋没しないように）。
+   * 先頭行は「自分の投稿予定論文」とみなし強調する（参考論文のノイズに埋没させない）。
+   * 短い入力（タイトル+キーワード）は従来の全体2回反復を維持しつつ、
+   * 長いアブストラクト（512トークン超）時はタイトル・キーワードを優先強調し
+   * 全体を約1800文字（~350トークン）以内に収めてモデル側の切り捨て・前方偏重を防ぐ。
    */
   function queryText(lines: readonly PaperRecord[]): string {
+    if (!lines?.length) return "";
+    const p0 = lines[0];
+    const p0TitleKw = [p0?.title, p0?.keywords]
+      .filter(Boolean)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+    const p0Full = paperText(p0).replace(/\s+/g, " ").trim();
     const all = lines.map((paper) => paperText(paper).replace(/\s+/g, " ").trim());
     const joined = all.filter(Boolean).join(" ").trim();
-    const primary = all[0] ? all[0] : "";
-    return (primary ? `${primary} ` : "") + joined;
+    if (joined.length <= 1800) {
+      const primary = p0Full;
+      return (primary ? `${primary} ` : "") + joined;
+    }
+    const emphasis = p0TitleKw || p0Full.slice(0, 240);
+    const budgetRemaining = Math.max(0, 1800 - (emphasis ? emphasis.length + 1 : 0));
+    let truncatedJoined = joined.slice(0, budgetRemaining).trim();
+    const lastSpace = truncatedJoined.lastIndexOf(" ");
+    if (lastSpace > budgetRemaining * 0.8) {
+      truncatedJoined = truncatedJoined.slice(0, lastSpace).trim();
+    }
+    return (emphasis ? `${emphasis} ` : "") + truncatedJoined;
   }
 
   function safeExternalUrl(value: unknown): string {
@@ -2316,6 +2437,7 @@ const Recommender = (() => {
     breakdown: breakdown,
     venueRecommendations: venueRecommendations,
     setReranker: setReranker,
+    RERANKER_ALGORITHM_REVISION: RERANKER_ALGORITHM_REVISION,
     RERANKER_FEATURE_SCHEMA: RERANKER_FEATURE_SCHEMA,
     confidenceState: confidenceState,
     fitLabel: fitLabel,

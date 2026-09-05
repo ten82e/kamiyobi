@@ -89,8 +89,7 @@
       "title": "A5/3 make or break: A massively parallel FPGA architecture for exhaustive key search",
       "primary_venue": "ches",
       "acceptable_venues": [
-        "ches",
-        "ccs"
+        "ches"
       ],
       "language": "en",
       "domains": [
@@ -105,11 +104,6 @@
         {
           "venue": "ches",
           "reason": "published primary venue in the cited source",
-          "source": "https://ches.iacr.org/2025/acceptedpapers.php"
-        },
-        {
-          "venue": "ccs",
-          "reason": "curated acceptable alternate venue for the benchmark label",
           "source": "https://ches.iacr.org/2025/acceptedpapers.php"
         }
       ]
@@ -295,8 +289,7 @@
       "title": "A Natural Actor-Critic Framework for Zero-Sum Markov Games",
       "primary_venue": "icml",
       "acceptable_venues": [
-        "icml",
-        "neurips"
+        "icml"
       ],
       "language": "en",
       "domains": [
@@ -311,11 +304,6 @@
         {
           "venue": "icml",
           "reason": "published primary venue in the cited source",
-          "source": "https://proceedings.mlr.press/v267/"
-        },
-        {
-          "venue": "neurips",
-          "reason": "curated acceptable alternate venue for the benchmark label",
           "source": "https://proceedings.mlr.press/v267/"
         }
       ]
@@ -501,8 +489,7 @@
       "title": "MixNet: A Runtime Reconfigurable Optical-Electrical Fabric for Distributed Mixture-of-Experts Training",
       "primary_venue": "sigcomm",
       "acceptable_venues": [
-        "sigcomm",
-        "nsdi"
+        "sigcomm"
       ],
       "language": "en",
       "domains": [
@@ -517,11 +504,6 @@
         {
           "venue": "sigcomm",
           "reason": "published primary venue in the cited source",
-          "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
-        },
-        {
-          "venue": "nsdi",
-          "reason": "curated acceptable alternate venue for the benchmark label",
           "source": "https://conferences.sigcomm.org/sigcomm/2025/accepted-papers/"
         }
       ]
@@ -707,8 +689,7 @@
       "title": "Low-Latency Transaction Scheduling via Userspace Interrupts: Why Wait or Yield When You Can Preempt?",
       "primary_venue": "sigmod",
       "acceptable_venues": [
-        "sigmod",
-        "vldb"
+        "sigmod"
       ],
       "language": "en",
       "domains": [
@@ -723,11 +704,6 @@
         {
           "venue": "sigmod",
           "reason": "published primary venue in the cited source",
-          "source": "https://2025.sigmod.org/sigmod_papers.shtml"
-        },
-        {
-          "venue": "vldb",
-          "reason": "curated acceptable alternate venue for the benchmark label",
           "source": "https://2025.sigmod.org/sigmod_papers.shtml"
         }
       ]
@@ -913,8 +889,7 @@
       "title": "Deterministic Image-to-Image Translation via Denoising Brownian Bridge Models with Dual Approximators",
       "primary_venue": "cvpr",
       "acceptable_venues": [
-        "cvpr",
-        "iccv"
+        "cvpr"
       ],
       "language": "en",
       "domains": [
@@ -932,11 +907,6 @@
         {
           "venue": "cvpr",
           "reason": "published primary venue in the cited source",
-          "source": "https://openaccess.thecvf.com/content/CVPR2025/papers/Xiao_Deterministic_Image-to-Image_Translation_via_Denoising_Brownian_Bridge_Models_with_Dual_CVPR_2025_paper.pdf"
-        },
-        {
-          "venue": "iccv",
-          "reason": "curated acceptable alternate venue for the benchmark label",
           "source": "https://openaccess.thecvf.com/content/CVPR2025/papers/Xiao_Deterministic_Image-to-Image_Translation_via_Denoising_Brownian_Bridge_Models_with_Dual_CVPR_2025_paper.pdf"
         }
       ]
@@ -1129,8 +1099,7 @@
       "title": "CompAct: Designing Interconnected Compliant Mechanisms with Targeted Actuation Transmissions.",
       "primary_venue": "chi",
       "acceptable_venues": [
-        "chi",
-        "uist"
+        "chi"
       ],
       "language": "en",
       "domains": [
@@ -1145,11 +1114,6 @@
         {
           "venue": "chi",
           "reason": "published primary venue in the cited source",
-          "source": "https://dblp.org/db/conf/chi/chi2025.xml"
-        },
-        {
-          "venue": "uist",
-          "reason": "curated acceptable alternate venue for the benchmark label",
           "source": "https://dblp.org/db/conf/chi/chi2025.xml"
         }
       ]
@@ -1335,8 +1299,7 @@
       "title": "Explicit Folded Reed-Solomon and Multiplicity Codes Achieve Relaxed Generalized Singleton Bounds.",
       "primary_venue": "stoc",
       "acceptable_venues": [
-        "stoc",
-        "focs"
+        "stoc"
       ],
       "language": "en",
       "domains": [
@@ -1351,11 +1314,6 @@
         {
           "venue": "stoc",
           "reason": "published primary venue in the cited source",
-          "source": "https://dblp.org/db/conf/stoc/stoc2025.xml"
-        },
-        {
-          "venue": "focs",
-          "reason": "curated acceptable alternate venue for the benchmark label",
           "source": "https://dblp.org/db/conf/stoc/stoc2025.xml"
         }
       ]
@@ -1541,8 +1499,7 @@
       "title": "Virtualization So Light, it Floats! Accelerating Floating Point Virtualization",
       "primary_venue": "hpdc",
       "acceptable_venues": [
-        "hpdc",
-        "ics"
+        "hpdc"
       ],
       "language": "en",
       "domains": [
@@ -1558,11 +1515,6 @@
         {
           "venue": "hpdc",
           "reason": "published primary venue in the cited source",
-          "source": "https://hpdc.sci.utah.edu/2025/program.html"
-        },
-        {
-          "venue": "ics",
-          "reason": "curated acceptable alternate venue for the benchmark label",
           "source": "https://hpdc.sci.utah.edu/2025/program.html"
         }
       ]
@@ -1859,8 +1811,7 @@
       "title": "Enhancing Vision Transformer Explainability Using Artificial Astrocytes",
       "primary_venue": "cvpr",
       "acceptable_venues": [
-        "cvpr",
-        "iccv"
+        "cvpr"
       ],
       "language": "en",
       "domains": [
@@ -1876,11 +1827,6 @@
         {
           "venue": "cvpr",
           "reason": "published primary venue in the cited source",
-          "source": "https://openaccess.thecvf.com/CVPR2025_workshops/LXCV"
-        },
-        {
-          "venue": "iccv",
-          "reason": "curated acceptable alternate venue for the benchmark label",
           "source": "https://openaccess.thecvf.com/CVPR2025_workshops/LXCV"
         }
       ]
@@ -1969,8 +1915,7 @@
       "title": "Brainmorphic computing: Paradigm and hardware",
       "primary_venue": "ieice-nolta-recent-progress-special",
       "acceptable_venues": [
-        "ieice-nolta-recent-progress-special",
-        "ieice-nolta"
+        "ieice-nolta-recent-progress-special"
       ],
       "language": "en",
       "domains": [
@@ -1986,11 +1931,6 @@
         {
           "venue": "ieice-nolta-recent-progress-special",
           "reason": "published primary venue in the cited source",
-          "source": "https://www.jstage.jst.go.jp/browse/nolta/16/3/_contents/-char/en"
-        },
-        {
-          "venue": "ieice-nolta",
-          "reason": "curated acceptable alternate venue for the benchmark label",
           "source": "https://www.jstage.jst.go.jp/browse/nolta/16/3/_contents/-char/en"
         }
       ]
@@ -2079,8 +2019,7 @@
       "title": "チャルディーニの法則を用いた標的型メールがAIに及ぼす影響に関する調査",
       "primary_venue": "jip",
       "acceptable_venues": [
-        "jip",
-        "ieice-trans-inf"
+        "jip"
       ],
       "language": "ja",
       "domains": [
@@ -2097,11 +2036,6 @@
         {
           "venue": "jip",
           "reason": "published primary venue in the cited source",
-          "source": "https://ipsj.ixsq.nii.ac.jp/records/2006313"
-        },
-        {
-          "venue": "ieice-trans-inf",
-          "reason": "curated acceptable alternate venue for the benchmark label",
           "source": "https://ipsj.ixsq.nii.ac.jp/records/2006313"
         }
       ]

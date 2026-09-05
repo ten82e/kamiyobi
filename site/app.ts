@@ -66,6 +66,7 @@ interface DrawerRow {
   localDate?: string;
   t: number;
   tLast: number;
+  dl?: DeadlineRecord;
 }
 
 interface SourceRecord {
@@ -105,15 +106,23 @@ type VectorMap = Record<string, Vector>;
 interface EmbeddingModelMeta {
   model: string;
   revision: string;
+  dim: number;
   probe: { text: string; vector: Vector };
 }
 
 interface EmbeddingSet {
+  model: string;
+  dim: number;
   embeddings: VectorMap;
 }
 
 interface EmbeddingBundle extends EmbeddingSet {
-  manifest: { models: Record<string, EmbeddingModelMeta> };
+  manifest: {
+    schema: number;
+    profile_hash: string;
+    keys: string[];
+    models: Record<string, EmbeddingModelMeta>;
+  };
   multi?: EmbeddingSet;
   paperVecs?: Record<string, Vector[]>;
 }
@@ -292,51 +301,93 @@ function vectorMap(value: unknown): VectorMap | null {
 function embeddingSet(value: unknown): EmbeddingSet | null {
   if (!isRecord(value)) return null;
   const embeddings = vectorMap(value.embeddings);
-  return embeddings ? { embeddings } : null;
+  const model = value.model;
+  const dim = value.dim;
+  if (
+    !embeddings ||
+    typeof model !== "string" ||
+    typeof dim !== "number" ||
+    !Number.isInteger(dim) ||
+    dim <= 0
+  )
+    return null;
+  return { model, dim, embeddings };
 }
 
 function embeddingModelMeta(value: unknown): EmbeddingModelMeta | null {
   if (!isRecord(value) || !isRecord(value.probe)) return null;
   const probeVector = vector(value.probe.vector);
+  const model = value.model;
+  const revision = value.revision;
+  const dim = value.dim;
+  const probeText = value.probe.text;
   if (
-    typeof value.model !== "string" ||
-    typeof value.revision !== "string" ||
-    typeof value.probe.text !== "string" ||
+    typeof model !== "string" ||
+    typeof revision !== "string" ||
+    typeof dim !== "number" ||
+    !Number.isInteger(dim) ||
+    dim <= 0 ||
+    typeof probeText !== "string" ||
     !probeVector
   ) {
     return null;
   }
   return {
-    model: value.model,
-    revision: value.revision,
-    probe: { text: value.probe.text, vector: probeVector },
+    model,
+    revision,
+    dim,
+    probe: { text: probeText, vector: probeVector },
   };
 }
 
 function embeddingBundle(value: unknown): EmbeddingBundle | null {
+  if (!isRecord(value)) return null;
   const base = embeddingSet(value);
-  if (!base || !isRecord(value) || !isRecord(value.manifest) || !isRecord(value.manifest.models)) {
+  const manifest = isRecord(value.manifest) ? value.manifest : null;
+  const schema = manifest?.schema;
+  const profileHash = manifest?.profile_hash;
+  const keys = manifest?.keys;
+  if (
+    !base ||
+    schema !== 1 ||
+    typeof profileHash !== "string" ||
+    !Array.isArray(keys) ||
+    !keys.every((key): key is string => typeof key === "string") ||
+    !isRecord(manifest?.models)
+  ) {
     return null;
   }
   const models: Record<string, EmbeddingModelMeta> = {};
-  for (const [language, item] of Object.entries(value.manifest.models)) {
+  for (const [language, item] of Object.entries(manifest.models)) {
     const model = embeddingModelMeta(item);
     if (!model) return null;
     models[language] = model;
   }
-  const multi = value.multi === undefined ? undefined : embeddingSet(value.multi);
-  if (value.multi !== undefined && !multi) return null;
+  const multiValue = value.multi;
+  const multi = multiValue === undefined ? undefined : embeddingSet(multiValue);
+  if (multiValue !== undefined && !multi) return null;
   const paperVecs: Record<string, Vector[]> = {};
-  if (value.paperVecs !== undefined) {
-    if (!isRecord(value.paperVecs)) return null;
-    for (const [key, item] of Object.entries(value.paperVecs)) {
+  const rawPaperVecs = value.paperVecs;
+  if (rawPaperVecs !== undefined) {
+    if (!isRecord(rawPaperVecs)) return null;
+    for (const [key, item] of Object.entries(rawPaperVecs)) {
       if (!Array.isArray(item)) return null;
       const vectors = item.map(vector);
       if (vectors.some((entry) => entry === null)) return null;
       paperVecs[key] = vectors.filter((entry): entry is Vector => entry !== null);
     }
   }
-  return { ...base, manifest: { models }, multi: multi ?? undefined, paperVecs };
+  return {
+    ...base,
+    manifest: {
+      schema,
+      profile_hash: profileHash,
+      keys: [...keys],
+      models,
+    },
+    multi: multi ?? undefined,
+    paperVecs,
+  };
 }
 
 function transformersModule(value: unknown): value is TransformersModule {
@@ -770,6 +821,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       esc(r.ed.date_text || r.ed.event_start || "未定") +
       "</p>" +
       "</div>";
+    html += verificationSummary(r.dl);
 
     $("drawerBody").innerHTML = html;
     const closeBtn = $("drawerClose");
@@ -1569,6 +1621,48 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return Recommender.safeExternalUrl(value);
   }
 
+  function verificationSummary(dl?: DeadlineRecord) {
+    const verification = dl?.verification;
+    if (!verification) return "";
+    const sourceLabels: Record<string, string> = {
+      "official-cfp": "公式CFP",
+      publisher: "出版社ページ",
+      "official-homepage": "公式ホームページ",
+      aggregator: "集約サイト",
+    };
+    const statusLabels: Record<string, string> = {
+      verified: "確認済み",
+      pending: "再確認待ち",
+      changed: "変更を検出",
+      retryable: "再試行待ち",
+      "source-unreachable": "公式ページ取得不能",
+      "parser-failed": "複数候補のため要確認",
+      "manual-required": "複数候補のため要確認",
+    };
+    const evidence = (dl.evidence ?? []).find((item) => item.verifiedFields);
+    const fields = Array.isArray(evidence?.verifiedFields)
+      ? evidence.verifiedFields.join("・")
+      : verification.selector_or_field || "日付・時刻・タイムゾーン";
+    const verifiedAt = verification.last_verified_at
+      ? new Date(verification.last_verified_at).toLocaleString("ja-JP")
+      : "未確認";
+    return (
+      '<div class="verification-summary"><b>公式確認</b> ' +
+      esc(verifiedAt) +
+      "<br><b>確認元</b> " +
+      esc(sourceLabels[verification.source_class || ""] || verification.source_class || "公式") +
+      "<br><b>確認範囲</b> " +
+      esc(fields) +
+      "<br><b>状態</b> " +
+      esc(statusLabels[verification.status || ""] || verification.status || "未確認") +
+      (verification.next_check_at
+        ? "<br><b>次回確認予定</b> " +
+          esc(new Date(verification.next_check_at).toLocaleString("ja-JP"))
+        : "") +
+      "</div>"
+    );
+  }
+
   function makeDetailRow(r: AppRow) {
     const tr = document.createElement("tr");
     tr.className = "detail-row";
@@ -1694,45 +1788,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       }
       html += "</div>";
     }
-    const verification = r.dl.verification;
-    if (verification) {
-      const sourceLabels: Record<string, string> = {
-        "official-cfp": "公式CFP",
-        publisher: "出版社ページ",
-        "official-homepage": "公式ホームページ",
-        aggregator: "集約サイト",
-      };
-      const statusLabels: Record<string, string> = {
-        verified: "確認済み",
-        pending: "再確認待ち",
-        changed: "変更を検出",
-        retryable: "再試行待ち",
-        "source-unreachable": "公式ページ取得不能",
-        "parser-failed": "複数候補のため要確認",
-        "manual-required": "複数候補のため要確認",
-      };
-      const evidence = (r.dl.evidence ?? []).find((item) => item.verifiedFields);
-      const fields = Array.isArray(evidence?.verifiedFields)
-        ? evidence.verifiedFields.join("・")
-        : verification.selector_or_field || "日付・時刻・タイムゾーン";
-      const verifiedAt = verification.last_verified_at
-        ? new Date(verification.last_verified_at).toLocaleString("ja-JP")
-        : "未確認";
-      html +=
-        '<div class="verification-summary"><b>公式確認</b> ' +
-        esc(verifiedAt) +
-        "<br><b>確認元</b> " +
-        esc(sourceLabels[verification.source_class || ""] || verification.source_class || "公式") +
-        "<br><b>確認範囲</b> " +
-        esc(fields) +
-        "<br><b>状態</b> " +
-        esc(statusLabels[verification.status || ""] || verification.status || "未確認") +
-        (verification.next_check_at
-          ? "<br><b>次回確認予定</b> " +
-            esc(new Date(verification.next_check_at).toLocaleString("ja-JP"))
-          : "") +
-        "</div>";
-    }
+    html += verificationSummary(r.dl);
     html += "</div>";
     td.innerHTML = html;
     tr.appendChild(td);

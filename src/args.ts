@@ -17,3 +17,8 @@ export function booleanValue(value: unknown, fallback = true): boolean {
 export function stringValue(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
+
+export function positiveIntegerValue(raw: string | undefined, fallback: number): number {
+  const value = Number(raw);
+  return Number.isInteger(value) && value > 0 ? value : fallback;
+}

@@ -2,8 +2,7 @@
  * Output generation: JSON / CSV / Markdown / llms.txt / HTML.
  *
  * Everything under public/ is produced here.  Rendering is a pure function of
- * (conferences, config, now) so that two runs with the same input are byte
- * identical.  Ported from scripts/build.py (kamiyobi).
+ * (conferences, config, now) so that two runs with the same input are byte-identical.
  */
 
 import { execFileSync } from "node:child_process";
@@ -22,6 +21,7 @@ import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { recommendationAxes } from "../site/recommendation-core.ts";
+import { isValidRerankerModel } from "../site/recommender.ts";
 // 代表採択論文タイトル（会議のセマンティック/語彙プロファイル強化）。
 // データパイプラインで conferences に papers として載せ、ブラウザの語彙一致と
 // IDF（buildNameIdf）の両方に使えるようにする。
@@ -79,6 +79,29 @@ export const SITE_RUNTIME_FILES = [
   "publish.js",
   "app.js",
 ] as const;
+
+const MANAGED_OUTPUT_FILES = [
+  "index.html",
+  "data.json",
+  "health.json",
+  "health.md",
+  "publish.json",
+  "catalog.json",
+  "recommendation-index.json",
+  "data.csv",
+  "upcoming.md",
+  "llms.txt",
+  ".nojekyll",
+  "embeddings.json",
+  ...SITE_RUNTIME_FILES,
+] as const;
+
+function clearManagedOutput(outdir: string, removeEmbeddings: boolean): void {
+  for (const name of MANAGED_OUTPUT_FILES) {
+    if (name === "embeddings.json" && !removeEmbeddings) continue;
+    rmSync(join(outdir, name), { force: true });
+  }
+}
 
 /** Compile the strict browser sources once; build and runtime tests consume these bytes. */
 export function compileSiteRuntime(
@@ -626,6 +649,11 @@ export function toJson(
       key: conf.key,
       title: conf.title,
       full_name: conf.full_name,
+      acronym: conf.acronym || conf.title,
+      ...(conf.scope?.length ? { scope: [...conf.scope] } : {}),
+      ...(conf.official_scope?.length ? { official_scope: [...conf.official_scope] } : {}),
+      ...(conf.paper_abstracts?.length ? { paper_abstracts: [...conf.paper_abstracts] } : {}),
+      ...(conf.keywords?.length ? { keywords: [...conf.keywords] } : {}),
       categories: [...conf.categories],
       rank: { ...conf.rank },
       link: conf.link,
@@ -751,6 +779,11 @@ function compactConference(
     key: conf.key,
     title: conf.title,
     full_name: conf.full_name,
+    ...(conf.acronym ? { acronym: conf.acronym } : {}),
+    ...(conf.scope ? { scope: conf.scope } : {}),
+    ...(conf.official_scope ? { official_scope: conf.official_scope } : {}),
+    ...(conf.paper_abstracts ? { paper_abstracts: conf.paper_abstracts } : {}),
+    ...(conf.keywords ? { keywords: conf.keywords } : {}),
     categories: conf.categories,
     rank: conf.rank,
     link: conf.link,
@@ -807,11 +840,14 @@ export function toRecommendationIndex(
   sourceStatus: Record<string, string> = {},
 ): Record<string, unknown> {
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
+  const rerankerPath = join(ROOT, "data", "recommender-reranker.json");
   const reranker = (() => {
     try {
-      return JSON.parse(readFileSync(join(ROOT, "data", "recommender-reranker.json"), "utf8"));
-    } catch {
-      return null;
+      const value = JSON.parse(readFileSync(rerankerPath, "utf8"));
+      if (!isValidRerankerModel(value)) throw new Error("model contract is invalid");
+      return value;
+    } catch (error) {
+      throw new Error(`recommender reranker ${rerankerPath} を読めない: ${String(error)}`);
     }
   })();
   const conferences = jsonRecords(data.conferences).map((conf) => {
@@ -871,7 +907,7 @@ export function toRecommendationIndex(
     history_ref: "data.json",
     embedding_ref: "embeddings.json",
     embedding_manifest: embeddingManifest(data as Parameters<typeof embeddingManifest>[0]),
-    ...(reranker ? { reranker } : {}),
+    reranker,
     conferences,
   };
 }
@@ -884,7 +920,7 @@ export type HealthSourceStatus =
   | "success";
 
 export const HEALTH_SCHEMA_VERSION = 3;
-export const HEALTH_DEADLINE_LOOKBACK_MS = 14 * DAY_MS;
+const HEALTH_DEADLINE_LOOKBACK_MS = 14 * DAY_MS;
 
 export interface HealthOutputFile {
   bytes: number;
@@ -1114,7 +1150,7 @@ export type HealthDeadlineEvidence = Pick<
 >;
 
 /** Schema 1 last-known-good reports embedded the UTC instant in `id`. */
-export interface LegacyHealthDeadlineRef {
+interface LegacyHealthDeadlineRef {
   id: string;
   at_utc: string;
 }
@@ -1187,7 +1223,7 @@ export interface HealthReportOptions {
   outputFiles?: Record<string, HealthOutputFile>;
 }
 
-export function normalizedTrackKey(
+function normalizedTrackKey(
   label: string | null | undefined,
   kind: string,
   explicitTrack?: string | null | undefined,
@@ -2276,7 +2312,7 @@ export function writePublishManifest(
   return manifest;
 }
 
-export function csvField(value: string | number | boolean | null | undefined): string {
+function csvField(value: string | number | boolean | null | undefined): string {
   if (value === null || value === undefined) return "";
   const s = String(value);
   if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
@@ -2500,6 +2536,9 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "  - key: string：正規化キー（slug）。例 'sigcomm'。",
     "  - title: string：略称。例 'SIGCOMM'。",
     "  - full_name: string：正式名称。",
+    "  - acronym: string：検索用の会議略称。存在時のみ。",
+    "  - scope / official_scope: array of string：検索用の対象分野。存在時のみ。",
+    "  - paper_abstracts / keywords: array of string：検索用の代表概要・キーワード。存在時のみ。",
     "  - categories: array of string：上記 categories のキー。",
     "  - rank: object：{'ccf': 'A', 'core': 'A*'} 等。欠けうる。",
     "    値 'N' は上流でランクが付いていないことを表す番兵であり、等級ではない。",
@@ -2602,11 +2641,13 @@ export async function buildAll(
   now: Date | null | undefined,
   opts: {
     noEmbeddings?: boolean;
+    localEmbeddingsOnly?: boolean;
     health?: HealthReportOptions;
     publishProvenance?: PublishProvenance;
   } = {},
 ): Promise<BuildStats> {
   mkdirSync(outdir, { recursive: true });
+  clearManagedOutput(outdir, opts.noEmbeddings === true);
 
   const safeConfs = Array.isArray(confs) ? confs : [];
   const safeConfig = config ?? {};
@@ -2677,10 +2718,15 @@ export async function buildAll(
       }
       if (needEmb) {
         const { buildEmbeddings } = await import("./embeddings.ts");
-        await buildEmbeddings(join(outdir, "data.json"), embPath);
+        await buildEmbeddings(
+          join(outdir, "data.json"),
+          embPath,
+          opts.localEmbeddingsOnly === true,
+        );
       }
       written.push("embeddings.json");
     } catch (exc) {
+      rmSync(join(outdir, "embeddings.json"), { force: true });
       console.warn(
         `warning: embeddings を生成しなかった（${(exc as Error).constructor.name}: ${String(exc)}）`,
       );
@@ -2700,19 +2746,16 @@ export async function buildAll(
   }
   if (templateText !== null) {
     if (!templateText.includes(TEMPLATE_MARKER)) {
-      console.warn(
-        `warning: ${templatePath} に ${TEMPLATE_MARKER} が見つからない。index.html を素通しする`,
-      );
-    } else {
-      templateText = templateText.replace(
-        TEMPLATE_MARKER,
-        embedJson(jsonCompact(toCatalog(data, nowUtc, upcomingDays))),
-      );
+      throw new Error(`required site template marker missing: ${templatePath}`);
     }
+    templateText = templateText.replace(
+      TEMPLATE_MARKER,
+      embedJson(jsonCompact(toCatalog(data, nowUtc, upcomingDays))),
+    );
     write("index.html", templateText);
     for (const [name, source] of Object.entries(compileSiteRuntime())) write(name, source);
   } else {
-    console.warn(`warning: ${templatePath} が無いので index.html を生成しない`);
+    throw new Error(`required site template missing: ${templatePath}`);
   }
 
   const report = healthReport(data, nowUtc, {

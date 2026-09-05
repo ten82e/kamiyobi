@@ -5,18 +5,14 @@
  * 出力はレビュー時の判断材料で、収録 (extra.yaml 昇格) は公式サイト裏取り後に人間が行う。
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { load as loadYaml } from "js-yaml";
 import { parseDeadlineText } from "./discover.ts";
 import { localSourcePaths } from "./sources/local.ts";
 
-export let ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-
-export function setRoot(root: string): void {
-  ROOT = root;
-}
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 // 名乗りベースの注意フラグ。ハゲタカ会議の確定判定ではない（IEEE の一部も Ei を名乗る）。
 const PREDATORY_HINTS = ["ei compendex", "scopus", "ieee xplore", "indexed by"];
@@ -54,6 +50,11 @@ export function normTitle(title: string | null | undefined): string {
 export function loadTrackedTitles(root: string = ROOT): Set<string> {
   /** 収録済み (snapshot + local canonical inputs + overrides) の名称集合。 */
   const tracked = new Set<string>();
+  const warnIfPresent = (path: string, error: unknown): void => {
+    if (existsSync(path)) {
+      console.warn(`warning: cannot read tracked data from ${path} (${String(error)})`);
+    }
+  };
   const add = (c: Record<string, unknown>): void => {
     if (typeof c.title === "string" && c.title) {
       const k = normTitle(c.title);
@@ -76,8 +77,9 @@ export function loadTrackedTitles(root: string = ROOT): Set<string> {
     for (const c of (snap.conferences as unknown[] | null) ?? []) {
       if (typeof c === "object" && c !== null) add(c as Record<string, unknown>);
     }
-  } catch {
+  } catch (error) {
     // snapshot が無い/壊れている場合も extra.yaml 側で拾う
+    warnIfPresent(join(root, "data", "snapshot.json"), error);
   }
   for (const path of localSourcePaths(root)) {
     try {
@@ -85,8 +87,9 @@ export function loadTrackedTitles(root: string = ROOT): Set<string> {
       for (const c of (local.conferences as unknown[] | null) ?? []) {
         if (typeof c === "object" && c !== null) add(c as Record<string, unknown>);
       }
-    } catch {
+    } catch (error) {
       // local input が無い場合
+      warnIfPresent(path, error);
     }
   }
   try {
@@ -100,8 +103,9 @@ export function loadTrackedTitles(root: string = ROOT): Set<string> {
       if (k) tracked.add(k);
       if (typeof val === "object" && val !== null) add(val as Record<string, unknown>);
     }
-  } catch {
+  } catch (error) {
     // overrides.yaml が無い場合
+    warnIfPresent(join(root, "data", "overrides.yaml"), error);
   }
   return tracked;
 }
@@ -145,7 +149,7 @@ export function runReviewCandidates(
   limit: number,
   today: Date | null | undefined,
   root: string = ROOT,
-): void {
+): boolean {
   const safeToday = today instanceof Date && !Number.isNaN(today.getTime()) ? today : new Date();
   const resolvedPath = isAbsolute(candidatesPath) ? candidatesPath : join(root, candidatesPath);
   let text: string;
@@ -153,7 +157,7 @@ export function runReviewCandidates(
     text = readFileSync(resolvedPath, "utf8");
   } catch (err) {
     console.warn(`warning: cannot read candidates from ${resolvedPath} (${String(err)})`);
-    return;
+    return false;
   }
   const data = (loadYaml(text) as Record<string, any>) ?? {};
   const cands =
@@ -220,4 +224,5 @@ export function runReviewCandidates(
 
   console.log(`\n=== 過去締切のみ (${past.length} 件・レビュー不要/削除候補) ===`);
   console.log(`=== 締切不明 (${unknown.length} 件・公式サイト確認が必要) ===`);
+  return true;
 }

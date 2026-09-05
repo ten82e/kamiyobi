@@ -62,18 +62,22 @@
         "tags": [
           "niche"
         ],
-        "review_state": "reviewed"
+        "review_state": "reviewed",
+        "full_name": "4th Workshop on Quantum Software",
+        "link": "https://data-cybernetics.com/en/wqs-2026"
       },
       "edition": {
         "year": 2026,
         "edition_id": "wqs-2026",
         "date_text": "2026-12-12",
         "event_start": "2026-12-12",
-        "event_end": "2026-12-12"
+        "event_end": "2026-12-12",
+        "link": "https://data-cybernetics.com/en/wqs-2026",
+        "place": "Stellenbosch, South Africa"
       },
       "deadline": {
         "kind": "abstract",
-        "label": "abstract",
+        "label": "Abstract registration",
         "round": 1,
         "track": "",
         "precision": "date-only",
@@ -161,18 +165,22 @@
         "tags": [
           "niche"
         ],
-        "review_state": "reviewed"
+        "review_state": "reviewed",
+        "full_name": "4th Workshop on Quantum Software",
+        "link": "https://data-cybernetics.com/en/wqs-2026"
       },
       "edition": {
         "year": 2026,
         "edition_id": "wqs-2026",
         "date_text": "2026-12-12",
         "event_start": "2026-12-12",
-        "event_end": "2026-12-12"
+        "event_end": "2026-12-12",
+        "link": "https://data-cybernetics.com/en/wqs-2026",
+        "place": "Stellenbosch, South Africa"
       },
       "deadline": {
         "kind": "paper",
-        "label": "paper",
+        "label": "Extended abstract submission",
         "round": 1,
         "track": "",
         "precision": "date-only",

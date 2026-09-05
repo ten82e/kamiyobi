@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
 import { describe, expect, it } from "vitest";
+import { likelyDuplicateVenues } from "../scripts/validate-data.ts";
 import { REPO_ROOT } from "./helpers.js";
 
 // overrides.yaml の 2027 以降 edition で
@@ -29,61 +30,44 @@ interface VenueRecord {
   editions?: Array<{ year?: number }>;
 }
 
-function shortTitle(value: string): string {
-  return value
-    .normalize("NFKC")
-    .toLowerCase()
-    .replace(/20\d\d/g, " ")
-    .replace(/\b(?:acm|ieee|ei)\b/g, " ")
-    .replace(/[^\p{L}\p{N}]+/gu, "");
+function loadVenues(path: string): VenueRecord[] {
+  const loaded = loadYaml(readFileSync(join(REPO_ROOT, path), "utf8")) as {
+    conferences?: VenueRecord[];
+  };
+  return loaded.conferences ?? [];
 }
 
-function nameTokens(value: string): Set<string> {
-  return new Set(
-    value
-      .normalize("NFKC")
-      .toLowerCase()
-      .replace(/20\d\d/g, " ")
-      .replace(/\b(?:acm|ieee|ei|the)\b/g, " ")
-      .match(/[\p{L}\p{N}]+/gu) ?? [],
-  );
-}
+const COLLAPSED_PROMOTIONS: Record<string, string[]> = {
+  "bdiot-2026": ["acm-bdiot-2026"],
+  "admit-2026": ["ieee-admit-2026"],
+  "ccisc-2026": ["ieee-ccisc-2026"],
+  "csp-2027": ["csp-ei-2027", "ieee-csp-2027"],
+  "icaici-2026": ["ieee-icaici-2026"],
+  icbda2027: ["icbda-2027"],
+  "iccns-2026": ["iccns-ei-2026"],
+  "iccr-2026": ["ieee-iccr-2026"],
+  "icimt-2026": ["icimt-ei-2026"],
+  "icmip-2027": ["icmip-ei-2027"],
+  "keir-cikm2026": ["keir-cikm-2026"],
+  raai2026: ["raai-2026"],
+};
 
-function tokenJaccard(left: string, right: string): number {
-  const a = nameTokens(left);
-  const b = nameTokens(right);
-  if (a.size === 0 || b.size === 0) return 0;
-  const intersection = [...a].filter((token) => b.has(token)).length;
-  return intersection / (a.size + b.size - intersection);
-}
-
-function likelyDuplicateVenues(conferences: VenueRecord[]): string[] {
-  const rows = conferences.flatMap((conference) =>
-    (conference.editions ?? []).map((edition) => ({
-      key: conference.key ?? "?",
-      title: conference.title ?? "",
-      fullName: conference.full_name ?? "",
-      year: edition.year ?? 0,
-    })),
-  );
-  const duplicates = new Set<string>();
-  for (let i = 0; i < rows.length; i++) {
-    for (let j = i + 1; j < rows.length; j++) {
-      const left = rows[i];
-      const right = rows[j];
-      if (left.key === right.key || left.year !== right.year) continue;
-      const title = shortTitle(left.title);
-      if (!title || title !== shortTitle(right.title)) continue;
-      if (
-        tokenJaccard(left.fullName, right.fullName) < 0.7 &&
-        shortTitle(left.fullName) !== title &&
-        shortTitle(right.fullName) !== title
-      )
-        continue;
-      duplicates.add([left.key, right.key].sort().join(" / "));
+function expectCollapsedPromotions(records: VenueRecord[], source: string) {
+  const liveKeys = new Set(records.map((conference) => conference.key));
+  for (const [key, legacyKeys] of Object.entries(COLLAPSED_PROMOTIONS)) {
+    const matches = records.filter((conference) => conference.key === key);
+    expect(matches, `${source}: ${key} must have one live record`).toHaveLength(1);
+    expect(matches[0]?.link, `${source}: ${key} must point at an official page`).toMatch(
+      /^https?:\/\//,
+    );
+    expect(matches[0]?.link, `${source}: ${key} must not use an aggregator link`).not.toMatch(
+      /easychair|wikicfp|dbworld|listserv/i,
+    );
+    for (const legacy of legacyKeys) {
+      expect(liveKeys.has(legacy), `${source}: ${legacy} must not remain a live key`).toBe(false);
+      expect(matches[0]?.legacy_keys ?? []).toContain(legacy);
     }
   }
-  return [...duplicates].sort();
 }
 
 /**
@@ -229,44 +213,18 @@ describe("invariants", () => {
   });
 
   it("I5: local の表記違い同一開催回を二重公開しない (#677)", () => {
-    const extra = loadYaml(readFileSync(join(REPO_ROOT, "data", "extra.yaml"), "utf8")) as {
-      conferences?: VenueRecord[];
-    };
-    expect(likelyDuplicateVenues(extra.conferences ?? [])).toEqual([]);
+    const extra = loadVenues("data/extra.yaml");
+    const canonical = [
+      ...loadVenues("data/manual.yaml"),
+      ...loadVenues("data/curated.generated.yaml"),
+    ];
+    expect(likelyDuplicateVenues(extra), "extra.yaml").toEqual([]);
+    expect(likelyDuplicateVenues(canonical), "manual.yaml + curated.generated.yaml").toEqual([]);
   });
 
   it("I6: 旧昇格12グループは公式リンク付きの正規キー1件へ収束している", () => {
-    const extra = loadYaml(readFileSync(join(REPO_ROOT, "data", "extra.yaml"), "utf8")) as {
-      conferences?: VenueRecord[];
-    };
-    const targets: Record<string, string[]> = {
-      "bdiot-2026": ["acm-bdiot-2026"],
-      "admit-2026": ["ieee-admit-2026"],
-      "ccisc-2026": ["ieee-ccisc-2026"],
-      "csp-2027": ["csp-ei-2027", "ieee-csp-2027"],
-      "icaici-2026": ["ieee-icaici-2026"],
-      icbda2027: ["icbda-2027"],
-      "iccns-2026": ["iccns-ei-2026"],
-      "iccr-2026": ["ieee-iccr-2026"],
-      "icimt-2026": ["icimt-ei-2026"],
-      "icmip-2027": ["icmip-ei-2027"],
-      "keir-cikm2026": ["keir-cikm-2026"],
-      raai2026: ["raai-2026"],
-    };
-    const records = extra.conferences ?? [];
-    const liveKeys = new Set(records.map((conference) => conference.key));
-    for (const [key, legacyKeys] of Object.entries(targets)) {
-      const matches = records.filter((conference) => conference.key === key);
-      expect(matches, `${key} must have one live record`).toHaveLength(1);
-      expect(matches[0]?.link, `${key} must point at an official page`).toMatch(/^https?:\/\//);
-      expect(matches[0]?.link, `${key} must not use an aggregator link`).not.toMatch(
-        /easychair|wikicfp|dbworld|listserv/i,
-      );
-      for (const legacy of legacyKeys) {
-        expect(liveKeys.has(legacy), `${legacy} must not remain a live key`).toBe(false);
-        expect(matches[0]?.legacy_keys ?? []).toContain(legacy);
-      }
-    }
+    expectCollapsedPromotions(loadVenues("data/extra.yaml"), "extra.yaml");
+    expectCollapsedPromotions(loadVenues("data/manual.yaml"), "manual.yaml");
   });
 
   it("I5: 同一会議の表記揺れを検出し、同じ略称の別会議は許す", () => {

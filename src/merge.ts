@@ -1,7 +1,6 @@
 /**
  * Name matching, classification, overrides, roll-forward and selection.
- * Ported from scripts/merge.py (kamiyobi).  Consumes the frozen interface
- * of src/model.ts (SPEC.md section 3) only.
+ * The implementation consumes the frozen interface of src/model.ts (SPEC.md section 3).
  */
 
 import {
@@ -33,10 +32,10 @@ import {
 import { patchDeadlineSemantics } from "./sources/local.ts";
 
 export const DEFAULT_SOURCE_PRIORITY = ["local", "aideadlines", "ccfddl"];
-export const DEFAULT_ONE_TO_ONE_MAX_S = 604800; // 7 d
-export const DEFAULT_CROSS_SOURCE_TOLERANCE_S = 90000; // 25 h
+const DEFAULT_ONE_TO_ONE_MAX_S = 604800; // 7 d
+const DEFAULT_CROSS_SOURCE_TOLERANCE_S = 90000; // 25 h
 export const DEADLINE_SELECTION_RULE = "source_priority_then_nearest_within_configured_window";
-export const ABSENT_RANKS = new Set(["N", "-", "none", "None", "NONE", "null", "NULL", ""]);
+const ABSENT_RANKS = new Set(["N", "-", "none", "None", "NONE", "null", "NULL", ""]);
 
 interface Windows {
   one_to_one: number;
@@ -614,6 +613,11 @@ function mergeBucket(
     key,
     title: confs[0].title,
     full_name: confs[0].full_name,
+    acronym: confs[0].acronym,
+    scope: [],
+    official_scope: [],
+    paper_abstracts: [],
+    keywords: [],
     link: confs[0].link,
     rank: {},
     dblp: null,
@@ -628,6 +632,7 @@ function mergeBucket(
     // low priority first, higher priority overwrites
     if (conf.title) out.title = conf.title;
     if (conf.full_name) out.full_name = conf.full_name;
+    if (conf.acronym) out.acronym = conf.acronym;
     if (conf.link) out.link = conf.link;
     if (Object.keys(conf.rank).length > 0) out.rank = { ...out.rank, ...conf.rank };
     if (conf.dblp) out.dblp = conf.dblp;
@@ -635,6 +640,10 @@ function mergeBucket(
   }
   out.tags = unique(confs.flatMap((c) => c.tags));
   out.categories = unique(confs.flatMap((c) => c.categories));
+  out.scope = unique(confs.flatMap((c) => c.scope ?? []));
+  out.official_scope = unique(confs.flatMap((c) => c.official_scope ?? []));
+  out.paper_abstracts = unique(confs.flatMap((c) => c.paper_abstracts ?? []));
+  out.keywords = unique(confs.flatMap((c) => c.keywords ?? []));
   out.sources = unique(confs.flatMap((c) => c.sources));
   const legacyKeys = unique(confs.flatMap((c) => c.legacy_keys ?? []));
   if (legacyKeys.length > 0) out.legacy_keys = legacyKeys;

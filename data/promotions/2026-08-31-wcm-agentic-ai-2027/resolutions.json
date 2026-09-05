@@ -69,16 +69,19 @@
           "niche",
           "special-issue"
         ],
-        "review_state": "reviewed"
+        "review_state": "reviewed",
+        "full_name": "Agentic AI-Enabled Networking for Heterogeneous Unmanned Systems in Low-Altitude Environments (IEEE Wireless Communications Special Issue)",
+        "link": "https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp/agentic-ai-enabled-networking-heterogeneous-unmanned-systems-low-altitude-environments"
       },
       "edition": {
         "year": 2027,
         "edition_id": "wcm-agentic-ai-unmanned-2027",
-        "date_text": "2027"
+        "date_text": "2027",
+        "link": "https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp/agentic-ai-enabled-networking-heterogeneous-unmanned-systems-low-altitude-environments"
       },
       "deadline": {
         "kind": "paper",
-        "label": "paper",
+        "label": "Manuscript submission deadline (extended)",
         "round": 1,
         "track": "",
         "precision": "date-only",

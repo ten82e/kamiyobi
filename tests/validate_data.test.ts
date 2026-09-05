@@ -1,20 +1,47 @@
 import { describe, expect, it } from "vitest";
 import {
+  likelyDuplicateVenues,
   newValidatorWarnings,
   normalizedTrack,
   summarizeCategoryChanges,
   summarizeDeadlineChanges,
   validateData,
   validateFile,
+  validateFindings,
   validateProduction,
+  validatorWarnings,
 } from "../scripts/validate-data.ts";
 
 describe("validate:data", () => {
+  it("uses one warning identity for legacy extra and snapshot prefixes", () => {
+    expect(
+      validatorWarnings([
+        "extra: ai4s-2026: category vocabulary diverges from title/full_name/scope; possible ai",
+        "snapshot: ai4s-2026: category vocabulary diverges from title/full_name/scope; possible ai",
+      ]),
+    ).toEqual([
+      expect.objectContaining({ code: "CATEGORY_VOCABULARY_DIVERGENCE", subject: "ai4s-2026" }),
+      expect.objectContaining({ code: "CATEGORY_VOCABULARY_DIVERGENCE", subject: "ai4s-2026" }),
+    ]);
+  });
+
+  it("rejects a missing or non-array conference collection", () => {
+    expect(validateData({} as Record<string, unknown>).errors).toContain(
+      "conferences must be an array",
+    );
+    expect(
+      validateData({ conferences: {} } as unknown as Record<string, unknown>).errors,
+    ).toContain("conferences must be an array");
+    expect(validateData([] as unknown as Record<string, unknown>).errors).toContain(
+      "top-level payload must be an object",
+    );
+  });
+
   it("fails closed on a new stable warning code and subject", () => {
     expect(
       newValidatorWarnings(
         ["venue: event date text is not structured"],
-        [{ code: "EVENT_DATE_UNSTRUCTURED", subject: "other" }],
+        [{ code: "EVENT_DATE_UNSTRUCTURED", subject: "other", status: "accepted" }],
       ),
     ).toEqual([expect.objectContaining({ code: "EVENT_DATE_UNSTRUCTURED", subject: "venue" })]);
   });
@@ -25,11 +52,111 @@ describe("validate:data", () => {
           "venue: event date text is not structured",
           "venue: event date text is not structured (second edition)",
         ],
-        [{ code: "EVENT_DATE_UNSTRUCTURED", subject: "venue", count: 1 }],
+        [{ code: "EVENT_DATE_UNSTRUCTURED", subject: "venue", count: 1, status: "accepted" }],
       ),
     ).toEqual([
       expect.objectContaining({ code: "EVENT_DATE_UNSTRUCTURED", subject: "venue", count: 2 }),
     ]);
+  });
+
+  it("reopens expired accepted findings", () => {
+    const finding = {
+      finding_id: "VF-test",
+      code: "VALIDATOR_REVIEW",
+      subject: "venue",
+      severity: "review" as const,
+      message: "venue: warning",
+      count: 1,
+      status: "accepted" as const,
+      reviewed_by: "maintainer",
+      reviewed_at: "2026-01-01T00:00:00Z",
+      review_reason: "checked",
+      evidence_ref: "data/manual.yaml#venue",
+      expires_at: "2026-02-01T00:00:00Z",
+    };
+    expect(validateFindings([finding], Date.parse("2026-01-31T00:00:00Z"))).toEqual([]);
+    expect(validateFindings([finding], Date.parse("2026-02-01T00:00:00Z"))).toContain(
+      "VF-test: accepted finding has expired",
+    );
+  });
+
+  it("does not let fixed findings suppress recurring warnings", () => {
+    expect(
+      newValidatorWarnings(
+        ["venue: event date text is not structured"],
+        [
+          {
+            code: "EVENT_DATE_UNSTRUCTURED",
+            subject: "venue",
+            count: 1,
+            status: "fixed",
+          },
+        ],
+      ),
+    ).toEqual([
+      expect.objectContaining({ code: "EVENT_DATE_UNSTRUCTURED", subject: "venue", count: 1 }),
+    ]);
+  });
+
+  it("allows a fixed history entry beside a recurring accepted finding", () => {
+    const shared = {
+      code: "EVENT_DATE_UNSTRUCTURED",
+      subject: "venue",
+      severity: "review" as const,
+      message: "venue: warning",
+    };
+    expect(
+      validateFindings(
+        [
+          { ...shared, finding_id: "VF-fixed", status: "fixed", fixed_at: "2026-01-01T00:00:00Z" },
+          {
+            ...shared,
+            finding_id: "VF-recurring",
+            status: "accepted",
+            reviewed_by: "maintainer",
+            reviewed_at: "2026-02-01T00:00:00Z",
+            review_reason: "reviewed again",
+            evidence_ref: "data/manual.yaml#venue",
+            expires_at: "2027-02-01T00:00:00Z",
+          },
+        ],
+        Date.parse("2026-03-01T00:00:00Z"),
+      ),
+    ).toEqual([]);
+  });
+  it("matches a source-prefixed warning to an accepted canonical finding", () => {
+    expect(
+      newValidatorWarnings(
+        [
+          "snapshot: ai4s-2026: category vocabulary diverges from title/full_name/scope; possible ai",
+        ],
+        [{ code: "CATEGORY_VOCABULARY_DIVERGENCE", subject: "ai4s-2026", status: "accepted" }],
+      ),
+    ).toEqual([]);
+  });
+
+  it("does not rediscover a doubly-prefixed warning baseline", () => {
+    expect(
+      newValidatorWarnings(
+        ["overrides: overrides:mmm/2027: event date text is not structured"],
+        [
+          {
+            code: "EVENT_DATE_UNSTRUCTURED",
+            subject: "overrides:mmm/2027",
+            status: "accepted",
+          },
+        ],
+      ),
+    ).toEqual([]);
+  });
+
+  it("does not let a status-less legacy entry suppress a warning", () => {
+    expect(
+      newValidatorWarnings(
+        ["venue: event date text is not structured"],
+        [{ code: "EVENT_DATE_UNSTRUCTURED", subject: "venue" } as never],
+      ),
+    ).toHaveLength(1);
   });
 
   it("accepts explicit not-announced event date states and exact placeholders", () => {
@@ -135,6 +262,55 @@ it("detects edition identity, event integrity, swaps and string corruption deter
   );
   expect(normalizedTrack(undefined, "Paper submission", "paper")).toBe("");
   expect(normalizedTrack("Industry", "Paper submission", "paper")).toBe("industry");
+});
+
+it("rejects a truncated leading year and same-year local duplicates", () => {
+  const truncated = validateData({
+    conferences: [
+      {
+        key: "icaidm-2026",
+        title: "ICAIDM 2026",
+        full_name:
+          "026 3rd International Conference on Artificial Intelligence and Digital Management",
+        editions: [{ year: 2026, id: "icaidm-202626" }],
+      },
+    ],
+  });
+  expect(truncated.errors).toContain("icaidm-2026: full_name appears truncated");
+  expect(
+    likelyDuplicateVenues([
+      {
+        key: "icbda-2027",
+        title: "IEEE ICBDA 2027",
+        full_name: "IEEE 12th International Conference on Big Data Analytics (ICBDA 2027)",
+        editions: [{ year: 2027 }],
+      },
+      {
+        key: "icbda2027",
+        title: "ICBDA2027",
+        full_name: "12th International Conference on Big Data Analytics",
+        editions: [{ year: 2027 }],
+      },
+    ]),
+  ).toEqual(["icbda-2027 / icbda2027"]);
+  expect(
+    validateData({
+      conferences: [
+        {
+          key: "icbda-2027",
+          title: "IEEE ICBDA 2027",
+          full_name: "IEEE 12th International Conference on Big Data Analytics (ICBDA 2027)",
+          editions: [{ year: 2027, id: "icbda-2027" }],
+        },
+        {
+          key: "icbda2027",
+          title: "ICBDA2027",
+          full_name: "12th International Conference on Big Data Analytics",
+          editions: [{ year: 2027, id: "icbda2027" }],
+        },
+      ],
+    }).errors,
+  ).toContain("duplicate venue edition icbda-2027 / icbda2027");
 });
 
 it("keeps a valid multi-edition name and different round/track slots as negative controls", () => {

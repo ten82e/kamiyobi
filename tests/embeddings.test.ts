@@ -2,12 +2,16 @@
  * Embeddings generator and CLI tests.
  */
 
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { env } from "@huggingface/transformers";
 import { describe, expect, it } from "vitest";
 import {
   benchmarkEmbeddingCacheKey,
   benchmarkEmbeddingManifest,
   benchmarkProfileHash,
+  buildEmbeddings,
   EMBEDDING_MODEL,
   EMBEDDING_MULTI_MODEL,
   EMBEDDING_MULTI_REVISION,
@@ -17,6 +21,7 @@ import {
   embeddingManifest,
   embeddingProfileHash,
   main,
+  PAPER_VEC_KEYS,
   profileTexts,
   selectVenueMedoids,
   serializeVenueProfileArtifact,
@@ -119,6 +124,68 @@ describe("profileTexts", () => {
     expect(res.keys).toEqual(["clean-conf"]);
     expect(res.texts[0]).toContain("Clean Conf");
     expect(res.texts[0]).toContain("hpc");
+  });
+
+  it("incorporates scope and official_scope into profile texts for both string and array representations", () => {
+    const confWithScope = [
+      {
+        key: "sc-conf",
+        title: "SC",
+        full_name: "Supercomputing",
+        scope: "High performance computing and parallel architectures",
+        official_scope: ["MPI", "OpenMP", "GPU acceleration"],
+        categories: ["hpc"],
+      },
+    ];
+    const res = profileTexts(confWithScope, { hpc: "High Performance Computing" });
+    expect(res.texts[0]).toContain("High performance computing and parallel architectures");
+    expect(res.texts[0]).toContain("MPI OpenMP GPU acceleration");
+  });
+
+  it("activates Japanese category keywords for domestic-jp and niche-jp tags in multilingual mode", () => {
+    const confsWithTags = [
+      {
+        key: "tag-jp-conf",
+        title: "SWoPP",
+        full_name: "Summer United Workshops on Parallel, Distributed and Pervasive Computing",
+        categories: ["systems"],
+        tags: ["domestic-jp"],
+      },
+    ];
+    const multi = profileTexts(confsWithTags, { systems: "Computer Systems" }, true);
+    expect(multi.texts[0]).toContain("カーネル");
+    expect(multi.texts[0]).toContain("スケジューリング");
+  });
+});
+
+describe("offline embedding generation", () => {
+  it("fails locally and keys failed attempts by cache directory", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-offline-embeddings-"));
+    const previousCache = env.cacheDir;
+    const data = join(dir, "data.json");
+    writeFileSync(data, JSON.stringify({ conferences: [], categories: {} }));
+    try {
+      const errors: string[] = [];
+      for (const cache of ["empty-cache-a", "empty-cache-b"]) {
+        env.cacheDir = join(dir, cache);
+        errors.push(
+          String(
+            await buildEmbeddings(data, join(dir, "embeddings.json"), true).then(
+              () => null,
+              (reason: unknown) => reason,
+            ),
+          ),
+        );
+      }
+      expect(errors[0]).toMatch(
+        /local file missing|local_files_only|locate file|not found|ENOENT/i,
+      );
+      expect(errors[0]).toContain("empty-cache-a");
+      expect(errors[1]).toContain("empty-cache-b");
+      expect(errors.join("\n")).not.toContain("network access is disabled");
+    } finally {
+      env.cacheDir = previousCache;
+    }
   });
 });
 
@@ -328,6 +395,36 @@ describe("recommendation bundle contract", () => {
     const dollar = String.fromCharCode(36);
     expect(source).toContain(`const tempPath = \`${dollar}{outPath}.tmp.${dollar}{process.pid}\`;`);
     expect(source).toContain("renameSync(tempPath, outPath);");
+  });
+
+  it("limits PAPER_VEC_KEYS to usenix-security and rtss", () => {
+    expect(PAPER_VEC_KEYS).toEqual(["usenix-security", "rtss"]);
+  });
+
+  it("binds paper vector policy into production and benchmark profile hashes", () => {
+    const mutableKeys = PAPER_VEC_KEYS as string[];
+    const data = { categories: {}, conferences: [] };
+    const productionHash = embeddingProfileHash(data);
+    const benchmarkHash = benchmarkProfileHash(2024);
+    mutableKeys.push("ecrts");
+    try {
+      expect(embeddingProfileHash(data)).not.toBe(productionHash);
+      expect(benchmarkProfileHash(2024)).not.toBe(benchmarkHash);
+    } finally {
+      mutableKeys.pop();
+    }
+  });
+
+  it("reflects scope changes in embeddingProfileHash", () => {
+    const dataA = {
+      categories: { systems: "Systems" },
+      conferences: [{ key: "osdi", title: "OSDI", scope: "Operating systems principles" }],
+    };
+    const dataB = {
+      categories: { systems: "Systems" },
+      conferences: [{ key: "osdi", title: "OSDI", scope: "Distributed systems and storage" }],
+    };
+    expect(embeddingProfileHash(dataA)).not.toBe(embeddingProfileHash(dataB));
   });
 });
 

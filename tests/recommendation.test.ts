@@ -1,8 +1,13 @@
-import { readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { recommendationAxes } from "../site/recommendation-core.ts";
 import recommender from "../site/recommender.ts";
-import { toRecommendationIndex } from "../src/build.ts";
+import {
+  ROOT as BUILD_ROOT,
+  setRoot as setBuildRoot,
+  toRecommendationIndex,
+} from "../src/build.ts";
 
 const NOW = Date.parse("2026-08-25T00:00:00Z");
 
@@ -301,6 +306,46 @@ describe("recommendation axes", () => {
       venue_maturity: { status: "established", evidence: { yearsObserved: 4 } },
       deadline_trust: { date: "official", sourceFreshness: "fresh" },
     });
+  });
+
+  it("fails closed when the reranker artifact cannot be parsed", () => {
+    const root = mkdtempSync("/tmp/kamiyobi-reranker-artifact-");
+    const dataDir = join(root, "data");
+    mkdirSync(dataDir, { recursive: true });
+    const artifact = join(dataDir, "recommender-reranker.json");
+    writeFileSync(artifact, "{invalid", "utf8");
+    const originalRoot = BUILD_ROOT;
+    setBuildRoot(root);
+    try {
+      expect(() =>
+        toRecommendationIndex({ conferences: [] }, new Date("2026-08-25T00:00:00Z")),
+      ).toThrow(artifact);
+    } finally {
+      setBuildRoot(originalRoot);
+    }
+  });
+
+  it("fails closed when the reranker artifact violates its numeric contract", () => {
+    const root = mkdtempSync("/tmp/kamiyobi-reranker-contract-");
+    const dataDir = join(root, "data");
+    mkdirSync(dataDir, { recursive: true });
+    const model = JSON.parse(
+      readFileSync(join(BUILD_ROOT, "data", "recommender-reranker.json"), "utf8"),
+    );
+    writeFileSync(
+      join(dataDir, "recommender-reranker.json"),
+      JSON.stringify({ ...model, blend: 2 }),
+      "utf8",
+    );
+    const originalRoot = BUILD_ROOT;
+    setBuildRoot(root);
+    try {
+      expect(() =>
+        toRecommendationIndex({ conferences: [] }, new Date("2026-08-25T00:00:00Z")),
+      ).toThrow("model contract is invalid");
+    } finally {
+      setBuildRoot(originalRoot);
+    }
   });
 
   it("propagates source fallback and does not count the N rank sentinel", () => {

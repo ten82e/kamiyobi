@@ -4,7 +4,7 @@
  * This module searches external academic CFP sources (DBLP, wikiCFP, DBWorld,
  * EasyChair, OpenReview, IEEE ComSoc, IEICE, IPSJ) for niche conferences,
  * workshops, symposia, and journal Call for Papers in HPC, Systems, Networking,
- * AI, and Security.  Ported from scripts/discover.py (kamiyobi).
+ * AI, and Security.
  */
 
 import { createHash } from "node:crypto";
@@ -12,7 +12,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { decode } from "html-entities";
 import { dump as dumpYaml, load as loadYaml } from "js-yaml";
-import { monthOf, slug } from "./model.ts";
+import { monthOf, repairTruncatedVenueName, slug } from "./model.ts";
 import { localSourcePaths } from "./sources/local.ts";
 
 const ROOT = join(import.meta.dirname, "..");
@@ -118,7 +118,7 @@ export const DOMAIN_KEYWORDS: Record<string, string[]> = {
 };
 
 // wikiCFP のカテゴリページ (?conference=<cat>) と kamiyobi カテゴリの対応。
-export const WIKICFP_CATEGORY_MAP: Record<string, string[]> = {
+const WIKICFP_CATEGORY_MAP: Record<string, string[]> = {
   hpc: ["parallel", "high", "grid", "performance", "computational"],
   networking: [
     "networks",
@@ -267,7 +267,7 @@ export interface Candidate {
 }
 
 export const CANDIDATE_REGISTRY_SCHEMA = 2 as const;
-export const CANDIDATE_STALE_AFTER_DAYS = 90;
+const CANDIDATE_STALE_AFTER_DAYS = 90;
 
 const CANDIDATE_STATUSES = new Set<CandidateStatus>([
   "discovered",
@@ -442,6 +442,7 @@ export function makeCandidate(
     categories: string[];
   },
 ): Candidate {
+  const year = partial.year;
   return {
     tags: ["niche"],
     source_type: "conference",
@@ -452,6 +453,8 @@ export function makeCandidate(
     place: "",
     deadlines: [],
     ...partial,
+    title: repairTruncatedVenueName(partial.title, year),
+    full_name: repairTruncatedVenueName(partial.full_name, year),
   };
 }
 
@@ -984,8 +987,8 @@ export function parseWikiCfpHtml(
     if (year !== undefined && year < minYear) continue;
     entries.push({
       key: slug(title),
-      title,
-      full_name: fullName,
+      title: repairTruncatedVenueName(title, year),
+      full_name: repairTruncatedVenueName(fullName, year),
       link: `https://www.wikicfp.com${href}`,
       categories: [...cats],
       date_text: deadline,
@@ -1087,14 +1090,9 @@ async function discoverFromWikiCfpUrls(
   for (const cat of categories) {
     for (let page = 1; page <= 3; page++) {
       const url = `http://www.wikicfp.com/cfp/call?conference=${cat}&page=${page}`;
-      let pageEntries: WikiCfpEntry[] = [];
-      try {
-        await sleep(400); // リクエスト過多での一時ブロック回避
-        const html = await fetchText(url, DISCOVER_UA, 15_000);
-        pageEntries = parseWikiCfpHtml(html, [cat], minYear);
-      } catch {
-        break; // 1 カテゴリ 1 ページの失敗で全体を止めない
-      }
+      await sleep(400); // リクエスト過多での一時ブロック回避
+      const html = await fetchText(url, DISCOVER_UA, 15_000);
+      const pageEntries = parseWikiCfpHtml(html, [cat], minYear);
       const future = pageEntries.filter((e) => deadlineIsFuture(e.date_text, today));
       entries.push(...future);
       if (future.length === 0) break; // 締切昇順: ここから先はすべて過去締切
@@ -1307,8 +1305,8 @@ export function easyChairEntriesFromRows(
     if (!inDomain(`${e.title} ${e.full_name} ${e.topics.join(" ")}`)) continue;
     entries.push({
       key: slug(e.title),
-      title: e.title,
-      full_name: e.full_name,
+      title: repairTruncatedVenueName(e.title, year),
+      full_name: repairTruncatedVenueName(e.full_name, year),
       link: e.url,
       categories: [], // レビュー時付与
       source_type: "conference",
@@ -1391,13 +1389,8 @@ export async function discoverFromComsocCfps(
   const entries: Array<Record<string, unknown>> = [];
   for (const [path, jname] of pages) {
     const url = `https://www.comsoc.org/publications/${path}/cfp`;
-    let html: string;
-    try {
-      await sleep(500);
-      html = await fetchText(url, DISCOVER_UA, 20_000);
-    } catch {
-      continue; // 1 誌の失敗で全体を止めない
-    }
+    await sleep(500);
+    const html = await fetchText(url, DISCOVER_UA, 20_000);
     for (const e of parseComsocCfpHtml(html, jname, url)) {
       const dm = /(20\d\d)/.exec(String(e.date_text));
       if (dm && Number(dm[1]) < minYear) continue; // 過去締切
@@ -1450,13 +1443,8 @@ export async function discoverFromIeiceCfps(
 ): Promise<Array<Record<string, unknown>>> {
   const url = "https://www.ieice.org/eng_r/information/schedule/journals.php";
   const entries: Array<Record<string, unknown>> = [];
-  let html: string;
-  try {
-    // IEICE はカスタム UA を 403 で拒否するため Mozilla 系 UA を使う
-    html = await fetchText(url, MAC_UA, 20_000);
-  } catch {
-    return entries; // 取得失敗で全体を止めない
-  }
+  // IEICE はカスタム UA を 403 で拒否するため Mozilla 系 UA を使う
+  const html = await fetchText(url, MAC_UA, 20_000);
   for (const e of parseIeiceCfpHtml(html, url)) {
     if (Number(e.year) < minYear) continue;
     entries.push(e);
@@ -1509,12 +1497,7 @@ export async function discoverFromIpsjCfps(
 ): Promise<Array<Record<string, unknown>>> {
   const url = "https://www.ipsj.or.jp/journal/index.html";
   const entries: Array<Record<string, unknown>> = [];
-  let html: string;
-  try {
-    html = await fetchText(url, MAC_UA, 20_000);
-  } catch {
-    return entries; // 取得失敗で全体を止めない
-  }
+  const html = await fetchText(url, MAC_UA, 20_000);
   for (const e of parseIpsjCfpHtml(html, url)) {
     if (Number(e.year) < minYear) continue;
     entries.push(e);
@@ -1526,7 +1509,10 @@ export class NicheDiscoverer {
   private readonly rootDir: string;
   private readonly discoveredAt: string;
   readonly knownKeys = new Set<string>();
+  readonly discoveryFailures: string[] = [];
   private readonly knownTitles = new Set<string>();
+  private discoveryAttempts = 0;
+  private discoverySuccesses = 0;
 
   constructor(rootDir: string = ROOT, discoveredAt = new Date().toISOString()) {
     this.rootDir = rootDir;
@@ -1561,6 +1547,7 @@ export class NicheDiscoverer {
             const rec = c as Record<string, unknown>;
             if ("key" in rec) this.knownKeys.add(slug(String(rec.key)));
             if ("title" in rec) this.knownTitles.add(String(rec.title).toLowerCase());
+            if ("full_name" in rec) this.knownTitles.add(String(rec.full_name).toLowerCase());
           }
         }
       } catch {
@@ -1577,6 +1564,7 @@ export class NicheDiscoverer {
           const rec = c as Record<string, unknown>;
           if ("key" in rec) this.knownKeys.add(slug(String(rec.key)));
           if ("title" in rec) this.knownTitles.add(String(rec.title).toLowerCase());
+          if ("full_name" in rec) this.knownTitles.add(String(rec.full_name).toLowerCase());
         }
       }
     } catch {
@@ -1612,46 +1600,42 @@ export class NicheDiscoverer {
   async discoverFromDblp(query = "workshop", maxResults = 30): Promise<Candidate[]> {
     const url = `https://dblp.org/search/venue/api?q=${encodeURIComponent(query)}&format=json&h=${maxResults}`;
     const candidates: Candidate[] = [];
-    try {
-      const html = await fetchText(url, DISCOVER_UA, 10_000);
-      const data = JSON.parse(html) as {
-        result?: { hits?: { hit?: Array<{ info?: Record<string, unknown> }> } };
-      };
-      const hits = data.result?.hits?.hit ?? [];
-      for (const hit of hits) {
-        const info = hit.info ?? {};
-        const venueTitle = decode(String(info.venue ?? info.acronym ?? "")).trim();
-        const venueUrl = String(info.url ?? "");
-        const venueName = decode(String(info.acronym ?? venueTitle)).trim();
+    const html = await fetchText(url, DISCOVER_UA, 10_000);
+    const data = JSON.parse(html) as {
+      result?: { hits?: { hit?: Array<{ info?: Record<string, unknown> }> } };
+    };
+    const hits = data.result?.hits?.hit ?? [];
+    for (const hit of hits) {
+      const info = hit.info ?? {};
+      const venueTitle = decode(String(info.venue ?? info.acronym ?? "")).trim();
+      const venueUrl = String(info.url ?? "");
+      const venueName = decode(String(info.acronym ?? venueTitle)).trim();
 
-        if (!venueTitle || this.isAlreadyTracked(venueTitle)) continue;
+      if (!venueTitle || this.isAlreadyTracked(venueTitle)) continue;
 
-        const candKey = slug(venueName || venueTitle);
-        if (!candKey || this.isAlreadyTracked(candKey)) continue;
+      const candKey = slug(venueName || venueTitle);
+      if (!candKey || this.isAlreadyTracked(candKey)) continue;
 
-        const categories = this.classifyCategory(venueTitle);
-        const sourceType =
-          venueTitle.toLowerCase().includes("journal") ||
-          venueTitle.toLowerCase().includes("transactions")
-            ? "journal"
-            : "conference";
+      const categories = this.classifyCategory(venueTitle);
+      const sourceType =
+        venueTitle.toLowerCase().includes("journal") ||
+        venueTitle.toLowerCase().includes("transactions")
+          ? "journal"
+          : "conference";
 
-        candidates.push(
-          makeCandidate({
-            key: candKey,
-            title: venueName || venueTitle.toUpperCase(),
-            full_name: venueTitle,
-            link: venueUrl || `https://dblp.org/db/conf/${candKey}/index.html`,
-            categories,
-            tags: ["niche", sourceType],
-            source_type: sourceType,
-            evidence_url: venueUrl,
-          }),
-        );
-        this.knownKeys.add(candKey);
-      }
-    } catch {
-      // Soft fallback on network error
+      candidates.push(
+        makeCandidate({
+          key: candKey,
+          title: venueName || venueTitle.toUpperCase(),
+          full_name: venueTitle,
+          link: venueUrl || `https://dblp.org/db/conf/${candKey}/index.html`,
+          categories,
+          tags: ["niche", sourceType],
+          source_type: sourceType,
+          evidence_url: venueUrl,
+        }),
+      );
+      this.knownKeys.add(candKey);
     }
     return candidates;
   }
@@ -1660,32 +1644,28 @@ export class NicheDiscoverer {
   async discoverFromOpenreview(query = "workshop"): Promise<Candidate[]> {
     const url = "https://api2.openreview.net/venues";
     const candidates: Candidate[] = [];
-    try {
-      const html = await fetchText(url, DISCOVER_UA, 10_000);
-      const data = JSON.parse(html) as { venues?: unknown[] };
-      for (const v of data.venues ?? []) {
-        if (typeof v !== "string") continue;
-        if (!v.toLowerCase().includes(query.toLowerCase())) continue;
-        const candKey = slug(v);
-        if (!candKey || this.isAlreadyTracked(candKey) || this.isAlreadyTracked(v)) continue;
+    const html = await fetchText(url, DISCOVER_UA, 10_000);
+    const data = JSON.parse(html) as { venues?: unknown[] };
+    for (const v of data.venues ?? []) {
+      if (typeof v !== "string") continue;
+      if (!v.toLowerCase().includes(query.toLowerCase())) continue;
+      const candKey = slug(v);
+      if (!candKey || this.isAlreadyTracked(candKey) || this.isAlreadyTracked(v)) continue;
 
-        const categories = this.classifyCategory(v);
-        candidates.push(
-          makeCandidate({
-            key: candKey,
-            title: v.split("/").pop()?.toUpperCase() ?? candKey,
-            full_name: v,
-            link: `https://openreview.net/group?id=${v}`,
-            categories,
-            tags: ["niche", "workshop", "openreview"],
-            source_type: "conference",
-            evidence_url: `https://openreview.net/group?id=${v}`,
-          }),
-        );
-        this.knownKeys.add(candKey);
-      }
-    } catch {
-      // Soft fallback on network error
+      const categories = this.classifyCategory(v);
+      candidates.push(
+        makeCandidate({
+          key: candKey,
+          title: v.split("/").pop()?.toUpperCase() ?? candKey,
+          full_name: v,
+          link: `https://openreview.net/group?id=${v}`,
+          categories,
+          tags: ["niche", "workshop", "openreview"],
+          source_type: "conference",
+          evidence_url: `https://openreview.net/group?id=${v}`,
+        }),
+      );
+      this.knownKeys.add(candKey);
     }
     return candidates;
   }
@@ -1726,6 +1706,23 @@ export class NicheDiscoverer {
     minYear = new Date().getUTCFullYear(),
   ): Promise<Candidate[]> {
     const results: Candidate[] = [];
+    this.discoveryFailures.length = 0;
+    this.discoveryAttempts = 0;
+    this.discoverySuccesses = 0;
+    const collect = async <T extends unknown[]>(
+      source: string,
+      task: () => Promise<T>,
+    ): Promise<T> => {
+      this.discoveryAttempts += 1;
+      try {
+        const value = await task();
+        this.discoverySuccesses += 1;
+        return value;
+      } catch (error) {
+        this.discoveryFailures.push(`${source}: ${String(error)}`);
+        return [] as unknown as T;
+      }
+    };
 
     // 1. DBLP queries
     const queries = [
@@ -1738,19 +1735,22 @@ export class NicheDiscoverer {
       "security",
     ];
     for (const q of queries) {
-      results.push(...(await this.discoverFromDblp(q, 20)));
+      results.push(...(await collect(`dblp:${q}`, () => this.discoverFromDblp(q, 20))));
     }
 
     // 2. OpenReview queries
     const orQueries = ["workshop", "symposium", `workshop ${minYear}`];
     for (const q of orQueries) {
-      results.push(...(await this.discoverFromOpenreview(q)));
+      results.push(...(await collect(`openreview:${q}`, () => this.discoverFromOpenreview(q))));
     }
 
     // 3. wikiCFP: 各 kamiyobi カテゴリの wikiCFP カテゴリ全部を取得。
     for (const [cat, wikicfpCats] of Object.entries(WIKICFP_CATEGORY_MAP)) {
       if (categories && !categories.includes(cat)) continue;
-      for (const entry of await discoverFromWikiCfpUrls(wikicfpCats, minYear)) {
+      const entries = await collect(`wikicfp:${cat}`, () =>
+        discoverFromWikiCfpUrls(wikicfpCats, minYear),
+      );
+      for (const entry of entries) {
         const candKey = entry.key;
         if (this.isAlreadyTracked(candKey) || this.isAlreadyTracked(entry.full_name)) continue;
         results.push(
@@ -1775,48 +1775,41 @@ export class NicheDiscoverer {
     }
 
     // 4. DBWorld
-    try {
-      this.addEntries(
-        results,
-        await discoverFromDbworld(minYear),
-        ["niche", "dbworld"],
-        "https://dbworld.sigmod.org/browse.html",
-      );
-    } catch {
-      // アーカイブ障害で全体を止めない
-    }
+    this.addEntries(
+      results,
+      await collect("dbworld", () => discoverFromDbworld(minYear)),
+      ["niche", "dbworld"],
+      "https://dbworld.sigmod.org/browse.html",
+    );
 
     // 5. EasyChair Smart CFP
-    try {
-      this.addEntries(
-        results,
-        await discoverFromEasyChair(minYear),
-        ["niche", "easychair"],
-        "https://easychair.org/cfp/",
-      );
-    } catch {
-      // 一覧取得失敗で全体を止めない
-    }
+    this.addEntries(
+      results,
+      await collect("easychair", () => discoverFromEasyChair(minYear)),
+      ["niche", "easychair"],
+      "https://easychair.org/cfp/",
+    );
 
     // 6. IEEE ComSoc 誌のオープン特集号 CFP
-    try {
-      this.addEntries(results, await discoverFromComsocCfps(minYear), ["niche", "special-issue"]);
-    } catch {
-      // 特集号一覧取得失敗で全体を止めない
-    }
+    this.addEntries(results, await collect("comsoc", () => discoverFromComsocCfps(minYear)), [
+      "niche",
+      "special-issue",
+    ]);
 
     // 7. IEICE 論文誌の特集号 CFP
-    try {
-      this.addEntries(results, await discoverFromIeiceCfps(minYear), ["niche", "special-issue"]);
-    } catch {
-      // 特集号一覧取得失敗で全体を止めない
-    }
+    this.addEntries(results, await collect("ieice", () => discoverFromIeiceCfps(minYear)), [
+      "niche",
+      "special-issue",
+    ]);
 
     // 8. IPSJ 論文誌ジャーナルの特集論文募集
-    try {
-      this.addEntries(results, await discoverFromIpsjCfps(minYear), ["niche", "special-issue"]);
-    } catch {
-      // 特集号一覧取得失敗で全体を止めない
+    this.addEntries(results, await collect("ipsj", () => discoverFromIpsjCfps(minYear)), [
+      "niche",
+      "special-issue",
+    ]);
+
+    if (this.discoveryAttempts > 0 && this.discoverySuccesses === 0) {
+      throw new Error(`all discovery sources failed: ${this.discoveryFailures.join("; ")}`);
     }
 
     // 9. Known niche candidate registry (fallback / curated candidates)

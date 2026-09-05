@@ -1,13 +1,20 @@
 /**
  * End-to-end build from tests/fixtures/ only: SPEC.md sections 4 and 8.
- * Ported from tests/test_build_golden.py.
  */
 
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { env } from "@huggingface/transformers";
 import { load as loadYaml } from "js-yaml";
 import { beforeAll, expect, it } from "vitest";
 import { runHealthGate } from "../scripts/health-gate.ts";
@@ -1273,6 +1280,7 @@ it("README documents every CLI command (review command regression)", () => {
   for (const cmd of commands) {
     expect(readme, `README must document the CLI command ${cmd}`).toContain(cmd);
   }
+  expect(readme).toContain("cli.ts evidence");
 });
 
 it("SPEC §3.7 documents every CLI command and flag from usage() (#374)", () => {
@@ -1325,6 +1333,51 @@ it("SPEC §2 tree documents every src / site / data yaml / scripts ts file (#378
   for (const name of names) {
     expect(tree, `SPEC §2 must list ${name}`).toContain(name);
   }
+  expect(tree).toContain("semantic-content.ts");
+  expect(tree).toMatch(/sources\/[\s\S]*primary\.ts/);
+  const workflows = readdirSync(join(REPO_ROOT, ".github", "workflows")).filter((file) =>
+    file.endsWith(".yml"),
+  );
+  expect(workflows).toEqual(
+    expect.arrayContaining([
+      "ci.yml",
+      "deploy.yml",
+      "nightly.yml",
+      "recommendation-bundle.yml",
+      "update-data.yml",
+    ]),
+  );
+  for (const name of workflows) {
+    expect(tree, `SPEC §2 must list workflow ${name}`).toContain(name);
+  }
+});
+
+it("AGENTS.md names canonical local sources instead of extra.yaml as live truth", () => {
+  const agents = readFileSync(join(REPO_ROOT, "AGENTS.md"), "utf8");
+  expect(agents).toContain("manual.yaml");
+  expect(agents).toContain("curated.generated.yaml");
+  expect(agents).toContain("data/extra.yaml");
+  expect(agents).toMatch(/extra\.yaml.*正典ではない/);
+  expect(agents).toContain("--no-embeddings");
+});
+
+it("GATES.md tracks restored CI instead of the deleted-CI note", () => {
+  const gates = readFileSync(join(REPO_ROOT, "GATES.md"), "utf8");
+  expect(gates).toContain(".github/workflows/ci.yml");
+  expect(gates).not.toMatch(/CI\/CD は .*削除/);
+  expect(gates).not.toContain("next-last-known-good-health.json");
+});
+
+it("full-benchmark workflows pin the real-paper feature store", () => {
+  const nightly = readFileSync(join(REPO_ROOT, ".github/workflows/nightly.yml"), "utf8");
+  const bundle = readFileSync(
+    join(REPO_ROOT, ".github/workflows/recommendation-bundle.yml"),
+    "utf8",
+  );
+  const repro = readFileSync(join(REPO_ROOT, "scripts/check-reproducible-build.zsh"), "utf8");
+  expect(nightly).toContain("--real-v2-features data/benchmarks/real-paper-features.jsonl");
+  expect(bundle).toContain("--real-v2-features data/benchmarks/real-paper-features.jsonl");
+  expect(repro).toContain("--no-embeddings");
 });
 
 it("SPEC §4 documents every file a standard build generates (embeddings.json/recommender.js regression)", () => {
@@ -1357,11 +1410,40 @@ it("build splits catalog, recommendation, and historical payloads (#468)", () =>
   expect(catalog.conferences[0]).not.toHaveProperty("papers");
   expect(recommendation.embedding_ref).toBe("embeddings.json");
   expect(recommendation.conferences[0]).toHaveProperty("papers");
+  expect(recommendation.conferences.every((conference: any) => conference.acronym)).toBe(true);
   expect(recommendation.conferences[0].editions.every((e: any) => e.deadlines.length <= 1)).toBe(
     true,
   );
   expect(readFileSync(join(site, "index.html"), "utf8")).not.toContain('"papers":');
   expect(data.conferences.length).toBeGreaterThanOrEqual(catalog.conferences.length);
+});
+
+it("carries every fielded recommendation profile value into the compact index", () => {
+  const conf = makeConference({
+    key: "profiled",
+    title: "PROFILED",
+    acronym: "PRF",
+    scope: ["Distributed systems"],
+    official_scope: ["Reliable storage"],
+    paper_abstracts: ["A replicated storage abstract"],
+    keywords: ["replication"],
+    editions: [
+      makeEdition({
+        year: 2027,
+        deadlines: [
+          makeDeadline("paper", "Paper submission", new Date("2027-01-02T23:59:00.000Z"), "UTC"),
+        ],
+      }),
+    ],
+  });
+  const recommendation = toRecommendationIndex(toJson([conf], {}, NOW), NOW);
+  expect((recommendation.conferences as any[])[0]).toMatchObject({
+    acronym: "PRF",
+    scope: ["Distributed systems"],
+    official_scope: ["Reliable storage"],
+    paper_abstracts: ["A replicated storage abstract"],
+    keywords: ["replication"],
+  });
 });
 
 it("generated_at follows the --now argument", () => {
@@ -2007,6 +2089,7 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
   // 実行検証: d キーで選択行のドロワーが開き、開閉でフォーカスが移る / 戻る
   const keySrc = jsFunction(html, "onKeydown");
   const openSrc = jsFunction(html, "openDrawer");
+  const summarySrc = jsFunction(html, "verificationSummary");
   const closeSrc = jsFunction(html, "closeDrawer");
   const script = [
     "const calls = { open: [], focus: [] };",
@@ -2030,13 +2113,15 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
     "const closeSpy = () => {};",
     `const KEY = ${JSON.stringify(keySrc)};`,
     `const OPEN = ${JSON.stringify(openSrc)};`,
+    `const SUMMARY = ${JSON.stringify(summarySrc)};`,
     `const CLOSE = ${JSON.stringify(closeSrc)};`,
     "const onKeydown = new Function('window', 'document', '$', 'selectedIndex', 'shown', 'openDrawer', 'closeDrawer', 'return (' + KEY + ')')(window, document, $, 1, ['A', 'B'], openSpy, closeSpy);",
     // d キー → 選択行 (shown[1]) のドロワーが開き、行にフォーカスが移る
     "onKeydown({ key: 'd', preventDefault() {}, target: { tagName: 'BODY' } });",
     "const dOpened = calls.open.length === 1 && calls.open[0] === 'B';",
     "const dFocusedRow = calls.focus[calls.focus.length - 1] === 'row1';",
-    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null);",
+    "const verificationSummary = new Function('esc', 'return (' + SUMMARY + ')')((s) => String(s ?? ''));",
+    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary);",
     "document.activeElement = prevEl;",
     "openDrawer({ kind: 'journal', conf: { title: 'X' }, ed: { place: 'P', date_text: 'D' } });",
     "const focusedClose = document.activeElement === closeBtn;",
@@ -2194,6 +2279,7 @@ it("site template statUpcoming counts confirmed submission deadlines only", () =
   expect(template).toMatch(
     /connect-src 'self' https:\/\/cdn\.jsdelivr\.net https:\/\/huggingface\.co https:\/\/cdn-lfs\.huggingface\.co/,
   );
+  expect(template).toContain(".verification-summary");
   expect(template).not.toMatch(/script-src[^>]*\*/);
   // statUpcoming の計算が投稿締切 (abstract/paper) かつ非推定 (!r.est) のみに限定されていること
   expect(runtime).toMatch(
@@ -2337,6 +2423,38 @@ it("openDrawer escapes KIND_LABEL fallback kind (#396)", () => {
   const body = runtime.slice(start, end);
   expect(body).toMatch(/esc\(\s*KIND_LABEL\[r\.kind\]/);
   expect(body).not.toMatch(/\+ \(KIND_LABEL\[r\.kind\] \|\| r\.kind\) \+/);
+});
+
+it("normal deadline drawer includes verification details", () => {
+  const runtime = siteRuntime();
+  const openSrc = jsFunction(runtime, "openDrawer");
+  const summarySrc = jsFunction(runtime, "verificationSummary");
+  const script = [
+    "const body = { innerHTML: '' };",
+    "const closeBtn = { focus() {} };",
+    "const els = {",
+    "  drawerBackdrop: { classList: { add() {} } }, drawerTitle: {}, drawerFullName: {},",
+    "  drawerBody: body, drawerClose: closeBtn,",
+    "};",
+    "const document = { activeElement: null, getElementById: (id) => els[id] || null };",
+    "function $(id) { return document.getElementById(id); }",
+    "const window = { _prevFocus: null };",
+    `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')((s) => String(s ?? ''));`,
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary);`,
+    "openDrawer({",
+    "  kind: 'paper', conf: { key: 'demo', title: 'Demo' },",
+    "  ed: { year: 2026, place: 'P', date_text: 'D' }, t: 0, tLast: 0,",
+    "  dl: { verification: { last_verified_at: '2026-08-01T10:00:00Z', source_class: 'official-cfp', status: 'verified', next_check_at: '2026-09-01T10:00:00Z' }, evidence: [{ verifiedFields: ['date', 'time', 'timezone'] }] },",
+    "});",
+    "console.log(body.innerHTML);",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  expect(proc.stdout).toContain("公式確認");
+  expect(proc.stdout).toContain("公式CFP");
+  expect(proc.stdout).toContain("date・time・timezone");
+  expect(proc.stdout).toContain("確認済み");
+  expect(proc.stdout).toContain("次回確認予定");
 });
 
 it("repolink URL is sanitised via safeExternalUrl (#419)", () => {
@@ -2587,6 +2705,64 @@ it("buildAll emits recommender.js when custom template is in separate directory 
   expect(existsSync(join(outDir, "index.html"))).toBe(true);
   expect(existsSync(join(outDir, "recommender.js"))).toBe(true);
   expect(readFileSync(join(outDir, "recommender.js"), "utf8")).toContain("Recommender");
+});
+
+it("buildAll removes stale managed files and requires the site template", async () => {
+  const tmpDir = mkdtempSync(join(tmpdir(), "cfp-missing-template-"));
+  const outDir = join(tmpDir, "out");
+  mkdirSync(outDir, { recursive: true });
+  for (const name of ["index.html", "recommender.js", "embeddings.json"]) {
+    writeFileSync(join(outDir, name), "stale", "utf8");
+  }
+  writeFileSync(join(outDir, "keep.txt"), "keep", "utf8");
+
+  await expect(
+    buildAll(
+      [],
+      { template: join(tmpDir, "missing-template.html") },
+      outDir,
+      new Date("2026-08-09T00:00:00Z"),
+      { noEmbeddings: true },
+    ),
+  ).rejects.toThrow(/required site template missing/);
+  expect(existsSync(join(outDir, "index.html"))).toBe(false);
+  expect(existsSync(join(outDir, "recommender.js"))).toBe(false);
+  expect(existsSync(join(outDir, "embeddings.json"))).toBe(false);
+  expect(existsSync(join(outDir, "keep.txt"))).toBe(true);
+});
+
+it("buildAll removes stale embeddings when local model generation fails", async () => {
+  const tmpDir = mkdtempSync(join(tmpdir(), "cfp-stale-embeddings-"));
+  const outDir = join(tmpDir, "out");
+  const template = join(tmpDir, "template.html");
+  mkdirSync(outDir, { recursive: true });
+  writeFileSync(join(outDir, "embeddings.json"), "stale", "utf8");
+  writeFileSync(template, "<html><body>/*__DATA__*/null</body></html>", "utf8");
+  const originalCacheDir = env.cacheDir;
+  env.cacheDir = join(tmpDir, "empty-cache");
+
+  try {
+    await buildAll([], { template }, outDir, NOW, { localEmbeddingsOnly: true });
+  } finally {
+    env.cacheDir = originalCacheDir;
+  }
+
+  expect(existsSync(join(outDir, "embeddings.json"))).toBe(false);
+  expect(JSON.parse(readFileSync(join(outDir, "publish.json"), "utf8")).semantic_status).toBe(
+    "lexical-only",
+  );
+});
+
+it("buildAll rejects a site template without the data marker", async () => {
+  const tmpDir = mkdtempSync(join(tmpdir(), "cfp-missing-marker-"));
+  const outDir = join(tmpDir, "out");
+  const template = join(tmpDir, "template.html");
+  writeFileSync(template, "<!doctype html><title>empty</title>\n", "utf8");
+
+  await expect(
+    buildAll([], { template }, outDir, new Date("2026-08-09T00:00:00Z"), { noEmbeddings: true }),
+  ).rejects.toThrow(/template marker missing/);
+  expect(existsSync(join(outDir, "publish.json"))).toBe(false);
 });
 
 it("buildAll handles null and undefined arguments safely and setRoot works (#336)", async () => {

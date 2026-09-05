@@ -10,21 +10,21 @@ import {
 } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 
-export const EVIDENCE_SCHEMA_VERSION = 1;
-export const EVIDENCE_MAX_BODY_BYTES = 5 * 1024 * 1024;
+const EVIDENCE_SCHEMA_VERSION = 1;
+const EVIDENCE_MAX_BODY_BYTES = 5 * 1024 * 1024;
 
-export interface EvidenceBlob {
+interface EvidenceBlob {
   bytes: number;
   content_type: string;
   references: string[];
 }
 
-export interface EvidenceIndex {
+interface EvidenceIndex {
   schema_version: 1;
   blobs: Record<string, EvidenceBlob>;
 }
 
-export interface EvidenceReport {
+interface EvidenceReport {
   index: EvidenceIndex;
   issues: string[];
   orphan_hashes: string[];
@@ -36,7 +36,7 @@ function dataRoot(root: string): string {
 }
 
 function blobRoots(root: string): string[] {
-  return [join(dataRoot(root), "evidence", "blobs"), join(dataRoot(root), "promotions")];
+  return [join(dataRoot(root), "evidence", "blobs")];
 }
 
 function inside(base: string, path: string): boolean {
@@ -44,22 +44,32 @@ function inside(base: string, path: string): boolean {
   return rel === "" || (rel !== ".." && !rel.startsWith(".."));
 }
 
-function walk(dir: string, predicate: (path: string) => boolean, out: string[]): void {
+function walk(
+  dir: string,
+  predicate: (path: string) => boolean,
+  out: string[],
+  includeMatchingDirectories = false,
+): void {
   if (!existsSync(dir)) return;
   for (const name of readdirSync(dir)) {
     const path = join(dir, name);
     try {
-      if (lstatSync(path).isDirectory()) walk(path, predicate, out);
-      else if (predicate(path)) out.push(path);
-    } catch {
-      // A concurrently removed optional evidence file is handled as missing.
+      if (lstatSync(path).isDirectory()) {
+        if (includeMatchingDirectories && predicate(path)) out.push(path);
+        else walk(path, predicate, out, includeMatchingDirectories);
+      } else if (predicate(path)) out.push(path);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
     }
   }
 }
 
 function bodyFiles(root: string): string[] {
   const out: string[] = [];
-  for (const dir of blobRoots(root)) walk(dir, (path) => path.endsWith(".body"), out);
+  for (const dir of blobRoots(root)) walk(dir, (path) => path.endsWith(".body"), out, true);
+  for (const path of out) {
+    if (!lstatSync(path).isFile()) throw new Error(`body blob must be a regular file: ${path}`);
+  }
   return out.sort();
 }
 
@@ -75,17 +85,71 @@ function explicitBodyRefs(text: string): string[] {
     .filter(Boolean);
 }
 
-function explicitHashRefs(text: string): string[] {
-  const hashes = [
+function explicitContentHashes(text: string): string[] {
+  return [
     ...text.matchAll(
       /(?:contentHash|content_hash|body_hash|bodyHash)\s*["']?\s*[:=]\s*["']?([a-f0-9]{64})/gi,
     ),
   ].map((match) => match[1]!.toLowerCase());
+}
+
+function bodyRefHash(ref: string): string | null {
+  const match = /(?:^|[/\\])([a-f0-9]{64})(?:\.body)?$/i.exec(ref.trim());
+  return match?.[1]?.toLowerCase() ?? null;
+}
+
+function explicitHashRefs(text: string): string[] {
+  const hashes = [
+    ...explicitContentHashes(text),
+    ...[...text.matchAll(/evidence\/blobs\/([a-f0-9]{64})\.body/gi)].map((match) =>
+      match[1]!.toLowerCase(),
+    ),
+    ...explicitBodyRefs(text).flatMap((ref) => {
+      const hash = bodyRefHash(ref);
+      return hash ? [hash] : [];
+    }),
+  ];
   if (/(?:["']?path["']?\s*:\s*["']?bodies\/|bodyPath)/i.test(text))
     hashes.push(
       ...[...text.matchAll(/\b[a-f0-9]{64}\b/gi)].map((match) => match[0]!.toLowerCase()),
     );
   return [...new Set(hashes)];
+}
+
+function hasBodyHashConflict(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some(hasBodyHashConflict);
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  const ref = record.body_ref ?? record.bodyRef ?? record.bodyPath;
+  const hash = record.content_hash ?? record.contentHash ?? record.body_hash ?? record.bodyHash;
+  const referencedHash = typeof ref === "string" ? bodyRefHash(ref) : null;
+  if (
+    referencedHash &&
+    typeof hash === "string" &&
+    /^[a-f0-9]{64}$/i.test(hash) &&
+    hash.toLowerCase() !== referencedHash
+  )
+    return true;
+  return Object.values(record).some(hasBodyHashConflict);
+}
+
+function hasBodyHashConflictText(text: string): boolean {
+  try {
+    return hasBodyHashConflict(JSON.parse(text));
+  } catch {
+    return text
+      .split(/\r?\n/)
+      .filter((line) => line.trim())
+      .some((line) => {
+        try {
+          return hasBodyHashConflict(JSON.parse(line));
+        } catch {
+          const refs = [...new Set(explicitBodyRefs(line))];
+          const hashes = [...new Set(explicitContentHashes(line))];
+          return refs.length === 1 && hashes.length === 1 && hashes[0] !== bodyRefHash(refs[0]!);
+        }
+      });
+  }
 }
 
 function bodyHash(path: string): string {
@@ -96,16 +160,11 @@ function relativeRef(root: string, path: string): string {
   return relative(root, path).replaceAll("\\", "/");
 }
 
-export function evidenceIndex(root: string): EvidenceIndex {
+function evidenceIndex(root: string): EvidenceIndex {
   const files = bodyFiles(root);
   const references = new Map<string, Set<string>>();
   for (const path of referenceFiles(root)) {
-    let text: string;
-    try {
-      text = readFileSync(path, "utf8");
-    } catch {
-      continue;
-    }
+    const text = readFileSync(path, "utf8");
     for (const hash of explicitHashRefs(text)) {
       const set = references.get(hash) ?? new Set<string>();
       set.add(relativeRef(root, path));
@@ -142,6 +201,10 @@ export function verifyEvidence(root: string): EvidenceReport {
   const files = bodyFiles(root);
   const index = evidenceIndex(root);
   const issues: string[] = [];
+  const misplaced: string[] = [];
+  walk(join(dataRoot(root), "promotions"), (path) => path.endsWith(".body"), misplaced, true);
+  for (const path of misplaced)
+    issues.push(`${relativeRef(root, path)}: body blob is outside canonical evidence storage`);
   const byHash = new Map<string, string[]>();
   for (const path of files) {
     const name = path
@@ -167,13 +230,9 @@ export function verifyEvidence(root: string): EvidenceReport {
   for (const path of files) knownPaths.set(resolve(path), path);
   const hashRefs = new Map<string, Set<string>>();
   for (const path of referenceFiles(root)) {
-    let text: string;
-    try {
-      text = readFileSync(path, "utf8");
-    } catch {
-      continue;
-    }
-    for (const ref of explicitBodyRefs(text)) {
+    const text = readFileSync(path, "utf8");
+    const bodyRefs = [...new Set(explicitBodyRefs(text))];
+    for (const ref of bodyRefs) {
       if (ref.includes("://") || ref.startsWith("/")) {
         issues.push(`${relativeRef(root, path)}: body_ref is outside evidence storage`);
         continue;
@@ -182,12 +241,14 @@ export function verifyEvidence(root: string): EvidenceReport {
       if (!candidates.some((candidate) => knownPaths.has(candidate)))
         issues.push(`${relativeRef(root, path)}: missing body_ref ${ref}`);
     }
+    if (hasBodyHashConflictText(text))
+      issues.push(`${relativeRef(root, path)}: body_ref hash conflicts with content_hash`);
     for (const hash of explicitHashRefs(text)) {
       const refs = hashRefs.get(hash) ?? new Set<string>();
       refs.add(relativeRef(root, path));
       hashRefs.set(hash, refs);
     }
-    if (/\b(?:cookie|authorization|set-cookie)\s*:/i.test(text))
+    if (/(?:^|[,{\s])["']?(?:cookie|authorization|set-cookie)["']?\s*:/im.test(text))
       issues.push(`${relativeRef(root, path)}: secret-like header is stored`);
   }
   for (const hash of Object.keys(index.blobs)) {

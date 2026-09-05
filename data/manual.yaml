@@ -4129,6 +4129,15 @@ conferences:
             kind: paper
             label: Submission deadline
             precision: date-only
+            superseded_deadlines:
+              - value: '2026-08-25'
+                precision: date-only
+                source: https://easychair.org/cfp/ICCR2026
+                evidenceRef: https://easychair.org/cfp/ICCR2026
+                status: superseded
+                supersededBy: iccr-2026|iccr-202626|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-08-31T00:00:00Z'
         event_end: '2026-12-13'
         event_start: '2026-12-11'
         id: iccr-202626
@@ -4217,6 +4226,15 @@ conferences:
             kind: paper
             label: Paper submission deadline
             precision: date-only
+            superseded_deadlines:
+              - value: '2026-08-31'
+                precision: date-only
+                source: https://easychair.org/cfp/ccisc2026
+                evidenceRef: https://easychair.org/cfp/ccisc2026
+                status: superseded
+                supersededBy: ccisc-2026|ccisc-202626|paper|1|
+                reason: official-extension
+                supersededAt: '2026-08-31T00:00:00Z'
         event_end: '2026-09-20'
         event_start: '2026-09-18'
         id: ccisc-202626
@@ -4471,6 +4489,23 @@ conferences:
             kind: paper
             label: Final submission deadline
             tz: AoE
+            superseded_deadlines:
+              - value: '2026-09-13'
+                precision: date-only
+                source: https://easychair.org/cfp/keir-cikm2026
+                evidenceRef: https://easychair.org/cfp/keir-cikm2026
+                status: superseded
+                supersededBy: keir-cikm2026|keir-cikm202626|paper|1|
+                reason: official-extension
+                supersededAt: '2026-08-31T00:00:00Z'
+              - value: '2026-08-24'
+                precision: date-only
+                source: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;c0c7be0.2607
+                evidenceRef: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;c0c7be0.2607
+                status: superseded
+                supersededBy: keir-cikm2026|keir-cikm202626|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-08-31T00:00:00Z'
         event_end: '2026-11-08'
         event_start: '2026-11-08'
         id: keir-cikm202626
@@ -4535,6 +4570,15 @@ conferences:
             kind: paper
             label: Paper submission deadline
             precision: date-only
+            superseded_deadlines:
+              - value: '2026-09-30'
+                precision: date-only
+                source: https://easychair.org/cfp/admit2026
+                evidenceRef: https://easychair.org/cfp/admit2026
+                status: superseded
+                supersededBy: admit-2026|admit-202626|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-08-31T00:00:00Z'
         event_end: '2026-10-18'
         event_start: '2026-10-16'
         id: admit-202626
@@ -5569,6 +5613,15 @@ conferences:
             kind: paper
             label: Full paper submission date
             precision: date-only
+            superseded_deadlines:
+              - value: '2026-08-28'
+                precision: date-only
+                source: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190624&copyownerid=182680
+                evidenceRef: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=190624&copyownerid=182680
+                status: superseded
+                supersededBy: icaici-2026|icaici-202626|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-08-31T00:00:00Z'
         event_end: '2026-09-13'
         event_start: '2026-09-11'
         id: icaici-202626
@@ -5594,7 +5647,7 @@ conferences:
         id: icaidm-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200184&copyownerid=182680
         year: 2026
-    full_name: 026 3rd International Conference on Artificial Intelligence and Digital Management
+    full_name: 2026 3rd International Conference on Artificial Intelligence and Digital Management
     key: icaidm-2026
     link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=200184&copyownerid=182680
     title: ICAIDM 2026
@@ -5623,14 +5676,29 @@ conferences:
           seriesId: iccns
         date_text: December 19-21, 2026
         deadlines:
-          - date: '2026-09-10'
-            kind: abstract
-            label: Abstract submission deadline
-            precision: date-only
-          - date: '2026-09-10'
+          - date: '2026-08-01'
             kind: paper
             label: Submission deadline
             precision: date-only
+            superseded_deadlines:
+              - value: '2026-09-10'
+                precision: date-only
+                source: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194237&copyownerid=13881
+                evidenceRef: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=194237&copyownerid=13881
+                status: superseded
+                supersededBy: iccns-2026|iccns-202626|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-09-01T00:00:00Z'
+            evidence:
+              - sourceClass: official-cfp
+                confidence: official
+                sourceUrl: https://www.iccns.org/iccns_cfp.pdf
+                retrievedAt: '2026-08-31T00:00:00Z'
+                verifiedAt: '2026-08-31T00:00:00Z'
+                rawExcerpt: 'Submission Deadline: August 1, 2026'
+                verifiedFields:
+                  - date
+                  - kind
         event_end: '2026-12-21'
         event_start: '2026-12-19'
         id: iccns-202626

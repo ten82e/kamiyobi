@@ -2,21 +2,18 @@
   "schema": 1,
   "id": "2026-08-31-genai4sg-cikm-2026",
   "observations": {
-    "sha256": "04386e1d4fecd54d165d3cf86f1620e0bf5be5b019062036e90c61af089401ed"
+    "sha256": "5b7debd5e67121404b96113379507ea05f686808a4cc371858215e80cdb0522b"
   },
   "resolutions": {
-    "sha256": "865230d1f47f7857a0a9b584cc6cf873e000ccfdc4399ce5548cf34b22cac5e0"
-  },
-  "extra": {
-    "sha256": "7c16f7e084d37d0249812c1c671e9c665675778681d69c651eaf0c68c125c5da"
+    "sha256": "73e919af43f1f07b4c0d8db2f1542e1eb2ea4a2b4b13c1fa58d0a8e7d611e39e"
   },
   "bodies": [
     {
-      "path": "bodies/78e838df21338c35405deb432ec11c68d4c17ffbc9e55a964a9921df7915eab1.body",
+      "path": "../../evidence/blobs/78e838df21338c35405deb432ec11c68d4c17ffbc9e55a964a9921df7915eab1.body",
       "sha256": "78e838df21338c35405deb432ec11c68d4c17ffbc9e55a964a9921df7915eab1"
     },
     {
-      "path": "bodies/b8eaad25f2fd07862684f630e200c51d94564ba54e0658905bed0456748de3dc.body",
+      "path": "../../evidence/blobs/b8eaad25f2fd07862684f630e200c51d94564ba54e0658905bed0456748de3dc.body",
       "sha256": "b8eaad25f2fd07862684f630e200c51d94564ba54e0658905bed0456748de3dc"
     }
   ],

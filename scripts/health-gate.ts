@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { evaluateHealthGate, type HealthReport, type ObservationBaseline } from "../src/build.ts";
 
-export interface HealthGateArgs {
+interface HealthGateArgs {
   currentPath: string;
   previousPath?: string;
   lastKnownGoodPath?: string;
@@ -26,7 +26,7 @@ function usage(): never {
   process.exit(2);
 }
 
-export function parseHealthGateArgs(argv: string[]): HealthGateArgs | null {
+function parseHealthGateArgs(argv: string[]): HealthGateArgs | null {
   const positional: string[] = [];
   let requireBaseline = false;
   let reportPath: string | undefined;
@@ -63,7 +63,7 @@ export function parseHealthGateArgs(argv: string[]): HealthGateArgs | null {
 }
 
 /** gate 判定の機械可読記録。失敗時の診断 artifact としてそのまま保存する。 */
-export interface HealthGateViolationReport {
+interface HealthGateViolationReport {
   ok: boolean;
   exit_status: number;
   reasons: string[];

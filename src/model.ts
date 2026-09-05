@@ -4,14 +4,12 @@
  * This module is the single place where upstream free-form values are turned
  * into structured data.  Nothing here throws on bad input: unparsable values
  * become `null` and a de-duplicated warning is written to stderr.
- *
- * Ported from scripts/model.py (kamiyobi).
  */
 
 export const DAY_MS = 86_400_000;
 
 /** Anywhere on Earth: UTC-12. */
-export const AOE_OFFSET_MINUTES = -12 * 60;
+const AOE_OFFSET_MINUTES = -12 * 60;
 
 export type DeadlineKind =
   | "abstract"
@@ -133,6 +131,7 @@ export interface DeadlineEvidence {
   retrievedAt?: string;
   verifiedAt?: string | null;
   contentHash?: string | null;
+  evidenceRef?: string;
   rawExcerpt?: string;
   verifiedFields?: EvidenceField[];
   adapter?: string;
@@ -208,6 +207,9 @@ export function deadlineEvidence(
         ...(typeof item.retrievedAt === "string" ? { retrievedAt: item.retrievedAt } : {}),
         ...(typeof item.verifiedAt === "string" ? { verifiedAt: item.verifiedAt } : {}),
         ...(typeof item.contentHash === "string" ? { contentHash: item.contentHash } : {}),
+        ...(typeof item.evidenceRef === "string" || typeof item.evidence_ref === "string"
+          ? { evidenceRef: String(item.evidenceRef ?? item.evidence_ref) }
+          : {}),
         ...(typeof item.rawExcerpt === "string" ? { rawExcerpt: item.rawExcerpt } : {}),
         ...(typeof item.adapter === "string" ? { adapter: item.adapter } : {}),
         ...(typeof item.structured === "boolean" ? { structured: item.structured } : {}),
@@ -408,6 +410,12 @@ function changeDate(value: DeadlineChangeRecord): string | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 
+function changeLocalDate(value: DeadlineChangeRecord): string | null {
+  const raw = String(value.local_date ?? value.date ?? "");
+  const local = /^(\d{4}-\d{2}-\d{2})/.exec(raw)?.[1];
+  return local ?? changeDate(value)?.slice(0, 10) ?? null;
+}
+
 function changeTime(value: DeadlineChangeRecord): number | null {
   const parsedWithZone =
     typeof value.date === "string" && typeof value.tz === "string"
@@ -439,7 +447,7 @@ export function classifyDeadlineChange(
   const newDate = changeDate(newValue);
   if (oldPrecision === newPrecision && oldDate !== null && oldDate === newDate) return "unchanged";
   if (oldPrecision === "date-only" && newPrecision === "exact") {
-    const exactDate = newDate?.slice(0, 10);
+    const exactDate = changeLocalDate(newValue);
     return exactDate === oldDate ? "precision-upgrade" : "ambiguous";
   }
   if (oldPrecision === "exact" && newPrecision === "date-only") return "precision-downgrade";
@@ -525,6 +533,11 @@ export interface Conference {
   key: string;
   title: string;
   full_name: string;
+  acronym?: string;
+  scope?: string[];
+  official_scope?: string[];
+  paper_abstracts?: string[];
+  keywords?: string[];
   link: string;
   rank: Record<string, string>;
   dblp: string | null;
@@ -825,6 +838,34 @@ export function slug(title: string | null | undefined): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+/** wikiCFP / EasyChair の本文欠けで先頭年が 0xx、末尾年が 20 になった名前。 */
+export function truncatedVenueName(value: string): boolean {
+  return (
+    /\b\p{L}{3,}\s+20$/u.test(value) ||
+    /^0\d{2}\b/.test(value) ||
+    /\b0\d{2}\s+(?:st|nd|rd|th)\b/i.test(value)
+  );
+}
+
+/** 欠けた 20xx を、分かっている開催年または 20 世紀接頭辞で復元する。 */
+export function repairTruncatedVenueName(value: string, year?: number | null): string {
+  const text = String(value ?? "").trim();
+  if (!truncatedVenueName(text)) return text;
+  const y =
+    typeof year === "number" && Number.isInteger(year) && year >= 2000 && year <= 2099
+      ? year
+      : null;
+  const centuryYear = (yy: string): string =>
+    y !== null && y % 100 === Number(yy) ? String(y) : `20${yy}`;
+  let repaired = text
+    .replace(/^0(\d{2})\b/, (_m, yy: string) => centuryYear(yy))
+    .replace(/\b0(\d{2})\s+(?=(?:st|nd|rd|th)\b)/i, (_m, yy: string) => `${centuryYear(yy)} `);
+  if (/\b\p{L}{3,}\s+20$/u.test(repaired) && y !== null) {
+    repaired = repaired.replace(/\b20$/, String(y));
+  }
+  return repaired;
 }
 
 // --------------------------------------------------------------------------
@@ -1701,7 +1742,7 @@ function providerIdentitiesOf(value: unknown): ProviderIdentity[] {
     );
 }
 
-function venueIdentityOf(value: unknown): VenueIdentity | undefined {
+export function venueIdentityOf(value: unknown): VenueIdentity | undefined {
   if (!value || typeof value !== "object") return undefined;
   const raw = value as Record<string, unknown>;
   const venueId = typeof raw.venueId === "string" ? raw.venueId.trim() : "";
@@ -1739,7 +1780,7 @@ function venueIdentityOf(value: unknown): VenueIdentity | undefined {
     : undefined;
 }
 
-function editionIdentityOf(value: unknown): EditionIdentity | undefined {
+export function editionIdentityOf(value: unknown): EditionIdentity | undefined {
   if (!value || typeof value !== "object") return undefined;
   const raw = value as Record<string, unknown>;
   const editionId = typeof raw.editionId === "string" ? raw.editionId.trim() : "";

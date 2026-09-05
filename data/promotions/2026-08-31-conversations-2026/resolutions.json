@@ -53,18 +53,22 @@
         "tags": [
           "niche"
         ],
-        "review_state": "reviewed"
+        "review_state": "reviewed",
+        "full_name": "10th International Symposium on Chatbots and Human-centred AI",
+        "link": "https://2026.conversations.ws/"
       },
       "edition": {
         "year": 2026,
         "edition_id": "conversations-2026",
         "date_text": "2026-11-23",
         "event_start": "2026-11-23",
-        "event_end": "2026-11-25"
+        "event_end": "2026-11-25",
+        "link": "https://2026.conversations.ws/call-for-papers/",
+        "place": "Amsterdam, Netherlands"
       },
       "deadline": {
         "kind": "paper",
-        "label": "paper",
+        "label": "Paper submission",
         "round": 1,
         "track": "",
         "precision": "date-only",

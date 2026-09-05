@@ -1,15 +1,15 @@
 /**
  * fetch-primary.ts の抽出ロジックの最小テスト。
- * Ported from tests/test_fetch_primary.py.
  */
 
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   extractDeadline,
   extractDeadlines,
+  ROOT as FETCH_PRIMARY_ROOT,
   main as fetchPrimaryMain,
   loadYamlFile,
   pageTitleYear,
@@ -18,6 +18,7 @@ import {
   parsePrimaryDate,
   primaryAdapter,
   runFetchPrimary,
+  setRoot as setFetchPrimaryRoot,
   toLines,
 } from "../src/fetch-primary.ts";
 import { resolvePrimaryObservations } from "../src/sources/primary.ts";
@@ -340,6 +341,29 @@ describe("page-year diagnostics", () => {
 });
 
 describe("runFetchPrimary", () => {
+  it("resolves default input paths after the root is changed", async () => {
+    const root = mkdtempSync(join(tmpdir(), "cfp-primary-root-"));
+    mkdirSync(join(root, "data"), { recursive: true });
+    writeFileSync(
+      join(root, "data", "primary.yaml"),
+      "conferences:\n  default-root:\n    url: https://example.test/cfp\n    year: 2027\n",
+      "utf8",
+    );
+    const previousRoot = FETCH_PRIMARY_ROOT;
+    const oldFetch = globalThis.fetch;
+    setFetchPrimaryRoot(root);
+    globalThis.fetch = (async () =>
+      new Response(
+        "<title>Default root 2027</title><p>Paper deadline: January 2, 2027</p>",
+      )) as typeof fetch;
+    try {
+      expect(await runFetchPrimary(false)).toBe(0);
+    } finally {
+      globalThis.fetch = oldFetch;
+      setFetchPrimaryRoot(previousRoot);
+    }
+  });
+
   it("returns 2 when registry has no conferences", async () => {
     spyStderr();
     const emptyRegistry = join(mkdtempSync(join(tmpdir(), "cfp-reg-")), "empty.yaml");

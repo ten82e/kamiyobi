@@ -1,7 +1,7 @@
 # kamiyobi
 
 高性能計算・ネットワーク・システム・人工知能・セキュリティ・データベース・グラフィックス・HCI・理論の国際会議および穴場ワークショップ・ジャーナルについて、論文投稿の締切と開催日を収集・正規化する。
-上流データの取得、候補探索、ビルド、公開は必要なときに手動で行い、JSON / CSV / Markdown と静的サイトを生成する。
+上流データの取得、候補探索、ビルド、公開は手元の CLI と GitHub Actions で行い、JSON / CSV / Markdown と静的サイトを生成する。
 生成した静的サイトは GitHub Pages で公開できる。
 
 公開先は https://ten82e.github.io/kamiyobi/ である。
@@ -113,16 +113,24 @@ node src/cli.ts review
 本文は SHA-256 付きで `data/evidence/blobs/` に保存し、日付の変更は台帳へ記録する。
 公開データを自動上書きしないため、変更後の値は台帳の resolution を確認してから反映する。
 
-上流の取得結果は `data/source-snapshots/` に源ごとに保存する。
-一次ソースの退避は `data/source-snapshots/primary.json` を使い、オフラインビルドでも検証済み観測を復元できる。
-
 ```sh
 node src/cli.ts reverify --due --now 2026-08-31T00:00:00Z
 ```
 
+証拠本文の参照整合を検査し、未参照本文を回収する。
+
+```sh
+node src/cli.ts evidence verify
+node src/cli.ts evidence gc --dry-run
+```
+
+上流の取得結果は `data/source-snapshots/` に源ごとに保存する。
+一次ソースの退避は `data/source-snapshots/primary.json` を使い、オフラインビルドでも検証済み観測を復元できる。
+
 ## 更新の仕組み
 
-更新は手動で行う。
+手元では次の順で更新する。push 後は `.github/workflows/ci.yml` が同じ検査を実行し、
+main では `deploy.yml` が Pages を配信する。
 
 ```sh
 # 1. 上流を取得して正規化し、一次ソース観測を適用する
@@ -133,10 +141,8 @@ node src/cli.ts discover
 npm run generate:curated
 # 4. フルビルド（public/ を生成）
 node src/cli.ts build --out public
-# 5. 意味検査
-npm run validate:data -- public/data.json
-# 6. health gate（前回成功時の health.json と比較）
-node scripts/health-gate.ts public/health.json --report work/health-gate-violations.json --require-baseline data/next-last-known-good-health.json
+# 5. 意味検査と health gate
+npm run update
 ```
 
 全上流が fresh の場合だけ `data/snapshot.json` を更新する。このスナップショットは上流が
@@ -168,7 +174,7 @@ npm test
 | `--out public` | 出力先 |
 | `--now 2026-08-09T00:00:00Z` | 基準時刻を固定する。同じ入力で出力が一致することを確かめたいときに使う |
 | `--cache .cache` | 上流の取得結果を置く場所 |
-| `--offline` | 上流を取りに行かず、キャッシュ、それも無ければ `data/snapshot.json` を使う |
+| `--offline` | 上流や埋め込みモデルを取りに行かず、上流はキャッシュ、それも無ければ `data/snapshot.json` を使う |
 | `--no-embeddings` | 埋め込み（`embeddings.json`）を生成しない。モデル取得を避けてビルドを速くする（テスト・オフライン確認用） |
 
 ## 収録範囲を変える

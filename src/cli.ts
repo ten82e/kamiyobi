@@ -1,6 +1,5 @@
 /**
  * Entry point: node src/cli.ts build [options]
- * Ported from scripts/cli.py (kamiyobi).
  */
 
 import { execFileSync } from "node:child_process";
@@ -10,7 +9,8 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual, parseArgs as parseNodeArgs } from "node:util";
 import { dump as dumpYaml, load as loadYaml } from "js-yaml";
-import { booleanValue, normalizeShortEquals, stringValue } from "./args.ts";
+import { generateCurated } from "../scripts/generate-curated.ts";
+import { booleanValue, normalizeShortEquals, positiveIntegerValue, stringValue } from "./args.ts";
 import { buildAll, collectPublishProvenance, type HealthSourceMetadata, toJson } from "./build.ts";
 import { gcEvidence, verifyEvidence, writeEvidenceIndex } from "./evidence.ts";
 import {
@@ -28,11 +28,13 @@ import {
   select,
 } from "./merge.ts";
 import {
+  asDate,
   type Conference,
   cmpStr,
   conferencesFromJson,
   type Deadline,
   deadlineTrackKey,
+  parseInstant,
   warn,
   warningCounts,
   warningIdentityKeys,
@@ -44,6 +46,9 @@ import {
   loadVerificationLedger,
   reverifyData,
   transitionVerificationResolution,
+  type VerificationLedger,
+  type VerificationPage,
+  type VerificationResolution,
 } from "./reverify.ts";
 import { AideadlinesSource } from "./sources/aideadlines.ts";
 import { fetchMetadataFor, resetFetchMetadata } from "./sources/base.ts";
@@ -101,7 +106,10 @@ function loadYamlFile(path: string, opts?: { strict?: boolean }): Record<string,
   if (!existsSync(path)) return {};
   try {
     const loaded = loadYaml(readFileSync(path, "utf8"));
-    return typeof loaded === "object" && loaded !== null ? (loaded as Record<string, unknown>) : {};
+    if (loaded === null || typeof loaded !== "object" || Array.isArray(loaded)) {
+      throw new TypeError(`${path} must contain a YAML mapping`);
+    }
+    return loaded as Record<string, unknown>;
   } catch (exc) {
     // 静かに {} を返すと primary_overrides 等のエントリが全滅するのにビルドは
     // 成功し続ける（2026-08-12 whpc で実証）。必ず警告を出す。
@@ -153,6 +161,7 @@ async function collectImpl(
     } catch (exc) {
       process.stderr.write(`warning: source ${source.name} の取得に失敗した: ${String(exc)}\n`);
       group = [];
+      failed.add(source.name);
     }
     if (group.length === 0 && source.name !== "local") {
       failed.add(source.name);
@@ -183,7 +192,9 @@ async function collectImpl(
     })();
     const status: SourceStatus =
       source.name === "local"
-        ? "fresh"
+        ? failed.has(source.name)
+          ? "failed"
+          : "fresh"
         : failed.has(source.name)
           ? "failed"
           : (meta?.status ?? "fresh");
@@ -242,6 +253,45 @@ interface PrimarySnapshot extends SourceSnapshot {
 
 const SHA256 = /^[0-9a-f]{64}$/i;
 
+function validSnapshotTimestamp(value: unknown): value is string {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T/.test(value)) return false;
+  try {
+    parseNow(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function validSnapshotConferenceTree(value: unknown): value is unknown[] {
+  if (!Array.isArray(value)) return false;
+  return value.every((conference: unknown) => {
+    if (!conference || typeof conference !== "object" || Array.isArray(conference)) return false;
+    const conferenceRecord = conference as Record<string, unknown>;
+    if (typeof conferenceRecord.key !== "string" || !conferenceRecord.key.trim()) return false;
+    const editions = conferenceRecord.editions;
+    if (!Array.isArray(editions)) return false;
+    return (editions as unknown[]).every((edition: unknown) => {
+      if (!edition || typeof edition !== "object" || Array.isArray(edition)) return false;
+      const editionRecord = edition as Record<string, unknown>;
+      if (
+        typeof editionRecord.year !== "number" ||
+        !Number.isInteger(editionRecord.year) ||
+        editionRecord.year <= 0
+      )
+        return false;
+      const deadlines = editionRecord.deadlines;
+      return (
+        Array.isArray(deadlines) &&
+        (deadlines as unknown[]).every(
+          (deadline: unknown) =>
+            deadline && typeof deadline === "object" && !Array.isArray(deadline),
+        )
+      );
+    });
+  });
+}
+
 function validSourceSnapshot(value: unknown, source: string): value is SourceSnapshot {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const snapshot = value as Record<string, unknown>;
@@ -249,11 +299,10 @@ function validSourceSnapshot(value: unknown, source: string): value is SourceSna
     snapshot.schemaVersion !== 1 ||
     snapshot.source !== source ||
     (snapshot.sourceRevision !== null && typeof snapshot.sourceRevision !== "string") ||
-    typeof snapshot.fetchedAt !== "string" ||
-    !Number.isFinite(Date.parse(snapshot.fetchedAt)) ||
+    !validSnapshotTimestamp(snapshot.fetchedAt) ||
     typeof snapshot.contentHash !== "string" ||
     !SHA256.test(snapshot.contentHash) ||
-    !Array.isArray(snapshot.conferences)
+    !validSnapshotConferenceTree(snapshot.conferences)
   )
     return false;
   const contentHash = createHash("sha256")
@@ -295,7 +344,12 @@ function readSourceSnapshots(
     if (!existsSync(path)) continue;
     try {
       const metadata: unknown = JSON.parse(readFileSync(path, "utf8"));
-      if (!validSourceSnapshot(metadata, source)) continue;
+      if (!validSourceSnapshot(metadata, source)) {
+        process.stderr.write(
+          `warning: source snapshot ${path} has an invalid schema or content hash; ignoring\n`,
+        );
+        continue;
+      }
       const conferences = conferencesFromJson({ conferences: metadata.conferences });
       out.set(source, { conferences, metadata });
     } catch (exc) {
@@ -387,7 +441,12 @@ function readPrimarySnapshot(root = ROOT): Record<string, unknown> {
   if (!existsSync(path)) return {};
   try {
     const snapshot: unknown = JSON.parse(readFileSync(path, "utf8"));
-    if (!validSourceSnapshot(snapshot, "primary")) return {};
+    if (!validSourceSnapshot(snapshot, "primary")) {
+      process.stderr.write(
+        `warning: primary snapshot ${path} has an invalid schema or content hash; ignoring\n`,
+      );
+      return {};
+    }
     const conferences: Record<string, unknown> = {};
     for (const raw of snapshot.conferences) {
       if (!raw || typeof raw !== "object") continue;
@@ -711,7 +770,13 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
       : readPrimarySnapshot();
   // 現行の local 正典は manual + curated.generated。旧 extra.yaml は、正典が
   // まだ無い checkout の互換入力としてだけ使う。
-  for (const path of localSourcePaths(ROOT)) loadYamlFile(path, { strict: true });
+  for (const path of localSourcePaths(ROOT)) {
+    if (!existsSync(path)) continue;
+    const local = loadYamlFile(path, { strict: true });
+    if (!Array.isArray(local.conferences)) {
+      throw new Error(`local source ${path}: conferences must be an array`);
+    }
+  }
   const offline = Boolean(args.offline);
 
   const snapshot = join(ROOT, "data", "snapshot.json");
@@ -861,19 +926,22 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
   const sourceMetadata: Record<string, HealthSourceMetadata> = Object.fromEntries(
     sourceResults.map(({ conferences: _conferences, ...source }) => {
       const restored = snapshotFallbackCounts[source.source];
-      const saved = snapshotPayload.metadata?.sources[source.source];
+      const sourceSnapshot = sourceSnapshots.get(source.source)?.metadata;
+      const legacySnapshot = snapshotPayload.metadata?.sources[source.source];
       const usesSnapshot =
         failed.has(source.source) &&
         Boolean(
           restored && restored.conferenceCount + restored.editionCount + restored.deadlineCount > 0,
         );
-      const observedAt = usesSnapshot ? (saved?.fetchedAt ?? null) : source.fetchedAt;
+      const observedAt = usesSnapshot
+        ? (sourceSnapshot?.fetchedAt ?? legacySnapshot?.fetchedAt ?? null)
+        : source.fetchedAt;
       const observedMs = Date.parse(String(observedAt ?? ""));
       const observationAgeSeconds = Number.isFinite(observedMs)
         ? Math.max(0, Math.floor((now.getTime() - observedMs) / 1000))
         : null;
       const observationStatus =
-        source.source === "local" || source.status === "fresh"
+        source.status === "fresh"
           ? "fresh"
           : observationAgeSeconds === null
             ? "unknown"
@@ -887,9 +955,9 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
           ...(usesSnapshot
             ? {
                 status: "snapshot-fallback" as const,
-                revision: saved?.revision ?? null,
-                fetchedAt: saved?.fetchedAt ?? null,
-                contentHash: saved?.contentHash ?? null,
+                revision: sourceSnapshot?.sourceRevision ?? legacySnapshot?.revision ?? null,
+                fetchedAt: sourceSnapshot?.fetchedAt ?? legacySnapshot?.fetchedAt ?? null,
+                contentHash: sourceSnapshot?.contentHash ?? legacySnapshot?.contentHash ?? null,
                 cacheAgeSeconds: observationAgeSeconds,
                 ...restored,
               }
@@ -913,6 +981,7 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
   ) as Record<string, SourceStatus>;
   const stats = await buildAll(confs, config, outdir, now, {
     noEmbeddings: Boolean(args.noEmbeddings),
+    localEmbeddingsOnly: offline,
     publishProvenance: collectPublishProvenance(ROOT, configPath, { now, offline }),
     health: {
       sourceStatus: Object.fromEntries(
@@ -1014,8 +1083,8 @@ export function discoverWriteAction(
   out: string | null,
   dryRun: boolean,
 ): DiscoverWriteAction {
-  if (append && out) return count > 0 ? "append" : "none";
   if (dryRun) return "dry-run";
+  if (append && out) return count > 0 ? "append" : "none";
   if (out) return "write";
   return "none";
 }
@@ -1038,6 +1107,9 @@ export async function cmdDiscover(args: DiscoverArgs): Promise<number> {
     `穴場の会議・ジャーナルを探索中（カテゴリ: ${categories?.join(",") ?? "すべて"}）...`,
   );
   const candidates = await discoverer.runDiscovery(categories ?? null, args.minYear);
+  for (const failure of discoverer.discoveryFailures) {
+    console.warn(`warning: discovery source failed: ${failure}`);
+  }
 
   console.log(`新しい穴場の会議・ジャーナル候補を ${candidates.length} 件見つけた。`);
   for (const cand of candidates.slice(0, 10)) {
@@ -1058,14 +1130,16 @@ export async function cmdDiscover(args: DiscoverArgs): Promise<number> {
   if (action === "append") {
     // 既存 YAML の conferences に、key が被らない候補だけ追記する。
     const outPath = isAbsolute(args.out!) ? args.out! : join(ROOT, args.out!);
-    const existing = loadYamlFile(outPath) as Record<string, unknown>;
+    const existing = existsSync(outPath) ? loadYamlFile(outPath, { strict: true }) : {};
+    if (existsSync(outPath) && !Array.isArray(existing.conferences)) {
+      throw new Error(`candidate output ${outPath}: conferences must be an array`);
+    }
     const existingConfs = (existing.conferences as Array<Record<string, unknown>> | null) ?? [];
     const seen = new Set(existingConfs.map((c) => c.key));
     const parsed = loadYaml(yamlText) as { conferences?: Array<Record<string, unknown>> };
     const newConfs = (parsed.conferences ?? []).filter((c) => !seen.has(c.key));
     existing.conferences = [...existingConfs, ...newConfs];
-    const { dump } = await import("js-yaml");
-    writeTextFile(outPath, dump(existing, { skipInvalid: true }));
+    writeTextFile(outPath, dumpYaml(existing, { skipInvalid: true }));
     console.log(`\n${newConfs.length} 件の候補を ${outPath} に追記した`);
   } else if (action === "dry-run") {
     console.log("\n--- プレビュー出力（extra.yaml 形式） ---");
@@ -1111,8 +1185,7 @@ export async function cmdReview(args: ReviewCliArgs): Promise<number> {
   const candidatesPath = isAbsolute(rawPath) ? rawPath : join(ROOT, rawPath);
   const limit = args.limit ?? 60;
   const now = args.now ? parseNow(args.now) : new Date();
-  runReviewCandidates(candidatesPath, limit, now);
-  return 0;
+  return runReviewCandidates(candidatesPath, limit, now) ? 0 : 1;
 }
 
 export interface ReverifyCliArgs {
@@ -1150,7 +1223,6 @@ export async function cmdReverify(args: ReverifyCliArgs): Promise<number> {
     if (action === "accept" || action === "apply" || action === "reject") {
       if (!args.resolution) throw new Error(`reverify ${action} requires --resolution <id>`);
       if (action === "apply") {
-        assertResolutionCanApply(ledgerPath, args.resolution);
         applyResolutionSource(ledgerPath, args.resolution, args.now);
       }
       transitionVerificationResolution(
@@ -1211,11 +1283,16 @@ export async function cmdReverify(args: ReverifyCliArgs): Promise<number> {
     console.log(
       JSON.stringify({
         processed: result.processed,
+        deferred: result.deferred,
         pages: result.pages,
         statuses: result.statuses,
       }),
     );
-    return 0;
+    return ["source-unreachable", "retryable", "parser-failed"].some(
+      (status) => (result.statuses[status] ?? 0) > 0,
+    )
+      ? 1
+      : 0;
   } catch (error) {
     process.stderr.write(`reverify failed: ${String(error)}\n`);
     return 1;
@@ -1245,36 +1322,173 @@ export function cmdEvidence(args: EvidenceCliArgs): number {
   }
 }
 
-function resolutionSourcePath(entry: {
-  source_name?: string;
-  promotion_ref?: { batch: string; resolution: string };
-}): string {
+function resolutionSourcePath(
+  root: string,
+  entry: {
+    source_name?: string;
+    promotion_ref?: { batch: string; resolution: string };
+  },
+): string {
   if (entry.source_name === "local") {
-    if (entry.promotion_ref && existsSync(join(ROOT, "data", "curated.generated.yaml")))
-      return join(ROOT, "data", "curated.generated.yaml");
-    if (existsSync(join(ROOT, "data", "manual.yaml"))) return join(ROOT, "data", "manual.yaml");
-    return join(ROOT, "data", "extra.yaml");
+    if (existsSync(join(root, "data", "manual.yaml"))) return join(root, "data", "manual.yaml");
+    return join(root, "data", "extra.yaml");
   }
   return entry.source_name === "primary"
-    ? join(ROOT, "data", "primary_overrides.yaml")
-    : join(ROOT, "data", "overrides.yaml");
+    ? join(root, "data", "primary_overrides.yaml")
+    : join(root, "data", "overrides.yaml");
 }
 
-function resolutionDeadlineValue(value: string): { date: string; time?: string; tz?: string } {
+function resolutionDeadlineValue(
+  value: string,
+  resolutionId: string,
+): { date: string; time?: string; tz?: string } {
   const text = value.trim();
   const date = /^(\d{4}-\d{2}-\d{2})/.exec(text)?.[1] ?? text.slice(0, 10);
-  const time = /\b(\d{2}:\d{2}(?::\d{2})?)\b/.exec(text)?.[1];
+  const time = /(?<!\d)(\d{2}:\d{2}(?::\d{2})?)(?!\d)/.exec(text)?.[1];
   const tz =
-    /\b(AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|[A-Za-z_]+\/[A-Za-z_]+)\b/i.exec(
+    /(?<![A-Za-z])(AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|Z|[A-Za-z_][\w.+-]*\/[\w.+-]+)(?![A-Za-z])/i.exec(
       text,
     )?.[1];
+  if (!asDate(date)) throw new Error(`resolution has an invalid deadline date: ${resolutionId}`);
+  if (time && (!tz || !parseInstant(`${date} ${time}`, tz)))
+    throw new Error(`resolution has an invalid exact deadline: ${resolutionId}`);
+  if (!time && tz)
+    throw new Error(`resolution has a timezone-less exact deadline: ${resolutionId}`);
   return { date, ...(time ? { time } : {}), ...(tz ? { tz } : {}) };
 }
 
-function applyResolutionSource(
+function sourceDeadlineValue(deadline: Record<string, unknown>): string {
+  const date = String(deadline.local_date ?? deadline.date ?? "");
+  const time = String(deadline.time ?? "");
+  const tz = String(deadline.tz ?? deadline.tz_raw ?? "");
+  if (deadline.precision === "date-only") return date.slice(0, 10);
+  const storedInstant = deadline.at_utc ?? deadline.utc;
+  if (storedInstant !== undefined && storedInstant !== null) {
+    const parsed = new Date(String(storedInstant));
+    if (!Number.isNaN(parsed.getTime())) return parsed.toISOString();
+  }
+  if (!time && !tz) return date.slice(0, 10);
+  const instant = parseInstant(time ? `${date.slice(0, 10)} ${time}` : date, tz);
+  return instant?.toISOString() ?? date;
+}
+
+function resolutionEditionYear(editionId: string): string {
+  const full = editionId.match(/20\d{2}/)?.[0];
+  if (full) return full;
+  const short = editionId.match(/(?:^|\D)(\d{2})(?:\D|$)/)?.[1];
+  if (short) return String(2000 + Number(short));
+  throw new Error(`resolution edition has no usable year: ${editionId}`);
+}
+
+function assertResolutionSourceUnchanged(
+  deadline: Record<string, unknown>,
+  resolution: VerificationResolution,
+): void {
+  const current = sourceDeadlineValue(deadline);
+  const sameInstant =
+    current.includes("T") &&
+    resolution.old_value.includes("T") &&
+    Date.parse(current) === Date.parse(resolution.old_value);
+  if (current !== resolution.old_value && !sameInstant)
+    throw new Error(
+      `resolution source value changed: expected ${resolution.old_value}, found ${current}`,
+    );
+}
+
+function promotionResolutionPath(root: string, batch: string): string {
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(batch))
+    throw new Error(`invalid promotion batch: ${batch}`);
+  return join(root, "data", "promotions", batch, "resolutions.json");
+}
+
+function applyPromotionResolution(
+  root: string,
+  ledger: VerificationLedger,
+  entry: {
+    promotion_ref?: { batch: string; resolution: string };
+    page_id?: string;
+    content_hash?: string | null;
+    body_ref?: string;
+  },
+  resolution: VerificationResolution,
+  nowText?: string | null,
+): void {
+  const ref = entry.promotion_ref;
+  if (!ref) throw new Error("promotion resolution reference is missing");
+  const path = promotionResolutionPath(root, ref.batch);
+  if (!existsSync(path)) throw new Error(`promotion resolutions are missing: ${path}`);
+  const rows = JSON.parse(readFileSync(path, "utf8")) as unknown;
+  if (!Array.isArray(rows)) throw new Error(`promotion resolutions are not an array: ${path}`);
+  const index = rows.findIndex(
+    (item) =>
+      item &&
+      typeof item === "object" &&
+      String((item as Record<string, unknown>).resolution_id ?? "") === ref.resolution,
+  );
+  if (index < 0) throw new Error(`promotion resolution is missing: ${ref.batch}/${ref.resolution}`);
+  const promotion = rows[index] as Record<string, any>;
+  const normalized = promotion.normalized as Record<string, any> | undefined;
+  const current = normalized?.deadline as Record<string, any> | undefined;
+  if (!normalized || !current)
+    throw new Error(`promotion resolution has no normalized deadline: ${ref.resolution}`);
+  assertResolutionSourceUnchanged(current, resolution);
+  const value = resolutionDeadlineValue(resolution.new_value, resolution.resolution_id);
+  const page: VerificationPage | undefined = resolution.page_id
+    ? ledger.pages[resolution.page_id]
+    : entry.page_id
+      ? ledger.pages[entry.page_id]
+      : undefined;
+  const contentHash = resolution.content_hash || page?.content_hash || entry.content_hash || "";
+  const priorEvidence = Array.isArray(current.evidence) ? current.evidence[0] : undefined;
+  const nextDeadline: Record<string, any> = {
+    ...current,
+    date: value.time && value.tz ? `${value.date} ${value.time}` : value.date,
+    precision: value.time && value.tz ? "exact" : "date-only",
+    evidence: [
+      {
+        sourceClass: priorEvidence?.sourceClass ?? "official-cfp",
+        sourceUrl: resolution.official_url,
+        sourceRevision: page?.source_revision || `sha256:${contentHash}`,
+        retrievedAt: page?.last_attempt_at ?? resolution.observed_at,
+        verifiedAt: resolution.observed_at,
+        contentHash,
+        rawExcerpt: resolution.raw_excerpt,
+        verifiedFields: priorEvidence?.verifiedFields ?? ["date", "kind", "round"],
+      },
+    ],
+    superseded_deadlines: [
+      ...(Array.isArray(current.superseded_deadlines) ? current.superseded_deadlines : []),
+      {
+        value: resolution.old_value,
+        precision: /\b\d{2}:\d{2}\b/.test(resolution.old_value) ? "exact" : "date-only",
+        source: resolution.official_url,
+        evidenceRef:
+          resolution.evidence_ref || page?.body_ref || entry.body_ref || resolution.page_id,
+        status: "superseded",
+        supersededBy: resolution.deadline_id,
+        reason:
+          resolution.change_kind === "extension"
+            ? "official-extension"
+            : resolution.change_kind === "precision-upgrade"
+              ? "precision-upgrade"
+              : "manual-resolution",
+        supersededAt: nowText ? parseNow(nowText).toISOString() : new Date().toISOString(),
+      },
+    ],
+  };
+  if (value.time && value.tz) nextDeadline.tz = value.tz;
+  else delete nextDeadline.tz;
+  delete nextDeadline.local_date;
+  normalized.deadline = nextDeadline;
+  rows[index] = promotion;
+  generateCurated(root, new Map([[path, `${JSON.stringify(rows, null, 2)}\n`]]));
+}
+
+export function applyResolutionSource(
   ledgerPath: string,
   resolutionId: string,
   nowText?: string | null,
+  repoRoot = ROOT,
 ): void {
   const ledger = loadVerificationLedger(ledgerPath);
   const resolution = ledger.resolutions.find((item) => item.resolution_id === resolutionId);
@@ -1284,9 +1498,67 @@ function applyResolutionSource(
     ledger.deadlines[ledger.aliases[resolution.deadline_id] ?? ""];
   if (!entry)
     throw new Error(`resolution target is missing from ledger: ${resolution.deadline_id}`);
-  const path = resolutionSourcePath(entry);
+  if (entry.promotion_ref) {
+    assertResolutionCanApply(ledgerPath, resolutionId);
+    applyPromotionResolution(repoRoot, ledger, entry, resolution, nowText);
+    return;
+  }
+  const path = resolutionSourcePath(repoRoot, entry);
   const parsed = existsSync(path) ? loadYaml(readFileSync(path, "utf8")) : {};
-  const value = resolutionDeadlineValue(resolution.new_value);
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new TypeError(`${path} must contain a YAML mapping`);
+  }
+  const parsedRoot = parsed as Record<string, unknown>;
+  const conferencesValue = parsedRoot.conferences;
+  const mapping = (value: unknown, context: string): Record<string, unknown> => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      throw new TypeError(`${context} must be a mapping`);
+    }
+    return value as Record<string, unknown>;
+  };
+  const mappings = (value: unknown, context: string): Record<string, unknown>[] => {
+    if (!Array.isArray(value)) throw new TypeError(`${context} must be an array`);
+    return value.map((item, index) => mapping(item, `${context}[${index}]`));
+  };
+  const validateDeadlines = (record: Record<string, unknown>, context: string): void => {
+    if (record.deadlines !== undefined) mappings(record.deadlines, `${context}.deadlines`);
+  };
+  if (conferencesValue !== undefined && entry.source_name === "local") {
+    for (const [index, conference] of mappings(
+      conferencesValue,
+      `${path}: conferences`,
+    ).entries()) {
+      if (conference.editions === undefined) continue;
+      for (const [editionIndex, edition] of mappings(
+        conference.editions,
+        `${path}: conferences[${index}].editions`,
+      ).entries()) {
+        validateDeadlines(edition, `${path}: conferences[${index}].editions[${editionIndex}]`);
+      }
+    }
+  } else if (conferencesValue !== undefined) {
+    const conferences = mapping(conferencesValue, `${path}: conferences`);
+    for (const [venueKey, conferenceValue] of Object.entries(conferences)) {
+      const conference = mapping(conferenceValue, `${path}: conferences.${venueKey}`);
+      if (conference.editions === undefined) continue;
+      const editions = mapping(conference.editions, `${path}: conferences.${venueKey}.editions`);
+      for (const [year, editionValue] of Object.entries(editions)) {
+        validateDeadlines(
+          mapping(editionValue, `${path}: conferences.${venueKey}.editions.${year}`),
+          `${path}: conferences.${venueKey}.editions.${year}`,
+        );
+      }
+    }
+  }
+  const value = resolutionDeadlineValue(resolution.new_value, resolution.resolution_id);
+  assertResolutionCanApply(ledgerPath, resolutionId);
+  const page: VerificationPage | undefined = resolution.page_id
+    ? ledger.pages[resolution.page_id]
+    : entry.page_id
+      ? ledger.pages[entry.page_id]
+      : undefined;
+  const contentHash = resolution.content_hash || page?.content_hash || entry.content_hash || "";
+  const evidenceRef = resolution.evidence_ref || page?.body_ref || entry.body_ref;
   const row: Record<string, unknown> = {
     kind: entry.kind,
     label: entry.label ?? entry.kind,
@@ -1295,12 +1567,41 @@ function applyResolutionSource(
     ...(value.time && value.tz ? { tz: value.tz } : { precision: "date-only" }),
     ...(entry.track ? { track: entry.track } : {}),
     ...(entry.promotion_ref ? { promotion_ref: entry.promotion_ref } : {}),
+    evidence: [
+      {
+        source_name: entry.source_name ?? "reverification",
+        source_url: resolution.official_url,
+        observed_at: resolution.observed_at,
+        original_value: resolution.new_value,
+        confidence:
+          entry.source_class === "official-cfp" ||
+          entry.source_class === "publisher" ||
+          entry.source_class === "official-homepage"
+            ? "official"
+            : "aggregator",
+        ...(entry.source_class ? { sourceClass: entry.source_class } : {}),
+        sourceUrl: resolution.official_url,
+        sourceRevision: page?.source_revision || `sha256:${contentHash}`,
+        retrievedAt: page?.last_attempt_at ?? resolution.observed_at,
+        verifiedAt: resolution.observed_at,
+        contentHash,
+        rawExcerpt: resolution.raw_excerpt,
+        verifiedFields: [
+          "date",
+          ...(value.time && value.tz ? ["time", "timezone"] : []),
+          "kind",
+          "round",
+          ...(entry.track ? ["track"] : []),
+        ],
+        ...(evidenceRef ? { evidenceRef } : {}),
+      },
+    ],
     superseded_deadlines: [
       {
         value: resolution.old_value,
         precision: /\b\d{2}:\d{2}\b/.test(resolution.old_value) ? "exact" : "date-only",
         source: resolution.official_url,
-        ...(resolution.evidence_ref ? { evidenceRef: resolution.evidence_ref } : {}),
+        ...(evidenceRef ? { evidenceRef } : {}),
         status: "superseded",
         supersededBy: resolution.deadline_id,
         reason: resolution.change_kind === "extension" ? "official-extension" : "manual-resolution",
@@ -1330,42 +1631,54 @@ function applyResolutionSource(
       row.superseded_deadlines = [...history, ...(row.superseded_deadlines as unknown[])];
     }
   };
-  const parsedRoot = (parsed && typeof parsed === "object" ? parsed : {}) as Record<
-    string,
-    unknown
-  >;
-  if (Array.isArray(parsedRoot.conferences)) {
+  const assertSnapshotSourceUnchanged = (year: string): void => {
+    const source = entry.source_name;
+    if (!source) throw new Error(`resolution source name is missing: ${resolution.deadline_id}`);
+    const snapshotPath = sourceSnapshotPath(source, repoRoot);
+    if (!existsSync(snapshotPath))
+      throw new Error(`resolution source snapshot is missing: ${snapshotPath}`);
+    const snapshot = JSON.parse(readFileSync(snapshotPath, "utf8")) as unknown;
+    if (!validSourceSnapshot(snapshot, source))
+      throw new Error(`resolution source snapshot is invalid: ${snapshotPath}`);
+    const conference = snapshot.conferences.find(
+      (item) => (item as Record<string, unknown>).key === entry.venue_key,
+    ) as Record<string, unknown> | undefined;
+    const sourceEditions = (
+      Array.isArray(conference?.editions) ? conference.editions : []
+    ) as Array<Record<string, unknown>>;
+    const exactEdition = sourceEditions.find(
+      (item) => String(item.id ?? item.edition_id ?? "") === entry.edition_id,
+    );
+    const sameYear = sourceEditions.filter((item) => String(item.year ?? "") === year);
+    const edition = exactEdition ?? (sameYear.length === 1 ? sameYear[0] : undefined);
+    const deadline = (Array.isArray(edition?.deadlines) ? edition.deadlines : []).find(
+      matchesEntry,
+    );
+    if (!deadline) throw new Error(`resolution source slot is missing: ${resolution.deadline_id}`);
+    assertResolutionSourceUnchanged(deadline as Record<string, unknown>, resolution);
+  };
+  if (entry.source_name === "local") {
     const root = parsedRoot;
     const conferences = Array.isArray(root.conferences) ? root.conferences : [];
-    let conference = conferences.find(
+    const conference = conferences.find(
       (item) => (item as Record<string, unknown>)?.key === entry.venue_key,
     ) as Record<string, unknown> | undefined;
-    if (!conference) {
-      conference = { key: entry.venue_key, title: entry.venue_key, editions: [] };
-      conferences.push(conference);
-    }
+    if (!conference) throw new Error(`resolution source conference is missing: ${entry.venue_key}`);
     const editions = Array.isArray(conference.editions) ? conference.editions : [];
-    let edition = editions.find(
+    const edition = editions.find(
       (item) =>
         String((item as Record<string, unknown>)?.id ?? (item as Record<string, unknown>)?.year) ===
         entry.edition_id,
     ) as Record<string, unknown> | undefined;
-    if (!edition) {
-      edition = {
-        year: Number(entry.edition_id.match(/20\d{2}/)?.[0] ?? 0),
-        id: entry.edition_id,
-        deadlines: [],
-      };
-      editions.push(edition);
-    }
+    if (!edition) throw new Error(`resolution source edition is missing: ${entry.edition_id}`);
     const deadlines = Array.isArray(edition.deadlines) ? edition.deadlines : [];
     const index = deadlines.findIndex((item) => {
       return matchesEntry(item);
     });
-    if (index >= 0) {
-      preserveSourceHistory(deadlines[index]);
-      deadlines[index] = row;
-    } else deadlines.push(row);
+    if (index < 0) throw new Error(`resolution source slot is missing: ${resolution.deadline_id}`);
+    assertResolutionSourceUnchanged(deadlines[index] as Record<string, unknown>, resolution);
+    preserveSourceHistory(deadlines[index]);
+    deadlines[index] = row;
     edition.deadlines = deadlines;
     conference.editions = editions;
     root.conferences = conferences;
@@ -1385,7 +1698,7 @@ function applyResolutionSource(
   const editions = (
     conference.editions && typeof conference.editions === "object" ? conference.editions : {}
   ) as Record<string, unknown>;
-  const year = String(entry.edition_id.match(/20\d{2}/)?.[0] ?? entry.edition_id);
+  const year = resolutionEditionYear(entry.edition_id);
   const edition = (
     editions[year] && typeof editions[year] === "object" ? editions[year] : {}
   ) as Record<string, unknown>;
@@ -1394,9 +1707,13 @@ function applyResolutionSource(
     return matchesEntry(item);
   });
   if (index >= 0) {
+    assertResolutionSourceUnchanged(deadlines[index] as Record<string, unknown>, resolution);
     preserveSourceHistory(deadlines[index]);
     deadlines[index] = row;
-  } else deadlines.push(row);
+  } else {
+    assertSnapshotSourceUnchanged(year);
+    deadlines.push(row);
+  }
   edition.deadlines = deadlines;
   editions[year] = edition;
   conference.editions = editions;
@@ -1450,7 +1767,7 @@ export function usage(): string {
     "  build    収集して public/ を生成する",
     "    -o, --out <dir>       出力先ディレクトリ (既定: public)",
     "    -c, --config <path>   設定ファイル (既定: config.yaml)",
-    "    --offline             ネットワークを使わずキャッシュのみ使う",
+    "    --offline             上流や埋め込みモデルを取りに行かず、キャッシュのみ使う",
     "    -n, --now <iso>       基準時刻。例 2026-08-09T00:00:00Z",
     "    --cache <dir>         上流アーカイブのキャッシュ先 (既定: .cache)",
     "    --no-embeddings       埋め込み (embeddings.json) を生成しない（テスト用・高速化）",
@@ -1482,14 +1799,6 @@ export function usage(): string {
     "    -d, --dry-run         gc対象だけ表示して削除しない",
     "  help / --help / -h      使い方を表示する",
   ].join("\n");
-}
-
-// 有限正整数の文字列のみ数値化し、不正値・非数値は既定値にフォールバックする。
-// Number("abc") = NaN になり、下流の `?? default` が NaN を拾わないため、
-// 非数値入力が cand.year >= NaN（常に false）へ伝播して discover が 0 件になるのを防ぐ。
-function toPosInt(raw: string | undefined, fallback: number): number {
-  const n = Number(raw);
-  return Number.isFinite(n) && Number.isInteger(n) && n > 0 ? n : fallback;
 }
 
 export function parseArgs(argv: string[] | null | undefined): CliArgs {
@@ -1569,7 +1878,7 @@ export function parseArgs(argv: string[] | null | undefined): CliArgs {
   if (values.now !== undefined) args.now = stringValue(values.now) ?? null;
   if (values.categories !== undefined) args.categories = stringValue(values.categories) ?? null;
   if (values["min-year"] !== undefined) {
-    args.minYear = toPosInt(stringValue(values["min-year"]), DEFAULT_MIN_YEAR);
+    args.minYear = positiveIntegerValue(stringValue(values["min-year"]), DEFAULT_MIN_YEAR);
   }
   if (values.offline !== undefined) args.offline = booleanValue(values.offline);
   if (values["no-embeddings"] !== undefined) {
@@ -1581,7 +1890,7 @@ export function parseArgs(argv: string[] | null | undefined): CliArgs {
     args.candidates =
       stringValue(values.candidates) ?? join(ROOT, "data", "discovered_candidates.yaml");
   }
-  if (values.limit !== undefined) args.limit = toPosInt(stringValue(values.limit), 60);
+  if (values.limit !== undefined) args.limit = positiveIntegerValue(stringValue(values.limit), 60);
   if (values.data !== undefined) args.data = stringValue(values.data) ?? undefined;
   if (values.ledger !== undefined) args.ledger = stringValue(values.ledger) ?? undefined;
   if (values.due !== undefined) args.due = booleanValue(values.due);
@@ -1589,17 +1898,20 @@ export function parseArgs(argv: string[] | null | undefined): CliArgs {
     args.resolution = stringValue(values.resolution) ?? undefined;
   if (values.reason !== undefined) args.reason = stringValue(values.reason) ?? undefined;
   if (values["max-pages"] !== undefined)
-    args.maxPages = toPosInt(stringValue(values["max-pages"]), 40);
+    args.maxPages = positiveIntegerValue(stringValue(values["max-pages"]), 40);
   if (values["max-deadlines"] !== undefined)
-    args.maxDeadlines = toPosInt(stringValue(values["max-deadlines"]), 200);
+    args.maxDeadlines = positiveIntegerValue(stringValue(values["max-deadlines"]), 200);
   if (values["max-per-host"] !== undefined)
-    args.maxPerHost = toPosInt(stringValue(values["max-per-host"]), 5);
+    args.maxPerHost = positiveIntegerValue(stringValue(values["max-per-host"]), 5);
   if (values.concurrency !== undefined)
-    args.concurrency = toPosInt(stringValue(values.concurrency), 4);
+    args.concurrency = positiveIntegerValue(stringValue(values.concurrency), 4);
   if (values["timeout-ms"] !== undefined)
-    args.timeoutMs = toPosInt(stringValue(values["timeout-ms"]), 15_000);
+    args.timeoutMs = positiveIntegerValue(stringValue(values["timeout-ms"]), 15_000);
   if (values["max-body-bytes"] !== undefined)
-    args.maxBodyBytes = toPosInt(stringValue(values["max-body-bytes"]), 5 * 1024 * 1024);
+    args.maxBodyBytes = positiveIntegerValue(
+      stringValue(values["max-body-bytes"]),
+      5 * 1024 * 1024,
+    );
   return args;
 }
 

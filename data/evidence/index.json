@@ -6,8 +6,6 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/extra.yaml",
-        "data/promotions/2026-08-31-eudat-conference-2026/extra.yaml",
         "data/promotions/2026-08-31-eudat-conference-2026/manifest.json",
         "data/promotions/2026-08-31-eudat-conference-2026/observations.jsonl",
         "data/promotions/2026-08-31-eudat-conference-2026/resolutions.json",
@@ -19,10 +17,11 @@
       "bytes": 11606,
       "content_type": "application/octet-stream",
       "references": [
-        "data/promotions/2026-08-31-sovereignai-2026/extra.yaml",
+        "data/curated.generated.yaml",
         "data/promotions/2026-08-31-sovereignai-2026/manifest.json",
         "data/promotions/2026-08-31-sovereignai-2026/observations.jsonl",
-        "data/promotions/2026-08-31-sovereignai-2026/resolutions.json"
+        "data/promotions/2026-08-31-sovereignai-2026/resolutions.json",
+        "data/source-snapshots/local.json"
       ]
     },
     "0897bd33c86b3a97f0021ccac945af4a870fc246915caef34644da738dd9117b": {
@@ -30,8 +29,6 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/extra.yaml",
-        "data/promotions/2026-08-31-dac-2027/extra.yaml",
         "data/promotions/2026-08-31-dac-2027/manifest.json",
         "data/promotions/2026-08-31-dac-2027/observations.jsonl",
         "data/promotions/2026-08-31-dac-2027/resolutions.json",
@@ -44,8 +41,6 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/extra.yaml",
-        "data/promotions/2026-08-31-lascas-2027/extra.yaml",
         "data/promotions/2026-08-31-lascas-2027/manifest.json",
         "data/promotions/2026-08-31-lascas-2027/observations.jsonl",
         "data/promotions/2026-08-31-lascas-2027/resolutions.json",
@@ -57,11 +52,8 @@
       "bytes": 73027,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml",
-        "data/extra.yaml",
         "data/promotions/2026-08-31-sovereignai-2026/manifest.json",
-        "data/snapshot.json",
-        "data/source-snapshots/local.json"
+        "data/snapshot.json"
       ]
     },
     "4a41e3acf4f8e5be14c218b8abc2b31d5c4fbbbaf2728f88072051365e79bcbd": {
@@ -76,8 +68,6 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/extra.yaml",
-        "data/promotions/2026-08-31-conversations-2026/extra.yaml",
         "data/promotions/2026-08-31-conversations-2026/manifest.json",
         "data/promotions/2026-08-31-conversations-2026/observations.jsonl",
         "data/promotions/2026-08-31-conversations-2026/resolutions.json",
@@ -89,11 +79,8 @@
       "bytes": 14221,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml",
-        "data/extra.yaml",
         "data/promotions/2026-08-31-sesame-jcdl-2026/manifest.json",
-        "data/snapshot.json",
-        "data/source-snapshots/local.json"
+        "data/snapshot.json"
       ]
     },
     "7238cfba9ecf5eaffae6ecb6b86a1fdae90e4c2c28669f5a458965491c5d06a2": {
@@ -101,8 +88,6 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/extra.yaml",
-        "data/promotions/2026-08-31-wcm-agentic-ai-2027/extra.yaml",
         "data/promotions/2026-08-31-wcm-agentic-ai-2027/manifest.json",
         "data/promotions/2026-08-31-wcm-agentic-ai-2027/observations.jsonl",
         "data/promotions/2026-08-31-wcm-agentic-ai-2027/resolutions.json",
@@ -114,10 +99,11 @@
       "bytes": 7934,
       "content_type": "application/octet-stream",
       "references": [
-        "data/promotions/2026-08-31-genai4sg-cikm-2026/extra.yaml",
+        "data/curated.generated.yaml",
         "data/promotions/2026-08-31-genai4sg-cikm-2026/manifest.json",
         "data/promotions/2026-08-31-genai4sg-cikm-2026/observations.jsonl",
-        "data/promotions/2026-08-31-genai4sg-cikm-2026/resolutions.json"
+        "data/promotions/2026-08-31-genai4sg-cikm-2026/resolutions.json",
+        "data/source-snapshots/local.json"
       ]
     },
     "79d4d461e30d517f72da7e0c7550cee5dfb37dc3998ef4e4c29229d9886c408f": {
@@ -125,8 +111,6 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/extra.yaml",
-        "data/promotions/2026-08-31-sesame-jcdl-2026/extra.yaml",
         "data/promotions/2026-08-31-sesame-jcdl-2026/manifest.json",
         "data/promotions/2026-08-31-sesame-jcdl-2026/observations.jsonl",
         "data/promotions/2026-08-31-sesame-jcdl-2026/resolutions.json",
@@ -139,8 +123,6 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/extra.yaml",
-        "data/promotions/2026-08-31-tsc-llm-service-ecosystems-2027/extra.yaml",
         "data/promotions/2026-08-31-tsc-llm-service-ecosystems-2027/manifest.json",
         "data/promotions/2026-08-31-tsc-llm-service-ecosystems-2027/observations.jsonl",
         "data/promotions/2026-08-31-tsc-llm-service-ecosystems-2027/resolutions.json",
@@ -160,8 +142,6 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/extra.yaml",
-        "data/promotions/2026-08-31-ieee-network-6g-isac-2027/extra.yaml",
         "data/promotions/2026-08-31-ieee-network-6g-isac-2027/manifest.json",
         "data/promotions/2026-08-31-ieee-network-6g-isac-2027/observations.jsonl",
         "data/promotions/2026-08-31-ieee-network-6g-isac-2027/resolutions.json",
@@ -173,11 +153,8 @@
       "bytes": 33593,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml",
-        "data/extra.yaml",
         "data/promotions/2026-08-31-genai4sg-cikm-2026/manifest.json",
-        "data/snapshot.json",
-        "data/source-snapshots/local.json"
+        "data/snapshot.json"
       ]
     },
     "cdb226fa64645300f44f019877355aa756f663f5bdf9198e484f8dea597ad23c": {
@@ -185,8 +162,6 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/extra.yaml",
-        "data/promotions/2026-08-31-icngn-2026/extra.yaml",
         "data/promotions/2026-08-31-icngn-2026/manifest.json",
         "data/promotions/2026-08-31-icngn-2026/observations.jsonl",
         "data/promotions/2026-08-31-icngn-2026/resolutions.json",
@@ -199,8 +174,6 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/extra.yaml",
-        "data/promotions/2026-08-31-wqs-2026/extra.yaml",
         "data/promotions/2026-08-31-wqs-2026/manifest.json",
         "data/promotions/2026-08-31-wqs-2026/observations.jsonl",
         "data/promotions/2026-08-31-wqs-2026/resolutions.json",
@@ -213,8 +186,6 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/extra.yaml",
-        "data/promotions/2026-08-31-arc-2027/extra.yaml",
         "data/promotions/2026-08-31-arc-2027/manifest.json",
         "data/promotions/2026-08-31-arc-2027/observations.jsonl",
         "data/promotions/2026-08-31-arc-2027/resolutions.json",

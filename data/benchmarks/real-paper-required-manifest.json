@@ -1,18 +1,28 @@
 {
   "schema_version": 2,
   "feature_schema": 2,
+  "minimum_language_counts": {
+    "dev": {
+      "en": 8,
+      "ja": 1
+    },
+    "heldout": {
+      "en": 9,
+      "ja": 1
+    }
+  },
   "records": [
     {
       "paper_id": "dev-2025-ches-01",
-      "record_sha256": "c0b55e654fa143db507971d363b589d8e6a96fe63651b24457ef9d69b8cc0958"
+      "record_sha256": "0f83d6e4a9af7641ceeff26fd21f55aac96d1de4819f258479e8a543b00f50a7"
     },
     {
       "paper_id": "dev-2025-chi-01",
-      "record_sha256": "8145d160128137929e7fedfb7f81efbd8d0f41ce10dff1ee68b73637cd28d565"
+      "record_sha256": "0b4937d5996b32c36032834430f886f03514d7675b2613efb22a5ef92ee1e62c"
     },
     {
       "paper_id": "dev-2025-cvpr-01",
-      "record_sha256": "af4151dd02b49299e0445b903df21e20c316f16d180b2080c233361a8b36eaa1"
+      "record_sha256": "a238a92895570e442db60f259b73772039fe211f9c9ca6f18a9188058570d1ae"
     },
     {
       "paper_id": "dev-2025-cvprw-01",
@@ -20,67 +30,67 @@
     },
     {
       "paper_id": "dev-2025-hpdc-01",
-      "record_sha256": "877dd8e7a90dd58a8331225b053916cc7e8bf2f4fbf8e0e20255fe46a8c7c17b"
+      "record_sha256": "077c44bbe21c8f523dd13715c52c635564b35786c67908214e7922940b09e362"
     },
     {
       "paper_id": "dev-2025-ipsj-journal-01",
-      "record_sha256": "4ae007082172660eef28263fdea96646d14a9745786faa6c49b85dba7142fc12"
+      "record_sha256": "0e1158fa8d319c67777729b65fb54bd99de1d67d89a544758a335b287990f5d1"
     },
     {
       "paper_id": "dev-2025-nolta-special-01",
-      "record_sha256": "7ca955cebb418d87a1064526866ba846e8a8f89a8295ac7bb415a501cc39485e"
+      "record_sha256": "af85ff7f197f9ab8c1861bfe2c8a56440980c7ea740ae649ed630a358add7b10"
     },
     {
       "paper_id": "dev-2025-sigcomm-01",
-      "record_sha256": "7e153016fec07c4d80744701279d4dd9a6ca3e131b10ead6794a6e03e5f2f86d"
+      "record_sha256": "dcf538db173dbc966886eaa8b5fad723943779028f4c37ba341da438636c877c"
     },
     {
       "paper_id": "dev-2025-sigmod-01",
-      "record_sha256": "6eec75824a1ef7719c518ca36ff26305415551f824a8183178ba5cca0adbee51"
+      "record_sha256": "9c24f36e52f794f2cca953c9b52ee6ac5c42a0cc41c3ced00cc1efad3233eb95"
     },
     {
       "paper_id": "heldout-2026-chi-03",
-      "record_sha256": "9979de804ee1e1ebb9a60ce7bd8d4959fe010a7488ad30f34902be75c3a46afa"
+      "record_sha256": "23df15097810ff234e1b0ffff0eb8dff27705cf77202c27cb8357056bdb1d9fa"
     },
     {
       "paper_id": "heldout-2026-cvpr-01",
-      "record_sha256": "0d25fd1c9225c120ffd601fa3220f0c6c8fc2d71d3b0b14d08f4e4257046288f"
+      "record_sha256": "afebc60d5d10c988cca1ad436debe1cd1cfe974724562cb0c54be993b213a23c"
     },
     {
       "paper_id": "heldout-2026-cvprw-01",
-      "record_sha256": "e2e1354950f5bdbd6fc447a7618ff301aac3d074ca912d83ef5fc36e0609a63c"
+      "record_sha256": "f11947a66b64d5d9cd4758301fb8eb4f1063b0fd5c49ac4a19dd8d6df3341af2"
     },
     {
       "paper_id": "heldout-2026-hpdc-01",
-      "record_sha256": "09d67775d3c1e1608cb51213c57e8ee08ff4736e1b35ed0d981f625a293108af"
+      "record_sha256": "03e8ce14b1e97570dcfb2c9f813abdb46eb01dc853e6fe3938c69b4b03768449"
     },
     {
       "paper_id": "heldout-2026-ipsj-journal-01",
-      "record_sha256": "d215e8807e0580bdbdb133c21147b407f8eb62d1d96efd5be6e21dbb4d87f892"
+      "record_sha256": "89c982d9c2ccaa79b63e3f41fca55a1ab416524fe0cb08830c992c7e24c6a0f5"
     },
     {
       "paper_id": "heldout-2026-nolta-special-01",
-      "record_sha256": "c82f2174b5a2deb95dbbd5de7dc738860fb5d8281867a20cca5feaf7526da4ad"
+      "record_sha256": "c43770bfde963025196fd3d4ea3132e2f0eae61f4407b11fe67f7c39503288af"
     },
     {
       "paper_id": "heldout-2026-nsdi-02",
-      "record_sha256": "58e01d2d289bccf2294e39ffb640572a6dd5368561de11491a1ffd1d77be49c6"
+      "record_sha256": "e4e56a583a6a25fe61a2364016c0bf785728e0392e4499d5d3b009563480e16e"
     },
     {
       "paper_id": "heldout-2026-sigcomm-01",
-      "record_sha256": "1a23cacbf5ab8d68d3d74e612a017f2952e2ee9170dbd80e8dc197331b26a029"
+      "record_sha256": "04b4bb606264292e1331f354642717433981db8954a077abf950838d46469ff8"
     },
     {
       "paper_id": "heldout-2026-sigmod-06",
-      "record_sha256": "8e0ea83534372609ebba3b0ff91e663246405b57a5c469988da630b73f4c8a0d"
+      "record_sha256": "8a9f2a3fdf8b2aee7271a14f814f49f6ef4ce25bc525c1d17ea30c40ab2b4522"
     },
     {
       "paper_id": "heldout-2026-usenix-security-01",
-      "record_sha256": "ec4268714fd32a5c6ef9e3d51651350c7adf16659c2c388c7a6b7d890558e134"
+      "record_sha256": "352a186ef95cedcc3f1570f729f9a83f3fce57d59f4e5a8f514733195b5b938e"
     },
     {
       "paper_id": "jstage-2026-jsceiii-7-20",
-      "record_sha256": "d92e2abe7815b1ef7ac364b0355a3a5a20933b9da68cfd06a78b4a417158525a"
+      "record_sha256": "328f52cc7b4016ed7ef3a5c4eab91fc2ee220ce3ffa8624b8263459071de791e"
     },
     {
       "paper_id": "pubmed-42058264",
@@ -140,7 +150,7 @@
     },
     {
       "paper_id": "pubmed-42345355",
-      "record_sha256": "76f77d5be6db35e5483c545df48cf1c91929212b0f55a9c88aef45be8b345bcd"
+      "record_sha256": "553d3b0ae803e3a25cb549ab0f158dbf7df3baa6b7fd65270065f32db1058b53"
     },
     {
       "paper_id": "pubmed-42359636",
@@ -188,7 +198,7 @@
     },
     {
       "paper_id": "pubmed-42454507",
-      "record_sha256": "08f7c81fcbc33b2382ee5224fc82dca26e58d90e7711fa5dbab02dec61acefd6"
+      "record_sha256": "89e40630a3e2e5c9ef6bcc0f7e3b76c776aeb5f294a3a421d36c131a929f7f62"
     },
     {
       "paper_id": "pubmed-42476202",
@@ -212,7 +222,7 @@
     },
     {
       "paper_id": "pubmed-42524027",
-      "record_sha256": "52d4e30df6a0c2fc15fabff17fab8536b5c91a7bf18fd2b4d42f34c5487d8483"
+      "record_sha256": "624a2eb3657e380ea418f09ba2b8017a20dfc3f81a8abb4ac2b88c70054406e2"
     },
     {
       "paper_id": "pubmed-42525450",
@@ -236,21 +246,11 @@
     },
     {
       "paper_id": "pubmed-42609944",
-      "record_sha256": "98161e064fb6f2a0a31da39d22ed57142d83d115defc1cdf6abc720e1417a3aa"
+      "record_sha256": "5b50b8e3155b2aa82fce1f5ac6cd1eea8bd3d16c266befd7e0d487710a5b976c"
     },
     {
       "paper_id": "pubmed-42621251",
       "record_sha256": "e11f09ff3709761eb5517af609fc93ec09d217adcbfdb5850f233db99083444b"
     }
-  ],
-  "minimum_language_counts": {
-    "dev": {
-      "en": 8,
-      "ja": 1
-    },
-    "heldout": {
-      "en": 9,
-      "ja": 1
-    }
-  }
+  ]
 }

@@ -5,7 +5,7 @@
     {
       "finding_id": "VF-0001",
       "code": "CATEGORY_VOCABULARY_DIVERGENCE",
-      "subject": "extra:ai4s-2026",
+      "subject": "ai4s-2026",
       "severity": "review",
       "message": "extra: ai4s-2026: category vocabulary diverges from title/full_name/scope; possible ai",
       "count": 1,
@@ -19,7 +19,7 @@
     {
       "finding_id": "VF-0002",
       "code": "CATEGORY_VOCABULARY_DIVERGENCE",
-      "subject": "extra:geosearch-2026",
+      "subject": "geosearch-2026",
       "severity": "review",
       "message": "extra: geosearch-2026: category vocabulary diverges from title/full_name/scope; possible db",
       "count": 1,
@@ -33,7 +33,7 @@
     {
       "finding_id": "VF-0003",
       "code": "CATEGORY_VOCABULARY_DIVERGENCE",
-      "subject": "extra:hpsr",
+      "subject": "hpsr",
       "severity": "review",
       "message": "extra: hpsr: category vocabulary diverges from title/full_name/scope; possible hpc",
       "count": 1,
@@ -47,7 +47,7 @@
     {
       "finding_id": "VF-0004",
       "code": "CATEGORY_VOCABULARY_DIVERGENCE",
-      "subject": "extra:icdm",
+      "subject": "icdm",
       "severity": "review",
       "message": "extra: icdm: category vocabulary diverges from title/full_name/scope; possible db",
       "count": 1,
@@ -59,37 +59,9 @@
       "expires_at": "2027-09-01T00:00:00Z"
     },
     {
-      "finding_id": "VF-0005",
-      "code": "CATEGORY_VOCABULARY_DIVERGENCE",
-      "subject": "snapshot:ai4s-2026",
-      "severity": "review",
-      "message": "snapshot: ai4s-2026: category vocabulary diverges from title/full_name/scope; possible ai",
-      "count": 1,
-      "status": "accepted",
-      "reviewed_by": "kamiyobi-maintainers",
-      "reviewed_at": "2026-09-01T00:00:00Z",
-      "review_reason": "公式scopeとの不一致候補を確認済み。自動カテゴリ追加は行わず、現行分類を維持する。",
-      "evidence_ref": "data/snapshot.json#ai4s-2026",
-      "expires_at": "2027-09-01T00:00:00Z"
-    },
-    {
-      "finding_id": "VF-0006",
-      "code": "CATEGORY_VOCABULARY_DIVERGENCE",
-      "subject": "snapshot:geosearch-2026",
-      "severity": "review",
-      "message": "snapshot: geosearch-2026: category vocabulary diverges from title/full_name/scope; possible db",
-      "count": 1,
-      "status": "accepted",
-      "reviewed_by": "kamiyobi-maintainers",
-      "reviewed_at": "2026-09-01T00:00:00Z",
-      "review_reason": "公式scopeとの不一致候補を確認済み。自動カテゴリ追加は行わず、現行分類を維持する。",
-      "evidence_ref": "data/snapshot.json#geosearch-2026",
-      "expires_at": "2027-09-01T00:00:00Z"
-    },
-    {
       "finding_id": "VF-0007",
       "code": "CATEGORY_VOCABULARY_DIVERGENCE",
-      "subject": "snapshot:hipeac",
+      "subject": "hipeac",
       "severity": "review",
       "message": "snapshot: hipeac: category vocabulary diverges from title/full_name/scope; possible hpc",
       "count": 1,
@@ -103,7 +75,7 @@
     {
       "finding_id": "VF-0008",
       "code": "CATEGORY_VOCABULARY_DIVERGENCE",
-      "subject": "snapshot:hot-chips",
+      "subject": "hot-chips",
       "severity": "review",
       "message": "snapshot: hot-chips: category vocabulary diverges from title/full_name/scope; possible hpc",
       "count": 1,
@@ -115,23 +87,9 @@
       "expires_at": "2027-09-01T00:00:00Z"
     },
     {
-      "finding_id": "VF-0009",
-      "code": "CATEGORY_VOCABULARY_DIVERGENCE",
-      "subject": "snapshot:hpsr",
-      "severity": "review",
-      "message": "snapshot: hpsr: category vocabulary diverges from title/full_name/scope; possible hpc",
-      "count": 1,
-      "status": "accepted",
-      "reviewed_by": "kamiyobi-maintainers",
-      "reviewed_at": "2026-09-01T00:00:00Z",
-      "review_reason": "公式scopeとの不一致候補を確認済み。自動カテゴリ追加は行わず、現行分類を維持する。",
-      "evidence_ref": "data/snapshot.json#hpsr",
-      "expires_at": "2027-09-01T00:00:00Z"
-    },
-    {
       "finding_id": "VF-0010",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ai4scisci-2026/ai4scisci-202626",
+      "subject": "ai4scisci-2026/ai4scisci-202626",
       "severity": "review",
       "message": "extra: ai4scisci-2026/ai4scisci-202626: event date text is not structured",
       "count": 1,
@@ -145,7 +103,7 @@
     {
       "finding_id": "VF-0011",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:aila2027/aila202727",
+      "subject": "aila2027/aila202727",
       "severity": "review",
       "message": "extra: aila2027/aila202727: event date text is not structured",
       "count": 1,
@@ -159,7 +117,7 @@
     {
       "finding_id": "VF-0012",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:aipe-2027/aipe-202727",
+      "subject": "aipe-2027/aipe-202727",
       "severity": "review",
       "message": "extra: aipe-2027/aipe-202727: event date text is not structured",
       "count": 1,
@@ -173,7 +131,7 @@
     {
       "finding_id": "VF-0013",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:airc-2027/airc-202727",
+      "subject": "airc-2027/airc-202727",
       "severity": "review",
       "message": "extra: airc-2027/airc-202727: event date text is not structured",
       "count": 1,
@@ -187,7 +145,7 @@
     {
       "finding_id": "VF-0014",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:bdaa-2026/bdaa-202626",
+      "subject": "bdaa-2026/bdaa-202626",
       "severity": "review",
       "message": "extra: bdaa-2026/bdaa-202626: event date text is not structured",
       "count": 1,
@@ -201,7 +159,7 @@
     {
       "finding_id": "VF-0015",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:cafcw-2026/cafcw-2026",
+      "subject": "cafcw-2026/cafcw-2026",
       "severity": "review",
       "message": "extra: cafcw-2026/cafcw-2026: event date text is not structured",
       "count": 1,
@@ -215,7 +173,7 @@
     {
       "finding_id": "VF-0016",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:canopie-2026/canopie-2026",
+      "subject": "canopie-2026/canopie-2026",
       "severity": "review",
       "message": "extra: canopie-2026/canopie-2026: event date text is not structured",
       "count": 1,
@@ -229,7 +187,7 @@
     {
       "finding_id": "VF-0017",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:cocoa/cocoa2026",
+      "subject": "cocoa/cocoa2026",
       "severity": "review",
       "message": "extra: cocoa/cocoa2026: event date text is not structured",
       "count": 1,
@@ -243,7 +201,7 @@
     {
       "finding_id": "VF-0018",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:cogfintech-2026/cogfintech-202626",
+      "subject": "cogfintech-2026/cogfintech-202626",
       "severity": "review",
       "message": "extra: cogfintech-2026/cogfintech-202626: event date text is not structured",
       "count": 1,
@@ -257,7 +215,7 @@
     {
       "finding_id": "VF-0019",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:compsac/compsac27",
+      "subject": "compsac/compsac27",
       "severity": "review",
       "message": "extra: compsac/compsac27: event date text is not structured",
       "count": 1,
@@ -271,7 +229,7 @@
     {
       "finding_id": "VF-0020",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:copa-2026/copa-202626",
+      "subject": "copa-2026/copa-202626",
       "severity": "review",
       "message": "extra: copa-2026/copa-202626: event date text is not structured",
       "count": 1,
@@ -285,7 +243,7 @@
     {
       "finding_id": "VF-0021",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:csai-2026/csai-202626",
+      "subject": "csai-2026/csai-202626",
       "severity": "review",
       "message": "extra: csai-2026/csai-202626: event date text is not structured",
       "count": 1,
@@ -299,7 +257,7 @@
     {
       "finding_id": "VF-0022",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:cvm/cvm27",
+      "subject": "cvm/cvm27",
       "severity": "review",
       "message": "extra: cvm/cvm27: event date text is not structured",
       "count": 1,
@@ -313,7 +271,7 @@
     {
       "finding_id": "VF-0023",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:dml-icc-2026/dml-icc-202626",
+      "subject": "dml-icc-2026/dml-icc-202626",
       "severity": "review",
       "message": "extra: dml-icc-2026/dml-icc-202626: event date text is not structured",
       "count": 1,
@@ -327,7 +285,7 @@
     {
       "finding_id": "VF-0024",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:eaai-27/eaai-2727",
+      "subject": "eaai-27/eaai-2727",
       "severity": "review",
       "message": "extra: eaai-27/eaai-2727: event date text is not structured",
       "count": 1,
@@ -341,7 +299,7 @@
     {
       "finding_id": "VF-0025",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:eecr-2027/eecr-202727",
+      "subject": "eecr-2027/eecr-202727",
       "severity": "review",
       "message": "extra: eecr-2027/eecr-202727: event date text is not structured",
       "count": 1,
@@ -355,7 +313,7 @@
     {
       "finding_id": "VF-0026",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:evomusart-2027/evomusart-202727",
+      "subject": "evomusart-2027/evomusart-202727",
       "severity": "review",
       "message": "extra: evomusart-2027/evomusart-202727: event date text is not structured",
       "count": 1,
@@ -369,7 +327,7 @@
     {
       "finding_id": "VF-0027",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ftxs-2026/ftxs26",
+      "subject": "ftxs-2026/ftxs26",
       "severity": "review",
       "message": "extra: ftxs-2026/ftxs26: event date text is not structured",
       "count": 1,
@@ -383,7 +341,7 @@
     {
       "finding_id": "VF-0028",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:gcetai26/gcetai2626",
+      "subject": "gcetai26/gcetai2626",
       "severity": "review",
       "message": "extra: gcetai26/gcetai2626: event date text is not structured",
       "count": 1,
@@ -397,7 +355,7 @@
     {
       "finding_id": "VF-0029",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:geoai-2026/geoai2026",
+      "subject": "geoai-2026/geoai2026",
       "severity": "review",
       "message": "extra: geoai-2026/geoai2026: event date text is not structured",
       "count": 1,
@@ -411,7 +369,7 @@
     {
       "finding_id": "VF-0030",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:geoanomalies-2026/geoanomalies2026",
+      "subject": "geoanomalies-2026/geoanomalies2026",
       "severity": "review",
       "message": "extra: geoanomalies-2026/geoanomalies2026: event date text is not structured",
       "count": 1,
@@ -425,7 +383,7 @@
     {
       "finding_id": "VF-0031",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:geoindustry-2026/geoindustry2026",
+      "subject": "geoindustry-2026/geoindustry2026",
       "severity": "review",
       "message": "extra: geoindustry-2026/geoindustry2026: event date text is not structured",
       "count": 1,
@@ -439,7 +397,7 @@
     {
       "finding_id": "VF-0032",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:geosearch-2026/geosearch2026",
+      "subject": "geosearch-2026/geosearch2026",
       "severity": "review",
       "message": "extra: geosearch-2026/geosearch2026: event date text is not structured",
       "count": 1,
@@ -453,7 +411,7 @@
     {
       "finding_id": "VF-0033",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:geosim-2026/geosim2026",
+      "subject": "geosim-2026/geosim2026",
       "severity": "review",
       "message": "extra: geosim-2026/geosim2026: event date text is not structured",
       "count": 1,
@@ -467,7 +425,7 @@
     {
       "finding_id": "VF-0034",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:greenai2027/greenai202727",
+      "subject": "greenai2027/greenai202727",
       "severity": "review",
       "message": "extra: greenai2027/greenai202727: event date text is not structured",
       "count": 1,
@@ -481,7 +439,7 @@
     {
       "finding_id": "VF-0035",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:h2rc-2026/h2rc26",
+      "subject": "h2rc-2026/h2rc26",
       "severity": "review",
       "message": "extra: h2rc-2026/h2rc26: event date text is not structured",
       "count": 1,
@@ -495,7 +453,7 @@
     {
       "finding_id": "VF-0036",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:hoti/hoti26",
+      "subject": "hoti/hoti26",
       "severity": "review",
       "message": "extra: hoti/hoti26: event date text is not structured",
       "count": 1,
@@ -509,7 +467,7 @@
     {
       "finding_id": "VF-0037",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:hpc-oda-2026/hpc-oda-2026",
+      "subject": "hpc-oda-2026/hpc-oda-2026",
       "severity": "review",
       "message": "extra: hpc-oda-2026/hpc-oda-2026: event date text is not structured",
       "count": 1,
@@ -523,7 +481,7 @@
     {
       "finding_id": "VF-0038",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:humob-2026/humob2026",
+      "subject": "humob-2026/humob2026",
       "severity": "review",
       "message": "extra: humob-2026/humob2026: event date text is not structured",
       "count": 1,
@@ -537,7 +495,7 @@
     {
       "finding_id": "VF-0039",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:hust-26-2026/hust26",
+      "subject": "hust-26-2026/hust26",
       "severity": "review",
       "message": "extra: hust-26-2026/hust26: event date text is not structured",
       "count": 1,
@@ -551,7 +509,7 @@
     {
       "finding_id": "VF-0040",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:icai-2026/icai-202626",
+      "subject": "icai-2026/icai-202626",
       "severity": "review",
       "message": "extra: icai-2026/icai-202626: event date text is not structured",
       "count": 1,
@@ -565,7 +523,7 @@
     {
       "finding_id": "VF-0041",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:icaibd-2027/icaibd-202727",
+      "subject": "icaibd-2027/icaibd-202727",
       "severity": "review",
       "message": "extra: icaibd-2027/icaibd-202727: event date text is not structured",
       "count": 1,
@@ -579,7 +537,7 @@
     {
       "finding_id": "VF-0042",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:icaid-2027/icaid-202727",
+      "subject": "icaid-2027/icaid-202727",
       "severity": "review",
       "message": "extra: icaid-2027/icaid-202727: event date text is not structured",
       "count": 1,
@@ -593,7 +551,7 @@
     {
       "finding_id": "VF-0043",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:icaie-2026/icaie-202626",
+      "subject": "icaie-2026/icaie-202626",
       "severity": "review",
       "message": "extra: icaie-2026/icaie-202626: event date text is not structured",
       "count": 1,
@@ -607,7 +565,7 @@
     {
       "finding_id": "VF-0044",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:icaisg-2026/icaisg-202626",
+      "subject": "icaisg-2026/icaisg-202626",
       "severity": "review",
       "message": "extra: icaisg-2026/icaisg-202626: event date text is not structured",
       "count": 1,
@@ -621,7 +579,7 @@
     {
       "finding_id": "VF-0045",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:icara-2027/icara-202727",
+      "subject": "icara-2027/icara-202727",
       "severity": "review",
       "message": "extra: icara-2027/icara-202727: event date text is not structured",
       "count": 1,
@@ -635,7 +593,7 @@
     {
       "finding_id": "VF-0046",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:icbdaia27/icbdaia2727",
+      "subject": "icbdaia27/icbdaia2727",
       "severity": "review",
       "message": "extra: icbdaia27/icbdaia2727: event date text is not structured",
       "count": 1,
@@ -649,7 +607,7 @@
     {
       "finding_id": "VF-0047",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:icccbda-2027/icccbda-202727",
+      "subject": "icccbda-2027/icccbda-202727",
       "severity": "review",
       "message": "extra: icccbda-2027/icccbda-202727: event date text is not structured",
       "count": 1,
@@ -663,7 +621,7 @@
     {
       "finding_id": "VF-0048",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:iccre-2027/iccre-202727",
+      "subject": "iccre-2027/iccre-202727",
       "severity": "review",
       "message": "extra: iccre-2027/iccre-202727: event date text is not structured",
       "count": 1,
@@ -677,7 +635,7 @@
     {
       "finding_id": "VF-0049",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:icdiacs-2026/icdiacs-202626",
+      "subject": "icdiacs-2026/icdiacs-202626",
       "severity": "review",
       "message": "extra: icdiacs-2026/icdiacs-202626: event date text is not structured",
       "count": 1,
@@ -691,7 +649,7 @@
     {
       "finding_id": "VF-0050",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:icdm/icdm26",
+      "subject": "icdm/icdm26",
       "severity": "review",
       "message": "extra: icdm/icdm26: event date text is not structured",
       "count": 1,
@@ -705,7 +663,7 @@
     {
       "finding_id": "VF-0051",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:icin/icin2027",
+      "subject": "icin/icin2027",
       "severity": "review",
       "message": "extra: icin/icin2027: event date text is not structured",
       "count": 1,
@@ -719,7 +677,7 @@
     {
       "finding_id": "VF-0052",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:icst/icst27",
+      "subject": "icst/icst27",
       "severity": "review",
       "message": "extra: icst/icst27: event date text is not structured",
       "count": 1,
@@ -733,7 +691,7 @@
     {
       "finding_id": "VF-0053",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ictdse2026/ictdse202626",
+      "subject": "ictdse2026/ictdse202626",
       "severity": "review",
       "message": "extra: ictdse2026/ictdse202626: event date text is not structured",
       "count": 1,
@@ -747,7 +705,7 @@
     {
       "finding_id": "VF-0054",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:icvrv/icvrv26",
+      "subject": "icvrv/icvrv26",
       "severity": "review",
       "message": "extra: icvrv/icvrv26: event date text is not structured",
       "count": 1,
@@ -761,7 +719,7 @@
     {
       "finding_id": "VF-0055",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ieee-aiot-2026/ieee-aiot-202626",
+      "subject": "ieee-aiot-2026/ieee-aiot-202626",
       "severity": "review",
       "message": "extra: ieee-aiot-2026/ieee-aiot-202626: event date text is not structured",
       "count": 1,
@@ -775,7 +733,7 @@
     {
       "finding_id": "VF-0056",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ieee-risc/risc2026",
+      "subject": "ieee-risc/risc2026",
       "severity": "review",
       "message": "extra: ieee-risc/risc2026: event date text is not structured",
       "count": 1,
@@ -789,7 +747,7 @@
     {
       "finding_id": "VF-0057",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ieee-tps/tps2026",
+      "subject": "ieee-tps/tps2026",
       "severity": "review",
       "message": "extra: ieee-tps/tps2026: event date text is not structured",
       "count": 1,
@@ -803,7 +761,7 @@
     {
       "finding_id": "VF-0058",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ieee-wsce-2026/wsce2026",
+      "subject": "ieee-wsce-2026/wsce2026",
       "severity": "review",
       "message": "extra: ieee-wsce-2026/wsce2026: event date text is not structured",
       "count": 1,
@@ -817,7 +775,7 @@
     {
       "finding_id": "VF-0059",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ieeebc27/ieeebc2727",
+      "subject": "ieeebc27/ieeebc2727",
       "severity": "review",
       "message": "extra: ieeebc27/ieeebc2727: event date text is not structured",
       "count": 1,
@@ -831,7 +789,7 @@
     {
       "finding_id": "VF-0060",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ieice-cpsy/ieice-cpsy-2026",
+      "subject": "ieice-cpsy/ieice-cpsy-2026",
       "severity": "review",
       "message": "extra: ieice-cpsy/ieice-cpsy-2026: event date text is not structured",
       "count": 1,
@@ -845,7 +803,7 @@
     {
       "finding_id": "VF-0061",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ieice-cys/ieice-cys-2026",
+      "subject": "ieice-cys/ieice-cys-2026",
       "severity": "review",
       "message": "extra: ieice-cys/ieice-cys-2026: event date text is not structured",
       "count": 1,
@@ -859,7 +817,7 @@
     {
       "finding_id": "VF-0062",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ieice-isec/ieice-isec-2026",
+      "subject": "ieice-isec/ieice-isec-2026",
       "severity": "review",
       "message": "extra: ieice-isec/ieice-isec-2026: event date text is not structured",
       "count": 1,
@@ -873,7 +831,7 @@
     {
       "finding_id": "VF-0063",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ieice-nolta/nolta2026",
+      "subject": "ieice-nolta/nolta2026",
       "severity": "review",
       "message": "extra: ieice-nolta/nolta2026: event date text is not structured",
       "count": 1,
@@ -887,7 +845,7 @@
     {
       "finding_id": "VF-0064",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ieice-rcs/ieice-rcs-2026",
+      "subject": "ieice-rcs/ieice-rcs-2026",
       "severity": "review",
       "message": "extra: ieice-rcs/ieice-rcs-2026: event date text is not structured",
       "count": 1,
@@ -901,7 +859,7 @@
     {
       "finding_id": "VF-0065",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ieice-sita/sita2026",
+      "subject": "ieice-sita/sita2026",
       "severity": "review",
       "message": "extra: ieice-sita/sita2026: event date text is not structured",
       "count": 1,
@@ -915,7 +873,7 @@
     {
       "finding_id": "VF-0066",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ifs-27/ifs-2727",
+      "subject": "ifs-27/ifs-2727",
       "severity": "review",
       "message": "extra: ifs-27/ifs-2727: event date text is not structured",
       "count": 1,
@@ -929,7 +887,7 @@
     {
       "finding_id": "VF-0067",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ipsj-css/css2026",
+      "subject": "ipsj-css/css2026",
       "severity": "review",
       "message": "extra: ipsj-css/css2026: event date text is not structured",
       "count": 1,
@@ -943,7 +901,7 @@
     {
       "finding_id": "VF-0068",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ipsj-deim/deim2026",
+      "subject": "ipsj-deim/deim2026",
       "severity": "review",
       "message": "extra: ipsj-deim/deim2026: event date text is not structured",
       "count": 1,
@@ -957,7 +915,7 @@
     {
       "finding_id": "VF-0069",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ipsj-dicomo/dicomo2026",
+      "subject": "ipsj-dicomo/dicomo2026",
       "severity": "review",
       "message": "extra: ipsj-dicomo/dicomo2026: event date text is not structured",
       "count": 1,
@@ -971,7 +929,7 @@
     {
       "finding_id": "VF-0070",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ipsj-sigemb/ipsj-emb-2026",
+      "subject": "ipsj-sigemb/ipsj-emb-2026",
       "severity": "review",
       "message": "extra: ipsj-sigemb/ipsj-emb-2026: event date text is not structured",
       "count": 1,
@@ -985,7 +943,7 @@
     {
       "finding_id": "VF-0071",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ipsj-sigkbs/ipsj-kbs-2026",
+      "subject": "ipsj-sigkbs/ipsj-kbs-2026",
       "severity": "review",
       "message": "extra: ipsj-sigkbs/ipsj-kbs-2026: event date text is not structured",
       "count": 1,
@@ -999,7 +957,7 @@
     {
       "finding_id": "VF-0072",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ipsj-sigpro/ipsj-pro-2026",
+      "subject": "ipsj-sigpro/ipsj-pro-2026",
       "severity": "review",
       "message": "extra: ipsj-sigpro/ipsj-pro-2026: event date text is not structured",
       "count": 1,
@@ -1013,7 +971,7 @@
     {
       "finding_id": "VF-0073",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ipsj-sigse/ipsj-se-2026",
+      "subject": "ipsj-sigse/ipsj-se-2026",
       "severity": "review",
       "message": "extra: ipsj-sigse/ipsj-se-2026: event date text is not structured",
       "count": 1,
@@ -1027,7 +985,7 @@
     {
       "finding_id": "VF-0074",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ipsj-sigsec/ipsj-csec-2026",
+      "subject": "ipsj-sigsec/ipsj-csec-2026",
       "severity": "review",
       "message": "extra: ipsj-sigsec/ipsj-csec-2026: event date text is not structured",
       "count": 1,
@@ -1041,7 +999,7 @@
     {
       "finding_id": "VF-0075",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ipsj-sigubi/ipsj-ubi-2026",
+      "subject": "ipsj-sigubi/ipsj-ubi-2026",
       "severity": "review",
       "message": "extra: ipsj-sigubi/ipsj-ubi-2026: event date text is not structured",
       "count": 1,
@@ -1055,7 +1013,7 @@
     {
       "finding_id": "VF-0076",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ipsj-wiss/wiss2026",
+      "subject": "ipsj-wiss/wiss2026",
       "severity": "review",
       "message": "extra: ipsj-wiss/wiss2026: event date text is not structured",
       "count": 1,
@@ -1069,7 +1027,7 @@
     {
       "finding_id": "VF-0077",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:isc-hpc/isc27",
+      "subject": "isc-hpc/isc27",
       "severity": "review",
       "message": "extra: isc-hpc/isc27: event date text is not structured",
       "count": 1,
@@ -1083,7 +1041,7 @@
     {
       "finding_id": "VF-0078",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:istai26/istai2626",
+      "subject": "istai26/istai2626",
       "severity": "review",
       "message": "extra: istai26/istai2626: event date text is not structured",
       "count": 1,
@@ -1097,7 +1055,7 @@
     {
       "finding_id": "VF-0079",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:itcs/itcs2027",
+      "subject": "itcs/itcs2027",
       "severity": "review",
       "message": "extra: itcs/itcs2027: event date text is not structured",
       "count": 1,
@@ -1111,7 +1069,7 @@
     {
       "finding_id": "VF-0080",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:jip/jip-compsac2027-si",
+      "subject": "jip/jip-compsac2027-si",
       "severity": "review",
       "message": "extra: jip/jip-compsac2027-si: event date text is not structured",
       "count": 1,
@@ -1125,7 +1083,7 @@
     {
       "finding_id": "VF-0081",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:jvac2027/jvac202727",
+      "subject": "jvac2027/jvac202727",
       "severity": "review",
       "message": "extra: jvac2027/jvac202727: event date text is not structured",
       "count": 1,
@@ -1139,7 +1097,7 @@
     {
       "finding_id": "VF-0082",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:llvm-hpc-2026/llvm-hpc26",
+      "subject": "llvm-hpc-2026/llvm-hpc26",
       "severity": "review",
       "message": "extra: llvm-hpc-2026/llvm-hpc26: event date text is not structured",
       "count": 1,
@@ -1153,7 +1111,7 @@
     {
       "finding_id": "VF-0083",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:lpc/lpc26",
+      "subject": "lpc/lpc26",
       "severity": "review",
       "message": "extra: lpc/lpc26: event date text is not structured",
       "count": 1,
@@ -1167,7 +1125,7 @@
     {
       "finding_id": "VF-0084",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:mdoa-2026/mdoa-202626",
+      "subject": "mdoa-2026/mdoa-202626",
       "severity": "review",
       "message": "extra: mdoa-2026/mdoa-202626: event date text is not structured",
       "count": 1,
@@ -1181,7 +1139,7 @@
     {
       "finding_id": "VF-0085",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:mirg-icair-2026/mirg-icair-202626",
+      "subject": "mirg-icair-2026/mirg-icair-202626",
       "severity": "review",
       "message": "extra: mirg-icair-2026/mirg-icair-202626: event date text is not structured",
       "count": 1,
@@ -1195,7 +1153,7 @@
     {
       "finding_id": "VF-0086",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:mlcc-2027/mlcc-202727",
+      "subject": "mlcc-2027/mlcc-202727",
       "severity": "review",
       "message": "extra: mlcc-2027/mlcc-202727: event date text is not structured",
       "count": 1,
@@ -1209,7 +1167,7 @@
     {
       "finding_id": "VF-0087",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:netdev/netdev-0x1a",
+      "subject": "netdev/netdev-0x1a",
       "severity": "review",
       "message": "extra: netdev/netdev-0x1a: event date text is not structured",
       "count": 1,
@@ -1223,7 +1181,7 @@
     {
       "finding_id": "VF-0088",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:nlp4call-2026/nlp4call-202626",
+      "subject": "nlp4call-2026/nlp4call-202626",
       "severity": "review",
       "message": "extra: nlp4call-2026/nlp4call-202626: event date text is not structured",
       "count": 1,
@@ -1237,7 +1195,7 @@
     {
       "finding_id": "VF-0089",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:oasis-ai-2026/oasis-ai-202626",
+      "subject": "oasis-ai-2026/oasis-ai-202626",
       "severity": "review",
       "message": "extra: oasis-ai-2026/oasis-ai-202626: event date text is not structured",
       "count": 1,
@@ -1251,7 +1209,7 @@
     {
       "finding_id": "VF-0090",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ocp-global-summit/ocp-summit26",
+      "subject": "ocp-global-summit/ocp-summit26",
       "severity": "review",
       "message": "extra: ocp-global-summit/ocp-summit26: event date text is not structured",
       "count": 1,
@@ -1265,7 +1223,7 @@
     {
       "finding_id": "VF-0091",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:p4-workshop/p4ws26",
+      "subject": "p4-workshop/p4ws26",
       "severity": "review",
       "message": "extra: p4-workshop/p4ws26: event date text is not structured",
       "count": 1,
@@ -1279,7 +1237,7 @@
     {
       "finding_id": "VF-0092",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:pacificvis/pacificvis27",
+      "subject": "pacificvis/pacificvis27",
       "severity": "review",
       "message": "extra: pacificvis/pacificvis27: event date text is not structured",
       "count": 1,
@@ -1293,7 +1251,7 @@
     {
       "finding_id": "VF-0093",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:parallel2026/parallel202626",
+      "subject": "parallel2026/parallel202626",
       "severity": "review",
       "message": "extra: parallel2026/parallel202626: event date text is not structured",
       "count": 1,
@@ -1307,7 +1265,7 @@
     {
       "finding_id": "VF-0094",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:percom/percom27",
+      "subject": "percom/percom27",
       "severity": "review",
       "message": "extra: percom/percom27: event date text is not structured",
       "count": 1,
@@ -1321,7 +1279,7 @@
     {
       "finding_id": "VF-0095",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:plsc-e-2026/plsc-e-202626",
+      "subject": "plsc-e-2026/plsc-e-202626",
       "severity": "review",
       "message": "extra: plsc-e-2026/plsc-e-202626: event date text is not structured",
       "count": 1,
@@ -1335,7 +1293,7 @@
     {
       "finding_id": "VF-0096",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:polds-2026/polds2026",
+      "subject": "polds-2026/polds2026",
       "severity": "review",
       "message": "extra: polds-2026/polds2026: event date text is not structured",
       "count": 1,
@@ -1349,7 +1307,7 @@
     {
       "finding_id": "VF-0097",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:qspatial-2026/qspatial2026",
+      "subject": "qspatial-2026/qspatial2026",
       "severity": "review",
       "message": "extra: qspatial-2026/qspatial2026: event date text is not structured",
       "count": 1,
@@ -1363,7 +1321,7 @@
     {
       "finding_id": "VF-0098",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:resdis-2026/resdis-2026",
+      "subject": "resdis-2026/resdis-2026",
       "severity": "review",
       "message": "extra: resdis-2026/resdis-2026: event date text is not structured",
       "count": 1,
@@ -1377,7 +1335,7 @@
     {
       "finding_id": "VF-0099",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:secitc/secitc2026",
+      "subject": "secitc/secitc2026",
       "severity": "review",
       "message": "extra: secitc/secitc2026: event date text is not structured",
       "count": 1,
@@ -1391,7 +1349,7 @@
     {
       "finding_id": "VF-0100",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:securecomm/securecomm27",
+      "subject": "securecomm/securecomm27",
       "severity": "review",
       "message": "extra: securecomm/securecomm27: event date text is not structured",
       "count": 1,
@@ -1405,7 +1363,7 @@
     {
       "finding_id": "VF-0101",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:slice-2026/slice-202626",
+      "subject": "slice-2026/slice-202626",
       "severity": "review",
       "message": "extra: slice-2026/slice-202626: event date text is not structured",
       "count": 1,
@@ -1419,7 +1377,7 @@
     {
       "finding_id": "VF-0102",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:sls-optirob-2027/sls-optirob-202727",
+      "subject": "sls-optirob-2027/sls-optirob-202727",
       "severity": "review",
       "message": "extra: sls-optirob-2027/sls-optirob-202727: event date text is not structured",
       "count": 1,
@@ -1433,7 +1391,7 @@
     {
       "finding_id": "VF-0103",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:spatialconnect-2026/spatialconnect2026",
+      "subject": "spatialconnect-2026/spatialconnect2026",
       "severity": "review",
       "message": "extra: spatialconnect-2026/spatialconnect2026: event date text is not structured",
       "count": 1,
@@ -1447,7 +1405,7 @@
     {
       "finding_id": "VF-0104",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:ssr/ssr2026",
+      "subject": "ssr/ssr2026",
       "severity": "review",
       "message": "extra: ssr/ssr2026: event date text is not structured",
       "count": 1,
@@ -1461,7 +1419,7 @@
     {
       "finding_id": "VF-0105",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:urbanai-2026/urbanai2026",
+      "subject": "urbanai-2026/urbanai2026",
       "severity": "review",
       "message": "extra: urbanai-2026/urbanai2026: event date text is not structured",
       "count": 1,
@@ -1475,7 +1433,7 @@
     {
       "finding_id": "VF-0106",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "extra:whpc-2026/whpc26",
+      "subject": "whpc-2026/whpc26",
       "severity": "review",
       "message": "extra: whpc-2026/whpc26: event date text is not structured",
       "count": 1,
@@ -1489,7 +1447,7 @@
     {
       "finding_id": "VF-0107",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "overrides:overrides:mmm/2027",
+      "subject": "overrides:mmm/2027",
       "severity": "review",
       "message": "overrides: overrides:mmm/2027: event date text is not structured",
       "count": 1,
@@ -1503,7 +1461,7 @@
     {
       "finding_id": "VF-0108",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "primary_overrides:primary_overrides:setta/2026",
+      "subject": "primary_overrides:setta/2026",
       "severity": "review",
       "message": "primary_overrides: primary_overrides:setta/2026: event date text is not structured",
       "count": 1,
@@ -1517,7 +1475,7 @@
     {
       "finding_id": "VF-0109",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "snapshot:hotsec/hotsec21",
+      "subject": "hotsec/hotsec21",
       "severity": "review",
       "message": "snapshot: hotsec/hotsec21: event date text is not structured",
       "count": 1,
@@ -1529,163 +1487,9 @@
       "expires_at": "2027-09-01T00:00:00Z"
     },
     {
-      "finding_id": "VF-0110",
-      "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "snapshot:ieice-cpsy/ieice-cpsy-2026",
-      "severity": "review",
-      "message": "snapshot: ieice-cpsy/ieice-cpsy-2026: event date text is not structured",
-      "count": 1,
-      "status": "accepted",
-      "reviewed_by": "kamiyobi-maintainers",
-      "reviewed_at": "2026-09-01T00:00:00Z",
-      "review_reason": "既存ソースの原文表示を維持し、構造化できない/会期範囲の差異は推測で補正しない。",
-      "evidence_ref": "data/snapshot.json#ieice-cpsy/ieice-cpsy-2026",
-      "expires_at": "2027-09-01T00:00:00Z"
-    },
-    {
-      "finding_id": "VF-0111",
-      "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "snapshot:ieice-cys/ieice-cys-2026",
-      "severity": "review",
-      "message": "snapshot: ieice-cys/ieice-cys-2026: event date text is not structured",
-      "count": 1,
-      "status": "accepted",
-      "reviewed_by": "kamiyobi-maintainers",
-      "reviewed_at": "2026-09-01T00:00:00Z",
-      "review_reason": "既存ソースの原文表示を維持し、構造化できない/会期範囲の差異は推測で補正しない。",
-      "evidence_ref": "data/snapshot.json#ieice-cys/ieice-cys-2026",
-      "expires_at": "2027-09-01T00:00:00Z"
-    },
-    {
-      "finding_id": "VF-0112",
-      "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "snapshot:ieice-isec/ieice-isec-2026",
-      "severity": "review",
-      "message": "snapshot: ieice-isec/ieice-isec-2026: event date text is not structured",
-      "count": 1,
-      "status": "accepted",
-      "reviewed_by": "kamiyobi-maintainers",
-      "reviewed_at": "2026-09-01T00:00:00Z",
-      "review_reason": "既存ソースの原文表示を維持し、構造化できない/会期範囲の差異は推測で補正しない。",
-      "evidence_ref": "data/snapshot.json#ieice-isec/ieice-isec-2026",
-      "expires_at": "2027-09-01T00:00:00Z"
-    },
-    {
-      "finding_id": "VF-0113",
-      "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "snapshot:ieice-nolta/nolta2026",
-      "severity": "review",
-      "message": "snapshot: ieice-nolta/nolta2026: event date text is not structured",
-      "count": 1,
-      "status": "accepted",
-      "reviewed_by": "kamiyobi-maintainers",
-      "reviewed_at": "2026-09-01T00:00:00Z",
-      "review_reason": "既存ソースの原文表示を維持し、構造化できない/会期範囲の差異は推測で補正しない。",
-      "evidence_ref": "data/snapshot.json#ieice-nolta/nolta2026",
-      "expires_at": "2027-09-01T00:00:00Z"
-    },
-    {
-      "finding_id": "VF-0114",
-      "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "snapshot:ieice-rcs/ieice-rcs-2026",
-      "severity": "review",
-      "message": "snapshot: ieice-rcs/ieice-rcs-2026: event date text is not structured",
-      "count": 1,
-      "status": "accepted",
-      "reviewed_by": "kamiyobi-maintainers",
-      "reviewed_at": "2026-09-01T00:00:00Z",
-      "review_reason": "既存ソースの原文表示を維持し、構造化できない/会期範囲の差異は推測で補正しない。",
-      "evidence_ref": "data/snapshot.json#ieice-rcs/ieice-rcs-2026",
-      "expires_at": "2027-09-01T00:00:00Z"
-    },
-    {
-      "finding_id": "VF-0115",
-      "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "snapshot:ipsj-sigemb/ipsj-emb-2026",
-      "severity": "review",
-      "message": "snapshot: ipsj-sigemb/ipsj-emb-2026: event date text is not structured",
-      "count": 1,
-      "status": "accepted",
-      "reviewed_by": "kamiyobi-maintainers",
-      "reviewed_at": "2026-09-01T00:00:00Z",
-      "review_reason": "既存ソースの原文表示を維持し、構造化できない/会期範囲の差異は推測で補正しない。",
-      "evidence_ref": "data/snapshot.json#ipsj-sigemb/ipsj-emb-2026",
-      "expires_at": "2027-09-01T00:00:00Z"
-    },
-    {
-      "finding_id": "VF-0116",
-      "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "snapshot:ipsj-sigkbs/ipsj-kbs-2026",
-      "severity": "review",
-      "message": "snapshot: ipsj-sigkbs/ipsj-kbs-2026: event date text is not structured",
-      "count": 1,
-      "status": "accepted",
-      "reviewed_by": "kamiyobi-maintainers",
-      "reviewed_at": "2026-09-01T00:00:00Z",
-      "review_reason": "既存ソースの原文表示を維持し、構造化できない/会期範囲の差異は推測で補正しない。",
-      "evidence_ref": "data/snapshot.json#ipsj-sigkbs/ipsj-kbs-2026",
-      "expires_at": "2027-09-01T00:00:00Z"
-    },
-    {
-      "finding_id": "VF-0117",
-      "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "snapshot:ipsj-sigpro/ipsj-pro-2026",
-      "severity": "review",
-      "message": "snapshot: ipsj-sigpro/ipsj-pro-2026: event date text is not structured",
-      "count": 1,
-      "status": "accepted",
-      "reviewed_by": "kamiyobi-maintainers",
-      "reviewed_at": "2026-09-01T00:00:00Z",
-      "review_reason": "既存ソースの原文表示を維持し、構造化できない/会期範囲の差異は推測で補正しない。",
-      "evidence_ref": "data/snapshot.json#ipsj-sigpro/ipsj-pro-2026",
-      "expires_at": "2027-09-01T00:00:00Z"
-    },
-    {
-      "finding_id": "VF-0118",
-      "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "snapshot:ipsj-sigse/ipsj-se-2026",
-      "severity": "review",
-      "message": "snapshot: ipsj-sigse/ipsj-se-2026: event date text is not structured",
-      "count": 1,
-      "status": "accepted",
-      "reviewed_by": "kamiyobi-maintainers",
-      "reviewed_at": "2026-09-01T00:00:00Z",
-      "review_reason": "既存ソースの原文表示を維持し、構造化できない/会期範囲の差異は推測で補正しない。",
-      "evidence_ref": "data/snapshot.json#ipsj-sigse/ipsj-se-2026",
-      "expires_at": "2027-09-01T00:00:00Z"
-    },
-    {
-      "finding_id": "VF-0119",
-      "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "snapshot:ipsj-sigsec/ipsj-csec-2026",
-      "severity": "review",
-      "message": "snapshot: ipsj-sigsec/ipsj-csec-2026: event date text is not structured",
-      "count": 1,
-      "status": "accepted",
-      "reviewed_by": "kamiyobi-maintainers",
-      "reviewed_at": "2026-09-01T00:00:00Z",
-      "review_reason": "既存ソースの原文表示を維持し、構造化できない/会期範囲の差異は推測で補正しない。",
-      "evidence_ref": "data/snapshot.json#ipsj-sigsec/ipsj-csec-2026",
-      "expires_at": "2027-09-01T00:00:00Z"
-    },
-    {
-      "finding_id": "VF-0120",
-      "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "snapshot:ipsj-sigubi/ipsj-ubi-2026",
-      "severity": "review",
-      "message": "snapshot: ipsj-sigubi/ipsj-ubi-2026: event date text is not structured",
-      "count": 1,
-      "status": "accepted",
-      "reviewed_by": "kamiyobi-maintainers",
-      "reviewed_at": "2026-09-01T00:00:00Z",
-      "review_reason": "既存ソースの原文表示を維持し、構造化できない/会期範囲の差異は推測で補正しない。",
-      "evidence_ref": "data/snapshot.json#ipsj-sigubi/ipsj-ubi-2026",
-      "expires_at": "2027-09-01T00:00:00Z"
-    },
-    {
       "finding_id": "VF-0121",
       "code": "EVENT_DATE_UNSTRUCTURED",
-      "subject": "snapshot:trustcom/trustcom21",
+      "subject": "trustcom/trustcom21",
       "severity": "review",
       "message": "snapshot: trustcom/trustcom21: event date text is not structured",
       "count": 1,
@@ -1699,7 +1503,7 @@
     {
       "finding_id": "VF-0122",
       "code": "EVENT_RANGE_ANOMALY",
-      "subject": "snapshot:asplos/asplos25",
+      "subject": "asplos/asplos25",
       "severity": "review",
       "message": "snapshot: asplos/asplos25: event range exceeds 31 days",
       "count": 1,
@@ -1713,7 +1517,7 @@
     {
       "finding_id": "VF-0123",
       "code": "EVENT_RANGE_ANOMALY",
-      "subject": "snapshot:eurosys/eurosys2025",
+      "subject": "eurosys/eurosys2025",
       "severity": "review",
       "message": "snapshot: eurosys/eurosys2025: event range exceeds 31 days",
       "count": 1,
@@ -1723,6 +1527,48 @@
       "review_reason": "既存ソースの原文表示を維持し、構造化できない/会期範囲の差異は推測で補正しない。",
       "evidence_ref": "data/snapshot.json#eurosys/eurosys2025",
       "expires_at": "2027-09-01T00:00:00Z"
+    },
+    {
+      "finding_id": "VF-0124",
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "subject": "ieee-network-6g-isac/ieee-network-6g-isac-2027",
+      "severity": "review",
+      "message": "curated: ieee-network-6g-isac/ieee-network-6g-isac-2027: event date text is not structured",
+      "count": 1,
+      "status": "accepted",
+      "reviewed_by": "kamiyobi-maintainers",
+      "reviewed_at": "2026-09-02T00:00:00Z",
+      "review_reason": "公式日付の構造化表現が得られないため、原文表示を維持し推測で補正しない。",
+      "evidence_ref": "data/curated.generated.yaml#ieee-network-6g-isac/ieee-network-6g-isac-2027",
+      "expires_at": "2027-09-02T00:00:00Z"
+    },
+    {
+      "finding_id": "VF-0125",
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "subject": "tsc-llm-service-ecosystems/tsc-llm-service-ecosystems-2027",
+      "severity": "review",
+      "message": "curated: tsc-llm-service-ecosystems/tsc-llm-service-ecosystems-2027: event date text is not structured",
+      "count": 1,
+      "status": "accepted",
+      "reviewed_by": "kamiyobi-maintainers",
+      "reviewed_at": "2026-09-02T00:00:00Z",
+      "review_reason": "公式日付の構造化表現が得られないため、原文表示を維持し推測で補正しない。",
+      "evidence_ref": "data/curated.generated.yaml#tsc-llm-service-ecosystems/tsc-llm-service-ecosystems-2027",
+      "expires_at": "2027-09-02T00:00:00Z"
+    },
+    {
+      "finding_id": "VF-0126",
+      "code": "EVENT_DATE_UNSTRUCTURED",
+      "subject": "wcm-agentic-ai-unmanned/wcm-agentic-ai-unmanned-2027",
+      "severity": "review",
+      "message": "curated: wcm-agentic-ai-unmanned/wcm-agentic-ai-unmanned-2027: event date text is not structured",
+      "count": 1,
+      "status": "accepted",
+      "reviewed_by": "kamiyobi-maintainers",
+      "reviewed_at": "2026-09-02T00:00:00Z",
+      "review_reason": "公式日付の構造化表現が得られないため、原文表示を維持し推測で補正しない。",
+      "evidence_ref": "data/curated.generated.yaml#wcm-agentic-ai-unmanned/wcm-agentic-ai-unmanned-2027",
+      "expires_at": "2027-09-02T00:00:00Z"
     }
   ]
 }

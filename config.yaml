@@ -13,6 +13,9 @@
 
 source_priority: [local, aideadlines, ccfddl]
 
+promotion:
+  canonicalization_margin: 40
+
 # source をまたぐ会議同一性は明示する。同じ綴りの source-local ID だけでは統合せず、
 # ここで一つの stable venue ID に結び付けた組だけを統合する。
 venue_identities:

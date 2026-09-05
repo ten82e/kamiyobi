@@ -1,5 +1,5 @@
 /** Deterministic semantic validation for every production data input. */
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { load as loadYaml } from "js-yaml";
@@ -9,6 +9,7 @@ import {
   embeddedTimezone,
   isConfirmedTimezone,
   parseInstant,
+  truncatedVenueName,
 } from "../src/model.ts";
 
 export interface DataValidation {
@@ -38,6 +39,13 @@ export interface ValidatorFinding extends ValidatorWarning {
   fixed_at?: string;
 }
 
+function canonicalWarningSubject(subject: string): string {
+  return subject.replace(
+    /^(?:extra|manual|curated|overrides|primary|primary_overrides|snapshot):/,
+    "",
+  );
+}
+
 export function validatorWarnings(warnings: readonly string[]): ValidatorWarning[] {
   return [...warnings]
     .map((message) => {
@@ -62,7 +70,12 @@ export function validatorWarnings(warnings: readonly string[]): ValidatorWarning
             : /category_evidence/.test(text)
               ? "CATEGORY_REVIEW_EVIDENCE_MISSING"
               : "VALIDATOR_REVIEW";
-      return { code, subject, severity: "review" as const, message };
+      return {
+        code,
+        subject: canonicalWarningSubject(subject),
+        severity: "review" as const,
+        message,
+      };
     })
     .sort(
       (left, right) =>
@@ -72,26 +85,34 @@ export function validatorWarnings(warnings: readonly string[]): ValidatorWarning
 
 export function newValidatorWarnings(
   warnings: readonly string[],
-  baseline: readonly Pick<ValidatorWarning, "code" | "subject" | "count">[],
+  baseline: readonly Pick<ValidatorFinding, "code" | "subject" | "count" | "status">[],
 ): ValidatorWarning[] {
-  const baselineCounts = new Map(
-    baseline.map((item) => [`${item.code}\0${item.subject}`, item.count ?? 1]),
-  );
-  const current = new Map<string, ValidatorWarning & { count: number }>();
-  for (const item of validatorWarnings(warnings)) {
-    const key = `${item.code}\0${item.subject}`;
-    const existing = current.get(key);
-    current.set(key, { ...item, count: (existing?.count ?? 0) + 1 });
+  const baselineCounts = new Map<string, number>();
+  for (const item of baseline) {
+    if (item.status !== "accepted") continue;
+    baselineCounts.set(`${item.code}\0${item.subject}`, item.count ?? 1);
   }
-  return [...current].flatMap(([key, item]) =>
-    item.count > (baselineCounts.get(key) ?? 0) ? [item] : [],
-  );
+  return warningIdentities(warnings).flatMap((item) => {
+    const key = `${item.code}\0${item.subject}`;
+    return item.count! > (baselineCounts.get(key) ?? 0) ? [item] : [];
+  });
 }
 
-export function validatorWarningBaseline(warnings: readonly string[]): ValidatorWarning[] {
+function warningSource(message: string): string | undefined {
+  return /^(extra|manual|curated|overrides|primary|primary_overrides|snapshot):/.exec(
+    message.trim(),
+  )?.[1];
+}
+
+export function warningIdentities(warnings: readonly string[]): ValidatorWarning[] {
   const counts = new Map<string, ValidatorWarning & { count: number }>();
+  const sourceByKey = new Map<string, string>();
   for (const item of validatorWarnings(warnings)) {
     const key = `${item.code}\0${item.subject}`;
+    const source = warningSource(item.message);
+    const previousSource = sourceByKey.get(key);
+    if (source && previousSource && source !== previousSource) continue;
+    if (source && !previousSource) sourceByKey.set(key, source);
     const existing = counts.get(key);
     counts.set(key, { ...item, count: (existing?.count ?? 0) + 1 });
   }
@@ -101,15 +122,23 @@ export function validatorWarningBaseline(warnings: readonly string[]): Validator
   );
 }
 
-export function validateFindings(findings: readonly ValidatorFinding[]): string[] {
+export function validateFindings(
+  findings: readonly ValidatorFinding[],
+  now = Date.now(),
+): string[] {
   const errors: string[] = [];
   const ids = new Set<string>();
+  const activeSubjects = new Set<string>();
   for (const finding of findings) {
     if (!finding.finding_id || ids.has(finding.finding_id))
       errors.push(`${finding.finding_id || "<missing>"}: finding_id is missing or duplicated`);
     ids.add(finding.finding_id);
     if (!finding.code || !finding.subject)
       errors.push(`${finding.finding_id}: code/subject is required`);
+    const subjectKey = `${finding.code}\0${finding.subject}`;
+    if (finding.status !== "fixed" && activeSubjects.has(subjectKey))
+      errors.push(`${finding.finding_id}: canonical finding is duplicated`);
+    if (finding.status !== "fixed") activeSubjects.add(subjectKey);
     if (!["unreviewed", "accepted", "fixed"].includes(finding.status))
       errors.push(`${finding.finding_id}: invalid status`);
     if (finding.status === "unreviewed")
@@ -123,8 +152,10 @@ export function validateFindings(findings: readonly ValidatorFinding[]): string[
         errors.push(`${finding.finding_id}: accepted finding lacks review_reason`);
       if (!finding.evidence_ref)
         errors.push(`${finding.finding_id}: accepted finding lacks evidence_ref`);
-      if (!finding.expires_at || !Number.isFinite(Date.parse(finding.expires_at)))
+      const expiresAt = Date.parse(finding.expires_at ?? "");
+      if (!Number.isFinite(expiresAt))
         errors.push(`${finding.finding_id}: accepted finding lacks valid expires_at`);
+      else if (expiresAt <= now) errors.push(`${finding.finding_id}: accepted finding has expired`);
     }
     if (
       finding.status === "fixed" &&
@@ -133,25 +164,6 @@ export function validateFindings(findings: readonly ValidatorFinding[]): string[
       errors.push(`${finding.finding_id}: fixed finding lacks valid fixed_at`);
   }
   return errors;
-}
-
-export function findingsBaseline(findings: readonly ValidatorFinding[]): ValidatorWarning[] {
-  const counts = new Map<string, ValidatorWarning>();
-  for (const finding of findings) {
-    const key = `${finding.code}\0${finding.subject}`;
-    const previous = counts.get(key);
-    counts.set(key, {
-      code: finding.code,
-      subject: finding.subject,
-      severity: "review",
-      message: finding.message,
-      count: (previous?.count ?? 0) + (finding.count ?? 1),
-    });
-  }
-  return [...counts.values()].sort(
-    (left, right) =>
-      left.code.localeCompare(right.code) || left.subject.localeCompare(right.subject),
-  );
 }
 
 function readFindings(root: string): ValidatorFinding[] {
@@ -230,6 +242,71 @@ function records(value: unknown): Record<string, unknown>[] {
         Boolean(item && typeof item === "object"),
       )
     : [];
+}
+
+function shortTitle(value: string): string {
+  return value
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/20\d\d/g, " ")
+    .replace(/\b(?:acm|ieee|ei)\b/g, " ")
+    .replace(/[^\p{L}\p{N}]+/gu, "");
+}
+
+function nameTokens(value: string): Set<string> {
+  return new Set(
+    value
+      .normalize("NFKC")
+      .toLowerCase()
+      .replace(/20\d\d/g, " ")
+      .replace(/\b(?:acm|ieee|ei|the)\b/g, " ")
+      .match(/[\p{L}\p{N}]+/gu) ?? [],
+  );
+}
+
+function tokenJaccard(left: string, right: string): number {
+  const a = nameTokens(left);
+  const b = nameTokens(right);
+  if (a.size === 0 || b.size === 0) return 0;
+  const intersection = [...a].filter((token) => b.has(token)).length;
+  return intersection / (a.size + b.size - intersection);
+}
+
+/** Same-year local records whose short titles match and whose names overlap. */
+export function likelyDuplicateVenues(
+  conferences: ReadonlyArray<{
+    key?: unknown;
+    title?: unknown;
+    full_name?: unknown;
+    editions?: unknown;
+  }>,
+): string[] {
+  const rows = conferences.flatMap((conference) =>
+    records(conference.editions).map((edition) => ({
+      key: String(conference.key ?? "?"),
+      title: String(conference.title ?? ""),
+      fullName: String(conference.full_name ?? ""),
+      year: Number(edition.year ?? 0),
+    })),
+  );
+  const duplicates = new Set<string>();
+  for (let i = 0; i < rows.length; i++) {
+    for (let j = i + 1; j < rows.length; j++) {
+      const left = rows[i];
+      const right = rows[j];
+      if (left.key === right.key || left.year !== right.year) continue;
+      const title = shortTitle(left.title);
+      if (!title || title !== shortTitle(right.title)) continue;
+      if (
+        tokenJaccard(left.fullName, right.fullName) < 0.7 &&
+        shortTitle(left.fullName) !== title &&
+        shortTitle(right.fullName) !== title
+      )
+        continue;
+      duplicates.add([left.key, right.key].sort().join(" / "));
+    }
+  }
+  return [...duplicates].sort();
 }
 
 function categoryRecords(value: unknown): Record<string, unknown>[] {
@@ -726,6 +803,14 @@ export function validateData(
     warnings: [],
     stats: { exact: 0, date_only: 0, estimated: 0 },
   };
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    add(result.errors, "top-level payload must be an object");
+    return result;
+  }
+  if (!Array.isArray(payload.conferences)) {
+    add(result.errors, "conferences must be an array");
+    return result;
+  }
   for (const conference of records(payload.conferences)) {
     const key = String(conference.key ?? "?");
     const editions = records(conference.editions);
@@ -745,8 +830,7 @@ export function validateData(
       const value = String(conference[field] ?? "");
       if (INVISIBLE.test(value))
         add(result.errors, `${key}: ${field} contains invisible/replacement characters`);
-      if (/\b\p{L}{3,}\s+20$/u.test(value))
-        add(result.errors, `${key}: ${field} appears truncated`);
+      if (truncatedVenueName(value)) add(result.errors, `${key}: ${field} appears truncated`);
       const mentioned = years(value);
       const actual = actualYears;
       if (mentioned.length && actual.length) {
@@ -767,6 +851,8 @@ export function validateData(
       validateEdition(key, edition, result);
     }
   }
+  for (const pair of likelyDuplicateVenues(records(payload.conferences)))
+    add(result.errors, `duplicate venue edition ${pair}`);
   result.errors = [...new Set(result.errors)].sort();
   result.warnings.sort();
   return result;
@@ -833,6 +919,8 @@ export function validateProduction(root = ROOT): DataValidation {
   const primary = load(join(root, "data", "primary.yaml"));
   const primaryOverrides = load(join(root, "data", "primary_overrides.yaml"));
   const snapshot = payloadForFile(join(root, "data", "snapshot.json"));
+  const manualPath = join(root, "data", "manual.yaml");
+  const curatedPath = join(root, "data", "curated.generated.yaml");
   const inputs = [
     { name: "extra", payload: extra },
     {
@@ -851,6 +939,8 @@ export function validateProduction(root = ROOT): DataValidation {
       name: "snapshot",
       payload: snapshot,
     },
+    ...(existsSync(manualPath) ? [{ name: "manual", payload: payloadForFile(manualPath) }] : []),
+    ...(existsSync(curatedPath) ? [{ name: "curated", payload: payloadForFile(curatedPath) }] : []),
   ];
   const aggregate: DataValidation = {
     errors: [],
@@ -893,28 +983,14 @@ export function main(argv = process.argv.slice(2)): number {
   const file = argv.find((value) => !value.startsWith("-"));
   try {
     const result = file ? validateFile(file) : validateProduction();
-    const baselinePath = join(ROOT, "data", "validator-warning-baseline.json");
     const findings = file ? [] : readFindings(ROOT);
-    const baseline = file
-      ? []
-      : findings.length
-        ? findingsBaseline(findings)
-        : !existsSync(baselinePath)
-          ? []
-          : ((JSON.parse(readFileSync(baselinePath, "utf8")) as { warnings?: ValidatorWarning[] })
-              .warnings ?? []);
+    const baseline = file ? [] : findings;
     const newWarnings = file ? [] : newValidatorWarnings(result.warnings, baseline);
-    if (!file && argv.includes("--write-baseline")) {
-      writeFileSync(
-        baselinePath,
-        `${JSON.stringify({ warnings: findings.length ? baseline : validatorWarningBaseline(result.warnings) }, null, 2)}\n`,
-      );
-    }
     if (json)
       process.stdout.write(
         `${JSON.stringify({
           ...result,
-          warning_identities: validatorWarningBaseline(result.warnings),
+          warning_identities: warningIdentities(result.warnings),
           new_warnings: newWarnings,
           finding_counts: {
             total: findings.length,

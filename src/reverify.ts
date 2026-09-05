@@ -133,7 +133,7 @@ export interface VerificationTarget {
 }
 
 export interface ExtractedDeadlineField extends CfpExtractionCandidate {
-  callIdentity?: string;
+  callIdentity?: string | { editionId?: string; callId?: string };
 }
 
 export interface ReverificationAdapter {
@@ -146,6 +146,7 @@ export interface ReverifyLimits {
   maxPages: number;
   maxDeadlines: number;
   maxPerHost: number;
+  minHostIntervalMs: number;
   concurrency: number;
   timeoutMs: number;
   maxBodyBytes: number;
@@ -164,6 +165,7 @@ export interface ReverifyOptions {
 
 export interface ReverifyResult {
   processed: number;
+  deferred: number;
   statuses: Record<string, number>;
   ledger: VerificationLedger;
   pages: number;
@@ -193,8 +195,8 @@ interface JsonDeadline {
   evidence?: JsonEvidence[];
   promotion_ref?: PromotionRef;
   promotionRef?: PromotionRef;
-  call_identity?: string;
-  callIdentity?: string;
+  call_identity?: string | { seriesId?: string; editionId?: string; callId?: string };
+  callIdentity?: string | { seriesId?: string; editionId?: string; callId?: string };
   selector_or_field?: string;
   selectorOrField?: string;
   adapter?: string;
@@ -207,7 +209,8 @@ interface JsonEdition {
   link?: string;
   legacy_ids?: string[];
   identity?: { editionId?: string; sourceIds?: Record<string, string> };
-  call_identity?: { editionId?: string; callId?: string };
+  call_identity?: { seriesId?: string; editionId?: string; callId?: string };
+  callIdentity?: { seriesId?: string; editionId?: string; callId?: string };
   deadlines?: JsonDeadline[];
 }
 
@@ -234,6 +237,38 @@ const STATUSES = new Set<VerificationState["status"]>([
   "manual-required",
 ]);
 const RESOLUTION_STATES = new Set<ResolutionState>(["open", "accepted", "rejected", "applied"]);
+const CHANGE_KINDS = new Set<DeadlineChangeKind>([
+  "unchanged",
+  "precision-upgrade",
+  "extension",
+  "pull-in",
+  "precision-downgrade",
+  "different-track",
+  "ambiguous",
+]);
+const MANUAL_CHANGE_KINDS = new Set<DeadlineChangeKind>([
+  "pull-in",
+  "precision-downgrade",
+  "different-track",
+  "ambiguous",
+]);
+const IDENTITY_PROVIDERS = new Set<IdentityProvider>([
+  "easychair",
+  "openreview",
+  "hotcrp",
+  "github-pages",
+  "acm",
+  "ieee",
+  "dedicated-domain",
+  "unknown",
+]);
+const SOURCE_CLASSES = new Set([
+  "official-cfp",
+  "publisher",
+  "official-homepage",
+  "aggregator",
+  "unknown",
+]);
 const SHA256 = /^[0-9a-f]{64}$/i;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -242,10 +277,25 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function validIso(value: unknown, nullable = false): boolean {
-  return (
-    (nullable && value === null) ||
-    (typeof value === "string" && Number.isFinite(Date.parse(value)))
-  );
+  if (nullable && value === null) return true;
+  if (typeof value !== "string") return false;
+  const match =
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,9}))?(Z|[+-]\d{2}:\d{2})$/.exec(
+      value,
+    );
+  if (!match) return false;
+  const [, year, month, day, hour, minute, second] = match;
+  const calendar = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  if (
+    calendar.getUTCFullYear() !== Number(year) ||
+    calendar.getUTCMonth() !== Number(month) - 1 ||
+    calendar.getUTCDate() !== Number(day) ||
+    Number(hour) > 23 ||
+    Number(minute) > 59 ||
+    Number(second) > 59
+  )
+    return false;
+  return Number.isFinite(Date.parse(value));
 }
 
 function pageIdForUrl(value: string): string {
@@ -292,27 +342,105 @@ function invalidLedgerEntry(id: string, reason: string): never {
   throw new TypeError(`invalid verification ledger entry:\n${id}: ${reason}`);
 }
 
+function stringField(
+  id: string,
+  raw: Record<string, unknown>,
+  field: string,
+  fallback = "",
+): string {
+  const value = raw[field];
+  if (value === undefined) return fallback;
+  if (typeof value !== "string") return invalidLedgerEntry(id, `${field} is invalid`);
+  return value;
+}
+
+function roundField(id: string, raw: Record<string, unknown>): number {
+  const value = raw.round;
+  if (value === undefined) return 1;
+  if (typeof value !== "number" || !Number.isInteger(value) || value <= 0)
+    return invalidLedgerEntry(id, "round is invalid");
+  return value;
+}
+
+function safeBodyRef(id: string, value: unknown, field = "body_ref"): string {
+  if (value === undefined) return "";
+  if (typeof value !== "string") return invalidLedgerEntry(id, `${field} is invalid`);
+  if (value === "") return "";
+  if (!/^evidence\/blobs\/[a-f0-9]{64}(?:\.body)?$/i.test(value))
+    return invalidLedgerEntry(id, `${field} must point inside evidence/blobs`);
+  return value;
+}
+
+function validProviderIdentity(value: unknown): value is ProviderIdentity {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.provider === "string" &&
+    IDENTITY_PROVIDERS.has(value.provider as IdentityProvider) &&
+    typeof value.providerKey === "string" &&
+    typeof value.strength === "string" &&
+    ["explicit", "provider-scoped", "dedicated-domain", "weak"].includes(value.strength)
+  );
+}
+
+function safeLedgerUrl(id: string, value: unknown, field: string): string {
+  if (typeof value !== "string" || !value.trim())
+    return invalidLedgerEntry(id, `${field} is missing`);
+  try {
+    assertSafePageUrl(value);
+  } catch (error) {
+    return invalidLedgerEntry(id, `${field} is unsafe: ${String(error)}`);
+  }
+  return value;
+}
+
 function validatePage(id: string, raw: unknown): VerificationPage {
   if (!isRecord(raw)) return invalidLedgerEntry(id, "page is not an object");
   for (const field of ["requested_url", "final_url"] as const) {
-    if (typeof raw[field] !== "string" || !raw[field])
-      return invalidLedgerEntry(id, `${field} is missing`);
-    try {
-      assertSafePageUrl(raw[field]);
-    } catch (error) {
-      return invalidLedgerEntry(id, `${field} is unsafe: ${String(error)}`);
-    }
+    safeLedgerUrl(id, raw[field], field);
   }
   if (!validIso(raw.last_attempt_at)) return invalidLedgerEntry(id, "last_attempt_at is invalid");
   if (!validIso(raw.last_success_at, true))
     return invalidLedgerEntry(id, "last_success_at is invalid");
-  if (typeof raw.content_hash !== "string" || (raw.content_hash && !SHA256.test(raw.content_hash)))
+  const status = raw.status === undefined ? 200 : raw.status;
+  if (typeof status !== "number" || !Number.isInteger(status) || status < 0 || status > 599)
+    return invalidLedgerEntry(id, "status is invalid");
+  if (raw.content_type !== undefined && typeof raw.content_type !== "string")
+    return invalidLedgerEntry(id, "content_type is invalid");
+  if (
+    raw.content_length !== undefined &&
+    (typeof raw.content_length !== "number" ||
+      !Number.isInteger(raw.content_length) ||
+      raw.content_length < 0)
+  )
+    return invalidLedgerEntry(id, "content_length is invalid");
+  const contentHash = raw.content_hash === undefined ? "" : raw.content_hash;
+  if (typeof contentHash !== "string" || (contentHash && !SHA256.test(contentHash)))
     return invalidLedgerEntry(id, "content_hash is invalid");
-  if (raw.body_ref !== undefined && typeof raw.body_ref !== "string")
-    return invalidLedgerEntry(id, "body_ref is invalid");
+  const bodyRef = safeBodyRef(id, raw.body_ref);
+  if (raw.headers !== undefined && !isRecord(raw.headers))
+    return invalidLedgerEntry(id, "headers is invalid");
+  const nestedHeaders = isRecord(raw.headers) ? raw.headers : {};
+  for (const field of ["etag", "lastModified", "last_modified", "retryAfter", "retry_after"]) {
+    if (nestedHeaders[field] !== undefined && typeof nestedHeaders[field] !== "string")
+      return invalidLedgerEntry(id, `headers.${field} is invalid`);
+  }
   const provider = raw.provider;
-  if (provider !== undefined && typeof provider !== "string")
+  if (
+    provider !== undefined &&
+    (typeof provider !== "string" || !IDENTITY_PROVIDERS.has(provider as IdentityProvider))
+  )
     return invalidLedgerEntry(id, "provider is invalid");
+  for (const field of [
+    "source_revision",
+    "parser_version",
+    "provider_key",
+    "etag",
+    "last_modified",
+    "error",
+  ]) {
+    if (raw[field] !== undefined && typeof raw[field] !== "string")
+      return invalidLedgerEntry(id, `${field} is invalid`);
+  }
   const requestedUrl = raw.requested_url as string;
   const finalUrl = raw.final_url as string;
   const lastAttempt = raw.last_attempt_at as string;
@@ -320,14 +448,27 @@ function validatePage(id: string, raw: unknown): VerificationPage {
   return {
     requested_url: requestedUrl,
     final_url: finalUrl,
-    status: Number(raw.status ?? 200),
+    status,
     content_type: String(raw.content_type ?? ""),
     content_length: Number(raw.content_length ?? 0),
     headers: {
-      ...(typeof raw.etag === "string" ? { etag: raw.etag } : {}),
-      ...(typeof raw.last_modified === "string" ? { lastModified: raw.last_modified } : {}),
+      ...((typeof raw.etag === "string" ? raw.etag : nestedHeaders.etag) !== undefined
+        ? { etag: (raw.etag ?? nestedHeaders.etag) as string }
+        : {}),
+      ...((typeof raw.last_modified === "string"
+        ? raw.last_modified
+        : (nestedHeaders.lastModified ?? nestedHeaders.last_modified)) !== undefined
+        ? {
+            lastModified: (raw.last_modified ??
+              nestedHeaders.lastModified ??
+              nestedHeaders.last_modified) as string,
+          }
+        : {}),
+      ...((nestedHeaders.retryAfter ?? nestedHeaders.retry_after) !== undefined
+        ? { retryAfter: (nestedHeaders.retryAfter ?? nestedHeaders.retry_after) as string }
+        : {}),
     },
-    content_hash: raw.content_hash,
+    content_hash: contentHash,
     source_revision: String(raw.source_revision ?? raw.etag ?? raw.last_modified ?? ""),
     parser_version: String(raw.parser_version ?? "reverification-v2"),
     provider: provider as IdentityProvider | undefined,
@@ -336,7 +477,7 @@ function validatePage(id: string, raw: unknown): VerificationPage {
     ...(typeof raw.last_modified === "string" ? { last_modified: raw.last_modified } : {}),
     last_attempt_at: lastAttempt,
     last_success_at: lastSuccess,
-    body_ref: String(raw.body_ref ?? ""),
+    body_ref: bodyRef,
     ...(typeof raw.error === "string" ? { error: raw.error } : {}),
   };
 }
@@ -353,33 +494,76 @@ function validateDeadline(
   if (!validIso(raw.next_check_at)) return invalidLedgerEntry(id, "next_check_at is invalid");
   if (typeof raw.status !== "string" || !STATUSES.has(raw.status as VerificationState["status"]))
     return invalidLedgerEntry(id, "status is invalid");
+  for (const field of [
+    "deadline_id",
+    "venue_key",
+    "edition_id",
+    "kind",
+    "track",
+    "label",
+    "official_url",
+    "source_name",
+    "label_signature",
+    "selector_or_field",
+    "adapter",
+    "observed_value",
+    "evidence_ref",
+    "raw_excerpt",
+  ]) {
+    if (raw[field] !== undefined && typeof raw[field] !== "string")
+      return invalidLedgerEntry(id, `${field} is invalid`);
+  }
+  if (
+    raw.source_class !== undefined &&
+    (typeof raw.source_class !== "string" || !SOURCE_CLASSES.has(raw.source_class))
+  )
+    return invalidLedgerEntry(id, "source_class is invalid");
+  if (
+    raw.observed_precision !== undefined &&
+    raw.observed_precision !== "exact" &&
+    raw.observed_precision !== "date-only"
+  )
+    return invalidLedgerEntry(id, "observed_precision is invalid");
+  for (const field of ["promotion_ref", "promotionRef"]) {
+    if (raw[field] !== undefined && raw[field] !== null && !promotionRefOf(raw[field]))
+      return invalidLedgerEntry(id, `${field} is invalid`);
+  }
+  if (raw.provider_identity !== undefined && !validProviderIdentity(raw.provider_identity))
+    return invalidLedgerEntry(id, "provider_identity is invalid");
   if (
     raw.last_verified_at !== null &&
     raw.last_verified_at !== undefined &&
     !validIso(raw.last_verified_at)
   )
     return invalidLedgerEntry(id, "last_verified_at is invalid");
-  if (raw.content_hash !== undefined && typeof raw.content_hash !== "string")
+  if (raw.last_attempt_at !== undefined && !validIso(raw.last_attempt_at))
+    return invalidLedgerEntry(id, "last_attempt_at is invalid");
+  if (
+    raw.content_hash !== undefined &&
+    raw.content_hash !== null &&
+    (typeof raw.content_hash !== "string" || (raw.content_hash && !SHA256.test(raw.content_hash)))
+  )
     return invalidLedgerEntry(id, "content_hash is invalid");
   const pageId = raw.page_id as string;
   const nextCheck = raw.next_check_at as string;
   const page = pages[pageId];
+  const bodyRef = raw.body_ref === undefined ? page.body_ref : safeBodyRef(id, raw.body_ref);
   const officialUrl =
-    typeof raw.official_url === "string" && raw.official_url
-      ? raw.official_url
-      : page.requested_url;
+    raw.official_url === undefined
+      ? page.requested_url
+      : safeLedgerUrl(id, raw.official_url, "official_url");
   const lastAttempt = validIso(raw.last_attempt_at, true)
     ? (raw.last_attempt_at as string)
     : page.last_attempt_at;
   const lastVerified =
     raw.last_verified_at === undefined ? null : (raw.last_verified_at as string | null);
   return {
-    deadline_id: typeof raw.deadline_id === "string" ? raw.deadline_id : id,
-    venue_key: String(raw.venue_key ?? ""),
-    edition_id: String(raw.edition_id ?? ""),
-    kind: String(raw.kind ?? "other"),
-    round: Number(raw.round ?? 1) || 1,
-    track: String(raw.track ?? ""),
+    deadline_id: stringField(id, raw, "deadline_id", id),
+    venue_key: stringField(id, raw, "venue_key"),
+    edition_id: stringField(id, raw, "edition_id"),
+    kind: stringField(id, raw, "kind", "other"),
+    round: roundField(id, raw),
+    track: stringField(id, raw, "track"),
     ...(typeof raw.label === "string" ? { label: raw.label } : {}),
     page_id: pageId,
     official_url: officialUrl,
@@ -396,8 +580,8 @@ function validateDeadline(
     ...(promotionRefOf(raw.promotion_ref ?? raw.promotionRef)
       ? { promotion_ref: promotionRefOf(raw.promotion_ref ?? raw.promotionRef) }
       : {}),
-    ...(isRecord(raw.provider_identity)
-      ? { provider_identity: raw.provider_identity as unknown as ProviderIdentity }
+    ...(validProviderIdentity(raw.provider_identity)
+      ? { provider_identity: raw.provider_identity }
       : {}),
     ...(typeof raw.label_signature === "string" ? { label_signature: raw.label_signature } : {}),
     ...(typeof raw.selector_or_field === "string"
@@ -410,18 +594,18 @@ function validateDeadline(
       : {}),
     ...(typeof raw.evidence_ref === "string" ? { evidence_ref: raw.evidence_ref } : {}),
     ...(typeof raw.raw_excerpt === "string" ? { raw_excerpt: raw.raw_excerpt } : {}),
-    ...(typeof raw.body_ref === "string"
-      ? { body_ref: raw.body_ref }
-      : page.body_ref
-        ? { body_ref: page.body_ref }
-        : {}),
+    ...(bodyRef ? { body_ref: bodyRef } : {}),
   };
 }
 
 function validateResolution(index: number, raw: unknown): VerificationResolution {
   if (!isRecord(raw))
     return invalidLedgerEntry(`resolution[${index}]`, "resolution is not an object");
-  const id = String(raw.resolution_id ?? `resolution[${index}]`);
+  const rawId = raw.resolution_id;
+  if (rawId !== undefined && typeof rawId !== "string")
+    return invalidLedgerEntry(`resolution[${index}]`, "resolution_id is invalid");
+  const id = rawId === undefined ? `resolution[${index}]` : rawId;
+  if (!id.trim()) return invalidLedgerEntry(`resolution[${index}]`, "resolution_id is missing");
   if (!RESOLUTION_STATES.has(raw.state as ResolutionState))
     return invalidLedgerEntry(id, "state is invalid");
   for (const field of [
@@ -433,17 +617,54 @@ function validateResolution(index: number, raw: unknown): VerificationResolution
   ] as const) {
     if (typeof raw[field] !== "string") return invalidLedgerEntry(id, `${field} is invalid`);
   }
+  if (!CHANGE_KINDS.has(raw.change_kind as DeadlineChangeKind))
+    return invalidLedgerEntry(id, "change_kind is invalid");
+  if (raw.status !== undefined && raw.status !== "changed" && raw.status !== "manual-required")
+    return invalidLedgerEntry(id, "status is invalid");
+  for (const field of [
+    "page_id",
+    "resolved_at",
+    "resolved_by",
+    "resolution_reason",
+    "applied_at",
+    "previous_value",
+    "current_value",
+  ]) {
+    if (raw[field] !== undefined && typeof raw[field] !== "string")
+      return invalidLedgerEntry(id, `${field} is invalid`);
+  }
+  if (
+    raw.content_hash !== undefined &&
+    raw.content_hash !== "" &&
+    !SHA256.test(String(raw.content_hash))
+  )
+    return invalidLedgerEntry(id, "content_hash is invalid");
+  if (raw.raw_excerpt !== undefined && typeof raw.raw_excerpt !== "string")
+    return invalidLedgerEntry(id, "raw_excerpt is invalid");
+  const evidenceRef = safeBodyRef(id, raw.evidence_ref, "evidence_ref");
   for (const field of ["observed_at", "first_detected_at", "last_seen_at"] as const) {
     if (!validIso(raw[field])) return invalidLedgerEntry(id, `${field} is invalid`);
   }
+  for (const field of ["resolved_at", "applied_at"] as const) {
+    if (raw[field] !== undefined && !validIso(raw[field]))
+      return invalidLedgerEntry(id, `${field} is invalid`);
+  }
+  if (raw.state === "applied" && typeof raw.applied_at !== "string")
+    return invalidLedgerEntry(id, "applied state requires applied_at");
+  if (raw.state !== "applied" && raw.applied_at !== undefined)
+    return invalidLedgerEntry(id, "applied_at requires applied state");
   const status = raw.status === "manual-required" ? "manual-required" : "changed";
   const deadlineIdValue = raw.deadline_id as string;
-  const officialUrl = raw.official_url as string;
+  const officialUrl = safeLedgerUrl(id, raw.official_url, "official_url");
   const observedAt = raw.observed_at as string;
   const firstDetectedAt = raw.first_detected_at as string;
   const lastSeenAt = raw.last_seen_at as string;
   const oldValue = raw.old_value as string;
   const newValue = raw.new_value as string;
+  if (raw.previous_value !== undefined && raw.previous_value !== oldValue)
+    return invalidLedgerEntry(id, "previous_value must match old_value");
+  if (raw.current_value !== undefined && raw.current_value !== newValue)
+    return invalidLedgerEntry(id, "current_value must match new_value");
   return {
     resolution_id: id,
     deadline_id: deadlineIdValue,
@@ -462,7 +683,7 @@ function validateResolution(index: number, raw: unknown): VerificationResolution
     old_value: oldValue,
     new_value: newValue,
     change_kind: raw.change_kind as DeadlineChangeKind,
-    ...(typeof raw.evidence_ref === "string" ? { evidence_ref: raw.evidence_ref } : {}),
+    ...(evidenceRef ? { evidence_ref: evidenceRef } : {}),
     content_hash: String(raw.content_hash ?? ""),
     raw_excerpt: String(raw.raw_excerpt ?? ""),
     status,
@@ -471,17 +692,67 @@ function validateResolution(index: number, raw: unknown): VerificationResolution
   };
 }
 
+function validateLedgerBindings(ledger: VerificationLedger): VerificationLedger {
+  for (const oldId of Object.keys(ledger.aliases)) {
+    const seen = new Set<string>();
+    let current = oldId;
+    while (ledger.aliases[current]) {
+      if (seen.has(current)) invalidLedgerEntry(oldId, "alias graph contains a cycle");
+      seen.add(current);
+      current = ledger.aliases[current]!;
+    }
+    if (!ledger.deadlines[current])
+      invalidLedgerEntry(oldId, `alias target does not resolve to a deadline: ${current}`);
+    ledger.aliases[oldId] = current;
+  }
+  for (const [id, deadline] of Object.entries(ledger.deadlines)) {
+    const pageId = deadline.page_id;
+    if (!pageId) invalidLedgerEntry(id, "page_id is missing");
+    const page = ledger.pages[pageId];
+    if (!page) invalidLedgerEntry(id, `page_id does not exist: ${pageId}`);
+    if (pageIdForUrl(deadline.official_url) !== pageIdForUrl(page.requested_url))
+      invalidLedgerEntry(id, "official_url does not match page requested_url");
+  }
+  const resolutionIds = new Set<string>();
+  for (const resolution of ledger.resolutions) {
+    if (resolutionIds.has(resolution.resolution_id))
+      invalidLedgerEntry(resolution.resolution_id, "duplicate resolution_id");
+    resolutionIds.add(resolution.resolution_id);
+    const deadline =
+      ledger.deadlines[resolution.deadline_id] ??
+      ledger.deadlines[ledger.aliases[resolution.deadline_id] ?? ""];
+    if (!deadline)
+      invalidLedgerEntry(
+        resolution.resolution_id,
+        `deadline_id does not resolve to a deadline: ${resolution.deadline_id}`,
+      );
+    if (resolution.page_id && !ledger.pages[resolution.page_id])
+      invalidLedgerEntry(resolution.resolution_id, `page_id does not exist: ${resolution.page_id}`);
+    if (resolution.page_id && resolution.page_id !== deadline.page_id)
+      invalidLedgerEntry(resolution.resolution_id, "page_id does not match deadline page_id");
+    if (pageIdForUrl(resolution.official_url) !== pageIdForUrl(deadline.official_url))
+      invalidLedgerEntry(
+        resolution.resolution_id,
+        "official_url does not match deadline official_url",
+      );
+  }
+  return ledger;
+}
+
 function migrateV1(value: Record<string, unknown>): VerificationLedger {
   if (!isRecord(value.entries))
     throw new TypeError("invalid verification ledger: entries is not an object");
   if (!Array.isArray(value.resolutions))
     throw new TypeError("invalid verification ledger: resolutions is not an array");
+  if (value.generated_at !== undefined && !validIso(value.generated_at))
+    invalidLedgerEntry("<ledger>", "generated_at is invalid");
   const ledger = emptyLedger();
   ledger.generated_at = typeof value.generated_at === "string" ? value.generated_at : "";
   for (const [id, raw] of Object.entries(value.entries)) {
     if (!isRecord(raw)) invalidLedgerEntry(id, "entry is not an object");
-    const officialUrl = String(raw.official_url ?? "");
-    if (!officialUrl) invalidLedgerEntry(id, "official_url is missing");
+    const officialUrl = raw.official_url;
+    if (typeof officialUrl !== "string" || !officialUrl.trim())
+      invalidLedgerEntry(id, "official_url is missing");
     let pageId: string;
     try {
       pageId = pageIdForUrl(officialUrl);
@@ -489,10 +760,36 @@ function migrateV1(value: Record<string, unknown>): VerificationLedger {
     } catch (error) {
       invalidLedgerEntry(id, `official_url is unsafe: ${String(error)}`);
     }
-    const lastAttempt = String(
-      raw.last_attempt_at ?? ledger.generated_at ?? new Date(0).toISOString(),
-    );
-    if (!validIso(lastAttempt)) invalidLedgerEntry(id, "last_attempt_at is invalid");
+    const lastAttempt =
+      raw.last_attempt_at === undefined || raw.last_attempt_at === null
+        ? ledger.generated_at || new Date(0).toISOString()
+        : raw.last_attempt_at;
+    if (typeof lastAttempt !== "string" || !validIso(lastAttempt))
+      invalidLedgerEntry(id, "last_attempt_at is invalid");
+    const lastVerifiedValue = raw.last_verified_at;
+    if (
+      lastVerifiedValue !== undefined &&
+      lastVerifiedValue !== null &&
+      (typeof lastVerifiedValue !== "string" || !validIso(lastVerifiedValue))
+    )
+      invalidLedgerEntry(id, "last_verified_at is invalid");
+    const lastVerified =
+      lastVerifiedValue === undefined || lastVerifiedValue === null ? null : lastVerifiedValue;
+    const contentHashValue = raw.content_hash;
+    if (
+      contentHashValue !== undefined &&
+      contentHashValue !== null &&
+      (typeof contentHashValue !== "string" ||
+        (contentHashValue !== "" && !SHA256.test(contentHashValue)))
+    )
+      invalidLedgerEntry(id, "content_hash is invalid");
+    const contentHash =
+      contentHashValue === undefined || contentHashValue === null ? "" : contentHashValue;
+    for (const field of ["etag", "last_modified", "label", "source_name"]) {
+      if (raw[field] !== undefined && typeof raw[field] !== "string")
+        invalidLedgerEntry(id, `${field} is invalid`);
+    }
+    const bodyRef = safeBodyRef(id, raw.body_ref);
     const page =
       ledger.pages[pageId] ??
       ({
@@ -502,15 +799,12 @@ function migrateV1(value: Record<string, unknown>): VerificationLedger {
         content_type: "",
         content_length: 0,
         headers: {},
-        content_hash: typeof raw.content_hash === "string" ? raw.content_hash : "",
-        source_revision: typeof raw.content_hash === "string" ? `sha256:${raw.content_hash}` : "",
+        content_hash: contentHash,
+        source_revision: contentHash ? `sha256:${contentHash}` : "",
         parser_version: "reverification-v1-migrated",
         last_attempt_at: lastAttempt,
-        last_success_at:
-          raw.last_verified_at === null || raw.last_verified_at === undefined
-            ? null
-            : String(raw.last_verified_at),
-        body_ref: typeof raw.body_ref === "string" ? raw.body_ref : "",
+        last_success_at: lastVerified,
+        body_ref: bodyRef,
         ...(typeof raw.etag === "string" ? { etag: raw.etag } : {}),
         ...(typeof raw.last_modified === "string" ? { last_modified: raw.last_modified } : {}),
         provider: providerIdentityFromUrl(officialUrl).provider,
@@ -522,58 +816,75 @@ function migrateV1(value: Record<string, unknown>): VerificationLedger {
     if (!STATUSES.has(status)) invalidLedgerEntry(id, "status is invalid");
     ledger.deadlines[id] = {
       deadline_id: id,
-      venue_key: String(raw.venue_key ?? ""),
-      edition_id: String(raw.edition_id ?? ""),
-      kind: String(raw.kind ?? "other"),
-      round: Number(raw.round ?? 1) || 1,
-      track: String(raw.track ?? ""),
+      venue_key: stringField(id, raw, "venue_key"),
+      edition_id: stringField(id, raw, "edition_id"),
+      kind: stringField(id, raw, "kind", "other"),
+      round: roundField(id, raw),
+      track: stringField(id, raw, "track"),
       ...(typeof raw.label === "string" ? { label: raw.label } : {}),
       page_id: pageId,
       official_url: officialUrl,
-      last_attempt_at: validIso(raw.last_attempt_at, true)
-        ? (raw.last_attempt_at as string)
-        : lastAttempt,
-      last_verified_at: validIso(raw.last_verified_at, true)
-        ? (raw.last_verified_at as string)
-        : null,
+      last_attempt_at: lastAttempt,
+      last_verified_at: lastVerified,
       next_check_at: new Date(Date.parse(String(next))).toISOString(),
-      content_hash:
-        raw.content_hash === null || raw.content_hash === undefined
-          ? null
-          : String(raw.content_hash),
+      content_hash: contentHash || null,
       status,
       ...(typeof raw.source_name === "string" ? { source_name: raw.source_name } : {}),
-      ...(typeof raw.body_ref === "string" ? { body_ref: raw.body_ref } : {}),
+      ...(raw.body_ref !== undefined ? { body_ref: bodyRef } : {}),
     };
   }
   for (const [index, raw] of value.resolutions.entries()) {
     if (!isRecord(raw)) invalidLedgerEntry(`resolution[${index}]`, "resolution is not an object");
-    const oldValue = String(raw.previous_value ?? "");
-    const newValue = String(raw.current_value ?? "");
-    const observedAt = String(raw.observed_at ?? ledger.generated_at);
-    if (!validIso(observedAt)) invalidLedgerEntry(`resolution[${index}]`, "observed_at is invalid");
+    const resolutionKey = `resolution[${index}]`;
+    const deadlineId = raw.deadline_id;
+    if (typeof deadlineId !== "string" || !deadlineId.trim())
+      invalidLedgerEntry(resolutionKey, "deadline_id is invalid");
+    const oldValue =
+      raw.previous_value === undefined || raw.previous_value === null ? "" : raw.previous_value;
+    const newValue =
+      raw.current_value === undefined || raw.current_value === null ? "" : raw.current_value;
+    if (typeof oldValue !== "string")
+      invalidLedgerEntry(resolutionKey, "previous_value is invalid");
+    if (typeof newValue !== "string") invalidLedgerEntry(resolutionKey, "current_value is invalid");
+    const observedAt =
+      raw.observed_at === undefined || raw.observed_at === null
+        ? ledger.generated_at
+        : raw.observed_at;
+    if (typeof observedAt !== "string" || !validIso(observedAt))
+      invalidLedgerEntry(resolutionKey, "observed_at is invalid");
+    const status = raw.status === undefined ? "changed" : raw.status;
+    if (status !== "changed" && status !== "manual-required")
+      invalidLedgerEntry(resolutionKey, "status is invalid");
+    const contentHash =
+      raw.content_hash === undefined || raw.content_hash === null ? "" : raw.content_hash;
+    if (typeof contentHash !== "string" || (contentHash !== "" && !SHA256.test(contentHash)))
+      invalidLedgerEntry(resolutionKey, "content_hash is invalid");
+    const rawExcerpt =
+      raw.raw_excerpt === undefined || raw.raw_excerpt === null ? "" : raw.raw_excerpt;
+    if (typeof rawExcerpt !== "string") invalidLedgerEntry(resolutionKey, "raw_excerpt is invalid");
     const resolutionId = `resolution:${createHash("sha256")
-      .update(`${raw.deadline_id}\0${oldValue}\0${newValue}\0${raw.content_hash ?? ""}`)
+      .update(`${deadlineId}\0${oldValue}\0${newValue}\0${contentHash}`)
       .digest("hex")}`;
+    const officialUrl = safeLedgerUrl(resolutionKey, raw.official_url, "official_url");
     ledger.resolutions.push({
       resolution_id: resolutionId,
-      deadline_id: String(raw.deadline_id ?? ""),
-      official_url: String(raw.official_url ?? ""),
+      deadline_id: deadlineId,
+      official_url: officialUrl,
       observed_at: observedAt,
       state: "open",
       first_detected_at: observedAt,
       last_seen_at: observedAt,
       old_value: oldValue,
       new_value: newValue,
-      change_kind: raw.status === "manual-required" ? "ambiguous" : "extension",
-      content_hash: String(raw.content_hash ?? ""),
-      raw_excerpt: String(raw.raw_excerpt ?? ""),
-      status: raw.status === "manual-required" ? "manual-required" : "changed",
+      change_kind: "ambiguous",
+      content_hash: contentHash,
+      raw_excerpt: rawExcerpt,
+      status: "manual-required",
       previous_value: oldValue,
       current_value: newValue,
     });
   }
-  return ledger;
+  return validateLedgerBindings(ledger);
 }
 
 export function loadVerificationLedger(path: string): VerificationLedger {
@@ -591,6 +902,8 @@ export function loadVerificationLedger(path: string): VerificationLedger {
     throw new TypeError(`invalid verification ledger: ${path}: schema_version is not 2`);
   if (value.producer_revision !== "reverification-v2")
     throw new TypeError(`invalid verification ledger: ${path}: producer_revision is invalid`);
+  if (!validIso(value.generated_at))
+    throw new TypeError(`invalid verification ledger: ${path}: generated_at is invalid`);
   if (!isRecord(value.pages))
     throw new TypeError(`invalid verification ledger: ${path}: pages is not an object`);
   if (!isRecord(value.deadlines))
@@ -608,17 +921,23 @@ export function loadVerificationLedger(path: string): VerificationLedger {
   const aliases: Record<string, string> = {};
   for (const [oldId, newId] of Object.entries(value.aliases)) {
     if (typeof newId !== "string" || !newId) invalidLedgerEntry(oldId, "alias target is invalid");
+    if (!oldId || oldId === newId)
+      invalidLedgerEntry(oldId || "<missing>", "alias is self-referential");
+    if (deadlines[oldId]) invalidLedgerEntry(oldId, "alias shadows a canonical deadline");
     aliases[oldId] = newId;
   }
-  return attachEntries({
-    schema_version: 2,
-    producer_revision: "reverification-v2",
-    generated_at: typeof value.generated_at === "string" ? value.generated_at : "",
-    pages,
-    deadlines,
-    aliases,
-    resolutions: value.resolutions.map((raw, index) => validateResolution(index, raw)),
-  });
+  const resolutions = value.resolutions.map((raw, index) => validateResolution(index, raw));
+  return validateLedgerBindings(
+    attachEntries({
+      schema_version: 2,
+      producer_revision: "reverification-v2",
+      generated_at: typeof value.generated_at === "string" ? value.generated_at : "",
+      pages,
+      deadlines,
+      aliases,
+      resolutions,
+    }),
+  );
 }
 
 function serializableLedger(ledger: VerificationLedger): Record<string, unknown> {
@@ -653,6 +972,73 @@ export function writeVerificationResolutions(path: string, ledger: VerificationL
   );
 }
 
+function assertCapturedResolutionBody(
+  path: string,
+  ledger: VerificationLedger,
+  resolution: VerificationResolution,
+): void {
+  const deadline =
+    ledger.deadlines[resolution.deadline_id] ??
+    ledger.deadlines[ledger.aliases[resolution.deadline_id] ?? ""];
+  if (!deadline) throw new Error(`resolution deadline is missing: ${resolution.resolution_id}`);
+  const page = resolution.page_id
+    ? ledger.pages[resolution.page_id]
+    : deadline?.page_id
+      ? ledger.pages[deadline.page_id]
+      : undefined;
+  const contentHash = resolution.content_hash || page?.content_hash || deadline?.content_hash || "";
+  if (!SHA256.test(contentHash))
+    throw new Error(`resolution has no captured body hash: ${resolution.resolution_id}`);
+  if (
+    !page ||
+    !SHA256.test(page.content_hash) ||
+    page.content_hash.toLowerCase() !== contentHash.toLowerCase()
+  )
+    throw new Error(
+      `resolution captured body does not match target page: ${resolution.resolution_id}`,
+    );
+  const bodyRef = resolution.evidence_ref || page.body_ref;
+  if (!bodyRef) throw new Error(`resolution captured body is missing: ${resolution.resolution_id}`);
+  if (!page.body_ref || bodyRef !== page.body_ref)
+    throw new Error(
+      `resolution captured body does not match target page: ${resolution.resolution_id}`,
+    );
+  const referencedHash = /^evidence\/blobs\/([a-f0-9]{64})(?:\.body)?$/i.exec(bodyRef)?.[1];
+  if (referencedHash?.toLowerCase() !== contentHash.toLowerCase())
+    throw new Error(
+      `resolution captured body reference hash mismatch: ${resolution.resolution_id}`,
+    );
+  const bodyPath = resolve(dirname(path), bodyRef);
+  if (!existsSync(bodyPath))
+    throw new Error(`resolution captured body is missing: ${resolution.resolution_id}`);
+  const bodyBytes = readFileSync(bodyPath);
+  const observedHash = createHash("sha256").update(bodyBytes).digest("hex");
+  if (observedHash !== contentHash.toLowerCase())
+    throw new Error(`resolution captured body hash mismatch: ${resolution.resolution_id}`);
+  const body = bodyBytes.toString("utf8");
+  const valueProof = (value: string): string => {
+    const text = value.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return `date:${text}`;
+    const match = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}(?::\d{2})?)(?:\.\d+)?\s*(\S+)$/.exec(text);
+    const instant = match ? parseInstant(`${match[1]} ${match[2]}`, match[3]) : null;
+    return instant ? `instant:${instant.toISOString()}` : "";
+  };
+  const expected = valueProof(resolution.new_value);
+  const excerpt = resolution.raw_excerpt.trim().replace(/\s+/g, " ");
+  const supported = extractCfpCandidates(body).some(
+    (candidate) =>
+      candidate.kind === deadline.kind &&
+      (candidate.round ?? 1) === deadline.round &&
+      candidateTrack(candidate) === deadline.track &&
+      valueProof(candidateValue(candidate)) === expected &&
+      candidate.rawExcerpt.trim().replace(/\s+/g, " ") === excerpt,
+  );
+  if (!expected || !supported)
+    throw new Error(
+      `resolution captured body does not support new value: ${resolution.resolution_id}`,
+    );
+}
+
 export function assertResolutionCanApply(path: string, resolutionId: string): void {
   const ledger = loadVerificationLedger(path);
   const resolution = ledger.resolutions.find((item) => item.resolution_id === resolutionId);
@@ -661,10 +1047,14 @@ export function assertResolutionCanApply(path: string, resolutionId: string): vo
     throw new Error(`verification resolution is already applied: ${resolutionId}`);
   if (resolution.state === "rejected")
     throw new Error(`rejected verification resolution cannot be applied: ${resolutionId}`);
-  if (resolution.status === "manual-required" && resolution.state !== "accepted")
+  if (
+    (resolution.status === "manual-required" || MANUAL_CHANGE_KINDS.has(resolution.change_kind)) &&
+    resolution.state !== "accepted"
+  )
     throw new Error(
       `manual-required verification resolution needs accepted state: ${resolutionId}`,
     );
+  assertCapturedResolutionBody(path, ledger, resolution);
 }
 
 export function transitionVerificationResolution(
@@ -770,22 +1160,33 @@ function labelSignature(value: string): string {
     .replace(/\s+/g, " ");
 }
 
-function sourceClassOf(deadline: JsonDeadline): VerificationTarget["sourceClass"] {
-  const state = deadline.verification;
-  if (
-    state?.source_class === "official-cfp" ||
-    state?.source_class === "publisher" ||
-    state?.source_class === "official-homepage" ||
-    state?.source_class === "aggregator"
+function excerptSignature(value: string): string {
+  return labelSignature(value.replace(/<[^>]+>/g, " ").replace(/&(?:#\d+|#x[\da-f]+|\w+);/gi, " "));
+}
+
+function callIdentityKey(value: unknown): string {
+  if (typeof value === "string") return value.trim().toLowerCase();
+  if (!isRecord(value)) return "";
+  return String(
+    value.callId ??
+      value.call_id ??
+      value.editionId ??
+      value.edition_id ??
+      value.seriesId ??
+      value.series_id ??
+      "",
   )
-    return state.source_class;
-  const classes = (deadline.evidence ?? []).map((item) =>
-    String(item.sourceClass ?? item.source_class ?? ""),
-  );
-  if (classes.includes("official-cfp")) return "official-cfp";
-  if (classes.includes("publisher")) return "publisher";
-  if (classes.includes("aggregator")) return "aggregator";
-  return "unknown";
+    .trim()
+    .toLowerCase();
+}
+
+function sourceClassOf(value: unknown): VerificationTarget["sourceClass"] {
+  return value === "official-cfp" ||
+    value === "publisher" ||
+    value === "official-homepage" ||
+    value === "aggregator"
+    ? value
+    : "unknown";
 }
 
 function evidenceFor(deadline: JsonDeadline): JsonEvidence | undefined {
@@ -796,23 +1197,48 @@ function evidenceFor(deadline: JsonDeadline): JsonEvidence | undefined {
         ? 0
         : source === "publisher"
           ? 1
-          : source === "aggregator"
+          : source === "official-homepage"
             ? 2
-            : 3;
+            : source === "aggregator"
+              ? 3
+              : 4;
     };
     return rank(a) - rank(b);
   })[0];
 }
 
-function sourceUrlOf(deadline: JsonDeadline): string {
+function sourceOf(deadline: JsonDeadline): {
+  sourceClass: VerificationTarget["sourceClass"];
+  url: string;
+  evidence?: JsonEvidence;
+} {
+  const verified = String(deadline.verification?.official_url ?? "").trim();
+  if (verified) {
+    const evidence = (deadline.evidence ?? []).find(
+      (item) => String(item.sourceUrl ?? item.source_url ?? "").trim() === verified,
+    );
+    const stateClass = sourceClassOf(deadline.verification?.source_class);
+    return {
+      sourceClass:
+        stateClass === "unknown"
+          ? sourceClassOf(evidence?.sourceClass ?? evidence?.source_class)
+          : stateClass,
+      url: verified,
+      ...(evidence ? { evidence } : {}),
+    };
+  }
   const evidence = evidenceFor(deadline);
-  return String(
-    deadline.verification?.official_url ?? evidence?.sourceUrl ?? evidence?.source_url ?? "",
-  ).trim();
+  return {
+    sourceClass: sourceClassOf(evidence?.sourceClass ?? evidence?.source_class),
+    url: String(evidence?.sourceUrl ?? evidence?.source_url ?? "").trim(),
+    ...(evidence ? { evidence } : {}),
+  };
 }
 
 function autoSource(target: VerificationTarget): boolean {
   if (target.sourceClass === "official-cfp") return true;
+  if (target.sourceClass === "official-homepage")
+    return Boolean(target.providerIdentity?.providerKey);
   if (target.sourceClass !== "publisher") return false;
   return Boolean(
     target.providerIdentity?.providerKey && target.providerIdentity.provider !== "unknown",
@@ -840,9 +1266,10 @@ function targetFor(
   ledger: VerificationLedger,
 ): VerificationTarget | null {
   const state = ledger.deadlines[id] ?? deadline.verification;
-  const evidence = evidenceFor(deadline);
-  const sourceClass = sourceClassOf(deadline);
-  const url = sourceUrlOf(deadline);
+  const source = sourceOf(deadline);
+  const evidence = source.evidence;
+  const sourceClass = source.sourceClass;
+  const url = source.url;
   if (!url) return null;
   let safeUrl: string;
   try {
@@ -853,6 +1280,12 @@ function targetFor(
   const providerIdentity = state?.provider_identity ?? providerIdentityFromUrl(safeUrl);
   const kind = String(deadline.kind ?? "other");
   const round = Number(deadline.round ?? 1) || 1;
+  const callIdentity = callIdentityKey(
+    deadline.call_identity ??
+      deadline.callIdentity ??
+      edition.call_identity ??
+      edition.callIdentity,
+  );
   return {
     deadlineId: id,
     pageId: state?.page_id ?? pageIdForUrl(safeUrl),
@@ -874,9 +1307,7 @@ function targetFor(
     ...((state?.adapter ?? deadline.adapter)
       ? { adapter: String(state?.adapter ?? deadline.adapter) }
       : {}),
-    ...((deadline.call_identity ?? deadline.callIdentity)
-      ? { callIdentity: String(deadline.call_identity ?? deadline.callIdentity) }
-      : {}),
+    ...(callIdentity ? { callIdentity } : {}),
     ...((evidence?.rawExcerpt ?? evidence?.raw_excerpt)
       ? { evidenceExcerpt: String(evidence.rawExcerpt ?? evidence.raw_excerpt) }
       : {}),
@@ -920,31 +1351,39 @@ export function collectVerificationTargets(
   );
 }
 
-function genericFields(body: Uint8Array, adapter: string): ExtractedDeadlineField[] {
+function genericFields(
+  body: Uint8Array,
+  adapter: string,
+  selectorOrField: string,
+): ExtractedDeadlineField[] {
   const text = new TextDecoder().decode(body);
-  return extractCfpCandidates(text).map((candidate) => ({ ...candidate, adapter }));
+  return extractCfpCandidates(text).map((candidate) => ({
+    ...candidate,
+    adapter,
+    selectorOrField,
+  }));
 }
 
 export const REVERIFICATION_ADAPTERS: ReverificationAdapter[] = [
   {
-    name: "easychair",
+    name: "easychair-v1",
     supports: (observation) => observation.providerIdentity?.provider === "easychair",
-    extract: (body) => genericFields(body, "easychair"),
+    extract: (body) => genericFields(body, "easychair-v1", "table-row:deadline"),
   },
   {
-    name: "openreview",
+    name: "generic-v1",
     supports: (observation) => observation.providerIdentity?.provider === "openreview",
-    extract: (body) => genericFields(body, "openreview"),
+    extract: (body) => genericFields(body, "generic-v1", "deadline-text-window"),
   },
   {
-    name: "generic-structured-html",
+    name: "generic-v1",
     supports: (observation) => /html/i.test(observation.contentType),
-    extract: (body) => genericFields(body, "generic-structured-html"),
+    extract: (body) => genericFields(body, "generic-v1", "deadline-text-window"),
   },
   {
-    name: "generic-text",
+    name: "generic-v1",
     supports: () => true,
-    extract: (body) => genericFields(body, "generic-text"),
+    extract: (body) => genericFields(body, "generic-v1", "deadline-text-window"),
   },
 ];
 
@@ -962,9 +1401,7 @@ function candidateTrack(candidate: CfpExtractionCandidate): string {
 }
 
 function candidateCallIdentity(candidate: ExtractedDeadlineField): string {
-  return String(candidate.callIdentity ?? "")
-    .trim()
-    .toLowerCase();
+  return callIdentityKey(candidate.callIdentity);
 }
 
 function slotCompatible(target: VerificationTarget, candidate: ExtractedDeadlineField): boolean {
@@ -980,16 +1417,22 @@ function slotCompatible(target: VerificationTarget, candidate: ExtractedDeadline
     !target.labelSignature.includes(candidateLabel)
   )
     return false;
-  if (target.callIdentity && candidateCallIdentity(candidate) !== target.callIdentity.toLowerCase())
+  const candidateIdentity = candidateCallIdentity(candidate);
+  if (target.callIdentity && candidateIdentity && candidateIdentity !== target.callIdentity)
     return false;
   if (target.adapter && candidate.adapter && candidate.adapter !== target.adapter) return false;
   if (target.selectorOrField && candidate.selectorOrField !== target.selectorOrField) return false;
-  if (
-    target.evidenceExcerpt &&
-    !candidate.rawExcerpt.includes(target.evidenceExcerpt) &&
-    !target.evidenceExcerpt.includes(candidate.rawExcerpt)
-  )
-    return false;
+  if (target.evidenceExcerpt) {
+    const targetEvidence = excerptSignature(target.evidenceExcerpt);
+    const candidateEvidence = excerptSignature(candidate.rawExcerpt);
+    if (
+      targetEvidence &&
+      candidateEvidence &&
+      !candidateEvidence.includes(targetEvidence) &&
+      !targetEvidence.includes(candidateEvidence)
+    )
+      return false;
+  }
   return true;
 }
 
@@ -1015,6 +1458,9 @@ function candidateRecord(
         track,
         precision: "exact",
         at_utc: at,
+        date: candidate.date,
+        time: candidate.time,
+        tz: candidate.timezone,
       };
   }
   return {
@@ -1030,11 +1476,14 @@ function candidateRecord(
 function sameDeadlineValue(deadline: JsonDeadline, candidate: ExtractedDeadlineField): boolean {
   if (!candidate.date) return false;
   if (deadline.precision === "date-only")
-    return candidate.date === String(deadline.local_date ?? "");
+    return (
+      !(candidate.time && candidate.timezone) &&
+      candidate.date === String(deadline.local_date ?? "")
+    );
   const expected = String(deadline.utc ?? "");
   if (!candidate.time || !candidate.timezone) return false;
   const at = parseInstant(`${candidate.date} ${candidate.time}`, candidate.timezone);
-  return Boolean(at && expected && at.toISOString() === expected);
+  return Boolean(at && expected && at.getTime() === Date.parse(expected));
 }
 
 function matchingCandidate(
@@ -1043,7 +1492,10 @@ function matchingCandidate(
 ): { candidate?: ExtractedDeadlineField; compatible: ExtractedDeadlineField[] } {
   const compatible = candidates.filter((candidate) => slotCompatible(target, candidate));
   const same = compatible.filter((candidate) => sameDeadlineValue(target.deadline, candidate));
-  return { candidate: same.length === 1 ? same[0] : undefined, compatible };
+  return {
+    candidate: compatible.length === 1 && same.length === 1 ? same[0] : undefined,
+    compatible,
+  };
 }
 
 function stateFor(
@@ -1116,6 +1568,9 @@ function recordResolution(
     existing.last_seen_at = now.toISOString();
     existing.observed_at = now.toISOString();
     if (page?.content_hash) existing.content_hash = page.content_hash;
+    if (page?.body_ref) existing.evidence_ref = page.body_ref;
+    if (candidate?.rawExcerpt || reason)
+      existing.raw_excerpt = candidate?.rawExcerpt ?? reason ?? "";
     return;
   }
   ledger.resolutions.push({
@@ -1131,6 +1586,7 @@ function recordResolution(
     old_value: oldValue,
     new_value: newValue,
     change_kind: changeKind,
+    ...(page?.body_ref ? { evidence_ref: page.body_ref } : {}),
     content_hash: page?.content_hash ?? "",
     raw_excerpt: candidate?.rawExcerpt ?? reason ?? "",
     status,
@@ -1147,15 +1603,19 @@ function pageForCapture(
 ): VerificationPage {
   const provider = providerIdentityFromUrl(captured.finalUrl);
   const old = ledger.pages[pageId];
-  const bodyRef = captured.bodyRef
+  const bodyRef = captured.body
     ? relative(resolve(dirname(ledgerPath)), captured.bodyRef)
     : (old?.body_ref ?? "");
+  const contentLength =
+    captured.notModified || captured.retryable || captured.status < 200 || captured.status >= 300
+      ? (old?.content_length ?? captured.contentLength)
+      : captured.contentLength;
   return {
     requested_url: captured.requestedUrl,
     final_url: captured.finalUrl,
     status: captured.status,
     content_type: captured.contentType,
-    content_length: captured.contentLength || old?.content_length || 0,
+    content_length: contentLength,
     headers: captured.headers,
     content_hash: captured.contentHash,
     source_revision: captured.sourceRevision,
@@ -1227,9 +1687,21 @@ function normalizeLimits(value: Partial<ReverifyLimits> | undefined): ReverifyLi
     maxPages: positive(value?.maxPages, 40),
     maxDeadlines: positive(value?.maxDeadlines, 200),
     maxPerHost: positive(value?.maxPerHost, 5),
+    minHostIntervalMs: positive(value?.minHostIntervalMs, 250),
     concurrency: positive(value?.concurrency, 4),
     timeoutMs: positive(value?.timeoutMs, DEFAULT_CAPTURE_LIMITS.timeoutMs),
     maxBodyBytes: positive(value?.maxBodyBytes, DEFAULT_CAPTURE_LIMITS.maxBodyBytes),
+  };
+}
+
+function hostRateLimiter(intervalMs: number): (url: string) => Promise<void> {
+  const nextAt = new Map<string, number>();
+  return async (url: string): Promise<void> => {
+    const host = new URL(url).hostname.toLowerCase();
+    const now = Date.now();
+    const start = Math.max(now, nextAt.get(host) ?? now);
+    nextAt.set(host, start + intervalMs);
+    if (start > now) await new Promise<void>((resolve) => setTimeout(resolve, start - now));
   };
 }
 
@@ -1383,7 +1855,8 @@ export async function reverifyData(options: ReverifyOptions): Promise<ReverifyRe
   const bodyRoot = resolve(
     options.bodyRoot ?? join(dirname(options.ledgerPath), "evidence", "blobs"),
   );
-  const fetchImpl = options.fetchImpl ?? fetch;
+  const fetchImpl = options.fetchImpl;
+  const waitForHost = hostRateLimiter(limits.minHostIntervalMs);
   const data = JSON.parse(readFileSync(options.dataPath, "utf8")) as JsonData;
   const ledger = loadVerificationLedger(options.ledgerPath);
   migrateTargetIds(data, ledger);
@@ -1440,8 +1913,9 @@ export async function reverifyData(options: ReverifyOptions): Promise<ReverifyRe
       const previous = ledger.pages[target.pageId];
       let captured: Awaited<ReturnType<typeof capturePage>>;
       try {
+        await waitForHost(url);
         captured = await capturePage(url, {
-          fetchImpl,
+          ...(fetchImpl ? { fetchImpl } : {}),
           previous: previous
             ? {
                 headers: previous.headers,
@@ -1463,8 +1937,37 @@ export async function reverifyData(options: ReverifyOptions): Promise<ReverifyRe
       }
       const page = pageForCapture(target.pageId, captured, ledger, options.ledgerPath);
       ledger.pages[target.pageId] = page;
-      if (captured.notModified)
-        return { group, page, candidates: [] as ExtractedDeadlineField[], notModified: true };
+      if (captured.notModified) {
+        if (!page.body_ref)
+          return {
+            group,
+            page,
+            candidates: [] as ExtractedDeadlineField[],
+            cachedBodyMissing: true,
+          };
+        let body: Uint8Array;
+        try {
+          body = readFileSync(resolve(dirname(options.ledgerPath), page.body_ref));
+        } catch {
+          return {
+            group,
+            page,
+            candidates: [] as ExtractedDeadlineField[],
+            cachedBodyMissing: true,
+          };
+        }
+        const adapter = adapterFor({
+          ...captured,
+          providerIdentity: providerIdentityFromUrl(captured.finalUrl),
+        });
+        return {
+          group,
+          page,
+          candidates: adapter.extract(body, captured),
+          adapter: adapter.name,
+          notModified: true,
+        };
+      }
       if (captured.retryable || captured.status < 200 || captured.status >= 300 || !captured.body)
         return {
           group,
@@ -1498,7 +2001,7 @@ export async function reverifyData(options: ReverifyOptions): Promise<ReverifyRe
       )
         status = "manual-required";
       else if (result.error) status = "source-unreachable";
-      else if (result.notModified) status = "verified";
+      else if (result.cachedBodyMissing) status = "manual-required";
       else if (result.retryable) status = "retryable";
       else if (!result.candidates.length) status = "parser-failed";
       else {
@@ -1552,7 +2055,14 @@ export async function reverifyData(options: ReverifyOptions): Promise<ReverifyRe
     options.resolutionsPath ?? join(dirname(options.ledgerPath), "reverification-resolutions.json"),
     ledger,
   );
-  return { processed: targets.length, statuses, ledger, pages: selectedPages.length };
+  const processed = Object.values(statuses).reduce((total, count) => total + count, 0);
+  return {
+    processed,
+    deferred: targets.length - processed,
+    statuses,
+    ledger,
+    pages: selectedPages.length,
+  };
 }
 
 function entryFor(ledger: VerificationLedger, id: string): VerificationLedgerDeadline | undefined {

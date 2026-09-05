@@ -54,18 +54,22 @@
         "tags": [
           "niche"
         ],
-        "review_state": "reviewed"
+        "review_state": "reviewed",
+        "full_name": "The 5th International Conference on Intelligent Computing and Next Generation Networks",
+        "link": "https://www.icngn.org/"
       },
       "edition": {
         "year": 2026,
         "edition_id": "icngn-2026",
         "date_text": "2026-12-12",
         "event_start": "2026-12-12",
-        "event_end": "2026-12-14"
+        "event_end": "2026-12-14",
+        "link": "https://www.icngn.org/",
+        "place": "Hong Kong, China"
       },
       "deadline": {
         "kind": "paper",
-        "label": "paper",
+        "label": "Paper submission deadline",
         "round": 1,
         "track": "",
         "precision": "date-only",
