@@ -1364,6 +1364,27 @@ describe("venue recommendation fusion", () => {
     expect(semantic.fit.evidence.some((item: any) => item.type === "semantic")).toBe(true);
   });
 
+  it("pins the RRF fusion weights: symmetric legacy blend, 1.6/0.4 fielded blend", () => {
+    const rows = [row("lex", "GPU Systems"), row("sem", "Distributed Inference")];
+    const lines = R.parsePaperLines("GPU scheduling | gpu");
+    const scores = { sem: 0.99 };
+    // 単一シグナルで rank=1 の会場は 100 * weight / (weight和=除数2) に落ちる。
+    // 重み和 2 が score 正規化の除数 2 と一致していることも同時に拘束する。
+    const legacy = R.venueRecommendations(rows, lines, scores, NOW, { topN: 1 });
+    const legacySem = legacy.find((item: any) => item.venueKey === "sem");
+    expect(legacySem.fit.lexicalRank).toBeNull();
+    expect(legacy.find((item: any) => item.venueKey === "lex").fit.baseScore).toBe(50);
+    expect(legacySem.fit.baseScore).toBe(50);
+    const fielded = R.venueRecommendations(rows, lines, scores, NOW, {
+      topN: 1,
+      fieldedLexical: true,
+    });
+    expect(fielded.find((item: any) => item.venueKey === "lex").fit.baseScore).toBe(80);
+    // semantic のみの候補は fielded 経路で 50→20 に圧縮される。site/app.ts の
+    // score >= 10 足切りと連動して UI 到達域が変わるため、意図的な値として固定する。
+    expect(fielded.find((item: any) => item.venueKey === "sem").fit.baseScore).toBe(20);
+  });
+
   it("looks up semantic scores by the normalized conference key", () => {
     const result = R.venueRecommendations(
       [row("foo-bar", "Unrelated venue")],

@@ -9,23 +9,23 @@
   },
   "production": {
     "trainer_revision": "l2-pairwise-logistic-reranker-v3-grouped-cv",
-    "oof_mrr": 0.054518,
-    "oof_recall_at_5": 0.0625,
+    "oof_mrr": 0.30252318,
+    "oof_recall_at_5": 0.3875,
     "dev": {
-      "mrr": 0.054624,
-      "recall_at_5": 0.0625,
-      "top1_brier": 0.05801,
-      "top5_brier": 0.084594,
-      "top1_ece": 0.194588,
-      "top5_ece": 0.144588
+      "mrr": 0.302121,
+      "recall_at_5": 0.3875,
+      "top1_brier": 0.155154,
+      "top5_brier": 0.248057,
+      "top1_ece": 0.034401,
+      "top5_ece": 0.159345
     },
     "heldout": {
-      "mrr": 0.146726,
-      "recall_at_5": 0.225,
-      "top1_brier": 0.094961,
-      "top5_brier": 0.187686,
-      "top1_ece": 0.16533,
-      "top5_ece": 0.019143
+      "mrr": 0.42329,
+      "recall_at_5": 0.6,
+      "top1_brier": 0.199952,
+      "top5_brier": 0.362167,
+      "top1_ece": 0.063293,
+      "top5_ece": 0.363293
     },
     "negative": {
       "abstention_rate": 1,
@@ -34,23 +34,23 @@
   },
   "candidate": {
     "trainer_revision": "l2-pairwise-logistic-reranker-v4-component-greedy-cv",
-    "oof_mrr": 0.08263338,
-    "oof_recall_at_5": 0.125,
+    "oof_mrr": 0.30319669,
+    "oof_recall_at_5": 0.4,
     "dev": {
-      "mrr": 0.050696,
-      "recall_at_5": 0.0625,
-      "top1_brier": 0.050541,
-      "top5_brier": 0.084594,
-      "top1_ece": 0.207088,
-      "top5_ece": 0.144588
+      "mrr": 0.302893,
+      "recall_at_5": 0.3875,
+      "top1_brier": 0.153821,
+      "top5_brier": 0.248057,
+      "top1_ece": 0.0594,
+      "top5_ece": 0.159345
     },
     "heldout": {
-      "mrr": 0.145119,
-      "recall_at_5": 0.2125,
-      "top1_brier": 0.094961,
-      "top5_brier": 0.180316,
-      "top1_ece": 0.16533,
-      "top5_ece": 0.015329
+      "mrr": 0.422725,
+      "recall_at_5": 0.5875,
+      "top1_brier": 0.199952,
+      "top5_brier": 0.353607,
+      "top1_ece": 0.063293,
+      "top5_ece": 0.350793
     },
     "negative": {
       "abstention_rate": 1,
@@ -70,7 +70,7 @@
     }
   },
   "decision": "keep-v3",
-  "candidate_rejected_reason": "heldout MRR and Recall@5 regressed",
+  "candidate_rejected_reason": "heldout acceptance gate: MRR -0.000565 / Recall@5 -0.0125 vs production (noise-level; kept incumbent v3 per non-degradation policy)",
   "artifact": {
     "path": "data/recommender-reranker.json",
     "algorithm_revision": "l2-pairwise-logistic-reranker-v3-grouped-cv",
