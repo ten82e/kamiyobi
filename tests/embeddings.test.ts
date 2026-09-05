@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { env } from "@huggingface/transformers";
 import { describe, expect, it } from "vitest";
+import { realPaperText } from "../src/bench-recommender.ts";
 import {
   benchmarkEmbeddingCacheKey,
   benchmarkEmbeddingManifest,
@@ -251,6 +252,42 @@ describe("generated venue profile artifact", () => {
         profile.prototypes.every((title) => profile.papers.some((paper) => paper.title === title)),
       ).toBe(true);
     }
+  });
+
+  it("keeps profile papers and prototypes disjoint from benchmark evaluation titles", () => {
+    // profile に評価対象論文が混入すると semantic 検索が自己参照でカンニングする。
+    // 生成スクリプトに機械的なリーク防御が無いため、artifact 側で全数照合して塞ぐ。
+    // 正規化はベンチ本体と同じ realPaperText (NFKC + \p{L}\p{N}) を使う。
+    // 独自の a-z0-9 正規化では NFD 形の擦り抜けと日本語タイトルの空文字化が起きる。
+    const normalize = (title: string) => realPaperText(title);
+    const benchTitles = new Set<string>();
+    for (const fixtureName of [
+      "real-paper-dev.json",
+      "real-paper-heldout.json",
+      "real-paper-required-dev.json",
+      "real-paper-required-heldout.json",
+      "real-paper-negative.json",
+      "regression-known.json",
+    ]) {
+      const fixture = JSON.parse(
+        readFileSync(new URL(`../data/benchmarks/${fixtureName}`, import.meta.url), "utf8"),
+      ) as { records?: Array<{ title?: string }> };
+      for (const record of fixture.records ?? []) {
+        const normalized = record.title ? normalize(record.title) : "";
+        if (normalized) benchTitles.add(normalized);
+      }
+    }
+    expect(benchTitles.size).toBeGreaterThan(100);
+    const collisions: string[] = [];
+    for (const [key, profile] of Object.entries(VENUE_PROFILE_ARTIFACT.profiles)) {
+      for (const paper of profile.papers) {
+        if (benchTitles.has(normalize(paper.title))) collisions.push(`${key}: ${paper.title}`);
+      }
+      for (const title of profile.prototypes) {
+        if (benchTitles.has(normalize(title))) collisions.push(`${key} (prototype): ${title}`);
+      }
+    }
+    expect(collisions).toEqual([]);
   });
 
   it("rejects malformed provenance and protects the full-artifact hash", () => {

@@ -4,323 +4,483 @@
   "records": [
     {
       "paper_id": "dev-2025-ches-01",
-      "record_sha256": "e21f20104d22e97141b3c7d2e9af7591f7376476d2d385cd21ab97b5d67060e4"
+      "record_sha256": "d68005eba7160ec1a6efaf47c53158d4761b772c642a85f4a6843024abff800e",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-ches-02",
-      "record_sha256": "e1e8ed5e16347c799eb055d5756ab60d58d0dfe5bd1ba485754c394fc6f1ca48"
+      "record_sha256": "8aa5ec93e46282691c946a03d78b9ad118c2740479bbc69db2cba2cfc2f18537",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-ches-03",
-      "record_sha256": "50dafbddbfb284cbef03f32ceb834a2b6ed43b40621d42006576657c306c7958"
+      "record_sha256": "f31305f60bb36df35fd695416ef4244f780d9451e2efdb64a6b811cae8449e62",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-ches-04",
-      "record_sha256": "c2fd5177c8dd05da04edcf17b29ff727be7fbde5b05b815ff6eba1da5930ca0a"
+      "record_sha256": "a9edd9374b0a847b00df4c32f05e2534d8a59f1ebad3d588d6f210540c1c082a",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-ches-05",
-      "record_sha256": "d4212e527c8b7031f58b3de1056a75690fec8ea6aff58bc11a2248671dacfc53"
+      "record_sha256": "0c93fd7c4dd8572a88793f7557fe565a996c3aa4eb3ff5a5d2d0c03a15ccb9d2",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-ches-06",
-      "record_sha256": "518c73e66a8cd8dfc39d64d9e4fb5bde9a83a293818757d026aa9274cf1ed78f"
+      "record_sha256": "518c73e66a8cd8dfc39d64d9e4fb5bde9a83a293818757d026aa9274cf1ed78f",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-ches-07",
-      "record_sha256": "3e87c9d1c3dcea5f94249da36719229442c210caae9b50bf0276d2bab8bb382e"
+      "record_sha256": "83d03cb2f12c33139e87725c863e5fa5d1ebb2fef8f04b6253e949050cc10b21",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-ches-08",
-      "record_sha256": "79680d8f877e229d2e7338284f413c078f8daee27a9cfc650b11a5752626053e"
+      "record_sha256": "0212cd911c2a1353aafb018533c2bda45e9a9f6a470fda69dbec7d51f5329821",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-chi-01",
-      "record_sha256": "e91d26d3c78cfcfe3cff7bc5e1603d5896cfd2c9171ac930b778cd510303c491"
+      "record_sha256": "e91d26d3c78cfcfe3cff7bc5e1603d5896cfd2c9171ac930b778cd510303c491",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-chi-02",
-      "record_sha256": "cc7e30bda6ed240a3617567c274afe5a9253f79be51805b6d29abcbfd888de30"
+      "record_sha256": "cc7e30bda6ed240a3617567c274afe5a9253f79be51805b6d29abcbfd888de30",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-chi-03",
-      "record_sha256": "740f05c2b394e232d0ba352f25bbee66daff9df941c3cfe2ed7836f3be21f3eb"
+      "record_sha256": "b2eb16de1b412a257b43a0fcd70aeeb32278c0adc15cb605c53bbed1cb328d84",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-chi-04",
-      "record_sha256": "ea209e2c7442af8f6d59513941e77d6a67c83fd29bef464d15478f916c8c7f69"
+      "record_sha256": "ea209e2c7442af8f6d59513941e77d6a67c83fd29bef464d15478f916c8c7f69",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-chi-05",
-      "record_sha256": "8a136b8d3776ea71d5d433bc5faafa536ee3a9d38389d6011212565df74fc9bb"
+      "record_sha256": "8a136b8d3776ea71d5d433bc5faafa536ee3a9d38389d6011212565df74fc9bb",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-chi-06",
-      "record_sha256": "d7c2a1a125de134df9ece45929b3606f741bada4490922ccdf72766359efb374"
+      "record_sha256": "d7c2a1a125de134df9ece45929b3606f741bada4490922ccdf72766359efb374",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-chi-07",
-      "record_sha256": "806f6a3cd21f7d4f90014b26727e3e69a9efad3b66d57e4a8d9f5c9d64e8cf16"
+      "record_sha256": "806f6a3cd21f7d4f90014b26727e3e69a9efad3b66d57e4a8d9f5c9d64e8cf16",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-chi-08",
-      "record_sha256": "759632cf8f455e9389753ffa184a2d6941fa20c61be72f26d8551658d7086a3b"
+      "record_sha256": "08a0d6888d36c279533753615261e9b5542626190f60fc1f1adcf079963adb10",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-cvpr-01",
-      "record_sha256": "78695a3f2ebe0586f951ea9efe80c7246be1f6a323a092fe6aac8daa3453b027"
+      "record_sha256": "f3489f5a0ff77d0502abdb790b5e2d094cf5d8fdf6f0a8ec6879103e28757567",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-cvpr-02",
-      "record_sha256": "9ff04de29c13a6d61bc7a65f1daaaa140f14c5953473a680b2c0992573ec999a"
+      "record_sha256": "1d18c6d8977f60c19c88a1a7739bf9ee6337e9a9449ec4b671a863d9f0ffa61e",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-cvpr-03",
-      "record_sha256": "51d66ab3ba922459fb2c1717698d7f03a05c7745e683ede2e00d4664a32e8791"
+      "record_sha256": "51d66ab3ba922459fb2c1717698d7f03a05c7745e683ede2e00d4664a32e8791",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-cvpr-04",
-      "record_sha256": "50c1b62519b1110a5594930d0853617769c5539396a3d0ca4b052bead927bde7"
+      "record_sha256": "1e1d432e78633cc778e847ec7b37f07686fc547cae65a184a98db9a73e3d5752",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-cvpr-05",
-      "record_sha256": "e981f96f0c90b0505dec149ccd6957ba1cc8a0d2c47be0f82680c5f08c62fb1b"
+      "record_sha256": "e981f96f0c90b0505dec149ccd6957ba1cc8a0d2c47be0f82680c5f08c62fb1b",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-cvpr-06",
-      "record_sha256": "d94f0571e2ec6f6be4ac2d0701c285ca6361dbd04cb169a2dc1a61b4b5bc35d3"
+      "record_sha256": "a70ab43da474b2cb42c141e72aefd6d784e4d996a0b67d28955ccc8379c79f58",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-cvpr-07",
-      "record_sha256": "5f2997af40a6226da66d4809d3d5aca8892f4a9e00f4f4a93c3fdc3c325ac32e"
+      "record_sha256": "5f2997af40a6226da66d4809d3d5aca8892f4a9e00f4f4a93c3fdc3c325ac32e",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-cvpr-08",
-      "record_sha256": "f21e19bbdf3c3c3024ad6a2b0f36bc7e63588987552d1d6cd6d9ce9c5b4a2973"
+      "record_sha256": "3cb5125b63ee1b732aeaea11cb881d3e623d257937cfaa4ac20847b1b173ad96",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-cvprw-01",
-      "record_sha256": "9e2fb35dde2da5b14e158d1e17ff17c44206e9aad04b3da3a856f99c6b85e2b6"
+      "record_sha256": "98905c8b957ee90acd5a163373c8b6acb6bd12a8a9b6000e8985f4a5c2789d51",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-cvprw-02",
-      "record_sha256": "e532bbae633a31236865b29de9c9294f55bf69af5b69dde1f6dacbfc1c00a102"
+      "record_sha256": "5e8c5ac306ac147abae3979ebf3836a02e359f68aa1c6f5e9df12437b90b5c2b",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-cvprw-03",
-      "record_sha256": "a7204c8723d21c8b609a5cb800d198600d8d04383bf39716f15178579509fa06"
+      "record_sha256": "30040438b1deb7508677ef2da6e9c52f9c1cf08c25fd5f0fe63b4beb5d6b4b44",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-cvprw-04",
-      "record_sha256": "fd81a41e4492f0bcc511c332eefcf03ae0e6d650e4e0b5427c2424521cfba4bd"
+      "record_sha256": "fd81a41e4492f0bcc511c332eefcf03ae0e6d650e4e0b5427c2424521cfba4bd",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-hpdc-01",
-      "record_sha256": "39ea51fc1d919cb31986e3a0d495334afaeb52deecb1a0e08c6bfa5d54cb0e4e"
+      "record_sha256": "b51d03ae9e634820876188aecaaffc3280c7986cf7b579e7c0f047315946608f",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-hpdc-02",
-      "record_sha256": "9f51dd43aedeeef06c17fc3af44c44e94b096e5cb87923b6d481489fb9d89266"
+      "record_sha256": "ea3601574eff65adc03f6bc63202b2698acf834c34610e7e58cfa0d1e8cab4e5",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-hpdc-03",
-      "record_sha256": "c5bed9006132b88209cdad6027da4874683653f0e165b840f6340170225a719d"
+      "record_sha256": "c5bed9006132b88209cdad6027da4874683653f0e165b840f6340170225a719d",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-hpdc-04",
-      "record_sha256": "0058d61793248d56ad5b1d2ba6e4fb605faf37386ffbf2b0aff4d699f57b941c"
+      "record_sha256": "e94956078bd6e5adc1036090cf3fb637a98ac68a29e7dec65f7f7ec90e663086",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-hpdc-05",
-      "record_sha256": "51bae11d50bf344382883e05a197f1e8ad899e709654ef7ef88a80777cb21c22"
+      "record_sha256": "e6c0c3662ae6f9f3c49b5683c1a93fcd97cda8c5585a68ffa25a1a99cde8432f",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-hpdc-06",
-      "record_sha256": "fdc819adfbe142273afa6206ef74f608c2d1d9b695fbed6a22fd00a47f276380"
+      "record_sha256": "ecd21329aa1b02bb7aa3ea22bf1897605bb2ec308d979c5734ad30aae20a213f",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-hpdc-07",
-      "record_sha256": "b34a1c3c0467de61d127063249011e32b24c9b012d5a85bea65154535d575b7e"
+      "record_sha256": "e915f0578ae472eab3cfa0c543a6d8547a40437f51a89ac05ecec7634ee25e71",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-hpdc-08",
-      "record_sha256": "e71aa64c83e9e1ebf7fe08ffcfabec91d7a83dd0e8d01cd998e64a108580f793"
+      "record_sha256": "354c20befea4bfc8d79aa962488993b42e36ca64388d692ee0e2255284bc7212",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-hpdc-09",
-      "record_sha256": "13976c45828cab991ed970c1f7e21d297c4647b145e1d95b39ccbdf358e5031c"
+      "record_sha256": "13976c45828cab991ed970c1f7e21d297c4647b145e1d95b39ccbdf358e5031c",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-hpdc-10",
-      "record_sha256": "a7a151036a1458f9dbd9f6755692011d2bc1b1f90bde3cc8d88bfad38970d9e4"
+      "record_sha256": "603b18cf3b22e5073b6245257b00cc7f9026d086b5ce638eca3d52b1cad57536",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-hpdc-11",
-      "record_sha256": "f8ad17e909f1e573aa72644d59710f38017e45c74d3a6a3579733bafe5496282"
+      "record_sha256": "c2023c8913411ca2ff383de1328436df122c3af852671f4e50b0f8f1438ef35b",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-hpdc-12",
-      "record_sha256": "5cabd2e671e3aab982f4518a554ebee5274daaeb718282b284ab06fb35a0b4e6"
+      "record_sha256": "6c636d0e82fc952ee9b6868d3581fef9d4ada02e7f4c7997cac9673bcbd8655e",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-icml-01",
-      "record_sha256": "92eec4c32f8891ddbe3cba079ed02bb3b83c08a3f7a0fde01b4227f6c44cf329"
+      "record_sha256": "b9353b26054e3af2917b59325477e86a4acd065d62a4d4a00c65293d1bc9ae49",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-icml-02",
-      "record_sha256": "cc99226d0482a2e7a71e7ac279a62edbeb03563775e41b1283e1dc05c1cd3e1d"
+      "record_sha256": "7397364f252f95da8e3ab655ee01ea249d4287dd17a4624a7da9518cd2653a55",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-icml-03",
-      "record_sha256": "37abec31706a739dc070febaceff358bc40d49a2ff5ee76d57f7c6b11bd867d8"
+      "record_sha256": "8a8861be7a2b6147a5da6fc360233cb8b1b39b2210da825054c1bdaf9f4074a0",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-icml-04",
-      "record_sha256": "7b162b2539546cf160a293506808fc678c877c0110ce3e6dce65518ec7c6d05a"
+      "record_sha256": "7b162b2539546cf160a293506808fc678c877c0110ce3e6dce65518ec7c6d05a",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-icml-05",
-      "record_sha256": "f9351b1307fc96e9eccfb66fd4e883fdcd01129f2ef57c3a2a3166f28944a3c5"
+      "record_sha256": "c63f29be83cc9448adbad1f83376b3a9761cf7266a6496022ad39e0779e432dd",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-icml-06",
-      "record_sha256": "44367d6fa5bc64100415478b1aec63b95bf8d5269b7bb8033f2bac4884ef60b9"
+      "record_sha256": "44367d6fa5bc64100415478b1aec63b95bf8d5269b7bb8033f2bac4884ef60b9",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-icml-07",
-      "record_sha256": "5ebeb125f0bb2dc8ad34fcd2703f84142ab5b285ad63c1b4736af434e25eb4ed"
+      "record_sha256": "40bcfc1df44c5443b4f032ea9c6c5a784437b86ab25d5c39e3ee31425d5ba3a1",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-icml-08",
-      "record_sha256": "385421777e34f8dd713e4be7d3a04b2bfca50b62f85578337b735ada8e9ec6f0"
+      "record_sha256": "385421777e34f8dd713e4be7d3a04b2bfca50b62f85578337b735ada8e9ec6f0",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-ipsj-journal-01",
-      "record_sha256": "0e1158fa8d319c67777729b65fb54bd99de1d67d89a544758a335b287990f5d1"
+      "record_sha256": "0e1158fa8d319c67777729b65fb54bd99de1d67d89a544758a335b287990f5d1",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "2c4055b12046f11709e9df2c122e59ffbdc2f900"
     },
     {
       "paper_id": "dev-2025-ipsj-journal-02",
-      "record_sha256": "4c308dbad52f48e3763bf37913aac93bc6801933214ff90c8145abcba5b50411"
+      "record_sha256": "4c308dbad52f48e3763bf37913aac93bc6801933214ff90c8145abcba5b50411",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "2c4055b12046f11709e9df2c122e59ffbdc2f900"
     },
     {
       "paper_id": "dev-2025-ipsj-journal-03",
-      "record_sha256": "e76a1d5a41981e73d1b8a3cadcc69ffb468409a0ea75d08a3354baea8e13ce7e"
+      "record_sha256": "e76a1d5a41981e73d1b8a3cadcc69ffb468409a0ea75d08a3354baea8e13ce7e",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "2c4055b12046f11709e9df2c122e59ffbdc2f900"
     },
     {
       "paper_id": "dev-2025-ipsj-journal-04",
-      "record_sha256": "72345e6d715c673aa8bdffa0ffb62186e22020d225c381dffc606c25e7034bdb"
+      "record_sha256": "72345e6d715c673aa8bdffa0ffb62186e22020d225c381dffc606c25e7034bdb",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "2c4055b12046f11709e9df2c122e59ffbdc2f900"
     },
     {
       "paper_id": "dev-2025-nolta-special-01",
-      "record_sha256": "d6d3a9d48fbc19c53043f3eddd97ba78a1e47310684a68d507dbaf0e70f98798"
+      "record_sha256": "e8beb7884287aa0db09eecb2c380d67a3e7359801f38c7188279f6bad853c0dc",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-nolta-special-02",
-      "record_sha256": "8325043d590f5fe3934d9e387461a5a7619db25813e718e0d9d0d7daefc7a194"
+      "record_sha256": "892d7ffec6c78737cb0d89d9fb4b8ad7c71d59198d39d2718177a98ff4cd08ed",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-nolta-special-03",
-      "record_sha256": "17a0c972d27e0038dd8a001cebab5e6673675dc3a580236233c2ebc5b52afd64"
+      "record_sha256": "17a0c972d27e0038dd8a001cebab5e6673675dc3a580236233c2ebc5b52afd64",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-nolta-special-04",
-      "record_sha256": "9193a79ce6d7784107fa132a8139cfebf289b5094156d0c0cec3dad30c7936ac"
+      "record_sha256": "c840fac3490a0a64657ac5ccd7c62be91ad689f1b8e3f341b37acee214bc6cc9",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-sigcomm-01",
-      "record_sha256": "2cbc578f0918c4052e10ca34a45b6bdf544a7b169da8c2039db8ee5ab8ef0bbf"
+      "record_sha256": "5eab969898c8910873666e849f21ce321bfa99c3461ceb2f065a6fad959fe9c9",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-sigcomm-02",
-      "record_sha256": "895a50ab577abf9777fa0a70c3c0e5151d5787af51bfe6aad3a27c5306e0a6c7"
+      "record_sha256": "e372add5aaaafdb36ec7036d9115d7b5773b409a02965173b53a97856e9471d0",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-sigcomm-03",
-      "record_sha256": "6a864a0fbea7113a8c9e62b48361d57612505dd2820b21726fcfd60c82ab99d6"
+      "record_sha256": "6a864a0fbea7113a8c9e62b48361d57612505dd2820b21726fcfd60c82ab99d6",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-sigcomm-04",
-      "record_sha256": "6f24551d16cd5fff290f0c017b0b7374e0ad1728b849b873f3fc55bd332efd6e"
+      "record_sha256": "6f24551d16cd5fff290f0c017b0b7374e0ad1728b849b873f3fc55bd332efd6e",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-sigcomm-05",
-      "record_sha256": "042bd467973fa9863cdd9ac6e7a53f10e1f165ca2822623a62cad23e0041b0ea"
+      "record_sha256": "83be6090d79e4109023c7e0dd84be62241c37c05d664e57e193ba577d903ab26",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-sigcomm-06",
-      "record_sha256": "baa1ec2f4f2f841ddf6d0f1028304685340c79515fc27a6c17974c9eda3ccafc"
+      "record_sha256": "743a281f37887b4feec3cca6c69aad7d3004ec7bb09563d9bda5a69f07197a61",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-sigcomm-07",
-      "record_sha256": "0fce96e95c116426d285585d20e760bcaba65a310bb6d08d704b6f70a3168b38"
+      "record_sha256": "0f3ac4f52d535c436e3c17e461ece1520a894e0613d04624c2a14d40ed2c4a78",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-sigcomm-08",
-      "record_sha256": "d496bde5c61c18bbd643366f94c2b26c9c4f903416a9a3cc89ffc72abe1d30f4"
+      "record_sha256": "03d8efa72a55a7584c164b4a226bd47338e69c0f233ec9223a7e12789f0be6e0",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-sigmod-01",
-      "record_sha256": "b405e09ea9c1caf74811409ac3949ab530d3f14a9aa746a218c05eab01e4f1ba"
+      "record_sha256": "b405e09ea9c1caf74811409ac3949ab530d3f14a9aa746a218c05eab01e4f1ba",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-sigmod-02",
-      "record_sha256": "eb5fedd46d309132e99dd6b20d802b71b375271b8a0bf6db4867831d1e455d94"
+      "record_sha256": "eb5fedd46d309132e99dd6b20d802b71b375271b8a0bf6db4867831d1e455d94",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-sigmod-03",
-      "record_sha256": "3e04ba5d05166a16eb40ff80c66d8e30c0c0bb25411d7b8ab614ab60ab2cbbfd"
+      "record_sha256": "417096684a1a4c003771cda1269d4d923073a45e774d47474b7da6e47beaf039",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-sigmod-04",
-      "record_sha256": "9422b57b4cfab19d3a289e455bddaf5bf243b50f04c4913d3b6a37d6fe34c5f8"
+      "record_sha256": "e3b5e834c00527f99e5f633dfaf42d356c033de7ba922b678c82c75520e4c413",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-sigmod-05",
-      "record_sha256": "d6818264bbb88d7e6aa5cd2b631a509cf75c927fe3222cac0e94090f006fe9bf"
+      "record_sha256": "cc20302bf8f3dc5a024b184c89785714133ad394ae005254ed2465ed354c5aa0",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-sigmod-06",
-      "record_sha256": "aff6da73882980ffde311b09b3ec8957c93b2fb9cc13e3857af2ade41fec4aa2"
+      "record_sha256": "aff6da73882980ffde311b09b3ec8957c93b2fb9cc13e3857af2ade41fec4aa2",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-sigmod-07",
-      "record_sha256": "58aad7179e4621d089e20e66090e52330ab7606529039c9e83d9df7a276bc9ea"
+      "record_sha256": "58aad7179e4621d089e20e66090e52330ab7606529039c9e83d9df7a276bc9ea",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-sigmod-08",
-      "record_sha256": "9bf42a11c8881e492ddee5f91d23855207c4422941a45782080fafa24434f16f"
+      "record_sha256": "30fa169031cae2015280ccdb40b5acbf6c6776b6be2a7445a5cbe942ed5812d6",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-stoc-01",
-      "record_sha256": "31c36bb587bc2a61069f5416c0c8b6cacca390a2a6702cefceb34b8f1c95d9be"
+      "record_sha256": "7daf7bc4bf725f3937cbf368f98419a541010a774a89243a53bff4ba8d3397a0",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-stoc-02",
-      "record_sha256": "1da6948e43bda7c0f203e2b6d73d02c235908cecaf602952c34e58308c90b985"
+      "record_sha256": "1da6948e43bda7c0f203e2b6d73d02c235908cecaf602952c34e58308c90b985",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-stoc-03",
-      "record_sha256": "b47b17196d1273a8c102ed19df62a459eb8b61624fb22f92b45d631306696765"
+      "record_sha256": "b47b17196d1273a8c102ed19df62a459eb8b61624fb22f92b45d631306696765",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-stoc-04",
-      "record_sha256": "5f3da308921ab76c8035a9107cca8b3b1e37a2ee04f069d632090d794938b2f3"
+      "record_sha256": "5f3da308921ab76c8035a9107cca8b3b1e37a2ee04f069d632090d794938b2f3",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-stoc-05",
-      "record_sha256": "56fd07bba98be979aff84f9015de0185ad897c2b59e747c1dadf2cb9c79f20d4"
+      "record_sha256": "bd408ead130d3bcbff09c9583264e6402e790044cd88b0970c0a3be0d4e4ba91",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-stoc-06",
-      "record_sha256": "6770253e66f707d774159131f44f52e924183f2142af4a7785dd004fddc95d16"
+      "record_sha256": "6770253e66f707d774159131f44f52e924183f2142af4a7785dd004fddc95d16",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-stoc-07",
-      "record_sha256": "64472e131130a4f63bee9f0ff2c5235280fe9ec299116b756cdf0a6aa2294482"
+      "record_sha256": "eb560ac10233e95a367a63b788408819467e2d55438825afd81b4aea6103bcee",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "dev-2025-stoc-08",
-      "record_sha256": "660e650266612fa5e8ee6d48223d106c1d8c9d58c3587495896820f98ea091b1"
+      "record_sha256": "660e650266612fa5e8ee6d48223d106c1d8c9d58c3587495896820f98ea091b1",
+      "profile_hash": "74353bb851d65b1e",
+      "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     }
   ]
 }
