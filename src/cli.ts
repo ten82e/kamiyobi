@@ -1153,10 +1153,21 @@ export async function cmdDiscover(args: DiscoverArgs): Promise<number> {
     writeTextFile(candidatePathResolved, formatCandidateRegistry(registry));
   }
   if (!args.dryRun) {
+    // 前回 archive を渡して、判定が変わっていないレコードの last_reviewed を温存する。
+    const archivePath = join(ROOT, "data", "discovery", "archive.json");
+    let previousArchive: unknown;
+    try {
+      previousArchive = existsSync(archivePath)
+        ? (JSON.parse(readFileSync(archivePath, "utf8")) as { records?: unknown }).records
+        : undefined;
+    } catch {
+      previousArchive = undefined;
+    }
     const lifecycle = splitCandidateLifecycle(
       registry.candidates,
       new Date(),
       loadTrackedTitles(ROOT),
+      Array.isArray(previousArchive) ? previousArchive : undefined,
     );
     writeTextFile(
       join(ROOT, "data", "discovery", "active.yaml"),
