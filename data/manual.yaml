@@ -4565,20 +4565,40 @@ conferences:
           parentEventId: null
           seriesId: admit
         date_text: October 16-18, 2026
+        # 2026-09-05 再検証: www.admit2026.net は DNS フィルタでフィッシング判定され
+        # 再検証不能。現在も検証可能な easychair CFP は abstract 9/20 + paper 9/30 を
+        # 掲示しているため、そちらへ揃える (推測日付を残さない)。
         deadlines:
           - date: '2026-09-20'
-            kind: paper
-            label: Paper submission deadline
+            kind: abstract
+            label: Abstract registration deadline
             precision: date-only
-            superseded_deadlines:
-              - value: '2026-09-30'
-                precision: date-only
-                source: https://easychair.org/cfp/admit2026
-                evidenceRef: https://easychair.org/cfp/admit2026
-                status: superseded
-                supersededBy: admit-2026|admit-202626|paper|1|
-                reason: manual-resolution
-                supersededAt: '2026-08-31T00:00:00Z'
+            evidence:
+              - sourceClass: official-cfp
+                confidence: official
+                sourceUrl: https://easychair.org/cfp/admit2026
+                contentHash: 8ca7bd24ca48914a5f8f2096d7151111f345a5e118fb193eaf94355829f03690
+                retrievedAt: '2026-09-05T06:30:00Z'
+                verifiedAt: '2026-09-05T06:30:00Z'
+                rawExcerpt: 'Abstract registration deadline: September 20, 2026'
+                verifiedFields:
+                  - date
+                  - kind
+          - date: '2026-09-30'
+            kind: paper
+            label: Submission deadline
+            precision: date-only
+            evidence:
+              - sourceClass: official-cfp
+                confidence: official
+                sourceUrl: https://easychair.org/cfp/admit2026
+                contentHash: 8ca7bd24ca48914a5f8f2096d7151111f345a5e118fb193eaf94355829f03690
+                retrievedAt: '2026-09-05T06:30:00Z'
+                verifiedAt: '2026-09-05T06:30:00Z'
+                rawExcerpt: 'Submission deadline: September 30, 2026'
+                verifiedFields:
+                  - date
+                  - kind
         event_end: '2026-10-18'
         event_start: '2026-10-16'
         id: admit-202626

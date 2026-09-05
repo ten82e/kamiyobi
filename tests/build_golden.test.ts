@@ -838,22 +838,31 @@ it("evaluateHealthGate matches deadline slots independently of timestamps", () =
     evaluateHealthGate(withRefs([slot(paper1, "2026-09-01T00:00:00.000Z")]), twoEditions).ok,
   ).toBe(false);
 
+  // track キーはラベル由来で頻繁に動くため、venue/year/kind/round と時刻が
+  // 完全一致し両側で一意な track 改名は同一締切として通す (2026-09-05 契約更新)。
+  // 値が動く track 改名は tests/health_gate.test.ts が引き続き阻止を検証する。
   expect(
     evaluateHealthGate(
       withRefs([slot(industryTrack, "2026-09-01T00:00:00.000Z")]),
       withRefs([slot(industry, "2026-09-01T00:00:00.000Z")]),
     ).ok,
-  ).toBe(false);
+  ).toBe(true);
 
+  // 旧 schema の edition 表記 (年のみ) は edition 改名対応付け (track まで一致 +
+  // 両側一意) で吸収され、延長は通す (2026-09-05 契約更新)。前倒しは引き続き阻止。
+  const legacySchemaBase: HealthReport = {
+    ...base,
+    schema_version: 1,
+    deadline_refs: undefined,
+    confirmed_deadline_refs: [
+      { id: "rtss|2026|paper|2026-09-01T00:00:00.000Z", at_utc: "2026-09-01T00:00:00.000Z" },
+    ],
+  };
   expect(
-    evaluateHealthGate(withRefs([slot(paper1, "2026-09-08T00:00:00.000Z")]), {
-      ...base,
-      schema_version: 1,
-      deadline_refs: undefined,
-      confirmed_deadline_refs: [
-        { id: "rtss|2026|paper|2026-09-01T00:00:00.000Z", at_utc: "2026-09-01T00:00:00.000Z" },
-      ],
-    }).ok,
+    evaluateHealthGate(withRefs([slot(paper1, "2026-09-08T00:00:00.000Z")]), legacySchemaBase).ok,
+  ).toBe(true);
+  expect(
+    evaluateHealthGate(withRefs([slot(paper1, "2026-08-25T00:00:00.000Z")]), legacySchemaBase).ok,
   ).toBe(false);
 
   expect(
