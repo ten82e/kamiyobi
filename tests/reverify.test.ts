@@ -146,7 +146,10 @@ it("keeps the ledger loadable when a non-auto source moves to a different URL", 
   // 同じ締切の集約元 URL が翌晩に変わっても、台帳は読み戻せなければならない。
   writeFileSync(
     dataPath,
-    readFileSync(dataPath, "utf8").replaceAll("https://aggregator-a.test/list", "https://aggregator-b.test/list"),
+    readFileSync(dataPath, "utf8").replaceAll(
+      "https://aggregator-a.test/list",
+      "https://aggregator-b.test/list",
+    ),
   );
   const moved = await reverifyData({
     dataPath,
