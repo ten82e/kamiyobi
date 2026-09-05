@@ -33,6 +33,23 @@ function step(job: { steps?: Step[] }, name: string): Step {
   return found;
 }
 
+/** run ブロック内の `node src/cli.ts ...` 呼び出しを argv 列として抽出する。 */
+function cliInvocations(run: string): string[][] {
+  return run
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.includes("node src/cli.ts "))
+    .map((line) =>
+      line
+        .slice(line.indexOf("node src/cli.ts "))
+        .split("|")[0]!
+        .trim()
+        .split(/\s+/)
+        .slice(2)
+        .map((token) => (/^"?\$/.test(token) ? "2026-08-09T00:00:00Z" : token)),
+    );
+}
+
 describe("workflow separation", () => {
   it("fails closed after the final dependency-install retry", () => {
     let installs = 0;
@@ -84,24 +101,8 @@ describe("workflow separation", () => {
     expect(String(step(generated!, "Discover candidates").run)).toContain(
       "--candidate-out data/discovered_candidates.yaml",
     );
-    expect(String(step(generated!, "Discover candidates").run)).toContain(
-      "--archive-out data/discovered_candidates.archive.yaml",
-    );
     const reverifyRun = String(step(generated!, "Reverify due official deadlines").run);
-    // 実行可能契約: workflow の CLI 呼び出しを実際のパーサに通す。#680 の CLI 改編後も
-    // workflow が旧フラグのまま残り unknown option (exit 2) で夜間が全滅した事故の再発防止。
-    const commandLine = reverifyRun
-      .split("\n")
-      .map((line) => line.trim())
-      .find((line) => line.startsWith("node src/cli.ts reverify"));
-    expect(commandLine).toBeTruthy();
-    const argv = commandLine!
-      .split("|")[0]!
-      .trim()
-      .split(/\s+/)
-      .slice(2)
-      .map((token) => (token === '"$BUILD_NOW"' ? "2026-08-09T00:00:00Z" : token));
-    const parsedReverify = parseArgs(argv);
+    const parsedReverify = parseArgs(cliInvocations(reverifyRun)[0]!);
     expect(parsedReverify.command).toBe("reverify");
     expect(parsedReverify.reverifyAction ?? "run").toBe("run");
     expect(parsedReverify.due).toBe(true);
@@ -289,5 +290,36 @@ describe("CI contracts", () => {
       }
       expect(text).toContain("persist-credentials: false");
     }
+  });
+
+  it("keeps every workflow cli.ts invocation parseable by the real CLI parser", () => {
+    // 実行可能契約: 文字列 pin では CLI 改編時の不追従 (unknown option で exit 2) を
+    // 検出できない。#680 後に reverify (--resolutions/--evidence) と discover
+    // (--archive-out) の 2 箇所で同型の夜間全滅が起きた事故の再発防止。
+    let invocations = 0;
+    for (const path of [
+      "ci.yml",
+      "update-data.yml",
+      "deploy.yml",
+      "nightly.yml",
+      "recommendation-bundle.yml",
+    ]) {
+      const { value } = workflow(`../.github/workflows/${path}`);
+      for (const [jobName, job] of Object.entries(value.jobs ?? {})) {
+        for (const candidate of job.steps ?? []) {
+          for (const argv of cliInvocations(String(candidate.run ?? ""))) {
+            invocations += 1;
+            const label = `${path}/${jobName}/${candidate.name ?? "?"}: ${argv.join(" ")}`;
+            try {
+              const parsed = parseArgs(argv);
+              expect(parsed.command, label).toBeTruthy();
+            } catch (error) {
+              throw new Error(`${label}\n${String(error)}`);
+            }
+          }
+        }
+      }
+    }
+    expect(invocations).toBeGreaterThanOrEqual(10);
   });
 });
