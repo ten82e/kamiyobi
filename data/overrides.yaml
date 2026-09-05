@@ -1003,9 +1003,12 @@ conferences:
         # 公式 CFP 頁 (percom.org/call-for-papers/「All deadlines are in AoE」) で通知を追補。
         #   Paper registration Sep 4 / Submission Sep 11 / Early rejection or rebuttal invite
         #   Nov 20 / Rebuttal Nov 27 / **Notification Dec 18** / CR Feb 2027 (TBA → 未収録)。
+        # 2026-09-05 再取得 (percom.org/dates/): 告知「Submission Deadline Extended!
+        #   (4 September 2026)」により registration Sep 4 → Sep 11、submission Sep 11 →
+        #   Sep 18 (いずれも AoE) へ 1 週間延長を確認。
         deadlines:
-          - {kind: registration, label: 'Paper registration', date: '2026-09-04 23:59:59', tz: AoE}
-          - {kind: paper, label: 'Submission', date: '2026-09-11 23:59:59', tz: AoE}
+          - {kind: registration, label: 'Paper registration (extended)', date: '2026-09-11 23:59:59', tz: AoE}
+          - {kind: paper, label: 'Submission (extended)', date: '2026-09-18 23:59:59', tz: AoE}
           - {kind: notification, label: 'Notification', date: '2026-12-18 23:59:59', tz: AoE}
 
   # --- cgo 2027 Fall 通知追加（締切 2 件は公式一致で pin） ---
