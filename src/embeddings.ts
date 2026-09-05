@@ -90,7 +90,7 @@ function hasJapanese(text: string): boolean {
  * （golden EN 実測: top1 0.0%）ことが発端。代表論文タイトルをプロファイルに混ぜると
  * 「会議の実際の採択領域」を埋め込みに反映できる。
  *
- * データ源: 公式採択リスト（SOSP '25 sigops.org / NDSS '25 / ICML PMLR）。
+ * データ源: DBLP の公式書誌ページ、PMLR、既存の公式採択リスト。
  * bench の regression-known テストセット（data/benchmarks/regression-known.json）とは
  * **完全に重複しないタイトルだけを使う**（リークなし検証）。
  */

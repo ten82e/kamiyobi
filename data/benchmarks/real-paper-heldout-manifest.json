@@ -4,55 +4,55 @@
   "records": [
     {
       "paper_id": "heldout-2026-chi-01",
-      "record_sha256": "b6a3f4000e4d6cff5c36c29de9f98405b5a7002e73d9bc169612165ff4d937ae"
+      "record_sha256": "6ba944f6d2c862ece8d00ccecbbd2cbf5a98a142d4276cba24a049305de80c21"
     },
     {
       "paper_id": "heldout-2026-chi-02",
-      "record_sha256": "4056aa7844044c3e8107b179c1914580869034d6ab46f4eb84ebe4d5b9e21a87"
+      "record_sha256": "62d805a39c441d3e1ac440b213d677cc57df0d678d5111e2f3b018b73d6fd8ce"
     },
     {
       "paper_id": "heldout-2026-chi-03",
-      "record_sha256": "23df15097810ff234e1b0ffff0eb8dff27705cf77202c27cb8357056bdb1d9fa"
+      "record_sha256": "667d49c287209f46f806af4d6f41a21067d1e1d1ee2cb9c1b35c6702cc0bf929"
     },
     {
       "paper_id": "heldout-2026-chi-04",
-      "record_sha256": "8fee56ba9f53ddab9904d12a7a55a0807dc00d4227429334db0ad34934e35d5f"
+      "record_sha256": "af78eaac4a45af386a02f17a3aceb40c1d009a9976bc78eeb58da18e4dcaf4c4"
     },
     {
       "paper_id": "heldout-2026-chi-05",
-      "record_sha256": "6ed338be58ef6ff4f9eb462d157d73ff6e95869b1bf99bb80645ff252d7b8843"
+      "record_sha256": "6b0d5b7db3362b71485b030f60dad79d626f1a2e591486b57f19349dea2a0d4a"
     },
     {
       "paper_id": "heldout-2026-chi-06",
-      "record_sha256": "a762f3b9fe33ca056b572595f752b86b324e54902c52667a64a851cecd2c5c64"
+      "record_sha256": "dc01432b68bf7de317c8e59019160582d44c9a3cb9b06c7f623f76cec878c529"
     },
     {
       "paper_id": "heldout-2026-chi-07",
-      "record_sha256": "e081e221132082d77dab4bcbac5e47266ecec5336bb8571c75ff1ccf09f1a467"
+      "record_sha256": "b3712aa5ae1fbae0444c5f63c0a4be4a06395c0a311830fe8c097c37a7520c6d"
     },
     {
       "paper_id": "heldout-2026-chi-08",
-      "record_sha256": "9f5a4e22ccffe5301b296f3a56ead90f99f5135a1bf76e15b6e8104403cc2295"
+      "record_sha256": "1c1be1c5761bdbc2b9e9705c129c1ef0d04382427dd7f3d1ca922513a175c12c"
     },
     {
       "paper_id": "heldout-2026-cvpr-01",
-      "record_sha256": "afebc60d5d10c988cca1ad436debe1cd1cfe974724562cb0c54be993b213a23c"
+      "record_sha256": "9e81891480a5de243256f2af61a40589921ed248138fa9319d1a23338ca4e31f"
     },
     {
       "paper_id": "heldout-2026-cvpr-02",
-      "record_sha256": "f927bba13398bfdab177f9c02d94aecfd82189b3d1619fb9897e27205820f24d"
+      "record_sha256": "7422e1c1845c1746ee7b2343b66e87d115027bae66540a63e6b4606548b4f122"
     },
     {
       "paper_id": "heldout-2026-cvpr-03",
-      "record_sha256": "67c65e950cc1c52d7a431f08fc3cff2ec8028eaceeaeeab82b6fc32222bf0c8e"
+      "record_sha256": "623d84db6c03f96d5c02d56a4231f2a7a155247ed6d05ac3db0fbf632dedf720"
     },
     {
       "paper_id": "heldout-2026-cvpr-04",
-      "record_sha256": "16b3216d52be41c6a9a49367b95253f9c53cb826761d221eb4751da18f35cb1c"
+      "record_sha256": "6569601f750a8db412a6013455909bf1dc4e15b43774a4e83a20a94406da7187"
     },
     {
       "paper_id": "heldout-2026-cvpr-05",
-      "record_sha256": "1d7fd24c5e0b86e9faa1dd77ad7a073a44a9986fb0738c76c59af3be142c15b2"
+      "record_sha256": "7089e4aa77304d26a0d2d76ab3bd0a9e2085d931875ccb29d4a52f9a77191ace"
     },
     {
       "paper_id": "heldout-2026-cvpr-06",
@@ -60,75 +60,75 @@
     },
     {
       "paper_id": "heldout-2026-cvpr-07",
-      "record_sha256": "04ea5832fd5f809a4042bd7aec7c057eade6d80ade12067f4ecf8903e7e866d6"
+      "record_sha256": "52f60ded54be5e6e56c4533fc7f59cdf56c09ae5d18112c1f52a0fcaa646665c"
     },
     {
       "paper_id": "heldout-2026-cvpr-08",
-      "record_sha256": "1d321764f3e23f844beb4270fd00ecd8f75e2c406b2d28174185938e4e0e3ab5"
+      "record_sha256": "deede4e2c29fbce1366dc4dce159fea276bcdd7d1a17d309f5e59b13530a95d7"
     },
     {
       "paper_id": "heldout-2026-cvprw-01",
-      "record_sha256": "c138837659259f52e9d001eb55beacd22b8f29406a32711a5748f16ac9709687"
+      "record_sha256": "ea18f96cf67ed500b423412b33fc390e6f47f8ab1de8203908321b6f97a6ff69"
     },
     {
       "paper_id": "heldout-2026-cvprw-02",
-      "record_sha256": "df85903a620a16cd2d52e279605b4ae7a25b72cc623a467a1b2c1f2865e704e3"
+      "record_sha256": "80402556b4a790e30667f1c39f83ad7c3db9127e6cbb6a93b0b0e5ce66d37087"
     },
     {
       "paper_id": "heldout-2026-cvprw-03",
-      "record_sha256": "8ee1e099558721c930fc8aa88b567492d81be972adcaa20475674e8365240b05"
+      "record_sha256": "f3f7905da93d372266e6bc6a26c504c9b8b027244809d6f810f5960f314e2e2d"
     },
     {
       "paper_id": "heldout-2026-cvprw-04",
-      "record_sha256": "868c213786740dc8b37a400755bc5cd03048f141eb44315a8589a990d1fdfa7a"
+      "record_sha256": "633abe35e61d2d94eae6b685c29eab384faaf05e480dd1491d61fc9b15618511"
     },
     {
       "paper_id": "heldout-2026-hpdc-01",
-      "record_sha256": "b02abfbed5fb8f9a9ed460471d9255e80c68ff42c6c36fb3cc59dccd99367a65"
+      "record_sha256": "e8cb8ce1aa0d2d35b5dbcb687ddc747e70e5453a01e1a0be82ab098b992c3995"
     },
     {
       "paper_id": "heldout-2026-hpdc-02",
-      "record_sha256": "2cba56303dd33cfa872f3fd63344ee2b30dba2f29f3423da7dc1d925f213eaa4"
+      "record_sha256": "3886e497b36f6d1165fa6cef533c96997915bb4657f3f9af6b0530f197ded5a3"
     },
     {
       "paper_id": "heldout-2026-hpdc-03",
-      "record_sha256": "1986e56fd176fea159482bc95adc07c76f5d75e0dfbf6c304ed7f9ef0d5aeb87"
+      "record_sha256": "87524cde11a64f803671d531ab9cbfe5c6d84ebf4106acad22eb52538fe12ef1"
     },
     {
       "paper_id": "heldout-2026-hpdc-04",
-      "record_sha256": "a668883f69dec0b028c96bc0bfcecdbfa058ce75724c3c2549bc7281473f752d"
+      "record_sha256": "0663bf891678a625572ed9993c854292b79d67db3a06ef03f3e2ec7240ad33f2"
     },
     {
       "paper_id": "heldout-2026-hpdc-05",
-      "record_sha256": "07615255f74567e9dd2170ceb48cc66d0fa11b066815be2f00486c69c2a12fec"
+      "record_sha256": "e7d1fc9d3205b55ea8bd0a9db17b55f27a2eac5d1fb6cf5f6fe3d09a8985f3df"
     },
     {
       "paper_id": "heldout-2026-hpdc-06",
-      "record_sha256": "f9a5c7d2954dd6f9a8b1e766028da4fa3f4fb2dc80616d15733b209f8c754174"
+      "record_sha256": "aa5c671f833966c04a70a1d79e4518a5644d1ac9cfcef754daa9d61605ef3966"
     },
     {
       "paper_id": "heldout-2026-hpdc-07",
-      "record_sha256": "900be3f6f9235b574f2d825aa76e12c1a8ccc8968c27118b05ad0ef21494a4a9"
+      "record_sha256": "98a49e2e44226ec0860a1853a8a4450d06f5b15d62d478b39413973830fc92a5"
     },
     {
       "paper_id": "heldout-2026-hpdc-08",
-      "record_sha256": "70b1300537093a8fac308aa6b6c727bdeef876683342ce1df48180a92fd86cad"
+      "record_sha256": "402531566bf35f00817dec84013a22e2fa4e49824b89599be775f6beee6d4dd2"
     },
     {
       "paper_id": "heldout-2026-hpdc-09",
-      "record_sha256": "9c3d37b60c429d61fbd05a16c1dc176e405aceeea10eedbd2eaf06d90de60c38"
+      "record_sha256": "2f6f1d61a48236e1dd55fed0341bcebf6f67cf49ce932efa5d6380dd953ecf8e"
     },
     {
       "paper_id": "heldout-2026-hpdc-10",
-      "record_sha256": "a24a0037fbe693f17223f136fb863ebf15a96302bec2365eabe8947f6f984e00"
+      "record_sha256": "dc40b5f219ea0ff1230ca0530af8afec9f80b7ba9f69bb637dd7ddb22da5cdb2"
     },
     {
       "paper_id": "heldout-2026-hpdc-11",
-      "record_sha256": "9ad395e4792364552fd2caf268628aa02c68a18051866dc9f04877155431f51d"
+      "record_sha256": "94476ca8edebd33b9b9a4dd746bd0ed86d3a84f424bc7fd4ff649062af003bcb"
     },
     {
       "paper_id": "heldout-2026-hpdc-12",
-      "record_sha256": "be12e15eef4cbac050b30caa64878b1b6be53673c40321102767b0236127d29e"
+      "record_sha256": "0a47b6fa26e4c0df1d306c2596d84f07016bb68b5a426795ac405ebe8381eec7"
     },
     {
       "paper_id": "heldout-2026-ipsj-journal-01",
@@ -148,51 +148,51 @@
     },
     {
       "paper_id": "heldout-2026-nolta-special-01",
-      "record_sha256": "c43770bfde963025196fd3d4ea3132e2f0eae61f4407b11fe67f7c39503288af"
+      "record_sha256": "2e2086a9675de33dd4ef305517bbf884a9b7ea2ad34ba906f074a2c963ab7afc"
     },
     {
       "paper_id": "heldout-2026-nolta-special-02",
-      "record_sha256": "621e38fcecbd260b1263a3c491ea3b479e8cc1ca6003953d7fac9e5ef1546113"
+      "record_sha256": "d1516240d6df226f123b0c844f0cf62ce62403c1eb8af59ec6bd5b79f8b9851c"
     },
     {
       "paper_id": "heldout-2026-nolta-special-03",
-      "record_sha256": "92e3ea42eb3cc7050de8d06ecf47950bfc194fcc100d4dfae12ef06a8252c2cc"
+      "record_sha256": "9e2d03a65379d6d58ee2c1d1d927df35af132d7f2dacb2697b240be6a202189c"
     },
     {
       "paper_id": "heldout-2026-nolta-special-04",
-      "record_sha256": "70dbb5f0fbe8d926c707bb286a7f97dd4e5202eb661372c0f3f1342cd90a7fc2"
+      "record_sha256": "1e0a3d308ad2c97b81d7c045668aaa60c53c20bf1e1c8c12b4a56cdb1aa2f396"
     },
     {
       "paper_id": "heldout-2026-nsdi-01",
-      "record_sha256": "6d34f19e2bedf7093cd1dcc522de2e0565c09c8cfe95aa47eb4885335dd8097f"
+      "record_sha256": "cb54f4aabd5963e1a20f04f3528fbef551f6fcedef112143b25864ab4c17668b"
     },
     {
       "paper_id": "heldout-2026-nsdi-02",
-      "record_sha256": "280c6dfc4611883240d291e55fa5a5073e4135187652cb1d2e54bb0c17ada5b6"
+      "record_sha256": "52d0683535d3ae99e0eefc4e872b4d285bf08baf54267bd6a6ec5ee658f704e4"
     },
     {
       "paper_id": "heldout-2026-nsdi-03",
-      "record_sha256": "a6bf70ac73db625fd9c016dba0726ca047f79e5d71fcdc6b097fcb393b45b1e4"
+      "record_sha256": "19cd0e676c9b1c2514c6c5d6537faa80911faa0e1dd7036d12783ff64dbc947b"
     },
     {
       "paper_id": "heldout-2026-nsdi-04",
-      "record_sha256": "a88cdf5a361c4d3ef2d74bbe98254dd2bba21696055e07058dc6db4b9aa8a71f"
+      "record_sha256": "671abf58974fa539c203d8f69b4a76a433e28c22bb219d7b463afa40855bdb7a"
     },
     {
       "paper_id": "heldout-2026-nsdi-05",
-      "record_sha256": "6b23080a42059c5eae05b233aed09f408b8e24013f191af278fc23c973aa9775"
+      "record_sha256": "dbb8e5fe9210d3d41b088e6b90ec8bd9b92e96e7c2c49703b9ad1c6700126cd4"
     },
     {
       "paper_id": "heldout-2026-nsdi-06",
-      "record_sha256": "9bd4fabf1f6407aa5979d0dbd40a7042c3056f4a87b8d42362599d6d29d33b37"
+      "record_sha256": "284d7b2771e82506b636ebd8d60e247882d39cb0394012733ecb1e75f1bd73a7"
     },
     {
       "paper_id": "heldout-2026-nsdi-07",
-      "record_sha256": "526bde70f2e87d8caa9c09b9874c928e2688ac78992d66615b1e3538fc46cd78"
+      "record_sha256": "789d04e9452b335b7a241e42e6f585a8ce8f45ea35e48b8bf34842328e10d46d"
     },
     {
       "paper_id": "heldout-2026-nsdi-08",
-      "record_sha256": "245f8c548476f7a0996dcf8479d2f6040e5dac0a156736c8db21c1e0897ae16b"
+      "record_sha256": "78cb42a9fa6fe9e6fb090701433dc0fc8f303c4ddea85ed32ea4038f5bd6c812"
     },
     {
       "paper_id": "heldout-2026-sigcomm-01",
@@ -200,7 +200,7 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-02",
-      "record_sha256": "96fb8595972ba45af9bc64cac791ded8a7aed8f25d6e5d0405bf12ceb0e18a35"
+      "record_sha256": "7cdb43698877e6d0f60e45c8afe26592a330a8cbe7520ec588e5931e080f6dee"
     },
     {
       "paper_id": "heldout-2026-sigcomm-03",
@@ -208,119 +208,119 @@
     },
     {
       "paper_id": "heldout-2026-sigcomm-04",
-      "record_sha256": "7c2e17c666d16f7cfbba18841c5b0f7b66107173976631836514eed6930efee9"
+      "record_sha256": "7380c30defab311b06193070d22e3cd792d6174ff01a91c086889d52731eec29"
     },
     {
       "paper_id": "heldout-2026-sigcomm-05",
-      "record_sha256": "b120062eea34d7be3c466c64b541ab7bc6ea95dca1bd56a03bbe9c4f96e1a10f"
+      "record_sha256": "874e8972dd31d6ad57d1a16cd975c1dfcb5d078ca064699c492b9b39c9bdcdd0"
     },
     {
       "paper_id": "heldout-2026-sigcomm-06",
-      "record_sha256": "5a48660d9e3262385f51a55e4c9fb1b144505e4d05ccdab758cf019fb34141c0"
+      "record_sha256": "1c0221121675c3b822b8e5000a1b3b7d078ee6a8818f7475322f39853652a25b"
     },
     {
       "paper_id": "heldout-2026-sigcomm-07",
-      "record_sha256": "b549fb716b0bc8629f118191cafa83b6cd0861d1a8a2f9b258728d49639c5203"
+      "record_sha256": "5b0dd2e50244d6631d248ac1c1accd512fa85e7761fe6037db4316a1e2279d8c"
     },
     {
       "paper_id": "heldout-2026-sigcomm-08",
-      "record_sha256": "bad72fa96a498014f680b7703517fbf4c4671b0e8cd27e459b520a214034093f"
+      "record_sha256": "25fbdf987dec367602c7d5019765b88572417a5e3e4008a9158fd1eb899cad07"
     },
     {
       "paper_id": "heldout-2026-sigmod-01",
-      "record_sha256": "81a84e3bf238ca1bac66e6d616d40562f81bb483a837d031950ff66b605a2aee"
+      "record_sha256": "c69b5f5834abc1807d1fb628ff781ec68bcc7da5f7bcf517bb5acf3f4acb4ee3"
     },
     {
       "paper_id": "heldout-2026-sigmod-02",
-      "record_sha256": "63fc94cd9dd8bb0b2f57dcf74ba8e97bd295ce449b3e10b74d019651c4c9556c"
+      "record_sha256": "8bc874fc2eec3efe8d6bb8380318f3bc72f52103e90ed259ef1f34d9afe28268"
     },
     {
       "paper_id": "heldout-2026-sigmod-03",
-      "record_sha256": "ef462954bd06aed9370518545f599fc4f3a101974a6e951c41e96c4d142b8072"
+      "record_sha256": "2ed54a1968a28748bf0d5d1149eb089daf1faae2d27fb6cbaa2521eca936b301"
     },
     {
       "paper_id": "heldout-2026-sigmod-04",
-      "record_sha256": "30ea20b36034ff5de5a9e2d192ad55b840460a8d75673259091b2b017ca3dfc6"
+      "record_sha256": "db16fad466dfc38ea1c2ba8a569961724ff8a34dd9c6976fecc973495e5f192c"
     },
     {
       "paper_id": "heldout-2026-sigmod-05",
-      "record_sha256": "1201bd6a6637859bd68194fa3a699d8d99850f7b3905e1e0ee91f2f653a0f363"
+      "record_sha256": "7978e49728ad499f3d632dee2c8b2ff0be0468d11aaa0cd7b65c74fceae5fd96"
     },
     {
       "paper_id": "heldout-2026-sigmod-06",
-      "record_sha256": "65817824b97e24890b2448757040e8d7564f3b6365a31e3682b10ed07087e05e"
+      "record_sha256": "2233e6050f4a502c754d8642145d9e73757960cb420c15a072e0acf8641976d2"
     },
     {
       "paper_id": "heldout-2026-sigmod-07",
-      "record_sha256": "9308b1d5db17902a72e335365079e20725543ddc203ca98f2a299e0179512882"
+      "record_sha256": "40062c1a7b2656cfe7438a38e20749c0ce676660fcf40035650316734fe4fa69"
     },
     {
       "paper_id": "heldout-2026-sigmod-08",
-      "record_sha256": "bf2ee13913dc3aa25e35f66ea8d0d3bc153fee8aaa0624cb62991360e811eb68"
+      "record_sha256": "2222be10da0c09ef2ef77eebd1dc1fbdd1f2e33f4307370d0841153b11ae7b83"
     },
     {
       "paper_id": "heldout-2026-stoc-01",
-      "record_sha256": "bb992ff90b60e5f54e285e5d122eeb533c7637e57bc25fa756d715e0eb01f213"
+      "record_sha256": "f139179641415bbd9be54f6d36e1a916f1e766454e44804b7768b3691da380b0"
     },
     {
       "paper_id": "heldout-2026-stoc-02",
-      "record_sha256": "a2f1459abd172860817df967d75cb7fbd168687da36a85ffd9f04283dac83cb3"
+      "record_sha256": "eb8de95cb27ad6bb4deac51e1108c34e833858099168421bac354ce40ee08424"
     },
     {
       "paper_id": "heldout-2026-stoc-03",
-      "record_sha256": "fa4d4c001ea68f611f9060958882998df4168062b382213faefc6e52aa9c668f"
+      "record_sha256": "bea401cbc4f41d8cb50b9b01060ee91f22198ac98e407ddbde19b73080da5c4a"
     },
     {
       "paper_id": "heldout-2026-stoc-04",
-      "record_sha256": "32f468cf814b7e544181a26f85a7902f7b810917a14615072bdde6a25641d010"
+      "record_sha256": "4b5a31f5a414b1cafc669a05832aa18d9c902154d3957f8f71f6c0c622851530"
     },
     {
       "paper_id": "heldout-2026-stoc-05",
-      "record_sha256": "0062a44ccf54db5cf07d97d32361a19b50bd12ebce2fbce7867bbe047807091b"
+      "record_sha256": "3cc6bc03a6a7fc666f5bfadedab2f60c16083368b06f2c77802f96ee8d63d5e3"
     },
     {
       "paper_id": "heldout-2026-stoc-06",
-      "record_sha256": "60fffcbdf073ceea21a30c778bde71d78d37860b8457e18606bad36a9a4d5237"
+      "record_sha256": "73796e719d9d0bcba4ad2360b0120ea828a52f8d10ad7bdf96d407a6b11254f1"
     },
     {
       "paper_id": "heldout-2026-stoc-07",
-      "record_sha256": "4f209f4c6609265935905ceaa2df4e8d9f7723aceab39708e43c5d8a88d59ebe"
+      "record_sha256": "d14c602752ce6cedcedc997b81d708ca0300c2f5e2b23f23bdc3415721a6a339"
     },
     {
       "paper_id": "heldout-2026-stoc-08",
-      "record_sha256": "805a7e4143f7424759f7c9afbb594fc28482abf5bcdf3f41036224918333401c"
+      "record_sha256": "02158035831c16d2f7f2d8954168202e8e45954a8a46d39d182fbb6b305dc5ac"
     },
     {
       "paper_id": "heldout-2026-usenix-security-01",
-      "record_sha256": "352a186ef95cedcc3f1570f729f9a83f3fce57d59f4e5a8f514733195b5b938e"
+      "record_sha256": "988d6aeedb1031a9b36af4c48054a61f961ab657bda38f512a91f5746bd33c42"
     },
     {
       "paper_id": "heldout-2026-usenix-security-02",
-      "record_sha256": "627174d7152ad9be94ac3da9145d1a09054934d82beb171e6cdad5a27bd1b14b"
+      "record_sha256": "dd8a0d01fd3b7fed046a8e7d888104cba241553876a7e8d68ae5b8f1b8118b3d"
     },
     {
       "paper_id": "heldout-2026-usenix-security-03",
-      "record_sha256": "5275c14c9a85fe84351463ff11b0035c451dc1568ac816ade7d787c02e74134d"
+      "record_sha256": "3eb91eb5bd7dbb1fe722a790d898f5715a4a14854529cc8b8985bc6cf9534c20"
     },
     {
       "paper_id": "heldout-2026-usenix-security-04",
-      "record_sha256": "0f7d89821d0c9c0b17015e866817bcf8674ed501c494e8537543629ef5b20394"
+      "record_sha256": "e3a7b0a260cba292449aaf4441145247250f6376ca4c75025ec157d5bad61596"
     },
     {
       "paper_id": "heldout-2026-usenix-security-05",
-      "record_sha256": "72eb0a7a32753ea3664c87d6b4f7c2cc07b90ad93df4d8ba0805202d0c173d62"
+      "record_sha256": "851c123cefcf62660c690fe017559edc6416124308d8c5f63acfbc80608dd863"
     },
     {
       "paper_id": "heldout-2026-usenix-security-06",
-      "record_sha256": "1d4e50017a8adda57db9debc60d29db4ace31dc3015af710471177f2ab87747a"
+      "record_sha256": "41349f04f00d22df60eb7f0312f659957ca95ba0770b12b1b27bc6890641e6a3"
     },
     {
       "paper_id": "heldout-2026-usenix-security-07",
-      "record_sha256": "97f5ad94f3db674783149072869e8f1576326527316fcf10c22567a27f965326"
+      "record_sha256": "e402b570dbe2d786f14b5fbf0cf016999381752e7d7efa21d97ceba0b0a57a4a"
     },
     {
       "paper_id": "heldout-2026-usenix-security-08",
-      "record_sha256": "4c86b8315c3b7e2e5b31f8408cbfd5d2e5ff6a17245618d1d3d76022ef4f7304"
+      "record_sha256": "9f6b8a0a97a845691131ac976508f42e424dd9f6246d883c34d7ab2f0f889a3e"
     }
   ]
 }

@@ -11,6 +11,20 @@
     "ches": {
       "papers": [
         {
+          "title": "1LUTSensor: Detecting FPGA Voltage Fluctuations using LookUp Tables",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "A Tale of Snakes and Horses: Amplifying Correlation Power Analysis on Quadratic Maps",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
           "title": "A5/3 make or break: A massively parallel FPGA architecture for exhaustive key search",
           "year": 2025,
           "source": "dblp",
@@ -39,6 +53,20 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
+          "title": "All You Need Is Fault: Zero-Value Attacks on AES and a New λ-Detection M&M",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "CalyPSO: An Enhanced Search Optimization based Framework to Model Delay-based PUFs",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
           "title": "CHERI-Crypt: Transparent Memory Encryption on Capability Architectures",
           "year": 2025,
           "source": "dblp",
@@ -53,6 +81,13 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
+          "title": "EstraNet: An Efficient Shift-Invariant Transformer Network for Side-Channel Analysis",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
           "title": "FalconSign: An Efficient and High-Throughput Hardware Architecture for Falcon Signature Generation",
           "year": 2025,
           "source": "dblp",
@@ -60,11 +95,39 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
+          "title": "Fallen Sanctuary: A Higher-Order and Leakage-Resilient Rekeying Scheme",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
           "title": "FANNG-MPC: Framework for Artificial Neural Networks and Generic MPC",
           "year": 2025,
           "source": "dblp",
           "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
           "collected_at": "2026-08-19T15:05:00.000Z"
+        },
+        {
+          "title": "Fast and Accurate: Efficient Full-Domain Functional Bootstrap and Digit Decomposition for Homomorphic Computation",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Fast and Clean: Auditable high-performance assembly via constraint solving",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Faster Bootstrapping via Modulus Raising and Composite NTT",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
         },
         {
           "title": "Fault Attacks on ECC Signature Verification",
@@ -81,6 +144,13 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
+          "title": "Gadget-based Masking of Streamlined NTRU Prime Decapsulation in Hardware",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
           "title": "GPU Acceleration for FHEW/TFHE Bootstrapping",
           "year": 2025,
           "source": "dblp",
@@ -88,11 +158,32 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
+          "title": "High-assurance zeroization",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
           "title": "KyberSlash: Exploiting Secret-Dependent Division Timings in Kyber Implementations",
           "year": 2025,
           "source": "dblp",
           "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
           "collected_at": "2026-08-19T15:05:00.000Z"
+        },
+        {
+          "title": "Low Cost and Precise Jitter Measurement Method for TRNG Entropy Assessment",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "ModHE: Modular Homomorphic Encryption Using Module Lattices Potentials and Limitations",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
         },
         {
           "title": "New Quantum Cryptanalysis of Binary Elliptic Curves",
@@ -123,11 +214,53 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
+          "title": "Quantile: Quantifying Information Leakage",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Quasi-linear masking against SCA and FIA, with cost amortization",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "SEV-Step A Single-Stepping Framework for AMD-SEV",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Smooth Passage with the Guards: Second-Order Hardware Masking of the AES with Low Randomness and Low Latency",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
           "title": "SoK: FHE-Friendly Symmetric Ciphers and Transciphering",
           "year": 2025,
           "source": "dblp",
           "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
           "collected_at": "2026-08-19T15:05:00.000Z"
+        },
+        {
+          "title": "StaTI: Protecting against Fault Attacks Using Stable Threshold Implementations",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "TeeJam: Sub-Cache-Line Leakages Strike Back",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
         },
         {
           "title": "TFHE Gets Real: An Efficient and Flexible Homomorphic Floating-Point Arithmetic",
@@ -149,17 +282,346 @@
           "source": "dblp",
           "source_url": "https://dblp.org/db/conf/ches/ches2025.html",
           "collected_at": "2026-08-19T15:05:00.000Z"
+        },
+        {
+          "title": "Who Watches the Watchers: Attacking Glitch Detection Circuits",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/tches/tches2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
         }
       ],
       "prototypes": [
-        "Adaptive Template Attacks on the Kyber Binomial Sampler",
+        "A Tale of Snakes and Horses: Amplifying Correlation Power Analysis on Quadratic Maps",
+        "A5/3 make or break: A massively parallel FPGA architecture for exhaustive key search",
         "Constant time lattice reduction in dimension 4 with application to SQIsign",
-        "FalconSign: An Efficient and High-Throughput Hardware Architecture for Falcon Signature Generation",
-        "FANNG-MPC: Framework for Artificial Neural Networks and Generic MPC",
+        "EstraNet: An Efficient Shift-Invariant Transformer Network for Side-Channel Analysis",
         "GPU Acceleration for FHEW/TFHE Bootstrapping",
-        "POTA: A Pipelined Oblivious Transfer Acceleration Architecture for Secure Multi-Party Computation",
-        "TPUXtract: An Exhaustive Hyperparameter Extraction Framework",
-        "Trace Copilot: Automatically Locating Cryptographic Operations in Side-Channel Traces by Firmware Binary Instrumenting"
+        "KyberSlash: Exploiting Secret-Dependent Division Timings in Kyber Implementations",
+        "Quasi-linear masking against SCA and FIA, with cost amortization",
+        "TPUXtract: An Exhaustive Hyperparameter Extraction Framework"
+      ],
+      "selection": {
+        "method": "fixed-title-embedding-k-medoids",
+        "max_prototypes": 8,
+        "source_year_max": 2025,
+        "embedding_model": "Xenova/all-MiniLM-L6-v2",
+        "embedding_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
+      }
+    },
+    "chi": {
+      "papers": [
+        {
+          "title": "\"This is not a data problem\": Algorithms and Power in Public Higher Education in Canada",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "(Un)making AI Magic: A Design Taxonomy",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "AI-Assisted Causal Pathway Diagram for Human-Centered Design",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "CollabCoder: A Lower-barrier, Rigorous Workflow for Inductive Collaborative Qualitative Analysis with Large Language Models",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Designing a Multisensory VR Game Prototype for Older Adults - the Acceptability and Design Implications",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Enhancing UX Evaluation Through Collaboration with Conversational AI Assistants: Effects of Proactive Dialogue and Timing",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Evaluating Large Language Models on Academic Literature Understanding and Review: An Empirical Study among Early-stage Scholars",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "From Paper to Card: Transforming Design Implications with Generative AI",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Generating Automatic Feedback on UI Mockups with Large Language Models",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "How AI Processing Delays Foster Creativity: Exploring Research Question Co-Creation with an LLM-based Agent",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Integrating measures of replicability into scholarly search: Challenges and opportunities",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Jigsaw: Supporting Designers to Prototype Multimodal Applications by Chaining AI Foundation Models",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Know Your Audience: The benefits and pitfalls of generating plain language summaries beyond the \"general\" audience",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "MUD: Towards a Large-Scale and Noise-Filtered UI Dataset for Modern Style UI Modeling",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "OmniActions: Predicting Digital Actions in Response to Real-World Multimodal Sensory Inputs with LLMs",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "PaperWeaver: Enriching Topical Paper Alerts by Contextualizing Recommended Papers with User-collected Papers",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "SimUser: Generating Usability Feedback by Simulating Various Users Interacting with Mobile Applications",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Surveyor: Facilitating Discovery Within Video Games for Blind and Low Vision Players",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Understanding the Role of Large Language Models in Personalizing and Scaffolding Strategies to Combat Academic Procrastination",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "VAL: Interactive Task Learning with GPT Dialog Parsing",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/chi/chi2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        }
+      ],
+      "prototypes": [
+        "\"This is not a data problem\": Algorithms and Power in Public Higher Education in Canada",
+        "Evaluating Large Language Models on Academic Literature Understanding and Review: An Empirical Study among Early-stage Scholars",
+        "Jigsaw: Supporting Designers to Prototype Multimodal Applications by Chaining AI Foundation Models",
+        "Know Your Audience: The benefits and pitfalls of generating plain language summaries beyond the \"general\" audience",
+        "OmniActions: Predicting Digital Actions in Response to Real-World Multimodal Sensory Inputs with LLMs",
+        "PaperWeaver: Enriching Topical Paper Alerts by Contextualizing Recommended Papers with User-collected Papers",
+        "Surveyor: Facilitating Discovery Within Video Games for Blind and Low Vision Players",
+        "VAL: Interactive Task Learning with GPT Dialog Parsing"
+      ],
+      "selection": {
+        "method": "fixed-title-embedding-k-medoids",
+        "max_prototypes": 8,
+        "source_year_max": 2025,
+        "embedding_model": "Xenova/all-MiniLM-L6-v2",
+        "embedding_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
+      }
+    },
+    "cvpr": {
+      "papers": [
+        {
+          "title": "A Category Agnostic Model for Visual Rearrangment",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "BigGait: Learning Gait Representation You Want by Large Vision Models",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Bilateral Event Mining and Complementary for Event Stream Super-Resolution",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "DiffusionLight: Light Probes for Free by Painting a Chrome Ball",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Eclipse: Disambiguating Illumination and Materials Using Unintended Shadows",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "FlowIE: Efficient Image Enhancement via Rectified Flow",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "FMA-Net: Flow-Guided Dynamic Filtering and Iterative Feature Refinement with Multi-Attention for Joint Video Super-Resolution and Deblurring",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "GPLD3D: Latent Diffusion of 3D Shape Generative Models by Enforcing Geometric and Physical Priors",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Gradient Alignment for Cross-Domain Face Anti-Spoofing",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "MultiPly: Reconstruction of Multiple People from Monocular Video in the Wild",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Objects as Volumes: A Stochastic Geometry View of Opaque Solids",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Relightable Gaussian Codec Avatars",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Retrieval-Augmented Layout Transformer for Content-Aware Layout Generation",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "SEAS: ShapE-Aligned Supervision for Person Re-Identification",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Semantic Human Mesh Reconstruction with Textures",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Specularity Factorization for Low-Light Enhancement",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Stratified Avatar Generation from Sparse Observations",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Test-Time Domain Generalization for Face Anti-Spoofing",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Towards Robust Event-guided Low-Light Image Enhancement: A Large-Scale Real-World Event-Image Dataset and Novel Approach",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "URHand: Universal Relightable Hands",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/cvpr/cvpr2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        }
+      ],
+      "prototypes": [
+        "Bilateral Event Mining and Complementary for Event Stream Super-Resolution",
+        "DiffusionLight: Light Probes for Free by Painting a Chrome Ball",
+        "FlowIE: Efficient Image Enhancement via Rectified Flow",
+        "GPLD3D: Latent Diffusion of 3D Shape Generative Models by Enforcing Geometric and Physical Priors",
+        "MultiPly: Reconstruction of Multiple People from Monocular Video in the Wild",
+        "Relightable Gaussian Codec Avatars",
+        "Retrieval-Augmented Layout Transformer for Content-Aware Layout Generation",
+        "Test-Time Domain Generalization for Face Anti-Spoofing"
       ],
       "selection": {
         "method": "fixed-title-embedding-k-medoids",
@@ -349,6 +811,328 @@
         "Pegasus: Transparent and Unified Kernel-Bypass Networking for Fast Local and Remote Communication",
         "Rakis: Secure Fast I/O Primitives Across Trust Boundaries on Intel SGX",
         "Towards Efficient Flash Caches with Emerging NVMe Flexible Data Placement SSDs"
+      ],
+      "selection": {
+        "method": "fixed-title-embedding-k-medoids",
+        "max_prototypes": 8,
+        "source_year_max": 2025,
+        "embedding_model": "Xenova/all-MiniLM-L6-v2",
+        "embedding_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
+      }
+    },
+    "focs": {
+      "papers": [
+        {
+          "title": "A Lossless Deamortization for Dynamic Greedy Set Cover",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "A Sampling Lovász Local Lemma for Large Domain Sizes",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Computational Dynamical Systems",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Computing the 3-Edge-Connected Components of Directed Graphs in Linear Time",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Cycles of Well-Linked Sets and an Elementary Bound for the Directed Grid Theorem",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Distinguishing, Predicting, and Certifying: On the Long Reach of Partial Notions of Pseudorandomness",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Fast Mixing in Sparse Random Ising Models",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "First-Order Model Checking on Monadically Stable Graph Classes",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Fully Dynamic k-Clustering with Fast Update Time and Small Recourse",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Fully Dynamic Matching and Ordered Ruzsa-Szemerédi Graphs",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Locally Stationary Distributions: A Framework for Analyzing Slow-Mixing Markov Chains",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Minor Containment and Disjoint Paths in Almost-Linear Time",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "O(1) Insertion for Random Walk d-ary Cuckoo Hashing up to the Load Threshold",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Obstructions to Erdös-Pósa Dualities for Minors",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "On Approximate Fully-Dynamic Matching and Online Matrix-Vector Multiplication",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Predict to Minimize Swap Regret for All Payoff-Bounded Tasks",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Replicability in High Dimensional Statistics",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Sampling, Counting, and Large Deviations for Triangle-Free Graphs Near the Critical Density",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "The Online Submodular Assignment Problem",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Three-Edge-Coloring Projective Planar Cubic Graphs: A Generalization of the Four Color Theorem",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/focs/focs2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        }
+      ],
+      "prototypes": [
+        "A Lossless Deamortization for Dynamic Greedy Set Cover",
+        "A Sampling Lovász Local Lemma for Large Domain Sizes",
+        "Distinguishing, Predicting, and Certifying: On the Long Reach of Partial Notions of Pseudorandomness",
+        "Fully Dynamic Matching and Ordered Ruzsa-Szemerédi Graphs",
+        "Locally Stationary Distributions: A Framework for Analyzing Slow-Mixing Markov Chains",
+        "O(1) Insertion for Random Walk d-ary Cuckoo Hashing up to the Load Threshold",
+        "Obstructions to Erdös-Pósa Dualities for Minors",
+        "Predict to Minimize Swap Regret for All Payoff-Bounded Tasks"
+      ],
+      "selection": {
+        "method": "fixed-title-embedding-k-medoids",
+        "max_prototypes": 8,
+        "source_year_max": 2025,
+        "embedding_model": "Xenova/all-MiniLM-L6-v2",
+        "embedding_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
+      }
+    },
+    "hpdc": {
+      "papers": [
+        {
+          "title": "A Portable, Fast, DCT-based Compressor for AI Accelerators",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Accelerating Function-Centric Applications by Discovering, Distributing, and Retaining Reusable Context in Workflow Systems",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "ADTopk: All-Dimension Top-k Compression for High-Performance Data-Parallel DNN Training",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "DataStates-LLM: Lazy Asynchronous Checkpointing for Large Language Models",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "DLHT: A Non-blocking Resizable Hashtable with Fast Deletes and Memory-awareness",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Efficient all-to-all Collective Communication Schedules for Direct-connect Topologies",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "ElasticRoom: Multi-Tenant DNN Inference Engine via Co-design with Resource-constrained Compilation and Strong Priority Scheduling",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "ESG: Pipeline-Conscious Efficient Scheduling of DNN Workflows on Serverless Platforms with Shareable GPUs",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "ETS: Deep Learning Training Iteration Time Prediction based on Execution Trace Sliding Window",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "EvoStore: Towards Scalable Storage of Evolving Learning Models",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Extending Sparse Patterns to Improve Inverse Preconditioning on GPU Architectures",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "FaaSKeeper: Learning from Building Serverless Services with ZooKeeper as an Example",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "FaaSRail: Employing Real Workloads to Generate Representative Load for Serverless Research",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Faast: An Efficient Serverless Framework Made Snapshot-based Function Response Fast",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "FASOP: Fast yet Accurate Automated Search for Optimal Parallelization of Transformers on Heterogeneous GPU Clusters",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "FPBOXer: Efficient Input-Generation for Targeting Floating-Point Exceptions in GPU Programs",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "GNNOne: A Unified System Optimizations for GNN Kernels",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "HAM-SpMSpV: an Optimized Parallel Algorithm for Masked Sparse Matrix-Sparse Vector Multiplications on multi-core CPUs",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "IDT: Intelligent Data Placement for Multi-tiered Main Memory with Reinforcement Learning",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Reinforcement Learning-based Adaptive Mitigation of Uncorrected DRAM Errors in the Field",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/hpdc/hpdc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        }
+      ],
+      "prototypes": [
+        "A Portable, Fast, DCT-based Compressor for AI Accelerators",
+        "Accelerating Function-Centric Applications by Discovering, Distributing, and Retaining Reusable Context in Workflow Systems",
+        "DataStates-LLM: Lazy Asynchronous Checkpointing for Large Language Models",
+        "ElasticRoom: Multi-Tenant DNN Inference Engine via Co-design with Resource-constrained Compilation and Strong Priority Scheduling",
+        "ETS: Deep Learning Training Iteration Time Prediction based on Execution Trace Sliding Window",
+        "Extending Sparse Patterns to Improve Inverse Preconditioning on GPU Architectures",
+        "FaaSRail: Employing Real Workloads to Generate Representative Load for Serverless Research",
+        "Reinforcement Learning-based Adaptive Mitigation of Uncorrected DRAM Errors in the Field"
       ],
       "selection": {
         "method": "fixed-title-embedding-k-medoids",
@@ -571,6 +1355,20 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
+          "title": "A Unified Framework for Learning with Nonlinear Model Classes from Arbitrary Linear Samples",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "ACPO: A Policy Optimization Algorithm for Average MDPs with Constraints",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
           "title": "Active Sampling for Min-Max Fairness",
           "year": 2025,
           "source": "pmlr",
@@ -578,11 +1376,67 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
+          "title": "Adaptively Perturbed Mirror Descent for Learning in Games",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "AttnLRP: Attention-Aware Layer-Wise Relevance Propagation for Transformers",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Balancing Feature Similarity and Label Variability for Optimal Size-Aware One-shot Subset Selection",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Bayesian Uncertainty for Gradient Aggregation in Multi-Task Learning",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "BeigeMaps: Behavioral Eigenmaps for Reinforcement Learning from Images",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "CHAI: Clustered Head Attention for Efficient LLM Inference",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "CosPGD: an efficient white-box adversarial attack for pixel-wise prediction tasks",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
           "title": "Deploying Convolutional Networks on Untrusted Platforms Using 2D Holographic Reduced Representations",
           "year": 2025,
           "source": "pmlr",
           "source_url": "https://proceedings.mlr.press/v267/",
           "collected_at": "2026-08-19T15:05:00.000Z"
+        },
+        {
+          "title": "Discovering Bias in Latent Space: An Unsupervised Debiasing Approach",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
         },
         {
           "title": "Do More Negative Samples Necessarily Hurt In Contrastive Learning?",
@@ -597,6 +1451,13 @@
           "source": "pmlr",
           "source_url": "https://proceedings.mlr.press/v267/",
           "collected_at": "2026-08-19T15:05:00.000Z"
+        },
+        {
+          "title": "FrameQuant: Flexible Low-Bit Quantization for Transformers",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
         },
         {
           "title": "Gradient Based Clustering",
@@ -627,11 +1488,39 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
+          "title": "Improved Differentially Private and Lazy Online Convex Optimization: Lower Regret without Smoothness Requirements",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "InferCept: Efficient Intercept Support for Augmented Large Language Model Inference",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "LeaPformer: Enabling Linear Transformers for Autoregressive and Simultaneous Tasks via Learned Proportions",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
           "title": "Learning of Cluster-based Feature Importance for Electronic Health Record Time-series",
           "year": 2025,
           "source": "pmlr",
           "source_url": "https://proceedings.mlr.press/v267/",
           "collected_at": "2026-08-19T15:05:00.000Z"
+        },
+        {
+          "title": "Learning to Play Atari in a World of Tokens",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
         },
         {
           "title": "Neuro-Symbolic Language Modeling with Automaton-augmented Retrieval",
@@ -648,6 +1537,13 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
+          "title": "Optimal Coresets for Low-Dimensional Geometric Median",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
           "title": "Optimistic Linear Support and Successor Features as a Basis for Optimal Policy Transfer",
           "year": 2025,
           "source": "pmlr",
@@ -655,11 +1551,32 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
+          "title": "Probabilistic Generating Circuits - Demystified",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
           "title": "Proving Theorems using Incremental Learning and Hindsight Experience Replay",
           "year": 2025,
           "source": "pmlr",
           "source_url": "https://proceedings.mlr.press/v267/",
           "collected_at": "2026-08-19T15:05:00.000Z"
+        },
+        {
+          "title": "REST: Efficient and Accelerated EEG Seizure Analysis through Residual State Updates",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Revisiting Character-level Adversarial Attacks for Language Models",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
         },
         {
           "title": "Scalable First-Order Bayesian Optimization via Structured Automatic Differentiation",
@@ -690,6 +1607,13 @@
           "collected_at": "2026-08-19T15:05:00.000Z"
         },
         {
+          "title": "The Non-linear $F$-Design and Applications to Interactive Learning",
+          "year": 2024,
+          "source": "pmlr",
+          "source_url": "https://proceedings.mlr.press/v235/",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
           "title": "Thresholded Lasso Bandit",
           "year": 2025,
           "source": "pmlr",
@@ -712,14 +1636,175 @@
         }
       ],
       "prototypes": [
-        "A Natural Actor-Critic Framework for Zero-Sum Markov Games",
+        "A Unified Framework for Learning with Nonlinear Model Classes from Arbitrary Linear Samples",
         "Active Sampling for Min-Max Fairness",
-        "Deploying Convolutional Networks on Untrusted Platforms Using 2D Holographic Reduced Representations",
-        "Do Not Mimic My Voice: Speaker Identity Unlearning for Zero-Shot Text-to-Speech",
-        "Learning of Cluster-based Feature Importance for Electronic Health Record Time-series",
+        "Adaptively Perturbed Mirror Descent for Learning in Games",
+        "CosPGD: an efficient white-box adversarial attack for pixel-wise prediction tasks",
+        "Do More Negative Samples Necessarily Hurt In Contrastive Learning?",
         "Neuro-Symbolic Language Modeling with Automaton-augmented Retrieval",
-        "Structured Stochastic Gradient MCMC",
+        "REST: Efficient and Accelerated EEG Seizure Analysis through Residual State Updates",
         "XAI for Transformers: Better Explanations through Conservative Propagation"
+      ],
+      "selection": {
+        "method": "fixed-title-embedding-k-medoids",
+        "max_prototypes": 8,
+        "source_year_max": 2025,
+        "embedding_model": "Xenova/all-MiniLM-L6-v2",
+        "embedding_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
+      }
+    },
+    "ipdps": {
+      "papers": [
+        {
+          "title": "A Cholesky QR type algorithm for computing tall-skinny QR factorization with column pivoting",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Alternative Basis Matrix Multiplication is Fast and Stable",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "AMST: Accelerating Large-Scale Graph Minimum Spanning Tree Computation on FPGA",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Application-Attuned Memory Management for Containerized HPC Workflows",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "CKSM: An Efficient Memory Deduplication Method for Container-based Cloud Computing Systems",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Enhancing the Generalization of Personalized Federated Learning with Multi-head Model and Ensemble Voting",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Fast multiplication of random dense matrices with sparse matrices",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "FEDGE: An Interference-Aware QoS Prediction Framework for Black-Box Scenario in IaaS Clouds with Domain Generalization",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Low-Depth Spatial Tree Algorithms",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Paldia: Enabling SLO-Compliant and Cost-Effective Serverless Computing on Heterogeneous Hardware",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "PckGNN: Optimizing Aggregation Operators with Packing Strategies in Graph Neural Networks",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Picasso: Memory-Efficient Graph Coloring Using Palettes With Applications in Quantum Computing",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "QSync: Quantization-Minimized Synchronous Distributed Training Across Hybrid Devices",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Scalable and Differentiable Simulator for Quantum Computational Chemistry",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Software Resource Disaggregation for HPC with Serverless Computing",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Tackling Cold Start in Serverless Computing with Multi-Level Container Reuse",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Two-Stage Block Orthogonalization to Improve Performance of s-step GMRES",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "UniFaaS: Programming across Distributed Cyberinfrastructure with Federated Function Serving",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "VNEC: A Vectorized Non-Empty Column Format for SpMV on CPUs",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Wait-free Trees with Asymptotically-Efficient Range Queries",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/ipps/ipdps2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        }
+      ],
+      "prototypes": [
+        "Alternative Basis Matrix Multiplication is Fast and Stable",
+        "Fast multiplication of random dense matrices with sparse matrices",
+        "PckGNN: Optimizing Aggregation Operators with Packing Strategies in Graph Neural Networks",
+        "Picasso: Memory-Efficient Graph Coloring Using Palettes With Applications in Quantum Computing",
+        "QSync: Quantization-Minimized Synchronous Distributed Training Across Hybrid Devices",
+        "Tackling Cold Start in Serverless Computing with Multi-Level Container Reuse",
+        "UniFaaS: Programming across Distributed Cyberinfrastructure with Federated Function Serving",
+        "Wait-free Trees with Asymptotically-Efficient Range Queries"
       ],
       "selection": {
         "method": "fixed-title-embedding-k-medoids",
@@ -1618,6 +2703,328 @@
         "embedding_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
       }
     },
+    "sigcomm": {
+      "papers": [
+        {
+          "title": "An Architecture For Edge Networking Services",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Crux: GPU-Efficient Communication Scheduling for Deep Learning Training",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "dAuth: A Resilient Authentication Architecture for Federated Private Cellular Networks",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Dissecting Carrier Aggregation in 5G Networks: Measurement, QoE Implications and Prediction",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Eagle: Toward Scalable and Near-Optimal Network-Wide Sketch Deployment in Network Measurement",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Fast, Scalable, and Accurate Rate Limiter for RDMA NICs",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "NegotiaToR: Towards A Simple Yet Effective On-demand Reconfigurable Datacenter Network",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "NetEdit: An Orchestration Platform for eBPF Network Functions at Scale",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "OptimusPrime: Unleash Dataplane Programmability through a Transformable Architecture",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Principles for Internet Congestion Management",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "R-Pingmesh: A Service-Aware RoCE Network Monitoring and Diagnostic System",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "RD-Probe: Scalable Monitoring With Sufficient Coverage In Complex Datacenter Networks",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Shale: A Practical, Scalable Oblivious Reconfigurable Network",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "SODA: An Adaptive Bitrate Controller for Consistent High-Quality Video Streaming",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "SUSS: Improving TCP Performance by Speeding Up Slow-Start",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Ten years of the Venezuelan crisis - An Internet perspective",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "The Next Generation of BGP Data Collection Platforms",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "TraceWeaver: Distributed Request Tracing for Microservices Without Application Modification",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Transferable Neural WAN TE for Changing Topologies",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "YuanRong: A Production General-purpose Serverless System for Distributed Applications in the Cloud",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/sigcomm/sigcomm2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        }
+      ],
+      "prototypes": [
+        "dAuth: A Resilient Authentication Architecture for Federated Private Cellular Networks",
+        "OptimusPrime: Unleash Dataplane Programmability through a Transformable Architecture",
+        "RD-Probe: Scalable Monitoring With Sufficient Coverage In Complex Datacenter Networks",
+        "SODA: An Adaptive Bitrate Controller for Consistent High-Quality Video Streaming",
+        "Ten years of the Venezuelan crisis - An Internet perspective",
+        "The Next Generation of BGP Data Collection Platforms",
+        "Transferable Neural WAN TE for Changing Topologies",
+        "YuanRong: A Production General-purpose Serverless System for Distributed Applications in the Cloud"
+      ],
+      "selection": {
+        "method": "fixed-title-embedding-k-medoids",
+        "max_prototypes": 8,
+        "source_year_max": 2025,
+        "embedding_model": "Xenova/all-MiniLM-L6-v2",
+        "embedding_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
+      }
+    },
+    "sigmod": {
+      "papers": [
+        {
+          "title": "A Neural Approach to Spatio-Temporal Data Release with User-Level Differential Privacy",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "A New Sparse Data Clustering Method Based On Frequent Items",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "AutoOD: Automatic Outlier Detection",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "AWARE: Workload-aware, Redundancy-exploiting Linear Algebra",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Circinus: Fast Redundancy-Reduced Subgraph Matching",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Composite Object Normal Forms: Parameterizing Boyce-Codd Normal Form by the Number of Minimal Keys",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "CompressGraph: Efficient Parallel Graph Analytics with Rule-Based Compression",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "EAR-Oracle: On Efficient Indexing for Distance Queries between Arbitrary Points on Terrain Surface",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Effectiveness Perspectives and a Deep Relevance Model for Spatial Keyword Queries",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Efficient Estimation of Pairwise Effective Resistance",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Fast Continuous Subgraph Matching over Streaming Graphs via Backtracking Reduction",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "iFlipper: Label Flipping for Individual Fairness",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Incremental Tabular Learning on Heterogeneous Feature Space",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "LadderFilter: Filtering Infrequent Items with Small Memory and Time Overhead",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "One-shot Garbage Collection for In-memory OLTP through Temporality-aware Version Storage",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "SANTOS: Relationship-based Semantic Table Union Search",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Sequence-Based Target Coin Prediction for Cryptocurrency Pump-and-Dump",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Time2State: An Unsupervised Framework for Inferring the Latent States in Time Series Data",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Unsupervised Hashing with Semantic Concept Mining",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Virtual-Memory Assisted Buffer Management",
+          "year": 2023,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pacmmod/pacmmod1.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        }
+      ],
+      "prototypes": [
+        "A Neural Approach to Spatio-Temporal Data Release with User-Level Differential Privacy",
+        "Composite Object Normal Forms: Parameterizing Boyce-Codd Normal Form by the Number of Minimal Keys",
+        "EAR-Oracle: On Efficient Indexing for Distance Queries between Arbitrary Points on Terrain Surface",
+        "Efficient Estimation of Pairwise Effective Resistance",
+        "iFlipper: Label Flipping for Individual Fairness",
+        "Incremental Tabular Learning on Heterogeneous Feature Space",
+        "LadderFilter: Filtering Infrequent Items with Small Memory and Time Overhead",
+        "Sequence-Based Target Coin Prediction for Cryptocurrency Pump-and-Dump"
+      ],
+      "selection": {
+        "method": "fixed-title-embedding-k-medoids",
+        "max_prototypes": 8,
+        "source_year_max": 2025,
+        "embedding_model": "Xenova/all-MiniLM-L6-v2",
+        "embedding_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
+      }
+    },
     "sosp": {
       "papers": [
         {
@@ -1770,6 +3177,328 @@
         "HedraRAG: Co-Optimizing Generation and Retrieval for Heterogeneous RAG Workflows",
         "How to Copy Memory? Coordinated Asynchronous Copy as a First-Class OS Service",
         "Unlocking True Elasticity for the Cloud-Native Era with Dandelion"
+      ],
+      "selection": {
+        "method": "fixed-title-embedding-k-medoids",
+        "max_prototypes": 8,
+        "source_year_max": 2025,
+        "embedding_model": "Xenova/all-MiniLM-L6-v2",
+        "embedding_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
+      }
+    },
+    "stoc": {
+      "papers": [
+        {
+          "title": "Approximate Earth Mover's Distance in Truly-Subquadratic Time",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Black-Box Identity Testing of Noncommutative Rational Formulas in Deterministic Quasipolynomial Time",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Calibrated Language Models Must Hallucinate",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Exploring and Learning in Sparse Linear MDPs without Computationally Intractable Oracles",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Learning the Coefficients: A Presentable Version of Border Complexity and Applications to Circuit Factoring",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Low-Step Multi-commodity Flow Emulators",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Maximum Bipartite Matching in n2+o(1) Time via a Combinatorial Algorithm",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Near Optimal Alphabet-Soundness Tradeoff PCPs",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Near-Optimal Dynamic Rounding of Fractional Matchings in Bipartite Graphs",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Near-Optimal Mean Estimation with Unknown, Heteroskedastic Variances",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "On the Power of Homogeneous Algebraic Formulas",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Online Edge Coloring Is (Nearly) as Easy as Offline",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Parameterized Inapproximability Hypothesis under Exponential Time Hypothesis",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Private Graphon Estimation via Sum-of-Squares",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Single-Source Shortest Paths with Negative Real Weights in Õ(mn8/9) Time",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Strategic Budget Selection in a Competitive Autobidding World",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Strong Algebras and Radical Sylvester-Gallai Configurations",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Super Non-singular Decompositions of Polynomials and Their Application to Robustly Learning Low-Degree PTFs",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "The Minimal Faithful Permutation Degree of Groups without Abelian Normal Subgroups",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "The Power of Two-Sided Recruitment in Two-Sided Markets",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/stoc/stoc2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        }
+      ],
+      "prototypes": [
+        "Calibrated Language Models Must Hallucinate",
+        "Exploring and Learning in Sparse Linear MDPs without Computationally Intractable Oracles",
+        "Low-Step Multi-commodity Flow Emulators",
+        "Near-Optimal Dynamic Rounding of Fractional Matchings in Bipartite Graphs",
+        "Online Edge Coloring Is (Nearly) as Easy as Offline",
+        "Parameterized Inapproximability Hypothesis under Exponential Time Hypothesis",
+        "Strong Algebras and Radical Sylvester-Gallai Configurations",
+        "The Power of Two-Sided Recruitment in Two-Sided Markets"
+      ],
+      "selection": {
+        "method": "fixed-title-embedding-k-medoids",
+        "max_prototypes": 8,
+        "source_year_max": 2025,
+        "embedding_model": "Xenova/all-MiniLM-L6-v2",
+        "embedding_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
+      }
+    },
+    "uist": {
+      "papers": [
+        {
+          "title": "Augmented Object Intelligence with XR-Objects",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Beyond the Chat: Executable and Verifiable Text-Editing with LLMs",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Can a Smartwatch Move Your Fingers? Compact and Practical Electrical Muscle Stimulation in a Smartwatch",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Can Capacitive Touch Images Enhance Mobile Keyboard Decoding?",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "CARDinality: Interactive Card-shaped Robots with Locomotion and Haptics using Vibration",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "CoLadder: Manipulating Code Generation via Multi-Level Blocks",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "HandPad: Make Your Hand an On-the-go Writing Pad via Human Capacitance",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "MagneDot: Integrated Fabrication and Actuation Methods of Dot-Based Magnetic Shape Displays",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "MouthIO: Fabricating Customizable Oral User Interfaces with Integrated Sensing and Actuation",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "NotePlayer: Engaging Computational Notebooks for Dynamic Presentation of Analytical Processes",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "OptiBasePen: Mobile Base+Pen Input on Passive Surfaces by Sensing Relative Base Motion Plus Close-Range Pen Position",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Palmrest+: Expanding Laptop Input Space with Shear Force on Palm-Resting Area",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "picoRing: battery-free rings for subtle thumb-to-index input",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "PortaChrome: A Portable Contact Light Source for Integrated Re-Programmable Multi-Color Textures",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Power-over-Skin: Full-Body Wearables Powered By Intra-Body RF Energy",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "PrISM-Observer: Intervention Agent to Help Users Perform Everyday Procedures Sensed using a Smartwatch",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "SQLucid: Grounding Natural Language Database Queries with Interactive Explanations",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "TouchInsight: Uncertainty-aware Rapid Touch and Text Input for Mixed Reality from Egocentric Vision",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Tyche: Making Sense of PBT Effectiveness",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "WatchLink: Enhancing Smartwatches with Sensor Add-Ons via ECG Interface",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/conf/uist/uist2024.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        }
+      ],
+      "prototypes": [
+        "Augmented Object Intelligence with XR-Objects",
+        "Can Capacitive Touch Images Enhance Mobile Keyboard Decoding?",
+        "CARDinality: Interactive Card-shaped Robots with Locomotion and Haptics using Vibration",
+        "CoLadder: Manipulating Code Generation via Multi-Level Blocks",
+        "MouthIO: Fabricating Customizable Oral User Interfaces with Integrated Sensing and Actuation",
+        "NotePlayer: Engaging Computational Notebooks for Dynamic Presentation of Analytical Processes",
+        "picoRing: battery-free rings for subtle thumb-to-index input",
+        "Tyche: Making Sense of PBT Effectiveness"
       ],
       "selection": {
         "method": "fixed-title-embedding-k-medoids",
@@ -1967,7 +3696,168 @@
         "embedding_model": "Xenova/all-MiniLM-L6-v2",
         "embedding_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
       }
+    },
+    "vldb": {
+      "papers": [
+        {
+          "title": "A Blockchain System for Clustered Federated Learning with Peer-to-Peer Knowledge Transfer",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "BigST: Linear Complexity Spatio-Temporal Graph Neural Network for Traffic Forecasting on Large-Scale Road Networks",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Capturing More Associations by Referencing External Graphs",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Communication Efficient and Provable Federated Unlearning",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Data-Driven Insight Synthesis for Multi-Dimensional Data",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Database Native Model Selection: Harnessing Deep Neural Networks in Database Systems",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Eraser: Eliminating Performance Regression on Learned Query Optimizer",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "ETC: Efficient Training of Temporal Graph Neural Networks over Large-scale Dynamic Graphs",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Falcon: Fair Active Learning using Multi-armed Bandits",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "HyBench: A New Benchmark for HTAP Databases",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "LM-SRPQ: Efficiently Answering Regular Path Query in Streaming Graphs",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "MisDetect: Iterative Mislabel Detection using Early Loss",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "PilotScope: Steering Databases with Machine Learning Drivers",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Querying Structural Diversity in Streaming Graphs",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Scaling Package Queries to a Billion Tuples via Hierarchical Partitioning and Customized Optimization",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "SepHash: A Write-Optimized Hash Index On Disaggregated Memory via Separate Segment Structure",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Text-to-SQL Empowered by Large Language Models: A Benchmark Evaluation",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Timestamp as a Service, not an Oracle",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "Towards Full Stack Adaptivity in Permissioned Blockchains",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        },
+        {
+          "title": "XGNN: Boosting Multi-GPU GNN Training via Global GNN Memory Store",
+          "year": 2024,
+          "source": "dblp",
+          "source_url": "https://dblp.org/db/journals/pvldb/pvldb17.html",
+          "collected_at": "2026-09-05T09:20:00.000Z"
+        }
+      ],
+      "prototypes": [
+        "A Blockchain System for Clustered Federated Learning with Peer-to-Peer Knowledge Transfer",
+        "Database Native Model Selection: Harnessing Deep Neural Networks in Database Systems",
+        "ETC: Efficient Training of Temporal Graph Neural Networks over Large-scale Dynamic Graphs",
+        "Falcon: Fair Active Learning using Multi-armed Bandits",
+        "MisDetect: Iterative Mislabel Detection using Early Loss",
+        "Querying Structural Diversity in Streaming Graphs",
+        "SepHash: A Write-Optimized Hash Index On Disaggregated Memory via Separate Segment Structure",
+        "Timestamp as a Service, not an Oracle"
+      ],
+      "selection": {
+        "method": "fixed-title-embedding-k-medoids",
+        "max_prototypes": 8,
+        "source_year_max": 2025,
+        "embedding_model": "Xenova/all-MiniLM-L6-v2",
+        "embedding_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
+      }
     }
   },
-  "profiles_hash": "c7defb3e0b605eff"
+  "profiles_hash": "a582a1eec1ff60cf"
 }

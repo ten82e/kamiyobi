@@ -1893,8 +1893,14 @@ const Recommender = (() => {
         if (!entry) return null;
         const lexicalRank = lexicalRanks[key] || null;
         const semanticRank = semanticRanks[key] || null;
+        // Fielded lexical retrieval benefits from a lexical tie-breaker after
+        // the expanded venue profiles; keep the legacy symmetric blend for
+        // the unfielded path used by the synthetic compatibility benchmark.
+        const lexicalRrfWeight = opts.fieldedLexical ? 1.6 : 1;
+        const semanticRrfWeight = opts.fieldedLexical ? 0.4 : 1;
         const rrf =
-          (lexicalRank ? 1 / (k + lexicalRank) : 0) + (semanticRank ? 1 / (k + semanticRank) : 0);
+          (lexicalRank ? lexicalRrfWeight / (k + lexicalRank) : 0) +
+          (semanticRank ? semanticRrfWeight / (k + semanticRank) : 0);
         const score = hasSemantic
           ? Math.round(Math.min(100, (rrf * 100 * (k + 1)) / 2))
           : entry.lexicalScore;
