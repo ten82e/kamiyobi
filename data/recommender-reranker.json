@@ -18,7 +18,7 @@
   "input_hashes": {
     "data/benchmarks/real-paper-dev.json": "dd2cc261d388bfa93a0d0c7972eb2b3e86960ccea09cb5429cf13f286b179c81",
     "data/benchmarks/real-paper-features.jsonl#dev-records": "573e3105430b5aec9e31ec624a61b75c467d1ccb8f30c9b3be8d51687dea04ec",
-    "data/venue-profiles.json": "41b8648067326eb3540367d352ced693fde5fbafed1713ec9c6e8c6c01aedd0a"
+    "data/venue-profiles.json": "3cb80b6eb1d28b5e1c36cc37a6888ad6a8eba249594f2bbf6521bdf33e3c5b0e"
   },
   "cv": {
     "folds": 5,
@@ -195,5 +195,5 @@
   },
   "production_trainer_revision": "l2-pairwise-logistic-reranker-v3-grouped-cv",
   "candidate_trainer_revision": "l2-pairwise-logistic-reranker-v4-component-greedy-cv",
-  "candidate_rejected_reason": "heldout acceptance gate: MRR -0.000448 / Recall@5 -0.0250 vs production (noise-level; kept incumbent v3 per non-degradation policy)"
+  "candidate_rejected_reason": "deferred promotion: v4 leads only oof_mrr (+0.00247; oof recall tied) and heldout MRR by +0.000209 (noise-level); dev Recall@5 degrades (0.425 vs 0.4375) and the calibration gates cannot distinguish the two models (bench confidence is not Platt-calibrated). Kept incumbent v3; promotion decision is #687"
 }

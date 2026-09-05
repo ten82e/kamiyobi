@@ -4,482 +4,482 @@
   "records": [
     {
       "paper_id": "heldout-2026-chi-01",
-      "record_sha256": "5e21bb200552690a8db1d1a1101849178088daa87cf836f50223e9d33b2d137c",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "eebf6529e8a575fc26e19002581c3a9affface3d8a7616ffd85a089127d34315",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-chi-02",
       "record_sha256": "356746fc89fc7e83945bf9e20600d7f5c1b502ade9f949444d1eecdc67b8ec86",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-chi-03",
       "record_sha256": "667d49c287209f46f806af4d6f41a21067d1e1d1ee2cb9c1b35c6702cc0bf929",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-chi-04",
-      "record_sha256": "c40123896e8f48fe03b7931b78d57386fef486af2e4b3b5347f418228b37cc65",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "1e488e500c69f826123787212e23774904e4c84dc4a146a45a57b9478c5e044b",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-chi-05",
-      "record_sha256": "6b0d5b7db3362b71485b030f60dad79d626f1a2e591486b57f19349dea2a0d4a",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "ccfd8adb9a2a5bcf0101104bfa4951c6c5d773d851116287622b05373843ade7",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-chi-06",
-      "record_sha256": "d10cd9382cbab3b026c37baac13084fae964afcaed5a9a50f5d45b6a164495e8",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "1ef6a540eeaa67ac27a4e28367f90e2a898c0a8ba30180ec98cd7aed023a2f37",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-chi-07",
-      "record_sha256": "1ab6ff1e43fa18e9a2bcdbed8e08a5c437415f78990a15fb2fe4fbd972a37b65",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "75a0c44255157968127f6bd26adfe769b114d2ddcab640588beec0b87efc308b",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-chi-08",
       "record_sha256": "5a7cd4ab1649f39da33696626bca7ec3a06478c8c0c3395546bcfad863faa5f6",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-cvpr-01",
-      "record_sha256": "9e81891480a5de243256f2af61a40589921ed248138fa9319d1a23338ca4e31f",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "468d77b40dd19bfc8867a15a8fbd29f1be4f0e2ae03f24a742d3f1a463dd7521",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-cvpr-02",
       "record_sha256": "42ed8992fff382bd27ad32b29bba4e16d1b8cbe6a5e917656c8f4cbb4085616d",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-cvpr-03",
-      "record_sha256": "623d84db6c03f96d5c02d56a4231f2a7a155247ed6d05ac3db0fbf632dedf720",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "95aa2d6c21586eab72b8adc39c56df5564748d0bc20e882a39fdace80a49e4a7",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-cvpr-04",
       "record_sha256": "6569601f750a8db412a6013455909bf1dc4e15b43774a4e83a20a94406da7187",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-cvpr-05",
-      "record_sha256": "c5d7fb02f435cd73fa2ff3bcadf63742919fc20683303a1c2c364acd8737205f",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "842b115a28f9d72d670259bbc5a94c3ba499cc09308d5479abac1d6b6776b3ff",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-cvpr-06",
       "record_sha256": "10aefcdb4e8ad6a0c12315dea10efda5b97b3a8b5ec51fb697c702a53975b907",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-cvpr-07",
-      "record_sha256": "b129b30f18dcc1d6b5382d9555635090d8709063b9f70eb55369b1b3ceba2e64",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "83d27adb6f3043d0ada4ff837f8e7712f1e61a2416803c012b4284d1374531e8",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-cvpr-08",
-      "record_sha256": "92d2fc4e9c631072385fdfea41ae9c9c3548cea36645ce093c60ca353ea0dde9",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "36a382774ddead900583920fd8971dca49a09d558383ee79841fc2f6e28be6be",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-cvprw-01",
       "record_sha256": "916aaf6b8b867c079d0609765f3f35eef17232cd9cd0e3c48b0db7bbfbe2bb74",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-cvprw-02",
       "record_sha256": "80402556b4a790e30667f1c39f83ad7c3db9127e6cbb6a93b0b0e5ce66d37087",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-cvprw-03",
       "record_sha256": "2c1ffc1d64b1840c34e69b802095162280c8ac850b613475d3a3c4373e408d1e",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-cvprw-04",
-      "record_sha256": "a3a4de43fdcb0b7c103f86ad0ccf123687e1cb02ebdd02b58e080d9106f737a9",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "d845147edd5d0d942cdcfa6b52392130a47c826bb9e52acbb000e86c9ca025de",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-hpdc-01",
-      "record_sha256": "bf233fb99a27ffc8ae9c4b3e346c79e2b9ff96d48617ece8a3d12c55a41f5b04",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "793190a3994a348239c0e4c31320d18209e5db03980782bdca663d6d317e91b5",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-hpdc-02",
-      "record_sha256": "510c063c3d1a56a4a8d424bd5adb035e5f898c9f436de6a51170686d773c0a79",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "c2e236d1c76d8e36bd1c47a10796330b73b7017faad05b8c6116d355b2fabf38",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-hpdc-03",
-      "record_sha256": "87524cde11a64f803671d531ab9cbfe5c6d84ebf4106acad22eb52538fe12ef1",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "87fcdce19e13bcd6627b58ef2802e500aef539ae1b7e94aa1181bcc4a6663147",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-hpdc-04",
-      "record_sha256": "e6eef18002551bc92ed3058ddf8d08ec537c16d574458193a716e923799e7f8f",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "0d4696808b596e2fc46debaf9316ee2a66b5b8a501b2958d531b95e83e10170b",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-hpdc-05",
-      "record_sha256": "09ffffe8b2aef75ed1a0ad4f9c1e13e12dcf987f8192b14064b344ce2f3f5596",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "d507eeee3358b26d3574cf8ab870f99f4a5e0a514799ab8094d7d578e1afb590",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-hpdc-06",
-      "record_sha256": "ec302b558a34896037dd919aeb827bfb44cc96ba6248524e8317546eb5da1c72",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "7d4fdf130f66b49f9ba7b60d2874cd380b37e6d5bb6078c7b570c0a417bb36c4",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-hpdc-07",
-      "record_sha256": "5e33068d8a52f913e6c74124ac9a671c76d8d0c9dccad946176c1643c01fe16d",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "f7a7da5e09bec3330401ee310b09bf8737b6133512b0f699def1a2e60f67a00f",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-hpdc-08",
-      "record_sha256": "ad916ed253f1bc22f759bc74b05ec40a0f0a63dba287b3cd4f19dba878319888",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "721218a499e794bd2215c24e997912b2c846ba26d4268e9e556049180500e49a",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-hpdc-09",
-      "record_sha256": "e99e7e4d232fd2d35d0572207a162edabcc4c9d6dff63df32b8f8a79fc6a8f78",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "52569e41304c7311b75b717ce434b3f5c25de8b50bbb9c50ed76e06b08c3321b",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-hpdc-10",
-      "record_sha256": "8ddfb286254d69e7a34bbbbd0088504af68b5f1c29263c76908dba1462e842bd",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "9ab2d74afa344a83c289c2347baf93861956e6e06fad99de382bd60d1d3b58ab",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-hpdc-11",
-      "record_sha256": "c00d1074469c8a0e2f12d2f812c8c6f9ebc10c6d20fbc9622dcb68834d937624",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "fb4938b2e26fe9430d23e40720070caf0605817ea23e8643ac7136de540a6697",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-hpdc-12",
-      "record_sha256": "0a47b6fa26e4c0df1d306c2596d84f07016bb68b5a426795ac405ebe8381eec7",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "3cf56d6958b7bad02f47715ba213054263160b1e8facc45cf00bf9af651ceb70",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-ipsj-journal-01",
       "record_sha256": "89c982d9c2ccaa79b63e3f41fca55a1ab416524fe0cb08830c992c7e24c6a0f5",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "2c4055b12046f11709e9df2c122e59ffbdc2f900"
     },
     {
       "paper_id": "heldout-2026-ipsj-journal-02",
       "record_sha256": "0c5ee55525f8e9727d71afbdad1b6af0a6ea29aee586d61602cabd5a9f9bc129",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "2c4055b12046f11709e9df2c122e59ffbdc2f900"
     },
     {
       "paper_id": "heldout-2026-ipsj-journal-03",
       "record_sha256": "5c7114f466b44d43da921875e883550bf658e506696c9a839fe3176099a05a6a",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "2c4055b12046f11709e9df2c122e59ffbdc2f900"
     },
     {
       "paper_id": "heldout-2026-ipsj-journal-04",
       "record_sha256": "03e22031c7f83d3906a332c4fa8b9f3edcdce4149d9f0a4b14014c9292163e04",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "2c4055b12046f11709e9df2c122e59ffbdc2f900"
     },
     {
       "paper_id": "heldout-2026-nolta-special-01",
       "record_sha256": "2e2086a9675de33dd4ef305517bbf884a9b7ea2ad34ba906f074a2c963ab7afc",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-nolta-special-02",
-      "record_sha256": "d662011583fc20478080ba1588448fd217588b43e924fbffa44a4f00d816b9de",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "e3ee5ebe8744a46da00378ef48b4591b5e5ec99cf6b16006a9f6b64a0c343ca7",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-nolta-special-03",
       "record_sha256": "ab8f54ef9764a0c659abad8ecf953dae276da65cc8404b5cda7b97ac36ea3f45",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-nolta-special-04",
-      "record_sha256": "4f73203eafe3f7be78ff3339f0101298d159e1627781e5c3a6ea34ece738c04f",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "1eb5d0afe6ad90ba5729d64d48420aa150f59c5a0667d562118b836b66dcb36b",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-nsdi-01",
-      "record_sha256": "b23847a75460316ee5abe4daa7c63d116b29d91ba3889494e9bb7c064db301e8",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "bbeefc3d5d7a065d930c275f29e923d0398117b9f8e08395b9ebf71b640cb052",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-nsdi-02",
-      "record_sha256": "2c18f4462f1d4f9c9eab54fc467009df9e7f0161fa9e4c03429a64471f4373ed",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "30989733e8f1cf73bd1f2a4c50e89fe6070d5b8c3c67f3eac490d42e742b8e69",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-nsdi-03",
       "record_sha256": "04c3c3a3c38adc27980c0fb99a45132628796f0c6f32cf6b1463d1246047a83d",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-nsdi-04",
-      "record_sha256": "671abf58974fa539c203d8f69b4a76a433e28c22bb219d7b463afa40855bdb7a",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "5b6f96aa0faf3faab9b118920ffcb51264a5409d49d460031967484de754a60c",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-nsdi-05",
-      "record_sha256": "54e6d3c25292c8677b8c5f427d3559c47eb7663864d229c168e3d47329ca72f4",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "d7eb154b02b58ad02784296b575829e433f84de6f0de376cda036c53a49a528a",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-nsdi-06",
-      "record_sha256": "284d7b2771e82506b636ebd8d60e247882d39cb0394012733ecb1e75f1bd73a7",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "f3a2c5512c10dfdd4b108cebb8ecc635c444d149afb96cbff291eb71d8633bd2",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-nsdi-07",
-      "record_sha256": "6341d8e48d64df74e56e20114f22484c9a4b212ba6a39f1b7c1573eddbaeb408",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "ea83b3c8c4e0816222d2a3aa242b0a8b3f14a87e3d571e490c6d32158c41dc02",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-nsdi-08",
-      "record_sha256": "78cb42a9fa6fe9e6fb090701433dc0fc8f303c4ddea85ed32ea4038f5bd6c812",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "fbb1b6b029fa315b6eae6e1a188ea92f88ca7f8f0c8aac28082c91229b6da232",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-sigcomm-01",
-      "record_sha256": "04b4bb606264292e1331f354642717433981db8954a077abf950838d46469ff8",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "066910ff4a2a2e56e39bcbd07b8f13e669828089dedc5f2aca78df7a17560cf8",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-sigcomm-02",
       "record_sha256": "7cdb43698877e6d0f60e45c8afe26592a330a8cbe7520ec588e5931e080f6dee",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-sigcomm-03",
       "record_sha256": "489d979d9ed0f25678bc10b55be015d33b2b806e78a5fb583c27a1150c381a10",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-sigcomm-04",
-      "record_sha256": "7380c30defab311b06193070d22e3cd792d6174ff01a91c086889d52731eec29",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "d065b4d701a0e18d884fc8ca88537ae8dffc25b9b0b55a078180b1061f53f433",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-sigcomm-05",
-      "record_sha256": "879beaf3b9fd07bc77c557902c728fc249e7fc992371773ad42362c94c086725",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "c48ab2cd936834c5c44e787b0482e7b4cb8049937b243504c5df85bac0858310",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-sigcomm-06",
-      "record_sha256": "0fcbd26adc074d541f166e8aef4a0a05b77f7be3d04401e1e9bbc8e0d37cdcc1",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "ec4808a22956333a297e0b833587810c485e3f85cc3b3dc30a08f92fd275a7ba",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-sigcomm-07",
       "record_sha256": "f27518df5062e6405d9c78e17fe78551f58948e4661578ab014f3d4211fa3f7c",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-sigcomm-08",
-      "record_sha256": "da181a36ce48c05a37882475818a886cbe2fcfd0453125362b827b17e03ef778",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "56595dbdddb78ab9b7d9c5354ff1f56d6f27b9d627826c9fda3feaa2e0d96dd5",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-sigmod-01",
-      "record_sha256": "86f1ca4ab236be0be5a0a749dd65f36a91f8301830c7cf90d8bd1b2e296dda66",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "0024cbf8d86361cd2019d46eee220defae668c6248f7c20341e7d2f07c3cabdb",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-sigmod-02",
-      "record_sha256": "6609cc5f8d3e71bad59452c951006e9c13d738801f31f7d435775e2fec114ec6",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "abee4ecebc24b6b411734a2c60102c0ae50f6d477bcf3b84de6546dd27047965",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-sigmod-03",
-      "record_sha256": "aecfd18cb9668400b823cb57905da0a98d16c49aab5bd6eabb6e116778884502",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "b69c36d1bdcf0592148ac8c84dfa12171e445017f4680f14f130a801995f6606",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-sigmod-04",
-      "record_sha256": "b81258cde9765ebe7be47df95b4a8e3eee47ff41705c60d542096c1b1ade5951",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "92d0a1851201e148ce8af6c9af5921132416e59d19deb132fc2b38db3fc2f91f",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-sigmod-05",
-      "record_sha256": "7978e49728ad499f3d632dee2c8b2ff0be0468d11aaa0cd7b65c74fceae5fd96",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "2fc9703266a76e8ba64b6b1ee881af551c0358c09101269eefc4ade7f796c782",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-sigmod-06",
       "record_sha256": "2233e6050f4a502c754d8642145d9e73757960cb420c15a072e0acf8641976d2",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-sigmod-07",
-      "record_sha256": "40062c1a7b2656cfe7438a38e20749c0ce676660fcf40035650316734fe4fa69",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "648341e7617af8d51b3654ec1f5af3e01131796394c17b885a617b3ee820eb47",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-sigmod-08",
       "record_sha256": "2222be10da0c09ef2ef77eebd1dc1fbdd1f2e33f4307370d0841153b11ae7b83",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-stoc-01",
       "record_sha256": "c7d88e5933b4bd5ffe93489497669f9d293040a9aa0860a088978e6cb326c850",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-stoc-02",
-      "record_sha256": "d3f97257514e1498027916d5911ec01dcc0a280178e0394f655356e6d9b807e7",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "0b8ddfa197e562bedf0f5930704425c888094c51d27845b79754b400fcdb57c5",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-stoc-03",
       "record_sha256": "bea401cbc4f41d8cb50b9b01060ee91f22198ac98e407ddbde19b73080da5c4a",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-stoc-04",
-      "record_sha256": "327927f0fa97573f6a4d6ea33b2f1492935851264701c7fa90f413ab6015ba49",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "dff2ff5d004b0e4c1895bbff5dc41ad39a6b89da6a40ec6f60ef052964c21807",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-stoc-05",
       "record_sha256": "3b97efc9c58d35a801517ccf9b2761e74137b3a33cfffa73e198968f72501bd1",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-stoc-06",
       "record_sha256": "d52f4d69fc154acdfdd1e4468fa4c54e8033c96d15856cea42594b5cdbedde49",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-stoc-07",
       "record_sha256": "d14c602752ce6cedcedc997b81d708ca0300c2f5e2b23f23bdc3415721a6a339",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-stoc-08",
       "record_sha256": "253fc190e1725dbb48d665ddaefe778287beef9ae86b3519131c4a09a6353155",
-      "profile_hash": "a2833cad186e92e6",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-usenix-security-01",
-      "record_sha256": "bbabf15818164b8a1c5b93e474dbf52d2a41ae29d8c1197c3b1e2816272cca4d",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "e8fad1fc684ab09e09f353f2206374ed01b5797253e1150b6fe08e7c9a6e1857",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-usenix-security-02",
-      "record_sha256": "2e47b67568595f7cc04b51224a903fc331a8b40aae39a5629871c915e4609e3d",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "bdc4cca606da79476e933fa886d27b837e3e78216c12118da2fea560390d6dbc",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-usenix-security-03",
-      "record_sha256": "d4856c91b78cc96ada2d82249b91c04623529df26604b1de80936ff898c68431",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "566ce4b709652de01731241e46cf18b56eec7e943cbeacb7034dce37abc664ab",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-usenix-security-04",
-      "record_sha256": "6b5c315760169fbf549018f80059a84d21409ee8a5affee3c429977bfb352d36",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "26192a8a5cf532310232e369b8a18270f66cc13e12f933cfbcdb8a9b354cc68d",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-usenix-security-05",
-      "record_sha256": "43e864cce1b6ef6b889ecf73ddb410e55a43e3066cb9998edd0c044b9376da26",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "37b13a3ca121627c602ede87f06facde53812aea5532792cc06298f831e452f5",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-usenix-security-06",
-      "record_sha256": "d9ac5d3da5e8e1896bc36fe938399803a5614ccafef180020875e205c9fb6b0a",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "0d33ab34ba0f160a12af4c1f1a9cbc5fe2f634e770595046c65115cb79d44c3b",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-usenix-security-07",
-      "record_sha256": "f41345a91760aa482f963a95f273966388051dfcbb1dfbe57e6272349389808c",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "c0790d17604c12c6c1679c56351f251a819945169e8f0c7eeeb2bbd93efb43ef",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     },
     {
       "paper_id": "heldout-2026-usenix-security-08",
-      "record_sha256": "c38e32a90d48bdf5d9084499d9a809497c1d6954ee94768b9ae8ab4588e4b98d",
-      "profile_hash": "a2833cad186e92e6",
+      "record_sha256": "8b5a2bba88359d49e23de4d71fc5690828b53ed37453aaa32ea4ff2462fe2308",
+      "profile_hash": "5f1ff53a2dfe55aa",
       "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9"
     }
   ]

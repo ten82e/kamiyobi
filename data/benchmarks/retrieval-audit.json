@@ -11,8 +11,8 @@
         "union_recall_at_all": 0.8375
       },
       "heldout": {
-        "union_recall_at_selected": 0.9125,
-        "union_recall_at_all": 0.9125
+        "union_recall_at_selected": 0.9,
+        "union_recall_at_all": 0.9
       }
     }
   },
@@ -41,23 +41,23 @@
     },
     "heldout": {
       "fused": {
-        "mrr": 0.422379,
+        "mrr": 0.40285,
         "recall_at_1": 0.3,
-        "recall_at_5": 0.625,
-        "recall_at_10": 0.65
+        "recall_at_5": 0.5375,
+        "recall_at_10": 0.5875
       },
       "candidate_retrieval": {
-        "lexical_recall_at_50": 0.7,
-        "semantic_recall_at_50": 0.7875,
-        "union_recall_at_50": 0.8875,
-        "oracle_reranker_recall_at_5": 0.8875
+        "lexical_recall_at_50": 0.65,
+        "semantic_recall_at_50": 0.8,
+        "union_recall_at_50": 0.8625,
+        "oracle_reranker_recall_at_5": 0.8625
       },
       "failure": {
         "none": 0,
-        "retrieval": 9,
-        "reranker": 21,
+        "retrieval": 11,
+        "reranker": 26,
         "annotation": 0,
-        "calibration": 50
+        "calibration": 43
       },
       "queries": 80
     },
@@ -115,42 +115,42 @@
       "50": {
         "queries": 80,
         "effective_top_n": 50,
-        "mean_candidates": 67.2625,
-        "lexical_recall": 0.75,
+        "mean_candidates": 67.3,
+        "lexical_recall": 0.7,
         "semantic_recall": 0.825,
-        "union_recall": 0.8875,
-        "oracle_reranker_recall_at_5": 0.8875,
-        "fused_recall_at_5": 0.625
+        "union_recall": 0.8625,
+        "oracle_reranker_recall_at_5": 0.8625,
+        "fused_recall_at_5": 0.55
       },
       "100": {
         "queries": 80,
         "effective_top_n": 100,
-        "mean_candidates": 105.925,
-        "lexical_recall": 0.7625,
-        "semantic_recall": 0.8375,
-        "union_recall": 0.9125,
-        "oracle_reranker_recall_at_5": 0.9125,
-        "fused_recall_at_5": 0.625
+        "mean_candidates": 105.8875,
+        "lexical_recall": 0.725,
+        "semantic_recall": 0.85,
+        "union_recall": 0.9,
+        "oracle_reranker_recall_at_5": 0.9,
+        "fused_recall_at_5": 0.5375
       },
       "200": {
         "queries": 80,
         "effective_top_n": 200,
-        "mean_candidates": 138.9125,
-        "lexical_recall": 0.7625,
-        "semantic_recall": 0.8375,
-        "union_recall": 0.9125,
-        "oracle_reranker_recall_at_5": 0.9125,
-        "fused_recall_at_5": 0.625
+        "mean_candidates": 138.95,
+        "lexical_recall": 0.725,
+        "semantic_recall": 0.85,
+        "union_recall": 0.9,
+        "oracle_reranker_recall_at_5": 0.9,
+        "fused_recall_at_5": 0.5375
       },
       "all": {
         "queries": 80,
         "effective_top_n": 664,
-        "mean_candidates": 148.925,
-        "lexical_recall": 0.7625,
-        "semantic_recall": 0.8375,
-        "union_recall": 0.9125,
-        "oracle_reranker_recall_at_5": 0.9125,
-        "fused_recall_at_5": 0.625
+        "mean_candidates": 148.975,
+        "lexical_recall": 0.725,
+        "semantic_recall": 0.85,
+        "union_recall": 0.9,
+        "oracle_reranker_recall_at_5": 0.9,
+        "fused_recall_at_5": 0.5375
       }
     }
   },
@@ -278,7 +278,7 @@
       "heldout": {
         "lexical": {
           "queries": 17,
-          "mrr": 0.329425,
+          "mrr": 0.329411,
           "top1Accuracy": 0.235294,
           "coverage": 0.588235,
           "recall@1": 0.235294,
@@ -293,7 +293,7 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.15004,
+                "lower": 0.149997,
                 "upper": 0.544118
               },
               "recall@1": {
@@ -317,7 +317,7 @@
         },
         "semantic": {
           "queries": 17,
-          "mrr": 0.221948,
+          "mrr": 0.221875,
           "top1Accuracy": 0.117647,
           "coverage": 0.647059,
           "recall@1": 0.117647,
@@ -332,8 +332,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.079979,
-                "upper": 0.394398
+                "lower": 0.079925,
+                "upper": 0.394253
               },
               "recall@1": {
                 "lower": 0,
@@ -356,7 +356,7 @@
         },
         "fused": {
           "queries": 17,
-          "mrr": 0.429758,
+          "mrr": 0.429778,
           "top1Accuracy": 0.411765,
           "coverage": 0.705882,
           "recall@1": 0.411765,
@@ -371,7 +371,7 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.21008,
+                "lower": 0.210101,
                 "upper": 0.662465
               },
               "recall@1": {
@@ -518,7 +518,7 @@
       "heldout": {
         "lexical": {
           "queries": 9,
-          "mrr": 0.16521,
+          "mrr": 0.165213,
           "top1Accuracy": 0,
           "coverage": 0.888889,
           "recall@1": 0,
@@ -533,8 +533,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.062606,
-                "upper": 0.283729
+                "lower": 0.062609,
+                "upper": 0.283731
               },
               "recall@1": {
                 "lower": 0,
@@ -596,7 +596,7 @@
         },
         "fused": {
           "queries": 9,
-          "mrr": 0.474766,
+          "mrr": 0.474744,
           "top1Accuracy": 0.444444,
           "coverage": 1,
           "recall@1": 0.444444,
@@ -612,7 +612,7 @@
             "metrics": {
               "mrr": {
                 "lower": 0.147109,
-                "upper": 0.797407
+                "upper": 0.797386
               },
               "recall@1": {
                 "lower": 0.111111,
@@ -758,7 +758,7 @@
       "heldout": {
         "lexical": {
           "queries": 12,
-          "mrr": 0.466258,
+          "mrr": 0.466236,
           "top1Accuracy": 0.333333,
           "coverage": 0.75,
           "recall@1": 0.333333,
@@ -773,8 +773,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.232108,
-                "upper": 0.709314
+                "lower": 0.23204,
+                "upper": 0.709291
               },
               "recall@1": {
                 "lower": 0.083333,
@@ -797,7 +797,7 @@
         },
         "semantic": {
           "queries": 12,
-          "mrr": 0.308871,
+          "mrr": 0.308768,
           "top1Accuracy": 0.166667,
           "coverage": 0.833333,
           "recall@1": 0.166667,
@@ -812,8 +812,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.137013,
-                "upper": 0.516108
+                "lower": 0.136808,
+                "upper": 0.516082
               },
               "recall@1": {
                 "lower": 0,
@@ -836,7 +836,7 @@
         },
         "fused": {
           "queries": 12,
-          "mrr": 0.60799,
+          "mrr": 0.608035,
           "top1Accuracy": 0.583333,
           "coverage": 0.916667,
           "recall@1": 0.583333,
@@ -851,7 +851,7 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.358982,
+                "lower": 0.359027,
                 "upper": 0.855159
               },
               "recall@1": {
@@ -998,7 +998,7 @@
       "heldout": {
         "lexical": {
           "queries": 10,
-          "mrr": 0.280855,
+          "mrr": 0.281404,
           "top1Accuracy": 0.2,
           "coverage": 0.9,
           "recall@1": 0.2,
@@ -1014,7 +1014,7 @@
             "metrics": {
               "mrr": {
                 "lower": 0.082589,
-                "upper": 0.532589
+                "upper": 0.533138
               },
               "recall@1": {
                 "lower": 0,
@@ -1076,7 +1076,7 @@
         },
         "fused": {
           "queries": 10,
-          "mrr": 0.318149,
+          "mrr": 0.318566,
           "top1Accuracy": 0.1,
           "coverage": 1,
           "recall@1": 0.1,
@@ -1091,8 +1091,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.168698,
-                "upper": 0.492763
+                "lower": 0.169531,
+                "upper": 0.493596
               },
               "recall@1": {
                 "lower": 0,
@@ -1238,14 +1238,14 @@
       "heldout": {
         "lexical": {
           "queries": 12,
-          "mrr": 0.586806,
+          "mrr": 0.589583,
           "top1Accuracy": 0.5,
           "coverage": 0.916667,
           "recall@1": 0.5,
-          "recall@5": 0.666667,
+          "recall@5": 0.75,
           "recall@10": 0.833333,
-          "ndcg@5": 0.583333,
-          "ndcg@10": 0.639306,
+          "ndcg@5": 0.615571,
+          "ndcg@10": 0.64186,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1253,16 +1253,16 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.350694,
-                "upper": 0.819444
+                "lower": 0.357639,
+                "upper": 0.822222
               },
               "recall@1": {
                 "lower": 0.25,
                 "upper": 0.75
               },
               "recall@5": {
-                "lower": 0.416667,
-                "upper": 0.916667
+                "lower": 0.5,
+                "upper": 1
               },
               "recall@10": {
                 "lower": 0.583333,
@@ -1277,14 +1277,14 @@
         },
         "semantic": {
           "queries": 12,
-          "mrr": 0.380441,
-          "top1Accuracy": 0.166667,
+          "mrr": 0.359788,
+          "top1Accuracy": 0.083333,
           "coverage": 1,
-          "recall@1": 0.166667,
+          "recall@1": 0.083333,
           "recall@5": 0.583333,
           "recall@10": 0.75,
-          "ndcg@5": 0.401955,
-          "ndcg@10": 0.459417,
+          "ndcg@5": 0.387887,
+          "ndcg@10": 0.445349,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1292,12 +1292,12 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.212452,
-                "upper": 0.570076
+                "lower": 0.214286,
+                "upper": 0.517857
               },
               "recall@1": {
                 "lower": 0,
-                "upper": 0.416667
+                "upper": 0.25
               },
               "recall@5": {
                 "lower": 0.333333,
@@ -1308,22 +1308,22 @@
                 "upper": 1
               },
               "ndcg@10": {
-                "lower": 0.271822,
-                "upper": 0.646179
+                "lower": 0.269678,
+                "upper": 0.61285
               }
             }
           }
         },
         "fused": {
           "queries": 12,
-          "mrr": 0.706944,
+          "mrr": 0.720833,
           "top1Accuracy": 0.583333,
           "coverage": 1,
           "recall@1": 0.583333,
           "recall@5": 0.916667,
           "recall@10": 0.916667,
-          "ndcg@5": 0.755134,
-          "ndcg@10": 0.755134,
+          "ndcg@5": 0.766045,
+          "ndcg@10": 0.766045,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1331,8 +1331,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.504167,
-                "upper": 0.902778
+                "lower": 0.523611,
+                "upper": 0.916667
               },
               "recall@1": {
                 "lower": 0.333333,
@@ -1347,8 +1347,8 @@
                 "upper": 1
               },
               "ndcg@10": {
-                "lower": 0.571779,
-                "upper": 0.927577
+                "lower": 0.576913,
+                "upper": 0.938488
               }
             }
           }
@@ -1478,14 +1478,14 @@
       "heldout": {
         "lexical": {
           "queries": 16,
-          "mrr": 0.345472,
-          "top1Accuracy": 0.1875,
-          "coverage": 0.9375,
-          "recall@1": 0.1875,
-          "recall@5": 0.5,
-          "recall@10": 0.6875,
-          "ndcg@5": 0.355784,
-          "ndcg@10": 0.414927,
+          "mrr": 0.226499,
+          "top1Accuracy": 0.125,
+          "coverage": 0.75,
+          "recall@1": 0.125,
+          "recall@5": 0.3125,
+          "recall@10": 0.4375,
+          "ndcg@5": 0.226933,
+          "ndcg@10": 0.266366,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1493,38 +1493,38 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.185357,
-                "upper": 0.520681
+                "lower": 0.080701,
+                "upper": 0.402714
               },
               "recall@1": {
                 "lower": 0,
-                "upper": 0.375
+                "upper": 0.3125
               },
               "recall@5": {
-                "lower": 0.25,
-                "upper": 0.75
+                "lower": 0.125,
+                "upper": 0.5625
               },
               "recall@10": {
-                "lower": 0.4375,
-                "upper": 0.875
+                "lower": 0.1875,
+                "upper": 0.6875
               },
               "ndcg@10": {
-                "lower": 0.241335,
-                "upper": 0.59451
+                "lower": 0.101933,
+                "upper": 0.442333
               }
             }
           }
         },
         "semantic": {
           "queries": 16,
-          "mrr": 0.142565,
-          "top1Accuracy": 0.0625,
-          "coverage": 0.6875,
-          "recall@1": 0.0625,
-          "recall@5": 0.1875,
+          "mrr": 0.08508,
+          "top1Accuracy": 0,
+          "coverage": 0.75,
+          "recall@1": 0,
+          "recall@5": 0.25,
           "recall@10": 0.25,
-          "ndcg@5": 0.133183,
-          "ndcg@10": 0.155446,
+          "ndcg@5": 0.109263,
+          "ndcg@10": 0.109263,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1532,38 +1532,38 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.034592,
-                "upper": 0.287058
+                "lower": 0.038521,
+                "upper": 0.143121
               },
               "recall@1": {
                 "lower": 0,
-                "upper": 0.1875
+                "upper": 0
               },
               "recall@5": {
-                "lower": 0,
-                "upper": 0.375
+                "lower": 0.0625,
+                "upper": 0.5
               },
               "recall@10": {
                 "lower": 0.0625,
                 "upper": 0.5
               },
               "ndcg@10": {
-                "lower": 0.022263,
-                "upper": 0.313982
+                "lower": 0.024178,
+                "upper": 0.211454
               }
             }
           }
         },
         "fused": {
           "queries": 16,
-          "mrr": 0.322516,
+          "mrr": 0.213826,
           "top1Accuracy": 0.0625,
-          "coverage": 0.9375,
+          "coverage": 0.875,
           "recall@1": 0.0625,
-          "recall@5": 0.8125,
-          "recall@10": 0.8125,
-          "ndcg@5": 0.43924,
-          "ndcg@10": 0.43924,
+          "recall@5": 0.375,
+          "recall@10": 0.5,
+          "ndcg@5": 0.230784,
+          "ndcg@10": 0.271861,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1571,24 +1571,24 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.213782,
-                "upper": 0.438542
+                "lower": 0.094757,
+                "upper": 0.357109
               },
               "recall@1": {
                 "lower": 0,
                 "upper": 0.1875
               },
               "recall@5": {
-                "lower": 0.625,
-                "upper": 1
+                "lower": 0.125,
+                "upper": 0.625
               },
               "recall@10": {
-                "lower": 0.625,
-                "upper": 1
+                "lower": 0.25,
+                "upper": 0.75
               },
               "ndcg@10": {
-                "lower": 0.313129,
-                "upper": 0.555575
+                "lower": 0.121508,
+                "upper": 0.431559
               }
             }
           }
@@ -1718,14 +1718,14 @@
       "heldout": {
         "lexical": {
           "queries": 8,
-          "mrr": 0.245982,
+          "mrr": 0.23869,
           "top1Accuracy": 0.125,
           "coverage": 0.625,
           "recall@1": 0.125,
-          "recall@5": 0.375,
+          "recall@5": 0.25,
           "recall@10": 0.625,
-          "ndcg@5": 0.252223,
-          "ndcg@10": 0.333323,
+          "ndcg@5": 0.203866,
+          "ndcg@10": 0.326192,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1733,8 +1733,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.046875,
-                "upper": 0.4875
+                "lower": 0.03869,
+                "upper": 0.479167
               },
               "recall@1": {
                 "lower": 0,
@@ -1742,22 +1742,22 @@
               },
               "recall@5": {
                 "lower": 0,
-                "upper": 0.75
+                "upper": 0.625
               },
               "recall@10": {
                 "lower": 0.25,
                 "upper": 0.875
               },
               "ndcg@10": {
-                "lower": 0.090023,
-                "upper": 0.561736
+                "lower": 0.086193,
+                "upper": 0.550244
               }
             }
           }
         },
         "semantic": {
           "queries": 8,
-          "mrr": 0.31199,
+          "mrr": 0.311661,
           "top1Accuracy": 0.125,
           "coverage": 1,
           "recall@1": 0.125,
@@ -1772,7 +1772,7 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.116007,
+                "lower": 0.114989,
                 "upper": 0.540179
               },
               "recall@1": {
@@ -1796,7 +1796,7 @@
         },
         "fused": {
           "queries": 8,
-          "mrr": 0.269209,
+          "mrr": 0.269896,
           "top1Accuracy": 0.125,
           "coverage": 1,
           "recall@1": 0.125,
@@ -1811,8 +1811,8 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.091989,
-                "upper": 0.508929
+                "lower": 0.092676,
+                "upper": 0.509615
               },
               "recall@1": {
                 "lower": 0,
@@ -1958,14 +1958,14 @@
       "heldout": {
         "lexical": {
           "queries": 21,
-          "mrr": 0.446723,
+          "mrr": 0.40734,
           "top1Accuracy": 0.333333,
-          "coverage": 0.904762,
+          "coverage": 0.761905,
           "recall@1": 0.333333,
-          "recall@5": 0.571429,
-          "recall@10": 0.714286,
-          "ndcg@5": 0.455315,
-          "ndcg@10": 0.501064,
+          "recall@5": 0.52381,
+          "recall@10": 0.571429,
+          "ndcg@5": 0.423183,
+          "ndcg@10": 0.438206,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -1973,38 +1973,38 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.285102,
-                "upper": 0.625351
+                "lower": 0.235356,
+                "upper": 0.597884
               },
               "recall@1": {
                 "lower": 0.142857,
                 "upper": 0.52381
               },
               "recall@5": {
-                "lower": 0.380952,
+                "lower": 0.285714,
                 "upper": 0.761905
               },
               "recall@10": {
-                "lower": 0.52381,
-                "upper": 0.904762
+                "lower": 0.380952,
+                "upper": 0.809524
               },
               "ndcg@10": {
-                "lower": 0.340812,
-                "upper": 0.666577
+                "lower": 0.250565,
+                "upper": 0.625282
               }
             }
           }
         },
         "semantic": {
           "queries": 21,
-          "mrr": 0.300619,
-          "top1Accuracy": 0.142857,
+          "mrr": 0.239779,
+          "top1Accuracy": 0.047619,
           "coverage": 0.952381,
-          "recall@1": 0.142857,
+          "recall@1": 0.047619,
           "recall@5": 0.428571,
           "recall@10": 0.52381,
-          "ndcg@5": 0.307352,
-          "ndcg@10": 0.340187,
+          "ndcg@5": 0.26058,
+          "ndcg@10": 0.293415,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2012,12 +2012,12 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.167599,
-                "upper": 0.454471
+                "lower": 0.145518,
+                "upper": 0.348857
               },
               "recall@1": {
                 "lower": 0,
-                "upper": 0.333333
+                "upper": 0.142857
               },
               "recall@5": {
                 "lower": 0.238095,
@@ -2028,22 +2028,22 @@
                 "upper": 0.761905
               },
               "ndcg@10": {
-                "lower": 0.185371,
-                "upper": 0.509543
+                "lower": 0.16762,
+                "upper": 0.426634
               }
             }
           }
         },
         "fused": {
           "queries": 21,
-          "mrr": 0.499695,
+          "mrr": 0.461982,
           "top1Accuracy": 0.333333,
-          "coverage": 1,
+          "coverage": 0.952381,
           "recall@1": 0.333333,
-          "recall@5": 0.809524,
-          "recall@10": 0.809524,
-          "ndcg@5": 0.568607,
-          "ndcg@10": 0.568607,
+          "recall@5": 0.619048,
+          "recall@10": 0.666667,
+          "ndcg@5": 0.488292,
+          "ndcg@10": 0.502627,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2051,24 +2051,24 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.336508,
-                "upper": 0.672222
+                "lower": 0.293624,
+                "upper": 0.643776
               },
               "recall@1": {
                 "lower": 0.142857,
                 "upper": 0.52381
               },
               "recall@5": {
-                "lower": 0.619048,
-                "upper": 0.952381
+                "lower": 0.380952,
+                "upper": 0.809524
               },
               "recall@10": {
-                "lower": 0.619048,
-                "upper": 0.952381
+                "lower": 0.47619,
+                "upper": 0.857143
               },
               "ndcg@10": {
-                "lower": 0.407696,
-                "upper": 0.73234
+                "lower": 0.323491,
+                "upper": 0.685003
               }
             }
           }
@@ -2198,7 +2198,7 @@
       "heldout": {
         "lexical": {
           "queries": 12,
-          "mrr": 0.07383,
+          "mrr": 0.074074,
           "top1Accuracy": 0,
           "coverage": 0.333333,
           "recall@1": 0,
@@ -2213,7 +2213,7 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.008772,
+                "lower": 0.009259,
                 "upper": 0.152778
               },
               "recall@1": {
@@ -2440,14 +2440,14 @@
       "heldout": {
         "lexical": {
           "queries": 76,
-          "mrr": 0.332934,
-          "top1Accuracy": 0.210526,
-          "coverage": 0.776316,
-          "recall@1": 0.210526,
-          "recall@5": 0.486842,
-          "recall@10": 0.618421,
-          "ndcg@5": 0.351147,
-          "ndcg@10": 0.39415,
+          "mrr": 0.307666,
+          "top1Accuracy": 0.197368,
+          "coverage": 0.736842,
+          "recall@1": 0.197368,
+          "recall@5": 0.447368,
+          "recall@10": 0.565789,
+          "ndcg@5": 0.324021,
+          "ndcg@10": 0.362527,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2455,38 +2455,38 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.253815,
-                "upper": 0.413288
+                "lower": 0.231083,
+                "upper": 0.390632
               },
               "recall@1": {
-                "lower": 0.131579,
-                "upper": 0.302632
+                "lower": 0.118421,
+                "upper": 0.276316
               },
               "recall@5": {
-                "lower": 0.368421,
-                "upper": 0.605263
+                "lower": 0.342105,
+                "upper": 0.565789
               },
               "recall@10": {
-                "lower": 0.5,
-                "upper": 0.723684
+                "lower": 0.447368,
+                "upper": 0.671053
               },
               "ndcg@10": {
-                "lower": 0.311492,
-                "upper": 0.478202
+                "lower": 0.27745,
+                "upper": 0.447729
               }
             }
           }
         },
         "semantic": {
           "queries": 76,
-          "mrr": 0.265921,
-          "top1Accuracy": 0.131579,
-          "coverage": 0.828947,
-          "recall@1": 0.131579,
-          "recall@5": 0.368421,
+          "mrr": 0.250507,
+          "top1Accuracy": 0.105263,
+          "coverage": 0.842105,
+          "recall@1": 0.105263,
+          "recall@5": 0.381579,
           "recall@10": 0.460526,
-          "ndcg@5": 0.268849,
-          "ndcg@10": 0.300094,
+          "ndcg@5": 0.261592,
+          "ndcg@10": 0.28815,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2494,38 +2494,38 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.19421,
-                "upper": 0.346226
+                "lower": 0.183761,
+                "upper": 0.324263
               },
               "recall@1": {
-                "lower": 0.065789,
-                "upper": 0.210526
+                "lower": 0.039474,
+                "upper": 0.184211
               },
               "recall@5": {
-                "lower": 0.263158,
-                "upper": 0.473684
+                "lower": 0.289474,
+                "upper": 0.5
               },
               "recall@10": {
                 "lower": 0.355263,
                 "upper": 0.565789
               },
               "ndcg@10": {
-                "lower": 0.221256,
-                "upper": 0.381539
+                "lower": 0.21324,
+                "upper": 0.367954
               }
             }
           }
         },
         "fused": {
           "queries": 76,
-          "mrr": 0.443351,
+          "mrr": 0.422796,
           "top1Accuracy": 0.315789,
-          "coverage": 0.907895,
+          "coverage": 0.894737,
           "recall@1": 0.315789,
-          "recall@5": 0.657895,
-          "recall@10": 0.684211,
-          "ndcg@5": 0.486904,
-          "ndcg@10": 0.495394,
+          "recall@5": 0.565789,
+          "recall@10": 0.618421,
+          "ndcg@5": 0.444741,
+          "ndcg@10": 0.461879,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2533,24 +2533,24 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.353963,
-                "upper": 0.534839
+                "lower": 0.329008,
+                "upper": 0.518454
               },
               "recall@1": {
                 "lower": 0.210526,
                 "upper": 0.421053
               },
               "recall@5": {
-                "lower": 0.539474,
-                "upper": 0.763158
+                "lower": 0.460526,
+                "upper": 0.671053
               },
               "recall@10": {
-                "lower": 0.578947,
-                "upper": 0.789474
+                "lower": 0.513158,
+                "upper": 0.723684
               },
               "ndcg@10": {
-                "lower": 0.402463,
-                "upper": 0.588563
+                "lower": 0.368361,
+                "upper": 0.559429
               }
             }
           }
@@ -2680,7 +2680,7 @@
       "heldout": {
         "lexical": {
           "queries": 4,
-          "mrr": 0.002641,
+          "mrr": 0.002647,
           "top1Accuracy": 0,
           "coverage": 0.5,
           "recall@1": 0,
@@ -2696,7 +2696,7 @@
             "metrics": {
               "mrr": {
                 "lower": 0,
-                "upper": 0.005281
+                "upper": 0.005295
               },
               "recall@1": {
                 "lower": 0,
@@ -2758,7 +2758,7 @@
         },
         "fused": {
           "queries": 4,
-          "mrr": 0.023915,
+          "mrr": 0.023866,
           "top1Accuracy": 0,
           "coverage": 1,
           "recall@1": 0,
@@ -2773,7 +2773,7 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.009673,
+                "lower": 0.009575,
                 "upper": 0.044079
               },
               "recall@1": {
@@ -2922,14 +2922,14 @@
       "heldout": {
         "lexical": {
           "queries": 68,
-          "mrr": 0.338842,
-          "top1Accuracy": 0.205882,
-          "coverage": 0.808824,
-          "recall@1": 0.205882,
-          "recall@5": 0.5,
-          "recall@10": 0.647059,
-          "ndcg@5": 0.356713,
-          "ndcg@10": 0.404776,
+          "mrr": 0.310604,
+          "top1Accuracy": 0.191176,
+          "coverage": 0.764706,
+          "recall@1": 0.191176,
+          "recall@5": 0.455882,
+          "recall@10": 0.588235,
+          "ndcg@5": 0.326395,
+          "ndcg@10": 0.369432,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2937,38 +2937,38 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.253849,
-                "upper": 0.434801
+                "lower": 0.228601,
+                "upper": 0.406617
               },
               "recall@1": {
                 "lower": 0.102941,
-                "upper": 0.308824
+                "upper": 0.294118
               },
               "recall@5": {
-                "lower": 0.382353,
-                "upper": 0.617647
+                "lower": 0.338235,
+                "upper": 0.573529
               },
               "recall@10": {
-                "lower": 0.529412,
-                "upper": 0.75
+                "lower": 0.470588,
+                "upper": 0.705882
               },
               "ndcg@10": {
-                "lower": 0.31957,
-                "upper": 0.500466
+                "lower": 0.284021,
+                "upper": 0.465434
               }
             }
           }
         },
         "semantic": {
           "queries": 68,
-          "mrr": 0.27381,
-          "top1Accuracy": 0.132353,
-          "coverage": 0.882353,
-          "recall@1": 0.132353,
-          "recall@5": 0.382353,
+          "mrr": 0.256583,
+          "top1Accuracy": 0.102941,
+          "coverage": 0.897059,
+          "recall@1": 0.102941,
+          "recall@5": 0.397059,
           "recall@10": 0.485294,
-          "ndcg@5": 0.276494,
-          "ndcg@10": 0.311415,
+          "ndcg@5": 0.268383,
+          "ndcg@10": 0.298066,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -2976,38 +2976,38 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.197188,
-                "upper": 0.354534
+                "lower": 0.181439,
+                "upper": 0.330791
               },
               "recall@1": {
-                "lower": 0.058824,
-                "upper": 0.220588
+                "lower": 0.044118,
+                "upper": 0.176471
               },
               "recall@5": {
-                "lower": 0.264706,
-                "upper": 0.5
+                "lower": 0.279412,
+                "upper": 0.514706
               },
               "recall@10": {
                 "lower": 0.367647,
                 "upper": 0.602941
               },
               "ndcg@10": {
-                "lower": 0.225314,
-                "upper": 0.401643
+                "lower": 0.213355,
+                "upper": 0.380611
               }
             }
           }
         },
         "fused": {
           "queries": 68,
-          "mrr": 0.462299,
+          "mrr": 0.439328,
           "top1Accuracy": 0.323529,
-          "coverage": 0.955882,
+          "coverage": 0.941176,
           "recall@1": 0.323529,
-          "recall@5": 0.691176,
-          "recall@10": 0.720588,
-          "ndcg@5": 0.508441,
-          "ndcg@10": 0.517931,
+          "recall@5": 0.588235,
+          "recall@10": 0.647059,
+          "ndcg@5": 0.461318,
+          "ndcg@10": 0.480473,
           "confidence_interval": {
             "method": "bootstrap",
             "confidence_level": 0.95,
@@ -3015,24 +3015,24 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.374789,
-                "upper": 0.555057
+                "lower": 0.34743,
+                "upper": 0.534363
               },
               "recall@1": {
                 "lower": 0.220588,
                 "upper": 0.426471
               },
               "recall@5": {
-                "lower": 0.588235,
-                "upper": 0.794118
+                "lower": 0.485294,
+                "upper": 0.705882
               },
               "recall@10": {
-                "lower": 0.617647,
-                "upper": 0.823529
+                "lower": 0.529412,
+                "upper": 0.75
               },
               "ndcg@10": {
-                "lower": 0.427238,
-                "upper": 0.61092
+                "lower": 0.384658,
+                "upper": 0.578487
               }
             }
           }
@@ -3162,7 +3162,7 @@
       "heldout": {
         "lexical": {
           "queries": 4,
-          "mrr": 0.002641,
+          "mrr": 0.002647,
           "top1Accuracy": 0,
           "coverage": 0.5,
           "recall@1": 0,
@@ -3178,7 +3178,7 @@
             "metrics": {
               "mrr": {
                 "lower": 0,
-                "upper": 0.005281
+                "upper": 0.005295
               },
               "recall@1": {
                 "lower": 0,
@@ -3240,7 +3240,7 @@
         },
         "fused": {
           "queries": 4,
-          "mrr": 0.023915,
+          "mrr": 0.023866,
           "top1Accuracy": 0,
           "coverage": 1,
           "recall@1": 0,
@@ -3255,7 +3255,7 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.009673,
+                "lower": 0.009575,
                 "upper": 0.044079
               },
               "recall@1": {
@@ -3642,7 +3642,7 @@
       "heldout": {
         "lexical": {
           "queries": 4,
-          "mrr": 0.565441,
+          "mrr": 0.565374,
           "top1Accuracy": 0.5,
           "coverage": 1,
           "recall@1": 0.5,
@@ -3657,7 +3657,7 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.130882,
+                "lower": 0.130747,
                 "upper": 1
               },
               "recall@1": {
@@ -3720,7 +3720,7 @@
         },
         "fused": {
           "queries": 4,
-          "mrr": 0.564583,
+          "mrr": 0.564549,
           "top1Accuracy": 0.5,
           "coverage": 1,
           "recall@1": 0.5,
@@ -3735,7 +3735,7 @@
             "resamples": 1000,
             "metrics": {
               "mrr": {
-                "lower": 0.129167,
+                "lower": 0.129098,
                 "upper": 1
               },
               "recall@1": {
@@ -3763,10 +3763,10 @@
   "failure_taxonomy": {
     "counts": {
       "none": 0,
-      "retrieval": 26,
-      "reranker": 49,
+      "retrieval": 28,
+      "reranker": 54,
       "annotation": 0,
-      "calibration": 85
+      "calibration": 78
     },
     "queries": {
       "calibration": [
@@ -4387,7 +4387,7 @@
           "paper_id": "heldout-2026-hpdc-05",
           "failure_type": "calibration",
           "lexical_rank": 12,
-          "semantic_rank": 4,
+          "semantic_rank": 3,
           "fused_rank": 1,
           "confidence": "ambiguous",
           "acceptable_venues": [
@@ -4399,7 +4399,7 @@
           "paper_id": "heldout-2026-hpdc-06",
           "failure_type": "calibration",
           "lexical_rank": 1,
-          "semantic_rank": 3,
+          "semantic_rank": 2,
           "fused_rank": 1,
           "confidence": "insufficient",
           "acceptable_venues": [
@@ -4423,7 +4423,7 @@
           "paper_id": "heldout-2026-hpdc-08",
           "failure_type": "calibration",
           "lexical_rank": 1,
-          "semantic_rank": 1,
+          "semantic_rank": 2,
           "fused_rank": 1,
           "confidence": "ambiguous",
           "acceptable_venues": [
@@ -4446,9 +4446,9 @@
         {
           "paper_id": "heldout-2026-hpdc-10",
           "failure_type": "calibration",
-          "lexical_rank": 6,
+          "lexical_rank": 5,
           "semantic_rank": 7,
-          "fused_rank": 3,
+          "fused_rank": 2,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "hpdc",
@@ -4459,7 +4459,7 @@
           "paper_id": "heldout-2026-hpdc-12",
           "failure_type": "calibration",
           "lexical_rank": 8,
-          "semantic_rank": 22,
+          "semantic_rank": 21,
           "fused_rank": 4,
           "confidence": "ambiguous",
           "acceptable_venues": [
@@ -4471,19 +4471,8 @@
           "paper_id": "heldout-2026-nsdi-02",
           "failure_type": "calibration",
           "lexical_rank": 3,
-          "semantic_rank": 59,
-          "fused_rank": 3,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "nsdi"
-          ]
-        },
-        {
-          "paper_id": "heldout-2026-nsdi-03",
-          "failure_type": "calibration",
-          "lexical_rank": 2,
-          "semantic_rank": null,
-          "fused_rank": 4,
+          "semantic_rank": 34,
+          "fused_rank": 2,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "nsdi"
@@ -4493,55 +4482,10 @@
           "paper_id": "heldout-2026-nsdi-04",
           "failure_type": "calibration",
           "lexical_rank": 1,
-          "semantic_rank": 13,
-          "fused_rank": 3,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "nsdi"
-          ]
-        },
-        {
-          "paper_id": "heldout-2026-nsdi-05",
-          "failure_type": "calibration",
-          "lexical_rank": 10,
-          "semantic_rank": 1,
-          "fused_rank": 2,
-          "confidence": "insufficient",
-          "acceptable_venues": [
-            "nsdi"
-          ]
-        },
-        {
-          "paper_id": "heldout-2026-nsdi-06",
-          "failure_type": "calibration",
-          "lexical_rank": 14,
-          "semantic_rank": 2,
-          "fused_rank": 5,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "nsdi"
-          ]
-        },
-        {
-          "paper_id": "heldout-2026-nsdi-08",
-          "failure_type": "calibration",
-          "lexical_rank": 4,
-          "semantic_rank": 23,
+          "semantic_rank": 35,
           "fused_rank": 4,
-          "confidence": "insufficient",
+          "confidence": "ambiguous",
           "acceptable_venues": [
-            "nsdi"
-          ]
-        },
-        {
-          "paper_id": "heldout-2026-sigcomm-01",
-          "failure_type": "calibration",
-          "lexical_rank": 1,
-          "semantic_rank": null,
-          "fused_rank": 5,
-          "confidence": "insufficient",
-          "acceptable_venues": [
-            "sigcomm",
             "nsdi"
           ]
         },
@@ -4558,22 +4502,10 @@
           ]
         },
         {
-          "paper_id": "heldout-2026-sigcomm-04",
-          "failure_type": "calibration",
-          "lexical_rank": 1,
-          "semantic_rank": 30,
-          "fused_rank": 2,
-          "confidence": "insufficient",
-          "acceptable_venues": [
-            "sigcomm",
-            "nsdi"
-          ]
-        },
-        {
           "paper_id": "heldout-2026-sigcomm-05",
           "failure_type": "calibration",
-          "lexical_rank": 9,
-          "semantic_rank": 3,
+          "lexical_rank": 8,
+          "semantic_rank": 4,
           "fused_rank": 1,
           "confidence": "insufficient",
           "acceptable_venues": [
@@ -4584,7 +4516,7 @@
         {
           "paper_id": "heldout-2026-sigcomm-06",
           "failure_type": "calibration",
-          "lexical_rank": 6,
+          "lexical_rank": 8,
           "semantic_rank": 19,
           "fused_rank": 3,
           "confidence": "ambiguous",
@@ -4598,18 +4530,6 @@
           "failure_type": "calibration",
           "lexical_rank": 3,
           "semantic_rank": null,
-          "fused_rank": 3,
-          "confidence": "ambiguous",
-          "acceptable_venues": [
-            "sigcomm",
-            "nsdi"
-          ]
-        },
-        {
-          "paper_id": "heldout-2026-sigcomm-08",
-          "failure_type": "calibration",
-          "lexical_rank": 13,
-          "semantic_rank": 6,
           "fused_rank": 3,
           "confidence": "ambiguous",
           "acceptable_venues": [
@@ -4705,7 +4625,7 @@
           "paper_id": "heldout-2026-usenix-security-02",
           "failure_type": "calibration",
           "lexical_rank": 2,
-          "semantic_rank": 19,
+          "semantic_rank": 20,
           "fused_rank": 4,
           "confidence": "ambiguous",
           "acceptable_venues": [
@@ -4728,7 +4648,7 @@
         {
           "paper_id": "heldout-2026-usenix-security-04",
           "failure_type": "calibration",
-          "lexical_rank": 5,
+          "lexical_rank": 6,
           "semantic_rank": 2,
           "fused_rank": 3,
           "confidence": "ambiguous",
@@ -4740,7 +4660,7 @@
         {
           "paper_id": "heldout-2026-usenix-security-07",
           "failure_type": "calibration",
-          "lexical_rank": 8,
+          "lexical_rank": 10,
           "semantic_rank": 11,
           "fused_rank": 3,
           "confidence": "ambiguous",
@@ -5062,9 +4982,9 @@
         {
           "paper_id": "heldout-2026-chi-02",
           "failure_type": "reranker",
-          "lexical_rank": 14,
+          "lexical_rank": 13,
           "semantic_rank": null,
-          "fused_rank": 16,
+          "fused_rank": 15,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "chi",
@@ -5075,8 +4995,8 @@
           "paper_id": "heldout-2026-cvpr-08",
           "failure_type": "reranker",
           "lexical_rank": null,
-          "semantic_rank": 28,
-          "fused_rank": 39,
+          "semantic_rank": 29,
+          "fused_rank": 38,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "cvpr",
@@ -5098,9 +5018,9 @@
         {
           "paper_id": "heldout-2026-ipsj-journal-01",
           "failure_type": "reranker",
-          "lexical_rank": 195,
+          "lexical_rank": 194,
           "semantic_rank": 15,
-          "fused_rank": 100,
+          "fused_rank": 102,
           "confidence": "insufficient",
           "acceptable_venues": [
             "jip"
@@ -5140,12 +5060,23 @@
           ]
         },
         {
-          "paper_id": "heldout-2026-nsdi-01",
+          "paper_id": "heldout-2026-nsdi-05",
           "failure_type": "reranker",
-          "lexical_rank": 75,
-          "semantic_rank": 41,
-          "fused_rank": 60,
+          "lexical_rank": null,
+          "semantic_rank": 4,
+          "fused_rank": 192,
           "confidence": "insufficient",
+          "acceptable_venues": [
+            "nsdi"
+          ]
+        },
+        {
+          "paper_id": "heldout-2026-nsdi-06",
+          "failure_type": "reranker",
+          "lexical_rank": 18,
+          "semantic_rank": 5,
+          "fused_rank": 11,
+          "confidence": "ambiguous",
           "acceptable_venues": [
             "nsdi"
           ]
@@ -5153,11 +5084,58 @@
         {
           "paper_id": "heldout-2026-nsdi-07",
           "failure_type": "reranker",
-          "lexical_rank": 14,
-          "semantic_rank": 30,
-          "fused_rank": 13,
+          "lexical_rank": 13,
+          "semantic_rank": 15,
+          "fused_rank": 9,
           "confidence": "ambiguous",
           "acceptable_venues": [
+            "nsdi"
+          ]
+        },
+        {
+          "paper_id": "heldout-2026-nsdi-08",
+          "failure_type": "reranker",
+          "lexical_rank": null,
+          "semantic_rank": 13,
+          "fused_rank": 33,
+          "confidence": "insufficient",
+          "acceptable_venues": [
+            "nsdi"
+          ]
+        },
+        {
+          "paper_id": "heldout-2026-sigcomm-01",
+          "failure_type": "reranker",
+          "lexical_rank": 1,
+          "semantic_rank": 31,
+          "fused_rank": 6,
+          "confidence": "insufficient",
+          "acceptable_venues": [
+            "sigcomm",
+            "nsdi"
+          ]
+        },
+        {
+          "paper_id": "heldout-2026-sigcomm-04",
+          "failure_type": "reranker",
+          "lexical_rank": 72,
+          "semantic_rank": 36,
+          "fused_rank": 51,
+          "confidence": "insufficient",
+          "acceptable_venues": [
+            "sigcomm",
+            "nsdi"
+          ]
+        },
+        {
+          "paper_id": "heldout-2026-sigcomm-08",
+          "failure_type": "reranker",
+          "lexical_rank": 21,
+          "semantic_rank": 3,
+          "fused_rank": 15,
+          "confidence": "ambiguous",
+          "acceptable_venues": [
+            "sigcomm",
             "nsdi"
           ]
         },
@@ -5248,7 +5226,7 @@
         {
           "paper_id": "heldout-2026-stoc-05",
           "failure_type": "reranker",
-          "lexical_rank": 19,
+          "lexical_rank": 18,
           "semantic_rank": 21,
           "fused_rank": 10,
           "confidence": "ambiguous",
@@ -5262,7 +5240,7 @@
           "failure_type": "reranker",
           "lexical_rank": null,
           "semantic_rank": 4,
-          "fused_rank": 14,
+          "fused_rank": 13,
           "confidence": "ambiguous",
           "acceptable_venues": [
             "usenix-security",
@@ -5299,7 +5277,7 @@
           "lexical_rank": null,
           "semantic_rank": 1,
           "fused_rank": 188,
-          "confidence": "insufficient",
+          "confidence": "ambiguous",
           "acceptable_venues": [
             "usenix-security",
             "ches"
@@ -5521,9 +5499,9 @@
         {
           "paper_id": "heldout-2026-cvprw-01",
           "failure_type": "retrieval",
-          "lexical_rank": 85,
+          "lexical_rank": 87,
           "semantic_rank": null,
-          "fused_rank": 120,
+          "fused_rank": 122,
           "confidence": "insufficient",
           "acceptable_venues": [
             "cvpr",
@@ -5572,6 +5550,28 @@
           "confidence": "ambiguous",
           "acceptable_venues": [
             "ieice-nolta-recent-progress-special"
+          ]
+        },
+        {
+          "paper_id": "heldout-2026-nsdi-01",
+          "failure_type": "retrieval",
+          "lexical_rank": 75,
+          "semantic_rank": 73,
+          "fused_rank": 71,
+          "confidence": "insufficient",
+          "acceptable_venues": [
+            "nsdi"
+          ]
+        },
+        {
+          "paper_id": "heldout-2026-nsdi-03",
+          "failure_type": "retrieval",
+          "lexical_rank": null,
+          "semantic_rank": null,
+          "fused_rank": null,
+          "confidence": "ambiguous",
+          "acceptable_venues": [
+            "nsdi"
           ]
         },
         {
