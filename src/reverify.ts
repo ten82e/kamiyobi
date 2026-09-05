@@ -1893,6 +1893,30 @@ export async function reverifyData(options: ReverifyOptions): Promise<ReverifyRe
   for (const target of targets) {
     if (selectedIds.has(target.deadlineId)) continue;
     if (!autoSource(target)) {
+      // deadline エントリが参照する page は必ず実体化する。欠落したまま書くと
+      // 台帳が再読込不能 (page_id does not exist) になり後続サブコマンドが全滅する。
+      // 既存 page が同一 URL なら温存する (取得済み content_hash / body_ref を消さない)。
+      // URL が変わっていたら旧 page のままでは official_url 整合検査で再読込不能になるため、
+      // 新 URL の page_id へ張り替えてスタブを置く。
+      const existing = ledger.pages[target.pageId];
+      if (!existing || existing.requested_url !== target.url) {
+        if (existing) target.pageId = pageIdForUrl(target.url);
+        ledger.pages[target.pageId] ??= {
+          requested_url: target.url,
+          final_url: target.url,
+          status: 0,
+          content_type: "",
+          content_length: 0,
+          content_hash: "",
+          source_revision: "",
+          parser_version: "reverification-v2-unfetched",
+          headers: {},
+          provider: providerIdentityFromUrl(target.url).provider,
+          last_attempt_at: now.toISOString(),
+          last_success_at: null,
+          body_ref: "",
+        };
+      }
       ledger.deadlines[target.deadlineId] = stateFor(
         ledger.deadlines[target.deadlineId] ?? target.deadline.verification,
         target,

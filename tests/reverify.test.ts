@@ -73,6 +73,135 @@ function dataFile(
   return path;
 }
 
+it("keeps the ledger loadable when non-auto sources are routed to manual review", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-manual-page-"));
+  const dataPath = dataFile(dir, [
+    {
+      kind: "paper",
+      label: "Paper submission deadline",
+      round: 1,
+      track: "",
+      precision: "date-only",
+      local_date: "2027-01-02",
+      evidence: [{ sourceClass: "aggregator", sourceUrl: "https://example.test/list" }],
+      verification: {
+        official_url: "https://example.test/list",
+        source_class: "aggregator",
+        next_check_at: "2026-08-30T00:00:00.000Z",
+        status: "pending",
+      },
+    },
+  ]);
+  const ledgerPath = join(dir, "verification-ledger.json");
+  let fetched = 0;
+  const result = await reverifyData({
+    dataPath,
+    ledgerPath,
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    fetchImpl: async () => {
+      fetched += 1;
+      return new Response("unused");
+    },
+  });
+  expect(fetched).toBe(0);
+  expect(result.statuses).toEqual({ "manual-required": 1 });
+  // run が書いた台帳は、後続サブコマンドがそのまま読み戻せなければならない。
+  const reloaded = loadVerificationLedger(ledgerPath);
+  const entry = reloaded.deadlines["demo|demo-2027|paper|1|"];
+  expect(entry?.status).toBe("manual-required");
+  expect(entry?.page_id ? reloaded.pages[entry.page_id] : undefined).toBeTruthy();
+});
+
+it("keeps the ledger loadable when a non-auto source moves to a different URL", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-manual-move-"));
+  const ledgerPath = join(dir, "verification-ledger.json");
+  const deadlineFor = (url: string): Array<Record<string, unknown>> => [
+    {
+      kind: "paper",
+      label: "Paper submission deadline",
+      round: 1,
+      track: "",
+      precision: "date-only",
+      local_date: "2027-06-02",
+      evidence: [{ sourceClass: "aggregator", sourceUrl: url }],
+      verification: {
+        official_url: url,
+        source_class: "aggregator",
+        next_check_at: "2026-08-30T00:00:00.000Z",
+        status: "pending",
+      },
+    },
+  ];
+  const dataPath = dataFile(dir, deadlineFor("https://aggregator-a.test/list"));
+  await reverifyData({
+    dataPath,
+    ledgerPath,
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    fetchImpl: async () => new Response("unused"),
+  });
+  // 同じ締切の集約元 URL が翌晩に変わっても、台帳は読み戻せなければならない。
+  writeFileSync(
+    dataPath,
+    readFileSync(dataPath, "utf8").replaceAll(
+      "https://aggregator-a.test/list",
+      "https://aggregator-b.test/list",
+    ),
+  );
+  const moved = await reverifyData({
+    dataPath,
+    ledgerPath,
+    now: new Date("2026-09-30T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    fetchImpl: async () => new Response("unused"),
+  });
+  expect(moved.statuses).toEqual({ "manual-required": 1 });
+  const reloaded = loadVerificationLedger(ledgerPath);
+  const entry = reloaded.deadlines["demo|demo-2027|paper|1|"];
+  expect(entry?.official_url).toBe("https://aggregator-b.test/list");
+  const page = entry?.page_id ? reloaded.pages[entry.page_id] : undefined;
+  expect(page?.requested_url).toBe("https://aggregator-b.test/list");
+});
+
+it("preserves a captured page when its deadline later degrades to a non-auto source", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-manual-preserve-"));
+  const ledgerPath = join(dir, "verification-ledger.json");
+  const dataPath = dataFile(dir);
+  const body = "Paper submission deadline: January 2, 2027";
+  const first = await reverifyData({
+    dataPath,
+    ledgerPath,
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    fetchImpl: async () => new Response(body),
+  });
+  expect(first.statuses).toEqual({ verified: 1 });
+  const capturedHash = createHash("sha256").update(body).digest("hex");
+  // 同一 URL のまま source_class だけ非 auto に落ちても、取得済み page を消さない。
+  writeFileSync(
+    dataPath,
+    readFileSync(dataPath, "utf8").replaceAll('"official-cfp"', '"aggregator"'),
+  );
+  const degraded = await reverifyData({
+    dataPath,
+    ledgerPath,
+    now: new Date("2026-09-30T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    fetchImpl: async () => new Response("unused"),
+  });
+  expect(degraded.statuses).toEqual({ "manual-required": 1 });
+  const reloaded = loadVerificationLedger(ledgerPath);
+  const entry = reloaded.deadlines["demo|demo-2027|paper|1|"];
+  const page = entry?.page_id ? reloaded.pages[entry.page_id] : undefined;
+  expect(page?.content_hash).toBe(capturedHash);
+});
+
 it("persists due verification, stores the body, and records a changed deadline", async () => {
   const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-"));
   const dataPath = dataFile(dir);
