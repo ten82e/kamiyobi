@@ -2090,7 +2090,7 @@ conferences:
           - date: '2026-09-18 23:59:00'
             kind: paper
             label: Submission
-            tz: UTC
+            tz: JST
         id: ieice-fundamentals-discrete-math-2027-09
         link: https://www.ieice.org/eng_r/information/schedule/journals.php
         year: 2027
@@ -2999,13 +2999,13 @@ conferences:
     editions:
       - date_text: March 2027
         deadlines:
-          - date: '2026-09-04 23:59:00'
-            kind: registration
-            label: Paper registration
-            tz: AoE
           - date: '2026-09-11 23:59:00'
+            kind: registration
+            label: Paper registration (extended)
+            tz: AoE
+          - date: '2026-09-18 23:59:00'
             kind: paper
-            label: Paper submission
+            label: Paper submission (extended)
             tz: AoE
         id: percom27
         link: https://percom.org/
@@ -3586,11 +3586,11 @@ conferences:
     editions:
       - date_text: November 16-20, 2026
         deadlines:
-          - date: '2026-08-31 23:59:00'
-            kind: paper
-            label: Paper Submission
-            tz: UTC
           - date: '2026-09-15 23:59:00'
+            kind: paper
+            label: Paper Submission (extended)
+            tz: UTC
+          - date: '2026-09-30 23:59:00'
             kind: notification
             label: Paper Acceptance Notification
             tz: UTC
@@ -5153,7 +5153,7 @@ conferences:
       - ai
     editions:
       - deadlines:
-          - date: '2026-09-14'
+          - date: '2026-09-13'
             kind: paper
             label: Submission deadline
             precision: date-only
@@ -6408,7 +6408,7 @@ conferences:
       - db
     editions:
       - deadlines:
-          - date: '2026-09-11'
+          - date: '2026-10-11'
             kind: paper
             label: Submission deadline
             precision: date-only
@@ -6460,7 +6460,7 @@ conferences:
       - security
     editions:
       - deadlines:
-          - date: '2026-09-05'
+          - date: '2026-08-25'
             kind: paper
             label: Submission deadline
             precision: date-only
