@@ -2048,8 +2048,10 @@ export async function reverifyData(options: ReverifyOptions): Promise<ReverifyRe
           observed = match.compatible[0];
           changeKind = "ambiguous";
         } else {
+          // 互換候補ゼロのとき、無関係な先頭候補を観測値として記録しない。
+          // (round/track 不一致の別トラック締切が observed_value に混入し、
+          //  誤った open resolution が量産される実測事故の防止。#701)
           status = "manual-required";
-          observed = result.candidates[0];
           changeKind = "ambiguous";
         }
       }

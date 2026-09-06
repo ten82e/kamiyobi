@@ -202,6 +202,44 @@ it("preserves a captured page when its deadline later degrades to a non-auto sou
   expect(page?.content_hash).toBe(capturedHash);
 });
 
+it("does not record an unrelated candidate when no compatible deadline matches", async () => {
+  // round/track 不一致でページ上の締切と照合できなかった場合、無関係な先頭候補を
+  // observed_value として resolution に書かない (#701 の安全化)。
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-incompatible-"));
+  const dataPath = dataFile(dir, [
+    {
+      kind: "paper",
+      label: "Paper submission (round 2)",
+      round: 2,
+      track: "fall",
+      precision: "date-only",
+      local_date: "2027-01-02",
+      verification: {
+        official_url: "https://example.test/cfp",
+        source_class: "official-cfp",
+        next_check_at: "2026-08-30T00:00:00.000Z",
+        status: "pending",
+      },
+    },
+  ]);
+  const ledgerPath = join(dir, "verification-ledger.json");
+  const result = await reverifyData({
+    dataPath,
+    ledgerPath,
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    // 抽出候補は round=1 の別トラック締切だけ (照合不能)
+    fetchImpl: async () => new Response("Workshop deadline: February 9, 2027"),
+  });
+  expect(result.statuses).toEqual({ "manual-required": 1 });
+  const resolution = result.ledger.resolutions.find(
+    (item) => item.deadline_id === "demo|demo-2027|paper|2|fall",
+  );
+  expect(resolution?.current_value ?? "").not.toContain("2027-02-09");
+  expect(resolution?.raw_excerpt ?? "").not.toContain("February 9");
+});
+
 it("persists due verification, stores the body, and records a changed deadline", async () => {
   const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-"));
   const dataPath = dataFile(dir);
