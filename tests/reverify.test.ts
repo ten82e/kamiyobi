@@ -444,6 +444,76 @@ it("verifies when the same value appears in multiple page mentions", async () =>
   expect(result.statuses).toEqual({ verified: 1 });
 });
 
+function publisherDeadline(): Array<Record<string, unknown>> {
+  return [
+    {
+      kind: "paper",
+      label: "Manuscript submission deadline (extended)",
+      round: 1,
+      track: "",
+      precision: "date-only",
+      local_date: "2026-09-15",
+      verification: {
+        official_url: "https://example.test/cfp",
+        source_class: "publisher",
+        next_check_at: "2026-08-30T00:00:00.000Z",
+        status: "pending",
+      },
+    },
+  ];
+}
+
+async function reverifyPublisherBody(dir: string, body: string) {
+  return reverifyData({
+    dataPath: dataFile(dir, publisherDeadline()),
+    ledgerPath: join(dir, "verification-ledger.json"),
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    fetchImpl: async () => new Response(body),
+  });
+}
+
+it("verifies a label whose signature carries a day-first date", async () => {
+  // 実例: IEEE ComSoc 特集号 CFP (#716)。labelSignature が国際式日付
+  // (15 September 2026) を除去できず、候補ラベルの署名に日付が残って
+  // 保存ラベルとの包含照合が壊れていた。
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-dayfirst-"));
+  const result = await reverifyPublisherBody(
+    dir,
+    "Manuscript Submission Deadline: 15 September 2026 (Extended Deadline)\n" +
+      "Final Manuscript Due: 1 March 2027\n",
+  );
+  expect(result.statuses).toEqual({ verified: 1 });
+});
+
+it("does not treat a revised-manuscript stage as a change announcement", async () => {
+  // 実例: IEEE WCM 特集号 CFP (#716)。「Revised Manuscript Due」(改訂稿提出の
+  // 編集段階) が CHANGE_LANGUAGE の revised に誤ヒットし、値一致候補の verified を
+  // 阻止していた。
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-revstage-"));
+  const result = await reverifyPublisherBody(
+    dir,
+    "Manuscript Submission Deadline: 15 September 2026 (Extended Deadline)\n" +
+      "Revised Manuscript Due: 1 December 2026\n" +
+      "Final Manuscript Due: 1 March 2027\n",
+  );
+  expect(result.statuses).toEqual({ verified: 1 });
+});
+
+it("still refuses a genuine revised-deadline announcement with a different date", async () => {
+  // 中和は 'revised manuscript' に限る保証 — 「Revised paper submission deadline:
+  // 新日付」型の真の変更告知は引き続きガード(2)で manual に落とす
+  // (中和を revised paper/version へ広げると素通りする。#716 反証レビューで実証)。
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-reviseddl-"));
+  const result = await reverifyPublisherBody(
+    dir,
+    "Manuscript Submission Deadline: 15 September 2026\n" +
+      "Revised paper submission deadline: 20 September 2026\n",
+  );
+  expect(result.statuses).toEqual({ "manual-required": 1 });
+});
+
 it("keeps ambiguous multi-candidate slots free of proposed observed values", async () => {
   // 複数互換で一意照合できないときも特定候補の値を提案しない (#701 レビュー R4)。
   const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-ambnoval-"));

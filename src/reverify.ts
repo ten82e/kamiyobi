@@ -1146,25 +1146,36 @@ function nextCheck(
 }
 
 function labelSignature(value: string): string {
-  return value
-    .normalize("NFKC")
-    .toLowerCase()
-    .replace(/\b20\d{2}[-/]\d{1,2}[-/]\d{1,2}\b/g, " ")
-    .replace(
-      /\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+\d{1,2}(?:st|nd|rd|th)?(?:,|\s)\s*20\d{2}\b/gi,
-      " ",
-    )
-    .replace(/\b20\d{2}\b/g, " ")
-    .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, " ")
-    .replace(/\b(?:AoE|UTC|GMT|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|JST|PT|ET|CT|MT)\b/gi, " ")
-    .replace(/\b(?:mon|tues|wednes|thurs|fri|satur|sun)day\b/gi, " ")
-    .replace(/\b(?:am|pm)\b/gi, " ")
-    .replace(/\bus\b/gi, " ")
-    .replace(/\b(?:deadline|due|submission date|date)\b/g, " ")
-    .replace(/\b(?:round|cycle|phase|stage)\s*#?\s*\d+\b/g, " ")
-    .replace(/[^\p{L}\p{N}]+/gu, " ")
-    .trim()
-    .replace(/\s+/g, " ");
+  return (
+    value
+      .normalize("NFKC")
+      .toLowerCase()
+      .replace(/\b20\d{2}[-/]\d{1,2}[-/]\d{1,2}\b/g, " ")
+      .replace(
+        /\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+\d{1,2}(?:st|nd|rd|th)?(?:,|\s)\s*20\d{2}\b/gi,
+        " ",
+      )
+      // 国際式 (日→月→年): 「15 September 2026」。IEEE ComSoc 等の publisher は
+      // この表記なので、米式のみだと署名に日付が残り包含照合が壊れる (#716)。
+      .replace(
+        /\b\d{1,2}(?:st|nd|rd|th)?\s+(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?,?\s*20\d{2}\b/gi,
+        " ",
+      )
+      .replace(/\b20\d{2}\b/g, " ")
+      .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, " ")
+      .replace(
+        /\b(?:AoE|UTC|GMT|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|JST|PT|ET|CT|MT)\b/gi,
+        " ",
+      )
+      .replace(/\b(?:mon|tues|wednes|thurs|fri|satur|sun)day\b/gi, " ")
+      .replace(/\b(?:am|pm)\b/gi, " ")
+      .replace(/\bus\b/gi, " ")
+      .replace(/\b(?:deadline|due|submission date|date)\b/g, " ")
+      .replace(/\b(?:round|cycle|phase|stage)\s*#?\s*\d+\b/g, " ")
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim()
+      .replace(/\s+/g, " ")
+  );
 }
 
 function excerptSignature(value: string): string {
@@ -1595,12 +1606,19 @@ function verifyBlocked(
       return true;
   }
   // (2) 変更語彙 (extended/updated/revised/postponed 等) を含む候補行が保存値と
-  //     異なる日付を示す場合。'extended abstract' は論文種別なので除外。
+  //     異なる日付を示す場合。'extended abstract' は論文種別、'revised manuscript'
+  //     は改訂稿提出という編集段階の名称なので除外 (ジャーナル CFP の
+  //     Revised Manuscript Due 行は変更告知ではない。#716)。中和はこの2語に限る —
+  //     'revised paper/version' まで広げると「Revised paper submission deadline:
+  //     新日付」型の真の変更告知が素通りし誤 verified になる (反証レビューで実証)。
   for (const candidate of candidates) {
     const line = `${candidate.label ?? ""} ${candidate.rawExcerpt ?? ""}`;
+    const neutralized = line
+      .replace(/extended[- ]abstracts?/gi, " ")
+      .replace(/revised[- ]manuscripts?/gi, " ");
     if (
       candidate.date &&
-      CHANGE_LANGUAGE.test(line.replace(/extended[- ]abstracts?/gi, " ")) &&
+      CHANGE_LANGUAGE.test(neutralized) &&
       !sameDeadlineValue(target.deadline, candidate) &&
       !siblings.some((sibling) => sameDeadlineValue(sibling, candidate))
     )
