@@ -88,7 +88,7 @@ conferences:
             kind: paper
             label: Paper Submission Deadline
             tz: AoE
-          - date: '2026-09-30'
+          - date: '2026-10-15'
             kind: notification
             label: Acceptance Notification
             precision: date-only
@@ -1580,7 +1580,7 @@ conferences:
             kind: paper
             label: Paper Submission (Round 2)
             tz: AoE
-          - date: '2026-09-20 23:59:00'
+          - date: '2026-09-22 23:59:00'
             kind: notification
             label: Notification of Acceptance (Round 2)
             tz: AoE
@@ -1605,7 +1605,7 @@ conferences:
             kind: paper
             label: Paper Submission (Round 2)
             tz: AoE
-          - date: '2026-09-20 23:59:00'
+          - date: '2026-09-22 23:59:00'
             kind: notification
             label: Notification of Acceptance (Round 2)
             tz: AoE
@@ -3347,7 +3347,7 @@ conferences:
             kind: paper
             label: Paper Submission
             tz: UTC
-          - date: '2026-09-30 23:59:00'
+          - date: '2026-10-10 23:59:00'
             kind: notification
             label: Acceptance Notification
             tz: UTC
@@ -3379,7 +3379,7 @@ conferences:
             kind: paper
             label: Paper Submission
             tz: UTC
-          - date: '2026-09-30 23:59:00'
+          - date: '2026-10-10 23:59:00'
             kind: notification
             label: Acceptance Notification
             tz: UTC
@@ -3554,7 +3554,7 @@ conferences:
             kind: paper
             label: Submission
             tz: UTC
-          - date: '2026-09-28 23:59:00'
+          - date: '2026-10-06 23:59:00'
             kind: notification
             label: Acceptance Notification
             tz: UTC
@@ -6026,10 +6026,19 @@ conferences:
       - ai
     editions:
       - deadlines:
-          - date: '2026-10-05'
+          - date: '2026-09-20'
             kind: paper
             label: Submission deadline
             precision: date-only
+            superseded_deadlines:
+              - value: '2026-10-05'
+                precision: date-only
+                source: https://www.icairs.net/
+                evidenceRef: https://www.icairs.net/
+                status: superseded
+                supersededBy: ieee-icairs-2026|ieee-icairs-202626|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-09-06T10:30:00Z'
         id: ieee-icairs-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=191487&copyownerid=163993
         year: 2026
@@ -6524,10 +6533,19 @@ conferences:
       - db
     editions:
       - deadlines:
-          - date: '2026-09-27'
+          - date: '2026-07-19'
             kind: paper
             label: Submission deadline
             precision: date-only
+            superseded_deadlines:
+              - value: '2026-09-27'
+                precision: date-only
+                source: https://icsoc2026.it.p.lodz.pl/important-dates.html
+                evidenceRef: https://icsoc2026.it.p.lodz.pl/important-dates.html
+                status: superseded
+                supersededBy: 24th-international-conference-on-service-oriented-computing-icsoc-2026-lodz-po|24th-international-conference-on-service-oriented-computing-icsoc-2026-lodz-po26|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-09-06T10:30:00Z'
         id: 24th-international-conference-on-service-oriented-computing-icsoc-2026-lodz-po26
         link: https://icsoc2026.it.p.lodz.pl/
         year: 2026

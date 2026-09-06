@@ -1286,22 +1286,129 @@ conferences:
         #   Round 2: paper Jun 10 / notification Aug 8 / revised Sep 7 / final Sep 30 / CR Oct 14。
         #   Round 3: paper Oct 7 / notification Dec 5 / revised Jan 4 / final Jan 27 / CR Feb 10。
         #   全て 5pm PT。
+        # 2026-09-06 訂正: 公式は「All deadlines are at 5 pm PT」と時刻を明記しており、
+        # 23:59 PT 慣例での記録は全行 7 時間遅かった。全行 17:00 PT へ訂正し、
+        # 将来分には旧公開 instant の supersession を付す。
         deadlines:
-          - {kind: paper, label: 'Paper submission (round 1)', date: '2026-02-04 23:59:00', tz: PT, round: 1}
-          - {kind: notification, label: 'Notification Acc/Rej/Rev (round 1)', date: '2026-04-04 23:59:00', tz: PT, round: 1}
-          - {kind: rebuttal_end, label: 'Revised paper submission (round 1)', date: '2026-05-04 23:59:00', tz: PT, round: 1}
-          - {kind: notification, label: 'Notification Acc/Rej (round 1)', date: '2026-05-27 23:59:00', tz: PT, round: 1}
-          - {kind: camera_ready, label: 'Camera-ready (round 1)', date: '2026-06-10 23:59:00', tz: PT, round: 1}
-          - {kind: paper, label: 'Paper submission (round 2)', date: '2026-06-10 23:59:00', tz: PT, round: 2}
-          - {kind: notification, label: 'Notification Acc/Rej/Rev (round 2)', date: '2026-08-08 23:59:00', tz: PT, round: 2}
-          - {kind: rebuttal_end, label: 'Revised paper submission (round 2)', date: '2026-09-07 23:59:00', tz: PT, round: 2}
-          - {kind: notification, label: 'Notification Acc/Rej (round 2)', date: '2026-09-30 23:59:00', tz: PT, round: 2}
-          - {kind: camera_ready, label: 'Camera-ready (round 2)', date: '2026-10-14 23:59:00', tz: PT, round: 2}
-          - {kind: paper, label: 'Paper submission (round 3)', date: '2026-10-07 23:59:00', tz: PT, round: 3}
-          - {kind: notification, label: 'Notification Acc/Rej/Rev (round 3)', date: '2026-12-05 23:59:00', tz: PT, round: 3}
-          - {kind: rebuttal_end, label: 'Revised paper submission (round 3)', date: '2027-01-04 23:59:00', tz: PT, round: 3}
-          - {kind: notification, label: 'Notification Acc/Rej (round 3)', date: '2027-01-27 23:59:00', tz: PT, round: 3}
-          - {kind: camera_ready, label: 'Camera-ready (round 3)', date: '2027-02-10 23:59:00', tz: PT, round: 3}
+          - {kind: paper, label: 'Paper submission (round 1)', date: '2026-02-04 17:00:00', tz: PT, round: 1}
+          - {kind: notification, label: 'Notification Acc/Rej/Rev (round 1)', date: '2026-04-04 17:00:00', tz: PT, round: 1}
+          - {kind: rebuttal_end, label: 'Revised paper submission (round 1)', date: '2026-05-04 17:00:00', tz: PT, round: 1}
+          - {kind: notification, label: 'Notification Acc/Rej (round 1)', date: '2026-05-27 17:00:00', tz: PT, round: 1}
+          - {kind: camera_ready, label: 'Camera-ready (round 1)', date: '2026-06-10 17:00:00', tz: PT, round: 1}
+          - {kind: paper, label: 'Paper submission (round 2)', date: '2026-06-10 17:00:00', tz: PT, round: 2}
+          - {kind: notification, label: 'Notification Acc/Rej/Rev (round 2)', date: '2026-08-08 17:00:00', tz: PT, round: 2}
+          - kind: rebuttal_end
+            label: 'Revised paper submission (round 2)'
+            date: '2026-09-07 17:00:00'
+            tz: PT
+            round: 2
+            superseded_deadlines:
+              - value: '2026-09-08T06:59:00Z'
+                precision: exact
+                source: https://edbticdt2027.github.io/?contents=important_dates.html
+                evidenceRef: https://edbticdt2027.github.io/?contents=important_dates.html
+                status: superseded
+                supersededBy: edbt|edbt27|rebuttal_end|2|
+                reason: manual-resolution
+                supersededAt: '2026-09-06T10:30:00Z'
+          - kind: notification
+            label: 'Notification Acc/Rej (round 2)'
+            date: '2026-09-30 17:00:00'
+            tz: PT
+            round: 2
+            superseded_deadlines:
+              - value: '2026-10-01T06:59:00Z'
+                precision: exact
+                source: https://edbticdt2027.github.io/?contents=important_dates.html
+                evidenceRef: https://edbticdt2027.github.io/?contents=important_dates.html
+                status: superseded
+                supersededBy: edbt|edbt27|notification|2|
+                reason: manual-resolution
+                supersededAt: '2026-09-06T10:30:00Z'
+          - kind: camera_ready
+            label: 'Camera-ready (round 2)'
+            date: '2026-10-14 17:00:00'
+            tz: PT
+            round: 2
+            superseded_deadlines:
+              - value: '2026-10-15T06:59:00Z'
+                precision: exact
+                source: https://edbticdt2027.github.io/?contents=important_dates.html
+                evidenceRef: https://edbticdt2027.github.io/?contents=important_dates.html
+                status: superseded
+                supersededBy: edbt|edbt27|camera_ready|2|
+                reason: manual-resolution
+                supersededAt: '2026-09-06T10:30:00Z'
+          - kind: paper
+            label: 'Paper submission (round 3)'
+            date: '2026-10-07 17:00:00'
+            tz: PT
+            round: 3
+            superseded_deadlines:
+              - value: '2026-10-08T06:59:00Z'
+                precision: exact
+                source: https://edbticdt2027.github.io/?contents=important_dates.html
+                evidenceRef: https://edbticdt2027.github.io/?contents=important_dates.html
+                status: superseded
+                supersededBy: edbt|edbt27|paper|3|
+                reason: manual-resolution
+                supersededAt: '2026-09-06T10:30:00Z'
+          - kind: notification
+            label: 'Notification Acc/Rej/Rev (round 3)'
+            date: '2026-12-05 17:00:00'
+            tz: PT
+            round: 3
+            superseded_deadlines:
+              - value: '2026-12-06T07:59:00Z'
+                precision: exact
+                source: https://edbticdt2027.github.io/?contents=important_dates.html
+                evidenceRef: https://edbticdt2027.github.io/?contents=important_dates.html
+                status: superseded
+                supersededBy: edbt|edbt27|notification|3|
+                reason: manual-resolution
+                supersededAt: '2026-09-06T10:30:00Z'
+          - kind: rebuttal_end
+            label: 'Revised paper submission (round 3)'
+            date: '2027-01-04 17:00:00'
+            tz: PT
+            round: 3
+            superseded_deadlines:
+              - value: '2027-01-05T07:59:00Z'
+                precision: exact
+                source: https://edbticdt2027.github.io/?contents=important_dates.html
+                evidenceRef: https://edbticdt2027.github.io/?contents=important_dates.html
+                status: superseded
+                supersededBy: edbt|edbt27|rebuttal_end|3|
+                reason: manual-resolution
+                supersededAt: '2026-09-06T10:30:00Z'
+          - kind: notification
+            label: 'Notification Acc/Rej (round 3)'
+            date: '2027-01-27 17:00:00'
+            tz: PT
+            round: 3
+            superseded_deadlines:
+              - value: '2027-01-28T07:59:00Z'
+                precision: exact
+                source: https://edbticdt2027.github.io/?contents=important_dates.html
+                evidenceRef: https://edbticdt2027.github.io/?contents=important_dates.html
+                status: superseded
+                supersededBy: edbt|edbt27|notification|3|
+                reason: manual-resolution
+                supersededAt: '2026-09-06T10:30:00Z'
+          - kind: camera_ready
+            label: 'Camera-ready (round 3)'
+            date: '2027-02-10 17:00:00'
+            tz: PT
+            round: 3
+            superseded_deadlines:
+              - value: '2027-02-11T07:59:00Z'
+                precision: exact
+                source: https://edbticdt2027.github.io/?contents=important_dates.html
+                evidenceRef: https://edbticdt2027.github.io/?contents=important_dates.html
+                status: superseded
+                supersededBy: edbt|edbt27|camera_ready|3|
+                reason: manual-resolution
+                supersededAt: '2026-09-06T10:30:00Z'
 
   # --- icdt 2027 2nd cycle 通知追加（締切 4 件は公式一致で pin） ---
   # 根拠: https://edbticdt2027.github.io/?contents=important_dates.html (2026-08-13 取得)
