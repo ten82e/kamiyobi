@@ -2283,7 +2283,7 @@ it("site template statUpcoming counts confirmed submission deadlines only", () =
   const runtime = siteRuntime();
   expect(template).toMatch(/Content-Security-Policy/);
   expect(template).toMatch(
-    /script-src 'self' 'unsafe-inline' https:\/\/cdn\.jsdelivr\.net https:\/\/cdnjs\.cloudflare\.com/,
+    /script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https:\/\/cdn\.jsdelivr\.net https:\/\/cdnjs\.cloudflare\.com/,
   );
   expect(template).toMatch(
     /connect-src 'self' https:\/\/cdn\.jsdelivr\.net https:\/\/huggingface\.co https:\/\/cdn-lfs\.huggingface\.co/,
