@@ -1168,10 +1168,16 @@ describe("venue recommendation fusion", () => {
     expect(comparison.acceptance.heldout_recall_at_5_non_degraded).toBe(
       comparison.candidate.heldout.recall_at_5 >= comparison.production.heldout.recall_at_5,
     );
-    // 非劣化ゲートを全通過しても差は雑音水準で、CV 方式の契約変更を伴う昇格は
-    // 保守者の明示判断に委ねる (#687)。decision は保留の keep-v3。
+    // 昇格ポリシー (#687 で確定): 昇格には heldout MRR で noise floor (0.01) を
+    // 超える改善が「必要条件」。dev MRR の bootstrap 95% CI 幅は ~0.17 (n=80) で、
+    // それ未満の差は雑音であり、雑音での機械的な昇格フリップを防ぐ。
+    // floor 超えは十分条件ではない (recall 劣化等での保守的 keep は常に適法) ため、
+    // 検証は一方向のみ: 雑音水準の差での promote を禁止する。
+    const PROMOTION_NOISE_FLOOR = 0.01;
+    const heldoutGain = comparison.candidate.heldout.mrr - comparison.production.heldout.mrr;
+    if (heldoutGain <= PROMOTION_NOISE_FLOOR) expect(comparison.decision).toBe("keep-v3");
+    expect(["keep-v3", "promote-v4"]).toContain(comparison.decision);
     expect(comparison).toMatchObject({
-      decision: "keep-v3",
       artifact: { algorithm_revision: model.algorithm_revision },
     });
     expect(model).toMatchObject({

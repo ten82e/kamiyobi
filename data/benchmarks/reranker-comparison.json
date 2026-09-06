@@ -70,7 +70,7 @@
     }
   },
   "decision": "keep-v3",
-  "candidate_rejected_reason": "deferred promotion: v4 leads only oof_mrr (+0.00247; oof recall tied) and heldout MRR by +0.000209 (noise-level); dev Recall@5 degrades (0.425 vs 0.4375) and the calibration gates cannot distinguish the two models (bench confidence is not Platt-calibrated). Kept incumbent v3; promotion decision is #687",
+  "candidate_rejected_reason": "kept incumbent v3 (final, #687): candidate heldout MRR gain +0.000209 is below the promotion noise floor (0.01); dev Recall@5 regresses (0.425 vs 0.4375) and the calibration gates cannot distinguish the models (bench confidence is not Platt-calibrated)",
   "artifact": {
     "path": "data/recommender-reranker.json",
     "algorithm_revision": "l2-pairwise-logistic-reranker-v3-grouped-cv",
