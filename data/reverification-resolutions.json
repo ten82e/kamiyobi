@@ -1,5 +1,44 @@
 {
   "schema_version": 1,
   "producer_revision": "reverification-v2",
-  "resolutions": []
+  "resolutions": [
+    {
+      "resolution_id": "resolution:bac50cf88d1ee0af474e05aa47f41844cdb7df383a02900cf1480cae132159d0",
+      "deadline_id": "network-flows-2-0|networkflows20|abstract|1|",
+      "page_id": "page:94546ccff1ac245f73308eb5a72a0c41f571933915437e3b55412c93c571511d",
+      "official_url": "https://easychair.org/cfp/flowchallenge2",
+      "observed_at": "2026-09-06T22:09:24.000Z",
+      "state": "open",
+      "first_detected_at": "2026-09-06T22:09:24.000Z",
+      "last_seen_at": "2026-09-06T22:09:24.000Z",
+      "old_value": "2026-09-15",
+      "new_value": "",
+      "change_kind": "ambiguous",
+      "evidence_ref": "evidence/blobs/c7d9a6de6f77a7ff281702ac593e813fd86aee5f4a66c6a9f40c6478852a4ac3.body",
+      "content_hash": "c7d9a6de6f77a7ff281702ac593e813fd86aee5f4a66c6a9f40c6478852a4ac3",
+      "raw_excerpt": "",
+      "status": "manual-required",
+      "previous_value": "2026-09-15",
+      "current_value": ""
+    },
+    {
+      "resolution_id": "resolution:f5dce72069d8ed92c7bc8583135ad88bd034e5838c77be1749dfd7cf89096346",
+      "deadline_id": "network-flows-2-0|networkflows20|paper|1|",
+      "page_id": "page:94546ccff1ac245f73308eb5a72a0c41f571933915437e3b55412c93c571511d",
+      "official_url": "https://easychair.org/cfp/flowchallenge2",
+      "observed_at": "2026-09-06T22:09:24.000Z",
+      "state": "open",
+      "first_detected_at": "2026-09-06T22:09:24.000Z",
+      "last_seen_at": "2026-09-06T22:09:24.000Z",
+      "old_value": "2026-09-15T23:59:00Z",
+      "new_value": "",
+      "change_kind": "ambiguous",
+      "evidence_ref": "evidence/blobs/c7d9a6de6f77a7ff281702ac593e813fd86aee5f4a66c6a9f40c6478852a4ac3.body",
+      "content_hash": "c7d9a6de6f77a7ff281702ac593e813fd86aee5f4a66c6a9f40c6478852a4ac3",
+      "raw_excerpt": "",
+      "status": "manual-required",
+      "previous_value": "2026-09-15T23:59:00Z",
+      "current_value": ""
+    }
+  ]
 }

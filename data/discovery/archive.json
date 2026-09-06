@@ -1300,8 +1300,8 @@
     },
     {
       "fingerprint": "candidate-3f54a3ca9d039f858bcb5911",
-      "decision": "no-official-evidence",
-      "last_reviewed": "2026-09-01T00:00:00.000Z",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-06T22:11:00.200Z",
       "source_url_hash": "1acb721970bce8966af3fd848abfb5f7a9a6d79e11dfa97620f00eae36d4a022"
     },
     {
@@ -3009,6 +3009,12 @@
       "source_url_hash": "1660c3252bb1873aa5a5eb1017dbc8baa3f447907e70d8b810d20d9d909ade88"
     },
     {
+      "fingerprint": "candidate-7fda2160ac2579e216770724",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-06T22:11:00.200Z",
+      "source_url_hash": "9813281a82d7688c51c00b3d5cd5c3de31b1b57b8873feaa9c1dbc46840f81b0"
+    },
+    {
       "fingerprint": "candidate-fa3930448e56b55f5cfc9c4a",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -3756,6 +3762,12 @@
       "fingerprint": "candidate-a4dd5118bba660a7619cfcde",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "42b232ed28fe60ab8a1f8418de07c644ca60fc3db662ba17606095f4e3c1f91c"
+    },
+    {
+      "fingerprint": "candidate-13718022dc7c4a5f2028beac",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-06T22:11:00.200Z",
       "source_url_hash": "42b232ed28fe60ab8a1f8418de07c644ca60fc3db662ba17606095f4e3c1f91c"
     },
     {
@@ -4803,6 +4815,12 @@
       "source_url_hash": "aee8ab76a4b414c2048c53f76470f370aa7402447dabb18867fd95309710c2dd"
     },
     {
+      "fingerprint": "candidate-40d041b6a4f9a48dea40e2ad",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-06T22:11:00.200Z",
+      "source_url_hash": "ffbf1f295bcbfb6fd51804b4d6d6e50e0717810274a25c5ac9438b347eef4b05"
+    },
+    {
       "fingerprint": "candidate-46e3fc302e8672983225bcaa",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -4945,6 +4963,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "2d0dd7c5b630cac1726e1835cf82cb823a601e4e267dab05c1dce5f126a8f3f6"
+    },
+    {
+      "fingerprint": "candidate-ee0a443993dae29b3b8b7d71",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-06T22:11:00.200Z",
+      "source_url_hash": "11381235af169deeeff06005c0cdaee15b4c47c17c43b517a1609125315bb663"
     },
     {
       "fingerprint": "candidate-24a08e8792f1f180cde7b287",
@@ -5359,6 +5383,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "aa7f46b2a9ef7aec9f9c4211598cee62da6e78b5f90e159526b8825476489946"
+    },
+    {
+      "fingerprint": "candidate-2056877e54a5c3d45ac410b1",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-06T22:11:00.200Z",
+      "source_url_hash": "e717ee88296cc9289199df1f7bbfcac2877a60dc76c19b5fabb427672973339e"
     },
     {
       "fingerprint": "candidate-4660aea2a15b87f3f3627eb1",
@@ -7137,6 +7167,12 @@
       "source_url_hash": "ce62d3c663731c9d14e7d33a1de13f2f1904e887b6b4c41bbb1093065ccd27a8"
     },
     {
+      "fingerprint": "candidate-cc483146dc998b047ff79108",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-06T22:11:00.200Z",
+      "source_url_hash": "3e3d24ae7282d968bb86f74ef60fe56c426c1f88ae6386d84d9584fbc9b9da74"
+    },
+    {
       "fingerprint": "candidate-a9861469babc112759b67285",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -7959,6 +7995,12 @@
       "source_url_hash": "6e8dccfcc15bede57321efe264d8ffd4ebfa9124ff37fdd7a575c00499dbd139"
     },
     {
+      "fingerprint": "candidate-acde9a1f3aefee8d109464d9",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-06T22:11:00.200Z",
+      "source_url_hash": "a8047251f844ce829858fab20cff1dde7a77efae5fdf96e87e8ab8753a73b306"
+    },
+    {
       "fingerprint": "candidate-e9b9e012a41b948c7ee1ff35",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -8224,8 +8266,8 @@
     },
     {
       "fingerprint": "candidate-6d9eb0d44e1be191d6532df9",
-      "decision": "no-official-evidence",
-      "last_reviewed": "2026-09-01T00:00:00.000Z",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-06T22:11:00.200Z",
       "source_url_hash": "00dcd778bbdd294b065f92e827bead775382a27743f09e0f50d22122d2cd59d3"
     },
     {
