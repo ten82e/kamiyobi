@@ -3,7 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://cdn-lfs.huggingface.co; worker-src 'self' blob: https://cdnjs.cloudflare.com;">
+<!-- connect-src: Hugging Face はモデル配信を xet CDN (*.cdn.hf.co, 2025〜) へ移行した。
+     旧 cdn-lfs のみの許可では model_quantized.onnx の取得が CSP でブロックされ、
+     全訪問者で意味検索が語彙のみへ静かに退化する (2026-09-06 実地QAで検出)。
+     frame-ancestors は meta 経由では無効 (console エラーの元) のため置かない。 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://cdn-lfs.huggingface.co https://*.cdn.hf.co https://*.xethub.hf.co; worker-src 'self' blob: https://cdnjs.cloudflare.com;">
 <title>kamiyobi：CS国際会議・穴場ワークショップ締切探知</title>
 <style>
 :root {
