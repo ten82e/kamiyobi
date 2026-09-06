@@ -1534,7 +1534,15 @@ function matchingCandidate(
 ): { candidate?: ExtractedDeadlineField; compatible: ExtractedDeadlineField[] } {
   const compatible = candidates.filter((candidate) => slotCompatible(target, candidate));
   const same = compatible.filter((candidate) => sameDeadlineValue(target.deadline, candidate));
-  // 値一致がちょうど 1 件で、かつ残りの互換候補がすべて同 edition の別スロットの
+  // CFP は Key dates 節と本文で同じ締切を二重掲載するのが一般形。一意性は候補の
+  // 「件数」でなく「異なり値の数」で判定する — 同一値の重複は裏付けの強化であって
+  // 曖昧ではない (#714)。date/time/tz の組が1つでも違えば従来どおり不一意。
+  const sameValueKeys = new Set(
+    same.map(
+      (candidate) => `${candidate.date ?? ""}|${candidate.time ?? ""}|${candidate.timezone ?? ""}`,
+    ),
+  );
+  // 値一致の異なり値がちょうど 1 で、かつ残りの互換候補がすべて同 edition の別スロットの
   // 値として説明できる場合のみ verified。説明できない互換候補 (延長の新値かも
   // しれない) が残るときは verified にしない (安全側。#701)。
   const siblings = (target.edition.deadlines ?? []).filter(
@@ -1555,7 +1563,9 @@ function matchingCandidate(
   );
   return {
     candidate:
-      same.length === 1 && unaccounted.length === 0 && !verifyBlocked(target, candidates, siblings)
+      sameValueKeys.size === 1 &&
+      unaccounted.length === 0 &&
+      !verifyBlocked(target, candidates, siblings)
         ? same[0]
         : undefined,
     compatible,

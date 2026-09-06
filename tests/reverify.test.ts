@@ -423,6 +423,27 @@ it("does not confirm a date-only statement against an unconfirmed timezone", asy
   expect(result.statuses).toEqual({ "manual-required": 1 });
 });
 
+it("verifies when the same value appears in multiple page mentions", async () => {
+  // CFP は Key dates 節と本文で同じ締切を二重掲載するのが一般形 (実例: genai4sg の
+  // EasyChair メタデータ表 + 本文)。同一値の重複は裏付けの強化であって曖昧ではない —
+  // 候補の「件数」でなく「異なり値の数」で一意性を判定する (#714)。
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-dupmention-"));
+  const dataPath = dataFile(dir);
+  const result = await reverifyData({
+    dataPath,
+    ledgerPath: join(dir, "verification-ledger.json"),
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    fetchImpl: async () =>
+      new Response(
+        "Submission deadline January 2, 2027\n" +
+          "Tentative paper submission deadline: January 2, 2027\n",
+      ),
+  });
+  expect(result.statuses).toEqual({ verified: 1 });
+});
+
 it("keeps ambiguous multi-candidate slots free of proposed observed values", async () => {
   // 複数互換で一意照合できないときも特定候補の値を提案しない (#701 レビュー R4)。
   const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-ambnoval-"));
