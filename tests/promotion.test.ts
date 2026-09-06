@@ -113,6 +113,19 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("classifies each labelled segment of a compound line independently", () => {
+    // PerCom 型: 1 行に複数の「ラベル: 日付」が並ぶと、行全体からの kind 導出では
+    // 先頭の種別語が全日付に伝播する (#701)。各日付の直前セグメントで分類する。
+    expect(
+      extractCfpCandidates(
+        "New date for Abstract registration: September 11, 2026, and Full paper submission: September 18 2026 (All in AoE)",
+      ),
+    ).toMatchObject([
+      { date: "2026-09-11", kind: "abstract" },
+      { date: "2026-09-18", kind: "paper" },
+    ]);
+  });
+
   it("extracts multiple round dates and their following times from one line", () => {
     expect(
       extractCfpCandidates(
