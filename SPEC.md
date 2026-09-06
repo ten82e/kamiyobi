@@ -995,6 +995,11 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 - 両 split は9カテゴリ、英語と日本語、国際会議と国内会議、conference・workshop・journal・special issue、title-only・title+abstract・PDF抽出を含む。
 - heldout の単一 venue 比率は25%以下とし、複数の妥当な投稿先を許すケースを含める。
 - 実論文評価は lexical・semantic・fused の MRR、Recall@1/5/10、nDCG@10、95% bootstrap区間、層別値、abstentionを分けて報告する。
+- ベンチの semantic はカタログ・クエリとも Node/fp32 で埋め込むが、本番ブラウザの
+  クエリは q8 量子化（transformers.js 既定）で計算される。実測（6クエリ×664会議、
+  2026-09-06）でクエリベクトル cosine(q8, fp32) = 0.9896〜0.9952、top5 集合一致
+  93.3%・top10 88.3%・top1 完全一致 3/6。融合が rank-based RRF のため実害は小さいが、
+  ベンチ数値は本番精度の点推定ではなく回帰検出の基準として扱う（#711）。
 - candidate retrieval は lexical・semantic・union の Recall@50 と oracle reranker Recall@5 を分けて報告する。
   required 実測では候補深度 50 / 100 / 200 / 全件を比較し、Union Recall@K が
   Union Recall@all - 0.01 以上となる最小 K を実運用の既定深度とする。
