@@ -1,37 +1,12 @@
 {
-  "observed_at": "2026-08-30T11:51:07Z",
+  "observed_at": "2026-09-05T22:05:09Z",
   "parse_warning_count": 0,
   "warning_codes": {},
   "warning_identities": [],
   "identity_conflicts": {
-    "venue": 3,
+    "venue": 0,
     "edition": 0,
     "new_since_baseline": 0,
-    "details": [
-      {
-        "scope": "venue",
-        "reason": "key-collision",
-        "subject": "ccfddl:sc/sec|sec|sec",
-        "candidates": [
-          "ccfddl:ds/sec|ieeesec|sec"
-        ]
-      },
-      {
-        "scope": "venue",
-        "reason": "key-collision",
-        "subject": "ccfddl:se/fse|fse|sigsoft",
-        "candidates": [
-          "ccfddl:sc/fse|fse|fse"
-        ]
-      },
-      {
-        "scope": "venue",
-        "reason": "source-collision",
-        "subject": "ccfddl:sc/ccs|ccs|ccs",
-        "candidates": [
-          "asiaccs|ccfddl:sc/asiaccs|ccs"
-        ]
-      }
-    ]
+    "details": []
   }
 }

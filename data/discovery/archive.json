@@ -237,6 +237,12 @@
       "source_url_hash": "fda006e269add3c49b1402e60948dc7ec63284e7275f1ebbe508d6e158b87daa"
     },
     {
+      "fingerprint": "candidate-2d011b9032fbce6ad9cfcd97",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "57d1eddc6374d95d921d975952516233063c8057e707ec73f571a03b11540a12"
+    },
+    {
       "fingerprint": "candidate-77d252403217cc4591aae68e",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -309,6 +315,12 @@
       "source_url_hash": "cc44bd87aba0f63a2053dac6dadab07fe1cefe83874f2b4f8607d8c865ec17a9"
     },
     {
+      "fingerprint": "candidate-69e66719f1899fefb7d737bf",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "16eedc99ac2b3e1947cc88bbbf75400a4237cf086674ee69e27020aa074ad657"
+    },
+    {
       "fingerprint": "candidate-d73914fe6b83b3c6745cc0b4",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -355,6 +367,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "c198ae91930564af90346dea9f2cd4c1e65e389840d8aba1f5dc8193e5994eec"
+    },
+    {
+      "fingerprint": "candidate-1383a2b8ca8031796d33a9c8",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "fed5865e563a842a1da6e77756088231d6ea68deffa19ea56533815e5b82bbf6"
     },
     {
       "fingerprint": "candidate-b16751fdb42e3b1a6ed9660d",
@@ -469,6 +487,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "04a8f7456454283a56657786f24b366172c784b9ab6dfe847ed0b5547e54ec6e"
+    },
+    {
+      "fingerprint": "candidate-f4b6b56313a34978ef942863",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "e0b9d1c336963a39c373f13cbeaff98c04c8fd3859b0d106b7cc96b9b0c921f1"
     },
     {
       "fingerprint": "candidate-783c3b894d3d88c234a2c54b",
@@ -765,6 +789,12 @@
       "source_url_hash": "6506c09d49ff1fd8ab7c7cf0d194ac7dc393581e0fed87d04a6d2613d12f290f"
     },
     {
+      "fingerprint": "candidate-e89b4bbb706f64b2d22156e9",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "54f2f16ac6919e681cab0c0898b5f6e9908bbb66484f86d9c93947c340175c8e"
+    },
+    {
       "fingerprint": "candidate-f26965c04844605b34032dc8",
       "decision": "already-curated",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -793,6 +823,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "72d4a6d0d24b694aeb0a3d0c6ccadc16928b354a32edb19fab1cdc125ecd9ab3"
+    },
+    {
+      "fingerprint": "candidate-4e5289608c3cc1f2422318ed",
+      "decision": "no-official-evidence",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "90e78cec5187339707d12f0053c7e70c13d78428dc666932801b0584e1b27fe9"
     },
     {
       "fingerprint": "candidate-13d9a68b329d7514ecfb5ac8",
@@ -829,6 +865,12 @@
       "decision": "no-official-evidence",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "ef569ff398da5debe88506dae91e26e0d2e14a337b459b1371c30959125d5cff"
+    },
+    {
+      "fingerprint": "candidate-c1f8c495b3e134827bbd8fd5",
+      "decision": "duplicate",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "77c06bd79d1f9e09706200079b16634bd13001da8afd8dba27ec717d5abe06fd"
     },
     {
       "fingerprint": "candidate-d0989998bba8176a4ca94539",
@@ -1143,6 +1185,12 @@
       "source_url_hash": "accdbf9ff6a60df8a26ee11f9facf087392dd5491faa1964c0107dbdd0d40196"
     },
     {
+      "fingerprint": "candidate-8070217849f3289324d2c0d5",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "526e4d19dcaf59120a18f9f6eb496a4fb69737a50b30aedf8ac5c4279af6ce33"
+    },
+    {
       "fingerprint": "candidate-7bccabec1ca3577eac6452e9",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -1371,9 +1419,15 @@
       "source_url_hash": "ac7c2caee7019d29f5281cf8914ad7e74c25918e673f1d556fe5177dea3dc624"
     },
     {
-      "fingerprint": "candidate-7ebb06fdc48133206002f5a9",
+      "fingerprint": "candidate-47f7640c2812f34a9a2041e7",
       "decision": "out-of-scope",
-      "last_reviewed": "2026-09-01T00:00:00.000Z",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "d26f83cc59dba4ef73e7132a6743d7dfc099177cd2785cf57f5f746427050989"
+    },
+    {
+      "fingerprint": "candidate-7ebb06fdc48133206002f5a9",
+      "decision": "duplicate",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
       "source_url_hash": "25aeaa9d6d9bca82559b64a46b4adc1672d94ee6c8d8814babe535c42b583862"
     },
     {
@@ -1475,8 +1529,8 @@
     {
       "fingerprint": "candidate-903597d91beb4d539c6ac2ce",
       "decision": "out-of-scope",
-      "last_reviewed": "2026-09-01T00:00:00.000Z",
-      "source_url_hash": "7dc3165eea87f807b0a7a0b65ff50075e21970331c0860672224724657268e4f"
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "ad9bfaeaecf48ff7b228d9faa7fd8592a4a9a54ea5c7426fb3a5a68404eb3fd1"
     },
     {
       "fingerprint": "candidate-d3814a7e9bea5aafab6890b4",
@@ -1495,6 +1549,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "531704c003c42ad1bb6a8d39c9f599fe9547174733037cbe4aefde19a74060ee"
+    },
+    {
+      "fingerprint": "candidate-603bb12b3ec24152d298c5ab",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "ffd089dbb01862273135bd2e832685d0fe5ee292957c8acba214301d21b427e7"
     },
     {
       "fingerprint": "candidate-49cc9fb61aec3c1eecc407e7",
@@ -1713,6 +1773,12 @@
       "source_url_hash": "5c7737063bcca06e41c79bce6898797147f4cefd44768ec4468761613fe67eb5"
     },
     {
+      "fingerprint": "candidate-e16c8f6a8418188fe0549319",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "f79651b5dd5fe44b562c101c6611eca06232b365633dcb05c07179efcd7d8f06"
+    },
+    {
       "fingerprint": "candidate-360a003607086e127114e846",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -1737,16 +1803,34 @@
       "source_url_hash": "7ac0b52deef105dccf1dcaf00839d03b3b2d47c9028319982d79a44cf34b6c81"
     },
     {
+      "fingerprint": "candidate-3577475f09fbe77d5132b74b",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "ae0a1c76f61889c38217388df2620c6a4e07025340dc6b931a623b77f2b9a54b"
+    },
+    {
       "fingerprint": "candidate-6b47d0ac6cc0fdd474e5e101",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "4a409a41efd4e173f367b41d1900844636f2b7e4eb2e1fde86365efc62f17e6f"
     },
     {
+      "fingerprint": "candidate-ea5d81a9edb56eed4f2b8398",
+      "decision": "duplicate",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "6a871eb4e003a588145703fbef12959aeef66095d1af28fd285a088cc296a813"
+    },
+    {
       "fingerprint": "candidate-b5f9a80d0923e56133061b0e",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "93d09877d77b489bbabf4ab0c99f84061e85efd0b7731d199eb65cd40abecd7c"
+    },
+    {
+      "fingerprint": "candidate-dffee8a716925cb72db43764",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "f683c800a1c64059287e30b6f5d24167eeb46878539fffb9e73038dbd466e4c1"
     },
     {
       "fingerprint": "candidate-a4b977277fe290760f96bfbe",
@@ -1939,6 +2023,12 @@
       "decision": "already-curated",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "916effce5f6f3116cc767374f13b0aaae4d987f944c315eecf44a9fe448c87e7"
+    },
+    {
+      "fingerprint": "candidate-1f6ecf0cbb56ba4629c9d969",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "466bf97b4081f28977ce03c657c396af7d209481aa15f310df10aac2247418b9"
     },
     {
       "fingerprint": "candidate-ed4e5c856e9070d245a8f83a",
@@ -2241,6 +2331,12 @@
       "source_url_hash": "02aeae47312ae826f2b9925fd30b77defaa409e202e83a598746c6120726661a"
     },
     {
+      "fingerprint": "candidate-ba9699ade9a334404d68cc3d",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "19a3071a0376d128525df5b8cc4b7015feaa9728c05f6754bf9718b7713c8dec"
+    },
+    {
       "fingerprint": "candidate-f88a708527a994d41a9366ad",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -2329,6 +2425,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "7f9c11f43aff8424b785e3afb6cae09e45b17485dd1c85a3245677c489d9140f"
+    },
+    {
+      "fingerprint": "candidate-ab5fb62de0c926cf21ad36de",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "817ff755376dae4a192a4402d3adbcbcba47efcb16a2fae4f926e9c876100b4d"
     },
     {
       "fingerprint": "candidate-abb97ab8789d3be77f65b871",
@@ -2433,10 +2535,22 @@
       "source_url_hash": "d899cf9e57467bde2b823539622594e02e65c5b91d047888031e6a3d4c514aed"
     },
     {
+      "fingerprint": "candidate-a90d05dbf3f44c3b71c2e830",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "cd3182e8224ed3ffdc6630054bc556b36fc4e2ddc6bc6ca34e08f5d12dfa8792"
+    },
+    {
       "fingerprint": "candidate-359644a42ee287eb172a84d1",
       "decision": "already-curated",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "9093675053393fe8b837870edc3d513b1f8423324236af24256048055df494df"
+    },
+    {
+      "fingerprint": "candidate-2d4100898654be8b5bcfe76f",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "eaabffde6179e7d57f88a7be5ee86e20a589693cd65701149360948699da1a54"
     },
     {
       "fingerprint": "candidate-e990417e3da87a3adcc48f44",
@@ -2655,6 +2769,12 @@
       "source_url_hash": "fec574e241d3dc039786b3cdb6d0463e399417e906fb1cd0ab4f59eaafd01bc3"
     },
     {
+      "fingerprint": "candidate-39af68567286978461178426",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "5c068fb1143e413698367cd92ec4e1085b783345f09137c108b549c40302b26f"
+    },
+    {
       "fingerprint": "candidate-5ef6d38051a1aa0bfdd60958",
       "decision": "already-curated",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -2841,6 +2961,12 @@
       "source_url_hash": "fef84fc1638653ddb8d8f999e452c6ae74ecbfe2ee66a7cdf63f484bf12f7ac2"
     },
     {
+      "fingerprint": "candidate-61c7ce7568e02a18d88f2142",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "e2e77b09673793d31830d2e49f83657af550cc76d7c76bd6168bb468643e4f6d"
+    },
+    {
       "fingerprint": "candidate-fad244dc9bed80f419d656de",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -2973,6 +3099,12 @@
       "source_url_hash": "0642bf02b604390c8f7fb59377e161038191cbbb5e50055a116efbb9c7828921"
     },
     {
+      "fingerprint": "candidate-995bc1d3714ca1e600c0f114",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "38bd8926822bf1707e3f291b89b3bd69becd5467d82e57fb950fef1617adb56f"
+    },
+    {
       "fingerprint": "candidate-abe23b4b27763544dc5cd449",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -3085,6 +3217,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "8dd5beb7d24d895a383513ef045bfc4ab71e921243fbf0c58f33178942aa9df3"
+    },
+    {
+      "fingerprint": "candidate-c7e3f411dd09f40b67e2abd4",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "e1ee700e852d240115813b327867b5e6477ba7c09e92a0ae75c70ba9741aa1a4"
     },
     {
       "fingerprint": "candidate-7cb8d9977ae3f861a0560886",
@@ -3271,6 +3409,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "c3cbb105d54f9aef9c4c9a0bdaa09a27856848f807ab80ff1172282eccb8eba0"
+    },
+    {
+      "fingerprint": "candidate-da287249f4d40b6c797b08d0",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "88db069ca821a7e99742a92636bc66f52d38a84e79ef0a48a564f7868f0a63a5"
     },
     {
       "fingerprint": "candidate-35202d2b994bcb3a525b97a5",
@@ -3465,6 +3609,12 @@
       "source_url_hash": "c0f7414cf97afc4325fc5a69a827bf242017c5428d8fe1ac97e14387d54fa9b2"
     },
     {
+      "fingerprint": "candidate-df13ba886e95fbea3e95fd45",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "4a733df8208b97a8adc6f30ff28e31b37b88b5a9546eec46398d0f314844aa37"
+    },
+    {
       "fingerprint": "candidate-d0880d3b1a00e9e3eb659a5c",
       "decision": "already-curated",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -3501,6 +3651,24 @@
       "source_url_hash": "2ea82d0c5489441047bcb53d3bb0ccb42d83cebd24738c863ce6c1e51af783d7"
     },
     {
+      "fingerprint": "candidate-0e93ddd58e4a2f3510dd620f",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "759963b9426c35aef38e1995c300ab09f000e9ae42d918badd2961cb576ad38d"
+    },
+    {
+      "fingerprint": "candidate-2000a7a1cbeb8f91db88dbd4",
+      "decision": "no-official-evidence",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "2e3866aca6ad4a448e9929444fa37a65fcdf0616fb6277b968b0c8b72272fdb1"
+    },
+    {
+      "fingerprint": "candidate-0e34c4be05570da4cc461880",
+      "decision": "no-official-evidence",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "a1a0bd382016cee9246033c27b6651641a144a23a63f20a0cc9a2e42e32f8ffd"
+    },
+    {
       "fingerprint": "candidate-048387c0bd762735126f9c0f",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -3535,6 +3703,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "df46f11db5086d470a567590b51cfcaab09fbb860cfbf5578afde76e721751c4"
+    },
+    {
+      "fingerprint": "candidate-3a97273fa1c1b2cef2ffd965",
+      "decision": "duplicate",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "026fc870621fdb9eacde1744e996dabfd07b5e5848aad3579225f33a1f874afc"
     },
     {
       "fingerprint": "candidate-70f2e0fc65777882af639df0",
@@ -3577,6 +3751,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "1c8c63ee9c9775e593a644114c7804120db28e852669255205e2ce6ce98798a3"
+    },
+    {
+      "fingerprint": "candidate-a4dd5118bba660a7619cfcde",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "42b232ed28fe60ab8a1f8418de07c644ca60fc3db662ba17606095f4e3c1f91c"
     },
     {
       "fingerprint": "candidate-644e99a078057ececfe3e548",
@@ -3669,6 +3849,12 @@
       "source_url_hash": "5b9324406f75d1c2420df0a857e012f9fef9a4246dda863fe805273ed3c13db1"
     },
     {
+      "fingerprint": "candidate-637980eaf4640528ed229c09",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "fcb2638dc0a01cfc1e713bf77708473be87b3c211cc4efc4b2046bbb37ded497"
+    },
+    {
       "fingerprint": "candidate-3a357d85604d552413186217",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -3753,15 +3939,27 @@
       "source_url_hash": "6bb3ad06e13631d1b7619f81c69db8b0d2cd7f31a05212a635c01f510082ebfb"
     },
     {
+      "fingerprint": "candidate-b8331ccf5af626d883d85b0f",
+      "decision": "duplicate",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "f6e563a585908d58f0dc7c6a7e561d7841ee9303d9d9cca71663e6ea51e01b49"
+    },
+    {
       "fingerprint": "candidate-59be4682feac18c84e70bc10",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "729a433bf9b87f800e79a7e0e66888ed667187bb40bc923907c73655f8348079"
     },
     {
-      "fingerprint": "candidate-e6413263a7d32fb5672d5716",
+      "fingerprint": "candidate-2c0e6ba4f2e3ec72c381faed",
       "decision": "out-of-scope",
-      "last_reviewed": "2026-09-01T00:00:00.000Z",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "ed558d62d8400a1395c0411c7a54da5326edff1a1df15c4a880aefb2e3c173de"
+    },
+    {
+      "fingerprint": "candidate-e6413263a7d32fb5672d5716",
+      "decision": "duplicate",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
       "source_url_hash": "59d3f9f3f364c744af57a92e8859f98db820556f583da6b85813808936c93f74"
     },
     {
@@ -3871,6 +4069,18 @@
       "decision": "already-curated",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "0377944c4001ef7d09e18238cbb8a67bd6d751524846a162da844e5ff6ae03ef"
+    },
+    {
+      "fingerprint": "candidate-b7a5534f3c5ac6e4b74b9f35",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "08d77c10b7c1c4e7e9e6d813fb90c281c6ab8409768b47abcdb3003dbf7d8301"
+    },
+    {
+      "fingerprint": "candidate-23c159dc5aae25fdd5cdd335",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "6d71c9cc20aa0afaef8b31670a0b0e7a8cdb2fb51594c5f2c70f276c8a686636"
     },
     {
       "fingerprint": "candidate-1c7d304d12784d4bfca77b7d",
@@ -4083,9 +4293,15 @@
       "source_url_hash": "022512f2ff87cac36bc7923adbf0c25f56ecb5f330692239e9e95cdbffae1232"
     },
     {
-      "fingerprint": "candidate-e21f06b8d54a78b96387b4a6",
+      "fingerprint": "candidate-14205ba93687bdfb0547f893",
       "decision": "out-of-scope",
-      "last_reviewed": "2026-09-01T00:00:00.000Z",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "91545b92dd953d69a6847405e550ad7c3f220ed769f7810e31b6240d00606d64"
+    },
+    {
+      "fingerprint": "candidate-e21f06b8d54a78b96387b4a6",
+      "decision": "duplicate",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
       "source_url_hash": "91549e10188de299e9d0b7140a7b512d8fb600bd137a8f0a28a2a87c6e7ab7dd"
     },
     {
@@ -4165,6 +4381,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "038992cfd2551c768dcd59996c44204ac4946246fbd34edb9d138dc617644d81"
+    },
+    {
+      "fingerprint": "candidate-dd38eff379643702fddc6f96",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "7b543baccd7883749a03e4b544a2630654a9866bc45eb5b64b64268cce58417e"
     },
     {
       "fingerprint": "candidate-5a07073ae16288cc365fb8ca",
@@ -4437,6 +4659,12 @@
       "source_url_hash": "11b13c912f5244289e1ae52695e78c27f7eb607afa2012bc1039fb31056eb647"
     },
     {
+      "fingerprint": "candidate-93b0ce06c06445753f4e2492",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "f41d52324c7d4e3accedf27ab5aef8f02ed5cb0b73358bdb611d63152bd634fa"
+    },
+    {
       "fingerprint": "candidate-0843cecd8d49519f2aa9b81b",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -4527,6 +4755,18 @@
       "source_url_hash": "87f644d43e8975c49d2457bc4a9a9cfb3e016f3c0bbaf3e04c4a6458fb416790"
     },
     {
+      "fingerprint": "candidate-2b3b8bc96578d7142b9fc33c",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "c3749f1c54c883d887c21717220d691aabbaee352bd6ed7c9a64d7dd15965962"
+    },
+    {
+      "fingerprint": "candidate-9ac6100dc8b3142ecbaae528",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "8f8b1f2e3b27e2995b3f4df390ce84bea0e3bf3869b6eb6be5cda5b7d62810c0"
+    },
+    {
       "fingerprint": "candidate-b52f577aa7a96d0cd1c93fa7",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -4539,9 +4779,15 @@
       "source_url_hash": "cee2502f85524288edeb91d4e7ec993b247ad686c03181315d389a67fb7826ea"
     },
     {
+      "fingerprint": "candidate-7651ba44f3adaea01674cd58",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "9fbf5b5f7be8b38e082758ad1bcca434e6622d37a5aef94f97e66ba087b626ac"
+    },
+    {
       "fingerprint": "candidate-d1c8644047c377a33c861ab2",
-      "decision": "no-official-evidence",
-      "last_reviewed": "2026-09-01T00:00:00.000Z",
+      "decision": "duplicate",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
       "source_url_hash": "6d4baaf131ea096a844ea566212616648f87f9f5b7836ade51d28a8c0f6ecea5"
     },
     {
@@ -4573,6 +4819,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "2a5e86424731b5b2730624d20faf3a023e0f23e12f283002f0bae4b3819d7222"
+    },
+    {
+      "fingerprint": "candidate-77d65edef738bc838b43007b",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "36170d98b2d63170b7c3f82fde74ae6f3c95fe3d12c111b765d9a23f36f3e604"
     },
     {
       "fingerprint": "candidate-2e05525fa56902a8e981ab39",
@@ -4641,6 +4893,12 @@
       "source_url_hash": "72965711a13e0a89bb9c57897cedac54a84b0f15c7287c575f83fdf7d56475bd"
     },
     {
+      "fingerprint": "candidate-63a109b2b44faa85d66c6761",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "44379a88aa08b6a34df53a02be253cd722785c447a5dbdca81f1729aa6bc184c"
+    },
+    {
       "fingerprint": "candidate-9b9104f8ef0f48659bcbda89",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -4687,6 +4945,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "2d0dd7c5b630cac1726e1835cf82cb823a601e4e267dab05c1dce5f126a8f3f6"
+    },
+    {
+      "fingerprint": "candidate-24a08e8792f1f180cde7b287",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "b102dd32ba16a9a5a41a426c60e774e0f6f09470f8e29d2b499e1493353974be"
     },
     {
       "fingerprint": "candidate-ec34b57a44ca8b349342b48a",
@@ -4797,6 +5061,12 @@
       "source_url_hash": "1098f5018d9f2d665747ca1e4516587e51f087ec551e77e3ba96e88f4c39a213"
     },
     {
+      "fingerprint": "candidate-278a1ef27e2bb12eec50c3d0",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "3dbab41cc740083309bbd4d0dbcdac6afbe4fb9ff29b4ffc04610bf0694e1c1f"
+    },
+    {
       "fingerprint": "candidate-a0b598a13ab5c8f6967f5b0e",
       "decision": "no-official-evidence",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -4849,6 +5119,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "0d2b849db2551c210455a8cb29c6fa9ae8a95af88e58858b4b17daedc1462874"
+    },
+    {
+      "fingerprint": "candidate-78bdcfb9ddd6e35a66c2cdb1",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "f12208831aac3cfe41d70c1f4d3498a0165e815cfc753ef491351270b31b90c9"
     },
     {
       "fingerprint": "candidate-e0d83ce42ad3e61092bf29b0",
@@ -4923,6 +5199,12 @@
       "source_url_hash": "cb2145da172bd06872ff7d6d313137568bb8295b586d5bea2be0835f30f3661e"
     },
     {
+      "fingerprint": "candidate-ea98bf3f99c96f0286b7a84f",
+      "decision": "no-official-evidence",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "6f3755263e11cf32a758c1e23f7af4abfbc131094afffb0a7821db02b14ba1c3"
+    },
+    {
       "fingerprint": "candidate-aedcb8aeec3a8651586c913e",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -4945,6 +5227,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "874f32f14e95b06430141000af2bb2c1d67dc50ec2aa71c25cfb27781b94b3f8"
+    },
+    {
+      "fingerprint": "candidate-0c0067a5962c03d31b3c90ba",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "8fcaa6341b901d8b77938c0ef1dd8018c43e71f29bfc61eb942817be858d960a"
     },
     {
       "fingerprint": "candidate-ad73915d8057c4bd48bb86b1",
@@ -5409,6 +5697,12 @@
       "source_url_hash": "ca7b61b6a74d4f6bc108136752611d4af23c899c6cffd2a9fed45442747da0b2"
     },
     {
+      "fingerprint": "candidate-762fc0bd6b382e7d63d374f7",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "8860a03b8597f282efd0740950413084487d615f9205837a127dd75c155ec535"
+    },
+    {
       "fingerprint": "candidate-33c41303cd4770aadf42f0ea",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -5805,6 +6099,12 @@
       "source_url_hash": "e4acdff5e576f65a1ec860b8c9e2b239245b0fca0b365c8c146371297a775ca7"
     },
     {
+      "fingerprint": "candidate-2c29d2a2bf869409bd84a983",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "f4f45eb97de277de16f88e90b7b3c8430f08d39799829245b4487efab901f385"
+    },
+    {
       "fingerprint": "candidate-fa7d55781bd4dc77321e6762",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -5839,6 +6139,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "ff9ae673c3994f10d19bc9d988aeb38aef41015edaa4db94bc35e012991fcfe2"
+    },
+    {
+      "fingerprint": "candidate-ebb4454149a54b829810ab87",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "18189e0e36f63ab21cd020c6786e3c62bc6e8c021241f6fca8f83f62e40f56ed"
     },
     {
       "fingerprint": "candidate-1a241f1a124304bde80b1047",
@@ -6043,6 +6349,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "3bfd29a94d097fb88bc2d649455acc421db038915246e93d9a1d915ad21b8adf"
+    },
+    {
+      "fingerprint": "candidate-80e63843cea3c5d4e2f80d32",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "8f2751eca8bcd53ee70fbf3ad8876728bb514413a18c3142889b9ad739ed89ce"
     },
     {
       "fingerprint": "candidate-339bec42eb7a50f4b4b9da48",
@@ -6459,6 +6771,12 @@
       "source_url_hash": "50f150fd1ae3348cdeb5cd68e68f77011f4e5d6a8e34423fd4dcc69f1cfb4740"
     },
     {
+      "fingerprint": "candidate-8d01a003a3e4f2e1d27af765",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "8c67d5986cf99d489fd1e1b96668b6ff0dade3e529e7d659374cf01f768e24a8"
+    },
+    {
       "fingerprint": "candidate-fd11adcec08ee1f207c4dae4",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -6519,6 +6837,12 @@
       "source_url_hash": "e87d9a5c35293a9f820be6f8868a0179b43874e00415637ebb73b14fd064a637"
     },
     {
+      "fingerprint": "candidate-e8c28a1c15622056253914c8",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "ee017ae4ceefe70b167aa68be3212523d0bc5c9be686d820b89cff802cb2ab29"
+    },
+    {
       "fingerprint": "candidate-6b08e4e96f31d33eb4f02fc6",
       "decision": "no-official-evidence",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -6535,6 +6859,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "1a8cf8fce6b5245f13643f6fa3c0b6a9505b923da8199daaab29f12b6fca5084"
+    },
+    {
+      "fingerprint": "candidate-1d76dd58deb229313da8247a",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "b12bbb855c34ecc426a05ed10c10c0f548e07964e475d1f1ac63ef315be43aaf"
     },
     {
       "fingerprint": "candidate-67a6d3a3958d5f8ebaac7c24",
@@ -6751,6 +7081,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "375f3a02ae62fdffd024f56ec474027c9dd0e16e08361924b3f16b66da48977f"
+    },
+    {
+      "fingerprint": "candidate-0b54db8f62ba205a556a1643",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "a93624e1f956dd7678c916b266ca460ab3f12fa7f6090247cfd5fec1208b9884"
     },
     {
       "fingerprint": "candidate-a23d9ecc4d3307f53ff82a71",
@@ -6991,6 +7327,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "5c773568e261b0bb73b872d139c18a0a48eec2ad2ca29a9adfb28be604ea4fb7"
+    },
+    {
+      "fingerprint": "candidate-3bbf349b1381f94884e3d10a",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "c665b0965b0e3ac79678101f1090984c328f6cec058c2d4d85557e9366908b81"
     },
     {
       "fingerprint": "candidate-f10fb4ff0193417162944fda",
@@ -7443,6 +7785,12 @@
       "source_url_hash": "1b247d7143eb6c6282f681beafe8b95232a3aceda219904bc0d0c9f75b2992b6"
     },
     {
+      "fingerprint": "candidate-c29921f7f497bff56e32fc34",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "91f0b4d0f27910edbee76b523b0c99838fc70664367c93ac2d3e7617a3edea35"
+    },
+    {
       "fingerprint": "candidate-464c546bd9a80dd414d2ede8",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -7537,6 +7885,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "c1c0f1a6751f2196c1eddc6a0aacf5739792591aba96db5ed645e452a959a0ad"
+    },
+    {
+      "fingerprint": "candidate-84a39f28e81c7c689c595272",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "029d69ca175bc00fb9099b3629b5399aabe375085acb02a0c86c7faac84092a8"
     },
     {
       "fingerprint": "candidate-e516c2828990eb4418f8d63e",
@@ -7645,6 +7999,12 @@
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "e7ff89b02259d856b3f3b91fdf5a59c5209e2137da021f55430d4cdea514a293"
+    },
+    {
+      "fingerprint": "candidate-91a0bdf30863a5b3faf5d961",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "1d21dff727f06a7341a05fe3be1ed2257cf9cb7f0d4042d20fac1f3b9197f999"
     },
     {
       "fingerprint": "candidate-cc9b9fe3c85174307a3c79d6",
@@ -7779,6 +8139,12 @@
       "source_url_hash": "118add74e2b9e77df6e362a993b64edf730e5d56a3565b539731054d9a9e3926"
     },
     {
+      "fingerprint": "candidate-3fc585cfd4d476736faa074c",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "7549ffb0df9063d686aab2262c346a0c1f6d802cec401056dfc1fc7d035810f2"
+    },
+    {
       "fingerprint": "candidate-ce2a84448bb9b78356cb0191",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -7887,6 +8253,12 @@
       "source_url_hash": "c5a17a3f0ae81d68b0094d0129e8b4de18e7b4cf641fd32e9eca63a924746685"
     },
     {
+      "fingerprint": "candidate-cb0832ad45c7e1a7e4bf97bf",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "09ec007867f87c52a061e1cd731e3beaddcb9c798787ee7e35f2a804a7690b32"
+    },
+    {
       "fingerprint": "candidate-57c7cdb3692a60148804091a",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -7917,10 +8289,22 @@
       "source_url_hash": "e2096c67b3800d70bc2a0e20fe35a39a3eff78a1bd1db7a5dac756ba7b1e4673"
     },
     {
+      "fingerprint": "candidate-62c07d5c5013b8a53454d057",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "43065f4a56c3969e94d05dd2b3ac67c7e98b885665670223c4805841122d160d"
+    },
+    {
       "fingerprint": "candidate-778a5c66fac5abc30243671c",
       "decision": "out-of-scope",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "4b728aecb615a5b512177dd76db0596faf9343aa4b1c0e4725bd92cc97b567cf"
+    },
+    {
+      "fingerprint": "candidate-bd2a298a8e85b68d2dd2e3ca",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "00ee08beed14eecca939eb765375ed1663542adbd24fb3bdde105df5f10ab76d"
     },
     {
       "fingerprint": "candidate-36293a922ecd1080b23513d4",
@@ -7999,6 +8383,12 @@
       "decision": "already-curated",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
       "source_url_hash": "5aff8697fa760b281516daed0ab0fe311d8b4daa8d832da3412042972dca1bce"
+    },
+    {
+      "fingerprint": "candidate-487b5696ef56813b4f283390",
+      "decision": "out-of-scope",
+      "last_reviewed": "2026-09-05T22:06:50.365Z",
+      "source_url_hash": "6179d410fa70e8f45377b668818c60607c98f4533e6aa6183df290c9ac35cbce"
     },
     {
       "fingerprint": "candidate-fb654331e96149fef47a804c",
