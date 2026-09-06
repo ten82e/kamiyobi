@@ -1164,12 +1164,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const language = isJp && bundle.multi ? "multi" : "en";
       const embSet = language === "multi" ? bundle.multi : bundle;
       if (!embSet || !Recommender.embeddingSetCompatible(bundle, language)) {
+        semanticReason = "embedding set incompatible";
         clearSemantic("error");
         render();
         return;
       }
       const modelMeta = bundle.manifest.models[language];
       if (!modelMeta) {
+        semanticReason = "model metadata missing";
         clearSemantic("error");
         render();
         return;
@@ -1177,6 +1179,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       loadTransformers(modelMeta, generation, (loaded) => {
         if (!semanticIsCurrent(generation, text)) return;
         if (!loaded || semLoadedModel !== `${modelMeta.model}@${modelMeta.revision}` || !semModel) {
+          semanticReason = "model load failed";
           clearSemantic("error");
           render();
           return;
@@ -1184,6 +1187,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         checkSemanticProbe(modelMeta, (probeOk) => {
           if (!semanticIsCurrent(generation, text)) return;
           if (!probeOk) {
+            semanticReason = "probe mismatch";
             clearSemantic("error");
             render();
             return;
@@ -1192,6 +1196,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           const q = Recommender.queryText(lines);
           const model = semModel;
           if (!model) {
+            semanticReason = "model unavailable";
             clearSemantic("error");
             render();
             return;
@@ -1237,6 +1242,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             })
             .catch(() => {
               if (!semanticIsCurrent(generation, text)) return;
+              semanticReason = "query embedding failed";
               clearSemantic("error");
               render();
             });
@@ -2046,7 +2052,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (semState === "loading") {
         cnt += " ｜ 意味検索を実行中…";
       } else if (semState === "error") {
-        cnt += " ｜ 意味検索は利用不可（埋め込みが使えないため語彙検索のみ）";
+        // 失敗理由コードを併記する。publish.ts / 各 error 分岐が設定する診断コードで、
+        // 8+通りの失敗が1文言に潰れて原因追跡不能になっていた (#711 の構造要因)。
+        cnt += ` ｜ 意味検索は利用不可（語彙検索のみ・原因: ${semanticReason || "unknown"}）`;
       }
     }
     $("count").textContent = cnt;
@@ -2115,6 +2123,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       })
       .catch(() => {
         recommendationError = true;
+        semanticReason = "recommendation data unavailable";
         clearSemantic("error");
         render();
       });
