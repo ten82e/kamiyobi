@@ -2091,6 +2091,15 @@ conferences:
             kind: paper
             label: Submission
             tz: JST
+            superseded_deadlines:
+              - value: '2026-09-18T23:59:00Z'
+                precision: exact
+                source: https://www.ieice.org/eng/s_issue/cfp/2027_9EA.pdf
+                evidenceRef: https://www.ieice.org/eng/s_issue/cfp/2027_9EA.pdf
+                status: superseded
+                supersededBy: ieice-fundamentals-discrete-math-special|ieice-fundamentals-discrete-math-2027-09|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-09-06T06:30:00Z'
         id: ieice-fundamentals-discrete-math-2027-09
         link: https://www.ieice.org/eng_r/information/schedule/journals.php
         year: 2027
@@ -2441,6 +2450,15 @@ conferences:
             kind: other
             label: Student and Abstract Only Submission (extended)
             tz: AoE
+            superseded_deadlines:
+              - value: '2026-09-06T11:59:00Z'
+                precision: exact
+                source: https://www.cafcw.org/services/
+                evidenceRef: https://www.cafcw.org/services/
+                status: superseded
+                supersededBy: cafcw-2026|cafcw-2026|other|1|
+                reason: manual-resolution
+                supersededAt: '2026-09-06T06:30:00Z'
           - date: '2026-09-25 23:59:00'
             kind: camera_ready
             label: Accepted Papers Camera Ready
@@ -2449,6 +2467,15 @@ conferences:
             kind: notification
             label: Notification of accepted abstracts
             tz: AoE
+            superseded_deadlines:
+              - value: '2026-10-01T11:59:00Z'
+                precision: exact
+                source: https://www.cafcw.org/services/
+                evidenceRef: https://www.cafcw.org/services/
+                status: superseded
+                supersededBy: cafcw-2026|cafcw-2026|notification|1|
+                reason: manual-resolution
+                supersededAt: '2026-09-06T06:30:00Z'
         id: cafcw-2026
         link: https://www.cafcw.org/
         place: Chicago, IL, USA
@@ -5157,6 +5184,15 @@ conferences:
             kind: paper
             label: Submission deadline
             precision: date-only
+            superseded_deadlines:
+              - value: '2026-09-14'
+                precision: date-only
+                source: https://ai4demons.github.io/AI4DEMONS/
+                evidenceRef: https://ai4demons.github.io/AI4DEMONS/
+                status: superseded
+                supersededBy: ai4demons-2026|ai4demons-202626|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-09-06T06:30:00Z'
         id: ai4demons-202626
         link: https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=201329&copyownerid=199538
         year: 2026
@@ -6464,6 +6500,15 @@ conferences:
             kind: paper
             label: Submission deadline
             precision: date-only
+            superseded_deadlines:
+              - value: '2026-09-05'
+                precision: date-only
+                source: https://sites.google.com/unipegaso.it/nesy4h2026/home
+                evidenceRef: https://sites.google.com/unipegaso.it/nesy4h2026/home
+                status: superseded
+                supersededBy: 1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare|1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare26|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-09-06T06:30:00Z'
         id: 1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare26
         link: https://listserv.acm.org/SCRIPTS/WA-ACMLPX.CGI?A2=MOD-DBWORLD;ec7f5b3c.2607
         year: 2026
