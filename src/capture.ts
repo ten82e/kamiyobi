@@ -218,10 +218,27 @@ async function cancelBody(response: Response, signal?: AbortSignal): Promise<voi
   );
 }
 
+/**
+ * Node 26 は autoSelectFamily の既定化に伴い lookup を { all: true } で呼び、
+ * コールバックに配列形式を要求する (旧式の (err, address, family) は
+ * ERR_INVALID_IP_ADDRESS で全リクエストが失敗する)。Node 24 以前の呼び出しは
+ * 従来形式のままなので、options.all で両契約に応える。
+ */
+export function pinnedLookup(address: string): LookupFunction {
+  return (_hostname, lookupOptions, callback) =>
+    (lookupOptions as { all?: boolean } | undefined)?.all
+      ? (
+          callback as unknown as (
+            err: null,
+            addrs: Array<{ address: string; family: number }>,
+          ) => void
+        )(null, [{ address, family: isIP(address) }])
+      : callback(null, address, isIP(address));
+}
+
 function fetchPinned(url: URL, address: string, init: RequestInit): Promise<Response> {
   const headers = new Headers(init.headers);
-  const lookup: LookupFunction = (_hostname, _options, callback) =>
-    callback(null, address, isIP(address));
+  const lookup = pinnedLookup(address);
   return new Promise((resolve, reject) => {
     const options = {
       protocol: url.protocol,

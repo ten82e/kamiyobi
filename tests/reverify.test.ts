@@ -15,7 +15,7 @@ import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
 import { expect, it } from "vitest";
 import { generateCurated } from "../scripts/generate-curated.ts";
-import { assertSafePageUrl, capturePage, writeCasBody } from "../src/capture.ts";
+import { assertSafePageUrl, capturePage, pinnedLookup, writeCasBody } from "../src/capture.ts";
 import { applyResolutionSource } from "../src/cli.ts";
 import { classifyDeadlineChange } from "../src/model.ts";
 import { writePromotionBatch } from "../src/promotion.ts";
@@ -821,6 +821,27 @@ it("does not rewrite an existing content-addressed body", async () => {
 it("rejects hexadecimal IPv4-mapped private page addresses", () => {
   expect(() => assertSafePageUrl("https://[::ffff:7f00:1]/")).toThrow(/private page address/);
   expect(() => assertSafePageUrl("https://[::ffff:c0a8:101]/")).toThrow(/private page address/);
+});
+
+it("answers both lookup callback contracts from the pinned resolver", () => {
+  // Node 26 の autoSelectFamily は lookup を { all: true } で呼び配列形式を要求する。
+  // 旧式のみだと ERR_INVALID_IP_ADDRESS で capture 全リクエストが失敗する回帰の防止。
+  const lookup = pinnedLookup("93.184.216.34");
+  const arrayForm: unknown[] = [];
+  (lookup as (h: string, o: unknown, cb: (...args: unknown[]) => void) => void)(
+    "example.com",
+    { all: true },
+    (...args) => arrayForm.push(...args),
+  );
+  expect(arrayForm[0]).toBeNull();
+  expect(arrayForm[1]).toEqual([{ address: "93.184.216.34", family: 4 }]);
+  const legacyForm: unknown[] = [];
+  (lookup as (h: string, o: unknown, cb: (...args: unknown[]) => void) => void)(
+    "example.com",
+    { family: 4 },
+    (...args) => legacyForm.push(...args),
+  );
+  expect(legacyForm).toEqual([null, "93.184.216.34", 4]);
 });
 
 it("marks 429 as retryable and rejects oversized/private redirected pages", async () => {
