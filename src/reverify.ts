@@ -20,8 +20,11 @@ import {
   type IdentityProvider,
   type PromotionRef,
   type ProviderIdentity,
+  isConfirmedTimezone,
   parseInstant,
   promotionRefOf,
+  resolveTz,
+  roundOf,
   type VerificationState,
 } from "./model.ts";
 import {
@@ -191,6 +194,7 @@ interface JsonDeadline {
   local_date?: string;
   utc?: string | null;
   aoe?: string | null;
+  tz_raw?: string | null;
   verification?: Partial<VerificationState>;
   evidence?: JsonEvidence[];
   promotion_ref?: PromotionRef;
@@ -1153,6 +1157,9 @@ function labelSignature(value: string): string {
     .replace(/\b20\d{2}\b/g, " ")
     .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, " ")
     .replace(/\b(?:AoE|UTC|GMT|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|JST|PT|ET|CT|MT)\b/gi, " ")
+    .replace(/\b(?:mon|tues|wednes|thurs|fri|satur|sun)day\b/gi, " ")
+    .replace(/\b(?:am|pm)\b/gi, " ")
+    .replace(/\bus\b/gi, " ")
     .replace(/\b(?:deadline|due|submission date|date)\b/g, " ")
     .replace(/\b(?:round|cycle|phase|stage)\s*#?\s*\d+\b/g, " ")
     .replace(/[^\p{L}\p{N}]+/gu, " ")
@@ -1406,8 +1413,14 @@ function candidateCallIdentity(candidate: ExtractedDeadlineField): string {
 
 function slotCompatible(target: VerificationTarget, candidate: ExtractedDeadlineField): boolean {
   if (String(candidate.kind ?? "other") !== target.kind) return false;
-  if ((Number(candidate.round ?? 1) || 1) !== target.round) return false;
-  if (candidateTrack(candidate) !== target.track) return false;
+  // round は原文に明示があるときだけ照合する。抽出器は明示なしで既定 1 を返すため、
+  // 既定値どうしの不一致棄却は多ラウンド会場 (NSDI 等) の照合を全滅させる (#701)。
+  const explicitRound = roundOf(candidate.label ?? candidate.rawExcerpt, 0);
+  if (explicitRound > 0 && explicitRound !== target.round) return false;
+  // track も候補側が持つときだけ照合する (target 側の track はラベル由来で、
+  // 抽出候補は track を持たないのが通常)。
+  const candTrack = candidateTrack(candidate);
+  if (candTrack && candTrack !== target.track) return false;
   const candidateLabel = labelSignature(candidate.label ?? candidate.rawExcerpt);
   if (
     target.labelSignature &&
@@ -1473,6 +1486,29 @@ function candidateRecord(
   };
 }
 
+/** 保存 exact 値の、公式表記タイムゾーン (tz_raw) での暦日 (YYYY-MM-DD)。 */
+function deadlineWallDate(deadline: JsonDeadline): string | null {
+  const utcMs = Date.parse(String(deadline.utc ?? ""));
+  if (!Number.isFinite(utcMs)) return null;
+  // TZ が未確認なら暦日を確定できない (UTC フォールバックでの照合は
+  // 誤 verified の温床になる)。date-only 照合は確認済み TZ に限る。
+  if (!isConfirmedTimezone(deadline.tz_raw)) return null;
+  const tz = resolveTz(deadline.tz_raw);
+  if (tz.kind === "fixed") {
+    return new Date(utcMs + tz.offsetMinutes * 60_000).toISOString().slice(0, 10);
+  }
+  try {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz.name,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date(utcMs));
+  } catch {
+    return null;
+  }
+}
+
 function sameDeadlineValue(deadline: JsonDeadline, candidate: ExtractedDeadlineField): boolean {
   if (!candidate.date) return false;
   if (deadline.precision === "date-only")
@@ -1481,7 +1517,13 @@ function sameDeadlineValue(deadline: JsonDeadline, candidate: ExtractedDeadlineF
       candidate.date === String(deadline.local_date ?? "")
     );
   const expected = String(deadline.utc ?? "");
-  if (!candidate.time || !candidate.timezone) return false;
+  if (!candidate.time || !candidate.timezone) {
+    // 原典が日付のみを示す締切 (通知・camera-ready 等) は、保存 exact 値の
+    // 公式表記タイムゾーンでの暦日と一致すれば「公式ページが同じ日付を示している」
+    // として値一致とみなす (#701)。時刻の推測はしない。
+    const wall = deadlineWallDate(deadline);
+    return Boolean(wall) && candidate.date === wall;
+  }
   const at = parseInstant(`${candidate.date} ${candidate.time}`, candidate.timezone);
   return Boolean(at && expected && at.getTime() === Date.parse(expected));
 }
@@ -1492,10 +1534,83 @@ function matchingCandidate(
 ): { candidate?: ExtractedDeadlineField; compatible: ExtractedDeadlineField[] } {
   const compatible = candidates.filter((candidate) => slotCompatible(target, candidate));
   const same = compatible.filter((candidate) => sameDeadlineValue(target.deadline, candidate));
+  // 値一致がちょうど 1 件で、かつ残りの互換候補がすべて同 edition の別スロットの
+  // 値として説明できる場合のみ verified。説明できない互換候補 (延長の新値かも
+  // しれない) が残るときは verified にしない (安全側。#701)。
+  const siblings = (target.edition.deadlines ?? []).filter(
+    (deadline) => deadline !== target.deadline,
+  );
+  // 延長は必ず保存値より後の日付になる。保存値より前の未説明候補 (追跡外の
+  // 別サイクル・過去ラウンドの締切) は延長の可能性がなく、verified を妨げない。
+  const storedDate =
+    target.deadline.precision === "date-only"
+      ? String(target.deadline.local_date ?? "")
+      : (deadlineWallDate(target.deadline) ?? "");
+  const unaccounted = compatible.filter(
+    (candidate) =>
+      !same.includes(candidate) &&
+      !siblings.some((sibling) => sameDeadlineValue(sibling, candidate)) &&
+      Boolean(storedDate) &&
+      String(candidate.date ?? "") > storedDate,
+  );
   return {
-    candidate: compatible.length === 1 && same.length === 1 ? same[0] : undefined,
+    candidate:
+      same.length === 1 && unaccounted.length === 0 && !verifyBlocked(target, candidates, siblings)
+        ? same[0]
+        : undefined,
     compatible,
   };
+}
+
+const CHANGE_LANGUAGE =
+  /\b(?:extend(?:ed|s)?|extension|updated?|revised?|postponed?|moved|rescheduled|new deadline|now due)\b/i;
+
+/** 値一致があっても verified を拒否すべき状況の検査 (すべて誤 verified 方向の安全弁)。 */
+function verifyBlocked(
+  target: VerificationTarget,
+  candidates: ExtractedDeadlineField[],
+  siblings: JsonDeadline[],
+): boolean {
+  // (1) ラベル署名が完全一致なのに値が異なる候補 = 同一スロットの訂正・変更の強い
+  //     兆候 (前倒し・同一ラベルでの再掲を含む)。
+  for (const candidate of candidates) {
+    const sig = labelSignature(candidate.label ?? candidate.rawExcerpt);
+    if (
+      sig &&
+      target.labelSignature &&
+      sig === target.labelSignature &&
+      candidate.date &&
+      !sameDeadlineValue(target.deadline, candidate)
+    )
+      return true;
+  }
+  // (2) 変更語彙 (extended/updated/revised/postponed 等) を含む候補行が保存値と
+  //     異なる日付を示す場合。'extended abstract' は論文種別なので除外。
+  for (const candidate of candidates) {
+    const line = `${candidate.label ?? ""} ${candidate.rawExcerpt ?? ""}`;
+    if (
+      candidate.date &&
+      CHANGE_LANGUAGE.test(line.replace(/extended[- ]abstracts?/gi, " ")) &&
+      !sameDeadlineValue(target.deadline, candidate) &&
+      !siblings.some((sibling) => sameDeadlineValue(sibling, candidate))
+    )
+      return true;
+  }
+  // (3) 同 kind の兄弟スロット間で round の順序と保存値の時系列が食い違う場合、
+  //     データ側の取り違えの疑いがあり、値照合だけでは正しさを保証できない。
+  const targetMs = Date.parse(String(target.deadline.utc ?? target.deadline.local_date ?? ""));
+  if (Number.isFinite(targetMs)) {
+    for (const sibling of siblings) {
+      if (String(sibling.kind ?? "other") !== target.kind) continue;
+      const siblingRound = Number(sibling.round ?? 1) || 1;
+      if (siblingRound === target.round) continue;
+      const siblingMs = Date.parse(String(sibling.utc ?? sibling.local_date ?? ""));
+      if (!Number.isFinite(siblingMs)) continue;
+      if (siblingRound > target.round && siblingMs < targetMs) return true;
+      if (siblingRound < target.round && siblingMs > targetMs) return true;
+    }
+  }
+  return false;
 }
 
 function stateFor(
@@ -2044,8 +2159,10 @@ export async function reverifyData(options: ReverifyOptions): Promise<ReverifyRe
             (changeKind === "extension" && explicitDeadlineExtension(observed.rawExcerpt));
           status = safeChange ? "changed" : "manual-required";
         } else if (match.compatible.length > 1) {
+          // 複数互換で一意に照合できない場合も、特定候補の値を観測値として
+          // 記録しない (#702 と同じ理由: 別ラウンドの値を提案する誤 resolution を
+          // 量産する)。
           status = "manual-required";
-          observed = match.compatible[0];
           changeKind = "ambiguous";
         } else {
           // 互換候補ゼロのとき、無関係な先頭候補を観測値として記録しない。

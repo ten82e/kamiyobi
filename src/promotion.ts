@@ -333,6 +333,10 @@ function candidateKind(text: string): string {
   const value = text.toLowerCase();
   if (value.includes("abstract") || value.includes("概要")) return "abstract";
   if (value.includes("camera-ready") || value.includes("camera ready")) return "camera_ready";
+  if (
+    /final\s+(?:paper|version|manuscript)(?:\s+files?)?\s+(?:due|deadline|submission)/.test(value)
+  )
+    return "camera_ready";
   if (value.includes("notification") || value.includes("採否") || value.includes("通知"))
     return "notification";
   if (value.includes("rebuttal") || value.includes("author response")) return "rebuttal_end";

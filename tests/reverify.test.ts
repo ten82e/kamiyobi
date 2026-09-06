@@ -202,6 +202,349 @@ it("preserves a captured page when its deadline later degrades to a non-auto sou
   expect(page?.content_hash).toBe(capturedHash);
 });
 
+it("verifies both rounds of a multi-round venue from one official page", async () => {
+  // 抽出候補は round/track を持たないため、既定値での不一致棄却は多ラウンド会場の
+  // 照合を全滅させていた (#701)。値一致+兄弟スロットでの説明可能性で確認する。
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-multiround-"));
+  const dataPath = dataFile(dir, [
+    {
+      kind: "paper",
+      label: "Full paper submissions due (spring)",
+      round: 1,
+      track: "spring",
+      precision: "exact",
+      utc: "2027-04-24T03:59:00Z",
+      tz_raw: "EDT",
+      verification: {
+        official_url: "https://example.test/cfp",
+        source_class: "official-cfp",
+        next_check_at: "2026-08-30T00:00:00.000Z",
+        status: "pending",
+      },
+    },
+    {
+      kind: "paper",
+      label: "Full paper submissions due (fall)",
+      round: 2,
+      track: "fall",
+      precision: "exact",
+      utc: "2027-09-18T03:59:00Z",
+      tz_raw: "EDT",
+      verification: {
+        official_url: "https://example.test/cfp",
+        source_class: "official-cfp",
+        next_check_at: "2026-08-30T00:00:00.000Z",
+        status: "pending",
+      },
+    },
+  ]);
+  const ledgerPath = join(dir, "verification-ledger.json");
+  const body =
+    "Full paper submissions due: Thursday, April 23, 2027, 11:59 pm EDT\n" +
+    "Full paper submissions due: Friday, September 17, 2027, 11:59 pm EDT\n";
+  const result = await reverifyData({
+    dataPath,
+    ledgerPath,
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    fetchImpl: async () => new Response(body),
+  });
+  expect(result.statuses).toEqual({ verified: 2 });
+  expect(result.ledger.resolutions).toHaveLength(0);
+});
+
+it("confirms an exact deadline against a date-only official statement", async () => {
+  // 原典に時刻表記が無い締切 (通知・camera-ready 等) は、保存 exact 値の公式 TZ での
+  // 暦日一致で確認する (#701)。時刻の推測はしない。
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-dateonly-"));
+  const dataPath = dataFile(dir, [
+    {
+      kind: "notification",
+      label: "Notification to authors",
+      round: 1,
+      track: "",
+      precision: "exact",
+      utc: "2026-12-08T23:59:59Z",
+      tz_raw: "UTC",
+      verification: {
+        official_url: "https://example.test/cfp",
+        source_class: "official-cfp",
+        next_check_at: "2026-08-30T00:00:00.000Z",
+        status: "pending",
+      },
+    },
+  ]);
+  const ledgerPath = join(dir, "verification-ledger.json");
+  const result = await reverifyData({
+    dataPath,
+    ledgerPath,
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    fetchImpl: async () =>
+      new Response("Notification to authors: Tuesday, December 8, 2026\n"),
+  });
+  expect(result.statuses).toEqual({ verified: 1 });
+});
+
+it("refuses to verify when an unexplained sibling candidate remains", async () => {
+  // 保存値と一致する候補があっても、兄弟スロットで説明できない互換候補 (延長の
+  // 新値かもしれない) が残る場合は verified にしない (#701 の安全側)。
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-unexplained-"));
+  const dataPath = dataFile(dir);
+  const ledgerPath = join(dir, "verification-ledger.json");
+  const result = await reverifyData({
+    dataPath,
+    ledgerPath,
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    fetchImpl: async () =>
+      new Response(
+        "Paper submission deadline: January 2, 2027\nPaper submission deadline: January 9, 2027\n",
+      ),
+  });
+  expect(result.statuses).toEqual({ "manual-required": 1 });
+});
+
+it("refuses to verify when a same-label candidate shows a different (earlier) date", async () => {
+  // ラベル署名が完全一致で値が異なる候補 = 同一スロットの訂正の強い兆候。
+  // 前倒し訂正の併記で旧値が verified になる誤りを防ぐ (#701 レビュー R1/R3)。
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-samelabel-"));
+  const dataPath = dataFile(dir);
+  const result = await reverifyData({
+    dataPath,
+    ledgerPath: join(dir, "verification-ledger.json"),
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    fetchImpl: async () =>
+      new Response(
+        "Paper submission deadline: January 2, 2027\nPaper submission deadline: December 20, 2026\n",
+      ),
+  });
+  expect(result.statuses).toEqual({ "manual-required": 1 });
+});
+
+it("refuses to verify when a change-marked candidate line shows a different date", async () => {
+  // 'Extended deadline:' 等の変更語彙つき行はラベル署名が変形して互換候補から
+  // 落ちるため、候補行スコープの変更語彙ガードで拒否する (#701 レビュー R6)。
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-marked-"));
+  const dataPath = dataFile(dir);
+  const result = await reverifyData({
+    dataPath,
+    ledgerPath: join(dir, "verification-ledger.json"),
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    fetchImpl: async () =>
+      new Response(
+        "Paper submission deadline: January 2, 2027\nUpdated deadline: December 20, 2026\n",
+      ),
+  });
+  expect(result.statuses).toEqual({ "manual-required": 1 });
+});
+
+it("refuses to verify sibling rounds whose stored order contradicts round order", async () => {
+  // 同 kind の round 順序と保存値の時系列が食い違う (取り違えの疑い) 場合、
+  // 値照合が相互に誤りを追認しないよう verified を拒否する (#701 レビュー R2)。
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-roundswap-"));
+  const verification = {
+    official_url: "https://example.test/cfp",
+    source_class: "official-cfp",
+    next_check_at: "2026-08-30T00:00:00.000Z",
+    status: "pending",
+  };
+  const dataPath = dataFile(dir, [
+    {
+      kind: "paper",
+      label: "Full paper submissions due (spring)",
+      round: 1,
+      track: "spring",
+      precision: "exact",
+      utc: "2027-09-18T03:59:00Z",
+      tz_raw: "EDT",
+      verification: { ...verification },
+    },
+    {
+      kind: "paper",
+      label: "Full paper submissions due (fall)",
+      round: 2,
+      track: "fall",
+      precision: "exact",
+      utc: "2027-04-24T03:59:00Z",
+      tz_raw: "EDT",
+      verification: { ...verification },
+    },
+  ]);
+  const result = await reverifyData({
+    dataPath,
+    ledgerPath: join(dir, "verification-ledger.json"),
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    fetchImpl: async () =>
+      new Response(
+        "Full paper submissions due: Thursday, April 23, 2027, 11:59 pm EDT\n" +
+          "Full paper submissions due: Friday, September 17, 2027, 11:59 pm EDT\n",
+      ),
+  });
+  expect(result.statuses).toEqual({ "manual-required": 2 });
+});
+
+it("does not confirm a date-only statement against an unconfirmed timezone", async () => {
+  // TZ 未確認の exact 値を UTC 暦日で照合すると誤 verified になる (#701 レビュー R5)。
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-unknowntz-"));
+  const dataPath = dataFile(dir, [
+    {
+      kind: "notification",
+      label: "Notification to authors",
+      round: 1,
+      track: "",
+      precision: "exact",
+      utc: "2026-12-08T23:59:59Z",
+      tz_raw: "Narnia Standard Time",
+      verification: {
+        official_url: "https://example.test/cfp",
+        source_class: "official-cfp",
+        next_check_at: "2026-08-30T00:00:00.000Z",
+        status: "pending",
+      },
+    },
+  ]);
+  const result = await reverifyData({
+    dataPath,
+    ledgerPath: join(dir, "verification-ledger.json"),
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    fetchImpl: async () => new Response("Notification to authors: Tuesday, December 8, 2026\n"),
+  });
+  expect(result.statuses).toEqual({ "manual-required": 1 });
+});
+
+it("keeps ambiguous multi-candidate slots free of proposed observed values", async () => {
+  // 複数互換で一意照合できないときも特定候補の値を提案しない (#701 レビュー R4)。
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-ambnoval-"));
+  const dataPath = dataFile(dir, [
+    {
+      kind: "paper",
+      label: "Paper submission deadline",
+      round: 2,
+      track: "",
+      precision: "date-only",
+      local_date: "2027-06-02",
+      verification: {
+        official_url: "https://example.test/cfp",
+        source_class: "official-cfp",
+        next_check_at: "2026-08-30T00:00:00.000Z",
+        status: "pending",
+      },
+    },
+  ]);
+  const result = await reverifyData({
+    dataPath,
+    ledgerPath: join(dir, "verification-ledger.json"),
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    fetchImpl: async () =>
+      new Response(
+        "Paper submission deadline: June 11, 2027\nPaper submission deadline: July 9, 2027\n",
+      ),
+  });
+  expect(result.statuses).toEqual({ "manual-required": 1 });
+  const entry = result.ledger.deadlines["demo|demo-2027|paper|2|"];
+  expect(entry?.observed_value ?? "").toBe("");
+  for (const resolution of result.ledger.resolutions) {
+    expect(resolution.current_value ?? "").not.toContain("2027-06-11");
+  }
+});
+
+it("ignores earlier untracked-cycle dates but blocks later unexplained ones", async () => {
+  // 保存値より前の未説明候補 (追跡外サイクル) は verified を妨げない一方、
+  // 後ろ向きの未説明候補 (延長の可能性) はブロックする (M4 変異の検出)。
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-backfilter-"));
+  const verification = {
+    official_url: "https://example.test/cfp",
+    source_class: "official-cfp",
+    next_check_at: "2026-08-30T00:00:00.000Z",
+    status: "pending",
+  };
+  const fall = {
+    kind: "notification",
+    label: "Notification to authors (fall)",
+    round: 2,
+    track: "fall",
+    precision: "exact",
+    utc: "2026-12-08T23:59:59Z",
+    tz_raw: "UTC",
+    verification: { ...verification },
+  };
+  const dataPath = dataFile(dir, [fall]);
+  const result = await reverifyData({
+    dataPath,
+    ledgerPath: join(dir, "verification-ledger.json"),
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    // 追跡外 spring サイクルの 7/23 が先に載っていても fall の 12/8 は verified
+    fetchImpl: async () =>
+      new Response(
+        "Notification to authors: Thursday, July 23, 2026\n" +
+          "Notification to authors: Tuesday, December 8, 2026\n",
+      ),
+  });
+  expect(result.statuses).toEqual({ verified: 1 });
+});
+
+it("classifies final-paper-files lines as camera-ready and strips US from label signatures", async () => {
+  // M9 ('us' 除去) と M10 (camera_ready 分類) の変異検出。実 NSDI と同形の行。
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-usenix-shape-"));
+  const verification = {
+    official_url: "https://example.test/cfp",
+    source_class: "official-cfp",
+    next_check_at: "2026-08-30T00:00:00.000Z",
+    status: "pending",
+  };
+  const dataPath = dataFile(dir, [
+    {
+      kind: "paper",
+      label: "Full paper submissions due (fall)",
+      round: 2,
+      track: "fall",
+      precision: "exact",
+      utc: "2026-09-18T03:59:00Z",
+      tz_raw: "EDT",
+      verification: { ...verification },
+    },
+    {
+      kind: "camera_ready",
+      label: "Final paper files due (fall)",
+      round: 2,
+      track: "fall",
+      precision: "exact",
+      utc: "2027-03-04T23:59:59Z",
+      tz_raw: "UTC",
+      verification: { ...verification },
+    },
+  ]);
+  const result = await reverifyData({
+    dataPath,
+    ledgerPath: join(dir, "verification-ledger.json"),
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    fetchImpl: async () =>
+      new Response(
+        "Full paper submissions due: Thursday, September 17, 2026, 11:59 pm US EDT\n" +
+          "Final paper files due: Thursday, March 4, 2027\n",
+      ),
+  });
+  expect(result.statuses).toEqual({ verified: 2 });
+});
+
 it("does not record an unrelated candidate when no compatible deadline matches", async () => {
   // round/track 不一致でページ上の締切と照合できなかった場合、無関係な先頭候補を
   // observed_value として resolution に書かない (#701 の安全化)。
