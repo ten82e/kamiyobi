@@ -2080,6 +2080,12 @@ const Recommender = (() => {
     });
   }
 
+  // 閾値 0.97: probe の役割は「別モデルの取り違え検出」(実測 cosine ≈ 0.40) であって
+  // 量子化差の検出ではない。ビルドは fp32 で probe を保存し、ブラウザは q8 量子化
+  // モデルで再計算するため、正しいモデルでも cosine ≈ 0.9895 (en/multi とも実測)。
+  // 原因は q8 量子化のみ (同一ライブラリ+quantized:false では 1.000000 を実測、
+  // Node/wasm のバックエンド差の寄与は測定限界以下)。旧閾値 0.99 はこの差で
+  // 全訪問者の意味検索を静かに無効化していた (2026-09-06 本番QAで検出)。
   function embeddingProbeMatches(
     meta: EmbeddingModelMeta | null | undefined,
     vector: unknown,
@@ -2091,7 +2097,7 @@ const Recommender = (() => {
         Array.isArray(meta.probe.vector) &&
         numericVector &&
         meta.probe.vector.length === numericVector.length &&
-        cosine(meta.probe.vector, numericVector) >= 0.99,
+        cosine(meta.probe.vector, numericVector) >= 0.97,
     );
   }
 

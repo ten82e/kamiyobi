@@ -1856,6 +1856,44 @@ it("browser date-only state is independent of the viewer timezone", () => {
   expect(outputs).toEqual([expected, expected, expected]);
 });
 
+it("recommendation data arrival re-schedules semantic for pending paper text", () => {
+  // 再現バグ: 埋め込み到着前に scheduleSemantic が走ると error で固着し、
+  // データが揃っても再計算されず「意味検索は利用不可」が出続ける。
+  const app = siteRuntime();
+  const script = (paperText: string, withEmbeddings: boolean) =>
+    [
+      "let recommendationData = null, recommendationPromise = null, recommendationError = false;",
+      "let EMBEDDINGS = null, semanticReason = null;",
+      "const DATA = {};",
+      "const calls = [];",
+      `const loadPublishedRecommendation = () => Promise.resolve({ index: { conferences: [] }, embeddings: ${withEmbeddings ? "{ ok: true }" : "null"}, state: { semantic: ${withEmbeddings}, reason: null } });`,
+      "const catalogFrom = (value) => value;",
+      "const embeddingBundle = (value) => value;",
+      "const clearSemantic = (state) => calls.push('clear:' + state);",
+      `const currentPaperText = () => ${JSON.stringify(paperText)};`,
+      "const scheduleSemantic = () => calls.push('schedule');",
+      "const setRecommendationProfile = () => {};",
+      "const render = () => {};",
+      jsFunction(app, "loadRecommendationData"),
+      "loadRecommendationData();",
+      "recommendationPromise.then(() => console.log(JSON.stringify(calls)));",
+    ].join("\n");
+  const run = (paperText: string, withEmbeddings: boolean) => {
+    const proc = spawnSync("node", ["-e", script(paperText, withEmbeddings)], {
+      encoding: "utf8",
+      timeout: 60_000,
+    });
+    expect(proc.status, proc.stderr).toBe(0);
+    return JSON.parse(proc.stdout);
+  };
+  // 入力済みテキスト + 埋め込み到着 → 再スケジュールされる
+  expect(run("TSN scheduling paper", true)).toEqual(["schedule"]);
+  // テキスト未入力 → 再スケジュールしない
+  expect(run("", true)).toEqual([]);
+  // 埋め込み不可 → error のまま (再スケジュールで隠さない)
+  expect(run("TSN scheduling paper", false)).toEqual(["clear:error"]);
+});
+
 it("default filter shows only submission deadlines", () => {
   const html = siteHtmlRuntime();
   const filterSrc = jsFunction(html, "filter");

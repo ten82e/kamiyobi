@@ -1771,6 +1771,12 @@ describe("semantic functions", () => {
     expect(R.embeddingSetCompatible(bundle, "en")).toBe(true);
     expect(R.embeddingProbeMatches(manifest.models.en, [1, 0])).toBe(true);
     expect(R.embeddingProbeMatches(manifest.models.en, [0, 1])).toBe(false);
+    // q8 量子化差 (fp32 ビルド probe vs ブラウザ q8 再計算、実測 cosine ≈ 0.9895) は
+    // 互換とみなす。別モデル (実測 cosine ≈ 0.40) は引き続き拒否する。
+    expect(R.embeddingProbeMatches(manifest.models.en, [0.98, Math.sqrt(1 - 0.98 ** 2)])).toBe(
+      true,
+    );
+    expect(R.embeddingProbeMatches(manifest.models.en, [0.9, Math.sqrt(1 - 0.9 ** 2)])).toBe(false);
     expect(R.embeddingSetCompatible({ ...bundle, dim: 3 }, "en")).toBe(false);
     expect(R.embeddingSetCompatible({ ...bundle, manifest: undefined }, "en")).toBe(false);
   });

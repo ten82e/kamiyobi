@@ -2106,6 +2106,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         EMBEDDINGS = result.embeddings ? embeddingBundle(result.embeddings) : null;
         semanticReason = result.state.reason;
         if (!result.state.semantic || !EMBEDDINGS) clearSemantic("error");
+        // 埋め込み到着前に scheduleSemantic が走ると error で固着する
+        // (loadEmbeddings は取得を待たず EMBEDDINGS 未設定なら即 error)。
+        // データが揃ったここで、入力済みの論文テキストに対して再計算する。
+        else if (currentPaperText().trim()) scheduleSemantic();
         setRecommendationProfile(result.index);
         render();
       })
