@@ -428,23 +428,32 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
         extracted.length === 1 ? raw : raw.slice(value.index, extracted[index + 1]?.index);
       const ambiguousLeadingTime =
         extracted.length > 1 && hasTimeExpression(raw.slice(0, extracted[0].index));
-      const candidate: CfpExtractionCandidate = {
-        rawExcerpt: raw,
-        text: raw,
-        label: raw,
-        kind: candidateKind(raw),
-        date: value.date,
-        editionYear: value.year,
-        round: roundOf(raw),
-        ...(candidateTrack(raw) ? { track: candidateTrack(raw) } : {}),
-      };
-      const localTime = ambiguousLeadingTime ? undefined : extractedTime(scope);
-      const localTimezone = ambiguousLeadingTime ? undefined : extractedTimezone(scope);
       const prefix = raw.slice(extracted[index - 1]?.end ?? 0, value.index);
       const currentPrefix = prefix.slice(
         Math.max(prefix.lastIndexOf(";"), prefix.lastIndexOf("|")) + 1,
       );
       const suffix = raw.slice(value.end, extracted[index + 1]?.index ?? raw.length);
+      // 複合行 (1 行に複数の「ラベル: 日付」) では、各日付の直前セグメントが種別語を
+      // 持つならそこから kind/label を導出する。行全体からの導出は先頭の種別語が
+      // 全日付に伝播する (PerCom 型: abstract と paper が両方 abstract になる)。#701
+      const segmentLabel = currentPrefix.replace(/^[\s,;:—–|-]*(?:and\s+)?/i, "").trim();
+      const segmentHasKindWords =
+        extracted.length > 1 &&
+        /abstract|camera|notification|rebuttal|registration|paper|submission|final|概要|通知|投稿/i.test(
+          segmentLabel,
+        );
+      const candidate: CfpExtractionCandidate = {
+        rawExcerpt: raw,
+        text: raw,
+        label: segmentHasKindWords ? segmentLabel : raw,
+        kind: candidateKind(segmentHasKindWords ? segmentLabel : raw),
+        date: value.date,
+        editionYear: value.year,
+        round: roundOf(segmentHasKindWords ? segmentLabel : raw),
+        ...(candidateTrack(raw) ? { track: candidateTrack(raw) } : {}),
+      };
+      const localTime = ambiguousLeadingTime ? undefined : extractedTime(scope);
+      const localTimezone = ambiguousLeadingTime ? undefined : extractedTimezone(scope);
       const deadlineSemantics = deadlineLabel;
       const inheritsHeader =
         headerHasDeadline &&
