@@ -950,7 +950,21 @@ describe("score labels and transient UI state", () => {
     expect(app).toContain("invalidateSemantic();");
     expect(app).toContain('clearSemantic("error");');
     expect(app).toContain("Recommender.setPaperVecs(null)");
-    expect(app).toContain("意味検索は利用不可（埋め込みが使えないため語彙検索のみ）");
+    // 失敗理由コードを併記する (#711: 8+通りの失敗が1文言に潰れて原因追跡不能だった)
+    expect(app).toContain("意味検索は利用不可（語彙検索のみ・原因: ");
+    expect(app).toMatch(
+      /意味検索は利用不可（語彙検索のみ・原因: \$\{semanticReason \|\| "unknown"\}）/,
+    );
+    for (const reason of [
+      "embedding set incompatible",
+      "model metadata missing",
+      "model load failed",
+      "probe mismatch",
+      "query embedding failed",
+      "recommendation data unavailable",
+    ]) {
+      expect(app).toContain(`semanticReason = "${reason}";`);
+    }
     expect(app).toContain("let semanticScores = null;");
   });
 
