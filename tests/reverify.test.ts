@@ -282,8 +282,7 @@ it("confirms an exact deadline against a date-only official statement", async ()
     now: new Date("2026-08-31T00:00:00.000Z"),
     due: true,
     bodyRoot: join(dir, "evidence", "blobs"),
-    fetchImpl: async () =>
-      new Response("Notification to authors: Tuesday, December 8, 2026\n"),
+    fetchImpl: async () => new Response("Notification to authors: Tuesday, December 8, 2026\n"),
   });
   expect(result.statuses).toEqual({ verified: 1 });
 });
