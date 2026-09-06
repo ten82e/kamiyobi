@@ -2289,7 +2289,9 @@ it("site template statUpcoming counts confirmed submission deadlines only", () =
     /connect-src 'self' https:\/\/cdn\.jsdelivr\.net https:\/\/huggingface\.co https:\/\/cdn-lfs\.huggingface\.co/,
   );
   expect(template).toContain(".verification-summary");
-  expect(template).not.toMatch(/script-src[^>]*\*/);
+  // script-src ディレクティブ内のみワイルドカード禁止 (connect-src の *.cdn.hf.co は
+  // fetch 先の許可であり script 実行元ではない)。境界は ';'。
+  expect(template).not.toMatch(/script-src[^;>]*\*/);
   // statUpcoming の計算が投稿締切 (abstract/paper) かつ非推定 (!r.est) のみに限定されていること
   expect(runtime).toMatch(
     /rows\.filter\(\(r\)\s*=>\s*\(r\.kind\s*===\s*"abstract"\s*\|\|\s*r\.kind\s*===\s*"paper"\)\s*&&\s*!r\.est/,
@@ -2493,6 +2495,7 @@ it("SPEC §7 carves out recommender CDNs and the site stays on that allowlist (#
     "https://cdnjs.cloudflare.com",
     "https://huggingface.co",
     "https://cdn-lfs.huggingface.co",
+    "https://*.cdn.hf.co",
     "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/+esm",
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
