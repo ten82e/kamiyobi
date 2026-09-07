@@ -789,11 +789,60 @@ function normLabel(label: string | null | undefined): string {
   return (label ?? "").trim().split(/\s+/).join(" ").toLowerCase();
 }
 
+// スロットキーの一般語(deadlineTrackKey の generic 集合)そのものに限ると、
+// "Full Paper Due"・"Submission deadline" のような常套句が非空の擬似trackに
+// なりスロットキーが食い違うため、この救済路自体が発火条件と矛盾し到達不能
+// だった (#733)。ここでは独自に「kind 語・author/full/regular/final/extended
+// /research/metadata/contribution 等の非弁別的修飾語・ストップワードを除いた
+// 残りが submission/deadline/due/notification/registration だけか」で判定する。
+// ERA・SEIP のような実在トラック名はこの語彙に含まれないため誤って畳まれない
+// (実データで較正済み)。
+const GENERIC_SUBMISSION_ACTION_WORDS = new Set([
+  "submission",
+  "deadline",
+  "due",
+  "notification",
+  "registration",
+]);
+const GENERIC_SUBMISSION_NEUTRAL_QUALIFIERS = new Set([
+  "author",
+  "full",
+  "regular",
+  "final",
+  "extended",
+  "research",
+  "paper",
+  "papers",
+  "abstract",
+  "abstracts",
+  "metadata",
+  "contribution",
+  "and",
+  "for",
+  "the",
+  "of",
+  "in",
+  "form",
+]);
+
+function isGenericSubmissionLabel(label: string, kind: string): boolean {
+  const neutral = new Set([...GENERIC_SUBMISSION_NEUTRAL_QUALIFIERS, kind]);
+  const words = normLabel(label)
+    .replace(/[/()-]/g, " ")
+    .split(" ")
+    .filter(Boolean);
+  return (
+    words.length > 0 &&
+    words
+      .filter((word) => !neutral.has(word))
+      .every((word) => GENERIC_SUBMISSION_ACTION_WORDS.has(word))
+  );
+}
+
 function sameGenericSubmissionSlot(left: Deadline, right: Deadline): boolean {
   if (left.track?.trim() || right.track?.trim()) return false;
   const kind = normLabel(left.kind || "other");
-  const generic = new Set([`${kind} submission`, `${kind} submission deadline`]);
-  return generic.has(normLabel(left.label)) && generic.has(normLabel(right.label));
+  return isGenericSubmissionLabel(left.label, kind) && isGenericSubmissionLabel(right.label, kind);
 }
 
 /** Re-apply the SPEC.md 3.6 fold after roll-forward. */
@@ -893,11 +942,11 @@ function dedupDeadlines(
   }
   const consolidated: Array<{ origins: Set<string>; deadline: Deadline }> = [];
   for (const entry of kept) {
+    // exact 同士に限ると、date-only 同士(および date-only×exact)で値が食い違う
+    // ペアは畳まれも conflicts[] に記録もされず、同一スロットの締切が重複して
+    // 残っていた (#733)。precision を問わずスロットキーで一致させる。
     const matching = consolidated.find(
-      (held) =>
-        deadlineSlotKey(held.deadline) === deadlineSlotKey(entry.deadline) &&
-        isExactDeadline(held.deadline) &&
-        isExactDeadline(entry.deadline),
+      (held) => deadlineSlotKey(held.deadline) === deadlineSlotKey(entry.deadline),
     );
     if (!matching) {
       consolidated.push(entry);
@@ -916,18 +965,29 @@ function dedupDeadlines(
       continue;
     }
     const source = [...entry.origins].sort(cmpStr)[0] ?? "unknown";
+    // 独立レビューで判明: exact を date-only より優先する案は、値が食い違う
+    // ケースには適用されない absorb の分岐を誤って先例に引いており、
+    // SPEC.md 3.6(区間外は競合として保持し、残すのは source_priority が
+    // 高い側)にも、同種の判定を行う mergeDeadlineSlots にも反していた。
+    // source_priority(= matching.deadline が既に保持している側)をそのまま
+    // primary として維持する。
     const at = isExactDeadline(incoming)
       ? incoming.at_utc
-      : dateOnlyWindow(incoming.local_date)?.earliestPossibleUtc;
-    if (at) {
-      matching.deadline = {
-        ...matching.deadline,
-        conflicts: [
-          ...(matching.deadline.conflicts ?? []),
-          { at_utc: at, label: incoming.label, source, raw_value: incoming.raw_value },
-        ],
-      } as Deadline;
-    }
+      : (dateOnlyWindow(incoming.local_date)?.earliestPossibleUtc ??
+        new Date(`${incoming.local_date}T00:00:00Z`));
+    matching.deadline = {
+      ...matching.deadline,
+      conflicts: [
+        ...(matching.deadline.conflicts ?? []),
+        {
+          at_utc: at,
+          ...(isDateOnlyDeadline(incoming) ? { local_date: incoming.local_date } : {}),
+          label: incoming.label,
+          source,
+          raw_value: incoming.raw_value,
+        },
+      ],
+    } as Deadline;
     tally.merged_deadlines += 1;
   }
   const out = consolidated.map((k) => k.deadline);
@@ -1454,16 +1514,32 @@ export function mergeDeadlineSlots(
             },
           ],
         };
+      } else {
+        // 日付が区間に収まり、値としては整合している(棄却ではなく確認)ので、
+        // incoming 側の supersession 台帳も同一スロットの継続として引き継ぐ
+        // (#733: 精度昇格分岐と対称にする)。
+        const superseded = mergeSuperseded(
+          held.superseded_deadlines,
+          incoming.superseded_deadlines,
+        );
+        if (superseded.length > 0) out[index] = { ...held, superseded_deadlines: superseded };
       }
       continue;
     }
     if (isDateOnlyDeadline(held) && isExactDeadline(incoming)) {
       if (exactInsideDateOnly(incoming, held)) {
         const evidence = mergeEvidence(incoming.evidence, held.evidence);
+        // 精度昇格は別の値への置き換えではなく同一スロットの継続なので、
+        // held の supersession 台帳を引き継ぐ (#733)。
+        const superseded = mergeSuperseded(
+          held.superseded_deadlines,
+          incoming.superseded_deadlines,
+        );
         out[index] = {
           ...incoming,
           precision: "exact",
           ...(evidence.length > 0 ? { evidence } : {}),
+          ...(superseded.length > 0 ? { superseded_deadlines: superseded } : {}),
         };
       } else {
         out[index] = {
@@ -1500,23 +1576,21 @@ export function mergeDeadlineSlots(
       } as Deadline;
       continue;
     }
+    // 値が一致する場合の更新(同一source再送・evidence差し替え等)。この
+    // スロットは継続しているので held の supersession 台帳を引き継ぐ (#733)。
     const evidence = mergeEvidence(incoming.evidence, held.evidence);
-    out[index] = { ...incoming, ...(evidence.length > 0 ? { evidence } : {}) };
+    const superseded = mergeSuperseded(held.superseded_deadlines, incoming.superseded_deadlines);
+    out[index] = {
+      ...incoming,
+      ...(evidence.length > 0 ? { evidence } : {}),
+      ...(superseded.length > 0 ? { superseded_deadlines: superseded } : {}),
+    };
   }
-  const histories = new Map<string, NonNullable<Deadline["superseded_deadlines"]>>();
-  for (const deadline of [...existing, ...observed]) {
-    const merged = mergeSuperseded(
-      histories.get(deadlineSlotKey(deadline)),
-      deadline.superseded_deadlines,
-    );
-    if (merged.length) histories.set(deadlineSlotKey(deadline), merged);
-  }
-  return out
-    .map((deadline) => {
-      const history = histories.get(deadlineSlotKey(deadline));
-      return history?.length ? { ...deadline, superseded_deadlines: history } : deadline;
-    })
-    .sort((a, b) => deadlineSortTime(a) - deadlineSortTime(b) || cmpStr(a.kind, b.kind));
+  // conflict として棄却された observed の supersession 台帳はどの分岐でも
+  // out[index] に引き継がれない(held 由来の conflicts 分岐は held をそのまま
+  // 保持し、incoming の台帳を混ぜない)。既存の held 自身の台帳は各分岐の
+  // spread で自然に保持される (#733)。
+  return out.sort((a, b) => deadlineSortTime(a) - deadlineSortTime(b) || cmpStr(a.kind, b.kind));
 }
 
 // --------------------------------------------------------------------------
