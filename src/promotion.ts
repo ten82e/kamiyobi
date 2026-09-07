@@ -331,10 +331,30 @@ function extractedTime(text: string): string | undefined {
     }
     return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:${String(second).padStart(2, "0")}`;
   }
+  const compact = compactHmm(text);
+  if (compact) return compact;
   if (/\b(?:(?:12\s*)?midnight|end of (?:the )?day|eod)\b/i.test(text)) {
     return "23:59:00";
   }
   return undefined;
+}
+
+function hmmFromDigits(raw: string): string | undefined {
+  const digits = raw.length === 3 ? raw.padStart(4, "0") : raw;
+  if (digits.length !== 4) return undefined;
+  const hour = Number(digits.slice(0, 2));
+  const minute = Number(digits.slice(2));
+  if (hour > 23 || minute > 59) return undefined;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
+}
+
+/** Colon-less 24h times such as '1700 UTC' / 'at 2359'. Years (2026) are not clocks. */
+function compactHmm(text: string): string | undefined {
+  const at = /\bat\s+(\d{3,4})\b/i.exec(text);
+  if (at) return hmmFromDigits(at[1]);
+  const stripped = text.replace(/\b20[2-9]\d\b/g, " ");
+  const match = /\b((?:[01]?\d|2[0-3])[0-5]\d)\b/.exec(stripped);
+  return match ? hmmFromDigits(match[1]) : undefined;
 }
 
 // IANA 分岐は (?:\/セグメント)+ で複数階層・ハイフン付きの実在ゾーン名
