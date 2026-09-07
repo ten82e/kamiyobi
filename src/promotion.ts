@@ -331,6 +331,15 @@ function extractedTime(text: string): string | undefined {
     }
     return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:${String(second).padStart(2, "0")}`;
   }
+  const hm = /\b(\d{1,2})\s*(a\.?m\.?|p\.?m\.?)\b/i.exec(text);
+  if (hm) {
+    let hour = Number(hm[1]);
+    const meridiem = hm[2].replace(/\./g, "").toLowerCase();
+    if (hour < 1 || hour > 12) return undefined;
+    if (meridiem === "pm" && hour < 12) hour += 12;
+    if (meridiem === "am" && hour === 12) hour = 0;
+    return `${String(hour).padStart(2, "0")}:00:00`;
+  }
   if (/\b(?:(?:12\s*)?midnight|end of (?:the )?day|eod)\b/i.test(text)) {
     return "23:59:00";
   }
