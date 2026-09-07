@@ -241,6 +241,15 @@ describe("promotion batch", () => {
     ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
   });
 
+  it("keeps fullwidth digits and colons after NFKC (#830)", () => {
+    expect(extractCfpCandidates("締切: ２０２６年５月１５日 23:59 AoE")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "AoE" },
+    ]);
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23：59 AoE")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "AoE" },
+    ]);
+  });
+
   it("applies an explicit page-wide deadline time without treating the event date as a deadline", () => {
     const [deadline, notification, event] = extractCfpCandidates(
       "<li>Paper Submission Deadline <b>October 10, 2026</b></li>" +
