@@ -1176,6 +1176,13 @@ describe("deadlineIsFuture", () => {
     expect(deadlineIsFuture("Mar 15, 2027", today)).toBe(true);
   });
 
+  it("keeps the same UTC calendar day after noon (#832)", () => {
+    const afternoon = new Date(Date.UTC(2026, 7, 10, 15, 0, 0));
+    expect(deadlineIsFuture("Aug 10, 2026", afternoon)).toBe(true);
+    expect(deadlineIsFuture("2026-08-10", afternoon)).toBe(true);
+    expect(deadlineIsFuture("Aug 9, 2026", afternoon)).toBe(false);
+  });
+
   it("treats impossible calendar dates as not future", () => {
     const today = utcDate(2026, 8, 10);
     expect(deadlineIsFuture("2026-02-30", today)).toBe(false);
