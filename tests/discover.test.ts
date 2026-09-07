@@ -791,6 +791,16 @@ describe("parseIpsjCfpHtml", () => {
     expect(es[0].link).toBe("https://www.ipsj.or.jp/journal/cfp/27-P.html");
   });
 
+  it("extracts 投稿〆切 as a deadline (#780)", () => {
+    const html =
+      '<a href="cfp/27-P.html">' +
+      "<article><h3>論文誌「ユビキタスコンピューティングシステム（XIV）」特集 論文募集</h3>" +
+      "<p>投稿〆切：2026年12月4日（金）</p></article></a>";
+    const es = parseIpsjCfpHtml(html, "https://www.ipsj.or.jp/journal/index.html");
+    expect(es).toHaveLength(1);
+    expect(es[0]?.date_text).toBe("2026-12-04");
+  });
+
   it("decodes HTML entities in the journal name", () => {
     const html =
       '<a href="cfp/27-Q.html">' +
