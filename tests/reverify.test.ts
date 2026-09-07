@@ -1592,7 +1592,7 @@ it("applies a promotion resolution to its batch source and preserves superseded 
   const data = join(root, "data");
   const batch = "2026-09-02-demo";
   const batchDir = join(data, "promotions", batch);
-  const body = "Paper deadline extended to October 15, 2026.";
+  const body = "Paper deadline extended to October 15, 2026 23:59 UTC.";
   const hash = createHash("sha256").update(body).digest("hex");
   const writeBatch = (
     targetDir: string,
@@ -1721,13 +1721,13 @@ it("applies a promotion resolution to its batch source and preserves superseded 
           first_detected_at: "2026-09-02T00:00:00.000Z",
           last_seen_at: "2026-09-02T00:00:00.000Z",
           old_value: "2026-10-01",
-          new_value: "2026-10-15",
+          new_value: "2026-10-15 23:59 UTC",
           change_kind: "extension",
           content_hash: hash,
           raw_excerpt: body,
           status: "changed",
           previous_value: "2026-10-01",
-          current_value: "2026-10-15",
+          current_value: "2026-10-15 23:59 UTC",
         },
       ],
     }),
@@ -1762,12 +1762,19 @@ it("applies a promotion resolution to its batch source and preserves superseded 
 
   applyResolutionSource(ledgerPath, "change-demo", "2026-09-02T01:00:00Z", root);
   const updated = JSON.parse(readFileSync(join(batchDir, "resolutions.json"), "utf8"));
-  expect(updated[0].normalized.deadline.date).toBe("2026-10-15");
+  expect(updated[0].normalized.deadline.date).toBe("2026-10-15 23:59");
+  expect(updated[0].normalized.deadline.evidence[0].verifiedFields).toEqual([
+    "date",
+    "time",
+    "timezone",
+    "kind",
+    "round",
+  ]);
   const curated = loadYaml(readFileSync(join(data, "curated.generated.yaml"), "utf8")) as {
     conferences: Array<{ editions: Array<{ deadlines: Array<Record<string, unknown>> }> }>;
   };
   const deadline = curated.conferences[0]?.editions[0]?.deadlines[0];
-  expect(deadline?.date).toBe("2026-10-15");
+  expect(deadline?.date).toBe("2026-10-15 23:59");
   expect(deadline?.superseded_deadlines).toMatchObject([
     { value: "2026-10-01", reason: "official-extension" },
   ]);

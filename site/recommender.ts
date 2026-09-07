@@ -44,6 +44,7 @@ interface DeadlineRecord {
   earliest_utc?: string;
   latest_utc?: string;
   utc?: string | null;
+  at_utc?: string | null;
   round?: number;
 }
 
@@ -290,6 +291,32 @@ interface EmbeddingBundle extends EmbeddingSet {
     models?: Record<string, EmbeddingModelMeta>;
   };
   multi?: EmbeddingSet;
+}
+
+function parsedInstant(value: unknown): number {
+  const time = Date.parse(String(value ?? ""));
+  return Number.isFinite(time) ? time : Number.NaN;
+}
+
+/** Same bounds as src/model.ts dateOnlyWindow: UTC midnight -14h .. +36h-1ms. */
+function dateOnlyWindowMs(localDate: unknown): { start: number; end: number } | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(localDate ?? "").trim());
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const startOfDay = Date.UTC(year, month - 1, day);
+  const date = new Date(startOfDay);
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  )
+    return null;
+  return {
+    start: startOfDay - 14 * 3_600_000,
+    end: startOfDay + 36 * 3_600_000 - 1,
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -1332,8 +1359,13 @@ const Recommender = (() => {
           .toLowerCase();
         (ed.deadlines || []).forEach((dl) => {
           const dateOnly = dl.precision === "date-only";
-          const t = Date.parse(String(dateOnly ? (dl.earliest_utc ?? "") : (dl.utc ?? "")));
-          const tLast = Date.parse(String(dateOnly ? (dl.latest_utc ?? "") : (dl.utc ?? "")));
+          const window = dateOnly ? dateOnlyWindowMs(dl.local_date) : null;
+          const t = dateOnly
+            ? parsedInstant(dl.earliest_utc ?? "") || window?.start || Number.NaN
+            : parsedInstant(dl.utc ?? dl.at_utc ?? "");
+          const tLast = dateOnly
+            ? parsedInstant(dl.latest_utc ?? "") || window?.end || Number.NaN
+            : t;
           if (!Number.isFinite(t) || !Number.isFinite(tLast)) return;
           out.push({
             conf,

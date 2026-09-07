@@ -1464,7 +1464,13 @@ function applyPromotionResolution(
         verifiedAt: resolution.observed_at,
         contentHash,
         rawExcerpt: resolution.raw_excerpt,
-        verifiedFields: priorEvidence?.verifiedFields ?? ["date", "kind", "round"],
+        verifiedFields: [
+          "date",
+          ...(value.time && value.tz ? ["time", "timezone"] : []),
+          "kind",
+          "round",
+          ...(current.track ? ["track"] : []),
+        ],
       },
     ],
     superseded_deadlines: [
