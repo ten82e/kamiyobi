@@ -12,7 +12,14 @@ import { parseArgs as parseNodeArgs } from "node:util";
 import { decode } from "html-entities";
 import { dump as dumpYaml, load as loadYaml } from "js-yaml";
 import { booleanValue, normalizeShortEquals, stringValue } from "./args.ts";
-import { deadlineTrackKey, monthOf, resolveTzStatus, roundOf, warn } from "./model.ts";
+import {
+  deadlineTrackKey,
+  monthOf,
+  resolveTzStatus,
+  roundOf,
+  usTimeZonePhraseOf,
+  warn,
+} from "./model.ts";
 import { extractObservationTime } from "./sources/primary.ts";
 
 export let ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -242,14 +249,19 @@ export function extractDeadline(
   let label = LABELS[kind];
   if (roundNo > 1) label = `Round ${roundNo} ${label}`;
   let tz: string | undefined;
-  TZ_RE.lastIndex = 0;
-  const tzM = TZ_RE.exec(window);
-  if (tzM) {
-    const raw = tzM[0];
-    tz =
-      raw.toLowerCase().includes("anywhere") || raw.toUpperCase() === "AOE"
-        ? "AoE"
-        : raw.toUpperCase();
+  const phraseTz = usTimeZonePhraseOf(window);
+  if (phraseTz) {
+    tz = phraseTz;
+  } else {
+    TZ_RE.lastIndex = 0;
+    const tzM = TZ_RE.exec(window);
+    if (tzM) {
+      const raw = tzM[0];
+      tz =
+        raw.toLowerCase().includes("anywhere") || raw.toUpperCase() === "AOE"
+          ? "AoE"
+          : raw.toUpperCase();
+    }
   }
   // 日付を含む側の行から壁時計の時刻を取る。
   // 無ければ time を載せない。

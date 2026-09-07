@@ -130,6 +130,18 @@ describe("resolve_tz", () => {
     expect(offset(resolveTz("HKT"))).toBe(8 * 60);
   });
 
+  it("spelled-out US zone names alias to PT/ET/CT/MT (#798)", () => {
+    expect(isConfirmedTimezone("Pacific Time")).toBe(true);
+    expect(isConfirmedTimezone("Eastern Time")).toBe(true);
+    expect(resolveTz("Pacific Time")).toEqual(resolveTz("PT"));
+    expect(resolveTz("Pacific Daylight Time")).toEqual(resolveTz("PDT"));
+    expect(resolveTz("Central Standard Time")).toEqual(resolveTz("CT"));
+    expect(isConfirmedTimezone("CST")).toBe(false);
+    expect(parseInstant("2026-07-15 12:00:00", "Pacific Time")?.toISOString()).toBe(
+      parseInstant("2026-07-15 12:00:00", "PT")?.toISOString(),
+    );
+  });
+
   it("IANA names", () => {
     const london = resolveTz("Europe/London");
     expect(offset(london, WINTER)).toBe(0);

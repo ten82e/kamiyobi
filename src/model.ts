@@ -949,6 +949,33 @@ const TZ_NAMED: Record<string, string> = {
   hkt: "Asia/Hong_Kong",
 };
 
+/** Spelled-out US zone names that CFPs use instead of PT/ET. CST spelled out is CT, not ambiguous CST. */
+const TZ_PHRASES: Record<string, string> = {
+  "pacific time": "pt",
+  "pacific daylight time": "pdt",
+  "pacific standard time": "pst",
+  "eastern time": "et",
+  "eastern daylight time": "edt",
+  "eastern standard time": "est",
+  "central time": "ct",
+  "central daylight time": "cdt",
+  "central standard time": "ct",
+  "mountain time": "mt",
+  "mountain daylight time": "mdt",
+  "mountain standard time": "mst",
+};
+
+const US_ZONE_PHRASE_RE =
+  /\b((?:pacific|eastern|central|mountain)\s+(?:(?:daylight|standard)\s+)?time)\b/i;
+
+/** Canonical abbreviation for a spelled-out US zone in free text, or null. */
+export function usTimeZonePhraseOf(text: string): string | null {
+  const match = US_ZONE_PHRASE_RE.exec(text);
+  if (!match) return null;
+  const alias = TZ_PHRASES[match[1].toLowerCase().replace(/\s+/g, " ")];
+  return alias ? alias.toUpperCase() : null;
+}
+
 /** These abbreviations name different zones unless the source gives context. */
 const TZ_AMBIGUOUS = new Set(["cst", "ist", "bst"]);
 
@@ -961,29 +988,30 @@ export type TzResolution = { status: "confirmed"; tz: Tz } | { status: "unconfir
 export function resolveTzStatus(tzRaw: string | null | undefined): TzResolution {
   if (tzRaw === null || tzRaw === undefined) return { status: "unconfirmed" };
   const raw = String(tzRaw).trim();
-  const low = raw.toLowerCase();
+  const low = raw.toLowerCase().replace(/\s+/g, " ");
+  const token = TZ_PHRASES[low] ?? low;
 
-  if (!raw || TZ_AMBIGUOUS.has(low)) return { status: "unconfirmed" };
-  if (low in TZ_FIXED) {
+  if (!raw || TZ_AMBIGUOUS.has(token)) return { status: "unconfirmed" };
+  if (token in TZ_FIXED) {
     return {
       status: "confirmed",
-      tz: { kind: "fixed", offsetMinutes: TZ_FIXED[low] },
+      tz: { kind: "fixed", offsetMinutes: TZ_FIXED[token] },
     };
   }
-  if (low in TZ_FIXED_ABBREVIATIONS) {
+  if (token in TZ_FIXED_ABBREVIATIONS) {
     return {
       status: "confirmed",
-      tz: { kind: "fixed", offsetMinutes: TZ_FIXED_ABBREVIATIONS[low] },
+      tz: { kind: "fixed", offsetMinutes: TZ_FIXED_ABBREVIATIONS[token] },
     };
   }
-  if (low in TZ_NAMED) {
+  if (token in TZ_NAMED) {
     return {
       status: "confirmed",
-      tz: { kind: "iana", name: TZ_NAMED[low] },
+      tz: { kind: "iana", name: TZ_NAMED[token] },
     };
   }
 
-  const m = TZ_OFFSET_RE.exec(low);
+  const m = TZ_OFFSET_RE.exec(token);
   if (m) {
     const sign = m[1] === "-" ? -1 : 1;
     const hours = Number(m[2]);

@@ -239,6 +239,22 @@ describe("promotion batch", () => {
     expect(
       extractCfpCandidates("Paper submission deadline: October 10, 2026 midnight AoE"),
     ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
+
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 23:59 Pacific Time")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "PT" },
+    ]);
+    expect(
+      extractCfpCandidates("Paper deadline: May 15, 2026 11:59 p.m. Eastern Time"),
+    ).toMatchObject([{ date: "2026-05-15", time: "23:59:00", timezone: "ET" }]);
+    expect(
+      extractCfpCandidates("Paper deadline: May 15, 2026 23:59 Pacific Daylight Time"),
+    ).toMatchObject([{ date: "2026-05-15", time: "23:59:00", timezone: "PDT" }]);
+    expect(
+      extractCfpCandidates("Paper deadline: May 15, 2026 23:59 Central Standard Time"),
+    ).toMatchObject([{ date: "2026-05-15", time: "23:59:00", timezone: "CT" }]);
+    expect(
+      extractCfpCandidates("Paper deadline May 15, 2026\nAll deadlines are 23:59 Pacific Time"),
+    ).toMatchObject([{ date: "2026-05-15", time: "23:59:00", timezone: "PT" }]);
   });
 
   it("applies an explicit page-wide deadline time without treating the event date as a deadline", () => {
