@@ -70,6 +70,8 @@ export function isDeadlineLine(text: string | null | undefined): boolean {
     low.includes("not entertained after") ||
     low.includes("not be considered after") ||
     low.includes("not considered after") ||
+    low.includes("not be accepted after") ||
+    low.includes("not accepted after") ||
     low.includes("締切") ||
     low.includes("締め切り") ||
     low.includes("期限") ||
