@@ -198,6 +198,8 @@ describe("fetch-primary extraction", () => {
     expect(extractDeadline("Cut-off date: May 15, 2026", 2026)?.date).toBe("2026-05-15");
     expect(extractDeadline("Cutoff: June 1, 2026", 2026)?.date).toBe("2026-06-01");
     expect(extractDeadline("必着: 2026年5月15日", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("At the latest May 15, 2026", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("Not later than June 1, 2026", 2026)?.date).toBe("2026-06-01");
   });
 
   it("camera ready", () => {
