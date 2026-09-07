@@ -19,6 +19,7 @@ import {
   monthOf,
   type ProviderIdentity,
   parseInstant,
+  resolveTzStatus,
   roundOf,
   slug,
   type VenueIdentity,
@@ -89,6 +90,7 @@ export interface PromotionObservation {
     time?: string;
     timezone?: string;
     kind?: string;
+    label?: string;
     round?: number;
     track?: string;
   };
@@ -812,6 +814,24 @@ function sourceIdentityConflicts(
   );
 }
 
+function sameTimezone(a: string | null | undefined, b: string | null | undefined): boolean {
+  const normA = (a ?? "").trim().toLowerCase();
+  const normB = (b ?? "").trim().toLowerCase();
+  if (normA === normB) return true;
+  if (!normA || !normB) return false;
+  const ra = resolveTzStatus(normA);
+  const rb = resolveTzStatus(normB);
+  if (ra.status === "confirmed" && rb.status === "confirmed") {
+    if (ra.tz.kind === "fixed" && rb.tz.kind === "fixed") {
+      return ra.tz.offsetMinutes === rb.tz.offsetMinutes;
+    }
+    if (ra.tz.kind === "iana" && rb.tz.kind === "iana") {
+      return ra.tz.name.toLowerCase() === rb.tz.name.toLowerCase();
+    }
+  }
+  return false;
+}
+
 function candidateMatches(
   deadline: PromotionObservation["deadline"],
   candidates: CfpExtractionCandidate[],
@@ -822,11 +842,7 @@ function candidateMatches(
     if (deadline.kind && candidate.kind !== deadline.kind) return false;
     if (deadline.time && normalizedTime(candidate.time) !== normalizedTime(deadline.time))
       return false;
-    if (
-      deadline.timezone &&
-      (candidate.timezone ?? "").trim().toLowerCase() !== deadline.timezone.trim().toLowerCase()
-    )
-      return false;
+    if (deadline.timezone && !sameTimezone(candidate.timezone, deadline.timezone)) return false;
     return Boolean(candidate.date);
   });
 }
@@ -1199,7 +1215,7 @@ export function resolvePromotion(
   const key = observation.candidate.trim();
   const deadline = {
     kind: observation.deadline?.kind ?? "paper",
-    label: observation.deadline?.kind ?? "paper",
+    label: observation.deadline?.label?.trim() || (observation.deadline?.kind ?? "paper"),
     round: observation.deadline?.round ?? 1,
     track: observation.deadline?.track?.trim() ?? "",
     precision: exact ? "exact" : "date-only",
@@ -1827,31 +1843,33 @@ export function verifyBatch(
     ...options,
     baseDir: options.baseDir ?? dirname(path),
   };
-  const resolutions = observationText
-    .split(/\r?\n/)
-    .filter((line) => line.trim() !== "")
-    .map((line) => {
-      const observation = JSON.parse(line) as PromotionObservation;
-      const capture = captureOf(observation);
-      const resolvedOptions = {
-        ...verificationOptions,
-        ...(hasManifest
-          ? {
-              requireManifestBody: true,
-              manifestBodyHash: capture?.bodyPath
-                ? manifestBodies.get(resolvePath(dirname(path), capture.bodyPath))
-                : undefined,
-            }
-          : {}),
-      };
-      return verificationOptions.existingConferences
-        ? resolvePromotionAgainst(observation, {
-            ...resolvedOptions,
-            existingConferences: verificationOptions.existingConferences,
-          })
-        : resolvePromotion(observation, resolvedOptions);
-    })
-    .sort((a, b) => cmpStr(a.candidate, b.candidate));
+  const resolutions = addResolutionIds(
+    observationText
+      .split(/\r?\n/)
+      .filter((line) => line.trim() !== "")
+      .map((line) => {
+        const observation = JSON.parse(line) as PromotionObservation;
+        const capture = captureOf(observation);
+        const resolvedOptions = {
+          ...verificationOptions,
+          ...(hasManifest
+            ? {
+                requireManifestBody: true,
+                manifestBodyHash: capture?.bodyPath
+                  ? manifestBodies.get(resolvePath(dirname(path), capture.bodyPath))
+                  : undefined,
+              }
+            : {}),
+        };
+        return verificationOptions.existingConferences
+          ? resolvePromotionAgainst(observation, {
+              ...resolvedOptions,
+              existingConferences: verificationOptions.existingConferences,
+            })
+          : resolvePromotion(observation, resolvedOptions);
+      })
+      .sort((a, b) => cmpStr(a.candidate, b.candidate)),
+  );
   if (hasManifest)
     assertStoredResolutionSemantics(
       path,
@@ -2152,7 +2170,9 @@ export function writePromotionBatch(
     observations: { sha256: createHash("sha256").update(observationText).digest("hex") },
     resolutions: { sha256: createHash("sha256").update(resolutionText).digest("hex") },
     bodies: [...bodies.values()].sort((a, b) => cmpStr(a.path, b.path)),
-    decisions: Object.fromEntries(resolutions.map((item) => [item.candidate, item.decision])),
+    decisions: Object.fromEntries(
+      resolutions.map((item) => [item.resolution_id ?? item.candidate, item.decision]),
+    ),
   };
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   return resolutions;

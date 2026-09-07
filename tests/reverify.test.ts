@@ -5,6 +5,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  rmSync,
   statSync,
   symlinkSync,
   utimesSync,
@@ -24,6 +25,7 @@ import {
   assertResolutionCanApply,
   collectVerificationTargets,
   loadVerificationLedger,
+  pageIdForUrl,
   reverifyData,
   transitionVerificationResolution,
 } from "../src/reverify.ts";
@@ -2977,5 +2979,119 @@ describe("fixes for reverify defects (#744)", () => {
     );
     // #744: Should not throw "resolution captured body does not support new value"
     expect(() => assertResolutionCanApply(ledgerPath, "change-r2")).not.toThrow();
+  });
+
+  it("migrates resolution official_url and page_id when conference URL changes in data.json (#750)", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-url-mig-"));
+    const initialUrl = "https://example.test/cfp-v1";
+    const updatedUrl = "https://example.test/cfp-v2";
+    const initialPageId = pageIdForUrl(initialUrl);
+    const updatedPageId = pageIdForUrl(updatedUrl);
+    const deadlineId = "demo|demo-2026|paper|1|";
+    const ledgerPath = join(dir, "ledger.json");
+    const dataPath = join(dir, "data.json");
+
+    writeFileSync(
+      ledgerPath,
+      JSON.stringify({
+        schema_version: 2,
+        producer_revision: "reverification-v2",
+        generated_at: "2026-08-31T00:00:00.000Z",
+        pages: {
+          [initialPageId]: {
+            requested_url: initialUrl,
+            final_url: initialUrl,
+            status: 200,
+            content_type: "text/html",
+            content_length: 100,
+            content_hash: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            source_revision: "",
+            parser_version: "reverification-v2",
+            headers: {},
+            provider: "unknown",
+            last_attempt_at: "2026-08-31T00:00:00.000Z",
+            last_success_at: "2026-08-31T00:00:00.000Z",
+            body_ref:
+              "evidence/blobs/0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef.body",
+          },
+        },
+        deadlines: {
+          [deadlineId]: {
+            deadline_id: deadlineId,
+            page_id: initialPageId,
+            official_url: initialUrl,
+            last_attempt_at: "2026-08-31T00:00:00.000Z",
+            last_verified_at: null,
+            next_check_at: "2026-09-01T00:00:00.000Z",
+            content_hash: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            status: "manual-required",
+          },
+        },
+        aliases: {},
+        resolutions: [
+          {
+            resolution_id: "res-demo",
+            deadline_id: deadlineId,
+            page_id: initialPageId,
+            official_url: initialUrl,
+            observed_at: "2026-08-31T00:00:00.000Z",
+            state: "open",
+            first_detected_at: "2026-08-31T00:00:00.000Z",
+            last_seen_at: "2026-08-31T00:00:00.000Z",
+            old_value: "2026-10-01",
+            new_value: "2026-10-15",
+            change_kind: "extension",
+          },
+        ],
+      }),
+    );
+
+    // data.json now has updatedUrl
+    writeFileSync(
+      dataPath,
+      JSON.stringify({
+        conferences: [
+          {
+            key: "demo",
+            title: "Demo",
+            link: updatedUrl,
+            editions: [
+              {
+                year: 2026,
+                id: "demo-2026",
+                link: updatedUrl,
+                deadlines: [
+                  {
+                    kind: "paper",
+                    round: 1,
+                    date: "2026-10-01",
+                    precision: "date-only",
+                    source: "manual",
+                    evidence: [
+                      {
+                        sourceUrl: updatedUrl,
+                        sourceClass: "official-cfp",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    await reverifyData({
+      dataPath,
+      ledgerPath,
+      now: new Date("2026-09-01T00:00:00.000Z"),
+      fetchImpl: async () => new Response("Paper deadline: October 15, 2026"),
+    });
+
+    const loaded = loadVerificationLedger(ledgerPath);
+    expect(loaded.resolutions[0]?.official_url).toBe(updatedUrl);
+    expect(loaded.resolutions[0]?.page_id).toBe(updatedPageId);
+    rmSync(dir, { recursive: true, force: true });
   });
 });

@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -1443,5 +1443,81 @@ describe("promotion batch", () => {
       "stored promotion resolution ID does not match its published deadline",
     );
     expect(files.map((path) => readFileSync(path, "utf8"))).toEqual(before);
+  });
+
+  describe("promotion fixes (#750)", () => {
+    it("resolvePromotion preserves candidate deadline label instead of overwriting with kind (#750)", () => {
+      const obs = observation({
+        deadline: {
+          date: "2027-01-02",
+          time: "23:59:00",
+          timezone: "AoE",
+          kind: "paper",
+          label: "Full Research Paper",
+          round: 1,
+          track: "research",
+        },
+      });
+      const res = resolvePromotion(obs);
+      expect(res.decision).toBe("promote");
+      expect(res.normalized?.deadline.label).toBe("Full Research Paper");
+    });
+
+    it("verifyBatch returns resolutions with valid resolution_id (#750)", () => {
+      const dir = mkdtempSync(join(tmpdir(), "kamiyobi-verify-batch-"));
+      const obsPath = join(dir, "observations.jsonl");
+      writeFileSync(obsPath, `${JSON.stringify(observation())}\n`);
+      const resolutions = verifyBatch(obsPath);
+      expect(resolutions).toHaveLength(1);
+      expect(resolutions[0]?.resolution_id).toMatch(/^resolution-[0-9a-f]{16}$/);
+      rmSync(dir, { recursive: true, force: true });
+    });
+
+    it("writePromotionBatch does not overwrite manifest decisions for multiple resolutions with same candidate (#750)", () => {
+      const dir = mkdtempSync(join(tmpdir(), "kamiyobi-manifest-decisions-"));
+      const obsPath = join(dir, "observations.jsonl");
+      const resPath = join(dir, "resolutions.json");
+      const manifestPath = join(dir, "manifest.json");
+      const obs1 = observation({
+        candidate: "shared-conf",
+        deadline: {
+          date: "2027-01-02",
+          time: "23:59:00",
+          timezone: "AoE",
+          kind: "paper",
+          round: 1,
+        },
+      });
+      const obs2 = observation({
+        candidate: "shared-conf",
+        deadline: {
+          date: "2027-01-02",
+          time: "23:59:00",
+          timezone: "AoE",
+          kind: "paper",
+          round: 2,
+        },
+      });
+      writeFileSync(obsPath, `${JSON.stringify(obs1)}\n${JSON.stringify(obs2)}\n`);
+      writePromotionBatch(obsPath, resPath, manifestPath);
+      const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+      expect(Object.keys(manifest.decisions)).toHaveLength(2);
+      rmSync(dir, { recursive: true, force: true });
+    });
+
+    it("candidateMatches accepts equivalent timezone aliases such as AoE and UTC-12 (#750)", () => {
+      const obs = observation({
+        deadline: {
+          date: "2027-01-02",
+          time: "23:59:00",
+          timezone: "UTC-12",
+          kind: "paper",
+          round: 2,
+        },
+        rawExcerpt: "Paper deadline: January 2, 2027 23:59 AoE",
+      });
+      const result = verifyPromotionObservation(obs);
+      expect(result.valid).toBe(true);
+    });
   });
 });

@@ -10,6 +10,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -2982,5 +2983,50 @@ describe("jsonCompact and legacy_key_redirects fixes (#746)", () => {
     const data = toJson([conf], {}, new Date("2026-08-09T00:00:00Z"));
     const deadlines = (data.conferences as any[])[0].editions[0].deadlines;
     expect(deadlines.map((dl: any) => dl.track)).toEqual(["artifacts", "industry", "research"]);
+  });
+
+  it("sortKey orders date-only deadlines on their calendar day rather than previous day (#750)", async () => {
+    const confExactPrior = makeConference({
+      key: "exact-prior",
+      title: "Exact Prior",
+      editions: [
+        makeEdition({
+          year: 2026,
+          edition_id: "prior26",
+          deadlines: [
+            makeDeadline("paper", "Prior Deadline", new Date("2026-09-01T20:00:00Z"), "UTC", 1),
+          ],
+        }),
+      ],
+    });
+    const confDateOnly = makeConference({
+      key: "date-only-conf",
+      title: "Date Only Conf",
+      editions: [
+        makeEdition({
+          year: 2026,
+          edition_id: "dateonly26",
+          deadlines: [
+            {
+              kind: "paper",
+              label: "Date Only Deadline",
+              round: 1,
+              precision: "date-only",
+              local_date: "2026-09-02",
+              comment: null,
+            },
+          ],
+        }),
+      ],
+    });
+    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-sortkey-"));
+    await buildAll([confDateOnly, confExactPrior], {}, dir, new Date("2026-08-09T00:00:00Z"));
+    const upcoming = readFileSync(join(dir, "upcoming.md"), "utf8");
+    const priorIdx = upcoming.indexOf("Exact Prior");
+    const dateOnlyIdx = upcoming.indexOf("Date Only Conf");
+    expect(priorIdx).toBeGreaterThanOrEqual(0);
+    expect(dateOnlyIdx).toBeGreaterThanOrEqual(0);
+    expect(priorIdx).toBeLessThan(dateOnlyIdx);
+    rmSync(dir, { recursive: true, force: true });
   });
 });
