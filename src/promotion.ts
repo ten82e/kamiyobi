@@ -550,7 +550,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
       continue;
     const extracted = extractedDates(raw);
     const headerHasDeadline =
-      /deadline|due|not be entertained after|not entertained after|not be considered after|not considered after|not be accepted after|not accepted after|must arrive|notification|camera[- ]?ready|締切|期限/i.test(
+      /deadline|due|not be entertained after|not entertained after|not be considered after|not considered after|not be accepted after|not accepted after|must arrive|submit|submission|notification|camera[- ]?ready|締切|期限/i.test(
         raw.slice(0, extracted[0]?.index),
       );
     const hasBareMilitaryTime = extracted.some((date, index) =>
@@ -596,7 +596,8 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
         : trailingTime
           ? trailingTz
           : (extractedTimezone(scope) ?? trailingTz);
-      const deadlineSemantics = deadlineLabel;
+      const deadlineSemantics =
+        /deadline|due|not be entertained after|not entertained after|not be considered after|not considered after|not be accepted after|not accepted after|must arrive|submit|submission|notification|camera[- ]?ready|締切|期限/i;
       const inheritsHeader =
         headerHasDeadline &&
         (/\b(?:round|cycle|phase)\b/i.test(currentPrefix) || /^[\s:—–-]*$/.test(currentPrefix)) &&

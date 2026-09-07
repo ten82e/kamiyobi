@@ -705,6 +705,22 @@ describe("promotion batch", () => {
     ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
   });
 
+  it("lets submit / submission lines inherit global deadline timing (#894)", () => {
+    expect(
+      extractCfpCandidates("All deadlines are at 23:59 AoE\nPlease submit by May 15, 2026"),
+    ).toMatchObject([{ date: "2026-05-15", time: "23:59:00", timezone: "AoE" }]);
+    expect(
+      extractCfpCandidates("All deadlines are at 23:59 AoE\nSubmission: May 15, 2026"),
+    ).toMatchObject([{ date: "2026-05-15", time: "23:59:00", timezone: "AoE" }]);
+    expect(
+      extractCfpCandidates("All deadlines are at 23:59 AoE\nThe conference opens May 15, 2026"),
+    ).toMatchObject([{ date: "2026-05-15" }]);
+    expect(
+      extractCfpCandidates("All deadlines are at 23:59 AoE\nThe conference opens May 15, 2026")[0]
+        ?.time,
+    ).toBeUndefined();
+  });
+
   it("extracts Japanese deadline kinds for domestic conferences (#756)", () => {
     expect(
       extractCfpCandidates("発表申込締切: 2026年5月1日\n原稿投稿締切: 2026年6月1日"),
