@@ -133,6 +133,8 @@ describe("fetch-primary extraction", () => {
     expect(extractDeadline("Deadline: May 15, 2026 23:59 CAT", 2026)?.tz).toBe("CAT");
     expect(extractDeadline("Deadline: May 15, 2026 23:59 WAT", 2026)?.tz).toBe("WAT");
     expect(extractDeadline("Deadline: May 15, 2026; the cat sat", 2026)?.tz).toBeUndefined();
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 NZST", 2026)?.tz).toBe("NZST");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 NZDT", 2026)?.tz).toBe("NZDT");
   });
 
   it("camera ready", () => {
