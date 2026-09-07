@@ -54,35 +54,33 @@ export function applyAliases(
   if (!groups || !Array.isArray(groups)) return [];
   if (!aliases) return groups;
   const table = new Map(Object.entries(aliases).map(([k, v]) => [k, String(v)]));
-  // ponytail: aliases are a small config table; index connected components if this ever becomes large.
-  const aliasGroup = (key: string): string[] => {
+
+  const resolveTarget = (key: string): string => {
     const seen = new Set<string>();
-    let target = key;
-    while (table.has(target) && !seen.has(target)) {
-      seen.add(target);
-      target = table.get(target)!;
+    let current = key;
+    while (table.has(current) && !seen.has(current)) {
+      seen.add(current);
+      current = table.get(current)!;
     }
-    return [...new Set([...table.keys(), ...table.values(), key])]
-      .filter((candidate) => {
-        const path = new Set<string>();
-        let current = candidate;
-        while (table.has(current) && !path.has(current)) {
-          path.add(current);
-          current = table.get(current)!;
-        }
-        return current === target;
-      })
+    return current;
+  };
+
+  // ponytail: aliases are a small config table; index connected components if this ever becomes large.
+  const aliasGroup = (target: string): string[] => {
+    return [...table.keys()]
+      .filter((candidate) => resolveTarget(candidate) === target)
       .sort(cmpStr);
   };
+
   return groups.map((group) =>
     Array.isArray(group)
       ? group.map((conf) => {
-          const key = table.get(conf.key);
-          const explicitAliases = aliasGroup(key ?? conf.key);
-          if (key === undefined && explicitAliases.length <= 1) return conf;
+          if (!conf || typeof conf !== "object" || !table.has(conf.key)) return conf;
+          const target = resolveTarget(conf.key);
+          const explicitAliases = aliasGroup(target);
           return {
             ...conf,
-            ...(key === undefined ? {} : { key }),
+            key: target,
             identity: mergeVenueIdentity([conf.identity, { aliases: explicitAliases }]),
           };
         })
@@ -136,12 +134,18 @@ export function mergeSources(
 
   const buckets: Conference[][] = [];
   for (const { conf } of ordered) {
-    const matching = buckets.filter((bucket) =>
-      bucket.some((candidate) => sameConference(candidate, conf)),
+    const matching = buckets.filter(
+      (bucket) =>
+        bucket.every((candidate) => !explicitIdentitySplit(candidate, conf)) &&
+        bucket.some((candidate) => sameConference(candidate, conf)),
     );
-    const combinedSources = [conf, ...matching.flat()].flatMap((item) => item.sources);
+    const combinedCandidates = [conf, ...matching.flat()];
+    const combinedSources = combinedCandidates.flatMap((item) => item.sources);
+    const hasSplit = combinedCandidates.some((a, i) =>
+      combinedCandidates.slice(i + 1).some((b) => explicitIdentitySplit(a, b)),
+    );
     const canCombine =
-      matching.length > 0 && new Set(combinedSources).size === combinedSources.length;
+      matching.length > 0 && !hasSplit && new Set(combinedSources).size === combinedSources.length;
     if (canCombine) {
       for (const bucket of matching) buckets.splice(buckets.indexOf(bucket), 1);
       buckets.push([...matching.flat(), conf]);
@@ -411,7 +415,9 @@ function compatibleAliases(conf: Conference): string[] {
 }
 
 function conferenceNames(conf: Conference): string[] {
-  return [conf.title, conf.full_name].filter(aliasToken);
+  return [conf.title, conf.full_name, conf.acronym].filter(
+    (value): value is string => aliasToken(value) !== "",
+  );
 }
 
 function sameSourceId(left: Conference, right: Conference): boolean {
@@ -517,19 +523,26 @@ function uniqueConferenceKeys(
     byKey.set(normalized.key, [...(byKey.get(normalized.key) ?? []), normalized]);
   }
   const out: Conference[] = [];
-  for (const [key, collisions] of byKey) {
+  const taken = new Set<string>([...reservedKeys, ...byKey.keys()]);
+  const sortedGroups = [...byKey.entries()].sort(([a], [b]) => cmpStr(a, b));
+
+  // Pass 1: Retain single-candidate conferences with their canonical keys.
+  for (const [, collisions] of sortedGroups) {
     if (collisions.length === 1) {
       out.push(collisions[0]!);
-      continue;
     }
-    const used = new Set<string>();
+  }
+
+  // Pass 2: Disambiguate collision groups with global unique suffix reservation.
+  for (const [key, collisions] of sortedGroups) {
+    if (collisions.length <= 1) continue;
     for (const conf of [...collisions].sort((a, b) =>
       cmpStr(conferenceSortKey(a), conferenceSortKey(b)),
     )) {
       const base = `${key}-${collisionSuffix(conf)}`;
       let next = base;
-      for (let suffix = 2; used.has(next); suffix++) next = `${base}-${suffix}`;
-      used.add(next);
+      for (let suffix = 2; taken.has(next); suffix++) next = `${base}-${suffix}`;
+      taken.add(next);
       out.push({
         ...conf,
         key: next,
@@ -537,6 +550,7 @@ function uniqueConferenceKeys(
       });
     }
   }
+
   const canonicalKeys = new Set([...out.map((conference) => conference.key), ...reservedKeys]);
   return out.map((conference) => {
     const legacyKeys = (conference.legacy_keys ?? []).filter((key) => !canonicalKeys.has(key));
@@ -567,6 +581,16 @@ function collisionSuffix(conf: Conference): string {
   return slug(conf.upstream_sub ?? "") || slug(explicit.join("-")) || slug(content.join("-"));
 }
 
+function aliasMatchesCanonical(aliased: Conference, canonical: Conference): boolean {
+  return (
+    compatibleAliases(aliased).length > 0 &&
+    compatibleAliases(canonical).length === 0 &&
+    !compatibleAliases(aliased).includes(aliased.key) &&
+    (conferenceNames(canonical).some((name) => aliasToken(name) === canonical.key) ||
+      identityToken(canonical.identity?.venueId) === canonical.key)
+  );
+}
+
 function sameConference(left: Conference, right: Conference): boolean {
   if (explicitIdentitySplit(left, right)) return false;
   const leftId = identityToken(left.identity?.venueId);
@@ -582,7 +606,9 @@ function sameConference(left: Conference, right: Conference): boolean {
     commonIdentity(conferenceNames(left), conferenceNames(right), aliasToken).length > 0
   )
     return true;
-  return commonIdentity(compatibleAliases(left), compatibleAliases(right), aliasToken).length > 0;
+  if (commonIdentity(compatibleAliases(left), compatibleAliases(right), aliasToken).length > 0)
+    return true;
+  return aliasMatchesCanonical(left, right) || aliasMatchesCanonical(right, left);
 }
 
 /** Distinct source identities are an explicit split, not an unresolved collision. */
