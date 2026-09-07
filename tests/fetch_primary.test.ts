@@ -121,6 +121,9 @@ describe("fetch-primary extraction", () => {
       time: "23:59:00",
       tz: "UTC+09:00",
     });
+    expect(extractDeadline("Submission deadline: May 15, 2026 midday AoE", 2026)?.time).toBe(
+      "12:00:00",
+    );
     // 隣接行に時刻がある場合も窓経由で拾う
     expect(
       extractDeadline("Submission deadline\nOctober 15, 2026 23:59:59 AoE".replace("\n", " "), 2026)
