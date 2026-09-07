@@ -241,6 +241,21 @@ describe("promotion batch", () => {
     ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
   });
 
+  it("does not treat UTC/GMT offsets as wall-clock times (#828)", () => {
+    expect(extractCfpCandidates("Paper submission deadline: May 15, 2026 UTC+09:00")).toMatchObject(
+      [{ date: "2026-05-15", timezone: "UTC+09:00" }],
+    );
+    expect(
+      extractCfpCandidates("Paper submission deadline: May 15, 2026 UTC+09:00")[0],
+    ).not.toHaveProperty("time");
+    expect(
+      extractCfpCandidates("Paper submission deadline: May 15, 2026 23:59 UTC+09:00"),
+    ).toMatchObject([{ date: "2026-05-15", time: "23:59:00", timezone: "UTC+09:00" }]);
+    expect(
+      extractCfpCandidates("Paper submission deadline: May 15, 2026 GMT+09:00")[0],
+    ).not.toHaveProperty("time");
+  });
+
   it("applies an explicit page-wide deadline time without treating the event date as a deadline", () => {
     const [deadline, notification, event] = extractCfpCandidates(
       "<li>Paper Submission Deadline <b>October 10, 2026</b></li>" +

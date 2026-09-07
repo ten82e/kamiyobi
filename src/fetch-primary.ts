@@ -29,7 +29,7 @@ const BLOCK_RE =
 const DELETED_RE = /<(del|s|strike)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
 const TAG_RE = /<[^>]+>/g;
 const TZ_RE =
-  /\b(PDT|PST|EDT|EST|CDT|CST|MDT|MST|AKDT|AKST|HST|UTC|GMT|CET|CEST|JST|AoE|PT|ET|CT|MT)\b|anywhere on (?:the )?(?:inhabited )?earth/gi;
+  /\b(PDT|PST|EDT|EST|CDT|CST|MDT|MST|AKDT|AKST|HST|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|CET|CEST|JST|AoE|PT|ET|CT|MT)\b|anywhere on (?:the )?(?:inhabited )?earth/gi;
 const LABELS: Record<string, string> = {
   paper: "Paper submission",
   abstract: "Abstract submission",
