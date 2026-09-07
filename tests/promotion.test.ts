@@ -553,6 +553,15 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("keeps ChST as an extracted timezone (#870)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 ChST")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "ChST" },
+    ]);
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 CHST")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "CHST" },
+    ]);
+  });
+
   it("filters out invalid dates in extractedDates without polluting candidate boundaries (#756)", () => {
     const candidates = extractCfpCandidates(
       "Submission Deadline: 2026-02-30, March 15, 2026 23:59 AoE",
