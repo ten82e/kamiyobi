@@ -1642,6 +1642,8 @@ const REBUTTAL_END = new Set([
   "rebuttal",
   "rebuttal_and_revision",
   "author_response",
+  "author_rebuttal",
+  "rebuttal_period_end",
 ]);
 const REGISTRATION = new Set(["registration", "reviewer_registration", "commitment_deadline"]);
 
