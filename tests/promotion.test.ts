@@ -562,6 +562,15 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("keeps HAST/HADT as extracted timezones (#866)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 HAST")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "HAST" },
+    ]);
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 HADT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "HADT" },
+    ]);
+  });
+
   it("filters out invalid dates in extractedDates without polluting candidate boundaries (#756)", () => {
     const candidates = extractCfpCandidates(
       "Submission Deadline: 2026-02-30, March 15, 2026 23:59 AoE",
