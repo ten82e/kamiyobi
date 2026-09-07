@@ -12,8 +12,8 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { load as loadYaml } from "js-yaml";
-import { expect, it } from "vitest";
+import { dump as dumpYaml, load as loadYaml } from "js-yaml";
+import { describe, expect, it } from "vitest";
 import { generateCurated } from "../scripts/generate-curated.ts";
 import { assertSafePageUrl, capturePage, pinnedLookup, writeCasBody } from "../src/capture.ts";
 import { applyResolutionSource } from "../src/cli.ts";
@@ -2831,4 +2831,151 @@ it("carries an edition CallIdentity into verification targets", () => {
     new Date("2026-08-31T00:00:00.000Z"),
   );
   expect(targets[0]?.callIdentity).toBe("demo-call");
+});
+
+describe("fixes for reverify defects (#744)", () => {
+  it("validateDeadline accepts last_attempt_at: null without throwing", () => {
+    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-null-attempt-"));
+    const path = join(dir, "ledger.json");
+    writeFileSync(
+      path,
+      JSON.stringify({
+        schema_version: 2,
+        producer_revision: "reverification-v2",
+        generated_at: "2026-09-01T00:00:00.000Z",
+        pages: {
+          "page:test": {
+            page_id: "page:test",
+            requested_url: "https://example.test/cfp",
+            final_url: "https://example.test/cfp",
+            last_attempt_at: "2026-09-01T00:00:00.000Z",
+            last_success_at: null,
+            body_ref: `evidence/blobs/${"a".repeat(64)}.body`,
+            headers: {},
+          },
+        },
+        deadlines: {
+          canonical: {
+            deadline_id: "canonical",
+            venue_key: "demo",
+            edition_id: "demo-2026",
+            kind: "paper",
+            round: 1,
+            track: "",
+            page_id: "page:test",
+            last_attempt_at: null, // #744: nullable
+            last_verified_at: null,
+            next_check_at: "2026-09-02T00:00:00.000Z",
+            status: "pending",
+            source_name: "local",
+          },
+        },
+        aliases: {},
+        resolutions: [],
+      }),
+    );
+    expect(() => loadVerificationLedger(path)).not.toThrow();
+    const ledger = loadVerificationLedger(path);
+    expect(ledger.deadlines.canonical.last_attempt_at).toBeNull();
+  });
+
+  it("assertCapturedResolutionBody allows round 2 and tracked deadlines with untagged CFP candidates", () => {
+    const root = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-r2-apply-"));
+    const data = join(root, "data");
+    mkdirSync(join(data, "evidence", "blobs"), { recursive: true });
+    const sourcePath = join(data, "manual.yaml");
+    writeFileSync(
+      sourcePath,
+      dumpYaml({
+        conferences: [
+          {
+            key: "demo",
+            title: "Demo Conf",
+            editions: [
+              {
+                id: "demo-2026",
+                year: 2026,
+                deadlines: [
+                  {
+                    kind: "paper",
+                    round: 2,
+                    track: "research",
+                    label: "Round 2 Paper",
+                    date: "2026-10-01",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    const body = "Paper submission deadline: October 15, 2026";
+    const hash = createHash("sha256").update(body).digest("hex");
+    const bodyRef = `evidence/blobs/${hash}.body`;
+    writeFileSync(join(data, bodyRef), body);
+    const ledgerPath = join(data, "verification-ledger.json");
+    writeFileSync(
+      ledgerPath,
+      JSON.stringify({
+        schema_version: 2,
+        producer_revision: "reverification-v2",
+        generated_at: "2026-09-02T00:00:00.000Z",
+        pages: {
+          "page:test": {
+            page_id: "page:test",
+            requested_url: "https://example.test/cfp",
+            final_url: "https://example.test/cfp",
+            last_attempt_at: "2026-09-02T00:00:00.000Z",
+            last_success_at: null,
+            body_ref: bodyRef,
+            content_hash: hash,
+            headers: {},
+          },
+        },
+        deadlines: {
+          "demo|demo-2026|paper|2|research": {
+            deadline_id: "demo|demo-2026|paper|2|research",
+            venue_key: "demo",
+            edition_id: "demo-2026",
+            kind: "paper",
+            round: 2,
+            track: "research",
+            page_id: "page:test",
+            official_url: "https://example.test/cfp",
+            last_attempt_at: "2026-09-02T00:00:00.000Z",
+            last_verified_at: null,
+            next_check_at: "2026-09-03T00:00:00.000Z",
+            content_hash: hash,
+            status: "changed",
+            source_name: "local",
+          },
+        },
+        aliases: {},
+        resolutions: [
+          {
+            resolution_id: "change-r2",
+            deadline_id: "demo|demo-2026|paper|2|research",
+            page_id: "page:test",
+            official_url: "https://example.test/cfp",
+            observed_at: "2026-09-02T00:00:00.000Z",
+            state: "accepted",
+            first_detected_at: "2026-09-02T00:00:00.000Z",
+            last_seen_at: "2026-09-02T00:00:00.000Z",
+            old_value: "2026-10-01",
+            new_value: "2026-10-15",
+            change_kind: "extension",
+            evidence_ref: bodyRef,
+            content_hash: hash,
+            raw_excerpt: "Paper submission deadline: October 15, 2026",
+            status: "changed",
+            previous_value: "2026-10-01",
+            current_value: "2026-10-15",
+          },
+        ],
+      }),
+    );
+    // #744: Should not throw "resolution captured body does not support new value"
+    expect(() => assertResolutionCanApply(ledgerPath, "change-r2")).not.toThrow();
+  });
 });
