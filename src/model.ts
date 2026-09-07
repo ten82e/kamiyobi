@@ -1612,6 +1612,19 @@ const REGISTRATION = new Set(["registration", "reviewer_registration", "commitme
 const NON_PAPER_LABEL_RE =
   /(?<![\w-])(posters?(?![\w-])|art gallery|student volunteer|workshops?(?![\w-])|student research competition|doctoral consortium|demonstration(?![\w-])|demo session|rising stars|appy hour|real-time live!|frontiers deadline|panels?(?![\w-])|educator)/i;
 
+/** Workshop / doctoral consortium rows that are not also a paper/論文 deadline. */
+export function isStandaloneWorkshopDeadline(text: string | null | undefined): boolean {
+  const value = String(text ?? "").toLowerCase();
+  if (
+    !/\bworkshops?\b|\bdoctoral\s+consortium\b|\bphd\s+symposium\b|ワークショップ|博士コンソーシアム/.test(
+      value,
+    )
+  ) {
+    return false;
+  }
+  return !/\bpapers?\b|full[- ]?paper|short[- ]?paper|論文|原稿投稿|論文投稿/.test(value);
+}
+
 /** Refine a kind derived from a generic upstream type using the row's own label. */
 export function refineKindWithLabel(
   kind: DeadlineKind,

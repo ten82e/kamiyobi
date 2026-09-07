@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { KINDS, kindOf, refineKindWithLabel } from "../src/model.ts";
+import { isStandaloneWorkshopDeadline, KINDS, kindOf, refineKindWithLabel } from "../src/model.ts";
 
 const KINDS_SET = new Set(KINDS);
 
@@ -146,5 +146,15 @@ describe("refineKindWithLabel (#516)", () => {
     expect(refineKindWithLabel("paper", "Posters deadline")).toBe("other");
     // ccfddl の paper_deadline / submission_deadline キーも汎用語扱い。
     expect(refineKindWithLabel("paper", "Posters Track", "submission_deadline")).toBe("other");
+  });
+});
+
+describe("isStandaloneWorkshopDeadline (#824)", () => {
+  it("treats workshop and doctoral consortium rows as non-paper unless a paper track is named", () => {
+    expect(isStandaloneWorkshopDeadline("Workshop deadline: May 15, 2026")).toBe(true);
+    expect(isStandaloneWorkshopDeadline("Doctoral consortium deadline: June 1, 2026")).toBe(true);
+    expect(isStandaloneWorkshopDeadline("ワークショップ締切: 2026年6月1日")).toBe(true);
+    expect(isStandaloneWorkshopDeadline("Workshop paper deadline: May 15, 2026")).toBe(false);
+    expect(isStandaloneWorkshopDeadline("Paper submission deadline: May 15, 2026")).toBe(false);
   });
 });
