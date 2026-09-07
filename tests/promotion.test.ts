@@ -192,6 +192,28 @@ describe("promotion batch", () => {
     ).toMatchObject([{ date: "2026-05-15", timezone: "America/Port-au-Prince" }]);
   });
 
+  it("extracts global deadline timing with multi-segment IANA zones and 12-hour format (#740)", () => {
+    expect(
+      extractCfpCandidates(
+        "All deadlines are 23:59 America/Port-au-Prince.\n" +
+          "Paper submission deadline: October 10, 2026",
+      ),
+    ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "America/Port-au-Prince" }]);
+
+    expect(
+      extractCfpCandidates(
+        "All deadlines are 11:59 PM AoE.\n" + "Paper submission deadline: October 10, 2026",
+      ),
+    ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
+
+    expect(
+      extractCfpCandidates(
+        "All deadlines are 23:59 AoE.\n" +
+          "Paper submission deadline: October 10, 2026 for the 2027 edition",
+      ),
+    ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
+  });
+
   it("applies an explicit page-wide deadline time without treating the event date as a deadline", () => {
     const [deadline, notification, event] = extractCfpCandidates(
       "<li>Paper Submission Deadline <b>October 10, 2026</b></li>" +

@@ -422,7 +422,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
     .filter(Boolean);
   const globalDeadlineTiming = lines.find(
     (line) =>
-      /^all deadlines?\s+(?:are|at)\s+\d{1,2}:\d{2}(?::\d{2})?\s+(?:AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|JST|PT|ET|CT|MT|[A-Za-z_]+\/[A-Za-z_]+)(?:\s*\(Anywhere on Earth\))?[.!]?$/i.test(
+      /^all deadlines?\s+(?:are|at)\s+\d{1,2}:\d{2}(?::\d{2})?\s*(?:[ap]\.?m\.?\s+)?(?:AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|JST|PT|ET|CT|MT|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)(?:\s*\(Anywhere on Earth\))?[.!]?$/i.test(
         line,
       ) &&
       extractedTime(line) &&
@@ -451,7 +451,9 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
       raw.slice(0, extracted[0]?.index),
     );
     const hasBareMilitaryTime = extracted.some((date, index) =>
-      /\b(?:[01]?\d|2[0-3])[0-5]\d\b/.test(raw.slice(date.end, extracted[index + 1]?.index)),
+      /\b(?:[01]?\d|2[0-3])[0-5]\d\b/.test(
+        raw.slice(date.end, extracted[index + 1]?.index).replace(/\b20[2-9]\d\b/g, ""),
+      ),
     );
     for (const [index, value] of extracted.entries()) {
       if (!value.date || !value.year) continue;

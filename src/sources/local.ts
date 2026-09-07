@@ -82,9 +82,10 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
     const superseded = supersededDeadlinesOf(rec.superseded_deadlines);
     const promotionRef = promotionRefOf(rec.promotion_ref ?? rec.promotionRef);
     const track = String(rec.track ?? "").trim();
+    const explicitTz = String(rec.tz ?? rec.timezone ?? "").trim();
     if (rec.precision === "date-only") {
       const localDate = asDate(rec.date);
-      if (localDate === null || tzRaw.trim()) {
+      if (localDate === null || explicitTz) {
         warn(`date-only deadline requires YYYY-MM-DD without timezone: ${String(rec.date ?? "")}`);
         continue;
       }

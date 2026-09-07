@@ -579,6 +579,49 @@ it("checks configured categories and reports promotion/evidence and vocabulary d
       "promoted: category vocabulary diverges from title/full_name/scope; possible ai",
     ]),
   );
+
+  // #740: review_state: "unreviewed" / "unconfirmed" must NOT trigger isAutoPromoted
+  const unreviewed = validateData({
+    conferences: [
+      {
+        key: "unreviewed-conf",
+        title: "Systems Workshop",
+        categories: ["systems"],
+        review_state: "unreviewed",
+        editions: [],
+      },
+      {
+        key: "unconfirmed-conf",
+        title: "Systems Workshop 2",
+        categories: ["systems"],
+        review_state: "unconfirmed",
+        editions: [],
+      },
+    ],
+  });
+  expect(unreviewed.warnings).not.toEqual(
+    expect.arrayContaining([
+      expect.stringContaining("auto-promoted categories lack category_evidence"),
+    ]),
+  );
+
+  // #740: date_text: "TBA", "To be announced", "未定" must not trigger "event date text is not structured"
+  const notAnnounced = validateData({
+    conferences: [
+      {
+        key: "tba-conf",
+        categories: ["systems"],
+        editions: [
+          { year: 2026, id: "tba-2026", date_text: "TBA" },
+          { year: 2026, id: "tba2-2026", date_text: "To be announced" },
+          { year: 2026, id: "tba3-2026", date_text: "未定" },
+        ],
+      },
+    ],
+  });
+  expect(notAnnounced.warnings).not.toEqual(
+    expect.arrayContaining([expect.stringContaining("event date text is not structured")]),
+  );
 });
 
 it("summarizes category changes as a pure data-only comparison", () => {
