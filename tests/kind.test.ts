@@ -66,6 +66,13 @@ describe("kind_of", () => {
     expect(kindOf("withdrawal")).toBe("other");
   });
 
+  it("regular_paper is a paper deadline (#924)", () => {
+    expect(kindOf("regular_paper")).toBe("paper");
+    expect(kindOf("regular-paper")).toBe("paper");
+    expect(kindOf("final_paper")).toBe("camera_ready");
+    expect(kindOf("withdrawal")).toBe("other");
+  });
+
   it("supplementary is not collapsed into paper", () => {
     expect(kindOf("supplementary")).toBe("supplementary");
     expect(kindOf("supplementary")).not.toBe(kindOf("paper"));
