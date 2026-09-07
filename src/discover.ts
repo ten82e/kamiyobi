@@ -549,9 +549,11 @@ export function toYamlDict(c: Candidate | null | undefined): Record<string, unkn
     // 締切が開催年の前年（秋締切等）だと date_text 由来の年が 1 年前にずれるため。
     const year = c.year && c.year >= 2020 ? c.year : m ? Number(m[1]) : null;
     if (year !== null) {
+      const yearSuffix = String(year % 100).padStart(2, "0");
+      const baseKey = c.key.replace(new RegExp(`[-_]?(?:${year}|${yearSuffix})$`), "");
       editions.push({
         year,
-        id: `${c.key}${year % 100}`,
+        id: `${baseKey || c.key}${yearSuffix}`,
         link: c.link,
         place: c.place || "",
         date_text: c.date_text || "",
@@ -908,16 +910,18 @@ export function extractDeadlinesFromText(
     }
   }
 
-  // 5. European Numeric Day Month Year: '15.05.2026', '15/05/2026', '15-05-2026'
+  // 5. European Numeric Day Month Year: '15.05.2026', '15/05/2026', '15-05-2026' or US '05/20/2026'
   const reEu = /\b(\d{1,2})[-/.](\d{1,2})[-/.](20\d\d)\b/g;
   while (true) {
     m = reEu.exec(norm);
     if (!m) break;
-    const d = Number(m[1]);
-    const mo = Number(m[2]);
+    const p1 = Number(m[1]);
+    const p2 = Number(m[2]);
     const y = Number(m[3]);
-    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) {
-      recordDate(m.index, y, mo, d);
+    if (p2 >= 1 && p2 <= 12 && p1 >= 1 && p1 <= 31) {
+      recordDate(m.index, y, p2, p1);
+    } else if (p1 >= 1 && p1 <= 12 && p2 > 12 && p2 <= 31) {
+      recordDate(m.index, y, p1, p2);
     }
   }
 
@@ -1067,14 +1071,17 @@ export function parseDeadlineText(dateText: string): Date | null {
     }
   }
 
-  // 5. Day Month Year Numeric: '15.08.2026', '15/08/2026', '15-08-2026'
+  // 5. Numeric Day Month Year ('15.08.2026') or Month Day Year ('08/15/2026')
   m = /\b(\d{1,2})[-/.](\d{1,2})[-/.](20\d\d)\b/.exec(norm);
   if (m) {
-    const day = Number(m[1]);
-    const month = Number(m[2]);
+    const p1 = Number(m[1]);
+    const p2 = Number(m[2]);
     const year = Number(m[3]);
-    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-      return validUtcDate(year, month, day);
+    if (p2 >= 1 && p2 <= 12 && p1 >= 1 && p1 <= 31) {
+      return validUtcDate(year, p2, p1);
+    }
+    if (p1 >= 1 && p1 <= 12 && p2 > 12 && p2 <= 31) {
+      return validUtcDate(year, p1, p2);
     }
   }
 
@@ -1144,7 +1151,7 @@ export function parseDbworldHtml(html: string | null | undefined): DbworldRow[] 
   for (const row of html.match(/<TR VALIGN=TOP>[\s\S]*?<\/TR>/g) ?? []) {
     const m = /<A HREF=([^>]+)>([^<]+)<\/A>/.exec(row);
     if (!m) continue;
-    const href = m[1].trim();
+    const href = m[1].trim().replace(/^["']|["']$/g, "");
     const subject = decode(m[2]).trim();
     if (/^job\s*:/i.test(subject)) continue;
     if (
@@ -1391,8 +1398,12 @@ export function parseComsocCfpHtml(
     }
     const title = `${topic}（${journalName} 特集号）`;
     const dm = /(20\d\d)/.exec(deadline);
+    const baseSlug = slug(title);
+    const key =
+      baseSlug ||
+      `comsoc-${dm ? dm[1] : "cfp"}-${createHash("sha256").update(title).digest("hex").slice(0, 6)}`;
     entries.push({
-      key: slug(title),
+      key,
       title,
       full_name: title,
       link: pageUrl,
@@ -1453,8 +1464,12 @@ export function parseIeiceCfpHtml(
     const [journal, deadline, section] = cells;
     if (!/^\d{4}-\d{1,2}-\d{1,2}$/.test(deadline)) continue;
     const title = `${section}（${journal} 特集号）`;
+    const baseSlug = slug(title);
+    const key =
+      baseSlug ||
+      `ieice-${deadline.replace(/[^0-9]/g, "")}-${createHash("sha256").update(title).digest("hex").slice(0, 6)}`;
     entries.push({
-      key: slug(title),
+      key,
       title,
       full_name: title,
       link: pageUrl,

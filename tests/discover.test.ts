@@ -1050,9 +1050,9 @@ describe("parseWikiCfpHtml", () => {
     });
     const dict = toYamlDict(cand);
     const edition = (dict.editions as Array<Record<string, unknown>>)[0];
-    // 開催年 2026 が締切年 2025 に上書きされない（回帰: dasfaa-202625 の誤り）
+    // 開催年 2026 が締切年 2025 に上書きされず、キーの重複年も除去されて dasfaa26 になる
     expect(edition.year).toBe(2026);
-    expect(edition.id).toBe("dasfaa-202626");
+    expect(edition.id).toBe("dasfaa26");
     // 締切日そのものは date_text として保持される
     expect(edition.date_text).toBe("Oct 27, 2025 (Oct 20, 2025)");
   });
@@ -1270,5 +1270,208 @@ describe("discover and review boundary handling", () => {
     expect(() => {
       runReviewCandidates("data/discovered_candidates.yaml", 10, undefined, REPO_ROOT);
     }).not.toThrow();
+  });
+
+  describe("fixes for discover and review-candidates defects (#742)", () => {
+    it("toYamlDict strips year suffixes and pads two-digit edition IDs", () => {
+      expect(
+        toYamlDict({
+          key: "dasfaa-2026",
+          title: "DASFAA 2026",
+          full_name: "Database Systems for Advanced Applications",
+          link: "https://dasfaa2026.org",
+          categories: ["db"],
+          tags: ["niche"],
+          source_type: "conference",
+          evidence_url: "",
+          status: "discovered",
+          discovered_at: "",
+          date_text: "2026-05-15",
+          place: "Tokyo",
+          year: 2026,
+          deadlines: [],
+        }),
+      ).toMatchObject({
+        editions: [
+          expect.objectContaining({
+            id: "dasfaa26",
+            year: 2026,
+          }),
+        ],
+      });
+
+      expect(
+        toYamlDict({
+          key: "dasfaa2026",
+          title: "DASFAA 2026",
+          full_name: "Database Systems",
+          link: "https://dasfaa.org",
+          categories: ["db"],
+          tags: [],
+          source_type: "conference",
+          evidence_url: "",
+          status: "discovered",
+          discovered_at: "",
+          date_text: "2026-05-15",
+          place: "",
+          year: 2026,
+          deadlines: [],
+        }),
+      ).toMatchObject({
+        editions: [
+          expect.objectContaining({
+            id: "dasfaa26",
+          }),
+        ],
+      });
+
+      expect(
+        toYamlDict({
+          key: "whpc",
+          title: "WHPC",
+          full_name: "Women in HPC",
+          link: "https://whpc.org",
+          categories: ["hpc"],
+          tags: [],
+          source_type: "workshop",
+          evidence_url: "",
+          status: "discovered",
+          discovered_at: "",
+          date_text: "2008-11-15",
+          place: "Austin",
+          year: 2008,
+          deadlines: [],
+        }),
+      ).toMatchObject({
+        editions: [
+          expect.objectContaining({
+            id: "whpc08",
+            year: 2008,
+          }),
+        ],
+      });
+    });
+
+    it("parseDbworldHtml strips surrounding quotes from HREF attribute", () => {
+      const html = `
+        <TABLE>
+          <TR VALIGN=TOP>
+            <TD><A HREF="https://dbworld.sigmod.org/message/12345">CFP: World DB Conf 2026</A></TD>
+          </TR>
+          <TR VALIGN=TOP>
+            <TD><A HREF='https://dbworld.sigmod.org/message/67890'>Call for Papers: Graph Data 2026</A></TD>
+          </TR>
+        </TABLE>
+      `;
+      const rows = parseDbworldHtml(html);
+      expect(rows).toHaveLength(2);
+      expect(rows[0].href).toBe("https://dbworld.sigmod.org/message/12345");
+      expect(rows[1].href).toBe("https://dbworld.sigmod.org/message/67890");
+      expect(() => new URL(rows[0].href)).not.toThrow();
+      expect(() => new URL(rows[1].href)).not.toThrow();
+    });
+
+    it("normTitle normalizes ordinals mid-string across editions", () => {
+      expect(normTitle("The 15th International Conference on Networks")).toBe(
+        "international conference on networks",
+      );
+      expect(normTitle("IEEE 15th International Conference on Networks")).toBe(
+        "ieee international conference on networks",
+      );
+      expect(normTitle("IEEE 16th International Conference on Networks")).toBe(
+        "ieee international conference on networks",
+      );
+      expect(normTitle("ACM 3rd Workshop on Systems")).toBe("acm workshop on systems");
+    });
+
+    it("reviewDeadlineText prioritizes submission deadlines over conference event dates", () => {
+      const candidate = {
+        key: "testconf",
+        date_text: "October 10-14, 2026",
+        editions: [
+          {
+            date_text: "October 10-14, 2026",
+            deadlines: [{ date: "2026-05-15 23:59:00" }],
+          },
+        ],
+      };
+      expect(reviewDeadlineText(candidate)).toBe("2026-05-15 23:59:00");
+    });
+
+    it("parseDeadlineText and extractDeadlinesFromText parse unambiguous US numeric dates (MM/DD/YYYY)", () => {
+      expect(parseDeadlineText("05/20/2026")?.toISOString().slice(0, 10)).toBe("2026-05-20");
+      expect(parseDeadlineText("12/31/2026")?.toISOString().slice(0, 10)).toBe("2026-12-31");
+      expect(parseDeadlineText("20/05/2026")?.toISOString().slice(0, 10)).toBe("2026-05-20");
+
+      const dls = extractDeadlinesFromText("Paper submission deadline is 05/20/2026.");
+      expect(dls).toHaveLength(1);
+      expect(dls[0].date).toBe("2026-05-20 23:59:00");
+    });
+
+    it("mergeCandidateRegistry transitions candidates to stale on active discovery and preserves on empty", () => {
+      const now = "2026-09-01T00:00:00.000Z";
+      const oldDate = "2026-01-01T00:00:00.000Z"; // > 90 days ago
+      const existing = parseCandidateRegistry({
+        schema: 2,
+        candidates: [
+          {
+            key: "old-cand",
+            title: "Old Candidate",
+            link: "https://example.com/old",
+            status: "discovered",
+            first_seen_at: oldDate,
+            last_seen_at: oldDate,
+          },
+        ],
+      });
+
+      // Empty discovery preserves existing candidates unchanged
+      expect(mergeCandidateRegistry(existing, [], now).candidates[0].status).toBe("discovered");
+
+      // Active discovery marks unseen old candidates as stale
+      const updated = mergeCandidateRegistry(
+        existing,
+        [
+          makeCandidate({
+            key: "new-cand",
+            title: "New Candidate",
+            full_name: "New Candidate",
+            link: "https://example.com/new",
+            categories: ["systems"],
+            discovered_at: now,
+          }),
+        ],
+        now,
+      );
+      expect(updated.candidates.find((c) => c.key === "old-cand")?.status).toBe("stale");
+      expect(updated.candidates.find((c) => c.key === "new-cand")?.status).toBe("discovered");
+    });
+
+    it("parseIeiceCfpHtml generates valid key for pure Japanese titles and is parseable", () => {
+      const html = `
+        <table>
+          <tr><th>Journal</th><th>Deadline</th><th>Section</th></tr>
+          <tr>
+            <td>情報・システムソサイエティ誌</td>
+            <td>2026-09-01</td>
+            <td>超高速情報処理・超並列計算</td>
+          </tr>
+        </table>
+      `;
+      const rows = parseIeiceCfpHtml(html, "https://www.ieice.org/journals.php");
+      expect(rows).toHaveLength(1);
+      expect(rows[0].key).toMatch(/^ieice-20260901-[a-f0-9]{6}$/);
+      expect(rows[0].title).toBe(
+        "超高速情報処理・超並列計算（情報・システムソサイエティ誌 特集号）",
+      );
+
+      // Verify that candidateFromRecord succeeds and does not drop the candidate
+      const reg = parseCandidateRegistry({
+        schema: 2,
+        candidates: rows,
+      });
+      expect(reg.candidates).toHaveLength(1);
+      expect(reg.candidates[0].key).toBe(rows[0].key);
+    });
   });
 });
