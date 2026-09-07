@@ -323,10 +323,41 @@ function extractedTime(text: string): string | undefined {
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:${String(second).padStart(2, "0")}`;
 }
 
+// IANA 分岐は (?:\/セグメント)+ で複数階層・ハイフン付きの実在ゾーン名
+// (America/Argentina/Buenos_Aires, America/Port-au-Prince 等) を丸ごと
+// 捕捉する。単一スラッシュ限定だと "America/Argentina" のように途中で
+// 切り詰められ、後段の実在性検証で誤って棄却されてしまう (#723 の独立
+// 反証レビューで発見)。
+const TIMEZONE_PATTERN =
+  /\b(AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|JST|PT|ET|CT|MT|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)\b/gi;
+
+/**
+ * IANA Area/Location 名として実在するかだけを判定する (model.ts の
+ * isConfirmedTimezone は再利用しない — あちらは warn() を呼び本物の観測用の
+ * グローバル警告カウンタへ記録するため、抽出走査中に無害な "and/or" 等へ
+ * 毎回誤警告を積んでしまう)。
+ */
+function isKnownIanaTimezone(name: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: name });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function extractedTimezone(text: string): string | undefined {
-  return /\b(AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|JST|PT|ET|CT|MT|[A-Za-z_]+\/[A-Za-z_]+)\b/i.exec(
-    text,
-  )?.[1];
+  for (const match of text.matchAll(TIMEZONE_PATTERN)) {
+    const candidate = match[1];
+    // IANA Area/Location 形式の候補だけは実在ゾーンか検証する。exec は
+    // 最左マッチを返すため、"Camera-ready/final" や "Paper/abstract"、
+    // URL パスの "org/cfp" のようなスラッシュを含む普通のラベル語が、
+    // 行内の本物の AoE/UTC より先にマッチしてしまう (#723)。既知の略号
+    // (AoE/UTC/PST 等) は従来どおり検証なしで受理する。
+    if (candidate.includes("/") && !isKnownIanaTimezone(candidate)) continue;
+    return candidate;
+  }
+  return undefined;
 }
 
 function candidateKind(text: string): string {

@@ -149,6 +149,49 @@ describe("promotion batch", () => {
     ).toMatchObject([{ date: "2026-03-01", time: "19:00:00", timezone: "UTC" }]);
   });
 
+  it("does not mistake a slash in the label or a URL path for an IANA timezone (#723)", () => {
+    // extractedTimezone の最後の選択肢 [A-Za-z_]+\/[A-Za-z_]+ は IANA
+    // Area/Location 形式を想定しているが、検証なしでは "Camera-ready/final"
+    // のような普通のラベル語や URL パスの一部が本物の AoE より先に
+    // マッチしてしまっていた。
+    expect(
+      extractCfpCandidates("Camera-ready/final version due: December 20, 2026, 23:59 AoE"),
+    ).toMatchObject([{ date: "2026-12-20", timezone: "AoE" }]);
+    expect(
+      extractCfpCandidates("Paper/abstract submission deadline: 15 May 2026 23:59 AoE"),
+    ).toMatchObject([{ date: "2026-05-15", timezone: "AoE" }]);
+    // タイムゾーンが本当に存在しない行では、偽のスラッシュ一致ではなく
+    // timezone なしに落ちる (安全側)。
+    const [noTz] = extractCfpCandidates(
+      "Submission deadline (papers and/or posters): 15 May 2026 23:59",
+    );
+    expect(noTz).not.toHaveProperty("timezone");
+    const [noTzUrl] = extractCfpCandidates(
+      "Submission deadline: 15 May 2026 23:59 see https://conf.example.org/cfp",
+    );
+    expect(noTzUrl).not.toHaveProperty("timezone");
+    // 本物の IANA 名は引き続き受理する。
+    expect(
+      extractCfpCandidates("Submission deadline: 15 May 2026 23:59 America/Los_Angeles"),
+    ).toMatchObject([{ date: "2026-05-15", timezone: "America/Los_Angeles" }]);
+  });
+
+  it("captures multi-segment and hyphenated IANA zone names whole instead of truncating them (#723)", () => {
+    // 単一スラッシュ限定の正規表現だと "America/Argentina/Buenos_Aires" が
+    // "America/Argentina" に切り詰められ、それ自体は実在しないゾーン名として
+    // 棄却される。棄却後にページ全体の既定タイムゾーン (AoE 等) が誤って
+    // 採用されてしまっていた (独立反証レビューで発見)。
+    expect(
+      extractCfpCandidates(
+        "All deadlines are 23:59 AoE.\n" +
+          "Paper submission deadline: 15 May 2026 America/Argentina/Buenos_Aires",
+      ),
+    ).toMatchObject([{ date: "2026-05-15", timezone: "America/Argentina/Buenos_Aires" }]);
+    expect(
+      extractCfpCandidates("Submission deadline: 15 May 2026 23:59 America/Port-au-Prince"),
+    ).toMatchObject([{ date: "2026-05-15", timezone: "America/Port-au-Prince" }]);
+  });
+
   it("applies an explicit page-wide deadline time without treating the event date as a deadline", () => {
     const [deadline, notification, event] = extractCfpCandidates(
       "<li>Paper Submission Deadline <b>October 10, 2026</b></li>" +
