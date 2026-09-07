@@ -117,6 +117,8 @@ describe("resolve_tz", () => {
     ["BRT", -3 * 60],
     ["CAT", 2 * 60],
     ["WAT", 60],
+    ["NZST", 12 * 60],
+    ["NZDT", 13 * 60],
   ] as Array<[string, number]>)("DST-specific abbreviation %j is literal", (raw, minutes) => {
     expect(isConfirmedTimezone(raw)).toBe(true);
     expect(offset(resolveTz(raw), WINTER)).toBe(minutes);
