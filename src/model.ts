@@ -1779,6 +1779,7 @@ const ROUND_CARDINAL = "one|two|three|four|five|six|seven|eight|nine|ten";
 const ROUND_PATTERNS = [
   /\b(?:round|cycle|phase|stage)\s*#?\s*([0-9]+)\b/i,
   /\b([0-9]+)(?:st|nd|rd|th)\s+(?:round|cycle|phase|stage)\b/i,
+  /\b([0-9]+)(?:st|nd|rd|th)\s+(?:paper\s+)?submission(?:\s+deadline)?\b/i,
   /\b(?:round|cycle|phase|stage)\s*#?\s*(i|ii|iii|iv|v|vi|vii|viii|ix|x)\b/i,
   new RegExp(`\\b(${ROUND_WORD})\\s+(?:round|cycle|phase|stage)\\b`, "i"),
   new RegExp(`\\b(?:round|cycle|phase|stage)\\s+(${ROUND_WORD}|${ROUND_CARDINAL})\\b`, "i"),
