@@ -593,6 +593,14 @@ describe("parse_date_range", () => {
     expect(warningCounts()).toEqual({});
     resetWarnings();
   });
+
+  it("parseDateRange ignores non-year 4-digit numbers when extracting event dates (#752)", () => {
+    resetWarnings();
+    const [start, end] = parseDateRange("August 15-18, 2026, Room 1200", 2026);
+    expect(start?.toISOString().slice(0, 10)).toBe("2026-08-15");
+    expect(end?.toISOString().slice(0, 10)).toBe("2026-08-18");
+    resetWarnings();
+  });
 });
 
 describe("slug", () => {

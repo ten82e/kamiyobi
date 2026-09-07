@@ -1302,6 +1302,24 @@ describe("merge_sources", () => {
       mergeSources([[sigcomm("ccfddl", [posters])], [sigcomm("aideadlines", [src])]], PRIORITY)[0],
     );
     expect(siggraphOther).toHaveLength(2);
+
+    // Non-ASCII explicit track names (e.g. Japanese "ポスター発表" vs "口頭発表") are preserved and not folded
+    const posterJp: Deadline = {
+      ...makeDeadline("other", "発表締切", utc(2026, 4, 21, 22, 0, 0)),
+      track: "ポスター発表",
+    };
+    const oralJp: Deadline = {
+      ...makeDeadline("other", "発表締切", utc(2026, 4, 21, 22, 0, 0)),
+      track: "口頭発表",
+    };
+    const dlsJp = deadlinesOf(
+      mergeSources(
+        [[sigcomm("ccfddl", [posterJp])], [sigcomm("aideadlines", [oralJp])]],
+        PRIORITY,
+      )[0],
+    );
+    expect(dlsJp).toHaveLength(2);
+    expect(dlsJp.map((d) => d.track).sort()).toEqual(["ポスター発表", "口頭発表"]);
   });
 
   it("same instant in two rounds remains two slots", () => {

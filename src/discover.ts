@@ -766,7 +766,6 @@ export function splitCandidateLifecycle(
       "",
     );
     const duplicate = seen.has(`${normalizedTitle}\0${candidateYear(candidate) ?? ""}`);
-    if (normalizedTitle) seen.add(`${normalizedTitle}\0${candidateYear(candidate) ?? ""}`);
     const date = candidateReviewDate(candidate);
     // status: rejected (人手の却下) / superseded (別候補へ置換) は終端状態。
     // 機械導出の判定より優先し、レビュー待ち行列 (active) へ戻さない。
@@ -779,10 +778,8 @@ export function splitCandidateLifecycle(
             ? "already-curated"
             : duplicate
               ? "duplicate"
-              : !DISCOVERY_CATEGORIES.has(
-                    candidate.categories.find((category) => DISCOVERY_CATEGORIES.has(category)) ??
-                      "",
-                  )
+              : candidate.categories.length > 0 &&
+                  !candidate.categories.some((category) => DISCOVERY_CATEGORIES.has(category))
                 ? "out-of-scope"
                 : !candidateHasOfficialUrl(candidate)
                   ? "no-official-evidence"
@@ -812,6 +809,7 @@ export function splitCandidateLifecycle(
         source_url_hash: sourceUrlHash,
       });
     } else {
+      if (normalizedTitle) seen.add(`${normalizedTitle}\0${candidateYear(candidate) ?? ""}`);
       active.push(candidate);
     }
   }

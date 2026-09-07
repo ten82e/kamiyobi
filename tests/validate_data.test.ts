@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   likelyDuplicateVenues,
+  main,
   newValidatorWarnings,
   normalizedTrack,
   summarizeCategoryChanges,
@@ -778,6 +779,11 @@ describe("month envelope validation fixes (#746)", () => {
       const venueMissingErrors = res.errors.filter((e) => e.includes("venue key missing"));
       expect(venueMissingErrors).toEqual([]);
       rmSync(dir, { recursive: true, force: true });
+    });
+
+    it("main respects findings baseline when validating a single file (#752)", () => {
+      const exitCode = main(["data/manual.yaml"]);
+      expect(exitCode).toBe(0);
     });
   });
 });

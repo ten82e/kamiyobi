@@ -598,6 +598,65 @@ describe("discovery lifecycle split", () => {
       last_reviewed: "2026-09-06T00:00:00.000Z",
     });
   });
+
+  it("retains candidates with empty categories array for human review instead of out-of-scope (#752)", () => {
+    const candidate: Candidate = {
+      key: "unclassified-conf",
+      title: "Unclassified Conference 2027",
+      full_name: "Unclassified Conference 2027",
+      link: "https://unclassified.example/cfp",
+      categories: [], // newly discovered venue without review-assigned categories
+      tags: [],
+      source_type: "conference",
+      evidence_url: "",
+      status: "discovered",
+      discovered_at: "2026-09-01T00:00:00Z",
+      date_text: "2027-06-01",
+      place: "Tokyo, Japan",
+      deadlines: [],
+    };
+    const split = splitCandidateLifecycle([candidate], new Date("2026-09-01T00:00:00Z"));
+    expect(split.active).toHaveLength(1);
+    expect(split.archive).toHaveLength(0);
+  });
+
+  it("does not archive valid candidate as duplicate when preceding same-title candidate was rejected (#752)", () => {
+    const rejected: Candidate = {
+      key: "bad-entry",
+      title: "Same Title Conference 2027",
+      full_name: "Same Title Conference 2027",
+      link: "https://bad.example/",
+      categories: ["systems"],
+      tags: [],
+      source_type: "conference",
+      evidence_url: "",
+      status: "rejected",
+      discovered_at: "2026-09-01T00:00:00Z",
+      date_text: "2027-06-01",
+      place: "",
+      deadlines: [],
+    };
+    const valid: Candidate = {
+      key: "good-entry",
+      title: "Same Title Conference 2027",
+      full_name: "Same Title Conference 2027",
+      link: "https://official.example/cfp",
+      categories: ["systems"],
+      tags: [],
+      source_type: "conference",
+      evidence_url: "",
+      status: "discovered",
+      discovered_at: "2026-09-01T00:00:00Z",
+      date_text: "2027-06-01",
+      place: "Tokyo, Japan",
+      deadlines: [],
+    };
+    const split = splitCandidateLifecycle([rejected, valid], new Date("2026-09-01T00:00:00Z"));
+    expect(split.archive).toHaveLength(1);
+    expect(split.archive[0]?.decision).toBe("rejected");
+    expect(split.active).toHaveLength(1);
+    expect(split.active[0]?.key).toBe("good-entry");
+  });
 });
 
 it("round-trips the new edition identity fields through JSON", () => {
