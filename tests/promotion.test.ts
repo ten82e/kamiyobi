@@ -509,6 +509,21 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("treats standalone poster and demo deadlines as other (#812)", () => {
+    expect(extractCfpCandidates("ポスター締切: 2026年6月1日")).toMatchObject([
+      { kind: "other", date: "2026-06-01" },
+    ]);
+    expect(extractCfpCandidates("Poster deadline: May 15, 2026")).toMatchObject([
+      { kind: "other", date: "2026-05-15" },
+    ]);
+    expect(
+      extractCfpCandidates("Submission deadline (papers and/or posters): 15 May 2026"),
+    ).toMatchObject([{ kind: "paper", date: "2026-05-15" }]);
+    expect(extractCfpCandidates("原稿投稿締切: 2026年6月1日")).toMatchObject([
+      { kind: "paper", date: "2026-06-01" },
+    ]);
+  });
+
   it("extracts candidate tracks from prefix and postfix track notations (#756)", () => {
     expect(
       extractCfpCandidates("Research Track: Paper Submission Deadline: May 15, 2026"),

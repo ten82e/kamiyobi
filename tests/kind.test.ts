@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { KINDS, kindOf, refineKindWithLabel } from "../src/model.ts";
+import { isStandaloneNonPaperDeadline, KINDS, kindOf, refineKindWithLabel } from "../src/model.ts";
 
 const KINDS_SET = new Set(KINDS);
 
@@ -146,5 +146,18 @@ describe("refineKindWithLabel (#516)", () => {
     expect(refineKindWithLabel("paper", "Posters deadline")).toBe("other");
     // ccfddl の paper_deadline / submission_deadline キーも汎用語扱い。
     expect(refineKindWithLabel("paper", "Posters Track", "submission_deadline")).toBe("other");
+  });
+});
+
+describe("isStandaloneNonPaperDeadline (#812)", () => {
+  it("treats poster and demo rows as non-paper unless a paper track is named", () => {
+    expect(isStandaloneNonPaperDeadline("ポスター締切: 2026年6月1日")).toBe(true);
+    expect(isStandaloneNonPaperDeadline("デモ締切: 2026年6月1日")).toBe(true);
+    expect(isStandaloneNonPaperDeadline("Poster deadline: May 15, 2026")).toBe(true);
+    expect(isStandaloneNonPaperDeadline("Demo session deadline: May 15, 2026")).toBe(true);
+    expect(
+      isStandaloneNonPaperDeadline("Submission deadline (papers and/or posters): 15 May 2026"),
+    ).toBe(false);
+    expect(isStandaloneNonPaperDeadline("原稿投稿締切: 2026年6月1日")).toBe(false);
   });
 });
