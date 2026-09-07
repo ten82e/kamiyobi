@@ -112,6 +112,12 @@ describe("kind_of", () => {
     expect(kindOf("withdrawal")).toBe("other");
   });
 
+  it("extended_abstract is an abstract deadline (#896)", () => {
+    expect(kindOf("extended_abstract")).toBe("abstract");
+    expect(kindOf("extended-abstract")).toBe("abstract");
+    expect(kindOf("withdrawal")).toBe("other");
+  });
+
   it("supplementary is not collapsed into paper", () => {
     expect(kindOf("supplementary")).toBe("supplementary");
     expect(kindOf("supplementary")).not.toBe(kindOf("paper"));
