@@ -2,7 +2,8 @@
  * discover.ts / review-candidates.ts のテスト。
  */
 
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
 import { describe, expect, it, vi } from "vitest";
@@ -1513,27 +1514,31 @@ describe("discover and review boundary handling", () => {
     });
 
     it("loadTrackedTitles indexes acronym and legacy_keys", () => {
-      const dir = mkdtempSync(join(REPO_ROOT, ".cache", "tracked-test-"));
-      mkdirSync(join(dir, "data"), { recursive: true });
-      writeFileSync(
-        join(dir, "data", "snapshot.json"),
-        JSON.stringify({
-          conferences: [
-            {
-              key: "sigcomm-conf",
-              title: "ACM SIGCOMM",
-              full_name: "ACM Special Interest Group on Data Communication",
-              acronym: "SIGCOMM",
-              legacy_keys: ["sigcomm-old", "acm-sigcomm"],
-            },
-          ],
-        }),
-      );
+      const dir = mkdtempSync(join(tmpdir(), "tracked-test-"));
+      try {
+        mkdirSync(join(dir, "data"), { recursive: true });
+        writeFileSync(
+          join(dir, "data", "snapshot.json"),
+          JSON.stringify({
+            conferences: [
+              {
+                key: "sigcomm-conf",
+                title: "ACM SIGCOMM",
+                full_name: "ACM Special Interest Group on Data Communication",
+                acronym: "SIGCOMM",
+                legacy_keys: ["sigcomm-old", "acm-sigcomm"],
+              },
+            ],
+          }),
+        );
 
-      const tracked = loadTrackedTitles(dir);
-      expect(tracked.has(normTitle("SIGCOMM"))).toBe(true);
-      expect(tracked.has(normTitle("sigcomm-old"))).toBe(true);
-      expect(tracked.has(normTitle("acm-sigcomm"))).toBe(true);
+        const tracked = loadTrackedTitles(dir);
+        expect(tracked.has(normTitle("SIGCOMM"))).toBe(true);
+        expect(tracked.has(normTitle("sigcomm-old"))).toBe(true);
+        expect(tracked.has(normTitle("acm-sigcomm"))).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
     });
 
     it("cleanDbworldTitle handles fullwidth brackets and trailing deadline annotations", () => {
