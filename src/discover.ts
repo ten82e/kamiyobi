@@ -287,11 +287,28 @@ function stringList(value: unknown): string[] {
 }
 
 function parsedCandidateYear(value: unknown): number | undefined {
-  return typeof value === "number" && Number.isInteger(value) && value >= 2020 ? value : undefined;
+  const numeric =
+    typeof value === "number"
+      ? value
+      : typeof value === "string" && /^(20\d{2})$/.test(value.trim())
+        ? Number(value.trim())
+        : Number.NaN;
+  return Number.isInteger(numeric) && numeric >= 2020 ? numeric : undefined;
+}
+
+function yearFromText(value: string | null | undefined): number | undefined {
+  const match = /\b(20\d{2})\b/.exec(String(value ?? ""));
+  return match ? parsedCandidateYear(Number(match[1])) : undefined;
 }
 
 function candidateYear(candidate: Candidate): number | null {
-  return parsedCandidateYear(candidate.year) ?? null;
+  return (
+    parsedCandidateYear(candidate.year) ??
+    yearFromText(candidate.title) ??
+    yearFromText(candidate.full_name) ??
+    yearFromText(candidate.key) ??
+    null
+  );
 }
 
 export function normalizeCandidateTitle(title: string | null | undefined): string {
@@ -711,9 +728,19 @@ export function formatCandidateRegistry(registry: CandidateRegistry | null | und
   ) as string;
 }
 
+function candidateDeadlineText(candidate: Candidate): string {
+  if (candidate.submission_deadline_text) return String(candidate.submission_deadline_text);
+  const deadlines = Array.isArray(candidate.deadlines) ? candidate.deadlines : [];
+  for (const deadline of deadlines) {
+    if (!deadline || typeof deadline !== "object") continue;
+    const raw = deadline.date || deadline.utc || deadline.deadline || deadline.local_date;
+    if (raw) return String(raw);
+  }
+  return String(candidate.date_text || "");
+}
+
 function candidateReviewDate(candidate: Candidate): Date | null {
-  const text = candidate.submission_deadline_text || candidate.date_text;
-  const parsed = parseDeadlineText(text);
+  const parsed = parseDeadlineText(candidateDeadlineText(candidate));
   return parsed && !Number.isNaN(parsed.getTime()) ? parsed : null;
 }
 
@@ -1046,6 +1073,16 @@ export function parseWikiCfpHtml(
 export function parseDeadlineText(dateText: string): Date | null {
   if (!dateText) return null;
   const norm = String(dateText).normalize("NFKC").trim();
+
+  // 0. ISO-8601 instant: 2027-06-01T23:59:59.000Z / +09:00
+  // YYYY-MM-DD の日直後が T だと \b が立たず、下の暦日正規表現が失敗する。
+  const iso = /^(20\d{2})-(\d{2})-(\d{2})T[0-9:.+-Z]+$/i.exec(norm);
+  if (iso) {
+    const calendar = validUtcDate(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+    const parsed = Date.parse(norm);
+    if (calendar && Number.isFinite(parsed)) return new Date(parsed);
+    return null;
+  }
 
   // 1. ISO / Numeric Year First: 2026-05-15, 2026/05/15, 2026.05.15
   let m = /\b(20\d\d)[-/.](\d{1,2})[-/.](\d{1,2})\b/.exec(norm);
