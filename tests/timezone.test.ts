@@ -175,6 +175,32 @@ describe("resolve_tz", () => {
     );
   });
 
+  it("does not double-apply the DST offset for wall-clock times just after a transition (#726)", () => {
+    // 2027-03-14 は America/New_York の夏時間開始日 (2:00 が 3:00 へ前進)。遷移直後の
+    // 壁時計時刻は、素朴な UTC 解釈での offset 推定と実際の候補瞬間での offset が
+    // 食い違うため、収束に2回目の反復を要する。誤って前回の候補瞬間から再度 offset を
+    // 差し引くと (二重補正)、実在し一意に定まるはずの壁時計時刻から 1 時間以上ずれる。
+    expect(parseInstant("2027-03-14 03:00:00", "America/New_York")?.toISOString()).toBe(
+      "2027-03-14T07:00:00.000Z",
+    );
+    expect(parseInstant("2027-03-14 03:30:00", "America/New_York")?.toISOString()).toBe(
+      "2027-03-14T07:30:00.000Z",
+    );
+    expect(parseInstant("2027-03-14 05:00:00", "America/New_York")?.toISOString()).toBe(
+      "2027-03-14T09:00:00.000Z",
+    );
+    expect(parseInstant("2027-03-14 06:59:00", "America/New_York")?.toISOString()).toBe(
+      "2027-03-14T10:59:00.000Z",
+    );
+    // 秋の巻き戻し (2027-11-07, 2:00 が2回発生) でも同じ二重補正が起きていた。
+    expect(parseInstant("2027-11-07 03:00:00", "America/New_York")?.toISOString()).toBe(
+      "2027-11-07T08:00:00.000Z",
+    );
+    expect(parseInstant("2027-11-07 05:00:00", "America/New_York")?.toISOString()).toBe(
+      "2027-11-07T10:00:00.000Z",
+    );
+  });
+
   it("unknown timezone warning says the observation is rejected", () => {
     resetWarnings();
     expect(parseInstant("2026-07-15 12:00:00", "Mars/Olympus_Mons")).toBeNull();

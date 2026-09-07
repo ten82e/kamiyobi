@@ -1020,14 +1020,18 @@ function zonedTimeToUtc(
   },
   tz: string,
 ): Date {
-  let guess = Date.UTC(parts.y, parts.m - 1, parts.d, parts.h, parts.min, parts.s);
+  // candidate は常に naiveMs から引き直す。前回の candidate を引き直すと、
+  // DST 遷移直後で offset が変わる場合に補正が積み重なり (二重補正)、
+  // 正しい瞬間から 1 時間ずれる (#726)。guess は次の offset 推定のためだけに使う。
+  const naiveMs = Date.UTC(parts.y, parts.m - 1, parts.d, parts.h, parts.min, parts.s);
+  let guess = naiveMs;
   for (let i = 0; i < 3; i++) {
     const off = tzOffsetMinutes(guess, tz);
-    const candidate = guess - off * 60_000;
+    const candidate = naiveMs - off * 60_000;
     if (tzOffsetMinutes(candidate, tz) === off) return new Date(candidate);
     guess = candidate;
   }
-  return new Date(guess - tzOffsetMinutes(guess, tz) * 60_000);
+  return new Date(naiveMs - tzOffsetMinutes(guess, tz) * 60_000);
 }
 
 /** Apply a tz descriptor to a naive wall-clock instant (ms), returning UTC. */
