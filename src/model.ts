@@ -106,15 +106,24 @@ export function eventDatePrecisionOf(
 ): EventDatePrecision {
   if (typeof explicit === "string" && EVENT_DATE_PRECISIONS.has(explicit as EventDatePrecision))
     return explicit as EventDatePrecision;
-  if (start && end) return start.getTime() === end.getTime() ? "single-day" : "exact-range";
-  if (/\b(?:tbd|tba|not announced|to be announced)\b|未定|未発表/i.test(dateText))
-    return "not-announced";
-  if (
-    /\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b(?:\s+20\d{2})?|20\d{2}\s*[年/-]\s*\d{1,2}\s*月?/i.test(
-      dateText,
-    )
-  )
+  const s = String(dateText ?? "").trim();
+  if (/\b(?:tbd|tba|not announced|to be announced)\b|未定|未発表/i.test(s)) return "not-announced";
+
+  const hasMonth =
+    /\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b|(?:1[0-2]|[1-9])月/i.test(
+      s,
+    );
+  const cleanS = s
+    .replace(/\s*[(（][^)）]*[)）]/gu, "")
+    .replace(/\b\d+(?:st|nd|rd|th)\b/gi, "")
+    .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, "");
+  const hasDay =
+    /\d+\s*日/u.test(cleanS) || /(?:^|[^\d])(?:[1-9]|[12]\d|3[01])(?!\s*月)(?:\D|$)/.test(cleanS);
+
+  if (hasMonth && !hasDay) {
     return "month-only";
+  }
+  if (start && end) return start.getTime() === end.getTime() ? "single-day" : "exact-range";
   return "unverified";
 }
 
@@ -812,7 +821,12 @@ export function asDate(value: unknown): Date | null {
   }
   // Source snapshots retain parser-native ISO timestamps; normalize them to
   // the date-only representation used by the public JSON contract.
-  const parsed = Date.parse(s);
+  // When an ISO timestamp lacks a timezone offset, treat it in UTC to avoid
+  // machine-local environment shifts (e.g. JST vs UTC vs EDT).
+  const normalized = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(s)
+    ? `${s.replace(" ", "T")}Z`
+    : s;
+  const parsed = Date.parse(normalized);
   return Number.isFinite(parsed) ? dateOnly(new Date(parsed)) : null;
 }
 
@@ -1008,18 +1022,30 @@ export function isConfirmedTimezone(tzRaw: string | null | undefined): boolean {
   return resolveTzStatus(tzRaw).status === "confirmed";
 }
 
+const DTF_CACHE = new Map<string, Intl.DateTimeFormat>();
+
+function getDtf(tz: string): Intl.DateTimeFormat {
+  let dtf = DTF_CACHE.get(tz);
+  if (!dtf) {
+    dtf = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      hour12: false,
+      hourCycle: "h23",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+    DTF_CACHE.set(tz, dtf);
+  }
+  return dtf;
+}
+
 /** Offset of `tz` at instant `utcMs`, in minutes. */
 function tzOffsetMinutes(utcMs: number, tz: string): number {
-  const dtf = new Intl.DateTimeFormat("en-US", {
-    timeZone: tz,
-    hour12: false,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
+  const dtf = getDtf(tz);
   const parts = dtf.formatToParts(new Date(utcMs));
   const get = (type: string): number => Number(parts.find((p) => p.type === type)?.value ?? 0);
   let hour = get("hour");

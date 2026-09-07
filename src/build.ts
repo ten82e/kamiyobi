@@ -703,7 +703,8 @@ export function toJson(
       return Object.fromEntries(
         [...aliases]
           .filter(([legacy, targets]) => !canonicalKeys.has(legacy) && new Set(targets).size === 1)
-          .map(([legacy, targets]) => [legacy, targets[0]!] as const),
+          .map(([legacy, targets]) => [legacy, targets[0]!] as const)
+          .sort(([a], [b]) => cmpStr(a, b)),
       );
     })(),
     conferences: outConfs,
@@ -2793,14 +2794,16 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
 }
 
 /** JSON を空白付きのコンパクト形式で直列化する。 */
-function jsonCompact(value: unknown): string {
-  if (value === null) return "null";
+export function jsonCompact(value: unknown): string {
+  if (value === null || value === undefined) return "null";
   if (typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number" || typeof value === "boolean") return String(value);
   if (Array.isArray(value)) {
-    return `[${value.map(jsonCompact).join(", ")}]`;
+    return `[${value.map((v) => (v === undefined ? "null" : jsonCompact(v))).join(", ")}]`;
   }
-  const entries = Object.entries(value as Record<string, unknown>);
+  const entries = Object.entries(value as Record<string, unknown>).filter(
+    ([, v]) => v !== undefined,
+  );
   return `{${entries.map(([k, v]) => `${JSON.stringify(k)}: ${jsonCompact(v)}`).join(", ")}}`;
 }
 

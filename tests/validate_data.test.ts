@@ -702,3 +702,50 @@ it("accepts each production YAML input explicitly", () => {
   ])
     expect(validateFile(file).errors).toEqual([]);
 });
+
+describe("month envelope validation fixes (#746)", () => {
+  it("treats month-only dates with edition ordinals as envelopes (warning, not error)", () => {
+    const res = validateData({
+      conferences: [
+        {
+          key: "conf-ord",
+          title: "Conf Ord",
+          editions: [
+            {
+              id: "conf-ord-2026",
+              year: 2026,
+              date_text: "October 2026 (25th Annual Conference)",
+              event_start: "2026-10-01",
+              event_end: "2026-11-05", // > 31 days span
+              event_date_precision: "month-only",
+            },
+          ],
+        },
+      ],
+    });
+    // Should be warning, not error
+    expect(res.errors).toEqual([]);
+    expect(res.warnings).toContain("conf-ord/conf-ord-2026: event range exceeds 31 days");
+  });
+
+  it("treats multi-month date text with explicit days as error when exceeding 31 days", () => {
+    const res = validateData({
+      conferences: [
+        {
+          key: "conf-days",
+          title: "Conf Days",
+          editions: [
+            {
+              id: "conf-days-2026",
+              year: 2026,
+              date_text: "October 1 - December 15, 2026",
+              event_start: "2026-10-01",
+              event_end: "2026-12-15",
+            },
+          ],
+        },
+      ],
+    });
+    expect(res.errors).toContain("conf-days/conf-days-2026: event range exceeds 31 days");
+  });
+});
