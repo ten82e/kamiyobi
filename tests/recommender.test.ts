@@ -9,6 +9,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { restoreRecommendationBundle } from "../scripts/restore-recommendation-bundle.ts";
 import {
+  deriveConfidenceThresholds,
   hardNegativeMix,
   trainingFeatureHash,
   trainRerankerMain,
@@ -1335,6 +1336,28 @@ describe("venue recommendation fusion", () => {
     expect(selected).toContain("venue-119");
     expect(selected).toContain("venue-000");
     expect(reversed).toEqual(selected);
+  });
+
+  it("clamps ambiguous below sufficient when SUFFICIENT_POLICY unlocks at the low end (#725)", () => {
+    // 全件 correct の OOF top-1 確率を作ると、confidencePolicy は coverage 最大化により
+    // 最も低い確率を chosen_threshold として解禁する。一方 ambiguous は同じ集合の下位
+    // 1/3 分位点であり、これは chosen_threshold より高い値になる。クランプが無ければ
+    // ambiguous > sufficient の逆転が起きる。
+    const top = Array.from({ length: 30 }, (_, index) => ({
+      probability: Number((0.06 + index * 0.01).toFixed(8)),
+      correct: true,
+    }));
+    const sortedProbabilities = [...new Set(top.map((item) => item.probability))].sort(
+      (a, b) => a - b,
+    );
+    const rawAmbiguousThreshold =
+      sortedProbabilities[Math.floor((sortedProbabilities.length - 1) / 3)];
+    const { policy, sufficientThreshold, ambiguousThreshold } = deriveConfidenceThresholds(top);
+    expect(policy.sufficient_enabled).toBe(true);
+    expect(sufficientThreshold).toBe(sortedProbabilities[0]);
+    expect(rawAmbiguousThreshold).toBeGreaterThan(sufficientThreshold);
+    expect(ambiguousThreshold).toBeLessThanOrEqual(sufficientThreshold);
+    expect(ambiguousThreshold).toBe(sufficientThreshold);
   });
 
   it("keeps frozen benchmark identity independent of the reader runtime", () => {
