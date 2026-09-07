@@ -509,6 +509,16 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("keeps 正午 as a published 12:00 wall-clock (#802)", () => {
+    expect(extractCfpCandidates("論文締切: 2026年5月15日 正午 JST")).toMatchObject([
+      { kind: "paper", date: "2026-05-15", time: "12:00:00", timezone: "JST" },
+    ]);
+    expect(extractCfpCandidates("原稿投稿締切: 2026年5月15日 (JST)")).toMatchObject([
+      { kind: "paper", date: "2026-05-15", timezone: "JST" },
+    ]);
+    expect(extractCfpCandidates("原稿投稿締切: 2026年5月15日 (JST)")[0]).not.toHaveProperty("time");
+  });
+
   it("extracts candidate tracks from prefix and postfix track notations (#756)", () => {
     expect(
       extractCfpCandidates("Research Track: Paper Submission Deadline: May 15, 2026"),
