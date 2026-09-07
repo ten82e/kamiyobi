@@ -31,6 +31,7 @@ const SPEC_TABLE: Array<[string, string]> = [
   ["final_submission", "camera_ready"],
   ["revision-deadline", "camera_ready"],
   ["rebuttal_start", "rebuttal_start"],
+  ["rebuttal_period_start", "rebuttal_start"],
   ["rebuttal_end", "rebuttal_end"],
   ["rebuttal", "rebuttal_end"],
   ["rebuttal_and_revision", "rebuttal_end"],
