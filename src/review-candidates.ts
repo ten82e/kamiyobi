@@ -44,6 +44,7 @@ export function normTitle(title: string | null | undefined): string {
   t = t.replace(/\b20\d\d(?:年|\b)/g, ""); // 2026 / 2026年 形式の年
   t = t.replace(/^\s*the\s+/i, ""); // The 形式の接頭冠詞
   t = t.replace(/\b\d+(?:st|nd|rd|th)\b/gi, ""); // 15th 形式の回次 (語中・先頭問わず)
+  t = t.replace(/第\s*\d+\s*回/gu, ""); // 第35回 形式の日本語回次
   t = t.replace(/[^\p{L}\p{N}]+/gu, " ");
   return t.trim().split(/\s+/).join(" ");
 }
@@ -68,6 +69,18 @@ export function loadTrackedTitles(root: string = ROOT): Set<string> {
     if (typeof c.key === "string" && c.key) {
       const k = normTitle(c.key);
       if (k) tracked.add(k);
+    }
+    if (typeof c.acronym === "string" && c.acronym) {
+      const k = normTitle(c.acronym);
+      if (k) tracked.add(k);
+    }
+    if (Array.isArray(c.legacy_keys)) {
+      for (const lk of c.legacy_keys) {
+        if (typeof lk === "string" && lk) {
+          const k = normTitle(lk);
+          if (k) tracked.add(k);
+        }
+      }
     }
   };
   try {
