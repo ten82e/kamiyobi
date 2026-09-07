@@ -241,6 +241,21 @@ describe("promotion batch", () => {
     ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
   });
 
+  it("extracts WET and WEST as confirmed timezones (#842)", () => {
+    expect(extractCfpCandidates("Paper submission deadline: May 15, 2026 23:59 WET")).toMatchObject(
+      [{ date: "2026-05-15", time: "23:59:00", timezone: "WET" }],
+    );
+    expect(
+      extractCfpCandidates("Paper submission deadline: May 15, 2026 23:59 WEST"),
+    ).toMatchObject([{ date: "2026-05-15", time: "23:59:00", timezone: "WEST" }]);
+    expect(
+      extractCfpCandidates("Deadline: May 15, 2026 23:59; the west wall").map((c) => c.timezone),
+    ).not.toContain("west");
+    expect(
+      extractCfpCandidates("Deadline: May 15, 2026 23:59; shoes got wet").map((c) => c.timezone),
+    ).not.toContain("wet");
+  });
+
   it("applies an explicit page-wide deadline time without treating the event date as a deadline", () => {
     const [deadline, notification, event] = extractCfpCandidates(
       "<li>Paper Submission Deadline <b>October 10, 2026</b></li>" +
