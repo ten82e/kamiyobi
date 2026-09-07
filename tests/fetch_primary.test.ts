@@ -83,6 +83,11 @@ describe("fetch-primary extraction", () => {
     ).toBe("17:00:00");
     // 日付のみのページは time を載せない (build 側の観測ゲートで前回値維持になる)
     expect(extractDeadline("Submission deadline May 10, 2026", 2026)?.time).toBeUndefined();
+    expect(extractDeadline("締切: ２０２６年５月１５日 23:59 AoE", 2026)).toMatchObject({
+      date: "2026-05-15",
+      time: "23:59:00",
+    });
+    expect(extractDeadline("Deadline: May 15, 2026 23：59 AoE", 2026)?.time).toBe("23:59:00");
     // 隣接行に時刻がある場合も窓経由で拾う
     expect(
       extractDeadline("Submission deadline\nOctober 15, 2026 23:59:59 AoE".replace("\n", " "), 2026)

@@ -481,6 +481,7 @@ function candidateTrack(text: string): string | undefined {
 /** Extract only date-bearing CFP/deadline lines; ambiguous values stay candidates for review. */
 export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
   const text = body
+    .normalize("NFKC")
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
     .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
     .replace(/<\/?(?:b|strong|em|i)\b[^>]*>/gi, "")
