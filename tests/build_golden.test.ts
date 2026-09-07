@@ -2953,4 +2953,34 @@ describe("jsonCompact and legacy_key_redirects fixes (#746)", () => {
     expect(keys).toEqual([...keys].sort());
     expect(keys).toEqual(["a-legacy", "m-legacy", "z-legacy"]);
   });
+
+  it("toJson deterministically sorts deadlines by track when round, time, kind, and label match (#748)", () => {
+    const conf = makeConference({
+      key: "track-conf",
+      title: "Track Conf",
+      editions: [
+        makeEdition({
+          year: 2026,
+          edition_id: "track-conf26",
+          deadlines: [
+            {
+              ...makeDeadline("paper", "Deadline", new Date("2026-09-01T12:00:00Z"), "AoE", 1),
+              track: "research",
+            },
+            {
+              ...makeDeadline("paper", "Deadline", new Date("2026-09-01T12:00:00Z"), "AoE", 1),
+              track: "industry",
+            },
+            {
+              ...makeDeadline("paper", "Deadline", new Date("2026-09-01T12:00:00Z"), "AoE", 1),
+              track: "artifacts",
+            },
+          ],
+        }),
+      ],
+    });
+    const data = toJson([conf], {}, new Date("2026-08-09T00:00:00Z"));
+    const deadlines = (data.conferences as any[])[0].editions[0].deadlines;
+    expect(deadlines.map((dl: any) => dl.track)).toEqual(["artifacts", "industry", "research"]);
+  });
 });

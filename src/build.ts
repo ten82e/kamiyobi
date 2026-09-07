@@ -328,7 +328,8 @@ function sortedDeadlines(edition: Edition): Deadline[] {
       a.round - b.round ||
       deadlineSortTime(a) - deadlineSortTime(b) ||
       cmpStr(a.kind, b.kind) ||
-      cmpStr(a.label ?? "", b.label ?? ""),
+      cmpStr(a.label ?? "", b.label ?? "") ||
+      cmpStr(a.track ?? "", b.track ?? ""),
   );
 }
 
@@ -2049,11 +2050,10 @@ function authorizesEarlier(previous: DeadlineSlot, current: DeadlineSlot): boole
   const prior = previous.evidence.filter(
     (evidence) => official(evidence) && evidence.verifiedFields?.includes("date"),
   );
-  const latestPrior = Math.max(
-    ...prior.map((evidence) => evidenceTime(evidence)!),
-    Number.NEGATIVE_INFINITY,
-  );
-  if (!Number.isFinite(latestPrior)) return false;
+  const latestPrior =
+    prior.length > 0
+      ? Math.max(...prior.map((evidence) => evidenceTime(evidence)!))
+      : Number.NEGATIVE_INFINITY;
   const priorIds = new Set(prior.map(evidenceIdentity));
   return current.evidence.some((evidence) => {
     const time = evidenceTime(evidence);

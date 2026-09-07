@@ -1377,15 +1377,16 @@ function parseJapaneseRange(
   // extra.yaml: '特集号予定 2027年9月号' — drop a leading label before YYYY年
   // and a trailing 号 (journal-issue marker) so the existing month branch matches.
   let norm = s.normalize("NFKC").replace(/\s+/g, "");
-  norm = norm.replace(/^.*?(?=\d{4}年)/u, "").replace(/号$/u, "");
+  norm = norm.replace(/^.*?(?=(?:\d{4}年|\d{1,2}月))/u, "").replace(/号$/u, "");
 
   // 1. 日付範囲: YYYY年M月D日[〜-]YYYY年M月D日 / YYYY年M月D日[〜-]M月D日 / YYYY年M月D日[〜-]D日
+  // または年省略: M月D日[〜-]YYYY年M月D日 / M月D日[〜-]M月D日 / M月D日[〜-]D日
   let m =
-    /^(\d{4})年(\d{1,2})月(\d{1,2})日\s*(?:[〜~～\-–—]|から|to)\s*(?:(\d{4})年)?(?:(\d{1,2})月)?(\d{1,2})日$/i.exec(
+    /^(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日\s*(?:[〜~～\-–—]|から|to)\s*(?:(\d{4})年)?(?:(\d{1,2})月)?(\d{1,2})日$/i.exec(
       norm,
     );
   if (m) {
-    const y1 = Number(m[1]);
+    const y1 = m[1] ? Number(m[1]) : fallbackYear;
     const m1 = Number(m[2]);
     const d1 = Number(m[3]);
     const m2 = m[5] ? Number(m[5]) : m1;
@@ -1399,10 +1400,12 @@ function parseJapaneseRange(
     return { matched: true, range: [null, null] };
   }
 
-  // 2. 月度範囲: YYYY年M月[〜-]YYYY年M月 / YYYY年M月[〜-]M月
-  m = /^(\d{4})年(\d{1,2})月\s*(?:[〜~～\-–—]|から|to)\s*(?:(\d{4})年)?(\d{1,2})月$/i.exec(norm);
+  // 2. 月度範囲: YYYY年M月[〜-]YYYY年M月 / YYYY年M月[〜-]M月 / M月[〜-]M月
+  m = /^(?:(\d{4})年)?(\d{1,2})月\s*(?:[〜~～\-–—]|から|to)\s*(?:(\d{4})年)?(\d{1,2})月$/i.exec(
+    norm,
+  );
   if (m) {
-    const y1 = Number(m[1]);
+    const y1 = m[1] ? Number(m[1]) : fallbackYear;
     const m1 = Number(m[2]);
     const m2 = Number(m[4]);
     const y2 = m[3] ? Number(m[3]) : m1 > m2 ? y1 + 1 : y1;
@@ -2110,7 +2113,7 @@ export function conferencesFromJson(
           : {}),
       });
     }
-    editions.sort((a, b) => a.year - b.year);
+    editions.sort((a, b) => a.year - b.year || cmpStr(a.edition_id, b.edition_id));
     let link = String(conf.link ?? "").trim();
     if (!link) {
       for (const ed of [...editions].reverse()) {
