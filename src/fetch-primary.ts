@@ -78,6 +78,8 @@ export function isDeadlineLine(text: string | null | undefined): boolean {
     low.includes("drop-dead") ||
     low.includes("drop dead") ||
     low.includes("reach us by") ||
+    low.includes("accepting papers until") ||
+    low.includes("accept papers until") ||
     low.includes("締切") ||
     low.includes("締め切り") ||
     low.includes("期限") ||
