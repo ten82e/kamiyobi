@@ -1709,7 +1709,7 @@ export function kindOf(rawTypeOrKey: string | null | undefined): DeadlineKind {
   if (PAPER.has(s)) return "paper";
   if (s === "supplementary") return "supplementary";
   if (CAMERA.has(s) || s.includes("camera_ready")) return "camera_ready";
-  if (s === "rebuttal_start") return "rebuttal_start";
+  if (s === "rebuttal_start" || s === "rebuttal_period_start") return "rebuttal_start";
   if (REBUTTAL_END.has(s)) return "rebuttal_end";
   if (s === "review_release") return "review_release";
   if (REGISTRATION.has(s)) return "registration";
