@@ -87,6 +87,13 @@ describe("kind_of", () => {
     expect(kindOf("withdrawal")).toBe("other");
   });
 
+  it("late_breaking_paper is a paper deadline (#934)", () => {
+    expect(kindOf("late_breaking_paper")).toBe("paper");
+    expect(kindOf("late-breaking-paper")).toBe("paper");
+    expect(kindOf("final_paper")).toBe("camera_ready");
+    expect(kindOf("withdrawal")).toBe("other");
+  });
+
   it("supplementary is not collapsed into paper", () => {
     expect(kindOf("supplementary")).toBe("supplementary");
     expect(kindOf("supplementary")).not.toBe(kindOf("paper"));
