@@ -13,6 +13,9 @@ const SPEC_TABLE: Array<[string, string]> = [
   ["paper", "paper"],
   ["submission", "paper"],
   ["full_paper", "paper"],
+  ["paper_deadline", "paper"],
+  ["submission_deadline", "paper"],
+  ["paper deadline", "paper"],
   ["abstract_deadline", "abstract"],
   ["abstract deadline", "abstract"],
   ["abstract", "abstract"],
@@ -27,6 +30,7 @@ const SPEC_TABLE: Array<[string, string]> = [
   ["final_paper", "camera_ready"],
   ["final_submission", "camera_ready"],
   ["revision-deadline", "camera_ready"],
+  ["final_deadline", "camera_ready"],
   ["rebuttal_start", "rebuttal_start"],
   ["rebuttal_end", "rebuttal_end"],
   ["rebuttal", "rebuttal_end"],
@@ -146,5 +150,18 @@ describe("refineKindWithLabel (#516)", () => {
     expect(refineKindWithLabel("paper", "Posters deadline")).toBe("other");
     // ccfddl の paper_deadline / submission_deadline キーも汎用語扱い。
     expect(refineKindWithLabel("paper", "Posters Track", "submission_deadline")).toBe("other");
+  });
+
+  it("maps ccfddl timeline keys that kindOf previously left as other (#794)", () => {
+    expect(kindOf("paper_deadline")).toBe("paper");
+    expect(kindOf("submission_deadline")).toBe("paper");
+    expect(kindOf("paper deadline")).toBe("paper");
+    expect(kindOf("final_deadline")).toBe("camera_ready");
+    expect(
+      refineKindWithLabel(kindOf("paper_deadline"), "Paper submission", "paper_deadline"),
+    ).toBe("paper");
+    expect(refineKindWithLabel(kindOf("paper_deadline"), "Posters Track", "paper_deadline")).toBe(
+      "other",
+    );
   });
 });

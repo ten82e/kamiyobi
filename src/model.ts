@@ -1583,7 +1583,14 @@ export function parseDateRange(
 // deadline kinds
 // --------------------------------------------------------------------------
 
-const PAPER = new Set(["deadline", "paper", "submission", "full_paper"]);
+const PAPER = new Set([
+  "deadline",
+  "paper",
+  "submission",
+  "full_paper",
+  "paper_deadline",
+  "submission_deadline",
+]);
 const CAMERA = new Set([
   "camera_ready",
   "camera_ready_deadline",
@@ -1591,6 +1598,7 @@ const CAMERA = new Set([
   "revision_deadline",
   "final_paper",
   "final_submission",
+  "final_deadline",
 ]);
 const REBUTTAL_END = new Set([
   "rebuttal_end",

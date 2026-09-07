@@ -1172,6 +1172,37 @@ describe("local source parsing", () => {
     ).toEqual([]);
   });
 
+  it("maps kind paper_deadline to paper unless the label is a non-paper track (#794)", () => {
+    const paper = localDeadlinesOf({
+      deadlines: [
+        {
+          date: "2026-08-24 23:59:00",
+          tz: "AoE",
+          kind: "paper_deadline",
+          label: "Paper submission",
+        },
+      ],
+    });
+    expect(paper[0]?.kind).toBe("paper");
+    const posters = localDeadlinesOf({
+      deadlines: [
+        { date: "2026-08-24 23:59:00", tz: "AoE", kind: "paper_deadline", label: "Posters Track" },
+      ],
+    });
+    expect(posters[0]?.kind).toBe("other");
+    const camera = localDeadlinesOf({
+      deadlines: [
+        {
+          date: "2026-08-24 23:59:00",
+          tz: "AoE",
+          kind: "final_deadline",
+          label: "Final manuscript",
+        },
+      ],
+    });
+    expect(camera[0]?.kind).toBe("camera_ready");
+  });
+
   it("inherits timezone from parent edition when deadline entry has no timezone", () => {
     const raw = {
       tz: "AoE",
