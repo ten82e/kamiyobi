@@ -122,6 +122,15 @@ describe("fetch-primary extraction", () => {
     expect(extractDeadline("Registration opens January 5, 2026", 2026)).toBeNull();
   });
 
+  it("treats standalone workshop and doctoral consortium deadlines as other (#824)", () => {
+    expect(extractDeadline("Workshop deadline: May 15, 2026", 2026)).toMatchObject({
+      kind: "other",
+      date: "2026-05-15",
+    });
+    expect(extractDeadline("Doctoral consortium deadline: June 1, 2026", 2026)?.kind).toBe("other");
+    expect(extractDeadline("Workshop paper deadline: May 15, 2026", 2026)?.kind).toBe("paper");
+  });
+
   it("camera ready", () => {
     const got = extractDeadline("Camera-ready deadline: October 3, 2026 23:59 UTC", 2026);
     expect(got).not.toBeNull();
