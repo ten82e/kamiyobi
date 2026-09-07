@@ -145,6 +145,13 @@ describe("kind_of", () => {
     expect(kindOf("withdrawal")).toBe("other");
   });
 
+  it("splits camelCase type names before mapping (#844)", () => {
+    expect(kindOf("cameraReady")).toBe("camera_ready");
+    expect(kindOf("CameraReady")).toBe("camera_ready");
+    expect(kindOf("camera_ready")).toBe("camera_ready");
+    expect(kindOf("withdrawal")).toBe("other");
+  });
+
   it("supplementary is not collapsed into paper", () => {
     expect(kindOf("supplementary")).toBe("supplementary");
     expect(kindOf("supplementary")).not.toBe(kindOf("paper"));
