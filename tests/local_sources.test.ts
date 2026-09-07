@@ -12,7 +12,8 @@
  * JSON / upcoming から落ちた。
  */
 
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
 import { describe, expect, it } from "vitest";
@@ -23,7 +24,7 @@ import {
   resetWarnings,
   warningCounts,
 } from "../src/model.ts";
-import { parseFile } from "../src/sources/local.ts";
+import { LocalSource, parseFile } from "../src/sources/local.ts";
 import { REPO_ROOT } from "./helpers.ts";
 
 interface RawDeadline {
@@ -219,4 +220,31 @@ describe("local source data integrity", () => {
     expect(header).not.toContain("merge.py");
     expect(header).not.toContain("apply_overrides");
   });
+});
+
+it("unions categories and tags when the same local key spans files (#768)", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-local-merge-"));
+  const venue = (categories: string, tags: string, year: number, id: string) =>
+    [
+      "conferences:",
+      "  - key: demo",
+      "    title: Demo",
+      `    categories: [${categories}]`,
+      `    tags: [${tags}]`,
+      "    editions:",
+      `      - year: ${year}`,
+      `        id: ${id}`,
+      "        deadlines:",
+      "          - {kind: paper, date: '2026-09-01', precision: date-only}",
+      "",
+    ].join("\n");
+  const first = join(dir, "manual.yaml");
+  const second = join(dir, "curated.yaml");
+  writeFileSync(first, venue("ai", "", 2026, "demo-2026"));
+  writeFileSync(second, venue("security", "workshop", 2027, "demo-2027"));
+  const loaded = await new LocalSource([first, second]).load();
+  expect(loaded).toHaveLength(1);
+  expect(loaded[0]!.categories.sort()).toEqual(["ai", "security"]);
+  expect(loaded[0]!.tags).toEqual(["workshop"]);
+  expect(loaded[0]!.editions.map((edition) => edition.year)).toEqual([2026, 2027]);
 });
