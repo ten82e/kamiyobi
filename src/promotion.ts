@@ -384,6 +384,8 @@ function candidateKind(text: string): string {
   if (
     value.includes("abstract") ||
     value.includes("概要") ||
+    value.includes("要旨") ||
+    value.includes("アブストラクト") ||
     value.includes("発表申込") ||
     value.includes("講演申込")
   )
@@ -570,7 +572,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
       const segmentLabel = currentPrefix.replace(/^[\s,;:—–|-]*(?:and\s+)?/i, "").trim();
       const segmentHasKindWords =
         extracted.length > 1 &&
-        /abstract|camera|notification|rebuttal|registration|paper|submission|final|概要|通知|投稿|申込|最終原稿|カメラレディ|査読回答|採否/i.test(
+        /abstract|camera|notification|rebuttal|registration|paper|submission|final|概要|要旨|通知|投稿|申込|最終原稿|カメラレディ|査読回答|採否/i.test(
           segmentLabel,
         );
       const candidate: CfpExtractionCandidate = {

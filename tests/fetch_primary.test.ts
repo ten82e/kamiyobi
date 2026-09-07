@@ -100,6 +100,15 @@ describe("fetch-primary extraction", () => {
     expect(got?.label).toBe("Round 2 Abstract submission");
   });
 
+  it("treats 要旨締切 as an abstract deadline (#796)", () => {
+    expect(extractDeadline("要旨締切: 2026年5月10日 (JST)", 2026)).toMatchObject({
+      kind: "abstract",
+      date: "2026-05-10",
+      tz: "JST",
+    });
+    expect(extractDeadline("原稿投稿締切: 2026年6月1日", 2026)?.kind).toBe("paper");
+  });
+
   it("defers edition-window validation to the primary resolver", () => {
     expect(extractDeadline("Paper submission deadline: August 21, 2024", 2026)?.date).toBe(
       "2024-08-21",

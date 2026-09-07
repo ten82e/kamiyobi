@@ -80,6 +80,7 @@ function kindOf(window: string | null | undefined): string {
   if (
     low.includes("abstract") ||
     low.includes("概要") ||
+    low.includes("要旨") ||
     low.includes("アブストラクト") ||
     low.includes("題目")
   ) {
