@@ -318,7 +318,7 @@ function extractedDates(
 function extractedTime(text: string): string | undefined {
   text = text.normalize("NFKC");
   const match =
-    /(?<!(?:utc|gmt)\s*[+-]\s*)\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?\b/i.exec(
+    /(?<!(?:utc|gmt)\s*[+-]\s*)\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?(?:h(?:rs?|ours?)?)?\b/i.exec(
       text,
     );
   if (match) {
