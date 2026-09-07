@@ -1353,17 +1353,57 @@ export function sanitizeEditions(confs: Conference[] | null | undefined): Confer
 
 function patchEditions(editions: Edition[], patches: Record<string, unknown>): Edition[] {
   const kept: Edition[] = [];
+  const appliedPatches = new Set<string>();
   const patchedYears = new Set<number>();
   const realYears = new Set(
     editions.filter((edition) => !edition.estimated).map(({ year }) => year),
   );
+
+  const activeEditions = editions.filter(
+    (edition) => !edition.estimated || !realYears.has(edition.year),
+  );
+  const editionsByYear = new Map<number, Edition[]>();
+  for (const ed of activeEditions) {
+    editionsByYear.set(ed.year, [...(editionsByYear.get(ed.year) ?? []), ed]);
+  }
+
   for (const edition of editions) {
     if (edition.estimated && realYears.has(edition.year)) continue;
-    const patch = patches[String(edition.year)] as Record<string, unknown> | undefined;
-    if (patch === undefined) {
+
+    let patchKey: string | undefined;
+    let patch: Record<string, unknown> | undefined;
+
+    if (
+      edition.edition_id &&
+      typeof patches[edition.edition_id] === "object" &&
+      patches[edition.edition_id] !== null
+    ) {
+      patchKey = edition.edition_id;
+      patch = patches[edition.edition_id] as Record<string, unknown>;
+    } else if (
+      typeof patches[String(edition.year)] === "object" &&
+      patches[String(edition.year)] !== null
+    ) {
+      const yearPatch = patches[String(edition.year)] as Record<string, unknown>;
+      const countInYear = editionsByYear.get(edition.year)?.length ?? 0;
+      if (countInYear <= 1) {
+        patchKey = String(edition.year);
+        patch = yearPatch;
+      } else if (yearPatch.drop) {
+        patchKey = String(edition.year);
+        patch = yearPatch;
+      } else if ("id" in yearPatch && String(yearPatch.id) === edition.edition_id) {
+        patchKey = String(edition.year);
+        patch = yearPatch;
+      }
+    }
+
+    if (patch === undefined || patchKey === undefined) {
       kept.push(edition);
       continue;
     }
+
+    appliedPatches.add(patchKey);
     patchedYears.add(edition.year);
     if (patch.drop) continue;
     const next: Edition = { ...edition, deadlines: [...edition.deadlines] };
@@ -1427,14 +1467,22 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
     fillEventFromDateText(next);
     kept.push(next);
   }
-  // 既存 edition に無い year の patch は新規 edition として追加する。
-  for (const [yearKey, patch] of Object.entries(patches)) {
-    if (!/^\d+$/.test(yearKey)) continue;
-    const year = Number(yearKey);
-    if (patchedYears.has(year)) continue;
+  // 既存 edition に無い patch は新規 edition として追加する。
+  for (const [patchKey, patch] of Object.entries(patches)) {
+    if (appliedPatches.has(patchKey)) continue;
     if (typeof patch !== "object" || patch === null) continue;
     const rec = patch as Record<string, unknown>;
     if (rec.drop) continue;
+
+    const isYearKey = /^\d+$/.test(patchKey);
+    const year = isYearKey
+      ? Number(patchKey)
+      : typeof rec.year === "number"
+        ? rec.year
+        : Number(patchKey.match(/\b(20\d{2})\b/)?.[1]) || null;
+    if (year === null) continue;
+    if (isYearKey && patchedYears.has(year)) continue;
+
     // 受入条件「受理締切も会議/開催メタ情報も無い
     // edition は追加しない」。全行棄却の deadlines のみで link/place/date_text/
     // event_* も無いブロックは、空の確定版として公開する価値が無く、
@@ -1447,12 +1495,12 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
       "event_start" in rec ||
       "event_end" in rec;
     if (semantics.action !== "replace" && !hasMeta) {
-      warn(`override edition ${yearKey} has no accepted deadline and no metadata — not added`);
+      warn(`override edition ${patchKey} has no accepted deadline and no metadata — not added`);
       continue;
     }
     const edition: Edition = {
       year,
-      edition_id: rec.id ? String(rec.id) : `override-${year}`,
+      edition_id: rec.id ? String(rec.id) : isYearKey ? `override-${year}` : patchKey,
       link: "",
       place: "",
       date_text: "",
@@ -1479,12 +1527,12 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
   return kept;
 }
 
-/** date_text がパースできるのに event_start が空なら埋める。明示値は残す。 */
+/** date_text がパースできるのに event_start または event_end が空なら埋める。明示値は残す。 */
 function fillEventFromDateText(edition: Edition): void {
-  if (edition.event_start || !edition.date_text) return;
+  if (!edition.date_text || (edition.event_start && edition.event_end)) return;
   const [start, end] = parseDateRange(edition.date_text, edition.year);
-  if (start) edition.event_start = start;
-  if (end) edition.event_end = end;
+  if (!edition.event_start && start) edition.event_start = start;
+  if (!edition.event_end && end) edition.event_end = end;
 }
 
 /** Logical deadline slot: kind + round + normalized non-generic track. */

@@ -1873,6 +1873,132 @@ describe("apply_overrides", () => {
     expect(out[0].rank.ccf).toBeUndefined();
     expect(out[0].rank.thcpl).toBeUndefined();
   });
+
+  it("preserves explicit event_end when event_start is absent (#735)", () => {
+    const conf = makeConference({
+      key: "test-conf",
+      title: "Test Conf",
+      editions: [
+        makeEdition({
+          year: 2026,
+          edition_id: "test-26",
+          date_text: "October 12-15, 2026",
+          event_start: null,
+          event_end: null,
+        }),
+      ],
+    });
+    const overrides = {
+      conferences: {
+        "test-conf": {
+          editions: {
+            2026: {
+              date_text: "October 12-15, 2026",
+              event_end: "2026-10-18", // Explicitly extended end date
+            },
+          },
+        },
+      },
+    };
+    const out = applyOverrides([conf], overrides);
+    const ed = out[0].editions[0];
+    expect(ed.event_start).toEqual(new Date(Date.UTC(2026, 9, 12)));
+    // event_end must remain the explicit override value (Oct 18), NOT overwritten to Oct 15
+    expect(ed.event_end).toEqual(new Date(Date.UTC(2026, 9, 18)));
+  });
+
+  it("derives event_end from date_text range when event_start is explicitly provided (#735)", () => {
+    const conf = makeConference({
+      key: "test-conf",
+      title: "Test Conf",
+      editions: [
+        makeEdition({
+          year: 2026,
+          edition_id: "test-26",
+          date_text: "October 12-16, 2026",
+          event_start: null,
+          event_end: null,
+        }),
+      ],
+    });
+    const overrides = {
+      conferences: {
+        "test-conf": {
+          editions: {
+            2026: {
+              date_text: "October 12-16, 2026",
+              event_start: "2026-10-12",
+            },
+          },
+        },
+      },
+    };
+    const out = applyOverrides([conf], overrides);
+    const ed = out[0].editions[0];
+    expect(ed.event_start).toEqual(new Date(Date.UTC(2026, 9, 12)));
+    // event_end must be derived from date_text (Oct 16), NOT left as null
+    expect(ed.event_end).toEqual(new Date(Date.UTC(2026, 9, 16)));
+  });
+
+  it("disambiguates patches for conferences with multiple editions in the same year (#735)", () => {
+    const edSpring = makeEdition({
+      year: 2026,
+      edition_id: "workshop-2026-03",
+      place: "Tokyo",
+      link: "https://example.com/spring",
+    });
+    const edAutumn = makeEdition({
+      year: 2026,
+      edition_id: "workshop-2026-09",
+      place: "Nagoya",
+      link: "https://example.com/autumn",
+    });
+    const conf = makeConference({
+      key: "workshop",
+      title: "Workshop",
+      editions: [edSpring, edAutumn],
+    });
+
+    // 1. Patch keyed by edition_id patches only that edition
+    const overrides1 = {
+      conferences: {
+        workshop: {
+          editions: {
+            "workshop-2026-09": {
+              link: "https://example.com/autumn-new",
+              place: "Okinawa",
+            },
+          },
+        },
+      },
+    };
+    const out1 = applyOverrides([conf], overrides1)[0];
+    expect(out1.editions).toHaveLength(2);
+    expect(out1.editions[0].link).toBe("https://example.com/spring");
+    expect(out1.editions[0].place).toBe("Tokyo");
+    expect(out1.editions[1].link).toBe("https://example.com/autumn-new");
+    expect(out1.editions[1].place).toBe("Okinawa");
+
+    // 2. Patch keyed by year with id matches only that edition and does not overwrite others with duplicate IDs
+    const overrides2 = {
+      conferences: {
+        workshop: {
+          editions: {
+            2026: {
+              id: "workshop-2026-09",
+              place: "Kyoto",
+            },
+          },
+        },
+      },
+    };
+    const out2 = applyOverrides([conf], overrides2)[0];
+    expect(out2.editions).toHaveLength(2);
+    expect(out2.editions[0].edition_id).toBe("workshop-2026-03");
+    expect(out2.editions[0].place).toBe("Tokyo");
+    expect(out2.editions[1].edition_id).toBe("workshop-2026-09");
+    expect(out2.editions[1].place).toBe("Kyoto");
+  });
 });
 
 describe("rollforward", () => {
