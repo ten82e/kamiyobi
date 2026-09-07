@@ -817,6 +817,15 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("extracts Japanese 〆切 markers (#780)", () => {
+    expect(extractCfpCandidates("論文〆切: 2026年5月15日")).toMatchObject([
+      { kind: "paper", date: "2026-05-15" },
+    ]);
+    expect(extractCfpCandidates("発表申込〆切：2026年8月3日")).toMatchObject([
+      { kind: "abstract", date: "2026-08-03" },
+    ]);
+  });
+
   it("extracts candidate tracks from prefix and postfix track notations (#756)", () => {
     expect(
       extractCfpCandidates("Research Track: Paper Submission Deadline: May 15, 2026"),

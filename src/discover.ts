@@ -1531,7 +1531,7 @@ export function parseIpsjCfpHtml(
     const inner = m[2];
     const sm = /論文誌「([^」]+)」特集/.exec(inner);
     if (!sm) continue;
-    const dm = /投稿締切[:：]\s*(\d{4})年(\d{1,2})月(\d{1,2})日/.exec(inner);
+    const dm = /投稿(?:締切|〆切)[:：]\s*(\d{4})年(\d{1,2})月(\d{1,2})日/.exec(inner);
     if (!dm) continue;
     const deadline = `${Number(dm[1]).toString().padStart(4, "0")}-${Number(dm[2]).toString().padStart(2, "0")}-${Number(dm[3]).toString().padStart(2, "0")}`;
     const title = `${decode(sm[1])}（IPSJ 論文誌 特集号）`;

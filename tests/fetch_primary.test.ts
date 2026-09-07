@@ -407,6 +407,25 @@ describe("fetch-primary extraction", () => {
       },
     ]);
   });
+
+  it("treats 〆切 as a Japanese deadline marker (#780)", () => {
+    expect(
+      extractDeadlines(["論文〆切: 2026年5月15日", "発表申込〆切：2026年8月3日"], 2026),
+    ).toEqual([
+      {
+        kind: "paper",
+        label: "Paper submission",
+        date: "2026-05-15",
+        round: 1,
+      },
+      {
+        kind: "abstract",
+        label: "Abstract submission",
+        date: "2026-08-03",
+        round: 1,
+      },
+    ]);
+  });
 });
 
 describe("page-year diagnostics", () => {
