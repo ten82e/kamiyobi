@@ -588,6 +588,15 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("keeps ACST/ACDT as extracted timezones (#854)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 ACST")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "ACST" },
+    ]);
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 ACDT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "ACDT" },
+    ]);
+  });
+
   it("filters out invalid dates in extractedDates without polluting candidate boundaries (#756)", () => {
     const candidates = extractCfpCandidates(
       "Submission Deadline: 2026-02-30, March 15, 2026 23:59 AoE",
