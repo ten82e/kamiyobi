@@ -1709,6 +1709,7 @@ export function refineKindWithLabel(
 export function kindOf(rawTypeOrKey: string | null | undefined): DeadlineKind {
   const s = String(rawTypeOrKey ?? "")
     .trim()
+    .replace(/([a-z\d])([A-Z])/g, "$1_$2")
     .toLowerCase()
     .replace(/[\s-]+/g, "_");
   if (s.startsWith("abstract") || s === "extended_abstract") return "abstract";
