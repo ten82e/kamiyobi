@@ -976,16 +976,19 @@ export function validateProduction(root = ROOT): DataValidation {
   const generatedKeys = new Set(
     Object.keys((primaryOverrides.conferences as Record<string, unknown>) ?? {}),
   );
+  const venueInputs = inputs.filter((input) =>
+    ["extra", "snapshot", "manual", "curated"].includes(input.name),
+  );
   const venueKeys = new Set(
-    [...records(extra.conferences), ...records(snapshot.conferences)].map(
-      (conference) => conference.key,
+    venueInputs.flatMap((input) =>
+      records(input.payload.conferences).map((conference) => conference.key),
     ),
   );
   for (const key of primaryKeys) {
     if (!generatedKeys.has(key))
       add(aggregate.errors, `primary: ${key}: generated override missing`);
     if (!venueKeys.has(key))
-      add(aggregate.errors, `primary: ${key}: venue key missing from extra/snapshot`);
+      add(aggregate.errors, `primary: ${key}: venue key missing from venue sources`);
   }
   for (const key of generatedKeys)
     if (!registeredKeys.has(key)) add(aggregate.errors, `primary: ${key}: registry entry missing`);

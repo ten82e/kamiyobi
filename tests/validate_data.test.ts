@@ -1,3 +1,6 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   likelyDuplicateVenues,
@@ -747,5 +750,34 @@ describe("month envelope validation fixes (#746)", () => {
       ],
     });
     expect(res.errors).toContain("conf-days/conf-days-2026: event range exceeds 31 days");
+  });
+
+  describe("validateProduction venueKeys collection (#748)", () => {
+    it("includes manual and curated inputs in venueKeys so primary matches them without error", () => {
+      const dir = mkdtempSync(join(tmpdir(), "kamiyobi-val-prod-"));
+      mkdirSync(join(dir, "data"), { recursive: true });
+      writeFileSync(join(dir, "config.yaml"), "categories:\n  systems: Systems\n");
+      writeFileSync(join(dir, "data", "extra.yaml"), "conferences: []\n");
+      writeFileSync(join(dir, "data", "overrides.yaml"), "conferences: {}\n");
+      writeFileSync(join(dir, "data", "snapshot.json"), JSON.stringify({ conferences: [] }));
+      writeFileSync(
+        join(dir, "data", "primary.yaml"),
+        "conferences:\n  manual-venue:\n    year: 2026\n",
+      );
+      writeFileSync(
+        join(dir, "data", "primary_overrides.yaml"),
+        "conferences:\n  manual-venue:\n    title: Manual Venue\n",
+      );
+      // Venue defined in manual.yaml
+      writeFileSync(
+        join(dir, "data", "manual.yaml"),
+        "conferences:\n  - key: manual-venue\n    title: Manual Venue\n    categories: [systems]\n    editions: []\n",
+      );
+
+      const res = validateProduction(dir);
+      const venueMissingErrors = res.errors.filter((e) => e.includes("venue key missing"));
+      expect(venueMissingErrors).toEqual([]);
+      rmSync(dir, { recursive: true, force: true });
+    });
   });
 });

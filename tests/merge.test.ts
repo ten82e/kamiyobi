@@ -3037,6 +3037,27 @@ describe("conferencesFromJson & defensive merge operations", () => {
     expect(confs[0].editions[0].year).toBe(2026);
   });
 
+  it("conferencesFromJson sorts same-year editions deterministically by edition_id (#748)", () => {
+    const payload = {
+      conferences: [
+        {
+          name: "SEMI",
+          editions: [
+            { year: 2026, id: "semi-winter" },
+            { year: 2026, id: "semi-autumn" },
+            { year: 2026, id: "semi-spring" },
+          ],
+        },
+      ],
+    };
+    const [conf] = conferencesFromJson(payload as any);
+    expect(conf.editions.map((ed) => ed.edition_id)).toEqual([
+      "semi-autumn",
+      "semi-spring",
+      "semi-winter",
+    ]);
+  });
+
   it("applyOverrides handles non-array tags, categories, and drop safely (#352)", () => {
     const conf = makeConference({
       key: "test-conf",

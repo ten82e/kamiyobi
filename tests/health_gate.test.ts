@@ -579,6 +579,36 @@ it("requires newer distinct official field evidence for earlier moves", () => {
   ).toBe(true);
 });
 
+it("authorizes earlier moves when previous deadline had no official field evidence and current has official CFP evidence (#748)", () => {
+  const aggregatorEvidence = {
+    kind: "source" as const,
+    sourceClass: "aggregator" as const,
+    uri: "https://aggregator.example/conf",
+    retrievedAt: "2026-08-01T00:00:00Z",
+    contentHash: "hash123",
+    verifiedFields: ["date", "time"] as ("date" | "time")[],
+  };
+  const previous = health(
+    [exact("2026-09-10T12:00:00Z", { evidence: [aggregatorEvidence] })],
+    "2026-08-09T00:00:00Z",
+  );
+  // Current has official CFP evidence authorizing the correction to earlier date
+  const currentWithOfficial = health([
+    exact("2026-09-01T12:00:00Z", {
+      evidence: [official("cfp-rev", "2026-08-05T00:00:00Z", ["date", "time", "timezone"])],
+    }),
+  ]);
+  expect(evaluateHealthGate(currentWithOfficial, previous).ok).toBe(true);
+
+  // Without official evidence, earlier move remains blocked
+  const currentWithoutOfficial = health([
+    exact("2026-09-01T12:00:00Z", {
+      evidence: [aggregatorEvidence],
+    }),
+  ]);
+  expect(evaluateHealthGate(currentWithoutOfficial, previous).ok).toBe(false);
+});
+
 it("groups full slot identities, resolves contained precision, and reports counts", () => {
   const same = health([exact("2026-09-01T12:00:00Z"), exact("2026-09-01T12:00:00Z")]);
   expect(evaluateHealthGate(same, same)).toMatchObject({
