@@ -697,6 +697,15 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("treats received by and receipt of as deadline lines (#864)", () => {
+    expect(extractCfpCandidates("Papers must be received by May 15, 2026")).toMatchObject([
+      { date: "2026-05-15" },
+    ]);
+    expect(extractCfpCandidates("Receipt of manuscripts: June 1, 2026")).toMatchObject([
+      { date: "2026-06-01" },
+    ]);
+  });
+
   it("filters out invalid dates in extractedDates without polluting candidate boundaries (#756)", () => {
     const candidates = extractCfpCandidates(
       "Submission Deadline: 2026-02-30, March 15, 2026 23:59 AoE",
