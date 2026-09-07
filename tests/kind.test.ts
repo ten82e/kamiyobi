@@ -100,6 +100,12 @@ describe("kind_of", () => {
     expect(kindOf("withdrawal")).toBe("other");
   });
 
+  it("workshop_paper is a paper deadline, standalone workshop is not (#890)", () => {
+    expect(kindOf("workshop_paper")).toBe("paper");
+    expect(kindOf("workshop-paper")).toBe("paper");
+    expect(kindOf("workshop")).toBe("other");
+  });
+
   it("supplementary is not collapsed into paper", () => {
     expect(kindOf("supplementary")).toBe("supplementary");
     expect(kindOf("supplementary")).not.toBe(kindOf("paper"));
