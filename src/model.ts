@@ -932,6 +932,7 @@ const TZ_FIXED_ABBREVIATIONS: Record<string, number> = {
   edt: -4 * 60,
   cet: 60,
   cest: 120,
+  bot: 2 * 60,
   akst: -9 * 60,
   akdt: -8 * 60,
   hst: -10 * 60,

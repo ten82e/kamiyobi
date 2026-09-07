@@ -454,6 +454,15 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("keeps uppercase BOT as an extracted timezone (#925)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 BOT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "BOT" },
+    ]);
+    expect(
+      extractCfpCandidates("Deadline: May 15, 2026 23:59; the bot sat").map((c) => c.timezone),
+    ).not.toContain("bot");
+  });
+
   it("filters out invalid dates in extractedDates without polluting candidate boundaries (#756)", () => {
     const candidates = extractCfpCandidates(
       "Submission Deadline: 2026-02-30, March 15, 2026 23:59 AoE",

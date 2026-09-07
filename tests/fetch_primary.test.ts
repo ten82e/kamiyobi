@@ -120,6 +120,8 @@ describe("fetch-primary extraction", () => {
 
   it("no keyword is none", () => {
     expect(extractDeadline("Registration opens January 5, 2026", 2026)).toBeNull();
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 BOT", 2026)?.tz).toBe("BOT");
+    expect(extractDeadline("Deadline: May 15, 2026; the bot sat", 2026)?.tz).toBeUndefined();
   });
 
   it("camera ready", () => {
