@@ -186,6 +186,10 @@ describe("fetch-primary extraction", () => {
     expect(extractDeadline("Drop-dead date: May 15, 2026", 2026)?.date).toBe("2026-05-15");
     expect(extractDeadline("Drop dead date: June 1, 2026", 2026)?.date).toBe("2026-06-01");
     expect(extractDeadline("Papers to reach us by May 15, 2026", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("Accepting papers until May 15, 2026", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("We will accept papers until June 1, 2026", 2026)?.date).toBe(
+      "2026-06-01",
+    );
   });
 
   it("camera ready", () => {
