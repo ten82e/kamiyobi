@@ -710,16 +710,24 @@ function validateEdition(
   if (start && end) {
     if (start > end) add(result.errors, `${prefix}: event range is reversed`);
     if (end.getTime() - start.getTime() > MAX_EVENT_DAYS * 86_400_000) {
+      const precision = String(edition.event_date_precision ?? "");
       const dateText = String(edition.date_text ?? "");
+      const cleanText = dateText
+        .replace(/\s*[(（][^)）]*[)）]/gu, "")
+        .replace(/\b\d+(?:st|nd|rd|th)\b/gi, "")
+        .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, "");
       // 数字の直後が「月」なら月番号であり日番号ではない。この除外が無いと
       // 「2026年11月」の "11" を日番号と誤認し、下の和文月のみ分岐
       // (`(?:1[0-2]|[1-9])月`) が恒久的に到達不能になっていた (#724)。
-      const hasDayNumber = /(?:^|[^\d])(?:[1-9]|[12]\d|3[01])(?!\s*月)(?:\D|$)/.test(dateText);
+      const hasDayNumber =
+        /\d+\s*日/u.test(cleanText) ||
+        /(?:^|[^\d])(?:[1-9]|[12]\d|3[01])(?!\s*月)(?:\D|$)/.test(cleanText);
       const isMonthEnvelope =
-        !hasDayNumber &&
-        /\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b|(?:1[0-2]|[1-9])月/i.test(
-          dateText,
-        );
+        precision === "month-only" ||
+        (!hasDayNumber &&
+          /\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b|(?:1[0-2]|[1-9])月/i.test(
+            dateText,
+          ));
       add(
         isMonthEnvelope ? result.warnings : result.errors,
         `${prefix}: event range exceeds ${MAX_EVENT_DAYS} days`,

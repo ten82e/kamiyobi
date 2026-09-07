@@ -16,7 +16,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { env } from "@huggingface/transformers";
 import { load as loadYaml } from "js-yaml";
-import { beforeAll, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { runHealthGate } from "../scripts/health-gate.ts";
 import type { HealthDeadlineRef, HealthReport } from "../src/build.ts";
 import {
@@ -31,6 +31,7 @@ import {
   HEALTH_SCHEMA_VERSION,
   healthMarkdown,
   healthReport,
+  jsonCompact,
   ROOT,
   recordsOf,
   setRoot,
@@ -2898,4 +2899,58 @@ it("profileTexts and embeddingsMain handle non-array tags/categories safely (#35
   expect(helpCode).toBe(0);
 
   expect(await embeddingsMain(["-h"])).toBe(0);
+});
+
+describe("jsonCompact and legacy_key_redirects fixes (#746)", () => {
+  it("jsonCompact omits undefined properties and converts undefined in arrays to null", () => {
+    // Undefined in object should be omitted, not turned into {}
+    expect(jsonCompact({ a: 1, b: undefined, c: "test" })).toBe('{"a": 1, "c": "test"}');
+
+    // Deep undefined should also be omitted
+    expect(jsonCompact({ outer: { inner: undefined, valid: true } })).toBe(
+      '{"outer": {"valid": true}}',
+    );
+
+    // Undefined in arrays becomes null
+    expect(jsonCompact([1, undefined, "three"])).toBe('[1, null, "three"]');
+
+    // Top-level null / undefined
+    expect(jsonCompact(null)).toBe("null");
+    expect(jsonCompact(undefined)).toBe("null");
+
+    // Primitives
+    expect(jsonCompact(42)).toBe("42");
+    expect(jsonCompact(true)).toBe("true");
+    expect(jsonCompact("hello")).toBe('"hello"');
+  });
+
+  it("toJson sorts legacy_key_redirects deterministically", () => {
+    const confs = [
+      {
+        key: "beta",
+        title: "Beta Conf",
+        categories: ["systems"],
+        tags: [],
+        sources: [],
+        rank: {},
+        legacy_keys: ["z-legacy", "a-legacy"],
+        editions: [],
+      },
+      {
+        key: "alpha",
+        title: "Alpha Conf",
+        categories: ["systems"],
+        tags: [],
+        sources: [],
+        rank: {},
+        legacy_keys: ["m-legacy"],
+        editions: [],
+      },
+    ] as any;
+    const data = toJson(confs, {}, new Date("2026-08-09T00:00:00Z"));
+    const redirects = (data.legacy_key_redirects ?? {}) as Record<string, string>;
+    const keys = Object.keys(redirects);
+    expect(keys).toEqual([...keys].sort());
+    expect(keys).toEqual(["a-legacy", "m-legacy", "z-legacy"]);
+  });
 });

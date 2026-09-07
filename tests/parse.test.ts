@@ -17,6 +17,7 @@ import {
   dateOnlyState,
   dateOnlyWindow,
   embeddedTimezone,
+  eventDatePrecisionOf,
   exactDeadlineState,
   fmtDate,
   fmtUTC,
@@ -1691,5 +1692,110 @@ describe("warning identities", () => {
     expect(keys.length).toBe(2);
     clearWarningContext();
     resetWarnings();
+  });
+});
+
+describe("eventDatePrecisionOf (#746)", () => {
+  it("classifies month-only event dates correctly", () => {
+    // English month-only
+    expect(
+      eventDatePrecisionOf(
+        undefined,
+        "October 2026",
+        new Date(Date.UTC(2026, 9, 1)),
+        new Date(Date.UTC(2026, 9, 31)),
+      ),
+    ).toBe("month-only");
+
+    expect(
+      eventDatePrecisionOf(
+        undefined,
+        "November, 2026",
+        new Date(Date.UTC(2026, 10, 1)),
+        new Date(Date.UTC(2026, 10, 30)),
+      ),
+    ).toBe("month-only");
+
+    expect(
+      eventDatePrecisionOf(
+        undefined,
+        "March-April 2025",
+        new Date(Date.UTC(2025, 2, 1)),
+        new Date(Date.UTC(2025, 3, 30)),
+      ),
+    ).toBe("month-only");
+
+    // English month with edition ordinal
+    expect(
+      eventDatePrecisionOf(
+        undefined,
+        "October 2026 (25th Annual Conference)",
+        new Date(Date.UTC(2026, 9, 1)),
+        new Date(Date.UTC(2026, 9, 31)),
+      ),
+    ).toBe("month-only");
+
+    // Japanese month-only
+    expect(
+      eventDatePrecisionOf(
+        undefined,
+        "2026年11月",
+        new Date(Date.UTC(2026, 10, 1)),
+        new Date(Date.UTC(2026, 10, 30)),
+      ),
+    ).toBe("month-only");
+
+    expect(
+      eventDatePrecisionOf(
+        undefined,
+        "2026年10月〜11月",
+        new Date(Date.UTC(2026, 9, 1)),
+        new Date(Date.UTC(2026, 10, 30)),
+      ),
+    ).toBe("month-only");
+  });
+
+  it("classifies exact range and single day dates correctly", () => {
+    // Exact day ranges
+    expect(
+      eventDatePrecisionOf(
+        undefined,
+        "October 10-15, 2026",
+        new Date(Date.UTC(2026, 9, 10)),
+        new Date(Date.UTC(2026, 9, 15)),
+      ),
+    ).toBe("exact-range");
+
+    expect(
+      eventDatePrecisionOf(
+        undefined,
+        "2026年8月6日〜7日",
+        new Date(Date.UTC(2026, 7, 6)),
+        new Date(Date.UTC(2026, 7, 7)),
+      ),
+    ).toBe("exact-range");
+
+    // Single day
+    expect(
+      eventDatePrecisionOf(
+        undefined,
+        "October 10, 2026",
+        new Date(Date.UTC(2026, 9, 10)),
+        new Date(Date.UTC(2026, 9, 10)),
+      ),
+    ).toBe("single-day");
+  });
+
+  it("classifies not-announced and unverified dates correctly", () => {
+    expect(eventDatePrecisionOf(undefined, "TBD 2027", null, null)).toBe("not-announced");
+    expect(eventDatePrecisionOf(undefined, "To be announced", null, null)).toBe("not-announced");
+    expect(eventDatePrecisionOf(undefined, "未定", null, null)).toBe("not-announced");
+    expect(eventDatePrecisionOf(undefined, "2026", null, null)).toBe("unverified");
+    expect(eventDatePrecisionOf(undefined, "", null, null)).toBe("unverified");
+  });
+
+  it("preserves explicit valid precision", () => {
+    expect(eventDatePrecisionOf("month-only", "2026-10-10", null, null)).toBe("month-only");
+    expect(eventDatePrecisionOf("single-day", "October 2026", null, null)).toBe("single-day");
   });
 });

@@ -5,6 +5,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   applyTz,
+  asDate,
   isConfirmedTimezone,
   parseInstant,
   resetWarnings,
@@ -263,5 +264,26 @@ describe("resolve_tz", () => {
     expect(offset(tz)).not.toBeNull();
     const march = new Date(Date.UTC(2026, 2, 1, 9, 0, 0));
     expect(offset(tz, march)).not.toBeNull();
+  });
+});
+
+describe("asDate and timezone caching fixes (#746)", () => {
+  it("asDate parses ISO timestamps with time deterministically in UTC", () => {
+    expect(asDate("2026-05-01 23:59:59")).toEqual(new Date(Date.UTC(2026, 4, 1)));
+    expect(asDate("2026-05-01T23:59:59")).toEqual(new Date(Date.UTC(2026, 4, 1)));
+    expect(asDate("2026-05-01T23:59:59Z")).toEqual(new Date(Date.UTC(2026, 4, 1)));
+    expect(asDate("2026-05-01T15:00:00+09:00")).toEqual(new Date(Date.UTC(2026, 4, 1)));
+    expect(asDate("2026-05-01")).toEqual(new Date(Date.UTC(2026, 4, 1)));
+    expect(asDate(null)).toBeNull();
+    expect(asDate(undefined)).toBeNull();
+    expect(asDate("not-a-date")).toBeNull();
+  });
+
+  it("applies cached Intl.DateTimeFormat with consistent hourCycle across repeated calls", () => {
+    const zone = resolveTz("America/New_York");
+    const t1 = applyTz(Date.UTC(2026, 6, 1, 12, 0, 0), zone);
+    const t2 = applyTz(Date.UTC(2026, 6, 1, 12, 0, 0), zone);
+    expect(t1.getTime()).toBe(t2.getTime());
+    expect(t1.toISOString()).toBe("2026-07-01T16:00:00.000Z");
   });
 });
