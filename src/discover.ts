@@ -547,7 +547,17 @@ export function toYamlDict(c: Candidate | null | undefined): Record<string, unkn
     const m = /(20\d\d)/.exec(c.date_text || "");
     // 開催年がパース時に判明している場合は date_text（締切日）より優先する。
     // 締切が開催年の前年（秋締切等）だと date_text 由来の年が 1 年前にずれるため。
-    const year = c.year && c.year >= 2020 ? c.year : m ? Number(m[1]) : null;
+    let year = c.year && c.year >= 2020 ? c.year : m ? Number(m[1]) : null;
+    if (year === null && Array.isArray(c.deadlines)) {
+      for (const dl of c.deadlines) {
+        if (typeof dl !== "object" || dl === null) continue;
+        const dlm = /(20\d\d)/.exec(String(dl.date ?? dl.utc ?? dl.local_date ?? ""));
+        if (dlm) {
+          year = Number(dlm[1]);
+          break;
+        }
+      }
+    }
     if (year !== null) {
       const yearSuffix = String(year % 100).padStart(2, "0");
       const baseKey = c.key.replace(new RegExp(`[-_]?(?:${year}|${yearSuffix})$`), "");
@@ -1173,7 +1183,7 @@ export function cleanDbworldTitle(subject: string | null | undefined): [string, 
     if (code === 0x96 || code === 0x97) return "-";
     return " ";
   });
-  t = t.replace(/^(\[[^\]]*\]\s*)+/, ""); // [DEADLINE EXTENDED] 等 (複数)
+  t = t.replace(/^([[【〔][^\]】〕]*[\]】〕]\s*)+/, ""); // [DEADLINE EXTENDED], 【CFP】 等 (複数)
   // CFP / Deadline 接頭辞は重なる（Deadlines approaching: CFP: X）。
   for (let i = 0; i < 4; i++) {
     const prev = t;
@@ -1188,9 +1198,15 @@ export function cleanDbworldTitle(subject: string | null | undefined): [string, 
   t = t.replace(/\s*(?:[|:]\s*)?(?:Final\s+|Last\s+)?Call for\b.*$/i, "");
   t = t.replace(/\s*\|\|?.*$/, ""); // "|" 区切り以降
   t = t.replace(/\s*:\s*[^()]*\bDeadline\b.*$/i, "");
-  t = t.replace(/\s*[-–]\s*(?:Deadline|Extended\s+deadline|Deadline\s+Extension).*$/i, "");
+  t = t.replace(
+    /\s*[-–]\s*(?:(?:new|extended|final|paper\s+submission|submission)\s+)?deadlines?\b.*$/i,
+    "",
+  );
   t = t.replace(/\s+Deadlines?\s+Extended\b.*$/i, "");
-  t = t.replace(/\s*[(（][^)）]*\b(?:DDL\s+)?Extended\b[^)）]*[)）]+\s*$/iu, "");
+  t = t.replace(
+    /\s*[(（][^)）]*\b(?:(?:(?:paper\s+)?submission\s+)?deadline|DDL\s+extended|extended)\b[^)）]*[)）]+\s*$/iu,
+    "",
+  );
   t = t
     .replace(/\s+/g, " ")
     .trim()
@@ -1214,8 +1230,15 @@ export async function discoverFromDbworld(
     const m = /(20\d\d)/.exec(cleaned);
     const year = m ? Number(m[1]) : undefined;
     if (year !== undefined && year < minYear) continue;
+    const baseKey = slug(cleaned);
+    const key =
+      baseKey ||
+      `dbworld-${year ?? "cfp"}-${createHash("sha256")
+        .update(cleaned + href)
+        .digest("hex")
+        .slice(0, 6)}`;
     entries.push({
-      key: slug(cleaned),
+      key,
       title: cleaned,
       full_name: cleaned,
       link: href,
@@ -1503,7 +1526,7 @@ export function parseIpsjCfpHtml(
 ): Array<Record<string, unknown>> {
   if (!html) return [];
   const entries: Array<Record<string, unknown>> = [];
-  for (const m of html.matchAll(/<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g)) {
+  for (const m of html.matchAll(/<a\b[^>]*href=["']?([^"'\s>]+)["']?[^>]*>([\s\S]*?)<\/a>/gi)) {
     const url = m[1];
     const inner = m[2];
     const sm = /論文誌「([^」]+)」特集/.exec(inner);
@@ -1513,7 +1536,12 @@ export function parseIpsjCfpHtml(
     const deadline = `${Number(dm[1]).toString().padStart(4, "0")}-${Number(dm[2]).toString().padStart(2, "0")}-${Number(dm[3]).toString().padStart(2, "0")}`;
     const title = `${decode(sm[1])}（IPSJ 論文誌 特集号）`;
     // key は CFP ファイル名由来 (ipsj-27-p) で一意化。
-    const fname = url.split("/").pop()?.split(".")[0]?.toLowerCase() ?? "cfp";
+    const rawFname = url.split("/").pop()?.split(/[?#.]/)[0]?.toLowerCase() ?? "";
+    const cleanFname = slug(rawFname);
+    const fname =
+      cleanFname && cleanFname !== "index" && cleanFname !== "cfp"
+        ? cleanFname
+        : createHash("sha256").update(url).digest("hex").slice(0, 6);
     entries.push({
       key: `ipsj-${fname}`,
       title,

@@ -1474,4 +1474,100 @@ describe("discover and review boundary handling", () => {
       expect(reg.candidates[0].key).toBe(rows[0].key);
     });
   });
+
+  describe("fixes for discover and review-candidates defects (#754)", () => {
+    it("toYamlDict derives year from deadlines when date_text and year are missing", () => {
+      const candidate = makeCandidate({
+        key: "comsoc-tccn-cfp",
+        title: "Deep Learning for Cognitive Radio",
+        full_name: "IEEE TCCN Special Issue on Deep Learning for Cognitive Radio",
+        link: "https://www.comsoc.org/cfp",
+        categories: ["networking"],
+        deadlines: [
+          {
+            kind: "paper",
+            label: "Submission Deadline",
+            date: "2027-05-15 23:59:00",
+            tz: "AoE",
+          },
+        ],
+      });
+      // date_text is empty, year is undefined
+      expect(candidate.date_text).toBe("");
+      expect(candidate.year).toBeUndefined();
+
+      const yamlDict = toYamlDict(candidate);
+      const editions = yamlDict.editions as Array<Record<string, unknown>>;
+      expect(editions).toHaveLength(1);
+      expect(editions[0].year).toBe(2027);
+      expect(editions[0].id).toBe("comsoc-tccn-cfp27");
+      expect(editions[0].deadlines).toHaveLength(1);
+    });
+
+    it("normTitle removes Japanese ordinals 第\\d+回", () => {
+      expect(normTitle("第35回 回路とシステムワークショップ")).toBe("回路とシステムワークショップ");
+      expect(normTitle("第36回回路とシステムワークショップ")).toBe("回路とシステムワークショップ");
+      expect(normTitle("第 10 回 プログラミングおよびプログラミング言語ワークショップ")).toBe(
+        "プログラミングおよびプログラミング言語ワークショップ",
+      );
+    });
+
+    it("loadTrackedTitles indexes acronym and legacy_keys", () => {
+      const dir = mkdtempSync(join(REPO_ROOT, ".cache", "tracked-test-"));
+      mkdirSync(join(dir, "data"), { recursive: true });
+      writeFileSync(
+        join(dir, "data", "snapshot.json"),
+        JSON.stringify({
+          conferences: [
+            {
+              key: "sigcomm-conf",
+              title: "ACM SIGCOMM",
+              full_name: "ACM Special Interest Group on Data Communication",
+              acronym: "SIGCOMM",
+              legacy_keys: ["sigcomm-old", "acm-sigcomm"],
+            },
+          ],
+        }),
+      );
+
+      const tracked = loadTrackedTitles(dir);
+      expect(tracked.has(normTitle("SIGCOMM"))).toBe(true);
+      expect(tracked.has(normTitle("sigcomm-old"))).toBe(true);
+      expect(tracked.has(normTitle("acm-sigcomm"))).toBe(true);
+    });
+
+    it("cleanDbworldTitle handles fullwidth brackets and trailing deadline annotations", () => {
+      expect(cleanDbworldTitle("【CFP】 IEEE BigData 2026")[0]).toBe("IEEE BigData 2026");
+      expect(cleanDbworldTitle("【締切延長】 AI4DEMONS 2026@CIKM2026")[0]).toBe(
+        "AI4DEMONS 2026@CIKM2026",
+      );
+      expect(
+        cleanDbworldTitle(
+          "[Reminder] ACM TWEB Special Issue on the Agentic Web (Deadline: Sept. 30, 2026)",
+        )[0],
+      ).toBe("ACM TWEB Special Issue on the Agentic Web");
+      expect(cleanDbworldTitle("SIMBig 2026 - Submission Deadline: July 15")[0]).toBe(
+        "SIMBig 2026",
+      );
+    });
+
+    it("parseIpsjCfpHtml handles single-quoted href and URLs with query parameters", () => {
+      const html = `
+        <ul>
+          <li>
+            <a href='/journal/index.php?issue=27-p'>
+              論文誌「コンピュータアーキテクチャ」特集
+              投稿締切: 2026年10月15日
+            </a>
+          </li>
+        </ul>
+      `;
+      const rows = parseIpsjCfpHtml(html, "https://www.ipsj.or.jp/journal/index.html");
+      expect(rows).toHaveLength(1);
+      expect(rows[0].key).toMatch(/^ipsj-[a-f0-9]{6}$/);
+      expect(rows[0].title).toBe("コンピュータアーキテクチャ（IPSJ 論文誌 特集号）");
+      expect(rows[0].date_text).toBe("2026-10-15");
+      expect(rows[0].link).toBe("https://www.ipsj.or.jp/journal/index.php?issue=27-p");
+    });
+  });
 });
