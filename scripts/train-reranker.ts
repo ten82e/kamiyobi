@@ -417,6 +417,26 @@ function confidencePolicy(top: Array<{ probability: number; correct: boolean }>)
   };
 }
 
+// ambiguous threshold: OOF top-1 確率の下位 1/3 分位点 (解禁時は sufficient 未満に丸める)。
+// SUFFICIENT_POLICY 解禁時、chosen threshold は coverage 最大化により確率分布の下端へ
+// 収束するため、下位 1/3 分位点である ambiguous を上回ることがある。この関数はその
+// 逆転を Math.min で防ぎ、site/recommender.ts が要求する ambiguous <= sufficient を
+// 常に満たす (#725)。
+function deriveConfidenceThresholds(top: Array<{ probability: number; correct: boolean }>) {
+  const sortedProbabilities = [...new Set(top.map((item) => item.probability))].sort(
+    (a, b) => a - b,
+  );
+  const rawAmbiguousThreshold = Number(
+    (sortedProbabilities[Math.floor((sortedProbabilities.length - 1) / 3)] ?? 0).toFixed(8),
+  );
+  const policy = confidencePolicy(top);
+  const sufficientThreshold = Number(
+    (policy.chosen_threshold ?? policy.evidence.best_observed_threshold ?? 0).toFixed(8),
+  );
+  const ambiguousThreshold = Math.min(rawAmbiguousThreshold, sufficientThreshold);
+  return { policy, sufficientThreshold, ambiguousThreshold };
+}
+
 function main(argv = process.argv.slice(2)): void {
   const { values } = parseArgs({
     args: argv,
@@ -516,14 +536,9 @@ function main(argv = process.argv.slice(2)): void {
     selected.logits.map((item) => [item.key, sigmoid(platt.slope * item.logit + platt.intercept)]),
   );
   const calibratedMetric = rankMetrics(rows, calibrated, selected.blend);
-  // ambiguous threshold: OOF top-1 確率の下位 1/3 分位点 (解禁時は sufficient 未満に丸める)。
-  const sortedProbabilities = [
-    ...new Set(calibratedMetric.top.map((item) => item.probability)),
-  ].sort((a, b) => a - b);
-  const ambiguousThreshold = Number(
-    (sortedProbabilities[Math.floor((sortedProbabilities.length - 1) / 3)] ?? 0).toFixed(8),
+  const { policy, sufficientThreshold, ambiguousThreshold } = deriveConfidenceThresholds(
+    calibratedMetric.top,
   );
-  const policy = confidencePolicy(calibratedMetric.top);
   const model = trainLinear(pairwiseRows(rows, candidateV4), selected.lambda, candidateV4);
   const brier =
     selected.logits.reduce((sum, item) => {
@@ -598,15 +613,23 @@ function main(argv = process.argv.slice(2)): void {
     confidence_thresholds: {
       // 解禁済みなら chosen threshold、未解禁なら将来の解禁候補 (best observed) を記録する。
       // sufficient_enabled=false の間この値は UI で使われない。
-      sufficient: Number(
-        (policy.chosen_threshold ?? policy.evidence.best_observed_threshold ?? 0).toFixed(8),
-      ),
+      sufficient: sufficientThreshold,
       ambiguous: ambiguousThreshold,
     },
   };
+  // site/recommender.ts の isValidRerankerModel が要求する不変条件
+  // (0 <= ambiguous <= sufficient <= 1) を書き出し前に確認する。破れていれば
+  // ここで大声で失敗させる — build.ts のビルドゲートまで届いてから
+  // "model contract is invalid" とだけ言われるより、原因箇所で分かる方がよい (#725)。
+  const { sufficient, ambiguous } = artifact.confidence_thresholds;
+  if (!(ambiguous >= 0 && sufficient <= 1 && ambiguous <= sufficient)) {
+    throw new Error(
+      `invariant violated: expected 0 <= ambiguous <= sufficient <= 1, got ambiguous=${ambiguous} sufficient=${sufficient}`,
+    );
+  }
   writeFileSync(outPath, `${JSON.stringify(artifact, null, 2)}\n`);
 }
 
 if (import.meta.main) main();
 
-export { hardNegativeMix, main as trainRerankerMain };
+export { deriveConfidenceThresholds, hardNegativeMix, main as trainRerankerMain };
