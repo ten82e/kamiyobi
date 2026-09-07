@@ -194,6 +194,8 @@ describe("parse_instant", () => {
     ["2026-09-01T12:00:00Z", null, "2026-09-01T12:00:00.000Z"],
     ["2026-09-01T12:00:00+09:00", null, "2026-09-01T03:00:00.000Z"],
     ["2026-09-01T12:00:00+09:00", "UTC+9", "2026-09-01T03:00:00.000Z"],
+    ["2026-09-01T12:00:00+0900", null, "2026-09-01T03:00:00.000Z"],
+    ["2026-09-01T12:00:00-0500", null, "2026-09-01T17:00:00.000Z"],
     ["2026-09-01T12:00:00.123+09:00", "Asia/Tokyo", "2026-09-01T03:00:00.123Z"],
   ] as Array<[string, string | null, string]>)(
     "uses the timezone embedded in %s",
@@ -201,6 +203,12 @@ describe("parse_instant", () => {
       expect(parseInstant(text, tz)?.toISOString()).toBe(expected);
     },
   );
+
+  it("extracts colon-less numeric offsets via embeddedTimezone (#740)", () => {
+    expect(embeddedTimezone("2026-09-01T12:00:00+0900")).toBe("UTC+0900");
+    expect(embeddedTimezone("2026-09-01T12:00:00-0500")).toBe("UTC-0500");
+    expect(embeddedTimezone("2026-04-08")).toBeNull();
+  });
 
   it("rejects a supplied timezone that conflicts with the embedded offset", () => {
     expect(parseInstant("2026-09-01T12:00:00+09:00", "UTC")).toBeNull();
@@ -824,6 +832,38 @@ describe("local source utilities and defensive parsing", () => {
     const dls2 = localDeadlinesOf(raw2);
     expect(dls2).toHaveLength(1);
     expect(dls2[0].kind).toBe("camera_ready");
+  });
+
+  it("deadlinesOf preserves date-only deadlines when parent edition has a timezone (#740)", () => {
+    const raw = {
+      timezone: "AoE",
+      deadlines: [
+        { kind: "paper", label: "Paper", date: "2026-05-15 23:59:00" },
+        { kind: "notification", label: "Notification", date: "2026-06-01", precision: "date-only" },
+      ],
+    };
+    const dls = localDeadlinesOf(raw);
+    expect(dls).toHaveLength(2);
+    expect(dls[0].kind).toBe("paper");
+    expect(dls[0].tz_raw).toBe("AoE");
+    expect(dls[1].kind).toBe("notification");
+    expect(dls[1].precision).toBe("date-only");
+    expect(dls[1].local_date).toBe("2026-06-01");
+
+    // But if date-only deadline explicitly specifies a timezone on the entry, it is rejected
+    const rawExplicit = {
+      timezone: "AoE",
+      deadlines: [
+        {
+          kind: "notification",
+          label: "Notification",
+          date: "2026-06-01",
+          precision: "date-only",
+          tz: "AoE",
+        },
+      ],
+    };
+    expect(localDeadlinesOf(rawExplicit)).toHaveLength(0);
   });
 
   it("editionOf and parseFile handle null/undefined/invalid arguments defensively", () => {

@@ -413,7 +413,32 @@ function changeDate(value: DeadlineChangeRecord): string | null {
 function changeLocalDate(value: DeadlineChangeRecord): string | null {
   const raw = String(value.local_date ?? value.date ?? "");
   const local = /^(\d{4}-\d{2}-\d{2})/.exec(raw)?.[1];
-  return local ?? changeDate(value)?.slice(0, 10) ?? null;
+  if (local) return local;
+  const tzRaw =
+    typeof value.tz_raw === "string" ? value.tz_raw : typeof value.tz === "string" ? value.tz : "";
+  const utcDate =
+    value.at_utc instanceof Date
+      ? value.at_utc
+      : typeof value.utc === "string"
+        ? new Date(value.utc)
+        : null;
+  if (utcDate && Number.isFinite(utcDate.getTime()) && tzRaw && isConfirmedTimezone(tzRaw)) {
+    const tz = resolveTz(tzRaw);
+    if (tz.kind === "fixed") {
+      return new Date(utcDate.getTime() + tz.offsetMinutes * 60_000).toISOString().slice(0, 10);
+    }
+    try {
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: tz.name,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(utcDate);
+    } catch {
+      // ignore invalid timezone name
+    }
+  }
+  return changeDate(value)?.slice(0, 10) ?? null;
 }
 
 function changeTime(value: DeadlineChangeRecord): number | null {
@@ -1066,7 +1091,7 @@ interface Naive {
   ms: number;
 }
 
-const EMBEDDED_TIMEZONE_RE = /(Z|[+-]\d{2}:\d{2})$/i;
+const EMBEDDED_TIMEZONE_RE = /(Z|[+-]\d{2}:\d{2}|[+-]\d{4})$/i;
 
 /** Canonical timezone carried by an ISO timestamp, if present. */
 export function embeddedTimezone(text: unknown): string | null {

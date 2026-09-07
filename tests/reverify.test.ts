@@ -1432,6 +1432,49 @@ it("classifies an AoE exact value on the same local day as a precision upgrade",
   ).toBe("precision-upgrade");
 });
 
+it("classifies an in-memory ExactDeadline with at_utc and tz_raw as a precision upgrade (#740)", () => {
+  expect(
+    classifyDeadlineChange(
+      { kind: "paper", round: 1, precision: "date-only", local_date: "2026-09-30" },
+      {
+        kind: "paper",
+        round: 1,
+        precision: "exact",
+        at_utc: new Date("2026-10-01T11:59:00.000Z"), // 2026-09-30 23:59:00 AoE
+        tz_raw: "AoE",
+      },
+    ),
+  ).toBe("precision-upgrade");
+
+  // Positive offset timezone early morning (Asia/Tokyo, UTC+9)
+  expect(
+    classifyDeadlineChange(
+      { kind: "paper", round: 1, precision: "date-only", local_date: "2026-09-30" },
+      {
+        kind: "paper",
+        round: 1,
+        precision: "exact",
+        at_utc: new Date("2026-09-29T18:00:00.000Z"), // 2026-09-30 03:00:00 JST
+        tz_raw: "Asia/Tokyo",
+      },
+    ),
+  ).toBe("precision-upgrade");
+
+  // Different calendar day is ambiguous
+  expect(
+    classifyDeadlineChange(
+      { kind: "paper", round: 1, precision: "date-only", local_date: "2026-09-30" },
+      {
+        kind: "paper",
+        round: 1,
+        precision: "exact",
+        at_utc: new Date("2026-10-02T11:59:00.000Z"), // 2026-10-01 23:59:00 AoE
+        tz_raw: "AoE",
+      },
+    ),
+  ).toBe("ambiguous");
+});
+
 it("routes pull-in and exact-to-date-only changes to manual resolution", async () => {
   const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-change-"));
   const exactData = dataFile(dir, [

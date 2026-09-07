@@ -591,7 +591,10 @@ function isAutoPromoted(conference: Record<string, unknown>): boolean {
     const value = conference[field];
     if (value === undefined || value === null || value === false) return false;
     const text = typeof value === "string" ? value : JSON.stringify(value);
-    return /auto|approv|confirm|promot|reviewed|verified/i.test(text ?? "");
+    if (/\b(?:unreviewed|unconfirmed|unverified|unapproved)\b/i.test(text ?? "")) return false;
+    return /\b(?:auto|approv(?:ed|al)?|confirm(?:ed)?|promot(?:ed|ion)?|reviewed|verified)\b/i.test(
+      text ?? "",
+    );
   });
 }
 
@@ -736,7 +739,9 @@ function validateEdition(
     .trim()
     .toLowerCase();
   const explicitlyNotAnnounced =
-    eventStatus === "not-announced" || /^(?:tbd(?:\s+20\d{2})?|not announced)$/i.test(dateText);
+    eventStatus === "not-announced" ||
+    /^(?:tbd(?:\s+20\d{2})?|tba(?:\s+20\d{2})?|not announced|to be announced)$/i.test(dateText) ||
+    /^(?:未定|未発表)$/.test(dateText);
   if (!start && !end && dateText && !explicitlyNotAnnounced && !eventPrecision)
     add(result.warnings, `${prefix}: event date text is not structured`);
 
