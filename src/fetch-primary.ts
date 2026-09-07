@@ -66,6 +66,8 @@ export function isDeadlineLine(text: string | null | undefined): boolean {
     low.includes("deadline") ||
     low.includes("due date") ||
     low.includes("due") ||
+    low.includes("at the latest") ||
+    low.includes("not later than") ||
     low.includes("not be entertained after") ||
     low.includes("not entertained after") ||
     low.includes("not be considered after") ||
