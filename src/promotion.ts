@@ -312,15 +312,26 @@ function extractedDates(
 
 function extractedTime(text: string): string | undefined {
   const match = /\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?\b/i.exec(text);
-  if (!match) return undefined;
-  let hour = Number(match[1]);
-  const minute = Number(match[2]);
-  const second = Number(match[3] ?? "0");
-  const meridiem = (match[4] ?? "").replace(/\./g, "").toLowerCase();
-  if (minute > 59 || second > 59 || hour > 23 || (meridiem && hour > 12)) return undefined;
-  if (meridiem === "pm" && hour < 12) hour += 12;
-  if (meridiem === "am" && hour === 12) hour = 0;
-  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:${String(second).padStart(2, "0")}`;
+  if (match) {
+    let hour = Number(match[1]);
+    let minute = Number(match[2]);
+    const second = Number(match[3] ?? "0");
+    const meridiem = (match[4] ?? "").replace(/\./g, "").toLowerCase();
+    if (minute > 59 || second > 59 || hour > 23 || (meridiem && hour > 12)) return undefined;
+    const afterTime = text.slice(match.index + match[0].length, match.index + match[0].length + 15);
+    if (/\bmidnight\b/i.test(afterTime) && hour === 12 && minute === 0) {
+      hour = 23;
+      minute = 59;
+    } else {
+      if (meridiem === "pm" && hour < 12) hour += 12;
+      if (meridiem === "am" && hour === 12) hour = 0;
+    }
+    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:${String(second).padStart(2, "0")}`;
+  }
+  if (/\b(?:(?:12\s*)?midnight|end of (?:the )?day|eod)\b/i.test(text)) {
+    return "23:59:00";
+  }
+  return undefined;
 }
 
 // IANA 分岐は (?:\/セグメント)+ で複数階層・ハイフン付きの実在ゾーン名
@@ -349,6 +360,11 @@ function isKnownIanaTimezone(name: string): boolean {
 function extractedTimezone(text: string): string | undefined {
   for (const match of text.matchAll(TIMEZONE_PATTERN)) {
     const candidate = match[1];
+    // 2文字の略号 (PT/ET/CT/MT) は大文字表記のみタイムゾーンとして受理する。
+    // 小文字 "pt" (12 pt font) や "et" (et al.) の誤爆を完全に防止する (#744)。
+    if (/^(?:pt|et|ct|mt)$/i.test(candidate) && candidate !== candidate.toUpperCase()) {
+      continue;
+    }
     // IANA Area/Location 形式の候補だけは実在ゾーンか検証する。exec は
     // 最左マッチを返すため、"Camera-ready/final" や "Paper/abstract"、
     // URL パスの "org/cfp" のようなスラッシュを含む普通のラベル語が、

@@ -540,7 +540,11 @@ function validateDeadline(
     !validIso(raw.last_verified_at)
   )
     return invalidLedgerEntry(id, "last_verified_at is invalid");
-  if (raw.last_attempt_at !== undefined && !validIso(raw.last_attempt_at))
+  if (
+    raw.last_attempt_at !== null &&
+    raw.last_attempt_at !== undefined &&
+    !validIso(raw.last_attempt_at)
+  )
     return invalidLedgerEntry(id, "last_attempt_at is invalid");
   if (
     raw.content_hash !== undefined &&
@@ -1029,14 +1033,17 @@ function assertCapturedResolutionBody(
   };
   const expected = valueProof(resolution.new_value);
   const excerpt = resolution.raw_excerpt.trim().replace(/\s+/g, " ");
-  const supported = extractCfpCandidates(body).some(
-    (candidate) =>
-      candidate.kind === deadline.kind &&
-      (candidate.round ?? 1) === deadline.round &&
-      candidateTrack(candidate) === deadline.track &&
+  const supported = extractCfpCandidates(body).some((candidate) => {
+    if (candidate.kind !== deadline.kind) return false;
+    const explicitRound = roundOf(candidate.label ?? candidate.rawExcerpt, 0);
+    if (explicitRound > 0 && explicitRound !== deadline.round) return false;
+    const candTrack = candidateTrack(candidate);
+    if (candTrack && candTrack !== deadline.track) return false;
+    return (
       valueProof(candidateValue(candidate)) === expected &&
-      candidate.rawExcerpt.trim().replace(/\s+/g, " ") === excerpt,
-  );
+      candidate.rawExcerpt.trim().replace(/\s+/g, " ") === excerpt
+    );
+  });
   if (!expected || !supported)
     throw new Error(
       `resolution captured body does not support new value: ${resolution.resolution_id}`,
@@ -1478,7 +1485,7 @@ function candidateRecord(
       return {
         kind: candidate.kind ?? "other",
         label,
-        round: candidate.round ?? 1,
+        round: candidate.round ?? target.round,
         track,
         precision: "exact",
         at_utc: at,
@@ -1490,7 +1497,7 @@ function candidateRecord(
   return {
     kind: candidate.kind ?? "other",
     label,
-    round: candidate.round ?? 1,
+    round: candidate.round ?? target.round,
     track,
     precision: "date-only",
     local_date: candidate.date ?? "",

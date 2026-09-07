@@ -212,6 +212,33 @@ describe("promotion batch", () => {
           "Paper submission deadline: October 10, 2026 for the 2027 edition",
       ),
     ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
+
+    // #744: Lowercase "pt" (font size) and "et" (et al.) must not hijack timezone
+    expect(
+      extractCfpCandidates(
+        "Paper submission (10 pages, 11 pt font, deadline October 10, 2026 23:59 AoE)",
+      ),
+    ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
+
+    expect(
+      extractCfpCandidates(
+        "Paper submission (see Smith et al., 2026, due October 10, 2026 23:59 AoE)",
+      ),
+    ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
+
+    // #744: Uppercase PT and ET are valid timezones
+    expect(
+      extractCfpCandidates("Paper submission deadline: October 10, 2026 11:59 PM PT"),
+    ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "PT" }]);
+
+    // #744: "12:00 midnight" and "midnight" extract as 23:59:00 in deadline context
+    expect(
+      extractCfpCandidates("Paper submission deadline: October 10, 2026 12:00 midnight AoE"),
+    ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
+
+    expect(
+      extractCfpCandidates("Paper submission deadline: October 10, 2026 midnight AoE"),
+    ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
   });
 
   it("applies an explicit page-wide deadline time without treating the event date as a deadline", () => {
