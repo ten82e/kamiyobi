@@ -1593,6 +1593,13 @@ function matchingCandidate(
   };
 }
 
+function isCompatibleRoundTrack(trackA: string, trackB: string): boolean {
+  if (trackA === trackB) return true;
+  const SEASONAL_CYCLES = new Set(["spring", "summer", "fall", "winter", "autumn"]);
+  if (SEASONAL_CYCLES.has(trackA) && SEASONAL_CYCLES.has(trackB)) return true;
+  return false;
+}
+
 const CHANGE_LANGUAGE =
   /\b(?:extend(?:ed|s)?|extension|updated?|revised?|postponed?|moved|rescheduled|new deadline|now due)\b/i;
 
@@ -1640,6 +1647,12 @@ function verifyBlocked(
   if (Number.isFinite(targetMs)) {
     for (const sibling of siblings) {
       if (String(sibling.kind ?? "other") !== target.kind) continue;
+      const siblingTrack = deadlineTrackKey(
+        String(sibling.label ?? ""),
+        String(sibling.kind ?? "other"),
+        String(sibling.track ?? ""),
+      );
+      if (!isCompatibleRoundTrack(siblingTrack, target.track)) continue;
       const siblingRound = Number(sibling.round ?? 1) || 1;
       if (siblingRound === target.round) continue;
       const siblingMs = Date.parse(String(sibling.utc ?? sibling.local_date ?? ""));
