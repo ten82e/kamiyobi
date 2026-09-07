@@ -286,7 +286,7 @@ export function isConfirmedTimezone(tzRaw: string | null | undefined): boolean;
 // 'UTC+8' 'UTC-08' 'GMT+02' 'UTC+0' 'UTC+05:30' -> 固定オフセット
 //   （ゼロ埋め・1〜2桁・コロン区切りの全てを受ける）
 // 'PT'/'ET'/'CT'/'MT' は IANA 地域帯として DST を観測する
-// 'PST'/'PDT'/'CDT'/'EST'/'EDT'/'CET'/'CEST' 等は文字どおり固定オフセット
+// 'PST'/'PDT'/'CDT'/'EST'/'EDT'/'CET'/'CEST'/'AEDT'/'AEST' 等は文字どおり固定オフセット
 // 文脈の無い 'CST'/'IST'/'BST'、未知・欠落は unconfirmed
 // IANA 名（'/' を含む）-> {kind:'iana', name: <そのまま>}
 // resolveTz は互換 API として unconfirmed を UTC に寄せる
