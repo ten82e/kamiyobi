@@ -698,6 +698,98 @@ describe("merge_sources", () => {
     expect(removed.map((deadline) => deadline.kind)).toEqual(["abstract"]);
   });
 
+  it("does not attach a rejected observation's supersession ledger to the accepted value (#733)", () => {
+    // observed が conflict として棄却され held の値が維持された場合でも、
+    // 末尾の superseded_deadlines 集約が [...existing, ...observed] 全件を
+    // スロットキー単位で無条件に union していたため、棄却された観測が持つ
+    // 台帳(この場合「2026-05-01 は dl-1 に取って代わられた」という無関係な
+    // 来歴)が採用された値にそのまま貼り付いていた。
+    const existing = makeDeadline("paper", "Paper", utc(2026, 5, 15, 23, 59, 59), "AoE");
+    const observed: Deadline = {
+      ...makeDeadline("paper", "Paper", utc(2026, 6, 1, 23, 59, 59), "AoE"),
+      superseded_deadlines: [
+        {
+          value: "2026-05-01T23:59:59.000Z",
+          precision: "exact",
+          source: "https://example.org/cfp",
+          status: "superseded",
+          supersededBy: "dl-1",
+          reason: "official-extension",
+          supersededAt: "2026-04-01T00:00:00.000Z",
+        },
+      ],
+    };
+    const merged = mergeDeadlineSlots([existing], [observed]);
+    expect(merged).toHaveLength(1);
+    expect(exactAt(merged[0]).getTime()).toBe(exactAt(existing).getTime());
+    expect(merged[0].conflicts).toHaveLength(1);
+    expect(merged[0].superseded_deadlines ?? []).toEqual([]);
+  });
+
+  it("keeps the accepted slot's supersession ledger across a precision upgrade (#733)", () => {
+    // 精度昇格(held=date-only の既存締切に台帳あり、observed=同日の exact)は
+    // 別の値への置き換えではなく同一スロットの継続なので、held が持っていた
+    // 台帳を消してはならない。独立レビューで、この逆向きの欠陥(finding 3 の
+    // 修正が精度昇格ケースの台帳まで一緒に落とす)が実際に起き得ることが
+    // 指摘された。
+    const ledger = [
+      {
+        value: "2026-05-01T23:59:59.000Z",
+        precision: "exact" as const,
+        source: "https://example.org/cfp",
+        status: "superseded" as const,
+        supersededBy: "dl-held",
+        reason: "official-extension" as const,
+        supersededAt: "2026-04-01T00:00:00.000Z",
+      },
+    ];
+    const held: Deadline = {
+      kind: "paper",
+      label: "Paper",
+      precision: "date-only",
+      local_date: "2026-05-15",
+      round: 1,
+      comment: null,
+      superseded_deadlines: ledger,
+    };
+    const incoming = makeDeadline("paper", "Paper", utc(2026, 5, 15, 23, 59, 59), "AoE");
+    const merged = mergeDeadlineSlots([held], [incoming]);
+    expect(merged).toHaveLength(1);
+    expect(isExactDeadline(merged[0])).toBe(true);
+    expect(merged[0].superseded_deadlines).toEqual(ledger);
+  });
+
+  it("keeps an incoming observation's supersession ledger when it merely confirms the held exact value (#733)", () => {
+    // held=exact・incoming=date-only で区間内(=棄却ではなく確認)の場合も
+    // 同一スロットの継続なので、incoming が持つ台帳を対称に引き継ぐ
+    // (精度昇格分岐と同じ論拠)。
+    const held = makeDeadline("paper", "Paper", utc(2026, 5, 15, 23, 59, 59), "AoE");
+    const ledger = [
+      {
+        value: "2026-05-01T23:59:59.000Z",
+        precision: "exact" as const,
+        source: "https://example.org/cfp",
+        status: "superseded" as const,
+        supersededBy: "dl-inc",
+        reason: "official-extension" as const,
+        supersededAt: "2026-04-01T00:00:00.000Z",
+      },
+    ];
+    const incoming: Deadline = {
+      kind: "paper",
+      label: "Paper",
+      precision: "date-only",
+      local_date: "2026-05-15",
+      round: 1,
+      comment: null,
+      superseded_deadlines: ledger,
+    };
+    const merged = mergeDeadlineSlots([held], [incoming]);
+    expect(merged).toHaveLength(1);
+    expect(isExactDeadline(merged[0])).toBe(true);
+    expect(merged[0].superseded_deadlines).toEqual(ledger);
+  });
+
   it("does not merge track or round mismatches and rejects exact outside a date-only interval", () => {
     const dateOnly: Deadline = {
       kind: "paper",
@@ -1071,15 +1163,20 @@ describe("merge_sources", () => {
       new Set(["regular:1", "industry:1", "regular:2"]),
     );
 
+    // date-only が exact の日を外れる(容器に収まらない)場合、値そのものは
+    // 違うので畳まないが、同一スロットとして 1 件に集約し conflicts[] に
+    // 記録する(#733: 以前は 2 件の重複として残っていた)。SPEC.md 3.6 どおり
+    // source_priority が高い側(aideadlines)の値が primary のまま残る。
     const outside: Deadline = { ...inside, local_date: "2026-02-08" };
-    expect(
-      deadlinesOf(
-        mergeSources(
-          [[sigcomm("ccfddl", [regular])], [sigcomm("aideadlines", [outside])]],
-          PRIORITY,
-        )[0],
-      ),
-    ).toHaveLength(2);
+    const withOutside = deadlinesOf(
+      mergeSources(
+        [[sigcomm("ccfddl", [regular])], [sigcomm("aideadlines", [outside])]],
+        PRIORITY,
+      )[0],
+    );
+    expect(withOutside).toHaveLength(1);
+    expect(withOutside[0].precision).toBe("date-only");
+    expect(withOutside[0].conflicts).toMatchObject([{ source: "ccfddl" }]);
   });
 
   it("deduplicates equal date-only deadlines without mixing them with exact instants", () => {
@@ -1100,6 +1197,111 @@ describe("merge_sources", () => {
 
     expect(dls).toHaveLength(1);
     expect(dls[0].precision).not.toBe("date-only");
+  });
+
+  it("folds conflicting date-only observations into one slot with a recorded conflict instead of duplicating (#733)", () => {
+    // 以前は exact 同士にしか働かなかった最終統合段のため、date-only 同士で
+    // 日付が食い違うと畳まれず、同一スロットの締切が2件残っていた
+    // (validate-data の "conflicting deadline slot" を誘発しうる状態)。
+    const early: Deadline = {
+      kind: "paper",
+      label: "Paper submission",
+      precision: "date-only",
+      local_date: "2026-05-01",
+      round: 1,
+      comment: null,
+    };
+    const late: Deadline = { ...early, local_date: "2026-05-03" };
+    const dls = deadlinesOf(
+      mergeSources([[sigcomm("ccfddl", [early])], [sigcomm("aideadlines", [late])]], PRIORITY)[0],
+    );
+    expect(dls).toHaveLength(1);
+    expect(dls[0].precision).toBe("date-only");
+    expect(dls[0].conflicts).toMatchObject([{ local_date: "2026-05-01" }]);
+  });
+
+  it("recognizes common CFP phrasing variants as the same generic slot across sources (#733)", () => {
+    // deadlineTrackKey はラベルから track を導出するため、"Full Paper Due" や
+    // "Submission deadline" のような常套句が非空の擬似trackになり、時刻が
+    // 完全一致していても畳まれなかった(本番 data.json に実例あり)。
+    const paper = makeDeadline("paper", "Paper submission", utc(2026, 9, 13, 11, 59, 59));
+    const fullPaperDue = makeDeadline("paper", "Full Paper Due", utc(2026, 9, 13, 11, 59, 59));
+    const dls = deadlinesOf(
+      mergeSources(
+        [[sigcomm("ccfddl", [paper])], [sigcomm("aideadlines", [fullPaperDue])]],
+        PRIORITY,
+      )[0],
+    );
+    expect(dls).toHaveLength(1);
+
+    // SIGIR型: "Full research paper abstract deadline" vs "Abstract submission"
+    const sigirAbs1 = makeDeadline("abstract", "Abstract submission", utc(2026, 1, 16, 11, 59, 59));
+    const sigirAbs2 = makeDeadline(
+      "abstract",
+      "Full research paper abstract deadline",
+      utc(2026, 1, 16, 11, 59, 59),
+    );
+    const dlsSigir = deadlinesOf(
+      mergeSources(
+        [[sigcomm("ccfddl", [sigirAbs1])], [sigcomm("aideadlines", [sigirAbs2])]],
+        PRIORITY,
+      )[0],
+    );
+    expect(dlsSigir).toHaveLength(1);
+
+    // CHI型: "Abstract/Metadata Due" (スラッシュ・metadata) vs "Abstract submission"
+    const chiAbs1 = makeDeadline("abstract", "Abstract submission", utc(2025, 9, 5, 11, 59, 59));
+    const chiAbs2 = makeDeadline("abstract", "Abstract/Metadata Due", utc(2025, 9, 5, 11, 59, 59));
+    const dlsChi = deadlinesOf(
+      mergeSources(
+        [[sigcomm("ccfddl", [chiAbs1])], [sigcomm("aideadlines", [chiAbs2])]],
+        PRIORITY,
+      )[0],
+    );
+    expect(dlsChi).toHaveLength(1);
+
+    // ACM MM型: "Contribution registration" vs "Abstract submission"
+    const mmReg1 = makeDeadline("abstract", "Abstract submission", utc(2026, 3, 26, 11, 59, 59));
+    const mmReg2 = makeDeadline(
+      "abstract",
+      "Contribution registration",
+      utc(2026, 3, 26, 11, 59, 59),
+    );
+    const dlsMm = deadlinesOf(
+      mergeSources(
+        [[sigcomm("ccfddl", [mmReg1])], [sigcomm("aideadlines", [mmReg2])]],
+        PRIORITY,
+      )[0],
+    );
+    expect(dlsMm).toHaveLength(1);
+
+    // ERA・SEIP のような実在するトラック名は誤って畳まれない(較正の反例)。
+    const era = makeDeadline(
+      "notification",
+      "Early Research Achievements (ERA) author notification",
+      utc(2026, 9, 28, 23, 59, 0),
+    );
+    const seip = makeDeadline(
+      "notification",
+      "Software Engineering in Practices (SEIP) author notification",
+      utc(2026, 9, 28, 23, 59, 0),
+    );
+    const tracked = deadlinesOf(
+      mergeSources([[sigcomm("ccfddl", [era])], [sigcomm("aideadlines", [seip])]], PRIORITY)[0],
+    );
+    expect(tracked).toHaveLength(2);
+
+    // Posters vs SRC のような実在トラック同士も誤って畳まれない
+    const posters = makeDeadline("other", "Posters deadline", utc(2026, 4, 21, 22, 0, 0));
+    const src = makeDeadline(
+      "other",
+      "Student Research Competition deadline",
+      utc(2026, 4, 21, 22, 0, 0),
+    );
+    const siggraphOther = deadlinesOf(
+      mergeSources([[sigcomm("ccfddl", [posters])], [sigcomm("aideadlines", [src])]], PRIORITY)[0],
+    );
+    expect(siggraphOther).toHaveLength(2);
   });
 
   it("same instant in two rounds remains two slots", () => {
