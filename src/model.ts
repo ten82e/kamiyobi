@@ -1593,6 +1593,7 @@ const PAPER = new Set([
   "technical_paper",
   "regular_paper",
   "contributed_paper",
+  "position_paper",
 ]);
 const CAMERA = new Set([
   "camera_ready",
