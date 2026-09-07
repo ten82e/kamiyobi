@@ -951,6 +951,8 @@ const TZ_FIXED_ABBREVIATIONS: Record<string, number> = {
   akst: -9 * 60,
   akdt: -8 * 60,
   hst: -10 * 60,
+  hast: -10 * 60,
+  hadt: -9 * 60,
   cdt: -5 * 60,
   chst: 10 * 60,
 };
