@@ -1640,6 +1640,7 @@ const CAMERA = new Set([
 const REBUTTAL_END = new Set([
   "rebuttal_end",
   "rebuttal",
+  "rebuttal_deadline",
   "rebuttal_and_revision",
   "author_response",
   "author_rebuttal",

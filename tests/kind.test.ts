@@ -38,6 +38,7 @@ const SPEC_TABLE: Array<[string, string]> = [
   ["author_response", "rebuttal_end"],
   ["author_rebuttal", "rebuttal_end"],
   ["rebuttal_period_end", "rebuttal_end"],
+  ["rebuttal_deadline", "rebuttal_end"],
   ["review_release", "review_release"],
   ["registration", "registration"],
   ["reviewer_registration", "registration"],
