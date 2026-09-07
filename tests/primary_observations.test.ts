@@ -40,6 +40,8 @@ describe("extractObservationTime", () => {
     expect(extractObservationTime("due 2026-05-10 5:00 PM")).toBe("17:00:00");
     expect(extractObservationTime("deadline: 2026-08-14 12:00 noon AoE")).toBe("12:00:00"); // 'noon' は修飾語・数値時刻は正
     expect(extractObservationTime("August 16th, 2026 23:59:59")).toBe("23:59:59");
+    expect(extractObservationTime("論文締切: 2026年5月15日 真夜中 JST")).toBe("23:59:00");
+    expect(extractObservationTime("論文締切: 2026年5月15日 午前0時 JST")).toBe("00:00:00");
     expect(extractObservationTime("May 10, 2026")).toBeNull(); // 日付のみ
     expect(extractObservationTime("25:00")).toBeNull();
     expect(extractObservationTime(null)).toBeNull();

@@ -52,8 +52,14 @@ export function editionYearOf(date: string): number {
  */
 export function extractObservationTime(text: string | null | undefined): string | null {
   if (!text) return null;
-  const m = TIME_RE.exec(String(text).trim());
-  if (!m) return null;
+  const raw = String(text).trim();
+  const m = TIME_RE.exec(raw);
+  if (!m) {
+    const folded = raw.normalize("NFKC");
+    if (folded.includes("真夜中")) return "23:59:00";
+    if (folded.includes("午前0時")) return "00:00:00";
+    return null;
+  }
   let h = Number(m[1]);
   const min = Number(m[2]);
   const sec = m[3] ? Number(m[3]) : 0;
