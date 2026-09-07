@@ -1170,6 +1170,16 @@ describe("local source parsing", () => {
         deadlines: [{ date: "2026-08-24", precision: "date-only", kind: "paper", tz: "AoE" }],
       }),
     ).toEqual([]);
+    expect(
+      localDeadlinesOf({
+        deadlines: [{ date: "2026-08-24 23:59:00", precision: "date-only", kind: "paper" }],
+      }),
+    ).toEqual([]);
+    expect(
+      localDeadlinesOf({
+        deadlines: [{ date: "2026/08/24", precision: "date-only", kind: "paper" }],
+      }),
+    ).toEqual([]);
   });
 
   it("inherits timezone from parent edition when deadline entry has no timezone", () => {

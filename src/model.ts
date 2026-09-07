@@ -826,10 +826,19 @@ export function asDate(value: unknown): Date | null {
   // the date-only representation used by the public JSON contract.
   // When an ISO timestamp lacks a timezone offset, treat it in UTC to avoid
   // machine-local environment shifts (e.g. JST vs UTC vs EDT).
-  const normalized = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(s)
-    ? `${s.replace(" ", "T")}Z`
-    : s;
-  const parsed = Date.parse(normalized);
+  // Slash / US / English dates must not fall through to Date.parse: that is
+  // local midnight and shifts the calendar day west of UTC (#790).
+  let iso: string;
+  if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(s)) {
+    iso = `${s.replace(" ", "T")}Z`;
+  } else if (
+    /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}(?::?\d{2})?)$/i.test(s)
+  ) {
+    iso = s.replace(" ", "T");
+  } else {
+    return null;
+  }
+  const parsed = Date.parse(iso);
   return Number.isFinite(parsed) ? dateOnly(new Date(parsed)) : null;
 }
 

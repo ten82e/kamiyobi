@@ -279,6 +279,13 @@ describe("asDate and timezone caching fixes (#746)", () => {
     expect(asDate("not-a-date")).toBeNull();
   });
 
+  it("does not parse slash or English dates via Date.parse (#790)", () => {
+    expect(asDate("2026/08/24")).toBeNull();
+    expect(asDate("08/24/2026")).toBeNull();
+    expect(asDate("August 24, 2026")).toBeNull();
+    expect(asDate("May 1, 2026")).toBeNull();
+  });
+
   it("applies cached Intl.DateTimeFormat with consistent hourCycle across repeated calls", () => {
     const zone = resolveTz("America/New_York");
     const t1 = applyTz(Date.UTC(2026, 6, 1, 12, 0, 0), zone);
