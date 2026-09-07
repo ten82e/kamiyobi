@@ -947,6 +947,7 @@ const TZ_FIXED_ABBREVIATIONS: Record<string, number> = {
   wita: 8 * 60,
   wit: 9 * 60,
   idt: 3 * 60,
+  msk: 3 * 60,
   akst: -9 * 60,
   akdt: -8 * 60,
   hst: -10 * 60,
