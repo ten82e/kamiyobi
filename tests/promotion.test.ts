@@ -507,6 +507,10 @@ describe("promotion batch", () => {
       { kind: "camera_ready", date: "2026-06-01" },
       { kind: "rebuttal_end", date: "2026-06-15" },
     ]);
+
+    expect(extractCfpCandidates("カメラ・レディ締切: 2026年6月1日")).toMatchObject([
+      { kind: "camera_ready", date: "2026-06-01" },
+    ]);
   });
 
   it("extracts candidate tracks from prefix and postfix track notations (#756)", () => {

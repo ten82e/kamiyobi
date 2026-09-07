@@ -77,6 +77,7 @@ export function isDeadlineLine(text: string | null | undefined): boolean {
 
 function kindOf(window: string | null | undefined): string {
   const low = String(window ?? "").toLowerCase();
+  const folded = low.replace(/[・･]/g, "");
   if (
     low.includes("abstract") ||
     low.includes("概要") ||
@@ -87,7 +88,7 @@ function kindOf(window: string | null | undefined): string {
   }
   if (
     low.includes("camera") ||
-    low.includes("カメラレディ") ||
+    folded.includes("カメラレディ") ||
     low.includes("最終原稿") ||
     low.includes("採択原稿")
   ) {
