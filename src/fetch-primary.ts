@@ -86,6 +86,7 @@ export function isDeadlineLine(text: string | null | undefined): boolean {
     low.includes("cut-off") ||
     low.includes("cutoff") ||
     low.includes("締切") ||
+    low.includes("必着") ||
     low.includes("締め切り") ||
     low.includes("期限") ||
     low.includes("期日") ||
