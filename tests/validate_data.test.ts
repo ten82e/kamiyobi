@@ -520,6 +520,32 @@ it("uses model instant parsing for offsets and accepts a short year-crossing eve
   expect(monthEnvelope.warnings).toContain(
     "month-envelope/month-envelope-2027: event range exceeds 31 days",
   );
+
+  // #724: 和文の月のみ表記は「年」に続く月番号 (例: "2026年11月" の "11") を
+  // 日番号と誤認する hasDayNumber の欠陥により、英文と同じ意味の入力でも
+  // 常に error (exit 1) に落ちていた (data/extra.yaml の実際の和文ソースが
+  // 生成する入力形。src/model.ts の parseJapaneseRange が対応する定型)。
+  const monthEnvelopeJp = validateData({
+    conferences: [
+      {
+        key: "month-envelope-jp",
+        categories: ["systems"],
+        editions: [
+          {
+            year: 2027,
+            id: "month-envelope-jp-2027",
+            date_text: "2027年3月下旬～4月上旬（詳細未定）",
+            event_start: "2027-03-01",
+            event_end: "2027-04-30",
+          },
+        ],
+      },
+    ],
+  });
+  expect(monthEnvelopeJp.errors).toEqual([]);
+  expect(monthEnvelopeJp.warnings).toContain(
+    "month-envelope-jp/month-envelope-jp-2027: event range exceeds 31 days",
+  );
 });
 
 it("checks configured categories and reports promotion/evidence and vocabulary drift as warnings", () => {
