@@ -77,6 +77,10 @@ describe("fetch-primary extraction", () => {
       round: 1,
       tz: "AoE",
     });
+    expect(extractDeadline("Submission deadline: May 15, 2026 23:59 WET", 2026)?.tz).toBe("WET");
+    expect(extractDeadline("Submission deadline: May 15, 2026 23:59 WEST", 2026)?.tz).toBe("WEST");
+    expect(extractDeadline("Deadline: May 15, 2026; the west wall", 2026)?.tz).toBeUndefined();
+    expect(extractDeadline("Deadline: May 15, 2026; shoes got wet", 2026)?.tz).toBeUndefined();
     // 12h 表記の正規化 (5pm -> 17:00)
     expect(
       extractDeadline("Paper submission deadline: August 16th, 2026 5:00 PM (AoE)", 2026)?.time,
