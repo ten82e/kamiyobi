@@ -472,6 +472,12 @@ describe("promotion batch", () => {
     ).not.toContain("cot");
   });
 
+  it("keeps FJT as an extracted timezone (#922)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 FJT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "FJT" },
+    ]);
+  });
+
   it("filters out invalid dates in extractedDates without polluting candidate boundaries (#756)", () => {
     const candidates = extractCfpCandidates(
       "Submission Deadline: 2026-02-30, March 15, 2026 23:59 AoE",
