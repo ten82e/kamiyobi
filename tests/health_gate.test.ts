@@ -1070,6 +1070,30 @@ it("waives pulls and disappearances only for scoped, fresh supersession ledger e
   ).toBe(false);
 });
 
+it("does not waive a sibling track's disappearance via an unrelated track's supersession ledger", () => {
+  // #722: supersededCovers は venue/edition/kind/round までしか superseded_by を
+  // 照合せず track を見ないため、ある track (SLOT) の正当な訂正台帳が、値も
+  // 一致する別 track (TRACK_SLOT) の未来締切消失まで免責してしまっていた。
+  const previous = health([
+    dateOnly("2026-09-10"),
+    { ...dateOnly("2026-09-10"), deadline_id: TRACK_SLOT },
+  ]);
+  const ledger = [
+    {
+      value: "2026-09-10",
+      precision: "date-only" as const,
+      reason: "manual-resolution",
+      superseded_at: "2026-08-05T00:00:00Z",
+      superseded_by: SLOT,
+    },
+  ];
+  // SLOT だけを正当に前倒しし、TRACK_SLOT は上流退行で丸ごと欠落した状態を模す。
+  const current = health([dateOnly("2026-08-01", { superseded_values: ledger })]);
+  const result = evaluateHealthGate(current, previous);
+  expect(result.ok).toBe(false);
+  expect(result.reasons).toContain(`future deadline disappeared: ${TRACK_SLOT}`);
+});
+
 it("waives a legacy-venue disappearance only through its migration target's scoped ledger", () => {
   const previous = health([
     {
