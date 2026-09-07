@@ -13,6 +13,10 @@ const SPEC_TABLE: Array<[string, string]> = [
   ["paper", "paper"],
   ["submission", "paper"],
   ["full_paper", "paper"],
+  ["fullpaper", "paper"],
+  ["paper_submission", "paper"],
+  ["short_paper", "paper"],
+  ["short paper", "paper"],
   ["manuscript", "paper"],
   ["manuscript_deadline", "paper"],
   ["full_manuscript", "paper"],
@@ -130,6 +134,14 @@ describe("kind_of", () => {
   it("ccfddl final_deadline key is camera-ready (#834)", () => {
     expect(kindOf("final_deadline")).toBe("camera_ready");
     expect(kindOf("final deadline")).toBe("camera_ready");
+    expect(kindOf("withdrawal")).toBe("other");
+  });
+
+  it("concatenated and compound paper keys stay paper (#822)", () => {
+    expect(kindOf("fullpaper")).toBe("paper");
+    expect(kindOf("paper_submission")).toBe("paper");
+    expect(kindOf("short_paper")).toBe("paper");
+    expect(kindOf("short paper")).toBe("paper");
     expect(kindOf("withdrawal")).toBe("other");
   });
 
