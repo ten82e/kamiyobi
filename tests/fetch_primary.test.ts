@@ -178,6 +178,11 @@ describe("fetch-primary extraction", () => {
     expect(extractDeadline("Manuscripts must arrive by May 15, 2026", 2026)?.date).toBe(
       "2026-05-15",
     );
+    expect(extractDeadline("Please submit by May 15, 2026", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("Accepting submissions until May 15, 2026", 2026)?.date).toBe(
+      "2026-05-15",
+    );
+    expect(extractDeadline("Submission: May 15, 2026", 2026)?.date).toBe("2026-05-15");
   });
 
   it("camera ready", () => {
