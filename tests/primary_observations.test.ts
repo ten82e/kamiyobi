@@ -344,6 +344,24 @@ describe("resolvePrimaryObservations (#504 acceptance)", () => {
     ]);
   });
 
+  it("drops unparsable deadline rows instead of keeping the raw patch (#766)", () => {
+    const resolved = resolvePrimaryObservations({
+      conferences: {
+        prose: {
+          editions: {
+            2026: {
+              link: "https://example.org/prose",
+              deadlines: [{ kind: "paper", label: "P", date: "March 15, 2026", tz: "AoE" }],
+            },
+          },
+        },
+      },
+    });
+    const edition = resolvedEditions(resolved, "prose")[2026];
+    expect(edition).not.toHaveProperty("deadlines");
+    expect(edition.link).toBe("https://example.org/prose");
+  });
+
   it("mixed quality: verified rows replace, unverifiable rows are dropped", () => {
     const primary = {
       conferences: {

@@ -62,6 +62,7 @@ import {
   deadlineTrackKey,
   type Edition,
   eventDatePrecisionOf,
+  evidenceClassOf,
   exactDeadlineState,
   fmtDate,
   fmtUTC,
@@ -499,12 +500,12 @@ export function toJson(
     evidence: Array<Record<string, unknown>>,
   ): Record<string, unknown> | undefined => {
     const source = evidence.find((item) =>
-      ["official-cfp", "publisher", "aggregator"].includes(String(item.sourceClass ?? "")),
+      ["official-cfp", "publisher", "aggregator"].includes(evidenceClassOf(item)),
     );
     if (!source) return undefined;
     const sourceUrl = String(source.sourceUrl ?? source.source_url ?? "").trim();
     if (!sourceUrl) return undefined;
-    const sourceClass = String(source.sourceClass ?? "aggregator");
+    const sourceClass = evidenceClassOf(source) || "aggregator";
     const verifiedAt = String(source.verifiedAt ?? source.retrievedAt ?? "").trim();
     const hasVerifiedEvidence =
       ["official-cfp", "publisher"].includes(sourceClass) &&
@@ -1262,7 +1263,7 @@ function deadlineRound(value: unknown): number {
 
 function officialEvidenceHash(deadline: JsonRecord): string | undefined {
   const items = jsonRecords(deadline.evidence)
-    .filter((item) => ["official-cfp", "publisher"].includes(String(item.sourceClass ?? "")))
+    .filter((item) => ["official-cfp", "publisher"].includes(evidenceClassOf(item)))
     .filter((item) => {
       const fields = jsonStrings(item.verifiedFields);
       return (
@@ -1282,7 +1283,7 @@ function officialEvidenceHash(deadline: JsonRecord): string | undefined {
 function healthEvidence(deadline: JsonRecord): HealthDeadlineEvidence[] {
   return jsonRecords(deadline.evidence)
     .map((item): HealthDeadlineEvidence | null => {
-      const sourceClass = String(item.sourceClass ?? "");
+      const sourceClass = evidenceClassOf(item);
       const sourceUrl = String(item.sourceUrl ?? item.source_url ?? "");
       const fields = jsonStrings(item.verifiedFields).filter((field) =>
         ["date", "time", "timezone", "kind", "round", "track"].includes(field),

@@ -307,7 +307,7 @@ export function pageTitleYear(htmlText: string | null | undefined): number | nul
   if (years.length === 0) {
     const shortYears = [...title.matchAll(/['’](\d{2})\b/g)]
       .map((x) => Number(x[1]))
-      .filter((y) => y >= 20 && y <= 35)
+      .filter((y) => y >= 20 && y <= 49)
       .map((y) => 2000 + y);
     years.push(...shortYears);
   }

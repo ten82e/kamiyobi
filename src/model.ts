@@ -180,6 +180,11 @@ const EVIDENCE_FIELDS = new Set<EvidenceField>([
   "track",
 ]);
 
+export function evidenceClassOf(item: Record<string, unknown> | null | undefined): string {
+  if (!item) return "";
+  return String(item.sourceClass ?? item.source_class ?? "").trim();
+}
+
 /** Normalize supplied field evidence without manufacturing verification metadata. */
 export function deadlineEvidence(
   value: unknown,
@@ -195,7 +200,7 @@ export function deadlineEvidence(
         item.original_value ?? item.rawExcerpt ?? fallback?.originalValue ?? "",
       );
       if (!sourceName && !sourceUrl && !originalValue) return null;
-      const sourceClass = String(item.sourceClass ?? fallback?.sourceClass ?? "");
+      const sourceClass = evidenceClassOf(item) || String(fallback?.sourceClass ?? "");
       const fields = (Array.isArray(item.verifiedFields) ? item.verifiedFields : [])
         .map((field) => String(field))
         .filter((field): field is EvidenceField => EVIDENCE_FIELDS.has(field as EvidenceField));
@@ -2004,15 +2009,18 @@ export function conferencesFromJson(
           .filter((item): item is Record<string, unknown> =>
             Boolean(item && typeof item === "object"),
           )
-          .map((item) => ({
-            source: String(item.source ?? "").trim(),
-            ...(EVIDENCE_CLASSES.has(String(item.sourceClass) as EvidenceClass)
-              ? { sourceClass: String(item.sourceClass) as EvidenceClass }
-              : {}),
-            revision: typeof item.revision === "string" ? item.revision : null,
-            fetchedAt: typeof item.fetchedAt === "string" ? item.fetchedAt : null,
-            freshness: item.freshness,
-          }))
+          .map((item) => {
+            const sourceClass = evidenceClassOf(item);
+            return {
+              source: String(item.source ?? "").trim(),
+              ...(EVIDENCE_CLASSES.has(sourceClass as EvidenceClass)
+                ? { sourceClass: sourceClass as EvidenceClass }
+                : {}),
+              revision: typeof item.revision === "string" ? item.revision : null,
+              fetchedAt: typeof item.fetchedAt === "string" ? item.fetchedAt : null,
+              freshness: item.freshness,
+            };
+          })
           .filter(
             (item): item is DeadlineOrigin =>
               Boolean(item.source) &&

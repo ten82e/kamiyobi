@@ -228,7 +228,13 @@ export function resolvePrimaryObservations(
       const eventEnd = asDate(ep.event_end) ?? parsedEnd ?? knownEdition?.event_end ?? null;
       const rows = toObservationRows(ep.deadlines);
       if (rows.length === 0) {
-        outEditions[yearKey] = Array.isArray(ep.remove) ? { ...ep, mode: "merge-slots" } : ep;
+        // 未パース行も含め、検証できる観測が無いなら deadlines を残さない。
+        if (Array.isArray(ep.deadlines) && ep.deadlines.length > 0) {
+          const { deadlines: _omit, ...rest } = ep;
+          outEditions[yearKey] = Array.isArray(ep.remove) ? { ...rest, mode: "merge-slots" } : rest;
+        } else {
+          outEditions[yearKey] = Array.isArray(ep.remove) ? { ...ep, mode: "merge-slots" } : ep;
+        }
         continue;
       }
       let ambiguous = 0;

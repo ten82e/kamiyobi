@@ -16,6 +16,7 @@ import {
   dateOnly,
   dateOnlyState,
   dateOnlyWindow,
+  deadlineEvidence,
   embeddedTimezone,
   eventDatePrecisionOf,
   exactDeadlineState,
@@ -600,6 +601,21 @@ describe("parse_date_range", () => {
     expect(start?.toISOString().slice(0, 10)).toBe("2026-08-15");
     expect(end?.toISOString().slice(0, 10)).toBe("2026-08-18");
     resetWarnings();
+  });
+});
+
+describe("deadlineEvidence", () => {
+  it("keeps snake_case source_class as sourceClass (#766)", () => {
+    expect(
+      deadlineEvidence([
+        {
+          source_name: "ccfddl",
+          source_class: "official-cfp",
+          source_url: "https://x.example/cfp",
+          original_value: "2026-09-01",
+        },
+      ]),
+    ).toMatchObject([{ source_name: "ccfddl", sourceClass: "official-cfp" }]);
   });
 });
 
