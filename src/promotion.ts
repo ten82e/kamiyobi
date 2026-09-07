@@ -343,7 +343,7 @@ function extractedTime(text: string): string | undefined {
 // 切り詰められ、後段の実在性検証で誤って棄却されてしまう (#723 の独立
 // 反証レビューで発見)。
 const TIMEZONE_PATTERN =
-  /\b(AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|JST|BOT|COT|FJT|GET|PKT|TRT|PT|ET|CT|MT|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)\b/gi;
+  /\b(AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|JST|BOT|COT|FJT|GET|PKT|TRT|BRT|PT|ET|CT|MT|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)\b/gi;
 
 /**
  * IANA Area/Location 名として実在するかだけを判定する (model.ts の
