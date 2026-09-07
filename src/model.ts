@@ -1381,6 +1381,8 @@ function parseJapaneseRange(
   // and a trailing 号 (journal-issue marker) so the existing month branch matches.
   let norm = s.normalize("NFKC").replace(/\s+/g, "");
   norm = norm.replace(/^.*?(?=(?:\d{4}年|\d{1,2}月))/u, "").replace(/号$/u, "");
+  // 会期の曜日注記: '2026年9月2日（水）～9月4日（金）' — NFKC 後は ASCII 括弧。
+  norm = norm.replace(/\((?:[月火水木金土日](?:曜日|曜)?)\)/g, "");
 
   // 1. 日付範囲: YYYY年M月D日[〜-]YYYY年M月D日 / YYYY年M月D日[〜-]M月D日 / YYYY年M月D日[〜-]D日
   // または年省略: M月D日[〜-]YYYY年M月D日 / M月D日[〜-]M月D日 / M月D日[〜-]D日
