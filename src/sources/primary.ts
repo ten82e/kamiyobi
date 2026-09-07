@@ -53,7 +53,10 @@ export function editionYearOf(date: string): number {
 export function extractObservationTime(text: string | null | undefined): string | null {
   if (!text) return null;
   const m = TIME_RE.exec(String(text).trim());
-  if (!m) return null;
+  if (!m) {
+    if (/\bnoon\b/i.test(String(text))) return "12:00:00";
+    return null;
+  }
   let h = Number(m[1]);
   const min = Number(m[2]);
   const sec = m[3] ? Number(m[3]) : 0;
