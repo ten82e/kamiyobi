@@ -478,6 +478,15 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("keeps uppercase GET as an extracted timezone (#936)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 GET")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "GET" },
+    ]);
+    expect(
+      extractCfpCandidates("Deadline: May 15, 2026 23:59; get ready").map((c) => c.timezone),
+    ).not.toContain("get");
+  });
+
   it("filters out invalid dates in extractedDates without polluting candidate boundaries (#756)", () => {
     const candidates = extractCfpCandidates(
       "Submission Deadline: 2026-02-30, March 15, 2026 23:59 AoE",
