@@ -37,6 +37,7 @@ import {
 } from "../model.ts";
 
 const TIME_RE = /(?<!(?:utc|gmt)\s*[+-]\s*)\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp]\.?[Mm]\.?)?/i;
+const HOUR_H_TIME_RE = /\b(\d{1,2})h([0-5]\d)\b/i;
 
 /** 解決済み行: そのまま applyOverrides/deadlinesOf に渡せる YAML 行。 */
 type ResolvedRow = Record<string, unknown>;
@@ -59,7 +60,13 @@ export function extractObservationTime(text: string | null | undefined): string 
     const folded = String(text).normalize("NFKC");
     if (folded.includes("真夜中")) return "23:59:00";
     if (folded.includes("午前0時")) return "00:00:00";
-    return null;
+    const hourH = HOUR_H_TIME_RE.exec(String(text));
+    if (!hourH) return null;
+    const hour = Number(hourH[1]);
+    const minute = Number(hourH[2]);
+    if (hour > 23) return null;
+    const pad = (n: number): string => String(n).padStart(2, "0");
+    return `${pad(hour)}:${pad(minute)}:00`;
   }
   let h = Number(m[1]);
   const min = Number(m[2]);
