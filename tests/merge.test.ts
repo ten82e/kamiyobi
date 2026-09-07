@@ -2535,6 +2535,121 @@ describe("apply_aliases", () => {
     expect(applyAliases(undefined, {})).toEqual([]);
     expect(applyAliases([[makeConference({ key: "kdd", title: "KDD" })]], null)).toHaveLength(1);
   });
+
+  it("resolves multi-hop alias chains and merges all sources into canonical key (#734)", () => {
+    const a = makeConference({ key: "alpha", title: "Alpha", sources: ["source-a"] });
+    const b = makeConference({ key: "beta", title: "Beta", sources: ["source-b"] });
+    const c = makeConference({ key: "gamma", title: "Gamma", sources: ["source-c"] });
+    const aliases = { alpha: "beta", beta: "gamma" };
+
+    const aliased = applyAliases([[a], [b], [c]], aliases);
+    expect(aliased[0][0].key).toBe("gamma");
+    expect(aliased[1][0].key).toBe("gamma");
+    expect(aliased[2][0].key).toBe("gamma");
+    expect(aliased[0][0].identity?.aliases).toEqual(["alpha", "beta"]);
+    expect(aliased[1][0].identity?.aliases).toEqual(["alpha", "beta"]);
+    // Unaliased canonical conference gamma is untouched
+    expect(aliased[2][0].identity?.aliases).toBeUndefined();
+
+    const merged = mergeSources(aliased, {});
+    expect(merged).toHaveLength(1);
+    expect(merged[0].key).toBe("gamma");
+    expect(new Set(merged[0].sources)).toEqual(new Set(["source-a", "source-b", "source-c"]));
+  });
+
+  it("does not merge unrelated conferences sharing target key when alias exists (#734)", () => {
+    const c1 = makeConference({
+      key: "target",
+      title: "Conference One",
+      sources: ["source-1"],
+      link: "https://one.example/",
+    });
+    const c2 = makeConference({
+      key: "target",
+      title: "Conference Two",
+      sources: ["source-2"],
+      link: "https://two.example/",
+    });
+    const aliases = { alias_conf: "target" };
+
+    const aliased = applyAliases([[c1], [c2]], aliases);
+    // Neither c1 nor c2 was aliased, so neither receives aliases
+    expect(aliased[0][0].identity?.aliases).toBeUndefined();
+    expect(aliased[1][0].identity?.aliases).toBeUndefined();
+
+    const merged = mergeSources(aliased, {});
+    expect(merged).toHaveLength(2);
+    expect(new Set(merged.map((c) => c.key))).not.toContain("target");
+  });
+
+  it("prevents transitive bridging across conferences with explicit identity split (#734)", () => {
+    // Left and Right have conflicting sourceIds for ccfddl -> explicitIdentitySplit
+    const left = makeConference({
+      key: "split",
+      title: "Split Conference",
+      sources: ["ccfddl"],
+      identity: { sourceIds: { ccfddl: "DS/sec" }, officialDomains: ["sec.example"] },
+    });
+    const right = makeConference({
+      key: "split",
+      title: "Split Conference",
+      sources: ["local"],
+      identity: { sourceIds: { ccfddl: "SC/sec" }, officialDomains: ["sec.example"] },
+    });
+    // Bridge has matching official domain and name, but no ccfddl sourceId
+    const bridge = makeConference({
+      key: "split",
+      title: "Split Conference",
+      sources: ["aideadlines"],
+      identity: { officialDomains: ["sec.example"] },
+    });
+
+    // Test order 1: [left, right, bridge]
+    const merged1 = mergeSources([[left], [right], [bridge]], {});
+    expect(merged1.length).toBeGreaterThanOrEqual(2);
+    for (const conf of merged1) {
+      // left and right must NEVER be merged together into the same conference
+      expect(conf.sources.includes("ccfddl") && conf.sources.includes("local")).toBe(false);
+    }
+
+    // Test order 2: [bridge, left, right]
+    const merged2 = mergeSources([[bridge], [left], [right]], {});
+    expect(merged2.length).toBeGreaterThanOrEqual(2);
+    for (const conf of merged2) {
+      expect(conf.sources.includes("ccfddl") && conf.sources.includes("local")).toBe(false);
+    }
+  });
+
+  it("prevents collision disambiguation from clashing with existing canonical single conference (#734)", () => {
+    // Existing single conference with key "sec-sc"
+    const existing = makeConference({
+      key: "sec-sc",
+      title: "SEC SC Canonical",
+      sources: ["local"],
+    });
+    // Two conferences colliding on "sec", where one derives collision suffix "sc"
+    const c1 = makeConference({
+      key: "sec",
+      title: "SEC",
+      upstream_sub: "sc",
+      sources: ["ccfddl"],
+    });
+    const c2 = makeConference({
+      key: "sec",
+      title: "SEC",
+      upstream_sub: "ds",
+      sources: ["ccfddl"],
+    });
+
+    const merged = mergeSources([[existing], [c1], [c2]], {});
+    expect(merged).toHaveLength(3);
+    const keys = merged.map((c) => c.key);
+    expect(new Set(keys).size).toBe(3);
+    // "sec-sc" belongs to existing, c1 gets disambiguated suffix e.g. "sec-sc-2"
+    expect(keys).toContain("sec-sc");
+    expect(keys).toContain("sec-ds");
+    expect(keys).toContain("sec-sc-2");
+  });
 });
 
 describe("conferencesFromJson & defensive merge operations", () => {
