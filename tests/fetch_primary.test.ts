@@ -269,6 +269,12 @@ describe("fetch-primary extraction", () => {
     expect(paper.tz).toBe("AoE"); // 前の行の AoE をウィンドウで拾う
   });
 
+  it("treats カメラ・レディ as camera-ready (#800)", () => {
+    expect(extractDeadline("カメラ・レディ締切: 2026年6月1日", 2026)?.kind).toBe("camera_ready");
+    expect(extractDeadline("カメラレディ締切: 2026年6月1日", 2026)?.kind).toBe("camera_ready");
+    expect(extractDeadline("原稿投稿締切: 2026年5月10日", 2026)?.kind).toBe("paper");
+  });
+
   it("kind hint wins over adjacent notification", () => {
     // deadline 行の次行に Notification があっても paper のまま (hmem 実例)。
     const lines = ["Submission deadline: August 17, 2026", "Notification: September 4, 2026"];
