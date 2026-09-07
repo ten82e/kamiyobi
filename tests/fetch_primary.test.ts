@@ -88,6 +88,11 @@ describe("fetch-primary extraction", () => {
       extractDeadline("Submission deadline\nOctober 15, 2026 23:59:59 AoE".replace("\n", " "), 2026)
         ?.time,
     ).toBe("23:59:59");
+    expect(extractDeadline("Paper deadline: May 15, 2026 23h59 CET", 2026)).toMatchObject({
+      date: "2026-05-15",
+      time: "23:59:00",
+      tz: "CET",
+    });
   });
 
   it("abstract with round and tz", () => {
