@@ -29,7 +29,7 @@ const BLOCK_RE =
 const DELETED_RE = /<(del|s|strike)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
 const TAG_RE = /<[^>]+>/g;
 const TZ_RE =
-  /\b(PDT|PST|EDT|EST|CDT|CST|MDT|MST|AKDT|AKST|HST|UTC|GMT|CET|CEST|JST|AoE|PT|ET|CT|MT)\b|anywhere on (?:the )?(?:inhabited )?earth/gi;
+  /\b(PDT|PST|EDT|EST|CDT|CST|MDT|MST|AKDT|AKST|HST|UTC|GMT|CET|CEST|JST|BOT|AoE|PT|ET|CT|MT)\b|anywhere on (?:the )?(?:inhabited )?earth/gi;
 const LABELS: Record<string, string> = {
   paper: "Paper submission",
   abstract: "Abstract submission",
@@ -246,10 +246,14 @@ export function extractDeadline(
   const tzM = TZ_RE.exec(window);
   if (tzM) {
     const raw = tzM[0];
-    tz =
-      raw.toLowerCase().includes("anywhere") || raw.toUpperCase() === "AOE"
-        ? "AoE"
-        : raw.toUpperCase();
+    if (/^(?:bot)$/i.test(raw) && raw !== raw.toUpperCase()) {
+      tz = undefined;
+    } else {
+      tz =
+        raw.toLowerCase().includes("anywhere") || raw.toUpperCase() === "AOE"
+          ? "AoE"
+          : raw.toUpperCase();
+    }
   }
   // 日付を含む側の行から壁時計の時刻を取る。
   // 無ければ time を載せない。
