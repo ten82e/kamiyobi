@@ -52,8 +52,20 @@ export function editionYearOf(date: string): number {
  */
 export function extractObservationTime(text: string | null | undefined): string | null {
   if (!text) return null;
-  const m = TIME_RE.exec(String(text).trim());
-  if (!m) return null;
+  const raw = String(text).trim();
+  const m = TIME_RE.exec(raw);
+  if (!m) {
+    const at = /\bat\s+(\d{3,4})\b/i.exec(raw);
+    const digits = at?.[1] ?? compactHmmDigits(raw);
+    if (!digits) return null;
+    const padded = digits.length === 3 ? digits.padStart(4, "0") : digits;
+    if (padded.length !== 4) return null;
+    const h = Number(padded.slice(0, 2));
+    const min = Number(padded.slice(2));
+    if (h > 23 || min > 59) return null;
+    const pad = (n: number): string => String(n).padStart(2, "0");
+    return `${pad(h)}:${pad(min)}:00`;
+  }
   let h = Number(m[1]);
   const min = Number(m[2]);
   const sec = m[3] ? Number(m[3]) : 0;
@@ -64,6 +76,11 @@ export function extractObservationTime(text: string | null | undefined): string 
   if (h > 23) return null;
   const pad = (n: number): string => String(n).padStart(2, "0");
   return `${pad(h)}:${pad(min)}:${pad(sec)}`;
+}
+
+function compactHmmDigits(text: string): string | undefined {
+  const stripped = text.replace(/\b20[2-9]\d\b/g, " ");
+  return /\b((?:[01]?\d|2[0-3])[0-5]\d)\b/.exec(stripped)?.[1];
 }
 
 interface ObservationRow {

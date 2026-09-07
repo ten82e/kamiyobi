@@ -239,6 +239,19 @@ describe("promotion batch", () => {
     expect(
       extractCfpCandidates("Paper submission deadline: October 10, 2026 midnight AoE"),
     ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
+
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 1700 UTC")).toMatchObject([
+      { date: "2026-05-15", time: "17:00:00", timezone: "UTC" },
+    ]);
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 at 1700 UTC")).toMatchObject([
+      { date: "2026-05-15", time: "17:00:00", timezone: "UTC" },
+    ]);
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 2359 AoE")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "AoE" },
+    ]);
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 at 900 JST")).toMatchObject([
+      { date: "2026-05-15", time: "09:00:00", timezone: "JST" },
+    ]);
   });
 
   it("applies an explicit page-wide deadline time without treating the event date as a deadline", () => {
@@ -320,14 +333,7 @@ describe("promotion batch", () => {
   });
 
   it("does not combine a named row time with the page-wide default", () => {
-    for (const rowTime of [
-      "noon UTC",
-      "5 PM UTC",
-      "25:00 UTC",
-      "at 1700 UTC",
-      "1700 UTC",
-      "1700",
-    ]) {
+    for (const rowTime of ["noon UTC", "5 PM UTC", "25:00 UTC", "at 2500 UTC"]) {
       const [deadline] = extractCfpCandidates(
         `Paper deadline October 10, 2026 ${rowTime}\nAll deadlines are 23:59 UTC`,
       );
@@ -335,6 +341,14 @@ describe("promotion batch", () => {
       if (rowTime.includes("UTC")) expect(deadline).toMatchObject({ timezone: "UTC" });
       else expect(deadline).not.toHaveProperty("timezone");
     }
+    expect(
+      extractCfpCandidates("Paper deadline October 10, 2026 1700 UTC\nAll deadlines are 23:59 UTC"),
+    ).toMatchObject([{ date: "2026-10-10", time: "17:00:00", timezone: "UTC" }]);
+    expect(
+      extractCfpCandidates(
+        "Paper deadline October 10, 2026 at 1700 UTC\nAll deadlines are 23:59 UTC",
+      ),
+    ).toMatchObject([{ date: "2026-10-10", time: "17:00:00", timezone: "UTC" }]);
   });
 
   it.each([
