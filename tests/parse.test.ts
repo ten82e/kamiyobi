@@ -583,6 +583,24 @@ describe("parse_date_range", () => {
     expect(monthOf("Novella")).toBeNull();
     expect(monthOf("Apricot")).toBeNull();
     expect(monthOf("Janina")).toBeNull();
+    expect(monthOf("Mai")).toBe(5);
+    expect(monthOf("Juni")).toBe(6);
+    expect(monthOf("Juli")).toBe(7);
+    expect(monthOf("März")).toBe(3);
+    expect(monthOf("Oktober")).toBe(10);
+    expect(monthOf("Dezember")).toBe(12);
+  });
+
+  it("parses continental day-period and German month event dates (#820)", () => {
+    const [mayStart, mayEnd] = parseDateRange("15. May 2026", 2026);
+    expect(mayStart?.toISOString().slice(0, 10)).toBe("2026-05-15");
+    expect(mayEnd?.toISOString().slice(0, 10)).toBe("2026-05-15");
+    const [maiStart, maiEnd] = parseDateRange("15. Mai 2026", 2026);
+    expect(maiStart?.toISOString().slice(0, 10)).toBe("2026-05-15");
+    expect(maiEnd?.toISOString().slice(0, 10)).toBe("2026-05-15");
+    const [junStart, junEnd] = parseDateRange("17. Juni 2026", 2026);
+    expect(junStart?.toISOString().slice(0, 10)).toBe("2026-06-17");
+    expect(junEnd?.toISOString().slice(0, 10)).toBe("2026-06-17");
   });
 
   it("parseDateRange parses event dates without false positive month matching on city names (#278)", () => {
