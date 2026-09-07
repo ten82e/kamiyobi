@@ -646,6 +646,15 @@ describe("promotion batch", () => {
     );
   });
 
+  it("treats not considered after as a deadline line (#908)", () => {
+    expect(extractCfpCandidates("Papers will not be considered after May 15, 2026")).toMatchObject([
+      { date: "2026-05-15" },
+    ]);
+    expect(
+      extractCfpCandidates("Submissions will not be considered after May 15, 2026"),
+    ).toMatchObject([{ date: "2026-05-15" }]);
+  });
+
   it("filters out invalid dates in extractedDates without polluting candidate boundaries (#756)", () => {
     const candidates = extractCfpCandidates(
       "Submission Deadline: 2026-02-30, March 15, 2026 23:59 AoE",
