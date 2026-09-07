@@ -88,6 +88,16 @@ describe("fetch-primary extraction", () => {
       extractDeadline("Submission deadline\nOctober 15, 2026 23:59:59 AoE".replace("\n", " "), 2026)
         ?.time,
     ).toBe("23:59:59");
+    expect(
+      extractDeadline("Submission deadline: May 15, 2026 23:59 British Summer Time", 2026),
+    ).toMatchObject({
+      date: "2026-05-15",
+      time: "23:59:00",
+      tz: "Europe/London",
+    });
+    expect(
+      extractDeadline("論文締切: 2026年5月15日 23:59 Japan Standard Time", 2026),
+    ).toMatchObject({ date: "2026-05-15", time: "23:59:00", tz: "JST" });
   });
 
   it("abstract with round and tz", () => {

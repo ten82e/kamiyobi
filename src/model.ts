@@ -949,6 +949,37 @@ const TZ_NAMED: Record<string, string> = {
   hkt: "Asia/Hong_Kong",
 };
 
+/**
+ * CFP が略号の代わりに綴るゾーン名。
+ * BST/CST 略号は曖昧のまま、綴りだけを確定値へ落とす（#808）。
+ * US の Pacific/Eastern Time は #798。
+ */
+const TZ_PHRASES: Record<string, string> = {
+  "british summer time": "Europe/London",
+  "japan standard time": "jst",
+  "korea standard time": "kst",
+  "china standard time": "Asia/Shanghai",
+  "central european time": "cet",
+  "central european summer time": "cest",
+  "greenwich mean time": "gmt",
+  "singapore time": "sgt",
+  "singapore standard time": "sgt",
+  "hong kong time": "hkt",
+  "hong kong standard time": "hkt",
+};
+
+const TZ_PHRASE_RE =
+  /\b((?:british summer|japan standard|korea standard|china standard|central european(?: summer)?|greenwich mean|singapore(?: standard)?|hong kong(?: standard)?) time)(?!-)\b/i;
+
+/** Canonical zone token for a spelled-out name in free text, or null. */
+export function namedTimeZonePhraseOf(text: string): string | null {
+  const match = TZ_PHRASE_RE.exec(text);
+  if (!match) return null;
+  const alias = TZ_PHRASES[match[1].toLowerCase().replace(/\s+/g, " ")];
+  if (!alias) return null;
+  return alias.includes("/") ? alias : alias.toUpperCase();
+}
+
 /** These abbreviations name different zones unless the source gives context. */
 const TZ_AMBIGUOUS = new Set(["cst", "ist", "bst"]);
 
@@ -961,29 +992,40 @@ export type TzResolution = { status: "confirmed"; tz: Tz } | { status: "unconfir
 export function resolveTzStatus(tzRaw: string | null | undefined): TzResolution {
   if (tzRaw === null || tzRaw === undefined) return { status: "unconfirmed" };
   const raw = String(tzRaw).trim();
-  const low = raw.toLowerCase();
+  const low = raw.toLowerCase().replace(/\s+/g, " ");
+  const mapped = TZ_PHRASES[low];
+  if (mapped?.includes("/")) {
+    try {
+      new Intl.DateTimeFormat("en-US", { timeZone: mapped });
+      return { status: "confirmed", tz: { kind: "iana", name: mapped } };
+    } catch {
+      warn(`unknown IANA timezone ${JSON.stringify(mapped)}; observation rejected`);
+      return { status: "unconfirmed" };
+    }
+  }
+  const token = mapped ?? low;
 
-  if (!raw || TZ_AMBIGUOUS.has(low)) return { status: "unconfirmed" };
-  if (low in TZ_FIXED) {
+  if (!raw || TZ_AMBIGUOUS.has(token)) return { status: "unconfirmed" };
+  if (token in TZ_FIXED) {
     return {
       status: "confirmed",
-      tz: { kind: "fixed", offsetMinutes: TZ_FIXED[low] },
+      tz: { kind: "fixed", offsetMinutes: TZ_FIXED[token] },
     };
   }
-  if (low in TZ_FIXED_ABBREVIATIONS) {
+  if (token in TZ_FIXED_ABBREVIATIONS) {
     return {
       status: "confirmed",
-      tz: { kind: "fixed", offsetMinutes: TZ_FIXED_ABBREVIATIONS[low] },
+      tz: { kind: "fixed", offsetMinutes: TZ_FIXED_ABBREVIATIONS[token] },
     };
   }
-  if (low in TZ_NAMED) {
+  if (token in TZ_NAMED) {
     return {
       status: "confirmed",
-      tz: { kind: "iana", name: TZ_NAMED[low] },
+      tz: { kind: "iana", name: TZ_NAMED[token] },
     };
   }
 
-  const m = TZ_OFFSET_RE.exec(low);
+  const m = TZ_OFFSET_RE.exec(token);
   if (m) {
     const sign = m[1] === "-" ? -1 : 1;
     const hours = Number(m[2]);

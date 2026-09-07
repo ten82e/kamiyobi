@@ -12,7 +12,14 @@ import { parseArgs as parseNodeArgs } from "node:util";
 import { decode } from "html-entities";
 import { dump as dumpYaml, load as loadYaml } from "js-yaml";
 import { booleanValue, normalizeShortEquals, stringValue } from "./args.ts";
-import { deadlineTrackKey, monthOf, resolveTzStatus, roundOf, warn } from "./model.ts";
+import {
+  deadlineTrackKey,
+  monthOf,
+  namedTimeZonePhraseOf,
+  resolveTzStatus,
+  roundOf,
+  warn,
+} from "./model.ts";
 import { extractObservationTime } from "./sources/primary.ts";
 
 export let ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -250,6 +257,8 @@ export function extractDeadline(
       raw.toLowerCase().includes("anywhere") || raw.toUpperCase() === "AOE"
         ? "AoE"
         : raw.toUpperCase();
+  } else {
+    tz = namedTimeZonePhraseOf(window) ?? undefined;
   }
   // 日付を含む側の行から壁時計の時刻を取る。
   // 無ければ time を載せない。

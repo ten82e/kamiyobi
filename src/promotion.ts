@@ -17,6 +17,7 @@ import {
   type IdentityProvider,
   isDateOnlyDeadline,
   monthOf,
+  namedTimeZonePhraseOf,
   type ProviderIdentity,
   parseInstant,
   resolveTzStatus,
@@ -376,7 +377,7 @@ function extractedTimezone(text: string): string | undefined {
     if (candidate.includes("/") && !isKnownIanaTimezone(candidate)) continue;
     return candidate;
   }
-  return undefined;
+  return namedTimeZonePhraseOf(text) ?? undefined;
 }
 
 function candidateKind(text: string): string {

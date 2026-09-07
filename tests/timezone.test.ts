@@ -7,6 +7,7 @@ import {
   applyTz,
   asDate,
   isConfirmedTimezone,
+  namedTimeZonePhraseOf,
   parseInstant,
   resetWarnings,
   resolveTz,
@@ -117,6 +118,20 @@ describe("resolve_tz", () => {
   it.each(["CST", "IST", "BST"])("context-free abbreviation %j is ambiguous", (raw) => {
     expect(isConfirmedTimezone(raw)).toBe(false);
     expect(parseInstant("2026-07-15 12:00:00", raw)).toBeNull();
+  });
+
+  it("spelled-out zone names are confirmed without using ambiguous abbreviations (#808)", () => {
+    expect(isConfirmedTimezone("British Summer Time")).toBe(true);
+    expect(resolveTz("British Summer Time")).toEqual({ kind: "iana", name: "Europe/London" });
+    expect(isConfirmedTimezone("BST")).toBe(false);
+    expect(isConfirmedTimezone("Japan Standard Time")).toBe(true);
+    expect(offset(resolveTz("Japan Standard Time"))).toBe(9 * 60);
+    expect(isConfirmedTimezone("Central European Time")).toBe(true);
+    expect(offset(resolveTz("Central European Time"), WINTER)).toBe(60);
+    expect(isConfirmedTimezone("China Standard Time")).toBe(true);
+    expect(offset(resolveTz("China Standard Time"))).toBe(8 * 60);
+    expect(isConfirmedTimezone("CST")).toBe(false);
+    expect(namedTimeZonePhraseOf("Singapore Time-Sensitive Networking deadline")).toBeNull();
   });
 
   it("JST and KST aliases resolve to UTC+9", () => {
