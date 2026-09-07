@@ -83,6 +83,8 @@ export function isDeadlineLine(text: string | null | undefined): boolean {
     low.includes("received by") ||
     low.includes("receipt of") ||
     low.includes("last date") ||
+    low.includes("cut-off") ||
+    low.includes("cutoff") ||
     low.includes("締切") ||
     low.includes("締め切り") ||
     low.includes("期限") ||
