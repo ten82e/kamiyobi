@@ -3118,4 +3118,58 @@ describe("fixes for reverify defects (#744)", () => {
     expect(loaded.resolutions[0]?.page_id).toBe(updatedPageId);
     rmSync(dir, { recursive: true, force: true });
   });
+
+  it("does not block verification when sibling rounds belong to different tracks (#756)", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-track-round-"));
+    const ledgerPath = join(dir, "verification-ledger.json");
+    const dataPath = dataFile(dir, [
+      {
+        kind: "paper",
+        label: "Research Track Round 2",
+        round: 2,
+        track: "research",
+        precision: "date-only",
+        local_date: "2027-02-01",
+        evidence: [{ sourceClass: "official-cfp", sourceUrl: "https://example.test/cfp" }],
+        verification: {
+          official_url: "https://example.test/cfp",
+          source_class: "official-cfp",
+          next_check_at: "2026-08-30T00:00:00.000Z",
+          status: "pending",
+        },
+      },
+      {
+        kind: "paper",
+        label: "Industry Track Round 1",
+        round: 1,
+        track: "industry",
+        precision: "date-only",
+        local_date: "2027-03-01",
+        evidence: [{ sourceClass: "official-cfp", sourceUrl: "https://example.test/cfp" }],
+        verification: {
+          official_url: "https://example.test/cfp",
+          source_class: "official-cfp",
+          next_check_at: "2026-08-30T00:00:00.000Z",
+          status: "pending",
+        },
+      },
+    ]);
+
+    await reverifyData({
+      dataPath,
+      ledgerPath,
+      now: new Date("2026-08-31T00:00:00.000Z"),
+      due: true,
+      bodyRoot: join(dir, "evidence", "blobs"),
+      fetchImpl: async () =>
+        new Response(
+          "Research Track Round 2 Deadline: February 1, 2027\nIndustry Track Round 1 Deadline: March 1, 2027",
+        ),
+    });
+
+    const reloaded = loadVerificationLedger(ledgerPath);
+    const researchEntry = reloaded.deadlines["demo|demo-2027|paper|2|research"];
+    expect(researchEntry?.status).toBe("verified");
+    rmSync(dir, { recursive: true, force: true });
+  });
 });

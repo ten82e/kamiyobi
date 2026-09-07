@@ -439,6 +439,100 @@ describe("promotion batch", () => {
     expect(candidates[1]).toMatchObject({ time: "23:59:00", timezone: "AoE" });
   });
 
+  it("extracts dates formatted with hyphens, slashes, or dots (#756)", () => {
+    expect(extractCfpCandidates("Paper submission deadline: 15-May-2026 23:59 AoE")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "AoE" },
+    ]);
+    expect(extractCfpCandidates("Paper submission deadline: May-15-2026 23:59 AoE")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "AoE" },
+    ]);
+    expect(extractCfpCandidates("Paper submission deadline: 2026.05.15 23:59 AoE")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "AoE" },
+    ]);
+    expect(extractCfpCandidates("Paper submission deadline: 2026/05/15 23:59 AoE")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "AoE" },
+    ]);
+  });
+
+  it("filters out invalid dates in extractedDates without polluting candidate boundaries (#756)", () => {
+    const candidates = extractCfpCandidates(
+      "Submission Deadline: 2026-02-30, March 15, 2026 23:59 AoE",
+    );
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]).toMatchObject({
+      date: "2026-03-15",
+      time: "23:59:00",
+      timezone: "AoE",
+    });
+  });
+
+  it("extracts global deadline timing with colons and parenthesized timezones (#756)", () => {
+    expect(
+      extractCfpCandidates(
+        "All deadlines: 23:59 AoE\n" + "Paper submission deadline: October 10, 2026",
+      ),
+    ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
+
+    expect(
+      extractCfpCandidates(
+        "All deadlines are 11:59 PM (AoE)\n" + "Paper submission deadline: October 10, 2026",
+      ),
+    ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
+
+    expect(
+      extractCfpCandidates(
+        "All deadlines are at 23:59 AoE\n" + "Paper submission deadline: October 10, 2026",
+      ),
+    ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
+  });
+
+  it("extracts Japanese deadline kinds for domestic conferences (#756)", () => {
+    expect(
+      extractCfpCandidates("発表申込締切: 2026年5月1日\n原稿投稿締切: 2026年6月1日"),
+    ).toMatchObject([
+      { kind: "abstract", date: "2026-05-01" },
+      { kind: "paper", date: "2026-06-01" },
+    ]);
+
+    expect(
+      extractCfpCandidates("講演申込締切: 2026年5月1日\n最終原稿締切: 2026年6月1日"),
+    ).toMatchObject([
+      { kind: "abstract", date: "2026-05-01" },
+      { kind: "camera_ready", date: "2026-06-01" },
+    ]);
+
+    expect(
+      extractCfpCandidates("カメラレディ締切: 2026年6月1日\n査読回答期限: 2026年6月15日"),
+    ).toMatchObject([
+      { kind: "camera_ready", date: "2026-06-01" },
+      { kind: "rebuttal_end", date: "2026-06-15" },
+    ]);
+  });
+
+  it("extracts candidate tracks from prefix and postfix track notations (#756)", () => {
+    expect(
+      extractCfpCandidates("Research Track: Paper Submission Deadline: May 15, 2026"),
+    ).toMatchObject([{ date: "2026-05-15", track: "research" }]);
+
+    expect(
+      extractCfpCandidates("Industry Track - Submission Deadline: June 1, 2026"),
+    ).toMatchObject([{ date: "2026-06-01", track: "industry" }]);
+
+    expect(
+      extractCfpCandidates("Paper Submission Deadline (Track: Workshops): July 1, 2026"),
+    ).toMatchObject([{ date: "2026-07-01", track: "workshops" }]);
+
+    const [mainCandidate] = extractCfpCandidates(
+      "Main Track: Paper Submission Deadline: May 15, 2026",
+    );
+    expect(mainCandidate).not.toHaveProperty("track");
+
+    const [regularCandidate] = extractCfpCandidates(
+      "Regular Track: Paper Submission Deadline: May 15, 2026",
+    );
+    expect(regularCandidate).not.toHaveProperty("track");
+  });
+
   it("requires explicit venue and category review before promotion", () => {
     expect(resolvePromotion(observation({ reviewState: undefined })).decision).toBe("hold");
     expect(resolvePromotion(observation({ categories: [] })).decision).toBe("hold");

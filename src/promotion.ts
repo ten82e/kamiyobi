@@ -242,20 +242,20 @@ export function canonicalJson(value: unknown): string {
 }
 
 const DATE_PATTERNS = [
-  /\b20\d{2}[-/]\d{1,2}[-/]\d{1,2}\b/g,
-  /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+\d{1,2}(?:st|nd|rd|th)?(?:,|\s)\s*20\d{2}\b/gi,
-  /\b\d{1,2}(?:st|nd|rd|th)?\s+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[,]?\s+20\d{2}\b/gi,
+  /\b20\d{2}[-/.]\d{1,2}[-/.]\d{1,2}\b/g,
+  /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[-/\s]+\d{1,2}(?:st|nd|rd|th)?(?:,)?[-/\s]+20\d{2}\b/gi,
+  /\b\d{1,2}(?:st|nd|rd|th)?[-/\s]+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[,]?[-/\s]+20\d{2}\b/gi,
   /\b20\d{2}年\d{1,2}月\d{1,2}日/g,
 ];
 
 function extractedDate(text: string): { date: string; year: number } | null {
-  const iso = /\b(20\d{2})[-/](\d{1,2})[-/](\d{1,2})\b/.exec(text);
+  const iso = /\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b/.exec(text);
   const monthFirst =
-    /\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,|\s)\s*(20\d{2})\b/i.exec(
+    /\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[-/\s]+(\d{1,2})(?:st|nd|rd|th)?(?:,)?[-/\s]+(20\d{2})\b/i.exec(
       text,
     );
   const dayFirst =
-    /\b(\d{1,2})(?:st|nd|rd|th)?\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[,]?\s+(20\d{2})\b/i.exec(
+    /\b(\d{1,2})(?:st|nd|rd|th)?[-/\s]+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[,]?[-/\s]+(20\d{2})\b/i.exec(
       text,
     );
   const japanese = /\b(20\d{2})年(\d{1,2})月(\d{1,2})日/.exec(text);
@@ -302,12 +302,13 @@ function extractedDate(text: string): { date: string; year: number } | null {
 
 function extractedDates(
   text: string,
-): Array<{ date?: string; year?: number; index: number; end: number }> {
+): Array<{ date: string; year: number; index: number; end: number }> {
   return DATE_PATTERNS.flatMap((pattern) =>
-    [...text.matchAll(pattern)].map((match) => {
+    [...text.matchAll(pattern)].flatMap((match) => {
       const value = extractedDate(match[0]);
+      if (!value) return [];
       const index = match.index ?? 0;
-      return { ...value, index, end: index + match[0].length };
+      return [{ ...value, index, end: index + match[0].length }];
     }),
   ).sort((a, b) => a.index - b.index || a.end - b.end);
 }
@@ -380,22 +381,101 @@ function extractedTimezone(text: string): string | undefined {
 
 function candidateKind(text: string): string {
   const value = text.toLowerCase();
-  if (value.includes("abstract") || value.includes("概要")) return "abstract";
-  if (value.includes("camera-ready") || value.includes("camera ready")) return "camera_ready";
+  if (
+    value.includes("abstract") ||
+    value.includes("概要") ||
+    value.includes("発表申込") ||
+    value.includes("講演申込")
+  )
+    return "abstract";
+  if (
+    value.includes("camera-ready") ||
+    value.includes("camera ready") ||
+    value.includes("カメラレディ") ||
+    value.includes("最終原稿")
+  )
+    return "camera_ready";
   if (
     /final\s+(?:paper|version|manuscript)(?:\s+files?)?\s+(?:due|deadline|submission)/.test(value)
   )
     return "camera_ready";
   if (value.includes("notification") || value.includes("採否") || value.includes("通知"))
     return "notification";
-  if (value.includes("rebuttal") || value.includes("author response")) return "rebuttal_end";
+  if (value.includes("rebuttal") || value.includes("author response") || value.includes("査読回答"))
+    return "rebuttal_end";
   if (value.includes("registration") || value.includes("参加登録")) return "registration";
   return "paper";
 }
 
+const TRACK_STOPWORDS = new Set([
+  "the",
+  "a",
+  "an",
+  "this",
+  "each",
+  "every",
+  "main",
+  "full",
+  "regular",
+  "paper",
+  "papers",
+  "conference",
+  "fast",
+  "single",
+  "our",
+  "all",
+  "jan",
+  "january",
+  "feb",
+  "february",
+  "mar",
+  "march",
+  "apr",
+  "april",
+  "may",
+  "jun",
+  "june",
+  "jul",
+  "july",
+  "aug",
+  "august",
+  "sep",
+  "september",
+  "oct",
+  "october",
+  "nov",
+  "november",
+  "dec",
+  "december",
+  "deadline",
+  "deadlines",
+  "due",
+  "submission",
+  "submissions",
+  "submit",
+  "notification",
+  "camera",
+  "registration",
+  "abstract",
+  "date",
+  "dates",
+  "round",
+  "cycle",
+  "phase",
+  "call",
+  "cfp",
+]);
+
 function candidateTrack(text: string): string | undefined {
-  const match = /\b(?:track|stream)\s*[:-]\s*([A-Za-z][A-Za-z0-9_-]*)/i.exec(text);
-  return match ? slug(match[1]) : undefined;
+  const prefix = /\b([A-Za-z][A-Za-z0-9_-]*)\s+(?:track|stream)\b/i.exec(text);
+  if (prefix && !TRACK_STOPWORDS.has(prefix[1].toLowerCase())) {
+    return slug(prefix[1]);
+  }
+  const postfix = /\b(?:track|stream)\s*[:-]\s*([A-Za-z][A-Za-z0-9_-]*)/i.exec(text);
+  if (postfix && !TRACK_STOPWORDS.has(postfix[1].toLowerCase())) {
+    return slug(postfix[1]);
+  }
+  return undefined;
 }
 
 /** Extract only date-bearing CFP/deadline lines; ambiguous values stay candidates for review. */
@@ -440,7 +520,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
     .filter(Boolean);
   const globalDeadlineTiming = lines.find(
     (line) =>
-      /^all deadlines?\s+(?:are|at)\s+\d{1,2}:\d{2}(?::\d{2})?\s*(?:[ap]\.?m\.?\s+)?(?:AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|JST|PT|ET|CT|MT|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)(?:\s*\(Anywhere on Earth\))?[.!]?$/i.test(
+      /^all deadlines?(?:\s+(?:are\s+at|are|at))?\s*[:\s]\s*\d{1,2}:\d{2}(?::\d{2})?\s*(?:[ap]\.?m\.?\s+)?[(（]?(?:AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|JST|PT|ET|CT|MT|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)[)）]?(?:\s*\(Anywhere on Earth\))?[.!]?$/i.test(
         line,
       ) &&
       extractedTime(line) &&
@@ -490,7 +570,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
       const segmentLabel = currentPrefix.replace(/^[\s,;:—–|-]*(?:and\s+)?/i, "").trim();
       const segmentHasKindWords =
         extracted.length > 1 &&
-        /abstract|camera|notification|rebuttal|registration|paper|submission|final|概要|通知|投稿/i.test(
+        /abstract|camera|notification|rebuttal|registration|paper|submission|final|概要|通知|投稿|申込|最終原稿|カメラレディ|査読回答|採否/i.test(
           segmentLabel,
         );
       const candidate: CfpExtractionCandidate = {
@@ -503,8 +583,14 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
         round: roundOf(segmentHasKindWords ? segmentLabel : raw),
         ...(candidateTrack(raw) ? { track: candidateTrack(raw) } : {}),
       };
-      const localTime = ambiguousLeadingTime ? undefined : extractedTime(scope);
-      const localTimezone = ambiguousLeadingTime ? undefined : extractedTimezone(scope);
+      const trailingTime = extractedTime(suffix);
+      const trailingTz = extractedTimezone(suffix);
+      const localTime = ambiguousLeadingTime ? undefined : (trailingTime ?? extractedTime(scope));
+      const localTimezone = ambiguousLeadingTime
+        ? undefined
+        : trailingTime
+          ? trailingTz
+          : (extractedTimezone(scope) ?? trailingTz);
       const deadlineSemantics = deadlineLabel;
       const inheritsHeader =
         headerHasDeadline &&
