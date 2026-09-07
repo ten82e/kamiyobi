@@ -1591,6 +1591,7 @@ const PAPER = new Set([
   "research_paper",
   "technical_paper",
   "regular_paper",
+  "contributed_paper",
 ]);
 const CAMERA = new Set([
   "camera_ready",
