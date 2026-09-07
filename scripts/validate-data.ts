@@ -1002,9 +1002,9 @@ export function main(argv = process.argv.slice(2)): number {
   const file = argv.find((value) => !value.startsWith("-"));
   try {
     const result = file ? validateFile(file) : validateProduction();
-    const findings = file ? [] : readFindings(ROOT);
-    const baseline = file ? [] : findings;
-    const newWarnings = file ? [] : newValidatorWarnings(result.warnings, baseline);
+    const findings = readFindings(ROOT);
+    const baseline = findings;
+    const newWarnings = newValidatorWarnings(result.warnings, baseline);
     if (json)
       process.stdout.write(
         `${JSON.stringify({

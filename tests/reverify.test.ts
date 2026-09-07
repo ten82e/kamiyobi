@@ -1477,6 +1477,30 @@ it("classifies an in-memory ExactDeadline with at_utc and tz_raw as a precision 
   ).toBe("ambiguous");
 });
 
+it("classifies date-only deadline changes within and beyond 30 days (#752)", () => {
+  expect(
+    classifyDeadlineChange(
+      { kind: "paper", round: 1, precision: "date-only", local_date: "2026-09-01" },
+      { kind: "paper", round: 1, precision: "date-only", local_date: "2026-09-15" },
+    ),
+  ).toBe("extension");
+
+  expect(
+    classifyDeadlineChange(
+      { kind: "paper", round: 1, precision: "date-only", local_date: "2026-09-15" },
+      { kind: "paper", round: 1, precision: "date-only", local_date: "2026-09-01" },
+    ),
+  ).toBe("pull-in");
+
+  // Extension > 30 days is ambiguous
+  expect(
+    classifyDeadlineChange(
+      { kind: "paper", round: 1, precision: "date-only", local_date: "2026-09-01" },
+      { kind: "paper", round: 1, precision: "date-only", local_date: "2026-10-15" }, // 44 days
+    ),
+  ).toBe("ambiguous");
+});
+
 it("routes pull-in and exact-to-date-only changes to manual resolution", async () => {
   const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-change-"));
   const exactData = dataFile(dir, [

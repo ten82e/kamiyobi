@@ -297,7 +297,7 @@ export function deadlineTrackKey(
   kind: string,
   explicitTrack?: string | null,
 ): string {
-  if (explicitTrack?.trim()) return slug(explicitTrack);
+  if (explicitTrack?.trim()) return slug(explicitTrack) || explicitTrack.trim();
   const type = slug(kind) || "other";
   const value = slug(String(label ?? "").replace(/\b(?:round|r)\s*\d+\b/gi, " "));
   const generic = new Set([
@@ -487,6 +487,9 @@ export function classifyDeadlineChange(
   if (oldPrecision === "exact" && newPrecision === "date-only") return "precision-downgrade";
   if (oldPrecision === "date-only" && newPrecision === "date-only") {
     if (oldDate === null || newDate === null) return "ambiguous";
+    const oldMs = asDate(oldDate)?.getTime() ?? 0;
+    const newMs = asDate(newDate)?.getTime() ?? 0;
+    if (Math.abs(newMs - oldMs) > 30 * DAY_MS) return "ambiguous";
     return newDate > oldDate ? "extension" : "pull-in";
   }
   const oldTime = changeTime(oldValue);
@@ -1293,7 +1296,7 @@ function scan(part: string): {
       if (month === null) month = monthOf(word);
     } else {
       const n = Number(num);
-      if (num.length === 4) {
+      if (num.length === 4 && n >= 1990 && n <= 2100) {
         if (year === null) year = n;
       } else if (n >= 1 && n <= 31 && day === null) {
         day = n;
@@ -2053,7 +2056,9 @@ export function conferencesFromJson(
           kind: refineKindWithLabel(kindOf(String(dl.kind ?? "other")), String(dl.label ?? "")),
           label: String(dl.label ?? ""),
           round: Number(dl.round ?? 1) || 1,
-          ...(typeof dl.track === "string" && dl.track.trim() ? { track: slug(dl.track) } : {}),
+          ...(typeof dl.track === "string" && dl.track.trim()
+            ? { track: slug(dl.track) || dl.track.trim() }
+            : {}),
           comment: dl.comment === null || dl.comment === undefined ? null : String(dl.comment),
           ...(evidence.length > 0 ? { evidence } : {}),
           ...(origins.length > 0 ? { origins } : {}),

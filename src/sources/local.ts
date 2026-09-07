@@ -95,7 +95,7 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
         precision: "date-only",
         local_date: fmtDate(localDate),
         round: roundOf(label, Number(rec.round ?? 1) || 1),
-        ...(track ? { track: slug(track) } : {}),
+        ...(track ? { track: slug(track) || track.trim() } : {}),
         comment: rec.comment === null || rec.comment === undefined ? null : String(rec.comment),
         raw_value: String(rec.date),
         evidence: deadlineEvidence(rec.evidence ?? raw.evidence, {
@@ -118,7 +118,7 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
       tz_raw: embeddedTimezone(rec.date) ?? tzRaw,
       // A round named in the label wins over the explicit field.
       round: roundOf(label, Number(rec.round ?? 1) || 1),
-      ...(track ? { track: slug(track) } : {}),
+      ...(track ? { track: slug(track) || track.trim() } : {}),
       comment: rec.comment === null || rec.comment === undefined ? null : String(rec.comment),
       raw_value: String(rec.date),
       evidence: deadlineEvidence(rec.evidence ?? raw.evidence, {

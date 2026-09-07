@@ -1447,7 +1447,7 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
                 label: String(item.label ?? item.kind ?? "other"),
                 round: Number(item.round ?? 1) || 1,
                 ...(typeof item.track === "string" && item.track.trim()
-                  ? { track: slug(item.track) }
+                  ? { track: slug(item.track) || item.track.trim() }
                   : {}),
                 precision: "date-only" as const,
                 local_date: "1970-01-01",
