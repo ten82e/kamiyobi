@@ -730,6 +730,15 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("treats no later than and on or before as deadline lines (#846)", () => {
+    expect(extractCfpCandidates("No later than May 15, 2026")).toMatchObject([
+      { date: "2026-05-15" },
+    ]);
+    expect(extractCfpCandidates("On or before June 1, 2026")).toMatchObject([
+      { date: "2026-06-01" },
+    ]);
+  });
+
   it("filters out invalid dates in extractedDates without polluting candidate boundaries (#756)", () => {
     const candidates = extractCfpCandidates(
       "Submission Deadline: 2026-02-30, March 15, 2026 23:59 AoE",
