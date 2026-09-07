@@ -100,6 +100,17 @@ describe("fetch-primary extraction", () => {
     expect(got?.label).toBe("Round 2 Abstract submission");
   });
 
+  it("extracts spelled-out US zone names (#798)", () => {
+    expect(extractDeadline("Paper deadline: May 15, 2026 23:59 Pacific Time", 2026)).toMatchObject({
+      date: "2026-05-15",
+      time: "23:59:00",
+      tz: "PT",
+    });
+    expect(
+      extractDeadline("Paper deadline: May 15, 2026 23:59 Eastern Daylight Time", 2026)?.tz,
+    ).toBe("EDT");
+  });
+
   it("defers edition-window validation to the primary resolver", () => {
     expect(extractDeadline("Paper submission deadline: August 21, 2024", 2026)?.date).toBe(
       "2024-08-21",

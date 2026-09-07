@@ -1171,7 +1171,7 @@ function labelSignature(value: string): string {
       .replace(/\b20\d{2}\b/g, " ")
       .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, " ")
       .replace(
-        /\b(?:AoE|UTC|GMT|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|JST|PT|ET|CT|MT)\b/gi,
+        /\b(?:AoE|UTC|GMT|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|JST|PT|ET|CT|MT|(?:Pacific|Eastern|Central|Mountain)(?:\s+(?:Daylight|Standard))?\s+Time)\b/gi,
         " ",
       )
       .replace(/\b(?:mon|tues|wednes|thurs|fri|satur|sun)day\b/gi, " ")
