@@ -29,6 +29,8 @@ const SPEC_TABLE: Array<[string, string]> = [
   ["camera", "camera_ready"],
   ["final_paper", "camera_ready"],
   ["final_submission", "camera_ready"],
+  ["final_deadline", "camera_ready"],
+  ["final deadline", "camera_ready"],
   ["revision-deadline", "camera_ready"],
   ["rebuttal_start", "rebuttal_start"],
   ["rebuttal_period_start", "rebuttal_start"],
@@ -122,6 +124,12 @@ describe("kind_of", () => {
   it("extended_abstract is an abstract deadline (#896)", () => {
     expect(kindOf("extended_abstract")).toBe("abstract");
     expect(kindOf("extended-abstract")).toBe("abstract");
+    expect(kindOf("withdrawal")).toBe("other");
+  });
+
+  it("ccfddl final_deadline key is camera-ready (#834)", () => {
+    expect(kindOf("final_deadline")).toBe("camera_ready");
+    expect(kindOf("final deadline")).toBe("camera_ready");
     expect(kindOf("withdrawal")).toBe("other");
   });
 

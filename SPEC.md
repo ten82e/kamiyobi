@@ -346,7 +346,7 @@ export function kindOf(rawTypeOrKey: string | null | undefined): DeadlineKind;
 | `abstract_deadline`, `abstract deadline`, `abstract` | `abstract` |
 | `supplementary` | `supplementary` |
 | `notification`, `first-notification`, `final-notification` | `notification` |
-| `camera_ready`, `camera-ready`, `revision-deadline` | `camera_ready` |
+| `camera_ready`, `camera-ready`, `revision-deadline`, `final_deadline` | `camera_ready` |
 | `rebuttal_start`, `rebuttal_period_start` | `rebuttal_start` |
 | `rebuttal_end`, `rebuttal`, `rebuttal_and_revision`, `author_response`, `author_rebuttal`, `rebuttal_period_end`, `rebuttal_deadline` | `rebuttal_end` |
 | `review_release` | `review_release` |
