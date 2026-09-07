@@ -106,6 +106,12 @@ describe("kind_of", () => {
     expect(kindOf("workshop")).toBe("other");
   });
 
+  it("industry_paper is a paper deadline (#916)", () => {
+    expect(kindOf("industry_paper")).toBe("paper");
+    expect(kindOf("industry-paper")).toBe("paper");
+    expect(kindOf("withdrawal")).toBe("other");
+  });
+
   it("supplementary is not collapsed into paper", () => {
     expect(kindOf("supplementary")).toBe("supplementary");
     expect(kindOf("supplementary")).not.toBe(kindOf("paper"));
