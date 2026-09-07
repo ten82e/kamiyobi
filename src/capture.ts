@@ -140,15 +140,15 @@ export function assertSafePageUrl(value: string, allowHttpHosts: string[] = []):
   } catch {
     throw new PageCaptureError("unsafe-url", `invalid page URL: ${value}`);
   }
-  if (
-    url.protocol !== "https:" &&
-    !(
-      url.protocol === "http:" &&
-      allowHttpHosts.map((host) => host.toLowerCase()).includes(url.hostname.toLowerCase())
-    )
-  )
-    throw new PageCaptureError("unsafe-url", `unsafe page URL protocol: ${url.protocol}`);
   const host = normalizedHost(url);
+  const allowedHosts = allowHttpHosts.map((allowed) =>
+    allowed
+      .toLowerCase()
+      .replace(/\.$/, "")
+      .replace(/^\[|\]$/g, ""),
+  );
+  if (url.protocol !== "https:" && !(url.protocol === "http:" && allowedHosts.includes(host)))
+    throw new PageCaptureError("unsafe-url", `unsafe page URL protocol: ${url.protocol}`);
   if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local"))
     throw new PageCaptureError("unsafe-url", `private page hostname: ${host}`);
   assertPublicAddress(host);

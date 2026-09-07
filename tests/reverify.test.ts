@@ -1296,6 +1296,18 @@ it("rejects hexadecimal IPv4-mapped private page addresses", () => {
   expect(() => assertSafePageUrl("https://[::ffff:c0a8:101]/")).toThrow(/private page address/);
 });
 
+it("normalizes hosts before checking allowHttpHosts in assertSafePageUrl (#758)", () => {
+  const urlWithDot = assertSafePageUrl("http://example.com./cfp", ["example.com"]);
+  expect(urlWithDot.hostname).toBe("example.com.");
+  const urlUpper = assertSafePageUrl("http://EXAMPLE.COM/cfp", ["example.com."]);
+  expect(urlUpper.hostname).toBe("example.com");
+  const ipv6 = assertSafePageUrl("http://[2001:db8::1]/cfp", ["[2001:db8::1]"]);
+  expect(ipv6.hostname).toBe("[2001:db8::1]");
+  expect(() => assertSafePageUrl("http://other.example.com/cfp", ["example.com"])).toThrow(
+    /unsafe page URL protocol/,
+  );
+});
+
 it("answers both lookup callback contracts from the pinned resolver", () => {
   // Node 26 の autoSelectFamily は lookup を { all: true } で呼び配列形式を要求する。
   // 旧式のみだと ERR_INVALID_IP_ADDRESS で capture 全リクエストが失敗する回帰の防止。

@@ -1,5 +1,13 @@
 import { createHash } from "node:crypto";
-import { chmodSync, mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
@@ -157,5 +165,32 @@ it("fails closed when an evidence reference directory cannot be traversed", () =
     expect(() => gcEvidence(root, true)).toThrow(/references|permission|EACCES/);
   } finally {
     chmodSync(references, 0o700);
+  }
+});
+
+it("removes orphan body blobs during non-dryRun GC even without trash CLI (#758)", () => {
+  const root = mkdtempSync(join(tmpdir(), "kamiyobi-evidence-gc-fallback-"));
+  const data = join(root, "data");
+  mkdirSync(join(data, "evidence", "blobs"), { recursive: true });
+  const body = "orphan captured page";
+  const hash = createHash("sha256").update(body).digest("hex");
+  const blobPath = join(data, "evidence", "blobs", `${hash}.body`);
+  writeFileSync(blobPath, body);
+  // Empty ledger with no references -> the blob is an orphan
+  writeFileSync(
+    join(data, "verification-ledger.json"),
+    JSON.stringify({ pages: {}, deadlines: {} }),
+  );
+
+  expect(existsSync(blobPath)).toBe(true);
+  const originalPath = process.env.PATH;
+  process.env.PATH = "";
+  try {
+    const result = gcEvidence(root, false);
+    expect(result.removed).toContain(`data/evidence/blobs/${hash}.body`);
+    expect(existsSync(blobPath)).toBe(false);
+  } finally {
+    process.env.PATH = originalPath;
+    rmSync(root, { recursive: true, force: true });
   }
 });

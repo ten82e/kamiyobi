@@ -785,5 +785,62 @@ describe("month envelope validation fixes (#746)", () => {
       const exitCode = main(["data/manual.yaml"]);
       expect(exitCode).toBe(0);
     });
+
+    it("allows cross-year date_text when event spans across year boundary (#758)", () => {
+      const res = validateData({
+        conferences: [
+          {
+            key: "winter-conf",
+            title: "Winter Conference",
+            categories: ["systems"],
+            editions: [
+              {
+                year: 2026,
+                id: "winter-conf-2026",
+                date_text: "December 28, 2026 - January 3, 2027",
+                deadlines: [
+                  {
+                    kind: "paper",
+                    date: "2026-10-01",
+                    precision: "date-only",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+      const yearConflictErrors = res.errors.filter((e) => e.includes("conflicts with edition"));
+      expect(yearConflictErrors).toEqual([]);
+    });
+
+    it("rejects year + 1 in date_text when edition year is absent (#758)", () => {
+      const res = validateData({
+        conferences: [
+          {
+            key: "mismatched-conf",
+            title: "Mismatched Conference",
+            categories: ["systems"],
+            editions: [
+              {
+                year: 2026,
+                id: "mismatched-conf-2026",
+                date_text: "January 3, 2027",
+                deadlines: [
+                  {
+                    kind: "paper",
+                    date: "2026-10-01",
+                    precision: "date-only",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+      expect(res.errors).toContain(
+        "mismatched-conf/mismatched-conf-2026: date_text year 2027 conflicts with edition 2026",
+      );
+    });
   });
 });

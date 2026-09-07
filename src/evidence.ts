@@ -6,6 +6,7 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
@@ -291,7 +292,15 @@ export function gcEvidence(root: string, dryRun = false): { removed: string[]; k
       .toLowerCase();
     if (report.orphan_hashes.includes(hash)) {
       removed.push(relativeRef(root, path));
-      if (!dryRun) execFileSync("trash", [path], { stdio: "ignore" });
+      if (!dryRun) {
+        try {
+          execFileSync("trash", [path], { stdio: "ignore" });
+        } catch (error) {
+          // CI / stock Linux は trash 未導入で ENOENT。それ以外は握り潰さない。
+          if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+          rmSync(path, { force: true });
+        }
+      }
     } else kept.push(relativeRef(root, path));
   }
   return { removed: removed.sort(), kept: kept.sort() };

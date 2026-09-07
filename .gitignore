@@ -14,3 +14,4 @@ __pycache__/
 
 # 他セッションの作業中間ファイル (自律ループ・Codex CLI 等の round-result)
 work/
+.claude/
