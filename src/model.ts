@@ -1750,10 +1750,39 @@ const KANJI_NUMERALS: Record<string, number> = {
   十: 10,
 };
 
+const WORD_ROUND_NUMERALS: Record<string, number> = {
+  first: 1,
+  second: 2,
+  third: 3,
+  fourth: 4,
+  fifth: 5,
+  sixth: 6,
+  seventh: 7,
+  eighth: 8,
+  ninth: 9,
+  tenth: 10,
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+};
+
+const ROUND_WORD = "first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth";
+const ROUND_CARDINAL = "one|two|three|four|five|six|seven|eight|nine|ten";
+
 const ROUND_PATTERNS = [
   /\b(?:round|cycle|phase|stage)\s*#?\s*([0-9]+)\b/i,
   /\b([0-9]+)(?:st|nd|rd|th)\s+(?:round|cycle|phase|stage)\b/i,
   /\b(?:round|cycle|phase|stage)\s*#?\s*(i|ii|iii|iv|v|vi|vii|viii|ix|x)\b/i,
+  new RegExp(`\\b(${ROUND_WORD})\\s+(?:round|cycle|phase|stage)\\b`, "i"),
+  new RegExp(`\\b(?:round|cycle|phase|stage)\\s+(${ROUND_WORD}|${ROUND_CARDINAL})\\b`, "i"),
+  new RegExp(`\\b(${ROUND_WORD})\\s+(?:paper\\s+)?submission(?:\\s+deadline)?\\b`, "i"),
   /\br([1-9][0-9]?)\b/i,
   /第\s*([0-9]+|[一二三四五六七八九十]+)\s*(?:回|次|期)/,
   /([0-9]+|[一二三四五六七八九十]+)\s*次(?:締切|募集|提出)/,
@@ -1769,6 +1798,7 @@ export function roundOf(label: string | null | undefined, defaultRound = 1): num
       const raw = match[1].toLowerCase();
       if (raw in ROMAN_NUMERALS) return ROMAN_NUMERALS[raw];
       if (raw in KANJI_NUMERALS) return KANJI_NUMERALS[raw];
+      if (raw in WORD_ROUND_NUMERALS) return WORD_ROUND_NUMERALS[raw];
       const value = Number(raw);
       if (value >= 1) return value;
     }
