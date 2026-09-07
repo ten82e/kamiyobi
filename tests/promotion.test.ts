@@ -352,6 +352,15 @@ describe("promotion batch", () => {
     }
   });
 
+  it("keeps AEDT/AEST as extracted timezones (#818)", () => {
+    expect(extractCfpCandidates("Deadline: 15 May 2026 23:59 AEDT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "AEDT" },
+    ]);
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 23:59 AEST")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "AEST" },
+    ]);
+  });
+
   it.each([
     "All deadlines are not 23:59 AoE",
     "All deadlines are never 23:59 AoE",
