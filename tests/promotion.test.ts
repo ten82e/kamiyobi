@@ -337,6 +337,24 @@ describe("promotion batch", () => {
     }
   });
 
+  it("keeps spelled-out zone names that are not ambiguous abbreviations (#808)", () => {
+    expect(
+      extractCfpCandidates("Paper deadline: May 15, 2026 23:59 British Summer Time"),
+    ).toMatchObject([{ date: "2026-05-15", time: "23:59:00", timezone: "Europe/London" }]);
+    expect(extractCfpCandidates("論文締切: 2026年5月15日 23:59 Japan Standard Time")).toMatchObject(
+      [{ date: "2026-05-15", time: "23:59:00", timezone: "JST" }],
+    );
+    expect(extractCfpCandidates("Deadline: 15 May 2026 23:59 China Standard Time")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "Asia/Shanghai" },
+    ]);
+    expect(extractCfpCandidates("Deadline: 15 May 2026 23:59 BST")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00" },
+    ]);
+    expect(extractCfpCandidates("Deadline: 15 May 2026 23:59 BST")[0]).not.toHaveProperty(
+      "timezone",
+    );
+  });
+
   it.each([
     "All deadlines are not 23:59 AoE",
     "All deadlines are never 23:59 AoE",
