@@ -582,6 +582,12 @@ describe("promotion batch", () => {
     ).not.toContain("eat");
   });
 
+  it("keeps SAST as an extracted timezone (#852)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 SAST")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "SAST" },
+    ]);
+  });
+
   it("filters out invalid dates in extractedDates without polluting candidate boundaries (#756)", () => {
     const candidates = extractCfpCandidates(
       "Submission Deadline: 2026-02-30, March 15, 2026 23:59 AoE",
