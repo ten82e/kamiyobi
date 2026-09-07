@@ -433,7 +433,7 @@ function sortKey(rec: DataRecord): [number, string] {
   // 終日項目はその日の 00:00 UTC、それ以外は正確な時刻で並べる。
   const stamp =
     rec.type === "deadline" && rec.deadline && isDateOnlyDeadline(rec.deadline)
-      ? rec.start.getTime()
+      ? (asDate(rec.deadline.local_date)?.getTime() ?? rec.start.getTime())
       : rec.all_day
         ? dateOnly(rec.start).getTime()
         : rec.start.getTime();

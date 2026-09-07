@@ -302,7 +302,7 @@ function validIso(value: unknown, nullable = false): boolean {
   return Number.isFinite(Date.parse(value));
 }
 
-function pageIdForUrl(value: string): string {
+export function pageIdForUrl(value: string): string {
   const url = new URL(value);
   url.hash = "";
   return `page:${createHash("sha256").update(url.toString()).digest("hex")}`;
@@ -1313,7 +1313,10 @@ function targetFor(
   );
   return {
     deadlineId: id,
-    pageId: state?.page_id ?? pageIdForUrl(safeUrl),
+    pageId:
+      state?.official_url && state.official_url !== safeUrl
+        ? pageIdForUrl(safeUrl)
+        : (state?.page_id ?? pageIdForUrl(safeUrl)),
     url: safeUrl,
     sourceClass,
     ...(providerIdentity.providerKey ? { providerIdentity } : {}),
@@ -2066,6 +2069,12 @@ export async function reverifyData(options: ReverifyOptions): Promise<ReverifyRe
           last_success_at: null,
           body_ref: "",
         };
+        for (const resolution of ledger.resolutions) {
+          if (resolution.deadline_id === target.deadlineId) {
+            resolution.official_url = target.url;
+            resolution.page_id = target.pageId;
+          }
+        }
       }
       ledger.deadlines[target.deadlineId] = stateFor(
         ledger.deadlines[target.deadlineId] ?? target.deadline.verification,
@@ -2208,6 +2217,14 @@ export async function reverifyData(options: ReverifyOptions): Promise<ReverifyRe
         }
       }
       const page = result.page;
+      if (oldState?.official_url && oldState.official_url !== target.url) {
+        for (const resolution of ledger.resolutions) {
+          if (resolution.deadline_id === target.deadlineId) {
+            resolution.official_url = target.url;
+            resolution.page_id = target.pageId;
+          }
+        }
+      }
       ledger.deadlines[target.deadlineId] = stateFor(oldState, target, now, status, page, observed);
       if (status === "changed" || status === "manual-required") {
         const kind = changeKind ?? "ambiguous";
