@@ -148,6 +148,8 @@ describe("fetch-primary extraction", () => {
     expect(extractDeadline("Deadline: May 15, 2026 23:59 EAT", 2026)?.tz).toBe("EAT");
     expect(extractDeadline("Deadline: May 15, 2026; authors eat later", 2026)?.tz).toBeUndefined();
     expect(extractDeadline("Deadline: May 15, 2026 23:59 SAST", 2026)?.tz).toBe("SAST");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 ACST", 2026)?.tz).toBe("ACST");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 ACDT", 2026)?.tz).toBe("ACDT");
   });
 
   it("camera ready", () => {
