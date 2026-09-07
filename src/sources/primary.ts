@@ -52,8 +52,12 @@ export function editionYearOf(date: string): number {
  */
 export function extractObservationTime(text: string | null | undefined): string | null {
   if (!text) return null;
-  const m = TIME_RE.exec(String(text).trim());
-  if (!m) return null;
+  const raw = String(text).trim();
+  const m = TIME_RE.exec(raw);
+  if (!m) {
+    // 和文の正午は公式が書いた壁時計。英語 noon は #782。
+    return raw.includes("正午") ? "12:00:00" : null;
+  }
   let h = Number(m[1]);
   const min = Number(m[2]);
   const sec = m[3] ? Number(m[3]) : 0;
