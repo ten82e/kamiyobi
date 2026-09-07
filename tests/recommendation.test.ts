@@ -418,6 +418,26 @@ describe("recommendation axes", () => {
     });
   });
 
+  it("keeps date-only deadlines on the same calendar day as uncertain rather than none (#764)", () => {
+    const value = conference({
+      editions: [
+        {
+          year: 2026,
+          deadlines: [
+            {
+              precision: "date-only",
+              local_date: "2026-08-25",
+              evidence: [{ sourceClass: "aggregator", verifiedFields: ["date"] }],
+            },
+          ],
+        },
+      ],
+    });
+    expect(
+      recommendationAxes(value, null, Date.parse("2026-08-25T18:00:00Z")).deadline_precision,
+    ).toBe("date-only");
+  });
+
   it("ignores an expired exact deadline in the same target edition", () => {
     const value = conference({
       editions: [

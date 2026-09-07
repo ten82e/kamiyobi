@@ -1385,7 +1385,7 @@ function parseJapaneseRange(
   // 1. 日付範囲: YYYY年M月D日[〜-]YYYY年M月D日 / YYYY年M月D日[〜-]M月D日 / YYYY年M月D日[〜-]D日
   // または年省略: M月D日[〜-]YYYY年M月D日 / M月D日[〜-]M月D日 / M月D日[〜-]D日
   let m =
-    /^(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日\s*(?:[〜~～\-–—]|から|to)\s*(?:(\d{4})年)?(?:(\d{1,2})月)?(\d{1,2})日$/i.exec(
+    /^(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日\s*(?:[〜~～\-–—]|から|to)\s*(?:(\d{4})年)?(?:(\d{1,2})月)?(\d{1,2})日?$/i.exec(
       norm,
     );
   if (m) {
@@ -1806,14 +1806,20 @@ function providerIdentitiesOf(value: unknown): ProviderIdentity[] {
 export function venueIdentityOf(value: unknown): VenueIdentity | undefined {
   if (!value || typeof value !== "object") return undefined;
   const raw = value as Record<string, unknown>;
-  const venueId = typeof raw.venueId === "string" ? raw.venueId.trim() : "";
-  const dblpKey = typeof raw.dblpKey === "string" ? raw.dblpKey.trim() : "";
-  const officialDomains = identityStrings(raw.officialDomains);
+  const venueId =
+    typeof (raw.venueId ?? raw.venue_id) === "string"
+      ? String(raw.venueId ?? raw.venue_id).trim()
+      : "";
+  const dblpKey =
+    typeof (raw.dblpKey ?? raw.dblp_key) === "string"
+      ? String(raw.dblpKey ?? raw.dblp_key).trim()
+      : "";
+  const officialDomains = identityStrings(raw.officialDomains ?? raw.official_domains);
   const aliases = identityStrings(raw.aliases);
   const sourceIds = Object.fromEntries(
     Object.entries(
-      raw.sourceIds && typeof raw.sourceIds === "object"
-        ? (raw.sourceIds as Record<string, unknown>)
+      (raw.sourceIds ?? raw.source_ids) && typeof (raw.sourceIds ?? raw.source_ids) === "object"
+        ? ((raw.sourceIds ?? raw.source_ids) as Record<string, unknown>)
         : {},
     )
       .filter(([, sourceId]) => typeof sourceId === "string" && sourceId.trim())
@@ -1844,12 +1850,15 @@ export function venueIdentityOf(value: unknown): VenueIdentity | undefined {
 export function editionIdentityOf(value: unknown): EditionIdentity | undefined {
   if (!value || typeof value !== "object") return undefined;
   const raw = value as Record<string, unknown>;
-  const editionId = typeof raw.editionId === "string" ? raw.editionId.trim() : "";
-  const officialUrls = identityStrings(raw.officialUrls);
+  const editionId =
+    typeof (raw.editionId ?? raw.edition_id) === "string"
+      ? String(raw.editionId ?? raw.edition_id).trim()
+      : "";
+  const officialUrls = identityStrings(raw.officialUrls ?? raw.official_urls);
   const sourceIds = Object.fromEntries(
     Object.entries(
-      raw.sourceIds && typeof raw.sourceIds === "object"
-        ? (raw.sourceIds as Record<string, unknown>)
+      (raw.sourceIds ?? raw.source_ids) && typeof (raw.sourceIds ?? raw.source_ids) === "object"
+        ? ((raw.sourceIds ?? raw.source_ids) as Record<string, unknown>)
         : {},
     )
       .filter(([, sourceId]) => typeof sourceId === "string" && sourceId.trim())
