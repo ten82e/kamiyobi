@@ -526,6 +526,21 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("keeps uppercase WIB, WITA, and WIT as extracted timezones (#900)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 WIB")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "WIB" },
+    ]);
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 WITA")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "WITA" },
+    ]);
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 WIT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "WIT" },
+    ]);
+    expect(
+      extractCfpCandidates("Deadline: May 15, 2026 23:59; authors of wit").map((c) => c.timezone),
+    ).not.toContain("wit");
+  });
+
   it("filters out invalid dates in extractedDates without polluting candidate boundaries (#756)", () => {
     const candidates = extractCfpCandidates(
       "Submission Deadline: 2026-02-30, March 15, 2026 23:59 AoE",
