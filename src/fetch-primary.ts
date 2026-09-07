@@ -70,6 +70,8 @@ export function isDeadlineLine(text: string | null | undefined): boolean {
     low.includes("not later than") ||
     low.includes("no later than") ||
     low.includes("on or before") ||
+    /\bcloses\b/.test(low) ||
+    low.includes("closing date") ||
     low.includes("not be entertained after") ||
     low.includes("not entertained after") ||
     low.includes("not be considered after") ||
