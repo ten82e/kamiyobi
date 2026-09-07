@@ -929,6 +929,10 @@ function candidateMatches(
     if (deadline.time && normalizedTime(candidate.time) !== normalizedTime(deadline.time))
       return false;
     if (deadline.timezone && !sameTimezone(candidate.timezone, deadline.timezone)) return false;
+    // 抽出器は round 未記入が通常。原文に明示があるときだけ観測 round と照合する (#701/#760)。
+    const explicitRound = roundOf(candidate.label ?? candidate.rawExcerpt, 0);
+    if (explicitRound > 0 && deadline.round && explicitRound !== Number(deadline.round))
+      return false;
     return Boolean(candidate.date);
   });
 }

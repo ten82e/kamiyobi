@@ -373,7 +373,7 @@ function evidenceList(value: unknown): CandidateEvidence[] {
         item.source_item_id === null || item.source_item_id === undefined
           ? null
           : String(item.source_item_id),
-      source_url: String(item.source_url ?? ""),
+      source_url: String(item.source_url ?? item.sourceUrl ?? ""),
       observed_at: String(item.observed_at ?? ""),
     }));
 }
