@@ -1636,6 +1636,7 @@ const CAMERA = new Set([
   "revision_deadline",
   "final_paper",
   "final_submission",
+  "final_deadline",
 ]);
 const REBUTTAL_END = new Set([
   "rebuttal_end",
