@@ -1679,7 +1679,7 @@ export function kindOf(rawTypeOrKey: string | null | undefined): DeadlineKind {
     .trim()
     .toLowerCase()
     .replace(/[\s-]+/g, "_");
-  if (s.startsWith("abstract")) return "abstract";
+  if (s.startsWith("abstract") || s === "extended_abstract") return "abstract";
   if (s.includes("notification")) return "notification";
   if (PAPER.has(s)) return "paper";
   if (s === "supplementary") return "supplementary";
