@@ -2166,6 +2166,11 @@ function semanticDeadlineRegressions(
         newGroups.slots.some(
           (candidate) =>
             (candidate.venue === slot.venue || migratedVenues.has(candidate.venue)) &&
+            // track も一致を要求する: supersededCovers 自体は superseded_by を
+            // venue/edition/kind/round までしか照合しないため、これがないと
+            // ある track の正当な訂正台帳が、値も一致する別 track の消失まで
+            // 免責してしまう (#722)。
+            candidate.track === slot.track &&
             supersededCovers(slot, candidate, currentTime),
         )
       )
