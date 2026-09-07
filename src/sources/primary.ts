@@ -37,6 +37,7 @@ import {
 } from "../model.ts";
 
 const TIME_RE = /\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp]\.?[Mm]\.?)?/;
+const DOTTED_TIME_RE = /(?<![.\d])(\d{1,2})\.([0-5]\d)(?!\.\d)\s*([AaPp]\.?[Mm]\.?)?/;
 
 /** 解決済み行: そのまま applyOverrides/deadlinesOf に渡せる YAML 行。 */
 export type ResolvedRow = Record<string, unknown>;
@@ -52,12 +53,15 @@ export function editionYearOf(date: string): number {
  */
 export function extractObservationTime(text: string | null | undefined): string | null {
   if (!text) return null;
-  const m = TIME_RE.exec(String(text).trim());
-  if (!m) return null;
-  let h = Number(m[1]);
-  const min = Number(m[2]);
-  const sec = m[3] ? Number(m[3]) : 0;
-  const ap = (m[4] ?? "").replace(/\./g, "").toLowerCase();
+  const raw = String(text).trim();
+  const m = TIME_RE.exec(raw);
+  const dotted = m ? null : DOTTED_TIME_RE.exec(raw);
+  const hit = m ?? dotted;
+  if (!hit) return null;
+  let h = Number(hit[1]);
+  const min = Number(hit[2]);
+  const sec = m && hit[3] ? Number(hit[3]) : 0;
+  const ap = ((m ? hit[4] : hit[3]) ?? "").replace(/\./g, "").toLowerCase();
   if (min > 59 || sec > 59 || h > 23) return null;
   if (ap === "pm" && h < 12) h += 12;
   if (ap === "am" && h === 12) h = 0;
