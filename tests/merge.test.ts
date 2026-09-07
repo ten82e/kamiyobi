@@ -1792,6 +1792,212 @@ describe("rollforward", () => {
     expect(out.editions.map((ed) => ed.year)).toEqual([2026]);
   });
 
+  it("does not carry the source edition's evidence/verification onto an estimated deadline (#732)", () => {
+    const sourced = makeDeadline("paper", "Paper", utc(2025, 7, 15, 11, 59, 59), "AoE");
+    sourced.evidence = [
+      {
+        source_name: "aideadlines",
+        source_url: "https://example.org/2025",
+        observed_at: "",
+        original_value: "2025-07-15",
+        confidence: "official",
+        sourceClass: "official-cfp",
+        contentHash: "abc123",
+        verifiedAt: "2025-06-01T00:00:00Z",
+        verifiedFields: ["date"],
+      },
+    ];
+    sourced.verification = {
+      official_url: "https://example.org/2025",
+      last_attempt_at: "2025-06-01T00:00:00Z",
+      last_verified_at: "2025-06-01T00:00:00Z",
+      next_check_at: "2025-07-01T00:00:00Z",
+      content_hash: "abc123",
+      status: "verified",
+      source_class: "official-cfp",
+    };
+    const conf = makeConference({
+      key: "ev",
+      title: "EV",
+      editions: [makeEdition({ year: 2025, edition_id: "ev25", deadlines: [sourced] })],
+    });
+    const out = byKey(rollforward([conf], TODAY, CONFIG)).ev;
+    const estimated = out.editions.filter((ed) => ed.estimated);
+    expect(estimated.length).toBe(1);
+    const paper = estimated[0].deadlines.find((d) => d.kind === "paper")!;
+    // 前年の実観測に紐づく来歴は推定日には引き継がない。引き継ぐと build.ts の
+    // evidenceOf が estimated 用の sourceClass:"assumption" 分岐に到達できず、
+    // 捏造した日付が「公式検証済み」として配信されてしまう。
+    expect(paper.evidence).toBeUndefined();
+    expect(paper.verification).toBeUndefined();
+  });
+
+  it("does not jump multiple years ahead when one interval spans a data gap (#732)", () => {
+    const conf = makeConference({
+      key: "fccm",
+      title: "FCCM",
+      editions: [
+        makeEdition({
+          year: 2022,
+          edition_id: "fccm22",
+          deadlines: [makeDeadline("paper", "Paper", utc(2022, 1, 4, 11, 59, 59), "AoE")],
+        }),
+        makeEdition({
+          year: 2024,
+          edition_id: "fccm24",
+          deadlines: [makeDeadline("paper", "Paper", utc(2024, 1, 10, 11, 59, 59), "AoE")],
+        }),
+        makeEdition({
+          year: 2025,
+          edition_id: "fccm25",
+          deadlines: [makeDeadline("paper", "Paper", utc(2025, 1, 18, 11, 59, 59), "AoE")],
+        }),
+      ],
+    });
+    const out = byKey(rollforward([conf], TODAY, CONFIG)).fccm;
+    const estimated = out.editions.filter((ed) => ed.estimated);
+    expect(estimated.length).toBe(1);
+    // 2022→2024 は版欠落による約2年ギャップ、2024→2025 は正常な1年間隔。中央値を
+    // そのまま使うと約1.5年周期に丸まり、2028 まで2〜3年分の版を飛ばしていた。
+    expect(estimated[0].year).toBe(2027);
+    const paper = estimated[0].deadlines.find((d) => d.kind === "paper")!;
+    expect(exactAt(paper).getUTCFullYear()).toBe(2027);
+  });
+
+  it("edition-year advance stays correct for a slightly-over-annual cadence (ICAPS-shaped, #732)", () => {
+    // 実データの ICAPS 型: 版が2つ(単一区間なので #732 の整合性チェックは対象外)、
+    // 区間が365日よりやや長い(約399日)。#732 の調査中に「shift/365.25 の丸めは
+    // 誤りだ」と誤って判断し、steps(進めた区間数)や暦年差から年数を逆算する
+    // 代替実装を検討したが、いずれも独立反証レビューで実データに対する劣化が
+    // 実測された(本ケースは steps=1 と Math.round(399/365.25)=1 がたまたま
+    // 一致するため両案とも通るが、下のテストで隔年開催との非両立が判明する)。
+    // 既存の Math.round(shift/365.25) をそのまま維持することが正しい。
+    const conf = makeConference({
+      key: "icapslike",
+      title: "ICAPSLIKE",
+      editions: [
+        makeEdition({
+          year: 2025,
+          edition_id: "icapslike25",
+          deadlines: [makeDeadline("paper", "Paper", utc(2024, 11, 2, 11, 59, 59), "AoE")],
+        }),
+        makeEdition({
+          year: 2026,
+          edition_id: "icapslike26",
+          deadlines: [makeDeadline("paper", "Paper", utc(2025, 12, 9, 11, 59, 59), "AoE")],
+        }),
+      ],
+    });
+    const out = byKey(rollforward([conf], TODAY, CONFIG)).icapslike;
+    const estimated = out.editions.filter((ed) => ed.estimated);
+    expect(estimated.length).toBe(1);
+    expect(estimated[0].year).toBe(2027);
+  });
+
+  it("edition-year advance counts full years, not interval hops, for a genuinely biennial cadence (ICCV-shaped, #732)", () => {
+    // 実データの ICCV 型: 隔年開催 (2021, 2023, 2025)。区間は約728日で標本間の
+    // 比率は約1.01(整合性チェックの対象外、正常な隔年周期)。steps は1回の区間
+    // 前進で足りる(steps=1)が、その区間自体が2年分なので年号は+2しなければ
+    // ならない。steps をそのまま年数として使う代替実装は、この隔年会議を
+    // +1年(誤り)にしてしまうことが実測で判明した — Math.round(shift/365.25)
+    // はこの2年区間を正しく2年と数えるため、変更せず維持する。
+    const conf = makeConference({
+      key: "iccvlike",
+      title: "ICCVLIKE",
+      editions: [
+        makeEdition({
+          year: 2021,
+          edition_id: "iccvlike21",
+          deadlines: [makeDeadline("paper", "Paper", utc(2021, 3, 18, 6, 59, 59), "AoE")],
+        }),
+        makeEdition({
+          year: 2023,
+          edition_id: "iccvlike23",
+          deadlines: [makeDeadline("paper", "Paper", utc(2023, 3, 8, 23, 59, 59), "AoE")],
+        }),
+        makeEdition({
+          year: 2025,
+          edition_id: "iccvlike25",
+          deadlines: [makeDeadline("paper", "Paper", utc(2025, 3, 8, 9, 59, 59), "AoE")],
+        }),
+      ],
+    });
+    const out = byKey(rollforward([conf], TODAY, CONFIG)).iccvlike;
+    const estimated = out.editions.filter((ed) => ed.estimated);
+    expect(estimated.length).toBe(1);
+    expect(estimated[0].year).toBe(2027);
+  });
+
+  it("does not trust a negative interval when an edition's deadline is chronologically out of order (#732)", () => {
+    // 版年号順に並べた締切が実際の時系列と食い違う(2024年版の締切が2023年版
+    // より早い)と、区間の1つが負になる。負の区間だと比率判定 (max/min) が
+    // 符号のせいで素通りすることが判明したため、非正の区間があれば安全な
+    // 既定値(364日)にフォールバックする。素朴に中央値(258.5日)を使うと
+    // 2026年版という誤った推定になる。
+    const conf = makeConference({
+      key: "negtest",
+      title: "NEGTEST",
+      editions: [
+        makeEdition({
+          year: 2023,
+          edition_id: "negtest23",
+          deadlines: [makeDeadline("paper", "Paper", utc(2024, 1, 1, 0, 0, 0), "AoE")],
+        }),
+        makeEdition({
+          year: 2024,
+          edition_id: "negtest24",
+          deadlines: [makeDeadline("paper", "Paper", utc(2023, 3, 15, 0, 0, 0), "AoE")],
+        }),
+        makeEdition({
+          year: 2025,
+          edition_id: "negtest25",
+          deadlines: [makeDeadline("paper", "Paper", utc(2025, 6, 1, 0, 0, 0), "AoE")],
+        }),
+      ],
+    });
+    const out = byKey(rollforward([conf], TODAY, CONFIG)).negtest;
+    const estimated = out.editions.filter((ed) => ed.estimated);
+    expect(estimated.length).toBe(1);
+    expect(estimated[0].year).toBe(2027);
+  });
+
+  it("interval_lookback_editions: 0 uses no reference editions rather than every edition (#732)", () => {
+    const conf = makeConference({
+      key: "lb",
+      title: "LB",
+      editions: [
+        makeEdition({
+          year: 2020,
+          edition_id: "lb20",
+          deadlines: [makeDeadline("paper", "Paper", utc(2020, 6, 1, 12, 0, 0), "AoE")],
+        }),
+        makeEdition({
+          year: 2025,
+          edition_id: "lb25",
+          deadlines: [makeDeadline("paper", "Paper", utc(2025, 6, 1, 12, 0, 0), "AoE")],
+        }),
+        makeEdition({
+          year: 2026,
+          edition_id: "lb26",
+          deadlines: [makeDeadline("paper", "Paper", utc(2026, 6, 1, 12, 0, 0), "AoE")],
+        }),
+      ],
+    });
+    const cfg = {
+      ...CONFIG,
+      rollforward: {
+        ...(CONFIG.rollforward as Record<string, unknown>),
+        interval_lookback_editions: 0,
+      },
+    };
+    const out = byKey(rollforward([conf], TODAY, cfg)).lb;
+    const estimated = out.editions.filter((ed) => ed.estimated);
+    expect(estimated.length).toBe(1);
+    expect(estimated[0].estimate?.source_editions).toEqual([]);
+    const paper = estimated[0].deadlines.find((d) => d.kind === "paper")!;
+    expect(exactAt(paper).getTime()).toBe(utc(2027, 5, 31, 12, 0, 0).getTime());
+  });
+
   it("leaves conferences without deadlines alone", () => {
     const conf = makeConference({
       key: "iots",

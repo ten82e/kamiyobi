@@ -1586,8 +1586,11 @@ function estimateEdition(
   const stale = Math.floor((dateOnly(today).getTime() - dateOnly(last.at).getTime()) / DAY_MS);
   if (stale < 0 || stale > maxStale) return null;
 
+  // lookback<=0 は「参照版なし」の意図であり、slice(-0) は slice(0)(全件)に
+  // なってしまう JS の -0 トラップを踏む (#732)。
+  const lookbackWindow = lookback > 0 ? dated.slice(-lookback) : [];
   const interval = intervalDays(
-    dated.slice(-lookback).map((d) => d.at),
+    lookbackWindow.map((d) => d.at),
     defaultInterval,
   );
   // Advance by whole intervals so the weekday is preserved.
@@ -1602,7 +1605,14 @@ function estimateEdition(
   if (dateOnly(addDays(last.at, shift)).getTime() < dateOnly(today).getTime()) {
     return null;
   }
-  // Derive the year label from the shift actually applied.
+  // Derive the year label from the shift actually applied. 一見 steps
+  // (進めた区間の個数) をそのまま使いたくなるが、それは誤り: 隔年開催
+  // (ICCV 等、interval が2年前後)では steps=1 が2年分の前進を表すため、
+  // year を steps だけ進めると1年分カウントし損ねる。逆に日付の暦年差から
+  // 逆算する案も、区間が1月1日を跨ぐ回数に依存し年前後で誤りうる(実データの
+  // icaps で実測)。#732 の独立反証レビューでこの2案をどちらも実データ664件で
+  // 検証した結果、両方とも既存の Math.round(shift/365.25) より悪化させる
+  // 実例が見つかったため、この式自体は変更しない。
   const year = last.edition.year + Math.max(1, Math.round(shift / 365.25));
   if (conf.editions.some((e) => e.year === year && !e.estimated)) {
     return null; // upstream already lists that edition, it just has no dates yet
@@ -1612,9 +1622,19 @@ function estimateEdition(
     .filter(isExactDeadline)
     .filter((d) => kinds.has(d.kind))
     .map((d) => ({
-      ...d,
+      kind: d.kind,
+      label: d.label,
+      round: d.round,
+      track: d.track,
+      precision: d.precision,
       at_utc: addDays(d.at_utc, shift),
+      tz_raw: d.tz_raw,
       comment: `Estimated from the ${last.edition.year} edition`,
+      // evidence・verification・raw_value・origins・conflicts・superseded_deadlines・
+      // promotion_ref は前年の実観測に紐づく来歴であり、推定日には引き継がない。
+      // 引き継ぐと build.ts の evidenceOf が estimated 用の sourceClass:"assumption"
+      // 分岐に到達できず、捏造した日付が「公式検証済み」として配信されてしまう
+      // (#732で実データにて確認)。
     }));
   if (deadlines.length === 0) return null;
   const point =
@@ -1625,7 +1645,7 @@ function estimateEdition(
     point_estimate: fmtDate(dateOnly(point)),
     window_start: fmtDate(dateOnly(addDays(point, -windowDays))),
     window_end: fmtDate(dateOnly(addDays(point, windowDays))),
-    source_editions: dated.slice(-lookback).map(({ edition }) => edition.year),
+    source_editions: lookbackWindow.map(({ edition }) => edition.year),
     method: "median-interval",
     confidence: dated.length >= 3 ? "medium" : "low",
   };
@@ -1674,6 +1694,13 @@ function intervalDays(instants: Date[], defaultInterval: number): number {
     gaps.push(Math.floor((instants[i + 1].getTime() - instants[i].getTime()) / DAY_MS));
   }
   if (gaps.length === 0) return defaultInterval;
+  // 直近の間隔同士が大きく食い違う場合(例: データ欠落で1件だけ約2倍の間隔になる)、
+  // 中央値は実在しない周期に丸まりうる(#732で実データ FCCM にて確認)。
+  // 何件欠落したかを推測する代わりに、標本の整合性を疑って安全な既定値に倒す。
+  // 非正の間隔(締切が年順に並んでいない異常データ)も同様に信頼しない
+  // (独立レビューで、負の間隔だと比率判定が素通りすることが判明)。
+  if (gaps.length >= 2 && (Math.min(...gaps) <= 0 || Math.max(...gaps) / Math.min(...gaps) > 1.5))
+    return defaultInterval;
   const estimate = roundHalfToEven(median(gaps) / 7) * 7; // multiples of 7 preserve the weekday
   return estimate >= 180 && estimate <= 900 ? estimate : defaultInterval;
 }
