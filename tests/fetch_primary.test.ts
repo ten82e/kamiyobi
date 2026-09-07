@@ -195,6 +195,8 @@ describe("fetch-primary extraction", () => {
     );
     expect(extractDeadline("Receipt of manuscripts: June 1, 2026", 2026)?.date).toBe("2026-06-01");
     expect(extractDeadline("Last date: May 15, 2026", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("Cut-off date: May 15, 2026", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("Cutoff: June 1, 2026", 2026)?.date).toBe("2026-06-01");
   });
 
   it("camera ready", () => {
