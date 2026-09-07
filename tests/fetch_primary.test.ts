@@ -129,6 +129,18 @@ describe("fetch-primary extraction", () => {
     expect(got?.tz).toBe("UTC");
   });
 
+  it("treats standalone poster and demo deadlines as other (#812)", () => {
+    expect(extractDeadline("ポスター締切: 2026年6月1日", 2026)).toMatchObject({
+      kind: "other",
+      date: "2026-06-01",
+    });
+    expect(extractDeadline("Poster deadline: May 15, 2026", 2026)?.kind).toBe("other");
+    expect(extractDeadline("Demo deadline: June 1, 2026", 2026)?.kind).toBe("other");
+    expect(
+      extractDeadline("Submission deadline (papers and/or posters): 15 May 2026", 2026)?.kind,
+    ).toBe("paper");
+  });
+
   it("supplementary material and rebuttal deadlines", () => {
     const supp = extractDeadline("Supplementary material deadline: June 1, 2026", 2026);
     expect(supp).not.toBeNull();

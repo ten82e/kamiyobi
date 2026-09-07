@@ -1653,6 +1653,13 @@ export function refineKindWithLabel(
   return kind;
 }
 
+/** Poster/demo CFP rows that are not also a paper/論文 deadline. */
+export function isStandaloneNonPaperDeadline(text: string | null | undefined): boolean {
+  const value = String(text ?? "").toLowerCase();
+  if (!/\bposters?\b|\bdemos?\b|demonstration|ポスター|デモ/.test(value)) return false;
+  return !/\bpapers?\b|full[- ]?paper|short[- ]?paper|論文|原稿投稿|論文投稿/.test(value);
+}
+
 /** Normalize an upstream deadline type name into one of the 10 kinds. */
 export function kindOf(rawTypeOrKey: string | null | undefined): DeadlineKind {
   const s = String(rawTypeOrKey ?? "")

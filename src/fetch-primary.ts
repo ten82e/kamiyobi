@@ -12,7 +12,14 @@ import { parseArgs as parseNodeArgs } from "node:util";
 import { decode } from "html-entities";
 import { dump as dumpYaml, load as loadYaml } from "js-yaml";
 import { booleanValue, normalizeShortEquals, stringValue } from "./args.ts";
-import { deadlineTrackKey, monthOf, resolveTzStatus, roundOf, warn } from "./model.ts";
+import {
+  deadlineTrackKey,
+  isStandaloneNonPaperDeadline,
+  monthOf,
+  resolveTzStatus,
+  roundOf,
+  warn,
+} from "./model.ts";
 import { extractObservationTime } from "./sources/primary.ts";
 
 export let ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -38,6 +45,7 @@ const LABELS: Record<string, string> = {
   registration: "Registration",
   supplementary: "Supplementary material",
   rebuttal_end: "Rebuttal deadline",
+  other: "Other deadline",
 };
 
 async function fetchPage(url: string, timeout = 30_000): Promise<string> {
@@ -121,6 +129,9 @@ function kindOf(window: string | null | undefined): string {
     low.includes("リバッタル")
   ) {
     return "rebuttal_end";
+  }
+  if (isStandaloneNonPaperDeadline(low)) {
+    return "other";
   }
   return "paper";
 }
