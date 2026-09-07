@@ -506,7 +506,7 @@ export async function runFetchPrimary(
   // 1 行目がキー付きエントリになり、compare-head.ts の正規化でも除去されない）。
   const header =
     "# 自動生成。src/fetch-primary.ts が data/primary.yaml の一次ソースから抽出した。手で編集しない。抽出失敗した会議は前回値が維持される。";
-  const yamlText = `${header}\n${dumpYaml({ conferences: generated }, { skipInvalid: true })}`;
+  const yamlText = `${header}\n${dumpYaml({ conferences: generated }, { skipInvalid: true, noRefs: true })}`;
   if (apply) {
     writeFileSync(resolvedOut, yamlText, "utf8");
     console.log(`wrote ${resolvedOut} (${Object.keys(generated).length} conferences)`);

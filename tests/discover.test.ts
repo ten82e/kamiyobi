@@ -11,6 +11,7 @@ import {
   deadlineIsFuture,
   easyChairEntriesFromRows,
   extractDeadlinesFromText,
+  formatCandidateRegistry,
   formatCandidateYaml,
   formatDiscoveredYaml,
   inDomain,
@@ -184,6 +185,50 @@ describe("formatDiscoveredYaml", () => {
     expect(text).toContain("key: nvmw");
     expect(text).toContain("title: NVMW");
     expect(text).toContain("Non-Volatile Memories Workshop");
+  });
+});
+
+describe("YAML anchor-free serialization (candidate registry writers)", () => {
+  it("expands a shared array reference instead of emitting YAML anchors", () => {
+    // 実運用の再現: 複数候補が同じ tags 配列オブジェクトを参照すると、
+    // js-yaml の既定動作は &ref_N / *ref_N のアンカーを出す。共有の有無は
+    // discover 実行ごとの内部構築経路に依存し非決定的なため、実行のたびに
+    // ファイル全体が無意味に書き換わる巨大差分を生む(2026-09-07 実地で検出)。
+    const sharedTags = ["niche", "easychair"];
+    const first = makeCandidate({
+      key: "alpha",
+      title: "Alpha",
+      full_name: "Alpha Workshop",
+      link: "https://alpha.example/",
+      categories: ["systems"],
+    });
+    const second = makeCandidate({
+      key: "beta",
+      title: "Beta",
+      full_name: "Beta Workshop",
+      link: "https://beta.example/",
+      categories: ["systems"],
+    });
+    first.tags = sharedTags;
+    second.tags = sharedTags;
+
+    const registryText = formatCandidateRegistry({ schema: 2, candidates: [first, second] });
+    expect(registryText).not.toMatch(/[&*]ref_\d+/);
+    const registryParsed = loadYaml(registryText) as { candidates: Array<{ tags?: string[] }> };
+    expect(registryParsed.candidates[0].tags).toEqual(["niche", "easychair"]);
+    expect(registryParsed.candidates[1].tags).toEqual(["niche", "easychair"]);
+
+    // formatActiveCandidates は内部で formatCandidateRegistry の出力を loadYaml
+    // してから再度 dump するため、参照共有はそこで既に消えており noRefs 単体では
+    // 検知できない (独立反証レビューで確認)。直接候補配列から dump する
+    // formatDiscoveredYaml (extra.yaml 形式) で、参照が生きたまま渡る別経路も守る。
+    const discoveredText = formatDiscoveredYaml([first, second]);
+    expect(discoveredText).not.toMatch(/[&*]ref_\d+/);
+    const discoveredParsed = loadYaml(discoveredText) as {
+      conferences: Array<{ tags?: string[] }>;
+    };
+    expect(discoveredParsed.conferences[0].tags).toEqual(["niche", "easychair"]);
+    expect(discoveredParsed.conferences[1].tags).toEqual(["niche", "easychair"]);
   });
 });
 

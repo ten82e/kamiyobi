@@ -692,7 +692,10 @@ export function formatCandidateRegistry(registry: CandidateRegistry | null | und
     });
   return dumpYaml(
     { schema: CANDIDATE_REGISTRY_SCHEMA, candidates: records },
-    { skipInvalid: true },
+    // noRefs: 候補配列が偶然オブジェクト参照を共有すると js-yaml が &ref_N/*ref_N
+    // アンカーを出す。共有の有無は実行ごとの構築経路に依存し非決定的なため、
+    // 常に展開してファイル全体の巨大な無意味差分を防ぐ。
+    { skipInvalid: true, noRefs: true },
   ) as string;
 }
 
@@ -819,7 +822,7 @@ export function formatActiveCandidates(candidates: Candidate[] | null | undefine
   ) as Record<string, unknown>;
   return dumpYaml(
     { schema: CANDIDATE_REGISTRY_SCHEMA, lifecycle: "active", candidates: parsed.candidates ?? [] },
-    { skipInvalid: true },
+    { skipInvalid: true, noRefs: true },
   ) as string;
 }
 
@@ -1877,5 +1880,8 @@ export class NicheDiscoverer {
 /** Format discovered candidates into YAML string compatible with extra.yaml. */
 export function formatDiscoveredYaml(candidates: Candidate[] | null | undefined): string {
   const safeCandidates = Array.isArray(candidates) ? candidates : [];
-  return dumpYaml({ conferences: safeCandidates.map(toYamlDict) }, { skipInvalid: true }) as string;
+  return dumpYaml(
+    { conferences: safeCandidates.map(toYamlDict) },
+    { skipInvalid: true, noRefs: true },
+  ) as string;
 }

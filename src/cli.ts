@@ -1139,7 +1139,7 @@ export async function cmdDiscover(args: DiscoverArgs): Promise<number> {
     const parsed = loadYaml(yamlText) as { conferences?: Array<Record<string, unknown>> };
     const newConfs = (parsed.conferences ?? []).filter((c) => !seen.has(c.key));
     existing.conferences = [...existingConfs, ...newConfs];
-    writeTextFile(outPath, dumpYaml(existing, { skipInvalid: true }));
+    writeTextFile(outPath, dumpYaml(existing, { skipInvalid: true, noRefs: true }));
     console.log(`\n${newConfs.length} 件の候補を ${outPath} に追記した`);
   } else if (action === "dry-run") {
     console.log("\n--- プレビュー出力（extra.yaml 形式） ---");
