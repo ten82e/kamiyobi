@@ -343,7 +343,7 @@ function extractedTime(text: string): string | undefined {
 // 切り詰められ、後段の実在性検証で誤って棄却されてしまう (#723 の独立
 // 反証レビューで発見)。
 const TIMEZONE_PATTERN =
-  /\b(AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|JST|BOT|COT|FJT|GET|PKT|TRT|BRT|PT|ET|CT|MT|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)\b/gi;
+  /\b(AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|JST|BOT|COT|FJT|GET|PKT|TRT|BRT|CAT|WAT|PT|ET|CT|MT|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)\b/gi;
 
 /**
  * IANA Area/Location 名として実在するかだけを判定する (model.ts の
@@ -365,7 +365,10 @@ function extractedTimezone(text: string): string | undefined {
     const candidate = match[1];
     // 2文字の略号 (PT/ET/CT/MT) は大文字表記のみタイムゾーンとして受理する。
     // 小文字 "pt" (12 pt font) や "et" (et al.) の誤爆を完全に防止する (#744)。
-    if (/^(?:pt|et|ct|mt|bot|cot|get)$/i.test(candidate) && candidate !== candidate.toUpperCase()) {
+    if (
+      /^(?:pt|et|ct|mt|bot|cot|get|cat|wat)$/i.test(candidate) &&
+      candidate !== candidate.toUpperCase()
+    ) {
       continue;
     }
     // IANA Area/Location 形式の候補だけは実在ゾーンか検証する。exec は

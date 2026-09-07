@@ -505,6 +505,18 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("keeps uppercase CAT and WAT as extracted timezones (#888)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 CAT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "CAT" },
+    ]);
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 WAT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "WAT" },
+    ]);
+    expect(
+      extractCfpCandidates("Deadline: May 15, 2026 23:59; the cat sat").map((c) => c.timezone),
+    ).not.toContain("cat");
+  });
+
   it("filters out invalid dates in extractedDates without polluting candidate boundaries (#756)", () => {
     const candidates = extractCfpCandidates(
       "Submission Deadline: 2026-02-30, March 15, 2026 23:59 AoE",
