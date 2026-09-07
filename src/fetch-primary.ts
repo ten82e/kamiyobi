@@ -170,7 +170,7 @@ export function parsePrimaryDate(window: string | null | undefined): ExtractedDa
   if (!window) return null;
   const norm = String(window).normalize("NFKC");
   // 1. Japanese format: '2026年5月10日', '2026年05月10日'
-  let m = /\b(\d{4})年(\d{1,2})月(\d{1,2})日/.exec(norm);
+  let m = /\b(\d{4})年(\d{1,2})月(\d{1,2})日?/.exec(norm);
   if (m) {
     const year = Number(m[1]);
     const month = Number(m[2]);

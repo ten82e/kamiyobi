@@ -85,6 +85,27 @@ it("health-gate reads last-known-good and writes the next explicit artifact", ()
     ok: false,
     exit_status: 1,
   });
+
+  const missingObservation = join(dir, "missing-observation.json");
+  const missingReport = join(dir, "missing-observation-violations.json");
+  const missingFailed = spawnSync(
+    process.execPath,
+    [
+      "scripts/health-gate.ts",
+      "--report",
+      missingReport,
+      "--observation-baseline",
+      missingObservation,
+      blocked,
+    ],
+    { cwd: REPO_ROOT, encoding: "utf8" },
+  );
+  expect(missingFailed.status).toBe(1);
+  expect(JSON.parse(readFileSync(missingReport, "utf8"))).toMatchObject({
+    ok: false,
+    exit_status: 1,
+  });
+  expect(String(missingFailed.stderr)).toMatch(/observation baseline not found/);
 });
 
 const SLOT = deadlineSlotId("venue", "venue26", "paper", 1, "");

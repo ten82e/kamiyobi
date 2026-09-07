@@ -521,6 +521,9 @@ describe("parse_date_range", () => {
   it.each([
     ["2026年8月17日 - 2026年8月21日", 2026, "2026-08-17", "2026-08-21"],
     ["2026年8月17日〜21日", 2026, "2026-08-17", "2026-08-21"],
+    ["2026年8月17〜21日", 2026, "2026-08-17", "2026-08-21"],
+    ["2026年8月17日〜21", 2026, "2026-08-17", "2026-08-21"],
+    ["2026年8月17", 2026, "2026-08-17", "2026-08-17"],
     ["2026年8月17日〜8月21日", 2026, "2026-08-17", "2026-08-21"],
     ["2026年8月30日〜9月2日", 2026, "2026-08-30", "2026-09-02"],
     ["2026年12月28日〜2027年1月3日", 2026, "2026-12-28", "2027-01-03"],
@@ -809,6 +812,15 @@ describe("aideadlines rankOf", () => {
     expect(dls.map((d) => d.kind)).toEqual(["paper", "notification", "camera_ready"]);
   });
 
+  it("does not revive legacy deadlines when structured dates are unpublished (#770)", () => {
+    const dls = aideadlinesDeadlinesOf({
+      timezone: "AoE",
+      deadline: "2025-01-15 23:59:59",
+      deadlines: [{ type: "paper", date: "TBA", timezone: "AoE" }],
+    });
+    expect(dls).toEqual([]);
+  });
+
   it("parseTree gracefully returns empty array for non-existent directory", () => {
     expect(aideadlinesParseTree("/tmp/nonexistent-aideadlines-12345")).toEqual([]);
   });
@@ -978,6 +990,17 @@ describe("ccfddl parsing", () => {
     expect(ed?.deadlines[0].kind).toBe("abstract");
     expect(ed?.deadlines[1].kind).toBe("paper");
     expect(ed?.event_start?.toISOString().slice(0, 10)).toBe("2026-08-17");
+  });
+
+  it("does not revive a stale top-level deadline when timeline is TBD-only (#770)", () => {
+    const ed = ccfddlEditionOf({
+      year: 2026,
+      id: "demo26",
+      timezone: "AoE",
+      deadline: "2026-11-01 23:59:59",
+      timeline: [{ deadline: "TBD", timezone: "AoE" }],
+    });
+    expect(ed?.deadlines).toEqual([]);
   });
 
   it("parses conference object with rank and editions", () => {

@@ -516,6 +516,8 @@ describe("parsePrimaryArgs and null safety", () => {
     expect(parsePrimaryDate(null)).toBeNull();
     expect(parsePrimaryDate(undefined)).toBeNull();
     expect(parsePrimaryDate("")).toBeNull();
+    expect(parsePrimaryDate("2026年5月10")).toEqual({ year: 2026, month: 5, day: 10 });
+    expect(parsePrimaryDate("2026年8月17〜21日")).toEqual({ year: 2026, month: 8, day: 17 });
 
     expect(extractDeadlines(null, 2026)).toEqual([]);
     expect(extractDeadlines(undefined, 2026)).toEqual([]);
