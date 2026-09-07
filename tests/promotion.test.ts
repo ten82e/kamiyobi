@@ -241,6 +241,15 @@ describe("promotion batch", () => {
     ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
   });
 
+  it("extracts midday as a noon wall-clock (#826)", () => {
+    expect(
+      extractCfpCandidates("Paper submission deadline: May 15, 2026 midday AoE"),
+    ).toMatchObject([{ date: "2026-05-15", time: "12:00:00", timezone: "AoE" }]);
+    expect(
+      extractCfpCandidates("Paper submission deadline: May 15, 2026 mid-day AoE"),
+    ).toMatchObject([{ date: "2026-05-15", time: "12:00:00", timezone: "AoE" }]);
+  });
+
   it("applies an explicit page-wide deadline time without treating the event date as a deadline", () => {
     const [deadline, notification, event] = extractCfpCandidates(
       "<li>Paper Submission Deadline <b>October 10, 2026</b></li>" +

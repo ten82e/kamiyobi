@@ -52,18 +52,22 @@ export function editionYearOf(date: string): number {
  */
 export function extractObservationTime(text: string | null | undefined): string | null {
   if (!text) return null;
-  const m = TIME_RE.exec(String(text).trim());
-  if (!m) return null;
-  let h = Number(m[1]);
-  const min = Number(m[2]);
-  const sec = m[3] ? Number(m[3]) : 0;
-  const ap = (m[4] ?? "").replace(/\./g, "").toLowerCase();
-  if (min > 59 || sec > 59 || h > 23) return null;
-  if (ap === "pm" && h < 12) h += 12;
-  if (ap === "am" && h === 12) h = 0;
-  if (h > 23) return null;
-  const pad = (n: number): string => String(n).padStart(2, "0");
-  return `${pad(h)}:${pad(min)}:${pad(sec)}`;
+  const value = String(text).trim();
+  const m = TIME_RE.exec(value);
+  if (m) {
+    let h = Number(m[1]);
+    const min = Number(m[2]);
+    const sec = m[3] ? Number(m[3]) : 0;
+    const ap = (m[4] ?? "").replace(/\./g, "").toLowerCase();
+    if (min > 59 || sec > 59 || h > 23) return null;
+    if (ap === "pm" && h < 12) h += 12;
+    if (ap === "am" && h === 12) h = 0;
+    if (h > 23) return null;
+    const pad = (n: number): string => String(n).padStart(2, "0");
+    return `${pad(h)}:${pad(min)}:${pad(sec)}`;
+  }
+  if (/\bmid-?day\b/i.test(value)) return "12:00:00";
+  return null;
 }
 
 interface ObservationRow {
