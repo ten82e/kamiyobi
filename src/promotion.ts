@@ -241,23 +241,28 @@ export function canonicalJson(value: unknown): string {
     .join(",")}}`;
 }
 
+const MONTH_NAME =
+  "Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e|i)?|Jul(?:y|i)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?|Mai|Mär(?:z)?|Maerz|Okt(?:ober)?|Dez(?:ember)?";
+const DAY_THEN_MONTH = `\\b\\d{1,2}(?:st|nd|rd|th)?(?:\\.[\\s/-]*|[\\s/-]+)(?:${MONTH_NAME})\\.?[,]?[-/\\s]+20\\d{2}\\b`;
+const MONTH_THEN_DAY = `\\b(?:${MONTH_NAME})\\.?[-/\\s]+\\d{1,2}(?:st|nd|rd|th)?(?:,)?[-/\\s]+20\\d{2}\\b`;
+
 const DATE_PATTERNS = [
   /\b20\d{2}[-/.]\d{1,2}[-/.]\d{1,2}\b/g,
-  /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[-/\s]+\d{1,2}(?:st|nd|rd|th)?(?:,)?[-/\s]+20\d{2}\b/gi,
-  /\b\d{1,2}(?:st|nd|rd|th)?[-/\s]+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[,]?[-/\s]+20\d{2}\b/gi,
+  new RegExp(MONTH_THEN_DAY, "gi"),
+  new RegExp(DAY_THEN_MONTH, "gi"),
   /\b20\d{2}年\d{1,2}月\d{1,2}日/g,
 ];
 
 function extractedDate(text: string): { date: string; year: number } | null {
   const iso = /\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b/.exec(text);
-  const monthFirst =
-    /\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[-/\s]+(\d{1,2})(?:st|nd|rd|th)?(?:,)?[-/\s]+(20\d{2})\b/i.exec(
-      text,
-    );
-  const dayFirst =
-    /\b(\d{1,2})(?:st|nd|rd|th)?[-/\s]+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[,]?[-/\s]+(20\d{2})\b/i.exec(
-      text,
-    );
+  const monthFirst = new RegExp(
+    `\\b(${MONTH_NAME})\\.?[-/\\s]+(\\d{1,2})(?:st|nd|rd|th)?(?:,)?[-/\\s]+(20\\d{2})\\b`,
+    "i",
+  ).exec(text);
+  const dayFirst = new RegExp(
+    `\\b(\\d{1,2})(?:st|nd|rd|th)?(?:\\.[\\s/-]*|[\\s/-]+)(${MONTH_NAME})\\.?[,]?[-/\\s]+(20\\d{2})\\b`,
+    "i",
+  ).exec(text);
   const japanese = /\b(20\d{2})年(\d{1,2})月(\d{1,2})日/.exec(text);
   const year = iso
     ? Number(iso[1])
@@ -271,9 +276,9 @@ function extractedDate(text: string): { date: string; year: number } | null {
   const month = iso
     ? Number(iso[2])
     : monthFirst
-      ? monthOf(monthFirst[1].slice(0, 3))
+      ? monthOf(monthFirst[1])
       : dayFirst
-        ? monthOf(dayFirst[2].slice(0, 3))
+        ? monthOf(dayFirst[2])
         : japanese
           ? Number(japanese[2])
           : 0;

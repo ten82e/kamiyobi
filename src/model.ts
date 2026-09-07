@@ -1264,6 +1264,17 @@ const MONTHS = [
 const KNOWN_MONTH_TYPOS: Record<string, number> = {
   // Upstream typos such as 'Septemper' (APWeb-WAIM 2024).
   septemper: 9,
+  // German CFP / D-A-CH event dates (#820).
+  mai: 5,
+  mär: 3,
+  märz: 3,
+  maerz: 3,
+  juni: 6,
+  juli: 7,
+  okt: 10,
+  oktober: 10,
+  dez: 12,
+  dezember: 12,
 };
 
 export function monthOf(word: string): number | null {
@@ -1276,7 +1287,7 @@ export function monthOf(word: string): number | null {
   return null;
 }
 
-const TOKEN_RE = /([A-Za-z]+)|(\d{1,4})/g;
+const TOKEN_RE = /([\p{L}]+)|(\d{1,4})/gu;
 
 /** Pull the first month / day / year out of one side of a range. */
 function scan(part: string): {
