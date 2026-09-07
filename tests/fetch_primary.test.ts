@@ -159,6 +159,9 @@ describe("fetch-primary extraction", () => {
     expect(extractDeadline("Deadline: May 15, 2026 23:59 SAST", 2026)?.tz).toBe("SAST");
     expect(extractDeadline("Deadline: May 15, 2026 23:59 ACST", 2026)?.tz).toBe("ACST");
     expect(extractDeadline("Deadline: May 15, 2026 23:59 ACDT", 2026)?.tz).toBe("ACDT");
+    expect(extractDeadline("Papers will not be entertained after May 15, 2026", 2026)?.date).toBe(
+      "2026-05-15",
+    );
   });
 
   it("camera ready", () => {
