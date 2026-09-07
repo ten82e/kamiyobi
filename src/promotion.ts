@@ -498,7 +498,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
     .map((line) => line.trim())
     .filter(Boolean);
   const deadlineLabel =
-    /deadline|due|at the latest|not later than|no later than|on or before|not be entertained after|not entertained after|not be considered after|not considered after|not be accepted after|not accepted after|must arrive|drop[ -]?dead|reach us by|accept(?:ing)? papers until|received by|receipt of|last date|cut-?off|notification|camera[- ]?ready|締切|期限|必着/i;
+    /deadline|due|at the latest|not later than|no later than|on or before|\bcloses?\b|closing date|not be entertained after|not entertained after|not be considered after|not considered after|not be accepted after|not accepted after|must arrive|drop[ -]?dead|reach us by|accept(?:ing)? papers until|received by|receipt of|last date|cut-?off|notification|camera[- ]?ready|締切|期限|必着/i;
   const blockedAdjacentDate =
     /\b(?:submissions?|events?|conferences?|open(?:s|ing)?|starts?|begins?)\b|開催/i;
   const isAdjacentDeadlineLabel = (line: string) =>
@@ -543,14 +543,14 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
     );
   for (const raw of lines) {
     if (
-      !/deadline|due|at the latest|not later than|no later than|on or before|not be entertained after|not entertained after|not be considered after|not considered after|not be accepted after|not accepted after|must arrive|drop[ -]?dead|reach us by|accept(?:ing)? papers until|received by|receipt of|last date|cut-?off|submission|submit|notification|camera[- ]?ready|call for papers|cfp|event|conference|開催|締切|期限|投稿|募集|必着/i.test(
+      !/deadline|due|at the latest|not later than|no later than|on or before|\bcloses?\b|closing date|not be entertained after|not entertained after|not be considered after|not considered after|not be accepted after|not accepted after|must arrive|drop[ -]?dead|reach us by|accept(?:ing)? papers until|received by|receipt of|last date|cut-?off|submission|submit|notification|camera[- ]?ready|call for papers|cfp|event|conference|開催|締切|期限|投稿|募集|必着/i.test(
         raw,
       )
     )
       continue;
     const extracted = extractedDates(raw);
     const headerHasDeadline =
-      /deadline|due|at the latest|not later than|no later than|on or before|not be entertained after|not entertained after|not be considered after|not considered after|not be accepted after|not accepted after|must arrive|drop[ -]?dead|reach us by|accept(?:ing)? papers until|received by|receipt of|last date|cut-?off|submit|submission|notification|camera[- ]?ready|締切|期限|必着/i.test(
+      /deadline|due|at the latest|not later than|no later than|on or before|\bcloses?\b|closing date|not be entertained after|not entertained after|not be considered after|not considered after|not be accepted after|not accepted after|must arrive|drop[ -]?dead|reach us by|accept(?:ing)? papers until|received by|receipt of|last date|cut-?off|submit|submission|notification|camera[- ]?ready|締切|期限|必着/i.test(
         raw.slice(0, extracted[0]?.index),
       );
     const hasBareMilitaryTime = extracted.some((date, index) =>
@@ -597,7 +597,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
           ? trailingTz
           : (extractedTimezone(scope) ?? trailingTz);
       const deadlineSemantics =
-        /deadline|due|at the latest|not later than|no later than|on or before|not be entertained after|not entertained after|not be considered after|not considered after|not be accepted after|not accepted after|must arrive|drop[ -]?dead|reach us by|accept(?:ing)? papers until|received by|receipt of|last date|cut-?off|submit|submission|notification|camera[- ]?ready|締切|期限|必着/i;
+        /deadline|due|at the latest|not later than|no later than|on or before|\bcloses?\b|closing date|not be entertained after|not entertained after|not be considered after|not considered after|not be accepted after|not accepted after|must arrive|drop[ -]?dead|reach us by|accept(?:ing)? papers until|received by|receipt of|last date|cut-?off|submit|submission|notification|camera[- ]?ready|締切|期限|必着/i;
       const inheritsHeader =
         headerHasDeadline &&
         (/\b(?:round|cycle|phase)\b/i.test(currentPrefix) || /^[\s:—–-]*$/.test(currentPrefix)) &&
