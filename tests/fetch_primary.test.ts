@@ -308,6 +308,20 @@ describe("fetch-primary extraction", () => {
     expect(paper.tz).toBe("AoE"); // 前の行の AoE をウィンドウで拾う
   });
 
+  it("extracts confirmed Asia/Pacific abbreviations that resolveTz already accepts (#788)", () => {
+    expect(extractDeadline("Paper deadline: May 15, 2026 23:59 KST", 2026)).toMatchObject({
+      date: "2026-05-15",
+      time: "23:59:00",
+      tz: "KST",
+    });
+    expect(extractDeadline("Paper deadline: May 15, 2026 23:59 SGT", 2026)).toMatchObject({
+      tz: "SGT",
+    });
+    expect(extractDeadline("Paper deadline: May 15, 2026 23:59 HKT", 2026)).toMatchObject({
+      tz: "HKT",
+    });
+  });
+
   it("kind hint wins over adjacent notification", () => {
     // deadline 行の次行に Notification があっても paper のまま (hmem 実例)。
     const lines = ["Submission deadline: August 17, 2026", "Notification: September 4, 2026"];

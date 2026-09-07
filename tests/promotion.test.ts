@@ -239,6 +239,25 @@ describe("promotion batch", () => {
     expect(
       extractCfpCandidates("Paper submission deadline: October 10, 2026 midnight AoE"),
     ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
+
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 23:59 KST")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "KST" },
+    ]);
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 23:59 SGT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "SGT" },
+    ]);
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 23:59 HKT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "HKT" },
+    ]);
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 23:59 HST")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "HST" },
+    ]);
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 23:59 AKDT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "AKDT" },
+    ]);
+    expect(
+      extractCfpCandidates("Paper deadline May 15, 2026\nAll deadlines are 23:59 KST"),
+    ).toMatchObject([{ date: "2026-05-15", time: "23:59:00", timezone: "KST" }]);
   });
 
   it("extracts WET and WEST as confirmed timezones (#842)", () => {
