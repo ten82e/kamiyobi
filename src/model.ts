@@ -1597,6 +1597,7 @@ const PAPER = new Set([
   "contributed_paper",
   "position_paper",
   "late_breaking_paper",
+  "invited_paper",
 ]);
 const CAMERA = new Set([
   "camera_ready",
