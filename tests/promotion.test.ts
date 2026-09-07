@@ -454,6 +454,18 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("extracts day-month dates that include of (#774)", () => {
+    expect(
+      extractCfpCandidates("Paper submission deadline: 15th of May, 2026 23:59 AoE"),
+    ).toMatchObject([{ date: "2026-05-15", time: "23:59:00", timezone: "AoE" }]);
+    expect(
+      extractCfpCandidates("Paper submission deadline: 15 of May 2026 23:59 AoE"),
+    ).toMatchObject([{ date: "2026-05-15", time: "23:59:00", timezone: "AoE" }]);
+    expect(extractCfpCandidates("Paper submission deadline: 15th of May 2026")).toMatchObject([
+      { date: "2026-05-15" },
+    ]);
+  });
+
   it("filters out invalid dates in extractedDates without polluting candidate boundaries (#756)", () => {
     const candidates = extractCfpCandidates(
       "Submission Deadline: 2026-02-30, March 15, 2026 23:59 AoE",

@@ -244,7 +244,7 @@ export function canonicalJson(value: unknown): string {
 const DATE_PATTERNS = [
   /\b20\d{2}[-/.]\d{1,2}[-/.]\d{1,2}\b/g,
   /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[-/\s]+\d{1,2}(?:st|nd|rd|th)?(?:,)?[-/\s]+20\d{2}\b/gi,
-  /\b\d{1,2}(?:st|nd|rd|th)?[-/\s]+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[,]?[-/\s]+20\d{2}\b/gi,
+  /\b\d{1,2}(?:st|nd|rd|th)?(?:[-/\s]+(?:of\s+)?|\s+of\s+)(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[,]?[-/\s]+20\d{2}\b/gi,
   /\b20\d{2}年\d{1,2}月\d{1,2}日/g,
 ];
 
@@ -255,7 +255,7 @@ function extractedDate(text: string): { date: string; year: number } | null {
       text,
     );
   const dayFirst =
-    /\b(\d{1,2})(?:st|nd|rd|th)?[-/\s]+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[,]?[-/\s]+(20\d{2})\b/i.exec(
+    /\b(\d{1,2})(?:st|nd|rd|th)?(?:[-/\s]+(?:of\s+)?|\s+of\s+)(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[,]?[-/\s]+(20\d{2})\b/i.exec(
       text,
     );
   const japanese = /\b(20\d{2})年(\d{1,2})月(\d{1,2})日/.exec(text);
