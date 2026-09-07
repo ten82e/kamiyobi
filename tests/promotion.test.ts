@@ -337,6 +337,18 @@ describe("promotion batch", () => {
     }
   });
 
+  it("keeps European 23h59 wall-clock times (#814)", () => {
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 23h59 CET")).toMatchObject([
+      { kind: "paper", date: "2026-05-15", time: "23:59:00", timezone: "CET" },
+    ]);
+    expect(extractCfpCandidates("Deadline: 15 May 2026 9h30 AoE")).toMatchObject([
+      { kind: "paper", date: "2026-05-15", time: "09:30:00", timezone: "AoE" },
+    ]);
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 23:59 CET")).toMatchObject([
+      { kind: "paper", date: "2026-05-15", time: "23:59:00", timezone: "CET" },
+    ]);
+  });
+
   it.each([
     "All deadlines are not 23:59 AoE",
     "All deadlines are never 23:59 AoE",
