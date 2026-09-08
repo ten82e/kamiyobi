@@ -827,7 +827,7 @@ export function asDate(value: unknown): Date | null {
   // When an ISO timestamp lacks a timezone offset, treat it in UTC to avoid
   // machine-local environment shifts (e.g. JST vs UTC vs EDT).
   // Slash / US / English dates must not fall through to Date.parse: that is
-  // local midnight and shifts the calendar day west of UTC (#790).
+  // local midnight and shifts the UTC calendar day in zones such as JST (#790).
   let iso: string;
   if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(s)) {
     iso = `${s.replace(" ", "T")}Z`;
