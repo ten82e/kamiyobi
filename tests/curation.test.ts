@@ -5,6 +5,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -60,7 +61,7 @@ function writeVerifiedBatch(
           kind: string;
           round?: number;
           track?: string;
-          evidence: Array<{ sourceUrl: string }>;
+          evidence: Array<{ sourceUrl?: string; source_url?: string }>;
         };
       };
     }
@@ -71,7 +72,7 @@ function writeVerifiedBatch(
     const venue = row.normalized.venue;
     const edition = row.normalized.edition;
     const deadline = row.normalized.deadline;
-    const sourceUrl = deadline.evidence[0]?.sourceUrl;
+    const sourceUrl = deadline.evidence[0]?.sourceUrl ?? deadline.evidence[0]?.source_url;
     if (!sourceUrl) throw new Error("test deadline evidence is required");
     const body = `Paper deadline: ${deadline.date}`;
     const bodyPath = join(batchDir, `capture-${index}.body`);
@@ -228,6 +229,54 @@ describe("canonical local inputs", () => {
     };
     expect(generated.conferences[0]?.title).toBe("Canonical Demo");
     expect(generated.conferences[0]?.editions[0]?.deadlines[0]?.date).toBe("2026-10-01");
+  });
+
+  it("resolves evidence URL and venue link from snake_case source_url (#758)", async () => {
+    const root = mkdtempSync(join(tmpdir(), "kamiyobi-curation-snake-case-"));
+    const data = join(root, "data");
+    const batchDir = join(data, "promotions", "2026-09-02-demo");
+    mkdirSync(batchDir, { recursive: true });
+    writeFileSync(
+      join(data, "extra.yaml"),
+      "conferences:\n  - key: demo\n    title: Legacy\n    editions:\n      - year: 2027\n        id: demo27\n        date_text: 2027\n        deadlines:\n          - {kind: paper, date: '2026-01-01', precision: date-only}\n",
+    );
+    writeFileSync(join(data, "manual.yaml"), "conferences: []\n");
+    writeFileSync(join(data, "snapshot.json"), '{"conferences":[]}\n');
+    writeVerifiedBatch(batchDir, [
+      {
+        resolution_id: "promotion-demo",
+        candidate: "demo",
+        decision: "promote",
+        verifiedFields: ["venue", "date"],
+        reason: "verified",
+        normalized: {
+          venue: { key: "demo", title: "Canonical Demo", categories: ["systems"], tags: [] },
+          edition: { year: 2027, edition_id: "demo-2027", date_text: "2027-04-01" },
+          deadline: {
+            kind: "paper",
+            label: "paper",
+            round: 1,
+            track: "",
+            precision: "date-only",
+            date: "2026-10-01",
+            evidence: [{ source_url: "https://demo.example/cfp" }],
+          },
+        },
+      },
+    ]);
+
+    expect(generateCurated(root)).toMatchObject({ manual: 0, curated: 1 });
+    const generated = loadYaml(readFileSync(join(data, "curated.generated.yaml"), "utf8")) as {
+      conferences: Array<{
+        title: string;
+        link: string;
+        editions: Array<{ link: string; deadlines: Array<{ date: string }> }>;
+      }>;
+    };
+    expect(generated.conferences[0]?.title).toBe("Canonical Demo");
+    expect(generated.conferences[0]?.link).toBe("https://demo.example/cfp");
+    expect(generated.conferences[0]?.editions[0]?.link).toBe("https://demo.example/cfp");
+    rmSync(root, { recursive: true, force: true });
   });
 
   it("keeps manual editions when a promoted edition is added to the same venue", async () => {

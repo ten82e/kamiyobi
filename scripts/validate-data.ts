@@ -9,6 +9,7 @@ import {
   embeddedTimezone,
   evidenceClassOf,
   isConfirmedTimezone,
+  parseDateRange,
   parseInstant,
   truncatedVenueName,
 } from "../src/model.ts";
@@ -703,10 +704,21 @@ function validateEdition(
     add(result.errors, `${prefix}: event_start year conflicts with edition ${year}`);
   if (end && ![year, year + 1].includes(end.getUTCFullYear()))
     add(result.errors, `${prefix}: event_end year conflicts with edition ${year}`);
+  const textYears = years(edition.date_text);
+  const [textStart, textEnd] =
+    !start && !end && textYears.includes(year + 1)
+      ? parseDateRange(String(edition.date_text ?? ""), year)
+      : [null, null];
   const allowedTextYears = new Set([year]);
-  if (start?.getUTCFullYear() === year && end?.getUTCFullYear() === year + 1)
+  if (
+    (start?.getUTCFullYear() === year && end?.getUTCFullYear() === year + 1) ||
+    (textStart?.getUTCFullYear() === year &&
+      textEnd?.getUTCFullYear() === year + 1 &&
+      textStart <= textEnd &&
+      textEnd.getTime() - textStart.getTime() <= MAX_EVENT_DAYS * 86_400_000)
+  )
     allowedTextYears.add(year + 1);
-  for (const mentioned of years(edition.date_text))
+  for (const mentioned of textYears)
     if (!allowedTextYears.has(mentioned))
       add(result.errors, `${prefix}: date_text year ${mentioned} conflicts with edition ${year}`);
   if ((start === null) !== (end === null))

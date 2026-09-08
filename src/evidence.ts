@@ -290,8 +290,18 @@ export function gcEvidence(root: string, dryRun = false): { removed: string[]; k
       .replace(/\.body$/, "")
       .toLowerCase();
     if (report.orphan_hashes.includes(hash)) {
+      if (!dryRun) {
+        try {
+          execFileSync("trash", [path], { stdio: "ignore" });
+        } catch (error) {
+          // ゴミ箱が使えない場合も証拠本文を完全削除しない。
+          if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+          throw new Error("evidence GC requires the trash command; orphan files were preserved", {
+            cause: error,
+          });
+        }
+      }
       removed.push(relativeRef(root, path));
-      if (!dryRun) execFileSync("trash", [path], { stdio: "ignore" });
     } else kept.push(relativeRef(root, path));
   }
   return { removed: removed.sort(), kept: kept.sort() };

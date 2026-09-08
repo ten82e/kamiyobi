@@ -185,13 +185,10 @@ function curatedFromResolutions(rowsByKey: Map<string, JsonRecord[]>): JsonRecor
             },
           };
         });
-        const sourceUrl = String(
-          (deadlines[0]?.evidence as JsonRecord[] | undefined)?.find((item) =>
-            String(item.sourceUrl ?? item.source_url ?? "").trim(),
-          )?.sourceUrl ??
-            (deadlines[0]?.evidence as JsonRecord[] | undefined)?.[0]?.source_url ??
-            "",
-        ).trim();
+        const evidenceItem = (deadlines[0]?.evidence as JsonRecord[] | undefined)?.find((item) =>
+          String(item.sourceUrl ?? item.source_url ?? "").trim(),
+        );
+        const sourceUrl = String(evidenceItem?.sourceUrl ?? evidenceItem?.source_url ?? "").trim();
         if (!sourceUrl) throw new Error(`promoted resolution has no evidence URL: ${key}`);
         return {
           year: Number(edition.year),
@@ -207,10 +204,11 @@ function curatedFromResolutions(rowsByKey: Map<string, JsonRecord[]>): JsonRecor
           deadlines,
         };
       });
+    const venueEvidenceItem = (
+      editions[0]?.deadlines?.[0]?.evidence as JsonRecord[] | undefined
+    )?.find((item) => String(item.sourceUrl ?? item.source_url ?? "").trim());
     const evidenceLink = String(
-      (editions[0]?.deadlines?.[0]?.evidence as JsonRecord[] | undefined)?.find((item) =>
-        String(item.sourceUrl ?? item.source_url ?? "").trim(),
-      )?.sourceUrl ?? "",
+      venueEvidenceItem?.sourceUrl ?? venueEvidenceItem?.source_url ?? "",
     ).trim();
     curated.push({
       key,
