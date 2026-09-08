@@ -666,6 +666,58 @@ describe("source freshness", () => {
     }
   });
 
+  it.each(["headers", "body"])("bounds stalled %s reads and restores the cache", async (phase) => {
+    const cache = mkdtempSync("/tmp/cfp-cache-timeout-");
+    const repo = `fixture/stalled-${phase}`;
+    const root = join(cacheSlot(cache, repo, "main"), "source-main");
+    mkdirSync(root, { recursive: true });
+    writeFileSync(join(root, "retained.txt"), "cached data");
+    vi.useFakeTimers();
+    const signals: AbortSignal[] = [];
+    const mockFetch = vi.fn(async (_url: unknown, init?: RequestInit) => {
+      const signal = init?.signal;
+      if (!signal) throw new Error("missing download cancellation signal");
+      signals.push(signal);
+      if (phase === "headers") {
+        return await new Promise<Response>((_resolve, reject) => {
+          signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+        });
+      }
+      return new Response(
+        new ReadableStream({
+          start(controller) {
+            signal.addEventListener("abort", () => controller.error(signal.reason), { once: true });
+          },
+        }),
+      );
+    });
+    vi.stubGlobal("fetch", mockFetch);
+    try {
+      const result = fetchTarball(repo, "main", cache);
+      await vi.advanceTimersByTimeAsync(59_999);
+      expect(signals[0]?.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(125_001);
+      await expect(result).resolves.toBe(root);
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+      expect(signals.every((signal) => signal.aborted)).toBe(true);
+      expect(readFileSync(join(root, "retained.txt"), "utf8")).toBe("cached data");
+      expect(fetchMetadataFor(repo, "main")?.status).toBe("cache-fallback");
+      expect(vi.getTimerCount()).toBe(0);
+
+      const withoutCache = expect(
+        fetchTarball(`${repo}-missing`, "main", cache),
+      ).rejects.toMatchObject({ name: "AbortError" });
+      await vi.advanceTimersByTimeAsync(185_000);
+      await withoutCache;
+      expect(mockFetch).toHaveBeenCalledTimes(6);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.unstubAllGlobals();
+      vi.useRealTimers();
+      resetWarnings();
+    }
+  });
+
   it("clears process-global source metadata before every build", async () => {
     const cache = mkdtempSync("/tmp/cfp-cache-reset-");
     const slot = cacheSlot(cache, "fixture/source", "main");

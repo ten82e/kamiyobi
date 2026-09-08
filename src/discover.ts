@@ -1104,7 +1104,9 @@ export function deadlineIsFuture(
   const d = parseDeadlineText(dateText);
   if (!d) return false;
   const now = today instanceof Date && !Number.isNaN(today.getTime()) ? today : new Date();
-  return d.getTime() >= now.getTime();
+  const deadlineDay = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  const todayDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return deadlineDay >= todayDay;
 }
 
 async function fetchText(url: string, userAgent: string, timeoutMs: number): Promise<string> {
@@ -1531,7 +1533,7 @@ export function parseIpsjCfpHtml(
     const inner = m[2];
     const sm = /論文誌「([^」]+)」特集/.exec(inner);
     if (!sm) continue;
-    const dm = /投稿締切[:：]\s*(\d{4})年(\d{1,2})月(\d{1,2})日/.exec(inner);
+    const dm = /投稿(?:締切|〆切)[:：]\s*(\d{4})年(\d{1,2})月(\d{1,2})日/.exec(inner);
     if (!dm) continue;
     const deadline = `${Number(dm[1]).toString().padStart(4, "0")}-${Number(dm[2]).toString().padStart(2, "0")}-${Number(dm[3]).toString().padStart(2, "0")}`;
     const title = `${decode(sm[1])}（IPSJ 論文誌 特集号）`;
