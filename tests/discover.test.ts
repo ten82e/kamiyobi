@@ -706,6 +706,9 @@ describe("parseDeadlineText", () => {
     // ISO 形式
     expect(parseDeadlineText("2026-02-30")).toBeNull(); // 2月30日
     expect(parseDeadlineText("2026-02-30T00:00:00Z")).toBeNull();
+    expect(parseDeadlineText("2026-08-24T23:59:00")).toBeNull();
+    expect(parseDeadlineText("2026-08-24T24:00:00Z")).toBeNull();
+    expect(parseDeadlineText("2026-08-24T23:60:00Z")).toBeNull();
     expect(parseDeadlineText("2025-02-29")).toBeNull(); // 平年の2月29日
     expect(parseDeadlineText("2026-04-31")).toBeNull(); // 4月31日
     // 日本語形式
@@ -1199,6 +1202,9 @@ describe("deadlineIsFuture", () => {
     expect(deadlineIsFuture("Aug 10, 2026", afternoon)).toBe(true);
     expect(deadlineIsFuture("2026-08-10", afternoon)).toBe(true);
     expect(deadlineIsFuture("Aug 9, 2026", afternoon)).toBe(false);
+    expect(deadlineIsFuture("2026-08-10T14:59:59Z", afternoon)).toBe(false);
+    expect(deadlineIsFuture("2026-08-10T15:00:00Z", afternoon)).toBe(true);
+    expect(deadlineIsFuture("2026-08-11T00:00:00+09:00", afternoon)).toBe(true);
   });
 
   it("treats impossible calendar dates as not future", () => {

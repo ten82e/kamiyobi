@@ -1076,8 +1076,13 @@ export function parseDeadlineText(dateText: string): Date | null {
 
   // 0. ISO-8601 instant: 2027-06-01T23:59:59.000Z / +09:00
   // YYYY-MM-DD の日直後が T だと \b が立たず、下の暦日正規表現が失敗する。
-  const iso = /^(20\d{2})-(\d{2})-(\d{2})T[0-9:.+-Z]+$/i.exec(norm);
-  if (iso) {
+  if (/^20\d{2}-\d{2}-\d{2}T/i.test(norm)) {
+    const iso =
+      /^(20\d{2})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})$/i.exec(
+        norm,
+      );
+    // A timezone-less timestamp is not an instant: never use the host timezone.
+    if (!iso || Number(iso[4]) > 23 || Number(iso[5]) > 59 || Number(iso[6] ?? 0) > 59) return null;
     const calendar = validUtcDate(Number(iso[1]), Number(iso[2]), Number(iso[3]));
     const parsed = Date.parse(norm);
     if (calendar && Number.isFinite(parsed)) return new Date(parsed);
@@ -1141,6 +1146,9 @@ export function deadlineIsFuture(
   const d = parseDeadlineText(dateText);
   if (!d) return false;
   const now = today instanceof Date && !Number.isNaN(today.getTime()) ? today : new Date();
+  if (/^20\d{2}-\d{2}-\d{2}T/i.test(String(dateText).normalize("NFKC").trim())) {
+    return d.getTime() >= now.getTime();
+  }
   const deadlineDay = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
   const todayDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
   return deadlineDay >= todayDay;
