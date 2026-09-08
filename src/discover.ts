@@ -1104,7 +1104,9 @@ export function deadlineIsFuture(
   const d = parseDeadlineText(dateText);
   if (!d) return false;
   const now = today instanceof Date && !Number.isNaN(today.getTime()) ? today : new Date();
-  return d.getTime() >= now.getTime();
+  const deadlineDay = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  const todayDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return deadlineDay >= todayDay;
 }
 
 async function fetchText(url: string, userAgent: string, timeoutMs: number): Promise<string> {
