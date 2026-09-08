@@ -81,39 +81,78 @@ export function writeCasBody(bodyRoot: string, contentHash: string, bytes: Uint8
 
 function blockedIpv4(value: string): boolean {
   const octets = value.split(".").map(Number);
-  if (octets.length !== 4 || octets.some((octet) => !Number.isInteger(octet))) return true;
-  const [a, b] = octets;
+  if (
+    octets.length !== 4 ||
+    octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)
+  )
+    return true;
+  const [a, b, c] = octets;
   return (
     a === 0 ||
     a === 10 ||
     a === 127 ||
-    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 100 && b! >= 64 && b! <= 127) ||
     (a === 169 && b === 254) ||
-    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 172 && b! >= 16 && b! <= 31) ||
+    (a === 192 && b === 0 && (c === 0 || c === 2)) ||
     (a === 192 && b === 168) ||
     (a === 198 && (b === 18 || b === 19)) ||
-    a >= 224
+    (a === 198 && b === 51 && c === 100) ||
+    (a === 203 && b === 0 && c === 113) ||
+    a! >= 224
   );
 }
 
+function parseIpv6Words(addr: string): number[] | null {
+  let s = addr.toLowerCase();
+  const lastColon = s.lastIndexOf(":");
+  if (lastColon !== -1) {
+    const lastPart = s.slice(lastColon + 1);
+    if (lastPart.includes(".")) {
+      const octets = lastPart.split(".").map(Number);
+      if (octets.length !== 4 || octets.some((o) => !Number.isInteger(o) || o < 0 || o > 255))
+        return null;
+      const w1 = ((octets[0]! << 8) | octets[1]!).toString(16);
+      const w2 = ((octets[2]! << 8) | octets[3]!).toString(16);
+      s = `${s.slice(0, lastColon + 1)}${w1}:${w2}`;
+    }
+  }
+  const parts = s.split("::");
+  if (parts.length > 2) return null;
+  let words: string[];
+  if (parts.length === 2) {
+    const left = parts[0] ? parts[0].split(":") : [];
+    const right = parts[1] ? parts[1].split(":") : [];
+    const missing = 8 - (left.length + right.length);
+    if (missing < 0) return null;
+    words = [...left, ...Array(missing).fill("0"), ...right];
+  } else {
+    words = s.split(":");
+  }
+  if (words.length !== 8) return null;
+  const parsed = words.map((w) => Number.parseInt(w, 16));
+  if (parsed.some((w) => Number.isNaN(w) || w < 0 || w > 0xffff)) return null;
+  return parsed;
+}
+
 function blockedIpv6(value: string): boolean {
-  const lower = value.toLowerCase();
-  if (lower === "::" || lower === "::1" || lower.startsWith("fc") || lower.startsWith("fd"))
-    return true;
-  if (
-    lower.startsWith("fe8") ||
-    lower.startsWith("fe9") ||
-    lower.startsWith("fea") ||
-    lower.startsWith("feb")
-  )
-    return true;
-  const mapped = lower.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-  if (mapped) return blockedIpv4(mapped[1]);
-  const mappedHex = lower.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
-  if (!mappedHex) return false;
-  const first = Number.parseInt(mappedHex[1], 16);
-  const second = Number.parseInt(mappedHex[2], 16);
-  return blockedIpv4(`${first >> 8}.${first & 0xff}.${second >> 8}.${second & 0xff}`);
+  const words = parseIpv6Words(value);
+  if (!words) return true;
+  if (words.every((w) => w === 0)) return true;
+  if (words.slice(0, 7).every((w) => w === 0) && words[7] === 1) return true;
+  if ((words[0]! & 0xfe00) === 0xfc00) return true;
+  if ((words[0]! & 0xffc0) === 0xfe80) return true;
+  if ((words[0]! & 0xffc0) === 0xfec0) return true;
+  if ((words[0]! & 0xff00) === 0xff00) return true;
+  if (words.slice(0, 5).every((w) => w === 0) && words[5] === 0xffff) {
+    const ipv4 = `${words[6]! >> 8}.${words[6]! & 0xff}.${words[7]! >> 8}.${words[7]! & 0xff}`;
+    return blockedIpv4(ipv4);
+  }
+  if (words.slice(0, 6).every((w) => w === 0) && (words[6] !== 0 || words[7]! > 1)) {
+    const ipv4 = `${words[6]! >> 8}.${words[6]! & 0xff}.${words[7]! >> 8}.${words[7]! & 0xff}`;
+    return blockedIpv4(ipv4);
+  }
+  return false;
 }
 
 function assertPublicAddress(address: string): void {
@@ -288,8 +327,10 @@ async function bytesOf(
   signal?: AbortSignal,
 ): Promise<Uint8Array> {
   const declared = Number(response.headers.get("content-length") ?? "");
-  if (Number.isFinite(declared) && declared > maxBytes)
+  if (Number.isFinite(declared) && declared > maxBytes) {
+    await cancelBody(response, signal);
     throw new PageCaptureError("body-too-large", `response body exceeds ${maxBytes} bytes`);
+  }
   if (!response.body) {
     const bytes = new Uint8Array(await response.arrayBuffer());
     if (bytes.byteLength > maxBytes)
@@ -372,7 +413,11 @@ export async function capturePage(
       );
     } catch (error) {
       if (error instanceof PageCaptureError) throw error;
-      if (error instanceof Error && error.name === "AbortError")
+      if (
+        (error instanceof Error &&
+          (error.name === "AbortError" || error.name === "TimeoutError")) ||
+        signal.aborted
+      )
         throw new PageCaptureError("timeout", `page request timed out after ${timeoutMs} ms`);
       throw new PageCaptureError("network", `page request failed: ${String(error)}`);
     }
@@ -391,13 +436,19 @@ export async function capturePage(
     );
   }
   if (!response) throw new PageCaptureError("network", "page request returned no response");
-  if (response.url)
-    resolved = await assertSafeResolvedPageUrl(
-      response.url,
-      options,
-      !options.fetchImpl || Boolean(options.dnsLookup),
-      signal,
-    );
+  if (response.url) {
+    try {
+      resolved = await assertSafeResolvedPageUrl(
+        response.url,
+        options,
+        !options.fetchImpl || Boolean(options.dnsLookup),
+        signal,
+      );
+    } catch (error) {
+      await cancelBody(response, signal);
+      throw error;
+    }
+  }
   const headers = safeHeaders(response);
   const contentType = response.headers.get("content-type") ?? "";
   const retryable = response.status === 429 || response.status === 503;

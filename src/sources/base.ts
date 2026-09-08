@@ -184,7 +184,8 @@ async function download(url: string, dest: string, now: Date): Promise<CachedFet
 /** ネットワーク層の一時的失敗 (fetch failed / ECONNRESET / タイムアウト等) のみリトライ対象。
  *  HTTP 4xx は Error として投げられるので retry されない (fetch 失敗時 TypeError になる)。 */
 function isRetryable(exc: unknown): boolean {
-  if (exc instanceof Error && exc.name === "AbortError") return true;
+  if (exc instanceof Error && (exc.name === "AbortError" || exc.name === "TimeoutError"))
+    return true;
   if (exc instanceof TypeError) return true; // undici fetch failed (network)
   return false;
 }
