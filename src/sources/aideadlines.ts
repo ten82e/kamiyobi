@@ -143,7 +143,7 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
         }),
       });
     }
-    if (out.length > 0) return out;
+    if (entries.length > 0) return out;
   }
 
   for (const [kind, label, key] of LEGACY) {

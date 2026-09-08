@@ -108,7 +108,21 @@ export function runHealthGate(argv: string[]): number {
       ? (JSON.parse(readFileSync(args.previousPath!, "utf8")) as HealthReport)
       : null;
     let observationBaseline: ObservationBaseline | null = null;
-    if (args.observationBaselinePath && existsSync(args.observationBaselinePath)) {
+    if (args.observationBaselinePath) {
+      if (!existsSync(args.observationBaselinePath)) {
+        const reason = `observation baseline not found: ${args.observationBaselinePath}`;
+        console.error(reason);
+        writeReport({
+          ok: false,
+          exit_status: 1,
+          reasons: [reason],
+          warnings: [],
+          baseline_available: hasUsableBaseline,
+          current_path: args.currentPath,
+          previous_path: hasUsableBaseline ? args.previousPath! : null,
+        });
+        return 1;
+      }
       try {
         observationBaseline = JSON.parse(
           readFileSync(args.observationBaselinePath, "utf8"),
