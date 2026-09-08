@@ -1392,6 +1392,9 @@ function resolutionEditionYear(editionId: string): string {
   if (full) return full;
   const short = editionId.match(/(?:^|\D)(\d{2})(?:\D|$)/)?.[1];
   if (short) return String(2000 + Number(short));
+  // eaai-2727 のように同一の短い年が二重に付いた形式だけを救済する。
+  const duplicatedYear = /(?:^|\D)([23]\d)\1$/.exec(editionId)?.[1];
+  if (duplicatedYear) return String(2000 + Number(duplicatedYear));
   throw new Error(`resolution edition has no usable year: ${editionId}`);
 }
 

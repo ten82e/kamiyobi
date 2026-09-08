@@ -1951,5 +1951,59 @@ describe("promotion batch", () => {
       const result = verifyPromotionObservation(obs);
       expect(result.valid).toBe(true);
     });
+
+    it("does not match an explicit Round 1 line to a Round 2 observation (#760)", () => {
+      const body =
+        "Round 1 paper deadline: January 2, 2027 23:59 AoE\n" +
+        "Round 2 paper deadline: June 1, 2027 23:59 AoE";
+      const dir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-round-"));
+      const bodyPath = join(dir, "cfp.html");
+      writeFileSync(bodyPath, body);
+      const hash = createHash("sha256").update(body).digest("hex");
+      const capture = {
+        ...defaultCapture,
+        bodyPath,
+        contentHash: hash,
+        excerpt: body,
+        sourceRevision: hash,
+        headers: {},
+      };
+      const mismatched = observation({
+        deadline: {
+          date: "2027-01-02",
+          time: "23:59:00",
+          timezone: "AoE",
+          kind: "paper",
+          round: 2,
+        },
+        rawExcerpt: "Round 1 paper deadline: January 2, 2027 23:59 AoE",
+        evidence: { ...evidence, contentHash: hash, rawExcerpt: body },
+        capture,
+      });
+      expect(verifyPromotionObservation(mismatched).valid).toBe(false);
+      expect(verifyPromotionObservation(mismatched).errors).toContain(
+        "deadline fields were not found in extraction candidates",
+      );
+      const matched = observation({
+        deadline: {
+          date: "2027-06-01",
+          time: "23:59:00",
+          timezone: "AoE",
+          kind: "paper",
+          round: 2,
+        },
+        rawExcerpt: "Round 2 paper deadline: June 1, 2027 23:59 AoE",
+        evidence: { ...evidence, contentHash: hash, rawExcerpt: body },
+        capture,
+      });
+      expect(verifyPromotionObservation(matched).valid).toBe(true);
+      expect(
+        verifyPromotionObservation({
+          ...matched,
+          deadline: { ...matched.deadline, round: undefined },
+        }).valid,
+      ).toBe(false);
+      rmSync(dir, { recursive: true, force: true });
+    });
   });
 });

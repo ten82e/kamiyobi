@@ -1689,6 +1689,38 @@ describe("discover and review boundary handling", () => {
       expect(rows[0].link).toBe("https://www.ipsj.or.jp/journal/index.php?issue=27-p");
     });
   });
+
+  describe("fixes for discover evidence URL defects (#760)", () => {
+    it("keeps camelCase sourceUrl when loading candidate evidence", () => {
+      const registry = parseCandidateRegistry({
+        schema: 2,
+        candidates: [
+          {
+            key: "demo",
+            title: "Demo Workshop",
+            full_name: "Demo Workshop",
+            link: "https://demo.example/",
+            categories: ["systems"],
+            evidence: [
+              {
+                source: "openreview",
+                sourceUrl: "https://openreview.net/forum?id=abc",
+                observed_at: "2026-09-01T00:00:00.000Z",
+              },
+            ],
+          },
+        ],
+      });
+      expect(registry.candidates[0]?.evidence).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            source: "openreview",
+            source_url: "https://openreview.net/forum?id=abc",
+          }),
+        ]),
+      );
+    });
+  });
 });
 
 describe("discover lifecycle and year parsing (#762)", () => {
