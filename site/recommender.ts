@@ -293,9 +293,9 @@ interface EmbeddingBundle extends EmbeddingSet {
   multi?: EmbeddingSet;
 }
 
-function parsedInstant(value: unknown): number {
+function parsedInstant(value: unknown): number | null {
   const time = Date.parse(String(value ?? ""));
-  return Number.isFinite(time) ? time : Number.NaN;
+  return Number.isFinite(time) ? time : null;
 }
 
 /** Same bounds as src/model.ts dateOnlyWindow: UTC midnight -14h .. +36h-1ms. */
@@ -1361,11 +1361,9 @@ const Recommender = (() => {
           const dateOnly = dl.precision === "date-only";
           const window = dateOnly ? dateOnlyWindowMs(dl.local_date) : null;
           const t = dateOnly
-            ? parsedInstant(dl.earliest_utc ?? "") || window?.start || Number.NaN
-            : parsedInstant(dl.utc ?? dl.at_utc ?? "");
-          const tLast = dateOnly
-            ? parsedInstant(dl.latest_utc ?? "") || window?.end || Number.NaN
-            : t;
+            ? (parsedInstant(dl.earliest_utc) ?? window?.start ?? Number.NaN)
+            : (parsedInstant(dl.utc ?? dl.at_utc) ?? Number.NaN);
+          const tLast = dateOnly ? (parsedInstant(dl.latest_utc) ?? window?.end ?? Number.NaN) : t;
           if (!Number.isFinite(t) || !Number.isFinite(tLast)) return;
           out.push({
             conf,
