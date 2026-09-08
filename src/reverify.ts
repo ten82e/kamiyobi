@@ -193,6 +193,7 @@ interface JsonDeadline {
   precision?: string;
   local_date?: string;
   utc?: string | null;
+  at_utc?: string | null;
   aoe?: string | null;
   tz_raw?: string | null;
   verification?: Partial<VerificationState>;
@@ -1121,13 +1122,15 @@ export function deadlineId(
 function deadlineCutoff(deadline: JsonDeadline): Date | null {
   if (deadline.precision === "date-only")
     return dateOnlyWindow(deadline.local_date)?.latestPossibleUtc ?? null;
-  const exact = new Date(String(deadline.utc ?? ""));
+  const exact = new Date(String(deadline.utc ?? deadline.at_utc ?? ""));
   return Number.isNaN(exact.getTime()) ? null : exact;
 }
 
 function deadlineValue(deadline: JsonDeadline): string {
   return String(
-    deadline.precision === "date-only" ? (deadline.local_date ?? "") : (deadline.utc ?? ""),
+    deadline.precision === "date-only"
+      ? (deadline.local_date ?? "")
+      : (deadline.utc ?? deadline.at_utc ?? ""),
   );
 }
 
@@ -1509,7 +1512,7 @@ function candidateRecord(
 
 /** 保存 exact 値の、公式表記タイムゾーン (tz_raw) での暦日 (YYYY-MM-DD)。 */
 function deadlineWallDate(deadline: JsonDeadline): string | null {
-  const utcMs = Date.parse(String(deadline.utc ?? ""));
+  const utcMs = Date.parse(String(deadline.utc ?? deadline.at_utc ?? ""));
   if (!Number.isFinite(utcMs)) return null;
   // TZ が未確認なら暦日を確定できない (UTC フォールバックでの照合は
   // 誤 verified の温床になる)。date-only 照合は確認済み TZ に限る。
@@ -1537,7 +1540,7 @@ function sameDeadlineValue(deadline: JsonDeadline, candidate: ExtractedDeadlineF
       !(candidate.time && candidate.timezone) &&
       candidate.date === String(deadline.local_date ?? "")
     );
-  const expected = String(deadline.utc ?? "");
+  const expected = String(deadline.utc ?? deadline.at_utc ?? "");
   if (!candidate.time || !candidate.timezone) {
     // 原典が日付のみを示す締切 (通知・camera-ready 等) は、保存 exact 値の
     // 公式表記タイムゾーンでの暦日と一致すれば「公式ページが同じ日付を示している」
@@ -1643,7 +1646,9 @@ function verifyBlocked(
   }
   // (3) 同 kind の兄弟スロット間で round の順序と保存値の時系列が食い違う場合、
   //     データ側の取り違えの疑いがあり、値照合だけでは正しさを保証できない。
-  const targetMs = Date.parse(String(target.deadline.utc ?? target.deadline.local_date ?? ""));
+  const targetMs = Date.parse(
+    String(target.deadline.utc ?? target.deadline.at_utc ?? target.deadline.local_date ?? ""),
+  );
   if (Number.isFinite(targetMs)) {
     for (const sibling of siblings) {
       if (String(sibling.kind ?? "other") !== target.kind) continue;
@@ -1655,7 +1660,9 @@ function verifyBlocked(
       if (!isCompatibleRoundTrack(siblingTrack, target.track)) continue;
       const siblingRound = Number(sibling.round ?? 1) || 1;
       if (siblingRound === target.round) continue;
-      const siblingMs = Date.parse(String(sibling.utc ?? sibling.local_date ?? ""));
+      const siblingMs = Date.parse(
+        String(sibling.utc ?? sibling.at_utc ?? sibling.local_date ?? ""),
+      );
       if (!Number.isFinite(siblingMs)) continue;
       if (siblingRound > target.round && siblingMs < targetMs) return true;
       if (siblingRound < target.round && siblingMs > targetMs) return true;
