@@ -7,6 +7,7 @@ import {
   asDate,
   deadlineTrackKey,
   embeddedTimezone,
+  evidenceClassOf,
   isConfirmedTimezone,
   parseInstant,
   truncatedVenueName,
@@ -442,7 +443,10 @@ function deadlineSemanticRows(value: unknown): Map<string, Record<string, unknow
 function evidenceClass(deadline: Record<string, unknown> | undefined): string | null {
   return (
     records(deadline?.evidence)
-      .map((evidence) => String(evidence.sourceClass ?? evidence.source_name ?? ""))
+      .map(
+        (evidence) =>
+          evidenceClassOf(evidence) || String(evidence.source_name ?? evidence.sourceName ?? ""),
+      )
       .find(Boolean) ?? null
   );
 }

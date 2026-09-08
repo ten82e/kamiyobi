@@ -347,6 +347,67 @@ describe("resolvePrimaryObservations (#504 acceptance)", () => {
     ]);
   });
 
+  it("drops unparsable deadline rows instead of keeping the raw patch (#766)", () => {
+    const resolved = resolvePrimaryObservations({
+      conferences: {
+        prose: {
+          editions: {
+            2026: {
+              link: "https://example.org/prose",
+              deadlines: [{ kind: "paper", label: "P", date: "March 15, 2026", tz: "AoE" }],
+            },
+          },
+        },
+      },
+    });
+    const edition = resolvedEditions(resolved, "prose")[2026];
+    expect(edition).not.toHaveProperty("deadlines");
+    expect(edition.link).toBe("https://example.org/prose");
+  });
+
+  it.each([
+    { deadlines: [] },
+    { deadlines: [{ kind: "paper", date: "March 15, 2026", tz: "AoE" }] },
+    { deadlines: [{ kind: "paper", date: "2026-02-30", tz: "AoE" }] },
+  ])(
+    "preserves confirmed slots and honors only explicit removals when no observation passes: %j",
+    ({ deadlines }) => {
+      const original = makeConference({
+        key: "demo",
+        title: "Demo",
+        editions: [
+          makeEdition({
+            year: 2026,
+            edition_id: "demo26",
+            deadlines: [
+              makeDeadline("paper", "Paper", utc(2026, 9, 15)),
+              makeDeadline("abstract", "Abstract", utc(2026, 9, 1)),
+            ],
+          }),
+        ],
+      });
+      for (const remove of [false, true]) {
+        const resolved = resolvePrimaryObservations({
+          conferences: {
+            demo: {
+              editions: {
+                2026: {
+                  deadlines,
+                  ...(remove ? { remove: [{ kind: "paper", label: "Paper", round: 1 }] } : {}),
+                },
+              },
+            },
+          },
+        });
+        expect(resolvedEditions(resolved, "demo")[2026]).not.toHaveProperty("deadlines");
+        const updated = applyOverrides([original], resolved)[0].editions[0].deadlines;
+        expect(updated).toEqual(
+          remove ? [original.editions[0].deadlines[1]] : original.editions[0].deadlines,
+        );
+      }
+    },
+  );
+
   it("mixed quality: verified rows replace, unverifiable rows are dropped", () => {
     const primary = {
       conferences: {

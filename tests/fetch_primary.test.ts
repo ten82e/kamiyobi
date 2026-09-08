@@ -460,6 +460,7 @@ describe("page-year diagnostics", () => {
       2026,
     );
     expect(pageTitleYear("<title>EuroSys '26 - 21st European Conference</title>")).toBe(2026);
+    expect(pageTitleYear("<title>EuroSys '36 CFP</title>")).toBe(2036);
     expect(pageTitleYear("<title>OSDI ’26 CFP</title>")).toBe(2026);
     expect(pageTitleYear("<title>SETTA 2025 / 2026</title>")).toBeNull();
     expect(pageTitleYear("<title>Annual Symposium on Systems</title>")).toBeNull();
