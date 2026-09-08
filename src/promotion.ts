@@ -314,7 +314,10 @@ function extractedDates(
 }
 
 function extractedTime(text: string): string | undefined {
-  const match = /\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?\b/i.exec(text);
+  const match =
+    /(?<!(?:utc|gmt)\s*[+-]\s*)\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?\b/i.exec(
+      text,
+    );
   if (match) {
     let hour = Number(match[1]);
     let minute = Number(match[2]);
