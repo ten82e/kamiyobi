@@ -1250,12 +1250,23 @@ describe("parseDeadlineText", () => {
     ["2026.05.15", 2026, 5, 15],
     ["2026-05-15", 2026, 5, 15],
     ["2026年5月15日", 2026, 5, 15],
+    ["2027-06-01T23:59:59Z", 2027, 6, 1],
+    ["2027-06-01T23:59:59Z (AoE)", 2027, 6, 1],
+    ["2027-06-01T23:59:59+09:00 (JST)", 2027, 6, 1],
   ])("parses %j -> %d-%02d-%02d", (text, y, m, d) => {
     const res = parseDeadlineText(text);
     expect(res).not.toBeNull();
     expect(res?.toISOString().slice(0, 10)).toBe(
       `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
     );
+  });
+
+  it("extracts ISO timestamps with T from text in extractDeadlinesFromText", () => {
+    const deadlines = extractDeadlinesFromText(
+      "The submission deadline is 2027-06-01T23:59:59Z for all papers.",
+    );
+    expect(deadlines).toHaveLength(1);
+    expect(deadlines[0].date).toBe("2027-06-01 23:59:00");
   });
 
   it("returns null for unparsable or empty strings", () => {
