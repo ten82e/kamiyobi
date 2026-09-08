@@ -4,7 +4,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
-  rmSync,
+  readFileSync,
   symlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -168,7 +168,7 @@ it("fails closed when an evidence reference directory cannot be traversed", () =
   }
 });
 
-it("removes orphan body blobs during non-dryRun GC even without trash CLI (#758)", () => {
+it("preserves orphan body blobs when the trash command is unavailable (#758)", () => {
   const root = mkdtempSync(join(tmpdir(), "kamiyobi-evidence-gc-fallback-"));
   const data = join(root, "data");
   mkdirSync(join(data, "evidence", "blobs"), { recursive: true });
@@ -186,11 +186,16 @@ it("removes orphan body blobs during non-dryRun GC even without trash CLI (#758)
   const originalPath = process.env.PATH;
   process.env.PATH = "";
   try {
-    const result = gcEvidence(root, false);
-    expect(result.removed).toContain(`data/evidence/blobs/${hash}.body`);
-    expect(existsSync(blobPath)).toBe(false);
+    expect(() => gcEvidence(root, false)).toThrow(/requires the trash command.*preserved/);
+    expect(readFileSync(blobPath, "utf8")).toBe(body);
+    const preview = gcEvidence(root, true);
+    expect(preview.removed).toContain(`data/evidence/blobs/${hash}.body`);
+    expect(existsSync(blobPath)).toBe(true);
+    writeFileSync(join(root, "trash"), "#!/bin/sh\nexit 7\n", { mode: 0o755 });
+    process.env.PATH = root;
+    expect(() => gcEvidence(root, false)).toThrow();
+    expect(readFileSync(blobPath, "utf8")).toBe(body);
   } finally {
     process.env.PATH = originalPath;
-    rmSync(root, { recursive: true, force: true });
   }
 });

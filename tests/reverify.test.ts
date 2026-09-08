@@ -1307,6 +1307,8 @@ it("normalizes hosts before checking allowHttpHosts in assertSafePageUrl (#758)"
   expect(() => assertSafePageUrl("http://other.example.com/cfp", ["example.com"])).toThrow(
     /unsafe page URL protocol/,
   );
+  expect(() => assertSafePageUrl("http://localhost./cfp", ["localhost"])).toThrow(/private/);
+  expect(() => assertSafePageUrl("http://127.0.0.1/cfp", ["127.0.0.1"])).toThrow(/private/);
 });
 
 it("answers both lookup callback contracts from the pinned resolver", () => {

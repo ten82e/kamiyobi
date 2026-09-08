@@ -837,7 +837,13 @@ describe("month envelope validation fixes (#746)", () => {
       expect(yearConflictErrors).toEqual([]);
     });
 
-    it("rejects year + 1 in date_text when edition year is absent (#758)", () => {
+    it.each([
+      "January 3, 2027",
+      "2026 / 2027 TBD",
+      "January 3, 2027 - December 28, 2026",
+      "January 1, 2026 - January 3, 2027",
+      "December 32, 2026 - January 3, 2027",
+    ])("rejects unsupported cross-year event text: %s (#758)", (dateText) => {
       const res = validateData({
         conferences: [
           {
@@ -848,7 +854,7 @@ describe("month envelope validation fixes (#746)", () => {
               {
                 year: 2026,
                 id: "mismatched-conf-2026",
-                date_text: "January 3, 2027",
+                date_text: dateText,
                 deadlines: [
                   {
                     kind: "paper",
