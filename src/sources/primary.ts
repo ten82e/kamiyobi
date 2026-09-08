@@ -228,7 +228,9 @@ export function resolvePrimaryObservations(
       const eventEnd = asDate(ep.event_end) ?? parsedEnd ?? knownEdition?.event_end ?? null;
       const rows = toObservationRows(ep.deadlines);
       if (rows.length === 0) {
-        outEditions[yearKey] = Array.isArray(ep.remove) ? { ...ep, mode: "merge-slots" } : ep;
+        // 未パース行も含め、検証できる観測が無いなら deadlines を残さない。
+        const { deadlines: _omit, ...rest } = ep;
+        outEditions[yearKey] = Array.isArray(ep.remove) ? { ...rest, mode: "merge-slots" } : rest;
         continue;
       }
       let ambiguous = 0;
@@ -266,7 +268,7 @@ export function resolvePrimaryObservations(
           );
         }
         const { deadlines: _omit, ...rest } = ep;
-        outEditions[yearKey] = rest;
+        outEditions[yearKey] = Array.isArray(ep.remove) ? { ...rest, mode: "merge-slots" } : rest;
         continue;
       }
       if (outsideWindow > 0 || ambiguous > 0) {

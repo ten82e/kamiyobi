@@ -607,6 +607,21 @@ describe("parse_date_range", () => {
   });
 });
 
+describe("deadlineEvidence", () => {
+  it("keeps snake_case source_class as sourceClass (#766)", () => {
+    expect(
+      deadlineEvidence([
+        {
+          source_name: "ccfddl",
+          source_class: "official-cfp",
+          source_url: "https://x.example/cfp",
+          original_value: "2026-09-01",
+        },
+      ]),
+    ).toMatchObject([{ source_name: "ccfddl", sourceClass: "official-cfp" }]);
+  });
+});
+
 describe("slug", () => {
   it.each([
     ["SIGCOMM", "sigcomm"],
