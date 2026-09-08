@@ -1885,7 +1885,7 @@ function migrateTargetIds(data: JsonData, ledger: VerificationLedger): void {
   const targets = collectVerificationTargets(data, emptyLedger(), new Date("1970-01-01T00:00:00Z"));
   for (const [oldId, entry] of Object.entries(ledger.deadlines)) {
     if (targets.some((target) => target.deadlineId === oldId)) continue;
-    const target = targets.find(
+    const matches = targets.filter(
       (item) =>
         item.kind === entry.kind &&
         item.round === entry.round &&
@@ -1904,7 +1904,9 @@ function migrateTargetIds(data: JsonData, ledger: VerificationLedger): void {
           item.edition.call_identity?.callId,
         ].some((value) => String(value ?? "") === entry.edition_id),
     );
-    if (!target || ledger.deadlines[target.deadlineId]) continue;
+    if (matches.length !== 1) continue;
+    const target = matches[0]!;
+    if (ledger.deadlines[target.deadlineId]) continue;
     ledger.deadlines[target.deadlineId] = {
       ...entry,
       deadline_id: target.deadlineId,

@@ -24,6 +24,7 @@ import {
   applyVerificationLedger,
   assertResolutionCanApply,
   collectVerificationTargets,
+  deadlineId,
   loadVerificationLedger,
   pageIdForUrl,
   reverifyData,
@@ -3172,4 +3173,114 @@ describe("fixes for reverify defects (#744)", () => {
     expect(researchEntry?.status).toBe("verified");
     rmSync(dir, { recursive: true, force: true });
   });
+});
+
+it("migrates a unique legacy ledger id and skips ambiguous legacy keys (#768)", async () => {
+  const pageId = pageIdForUrl("https://example.test/cfp");
+  const hash = "b".repeat(64);
+  const conference = (key: string) => ({
+    key,
+    title: key,
+    legacy_keys: ["fse"],
+    editions: [
+      {
+        year: 2026,
+        id: "2026",
+        deadlines: [
+          {
+            kind: "paper",
+            label: "Paper",
+            round: 1,
+            track: "",
+            precision: "date-only",
+            local_date: "2027-01-02",
+            verification: {
+              official_url: "https://example.test/cfp",
+              source_class: "official-cfp" as const,
+              next_check_at: "2099-01-01T00:00:00.000Z",
+              status: "pending" as const,
+            },
+          },
+        ],
+      },
+    ],
+  });
+  const writeCase = (keys: string[]) => {
+    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-migrate-"));
+    const dataPath = join(dir, "data.json");
+    const ledgerPath = join(dir, "verification-ledger.json");
+    const conferences = keys.map(conference);
+    writeFileSync(dataPath, JSON.stringify({ conferences }));
+    const oldId = "fse|2026|paper|1|";
+    writeFileSync(
+      ledgerPath,
+      JSON.stringify({
+        schema_version: 2,
+        producer_revision: "reverification-v2",
+        generated_at: "2026-08-31T00:00:00.000Z",
+        pages: {
+          [pageId]: {
+            requested_url: "https://example.test/cfp",
+            final_url: "https://example.test/cfp",
+            status: 200,
+            last_attempt_at: "2026-08-31T00:00:00.000Z",
+            last_success_at: "2026-08-31T00:00:00.000Z",
+          },
+        },
+        deadlines: {
+          [oldId]: {
+            page_id: pageId,
+            deadline_id: oldId,
+            venue_key: "fse",
+            edition_id: "2026",
+            kind: "paper",
+            round: 1,
+            track: "",
+            next_check_at: "2099-01-01T00:00:00.000Z",
+            status: "pending",
+            content_hash: hash,
+            official_url: "https://example.test/cfp",
+          },
+        },
+        aliases: {},
+        resolutions: [],
+      }),
+    );
+    return { dir, dataPath, ledgerPath, oldId, conferences };
+  };
+
+  const unique = writeCase(["fse-sc"]);
+  const uniqueId = deadlineId(
+    unique.conferences[0]!,
+    unique.conferences[0]!.editions[0]!,
+    unique.conferences[0]!.editions[0]!.deadlines[0]!,
+  );
+  const uniqueResult = await reverifyData({
+    dataPath: unique.dataPath,
+    ledgerPath: unique.ledgerPath,
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    fetchImpl: async () => {
+      throw new Error("unique migration should not fetch");
+    },
+  });
+  expect(uniqueId).toBe("fse-sc|2026|paper|1|");
+  expect(uniqueResult.ledger.deadlines[unique.oldId]).toBeUndefined();
+  expect(uniqueResult.ledger.deadlines[uniqueId]?.content_hash).toBe(hash);
+  expect(uniqueResult.ledger.aliases[unique.oldId]).toBe(uniqueId);
+
+  const ambiguous = writeCase(["fse-sc", "fse-se"]);
+  const ambiguousResult = await reverifyData({
+    dataPath: ambiguous.dataPath,
+    ledgerPath: ambiguous.ledgerPath,
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    fetchImpl: async () => {
+      throw new Error("ambiguous migration should not fetch");
+    },
+  });
+  expect(ambiguousResult.ledger.deadlines[ambiguous.oldId]?.content_hash).toBe(hash);
+  expect(ambiguousResult.ledger.deadlines["fse-sc|2026|paper|1|"]?.content_hash).not.toBe(hash);
+  expect(ambiguousResult.ledger.deadlines["fse-se|2026|paper|1|"]?.content_hash).not.toBe(hash);
+  expect(ambiguousResult.ledger.aliases[ambiguous.oldId]).toBeUndefined();
 });
