@@ -962,6 +962,10 @@ describe("review helpers", () => {
     );
     expect(parseDeadlineText("2026年05月15日")?.toISOString().slice(0, 10)).toBe("2026-05-15");
     expect(parseDeadlineText("2026年5月15日 (金)")?.toISOString().slice(0, 10)).toBe("2026-05-15");
+    expect(parseDeadlineText("2026年5月10")?.toISOString().slice(0, 10)).toBe("2026-05-10");
+    expect(parseDeadlineText("2026年5月100日")).toBeNull();
+    expect(extractDeadlinesFromText("投稿締切: 2026年5月100日")).toEqual([]);
+    expect(parseDeadlineText("2026年8月17〜21日")?.toISOString().slice(0, 10)).toBe("2026-08-17");
     expect(parseDeadlineText("Aug 15, 2026 (Aug 1, 2026)")?.toISOString().slice(0, 10)).toBe(
       "2026-08-15",
     );
@@ -975,6 +979,9 @@ describe("review helpers", () => {
     const res2 = extractDeadlinesFromText("Submission: ２０２６/０８/２０");
     expect(res2.length).toBe(1);
     expect(res2[0].date).toBe("2026-08-20 23:59:00");
+
+    const omittedDay = extractDeadlinesFromText("投稿締切: 2026年5月10");
+    expect(omittedDay[0]?.date).toBe("2026-05-10 23:59:00");
 
     expect(extractDeadlinesFromText(null)).toEqual([]);
     expect(extractDeadlinesFromText(undefined)).toEqual([]);

@@ -879,7 +879,7 @@ export function extractDeadlinesFromText(
   };
 
   // 1. Japanese format: 2026年5月15日
-  const reJp = /(\d{4})年(\d{1,2})月(\d{1,2})日/g;
+  const reJp = /(\d{4})年(\d{1,2})月(\d{1,2})(?!\d)日?/g;
   let m: RegExpExecArray | null = null;
   while (true) {
     m = reJp.exec(norm);
@@ -1052,7 +1052,7 @@ export function parseDeadlineText(dateText: string): Date | null {
   if (m) return validUtcDate(Number(m[1]), Number(m[2]), Number(m[3]));
 
   // 2. Japanese date: 2026年5月15日, 2026年05月15日
-  m = /(\d{4})年(\d{1,2})月(\d{1,2})日/.exec(norm);
+  m = /(\d{4})年(\d{1,2})月(\d{1,2})(?!\d)日?/.exec(norm);
   if (m) return validUtcDate(Number(m[1]), Number(m[2]), Number(m[3]));
 
   // 3. Day Month Year: '15 May 2026', '15th of May, 2026', '15th of May 2026', '15th August, 2026', '15-May-2026', '15/May/2026'
@@ -1533,7 +1533,7 @@ export function parseIpsjCfpHtml(
     const inner = m[2];
     const sm = /論文誌「([^」]+)」特集/.exec(inner);
     if (!sm) continue;
-    const dm = /投稿(?:締切|〆切)[:：]\s*(\d{4})年(\d{1,2})月(\d{1,2})日/.exec(inner);
+    const dm = /投稿(?:締切|〆切)[:：]\s*(\d{4})年(\d{1,2})月(\d{1,2})(?!\d)日?/.exec(inner);
     if (!dm) continue;
     const deadline = `${Number(dm[1]).toString().padStart(4, "0")}-${Number(dm[2]).toString().padStart(2, "0")}-${Number(dm[3]).toString().padStart(2, "0")}`;
     const title = `${decode(sm[1])}（IPSJ 論文誌 特集号）`;

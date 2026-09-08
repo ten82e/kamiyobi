@@ -1433,7 +1433,7 @@ function parseJapaneseRange(
   // 1. 日付範囲: YYYY年M月D日[〜-]YYYY年M月D日 / YYYY年M月D日[〜-]M月D日 / YYYY年M月D日[〜-]D日
   // または年省略: M月D日[〜-]YYYY年M月D日 / M月D日[〜-]M月D日 / M月D日[〜-]D日
   let m =
-    /^(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日\s*(?:[〜~～\-–—]|から|to)\s*(?:(\d{4})年)?(?:(\d{1,2})月)?(\d{1,2})日?$/i.exec(
+    /^(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日?\s*(?:[〜~～\-–—]|から|to)\s*(?:(\d{4})年)?(?:(\d{1,2})月)?(\d{1,2})日?$/i.exec(
       norm,
     );
   if (m) {
@@ -1469,7 +1469,7 @@ function parseJapaneseRange(
   }
 
   // 3. 単一日付: YYYY年M月D日 / M月D日
-  m = /^(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日$/.exec(norm);
+  m = /^(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日?$/.exec(norm);
   if (m) {
     const y = m[1] ? Number(m[1]) : fallbackYear;
     const mo = Number(m[2]);
