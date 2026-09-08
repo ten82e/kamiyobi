@@ -148,10 +148,13 @@ async function download(url: string, dest: string, now: Date): Promise<CachedFet
         `warning: fetch of ${url} failed; retrying (${attempt}/${maxAttempts})\n`,
       );
     }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 60_000);
     try {
       const response = await fetch(url, {
         headers: { "User-Agent": USER_AGENT },
         redirect: "follow",
+        signal: controller.signal,
       });
       if (response.status >= 500 || response.status === 429) {
         lastError = new Error(`HTTP ${response.status} for ${url}`);
@@ -171,6 +174,8 @@ async function download(url: string, dest: string, now: Date): Promise<CachedFet
         continue;
       }
       throw exc;
+    } finally {
+      clearTimeout(timer);
     }
   }
   throw lastError ?? new Error(`unreachable: download retries exhausted for ${url}`);
