@@ -158,8 +158,16 @@ export function resolveObservation(
   // 日付のみは一級の観測であり、時刻を捏造しない。
   if (row.time && resolveTzStatus(row.tzRaw).status !== "confirmed") return null;
   const day = asDate(row.date);
-  const start = eventStart ?? eventEnd;
-  const end = eventEnd ?? eventStart;
+  const rawStart = eventStart ?? eventEnd;
+  const rawEnd = eventEnd ?? eventStart;
+  const start =
+    rawStart !== null && rawEnd !== null && rawStart.getTime() > rawEnd.getTime()
+      ? rawEnd
+      : rawStart;
+  const end =
+    rawStart !== null && rawEnd !== null && rawStart.getTime() > rawEnd.getTime()
+      ? rawStart
+      : rawEnd;
   if (
     !day ||
     (start !== null &&

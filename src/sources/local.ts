@@ -30,6 +30,7 @@ import {
   venueIdentityOf,
   warn,
 } from "../model.ts";
+import { rankOf } from "./aideadlines.ts";
 
 export const NAME = "local";
 
@@ -241,6 +242,11 @@ export function editionOf(
     start = start ?? parsedStart;
     end = end ?? parsedEnd;
   }
+  if (start !== null && end !== null && start.getTime() > end.getTime()) {
+    const tmp = start;
+    start = end;
+    end = tmp;
+  }
   const editionId = String(raw.id ?? `${key}${String(year % 100).padStart(2, "0")}`);
   const link = String(raw.link ?? "");
   const callIdentity = callIdentityOf(raw.call_identity ?? raw.callIdentity);
@@ -320,12 +326,7 @@ export function parseFile(path: string | null | undefined): Conference[] {
         return edition;
       })
       .sort((a, b) => a.year - b.year);
-    const rank: Record<string, string> = {};
-    for (const [k, v] of Object.entries((raw.rank as Record<string, unknown> | null) ?? {})) {
-      if (v !== null && v !== undefined && String(v).trim() !== "" && String(v).trim() !== "null") {
-        rank[String(k).toLowerCase().trim()] = String(v).trim();
-      }
-    }
+    const rank = rankOf(raw.rank ?? raw.rankings);
     let link = String(raw.link ?? "").trim();
     if (!link) {
       for (const edition of [...editions].reverse()) {
@@ -434,6 +435,21 @@ export class LocalSource {
       ];
       byKey.set(conference.key, {
         ...existing,
+        full_name:
+          (existing.full_name &&
+          existing.full_name !== existing.key &&
+          existing.full_name !== existing.title
+            ? existing.full_name
+            : conference.full_name) || existing.full_name,
+        acronym:
+          (existing.acronym &&
+          existing.acronym !== existing.key &&
+          existing.acronym !== existing.title
+            ? existing.acronym
+            : conference.acronym) || existing.acronym,
+        link: existing.link || conference.link,
+        rank: { ...conference.rank, ...existing.rank },
+        dblp: existing.dblp ?? conference.dblp,
         tags: [...new Set([...existing.tags, ...conference.tags].filter(Boolean))],
         categories: [
           ...new Set([...existing.categories, ...conference.categories].filter(Boolean)),
