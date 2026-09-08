@@ -200,6 +200,37 @@ describe("recommendation axes", () => {
       conflicts: 2,
     });
     expect(recommendationAxes(value, null, NOW).evidence_quality).toBe("official");
+
+    expect(
+      recommendationAxes(
+        conference({
+          dblp: null,
+          rank: {},
+          papers: [],
+          editions: [
+            {
+              year: 2027,
+              sourceFreshness: "fresh",
+              deadlines: [
+                {
+                  kind: "paper",
+                  precision: "exact",
+                  utc: "2027-01-02T23:59:00.000Z",
+                  evidence: [
+                    {
+                      source_class: "official-cfp",
+                      verified_fields: ["date", "time", "timezone", "kind"],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
+        null,
+        NOW,
+      ).deadline_trust.date,
+    ).toBe("official");
   });
 
   it("does not let an unscoped official evidence make every field official", () => {
@@ -524,5 +555,74 @@ describe("recommendation axes", () => {
       deadline_precision: "date-only",
       deadline_trust: { date: "aggregator", time: "unverified" },
     });
+  });
+
+  it("keeps date-only local_date and exact at_utc rows without utc fields (#772)", () => {
+    const rows = (recommender as any).candidateRows({
+      conferences: [
+        {
+          key: "date-only-venue",
+          title: "Date Only Venue",
+          categories: ["systems"],
+          editions: [
+            {
+              year: 2026,
+              deadlines: [{ kind: "paper", precision: "date-only", local_date: "2026-08-09" }],
+            },
+          ],
+        },
+        {
+          key: "exact-venue",
+          title: "Exact Venue",
+          categories: ["systems"],
+          editions: [
+            {
+              year: 2026,
+              deadlines: [
+                { kind: "paper", precision: "exact", at_utc: "2026-12-01T23:59:00.000Z" },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({
+      dateOnly: true,
+      localDate: "2026-08-09",
+      t: Date.parse("2026-08-08T10:00:00.000Z"),
+      tLast: Date.parse("2026-08-10T11:59:59.999Z"),
+    });
+    expect(rows[1].t).toBe(Date.parse("2026-12-01T23:59:00.000Z"));
+    expect(rows[1].tLast).toBe(rows[1].t);
+  });
+
+  it("preserves explicit zero-valued bounds and rejects invalid date-only fallback dates", () => {
+    const rows = (recommender as any).candidateRows({
+      conferences: [
+        {
+          key: "bounds",
+          title: "Bounds",
+          editions: [
+            {
+              year: 1970,
+              deadlines: [
+                {
+                  kind: "paper",
+                  precision: "date-only",
+                  local_date: "1970-01-01",
+                  earliest_utc: "1970-01-01T00:00:00Z",
+                  latest_utc: "1970-01-01T00:00:00Z",
+                },
+                { kind: "paper", precision: "date-only", local_date: "2026-02-30" },
+                { kind: "paper", precision: "date-only", local_date: "not-a-date" },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ t: 0, tLast: 0 });
   });
 });

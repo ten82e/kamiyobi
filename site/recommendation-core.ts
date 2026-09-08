@@ -129,7 +129,7 @@ function trustLevel(value: unknown): TrustLevel {
 }
 
 function evidenceTrust(evidence: JsonRecord, field: TrustField): TrustLevel {
-  const verifiedFields = strings(evidence.verifiedFields);
+  const verifiedFields = strings(evidence.verifiedFields ?? evidence.verified_fields);
   return verifiedFields.includes(field)
     ? trustLevel(evidence.sourceClass ?? evidence.source_class ?? evidence.confidence)
     : "unverified";
