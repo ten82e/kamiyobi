@@ -231,6 +231,10 @@ it("unions categories and tags when the same local key spans files (#768)", asyn
       "    title: Demo",
       `    categories: [${categories}]`,
       `    tags: [${tags}]`,
+      `    legacy_keys: [demo-old, ${id}-old]`,
+      `    scope: [shared, ${categories}]`,
+      "    category_assignments:",
+      `      - {category: ${categories}, reason: manual-review, evidence: '${id}'}`,
       "    editions:",
       `      - year: ${year}`,
       `        id: ${id}`,
@@ -246,5 +250,11 @@ it("unions categories and tags when the same local key spans files (#768)", asyn
   expect(loaded).toHaveLength(1);
   expect(loaded[0]!.categories.sort()).toEqual(["ai", "security"]);
   expect(loaded[0]!.tags).toEqual(["workshop"]);
+  expect(loaded[0]!.legacy_keys).toEqual(["demo-old", "demo-2026-old", "demo-2027-old"]);
+  expect(loaded[0]!.scope).toEqual(["shared", "ai", "security"]);
+  expect(loaded[0]!.category_assignments).toEqual([
+    { category: "ai", reason: "manual-review", evidence: "demo-2026" },
+    { category: "security", reason: "manual-review", evidence: "demo-2027" },
+  ]);
   expect(loaded[0]!.editions.map((edition) => edition.year)).toEqual([2026, 2027]);
 });

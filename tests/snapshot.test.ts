@@ -484,64 +484,66 @@ it("restores failed-source deadlines from a mixed edition led by local data", ()
   expect(restored.counts.aideadlines?.deadlineCount).toBe(1);
 });
 
-it("does not restore local-only snapshot slots when local did not fail (#768)", () => {
-  const evidence = (source_name: string) => [
-    {
-      source_name,
-      source_url: `https://example.org/${source_name}`,
-      observed_at: "2026-08-01T00:00:00Z",
-      original_value: "2026-09-09",
-      confidence: "aggregator" as const,
-    },
-  ];
-  const current = [
-    makeConference({
-      key: "mixed-local",
-      title: "Mixed Local",
-      sources: ["local", "ccfddl"],
-      editions: [
-        makeEdition({
-          year: 2026,
-          edition_id: "mixed-local26",
-          source: "local",
-          deadlines: [makeDeadline("paper", "Paper", utc(2026, 8, 20))],
-        }),
-      ],
-    }),
-  ];
-  const snapshot = [
-    makeConference({
-      key: "mixed-local",
-      title: "Mixed Local",
-      sources: ["local", "ccfddl"],
-      editions: [
-        makeEdition({
-          year: 2026,
-          edition_id: "mixed-local26",
-          source: "local",
-          deadlines: [
-            makeDeadline("paper", "Paper", utc(2026, 8, 20)),
-            {
-              ...makeDeadline("notification", "Notification", utc(2026, 9, 9)),
-              evidence: evidence("local"),
-            },
-            {
-              ...makeDeadline("camera_ready", "Camera ready", utc(2026, 9, 20)),
-              evidence: evidence("ccfddl"),
-            },
-          ],
-        }),
-      ],
-    }),
-  ];
+it.each([false, true])(
+  "does not restore successful local snapshot slots (mixed evidence: %s) (#768)",
+  (mixed) => {
+    const evidence = (source_name: string) => [
+      {
+        source_name,
+        source_url: `https://example.org/${source_name}`,
+        observed_at: "2026-08-01T00:00:00Z",
+        original_value: "2026-09-09",
+        confidence: "aggregator" as const,
+      },
+    ];
+    const current = [
+      makeConference({
+        key: "mixed-local",
+        title: "Mixed Local",
+        sources: ["local", "ccfddl"],
+        editions: [
+          makeEdition({
+            year: 2026,
+            edition_id: "mixed-local26",
+            source: "local",
+            deadlines: [makeDeadline("paper", "Paper", utc(2026, 8, 20))],
+          }),
+        ],
+      }),
+    ];
+    const snapshot = [
+      makeConference({
+        key: "mixed-local",
+        title: "Mixed Local",
+        sources: ["local", "ccfddl"],
+        editions: [
+          makeEdition({
+            year: 2026,
+            edition_id: "mixed-local26",
+            source: "local",
+            deadlines: [
+              makeDeadline("paper", "Paper", utc(2026, 8, 20)),
+              {
+                ...makeDeadline("notification", "Notification", utc(2026, 9, 9)),
+                evidence: [...evidence("local"), ...(mixed ? evidence("ccfddl") : [])],
+              },
+              {
+                ...makeDeadline("camera_ready", "Camera ready", utc(2026, 9, 20)),
+                evidence: evidence("ccfddl"),
+              },
+            ],
+          }),
+        ],
+      }),
+    ];
 
-  const restored = restoreFailedSourceMaterialWithCounts(current, snapshot, new Set(["ccfddl"]));
-  expect(restored.conferences[0]!.editions[0]!.deadlines.map((deadline) => deadline.kind)).toEqual([
-    "paper",
-    "camera_ready",
-  ]);
-  expect(restored.counts.ccfddl?.deadlineCount).toBe(1);
-});
+    const restored = restoreFailedSourceMaterialWithCounts(current, snapshot, new Set(["ccfddl"]));
+    expect(
+      restored.conferences[0]!.editions[0]!.deadlines.map((deadline) => deadline.kind),
+    ).toEqual(["paper", "camera_ready"]);
+    expect(restored.counts.ccfddl?.deadlineCount).toBe(1);
+  },
+);
 
 describe("source freshness", () => {
   const conference = (key: string, source: string) =>
