@@ -942,7 +942,7 @@ export function extractDeadlinesFromText(
   }
 
   // 2. ISO / Numeric Year First: 2026-05-15, 2026/05/15, 2026.05.15
-  const reIso = /\b(20\d\d)[-/.](\d{1,2})[-/.](\d{1,2})\b/g;
+  const reIso = /\b(20\d\d)[-/.](\d{1,2})[-/.](\d{1,2})(?=[T\s.,;:)|]|\b)/gi;
   while (true) {
     m = reIso.exec(norm);
     if (!m) break;
@@ -1110,19 +1110,19 @@ export function parseDeadlineText(dateText: string): Date | null {
   // YYYY-MM-DD の日直後が T だと \b が立たず、下の暦日正規表現が失敗する。
   if (/^20\d{2}-\d{2}-\d{2}T/i.test(norm)) {
     const iso =
-      /^(20\d{2})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})$/i.exec(
+      /^(20\d{2})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})/i.exec(
         norm,
       );
     // A timezone-less timestamp is not an instant: never use the host timezone.
     if (!iso || Number(iso[4]) > 23 || Number(iso[5]) > 59 || Number(iso[6] ?? 0) > 59) return null;
     const calendar = validUtcDate(Number(iso[1]), Number(iso[2]), Number(iso[3]));
-    const parsed = Date.parse(norm);
+    const parsed = Date.parse(iso[0]);
     if (calendar && Number.isFinite(parsed)) return new Date(parsed);
     return null;
   }
 
   // 1. ISO / Numeric Year First: 2026-05-15, 2026/05/15, 2026.05.15
-  let m = /\b(20\d\d)[-/.](\d{1,2})[-/.](\d{1,2})\b/.exec(norm);
+  let m = /\b(20\d\d)[-/.](\d{1,2})[-/.](\d{1,2})(?=[T\s.,;:)|]|\b)/i.exec(norm);
   if (m) return validUtcDate(Number(m[1]), Number(m[2]), Number(m[3]));
 
   // 2. Japanese date: 2026年5月15日, 2026年05月15日
