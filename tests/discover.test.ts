@@ -42,6 +42,82 @@ import { REPO_ROOT } from "./helpers.ts";
 
 const utcDate = (y: number, m: number, d: number): Date => new Date(Date.UTC(y, m - 1, d));
 
+describe("multiple-deadline candidate review (#940)", () => {
+  const now = new Date("2026-09-08T15:00:00Z");
+  const candidate = (deadlines: Array<Record<string, unknown>>, extra = {}) =>
+    makeCandidate({
+      key: "multi-round-demo",
+      title: "Multi Round Demo 2027",
+      full_name: "Multi Round Demo",
+      link: "https://example.org/cfp",
+      categories: ["systems"],
+      date_text: "2027-12-31",
+      deadlines,
+      ...extra,
+    });
+
+  it.each(["TBD", "2025-06-01"])(
+    "keeps the next deadline after %s regardless of array order",
+    (first) => {
+      const deadlines = [
+        { date: first },
+        { utc: "2026-11-01T23:59:00Z" },
+        { utc: "2026-10-01T23:59:00Z" },
+      ];
+      for (const order of [deadlines, [...deadlines].reverse()]) {
+        const row = candidate(order);
+        expect(reviewDeadlineText(row, now)).toBe("2026-10-01T23:59:00Z");
+        const split = splitCandidateLifecycle([row], now);
+        expect(split.active).toHaveLength(1);
+        expect(split.archive).toHaveLength(0);
+      }
+    },
+  );
+
+  it("distinguishes expired and unknown structured deadlines without using the event date", () => {
+    const expired = candidate([{ date: "2025-01-01" }, { utc: "2026-09-08T14:59:59Z" }]);
+    expect(reviewDeadlineText(expired, now)).toBe("2026-09-08T14:59:59Z");
+    expect(splitCandidateLifecycle([expired], now).archive[0]?.decision).toBe("expired");
+    const unknown = candidate([{ date: "TBD" }, { date: "invalid" }]);
+    expect(reviewDeadlineText(unknown, now)).toBe("");
+    expect(splitCandidateLifecycle([unknown], now).archive[0]?.decision).toBe(
+      "no-reviewable-deadline",
+    );
+  });
+
+  it("keeps date-only deadlines today and preserves explicit submission-date priority", () => {
+    const row = candidate([{ local_date: "2026-09-08" }]);
+    expect(splitCandidateLifecycle([row], now).active).toHaveLength(1);
+    const explicit = candidate([{ date: "2027-01-01" }], {
+      submission_deadline_text: "2026-01-01",
+    });
+    expect(reviewDeadlineText(explicit, now)).toBe("2026-01-01");
+    expect(splitCandidateLifecycle([explicit], now).archive[0]?.decision).toBe("expired");
+  });
+
+  it("uses the same next deadline in CLI review and lifecycle classification", () => {
+    const root = mkdtempSync(join(tmpdir(), "kamiyobi-review-multiple-"));
+    const rows = [
+      candidate([{ date: "TBD" }, { date: "2026-10-01" }]),
+      candidate([{ local_date: "2026-09-08" }], { key: "today", title: "Today Workshop" }),
+      candidate([{ utc: "2026-09-08T14:59:59Z" }], { key: "past", title: "Past Workshop" }),
+    ];
+    const path = join(root, "candidates.yaml");
+    writeFileSync(path, JSON.stringify({ candidates: rows }));
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      expect(runReviewCandidates(path, 10, now, root)).toBe(true);
+      const output = log.mock.calls.map((args) => args.join(" ")).join("\n");
+      expect(output).toContain("未来 2 件");
+      expect(output.indexOf("Today Workshop")).toBeLessThan(
+        output.indexOf("Multi Round Demo 2027"),
+      );
+    } finally {
+      log.mockRestore();
+    }
+  });
+});
+
 describe("NicheDiscoverer", () => {
   const discoverer = new NicheDiscoverer(REPO_ROOT);
 
