@@ -1645,9 +1645,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       "parser-failed": "複数候補のため要確認",
       "manual-required": "複数候補のため要確認",
     };
-    const evidence = (dl.evidence ?? []).find((item) => item.verifiedFields);
-    const fields = Array.isArray(evidence?.verifiedFields)
-      ? evidence.verifiedFields.join("・")
+    const evidence = (dl.evidence ?? []).find(
+      (item) => item.verifiedFields ?? item.verified_fields,
+    );
+    const verified = evidence?.verifiedFields ?? evidence?.verified_fields;
+    const fields = Array.isArray(verified)
+      ? verified.join("・")
       : verification.selector_or_field || "日付・時刻・タイムゾーン";
     const verifiedAt = verification.last_verified_at
       ? new Date(verification.last_verified_at).toLocaleString("ja-JP")

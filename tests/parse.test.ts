@@ -16,6 +16,7 @@ import {
   dateOnly,
   dateOnlyState,
   dateOnlyWindow,
+  deadlineEvidence,
   embeddedTimezone,
   eventDatePrecisionOf,
   exactDeadlineState,
@@ -1835,5 +1836,27 @@ describe("eventDatePrecisionOf (#746)", () => {
   it("preserves explicit valid precision", () => {
     expect(eventDatePrecisionOf("month-only", "2026-10-10", null, null)).toBe("month-only");
     expect(eventDatePrecisionOf("single-day", "October 2026", null, null)).toBe("single-day");
+  });
+});
+
+it("deadlineEvidence keeps snake_case verified_fields and provenance (#772)", () => {
+  const [evidence] = deadlineEvidence([
+    {
+      source_name: "cfp",
+      source_url: "https://example.test/cfp",
+      original_value: "2026-09-01",
+      source_class: "official-cfp",
+      verified_fields: ["date", "time", "timezone"],
+      content_hash: "a".repeat(64),
+      retrieved_at: "2026-08-01T00:00:00.000Z",
+      verified_at: "2026-08-01T00:00:00.000Z",
+    },
+  ]);
+  expect(evidence).toMatchObject({
+    sourceClass: "official-cfp",
+    verifiedFields: ["date", "time", "timezone"],
+    contentHash: "a".repeat(64),
+    retrievedAt: "2026-08-01T00:00:00.000Z",
+    verifiedAt: "2026-08-01T00:00:00.000Z",
   });
 });

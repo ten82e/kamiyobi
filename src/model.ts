@@ -195,10 +195,23 @@ export function deadlineEvidence(
         item.original_value ?? item.rawExcerpt ?? fallback?.originalValue ?? "",
       );
       if (!sourceName && !sourceUrl && !originalValue) return null;
-      const sourceClass = String(item.sourceClass ?? fallback?.sourceClass ?? "");
-      const fields = (Array.isArray(item.verifiedFields) ? item.verifiedFields : [])
+      const sourceClass = String(
+        item.sourceClass ?? item.source_class ?? fallback?.sourceClass ?? "",
+      );
+      const rawFields = Array.isArray(item.verifiedFields)
+        ? item.verifiedFields
+        : Array.isArray(item.verified_fields)
+          ? item.verified_fields
+          : [];
+      const fields = rawFields
         .map((field) => String(field))
         .filter((field): field is EvidenceField => EVIDENCE_FIELDS.has(field as EvidenceField));
+      const sourceRevision = item.sourceRevision ?? item.source_revision;
+      const retrievedAt = item.retrievedAt ?? item.retrieved_at;
+      const verifiedAt = item.verifiedAt ?? item.verified_at;
+      const contentHash = item.contentHash ?? item.content_hash;
+      const rawExcerpt = item.rawExcerpt ?? item.raw_excerpt;
+      const selectorOrField = item.selectorOrField ?? item.selector_or_field;
       const evidence: DeadlineEvidence = {
         source_name: sourceName,
         source_url: sourceUrl,
@@ -212,19 +225,17 @@ export function deadlineEvidence(
           ? { sourceClass: sourceClass as EvidenceClass }
           : {}),
         ...(sourceUrl ? { sourceUrl } : {}),
-        ...(typeof item.sourceRevision === "string" ? { sourceRevision: item.sourceRevision } : {}),
-        ...(typeof item.retrievedAt === "string" ? { retrievedAt: item.retrievedAt } : {}),
-        ...(typeof item.verifiedAt === "string" ? { verifiedAt: item.verifiedAt } : {}),
-        ...(typeof item.contentHash === "string" ? { contentHash: item.contentHash } : {}),
+        ...(typeof sourceRevision === "string" ? { sourceRevision } : {}),
+        ...(typeof retrievedAt === "string" ? { retrievedAt } : {}),
+        ...(typeof verifiedAt === "string" ? { verifiedAt } : {}),
+        ...(typeof contentHash === "string" ? { contentHash } : {}),
         ...(typeof item.evidenceRef === "string" || typeof item.evidence_ref === "string"
           ? { evidenceRef: String(item.evidenceRef ?? item.evidence_ref) }
           : {}),
-        ...(typeof item.rawExcerpt === "string" ? { rawExcerpt: item.rawExcerpt } : {}),
+        ...(typeof rawExcerpt === "string" ? { rawExcerpt } : {}),
         ...(typeof item.adapter === "string" ? { adapter: item.adapter } : {}),
         ...(typeof item.structured === "boolean" ? { structured: item.structured } : {}),
-        ...(typeof item.selectorOrField === "string"
-          ? { selectorOrField: item.selectorOrField }
-          : {}),
+        ...(typeof selectorOrField === "string" ? { selectorOrField } : {}),
         ...(fields.length > 0 ? { verifiedFields: fields } : {}),
       };
       return evidence;
