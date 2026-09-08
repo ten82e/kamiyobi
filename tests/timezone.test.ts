@@ -2,6 +2,7 @@
  * resolveTz: SPEC.md section 3 + the timezone values listed in sections 1.1 / 1.2.
  */
 
+import { execFileSync } from "node:child_process";
 import { describe, expect, it, vi } from "vitest";
 import {
   applyTz,
@@ -108,6 +109,35 @@ describe("resolve_tz", () => {
     ["CDT", -5 * 60],
     ["CET", 60],
     ["CEST", 120],
+    ["BOT", 2 * 60],
+    ["COT", -5 * 60],
+    ["FJT", 12 * 60],
+    ["GET", 4 * 60],
+    ["PKT", 5 * 60],
+    ["TRT", 3 * 60],
+    ["BRT", -3 * 60],
+    ["CAT", 2 * 60],
+    ["WAT", 60],
+    ["NZST", 12 * 60],
+    ["NZDT", 13 * 60],
+    ["WIB", 7 * 60],
+    ["WITA", 8 * 60],
+    ["WIT", 9 * 60],
+    ["IDT", 3 * 60],
+    ["MSK", 3 * 60],
+    ["ChST", 10 * 60],
+    ["CHST", 10 * 60],
+    ["HAST", -10 * 60],
+    ["HADT", -9 * 60],
+    ["EAT", 3 * 60],
+    ["SAST", 2 * 60],
+    ["ACST", 9 * 60 + 30],
+    ["ACDT", 10 * 60 + 30],
+    ["WET", 0],
+    ["WEST", 60],
+    ["AEST", 10 * 60],
+    ["AEDT", 11 * 60],
+    ["AWST", 8 * 60],
   ] as Array<[string, number]>)("DST-specific abbreviation %j is literal", (raw, minutes) => {
     expect(isConfirmedTimezone(raw)).toBe(true);
     expect(offset(resolveTz(raw), WINTER)).toBe(minutes);
@@ -268,6 +298,33 @@ describe("resolve_tz", () => {
 });
 
 describe("asDate and timezone caching fixes (#746)", () => {
+  it.each(["UTC", "Asia/Tokyo", "America/Los_Angeles"])(
+    "keeps date parsing independent of host timezone %s",
+    (timezone) => {
+      const cases = [
+        "2026/08/24",
+        "August 24, 2026",
+        "2026-08-24",
+        "2026-08-24 00:30:00",
+        "2026-08-24T00:30:00+09:00",
+      ];
+      const script = `import { asDate } from ${JSON.stringify(new URL("../src/model.ts", import.meta.url).href)};
+      console.log(JSON.stringify(${JSON.stringify(cases)}.map(value => asDate(value)?.toISOString() ?? null)));`;
+      const result = execFileSync(process.execPath, ["--input-type=module", "-e", script], {
+        env: { ...process.env, TZ: timezone },
+        encoding: "utf8",
+        timeout: 10_000,
+      });
+      expect(JSON.parse(result)).toEqual([
+        null,
+        null,
+        "2026-08-24T00:00:00.000Z",
+        "2026-08-24T00:00:00.000Z",
+        "2026-08-23T00:00:00.000Z",
+      ]);
+    },
+  );
+
   it("asDate parses ISO timestamps with time deterministically in UTC", () => {
     expect(asDate("2026-05-01 23:59:59")).toEqual(new Date(Date.UTC(2026, 4, 1)));
     expect(asDate("2026-05-01T23:59:59")).toEqual(new Date(Date.UTC(2026, 4, 1)));
@@ -277,6 +334,13 @@ describe("asDate and timezone caching fixes (#746)", () => {
     expect(asDate(null)).toBeNull();
     expect(asDate(undefined)).toBeNull();
     expect(asDate("not-a-date")).toBeNull();
+  });
+
+  it("does not parse slash or English dates via Date.parse (#790)", () => {
+    expect(asDate("2026/08/24")).toBeNull();
+    expect(asDate("08/24/2026")).toBeNull();
+    expect(asDate("August 24, 2026")).toBeNull();
+    expect(asDate("May 1, 2026")).toBeNull();
   });
 
   it("applies cached Intl.DateTimeFormat with consistent hourCycle across repeated calls", () => {

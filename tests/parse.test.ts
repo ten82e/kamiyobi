@@ -16,6 +16,7 @@ import {
   dateOnly,
   dateOnlyState,
   dateOnlyWindow,
+  deadlineEvidence,
   embeddedTimezone,
   eventDatePrecisionOf,
   exactDeadlineState,
@@ -731,6 +732,17 @@ describe("roundOf", () => {
     ["Phase #3", 1, 3],
     ["1st Phase Submission", 1, 1],
     ["2nd Phase Deadline", 1, 2],
+    ["second round deadline", 1, 2],
+    ["Second Round submission", 1, 2],
+    ["first cycle notification", 1, 1],
+    ["round two deadline", 1, 2],
+    ["third phase deadline", 1, 3],
+    ["second submission deadline", 1, 2],
+    ["Second International Conference deadline", 1, 1],
+    ["2nd submission deadline", 1, 2],
+    ["2nd paper submission", 1, 2],
+    ["1st submission", 1, 1],
+    ["May 2nd, 2026", 1, 1],
     ["Stage 1 Paper", 1, 1],
     ["Stage 2 Submission", 1, 2],
     ["3rd Stage", 1, 3],
@@ -1191,6 +1203,16 @@ describe("local source parsing", () => {
     expect(
       localDeadlinesOf({
         deadlines: [{ date: "2026-08-24", precision: "date-only", kind: "paper", tz: "AoE" }],
+      }),
+    ).toEqual([]);
+    expect(
+      localDeadlinesOf({
+        deadlines: [{ date: "2026-08-24 23:59:00", precision: "date-only", kind: "paper" }],
+      }),
+    ).toEqual([]);
+    expect(
+      localDeadlinesOf({
+        deadlines: [{ date: "2026/08/24", precision: "date-only", kind: "paper" }],
       }),
     ).toEqual([]);
   });
@@ -1836,5 +1858,27 @@ describe("eventDatePrecisionOf (#746)", () => {
   it("preserves explicit valid precision", () => {
     expect(eventDatePrecisionOf("month-only", "2026-10-10", null, null)).toBe("month-only");
     expect(eventDatePrecisionOf("single-day", "October 2026", null, null)).toBe("single-day");
+  });
+});
+
+it("deadlineEvidence keeps snake_case verified_fields and provenance (#772)", () => {
+  const [evidence] = deadlineEvidence([
+    {
+      source_name: "cfp",
+      source_url: "https://example.test/cfp",
+      original_value: "2026-09-01",
+      source_class: "official-cfp",
+      verified_fields: ["date", "time", "timezone"],
+      content_hash: "a".repeat(64),
+      retrieved_at: "2026-08-01T00:00:00.000Z",
+      verified_at: "2026-08-01T00:00:00.000Z",
+    },
+  ]);
+  expect(evidence).toMatchObject({
+    sourceClass: "official-cfp",
+    verifiedFields: ["date", "time", "timezone"],
+    contentHash: "a".repeat(64),
+    retrievedAt: "2026-08-01T00:00:00.000Z",
+    verifiedAt: "2026-08-01T00:00:00.000Z",
   });
 });

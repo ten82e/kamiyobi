@@ -314,7 +314,10 @@ function extractedDates(
 }
 
 function extractedTime(text: string): string | undefined {
-  const match = /\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?\b/i.exec(text);
+  const match =
+    /(?<!(?:utc|gmt)\s*[+-]\s*)\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?\b/i.exec(
+      text,
+    );
   if (match) {
     let hour = Number(match[1]);
     let minute = Number(match[2]);
@@ -343,7 +346,7 @@ function extractedTime(text: string): string | undefined {
 // 切り詰められ、後段の実在性検証で誤って棄却されてしまう (#723 の独立
 // 反証レビューで発見)。
 const TIMEZONE_PATTERN =
-  /\b(AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|JST|PT|ET|CT|MT|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)\b/gi;
+  /\b(AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|WET|WEST|JST|KST|SGT|HKT|BOT|COT|FJT|GET|PKT|TRT|BRT|CAT|WAT|NZST|NZDT|WIB|WITA|WIT|IDT|MSK|ChST|CHST|HAST|HADT|AKDT|AKST|HST|EAT|SAST|ACST|ACDT|AEDT|AEST|AWST|PT|ET|CT|MT|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)\b/gi;
 
 /**
  * IANA Area/Location 名として実在するかだけを判定する (model.ts の
@@ -365,7 +368,10 @@ function extractedTimezone(text: string): string | undefined {
     const candidate = match[1];
     // 2文字の略号 (PT/ET/CT/MT) は大文字表記のみタイムゾーンとして受理する。
     // 小文字 "pt" (12 pt font) や "et" (et al.) の誤爆を完全に防止する (#744)。
-    if (/^(?:pt|et|ct|mt)$/i.test(candidate) && candidate !== candidate.toUpperCase()) {
+    if (
+      /^(?:pt|et|ct|mt|bot|cot|get|cat|wat|wit|eat|wet|west)$/i.test(candidate) &&
+      candidate !== candidate.toUpperCase()
+    ) {
       continue;
     }
     // IANA Area/Location 形式の候補だけは実在ゾーンか検証する。exec は
@@ -494,7 +500,8 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
-  const deadlineLabel = /deadline|due|notification|camera[- ]?ready|締切|期限/i;
+  const deadlineLabel =
+    /deadline|due|at the latest|not later than|no later than|on or before|\bcloses?\b|closing date|not be entertained after|not entertained after|not be considered after|not considered after|not be accepted after|not accepted after|must arrive|drop[ -]?dead|reach us by|accept(?:ing)? papers until|received by|receipt of|last date|cut-?off|notification|camera[- ]?ready|締切|〆切|期限|必着/i;
   const blockedAdjacentDate =
     /\b(?:submissions?|events?|conferences?|open(?:s|ing)?|starts?|begins?)\b|開催/i;
   const isAdjacentDeadlineLabel = (line: string) =>
@@ -520,7 +527,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
     .filter(Boolean);
   const globalDeadlineTiming = lines.find(
     (line) =>
-      /^all deadlines?(?:\s+(?:are\s+at|are|at))?\s*[:\s]\s*\d{1,2}:\d{2}(?::\d{2})?\s*(?:[ap]\.?m\.?\s+)?[(（]?(?:AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|JST|PT|ET|CT|MT|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)[)）]?(?:\s*\(Anywhere on Earth\))?[.!]?$/i.test(
+      /^all deadlines?(?:\s+(?:are\s+at|are|at))?\s*[:\s]\s*\d{1,2}:\d{2}(?::\d{2})?\s*(?:[ap]\.?m\.?\s+)?[(（]?(?:AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|WET|WEST|JST|KST|SGT|HKT|AEDT|AEST|AWST|PT|ET|CT|MT|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)[)）]?(?:\s*\(Anywhere on Earth\))?[.!]?$/i.test(
         line,
       ) &&
       extractedTime(line) &&
@@ -539,15 +546,16 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
     );
   for (const raw of lines) {
     if (
-      !/deadline|due|submission|submit|notification|camera[- ]?ready|call for papers|cfp|event|conference|開催|締切|期限|投稿|募集/i.test(
+      !/deadline|due|at the latest|not later than|no later than|on or before|\bcloses?\b|closing date|not be entertained after|not entertained after|not be considered after|not considered after|not be accepted after|not accepted after|must arrive|drop[ -]?dead|reach us by|accept(?:ing)? papers until|received by|receipt of|last date|cut-?off|submission|submit|notification|camera[- ]?ready|call for papers|cfp|event|conference|開催|締切|〆切|期限|投稿|募集|必着/i.test(
         raw,
       )
     )
       continue;
     const extracted = extractedDates(raw);
-    const headerHasDeadline = /deadline|due|notification|camera[- ]?ready|締切|期限/i.test(
-      raw.slice(0, extracted[0]?.index),
-    );
+    const headerHasDeadline =
+      /deadline|due|at the latest|not later than|no later than|on or before|\bcloses?\b|closing date|not be entertained after|not entertained after|not be considered after|not considered after|not be accepted after|not accepted after|must arrive|drop[ -]?dead|reach us by|accept(?:ing)? papers until|received by|receipt of|last date|cut-?off|submit|submission|notification|camera[- ]?ready|締切|〆切|期限|必着/i.test(
+        raw.slice(0, extracted[0]?.index),
+      );
     const hasBareMilitaryTime = extracted.some((date, index) =>
       /\b(?:[01]?\d|2[0-3])[0-5]\d\b/.test(
         raw.slice(date.end, extracted[index + 1]?.index).replace(/\b20[2-9]\d\b/g, ""),
@@ -591,7 +599,8 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
         : trailingTime
           ? trailingTz
           : (extractedTimezone(scope) ?? trailingTz);
-      const deadlineSemantics = deadlineLabel;
+      const deadlineSemantics =
+        /deadline|due|at the latest|not later than|no later than|on or before|\bcloses?\b|closing date|not be entertained after|not entertained after|not be considered after|not considered after|not be accepted after|not accepted after|must arrive|drop[ -]?dead|reach us by|accept(?:ing)? papers until|received by|receipt of|last date|cut-?off|submit|submission|notification|camera[- ]?ready|締切|〆切|期限|必着/i;
       const inheritsHeader =
         headerHasDeadline &&
         (/\b(?:round|cycle|phase)\b/i.test(currentPrefix) || /^[\s:—–-]*$/.test(currentPrefix)) &&
