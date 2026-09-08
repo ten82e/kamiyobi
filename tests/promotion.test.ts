@@ -103,6 +103,7 @@ describe("promotion batch", () => {
 
   it("extracts Japanese dates that omit 日 after the start day (#770)", () => {
     expect(extractCfpCandidates("投稿締切: 2026年5月10")).toMatchObject([{ date: "2026-05-10" }]);
+    expect(extractCfpCandidates("投稿締切: 2026年5月100日")).toEqual([]);
     expect(extractCfpCandidates("締切: 2026年8月17〜21日")).toMatchObject([{ date: "2026-08-17" }]);
   });
 
