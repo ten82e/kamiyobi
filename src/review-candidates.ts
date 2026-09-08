@@ -9,7 +9,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { load as loadYaml } from "js-yaml";
-import { parseDeadlineText } from "./discover.ts";
+import { candidateDeadlineText, deadlineIsFuture, parseDeadlineText } from "./discover.ts";
 import { localSourcePaths } from "./sources/local.ts";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -127,6 +127,7 @@ export function loadTrackedTitles(root: string = ROOT): Set<string> {
 interface Enriched {
   c: Record<string, any>;
   dl: Date | null;
+  future: boolean;
   pred: boolean;
   tracked: boolean;
 }
@@ -135,27 +136,11 @@ interface Enriched {
  * レビュー締切判定に使うテキスト。EasyChair 候補は edition date_text が開催日
  * のため、候補レベルの submission_deadline_text (提出締切) を優先する。
  */
-export function reviewDeadlineText(c: Record<string, any> | null | undefined): string {
-  if (!c || typeof c !== "object") return "";
-  if (c.submission_deadline_text) return String(c.submission_deadline_text);
-  const ed = (Array.isArray(c.editions) && c.editions.length > 0 ? c.editions[0] : {}) as Record<
-    string,
-    any
-  >;
-  const dls = (
-    Array.isArray(c.deadlines) && c.deadlines.length > 0
-      ? c.deadlines
-      : ed && Array.isArray(ed.deadlines) && ed.deadlines.length > 0
-        ? ed.deadlines
-        : []
-  ) as Array<Record<string, any>>;
-  if (dls.length > 0) {
-    const raw = dls[0]?.date || dls[0]?.utc || dls[0]?.deadline;
-    if (raw) return String(raw);
-  }
-  if (ed && typeof ed === "object" && ed.date_text) return String(ed.date_text);
-  if (c.date_text) return String(c.date_text);
-  return "";
+export function reviewDeadlineText(
+  c: Record<string, any> | null | undefined,
+  now: Date = new Date(),
+): string {
+  return candidateDeadlineText(c, now);
 }
 
 export function runReviewCandidates(
@@ -184,9 +169,11 @@ export function runReviewCandidates(
       const tKey = normTitle(String(c.title ?? ""));
       const fKey = normTitle(String(c.full_name ?? ""));
       const kKey = normTitle(String(c.key ?? ""));
+      const deadlineText = reviewDeadlineText(c, safeToday);
       return {
         c,
-        dl: parseDeadlineText(reviewDeadlineText(c)),
+        dl: parseDeadlineText(deadlineText),
+        future: deadlineIsFuture(deadlineText, safeToday),
         pred: isPredatory(`${c.title ?? ""} ${c.full_name ?? ""}`),
         tracked:
           (Boolean(tKey) && tracked.has(tKey)) ||
@@ -196,9 +183,9 @@ export function runReviewCandidates(
     });
 
   const future = enriched
-    .filter((e) => e.dl && e.dl.getTime() >= safeToday.getTime() && !e.tracked)
+    .filter((e) => e.dl && e.future && !e.tracked)
     .sort((a, b) => a.dl!.getTime() - b.dl!.getTime());
-  const past = enriched.filter((e) => e.dl && e.dl.getTime() < safeToday.getTime() && !e.tracked);
+  const past = enriched.filter((e) => e.dl && !e.future && !e.tracked);
   const unknown = enriched.filter((e) => !e.dl && !e.tracked);
   const already = enriched.filter((e) => e.tracked);
 

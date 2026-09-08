@@ -16,6 +16,7 @@ import {
   dateOnly,
   dateOnlyState,
   dateOnlyWindow,
+  deadlineEvidence,
   embeddedTimezone,
   eventDatePrecisionOf,
   exactDeadlineState,
@@ -521,6 +522,9 @@ describe("parse_date_range", () => {
   it.each([
     ["2026年8月17日 - 2026年8月21日", 2026, "2026-08-17", "2026-08-21"],
     ["2026年8月17日〜21日", 2026, "2026-08-17", "2026-08-21"],
+    ["2026年8月17〜21日", 2026, "2026-08-17", "2026-08-21"],
+    ["2026年8月17日〜21", 2026, "2026-08-17", "2026-08-21"],
+    ["2026年8月17", 2026, "2026-08-17", "2026-08-17"],
     ["2026年8月17日〜8月21日", 2026, "2026-08-17", "2026-08-21"],
     ["2026年8月30日〜9月2日", 2026, "2026-08-30", "2026-09-02"],
     ["2026年12月28日〜2027年1月3日", 2026, "2026-12-28", "2027-01-03"],
@@ -728,6 +732,17 @@ describe("roundOf", () => {
     ["Phase #3", 1, 3],
     ["1st Phase Submission", 1, 1],
     ["2nd Phase Deadline", 1, 2],
+    ["second round deadline", 1, 2],
+    ["Second Round submission", 1, 2],
+    ["first cycle notification", 1, 1],
+    ["round two deadline", 1, 2],
+    ["third phase deadline", 1, 3],
+    ["second submission deadline", 1, 2],
+    ["Second International Conference deadline", 1, 1],
+    ["2nd submission deadline", 1, 2],
+    ["2nd paper submission", 1, 2],
+    ["1st submission", 1, 1],
+    ["May 2nd, 2026", 1, 1],
     ["Stage 1 Paper", 1, 1],
     ["Stage 2 Submission", 1, 2],
     ["3rd Stage", 1, 3],
@@ -807,6 +822,15 @@ describe("aideadlines rankOf", () => {
     const dls = aideadlinesDeadlinesOf(raw);
     expect(dls.length).toBe(3);
     expect(dls.map((d) => d.kind)).toEqual(["paper", "notification", "camera_ready"]);
+  });
+
+  it("does not revive legacy deadlines when structured dates are unpublished (#770)", () => {
+    const dls = aideadlinesDeadlinesOf({
+      timezone: "AoE",
+      deadline: "2025-01-15 23:59:59",
+      deadlines: [{ type: "paper", date: "TBA", timezone: "AoE" }],
+    });
+    expect(dls).toEqual([]);
   });
 
   it("parseTree gracefully returns empty array for non-existent directory", () => {
@@ -978,6 +1002,17 @@ describe("ccfddl parsing", () => {
     expect(ed?.deadlines[0].kind).toBe("abstract");
     expect(ed?.deadlines[1].kind).toBe("paper");
     expect(ed?.event_start?.toISOString().slice(0, 10)).toBe("2026-08-17");
+  });
+
+  it("does not revive a stale top-level deadline when timeline is TBD-only (#770)", () => {
+    const ed = ccfddlEditionOf({
+      year: 2026,
+      id: "demo26",
+      timezone: "AoE",
+      deadline: "2026-11-01 23:59:59",
+      timeline: [{ deadline: "TBD", timezone: "AoE" }],
+    });
+    expect(ed?.deadlines).toEqual([]);
   });
 
   it("parses conference object with rank and editions", () => {
@@ -1168,6 +1203,16 @@ describe("local source parsing", () => {
     expect(
       localDeadlinesOf({
         deadlines: [{ date: "2026-08-24", precision: "date-only", kind: "paper", tz: "AoE" }],
+      }),
+    ).toEqual([]);
+    expect(
+      localDeadlinesOf({
+        deadlines: [{ date: "2026-08-24 23:59:00", precision: "date-only", kind: "paper" }],
+      }),
+    ).toEqual([]);
+    expect(
+      localDeadlinesOf({
+        deadlines: [{ date: "2026/08/24", precision: "date-only", kind: "paper" }],
       }),
     ).toEqual([]);
   });
@@ -1813,5 +1858,27 @@ describe("eventDatePrecisionOf (#746)", () => {
   it("preserves explicit valid precision", () => {
     expect(eventDatePrecisionOf("month-only", "2026-10-10", null, null)).toBe("month-only");
     expect(eventDatePrecisionOf("single-day", "October 2026", null, null)).toBe("single-day");
+  });
+});
+
+it("deadlineEvidence keeps snake_case verified_fields and provenance (#772)", () => {
+  const [evidence] = deadlineEvidence([
+    {
+      source_name: "cfp",
+      source_url: "https://example.test/cfp",
+      original_value: "2026-09-01",
+      source_class: "official-cfp",
+      verified_fields: ["date", "time", "timezone"],
+      content_hash: "a".repeat(64),
+      retrieved_at: "2026-08-01T00:00:00.000Z",
+      verified_at: "2026-08-01T00:00:00.000Z",
+    },
+  ]);
+  expect(evidence).toMatchObject({
+    sourceClass: "official-cfp",
+    verifiedFields: ["date", "time", "timezone"],
+    contentHash: "a".repeat(64),
+    retrievedAt: "2026-08-01T00:00:00.000Z",
+    verifiedAt: "2026-08-01T00:00:00.000Z",
   });
 });

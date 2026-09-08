@@ -27,6 +27,7 @@ import {
   parseIeiceCfpHtml,
   parseIpsjCfpHtml,
   parseWikiCfpHtml,
+  splitCandidateLifecycle,
   toYamlDict,
 } from "../src/discover.ts";
 import {
@@ -40,6 +41,82 @@ import {
 import { REPO_ROOT } from "./helpers.ts";
 
 const utcDate = (y: number, m: number, d: number): Date => new Date(Date.UTC(y, m - 1, d));
+
+describe("multiple-deadline candidate review (#940)", () => {
+  const now = new Date("2026-09-08T15:00:00Z");
+  const candidate = (deadlines: Array<Record<string, unknown>>, extra = {}) =>
+    makeCandidate({
+      key: "multi-round-demo",
+      title: "Multi Round Demo 2027",
+      full_name: "Multi Round Demo",
+      link: "https://example.org/cfp",
+      categories: ["systems"],
+      date_text: "2027-12-31",
+      deadlines,
+      ...extra,
+    });
+
+  it.each(["TBD", "2025-06-01"])(
+    "keeps the next deadline after %s regardless of array order",
+    (first) => {
+      const deadlines = [
+        { date: first },
+        { utc: "2026-11-01T23:59:00Z" },
+        { utc: "2026-10-01T23:59:00Z" },
+      ];
+      for (const order of [deadlines, [...deadlines].reverse()]) {
+        const row = candidate(order);
+        expect(reviewDeadlineText(row, now)).toBe("2026-10-01T23:59:00Z");
+        const split = splitCandidateLifecycle([row], now);
+        expect(split.active).toHaveLength(1);
+        expect(split.archive).toHaveLength(0);
+      }
+    },
+  );
+
+  it("distinguishes expired and unknown structured deadlines without using the event date", () => {
+    const expired = candidate([{ date: "2025-01-01" }, { utc: "2026-09-08T14:59:59Z" }]);
+    expect(reviewDeadlineText(expired, now)).toBe("2026-09-08T14:59:59Z");
+    expect(splitCandidateLifecycle([expired], now).archive[0]?.decision).toBe("expired");
+    const unknown = candidate([{ date: "TBD" }, { date: "invalid" }]);
+    expect(reviewDeadlineText(unknown, now)).toBe("");
+    expect(splitCandidateLifecycle([unknown], now).archive[0]?.decision).toBe(
+      "no-reviewable-deadline",
+    );
+  });
+
+  it("keeps date-only deadlines today and preserves explicit submission-date priority", () => {
+    const row = candidate([{ local_date: "2026-09-08" }]);
+    expect(splitCandidateLifecycle([row], now).active).toHaveLength(1);
+    const explicit = candidate([{ date: "2027-01-01" }], {
+      submission_deadline_text: "2026-01-01",
+    });
+    expect(reviewDeadlineText(explicit, now)).toBe("2026-01-01");
+    expect(splitCandidateLifecycle([explicit], now).archive[0]?.decision).toBe("expired");
+  });
+
+  it("uses the same next deadline in CLI review and lifecycle classification", () => {
+    const root = mkdtempSync(join(tmpdir(), "kamiyobi-review-multiple-"));
+    const rows = [
+      candidate([{ date: "TBD" }, { date: "2026-10-01" }]),
+      candidate([{ local_date: "2026-09-08" }], { key: "today", title: "Today Workshop" }),
+      candidate([{ utc: "2026-09-08T14:59:59Z" }], { key: "past", title: "Past Workshop" }),
+    ];
+    const path = join(root, "candidates.yaml");
+    writeFileSync(path, JSON.stringify({ candidates: rows }));
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      expect(runReviewCandidates(path, 10, now, root)).toBe(true);
+      const output = log.mock.calls.map((args) => args.join(" ")).join("\n");
+      expect(output).toContain("未来 2 件");
+      expect(output.indexOf("Today Workshop")).toBeLessThan(
+        output.indexOf("Multi Round Demo 2027"),
+      );
+    } finally {
+      log.mockRestore();
+    }
+  });
+});
 
 describe("NicheDiscoverer", () => {
   const discoverer = new NicheDiscoverer(REPO_ROOT);
@@ -686,6 +763,12 @@ describe("parseDeadlineText", () => {
     expect(parseDeadlineText("15-05-2026")).toEqual(utcDate(2026, 5, 15)); // DD-MM-YYYY
     expect(parseDeadlineText("November, 2026")).toBeNull(); // 月のみはでっち上げない
     expect(parseDeadlineText("unknown")).toBeNull();
+    expect(parseDeadlineText("2027-06-01T23:59:59.000Z")).toEqual(
+      new Date("2027-06-01T23:59:59.000Z"),
+    );
+    expect(parseDeadlineText("2027-06-01T23:59:59+09:00")).toEqual(
+      new Date("2027-06-01T23:59:59+09:00"),
+    );
   });
 
   it("keeps valid leap-year and year-omitted dates", () => {
@@ -698,6 +781,10 @@ describe("parseDeadlineText", () => {
   it("rejects impossible calendar dates instead of rolling them over", () => {
     // ISO 形式
     expect(parseDeadlineText("2026-02-30")).toBeNull(); // 2月30日
+    expect(parseDeadlineText("2026-02-30T00:00:00Z")).toBeNull();
+    expect(parseDeadlineText("2026-08-24T23:59:00")).toBeNull();
+    expect(parseDeadlineText("2026-08-24T24:00:00Z")).toBeNull();
+    expect(parseDeadlineText("2026-08-24T23:60:00Z")).toBeNull();
     expect(parseDeadlineText("2025-02-29")).toBeNull(); // 平年の2月29日
     expect(parseDeadlineText("2026-04-31")).toBeNull(); // 4月31日
     // 日本語形式
@@ -789,6 +876,16 @@ describe("parseIpsjCfpHtml", () => {
     expect(es[0].date_text).toBe("2026-12-04");
     expect(es[0].year).toBe(2026);
     expect(es[0].link).toBe("https://www.ipsj.or.jp/journal/cfp/27-P.html");
+  });
+
+  it("extracts 投稿〆切 as a deadline (#780)", () => {
+    const html =
+      '<a href="cfp/27-P.html">' +
+      "<article><h3>論文誌「ユビキタスコンピューティングシステム（XIV）」特集 論文募集</h3>" +
+      "<p>投稿〆切：2026年12月4日（金）</p></article></a>";
+    const es = parseIpsjCfpHtml(html, "https://www.ipsj.or.jp/journal/index.html");
+    expect(es).toHaveLength(1);
+    expect(es[0]?.date_text).toBe("2026-12-04");
   });
 
   it("decodes HTML entities in the journal name", () => {
@@ -952,6 +1049,10 @@ describe("review helpers", () => {
     );
     expect(parseDeadlineText("2026年05月15日")?.toISOString().slice(0, 10)).toBe("2026-05-15");
     expect(parseDeadlineText("2026年5月15日 (金)")?.toISOString().slice(0, 10)).toBe("2026-05-15");
+    expect(parseDeadlineText("2026年5月10")?.toISOString().slice(0, 10)).toBe("2026-05-10");
+    expect(parseDeadlineText("2026年5月100日")).toBeNull();
+    expect(extractDeadlinesFromText("投稿締切: 2026年5月100日")).toEqual([]);
+    expect(parseDeadlineText("2026年8月17〜21日")?.toISOString().slice(0, 10)).toBe("2026-08-17");
     expect(parseDeadlineText("Aug 15, 2026 (Aug 1, 2026)")?.toISOString().slice(0, 10)).toBe(
       "2026-08-15",
     );
@@ -965,6 +1066,9 @@ describe("review helpers", () => {
     const res2 = extractDeadlinesFromText("Submission: ２０２６/０８/２０");
     expect(res2.length).toBe(1);
     expect(res2[0].date).toBe("2026-08-20 23:59:00");
+
+    const omittedDay = extractDeadlinesFromText("投稿締切: 2026年5月10");
+    expect(omittedDay[0]?.date).toBe("2026-05-10 23:59:00");
 
     expect(extractDeadlinesFromText(null)).toEqual([]);
     expect(extractDeadlinesFromText(undefined)).toEqual([]);
@@ -1174,6 +1278,16 @@ describe("deadlineIsFuture", () => {
     expect(deadlineIsFuture("Feb 1, 2026", today)).toBe(false);
     expect(deadlineIsFuture("TBA", today)).toBe(false); // 形式不明は候補にしない
     expect(deadlineIsFuture("Mar 15, 2027", today)).toBe(true);
+  });
+
+  it("keeps the same UTC calendar day after noon (#832)", () => {
+    const afternoon = new Date(Date.UTC(2026, 7, 10, 15, 0, 0));
+    expect(deadlineIsFuture("Aug 10, 2026", afternoon)).toBe(true);
+    expect(deadlineIsFuture("2026-08-10", afternoon)).toBe(true);
+    expect(deadlineIsFuture("Aug 9, 2026", afternoon)).toBe(false);
+    expect(deadlineIsFuture("2026-08-10T14:59:59Z", afternoon)).toBe(false);
+    expect(deadlineIsFuture("2026-08-10T15:00:00Z", afternoon)).toBe(true);
+    expect(deadlineIsFuture("2026-08-11T00:00:00+09:00", afternoon)).toBe(true);
   });
 
   it("treats impossible calendar dates as not future", () => {
@@ -1606,5 +1720,60 @@ describe("discover and review boundary handling", () => {
         ]),
       );
     });
+  });
+});
+
+describe("discover lifecycle and year parsing (#762)", () => {
+  it("keeps a candidate whose only reviewable deadline is deadlines[].utc", () => {
+    const candidate = makeCandidate({
+      key: "utc-only",
+      title: "UTC Only Workshop",
+      full_name: "UTC Only Workshop",
+      link: "https://official.example/cfp",
+      categories: ["systems"],
+      date_text: "Tokyo, Japan",
+      deadlines: [{ kind: "paper", utc: "2027-06-01T23:59:59.000Z" }],
+    });
+    const split = splitCandidateLifecycle([candidate], new Date("2026-09-07T15:00:00Z"));
+    expect(split.active).toHaveLength(1);
+    expect(split.archive).toHaveLength(0);
+  });
+
+  it("does not treat same-name editions of different years as duplicates without year fields", () => {
+    const first = makeCandidate({
+      key: "icml-2026b",
+      title: "ICML 2026",
+      full_name: "ICML 2026",
+      link: "https://icml.cc/2026",
+      categories: ["ai"],
+      submission_deadline_text: "Jan 15, 2027",
+    });
+    const second = makeCandidate({
+      key: "icml-2027b",
+      title: "ICML 2027",
+      full_name: "ICML 2027",
+      link: "https://icml.cc/2027",
+      categories: ["ai"],
+      submission_deadline_text: "Jan 15, 2028",
+    });
+    const split = splitCandidateLifecycle([first, second], new Date("2026-09-07T00:00:00Z"));
+    expect(split.active).toHaveLength(2);
+    expect(split.archive.filter((row) => row.decision === "duplicate")).toHaveLength(0);
+  });
+
+  it("coerces string year fields when loading a candidate registry", () => {
+    const registry = parseCandidateRegistry({
+      schema: 2,
+      candidates: [
+        {
+          key: "icml-2026",
+          title: "ICML 2026",
+          year: "2026",
+          link: "https://icml.cc/2026",
+          categories: ["ai"],
+        },
+      ],
+    });
+    expect(registry.candidates[0]?.year).toBe(2026);
   });
 });

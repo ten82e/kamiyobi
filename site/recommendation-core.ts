@@ -86,9 +86,13 @@ function deadlineTime(deadline: JsonRecord): number | null {
 }
 
 function deadlineEndTime(deadline: JsonRecord): number | null {
-  const value = deadline.latest_utc ?? deadline.utc ?? deadline.at_utc ?? deadline.local_date;
+  const value = deadline.latest_utc ?? deadline.utc ?? deadline.at_utc;
   const time = Date.parse(String(value ?? ""));
-  return Number.isFinite(time) ? time : null;
+  if (Number.isFinite(time)) return time;
+  const day = Date.parse(String(deadline.local_date ?? ""));
+  if (!Number.isFinite(day)) return null;
+  // build.ts dateOnlyWindow: 暦日 UTC 0:00 から +36h-1ms。同日午後を「締切なし」にしない。
+  return day + 36 * 3_600_000 - 1;
 }
 
 function deadlineRecords(
@@ -125,7 +129,7 @@ function trustLevel(value: unknown): TrustLevel {
 }
 
 function evidenceTrust(evidence: JsonRecord, field: TrustField): TrustLevel {
-  const verifiedFields = strings(evidence.verifiedFields);
+  const verifiedFields = strings(evidence.verifiedFields ?? evidence.verified_fields);
   return verifiedFields.includes(field)
     ? trustLevel(evidence.sourceClass ?? evidence.source_class ?? evidence.confidence)
     : "unverified";
