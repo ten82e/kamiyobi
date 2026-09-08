@@ -27,6 +27,7 @@ import {
   parseIeiceCfpHtml,
   parseIpsjCfpHtml,
   parseWikiCfpHtml,
+  splitCandidateLifecycle,
   toYamlDict,
 } from "../src/discover.ts";
 import {
@@ -686,6 +687,12 @@ describe("parseDeadlineText", () => {
     expect(parseDeadlineText("15-05-2026")).toEqual(utcDate(2026, 5, 15)); // DD-MM-YYYY
     expect(parseDeadlineText("November, 2026")).toBeNull(); // 月のみはでっち上げない
     expect(parseDeadlineText("unknown")).toBeNull();
+    expect(parseDeadlineText("2027-06-01T23:59:59.000Z")).toEqual(
+      new Date("2027-06-01T23:59:59.000Z"),
+    );
+    expect(parseDeadlineText("2027-06-01T23:59:59+09:00")).toEqual(
+      new Date("2027-06-01T23:59:59+09:00"),
+    );
   });
 
   it("keeps valid leap-year and year-omitted dates", () => {
@@ -698,6 +705,10 @@ describe("parseDeadlineText", () => {
   it("rejects impossible calendar dates instead of rolling them over", () => {
     // ISO 形式
     expect(parseDeadlineText("2026-02-30")).toBeNull(); // 2月30日
+    expect(parseDeadlineText("2026-02-30T00:00:00Z")).toBeNull();
+    expect(parseDeadlineText("2026-08-24T23:59:00")).toBeNull();
+    expect(parseDeadlineText("2026-08-24T24:00:00Z")).toBeNull();
+    expect(parseDeadlineText("2026-08-24T23:60:00Z")).toBeNull();
     expect(parseDeadlineText("2025-02-29")).toBeNull(); // 平年の2月29日
     expect(parseDeadlineText("2026-04-31")).toBeNull(); // 4月31日
     // 日本語形式
@@ -1198,6 +1209,9 @@ describe("deadlineIsFuture", () => {
     expect(deadlineIsFuture("Aug 10, 2026", afternoon)).toBe(true);
     expect(deadlineIsFuture("2026-08-10", afternoon)).toBe(true);
     expect(deadlineIsFuture("Aug 9, 2026", afternoon)).toBe(false);
+    expect(deadlineIsFuture("2026-08-10T14:59:59Z", afternoon)).toBe(false);
+    expect(deadlineIsFuture("2026-08-10T15:00:00Z", afternoon)).toBe(true);
+    expect(deadlineIsFuture("2026-08-11T00:00:00+09:00", afternoon)).toBe(true);
   });
 
   it("treats impossible calendar dates as not future", () => {
@@ -1598,5 +1612,60 @@ describe("discover and review boundary handling", () => {
       expect(rows[0].date_text).toBe("2026-10-15");
       expect(rows[0].link).toBe("https://www.ipsj.or.jp/journal/index.php?issue=27-p");
     });
+  });
+});
+
+describe("discover lifecycle and year parsing (#762)", () => {
+  it("keeps a candidate whose only reviewable deadline is deadlines[].utc", () => {
+    const candidate = makeCandidate({
+      key: "utc-only",
+      title: "UTC Only Workshop",
+      full_name: "UTC Only Workshop",
+      link: "https://official.example/cfp",
+      categories: ["systems"],
+      date_text: "Tokyo, Japan",
+      deadlines: [{ kind: "paper", utc: "2027-06-01T23:59:59.000Z" }],
+    });
+    const split = splitCandidateLifecycle([candidate], new Date("2026-09-07T15:00:00Z"));
+    expect(split.active).toHaveLength(1);
+    expect(split.archive).toHaveLength(0);
+  });
+
+  it("does not treat same-name editions of different years as duplicates without year fields", () => {
+    const first = makeCandidate({
+      key: "icml-2026b",
+      title: "ICML 2026",
+      full_name: "ICML 2026",
+      link: "https://icml.cc/2026",
+      categories: ["ai"],
+      submission_deadline_text: "Jan 15, 2027",
+    });
+    const second = makeCandidate({
+      key: "icml-2027b",
+      title: "ICML 2027",
+      full_name: "ICML 2027",
+      link: "https://icml.cc/2027",
+      categories: ["ai"],
+      submission_deadline_text: "Jan 15, 2028",
+    });
+    const split = splitCandidateLifecycle([first, second], new Date("2026-09-07T00:00:00Z"));
+    expect(split.active).toHaveLength(2);
+    expect(split.archive.filter((row) => row.decision === "duplicate")).toHaveLength(0);
+  });
+
+  it("coerces string year fields when loading a candidate registry", () => {
+    const registry = parseCandidateRegistry({
+      schema: 2,
+      candidates: [
+        {
+          key: "icml-2026",
+          title: "ICML 2026",
+          year: "2026",
+          link: "https://icml.cc/2026",
+          categories: ["ai"],
+        },
+      ],
+    });
+    expect(registry.candidates[0]?.year).toBe(2026);
   });
 });
