@@ -38,8 +38,9 @@ node src/cli.ts build --out public --offline --no-embeddings --cache .cache --no
 
 ## 作業手順
 
-- GitHub Issues が作業台帳。具体的な候補ができたら重複検索のうえ Issue を
-  作成し、受入条件を固定してから着手する。
-- 変更は branch → PR → CI（typecheck / check / test）緑 → merge。
+- IDD（Issue-Driven Development / GitHub Issues を作業台帳とする運用）は廃止済み。
+  作業にあたって Issue を起票・事前登録する必要はない。
+- 変更はローカルでの検証（typecheck / check / test / build）を必ず通過させる。
+- 変更は branch → PR → CI（typecheck / check / test）緑 → merge、または適切な単位で整理して反映する。
 - 上記の収録契約と上流との境界はすべての作業で有効。変更は `ten82e/kamiyobi`
-  内部のみ。
+  内部のみ。第三者への送信（外部 PR・Issue・メール等）は一切行わない。
