@@ -763,6 +763,19 @@ function mergeEditions(confs: Conference[], windows: Windows, tally: MergeStats)
   return out;
 }
 
+function sharedSourceLocalIds(
+  left: Record<string, string> | undefined,
+  right: Record<string, string> | undefined,
+): boolean {
+  if (!left || !right) return false;
+  for (const [source, id] of Object.entries(left)) {
+    const token = identityToken(id);
+    const other = identityToken(right[source]);
+    if (token && other && token === other) return true;
+  }
+  return false;
+}
+
 function mergeTarget(left: Edition, right: Edition): boolean {
   const leftId = identityToken(left.identity?.editionId);
   const rightId = identityToken(right.identity?.editionId);
@@ -787,11 +800,10 @@ function mergeTarget(left: Edition, right: Edition): boolean {
   const leftUrls = left.identity?.officialUrls ?? [];
   const rightUrls = right.identity?.officialUrls ?? [];
   if (commonIdentity(leftUrls, rightUrls, urlToken).length > 0) return true;
+  // SPEC 3.6: sourceIds の値が偶然一致しただけでは source をまたいで統合しない。
+  // 同一 source キーの source-local ID と会期重複だけを名寄せに使う。
   if (
-    commonIdentity(
-      Object.values(left.identity?.sourceIds ?? {}),
-      Object.values(right.identity?.sourceIds ?? {}),
-    ).length > 0 &&
+    sharedSourceLocalIds(left.identity?.sourceIds, right.identity?.sourceIds) &&
     eventRangesOverlap(left, right)
   )
     return true;
