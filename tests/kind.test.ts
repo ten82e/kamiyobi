@@ -13,6 +13,13 @@ const SPEC_TABLE: Array<[string, string]> = [
   ["paper", "paper"],
   ["submission", "paper"],
   ["full_paper", "paper"],
+  ["fullpaper", "paper"],
+  ["paper_submission", "paper"],
+  ["short_paper", "paper"],
+  ["short paper", "paper"],
+  ["manuscript", "paper"],
+  ["manuscript_deadline", "paper"],
+  ["full_manuscript", "paper"],
   ["abstract_deadline", "abstract"],
   ["abstract deadline", "abstract"],
   ["abstract", "abstract"],
@@ -26,12 +33,18 @@ const SPEC_TABLE: Array<[string, string]> = [
   ["camera", "camera_ready"],
   ["final_paper", "camera_ready"],
   ["final_submission", "camera_ready"],
+  ["final_deadline", "camera_ready"],
+  ["final deadline", "camera_ready"],
   ["revision-deadline", "camera_ready"],
   ["rebuttal_start", "rebuttal_start"],
+  ["rebuttal_period_start", "rebuttal_start"],
   ["rebuttal_end", "rebuttal_end"],
   ["rebuttal", "rebuttal_end"],
   ["rebuttal_and_revision", "rebuttal_end"],
   ["author_response", "rebuttal_end"],
+  ["author_rebuttal", "rebuttal_end"],
+  ["rebuttal_period_end", "rebuttal_end"],
+  ["rebuttal_deadline", "rebuttal_end"],
   ["review_release", "review_release"],
   ["registration", "registration"],
   ["reviewer_registration", "registration"],
@@ -52,6 +65,91 @@ describe("kind_of", () => {
 
   it("ccfddl main deadline key is a paper deadline", () => {
     expect(kindOf("deadline")).toBe("paper");
+  });
+
+  it("research_paper is a paper deadline (#910)", () => {
+    expect(kindOf("research_paper")).toBe("paper");
+    expect(kindOf("research-paper")).toBe("paper");
+    expect(kindOf("withdrawal")).toBe("other");
+  });
+
+  it("technical_paper is a paper deadline (#920)", () => {
+    expect(kindOf("technical_paper")).toBe("paper");
+    expect(kindOf("technical-paper")).toBe("paper");
+    expect(kindOf("withdrawal")).toBe("other");
+  });
+
+  it("regular_paper is a paper deadline (#924)", () => {
+    expect(kindOf("regular_paper")).toBe("paper");
+    expect(kindOf("regular-paper")).toBe("paper");
+    expect(kindOf("final_paper")).toBe("camera_ready");
+    expect(kindOf("withdrawal")).toBe("other");
+  });
+
+  it("contributed_paper is a paper deadline (#928)", () => {
+    expect(kindOf("contributed_paper")).toBe("paper");
+    expect(kindOf("contributed-paper")).toBe("paper");
+    expect(kindOf("final_paper")).toBe("camera_ready");
+    expect(kindOf("withdrawal")).toBe("other");
+  });
+
+  it("position_paper is a paper deadline (#930)", () => {
+    expect(kindOf("position_paper")).toBe("paper");
+    expect(kindOf("position-paper")).toBe("paper");
+    expect(kindOf("final_paper")).toBe("camera_ready");
+    expect(kindOf("withdrawal")).toBe("other");
+  });
+
+  it("late_breaking_paper is a paper deadline (#934)", () => {
+    expect(kindOf("late_breaking_paper")).toBe("paper");
+    expect(kindOf("late-breaking-paper")).toBe("paper");
+    expect(kindOf("final_paper")).toBe("camera_ready");
+    expect(kindOf("withdrawal")).toBe("other");
+  });
+
+  it("invited_paper is a paper deadline (#904)", () => {
+    expect(kindOf("invited_paper")).toBe("paper");
+    expect(kindOf("invited-paper")).toBe("paper");
+    expect(kindOf("withdrawal")).toBe("other");
+  });
+
+  it("workshop_paper is a paper deadline, standalone workshop is not (#890)", () => {
+    expect(kindOf("workshop_paper")).toBe("paper");
+    expect(kindOf("workshop-paper")).toBe("paper");
+    expect(kindOf("workshop")).toBe("other");
+  });
+
+  it("industry_paper is a paper deadline (#916)", () => {
+    expect(kindOf("industry_paper")).toBe("paper");
+    expect(kindOf("industry-paper")).toBe("paper");
+    expect(kindOf("withdrawal")).toBe("other");
+  });
+
+  it("extended_abstract is an abstract deadline (#896)", () => {
+    expect(kindOf("extended_abstract")).toBe("abstract");
+    expect(kindOf("extended-abstract")).toBe("abstract");
+    expect(kindOf("withdrawal")).toBe("other");
+  });
+
+  it("ccfddl final_deadline key is camera-ready (#834)", () => {
+    expect(kindOf("final_deadline")).toBe("camera_ready");
+    expect(kindOf("final deadline")).toBe("camera_ready");
+    expect(kindOf("withdrawal")).toBe("other");
+  });
+
+  it("concatenated and compound paper keys stay paper (#822)", () => {
+    expect(kindOf("fullpaper")).toBe("paper");
+    expect(kindOf("paper_submission")).toBe("paper");
+    expect(kindOf("short_paper")).toBe("paper");
+    expect(kindOf("short paper")).toBe("paper");
+    expect(kindOf("withdrawal")).toBe("other");
+  });
+
+  it("splits camelCase type names before mapping (#844)", () => {
+    expect(kindOf("cameraReady")).toBe("camera_ready");
+    expect(kindOf("CameraReady")).toBe("camera_ready");
+    expect(kindOf("camera_ready")).toBe("camera_ready");
+    expect(kindOf("withdrawal")).toBe("other");
   });
 
   it("supplementary is not collapsed into paper", () => {

@@ -286,7 +286,7 @@ export function isConfirmedTimezone(tzRaw: string | null | undefined): boolean;
 // 'UTC+8' 'UTC-08' 'GMT+02' 'UTC+0' 'UTC+05:30' -> 固定オフセット
 //   （ゼロ埋め・1〜2桁・コロン区切りの全てを受ける）
 // 'PT'/'ET'/'CT'/'MT' は IANA 地域帯として DST を観測する
-// 'PST'/'PDT'/'CDT'/'EST'/'EDT'/'CET'/'CEST' 等は文字どおり固定オフセット
+// 'PST'/'PDT'/'CDT'/'EST'/'EDT'/'CET'/'CEST'/'AEDT'/'AEST' 等は文字どおり固定オフセット
 // 文脈の無い 'CST'/'IST'/'BST'、未知・欠落は unconfirmed
 // IANA 名（'/' を含む）-> {kind:'iana', name: <そのまま>}
 // resolveTz は互換 API として unconfirmed を UTC に寄せる
@@ -342,13 +342,13 @@ export function kindOf(rawTypeOrKey: string | null | undefined): DeadlineKind;
 
 | raw | kind |
 |---|---|
-| `deadline`, `paper`, `submission`, `full_paper` | `paper` |
+| `deadline`, `paper`, `submission`, `full_paper`, `fullpaper`, `paper_submission`, `short_paper`, `manuscript`, `manuscript_deadline`, `full_manuscript` | `paper` |
 | `abstract_deadline`, `abstract deadline`, `abstract` | `abstract` |
 | `supplementary` | `supplementary` |
 | `notification`, `first-notification`, `final-notification` | `notification` |
-| `camera_ready`, `camera-ready`, `revision-deadline` | `camera_ready` |
-| `rebuttal_start` | `rebuttal_start` |
-| `rebuttal_end`, `rebuttal`, `rebuttal_and_revision`, `author_response` | `rebuttal_end` |
+| `camera_ready`, `camera-ready`, `revision-deadline`, `final_deadline` | `camera_ready` |
+| `rebuttal_start`, `rebuttal_period_start` | `rebuttal_start` |
+| `rebuttal_end`, `rebuttal`, `rebuttal_and_revision`, `author_response`, `author_rebuttal`, `rebuttal_period_end`, `rebuttal_deadline` | `rebuttal_end` |
 | `review_release` | `review_release` |
 | `registration`, `reviewer_registration`, `commitment_deadline` | `registration` |
 | 上記以外（`withdrawal` 等） | `other` |
