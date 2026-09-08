@@ -77,17 +77,38 @@ describe("fetch-primary extraction", () => {
       round: 1,
       tz: "AoE",
     });
+    expect(extractDeadline("Submission deadline: May 15, 2026 23:59 WET", 2026)?.tz).toBe("WET");
+    expect(extractDeadline("Submission deadline: May 15, 2026 23:59 WEST", 2026)?.tz).toBe("WEST");
+    expect(extractDeadline("Deadline: May 15, 2026; the west wall", 2026)?.tz).toBeUndefined();
+    expect(extractDeadline("Deadline: May 15, 2026; shoes got wet", 2026)?.tz).toBeUndefined();
     // 12h 表記の正規化 (5pm -> 17:00)
     expect(
       extractDeadline("Paper submission deadline: August 16th, 2026 5:00 PM (AoE)", 2026)?.time,
     ).toBe("17:00:00");
     // 日付のみのページは time を載せない (build 側の観測ゲートで前回値維持になる)
     expect(extractDeadline("Submission deadline May 10, 2026", 2026)?.time).toBeUndefined();
+    expect(
+      extractDeadline("Submission deadline: May 15, 2026 UTC+09:00", 2026)?.time,
+    ).toBeUndefined();
+    expect(extractDeadline("Submission deadline: May 15, 2026 UTC+09:00", 2026)?.tz).toBe(
+      "UTC+09:00",
+    );
+    expect(
+      extractDeadline("Submission deadline: May 15, 2026 23:59 UTC+09:00", 2026),
+    ).toMatchObject({
+      time: "23:59:00",
+      tz: "UTC+09:00",
+    });
     // 隣接行に時刻がある場合も窓経由で拾う
     expect(
       extractDeadline("Submission deadline\nOctober 15, 2026 23:59:59 AoE".replace("\n", " "), 2026)
         ?.time,
     ).toBe("23:59:59");
+    expect(extractDeadline("Deadline: 15 May 2026 23:59 AEDT", 2026)).toMatchObject({
+      date: "2026-05-15",
+      time: "23:59:00",
+      tz: "AEDT",
+    });
   });
 
   it("abstract with round and tz", () => {
@@ -120,6 +141,81 @@ describe("fetch-primary extraction", () => {
 
   it("no keyword is none", () => {
     expect(extractDeadline("Registration opens January 5, 2026", 2026)).toBeNull();
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 BOT", 2026)?.tz).toBe("BOT");
+    expect(extractDeadline("Deadline: May 15, 2026; the bot sat", 2026)?.tz).toBeUndefined();
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 COT", 2026)?.tz).toBe("COT");
+    expect(extractDeadline("Deadline: May 15, 2026; a cot bed", 2026)?.tz).toBeUndefined();
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 FJT", 2026)?.tz).toBe("FJT");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 GET", 2026)?.tz).toBe("GET");
+    expect(extractDeadline("Deadline: May 15, 2026; get ready", 2026)?.tz).toBeUndefined();
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 PKT", 2026)?.tz).toBe("PKT");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 TRT", 2026)?.tz).toBe("TRT");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 BRT", 2026)?.tz).toBe("BRT");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 CAT", 2026)?.tz).toBe("CAT");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 WAT", 2026)?.tz).toBe("WAT");
+    expect(extractDeadline("Deadline: May 15, 2026; the cat sat", 2026)?.tz).toBeUndefined();
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 NZST", 2026)?.tz).toBe("NZST");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 NZDT", 2026)?.tz).toBe("NZDT");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 WIB", 2026)?.tz).toBe("WIB");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 WITA", 2026)?.tz).toBe("WITA");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 WIT", 2026)?.tz).toBe("WIT");
+    expect(extractDeadline("Deadline: May 15, 2026; authors of wit", 2026)?.tz).toBeUndefined();
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 IDT", 2026)?.tz).toBe("IDT");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 MSK", 2026)?.tz).toBe("MSK");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 ChST", 2026)?.tz).toBe("CHST");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 CHST", 2026)?.tz).toBe("CHST");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 HAST", 2026)?.tz).toBe("HAST");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 HADT", 2026)?.tz).toBe("HADT");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 EAT", 2026)?.tz).toBe("EAT");
+    expect(extractDeadline("Deadline: May 15, 2026; authors eat later", 2026)?.tz).toBeUndefined();
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 SAST", 2026)?.tz).toBe("SAST");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 ACST", 2026)?.tz).toBe("ACST");
+    expect(extractDeadline("Deadline: May 15, 2026 23:59 ACDT", 2026)?.tz).toBe("ACDT");
+    expect(extractDeadline("Papers will not be entertained after May 15, 2026", 2026)?.date).toBe(
+      "2026-05-15",
+    );
+    expect(extractDeadline("Papers will not be considered after May 15, 2026", 2026)?.date).toBe(
+      "2026-05-15",
+    );
+    expect(
+      extractDeadline("Submissions will not be considered after May 15, 2026", 2026)?.date,
+    ).toBe("2026-05-15");
+    expect(extractDeadline("Papers will not be accepted after May 15, 2026", 2026)?.date).toBe(
+      "2026-05-15",
+    );
+    expect(extractDeadline("Papers are not accepted after May 15, 2026", 2026)?.date).toBe(
+      "2026-05-15",
+    );
+    expect(extractDeadline("Papers must arrive by May 15, 2026", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("Manuscripts must arrive by May 15, 2026", 2026)?.date).toBe(
+      "2026-05-15",
+    );
+    expect(extractDeadline("Please submit by May 15, 2026", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("Accepting submissions until May 15, 2026", 2026)?.date).toBe(
+      "2026-05-15",
+    );
+    expect(extractDeadline("Submission: May 15, 2026", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("Drop-dead date: May 15, 2026", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("Drop dead date: June 1, 2026", 2026)?.date).toBe("2026-06-01");
+    expect(extractDeadline("Papers to reach us by May 15, 2026", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("Accepting papers until May 15, 2026", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("We will accept papers until June 1, 2026", 2026)?.date).toBe(
+      "2026-06-01",
+    );
+    expect(extractDeadline("Papers must be received by May 15, 2026", 2026)?.date).toBe(
+      "2026-05-15",
+    );
+    expect(extractDeadline("Receipt of manuscripts: June 1, 2026", 2026)?.date).toBe("2026-06-01");
+    expect(extractDeadline("Last date: May 15, 2026", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("Cut-off date: May 15, 2026", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("Cutoff: June 1, 2026", 2026)?.date).toBe("2026-06-01");
+    expect(extractDeadline("必着: 2026年5月15日", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("At the latest May 15, 2026", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("Not later than June 1, 2026", 2026)?.date).toBe("2026-06-01");
+    expect(extractDeadline("No later than May 15, 2026", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("On or before June 1, 2026", 2026)?.date).toBe("2026-06-01");
+    expect(extractDeadline("Closes: May 15, 2026", 2026)?.date).toBe("2026-05-15");
+    expect(extractDeadline("Closing date: June 1, 2026", 2026)?.date).toBe("2026-06-01");
   });
 
   it("camera ready", () => {
@@ -269,6 +365,20 @@ describe("fetch-primary extraction", () => {
     expect(paper.tz).toBe("AoE"); // 前の行の AoE をウィンドウで拾う
   });
 
+  it("extracts confirmed Asia/Pacific abbreviations that resolveTz already accepts (#788)", () => {
+    expect(extractDeadline("Paper deadline: May 15, 2026 23:59 KST", 2026)).toMatchObject({
+      date: "2026-05-15",
+      time: "23:59:00",
+      tz: "KST",
+    });
+    expect(extractDeadline("Paper deadline: May 15, 2026 23:59 SGT", 2026)).toMatchObject({
+      tz: "SGT",
+    });
+    expect(extractDeadline("Paper deadline: May 15, 2026 23:59 HKT", 2026)).toMatchObject({
+      tz: "HKT",
+    });
+  });
+
   it("kind hint wins over adjacent notification", () => {
     // deadline 行の次行に Notification があっても paper のまま (hmem 実例)。
     const lines = ["Submission deadline: August 17, 2026", "Notification: September 4, 2026"];
@@ -305,6 +415,25 @@ describe("fetch-primary extraction", () => {
         kind: "camera_ready",
         label: "Camera-ready submission",
         date: "2026-07-15",
+        round: 1,
+      },
+    ]);
+  });
+
+  it("treats 〆切 as a Japanese deadline marker (#780)", () => {
+    expect(
+      extractDeadlines(["論文〆切: 2026年5月15日", "発表申込〆切：2026年8月3日"], 2026),
+    ).toEqual([
+      {
+        kind: "paper",
+        label: "Paper submission",
+        date: "2026-05-15",
+        round: 1,
+      },
+      {
+        kind: "abstract",
+        label: "Abstract submission",
+        date: "2026-08-03",
         round: 1,
       },
     ]);
@@ -517,6 +646,9 @@ describe("parsePrimaryArgs and null safety", () => {
     expect(parsePrimaryDate(null)).toBeNull();
     expect(parsePrimaryDate(undefined)).toBeNull();
     expect(parsePrimaryDate("")).toBeNull();
+    expect(parsePrimaryDate("2026年5月10")).toEqual({ year: 2026, month: 5, day: 10 });
+    expect(parsePrimaryDate("2026年5月100日")).toBeNull();
+    expect(parsePrimaryDate("2026年8月17〜21日")).toEqual({ year: 2026, month: 8, day: 17 });
 
     expect(extractDeadlines(null, 2026)).toEqual([]);
     expect(extractDeadlines(undefined, 2026)).toEqual([]);

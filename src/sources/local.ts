@@ -84,7 +84,8 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
     const track = String(rec.track ?? "").trim();
     const explicitTz = String(rec.tz ?? rec.timezone ?? "").trim();
     if (rec.precision === "date-only") {
-      const localDate = asDate(rec.date);
+      const rawDate = String(rec.date ?? "").trim();
+      const localDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? asDate(rawDate) : null;
       if (localDate === null || explicitTz) {
         warn(`date-only deadline requires YYYY-MM-DD without timezone: ${String(rec.date ?? "")}`);
         continue;
@@ -420,8 +421,47 @@ export class LocalSource {
       );
       if (duplicate)
         throw new Error(`duplicate local edition ${conference.key}/${duplicate.edition_id}`);
+      const categoryAssignments = [...(existing.category_assignments ?? [])];
+      for (const assignment of conference.category_assignments ?? []) {
+        if (!categoryAssignments.some((item) => item.category === assignment.category)) {
+          categoryAssignments.push(assignment);
+        }
+      }
+      const legacyKeys = [
+        ...new Set(
+          [...(existing.legacy_keys ?? []), ...(conference.legacy_keys ?? [])].filter(Boolean),
+        ),
+      ];
       byKey.set(conference.key, {
         ...existing,
+        tags: [...new Set([...existing.tags, ...conference.tags].filter(Boolean))],
+        categories: [
+          ...new Set([...existing.categories, ...conference.categories].filter(Boolean)),
+        ],
+        scope: [
+          ...new Set([...(existing.scope ?? []), ...(conference.scope ?? [])].filter(Boolean)),
+        ],
+        official_scope: [
+          ...new Set(
+            [...(existing.official_scope ?? []), ...(conference.official_scope ?? [])].filter(
+              Boolean,
+            ),
+          ),
+        ],
+        keywords: [
+          ...new Set(
+            [...(existing.keywords ?? []), ...(conference.keywords ?? [])].filter(Boolean),
+          ),
+        ],
+        paper_abstracts: [
+          ...new Set(
+            [...(existing.paper_abstracts ?? []), ...(conference.paper_abstracts ?? [])].filter(
+              Boolean,
+            ),
+          ),
+        ],
+        ...(legacyKeys.length ? { legacy_keys: legacyKeys } : {}),
+        ...(categoryAssignments.length ? { category_assignments: categoryAssignments } : {}),
         identity: {
           ...conference.identity,
           ...existing.identity,

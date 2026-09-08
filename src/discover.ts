@@ -287,11 +287,28 @@ function stringList(value: unknown): string[] {
 }
 
 function parsedCandidateYear(value: unknown): number | undefined {
-  return typeof value === "number" && Number.isInteger(value) && value >= 2020 ? value : undefined;
+  const numeric =
+    typeof value === "number"
+      ? value
+      : typeof value === "string" && /^(20\d{2})$/.test(value.trim())
+        ? Number(value.trim())
+        : Number.NaN;
+  return Number.isInteger(numeric) && numeric >= 2020 ? numeric : undefined;
+}
+
+function yearFromText(value: string | null | undefined): number | undefined {
+  const match = /\b(20\d{2})\b/.exec(String(value ?? ""));
+  return match ? parsedCandidateYear(Number(match[1])) : undefined;
 }
 
 function candidateYear(candidate: Candidate): number | null {
-  return parsedCandidateYear(candidate.year) ?? null;
+  return (
+    parsedCandidateYear(candidate.year) ??
+    yearFromText(candidate.title) ??
+    yearFromText(candidate.full_name) ??
+    yearFromText(candidate.key) ??
+    null
+  );
 }
 
 export function normalizeCandidateTitle(title: string | null | undefined): string {
@@ -711,10 +728,46 @@ export function formatCandidateRegistry(registry: CandidateRegistry | null | und
   ) as string;
 }
 
-function candidateReviewDate(candidate: Candidate): Date | null {
-  const text = candidate.submission_deadline_text || candidate.date_text;
-  const parsed = parseDeadlineText(text);
-  return parsed && !Number.isNaN(parsed.getTime()) ? parsed : null;
+/** Select the next reviewable deadline, or the most recent expired deadline. */
+export function candidateDeadlineText(
+  candidate:
+    | {
+        submission_deadline_text?: unknown;
+        deadlines?: unknown;
+        editions?: unknown;
+        date_text?: unknown;
+      }
+    | null
+    | undefined,
+  now: Date = new Date(),
+): string {
+  if (!candidate) return "";
+  if (candidate.submission_deadline_text) return String(candidate.submission_deadline_text);
+  const firstEdition = Array.isArray(candidate.editions) ? candidate.editions[0] : null;
+  const edition: Record<string, unknown> =
+    firstEdition && typeof firstEdition === "object" ? firstEdition : {};
+  const deadlines: unknown[] =
+    Array.isArray(candidate.deadlines) && candidate.deadlines.length > 0
+      ? candidate.deadlines
+      : Array.isArray(edition.deadlines)
+        ? edition.deadlines
+        : [];
+  if (deadlines.length === 0) return String(edition.date_text || candidate.date_text || "");
+  const parsed = deadlines.flatMap((deadline) => {
+    if (!deadline || typeof deadline !== "object") return [];
+    const row = deadline as Record<string, unknown>;
+    const text = String(row.date || row.utc || row.deadline || row.local_date || row.at_utc || "");
+    const date = parseDeadlineText(text);
+    return date ? [{ text, time: date.getTime(), future: deadlineIsFuture(text, now) }] : [];
+  });
+  parsed.sort(
+    (left, right) =>
+      Number(right.future) - Number(left.future) ||
+      (left.future ? left.time - right.time : right.time - left.time) ||
+      left.text.localeCompare(right.text),
+  );
+  // Explicit structured deadlines must not fall back to an event date.
+  return parsed[0]?.text ?? "";
 }
 
 function candidateNameKeys(candidate: Candidate): string[] {
@@ -776,7 +829,8 @@ export function splitCandidateLifecycle(
       "",
     );
     const duplicate = seen.has(`${normalizedTitle}\0${candidateYear(candidate) ?? ""}`);
-    const date = candidateReviewDate(candidate);
+    const deadlineText = candidateDeadlineText(candidate, safeNow);
+    const date = parseDeadlineText(deadlineText);
     // status: rejected (人手の却下) / superseded (別候補へ置換) は終端状態。
     // 機械導出の判定より優先し、レビュー待ち行列 (active) へ戻さない。
     const decision: CandidateArchiveDecision | null =
@@ -795,7 +849,7 @@ export function splitCandidateLifecycle(
                   ? "no-official-evidence"
                   : !date
                     ? "no-reviewable-deadline"
-                    : date.getTime() < safeNow.getTime()
+                    : !deadlineIsFuture(deadlineText, safeNow)
                       ? "expired"
                       : null;
     if (decision) {
@@ -879,7 +933,7 @@ export function extractDeadlinesFromText(
   };
 
   // 1. Japanese format: 2026年5月15日
-  const reJp = /(\d{4})年(\d{1,2})月(\d{1,2})日/g;
+  const reJp = /(\d{4})年(\d{1,2})月(\d{1,2})(?!\d)日?/g;
   let m: RegExpExecArray | null = null;
   while (true) {
     m = reJp.exec(norm);
@@ -1047,12 +1101,27 @@ export function parseDeadlineText(dateText: string): Date | null {
   if (!dateText) return null;
   const norm = String(dateText).normalize("NFKC").trim();
 
+  // 0. ISO-8601 instant: 2027-06-01T23:59:59.000Z / +09:00
+  // YYYY-MM-DD の日直後が T だと \b が立たず、下の暦日正規表現が失敗する。
+  if (/^20\d{2}-\d{2}-\d{2}T/i.test(norm)) {
+    const iso =
+      /^(20\d{2})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})$/i.exec(
+        norm,
+      );
+    // A timezone-less timestamp is not an instant: never use the host timezone.
+    if (!iso || Number(iso[4]) > 23 || Number(iso[5]) > 59 || Number(iso[6] ?? 0) > 59) return null;
+    const calendar = validUtcDate(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+    const parsed = Date.parse(norm);
+    if (calendar && Number.isFinite(parsed)) return new Date(parsed);
+    return null;
+  }
+
   // 1. ISO / Numeric Year First: 2026-05-15, 2026/05/15, 2026.05.15
   let m = /\b(20\d\d)[-/.](\d{1,2})[-/.](\d{1,2})\b/.exec(norm);
   if (m) return validUtcDate(Number(m[1]), Number(m[2]), Number(m[3]));
 
   // 2. Japanese date: 2026年5月15日, 2026年05月15日
-  m = /(\d{4})年(\d{1,2})月(\d{1,2})日/.exec(norm);
+  m = /(\d{4})年(\d{1,2})月(\d{1,2})(?!\d)日?/.exec(norm);
   if (m) return validUtcDate(Number(m[1]), Number(m[2]), Number(m[3]));
 
   // 3. Day Month Year: '15 May 2026', '15th of May, 2026', '15th of May 2026', '15th August, 2026', '15-May-2026', '15/May/2026'
@@ -1104,7 +1173,12 @@ export function deadlineIsFuture(
   const d = parseDeadlineText(dateText);
   if (!d) return false;
   const now = today instanceof Date && !Number.isNaN(today.getTime()) ? today : new Date();
-  return d.getTime() >= now.getTime();
+  if (/^20\d{2}-\d{2}-\d{2}T/i.test(String(dateText).normalize("NFKC").trim())) {
+    return d.getTime() >= now.getTime();
+  }
+  const deadlineDay = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  const todayDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return deadlineDay >= todayDay;
 }
 
 async function fetchText(url: string, userAgent: string, timeoutMs: number): Promise<string> {
@@ -1531,7 +1605,7 @@ export function parseIpsjCfpHtml(
     const inner = m[2];
     const sm = /論文誌「([^」]+)」特集/.exec(inner);
     if (!sm) continue;
-    const dm = /投稿締切[:：]\s*(\d{4})年(\d{1,2})月(\d{1,2})日/.exec(inner);
+    const dm = /投稿(?:締切|〆切)[:：]\s*(\d{4})年(\d{1,2})月(\d{1,2})(?!\d)日?/.exec(inner);
     if (!dm) continue;
     const deadline = `${Number(dm[1]).toString().padStart(4, "0")}-${Number(dm[2]).toString().padStart(2, "0")}-${Number(dm[3]).toString().padStart(2, "0")}`;
     const title = `${decode(sm[1])}（IPSJ 論文誌 特集号）`;

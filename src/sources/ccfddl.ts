@@ -129,10 +129,12 @@ export function deadlinesOf(
         });
       }
     }
-    if (out.length > 0) return out;
+    // Non-empty timeline is the structured record. TBD-only rounds must not
+    // revive a stale top-level deadline (SPEC: unpublished stays unpublished).
+    return out;
   }
 
-  // Fallback to top-level rawEdition properties if timeline is absent or yielded no deadlines
+  // Fallback to top-level rawEdition properties if timeline is absent or empty
   if (rawEdition && typeof rawEdition === "object") {
     const entryTz = String(rawEdition.timezone ?? rawEdition.tz ?? tzRaw ?? "");
     const comment =

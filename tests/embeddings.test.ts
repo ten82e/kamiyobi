@@ -306,6 +306,24 @@ describe("generated venue profile artifact", () => {
     future.profiles.ches.papers[0].year = 2026;
     expect(() => serializeVenueProfileArtifact(future)).toThrow(/cutoff|future/);
   });
+
+  it("accepts RFC 3339 collected_at without milliseconds and canonicalizes (#768)", () => {
+    const artifact = JSON.parse(JSON.stringify(VENUE_PROFILE_ARTIFACT));
+    const key = Object.keys(artifact.profiles)[0]!;
+    artifact.profiles[key].papers[0].collected_at = "2026-08-25T00:00:00Z";
+    const serialized = JSON.parse(serializeVenueProfileArtifact(artifact));
+    expect(serialized.profiles[key].papers[0].collected_at).toBe("2026-08-25T00:00:00.000Z");
+
+    const offset = JSON.parse(JSON.stringify(VENUE_PROFILE_ARTIFACT));
+    offset.profiles[key].papers[0].collected_at = "2026-08-25T09:00:00+09:00";
+    expect(
+      JSON.parse(serializeVenueProfileArtifact(offset)).profiles[key].papers[0].collected_at,
+    ).toBe("2026-08-25T00:00:00.000Z");
+
+    const invalid = JSON.parse(JSON.stringify(VENUE_PROFILE_ARTIFACT));
+    invalid.profiles[key].papers[0].collected_at = "2026-02-30T00:00:00.000Z";
+    expect(() => serializeVenueProfileArtifact(invalid)).toThrow(/collected_at/);
+  });
 });
 
 describe("venue profile medoids", () => {

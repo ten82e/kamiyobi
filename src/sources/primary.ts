@@ -36,7 +36,7 @@ import {
   warn,
 } from "../model.ts";
 
-const TIME_RE = /\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp]\.?[Mm]\.?)?/;
+const TIME_RE = /(?<!(?:utc|gmt)\s*[+-]\s*)\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp]\.?[Mm]\.?)?/i;
 
 /** 解決済み行: そのまま applyOverrides/deadlinesOf に渡せる YAML 行。 */
 export type ResolvedRow = Record<string, unknown>;

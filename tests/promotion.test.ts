@@ -101,6 +101,12 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("extracts Japanese dates that omit 日 after the start day (#770)", () => {
+    expect(extractCfpCandidates("投稿締切: 2026年5月10")).toMatchObject([{ date: "2026-05-10" }]);
+    expect(extractCfpCandidates("投稿締切: 2026年5月100日")).toEqual([]);
+    expect(extractCfpCandidates("締切: 2026年8月17〜21日")).toMatchObject([{ date: "2026-08-17" }]);
+  });
+
   it("extracts labels and dates from cells in the same table row", () => {
     expect(
       extractCfpCandidates(
@@ -239,6 +245,55 @@ describe("promotion batch", () => {
     expect(
       extractCfpCandidates("Paper submission deadline: October 10, 2026 midnight AoE"),
     ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
+
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 23:59 KST")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "KST" },
+    ]);
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 23:59 SGT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "SGT" },
+    ]);
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 23:59 HKT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "HKT" },
+    ]);
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 23:59 HST")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "HST" },
+    ]);
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 23:59 AKDT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "AKDT" },
+    ]);
+    expect(
+      extractCfpCandidates("Paper deadline May 15, 2026\nAll deadlines are 23:59 KST"),
+    ).toMatchObject([{ date: "2026-05-15", time: "23:59:00", timezone: "KST" }]);
+  });
+
+  it("extracts WET and WEST as confirmed timezones (#842)", () => {
+    expect(extractCfpCandidates("Paper submission deadline: May 15, 2026 23:59 WET")).toMatchObject(
+      [{ date: "2026-05-15", time: "23:59:00", timezone: "WET" }],
+    );
+    expect(
+      extractCfpCandidates("Paper submission deadline: May 15, 2026 23:59 WEST"),
+    ).toMatchObject([{ date: "2026-05-15", time: "23:59:00", timezone: "WEST" }]);
+    expect(
+      extractCfpCandidates("Deadline: May 15, 2026 23:59; the west wall").map((c) => c.timezone),
+    ).not.toContain("west");
+    expect(
+      extractCfpCandidates("Deadline: May 15, 2026 23:59; shoes got wet").map((c) => c.timezone),
+    ).not.toContain("wet");
+  });
+
+  it("does not treat UTC/GMT offsets as wall-clock times (#828)", () => {
+    expect(extractCfpCandidates("Paper submission deadline: May 15, 2026 UTC+09:00")).toMatchObject(
+      [{ date: "2026-05-15", timezone: "UTC+09:00" }],
+    );
+    expect(
+      extractCfpCandidates("Paper submission deadline: May 15, 2026 UTC+09:00")[0],
+    ).not.toHaveProperty("time");
+    expect(
+      extractCfpCandidates("Paper submission deadline: May 15, 2026 23:59 UTC+09:00"),
+    ).toMatchObject([{ date: "2026-05-15", time: "23:59:00", timezone: "UTC+09:00" }]);
+    expect(
+      extractCfpCandidates("Paper submission deadline: May 15, 2026 GMT+09:00")[0],
+    ).not.toHaveProperty("time");
   });
 
   it("applies an explicit page-wide deadline time without treating the event date as a deadline", () => {
@@ -335,6 +390,15 @@ describe("promotion batch", () => {
       if (rowTime.includes("UTC")) expect(deadline).toMatchObject({ timezone: "UTC" });
       else expect(deadline).not.toHaveProperty("timezone");
     }
+  });
+
+  it("keeps AEDT/AEST as extracted timezones (#818)", () => {
+    expect(extractCfpCandidates("Deadline: 15 May 2026 23:59 AEDT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "AEDT" },
+    ]);
+    expect(extractCfpCandidates("Paper deadline: May 15, 2026 23:59 AEST")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "AEST" },
+    ]);
   });
 
   it.each([
@@ -454,6 +518,255 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("keeps uppercase BOT as an extracted timezone (#925)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 BOT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "BOT" },
+    ]);
+    expect(
+      extractCfpCandidates("Deadline: May 15, 2026 23:59; the bot sat").map((c) => c.timezone),
+    ).not.toContain("bot");
+  });
+
+  it("keeps uppercase COT as an extracted timezone (#932)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 COT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "COT" },
+    ]);
+    expect(
+      extractCfpCandidates("Deadline: May 15, 2026 23:59; a cot bed").map((c) => c.timezone),
+    ).not.toContain("cot");
+  });
+
+  it("keeps FJT as an extracted timezone (#922)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 FJT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "FJT" },
+    ]);
+  });
+
+  it("keeps uppercase GET as an extracted timezone (#936)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 GET")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "GET" },
+    ]);
+    expect(
+      extractCfpCandidates("Deadline: May 15, 2026 23:59; get ready").map((c) => c.timezone),
+    ).not.toContain("get");
+  });
+
+  it("keeps PKT as an extracted timezone (#906)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 PKT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "PKT" },
+    ]);
+  });
+
+  it("keeps TRT as an extracted timezone (#912)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 TRT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "TRT" },
+    ]);
+  });
+
+  it("keeps BRT as an extracted timezone (#918)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 BRT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "BRT" },
+    ]);
+  });
+
+  it("keeps uppercase CAT and WAT as extracted timezones (#888)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 CAT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "CAT" },
+    ]);
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 WAT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "WAT" },
+    ]);
+    expect(
+      extractCfpCandidates("Deadline: May 15, 2026 23:59; the cat sat").map((c) => c.timezone),
+    ).not.toContain("cat");
+  });
+
+  it("keeps NZST and NZDT as extracted timezones (#892)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 NZST")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "NZST" },
+    ]);
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 NZDT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "NZDT" },
+    ]);
+  });
+
+  it("keeps uppercase WIB, WITA, and WIT as extracted timezones (#900)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 WIB")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "WIB" },
+    ]);
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 WITA")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "WITA" },
+    ]);
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 WIT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "WIT" },
+    ]);
+    expect(
+      extractCfpCandidates("Deadline: May 15, 2026 23:59; authors of wit").map((c) => c.timezone),
+    ).not.toContain("wit");
+  });
+
+  it("keeps IDT as an extracted timezone and leaves IST ambiguous (#876)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 IDT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "IDT" },
+    ]);
+  });
+
+  it("keeps MSK as an extracted timezone (#872)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 MSK")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "MSK" },
+    ]);
+  });
+
+  it("keeps ChST as an extracted timezone (#870)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 ChST")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "ChST" },
+    ]);
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 CHST")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "CHST" },
+    ]);
+  });
+
+  it("keeps HAST/HADT as extracted timezones (#866)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 HAST")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "HAST" },
+    ]);
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 HADT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "HADT" },
+    ]);
+  });
+
+  it("keeps uppercase EAT as an extracted timezone (#858)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 EAT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "EAT" },
+    ]);
+    expect(
+      extractCfpCandidates("Deadline: May 15, 2026 23:59; authors eat later").map(
+        (c) => c.timezone,
+      ),
+    ).not.toContain("eat");
+  });
+
+  it("keeps SAST as an extracted timezone (#852)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 SAST")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "SAST" },
+    ]);
+  });
+
+  it("keeps ACST/ACDT as extracted timezones (#854)", () => {
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 ACST")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "ACST" },
+    ]);
+    expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 ACDT")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "ACDT" },
+    ]);
+  });
+
+  it("treats not entertained after as a deadline line (#914)", () => {
+    expect(extractCfpCandidates("Papers will not be entertained after May 15, 2026")).toMatchObject(
+      [{ date: "2026-05-15" }],
+    );
+  });
+
+  it("treats not considered after as a deadline line (#908)", () => {
+    expect(extractCfpCandidates("Papers will not be considered after May 15, 2026")).toMatchObject([
+      { date: "2026-05-15" },
+    ]);
+    expect(
+      extractCfpCandidates("Submissions will not be considered after May 15, 2026"),
+    ).toMatchObject([{ date: "2026-05-15" }]);
+  });
+
+  it("treats not accepted after as a deadline line (#902)", () => {
+    expect(extractCfpCandidates("Papers will not be accepted after May 15, 2026")).toMatchObject([
+      { date: "2026-05-15" },
+    ]);
+    expect(extractCfpCandidates("Papers are not accepted after May 15, 2026")).toMatchObject([
+      { date: "2026-05-15" },
+    ]);
+  });
+
+  it("treats must arrive as a deadline line (#898)", () => {
+    expect(extractCfpCandidates("Papers must arrive by May 15, 2026")).toMatchObject([
+      { date: "2026-05-15" },
+    ]);
+    expect(extractCfpCandidates("Manuscripts must arrive by May 15, 2026")).toMatchObject([
+      { date: "2026-05-15" },
+    ]);
+  });
+
+  it("treats drop-dead date as a deadline line (#884)", () => {
+    expect(extractCfpCandidates("Drop-dead date: May 15, 2026")).toMatchObject([
+      { date: "2026-05-15" },
+    ]);
+    expect(extractCfpCandidates("Drop dead date: June 1, 2026")).toMatchObject([
+      { date: "2026-06-01" },
+    ]);
+  });
+
+  it("treats reach us by as a deadline line (#880)", () => {
+    expect(extractCfpCandidates("Papers to reach us by May 15, 2026")).toMatchObject([
+      { date: "2026-05-15" },
+    ]);
+  });
+
+  it("treats accepting papers until as a deadline line (#878)", () => {
+    expect(extractCfpCandidates("Accepting papers until May 15, 2026")).toMatchObject([
+      { date: "2026-05-15" },
+    ]);
+    expect(extractCfpCandidates("We will accept papers until June 1, 2026")).toMatchObject([
+      { date: "2026-06-01" },
+    ]);
+  });
+
+  it("treats received by and receipt of as deadline lines (#864)", () => {
+    expect(extractCfpCandidates("Papers must be received by May 15, 2026")).toMatchObject([
+      { date: "2026-05-15" },
+    ]);
+    expect(extractCfpCandidates("Receipt of manuscripts: June 1, 2026")).toMatchObject([
+      { date: "2026-06-01" },
+    ]);
+  });
+
+  it("treats last date as a deadline line (#860)", () => {
+    expect(extractCfpCandidates("Last date: May 15, 2026")).toMatchObject([{ date: "2026-05-15" }]);
+  });
+
+  it("treats cut-off date as a deadline line (#856)", () => {
+    expect(extractCfpCandidates("Cut-off date: May 15, 2026")).toMatchObject([
+      { date: "2026-05-15" },
+    ]);
+    expect(extractCfpCandidates("Cutoff: June 1, 2026")).toMatchObject([{ date: "2026-06-01" }]);
+  });
+
+  it("treats 必着 as a deadline line (#850)", () => {
+    expect(extractCfpCandidates("必着: 2026年5月15日")).toMatchObject([{ date: "2026-05-15" }]);
+  });
+
+  it("treats at the latest and not later than as deadline lines (#848)", () => {
+    expect(extractCfpCandidates("At the latest May 15, 2026")).toMatchObject([
+      { date: "2026-05-15" },
+    ]);
+    expect(extractCfpCandidates("Not later than June 1, 2026")).toMatchObject([
+      { date: "2026-06-01" },
+    ]);
+  });
+
+  it("treats no later than and on or before as deadline lines (#846)", () => {
+    expect(extractCfpCandidates("No later than May 15, 2026")).toMatchObject([
+      { date: "2026-05-15" },
+    ]);
+    expect(extractCfpCandidates("On or before June 1, 2026")).toMatchObject([
+      { date: "2026-06-01" },
+    ]);
+  });
+
+  it("treats Closes and Closing date as deadline lines (#838)", () => {
+    expect(extractCfpCandidates("Closes: May 15, 2026")).toMatchObject([{ date: "2026-05-15" }]);
+    expect(extractCfpCandidates("Closing date: May 15, 2026")).toMatchObject([
+      { date: "2026-05-15" },
+    ]);
+  });
+
   it("filters out invalid dates in extractedDates without polluting candidate boundaries (#756)", () => {
     const candidates = extractCfpCandidates(
       "Submission Deadline: 2026-02-30, March 15, 2026 23:59 AoE",
@@ -486,6 +799,22 @@ describe("promotion batch", () => {
     ).toMatchObject([{ date: "2026-10-10", time: "23:59:00", timezone: "AoE" }]);
   });
 
+  it("lets submit / submission lines inherit global deadline timing (#894)", () => {
+    expect(
+      extractCfpCandidates("All deadlines are at 23:59 AoE\nPlease submit by May 15, 2026"),
+    ).toMatchObject([{ date: "2026-05-15", time: "23:59:00", timezone: "AoE" }]);
+    expect(
+      extractCfpCandidates("All deadlines are at 23:59 AoE\nSubmission: May 15, 2026"),
+    ).toMatchObject([{ date: "2026-05-15", time: "23:59:00", timezone: "AoE" }]);
+    expect(
+      extractCfpCandidates("All deadlines are at 23:59 AoE\nThe conference opens May 15, 2026"),
+    ).toMatchObject([{ date: "2026-05-15" }]);
+    expect(
+      extractCfpCandidates("All deadlines are at 23:59 AoE\nThe conference opens May 15, 2026")[0]
+        ?.time,
+    ).toBeUndefined();
+  });
+
   it("extracts Japanese deadline kinds for domestic conferences (#756)", () => {
     expect(
       extractCfpCandidates("発表申込締切: 2026年5月1日\n原稿投稿締切: 2026年6月1日"),
@@ -506,6 +835,15 @@ describe("promotion batch", () => {
     ).toMatchObject([
       { kind: "camera_ready", date: "2026-06-01" },
       { kind: "rebuttal_end", date: "2026-06-15" },
+    ]);
+  });
+
+  it("extracts Japanese 〆切 markers (#780)", () => {
+    expect(extractCfpCandidates("論文〆切: 2026年5月15日")).toMatchObject([
+      { kind: "paper", date: "2026-05-15" },
+    ]);
+    expect(extractCfpCandidates("発表申込〆切：2026年8月3日")).toMatchObject([
+      { kind: "abstract", date: "2026-08-03" },
     ]);
   });
 
