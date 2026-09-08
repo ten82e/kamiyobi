@@ -3424,3 +3424,39 @@ it("migrates a unique legacy ledger id and skips ambiguous legacy keys (#768)", 
   expect(ambiguousResult.ledger.deadlines["fse-se|2026|paper|1|"]?.content_hash).not.toBe(hash);
   expect(ambiguousResult.ledger.aliases[ambiguous.oldId]).toBeUndefined();
 });
+
+it("supports at_utc for exact deadline reverification matching and cutoff", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-at-utc-"));
+  const dataPath = dataFile(dir, [
+    {
+      kind: "paper",
+      label: "Paper submission deadline",
+      round: 1,
+      track: "",
+      precision: "exact",
+      at_utc: "2027-01-03T11:59:00.000Z",
+      tz_raw: "AoE",
+      verification: {
+        official_url: "https://example.test/cfp",
+        source_class: "official-cfp",
+        next_check_at: "2026-08-30T00:00:00.000Z",
+        status: "pending",
+      },
+    },
+  ]);
+  const ledgerPath = join(dir, "verification-ledger.json");
+  const result = await reverifyData({
+    dataPath,
+    ledgerPath,
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    fetchImpl: async () =>
+      new Response("<html><body>Submission deadline: January 2, 2027 23:59 AoE</body></html>", {
+        status: 200,
+        headers: { "content-type": "text/html" },
+      }),
+  });
+  expect(result.processed).toBe(1);
+  const targetId = "demo|demo-2027|paper|1|";
+  expect(result.ledger.deadlines[targetId]?.status).toBe("verified");
+});
