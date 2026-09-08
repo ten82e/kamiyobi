@@ -625,6 +625,16 @@ describe("merge_sources", () => {
       mergeSources([[conference("ccfddl", ccf)], [conference("aideadlines", ai)]], PRIORITY)[0]
         .editions,
     ).toHaveLength(2);
+    const sameProviderId = {
+      ...ai,
+      identity: { sourceIds: { ccfddl: "shared-id", aideadlines: "ai-id" } },
+    };
+    expect(
+      mergeSources(
+        [[conference("ccfddl", ccf)], [conference("aideadlines", sameProviderId)]],
+        PRIORITY,
+      )[0].editions,
+    ).toHaveLength(1);
   });
 
   it("merges only explicitly configured cross-source edition IDs after a schedule change", () => {

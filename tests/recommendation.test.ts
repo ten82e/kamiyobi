@@ -436,6 +436,12 @@ describe("recommendation axes", () => {
     expect(
       recommendationAxes(value, null, Date.parse("2026-08-25T18:00:00Z")).deadline_precision,
     ).toBe("date-only");
+    expect(
+      recommendationAxes(value, null, Date.parse("2026-08-26T11:59:59.999Z")).deadline_precision,
+    ).toBe("date-only");
+    expect(
+      recommendationAxes(value, null, Date.parse("2026-08-26T12:00:00Z")).deadline_precision,
+    ).toBe("none");
   });
 
   it("ignores an expired exact deadline in the same target edition", () => {
