@@ -1260,18 +1260,24 @@ function deadlineRound(value: unknown): number {
   return Number.isFinite(round) && round >= 1 ? Math.trunc(round) : 1;
 }
 
+function evidenceFieldList(item: JsonRecord): string[] {
+  return jsonStrings(item.verifiedFields ?? item.verified_fields);
+}
+
 function officialEvidenceHash(deadline: JsonRecord): string | undefined {
   const items = jsonRecords(deadline.evidence)
-    .filter((item) => ["official-cfp", "publisher"].includes(String(item.sourceClass ?? "")))
+    .filter((item) =>
+      ["official-cfp", "publisher"].includes(String(item.sourceClass ?? item.source_class ?? "")),
+    )
     .filter((item) => {
-      const fields = jsonStrings(item.verifiedFields);
+      const fields = evidenceFieldList(item);
       return (
         fields.includes("date") && (fields.includes("time") ? fields.includes("timezone") : true)
       );
     })
     .map(
       (item) =>
-        `${String(item.sourceUrl ?? item.source_url ?? "")}\n${String(item.contentHash ?? item.sourceRevision ?? item.original_value ?? "")}`,
+        `${String(item.sourceUrl ?? item.source_url ?? "")}\n${String(item.contentHash ?? item.content_hash ?? item.sourceRevision ?? item.original_value ?? "")}`,
     )
     .filter((row) => row !== "\n")
     .sort(cmpStr);
@@ -1282,19 +1288,27 @@ function officialEvidenceHash(deadline: JsonRecord): string | undefined {
 function healthEvidence(deadline: JsonRecord): HealthDeadlineEvidence[] {
   return jsonRecords(deadline.evidence)
     .map((item): HealthDeadlineEvidence | null => {
-      const sourceClass = String(item.sourceClass ?? "");
+      const sourceClass = String(item.sourceClass ?? item.source_class ?? "");
       const sourceUrl = String(item.sourceUrl ?? item.source_url ?? "");
-      const fields = jsonStrings(item.verifiedFields).filter((field) =>
+      const fields = evidenceFieldList(item).filter((field) =>
         ["date", "time", "timezone", "kind", "round", "track"].includes(field),
       ) as NonNullable<DeadlineEvidence["verifiedFields"]>;
       if (!sourceClass && !sourceUrl && fields.length === 0) return null;
       return {
         ...(sourceClass ? { sourceClass: sourceClass as DeadlineEvidence["sourceClass"] } : {}),
         ...(sourceUrl ? { sourceUrl } : {}),
-        ...(typeof item.sourceRevision === "string" ? { sourceRevision: item.sourceRevision } : {}),
-        ...(typeof item.retrievedAt === "string" ? { retrievedAt: item.retrievedAt } : {}),
-        ...(typeof item.verifiedAt === "string" ? { verifiedAt: item.verifiedAt } : {}),
-        ...(typeof item.contentHash === "string" ? { contentHash: item.contentHash } : {}),
+        ...(typeof item.sourceRevision === "string" || typeof item.source_revision === "string"
+          ? { sourceRevision: String(item.sourceRevision ?? item.source_revision) }
+          : {}),
+        ...(typeof item.retrievedAt === "string" || typeof item.retrieved_at === "string"
+          ? { retrievedAt: String(item.retrievedAt ?? item.retrieved_at) }
+          : {}),
+        ...(typeof item.verifiedAt === "string" || typeof item.verified_at === "string"
+          ? { verifiedAt: String(item.verifiedAt ?? item.verified_at) }
+          : {}),
+        ...(typeof item.contentHash === "string" || typeof item.content_hash === "string"
+          ? { contentHash: String(item.contentHash ?? item.content_hash) }
+          : {}),
         ...(fields.length > 0 ? { verifiedFields: fields } : {}),
       };
     })

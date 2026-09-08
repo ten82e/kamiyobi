@@ -195,10 +195,23 @@ export function deadlineEvidence(
         item.original_value ?? item.rawExcerpt ?? fallback?.originalValue ?? "",
       );
       if (!sourceName && !sourceUrl && !originalValue) return null;
-      const sourceClass = String(item.sourceClass ?? fallback?.sourceClass ?? "");
-      const fields = (Array.isArray(item.verifiedFields) ? item.verifiedFields : [])
+      const sourceClass = String(
+        item.sourceClass ?? item.source_class ?? fallback?.sourceClass ?? "",
+      );
+      const rawFields = Array.isArray(item.verifiedFields)
+        ? item.verifiedFields
+        : Array.isArray(item.verified_fields)
+          ? item.verified_fields
+          : [];
+      const fields = rawFields
         .map((field) => String(field))
         .filter((field): field is EvidenceField => EVIDENCE_FIELDS.has(field as EvidenceField));
+      const sourceRevision = item.sourceRevision ?? item.source_revision;
+      const retrievedAt = item.retrievedAt ?? item.retrieved_at;
+      const verifiedAt = item.verifiedAt ?? item.verified_at;
+      const contentHash = item.contentHash ?? item.content_hash;
+      const rawExcerpt = item.rawExcerpt ?? item.raw_excerpt;
+      const selectorOrField = item.selectorOrField ?? item.selector_or_field;
       const evidence: DeadlineEvidence = {
         source_name: sourceName,
         source_url: sourceUrl,
@@ -212,19 +225,17 @@ export function deadlineEvidence(
           ? { sourceClass: sourceClass as EvidenceClass }
           : {}),
         ...(sourceUrl ? { sourceUrl } : {}),
-        ...(typeof item.sourceRevision === "string" ? { sourceRevision: item.sourceRevision } : {}),
-        ...(typeof item.retrievedAt === "string" ? { retrievedAt: item.retrievedAt } : {}),
-        ...(typeof item.verifiedAt === "string" ? { verifiedAt: item.verifiedAt } : {}),
-        ...(typeof item.contentHash === "string" ? { contentHash: item.contentHash } : {}),
+        ...(typeof sourceRevision === "string" ? { sourceRevision } : {}),
+        ...(typeof retrievedAt === "string" ? { retrievedAt } : {}),
+        ...(typeof verifiedAt === "string" ? { verifiedAt } : {}),
+        ...(typeof contentHash === "string" ? { contentHash } : {}),
         ...(typeof item.evidenceRef === "string" || typeof item.evidence_ref === "string"
           ? { evidenceRef: String(item.evidenceRef ?? item.evidence_ref) }
           : {}),
-        ...(typeof item.rawExcerpt === "string" ? { rawExcerpt: item.rawExcerpt } : {}),
+        ...(typeof rawExcerpt === "string" ? { rawExcerpt } : {}),
         ...(typeof item.adapter === "string" ? { adapter: item.adapter } : {}),
         ...(typeof item.structured === "boolean" ? { structured: item.structured } : {}),
-        ...(typeof item.selectorOrField === "string"
-          ? { selectorOrField: item.selectorOrField }
-          : {}),
+        ...(typeof selectorOrField === "string" ? { selectorOrField } : {}),
         ...(fields.length > 0 ? { verifiedFields: fields } : {}),
       };
       return evidence;
@@ -826,10 +837,19 @@ export function asDate(value: unknown): Date | null {
   // the date-only representation used by the public JSON contract.
   // When an ISO timestamp lacks a timezone offset, treat it in UTC to avoid
   // machine-local environment shifts (e.g. JST vs UTC vs EDT).
-  const normalized = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(s)
-    ? `${s.replace(" ", "T")}Z`
-    : s;
-  const parsed = Date.parse(normalized);
+  // Slash / US / English dates must not fall through to Date.parse: that is
+  // local midnight and shifts the UTC calendar day in zones such as JST (#790).
+  let iso: string;
+  if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(s)) {
+    iso = `${s.replace(" ", "T")}Z`;
+  } else if (
+    /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}(?::?\d{2})?)$/i.test(s)
+  ) {
+    iso = s.replace(" ", "T");
+  } else {
+    return null;
+  }
+  const parsed = Date.parse(iso);
   return Number.isFinite(parsed) ? dateOnly(new Date(parsed)) : null;
 }
 
@@ -932,10 +952,38 @@ const TZ_FIXED_ABBREVIATIONS: Record<string, number> = {
   edt: -4 * 60,
   cet: 60,
   cest: 120,
+  bot: 2 * 60,
+  cot: -5 * 60,
+  fjt: 12 * 60,
+  get: 4 * 60,
+  pkt: 5 * 60,
+  trt: 3 * 60,
+  brt: -3 * 60,
+  cat: 2 * 60,
+  wat: 60,
+  nzst: 12 * 60,
+  nzdt: 13 * 60,
+  wib: 7 * 60,
+  wita: 8 * 60,
+  wit: 9 * 60,
+  idt: 3 * 60,
+  msk: 3 * 60,
+  eat: 3 * 60,
+  sast: 2 * 60,
+  acst: 9 * 60 + 30,
+  acdt: 10 * 60 + 30,
+  wet: 0,
+  west: 60,
   akst: -9 * 60,
   akdt: -8 * 60,
   hst: -10 * 60,
+  hast: -10 * 60,
+  hadt: -9 * 60,
   cdt: -5 * 60,
+  chst: 10 * 60,
+  aest: 10 * 60,
+  aedt: 11 * 60,
+  awst: 8 * 60,
 };
 
 const TZ_NAMED: Record<string, string> = {
@@ -1385,7 +1433,7 @@ function parseJapaneseRange(
   // 1. 日付範囲: YYYY年M月D日[〜-]YYYY年M月D日 / YYYY年M月D日[〜-]M月D日 / YYYY年M月D日[〜-]D日
   // または年省略: M月D日[〜-]YYYY年M月D日 / M月D日[〜-]M月D日 / M月D日[〜-]D日
   let m =
-    /^(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日\s*(?:[〜~～\-–—]|から|to)\s*(?:(\d{4})年)?(?:(\d{1,2})月)?(\d{1,2})日$/i.exec(
+    /^(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日\s*(?:[〜~～\-–—]|から|to)\s*(?:(\d{4})年)?(?:(\d{1,2})月)?(\d{1,2})日?$/i.exec(
       norm,
     );
   if (m) {
@@ -1583,7 +1631,27 @@ export function parseDateRange(
 // deadline kinds
 // --------------------------------------------------------------------------
 
-const PAPER = new Set(["deadline", "paper", "submission", "full_paper"]);
+const PAPER = new Set([
+  "deadline",
+  "paper",
+  "submission",
+  "full_paper",
+  "fullpaper",
+  "paper_submission",
+  "short_paper",
+  "research_paper",
+  "technical_paper",
+  "regular_paper",
+  "contributed_paper",
+  "position_paper",
+  "late_breaking_paper",
+  "invited_paper",
+  "workshop_paper",
+  "industry_paper",
+  "manuscript",
+  "manuscript_deadline",
+  "full_manuscript",
+]);
 const CAMERA = new Set([
   "camera_ready",
   "camera_ready_deadline",
@@ -1591,12 +1659,16 @@ const CAMERA = new Set([
   "revision_deadline",
   "final_paper",
   "final_submission",
+  "final_deadline",
 ]);
 const REBUTTAL_END = new Set([
   "rebuttal_end",
   "rebuttal",
+  "rebuttal_deadline",
   "rebuttal_and_revision",
   "author_response",
+  "author_rebuttal",
+  "rebuttal_period_end",
 ]);
 const REGISTRATION = new Set(["registration", "reviewer_registration", "commitment_deadline"]);
 
@@ -1657,14 +1729,15 @@ export function refineKindWithLabel(
 export function kindOf(rawTypeOrKey: string | null | undefined): DeadlineKind {
   const s = String(rawTypeOrKey ?? "")
     .trim()
+    .replace(/([a-z\d])([A-Z])/g, "$1_$2")
     .toLowerCase()
     .replace(/[\s-]+/g, "_");
-  if (s.startsWith("abstract")) return "abstract";
+  if (s.startsWith("abstract") || s === "extended_abstract") return "abstract";
   if (s.includes("notification")) return "notification";
   if (PAPER.has(s)) return "paper";
   if (s === "supplementary") return "supplementary";
   if (CAMERA.has(s) || s.includes("camera_ready")) return "camera_ready";
-  if (s === "rebuttal_start") return "rebuttal_start";
+  if (s === "rebuttal_start" || s === "rebuttal_period_start") return "rebuttal_start";
   if (REBUTTAL_END.has(s)) return "rebuttal_end";
   if (s === "review_release") return "review_release";
   if (REGISTRATION.has(s)) return "registration";
@@ -1697,10 +1770,40 @@ const KANJI_NUMERALS: Record<string, number> = {
   十: 10,
 };
 
+const WORD_ROUND_NUMERALS: Record<string, number> = {
+  first: 1,
+  second: 2,
+  third: 3,
+  fourth: 4,
+  fifth: 5,
+  sixth: 6,
+  seventh: 7,
+  eighth: 8,
+  ninth: 9,
+  tenth: 10,
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+};
+
+const ROUND_WORD = "first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth";
+const ROUND_CARDINAL = "one|two|three|four|five|six|seven|eight|nine|ten";
+
 const ROUND_PATTERNS = [
   /\b(?:round|cycle|phase|stage)\s*#?\s*([0-9]+)\b/i,
   /\b([0-9]+)(?:st|nd|rd|th)\s+(?:round|cycle|phase|stage)\b/i,
+  /\b([0-9]+)(?:st|nd|rd|th)\s+(?:paper\s+)?submission(?:\s+deadline)?\b/i,
   /\b(?:round|cycle|phase|stage)\s*#?\s*(i|ii|iii|iv|v|vi|vii|viii|ix|x)\b/i,
+  new RegExp(`\\b(${ROUND_WORD})\\s+(?:round|cycle|phase|stage)\\b`, "i"),
+  new RegExp(`\\b(?:round|cycle|phase|stage)\\s+(${ROUND_WORD}|${ROUND_CARDINAL})\\b`, "i"),
+  new RegExp(`\\b(${ROUND_WORD})\\s+(?:paper\\s+)?submission(?:\\s+deadline)?\\b`, "i"),
   /\br([1-9][0-9]?)\b/i,
   /第\s*([0-9]+|[一二三四五六七八九十]+)\s*(?:回|次|期)/,
   /([0-9]+|[一二三四五六七八九十]+)\s*次(?:締切|募集|提出)/,
@@ -1716,6 +1819,7 @@ export function roundOf(label: string | null | undefined, defaultRound = 1): num
       const raw = match[1].toLowerCase();
       if (raw in ROMAN_NUMERALS) return ROMAN_NUMERALS[raw];
       if (raw in KANJI_NUMERALS) return KANJI_NUMERALS[raw];
+      if (raw in WORD_ROUND_NUMERALS) return WORD_ROUND_NUMERALS[raw];
       const value = Number(raw);
       if (value >= 1) return value;
     }
@@ -1806,14 +1910,20 @@ function providerIdentitiesOf(value: unknown): ProviderIdentity[] {
 export function venueIdentityOf(value: unknown): VenueIdentity | undefined {
   if (!value || typeof value !== "object") return undefined;
   const raw = value as Record<string, unknown>;
-  const venueId = typeof raw.venueId === "string" ? raw.venueId.trim() : "";
-  const dblpKey = typeof raw.dblpKey === "string" ? raw.dblpKey.trim() : "";
-  const officialDomains = identityStrings(raw.officialDomains);
+  const venueId =
+    typeof (raw.venueId ?? raw.venue_id) === "string"
+      ? String(raw.venueId ?? raw.venue_id).trim()
+      : "";
+  const dblpKey =
+    typeof (raw.dblpKey ?? raw.dblp_key) === "string"
+      ? String(raw.dblpKey ?? raw.dblp_key).trim()
+      : "";
+  const officialDomains = identityStrings(raw.officialDomains ?? raw.official_domains);
   const aliases = identityStrings(raw.aliases);
   const sourceIds = Object.fromEntries(
     Object.entries(
-      raw.sourceIds && typeof raw.sourceIds === "object"
-        ? (raw.sourceIds as Record<string, unknown>)
+      (raw.sourceIds ?? raw.source_ids) && typeof (raw.sourceIds ?? raw.source_ids) === "object"
+        ? ((raw.sourceIds ?? raw.source_ids) as Record<string, unknown>)
         : {},
     )
       .filter(([, sourceId]) => typeof sourceId === "string" && sourceId.trim())
@@ -1844,12 +1954,15 @@ export function venueIdentityOf(value: unknown): VenueIdentity | undefined {
 export function editionIdentityOf(value: unknown): EditionIdentity | undefined {
   if (!value || typeof value !== "object") return undefined;
   const raw = value as Record<string, unknown>;
-  const editionId = typeof raw.editionId === "string" ? raw.editionId.trim() : "";
-  const officialUrls = identityStrings(raw.officialUrls);
+  const editionId =
+    typeof (raw.editionId ?? raw.edition_id) === "string"
+      ? String(raw.editionId ?? raw.edition_id).trim()
+      : "";
+  const officialUrls = identityStrings(raw.officialUrls ?? raw.official_urls);
   const sourceIds = Object.fromEntries(
     Object.entries(
-      raw.sourceIds && typeof raw.sourceIds === "object"
-        ? (raw.sourceIds as Record<string, unknown>)
+      (raw.sourceIds ?? raw.source_ids) && typeof (raw.sourceIds ?? raw.source_ids) === "object"
+        ? ((raw.sourceIds ?? raw.source_ids) as Record<string, unknown>)
         : {},
     )
       .filter(([, sourceId]) => typeof sourceId === "string" && sourceId.trim())

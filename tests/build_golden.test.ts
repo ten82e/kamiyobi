@@ -137,6 +137,53 @@ it("healthReport separates future confirmed and estimated values", () => {
   expect(healthMarkdown(report)).toContain("| data.json | 10 |");
 });
 
+it("healthReport preserves equivalent camelCase and snake_case evidence", () => {
+  const canonical = {
+    sourceClass: "official-cfp",
+    sourceUrl: "https://example.test/cfp",
+    sourceRevision: "r1",
+    contentHash: "a".repeat(64),
+    retrievedAt: "2026-08-01T00:00:00Z",
+    verifiedAt: "2026-08-02T00:00:00Z",
+    verifiedFields: ["date", "time", "timezone"],
+  };
+  const snake = Object.fromEntries(
+    Object.entries(canonical).map(([key, value]) => [
+      key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`),
+      value,
+    ]),
+  );
+  const refs = (evidence: Record<string, unknown>) =>
+    healthReport(
+      {
+        conferences: [
+          {
+            key: "demo",
+            editions: [
+              {
+                year: 2026,
+                id: "demo26",
+                deadlines: [
+                  {
+                    kind: "paper",
+                    utc: "2026-09-01T00:00:00Z",
+                    evidence: [evidence],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      NOW,
+    ).deadline_refs;
+  const expected = refs(canonical);
+  expect(expected).toHaveLength(1);
+  expect(expected?.[0]?.evidence_hash).toBeTruthy();
+  expect(expected?.[0]?.evidence).toEqual([canonical]);
+  expect(refs(snake)).toEqual(expected);
+});
+
 it("healthReport counts date-only deadlines without inventing a UTC instant", () => {
   const report = healthReport(
     {
