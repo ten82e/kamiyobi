@@ -1486,6 +1486,72 @@ describe("discover and review boundary handling", () => {
       expect(() => new URL(rows[1].href)).not.toThrow();
     });
 
+    it("parseDbworldHtml handles trailing/preceding attributes, nested tags, and lowercase rows", () => {
+      const html = `
+        <table>
+          <tr class="odd">
+            <td><A class="msg-link" HREF="https://dbworld.sigmod.org/message/111" TARGET="_blank"><b>CFP:</b> High Performance 2026</A></td>
+          </tr>
+          <TR VALIGN=TOP>
+            <TD><a href='https://dbworld.sigmod.org/message/222' rel="noreferrer"><span>Call for Papers</span>: <i>Cloud 2026</i></a></TD>
+          </TR>
+          <tr valign="top">
+            <td><A HREF=https://dbworld.sigmod.org/message/333>Special Issue: Big Data</A></td>
+          </tr>
+        </table>
+      `;
+      const rows = parseDbworldHtml(html);
+      expect(rows).toHaveLength(3);
+      expect(rows[0].href).toBe("https://dbworld.sigmod.org/message/111");
+      expect(rows[0].subject).toBe("CFP: High Performance 2026");
+      expect(rows[1].href).toBe("https://dbworld.sigmod.org/message/222");
+      expect(rows[1].subject).toBe("Call for Papers: Cloud 2026");
+      expect(rows[2].href).toBe("https://dbworld.sigmod.org/message/333");
+      expect(rows[2].subject).toBe("Special Issue: Big Data");
+    });
+
+    it("parseWikiCfpHtml and parseEasyChairCfpHtml handle attributes and nested tags", () => {
+      const wikiHtml = `
+        <table>
+          <tr>
+            <td><input type="checkbox"/></td>
+            <td><a class="event-title" href='/cfp/servlet/event.showcfp?eventid=9999'><b>ICDCS 2027</b></a></td>
+            <td>International Conference on Distributed Computing Systems</td>
+          </tr>
+          <tr>
+            <td>June 1-4, 2027</td>
+            <td>Tokyo, Japan</td>
+            <td>Jan 15, 2027</td>
+          </tr>
+        </table>
+      `;
+      const wikiEntries = parseWikiCfpHtml(wikiHtml, ["distributed"], 2026);
+      expect(wikiEntries).toHaveLength(1);
+      expect(wikiEntries[0].title).toBe("ICDCS 2027");
+      expect(wikiEntries[0].link).toBe(
+        "https://www.wikicfp.com/cfp/servlet/event.showcfp?eventid=9999",
+      );
+      expect(wikiEntries[0].date_text).toBe("Jan 15, 2027");
+
+      const easyHtml = `
+        <tbody>
+          <tr>
+            <td><a class="track" href='/cfp/conf2027'><b>CONF 2027</b></a></td>
+            <td>Full Name 2027</td>
+            <td>Osaka</td>
+            <td>2027-08-01</td>
+            <td>2027-08-05</td>
+            <td><span class="tag">systems</span></td>
+          </tr>
+        </tbody>
+      `;
+      const easyRows = parseEasyChairCfpHtml(easyHtml);
+      expect(easyRows).toHaveLength(1);
+      expect(easyRows[0].title).toBe("CONF 2027");
+      expect(easyRows[0].url).toBe("https://easychair.org/cfp/conf2027");
+      expect(easyRows[0].topics).toEqual(["systems"]);
+    });
+
     it("normTitle normalizes ordinals mid-string across editions", () => {
       expect(normTitle("The 15th International Conference on Networks")).toBe(
         "international conference on networks",

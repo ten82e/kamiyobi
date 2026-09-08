@@ -1041,10 +1041,13 @@ export function parseWikiCfpHtml(
   const entries: WikiCfpEntry[] = [];
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    const m = /<a href="([^"]*event\.showcfp[^"]*)">([^<]+)<\/a>/.exec(row);
+    const m =
+      /<a\b[^>]*?\bhref=(?:"([^"]*event\.showcfp[^"]*)"|'([^']*event\.showcfp[^']*)'|([^\s>]*event\.showcfp[^\s>]*))[^>]*>([\s\S]*?)<\/a>/i.exec(
+        row,
+      );
     if (!m) continue;
-    const href = decode(m[1]);
-    const title = decode(m[2]).trim();
+    const href = decode(m[1] ?? m[2] ?? m[3] ?? "");
+    const title = decode((m[4] ?? "").replace(/<[^>]+>/g, "")).trim();
     // full name = イベント行の 2 番目の td
     const tds = row.match(/<td[^>]*>([\s\S]*?)<\/td>/g) ?? [];
     let fullName = "";
@@ -1086,7 +1089,9 @@ export function parseWikiCfpHtml(
       key: slug(title),
       title: repairTruncatedVenueName(title, year),
       full_name: repairTruncatedVenueName(fullName, year),
-      link: `https://www.wikicfp.com${href}`,
+      link: href.startsWith("http")
+        ? href
+        : `https://www.wikicfp.com${href.startsWith("/") ? "" : "/"}${href}`,
       categories: [...cats],
       date_text: deadline,
       place: where !== "" && where !== "N/A" ? where : "",
@@ -1230,12 +1235,14 @@ interface DbworldRow {
 export function parseDbworldHtml(html: string | null | undefined): DbworldRow[] {
   if (!html) return [];
   const out: DbworldRow[] = [];
-  for (const row of html.match(/<TR VALIGN=TOP>[\s\S]*?<\/TR>/g) ?? []) {
-    const m = /<A HREF=([^>]+)>([^<]+)<\/A>/.exec(row);
+  for (const row of html.match(/<TR\b[^>]*>[\s\S]*?<\/TR>/gi) ?? []) {
+    const m = /<A\b[^>]*?\bHREF\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))[^>]*>([\s\S]*?)<\/A>/i.exec(
+      row,
+    );
     if (!m) continue;
-    const href = m[1].trim().replace(/^["']|["']$/g, "");
-    const subject = decode(m[2]).trim();
-    if (/^job\s*:/i.test(subject)) continue;
+    const href = (m[1] ?? m[2] ?? m[3] ?? "").trim();
+    const subject = decode(m[4].replace(/<[^>]+>/g, "")).trim();
+    if (!href || /^job\s*:/i.test(subject)) continue;
     if (
       /call for (papers?|participation)|\bcfp\b|deadline|reminder|last call|special issue/i.test(
         subject,
@@ -1344,9 +1351,14 @@ export function parseEasyChairCfpHtml(html: string | null | undefined): EasyChai
     for (const tr of tbody.match(/<tr[^>]*>([\s\S]*?)<\/tr>/g) ?? []) {
       const cells = tr.match(/<td[^>]*>([\s\S]*?)<\/td>/g) ?? [];
       if (cells.length < 5) continue;
-      const m = /href="(\/cfp\/[^"]+)"[^>]*>([^<]+)</.exec(cells[0] ?? "");
+      const m =
+        /<a\b[^>]*?\bhref=(?:"(\/cfp\/[^"]+)"|'(\/cfp\/[^']+)'|(\/cfp\/[^\s>]+))[^>]*>([\s\S]*?)<\/a>/i.exec(
+          cells[0] ?? "",
+        );
       if (!m) continue;
+      const path = (m[1] ?? m[2] ?? m[3] ?? "").trim();
       const text = (c: string): string => decode(c.replace(/<[^>]+>/g, "")).trim();
+      const title = decode((m[4] ?? "").replace(/<[^>]+>/g, "")).trim();
       const topics =
         cells.length > 5
           ? [...(cells[5].match(/<span class="tag[^"]*">([^<]+)<\/span>/g) ?? [])].map((t) =>
@@ -1354,13 +1366,13 @@ export function parseEasyChairCfpHtml(html: string | null | undefined): EasyChai
             )
           : [];
       out.push({
-        title: decode(m[2]).trim(),
-        full_name: text(cells[1] ?? "") || decode(m[2]).trim(),
+        title,
+        full_name: text(cells[1] ?? "") || title,
         place: text(cells[2] ?? ""),
         date_text: text(cells[3] ?? ""),
         start: text(cells[4] ?? ""),
         topics,
-        url: `https://easychair.org${m[1]}`,
+        url: `https://easychair.org${path.startsWith("/") ? "" : "/"}${path}`,
       });
     }
   }
