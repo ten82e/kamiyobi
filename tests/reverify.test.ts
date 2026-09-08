@@ -1974,104 +1974,120 @@ it("applies new verification evidence to non-promotion source data", () => {
   expect(overrides.conferences.demo.editions.demo26).toBeUndefined();
 });
 
-it("applies a mapping-shaped override using duplicated short-year edition ids (#760)", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-dup-year-"));
-  const data = join(root, "data");
-  const body = "Official deadline extension: October 15, 2026 23:59 UTC.";
-  const hash = createHash("sha256").update(body).digest("hex");
-  mkdirSync(join(data, "evidence", "blobs"), { recursive: true });
-  writeFileSync(join(data, "evidence", "blobs", `${hash}.body`), body);
-  writeFileSync(
-    join(data, "overrides.yaml"),
-    [
-      "conferences:",
-      "  eaai-27:",
-      "    editions:",
-      "      '2027':",
-      "        deadlines:",
-      "          - kind: paper",
-      "            label: Submission deadline",
-      "            round: 1",
-      "            date: 2026-10-01 23:59:00",
-      "            tz: UTC",
-    ].join("\n"),
-  );
-  const ledgerPath = join(data, "verification-ledger.json");
-  writeFileSync(
-    ledgerPath,
-    JSON.stringify({
-      schema_version: 2,
-      producer_revision: "reverification-v2",
-      generated_at: "2026-09-02T00:00:00.000Z",
-      pages: {
-        "page:test": {
-          requested_url: "https://easychair.org/cfp/EAAI-27",
-          final_url: "https://easychair.org/cfp/EAAI-27",
-          status: 200,
-          content_type: "text/plain",
-          content_length: body.length,
-          content_hash: hash,
-          source_revision: `sha256:${hash}`,
-          parser_version: "reverification-v2",
-          headers: {},
-          last_attempt_at: "2026-09-02T00:00:00.000Z",
-          last_success_at: "2026-09-02T00:00:00.000Z",
-          body_ref: `evidence/blobs/${hash}.body`,
+it.each([
+  { editionId: "eaai-2727", accepted: true },
+  { editionId: "eaai-2027", accepted: true },
+  { editionId: "eaai-2728", accepted: false },
+  { editionId: "eaai-123", accepted: false },
+])(
+  "uses only a supported year format in resolution edition $editionId (#760)",
+  ({ editionId, accepted }) => {
+    const root = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-dup-year-"));
+    const data = join(root, "data");
+    const body = "Official deadline extension: October 15, 2026 23:59 UTC.";
+    const hash = createHash("sha256").update(body).digest("hex");
+    mkdirSync(join(data, "evidence", "blobs"), { recursive: true });
+    writeFileSync(join(data, "evidence", "blobs", `${hash}.body`), body);
+    writeFileSync(
+      join(data, "overrides.yaml"),
+      [
+        "conferences:",
+        "  eaai-27:",
+        "    editions:",
+        "      '2027':",
+        "        deadlines:",
+        "          - kind: paper",
+        "            label: Submission deadline",
+        "            round: 1",
+        "            date: 2026-10-01 23:59:00",
+        "            tz: UTC",
+      ].join("\n"),
+    );
+    const ledgerPath = join(data, "verification-ledger.json");
+    writeFileSync(
+      ledgerPath,
+      JSON.stringify({
+        schema_version: 2,
+        producer_revision: "reverification-v2",
+        generated_at: "2026-09-02T00:00:00.000Z",
+        pages: {
+          "page:test": {
+            requested_url: "https://easychair.org/cfp/EAAI-27",
+            final_url: "https://easychair.org/cfp/EAAI-27",
+            status: 200,
+            content_type: "text/plain",
+            content_length: body.length,
+            content_hash: hash,
+            source_revision: `sha256:${hash}`,
+            parser_version: "reverification-v2",
+            headers: {},
+            last_attempt_at: "2026-09-02T00:00:00.000Z",
+            last_success_at: "2026-09-02T00:00:00.000Z",
+            body_ref: `evidence/blobs/${hash}.body`,
+          },
         },
-      },
-      deadlines: {
-        "eaai-27|eaai-2727|paper|1|": {
-          deadline_id: "eaai-27|eaai-2727|paper|1|",
-          venue_key: "eaai-27",
-          edition_id: "eaai-2727",
-          kind: "paper",
-          round: 1,
-          track: "",
-          label: "Submission deadline",
-          page_id: "page:test",
-          official_url: "https://easychair.org/cfp/EAAI-27",
-          last_attempt_at: "2026-09-02T00:00:00.000Z",
-          last_verified_at: null,
-          next_check_at: "2026-09-03T00:00:00.000Z",
-          content_hash: hash,
-          status: "changed",
-          source_name: "ccfddl",
-          source_class: "official-cfp",
+        deadlines: {
+          [`eaai-27|${editionId}|paper|1|`]: {
+            deadline_id: `eaai-27|${editionId}|paper|1|`,
+            venue_key: "eaai-27",
+            edition_id: editionId,
+            kind: "paper",
+            round: 1,
+            track: "",
+            label: "Submission deadline",
+            page_id: "page:test",
+            official_url: "https://easychair.org/cfp/EAAI-27",
+            last_attempt_at: "2026-09-02T00:00:00.000Z",
+            last_verified_at: null,
+            next_check_at: "2026-09-03T00:00:00.000Z",
+            content_hash: hash,
+            status: "changed",
+            source_name: "ccfddl",
+            source_class: "official-cfp",
+          },
         },
-      },
-      aliases: {},
-      resolutions: [
-        {
-          resolution_id: "change-eaai",
-          deadline_id: "eaai-27|eaai-2727|paper|1|",
-          page_id: "page:test",
-          official_url: "https://easychair.org/cfp/EAAI-27",
-          observed_at: "2026-09-02T00:00:00.000Z",
-          state: "accepted",
-          first_detected_at: "2026-09-02T00:00:00.000Z",
-          last_seen_at: "2026-09-02T00:00:00.000Z",
-          old_value: "2026-10-01T23:59:00Z",
-          new_value: "2026-10-15T23:59:00Z",
-          change_kind: "extension",
-          evidence_ref: `evidence/blobs/${hash}.body`,
-          content_hash: hash,
-          raw_excerpt: body,
-        },
-      ],
-    }),
-  );
+        aliases: {},
+        resolutions: [
+          {
+            resolution_id: "change-eaai",
+            deadline_id: `eaai-27|${editionId}|paper|1|`,
+            page_id: "page:test",
+            official_url: "https://easychair.org/cfp/EAAI-27",
+            observed_at: "2026-09-02T00:00:00.000Z",
+            state: "accepted",
+            first_detected_at: "2026-09-02T00:00:00.000Z",
+            last_seen_at: "2026-09-02T00:00:00.000Z",
+            old_value: "2026-10-01T23:59:00Z",
+            new_value: "2026-10-15T23:59:00Z",
+            change_kind: "extension",
+            evidence_ref: `evidence/blobs/${hash}.body`,
+            content_hash: hash,
+            raw_excerpt: body,
+          },
+        ],
+      }),
+    );
 
-  applyResolutionSource(ledgerPath, "change-eaai", "2026-09-02T01:00:00Z", root);
-  const overrides = loadYaml(readFileSync(join(data, "overrides.yaml"), "utf8")) as {
-    conferences: {
-      "eaai-27": { editions: { "2027": { deadlines: Array<{ date: string }> } } };
+    if (!accepted) {
+      const before = readFileSync(join(data, "overrides.yaml"), "utf8");
+      expect(() =>
+        applyResolutionSource(ledgerPath, "change-eaai", "2026-09-02T01:00:00Z", root),
+      ).toThrow(/edition has no usable year/);
+      expect(readFileSync(join(data, "overrides.yaml"), "utf8")).toBe(before);
+      return;
+    }
+    applyResolutionSource(ledgerPath, "change-eaai", "2026-09-02T01:00:00Z", root);
+    const overrides = loadYaml(readFileSync(join(data, "overrides.yaml"), "utf8")) as {
+      conferences: {
+        "eaai-27": { editions: { "2027": { deadlines: Array<{ date: string }> } } };
+      };
     };
-  };
-  expect(overrides.conferences["eaai-27"].editions["2027"].deadlines[0]?.date).toBe(
-    "2026-10-15 23:59:00",
-  );
-  rmSync(root, { recursive: true, force: true });
-});
+    expect(overrides.conferences["eaai-27"].editions["2027"].deadlines[0]?.date).toBe(
+      "2026-10-15 23:59:00",
+    );
+    rmSync(root, { recursive: true, force: true });
+  },
+);
 
 it("refuses to apply a resolution without captured body evidence", () => {
   const root = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-source-no-evidence-"));

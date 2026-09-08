@@ -1997,6 +1997,12 @@ describe("promotion batch", () => {
         capture,
       });
       expect(verifyPromotionObservation(matched).valid).toBe(true);
+      expect(
+        verifyPromotionObservation({
+          ...matched,
+          deadline: { ...matched.deadline, round: undefined },
+        }).valid,
+      ).toBe(false);
       rmSync(dir, { recursive: true, force: true });
     });
   });
