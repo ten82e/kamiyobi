@@ -258,3 +258,56 @@ it("unions categories and tags when the same local key spans files (#768)", asyn
   ]);
   expect(loaded[0]!.editions.map((edition) => edition.year)).toEqual([2026, 2027]);
 });
+
+it("merges rank, dblp, link, full_name, and acronym when the same local key spans files", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-local-merge-rank-"));
+  const first = join(dir, "manual.yaml");
+  const second = join(dir, "curated.yaml");
+  writeFileSync(
+    first,
+    [
+      "conferences:",
+      "  - key: testconf",
+      "    title: TestConf",
+      "    rank: { ccf: B }",
+      "    editions:",
+      "      - year: 2026",
+      "        id: testconf26",
+      "        event_start: '2026-10-15'",
+      "        event_end: '2026-10-10'", // inverted dates
+      "        deadlines:",
+      "          - {kind: paper, date: '2026-05-01', precision: date-only}",
+    ].join("\n"),
+  );
+  writeFileSync(
+    second,
+    [
+      "conferences:",
+      "  - key: testconf",
+      "    title: TestConf",
+      "    full_name: Full Test Conference",
+      "    acronym: TC",
+      "    link: https://testconf.org",
+      "    dblp: conf/testconf",
+      "    rank: 'CORE: A*, THCPL: A'",
+      "    editions:",
+      "      - year: 2027",
+      "        id: testconf27",
+      "        deadlines:",
+      "          - {kind: paper, date: '2027-05-01', precision: date-only}",
+    ].join("\n"),
+  );
+
+  const loaded = await new LocalSource([first, second]).load();
+  expect(loaded).toHaveLength(1);
+  const conf = loaded[0]!;
+  expect(conf.full_name).toBe("Full Test Conference");
+  expect(conf.acronym).toBe("TC");
+  expect(conf.link).toBe("https://testconf.org");
+  expect(conf.dblp).toBe("conf/testconf");
+  expect(conf.rank).toEqual({ ccf: "B", core: "A*", thcpl: "A" });
+  // Verify inverted event date normalization: start <= end
+  const ed26 = conf.editions.find((e) => e.year === 2026)!;
+  expect(ed26.event_start!.toISOString().slice(0, 10)).toBe("2026-10-10");
+  expect(ed26.event_end!.toISOString().slice(0, 10)).toBe("2026-10-15");
+});

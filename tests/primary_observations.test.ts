@@ -518,6 +518,24 @@ describe("resolvePrimaryObservations (#504 acceptance)", () => {
       2026,
     );
     expect(staleYear).toBeNull();
+
+    // Inverted event dates (eventStart > eventEnd) must be normalized so deadline within window is accepted
+    const invertedWindow = resolveObservation(
+      {
+        kind: "paper",
+        label: "P",
+        date: "2026-10-12",
+        time: "23:59:00",
+        tzRaw: "AoE",
+        round: 1,
+        rest: {},
+      },
+      2026,
+      new Date("2026-10-15T00:00:00Z"), // eventStart later than eventEnd
+      new Date("2026-10-10T00:00:00Z"), // eventEnd earlier than eventStart
+    );
+    expect(invertedWindow).not.toBeNull();
+    expect(invertedWindow?.date).toBe("2026-10-12 23:59:00");
   });
 });
 
