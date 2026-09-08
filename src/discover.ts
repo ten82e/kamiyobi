@@ -728,20 +728,46 @@ export function formatCandidateRegistry(registry: CandidateRegistry | null | und
   ) as string;
 }
 
-function candidateDeadlineText(candidate: Candidate): string {
+/** Select the next reviewable deadline, or the most recent expired deadline. */
+export function candidateDeadlineText(
+  candidate:
+    | {
+        submission_deadline_text?: unknown;
+        deadlines?: unknown;
+        editions?: unknown;
+        date_text?: unknown;
+      }
+    | null
+    | undefined,
+  now: Date = new Date(),
+): string {
+  if (!candidate) return "";
   if (candidate.submission_deadline_text) return String(candidate.submission_deadline_text);
-  const deadlines = Array.isArray(candidate.deadlines) ? candidate.deadlines : [];
-  for (const deadline of deadlines) {
-    if (!deadline || typeof deadline !== "object") continue;
-    const raw = deadline.date || deadline.utc || deadline.deadline || deadline.local_date;
-    if (raw) return String(raw);
-  }
-  return String(candidate.date_text || "");
-}
-
-function candidateReviewDate(candidate: Candidate): Date | null {
-  const parsed = parseDeadlineText(candidateDeadlineText(candidate));
-  return parsed && !Number.isNaN(parsed.getTime()) ? parsed : null;
+  const firstEdition = Array.isArray(candidate.editions) ? candidate.editions[0] : null;
+  const edition: Record<string, unknown> =
+    firstEdition && typeof firstEdition === "object" ? firstEdition : {};
+  const deadlines: unknown[] =
+    Array.isArray(candidate.deadlines) && candidate.deadlines.length > 0
+      ? candidate.deadlines
+      : Array.isArray(edition.deadlines)
+        ? edition.deadlines
+        : [];
+  if (deadlines.length === 0) return String(edition.date_text || candidate.date_text || "");
+  const parsed = deadlines.flatMap((deadline) => {
+    if (!deadline || typeof deadline !== "object") return [];
+    const row = deadline as Record<string, unknown>;
+    const text = String(row.date || row.utc || row.deadline || row.local_date || row.at_utc || "");
+    const date = parseDeadlineText(text);
+    return date ? [{ text, time: date.getTime(), future: deadlineIsFuture(text, now) }] : [];
+  });
+  parsed.sort(
+    (left, right) =>
+      Number(right.future) - Number(left.future) ||
+      (left.future ? left.time - right.time : right.time - left.time) ||
+      left.text.localeCompare(right.text),
+  );
+  // Explicit structured deadlines must not fall back to an event date.
+  return parsed[0]?.text ?? "";
 }
 
 function candidateNameKeys(candidate: Candidate): string[] {
@@ -803,7 +829,8 @@ export function splitCandidateLifecycle(
       "",
     );
     const duplicate = seen.has(`${normalizedTitle}\0${candidateYear(candidate) ?? ""}`);
-    const date = candidateReviewDate(candidate);
+    const deadlineText = candidateDeadlineText(candidate, safeNow);
+    const date = parseDeadlineText(deadlineText);
     // status: rejected (人手の却下) / superseded (別候補へ置換) は終端状態。
     // 機械導出の判定より優先し、レビュー待ち行列 (active) へ戻さない。
     const decision: CandidateArchiveDecision | null =
@@ -822,7 +849,7 @@ export function splitCandidateLifecycle(
                   ? "no-official-evidence"
                   : !date
                     ? "no-reviewable-deadline"
-                    : date.getTime() < safeNow.getTime()
+                    : !deadlineIsFuture(deadlineText, safeNow)
                       ? "expired"
                       : null;
     if (decision) {
