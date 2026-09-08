@@ -84,7 +84,8 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
     const track = String(rec.track ?? "").trim();
     const explicitTz = String(rec.tz ?? rec.timezone ?? "").trim();
     if (rec.precision === "date-only") {
-      const localDate = asDate(rec.date);
+      const rawDate = String(rec.date ?? "").trim();
+      const localDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? asDate(rawDate) : null;
       if (localDate === null || explicitTz) {
         warn(`date-only deadline requires YYYY-MM-DD without timezone: ${String(rec.date ?? "")}`);
         continue;
