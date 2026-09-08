@@ -594,6 +594,49 @@ describe("merge_sources", () => {
     ).toHaveLength(1);
   });
 
+  it("does not merge overlapping editions when only sourceIds values coincide across sources (#764)", () => {
+    const conference = (source: string, edition: Edition): Conference =>
+      makeConference({
+        key: "venue",
+        title: "Venue",
+        identity: { venueId: "venue" },
+        sources: [source],
+        editions: [edition],
+      });
+    const ccf = makeEdition({
+      year: 2026,
+      edition_id: "w1-26",
+      place: "Tokyo, Japan",
+      source: "ccfddl",
+      event_start: new Date(Date.UTC(2026, 6, 1)),
+      event_end: new Date(Date.UTC(2026, 6, 3)),
+      identity: { sourceIds: { ccfddl: "shared-id" } },
+    });
+    const ai = makeEdition({
+      year: 2026,
+      edition_id: "w2-26",
+      place: "Kyoto, Japan",
+      source: "aideadlines",
+      event_start: new Date(Date.UTC(2026, 6, 3)),
+      event_end: new Date(Date.UTC(2026, 6, 5)),
+      identity: { sourceIds: { aideadlines: "shared-id" } },
+    });
+    expect(
+      mergeSources([[conference("ccfddl", ccf)], [conference("aideadlines", ai)]], PRIORITY)[0]
+        .editions,
+    ).toHaveLength(2);
+    const sameProviderId = {
+      ...ai,
+      identity: { sourceIds: { ccfddl: "shared-id", aideadlines: "ai-id" } },
+    };
+    expect(
+      mergeSources(
+        [[conference("ccfddl", ccf)], [conference("aideadlines", sameProviderId)]],
+        PRIORITY,
+      )[0].editions,
+    ).toHaveLength(1);
+  });
+
   it("merges only explicitly configured cross-source edition IDs after a schedule change", () => {
     const evidence = (sourceName: string) => [
       {
@@ -2858,6 +2901,45 @@ describe("conferencesFromJson & defensive merge operations", () => {
     expect(conf.editions[0].identity).toEqual({
       editionId: "venue-2026",
       officialUrls: ["https://venue.example/2026"],
+    });
+  });
+
+  it("conferencesFromJson restores snake_case venue and edition identity (#764)", () => {
+    const [conf] = conferencesFromJson({
+      conferences: [
+        {
+          key: "venue",
+          title: "Venue",
+          identity: {
+            venue_id: "venue-id",
+            dblp_key: "conf/venue",
+            official_domains: ["venue.example"],
+            source_ids: { local: "abc" },
+          },
+          editions: [
+            {
+              year: 2026,
+              id: "venue26",
+              identity: {
+                edition_id: "venue-2026",
+                official_urls: ["https://venue.example/2026"],
+                source_ids: { local: "abc-2026" },
+              },
+            },
+          ],
+        },
+      ],
+    });
+    expect(conf.identity).toEqual({
+      venueId: "venue-id",
+      dblpKey: "conf/venue",
+      officialDomains: ["venue.example"],
+      sourceIds: { local: "abc" },
+    });
+    expect(conf.editions[0].identity).toEqual({
+      editionId: "venue-2026",
+      officialUrls: ["https://venue.example/2026"],
+      sourceIds: { local: "abc-2026" },
     });
   });
 

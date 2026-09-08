@@ -174,6 +174,29 @@ function venueProfileSelection(value: unknown, context: string): VenueProfileSel
   };
 }
 
+/** RFC 3339 instant → canonical `toISOString()`. Milliseconds and offset aliases are accepted. */
+function canonicalCollectedAt(value: string): string | null {
+  const match =
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$/.exec(
+      value.trim(),
+    );
+  if (!match) return null;
+  const [, year, month, day, hour, minute, second] = match;
+  const calendar = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  if (
+    calendar.getUTCFullYear() !== Number(year) ||
+    calendar.getUTCMonth() !== Number(month) - 1 ||
+    calendar.getUTCDate() !== Number(day) ||
+    Number(hour) > 23 ||
+    Number(minute) > 59 ||
+    Number(second) > 59
+  )
+    return null;
+  const collected = new Date(value);
+  if (!Number.isFinite(collected.getTime())) return null;
+  return collected.toISOString();
+}
+
 function venueProfilePaper(value: unknown, context: string): VenueProfilePaper {
   if (!value || typeof value !== "object")
     throw new Error(`invalid venue profile paper: ${context}`);
@@ -199,10 +222,11 @@ function venueProfilePaper(value: unknown, context: string): VenueProfilePaper {
   if (typeof paper.collected_at !== "string" || !paper.collected_at.trim()) {
     throw new Error(`invalid venue profile collected_at: ${context}`);
   }
-  const collected = new Date(paper.collected_at);
-  if (!Number.isFinite(collected.getTime()) || collected.toISOString() !== paper.collected_at) {
+  const collectedAt = canonicalCollectedAt(paper.collected_at);
+  if (!collectedAt) {
     throw new Error(`invalid venue profile collected_at: ${context}`);
   }
+  const collected = new Date(collectedAt);
   if (Number(paper.year) > collected.getUTCFullYear()) {
     throw new Error(`future venue profile record: ${context}`);
   }
@@ -211,7 +235,7 @@ function venueProfilePaper(value: unknown, context: string): VenueProfilePaper {
     year: Number(paper.year),
     source: paper.source.trim(),
     source_url: paper.source_url.trim(),
-    collected_at: paper.collected_at,
+    collected_at: collectedAt,
   };
 }
 

@@ -24,6 +24,7 @@ import {
   applyVerificationLedger,
   assertResolutionCanApply,
   collectVerificationTargets,
+  deadlineId,
   loadVerificationLedger,
   pageIdForUrl,
   reverifyData,
@@ -1599,191 +1600,202 @@ it("routes pull-in and exact-to-date-only changes to manual resolution", async (
   expect(upgrade.ledger.resolutions[0]?.change_kind).toBe("precision-upgrade");
 });
 
-it("applies a promotion resolution to its batch source and preserves superseded history", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-promotion-apply-"));
-  const data = join(root, "data");
-  const batch = "2026-09-02-demo";
-  const batchDir = join(data, "promotions", batch);
-  const body = "Paper deadline extended to October 15, 2026.";
-  const hash = createHash("sha256").update(body).digest("hex");
-  const writeBatch = (
-    targetDir: string,
-    rows: Array<{ candidate: string; date: string; track?: string }>,
-  ) => {
-    mkdirSync(targetDir, { recursive: true });
-    const observationsPath = join(targetDir, "observations.jsonl");
-    const observations = rows.map((row, index) => {
-      const captured = `Paper deadline: ${row.date}`;
-      const bodyPath = join(targetDir, `capture-${index}.body`);
-      const contentHash = createHash("sha256").update(captured).digest("hex");
-      writeFileSync(bodyPath, captured);
-      return {
-        candidate: row.candidate,
-        sourceUrl: `https://example.test/${row.candidate}/cfp`,
-        sourceClass: "official-cfp",
-        officialDomains: ["example.test"],
-        title: row.candidate === "demo" ? "Demo" : "Invalid",
-        categories: ["systems"],
-        reviewState: "reviewed",
-        categoryReviewState: "reviewed",
-        deadline: { date: row.date, kind: "paper", round: 1, track: row.track ?? "" },
-        eventDate: "2026-04-01",
-        eventEndDate: "2026-04-01",
-        rawExcerpt: captured,
-        evidence: {
+it.each([false, true])(
+  "applies a promotion resolution and preserves history (exact: %s)",
+  (exact) => {
+    const root = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-promotion-apply-"));
+    const data = join(root, "data");
+    const batch = "2026-09-02-demo";
+    const batchDir = join(data, "promotions", batch);
+    const newValue = exact ? "2026-10-15 23:59 UTC" : "2026-10-15";
+    const expectedDate = exact ? "2026-10-15 23:59" : "2026-10-15";
+    const body = `Paper deadline extended to October 15, 2026${exact ? " 23:59 UTC" : ""}.`;
+    const hash = createHash("sha256").update(body).digest("hex");
+    const writeBatch = (
+      targetDir: string,
+      rows: Array<{ candidate: string; date: string; track?: string }>,
+    ) => {
+      mkdirSync(targetDir, { recursive: true });
+      const observationsPath = join(targetDir, "observations.jsonl");
+      const observations = rows.map((row, index) => {
+        const captured = `Paper deadline: ${row.date}`;
+        const bodyPath = join(targetDir, `capture-${index}.body`);
+        const contentHash = createHash("sha256").update(captured).digest("hex");
+        writeFileSync(bodyPath, captured);
+        return {
+          candidate: row.candidate,
           sourceUrl: `https://example.test/${row.candidate}/cfp`,
           sourceClass: "official-cfp",
-          sourceRevision: `sha256:${contentHash}`,
-          retrievedAt: "2026-09-02T00:00:00.000Z",
-          verifiedAt: "2026-09-02T00:00:00.000Z",
-          contentHash,
-          rawExcerpt: captured,
-        },
-        capture: {
-          requestedUrl: `https://example.test/${row.candidate}/cfp`,
-          finalUrl: `https://example.test/${row.candidate}/cfp`,
-          status: 200,
-          headers: {},
-          retrievedAt: "2026-09-02T00:00:00.000Z",
-          contentHash,
-          parserVersion: "test/1",
-          bodyPath,
-          excerpt: captured,
-          candidates: [
-            { rawExcerpt: captured, date: row.date, kind: "paper", track: row.track ?? "" },
-          ],
-          sourceRevision: `sha256:${contentHash}`,
           officialDomains: ["example.test"],
-        },
-      };
-    });
+          title: row.candidate === "demo" ? "Demo" : "Invalid",
+          categories: ["systems"],
+          reviewState: "reviewed",
+          categoryReviewState: "reviewed",
+          deadline: { date: row.date, kind: "paper", round: 1, track: row.track ?? "" },
+          eventDate: "2026-04-01",
+          eventEndDate: "2026-04-01",
+          rawExcerpt: captured,
+          evidence: {
+            sourceUrl: `https://example.test/${row.candidate}/cfp`,
+            sourceClass: "official-cfp",
+            sourceRevision: `sha256:${contentHash}`,
+            retrievedAt: "2026-09-02T00:00:00.000Z",
+            verifiedAt: "2026-09-02T00:00:00.000Z",
+            contentHash,
+            rawExcerpt: captured,
+          },
+          capture: {
+            requestedUrl: `https://example.test/${row.candidate}/cfp`,
+            finalUrl: `https://example.test/${row.candidate}/cfp`,
+            status: 200,
+            headers: {},
+            retrievedAt: "2026-09-02T00:00:00.000Z",
+            contentHash,
+            parserVersion: "test/1",
+            bodyPath,
+            excerpt: captured,
+            candidates: [
+              { rawExcerpt: captured, date: row.date, kind: "paper", track: row.track ?? "" },
+            ],
+            sourceRevision: `sha256:${contentHash}`,
+            officialDomains: ["example.test"],
+          },
+        };
+      });
+      writeFileSync(
+        observationsPath,
+        `${observations.map((observation) => JSON.stringify(observation)).join("\n")}\n`,
+      );
+      return writePromotionBatch(
+        observationsPath,
+        join(targetDir, "resolutions.json"),
+        join(targetDir, "manifest.json"),
+        { existingConferences: [] },
+      );
+    };
+    mkdirSync(batchDir, { recursive: true });
+    mkdirSync(join(data, "evidence", "blobs"), { recursive: true });
+    writeFileSync(join(data, "evidence", "blobs", `${hash}.body`), body);
+    writeFileSync(join(data, "extra.yaml"), "conferences: []\n");
+    writeFileSync(join(data, "manual.yaml"), "conferences: []\n");
+    writeFileSync(join(data, "snapshot.json"), '{"conferences":[]}\n');
+    const promotionId = writeBatch(batchDir, [{ candidate: "demo", date: "2026-10-01" }])[0]
+      ?.resolution_id;
+    expect(promotionId).toBeTypeOf("string");
+    generateCurated(root);
+    const ledgerPath = join(root, "data", "verification-ledger.json");
     writeFileSync(
-      observationsPath,
-      `${observations.map((observation) => JSON.stringify(observation)).join("\n")}\n`,
+      ledgerPath,
+      JSON.stringify({
+        schema_version: 2,
+        producer_revision: "reverification-v2",
+        generated_at: "2026-09-02T00:00:00.000Z",
+        pages: {
+          "page:test": {
+            requested_url: "https://example.test/cfp",
+            final_url: "https://example.test/cfp",
+            status: 200,
+            content_type: "text/plain",
+            content_length: body.length,
+            content_hash: hash,
+            source_revision: `sha256:${hash}`,
+            parser_version: "reverification-v2",
+            headers: {},
+            last_attempt_at: "2026-09-02T00:00:00.000Z",
+            last_success_at: "2026-09-02T00:00:00.000Z",
+            body_ref: `evidence/blobs/${hash}.body`,
+          },
+        },
+        deadlines: {
+          "demo|demo-2026|paper|1|": {
+            deadline_id: "demo|demo-2026|paper|1|",
+            venue_key: "demo",
+            edition_id: "demo-2026",
+            kind: "paper",
+            round: 1,
+            track: "",
+            label: "Paper submission",
+            page_id: "page:test",
+            official_url: "https://example.test/cfp",
+            last_attempt_at: "2026-09-02T00:00:00.000Z",
+            last_verified_at: null,
+            next_check_at: "2026-09-03T00:00:00.000Z",
+            content_hash: hash,
+            status: "changed",
+            source_class: "official-cfp",
+            promotion_ref: { batch, resolution: promotionId },
+          },
+        },
+        aliases: {},
+        resolutions: [
+          {
+            resolution_id: "change-demo",
+            deadline_id: "demo|demo-2026|paper|1|",
+            page_id: "page:test",
+            official_url: "https://example.test/cfp",
+            observed_at: "2026-09-02T00:00:00.000Z",
+            state: "open",
+            first_detected_at: "2026-09-02T00:00:00.000Z",
+            last_seen_at: "2026-09-02T00:00:00.000Z",
+            old_value: "2026-10-01",
+            new_value: newValue,
+            change_kind: "extension",
+            content_hash: hash,
+            raw_excerpt: body,
+            status: "changed",
+            previous_value: "2026-10-01",
+            current_value: newValue,
+          },
+        ],
+      }),
     );
-    return writePromotionBatch(
-      observationsPath,
-      join(targetDir, "resolutions.json"),
-      join(targetDir, "manifest.json"),
+
+    const resolutionPath = join(batchDir, "resolutions.json");
+    const originalResolutionText = readFileSync(resolutionPath, "utf8");
+    const invalidBatchDir = join(data, "promotions", "2026-09-02-invalid");
+    writeBatch(invalidBatchDir, [
+      { candidate: "invalid", date: "2026-10-01", track: "Main" },
+      { candidate: "invalid", date: "2026-11-01", track: "main" },
+    ]);
+    expect(() =>
+      applyResolutionSource(ledgerPath, "change-demo", "2026-09-02T01:00:00Z", root),
+    ).toThrow(/duplicate promoted deadline slot/);
+    expect(readFileSync(resolutionPath, "utf8")).toBe(originalResolutionText);
+    writeFileSync(join(invalidBatchDir, "observations.jsonl"), "");
+    writePromotionBatch(
+      join(invalidBatchDir, "observations.jsonl"),
+      join(invalidBatchDir, "resolutions.json"),
+      join(invalidBatchDir, "manifest.json"),
       { existingConferences: [] },
     );
-  };
-  mkdirSync(batchDir, { recursive: true });
-  mkdirSync(join(data, "evidence", "blobs"), { recursive: true });
-  writeFileSync(join(data, "evidence", "blobs", `${hash}.body`), body);
-  writeFileSync(join(data, "extra.yaml"), "conferences: []\n");
-  writeFileSync(join(data, "manual.yaml"), "conferences: []\n");
-  writeFileSync(join(data, "snapshot.json"), '{"conferences":[]}\n');
-  const promotionId = writeBatch(batchDir, [{ candidate: "demo", date: "2026-10-01" }])[0]
-    ?.resolution_id;
-  expect(promotionId).toBeTypeOf("string");
-  generateCurated(root);
-  const ledgerPath = join(root, "data", "verification-ledger.json");
-  writeFileSync(
-    ledgerPath,
-    JSON.stringify({
-      schema_version: 2,
-      producer_revision: "reverification-v2",
-      generated_at: "2026-09-02T00:00:00.000Z",
-      pages: {
-        "page:test": {
-          requested_url: "https://example.test/cfp",
-          final_url: "https://example.test/cfp",
-          status: 200,
-          content_type: "text/plain",
-          content_length: body.length,
-          content_hash: hash,
-          source_revision: `sha256:${hash}`,
-          parser_version: "reverification-v2",
-          headers: {},
-          last_attempt_at: "2026-09-02T00:00:00.000Z",
-          last_success_at: "2026-09-02T00:00:00.000Z",
-          body_ref: `evidence/blobs/${hash}.body`,
-        },
-      },
-      deadlines: {
-        "demo|demo-2026|paper|1|": {
-          deadline_id: "demo|demo-2026|paper|1|",
-          venue_key: "demo",
-          edition_id: "demo-2026",
-          kind: "paper",
-          round: 1,
-          track: "",
-          label: "Paper submission",
-          page_id: "page:test",
-          official_url: "https://example.test/cfp",
-          last_attempt_at: "2026-09-02T00:00:00.000Z",
-          last_verified_at: null,
-          next_check_at: "2026-09-03T00:00:00.000Z",
-          content_hash: hash,
-          status: "changed",
-          source_class: "official-cfp",
-          promotion_ref: { batch, resolution: promotionId },
-        },
-      },
-      aliases: {},
-      resolutions: [
-        {
-          resolution_id: "change-demo",
-          deadline_id: "demo|demo-2026|paper|1|",
-          page_id: "page:test",
-          official_url: "https://example.test/cfp",
-          observed_at: "2026-09-02T00:00:00.000Z",
-          state: "open",
-          first_detected_at: "2026-09-02T00:00:00.000Z",
-          last_seen_at: "2026-09-02T00:00:00.000Z",
-          old_value: "2026-10-01",
-          new_value: "2026-10-15",
-          change_kind: "extension",
-          content_hash: hash,
-          raw_excerpt: body,
-          status: "changed",
-          previous_value: "2026-10-01",
-          current_value: "2026-10-15",
-        },
-      ],
-    }),
-  );
 
-  const resolutionPath = join(batchDir, "resolutions.json");
-  const originalResolutionText = readFileSync(resolutionPath, "utf8");
-  const invalidBatchDir = join(data, "promotions", "2026-09-02-invalid");
-  writeBatch(invalidBatchDir, [
-    { candidate: "invalid", date: "2026-10-01", track: "Main" },
-    { candidate: "invalid", date: "2026-11-01", track: "main" },
-  ]);
-  expect(() =>
-    applyResolutionSource(ledgerPath, "change-demo", "2026-09-02T01:00:00Z", root),
-  ).toThrow(/duplicate promoted deadline slot/);
-  expect(readFileSync(resolutionPath, "utf8")).toBe(originalResolutionText);
-  writeFileSync(join(invalidBatchDir, "observations.jsonl"), "");
-  writePromotionBatch(
-    join(invalidBatchDir, "observations.jsonl"),
-    join(invalidBatchDir, "resolutions.json"),
-    join(invalidBatchDir, "manifest.json"),
-    { existingConferences: [] },
-  );
+    const stalePromotion = JSON.parse(originalResolutionText);
+    stalePromotion[0].normalized.deadline.date = "2026-10-02";
+    writeFileSync(resolutionPath, `${JSON.stringify(stalePromotion, null, 2)}\n`);
+    expect(() =>
+      applyResolutionSource(ledgerPath, "change-demo", "2026-09-02T01:00:00Z", root),
+    ).toThrow(/resolution source value changed/);
+    writeFileSync(resolutionPath, originalResolutionText);
 
-  const stalePromotion = JSON.parse(originalResolutionText);
-  stalePromotion[0].normalized.deadline.date = "2026-10-02";
-  writeFileSync(resolutionPath, `${JSON.stringify(stalePromotion, null, 2)}\n`);
-  expect(() =>
-    applyResolutionSource(ledgerPath, "change-demo", "2026-09-02T01:00:00Z", root),
-  ).toThrow(/resolution source value changed/);
-  writeFileSync(resolutionPath, originalResolutionText);
-
-  applyResolutionSource(ledgerPath, "change-demo", "2026-09-02T01:00:00Z", root);
-  const updated = JSON.parse(readFileSync(join(batchDir, "resolutions.json"), "utf8"));
-  expect(updated[0].normalized.deadline.date).toBe("2026-10-15");
-  const curated = loadYaml(readFileSync(join(data, "curated.generated.yaml"), "utf8")) as {
-    conferences: Array<{ editions: Array<{ deadlines: Array<Record<string, unknown>> }> }>;
-  };
-  const deadline = curated.conferences[0]?.editions[0]?.deadlines[0];
-  expect(deadline?.date).toBe("2026-10-15");
-  expect(deadline?.superseded_deadlines).toMatchObject([
-    { value: "2026-10-01", reason: "official-extension" },
-  ]);
-});
+    applyResolutionSource(ledgerPath, "change-demo", "2026-09-02T01:00:00Z", root);
+    const updated = JSON.parse(readFileSync(join(batchDir, "resolutions.json"), "utf8"));
+    expect(updated[0].normalized.deadline.date).toBe(expectedDate);
+    expect(updated[0].normalized.deadline.evidence[0].verifiedFields).toEqual([
+      "date",
+      ...(exact ? ["time", "timezone"] : []),
+      "kind",
+      "round",
+    ]);
+    const curated = loadYaml(readFileSync(join(data, "curated.generated.yaml"), "utf8")) as {
+      conferences: Array<{ editions: Array<{ deadlines: Array<Record<string, unknown>> }> }>;
+    };
+    const deadline = curated.conferences[0]?.editions[0]?.deadlines[0];
+    expect(deadline?.date).toBe(expectedDate);
+    expect(deadline?.superseded_deadlines).toMatchObject([
+      { value: "2026-10-01", reason: "official-extension" },
+    ]);
+  },
+);
 
 it("applies new verification evidence to non-promotion source data", () => {
   const root = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-source-evidence-"));
@@ -1973,6 +1985,121 @@ it("applies new verification evidence to non-promotion source data", () => {
   expect(overrides.conferences.demo.editions["2026"].deadlines[0].date).toBe("2026-10-15 23:59:00");
   expect(overrides.conferences.demo.editions.demo26).toBeUndefined();
 });
+
+it.each([
+  { editionId: "eaai-2727", accepted: true },
+  { editionId: "eaai-2027", accepted: true },
+  { editionId: "eaai-2728", accepted: false },
+  { editionId: "eaai-123", accepted: false },
+])(
+  "uses only a supported year format in resolution edition $editionId (#760)",
+  ({ editionId, accepted }) => {
+    const root = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-dup-year-"));
+    const data = join(root, "data");
+    const body = "Official deadline extension: October 15, 2026 23:59 UTC.";
+    const hash = createHash("sha256").update(body).digest("hex");
+    mkdirSync(join(data, "evidence", "blobs"), { recursive: true });
+    writeFileSync(join(data, "evidence", "blobs", `${hash}.body`), body);
+    writeFileSync(
+      join(data, "overrides.yaml"),
+      [
+        "conferences:",
+        "  eaai-27:",
+        "    editions:",
+        "      '2027':",
+        "        deadlines:",
+        "          - kind: paper",
+        "            label: Submission deadline",
+        "            round: 1",
+        "            date: 2026-10-01 23:59:00",
+        "            tz: UTC",
+      ].join("\n"),
+    );
+    const ledgerPath = join(data, "verification-ledger.json");
+    writeFileSync(
+      ledgerPath,
+      JSON.stringify({
+        schema_version: 2,
+        producer_revision: "reverification-v2",
+        generated_at: "2026-09-02T00:00:00.000Z",
+        pages: {
+          "page:test": {
+            requested_url: "https://easychair.org/cfp/EAAI-27",
+            final_url: "https://easychair.org/cfp/EAAI-27",
+            status: 200,
+            content_type: "text/plain",
+            content_length: body.length,
+            content_hash: hash,
+            source_revision: `sha256:${hash}`,
+            parser_version: "reverification-v2",
+            headers: {},
+            last_attempt_at: "2026-09-02T00:00:00.000Z",
+            last_success_at: "2026-09-02T00:00:00.000Z",
+            body_ref: `evidence/blobs/${hash}.body`,
+          },
+        },
+        deadlines: {
+          [`eaai-27|${editionId}|paper|1|`]: {
+            deadline_id: `eaai-27|${editionId}|paper|1|`,
+            venue_key: "eaai-27",
+            edition_id: editionId,
+            kind: "paper",
+            round: 1,
+            track: "",
+            label: "Submission deadline",
+            page_id: "page:test",
+            official_url: "https://easychair.org/cfp/EAAI-27",
+            last_attempt_at: "2026-09-02T00:00:00.000Z",
+            last_verified_at: null,
+            next_check_at: "2026-09-03T00:00:00.000Z",
+            content_hash: hash,
+            status: "changed",
+            source_name: "ccfddl",
+            source_class: "official-cfp",
+          },
+        },
+        aliases: {},
+        resolutions: [
+          {
+            resolution_id: "change-eaai",
+            deadline_id: `eaai-27|${editionId}|paper|1|`,
+            page_id: "page:test",
+            official_url: "https://easychair.org/cfp/EAAI-27",
+            observed_at: "2026-09-02T00:00:00.000Z",
+            state: "accepted",
+            first_detected_at: "2026-09-02T00:00:00.000Z",
+            last_seen_at: "2026-09-02T00:00:00.000Z",
+            old_value: "2026-10-01T23:59:00Z",
+            new_value: "2026-10-15T23:59:00Z",
+            change_kind: "extension",
+            evidence_ref: `evidence/blobs/${hash}.body`,
+            content_hash: hash,
+            raw_excerpt: body,
+          },
+        ],
+      }),
+    );
+
+    if (!accepted) {
+      const before = readFileSync(join(data, "overrides.yaml"), "utf8");
+      expect(() =>
+        applyResolutionSource(ledgerPath, "change-eaai", "2026-09-02T01:00:00Z", root),
+      ).toThrow(/edition has no usable year/);
+      expect(readFileSync(join(data, "overrides.yaml"), "utf8")).toBe(before);
+      return;
+    }
+    applyResolutionSource(ledgerPath, "change-eaai", "2026-09-02T01:00:00Z", root);
+    const overrides = loadYaml(readFileSync(join(data, "overrides.yaml"), "utf8")) as {
+      conferences: {
+        "eaai-27": { editions: { "2027": { deadlines: Array<{ date: string }> } } };
+      };
+    };
+    expect(overrides.conferences["eaai-27"].editions["2027"].deadlines[0]?.date).toBe(
+      "2026-10-15 23:59:00",
+    );
+    rmSync(root, { recursive: true, force: true });
+  },
+);
 
 it("refuses to apply a resolution without captured body evidence", () => {
   const root = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-source-no-evidence-"));
@@ -3184,4 +3311,114 @@ describe("fixes for reverify defects (#744)", () => {
     expect(researchEntry?.status).toBe("verified");
     rmSync(dir, { recursive: true, force: true });
   });
+});
+
+it("migrates a unique legacy ledger id and skips ambiguous legacy keys (#768)", async () => {
+  const pageId = pageIdForUrl("https://example.test/cfp");
+  const hash = "b".repeat(64);
+  const conference = (key: string) => ({
+    key,
+    title: key,
+    legacy_keys: ["fse"],
+    editions: [
+      {
+        year: 2026,
+        id: "2026",
+        deadlines: [
+          {
+            kind: "paper",
+            label: "Paper",
+            round: 1,
+            track: "",
+            precision: "date-only",
+            local_date: "2027-01-02",
+            verification: {
+              official_url: "https://example.test/cfp",
+              source_class: "official-cfp" as const,
+              next_check_at: "2099-01-01T00:00:00.000Z",
+              status: "pending" as const,
+            },
+          },
+        ],
+      },
+    ],
+  });
+  const writeCase = (keys: string[]) => {
+    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-migrate-"));
+    const dataPath = join(dir, "data.json");
+    const ledgerPath = join(dir, "verification-ledger.json");
+    const conferences = keys.map(conference);
+    writeFileSync(dataPath, JSON.stringify({ conferences }));
+    const oldId = "fse|2026|paper|1|";
+    writeFileSync(
+      ledgerPath,
+      JSON.stringify({
+        schema_version: 2,
+        producer_revision: "reverification-v2",
+        generated_at: "2026-08-31T00:00:00.000Z",
+        pages: {
+          [pageId]: {
+            requested_url: "https://example.test/cfp",
+            final_url: "https://example.test/cfp",
+            status: 200,
+            last_attempt_at: "2026-08-31T00:00:00.000Z",
+            last_success_at: "2026-08-31T00:00:00.000Z",
+          },
+        },
+        deadlines: {
+          [oldId]: {
+            page_id: pageId,
+            deadline_id: oldId,
+            venue_key: "fse",
+            edition_id: "2026",
+            kind: "paper",
+            round: 1,
+            track: "",
+            next_check_at: "2099-01-01T00:00:00.000Z",
+            status: "pending",
+            content_hash: hash,
+            official_url: "https://example.test/cfp",
+          },
+        },
+        aliases: {},
+        resolutions: [],
+      }),
+    );
+    return { dir, dataPath, ledgerPath, oldId, conferences };
+  };
+
+  const unique = writeCase(["fse-sc"]);
+  const uniqueId = deadlineId(
+    unique.conferences[0]!,
+    unique.conferences[0]!.editions[0]!,
+    unique.conferences[0]!.editions[0]!.deadlines[0]!,
+  );
+  const uniqueResult = await reverifyData({
+    dataPath: unique.dataPath,
+    ledgerPath: unique.ledgerPath,
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    fetchImpl: async () => {
+      throw new Error("unique migration should not fetch");
+    },
+  });
+  expect(uniqueId).toBe("fse-sc|2026|paper|1|");
+  expect(uniqueResult.ledger.deadlines[unique.oldId]).toBeUndefined();
+  expect(uniqueResult.ledger.deadlines[uniqueId]?.content_hash).toBe(hash);
+  expect(uniqueResult.ledger.aliases[unique.oldId]).toBe(uniqueId);
+
+  const ambiguous = writeCase(["fse-sc", "fse-se"]);
+  const ambiguousResult = await reverifyData({
+    dataPath: ambiguous.dataPath,
+    ledgerPath: ambiguous.ledgerPath,
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    fetchImpl: async () => {
+      throw new Error("ambiguous migration should not fetch");
+    },
+  });
+  expect(ambiguousResult.ledger.deadlines[ambiguous.oldId]?.content_hash).toBe(hash);
+  expect(ambiguousResult.ledger.deadlines["fse-sc|2026|paper|1|"]?.content_hash).not.toBe(hash);
+  expect(ambiguousResult.ledger.deadlines["fse-se|2026|paper|1|"]?.content_hash).not.toBe(hash);
+  expect(ambiguousResult.ledger.aliases[ambiguous.oldId]).toBeUndefined();
 });

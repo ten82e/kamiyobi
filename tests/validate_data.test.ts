@@ -691,6 +691,29 @@ it("classifies deadline semantic risks deterministically", () => {
   );
   expect(result.changes[0]).toMatchObject({ risk: "critical", precisionAfter: "date-only" });
   expect(result.summary).toContain("risk: critical");
+  const classOnly = (source_class: string) => ({
+    conferences: [
+      {
+        key: "venue",
+        editions: [
+          {
+            id: "venue27",
+            deadlines: [
+              {
+                kind: "paper",
+                precision: "exact",
+                utc: "2026-09-17T00:00:00Z",
+                evidence: [{ source_class, source_name: "ccfddl" }],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  expect(
+    summarizeDeadlineChanges(classOnly("official-cfp"), classOnly("aggregator")).changes[0],
+  ).toMatchObject({ risk: "high", evidenceBefore: "official-cfp", evidenceAfter: "aggregator" });
 });
 
 it("validates every production input by default", () => {

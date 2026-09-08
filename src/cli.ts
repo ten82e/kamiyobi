@@ -607,12 +607,10 @@ export function restoreFailedSourceMaterialWithCounts(
       // (satml27 は source=local でも ccfddl evidence の paper を持つ → 復元対象。
       //  bis 2025 は evidence が ccfddl のみで aideadlines 由来ではない → 復元不要)
       const hasFailedEvidence = (edition.deadlines ?? []).some((deadline) =>
-        (deadline.evidence ?? []).some(
-          (item) =>
-            item.source_name !== null &&
-            item.source_name !== undefined &&
-            failed.has(item.source_name),
-        ),
+        (deadline.evidence ?? []).some((item) => {
+          const name = String(item.source_name ?? "").trim();
+          return Boolean(name) && failed.has(name);
+        }),
       );
       return hasFailedEvidence ? edition.source : null;
     }
@@ -623,10 +621,16 @@ export function restoreFailedSourceMaterialWithCounts(
   };
   const sourceOfDeadline = (deadline: Deadline, fallback: string): string | null => {
     const sources = [
-      ...new Set((deadline.evidence ?? []).map((item) => item.source_name).filter(Boolean)),
+      ...new Set(
+        (deadline.evidence ?? [])
+          .map((item) => String(item.source_name ?? "").trim())
+          .filter(Boolean),
+      ),
     ];
+    // SPEC 3.5: restore only slots whose evidence is entirely from failed sources.
+    // local が混ざっていても local が成功していれば現行値が正。無条件に "local" を返すと
+    // 失敗していない local slot まで snapshot から再注入する。
     if (sources.length === 0) return failed.has(fallback) ? fallback : null;
-    if (sources.includes("local")) return "local";
     return sources.every((source) => failed.has(source)) ? sources[0]! : null;
   };
   for (const saved of snapshot) {
@@ -714,7 +718,7 @@ export function restoreFailedSourceMaterialWithCounts(
       const present = new Set(heldEdition.deadlines.map(deadlineSlotKey));
       for (const deadline of savedEdition.deadlines) {
         const deadlineSource = sourceOfDeadline(deadline, savedSource ?? "");
-        if (!deadlineSource) continue;
+        if (!deadlineSource || !failed.has(deadlineSource)) continue;
         if (!present.has(deadlineSlotKey(deadline))) {
           heldEdition.deadlines.push(deadline);
           restored = true;
@@ -1388,6 +1392,9 @@ function resolutionEditionYear(editionId: string): string {
   if (full) return full;
   const short = editionId.match(/(?:^|\D)(\d{2})(?:\D|$)/)?.[1];
   if (short) return String(2000 + Number(short));
+  // eaai-2727 のように同一の短い年が二重に付いた形式だけを救済する。
+  const duplicatedYear = /(?:^|\D)([23]\d)\1$/.exec(editionId)?.[1];
+  if (duplicatedYear) return String(2000 + Number(duplicatedYear));
   throw new Error(`resolution edition has no usable year: ${editionId}`);
 }
 
@@ -1464,7 +1471,13 @@ function applyPromotionResolution(
         verifiedAt: resolution.observed_at,
         contentHash,
         rawExcerpt: resolution.raw_excerpt,
-        verifiedFields: priorEvidence?.verifiedFields ?? ["date", "kind", "round"],
+        verifiedFields: [
+          "date",
+          ...(value.time && value.tz ? ["time", "timezone"] : []),
+          "kind",
+          "round",
+          ...(current.track ? ["track"] : []),
+        ],
       },
     ],
     superseded_deadlines: [

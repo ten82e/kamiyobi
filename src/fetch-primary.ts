@@ -29,7 +29,7 @@ const BLOCK_RE =
 const DELETED_RE = /<(del|s|strike)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
 const TAG_RE = /<[^>]+>/g;
 const TZ_RE =
-  /\b(PDT|PST|EDT|EST|CDT|CST|MDT|MST|AKDT|AKST|HST|UTC|GMT|CET|CEST|JST|AoE|PT|ET|CT|MT)\b|anywhere on (?:the )?(?:inhabited )?earth/gi;
+  /\b(PDT|PST|EDT|EST|CDT|CST|MDT|MST|AKDT|AKST|HST|HAST|HADT|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|CET|CEST|WET|WEST|JST|KST|SGT|HKT|BOT|COT|FJT|GET|PKT|TRT|BRT|CAT|WAT|NZST|NZDT|WIB|WITA|WIT|IDT|MSK|CHST|EAT|SAST|ACST|ACDT|AEDT|AEST|AWST|AoE|PT|ET|CT|MT)\b|anywhere on (?:the )?(?:inhabited )?earth/gi;
 const LABELS: Record<string, string> = {
   paper: "Paper submission",
   abstract: "Abstract submission",
@@ -66,7 +66,34 @@ export function isDeadlineLine(text: string | null | undefined): boolean {
     low.includes("deadline") ||
     low.includes("due date") ||
     low.includes("due") ||
+    low.includes("at the latest") ||
+    low.includes("not later than") ||
+    low.includes("no later than") ||
+    low.includes("on or before") ||
+    /\bcloses\b/.test(low) ||
+    low.includes("closing date") ||
+    low.includes("not be entertained after") ||
+    low.includes("not entertained after") ||
+    low.includes("not be considered after") ||
+    low.includes("not considered after") ||
+    low.includes("not be accepted after") ||
+    low.includes("not accepted after") ||
+    low.includes("must arrive") ||
+    low.includes("submission") ||
+    low.includes("submit") ||
+    low.includes("drop-dead") ||
+    low.includes("drop dead") ||
+    low.includes("reach us by") ||
+    low.includes("accepting papers until") ||
+    low.includes("accept papers until") ||
+    low.includes("received by") ||
+    low.includes("receipt of") ||
+    low.includes("last date") ||
+    low.includes("cut-off") ||
+    low.includes("cutoff") ||
     low.includes("締切") ||
+    low.includes("〆切") ||
+    low.includes("必着") ||
     low.includes("締め切り") ||
     low.includes("期限") ||
     low.includes("期日") ||
@@ -81,7 +108,9 @@ function kindOf(window: string | null | undefined): string {
     low.includes("abstract") ||
     low.includes("概要") ||
     low.includes("アブストラクト") ||
-    low.includes("題目")
+    low.includes("題目") ||
+    low.includes("発表申込") ||
+    low.includes("講演申込")
   ) {
     return "abstract";
   }
@@ -170,7 +199,7 @@ export function parsePrimaryDate(window: string | null | undefined): ExtractedDa
   if (!window) return null;
   const norm = String(window).normalize("NFKC");
   // 1. Japanese format: '2026年5月10日', '2026年05月10日'
-  let m = /\b(\d{4})年(\d{1,2})月(\d{1,2})日/.exec(norm);
+  let m = /\b(\d{4})年(\d{1,2})月(\d{1,2})(?!\d)日?/.exec(norm);
   if (m) {
     const year = Number(m[1]);
     const month = Number(m[2]);
@@ -246,10 +275,14 @@ export function extractDeadline(
   const tzM = TZ_RE.exec(window);
   if (tzM) {
     const raw = tzM[0];
-    tz =
-      raw.toLowerCase().includes("anywhere") || raw.toUpperCase() === "AOE"
-        ? "AoE"
-        : raw.toUpperCase();
+    if (/^(?:bot|cot|get|cat|wat|wit|eat|wet|west)$/i.test(raw) && raw !== raw.toUpperCase()) {
+      tz = undefined;
+    } else {
+      tz =
+        raw.toLowerCase().includes("anywhere") || raw.toUpperCase() === "AOE"
+          ? "AoE"
+          : raw.toUpperCase();
+    }
   }
   // 日付を含む側の行から壁時計の時刻を取る。
   // 無ければ time を載せない。
@@ -307,7 +340,7 @@ export function pageTitleYear(htmlText: string | null | undefined): number | nul
   if (years.length === 0) {
     const shortYears = [...title.matchAll(/['’](\d{2})\b/g)]
       .map((x) => Number(x[1]))
-      .filter((y) => y >= 20 && y <= 35)
+      .filter((y) => y >= 20 && y <= 49)
       .map((y) => 2000 + y);
     years.push(...shortYears);
   }
