@@ -932,10 +932,38 @@ const TZ_FIXED_ABBREVIATIONS: Record<string, number> = {
   edt: -4 * 60,
   cet: 60,
   cest: 120,
+  bot: 2 * 60,
+  cot: -5 * 60,
+  fjt: 12 * 60,
+  get: 4 * 60,
+  pkt: 5 * 60,
+  trt: 3 * 60,
+  brt: -3 * 60,
+  cat: 2 * 60,
+  wat: 60,
+  nzst: 12 * 60,
+  nzdt: 13 * 60,
+  wib: 7 * 60,
+  wita: 8 * 60,
+  wit: 9 * 60,
+  idt: 3 * 60,
+  msk: 3 * 60,
+  eat: 3 * 60,
+  sast: 2 * 60,
+  acst: 9 * 60 + 30,
+  acdt: 10 * 60 + 30,
+  wet: 0,
+  west: 60,
   akst: -9 * 60,
   akdt: -8 * 60,
   hst: -10 * 60,
+  hast: -10 * 60,
+  hadt: -9 * 60,
   cdt: -5 * 60,
+  chst: 10 * 60,
+  aest: 10 * 60,
+  aedt: 11 * 60,
+  awst: 8 * 60,
 };
 
 const TZ_NAMED: Record<string, string> = {
@@ -1583,7 +1611,27 @@ export function parseDateRange(
 // deadline kinds
 // --------------------------------------------------------------------------
 
-const PAPER = new Set(["deadline", "paper", "submission", "full_paper"]);
+const PAPER = new Set([
+  "deadline",
+  "paper",
+  "submission",
+  "full_paper",
+  "fullpaper",
+  "paper_submission",
+  "short_paper",
+  "research_paper",
+  "technical_paper",
+  "regular_paper",
+  "contributed_paper",
+  "position_paper",
+  "late_breaking_paper",
+  "invited_paper",
+  "workshop_paper",
+  "industry_paper",
+  "manuscript",
+  "manuscript_deadline",
+  "full_manuscript",
+]);
 const CAMERA = new Set([
   "camera_ready",
   "camera_ready_deadline",
@@ -1591,12 +1639,16 @@ const CAMERA = new Set([
   "revision_deadline",
   "final_paper",
   "final_submission",
+  "final_deadline",
 ]);
 const REBUTTAL_END = new Set([
   "rebuttal_end",
   "rebuttal",
+  "rebuttal_deadline",
   "rebuttal_and_revision",
   "author_response",
+  "author_rebuttal",
+  "rebuttal_period_end",
 ]);
 const REGISTRATION = new Set(["registration", "reviewer_registration", "commitment_deadline"]);
 
@@ -1657,14 +1709,15 @@ export function refineKindWithLabel(
 export function kindOf(rawTypeOrKey: string | null | undefined): DeadlineKind {
   const s = String(rawTypeOrKey ?? "")
     .trim()
+    .replace(/([a-z\d])([A-Z])/g, "$1_$2")
     .toLowerCase()
     .replace(/[\s-]+/g, "_");
-  if (s.startsWith("abstract")) return "abstract";
+  if (s.startsWith("abstract") || s === "extended_abstract") return "abstract";
   if (s.includes("notification")) return "notification";
   if (PAPER.has(s)) return "paper";
   if (s === "supplementary") return "supplementary";
   if (CAMERA.has(s) || s.includes("camera_ready")) return "camera_ready";
-  if (s === "rebuttal_start") return "rebuttal_start";
+  if (s === "rebuttal_start" || s === "rebuttal_period_start") return "rebuttal_start";
   if (REBUTTAL_END.has(s)) return "rebuttal_end";
   if (s === "review_release") return "review_release";
   if (REGISTRATION.has(s)) return "registration";
@@ -1697,10 +1750,40 @@ const KANJI_NUMERALS: Record<string, number> = {
   十: 10,
 };
 
+const WORD_ROUND_NUMERALS: Record<string, number> = {
+  first: 1,
+  second: 2,
+  third: 3,
+  fourth: 4,
+  fifth: 5,
+  sixth: 6,
+  seventh: 7,
+  eighth: 8,
+  ninth: 9,
+  tenth: 10,
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+};
+
+const ROUND_WORD = "first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth";
+const ROUND_CARDINAL = "one|two|three|four|five|six|seven|eight|nine|ten";
+
 const ROUND_PATTERNS = [
   /\b(?:round|cycle|phase|stage)\s*#?\s*([0-9]+)\b/i,
   /\b([0-9]+)(?:st|nd|rd|th)\s+(?:round|cycle|phase|stage)\b/i,
+  /\b([0-9]+)(?:st|nd|rd|th)\s+(?:paper\s+)?submission(?:\s+deadline)?\b/i,
   /\b(?:round|cycle|phase|stage)\s*#?\s*(i|ii|iii|iv|v|vi|vii|viii|ix|x)\b/i,
+  new RegExp(`\\b(${ROUND_WORD})\\s+(?:round|cycle|phase|stage)\\b`, "i"),
+  new RegExp(`\\b(?:round|cycle|phase|stage)\\s+(${ROUND_WORD}|${ROUND_CARDINAL})\\b`, "i"),
+  new RegExp(`\\b(${ROUND_WORD})\\s+(?:paper\\s+)?submission(?:\\s+deadline)?\\b`, "i"),
   /\br([1-9][0-9]?)\b/i,
   /第\s*([0-9]+|[一二三四五六七八九十]+)\s*(?:回|次|期)/,
   /([0-9]+|[一二三四五六七八九十]+)\s*次(?:締切|募集|提出)/,
@@ -1716,6 +1799,7 @@ export function roundOf(label: string | null | undefined, defaultRound = 1): num
       const raw = match[1].toLowerCase();
       if (raw in ROMAN_NUMERALS) return ROMAN_NUMERALS[raw];
       if (raw in KANJI_NUMERALS) return KANJI_NUMERALS[raw];
+      if (raw in WORD_ROUND_NUMERALS) return WORD_ROUND_NUMERALS[raw];
       const value = Number(raw);
       if (value >= 1) return value;
     }
