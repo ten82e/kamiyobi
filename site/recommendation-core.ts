@@ -285,13 +285,18 @@ function maturityEvidence(conference: JsonRecord, editions: JsonRecord[]): Venue
       ...strings(conference.sources),
       ...editions.map((edition) => String(edition.source ?? "").trim()).filter(Boolean),
     ].some((source) => source.toLowerCase() === "publisher");
-  const rank = conference.rank;
+  const rank = conference.rank ?? conference.rankings;
   const ranked =
     (typeof rank === "string" && rankedValue(rank)) ||
     (Array.isArray(rank) && rank.some(rankedValue)) ||
     (rank !== null && typeof rank === "object" && Object.values(rank).some(rankedValue));
   const profileCoverage = strings(conference.papers).length;
-  const dblp = conference.dblp;
+  const dblp =
+    conference.dblp ??
+    conference.dblp_key ??
+    (typeof conference.identity === "object" && conference.identity !== null
+      ? (conference.identity as Record<string, unknown>).dblpKey
+      : undefined);
   return {
     yearsObserved,
     dblpIndexed:
@@ -330,9 +335,15 @@ export function recommendationAxes(
   const editions = records(conference.all_editions ?? conference.editions);
   const maturity = maturityEvidence(conference, editions);
   const hasExact = deadlines.some(
-    ({ deadline }) => deadline.precision !== "date-only" && Boolean(deadline.utc),
+    ({ deadline }) =>
+      deadline.precision === "exact" ||
+      (deadline.precision !== "date-only" && Boolean(deadline.utc ?? deadline.at_utc)),
   );
-  const hasDateOnly = deadlines.some(({ deadline }) => deadline.precision === "date-only");
+  const hasDateOnly = deadlines.some(
+    ({ deadline }) =>
+      deadline.precision === "date-only" ||
+      (Boolean(deadline.local_date) && !deadline.utc && !deadline.at_utc),
+  );
   const hasEstimated =
     deadlines.some(({ estimated }) => estimated) ||
     (deadlines.length === 0 &&
