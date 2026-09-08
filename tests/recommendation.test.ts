@@ -502,6 +502,41 @@ describe("recommendation axes", () => {
     });
   });
 
+  it("recognizes exact deadlines using at_utc without utc field", () => {
+    const value = conference({
+      editions: [
+        {
+          year: 2027,
+          deadlines: [
+            {
+              precision: "exact",
+              at_utc: "2027-02-15T23:59:00.000Z",
+              evidence: [{ sourceClass: "official-cfp", verifiedFields: ["date"] }],
+            },
+          ],
+        },
+      ],
+    });
+    expect(recommendationAxes(value, null, NOW)).toMatchObject({
+      deadline_precision: "exact",
+    });
+  });
+
+  it("recognizes rankings and identity.dblpKey in venue maturity evidence", () => {
+    const value = conference({
+      dblp: null,
+      identity: { dblpKey: "conf/test" },
+      rank: undefined,
+      rankings: { ccf: "A" },
+      papers: ["One", "Two"],
+      editions: [{ year: 2024 }, { year: 2025 }, { year: 2026 }],
+    });
+    const axes = recommendationAxes(value, null, NOW);
+    expect(axes.venue_maturity.evidence.dblpIndexed).toBe(true);
+    expect(axes.venue_maturity.evidence.ranked).toBe(true);
+    expect(axes.venue_maturity.status).toBe("established");
+  });
+
   it("keeps trust axes independent for each ranked recommendation", () => {
     const candidates = [
       conference(),
