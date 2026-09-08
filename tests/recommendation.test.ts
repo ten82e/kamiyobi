@@ -625,4 +625,42 @@ describe("recommendation axes", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ t: 0, tLast: 0 });
   });
+
+  it("does not prioritize unparseable deadlineTime ahead of earlier parseable deadlines in recommendationAxes", () => {
+    const conf = {
+      key: "sort-order-test",
+      title: "Sort Order Test",
+      categories: ["systems"],
+      editions: [
+        {
+          year: 2026,
+          deadlines: [
+            {
+              kind: "paper",
+              precision: "exact",
+              utc: "2026-09-01T23:59:00.000Z",
+              evidence: [{ sourceClass: "official", verifiedFields: ["date"] }],
+            },
+          ],
+        },
+        {
+          year: 2027,
+          deadlines: [
+            {
+              kind: "paper",
+              precision: "exact",
+              // latest_utc makes it future, but utc is unparseable
+              latest_utc: "2027-09-01T23:59:00.000Z",
+              utc: "unparseable-date",
+              evidence: [{ sourceClass: "official", verifiedFields: ["date"] }],
+            },
+          ],
+        },
+      ],
+    };
+    const axes = recommendationAxes(conf, 70, NOW);
+    // 2026 deadline is the true earliest future deadline; unparseable 2027 should NOT jump ahead as epoch 0
+    expect(axes.deadline_precision).toBe("exact");
+    expect(axes.deadline_trust.date).toBe("official");
+  });
 });

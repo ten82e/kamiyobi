@@ -95,6 +95,10 @@ function deadlineEndTime(deadline: JsonRecord): number | null {
   return day + 36 * 3_600_000 - 1;
 }
 
+function deadlineSortTime(deadline: JsonRecord): number {
+  return deadlineTime(deadline) ?? deadlineEndTime(deadline) ?? Number.POSITIVE_INFINITY;
+}
+
 function deadlineRecords(
   conference: JsonRecord,
   now: number,
@@ -103,7 +107,7 @@ function deadlineRecords(
   const future = editions
     .flatMap((edition) => records(edition.deadlines).map((deadline) => ({ edition, deadline })))
     .filter(({ deadline }) => (deadlineEndTime(deadline) ?? Number.NEGATIVE_INFINITY) >= now)
-    .sort((a, b) => (deadlineTime(a.deadline) ?? 0) - (deadlineTime(b.deadline) ?? 0));
+    .sort((a, b) => deadlineSortTime(a.deadline) - deadlineSortTime(b.deadline));
   const target = future[0]?.edition;
   return target
     ? future
