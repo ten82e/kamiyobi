@@ -831,6 +831,13 @@ describe("promotion batch", () => {
     ]);
 
     expect(
+      extractCfpCandidates("要旨締切: 2026年5月1日\n原稿投稿締切: 2026年6月1日"),
+    ).toMatchObject([
+      { kind: "abstract", date: "2026-05-01" },
+      { kind: "paper", date: "2026-06-01" },
+    ]);
+
+    expect(
       extractCfpCandidates("カメラレディ締切: 2026年6月1日\n査読回答期限: 2026年6月15日"),
     ).toMatchObject([
       { kind: "camera_ready", date: "2026-06-01" },
