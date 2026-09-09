@@ -1034,6 +1034,14 @@ export function resolveTzStatus(tzRaw: string | null | undefined): TzResolution 
     };
   }
 
+  const phrase = low.replace(/\s+/g, " ");
+  if (/^anywhere on (?:the )?(?:inhabited )?earth$/.test(phrase)) {
+    return { status: "confirmed", tz: { kind: "fixed", offsetMinutes: AOE_OFFSET_MINUTES } };
+  }
+  if (phrase === "日本時間" || phrase === "japan standard time") {
+    return { status: "confirmed", tz: { kind: "iana", name: TZ_NAMED.jst } };
+  }
+
   const m = TZ_OFFSET_RE.exec(low);
   if (m) {
     const sign = m[1] === "-" ? -1 : 1;

@@ -29,6 +29,12 @@ describe("resolve_tz", () => {
     expect(offset(resolveTz("AoE"))).toBe(-12 * 60);
     expect(offset(resolveTz("aoe"))).toBe(-12 * 60);
     expect(offset(resolveTz("AOE"))).toBe(-12 * 60);
+    expect(offset(resolveTz("Anywhere on Earth"))).toBe(-12 * 60);
+    expect(offset(resolveTz("anywhere on the earth"))).toBe(-12 * 60);
+    expect(isConfirmedTimezone("Anywhere on inhabited Earth")).toBe(true);
+    expect(parseInstant("2026-05-15 23:59:00", "Anywhere on Earth")?.toISOString()).toBe(
+      parseInstant("2026-05-15 23:59:00", "AoE")?.toISOString(),
+    );
   });
 
   it.each(["UTC", "GMT", "utc"])("UTC-like value %j resolves to 0", (raw) => {
@@ -153,6 +159,11 @@ describe("resolve_tz", () => {
     expect(offset(resolveTz("JST"))).toBe(9 * 60);
     expect(offset(resolveTz("jst"))).toBe(9 * 60);
     expect(offset(resolveTz("KST"))).toBe(9 * 60);
+    expect(offset(resolveTz("日本時間"))).toBe(9 * 60);
+    expect(offset(resolveTz("Japan Standard Time"))).toBe(9 * 60);
+    expect(parseInstant("2026-05-15 23:59:00", "日本時間")?.toISOString()).toBe(
+      parseInstant("2026-05-15 23:59:00", "JST")?.toISOString(),
+    );
   });
 
   it("SGT and HKT aliases resolve to UTC+8", () => {
