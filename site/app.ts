@@ -1277,7 +1277,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // （スコア順ソートで自然に候補が上位に来る）。
     const cats = state.cats;
     // 掲載先タグの属するカテゴリ（例: RTSS タグ → systems）。同カテゴリの会議を僅かにブースト
-    const venueCats = pLines.length && Rec ? Rec.venueCategories(pLines, rows) : [];
+    const autoCats = pLines.length && Rec ? Rec.autoDetectCats(pLines) : [];
+    const detectedVenueCats = pLines.length && Rec ? Rec.venueCategories(pLines, rows) : [];
+    const venueCats = [...new Set([...(state.cats || []), ...detectedVenueCats, ...autoCats])];
 
     // 論文モードおよび常時受付モード: 未来締切 + 常時受付ジャーナル + 未来締切の無い会議の過去代表行
     // （過去行は代表 1 行のみに限定し、全過去版で埋めない）
@@ -1290,8 +1292,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       pool = rows.concat(Rec.journalRows(activeData.conferences, now));
     }
 
-    // 推薦モード（論文入力あり）では締切画面用の検索/種別/ランク/期間/分野/国内/推定/過去フィルタを
-    // 適用しない。pool は既に未来締切+常時受付+過去代表行で構成済み。
+    // 推薦モード（論文入力あり）では締切画面用の検索/種別/ランク/期間/推定/過去フィルタを
+    // 適用しない（手動指定の分野・国内フィルタは反映）。pool は既に未来締切+常時受付+過去代表行で構成済み。
     const inRecommend = state.mode === "recommend" && pLines.length > 0;
 
     let out: AppRow[] = pool.filter((r) => {

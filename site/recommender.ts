@@ -425,6 +425,10 @@ const Recommender = (() => {
     hpc: [
       "hpc",
       "supercomputing",
+      "high performance computing",
+      "high-performance computing",
+      "scasia",
+      "hpcasia",
       "parallel",
       "gpu",
       "fpga",
@@ -436,6 +440,13 @@ const Recommender = (() => {
       "ハイパフォーマンス",
       "スーパーコンピュータ",
       "並列",
+      "高性能計算",
+      "高性能",
+      "スパコン",
+      "アクセラレータ",
+      "クラスタ",
+      "集団通信",
+      "xsig",
     ],
     systems: [
       "storage",
@@ -455,8 +466,19 @@ const Recommender = (() => {
       "ストレージ",
       "カーネル",
       "分散システム",
+      "分散",
+      "並列処理",
       "ミドルウェア",
       "オペレーティングシステム",
+      "スケジューリング",
+      "スケジューラ",
+      "仮想化",
+      "コンテナ",
+      "省電力",
+      "アーキテクチャ",
+      "キャッシュ",
+      "プロセッサ",
+      "xsig",
     ],
     networking: [
       "network",
@@ -502,6 +524,9 @@ const Recommender = (() => {
       "セキュリティ",
       "プライバシー",
       "暗号",
+      "scis",
+      "脆弱性",
+      "認証",
     ],
     db: [
       "database",
@@ -580,6 +605,39 @@ const Recommender = (() => {
       "issue issues"
     ).split(/\s+/),
   );
+
+  const JP_STOPWORDS = new Set([
+    "における",
+    "について",
+    "に関する",
+    "に対する",
+    "関する",
+    "対する",
+    "による",
+    "および",
+    "または",
+    "これら",
+    "それら",
+    "そのため",
+    "用いた",
+    "向けた",
+    "行った",
+    "提案する",
+    "検討する",
+    "評価する",
+    "ための",
+    "などの",
+    "に基づく",
+    "基づく",
+    "向け",
+    "よる",
+    "関して",
+    "あたり",
+    "当たって",
+    "おける",
+    "伴う",
+    "対して",
+  ]);
 
   /* 1行: "タイトル | キーワード | 掲載先(任意)" または "タイトル<TAB>キーワード<TAB>掲載先" */
   function parsePaperLines(text: unknown): PaperRecord[] {
@@ -821,9 +879,9 @@ const Recommender = (() => {
   function normKey(s: unknown): string {
     return String(s || "")
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/[^a-z0-9\u3040-\u30ff\u3400-\u9fff]+/g, " ")
       .replace(FILLER, " ")
-      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/[^a-z0-9\u3040-\u30ff\u3400-\u9fff]+/g, " ")
       .trim();
   }
 
@@ -1016,15 +1074,110 @@ const Recommender = (() => {
   };
   const FIELD_NAMES = Object.keys(FIELD_WEIGHTS) as FieldName[];
 
+  const jaSegmenter =
+    typeof Intl !== "undefined" && Intl.Segmenter
+      ? new Intl.Segmenter("ja", { granularity: "word" })
+      : null;
+
+  const JP_ORG_STOP =
+    /(?:情報処理学会|電子情報通信学会|情報処理|電子情報通信|研究会|シンポジウム|特集号|論文誌|学会|信学技報|ワークショップ)/gu;
+
+  const JP_PAPER_GENERIC = new Set([
+    "研究",
+    "開発",
+    "提案",
+    "手法",
+    "評価",
+    "実装",
+    "解析",
+    "実験",
+    "検討",
+    "考察",
+    "情報",
+    "処理",
+    "論文",
+    "システム",
+  ]);
+
+  function extractDistinctiveJpTerms(raw: unknown): string[] {
+    const text = String(raw ?? "").toLowerCase();
+    if (!text) return [];
+    const terms = new Set<string>();
+    // Katakana: full sequences of length >= 3
+    for (const m of text.match(/[\u30a0-\u30ff\u30fc]{3,}/g) ?? []) {
+      if (!JP_STOPWORDS.has(m) && !JP_PAPER_GENERIC.has(m)) terms.add(m);
+    }
+    // Kanji: 2-kanji and 4-kanji decomposed
+    for (const m of text.match(/[\u3400-\u9fff]{2,}/g) ?? []) {
+      if (!JP_STOPWORDS.has(m) && !JP_PAPER_GENERIC.has(m)) {
+        terms.add(m);
+        if (m.length === 4) {
+          const sub1 = m.slice(0, 2);
+          const sub2 = m.slice(2, 4);
+          if (!JP_STOPWORDS.has(sub1) && !JP_PAPER_GENERIC.has(sub1)) terms.add(sub1);
+          if (!JP_STOPWORDS.has(sub2) && !JP_PAPER_GENERIC.has(sub2)) terms.add(sub2);
+        }
+      }
+    }
+    if (jaSegmenter) {
+      for (const item of jaSegmenter.segment(text)) {
+        const seg = item.segment.trim();
+        if (/^[\u30a0-\u30ff\u30fc]+$/.test(seg)) continue;
+        if (
+          item.isWordLike &&
+          seg.length >= 2 &&
+          !JP_STOPWORDS.has(seg) &&
+          !JP_PAPER_GENERIC.has(seg)
+        ) {
+          terms.add(seg);
+        }
+      }
+    }
+    return [...terms];
+  }
+
   function lexicalTerms(value: unknown): string[] {
-    return [
-      ...new Set(
-        String(value ?? "")
-          .toLowerCase()
-          .match(/[a-z0-9]+|[\u3040-\u30ff\u3400-\u9fff]{2,}/g)
-          ?.filter((term) => !STOPWORDS.has(term)) ?? [],
-      ),
-    ];
+    const raw = String(value ?? "").toLowerCase();
+    if (!raw) return [];
+    const terms = new Set<string>();
+    const ascii = raw.match(/[a-z0-9]+/g) || [];
+    ascii.forEach((term) => {
+      if (!STOPWORDS.has(term)) terms.add(term);
+    });
+    if (hasJapanese(raw)) {
+      const katakana = raw.match(/[\u30a0-\u30ff\u30fc]{2,}/g) || [];
+      katakana.forEach((term) => {
+        if (!JP_STOPWORDS.has(term)) terms.add(term);
+      });
+      const kanji = raw.match(/[\u3400-\u9fff]{2,}/g) || [];
+      kanji.forEach((term) => {
+        if (!JP_STOPWORDS.has(term)) {
+          terms.add(term);
+          if (term.length === 4) {
+            terms.add(term.slice(0, 2));
+            terms.add(term.slice(2, 4));
+          } else if (term.length === 6) {
+            terms.add(term.slice(0, 2));
+            terms.add(term.slice(2, 4));
+            terms.add(term.slice(4, 6));
+          }
+        }
+      });
+      if (jaSegmenter) {
+        for (const item of jaSegmenter.segment(raw)) {
+          const seg = item.segment.trim();
+          if (item.isWordLike && seg.length >= 2 && !JP_STOPWORDS.has(seg)) {
+            if (/^[\u30a0-\u30ff\u30fc]+$/.test(seg)) continue;
+            terms.add(seg);
+            if (seg.length === 4) {
+              terms.add(seg.slice(0, 2));
+              terms.add(seg.slice(2, 4));
+            }
+          }
+        }
+      }
+    }
+    return [...terms];
   }
 
   function overlapScore(query: unknown, documents: readonly string[]): number {
@@ -1044,12 +1197,14 @@ const Recommender = (() => {
     const abstract = paper.abstract ?? "";
     const keywords = paper.keywords ?? "";
     const all = [title, abstract, keywords].join(" ");
+    const detected = autoDetectCats([paper]);
+    const catQuery = [...new Set([...lexicalTerms(all), ...detected])].join(" ");
     const fields: FieldScores = {
       acronym: overlapScore(title, conf.acronym),
       full_name: overlapScore(all, [conf.title, conf.full]),
       scope: overlapScore(all, conf.scope),
       tags: overlapScore(all, conf.tags),
-      categories: overlapScore(all, conf.categories),
+      categories: overlapScore(catQuery, conf.categories),
       representative_papers: overlapScore(all, conf.papers),
       paper_title: overlapScore(title, conf.papers),
       paper_abstract: overlapScore(abstract, [...conf.papers, ...conf.paperAbstracts]),
@@ -1206,9 +1361,9 @@ const Recommender = (() => {
     // 衝突して誤爆する）。
     // また、掲載先タグ付き行（p.venue）でも使わない — タグの絶対性（venueHit +40）を
     // 守るため。
-    const nameWords = `${conf.title} ${conf.full}`
+    const nameWords = `${conf.title} ${conf.full} ${conf.acronym.join(" ")}`
       .split(" ")
-      .filter((word) => word.length > 3 && !STOPWORDS.has(word));
+      .filter((word) => word.length >= 3 && !STOPWORDS.has(word));
     const paperWords =
       hasJapanese(pt) || p.venue
         ? []
@@ -1246,16 +1401,22 @@ const Recommender = (() => {
       details.paper += wgt;
     });
 
-    // 日本語の部分一致: 論文の日本語チャンク（4 文字以上）が会議名の日本語に含まれれば加点
-    // 例: 論文に「分散処理」→ DPS 研究会の full_name「マルチメディア通信と分散処理研究会」に含まれる
-    // 長いチャンクが複数あっても 1 会議あたり最大 1 回（分野シグナル相当の重み）にする
-    const jpChunks = (pt.match(/[\u3000-\u9fff]+/g) || []).filter((chunk) => chunk.length >= 4);
-    if (jpChunks.length && conf.jp.length) {
-      jpHay = conf.jp.join(" ");
-      jpHit = jpChunks.some((chunk) => jpHay.indexOf(chunk) !== -1);
-      if (jpHit) {
-        score += SIG_WEIGHTS.jp;
-        details.jp += SIG_WEIGHTS.jp;
+    // 日本語の部分一致: 論文の固有日本語語彙（カタカナ語・漢字複合語）が会議名の日本語に含まれれば加点
+    // 助詞や汎用学会接頭辞（情報処理学会/電子情報通信学会/研究会/シンポジウム等）を落とした
+    // 実質名称に対して照合し、論文側の研究/提案/評価/システム等の汎用語も除外する。
+    if (hasJapanese(pt) && conf.jp.length) {
+      jpHay = conf.jp
+        .join(" ")
+        .replace(JP_ORG_STOP, " ")
+        .replace(/[^\p{L}\p{N}]+/gu, " ")
+        .trim();
+      if (jpHay) {
+        const terms = extractDistinctiveJpTerms(pt);
+        jpHit = terms.some((term) => jpHay.indexOf(term) !== -1);
+        if (jpHit) {
+          score += SIG_WEIGHTS.jp;
+          details.jp += SIG_WEIGHTS.jp;
+        }
       }
     }
 
@@ -1718,8 +1879,8 @@ const Recommender = (() => {
 
   function fitLabel(confidence: Confidence): string {
     if (confidence === "sufficient") return "十分な一致";
-    if (confidence === "ambiguous") return "候補を絞り切れません";
-    return "入力内容から十分な一致を確認できません";
+    if (confidence === "ambiguous") return "候補";
+    return "情報不足";
   }
 
   function availability(row: CandidateRow | null | undefined, now: number): Availability {
@@ -2382,9 +2543,12 @@ const Recommender = (() => {
     交通: "transportation traffic",
     電力: "power energy",
     並列: "parallel",
+    高性能計算: "high performance computing hpc supercomputing",
     ハイパフォーマンス: "high performance hpc",
     スーパーコンピュータ: "supercomputer",
+    スパコン: "supercomputing supercomputer",
     高性能: "high performance",
+    アクセラレータ: "accelerator acceleration",
     輻輳制御: "congestion control",
     耐故障性: "fault tolerance",
     レプリケーション: "replication",

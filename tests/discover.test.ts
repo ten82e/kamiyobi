@@ -8,6 +8,7 @@ import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
 import { describe, expect, it, vi } from "vitest";
 import {
+  canonicalizeCategories,
   cleanDbworldTitle,
   deadlineIsFuture,
   easyChairEntriesFromRows,
@@ -33,9 +34,11 @@ import {
 import {
   isPredatory,
   loadTrackedTitles,
+  normGroupKey,
   normTitle,
   reviewDeadlineText,
   runReviewCandidates,
+  stripSponsorPrefix,
   tagSource,
 } from "../src/review-candidates.ts";
 import { REPO_ROOT } from "./helpers.ts";
@@ -1021,6 +1024,60 @@ describe("review helpers", () => {
     expect(lines.join("\n")).not.toContain("predatory");
   });
 
+  it("stripSponsorPrefix and normGroupKey normalize sponsor prefixes defensively", () => {
+    expect(stripSponsorPrefix(null)).toBe("");
+    expect(stripSponsorPrefix(undefined)).toBe("");
+    expect(stripSponsorPrefix("")).toBe("");
+    expect(stripSponsorPrefix("acm iccfi")).toBe("iccfi");
+    expect(stripSponsorPrefix("ieee icsps")).toBe("icsps");
+    expect(stripSponsorPrefix("ieee acm cgo")).toBe("cgo");
+    expect(stripSponsorPrefix("情報処理学会 hpc 研究会")).toBe("hpc 研究会");
+
+    expect(normGroupKey(null)).toBe("");
+    expect(normGroupKey(undefined)).toBe("");
+    expect(normGroupKey("ACM ICCFI 2026")).toBe(normGroupKey("ICCFI 2026"));
+    expect(normGroupKey("IEEE 15th International Conference on Networks")).toBe(
+      normGroupKey("15th International Conference on Networks"),
+    );
+    expect(normGroupKey("IEEE/ACM CGO 2026")).toBe(normGroupKey("CGO 2026"));
+    // Standalone sponsor name falls back to itself without emptying
+    expect(normGroupKey("ACM")).toBe("acm");
+    expect(normGroupKey("IEEE")).toBe("ieee");
+  });
+
+  it("runReviewCandidates groups sponsor-prefixed duplicates and deduplicates future review queue", () => {
+    const root = mkdtempSync(join(tmpdir(), "kamiyobi-review-dups-"));
+    const rows = [
+      {
+        title: "ACM ICCFI 2026",
+        link: "https://example.com/acm-iccfi",
+        tags: ["wikicfp"],
+        submission_deadline_text: "2026-10-01",
+      },
+      {
+        title: "ICCFI 2026",
+        link: "https://example.com/iccfi",
+        tags: ["easychair"],
+        submission_deadline_text: "2026-10-01",
+      },
+    ];
+    const path = join(root, "candidates.yaml");
+    writeFileSync(path, JSON.stringify({ candidates: rows }));
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      expect(runReviewCandidates(path, 10, new Date("2026-08-09T00:00:00Z"), root)).toBe(true);
+      const output = log.mock.calls.map((args) => args.join(" ")).join("\n");
+      // Only 1 unique conference in future recommendations
+      expect(output).toContain("未来 1 件中 上位 10 件");
+      // Merged into duplicate groups under iccfi
+      expect(output).toContain("重複グループ (1 組)");
+      expect(output).toContain("- iccfi: ACM ICCFI 2026@wikicfp, ICCFI 2026@easychair");
+    } finally {
+      log.mockRestore();
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("normTitle, isPredatory, and reviewDeadlineText handle null/undefined defensively", () => {
     expect(normTitle(null)).toBe("");
     expect(normTitle(undefined)).toBe("");
@@ -1127,6 +1184,37 @@ describe("parseWikiCfpHtml", () => {
     const entries = parseWikiCfpHtml(html, ["systems"], 2026);
     expect(entries.length).toBe(1);
     expect(entries[0].full_name).toBe("International Conference on Computing & Systems");
+  });
+
+  it("parses rows with empty or whitespace-only where location without dropping them", () => {
+    const html =
+      "<table>" +
+      '<tr><td><a href="/cfp/servlet/event.showcfp?eventid=101">VIRTUAL 2027</a></td>' +
+      "<td>International Virtual Conference on High Performance Computing</td></tr>" +
+      "<tr><td>Mar 1, 2027 - Mar 4, 2027</td><td> &nbsp; </td><td>Sep 30, 2026</td></tr>" +
+      "</table>";
+    const entries = parseWikiCfpHtml(html, ["hpc"], 2026);
+    expect(entries).toHaveLength(1);
+    expect(entries[0].title).toBe("VIRTUAL 2027");
+    expect(entries[0].place).toBe("");
+    expect(entries[0].date_text).toBe("Sep 30, 2026");
+    expect(entries[0].year).toBe(2027);
+  });
+
+  it("extracts 2-digit year and falls back to when-cell year when title omits 4-digit year", () => {
+    const html =
+      "<table>" +
+      '<tr><td><a href="/cfp/servlet/event.showcfp?eventid=202">SCA\'27</a></td>' +
+      "<td>SupercomputingAsia 2027</td></tr>" +
+      "<tr><td>Mar 1, 2027 - Mar 4, 2027</td><td>Singapore</td><td>Nov 15, 2026</td></tr>" +
+      '<tr><td><a href="/cfp/servlet/event.showcfp?eventid=203">HPCAsia</a></td>' +
+      "<td>International Conference on High Performance Computing in Asia-Pacific Region</td></tr>" +
+      "<tr><td>Jan 25, 2027 - Jan 28, 2027</td><td>Tokyo, Japan</td><td>Oct 1, 2026</td></tr>" +
+      "</table>";
+    const entries = parseWikiCfpHtml(html, ["hpc"], 2026);
+    expect(entries).toHaveLength(2);
+    expect(entries[0].year).toBe(2027);
+    expect(entries[1].year).toBe(2027);
   });
 
   it("toYamlDict は開催年 (entry.year) を優先し、締切日 (date_text) の年で上書きしない", () => {
@@ -1696,6 +1784,28 @@ describe("discover and review boundary handling", () => {
       expect(editions[0].deadlines).toHaveLength(1);
     });
 
+    it("toYamlDict derives year from deadlines when deadlines only contain at_utc", () => {
+      const candidate = makeCandidate({
+        key: "at-utc-conf",
+        title: "Conference with at_utc",
+        full_name: "Conference with at_utc",
+        link: "https://example.org/cfp",
+        categories: ["systems"],
+        deadlines: [
+          {
+            kind: "paper",
+            label: "Submission",
+            at_utc: "2028-04-15T23:59:00Z",
+          },
+        ],
+      });
+      const yamlDict = toYamlDict(candidate);
+      const editions = yamlDict.editions as Array<Record<string, unknown>>;
+      expect(editions).toHaveLength(1);
+      expect(editions[0].year).toBe(2028);
+      expect(editions[0].id).toBe("at-utc-conf28");
+    });
+
     it("normTitle removes Japanese ordinals 第\\d+回", () => {
       expect(normTitle("第35回 回路とシステムワークショップ")).toBe("回路とシステムワークショップ");
       expect(normTitle("第36回回路とシステムワークショップ")).toBe("回路とシステムワークショップ");
@@ -1852,5 +1962,49 @@ describe("discover lifecycle and year parsing (#762)", () => {
       ],
     });
     expect(registry.candidates[0]?.year).toBe(2026);
+  });
+
+  describe("category canonicalization & lifecycle scope", () => {
+    it("canonicalizes sub-domain categories to valid taxonomy categories", () => {
+      expect(canonicalizeCategories(["parallel", "supercomputing"])).toEqual(["hpc"]);
+      expect(canonicalizeCategories(["robotics", "deep learning"])).toEqual(["ai"]);
+      expect(canonicalizeCategories(["blockchain", "compilers"])).toEqual(["systems"]);
+      expect(canonicalizeCategories(["cybersecurity", "cryptography"])).toEqual(["security"]);
+      expect(canonicalizeCategories(["networks", "wireless"])).toEqual(["networking"]);
+      expect(canonicalizeCategories(["databases", "big data"])).toEqual(["db"]);
+      expect(canonicalizeCategories(["algorithms", "optimization"])).toEqual(["theory"]);
+      expect(canonicalizeCategories(["custom-unknown"])).toEqual(["custom-unknown"]);
+    });
+
+    it("prevents valid niche candidates with subcategories from being archived as out-of-scope", () => {
+      const now = new Date("2026-09-08T15:00:00Z");
+      const candidate = makeCandidate({
+        key: "niche-parallel-workshop",
+        title: "International Workshop on Parallel Algorithms 2027",
+        full_name: "International Workshop on Parallel Algorithms",
+        link: "https://example.org/parallel",
+        categories: canonicalizeCategories(["parallel"]),
+        date_text: "2027-04-15",
+      });
+      const split = splitCandidateLifecycle([candidate], now);
+      expect(split.active).toHaveLength(1);
+      expect(split.archive).toHaveLength(0);
+    });
+
+    it("infers domain category from title if candidate categories are empty or unknown", () => {
+      const registry = parseCandidateRegistry({
+        schema: 2,
+        candidates: [
+          {
+            key: "hpc-cluster-conf",
+            title: "International Conference on Supercomputing and Heterogeneous Computing 2027",
+            link: "https://example.org/conf",
+            categories: ["unknown"],
+            date_text: "2027-05-01",
+          },
+        ],
+      });
+      expect(registry.candidates[0]?.categories).toContain("hpc");
+    });
   });
 });

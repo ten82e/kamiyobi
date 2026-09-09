@@ -205,6 +205,11 @@ export function editionOf(
     start = start ?? parsedStart;
     end = end ?? parsedEnd;
   }
+  if (start !== null && end !== null && start.getTime() > end.getTime()) {
+    const tmp = start;
+    start = end;
+    end = tmp;
+  }
   const rawPlace = raw.place !== null && raw.place !== undefined ? String(raw.place).trim() : "";
   const place =
     rawPlace ||
