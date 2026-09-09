@@ -119,7 +119,21 @@ export const DOMAIN_KEYWORDS: Record<string, string[]> = {
 
 // wikiCFP のカテゴリページ (?conference=<cat>) と kamiyobi カテゴリの対応。
 const WIKICFP_CATEGORY_MAP: Record<string, string[]> = {
-  hpc: ["parallel", "high", "grid", "performance", "computational"],
+  hpc: [
+    "parallel",
+    "high performance",
+    "hpc",
+    "supercomputing",
+    "cluster",
+    "grid",
+    "performance",
+    "computational",
+    "distributed",
+    "multicore",
+    "gpu",
+    "heterogeneous",
+    "accelerator",
+  ],
   networking: [
     "networks",
     "networking",
@@ -132,6 +146,12 @@ const WIKICFP_CATEGORY_MAP: Record<string, string[]> = {
     "ubiquitous",
     "pervasive",
     "sensor",
+    "5g",
+    "6g",
+    "iot",
+    "sdn",
+    "routing",
+    "optical",
   ],
   systems: [
     "systems",
@@ -149,6 +169,11 @@ const WIKICFP_CATEGORY_MAP: Record<string, string[]> = {
     "blockchain",
     "cyber-physical",
     "safety",
+    "storage",
+    "hardware",
+    "kernel",
+    "virtualization",
+    "real-time",
   ],
   ai: [
     "artificial",
@@ -163,21 +188,39 @@ const WIKICFP_CATEGORY_MAP: Record<string, string[]> = {
     "agents",
     "multi-agent",
     "pattern",
+    "ai",
+    "machine learning",
+    "deep learning",
+    "computer vision",
+    "nlp",
+    "data science",
   ],
-  security: ["security", "cybersecurity", "privacy", "cryptography", "cyber", "trust"],
+  security: [
+    "security",
+    "cybersecurity",
+    "privacy",
+    "cryptography",
+    "cyber",
+    "trust",
+    "forensics",
+    "information security",
+    "network security",
+  ],
   db: [
     "database",
     "databases",
     "data",
-    "big",
+    "big data",
     "knowledge",
     "semantic",
     "semantics",
     "ontologies",
     "ontology",
+    "data mining",
+    "information retrieval",
   ],
-  graphics: ["graphics", "multimedia", "visualization", "image", "virtual"],
-  hci: ["human", "human-computer"],
+  graphics: ["graphics", "multimedia", "visualization", "image", "virtual reality"],
+  hci: ["human", "human-computer", "interaction", "user interface"],
   theory: [
     "theory",
     "algorithms",
@@ -190,6 +233,42 @@ const WIKICFP_CATEGORY_MAP: Record<string, string[]> = {
     "graph",
   ],
 };
+
+export const DISCOVERY_CATEGORIES = new Set(Object.keys(DOMAIN_KEYWORDS));
+
+/** Canonicalize raw/sub-domain categories to known taxonomy categories. */
+export function canonicalizeCategories(rawCategories: string[]): string[] {
+  const result = new Set<string>();
+  for (const raw of rawCategories) {
+    const lower = raw.trim().toLowerCase();
+    if (!lower) continue;
+    if (DISCOVERY_CATEGORIES.has(lower)) {
+      result.add(lower);
+      continue;
+    }
+    let mapped = false;
+    for (const [canonical, subs] of Object.entries(WIKICFP_CATEGORY_MAP)) {
+      if (subs.includes(lower)) {
+        result.add(canonical);
+        mapped = true;
+        break;
+      }
+    }
+    if (!mapped) {
+      for (const [canonical, kws] of Object.entries(DOMAIN_KEYWORDS)) {
+        if (kws.some((kw) => kw === lower || lower.includes(kw) || kw.includes(lower))) {
+          result.add(canonical);
+          mapped = true;
+          break;
+        }
+      }
+    }
+    if (!mapped) {
+      result.add(lower);
+    }
+  }
+  return [...result];
+}
 
 export type CandidateStatus =
   | "discovered"
@@ -497,12 +576,21 @@ function candidateFromRecord(value: unknown): Candidate | null {
         (item): item is Record<string, unknown> => typeof item === "object" && item !== null,
       )
     : [];
+  let categories = canonicalizeCategories(stringList(record.categories));
+  if (categories.length === 0 || (categories.length === 1 && categories[0] === "unknown")) {
+    const textLower = `${title} ${String(record.full_name ?? "")}`.toLowerCase();
+    const inferred: string[] = [];
+    for (const [cat, keywords] of Object.entries(DOMAIN_KEYWORDS)) {
+      if (keywords.some((kw) => textLower.includes(kw))) inferred.push(cat);
+    }
+    if (inferred.length > 0) categories = inferred;
+  }
   return makeCandidate({
     key,
     title,
     full_name: String(record.full_name ?? title),
     link: String(record.link ?? edition.link ?? ""),
-    categories: stringList(record.categories),
+    categories,
     tags: stringList(record.tags),
     source_type: String(record.source_type ?? "conference"),
     evidence_url: String(record.evidence_url ?? ""),
@@ -568,7 +656,9 @@ export function toYamlDict(c: Candidate | null | undefined): Record<string, unkn
     if (year === null && Array.isArray(c.deadlines)) {
       for (const dl of c.deadlines) {
         if (typeof dl !== "object" || dl === null) continue;
-        const dlm = /(20\d\d)/.exec(String(dl.date ?? dl.utc ?? dl.local_date ?? ""));
+        const dlm = /(20\d\d)/.exec(
+          String(dl.date ?? dl.utc ?? dl.at_utc ?? dl.deadline ?? dl.local_date ?? ""),
+        );
         if (dlm) {
           year = Number(dlm[1]);
           break;
@@ -794,8 +884,6 @@ function candidateHasOfficialUrl(candidate: Candidate): boolean {
     return false;
   }
 }
-
-const DISCOVERY_CATEGORIES = new Set(Object.keys(DOMAIN_KEYWORDS));
 
 export function splitCandidateLifecycle(
   candidates: Candidate[] | null | undefined,
@@ -1060,29 +1148,29 @@ export function parseWikiCfpHtml(
         break;
       }
     }
-    if (!fullName || i + 1 >= rows.length) continue;
     // ディテール行: when / where / deadline
-    const detailRows = rows[i + 1].match(/<td[^>]*>([\s\S]*?)<\/td>/g) ?? [];
-    const cells = detailRows
-      .map((c) => c.replace(/<[^>]+>/g, " "))
-      .map((c) => c.replace(/\s+/g, " ").trim())
-      .filter((c) =>
-        c
-          .replace(/<[^>]+>/g, "")
-          .replace(/\s+/g, " ")
-          .trim(),
-      );
-    if (cells.length < 3) continue;
+    const detailTds = rows[i + 1].match(/<td[^>]*>([\s\S]*?)<\/td>/g) ?? [];
+    if (detailTds.length < 3) continue;
+    const cells = detailTds.map((c) =>
+      decode(c.replace(/<[^>]+>/g, " "))
+        .replace(/\u00a0|&nbsp;/g, " ")
+        .replace(/\s+/g, " ")
+        .trim(),
+    );
     const [when, where, deadline] = cells;
-    void when;
-    if (deadline === "" || deadline === "N/A") continue;
+    if (!deadline || deadline === "N/A") continue;
     let year: number | undefined;
-    const tm = /(20\d\d)/.exec(title);
+    const tm = /(?:20(\d\d)|['’](\d{2})\b)/.exec(title);
     if (tm) {
-      year = Number(tm[1]);
+      year = tm[1] ? Number(`20${tm[1]}`) : Number(`20${tm[2]}`);
     } else {
-      const dm = /(20\d\d)/.exec(deadline);
-      if (dm) year = Number(dm[1]);
+      const wm = /(20\d\d)/.exec(when);
+      if (wm) {
+        year = Number(wm[1]);
+      } else {
+        const dm = /(20\d\d)/.exec(deadline);
+        if (dm) year = Number(dm[1]);
+      }
     }
     if (year !== undefined && year < minYear) continue;
     entries.push({
@@ -1207,20 +1295,22 @@ const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms
 
 /** wikiCFP カテゴリページを取得してパースする(ネットワーク層)。 */
 async function discoverFromWikiCfpUrls(
+  canonicalCategory: string,
   categories: string[],
   minYear: number,
 ): Promise<WikiCfpEntry[]> {
   const entries: WikiCfpEntry[] = [];
   const today = new Date();
   for (const cat of categories) {
-    for (let page = 1; page <= 3; page++) {
-      const url = `http://www.wikicfp.com/cfp/call?conference=${cat}&page=${page}`;
+    const encoded = encodeURIComponent(cat);
+    for (let page = 1; page <= 5; page++) {
+      const url = `http://www.wikicfp.com/cfp/call?conference=${encoded}&page=${page}`;
       await sleep(400); // リクエスト過多での一時ブロック回避
       const html = await fetchText(url, DISCOVER_UA, 15_000);
-      const pageEntries = parseWikiCfpHtml(html, [cat], minYear);
+      const pageEntries = parseWikiCfpHtml(html, [canonicalCategory], minYear);
+      if (pageEntries.length === 0) break;
       const future = pageEntries.filter((e) => deadlineIsFuture(e.date_text, today));
       entries.push(...future);
-      if (future.length === 0) break; // 締切昇順: ここから先はすべて過去締切
     }
   }
   return entries;
@@ -1759,9 +1849,18 @@ export class NicheDiscoverer {
     const url = `https://dblp.org/search/venue/api?q=${encodeURIComponent(query)}&format=json&h=${maxResults}`;
     const candidates: Candidate[] = [];
     const html = await fetchText(url, DISCOVER_UA, 10_000);
-    const data = JSON.parse(html) as {
+    const trimmed = html.trim();
+    if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+      return [];
+    }
+    let data: {
       result?: { hits?: { hit?: Array<{ info?: Record<string, unknown> }> } };
     };
+    try {
+      data = JSON.parse(trimmed);
+    } catch {
+      return [];
+    }
     const hits = data.result?.hits?.hit ?? [];
     for (const hit of hits) {
       const info = hit.info ?? {};
@@ -1883,7 +1982,7 @@ export class NicheDiscoverer {
     };
 
     // 1. DBLP queries
-    const queries = [
+    const defaultDblpQueries = [
       "workshop",
       "symposium",
       "journal",
@@ -1892,21 +1991,43 @@ export class NicheDiscoverer {
       "networking",
       "security",
     ];
+    const queries = categories
+      ? [
+          "workshop",
+          "symposium",
+          "journal",
+          ...categories.filter((cat) =>
+            [
+              "systems",
+              "hpc",
+              "networking",
+              "security",
+              "ai",
+              "db",
+              "graphics",
+              "hci",
+              "theory",
+            ].includes(cat),
+          ),
+        ]
+      : defaultDblpQueries;
     for (const q of queries) {
       results.push(...(await collect(`dblp:${q}`, () => this.discoverFromDblp(q, 20))));
+      await sleep(300);
     }
 
     // 2. OpenReview queries
     const orQueries = ["workshop", "symposium", `workshop ${minYear}`];
     for (const q of orQueries) {
       results.push(...(await collect(`openreview:${q}`, () => this.discoverFromOpenreview(q))));
+      await sleep(200);
     }
 
     // 3. wikiCFP: 各 kamiyobi カテゴリの wikiCFP カテゴリ全部を取得。
     for (const [cat, wikicfpCats] of Object.entries(WIKICFP_CATEGORY_MAP)) {
       if (categories && !categories.includes(cat)) continue;
       const entries = await collect(`wikicfp:${cat}`, () =>
-        discoverFromWikiCfpUrls(wikicfpCats, minYear),
+        discoverFromWikiCfpUrls(cat, wikicfpCats, minYear),
       );
       for (const entry of entries) {
         const candKey = entry.key;
@@ -1917,7 +2038,7 @@ export class NicheDiscoverer {
             title: entry.title,
             full_name: entry.full_name,
             link: entry.link,
-            categories: entry.categories,
+            categories: canonicalizeCategories(entry.categories),
             tags: ["niche", "wikicfp"],
             source_type: /journal|transactions|letters/.test(entry.full_name.toLowerCase())
               ? "journal"
