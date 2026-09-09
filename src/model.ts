@@ -109,16 +109,25 @@ export function eventDatePrecisionOf(
   const s = String(dateText ?? "").trim();
   if (/\b(?:tbd|tba|not announced|to be announced)\b|未定|未発表/i.test(s)) return "not-announced";
 
-  const hasMonth =
-    /\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b|(?:1[0-2]|[1-9])月/i.test(
-      s,
-    );
+  const monthName =
+    "(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)";
+  const hasMonth = new RegExp(`\\b${monthName}\\b|(?:1[0-2]|[1-9])月`, "i").test(s);
+  // Keep calendar ordinals (May 15th / 15th of May). Strip leftover 15th-conference
+  // ordinals so they do not count as a day-of-month.
+  const hasOrdinalDateDay =
+    new RegExp(`\\b${monthName}\\.?[-/\\s]+\\d{1,2}(?:st|nd|rd|th)\\b`, "i").test(s) ||
+    new RegExp(
+      `\\b\\d{1,2}(?:st|nd|rd|th)(?:\\s*[-\\u2010-\\u2015\\u2212~〜]\\s*\\d{1,2}(?:st|nd|rd|th))?(?:[-/\\s]+(?:of\\s+)?|\\s+of\\s+)${monthName}\\b`,
+      "i",
+    ).test(s);
   const cleanS = s
     .replace(/\s*[(（][^)）]*[)）]/gu, "")
     .replace(/\b\d+(?:st|nd|rd|th)\b/gi, "")
     .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, "");
   const hasDay =
-    /\d+\s*日/u.test(cleanS) || /(?:^|[^\d])(?:[1-9]|[12]\d|3[01])(?!\s*月)(?:\D|$)/.test(cleanS);
+    hasOrdinalDateDay ||
+    /\d+\s*日/u.test(cleanS) ||
+    /(?:^|[^\d])(?:[1-9]|[12]\d|3[01])(?!\s*月)(?:\D|$)/.test(cleanS);
 
   if (hasMonth && !hasDay) {
     return "month-only";
