@@ -235,7 +235,7 @@ export function matchesIdentitySelector(
 }
 
 function deadlineRange(deadline: JsonRecord): [string, string] | null {
-  const exact = Date.parse(String(deadline.utc ?? ""));
+  const exact = Date.parse(String(deadline.utc ?? deadline.at_utc ?? ""));
   if (Number.isFinite(exact)) {
     const iso = new Date(exact).toISOString();
     return [iso, iso];

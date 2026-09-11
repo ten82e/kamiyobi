@@ -1151,6 +1151,10 @@ export interface HealthSupersededValue {
   superseded_at: string;
   /** 訂正先 slot id。免責をこの slot family に限定するための必須スコープ。 */
   superseded_by: string;
+  /** 旧 track (slot id 成分)。省略時は候補 slot 自身の track とみなす。空文字も有効。 */
+  superseded_track?: string;
+  /** 旧 round。省略時は候補 slot 自身の round とみなす。 */
+  superseded_round?: number;
 }
 
 export type HealthDeadlineEvidence = Pick<
@@ -1377,6 +1381,12 @@ export function healthReport(
             reason: item.reason,
             superseded_at: item.supersededAt,
             superseded_by: item.supersededBy,
+            ...((item.superseded_track ?? null) !== null
+              ? { superseded_track: item.superseded_track as string }
+              : {}),
+            ...((item.superseded_round ?? null) !== null
+              ? { superseded_round: item.superseded_round as number }
+              : {}),
           }),
         );
         // 公式訂正で過去日へ移った締切も、訂正が lookback 内なら gate が旧 slot と
@@ -1423,7 +1433,7 @@ export function healthReport(
               });
               continue;
             }
-            const conflictAt = Date.parse(String(conflict.at_utc ?? ""));
+            const conflictAt = Date.parse(String(conflict.at_utc ?? conflict.utc ?? ""));
             // Upstreams normalize an HH:MM deadline to either :00 or :59. Only that
             // conventional pair is equivalent; other sub-minute differences are real conflicts.
             const seconds = new Set([conflictAt % 60_000, timestamp % 60_000]);
@@ -1606,7 +1616,7 @@ function reportDeadlineRefs(report: Partial<HealthReport>): HealthDeadlineRef[] 
     if (!item || typeof item !== "object") return null;
     const rec = item as unknown as Record<string, unknown>;
     const deadlineId = String(rec.deadline_id ?? rec.id ?? "").trim();
-    const atUtc = rec.at_utc;
+    const atUtc = rec.at_utc ?? rec.utc;
     const localDate = String(rec.local_date ?? "");
     if (!deadlineId) return null;
     const parsedLocalDate = asDate(localDate);
@@ -1730,6 +1740,13 @@ function healthSupersededValues(value: unknown): HealthSupersededValue[] {
       reason,
       superseded_at: supersededAt,
       superseded_by: supersededBy,
+      ...((rec.superseded_track ?? rec.supersededTrack ?? null) !== null
+        ? { superseded_track: String(rec.superseded_track ?? rec.supersededTrack) }
+        : {}),
+      ...((rec.superseded_round ?? rec.supersededRound ?? null) !== null &&
+      Number.isFinite(Number(rec.superseded_round ?? rec.supersededRound))
+        ? { superseded_round: Number(rec.superseded_round ?? rec.supersededRound) }
+        : {}),
     });
   }
   return parsed;
@@ -1740,6 +1757,8 @@ function healthSupersededValues(value: unknown): HealthSupersededValue[] {
  * 記録しているか。免責は (1) 旧値の完全一致、(2) superseded_by が台帳を持つ現行
  * slot 自身の family (venue/edition/kind/round) を指すこと、(3) 旧 slot と現行 slot
  * の kind/round 一致、(4) 訂正が lookback 内であること、をすべて要求する。
+ * track/round の改名・振り直しは boundSupersededCovers (旧 identity の明示束縛)
+ * で扱う。ここでは触らない。
  */
 function supersededCovers(
   previous: DeadlineSlot,
@@ -1747,7 +1766,22 @@ function supersededCovers(
   currentTime: number,
 ): boolean {
   if (previous.kind !== current.kind || previous.round !== current.round) return false;
-  return current.superseded_values.some((item) => {
+  return current.superseded_values.some((item) =>
+    supersededEntryCovers(item, previous, current, currentTime),
+  );
+}
+
+/**
+ * 台帳エントリ単体のカバレッジ判定 (時刻・対象・値)。track/round の新旧対応は
+ * 呼び出し側 (pair 経路の同一性・disappeared 経路の束縛) が担い、ここでは見ない。
+ */
+function supersededEntryCovers(
+  item: HealthSupersededValue,
+  previous: DeadlineSlot,
+  current: DeadlineSlot,
+  currentTime: number,
+): boolean {
+  {
     const supersededAt = Date.parse(item.superseded_at);
     if (
       !Number.isFinite(supersededAt) ||
@@ -1774,6 +1808,30 @@ function supersededCovers(
     }
     const at = Date.parse(item.value);
     return Number.isFinite(at) && at === previous.earliest_ms && at === previous.latest_ms;
+  }
+}
+
+/**
+ * 旧 identity の明示束縛による免責 (track 改名・round 振り直し用)。
+ * エントリの superseded_track/superseded_round が旧 slot の値を指名している
+ * ときだけ、値・時刻・対象の一致 (supersededEntryCovers) で免責する。
+ * 束縛なしエントリは何も免責しない — 無関係 track の免責は起きない (#722)。
+ */
+function boundSupersededCovers(
+  previous: DeadlineSlot,
+  candidate: DeadlineSlot,
+  currentTime: number,
+): boolean {
+  // supersededCovers と同じ kind 一致要件を維持する。これが無いと、ある kind の
+  // 台帳が round/track の値一致だけで無関係な別 kind の消失まで免責してしまう
+  // (#722 と同型のバグが kind 軸で再発する)。
+  if (previous.kind !== candidate.kind) return false;
+  return candidate.superseded_values.some((item) => {
+    if (item.superseded_track == null && item.superseded_round == null) return false;
+    const boundTrack = item.superseded_track ?? candidate.track;
+    const boundRound = item.superseded_round ?? candidate.round;
+    if (boundTrack !== previous.track || boundRound !== previous.round) return false;
+    return supersededEntryCovers(item, previous, candidate, currentTime);
   });
 }
 
@@ -1875,6 +1933,57 @@ function matchDeadlineSlots(
     if ((previousByTrackFree.get(key) ?? []).length !== 1) return;
     const candidates = (currentByTrackFree.get(key) ?? []).filter(
       (index) => !usedCurrent.has(index),
+    );
+    if (candidates.length !== 1) return;
+    const currentIndex = candidates[0];
+    usedPrevious.add(previousIndex);
+    usedCurrent.add(currentIndex);
+    currentUse.set(currentIndex, "exact");
+    pairs.push({ previous: slot, current: current[currentIndex] });
+  });
+
+  // round 振り直し (round のみに差がある同一締切) も同一締切として扱う —
+  // venue/year/kind/track と時刻が完全一致し、両側で候補が一意な場合に限る。
+  // 値が動いた場合は通常の検査 (authorizesEarlier 等) へ回す。ペア化は容認ではない。
+  // 異なる track 間の値一致はここでは扱わない (旧 track 束縛つき台帳が必要。#722)。
+  // 旧 round(= 対象の previous 自身の round)が current 側にまだ存在する場合は
+  // ここでペア化しない(振り直しではなく単に値が変わっただけの可能性がある)。
+  // これだけでは、対象とは別の未使用 previous が editionFreeKey で所有する current
+  // を横取りする余地が残るため、その保護は下の previousOwnedEditionFreeKeys で行う。
+  const currentRoundOccupied = new Set(current.map((slot) => editionFreeKey(slot)));
+  const roundFreeKey = (slot: DeadlineSlot): string =>
+    [slot.venue, slot.year, slot.kind, slot.track, slot.earliest_ms, slot.latest_ms].join("\0");
+  const currentByRoundFree = new Map<string, number[]>();
+  current.forEach((slot, index) => {
+    if (usedCurrent.has(index)) return;
+    const key = roundFreeKey(slot);
+    const list = currentByRoundFree.get(key) ?? [];
+    list.push(index);
+    currentByRoundFree.set(key, list);
+  });
+  const previousByRoundFree = new Map<string, number[]>();
+  previous.forEach((slot, index) => {
+    if (usedPrevious.has(index)) return;
+    const key = roundFreeKey(slot);
+    const list = previousByRoundFree.get(key) ?? [];
+    list.push(index);
+    previousByRoundFree.set(key, list);
+  });
+  // 未使用の previous が editionFreeKey で所有する current は、その所有者自身の
+  // (より厳密な) 値変化検査に委ねる。round-free ペア化がここで横取りすると、
+  // 所有者側の本物の精度後退・前倒しが検査に届かず見逃されてしまう。
+  const previousOwnedEditionFreeKeys = new Set(
+    previous.filter((_, index) => !usedPrevious.has(index)).map((slot) => editionFreeKey(slot)),
+  );
+  previous.forEach((slot, previousIndex) => {
+    if (usedPrevious.has(previousIndex)) return;
+    if (currentRoundOccupied.has(editionFreeKey(slot))) return;
+    const key = roundFreeKey(slot);
+    if ((previousByRoundFree.get(key) ?? []).length !== 1) return;
+    const candidates = (currentByRoundFree.get(key) ?? []).filter(
+      (index) =>
+        !usedCurrent.has(index) &&
+        !previousOwnedEditionFreeKeys.has(editionFreeKey(current[index])),
     );
     if (candidates.length !== 1) return;
     const currentIndex = candidates[0];
@@ -2180,12 +2289,10 @@ function semanticDeadlineRegressions(
         newGroups.slots.some(
           (candidate) =>
             (candidate.venue === slot.venue || migratedVenues.has(candidate.venue)) &&
-            // track も一致を要求する: supersededCovers 自体は superseded_by を
-            // venue/edition/kind/round までしか照合しないため、これがないと
-            // ある track の正当な訂正台帳が、値も一致する別 track の消失まで
-            // 免責してしまう (#722)。
-            candidate.track === slot.track &&
-            supersededCovers(slot, candidate, currentTime),
+            ((candidate.track === slot.track && supersededCovers(slot, candidate, currentTime)) ||
+              // track 改名・round 振り直しは旧 identity の明示束縛つき台帳でのみ免責する。
+              // 束縛なし台帳の無関係 track への波及はない (#722)。
+              boundSupersededCovers(slot, candidate, currentTime)),
         )
       )
         continue;

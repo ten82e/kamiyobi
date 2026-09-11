@@ -2294,6 +2294,80 @@ describe.skipIf(!hasData)("real data integration", () => {
     expect(Math.max(...jpHits.map((k) => scores[k] ?? 0))).toBeGreaterThan(scores.asap ?? 0);
   });
 
+  it("Japanese paper without keywords matches Japanese venues on title alone", () => {
+    const { top } = makeScript("分散システムにおける低遅延ミドルウェア", 12);
+    const scores = Object.fromEntries(top.map((t) => [t.key, t.score]));
+    const dps = top.find((t) => t.key === "ipsj-sigdps");
+    expect(dps).toBeTruthy();
+    expect(scores["ipsj-sigdps"]).toBeGreaterThanOrEqual(30);
+  });
+
+  it("scoreLine recognizes 3-letter conference acronyms in nameWords", () => {
+    const rows = loadRows();
+    const cgo = rows.find((r) => r.conf.key === "ieee-acm-cgo");
+    expect(cgo).toBeTruthy();
+    const lines = R.parsePaperLines(
+      "CGO 2026: Code Generation and Optimization for Heterogeneous Accelerators",
+    );
+    const b = R.breakdown(cgo, lines);
+    expect(b.perLine[0]?.details.name).toBeGreaterThan(0);
+  });
+
+  it("recommends xSIG and SCIS for Japanese system and security papers", () => {
+    const xsigRow = {
+      conf: {
+        key: "xsig",
+        title: "xSIG",
+        full_name:
+          "計算機システム・基盤・プログラミングに関する分野横断的ワークショップ (xSIG / cross-disciplinary Workshop on Computing Systems, Infrastructures, and Programming)",
+        acronym: "xSIG",
+        tags: ["domestic-jp", "workshop"],
+      },
+      cats: ["systems", "hpc"],
+      tags: ["domestic-jp", "workshop"],
+    };
+    const lines = R.parsePaperLines(
+      "計算機システムにおける省電力スケジューリングとプロセッサアーキテクチャ",
+    );
+    const b = R.breakdown(xsigRow, lines);
+    expect(b.score).toBeGreaterThanOrEqual(40);
+    expect(b.agg.jp).toBe(30);
+
+    const scisRow = {
+      conf: {
+        key: "ieice-scis",
+        title: "SCIS",
+        full_name: "暗号と情報セキュリティシンポジウム (SCIS)",
+        acronym: "SCIS",
+        tags: ["domestic-jp", "symposium"],
+      },
+      cats: ["security"],
+      tags: ["domestic-jp", "symposium"],
+    };
+    const scisLines = R.parsePaperLines("共通鍵暗号の安全性評価と代数攻撃に関する考察");
+    const bScis = R.breakdown(scisRow, scisLines);
+    expect(bScis.score).toBeGreaterThanOrEqual(40);
+    expect(bScis.agg.jp).toBe(30);
+  });
+
+  it("recommends SCAsia and HPCAsia for regional supercomputing queries", () => {
+    const scaRow = {
+      conf: {
+        key: "sc-asia",
+        title: "SCAsia",
+        full_name: "SupercomputingAsia",
+        acronym: "SCA",
+        tags: [],
+      },
+      cats: ["hpc"],
+      tags: [],
+    };
+    const lines = R.parsePaperLines("SupercomputingAsia: High Performance Computing Architectures");
+    const b = R.breakdown(scaRow, lines);
+    expect(b.score).toBeGreaterThanOrEqual(30);
+    expect(b.agg.name).toBeGreaterThan(0);
+  });
+
   it("paper mode pipeline: dedupes, past reps and journals included", () => {
     // 論文モード: 未来締切 + 未来の無い会議の過去代表 + 常時受付ジャーナルを網羅し、
     // 会議単位に集約してスコア降順で並ぶ（網羅性を優先する設計）

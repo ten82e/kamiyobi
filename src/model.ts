@@ -80,6 +80,10 @@ export interface SupersededDeadline {
   supersededBy: string;
   reason: "official-extension" | "precision-upgrade" | "duplicate-promotion" | "manual-resolution";
   supersededAt: string;
+  /** 旧 track (slot id 成分)。省略時は現行 row の track とみなす。空文字も有効。 */
+  superseded_track?: string;
+  /** 旧 round。省略時は現行 row の round とみなす。 */
+  superseded_round?: number;
 }
 
 export type EventDatePrecision =
@@ -2089,6 +2093,15 @@ export function supersededDeadlinesOf(value: unknown): SupersededDeadline[] {
               supersededBy,
               reason,
               supersededAt: new Date(Date.parse(supersededAt)).toISOString(),
+              // 旧 identity の明示束縛 (省略時は現行 row の値とみなす)。空文字も有効な
+              // 旧 track なので null/undefined でのみ省略判定する。
+              ...((item.superseded_track ?? item.supersededTrack ?? null) !== null
+                ? { superseded_track: String(item.superseded_track ?? item.supersededTrack) }
+                : {}),
+              ...((item.superseded_round ?? item.supersededRound ?? null) !== null &&
+              Number.isFinite(Number(item.superseded_round ?? item.supersededRound))
+                ? { superseded_round: Number(item.superseded_round ?? item.supersededRound) }
+                : {}),
             },
           ]
         : [];
