@@ -13,7 +13,10 @@ import {
   healthReport,
   toJson,
 } from "../src/build.ts";
-import { validateIdentityMigrationManifest } from "../src/identity-migration.ts";
+import {
+  identityMigrationManifestForData,
+  validateIdentityMigrationManifest,
+} from "../src/identity-migration.ts";
 import { mergeDeadlineSlots } from "../src/merge.ts";
 import { deadlinesOf as localDeadlines } from "../src/sources/local.ts";
 import { resolvePrimaryObservations } from "../src/sources/primary.ts";
@@ -1195,4 +1198,57 @@ it("waives a legacy-venue disappearance only through its migration target's scop
   ).toBe(true);
   // manifest なしでは venue 境界を越えず、従来どおり阻止する。
   expect(evaluateHealthGate(health([currentSlot]), previous).ok).toBe(false);
+});
+
+it("identityMigrationManifestForData handles exact deadlines formatted with at_utc", () => {
+  const data = {
+    legacy_key_redirects: { oldvenue: "newvenue" },
+    conferences: [
+      {
+        key: "newvenue",
+        editions: [
+          {
+            year: 2026,
+            id: "newvenue26",
+            deadlines: [
+              {
+                kind: "paper",
+                round: 1,
+                track: "",
+                label: "Paper Deadline",
+                precision: "exact",
+                at_utc: "2026-09-01T23:59:00.000Z",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  const manifest = identityMigrationManifestForData(data);
+  expect(manifest.migrations).toHaveLength(1);
+  expect(manifest.migrations[0].from.venue).toBe("oldvenue");
+  expect(manifest.migrations[0].to.venue).toBe("newvenue");
+  expect(manifest.migrations[0].action).toBe("rename");
+});
+
+it("evaluateHealthGate accepts baseline deadline_refs formatted with utc instead of at_utc", () => {
+  const current = health([
+    {
+      deadline_id: deadlineSlotId("venue", "venue26", "paper", 1, ""),
+      at_utc: "2026-09-01T23:59:00.000Z",
+      edition_year: 2026,
+    },
+  ]);
+  const previous = {
+    ...current,
+    deadline_refs: [
+      {
+        deadline_id: deadlineSlotId("venue", "venue26", "paper", 1, ""),
+        utc: "2026-09-01T23:59:00.000Z",
+        edition_year: 2026,
+      },
+    ],
+  };
+  expect(evaluateHealthGate(current, previous).ok).toBe(true);
 });

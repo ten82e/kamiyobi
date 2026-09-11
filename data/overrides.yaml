@@ -2030,3 +2030,21 @@ conferences:
     tags: [dormant, systems, virtual-execution]
   ipsn:
     tags: [merged, sensys, networking, iot]
+
+  # 根拠: https://dasfaa2027.github.io/dates/list.htm (2026-09-10 直接取得)
+  #   Main Conference: Full Paper Submission June 6, 2027 / Notification Aug 16 /
+  #   Camera Ready Sep 9 (全て 11:59PM AOE)。会期の日付は list.htm に記載なし。
+  #   上流 ccfddl がヘッダーの誤表記 (May 28-30, 2027) を会期として取り込み、
+  #   正しい 6/6 締切が sanitizeEditions (会期後締切の除去) で消えて health gate の
+  #   future deadline disappeared を起こした。会期が確定するまで event 日付を外す
+  #   (date_text も空にする。残すと fillEventFromDateText が会期を復元してしまう)。
+  #   さらに上流の paper 値 (2026-11-25) と公式値が衝突するため、公式の
+  #   Full Paper 締切で置換する (手入力 manual/extra と同値。表示不変)。
+  dasfaa:
+    editions:
+      2027:
+        date_text: ''
+        event_start: null
+        event_end: null
+        deadlines:
+          - {kind: paper, label: 'Full Paper Submission', date: '2027-06-06 23:59:00', tz: AoE}

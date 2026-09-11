@@ -817,6 +817,17 @@ function fillEdition(target: Edition, other: Edition): void {
   if (!target.date_text && other.date_text) target.date_text = other.date_text;
   if (!target.event_start && other.event_start) target.event_start = other.event_start;
   if (!target.event_end && other.event_end) target.event_end = other.event_end;
+  if (!target.event_date_precision && other.event_date_precision)
+    target.event_date_precision = other.event_date_precision;
+  if (
+    target.event_start &&
+    target.event_end &&
+    target.event_start.getTime() > target.event_end.getTime()
+  ) {
+    const tmp = target.event_start;
+    target.event_start = target.event_end;
+    target.event_end = tmp;
+  }
   const identity = mergeEditionIdentity([target.identity, other.identity]);
   if (identity) target.identity = identity;
 }

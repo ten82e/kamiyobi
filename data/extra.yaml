@@ -11,6 +11,90 @@
 conferences:
 
   # ------------------------------------------------------------------ HPC --
+  # 根拠: https://sc-asia.org/ (2026-09-08 取得)
+  #   「March 1-4, 2027 Singapore」
+  #   Deadlines: Workshop 2026-09-17 AoE, Tutorial 2026-09-30 AoE, Workshop Paper 2026-11-24 AoE
+  - key: sc-asia
+    title: SCAsia
+    full_name: SupercomputingAsia
+    link: https://sc-asia.org/
+    categories: [hpc]
+    editions:
+      - year: 2027
+        id: sca27
+        link: https://sc-asia.org/
+        place: Singapore
+        date_text: March 1-4, 2027
+        event_start: '2027-03-01'
+        event_end: '2027-03-04'
+        deadlines:
+          - label: Workshop Proposals Deadline
+            date: '2026-09-17 23:59:00'
+            tz: AoE
+            kind: workshop
+          - label: Tutorial Proposals Deadline
+            date: '2026-09-30 23:59:00'
+            tz: AoE
+            kind: tutorial
+          - label: Workshop Paper Deadline
+            date: '2026-11-24 23:59:00'
+            tz: AoE
+            kind: paper
+          - label: Workshop Paper Notification of Acceptance
+            date: '2026-12-08 23:59:00'
+            tz: AoE
+            kind: notification
+          - label: Camera-ready Paper Deadline (Workshops)
+            date: '2026-12-20 23:59:00'
+            tz: AoE
+            kind: camera_ready
+          - label: 1st Round Poster Submission
+            date: '2026-11-30 23:59:00'
+            tz: AoE
+            kind: poster
+          - label: 2nd Round Poster Submission
+            date: '2027-01-15 23:59:00'
+            tz: AoE
+            kind: poster
+
+  # 根拠: https://hpcasia2027.org/ (2026-09-08 取得)
+  #   「Feb 17-19, 2027 Yonsei University, Seoul, South Korea」
+  #   Deadlines: Paper 2026-09-13 AoE, Workshop 2026-09-30 AoE, Tutorial 2026-09-30 AoE
+  - key: hpc-asia
+    title: HPC Asia
+    full_name: International Conference on High Performance Computing in Asia-Pacific Region
+    link: https://hpcasia2027.org/
+    categories: [hpc]
+    editions:
+      - year: 2027
+        id: hpcasia27
+        link: https://hpcasia2027.org/
+        place: Yonsei University, Seoul, South Korea
+        date_text: February 17-19, 2027
+        event_start: '2027-02-17'
+        event_end: '2027-02-19'
+        deadlines:
+          - label: Paper Submission Deadline
+            date: '2026-09-13 23:59:00'
+            tz: AoE
+            kind: paper
+          - label: Workshop Proposal Deadline
+            date: '2026-09-30 23:59:00'
+            tz: AoE
+            kind: workshop
+          - label: Tutorial Proposal Deadline
+            date: '2026-09-30 23:59:00'
+            tz: AoE
+            kind: tutorial
+          - label: 1st Round Poster Submission
+            date: '2026-11-29 23:59:00'
+            tz: AoE
+            kind: poster
+          - label: 2nd Round Poster Submission
+            date: '2026-12-27 23:59:00'
+            tz: AoE
+            kind: poster
+
   # 根拠: https://isc-hpc.com/ (2026-08-09 取得)
   #   「JUNE 7-11, 2027 HAMBURG, GERMANY」
   #   ISC 2026 の締切は同ページに Abstract 2025-12-12 / Full paper 2025-12-19 と
@@ -3430,6 +3514,70 @@ conferences:
         place: Japan
         date_text: 'October 2026'
         deadlines: []
+
+  # 根拠: https://www.iwsec.org/scis/2026/
+  - key: ieice-scis
+    title: SCIS
+    full_name: 暗号と情報セキュリティシンポジウム (SCIS)
+    link: https://www.iwsec.org/scis/2026/
+    categories: [security]
+    tags: [domestic-jp, symposium]
+    editions:
+      - year: 2026
+        id: scis2026
+        link: https://www.iwsec.org/scis/2026/
+        place: 北海道函館市 函館アリーナ
+        date_text: 2026年1月26日-30日
+        event_start: '2026-01-26'
+        event_end: '2026-01-30'
+        deadlines:
+          - date: '2025-12-01 12:00:00'
+            id: scis2026-entry
+            kind: abstract
+            label: 講演申込締切
+            comment: 講演新規申込
+            tz: UTC+9
+          - date: '2025-12-16 10:00:00'
+            id: scis2026-paper
+            kind: paper
+            label: 講演原稿締切
+            comment: 講演原稿提出
+            tz: UTC+9
+
+  # 根拠: https://xsig.ipsj.or.jp/2026/
+  - key: xsig
+    title: xSIG
+    full_name: 計算機システム・基盤・プログラミングに関する分野横断的ワークショップ (xSIG / cross-disciplinary Workshop on Computing Systems, Infrastructures, and Programming)
+    link: https://xsig.ipsj.or.jp/2026/
+    categories: [systems, hpc]
+    tags: [domestic-jp, workshop]
+    editions:
+      - year: 2026
+        id: xsig2026
+        link: https://xsig.ipsj.or.jp/2026/
+        place: 岐阜県高山市 飛騨・世界生活文化センター
+        date_text: 2026年8月5日 (SWoPP 2026内)
+        event_start: '2026-08-05'
+        event_end: '2026-08-05'
+        deadlines:
+          - date: '2026-03-17 17:00:00'
+            id: xsig2026-abstract
+            kind: abstract
+            label: 論文登録締切
+            comment: 論文登録〆切
+            tz: UTC+9
+          - date: '2026-03-24 17:00:00'
+            id: xsig2026-paper
+            kind: paper
+            label: 論文原稿締切
+            comment: 論文アップロード〆切
+            tz: UTC+9
+          - date: '2026-06-29 17:00:00'
+            id: xsig2026-poster
+            kind: poster
+            label: ポスター締切
+            comment: ポスター投稿〆切
+            tz: UTC+9
 
   # 根拠: https://www.wiss.org/
   - key: ipsj-wiss
