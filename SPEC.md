@@ -610,13 +610,22 @@ node --experimental-strip-types src/cli.ts evidence [verify|gc] [--dry-run]
 正典の supersession 訂正が lookback 内にある締切は過去日でも ref に残し、
 `superseded_values`（旧値・精度・reason・訂正時刻・訂正先 slot id）を添える。
 track キーはラベル由来で変動するため、venue/年/kind/round と時刻が完全一致し
-両側で一意な track 改名は同一締切として対応付ける。track と値が同時に変わる遷移は
-対応付けず、従来どおり fail-closed である。
+両側で一意な track 改名は同一締切として対応付ける。同様に、venue/年/kind/track と
+時刻が完全一致し両側で一意、かつ旧 round が現行データで完全に空席（振り直し先以外に
+その round を名乗る slot が無い）な round 振り直しも同一締切として対応付ける。
+track と値が同時に変わる遷移、および旧 round がまだ他 slot に占有されている
+（=振り直しではなく単に値が変わっただけの可能性がある）遷移は対応付けず、
+従来どおり fail-closed である。
 正典（manual.yaml / curated.generated.yaml）の `superseded_deadlines` は公式訂正の
 台帳であり、消えた旧 slot・前倒し・精度後退が台帳の旧値と完全一致する場合だけ
 配信阻止を免責する。免責は (1) 台帳を持つ現行 slot 自身の family
 （venue/edition/kind/round）を `supersededBy` が指すこと、(2) 旧 slot と現行 slot の
-kind/round 一致、(3) 訂正時刻が lookback（14 日）内であること、を全て要求する。
+kind 一致、(3) 訂正時刻が lookback（14 日）内であること、を全て要求する。
+round・track の一致も要求するが、台帳エントリが `superseded_track`/`superseded_round`
+で旧 identity を明示的に指名し、その束縛が実際の旧 slot の track/round と一致する
+場合に限り、この round/track 一致要件を免除する（正当な track 改名・round 振り直しの
+訂正を記録する経路。kind 一致は束縛の有無によらず常に必須）。束縛のないエントリは
+round/track の異なる消失を一切免責しない。
 上流アグリゲータ（ccfddl / aideadlines）の `superseded_deadlines` は取り込まない
 （gate の自己免責注入を防ぐ）。
 `identity_migrations` は旧 slot から現行 slot への明示的な写像であり、`rename` と
