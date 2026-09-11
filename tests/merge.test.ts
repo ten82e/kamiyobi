@@ -3179,4 +3179,50 @@ describe("conferencesFromJson & defensive merge operations", () => {
     expect(out[0].tags).toEqual(["niche"]);
     expect(out[0].categories).toEqual(["security"]);
   });
+
+  it("fillEdition propagates event_date_precision and normalizes reversed event start/end dates", () => {
+    const primary = makeConference({
+      key: "conf-a",
+      title: "Conf A",
+      dblp: "conf/conf-a",
+      sources: ["local"],
+      editions: [
+        makeEdition({
+          year: 2026,
+          edition_id: "conf-a26",
+          source: "local",
+          event_start: new Date("2026-10-20T00:00:00Z"),
+          event_end: null,
+          event_date_precision: undefined,
+          identity: { officialUrls: ["https://example.org/conf26"] },
+          deadlines: [],
+        }),
+      ],
+    });
+    const secondary = makeConference({
+      key: "conf-a",
+      title: "Conf A",
+      dblp: "conf/conf-a",
+      sources: ["aideadlines"],
+      editions: [
+        makeEdition({
+          year: 2026,
+          edition_id: "conf-a26",
+          source: "aideadlines",
+          event_start: null,
+          event_end: new Date("2026-10-15T00:00:00Z"),
+          event_date_precision: "single-day",
+          identity: { officialUrls: ["https://example.org/conf26"] },
+          deadlines: [],
+        }),
+      ],
+    });
+    const [merged] = mergeSources([[primary], [secondary]], PRIORITY);
+    expect(merged.editions).toHaveLength(1);
+    const ed = merged.editions[0];
+    expect(ed.event_date_precision).toBe("single-day");
+    expect(ed.event_start!.getTime()).toBeLessThanOrEqual(ed.event_end!.getTime());
+    expect(ed.event_start!.toISOString().slice(0, 10)).toBe("2026-10-15");
+    expect(ed.event_end!.toISOString().slice(0, 10)).toBe("2026-10-20");
+  });
 });

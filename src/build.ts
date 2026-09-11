@@ -1423,7 +1423,7 @@ export function healthReport(
               });
               continue;
             }
-            const conflictAt = Date.parse(String(conflict.at_utc ?? ""));
+            const conflictAt = Date.parse(String(conflict.at_utc ?? conflict.utc ?? ""));
             // Upstreams normalize an HH:MM deadline to either :00 or :59. Only that
             // conventional pair is equivalent; other sub-minute differences are real conflicts.
             const seconds = new Set([conflictAt % 60_000, timestamp % 60_000]);
@@ -1606,7 +1606,7 @@ function reportDeadlineRefs(report: Partial<HealthReport>): HealthDeadlineRef[] 
     if (!item || typeof item !== "object") return null;
     const rec = item as unknown as Record<string, unknown>;
     const deadlineId = String(rec.deadline_id ?? rec.id ?? "").trim();
-    const atUtc = rec.at_utc;
+    const atUtc = rec.at_utc ?? rec.utc;
     const localDate = String(rec.local_date ?? "");
     if (!deadlineId) return null;
     const parsedLocalDate = asDate(localDate);

@@ -194,6 +194,8 @@ interface JsonDeadline {
   local_date?: string;
   utc?: string | null;
   at_utc?: string | null;
+  earliest_utc?: string | null;
+  latest_utc?: string | null;
   aoe?: string | null;
   tz_raw?: string | null;
   verification?: Partial<VerificationState>;
@@ -1149,7 +1151,7 @@ function nextCheck(
 ): string {
   const scheduled =
     computeNextCheckAt(deadlineCutoff(deadline), now) ??
-    previous ??
+    (previous && Number.isFinite(Date.parse(previous)) ? previous : undefined) ??
     new Date(now.getTime() + DAY_MS).toISOString();
   const retryAt = retryAfterAt(retryAfter, now);
   return new Date(Math.max(Date.parse(scheduled), retryAt ?? 0)).toISOString();
@@ -1549,7 +1551,20 @@ function sameDeadlineValue(deadline: JsonDeadline, candidate: ExtractedDeadlineF
     return Boolean(wall) && candidate.date === wall;
   }
   const at = parseInstant(`${candidate.date} ${candidate.time}`, candidate.timezone);
-  return Boolean(at && expected && at.getTime() === Date.parse(expected));
+  if (!at || !expected) return false;
+  const expectedMs = Date.parse(expected);
+  if (!Number.isFinite(expectedMs)) return false;
+  if (at.getTime() === expectedMs) return true;
+  // Upstreams and official pages normalize an HH:MM deadline to either :00 or :59.
+  // When within the same minute with :00 vs :59, they are equivalent.
+  const atMs = at.getTime();
+  const seconds = new Set([atMs % 60_000, expectedMs % 60_000]);
+  return (
+    Math.floor(atMs / 60_000) === Math.floor(expectedMs / 60_000) &&
+    seconds.size === 2 &&
+    seconds.has(0) &&
+    seconds.has(59_000)
+  );
 }
 
 function matchingCandidate(
@@ -1606,6 +1621,21 @@ function isCompatibleRoundTrack(trackA: string, trackB: string): boolean {
 const CHANGE_LANGUAGE =
   /\b(?:extend(?:ed|s)?|extension|updated?|revised?|postponed?|moved|rescheduled|new deadline|now due)\b/i;
 
+function deadlineComparableMs(deadline: JsonDeadline): number | null {
+  const raw = deadline.utc ?? deadline.at_utc;
+  if (raw) {
+    const ms = Date.parse(String(raw));
+    if (Number.isFinite(ms)) return ms;
+  }
+  const bound =
+    deadline.latest_utc ??
+    (deadline.local_date
+      ? dateOnlyWindow(deadline.local_date)?.latestPossibleUtc.toISOString()
+      : null);
+  const ms = Date.parse(String(bound ?? deadline.local_date ?? ""));
+  return Number.isFinite(ms) ? ms : null;
+}
+
 /** 値一致があっても verified を拒否すべき状況の検査 (すべて誤 verified 方向の安全弁)。 */
 function verifyBlocked(
   target: VerificationTarget,
@@ -1646,10 +1676,8 @@ function verifyBlocked(
   }
   // (3) 同 kind の兄弟スロット間で round の順序と保存値の時系列が食い違う場合、
   //     データ側の取り違えの疑いがあり、値照合だけでは正しさを保証できない。
-  const targetMs = Date.parse(
-    String(target.deadline.utc ?? target.deadline.at_utc ?? target.deadline.local_date ?? ""),
-  );
-  if (Number.isFinite(targetMs)) {
+  const targetMs = deadlineComparableMs(target.deadline);
+  if (targetMs !== null) {
     for (const sibling of siblings) {
       if (String(sibling.kind ?? "other") !== target.kind) continue;
       const siblingTrack = deadlineTrackKey(
@@ -1660,10 +1688,8 @@ function verifyBlocked(
       if (!isCompatibleRoundTrack(siblingTrack, target.track)) continue;
       const siblingRound = Number(sibling.round ?? 1) || 1;
       if (siblingRound === target.round) continue;
-      const siblingMs = Date.parse(
-        String(sibling.utc ?? sibling.at_utc ?? sibling.local_date ?? ""),
-      );
-      if (!Number.isFinite(siblingMs)) continue;
+      const siblingMs = deadlineComparableMs(sibling);
+      if (siblingMs === null) continue;
       if (siblingRound > target.round && siblingMs < targetMs) return true;
       if (siblingRound < target.round && siblingMs > targetMs) return true;
     }

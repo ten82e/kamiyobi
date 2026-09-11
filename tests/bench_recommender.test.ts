@@ -26,14 +26,14 @@ describe("data-delta recommendation benchmark", () => {
     const result = runDataDeltaBenchmark(fixture);
     expect(result).toMatchObject({
       case_count: 63,
-      recall_at_1: 0.619048,
-      recall_at_5: 0.698413,
-      mrr: 0.644709,
-      abstention_rate: 0.111111,
+      recall_at_1: 0.68254,
+      recall_at_5: 0.714286,
+      mrr: 0.693651,
+      abstention_rate: 0.095238,
       expected_venues_dropped: [],
     });
-    expect(result.ndcg_at_10).toBeCloseTo(0.657912, 6);
-    expect(result.changed_top5).toHaveLength(55);
+    expect(result.ndcg_at_10).toBeCloseTo(0.698695, 6);
+    expect(result.changed_top5).toHaveLength(56);
     expect(result.changed_top5).toContain("case-01-hpc-en");
     expect(result.new_venues_in_top5).toContain("ieice-fundamentals-discrete-math-special");
   });

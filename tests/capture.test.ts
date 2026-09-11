@@ -173,4 +173,30 @@ describe("capturePage resource cleanup and error mapping", () => {
       ),
     ).toThrow(/content-addressed body mismatch/);
   });
+
+  it("preserves cached contentLength on 304 Not Modified", async () => {
+    const mockFetch: typeof fetch = async () => new Response(null, { status: 304 });
+    const res = await capturePage("https://example.com/cached", {
+      fetchImpl: mockFetch,
+      previous: {
+        contentLength: 4242,
+        contentHash: "abcdef",
+        bodyRef: "test.body",
+      },
+    });
+    expect(res.notModified).toBe(true);
+    expect(res.contentLength).toBe(4242);
+    expect(res.contentHash).toBe("abcdef");
+    expect(res.bodyRef).toBe("test.body");
+  });
+
+  it("throws clear network error when redirect response lacks Location header", async () => {
+    const mockFetch: typeof fetch = async () => new Response(null, { status: 302 });
+    await expect(
+      capturePage("https://example.com/bad-redirect", { fetchImpl: mockFetch }),
+    ).rejects.toMatchObject({
+      code: "network",
+      message: expect.stringContaining("missing Location header"),
+    });
+  });
 });

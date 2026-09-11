@@ -1897,3 +1897,20 @@ it("deadlineEvidence keeps snake_case verified_fields and provenance (#772)", ()
     verifiedAt: "2026-08-01T00:00:00.000Z",
   });
 });
+
+it("aideadlines editionOf normalizes inverted event start/end dates so start <= end", () => {
+  const ed = editionOf(
+    {
+      year: 2026,
+      start: "2026-10-25",
+      end: "2026-10-20",
+    },
+    "demo",
+  );
+  expect(ed).not.toBeNull();
+  expect(ed!.event_start).not.toBeNull();
+  expect(ed!.event_end).not.toBeNull();
+  expect(ed!.event_start!.getTime()).toBeLessThanOrEqual(ed!.event_end!.getTime());
+  expect(ed!.event_start!.toISOString().slice(0, 10)).toBe("2026-10-20");
+  expect(ed!.event_end!.toISOString().slice(0, 10)).toBe("2026-10-25");
+});

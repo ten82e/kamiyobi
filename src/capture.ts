@@ -423,7 +423,14 @@ export async function capturePage(
     }
     if (response.status === 304 || response.status < 300 || response.status >= 400) break;
     const location = response.headers.get("location");
-    if (!location || redirect === maxRedirects) {
+    if (!location) {
+      await cancelBody(response, signal);
+      throw new PageCaptureError(
+        "network",
+        `redirect response ${response.status} missing Location header`,
+      );
+    }
+    if (redirect === maxRedirects) {
       await cancelBody(response, signal);
       throw new PageCaptureError("network", `redirect chain exceeded ${maxRedirects} hops`);
     }
@@ -475,7 +482,9 @@ export async function capturePage(
     status: response.status,
     retrievedAt: now.toISOString(),
     contentType,
-    contentLength: bytes.byteLength,
+    contentLength: notModified
+      ? (options.previous?.contentLength ?? bytes.byteLength)
+      : bytes.byteLength,
     headers,
     contentHash,
     sourceRevision,

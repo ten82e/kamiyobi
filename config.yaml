@@ -101,6 +101,7 @@ taxonomy:
       - ccgrid        # Cluster, Cloud and Internet Computing
       - cluster       # IEEE Cluster
       - euro-par      # Euro-Par
+      - hpc-asia      # International Conference on High Performance Computing in Asia-Pacific Region
       - hpcc          # High Performance Computing and Communications
       - hpdc          # High-Performance Parallel and Distributed Computing
       - ica3pp        # Algorithms and Architectures for Parallel Processing
@@ -108,12 +109,15 @@ taxonomy:
       - icpp          # International Conference on Parallel Processing
       - ics           # ACM International Conference on Supercomputing
       - ipdps         # IEEE IPDPS
+      - ipsj-sighpc   # 情報処理学会 ハイパフォーマンスコンピューティング研究会 (SIGHPC)
       - ispa          # Parallel and Distributed Processing with Applications
       - pact          # Parallel Architectures and Compilation Techniques
       - pdcat         # Parallel and Distributed Computing, Applications, Technologies
       - ppopp         # Principles and Practice of Parallel Programming
       - sc            # SC (Supercomputing)
+      - sc-asia       # SupercomputingAsia (SCA)
       - spaa          # Parallelism in Algorithms and Architectures
+      - xsig          # cross-disciplinary Workshop on Computing Systems, Infrastructures, and Programming
 
   # ---- Networking ---------------------------------------------------------
   # 上流 SC(セキュリティ)配下でも、計測・運用管理を主題にする会議は
@@ -181,9 +185,12 @@ taxonomy:
       - systor
       - vee           # Virtual Execution Environments
       - ieice-cpsy    # 電子情報通信学会 コンピュータシステム研究会 (CPSY)
-      - ipsj-sigpro   # 情報処理学会 プログラミング研究会 (PRO)
+      - ipsj-sigarc   # 情報処理学会 システム・アーキテクチャ研究会 (SIGARC)
       - ipsj-sigemb   # 情報処理学会 組込みシステム研究会 (EMB)
+      - ipsj-sigos    # 情報処理学会 システムソフトウェアとオペレーティング・システム研究会 (SIGOS)
+      - ipsj-sigpro   # 情報処理学会 プログラミング研究会 (PRO)
       - ipsj-sigse    # 情報処理学会 ソフトウェア工学研究会 (SE)
+      - xsig          # cross-disciplinary Workshop on Computing Systems, Infrastructures, and Programming
 
   # ---- AI -----------------------------------------------------------------
   ai:
@@ -204,8 +211,9 @@ taxonomy:
     ccfddl_subs: [SC]
     venues:
       - aft            # Advances in Financial Technologies (上流 MX)
-      - ieice-isec     # 電子情報通信学会 情報セキュリティ研究会 (ISEC)
       - ieice-cys      # 電子情報通信学会 サイバーセキュリティ研究会 (CyS)
+      - ieice-isec     # 電子情報通信学会 情報セキュリティ研究会 (ISEC)
+      - ieice-scis     # 暗号と情報セキュリティシンポジウム (SCIS)
       - ipsj-css       # 情報処理学会 コンピュータセキュリティシンポジウム (CSS)
       - ipsj-sigsec    # 情報処理学会 コンピュータセキュリティ研究会 (CSEC)
 
