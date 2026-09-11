@@ -1,8 +1,17 @@
 {
-  "observed_at": "2026-09-05T22:05:09Z",
-  "parse_warning_count": 0,
-  "warning_codes": {},
-  "warning_identities": [],
+  "observed_at": "2026-09-09T16:29:56Z",
+  "parse_warning_count": 1,
+  "warning_codes": {
+    "PRIMARY_OUTSIDE_EDITION_WINDOW": {
+      "count": 1,
+      "messages": [
+        "primary[geoindustry-2026/2026]: quarantined 1 observation(s) (deadline falls outside edition window)"
+      ]
+    }
+  },
+  "warning_identities": [
+    "PRIMARY_OUTSIDE_EDITION_WINDOW\u0000unknown\u0000\u0000\u0000primary\u0000primary[geoindustry-#/#]: quarantined # observation(s) (deadline falls outside edition window)"
+  ],
   "identity_conflicts": {
     "venue": 0,
     "edition": 0,

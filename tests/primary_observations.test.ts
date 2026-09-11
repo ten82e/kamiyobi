@@ -179,6 +179,52 @@ describe("resolvePrimaryObservations (#504 acceptance)", () => {
     expect("deadlines" in resolvedEditions(resolved, "bounded")[2027]).toBe(false);
   });
 
+  it("quarantines date-only paper deadlines on or after the event start day", () => {
+    // geoindustry-2026: 一次抽出が会期日 (Workshop day November 3) を paper 締切と
+    // 誤認し、手入力の exact 値 (9/4 AoE) と衝突して health gate を block した。
+    // 日付のみ観測の会期初日以降は会期日の誤認として quarantined。
+    // Sept 4 の exact 正値は残る。
+    const warnSpy = spyWarn();
+    try {
+      const primary = {
+        conferences: {
+          geoish: {
+            editions: {
+              2026: {
+                event_start: "2026-11-03",
+                event_end: "2026-11-03",
+                deadlines: [
+                  { kind: "paper", label: "Paper submission", date: "2026-11-03" },
+                  { kind: "paper", label: "Paper submission", date: "2026-09-04 23:59", tz: "AoE" },
+                ],
+              },
+            },
+          },
+        },
+      };
+      const resolved = resolvePrimaryObservations(primary, { primary: { max_lead_days: 500 } });
+      const deadlines = resolvedEditions(resolved, "geoish")[2026].deadlines as
+        | Array<{ date?: unknown }>
+        | undefined;
+      expect(deadlines).toHaveLength(1);
+      expect(String(deadlines?.[0]?.date)).toContain("2026-09-04");
+      // timezone は無関係 (tz: AoE は confirmed) なので outside-window 側の件数に
+      // 計上されなければならない。unverifiable (timezone) 側に誤って計上されると
+      // health gate baseline が誤った warning code (PRIMARY_TIMEZONE_UNCONFIRMED)
+      // を記録してしまう (実際に geoindustry-2026 で発生した)。
+      const messages = warnSpy.mock.calls.map((call: unknown[]) => String(call[0]));
+      expect(
+        messages.some((m: string) =>
+          m.includes(
+            "primary[geoish/2026]: kept 1/2 observation(s), quarantined 1 outside-window / 0 unverifiable",
+          ),
+        ),
+      ).toBe(true);
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
   it("uses event dates already known by the merged edition", () => {
     const known = [
       makeConference({

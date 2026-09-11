@@ -173,6 +173,15 @@ export function resolveObservation(
     (start !== null &&
       end !== null &&
       (day.getTime() > end.getTime() || day.getTime() < start.getTime() - maxLeadDays * DAY_MS)) ||
+    // 投稿締切 (paper/abstract) の日付のみ観測が会期初日以降なのは、会期日の誤認で
+    // ある可能性が極めて高い (テキスト窓抽出が "Workshop day November 3" のような
+    // 会期日を締切と誤認する。geoindustry-2026 の health gate block)。
+    // 時刻付き (exact) の観測は証拠が強いので従来通り受け入れる。
+    // 会期不明時は何もしない。
+    ((row.kind === "paper" || row.kind === "abstract") &&
+      !row.time &&
+      start !== null &&
+      day.getTime() >= start.getTime()) ||
     (start === null &&
       Number.isFinite(editionYear) &&
       ![editionYear - 1, editionYear].includes(editionYearOf(row.date)))
@@ -256,6 +265,16 @@ export function resolvePrimaryObservations(
         if (done !== null) {
           resolved.push(done);
         } else if (row.time && resolveTzStatus(row.tzRaw).status === "confirmed") {
+          outsideWindow += 1;
+        } else if (
+          // 会期初日以降の日付のみ投稿締切棄却(resolveObservation 参照)は
+          // timezone とは無関係なので、そちらの警告バケツに落ちないよう
+          // outsideWindow 側に分類する。
+          (row.kind === "paper" || row.kind === "abstract") &&
+          !row.time &&
+          (eventStart ?? eventEnd) !== null &&
+          (asDate(row.date)?.getTime() ?? -Infinity) >= (eventStart ?? eventEnd)!.getTime()
+        ) {
           outsideWindow += 1;
         } else {
           ambiguous += 1;
