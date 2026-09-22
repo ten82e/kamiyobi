@@ -1528,7 +1528,9 @@ describe("score labels and transient UI state", () => {
     expect(template).not.toContain("strong candidate");
     expect(template).toContain("過去掲載先一致");
     expect(template).toContain("r._boosted = false;");
-    expect(template).toContain("return (ar === br ? 0 : ar > br ? 1 : -1) * mult;");
+    expect(template).toContain("const cmp = ar === br ? 0 : ar > br ? 1 : -1;");
+    // 同じランクの塊の中は締切の近い順（同じ評価の行がデータ源順でバラバラにならない）。
+    expect(template).toContain("compareDeadlineRows(a, b) * mult");
     expect(template).toContain('const PDFJS_VERSION = "3.11.174";');
     expect(template).toContain("const PDF_PAGE_LIMIT = 3;");
     expect(template).toContain("const PDF_MAX_BYTES = 20 * 1024 * 1024;");

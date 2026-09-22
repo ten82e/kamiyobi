@@ -682,6 +682,33 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   // タイトル + 開催年。タイトルが既にその年で終わっていれば年を二重に付けない。
+  /* 表の会議名列に実際に出る語。並び順はこの語を使う（素の `conf.title` で並べると、
+   * タイトル欠落の行 — 表示は `ieice-nolta-2027` のような語 — が空文字で先頭に集まり、
+   * 「勝手に並ぶ」ように見える。セルの書き換えとSortingが別文字列を持つのが原因）。 */
+  /* 同じ締切時刻の行は、そのままではデータ源の順で並ぶ。既定画面 477 行のうち 303 行が
+   * 別の行と同じ締切時刻を持ち（同値グループは最大 17 行）、同じ日の内側がバラバラな
+   * ままだった。締切時刻 → 表に出る会議名（五十音順）→ 種別（種別セレクトと同じ順）の
+   * 順でタイを割り、同じ日に並んだ行を上から読めるようにする。
+   * 日本語名は `"ja"` collation を使う（漢字は読み基準の五十音順になる。実測で
+   * 航空(か) → 情報(ざ) → 電子(た) と並ぶ。カタカナ語は漢字語より前に出る）。
+   * 日付だけ_unknown_の行（175 件）は JST 00:00 相当なので、同じ日内では先に並ぶ。 */
+  function compareDeadlineRows(a: AppRow, b: AppRow): number {
+    if (a.t !== b.t) return a.t < b.t ? -1 : 1;
+    const cmp = conferenceNameCell(a).localeCompare(conferenceNameCell(b), "ja");
+    if (cmp) return cmp;
+    return kindSortIndex(a.kind) - kindSortIndex(b.kind);
+  }
+
+  /** 種別の並び順（種別セレクトに並べる順と共通。書き写さない）。 */
+  function kindSortIndex(kind: string): number {
+    const at = SELECTABLE_KINDS.indexOf(kind);
+    return at < 0 ? SELECTABLE_KINDS.length : at;
+  }
+
+  function conferenceNameCell(r: AppRow): string {
+    return titleWithYear(r.conf.title || r.conf.key || "", r.ed.year);
+  }
+
   function titleWithYear(title: string | undefined, year: number | null | undefined) {
     const t = String(title || "").trim();
     if (!t) return "";
@@ -1530,8 +1557,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         ? [{ title: pText, keywords: "", venue: "" }]
         : [];
 
-    // 分野: 手動チップがあればそれで絞る。論文モードでチップが空なら絞らない
-    // （スコア順ソートで自然に候補が上位に来る）。
+    // 分野: 手動チップがあればそれで絞る。論文モードではチップ自体を見せていない
+    // （`.field.deadline-only` で非表示）ので、ここで絞る必要は無い。
     const cats = state.cats;
     // 掲載先タグの属するカテゴリ（例: RTSS タグ → systems）。同カテゴリの会議を僅かにブースト
     const autoCats = pLines.length && Rec ? Rec.autoDetectCats(pLines) : [];
@@ -1549,8 +1576,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       pool = rows.concat(Rec.journalRows(activeData.conferences, now));
     }
 
-    // 推薦モード（論文入力あり）では締切画面用の検索/種別/ランク/期間/推定/過去フィルタを
-    // 適用しない（手動指定の分野・国内フィルタは反映）。pool は既に未来締切+常時受付+過去代表行で構成済み。
+    // 推薦モード（論文入力あり）では締切画面用の絞り込みを一切適用しない。
+    // 検索・種別・ランク・期間・推定・過去に加え、分野チップ・国内・オンラインも
+    // このモードでは非表示なので適用しない（効かない制御を残さない）。
+    // 分野は絞らず `venueCats` によるスコアの寄せにだけ使う。
+    // pool は既に未来締切 + 常時受付ジャーナル + 過去代表行で構成済み。
     const inRecommend = state.mode === "recommend" && pLines.length > 0;
 
     // 分野だけを覗いた述語。分野チップの件数は「他の条件を通った行」を数えるため、
@@ -1679,13 +1709,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       }
       const mult = sortAsc ? 1 : -1;
       if (sortKey === "conf") {
-        return (a.conf.title || "").localeCompare(b.conf.title || "") * mult;
+        // 会議名順は表に出る語で並べ、同じ名前の複数版（年違い）は締切時刻でそろえる。
+        // ロケールを明示しないと、閲覧者の UI ロケールで日本語の並びが変わる
+        // （実測: 既定＝自環境ロケールでは en/de と ja で「航空/情報」の順が入れ替わった）。
+        // `"ja"` は漢字を読み（音読み）の五十音順に並べる collation。読み辞書を持たない
+        // のでカタカナ語は漢字語より前の段に出る（異スクリプト間の段差は越えられない）。
+        const cmp = conferenceNameCell(a).localeCompare(conferenceNameCell(b), "ja");
+        return cmp ? cmp * mult : (a.t - b.t) * mult;
       } else if (sortKey === "rank") {
         const ar = a.rankPairs[0] || "";
         const br = b.rankPairs[0] || "";
-        return (ar === br ? 0 : ar > br ? 1 : -1) * mult;
+        const cmp = ar === br ? 0 : ar > br ? 1 : -1;
+        // ランクが同じ行は締切の近い順（同じ評価の塊の中を読める順にする）。
+        return cmp ? cmp * mult : compareDeadlineRows(a, b) * mult;
       }
-      return (a.t - b.t) * mult;
+      return compareDeadlineRows(a, b) * mult;
     });
 
     return out;
@@ -2027,7 +2065,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const c2 = td(tr, "会議");
     const head = document.createElement("div");
     head.className = "conf";
-    const name = titleWithYear(r.conf.title || r.conf.key || "", r.ed.year);
+    const name = conferenceNameCell(r);
     const href = safeExternalUrl(r.ed.link || r.conf.link);
     if (href) {
       const a = document.createElement("a");

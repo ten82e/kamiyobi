@@ -2450,9 +2450,27 @@ const SEARCH_CANON = (() => {
     ].map((name) => jsFunction(rec, name)),
   ];
 })();
+/* 並び順の比較は表の実装そのものを注入する。SORT はセルに出る語（`conferenceNameCell`）で
+ * 決まるので、スタブにすると「見ていない語で並ぶ」欠けを検査できない。 */
+const SORT_CANON = (() => {
+  const app = siteRuntime();
+  const consts = [/const SELECTABLE_KINDS = [^\n]*;/.exec(app)?.[0] || ""];
+  const fns = ["titleWithYear", "conferenceNameCell", "kindSortIndex", "compareDeadlineRows"].map(
+    (name) => jsFunction(app, name),
+  );
+  return { consts, fns, all: [...consts, ...fns] };
+})();
+/* 間接 eval で関数はグローバルに載るが、`const` は eval 用の宣言環境に閉じる
+ * （`globalThis.X` にならない）。eval に渡す側だけ `var` に直す（正本の値はそのまま）。 */
+const SORT_CANON_EVAL = [
+  ...SORT_CANON.consts.map((src) => src.replace(/^const /, "var ")),
+  ...SORT_CANON.fns,
+].join("\n");
+
 const FILTER_RUNTIME_STUBS = [
   // 窓の上限時刻は絞り込みと 0 件時の会期案内で共有する実装（書かないと両者が違う窓で動く）。
   jsFunction(siteRuntime(), "windowLimitMs"),
+  ...SORT_CANON.all,
   "let semQuery = null, semEmbeddings = null;",
   "let catFacetCounts = {};",
   "let hiddenCounts = { past: 0, est: 0, kind: 0 };",
@@ -2751,7 +2769,7 @@ it("default filter shows only submission deadlines", () => {
     "function row(kind) {",
     "  return {",
     "    kind: kind, est: false, cats: ['hpc'], rankPairs: [], hay: 'x',",
-    "    t: now + 86400000, tLast: now + 2 * 86400000, ed: { deadlines: [] }",
+    "    t: now + 86400000, tLast: now + 2 * 86400000, ed: { deadlines: [] }, conf: { key: kind }",
     "  };",
     "}",
     'const rows = ["paper", "abstract", "event", "notification", "camera_ready"].map(row);',
@@ -2779,7 +2797,7 @@ it("recommendation filter ignores deadline-only state", () => {
     "function $(id) { return id === 'paperText' ? paper : null; }",
     "const window = {};",
     "function row(hay, t, rank, cats, tags) {",
-    "  return { kind: 'paper', est: false, cats, rankPairs: [rank], hay, tags, t, tLast: t, ed: { deadlines: [] } };",
+    "  return { kind: 'paper', est: false, cats, rankPairs: [rank], hay, tags, t, tLast: t, ed: { deadlines: [] }, conf: { key: hay } };",
     "}",
     "const rows = [",
     "  row('topic', now + 86400000, 'A', ['hpc'], ['domestic-jp']),",
@@ -2972,7 +2990,7 @@ it("past-deadline toggle reveals past rows (SPEC §7)", () => {
     "function row(tOff) {",
     "  return {",
     "    kind: 'paper', est: false, cats: ['hpc'], rankPairs: [], hay: 'x',",
-    "    t: now + tOff, tLast: now + tOff, ed: { deadlines: [] }",
+    "    t: now + tOff, tLast: now + tOff, ed: { deadlines: [] }, conf: { key: 'r' + tOff }",
     "  };",
     "}",
     // 未来の paper と過去の paper
@@ -4155,8 +4173,9 @@ it("the online-participation filter keeps only venues that say so (SPEC §7)", (
   expect(proc.status, proc.stderr).toBe(0);
   const out = JSON.parse(proc.stdout) as { online: string[]; all: string[] };
   // 会場名に語が含まれるだけの行は残さない。
-  expect(out.online).toEqual(["hybrid", "english"]);
-  expect(out.all).toEqual(["hybrid", "inperson", "venue-name", "english"]);
+  // 同じ締切時刻の行は表に出る会議名順（`english` → `hybrid`）にぞろえる。
+  expect(out.online).toEqual(["english", "hybrid"]);
+  expect(out.all).toEqual(["english", "hybrid", "inperson", "venue-name"]);
 });
 
 /** ビルド後の CSS をルール単位に割る（ネストは @media のみ）。
@@ -4435,7 +4454,7 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
     "const fmtAoE = () => 'AoE';",
     "const officialZone = () => 'JST';",
     "const catLabel = (k) => k;",
-    "const titleWithYear = (t) => String(t);",
+    // `titleWithYear` はスタブにせず正本を使う（並び順と同じ語をセルが組むことを見るため）。
     "const verificationTag = () => null;",
     "const verificationAlert = () => '';",
     "const toggleDetail = () => {};",
@@ -4456,6 +4475,7 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
     // 「あと N 日」も正本から（ダミー値で通す検査にしない）。
     jsFunction(app, "remain"),
     "const DAY = 86400000;",
+    ...SORT_CANON.fns,
     jsFunction(app, "makeRow"),
     "const flat = (n) => (n.textContent || '') + n.children.map((c) => '|' + flat(c)).join('');",
     "const titles = (n, out = []) => { if (n.title) out.push(n.title); n.children.forEach((c) => titles(c, out)); return out; };",
@@ -4724,12 +4744,14 @@ it("種別セレクトに並ぶ選択肢は、選べば行が返る（SPEC §7�
     // 間接 eval でグローバルに置く（`new Function` の中身はグローバルスコープで解決されるため、
     // async IIFE の中の変数は見えない）。
     `(0, eval)(${JSON.stringify(jsFunction(runtime, "windowLimitMs"))});`,
+    // 並び順の比較もグローバルに（`new Function` 内はグローバルで解決される）。
+    // 手書きの `SELECTABLE_KINDS` は種別セレクトの正本から取る。
+    `(0, eval)(${JSON.stringify(SORT_CANON_EVAL)});`,
     "(async () => {",
     "const { readFileSync } = await import('node:fs');",
     `const { default: Recommender } = await import(${JSON.stringify(`file://${recPath}`)});`,
     `const DATA = JSON.parse(readFileSync(${JSON.stringify(dataPath)}, 'utf8'));`,
     "const rows = Recommender.candidateRows(DATA);",
-    "const SELECTABLE_KINDS = ['abstract', 'paper', 'journal'];",
     "const KIND_LABEL = Recommender.kindLabelTable();",
     kindSrc,
     `const FILTER = ${JSON.stringify(filterSrc)};`,
@@ -4826,6 +4848,9 @@ it("ランクの選択肢は選べば行が返り、表示語はそのまま引�
     // 間接 eval でグローバルに置く（`new Function` の中身はグローバルスコープで解決されるため、
     // async IIFE の中の変数は見えない）。
     `(0, eval)(${JSON.stringify(jsFunction(runtime, "windowLimitMs"))});`,
+    // 並び順の比較もグローバルに（`new Function` 内はグローバルで解決される）。
+    // 手書きの `SELECTABLE_KINDS` は種別セレクトの正本から取る。
+    `(0, eval)(${JSON.stringify(SORT_CANON_EVAL)});`,
     "(async () => {",
     "const { readFileSync } = await import('node:fs');",
     `const { default: Recommender } = await import(${JSON.stringify(`file://${recPath}`)});`,
@@ -4944,6 +4969,7 @@ it("締切までの選択肢は URL と表裏一体で、窓は入れ子にな�
     "let searchQuery = '';",
     "const activeData = { conferences: [] };",
     jsFunction(runtime, "windowLimitMs"),
+    ...SORT_CANON.all,
     "const Recommender = {",
     "  expandRelativeMonths: (q) => q || '', searchMatcher: () => () => true,",
     "  parsePaperLines: (t) => (t ? [{ title: t }] : []),",
@@ -5486,4 +5512,91 @@ it("論文から探すの候補も「さらに表示」で全件に到達する�
   // 検索・分野・国内などの絞り込みを見せていない）。
   expect(runtime).not.toContain("該当する投稿先がありません。論文本文を長めに入れるか");
   expect(runtime).toContain("タイトル・概要・キーワードを足すと当たりやすくなります");
+});
+
+it("同じ締切時刻の行は表に出る会議名と種別で並ぶ（SPEC §7）", () => {
+  const runtime = siteRuntime("app.js");
+  // 既定画面 477 行のうち 303 行が別の行と同じ締切時刻を持つ（同値グループは最大 17 行）。
+  // 変更前のタイはデータ源の順のままだった。
+  expect(runtime).toContain("return compareDeadlineRows(a, b) * mult;");
+  // ランク順も同じ評価の塊の中を読めるようにする。
+  expect(runtime).toContain("return cmp ? cmp * mult : compareDeadlineRows(a, b) * mult;");
+  // 並び順は表のセルに出る語を共通の helper で使う（セルとSORTが別文字列を持つのが原因）。
+  expect(runtime).toContain("const name = conferenceNameCell(r);");
+  expect(runtime).not.toContain('localeCompare(b.conf.title || "")');
+  // ロケールを明示しない比較は閲覧者の UI ロケールで順序が変わる（実測で en/de と ja が違った）。
+  expect(
+    (runtime.match(/\.localeCompare\(conferenceNameCell\(b\), "ja"\)/g) || []).length,
+  ).toBeGreaterThanOrEqual(2);
+
+  const consts = /const SELECTABLE_KINDS = [^\n]*;/.exec(runtime)?.[0];
+  expect(consts, "種別の並び順の元になる配列がない").toBeTruthy();
+  const script = [
+    consts,
+    `const kindSortIndex = ${jsFunction(runtime, "kindSortIndex")};`,
+    `const titleWithYear = ${jsFunction(runtime, "titleWithYear")};`,
+    `const conferenceNameCell = ${jsFunction(runtime, "conferenceNameCell")};`,
+    `const compareDeadlineRows = ${jsFunction(runtime, "compareDeadlineRows")};`,
+    "const row = (title, key, t, kind, year) => ({ conf: { title, key }, ed: { year }, t, kind });",
+    // 同じ時刻の3行。漢字名は読み基準の五十音順（航空=か → 情報=ざ）に並ぶ。
+    "const tied = [",
+    "  row('情報処理研究会', 'ipsj-hi', 1, 'paper', 2027),",
+    "  row('航空宇宙研究会', 'ipsj-ast', 1, 'paper', 2027),",
+    "  row('ネットワーク研究会', 'ipsj-nw', 1, 'paper', 2027),",
+    "];",
+    "const byName = tied.slice().sort(compareDeadlineRows).map((r) => conferenceNameCell(r));",
+    // 名前の末尾に年が付く（セルと同じ文字列で並んでいることを見る）。
+    "expect_year = byName.every((n) => n.endsWith('2027'));",
+    // 会議名も時刻も同じなら、種別セレクトに並べる順（概要 → 論文）で割る。
+    "const sameKind = [",
+    "  row('SC', 'sc', 5, 'paper', 2027),",
+    "  row('SC', 'sc', 5, 'abstract', 2027),",
+    "  row('SC', 'sc', 5, 'journal', 2027),",
+    "];",
+    "const kinds = sameKind.slice().sort(compareDeadlineRows).map((r) => r.kind);",
+    // 時刻が違う行は種別より先に関係なく時刻で並ぶ。
+    "const times = [row('B', 'b', 9, 'abstract', null), row('A', 'a', 3, 'paper', null)];",
+    "const byTime = times.slice().sort(compareDeadlineRows).map((r) => r.conf.key);",
+    // 入力順を変えても結果が同じ（表の並びをビルド・描画順に依存させない）。
+    "const many = [];",
+    "for (let i = 0; i < 40; i += 1) {",
+    "  many.push(row('会議' + (i % 5), 'k' + (i % 5), (i % 3) * 7, i % 2 ? 'paper' : 'abstract', 2027));",
+    "}",
+    "const forward = many.slice().sort(compareDeadlineRows).map((r) => [r.conf.key, r.kind, r.t].join(':'));",
+    "const backward = many.slice().reverse().sort(compareDeadlineRows).map((r) => [r.conf.key, r.kind, r.t].join(':'));",
+    // 降順は昇順の完全な逆順になる（矢印を押しただけで並びの意味が崩れない）。",
+    "const asc = many.slice().sort(compareDeadlineRows);",
+    "const desc = many.slice().sort((x, y) => compareDeadlineRows(y, x));",
+    "console.log(JSON.stringify({",
+    "  byName,",
+    "  expect_year,",
+    "  kinds,",
+    "  byTime,",
+    "  deterministic: JSON.stringify(forward) === JSON.stringify(backward),",
+    "  reversed:",
+    "    JSON.stringify(desc.map((r) => [r.conf.key, r.kind, r.t].join(':'))) ===",
+    "    JSON.stringify(asc.map((r) => [r.conf.key, r.kind, r.t].join(':')).reverse()),",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    byName: string[];
+    expect_year: boolean;
+    kinds: string[];
+    byTime: string[];
+    deterministic: boolean;
+    reversed: boolean;
+  };
+  expect(out.byName).toEqual([
+    "ネットワーク研究会 2027",
+    "航空宇宙研究会 2027",
+    "情報処理研究会 2027",
+  ]);
+  // カタカナ語は漢字語より前の段に出る（読み辞書を持たないため。仕様として固定する）。
+  expect(out.expect_year).toBe(true);
+  expect(out.kinds).toEqual(["abstract", "paper", "journal"]);
+  expect(out.byTime).toEqual(["a", "b"]);
+  expect(out.deterministic, "入力順で表の並びが変わる").toBe(true);
+  expect(out.reversed, "降順が昇順の逆順になっていない").toBe(true);
 });
