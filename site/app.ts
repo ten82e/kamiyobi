@@ -1533,6 +1533,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return win === "all" ? Number.POSITIVE_INFINITY : now + Number.parseInt(win, 10) * DAY;
   }
 
+  /* 「締切まで N 日」の下側。既定（過去を表示しない）は過去分がそもそも出ないので要らないが、
+   * 「過去の締切も表示」と同時に使うと窓が未来側にしか効かず、2019 年まで全件が残って
+   * 窓が意味を失う（実測: 7 日以内 + 過去表示で 2,059 行）。過去を見せているときは
+   * 同じ日数の前後の窓として扱う（「先週出た締切と今週の締切」が見られる形）。 */
+  function windowFloorMs(win: string, now: number): number {
+    return win === "all" ? Number.NEGATIVE_INFINITY : now - Number.parseInt(win, 10) * DAY;
+  }
+
   function filter(): AppRow[] {
     const now = Date.now();
     // `来月` などの相対月を検索語として受け付ける。展開式の一覧への反映は recommender が
@@ -1544,6 +1552,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const isPast = (row: AppRow) => (row.dateOnly ? now > row.tLast : row.t < now);
     const isAfter = (row: AppRow, dateLimit: number) => row.t > dateLimit;
     const limit = windowLimitMs(state.win, now);
+    const floor = state.past ? windowFloorMs(state.win, now) : Number.NEGATIVE_INFINITY;
     const pElem = typeof document !== "undefined" ? $("paperText") : null;
     const pText =
       state.mode === "recommend" && pElem && "value" in pElem && typeof pElem.value === "string"
@@ -1612,6 +1621,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         return false;
       }
       if (!inRecommend && isAfter(r, limit)) {
+        return false;
+      }
+      // 日付だけの行は当日中が有効なので、終端側（tLast）で窓に触れているかを見る。
+      if (!inRecommend && (r.dateOnly ? r.tLast < floor : r.t < floor)) {
         return false;
       }
       if (!inRecommend && state.kind && r.kind !== state.kind) {

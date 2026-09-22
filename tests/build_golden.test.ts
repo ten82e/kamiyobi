@@ -2470,6 +2470,8 @@ const SORT_CANON_EVAL = [
 const FILTER_RUNTIME_STUBS = [
   // 窓の上限時刻は絞り込みと 0 件時の会期案内で共有する実装（書かないと両者が違う窓で動く）。
   jsFunction(siteRuntime(), "windowLimitMs"),
+  // 「締切まで」の上下限は絞り込み本体が共有する実装（窓の解釈を二重化しない）。
+  jsFunction(siteRuntime(), "windowFloorMs"),
   ...SORT_CANON.all,
   "let semQuery = null, semEmbeddings = null;",
   "let catFacetCounts = {};",
@@ -2993,17 +2995,40 @@ it("past-deadline toggle reveals past rows (SPEC §7)", () => {
     "    t: now + tOff, tLast: now + tOff, ed: { deadlines: [] }, conf: { key: 'r' + tOff }",
     "  };",
     "}",
-    // 未来の paper と過去の paper
-    "const rows = [row(86400000), row(-86400000)];",
+    // 未来 20 日 / 未来 3 日 / 過去 3 日 / 過去 20 日
+    "const rows = [row(20 * DAY), row(3 * DAY), row(-3 * DAY), row(-20 * DAY)];",
     FILTER_RUNTIME_STUBS,
-    "const mk = (past) => new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
+    "const mk = (past, win) => new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
     "  'return (' + FILTER + ')')(FakeDate, DAY, rows,",
-    "  { q: '', cats: [], kind: '', rank: '', win: 'all', est: false, past: past }, true, 'rem');",
-    "console.log(JSON.stringify(mk(false)().length) + '|' + JSON.stringify(mk(true)().length));",
+    "  { q: '', cats: [], kind: '', rank: '', win: win, est: false, past: past }, true, 'rem');",
+    // 過去を示さない:  future のみ（20日, 3日）。
+    "const seen = [mk(false, 'all')().length, mk(true, 'all')().length];",
+    // 「締切まで 7 日」+ 過去表示は **前後 7 日**（変更前は past 側が窓の外に出ず、
+    // 過去分が片端から残った。実測で 7日以内+過去表示 = 2,059 行だった）。
+    "seen.push(mk(true, '7d')().length, mk(false, '7d')().length);",
+    // 「かまわない」なら過去表示で全件（窓は課さない）。
+    "seen.push(mk(true, 'all')().length);",
+    "console.log(JSON.stringify(seen));",
   ].join("\n");
   const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
   expect(proc.status, proc.stderr).toBe(0);
-  expect(proc.stdout.trim()).toBe("1|2");
+  // past=false + 7日: 今後の 3 日後だけ（20 日後は窓の外、過去分はそもそも出ない）。
+  expect(JSON.parse(proc.stdout)).toEqual([2, 4, 2, 1, 4]);
+});
+
+it("「過去の締切も表示」と CSV の読み方にてびきが応える（SPEC §7）", () => {
+  const html = siteHtmlRuntime();
+  expect(html).toContain("<dt>過去の締切も表示</dt>");
+  expect(html).toContain("<dt>CSV</dt>");
+  // 期間窓の案内は、過去を表示したときの前後窓として正しい記述にする
+  // （「過ぎた締切は期間の外に出ます」は実装と逆の説明だった）。
+  expect(html).toContain("同じ日数の<strong>前後</strong>の窓になります");
+  expect(html).not.toContain("過ぎた締切は期間の外に出ます");
+  // CSV は「表示中＝絞り込み後の全行」であること、数値の残り列と BOM を書く。
+  const dd = html.slice(html.indexOf("<dt>CSV</dt>"), html.indexOf("<dt>並び順</dt>"));
+  expect(dd).toContain("絞り込み後の全行");
+  expect(dd).toContain("BOM");
+  expect(dd).toContain("負の数");
 });
 
 it("drawer is a keyboard-operable modal dialog with focus management (#218)", () => {
@@ -4969,6 +4994,7 @@ it("締切までの選択肢は URL と表裏一体で、窓は入れ子にな�
     "let searchQuery = '';",
     "const activeData = { conferences: [] };",
     jsFunction(runtime, "windowLimitMs"),
+    jsFunction(runtime, "windowFloorMs"),
     ...SORT_CANON.all,
     "const Recommender = {",
     "  expandRelativeMonths: (q) => q || '', searchMatcher: () => () => true,",
