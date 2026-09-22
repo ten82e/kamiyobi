@@ -8192,8 +8192,10 @@ it("狭い画面でも並び替えできる（見出しを消すなら並べ替�
     expect(barBlock, `並べ替えバーに ${label} の列がない`).toContain(`>${label}`);
   }
   // キーボードの案内は狭い画面では消す（ショートカットの無い端末で誤導しない）。
-  expect(block, "キーボードの案内を狭い画面で消していない").toContain(
-    ".only-keyboard { display: none; }",
+  // 第 103 回まで見出ししか消しておらず、説明（`j`/`k`/`d`/`Esc` の書き方）が残っていたので、
+  // 隣接する説明も一緒に閉じる形を要求する（文字列ピンは古い形を戻さないために置く）。
+  expect(block, "キーボードの案内を狭い画面で消していない").toMatch(
+    /\.only-keyboard,\s*\.only-keyboard \+ dd \{[^}]*display: none/,
   );
   expect(template).toContain('<dt class="only-keyboard">キーボードで一覧を動かす</dt>');
   // てびきも同じことを書いている。
@@ -9070,9 +9072,31 @@ it("てびきのキーボード表記が、実装が扱うキーと欠けずに�
   const detailAt = template.indexOf("<dt>行の詳細</dt>");
   expect(detailAt).toBeGreaterThan(0);
   const detailGuide = template.slice(detailAt, template.indexOf("</dd>", detailAt));
-  for (const word of ["行を押す", "<code>d</code>", "<code>Esc</code>", "公式サイト"]) {
+  for (const word of ["行を押す", "<code>d</code>", "<code>Esc</code>", "公式サイト", "✕"]) {
     expect(detailGuide, `行の詳細の説明に ${word} が無い`).toContain(word);
   }
+  // 狭い画面ではキーの案内が出せない（押す/✕ の話だけが残る）。
+  const keyboardSpan = /<span class="only-keyboard">([\s\S]*?)<\/span>/.exec(detailGuide);
+  expect(keyboardSpan, "行の詳細の説明でキー操作を狭い画面向けに括っていない").not.toBeNull();
+  expect(keyboardSpan![1]).toContain("<code>d</code>");
+  expect(keyboardSpan![1], "押さなくて良い操作が混ざっている").not.toContain("行を押す");
+  expect(detailGuide.slice(0, detailGuide.indexOf('<span class="only-keyboard">'))).toContain("✕");
+});
+
+it("狭い画面ではキー操作の案内は見出しも説明も閉じる（SPEC §7）", () => {
+  /* 狭い画面（ほぼスマホ）ではショートカットが使えないので案内も消す方針で、第 85 回に
+   * 一度「閉じ忘れ」を直している。しかし閉じていたのは `.only-keyboard` を付けた **見出しだけ**
+   * で、直後の `<dd>`（`j`/`k`/`d`/`Esc` の書き方そのもの）はそのまま出ていた（2026-09-23 実測）。 */
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const at = template.indexOf("@media (max-width: 640px)");
+  expect(at).toBeGreaterThan(0);
+  const mediaBlocks = template.slice(at);
+  expect(mediaBlocks).toMatch(/\.only-keyboard,\s*\.only-keyboard \+ dd \{[^}]*display: none/);
+  // キーの項は、見出しを失っても説明が独り歩きしていないこと。
+  const dtAt = template.indexOf('<dt class="only-keyboard">');
+  expect(dtAt).toBeGreaterThan(0);
+  const afterDd = template.slice(template.indexOf("</dt>", dtAt) + 5);
+  expect(afterDd.trimStart().startsWith("<dd>"), "キーの項の説明が直後に無い").toBe(true);
 });
 
 it("二つの画面の呼び方が、切り替えボタンの語と揃っている（SPEC §7）", () => {
