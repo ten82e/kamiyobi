@@ -160,6 +160,7 @@ interface SiteRecommenderApi {
   placeOffersOnline(value: unknown): boolean;
   /** 空の会期・開催地・ランクを表で出す語（検索側と同じ正本）。 */
   unconfirmedLabelJa(): string;
+  querySynonymNotes(query: unknown): string[];
   rankPairLabelJa(pair: string): string;
   rankScaleLabelJa(name: string): string;
   rankUnratedLabelJa(): string;

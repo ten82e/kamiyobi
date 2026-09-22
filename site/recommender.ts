@@ -1533,6 +1533,57 @@ const Recommender = (() => {
     theory: "計算理論",
   };
 
+  /* 検索の言いゆれの吸収: 日本の研究者が口にする語を、表に書いてある分野名に寄せる。
+   * 「スパコン」は 0 件になるが「高性能計算」は収録済み、という食い違いを防ぐためで、
+   * 対応は**画面に出す分野名そのもの**に向ける（寄せた先が必ず行に見える形にする）。
+   * 真ん中の語は件数欄に「こう探しました」と出して説明する。理由も見せずに
+   * 分野全体の行を並べると、なぜ出たか分からないまま壁になる。
+   * 精密な語（`機械学習` など）は寄せない。寄せるのは、そのままでは当たらない語だけにする。
+   * 「〜込み」は `組み込み`・`組込み` の 2 表記まで受け、「埋め込み」は置かない
+   * （§7 の開発用語を残さない規則と同じ語彙に揃える）。 */
+  const QUERY_SYNONYMS_JA: Array<[string, string, string[]]> = [
+    ["スパコン", "分野「高性能計算」", ["高性能計算", "hpc"]],
+    ["スーパーコンピュータ", "分野「高性能計算」", ["高性能計算", "hpc"]],
+    ["スーパーコンピューター", "分野「高性能計算」", ["高性能計算", "hpc"]],
+    ["スーパーコンピューティング", "分野「高性能計算」", ["高性能計算", "hpc"]],
+    ["並列処理", "分野「高性能計算」", ["高性能計算", "hpc"]],
+    ["並列計算", "分野「高性能計算」", ["高性能計算", "hpc"]],
+    ["分散システム", "分野「システム」", ["システム", "systems"]],
+    ["分散処理", "分野「システム」", ["システム", "systems"]],
+    ["組み込み", "分野「システム」", ["システム", "systems"]],
+    ["組込み", "分野「システム」", ["システム", "systems"]],
+    ["クラウド", "分野「システム」", ["システム", "systems"]],
+    ["深層学習", "主題「ディープラーニング」", ["ディープラーニング", "deep-learning"]],
+    ["可視化", "分野「グラフィックス」", ["グラフィックス", "graphics"]],
+    ["ビジュアライゼーション", "分野「グラフィックス」", ["グラフィックス", "graphics"]],
+    ["ヒューマンインタフェース", "分野「人間情報処理」", ["人間情報処理", "hci"]],
+    ["ヒューマンインターフェース", "分野「人間情報処理」", ["人間情報処理", "hci"]],
+    ["人間中心", "分野「人間情報処理」", ["人間情報処理", "hci"]],
+  ];
+
+  /** 検索語の同義展開（キーはかな正規化した語）。 */
+  function querySynonymMap(): Record<string, [string, string[]]> {
+    const out: Record<string, [string, string[]]> = {};
+    QUERY_SYNONYMS_JA.forEach(([word, shown, terms]) => {
+      out[kanaFold(word)] = [shown, terms];
+    });
+    return out;
+  }
+
+  /* 件数欄に出す「こう探しました」。展開した語だけを言い、行数は数えない
+   * （行番号に連番を付けているため、件数を書くと誤読を招く）。 */
+  function querySynonymNotes(query: unknown): string[] {
+    const map = querySynonymMap();
+    const notes: string[] = [];
+    queryTokens(query).forEach((token) => {
+      const hit = map[kanaFold(token)];
+      if (!hit) return;
+      const note = `「${token}」は${hit[0]}で探しています`;
+      if (notes.indexOf(note) < 0) notes.push(note);
+    });
+    return notes;
+  }
+
   function categoryLabelJa(key: unknown): string {
     const k = typeof key === "string" ? key : "";
     return CATEGORY_LABELS_JA[k] || k;
@@ -2011,6 +2062,10 @@ const Recommender = (() => {
   /** 検索語を、かなで引いたときも含めた候補グループへ展開する（語ごとに OR の組）。 */
   function queryTokenGroups(query: unknown): string[][] {
     const byReading: Record<string, string[]> = {};
+    const synonyms = querySynonymMap();
+    Object.keys(synonyms).forEach((key) => {
+      byReading[key] = synonyms[key][1];
+    });
     PLACE_READINGS.concat(REGION_READINGS).forEach((entry) => {
       const members = entry[2] ? String(entry[2]).split(",") : [entry[0]];
       const keys = [kanaFold(entry[1])];
@@ -3701,6 +3756,7 @@ const Recommender = (() => {
     weekdayJaFromDate: weekdayJaFromDate,
     deadlinesToCsv: deadlinesToCsv,
     searchNormalize: searchNormalize,
+    querySynonymNotes: querySynonymNotes,
     monthTermsJa: monthTermsJa,
     placePrefectureJa: placePrefectureJa,
     placeOffersOnline: placeOffersOnline,

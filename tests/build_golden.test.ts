@@ -2305,6 +2305,7 @@ const SEARCH_CANON = (() => {
     ["ONLINE_TERMS_JA", /const ONLINE_TERMS_JA = [^\n]*;/],
     ["ONLINE_TERMS_EN", /const ONLINE_TERMS_EN = [^\n]*;/],
     ["ONLINE_VENUE_FALSE_POSITIVES", /const ONLINE_VENUE_FALSE_POSITIVES = [^\n]*;/],
+    ["QUERY_SYNONYMS_JA", /const QUERY_SYNONYMS_JA[\s\S]*?\];/],
   ].map(([name, re]) => {
     const src = rec.match(re)?.[0];
     expect(src, `${name} 定義が見つからない`).toBeTruthy();
@@ -2318,6 +2319,7 @@ const SEARCH_CANON = (() => {
       "expandRelativeMonths",
       "searchNormalize",
       "queryTokens",
+      "querySynonymMap",
       "queryTokenGroups",
       "compoundSplitHit",
       "placeOffersOnline",
@@ -4442,6 +4444,8 @@ it("のぞいた行数を件数欄で説明する（SPEC §7）", () => {
   const countsSrc = jsFunction(runtime, "hiddenDeadlineCounts");
   // 件数欄に出る文言が消えていないこと。
   expect(app).toContain("のぞく: ");
+  // 「スパコン」などを分野名に寄せたことも、同じ件数欄で伝える。
+  expect(app).toContain("querySynonymNotes(searchQuery)");
   expect(app).toContain("hiddenDeadlineCounts()");
 
   const script = [
@@ -5035,4 +5039,48 @@ it("upcoming.md の開催地は、サイトの表と同じ日本語表記で出�
     });
   });
   expect(offenders, `md の開催地が未翻訳: ${offenders.join(" / ")}`).toEqual([]);
+});
+
+it("分野の言い方は、画面に出る語だけを指す（SPEC §7）", () => {
+  // 寄せた先が行に見えない語だと、なぜ出たか分からないまま行の壁になる。
+  // 同義語表の行き先が、分野名・主題タグの日本語表記（どちらも画面に出す）だけを向いていることを検査する。
+  const rec = siteRuntime("recommender.js");
+  const app = siteRuntime("app.js");
+  const table = rec.match(/const QUERY_SYNONYMS_JA[^=]*= \[([\s\S]*?)\n\s*\];/);
+  expect(table, "QUERY_SYNONYMS_JA が見つからない").toBeTruthy();
+  const entries = [...String(table![1]).matchAll(/\["([^"]+)", "([^"]+)", \[([^\]]*)\]\]/g)].map(
+    (m) => ({
+      word: m[1],
+      shown: m[2],
+      terms: [...m[3].matchAll(/"([^"]+)"/g)].map((t) => t[1]),
+    }),
+  );
+  expect(entries.length).toBeGreaterThan(5);
+  entries.forEach((entry) => {
+    // 説明の「◯◯『△△』」の △△ が、その語の実際の日本語表記と一致すること。
+    const quoted = entry.shown.match(/「([^」]+)」/)?.[1];
+    expect(quoted, `${entry.word} の説明に表示語を書いていない`).toBeTruthy();
+    expect(entry.terms, `${entry.word} の展開語が無い`).toContain(quoted);
+    // 展開語は分野名か主題タグの日本語表記である（内部キーだけの指向にしない）。
+    const isCategory =
+      [
+        "人工知能",
+        "データベース",
+        "グラフィックス",
+        "人間情報処理",
+        "高性能計算",
+        "ネットワーク",
+        "セキュリティ",
+        "システム",
+        "計算理論",
+      ].indexOf(String(quoted)) >= 0;
+    const isTagLabel = Boolean(
+      rec.match(new RegExp(`"${entry.terms[entry.terms.length - 1]}": "${quoted}"`)),
+    );
+    expect(isCategory || isTagLabel, `${entry.word} → ${quoted} が画面に出る語ではない`).toBe(true);
+  });
+  // 件数欄で説明すること（理由も出さずに分野全体の行を並べない）。
+  expect(app).toContain("querySynonymNotes(searchQuery)");
+  // 説明文そのものは recommender 側が持つ（件数欄の文言と検索の寄せ先が割れないように）。
+  expect(rec).toContain("で探しています");
 });

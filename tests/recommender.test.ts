@@ -4401,3 +4401,38 @@ describe("開催地の日本語表記（表と upcoming.md が同じ語で読め
     expect(ja("Los Angeles, USC")).toBe("Los Angeles, USC");
   });
 });
+
+describe("分野の言い方（スパコンなどで引ける）", () => {
+  const hit = (q: string, hay: string) => R.searchMatcher(q)(hay);
+
+  it("口にする語が、表に出る分野名に寄せる", () => {
+    // 「スパコン」で 0 件になり、分野チップの「高性能計算」に辿り着けない状態を防ぐ。
+    expect(hit("スパコン", "SC26 高性能計算 hpc")).toBe(true);
+    expect(hit("スーパーコンピューター", "高性能計算")).toBe(true);
+    expect(hit("並列処理", "高性能計算")).toBe(true);
+    expect(hit("可視化", "グラフィックス")).toBe(true);
+    expect(hit("ヒューマンインタフェース", "人間情報処理")).toBe(true);
+    expect(hit("深層学習", "主題: ディープラーニング")).toBe(true);
+    // 寄せた先も引ける（表示語 = 検索語の不変条件）。
+    expect(hit("高性能計算", "SC26 高性能計算")).toBe(true);
+  });
+
+  it("寄せたことを件数欄のことばで伝える", () => {
+    expect(R.querySynonymNotes("スパコン")).toEqual([
+      "「スパコン」は分野「高性能計算」で探しています",
+    ]);
+    // 同じ語が二度出ない。
+    expect(R.querySynonymNotes("スパコン スパコン")).toHaveLength(1);
+    // 展開していない語は説明を出さない（理由のない説明は誤読のもと）。
+    expect(R.querySynonymNotes("nsdi")).toEqual([]);
+    expect(R.querySynonymNotes("")).toEqual([]);
+  });
+
+  it("精密に引ける語は寄せない（行の壁にしない）", () => {
+    // `機械学習` は主題として当たる。分野全体に寄せると 2 桁多く出て精密さを失う。
+    expect(R.querySynonymNotes("機械学習")).toEqual([]);
+    expect(R.querySynonymNotes("スパコン 国内")).toEqual([
+      "「スパコン」は分野「高性能計算」で探しています",
+    ]);
+  });
+});

@@ -2539,6 +2539,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (hidden.kind) parts.push(`投稿締切以外の種別 ${hidden.kind} 件`);
       if (hidden.est) parts.push(`推定 ${hidden.est} 件`);
       if (parts.length) cnt += ` ｜ のぞく: ${parts.join("・")}`;
+      // 「スパコン」などを分野名に寄せたときは、寄せた先をその場で書く。
+      // 理由も見ずに分野全体の行を並べると、なぜ出たか分からないまま行の壁になる。
+      const synonymNotes = Recommender.querySynonymNotes(searchQuery);
+      if (synonymNotes.length) cnt += ` ｜ ${synonymNotes.join("・")}`;
     }
     if (!recMode && droppedKindNotice) cnt += ` ｜ ${droppedKindNotice}`;
     if (!recMode && state.past && historyStatus === "loading") cnt += " ｜ 全履歴を読み込み中…";
