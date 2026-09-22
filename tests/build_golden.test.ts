@@ -2530,7 +2530,7 @@ const FILTER_RUNTIME_STUBS = [
   "let semQuery = null, semEmbeddings = null;",
   "let catFacetCounts = {};",
   "let hiddenCounts = {",
-  "  past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0, window: 0,",
+  "  past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0, window: 0, rank: 0,",
   "};",
   "const activeData = { conferences: [] };",
   ...SEARCH_CANON,
@@ -4736,6 +4736,8 @@ it("のぞいた行数を件数欄で説明する（SPEC §7）", () => {
     online: 0,
     onlinePlaceUnknown: 0,
     window: 0,
+    // 評価でしぼるのは選択欄を動かしたときだけなので、既定では内訳に立たない。
+    rank: 0,
   });
   // 「過去の締切も表示」をオンにすると過去の分はのぞかなくなる（他はそのまま）。
   expect(out.withPast.hidden.past).toBe(0);
@@ -4853,7 +4855,7 @@ it("種別セレクトに並ぶ選択肢は、選べば行が返る（SPEC §7�
     "const window = {};",
     "globalThis.Recommender = Recommender;",
     "globalThis.activeData = DATA;",
-    "globalThis.hiddenCounts = { past: 0, est: 0, kind: 0 };",
+    "globalThis.hiddenCounts = { past: 0, est: 0, kind: 0, rank: 0 };",
     "globalThis.catFacetCounts = {};",
     "globalThis.searchQuery = '';",
     "function run(kind) {",
@@ -4956,7 +4958,7 @@ it("ランクの選択肢は選べば行が返り、表示語はそのまま引�
     "const window = {};",
     "globalThis.Recommender = Recommender;",
     "globalThis.activeData = DATA;",
-    "globalThis.hiddenCounts = { past: 0, est: 0, kind: 0 };",
+    "globalThis.hiddenCounts = { past: 0, est: 0, kind: 0, rank: 0 };",
     "globalThis.catFacetCounts = {};",
     "globalThis.searchQuery = '';",
     "function run(rank) {",
@@ -5057,7 +5059,7 @@ it("締切までの選択肢は URL と表裏一体で、窓は入れ子にな�
     "function $(id) { return null; }",
     "const window = {};",
     "let hiddenCounts = {",
-    "  past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0, window: 0,",
+    "  past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0, window: 0, rank: 0,",
     "};",
     "let catFacetCounts = {};",
     "let searchQuery = '';",
@@ -6939,4 +6941,76 @@ it("開催地の翻訳が収録データで化けていない（New Mexico・別
     out.gluedCount,
     `日本語の語にラテン文字が食い付いた開催地表記: ${out.glued.join(" / ")}`,
   ).toBe(0);
+});
+
+it("「評価でしぼる」でのぞいた件数を件数欄に出す（SPEC §7）", () => {
+  /* 評価の選択欄は「A*」などの一語で、収録にその評価がどれくらいあるかが見えない。
+   * のぞいた行数を出さないと「収録に A* が少ない」と誤解する（2026-09-23 実測:
+   * 既定画面 477 行のうち「A*」は 61 行だけで、のこり 416 行の話が件数欄になかった）。
+   * ビルド後の `filter` を動かし、表示件数とのぞいた数の合計が対象行数と一致ることをみる。
+   * 等級の判定は recommender の正本（厳密比較）を使う — 選択欄と同じ比較式でないと
+   * 「A」が「A*」に誤マッチして数字が合うはずのものが合わなくなる。 */
+  const runtime = siteRuntime();
+  const rec = readFileSync(join(site, "recommender.js"), "utf8");
+  const filterSrc = jsFunction(runtime, "filter");
+  const rankMatchesSrc = jsFunction(rec, "rankMatches");
+  expect(rankMatchesSrc, "recommender の等級判定が見つからない").toBeTruthy();
+  // 関数ソースをそのまま入れる（JSON.stringify すると文字列になって代入にならない）。
+  const script = [
+    "const DAY = 86400000;",
+    `const FILTER = ${JSON.stringify(filterSrc)};`,
+    'const now = Date.parse("2026-08-10T00:00:00Z");',
+    "class FakeDate extends Date { static now() { return now; } }",
+    "function row(key, rankPairs) {",
+    "  return { kind: 'paper', est: false, cats: ['hpc'], rankPairs: rankPairs, tags: [],",
+    "    hay: key, t: now + DAY, tLast: now + DAY,",
+    "    ed: { place: 'Kyoto, 日本', deadlines: [] }, conf: { key: key } };",
+    "}",
+    "const rows = [",
+    "  row('a', []), row('b', []), row('c', []),",
+    "  row('astar', ['ccf:A*']), row('aA', ['core:A']), row('bB', ['ccf:B']),",
+    "  row('n1', ['ccf:N']), row('n2', ['ccf:N', 'core:A*']),",
+    "];",
+    FILTER_RUNTIME_STUBS,
+    // 等级判定だけ正本に差し替える（スタブの `includes` は部分一致で誤マッチする）。
+    `Recommender.rankMatches = ${rankMatchesSrc};`,
+    "const run = (rank) => {",
+    // `hiddenCounts` はスタブ側の `let` 束縛そのものを戻す（globalThis に書いても
+    // `filter` は語彙束縛を見るので数え直されない）。
+    "  hiddenCounts = {",
+    "    past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0, window: 0, rank: 0,",
+    "  };",
+    "  const out = new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
+    "    'return (' + FILTER + ')')(FakeDate, DAY, rows,",
+    "    { q: '', cats: [], kind: '', rank: rank, win: 'all', est: false }, true, 'rem')();",
+    "  return { shown: out.map((r) => r.conf.key), hidden: hiddenCounts.rank };",
+    "};",
+    "const out = { noRank: run(''), grades: {} };",
+    "['A*', 'A', 'B', 'C', 'N'].forEach((g) => { out.grades[g] = run(g); });",
+    "console.log(JSON.stringify(out));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    noRank: { shown: string[]; hidden: number };
+    grades: Record<string, { shown: string[]; hidden: number }>;
+  };
+  // 評価を掛けない行はすべて出る（のぞいた数も 0）。
+  expect(out.noRank.shown).toHaveLength(8);
+  expect(out.noRank.hidden).toBe(0);
+  Object.entries(out.grades).forEach(([grade, v]) => {
+    // 表示 + のぞく = 対象行数（数え漏らし・二重計上の検出）。
+    expect(v.shown.length + v.hidden, `評価「${grade}」`).toBe(8);
+  });
+  expect(out.grades["A*"].shown).toEqual(["astar", "n2"]);
+  // 厳密比較なので「A」は「A*」を含まない（選択欄と同じ判定を使っていることの確認）。
+  expect(out.grades.A.shown).toEqual(["aA"]);
+  expect(out.grades.N.shown).toEqual(["n1", "n2"]);
+  expect(out.grades.C.shown).toEqual([]);
+  expect(out.grades.C.hidden, "0 件の評価でのぞいた数が出ていない").toBe(8);
+
+  const app = runtime;
+  expect(app, "件数欄が評価で絞った件数を書いていない").toContain(
+    "評価「${state.rank}」を持たない行 ${hidden.rank} 件",
+  );
 });

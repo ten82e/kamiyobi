@@ -1419,6 +1419,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     onlinePlaceUnknown: 0,
     // 「締切まで N 日以内」の窓（上限・下限の両方）で落ちた行数。
     window: 0,
+    // 「評価でしぼる」で落ちた行数（選択した等級を持たない行）。
+    rank: 0,
   };
 
   /* URL で渡された種別のうち、表に出さないものを読み捨てたときの説明。
@@ -1433,6 +1435,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     online: number;
     onlinePlaceUnknown: number;
     window: number;
+    rank: number;
   } {
     return hiddenCounts;
   }
@@ -1593,6 +1596,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           ? Rec.rankMatches(r.rankPairs, state.rank)
           : r.rankPairs.indexOf(state.rank) >= 0;
         if (!rankHit) {
+          // 評価は選択欄の表示が「A*」などの一語で、収まっているのか無いのかが見えない。
+          // のぞいた件数を出さないと「収録に A* が少ない」と誤解する（国内・オンラインと
+          // 同じ型の問題。2026-09-23 実測: 「A*」を選ぶと既定画面 477 行のうち 61 行だけ
+          // 出て、のこり 416 行の話が件数欄になかった）。
+          if (!inRecommend) hiddenCounts.rank += 1;
           return false;
         }
       }
@@ -1630,6 +1638,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       online: 0,
       onlinePlaceUnknown: 0,
       window: 0,
+      rank: 0,
     };
     catFacetCounts = {};
     let out: AppRow[] = pool.filter((r) => {
@@ -2708,6 +2717,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           `「締切まで ${Number.parseInt(state.win, 10)} 日以内」を超える ${hidden.window} 件`,
         );
       }
+      // 評価で絞った件数。選択欄の等級表記をそのまま書く（画面の語で探す人が探せる形に）。
+      if (hidden.rank && state.rank)
+        parts.push(`評価「${state.rank}」を持たない行 ${hidden.rank} 件`);
       if (hidden.domestic) parts.push(`国内研究会・国内シンポジウム以外 ${hidden.domestic} 件`);
       if (hidden.online) {
         // 「記載が無いだけ」の行数を括弧で添える（対面だと断定していないことの説明にもなる）。
