@@ -123,7 +123,8 @@ describe("local source data integrity", () => {
     // 178 -> 181: IEICE の IBISML・DE・SS 研究会の発表申込締切を公式ページから追記した分。
     // 181 -> 183: IPSJ の HPC・ARC 研究会（2026 年 12 月研究発表会）の発表申込締切を
     // 研究会発表申込システム（ken.ieice.org）から追記した分。
-    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(183);
+    // 183 -> 185: IPSJ の DBS・IFAT 研究会（2026 年 12 月研究発表会、合同開催）を収録した分。
+    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(185);
 
     for (const row of rows) {
       if (row.precision === "date-only") {

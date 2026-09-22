@@ -6971,4 +6971,99 @@ conferences:
     tags:
       - domestic-jp
     title: 電子情報通信学会 SS 研究会
+  - categories:
+      - db
+    editions:
+      - date_text: 2026年12月18日-19日
+        deadlines:
+          - date: '2026-10-23'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
+        event_end: '2026-12-19'
+        event_start: '2026-12-18'
+        id: ipsj-dbs-2026-12
+        link: https://ken.ieice.org/ken/program/?tgid=IPSJ-DBS
+        place: 北國会館 香林坊プラザ（石川県）／オンライン
+        year: 2026
+    full_name: 情報処理学会 データベースシステム研究会 (DBS)
+    key: ipsj-sigdbs
+    link: https://ken.ieice.org/ken/program/?tgid=IPSJ-DBS
+    tags:
+      - domestic-jp
+    title: 情報処理学会 DBS 研究会
+  - categories:
+      - theory
+    editions:
+      - date_text: 2026年11月12日-13日
+        deadlines: []
+        event_end: '2026-11-13'
+        event_start: '2026-11-12'
+        id: ipsj-al-2026-11
+        link: https://ken.ieice.org/ken/program/?tgid=IPSJ-AL
+        place: 松江テルサ（島根県）
+        year: 2026
+    full_name: 情報処理学会 アルゴリズム研究会 (AL)
+    key: ipsj-sigal
+    link: https://ken.ieice.org/ken/program/?tgid=IPSJ-AL
+    tags:
+      - domestic-jp
+    title: 情報処理学会 AL 研究会
+  - categories:
+      - theory
+      - networking
+    editions:
+      - date_text: 2026年12月18日-19日
+        deadlines:
+          - date: '2026-10-23'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
+        event_end: '2026-12-19'
+        event_start: '2026-12-18'
+        id: ipsj-ifat-2026-12
+        link: https://ken.ieice.org/ken/program/?tgid=IPSJ-IFAT
+        place: 北國会館 香林坊プラザ（石川県）／オンライン
+        year: 2026
+    full_name: 情報処理学会 情報基礎とアクセス技術研究会 (IFAT)
+    key: ipsj-sigifat
+    link: https://ken.ieice.org/ken/program/?tgid=IPSJ-IFAT
+    tags:
+      - domestic-jp
+    title: 情報処理学会 IFAT 研究会
+  - categories:
+      - graphics
+    editions:
+      - date_text: 2026年11月26日-27日
+        deadlines: []
+        event_end: '2026-11-27'
+        event_start: '2026-11-26'
+        id: ipsj-cgvi-2026-11
+        link: https://ken.ieice.org/ken/program/?tgid=IPSJ-CGVI
+        place: 同志社大学 新町キャンパス 尋真館（京都府）
+        year: 2026
+    full_name: 情報処理学会 コンピュータグラフィックスとビジュアル情報学研究会 (CGVI)
+    key: ipsj-sigcgvi
+    link: https://ken.ieice.org/ken/program/?tgid=IPSJ-CGVI
+    tags:
+      - domestic-jp
+    title: 情報処理学会 CGVI 研究会
+  - categories:
+      - networking
+      - systems
+    editions:
+      - date_text: 2027年3月1日-3日
+        deadlines: []
+        event_end: '2027-03-03'
+        event_start: '2027-03-01'
+        id: ipsj-iot-2027-03
+        link: https://ken.ieice.org/ken/program/?tgid=IPSJ-IOT
+        place: 未定
+        year: 2027
+    full_name: 情報処理学会 インターネットと運用技術研究会 (IOT)
+    key: ipsj-sigiot
+    link: https://ken.ieice.org/ken/program/?tgid=IPSJ-IOT
+    tags:
+      - domestic-jp
+    title: 情報処理学会 IOT 研究会
 schema_version: 1

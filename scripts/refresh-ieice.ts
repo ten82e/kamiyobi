@@ -227,6 +227,9 @@ export function editionIdPrefix(block: string, key: string): string {
   const ids = [...block.matchAll(/^\s+id: (\S+?)-\d{4}-\d{2}(?:[-\w]*)$/gm)].map((m) => m[1]);
   // 会議キーと違う接頭語で統一されている研究会（ipsj-sighpc → ipsj-hpc）に合わせる。
   for (const id of ids.reverse()) if (id !== key) return id;
+  // 版がまだ無い IPSJ 研究会は、既存の流儀（ipsj-dps-2026-09）に合わせて略称で出す。
+  const sig = /^ipsj-sig([a-z]+)$/.exec(key);
+  if (sig) return `ipsj-${sig[1]}`;
   return key;
 }
 
@@ -276,6 +279,11 @@ const TGID_BY_KEY: Record<string, string> = {
   "ipsj-sigse": "IPSJ-SE",
   "ipsj-sigdps": "IPSJ-DPS",
   "ipsj-sigubi": "IPSJ-UBI",
+  "ipsj-sigdbs": "IPSJ-DBS",
+  "ipsj-sigal": "IPSJ-AL",
+  "ipsj-sigifat": "IPSJ-IFAT",
+  "ipsj-sigcgvi": "IPSJ-CGVI",
+  "ipsj-sigiot": "IPSJ-IOT",
 };
 
 export function keyToTgid(key: string): string {
@@ -285,7 +293,8 @@ export function keyToTgid(key: string): string {
 /** tgid から研究会キーを組み立てる（逆引きに無いものは IEICE の略称とみなす）。 */
 export function tgidToKey(tgid: string): string {
   for (const [key, value] of Object.entries(TGID_BY_KEY)) if (value === tgid) return key;
-  return `ieice-${tgid.toLowerCase()}`;
+  // 学会名付き（IPSJ-DBS など）を IEICE の研究会として扱わない。
+  return tgid.includes("-") ? tgid.toLowerCase() : `ieice-${tgid.toLowerCase()}`;
 }
 
 export function programUrl(tgid: string): string {
@@ -418,6 +427,11 @@ const TGID_ORDER = [
   "IPSJ-SE",
   "IPSJ-DPS",
   "IPSJ-UBI",
+  "IPSJ-DBS",
+  "IPSJ-AL",
+  "IPSJ-IFAT",
+  "IPSJ-CGVI",
+  "IPSJ-IOT",
 ];
 
 function parseArgs(argv: string[]): {
