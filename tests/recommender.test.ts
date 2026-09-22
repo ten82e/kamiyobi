@@ -5157,3 +5157,56 @@ describe("かなで打った地名が、漢字で打ったときと同じ行に�
     expect(hits("とうきょう 通信")).toEqual([]);
   });
 });
+
+describe("地域の語で引く（南米・中米・北米）", () => {
+  const NOW = Date.parse("2026-08-09T00:00:00Z");
+  const members = (q: string) => {
+    const groups = R.queryTokenGroups(q, NOW);
+    return groups.length === 1 ? groups[0].map(String) : [];
+  };
+
+  it("「南米」は南米の国名を探し、他の大陸の国名を含まない", () => {
+    const group = members("南米");
+    expect(group.length).toBeGreaterThan(1);
+    for (const country of ["ブラジル", "アルゼンチン", "チリ", "コロンビア"]) {
+      expect(group, country).toContain(country);
+    }
+    expect(group).not.toContain("フランス");
+    expect(group).not.toContain("日本");
+  });
+
+  it("「中米」は中米の国名を探す", () => {
+    const group = members("中米");
+    for (const country of ["メキシコ", "コスタリカ", "パナマ"]) {
+      expect(group, country).toContain(country);
+    }
+    expect(group).not.toContain("ブラジル");
+  });
+
+  it("「中南米」は南米と中米の両方を含む", () => {
+    const broad = members("中南米");
+    // グループには打った語自身も入るので、寄せ先の国名だけ比べてください。
+    const countries = [...members("南米"), ...members("中米")].filter(
+      (word) => word !== "南米" && word !== "中米",
+    );
+    expect(countries.length).toBeGreaterThan(4);
+    for (const word of countries) {
+      expect(broad, word).toContain(word);
+    }
+  });
+
+  it("メキシコは北米として「北米」に入る（「アメリカ」と打った人には出さない）", () => {
+    expect(members("北米")).toContain("メキシコ");
+    expect(members("アメリカ")).not.toContain("メキシコ");
+  });
+
+  it("一方向のまま（国名を打っても地域の語には展開しない）", () => {
+    // 展開語を行側に足していないので、`ブラジル` と打った人に他の国の行は混ざらない。
+    const rows = [
+      { conf: { key: "br", title: "SBIA", editions: [] }, hay: "sbia brazil ブラジル" },
+      { conf: { key: "cl", title: "CLAPIoT", editions: [] }, hay: "clapion chile チリ" },
+    ];
+    const m = R.searchMatcher("ブラジル", NOW);
+    expect(rows.filter((r) => m(r.hay)).map((r) => r.conf.key)).toEqual(["br"]);
+  });
+});

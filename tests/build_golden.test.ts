@@ -2437,6 +2437,8 @@ const SEARCH_CANON = (() => {
     ["US_STATES_JA", /const US_STATES_JA =[\s\S]*?;/],
     ["US_JA", /const US_JA =[\s\S]*?;/],
     ["NORTH_AMERICA_JA", /const NORTH_AMERICA_JA =[\s\S]*?;/],
+    ["SOUTH_AMERICA_JA", /const SOUTH_AMERICA_JA =[\s\S]*?;/],
+    ["CENTRAL_AMERICA_JA", /const CENTRAL_AMERICA_JA =[\s\S]*?;/],
     ["OCEANIA_JA", /const OCEANIA_JA =[\s\S]*?;/],
     ["CONTINENT_READINGS", /const CONTINENT_READINGS[\s\S]*?\];/],
     // 地方名 → 都道府県 + 開催市（`関東` で `Tokyo, Japan` を引く）の定義。
@@ -6627,4 +6629,69 @@ it("かな入力の地名が、漢字で引ける行を取りこぼさない（S
   const out = JSON.parse(proc.stdout) as { worse: string[]; leak: string[] };
   expect(out.worse, "かなで打くと漢字より足りない行がある:\n" + out.worse.join("\n")).toEqual([]);
   expect(out.leak, "かな入力の行集合が漢字とズレている: " + out.leak.join(" / ")).toEqual([]);
+});
+
+it("「南米」「中米」で引けると、地域の切れ目が実データで崩れない（SPEC §7）", () => {
+  /* 「中南米」は当たっても「南米」単体では 0 件で止まっていた（2026-09-23 実測:
+   * 中南米 95 行 / 南米 0 行 / 中米 0 行）。南米の会議を開こうとする人は「南米」と書く。
+   * 収録カタログで、国名で引ける行が地域の語でも引けること、地域の切れ目が
+   * 混ざらないことを見る。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(new URL("../data/snapshot.json", import.meta.url).pathname)}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const keys = (word) => {",
+    "  const m = Recommender.searchMatcher(word, now);",
+    "  return new Set(rows.filter((r) => m(r.hay)).map((r) => r.conf.key + '@' + r.ed.year + '@' + r.kind));",
+    "};",
+    "const missing = (broad, narrowList) =>",
+    "  narrowList.flatMap((narrow) => [...keys(narrow)].filter((k) => !keys(broad).has(k)).map((k) => `${narrow}: ${k}`));",
+    "const intersect = (a, b) => [...keys(a)].filter((k) => keys(b).has(k)).length;",
+    "console.log(JSON.stringify({",
+    "  south: keys('南米').size,",
+    "  central: keys('中米').size,",
+    "  latin: keys('中南米').size,",
+    "  southFromCountries: missing('南米', ['ブラジル', 'チリ', 'コロンビア', 'アルゼンチン']),",
+    "  centralFromCountries: missing('中米', ['メキシコ', 'コスタリカ', 'パナマ']),",
+    "  latinMissing: missing('中南米', ['南米', '中米']),",
+    "  southInEurope: intersect('南米', 'ヨーロッパ'),",
+    "  centralInAsia: intersect('中米', 'アジア'),",
+    "  mexicoInNorthAmerica: keys('メキシコ').size && missing('北米', ['メキシコ']).length === 0,",
+    "}));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    south: number;
+    central: number;
+    latin: number;
+    southFromCountries: string[];
+    centralFromCountries: string[];
+    latinMissing: string[];
+    southInEurope: number;
+    centralInAsia: number;
+    mexicoInNorthAmerica: boolean;
+  };
+  expect(out.south, "「南米」が 0 件").toBeGreaterThan(0);
+  expect(out.central, "「中米」が 0 件").toBeGreaterThan(0);
+  expect(
+    out.latinMissing,
+    "「中南米」が南米・中米の行を取りこぼしている:\n" + out.latinMissing.join("\n"),
+  ).toEqual([]);
+  expect(
+    out.southFromCountries,
+    "国名で引ける南米の行が「南米」で出ていない:\n" + out.southFromCountries.join("\n"),
+  ).toEqual([]);
+  expect(
+    out.centralFromCountries,
+    "国名で引ける中米の行が「中米」で出ていない:\n" + out.centralFromCountries.join("\n"),
+  ).toEqual([]);
+  // 地域の切れ目（ブラジルの行がヨーロッパに入らない等）。
+  expect(out.southInEurope, "南米の行がヨーロッパで当たっている").toBe(0);
+  expect(out.centralInAsia, "中米の行がアジアで当たっている").toBe(0);
+  expect(out.mexicoInNorthAmerica, "メキシコ開催の行が「北米」で出ていない").toBe(true);
 });
