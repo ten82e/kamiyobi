@@ -718,11 +718,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 「いちばん遠い」に化ける）。依存を新たに増やさないよう NaN はここで寄せる
    * （ビルド成果物から関数を抜き出す検査は、自由変数を全部渡し直す必要がある）。 */
   function compareDeadlineRows(a: AppRow, b: AppRow, mult: number = 1): number {
-    const aTail = Number.isFinite(a.t) ? 0 : 1;
-    const bTail = Number.isFinite(b.t) ? 0 : 1;
+    // 基準は「画面に出している暦日」(`tShown`)。古い呼び出し側や検査で組んだ行が
+    // 持っていないときは `t` に寄せる（行を落とさない・並びを壊さない）。
+    const key = (r: AppRow) =>
+      Number.isFinite(r.tShown) ? r.tShown : Number.isFinite(r.t) ? r.t : Number.NaN;
+    const aKey = key(a);
+    const bKey = key(b);
+    const aTail = Number.isFinite(aKey) ? 0 : 1;
+    const bTail = Number.isFinite(bKey) ? 0 : 1;
     if (aTail !== bTail) return aTail - bTail;
-    const at = Number.isFinite(a.t) ? a.t : 0;
-    const bt = Number.isFinite(b.t) ? b.t : 0;
+    const at = Number.isFinite(aKey) ? aKey : 0;
+    const bt = Number.isFinite(bKey) ? bKey : 0;
     if (at !== bt) return (at < bt ? -1 : 1) * mult;
     const cmp = conferenceNameCell(a).localeCompare(conferenceNameCell(b), "ja");
     if (cmp) return cmp * mult;
@@ -1223,6 +1229,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   // ---- REMAIN / STATUS ----
   function remain(ms: number) {
+    /* 締切の瞬間が読めない行は組み立て時点で落ちるので、ここは本来通らない。
+     * それでも通ったときに画面へ `あと NaN 日` と出すのがいちばん悪い
+     * （2026-09-23 実測: 呼び出し側が基準を間違えると NaN がそのまま出ていた）。
+     * 数えられない、という意味で横線を出す（「評価なし」を空欄にしない規則と同じで、
+     * 値が無いことを値として出す）。 */
+    if (!Number.isFinite(ms)) return { text: "―", cls: "" };
     const now = Date.now();
     const diff = ms - now;
     if (diff < 0) {
@@ -1847,7 +1859,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         // `"ja"` は漢字を読み（音読み）の五十音順に並べる collation。読み辞書を持たない
         // のでカタカナ語は漢字語より前の段に出る（異スクリプト間の段差は越えられない）。
         const cmp = conferenceNameCell(a).localeCompare(conferenceNameCell(b), "ja");
-        return cmp ? cmp * mult : (a.t - b.t) * mult;
+        return cmp ? cmp * mult : (a.tShown - b.tShown) * mult;
       } else if (sortKey === "rank") {
         // 等級の点数で並べる（`rankSortKey` が正本）。`rankPairs` をそのまま文字列比較
         // すると体系名が先に効いて `ccf:C` が `core:A*` より前に来ていた。
@@ -2136,8 +2148,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   // 月キーは JST で決める（表示が JST なので、表示と違う単位で区切ると迷う）。
   function monthKey(r: AppRow): string {
-    if (r.kind === "journal" || !Number.isFinite(r.t)) return "";
-    const jst = new Date(r.t + 9 * 3600000);
+    if (r.kind === "journal") return "";
+    // 月も「画面に出している暦日」で決める。幅を持つ行は `t` が締切の最も早い瞬間なので、
+    // それを見ると表示している暦日と違う月に入ることがある（残り・並びと同じ基準）。
+    const basis = Number.isFinite(r.tShown) ? r.tShown : r.t;
+    if (!Number.isFinite(basis)) return "";
+    const jst = new Date(basis + 9 * 3600000);
     return `${jst.getUTCFullYear()}-${pad(jst.getUTCMonth() + 1)}`;
   }
 
@@ -2237,7 +2253,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         : dateState === "uncertain-on-date"
           ? { text: "締切日です（終了済みの可能性あり）", cls: "today" }
           : { text: "時刻未確認", cls: "" }
-      : remain(r.t);
+      : remain(r.tShown);
     // 常時受付ジャーナルは締切の概念がないため「本日終了」等の誤解を与えない表示にする
     if (r.kind === "journal") {
       rem = { text: "常時受付", cls: "" };

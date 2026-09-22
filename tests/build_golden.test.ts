@@ -10077,3 +10077,118 @@ it("検索欄で Esc を押すと、語を消さずに欄を出て選択行に�
   );
   expect(template).toContain("検索語を消さずに欄を出て");
 });
+
+it("幅を持つ行の残り・並び・月は、画面に出している暦日で決まる（SPEC §7）", () => {
+  /* 時刻未確認の行は `t` が「最も早く締切る瞬間」（UTC+14 の始まり）だった。それを
+   * 残り・並び・月の基準に使うと、同じ行の日付欄と食い違う（2026-09-23 実測:
+   * 既定画面 478 行で表示暦日が戻る隣接ペア 27 件。残りも日付欄より 1 日少ない行が
+   * 231 件。収録全体では 13 行が前の月のグループに落ち、例は表示 2026-09-01 の行が
+   * 2026年8月に入っていた）。*/
+  const recPath = join(site, "recommender.js");
+  const dataPath = join(site, "data.json");
+  const script = [
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${recPath}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(dataPath)}, 'utf8'));`,
+    "const NOW = Date.parse('2026-08-09T00:00:00Z');",
+    "const DAY = 86400000;",
+    "const jstDay = (ms) => Math.floor((ms + 9 * 3600000) / DAY);",
+    "const jstMonth = (ms) => { const d = new Date(ms + 9 * 3600000); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0'); };",
+    "const displayDay = (r) => String(r.localDate || '').trim() || new Date(r.t + 9 * 3600000).toISOString().slice(0, 10);",
+    "const rows = Recommender.candidateRows(DATA, NOW);",
+    "const view = rows.filter((r) => (r.kind === 'abstract' || r.kind === 'paper') && r.t >= NOW && !r.est);",
+    "const dateOnly = view.filter((r) => String(r.localDate || '').trim());",
+    "const inversions = (list, key) => { const s = [...list].sort((a, b) => key(a) - key(b)); let n = 0; for (let i = 1; i < s.length; i++) if (displayDay(s[i - 1]) > displayDay(s[i])) n++; return n; };",
+    // ① 並び: 表示している暦日が戻る場所が無いこと（従来の基準では実在した）。
+    "const shownInversions = inversions(view, (r) => r.tShown);",
+    "const oldInversions = inversions(view, (r) => r.t);",
+    // ② 残り: 時刻未確認の行は、日付欄の日から数えた日数とずれない。
+    "const remainWrong = dateOnly.filter((r) => jstDay(r.tShown) !== jstDay(Date.parse(String(r.localDate) + 'T00:00:00+09:00'))).length;",
+    // ③ 月グループ: 表示している暦日の月に入る（従来の基準では前の月に落ちていた）。
+    "const monthWrong = rows.filter((r) => String(r.localDate || '').trim() && jstMonth(r.tShown) !== String(r.localDate).slice(0, 7)).length;",
+    "const monthWrongOld = rows.filter((r) => String(r.localDate || '').trim() && jstMonth(r.t) !== String(r.localDate).slice(0, 7)).length;",
+    // ④ 終了判定の幅はそのまま（幅の最早 < 表示の暦日 < 幅の終り）。
+    "const widthOk = dateOnly.every((r) => r.t < r.tShown && r.tShown <= r.tLast);",
+    // ⑤ CSV の残り列も同じ基準。
+    "const sample = dateOnly[0];",
+    "const csv = Recommender.deadlinesToCsv([sample], NOW);",
+    "const csvLeft = Number(csv.split('\\n')[1].split(',')[2]);",
+    "const csvExpected = jstDay(Date.parse(String(sample.localDate) + 'T00:00:00+09:00')) - jstDay(NOW);",
+    "console.log(JSON.stringify({ view: view.length, dateOnly: dateOnly.length, shownInversions, oldInversions, remainWrong, monthWrong, monthWrongOld, widthOk, csvLeft, csvExpected }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as Record<string, number | boolean>;
+  expect(out.view, "既定画面が空").toBeGreaterThan(100);
+  expect(out.dateOnly, "時刻未確認の行が無い").toBeGreaterThan(50);
+  expect(out.shownInversions, "日時順で表示している暦日が戻る行がある").toBe(0);
+  expect(out.oldInversions, "基準を変えても何も変わらないなら検査は無意味").toBeGreaterThan(0);
+  expect(out.remainWrong, "残りの基準が日付欄と違う時刻未確認の行がある").toBe(0);
+  expect(out.monthWrong, "月グループが日付欄と違う月に入る行がある").toBe(0);
+  expect(out.monthWrongOld, "従来の基準でも月は狂っていなかったはず").toBeGreaterThan(0);
+  expect(out.widthOk, "幅の両端が壊れている").toBe(true);
+  expect(out.csvLeft, "CSV の残り列が日付欄から数えた日数と違う").toBe(out.csvExpected);
+});
+
+it("並びの比較は表示している暦日を使い、その値を持たない行も落とさない（SPEC §7）", () => {
+  const app = siteRuntime();
+  const cmpSrc = jsFunction(app, "compareDeadlineRows");
+  const monthSrc = jsFunction(app, "monthKey");
+  const remainSrc = jsFunction(app, "remain");
+  const script = [
+    "const DAY = 86400000;",
+    "const name = (r) => r.name;",
+    "const kindIndex = (k) => (k === 'abstract' ? 0 : k === 'paper' ? 1 : 2);",
+    `const CMP = ${JSON.stringify(cmpSrc)};`,
+    `const MONTH = ${JSON.stringify(monthSrc)};`,
+    `const REMAIN = ${JSON.stringify(remainSrc)};`,
+    "const cmp = new Function('conferenceNameCell', 'kindSortIndex', 'return (' + CMP + ')')(name, kindIndex);",
+    "const pad = (n) => String(n).padStart(2, '0');",
+    "const monthKey = new Function('pad', 'return (' + MONTH + ')')(pad);",
+    "const now = Date.UTC(2026, 7, 9);",
+    "const DateNow = now;",
+    "const remain = new Function('DAY', 'Date', 'return (' + REMAIN + ')')(DAY, { now: () => DateNow });",
+    // 表示 8月14日 23:00 JST（確定）と、表示 8月15日（時刻未確認・幅の最早は 8月14日 19:00 JST）。
+    "const sure = { name: 'A', kind: 'paper', t: Date.UTC(2026, 7, 14, 14, 0), tShown: Date.UTC(2026, 7, 14, 14, 0), tLast: Date.UTC(2026, 7, 14, 14, 0) };",
+    "const wide = { name: 'B', kind: 'paper', t: Date.UTC(2026, 7, 14, 10, 0), tShown: Date.UTC(2026, 7, 15, 3, 0), tLast: Date.UTC(2026, 7, 15, 15, 0), localDate: '2026-08-15' };",
+    // 従来の基準（t）なら B が先だったが、表示している暦日では A が先。
+    "const oldOrder = wide.t < sure.t;",
+    "const shownOrder = cmp(sure, wide) < 0;",
+    // 降順でも逆向きになる（塊の反転を再現しない）。
+    "const descOrder = cmp(sure, wide, -1) > 0;",
+    // tShown を持たない行（古い呼び出し側・検査が組んだ行）は t で並ぶ。末尾には落ちない。
+    "const legacy = { name: 'C', kind: 'paper', t: Date.UTC(2026, 7, 20), tLast: Date.UTC(2026, 7, 20) };",
+    "const legacyFirst = cmp(legacy, sure) > 0;",
+    "const legacyVsTail = cmp(legacy, { name: 'D', kind: 'paper', t: Number.NaN, tLast: Number.NaN }) < 0;",
+    // 月も表示している暦日。幅の最早が前の月でも、表示の月に入る。
+    "const monthWide = { name: 'E', kind: 'paper', t: Date.UTC(2026, 8, 30, 10, 0), tShown: Date.UTC(2026, 9, 1, 3, 0), tLast: Date.UTC(2026, 9, 1, 15, 0), localDate: '2026-10-01' };",
+    "const month = monthKey(monthWide);",
+    "const monthFromT = new Date(monthWide.t + 9 * 3600000).getUTCMonth();",
+    "const monthJournal = monthKey({ kind: 'journal', name: 'J', t: now, tShown: now, tLast: now });",
+    // 残りは tShown から。持たない行は t から数え、NaN を画面に出さない。
+    "const remainWide = remain(wide.tShown).text;",
+    "const remainLegacy = remain(legacy.t).text;",
+    "const remainNoNaN = remain(Number.NaN).text.indexOf('NaN') < 0;",
+    "console.log(JSON.stringify({ oldOrder, shownOrder, descOrder, legacyFirst, legacyVsTail, month, monthFromT, monthJournal, remainWide, remainLegacy, remainNoNaN }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as Record<string, unknown>;
+  expect(out.oldOrder, "前提が崩れた（従来の基準なら B が先では無い）").toBe(true);
+  expect(out.shownOrder, "表示している暦日で並んでいない").toBe(true);
+  expect(out.descOrder, "降順で逆向きになっていない").toBe(true);
+  expect(out.legacyFirst, "tShown の無い行を末尾に落としている").toBe(true);
+  expect(out.legacyVsTail, "tShown の無い行と時刻不明の行の前後が壊れている").toBe(true);
+  expect(out.month, "月グループが表示の暦日から決まっていない").toBe("2026-10");
+  expect(out.monthFromT, "従来の基準でも 10 月なら検査は無意味").toBe(8);
+  expect(out.monthJournal, "常時受付が月グループに入っている").toBe("");
+  expect(out.remainWide, "残りが表示している暦日から数えていない").toBe("あと 6 日");
+  expect(out.remainLegacy).toBe("あと 11 日");
+  expect(out.remainNoNaN, "残りに NaN が出ている").toBe(true);
+});

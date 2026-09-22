@@ -96,6 +96,10 @@ interface CandidateRow {
   kind: string;
   est: boolean;
   t: number;
+  /** 画面に出している暦日（JST の正午）。並び順・残り・CSV の残り列の基準。
+   * 時刻未確認の行では `t`（最も早い締め時刻）と違う – 幅の端で並べると日付欄と
+   * 食い違うため（SPEC §7）。 */
+  tShown: number;
   tLast: number;
   dateOnly?: boolean;
   localDate?: string;
@@ -409,6 +413,9 @@ function normalizeCandidateLike(value: unknown): CandidateRow | null {
     kind: typeof value.kind === "string" ? value.kind : "other",
     est: Boolean(value.est),
     t: typeof value.t === "number" ? value.t : 0,
+    // 旧い呼び出し側が `tShown` を持たない場合は `t` に寄せる（行を落とさない）。
+    tShown:
+      typeof value.tShown === "number" ? value.tShown : typeof value.t === "number" ? value.t : 0,
     tLast: typeof value.tLast === "number" ? value.tLast : 0,
     dateOnly: Boolean(value.dateOnly),
     localDate: typeof value.localDate === "string" ? value.localDate : "",
@@ -2099,8 +2106,11 @@ const Recommender = (() => {
        * 持てるためで、画面の「あと N 日」（読みやすさ優先）とは書き方が違う。過ぎた分は負の数。
        * 日期のみの行も日粒度で数値を出す（時刻の未確認は「公式表記」列が既に伝えている）。 */
       let left = "";
-      if (kind !== "journal" && Number.isFinite(t)) {
-        left = String(Math.floor((t - nowMs) / 86400000));
+      // 幅を持つ行は、画面と同じ「表示している暦日」から数える（`tShown`）。画面の
+      // 「あと N 日」と表計算の数が違うと、どちらを信じていいか分からなくなる。
+      const tShown = typeof row.tShown === "number" && Number.isFinite(row.tShown) ? row.tShown : t;
+      if (kind !== "journal" && Number.isFinite(tShown)) {
+        left = String(Math.floor((tShown - nowMs) / 86400000));
       }
       /* ランクは画面と同じ書き方にする。上流の `N` は「ランクが付いていない」ことを
        * 表す番兵で等級ではない（SPEC §2）ので、表計算にそのまま渡すと「N という等級」
@@ -2308,6 +2318,28 @@ const Recommender = (() => {
     if (!ymd) return "";
     const term = WEEKDAY_TERMS_JA[new Date(Date.UTC(ymd[0], ymd[1] - 1, ymd[2])).getUTCDay()];
     return `${term} ${term}日`;
+  }
+
+  /* 表示している暦日の JST 正午。並び順・残り日数・CSV の残り列の基準にする
+   * （`t` のように幅の端でなく、人が読んだ日付そのもの）。暦日が読めないときは
+   * 従来の値に寄り、行を落とさない。 */
+  function jstNoonMs(localDate: unknown, fallback: number): number {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(localDate ?? "").trim());
+    if (!match) return fallback;
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    if (month < 1 || month > 12 || day < 1 || day > 31) return fallback;
+    // JST 正午 = UTC 03:00（`calendarDateJa` が JST の暦日を返すのと同じ基準）。
+    const noon = Date.UTC(year, month - 1, day, 3, 0, 0);
+    const check = new Date(noon);
+    if (
+      check.getUTCFullYear() !== year ||
+      check.getUTCMonth() + 1 !== month ||
+      check.getUTCDate() !== day
+    )
+      return fallback;
+    return noon;
   }
 
   function dayTermsJa(value: unknown): string {
@@ -3942,6 +3974,14 @@ const Recommender = (() => {
             : (parsedInstant(dl.utc ?? dl.at_utc) ?? Number.NaN);
           const tLast = dateOnly ? (parsedInstant(dl.latest_utc) ?? window?.end ?? Number.NaN) : t;
           if (!Number.isFinite(t) || !Number.isFinite(tLast)) return;
+          /* 幅を持つ行（時刻未確認）は、`t` が「最も早い締め時刻」なので、これを並びと
+           * 残りの基準に使うと、同じ行の日付欄より 1〜2 日早く並んでしまう
+           * （2026-09-23 実測: 既定画面で表示暦日が戻る隣接ペア 27 件。例 08-15 の後に
+           * 08-14 が来る。残りも日付欄より 1 日少ない値になった）。
+           * そこで **画面に出している暦日（JST の正午）**を別の基準として持つ。
+           * 終了したかどうかの判定は従来の幅（`t` / `tLast`）のまま – 「表示した日より
+           * 前に終わっている可能性がある」という約束はそこが担っている。 */
+          const tShown = dateOnly ? jstNoonMs(dl.local_date, t) : t;
           out.push({
             conf,
             ed,
@@ -3949,6 +3989,7 @@ const Recommender = (() => {
             kind: dl.kind || "other",
             est: !!ed.estimated,
             t,
+            tShown,
             tLast,
             dateOnly,
             localDate: dateOnly ? String(dl.local_date || "") : "",
@@ -4001,6 +4042,7 @@ const Recommender = (() => {
         kind: "journal",
         est: false,
         t: now,
+        tShown: now,
         tLast: now,
         cats: cats,
         tags: tags,
