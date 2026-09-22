@@ -2176,7 +2176,8 @@ it("filtered rows can be exported to a spreadsheet as BOM-prefixed CSV (SPEC §7
   // 書き出し本文は recommender の単一正典を通す（一覧の表示式とズレないようにする）。
   expect(runtime).toContain("Recommender.deadlinesToCsv(");
   // Excel は BOM の無い UTF-8 を日本語として読めない。
-  expect(runtime).toContain('"\\ufeff" + csv');
+  // BOM 付きで渡していること（書き方が変わっても BOM 文字 + csv の組合せを見る）。
+  expect(runtime).toContain("`\\ufeff${csv}`");
   // 推薦モードでは出さず、締切一覧の絞り込み件数ラベルをそのまま使う。
   expect(runtime).toContain("exportBtn.hidden = recMode || !shown.length;");
   expect(runtime).toContain("件を CSV でダウンロード");
@@ -2346,6 +2347,11 @@ it("drawer shows JST with weekday and the official timezone, viewer-timezone ind
   const runtime = siteRuntime();
   const weekdayConst = runtime.match(/const WEEKDAY_JA = \[[^\]]*\];/)?.[0];
   expect(weekdayConst, "WEEKDAY_JA 定義が見つからない").toBeTruthy();
+  // ドロワーは「今後の会期」も組むので、依存も正本から注入する（書き写さない）。
+  const drawerDepsSrc = [
+    jsFunction(runtime, "meetingRangeJa"),
+    jsFunction(runtime, "upcomingEditionsOf"),
+  ].join("\n");
   const openSrc = jsFunction(runtime, "openDrawer");
   const script = [
     weekdayConst as string,
@@ -2353,6 +2359,7 @@ it("drawer shows JST with weekday and the official timezone, viewer-timezone ind
     jsFunction(runtime, "fmtDate"),
     jsFunction(runtime, "fmtJst"),
     jsFunction(runtime, "fmtAoE"),
+    drawerDepsSrc as string,
     // 公式表記の判定は recommender.js の正本をそのまま注入する（規則の書き写しは
     // 正本とズレるため避ける）。officialZone の依存は isRecord のみ。
     jsFunction(siteRuntime("recommender.js"), "isRecord"),
@@ -2368,7 +2375,7 @@ it("drawer shows JST with weekday and the official timezone, viewer-timezone ind
     "const document = { activeElement: null, getElementById: (id) => els[id] || null };",
     "function $(id) { return document.getElementById(id); }",
     "const window = { _prevFocus: null };",
-    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, { paper: '論文締切' }, (t) => t, fmtDate, fmtJst, fmtAoE, (s) => String(s ?? ''), (v) => String(v ?? ''), () => null, () => '', Recommender);`,
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, { paper: '論文締切' }, (t) => t, fmtDate, fmtJst, fmtAoE, (s) => String(s ?? ''), (v) => String(v ?? ''), () => null, () => '', Recommender, meetingRangeJa, upcomingEditionsOf);`,
     "const draw = (tzRaw) => {",
     "  body.innerHTML = '';",
     "  openDrawer({",
@@ -2799,6 +2806,10 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
   expect(html).toContain("<kbd>d</kbd> 詳細");
   // 実行検証: d キーで選択行のドロワーが開き、開閉でフォーカスが移る / 戻る
   const keySrc = jsFunction(html, "onKeydown");
+  const drawerDepsSrc = [
+    jsFunction(html, "meetingRangeJa"),
+    jsFunction(html, "upcomingEditionsOf"),
+  ].join("\n");
   const openSrc = jsFunction(html, "openDrawer");
   const summarySrc = jsFunction(html, "verificationSummary");
   const closeSrc = jsFunction(html, "closeDrawer");
@@ -2826,13 +2837,14 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
     `const OPEN = ${JSON.stringify(openSrc)};`,
     `const SUMMARY = ${JSON.stringify(summarySrc)};`,
     `const CLOSE = ${JSON.stringify(closeSrc)};`,
+    drawerDepsSrc as string,
     "const onKeydown = new Function('window', 'document', '$', 'selectedIndex', 'shown', 'openDrawer', 'closeDrawer', 'return (' + KEY + ')')(window, document, $, 1, ['A', 'B'], openSpy, closeSpy);",
     // d キー → 選択行 (shown[1]) のドロワーが開き、行にフォーカスが移る
     "onKeydown({ key: 'd', preventDefault() {}, target: { tagName: 'BODY' } });",
     "const dOpened = calls.open.length === 1 && calls.open[0] === 'B';",
     "const dFocusedRow = calls.focus[calls.focus.length - 1] === 'row1';",
     "const verificationSummary = new Function('esc', 'return (' + SUMMARY + ')')((s) => String(s ?? ''));",
-    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '' });",
+    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '' }, meetingRangeJa, upcomingEditionsOf);",
     "document.activeElement = prevEl;",
     "openDrawer({ kind: 'journal', conf: { title: 'X' }, ed: { place: 'P', date_text: 'D' } });",
     "const focusedClose = document.activeElement === closeBtn;",
@@ -3140,9 +3152,15 @@ it("openDrawer escapes KIND_LABEL fallback kind (#396)", () => {
 
 it("normal deadline drawer includes verification details", () => {
   const runtime = siteRuntime();
+  // ドロワーは「今後の会期」も組むので、依存も正本から注入する（書き写さない）。
+  const drawerDepsSrc = [
+    jsFunction(runtime, "meetingRangeJa"),
+    jsFunction(runtime, "upcomingEditionsOf"),
+  ].join("\n");
   const openSrc = jsFunction(runtime, "openDrawer");
   const summarySrc = jsFunction(runtime, "verificationSummary");
   const script = [
+    drawerDepsSrc as string,
     "const body = { innerHTML: '' };",
     "const closeBtn = { focus() {} };",
     "const els = {",
@@ -3153,7 +3171,7 @@ it("normal deadline drawer includes verification details", () => {
     "function $(id) { return document.getElementById(id); }",
     "const window = { _prevFocus: null };",
     `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')((s) => String(s ?? ''));`,
-    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '' });`,
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '' }, meetingRangeJa, upcomingEditionsOf);`,
     "openDrawer({",
     "  kind: 'paper', conf: { key: 'demo', title: 'Demo' },",
     "  ed: { year: 2026, place: 'P', date_text: 'D' }, t: 0, tLast: 0,",
@@ -3744,6 +3762,7 @@ it("the next-meeting note formats the schedule-only edition for a Japanese reade
     "const box = { hidden: true, textContent: '', appendChild(node) { if (node.textContent) this.textContent += node.textContent; } };",
     "const document = { createElement: (tag) => ({ tagName: tag, textContent: '', href: '', target: '', rel: '' }), createTextNode: (text) => ({ textContent: text }) };",
     "const $ = () => box;",
+    jsFunction(siteRuntime("app.js"), "meetingRangeJa"),
     jsFunction(siteRuntime("app.js"), "renderNextMeetingNote"),
     "renderNextMeetingNote({ window: '90', cats: [], domestic: true });",
     "console.log(JSON.stringify({ hidden: box.hidden, text: box.textContent }));",
@@ -3768,4 +3787,63 @@ it("the next-meeting note formats the schedule-only edition for a Japanese reade
   });
   expect(outOfWindow.status, outOfWindow.stderr).toBe(0);
   expect(JSON.parse(outOfWindow.stdout).hidden).toBe(true);
+});
+
+it("the drawer lists the same conference's later meetings (SPEC §7)", () => {
+  const app = siteRuntime("app.js");
+  expect(app).toContain("今後の会期");
+  // てびき に語彙を書かないと、案内だけ増えて説明が追いつかない状態になる。
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const guide = html.slice(html.indexOf('id="helpPanel"'), html.indexOf("</dl>"));
+  for (const word of ["会期のみ・締切未定", "upcoming.md", "今後の会期"]) {
+    expect(guide, `てびき に「${word}」が無い`).toContain(word);
+  }
+
+  // ビルド後の関数をそのまま実行する（Recommender は同じビルドの正本を読み込む）。
+  const runtime = compileSiteRuntime();
+  if (!runtime) throw new Error("site runtime is not compiled");
+  const dir = mkdtempSync(join(tmpdir(), "cfp-later-"));
+  const recPath = join(dir, "recommender.mjs");
+  writeFileSync(recPath, runtime["recommender.js"]);
+  const script = [
+    "(async () => {",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${recPath}`)});`,
+    "const conf = { key: 'ipsj-hpc', editions: [",
+    "  { event_start: '2026-08-06', event_end: '2026-08-07', place: '名古屋大学' },",
+    "  { event_start: '2026-09-28', event_end: '2026-09-29', place: '名古屋大学' },",
+    "  { event_start: '2026-12-01', event_end: '2026-12-02', place: '沖縄産業支援センター（沖縄県）' },",
+    "  { event_start: '2027-03-07', event_end: '2027-03-08', place: '' },",
+    "  { event_start: '2027-06-01', event_end: '2027-06-02', place: '将来分' },",
+    "] };",
+    "const now = Date.UTC(2026, 8, 22, 3, 0, 0);", // 2026-09-22 12:00 JST
+    jsFunction(app, "meetingRangeJa"),
+    jsFunction(app, "upcomingEditionsOf"),
+    "const later = upcomingEditionsOf(conf, '2026-09-28', now);",
+    "console.log(JSON.stringify({",
+    "  sameYear: meetingRangeJa('2026-12-01', '2026-12-02'),",
+    "  crossYear: meetingRangeJa('2026-12-30', '2027-01-02'),",
+    "  oneDay: meetingRangeJa('2026-12-01', '2026-12-01'),",
+    "  later: later.map((e) => meetingRangeJa(e.start, e.end) + (e.place ? ' ＠' + e.place : '')),",
+    "  capped: later.length,",
+    "}));",
+    "})().catch((e) => { console.error(e && e.stack || String(e)); process.exit(1); });",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    sameYear: string;
+    crossYear: string;
+    oneDay: string;
+    later: string[];
+    capped: number;
+  };
+  // 同じ年は年を二度書かない / 年を跨いだら年を落とさない / 1 日会期に〜を付けない。
+  expect(out.sameYear).toBe("2026-12-01(火)〜12-02(水)");
+  expect(out.crossYear).toBe("2026-12-30(水)〜2027-01-02(土)");
+  expect(out.oneDay).toBe("2026-12-01(火)");
+  // 過ぎた回と、今見ている回は出さない。最大 3 件。
+  expect(out.capped).toBe(3);
+  expect(out.later[0]).toContain("2026-12-01(火)〜12-02(水) ＠沖縄産業支援センター（沖縄県）");
+  expect(out.later.join(" / ")).not.toContain("2026-09-28");
+  expect(out.later.join(" / ")).not.toContain("2026-08-06");
 });

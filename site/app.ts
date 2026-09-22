@@ -835,6 +835,19 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
     const placeRaw = String(r.ed.place || "");
     const placeShown = Recommender.placeJa(placeRaw);
+    // 研究会は毎月開くので、この行の回より後の会期も併記する（「次はいつか」を
+    // 行をめくって探さなくて済むように）。日程の書き方は表と揃える。
+    const laterEditions = upcomingEditionsOf(r.conf, String(r.ed.event_start || ""), Date.now());
+    const laterEditionsHtml = laterEditions.length
+      ? `<p style="margin-bottom: 8px;"><strong>今後の会期:</strong> ${esc(
+          laterEditions
+            .map(
+              (next) =>
+                `${meetingRangeJa(next.start, next.end)}${next.place ? ` ＠${next.place}` : ""}`,
+            )
+            .join(" / "),
+        )}</p>`
+      : "";
     html +=
       '<div style="font-size: 0.85rem;">' +
       '<p style="margin-bottom: 8px;"><strong>開催地:</strong> ' +
@@ -848,6 +861,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       '<p style="margin-bottom: 8px;"><strong>会期:</strong> ' +
       esc(r.ed.date_text || r.ed.event_start || "未定") +
       "</p>" +
+      laterEditionsHtml +
       // 主題タグは日本語表記で出す（会議名から場を推定しないため）。
       (Recommender.topicTagsJa(r.conf.tags).length
         ? '<p style="margin-bottom: 8px;"><strong>主題:</strong> ' +
@@ -1482,7 +1496,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       Date.now(),
     );
     if (typeof Blob === "undefined" || typeof URL === "undefined" || !URL.createObjectURL) return;
-    const url = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" }));
+    const url = URL.createObjectURL(new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8" }));
     const now = new Date();
     const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
     const anchor = document.createElement("a");
@@ -1517,6 +1531,45 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.md に載せています。";
     if (!tips.length) return `${base} ${meetingNote}`;
     return `${base} 多いのは ${tips.join(" / ")}。${meetingNote}`;
+  }
+
+  /**
+   * 会期の暦日表示。表の日付列と同じ書き方（暦日 + 曜日、時刻は付けない、
+   * 同じ年会期で年を二度書かない）を案内とドロワーで共有する。
+   */
+  function meetingRangeJa(start: string, end: string): string {
+    const startDay = Recommender.weekdayJaFromDate(start);
+    let when = `${start}${startDay ? `(${startDay})` : ""}`;
+    if (end && end !== start) {
+      const endDay = Recommender.weekdayJaFromDate(end);
+      const endHead = end.slice(0, 4) === start.slice(0, 4) ? "" : `${end.slice(0, 4)}-`;
+      when += `〜${endHead}${end.slice(5)}${endDay ? `(${endDay})` : ""}`;
+    }
+    return when;
+  }
+
+  /** 同じ研究会のこれから先の会期（行になっている回を除く）。研究会は毎月開くので、
+   *  1 行だけ見て「次はいつか」が分からないのは惜しい。 */
+  function upcomingEditionsOf(
+    conf: unknown,
+    exceptStart: string,
+    nowMs: number,
+    max = 3,
+  ): Array<{ start: string; end: string; place: string }> {
+    const record = conf as { editions?: Array<Record<string, unknown>> };
+    const out: Array<{ start: string; end: string; place: string }> = [];
+    for (const ed of record.editions || []) {
+      const start = String(ed.event_start || "");
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) continue;
+      if (start === exceptStart) continue;
+      const startMs = Date.parse(`${start}T00:00:00+09:00`);
+      // 会期が終わった回を出さない（開始日が今を向いていても終了日が過ぎていれば除外）。
+      const endMs = Date.parse(`${String(ed.event_end || start)}T23:59:59+09:00`);
+      if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) continue;
+      if (endMs < nowMs) continue;
+      out.push({ start, end: String(ed.event_end || start), place: String(ed.place || "") });
+    }
+    return out.sort((a, b) => a.start.localeCompare(b.start)).slice(0, max);
   }
 
   /**
@@ -1555,16 +1608,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     found.forEach((m, index) => {
       const sep = document.createTextNode(index === 0 ? " " : " / ");
       box.appendChild(sep);
-      const startDay = Recommender.weekdayJaFromDate(m.eventStart);
-      const endDay = Recommender.weekdayJaFromDate(m.eventEnd);
-      // 同じ年の会期で年を二度書かない（表の日付列と同じ書き方）。
-      const sameYear = m.eventEnd.slice(0, 4) === m.eventStart.slice(0, 4);
-      let when = `${m.eventStart}${startDay ? `(${startDay})` : ""}`;
-      if (m.eventEnd && m.eventEnd !== m.eventStart) {
-        const endHead = sameYear ? "" : `${m.eventEnd.slice(0, 4)}-`;
-        when += `〜${endHead}${m.eventEnd.slice(5)}${endDay ? `(${endDay})` : ""}`;
-      }
-      const label = document.createTextNode(`${when} `);
+      const label = document.createTextNode(`${meetingRangeJa(m.eventStart, m.eventEnd)} `);
       box.appendChild(label);
       if (m.link) {
         const a = document.createElement("a");
