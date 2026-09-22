@@ -11630,3 +11630,68 @@ it("行をまたぐ見出しの列数と、外せる条件の数え上げを実�
   expect(out.rankOnly).toBeTruthy();
   expect(out.estOnly, "推定だけを外せない（0 件案内は外せる条件に並べる）").toBeTruthy();
 });
+
+it("投稿先を探すモードの一致評価の語を、画面で説明している語に限定する（SPEC §7）", () => {
+  /* カードの chips は `一致評価 <語> ▾` と出す。以前は「情報不足」がほぼ全ての行に出て、
+   * 論文を最後まで入力しても同じだった（2026-09-23 実測: 画面に出る 25 件のうち 23 件、
+   * 意味検索の得点を_synthetic に足しても 122 件のうち 120 件）。
+   * 「論文の情報が足りない」と読める語が常に出るため、実際に測った人が入力をやめる
+   * 恐れがあった。ここは (a) 常に出る語を画面で説明しているか、(b) 説明文が無い語を
+   * 出していないか、を検査する（ラベルは実装から取り、テストに書き写さない）。 */
+  const script = [
+    "import fs from 'node:fs';",
+    `import Recommender from ${JSON.stringify("file://" + join(site, "recommender.js"))};`,
+    "const R = Recommender;",
+    `const DATA = JSON.parse(fs.readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const NOW = Date.parse('2026-08-09T00:00:00Z');",
+    "const rows = R.candidateRows(DATA, NOW);",
+    "const papers = [",
+    "  'タイトル: 分散 GPU 学習の通信最適化',",
+    "  'タイトル: ゼロコピー転送を用いた分散 GPU 学習のための通信最適化\\n概要: RDMA と集合通信ライブラリの性能を計測し、学習反復あたり短縮を確認した。\\nキーワード: 分散学習 ネットワーク',",
+    "];",
+    "const labels = new Set();",
+    "let shownRows = 0;",
+    "let mostCommon = { label: '', count: 0 };",
+    "const tally = {};",
+    "for (const p of papers) {",
+    "  const lines = R.parsePaperLines(p);",
+    "  const scores = {};",
+    "  for (const x of R.venueRecommendations(rows, lines, scores, NOW, { fieldedLexical: true })) {",
+    "    labels.add(x.fit.label);",
+    "    // 一覧に出る行だけを数える（しきい値は app.js の式から取る）。",
+    "    if (x.fit.score >= 10) {",
+    "      shownRows += 1;",
+    "      tally[x.fit.label] = (tally[x.fit.label] || 0) + 1;",
+    "    }",
+    "  }",
+    "}",
+    "for (const [label, count] of Object.entries(tally)) if (count > mostCommon.count) mostCommon = { label, count };",
+    "console.log(JSON.stringify({ labels: [...labels], shownRows, tally, mostCommon }));",
+  ].join("\n");
+  // Node 26 は `node -e` のソースを ESM として見るので、静的 import がそのまま使える。
+  const proc = spawnSync("node", ["-e", script], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    labels: string[];
+    shownRows: number;
+    tally: { [k: string]: number };
+    mostCommon: { label: string; count: number };
+  };
+  expect(out.shownRows, "推薦の行が 1 も出ず、検査が空振り").toBeGreaterThan(10);
+  expect(out.labels.length, "ラベルが 1 種類しか出ず、検査が空振り").toBeGreaterThan(1);
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  // 画面に出る語は、てびきで説明している語だけにする。
+  for (const label of out.labels) {
+    expect(html, `「${label}」が一覧に出るのに、画面のどこにも説明が無い`).toContain(label);
+  }
+  // 常に出る語は、説明文が「その語がほぼ全行に出る」ことを正直に書いている。
+  const noteAt = html.indexOf(out.mostCommon.label);
+  expect(noteAt).toBeGreaterThan(-1);
+  const note = html.slice(Math.max(0, noteAt - 400), noteAt + 400);
+  expect(note).toMatch(/実測|ほとんど/);
+  // 以前の語は画面から消えている（論文を入力しても消えない警告に見えていた）。
+  expect(html).not.toContain("情報不足");
+});

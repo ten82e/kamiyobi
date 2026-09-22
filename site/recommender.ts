@@ -239,7 +239,7 @@ interface LinearRerankerModel {
   weights: Record<string, number>;
   blend: number;
   confidence_thresholds: { sufficient: number; ambiguous: number };
-  /** 精度保証が取れるまで sufficient 表示は無効 (UI は 候補/情報不足 の2段階)。 */
+  /** 精度保証が取れるまで sufficient 表示は無効 (UI は 候補/重なりうすい の2段階)。 */
   confidence_policy: { sufficient_enabled: boolean };
   calibration?: { method: "platt"; slope: number; intercept: number };
 }
@@ -4506,10 +4506,17 @@ const Recommender = (() => {
     return "sufficient";
   }
 
+  /* カードの chips に出る語（`一致評価 <語> ▾`）。以前の「情報不足」は、論文を最後まで
+   * 入力してもほぼ全ての行に出た（2026-09-23 実測: 概要・キーワードまで入れた入力で
+   * 画面に出る 25 件のうち 23 件、意味検索の得点を足しても 122 件のうち 120 件が同じ語）。
+   * 「論文の情報が足りない」と読める語で、実際に測った人がそこで入力をやめる恐れがある。
+   * 実体は max(言葉の一致, 意味検索の近さ) が閾値に届かないことなので、その意味の語に
+   * 変える（一覧の別の案内がすでに「重なる投稿先」という語を使っているので揃える）。
+   * 「十分な一致」は精度保証が取れるまで出さない（上の定数コメント参照）。 */
   function fitLabel(confidence: Confidence): string {
     if (confidence === "sufficient") return "十分な一致";
     if (confidence === "ambiguous") return "候補";
-    return "情報不足";
+    return "重なりうすい";
   }
 
   function availability(row: CandidateRow | null | undefined, now: number): Availability {
