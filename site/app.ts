@@ -3488,12 +3488,40 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   if (DATA.generated_at) {
     $("genat").textContent = generatedAtLabel(DATA.generated_at);
   }
-  const srcs = (DATA.sources || []).map(
-    (source) =>
-      source.name +
-      (source.repo ? ` (${source.repo}${source.license ? `, ${source.license}` : ""})` : ""),
-  );
-  $("sources").textContent = srcs.length ? srcs.join(" / ") : "-";
+  /* データ源の行。`local` はこのサイト自身の入力で、上流の配布物ではない。
+   * 内部のファイル名（`data/extra.yaml`）を画面に出さない（§7: 内部キー・実装語を出さない）。
+   * また上流と並ぶ欄に自前の入力へ「MIT」を出すのは誤解を招く（配布物のライセンス表記に
+   * 見える。2026-09-23 実測）。上流の出典は一次資料へ飛べるようにリンクする。 */
+  function dataSourceLabels(sources: SourceRecord[]): Array<{ label: string; url: string | null }> {
+    return (sources || []).map((source) => {
+      const url = safeExternalUrl(source.url);
+      if (source.name === "local") {
+        return { label: "このサイトで収録した分（上流に無いもの）", url };
+      }
+      const where = source.repo
+        ? `（${source.repo}${source.license ? `、${source.license}` : ""}）`
+        : "";
+      return { label: `${source.name}${where}`, url };
+    });
+  }
+
+  const srcEls = dataSourceLabels(DATA.sources || []);
+  const sourcesEl = $("sources");
+  sourcesEl.textContent = "";
+  if (!srcEls.length) {
+    sourcesEl.textContent = "-";
+  }
+  srcEls.forEach((item, i) => {
+    if (i) sourcesEl.appendChild(document.createTextNode(" / "));
+    if (item.url) {
+      const a = document.createElement("a");
+      a.href = item.url;
+      a.textContent = item.label;
+      sourcesEl.appendChild(a);
+    } else {
+      sourcesEl.appendChild(document.createTextNode(item.label));
+    }
+  });
 
   const localSrc = DATA.sources.find((source) => source.name === "local");
   if (localSrc && safeExternalUrl(localSrc.url)) {

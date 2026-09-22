@@ -8451,8 +8451,23 @@ it("日本語の案内に中国語の略語を混ぜない（SPEC §7）", () =>
   /* dropdown に当たる中国語表記を説明文に混入させては 3 回指摘している（2026-09-23 まで）。
    * 画面に出す語・案内に書く語は日本語で書く、という §7 の約束をファイル横断で検める。
    * 語列出典が自分自身を参照して落ちないよう、点検語は文字番号で書く。
-   * 引用（実物の誤記をバッククォートで書いた記録）は対象外。 */
-  const words = ["\u4e0b\u62c9", "\u6298\u53e0", "\u8fd9\u4e9b", "\u6279\u91cf"];
+   * 引用（実物の誤記をバッククォートで書いた記録）は対象外。
+   * 第 97 回で、自分が案内に実際に混入させた語（中国語の簡体字表記と韓国語の活用の語）を
+   * 点検語に足した。点検語の一覧はこのファイル自身も見るので、該当の語は引用しない。
+   * ハングルは日本語の案内に出る用事が無いので文字範囲で抑える（会議名は日本語か現地表記、
+   * 点検語自身のエスケープは文字範囲に掛からない）。 */
+  const words = [
+    "\u4e0b\u62c9",
+    "\u6298\u53e0",
+    "\u8fd9\u4e9b",
+    "\u6279\u91cf",
+    "\u8fc7\u53bb",
+    "\u95ee\u9898",
+    "\u663e\u793a",
+    "\u53d8\u91cf",
+    "\u51fd\u6570",
+    "\u5df2\u7ecf",
+  ];
   const targets = [
     "README.md",
     "SPEC.md",
@@ -8467,6 +8482,10 @@ it("日本語の案内に中国語の略語を混ぜない（SPEC §7）", () =>
     for (const word of words) {
       expect(text, `${rel} に中国語の略語「${word}」が混入している`).not.toContain(word);
     }
+    // 韓国語文字列の混入（第 97 回で動詞の活用形を実際に混入させた。日本語の案内に
+    // 出る用事が無いので、ハングルは文字範囲で抑える。ここでは語を引用しない）。
+    const hangul = /[\uac00-\ud55c]+/g;
+    expect(text.match(hangul) || [], `${rel} にハングルが混入している`).toEqual([]);
   }
 });
 
@@ -8781,4 +8800,47 @@ it("「データ生成」の時刻は JST と曜日で出る（SPEC §7）", () 
   expect(guide).toContain("右上");
   expect(guide, "てびきが画面の語「データ生成」を挙げていない").toContain("データ生成");
   expect(guide, "てびきが生成時刻の単位を書いていない").toContain("JST");
+});
+
+it("データ源の行は内部の実装語を出さず、上流は一次資料へ飛べる（SPEC §7）", () => {
+  /* 以前は `ccfddl (ccfddl/ccf-deadlines, MIT) / aideadlines (…) / local (data/extra.yaml, MIT)`
+   * と出していた（2026-09-23 実測）。自前の入力の内部ファイル名を画面に出すうえ、
+   * 上流の配布物と並ぶ欄に自项目へ「MIT」と付いて見えた（配布物のライセンス表記に見える）。
+   * 名前はリンクでもなく、出典を確かめられなかった。 */
+  const app = siteRuntime();
+  const script = [
+    "(async () => {",
+    'const safeExternalUrl = (u) => (typeof u === "string" && u.startsWith("https://") ? u : null);',
+    `const SRC_SRC = ${JSON.stringify(jsFunction(app, "dataSourceLabels"))};`,
+    'const dataSourceLabels = new Function("safeExternalUrl", "return (" + SRC_SRC + ")")(safeExternalUrl);',
+    "const got = dataSourceLabels([",
+    "  { name: 'ccfddl', repo: 'ccfddl/ccf-deadlines', license: 'MIT', url: 'https://github.com/ccfddl/ccf-deadlines' },",
+    "  { name: 'local', repo: 'data/extra.yaml', license: 'MIT', url: 'https://github.com/ten82e/kamiyobi' },",
+    "  { name: 'unknown', url: 'javascript:alert(1)' },",
+    " ]);",
+    "console.log(JSON.stringify(got));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout.trim().split("\n").pop() || "[]");
+  // 上流はそのまま（誰の配布物か、何のライセンスかが分かる）。
+  expect(got[0].label).toBe("ccfddl（ccfddl/ccf-deadlines、MIT）");
+  expect(got[0].url).toBe("https://github.com/ccfddl/ccf-deadlines");
+  // 自分の入力は、内部ファイル名とライセンスを出さない。
+  expect(got[1].label, "内部ファイル名を画面に出している").not.toContain("data/extra.yaml");
+  expect(got[1].label, "自前の入力にライセンスを付けている").not.toContain("MIT");
+  expect(got[1].label).toBe("このサイトで収録した分（上流に無いもの）");
+  // https 以外はリンクにしない（`safeExternalUrl` の結果だけを渡す）。
+  expect(got[2].url).toBeNull();
+  // てびきに画面の語そのままの説明がある（26 項目あっても「データ源」だけ無かった）。
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const help = template.slice(template.indexOf('id="helpPanel"'));
+  const guide = help.slice(0, help.indexOf("</dl>"));
+  expect(guide).toContain("<dt>データ源</dt>");
+  expect(guide).toContain("このサイトで収録した分（上流に無いもの）");
+  expect(guide).toContain("一次資料");
 });
