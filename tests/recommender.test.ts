@@ -1085,8 +1085,10 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
 
     it("語ごとの AND は保ったまま候補を増やす", () => {
+      // かな見出しは漢字見出しが持つ英文字表記の寄せも受け取る（`おきなわ` → `okinawa`）。
+      // 開催地は公式表記のまま残るので、これがないと漢字で出る行がかなで出なかった。
       expect(R.queryTokenGroups("おきなわ オンライン")).toEqual([
-        ["おきなわ", "沖縄"],
+        ["おきなわ", "沖縄", "okinawa"],
         ["オンライン"],
       ]);
       expect(R.hayMatches("沖縄産業支援センター（沖縄県）", "おきなわ 研究会")).toBe(false);
@@ -5106,5 +5108,52 @@ describe("早め絞り込みのボタンは、自分の条件だけを出し入�
     expect(json(R.presetNextSelection("nope", busy))).toBe(json(busy));
     expect(R.presetIsActive("nope", busy)).toBe(false);
     expect(json(R.presetNextSelection(null, null))).toBe(json(EMPTY));
+  });
+});
+
+describe("かなで打った地名が、漢字で打ったときと同じ行に届く", () => {
+  const NOW = Date.parse("2026-08-09T00:00:00Z");
+  // 漢字見出しは英文字表記の寄せ（`東京` ↔ `tokyo`）を持つが、かな見出し（`とうきょう`）は
+  // 漢字見出しへ寄せるだけで、その寄せを受け継いでいなかった。開催地の公式表記は
+  // 英文字なので、漢字で引ける行数とかなで引ける行数がズレていた（2026-09-23 実測:
+  // 東京 28 件 / `とうきょう` 1 件）。実データの検証は `tests/build_golden.test.ts`。
+  const rows = [
+    {
+      conf: { key: "nsdi", title: "NSDI", editions: [] },
+      hay: "nsdi networked systems design implementation tokyo, 日本",
+    },
+    {
+      conf: { key: "ieice", title: "IEICE", editions: [] },
+      hay: "ieice 情報処理学会 研究会 東京, 日本",
+    },
+    {
+      conf: { key: "sigcomm", title: "SIGCOMM", editions: [] },
+      hay: "sigcomm copenhagen, denmark",
+    },
+  ];
+  const hits = (q: string) => {
+    const m = R.searchMatcher(q, NOW);
+    return rows
+      .filter((r) => m(r.hay))
+      .map((r) => String(r.conf.key))
+      .sort();
+  };
+
+  it("ひらがなの都市名が、英文字表記だけの行にも当たる", () => {
+    expect(hits("とうきょう")).toEqual(hits("東京"));
+    expect(hits("とうきょう").includes("nsdi")).toBe(true);
+  });
+
+  it("展開は漢字見出しが持つ寄せを1ホップ受け取る", () => {
+    const group = R.queryTokenGroups("とうきょう", NOW);
+    expect(group.length).toBe(1);
+    const members = group[0].map(String);
+    expect(members).toContain("東京");
+    expect(members).toContain("tokyo");
+  });
+
+  it("寄せた先が違う語へ漏れない（無関係の行は出ない）", () => {
+    expect(hits("とうきょう")).toEqual(["ieice", "nsdi"]);
+    expect(hits("とうきょう 通信")).toEqual([]);
   });
 });

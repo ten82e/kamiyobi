@@ -2777,10 +2777,29 @@ const Recommender = (() => {
       if (!byReading[latin]) byReading[latin] = [];
       if (byReading[latin].indexOf(ja) < 0) byReading[latin].push(ja);
     });
+    /* 展開を 1 ホップだけ合成する。かな見出し（`とうきょう`）は漢字見出し（`東京`）へ
+     * 寄せるが、漢字見出しが別に持つ英文字表記の寄せ（`tokyo`）は違う表にある。
+     * 合成しないと、**漢字で引ける行数とかなで引ける行数がズレる**（2026-09-23 実測:
+     * 東京 28 件に対して `とうきょう` 1 件、京都 18 件に対して `きょうと` 2 件、
+     * `なら` 0 件）。1 ホップに限定して、連鎖展開で組が膨らみ続けるのを防ぐ。 */
+    const resolved: Record<string, string[]> = {};
+    Object.keys(byReading).forEach((key) => {
+      byReading[key].forEach((member) => {
+        const more = byReading[member];
+        if (!more) return;
+        more.forEach((extra) => {
+          if (byReading[key].indexOf(extra) < 0) byReading[key].push(extra);
+        });
+      });
+    });
+    Object.keys(byReading).forEach((key) => {
+      resolved[key] = byReading[key].slice();
+    });
+
     const groups: string[][] = [];
     queryTokens(query).forEach((token) => {
       const group = [token];
-      const expanded = byReading[kanaFold(token)];
+      const expanded = resolved[kanaFold(token)];
       if (expanded) {
         expanded.forEach((name) => {
           if (group.indexOf(name) < 0) group.push(name);

@@ -6581,3 +6581,50 @@ it("早め絞り込みのボタンは、押した条件だけを出し入れし�
     "他の条件を足した画面で点かないボタンがある: " + out.neverLit.join(", "),
   ).toEqual([]);
 });
+
+it("かな入力の地名が、漢字で引ける行を取りこぼさない（SPEC §7）", () => {
+  /* 漢字見出しは英文字表記の寄せ（`東京` ↔ `tokyo`）を持つが、かな見出しはその漢字へ
+   * 寄せるだけだった。開催地の公式表記はそのまま残す設計なので、**漢字で出てかなで
+   * 出ない**行が黙って生まれた（2026-09-23 実測: 東京 28 件 / `とうきょう` 1 件、
+   * 京都 18 件 / `きょうと` 2 件、`なら` 0 件）。
+   * 読み表の条目ごとに、**漢字で出る行をかなでも出す**ことを収録カタログで見る。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const src = readFileSync(${JSON.stringify(join(site, "recommender.js"))}, 'utf8');`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(new URL("../data/snapshot.json", import.meta.url).pathname)}, 'utf8'));`,
+    "const i = src.indexOf('const PLACE_READINGS = [');",
+    "const readings = eval(src.slice(i + 'const PLACE_READINGS = '.length, src.indexOf('];', i) + 1));",
+    "const rows = Recommender.candidateRows(DATA);",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const keys = (word) => {",
+    "  const m = Recommender.searchMatcher(word, now);",
+    "  return new Set(rows.filter((r) => m(r.hay)).map((r) => r.conf.key + '@' + r.ed.year + '@' + r.kind));",
+    "};",
+    "const worse = [];",
+    "readings.forEach((entry) => {",
+    "  const kanji = String(entry[0]);",
+    "  const kana = String(entry[1]);",
+    "  const byKanji = keys(kanji);",
+    "  if (!byKanji.size) return; // 収録に無い場所は比較しようがない",
+    "  const byKana = keys(kana);",
+    "  const missing = [...byKanji].filter((k) => !byKana.has(k)).length;",
+    "  if (missing) worse.push(`${kana} / ${kanji}: 漢字 ${byKanji.size} 件 → かな ${byKana.size} 件（${missing} 件足りない）`);",
+    "});",
+    // 受け取った寄せが違う語へ漏れていないこと（`なら` が奈良以外の行を拾わない等）。
+    "const leak = [];",
+    "[['なら', '奈良'], ['とうきょう', '東京'], ['きょうと', '京都']].forEach(([kana, kanji]) => {",
+    "  const a = keys(kana);",
+    "  const b = keys(kanji);",
+    "  if (a.size !== b.size || [...a].some((k) => !b.has(k))) leak.push(`${kana} と ${kanji} の行集合が違う`);",
+    "});",
+    "console.log(JSON.stringify({ worse, leak }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as { worse: string[]; leak: string[] };
+  expect(out.worse, "かなで打くと漢字より足りない行がある:\n" + out.worse.join("\n")).toEqual([]);
+  expect(out.leak, "かな入力の行集合が漢字とズレている: " + out.leak.join(" / ")).toEqual([]);
+});
