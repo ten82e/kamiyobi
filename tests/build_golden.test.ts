@@ -4680,8 +4680,12 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
   const guideText = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
   expect(guideText, "てびきが延長の語を説明していない").toContain(`<dt>${out.extendedWord}</dt>`);
   // ドロワーも同じ語を使う（表とドロワーで言い方が割れないようにする）。
-  expect(app).toContain("esc(placeShown || UNCONFIRMED_JA)");
-  expect(app).toContain("esc(r.ed.date_text || r.ed.event_start || UNCONFIRMED_JA)");
+  // 常時受付の行は「未確認」ではなく「該当なし」を出すので、式ごと見る（SPEC §7）。
+  expect(app).toContain("placeNa ? NOT_APPLICABLE_JA : UNCONFIRMED_JA");
+  expect(
+    (app.match(/fieldNotApplicableJa\(r\) \? NOT_APPLICABLE_JA : UNCONFIRMED_JA/g) || []).length,
+    "ドロワーの開催地・会期が「該当なし」を区別していない",
+  ).toBe(2);
 });
 
 it("「未確認」と出した行はそのまま検索できる（SPEC §7）", () => {
@@ -10832,4 +10836,85 @@ it("古いデータを開いた人に、生成から経った日数を伝える�
   // てびきが画面に出る語を説明していること。
   expect(html).toContain("日次で更新する運用");
   expect(html).toContain("3 日以上");
+});
+
+it("常時受付の行の会期・開催地は「該当なし」と出す（SPEC §7）", () => {
+  /* 「未確認」は kamiyobi が公式で裏を取れていないという意味だと、てびきが説明している。
+   * 常時受付のジャーナル（tag: journal で締切なし）は会期も会場も存在しないのに、表・行の
+   * 詳細ともに「未確認」と出していた（2026-09-23 実測: 実データ 22 行が 未確認 扱い。
+   * ラベルは 0 件にならない）。読者は公式の発表を待つ情報だと誤り、発表を待ってしまう。*/
+  const rec = join(site, "recommender.js");
+  const app = siteRuntime();
+  const script = [
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${rec}`)});`,
+    // `node -e` のソースは require とトップレベル await を同時に持てない（AGENTS.md）。
+    "const { readFileSync } = await import('node:fs');",
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const deadlines = Recommender.candidateRows(DATA, now);",
+    "const journals = Recommender.journalRows(DATA.conferences, now);",
+    "const yes = (rows) => rows.filter((r) => Recommender.fieldNotApplicableJa(r)).length;",
+    // 壊れた行（null など）で落ちないこと。
+    "const broken = [null, undefined, {}, { kind: 'paper' }].map((v) => Recommender.fieldNotApplicableJa(v));",
+    // 画面に出る語は検索でも引ける（他の状態の語と同じ約束）。
+    "const m = Recommender.searchMatcher('該当なし', now);",
+    "const found = deadlines.concat(journals).filter((r) => m(r.hay)).length;",
+    "console.log(JSON.stringify({",
+    "  na: Recommender.notApplicableLabelJa(),",
+    "  unconfirmed: Recommender.unconfirmedLabelJa(),",
+    "  journalRows: journals.length,",
+    "  journalYes: yes(journals),",
+    "  deadlineYes: yes(deadlines),",
+    "  deadlineTotal: deadlines.length,",
+    // 「未確認」の出番が残っていることも見る（置き換えてしまったら検査が無意味になる）。
+    "  unknownEvent: deadlines.filter((r) => !r.ed.event_start).length,",
+    "  titles: [Recommender.notApplicableTitleJa('event'), Recommender.notApplicableTitleJa('place'), Recommender.notApplicableTitleJa('rank')],",
+    "  broken,",
+    "  found,",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    na: string;
+    unconfirmed: string;
+    journalRows: number;
+    journalYes: number;
+    deadlineYes: number;
+    deadlineTotal: number;
+    unknownEvent: number;
+    titles: string[];
+    broken: boolean[];
+    found: number;
+  };
+  expect(out.na).toBe("該当なし");
+  // 「未確認」とは別の語であることが検査の意味（同じ語なら区別できない）。
+  expect(out.na).not.toBe(out.unconfirmed);
+  expect(out.journalRows, "常時受付の行が実データに無い").toBeGreaterThan(0);
+  expect(out.journalYes, "常時受付の行が「該当なし」になっていない").toBe(out.journalRows);
+  // 締切行では出さない（誤って「該当なし」にすると、確認待ちの情報を消してしまう）。
+  expect(out.deadlineYes, "締切行に「該当なし」が出ている").toBe(0);
+  expect(out.deadlineYes).toBeLessThan(out.deadlineTotal);
+  expect(out.unknownEvent, "「未確認」を出す行が消えて検査が無意味になっている").toBeGreaterThan(0);
+  // 理由を title に書く。知らない欄には空を返す（でたらめな理由を書かない）。
+  expect(out.titles[0]).toContain("会期");
+  expect(out.titles[1]).toContain("開催地");
+  expect(out.titles[2]).toBe("");
+  for (const v of out.broken) expect(v).toBe(false);
+  expect(out.found, "画面に出す語が検索で引けない").toBe(out.journalRows);
+
+  // 実画面への配線（表と行の詳細の両方）。
+  expect(app).toContain("Recommender.notApplicableLabelJa()");
+  expect(app).toContain('notApplicableTitleJa("event")');
+  expect(app).toContain('notApplicableTitleJa("place")');
+  const guide = readFileSync(join(site, "index.html"), "utf8");
+  // てびきが「未確認」との区別を説明していること。
+  const at = guide.indexOf("<dt>未確認</dt>");
+  expect(at, "未確認の説明が無くなった").toBeGreaterThan(-1);
+  const entry = guide.slice(at, guide.indexOf("</dd>", at));
+  expect(entry).toContain("該当なし");
+  expect(entry).toContain("常時受付");
 });

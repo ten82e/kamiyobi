@@ -3730,6 +3730,29 @@ const Recommender = (() => {
     return UNCONFIRMED_LABEL_JA;
   }
 
+  /* 会期・開催地が「そもそも存在しない」行に使う語（SPEC §7）。「未確認」は kamiyobi が
+   * 公式で裏を取れていないという意味なので、常時受付のジャーナル（会期も会場も無い）に
+   * 同じ語を当てると、利用者は公式情報を追いかける意味のない探索をさせられる。 */
+  const NOT_APPLICABLE_LABEL_JA = "該当なし";
+  const NOT_APPLICABLE_TITLES_JA: Record<string, string> = {
+    event: "常時受付のジャーナルには会期がありません",
+    place: "常時受付のジャーナルには開催地がありません",
+  };
+
+  function notApplicableLabelJa(): string {
+    return NOT_APPLICABLE_LABEL_JA;
+  }
+
+  function notApplicableTitleJa(field: string): string {
+    return NOT_APPLICABLE_TITLES_JA[field] || "";
+  }
+
+  /** 会期・開催地がそもそも存在しない行か（常時受付のジャーナル）。 */
+  function fieldNotApplicableJa(row: unknown): boolean {
+    const rec = row as { kind?: unknown } | null;
+    return String(rec?.kind ?? "") === "journal";
+  }
+
   /* データ生成時刻が古いときの注意書き（SPEC §7）。`update-data.yml` は日次で走る設計
    * （cron: 17 20 * * *）なので、数日経ったままなら更新が止まっている可能性がある。
    * 締切のサイトで古いデータを開いた人がそれを最新と誤って使い、投稿の機会を逃すのが
@@ -4099,7 +4122,7 @@ const Recommender = (() => {
           }
         });
       }
-      const baseHay = [conf.title, conf.full_name, conf.key]
+      const baseHay = [conf.title, conf.full_name, conf.key, NOT_APPLICABLE_LABEL_JA]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
@@ -5259,6 +5282,9 @@ const Recommender = (() => {
     unconfirmedLabelJa: unconfirmedLabelJa,
     dataAgeNoteJa: dataAgeNoteJa,
     dataStaleDaysJa: DATA_STALE_DAYS_JA,
+    notApplicableLabelJa: notApplicableLabelJa,
+    notApplicableTitleJa: notApplicableTitleJa,
+    fieldNotApplicableJa: fieldNotApplicableJa,
     semanticReasonJa: semanticReasonJa,
     semanticReasonLabelsJa: SEMANTIC_REASON_LABELS_JA,
     rankPairLabelJa: rankPairLabelJa,

@@ -1041,7 +1041,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     html +=
       '<div style="font-size: 0.85rem;">' +
       '<p style="margin-bottom: 8px;"><strong>開催地:</strong> ' +
-      esc(placeShown || UNCONFIRMED_JA) +
+      esc(
+        placeShown || (Recommender.fieldNotApplicableJa(r) ? NOT_APPLICABLE_JA : UNCONFIRMED_JA),
+      ) +
       "</p>" +
       (placeShown && placeShown !== placeRaw
         ? '<p style="margin-bottom: 8px; color: var(--muted); font-size: 0.8rem;">原表記: ' +
@@ -1049,7 +1051,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           "</p>"
         : "") +
       '<p style="margin-bottom: 8px;"><strong>会期:</strong> ' +
-      esc(r.ed.date_text || r.ed.event_start || UNCONFIRMED_JA) +
+      esc(
+        r.ed.date_text ||
+          r.ed.event_start ||
+          (Recommender.fieldNotApplicableJa(r) ? NOT_APPLICABLE_JA : UNCONFIRMED_JA),
+      ) +
       "</p>" +
       laterEditionsHtml +
       // 並べ語は中黒（・）に統一する。一覧・CSV・件数欄はすでに中黒で並べていて、
@@ -1595,6 +1601,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * kamiyobi が確認できていないという事実とは別の話になるため使わない。
    * 語そのものは recommender の正本を使い、表に出る語が検索で引ける状態を保つ。 */
   const UNCONFIRMED_JA = Recommender.unconfirmedLabelJa();
+  /* 「未確認」（確認できていない）と「該当なし」（そもそも存在しない）は別の話なので、
+   * 常時受付の行には後者を出す（SPEC §7）。 */
+  const NOT_APPLICABLE_JA = Recommender.notApplicableLabelJa();
   const UNCONFIRMED_TITLES_JA = {
     event: " kamiyobi が公式で会期を確認できていません。".trim(),
     place: " kamiyobi が公式で開催地を確認できていません。".trim(),
@@ -2531,7 +2540,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
 
     const c5 = td(tr, "会期");
-    let span = UNCONFIRMED_JA;
+    const eventNa = Recommender.fieldNotApplicableJa(r);
+    let span = eventNa ? NOT_APPLICABLE_JA : UNCONFIRMED_JA;
     if (r.ed.event_start) {
       // 出張・会場押さえは曜日で見込むので、ISO 日付に曜日を添える（不明なら出さない）。
       const startDay = Recommender.weekdayJaFromDate(r.ed.event_start);
@@ -2543,10 +2553,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
     const spanCell = line(c5, span, "sub nowrap");
     if (spanCell && span === UNCONFIRMED_JA) spanCell.title = UNCONFIRMED_TITLES_JA.event;
+    if (spanCell && eventNa) spanCell.title = Recommender.notApplicableTitleJa("event");
 
     const c6 = td(tr, "開催地");
     const placeShown = Recommender.placeJa(r.ed.place);
-    const placeCell = line(c6, placeShown || UNCONFIRMED_JA, "sub");
+    const placeNa = Recommender.fieldNotApplicableJa(r);
+    const placeCell = line(c6, placeShown || (placeNa ? NOT_APPLICABLE_JA : UNCONFIRMED_JA), "sub");
+    if (placeCell && !placeShown && placeNa) {
+      placeCell.title = Recommender.notApplicableTitleJa("place");
+    }
     if (placeCell) {
       // 日本語化は流し読み用。会場名・市区郡を含む原文は title に落とす。
       if (placeShown && placeShown !== r.ed.place) placeCell.title = String(r.ed.place || "");
