@@ -6858,3 +6858,85 @@ it("ランク順は等級で並び、評価の無い行は末尾に回る（SPEC
   // URL にも同じ値を書く（`rank=A*` が選択肢に無い値で共有されない）。
   expect(app, "ランクの URL 読み書きが選択肢と同じ表を見ていない").toContain("RANK_GRADE_OPTIONS");
 });
+
+it("開催地の翻訳が収録データで化けていない（New Mexico・別表記の国名・語の食い付き）（SPEC §7）", () => {
+  /* 開催地の国名を日本語に寄せる処理は、複合地名を壊すと画面が嘘をつく
+   * （`New Mexico` → 「New メキシコ」で、アメリカの会議が「メキシコ」で出ていた）。
+   * 収録カタログ全体で、寄せ結果と原文が食い違っていないことをみる。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(new URL("../data/snapshot.json", import.meta.url).pathname)}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const fold = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');",
+    "const rowsOf = (word) => {",
+    "  const m = Recommender.searchMatcher(word, now);",
+    "  return rows.filter((r) => m(r.hay));",
+    "};",
+    "const strip = (s) => fold(s).replace(/[^a-z ]/g, ' ');",
+    // ① 国名で引いた行の原文に、その国の語が本当に書かれているか（州名の混入など）。
+    "const mexicoBad = rowsOf('メキシコ')",
+    "  .filter((r) => !/(^| )mexico( |$)/.test(strip(r.ed.place)))",
+    "  .map((r) => String(r.ed.place));",
+    "const koreaBad = rowsOf('韓国')",
+    "  .filter((r) => !/(korea|korea|seoul)/.test(strip(r.ed.place)))",
+    "  .map((r) => String(r.ed.place));",
+    // ② 別表記で書かれた国が、日本語の語でたどれないままになっていないか。
+    "const count = (word, re) => rowsOf(word).filter((r) => re.test(String(r.ed.place))).length;",
+    "const codeRows = rows.filter((r) => /,\\s*BE$/.test(String(r.ed.place))).length;",
+    // ③ 寄せ結果で日本語の語にラテン文字が食い付いていないか（`パナマ City` 型）。
+    "const glued = [];",
+    "rows.forEach((r) => {",
+    "  const out = Recommender.placeJa(r.ed.place);",
+    "  const hit = out.match(/[ぁ-んァ-ン一-龥][A-Za-z]/);",
+    "  if (hit && glued.indexOf(out) < 0) glued.push(out);",
+    "});",
+    "console.log(JSON.stringify({",
+    "  mexicoBad,",
+    "  koreaBad,",
+    "  newMexicoRows: rowsOf('ニューメキシコ').length,",
+    "  newMexicoAllNewMexico: rowsOf('ニューメキシコ').every((r) => /new mexico/i.test(String(r.ed.place))),",
+    "  belgiumFromCode: count('ベルギー', /,\\s*BE$/),",
+    "  codeRows,",
+    "  curacao: count('キュラソー', /cura[çc]ao/i),",
+    "  mexicoAccented: count('メキシコ', /m[ée]xico/i),",
+    "  glued: glued.slice(0, 5),",
+    "  gluedCount: glued.length,",
+    "}));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    mexicoBad: string[];
+    koreaBad: string[];
+    newMexicoRows: number;
+    newMexicoAllNewMexico: boolean;
+    belgiumFromCode: number;
+    codeRows: number;
+    curacao: number;
+    mexicoAccented: number;
+    glued: string[];
+    gluedCount: number;
+  };
+  expect(
+    out.mexicoBad,
+    "「メキシコ」で引くとメキシコ国内ではない行が出る:\n" + out.mexicoBad.join("\n"),
+  ).toEqual([]);
+  expect(out.koreaBad, "「韓国」で引くと韓国の行ではない:\n" + out.koreaBad.join("\n")).toEqual([]);
+  expect(out.newMexicoRows, "「ニューメキシコ」が 0 件").toBeGreaterThan(0);
+  expect(out.newMexicoAllNewMexico, "「ニューメキシコ」に別の場所が混ざっている").toBe(true);
+  expect(
+    out.codeRows,
+    "国コードで書かれた開催地が収録に見当たらない（検査が空振りする）",
+  ).toBeGreaterThan(0);
+  expect(out.belgiumFromCode, "国コード `BE` の行が「ベルギー」で引けない").toBe(out.codeRows);
+  expect(out.curacao, "Curaçao が「キュラソー」で引けない").toBeGreaterThan(0);
+  expect(out.mexicoAccented, "México が「メキシコ」で引けない").toBeGreaterThan(0);
+  expect(
+    out.gluedCount,
+    `日本語の語にラテン文字が食い付いた開催地表記: ${out.glued.join(" / ")}`,
+  ).toBe(0);
+});

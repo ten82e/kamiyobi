@@ -2557,6 +2557,8 @@ const Recommender = (() => {
     ["ニューデリー", "new delhi"],
     ["ラバト", "rabat"],
     ["フロリアノポリス", "florianopolis"],
+    // 国名の翻訳から守って公式表記のまま置いた州（`PLACE_NAME_SHIELDS_JA`）。
+    ["ニューメキシコ", "new mexico"],
   ];
 
   /* 主題のことばも、日本語で打った人に届くようにする。分野ラベル（`セキュリティ` など）は
@@ -3119,7 +3121,13 @@ const Recommender = (() => {
     ["panama", "パナマ"],
     ["malaysia", "マレーシア"],
     ["indonesia", "インドネシア"],
+    // アクセント付きの表記は語として書かれていないと当たらない（照合はそのままの
+    // 文字列を見るので、検索のときだけアクセントを落とす仕組みはここでは効かない）。
+    // 収録に現れた表記を増やす（2026-09-23: `México` が英語のまま残っていた）。
     ["mexico", "メキシコ"],
+    ["méxico", "メキシコ"],
+    ["curacao", "キュラソー"],
+    ["curaçao", "キュラソー"],
     ["cameroon", "カメルーン"],
     ["luxembourg", "ルクセンブルク"],
     ["ghana", "ガーナ"],
@@ -3195,6 +3203,14 @@ const Recommender = (() => {
 
   // 語として置換する。語句の途中にマッチすると都市名を壊すため、
   // 前後は単語境界（ラテン文字・数字・ハイフン以外）に限定する。
+  /* 国名の置換に壊される複合地名（収録に実在するものだけ）。`New Mexico` は
+   * アメリカの州なのに、`mexico` の置換で表示が「New メキシコ」になり、
+   * 「メキシコ」で引いた人にアメリカの会議を渡していた（2026-09-23 実測:
+   * `New Mexico` 2 行）。「○○州」に寄せると `ニューメキシコ` の中に `メキシコ` が
+   * 残って検索側でも同じ誤りが起きるので、**翻訳せず公式表記のまま**置く
+   * （州名から国を推測して検索語に足すこともしない）。 */
+  const PLACE_NAME_SHIELDS_JA = ["new mexico"];
+
   const PLACE_TERM_PATTERNS: Array<[RegExp, string]> = PLACE_TERMS_JA.map(([term, ja]) => [
     new RegExp(
       `(?<![A-Za-z0-9-])${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![A-Za-z0-9-])`,
@@ -3203,10 +3219,30 @@ const Recommender = (() => {
     ja,
   ]);
 
+  /* 2 文字の国コードで書かれた開催地（上流表記）。収録に現れる `BE` だけを足す
+   * （`Antwerp, BE` が英語のまま残り、「ベルギー」で引いても出なかった。2026-09-23 実測:
+   * 2 行）。末尾の句に単独で現れたときだけ置くので、会場名の一部にはマッチしない。 */
+  const PLACE_COUNTRY_CODES_JA: Array<[string, string]> = [["be", "ベルギー"]];
+
   function placeTermJa(text: string): string {
     let out = text;
-    PLACE_TERM_PATTERNS.forEach(([pattern, ja]) => {
+    const shielded: string[] = [];
+    PLACE_NAME_SHIELDS_JA.forEach((name) => {
+      out = out.replace(new RegExp(`(?<![A-Za-z0-9-])${name}(?![A-Za-z0-9-])`, "gi"), (matched) => {
+        shielded.push(matched);
+        return ` ${shielded.length - 1} `;
+      });
+    });
+    PLACE_TERM_PATTERNS.concat(
+      PLACE_COUNTRY_CODES_JA.map(
+        ([term, ja]) =>
+          [new RegExp(`(?<![A-Za-z0-9-])${term}(?![A-Za-z0-9-])`, "gi"), ja] as [RegExp, string],
+      ),
+    ).forEach(([pattern, ja]) => {
       out = out.replace(pattern, ja);
+    });
+    shielded.forEach((matched, i) => {
+      out = out.split(` ${i} `).join(matched);
     });
     // "UK and hybrid" 等の接続詞は中点に寄せる（一覧の 1 行で読める形にする）。
     return out.replace(/\s+and\s+|\s*&\s*/gi, "・");

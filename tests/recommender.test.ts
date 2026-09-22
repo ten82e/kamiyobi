@@ -4411,8 +4411,13 @@ describe("開催地の日本語表記（表と upcoming.md が同じ語で読め
   });
 
   it("歧う語と会場名は置換しない（推測で土地を書かない）", () => {
-    // 二字の国コードは州コードと歧うのでそのまま残す。
-    expect(ja("Antwerp, BE")).toBe("Antwerp, BE");
+    /* 二字の国コードは州コードと歧うので原則そのまま残す。ただし米国の州コードに
+     * 無い語は歧う余地がないので寄せる（`BE` = ベルギー。収録で末尾の句に単独で
+     * 現れる国コードはこれだけで、変更前は表示が英語のまま「ベルギー」でも
+     * 引けなかった。2026-09-23 実測: 2 行）。州コードになりうるものは触らない。 */
+    expect(ja("Antwerp, BE")).toBe("Antwerp, ベルギー");
+    expect(ja("Philadelphia, PA")).toBe("Philadelphia, PA");
+    expect(ja("Seattle, WA")).toBe("Seattle, WA");
     // 会場名の中に国名が含まれる行は、置換が会場名を壊す。
     expect(ja("Radisson Grenada Beach Resort Grenada")).toBe(
       "Radisson Grenada Beach Resort Grenada",
@@ -5322,5 +5327,45 @@ describe("ランク順は体系名ではなく等級で並ぶ", () => {
     const taken = R.rankGradeOrderJa();
     taken.push("S");
     expect(R.rankGradeOrderJa()).toEqual(["A*", "A", "B", "C", "N"]);
+  });
+});
+
+describe("開催地の翻訳が複合地名を壊さない", () => {
+  it("New Mexico はアメリカの州で、メキシコに寄せない（表示と検索の両方）", () => {
+    // `mexico` の置換で「New メキシコ」になり、「メキシコ」で引いた人に
+    // アメリカの会議を渡していた（2026-09-23 実測: `New Mexico` 2 行）。
+    expect(R.placeJa("Las Cruces, New Mexico")).toBe("Las Cruces, New Mexico");
+    expect(R.placeJa("Santa Fe, New Mexico, USA")).toBe("Santa Fe, New Mexico, アメリカ");
+    const rows = [
+      { conf: { key: "nm", title: "PPoPP", editions: [] }, hay: "ppopp las cruces new mexico" },
+      { conf: { key: "mx", title: "CLeaR", editions: [] }, hay: "clear méxico mérida" },
+    ];
+    const mexico = R.searchMatcher("メキシコ", Date.parse("2026-08-09T00:00:00Z"));
+    const hayOf = (r: { hay: string }) => `${r.hay} ${R.placeJa(r.hay.toUpperCase())}`;
+    expect(rows.filter((r) => mexico(hayOf(r))).map((r) => r.conf.key)).toEqual(["mx"]);
+    expect(R.placeJa("New Mexico")).toBe("New Mexico");
+  });
+
+  it("別表記で書かれた国も日本語に寄せる（México・Curaçao・BE）", () => {
+    expect(R.placeJa("Mérida, México")).toBe("Mérida, メキシコ");
+    expect(R.placeJa("Willemstad, Curaçao")).toBe("Willemstad, キュラソー");
+    expect(R.placeJa("Antwerp, BE")).toBe("Antwerp, ベルギー");
+  });
+
+  it("国コードは末尾の句に単独で出るときだけ寄せる（会場名を壊さない）", () => {
+    // 末尾句の語として現れない "BE" は置換しない（都市名・会場名の途中に食いちぎらない）。
+    expect(R.placeJa("Bet Block Metro, Belfast")).toBe("Bet Block Metro, Belfast");
+    expect(R.placeJa("Beppu, Japan")).toBe("Beppu, 日本");
+  });
+
+  it("都市名を国名に化けさせる旧来的な誤りは起きない", () => {
+    expect(R.placeJa("Panama City, Panama")).toBe("Panama City, パナマ");
+    expect(R.placeJa("New York, USA")).toBe("New York, アメリカ");
+    expect(R.placeJa("Kansas City, Missouri, USA")).toBe("Kansas City, Missouri, アメリカ");
+  });
+
+  it("守った地名はカタカナでも引ける", () => {
+    const groups = R.queryTokenGroups("ニューメキシコ").map((g: string[]) => g.map(String));
+    expect(groups[0]).toContain("new mexico");
   });
 });
