@@ -1475,13 +1475,28 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   /* 「N 件 / 全 M 件」の差の内訳。既定で隠れる行（過去の締切・推定・投稿締切以外の種別）を
    * 数える。隠れていることを説明しないと、探した締切が「無い」と誤解される。 */
-  let hiddenCounts = { past: 0, est: 0, kind: 0, domestic: 0 };
+  let hiddenCounts = {
+    past: 0,
+    est: 0,
+    kind: 0,
+    domestic: 0,
+    // 「オンライン参加可のみ」で落ちた行数と、そのうち開催地自体が未確認の行数。
+    online: 0,
+    onlinePlaceUnknown: 0,
+  };
 
   /* URL で渡された種別のうち、表に出さないものを読み捨てたときの説明。
    * 黙って条件が変わったように見えるのを避ける（相対月を解決したときと同じ方針）。 */
   let droppedKindNotice = "";
 
-  function hiddenDeadlineCounts(): { past: number; est: number; kind: number; domestic: number } {
+  function hiddenDeadlineCounts(): {
+    past: number;
+    est: number;
+    kind: number;
+    domestic: number;
+    online: number;
+    onlinePlaceUnknown: number;
+  } {
     return hiddenCounts;
   }
 
@@ -1648,6 +1663,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       }
       // 開催形式は会場表記に書かれた記述だけで絞る（書かれていないことから対面を断定しない）。
       if (!inRecommend && state.online && !Recommender.placeOffersOnline(r.ed.place)) {
+        // チェックを付けた人にとって「出ない理由」は 2 種類ある。
+        // 会場表記に対面の記述しかない場合と、**開催地自体が未確認**で読みようがない場合。
+        // 後者を区別しないと「オンライン参加が無い会議」と誤解して検索をやめてしまう
+        // （実測: 既定画面 477 行でオンライン参加可は 15 件だけ、のぞく 462 件のうち
+        // 110 件は開催地が空）。
+        hiddenCounts.online += 1;
+        if (!String(r.ed.place || "").trim()) hiddenCounts.onlinePlaceUnknown += 1;
         return false;
       }
       // 検索は正規化した語の AND 判定（全角入力・全角スペース・複数語に対応するため
@@ -1658,7 +1680,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       return true;
     };
 
-    hiddenCounts = { past: 0, est: 0, kind: 0, domestic: 0 };
+    hiddenCounts = {
+      past: 0,
+      est: 0,
+      kind: 0,
+      domestic: 0,
+      online: 0,
+      onlinePlaceUnknown: 0,
+    };
     catFacetCounts = {};
     let out: AppRow[] = pool.filter((r) => {
       if (!matchesExceptCats(r)) {
@@ -2724,6 +2753,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       // 国内チェックで消えた行は「国内研究会ではない」だけの理由で落ちている。
       // 日本開催の国際会議もここに入るため、件数だけ出しておかないと検索をやめてしまう。
       if (hidden.domestic) parts.push(`国内研究会・国内シンポジウム以外 ${hidden.domestic} 件`);
+      if (hidden.online) {
+        // 「記載が無いだけ」の行数を括弧で添える（対面だと断定していないことの説明にもなる）。
+        parts.push(
+          hidden.onlinePlaceUnknown
+            ? `オンライン参加の記載がない ${hidden.online} 件（うち開催地が未確認 ${hidden.onlinePlaceUnknown} 件）`
+            : `オンライン参加の記載がない ${hidden.online} 件`,
+        );
+      }
       if (parts.length) cnt += ` ｜ のぞく: ${parts.join("・")}`;
       // 「スパコン」などを分野名に寄せたときは、寄せた先をその場で書く。
       // 理由も見ずに分野全体の行を並べると、なぜ出たか分からないまま行の壁になる。

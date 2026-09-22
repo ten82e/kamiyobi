@@ -735,11 +735,8 @@ footer a:hover { text-decoration: underline; }
     </div>
 
     <div class="row deadline-only" style="margin-top: 14px;">
-      <label class="check"
-        ><input type="checkbox" id="domestic" />
-        <span title="情報処理学会・電子情報通信学会などの国内研究会と国内シンポジウムに絞ります。日本の開催かどうかは関係ありません。日本で開催される国際会議（開催地が Tokyo, 日本 のように書かれる行）を見たいときは、このチェックを外して検索に「東京」「日本」などと打ってください。">国内研究会・国内シンポジウムのみ</span></label
-      >
-      <label class="check"><input type="checkbox" id="online"> <span>オンライン参加可のみ</span></label>
+      <label class="check"><input type="checkbox" id="domestic"> <span title="情報処理学会・電子情報通信学会などの国内研究会と国内シンポジウムに絞ります。日本の開催かどうかは関係ありません。日本で開催される国際会議（開催地が Tokyo, 日本 のように書かれる行）を見たいときは、このチェックを外して検索に「東京」「日本」などと打ってください。">国内研究会・国内シンポジウムのみ</span></label>
+      <label class="check"><input type="checkbox" id="online"> <span title="会場表記にオンライン・ハイブリッドなどの記述がある行だけを出します。記述が無い行は対面だと判定していません。開催地が未確認の行もここには出ないので、件数欄の「うち開催地が未確認 N 件」で確かめてください。">オンライン参加可のみ</span></label>
       <label class="check"><input type="checkbox" id="est"> <span>推定締切を含める</span></label>
       <label class="check"><input type="checkbox" id="past"> <span>過去の締切も表示</span></label>
     </div>
@@ -858,7 +855,7 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div>
         <dt>オンライン参加可</dt>
-        <dd>会場表記に「オンライン」「ハイブリッド」「Online」「Virtual」などの記述がある行だけを出します。記述が無い行を<strong>対面とは判定しません</strong>（公式サイトで確認してください）。会場名の一部として語が含まれる例（<code>KSIR Virtual Conference Center</code>）は除外しています。</dd>
+        <dd>会場表記に「オンライン」「ハイブリッド」「Online」「Virtual」などの記述がある行だけを出します。記述が無い行を<strong>対面とは判定しません</strong>（公式サイトで確認してください）。会場名の一部として語が含まれる例（<code>KSIR Virtual Conference Center</code>）は除外しています。実測で既定画面 477 行のうちこの条件に書くのは 15 行だけで、のぞく 462 件のうち <strong>110 件は開催地自体が未確認</strong>です。件数欄は「オンライン参加の記載がない N 件（うち開催地が未確認 M 件）」と分けて出すので、<strong>オンライン参加が無いのだと誤解しないでください</strong>。行の詳細には開催地の公式表記をそのまま載せています。</dd>
       </div>
       <div>
         <dt>会期のみ・締切未定</dt>

@@ -2492,7 +2492,7 @@ const FILTER_RUNTIME_STUBS = [
   ...SORT_CANON.all,
   "let semQuery = null, semEmbeddings = null;",
   "let catFacetCounts = {};",
-  "let hiddenCounts = { past: 0, est: 0, kind: 0, domestic: 0 };",
+  "let hiddenCounts = { past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0 };",
   "const activeData = { conferences: [] };",
   ...SEARCH_CANON,
   "let searchQuery = '';",
@@ -4688,7 +4688,15 @@ it("のぞいた行数を件数欄で説明する（SPEC §7）", () => {
   // 既定: 過去の締切・推定・投稿締切以外の種別が落ちる。
   expect(out.defaults.shown.slice().sort()).toEqual(["future-abstract", "future-paper"]);
   // 国内チェックは入れていないので domestic は 0 のまま（件数を出すのは効いたときだけ）。
-  expect(out.defaults.hidden).toEqual({ past: 2, kind: 2, est: 1, domestic: 0 });
+  // 国内チェックもオンライン絞り込みも入れていないので、それぞれの内訳は 0 のまま。
+  expect(out.defaults.hidden).toEqual({
+    past: 2,
+    kind: 2,
+    est: 1,
+    domestic: 0,
+    online: 0,
+    onlinePlaceUnknown: 0,
+  });
   // 「過去の締切も表示」をオンにすると過去の分はのぞかなくなる（他はそのまま）。
   expect(out.withPast.hidden.past).toBe(0);
   expect(out.withPast.hidden.kind).toBe(2);
@@ -5007,7 +5015,7 @@ it("締切までの選択肢は URL と表裏一体で、窓は入れ子にな�
     "const document = {};",
     "function $(id) { return null; }",
     "const window = {};",
-    "let hiddenCounts = { past: 0, est: 0, kind: 0, domestic: 0 };",
+    "let hiddenCounts = { past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0 };",
     "let catFacetCounts = {};",
     "let searchQuery = '';",
     "const activeData = { conferences: [] };",
@@ -5836,4 +5844,63 @@ it("「国内研究会・国内シンポジウムのみ」で消えた行を件�
   const box = html.slice(html.indexOf('id="domestic"'), html.indexOf('id="online"'));
   expect(box).toContain("日本の開催かどうかは関係ありません");
   expect(box).toContain("検索に「東京」");
+});
+
+it("「オンライン参加可のみ」で出ない理由を 2 通りに分けて数える（SPEC §7）", () => {
+  /* この絞り込みは会場表記の記述だけで動く。チェックした人から見て「出ない」理由は
+   * (a) 対面の記述しかない、(b) **開催地自体が未確認**で読みようがない、の 2 つある。
+   * (b) を混ぜると「オンライン参加を認めていない会議」と誤解される。
+   * 実測: 既定画面 477 行のうち条件に書くのは 15 行だけで、のぞく 462 件のうち 110 行は
+   * 開催地が空だった。 */
+  const filterSrc = jsFunction(siteRuntime(), "filter");
+  const script = [
+    "const DAY = 86400000;",
+    `const FILTER = ${JSON.stringify(filterSrc)};`,
+    'const now = Date.parse("2026-08-10T00:00:00Z");',
+    "class FakeDate extends Date { static now() { return now; } }",
+    "function row(key, place) {",
+    "  return { kind: 'paper', est: false, cats: ['hpc'], rankPairs: [], tags: [], hay: key,",
+    "    t: now + DAY, tLast: now + DAY, ed: { place: place, deadlines: [] }, conf: { key: key } };",
+    "}",
+    "const rows = [",
+    "  row('hybrid', 'Alicante, Spain / Online'),",
+    "  row('onsite', 'Kyoto, 日本'),",
+    "  row('unknown', ''),",
+    "];",
+    FILTER_RUNTIME_STUBS,
+    "const run = (online) => new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
+    "  'return (' + FILTER + ')')(FakeDate, DAY, rows,",
+    "  { q: '', cats: [], kind: '', rank: '', win: 'all', est: false, online: online }, true, 'rem');",
+    "const all = run(false)().length;",
+    "const shown = run(true)().map((r) => r.conf.key);",
+    "console.log(JSON.stringify({",
+    "  all, shown, online: hiddenCounts.online, unknown: hiddenCounts.onlinePlaceUnknown,",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    all: number;
+    shown: string[];
+    online: number;
+    unknown: number;
+  };
+  expect(out.all).toBe(3);
+  expect(out.shown).toEqual(["hybrid"]);
+  expect(out.online, "のぞいた行数が出ていない").toBe(2);
+  expect(out.unknown, "開催地が未確認の行数を分けていない").toBe(1);
+
+  const app = siteRuntime();
+  expect(app).toContain("オンライン参加の記載がない ${hidden.online} 件");
+  expect(app).toContain("うち開催地が未確認 ${hidden.onlinePlaceUnknown} 件");
+  // チェックボックスの tool tip にも、対面を断定していないことと確認先を書く。
+  const html = siteHtmlRuntime();
+  const box = html.slice(html.indexOf('id="online"'), html.indexOf('id="est"'));
+  expect(box).toContain("記述が無い行は対面だと判定していません");
+  expect(box).toContain("開催地が未確認");
+  const dd = html.slice(
+    html.indexOf("<dt>オンライン参加可</dt>"),
+    html.indexOf("<dt>会期のみ・締切未定</dt>"),
+  );
+  expect(dd).toContain("オンライン参加が無いのだと誤解しないでください");
 });
