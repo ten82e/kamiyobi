@@ -2007,7 +2007,10 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     "let sortKey = DEFAULT_SORT_KEY, sortAsc = true;",
     "const state = { mode: 'deadlines', q: '', kind: '', rank: '', win: 'all', est: false, domestic: false, past: false, cats: [] };",
     "const DATA = { categories: { hpc: {}, systems: {} } };",
-    "const KIND_LABEL = { abstract: '概要締切', paper: '論文締切' };",
+    "const KIND_LABEL = { abstract: '概要締切', paper: '論文締切', notification: '採否通知' };",
+    runtime.match(/const SELECTABLE_KINDS = \[[^\]]*\];/)?.[0] ?? "",
+    jsFunction(runtime, "selectableKind"),
+    "let droppedKindNotice = '';",
     "let written = '';",
     "const window = { location: { search: '', pathname: '/index.html' } };",
     "const history = { replaceState: (_s, _t, url) => { written = String(url); } };",
@@ -2019,16 +2022,20 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     // 別の人がその URL を開いたときの復元。
     "window.location.search = sent.slice(1); sortKey = DEFAULT_SORT_KEY; sortAsc = true; readUrl();",
     "const got = [sortKey, sortAsc];",
+    // 表に出さない種別を URL で受けたら、既定に戻して理由を残す（黙って条件を変えない）。
+    "state.kind = 'paper'; droppedKindNotice = ''; window.location.search = '?kind=notification'; readUrl();",
+    "const droppedKind = [state.kind, droppedKindNotice];",
     // 既定の並びなら参数を足さない（URL は必要な情報だけ乗せる）。
     "sortKey = DEFAULT_SORT_KEY; sortAsc = true; state.domestic = false; writeUrl();",
-    "console.log(JSON.stringify([sent, got, written]));",
+    "console.log(JSON.stringify([sent, got, written, droppedKind]));",
   ].join("\n");
   const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
   expect(proc.status, proc.stderr).toBe(0);
-  const [sent, got, defaultUrl] = JSON.parse(proc.stdout.trim()) as [
+  const [sent, got, defaultUrl, droppedKind] = JSON.parse(proc.stdout.trim()) as [
     string,
     [string, boolean],
     string,
+    [string, string],
   ];
   expect(sent).toContain("sort=date");
   expect(sent).toContain("dir=desc");
@@ -2036,6 +2043,9 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
   expect(got).toEqual(["date", false]);
   expect(defaultUrl).not.toContain("sort=");
   expect(defaultUrl).not.toContain("dir=");
+  // 捨てたことを読み手に伝えず条件だけ変わる、を避ける。
+  expect(droppedKind[0]).toBe("");
+  expect(droppedKind[1]).toContain("upcoming.md");
   // 知らない key は既定に戻る（URL を叩いて並べ替え式を壊せないようにする）。
   const bogus = spawnSync("node", ["-e", script.replace("sent.slice(1)", '"sort=bogus&dir=up"')], {
     encoding: "utf8",
@@ -4535,4 +4545,101 @@ it("ドロワーは表の情報（分野・ランク・ラウンド）を落と�
   expect(out.bare).not.toContain("ラウンド");
   // 空の会期・開催地は表と同じ語で出す（表とドロワーで言い方が割れないようにする）。
   expect(out.bare).toContain("未確認");
+});
+
+it("種別セレクトに並ぶ選択肢は、選べば行が返る（SPEC §7）", () => {
+  const runtime = siteRuntime();
+  const app = siteRuntime("app.js");
+  const filterSrc = jsFunction(runtime, "filter");
+  const kindSrc = jsFunction(runtime, "selectableKind");
+  // 選択肢は `SELECTABLE_KINDS`（＝ `filter()` が通す種別）から作る。
+  // `KIND_LABEL` の全鍵を並べると、選んでも 0 件になる選択肢が並ぶ（実際に发生过）。
+  expect(app).toContain("SELECTABLE_KINDS.forEach");
+  expect(app).not.toContain("Object.keys(KIND_LABEL).forEach");
+  // URL で捨てた種別は件数欄で理由を出す。
+  expect(app).toContain("droppedKindNotice");
+  expect(app).toContain("upcoming.md で確認できます");
+
+  const recPath = join(site, "recommender.js");
+  const dataPath = join(site, "data.json");
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${recPath}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(dataPath)}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const SELECTABLE_KINDS = ['abstract', 'paper', 'journal'];",
+    "const KIND_LABEL = Recommender.kindLabelTable();",
+    kindSrc,
+    `const FILTER = ${JSON.stringify(filterSrc)};`,
+    'const now = Date.parse("2026-08-09T00:00:00Z");',
+    "class FakeDate extends Date { static now() { return now; } }",
+    "const document = {};",
+    "function $(id) { return null; }",
+    "const window = {};",
+    "globalThis.Recommender = Recommender;",
+    "globalThis.activeData = DATA;",
+    "globalThis.hiddenCounts = { past: 0, est: 0, kind: 0 };",
+    "globalThis.catFacetCounts = {};",
+    "globalThis.searchQuery = '';",
+    "function run(kind) {",
+    "  const state = { mode: 'deadlines', q: '', cats: [], kind: kind, rank: '', win: 'all',",
+    "    est: false, domestic: false, online: false, past: false };",
+    "  const runFilter = new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
+    "    'return (' + FILTER + ')')(FakeDate, 86400000, rows, state, true, 'rem');",
+    "  const out = runFilter();",
+    "  const kinds = {};",
+    "  out.forEach((r) => { kinds[r.kind] = (kinds[r.kind] || 0) + 1; });",
+    "  return { n: out.length, kinds };",
+    "}",
+    "const kinds = {};",
+    "rows.forEach((r) => { kinds[r.kind] = (kinds[r.kind] || 0) + 1; });",
+    "console.log(JSON.stringify({",
+    "  catalogKinds: kinds,",
+    "  all: run(''),",
+    "  abstract: run('abstract'),",
+    "  paper: run('paper'),",
+    "  journal: run('journal'),",
+    "  notification: run('notification'),",
+    "  cameraReady: run('camera_ready'),",
+    "  dropped: selectableKind('notification'),",
+    "  kept: selectableKind('paper'),",
+    "  unknown: selectableKind('definitely-not-a-kind'),",
+    "}));",
+    "})().catch((e) => { console.error(e && e.stack || String(e)); process.exit(1); });",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 120_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    catalogKinds: Record<string, number>;
+    all: { n: number; kinds: Record<string, number> };
+    abstract: { n: number; kinds: Record<string, number> };
+    paper: { n: number; kinds: Record<string, number> };
+    journal: { n: number; kinds: Record<string, number> };
+    notification: { n: number; kinds: Record<string, number> };
+    cameraReady: { n: number; kinds: Record<string, number> };
+    dropped: { kind: string; notice: string };
+    kept: { kind: string; notice: string };
+    unknown: { kind: string; notice: string };
+  };
+  // 収録されているのに選べない種別があること（＝この検査に意味があること）。
+  expect(out.catalogKinds.notification || 0).toBeGreaterThan(0);
+  // 既定は投稿締切のみ。
+  expect(Object.keys(out.all.kinds).sort()).toEqual(["abstract", "paper"]);
+  // 選択肢に並べる種別は、選べば行が返らないといけない。
+  expect(out.abstract.n, "概要締切が 0 件なら選択肢が噺になる").toBeGreaterThan(0);
+  expect(out.paper.n).toBeGreaterThan(0);
+  expect(out.journal.n).toBeGreaterThan(0);
+  expect(Object.keys(out.abstract.kinds)).toEqual(["abstract"]);
+  expect(Object.keys(out.paper.kinds)).toEqual(["paper"]);
+  // 投稿締切以外の種別を表に出さないのは仕様（SPEC §7）。`upcoming.md` で追う。
+  expect(out.notification.n).toBe(0);
+  expect(out.cameraReady.n).toBe(0);
+  // 実在する種別を URL で受けたときは、黙って捨てず理由を返す。
+  expect(out.dropped.kind).toBe("");
+  expect(out.dropped.notice).toContain("採否通知");
+  expect(out.dropped.notice).toContain("upcoming.md");
+  expect(out.kept).toEqual({ kind: "paper", notice: "" });
+  // 不明な値は説明を出さない（存在しない種別の名前を教えない）。
+  expect(out.unknown).toEqual({ kind: "", notice: "" });
 });

@@ -433,6 +433,28 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   // という状態を作らないため）。
   const KIND_LABEL: Record<string, string> = Recommender.kindLabelTable();
 
+  /* 種別セレクトの選択肢。`filter()` の `byKind` が通す種別と必ず揃える —
+   * 選んでも 0 件になる選択肢を並べるのが最もまずい（選択肢が噺になる）。
+   * 採否通知・カメラレディ・登録締切などはサイト表に出さない仕様で、
+   * それらを追うのは `upcoming.md`（SPEC §4・§7）。 */
+  const SELECTABLE_KINDS = ["abstract", "paper", "journal"];
+
+  /** URL やフォームから来た種別を選択可能なものにする。捨てた場合は理由を返す。 */
+  function selectableKind(raw: string | null): { kind: string; notice: string } {
+    const value = raw || "";
+    if (!value || SELECTABLE_KINDS.indexOf(value) >= 0) {
+      return { kind: value, notice: "" };
+    }
+    if (KIND_LABEL[value]) {
+      // 実在する種別なのに表に出さない場合だけ、理由を伝える（不明な値は黙って落とす）。
+      return {
+        kind: "",
+        notice: `${KIND_LABEL[value]} は表に出しません（upcoming.md で確認できます）`,
+      };
+    }
+    return { kind: "", notice: "" };
+  }
+
   // recommender.js から供給（テスト可能な単一正典）。無ければこの場で縮退定義。
   let activeData: Catalog = DATA;
   let recommendationData: Catalog | null = null;
@@ -1054,7 +1076,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   optAllK.value = "";
   optAllK.textContent = "投稿締切（概要・論文）";
   kindSel.appendChild(optAllK);
-  Object.keys(KIND_LABEL).forEach((k) => {
+  SELECTABLE_KINDS.forEach((k) => {
     const opt = document.createElement("option");
     opt.value = k;
     opt.textContent = KIND_LABEL[k];
@@ -1395,6 +1417,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* 「N 件 / 全 M 件」の差の内訳。既定で隠れる行（過去の締切・推定・投稿締切以外の種別）を
    * 数える。隠れていることを説明しないと、探した締切が「無い」と誤解される。 */
   let hiddenCounts = { past: 0, est: 0, kind: 0 };
+
+  /* URL で渡された種別のうち、表に出さないものを読み捨てたときの説明。
+   * 黙って条件が変わったように見えるのを避ける（相対月を解決したときと同じ方針）。 */
+  let droppedKindNotice = "";
 
   function hiddenDeadlineCounts(): { past: number; est: number; kind: number } {
     return hiddenCounts;
@@ -2494,6 +2520,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (hidden.est) parts.push(`推定 ${hidden.est} 件`);
       if (parts.length) cnt += ` ｜ のぞく: ${parts.join("・")}`;
     }
+    if (!recMode && droppedKindNotice) cnt += ` ｜ ${droppedKindNotice}`;
     if (!recMode && state.past && historyStatus === "loading") cnt += " ｜ 全履歴を読み込み中…";
     if (!recMode && state.past && historyStatus === "error")
       cnt += " ｜ 全履歴を読み込めませんでした";
@@ -2671,7 +2698,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const p = new URLSearchParams(window.location.search);
     state.mode = p.get("mode") === "recommend" ? "recommend" : "deadlines";
     state.q = p.get("q") || "";
-    state.kind = KIND_LABEL[p.get("kind") || ""] ? p.get("kind") || "" : "";
+    const urlKind = selectableKind(p.get("kind"));
+    state.kind = urlKind.kind;
+    droppedKindNotice = urlKind.notice;
     const rawRank = p.get("rank");
     state.rank = ["A*", "A", "B", "C", "N"].indexOf(rawRank || "") >= 0 ? rawRank || "" : "";
     const rawWin = p.get("win");
