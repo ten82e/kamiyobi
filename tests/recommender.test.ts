@@ -5000,3 +5000,52 @@ describe("チェックボックスと選択肢の語を、複合語のまま引�
     ]);
   });
 });
+
+describe("海外の開催都市をカタカナで打つ", () => {
+  const NOW = Date.parse("2026-08-09T00:00:00Z");
+  // 行の検索用文字列には開催地の公式表記が入る（翻訳して変えない）。だからカタカナ入力は
+  // 表記表で英文字のつづりに寄せて届ける。ここは照合の側だけを見、表が実データに
+  // 追いついているかは `tests/build_golden.test.ts` の収録カタログ検査で見る。
+  const rows = [
+    {
+      conf: { key: "pam", title: "PAM", editions: [] },
+      hay: "pam passive and active measurement lille, france",
+    },
+    {
+      conf: { key: "prdc", title: "PRDC", editions: [] },
+      hay: "prdc parallel and distributed computing busan, 韓国",
+    },
+    {
+      conf: { key: "icalt", title: "ICALT", editions: [] },
+      hay: "icalt heraklion, crete, greece",
+    },
+    { conf: { key: "bali-conf", title: "ICMB", editions: [] }, hay: "icmb bali, インドネシア" },
+    {
+      conf: { key: "sigir-anno", title: "SIGIR ANN", editions: [] },
+      hay: "sigir ann baritbari bari, イタリア",
+    },
+  ];
+  const hits = (q: string) => {
+    const m = R.searchMatcher(q, NOW);
+    return rows.filter((r) => m(r.hay)).map((r) => String(r.conf.key));
+  };
+
+  it("カタカナの都市名が、公式表記のつづりで書かれた行に届く", () => {
+    expect(hits("リール")).toEqual(["pam"]);
+    expect(hits("プサン")).toEqual(["prdc"]);
+    expect(hits("ブサン")).toEqual(["prdc"]);
+    expect(hits("クレタ")).toEqual(["icalt"]);
+    expect(hits("クレタ島")).toEqual(["icalt"]);
+  });
+
+  it("日本語で同じ書き方になる別都市は、両方に寄せる（国が併記で分かる）", () => {
+    // Bali（インドネシア）と Bari（イタリア）は、どちらも「バリ」と書く人が多い。
+    expect(hits("バリ").sort()).toEqual(["bali-conf", "sigir-anno"]);
+  });
+
+  it("寄せない語は行を増やさない（都市語を打っていない行は出ない）", () => {
+    // 都市語と別の語を同時に打てば AND になる（都市語だけを足して増えることはない）。
+    expect(hits("リール measurement")).toEqual(["pam"]);
+    expect(hits("リール 並列")).toEqual([]);
+  });
+});

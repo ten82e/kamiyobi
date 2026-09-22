@@ -6419,3 +6419,79 @@ it("チェックボックスの語と種別の言い方を実データで引け�
   expect(app, "一覧に「随時受付」が残っている").not.toContain("随時受付");
   expect(rec, "CSV の常時受付表記が「随時受付」に戻っている").not.toContain('"随時受付";');
 });
+
+it("収録 5 行以上の開催都市は、カタカナの入力でたどれないものがない（SPEC §7）", () => {
+  /* 海外の出張先はカタカナで覚えるのが普通なのに、収録カタログに現れる都市の多くが
+   * 日本語表記の表に無く、カタカナで打つと 0 件だった（2026-09-23 実測: 収録 5 行以上の
+   * 都市のうち 123 種が表に無かった）。**収録カタログ側**から検査するので、都市が増えて
+   * 表が追いついていないときに落ちる（＝足す案内になる）。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(new URL("../data/snapshot.json", import.meta.url).pathname)}, 'utf8'));`,
+    `const src = readFileSync(${JSON.stringify(join(site, "recommender.js"))}, 'utf8');`,
+    "const i = src.indexOf('const PLACE_QUERY_ALIASES_JA = [');",
+    "const aliases = eval(src.slice(i + 'const PLACE_QUERY_ALIASES_JA = '.length, src.indexOf('];', i) + 1));",
+    "const cityOf = (r) => {",
+    "  const raw = String(r.ed.place || '').trim();",
+    "  if (!raw) return '';",
+    "  const segment = raw.split('/')[0];",
+    "  const at = segment.indexOf(',');",
+    "  return (at < 0 ? segment : segment.slice(0, at)).trim().toLowerCase();",
+    "};",
+    "const rows = Recommender.candidateRows(DATA);",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    // 都市語を数える。開催形式の語と会場名（大学・会議センターなど）は都市ではないので除く。
+    "const NOT_CITY = /university|center|centre|centre|universitat|resort|foundation|institute|campus|hall|online|virtual|tbd|sar$|california/i;",
+    "const counts = new Map();",
+    "rows.forEach((r) => {",
+    "  const raw = String(r.ed.place || '').trim();",
+    "  if (!raw) return;",
+    "  const segment = raw.split('/')[0];",
+    "  const at = segment.indexOf(',');",
+    "  const city = (at < 0 ? segment : segment.slice(0, at)).trim();",
+    "  if (!city || !/^[A-Za-z][A-Za-z .'-]*$/.test(city)) return;",
+    "  if (NOT_CITY.test(city) || city.length < 4) return;",
+    "  const key = city.toLowerCase();",
+    "  counts.set(key, (counts.get(key) || 0) + 1);",
+    "});",
+    /* 「その都市の行が 1 行以上当たる日本語の語があるか」を、表の条目ごとに確かめる。
+     * ただ語を打って当たった行の都市を覚えるやり方だと、`Anaheim, California` が
+     * 「カリフォルニア」でカバーされてしまい、都市の名前では引けないまま緑になる
+     * （2026-09-23 に実測で通ってしまい、検査として弱かった）。表の条目が示す
+     * 英文字のつづりが都市語に現れていて、かつその語でその行に届くことを見る。 */
+    "const covered = new Set();",
+    "aliases.forEach(([ja, latin]) => {",
+    "  const word = String(ja);",
+    "  const want = String(latin).toLowerCase();",
+    "  const m = Recommender.searchMatcher(word, now);",
+    "  rows.forEach((r) => {",
+    "    const city = cityOf(r);",
+    "    if (!city || city.indexOf(want) < 0) return;",
+    "    if (m(r.hay)) covered.add(city);",
+    "  });",
+    "});",
+    "const uncovered = [...counts.entries()]",
+    "  .filter(([, n]) => n >= 5)",
+    "  .filter(([city]) => !covered.has(city))",
+    "  .map(([city, n]) => `${city} (${n} 行)`)",
+    "  .sort();",
+    // 表の語が、カタログで本当に当たる語だけか（死んだ条目を置かない）。
+    "const dead = [];",
+    "aliases.forEach(([ja, latin]) => {",
+    "  const m = Recommender.searchMatcher(ja, now);",
+    "  if (rows.filter((r) => m(r.hay)).length === 0) dead.push(String(ja));",
+    "});",
+    "console.log(JSON.stringify({ cities: counts.size, uncovered, dead: dead.slice(0, 6) }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as { cities: number; uncovered: string[]; dead: string[] };
+  expect(out.cities, "カタログから都市を 1 つも数え上げられない").toBeGreaterThan(100);
+  expect(out.uncovered, "カタカナで引けない開催都市がある:\n" + out.uncovered.join("\n")).toEqual(
+    [],
+  );
+  expect(out.dead, "日本語表記の表に、1 件も当たらない語がある").toEqual([]);
+});
