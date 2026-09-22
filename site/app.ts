@@ -1519,6 +1519,72 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return `${base} 多いのは ${tips.join(" / ")}。${meetingNote}`;
   }
 
+  /**
+   * 0 件のとき、会期だけ確定している次回開催を案内する。締切が未定の会は表に載らない
+   * （`upcoming.md` 側にしか出ない）ので、「検索語は合っているのに 0 件」をそのまま
+   * 放置しない。表示する日程は表と同じく暦日 + 曜日で、時刻は付けない。
+   */
+  function renderNextMeetingNote(filter: {
+    window: string;
+    cats: string[];
+    domestic: boolean;
+  }): void {
+    const box = $("emptyMeeting");
+    if (!box) return;
+    box.textContent = "";
+    box.hidden = true;
+    const now = Date.now();
+    const limit =
+      filter.window === "all" || filter.window === "future"
+        ? Number.POSITIVE_INFINITY
+        : now + Number.parseInt(filter.window, 10) * DAY;
+    const found = Recommender.scheduleOnlyEditions(DATA)
+      .filter((m) => {
+        if (searchQuery.trim() && !Recommender.hayMatches(m.hay, searchQuery)) return false;
+        if (filter.domestic && m.tags.indexOf("domestic-jp") < 0) return false;
+        if (filter.cats.length && !filter.cats.some((c) => m.cats.indexOf(c) >= 0)) return false;
+        const startMs = Date.parse(`${m.eventStart}T00:00:00+09:00`);
+        return Number.isFinite(startMs) && startMs >= now && startMs <= limit;
+      })
+      .sort((a, b) => a.eventStart.localeCompare(b.eventStart))
+      .slice(0, 3);
+    if (!found.length) return;
+    const lead = document.createElement("strong");
+    lead.textContent = "会期だけ確定している次回:";
+    box.appendChild(lead);
+    found.forEach((m, index) => {
+      const sep = document.createTextNode(index === 0 ? " " : " / ");
+      box.appendChild(sep);
+      const startDay = Recommender.weekdayJaFromDate(m.eventStart);
+      const endDay = Recommender.weekdayJaFromDate(m.eventEnd);
+      // 同じ年の会期で年を二度書かない（表の日付列と同じ書き方）。
+      const sameYear = m.eventEnd.slice(0, 4) === m.eventStart.slice(0, 4);
+      let when = `${m.eventStart}${startDay ? `(${startDay})` : ""}`;
+      if (m.eventEnd && m.eventEnd !== m.eventStart) {
+        const endHead = sameYear ? "" : `${m.eventEnd.slice(0, 4)}-`;
+        when += `〜${endHead}${m.eventEnd.slice(5)}${endDay ? `(${endDay})` : ""}`;
+      }
+      const label = document.createTextNode(`${when} `);
+      box.appendChild(label);
+      if (m.link) {
+        const a = document.createElement("a");
+        a.href = m.link;
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.textContent = m.name;
+        box.appendChild(a);
+      } else {
+        box.appendChild(document.createTextNode(m.name));
+      }
+      if (m.place) box.appendChild(document.createTextNode(` ＠${m.place}`));
+    });
+    const note = document.createTextNode(
+      " 締切が未定の会は表に載せません（会期は upcoming.md にも掲載）。",
+    );
+    box.appendChild(note);
+    box.hidden = false;
+  }
+
   /** 0 件時に「条件をまとめて外す」を出すべきか（既に全部外れていれば出さない）。 */
   function filtersClearable(filter: {
     window: string;
@@ -2302,6 +2368,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           query: state.q,
         };
         $("emptyText").textContent = emptyDeadlineHint(filter);
+        renderNextMeetingNote({ window: state.win, cats: state.cats, domestic: state.domestic });
         // 「過去の締切も表示」だけは一覧の意味を変える（過去行の読み込みを伴う）ので
         // まとめて外す側では触らず、文章での案内に留める。
         $("emptyReset").hidden = !filtersClearable(filter);

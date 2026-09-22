@@ -19,6 +19,7 @@ import { env } from "@huggingface/transformers";
 import { load as loadYaml } from "js-yaml";
 import { beforeAll, describe, expect, it } from "vitest";
 import { runHealthGate } from "../scripts/health-gate.ts";
+import Recommender from "../site/recommender.ts";
 import type { HealthDeadlineRef, HealthReport } from "../src/build.ts";
 import {
   buildAll,
@@ -3690,4 +3691,81 @@ describe("jsonCompact and legacy_key_redirects fixes (#746)", () => {
     expect(priorIdx).toBeLessThan(dateOnlyIdx);
     rmSync(dir, { recursive: true, force: true });
   });
+});
+
+it("the empty state offers the next schedule-only meeting (SPEC §7)", () => {
+  // 締切が未定の会は締切一覧の表に載らない。だから「検索語は合っているのに 0 件」で
+  // 終わらせず、次回会期をその場で案内する。マークアップと呼び出しの両方を見る
+  // （どちらか一方だけ直して案内が消える事故を防ぐ）。
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  expect(html).toContain('id="emptyMeeting"');
+  const app = siteRuntime("app.js");
+  expect(app).toContain("Recommender.scheduleOnlyEditions");
+  expect(app).toContain("会期だけ確定している次回");
+  expect(app).toContain("締切が未定の会は表に載せません");
+  // 実データで実際に効いていること（0 件なら検査が空回りする）。
+  const editions = Recommender.scheduleOnlyEditions(data);
+  expect(editions.length).toBeGreaterThan(0);
+  expect(editions.some((e) => e.tags.indexOf("domestic-jp") >= 0)).toBe(true);
+  // 案内に混ぜるのは「締切を持たない版」だけ。会議ごとに件数が一致するかで見る。
+  type EditionShape = { deadlines?: unknown[]; event_start?: string };
+  for (const conf of (data.conferences || []) as Array<{
+    key: string;
+    editions?: EditionShape[];
+  }>) {
+    const expected = (conf.editions || []).filter(
+      (ed) =>
+        !(ed.deadlines || []).length && /^\d{4}-\d{2}-\d{2}$/.test(String(ed.event_start || "")),
+    ).length;
+    const got = Recommender.scheduleOnlyEditions({ conferences: [conf] }).length;
+    expect(got, `${conf.key}: 締切の無い版と案内対象の件数が合わない`).toBe(expected);
+  }
+});
+
+it("the next-meeting note formats the schedule-only edition for a Japanese reader (SPEC §7)", () => {
+  // 文言の一致だけだと「実は出ていない」を防げないので、ビルド後の app.js の関数を
+  // そのまま実行して表示文言を検査する。Recommender は書き写さず、同じビルドで
+  // 生成された recommender.js を読み込む（正本とズレたスタブで通す検査にしない）。
+  const runtime = compileSiteRuntime();
+  if (!runtime) throw new Error("site runtime is not compiled");
+  const dir = mkdtempSync(join(tmpdir(), "cfp-note-"));
+  const recPath = join(dir, "recommender.mjs");
+  writeFileSync(recPath, runtime["recommender.js"]);
+  const script = [
+    "(async () => {",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${recPath}`)});`,
+    "const DAY = 86400000;",
+    "Date.now = () => Date.UTC(2026, 8, 22, 3, 0, 0);", // 2026-09-22 12:00 JST
+    "const DATA = { conferences: [{ key: 'ipsj-al', title: '情報処理学会 AL 研究会', full_name: '情報処理学会 アルゴリズム研究会 (AL)', categories: ['theory'], tags: ['domestic-jp'], link: 'https://example.invalid/al', editions: [",
+    "  { id: 'ipsj-al-2026-11', date_text: '2026年11月12日-13日', event_start: '2026-11-12', event_end: '2026-11-13', place: '松江テルサ（島根県）', link: 'https://example.invalid/al', deadlines: [] },",
+    "  { id: 'ipsj-al-2026-09', event_start: '2026-09-04', event_end: '2026-09-05', place: 'オンライン', deadlines: [{ kind: 'abstract', precision: 'date-only', local_date: '2026-08-01' }] }",
+    "]}] };",
+    "let searchQuery = Recommender.expandRelativeMonths('アルゴリズム', Date.now());",
+    "const box = { hidden: true, textContent: '', appendChild(node) { if (node.textContent) this.textContent += node.textContent; } };",
+    "const document = { createElement: (tag) => ({ tagName: tag, textContent: '', href: '', target: '', rel: '' }), createTextNode: (text) => ({ textContent: text }) };",
+    "const $ = () => box;",
+    jsFunction(siteRuntime("app.js"), "renderNextMeetingNote"),
+    "renderNextMeetingNote({ window: '90', cats: [], domestic: true });",
+    "console.log(JSON.stringify({ hidden: box.hidden, text: box.textContent }));",
+    "})().catch((e) => { console.error(e && e.stack || String(e)); process.exit(1); });",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const shown = JSON.parse(proc.stdout) as { hidden: boolean; text: string };
+  expect(shown.hidden).toBe(false);
+  expect(shown.text).toContain("会期だけ確定している次回:");
+  // 暦日 + 曜日（時刻を付けない）/ 同じ年は年を二度書かない / 会場名を出す。
+  expect(shown.text).toContain("2026-11-12(木)〜11-13(金)");
+  expect(shown.text).toContain("情報処理学会 AL 研究会");
+  expect(shown.text).toContain("松江テルサ（島根県）");
+  expect(shown.text).toContain("締切が未定の会は表に載せません");
+  expect(shown.text).not.toContain("2026-09-04");
+
+  // 期間外（30 日先まで）なら案内しない。
+  const outOfWindow = spawnSync("node", ["-e", script.replace("window: '90'", "window: '30'")], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(outOfWindow.status, outOfWindow.stderr).toBe(0);
+  expect(JSON.parse(outOfWindow.stdout).hidden).toBe(true);
 });

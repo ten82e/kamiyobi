@@ -160,6 +160,17 @@ interface SiteRecommenderApi {
   queryTokenGroups(query: unknown): string[][];
   queryTokens(query: unknown): string[];
   hayMatches(hay: unknown, query: unknown): boolean;
+  scheduleOnlyEditions(data: unknown): Array<{
+    key: string;
+    name: string;
+    link: string;
+    place: string;
+    eventStart: string;
+    eventEnd: string;
+    cats: string[];
+    tags: string[];
+    hay: string;
+  }>;
   tagLabelJa(tag: unknown): string;
   topicTagsJa(tags: readonly string[] | null | undefined): string[];
   safeExternalUrl(value: unknown): string;

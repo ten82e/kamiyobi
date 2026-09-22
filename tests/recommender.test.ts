@@ -3962,3 +3962,51 @@ describe("embeddingsMain 引数パース (#322)", () => {
     expect(nonExistCode).toBe(1);
   });
 });
+
+describe("会期だけ確定している回（締切未定）の一覧", () => {
+  const catalog = {
+    conferences: [
+      {
+        key: "ipsj-al",
+        title: "情報処理学会 AL 研究会",
+        full_name: "情報処理学会 アルゴリズム研究会 (AL)",
+        categories: ["theory"],
+        tags: ["domestic-jp"],
+        link: "https://ken.ieice.org/ken/program/?tgid=IPSJ-AL",
+        editions: [
+          {
+            id: "ipsj-al-2026-11",
+            date_text: "2026年11月12日-13日",
+            event_start: "2026-11-12",
+            event_end: "2026-11-13",
+            place: "松江テルサ（島根県）",
+            link: "https://ken.ieice.org/ken/program/?tgid=IPSJ-AL",
+            deadlines: [],
+          },
+          {
+            id: "ipsj-al-2026-09",
+            event_start: "2026-09-04",
+            event_end: "2026-09-05",
+            place: "オンライン",
+            deadlines: [{ kind: "abstract", precision: "date-only", local_date: "2026-08-01" }],
+          },
+        ],
+      },
+    ],
+  };
+  const editions = recommender.scheduleOnlyEditions(catalog);
+
+  it("締切の無い回だけを返す", () => {
+    expect(editions.map((e) => e.eventStart)).toEqual(["2026-11-12"]);
+    expect(editions[0].name).toBe("情報処理学会 AL 研究会");
+    expect(editions[0].cats).toEqual(["theory"]);
+    expect(editions[0].tags).toContain("domestic-jp");
+  });
+
+  it("研究会名・開催地・県・月で引っかかる（表に出ない回を検索できる）", () => {
+    for (const query of ["アルゴリズム", "松江", "しまね", "島根", "11月", "研究会"]) {
+      const hit = editions.filter((e) => recommender.hayMatches(e.hay, query));
+      expect(hit.length, `「${query}」で会期だけの回が見つからない`).toBe(1);
+    }
+  });
+});

@@ -60,6 +60,19 @@ interface EditionRecord {
   deadlines?: DeadlineRecord[];
 }
 
+/** 会期だけが決まっていて締切が未定の回（締切一覧の表には出さない）。 */
+interface ScheduleOnlyEdition {
+  key: string;
+  name: string;
+  link: string;
+  place: string;
+  eventStart: string;
+  eventEnd: string;
+  cats: string[];
+  tags: string[];
+  hay: string;
+}
+
 interface ConferenceRecord {
   key: string;
   title?: string;
@@ -2279,6 +2292,48 @@ const Recommender = (() => {
     return out;
   }
 
+  /**
+   * 会期だけが決まっていて締切が未定の回を一覧にする。締切一覧の表は締切行でできており、
+   * これらの回は `upcoming.md` にしか出ない。検索で引っ掛けて「次回の開催」を案内できる
+   * ようにするのが目的なので、`candidateRows` と同じ検索要素（分類・開催地・都道府県・月・
+   * タグ）を同じヘルパーで組み立てる。
+   */
+  function scheduleOnlyEditions(data: unknown): ScheduleOnlyEdition[] {
+    const out: ScheduleOnlyEdition[] = [];
+    const source = isRecord(data) && Array.isArray(data.conferences) ? data.conferences : data;
+    const conferences = Array.isArray(source) ? source.filter(isConference) : [];
+    conferences.forEach((conf) => {
+      const confTags = conf.tags || [];
+      const baseHay = [conf.title, conf.full_name, conf.key]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      (conf.editions || []).forEach((ed) => {
+        if ((ed.deadlines || []).length) return;
+        const start = String(ed.event_start || "");
+        const end = String(ed.event_end || start);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) return;
+        out.push({
+          key: String(conf.key || ""),
+          name: String(conf.title || conf.key || ""),
+          link: String((ed as { link?: string }).link || (conf as { link?: string }).link || ""),
+          place: String(ed.place || ""),
+          eventStart: start,
+          eventEnd: end,
+          cats: conf.categories || [],
+          tags: confTags,
+          hay: searchNormalize(
+            `${baseHay} ${ed.place || ""} ${ed.date_text || ""} ` +
+              `${categorySearchTerms(conf.categories, confTags)} ${tagSearchTerms(confTags)} ` +
+              `${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ` +
+              `${monthTermsJa(start)} ${monthTermsJa(end)}`,
+          ),
+        });
+      });
+    });
+    return out;
+  }
+
   /* 論文モード用: 未来の投稿締切（abstract/paper）を持たない会議に限り、
    * 直近の過去投稿締切を 1 行だけ返す（RTSS 等「次回未発表」の会議を推薦圏に残す）。
    * 推定の過去行・開催イベント行は除外する。 */
@@ -3355,6 +3410,7 @@ const Recommender = (() => {
     tagLabelJa: tagLabelJa,
     topicTagsJa: topicTagsJa,
     tagSearchTerms: tagSearchTerms,
+    scheduleOnlyEditions: scheduleOnlyEditions,
     categorySearchTerms: categorySearchTerms,
     pastRepresentatives: pastRepresentatives,
     pickRepresentative: pickRepresentative,
