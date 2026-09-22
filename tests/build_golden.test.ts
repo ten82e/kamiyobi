@@ -11695,3 +11695,71 @@ it("投稿先を探すモードの一致評価の語を、画面で説明して�
   // 以前の語は画面から消えている（論文を入力しても消えない警告に見えていた）。
   expect(html).not.toContain("情報不足");
 });
+
+it("内訳の項目に、足して読むように見える数字を出さない（SPEC §7）", () => {
+  /* 推薦の行の内訳（`一致評価 … ▾` を押すと出る）は、以前 `+18` などの数字を並べていた。
+   * しかしその数字は手作業で決めた信号重みで、**画面に出すスコアとは別の計算**だった
+   * （2026-09-23 実測: 「一致スコア 65点」の行の内訳は +18 と +9 が並ぶだけで合計 27、
+   * 63 点的な行は合計 21、59 点的な行は合計 57）。`+` 付きの数字は足して読むものに見え、
+   * てびきも「どの要素でどれだけ合ったか」と書いていたため、画面の噓になっていた。
+   * 内訳は「当たった要素」の名前だけを出し、スコアとの関係を明文化する。 */
+  const app = siteRuntime("app.js");
+  expect(app).toContain("この会議で当たった要素");
+  // `+<数>` の形の項目を作らない（agg の値をそのまま出していた形）。
+  expect(app, "内訳に信号重みをそのまま出している").not.toMatch(/`\+\$\{agg/);
+  expect(app, "内訳に足し算に見える数字を残している").not.toContain('"+10"');
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  // スコアと内訳の関係を書いておく（点を足した値だと誤解させない）。
+  expect(html).toMatch(/スコア（点）はこの内訳を足した値ではありません/);
+
+  /* 「数字を足すとスコアになる」が成立しないことの実測（直した理由の記録として残す。
+   * 成立する日が来ても、項目は名前だけを出し続ける）。 */
+  const script = [
+    "import fs from 'node:fs';",
+    `import Recommender from ${JSON.stringify("file://" + join(site, "recommender.js"))};`,
+    "const R = Recommender;",
+    `const DATA = JSON.parse(fs.readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const NOW = Date.parse('2026-08-09T00:00:00Z');",
+    "const rows = R.candidateRows(DATA, NOW);",
+    "const lines = R.parsePaperLines(",
+    "  'タイトル: ゼロコピー転送を用いた分散 GPU 学習のための通信最適化\\n概要: RDMA と集合通信ライブラリの性能を計測した。\\nキーワード: 分散学習 ネットワーク HPC',",
+    ");",
+    "const kept = R.venueRecommendations(rows, lines, {}, NOW, { fieldedLexical: true }).filter(",
+    "  (x) => x.fit.score >= 10,",
+    ");",
+    "let checked = 0;",
+    "let differs = 0;",
+    "for (const x of kept) {",
+    "  const agg = x.match.agg || {};",
+    "  const sum = ['domain', 'name', 'paper', 'jp', 'tags'].reduce(",
+    "    (s, k) => s + (agg[k] || 0),",
+    "    0,",
+    "  );",
+    "  if (!sum) continue;",
+    "  checked += 1;",
+    "  if (sum !== x.fit.lexicalScore) differs += 1;",
+    "}",
+    "console.log(JSON.stringify({ checked, differs, shown: kept.length }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as { checked: number; differs: number; shown: number };
+  expect(out.shown, "推薦の行が出ず、検査が空振り").toBeGreaterThan(5);
+  expect(out.checked, "内訳の項目がある行が出ず、検査が空振り").toBeGreaterThan(5);
+  expect(out.differs, "内訳の合計とスコアが一致するなら、この検査の前提が変わった").toBe(
+    out.checked,
+  );
+});
+
+it("画面に出る文へ markdown の記号を混ぜない（SPEC §7）", () => {
+  /* `site/template.html` に `**強調**` の形で書いた行が実際に有った（2026-09-23 実測:
+   * 「残り」の項に `**日数は JST の暦日**` がそのまま画面に出ていた）。Markdown を書く
+   * 癖が HTML に残っても検査が通っていたので、表示される本文だけを見て弾く。
+   * CSS・スクリプト・HTML コメントの中は画面に出ないので見る必要がない。 */
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const visible = html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/g, " ")
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/g, " ")
+    .replace(/<!--[\s\S]*?-->/g, " ");
+  expect(visible, "画面に出る文に markdown の強調記号が残っている").not.toContain("**");
+});

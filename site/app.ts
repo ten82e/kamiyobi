@@ -2729,28 +2729,27 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       lines = Recommender.parsePaperLines(paperText);
     }
 
+    /* 内訳の chips は「当たった要素」の名前だけを出す（2 番目の欄は順位などの
+     * 実数があるときだけ埋める）。以前は `+18` のような数字を並べていたが、それは
+     * 手作業で決めた信号重み（`SIG_WEIGHTS`）で、**画面に出すスコアとは別の計算**だった
+     * （スコアは各項目の順位の融合 + 会議名一致 + 分野の推定で決まる – 2026-09-23 実測:
+     * 「一致スコア 65点」の行の内訳の数字は 18 + 9 が並ぶだけで合計 27、63 点的な行は
+     * 合計 21、59 点的な行は合計 57）。`+` 付きの数字は足して読むものに見えるため、
+     * 画面の噓になっていた。当たり外れだけが本当に分かる形にする。 */
     const chips: Array<[string, string, string]> = [];
     if (agg.domain > 0)
       chips.push([
         "分野の一致",
-        `+${agg.domain}`,
+        "",
         "会議の分野と論文のキーワードが一致（HPC・AI・セキュリティなど）",
       ]);
     if ((agg.venueName || 0) > 0)
-      chips.push([
-        "会議名一致",
-        `+${agg.venueName}`,
-        "会議名の内容語が論文タイトル・キーワードに含まれる",
-      ]);
+      chips.push(["会議名一致", "", "会議名の内容語が論文タイトル・キーワードに含まれる"]);
     if (agg.paper > 0)
-      chips.push(["採択論文一致", `+${agg.paper}`, "この会議で採択された論文に使われた語と一致"]);
-    if (agg.jp > 0) chips.push(["日本語一致", `+${agg.jp}`, "日本語の会議名・論文語が一致"]);
+      chips.push(["採択論文一致", "", "この会議で採択された論文に使われた語と一致"]);
+    if (agg.jp > 0) chips.push(["日本語一致", "", "日本語の会議名・論文語が一致"]);
     if (agg.tags > 0)
-      chips.push([
-        "主題の一致",
-        `+${agg.tags}`,
-        "会議の主題（real-time など）が論文に書かれている",
-      ]);
+      chips.push(["主題の一致", "", "会議の主題（real-time など）が論文に書かれている"]);
     if (agg.venue > 0)
       chips.push([
         "過去掲載先一致",
@@ -2764,15 +2763,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         "意味検索（文の意味の近さで探す検索）の順位も、順序決めに使う",
       ]);
     if (r._boosted)
-      chips.push(["同じ分野（掲載先から推定）", "+10", "掲載先から推定した分野とこの会議が一致"]);
+      chips.push(["同じ分野（掲載先から推定）", "", "掲載先から推定した分野とこの会議が一致"]);
     if (!chips.length)
-      chips.push(["目立つ一致はない", "—", "一致の数は少ないが、表示の下限は超えている"]);
+      chips.push(["目立つ一致はない", "", "一致の数は少ないが、表示の下限は超えている"]);
 
     let html = '<div class="detail-inner">';
     html +=
       '<div class="detail-head">一致評価 ' +
       esc(r._fitLabel || "評価保留") +
-      " の内訳（この会議が選ばれた理由）</div>";
+      " の内訳（この会議で当たった要素）</div>";
     let comp: string;
     if (r._semanticRank) {
       comp =
@@ -2803,9 +2802,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             esc(chip[2]) +
             '"><b>' +
             esc(chip[0]) +
-            "</b><em>" +
-            esc(chip[1]) +
-            "</em></span>",
+            "</b>" +
+            // 順位など実数がある項目だけ値を出す（空の <em> は空白の塊に見える）。
+            (chip[1] ? "<em>" + esc(chip[1]) + "</em>" : "") +
+            "</span>",
         )
         .join("") +
       "</div>";
