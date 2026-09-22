@@ -1821,6 +1821,34 @@ it("upcoming.md writes each deadline in its official zone, not blanket AoE (SPEC
   expect(rows.some((r) => r[0].endsWith("JST"))).toBe(true);
 });
 
+it("the empty deadline state names the filters that caused it (SPEC §7)", () => {
+  const hint = new Function(
+    `return (${jsFunction(siteRuntime(), "emptyDeadlineHint")});`,
+  )() as (f: {
+    window: string;
+    past: boolean;
+    cats: number;
+    domestic: boolean;
+    rank: string;
+    query: string;
+  }) => string;
+  const clear = { window: "all", past: true, cats: 0, domestic: false, rank: "all", query: "" };
+  // 条件を全部外して 0 件のときは、表に出ない種別（開催行）を説明する。
+  expect(hint(clear)).toContain("upcoming.md");
+  expect(hint(clear)).not.toContain("期間を");
+  // 条件が残っているときは、外せる条件を実名で挙げる。
+  const filtered = hint({ ...clear, window: "7d", past: false, query: "機械学" });
+  expect(filtered).toContain("期間を「すべて」に変更");
+  expect(filtered).toContain("「過去の締切も表示」をオン");
+  expect(filtered).toContain("検索語を短くする");
+  expect(hint({ ...clear, domestic: true, cats: 2, rank: "A*" })).toContain(
+    "「国内研究会・国内シンポジウムのみ」をオフ",
+  );
+  // 0 件メッセージは表の直下に出る（別ページへ飛ばさない）。
+  const runtime = siteRuntime();
+  expect(runtime).toContain('$("empty").textContent = emptyDeadlineHint(');
+});
+
 it("upcoming.md lists meetings as well as deadlines", () => {
   const rows = upcomingRows(site);
   const kinds = new Set(rows.map((r) => r[3]));

@@ -1446,6 +1446,31 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   // 選択・詳細・キーボード移動はこれらの行を数えない（off-by-one の再発防止）。
   // 日時順で見ているときだけ月で区切る。一致度順やランク順で区切ると、
   // 月が往復してかえって読めなくなる。
+  /* SPEC §7: 0 件のとき、原因になりやすい条件をそのまま並べる。
+   * 期間窓・過去非表示・「開催行は表に出さない」が重なると、収録が無いのだと
+   * 誤解して離脱するため、いま外せる条件を実名で示す。*/
+  function emptyDeadlineHint(filter: {
+    window: string;
+    past: boolean;
+    cats: number;
+    domestic: boolean;
+    rank: string;
+    query: string;
+  }): string {
+    const tips: string[] = [];
+    if (filter.window && filter.window !== "all") tips.push("期間を「すべて」に変更");
+    if (!filter.past) tips.push("「過去の締切も表示」をオン");
+    if (filter.cats > 0) tips.push("分野チップをはずす");
+    if (filter.domestic) tips.push("「国内研究会・国内シンポジウムのみ」をオフ");
+    if (filter.rank && filter.rank !== "all") tips.push("ランクを「すべて」に変更");
+    if (filter.query.trim())
+      tips.push("検索語を短くする（分野名・主題・開催地の日本語でも引けます）");
+    const base = "該当する締切はありません。";
+    const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.md に載せています。";
+    if (!tips.length) return `${base} ${meetingNote}`;
+    return `${base} 多いのは ${tips.join(" / ")}。${meetingNote}`;
+  }
+
   function shouldGroupMonths(grouping: {
     sortKey: string | null;
     sortAsc: boolean;
@@ -2186,7 +2211,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       $("deadlineTableWrap").hidden = false;
       $("recommendationCards").hidden = true;
       if (!shown.length) {
-        $("empty").textContent = "該当する締切はありません。";
+        $("empty").textContent = emptyDeadlineHint({
+          window: state.win,
+          past: state.past,
+          cats: state.cats.length,
+          domestic: state.domestic,
+          rank: state.rank,
+          query: state.q,
+        });
         $("empty").hidden = false;
       } else {
         $("empty").hidden = true;
