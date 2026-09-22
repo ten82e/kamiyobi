@@ -2244,9 +2244,13 @@ it("the deadline table is usable on paper and with a Japanese IME (SPEC §7)", (
   // 印刷物だけ直近 40 件で打ち切られないよう、印刷前に全行を描画して印刷後に戻す。
   expect(runtime).toContain('window.addEventListener("beforeprint"');
   expect(runtime).toContain('window.addEventListener("afterprint"');
-  // 日本語 IME: 未確定のひらがなで絞り込み直さず、変換確定後に一度だけ適用する。
-  expect(runtime).toContain('valueElement("q").addEventListener("compositionstart"');
-  expect(runtime).toContain('valueElement("q").addEventListener("compositionend"');
+  /* 日本語 IME: 未確定のひらがなで絞り込み直さず、変換確定後に一度だけ適用する。
+   * 経路は `wireDebouncedInput` に集約した（論文入力の要旨・タイトルも日本語で打つので、
+   * 検索欄だけ守っても使う人は同じもたつきを踏む）。聞き手自体を張っている箇所は
+   * ヘルパー内の 1 箇所だけであることを、下の IME 検査で実際に動かして確認する。 */
+  expect(runtime).toContain('element.addEventListener("compositionstart"');
+  expect(runtime).toContain('element.addEventListener("compositionend"');
+  expect(runtime).toContain('wireDebouncedInput(valueElement("q")');
   // ビルド成果物では `if (composing)` と `return;` が改行で分かれるため、条件だけ見る。
   expect(runtime).toMatch(/if \(composing\)\s*\n?\s*return;/);
 });
@@ -5208,4 +5212,94 @@ it("既定画面で 0 件でも収録している検索語がある（0 件の�
   if (out.hidden.length) {
     expect(out.hidden[0].catalog).toBeGreaterThan(0);
   }
+});
+
+it("日本語 IME の変換中は再計算せず、確定後に一度だけ適用する（SPEC §7）", async () => {
+  /* 検索欄だけ変換中を除けても、論文入力の要旨・タイトルは日本語で打つ欄なので
+   * 同じもたつきが残る。入力欄はすべて同じ経路を通っていることを、ビルド後の
+   * 実装を動かして確かめる（書き写した模倣では漂移を検出できない）。 */
+  const app = siteRuntime();
+  const wire = new Function(`return ${jsFunction(app, "wireDebouncedInput")};`)() as (
+    element: { addEventListener(type: string, listener: () => void): void },
+    delay: number,
+    applyInput: () => void,
+    onType?: () => void,
+  ) => void;
+  const fake = () => {
+    const el: {
+      handlers: Record<string, () => void>;
+      applied: number;
+      typed: number;
+      addEventListener(type: string, listener: () => void): void;
+      fire(type: string): void;
+    } = {
+      handlers: {},
+      applied: 0,
+      typed: 0,
+      addEventListener(type, listener) {
+        this.handlers[type] = listener;
+      },
+      fire(type) {
+        this.handlers[type]();
+      },
+    };
+    return el;
+  };
+  const wait = () => new Promise((resolve) => setTimeout(resolve, 60));
+
+  // まとめた適用: 3 回打っても再計算は 1 回。
+  const typing = fake();
+  wire(
+    typing,
+    20,
+    () => (typing.applied += 1),
+    () => (typing.typed += 1),
+  );
+  typing.fire("input");
+  typing.fire("input");
+  typing.fire("input");
+  await wait();
+  expect(typing.applied).toBe(1);
+  // 軽い処理（キャッシュ無効化）は打鍵ごとに走る。再計算を後回しにしても、
+  // 古い結果を使い回さないために必要。
+  expect(typing.typed).toBe(3);
+
+  // 変換中（未確定のひらがな）は再計算しない。確定後に一度だけ。
+  const ime = fake();
+  wire(
+    ime,
+    20,
+    () => (ime.applied += 1),
+    () => (ime.typed += 1),
+  );
+  ime.fire("compositionstart");
+  ime.fire("input");
+  ime.fire("input");
+  ime.fire("input");
+  await wait();
+  expect(ime.applied, "変換の途中で一覧が入れ替わっている").toBe(0);
+  ime.fire("compositionend");
+  await wait();
+  expect(ime.applied, "確定後に適用されていない").toBe(1);
+  // 変換中もキャッシュは無効化しておく（その隙に分野チップ等を押すことがある）。
+  expect(ime.typed).toBeGreaterThanOrEqual(4);
+
+  // compositionstart を飛ばして compositionend だけ来る入力経路でも取りこぼさない。
+  const only = fake();
+  wire(only, 20, () => (only.applied += 1));
+  only.fire("compositionend");
+  await wait();
+  expect(only.applied).toBe(1);
+
+  // 入力欄はすべてこの経路を通る（生で `input` を張った欄が 1 つでもあれば、
+  // その欄だけ変換中にも再計算する）。
+  expect(
+    (app.match(/addEventListener\("input"/g) || []).length,
+    "生の input 聞き手を張った欄が残っている",
+  ).toBe(1);
+  expect(app).toContain('wireDebouncedInput(valueElement("q")');
+  expect(app).toContain('wireDebouncedInput($("paperText")');
+  // 論文入力の 4 欄（タイトル・要旨・キーワード・参考文献）も同じ経路。
+  expect(app).toContain('"paperPrimaryTitle", "paperPrimaryAbstract"');
+  expect(app).toContain("wireDebouncedInput($(id), 200");
 });

@@ -3046,46 +3046,66 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     target.value = "";
   });
 
+  /* 入力欄への入力を遅延適用する。日本語 IME の変換中は適用しない —
+   * 未確定のひらなが（「きかい」）で画面が入れ替わって見えいうえ、変換候補ウィンドウを
+   * 開いたままの再計算はもたつく。確定（compositionend）後に一度だけ走らせる。
+   * 検索欄だけでなく論文入力の各欄も同じにする。要旨・タイトルは日本語で打つ欄なので、
+   * 検索欄だけ守っても使っている人は同じもたつきを踏む。
+   * `onType` は打鍵ごとに走らせる軽い処理（再計算を伴わないキャッシュ無効化など）。
+   * 変換中に他の操作（分野チップ等）をされたときに、古い結果を使い回さないため必要。 */
+  function wireDebouncedInput(
+    element: { addEventListener(type: string, listener: () => void): void },
+    delay: number,
+    applyInput: () => void,
+    onType?: () => void,
+  ): void {
+    let composing = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const schedule = () => {
+      if (onType) onType();
+      clearTimeout(timer);
+      if (composing) return;
+      timer = setTimeout(applyInput, delay);
+    };
+    element.addEventListener("compositionstart", () => {
+      composing = true;
+      if (onType) onType();
+    });
+    element.addEventListener("compositionend", () => {
+      composing = false;
+      schedule();
+    });
+    element.addEventListener("input", schedule);
+  }
+
   // ---- wiring ----
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  // 日本語 IME の変換中は絞り込みを走らせない。未確定のひらがな（「きかい」）で一覧が
-  // 入れ替わって見えいうえ、変換候補ウィンドウを開いたままの再描画はもたつく。
-  // 確定（compositionend）後に一度だけ適用するため、値は apply() 内で入力欄から読む。
-  let composing = false;
-  valueElement("q").addEventListener("compositionstart", () => {
-    composing = true;
-  });
-  valueElement("q").addEventListener("compositionend", () => {
-    composing = false;
-    clearTimeout(timer);
-    timer = setTimeout(apply, 180);
-  });
-  valueElement("q").addEventListener("input", () => {
-    clearTimeout(timer);
-    if (composing) return;
-    timer = setTimeout(apply, 180);
-  });
-  $("paperText").addEventListener("input", () => {
-    invalidateSemantic();
-    clearTimeout(timer);
-    timer = setTimeout(() => {
+  // 検索は 1 打鍵で全行を絞り込む（3234 行で約 9.6 ms）。確定・入力のたびに
+  // 走らせるともたつくので、入力はまとめて 1 回だけ適用する。
+  wireDebouncedInput(valueElement("q"), 180, apply);
+  wireDebouncedInput(
+    $("paperText"),
+    200,
+    () => {
       apply();
       scheduleSemantic();
-    }, 200);
-  });
+    },
+    invalidateSemantic,
+  );
   ["paperPrimaryTitle", "paperPrimaryAbstract", "paperPrimaryKeywords", "paperReferences"].forEach(
     (id) => {
-      $(id).addEventListener("input", () => {
-        syncPaperText();
-        invalidateSemantic();
-        clearTimeout(timer);
-        timer = setTimeout(() => {
+      wireDebouncedInput(
+        $(id),
+        200,
+        () => {
+          syncPaperText();
           apply();
           scheduleSemantic();
-        }, 200);
-      });
+        },
+        invalidateSemantic,
+      );
     },
   );
+
   document.querySelectorAll<HTMLElement>(".sample-btn").forEach((button) => {
     button.addEventListener("click", () => {
       const sample = Recommender.parsePaperLines(button.getAttribute("data-sample"))[0];
