@@ -401,6 +401,18 @@ label.check input:checked + span { color: var(--fg); }
   background: var(--panel);
 }
 table { border-collapse: collapse; width: 100%; min-width: 880px; }
+/* 狭幅ではカード化するので、デスクトップ用の最小幅をここで解除する。カード自体が 880px に
+   広がり、1 行を読むのに横スワイプが要ってしまう。上の規則より**後ろ**に置くこと
+   （セレクタの特異性が同じなので、前に書くと負ける）。 */
+@media (max-width: 640px) {
+  table { min-width: 0; }
+  .tablewrap {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    overflow-x: visible;
+  }
+}
 th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border-subtle); vertical-align: top; }
 th {
   background: var(--chip);

@@ -3992,3 +3992,93 @@ it("the online-participation filter keeps only venues that say so (SPEC §7)", (
   expect(out.online).toEqual(["hybrid", "english"]);
   expect(out.all).toEqual(["hybrid", "inperson", "venue-name", "english"]);
 });
+
+/** ビルド後の CSS をルール単位に割る（ネストは @media のみ）。
+ * コメントは前置されるとセレクタや @media の判定を壊すので、先に落とす。 */
+function cssBlocks(
+  css: string,
+  media = "",
+): Array<{ media: string; selector: string; body: string }> {
+  const source = media === "" ? css.replace(/\/\*[\s\S]*?\*\//g, "") : css;
+  const out: Array<{ media: string; selector: string; body: string }> = [];
+  let i = 0;
+  while (i < source.length) {
+    const open = source.indexOf("{", i);
+    if (open < 0) break;
+    const prelude = source.slice(i, open).trim();
+    const closeBrace = (from: number): number => {
+      let depth = 1;
+      let j = from;
+      while (j < source.length && depth > 0) {
+        if (source[j] === "{") depth += 1;
+        else if (source[j] === "}") depth -= 1;
+        j += 1;
+      }
+      return j - 1;
+    };
+    if (/^@(media|supports)/.test(prelude)) {
+      const end = closeBrace(open + 1);
+      const cond = prelude.replace(/^@(media|supports)\s*/, "");
+      for (const rule of cssBlocks(source.slice(open + 1, end), cond)) out.push(rule);
+      i = end + 1;
+      continue;
+    }
+    if (prelude.startsWith("@")) {
+      i = closeBrace(open + 1) + 1;
+      continue;
+    }
+    const end = source.indexOf("}", open);
+    if (end < 0) break;
+    for (const sel of prelude
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)) {
+      out.push({ media, selector: sel, body: source.slice(open + 1, end) });
+    }
+    i = end + 1;
+  }
+  return out;
+}
+
+function cssMediaApplies(media: string, width: number): boolean {
+  if (!media) return true;
+  if (/\bprint\b/.test(media)) return false;
+  const max = media.match(/max-width:\s*(\d+)px/);
+  if (max && width > Number(max[1])) return false;
+  const min = media.match(/min-width:\s*(\d+)px/);
+  if (min && width < Number(min[1])) return false;
+  return true;
+}
+
+/** 同じセレクタに後から書かれた宣言が勝つ、という単一の規則で解決する。 */
+function effectiveCss(
+  css: string,
+  selector: string,
+  property: string,
+  width: number,
+): string | null {
+  let value: string | null = null;
+  for (const block of cssBlocks(css)) {
+    if (block.selector !== selector) continue;
+    if (!cssMediaApplies(block.media, width)) continue;
+    const hit = block.body.match(new RegExp(`(?:^|;)\\s*${property}\\s*:\\s*([^;]+)`));
+    if (hit) value = (hit[1] as string).trim();
+  }
+  return value;
+}
+
+it("the card layout actually fits a phone width (SPEC §7)", () => {
+  const html = siteHtmlRuntime();
+  const style = html.slice(html.indexOf("<style"), html.indexOf("</style>"));
+  // スキャナの自己検証: メディアクエリ内のルールも見えていること。
+  expect(effectiveCss(style, "thead", "display", 400)).toBe("none");
+  expect(effectiveCss(style, "thead", "display", 1200)).not.toBe("none");
+
+  // 狭幅ではカード化するので、デスクトップ用の最小幅は解除されないといけない。
+  // 880px を残したままだとカード自体が 880px になり、1 行読むのに横スワイプが要る。
+  expect(effectiveCss(style, "table", "min-width", 400)).toBe("0");
+  expect(effectiveCss(style, ".tablewrap", "overflow-x", 400)).not.toBe("auto");
+  // 広い画面では従来どおり（横並びの表・スクロール可）でないと意味が無い。
+  expect(effectiveCss(style, "table", "min-width", 1200)).toBe("880px");
+  expect(effectiveCss(style, ".tablewrap", "overflow-x", 1200)).toBe("auto");
+});
