@@ -3869,7 +3869,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   });
 
   if (DATA.generated_at) {
-    $("genat").textContent = generatedAtLabel(DATA.generated_at);
+    const genAtNode = $("genat");
+    genAtNode.textContent = generatedAtLabel(DATA.generated_at);
+    /* 日次更新の運用から日数が経ているなら、古いデータを最新と誤って使わせないために
+     * その旨を出す（SPEC §7）。締切の日付を推測する話ではなく、表示しているデータの
+     * 生成時刻の話。 */
+    const ageNote = Recommender.dataAgeNoteJa(DATA.generated_at, Date.now());
+    if (ageNote) {
+      const stale = document.createElement("span");
+      stale.className = "stale";
+      stale.textContent = ageNote;
+      genAtNode.appendChild(stale);
+    }
   }
   /* データ源の行。`local` はこのサイト自身の入力で、上流の配布物ではない。
    * 内部のファイル名（`data/extra.yaml`）を画面に出さない（§7: 内部キー・実装語を出さない）。

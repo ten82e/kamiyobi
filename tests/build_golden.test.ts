@@ -10759,3 +10759,77 @@ it("てびきのキーボード欄が同じ操作を二度書いていない（S
   const print = html.slice(at, html.indexOf("</dd>", at));
   expect(print).toContain("並び順");
 });
+
+it("古いデータを開いた人に、生成から経った日数を伝える（SPEC §7）", () => {
+  /* 更新は日次の運用（`.github/workflows/update-data.yml` の cron: 17 20 * * *）。
+   * それが止まっているとき、画面は「データ生成: 2026-08-09(日) 09:00 JST」と出すだけで、
+   * それが何日前なのかも言わなかった（2026-09-23 実測: ヘッダーの文字列は生成時刻だけ）。
+   * 締切のサイトで古い一覧を最新と誤って使い、投稿の機会を逃すのが一番悪い失敗。 */
+  const rec = join(site, "recommender.js");
+  const app = siteRuntime();
+  const script = [
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${rec}`)});`,
+    "const gen = Date.parse('2026-08-09T00:00:00Z');",
+    "const DAY = 86400000;",
+    "const at = (days) => new Date(gen + days * DAY).toISOString();",
+    // 生成時刻は固定し、閲覧側の現在時刻だけを動かす（生成時刻もずらすと経過年数が 0 になる）。
+    "const note = (days) => Recommender.dataAgeNoteJa(at(0), gen + days * DAY);",
+    "const cases = [0.1, 1, 2, 3, 5, 11].map((d) => [d, note(d)]);",
+    // 生成より過去（閲覧側の時計がずれている）で警告を出さない。
+    "const past = Recommender.dataAgeNoteJa(at(0), gen - DAY);",
+    // 生成時刻が読めない値のときは空（別経路で「未確認」と出るので二重に言わない）。
+    "const broken = ['', '未取得', undefined, null].map((v) => Recommender.dataAgeNoteJa(v, gen));",
+    "const noNow = Recommender.dataAgeNoteJa(at(30), Number.NaN);",
+    "console.log(JSON.stringify({",
+    "  threshold: Recommender.dataStaleDaysJa,",
+    "  silentBelow: cases.filter(([d]) => d < 3).every(([, t]) => t === ''),",
+    "  firedAt3: cases.find(([d]) => d === 3)[1],",
+    "  firedAt11: cases.find(([d]) => d === 11)[1],",
+    "  at0: cases.find(([d]) => d === 0.1)[1],",
+    "  past, broken, noNow,",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    threshold: number;
+    silentBelow: boolean;
+    firedAt3: string;
+    firedAt11: string;
+    at0: string;
+    past: string;
+    broken: string[];
+    noNow: string;
+  };
+  // 閾値はてびきと README に書いた値と同じ（書き写さず、実装の正本から取る）。
+  expect(out.threshold).toBe(3);
+  expect(out.at0).toBe("");
+  expect(out.silentBelow, "閾値より前で警告が出ている").toBe(true);
+  expect(out.firedAt3, "閾値の日で警告が出ていない").toContain(
+    "データは 3 日前に生成されたものです",
+  );
+  // 日数は実際の経過日数を出す（「古い」の一言で済ませない）。
+  expect(out.firedAt11).toContain("データは 11 日前");
+  // 締切の推測ではなく、公式確認の依頼として締める。
+  expect(out.firedAt3).toContain("公式サイトの募集要項");
+  // 時計のズレ・読めない値で根拠の無い警告を出さない。
+  expect(out.past).toBe("");
+  expect(out.noNow).toBe("");
+  for (const text of out.broken) expect(text).toBe("");
+
+  // 実画面への配線（上の検査だけではヘッダーは何も変わらない）。
+  expect(app).toContain("dataAgeNoteJa(DATA.generated_at, Date.now())");
+  expect(app).toContain('"stale"');
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  // 色だけに頼らず本文で言うが、視覚の目印も付ける。
+  expect(html).toContain(".meta-info .stale");
+  expect(
+    html.slice(html.indexOf(".meta-info .stale"), html.indexOf(".meta-info .stale") + 200),
+  ).toContain("var(--warn)");
+  // てびきが画面に出る語を説明していること。
+  expect(html).toContain("日次で更新する運用");
+  expect(html).toContain("3 日以上");
+});

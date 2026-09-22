@@ -192,6 +192,8 @@ interface SiteRecommenderApi {
   /** 空の会期・開催地・ランクを表で出す語（検索側と同じ正本）。 */
   unconfirmedLabelJa(): string;
   semanticReasonJa(value: unknown): string;
+  dataAgeNoteJa(generatedAt: unknown, nowMs: number): string;
+  readonly dataStaleDaysJa: number;
   readonly semanticReasonLabelsJa: { [code: string]: string };
   querySynonymNotes(query: unknown): string[];
   dayTermsJa(value: unknown): string;

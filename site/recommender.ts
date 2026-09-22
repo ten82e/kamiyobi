@@ -3730,6 +3730,28 @@ const Recommender = (() => {
     return UNCONFIRMED_LABEL_JA;
   }
 
+  /* データ生成時刻が古いときの注意書き（SPEC §7）。`update-data.yml` は日次で走る設計
+   * （cron: 17 20 * * *）なので、数日経ったままなら更新が止まっている可能性がある。
+   * 締切のサイトで古いデータを開いた人がそれを最新と誤って使い、投稿の機会を逃すのが
+   * 一番悪い失敗なので、表示しているデータの生成から経った日数を正直に出す。
+   * ここはデータの生成時刻の話で、締切の日付を推測する話ではない。 */
+  const DATA_STALE_DAYS_JA = 3;
+
+  /** データ生成からの日数が指定日数（`DATA_STALE_DAYS_JA`）以上のときだけ、
+   *  読めない値・未来の値（閲覧側の時計のズレ）では空文字 – 根拠の無い警告を出さない。 */
+  function dataAgeNoteJa(generatedAt: unknown, nowMs: number): string {
+    const raw = typeof generatedAt === "string" ? generatedAt.trim() : "";
+    const at = raw ? Date.parse(raw) : Number.NaN;
+    if (!Number.isFinite(at) || !Number.isFinite(nowMs)) return "";
+    const days = Math.floor((nowMs - at) / 86400000);
+    if (days < DATA_STALE_DAYS_JA) return "";
+    return (
+      ` データは ${days} 日前に生成されたものです。` +
+      "日次で更新する運用なので、更新が止まっている可能性があります。" +
+      "投稿前に公式サイトの募集要項を確認してください。"
+    );
+  }
+
   /* 意味検索が使えないとき、画面に理由を出す。失敗の識別子は #711 の構造要因（8 通りの
    * 失敗が 1 文言に潰れて原因追跡不能になっていた）を直すために持っているが、値は
    * `model load failed` のような英語なので、日本語の文にそのまま混ぜると利用者に読めない
@@ -5235,6 +5257,8 @@ const Recommender = (() => {
     presetIsActive: presetIsActive,
     presetNextSelection: presetNextSelection,
     unconfirmedLabelJa: unconfirmedLabelJa,
+    dataAgeNoteJa: dataAgeNoteJa,
+    dataStaleDaysJa: DATA_STALE_DAYS_JA,
     semanticReasonJa: semanticReasonJa,
     semanticReasonLabelsJa: SEMANTIC_REASON_LABELS_JA,
     rankPairLabelJa: rankPairLabelJa,
