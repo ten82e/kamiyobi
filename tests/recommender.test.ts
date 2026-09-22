@@ -1159,6 +1159,28 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
   });
 
+  describe("開催市の日本語の言い方（アクセント付きの表記にも届く）", () => {
+    /* 海外の出張先はカタカナで覚えるのが普通。収録側は `Cancún` `Malmö` `Kraków` のように
+     * アクセント付きで書くが、検索はアクセントを捨てるので、アクセント記号を除いたつづりに寄せる。
+     * （2026-09-23 実測: `カンクン` で引く人が 0 件に当たっていた。収録 23 行あるのに）。 */
+    it("カタカナの都市名がアクセント付きの収録表記に届く", () => {
+      const group = (q: string) => R.queryTokenGroups(q)[0];
+      expect(group("カンクン")).toContain("cancun");
+      expect(group("マルメ")).toContain("malmo");
+      expect(group("テュービンゲン")).toContain("tubingen");
+      expect(group("クラクフ")).toContain("krakow");
+      expect(group("ロングビーチ")).toContain("long beach");
+      // 開き直しの許す寄せは上で既に定義済み（ここでの再掲はしない）。
+      expect(group("ワシントン")).toContain("washington");
+    });
+
+    it("表記が迷う語を推測で足さない", () => {
+      // `アンタルヤ` / `シャニア` は日本語表記が定着していないので寄せていない。
+      expect(R.queryTokenGroups("アンタルヤ")).toEqual([["アンタルヤ"]]);
+      expect(R.queryTokenGroups("シャニア")).toEqual([["シャニア"]]);
+    });
+  });
+
   describe("deadlinesToCsv（絞り込み結果を表計算へ持ち出す）", () => {
     const now = Date.parse("2026-09-22T00:00:00+09:00");
     const rowOf = (over: Record<string, unknown>) => ({

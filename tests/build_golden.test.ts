@@ -6465,12 +6465,17 @@ it("収録 5 行以上の開催都市は、カタカナの入力でたどれな�
     `const src = readFileSync(${JSON.stringify(join(site, "recommender.js"))}, 'utf8');`,
     "const i = src.indexOf('const PLACE_QUERY_ALIASES_JA = [');",
     "const aliases = eval(src.slice(i + 'const PLACE_QUERY_ALIASES_JA = '.length, src.indexOf('];', i) + 1));",
+    /* 都市語はアクセント付きで収録されている（`Cancún` `Malmö` `Kraków` など）。
+     * 検索側はアクセントを捨てるので、数え上げもアクセント記号を除いて行わないと、
+     * **アクセント付きの都市が検査から丸ごと抜ける**（2026-09-23 に実測で発覚:
+     * `Cancún` は収録 23 行あったのに ASCII の正規表現で弾かれて検査されていなかった）。 */
+    "const FOLD = (v) => String(v).normalize('NFKC').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase();",
     "const cityOf = (r) => {",
     "  const raw = String(r.ed.place || '').trim();",
     "  if (!raw) return '';",
     "  const segment = raw.split('/')[0];",
     "  const at = segment.indexOf(',');",
-    "  return (at < 0 ? segment : segment.slice(0, at)).trim().toLowerCase();",
+    "  return FOLD(at < 0 ? segment : segment.slice(0, at));",
     "};",
     "const rows = Recommender.candidateRows(DATA);",
     "const now = Date.parse('2026-08-09T00:00:00Z');",
@@ -6482,10 +6487,12 @@ it("収録 5 行以上の開催都市は、カタカナの入力でたどれな�
     "  if (!raw) return;",
     "  const segment = raw.split('/')[0];",
     "  const at = segment.indexOf(',');",
-    "  const city = (at < 0 ? segment : segment.slice(0, at)).trim();",
-    "  if (!city || !/^[A-Za-z][A-Za-z .'-]*$/.test(city)) return;",
+    "  const city = FOLD(at < 0 ? segment : segment.slice(0, at));",
+    // アクセント記号を除いた後なので、ラテン文字の都市名はここで拾える（ギリシャ文字・キリル文字の
+    // 表記は引き続き数えない。検索のアクセント除去と同じ範囲に揃えている）。
+    "  if (!city || !/^[a-z][a-z .'-]*$/.test(city)) return;",
     "  if (NOT_CITY.test(city) || city.length < 4) return;",
-    "  const key = city.toLowerCase();",
+    "  const key = city;",
     "  counts.set(key, (counts.get(key) || 0) + 1);",
     "});",
     /* 「その都市の行が 1 行以上当たる日本語の語があるか」を、表の条目ごとに確かめる。
@@ -7229,5 +7236,70 @@ it("新しい分野の言い方が、収録カタログの英文字表記に届�
       0,
     );
     expect(row.viaJa, `「${row.ja}」で 1 件も出ない`).toBeGreaterThan(0);
+  }
+});
+
+it("新しい開催市の言い方が、収録の開催地に届いている（SPEC §7）", () => {
+  /* 「5 行以上の都市は検査で見ている」検査は、**アクセント付きの都市名を ASCII 正規表現で
+   * 弾いていた**ため、`Cancún`（収録 23 行）など 4 種を見ていなかった（2026-09-23 実測）。
+   * アクセント記号を除いて数え上げるように直したので、足した語が本当に届くことを実データで見る。 */
+  const pairs: Array<[string, string]> = [
+    ["カンクン", "cancun"],
+    ["マルメ", "malmo"],
+    ["テュービンゲン", "tubingen"],
+    ["マラガ", "malaga"],
+    ["サクラメント", "sacramento"],
+    ["ニージメヘン", "nijmegen"],
+    ["ヴェローナ", "verona"],
+    ["ハリファックス", "halifax"],
+    ["アレクサンドリア", "alexandria"],
+    ["ドゥブロブニク", "dubrovnik"],
+    ["ロングビーチ", "long beach"],
+    ["シャーロット", "charlotte"],
+    ["クラクフ", "krakow"],
+    ["ピサ", "pisa"],
+    ["ノッティンガム", "nottingham"],
+  ];
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(new URL("../data/snapshot.json", import.meta.url).pathname)}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const FOLD = (v) => String(v).normalize('NFKC').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase();",
+    "const cityOf = (r) => {",
+    "  const raw = String(r.ed.place || '').trim();",
+    "  if (!raw) return '';",
+    "  const seg = raw.split('/')[0];",
+    "  const at = seg.indexOf(',');",
+    "  return FOLD(at < 0 ? seg : seg.slice(0, at));",
+    "};",
+    "const PAIRS = " + JSON.stringify(pairs) + ";",
+    "const out = [];",
+    "for (const [ja, latin] of PAIRS) {",
+    "  const want = String(latin).toLowerCase();",
+    "  const cities = new Set(rows.filter((r) => cityOf(r).indexOf(want) >= 0).map((r) => r.conf.key + '@' + r.ed.year));",
+    "  const m = Recommender.searchMatcher(ja);",
+    "  const viaJa = new Set(rows.filter((r) => m(r.hay)).map((r) => r.conf.key + '@' + r.ed.year));",
+    "  out.push({ ja, latin, cities: cities.size, missing: [...cities].filter((k) => !viaJa.has(k)).length });",
+    "}",
+    "console.log(JSON.stringify(out));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as Array<{
+    ja: string;
+    latin: string;
+    cities: number;
+    missing: number;
+  }>;
+  expect(out.length).toBe(pairs.length);
+  for (const row of out) {
+    expect(
+      row.cities,
+      `「${row.ja}」の寄せ先 ${row.latin} が開催地として収録に現れない`,
+    ).toBeGreaterThan(0);
+    expect(row.missing, `「${row.ja}」で引くとその都市の行が ${row.missing} 件届かない`).toBe(0);
   }
 });
