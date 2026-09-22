@@ -4494,8 +4494,28 @@ it("説明文に開発用語を残さない（SPEC §7）", () => {
     ).map((m) => m[1] as string),
   ];
   expect(literals.length).toBeGreaterThan(80);
+  // 出す方を直したら、置き換えた語が本当に画面へ出る文字列に残っていることも見る
+  // （禁止語だけ増やして、実際には消えていない/逆に出ていない、を検査できないため）。
+  const recSrc = siteRuntime("recommender.js");
+  const runtimeOnly = [...japaneseStringLiterals(runtime), ...japaneseStringLiterals(recSrc)];
+  for (const phrase of [
+    "今回あたって確認",
+    "確定済みの収録データ（今回は上流にあたらず）",
+    "その会議の論文サンプル",
+  ]) {
+    // 抽出器は正規表現リテラルの中の引用符でずれることがあるので、在る方を見る
+    // 検査は生の成果物テキストで見る（無い方を禁止語で見るのは上のとおり）。
+    expect(
+      [runtime, recSrc].some((src) => src.includes(phrase)),
+      `置き換えた推薦カードの語 ${phrase} がビルド成果物に見当たらない`,
+    ).toBe(true);
+  }
   // 実装側の語をそのまま出さない。画面では 分野 / 主題 / 絞り込み / 言葉の一致 を使う。
   const banned = [
+    // 推薦カードから出した語（第 84 回）。`キャッシュ退避` 等は実装側の言い方。
+    "退避",
+    "観測年数",
+    "プロフィール",
     "シグナル",
     "カテゴリ",
     "トピック",

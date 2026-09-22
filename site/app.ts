@@ -2523,10 +2523,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     assumption: "推定",
     unverified: "未確認",
   };
+  /* 推薦カードの「取得状態」に出る語。`キャッシュ退避`・`スナップショット退避` は
+   * 実装側の語で、読者には「その締切が今日の見積もりなのか、古いデータなのか」が
+   * 伝わらなかった（2026-09-23 確認）。何が違うかで書く。 */
   const freshnessLabel: Record<string, string> = {
-    fresh: "最新取得",
-    "cache-fallback": "キャッシュ退避",
-    "snapshot-fallback": "スナップショット退避",
+    fresh: "今回あたって確認",
+    "cache-fallback": "前回の取得データ（今回は上流にあたらず）",
+    "snapshot-fallback": "確定済みの収録データ（今回は上流にあたらず）",
   };
   const maturityLabel: Record<string, string> = {
     established: "確立",
@@ -2594,7 +2597,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     );
     line(
       card,
-      `会議履歴: ${maturityLabel[axes.venue_maturity.status]}（観測年数 ${maturityEvidence.yearsObserved}年、プロフィール ${maturityEvidence.profileCoverage}件）`,
+      // 「観測年数」「プロフィール」も実装側の語。`profileCoverage` はその会議の
+      // 論文サンプル数（`recommendation-core.ts` の `strings(conference.papers)`）なので、
+      // 数えているものを書く。
+      `会議の続いている年数: ${maturityLabel[axes.venue_maturity.status]}（確認した年 ${maturityEvidence.yearsObserved}年、その会議の論文サンプル ${maturityEvidence.profileCoverage}件）`,
       "card-section recommendation-axes",
     );
     line(
