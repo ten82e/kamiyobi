@@ -2265,6 +2265,7 @@ const SEARCH_CANON = (() => {
     ["RELATIVE_MONTH_OFFSETS_JA", /const RELATIVE_MONTH_OFFSETS_JA[\s\S]*?\};/],
     ["PLACE_READINGS", /const PLACE_READINGS[\s\S]*?\];/],
     ["REGION_READINGS", /const REGION_READINGS[\s\S]*?\];/],
+    ["QUERY_EDGE_PUNCTUATION", /const QUERY_EDGE_PUNCTUATION = [^\n]*;/],
   ].map(([name, re]) => {
     const src = rec.match(re)?.[0];
     expect(src, `${name} 定義が見つからない`).toBeTruthy();
@@ -3846,4 +3847,33 @@ it("the drawer lists the same conference's later meetings (SPEC §7)", () => {
   expect(out.later[0]).toContain("2026-12-01(火)〜12-02(水) ＠沖縄産業支援センター（沖縄県）");
   expect(out.later.join(" / ")).not.toContain("2026-09-28");
   expect(out.later.join(" / ")).not.toContain("2026-08-06");
+});
+
+it("every kind label shown in upcoming.md is searchable (SPEC §7)", () => {
+  const build = readFileSync(new URL("../src/build.ts", import.meta.url), "utf8");
+  const app = siteRuntime("app.js");
+  // 表記を二重実装させない（表示語で検索できない、という事故の根本原因）。
+  expect(build).toContain("Recommender.kindLabelTable()");
+  expect(app).toContain("Recommender.kindLabelTable()");
+
+  const md = readFileSync(join(site, "upcoming.md"), "utf8");
+  const kinds = new Set<string>();
+  for (const line of md.split("\n")) {
+    if (!line.startsWith("| ") || /^\|-/.test(line)) continue;
+    const cells = line
+      .slice(1, -1)
+      .split("|")
+      .map((c) => c.trim());
+    if (cells.length < 7 || cells[0] === "日付" || cells[3] === "開催") continue;
+    kinds.add(cells[3]);
+  }
+  // md に種別語が実際に載っていること（0 件なら検査が空回りする）。
+  expect(kinds.size).toBeGreaterThan(1);
+  const rows = Recommender.candidateRows(data);
+  for (const label of kinds) {
+    expect(
+      rows.some((r) => Recommender.hayMatches(r.hay, label)),
+      `upcoming.md の種別「${label}」が検索で引けない`,
+    ).toBe(true);
+  }
 });

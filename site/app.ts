@@ -424,11 +424,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   let sortKey = DEFAULT_SORT_KEY;
   let sortAsc = true;
 
-  const KIND_LABEL: Record<string, string> = {
-    abstract: "概要締切",
-    paper: "論文締切",
-    journal: "常時受付",
-  };
+  // 種別の日本語表記は recommender の正典と同じ表を使う（表示している語で検索できない、
+  // という状態を作らないため）。
+  const KIND_LABEL: Record<string, string> = Recommender.kindLabelTable();
 
   // recommender.js から供給（テスト可能な単一正典）。無ければこの場で縮退定義。
   let activeData: Catalog = DATA;

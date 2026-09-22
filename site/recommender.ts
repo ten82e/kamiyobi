@@ -1809,11 +1809,18 @@ const Recommender = (() => {
   /* 検索語は空白区切りの複数語として扱う。日本語で「ネットワーク 仮想化」のように
    * 語を並べて打つ利用者が多く、連結文字列そのものを haystack の中を探すでは当たらない。
    * 全語が含まれるときだけ一致とみなす（AND）。 */
+  /* 検索語の両端の句読点だけ落とす。md の表をそのまま貼る利用（「締切: Tutorial
+   * Proposal Deadline」）で、語そのものが入った token にならないと当たらないため。
+   * `C++` のように記号が語の一部のものは壊したくないので、記号は列挙する。 */
+  const QUERY_EDGE_PUNCTUATION =
+    /^[。、，．・：:；;！？!？」』）)】\]]+|[。、，．・：:；;！？!？」』）)】\]]+$/g;
+
   function queryTokens(query: unknown): string[] {
     const normalized = searchNormalize(query);
     if (!normalized) return [];
     const seen: string[] = [];
-    normalized.split(" ").forEach((token) => {
+    normalized.split(" ").forEach((raw) => {
+      const token = raw.replace(QUERY_EDGE_PUNCTUATION, "");
       if (token && seen.indexOf(token) < 0) seen.push(token);
     });
     return seen;
@@ -1962,6 +1969,28 @@ const Recommender = (() => {
   ];
   /* 地方名は構成する都道府県への OR に展開する。「中国」は国名と衝突するため、
    * かな表記 `ちゅうごくちほう` に限る（地方で絞りたい利用者はそう打つ）。 */
+  /* 種別の日本語表記。サイトのドロワー・一覧、`upcoming.md`、検索のどれからも
+   * 同じ語で引けるように、表記はここに一本化する（表示語で検索できないのが
+   * 2026-09-22 に実測で出た: 「論文締切」「概要締切」が 0 件だった）。 */
+  const KIND_LABEL_JA: Record<string, string> = {
+    abstract: "概要締切",
+    paper: "論文締切",
+    supplementary: "補足資料締切",
+    notification: "採否通知",
+    camera_ready: "カメラレディ締切",
+    rebuttal_start: "反論期間開始",
+    rebuttal_end: "反論期間終了",
+    review_release: "査読結果公開",
+    registration: "登録締切",
+    journal: "常時受付",
+    other: "締切",
+  };
+
+  function kindLabelJa(kind: unknown): string {
+    const key = String(kind ?? "");
+    return KIND_LABEL_JA[key] || key;
+  }
+
   const REGION_READINGS: string[][] = [
     ["東北", "とうほく", "青森,岩手,宮城,秋田,山形,福島"],
     ["関東", "かんとう", "茨城,栃木,群馬,埼玉,千葉,東京,神奈川"],
@@ -1979,11 +2008,16 @@ const Recommender = (() => {
     const byReading: Record<string, string[]> = {};
     PLACE_READINGS.concat(REGION_READINGS).forEach((entry) => {
       const members = entry[2] ? String(entry[2]).split(",") : [entry[0]];
-      const key = kanaFold(entry[1]);
-      if (!byReading[key]) byReading[key] = [];
-      members.forEach((member) => {
-        if (byReading[key].indexOf(member) < 0) byReading[key].push(member);
-      });
+      const keys = [kanaFold(entry[1])];
+      // 地方名は漢字そのものが会場地名に書かれるとは限らない（「九州」で別府を引きたい）。
+      // 漢字見出しも同じ展開語彙に入れる。市名は会場文字列にそのまま出るので kana のみ。
+      if (REGION_READINGS.indexOf(entry) >= 0) keys.push(kanaFold(entry[0]));
+      for (const key of keys) {
+        if (!byReading[key]) byReading[key] = [];
+        members.forEach((member) => {
+          if (byReading[key].indexOf(member) < 0) byReading[key].push(member);
+        });
+      }
     });
     return queryTokens(query).map((token) => {
       const group = [token];
@@ -2235,7 +2269,7 @@ const Recommender = (() => {
             tags: conf.tags || [],
             rankPairs,
             hay: searchNormalize(
-              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`,
+              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`,
             ),
             dupLabel: dl.comment || "",
           });
@@ -3411,6 +3445,8 @@ const Recommender = (() => {
     topicTagsJa: topicTagsJa,
     tagSearchTerms: tagSearchTerms,
     scheduleOnlyEditions: scheduleOnlyEditions,
+    kindLabelJa: kindLabelJa,
+    kindLabelTable: () => ({ ...KIND_LABEL_JA }),
     categorySearchTerms: categorySearchTerms,
     pastRepresentatives: pastRepresentatives,
     pickRepresentative: pickRepresentative,

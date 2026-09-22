@@ -4010,3 +4010,90 @@ describe("会期だけ確定している回（締切未定）の一覧", () => {
     }
   });
 });
+
+describe("表示している語で検索できる", () => {
+  const catalog = {
+    conferences: [
+      {
+        key: "demo-kyushu",
+        title: "Demo Kyushu WS",
+        categories: ["systems"],
+        editions: [
+          {
+            place: "別府国際コンベンションセンター/ビーコンプラザ（大分県）／オンライン",
+            event_start: "2026-11-05",
+            event_end: "2026-11-06",
+            deadlines: [{ kind: "paper", precision: "exact", utc: "2026-10-01T12:00:00Z" }],
+          },
+        ],
+      },
+      {
+        key: "demo-reg",
+        title: "Demo Reg WS",
+        categories: ["networking"],
+        editions: [
+          {
+            place: "京都",
+            event_start: "2026-12-01",
+            deadlines: [{ kind: "registration", precision: "exact", utc: "2026-11-01T12:00:00Z" }],
+          },
+        ],
+      },
+    ],
+  };
+  const rows = recommender.candidateRows(catalog);
+
+  it("種別の日本語表記が一覧・md と同じ正典から来る", () => {
+    const table = recommender.kindLabelTable();
+    expect(table.paper).toBe("論文締切");
+    expect(table.abstract).toBe("概要締切");
+    expect(table.registration).toBe("登録締切");
+    // 未知の種別はそのまま返す（発明しない）。
+    expect(recommender.kindLabelJa("made_up_kind")).toBe("made_up_kind");
+  });
+
+  it("表示されている種別語でそのまま検索できる", () => {
+    for (const [label, key] of [
+      ["論文締切", "demo-kyushu"],
+      ["登録締切", "demo-reg"],
+    ] as const) {
+      const hit = rows.filter((r) => recommender.hayMatches(r.hay, label));
+      expect(
+        hit.map((r) => r.conf.key),
+        `「${label}」で見つからない`,
+      ).toEqual([key]);
+    }
+    // 関係のない種別語で混ざらないこと。
+    expect(rows.filter((r) => recommender.hayMatches(r.hay, "概要締切")).length).toBe(0);
+  });
+
+  it("地方名の漢字で会場の都道府県が引ける", () => {
+    // 「九州」自体は会場文字列に書かれないので、漢字見出しでも都道府県へ展開する。
+    expect(recommender.queryTokenGroups("九州")[0]).toContain("大分");
+    const hit = rows.filter((r) => recommender.hayMatches(r.hay, "九州"));
+    expect(hit.map((r) => r.conf.key)).toEqual(["demo-kyushu"]);
+    // 市名と同じ扱い（漢字見出しを展開しない）になっていることは、市名側では効かないことで見える。
+    expect(recommender.queryTokenGroups("別府")[0]).toEqual(["別府"]);
+  });
+});
+
+describe("検索語の両端の句読点", () => {
+  const hay = recommender.searchNormalize(
+    "Tutorial Proposal Deadline 締切 demo 2026年12月 12月 別府（大分県）",
+  );
+
+  it("表をそのまま貼った語でも当たる", () => {
+    // `upcoming.md` の種別列は「種別: ラベル」の形なので、そのまま貼ることがある。
+    expect(recommender.hayMatches(hay, "締切: Tutorial Proposal Deadline")).toBe(true);
+    expect(recommender.hayMatches(hay, "（大分県）")).toBe(true);
+    expect(recommender.hayMatches(hay, "12月。")).toBe(true);
+  });
+
+  it("語の一部の記号は落とさない", () => {
+    // `C++` を `C` に縮めると、1 文字で何でも当たってしまう。
+    expect(recommender.queryTokens("C++")).toEqual(["c++"]);
+    expect(recommender.hayMatches(recommender.searchNormalize("Conf on C Systems"), "C++")).toBe(
+      false,
+    );
+  });
+});

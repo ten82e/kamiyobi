@@ -131,18 +131,9 @@ export function setRoot(root: string): void {
 
 // --- constants ---------------------------------------------------------------
 
-export const KIND_LABEL_JA: Record<string, string> = {
-  abstract: "概要締切",
-  paper: "論文締切",
-  supplementary: "補足資料締切",
-  notification: "採否通知",
-  camera_ready: "カメラレディ締切",
-  rebuttal_start: "反論期間開始",
-  rebuttal_end: "反論期間終了",
-  review_release: "査読結果公開",
-  registration: "登録締切",
-  other: "締切",
-};
+// 種別の日本語表記はサイト側（site/recommender.ts）が正典。md も同じ表を使うことで、
+// 「表示されている語で検索できる」状態を保つ。
+export const KIND_LABEL_JA: Record<string, string> = Recommender.kindLabelTable();
 
 export const DEFAULT_CATEGORIES: Record<string, string> = {
   hpc: "High Performance Computing",
