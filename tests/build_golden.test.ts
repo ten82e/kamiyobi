@@ -77,6 +77,16 @@ function siteRuntime(name: keyof ReturnType<typeof compileSiteRuntime> = "app.js
   return compiledRuntime[name];
 }
 
+/* 等級順の列表をビルド成果から取り出す（テスト側に書き写さない）。
+ * app.js の `RANK_GRADE_OPTIONS` は recommender の正本から作るので、
+ * ハーネスへ入れるときは recommender 側の定義をそのまま使う。 */
+function rankGradeOptionsSource(): string {
+  const rec = siteRuntime("recommender.js");
+  const order = rec.match(/const RANK_GRADE_ORDER_JA = \[[^\]]*\];/)?.[0];
+  expect(order, "recommender の等級順（RANK_GRADE_ORDER_JA）が見つからない").toBeTruthy();
+  return `${String(order).replace("const RANK_GRADE_ORDER_JA", "const RANK_GRADE_OPTIONS")};`;
+}
+
 function siteHtmlRuntime(): string {
   return `${readFileSync(join(site, "index.html"), "utf8")}\n${siteRuntime()}`;
 }
@@ -2117,7 +2127,7 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     "const KIND_LABEL = { abstract: '概要締切', paper: '論文締切', notification: '採否通知' };",
     runtime.match(/const SELECTABLE_KINDS = \[[^\]]*\];/)?.[0] ?? "",
     jsFunction(runtime, "selectableKind"),
-    runtime.match(/const RANK_GRADE_OPTIONS = \[[^\]]*\];/)?.[0] ?? "",
+    rankGradeOptionsSource(),
     runtime.match(/const WIN_OPTIONS = \[[^\]]*\];/)?.[0] ?? "",
     "let droppedKindNotice = '';",
     "let written = '';",
@@ -4915,8 +4925,9 @@ it("ランクの選択肢は選べば行が返り、表示語はそのまま引�
   // 表示は recommender の語を正本にする（表とドロワーで言い方が割れないようにする）。
   expect(app).toContain("Recommender.rankPairLabelJa(");
   // URL が受け付けるランクの値は選択肢の正本と同じ列表を使う（書き写しを防ぐ）。
-  const grades = runtime.match(/const RANK_GRADE_OPTIONS = \[[^\]]*\];/)?.[0];
-  expect(grades, "RANK_GRADE_OPTIONS 定義が見つからない").toBeTruthy();
+  // 等級順の正本は recommender（app の選択肢はその写し。並び順と同じ表を使う）。
+  const grades = rankGradeOptionsSource();
+  expect(app).toContain("RANK_GRADE_OPTIONS = Recommender.rankGradeOrderJa()");
   expect(app).toContain('RANK_GRADE_OPTIONS.indexOf(rawRank || "")');
   expect(app).toContain("RANK_GRADE_OPTIONS.forEach((r) => {");
   // 選択肢の列表はビルド成果から取る（テスト側に書き写さない）。
@@ -6763,4 +6774,87 @@ it("「中国」で国と地方の両方が出ても、大陸の語に国内の�
     out.shutokenMissing,
     "「首都圏」が東京の行を取りこぼしている:\n" + out.shutokenMissing.join("\n"),
   ).toEqual([]);
+});
+
+it("ランク順は等級で並び、評価の無い行は末尾に回る（SPEC §7）", () => {
+  /* 変更前は `rankPairs[0]`（`ccf:A` のような文字列）で並べていたので、
+   * 体系名が等級より先に効き、降順で ccf:N（評価が付いていない）の行が先頭に
+   * 来ていた（2026-09-23 実測）。並びの規則は recommender の `rankSortKey` が正本で、
+   * 一覧の比較式がそれを使っていること、選択欄の等級順と同じ正本であることを見る。 */
+  const app = siteRuntime("app.js");
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const rankBlock = app.slice(
+    app.indexOf('sortKey === "rank"'),
+    app.indexOf("compareDeadlineRows(a, b) * mult", app.indexOf('sortKey === "rank"')),
+  );
+  expect(rankBlock, "ランク順が recommender の等級キーを見ていない").toContain("rankSortKey");
+  expect(rankBlock, "rankPairs を直接比較している").not.toContain("rankPairs[0]");
+  // 選択欄の等級は app 側で組み立てるので、静的な HTML には無い。
+  // ここは選択欄が recommender の正本から等級をもらっていることを見る
+  // （並び順と同じ順序で選択肢を出すための前提）。
+  expect(html, "HTML にランク選択欄がない").toContain('id="rank"');
+  expect(app, "ランクの選択欄が等級順の正本を使っていない").toContain(
+    "RANK_GRADE_OPTIONS = Recommender.rankGradeOrderJa()",
+  );
+
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(new URL("../data/snapshot.json", import.meta.url).pathname)}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const view = rows.filter((r) => (r.kind === 'abstract' || r.kind === 'paper') && r.t >= now && !r.ed.estimated);",
+    "const key = (r) => Recommender.rankSortKey(r.rankPairs);",
+    "const desc = view.slice().sort((a, b) => (key(a) < key(b) ? 1 : key(a) > key(b) ? -1 : 0));",
+    "const rated = (r, grades) => r.rankPairs.some((p) => grades.indexOf(p.slice(p.indexOf(':') + 1)) >= 0);",
+    "const topBad = desc.slice(0, 20).filter((r) => !rated(r, ['A*', 'A'])).map((r) => r.rankPairs.join('+') || '(なし)');",
+    "const tailBad = desc.slice(-20).filter((r) => rated(r, ['A*', 'A'])).map((r) => r.conf.key);",
+    /* 体系名が等級より先に効いていないこと: `A*` を1つでも持つ行が、最良の等級が
+     * C 以下の行（`ccf:C` を最良とする行など）より前に並びきるかを見る。
+     * 変更前は `core:A*` の行が `ccf:C` の後ろに置かれていた。 */
+    "const isAStar = (r) => rated(r, ['A*']);",
+    "const bestIsLow = (r) => !rated(r, ['A*', 'A', 'B']) && r.rankPairs.length > 0;",
+    "const aStarIndexes = desc.map((r, i) => (isAStar(r) ? i : -1)).filter((i) => i >= 0);",
+    "const lowIndexes = desc.map((r, i) => (bestIsLow(r) ? i : -1)).filter((i) => i >= 0);",
+    "const crossSystemOk = aStarIndexes.length > 0 && lowIndexes.length > 0",
+    "  ? Math.max(...aStarIndexes) < Math.min(...lowIndexes)",
+    "  : null;",
+    "console.log(JSON.stringify({",
+    "  viewRows: view.length,",
+    "  topBad,",
+    "  tailBad,",
+    "  crossSystemOk,",
+    "  hasAStar: desc.some((r) => rated(r, ['A*'])),",
+    "  gradeOrder: Recommender.rankGradeOrderJa(),",
+    "}));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    viewRows: number;
+    topBad: string[];
+    tailBad: string[];
+    crossSystemOk: boolean | null;
+    hasAStar: boolean;
+    gradeOrder: string[];
+  };
+  expect(out.viewRows).toBeGreaterThan(0);
+  expect(out.hasAStar, "収録に A* の行がない（検査が空振りする）").toBe(true);
+  expect(
+    out.topBad,
+    "ランク順の降順で先頭に評価の無い・等級の低い行が来ている: " + out.topBad.join(" / "),
+  ).toEqual([]);
+  expect(
+    out.tailBad,
+    "A* / A の行がランク順の末尾に置かれている: " + out.tailBad.join(", "),
+  ).toEqual([]);
+  expect(
+    out.crossSystemOk,
+    "A* を持つ行が、最良の等級が C 以下の行より後ろに置かれている（体系名が優先している）",
+  ).toBe(true);
+  expect(out.gradeOrder).toEqual(["A*", "A", "B", "C", "N"]);
+  // URL にも同じ値を書く（`rank=A*` が選択肢に無い値で共有されない）。
+  expect(app, "ランクの URL 読み書きが選択肢と同じ表を見ていない").toContain("RANK_GRADE_OPTIONS");
 });

@@ -1093,7 +1093,7 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       // 地方だけの入口は地方だけ（国名側へは展開しない）。
       const chugoku = R.queryTokenGroups("中国地方")[0].map(String);
       expect(chugoku).toContain("鳥取");
-      expect(chugoku.filter((w) => w.startsWith("よーろっぱ"))).toEqual([]);
+      expect(chugoku.filter((w: string) => w.startsWith("よーろっぱ"))).toEqual([]);
     });
 
     it("語ごとの AND は保ったまま候補を増やす", () => {
@@ -1543,7 +1543,10 @@ describe("score labels and transient UI state", () => {
     expect(template).not.toContain("strong candidate");
     expect(template).toContain("過去掲載先一致");
     expect(template).toContain("r._boosted = false;");
-    expect(template).toContain("const cmp = ar === br ? 0 : ar > br ? 1 : -1;");
+    // ランクは `rankSortKey`（等級の点数）で比べる（体系名で並ばないようにした）。
+    expect(template).toContain("Recommender.rankSortKey(a.rankPairs)");
+    expect(template).toContain("Recommender.rankSortKey(b.rankPairs)");
+    expect(template).not.toContain("const ar = a.rankPairs[0]");
     // 同じランクの塊の中は締切の近い順（同じ評価の行がデータ源順でバラバラにならない）。
     expect(template).toContain("compareDeadlineRows(a, b) * mult");
     expect(template).toContain('const PDFJS_VERSION = "3.11.174";');
@@ -5271,5 +5274,53 @@ describe("地域語の広げすぎを防ぐ（中国・首都圏・東海）", (
       expect(asia, pref).not.toContain(pref);
     }
     expect(asia).toContain("中国");
+  });
+});
+
+describe("ランク順は体系名ではなく等級で並ぶ", () => {
+  const key = (pairs: string[]) => R.rankSortKey(pairs);
+  const byKey = (rows: string[][]) =>
+    rows
+      .slice()
+      .sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0))
+      .map((r) => r.join("+"));
+
+  it("等級の高い順（降順）に並べると A* が先頭に来る", () => {
+    const rows = [["ccf:N"], ["ccf:C"], ["core:A"], ["ccf:B"], ["core:A*"], []];
+    expect(byKey(rows).reverse()).toEqual(["core:A*", "core:A", "ccf:B", "ccf:C", "ccf:N", ""]);
+  });
+
+  it("体系名が違うと同じ等級でも並びが崩れない（ccf:C が core:A* より前に来ない）", () => {
+    expect(key(["core:A*"]) > key(["ccf:C"])).toBe(true);
+    expect(key(["core:A"]) > key(["ccf:B"])).toBe(true);
+    expect(key(["ccf:A"]) > key(["core:B"])).toBe(true);
+    expect(key(["ccf:A"]) === key(["core:A"])).toBe(true);
+  });
+
+  it("評価の無い行は最も低い扱い（昇順で先頭、降順で末尾）", () => {
+    expect(key([]) < key(["ccf:N"])).toBe(true);
+    expect(key(null as unknown as string[]) < key(["ccf:N"])).toBe(true);
+    expect(key(undefined as unknown as string[]) < key(["core:C"])).toBe(true);
+  });
+
+  it("複数の評価を持つ行は、最良の等級→次の等級の順で比べる", () => {
+    const best = [["ccf:C"], ["ccf:C"]];
+    best[1] = ["ccf:C", "core:A*"];
+    expect(key(best[1]) > key(best[0])).toBe(true);
+    // 2 つ目の等級も同じ並び規則で、同じ等級の塊の中でも読める順にする。
+    expect(key(["ccf:B", "core:A"]) > key(["ccf:B", "core:C"])).toBe(true);
+  });
+
+  it("未知の等級は評価あり側として、N の下・評価なしの上に置く", () => {
+    expect(key(["core:S"]) < key(["ccf:N"])).toBe(true);
+    expect(key(["core:S"]) > key([])).toBe(true);
+  });
+
+  it("等級の順は選択欄と並び順で同じ正本を使う", () => {
+    expect(R.rankGradeOrderJa()).toEqual(["A*", "A", "B", "C", "N"]);
+    // 正本から写した配列を書き換えても、次に取り出したときの値は変わらない。
+    const taken = R.rankGradeOrderJa();
+    taken.push("S");
+    expect(R.rankGradeOrderJa()).toEqual(["A*", "A", "B", "C", "N"]);
   });
 });

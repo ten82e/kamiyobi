@@ -448,7 +448,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   const KIND_ALL_LABEL_JA = "投稿締切（概要・論文）";
 
   /* ランク絞り込みの選択肢（data の grade と一致させる。SPEC §2: `N` はランク無し）。 */
-  const RANK_GRADE_OPTIONS = ["A*", "A", "B", "C", "N"];
+  // 等級の順は recommender の正本から取る（並び順と同じ順序で選択肢を出す）。
+  const RANK_GRADE_OPTIONS = Recommender.rankGradeOrderJa();
   const RANK_UNRATED_JA = Recommender.rankUnratedLabelJa();
   const RANK_UNRATED_TITLE_JA =
     "この会議はその評価一覧に載っていますが、評価が付いていません（ kamiyobi の内部表記では `N`）。";
@@ -1705,9 +1706,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         const cmp = conferenceNameCell(a).localeCompare(conferenceNameCell(b), "ja");
         return cmp ? cmp * mult : (a.t - b.t) * mult;
       } else if (sortKey === "rank") {
-        const ar = a.rankPairs[0] || "";
-        const br = b.rankPairs[0] || "";
-        const cmp = ar === br ? 0 : ar > br ? 1 : -1;
+        // 等級の点数で並べる（`rankSortKey` が正本）。`rankPairs` をそのまま文字列比較
+        // すると体系名が先に効いて `ccf:C` が `core:A*` より前に来ていた。
+        // 数値列と同じ約束で、降順がいちばん評価の高い行（A*）から出る。
+        const ar = Recommender.rankSortKey(a.rankPairs);
+        const br = Recommender.rankSortKey(b.rankPairs);
+        const cmp = ar === br ? 0 : ar < br ? -1 : 1;
         // ランクが同じ行は締切の近い順（同じ評価の塊の中を読める順にする）。
         return cmp ? cmp * mult : compareDeadlineRows(a, b) * mult;
       }

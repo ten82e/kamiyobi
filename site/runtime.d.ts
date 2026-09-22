@@ -168,6 +168,10 @@ interface SiteRecommenderApi {
   /** 会場表記にオンライン参加の記述があるか（対面かどうかは判定しない）。 */
   placeOffersOnline(value: unknown): boolean;
   /** 早め絞り込みのボタンが押されている状態か（点灯の正本）。 */
+  /** 評価の等級を「よさ」の順に並べた表（選択欄・URL・並び順で同じ正本）。 */
+  rankGradeOrderJa(): string[];
+  /** ランク順の並びキー（等級のよさだけを見る。評価の無い行は末尾）。 */
+  rankSortKey(pairs: readonly string[] | null | undefined): string;
   presetIsActive(preset: unknown, current: PresetSelection | null): boolean;
   /** 早め絞り込みのボタンを押した後の状態（自分の担当する条件だけを出し入れする）。 */
   presetNextSelection(preset: unknown, current: PresetSelection | null): PresetSelection;

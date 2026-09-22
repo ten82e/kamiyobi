@@ -1515,6 +1515,44 @@ const Recommender = (() => {
 
   /* ランクフィルタ: rankPairs ("ccf:A" 等) のグレードを厳密比較する。
    * indexOf の部分一致だと "A" が "core:A*" に誤マッチする (A* は A ではない)。 */
+  /* 評価の等級を「よさ」の順に並べた表。一覧の選択欄・URL・並び順で同じ正本を使う
+   * （書き写すと、選択肢に無い等級を通した URL が生まれたり、並びだけが違う順序に
+   * なったりする）。 */
+  const RANK_GRADE_ORDER_JA = ["A*", "A", "B", "C", "N"];
+
+  function rankGradeOrderJa(): string[] {
+    return RANK_GRADE_ORDER_JA.slice();
+  }
+
+  /* ランク順の並びキー。`rankPairs` は `ccf:A` の形なので、文字列比較すると
+   * **体系名が等級より先に効いて**、`ccf:C` が `core:A*` より前に並んでいた。
+   * `N`（一覧に載っているが評価が付いていない）を等級として先頭側に出す問題もあった
+   * （2026-09-23 実測: ランク列の降順で ccf:N の行が先頭に来ていた）。
+   *
+   * ここでは等級を点数に直して並べる（`A*` が最も高い）。表の並びは数値列と同じ約束で、
+   * **昇順がいちばん低い行（評価の無い行）から、降順がいちばん高い行（A*）から**出る。
+   * 同じ等級の塊の中は、次の体系の等級がよい行を後ろ（＝降順で前）に置く。
+   * 未知の等級は「評価あり」側として `N` の下・評価の無い行の上に置く
+   * （知らない等級を「評価なし」と混ぜない）。 */
+  function rankSortKey(pairs: readonly string[] | null | undefined): string {
+    const best = RANK_GRADE_ORDER_JA.length + 1; // A* などの最高点に使う幅
+    const qualities: number[] = [];
+    (pairs || []).forEach((pair) => {
+      const text = String(pair);
+      const grade = text.slice(text.indexOf(":") + 1);
+      const at = RANK_GRADE_ORDER_JA.indexOf(grade);
+      qualities.push(at < 0 ? 1 : best - at);
+    });
+    // 評価の無い行は 0（昇順で先頭、降順で末尾）。
+    if (!qualities.length) qualities.push(0);
+    qualities.sort((x, y) => y - x);
+    while (qualities.length < 3) qualities.push(0);
+    return qualities
+      .slice(0, 3)
+      .map((n) => (n < 10 ? `0${n}` : String(n)))
+      .join("|");
+  }
+
   function rankMatches(rankPairs: readonly string[] | null | undefined, grade: string): boolean {
     return (rankPairs || []).some((pair) => pair.slice(pair.indexOf(":") + 1) === grade);
   }
@@ -4702,6 +4740,8 @@ const Recommender = (() => {
     relativeDayNotes: relativeDayNotes,
     placePrefectureJa: placePrefectureJa,
     placeOffersOnline: placeOffersOnline,
+    rankGradeOrderJa: rankGradeOrderJa,
+    rankSortKey: rankSortKey,
     presetIsActive: presetIsActive,
     presetNextSelection: presetNextSelection,
     unconfirmedLabelJa: unconfirmedLabelJa,
