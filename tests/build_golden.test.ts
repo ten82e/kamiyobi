@@ -11563,3 +11563,70 @@ it("0 件の案内が、各条件で今何行が隠れているかを並べて�
   expect(app).toContain("hidden: hiddenDeadlineCounts()");
   expect(app).toContain("est: state.est");
 });
+
+it("行をまたぐ見出しの列数と、外せる条件の数え上げを実際の列と揃える（SPEC §7）", () => {
+  /* 月見出し・過ぎた締切の見出し・行の詳細は `colSpan` で列をまたぐ。以前は 7 を
+   * 3 箇所に直書きしていた（2026-09-23 実測: `colSpan = 7` がビルド成果物に 3 件）。
+   * 列を増やした日に見出しの跨ぎが足りなくなると、画面では見出しの右に列が余って
+   * 「表示が欠けた」ように見え、支援技術では見出しが列に紐づかない。同じ数は
+   * 表の見出し（`site/template.html`）と行のラベル（`data-label`）にも出ていたので、
+   * 三者が本当に同じかを検査で結ぶ。 */
+  const app = siteRuntime("app.js");
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const headAt = html.indexOf("<thead>");
+  expect(headAt, "表の見出しが見当たらない").toBeGreaterThan(-1);
+  const head = html.slice(headAt, html.indexOf("</thead>", headAt));
+  // `<thead>` を抓わないように `<th\b` にし、閉じタグを書く列（種別・開催地）も取る。
+  const headerLabels = [...head.matchAll(/<th\b[^>]*>([^<\n]*)/g)]
+    .map((m) => m[1].trim())
+    .filter(Boolean);
+  expect(headerLabels.length, "見出しの列が読めない").toBeGreaterThan(4);
+  // 行側も同じ数のラベルを持っている（カード化ではこの語が列名になる）。
+  const cellLabels = [...app.matchAll(/td\(tr, "([^"]+)"(?:, "[^"]*")?\)/g)].map((m) => m[1]);
+  expect(cellLabels.length, "行のラベルが読めない").toBe(headerLabels.length);
+  expect([...new Set(cellLabels)].length, "行のラベルが重複している").toBe(cellLabels.length);
+  // 跨ぎの列数は 1 箇所に寄せてある（直書きに戻ると、列を変えた日に静かに壊れる）。
+  expect((app.match(/colSpan = 7/g) || []).length, "列数の直書きが残っている").toBe(0);
+  const tableColumns = /const TABLE_COLUMNS_JA = (\d+);/.exec(app);
+  expect(tableColumns, "列数の定数が見当たらない").not.toBeNull();
+  expect(Number(tableColumns?.[1]), "列数の定数が見出しと違う").toBe(headerLabels.length);
+
+  /* 「条件をまとめて外す」が出る条件の数え上げに、推定が入っていない状態を見る。
+   * 0 件案内（第 136 回）は推定を「外せる条件」として並べるので、同じ数え上げに
+   * していないと、案内は外せるというのにボタンは出ない。 */
+  const clearFn = jsFunction(app, "filtersClearable");
+  expect(clearFn, "filtersClearable が見当たらない").not.toBe("");
+  const script = [
+    // 抜き出した関数ソースは文字列ではなく式としてそのまま入れる（JSON.stringify すると
+    // 関数ではなく文字列になり、`f is not a function` になる）。
+    "const f = (" + clearFn + ");",
+    "const clear = {",
+    "  window: 'all',",
+    "  cats: 0,",
+    "  domestic: false,",
+    "  online: false,",
+    "  rank: 'all',",
+    "  kind: '',",
+    "  est: false,",
+    "  query: '',",
+    "};",
+    "console.log(JSON.stringify({",
+    "  nothing: f(clear),",
+    "  estOnly: f({ ...clear, est: true }),",
+    "  kindOnly: f({ ...clear, kind: 'paper' }),",
+    "  windowOnly: f({ ...clear, window: '7d' }),",
+    "  rankOnly: f({ ...clear, rank: 'A*' }),",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as { [k: string]: boolean };
+  expect(out.nothing, "条件を一切掛けていないのに外せることになる").toBeFalsy();
+  expect(out.kindOnly).toBeTruthy();
+  expect(out.windowOnly).toBeTruthy();
+  expect(out.rankOnly).toBeTruthy();
+  expect(out.estOnly, "推定だけを外せない（0 件案内は外せる条件に並べる）").toBeTruthy();
+});

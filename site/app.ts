@@ -431,6 +431,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   const RECOMMENDATION_PAGE = 20;
   let selectedIndex = -1;
   /** ソートできる列の key。`th[data-sort]` と一致させる（ズレは検査で拾う）。 */
+  /* 表の列数。行をまたぐ見出し（月見出し・過ぎた締切の見出し・行の詳細）はここを使う
+   * （直書きを 3 箇所に分けると、列を増やした日に見出しの跨ぎが足りず右に列が余る –
+   * 画面では「表示が欠けた」ように見え、支援技術では見出しが列に紐づかない –
+   * `site/template.html` の見出しと検査で突き合わせる）。 */
+  const TABLE_COLUMNS_JA = 7;
+
   const SORTABLE_KEYS = ["rem", "date", "event", "conf", "rank"];
   const DEFAULT_SORT_KEY = "rem";
   let sortKey = DEFAULT_SORT_KEY;
@@ -2322,6 +2328,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     online: boolean;
     rank: string;
     kind: string;
+    est: boolean;
     query: string;
   }): boolean {
     return Boolean(
@@ -2332,6 +2339,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         (filter.rank && filter.rank !== "all" && filter.rank !== "") ||
         // 種別だけを掛けた状態で 0 件になった人に「外せる条件はありません」と言わない。
         filter.kind ||
+        // 「推定締切を含める」も外せる条件である（0 件案内が並べる項目と同じにする。
+        // 2026-09-23 の収録では推定だけを入れて 0 件になることが起きないため、
+        // 今日は画面で踏めないが、案内と数え上げをズレさせない）。
+        filter.est ||
         filter.query.trim(),
     );
   }
@@ -2366,7 +2377,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const tr = document.createElement("tr");
     tr.className = "month-row";
     const th = document.createElement("th");
-    th.colSpan = 7;
+    th.colSpan = TABLE_COLUMNS_JA;
     th.scope = "colgroup";
     th.textContent = monthHeading(key, count);
     tr.appendChild(th);
@@ -2379,7 +2390,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const tr = document.createElement("tr");
     tr.className = "month-row section-row";
     const th = document.createElement("th");
-    th.colSpan = 7;
+    th.colSpan = TABLE_COLUMNS_JA;
     th.scope = "colgroup";
     th.textContent = `${label}（${count} 件）`;
     tr.appendChild(th);
@@ -2709,7 +2720,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const tr = document.createElement("tr");
     tr.className = "detail-row";
     const td = document.createElement("td");
-    td.colSpan = 7;
+    td.colSpan = TABLE_COLUMNS_JA;
     const m: ScoreBreakdown | undefined = r._match;
     const agg = m?.agg ?? { domain: 0, name: 0, paper: 0, jp: 0, tags: 0, venue: 0 };
     let lines: PaperRecord[] = [];
