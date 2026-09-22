@@ -2463,59 +2463,131 @@ export function evaluateHealthGate(
 }
 
 export function healthMarkdown(report: HealthReport): string {
+  /* 「health.md：health.json の人間向け要約」と書きながら、本文だけ英語のままだった
+   * （2026-09-23 確認）。読むのは収録を確かめる人なので日本語に寄せる。
+   * 機械可読の正は `health.json` なので、見出しには JSON のキーを併記する
+   * （日本語のラベルだけ見てキーを辿れなくしないため）。 */
+  const metric = (label: string, key: string, value: string | number) =>
+    `| ${label}（\`${key}\`） | ${value} |`;
+  const SOURCE_STATUS_JA: Record<string, string> = {
+    fresh: "今回取得",
+    "snapshot-fallback": "収録 snapshot から",
+    failed: "取得失敗",
+  };
+  const sourceNote = (status: string) => SOURCE_STATUS_JA[status] || `不明（${status}）`;
+  const fallbackSources = Object.entries(report.source_status)
+    .filter(([, status]) => status !== "fresh")
+    .map(([source]) => source);
   const lines = [
-    "# Build health",
+    "# ビルド健全性",
     "",
-    `Generated at: ${report.generated_at}`,
+    `生成時刻（\`generated_at\`）: ${report.generated_at}`,
     "",
-    "| Metric | Value |",
+    "## まとめ",
+    "",
+    `- 収録している会議は ${report.tracked_venues} 件。うち次回以降に確定した締切を持つ会議が ${report.future_confirmed_venues} 件、推定締切を持つ会議が ${report.future_estimated_venues} 件。`,
+    `- 次回以降の締切は確定 ${report.future_exact_deadlines ?? 0} 件（時刻まで確定）+ 日付のみ ${report.future_date_only_deadlines ?? 0} 件、推定 ${report.future_estimated_deadlines ?? 0} 件。推定は公式サイトで裏が取れるまで既定の一覧に出さない。`,
+    // グローバルなフォールバック旗とソース別の状況が食い違うことがある
+    // （上流にあたって一部だけ snapshot を使った組み立て）。両方出すと読者が迷うので、
+    // 実態の式を 1 つにまとめて書く。
+    fallbackSources.length === 0
+      ? "- 今回の組み立ては上流をその場であたって行った。"
+      : report.snapshot_fallback
+        ? "- 今回の組み立ては収録 snapshot（リポジトリに確定済みの上流データ）で組んだ。上流をその場で取っていないので、日付は snapshot を取った時点のまま。"
+        : `- 今回の組み立ては上流をその場であたったが、一部（${fallbackSources.join(" / ")}）は収録 snapshot の値を使った。`,
+    fallbackSources.length
+      ? `- 収録 snapshot にフォールバックしたソース: ${fallbackSources.join(" / ")}（未取得のぶんは snapshot の値で組んでいる）`
+      : "- 収録 snapshot にフォールバックしたソースはない。",
+    "",
+    "## 収録の数",
+    "",
+    "| 意味（`health.json` のキー） | 値 |",
     "|---|---:|",
-    `| Tracked venues | ${report.tracked_venues} |`,
-    `| Future confirmed venues | ${report.future_confirmed_venues} |`,
-    `| Future estimated venues | ${report.future_estimated_venues} |`,
-    `| Confirmed deadlines | ${report.confirmed_deadlines} |`,
-    `| Estimated deadlines | ${report.estimated_deadlines} |`,
-    `| Future exact deadlines | ${report.future_exact_deadlines ?? 0} |`,
-    `| Future date-only deadlines | ${report.future_date_only_deadlines ?? 0} |`,
-    `| Future estimated deadlines | ${report.future_estimated_deadlines ?? 0} |`,
-    `| Venues with future exact deadline | ${report.venues_with_exact_future_deadline ?? 0} |`,
-    `| Venues with future date-only deadline | ${report.venues_with_date_only_future_deadline ?? 0} |`,
-    `| Identity migrations | ${report.identity_migrations?.migrations.length ?? 0} |`,
-    `| Parse warning count | ${report.parse_warning_count} |`,
-    `| Snapshot fallback | ${report.snapshot_fallback ? "yes" : "no"} |`,
-    `| Profile hash | ${report.profile_hash} |`,
+    metric("収録している会議", "tracked_venues", report.tracked_venues),
+    metric(
+      "次回以降に確定した締切を持つ会議",
+      "future_confirmed_venues",
+      report.future_confirmed_venues,
+    ),
+    metric(
+      "次回以降に推定締切を持つ会議",
+      "future_estimated_venues",
+      report.future_estimated_venues,
+    ),
+    metric("確定した締切", "confirmed_deadlines", report.confirmed_deadlines),
+    metric("推定締切", "estimated_deadlines", report.estimated_deadlines),
+    metric(
+      "次回以降の締切（時刻まで確定）",
+      "future_exact_deadlines",
+      report.future_exact_deadlines ?? 0,
+    ),
+    metric(
+      "次回以降の締切（日付のみ）",
+      "future_date_only_deadlines",
+      report.future_date_only_deadlines ?? 0,
+    ),
+    metric(
+      "次回以降の推定締切",
+      "future_estimated_deadlines",
+      report.future_estimated_deadlines ?? 0,
+    ),
+    metric(
+      "次回以降に時刻まで確定した締切を持つ会議",
+      "venues_with_exact_future_deadline",
+      report.venues_with_exact_future_deadline ?? 0,
+    ),
+    metric(
+      "次回以降に日付のみの締切を持つ会議",
+      "venues_with_date_only_future_deadline",
+      report.venues_with_date_only_future_deadline ?? 0,
+    ),
+    metric(
+      "会議 key の移行記録",
+      "identity_migrations",
+      report.identity_migrations?.migrations.length ?? 0,
+    ),
+    metric("解析上の注意の件数", "parse_warning_count", report.parse_warning_count),
+    `| 収録 snapshot で組んだか（\`snapshot_fallback\`） | ${report.snapshot_fallback ? "はい" : "いいえ"} |`,
+    `| 入力プロファイルのハッシュ（\`profile_hash\`） | ${report.profile_hash} |`,
     "",
-    "## Source status",
+    "## 上流ソースの状況",
     "",
-    "| Source | Status |",
+    "| ソース | 状況 |",
     "|---|---|",
-    ...Object.entries(report.source_status).map(([source, status]) => `| ${source} | ${status} |`),
+    ...Object.entries(report.source_status).map(
+      ([source, status]) => `| ${source} | ${sourceNote(status)}（\`${status}\`） |`,
+    ),
     "",
-    `Source failures: ${report.source_failures.length > 0 ? report.source_failures.join(", ") : "none"}`,
+    `上流をその場で取れなかったソース: ${report.source_failures.length > 0 ? `${report.source_failures.join(", ")}（収録 snapshot の値で組んだ）` : "なし"}`,
     "",
-    "## Categories",
+    "## 分野の内訳",
     "",
-    "| Category | Venues |",
+    "> 分野は機械可読のキーで出す。日本語の名前は一覧のチップと行の詳細に出す（`data.json` の `categories` は英語名）。",
+    "",
+    "| 分野（キー） | 会議数 |",
     "|---|---:|",
     ...Object.entries(report.category_distribution).map(
       ([category, count]) => `| ${category} | ${count} |`,
     ),
     "",
-    "## Parse warnings",
+    "## 解析上の注意",
     "",
     ...(Object.entries(report.parse_warnings).length
-      ? Object.entries(report.parse_warnings).map(([message, count]) => `- ${count}× ${message}`)
-      : ["- none"]),
+      ? Object.entries(report.parse_warnings).map(([message, count]) => `- ${count} 件: ${message}`)
+      : ["- なし"]),
     "",
-    "## Required venues",
+    "## 必ず収録しておきたい会議",
     "",
     ...(Object.entries(report.required_venues).length
-      ? Object.entries(report.required_venues).map(([venue, status]) => `- ${venue}: ${status}`)
-      : ["- none"]),
+      ? Object.entries(report.required_venues).map(
+          ([venue, status]) =>
+            `- ${venue}: ${status === "present" ? "収録済み" : `未取得（${status}）`}`,
+        )
+      : ["- なし"]),
     "",
-    "## Output files",
+    "## 出力ファイル",
     "",
-    "| File | Bytes | SHA-256 |",
+    "| ファイル | バイト数 | SHA-256 |",
     "|---|---:|---|",
     ...Object.entries(report.output_files).map(
       ([name, file]) => `| ${name} | ${file.bytes} | ${file.sha256} |`,

@@ -146,7 +146,8 @@ it("healthReport separates future confirmed and estimated values", () => {
     category_distribution: { hpc: 1, systems: 3 },
     output_files: { "data.json": { bytes: 10, sha256: "a".repeat(64) } },
   });
-  expect(healthMarkdown(report)).toContain("| Confirmed deadlines | 1 |");
+  // md は日本語ラベル＋`health.json` のキーを併記する（第 83 回まで英語の見出しだった）。
+  expect(healthMarkdown(report)).toContain("| 確定した締切（`confirmed_deadlines`） | 1 |");
   expect(healthMarkdown(report)).toContain("| data.json | 10 |");
 });
 
@@ -962,7 +963,8 @@ it("generated health files describe the deterministic build", () => {
     bytes: dataBytes.byteLength,
     sha256: createHash("sha256").update(dataBytes).digest("hex"),
   });
-  expect(readFileSync(join(site, "health.md"), "utf8")).toContain("# Build health");
+  // health.md は「人間向け要約」なので日本語で見出しを出す（第 83 回まで英語だった）。
+  expect(readFileSync(join(site, "health.md"), "utf8")).toContain("# ビルド健全性");
 });
 
 // --- generated file set ----------------------------------------------------
@@ -7913,4 +7915,46 @@ it("llms.txt に書いた検索の引き方が、ビルド成果物で実際に�
   expect(out.abbrevGroups, "`NSDI 27` が 2 語に割れない").toBe(2);
   expect(out.abbrevYear, "`NSDI 27` の 27 が 2027 として引けない").toBe(true);
   expect(out.monthDayGroups, "月日の裸の数字（`8月 27`）を年に展開している").toBe(false);
+});
+
+it("health.md は日本語で書き、数値が health.json とずれていない（SPEC §7）", () => {
+  /* 「health.md：health.json の人間向け要約」と案内しておきながら、本文は英語のままだった
+   * （2026-09-23 確認: "# Build health" / "Tracked venues" / "| Metric | Value |"）。
+   * 読むのは収録を確かめる人なので日本語に寄せた。機械可読の正は health.json なので、
+   * 各見出しに JSON のキーを併記し、**md に出た数値が json と同じこと**をここで見る
+   * （表示だけ先に古くなるのを防ぐ）。 */
+  const md = readFileSync(join(site, "health.md"), "utf8");
+  const json = JSON.parse(readFileSync(join(site, "health.json"), "utf8")) as Record<
+    string,
+    unknown
+  >;
+  const rows: Array<[string, string]> = [
+    ["収録している会議", "tracked_venues"],
+    ["次回以降に確定した締切を持つ会議", "future_confirmed_venues"],
+    ["確定した締切", "confirmed_deadlines"],
+    ["推定締切", "estimated_deadlines"],
+    ["次回以降の推定締切", "future_estimated_deadlines"],
+    ["解析上の注意の件数", "parse_warning_count"],
+  ];
+  expect(rows.length).toBeGreaterThanOrEqual(6);
+  for (const [label, key] of rows) {
+    const value = json[key];
+    expect(typeof value, `health.json に ${key} がない`).toBe("number");
+    const line = `| ${label}（\`${key}\`） | ${String(value)} |`;
+    expect(md, `health.md の ${label} の行が health.json と合わない（または行がない）`).toContain(
+      line,
+    );
+  }
+  // 「要約」の名に反して英語に戻していないこと（機械キーは併記してあってよい）。
+  for (const stale of ["# Build health", "| Metric | Value |", "Tracked venues", "Source status"]) {
+    expect(md, `health.md に英語のままの箇所が残っている: ${stale}`).not.toContain(stale);
+  }
+  // フォールバックの有無は、数値だけでなく意味が分かる形で書く。
+  expect(md).toContain("収録 snapshot で組んだか（`snapshot_fallback`）");
+  expect(md).toContain(
+    json.snapshot_fallback
+      ? "| 収録 snapshot で組んだか（`snapshot_fallback`） | はい |"
+      : "| 収録 snapshot で組んだか（`snapshot_fallback`） | いいえ |",
+  );
+  expect(md, "結論が先に書いていない（まとめ章がない）").toContain("## まとめ");
 });

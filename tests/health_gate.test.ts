@@ -708,7 +708,7 @@ it("groups full slot identities, resolves contained precision, and reports count
     venues_with_exact_future_deadline: 1,
     venues_with_date_only_future_deadline: 1,
   });
-  expect(healthMarkdown(stats)).toContain("| Future date-only deadlines | 1 |");
+  // 日本語ラベル＋キー併記（第 83 回まで英語の見出しだった）。  expect(healthMarkdown(stats)).toContain("| 次回以降の締切（日付のみ）（`future_date_only_deadlines`） | 1 |");
 });
 
 it("turns serialized merge conflicts into a health slot collision", () => {
