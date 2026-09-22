@@ -1646,9 +1646,15 @@ const Recommender = (() => {
       if (region.length) {
         const members = regionEntryMembers(region[0]);
         // 地方は都道府県だけでは届かない（開催市だけ書かれた行がある）ので、
-        // 展開した先の実態を語列表に書く。
-        const label = continent.length ? "地域まとめ" : "地方の都道府県と開催市";
-        const note = `「${token}」は${label}（${members.slice(0, 2).join("・")} など ${members.length} か所の表記）で探しています`;
+        // 展開した先の実態を語列表に書く。構成員が 1 つのときに「など」は付けない。
+        const label = continent.length
+          ? "地域まとめ"
+          : REGION_ALSO_JA[region[0][0]] || "地方の都道府県と開催市";
+        const where =
+          members.length > 2
+            ? `${members.slice(0, 2).join("・")} など ${members.length} か所の表記`
+            : members.join("・") || "この表記";
+        const note = `「${token}」は${label}（${where}）で探しています`;
         if (notes.indexOf(note) < 0) notes.push(note);
         // この語にさらに付ける説明はない。
         return;
@@ -2573,7 +2579,28 @@ const Recommender = (() => {
     // 沖縄は総務省の区分では「九州・沖縄地方」。`沖縄` 単独でも引けるので、
     // ここに入れることで `九州` の当たり方が狭まることはない。
     ["九州", "きゅうしゅう", "福岡,佐賀,長崎,熊本,大分,宮崎,鹿児島,沖縄"],
+    /* 「中国」は国名としても地方名としても打たれる語。国名の行には当たるが地方の行には
+     * 当たらない状態は、調べ方を狭めてしまう（2026-09-23 実測: `中国` は国名の 233 行だけ
+     * で、中国地方の 3 行は `中国地方` と打たないと出なかった）。ここでは**足す方向**に
+     * 広げ、どちらを探しているかを件数欄に書く（`REGION_ALSO_JA`）。
+     * 地方だけの人が損をしないように、`中国地方` は今までどおり地方だけを出す。 */
+    ["中国", "ちゅうごく", "鳥取,島根,岡山,広島,山口"],
+    /* 日常語で打つ人のための呼び方（総務省の地方区分そのものではない語）。
+     * 構成員は収録の開催地に現れる都道府県だけにする（`地域まとめの構成員は、
+     * 収録カタログの開催地に現れる` の検査が同じ規則を見る）。2026-09-23 時点で
+     * 首都圏は神奈川・埼玉・千葉の収録が無く、東海は三重・静岡の収録が無いので、
+     * それらが入るまでは見える構成員だけを書く（収録された日に検査が足す案内になる）。
+     * `甲信越`・`信越`・`南関東` は構成県がすべて 0 行なので置いていない。 */
+    ["首都圏", "しゅとうけん", "東京"],
+    ["東海", "とうかい", "愛知,岐阜"],
+    ["東海地方", "とうかいちほう", "愛知,岐阜"],
   ];
+
+  /* 国名と地方名の両方で打たれる語（`中国` だけ）。広げた先を誤解させないための
+   * 説明ラベルをここで持つ。 */
+  const REGION_ALSO_JA: Record<string, string> = {
+    中国: "国名と中国地方の両方",
+  };
 
   /* 地方で引いたときに、**開催市だけ**が書かれた行を落とさないための表。
    * 国内の国際会議の開催地は上流どおりの英字表記（`Tokyo, Japan`）で、都道府県が
@@ -2794,8 +2821,18 @@ const Recommender = (() => {
      * 東京 28 件に対して `とうきょう` 1 件、京都 18 件に対して `きょうと` 2 件、
      * `なら` 0 件）。1 ホップに限定して、連鎖展開で組が膨らみ続けるのを防ぐ。 */
     const resolved: Record<string, string[]> = {};
+    /* ただし**地域まとめの見出しでは hop を止める**（`アジア` → `中国` の先が
+     * 地方見出しになっていると、地方の都道府県までアジアの展開語に入ってしまう。
+     * 「『アジア』に国内の行は入らない」という既定の約束が黙って壊れる。2026-09-23 に
+     * `中国` を地方見出しへ足した折、アジアが 523 → 526 行へ広がって実際に壊れた）。 */
+    const groupHeadings: Record<string, boolean> = {};
+    REGION_READINGS.concat(CONTINENT_READINGS).forEach((entry) => {
+      groupHeadings[kanaFold(entry[0])] = true;
+      groupHeadings[kanaFold(entry[1])] = true;
+    });
     Object.keys(byReading).forEach((key) => {
       byReading[key].forEach((member) => {
+        if (groupHeadings[member]) return;
         const more = byReading[member];
         if (!more) return;
         more.forEach((extra) => {

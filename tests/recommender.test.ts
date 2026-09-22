@@ -1080,8 +1080,20 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.hayMatches("高知工科大学 香美キャンパス（高知県香美市）", "しこく")).toBe(true);
       expect(R.hayMatches("米子コンベンションセンター（鳥取県）", "ちゅうごくちほう")).toBe(true);
       expect(R.hayMatches("飛騨・世界生活文化センター（岐阜県）", "かんとう")).toBe(false);
-      // 「中国」は国名と衝突するので素では展開しない（地方で絞りたいときはかなで打つ）。
-      expect(R.queryTokenGroups("中国")).toEqual([["中国"]]);
+      /* 「中国」は国名と衝突するから素では展開しない、という扱いだった時期があるが、
+       * 国名の行は語そのもので既に当たるので、展開しなくても混ざり方は同じだった
+       * （違うのは地方の行が出るかどうかだけ）。2026-09-23 に広げ方針へ変え、
+       * どちらを探しているかは件数欄に出す。地方だけに絞りたい人の入口は
+       * `中国地方` のままなので、その人が損をすることはない。 */
+      const china = R.queryTokenGroups("中国")[0].map(String);
+      for (const pref of ["鳥取", "島根", "岡山", "広島", "山口"]) {
+        expect(china, pref).toContain(pref);
+      }
+      expect(china).toContain("中国");
+      // 地方だけの入口は地方だけ（国名側へは展開しない）。
+      const chugoku = R.queryTokenGroups("中国地方")[0].map(String);
+      expect(chugoku).toContain("鳥取");
+      expect(chugoku.filter((w) => w.startsWith("よーろっぱ"))).toEqual([]);
     });
 
     it("語ごとの AND は保ったまま候補を増やす", () => {
@@ -5208,5 +5220,56 @@ describe("地域の語で引く（南米・中米・北米）", () => {
     ];
     const m = R.searchMatcher("ブラジル", NOW);
     expect(rows.filter((r) => m(r.hay)).map((r) => r.conf.key)).toEqual(["br"]);
+  });
+});
+
+describe("地域語の広げすぎを防ぐ（中国・首都圏・東海）", () => {
+  const NOW = Date.parse("2026-08-09T00:00:00Z");
+  const members = (q: string) => {
+    const groups = R.queryTokenGroups(q, NOW);
+    return groups.length === 1 ? groups[0].map(String) : [];
+  };
+
+  it("「中国」は国名に加えて中国地方の都道府県も探す", () => {
+    const group = members("中国");
+    for (const pref of ["鳥取", "島根", "岡山", "広島", "山口"]) {
+      expect(group, pref).toContain(pref);
+    }
+  });
+
+  it("「中国地方」は地方だけを出す（国名を足さない）", () => {
+    const group = members("中国地方");
+    expect(group).toContain("広島");
+    // 国名側への展開はしない（`中国` 自身を語として持たせない）。
+    expect(group).not.toContain("ヨーロッパ");
+  });
+
+  it("広げた先を件数欄に書く（国名と地方の両方だと分かる言い方）", () => {
+    const notes = R.querySynonymNotes("中国");
+    expect(notes.length).toBe(1);
+    expect(notes[0]).toContain("国名と中国地方の両方");
+  });
+
+  it("構成員が 1 つの地方語では「など 1 か所」と書かない", () => {
+    const notes = R.querySynonymNotes("首都圏");
+    expect(notes.length).toBe(1);
+    expect(notes[0]).not.toContain("など 1 か所");
+    expect(notes[0]).toContain("東京");
+  });
+
+  it("日常語の地方名も引ける（首都圏・東海）", () => {
+    expect(members("首都圏")).toContain("東京");
+    expect(members("東海")).toContain("愛知");
+    expect(members("東海地方")).toContain("岐阜");
+  });
+
+  it("大陸の語から日本の都道府県へは広がらない（アジアに国内の行が混ざらない）", () => {
+    // `中国` が地方見出しになったので、hop をそのまま連鎖させると
+    // `アジア` → `中国` → 広島の行、となって「アジアに国内研究会は入らない」が壊れる。
+    const asia = members("アジア");
+    for (const pref of ["広島", "岡山", "鳥取", "島根", "山口"]) {
+      expect(asia, pref).not.toContain(pref);
+    }
+    expect(asia).toContain("中国");
   });
 });

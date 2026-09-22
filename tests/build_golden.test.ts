@@ -6695,3 +6695,72 @@ it("「南米」「中米」で引けると、地域の切れ目が実データ�
   expect(out.centralInAsia, "中米の行がアジアで当たっている").toBe(0);
   expect(out.mexicoInNorthAmerica, "メキシコ開催の行が「北米」で出ていない").toBe(true);
 });
+
+it("「中国」で国と地方の両方が出ても、大陸の語に国内の行は混ざらない（SPEC §7）", () => {
+  /* 「中国」は国名としても地方名としても打たれる。国名の行しか当たらない状態は
+   * 調べ方を狭めるが（2026-09-23 実測: `中国` 233 行、中国地方の 3 行は `中国地方`
+   * と打たないと出なかった）、広げすぎると `アジア` に国内の行が混ざる
+   * （実際 `中国` を地方見出しへ足した日にアジアが 523 → 526 行へ広がった）。
+   * 収録カタログで両方を同時に確認する。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(new URL("../data/snapshot.json", import.meta.url).pathname)}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const rowsOf = (word) => {",
+    "  const m = Recommender.searchMatcher(word, now);",
+    "  return rows.filter((r) => m(r.hay));",
+    "};",
+    "const keys = (word) => new Set(rowsOf(word).map((r) => r.conf.key + '@' + r.ed.year + '@' + r.kind));",
+    "const chugoku = keys('中国地方');",
+    "console.log(JSON.stringify({",
+    "  chugoku: chugoku.size,",
+    "  china: keys('中国').size,",
+    "  chinaMissing: [...chugoku].filter((k) => !keys('中国').has(k)),",
+    "  // 「アジアに国内研究会は入らない」はてびきで書いている約束。",
+    "  asiaDomestic: rowsOf('アジア').filter((r) => (r.conf.tags || []).indexOf('domestic-jp') >= 0).length,",
+    "  europeDomestic: rowsOf('ヨーロッパ').filter((r) => (r.conf.tags || []).indexOf('domestic-jp') >= 0).length,",
+    "  shutoken: keys('首都圏').size,",
+    "  tokai: keys('東海').size,",
+    // 開催地に都道府県が書かれない行（`Nagoya, Japan`）もあるので、「東海」の当たり行が
+    // 都道府県名を含むことでは確かめられない。構成県の語で引ける行を含むことを見る。
+    "  tokaiMissing: [",
+    "    ...new Set([...keys('愛知'), ...keys('岐阜')].map((k) => k)),",
+    "  ].filter((k) => !keys('東海').has(k)),",
+    "  shutokenMissing: [...keys('東京')].filter((k) => !keys('首都圏').has(k)),",
+    "}));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    chugoku: number;
+    china: number;
+    chinaMissing: string[];
+    asiaDomestic: number;
+    europeDomestic: number;
+    shutoken: number;
+    tokai: number;
+    tokaiMissing: string[];
+    shutokenMissing: string[];
+  };
+  expect(out.chugoku, "中国地方の行が 0 件").toBeGreaterThan(0);
+  expect(
+    out.chinaMissing,
+    "「中国」で引くと中国地方の行が足りない:\n" + out.chinaMissing.join("\n"),
+  ).toEqual([]);
+  expect(out.asiaDomestic, "「アジア」に国内の行が混ざっている").toBe(0);
+  expect(out.europeDomestic, "「ヨーロッパ」に国内の行が混ざっている").toBe(0);
+  expect(out.shutoken, "「首都圏」が 0 件").toBeGreaterThan(0);
+  expect(out.tokai, "「東海」が 0 件").toBeGreaterThan(0);
+  expect(
+    out.tokaiMissing,
+    "「東海」が愛知・岐阜の行を取りこぼしている:\n" + out.tokaiMissing.join("\n"),
+  ).toEqual([]);
+  expect(
+    out.shutokenMissing,
+    "「首都圏」が東京の行を取りこぼしている:\n" + out.shutokenMissing.join("\n"),
+  ).toEqual([]);
+});
