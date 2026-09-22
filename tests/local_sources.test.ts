@@ -119,7 +119,7 @@ describe("local source data integrity", () => {
     const rows = rawDeadlines();
     expect(rows.length).toBeGreaterThan(100);
     // 基準値。local 源の締切精度が意図せず動いたら気づくためのピン（国内研究会の
-    // 発表申込締切は公式が日只显示のため date-only で数える）。
+    // 発表申込締切は公式ページが日付だけを表示しているので date-only で数える）。
     // 178 -> 181: IEICE の IBISML・DE・SS 研究会の発表申込締切を公式ページから追記した分。
     // 181 -> 183: IPSJ の HPC・ARC 研究会（2026 年 12 月研究発表会）の発表申込締切を
     // 研究会発表申込システム（ken.ieice.org）から追記した分。

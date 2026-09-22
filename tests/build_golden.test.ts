@@ -7978,3 +7978,156 @@ it("health.md は日本語で書き、数値が health.json とずれていな�
   );
   expect(md, "結論が先に書いていない（まとめ章がない）").toContain("## まとめ");
 });
+
+it("キーボード操作は効き、入力中は効かない（SPEC §7）", () => {
+  /* 一覧には j / k / ↑ / ↓ / Enter / d / Esc / `/` の既定操作があるが、**検査も
+   * 説明も無かった**（2026-09-23 確認）。とくに「検索欄で j と打ったときに行が
+   * 動くか」は、打つ人にとって効くと壊れる操作なので、効かない側を固定する。
+   * ビルド成果物の `onKeydown` を取り出して、作り物の画面に対して実際に叩く。 */
+  const runtime = siteRuntime();
+  const script = [
+    "(async () => {",
+    `const src = ${JSON.stringify(jsFunction(runtime, "onKeydown"))};`,
+    "const calls = { update: 0, open: [], drawer: [], close: 0, focus: [] };",
+    // `onKeydown` の `d` と `updateRowSelection` は行の classList を見るので、作り物でも持つ。
+    "const rows = [0, 1, 2].map((i) => ({",
+    "  i,",
+    "  selected: false,",
+    "  classList: { contains: () => false, toggle() {} },",
+    "  focus() { calls.focus.push('row' + i); },",
+    "  scrollIntoView() {},",
+    "}));",
+    "const els = {",
+    "  q: { focus() { calls.focus.push('q'); } },",
+    "  tbody: { querySelectorAll: () => rows },",
+    "};",
+    "const $ = (id) => els[id] || null;",
+    "const win = { open: (href) => calls.open.push(href) };",
+    "const keydown = (key, target, mode, index) => {",
+    "  let prevented = false;",
+    "  const state = { mode: mode || 'list' };",
+    "  const fn = new Function(",
+    "    'state', 'shown', 'selectedIndex', 'updateRowSelection', 'openDrawer', 'closeDrawer',",
+    "    'safeExternalUrl', '$', 'window',",
+    "    'return (' + src + ')',",
+    "  );",
+    "  const e = {",
+    "    key,",
+    "    target: target || { tagName: 'BODY' },",
+    "    preventDefault() { prevented = true; },",
+    "  };",
+    "  const handler = fn(",
+    "    state,",
+    "    [{ conf: { key: 'a', link: 'https://example.org/a' }, ed: { link: 'https://example.org/a' } },",
+    "     { conf: { key: 'b', link: 'https://example.org/b' }, ed: { link: '' } },",
+    "     { conf: { key: 'c', link: '' }, ed: { link: '' } }],",
+    "    typeof index === 'number' ? index : 1,",
+    "    () => { calls.update += 1; },",
+    "    (r) => { calls.drawer.push(r && r.conf ? r.conf.key : null); },",
+    "    () => { calls.close += 1; },",
+    "    (u) => String(u || ''),",
+    "    $,",
+    "    win,",
+    "  );",
+    // `new Function` の戻り値は作られた関数そのもの。第 2 段で呼んで初めて発火する。
+    "  handler(e);",
+    "  return prevented;",
+    "};",
+    "const out = {};",
+    "  // 入力中の打鍵で行を動かさない（検索語に j を含む入力は普通にある）。",
+    "  out.inInput = keydown('j', { tagName: 'INPUT' });",
+    "  out.inInputUpdate = calls.update;",
+    "  out.inTextarea = keydown('k', { tagName: 'TEXTAREA' });",
+    "  out.inSelect = keydown('/', { tagName: 'SELECT' });",
+    "  out.editable = keydown('j', { tagName: 'DIV', isContentEditable: true });",
+    "  calls.update = 0;",
+    "  out.list = keydown('j');",
+    "  out.listUpdate = calls.update;",
+    "  calls.update = 0;",
+    "  out.up = keydown('k');",
+    "  out.upUpdate = calls.update;",
+    "  calls.update = 0;",
+    // 上端・下端ではこれ以上動かさない（周回しない。外れた選択が出ない）。
+    "  out.topKey = keydown('k', null, 'list', 0);",
+    "  out.topUpdate = calls.update;",
+    "  calls.update = 0;",
+    "  out.bottomKey = keydown('j', null, 'list', 2);",
+    "  out.bottomUpdate = calls.update;",
+    "  out.slash = keydown('/');",
+    "  out.focusQ = calls.focus.indexOf('q') >= 0;",
+    "  out.d = keydown('d');",
+    "  out.drawer = calls.drawer.slice();",
+    "  out.esc = keydown('Escape');",
+    "  out.close = calls.close;",
+    "  out.enter = keydown('Enter');",
+    "  out.opened = calls.open.slice();",
+    "  calls.update = 0;",
+    "  out.recommend = keydown('j', null, 'recommend');",
+    "  out.recommendUpdate = calls.update;",
+    "  // 入力の中では Esc だけ効く（検索欄のフォーカスを外す）。",
+    "  let blurred = 0;",
+    // 本物の入力欄は tagName を持つので、同じ形で作る（tag が引けない要素は
+    // handler の先頭でそのまま返る）。
+    "  out.escInInput = keydown('Escape', { tagName: 'INPUT', blur: () => { blurred += 1; } });",
+    "  out.escBlurred = blurred;",
+    "console.log(JSON.stringify(out));",
+    "})().catch((e) => { console.error(e && e.stack || String(e)); process.exit(1); });",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as Record<string, unknown>;
+  // 入力中は効かない（`j` を含む検索語を打てること。検索欄は IME の入力先でもある）。
+  expect(out.inInput, "検索欄で j を打ったときに処理を止めていない").toBe(false);
+  expect(out.inInputUpdate, "検索欄で j を打つと行の選択が動いた").toBe(0);
+  expect(out.inTextarea, "概要欄で k を打つと行の選択が動いた").toBe(false);
+  expect(out.inSelect, "下拉で / を打つと検索欄に飛んだ").toBe(false);
+  expect(out.editable, "編集中の欄で j を打つと行の選択が動いた").toBe(false);
+  // 入力以外は効く。
+  expect(out.list, "一覧で j が効かない").toBe(true);
+  expect(out.listUpdate, "一覧で jを行を選ばない").toBe(1);
+  expect(out.upUpdate, "一覧で k が行を選ばない").toBe(1);
+  expect(out.topKey, "上端で k が処理を止めていない").toBe(true);
+  expect(out.topUpdate, "上端で k を押すと選択が外れた（周回させない）").toBe(0);
+  expect(out.bottomUpdate, "下端で j を押すと選択が外れた（周回させない）").toBe(0);
+  expect(out.slash, "/ で検索欄に焦点が当たらない").toBe(true);
+  expect(out.focusQ, "/ が検索欄以外に焦点を当てた").toBe(true);
+  expect(out.drawer, "d で選択行の詳細が開かない").toEqual(["b"]);
+  expect(out.close, "Esc で詳細が閉じない").toBe(1);
+  // 選択行（2件目）は会期側のリンクが無いので会議本体のリンクを開く。
+  expect(out.opened, "Enter で公式ページを開かない").toEqual(["https://example.org/b"]);
+  // 推薦モードでは表用の操作を無効化する（論文の欄を打っている間に表が動かない）。
+  expect(out.recommend, "推薦モードで j が処理を止めていない").toBe(true);
+  expect(out.recommendUpdate, "推薦モードで j に行が動いた").toBe(0);
+  expect(out.escBlurred, "入力欄の中では Esc が焦点を外さない").toBe(1);
+});
+
+it("キーボードの既定操作は、てびきに書いたとおりに実装されている（SPEC §7）", () => {
+  /* 第 84 回まで既定操作が検査も説明も無かった。てびきに書いた以上、実装が同じキーを
+   * 処理していることを対で見る（案内だけ先に変更しても、実装だけキーを増やしても落ちる）。
+   * `Esc` のように画面での書き方が違うものは、対応表をここに置く。 */
+  const runtime = siteRuntime();
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const keys: Array<[string, string]> = [
+    ['key === "j"', "j"],
+    ['key === "k"', "k"],
+    ['key === "d"', "d"],
+    ['key === "/"', "/"],
+    ['key === "Enter"', "Enter"],
+    ['key === "Escape"', "Esc"],
+    ['key === "ArrowDown"', "↓"],
+    ['key === "ArrowUp"', "↑"],
+  ];
+  expect(keys.length).toBeGreaterThanOrEqual(8);
+  const guide = template.slice(template.indexOf("<dt>キーボードで一覧を動かす</dt>"));
+  const entry = guide.slice(0, guide.indexOf("</dd>"));
+  expect(entry.length, "てびきにキーボードの項がない").toBeGreaterThan(40);
+  for (const [code, shown] of keys) {
+    expect(runtime, `ビルド成果物が ${code} を処理していない`).toContain(code);
+    expect(entry, `てびきのキーボードの項に ${shown} が書いていない`).toContain(
+      `<code>${shown}</code>`,
+    );
+  }
+  // 入力欄の中で効かないことも、案内と実装が揃っている。
+  expect(entry).toContain("入力欄の中ではこれらのキーはただの文字");
+  expect(runtime).toContain('tag === "INPUT"');
+});
