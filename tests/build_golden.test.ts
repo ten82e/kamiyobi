@@ -1553,7 +1553,7 @@ it("index.html 7d preset uses a real 7-day window", () => {
   // 「締切直近 (7日以内)」プリセットは 7 日窓で動作し、ドロップダウンに 7d がある
   expect(html).toContain("applyPreset('7d')");
   expect(html).toMatch(/if\s*\(type\s*===\s*["']7d["']\)\s*state\.win\s*=\s*["']7d["']/);
-  expect(html).toContain('value="7d">直近 7 日以内</option>');
+  expect(html).toContain('value="7d">7 日以内</option>');
   // 30 日窓への偽代入が残っていない（回帰防止）
   expect(html).not.toMatch(/if\s*\(type\s*===\s*["']7d["']\)\s*state\.win\s*=\s*["']30d["']/);
 });
@@ -2011,6 +2011,7 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     runtime.match(/const SELECTABLE_KINDS = \[[^\]]*\];/)?.[0] ?? "",
     jsFunction(runtime, "selectableKind"),
     runtime.match(/const RANK_GRADE_OPTIONS = \[[^\]]*\];/)?.[0] ?? "",
+    runtime.match(/const WIN_OPTIONS = \[[^\]]*\];/)?.[0] ?? "",
     "let droppedKindNotice = '';",
     "let written = '';",
     "const window = { location: { search: '', pathname: '/index.html' } };",
@@ -2328,6 +2329,8 @@ const SEARCH_CANON = (() => {
   ];
 })();
 const FILTER_RUNTIME_STUBS = [
+  // 窓の上限時刻は絞り込みと 0 件時の会期案内で共有する実装（書かないと両者が違う窓で動く）。
+  jsFunction(siteRuntime(), "windowLimitMs"),
   "let semQuery = null, semEmbeddings = null;",
   "let catFacetCounts = {};",
   "let hiddenCounts = { past: 0, est: 0, kind: 0 };",
@@ -3801,6 +3804,10 @@ it("the next-meeting note formats the schedule-only edition for a Japanese reade
   const recPath = join(dir, "recommender.mjs");
   writeFileSync(recPath, runtime["recommender.js"]);
   const script = [
+    // 間接 eval でグローバルに置く（`new Function` の中身はグローバルスコープで解決されるため、
+    // async IIFE の中の変数は見えない）。
+    // `windowLimitMs` は `DAY` を読むので、同じ eval の中で一緒に定義する（グローバルに置く）。
+    `(0, eval)("const DAY = 86400000; " + ${JSON.stringify(jsFunction(runtime["app.js"], "windowLimitMs"))});`,
     "(async () => {",
     `const { default: Recommender } = await import(${JSON.stringify(`file://${recPath}`)});`,
     "const DAY = 86400000;",
@@ -4573,6 +4580,9 @@ it("種別セレクトに並ぶ選択肢は、選べば行が返る（SPEC §7�
   const recPath = join(site, "recommender.js");
   const dataPath = join(site, "data.json");
   const script = [
+    // 間接 eval でグローバルに置く（`new Function` の中身はグローバルスコープで解決されるため、
+    // async IIFE の中の変数は見えない）。
+    `(0, eval)(${JSON.stringify(jsFunction(runtime, "windowLimitMs"))});`,
     "(async () => {",
     "const { readFileSync } = await import('node:fs');",
     `const { default: Recommender } = await import(${JSON.stringify(`file://${recPath}`)});`,
@@ -4672,6 +4682,9 @@ it("ランクの選択肢は選べば行が返り、表示語はそのまま引�
   const recPath = join(site, "recommender.js");
   const dataPath = join(site, "data.json");
   const script = [
+    // 間接 eval でグローバルに置く（`new Function` の中身はグローバルスコープで解決されるため、
+    // async IIFE の中の変数は見えない）。
+    `(0, eval)(${JSON.stringify(jsFunction(runtime, "windowLimitMs"))});`,
     "(async () => {",
     "const { readFileSync } = await import('node:fs');",
     `const { default: Recommender } = await import(${JSON.stringify(`file://${recPath}`)});`,
@@ -4756,4 +4769,146 @@ it("ランクの選択肢は選べば行が返り、表示語はそのまま引�
   expect(out.unreachable).toEqual([]);
   expect(out.unrated).toBeGreaterThan(0);
   expect(out.unratedHit).toBeGreaterThanOrEqual(out.unrated);
+});
+
+it("締切までの選択肢は URL と表裏一体で、窓は入れ子になる（SPEC §7）", () => {
+  const runtime = siteRuntime();
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const filterSrc = jsFunction(runtime, "filter");
+  // セレクトに並ぶ値と、URL が受け付ける値がズレると、共有 URL でセレクトが空欄になる
+  // （選択肢に無い値を `select.value` に代入すると表示が消える）。
+  const selectBlock = template.match(/<select id="win"[\s\S]*?<\/select>/)?.[0];
+  expect(selectBlock, "期間のセレクトが見つからない").toBeTruthy();
+  const optionValues = [...String(selectBlock).matchAll(/<option value="([^"]+)">/g)].map(
+    (m) => m[1],
+  );
+  const accepted = runtime.match(/const WIN_OPTIONS = \[[^\]]*\];/)?.[0];
+  expect(accepted, "WIN_OPTIONS 定義が見つからない").toBeTruthy();
+  const acceptedValues = [...String(accepted).matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+  expect(optionValues.slice().sort()).toEqual(acceptedValues.slice().sort());
+  // 「直近 N 日」は過去 7 日とも読める。締切日からの日数だと分かる表記にする。
+  expect(String(selectBlock)).not.toContain("直近");
+  expect(template).toContain("締切まで");
+
+  const script = [
+    "const DAY = 86400000;",
+    `const FILTER = ${JSON.stringify(filterSrc)};`,
+    'const now = Date.parse("2026-08-09T00:00:00Z");',
+    "class FakeDate extends Date { static now() { return now; } }",
+    "const document = {};",
+    "function $(id) { return null; }",
+    "const window = {};",
+    "let hiddenCounts = { past: 0, est: 0, kind: 0 };",
+    "let catFacetCounts = {};",
+    "let searchQuery = '';",
+    "const activeData = { conferences: [] };",
+    jsFunction(runtime, "windowLimitMs"),
+    "const Recommender = {",
+    "  expandRelativeMonths: (q) => q || '', searchMatcher: () => () => true,",
+    "  parsePaperLines: (t) => (t ? [{ title: t }] : []),",
+    "  journalRows: () => [], pastRepresentatives: () => [],",
+    "  rankMatches: (pairs, rank) => (pairs || []).some((p) => p.slice(p.indexOf(':') + 1) === rank),",
+    "  placeOffersOnline: () => false, hasJapanese: () => false,",
+    "};",
+    "const rows = [];",
+    // 400 日先まで行を置く（窓の入れ子と「選べば変わる」を両方見るため、窓より広くする）。
+    "for (let i = 0; i < 400; i++) {",
+    "  const inDays = i; // 0〜399 日後",
+    "  rows.push({",
+    "    kind: 'paper', est: false, cats: ['hpc'], rankPairs: [], hay: 'row' + i, tags: [],",
+    "    t: now + inDays * DAY, tLast: now + inDays * DAY,",
+    "    ed: { place: '京都', deadlines: [] }, conf: { key: 'r' + i },",
+    "  });",
+    "}",
+    "for (let i = 0; i < 8; i++) {",
+    "  rows.push({",
+    "    kind: 'paper', est: false, cats: ['hpc'], rankPairs: [], hay: 'past' + i, tags: [],",
+    "    t: now - (i + 1) * DAY, tLast: now - (i + 1) * DAY,",
+    "    ed: { place: '京都', deadlines: [] }, conf: { key: 'p' + i },",
+    "  });",
+    "}",
+    "function run(opt) {",
+    "  const o = opt || {};",
+    "  const state = { mode: 'deadlines', q: '', cats: [], kind: '', rank: '', win: o.win || 'all',",
+    "    est: false, domestic: false, online: false, past: o.past === true };",
+    "  const runFilter = new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
+    "    'return (' + FILTER + ')')(FakeDate, DAY, rows, state, true, 'rem');",
+    "  return runFilter().map((r) => r.conf.key);",
+    "}",
+    "const win = {};",
+    // 過去行も出す設定で比べる（既定画面だと全行が未来なので、広い窓と区別できない）。
+    "['all', '7d', '30d', '90d', '180d'].forEach((w) => {",
+    "  win[w] = run({ win: w, past: true });",
+    "});",
+    "console.log(JSON.stringify({ win }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as { win: Record<string, string[]> };
+  // 窓は入れ子。広い窓が狭い窓を含んでいないと「変えたのに増えない」が起きる。
+  const subset = (small: string, big: string) => {
+    const bigSet = new Set(out.win[big]);
+    expect(
+      out.win[small].every((k) => bigSet.has(k)),
+      `${small} が ${big} を含んでいない`,
+    ).toBe(true);
+  };
+  expect(out.win["7d"].length).toBeGreaterThan(0);
+  subset("7d", "30d");
+  subset("30d", "90d");
+  subset("90d", "180d");
+  subset("180d", "all");
+  // 並べる選択肢は、選べば画面が変わる（何もしない値を並べない）。
+  for (const win of ["7d", "30d", "90d", "180d"]) {
+    expect(out.win[win].length, `窓 ${win} が「かまわない」と同じ行を返す`).toBeLessThan(
+      out.win.all.length,
+    );
+  }
+});
+
+it("プリセットボタンは、その状態そのもののときだけ点灯する（SPEC §7）", () => {
+  const runtime = siteRuntime();
+  const script = [
+    jsFunction(runtime, "updatePresetActive"),
+    // `updatePresetActive` はモジュールスコープの `state` を読む（引数取らず）。
+    "let state = {};",
+    "function btn(preset) {",
+    "  const b = { preset, active: false };",
+    "  b.classList = {",
+    "    toggle: (_name, on) => {",
+    "      b.active = Boolean(on);",
+    "    },",
+    "  };",
+    "  b.getAttribute = (name) => (name === 'data-preset' ? preset : null);",
+    "  return b;",
+    "}",
+    "const buttons = ['7d', 'a_star', 'hpc_sys', 'domestic', 'online'].map((p) => btn(p));",
+    "const document = { querySelectorAll: () => buttons };",
+    "function lit(next) {",
+    "  state = Object.assign({}, base, next);",
+    "  buttons.forEach((b) => {",
+    "    b.active = false;",
+    "  });",
+    "  updatePresetActive();",
+    "  return buttons.filter((b) => b.active).map((b) => b.preset);",
+    "}",
+    "const base = { q: '', cats: [], kind: '', rank: '', win: 'all', est: false, domestic: false, online: false, past: false };",
+    "console.log(JSON.stringify({",
+    "  nothing: lit({}),",
+    "  domestic: lit({ domestic: true }),",
+    "  online: lit({ online: true }),",
+    "  both: lit({ domestic: true, online: true }),",
+    "  domesticPlusQuery: lit({ domestic: true, q: 'nsdi' }),",
+    "  sevenDays: lit({ win: '7d' }),",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as Record<string, string[]>;
+  expect(out.nothing).toEqual([]);
+  expect(out.domestic).toEqual(["domestic"]);
+  expect(out.online).toEqual(["online"]);
+  // 複合状態はどのプリセットでもない（片方だけ点灯すると、押した意味が読めない）。
+  expect(out.both).toEqual([]);
+  expect(out.domesticPlusQuery).toEqual([]);
 });

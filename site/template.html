@@ -667,7 +667,7 @@ footer a:hover { text-decoration: underline; }
   <div class="panel mode-deadlines" id="controlsPanel">
     <div class="presets-bar deadline-only">
       <span style="font-size: 0.78rem; color: var(--muted); align-self: center; margin-right: 4px;">クイック抽出:</span>
-      <button class="preset-btn" data-preset="7d" onclick="applyPreset('7d')">締切直近 (7日以内)</button>
+      <button class="preset-btn" data-preset="7d" onclick="applyPreset('7d')">締切まで 7 日以内</button>
       <button class="preset-btn" data-preset="a_star" onclick="applyPreset('a_star')">A*ランク</button>
       <button class="preset-btn" data-preset="hpc_sys" onclick="applyPreset('hpc_sys')">HPC・システム</button>
       <button class="preset-btn" data-preset="domestic" onclick="applyPreset('domestic')">国内研究会</button>
@@ -687,13 +687,13 @@ footer a:hover { text-decoration: underline; }
         <select id="rank"></select>
       </div>
       <div class="field">
-        <span>期間</span>
-        <select id="win">
-          <option value="all">すべて</option>
-          <option value="7d">直近 7 日以内</option>
-          <option value="30d">直近 30 日以内</option>
-          <option value="90d">直近 90 日以内</option>
-          <option value="180d">直近 180 日以内</option>
+        <span>締切まで</span>
+        <select id="win" title="締切日からの日数で絞ります（開催日ではありません）。">
+          <option value="all">かまわない</option>
+          <option value="7d">7 日以内</option>
+          <option value="30d">30 日以内</option>
+          <option value="90d">90 日以内</option>
+          <option value="180d">180 日以内</option>
         </select>
       </div>
       <button class="btn-reset" id="reset">条件クリア</button>
@@ -811,6 +811,10 @@ footer a:hover { text-decoration: underline; }
       <div>
         <dt>再確認待ち・要確認</dt>
         <dd>公式ページの見直しを予定している状態、または本文から締切を 1 つに確定できなかった状態。行を選ぶと確認元・確認範囲・次回確認予定が出る。</dd>
+      </div>
+      <div>
+        <dt>締切まで</dt>
+        <dd>締切日からの日数で絞ります（<strong>開催日ではありません</strong>）。「過去の締切も表示」と一緒にすると、過ぎた締切は期間の外に出ます。既定は「かまわない」で、期限なく先の締切も出します。</dd>
       </div>
       <div>
         <dt>検索</dt>

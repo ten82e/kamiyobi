@@ -725,8 +725,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       !state.domestic &&
       !state.online &&
       !state.past;
+    // 各ボタンは「その状態そのもの」の時だけ点灯させる。国内に online の条件を忘れると、
+    // 国内＋オンラインの画面で片方のボタンだけ押された表示になり、押した意味が読めない。
     const pDom =
       state.domestic &&
+      !state.online &&
       !state.q &&
       !state.cats.length &&
       !state.kind &&
@@ -1442,6 +1445,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return catFacetCounts;
   }
 
+  /** 締切までの窓の選択肢。`site/template.html` の `<select id="win">` と必ず揃える。 */
+  const WIN_OPTIONS = ["all", "7d", "30d", "90d", "180d"];
+
+  /* 窓の上限時刻。絞り込みと 0 件時の会期案内で別の式を書くと、表と案内が違う窓で
+   * 動く（過去行を出すか否かは `past` のチェックボックスだけが決める）。 */
+  function windowLimitMs(win: string, now: number): number {
+    return win === "all" ? Number.POSITIVE_INFINITY : now + Number.parseInt(win, 10) * DAY;
+  }
+
   function filter(): AppRow[] {
     const now = Date.now();
     // `来月` などの相対月を検索語として受け付ける。展開式の一覧への反映は recommender が
@@ -1452,9 +1464,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const matchesQuery = Recommender.searchMatcher(searchQuery);
     const isPast = (row: AppRow) => (row.dateOnly ? now > row.tLast : row.t < now);
     const isAfter = (row: AppRow, dateLimit: number) => row.t > dateLimit;
-    const isWinFuture = state.win === "future";
-    const limit =
-      state.win === "all" || isWinFuture ? Infinity : now + parseInt(state.win, 10) * DAY;
+    const limit = windowLimitMs(state.win, now);
     const pElem = typeof document !== "undefined" ? $("paperText") : null;
     const pText =
       state.mode === "recommend" && pElem && "value" in pElem && typeof pElem.value === "string"
@@ -1736,10 +1746,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     box.textContent = "";
     box.hidden = true;
     const now = Date.now();
-    const limit =
-      filter.window === "all" || filter.window === "future"
-        ? Number.POSITIVE_INFINITY
-        : now + Number.parseInt(filter.window, 10) * DAY;
+    const limit = windowLimitMs(filter.window, now);
     const meetsQuery = Recommender.searchMatcher(searchQuery);
     const found = Recommender.scheduleOnlyEditions(DATA)
       .filter((m) => {
@@ -2717,10 +2724,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 許す値は選択肢の正本と同じ（書き写すと URL だけ通る値が生まれる）。
     state.rank = RANK_GRADE_OPTIONS.indexOf(rawRank || "") >= 0 ? rawRank || "" : "";
     const rawWin = p.get("win");
-    state.win =
-      ["all", "7d", "30d", "90d", "180d", "future"].indexOf(rawWin || "") >= 0
-        ? rawWin || ""
-        : "all";
+    // 受け付ける値はセレクトの選択肢と表裏一体にする（選択肢に無い値を通すと、その値で
+    // 共有された URL を開いた人のセレクトが空欄になる。`future` は過去行を落とさない
+    // 何もしない値だったので、受け付け自体をやめた）。
+    state.win = WIN_OPTIONS.indexOf(rawWin || "") >= 0 ? rawWin || "" : "all";
     state.est = p.get("est") === "1";
     state.domestic = p.get("domestic") === "1";
     state.online = p.get("online") === "1";
