@@ -5303,12 +5303,14 @@ it("分野の言い方は、画面に出る語だけを指す（SPEC §7）", ()
     const quoted = entry.shown.match(/「([^」]+)」/)?.[1];
     expect(quoted, `${entry.word} の説明に表示語を書いていない`).toBeTruthy();
     expect(entry.terms, `${entry.word} の展開語が無い`).toContain(quoted);
-    /* 展開語は、画面に出す表記そのもの。分野名・締切種別・主題タグの対応表に無い語を
-     * 指したら失敗する（寄せ先が行に見えない語だと、なぜ出たか分からなくなる）。 */
+    /* 展開語は、画面に出す表記そのもの。分野名・締切種別・主題タグの対応表、および
+     * 参加形式の語（チェックボックスに出る）に無い語を指したら失敗する
+     * （寄せ先が行に見えない語だと、なぜ出たか分からなくなる）。 */
     const labelBlocks = [
       /const CATEGORY_LABELS_JA[^=]*= \{([\s\S]*?)\n\s*\};/,
       /const KIND_LABEL_JA[^=]*= \{([\s\S]*?)\n\s*\};/,
       /const TAG_LABELS_JA[^=]*= \{([\s\S]*?)\n\s*\};/,
+      /const ONLINE_PARTICIPATION_LABEL_JA[^\n]*;/,
     ]
       .map((re) => rec.match(re)?.[0] ?? "")
       .join("\n");
@@ -6296,4 +6298,49 @@ it("地方名で引くと、開催市だけ書かれた国内行も漏れない�
   expect(out.cities, "収録カタログで都市の行を 1 つも拾えていない").toBeGreaterThanOrEqual(14);
   expect(out.missing, "地方名で引けない国内行がある:\n" + out.missing.join("\n")).toEqual([]);
   expect(out.dead, "都市の表に、収録カタログで当たらない語がある").toEqual([]);
+});
+
+it("参加形式の語で引いた行が、チェックボックスで出る行と一致する（SPEC §7）", () => {
+  /* `オンライン参加可` はチェックボックスの語。その語で検索した人が同じ行にたどり着けること、
+   * 判定が `placeOffersOnline` 1本で決まっていること（別の書き方をするとズレる）を、
+   * 収録カタログの行で見る。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(new URL("../data/snapshot.json", import.meta.url).pathname)}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const key = (r) => r.conf.key + '@' + r.ed.year + '@' + r.kind;",
+    "const byPredicate = rows.filter((r) => Recommender.placeOffersOnline(r.ed.place)).map(key).sort();",
+    "const byQuery = (q) => {",
+    "  const m = Recommender.searchMatcher(q, now);",
+    "  return rows.filter((r) => m(r.hay)).map(key).sort();",
+    "};",
+    "const phrase = byQuery('オンライン参加可');",
+    "const hybrid = byQuery('ハイブリッド');",
+    "const outside = hybrid.filter((k) => !byPredicate.includes(k));",
+    "console.log(JSON.stringify({",
+    "  predicate: byPredicate.length,",
+    "  sameAsPhrase: JSON.stringify(phrase) === JSON.stringify(byPredicate),",
+    "  hybrid: hybrid.length,",
+    "  hybridOutside: outside.slice(0, 3),",
+    "  noFalseFacet: rows.filter((r) => !Recommender.placeOffersOnline(r.ed.place) && String(r.hay).includes('オンライン参加可')).length,",
+    "}));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 120_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    predicate: number;
+    sameAsPhrase: boolean;
+    hybrid: number;
+    hybridOutside: string[];
+    noFalseFacet: number;
+  };
+  expect(out.predicate, "収録カタログにオンライン参加可の行が無い").toBeGreaterThan(0);
+  expect(out.sameAsPhrase, "「オンライン参加可」で引ける行とチェックボックスの行が違う").toBe(true);
+  expect(out.hybrid, "「ハイブリッド」が 0 件").toBeGreaterThan(0);
+  expect(out.hybridOutside, "「ハイブリッド」がオンライン参加の記載のない行を出した").toEqual([]);
+  expect(out.noFalseFacet, "オンライン参加可の語が該当外の行に入っている").toBe(0);
 });

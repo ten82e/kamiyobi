@@ -4879,3 +4879,48 @@ describe("地方で引く（関東・関西で、開催市だけ書かれた国�
     expect(R.querySynonymNotes("東京")).toEqual([]);
   });
 });
+
+describe("参加形式の語（オンライン参加可・ハイブリッド）で引ける", () => {
+  const NOW = Date.parse("2026-08-09T00:00:00Z");
+  // `オンライン参加可` は行が持つ参加形式の語（チェックボックスと同じ判定で hay に入る）。
+  // ここでは実データと同じ形に手で置いて、照合の側だけを見る
+  // （語が本当に入っているかは `tests/build_golden.test.ts` の収録カタログ検査で見る）。
+  const rows = [
+    {
+      conf: { key: "online-ws", title: "WS", editions: [] },
+      hay: "workshop オンライン参加可 osaka, 日本 ／オンライン",
+    },
+    {
+      conf: { key: "hybrid-conf", title: "CONF", editions: [] },
+      hay: "conference オンライン参加可 kyoto, 日本 ／オンライン／対面",
+    },
+    {
+      conf: { key: "onsite-only", title: "SYM", editions: [] },
+      hay: "symposium kyoto, 日本 京都大学 百周年記念会館",
+    },
+  ];
+  const hits = (q: string) => {
+    const m = R.searchMatcher(q, NOW);
+    return rows.filter((r) => m(r.hay)).map((r) => String(r.conf.key));
+  };
+
+  it("チェックボックスの語は検索の語にもなっている", () => {
+    expect(hits("オンライン参加可").sort()).toEqual(["hybrid-conf", "online-ws"]);
+    // 部分一致で言いかけでも当たる。
+    expect(hits("オンライン参加").sort()).toEqual(["hybrid-conf", "online-ws"]);
+    expect(hits("参加可").sort()).toEqual(["hybrid-conf", "online-ws"]);
+    // 対面だけの行は出ない（`京都` は `kyoto` に寄せる表があるので語のかけ算で使う）。
+    expect(hits("オンライン参加可 百周年")).toEqual([]);
+    expect(hits("京都")).toEqual(["hybrid-conf", "onsite-only"]);
+  });
+
+  it("「ハイブリッド」はオンライン参加の記載に寄せる（0 件で止まらない）", () => {
+    // `ハイブリッド` のまま当たる行は収録カタログでいずれも過去で、既定の一覧では 0 件だった。
+    expect(hits("ハイブリッド").sort()).toEqual(["hybrid-conf", "online-ws"]);
+    expect(R.querySynonymNotes("ハイブリッド")).toEqual([
+      "「ハイブリッド」は参加形式「オンライン参加可」で探しています",
+    ]);
+    // 語のかけ算は壊れない。
+    expect(hits("ハイブリッド 対面")).toEqual(["hybrid-conf"]);
+  });
+});

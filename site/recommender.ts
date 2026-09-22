@@ -1561,6 +1561,10 @@ const Recommender = (() => {
     ["ヒューマンインタフェース", "分野「人間情報処理」", ["人間情報処理", "hci"]],
     ["ヒューマンインターフェース", "分野「人間情報処理」", ["人間情報処理", "hci"]],
     ["人間中心", "分野「人間情報処理」", ["人間情報処理", "hci"]],
+    // 参加形式の言い方。`ハイブリッド` で引く人は「オンラインでも参加できる行」を
+    // 求めているので、行が持つ参加形式の語へ寄せる（2026-09-23 時点で `ハイブリッド` の
+    // まま当たる行はすべて過去で、既定の一覧では 0 件になっていた）。
+    ["ハイブリッド", "参加形式「オンライン参加可」", ["オンライン参加可", "online"]],
     // 締切種別も言い方が分かれる。学会側は「抄録」「要旨」と書くことが多いが、
     // 表は「概要締切」を出す（実測: `抄録` 0 件 / `概要` 660 件）。
     ["抄録", "種別「概要締切」", ["概要締切", "abstract"]],
@@ -3203,10 +3207,26 @@ const Recommender = (() => {
   // 比較側は `kanaFold` 済み（カタカナはひらがなに畳まれ、小さな仮名も伸びる）なので、
   // 照合語も同じ形にしておく（「オンライン」は「おんらいん」になる）。
   const ONLINE_TERMS_JA = ["オンライン", "ハイブリッド"].map((term) => kanaFold(term));
-  const ONLINE_TERMS_EN = ["online", "virtual"];
+  /* 対面とオンラインの併用（hybrid）もオンライン参加ができるので対象に含める。
+   * 英語側に入れていなかったため `Málaga, Spain (hybrid)`（GECCO など収録 20 行）が
+   * 「オンライン参加可のみ」から落ちていた（2026-09-23 実測。日本語表記の `ハイブリッド` は
+   * 上の語列表で拾えていたので、英語表記だけ漏れる不整合だった）。 */
+  const ONLINE_TERMS_EN = ["online", "virtual", "hybrid"];
   // 会場名の一部として現れる句（2026-09-22 の実データ `San Francisco Bay, USA and KSIR
   // Virtual Conference Center, USA` で誤って online 扱いになった）。
   const ONLINE_VENUE_FALSE_POSITIVES = ["virtual conference center"];
+
+  /* 「オンライン参加可」はチェックボックスに出る語（=表示語）なので、ここで1回だけ書き、
+   * 検索の語・行の検索用文字列・おしらせで同じ字面を使う。 */
+  const ONLINE_PARTICIPATION_LABEL_JA = "オンライン参加可";
+
+  /* 「オンライン参加可」はチェックボックスの語なので、検索の語としても引けるようにする
+   * （`国内` を hay に入れるのと同じ流儀）。判定はチェックボックスと同じ
+   * `placeOffersOnline` だけを使う（別実装を書くと、チェックで出る行と検索で出る行がズレる）。
+   * 語を1つ入れておけば `オンライン参加` `参加可` も部分一致で引ける。 */
+  function participationSearchTerms(value: unknown): string {
+    return placeOffersOnline(value) ? ONLINE_PARTICIPATION_LABEL_JA : "";
+  }
 
   function placeOffersOnline(value: unknown): boolean {
     let text = kanaFold(searchNormalize(value));
@@ -3266,7 +3286,7 @@ const Recommender = (() => {
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
-        const catHay = `${categorySearchTerms(conf.categories, confTags)} ${placeJa(ed.place)} ${placePrefectureJa(ed.place)}`;
+        const catHay = `${categorySearchTerms(conf.categories, confTags)} ${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ${participationSearchTerms(ed.place)}`;
         (ed.deadlines || []).forEach((dl) => {
           const dateOnly = dl.precision === "date-only";
           const window = dateOnly ? dateOnlyWindowMs(dl.local_date) : null;
