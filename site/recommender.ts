@@ -2104,6 +2104,52 @@ const Recommender = (() => {
     return out.replace(/\s+and\s+|\s*&\s*/gi, "・");
   }
 
+  /* 会場表記に都道府県が書かれるとは限らない（`倉敷市芸文館`、`名古屋大学 基盤センター` など）。
+   * 土地で絞り込む利用者が「岡山」「愛知」で引けるよう、都市名から都道府県の手がかりを足す。
+   * 一覧は実際に収録済みの会場表記（国内会議の開催地 36 種）に現れた都市だけに限る。
+   * 表示は公式表記のまま変え、検索語にだけ効かせる（推測で都道府県を書かない）。 */
+  const CITY_PREFECTURE_JA: Array<[string, string]> = [
+    ["倉敷", "岡山"],
+    ["名古屋", "愛知"],
+    ["北九州", "福岡"],
+    ["武蔵野", "東京"],
+    ["能登", "石川"],
+    ["函館", "北海道"],
+    ["那覇", "沖縄"],
+    ["札幌", "北海道"],
+    ["仙台", "宮城"],
+    ["松江", "島根"],
+    ["高山", "岐阜"],
+    ["別府", "大分"],
+    ["香美", "高知"],
+    ["御影", "兵庫"],
+    ["芸文館", "岡山"],
+  ];
+
+  /** 開催地に都道府県が書かれていないときだけ補う（`upcoming.md` の開催地列用）。
+   * 公式表記を書き換えないため、末尾に空白区切りで添えるだけにする。 */
+  function placeWithPrefectureJa(value: unknown): string {
+    const raw = typeof value === "string" ? value.trim() : "";
+    if (!raw) return "";
+    const terms = placePrefectureJa(raw);
+    if (!terms) return raw;
+    const prefecture = terms.split(" ")[0] as string;
+    if (raw.indexOf(prefecture) >= 0) return raw;
+    return `${raw} ${prefecture}県`;
+  }
+
+  /** 会場表記から都道府県の検索語を作る（`岡山 岡山県`。「岡山県」と打っても引けるように両方）。 */
+  function placePrefectureJa(value: unknown): string {
+    const raw = typeof value === "string" ? value : "";
+    if (!raw) return "";
+    const hits: string[] = [];
+    CITY_PREFECTURE_JA.forEach(([city, prefecture]) => {
+      if (raw.indexOf(city) < 0) return;
+      if (hits.indexOf(prefecture) < 0) hits.push(prefecture);
+    });
+    return hits.map((prefecture) => `${prefecture} ${prefecture}県`).join(" ");
+  }
+
   function placeJa(value: unknown): string {
     const raw = typeof value === "string" ? value.trim() : "";
     if (!raw) return "";
@@ -2153,7 +2199,7 @@ const Recommender = (() => {
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
-        const catHay = `${categorySearchTerms(conf.categories, confTags)} ${placeJa(ed.place)}`;
+        const catHay = `${categorySearchTerms(conf.categories, confTags)} ${placeJa(ed.place)} ${placePrefectureJa(ed.place)}`;
         (ed.deadlines || []).forEach((dl) => {
           const dateOnly = dl.precision === "date-only";
           const window = dateOnly ? dateOnlyWindowMs(dl.local_date) : null;
@@ -3299,6 +3345,8 @@ const Recommender = (() => {
     deadlinesToCsv: deadlinesToCsv,
     searchNormalize: searchNormalize,
     monthTermsJa: monthTermsJa,
+    placePrefectureJa: placePrefectureJa,
+    placeWithPrefectureJa: placeWithPrefectureJa,
     expandRelativeMonths: expandRelativeMonths,
     kanaFold: kanaFold,
     queryTokenGroups: queryTokenGroups,

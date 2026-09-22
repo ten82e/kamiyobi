@@ -1906,6 +1906,32 @@ it("the deadline search index carries Japanese month terms (SPEC §7)", () => {
   expect(runtime).toMatch(/monthTermsJa[\s\S]*new Date\(value \+ 9 \* 3_600_000\)/);
 });
 
+it("venues without a prefecture are findable by prefecture (SPEC §7)", () => {
+  const build = readFileSync(new URL("../src/build.ts", import.meta.url), "utf8");
+  const runtime = siteRuntime("recommender.js");
+  // 土地で絞る入口はサイトと同じ語を使う（md 側で都道府県表を二重実装しない）。
+  expect(runtime).toContain("${placePrefectureJa(ed.place)}");
+  expect(build).toContain("Recommender.placeWithPrefectureJa(ed.place)");
+  // 公式表記を書き換えないので、補うのは末尾に空白区切りで添える形だけ。
+  // 参照する定数と関数は正本をそのまま注入する（書き写すと正本とズレる）。
+  const citySrc = runtime.match(/const CITY_PREFECTURE_JA[\s\S]*?\];/)?.[0];
+  expect(citySrc, "CITY_PREFECTURE_JA 定義が見つからない").toBeTruthy();
+  const [bare, withPref] = new Function(
+    [
+      citySrc as string,
+      jsFunction(runtime, "placePrefectureJa"),
+      jsFunction(runtime, "placeWithPrefectureJa"),
+      "return [placePrefectureJa, placeWithPrefectureJa];",
+    ].join("\n"),
+  )() as [(v: unknown) => string, (v: unknown) => string];
+  expect(bare("倉敷市芸文館")).toBe("岡山 岡山県");
+  expect(withPref("倉敷市芸文館")).toBe("倉敷市芸文館 岡山県");
+  expect(withPref("飛騨・世界生活文化センター（岐阜県高山市）")).toBe(
+    "飛騨・世界生活文化センター（岐阜県高山市）",
+  );
+  expect(bare("未定")).toBe("");
+});
+
 it("relative months in the query are resolved and shown (SPEC §7)", () => {
   const runtime = siteRuntime();
   const template = readFileSync(join(site, "index.html"), "utf8");

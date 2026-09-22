@@ -21,7 +21,7 @@ import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { recommendationAxes } from "../site/recommendation-core.ts";
-import { isValidRerankerModel } from "../site/recommender.ts";
+import Recommender, { isValidRerankerModel } from "../site/recommender.ts";
 // 代表採択論文タイトル（会議のセマンティック/語彙プロファイル強化）。
 // データパイプラインで conferences に papers として載せ、ブラウザの語彙一致と
 // IDF（buildNameIdf）の両方に使えるようにする。
@@ -2682,7 +2682,10 @@ export function toUpcomingMd(
     const link = rawLink ? escapeMdUrl(rawLink) : "";
     const titleEscaped = escapeMdCell(titleWithYear(conf.title, ed.year));
     const name = link ? `[${titleEscaped}](${link})` : titleEscaped;
-    const placeEscaped = escapeMdCell(ed.place);
+    // 開催地に都道府県が書かれていない行（`倉敷市芸文館` など）は、土地で探すと
+    // 見つからない。サイト側の検索と同じ都道府県語を md の開催地列にも添える
+    // （公式表記は変えないので末尾に空白区切りで添えるだけ）。
+    const placeEscaped = escapeMdCell(Recommender.placeWithPrefectureJa(ed.place));
     if (rec.type === "deadline") {
       const dl = rec.deadline;
       if (dl === null) continue;

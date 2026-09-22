@@ -993,6 +993,45 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
   });
 
+  describe("会場表記から都道府県で引く（placePrefectureJa / placeWithPrefectureJa）", () => {
+    it("都道府県が書かれていない会場名にも土地の語を足す", () => {
+      // 収録済みの国内会議の会場表記で実際に起きている例のみ。
+      expect(R.placePrefectureJa("倉敷市芸文館")).toBe("岡山 岡山県");
+      expect(R.placePrefectureJa("名古屋大学 基盤センター２F演習室")).toBe("愛知 愛知県");
+      expect(R.placePrefectureJa("北九州市（FIT2026）")).toBe("福岡 福岡県");
+      expect(R.placePrefectureJa("能登方面の予定（ハイブリッド）")).toBe("石川 石川県");
+    });
+
+    it("都道府県が既に分かる表記では二重に補わない", () => {
+      expect(R.placeWithPrefectureJa("倉敷市芸文館")).toBe("倉敷市芸文館 岡山県");
+      expect(R.placeWithPrefectureJa("島根県立産業交流会館 くにびきメッセ（島根県松江市）")).toBe(
+        "島根県立産業交流会館 くにびきメッセ（島根県松江市）",
+      );
+      expect(R.placeWithPrefectureJa("高知工科大学 香美キャンパス（高知県香美市）")).toBe(
+        "高知工科大学 香美キャンパス（高知県香美市）",
+      );
+      expect(R.placeWithPrefectureJa("花びしホテル（北海道 函館）")).toBe(
+        "花びしホテル（北海道 函館）",
+      );
+    });
+
+    it("土地と読めない値は補わない", () => {
+      expect(R.placePrefectureJa("未定")).toBe("");
+      expect(R.placePrefectureJa("Japan")).toBe("");
+      expect(R.placeWithPrefectureJa("")).toBe("");
+      expect(R.placeWithPrefectureJa(null)).toBe("");
+    });
+
+    it("県名・かなのどちらで打っても引ける", () => {
+      const terms = R.placePrefectureJa("倉敷市芸文館");
+      expect(R.hayMatches(`倉敷市芸文館 ${terms}`, "岡山")).toBe(true);
+      expect(R.hayMatches(`倉敷市芸文館 ${terms}`, "岡山県")).toBe(true);
+      expect(R.hayMatches(`倉敷市芸文館 ${terms}`, "おかやま")).toBe(true);
+      // 別の県では当たらない（都市名の語を勝手に広げない）。
+      expect(R.hayMatches(`倉敷市芸文館 ${terms}`, "広島")).toBe(false);
+    });
+  });
+
   describe("月での検索（monthTermsJa）", () => {
     it("締切は JST の暦日から月語を作る", () => {
       // 2026-09-30 16:00 UTC = JST 2026-10-01 01:00。一覧の日時列と同じ暦日で読む。
