@@ -604,6 +604,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     kindLabel: (k: string) => string,
     categoryLabel: (c: string) => string,
     windowLabel: string,
+    sort: { key: string; asc: boolean },
+    sortLabel: (key: string) => string,
   ): string {
     const out: string[] = [];
     const query = String(s.q || "").trim();
@@ -617,7 +619,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (s.online) out.push("オンライン参加可のみ");
     if (s.past) out.push("過去の締切も表示");
     // 何も絞っていないときは「全件」と書く。空欄だと、絞ったのに漏れたのか読めない。
-    return out.length ? out.join(" ／ ") : "絞り込みなし（収録全体の一覧）";
+    const condition = out.length ? out.join(" ／ ") : "絞り込みなし（収録全体の一覧）";
+    /* 並び順は絞り込みではないが、紙には必要 – 同じ一覧を並べ替えて配ることもある
+     * （第 126 回で会期順が増えたので、「会期順で印刷した」が紙で分からないと
+     * 読み手は日付の順がなぜ違うのかを確かめられない）。既定の並びでも書く。 */
+    const order = sortLabel(sort.key);
+    if (!order) return condition;
+    return `${condition} ／ 並び順: ${order} ${sort.asc ? "昇順" : "降順"}`;
   }
 
   function valueElement(id: string): HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement {
@@ -876,12 +884,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 変えたら黙らない」方針（過ぎた締切を下にまとめた件数を件数欄に書くのと同じ）に
    * 従っていない。画面は混むので、読み上げ専用の短い欄にだけ足す（第 89 回で分けた仕組み）。
    * 列の語は見出し自身から取る（テストにもソートバーにも書き写さない）。 */
-  function sortNoteJa(key: string, asc: boolean): string {
+  /** 並びの基準にしている列の画面での語。見出しから取る（書き写すと、列の名前を
+   * 変えたときに案内だけ古くなる）。見出しは目印の矢印まで書き換えるので、そこは落とす。 */
+  function sortColumnLabel(key: string): string {
     if (!key) return "";
     const th = document.querySelector<HTMLElement>(`th[data-sort="${key}"]`);
-    const label = String((th && th.textContent) || "")
+    return String((th && th.textContent) || "")
       .replace(/[↑↓↕]\s*$/, "")
       .trim();
+  }
+
+  function sortNoteJa(key: string, asc: boolean): string {
+    const label = sortColumnLabel(key);
     if (!label) return "";
     return ` ｜ 並び順: ${label} ${asc ? "昇順" : "降順"}`;
   }
@@ -3801,6 +3815,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         (k) => KIND_LABEL[k] || k,
         (c) => Recommender.categoryLabelJa(c),
         winLabel,
+        { key: sortKey, asc: sortAsc },
+        sortColumnLabel,
       )}` +
       ` ／ 表示 ${shown.length} 件 ／ 印刷した日時 ${fmtJst(new Date())} ／ ${generatedAtLabel(genAt)}`;
   }

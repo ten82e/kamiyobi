@@ -9531,6 +9531,7 @@ it("並び替えの状態は読み上げに伝わる（見出しの矢印だけ�
   const app = siteRuntime();
   const script = [
     "(async () => {",
+    `const LABEL_SRC = ${JSON.stringify(jsFunction(app, "sortColumnLabel"))};`,
     `const NOTE_SRC = ${JSON.stringify(jsFunction(app, "sortNoteJa"))};`,
     'const LABELS = { rem: "残り ↕", date: "日時（JST） ↓", conf: "会議 ↕", rank: "ランク ↑" };',
     "const document = {",
@@ -9540,7 +9541,12 @@ it("並び替えの状態は読み上げに伝わる（見出しの矢印だけ�
     "    return { textContent: LABELS[k[1]] };",
     "  },",
     "};",
-    "const note = new Function('document', 'return (' + NOTE_SRC + ')')(document);",
+    "const sortColumnLabel = new Function('document', 'return (' + LABEL_SRC + ')')(document);",
+    "const note = new Function(",
+    "  'document',",
+    "  'sortColumnLabel',",
+    "  'return (' + NOTE_SRC + ')'",
+    ")(document, sortColumnLabel);",
     "console.log(JSON.stringify({",
     "  rem: note('rem', true),",
     "  dateDesc: note('date', false),",
@@ -10256,7 +10262,7 @@ it("並びの比較は表示している暦日を使い、その値を持たな�
   expect(out.remainNoNaN, "残りに NaN が出ている").toBe(true);
 });
 
-it("印刷物に、条件・件数・日時が残り、画面では見えない（SPEC §7）", () => {
+it("印刷物に、条件・並び順・件数・日時が残り、画面では見えない（SPEC §7）", () => {
   /* 印刷は「研究室に貼る・グループ会議で回覧する」用途（スタイルのコメントに書いた需要）。
    * ところが画面の絞り込み欄は印刷で落ちるため、紙のうえに「どんな条件で絞った一覧か」が
    * 残っていなかった（2026-09-23 実測: 印刷時に条件を書く箇所はどこにも無い。データ生成日
@@ -10268,14 +10274,33 @@ it("印刷物に、条件・件数・日時が残り、画面では見えない�
     "const DESCRIBE = new Function('return (' + DESCRIBE_SRC + ')')();",
     "const kind = (k) => ({ abstract: '概要締切', paper: '論文締切' })[k] || k;",
     "const cat = (c) => ({ net: 'ネットワーク', hpc: '高性能計算' })[c] || c;",
-    "const f = (over, win) => DESCRIBE(Object.assign({ q: '', cats: [], kind: '', rank: '', est: false, domestic: false, online: false, past: false }, over), kind, cat, win || '');",
+    "const sl = (k) => ({ rem: '残り', date: '日時（JST）', event: '会期', conf: '会議', rank: 'ランク' })[k] || '';",
+    "const f = (over, win, sort) =>",
+    "  DESCRIBE(",
+    "    Object.assign(",
+    "      { q: '', cats: [], kind: '', rank: '', est: false, domestic: false, online: false, past: false },",
+    "      over,",
+    "    ),",
+    "    kind,",
+    "    cat,",
+    "    win || '',",
+    "    sort || { key: 'rem', asc: true },",
+    "    sl,",
+    "  );",
     "const nothing = f({});",
     // 空白だけの検索語は条件にしない（打つ途中の欄で「検索語「」」と出さない）。
     "const blank = f({ q: '   ' });",
     "const many = f({ q: '研究会', kind: 'paper', cats: ['net', 'hpc'], domestic: true, online: true, past: true, est: true }, '30日以内');",
     // ランクは画面に出る等級そのものを書く（内部の番兵を書かない）。
     "const ranked = f({ rank: 'A*' });",
-    "console.log(JSON.stringify({ nothing, blank, many, ranked }));",
+    // 並び順は絞り込みではないが、紙には要る（並べ替えて配ることもある）。
+    "const byEvent = f({ q: '研究会' }, '', { key: 'event', asc: true });",
+    "const byDateDesc = f({}, '', { key: 'date', asc: false });",
+    // 既定の並びでも書く（「締切の新しい順で印刷した」が分からないと読み手が困る）。
+    "const byDefault = f({}, '', { key: 'rem', asc: true });",
+    // 見出しに見当たらない鍵のときは並び順を書かない（噓を書かない）。
+    "const unknownKey = f({}, '', { key: 'nope', asc: true });",
+    "console.log(JSON.stringify({ nothing, blank, many, ranked, byEvent, byDateDesc, byDefault, unknownKey }));",
   ].join("\n");
   const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
     encoding: "utf8",
@@ -10294,6 +10319,17 @@ it("印刷物に、条件・件数・日時が残り、画面では見えない�
   expect(out.many).toContain("オンライン参加可のみ");
   expect(out.many).toContain("過去の締切も表示");
   expect(out.ranked).toContain("ランク: A*");
+  // 並び順（第 126 回で会期順が増えたので、紙で区別できる必要がある）。
+  expect(out.byEvent).toContain("検索語「研究会」");
+  expect(out.byEvent).toContain("並び順: 会期 昇順");
+  expect(out.byDateDesc).toContain("並び順: 日時（JST） 降順");
+  expect(out.byDefault, "既定の並びが紙に残っていない").toContain("並び順: 残り 昇順");
+  expect(out.byDefault).toContain("絞り込みなし");
+  // 見出しに見当たらない鍵のときは並び順を書かない（噓の列名を紙に残さない）。
+  expect(out.unknownKey, "画面に無い列名を並び順として書いた").toBe(
+    "絞り込みなし（収録全体の一覧）",
+  );
+  expect(out.unknownKey).not.toContain("並び順");
   // 画面のチェック欄・セレクトと同じ語を書いている（別の名前を付けない）。
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
   for (const label of [
@@ -10323,6 +10359,42 @@ it("印刷物に、条件・件数・日時が残り、画面では見えない�
   expect(app).toContain("beforeprint");
   expect(app).toContain("fillPrintMeta();");
   expect(app).toContain('$("printMeta")');
+  // 呼び出し側が、今の並びを実際に渡していること（上の抜き出し検査だけでは実画面は変わらない）。
+  expect(app).toContain("{ key: sortKey, asc: sortAsc },");
+  // 列名を取り出す関数も印刷の組み立てに使っている（見出しの語を二箇所に書かない）。
+  expect(app).toContain("sortColumnLabel");
+  const labelSrc = jsFunction(app, "sortColumnLabel");
+  // 列名は画面の見出しから取る（書き写さない）。見出しは目印の矢印まで書き換えるので、
+  // そこを落として紙に出せる語だけを取り出すことを、見出しの実物に近い形で確認する。
+  const labelProc = spawnSync(
+    "node",
+    [
+      "-e",
+      vmSafeSource(
+        [
+          `const SRC = ${JSON.stringify(labelSrc)};`,
+          // 見出しの実物は「会期 ↕」のように語と目印が一体になっている。
+          "const run = (text, key) => {",
+          "  const doc = {",
+          "    querySelector: (sel) => (sel.indexOf(key) >= 0 ? { textContent: text } : null),",
+          "  };",
+          "  return new Function('document', 'return (' + SRC + ')')(doc)(key);",
+          "};",
+          "console.log(JSON.stringify([",
+          "  run('会期 ↕', 'event'),",
+          "  run('日時（JST） ↓', 'date'),",
+          "  run('残り ↑', 'rem'),",
+          "  run('', 'conf'),",
+          "]));",
+        ].join("\n"),
+      ),
+    ],
+    { encoding: "utf8", timeout: 60_000 },
+  );
+  expect(labelProc.status, labelProc.stderr).toBe(0);
+  const labels = JSON.parse(labelProc.stdout) as string[];
+  // 見出しの語だけを取り、目印の矢印は紙に書かない（空の見出しは空のまま）。
+  expect(labels).toEqual(["会期", "日時（JST）", "残り", ""]);
   expect(app, "印刷した日時を残していない").toContain("印刷した日時");
   expect(app, "データ生成日時を残していない").toContain("generatedAtLabel(genAt)");
   // てびきが印刷の説明を持っている（押せる場所が無いと分からない）。
@@ -10665,4 +10737,25 @@ it("実データで会期順が並びとして成立している（未確認が�
   expect(out.bad, "会期順に並べても逆転か未確認の先頭混入がある").toBe(0);
   // 並べる前は飛んでいる（＝この並びが実際に効いている）。
   expect(out.before).toBeGreaterThan(0);
+});
+
+it("てびきのキーボード欄が同じ操作を二度書いていない（SPEC §7）", () => {
+  /* 「キーボードで一覧を動かす」の説明で、`/`（検索欄へ飛ぶ）と `Esc` の説明が
+   * 一続きの文章の中に二回あった（2026-09-23 実測: 「`/` で検索欄に飛び…（`Esc` は行の
+   * 詳細を閉じるのにも使います）」と、同じ項の後ろの方に「`/` を押すと検索欄に飛び、
+   * `Esc` で詳細を閉じます」）。読者は二つの文が同じ操作を指しているのか、別々の操作が
+   * あるのかを確かめられない。同じ欄の中で同じ言い回しを繰り返さない。*/
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const at = html.indexOf("<dt>印刷</dt>");
+  const kb = html.indexOf('<dt class="only-keyboard">キーボードで一覧を動かす</dt>');
+  expect(kb, "キーボードの項が無くなった").toBeGreaterThan(-1);
+  const block = html.slice(kb, html.indexOf("</div>", kb));
+  for (const phrase of ["検索欄に飛び", "行の詳細を閉じる"]) {
+    const hits = block.split(phrase).length - 1;
+    expect(hits, `「${phrase}」の説明が同じ項に ${hits} 回ある`).toBe(1);
+  }
+  // 印刷の項は、並び順が紙に残ることを説明している（第 127 回）。
+  expect(at, "印刷の項が無くなった").toBeGreaterThan(-1);
+  const print = html.slice(at, html.indexOf("</dd>", at));
+  expect(print).toContain("並び順");
 });
