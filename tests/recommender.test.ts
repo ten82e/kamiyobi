@@ -1230,6 +1230,30 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
   });
 
+  describe("日本開催の行を漢字で引く", () => {
+    /* 国内の行はローマ字をそのまま打つ人が少ない。収録の日本開催で行われた
+     * `Aizuwakamatsu` の 2 行だけが、どの日本語の言い方でも届いていなかった
+     * （2026-09-23 実測）。 */
+    const group = (q: string) => R.queryTokenGroups(q)[0];
+
+    it("市区郡と会場名の漢字が、収録のローマ字表記に届く", () => {
+      expect(group("会津若松")).toContain("aizuwakamatsu");
+      expect(group("会津")).toContain("aizuwakamatsu");
+      // 会場名で行を書いている回（表には `Hitotsubashi Hall, 東京, 日本` と出る）。
+      expect(group("一橋講堂")).toContain("hitotsubashi hall");
+      expect(group("日本科学未来館")).toContain("miraikan");
+      expect(group("未来館")).toContain("miraikan");
+    });
+
+    it("寄せ済みは公式の表記どおりで、行の無い地名は置かない", () => {
+      // `Miyakojima`（FC の回）は既に寄せてある。公式の表記は "Miyakojima, Japan"
+      // （fc25.ifca.ai）なので、日本語は `宮古島` が対応する。
+      expect(group("宮古島")).toContain("miyakojima");
+      // `宮島`（広島の厳島）に当たる行は収録に無いので置いていない。
+      expect(R.queryTokenGroups("宮島")).toEqual([["宮島"]]);
+    });
+  });
+
   describe("deadlinesToCsv（絞り込み結果を表計算へ持ち出す）", () => {
     const now = Date.parse("2026-09-22T00:00:00+09:00");
     const rowOf = (over: Record<string, unknown>) => ({

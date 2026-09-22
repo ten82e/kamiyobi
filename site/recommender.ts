@@ -2591,6 +2591,18 @@ const Recommender = (() => {
     ["ピサ", "pisa"],
     ["ノッティンガム", "nottingham"],
     ["マインツ", "mainz"],
+    /* 日本開催の行は、開催地のローマ字をそのまま打つ人が少ない（国内なので漢字で打つ）。
+     * 収録の日本開催の行を洗い出したところ、`Aizuwakamatsu` の 2 行だけがどの日本語の
+     * 言い方でも届かなかった（2026-09-23 実測）。`Miyakojima`（FC の回）は上に
+     * `宮古島` で既に寄せてあり、公式の表記（fc25.ifca.ai の "Miyakojima, Japan"）と
+     * 揃っている。`宮島`（広島の厳島）は当たる行が無いので置いていない。 */
+    ["会津若松", "aizuwakamatsu"],
+    ["会津", "aizuwakamatsu"],
+    /* 会場名で行を書いている回（表に `Hitotsubashi Hall, 東京, 日本` と出る）。
+     * 都市名（`東京`）でも届くが、会場で覚える人がいる。 */
+    ["一橋講堂", "hitotsubashi hall"],
+    ["日本科学未来館", "miraikan"],
+    ["未来館", "miraikan"],
     // 国名の翻訳から守って公式表記のまま置いた州（`PLACE_NAME_SHIELDS_JA`）。
     ["ニューメキシコ", "new mexico"],
   ];

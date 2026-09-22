@@ -6517,22 +6517,44 @@ it("収録 5 行以上の開催都市は、カタカナの入力でたどれな�
     "  .map(([city, n]) => `${city} (${n} 行)`)",
     "  .sort();",
     // 表の語が、カタログで本当に当たる語だけか（死んだ条目を置かない）。
+    // ただし **寄せ先の英文字がこのカタログに 1 行も無い条目は判定しない** — それは死んだ
+    // 条目ではなく、単にその会議がこのビルドに無いだけ（「別表記の表は、実際に新しい行を
+    // 増やしている」検査と同じ約束。例: `会津若松` の行は上流の取得状況で増える）。
+    // 実際に当たるかの判定は、収録に依存しない形の検査（日本開催の行の検査）で見る。
     "const dead = [];",
+    "let unjudged = 0;",
     "aliases.forEach(([ja, latin]) => {",
+    "  const ml = Recommender.searchMatcher(String(latin), now);",
+    "  if (rows.filter((r) => ml(r.hay)).length === 0) {",
+    "    unjudged += 1;",
+    "    return;",
+    "  }",
     "  const m = Recommender.searchMatcher(ja, now);",
     "  if (rows.filter((r) => m(r.hay)).length === 0) dead.push(String(ja));",
     "});",
-    "console.log(JSON.stringify({ cities: counts.size, uncovered, dead: dead.slice(0, 6) }));",
+    "console.log(JSON.stringify({",
+    "  cities: counts.size, uncovered, dead: dead.slice(0, 6), unjudged,",
+    " }));",
     "})();",
   ].join("\n");
   const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
   expect(proc.status, proc.stderr).toBe(0);
-  const out = JSON.parse(proc.stdout) as { cities: number; uncovered: string[]; dead: string[] };
+  const out = JSON.parse(proc.stdout) as {
+    cities: number;
+    uncovered: string[];
+    dead: string[];
+    unjudged: number;
+  };
   expect(out.cities, "カタログから都市を 1 つも数え上げられない").toBeGreaterThan(100);
   expect(out.uncovered, "カタカナで引けない開催都市がある:\n" + out.uncovered.join("\n")).toEqual(
     [],
   );
   expect(out.dead, "日本語表記の表に、1 件も当たらない語がある").toEqual([]);
+  // 判定を飛ばした条目が多すぎるなら（表が実データから浮いている）、この目検が効かなくなる。
+  expect(
+    out.unjudged,
+    "このビルドに無い都市への寄せが多すぎる（表が実データから浮いている）",
+  ).toBeLessThan(30);
 });
 
 it("早め絞り込みのボタンは、押した条件だけを出し入れし、押されたまま見える（SPEC §7）", () => {
@@ -7416,4 +7438,99 @@ it("会期だけの会の案内と行の詳細の開催地は、表と同じ書�
   expect(out.titles, "原表記をどこにも残していない").toContain("Kyoto, Japan");
   // 会期の書き方も表と同じ（暦日 + 曜日）。
   expect(out.text).toContain("2026-09-30(水)");
+});
+
+it("日本開催の行は、開催地の市区郡・会場を日本語で打つとその行に出会える（SPEC §7）", () => {
+  /* 国内の行はローマ字をそのまま打つ人が少ない（漢字で打つ）。海外側は「5 行以上の都市」で
+   * 見ていたが、日本開催は 1 都市 1〜2 行なので閾値に届かず、検査の外にあった。
+   * 2026-09-23 実測: 日本開催の行のうち `Aizuwakamatsu` の 2 行だけが、どの日本語の
+   * 言い方でも 0 件だった（`会津若松` を足して解消）。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const rec = readFileSync(${JSON.stringify(join(site, "recommender.js"))}, 'utf8');`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const FOLD = (v) => String(v).normalize('NFKC').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase();",
+    "const grab = (name) => {",
+    "  const head = 'const ' + name + ' = ';",
+    "  const i = rec.indexOf(head);",
+    "  const j = rec.indexOf('\\n    ];', i);",
+    '  return eval(vmSafeSource(rec.slice(i + head.length, j)) + "\\n];");',
+    "};",
+    "const cityOf = (place) => {",
+    "  const seg = String(place || '').trim().split('/')[0];",
+    "  const at = seg.indexOf(',');",
+    "  return (at < 0 ? seg : seg.slice(0, at)).trim();",
+    "};",
+    // ① 実行ビルドの収録に対して: 日本開催の行の開催地（最初の市区郡・会場）ごとに、
+    //    日本語の言い方の表に対応があるか。
+    "const rows = Recommender.candidateRows(DATA);",
+    "const japan = rows.filter((r) => /日本|japan/i.test(String(r.ed.place || '')));",
+    "const pairs = grab('PLACE_QUERY_ALIASES_JA').map((p) => [p[0], FOLD(p[1])]);",
+    // 除外は置かない。`Miyakojima`（FC の回）は公式の "Miyakojima, Japan" に応じて
+    // `宮古島` が既に寄せてあるので、そのまま通る。
+    "const segs = new Map();",
+    "japan.forEach((r) => { const c = cityOf(r.ed.place); segs.set(c, (segs.get(c) || 0) + 1); });",
+    "const uncovered = [];",
+    "for (const [city, n] of segs) {",
+    "  const folded = FOLD(city);",
+    "  if (!/^[a-z]/.test(folded)) continue;",
+    "  if (!pairs.some((p) => folded.indexOf(p[1]) >= 0)) uncovered.push(city + ' (' + n + ' 行)');",
+    "}",
+    // ② 表にあっても当たり方が違えば意味がないので、合成した行に対して実際に引いて見る
+    //    （収録側の行は上流の取得状況で増減するため、ここでは再現できる形でおく）。
+    // 収録の形（`tests/helpers.ts` の makeConference/makeEdition と同じ字段）。
+    "const mk = (key, place) => ({ key, title: key.toUpperCase(), full_name: key.toUpperCase(),",
+    "  link: 'https://example.org/', rank: {}, dblp: null, upstream_sub: null, tags: [],",
+    "  categories: ['hpc'], sources: ['ccfddl'], editions: [{",
+    "  edition_id: key + '26', link: 'https://example.org/cfp', place, date_text: '2026-09-30',",
+    "  event_start: '2026-09-30', event_end: '2026-10-02', estimated: false, source: 'ccfddl',",
+    "  deadlines: [{ kind: 'paper', label: '2026-09-01', at_utc: '2026-09-01T15:00:00.000Z',",
+    "  tz_raw: 'AoE', round: 1, comment: null }] }] });",
+    "const fixture = { conferences: [",
+    "  mk('aizu', 'Aizuwakamatsu, Japan'), mk('hitotsubashi', 'Hitotsubashi Hall, Tokyo, Japan'),",
+    "  mk('miraikan', 'Tokyo Odaiba Miraikan, Japan'), mk('tokyo', 'Tokyo, Japan'),",
+    "  mk('kyoto', 'Kyoto, Japan'), mk('nagoya', 'Nagoya, Japan'),",
+    "] };",
+    "const frows = Recommender.candidateRows(fixture);",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const checks = [['会津若松', 'aizu'], ['会津', 'aizu'], ['一橋講堂', 'hitotsubashi'],",
+    "  ['日本科学未来館', 'miraikan'], ['未来館', 'miraikan'], ['東京', 'tokyo'], ['東京', 'hitotsubashi'],",
+    "  ['京都', 'kyoto'], ['名古屋', 'nagoya']];",
+    "const misses = [];",
+    "for (const [ja, key] of checks) {",
+    "  const m = Recommender.searchMatcher(ja, now);",
+    "  const row = frows.find((r) => r.conf.key === key);",
+    "  if (!row) misses.push(ja + ': 行が無い');",
+    "  else if (!m(row.hay)) misses.push('「' + ja + '」が " + "' + key + ' の行を返さない');",
+    "}",
+    "console.log(JSON.stringify({",
+    "  total: segs.size, japan: japan.length,",
+    "  uncovered, misses, fixtureRows: frows.length,",
+    " }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync(
+    "node",
+    ["-e", `const vmSafeSource = ${vmSafeSource.toString()};\n${script}`],
+    { encoding: "utf8", timeout: 180_000 },
+  );
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    total: number;
+    japan: number;
+    uncovered: string[];
+    misses: string[];
+    fixtureRows: number;
+  };
+  // 検査が実際に日本開催の行を見ていること（空振りを防ぐ）。
+  expect(out.japan, "日本開催の行が検査に乗っていない").toBeGreaterThan(8);
+  expect(out.total).toBeGreaterThan(5);
+  expect(out.fixtureRows, "合成行が作れていない").toBe(6);
+  expect(
+    out.uncovered,
+    "日本語で打ってもたどれない日本開催の開催地:\n" + out.uncovered.join("\n"),
+  ).toEqual([]);
+  expect(out.misses, "日本語で引いても行が出ない:\n" + out.misses.join("\n")).toEqual([]);
 });
