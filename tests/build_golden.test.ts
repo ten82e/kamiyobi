@@ -8566,6 +8566,9 @@ it("日本語の案内に中国語の略語を混ぜない（SPEC §7）", () =>
     // 日本語の語として成り立たない二字目以上の語（同じ字を使う中華語）。
     "\u53c2\u6570",
     "\u5176\u4ed6",
+    // 同じ運びの別の表記（二字目の文字番号が違う）。第 122 回でこちらの実物が
+    // 案内とコメントに残っていたのに、上の表記しか点検していなくて黙っていた。
+    "\u5176\u5b83",
     "\u6b67",
     // 「新しい」に当たる四字の語は日本語として立たない（第 120 回の手記に混入した）。
     "\u65b0\u7684",
@@ -8587,6 +8590,27 @@ it("日本語の案内に中国語の略語を混ぜない（SPEC §7）", () =>
     for (const word of words) {
       expect(text, `${rel} に中国語の略語「${word}」が混入している`).not.toContain(word);
     }
+    // 点検語は文字番号で書いているので、一文字でも間違えると検査が黙って通る
+    // （第 122 回で、実際に混入していた語の二字目の文字番号を間違えていた）。
+    // 意図した語が実際に点検されていることを、文字番号から組み立てた見本で確かめる。
+    for (const points of [
+      [0x5176, 0x5b83],
+      [0x5176, 0x4ed6],
+      [0x4e0b, 0x62c9],
+      [0x65b0, 0x7684],
+    ]) {
+      const sample = String.fromCharCode.apply(null, points);
+      const label = points.map((c) => "U+" + c.toString(16)).join("+");
+      expect(words, `点検語に ${label} の表記が無い（文字番号の書き間違い？）`).toContain(sample);
+      // 見本の文が実際に点検で落ちることも見る。語列表に有っても、読み方が違いますと
+      // 混入を検出できないので、ここが通って初めて検査が効いていると言える。
+      const sampleText = `見本: ${sample} の混入`;
+      expect(
+        words.some((word) => sampleText.includes(word)),
+        `見本 ${label} を検出できない`,
+      ).toBe(true);
+    }
+
     // 韓国語文字列の混入（第 97 回で動詞の活用形を実際に混入させた。日本語の案内に
     // 出る用事が無いので、ハングルは文字範囲で抑える。ここでは語を引用しない）。
     const hangul = /[\uac00-\ud55c]+/g;
@@ -10197,4 +10221,77 @@ it("並びの比較は表示している暦日を使い、その値を持たな�
   expect(out.remainWide, "残りが表示している暦日から数えていない").toBe("あと 6 日");
   expect(out.remainLegacy).toBe("あと 11 日");
   expect(out.remainNoNaN, "残りに NaN が出ている").toBe(true);
+});
+
+it("印刷物に、条件・件数・日時が残り、画面では見えない（SPEC §7）", () => {
+  /* 印刷は「研究室に貼る・グループ会議で回覧する」用途（スタイルのコメントに書いた需要）。
+   * ところが画面の絞り込み欄は印刷で落ちるため、紙のうえに「どんな条件で絞った一覧か」が
+   * 残っていなかった（2026-09-23 実測: 印刷時に条件を書く箇所はどこにも無い。データ生成日
+   * だけがヘッダーに残る）。受け取った人は収録全体の一覧と取り違える。*/
+  const app = siteRuntime();
+  const describeSrc = jsFunction(app, "describeFilters");
+  const script = [
+    `const DESCRIBE_SRC = ${JSON.stringify(describeSrc)};`,
+    "const DESCRIBE = new Function('return (' + DESCRIBE_SRC + ')')();",
+    "const kind = (k) => ({ abstract: '概要締切', paper: '論文締切' })[k] || k;",
+    "const cat = (c) => ({ net: 'ネットワーク', hpc: '高性能計算' })[c] || c;",
+    "const f = (over, win) => DESCRIBE(Object.assign({ q: '', cats: [], kind: '', rank: '', est: false, domestic: false, online: false, past: false }, over), kind, cat, win || '');",
+    "const nothing = f({});",
+    // 空白だけの検索語は条件にしない（打つ途中の欄で「検索語「」」と出さない）。
+    "const blank = f({ q: '   ' });",
+    "const many = f({ q: '研究会', kind: 'paper', cats: ['net', 'hpc'], domestic: true, online: true, past: true, est: true }, '30日以内');",
+    // ランクは画面に出る等級そのものを書く（内部の番兵を書かない）。
+    "const ranked = f({ rank: 'A*' });",
+    "console.log(JSON.stringify({ nothing, blank, many, ranked }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as Record<string, string>;
+  expect(out.nothing, "何も絞っていないときの書き方が無い").toContain("絞り込みなし");
+  expect(out.blank, "空の検索語を条件にしている").toBe(out.nothing);
+  expect(out.many).toContain("検索語「研究会」");
+  expect(out.many).toContain("種別: 論文締切");
+  expect(out.many).toContain("分野: ネットワーク・高性能計算");
+  expect(out.many).toContain("締切まで: 30日以内");
+  expect(out.many).toContain("推定締切を含める");
+  expect(out.many).toContain("国内研究会・国内シンポジウムのみ");
+  expect(out.many).toContain("オンライン参加可のみ");
+  expect(out.many).toContain("過去の締切も表示");
+  expect(out.ranked).toContain("ランク: A*");
+  // 画面のチェック欄・セレクトと同じ語を書いている（別の名前を付けない）。
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  for (const label of [
+    "推定締切を含める",
+    "過去の締切も表示",
+    "国内研究会・国内シンポジウムのみ",
+    "オンライン参加可のみ",
+  ]) {
+    expect(template, `画面に出ている条件の語がない: ${label}`).toContain(label);
+  }
+
+  // 紙にのこる見出し: 画面では `display: none`（支援技術からもタブ順序からも消す）、
+  // 印刷のときだけ出る。幅解決の補助関数は print を見ないので、節を直接読む。
+  const html = siteHtmlRuntime();
+  const style = html.slice(html.indexOf("<style"), html.indexOf("</style>"));
+  expect(effectiveCss(style, ".print-meta", "display", 1200)).toBe("none");
+  const blocks = cssBlocks(style);
+  const printed = blocks.filter((b) => b.selector === ".print-meta" && /print/.test(b.media || ""));
+  expect(printed.length, "印刷のときに出る規則が無い").toBeGreaterThan(0);
+  expect(printed[0].body, "印刷のときに block になっていない").toContain("display: block");
+  // 表の直前にあること（印刷で表より後ろに落ちると「誰の一覧か」分からない）。
+  expect(
+    template.indexOf('id="printMeta"') < template.indexOf('id="deadlineTableWrap"'),
+    "見出しが表より後ろにある",
+  ).toBe(true);
+  // 印刷の前に入れて、後で消す（画面の DOM に古い条件を残さない）。
+  expect(app).toContain("beforeprint");
+  expect(app).toContain("fillPrintMeta();");
+  expect(app).toContain('$("printMeta")');
+  expect(app, "印刷した日時を残していない").toContain("印刷した日時");
+  expect(app, "データ生成日時を残していない").toContain("generatedAtLabel(genAt)");
+  // てびきが印刷の説明を持っている（押せる場所が無いと分からない）。
+  expect(template).toContain("<dt>印刷</dt>");
 });

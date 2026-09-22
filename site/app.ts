@@ -583,6 +583,42 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return element;
   }
 
+  /* 印刷物に残す条件の書き下ろし。画面の絞り込み欄は印刷では落ちる（研究室に貼る・
+   * グループ会議で回覧する用途 – スタイルのコメントに書いた需要そのもの）なので、
+   * 紙のうえに「どんな条件で絞った一覧か」が無いと、受け取った人は収録全体の一覧と
+   * 取り違える（2026-09-23 実測: 印刷時に条件を書く箇所はどこにも無かった）。
+   * 語は画面のチェック欄・セレクトと同じ物を書く（別の名前を付けない）。
+   * ラベルは呼び出し側から渡す – 検査はこの関数を単位で切り出して動かす。 */
+  function describeFilters(
+    s: {
+      q: string;
+      cats: string[];
+      kind: string;
+      rank: string;
+      est: boolean;
+      domestic: boolean;
+      online: boolean;
+      past: boolean;
+    },
+    kindLabel: (k: string) => string,
+    categoryLabel: (c: string) => string,
+    windowLabel: string,
+  ): string {
+    const out: string[] = [];
+    const query = String(s.q || "").trim();
+    if (query) out.push(`検索語「${query}」`);
+    if (s.kind) out.push(`種別: ${kindLabel(s.kind)}`);
+    if (s.rank) out.push(`ランク: ${s.rank}`);
+    if (s.cats.length) out.push(`分野: ${s.cats.map((c) => categoryLabel(c)).join("・")}`);
+    if (windowLabel) out.push(`締切まで: ${windowLabel}`);
+    if (s.est) out.push("推定締切を含める");
+    if (s.domestic) out.push("国内研究会・国内シンポジウムのみ");
+    if (s.online) out.push("オンライン参加可のみ");
+    if (s.past) out.push("過去の締切も表示");
+    // 何も絞っていないときは「全件」と書く。空欄だと、絞ったのに漏れたのか読めない。
+    return out.length ? out.join(" ／ ") : "絞り込みなし（収録全体の一覧）";
+  }
+
   function valueElement(id: string): HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement {
     const element = $(id);
     if (
@@ -1543,7 +1579,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 表は投稿締切・未来だけを出すので、収録している語でも 0 件になりうる。
    * 「 kamiyobi に無い」と「今出していない」を区別できないと、そこで検索をやめてしまう。
    * 絞り込みをまたいだ再実行はしない（どの条件を外せば出るかと結びつけると、
-   * 1 つ外しても其它の条件で 0 件のときに過剰な約束になる）。 */
+   * 1 つ外しても他の条件で 0 件のときに過剰な約束になる）。 */
   function queryMatchCounts(query: string): { catalog: number; journal: number } {
     const trimmed = query.trim();
     if (!trimmed) return { catalog: 0, journal: 0 };
@@ -3668,13 +3704,40 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   // 印刷時は絞り込み後の全行を描画する。画面は 40 行ずつしか出さないので、
   // この措置が無いと印刷物だけ「直近 40 件」で途中までになる。印刷後に戻す。
   let printExpanded = false;
+  /* 印刷物に「いつのデータで、どんな条件の一覧か」を残す。画面の絞り込み欄は印刷で
+   * 落ちるので、これがないと紙だけ条件の分からない一覧になる（データ生成日はヘッダーに
+   * 残るが、絞り込み条件はどこにも残っていなかった – 2026-09-23 実測）。 */
+  function fillPrintMeta() {
+    const box = $("printMeta");
+    if (!box) return;
+    const genAt = typeof DATA.generated_at === "string" ? DATA.generated_at : "";
+    const winSelect = valueElement("win") as HTMLSelectElement;
+    const opt =
+      winSelect && winSelect.options && winSelect.selectedIndex >= 0
+        ? winSelect.options[winSelect.selectedIndex]
+        : null;
+    const winText = opt ? String(opt.text || opt.textContent || "").trim() : "";
+    const winLabel = state.win && state.win !== "all" ? winText || state.win : "";
+    box.textContent =
+      `この印刷物: ${describeFilters(
+        state,
+        (k) => KIND_LABEL[k] || k,
+        (c) => Recommender.categoryLabelJa(c),
+        winLabel,
+      )}` +
+      ` ／ 表示 ${shown.length} 件 ／ 印刷した日時 ${fmtJst(new Date())} ／ ${generatedAtLabel(genAt)}`;
+  }
   window.addEventListener("beforeprint", () => {
-    if (state.mode !== "deadlines" || drawn >= shown.length) return;
+    fillPrintMeta();
+    if (state.mode !== "deadlines") return;
+    if (drawn >= shown.length) return;
     const target = shown.length;
     while (drawn < target) drawMore();
     printExpanded = true;
   });
   window.addEventListener("afterprint", () => {
+    const box = $("printMeta");
+    if (box) box.textContent = "";
     if (!printExpanded) return;
     printExpanded = false;
     render();

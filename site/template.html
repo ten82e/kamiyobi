@@ -711,6 +711,13 @@ footer {
 footer a { color: var(--accent); text-decoration: none; }
 footer a:hover { text-decoration: underline; }
 
+/* 印刷のときだけ出る見出し。画面では `display: none`（支援技術からもタブ順序からも
+   * 消える – 第 110 回で確認したとおり `pointer-events: none` では消えない）。同じ情報が
+   * 画面の絞り込み欄に出ているので、二重に読ませない。 */
+.print-meta {
+  display: none;
+}
+
 /* 印刷: 締切一覧を研究室に貼る・グループ会議で回覧する需要に応える。
    画面用の操作要素を落として紙で役に立つ情報だけ残し、紙で押せないリンクは URL を印字する。 */
 /* OS の「視差効果を減らす」設定の人。動きを消す。
@@ -753,6 +760,15 @@ footer a:hover { text-decoration: underline; }
   .recommend-only,
   footer .btn-reset { display: none !important; }
   .skip-link { display: none !important; }
+  /* 条件・件数・日時を紙に残す見出し（画面では `display: none`）。 */
+  .print-meta {
+    display: block !important;
+    font-size: 9pt;
+    color: #333;
+    border: 1px solid #bbb;
+    padding: 6px 8px;
+    margin: 0 0 8px;
+  }
   /* 幅せまカード表示のメディアクエリが印刷幅でも当たることがあるため、表として印刷する。 */
   thead { display: table-header-group; }
   tbody tr { display: table-row; }
@@ -930,6 +946,7 @@ footer a:hover { text-decoration: underline; }
     <button type="button" data-sort="rank" onclick="toggleSort('rank')">ランク ↕</button>
   </div>
   <main id="results" tabindex="-1">
+  <div class="print-meta" id="printMeta"></div>
   <div class="tablewrap" id="deadlineTableWrap">
     <table>
       <caption class="only-sr">締切の一覧（日時は JST で出しています）</caption>
@@ -1013,6 +1030,12 @@ footer a:hover { text-decoration: underline; }
         <dd>列の見出し（残り・日時・会議・ランク）を押すと並び替わります。押している列だけが <code>↑</code> / <code>↓</code>（他は <code>↕</code>）なので、今の画面が何の順で並んでいるかを見出しだけで確かめられます。支援技術には、件数といっしょに「並び順: 残り 昇順」のように読まれます（見出しの矢印は読んでも変わらないので）。残りの昇順（既定）と日時の昇順では同じ月の締切をまとめて区切るため、降順にすると月でくくれた行になります。同じ締切日・同じランクの行が並んだときは、表に出る会議名（日本語は読み基準の五十音順）→ 種別（概要・論文）の順でぞろえます。狭い画面（スマートフォンの幅）では列の見出しを消して行をカードにするため、代わりに表の上に <strong>並べ替え</strong> の列を出します（押している列だけ <code>↑</code> / <code>↓</code>）。<code>ランク</code> は評価の<strong>体系名ではなく等級</strong>で並びます（<code>降順</code>がいちばん評価の高い行から。変更前は体系名が先に効いて、降順でも評価の付いていない行が先頭に来ていた）。複数の評価を持つ会議は最良の等級で入り、評価の無い行は降順では末尾に回ります。並び順も URL に残るので、そのまま共有可能です。</dd>
       </div>
       <div>
+        <dt>印刷</dt>
+        <dd>ブラウザの印刷（<code>Ctrl</code> + <code>P</code> など）では、いま絞り込まれた
+        一覧の<strong>全行</strong>が出ます（画面では 40 行ずつしか描かないので、そのままだと
+        印刷物だけ途中までになってしまうためです）。表の上には、条件の書き下ろし・表示件数・
+        印刷した日時（JST）・データ生成日時（JST）が紙に残ります。研究室に貼る・会議で回覧する
+        ときに、条件の分からない一覧にならないためです。ヘッダーの「データ生成」も印刷に残ります。</dd>
         <dt class="only-keyboard">キーボードで一覧を動かす</dt>
         <dd><code>j</code> / <code>k</code>（または <code>↓</code> / <code>↑</code>）で選択行を動かし、<code>Enter</code> で公式ページを開き、<code>d</code> で行の詳細を出します。<code>/</code> で検索欄に飛び、その欄にいるときに<code>Esc</code> を押すと検索語を消さずに欄を出て、選んでいた行にフォーカスが戻ります（<code>Esc</code> は行の詳細を閉じるのにも使います）。選んだ行にはフォーカスも一緒に動くので、支援技術では行の内容が読まれます。<code>/</code> を押すと検索欄に飛び、<code>Esc</code> で詳細を閉じます。入力欄の中ではこれらのキーはただの文字として扱われるので、検索語に <code>j</code> や <code>k</code> を含んでも行は動きません。投稿先を探すモードでは表用の操作は使いません。</dd>
       </div>
