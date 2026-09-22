@@ -2734,6 +2734,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       : recMode
         ? "投稿先を探すには論文情報を入力してください"
         : `${shown.length} 件 / 全 ${rows.length} 件`;
+    // 読み上げ用の一行。`#count` は「のぞく」の内訳まで載せる長い欄なので、そこを
+    // そのまま aria-live にすると 1 打鍵ごとに数十語が流れる（第 88 回で付けて実測）。
+    // 件数と、解決結果・取得状態の短い通知だけをこちらに出す。
+    let cntLive = cnt;
     // 「全 M 件」との差をその場で説明する。内訳は独立に数えているので合計は全件にならない
     // （過去かつ投稿締切以外の行が両方に立つ）ため、「〜をのぞく」の形で書く。
     if (!recMode && !paperMode) {
@@ -2777,34 +2781,56 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         // 黙って条件が変わったように見せない）。
         Recommender.relativeDayNotes(searchQuery, Date.now()),
       );
-      if (synonymNotes.length) cnt += ` ｜ ${synonymNotes.join("・")}`;
+      if (synonymNotes.length) {
+        cnt += ` ｜ ${synonymNotes.join("・")}`;
+        cntLive += ` ｜ ${synonymNotes.join("・")}`;
+      }
     }
-    if (!recMode && droppedKindNotice) cnt += ` ｜ ${droppedKindNotice}`;
-    if (!recMode && state.past && historyStatus === "loading") cnt += " ｜ 全履歴を読み込み中…";
-    if (!recMode && state.past && historyStatus === "error")
+    if (!recMode && droppedKindNotice) {
+      cnt += ` ｜ ${droppedKindNotice}`;
+      cntLive += ` ｜ ${droppedKindNotice}`;
+    }
+    if (!recMode && state.past && historyStatus === "loading") {
+      cnt += " ｜ 全履歴を読み込み中…";
+      cntLive += " ｜ 全履歴を読み込み中…";
+    }
+    if (!recMode && state.past && historyStatus === "error") {
       cnt += " ｜ 全履歴を読み込めませんでした";
+      cntLive += " ｜ 全履歴を読み込めませんでした";
+    }
     if (paperMode) {
       const _lines = Recommender.parsePaperLines(paperText);
       const _auto = _lines.length ? Recommender.autoDetectCats(_lines) : [];
       if (_auto.length && !state.cats.length) {
-        cnt += ` ｜ 分野自動判定: ${_auto.map((k) => catLabel(k)).join("・")}`;
+        const autoNote = ` ｜ 分野自動判定: ${_auto.map((k) => catLabel(k)).join("・")}`;
+        cnt += autoNote;
+        cntLive += autoNote;
       }
       // 意味検索の状態を明示（初回はモデル読込に数秒かかる）
       if (semState === "loading") {
         cnt += " ｜ 意味検索を実行中…";
+        cntLive += " ｜ 意味検索を実行中…";
       } else if (semState === "error") {
         // 失敗理由コードを併記する。publish.ts / 各 error 分岐が設定する診断コードで、
         // 8+通りの失敗が1文言に潰れて原因追跡不能になっていた (#711 の構造要因)。
-        cnt += ` ｜ 意味検索は利用不可（語彙検索のみ・原因: ${semanticReason || "unknown"}）`;
+        const semNote = ` ｜ 意味検索は利用不可（語彙検索のみ・原因: ${semanticReason || "unknown"}）`;
+        cnt += semNote;
+        cntLive += semNote;
       }
     }
     // 「来月」で検索したとき、何月に絞ったのかを利用者が確認できるようにする
     // （相対指定が裏でどう解決されたかを見せないのは誤信を生む）。
     if (!recMode) {
       const note = relativeMonthNote(state.q, searchQuery);
-      if (note) cnt += note;
+      if (note) {
+        cnt += note;
+        cntLive += note;
+      }
     }
     $("count").textContent = cnt;
+    // 読み上げはこちらの短い欄だけ（画面に出す文は `#count` のまま）。
+    const countLive = $("countLive");
+    if (countLive) countLive.textContent = cntLive;
     // CSV 書き出しは締切一覧の絞り込み結果に対してだけ意味がある（推薦モードでは出さない）。
     const exportBtn = $("exportCsv");
     if (exportBtn) {

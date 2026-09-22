@@ -8306,11 +8306,23 @@ it("表の列見出しと件数欄が支援技術に伝わる（SPEC §7）", ()
     expect(attrs, `<th> に scope が無い（${attrs.trim()}）`).toContain('scope="col"');
   }
   // 絞り込みのフィードバックを出す欄は、書き換わったことが分かる形にする。
+  // 読み上げは専用の短い欄に出す（`#count` は「のぞく」の内訳まで載る長い欄なので、
+  // 第 88 回でそのまま aria-live を付けると 1 打鍵ごとに数十語が流れた。第 89 回で分割）。
   for (const probe of [
-    '<span id="count" aria-live="polite">',
+    '<span id="countLive" class="sr-label" aria-live="polite">',
     '<div id="historyStatus" aria-live="polite"',
   ]) {
     expect(template, `支援技術に伝わらない欄がある: ${probe}`).toContain(probe);
+  }
+  expect(template, "長い件数欄そのものを aria-live に戻さない").not.toContain(
+    '<span id="count" aria-live',
+  );
+  // 画面に出す長い内訳（「のぞく」）は読み上げない。件数と状態の通知だけを読み上げる。
+  const runtimeLive = siteRuntime();
+  expect(runtimeLive).toContain("cnt += ` ｜ のぞく");
+  expect(runtimeLive).not.toContain("cntLive += ` ｜ のぞく");
+  for (const note of ["全履歴を読み込み中", "意味検索を実行中", '$("countLive")']) {
+    expect(runtimeLive, `読み上げ欄への書き込みが減っている: ${note}`).toContain(note);
   }
   // 月見出しは列グループの見出し（列見出しと同じ規則になっていること）。
   const runtime = siteRuntime();

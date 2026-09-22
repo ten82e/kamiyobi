@@ -818,8 +818,9 @@ footer a:hover { text-decoration: underline; }
   <!-- Items Counter & Keyboard Shortcuts Hint -->
   <div class="count">
     <!-- 絞り込みのたびに書き換わる唯一のフィードバック（件数・「こう探しました」・
-     0 件のときの案内）。「入力したのに一覧がどう変わったか」を支援技術に伝える。 -->
-    <span id="count" aria-live="polite"></span>
+     0 件のときの案内）。読み上げは上の短い生領域だけに出す（この欄は「のぞく」の
+     内訳まで載るので、全体を aria-live にすると 1 打鍵ごとに数十語が流れる）。 -->
+    <span id="countLive" class="sr-label" aria-live="polite"></span><span id="count"></span>
     <!-- 絞り込んだ結果は表計算へ持ち出して研究室内の予定表に貼れる（BOM 付き UTF-8） -->
     <button id="exportCsv" type="button" class="btn-reset" hidden></button>
     <span class="count-hint">行を選ぶと詳細（公式確認の状態と根拠）<span class="count-kbd" style="font-family: var(--font-mono); font-size: 0.75rem;"> ｜ ショートカット: <kbd>j</kbd>/<kbd>k</kbd> 選択 | <kbd>Enter</kbd> 開く | <kbd>d</kbd> 詳細 | <kbd>Esc</kbd> 閉じる | <kbd>/</kbd> 検索</span></span>
