@@ -2148,7 +2148,7 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     "const droppedKind = [state.kind, droppedKindNotice];",
     "window.location.search = '?rank=A%2A'; readUrl();",
     "const restoredRank = state.rank;",
-    // 既定の並びなら参数を足さない（URL は必要な情報だけ乗せる）。
+    // 既定の並びなら引数を足さない（URL は必要な情報だけ乗せる）。
     "sortKey = DEFAULT_SORT_KEY; sortAsc = true; state.domestic = false; writeUrl();",
     "console.log(JSON.stringify([sent, got, written, droppedKind, restoredRank]));",
   ].join("\n");
@@ -8493,10 +8493,50 @@ it("日本語の案内に中国語の略語を混ぜない（SPEC §7）", () =>
     "\u51fd\u6570",
     "\u5df2\u7ecf",
     "\u8fd9\u91cc",
-    // 簡体字専用の一字目（日本語の新字体 労 U+52B3 / 過 U+904E / 発 U+767A とは別物）。
+    // 簡体字専用の一字目（日本語の新字体・共用漢字と字形が別な物だけ。たとえば日本語の
+    // 「状態」の状や「文章」は正常な日本語なので入れない – 実際に混ぜて検査を落としたり、
+    // 誤検出で検査を信用できなくしたりするのはここの失敗なので、一字ずつ確認して足す）。
     "\u52b3",
     "\u8fc7",
     "\u53d1",
+    "\u5b9e",
+    "\u663e",
+    "\u56fe",
+    "\u5173",
+    "\u7f51",
+    "\u503c",
+    "\u8ba9",
+    "\u4ece",
+    "\u8bf4",
+    "\u8bf7",
+    "\u4e1c",
+    "\u8f66",
+    "\u9a6c",
+    "\u9e1f",
+    "\u9c7c",
+    "\u95e8",
+    "\u957f",
+    "\u98ce",
+    "\u98de",
+    "\u4e66",
+    "\u7535",
+    "\u5bf9",
+    "\u65f6",
+    "\u89c1",
+    "\u89c2",
+    "\u4e49",
+    "\u6c14",
+    "\u534e",
+    "\u79cd",
+    "\u7ebf",
+    "\u672f",
+    "\u8fd0",
+    "\u8fdc",
+    "\u8fb9",
+    "\u5904",
+    "\u4ea7",
+    // 日本語の語として成り立たない二字目以上の語（同じ字を使う中華語）。
+    "\u53c2\u6570",
   ];
   const targets = [
     "README.md",
@@ -9454,4 +9494,25 @@ it("並び替えの状態は読み上げに伝わる（見出しの矢印だけ�
   expect(guide, "てびきを読み上げの語と揃えないと、画面の説明が噓になる").toContain(
     "並び順: 残り 昇順",
   );
+});
+
+it("URL に書く条件は、URL から読みもする（共有画面で条件が消えない・SPEC §7）", () => {
+  /* `writeUrl` は 12 種類の条件を書く。読み側 `readUrl` が 1 つでも忘れていると、
+   * 共有した相手の画面でその条件だけ黙って外れる（画面には「絞り込み済み」らしく
+   * 出てしまう）。両方の関数からキー名を洗って照合する（キーをテスト側に書き写さない）。 */
+  const app = siteRuntime();
+  const keys = (fn: string, re: RegExp) => {
+    const body = jsFunction(app, fn);
+    expect(body, `${fn} が見当たらない（検査が空振り）`).not.toBe("");
+    return new Set(Array.from(body.matchAll(re), (m) => m[1]));
+  };
+  const written = keys("writeUrl", /\.set\("([a-z]+)"/g);
+  const read = keys("readUrl", /\.get\("([a-z]+)"/g);
+  expect(written.size, "URL に書く条件が見当たらない").toBeGreaterThan(6);
+  for (const key of written) {
+    expect(read, `URL には ${key} を書くのに読まない（共有先で条件が消える）`).toContain(key);
+  }
+  // 読むだけで書かないキーは許す（古い URL の受け皿など）が、空いていたら記録する。
+  const onlyRead = Array.from(read).filter((k) => !written.has(k));
+  expect(onlyRead, "読み-only のキーが増えたら意図を確認する").toEqual([]);
 });

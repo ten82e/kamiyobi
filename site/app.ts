@@ -3156,7 +3156,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (state.past) p.set("past", "1");
     if (state.cats.length) p.set("cats", state.cats.join(","));
     // 並び順も URL に入れる。「国内研究会を締切の新しい順で」のような共有が、
-    // 開いた人の画面で元の並びにならないのは惜しい。既定の並びなら参数を足さない。
+    // 開いた人の画面で元の並びにならないのは惜しい。既定の並びなら引数を足さない。
     if (sortKey !== DEFAULT_SORT_KEY) p.set("sort", sortKey);
     if (!sortAsc) p.set("dir", "desc");
     const str = p.toString();
