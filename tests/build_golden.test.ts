@@ -8939,3 +8939,68 @@ it("一致評価の行内展開は、開閉状態を支援技術に伝える（S
   const dtCount = (guide.match(/<dt[ >]/g) || []).length;
   expect(dtCount, "てびきの見出しが減っている").toBe(ddOpen - 1); // 1 項だけ dd を 2 つ持つ
 });
+
+it("閉じた行の詳細は、支援技術からもタブ順序からも消える（SPEC §7）", () => {
+  /* 閉じたドロワーは `opacity: 0` と画面外スライド（`right: -480px`）だけで消していた
+   * （2026-09-23 実測）。`pointer-events: none` はマウス専用で、Tab は素通りしない。
+   * なので閉じている状態で「閉じる」ボタンがタブ順序に残り、見えない箇所にフォーカスが
+   * 飛んでいた。さらに中身は `role="dialog" aria-modal="true"` なので、閉じたまま
+   * ツリーに出ると「ページ全体が背景」として扱われる支援技術がある。 */
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const strip = (block: string) => block.replace(/\/\*[\s\S]*?\*\//g, "");
+
+  const closedStart = template.indexOf(".drawer-backdrop {");
+  expect(closedStart).toBeGreaterThan(0);
+  const closed = strip(template.slice(closedStart, template.indexOf("}", closedStart)));
+  expect(closed, "閉じたドロワーが支援技術から消えない").toContain("visibility: hidden");
+  // フェードアウトを潰さない遅延（閉じる側だけ遅らせる）。
+  expect(closed, "visibility を即時に切り替えて遷移を潰している").toMatch(
+    /visibility 0s linear 0\.[1-9]/,
+  );
+
+  const activeStart = template.indexOf(".drawer-backdrop.active");
+  expect(activeStart).toBeGreaterThan(0);
+  const active = strip(template.slice(activeStart, template.indexOf("}", activeStart)));
+  expect(active, "開いたドロワーが見えない").toContain("visibility: visible");
+  expect(active, "表示に遅れが出て開きが重い").toMatch(/visibility 0s(?![ .\d])/);
+
+  // タブで届く物が全部ドロワーの内側に有ること（＝この CSS でタブ順序も塞がる）。
+  // ドロワーは本文の後ろ（`</footer>` の後）に有るので、そこから後ろを洗う。
+  const drawerStart = template.indexOf('<div class="drawer-backdrop"');
+  expect(drawerStart).toBeGreaterThan(0);
+  const tail = template.slice(drawerStart);
+  const drawerBlock = tail.slice(
+    0,
+    tail.indexOf("<script") > 0 ? tail.indexOf("<script") : tail.length,
+  );
+  expect(
+    drawerBlock.match(/<button/g) || [],
+    "ドロワーに閉じる手段が無い（検査が空振り）",
+  ).toHaveLength(1);
+  const rest = tail.slice(drawerBlock.length);
+  expect(rest.match(/<button/g) || [], "ドロワーの後ろに閉じた状態で残る操作がある").toEqual([]);
+  // ダイアログとしての行儀（閉じたときに消えることが前提の属性）。
+  expect(template).toContain('role="dialog"');
+  expect(template).toContain('aria-modal="true"');
+
+  // 実装は `.active` を外すだけで閉じる（CSS の可視性が効く形）。
+  const app = siteRuntime();
+  const script = [
+    "(async () => {",
+    "const touched = [];",
+    "const el = (id) => ({ id, classList: { remove: (c) => touched.push([id, 'remove', c]),",
+    "  add: (c) => touched.push([id, 'add', c]) } });",
+    `const CLOSE_SRC = ${JSON.stringify(jsFunction(app, "closeDrawer"))};`,
+    'const closeDrawer = new Function("$", "window", "return (" + CLOSE_SRC + ")")(el, {});',
+    "closeDrawer();",
+    "console.log(JSON.stringify(touched));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const touched = JSON.parse(proc.stdout.trim().split("\n").pop() || "[]");
+  expect(touched).toContainEqual(["drawerBackdrop", "remove", "active"]);
+});

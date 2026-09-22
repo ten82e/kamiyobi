@@ -640,9 +640,19 @@ tr.detail-row td {
   z-index: 100;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease;
+  /* 閉じている間は支援技術からもタブ順序からも消す（`pointer-events: none` は
+     マウス専用で、Tab は素通りしない。2026-09-23 実測: 閉じた状態の「閉じる」ボタンが
+     タブで届き、`aria-modal="true"` の行儀の良さを失っていた）。
+     フェードアウトを潰さないよう、可視化は遅延なし・非可視化は遷移の後に遅らせる。 */
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0s linear 0.2s;
 }
-.drawer-backdrop.active { opacity: 1; pointer-events: auto; }
+.drawer-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+  transition: opacity 0.2s ease, visibility 0s;
+}
 .drawer {
   position: fixed;
   top: 0; right: -480px; width: 440px; max-width: 90vw; height: 100vh;
