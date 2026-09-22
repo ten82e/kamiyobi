@@ -2524,6 +2524,50 @@ const Recommender = (() => {
    * `nsdi27` 0 件 / `NSDI 2027` 6 件）。略称と年を、それぞれ別の組として要求する。
    * 語尾の数字は 2 桁（直近の年を略して書く流儀）と 4 桁の両方を受け、両方の表記を
    * 年の組に入れる（hay は `2027` と書くので `27` だけの照合では当たらない）。 */
+  /* 日付を**数字だけ**の表記で打つ人に合わせる。表の行には暦日の日本語形
+   * （`2026年8月22日` と `8月22日`、月は `2026年8月` と `8月`）が入っているので、
+   * `2026-12-25` `2026/12/25` `12/25` `12-25` `12.25` `2026-12` を同じ組に入れる。
+   * 年を打った人はその年限定と見る（年なしの暦日は足さない）。
+   * 変更前はこれらがすべて 0 件だった（2026-09-23 実測）。
+   * 月・日の範囲外（`13/45` など）は日付として扱わない。会議名や号数の数字の取り合わせを
+   * 別物に解釈して当たり方を狭めるより、そのままの部分一致に残すほうがましだから。 */
+  const DATE_WITH_YEAR_TOKEN = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/;
+  const DATE_MONTH_DAY_TOKEN = /^(\d{1,2})[-/.](\d{1,2})$/;
+  const DATE_YEAR_MONTH_TOKEN = /^(\d{4})[-/.](\d{1,2})$/;
+
+  function calendarDateGroups(token: string): string[] | null {
+    if (!/^\d/.test(token)) return null;
+    const withYear = DATE_WITH_YEAR_TOKEN.exec(token);
+    if (withYear) {
+      const year = Number(withYear[1]);
+      const month = Number(withYear[2]);
+      const day = Number(withYear[3]);
+      if (!isCalendarMonthDay(month, day)) return null;
+      // 年まで打っているのに `8月22日`（年なし）も足すと、別年の同じ暦日が混ざって
+      // 精密さを失う（実測で 14 件中 4 件が別年だった）。年の付いた形だけにする。
+      return [`${year}年${month}月${day}日`];
+    }
+    const monthDay = DATE_MONTH_DAY_TOKEN.exec(token);
+    if (monthDay) {
+      const month = Number(monthDay[1]);
+      const day = Number(monthDay[2]);
+      if (!isCalendarMonthDay(month, day)) return null;
+      return [`${month}月${day}日`];
+    }
+    const yearMonth = DATE_YEAR_MONTH_TOKEN.exec(token);
+    if (yearMonth) {
+      const year = Number(yearMonth[1]);
+      const month = Number(yearMonth[2]);
+      if (month < 1 || month > 12) return null;
+      return [`${year}年${month}月`];
+    }
+    return null;
+  }
+
+  function isCalendarMonthDay(month: number, day: number): boolean {
+    return month >= 1 && month <= 12 && day >= 1 && day <= 31;
+  }
+
   const ABBREV_YEAR_TOKEN = /^([a-z]{2,})(\d{2}|\d{4})$/;
 
   function abbrevYearGroups(token: string): string[][] | null {
@@ -2587,6 +2631,14 @@ const Recommender = (() => {
       const relative = relativeDayGroups(token, now);
       if (relative) {
         relative.forEach((name) => {
+          if (group.indexOf(name) < 0) group.push(name);
+        });
+      }
+      // 数字だけの入力（`12/25` `2026-12-25` `2026-12`）は、hay に出る暦日の日本語形と
+      // 同じ組に入れる。暦日への解決は月日そのものなので、日付の語とは違い説明は不要。
+      const calendar = calendarDateGroups(token);
+      if (calendar) {
+        calendar.forEach((name) => {
           if (group.indexOf(name) < 0) group.push(name);
         });
       }

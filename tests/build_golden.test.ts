@@ -2445,6 +2445,10 @@ const SEARCH_CANON = (() => {
     ["ONLINE_VENUE_FALSE_POSITIVES", /const ONLINE_VENUE_FALSE_POSITIVES = [^\n]*;/],
     ["QUERY_SYNONYMS_JA", /const QUERY_SYNONYMS_JA[\s\S]*?\];/],
     ["ABBREV_YEAR_TOKEN", /const ABBREV_YEAR_TOKEN = [^\n]*;/],
+    // 数字だけの入力（`12/25` `2026-12`）を暦日へ解決するための定義。
+    ["DATE_WITH_YEAR_TOKEN", /const DATE_WITH_YEAR_TOKEN = [^\n]*;/],
+    ["DATE_MONTH_DAY_TOKEN", /const DATE_MONTH_DAY_TOKEN = [^\n]*;/],
+    ["DATE_YEAR_MONTH_TOKEN", /const DATE_YEAR_MONTH_TOKEN = [^\n]*;/],
     // 英字語の語境界照合（開催地の語は語全体で当てる）が使う定義。
     ["LATIN_TERM_TOKEN", /const LATIN_TERM_TOKEN = [^\n]*;/],
     ["wholeWordLatinTerms", /let wholeWordLatinTerms[^\n]*;/],
@@ -2465,6 +2469,8 @@ const SEARCH_CANON = (() => {
       "queryTokens",
       "querySynonymMap",
       "abbrevYearGroups",
+      "isCalendarMonthDay",
+      "calendarDateGroups",
       "offsetCalendarDay",
       "weekDayTermsJa",
       "relativeDayGroups",
@@ -6107,4 +6113,64 @@ it("ビルド後の照合式は英字語を語の途中では当てない（SPEC
   expect(out.vision).toEqual([0, 0, 0, 0, 1]);
   // 1〜2 文字は従来どおり前後の境界を見る。
   expect(out.sc).toEqual([0, 0, 0, 0, 0]);
+});
+
+it("数字で打った日付が、暦日の日本語表記と同じ行に当たる（SPEC §7）", () => {
+  /* 一覧の絞り込みはビルド後の `recommender.js` を通る。検査用のカタログの日付をそのまま
+   * 数字表記（`8/22`・`2026/8/22`）に直して、日本語表記（`8月22日`）と同じ行集合になることを
+   * 見る。固定の日付を書くと、このビルドにその日が無いときに空振りで通ってしまうため、
+   * 実際に締切のある日を選ぶ。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    // JST の暦日で最多数の行を持つ日を使う。
+    "const jst = (t) => new Date(t + 9 * 60 * 60 * 1000);",
+    "const counts = new Map();",
+    "rows.forEach((r) => {",
+    "  if (Number.isFinite(r.t)) {",
+    "    const d = jst(r.t);",
+    "    const k = `${d.getUTCFullYear()}-${d.getUTCMonth() + 1}-${d.getUTCDate()}`;",
+    "    counts.set(k, (counts.get(k) || 0) + 1);",
+    "  }",
+    "});",
+    "const [year, month, day] = [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0].split('-');",
+    "const keys = (q) => {",
+    "  const m = Recommender.searchMatcher(q, now);",
+    "  return rows.filter((r) => m(r.hay)).map((r) => r.conf.key + '@' + r.ed.year + '@' + r.kind).sort();",
+    "};",
+    "const ja = keys(`${month}月${day}日`);",
+    "const jaYear = keys(`${year}年${month}月${day}日`);",
+    "console.log(JSON.stringify({",
+    "  date: `${year}/${month}/${day}`,",
+    "  sameMonthDay: JSON.stringify(keys(`${month}/${day}`)) === JSON.stringify(ja),",
+    "  sameMonthDayDash: JSON.stringify(keys(`${month}-${day}`)) === JSON.stringify(ja),",
+    "  sameWithYear: JSON.stringify(keys(`${year}/${month}/${day}`)) === JSON.stringify(jaYear),",
+    "  sameYearMonth: JSON.stringify(keys(`${year}-${month}`)) === JSON.stringify(keys(`${year}年${month}月`)),",
+    "  hits: ja.length,",
+    "  invalidUntouched: JSON.stringify(Recommender.queryTokenGroups('13/45', now)),",
+    "}));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 120_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    date: string;
+    sameMonthDay: boolean;
+    sameMonthDayDash: boolean;
+    sameWithYear: boolean;
+    sameYearMonth: boolean;
+    hits: number;
+    invalidUntouched: string;
+  };
+  expect(out.hits, `検査用カタログに ${out.date} の締切が無い`).toBeGreaterThan(0);
+  expect(out.sameMonthDay, `${out.date} を「M/D」で引くと行集合が違う`).toBe(true);
+  expect(out.sameMonthDayDash, `${out.date} を「M-D」で引くと行集合が違う`).toBe(true);
+  expect(out.sameWithYear, `${out.date} を「Y/M/D」で引くと行集合が違う`).toBe(true);
+  expect(out.sameYearMonth, `${out.date} を「Y-M」で引くと行集合が違う`).toBe(true);
+  // ありえない日付は展開しない（会議名の数字の取り合わせを壊さない）。
+  expect(out.invalidUntouched).toBe('[["13/45"]]');
 });

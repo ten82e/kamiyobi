@@ -4765,3 +4765,59 @@ describe("英字の語は語境界で当てる（語の途中での誤爆を防�
     expect(hit("sc", "supercomputing sc 26 st. louis, usa")).toBe(true);
   });
 });
+
+describe("日付を数字で打つ（12/25・2026-12-25・2026-12）", () => {
+  const NOW = Date.parse("2026-08-09T00:00:00Z");
+  // hay は実データと同じ形。暦日は日本語形が年あり・年なしの両方で入っている。
+  const rows = [
+    {
+      conf: { key: "sc26", title: "SC", editions: [] },
+      hay: "sc supercomputing 2026年8月 8月 2026年8月22日 8月22日",
+    },
+    {
+      conf: { key: "sc25", title: "SC", editions: [] },
+      hay: "sc supercomputing 2025年8月 8月 2025年8月22日 8月22日",
+    },
+    {
+      conf: { key: "icde", title: "ICDE", editions: [] },
+      hay: "icde 2026年12月 12月 2026年12月25日 12月25日",
+    },
+  ];
+  const hits = (q: string) => {
+    const m = R.searchMatcher(q, NOW);
+    return rows.filter((r) => m(r.hay)).map((r) => String(r.conf.key));
+  };
+
+  it("月日の入力は暦日の日本語形と同じ行に届く", () => {
+    expect(hits("8/22")).toEqual(["sc26", "sc25"]);
+    expect(hits("8月22日")).toEqual(["sc26", "sc25"]);
+    expect(hits("8-22")).toEqual(hits("8月22日"));
+    expect(hits("8.22")).toEqual(hits("8月22日"));
+    expect(hits("12/25")).toEqual(["icde"]);
+    expect(hits("12月25日")).toEqual(["icde"]);
+  });
+
+  it("年を打った人はその年限定（別年の同じ暦日を混ぜない）", () => {
+    expect(hits("2026-8-22")).toEqual(["sc26"]);
+    expect(hits("2026年8月22日")).toEqual(["sc26"]);
+    expect(hits("2026/08/22")).toEqual(["sc26"]);
+    expect(hits("2026-12")).toEqual(["icde"]);
+    expect(hits("2026年12月")).toEqual(["icde"]);
+  });
+
+  it("暦日としてありえない数字は日付として扱わない", () => {
+    // 会議名や号数の数字の取り合わせを別物に解釈しない（そのままの部分一致に残す）。
+    expect(R.queryTokenGroups("13/45", NOW)).toEqual([["13/45"]]);
+    expect(R.queryTokenGroups("2026-13", NOW)).toEqual([["2026-13"]]);
+    expect(R.queryTokenGroups("0/12", NOW)).toEqual([["0/12"]]);
+    expect(hits("13/45")).toEqual([]);
+  });
+
+  it("入力そのものも組に残る（hay に数字表記で書かれる行を落とさない）", () => {
+    const glued = [
+      { conf: { key: "x", title: "X", editions: [] }, hay: "workshop 2026-03-04 submission" },
+    ];
+    const m = R.searchMatcher("2026-03-04", NOW);
+    expect(glued.filter((r) => m(r.hay)).map((r) => r.conf.key)).toEqual(["x"]);
+  });
+});
