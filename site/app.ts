@@ -2758,7 +2758,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const parts: string[] = [];
       if (hidden.past) parts.push(`過去の締切 ${hidden.past} 件`);
       if (hidden.kind) parts.push(`投稿締切以外の種別 ${hidden.kind} 件`);
-      if (hidden.est) parts.push(`推定 ${hidden.est} 件`);
+      // 「推定」の語は一覧の検索でも引ける（`推定` バッジの語を hay に入れている）が、
+      // 既定ではここで行が落ちたままなので、出し方を同じ行に書く。
+      if (hidden.est) parts.push(`推定 ${hidden.est} 件（「推定締切を含める」で出ます）`);
       // 国内チェックで消えた行は「国内研究会ではない」だけの理由で落ちている。
       // 日本開催の国際会議もここに入るため、件数だけ出しておかないと検索をやめてしまう。
       if (hidden.window && state.win !== "all") {

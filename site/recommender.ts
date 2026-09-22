@@ -1859,6 +1859,24 @@ const Recommender = (() => {
     journal: "常時受付",
   };
 
+  /* 締切セル・CSV・一覧の検索に出す**状態の語**をここで一本化する。
+   * 画面は `推定` のバッジを出し、CSV にも同じ語を書いているのに、検索用の文字列
+   * （hay）に入れていなかったため、**「推定」と打つと収録 134 件が 1 件も引けなかった**
+   * （2026-09-23 実測。`再確認待ち` `要確認` も同じ）。画面に出る語は検索でも引ける、
+   * という規則を関数1つで保つ。 */
+  function statusBadgeWords(ed: object, dl: object): string[] {
+    // `needs_reconfirm` と `verification` は型に生えていない上流由来の欄なので、
+    // ここでは広く取る（2026-09-23 時点で収録カタログには 0 行。出た日に検索できることが
+    // 目的で、語だけ先行して置いておく）。
+    const e = ed as Record<string, unknown>;
+    const d = dl as Record<string, unknown>;
+    return [
+      e.estimated ? "推定" : "",
+      d.needs_reconfirm ? "再確認待ち" : "",
+      d.verification === "unverified" ? "要確認" : "",
+    ].filter(Boolean);
+  }
+
   function deadlinesToCsv(
     rows: readonly Record<string, unknown>[] | null | undefined,
     nowMs: number,
@@ -1895,13 +1913,7 @@ const Recommender = (() => {
       if (kind !== "journal" && Number.isFinite(t)) {
         left = String(Math.floor((t - nowMs) / 86400000));
       }
-      const status = [
-        ed.estimated ? "推定" : "",
-        dl.needs_reconfirm ? "再確認待ち" : "",
-        dl.verification === "unverified" ? "要確認" : "",
-      ]
-        .filter(Boolean)
-        .join("・");
+      const status = statusBadgeWords(ed, dl).join("・");
       const place = placeJa(ed.place) || String(ed.place || "");
       lines.push(
         [
@@ -3204,7 +3216,7 @@ const Recommender = (() => {
             tags: conf.tags || [],
             rankPairs,
             hay: searchNormalize(
-              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${unconfirmedSearchTerms(ed, rankPairs)} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`,
+              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${unconfirmedSearchTerms(ed, rankPairs)} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`,
             ),
             dupLabel: dl.comment || "",
           });

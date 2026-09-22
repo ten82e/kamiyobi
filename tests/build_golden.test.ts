@@ -6174,3 +6174,51 @@ it("数字で打った日付が、暦日の日本語表記と同じ行に当た�
   // ありえない日付は展開しない（会議名の数字の取り合わせを壊さない）。
   expect(out.invalidUntouched).toBe('[["13/45"]]');
 });
+
+it("画面に出る状態の語（推定）が一覧の検索でも引ける（SPEC §7）", () => {
+  /* 締切セルに `推定` のバッジを出し、CSV にも同じ語を書いていたのに、検索用の文字列に
+   * 入れていなかったため「推定」で 1 件も引けなかった（2026-09-23 実測: 収録 134 件が 0 件）。
+   * 画面に出る語は検索でも引ける、をビルド後の成果物で確認する。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const m = Recommender.searchMatcher('推定', now);",
+    "const hit = rows.filter((r) => m(r.hay)).map((r) => r.conf.key + '@' + r.ed.year + '@' + r.kind).sort();",
+    "const flagged = rows",
+    "  .filter((r) => r.ed.estimated === true)",
+    "  .map((r) => r.conf.key + '@' + r.ed.year + '@' + r.kind)",
+    "  .sort();",
+    // バッジ語を共有していること: 推定行の hay と CSV の状態欄が同じ語を書く。
+    "const est = rows.find((r) => r.ed.estimated === true);",
+    "const csv = est ? Recommender.deadlinesToCsv([est], now) : '';",
+    "console.log(JSON.stringify({",
+    "  flagged: flagged.length,",
+    "  sameSet: JSON.stringify(hit) === JSON.stringify(flagged),",
+    "  hayHasWord: est ? String(est.hay).includes('推定') : false,",
+    "  csvHasWord: csv.includes('推定'),",
+    "  noFalsePositive: rows.filter((r) => !r.ed.estimated && String(r.hay).includes('推定')).length,",
+    "}));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 120_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    flagged: number;
+    sameSet: boolean;
+    hayHasWord: boolean;
+    csvHasWord: boolean;
+    noFalsePositive: number;
+  };
+  expect(out.flagged, "検査用カタログに推定の行が無い").toBeGreaterThan(0);
+  expect(out.sameSet, "「推定」で引ける行と推定バッジの行が違う").toBe(true);
+  expect(out.hayHasWord, "推定行の検索用文字列に「推定」が無い").toBe(true);
+  expect(out.csvHasWord, "CSV の状態欄と検索の語がズレている").toBe(true);
+  expect(out.noFalsePositive, "推定でない行が「推定」で当たる").toBe(0);
+  // 件数欄は、落ちた行の出し方まで同じ行に書く（回復経路を検索語から探させない）。
+  const app = siteRuntime("app.js");
+  expect(app).toContain("件（「推定締切を含める」で出ます）");
+});
