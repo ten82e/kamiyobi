@@ -711,6 +711,7 @@ footer a:hover { text-decoration: underline; }
         <button id="cancelPdf" type="button" hidden>PDF読み込みをキャンセル</button>
       </div>
       <div style="font-size: 0.7rem; color: var(--muted); margin-top: 2px;">PDF は先頭3ページのタイトル・概要・キーワードだけを読み取ります。抽出結果は編集してから推薦できます。</div>
+      <div style="font-size: 0.7rem; color: var(--muted); margin-top: 2px;">共有用URLには論文のタイトル・概要を含めません。未発表の原稿がリンクや閲覧履歴に残るためです。共有されるのはモードと絞り込みだけなので、リンクを受け取った側には同じ情報を入力してもらってください。</div>
       <div style="display: grid; gap: 8px; margin-top: 8px;">
         <label>投稿予定タイトル<input id="paperPrimaryTitle" type="text" placeholder="投稿予定論文のタイトル"></label>
         <label>投稿予定概要<textarea id="paperPrimaryAbstract" rows="4" placeholder="投稿予定論文の概要"></textarea></label>

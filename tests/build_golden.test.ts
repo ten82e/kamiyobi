@@ -5600,3 +5600,26 @@ it("同じ締切時刻の行は表に出る会議名と種別で並ぶ（SPEC §
   expect(out.deterministic, "入力順で表の並びが変わる").toBe(true);
   expect(out.reversed, "降順が昇順の逆順になっていない").toBe(true);
 });
+
+it("共有URLに論文の本文を載せず、そのことを画面で伝える（SPEC §10）", () => {
+  const app = siteRuntime("app.js");
+  const html = siteHtmlRuntime();
+  /* URL に書き出すのはモードと絞り込みだけ。論文のタイトル・概要・キーワードを
+   * クエリに載せると、未発表の原稿がリンク・チャットプレビュー・閲覧履歴・サーバログに
+   * 残る。将来「共有が復元されない」という報告で足されないよう、不変条件として固定する。 */
+  const writeUrl = jsFunction(app, "writeUrl");
+  const readUrl = jsFunction(app, "readUrl");
+  expect(writeUrl).toContain('p.set("mode", state.mode)');
+  expect(writeUrl.toLowerCase()).not.toMatch(/paper|abstract|keyword/);
+  expect(readUrl.toLowerCase()).not.toMatch(/paper|abstract|keyword/);
+  /* 論文の本文が入らないことは、気づかなければ「リンクが壊れた」に見える。
+   * 入力する場所と、空のときに出る案内の両方に書く。 */
+  expect(html).toContain("共有用URLには論文のタイトル・概要を含めません");
+  expect(app).toContain("リンクで開いた場合はここが空になります");
+  // 案内は推薦モードのpanelに出す（てびきは推薦画面では畳まれるため、あてにできない）。
+  const panel = html.slice(
+    html.indexOf('class="recommend-only"'),
+    html.indexOf('id="recommendationCards"'),
+  );
+  expect(panel).toContain("共有用URLには論文のタイトル・概要を含めません");
+});

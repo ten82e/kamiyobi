@@ -2641,7 +2641,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (!lines.length) {
       line(
         cards,
-        "投稿予定論文のタイトル・概要・PDF/TXTを入力してください。",
+        // 共有リンクで開いた人は、ここが空のままになる（論文の本文をURLに載せないため）。
+        // 「リンクが壊れた」と受け取られると、そこで操作が止まる。
+        "投稿予定論文のタイトル・概要・PDF/TXTを入力してください。リンクで開いた場合はここが空になります（論文の本文はURLに載せません）。",
         "recommendation-card",
       );
       return;
