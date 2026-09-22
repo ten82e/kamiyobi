@@ -283,7 +283,20 @@ header {
   align-items: flex-end;
 }
 .field { display: flex; flex-direction: column; gap: 6px; }
-.field > span { font-size: 0.78rem; color: var(--muted); font-weight: 500; }
+.field > span, .field > label { font-size: 0.78rem; color: var(--muted); font-weight: 500; }
+/* 画面には出さないが支援技術には渡すラベル（検索欄のように見出しを置かない場所用の
+   定番の型）。`display: none` と違い、支援技術から消えない。 */
+.sr-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
 
 .search-wrap {
   flex: 1 1 280px;
@@ -733,18 +746,21 @@ footer a:hover { text-decoration: underline; }
 
     <div class="row deadline-only" style="margin-bottom: 14px;">
       <div class="search-wrap">
+        <!-- 検索欄は見出しを置いていない（placeholder だけ）。打つと placeholder は
+             消えるので、支援技術用にラベルを置く。 -->
+        <label for="q" class="sr-label">検索</label>
         <input type="search" id="q" placeholder="会議名・分野・開催地で検索（例: NSDI、ネットワーク、おきなわ、国内）...">
       </div>
       <div class="field">
-        <span>種別</span>
+        <label for="kind">種別</label>
         <select id="kind"></select>
       </div>
       <div class="field">
-        <span>ランク</span>
+        <label for="rank">ランク</label>
         <select id="rank"></select>
       </div>
       <div class="field">
-        <span>締切まで</span>
+        <label for="win">締切まで</label>
         <select id="win" title="締切日からの日数で絞ります（開催日ではありません）。">
           <option value="all">かまわない</option>
           <option value="7d">7 日以内</option>
@@ -801,12 +817,14 @@ footer a:hover { text-decoration: underline; }
 
   <!-- Items Counter & Keyboard Shortcuts Hint -->
   <div class="count">
-    <span id="count"></span>
+    <!-- 絞り込みのたびに書き換わる唯一のフィードバック（件数・「こう探しました」・
+     0 件のときの案内）。「入力したのに一覧がどう変わったか」を支援技術に伝える。 -->
+    <span id="count" aria-live="polite"></span>
     <!-- 絞り込んだ結果は表計算へ持ち出して研究室内の予定表に貼れる（BOM 付き UTF-8） -->
     <button id="exportCsv" type="button" class="btn-reset" hidden></button>
     <span class="count-hint">行を選ぶと詳細（公式確認の状態と根拠）<span class="count-kbd" style="font-family: var(--font-mono); font-size: 0.75rem;"> ｜ ショートカット: <kbd>j</kbd>/<kbd>k</kbd> 選択 | <kbd>Enter</kbd> 開く | <kbd>d</kbd> 詳細 | <kbd>Esc</kbd> 閉じる | <kbd>/</kbd> 検索</span></span>
   </div>
-  <div id="historyStatus" hidden style="padding: 0 0 12px; text-align: center; color: var(--muted);">
+  <div id="historyStatus" aria-live="polite" hidden style="padding: 0 0 12px; text-align: center; color: var(--muted);">
     <span id="historyStatusText"></span>
     <button id="historyRetry" type="button" hidden>過去の締切を再試行</button>
   </div>
@@ -826,13 +844,13 @@ footer a:hover { text-decoration: underline; }
     <table>
       <thead>
         <tr>
-          <th tabindex="0" aria-sort="ascending" data-sort="rem" onclick="toggleSort('rem')" title="ここを押すと「残り」の昇順・降順を切り替えます">残り ↕
-          <th tabindex="0" aria-sort="none" data-sort="date" onclick="toggleSort('date')" title="ここを押すと「日時（JST）」の昇順・降順を切り替えます">日時（JST） ↕
-          <th tabindex="0" aria-sort="none" data-sort="conf" onclick="toggleSort('conf')" title="ここを押すと「会議」の昇順・降順を切り替えます">会議 ↕
-          <th>種別</th>
-          <th tabindex="0" aria-sort="none" data-sort="rank" onclick="toggleSort('rank')" title="ここを押すと「ランク」の昇順・降順を切り替えます">ランク ↕
-          <th>会期</th>
-          <th>開催地</th>
+          <th scope="col" tabindex="0" aria-sort="ascending" data-sort="rem" onclick="toggleSort('rem')" title="ここを押すと「残り」の昇順・降順を切り替えます">残り ↕
+          <th scope="col" tabindex="0" aria-sort="none" data-sort="date" onclick="toggleSort('date')" title="ここを押すと「日時（JST）」の昇順・降順を切り替えます">日時（JST） ↕
+          <th scope="col" tabindex="0" aria-sort="none" data-sort="conf" onclick="toggleSort('conf')" title="ここを押すと「会議」の昇順・降順を切り替えます">会議 ↕
+          <th scope="col">種別</th>
+          <th scope="col" tabindex="0" aria-sort="none" data-sort="rank" onclick="toggleSort('rank')" title="ここを押すと「ランク」の昇順・降順を切り替えます">ランク ↕
+          <th scope="col">会期</th>
+          <th scope="col">開催地</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>

@@ -8292,3 +8292,79 @@ it("操作できる箇所に焦点の目印があり、隠した制御が操作�
     expect(css, `焦点の目印の規則に ${sel} が無い`).toContain(sel);
   }
 });
+
+it("表の列見出しと件数欄が支援技術に伝わる（SPEC §7）", () => {
+  /* 列見出しの `<th>` に `scope` が無く、月見出し側は `scope="colgroup"` を使って
+   * いた（2026-09-23 実測）。支援技術では 478 行のセルがどの列のものか伝えられない。
+   * また絞り込みのたびに書き換わる件数欄（`#count`）と履歴状態（`#historyStatus`）に
+   * `aria-live` が無く、**入力したのに画面がどう変わったか**が黙って入れ替わっていた。 */
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const head = template.slice(template.indexOf("<thead>"), template.indexOf("</thead>"));
+  const ths = Array.from(head.matchAll(/<th\b([^>]*)>/g));
+  expect(ths.length).toBeGreaterThanOrEqual(7);
+  for (const [, attrs] of ths) {
+    expect(attrs, `<th> に scope が無い（${attrs.trim()}）`).toContain('scope="col"');
+  }
+  // 絞り込みのフィードバックを出す欄は、書き換わったことが分かる形にする。
+  for (const probe of [
+    '<span id="count" aria-live="polite">',
+    '<div id="historyStatus" aria-live="polite"',
+  ]) {
+    expect(template, `支援技術に伝わらない欄がある: ${probe}`).toContain(probe);
+  }
+  // 月見出しは列グループの見出し（列見出しと同じ規則になっていること）。
+  const runtime = siteRuntime();
+  expect(runtime).toContain('th.scope = "colgroup"');
+});
+
+it("絞り込みの各欄に名前があり、支援技術から消していない（SPEC §7）", () => {
+  /* 種別・ランク・締切までの見出しはただの `<span>` で、`<label for>` では無かった
+   * （2026-09-23 実測）。支援技術では 3 つの下拉が「すべて」としか読めず、どれが
+   * 種別でどれがランクか分からない。検索欄は見出し自体を置いていなかった
+   * （placeholder だけ。打つと消える）。 */
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const body = template.slice(template.indexOf("<body"));
+  const controls = Array.from(body.matchAll(/<(?:select|input|textarea)\b[^>]*>/g)).map(
+    (m) => m[0],
+  );
+  expect(controls.length).toBeGreaterThanOrEqual(12);
+  const labelled = new Set(
+    Array.from(body.matchAll(/<label\b[^>]*\bfor="([^"]+)"/g)).map((m) => m[1]),
+  );
+  const ids = new Set(Array.from(body.matchAll(/\bid="([^"]+)"/g)).map((m) => m[1]));
+  // ラベルで囲う型（`<label class="check"><input …></label>`）も名前を持つ。
+  // タグ文字列だけ見ても分からないので、本文上の位置の前後を見て判定する。
+  const wrappedInLabel = (id: string) => {
+    const at = body.indexOf(`id="${id}"`);
+    if (at < 0) return false;
+    return body.lastIndexOf("<label", at) > body.lastIndexOf("</label>", at);
+  };
+  for (const tag of controls) {
+    const id = /\bid="([^"]+)"/.exec(tag)?.[1] || "";
+    if (!id) continue;
+    // 隠れた保持用（`paperText` など）やファイル選択は、ここでの点検対象から除く。
+    if (/\shidden\b|type="hidden"|type="file"/.test(tag)) continue;
+    const hasName = labelled.has(id) || /aria-label=|placeholder=/.test(tag) || wrappedInLabel(id);
+    // 下拉と検索欄は「名前がある」だけでは足りない（placeholder は打つと消える）。
+    const needsLabel = /<select|type="search"/.test(tag);
+    if (needsLabel) {
+      expect(
+        labelled.has(id),
+        `id="${id}" に label[for] が無い（支援技術に名前が伝わらない）`,
+      ).toBe(true);
+    } else {
+      // チェックボックスはラベルで囲われている（`<label class="check">`）。
+      expect(hasName || labelled.has(id), `id="${id}" に名前が無い`).toBe(true);
+    }
+  }
+  // `for` が居ない id を指していると、名前もクリックでの焦点も静かに切れる。
+  for (const target of labelled) {
+    expect(ids.has(target), `label[for="${target}"] が対応する欄を持たない`).toBe(true);
+  }
+  // 見えないラベルは `display: none` ではなく clip で消す（第 87 回と同じ教訓）。
+  const sr = template.slice(template.indexOf(".sr-label {"));
+  expect(sr.slice(0, 260)).toContain("clip-path:");
+  expect(sr.slice(0, 260)).not.toContain("display: none");
+  // 画面に出る見出しは従来どおりスタイルが当たる（見た目を壊していない）。
+  expect(template).toContain(".field > span, .field > label");
+});
