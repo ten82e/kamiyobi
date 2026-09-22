@@ -1190,7 +1190,8 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
 
     it("常時受付ジャーナルと空入力を壊さない", () => {
       const journal = R.deadlinesToCsv([rowOf({ kind: "journal", t: Number.NaN })], now);
-      expect(journal).toContain("随時受付,");
+      // 日時セルの語は種別ラベルと同じ `常時受付`（行の中で 2 つの名前を見せない）。
+      expect(journal).toContain("常時受付,");
       expect(R.deadlinesToCsv([], now)).toBe(
         "締切,公式表記,残り日数,会議,種別,ラウンド,CCF,CORE,THCPL,会期,開催地,状態,URL\r\n",
       );
@@ -4922,5 +4923,80 @@ describe("参加形式の語（オンライン参加可・ハイブリッド）�
     ]);
     // 語のかけ算は壊れない。
     expect(hits("ハイブリッド 対面")).toEqual(["hybrid-conf"]);
+  });
+});
+
+describe("チェックボックスと選択肢の語を、複合語のまま引ける", () => {
+  const NOW = Date.parse("2026-08-09T00:00:00Z");
+  // `国内研究会` はチェックボックスの語。行の名前には「研究会」としか書かれず、「国内」は
+  // タグ側の情報なので、複合語は行の検索用文字列に入れる（実データと同じ形に置いて、
+  // ここは照合の側だけを見る。語が本当に入っているかは
+  // `tests/build_golden.test.ts` の収録カタログ検査で確認する）。
+  const rows = [
+    {
+      conf: {
+        key: "ieice-nolta",
+        title: "情報処理学会 NL研究協会",
+        editions: [],
+        tags: ["domestic-jp"],
+      },
+      hay: "情報処理学会 nl研究協会 国内 domestic 研究会 国内研究会",
+    },
+    {
+      conf: {
+        key: "ieice-sig-symp",
+        title: "研究会・シンポジウム",
+        editions: [],
+        tags: ["domestic-jp"],
+      },
+      hay: "研究会・シンポジウム 国内 domestic 国内研究会 国内シンポジウム",
+    },
+    {
+      conf: { key: "atswoim", title: "ATSWOIM", editions: [], tags: ["domestic-jp"] },
+      hay: "atswoim 国内 domestic okinawa, 日本",
+    },
+    {
+      conf: { key: "sc", title: "SC", editions: [], tags: [] },
+      hay: "sc international conference for high performance computing networking storage and analysis",
+    },
+  ];
+  const hits = (q: string) => {
+    const m = R.searchMatcher(q, NOW);
+    return rows.filter((r) => m(r.hay)).map((r) => String(r.conf.key));
+  };
+
+  it("「国内研究会」で、国内の研究会行だけが出る", () => {
+    expect(hits("国内研究会").sort()).toEqual(["ieice-nolta", "ieice-sig-symp"]);
+    // 国内だが研究会ではない行、研究会でも国内ではない行は出ない。
+    expect(hits("国内研究会").includes("atswoim")).toBe(false);
+    expect(hits("国内研究会").includes("sc")).toBe(false);
+  });
+
+  it("名前に応じた語だけが入る（シンポジウムとワークショップは別々の語）", () => {
+    expect(hits("国内シンポジウム")).toEqual(["ieice-sig-symp"]);
+    expect(hits("国内ワークショップ")).toEqual([]);
+  });
+
+  it("締切種別は「〜締切」を付けた言い方で同じ行に届く", () => {
+    const groups = R.queryTokenGroups("アブストラクト締切", NOW);
+    expect(groups.length).toBe(1);
+    expect(groups[0].map(String)).toContain("概要締切");
+    expect(R.querySynonymNotes("アブストラクト締切")).toEqual([
+      "「アブストラクト締切」は種別「概要締切」で探しています",
+    ]);
+    expect(R.queryTokenGroups("全文締切", NOW)[0].map(String)).toContain("論文締切");
+    expect(R.queryTokenGroups("抄録締切", NOW)[0].map(String)).toContain("概要締切");
+    expect(R.queryTokenGroups("要旨締切", NOW)[0].map(String)).toContain("概要締切");
+  });
+
+  it("「随時受付」と打っても表の語「常時受付」で行を引く", () => {
+    const journal = [
+      { conf: { key: "j", title: "Journal", editions: [] }, hay: "journal 常時受付" },
+    ];
+    const m = R.searchMatcher("随時受付", NOW);
+    expect(journal.filter((r) => m(r.hay)).map((r) => r.conf.key)).toEqual(["j"]);
+    expect(R.querySynonymNotes("随時受付")).toEqual([
+      "「随時受付」は種別「常時受付」で探しています",
+    ]);
   });
 });

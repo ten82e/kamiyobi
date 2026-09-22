@@ -6344,3 +6344,78 @@ it("参加形式の語で引いた行が、チェックボックスで出る行�
   expect(out.hybridOutside, "「ハイブリッド」がオンライン参加の記載のない行を出した").toEqual([]);
   expect(out.noFalseFacet, "オンライン参加可の語が該当外の行に入っている").toBe(0);
 });
+
+it("チェックボックスの語と種別の言い方を実データで引ける（SPEC §7）", () => {
+  /* 「国内研究会」はチェックボックスの語、「アブストラクト締切」は種別セレクトの語に
+   * 「締切」を付けた言い方。どちらも 0 件で止まっていた（2026-09-23 実測:
+   * `国内研究会` 0 件 / `アブストラクト締切` 0 件）。収録カタログの行で見る。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(new URL("../data/snapshot.json", import.meta.url).pathname)}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const key = (r) => r.conf.key + '@' + r.ed.year + '@' + r.kind;",
+    "const keys = (q) => {",
+    "  const m = Recommender.searchMatcher(q, now);",
+    "  return rows.filter((r) => m(r.hay)).map(key).sort();",
+    "};",
+    // 国内研究会の語は、domestic-jp の行で名前に研究会を含む行と一致すること。
+    "const expectedDomestic = rows",
+    "  .filter((r) => (r.conf.tags || []).indexOf('domestic-jp') >= 0)",
+    "  .filter((r) => String(r.conf.title || '').includes('研究会'))",
+    "  .map(key)",
+    "  .sort();",
+    "const domestic = keys('国内研究会');",
+    // 語を、該当しない行に入れていないこと（シンポジウムとワークショップは別々の語）。
+    "const wrongWords = rows.filter((r) => {",
+    "  const hay = String(r.hay);",
+    "  const title = String(r.conf.title || '');",
+    "  const words = [];",
+    "  if (hay.includes('国内シンポジウム')) words.push('シンポジウム');",
+    "  if (hay.includes('国内ワークショップ')) words.push('ワークショップ');",
+    "  return words.some((w) => !title.includes(w));",
+    "}).length;",
+    // 種別の複合語は、単語で引いたときと同じ行集合になること。",
+    "const kindPairs = [",
+    "  ['アブストラクト締切', 'アブストラクト'],",
+    "  ['抄録締切', '抄録'],",
+    "  ['要旨締切', '要旨'],",
+    "  ['全文締切', '全文'],",
+    "];",
+    "const kindMismatch = kindPairs",
+    "  .filter(([phrase, word]) => JSON.stringify(keys(phrase)) !== JSON.stringify(keys(word)))",
+    "  .map(([phrase]) => phrase);",
+    "console.log(JSON.stringify({",
+    "  domestic: domestic.length,",
+    "  sameDomestic: JSON.stringify(domestic) === JSON.stringify(expectedDomestic),",
+    "  wrongWords,",
+    "  abstractRows: keys('アブストラクト締切').length,",
+    "  kindMismatch,",
+    "}));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 120_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    domestic: number;
+    sameDomestic: boolean;
+    wrongWords: number;
+    abstractRows: number;
+    kindMismatch: string[];
+  };
+  expect(out.domestic, "「国内研究会」が 0 件").toBeGreaterThan(0);
+  expect(out.sameDomestic, "「国内研究会」で引ける行が国内の研究会行と違う").toBe(true);
+  expect(out.wrongWords, "名前にない参加形式の語が行に入っている").toBe(0);
+  expect(out.abstractRows, "「アブストラクト締切」が 0 件").toBeGreaterThan(0);
+  expect(
+    out.kindMismatch,
+    "複合語で引くと単語と違う行集合になる: " + out.kindMismatch.join(","),
+  ).toEqual([]);
+  // 常時受付: 行の中で 2 つの名前が見えていた（日時セルだけ「随時受付」）。画面に出す語を統一する。
+  const app = siteRuntime("app.js");
+  const rec = siteRuntime("recommender.js");
+  expect(app, "一覧に「随時受付」が残っている").not.toContain("随時受付");
+  expect(rec, "CSV の常時受付表記が「随時受付」に戻っている").not.toContain('"随時受付";');
+});

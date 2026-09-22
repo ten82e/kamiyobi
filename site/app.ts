@@ -904,7 +904,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       esc(KIND_LABEL[r.kind] || r.kind) +
       "</div>" +
       (r.kind === "journal"
-        ? '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">随時受付（締切なし）</div>'
+        ? '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">常時受付（締切なし）</div>'
         : r.dateOnly
           ? '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">' +
             esc(
@@ -2096,7 +2096,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
     const c1 = td(tr, "日時（JST）");
     if (r.kind === "journal") {
-      line(c1, "随時受付", "nowrap");
+      // 種別セル・CSV・詳細・てびきと同じ語に寄せる（1 行の中で 2 つの名前が見えると
+      // 別のものだと誤解する）。
+      line(c1, "常時受付", "nowrap");
     } else if (r.dateOnly) {
       // 暦日だけ分かっている締切でも、動作計画は曜日で見込むので曜日を添える。
       const dateOnlyDay = Recommender.weekdayJaFromDate(r.localDate);

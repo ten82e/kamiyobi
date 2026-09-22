@@ -1567,9 +1567,18 @@ const Recommender = (() => {
     ["ハイブリッド", "参加形式「オンライン参加可」", ["オンライン参加可", "online"]],
     // 締切種別も言い方が分かれる。学会側は「抄録」「要旨」と書くことが多いが、
     // 表は「概要締切」を出す（実測: `抄録` 0 件 / `概要` 660 件）。
+    // 「アブストラクト」単体では当たるが、選択肢に出る語との複合で打つ人が多い
+    // （`アブストラクト締切` は 2026-09-23 実測で 0 件、`概要締切` は 660 件）。
+    ["アブストラクト締切", "種別「概要締切」", ["概要締切", "abstract"]],
+    // ほかのサイトや昔の表記で「随時受付」と書くところがある。表の語は `常時受付`
+    // （種別ラベル・CSV・並び順・てびきですべて同じ語を使っているので、そこへ寄せる）。
+    ["随時受付", "種別「常時受付」", ["常時受付", "journal"]],
+    ["抄録締切", "種別「概要締切」", ["概要締切", "abstract"]],
+    ["要旨締切", "種別「概要締切」", ["概要締切", "abstract"]],
     ["抄録", "種別「概要締切」", ["概要締切", "abstract"]],
     ["要旨", "種別「概要締切」", ["概要締切", "abstract"]],
     ["アブストラクト", "種別「概要締切」", ["概要締切", "abstract"]],
+    ["全文締切", "種別「論文締切」", ["論文締切", "paper"]],
     ["全文", "種別「論文締切」", ["論文締切", "paper"]],
     ["フルペーパー", "種別「論文締切」", ["論文締切", "paper"]],
     ["本論文", "種別「論文締切」", ["論文締切", "paper"]],
@@ -1902,7 +1911,7 @@ const Recommender = (() => {
       let when = "";
       let official = "";
       if (kind === "journal") {
-        when = "随時受付";
+        when = "常時受付"; // 種別ラベルと同じ語（1 行の中で 2 つの名前を見せない）
       } else if (dateOnly) {
         const day = weekdayJaFromDate(row.localDate);
         when = day ? `${row.localDate}(${day})` : String(row.localDate || "");
@@ -3216,6 +3225,25 @@ const Recommender = (() => {
   // Virtual Conference Center, USA` で誤って online 扱いになった）。
   const ONLINE_VENUE_FALSE_POSITIVES = ["virtual conference center"];
 
+  /* チェックボックスの語「国内研究会」も検索の語として引けるようにする。行の名前には
+   * 「研究会」としか書かれず、「国内」はタグ側の情報なので複合語では当たらない
+   * （2026-09-23 実測: `国内研究会` は 0 件なのに、チェックボックスでは同じ行が出る）。
+   * 語はその行に本当に当てはまるときだけ入れる。`国内シンポジウム` と
+   * `国内ワークショップ` は名前にその語がある行だけで、2026-09-23 の収録では
+   * domestic-jp の行にどちらも含まれていなかったので、条件を満たす行が増えた日に効く。 */
+  function domesticFacetSearchTerms(
+    tags: readonly string[] | null | undefined,
+    title: unknown,
+  ): string {
+    if ((tags || []).indexOf("domestic-jp") < 0) return "";
+    const name = String(title || "");
+    const words: string[] = [];
+    if (name.indexOf("研究会") >= 0) words.push("国内研究会");
+    if (name.indexOf("シンポジウム") >= 0) words.push("国内シンポジウム");
+    if (name.indexOf("ワークショップ") >= 0) words.push("国内ワークショップ");
+    return words.join(" ");
+  }
+
   /* 「オンライン参加可」はチェックボックスに出る語（=表示語）なので、ここで1回だけ書き、
    * 検索の語・行の検索用文字列・おしらせで同じ字面を使う。 */
   const ONLINE_PARTICIPATION_LABEL_JA = "オンライン参加可";
@@ -3286,7 +3314,7 @@ const Recommender = (() => {
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
-        const catHay = `${categorySearchTerms(conf.categories, confTags)} ${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ${participationSearchTerms(ed.place)}`;
+        const catHay = `${categorySearchTerms(conf.categories, confTags)} ${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ${participationSearchTerms(ed.place)} ${domesticFacetSearchTerms(confTags, conf.title)}`;
         (ed.deadlines || []).forEach((dl) => {
           const dateOnly = dl.precision === "date-only";
           const window = dateOnly ? dateOnlyWindowMs(dl.local_date) : null;
