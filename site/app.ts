@@ -1543,6 +1543,24 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return { catalog, journal };
   }
 
+  /* 0 件の理由を出したのは良いが、その文は表の場所（`#emptyText`）に書くだけで、
+   * 支援技術には読まれていなかった（2026-09-23 実測: 読み上げ専用の欄は件数だけを
+   * 言っていた）。長い文を aria-live に流すのは避ける方針なので、読み上げには同じ原因を
+   * 短い形で入れる。 */
+  function zeroResultLiveNote(filter: {
+    hiddenKindWords: string[];
+    termCounts: Array<{ term: string; count: number }>;
+    queryMatch: { catalog: number; journal: number };
+  }): string {
+    const dead = filter.termCounts.filter((t) => t.count === 0).map((t) => t.term);
+    if (dead.length) return ` ｜ 語「${dead[0]}」は収録データにありません`;
+    if (filter.hiddenKindWords.length)
+      return ` ｜ 検索語は「${filter.hiddenKindWords[0]}」の種別に当たります（表に出さない種別です）`;
+    if (filter.queryMatch.catalog > 0)
+      return ` ｜ 検索語は収録で ${filter.queryMatch.catalog} 件に当たりますが、いまの条件では 0 件です`;
+    return " ｜ いまの条件では行がありません。条件を緩めると出ます";
+  }
+
   /* 語を並べて打った検索語を、語の組に分けて収録データの当たり数を数える
    * （`queryMatchCounts` と同じ展開を使う – 展開を忘れると届く語を「無い」と書く）。 */
   function queryTermNotes(query: string): Array<{ term: string; count: number }> {
@@ -3017,6 +3035,25 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 並び替えの状態を読み上げに足す（表が出ているときだけ。推薦のカードでは
     // 見出しが消えているので、見出しの語から作るこの文は出さない）。
     if (!recMode && !paperMode) cntLive += sortNoteJa(sortKey, sortAsc);
+    /* 0 件の理由は、のちのち表の場所に出す長い文と同じ材料から作る（同じ判定を二箇所に
+       書かない）。0 件のときだけ走るので、打鍵ごとの当たりの数え上げは増えない。 */
+    const zeroFilter =
+      !recMode && !paperMode && !shown.length
+        ? {
+            window: state.win,
+            past: state.past,
+            cats: state.cats.length,
+            domestic: state.domestic,
+            online: state.online,
+            rank: state.rank,
+            kind: state.kind,
+            query: state.q,
+            hiddenKindWords: hiddenKindQueryWords(searchQuery),
+            queryMatch: queryMatchCounts(searchQuery),
+            termCounts: queryTermNotes(searchQuery),
+          }
+        : null;
+    if (zeroFilter) cntLive += zeroResultLiveNote(zeroFilter);
     $("count").textContent = cnt;
     // 読み上げはこちらの短い欄だけ（画面に出す文は `#count` のまま）。
     const countLive = $("countLive");
@@ -3048,20 +3085,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     } else {
       $("deadlineTableWrap").hidden = false;
       $("recommendationCards").hidden = true;
-      if (!shown.length) {
-        const filter = {
-          window: state.win,
-          past: state.past,
-          cats: state.cats.length,
-          domestic: state.domestic,
-          online: state.online,
-          rank: state.rank,
-          kind: state.kind,
-          query: state.q,
-          hiddenKindWords: hiddenKindQueryWords(searchQuery),
-          queryMatch: queryMatchCounts(searchQuery),
-          termCounts: queryTermNotes(searchQuery),
-        };
+      if (zeroFilter) {
+        const filter = zeroFilter;
         $("emptyText").textContent = emptyDeadlineHint(filter);
         renderNextMeetingNote({
           window: state.win,

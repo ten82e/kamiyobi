@@ -9770,3 +9770,52 @@ it("語を並べた検索で 0 件のとき、原因の語を名指す（SPEC §
   expect(one).not.toContain("語をすべて含む行はありません");
   expect(one).not.toContain("収録データにも見当たりません");
 });
+
+it("0 件の理由は読み上げにも短的に出る（長い文を aria-live に流さない・SPEC §7）", () => {
+  /* 0 件の理由（どの語が足りなかったか等）は `#emptyText` に書くだけで、支援技術には
+   * 読まれていなかった（2026-09-23 実測: 読み上げ専用の欄は件数だけを言っていた）。
+   * とはいえ長い説明文を aria-live に流すと 1 打鍵ごとに数十語が読まれる（第 88 回で
+   * 実際に起きた）。同じ原因を短い形で読み上げに出す。 */
+  const app = siteRuntime();
+  const note = new Function(`return (${jsFunction(app, "zeroResultLiveNote")});`)() as (f: {
+    hiddenKindWords: string[];
+    termCounts: Array<{ term: string; count: number }>;
+    queryMatch: { catalog: number; journal: number };
+  }) => string;
+  const empty = { hiddenKindWords: [], termCounts: [], queryMatch: { catalog: 0, journal: 0 } };
+  // 収録に無い語が最優先（その語を外さないと何も変わらないので）。
+  const dead = note({
+    ...empty,
+    termCounts: [
+      { term: "ネットワーク", count: 258 },
+      { term: "gpu", count: 0 },
+    ],
+  });
+  expect(dead).toContain("gpu");
+  expect(dead).toContain("収録データにありません");
+  // 表に出さない種別に当たったケース。
+  const kindHit = note({ ...empty, hiddenKindWords: ["採否通知"] });
+  expect(kindHit).toContain("採否通知");
+  expect(kindHit).toContain("種別");
+  // 収録では当たるがいまの条件で 0 件、は件数を書く（「kamiyobi に無い」と誤らせない）。
+  const inCatalog = note({ ...empty, queryMatch: { catalog: 31, journal: 0 } });
+  expect(inCatalog).toContain("31 件");
+  expect(inCatalog).toContain("いまの条件では 0 件");
+  // どの原因でも無いときの受け皿。
+  const plain = note(empty);
+  expect(plain).toContain("条件を緩める");
+  // 読み上げなので短い（画面に出す説明文は別。1 打鍵ごとに読まれる長さにする）。
+  for (const text of [dead, kindHit, inCatalog, plain]) {
+    expect(text.length, `読み上げの文が長い: ${text}`).toBeLessThanOrEqual(60);
+  }
+  // 読み上げ専用の欄にだけ入れ、画面に出す件数欄には足さない（画面は元の文のままで良い）。
+  expect(app, "0 件の理由を読み上げに足していない").toContain("cntLive += zeroResultLiveNote(");
+  expect(app, "画面の件数欄に 0 件の理由を二重に書いている").not.toContain(
+    "cnt += zeroResultLiveNote(",
+  );
+  // 判定自体が「表が出て 0 件のときだけ」発火することも見る（推薦のカードでは出さない）。
+  const guard = /const zeroFilter =[\s\S]{0,120}?\? \{/.exec(app);
+  expect(guard, "0 件の判定の組み方が変わって検査が空振りしている").not.toBeNull();
+  expect(guard![0], "0 件以外でも数え上げている").toContain("!shown.length");
+  expect(guard![0], "推薦のカードでも数え上げている").toContain("!recMode");
+});
