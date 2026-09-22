@@ -439,6 +439,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * それらを追うのは `upcoming.md`（SPEC §4・§7）。 */
   const SELECTABLE_KINDS = ["abstract", "paper", "journal"];
 
+  /* ランク絞り込みの選択肢（data の grade と一致させる。SPEC §2: `N` はランク無し）。 */
+  const RANK_GRADE_OPTIONS = ["A*", "A", "B", "C", "N"];
+  const RANK_UNRATED_JA = Recommender.rankUnratedLabelJa();
+  const RANK_UNRATED_TITLE_JA =
+    "この会議はその評価一覧に載っていますが、評価が付いていません（ kamiyobi の内部表記では `N`）。";
+  const RANK_FILTER_NOTE_JA =
+    "CCF・CORE・THCPL のいずれかの一覧で、その評価が付いている会議を出します。";
+
   /** URL やフォームから来た種別を選択可能なものにする。捨てた場合は理由を返す。 */
   function selectableKind(raw: string | null): { kind: string; notice: string } {
     const value = raw || "";
@@ -888,10 +896,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 行をめくって探さなくて済むように）。日程の書き方は表と揃える。
     const laterEditions = upcomingEditionsOf(r.conf, String(r.ed.event_start || ""), Date.now());
     const catNamesJa = (r.cats || []).map((key) => catLabel(key));
-    const rankShown = (r.rankPairs || []).map((pair) => {
-      const parts = String(pair).split(":");
-      return `${String(parts[0]).toUpperCase()} ${parts[1]}`;
-    });
+    const rankShown = (r.rankPairs || []).map((pair) => Recommender.rankPairLabelJa(pair));
     const laterEditionsHtml = laterEditions.length
       ? `<p style="margin-bottom: 8px;"><strong>今後の会期:</strong> ${esc(
           laterEditions
@@ -1088,12 +1093,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   optAllR.value = "";
   optAllR.textContent = "すべて";
   rankSel.appendChild(optAllR);
-  ["A*", "A", "B", "C", "N"].forEach((r) => {
+  // 値は data の grade のまま（URL にも同じ値を書く）。見出しは日本語に出す —
+  // 「Rank N」は内部トークンそのもので、読み手には意味が伝わらない。
+  RANK_GRADE_OPTIONS.forEach((r) => {
     const opt = document.createElement("option");
     opt.value = r;
-    opt.textContent = `Rank ${r}`;
+    opt.textContent = r === "N" ? RANK_UNRATED_JA : r;
+    opt.title = r === "N" ? RANK_UNRATED_TITLE_JA : RANK_FILTER_NOTE_JA;
     rankSel.appendChild(opt);
   });
+  rankSel.title = RANK_FILTER_NOTE_JA;
 
   // ---- DATA FLATTENING ----
   function buildRows(data: Catalog): AppRow[] {
@@ -2017,10 +2026,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const c4 = td(tr, "ランク");
     if (r.rankPairs.length) {
       r.rankPairs.forEach((p) => {
-        const s = p.split(":");
         const e = document.createElement("span");
         e.className = "tag";
-        e.textContent = `${s[0].toUpperCase()} ${s[1]}`;
+        // 内部トークンの `N` をそのまま出さない（表・ドロワーで同じ語を使う）。
+        e.textContent = Recommender.rankPairLabelJa(p);
+        if (e.textContent.indexOf(RANK_UNRATED_JA) >= 0) {
+          e.title = RANK_UNRATED_TITLE_JA;
+        }
         c4.appendChild(e);
       });
     } else {
@@ -2702,7 +2714,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     state.kind = urlKind.kind;
     droppedKindNotice = urlKind.notice;
     const rawRank = p.get("rank");
-    state.rank = ["A*", "A", "B", "C", "N"].indexOf(rawRank || "") >= 0 ? rawRank || "" : "";
+    // 許す値は選択肢の正本と同じ（書き写すと URL だけ通る値が生まれる）。
+    state.rank = RANK_GRADE_OPTIONS.indexOf(rawRank || "") >= 0 ? rawRank || "" : "";
     const rawWin = p.get("win");
     state.win =
       ["all", "7d", "30d", "90d", "180d", "future"].indexOf(rawWin || "") >= 0

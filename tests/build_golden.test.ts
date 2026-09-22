@@ -2010,6 +2010,7 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     "const KIND_LABEL = { abstract: '概要締切', paper: '論文締切', notification: '採否通知' };",
     runtime.match(/const SELECTABLE_KINDS = \[[^\]]*\];/)?.[0] ?? "",
     jsFunction(runtime, "selectableKind"),
+    runtime.match(/const RANK_GRADE_OPTIONS = \[[^\]]*\];/)?.[0] ?? "",
     "let droppedKindNotice = '';",
     "let written = '';",
     "const window = { location: { search: '', pathname: '/index.html' } };",
@@ -2025,17 +2026,20 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     // 表に出さない種別を URL で受けたら、既定に戻して理由を残す（黙って条件を変えない）。
     "state.kind = 'paper'; droppedKindNotice = ''; window.location.search = '?kind=notification'; readUrl();",
     "const droppedKind = [state.kind, droppedKindNotice];",
+    "window.location.search = '?rank=A%2A'; readUrl();",
+    "const restoredRank = state.rank;",
     // 既定の並びなら参数を足さない（URL は必要な情報だけ乗せる）。
     "sortKey = DEFAULT_SORT_KEY; sortAsc = true; state.domestic = false; writeUrl();",
-    "console.log(JSON.stringify([sent, got, written, droppedKind]));",
+    "console.log(JSON.stringify([sent, got, written, droppedKind, restoredRank]));",
   ].join("\n");
   const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
   expect(proc.status, proc.stderr).toBe(0);
-  const [sent, got, defaultUrl, droppedKind] = JSON.parse(proc.stdout.trim()) as [
+  const [sent, got, defaultUrl, droppedKind, restoredRank] = JSON.parse(proc.stdout.trim()) as [
     string,
     [string, boolean],
     string,
     [string, string],
+    string,
   ];
   expect(sent).toContain("sort=date");
   expect(sent).toContain("dir=desc");
@@ -2046,6 +2050,7 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
   // 捨てたことを読み手に伝えず条件だけ変わる、を避ける。
   expect(droppedKind[0]).toBe("");
   expect(droppedKind[1]).toContain("upcoming.md");
+  expect(restoredRank).toBe("A*");
   // 知らない key は既定に戻る（URL を叩いて並べ替え式を壊せないようにする）。
   const bogus = spawnSync("node", ["-e", script.replace("sent.slice(1)", '"sort=bogus&dir=up"')], {
     encoding: "utf8",
@@ -2314,6 +2319,8 @@ const SEARCH_CANON = (() => {
       "queryTokenGroups",
       "compoundSplitHit",
       "placeOffersOnline",
+      "isSingleLatinLetter",
+      "foldedLetterAtWordBoundary",
       "matchFoldedGroups",
       "searchMatcher",
       "hayMatches",
@@ -4508,7 +4515,7 @@ it("ドロワーは表の情報（分野・ランク・ラウンド）を落と�
     `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')(esc);`,
     `const openDrawer = new Function('window','document','$','KIND_LABEL','titleWithYear','fmtDate','fmtJst','fmtAoE','esc','safeExternalUrl','rowDateOnlyState','verificationSummary','Recommender','catLabel','meetingRangeJa','upcomingEditionsOf','UNCONFIRMED_JA','return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, KIND_LABEL, titleWithYear, () => 'UTC', () => 'JST', () => 'AoE', esc, (u) => String(u ?? ''), () => null, verificationSummary, Recommender, catLabel, meetingRangeJa, upcomingEditionsOf, Recommender.unconfirmedLabelJa());`,
     "openDrawer({",
-    "  kind: 'paper', cats: ['hpc', 'systems'], rankPairs: ['ccf:B', 'core:A*'],",
+    "  kind: 'paper', cats: ['hpc', 'systems'], rankPairs: ['ccf:B', 'core:A*', 'thcpl:N'],",
     "  conf: { key: 'demo', title: 'Demo', tags: ['machine-learning'] },",
     "  ed: { year: 2026, place: 'Kyoto, Japan', date_text: '2026年11月2日-4日', event_start: '2026-11-02' },",
     "  t: 0, tLast: 0,",
@@ -4536,6 +4543,9 @@ it("ドロワーは表の情報（分野・ランク・ラウンド）を落と�
   expect(out.withFields).toContain("ランク:");
   expect(out.withFields).toContain("CCF B");
   expect(out.withFields).toContain("CORE A*");
+  // 内部トークン `N` をそのまま出さない（SPEC §2: `N` はランク無し）。
+  expect(out.withFields).toContain("THCPL 評価なし");
+  expect(out.withFields).not.toContain("THCPL N");
   // 第 1 ラウンド以外はそのこと自体が情報なので出す。
   expect(out.withFields).toContain("第 2 ラウンド");
   expect(out.withFields).toContain("Poster submission");
@@ -4642,4 +4652,108 @@ it("種別セレクトに並ぶ選択肢は、選べば行が返る（SPEC §7�
   expect(out.kept).toEqual({ kind: "paper", notice: "" });
   // 不明な値は説明を出さない（存在しない種別の名前を教えない）。
   expect(out.unknown).toEqual({ kind: "", notice: "" });
+});
+
+it("ランクの選択肢は選べば行が返り、表示語はそのまま引ける（SPEC §7）", () => {
+  const runtime = siteRuntime();
+  const app = siteRuntime("app.js");
+  const filterSrc = jsFunction(runtime, "filter");
+  // 表示は recommender の語を正本にする（表とドロワーで言い方が割れないようにする）。
+  expect(app).toContain("Recommender.rankPairLabelJa(");
+  // URL が受け付けるランクの値は選択肢の正本と同じ列表を使う（書き写しを防ぐ）。
+  const grades = runtime.match(/const RANK_GRADE_OPTIONS = \[[^\]]*\];/)?.[0];
+  expect(grades, "RANK_GRADE_OPTIONS 定義が見つからない").toBeTruthy();
+  expect(app).toContain('RANK_GRADE_OPTIONS.indexOf(rawRank || "")');
+  expect(app).toContain("RANK_GRADE_OPTIONS.forEach((r) => {");
+  // 選択肢の列表はビルド成果から取る（テスト側に書き写さない）。
+  const gradeOptions = [...String(grades).matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+  expect(gradeOptions.length).toBeGreaterThan(2);
+
+  const recPath = join(site, "recommender.js");
+  const dataPath = join(site, "data.json");
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${recPath}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(dataPath)}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    `const FILTER = ${JSON.stringify(filterSrc)};`,
+    "class FakeDate extends Date { static now() { return now; } }",
+    "const document = {};",
+    "function $(id) { return null; }",
+    "const window = {};",
+    "globalThis.Recommender = Recommender;",
+    "globalThis.activeData = DATA;",
+    "globalThis.hiddenCounts = { past: 0, est: 0, kind: 0 };",
+    "globalThis.catFacetCounts = {};",
+    "globalThis.searchQuery = '';",
+    "function run(rank) {",
+    "  const state = { mode: 'deadlines', q: '', cats: [], kind: '', rank: rank, win: 'all',",
+    "    est: false, domestic: false, online: false, past: false };",
+    "  const runFilter = new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
+    "    'return (' + FILTER + ')')(FakeDate, 86400000, rows, state, true, 'rem');",
+    "  return runFilter();",
+    "}",
+    // 期待行をこの場で書き写さない（推定・過去・期間の規則を再現すると、テストが実装の
+    // 写しになる）。既定の画面（rank 未指定）を出発点にして、
+    // 「ランクの絞り込みは、その grade を持つ行だけの部分集合である」ことを見る。
+    "const gradeOf = (p) => { const at = String(p).indexOf(':'); return at < 0 ? '' : String(p).slice(at + 1); };",
+    "const rowId = (r) => [r.conf.key, r.t, r.kind].join('|');",
+    "const baseRows = run('');",
+    "const gradesInView = new Set();",
+    "baseRows.forEach((r) => (r.rankPairs || []).forEach((p) => { const g2 = gradeOf(p); if (g2) gradesInView.add(g2); }));",
+    "const perGrade = {};",
+    `const GRADES = ${JSON.stringify(gradeOptions)};`,
+    "GRADES.filter((g) => gradesInView.has(g)).forEach((g) => {",
+    "  const got = run(g).map(rowId);",
+    "  const want = baseRows.filter((r) => Recommender.rankMatches(r.rankPairs, g)).map(rowId);",
+    "  perGrade[g] = { n: got.length, exact: JSON.stringify(got) === JSON.stringify(want) };",
+    "});",
+    // 表示ラベルがそのままで引けるか（全ペアを総当たり）。
+    "const pairs = new Set();",
+    "rows.forEach((r) => (r.rankPairs || []).forEach((p) => pairs.add(p)));",
+    "const unreachable = [];",
+    "for (const p of pairs) {",
+    "  const label = Recommender.rankPairLabelJa(p);",
+    "  if (!rows.some((r) => Recommender.hayMatches(r.hay, label))) unreachable.push(p + ' -> ' + label);",
+    "}",
+    // 評価一覧に載るが評価の無い行（N）は「評価なし」で引けること。
+    "const unrated = rows.filter((r) => (r.rankPairs || []).some((p) => /:N$/.test(String(p)))).length;",
+    "const unratedHit = rows.filter((r) => Recommender.hayMatches(r.hay, '評価なし')).length;",
+    "console.log(JSON.stringify({",
+    "  base: baseRows.length,",
+    "  inView: [...gradesInView].sort(),",
+    "  perGrade,",
+    "  pairCount: pairs.size,",
+    "  unreachable,",
+    "  unrated,",
+    "  unratedHit,",
+    "}));",
+    "})().catch((e) => { console.error(e && e.stack || String(e)); process.exit(1); });",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 120_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    base: number;
+    inView: string[];
+    perGrade: Record<string, { n: number; exact: boolean }>;
+    pairCount: number;
+    unreachable: string[];
+    unrated: number;
+    unratedHit: number;
+  };
+  // 既定の画面に見える grade は、選べばその行が返る。grade の厳密比較になっていることも
+  // ここで見る（一覧名込みの文字列と比べる実装だと全 grade で 0 件になる）。
+  expect(out.base, "既定画面が行を作っていない").toBeGreaterThan(0);
+  expect(out.inView.length, "ランク付きの行が既定画面に見当たらない").toBeGreaterThan(1);
+  for (const [grade, got] of Object.entries(out.perGrade)) {
+    expect(got.n, `ランク ${grade} を選ぶと 0 件になる`).toBeGreaterThan(0);
+    expect(got.exact, `ランク ${grade} の絞り込みが grade 一致と違う行を返している`).toBe(true);
+  }
+  // 表に出すランクの語が、そのまま検索で引けない行がない。
+  expect(out.pairCount).toBeGreaterThan(4);
+  expect(out.unreachable).toEqual([]);
+  expect(out.unrated).toBeGreaterThan(0);
+  expect(out.unratedHit).toBeGreaterThanOrEqual(out.unrated);
 });

@@ -2064,12 +2064,43 @@ const Recommender = (() => {
     };
   }
 
+  /** 1 文字の英字だけか（ランクの A・B・C・N など）。 */
+  function isSingleLatinLetter(term: string): boolean {
+    return /^[a-z]$/.test(term);
+  }
+
+  /* 1 文字の英字を部分一致で明けると、ほぼ全行に当たってしまう（実測で `N` が 3234 行中
+   * 3219 行にヒットした）。表に出している語（`CCF B` の `B` など）で引けるようにしたいので、
+   * 一致そのものはやめず、**英数字に挟まれた位置の一致は使わない**ことにする。
+   * 正規表現を作らずに走査する（語の分解は 1 描画 1 回で、行ごとに作るものではない）。 */
+  function foldedLetterAtWordBoundary(target: string, term: string): boolean {
+    let from = 0;
+    for (;;) {
+      const at = target.indexOf(term, from);
+      if (at < 0) return false;
+      const before = at > 0 ? target.charAt(at - 1) : "";
+      const after = at + term.length < target.length ? target.charAt(at + term.length) : "";
+      const gluedBefore = before !== "" && /[a-z0-9]/.test(before);
+      const gluedAfter = after !== "" && /[a-z0-9]/.test(after);
+      if (!gluedBefore && !gluedAfter) return true;
+      from = at + 1;
+    }
+  }
+
   /** 畳み済みの語グループ（語ごとに OR、語同士は AND）を行に照合する。 */
   function matchFoldedGroups(target: string, groups: string[][]): boolean {
     for (let i = 0; i < groups.length; i++) {
       let hit = false;
       for (let k = 0; k < groups[i].length; k++) {
-        if (target.indexOf(groups[i][k]) >= 0) {
+        const term = groups[i][k];
+        if (isSingleLatinLetter(term)) {
+          if (foldedLetterAtWordBoundary(target, term)) {
+            hit = true;
+            break;
+          }
+          continue;
+        }
+        if (target.indexOf(term) >= 0) {
           hit = true;
           break;
         }
@@ -2305,6 +2336,61 @@ const Recommender = (() => {
     return parts.join(" ");
   }
 
+  /* ランク表の `N` は「評価の一覧に載っているが評価が付いていない」意味だと §2 で検証済み
+   * （`ccf: N` など）。表に内部トークンの `N` をそのまま出すと読み手には読めないので、
+   * 表示語に直す。評価の一覧にそもそも載らない行は「未確認」なので、語を使い分ける
+   * （ kamiyobi が未確認なのと、一覧が評価を付けていないのは別の事実）。 */
+  const RANK_UNRATED_LABEL_JA = "評価なし";
+  const RANK_ABSENT_GRADES = ["n", "none", "-", ""];
+  const RANK_SCALE_LABEL_JA: Record<string, string> = {
+    ccf: "CCF",
+    core: "CORE",
+    thcpl: "THCPL",
+  };
+
+  function rankScaleLabelJa(name: string): string {
+    const key = String(name || "").toLowerCase();
+    return RANK_SCALE_LABEL_JA[key] || String(name || "").toUpperCase();
+  }
+
+  /** `ccf:B` → `CCF B`、`ccf:N` → `CCF 評価なし`。表・ドロワーで同じ語を使う。 */
+  function rankPairLabelJa(pair: string): string {
+    const text = String(pair || "");
+    const at = text.indexOf(":");
+    if (at < 0) return rankScaleLabelJa(text);
+    const scale = rankScaleLabelJa(text.slice(0, at));
+    const grade = text.slice(at + 1).trim();
+    if (RANK_ABSENT_GRADES.indexOf(grade.toLowerCase()) >= 0) {
+      return `${scale} ${RANK_UNRATED_LABEL_JA}`;
+    }
+    return `${scale} ${grade}`;
+  }
+
+  function rankUnratedLabelJa(): string {
+    return RANK_UNRATED_LABEL_JA;
+  }
+
+  /** 表に出すランクの語を検索語として受け付ける（「表示している語で検索できる」）。 */
+  function rankSearchTerms(rankPairs: readonly string[] | null | undefined): string {
+    const parts: string[] = [];
+    (rankPairs || []).forEach((pair) => {
+      const text = String(pair || "");
+      const at = text.indexOf(":");
+      if (at < 0) return;
+      const scale = rankScaleLabelJa(text.slice(0, at)).toLowerCase();
+      const grade = text.slice(at + 1).trim();
+      parts.push(scale);
+      if (RANK_ABSENT_GRADES.indexOf(grade.toLowerCase()) >= 0) {
+        parts.push(RANK_UNRATED_LABEL_JA);
+        parts.push(`${scale}${RANK_UNRATED_LABEL_JA}`);
+        return;
+      }
+      parts.push(grade.toLowerCase());
+      parts.push(`${scale} ${grade.toLowerCase()}`);
+    });
+    return parts.join(" ");
+  }
+
   /* 会場表記にオンライン参加の記述があるか。出張できないときの参加手段は実務上よく見る
    * 条件だが、表記はdataの文字列に依存する（「会場名／オンライン」「〜 & Virtual」など）。
    * 対面かどうかは**判定しない**（書かれていないことから参加形式は推定できない）。
@@ -2398,7 +2484,7 @@ const Recommender = (() => {
             tags: conf.tags || [],
             rankPairs,
             hay: searchNormalize(
-              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${unconfirmedSearchTerms(ed, rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`,
+              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${unconfirmedSearchTerms(ed, rankPairs)} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`,
             ),
             dupLabel: dl.comment || "",
           });
@@ -3566,6 +3652,10 @@ const Recommender = (() => {
     placePrefectureJa: placePrefectureJa,
     placeOffersOnline: placeOffersOnline,
     unconfirmedLabelJa: unconfirmedLabelJa,
+    rankPairLabelJa: rankPairLabelJa,
+    rankScaleLabelJa: rankScaleLabelJa,
+    rankUnratedLabelJa: rankUnratedLabelJa,
+    rankSearchTerms: rankSearchTerms,
     placeWithPrefectureJa: placeWithPrefectureJa,
     expandRelativeMonths: expandRelativeMonths,
     kanaFold: kanaFold,

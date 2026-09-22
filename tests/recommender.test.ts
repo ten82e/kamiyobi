@@ -4277,3 +4277,38 @@ describe("表に出す「未確認」で検索できる", () => {
     expect(recommender.hayMatches(hay, "ランク未確認")).toBe(false);
   });
 });
+
+describe("ランクの表示語と検索語", () => {
+  it("内部トークン `N` を読める語に直す", () => {
+    expect(recommender.rankPairLabelJa("ccf:B")).toBe("CCF B");
+    expect(recommender.rankPairLabelJa("core:A*")).toBe("CORE A*");
+    expect(recommender.rankPairLabelJa("thcpl:N")).toBe("THCPL 評価なし");
+    expect(recommender.rankPairLabelJa("ccf:N")).toBe("CCF 評価なし");
+    // 空の grade も「評価が付いていない」と同じ扱い（SPEC §2 の `N` と揃える）。
+    expect(recommender.rankPairLabelJa("ccf:")).toBe("CCF 評価なし");
+    // 知らない一覧名は潰さず大文字で返す（収録一覧が増えても読める）。
+    expect(recommender.rankPairLabelJa("schc:A")).toBe("SCHC A");
+    expect(recommender.rankUnratedLabelJa()).toBe("評価なし");
+  });
+
+  it("表示する語がそのままで引ける", () => {
+    const terms = recommender.rankSearchTerms(["ccf:B", "thcpl:N"]);
+    expect(terms).toContain("ccf b");
+    expect(terms).toContain("評価なし");
+    expect(terms).toContain("thcpl評価なし");
+    expect(recommender.rankSearchTerms(null)).toBe("");
+  });
+
+  it("1 文字の英字は語の境界で当てる", () => {
+    // `N` をそのまま部分一致で明けるとほぼ全行に当たった（実測 3234 行中 3219 行）。
+    expect(recommender.hayMatches(" conference ccf b core a* ", "b")).toBe(true);
+    expect(recommender.hayMatches("ccf b", "B")).toBe(true);
+    expect(recommender.hayMatches("abbey", "b")).toBe(false);
+    expect(recommender.hayMatches("b05 hall", "b")).toBe(false);
+    expect(recommender.hayMatches("usenix annual technical conference", "n")).toBe(false);
+    // 日本語の会場表記に含まれる B（例: 122号館B）は語の境界として扱う。
+    expect(recommender.hayMatches("電気通信大学 122号館b", "b")).toBe(true);
+    // 2 文字以上は従来どおり部分一致（`nsdi` が `usenix nsdi` に当たる等）。
+    expect(recommender.hayMatches("usenix nsdi 2027", "nsdi")).toBe(true);
+  });
+});

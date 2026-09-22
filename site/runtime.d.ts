@@ -160,6 +160,10 @@ interface SiteRecommenderApi {
   placeOffersOnline(value: unknown): boolean;
   /** 空の会期・開催地・ランクを表で出す語（検索側と同じ正本）。 */
   unconfirmedLabelJa(): string;
+  rankPairLabelJa(pair: string): string;
+  rankScaleLabelJa(name: string): string;
+  rankUnratedLabelJa(): string;
+  rankSearchTerms(rankPairs: readonly string[] | null | undefined): string;
   expandRelativeMonths(query: unknown, nowMs: number): string;
   queryTokenGroups(query: unknown): string[][];
   queryTokens(query: unknown): string[];
