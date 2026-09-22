@@ -9516,3 +9516,55 @@ it("URL に書く条件は、URL から読みもする（共有画面で条件�
   const onlyRead = Array.from(read).filter((k) => !written.has(k));
   expect(onlyRead, "読み-only のキーが増えたら意図を確認する").toEqual([]);
 });
+
+it("表の公式表記に出る語（時刻未確認・AoE・JST）はその語で引ける（SPEC §7）", () => {
+  /* 一覧の 2 行目は公式ページの表記を出すが、その語が検索要素に入っていなかった
+   * （2026-09-23 実測）。日付だけの行 188 件が「時刻未確認」の印を出すのにその語は
+   * 0 件、AoE 宣言の行 1,908 件が「公式 AoE …」と出すのに「AoE」は 2 件だけ
+   * （上流の締切名に偶々入っていた物で、AoE 締切自体は 1 件も出ていなかった）。
+   * 「画面に出ている語で検索できる」状態を保つ（SPEC §2 の表示と検索の約束事）。 */
+  const rows = Recommender.candidateRows(data);
+  expect(rows.length).toBeGreaterThan(100);
+  const dateOnly = rows.filter((r) => r.dateOnly === true);
+  const aoe = rows.filter((r) => Recommender.officialZone(r.dl) === "AoE");
+  const jst = rows.filter((r) => Recommender.officialZone(r.dl) === "JST");
+  // 検査が空振りしないこと（収録が変わって 0 行になたら、この検査は何も言えなくなる）。
+  expect(dateOnly.length, "日付だけの行が無い（検査が空振り）").toBeGreaterThan(0);
+  expect(aoe.length, "AoE 宣言の行が無い（検査が空振り）").toBeGreaterThan(0);
+  expect(jst.length, "JST 宣言の行が無い（検査が空振り）").toBeGreaterThan(0);
+  /* 画面が出す語をビルド成果物から取る（表示の語をテスト側に書き写すと、表示だけが
+   * 変わったときに検査が緑のまま残る）。`残り` 列の badge の語を見る。 */
+  const app = siteRuntime();
+  const badge = /text: "([^"]*未確認[^"]*)", cls: ""/.exec(app);
+  expect(badge, "一覧の badge の語が見つからない").not.toBeNull();
+  const badgeWord = String(badge![1]).replace(/[（）。]/g, "");
+  expect(badgeWord).toContain("時刻未確認");
+  // 日付だけの行は、画面と同じ語で全部引ける。
+  for (const r of dateOnly) {
+    expect(
+      Recommender.hayMatches(r.hay, badgeWord),
+      `${String(r.hay).slice(0, 24)} が「${badgeWord}」で引けない`,
+    ).toBe(true);
+  }
+  // AoE 宣言の行は「AoE」で引ける。逆に JST 宣言の行が混ざると、実在しない AoE 締切を
+  // 探したことになる（表示で AoE を出さない行と同じ向き）。
+  for (const r of aoe) {
+    expect(
+      Recommender.hayMatches(r.hay, "AoE"),
+      `${String(r.hay).slice(0, 24)} が「AoE」で引けない`,
+    ).toBe(true);
+  }
+  for (const r of jst) {
+    expect(
+      Recommender.hayMatches(r.hay, "AoE"),
+      `${String(r.hay).slice(0, 24)} は AoE 締切でない`,
+    ).toBe(false);
+    expect(
+      Recommender.hayMatches(r.hay, "JST"),
+      `${String(r.hay).slice(0, 24)} が「JST」で引けない`,
+    ).toBe(true);
+  }
+  // 全行に出る「公式」の二字は検索語にしない（入れても絞れず、絞れたと誤信させる。
+  // 「確認できたものだけ」はチェックボックスの側で絞る）。
+  expect(rows.filter((r) => Recommender.hayMatches(r.hay, "公式")).length).toBe(0);
+});

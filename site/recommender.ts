@@ -1990,6 +1990,23 @@ const Recommender = (() => {
     ].filter(Boolean);
   }
 
+  /* 表の 2 行目（公式表記）に出す語そのものを、検索の語にも入れる。2026-09-23 実測:
+   * 将来締切 917 行のうち 181 行が「時刻未確認」の印を出し、524 行が「公式 AoE …」と
+   * 出すのに、その語を打つと 0 件だった（画面に出ている語が引けない状態）。「AoE」は
+   * 上流の締切名に混じる 2 件が引けるだけで、AoE 締切自体は 1 件も出ていなかった。
+   *   -AoE は表と同じく AoE 宣言の行だけに入れる（JST 宣言の行に入れても、実在しない
+   *     AoE 締切を探したことになり、表の向きともズレる）。
+   *   -全行に出る「公式」の二字は入れない（入れても何も絞れず、絞れたと誤信させる。
+   *   -「確認できたものだけ」はチェックボックスの側で絞れる）。 */
+  function zoneSearchWords(dl: unknown, dateOnly: boolean): string {
+    if (dateOnly) return TIME_UNCONFIRMED_LABEL_JA;
+    const zone = officialZone(dl);
+    if (!zone) return "";
+    if (zone === "UTC" || zone === "JST" || zone === "AoE") return zone;
+    // 表は「公式 CEST ／ 2026-… UTC」の形で出すので、両方の語を引けるようにする。
+    return `${zone} UTC`;
+  }
+
   function deadlinesToCsv(
     rows: readonly Record<string, unknown>[] | null | undefined,
     nowMs: number,
@@ -2010,7 +2027,7 @@ const Recommender = (() => {
       } else if (dateOnly) {
         const day = weekdayJaFromDate(row.localDate);
         when = day ? `${row.localDate}(${day})` : String(row.localDate || "");
-        official = "時刻未確認";
+        official = TIME_UNCONFIRMED_LABEL_JA;
       } else if (Number.isFinite(t)) {
         when = csvJstInstant(t);
         const zone = officialZone(dl);
@@ -3591,6 +3608,9 @@ const Recommender = (() => {
    * する（「表示している語で検索できる」の不変条件）。分野ごとにも引けるよう修飾形も添える。
    * 「未定」ではない — 会議が決めていないことと、 kamiyobi が確認できていないことは別。 */
   const UNCONFIRMED_LABEL_JA = "未確認";
+  /* 日付だけが決まっている行の公式表記に出す語。一覧・行の詳細・CSV・検索が同じ語を
+   * 使う（同じ物に二つの名前を付けない）。 */
+  const TIME_UNCONFIRMED_LABEL_JA = "時刻未確認";
 
   function unconfirmedLabelJa(): string {
     return UNCONFIRMED_LABEL_JA;
@@ -3860,7 +3880,7 @@ const Recommender = (() => {
             tags: conf.tags || [],
             rankPairs,
             hay: searchNormalize(
-              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedSearchTerms(ed, rankPairs)} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`,
+              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedSearchTerms(ed, rankPairs)} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)} ${zoneSearchWords(dl, dateOnly)}`,
             ),
             dupLabel: dl.comment || "",
           });
