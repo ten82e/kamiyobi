@@ -1942,9 +1942,50 @@ const Recommender = (() => {
    * - 全角スペースも半角スペースに畳む（「ネットワーク　システム」で語が割れた扱いになるのを防ぐ）。
    * - 大文字小文字は無視する。
    * hay を作る側でも同じ正規化を通し、照合側だけがズレることがないようにする。 */
+  /* NFD の分解では片付かない英文字（`ł` `ø` `ß` など）。ASCII で打つ人と合わせる。 */
+  const DIACRITIC_FOLD_JA: Record<string, string> = {
+    ł: "l",
+    đ: "d",
+    ø: "o",
+    œ: "oe",
+    æ: "ae",
+    ß: "ss",
+    þ: "th",
+    ð: "d",
+    ı: "i",
+    ğ: "g",
+    ș: "s",
+    ț: "t",
+    ż: "z",
+    ź: "z",
+    ć: "c",
+    ń: "n",
+    ť: "t",
+    ě: "e",
+    ů: "u",
+  };
+  const DIACRITIC_FOLD_CHARS = /[łđøœæßþðığșțżźćńťěů]/g;
+  /* NFD を掛けるのは英文字だけに限る。日本語にかけてはいけない（`パ` が
+   * `ハ` + 半濁点に分解され、件数欄の寄せ説明で利用者が打った語をそのまま
+   * 見せるときに、見た目は同じで別の文字列になる）。 */
+  const LATIN_DIACRITIC_CHARS = /[\u00c0-\u00ff\u0100-\u017f\u0180-\u024f\u1e00-\u1eff]/g;
+  const COMBINING_MARKS = /[\u0300-\u036f]/g;
+
+  /* アクセント記号は落とす。収録する開催地のつづりは `Montréal` `Malmö` `Kraków` のように
+   * 現地表記で書かれていて（実測 118 行がアクセント付き英文字を含む）、日本人が打つ
+   * ASCII ローマ字（`montreal` `malmo` `krakow`）とは 1 文字だけ違う。そのままでは
+   * 画面に見える地名が引けない。NFKC だけでは é が分解されないので NFD にしてから
+   * 合成記号を落とす。検索語・行の両方がこの関数を通るので、どちらで打っても同じ結果になる。
+   * 表示（開催地セル）は公式表記のまま変えない。 */
   function searchNormalize(value: unknown): string {
     const raw = typeof value === "string" ? value : value == null ? "" : String(value);
-    const folded = typeof raw.normalize === "function" ? raw.normalize("NFKC") : raw;
+    let folded = typeof raw.normalize === "function" ? raw.normalize("NFKC") : raw;
+    if (typeof folded.normalize === "function") {
+      folded = folded.replace(LATIN_DIACRITIC_CHARS, (ch) =>
+        ch.normalize("NFD").replace(COMBINING_MARKS, ""),
+      );
+    }
+    folded = folded.replace(DIACRITIC_FOLD_CHARS, (ch) => DIACRITIC_FOLD_JA[ch] || ch);
     return folded.toLowerCase().replace(/\s+/g, " ").trim();
   }
 
@@ -2215,6 +2256,143 @@ const Recommender = (() => {
     return KIND_LABEL_JA[key] || key;
   }
 
+  /* 海外の開催地は画面に `Seattle, USA` のように英文字で書かれる（公式表記のまま変えない）。
+   * それでも日本人は「シアトル」「米国」と打つので、**同じ場所を指す別表記**を検索語の組に
+   * 足す。語自体は画面に出ている形のまま入れる（表示に無い語へ寄せない）。
+   * 対象は収録カタログの開催地に現れる都市に限定する（実測で英字の都市句 124 種、
+   * うち日本語名が一意に決まるものだけを挙げた。収録に現れない `仙台` `広島` のような
+   * 表記は、会場が日本語で書かれているため既に引けており、英文字側は死語になるので置いていない）。
+   * 変更前はこの形で 0 件だった:
+   * `東京` 0（`tokyo` は 11 件）/ `シアトル` 0 / `ホノルル` 0 / `米国` 0（`アメリカ` 99 件）。 */
+  const PLACE_QUERY_ALIASES_JA: string[][] = [
+    ["米国", "usa"],
+    ["米国", "america"],
+    ["合衆国", "usa"],
+    ["英国", "uk"],
+    ["英国", "england"],
+    ["豪州", "australia"],
+    ["東京", "tokyo"],
+    ["横浜", "yokohama"],
+    ["京都", "kyoto"],
+    ["神戸", "kobe"],
+    ["奈良", "nara"],
+    ["大阪", "osaka"],
+    ["名古屋", "nagoya"],
+    ["札幌", "sapporo"],
+    ["福岡", "fukuoka"],
+    ["シカゴ", "chicago"],
+    ["シンガポール", "singapore"],
+    ["シドニー", "sydney"],
+    ["メルボルン", "melbourne"],
+    ["パース", "perth"],
+    ["ブリスベン", "brisbane"],
+    ["オークランド", "auckland"],
+    ["ゴールドコースト", "gold coast"],
+    ["ソウル", "seoul"],
+    ["テジョン", "daejeon"],
+    ["大田", "daejeon"],
+    ["香港", "hong kong"],
+    ["マカオ", "macao"],
+    ["サンディエゴ", "san diego"],
+    ["ローマ", "rome"],
+    ["ミラノ", "milan"],
+    ["ナポリ", "naples"],
+    ["バリ", "bari"],
+    ["ボローニャ", "bologna"],
+    ["バンクーバー", "vancouver"],
+    ["ロンドン", "london"],
+    ["グラスゴー", "glasgow"],
+    ["エジンバラ", "edinburgh"],
+    ["ランカスター", "lancaster"],
+    ["ウィーン", "vienna"],
+    ["リスボン", "lisbon"],
+    ["ポルト", "porto"],
+    ["バルセロナ", "barcelona"],
+    ["マドリード", "madrid"],
+    ["バレンシア", "valencia"],
+    ["サンフランシスコ", "san francisco"],
+    ["ロサンゼルス", "los angeles"],
+    ["サンタクララ", "santa clara"],
+    ["サンタバーバラ", "santa barbara"],
+    ["サンノゼ", "san jose"],
+    ["リバサイド", "riverside"],
+    ["ピッツバーグ", "pittsburgh"],
+    ["トロント", "toronto"],
+    ["オタワ", "ottawa"],
+    ["アブダビ", "abu dhabi"],
+    ["ドバイ", "dubai"],
+    ["上海", "shanghai"],
+    ["杭州", "hangzhou"],
+    ["北京", "beijing"],
+    ["広州", "guangzhou"],
+    ["深圳", "shenzhen"],
+    ["武漢", "wuhan"],
+    ["成都", "chengdu"],
+    ["瀋陽", "shenyang"],
+    ["天津", "tianjin"],
+    ["蘇州", "suzhou"],
+    ["ハルビン", "harbin"],
+    ["ソルトレイクシティ", "salt lake city"],
+    ["モントリオール", "montreal"],
+    ["ホノルル", "honolulu"],
+    ["コペンハーゲン", "copenhagen"],
+    ["シアトル", "seattle"],
+    ["ダブリン", "dublin"],
+    ["リオデジャネイロ", "rio de janeiro"],
+    ["フィラデルフィア", "philadelphia"],
+    ["ボルチモア", "baltimore"],
+    ["台北", "taipei"],
+    ["タイペイ", "taipei"],
+    ["プラハ", "prague"],
+    ["アムステルダム", "amsterdam"],
+    ["ロッテルダム", "rotterdam"],
+    ["デルフト", "delft"],
+    ["アテネ", "athens"],
+    ["リマソル", "limassol"],
+    ["ハノイ", "hanoi"],
+    ["デンバー", "denver"],
+    ["オーランド", "orlando"],
+    ["クアラルンプール", "kuala lumpur"],
+    ["ヘルシンキ", "helsinki"],
+    ["タンペレ", "tampere"],
+    ["パリ", "paris"],
+    ["ニューオーリンズ", "new orleans"],
+    ["ニューヨーク", "new york"],
+    ["ボストン", "boston"],
+    ["バンコク", "bangkok"],
+    ["ミュンヘン", "munich"],
+    ["ブレーメン", "bremen"],
+    ["ハノーファー", "hannover"],
+    ["オースティン", "austin"],
+    ["ラスベガス", "las vegas"],
+    ["アトランタ", "atlanta"],
+    ["モンテレー", "monterey"],
+    ["ワシントン", "washington"],
+    ["ダラス", "dallas"],
+    ["ベルリン", "berlin"],
+    ["イスタンブール", "istanbul"],
+    ["リヨン", "lyon"],
+    ["ボルドー", "bordeaux"],
+    ["ナント", "nantes"],
+    ["オーフス", "aarhus"],
+    ["ブダペスト", "budapest"],
+    ["ブルッヘ", "bruges"],
+    ["トロンヘイム", "trondheim"],
+    ["ルーヴェン", "leuven"],
+    ["マーストリヒト", "maastricht"],
+    ["ユトレヒト", "utrecht"],
+    ["サウサンプトン", "southampton"],
+    ["ミネアポリス", "minneapolis"],
+    ["マイアミ", "miami"],
+    ["レイキャビク", "reykjavik"],
+    ["ボルダー", "boulder"],
+    ["ローリー", "raleigh"],
+    ["ベルビュー", "bellevue"],
+    ["ニューデリー", "new delhi"],
+    ["ラバト", "rabat"],
+    ["フロリアノポリス", "florianopolis"],
+  ];
+
   const REGION_READINGS: string[][] = [
     ["東北", "とうほく", "青森,岩手,宮城,秋田,山形,福島"],
     ["関東", "かんとう", "茨城,栃木,群馬,埼玉,千葉,東京,神奈川"],
@@ -2268,6 +2446,17 @@ const Recommender = (() => {
           if (byReading[key].indexOf(member) < 0) byReading[key].push(member);
         });
       }
+    });
+    /* 日本語表記で打たれた国名・都市名を、画面に出る英文字表記と同じ組に入れる。
+     * 開催地は公式表記（`Seattle, USA`）を変えないので、日本語で打った人に届くように
+     * するのは検索語側だけ。逆方向（`seattle` と打ったときに国内表記も見る）も同じ表から
+     * 作るが、組の中身は同じ場所を指す語に限定する。 */
+    PLACE_QUERY_ALIASES_JA.forEach(([ja, latin]) => {
+      const key = kanaFold(ja);
+      if (!byReading[key]) byReading[key] = [];
+      if (byReading[key].indexOf(latin) < 0) byReading[key].push(latin);
+      if (!byReading[latin]) byReading[latin] = [];
+      if (byReading[latin].indexOf(ja) < 0) byReading[latin].push(ja);
     });
     const groups: string[][] = [];
     queryTokens(query).forEach((token) => {

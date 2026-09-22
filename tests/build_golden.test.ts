@@ -2409,6 +2409,13 @@ const SEARCH_CANON = (() => {
   const rec = siteRuntime("recommender.js");
   const consts = [
     ["SMALL_KANA_JA", /const SMALL_KANA_JA[\s\S]*?\};/],
+    // `searchNormalize` がアクセントを折るための表（正本から注入し、写しは作らない）。
+    // 他の定数の定義中に `searchNormalize` が呼ばれるので、必ず先に置く。
+    ["DIACRITIC_FOLD_JA", /const DIACRITIC_FOLD_JA[\s\S]*?\};/],
+    ["DIACRITIC_FOLD_CHARS", /const DIACRITIC_FOLD_CHARS = [^\n]*;/],
+    ["LATIN_DIACRITIC_CHARS", /const LATIN_DIACRITIC_CHARS = [^\n]*;/],
+    ["COMBINING_MARKS", /const COMBINING_MARKS = [^\n]*;/],
+    ["PLACE_QUERY_ALIASES_JA", /const PLACE_QUERY_ALIASES_JA[\s\S]*?\];/],
     ["RELATIVE_MONTH_OFFSETS_JA", /const RELATIVE_MONTH_OFFSETS_JA[\s\S]*?\};/],
     ["PLACE_READINGS", /const PLACE_READINGS[\s\S]*?\];/],
     ["REGION_READINGS", /const REGION_READINGS[\s\S]*?\];/],
@@ -5648,4 +5655,53 @@ it("共有URLに論文の本文を載せず、そのことを画面で伝える�
     html.indexOf('id="recommendationCards"'),
   );
   expect(panel).toContain("共有用URLには論文のタイトル・概要を含めません");
+});
+
+it("開催地を日本語で引け、アクセント付きのつづりは ASCII で当たる（SPEC §7）", () => {
+  /* 開催地は公式表記（`Seattle, USA` / `Montréal`）のまま変えない。日本人は「シアトル」
+   * 「米国」「montreal」と打つので、検索語側だけで届かせる。実データで測る:
+   * 変更前は `東京` 0 件（`tokyo` は 28 件）、`krakow` 0 件（表記は `Kraków`）だった。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const keys = (q) => { const m = Recommender.searchMatcher(q); return rows.filter((r) => m(r.hay)).map((r) => r.conf.key + '@' + r.ed.year); };",
+    "const jp = keys('東京');",
+    "const latin = keys('tokyo');",
+    "const krakow = keys('krakow').length;",
+    "const beikoku = keys('米国');",
+    // 誤爆検査: 「米国」が出した行は、どれも hay に usa / america を持つ。
+    "const m = Recommender.searchMatcher('米国');",
+    "const phantoms = rows.filter((r) => m(r.hay) && !/usa|america/.test(String(r.hay))).length;",
+    // 別表記の表に、収録カタログで 1 件も当たらない英文字表記を置いていないこと。
+    "const src = readFileSync(" + JSON.stringify(join(site, "recommender.js")) + ", 'utf8');",
+    "const i = src.indexOf('const PLACE_QUERY_ALIASES_JA = [');",
+    "const table = eval(src.slice(i + 'const PLACE_QUERY_ALIASES_JA = '.length, src.indexOf('];', i) + 1));",
+    "const alive = table.filter(([, latin]) => keys(latin).length > 0).length;",
+    "console.log(JSON.stringify({",
+    "  jp: jp.length, same: jp.join(',') === latin.join(','), krakow,",
+    "  beikoku: beikoku.length, phantoms, total: table.length, alive,",
+    "}));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 120_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    jp: number;
+    same: boolean;
+    krakow: number;
+    beikoku: number;
+    phantoms: number;
+    total: number;
+    alive: number;
+  };
+  // 検査用のビルドは小型のカタログなので、「何件当たるか」ではなく
+  // 日本語表記と英文字表記で**同じ行に届く**ことだけを見る（件数の実測は SPEC §7 に載せる。
+  // アクセントを落とす動作は `tests/recommender.test.ts` の固定データで見る）。
+  expect(out.jp, "「東京」が 0 件").toBeGreaterThan(0);
+  expect(out.same, "日本語表記と英文字表記で出会う行が違う").toBe(true);
+  expect(out.beikoku, "「米国」が 0 件").toBeGreaterThan(0);
+  expect(out.phantoms, "別表記の寄せが誤爆している行がある").toBe(0);
 });

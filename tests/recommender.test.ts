@@ -4404,6 +4404,73 @@ describe("開催地の日本語表記（表と upcoming.md が同じ語で読め
   });
 });
 
+describe("開催地の引き方（日本語の都市名・ローマ字のアクセント）", () => {
+  const NOW = Date.parse("2026-08-09T00:00:00Z");
+  const rows = [
+    {
+      conf: { key: "xiv", title: "XIV", editions: [] },
+      ed: { place: "Seattle, USA", deadlines: [], date_text: "" },
+      dl: { kind: "paper", label: "" },
+      kind: "paper",
+      t: NOW + 86_400_000,
+      tLast: NOW + 86_400_000,
+      hay: "xiv seattle usa seattle, america seattle, アメリカ",
+    },
+    {
+      conf: { key: "www", title: "WWW", editions: [] },
+      ed: { place: "Montréal, Canada", deadlines: [], date_text: "" },
+      dl: { kind: "paper", label: "" },
+      kind: "paper",
+      t: NOW + 86_400_000,
+      tLast: NOW + 86_400_000,
+      hay: "www montreal canada montréal, canada",
+    },
+    {
+      conf: { key: "ipa", title: "IPA", editions: [] },
+      ed: { place: "Kraków, Poland", deadlines: [], date_text: "" },
+      dl: { kind: "paper", label: "" },
+      kind: "paper",
+      t: NOW + 86_400_000,
+      tLast: NOW + 86_400_000,
+      hay: "ipa krakow poland kraków, poland",
+    },
+  ];
+  const hits = (q: string) => {
+    const m = R.searchMatcher(q, NOW);
+    return rows.filter((r) => m(r.hay)).map((r) => String(r.conf.key));
+  };
+
+  it("日本語で打った都市名が、英文字の開催地に届く", () => {
+    expect(hits("シアトル")).toEqual(["xiv"]);
+    expect(hits("seattle")).toEqual(["xiv"]);
+    // どちらも同じ行に出会う（片方だけ広くも狭くもならない）。
+    expect(hits("シアトル").length).toBe(hits("seattle").length);
+  });
+
+  it("ローマ字のアクセント記号を落とす（画面に見える地名を ASCII で引ける）", () => {
+    expect(hits("montreal")).toEqual(["www"]);
+    expect(hits("Montréal")).toEqual(["www"]);
+    expect(hits("krakow")).toEqual(["ipa"]);
+    // 折いた語は `krakw` のように壊れない（ł も同じ字に寄せる）。
+    expect(hits("krakw")).toEqual([]);
+  });
+
+  it("国の別表記を同じ場所として扱う", () => {
+    expect(hits("米国")).toEqual(["xiv"]);
+    expect(hits("usa")).toEqual(["xiv"]);
+    expect(hits("アメリカ")).toEqual(["xiv"]);
+  });
+
+  it("正規化は日本語の濁点・半濁点を壊さない（件数欄に打った語をそのまま出す）", () => {
+    // `searchNormalize` に NFD を日本語へ掛ける実装にすると、`パ` が `ハ` + 半濁点に
+    // 分解され、見た目がおなじなのに違う文字列になる。寄せ説明は打たれた語を出す。
+    expect(R.querySynonymNotes("スパコン")).toEqual([
+      "「スパコン」は分野「高性能計算」で探しています",
+    ]);
+    expect(R.querySynonymNotes("スパコン")[0]).toContain("パ");
+  });
+});
+
 describe("分野の言い方（スパコンなどで引ける）", () => {
   const hit = (q: string, hay: string) => R.searchMatcher(q)(hay);
 
