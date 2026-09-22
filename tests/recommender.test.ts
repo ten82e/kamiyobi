@@ -958,6 +958,49 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
   });
 
+  describe("かな表記と土地名での検索（kanaFold / queryTokenGroups）", () => {
+    it("カタカナ・長音符・小文字の揺れを吸収する", () => {
+      expect(R.hayMatches("情報ネットワークと分散処理", "ねっとわーく")).toBe(true);
+      expect(R.hayMatches("情報ネットワークと分散処理", "ネットワーク")).toBe(true);
+      expect(R.hayMatches("情報ネットワークと分散処理", "ネツトワーク")).toBe(true);
+      expect(R.kanaFold("ネットワーク")).toBe(R.kanaFold("ねっとわーく"));
+      // 畳むのはかなの表記差だけ（漢字の読みは都道府県の一覧表で扱う）。
+      expect(R.kanaFold("オタル")).toBe("おたる");
+      // 畳んだあとも拉丁語の照合は変わらない。
+      expect(R.hayMatches("NSDI 2027", "nsdi")).toBe(true);
+    });
+
+    it("ひらがな・カタカナの土地名を都道府県へ展開する", () => {
+      expect(R.hayMatches("沖縄産業支援センター（沖縄県）", "おきなわ")).toBe(true);
+      expect(R.hayMatches("国立京都国際会館", "キョウト")).toBe(true);
+      expect(R.hayMatches("東北大学 電気通信研究所（宮城県）", "みやぎ")).toBe(true);
+      expect(R.hayMatches("函館サーモン・まるなまアリーナ（北海道）", "ほっかいどう")).toBe(true);
+      // 土地名になっていない語は展開しない（誤爆を防ぐ）。
+      expect(R.queryTokenGroups("ネットワーク")).toEqual([["ネットワーク"]]);
+    });
+
+    it("地方名は構成する都道府県のいずれかにhitsする", () => {
+      expect(R.hayMatches("高知工科大学 香美キャンパス（高知県香美市）", "しこく")).toBe(true);
+      expect(R.hayMatches("米子コンベンションセンター（鳥取県）", "ちゅうごくちほう")).toBe(true);
+      expect(R.hayMatches("飛騨・世界生活文化センター（岐阜県）", "かんとう")).toBe(false);
+      // 「中国」は国名と衝突するので素では展開しない（地方で絞りたいときはかなで打つ）。
+      expect(R.queryTokenGroups("中国")).toEqual([["中国"]]);
+    });
+
+    it("語ごとの AND は保ったまま候補を増やす", () => {
+      expect(R.queryTokenGroups("おきなわ オンライン")).toEqual([
+        ["おきなわ", "沖縄"],
+        ["オンライン"],
+      ]);
+      expect(R.hayMatches("沖縄産業支援センター（沖縄県）", "おきなわ 研究会")).toBe(false);
+      expect(
+        R.hayMatches("沖縄産業支援センター（沖縄県）／オンライン", "おきなわ オンライン"),
+      ).toBe(true);
+      // 展開が既存のヒットを消さない（候補は OR で増やすだけ）。
+      expect(R.hayMatches("Networking, 東京", "とうきょう")).toBe(true);
+    });
+  });
+
   describe("deadlinesToCsv（絞り込み結果を表計算へ持ち出す）", () => {
     const now = Date.parse("2026-09-22T00:00:00+09:00");
     const rowOf = (over: Record<string, unknown>) => ({

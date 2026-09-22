@@ -1803,12 +1803,136 @@ const Recommender = (() => {
     return seen;
   }
 
+  /* かなのゆらぎを吸収する。国内の会場名は漢字、会議名はカタカナ表記が多く、
+   * `ネットワーク` と `ねっとわーく`、`ッ` と `っ` のように表記が揺れる。
+   * 比較の直前にかなをひらがなへ畳んで長音符を落とす（`hay` は表示にも使うので変えない）。 */
+  const SMALL_KANA_JA: Record<string, string> = {
+    ぁ: "あ",
+    ぃ: "い",
+    ぅ: "う",
+    ぇ: "え",
+    ぉ: "お",
+    ヵ: "か",
+    ヶ: "け",
+    っ: "つ",
+    ゃ: "や",
+    ゅ: "ゆ",
+    ょ: "よ",
+    ゎ: "わ",
+  };
+
+  function kanaFold(value: unknown): string {
+    let text = searchNormalize(value);
+    if (!text) return "";
+    text = text.replace(/[\u30a1-\u30fa]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 96));
+    text = text.replace(/[ー\u309b\u309c]/g, "");
+    text = text.replace(/[ぁぃぅぇぉヵヶっゃゅょゎ]/g, (ch) => SMALL_KANA_JA[ch] || ch);
+    return text;
+  }
+
+  /* 土地名での検索。出張先は「国内であってほしい」「四国であってほしい」という条件で
+   * 絞ることが多く、`おきなわ` や `しこく` でも引ける価値がある。読み辞書は
+   * 47 都道府県と地方に限定する（一般語の読み辞書は誤爆が高く作らない）。
+   * 展開は OR で候補を増やすだけなので、誤りが既存のヒットを消すことはない。 */
+  const PLACE_READINGS: string[][] = [
+    ["北海道", "ほっかいどう"],
+    ["青森", "あおもり"],
+    ["岩手", "いわて"],
+    ["宮城", "みやぎ"],
+    ["秋田", "あきた"],
+    ["山形", "やまがた"],
+    ["福島", "ふくしま"],
+    ["茨城", "いばらき"],
+    ["栃木", "とちぎ"],
+    ["群馬", "ぐんま"],
+    ["埼玉", "さいたま"],
+    ["千葉", "ちば"],
+    ["東京", "とうきょう"],
+    ["神奈川", "かながわ"],
+    ["新潟", "にいがた"],
+    ["富山", "とやま"],
+    ["石川", "いしかわ"],
+    ["福井", "ふくい"],
+    ["山梨", "やまなし"],
+    ["長野", "ながの"],
+    ["岐阜", "ぎふ"],
+    ["静岡", "しずおか"],
+    ["愛知", "あいち"],
+    ["三重", "みえ"],
+    ["滋賀", "しが"],
+    ["京都", "きょうと"],
+    ["大阪", "おおさか"],
+    ["兵庫", "ひょうご"],
+    ["奈良", "なら"],
+    ["和歌山", "わかやま"],
+    ["鳥取", "とっとり"],
+    ["島根", "しまね"],
+    ["岡山", "おかやま"],
+    ["広島", "ひろしま"],
+    ["山口", "やまぐち"],
+    ["徳島", "とくしま"],
+    ["香川", "かがわ"],
+    ["愛媛", "えひめ"],
+    ["高知", "こうち"],
+    ["福岡", "ふくおか"],
+    ["佐賀", "さが"],
+    ["長崎", "ながさき"],
+    ["熊本", "くまもと"],
+    ["大分", "おおいた"],
+    ["宮崎", "みやざき"],
+    ["鹿児島", "かごしま"],
+    ["沖縄", "おきなわ"],
+  ];
+  /* 地方名は構成する都道府県への OR に展開する。「中国」は国名と衝突するため、
+   * かな表記 `ちゅうごくちほう` に限る（地方で絞りたい利用者はそう打つ）。 */
+  const REGION_READINGS: string[][] = [
+    ["東北", "とうほく", "青森,岩手,宮城,秋田,山形,福島"],
+    ["関東", "かんとう", "茨城,栃木,群馬,埼玉,千葉,東京,神奈川"],
+    ["中部", "ちゅうぶ", "新潟,富山,石川,福井,山梨,長野,岐阜,静岡,愛知,三重"],
+    ["北陸", "ほくりく", "新潟,富山,石川,福井"],
+    ["関西", "かんさい", "滋賀,京都,大阪,兵庫,奈良,和歌山"],
+    ["近畿", "きんき", "滋賀,京都,大阪,兵庫,奈良,和歌山"],
+    ["中国地方", "ちゅうごくちほう", "鳥取,島根,岡山,広島,山口"],
+    ["四国", "しこく", "徳島,香川,愛媛,高知"],
+    ["九州", "きゅうしゅう", "福岡,佐賀,長崎,熊本,大分,宮崎,鹿児島"],
+  ];
+
+  /** 検索語を、かなで引いたときも含めた候補グループへ展開する（語ごとに OR の組）。 */
+  function queryTokenGroups(query: unknown): string[][] {
+    const byReading: Record<string, string[]> = {};
+    PLACE_READINGS.concat(REGION_READINGS).forEach((entry) => {
+      const members = entry[2] ? String(entry[2]).split(",") : [entry[0]];
+      const key = kanaFold(entry[1]);
+      if (!byReading[key]) byReading[key] = [];
+      members.forEach((member) => {
+        if (byReading[key].indexOf(member) < 0) byReading[key].push(member);
+      });
+    });
+    return queryTokens(query).map((token) => {
+      const group = [token];
+      const expanded = byReading[kanaFold(token)];
+      if (expanded) {
+        expanded.forEach((name) => {
+          if (group.indexOf(name) < 0) group.push(name);
+        });
+      }
+      return group;
+    });
+  }
+
   function hayMatches(hay: unknown, query: unknown): boolean {
-    const tokens = queryTokens(query);
-    if (!tokens.length) return true;
-    const target = searchNormalize(hay);
-    for (let i = 0; i < tokens.length; i++) {
-      if (target.indexOf(tokens[i]) < 0) return false;
+    const groups = queryTokenGroups(query);
+    if (!groups.length) return true;
+    const target = kanaFold(hay);
+    for (let i = 0; i < groups.length; i++) {
+      let hit = false;
+      for (let k = 0; k < groups[i].length; k++) {
+        if (target.indexOf(kanaFold(groups[i][k])) >= 0) {
+          hit = true;
+          break;
+        }
+      }
+      if (!hit) return false;
     }
     return true;
   }
@@ -3110,6 +3234,8 @@ const Recommender = (() => {
     weekdayJaFromDate: weekdayJaFromDate,
     deadlinesToCsv: deadlinesToCsv,
     searchNormalize: searchNormalize,
+    kanaFold: kanaFold,
+    queryTokenGroups: queryTokenGroups,
     queryTokens: queryTokens,
     hayMatches: hayMatches,
     tagLabelJa: tagLabelJa,

@@ -2011,18 +2011,31 @@ function jsFunction(html: string, name: string): string {
 }
 
 // filter() is extracted from the emitted module; provide only its explicit module dependencies.
-const SEARCH_CANON = [
+const SEARCH_CANON = (() => {
   // 検索照合の規則は recommender.js の正本をそのまま注入する（書き写すと正本とズレるため、
   // スタブでの再現は避ける）。
-  ...["searchNormalize", "queryTokens", "hayMatches"].map((name) =>
-    jsFunction(siteRuntime("recommender.js"), name),
-  ),
-];
+  const rec = siteRuntime("recommender.js");
+  const consts = [
+    ["SMALL_KANA_JA", /const SMALL_KANA_JA[\s\S]*?\};/],
+    ["PLACE_READINGS", /const PLACE_READINGS[\s\S]*?\];/],
+    ["REGION_READINGS", /const REGION_READINGS[\s\S]*?\];/],
+  ].map(([name, re]) => {
+    const src = rec.match(re)?.[0];
+    expect(src, `${name} 定義が見つからない`).toBeTruthy();
+    return src as string;
+  });
+  return [
+    ...consts,
+    ...["kanaFold", "searchNormalize", "queryTokens", "queryTokenGroups", "hayMatches"].map(
+      (name) => jsFunction(rec, name),
+    ),
+  ];
+})();
 const FILTER_RUNTIME_STUBS = [
   "let semQuery = null, semEmbeddings = null;",
   "const activeData = { conferences: [] };",
   ...SEARCH_CANON,
-  "const Recommender = { searchNormalize: searchNormalize, queryTokens: queryTokens, hayMatches: hayMatches, parsePaperLines: (text) => text ? [{ title: text }] : [], hasJapanese: () => false, contentWordCount: () => 0, autoDetectCats: () => [], venueCategories: () => [], journalRows: () => [], pastRepresentatives: () => [], rankMatches: (pairs, rank) => pairs.includes(rank), venueRecommendations: (rows) => rows.map((row) => ({ row, boosted: false, match: null, availability: null, fit: { score: 10, lexicalScore: 10, label: '', lexicalRank: 0, semanticRank: 0, semanticScore: 0 } })), comparePapers: () => 0 };",
+  "const Recommender = { searchNormalize: searchNormalize, queryTokens: queryTokens, kanaFold: kanaFold, queryTokenGroups: queryTokenGroups, hayMatches: hayMatches, parsePaperLines: (text) => text ? [{ title: text }] : [], hasJapanese: () => false, contentWordCount: () => 0, autoDetectCats: () => [], venueCategories: () => [], journalRows: () => [], pastRepresentatives: () => [], rankMatches: (pairs, rank) => pairs.includes(rank), venueRecommendations: (rows) => rows.map((row) => ({ row, boosted: false, match: null, availability: null, fit: { score: 10, lexicalScore: 10, label: '', lexicalRank: 0, semanticRank: 0, semanticScore: 0 } })), comparePapers: () => 0 };",
 ].join("\n");
 
 it("browser date-only state is independent of the viewer timezone", () => {
