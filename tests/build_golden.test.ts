@@ -10465,3 +10465,75 @@ it("締切のデータが無い画面は、それを条件の話より先に言�
   // 呼び出し側が収録件数を通していること（上だけ見ていても実画面は変わらない）。
   expect(app).toContain("catalogConferences: DATA.conferences.length");
 });
+
+it("意味検索が使えない理由は、画面では日本語で出る（英字の符号を混ぜない・SPEC §7）", () => {
+  /* 件数の欄に出す「意味検索は利用不可（語彙検索のみ・原因: …）」に、失敗の識別子を
+   * そのまま挟んでいた（2026-09-23 実測: 「原因: embeddings unavailable」「原因:
+   * model load failed」…）。識別子は #711（8 通りの失敗が 1 文言に潰れて原因追跡不能に
+   * なった）で入れたもので、捨てると調査に戻れない。画面は日本語、識別子は属性で残す。*/
+  const app = siteRuntime();
+  const script = [
+    `const { default: Recommender } = await import(${JSON.stringify(
+      `file://${join(site, "recommender.js")}`,
+    )});`,
+    "const labels = Recommender.semanticReasonLabelsJa;",
+    "const codes = Object.keys(labels);",
+    "const ascii = codes.filter((c) => /[A-Za-z]/.test(labels[c]));",
+    "const shown = codes.map((c) => Recommender.semanticReasonJa(c));",
+    "const other = Recommender.semanticReasonJa('some free text from upstream');",
+    "const passthrough = Recommender.semanticReasonJa('モデルの読み込みに失敗しました（詳しい注記）');",
+    "const blank = [undefined, null, '   '].map((v) => Recommender.semanticReasonJa(v));",
+    "console.log(JSON.stringify({ codes: codes.length, ascii, shown, other, passthrough, blank, labels }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    codes: number;
+    ascii: string[];
+    shown: string[];
+    other: string;
+    passthrough: string;
+    blank: string[];
+    labels: { [code: string]: string };
+  };
+  // ラベルは全部日本語（英字の符号が混じると、それ自体が読めない語になる）。
+  expect(out.ascii, "日本語の理由に英字が残っている").toEqual([]);
+  expect(out.codes).toBeGreaterThan(10);
+  expect(out.shown.every((t) => typeof t === "string" && t.length > 0)).toBe(true);
+  // 未知の値（上流が返す自由文）は「その他の問題」に寄せる。ただし日本語で書かれた
+  // 説明を英語扱いで潰さない。
+  expect(out.other).toBe("その他の問題");
+  expect(out.passthrough).toContain("モデルの読み込みに失敗しました");
+  // 値が欠けているときは「特定できなかった」と言う（空欄を出さない）。
+  for (const label of out.blank) expect(label).toBe("原因を特定できませんでした");
+
+  // 画面の文に識別子を混ぜないこと、識別子は属性で残すこと（原因追跡の要件）。
+  expect(app).not.toContain("原因: ${semanticReason");
+  expect(app).toContain("Recommender.semanticReasonJa(");
+  expect(app).toContain('setAttribute("data-semantic-reason"');
+  expect(app).toContain('removeAttribute("data-semantic-reason")');
+  // 識別子を打ち忘れた符号が出ないか、ビルド成果物側も照合する（上のラベル表は人が
+  // 写した表なので、実装が新しい符号を足したときにここで気づく）。
+  const built = [
+    { name: "app.js", text: app },
+    { name: "publish.js", text: siteRuntime("publish.js") },
+  ];
+  const missing: string[] = [];
+  for (const item of built) {
+    const pattern = /(?:semanticReason|reason)\s*[:=]\s*"([^"]+)"/g;
+    for (const match of item.text.matchAll(pattern)) {
+      const code = match[1];
+      if (/[\u3041-\u309f\u30a1-\u30ff\u4e00-\u9fff]/.test(code)) continue; // 日本語の注記はそのまま通す
+      if (!Object.hasOwn(out.labels, code)) missing.push(`${code} (${item.name})`);
+    }
+  }
+  expect(missing, "ラベルの無い失敗の識別子がある").toEqual([]);
+
+  // 画面に出る語をてびきが説明していること。
+  const guide = readFileSync(join(site, "index.html"), "utf8");
+  expect(guide).toContain("意味検索が使えないとき");
+  expect(guide).toContain("意味検索は利用不可");
+});

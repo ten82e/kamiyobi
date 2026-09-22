@@ -1324,6 +1324,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   let semGeneration = 0;
   let semState: SemanticStatus = "idle"; // idle | loading | ready | error（AI 状態の表示用）
   let semanticReason: string | null = null;
+  /* 画面には日本語の理由だけを出し、識別子はこの要素の `data-semantic-reason` に残す
+   * （原因追跡は #711 以来の要件なので捨てない）。*/
+  let countSemanticReason: string | null = null;
   const semProbeCache: Record<string, boolean> = {}; // model@revision -> probe compatibility
 
   function currentPaperText() {
@@ -3048,6 +3051,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // そのまま aria-live にすると 1 打鍵ごとに数十語が流れる（第 88 回で付けて実測）。
     // 件数と、解決結果・取得状態の短い通知だけをこちらに出す。
     let cntLive = cnt;
+    // 前の描画で出した理由が残り続けないよう、状態を組み直すたびに消す。
+    countSemanticReason = null;
     /* 会期だけが確定している会の当たり数を、件数欄と 0 件の案内で共用する（同じ絞り込みを
      * 二箇所に書かない）。対象は数十件なので、毎回数えても打鍵のコストにはならない。 */
     const scheduleOnly =
@@ -3143,9 +3148,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       } else if (semState === "error") {
         // 失敗理由コードを併記する。publish.ts / 各 error 分岐が設定する診断コードで、
         // 8+通りの失敗が1文言に潰れて原因追跡不能になっていた (#711 の構造要因)。
-        const semNote = ` ｜ 意味検索は利用不可（語彙検索のみ・原因: ${semanticReason || "unknown"}）`;
+        /* 理由の識別子は英語なので、画面には日本語を出す – 英字の符号は利用者に
+         * 読めない（2026-09-23 実測: 「原因: embeddings unavailable」）。 */
+        const semCode = semanticReason || "unknown";
+        const semNote = ` ｜ 意味検索は利用不可（語彙検索のみ・原因: ${Recommender.semanticReasonJa(semCode)}）`;
         cnt += semNote;
         cntLive += semNote;
+        countSemanticReason = semCode;
       }
     }
     // 「来月」で検索したとき、何月に絞ったのかを利用者が確認できるようにする
@@ -3188,6 +3197,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         : null;
     if (zeroFilter) cntLive += zeroResultLiveNote(zeroFilter);
     $("count").textContent = cnt;
+    /* 原因の識別子は画面に出さないが、捨てると調査できない（#711）。属性で残す
+     * （エラーのときだけ付け、他の状態では消す – 前の理由が残り続けるのを防ぐ）。 */
+    if (countSemanticReason) $("count").setAttribute("data-semantic-reason", countSemanticReason);
+    else $("count").removeAttribute("data-semantic-reason");
     // 読み上げはこちらの短い欄だけ（画面に出す文は `#count` のまま）。
     const countLive = $("countLive");
     if (countLive) countLive.textContent = cntLive;

@@ -191,6 +191,8 @@ interface SiteRecommenderApi {
   presetNextSelection(preset: unknown, current: PresetSelection | null): PresetSelection;
   /** 空の会期・開催地・ランクを表で出す語（検索側と同じ正本）。 */
   unconfirmedLabelJa(): string;
+  semanticReasonJa(value: unknown): string;
+  readonly semanticReasonLabelsJa: { [code: string]: string };
   querySynonymNotes(query: unknown): string[];
   dayTermsJa(value: unknown): string;
   weekDayTermsJa(token: string, nowMs: number): string[];

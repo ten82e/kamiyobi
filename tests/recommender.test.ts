@@ -1873,11 +1873,14 @@ describe("score labels and transient UI state", () => {
     expect(app).toContain("invalidateSemantic();");
     expect(app).toContain('clearSemantic("error");');
     expect(app).toContain("Recommender.setPaperVecs(null)");
-    // 失敗理由コードを併記する (#711: 8+通りの失敗が1文言に潰れて原因追跡不能だった)
+    // 失敗理由を併記する (#711: 8+通りの失敗が1文言に潰れて原因追跡不能だった)。
+    // 識別子は捨てないが、画面には日本語を出す – 英字の符号は利用者に読めないため、
+    // 識別子はこの要素の属性で残す（第 125 回）。
     expect(app).toContain("意味検索は利用不可（語彙検索のみ・原因: ");
     expect(app).toMatch(
-      /意味検索は利用不可（語彙検索のみ・原因: \$\{semanticReason \|\| "unknown"\}）/,
+      /意味検索は利用不可（語彙検索のみ・原因: \$\{Recommender\.semanticReasonJa\(semCode\)\}）/,
     );
+    expect(app).toContain('setAttribute("data-semantic-reason"');
     for (const reason of [
       "embedding set incompatible",
       "model metadata missing",

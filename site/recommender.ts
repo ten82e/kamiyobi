@@ -3724,6 +3724,42 @@ const Recommender = (() => {
     return UNCONFIRMED_LABEL_JA;
   }
 
+  /* 意味検索が使えないとき、画面に理由を出す。失敗の識別子は #711 の構造要因（8 通りの
+   * 失敗が 1 文言に潰れて原因追跡不能になっていた）を直すために持っているが、値は
+   * `model load failed` のような英語なので、日本語の文にそのまま混ぜると利用者に読めない
+   * 語が見える（2026-09-23 実測: 「原因: embeddings unavailable」）。画面には日本語を
+   * 出し、識別子はそのまま要素の `data-semantic-reason` に残す（報告を受けた側が
+   * 開発者ツールで読める）。 */
+  const SEMANTIC_REASON_LABELS_JA: { [code: string]: string } = {
+    unknown: "原因を特定できませんでした",
+    "embeddings unavailable": "意味検索のデータが読み込めませんでした",
+    "embedding set incompatible": "意味検索のデータの組み合わせが一致しません",
+    "model metadata missing": "意味検索モデルの情報が見つかりません",
+    "model load failed": "意味検索モデルの読み込みに失敗しました",
+    "probe mismatch": "意味検索モデルの確認に失敗しました",
+    "model unavailable": "意味検索モデルを利用できません",
+    "query embedding failed": "入力した文章の読み取りに失敗しました",
+    "recommendation data unavailable": "推薦データの読み込みに失敗しました",
+    "manifest/index unavailable": "推薦データの目録が読み込めませんでした",
+    "index structure mismatch": "推薦データの形が一致しません",
+    "index build_id mismatch": "推薦データの版が一致しません（再読み込みで直ることがあります）",
+    "index content_id mismatch": "推薦データの内容が一致しません（再読み込みで直ることがあります）",
+    "semantic_status lexical-only":
+      "この推薦データでは意味検索を使えません（言葉の一致だけで探します）",
+    "embeddings mismatch": "意味検索のデータが一致しません",
+  };
+
+  /** 失敗の識別子を利用者が読める形に直す。未知の値（モデル側が返す自由文）は
+   *  「その他の問題」に寄せるが、既に日本語で書かれたものはそのまま通す。 */
+  function semanticReasonJa(code: unknown): string {
+    const value = typeof code === "string" ? code.trim() : "";
+    if (!value) return SEMANTIC_REASON_LABELS_JA.unknown;
+    const known = SEMANTIC_REASON_LABELS_JA[value];
+    if (known) return known;
+    // 日本語を含む自由文（後から運営が足した説明など）を、英語扱いで潰さない。
+    return /[\u3041-\u309f\u30a1-\u30ff\u4e00-\u9fff]/.test(value) ? value : "その他の問題";
+  }
+
   /** 表が「未確認」を出す項目の検索語。条件は表のセルの作り方と揃える。 */
   function unconfirmedSearchTerms(
     ed: { event_start?: string | null; place?: string | null },
@@ -5186,6 +5222,8 @@ const Recommender = (() => {
     presetIsActive: presetIsActive,
     presetNextSelection: presetNextSelection,
     unconfirmedLabelJa: unconfirmedLabelJa,
+    semanticReasonJa: semanticReasonJa,
+    semanticReasonLabelsJa: SEMANTIC_REASON_LABELS_JA,
     rankPairLabelJa: rankPairLabelJa,
     rankScaleLabelJa: rankScaleLabelJa,
     rankUnratedLabelJa: rankUnratedLabelJa,
