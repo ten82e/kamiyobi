@@ -65,6 +65,9 @@ interface DrawerRow {
   kind: string;
   dateOnly?: boolean;
   localDate?: string;
+  // 表と同じ情報をドロワーでも出すため、この 2 つは無くさない（無い呼び出し側も許す）。
+  cats?: string[];
+  rankPairs?: string[];
   t: number;
   tLast: number;
   dl?: DeadlineRecord;
@@ -802,6 +805,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           ? "（締切日経過）"
           : "（時刻未確認）";
 
+    // 表の種別セルに出している「第 N ラウンド」「ラベル」をドロワーで落とさない。
+    // 同じ会議の複数ラウンドを見分ける実務上有意のある情報で、詳細側で欠けると困る。
+    const roundLabel = r.dl && r.dl.round && r.dl.round > 1 ? `第 ${r.dl.round} ラウンド` : "";
+    const kindDetail = [roundLabel, (r.dl && r.dl.label) || ""].filter(Boolean).join(" / ");
     // 表と同じ式で併記を出す。AoE は公式が AoE 締めの場合だけ見せる
     // （JST 宣言の国内締切に AoE を出すと、実在しない AoE 締切があると誤解させる）。
     const zone = Recommender.officialZone(r.dl);
@@ -830,6 +837,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             "（" +
             crossCheck +
             "）</div>") +
+      (kindDetail
+        ? `<div style="font-size: 0.8rem; color: var(--muted); margin-top: 4px;">${esc(kindDetail)}</div>`
+        : "") +
       "</div>";
 
     let actionRow = "";
@@ -855,6 +865,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 研究会は毎月開くので、この行の回より後の会期も併記する（「次はいつか」を
     // 行をめくって探さなくて済むように）。日程の書き方は表と揃える。
     const laterEditions = upcomingEditionsOf(r.conf, String(r.ed.event_start || ""), Date.now());
+    const catNamesJa = (r.cats || []).map((key) => catLabel(key));
+    const rankShown = (r.rankPairs || []).map((pair) => {
+      const parts = String(pair).split(":");
+      return `${String(parts[0]).toUpperCase()} ${parts[1]}`;
+    });
     const laterEditionsHtml = laterEditions.length
       ? `<p style="margin-bottom: 8px;"><strong>今後の会期:</strong> ${esc(
           laterEditions
@@ -880,6 +895,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       "</p>" +
       laterEditionsHtml +
       // 主題タグは日本語表記で出す（会議名から場を推定しないため）。
+      // 表にある分野・ランクをドロワーで落とさない（詳細を開いたのに一覧より分からない、を
+      // 避ける）。分野は日本語名、ランクの表記は表のセルと同じ形にする。
+      (catNamesJa.length
+        ? `<p style="margin-bottom: 8px;"><strong>分野:</strong> ${esc(catNamesJa.join("，"))}</p>`
+        : "") +
+      (rankShown.length
+        ? `<p style="margin-bottom: 8px;"><strong>ランク:</strong> ${esc(rankShown.join("，"))}</p>`
+        : "") +
       (Recommender.topicTagsJa(r.conf.tags).length
         ? '<p style="margin-bottom: 8px;"><strong>主題:</strong> ' +
           esc(Recommender.topicTagsJa(r.conf.tags).join("，")) +

@@ -4470,3 +4470,69 @@ it("のぞいた行数を件数欄で説明する（SPEC §7）", () => {
     "past-paper",
   ]);
 });
+
+it("ドロワーは表の情報（分野・ランク・ラウンド）を落とさない（SPEC §7）", () => {
+  const runtime = siteRuntime();
+  const dir = mkdtempSync(join(tmpdir(), "cfp-drawer-fields-"));
+  const recPath = join(dir, "recommender.mjs");
+  writeFileSync(recPath, siteRuntime("recommender.js"));
+  const openSrc = jsFunction(runtime, "openDrawer");
+  const summarySrc = jsFunction(runtime, "verificationSummary");
+  const script = [
+    "(async () => {",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${recPath}`)});`,
+    "const body = { innerHTML: '' };",
+    "const els = {",
+    "  drawerBackdrop: { classList: { add() {} } }, drawerTitle: {}, drawerFullName: {},",
+    "  drawerBody: body, drawerClose: { focus() {} },",
+    "};",
+    "const document = { activeElement: null, getElementById: (id) => els[id] || null };",
+    "function $(id) { return document.getElementById(id); }",
+    "const window = { _prevFocus: null };",
+    "const esc = (s) => String(s ?? '');",
+    "const KIND_LABEL = Recommender.kindLabelTable();",
+    jsFunction(runtime, "titleWithYear"),
+    jsFunction(runtime, "catLabel"),
+    jsFunction(runtime, "meetingRangeJa"),
+    jsFunction(runtime, "upcomingEditionsOf"),
+    `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')(esc);`,
+    `const openDrawer = new Function('window','document','$','KIND_LABEL','titleWithYear','fmtDate','fmtJst','fmtAoE','esc','safeExternalUrl','rowDateOnlyState','verificationSummary','Recommender','catLabel','meetingRangeJa','upcomingEditionsOf','UNCONFIRMED_JA','return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, KIND_LABEL, titleWithYear, () => 'UTC', () => 'JST', () => 'AoE', esc, (u) => String(u ?? ''), () => null, verificationSummary, Recommender, catLabel, meetingRangeJa, upcomingEditionsOf, Recommender.unconfirmedLabelJa());`,
+    "openDrawer({",
+    "  kind: 'paper', cats: ['hpc', 'systems'], rankPairs: ['ccf:B', 'core:A*'],",
+    "  conf: { key: 'demo', title: 'Demo', tags: ['machine-learning'] },",
+    "  ed: { year: 2026, place: 'Kyoto, Japan', date_text: '2026年11月2日-4日', event_start: '2026-11-02' },",
+    "  t: 0, tLast: 0,",
+    "  dl: { kind: 'paper', round: 2, label: 'Poster submission' },",
+    "});",
+    "const withFields = body.innerHTML;",
+    "body.innerHTML = '';",
+    "openDrawer({",
+    "  kind: 'paper', conf: { key: 'demo2', title: 'Demo 2' },",
+    "  ed: { place: '未定', event_start: null }, t: 0, tLast: 0, dl: { kind: 'paper' },",
+    "});",
+    "const bare = body.innerHTML;",
+    "console.log(JSON.stringify({ withFields, bare }));",
+    "})().catch((e) => { console.error(e && e.stack || String(e)); process.exit(1); });",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as { withFields: string; bare: string };
+  // 分野は日本語名（英表記だけを出さない）。
+  expect(out.withFields).toContain("分野:");
+  expect(out.withFields).toContain("高性能計算");
+  // ラベルはサイトの正典（`systems` は「システム」と出す）。
+  expect(out.withFields).toContain("高性能計算，システム");
+  // ランクは表のセルと同じ表記。
+  expect(out.withFields).toContain("ランク:");
+  expect(out.withFields).toContain("CCF B");
+  expect(out.withFields).toContain("CORE A*");
+  // 第 1 ラウンド以外はそのこと自体が情報なので出す。
+  expect(out.withFields).toContain("第 2 ラウンド");
+  expect(out.withFields).toContain("Poster submission");
+  // 無い行で空の見出しを出さない（主題と同じ扱い）。
+  expect(out.bare).not.toContain("分野:");
+  expect(out.bare).not.toContain("ランク:");
+  expect(out.bare).not.toContain("ラウンド");
+  // 空の会期・開催地は表と同じ語で出す（表とドロワーで言い方が割れないようにする）。
+  expect(out.bare).toContain("未確認");
+});
