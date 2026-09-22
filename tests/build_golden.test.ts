@@ -8717,6 +8717,7 @@ it("日本語の案内に中国語の略語を混ぜない（SPEC §7）", () =>
     // 「状態」の状や「文章」は正常な日本語なので入れない – 実際に混ぜて検査を落としたり、
     // 誤検出で検査を信用できなくしたりするのはここの失敗なので、一字ずつ確認して足す）。
     "\u52b3",
+    "\u9879",
     "\u8fc7",
     "\u53d1",
     "\u5b9e",
@@ -9126,7 +9127,7 @@ it("「データ生成」の時刻は JST と曜日で出る（SPEC §7）", () 
 it("データ源の行は内部の実装語を出さず、上流は一次資料へ飛べる（SPEC §7）", () => {
   /* 以前は `ccfddl (ccfddl/ccf-deadlines, MIT) / aideadlines (…) / local (data/extra.yaml, MIT)`
    * と出していた（2026-09-23 実測）。自前の入力の内部ファイル名を画面に出すうえ、
-   * 上流の配布物と並ぶ欄に自项目へ「MIT」と付いて見えた（配布物のライセンス表記に見える）。
+   * 上流の配布物と並ぶ欄で、自分の入力にも「MIT」と付いて見えた（配布物のライセンス表記に見える）。
    * 名前はリンクでもなく、出典を確かめられなかった。 */
   const app = siteRuntime();
   const script = [
@@ -11836,8 +11837,28 @@ it("画面に出る文へ markdown の記号を混ぜない（SPEC §7）", () =
   const visible = html
     .replace(/<style[^>]*>[\s\S]*?<\/style>/g, " ")
     .replace(/<script[^>]*>[\s\S]*?<\/script>/g, " ")
-    .replace(/<!--[\s\S]*?-->/g, " ");
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    // 要素に囲まれた文字（`<code>` の中も画面に出る）だけを見る。
+    .replace(/<[^>]+>/g, " ");
   expect(visible, "画面に出る文に markdown の強調記号が残っている").not.toContain("**");
+  /* バッククォートも同じ。てびきの本文中に `NSDI 2027` / `cryptography` / `Tokyo, 日本` の形で
+   * 書いた行が実際に有った（2026-09-23 実測: 画面に記号がそのまま出ていた）。HTML では
+   * `<code>` で囲むのがこの画面の書き方で、てびきの他の項目はそうなっている（第 143 回）。*/
+  expect(visible, "画面に出る文に markdown の code 記号が残っている").not.toContain("`");
+  expect(visible).not.toMatch(/__\S[^_]*__\s/);
+  expect(visible).not.toMatch(/\[[^\]\n]{1,40}\]\([^)\n]{1,80}\)/);
+  /* 吹き出し（`title`）も画面に出る文。折り返し形式の指定は効かず記号がそのまま出る
+   * （2026-09-23 実測: 「 kamiyobi の内部表記では `N`」）。画面の語だけで書かせる。*/
+  const app = siteRuntime("app.js");
+  const titleDecl = (app.match(/RANK_UNRATED_TITLE_JA\s*=\s*"[^"]*"/) || [""])[0];
+  expect(titleDecl, "「評価なし」の吹き出しが見つからない（検査が空振り）").not.toBe("");
+  expect(titleDecl).not.toContain("`");
+  expect(titleDecl, "画面に無い開発寄りの語を吹き出しに混ぜない").not.toContain("内部表記");
+  const guide = visible;
+  // 吹き出しが画面の語を使う限り、てびき側にもその語の説明が要る。
+  for (const word of titleDecl.match(/「[^」]+」/g) || []) {
+    expect(guide, `吹き出しの語 ${word} がてびきから引けない`).toContain(word);
+  }
 });
 
 it("閉じたままのてびきの入口に、中身とズレた見出しを置かない（SPEC §7）", () => {

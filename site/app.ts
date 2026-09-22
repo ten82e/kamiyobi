@@ -460,8 +460,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   // 等級の順は recommender の正本から取る（並び順と同じ順序で選択肢を出す）。
   const RANK_GRADE_OPTIONS = Recommender.rankGradeOrderJa();
   const RANK_UNRATED_JA = Recommender.rankUnratedLabelJa();
+  /* 「評価なし」の吹き出し。中身は画面の語だけで書く – 折り返し形式の指定（markdown の
+   * バッククォート）は `title` で効かず「内部表記では `N`」のように記号がそのまま出ていた
+   * （2026-09-23 実測）。同じく開発寄りの「内部表記」という語も画面のどこにも出てこない。
+   * 利用者が知りたいのは「評価なし」と「未確認」の違いなので、その区別を書く
+   * （てびきの「空欄の出し方」と同じ説明の向き）。 */
   const RANK_UNRATED_TITLE_JA =
-    "この会議はその評価一覧に載っていますが、評価が付いていません（ kamiyobi の内部表記では `N`）。";
+    "この会議はその評価一覧に載っていますが、評価は付いていません。評価が付いていないことと、 kamiyobi が公式で裏を取れていないこと（「未確認」）は別に出しています。";
   const RANK_FILTER_NOTE_JA =
     "CCF・CORE・THCPL のいずれかの一覧で、その評価が付いている会議を出します。";
 
