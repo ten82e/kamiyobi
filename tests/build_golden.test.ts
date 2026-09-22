@@ -2135,7 +2135,8 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     jsFunction(runtime, "selectableKind"),
     rankGradeOptionsSource(),
     runtime.match(/const WIN_OPTIONS = \[[^\]]*\];/)?.[0] ?? "",
-    "let droppedKindNotice = '';",
+    "let urlNotices = [];",
+    jsFunction(runtime, "urlValueNoticeJa"),
     "let written = '';",
     "const window = { location: { search: '', pathname: '/index.html' } };",
     "const history = { replaceState: (_s, _t, url) => { written = String(url); } };",
@@ -2153,19 +2154,70 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     "window.location.search = sentEvent.slice(1); sortKey = DEFAULT_SORT_KEY; sortAsc = false; readUrl();",
     "const gotEvent = [sortKey, sortAsc];",
     // 表に出さない種別を URL で受けたら、既定に戻して理由を残す（黙って条件を変えない）。
-    "state.kind = 'paper'; droppedKindNotice = ''; window.location.search = '?kind=notification'; readUrl();",
-    "const droppedKind = [state.kind, droppedKindNotice];",
+    "state.kind = 'paper'; urlNotices = []; window.location.search = '?kind=notification'; readUrl();",
+    "const droppedKind = [state.kind, urlNotices.join(' ／ ')];",
+    // 使えない値を黙って落とさない（送った人の意図した絞り込みが外れた画面を開く）。
+    "urlNotices = []; window.location.search = '?rank=B%2B%2B&win=7d%21'; readUrl();",
+    "const droppedRankWin = [state.rank, state.win, urlNotices.join(' ／ ')];",
+    // 分野は一部だけ未知のときと、全部未知のときで言うことが違う。
+    "urlNotices = []; window.location.search = '?cats=hpc,ai%2Dfuture'; readUrl();",
+    "const partialCats = [state.cats.join(','), urlNotices.join(' ／ ')];",
+    "urlNotices = []; window.location.search = '?cats=ai%2Dfuture'; readUrl();",
+    "const allUnknownCats = [state.cats.join(','), urlNotices.join(' ／ ')];",
+    // 並び順の鍵が未知なら既定に戻し、それを伝える。
+    "urlNotices = []; sortKey = DEFAULT_SORT_KEY; sortAsc = true; window.location.search = '?sort=deadline'; readUrl();",
+    "const droppedSort = [sortKey, urlNotices.join(' ／ ')];",
+    // 正しい値だけでは何も言わない（毎回注意されると読めない）。
+    "urlNotices = []; window.location.search = '?rank=A%2A&win=30d&cats=hpc&sort=event'; readUrl();",
+    "const cleanNotices = urlNotices.join(' ／ ');",
     "window.location.search = '?rank=A%2A'; readUrl();",
     "const restoredRank = state.rank;",
     // 既定の並びなら引数を足さない（URL は必要な情報だけ乗せる）。
     "sortKey = DEFAULT_SORT_KEY; sortAsc = true; state.domestic = false; writeUrl();",
-    "console.log(JSON.stringify([sent, got, written, droppedKind, restoredRank, sentEvent, gotEvent]));",
+    "console.log(JSON.stringify([",
+    "  sent,",
+    "  got,",
+    "  written,",
+    "  droppedKind,",
+    "  restoredRank,",
+    "  sentEvent,",
+    "  gotEvent,",
+    "  droppedRankWin,",
+    "  partialCats,",
+    "  allUnknownCats,",
+    "  droppedSort,",
+    "  cleanNotices,",
+    "]));",
   ].join("\n");
   const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
   expect(proc.status, proc.stderr).toBe(0);
-  const [sent, got, defaultUrl, droppedKind, restoredRank, sentEvent, gotEvent] = JSON.parse(
-    proc.stdout.trim(),
-  ) as [string, [string, boolean], string, [string, string], string, string, [string, boolean]];
+  const [
+    sent,
+    got,
+    defaultUrl,
+    droppedKind,
+    restoredRank,
+    sentEvent,
+    gotEvent,
+    droppedRankWin,
+    partialCats,
+    allUnknownCats,
+    droppedSort,
+    cleanNotices,
+  ] = JSON.parse(proc.stdout.trim()) as [
+    string,
+    [string, boolean],
+    string,
+    [string, string],
+    string,
+    string,
+    [string, boolean],
+    [string, string, string],
+    [string, string],
+    [string, string],
+    [string, string],
+    string,
+  ];
   expect(sent).toContain("sort=date");
   // 会期順の共有も対で動く（既定の向きなので `dir` は付かない）。
   expect(sentEvent).toContain("sort=event");
@@ -2180,6 +2232,31 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
   expect(droppedKind[0]).toBe("");
   expect(droppedKind[1]).toContain("upcoming.md");
   expect(restoredRank).toBe("A*");
+  // 使えない値を黙って落とさない。送った人は自分が映っていた画面を信じて共有する。
+  expect(droppedRankWin[0], "使えないランクが適用されている").toBe("");
+  expect(droppedRankWin[1], "使えない締切までが適用されている").toBe("all");
+  expect(droppedRankWin[2]).toContain("リンクのランク「B++」");
+  expect(droppedRankWin[2]).toContain("ランクの絞り込みは外れています");
+  expect(droppedRankWin[2]).toContain("リンクの締切まで「7d!」");
+  expect(droppedRankWin[2]).toContain("締切日は絞っていません");
+  // 分野は、一部だけ外れたときと全部外れたときで伝える内容が違う。
+  expect(partialCats[0]).toBe("hpc");
+  expect(partialCats[1]).toContain("ai-future");
+  expect(partialCats[1]).toContain("その部分だけ外しました");
+  expect(allUnknownCats[0]).toBe("");
+  expect(allUnknownCats[1], "全部の分野が未知のときに、絞れていないことを言っていない").toContain(
+    "分野の絞り込みは外れています",
+  );
+  // 並び順の鍵が未知なら既定に戻し、その旨を出す。
+  expect(droppedSort[0]).toBe("rem");
+  expect(droppedSort[1]).toContain("リンクの並び順「deadline」");
+  expect(droppedSort[1]).toContain("既定の並び順に戻しました");
+  // 正しい値だけでは何も言わない（毎回注意されると読めなくなる）。
+  expect(cleanNotices).toBe("");
+  // てびきが画面を共有する話と案内の文言の形を説明している（実装と案内がズレない形で）。
+  const guideHtml = readFileSync(join(site, "index.html"), "utf8");
+  expect(guideHtml, "てびきに画面共有の項が無い").toContain("<dt>画面を共有する</dt>");
+  expect(guideHtml).toContain("はこの一覧で使えない値なので、");
   // 知らない key は既定に戻る（URL を叩いて並べ替え式を壊せないようにする）。
   const bogus = spawnSync("node", ["-e", script.replace("sent.slice(1)", '"sort=bogus&dir=up"')], {
     encoding: "utf8",
@@ -4918,7 +4995,7 @@ it("種別セレクトに並ぶ選択肢は、選べば行が返る（SPEC §7�
   expect(app).toContain("SELECTABLE_KINDS.forEach");
   expect(app).not.toContain("Object.keys(KIND_LABEL).forEach");
   // URL で捨てた種別は件数欄で理由を出す。
-  expect(app).toContain("droppedKindNotice");
+  expect(app).toContain("urlNotices");
   expect(app).toContain("upcoming.md で確認できます");
 
   const recPath = join(site, "recommender.js");

@@ -1630,7 +1630,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   /* URL で渡された種別のうち、表に出さないものを読み捨てたときの説明。
    * 黙って条件が変わったように見えるのを避ける（相対月を解決したときと同じ方針）。 */
-  let droppedKindNotice = "";
+  /* 共有リンクの中で、この一覧が受け付けられなかった値の案内。黙って落とすと、送った人が
+   * 意図した絞り込みが外れた画面を相手に見せる（送った人は自分が映った画面を信じている）。
+   * 種別だけ特別扱いしていたのは、他の値でも同じ問題が起きるのに気づけていなかったから。 */
+  let urlNotices: string[] = [];
+
+  /** 受け付けられなかった値を、条件の書き下ろしとは別の文で伝える。 */
+  function urlValueNoticeJa(label: string, value: string, behavior: string): string {
+    if (!value) return "";
+    return `リンクの${label}「${value}」はこの一覧で使えない値なので、${behavior}`;
+  }
 
   function hiddenDeadlineCounts(): {
     past: number;
@@ -3179,9 +3188,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         cntLive += ` ｜ ${synonymNotes.join("・")}`;
       }
     }
-    if (!recMode && droppedKindNotice) {
-      cnt += ` ｜ ${droppedKindNotice}`;
-      cntLive += ` ｜ ${droppedKindNotice}`;
+    if (!recMode && urlNotices.length) {
+      const noticeText = urlNotices.map((notice) => ` ｜ ${notice}`).join("");
+      cnt += noticeText;
+      cntLive += noticeText;
     }
     if (!recMode && state.past && historyStatus === "loading") {
       cnt += " ｜ 全履歴を読み込み中…";
@@ -3403,26 +3413,48 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const p = new URLSearchParams(window.location.search);
     state.mode = p.get("mode") === "recommend" ? "recommend" : "deadlines";
     state.q = p.get("q") || "";
+    urlNotices = [];
     const urlKind = selectableKind(p.get("kind"));
     state.kind = urlKind.kind;
-    droppedKindNotice = urlKind.notice;
+    if (urlKind.notice) urlNotices.push(urlKind.notice);
     const rawRank = p.get("rank");
     // 許す値は選択肢の正本と同じ（書き写すと URL だけ通る値が生まれる）。
     state.rank = RANK_GRADE_OPTIONS.indexOf(rawRank || "") >= 0 ? rawRank || "" : "";
+    if (rawRank && !state.rank) {
+      urlNotices.push(urlValueNoticeJa("ランク", rawRank, "ランクの絞り込みは外れています"));
+    }
     const rawWin = p.get("win");
     // 受け付ける値はセレクトの選択肢と表裏一体にする（選択肢に無い値を通すと、その値で
     // 共有された URL を開いた人のセレクトが空欄になる。`future` は過去行を落とさない
     // 何もしない値だったので、受け付け自体をやめた）。
     state.win = WIN_OPTIONS.indexOf(rawWin || "") >= 0 ? rawWin || "" : "all";
+    if (rawWin && state.win === "all") {
+      urlNotices.push(urlValueNoticeJa("締切まで", rawWin, "締切日は絞っていません"));
+    }
     state.est = p.get("est") === "1";
     state.domestic = p.get("domestic") === "1";
     state.online = p.get("online") === "1";
     state.past = p.get("past") === "1";
-    state.cats = (p.get("cats") || "")
-      .split(",")
-      .filter((category) => Boolean(category) && Boolean(DATA.categories[category]));
+    const rawCats = (p.get("cats") || "").split(",").filter((category) => Boolean(category));
+    state.cats = rawCats.filter((category) => Boolean(DATA.categories[category]));
+    // 分野は「知らない鍵を黙って落とす」と、送った人の意図より広い一覧を開くことになる
+    // （全部の鍵が未知なら、そもそも絞り込んでいない画面になる）。
+    const unknownCats = rawCats.filter((category) => !DATA.categories[category]);
+    if (unknownCats.length) {
+      // 知らない鍵はラベルの引きようが無いので、URL に書いたとおりの値で見せる
+      // （送った人が打った / 生成的に得た文字列そのものが分からないと直せない）。
+      const names = unknownCats.join("・");
+      urlNotices.push(
+        state.cats.length
+          ? `リンクの分野「${names}」はこの一覧に無いので、その部分だけ外しました`
+          : `リンクの分野「${names}」はこの一覧に無いので、分野の絞り込みは外れています`,
+      );
+    }
     const rawSort = p.get("sort");
     sortKey = rawSort && SORTABLE_KEYS.indexOf(rawSort) >= 0 ? rawSort : DEFAULT_SORT_KEY;
+    if (rawSort && sortKey === DEFAULT_SORT_KEY && SORTABLE_KEYS.indexOf(rawSort) < 0) {
+      urlNotices.push(urlValueNoticeJa("並び順", rawSort, "既定の並び順に戻しました"));
+    }
     sortAsc = p.get("dir") !== "desc";
   }
 
