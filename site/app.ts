@@ -1494,6 +1494,23 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return `${base} 多いのは ${tips.join(" / ")}。${meetingNote}`;
   }
 
+  /** 0 件時に「条件をまとめて外す」を出すべきか（既に全部外れていれば出さない）。 */
+  function filtersClearable(filter: {
+    window: string;
+    cats: number;
+    domestic: boolean;
+    rank: string;
+    query: string;
+  }): boolean {
+    return Boolean(
+      (filter.window && filter.window !== "all" && filter.window !== "") ||
+        filter.cats > 0 ||
+        filter.domestic ||
+        (filter.rank && filter.rank !== "all" && filter.rank !== "") ||
+        filter.query.trim(),
+    );
+  }
+
   function shouldGroupMonths(grouping: {
     sortKey: string | null;
     sortAsc: boolean;
@@ -2245,14 +2262,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       $("deadlineTableWrap").hidden = false;
       $("recommendationCards").hidden = true;
       if (!shown.length) {
-        $("empty").textContent = emptyDeadlineHint({
+        const filter = {
           window: state.win,
           past: state.past,
           cats: state.cats.length,
           domestic: state.domestic,
           rank: state.rank,
           query: state.q,
-        });
+        };
+        $("emptyText").textContent = emptyDeadlineHint(filter);
+        // 「過去の締切も表示」だけは一覧の意味を変える（過去行の読み込みを伴う）ので
+        // まとめて外す側では触らず、文章での案内に留める。
+        $("emptyReset").hidden = !filtersClearable(filter);
         $("empty").hidden = false;
       } else {
         $("empty").hidden = true;
@@ -2661,6 +2682,27 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   });
   catsBox.addEventListener("change", apply);
   $("more").addEventListener("click", drawMore);
+  // 0 件時の「条件をまとめて外す」。`applyPreset` が既に持つ初期値への戻し方を真似るが、
+  // 一覧の意味を変える「過去の締切も表示」は利用者の選択として残す。
+  $("emptyReset").addEventListener("click", () => {
+    const past = state.past;
+    state = {
+      mode: state.mode,
+      q: "",
+      cats: [],
+      kind: "",
+      rank: "",
+      win: "all",
+      est: false,
+      domestic: false,
+      past,
+    };
+    stopHistoryLoad();
+    if (state.mode === "deadlines") setDeadlineProfile(DATA);
+    toForm();
+    writeUrl();
+    render();
+  });
   const exportCsvButton = $("exportCsv");
   if (exportCsvButton) exportCsvButton.addEventListener("click", exportShownCsv);
   // 印刷時は絞り込み後の全行を描画する。画面は 40 行ずつしか出さないので、

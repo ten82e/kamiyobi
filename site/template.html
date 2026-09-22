@@ -750,7 +750,14 @@ footer a:hover { text-decoration: underline; }
 
   <div id="recommendationCards" class="recommendation-cards" hidden></div>
 
-  <div class="empty" id="empty" style="padding: 32px; text-align: center; color: var(--muted);" hidden>該当する締切はありません。</div>
+  <!-- 0 件のときは外せる条件を実名で示し、まとめて外す導線も置く（各チェックを順番に
+       外させるのは劳苦なので）。ボタンは実際に外せる条件が残っているときだけ出す。 -->
+  <div class="empty" id="empty" style="padding: 32px; text-align: center; color: var(--muted);" hidden>
+    <span id="emptyText">該当する締切はありません。</span>
+    <div style="margin-top: 12px;">
+      <button id="emptyReset" type="button" hidden>条件をまとめて外す</button>
+    </div>
+  </div>
   <div style="margin-top: 20px; text-align: center;"><button id="more">さらに表示</button></div>
 
   <!-- 見方のてびき: 締切一覧の用語をその場で説明する（外部の解説ページを必要としない） -->

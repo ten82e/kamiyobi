@@ -1863,7 +1863,8 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
   );
   // 0 件メッセージは表の直下に出る（別ページへ飛ばさない）。
   const runtime = siteRuntime();
-  expect(runtime).toContain('$("empty").textContent = emptyDeadlineHint(');
+  // 0 件メッセージは表の直下に出る（別ページへ飛ばさない）。
+  expect(runtime).toContain('$("emptyText").textContent = emptyDeadlineHint(');
 });
 
 it("weekday suffixes for date-only deadlines and 会期 are viewer-timezone independent (SPEC §7)", () => {
@@ -1903,6 +1904,27 @@ it("the deadline search index carries Japanese month terms (SPEC §7)", () => {
   // 締切側は日付だけの値をそのまま、時刻を持つ値は JST の暦日で読む。
   expect(runtime).toContain("monthTermsJa(dateOnly ? dl.local_date : t)");
   expect(runtime).toMatch(/monthTermsJa[\s\S]*new Date\(value \+ 9 \* 3_600_000\)/);
+});
+
+it("the empty deadline state offers a one-click way to drop the filters (SPEC §7)", () => {
+  const template = readFileSync(join(site, "index.html"), "utf8");
+  const runtime = siteRuntime();
+  // 文章で条件を名指しするだけでは劳があるので、まとめて外すボタンを同じ場所に出す。
+  expect(template).toContain('id="emptyText"');
+  expect(template).toContain('<button id="emptyReset" type="button" hidden>');
+  // 説明文は要素を消さないよう専用の span へ書く（textContent だと子要素が消える）。
+  expect(runtime).toContain('$("emptyText").textContent = emptyDeadlineHint(');
+  expect(runtime).toContain('$("emptyReset").hidden = !filtersClearable(filter);');
+  // 一覧の意味を変える「過去の締切も表示」は利用者の選択として残す。
+  const clear = { window: "all", cats: 0, domestic: false, rank: "", query: "" };
+  const isClearable = new Function(`return (${jsFunction(runtime, "filtersClearable")});`)() as (
+    f: typeof clear,
+  ) => boolean;
+  expect(isClearable(clear)).toBe(false);
+  expect(isClearable({ ...clear, query: "機械学" })).toBe(true);
+  expect(isClearable({ ...clear, window: "7d" })).toBe(true);
+  expect(isClearable({ ...clear, domestic: true })).toBe(true);
+  expect(isClearable({ ...clear, rank: "A*", cats: 2 })).toBe(true);
 });
 
 it("the deadline table is usable on paper and with a Japanese IME (SPEC §7)", () => {
