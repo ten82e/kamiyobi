@@ -1438,6 +1438,28 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return hiddenCounts;
   }
 
+  /* 検索語が収録データ全体で何件に当たるかを数える（0 件の案内が使う）。
+   * 表は投稿締切・未来だけを出すので、収録している語でも 0 件になりうる。
+   * 「 kamiyobi に無い」と「今出していない」を区別できないと、そこで検索をやめてしまう。
+   * 絞り込みをまたいだ再実行はしない（どの条件を外せば出るかと結びつけると、
+   * 1 つ外しても其它の条件で 0 件のときに過剰な約束になる）。 */
+  function queryMatchCounts(query: string): { catalog: number; journal: number } {
+    const trimmed = query.trim();
+    if (!trimmed) return { catalog: 0, journal: 0 };
+    const matches = Recommender.searchMatcher(
+      Recommender.expandRelativeMonths(trimmed, Date.now()),
+    );
+    let catalog = 0;
+    rows.forEach((row) => {
+      if (matches(row.hay)) catalog += 1;
+    });
+    let journal = 0;
+    Recommender.journalRows(activeData.conferences, Date.now()).forEach((row) => {
+      if (matches((row as unknown as AppRow).hay)) journal += 1;
+    });
+    return { catalog, journal };
+  }
+
   /* 検索語が「表に出さない種別」の表示語に当たるか。`SELECTABLE_KINDS` に無い種別が対象で、
    * 選択肢と同じ列表から求める（書き写すと増えた種別が案内から落ちる）。 */
   function hiddenKindQueryWords(query: string): string[] {
@@ -1686,6 +1708,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     rank: string;
     query: string;
     hiddenKindWords: string[];
+    queryMatch: { catalog: number; journal: number };
   }): string {
     const tips: string[] = [];
     // 選択肢の実際のラベルを書く（「すべて」に変えた旧名を案内すると、その語が見つからない）。
@@ -1701,13 +1724,23 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /* 検索語が採否通知・査読結果公開など、表に出さない種別に当たっていることがある。
      * の外せる条件とは別枠の「なぜ 0 件か」なので、「多いのは …」の前に文として立てる。
      * 「収録が無い」と誤解して離脱しないよう、実名で書く。 */
+    /* 検索語が収録データ全体では行に当たっているのに 0 件のとき（既定で出す行が
+     * 投稿締切・未来だけなので起こる）。「収録が無い」と誤解させない。 */
+    const catalogNote =
+      filter.query.trim() && filter.queryMatch.catalog > 0
+        ? ` 検索語「${filter.query.trim()}」は収録済みで ${filter.queryMatch.catalog} 件に当たります` +
+          "（表は投稿締切でこれから先のものだけを出す既定と、いまの絞り込みで 0 件になっています）。" +
+          (filter.queryMatch.journal > 0
+            ? ` 常時受付のジャーナル ${filter.queryMatch.journal} 件は「種別」で選べます。`
+            : "")
+        : "";
     const kindNote = filter.hiddenKindWords.length
       ? ` 検索語は${filter.hiddenKindWords.map((w) => `「${w}」`).join("・")}の種別に当たります` +
         "（表には投稿締切だけを出します）。"
       : "";
     const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.md に載せています。";
-    if (!tips.length) return `${base}${kindNote} ${meetingNote}`;
-    return `${base}${kindNote} 多いのは ${tips.join(" / ")}。${meetingNote}`;
+    if (!tips.length) return `${base}${kindNote}${catalogNote} ${meetingNote}`;
+    return `${base}${kindNote}${catalogNote} 多いのは ${tips.join(" / ")}。${meetingNote}`;
   }
 
   /**
@@ -2623,6 +2656,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           rank: state.rank,
           query: state.q,
           hiddenKindWords: hiddenKindQueryWords(searchQuery),
+          queryMatch: queryMatchCounts(searchQuery),
         };
         $("emptyText").textContent = emptyDeadlineHint(filter);
         renderNextMeetingNote({
