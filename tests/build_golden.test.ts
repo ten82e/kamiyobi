@@ -1868,6 +1868,7 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
     query: string;
     hiddenKindWords: string[];
     queryMatch: { catalog: number; journal: number };
+    termCounts: Array<{ term: string; count: number }>;
     online?: boolean;
   }) => string;
   const clear = {
@@ -1880,6 +1881,7 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
     query: "",
     hiddenKindWords: [],
     queryMatch: { catalog: 0, journal: 0 },
+    termCounts: [],
   };
   // 条件を全部外して 0 件のときは、表に出ない種別（開催行）を説明する。
   expect(hint(clear)).toContain("upcoming.md");
@@ -9695,4 +9697,76 @@ it("締切が延びていた行は、一覧・CSV・検索で同じ語が揃う�
   // チップの語は日本語にする（上流の英語ラベルをそのままチップにしない – 公式ページの
   // 表記そのものを出す欄は別に有るが、あれは意図して原表記を残している欄なので別物）。
   expect(Recommender.extendedLabelJa()).not.toMatch(/[A-Za-z]/);
+});
+
+it("語を並べた検索で 0 件のとき、原因の語を名指す（SPEC §7）", () => {
+  /* 「ネットワーク 福岡 GPU」も「人工知能 だけ」も 0 件だったが、画面は原因の語を言わず
+   * 「検索語を短くする」しか出さなかった（2026-09-23 実測）。語ごとの当たり数を数えて、
+   * 収録データに無い語を名指すか、語をすべて含む行が無いことを件数で示す。 */
+  const rows = Recommender.candidateRows(data);
+  const hays = rows.map((r) => r.hay);
+  const counts = Recommender.queryTermCounts("ネットワーク 福岡 GPU", hays);
+  expect(counts.length, "語に分けていない").toBeGreaterThan(1);
+  const gpu = counts.find((c) => c.term === "gpu");
+  expect(gpu, "GPU の語が数え上げられていない").toBeDefined();
+  expect(gpu!.count, "この収録に GPU の行があるなら検査の前提が変わった").toBe(0);
+  expect(
+    counts.filter((c) => c.count > 0).length,
+    "当たる語が 1 つも無い（検査が空振り）",
+  ).toBeGreaterThan(0);
+  /* 展開される語は、生の語ではなく展開後で数える（「九州」は会場地名に漢字で書かれて
+   * いないことがある – 1 語だけで数ると「無い」と誤らせる）。 */
+  const kyushu = Recommender.queryTermCounts("九州", hays);
+  expect(kyushu.length).toBe(1);
+  expect(kyushu[0].count, "展開後の語で数えていない").toBeGreaterThan(0);
+
+  // 0 件案内の文面（ビルド成果物の関数を使う）。
+  const app = siteRuntime();
+  const hint = new Function(
+    `${app.match(/const KIND_ALL_LABEL_JA = [^\n]*;/)?.[0] ?? ""}
+     return (${jsFunction(app, "emptyDeadlineHint")});`,
+  )() as (f: object) => string;
+  const base = {
+    window: "all",
+    past: true,
+    cats: 0,
+    domestic: false,
+    online: false,
+    rank: "all",
+    kind: "",
+    query: "ネットワーク 福岡 GPU",
+    hiddenKindWords: [],
+    queryMatch: { catalog: 0, journal: 0 },
+  };
+  const dead = hint({
+    ...base,
+    termCounts: [
+      { term: "ネットワーク", count: 258 },
+      { term: "福岡", count: 1 },
+      { term: "gpu", count: 0 },
+    ],
+  });
+  expect(dead, "収録に無い語を名指していない").toContain("「gpu」");
+  expect(dead).toContain("収録データにも見当たりません");
+  // 原因の語が分かったときは、的外れな「検索語を短くする」を出さない。
+  expect(dead).not.toContain("検索語を短くする");
+  // 語が全部当たっている場合は、語ごとの件数を出す（「人工知能 だけ」のような形）。
+  const all = hint({
+    ...base,
+    query: "機械学習 のみ",
+    termCounts: [
+      { term: "機械学習", count: 494 },
+      { term: "のみ", count: 1 },
+    ],
+  });
+  expect(all).toContain("語をすべて含む行はありません");
+  expect(all).toContain("「機械学習」494件");
+  // 1 語だけの検索では出さない（語を並べた人が対象）。
+  const one = hint({
+    ...base,
+    query: "データベース",
+    termCounts: [{ term: "データベース", count: 456 }],
+  });
+  expect(one).not.toContain("語をすべて含む行はありません");
+  expect(one).not.toContain("収録データにも見当たりません");
 });

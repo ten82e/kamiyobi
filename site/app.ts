@@ -1543,6 +1543,19 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return { catalog, journal };
   }
 
+  /* 語を並べて打った検索語を、語の組に分けて収録データの当たり数を数える
+   * （`queryMatchCounts` と同じ展開を使う – 展開を忘れると届く語を「無い」と書く）。 */
+  function queryTermNotes(query: string): Array<{ term: string; count: number }> {
+    const trimmed = query.trim();
+    if (!trimmed) return [];
+    const now = Date.now();
+    return Recommender.queryTermCounts(
+      Recommender.expandRelativeMonths(trimmed, now),
+      rows.map((row) => row.hay),
+      now,
+    );
+  }
+
   /* 検索語が「表に出さない種別」の表示語に当たるか。`SELECTABLE_KINDS` に無い種別が対象で、
    * 選択肢と同じ列表から求める（書き写すと増えた種別が案内から落ちる）。 */
   function hiddenKindQueryWords(query: string): string[] {
@@ -1871,6 +1884,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     query: string;
     hiddenKindWords: string[];
     queryMatch: { catalog: number; journal: number };
+    termCounts: Array<{ term: string; count: number }>;
   }): string {
     const base = "該当する締切はありません。";
     const trimmedQuery = filter.query.trim();
@@ -1890,10 +1904,33 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             ? ` 常時受付のジャーナル ${filter.queryMatch.journal} 件は「種別」で選べます。`
             : "")
         : "";
+    /* 語を並べて打ったのに 0 件のとき、どの語が足りなかったのかを言う（2026-09-23 実測:
+     * 「ネットワーク 福岡 GPU」も「人工知能 だけ」も 0 件なのに、画面は原因の語を言わず
+     * 「検索語を短くする」しか出さなかった）。収録データに無い語があればそれを名指す
+     * （その語を待っても行は増えない）。語が全部当たっている場合は、すべてを含む行が
+     * 無いだけなので語ごとの件数を示し、いずれかを外すよう導く。 */
+    const terms = filter.termCounts.length > 1 ? filter.termCounts : [];
+    const deadTerms = terms.filter((t) => t.count === 0).map((t) => t.term);
+    let termNote = "";
+    if (deadTerms.length) {
+      termNote =
+        ` 検索語のうち${deadTerms
+          .slice(0, 2)
+          .map((w) => `「${w}」`)
+          .join("・")}は` + "収録データにも見当たりません。その語を外すと増えます。";
+    } else if (terms.length > 1) {
+      termNote =
+        " 語をすべて含む行はありません（" +
+        terms
+          .slice(0, 3)
+          .map((t) => `「${t.term}」${t.count}件`)
+          .join("・") +
+        "）。いずれかの語を外すと増えます。";
+    }
     /* 原因を特定できたときは、他の説明文を足さない。考えられる理由を全部並べると
      * 「結局どうすればいい」が読めなくなる。検索語を短くする助言も、原因が分かっていれば
      * 的外れなので出さない。 */
-    const specific = Boolean(kindNote || catalogNote);
+    const specific = Boolean(kindNote || catalogNote || deadTerms.length);
 
     const tips: string[] = [];
     // 選択肢の実際のラベルを書く（「すべて」に変えた旧名を案内すると、その語が見つからない）。
@@ -1911,11 +1948,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.md に載せています。";
     if (specific) {
       return tips.length
-        ? `${base}${kindNote}${catalogNote} 外せる条件: ${tips.join(" / ")}。`
-        : `${base}${kindNote}${catalogNote}`;
+        ? `${base}${kindNote}${catalogNote}${termNote} 外せる条件: ${tips.join(" / ")}。`
+        : `${base}${kindNote}${catalogNote}${termNote}`;
     }
-    if (!tips.length) return `${base} ${meetingNote}`;
-    return `${base} 多いのは ${tips.join(" / ")}。${meetingNote}`;
+    if (!tips.length) return `${base}${termNote} ${meetingNote}`;
+    return `${base}${termNote} 多いのは ${tips.join(" / ")}。${meetingNote}`;
   }
 
   /**
@@ -3023,6 +3060,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           query: state.q,
           hiddenKindWords: hiddenKindQueryWords(searchQuery),
           queryMatch: queryMatchCounts(searchQuery),
+          termCounts: queryTermNotes(searchQuery),
         };
         $("emptyText").textContent = emptyDeadlineHint(filter);
         renderNextMeetingNote({

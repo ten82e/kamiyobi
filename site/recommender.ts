@@ -2020,6 +2020,33 @@ const Recommender = (() => {
     return `${zone} UTC`;
   }
 
+  /* 検索語を語の組に分けて、収録データで何行に当たるかを数える。語を並べて打った人が
+   * 0 件に当たったとき、どの語が足りなかったのかを画面が言えるようにするため
+   * （2026-09-23 実測: 「ネットワーク 福岡 GPU」は 0 件なのに、どの語が原因かを画面は
+   * 何も言わなかった）。組の中は OR（同義・読み展開）、組の間は AND なので、
+   * 数えるのも組の単位にする（1 語だけで数ると、展開で届く語を「無い」と誤報する）。 */
+  function queryTermCounts(
+    query: unknown,
+    hays: readonly unknown[],
+    nowMs?: number,
+  ): Array<{ term: string; count: number }> {
+    const list = Array.isArray(hays) ? hays : [];
+    return queryTokenGroups(query, nowMs).map((group) => {
+      const alts = (group || []).length ? group : [""];
+      const matchers = alts.map((alt) => searchMatcher(alt, nowMs));
+      let count = 0;
+      for (let i = 0; i < list.length; i++) {
+        for (let j = 0; j < matchers.length; j++) {
+          if (matchers[j](list[i])) {
+            count += 1;
+            break;
+          }
+        }
+      }
+      return { term: String(alts[0] || ""), count: count };
+    });
+  }
+
   function deadlinesToCsv(
     rows: readonly Record<string, unknown>[] | null | undefined,
     nowMs: number,
@@ -5059,6 +5086,7 @@ const Recommender = (() => {
     categoryLabelJa: categoryLabelJa,
     officialZone: officialZone,
     isExtendedDeadline: isExtendedDeadline,
+    queryTermCounts: queryTermCounts,
     extendedLabelJa: () => EXTENDED_LABEL_JA,
     placeJa: placeJa,
     weekdayJaFromDate: weekdayJaFromDate,

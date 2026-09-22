@@ -154,6 +154,13 @@ interface SiteRecommenderApi {
     tags: readonly string[] | null | undefined,
   ): string;
   officialZone(dl: unknown): string;
+  /** 検索語を語の組に分け、収録データの何行に当たるかを数える（0 件のときの案内がどの語の
+   * せいかを言うため）。組の中は OR、組の間は AND なので、組の単位で数える。 */
+  queryTermCounts(
+    query: unknown,
+    hays: readonly unknown[],
+    nowMs?: number,
+  ): Array<{ term: string; count: number }>;
   /** 上流の締切名が延長を示しているか（一覧・CSV・検索で同じ判定を使う）。 */
   isExtendedDeadline(dl: unknown): boolean;
   /** 延長を示すチップの語（画面・CSV・検索で同じ語を使う）。 */
