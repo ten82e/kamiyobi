@@ -1576,7 +1576,9 @@ it("index.html has domestic filter and tag", () => {
   expect(html).toContain('id="domestic"');
   expect(html).toContain("domestic-jp");
   expect(html).toContain('textContent = "国内"');
-  expect(html).toContain('p.get("domestic") === "1"');
+  // 読み側も同じ鍵を見ている（値の形は urlFlagJa に寄せた・SPEC §7）。
+  expect(html).toContain('p.get("domestic")');
+  expect(html).toContain("state.domestic = domesticFlag.on");
   for (const title of [
     "情報処理学会 OS 研究会",
     "電子情報通信学会 NS 研究会",
@@ -2137,6 +2139,7 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     runtime.match(/const WIN_OPTIONS = \[[^\]]*\];/)?.[0] ?? "",
     "let urlNotices = [];",
     jsFunction(runtime, "urlValueNoticeJa"),
+    jsFunction(runtime, "urlFlagJa"),
     "let written = '';",
     "const window = { location: { search: '', pathname: '/index.html' } };",
     "const history = { replaceState: (_s, _t, url) => { written = String(url); } };",
@@ -2170,6 +2173,20 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     // 正しい値だけでは何も言わない（毎回注意されると読めない）。
     "urlNotices = []; window.location.search = '?rank=A%2A&win=30d&cats=hpc&sort=event'; readUrl();",
     "const cleanNotices = urlNotices.join(' ／ ');",
+    // チェック欄は `1` 以外も読む（人が打った `true` を黙って切り捨てない）。
+    "urlNotices = []; state.est = false; state.past = false; window.location.search = '?past=true&est=TRUE'; readUrl();",
+    "const trueFlags = [state.past, state.est, urlNotices.join(' ／ ')];",
+    // 入りなしも明に書ける（`0` / `false` で注意を出さない）。
+    "urlNotices = []; state.past = true; window.location.search = '?past=0&domestic=false'; readUrl();",
+    "const offFlags = [state.past, state.domestic, urlNotices.join(' ／ ')];",
+    // 読めない値は入りなしにして、画面上の語（ラベルそのもの）で理由を出す。
+    "urlNotices = []; state.online = true; window.location.search = '?online=maybe'; readUrl();",
+    "const unreadableFlag = [state.online, urlNotices.join(' ／ ')];",
+    // 画面のモードも同じ（既定の画面があるので、何を開いたかを書く）。
+    "urlNotices = []; window.location.search = '?mode=posts'; readUrl();",
+    "const unreadableMode = [state.mode, urlNotices.join(' ／ ')];",
+    "urlNotices = []; window.location.search = '?mode=deadlines'; readUrl();",
+    "const explicitMode = [state.mode, urlNotices.join(' ／ ')];",
     "window.location.search = '?rank=A%2A'; readUrl();",
     "const restoredRank = state.rank;",
     // 既定の並びなら引数を足さない（URL は必要な情報だけ乗せる）。
@@ -2187,6 +2204,11 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     "  allUnknownCats,",
     "  droppedSort,",
     "  cleanNotices,",
+    "  trueFlags,",
+    "  offFlags,",
+    "  unreadableFlag,",
+    "  unreadableMode,",
+    "  explicitMode,",
     "]));",
   ].join("\n");
   const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
@@ -2204,6 +2226,11 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     allUnknownCats,
     droppedSort,
     cleanNotices,
+    trueFlags,
+    offFlags,
+    unreadableFlag,
+    unreadableMode,
+    explicitMode,
   ] = JSON.parse(proc.stdout.trim()) as [
     string,
     [string, boolean],
@@ -2217,6 +2244,11 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     [string, string],
     [string, string],
     string,
+    [boolean, boolean, string],
+    [boolean, boolean, string],
+    [boolean, string],
+    [string, string],
+    [string, string],
   ];
   expect(sent).toContain("sort=date");
   // 会期順の共有も対で動く（既定の向きなので `dir` は付かない）。
@@ -2257,6 +2289,17 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
   const guideHtml = readFileSync(join(site, "index.html"), "utf8");
   expect(guideHtml, "てびきに画面共有の項が無い").toContain("<dt>画面を共有する</dt>");
   expect(guideHtml).toContain("はこの一覧で使えない値なので、");
+  // チェック欄とモードも同じ扱いにした（第 130 回の直し方を広げただけなので、
+  // 「1 以外を黙って切り捨てる」実装に戻っていないことをここで止める）。
+  expect(trueFlags, "true と書いたチェックが効いていない").toEqual([true, true, ""]);
+  expect(offFlags, "明示的な解除で注意を出している").toEqual([false, false, ""]);
+  expect(unreadableFlag[0], "読めない値でチェックが入っている").toBe(false);
+  expect(unreadableFlag[1]).toContain("リンクのオンライン参加可のみ「maybe」");
+  expect(unreadableFlag[1]).toContain("チェックは入りませんでした");
+  expect(unreadableMode[0], "読めないモードで推薦画面を開いている").toBe("deadlines");
+  expect(unreadableMode[1]).toContain("リンクのモード「posts」");
+  expect(unreadableMode[1]).toContain("締切の一覧を開きました");
+  expect(explicitMode).toEqual(["deadlines", ""]);
   // 知らない key は既定に戻る（URL を叩いて並べ替え式を壊せないようにする）。
   const bogus = spawnSync("node", ["-e", script.replace("sent.slice(1)", '"sort=bogus&dir=up"')], {
     encoding: "utf8",
@@ -3137,7 +3180,8 @@ it("past-deadline toggle reveals past rows (SPEC §7)", () => {
   const html = siteHtmlRuntime();
   // 静的検証: トグル UI と URL 状態の配線がある
   expect(html).toContain('id="past"');
-  expect(html).toContain('state.past = p.get("past") === "1"');
+  expect(html).toContain('p.get("past")');
+  expect(html).toContain("state.past = pastFlag.on");
   expect(html).toMatch(/if\s*\(state\.past\)\s*(?:\{\s*)?p\.set\(["']past["'],\s*["']1["']\)/);
   // 実行検証: past=false では過去行が出ず、past=true で出る
   const filterSrc = jsFunction(html, "filter");
@@ -4328,7 +4372,8 @@ it("the online-participation filter keeps only venues that say so (SPEC §7)", (
   expect(app).toContain("Recommender.placeOffersOnline(r.ed.place)");
   // 共有できる状態にする（「オンライン参加可で国内」のような見方を貼り付けられる）。
   expect(app).toContain('p.set("online", "1");');
-  expect(app).toContain('state.online = p.get("online") === "1";');
+  expect(app).toContain('p.get("online")');
+  expect(app).toContain("state.online = onlineFlag.on;");
 
   const script = [
     "const DAY = 86400000;",

@@ -1635,6 +1635,20 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 種別だけ特別扱いしていたのは、他の値でも同じ問題が起きるのに気づけていなかったから。 */
   let urlNotices: string[] = [];
 
+  /* 共有リンクのチェック欄の値を読む。空・0・false は入りなし、1・true は入り、
+   * それ以外は「読めない」として扱い、理由を出す。第 130 回でランク・締切まで・分野・
+   * 並び順は直したが、チェック欄は `=== "1"` のまま残っていて、`?past=true` も
+   * `?past=maybe` も黙って入りなしになっていた（2026-09-23 実測: 4 つのチェック欄いずれも、
+   * 1 以外の値で画面になんの説明も出さない）。 */
+  function urlFlagJa(raw: unknown): { on: boolean; readable: boolean } {
+    const value = String(raw == null ? "" : raw)
+      .trim()
+      .toLowerCase();
+    if (value === "" || value === "0" || value === "false") return { on: false, readable: true };
+    if (value === "1" || value === "true") return { on: true, readable: true };
+    return { on: false, readable: false };
+  }
+
   /** 受け付けられなかった値を、条件の書き下ろしとは別の文で伝える。 */
   function urlValueNoticeJa(label: string, value: string, behavior: string): string {
     if (!value) return "";
@@ -3411,9 +3425,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   function readUrl() {
     const p = new URLSearchParams(window.location.search);
-    state.mode = p.get("mode") === "recommend" ? "recommend" : "deadlines";
-    state.q = p.get("q") || "";
+    // 案内は読み取りのつど作り直す（項目を集めたあとで初期化すると、最初に集めた分が
+    // 消える。2026-09-23 に実発生）。
     urlNotices = [];
+    const rawMode = p.get("mode");
+    state.mode = rawMode === "recommend" ? "recommend" : "deadlines";
+    if (rawMode && rawMode !== "recommend" && rawMode !== "deadlines") {
+      urlNotices.push(urlValueNoticeJa("モード", rawMode, "締切の一覧を開きました"));
+    }
+    state.q = p.get("q") || "";
     const urlKind = selectableKind(p.get("kind"));
     state.kind = urlKind.kind;
     if (urlKind.notice) urlNotices.push(urlKind.notice);
@@ -3431,10 +3451,31 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (rawWin && state.win === "all") {
       urlNotices.push(urlValueNoticeJa("締切まで", rawWin, "締切日は絞っていません"));
     }
-    state.est = p.get("est") === "1";
-    state.domestic = p.get("domestic") === "1";
-    state.online = p.get("online") === "1";
-    state.past = p.get("past") === "1";
+    /* チェック欄の値。`1` / `true` で入り、`0` / `false` で入りなし、読めない値は
+     * 入りなしにして、画面上の語（ラベルそのもの）で理由を出す。
+     * `p.get("est")` のように鍵を直書きするのは、URL に書いた条件を読み戻す照合検査
+     * （SPEC §7）が鍵名を洗えるようにするためでもある。 */
+    const flagNoticeJa = (label: string, raw: string | null): void => {
+      urlNotices.push(
+        urlValueNoticeJa(label, raw == null ? "" : String(raw), "チェックは入りませんでした"),
+      );
+    };
+    const estRaw = p.get("est");
+    const domesticRaw = p.get("domestic");
+    const onlineRaw = p.get("online");
+    const pastRaw = p.get("past");
+    const estFlag = urlFlagJa(estRaw);
+    const domesticFlag = urlFlagJa(domesticRaw);
+    const onlineFlag = urlFlagJa(onlineRaw);
+    const pastFlag = urlFlagJa(pastRaw);
+    if (!estFlag.readable) flagNoticeJa("推定締切を含める", estRaw);
+    if (!domesticFlag.readable) flagNoticeJa("国内研究会・国内シンポジウムのみ", domesticRaw);
+    if (!onlineFlag.readable) flagNoticeJa("オンライン参加可のみ", onlineRaw);
+    if (!pastFlag.readable) flagNoticeJa("過去の締切も表示", pastRaw);
+    state.est = estFlag.on;
+    state.domestic = domesticFlag.on;
+    state.online = onlineFlag.on;
+    state.past = pastFlag.on;
     const rawCats = (p.get("cats") || "").split(",").filter((category) => Boolean(category));
     state.cats = rawCats.filter((category) => Boolean(DATA.categories[category]));
     // 分野は「知らない鍵を黙って落とす」と、送った人の意図より広い一覧を開くことになる
