@@ -1977,6 +1977,18 @@ const Recommender = (() => {
    * （hay）に入れていなかったため、**「推定」と打つと収録 134 件が 1 件も引けなかった**
    * （2026-09-23 実測。`再確認待ち` `要確認` も同じ）。画面に出る語は検索でも引ける、
    * という規則を関数1つで保つ。 */
+  /* 上流の締切名に "Extended"（延長）と付いている行がある（2026-09-23 実測: 収録 3,235 行の
+   * うち 30 行、将来締切では 15 行）。その事実は画面のどこにも出ておらず、検索も英語の
+   * `extended` でしか引けなかった（「延長」は 3 件 – 偶然日本語の締切名に含んでいた行だけ）。
+   * 締切が延びたかどうかは動作計画に直結するので、一覧・CSV・検索で同じ語を使う。
+   * 表示する日付は延長後の締切そのもの（元の日付は上流も保持していない）。 */
+  const EXTENDED_LABEL_JA = "延長後";
+
+  function isExtendedDeadline(dl: unknown): boolean {
+    const label = String((dl as Record<string, unknown> | null)?.label || "");
+    return /extend/i.test(label) || label.indexOf("延長") >= 0;
+  }
+
   function statusBadgeWords(ed: object, dl: object): string[] {
     // `needs_reconfirm` と `verification` は型に生えていない上流由来の欄なので、
     // ここでは広く取る（2026-09-23 時点で収録カタログには 0 行。出た日に検索できることが
@@ -1987,6 +1999,7 @@ const Recommender = (() => {
       e.estimated ? "推定" : "",
       d.needs_reconfirm ? "再確認待ち" : "",
       d.verification === "unverified" ? "要確認" : "",
+      isExtendedDeadline(dl) ? EXTENDED_LABEL_JA : "",
     ].filter(Boolean);
   }
 
@@ -5045,6 +5058,8 @@ const Recommender = (() => {
     candidateRows: candidateRows,
     categoryLabelJa: categoryLabelJa,
     officialZone: officialZone,
+    isExtendedDeadline: isExtendedDeadline,
+    extendedLabelJa: () => EXTENDED_LABEL_JA,
     placeJa: placeJa,
     weekdayJaFromDate: weekdayJaFromDate,
     deadlinesToCsv: deadlinesToCsv,

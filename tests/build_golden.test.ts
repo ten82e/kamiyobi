@@ -4592,12 +4592,14 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
     "  return out;",
     "};",
     // 一致評価のチップ（行内展開のトリガ）も同じハーネスで見る（行の中に有る物なので）。
-    "const mk = (place, eventStart) => ({ kind: 'paper', est: false, cats: ['hpc'], rankPairs: [], _matchScore: 40, _fitLabel: 'B',",
+    "const mk = (place, eventStart, label) => ({ kind: 'paper', est: false, cats: ['hpc'], rankPairs: [], _matchScore: 40, _fitLabel: 'B',",
     "  hay: 'x', tags: ['domestic-jp'], t: Date.UTC(2026, 8, 1), tLast: Date.UTC(2026, 8, 1),",
     "  dateOnly: false, ed: { place, event_start: eventStart, event_end: eventStart, deadlines: [], date_text: '' },",
-    "  dl: { kind: 'paper' }, conf: { key: 'k', title: '研究会', link: '' } });",
+    "  dl: { kind: 'paper', label: label || '' }, conf: { key: 'k', title: '研究会', link: '' } });",
     "const empty = makeRow(mk('', null));",
     "const known = makeRow(mk('Kyoto, Japan', '2026-11-12'));",
+    // 上流の締切名に Extended と付いていた行（延長の事実はここにしか情報がない）。
+    "const extended = makeRow(mk('Kyoto, Japan', '2026-11-12', 'Paper submission (Extended)'));",
     "const findByClass = (n, cls, out = []) => {",
     "  if (n.className && String(n.className).split(' ').includes(cls)) out.push(n);",
     "  (n.children || []).forEach((c) => findByClass(c, cls, out));",
@@ -4607,6 +4609,7 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
     "console.log(JSON.stringify({",
     "  emptyCells: cells(empty), emptyTitles: titles(empty),",
     "  knownCells: cells(known), knownTitles: titles(known),",
+    "  extendedCells: cells(extended), extendedWord: Recommender.extendedLabelJa(),",
     "  trigger: trig && { tag: trig.tagName, type: trig.type, attrs: trig.attrs, cls: trig.className },",
     "}));",
     "})().catch((e) => { console.error(e && e.stack || String(e)); process.exit(1); });",
@@ -4618,6 +4621,8 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
     emptyTitles: string[];
     knownCells: Record<string, string>;
     knownTitles: string[];
+    extendedCells: Record<string, string>;
+    extendedWord: string;
     trigger: { tag: string; type: string; attrs: Record<string, string>; cls: string } | null;
   };
   // 空の値は「-」ではなく、確認できていないことを短い語で出す。
@@ -4641,6 +4646,18 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
   expect(out.knownCells["会期"]).toContain("2026-11-12(木)");
   expect(out.knownCells["開催地"]).toContain("日本");
   expect(out.knownTitles.join(" ")).toContain("Kyoto, Japan");
+  /* 締切が延びていたことは、一覧に出さないと分からない（2026-09-23 実測: 上流の締切名に
+   * "Extended" と付く行が画面では他の行と区別が無く、検索も英語でしか引けなかった）。
+   * 語は recommender の正本から取り、てびきの語と揃える（テスト側に書き写さない）。 */
+  expect(out.extendedWord).not.toBe("");
+  expect(out.extendedCells["会議"], "延長していた行に一覧で目印が出ていない").toContain(
+    out.extendedWord,
+  );
+  expect(out.knownCells["会議"], "延長していない行まで目印を出している").not.toContain(
+    out.extendedWord,
+  );
+  const guideText = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  expect(guideText, "てびきが延長の語を説明していない").toContain(`<dt>${out.extendedWord}</dt>`);
   // ドロワーも同じ語を使う（表とドロワーで言い方が割れないようにする）。
   expect(app).toContain("esc(placeShown || UNCONFIRMED_JA)");
   expect(app).toContain("esc(r.ed.date_text || r.ed.event_start || UNCONFIRMED_JA)");
@@ -8537,6 +8554,7 @@ it("日本語の案内に中国語の略語を混ぜない（SPEC §7）", () =>
     "\u4ea7",
     // 日本語の語として成り立たない二字目以上の語（同じ字を使う中華語）。
     "\u53c2\u6570",
+    "\u5176\u4ed6",
   ];
   const targets = [
     "README.md",
@@ -9638,4 +9656,38 @@ it("キーボードで選んだ行にフォーカスが動く（支援技術に�
   const at = template.indexOf("<code>d</code> で行の詳細を出します。");
   expect(at).toBeGreaterThan(0);
   expect(template.slice(at, at + 260), "てびきに読み上げの説明が無い").toContain("支援技術");
+});
+
+it("締切が延びていた行は、一覧・CSV・検索で同じ語が揃う（SPEC §7）", () => {
+  /* 上流の締切名に "Extended"（延長）と付く行が収録 3,235 行のうち 33 行（将来締切 15 行）
+   * あったが、その事実は画面のどこにも出ておらず、検索も英語の `extended` でしか引けなかっ
+   * た（「延長」は偶然日本語の締切名を持っていた 3 件だけ – 2026-09-23 実測）。
+   * 締切が延びたかどうかは動作計画に直結するので、一覧のチップ・CSV の取得状態・検索語が
+   * 同じ語になることを実データで見る。 */
+  const rows = Recommender.candidateRows(data);
+  const extended = rows.filter((r) => Recommender.isExtendedDeadline(r.dl));
+  expect(extended.length, "延長の行が無い収録では検査が空振りする").toBeGreaterThan(0);
+  expect(extended.length).toBeLessThan(rows.length);
+  for (const r of extended) {
+    expect(
+      Recommender.hayMatches(r.hay, "延長"),
+      `${r.hay.slice(0, 24)} が「延長」で引けない`,
+    ).toBe(true);
+  }
+  // 延長していない行が混ざってはいけない（語を広く入れると誤検出になる）。
+  const others = rows.filter((r) => !Recommender.isExtendedDeadline(r.dl));
+  expect(
+    others.filter((r) => Recommender.hayMatches(r.hay, "延長")).length,
+    "延長していない行が「延長」で引ける",
+  ).toBe(0);
+  // CSV の取得状態にも同じ語を入れる（表計算に落とすと情報が消えないようにする）。
+  // 型は行の欄を広く取る API なので、テスト側の行型は寄せる（実装の検査ではない）。
+  const csv = Recommender.deadlinesToCsv(
+    extended as unknown as Record<string, unknown>[],
+    Date.UTC(2026, 7, 9),
+  );
+  expect(csv).toContain(Recommender.extendedLabelJa());
+  // チップの語は日本語にする（上流の英語ラベルをそのままチップにしない – 公式ページの
+  // 表記そのものを出す欄は別に有るが、あれは意図して原表記を残している欄なので別物）。
+  expect(Recommender.extendedLabelJa()).not.toMatch(/[A-Za-z]/);
 });

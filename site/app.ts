@@ -2252,6 +2252,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       es.textContent = "推定";
       tags.appendChild(es);
     }
+    // 締切が延びていたことは、一覧に出さないと分からない（2026-09-23 実測: 上流の締切名に
+    // "Extended" と付く 30 行が、画面では他の行と区別が無く、検索も英語でしか引けなかった）。
+    if (Recommender.isExtendedDeadline(r.dl)) {
+      const xs = document.createElement("span");
+      xs.className = "tag est";
+      xs.textContent = Recommender.extendedLabelJa();
+      tags.appendChild(xs);
+    }
     const verificationTag = verificationAlert(r.dl.verification?.status);
     if (verificationTag) {
       const vs = document.createElement("span");
