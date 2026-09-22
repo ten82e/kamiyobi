@@ -2031,6 +2031,25 @@ const Recommender = (() => {
     });
   }
 
+  /* 長い和語・熟語は、表側の表記が分かれていることがある（「オペレーティング・システム」
+   * のように中黒で割れる語、主題語が別々に並ぶ hay）。語そのものが無いときだけ、
+   * 2 つに割った両方が含まれるかを試す。短い語でやると別々の語の取り合わせで何でも
+   * 当たってしまうので、長い日本語の語に限定する。 */
+  const COMPOUND_MIN_LENGTH_JA = 7;
+
+  function compoundSplitHit(target: string, token: string): boolean {
+    if (token.length < COMPOUND_MIN_LENGTH_JA) return false;
+    if (!/^[\u3040-\u309f\u30a0-\u30ff\u4e00-\u9fff]+$/.test(token)) return false;
+    // 分割案は必ず語の先頭 2 文字と末尾 2 文字を含むので、それを必要条件に落として
+    // 行を絞る（検索ボックスは 1 文字打つごとに全行を見るため、ここを怠ると遅い）。
+    if (target.indexOf(token.slice(0, 2)) < 0 || target.indexOf(token.slice(-2)) < 0) return false;
+    for (let cut = 2; cut <= token.length - 2; cut += 1) {
+      if (target.indexOf(token.slice(0, cut)) >= 0 && target.indexOf(token.slice(cut)) >= 0)
+        return true;
+    }
+    return false;
+  }
+
   function hayMatches(hay: unknown, query: unknown): boolean {
     const groups = queryTokenGroups(query);
     if (!groups.length) return true;
@@ -2041,6 +2060,15 @@ const Recommender = (() => {
         if (target.indexOf(kanaFold(groups[i][k])) >= 0) {
           hit = true;
           break;
+        }
+      }
+      // どの候補も語そのものでは当たらなかったときだけ、長い和語の分割を試す。
+      if (!hit) {
+        for (let k = 0; k < groups[i].length; k++) {
+          if (compoundSplitHit(target, kanaFold(groups[i][k]))) {
+            hit = true;
+            break;
+          }
         }
       }
       if (!hit) return false;

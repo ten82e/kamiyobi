@@ -4097,3 +4097,71 @@ describe("検索語の両端の句読点", () => {
     );
   });
 });
+
+describe("長い和語を二語が並ぶ行にも当てる", () => {
+  const catalog = {
+    conferences: [
+      {
+        key: "demo-netsoc",
+        title: "Symposium on Networking and Security",
+        categories: ["networking", "security"],
+        editions: [
+          {
+            place: "京都",
+            event_start: "2026-12-01",
+            deadlines: [{ kind: "paper", precision: "exact", utc: "2026-10-01T12:00:00Z" }],
+          },
+        ],
+      },
+      {
+        key: "demo-os",
+        title: "情報処理学会 OS 研究会",
+        full_name: "システムソフトウェアとオペレーティング・システム研究会 (OS)",
+        categories: ["systems"],
+        editions: [
+          {
+            place: "福岡",
+            event_start: "2026-12-08",
+            deadlines: [{ kind: "paper", precision: "exact", utc: "2026-10-08T12:00:00Z" }],
+          },
+        ],
+      },
+      {
+        key: "demo-words",
+        // 「データ」と「ベース」は別々に含まれるが「データベース」は含まない行。
+        title: "Data Base? Base Data Workshop on Data Base",
+        categories: ["networking"],
+        tags: ["niche"],
+        editions: [
+          {
+            place: "Base",
+            event_start: "2026-12-10",
+            deadlines: [{ kind: "paper", precision: "exact", utc: "2026-10-10T12:00:00Z" }],
+          },
+        ],
+      },
+    ],
+  };
+  const rows = recommender.candidateRows(catalog);
+  const hit = (query: string) => rows.filter((r) => recommender.hayMatches(r.hay, query));
+
+  it("主題語が別々に書かれた行に当たる", () => {
+    expect(hit("ネットワークセキュリティ").map((r) => r.conf.key)).toContain("demo-netsoc");
+  });
+
+  it("中黒で割れた表記にも当たる", () => {
+    expect(hit("オペレーティングシステム").map((r) => r.conf.key)).toEqual(["demo-os"]);
+  });
+
+  it("短い語は分割しない", () => {
+    // 「データベース」を 2 語の取り合わせで当てると、無関係な行まで拾ってしまう。
+    expect(hit("データベース").map((r) => r.conf.key)).not.toContain("demo-words");
+  });
+
+  it("日本語以外の長い語は分割しない", () => {
+    // 英語は語間が空いた表記が普通なので、分割しない（しないことを決めておく）。
+    expect(recommender.hayMatches("Machine Learning Systems Base", "machinelearningsystems")).toBe(
+      false,
+    );
+  });
+});

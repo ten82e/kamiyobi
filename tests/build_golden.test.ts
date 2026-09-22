@@ -2266,6 +2266,7 @@ const SEARCH_CANON = (() => {
     ["PLACE_READINGS", /const PLACE_READINGS[\s\S]*?\];/],
     ["REGION_READINGS", /const REGION_READINGS[\s\S]*?\];/],
     ["QUERY_EDGE_PUNCTUATION", /const QUERY_EDGE_PUNCTUATION = [^\n]*;/],
+    ["COMPOUND_MIN_LENGTH_JA", /const COMPOUND_MIN_LENGTH_JA = [^\n]*;/],
   ].map(([name, re]) => {
     const src = rec.match(re)?.[0];
     expect(src, `${name} 定義が見つからない`).toBeTruthy();
@@ -2280,6 +2281,7 @@ const SEARCH_CANON = (() => {
       "searchNormalize",
       "queryTokens",
       "queryTokenGroups",
+      "compoundSplitHit",
       "hayMatches",
     ].map((name) => jsFunction(rec, name)),
   ];
