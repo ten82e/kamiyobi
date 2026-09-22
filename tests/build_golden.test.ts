@@ -8405,7 +8405,7 @@ it("狭い画面でも並び替えできる（見出しを消すなら並べ替�
   expect(block, "見出しを隠すのに並べ替えの列を出していない（並び替え不能に戻る）").toContain(
     ".sortbar { display: flex; }",
   );
-  // 並べ替えバーの列は、実装が並び替え可能な列と Exactly 同じであること（双方向）。
+  // 並べ替えバーの列は、実装が並び替え可能な列とちょうど一致すること（双方向）。
   const bar = template.slice(template.indexOf('<div class="sortbar"'));
   const barBlock = bar.slice(0, bar.indexOf("</div>"));
   const barKeys = Array.from(barBlock.matchAll(/data-sort="([^"]+)"/g)).map((m) => m[1]);
@@ -8420,12 +8420,22 @@ it("狭い画面でも並び替えできる（見出しを消すなら並べ替�
   for (const label of ["残り", "日時（JST）", "会議", "ランク"]) {
     expect(barBlock, `並べ替えバーに ${label} の列がない`).toContain(`>${label}`);
   }
-  // キーボードの案内は狭い画面では消す（ショートカットの無い端末で誤導しない）。
-  // 第 103 回まで見出ししか消しておらず、説明（`j`/`k`/`d`/`Esc` の書き方）が残っていたので、
-  // 隣接する説明も一緒に閉じる形を要求する（文字列ピンは古い形を戻さないために置く）。
-  expect(block, "キーボードの案内を狭い画面で消していない").toMatch(
+  /* キーボードの案内を消す条件は「幅」ではない（第 145 回で変更）。`j` / `k` / `d` / `/` の
+   * 処理に幅の判定は無いので、狭い窓を開いた人からは案内だけが消えていた。タッチで狙う
+   * 端末でだけ隠す。第 103 回まで見出ししか消しておらず、説明（`j`/`k`/`d`/`Esc` の書き方が
+   * 残っていた）ので、隣接する説明も一緒に閉じる形を要求する要求はそのまま残す。*/
+  const coarse = template.slice(template.indexOf("@media (hover: none), (pointer: coarse)"));
+  const coarseBlock = coarse.slice(0, coarse.indexOf("\n}"));
+  expect(coarseBlock, "キー操作の案内を操作手段で隠していない").toMatch(
+    /\.count-kbd \{[^}]*display: none/,
+  );
+  expect(coarseBlock, "キーボードの案内を操作手段で隠していない").toMatch(
     /\.only-keyboard,\s*\.only-keyboard \+ dd \{[^}]*display: none/,
   );
+  expect(
+    block,
+    "キーボードの案内を幅でも隠している（狭い窓で効いているキーの案内が消える）",
+  ).not.toContain(".only-keyboard");
   expect(template).toContain('<dt class="only-keyboard">キーボードで一覧を動かす</dt>');
   // てびきも同じことを書いている。
   const guide = template.slice(template.indexOf("<dt>並び順</dt>"));
@@ -12016,4 +12026,48 @@ it("画面の件数は 3 桁ごとに区切り、てびきの書き方と揃え�
       /^[0-9]{1,3}(,[0-9]{3})*$/,
     );
   }
+});
+
+it("キー操作の案内は幅ではなく操作手段で出し、効いている画面から案内を消さない（SPEC §7）", () => {
+  /* `j` / `k` / `d` / `/` の処理に幅の判定は無い（`onKeydown` に `innerWidth` 等の参照は
+   * 無い）。ところが案内の方は 640px 未満という「幅」の条件で隠れていた（2026-09-23 実測:
+   * パソコンの窓を左右に分割して狭くした人は、キーが効いているのに件数欄の案内とてびきの
+   * 「キーボードで一覧を動かす」の項が消えた画面を開く）。タッチで狙う端末で隠すのが
+   * 意図なので、操作手段（`pointer` / `hover`）で分ける。 */
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const css = (html.match(/<style>([\s\S]*?)<\/style>/) || ["", ""])[1];
+  // コメントの中に条件らしい語を書いても誤読しないよう、実装と同じく先に落とす。
+  const noComments = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  const blocks: Array<{ query: string; body: string }> = [];
+  const re = /@media[^{]*\{/g;
+  for (let m = re.exec(noComments); m !== null; m = re.exec(noComments)) {
+    let depth = 1;
+    let j = m.index + m[0].length;
+    while (j < noComments.length && depth > 0) {
+      if (noComments[j] === "{") depth += 1;
+      else if (noComments[j] === "}") depth -= 1;
+      j += 1;
+    }
+    blocks.push({
+      query: m[0].slice(0, -1).replace(/\s+/g, " ").trim(),
+      body: noComments.slice(m.index + m[0].length, j),
+    });
+  }
+  expect(blocks.length, "@media の块が読めない（検査が空振り）").toBeGreaterThan(2);
+  const selectors = [".count-kbd", ".only-keyboard"];
+  for (const sel of selectors) {
+    const hiding = blocks.filter((b) => b.body.includes(`${sel} {`) || b.body.includes(`${sel},`));
+    expect(hiding.length, `${sel} を隠す規則が見当たらない（検査が空振り）`).toBeGreaterThan(0);
+    for (const b of hiding) {
+      expect(
+        b.query,
+        `${sel} を幅で隠している（狭い窓を開いた人から、効いているキーの案内が消える）`,
+      ).toMatch(/\((pointer|hover)\s*:/);
+    }
+  }
+  // キー処理その物に幅の判定が無いことも見る（案内だけ消える食い違いの根本）。
+  const app = siteRuntime("app.js");
+  const handler = jsFunction(app, "onKeydown");
+  expect(handler, "キー処理本体が見当たらない（検査が空振り）").not.toBe("");
+  expect(handler).not.toMatch(/innerWidth|clientWidth|offsetWidth|matchMedia/);
 });
