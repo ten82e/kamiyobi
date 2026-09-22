@@ -2313,6 +2313,7 @@ const SEARCH_CANON = (() => {
 const FILTER_RUNTIME_STUBS = [
   "let semQuery = null, semEmbeddings = null;",
   "let catFacetCounts = {};",
+  "let hiddenCounts = { past: 0, est: 0, kind: 0 };",
   "const activeData = { conferences: [] };",
   ...SEARCH_CANON,
   "let searchQuery = '';",
@@ -4406,4 +4407,66 @@ it("upcoming.md の開催地列に空欄を残さない（SPEC §4）", () => {
   expect(blank, "空欄だと収録漏れと公式未発表が区別できない").toBe(0);
   // 0 件になるようなら検査が無意味なので、実際に「未確認」が出ていることも見る。
   expect(unconfirmed).toBeGreaterThan(0);
+});
+
+it("のぞいた行数を件数欄で説明する（SPEC §7）", () => {
+  const runtime = siteRuntime();
+  const app = siteRuntime("app.js");
+  const filterSrc = jsFunction(runtime, "filter");
+  const countsSrc = jsFunction(runtime, "hiddenDeadlineCounts");
+  // 件数欄に出る文言が消えていないこと。
+  expect(app).toContain("のぞく: ");
+  expect(app).toContain("hiddenDeadlineCounts()");
+
+  const script = [
+    "const DAY = 86400000;",
+    `const FILTER = ${JSON.stringify(filterSrc)};`,
+    'const now = Date.parse("2026-08-10T00:00:00Z");',
+    "class FakeDate extends Date { static now() { return now; } }",
+    "const document = {};",
+    "function $(id) { return null; }",
+    "const window = {};",
+    "function row(key, opt) {",
+    "  const o = opt || {};",
+    "  return { kind: o.kind || 'paper', est: o.est === true, cats: ['hpc'], rankPairs: ['B'],",
+    "    hay: key, tags: [], t: o.past ? now - 86400000 : now + 86400000,",
+    "    tLast: o.past ? now - 86400000 : now + 86400000,",
+    "    ed: { place: '京都', deadlines: [] }, conf: { key } };",
+    "}",
+    "const rows = [",
+    "  row('future-paper', {}),",
+    "  row('past-paper', { past: true }),",
+    "  row('future-paper-est', { est: true }),",
+    "  row('future-abstract', { kind: 'abstract' }),",
+    "  row('future-notification', { kind: 'notification' }),",
+    "  // 過去かつ投稿締切以外の行は両方に立つ（内訳を足すと全件にならないことを見る）。",
+    "  row('past-notification', { past: true, kind: 'notification' }),",
+    "];",
+    countsSrc,
+    "const state = { mode: 'deadlines', q: '', cats: [], kind: '', rank: '', win: 'all', est: false, domestic: false, online: false, past: false };",
+    FILTER_RUNTIME_STUBS,
+    "const filter = new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
+    "  'return (' + FILTER + ')')(FakeDate, DAY, rows, state, true, 'rem');",
+    "const defaults = { shown: filter().map((r) => r.conf.key), hidden: hiddenDeadlineCounts() };",
+    "state.past = true;",
+    "const withPast = { shown: filter().map((r) => r.conf.key), hidden: hiddenDeadlineCounts() };",
+    "console.log(JSON.stringify({ defaults, withPast }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    defaults: { shown: string[]; hidden: Record<string, number> };
+    withPast: { shown: string[]; hidden: Record<string, number> };
+  };
+  // 既定: 過去の締切・推定・投稿締切以外の種別が落ちる。
+  expect(out.defaults.shown.slice().sort()).toEqual(["future-abstract", "future-paper"]);
+  expect(out.defaults.hidden).toEqual({ past: 2, kind: 2, est: 1 });
+  // 「過去の締切も表示」をオンにすると過去の分はのぞかなくなる（他はそのまま）。
+  expect(out.withPast.hidden.past).toBe(0);
+  expect(out.withPast.hidden.kind).toBe(2);
+  expect(out.withPast.shown.slice().sort()).toEqual([
+    "future-abstract",
+    "future-paper",
+    "past-paper",
+  ]);
 });

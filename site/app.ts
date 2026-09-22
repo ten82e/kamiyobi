@@ -1369,6 +1369,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     rank: "CCF・CORE の一覧でこの会議の評価が確認できていません。".trim(),
   };
 
+  /* 「N 件 / 全 M 件」の差の内訳。既定で隠れる行（過去の締切・推定・投稿締切以外の種別）を
+   * 数える。隠れていることを説明しないと、探した締切が「無い」と誤解される。 */
+  let hiddenCounts = { past: 0, est: 0, kind: 0 };
+
+  function hiddenDeadlineCounts(): { past: number; est: number; kind: number } {
+    return hiddenCounts;
+  }
+
   /** 分野チップの件数（`filter()` が分野以外の条件を通った行について数え直す）。 */
   let catFacetCounts: Record<string, number> = {};
 
@@ -1428,25 +1436,29 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 分野だけを覗いた述語。分野チップの件数は「他の条件を通った行」を数えるため、
     // ここで区切っておく（選んだ分野で自分の選択肢を潰さない、facet の普通の形にする）。
     const matchesExceptCats = (r: AppRow): boolean => {
-      if (!inRecommend && !state.est && r.est && !pLines.length) {
-        return false;
-      }
+      // 既定の条件で何件が落ちたかを数える。「N 件 / 全 M 件」の差を読み手が説明できる
+      // ようにするためで、条件式を外に書き出して二重実装する代わりにここで名前を付ける。
+      const byEst = !inRecommend && !state.est && r.est && !pLines.length;
       // 過去行は通常モードで除外（「過去の締切も表示」トグルで表示）。
       // 論文モードでは「締切済みだが次回予定あり」の会議として許容
-      if (isPast(r) && !pLines.length && !state.past) {
-        return false;
-      }
-      if (r.est && isPast(r)) {
-        return false;
-      }
+      const byPast = isPast(r) && !pLines.length && !state.past;
+      // 推定日程がすでに過ぎた行は「推定を含める」でも出さない（未来の約束ではない）。
+      const byEstimatedPast = r.est && isPast(r);
       // このサイトは「これから投稿できるところ」を探すもの。
       // 投稿締切（概要・論文）以外の種別（開催・採否通知等）は表示しない。
       // 論文モードまたは種別指定時のみ常時受付ジャーナル（kind: journal）を許容する。
-      if (
+      const byKind =
         r.kind !== "abstract" &&
         r.kind !== "paper" &&
-        !((pLines.length || state.kind === "journal") && r.kind === "journal")
-      ) {
+        !((pLines.length || state.kind === "journal") && r.kind === "journal");
+      // 各条件は**独立に**数える（1 行が過去かつ投稿締切以外なら両方に立つ）。
+      // なので内訳を足しても全件にはならない — 表示文でもそう書く。
+      if (!inRecommend) {
+        if (byEst) hiddenCounts.est += 1;
+        if (byPast) hiddenCounts.past += 1;
+        if (byKind) hiddenCounts.kind += 1;
+      }
+      if (byEst || byPast || byEstimatedPast || byKind) {
         return false;
       }
       if (!inRecommend && isAfter(r, limit)) {
@@ -1479,6 +1491,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       return true;
     };
 
+    hiddenCounts = { past: 0, est: 0, kind: 0 };
     catFacetCounts = {};
     let out: AppRow[] = pool.filter((r) => {
       if (!matchesExceptCats(r)) {
@@ -2448,6 +2461,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       : recMode
         ? "投稿先を探すには論文情報を入力してください"
         : `${shown.length} 件 / 全 ${rows.length} 件`;
+    // 「全 M 件」との差をその場で説明する。内訳は独立に数えているので合計は全件にならない
+    // （過去かつ投稿締切以外の行が両方に立つ）ため、「〜をのぞく」の形で書く。
+    if (!recMode && !paperMode) {
+      const hidden = hiddenDeadlineCounts();
+      const parts: string[] = [];
+      if (hidden.past) parts.push(`過去の締切 ${hidden.past} 件`);
+      if (hidden.kind) parts.push(`投稿締切以外の種別 ${hidden.kind} 件`);
+      if (hidden.est) parts.push(`推定 ${hidden.est} 件`);
+      if (parts.length) cnt += ` ｜ のぞく: ${parts.join("・")}`;
+    }
     if (!recMode && state.past && historyStatus === "loading") cnt += " ｜ 全履歴を読み込み中…";
     if (!recMode && state.past && historyStatus === "error")
       cnt += " ｜ 全履歴を読み込めませんでした";
