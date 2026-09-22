@@ -1895,6 +1895,16 @@ it("weekday suffixes for date-only deadlines and 会期 are viewer-timezone inde
   expect(app).toContain("Recommender.weekdayJaFromDate(r.ed.event_end)");
 });
 
+it("the deadline search index carries Japanese month terms (SPEC §7)", () => {
+  const runtime = siteRuntime("recommender.js");
+  // 会期の `date_text` は国際会議だと英語表記なので、月での検索は ISO 暦日から作る。
+  expect(runtime).toContain("monthTermsJa(ed.event_start)");
+  expect(runtime).toContain("monthTermsJa(ed.event_end)");
+  // 締切側は日付だけの値をそのまま、時刻を持つ値は JST の暦日で読む。
+  expect(runtime).toContain("monthTermsJa(dateOnly ? dl.local_date : t)");
+  expect(runtime).toMatch(/monthTermsJa[\s\S]*new Date\(value \+ 9 \* 3_600_000\)/);
+});
+
 it("the deadline table is usable on paper and with a Japanese IME (SPEC §7)", () => {
   const template = readFileSync(join(site, "index.html"), "utf8");
   const runtime = siteRuntime();

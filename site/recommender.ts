@@ -53,6 +53,9 @@ interface EditionRecord {
   year?: number;
   place?: string;
   date_text?: string;
+  /** 会期の暦日。国際会議の `date_text` は英語表記なので、月での検索はこっちを使う。 */
+  event_start?: string;
+  event_end?: string;
   estimated?: boolean;
   deadlines?: DeadlineRecord[];
 }
@@ -1803,6 +1806,38 @@ const Recommender = (() => {
     return seen;
   }
 
+  /* 「12月締切の会議だけ」のように月で探す利用者が多い。会期は国際会議だと英語表記
+   * （`June 7-11, 2027`）なので `6月` では当たらない。締切（JST の暦日）と会期の
+   * 開始・終了から和暦風の月語を hay に足す（`2026年12月 12月`）。
+   * 瞬間から月を引くときは JST の暦日で読む（一覧の日時列と同じ）。
+   * `YYYY-MM-DD` の文字列は閲覧者のタイムゾーンに依存せず、そのまま暦日として読む。 */
+  function monthTermsJa(value: unknown): string {
+    let year = 0;
+    let month = 0;
+    if (typeof value === "number" && Number.isFinite(value)) {
+      const jst = new Date(value + 9 * 3_600_000);
+      year = jst.getUTCFullYear();
+      month = jst.getUTCMonth() + 1;
+    } else {
+      const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value ?? "").trim());
+      if (!matched) return "";
+      year = Number(matched[1]);
+      month = Number(matched[2]);
+      const day = Number(matched[3]);
+      // `weekdayJaFromDate` と同じ検査。`Date.UTC` は 2月30日のような値を翌月へ繰り越す
+      // ので、読み直した暦日が元値と一致するときだけ認める。
+      const check = new Date(Date.UTC(year, month - 1, day));
+      if (
+        check.getUTCFullYear() !== year ||
+        check.getUTCMonth() + 1 !== month ||
+        check.getUTCDate() !== day
+      )
+        return "";
+    }
+    if (!year || month < 1 || month > 12) return "";
+    return `${year}年${month}月 ${month}月`;
+  }
+
   /* かなのゆらぎを吸収する。国内の会場名は漢字、会議名はカタカナ表記が多く、
    * `ネットワーク` と `ねっとわーく`、`ッ` と `っ` のように表記が揺れる。
    * 比較の直前にかなをひらがなへ畳んで長音符を落とす（`hay` は表示にも使うので変えない）。 */
@@ -2112,7 +2147,7 @@ const Recommender = (() => {
             tags: conf.tags || [],
             rankPairs,
             hay: searchNormalize(
-              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${catHay} ${tagSearchTerms(confTags)}`,
+              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`,
             ),
             dupLabel: dl.comment || "",
           });
@@ -3234,6 +3269,7 @@ const Recommender = (() => {
     weekdayJaFromDate: weekdayJaFromDate,
     deadlinesToCsv: deadlinesToCsv,
     searchNormalize: searchNormalize,
+    monthTermsJa: monthTermsJa,
     kanaFold: kanaFold,
     queryTokenGroups: queryTokenGroups,
     queryTokens: queryTokens,

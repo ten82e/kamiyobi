@@ -153,6 +153,7 @@ interface SiteRecommenderApi {
   ): string;
   searchNormalize(value: unknown): string;
   kanaFold(value: unknown): string;
+  monthTermsJa(value: unknown): string;
   queryTokenGroups(query: unknown): string[][];
   queryTokens(query: unknown): string[];
   hayMatches(hay: unknown, query: unknown): boolean;

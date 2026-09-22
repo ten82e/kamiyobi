@@ -958,6 +958,29 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
   });
 
+  describe("月での検索（monthTermsJa）", () => {
+    it("締切は JST の暦日から月語を作る", () => {
+      // 2026-09-30 16:00 UTC = JST 2026-10-01 01:00。一覧の日時列と同じ暦日で読む。
+      expect(R.monthTermsJa(Date.parse("2026-09-30T16:00:00Z"))).toBe("2026年10月 10月");
+      expect(R.monthTermsJa(Date.parse("2026-12-25T15:00:00Z"))).toBe("2026年12月 12月");
+      expect(R.monthTermsJa(Date.parse("2026-12-25T14:00:00Z"))).toBe("2026年12月 12月");
+    });
+
+    it("日付だけの値は閲覧者のタイムゾーンに依存しない", () => {
+      expect(R.monthTermsJa("2027-01-21")).toBe("2027年1月 1月");
+      expect(R.monthTermsJa("2026-12-01")).toBe("2026年12月 12月");
+    });
+
+    it("暦日として読めない値には月語を付けない", () => {
+      expect(R.monthTermsJa("2026-13-01")).toBe("");
+      expect(R.monthTermsJa("June 7-11, 2027")).toBe("");
+      expect(R.monthTermsJa(null)).toBe("");
+      expect(R.monthTermsJa(Number.NaN)).toBe("");
+      // 存在しない月語は作らないので、`13月` では何もヒットしない。
+      expect(R.monthTermsJa("2026-02-30")).toBe("");
+    });
+  });
+
   describe("かな表記と土地名での検索（kanaFold / queryTokenGroups）", () => {
     it("カタカナ・長音符・小文字の揺れを吸収する", () => {
       expect(R.hayMatches("情報ネットワークと分散処理", "ねっとわーく")).toBe(true);
