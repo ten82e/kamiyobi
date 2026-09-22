@@ -1367,6 +1367,55 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
   });
 
+  describe("月と日で引いたとき、隣の月日が混ざらない", () => {
+    /* `12月` で絞ったのに 11 月の締切が混ざっていた（2026-09-23 実測: 「1月」の当たり
+     * 892 件のうち 526 件が 1 月と無関係、「2月」も 394 件、「1日」は 287 件）。
+     * 照合が部分一致なので `1月` が `11月` に当たっていた。先頭を空白で締める手は
+     * `searchNormalize` が trim して素の語に戻った（実測で無効）。なので **hay に
+     * 出ている和暦付きの形**（月の語は `2026年12月`、日の語は `8月10日`）へ展開する。 */
+    it("月語は和暦付きの形に展開する", () => {
+      const group = R.queryTokenGroups("1月")[0];
+      expect(group).toContain("2026年1月");
+      // 素の語を残すと隣の月に当たるので使わない。
+      expect(group).not.toContain("1月");
+      expect(group.every((t: string) => /^[0-9]{4}年1月$/.test(t))).toBe(true);
+      // 当たり方の確認。11 月の行は引かない、1 月の行は引く。
+      expect(R.hayMatches("icde 2026年11月 11月 2026年11月20日", "1月")).toBe(false);
+      expect(R.hayMatches("icde 2026年1月 1月 2026年1月20日", "1月")).toBe(true);
+      expect(R.hayMatches("sc 2025年12月 12月", "2月")).toBe(false);
+      expect(R.hayMatches("sc 2025年2月 2月", "2月")).toBe(true);
+    });
+
+    it("日の語は月付きの形に展開する", () => {
+      const group = R.queryTokenGroups("7日")[0];
+      expect(group).toContain("8月7日");
+      expect(group).not.toContain("7日");
+      expect(group.every((t: string) => /^[0-9]{1,2}月7日$/.test(t))).toBe(true);
+      // 11 日・21 日・31 日の行は 1 日では引かない。
+      expect(R.hayMatches("sc 2026年8月11日 8月11日", "1日")).toBe(false);
+      expect(R.hayMatches("sc 2026年8月1日 8月1日", "1日")).toBe(true);
+      // 月と日の両方が立つ（11 月 1 日の行は「11月」と「1日」の両方で引ける）。
+      expect(R.hayMatches("sc 2026年11月 11月 2026年11月1日 11月1日", "11日")).toBe(false);
+      expect(R.hayMatches("sc 2026年11月 11月 2026年11月1日 11月1日", "11月1日")).toBe(true);
+    });
+
+    it("和暦込みで打った入力は展開しない（もともと隣の月を含まない）", () => {
+      expect(R.queryTokenGroups("2026年1月")).toEqual([["2026年1月"]]);
+      expect(R.queryTokenGroups("2026年12月")).toEqual([["2026年12月"]]);
+      expect(R.queryTokenGroups("8月10日")).toEqual([["8月10日"]]);
+      // ありえない月は展開しない（全件に化けない）。
+      expect(R.queryTokenGroups("13月")[0]).toEqual(["13月"]);
+      expect(R.queryTokenGroups("0日")[0]).toEqual(["0日"]);
+    });
+
+    it("他の絞り込みと組み合わせても壊れない", () => {
+      // 月語を並べ語で書いても、他の語との AND はそのまま。
+      expect(R.queryTokenGroups("スパコン・12月").length).toBe(2);
+      expect(R.queryTokenGroups("明日").length).toBe(1);
+      expect(R.queryTokenGroups("今週").length).toBe(1);
+    });
+  });
+
   describe("deadlinesToCsv（絞り込み結果を表計算へ持ち出す）", () => {
     const now = Date.parse("2026-09-22T00:00:00+09:00");
     const rowOf = (over: Record<string, unknown>) => ({

@@ -2958,6 +2958,12 @@ const Recommender = (() => {
   }
 
   /** 検索語を、かなで引いたときも含めた候補グループへ展開する（語ごとに OR の組）。 */
+  /* 月語の展開で扱う年幅。収録は 2019 年ごろまで遡り、次回会期は 2030 年台半ばまで
+   * 置くものがあるので、その前後を見込みでかぶせる（外れた年の行はhay に和暦語を
+   * 持たないので、単に当たらないだけ）。 */
+  const MONTH_QUERY_YEAR_FROM = 2018;
+  const MONTH_QUERY_YEAR_TO = 2032;
+
   function queryTokenGroups(query: unknown, nowMs?: number): string[][] {
     const now = Number.isFinite(Number(nowMs)) ? Number(nowMs) : Date.now();
     const byReading: Record<string, string[]> = {};
@@ -3091,7 +3097,32 @@ const Recommender = (() => {
     );
     mergedUnits.forEach((unit) => {
       const token = unit.token;
-      const group = [token];
+      let group = [token];
+      /* `12月` と打つと `2026年12月` の行が出てほしい。ところが素の `1月` は `11月` に、
+       * `1日` は `11日`・`21日`・`31日` に文字列として含まれる。照合は部分一致なので、
+       * **12月で絞り込んだのに11月の締切が混ざっていた**（2026-09-23 実測: 「1月」の
+       * 当たり 892 件のうち 526 件が 1 月と無関係、「2月」も 394 件、「1日」は 287 件）。
+       * 先頭に空白を付けた形で照合する手は、`searchNormalize` が語を trim するため
+       * 素の語に戻って効かなかった（実測で無変化）。なので **hay に出る和暦付きの形に
+       * 展開する**（hay の月語は `2026年12月 12月`、日語は `2026年8月10日 8月10日`）。
+       * `2026年1月` のように打たれたときは展開しない（隣接の月を含まない語なので）。 */
+      if (/^[0-9]{1,2}月$/.test(token)) {
+        const month = Number(token.slice(0, -1));
+        if (month >= 1 && month <= 12) {
+          group = [];
+          for (let year = MONTH_QUERY_YEAR_FROM; year <= MONTH_QUERY_YEAR_TO; year += 1) {
+            group.push(`${year}年${month}月`);
+          }
+        }
+      } else if (/^[0-9]{1,2}日$/.test(token)) {
+        const day = Number(token.slice(0, -1));
+        if (day >= 1 && day <= 31) {
+          group = [];
+          for (let month = 1; month <= 12; month += 1) {
+            group.push(`${month}月${day}日`);
+          }
+        }
+      }
       const expanded = resolved[kanaFold(token)];
       unit.whole.forEach((name) => {
         if (group.indexOf(name) < 0) group.push(name);

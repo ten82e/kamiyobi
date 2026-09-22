@@ -7774,3 +7774,70 @@ it("行の詳細の分野・主題・ランクは、一覧と同じ中黒で並�
   const out = JSON.parse(rows.stdout) as { multi: number };
   expect(out.multi, "分野を 2 つ以上持つ行が無いとこの検査が空振りする").toBeGreaterThan(20);
 });
+
+it("月・日の語は、和暦の語を持つ行だけを出す（隣の月日が混ざらない・SPEC §7）", () => {
+  /* 照合は部分一致なので、変更前は `1月` が `11月` に当たって 1 月と無関係な行を
+   * 526 件返していた（`2月` は 394 件・`1日` は 287 件）。実カタログで、
+   * **当たり = 和暦の語を持つ行** であることを双方向で見る（多くも少なくも出ない）。 */
+  // 収録の和暦年（2019〜2028 実測）を月語の展開範囲が含んでいることも見るので、
+  // 空キャッシュ（= 収録 snapshot）で組み直した成果物で測る。
+  const basis2 = join(mkdtempSync(join(tmpdir(), "cfp-month-")), "public");
+  const builtMonth = runCli(basis2, {
+    now: "2026-08-09T00:00:00Z",
+    cache: mkdtempSync(join(tmpdir(), "cfp-empty-")),
+    extra: ["--no-embeddings"],
+  });
+  expect(builtMonth.status, builtMonth.stderr).toBe(0);
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(basis2, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(basis2, "data.json"))}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const hasMonth = (hay, m) => new RegExp('(^| )\\\\d{4}年' + m + '月').test(hay);",
+    // 日の語は `8月10日` と `2026年8月10日` の両方に出る（月語も `2026年8月`）。
+    "const hasDay = (hay, d) =>",
+    "  new RegExp('(^| )(\\\\d{4}年)?\\\\d{1,2}月' + d + '日').test(hay);",
+    "const out = [];",
+    "for (let m = 1; m <= 12; m += 1) {",
+    "  const mt = Recommender.searchMatcher(m + '月');",
+    "  const hit = rows.filter((r) => mt(r.hay));",
+    "  const own = rows.filter((r) => hasMonth(r.hay, m));",
+    "  out.push({",
+    "    q: m + '月', hit: hit.length, own: own.length,",
+    "    extra: hit.filter((r) => !hasMonth(r.hay, m)).length,",
+    "    miss: own.filter((r) => !mt(r.hay)).length,",
+    "  });",
+    "}",
+    "for (const d of [1, 2, 7, 11, 22, 31]) {",
+    "  const mt = Recommender.searchMatcher(d + '日');",
+    "  const hit = rows.filter((r) => mt(r.hay));",
+    "  const own = rows.filter((r) => hasDay(r.hay, d));",
+    "  out.push({",
+    "    q: d + '日', hit: hit.length, own: own.length,",
+    "    extra: hit.filter((r) => !hasDay(r.hay, d)).length,",
+    "    miss: own.filter((r) => !mt(r.hay)).length,",
+    "  });",
+    "}",
+    "console.log(JSON.stringify(out));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as Array<{
+    q: string;
+    hit: number;
+    own: number;
+    extra: number;
+    miss: number;
+  }>;
+  expect(out.length).toBe(18);
+  for (const row of out) {
+    expect(
+      row.own,
+      `「${row.q}」で和暦の語を持つ行が数えられていない（検査が空振り）`,
+    ).toBeGreaterThan(20);
+    expect(row.extra, `「${row.q}」は和暦の語を持たない行を ${row.extra} 件返す`).toBe(0);
+    expect(row.miss, `「${row.q}」は和暦の語を持つ行を ${row.miss} 件落としている`).toBe(0);
+  }
+});
