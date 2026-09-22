@@ -11040,3 +11040,57 @@ it("常時受付の行の会期・開催地は「該当なし」と出す（SPEC
   expect(entry).toContain("該当なし");
   expect(entry).toContain("常時受付");
 });
+
+it("upcoming.md は、表のうえで列の意味が分かる（SPEC §7）", async () => {
+  /* この表は `index.html` と違い、条件欄もてびきもない単体のファイルとして読まれる
+   * （チャットに貼る・grep する・他ツールに食わせる）。ところが列の見出しが
+   * `| 日付 | 残り | 会議 | 種別 | R | 推定 | 開催地 |` で、**「R」が何なのか表のどこにも
+   * 書いていなかった**（2026-09-23 実測: 値は `R1`・`R2`・`-`。会期行の「残り」が
+   * 「本日開催」「開催中(残り1日)」になることも、種別「開催」が締切でないことも、
+   * 表のうえでは説明が無かった）。 */
+  const confs = [
+    makeConference({
+      key: "run",
+      title: "RUN",
+      categories: ["hpc"],
+      sources: ["local"],
+      editions: [
+        makeEdition({
+          year: 2026,
+          edition_id: "run26",
+          source: "local",
+          event_start: utc(2026, 8, 7),
+          event_end: utc(2026, 8, 11),
+          deadlines: [makeDeadline("paper", "Paper submission", utc(2026, 8, 20), "AoE", 2)],
+        }),
+      ],
+    }),
+  ];
+  const outdir = mkdtempSync(join(tmpdir(), "cfp-md-legend-"));
+  await buildAll(confs, { categories: { hpc: "HPC" } }, outdir, NOW, { noEmbeddings: true });
+  const text = readFileSync(join(outdir, "upcoming.md"), "utf8");
+  const lines = text.split("\n");
+  const headerAt = lines.findIndex((line) => line.startsWith("| 日付 |"));
+  expect(headerAt, "表の見出し行が無い").toBeGreaterThan(-1);
+  const above = lines.slice(0, headerAt).join("\n");
+  const cells = lines[headerAt]
+    .split("|")
+    .slice(1, -1)
+    .map((cell) => cell.trim());
+  // 一文字だけの見出しは、単体で開いた人に読めない（`R` が通ると検査が空振りする）。
+  for (const cell of cells) {
+    expect(/^[A-Za-z]$/.test(cell), `読み替えないと分からない見出し「${cell}」`).toBe(false);
+  }
+  // 見出しはサイトと同じ語（一覧の列名は「ラウンド」）。
+  expect(cells).toContain("ラウンド");
+  expect(above, "列の意味を表のうえで説明していない").toContain("列の意味");
+  // 実際に画面（表）に出る語で説明する – 略語の説明だけで分からないようにする。
+  for (const word of ["ラウンド", "残り", "推定", "本日開催", "開催中"]) {
+    expect(above, `列の意味のうち「${word}」を説明していない`).toContain(word);
+  }
+  // 種別「開催」は締切ではないことを書く（締切表だと信じて読む人を誤らせない）。
+  expect(above).toContain("会期そのもの");
+  // 列の数と見出しは常に揃う（列が増えて説明が漏れた日に気づけるようにする）。
+  const sep = lines[headerAt + 1];
+  expect(sep.split("|").slice(1, -1).length).toBe(cells.length);
+});
