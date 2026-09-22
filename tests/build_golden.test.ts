@@ -1906,6 +1906,28 @@ it("the deadline search index carries Japanese month terms (SPEC §7)", () => {
   expect(runtime).toMatch(/monthTermsJa[\s\S]*new Date\(value \+ 9 \* 3_600_000\)/);
 });
 
+it("upcoming.md and llms.txt explain the coverage window and the JST basis (SPEC §4)", () => {
+  const md = readFileSync(join(site, "upcoming.md"), "utf8");
+  const head = md.split("\n").slice(0, 12).join("\n");
+  // md を単体で読む人に「いつの時点の、いつまでの表か」伝えないと表を使えない。
+  expect(head).toMatch(
+    /生成時刻: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z（JST では \d{4}-\d{2}-\d{2}\([月火水木金土日]\) \d{2}:\d{2} JST）/,
+  );
+  expect(head).toMatch(/対象期間: \d{4}-\d{2}-\d{2} 〜 \d{4}-\d{2}-\d{2}\([月火水木金土日]\)/);
+  // 会期行は生成時刻より前に開いていても載る（説明と実データが噛み合っていればよい）。
+  expect(head).toContain("進行中の会期");
+
+  const llms = readFileSync(join(site, "llms.txt"), "utf8");
+  // サイトの見た目は国内研究会の収録と JST 基準が主役なので、llms.txt も同じ説明にする。
+  expect(llms).toContain("domestic-jp");
+  expect(llms).toContain("国内研究会");
+  expect(llms).toContain("JST");
+  expect(llms).toContain("## サイト（index.html）の日本語での引き方");
+  for (const phrase of ["月で引ける", "都道府県で引ける", "BOM 付き CSV", "印刷時"]) {
+    expect(llms, phrase).toContain(phrase);
+  }
+});
+
 it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", () => {
   const runtime = siteRuntime();
   const sortable = runtime.match(/const SORTABLE_KEYS = \[[^\]]*\];/)?.[0];
