@@ -1610,14 +1610,26 @@ const Recommender = (() => {
 
   /* 件数欄に出す「こう探しました」。展開した語だけを言い、行数は数えない
    * （行番号に連番を付けているため、件数を書くと誤読を招く）。 */
+  /* 検索語を書き換えたときは、その場でおしらせする（件数欄が使う）。
+   * 寄せた語（`スパコン` → 分野「高性能計算」）と、割った語（`nsdi27` → `nsdi` と `2027`）を
+   * 同じ入口で返す。理由も見ずに分野全体の行を並べたり、別々の語を含む行を返したりすると、
+   * なぜその行が出たか分からないまま行数の壁になる。 */
   function querySynonymNotes(query: unknown): string[] {
     const map = querySynonymMap();
     const notes: string[] = [];
     queryTokens(query).forEach((token) => {
       const hit = map[kanaFold(token)];
-      if (!hit) return;
-      const note = `「${token}」は${hit[0]}で探しています`;
-      if (notes.indexOf(note) < 0) notes.push(note);
+      if (hit) {
+        const note = `「${token}」は${hit[0]}で探しています`;
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
+      const parts = ABBREV_YEAR_TOKEN.exec(token);
+      if (parts) {
+        const digits = parts[2];
+        const year = digits.length === 2 ? `20${digits}` : digits;
+        const note = `「${token}」は「${parts[1]}」と「${year}」に分けて探しています`;
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
     });
     return notes;
   }
@@ -2097,6 +2109,27 @@ const Recommender = (() => {
     ["九州", "きゅうしゅう", "福岡,佐賀,長崎,熊本,大分,宮崎,鹿児島"],
   ];
 
+  /* 会議の略称と年は、表では `NSDI 2027` のように別々の語に割れて書かれる。
+   * ところが打たれるのは `nsdi27`（年を 4 桁で打つ人も `nsdi2027`）のような 1 語の形で、
+   * そのままでは 1 件も当たらなかった（実測: `ICDE2027` 0 件 / `ICDE 2027` 6 件、
+   * `nsdi27` 0 件 / `NSDI 2027` 6 件）。略称と年を、それぞれ別の組として要求する。
+   * 語尾の数字は 2 桁（直近の年を略して書く流儀）と 4 桁の両方を受け、両方の表記を
+   * 年の組に入れる（hay は `2027` と書くので `27` だけの照合では当たらない）。 */
+  const ABBREV_YEAR_TOKEN = /^([a-z]{2,})(\d{2}|\d{4})$/;
+
+  function abbrevYearGroups(token: string): string[][] | null {
+    const parts = ABBREV_YEAR_TOKEN.exec(token);
+    if (!parts) return null;
+    const head = parts[1];
+    const digits = parts[2];
+    // 1 文字の略称（`r0` など）は割らない。短い語の取り合わせで何でも当たるため。
+    if (head.length < 2) return null;
+    const years = digits.length === 2 ? [digits, `20${digits}`] : [digits, digits.slice(2)];
+    /* 両方の組に打ち込まれた形そのものも入れておく。`SC26` のように語が割れていない
+     * 表記の行は、今までどおり当たる（割った条件だけを要求して落とさない）。 */
+    return [[token, head], [token].concat(years)];
+  }
+
   /** 検索語を、かなで引いたときも含めた候補グループへ展開する（語ごとに OR の組）。 */
   function queryTokenGroups(query: unknown): string[][] {
     const byReading: Record<string, string[]> = {};
@@ -2117,7 +2150,8 @@ const Recommender = (() => {
         });
       }
     });
-    return queryTokens(query).map((token) => {
+    const groups: string[][] = [];
+    queryTokens(query).forEach((token) => {
       const group = [token];
       const expanded = byReading[kanaFold(token)];
       if (expanded) {
@@ -2125,8 +2159,19 @@ const Recommender = (() => {
           if (group.indexOf(name) < 0) group.push(name);
         });
       }
-      return group;
+      const split = abbrevYearGroups(token);
+      if (split) {
+        // 略称の組にも読み展開を足す（`しこんどす27` のような入力は無いが、
+        // 展開語を持つ語が割れる経路と衝突させないため統一する）。
+        expanded?.forEach((name) => {
+          if (split[0].indexOf(name) < 0) split[0].push(name);
+        });
+        groups.push(split[0], split[1]);
+        return;
+      }
+      groups.push(group);
     });
+    return groups;
   }
 
   /* 長い和語・熟語は、表側の表記が分かれていることがある（「オペレーティング・システム」
@@ -2162,13 +2207,14 @@ const Recommender = (() => {
     };
   }
 
-  /** 1 文字の英字だけか（ランクの A・B・C・N など）。 */
-  function isSingleLatinLetter(term: string): boolean {
-    return /^[a-z]$/.test(term);
+  /* 英字 1〜2 文字の語か（ランクの A・B・C・N、会議の略称 SC など）。 */
+  function isShortLatinTerm(term: string): boolean {
+    return /^[a-z]{1,2}$/.test(term);
   }
 
-  /* 1 文字の英字を部分一致で明けると、ほぼ全行に当たってしまう（実測で `N` が 3234 行中
-   * 3219 行にヒットした）。表に出している語（`CCF B` の `B` など）で引けるようにしたいので、
+  /* 英字 1〜2 文字を部分一致で明けると、ほとんど全行に当たってしまう（実測で `N` が
+   * 3234 行中 3219 行、`sc` が 342 行で、後者は "science" などの一部まで拾っていた）。
+   * 表に出している語（`CCF B` の `B`、略称 `SC` など）で引けるようにしたいので、
    * 一致そのものはやめず、**英数字に挟まれた位置の一致は使わない**ことにする。
    * 正規表現を作らずに走査する（語の分解は 1 描画 1 回で、行ごとに作るものではない）。 */
   function foldedLetterAtWordBoundary(target: string, term: string): boolean {
@@ -2191,7 +2237,7 @@ const Recommender = (() => {
       let hit = false;
       for (let k = 0; k < groups[i].length; k++) {
         const term = groups[i][k];
-        if (isSingleLatinLetter(term)) {
+        if (isShortLatinTerm(term)) {
           if (foldedLetterAtWordBoundary(target, term)) {
             hit = true;
             break;

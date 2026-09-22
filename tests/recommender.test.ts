@@ -4467,3 +4467,37 @@ describe("締切種別の言い方と、表に出さない種別の案内", () =
     expect(R.queryHiddenKindMatches("論文", hidden)).toEqual([]);
   });
 });
+
+describe("略称と年の合わせ打ち（`nsdi27`）・英字 1〜2 文字の語", () => {
+  it("略称に年を貼り付けた入力が当たる（`ICDE2027`・`nsdi27`）", () => {
+    // 表では `NSDI 2027` と別々の語に割れて書かれる。打たれるのは `nsdi27`。
+    expect(R.searchMatcher("nsdi27")("nsdi 2027 twentieth symposium")).toBe(true);
+    expect(R.searchMatcher("nsdi2027")("nsdi 2027 twentieth symposium")).toBe(true);
+    expect(R.searchMatcher("icde2027")("icde 2027 ieee")).toBe(true);
+    // 年が違う行を合わせない（`nsdi27` が 2026 年版を出さない）。
+    expect(R.searchMatcher("nsdi27")("nsdi 2026 symposium")).toBe(false);
+    // 語が割れていない表記（`SC26`）は今までどおり当たる（割った条件で落とさない）。
+    expect(R.searchMatcher("sc26")("sc26 the international conference")).toBe(true);
+    // 略称 1 文字の取り合わせでは割らない（何でも当たるため）。
+    expect(R.searchMatcher("a3")("alpha 3 workshop")).toBe(false);
+    // 説明を出す（理由の見えない行の壁にしない）。
+    expect(R.querySynonymNotes("nsdi27")).toEqual([
+      "「nsdi27」は「nsdi」と「2027」に分けて探しています",
+    ]);
+    expect(R.querySynonymNotes("nsdi")).toEqual([]);
+  });
+
+  it("英字 1〜2 文字は語の境界でしか当たらない（`sc` が science を拾わない）", () => {
+    expect(R.searchMatcher("sc")("sc 26 supercomputing")).toBe(true);
+    expect(R.searchMatcher("sc")("science and technology")).toBe(false);
+    expect(R.searchMatcher("sc")("ai4scisci 2026 workshop")).toBe(false);
+    // 句読点は境界（`ACM/SC`・`SC '26` は当たる）。
+    expect(R.searchMatcher("sc")("acm/sc conference")).toBe(true);
+    // 1 文字の既存の振る舞いは変えない（ランクの A・B・C・N）。
+    expect(R.searchMatcher("n")("rank n unrated")).toBe(true);
+    expect(R.searchMatcher("n")("journal of networks")).toBe(false);
+    // 3 文字以上は従来どおり部分一致でよい（表の表記揺れ `ICDE27` の直書きを
+    // 取りこぼさないため、略長を切りすぎない）。
+    expect(R.searchMatcher("icde")("icde27 industrial conference")).toBe(true);
+  });
+});

@@ -2412,6 +2412,7 @@ const SEARCH_CANON = (() => {
     ["ONLINE_TERMS_EN", /const ONLINE_TERMS_EN = [^\n]*;/],
     ["ONLINE_VENUE_FALSE_POSITIVES", /const ONLINE_VENUE_FALSE_POSITIVES = [^\n]*;/],
     ["QUERY_SYNONYMS_JA", /const QUERY_SYNONYMS_JA[\s\S]*?\];/],
+    ["ABBREV_YEAR_TOKEN", /const ABBREV_YEAR_TOKEN = [^\n]*;/],
   ].map(([name, re]) => {
     const src = rec.match(re)?.[0];
     expect(src, `${name} 定義が見つからない`).toBeTruthy();
@@ -2426,10 +2427,11 @@ const SEARCH_CANON = (() => {
       "searchNormalize",
       "queryTokens",
       "querySynonymMap",
+      "abbrevYearGroups",
       "queryTokenGroups",
       "compoundSplitHit",
       "placeOffersOnline",
-      "isSingleLatinLetter",
+      "isShortLatinTerm",
       "foldedLetterAtWordBoundary",
       "matchFoldedGroups",
       "searchMatcher",
@@ -5343,4 +5345,43 @@ it("日本語 IME の変換中は再計算せず、確定後に一度だけ適�
   // 論文入力の 4 欄（タイトル・要旨・キーワード・参考文献）も同じ経路。
   expect(app).toContain('"paperPrimaryTitle", "paperPrimaryAbstract"');
   expect(app).toContain("wireDebouncedInput($(id), 200");
+});
+
+it("略称と年の合わせ打ちが実カタログで当たり、2 文字語の取りこぼしが増えない（SPEC §7）", () => {
+  // `ICDE2027` 0 件 / `ICDE 2027` 6 件、`nsdi27` 0 件 / `NSDI 2027` 6 件だった。
+  // 割る方向に直したので、今まで当たっていた行（`SC26` の直書き）を落としていないことも
+  // 同じ実データで確認する。
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const hit = (q) => { const m = Recommender.searchMatcher(q); return rows.filter((r) => m(r.hay)); };",
+    // 略称+年の入力が、語を割って打ったときと同じ行を出す。
+    "const joined = hit('nsdi 2027').length;",
+    "const glued = hit('nsdi27').length;",
+    "const scSpaced = hit('sc 26').length;",
+    // 2 文字語を部分一致で拾った行数（変更前に近い過剰な当たり）。
+    "const gluedSc = rows.filter((r) => String(r.hay).indexOf('sc') >= 0).length;",
+    "const boundedSc = hit('sc').length;",
+    "console.log(JSON.stringify({ joined, glued, scSpaced, gluedSc, boundedSc }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    joined: number;
+    glued: number;
+    scSpaced: number;
+    gluedSc: number;
+    boundedSc: number;
+  };
+  expect(out.joined, "語を割って打つ方が 0 件").toBeGreaterThan(0);
+  expect(out.glued, "貼り付けた入力が当たらない").toBe(out.joined);
+  // `sc 26` は語の境界で当てるので、部分一致で拾うより大きく減る（`science` を捨てた）。
+  expect(out.scSpaced).toBeGreaterThan(0);
+  expect(out.scSpaced).toBeLessThan(out.gluedSc);
+  expect(out.boundedSc).toBeGreaterThan(0);
+  expect(out.boundedSc).toBeLessThan(out.gluedSc);
 });

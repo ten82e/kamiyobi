@@ -13,6 +13,10 @@ npm test            # vitest
 node src/cli.ts build --out public --offline --no-embeddings --cache .cache --now 2026-08-09T00:00:00Z
 ```
 
+- 整形は対象を絞って掛ける（`npx biome check --write site tests src` など）。リポジトリ全体に
+  `--write .` を掛けると `data/**` の JSON まで再整形され、`data/recommender-reranker.json` の
+  `input_hashes` 固定（`pins the reranker development inputs by hash`）が壊れる
+  （2026-09-23 に実発生。`git checkout -- data/` で戻せる）。
 - `public/` は `.gitignore`（CI が生成）。`data/snapshot.json` は健全な online ビルドが更新する。
 - offline ビルドは snapshot を書かない（fixtures 汚染防止）。実キャッシュ成果を snapshot に載せるときは手でコピー。
 
