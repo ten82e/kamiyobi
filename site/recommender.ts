@@ -1661,12 +1661,14 @@ const Recommender = (() => {
   const CSV_HEADERS_JA = [
     "締切",
     "公式表記",
-    "残り",
+    // 数値を入れる列なので、単位を見出しに書く（「残り」だと文字列に見えて順を変えられない）。
+    "残り日数",
     "会議",
     "種別",
     "ラウンド",
     "CCF",
     "CORE",
+    "THCPL",
     "会期",
     "開催地",
     "状態",
@@ -1726,10 +1728,12 @@ const Recommender = (() => {
         else if (zone && zone !== "UTC") official = `${zone} ／ UTC`;
         else official = "UTC";
       }
+      /* 残り日数は数値のまま出す。表計算で開いたときに並べ替えたり近い分だけ狭めたりできる形で
+       * 持てるためで、画面の「あと N 日」（読みやすさ優先）とは書き方が違う。過ぎた分は負の数。
+       * 日期のみの行も日粒度で数値を出す（時刻の未確認は「公式表記」列が既に伝えている）。 */
       let left = "";
       if (kind !== "journal" && Number.isFinite(t)) {
-        const days = Math.floor((t - nowMs) / 86400000);
-        left = dateOnly ? "時刻未確認" : days >= 0 ? `残り${days}日` : "経過";
+        left = String(Math.floor((t - nowMs) / 86400000));
       }
       const status = [
         ed.estimated ? "推定" : "",
@@ -1749,6 +1753,7 @@ const Recommender = (() => {
           dl.round == null ? "" : `R${dl.round}`,
           rank.ccf,
           rank.core,
+          rank.thcpl,
           // 一覧の会期列と同じ形（ISO + 暦日）を優先し、読めない会期は原文を残す。
           ed.event_start
             ? [ed.event_start, ed.event_end]

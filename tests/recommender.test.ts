@@ -1127,16 +1127,22 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     it("日本語ヘッダーで 1 行 1 締切写出す", () => {
       const csv = R.deadlinesToCsv([rowOf({})], now);
       const [header, first] = csv.split("\r\n");
-      expect(header).toBe("締切,公式表記,残り,会議,種別,ラウンド,CCF,CORE,会期,開催地,状態,URL");
+      expect(header).toBe(
+        "締切,公式表記,残り日数,会議,種別,ラウンド,CCF,CORE,THCPL,会期,開催地,状態,URL",
+      );
       const cells = first.split(",");
       // JST 主表記 + 曜日（2026-10-05 14:59 UTC = JST 23:59）。
       expect(cells[0]).toBe("2026-10-05 23:59 JST(月)");
       // AoE は UTC-12 の壁時計（2026-10-05 14:59 UTC = AoE 02:59）。
       expect(cells[1]).toBe("2026-10-05 02:59 AoE");
-      expect(cells[2]).toBe("残り13日");
+      // 残りは数値（表計算で並べ替えられる形）。画面の「あと N 日」とは書き方が違う。
+      expect(cells[2]).toBe("13");
       expect(cells[4]).toBe("論文締切");
       expect(cells[5]).toBe("R1");
       expect(cells[6]).toBe("A");
+      expect(cells[7]).toBe("A*");
+      // 画面に出す評価一覧は CSV にも載せる（見えている情報を落とさない）。
+      expect(cells[8]).toBe("");
       // 会期は一覧と同じ ISO + 暦日、開催地は日本語に寄せた表記。
       expect(csv).toContain("2027-06-07(月) 〜 2027-06-11(金)");
       expect(csv).toContain("Alicante, スペイン / オンライン");
@@ -1155,10 +1161,13 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
         ],
         now,
       );
-      expect(dateOnly).toContain("2026-09-30(水),時刻未確認,時刻未確認");
+      // 時刻の未確認は「公式表記」列が伝える。残りは数値のままにする（順を変えられる形で）。
+      expect(dateOnly).toContain("2026-09-30(水),時刻未確認,7");
 
+      // 過ぎた締切は「経過」ではなく負の数。表計算で「残り 7 日以内」をフィルタできる形にする。
       const past = R.deadlinesToCsv([rowOf({ t: now - 5 * 86400000, tLast: now })], now);
-      expect(past).toContain(",経過,");
+      expect(past).toContain(",-5,");
+      expect(past).not.toContain("経過");
 
       const estimated = R.deadlinesToCsv(
         [rowOf({ ed: { ...rowOf({}).ed, estimated: true } })],
@@ -1183,11 +1192,48 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       const journal = R.deadlinesToCsv([rowOf({ kind: "journal", t: Number.NaN })], now);
       expect(journal).toContain("随時受付,");
       expect(R.deadlinesToCsv([], now)).toBe(
-        "締切,公式表記,残り,会議,種別,ラウンド,CCF,CORE,会期,開催地,状態,URL\r\n",
+        "締切,公式表記,残り日数,会議,種別,ラウンド,CCF,CORE,THCPL,会期,開催地,状態,URL\r\n",
       );
       expect(R.deadlinesToCsv(null, now)).toBe(
-        "締切,公式表記,残り,会議,種別,ラウンド,CCF,CORE,会期,開催地,状態,URL\r\n",
+        "締切,公式表記,残り日数,会議,種別,ラウンド,CCF,CORE,THCPL,会期,開催地,状態,URL\r\n",
       );
+    });
+
+    it("残り日数は数値で、経過は負の数になる", () => {
+      const day = 86400000;
+      const at = (days: number) => rowOf({ t: now + days * day, tLast: now + days * day });
+      const col = (csv: string) =>
+        csv
+          .split("\r\n")
+          .slice(1)
+          .filter((line) => line.length > 0)
+          .map((line) => line.split(",")[2]);
+      const values = col(R.deadlinesToCsv([at(30), at(2), at(0), at(-5), at(120)], now));
+      expect(values).toEqual(["30", "2", "0", "-5", "120"]);
+      // 文字列（`残り13日`）だと "120" が "2" より前に並び、締切の近い順にできない。
+      expect(values.slice().sort()).toEqual(["-5", "0", "120", "2", "30"]);
+      expect(values.slice().sort((a, b) => Number(a) - Number(b))).toEqual([
+        "-5",
+        "0",
+        "2",
+        "30",
+        "120",
+      ]);
+    });
+
+    it("常時受付は空欄で、THCPL も写出す", () => {
+      const journalCells = R.deadlinesToCsv([rowOf({ kind: "journal" })], now)
+        .split("\r\n")[1]
+        .split(",");
+      expect(journalCells[2]).toBe("");
+      const thcplCells = R.deadlinesToCsv(
+        [rowOf({ conf: { key: "demo", title: "Demo", rank: { thcpl: "B" }, link: "" } })],
+        now,
+      )
+        .split("\r\n")[1]
+        .split(",");
+      expect(thcplCells[8]).toBe("B");
+      expect(thcplCells[6]).toBe("");
     });
   });
 

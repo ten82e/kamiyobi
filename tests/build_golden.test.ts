@@ -1856,7 +1856,8 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
   expect(hint(clear)).not.toContain("期間を");
   // 条件が残っているときは、外せる条件を実名で挙げる。
   const filtered = hint({ ...clear, window: "7d", past: false, query: "機械学" });
-  expect(filtered).toContain("期間を「すべて」に変更");
+  // 案内は選択肢の実ラベルを書く（古いラベルを出すと、その語が画面に見つからない）。
+  expect(filtered).toContain("「締切まで」を「かまわない」に変更");
   expect(filtered).toContain("「過去の締切も表示」をオン");
   expect(filtered).toContain("検索語を短くする");
   expect(hint({ ...clear, domestic: true, cats: 2, rank: "A*" })).toContain(

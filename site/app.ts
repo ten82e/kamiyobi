@@ -1677,7 +1677,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     query: string;
   }): string {
     const tips: string[] = [];
-    if (filter.window && filter.window !== "all") tips.push("期間を「すべて」に変更");
+    // 選択肢の実際のラベルを書く（「すべて」に変えた旧名を案内すると、その語が見つからない）。
+    if (filter.window && filter.window !== "all") tips.push("「締切まで」を「かまわない」に変更");
     if (!filter.past) tips.push("「過去の締切も表示」をオン");
     if (filter.cats > 0) tips.push("分野チップをはずす");
     if (filter.domestic) tips.push("「国内研究会・国内シンポジウムのみ」をオフ");
