@@ -662,6 +662,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     );
   }
 
+  /* 「データ生成」の表示。生成時刻は UTC の `...Z` で来るため、そのまま出すと日本語の
+   * 利用者には日付が一日ずれて見える（2026-09-23 実測: 「データ生成: 2026-08-09T00:00:00Z」
+   * → JST では同日 09:00。夜ビルドなら日付その物が翌日になる）。一覧と同じ JST + 曜日 に
+   * 寄せる。読めない値には嘘の日付を作らず原文を残す。 */
+  function generatedAtLabel(value: string): string {
+    const at = new Date(value);
+    if (Number.isNaN(at.getTime())) return `データ生成: ${value}`;
+    return `データ生成: ${fmtJst(at)}`;
+  }
+
   // Anywhere on Earth (UTC-12)。SPEC §7: 締切表示に AoE 表記を併記する。
   function fmtAoE(d: Date) {
     const aoe = new Date(d.getTime() - 12 * 3600000);
@@ -3476,7 +3486,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   });
 
   if (DATA.generated_at) {
-    $("genat").textContent = `データ生成: ${DATA.generated_at}`;
+    $("genat").textContent = generatedAtLabel(DATA.generated_at);
   }
   const srcs = (DATA.sources || []).map(
     (source) =>

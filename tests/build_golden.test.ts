@@ -8730,3 +8730,55 @@ it("早め絞り込みのボタンは、同じ条件を出す欄と同じ語で�
     );
   }
 });
+
+it("「データ生成」の時刻は JST と曜日で出る（SPEC §7）", () => {
+  /* 生成時刻は UTC の `...Z` で来るため、そのまま出していた（2026-09-23 実測:
+   * 「データ生成: 2026-08-09T00:00:00Z」）。一覧は JST + 曜日を単位にしているので、
+   * この欄だけ別単位だと、夜ビルドで日付が一日ずれて見える（UTC 8/8 20:00 は
+   * JST では 8/9 の朝）。読めない値には嘘の日付を作らない。 */
+  const app = siteRuntime();
+  const weekday = app.match(/const WEEKDAY_JA = \[[^\]]*\];/)?.[0];
+  expect(weekday, "WEEKDAY_JA が見つからない").toBeTruthy();
+  const script = [
+    "(async () => {",
+    weekday,
+    // 抽出した関数本体は、引用符の中へ素で埋めると壊れる（JSON 化して別の変数に置く）。
+    `const PAD_SRC = ${JSON.stringify(jsFunction(app, "pad"))};`,
+    `const FMT_SRC = ${JSON.stringify(jsFunction(app, "fmtJst"))};`,
+    `const GEN_SRC = ${JSON.stringify(jsFunction(app, "generatedAtLabel"))};`,
+    'const pad = new Function("return (" + PAD_SRC + ")")();',
+    'const fmtJst = new Function("WEEKDAY_JA", "pad", "return (" + FMT_SRC + ")")(WEEKDAY_JA, pad);',
+    'const generatedAtLabel = new Function("fmtJst", "return (" + GEN_SRC + ")")(fmtJst);',
+    "console.log(JSON.stringify({",
+    "  night: generatedAtLabel('2026-08-08T20:00:00Z'),",
+    "  morning: generatedAtLabel('2026-08-09T00:00:00Z'),",
+    "  broken: generatedAtLabel('未取得'),",
+    " }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout.trim().split("\n").pop() || "{}");
+  // UTC では 8/8 の夜でも、JST では 8/9 の朝（一日進んだ日付を出す）。
+  expect(got.night).toMatch(/^データ生成: 2026-08-09\([日月火水木金土]\) 05:00 JST$/);
+  expect(got.night).not.toContain("2026-08-08");
+  expect(got.morning).toMatch(/^データ生成: 2026-08-09\([日月火水木金土]\) 09:00 JST$/);
+  // 時刻として読めない値は原文を残す（嘘の日付を作らない）。
+  expect(got.broken).toBe("データ生成: 未取得");
+  // てびきは「右上の更新時刻」と書いている。実際のレイアウト（見出し行の右端）と合うこと。
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const brand = template.slice(template.indexOf(".brand-row {"));
+  expect(brand.slice(0, 240)).toContain("justify-content: space-between");
+  const genat = template.slice(template.indexOf('id="genat"'));
+  expect(genat.slice(0, 80), "生成時刻の欄が見出し行に無い").toContain("</div>");
+  // てびきが「右上の更新時刻」とだけ書いていた（実際の語は「データ生成」で、単位も
+  // 出さなかった）。画面に出る語と単位をそのまま引けるようにする。
+  const help = template.slice(template.indexOf('id="helpPanel"'));
+  const guide = help.slice(0, help.indexOf("</dl>"));
+  expect(guide).toContain("右上");
+  expect(guide, "てびきが画面の語「データ生成」を挙げていない").toContain("データ生成");
+  expect(guide, "てびきが生成時刻の単位を書いていない").toContain("JST");
+});
