@@ -1112,6 +1112,53 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
   });
 
+  describe("分野の言い方を書く（英文字表記の収録にも届く。第 2 群）", () => {
+    /* 口の利かれる分野の語なのに、収録側の表記が英文字だというだけの理由で 0 件になる
+     * 群があった（2026-09-23 実測: 「リアルタイム」「プログラミング言語」「脆弱性」などは
+     * いずれも 0 件で、同じ意味の英文字表記は数件〜数十件当たっていた）。
+     * 「収録に無い」と「打ち方が通じない」を区別できないと、そこで検索をやめてしまう。 */
+    it("かな・漢字の分野語が英文字表記と同じ組になる", () => {
+      const groups = (q: string) => R.queryTokenGroups(q)[0];
+      expect(groups("リアルタイム")).toContain("real-time");
+      // 「実時間」は学会の書き方なので、こちらからも引けるようにする。
+      expect(groups("実時間")).toContain("real-time");
+      expect(groups("プログラミング言語")).toContain("programming language");
+      expect(groups("計算機アーキテクチャ")).toContain("computer architecture");
+      expect(groups("侵入検知")).toContain("intrusion detection");
+      expect(groups("脆弱性")).toContain("vulnerability");
+      expect(groups("バイオインフォマティクス")).toContain("bioinformatics");
+      expect(groups("エッジコンピューティング")).toContain("edge computing");
+    });
+
+    it("長音の書き方が違っても同じ結果になる", () => {
+      // 展開語の一覧には相手の表記も入るので「同じ組」にはならない。確かめるのは
+      // 展開の語ではなく**同じ行に出会う**こと。
+      const hays = [
+        "acm conference on human factors in computing systems user interface technology",
+        "hci letters on user interface design",
+        "ネットワークの会議",
+      ];
+      const hits = (q: string) => hays.filter((h) => R.hayMatches(h, q));
+      expect(hits("ユーザインタフェース")).toEqual(hits("ユーザインターフェース"));
+      expect(hits("ユーザインタフェース").length).toBeGreaterThan(0);
+      expect(R.queryTokenGroups("ユーザインタフェース")[0]).toContain("user interface");
+    });
+
+    it("収録に無い語順の寄せは作らない（死んだ寄せを置かない）", () => {
+      /* `画像認識` は英文字側が `image recognition` の語順で収録に現れないので入れていない
+       * （当たった 3 行は `graphics, patterns and images` + 別箇所の `recognition`）。
+       * 別表記は「打てば行が増える」ためだけに置く、という表の約束を守る。 */
+      const group = R.queryTokenGroups("画像認識")[0];
+      expect(group).not.toContain("image recognition");
+      // 代わりに使える語は生きている（`画像` は英文字の `image` に、
+      // `パターン認識` は英文字の `pattern recognition` に寄せてある）。
+      expect(
+        R.hayMatches("ieee international conference on pattern recognition", "パターン認識"),
+      ).toBe(true);
+      expect(R.queryTokenGroups("画像")[0]).toContain("image");
+    });
+  });
+
   describe("deadlinesToCsv（絞り込み結果を表計算へ持ち出す）", () => {
     const now = Date.parse("2026-09-22T00:00:00+09:00");
     const rowOf = (over: Record<string, unknown>) => ({

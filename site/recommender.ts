@@ -2618,6 +2618,35 @@ const Recommender = (() => {
     ["組込み", "embedded"],
     ["形式手法", "formal method"],
     ["宇宙", "space"],
+    /* 口の利かれる分野の語で、収録側の表記が英文字のものを足す（2026-09-23 実測:
+     * 以下の日本語はいずれも 0 件で、同じ意味の英文字表記は数件〜数十件当たった。
+     * 「収録に無い」と「打ち方が通じない」を区別できないと、そこで検索をやめる）。
+     * 追加の基準は既存と同じく**収録カタログに英文字側が現れること**（死んだ寄せを
+     * 作らない。`テスト`・`対話`・`モデリング` は当たり方が広すぎるので割愛した）。 */
+    ["リアルタイム", "real-time"],
+    ["実時間", "real-time"],
+    ["スケジューリング", "scheduling"],
+    ["プログラミング言語", "programming language"],
+    ["コンパイラ", "compiler"],
+    ["クラスタ", "cluster"],
+    ["バイオインフォマティクス", "bioinformatics"],
+    ["音響", "acoustic"],
+    ["脆弱性", "vulnerability"],
+    ["マルウェア", "malware"],
+    ["侵入検知", "intrusion detection"],
+    ["モバイル", "mobile"],
+    ["ユーザインタフェース", "user interface"],
+    ["ユーザインターフェース", "user interface"],
+    ["ゲーム", "game"],
+    ["エッジコンピューティング", "edge computing"],
+    ["仮想現実", "virtual reality"],
+    ["拡張現実", "augmented reality"],
+    ["計算機アーキテクチャ", "computer architecture"],
+    ["データ分析", "data analytics"],
+    ["パターン認識", "pattern recognition"],
+    // `画像認識` は入れていない（英文字側が `image recognition` の語順で収録に現れない。
+    // 当たった 3 行は `graphics, patterns and images` + 別箇所の `recognition` で、
+    // 別表記として置く語ではない）。`画像`・`パターン認識`・`コンピュータビジョン` で引ける。
   ];
 
   const REGION_READINGS: string[][] = [

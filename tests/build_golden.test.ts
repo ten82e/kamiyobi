@@ -5823,7 +5823,9 @@ it("別表記の表は、実際に新しい行を増やしている（SPEC §7�
     "  const i = rec.indexOf(head);",
     "  const j = rec.indexOf('\\n    ];', i);",
     // Node の ESM 検出回避は検索の正典の注入と同じものを使う（`vmSafeSource`）。
-    "  return eval(vmSafeSource(rec.slice(i + head.length, j)) + ']');",
+    // 表の末尾が説明コメントで終わることがある（`//` の行に `]` を繋ぐとコメントに
+    // 飲み込まれて構文エラーになる）。改行 after 閉じる。
+    '  return eval(vmSafeSource(rec.slice(i + head.length, j)) + "\\n];");',
     "};",
     "const stats = (name) => {",
     "  let alive = 0;",
@@ -7161,4 +7163,71 @@ it("分野チップでのぞいた件数を件数欄に出す（SPEC §7）", ()
   expect(app, "件数欄が分野で絞った件数を書いていない").toContain(
     '分野「${state.cats.map((key) => catLabel(key)).join("・")}」を持たない行 ${hidden.cats} 件',
   );
+});
+
+it("新しい分野の言い方が、収録カタログの英文字表記に届いている（SPEC §7）", () => {
+  /* 「打ち方が通じない」で 0 件にしないための表なので、**実データで当たること**を見る。
+   * 日本語で打った行が英文字表記の行をすべて含み、かつ 1 件以上出ること。
+   *英文字側の語順が収録に無い条目を置いていないことも、ここで同時に確かめる。 */
+  const pairs: Array<[string, string]> = [
+    ["リアルタイム", "real-time"],
+    ["実時間", "real-time"],
+    ["スケジューリング", "scheduling"],
+    ["プログラミング言語", "programming language"],
+    ["コンパイラ", "compiler"],
+    ["クラスタ", "cluster"],
+    ["バイオインフォマティクス", "bioinformatics"],
+    ["音響", "acoustic"],
+    ["脆弱性", "vulnerability"],
+    ["マルウェア", "malware"],
+    ["侵入検知", "intrusion detection"],
+    ["モバイル", "mobile"],
+    ["ユーザインタフェース", "user interface"],
+    ["ゲーム", "game"],
+    ["エッジコンピューティング", "edge computing"],
+    ["仮想現実", "virtual reality"],
+    ["拡張現実", "augmented reality"],
+    ["計算機アーキテクチャ", "computer architecture"],
+    ["データ分析", "data analytics"],
+    ["パターン認識", "pattern recognition"],
+  ];
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(new URL("../data/snapshot.json", import.meta.url).pathname)}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const PAIRS = " + JSON.stringify(pairs) + ";",
+    "const out = [];",
+    "for (const [ja, latin] of PAIRS) {",
+    "  const folded = Recommender.searchNormalize(latin);",
+    "  const phrase = new Set(rows.filter((r) => Recommender.kanaFold(r.hay).indexOf(folded) >= 0).map((r) => r.conf.key + '@' + r.ed.year));",
+    "  const m = Recommender.searchMatcher(ja);",
+    "  const viaJa = new Set(rows.filter((r) => m(r.hay)).map((r) => r.conf.key + '@' + r.ed.year));",
+    "  const missing = [...phrase].filter((k) => !viaJa.has(k)).length;",
+    "  out.push({ ja, latin, phrase: phrase.size, viaJa: viaJa.size, missing });",
+    "}",
+    "console.log(JSON.stringify(out));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as Array<{
+    ja: string;
+    latin: string;
+    phrase: number;
+    viaJa: number;
+    missing: number;
+  }>;
+  expect(out.length).toBe(pairs.length);
+  for (const row of out) {
+    expect(
+      row.phrase,
+      `「${row.ja}」の寄せ先 ${row.latin} が収録に現れない（死んだ寄せ）`,
+    ).toBeGreaterThan(0);
+    expect(row.missing, `「${row.ja}」で引くと ${row.latin} の行が ${row.missing} 件届かない`).toBe(
+      0,
+    );
+    expect(row.viaJa, `「${row.ja}」で 1 件も出ない`).toBeGreaterThan(0);
+  }
 });
