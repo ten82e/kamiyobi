@@ -1421,6 +1421,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     window: 0,
     // 「評価でしぼる」で落ちた行数（選択した等級を持たない行）。
     rank: 0,
+    // 分野チップで落ちた行数（選んだ分野を持たない行）。
+    cats: 0,
   };
 
   /* URL で渡された種別のうち、表に出さないものを読み捨てたときの説明。
@@ -1436,6 +1438,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     onlinePlaceUnknown: number;
     window: number;
     rank: number;
+    cats: number;
   } {
     return hiddenCounts;
   }
@@ -1639,6 +1642,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       onlinePlaceUnknown: 0,
       window: 0,
       rank: 0,
+      cats: 0,
     };
     catFacetCounts = {};
     let out: AppRow[] = pool.filter((r) => {
@@ -1658,6 +1662,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           }
         }
         if (!hit) {
+          // チップには分野ごとの件数が写るが、「選んだ分野で何行が出て、他が何行だったか」は
+          // 件数欄に書かないと分からない。窓や評価と同じ型でのぞいた件数を出す
+          // （のぞいた行数は「他の条件を通った行」の数えなので、チップの件数と足して
+          // 全件にはならない）。
+          if (!inRecommend) hiddenCounts.cats += 1;
           return false;
         }
       }
@@ -2720,6 +2729,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       // 評価で絞った件数。選択欄の等級表記をそのまま書く（画面の語で探す人が探せる形に）。
       if (hidden.rank && state.rank)
         parts.push(`評価「${state.rank}」を持たない行 ${hidden.rank} 件`);
+      // 分野チップも同じ。チップに押した語が並ぶので、外した語を日本語でそのまま書く。
+      if (hidden.cats && state.cats.length)
+        parts.push(
+          `分野「${state.cats.map((key: string) => catLabel(key)).join("・")}」を持たない行 ${hidden.cats} 件`,
+        );
       if (hidden.domestic) parts.push(`国内研究会・国内シンポジウム以外 ${hidden.domestic} 件`);
       if (hidden.online) {
         // 「記載が無いだけ」の行数を括弧で添える（対面だと断定していないことの説明にもなる）。

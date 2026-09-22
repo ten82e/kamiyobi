@@ -2530,7 +2530,7 @@ const FILTER_RUNTIME_STUBS = [
   "let semQuery = null, semEmbeddings = null;",
   "let catFacetCounts = {};",
   "let hiddenCounts = {",
-  "  past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0, window: 0, rank: 0,",
+  "  past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0, window: 0, rank: 0, cats: 0,",
   "};",
   "const activeData = { conferences: [] };",
   ...SEARCH_CANON,
@@ -4738,6 +4738,7 @@ it("のぞいた行数を件数欄で説明する（SPEC §7）", () => {
     window: 0,
     // 評価でしぼるのは選択欄を動かしたときだけなので、既定では内訳に立たない。
     rank: 0,
+    cats: 0,
   });
   // 「過去の締切も表示」をオンにすると過去の分はのぞかなくなる（他はそのまま）。
   expect(out.withPast.hidden.past).toBe(0);
@@ -4855,7 +4856,7 @@ it("種別セレクトに並ぶ選択肢は、選べば行が返る（SPEC §7�
     "const window = {};",
     "globalThis.Recommender = Recommender;",
     "globalThis.activeData = DATA;",
-    "globalThis.hiddenCounts = { past: 0, est: 0, kind: 0, rank: 0 };",
+    "globalThis.hiddenCounts = { past: 0, est: 0, kind: 0, rank: 0, cats: 0 };",
     "globalThis.catFacetCounts = {};",
     "globalThis.searchQuery = '';",
     "function run(kind) {",
@@ -4958,7 +4959,7 @@ it("ランクの選択肢は選べば行が返り、表示語はそのまま引�
     "const window = {};",
     "globalThis.Recommender = Recommender;",
     "globalThis.activeData = DATA;",
-    "globalThis.hiddenCounts = { past: 0, est: 0, kind: 0, rank: 0 };",
+    "globalThis.hiddenCounts = { past: 0, est: 0, kind: 0, rank: 0, cats: 0 };",
     "globalThis.catFacetCounts = {};",
     "globalThis.searchQuery = '';",
     "function run(rank) {",
@@ -5059,7 +5060,7 @@ it("締切までの選択肢は URL と表裏一体で、窓は入れ子にな�
     "function $(id) { return null; }",
     "const window = {};",
     "let hiddenCounts = {",
-    "  past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0, window: 0, rank: 0,",
+    "  past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0, window: 0, rank: 0, cats: 0,",
     "};",
     "let catFacetCounts = {};",
     "let searchQuery = '';",
@@ -6978,7 +6979,7 @@ it("「評価でしぼる」でのぞいた件数を件数欄に出す（SPEC §
     // `hiddenCounts` はスタブ側の `let` 束縛そのものを戻す（globalThis に書いても
     // `filter` は語彙束縛を見るので数え直されない）。
     "  hiddenCounts = {",
-    "    past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0, window: 0, rank: 0,",
+    "    past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0, window: 0, rank: 0, cats: 0,",
     "  };",
     "  const out = new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
     "    'return (' + FILTER + ')')(FakeDate, DAY, rows,",
@@ -7093,4 +7094,71 @@ it("CSV の分野列は画面と同じ日本語の語で、英字のキーを書
   ).toEqual([]);
   expect(out.emptyWhereCats, "分野を持つ行の分野列が空").toBe(0);
   expect(out.mismatch, "分野列が画面と同じ語になっていない行がある").toBe(0);
+});
+
+it("分野チップでのぞいた件数を件数欄に出す（SPEC §7）", () => {
+  /* チップには分野ごとの件数が写るが、「選んだ分野で何行が出て他が何行だったか」は
+   * 件数欄に書かないと分からない（2026-09-23 実測: 既定画面 477 行のうち
+   * 「人工知能」は 182 行で、のこり 295 行の話し手が件数欄にいなかった）。
+   * のぞいた数は「他の条件を通った行」からの数えなので、表示と足して全件にはならない
+   * — その関係も検査で固定する（何と何を足した数か分からない表示を避ける）。 */
+  const runtime = siteRuntime();
+  const filterSrc = jsFunction(runtime, "filter");
+  const script = [
+    "const DAY = 86400000;",
+    `const FILTER = ${JSON.stringify(filterSrc)};`,
+    'const now = Date.parse("2026-08-10T00:00:00Z");',
+    "class FakeDate extends Date { static now() { return now; } }",
+    "function row(key, cats) {",
+    "  return { kind: 'paper', est: false, cats: cats, rankPairs: [], tags: [],",
+    "    hay: key, t: now + DAY, tLast: now + DAY,",
+    "    ed: { place: 'Kyoto, 日本', deadlines: [] }, conf: { key: key } };",
+    "}",
+    "const rows = [",
+    "  row('hpc', ['hpc']), row('ai', ['ai']), row('both', ['hpc', 'ai']),",
+    "  row('sec', ['sec']), row('net', ['net', 'sec']),",
+    "];",
+    FILTER_RUNTIME_STUBS,
+    "const run = (cats) => {",
+    // `hiddenCounts` はスタブ側の `let` 束縛そのものを戻す（語彙束縛を見ないので
+    // globalThis に書いても数え直されない）。
+    "  hiddenCounts = {",
+    "    past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0, window: 0,",
+    "    rank: 0, cats: 0,",
+    "  };",
+    "  const out = new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
+    "    'return (' + FILTER + ')')(FakeDate, DAY, rows,",
+    "    { q: '', cats: cats, kind: '', rank: '', win: 'all', est: false }, true, 'rem')();",
+    "  return { shown: out.map((r) => r.conf.key), hidden: hiddenCounts.cats, facets: catFacetCounts };",
+    "};",
+    "console.log(JSON.stringify({",
+    "  none: run([]), one: run(['hpc']), two: run(['hpc', 'ai']), other: run(['quantum']),",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    none: { shown: string[]; hidden: number };
+    one: { shown: string[]; hidden: number };
+    two: { shown: string[]; hidden: number };
+    other: { shown: string[]; hidden: number };
+  };
+  /* 並び順はこの検査の話ではないので、比較は常に順を揃えて行う。 */
+  // チップを押していないときは内訳に立たない（件数欄に出さない）。
+  expect(out.none.shown).toHaveLength(5);
+  expect(out.none.hidden).toBe(0);
+  // 1 つのチップ: 表示 + のぞく = 他の条件を通った行（ここでは全 5 行）。
+  expect(out.one.shown.slice().sort()).toEqual(["both", "hpc"]);
+  expect(out.one.hidden).toBe(3);
+  // 2 つのチップは OR なので、のぞく数は減る（`net` は hpc・ai のどちらでもない）。
+  expect(out.two.shown.slice().sort()).toEqual(["ai", "both", "hpc"]);
+  expect(out.two.hidden).toBe(2);
+  // 収録に無い分野を選ぶと 0 件＋のぞいた全件（0 件の案内と合わせて理由が分かる）。
+  expect(out.other.shown).toEqual([]);
+  expect(out.other.hidden).toBe(5);
+
+  const app = runtime;
+  expect(app, "件数欄が分野で絞った件数を書いていない").toContain(
+    '分野「${state.cats.map((key) => catLabel(key)).join("・")}」を持たない行 ${hidden.cats} 件',
+  );
 });
