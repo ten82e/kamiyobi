@@ -881,15 +881,23 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const laterEditions = upcomingEditionsOf(r.conf, String(r.ed.event_start || ""), Date.now());
     const catNamesJa = (r.cats || []).map((key) => catLabel(key));
     const rankShown = (r.rankPairs || []).map((pair) => Recommender.rankPairLabelJa(pair));
+    // 今後の会期の開催地も、表と同じ書き方で日本語に寄せる（行の詳細の中で
+    // 「開催地: 京都, 日本」と「今後の会期: … ＠Kyoto, Japan」が両方出ると、
+    // 別の場所だと誤解する。原文は title に残す）。
+    const laterEditionsText = laterEditions
+      .map((next) => {
+        const place = String(next.place || "");
+        return `${meetingRangeJa(next.start, next.end)}${place ? ` ＠${Recommender.placeJa(place)}` : ""}`;
+      })
+      .join(" / ");
+    const laterEditionsRaw = laterEditions
+      .map((next) => String(next.place || ""))
+      .filter((place) => place && Recommender.placeJa(place) !== place)
+      .join(" / ");
     const laterEditionsHtml = laterEditions.length
-      ? `<p style="margin-bottom: 8px;"><strong>今後の会期:</strong> ${esc(
-          laterEditions
-            .map(
-              (next) =>
-                `${meetingRangeJa(next.start, next.end)}${next.place ? ` ＠${next.place}` : ""}`,
-            )
-            .join(" / "),
-        )}</p>`
+      ? `<p style="margin-bottom: 8px;"${
+          laterEditionsRaw ? ` title="原表記: ${esc(laterEditionsRaw)}"` : ""
+        }><strong>今後の会期:</strong> ${esc(laterEditionsText)}</p>`
       : "";
     html +=
       '<div style="font-size: 0.85rem;">' +
@@ -1912,7 +1920,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       } else {
         box.appendChild(document.createTextNode(m.name));
       }
-      if (m.place) box.appendChild(document.createTextNode(` ＠${m.place}`));
+      if (m.place) {
+        // 会期だけの会の開催地も、表と同じく日本語に寄せる（原文は title に残す）。
+        const shownPlace = Recommender.placeJa(m.place);
+        const placeNode = document.createElement("span");
+        placeNode.textContent = ` ＠${shownPlace}`;
+        if (shownPlace !== m.place) placeNode.title = String(m.place);
+        box.appendChild(placeNode);
+      }
     });
     const note = document.createTextNode(
       " 締切が未定の会は表に載せません（会期は upcoming.md にも掲載）。",

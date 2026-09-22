@@ -7345,3 +7345,62 @@ it("略称と年をスペースで離して 2 桁打つ入力も、実カタロ�
   expect(out.monthDay).toBeGreaterThan(0);
   expect(out.isoMonth).toBeGreaterThan(0);
 });
+
+it("会期だけの会の案内と行の詳細の開催地は、表と同じ書き方で出す（SPEC §7）", () => {
+  /* 行の詳細は「開催地: Kyoto, 日本」と出すのに、「今後の会期」と 0 件時の会期案内は
+   * 原文のままだった（＠Kyoto, Japan）。開催都市は公式表記のまま、国だけ日本語に寄せる
+   * のが表の書き方なので、そちらに揃える。同じ画面の中で同じ種類の情報が 2 通りの
+   * 書き方をしていると、別の場所だと誤解する（開催地は日本語に寄せる、が既定の約束）。
+   * ビルド後の `renderNextMeetingNote` を疑似 DOM で実際に動かして確かめる。 */
+  const runtime = siteRuntime();
+  const recSrc = readFileSync(join(site, "recommender.js"), "utf8");
+  expect(runtime).toContain("＠${shownPlace}");
+  expect(runtime).toContain("＠${Recommender.placeJa(place)}");
+  // 原文を出しっぱなしにする形に戻っていないこと（表題の語で探す人が探せる形）。
+  expect(runtime).not.toContain("＠${m.place}");
+  expect(runtime).not.toContain("＠${next.place}");
+  const noteSrc = jsFunction(runtime, "renderNextMeetingNote");
+  const limitSrc = jsFunction(runtime, "windowLimitMs");
+  const rangeSrc = jsFunction(runtime, "meetingRangeJa");
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    "const DAY = 86400000;",
+    'const now = Date.parse("2026-08-10T00:00:00Z");',
+    "class FakeDate extends Date { static now() { return now; } }",
+    // 会期だけ確定している回（締切の無い edition）を 1 件置く。
+    "const DATA = { conferences: [{ key: 'demo', title: 'Demo Conf', link: 'https://example.org/',",
+    "  categories: ['hpc'], tags: [], editions: [{ event_start: '2026-09-30', event_end: '2026-10-02',",
+    "  place: 'Kyoto, Japan', deadlines: [], link: 'https://example.org/cfp' }] }] }",
+    "const boxes = [];",
+    "function node(text) { return { textContent: text || '', title: '', tag: 'span', children: [],",
+    "  appendChild(c) { this.children.push(c); return c; } }; }",
+    "const box = node();",
+    "box.hidden = true;",
+    "boxes.push(box);",
+    "const document = { createElement: (tag) => { const n = node(); n.tag = tag; return n; },",
+    "  createTextNode: (t) => node(t) };",
+    "const $ = () => box;",
+    "let searchQuery = '';",
+    `${limitSrc}`,
+    `${rangeSrc}`,
+    `${noteSrc}`,
+    "renderNextMeetingNote({ window: 'all', cats: [], domestic: false, online: false });",
+    "const flat = (n) => (n.textContent || '') + n.children.map(flat).join('');",
+    "const titles = [];",
+    "(function walk(n) { if (n.title) titles.push(n.title); n.children.forEach(walk); })(box);",
+    "console.log(JSON.stringify({ hidden: box.hidden, text: flat(box), titles }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as { hidden: boolean; text: string; titles: string[] };
+  expect(out.hidden, "会期案内が出ていない（検査が空振りする）").toBe(false);
+  // 表と同じ書き方（国は日本語、開催市は公式表記）。
+  expect(out.text, "開催地が表と同じ書き方になっていない: " + out.text).toContain("Kyoto, 日本");
+  expect(out.text).not.toContain("Japan");
+  expect(out.titles, "原表記をどこにも残していない").toContain("Kyoto, Japan");
+  // 会期の書き方も表と同じ（暦日 + 曜日）。
+  expect(out.text).toContain("2026-09-30(水)");
+});
