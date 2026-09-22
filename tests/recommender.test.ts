@@ -1311,6 +1311,37 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
   });
 
+  describe("同じ書き方の場所が複数ある語を件数欄でおしらせする", () => {
+    /* 「バリ」はイタリアの bari とインドネシアの bali の両方に当たる（違う場所を足して
+     * いる）。行の開催地は公式の英文字表記のまま残るので、おしらせがないと
+     * 「なぜこの行が出たか」が画面のどこにも出なかった（2026-09-23 実測: 空）。
+     * 1 とおりの寄せ（`クラクフ` → `krakow`）は精密に引けているので付けない
+     * ——地域まとめの検査が「精密に引ける語には付けない」と見ているのと同じ規則。 */
+    it("複数の英文字表記に寄るときだけおしらせを出す", () => {
+      const note = R.querySynonymNotes("バリ").join("");
+      expect(note).toContain("bari");
+      expect(note).toContain("bali");
+      // 1 とおりの寄せには付けない（既存の規則）。
+      expect(R.querySynonymNotes("クラクフ")).toEqual([]);
+      expect(R.querySynonymNotes("会津若松")).toEqual([]);
+      // 表示側で日本語に寄せる語（国名など）も書かない（画面に既に日本語で出る）。
+      expect(R.querySynonymNotes("日本").join("")).not.toContain("開催地");
+    });
+
+    it("長音の書き方が違う条目が同じ寄せ先くるとき、同じ語を並べない", () => {
+      // 変更前は「英語で書かれた会議名（user interface / user interface など）」だった。
+      const note = R.querySynonymNotes("ユーザインタフェース").join("");
+      expect(note.match(/user interface/g)?.length).toBe(1);
+      expect(note).toContain("user interface");
+    });
+
+    it("分野の寄せ説明と重なって二重にならない", () => {
+      const notes = R.querySynonymNotes("スパコン");
+      expect(notes.length).toBe(1);
+      expect(notes[0]).toContain("分野");
+    });
+  });
+
   describe("deadlinesToCsv（絞り込み結果を表計算へ持ち出す）", () => {
     const now = Date.parse("2026-09-22T00:00:00+09:00");
     const rowOf = (over: Record<string, unknown>) => ({

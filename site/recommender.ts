@@ -1665,6 +1665,18 @@ const Recommender = (() => {
    * 寄せた語（`スパコン` → 分野「高性能計算」）と、割った語（`nsdi27` → `nsdi` と `2027`）を
    * 同じ入口で返す。理由も見ずに分野全体の行を並べたり、別々の語を含む行を返したりすると、
    * なぜその行が出たか分からないまま行数の壁になる。 */
+  /* 表示側で日本語に寄せる開催地の語（国名など）。検索語のおしらせでは、
+   * 画面に既に日本語で出る語を「英語で書かれた開催地を探した」と書かないために使う。 */
+  let displayedPlaceTermSet: Set<string> | null = null;
+  function displayedPlaceTerms(): Set<string> {
+    if (!displayedPlaceTermSet) {
+      displayedPlaceTermSet = new Set(
+        PLACE_TERMS_JA.map((entry) => String(entry[0]).toLowerCase()),
+      );
+    }
+    return displayedPlaceTermSet;
+  }
+
   function querySynonymNotes(query: unknown): string[] {
     const map = querySynonymMap();
     const notes: string[] = [];
@@ -1699,13 +1711,35 @@ const Recommender = (() => {
       }
       // 主題のことばを英語表記の会議名へ広げたときも同じ。分野・主題の寄せ説明が
       // 既に出ている語では二重になるので、そちらに譲る。
-      const topic = hit
-        ? []
-        : TOPIC_QUERY_ALIASES_JA.filter((entry) => kanaFold(entry[0]) === foldedToken).map(
-            (entry) => entry[1],
-          );
+      const topic = (
+        hit ? [] : TOPIC_QUERY_ALIASES_JA.filter((entry) => kanaFold(entry[0]) === foldedToken)
+      )
+        .map((entry) => String(entry[1]))
+        // 長音の書き方が違う条目が同じ寄せ先にくると、同じ語を並べることになる
+        // （`ユーザインタフェース` → 「user interface / user interface」）。1 つに束ねる。
+        .filter((latin, index, all) => all.indexOf(latin) === index);
       if (topic.length) {
         const note = `「${token}」は英語で書かれた会議名（${topic.slice(0, 2).join(" / ")} など）も探しています`;
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
+      /* 開催地の寄せで、**1 つの日本語が複数の英文字表記に広がるとき**だけ書く
+       * （`バリ` → `bari`（イタリア）と `bali`（インドネシア））。違う場所を足して
+       * いるので、おしらせがないと「なぜこの行が出たか」が画面のどこにも出ない
+       * （行の開催地は公式の英文字表記のまま残る）。
+       * 1 とおりの寄せ（`クラクフ` → `krakow`）は精密に引けているので付けない ——
+       * 地域まとめの検査が「精密に引ける語には付けない」と見ていて、同じ規則にする。
+       * 表示側で日本語に寄せる語（国名など）も書かない（画面に既に日本語で出る）。 */
+      const place = PLACE_QUERY_ALIASES_JA.filter(
+        (entry) =>
+          kanaFold(entry[0]) === foldedToken &&
+          !displayedPlaceTerms().has(String(entry[1]).toLowerCase()),
+      )
+        .map((entry) => String(entry[1]))
+        .filter((latin, index, all) => all.indexOf(latin) === index);
+      if (place.length > 1) {
+        const note = `「${token}」は同じ書き方の場所が複数あります（英語で書かれた開催地 ${place
+          .slice(0, 3)
+          .join(" / ")}${place.length > 3 ? " など" : ""}）`;
         if (notes.indexOf(note) < 0) notes.push(note);
       }
       const parts = ABBREV_YEAR_TOKEN.exec(token);
