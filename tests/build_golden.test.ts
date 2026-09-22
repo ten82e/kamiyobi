@@ -10050,7 +10050,9 @@ it("0 件の理由は読み上げにも短的に出る（長い文を aria-live 
   expect(inCatalog).toContain("いまの条件では 0 件");
   // どの原因でも無いときの受け皿。
   const plain = note(empty);
-  expect(plain).toContain("条件を緩める");
+  /* 「緩められる」という言いぶりは、下に「外せる条件」が並んでいる画面では
+   * その案内を指す文に変わった（外せる条件が残っていない画面では言わない – 第 141 回）。*/
+  expect(plain).toContain("下に外せる条件も書いてあります");
   // 読み上げなので短い（画面に出す説明文は別。1 打鍵ごとに読まれる長さにする）。
   for (const text of [dead, kindHit, inCatalog, plain]) {
     expect(text.length, `読み上げの文が長い: ${text}`).toBeLessThanOrEqual(60);
@@ -10716,6 +10718,7 @@ it("締切のデータが無い画面は、それを条件の話より先に言�
   // データが無いときは、条件を緩める案内を出さない。
   expect(out.noData).toContain("締切のデータが入っていません");
   expect(out.noData).not.toContain("条件を緩める");
+  expect(out.noData).not.toContain("外せる条件");
   expect(out.noData).not.toContain("外せる条件");
   expect(out.noDataLive, "読み上げがデータが無いことを言っていない").toContain(
     "データが入っていません",
@@ -11817,4 +11820,61 @@ it("閉じたままのてびきの入口に、中身とズレた見出しを置�
   const app = siteRuntime("app.js");
   expect(app).toContain('p.set("help", "1")');
   expect(app).toContain('p.get("help")');
+});
+
+it("0 件の読み上げが、画面に出ている案内の有無と緩められる条件の有無を正直に言う（SPEC §7）", () => {
+  /* 0 件画面の下には「外せる条件」を並べるが、読み上げには短い理由だけを流していた
+   * （2026-09-23 実測: 「 ｜ いまの条件では行がありません。条件を緩めると出ます」）。
+   * 支援技術では下に出ている案内が見えないので、0 件とだけ聞いて操作をやめる人が出る。
+   * 逆に、外せる条件が 1 つも残っていない画面で「緩めると出ます」と言うのは噓だった。 */
+  const app = siteRuntime("app.js");
+  const liveFn = jsFunction(app, "zeroResultLiveNote");
+  expect(liveFn, "0 件の読み上げ文言が見当たらない（検査が空振り）").not.toBe("");
+  const script = [
+    // 抜き出した関数は式としてそのまま入れる（JSON.stringify すると文字列になる）。
+    "const live = (" + liveFn + ");",
+    "const base = {",
+    "  hiddenKindWords: [],",
+    "  termCounts: [],",
+    "  queryMatch: { catalog: 0, journal: 0 },",
+    "  catalogConferences: 40,",
+    "  clearable: false,",
+    "  pastShown: false,",
+    "  hidden: {},",
+    "};",
+    "const run = (over) => live({ ...base, ...over });",
+    "console.log(JSON.stringify({",
+    "  // 窓で絞って 0 件（今日は実際に踏める形）。",
+    "  windowed: run({ clearable: true, hidden: { window: 34 } }),",
+    "  // 何も絞っていないのに 0 件で、過去の締切だけが出ない形。",
+    "  onlyPast: run({ hidden: { past: 2317 } }),",
+    "  // 過去も表示し終えて 0 件（緩める条件が残っていない）。",
+    "  exhausted: run({ pastShown: true }),",
+    "  noData: run({ catalogConferences: 0 }),",
+    "  // 原因が特定できても、下に案内があることは同じように伝える。",
+    "  hiddenKind: run({ hiddenKindWords: ['採否通知'], clearable: true, hidden: { kind: 603 } }),",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as { [k: string]: string };
+  // 下に出ている案内を指し示す（支援技術では下の塊が見えない）。
+  expect(out.windowed).toContain("下に外せる条件も書いてあります");
+  expect(out.hiddenKind).toContain("下に外せる条件も書いてあります");
+  expect(out.hiddenKind).toContain("種別に当たります");
+  // 括弧を二重に重ねない（読み上げで「（…）（…）」と続くのは聞こえない）。
+  expect(out.hiddenKind).not.toContain("）（");
+  // 緩められない画面で「緩めると出ます」と言わない。
+  expect(out.exhausted).not.toMatch(/緩め|外せる条件/);
+  expect(out.exhausted).toContain("収録にいま以降の締切");
+  expect(out.onlyPast).toContain("収録の締切はすべて過ぎています");
+  expect(out.onlyPast).toContain("過去の締切も表示");
+  // データその物が無い話は、条件の話より先にそのまま出す（第 118 回以降の方針）。
+  expect(out.noData).toContain("締切のデータが入っていません");
+  // 呼び出し側が、0 件案内と同じ数え合わせを渡していること。
+  expect(app).toContain("clearable: filtersClearable(");
+  expect(app).toContain("pastShown: state.past");
 });

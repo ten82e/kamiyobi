@@ -1724,16 +1724,43 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     termCounts: Array<{ term: string; count: number }>;
     queryMatch: { catalog: number; journal: number };
     catalogConferences: number;
+    // 下に並ぶ「外せる条件」が 1 つ以上あるか（0 件案内と数え上げを同じにする）。
+    clearable: boolean;
+    pastShown: boolean;
+    hidden: Record<string, number>;
   }): string {
     // データその物が無いときは、他のどの説明より先にそれを言う（読み上げは短い形で）。
     if (!filter.catalogConferences) return " ｜ 締切のデータが入っていません";
+    /* 0 件画面の下の方には「外せる条件」を書く。読み上げには短い形だけを流すので、
+     * その案内が画面に出ていることを一言添えないと、支援技術では 0 件とだけ聞いて
+     * 操作をやめてしまう（画面の内訳まで流すと 1 打鍵ごとに数十語になるので、
+     * そこは流さない – 上の `countLive` の注記と同じ判断）。 */
+    const loosenable =
+      filter.clearable ||
+      !filter.pastShown ||
+      Boolean(filter.hidden?.past) ||
+      Boolean(filter.hidden?.est);
+    const pointer = loosenable ? "。下に外せる条件も書いてあります" : "";
+    // 外せる条件が 1 つも無いなら、その旨を言う（「下に案内がある」「緩めると出る」は
+    // いずれも噓になる）。2026-09-23 の収録では踏めない（今後より後の締切が多数ある）
+    // ので、収録が古くなった日に効く形の防御である。
+    if (!loosenable) return " ｜ 収録にいま以降の締切が残っていません。データ更新をお待ちください";
     const dead = filter.termCounts.filter((t) => t.count === 0).map((t) => t.term);
-    if (dead.length) return ` ｜ 語「${dead[0]}」は収録データにありません`;
+    if (dead.length) return ` ｜ 語「${dead[0]}」は収録データにありません${pointer}`;
     if (filter.hiddenKindWords.length)
-      return ` ｜ 検索語は「${filter.hiddenKindWords[0]}」の種別に当たります（表に出さない種別です）`;
+      return (
+        ` ｜ 検索語は「${filter.hiddenKindWords[0]}」の種別に当たります（表に出さない種別です）` +
+        pointer
+      );
     if (filter.queryMatch.catalog > 0)
-      return ` ｜ 検索語は収録で ${filter.queryMatch.catalog} 件に当たりますが、いまの条件では 0 件です`;
-    return " ｜ いまの条件では行がありません。条件を緩めると出ます";
+      return (
+        ` ｜ 検索語は収録で ${filter.queryMatch.catalog} 件に当たりますが、いまの条件では 0 件です` +
+        pointer
+      );
+    // 何も絞り込んでいないのに 0 件なら、緩める条件ではなく収録の時刻の話をする。
+    if (!filter.clearable && !filter.pastShown && filter.hidden?.past)
+      return " ｜ 収録の締切はすべて過ぎています。「過去の締切も表示」で出ます";
+    return " ｜ いまの条件では行がありません" + pointer;
   }
 
   /* 語を並べて打った検索語を、語の組に分けて収録データの当たり数を数える
@@ -3344,7 +3371,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             catalogConferences: DATA.conferences.length,
           }
         : null;
-    if (zeroFilter) cntLive += zeroResultLiveNote(zeroFilter);
+    if (zeroFilter)
+      cntLive += zeroResultLiveNote({
+        ...zeroFilter,
+        // 0 件案内が「外せる条件」として並べる数と、読み上げの言いぶりを揃える。
+        clearable: filtersClearable(zeroFilter),
+        pastShown: state.past,
+      });
     $("count").textContent = cnt;
     /* 原因の識別子は画面に出さないが、捨てると調査できない（#711）。属性で残す
      * （エラーのときだけ付け、他の状態では消す – 前の理由が残り続けるのを防ぐ）。 */
