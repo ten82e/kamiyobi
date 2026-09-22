@@ -1285,8 +1285,29 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   // ---- FILTERING ----
+  /** 展開で置き換わった語だけ `来月 = 2026年10月` の形で返す（説明用の補助）。 */
+  function relativeMonthNote(query: string, expanded: string): string {
+    const before = String(query || "")
+      .trim()
+      .split(/\s+/);
+    const after = String(expanded || "")
+      .trim()
+      .split(/\s+/);
+    const pairs: string[] = [];
+    for (let i = 0; i < before.length; i++) {
+      if (after[i] && before[i] !== after[i]) pairs.push(`${before[i]} = ${after[i]}`);
+    }
+    return pairs.length ? ` ｜ ${pairs.join("、")}` : "";
+  }
+
+  /** 相対月を展開した後の検索語。`filter()` の描画周期内でだけ有効（利用者の入力文は `state.q`）。 */
+  let searchQuery = "";
+
   function filter(): AppRow[] {
     const now = Date.now();
+    // `来月` などの相対月を検索語として受け付ける。展開式の一覧への反映は recommender が
+    // 持つ（`来月` がどの月を指すかの判断を UI 側に二重化しない）。
+    searchQuery = Recommender.expandRelativeMonths(state.q, now);
     const isPast = (row: AppRow) => (row.dateOnly ? now > row.tLast : row.t < now);
     const isAfter = (row: AppRow, dateLimit: number) => row.t > dateLimit;
     const isWinFuture = state.win === "future";
@@ -1382,7 +1403,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       }
       // 検索は正規化した語の AND 判定（全角入力・全角スペース・複数語に対応するため
       // 照合式は recommender の hayMatches を単一正典にする）。
-      if (!inRecommend && !Recommender.hayMatches(r.hay, state.q)) {
+      if (!inRecommend && !Recommender.hayMatches(r.hay, searchQuery)) {
         return false;
       }
 
@@ -2234,6 +2255,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         // 8+通りの失敗が1文言に潰れて原因追跡不能になっていた (#711 の構造要因)。
         cnt += ` ｜ 意味検索は利用不可（語彙検索のみ・原因: ${semanticReason || "unknown"}）`;
       }
+    }
+    // 「来月」で検索したとき、何月に絞ったのかを利用者が確認できるようにする
+    // （相対指定が裏でどう解決されたかを見せないのは誤信を生む）。
+    if (!recMode) {
+      const note = relativeMonthNote(state.q, searchQuery);
+      if (note) cnt += note;
     }
     $("count").textContent = cnt;
     // CSV 書き出しは締切一覧の絞り込み結果に対してだけ意味がある（推薦モードでは出さない）。

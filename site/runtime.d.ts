@@ -154,6 +154,7 @@ interface SiteRecommenderApi {
   searchNormalize(value: unknown): string;
   kanaFold(value: unknown): string;
   monthTermsJa(value: unknown): string;
+  expandRelativeMonths(query: unknown, nowMs: number): string;
   queryTokenGroups(query: unknown): string[][];
   queryTokens(query: unknown): string[];
   hayMatches(hay: unknown, query: unknown): boolean;

@@ -958,6 +958,41 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
   });
 
+  describe("相対月での検索（expandRelativeMonths）", () => {
+    const now = Date.parse("2026-09-22T09:00:00+09:00"); // JST 2026-09-22
+
+    it("今月・来月・再来月・先月を JST の暦月へ解決する", () => {
+      expect(R.expandRelativeMonths("今月", now)).toBe("2026年9月");
+      expect(R.expandRelativeMonths("来月", now)).toBe("2026年10月");
+      expect(R.expandRelativeMonths("再来月", now)).toBe("2026年11月");
+      expect(R.expandRelativeMonths("先月", now)).toBe("2026年8月");
+      expect(R.expandRelativeMonths("先々月", now)).toBe("2026年7月");
+    });
+
+    it("年をまたいでも月だけ進める", () => {
+      // 12 月の来月は翌年 1 月。日付を足して月を計算すると 3 月に飛ぶ。
+      expect(R.expandRelativeMonths("来月", Date.parse("2026-12-15T00:00:00+09:00"))).toBe(
+        "2027年1月",
+      );
+      expect(R.expandRelativeMonths("来月", Date.parse("2026-01-05T00:00:00+09:00"))).toBe(
+        "2026年2月",
+      );
+      // JST の境界（UTC 9/30 16:00 = JST 10/1）では 10 月が今月。
+      expect(R.expandRelativeMonths("今月", Date.parse("2026-09-30T16:00:00Z"))).toBe("2026年10月");
+    });
+
+    it("相対月以外の語はそのまま、語のかけ算も壊さない", () => {
+      expect(R.expandRelativeMonths("再来月 国内", now)).toBe("2026年11月 国内");
+      expect(R.expandRelativeMonths("機械学習", now)).toBe("機械学習");
+      // 全角は半角・小文字へ畳まれる（検索の正規化と同じ規則）。
+      expect(R.expandRelativeMonths("ＮＳＤＩ", now)).toBe("nsdi");
+      expect(R.expandRelativeMonths("", now)).toBe("");
+      // 展開先は月語の検索インデックス（monthTermsJa）と同じ形なので当たり方が揃う。
+      const hay = `電子情報通信学会 NS 研究会 ${R.monthTermsJa("2026-10-07")}`;
+      expect(R.hayMatches(hay, R.expandRelativeMonths("来月", now))).toBe(true);
+    });
+  });
+
   describe("月での検索（monthTermsJa）", () => {
     it("締切は JST の暦日から月語を作る", () => {
       // 2026-09-30 16:00 UTC = JST 2026-10-01 01:00。一覧の日時列と同じ暦日で読む。

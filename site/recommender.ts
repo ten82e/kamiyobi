@@ -1865,6 +1865,35 @@ const Recommender = (() => {
     return text;
   }
 
+  /* 「来月の締切だけ」は研究計画の立て方でよく言う形なので、相対月を検索語として受け付ける。
+   * 展開先は hay に入っている `2026年10月` の形（`monthTermsJa` が作っている語）に合わせる。
+   * 基準は JST の暦月（一覧の日時列と同じ）。年跨ぎ（12月 → 翌年1月）に対応する。
+   * 展開しなかった語はそのまま残すので、`来月 国内` のような語のかけ算は壊れない。 */
+  const RELATIVE_MONTH_OFFSETS_JA: Record<string, number> = {
+    今月: 0,
+    来月: 1,
+    再来月: 2,
+    先月: -1,
+    先々月: -2,
+  };
+
+  /** 相対月の語を `YYYY年M月` へ置き換えた検索語を返す（該当がなければ元の検索語のまま）。 */
+  function expandRelativeMonths(query: unknown, nowMs: number): string {
+    const normalized = searchNormalize(query);
+    if (!normalized) return normalized;
+    let changed = false;
+    const tokens = normalized.split(" ").map((token) => {
+      const offset = RELATIVE_MONTH_OFFSETS_JA[token];
+      if (offset === undefined) return token;
+      const base = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
+      // 月の加算は日付を足さず月だけで行う（1/31 に 1 ヶ月足すと 3/3 になるため）。
+      const shifted = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + offset, 1));
+      changed = true;
+      return `${shifted.getUTCFullYear()}年${shifted.getUTCMonth() + 1}月`;
+    });
+    return changed ? tokens.join(" ") : normalized;
+  }
+
   /* 土地名での検索。出張先は「国内であってほしい」「四国であってほしい」という条件で
    * 絞ることが多く、`おきなわ` や `しこく` でも引ける価値がある。読み辞書は
    * 47 都道府県と地方に限定する（一般語の読み辞書は誤爆が高く作らない）。
@@ -3270,6 +3299,7 @@ const Recommender = (() => {
     deadlinesToCsv: deadlinesToCsv,
     searchNormalize: searchNormalize,
     monthTermsJa: monthTermsJa,
+    expandRelativeMonths: expandRelativeMonths,
     kanaFold: kanaFold,
     queryTokenGroups: queryTokenGroups,
     queryTokens: queryTokens,

@@ -1906,6 +1906,24 @@ it("the deadline search index carries Japanese month terms (SPEC §7)", () => {
   expect(runtime).toMatch(/monthTermsJa[\s\S]*new Date\(value \+ 9 \* 3_600_000\)/);
 });
 
+it("relative months in the query are resolved and shown (SPEC §7)", () => {
+  const runtime = siteRuntime();
+  const template = readFileSync(join(site, "index.html"), "utf8");
+  // 展開式は recommender に一本化し、UI は展開後の語で絞り込む。
+  expect(runtime).toContain("searchQuery = Recommender.expandRelativeMonths(state.q, now);");
+  expect(runtime).toContain("Recommender.hayMatches(r.hay, searchQuery)");
+  // てびきに相対月の説明がある（仕様が画面から追える状態にする）。
+  expect(template).toContain("「今月」「来月」「再来月」「先月」");
+  // 「来月」がどの月に解決されたかをその場で見せる（伏せた展開は誤信を生む）。
+  const note = new Function(`return (${jsFunction(runtime, "relativeMonthNote")});`)() as (
+    query: string,
+    expanded: string,
+  ) => string;
+  expect(note("来月", "2026年10月")).toBe(" ｜ 来月 = 2026年10月");
+  expect(note("来月 国内", "2026年10月 国内")).toBe(" ｜ 来月 = 2026年10月");
+  expect(note("機械学習", "機械学習")).toBe("");
+});
+
 it("the empty deadline state offers a one-click way to drop the filters (SPEC §7)", () => {
   const template = readFileSync(join(site, "index.html"), "utf8");
   const runtime = siteRuntime();
@@ -2073,6 +2091,7 @@ const SEARCH_CANON = (() => {
   const rec = siteRuntime("recommender.js");
   const consts = [
     ["SMALL_KANA_JA", /const SMALL_KANA_JA[\s\S]*?\};/],
+    ["RELATIVE_MONTH_OFFSETS_JA", /const RELATIVE_MONTH_OFFSETS_JA[\s\S]*?\};/],
     ["PLACE_READINGS", /const PLACE_READINGS[\s\S]*?\];/],
     ["REGION_READINGS", /const REGION_READINGS[\s\S]*?\];/],
   ].map(([name, re]) => {
@@ -2082,16 +2101,23 @@ const SEARCH_CANON = (() => {
   });
   return [
     ...consts,
-    ...["kanaFold", "searchNormalize", "queryTokens", "queryTokenGroups", "hayMatches"].map(
-      (name) => jsFunction(rec, name),
-    ),
+    ...[
+      "kanaFold",
+      "monthTermsJa",
+      "expandRelativeMonths",
+      "searchNormalize",
+      "queryTokens",
+      "queryTokenGroups",
+      "hayMatches",
+    ].map((name) => jsFunction(rec, name)),
   ];
 })();
 const FILTER_RUNTIME_STUBS = [
   "let semQuery = null, semEmbeddings = null;",
   "const activeData = { conferences: [] };",
   ...SEARCH_CANON,
-  "const Recommender = { searchNormalize: searchNormalize, queryTokens: queryTokens, kanaFold: kanaFold, queryTokenGroups: queryTokenGroups, hayMatches: hayMatches, parsePaperLines: (text) => text ? [{ title: text }] : [], hasJapanese: () => false, contentWordCount: () => 0, autoDetectCats: () => [], venueCategories: () => [], journalRows: () => [], pastRepresentatives: () => [], rankMatches: (pairs, rank) => pairs.includes(rank), venueRecommendations: (rows) => rows.map((row) => ({ row, boosted: false, match: null, availability: null, fit: { score: 10, lexicalScore: 10, label: '', lexicalRank: 0, semanticRank: 0, semanticScore: 0 } })), comparePapers: () => 0 };",
+  "let searchQuery = '';",
+  "const Recommender = { searchNormalize: searchNormalize, queryTokens: queryTokens, kanaFold: kanaFold, queryTokenGroups: queryTokenGroups, monthTermsJa: monthTermsJa, expandRelativeMonths: expandRelativeMonths, hayMatches: hayMatches, parsePaperLines: (text) => text ? [{ title: text }] : [], hasJapanese: () => false, contentWordCount: () => 0, autoDetectCats: () => [], venueCategories: () => [], journalRows: () => [], pastRepresentatives: () => [], rankMatches: (pairs, rank) => pairs.includes(rank), venueRecommendations: (rows) => rows.map((row) => ({ row, boosted: false, match: null, availability: null, fit: { score: 10, lexicalScore: 10, label: '', lexicalRank: 0, semanticRank: 0, semanticScore: 0 } })), comparePapers: () => 0 };",
 ].join("\n");
 
 it("browser date-only state is independent of the viewer timezone", () => {
@@ -2269,8 +2295,8 @@ it("site UI is readable for Japanese researchers: field names, JST header, help 
   expect(runtime).toContain('classList.contains("month-row")');
   expect(template).toContain(".month-row th");
   // 検索照合は recommender の正規化判定に一元化する（全角入力・複数語対応のため、
-  // 一覧側で r.hay.indexOf(q) を直呼びしない）。
-  expect(runtime).toContain("Recommender.hayMatches(r.hay, state.q)");
+  // 一覧側で r.hay.indexOf(q) を直呼びしない。`来月` の展開も recommender 側で行う）。
+  expect(runtime).toContain("Recommender.hayMatches(r.hay, searchQuery)");
   // 主題タグ（tags）も日本語で詳細に出す（会議名から場を推定させないため）。
   expect(runtime).toContain("Recommender.topicTagsJa(r.conf.tags)");
   expect(runtime).toContain("<strong>主題:</strong>");
