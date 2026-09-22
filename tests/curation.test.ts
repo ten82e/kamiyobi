@@ -160,7 +160,13 @@ describe("canonical local inputs", () => {
     const manualKeys = new Set(manual.map((conference) => conference.key));
     const curatedKeys = new Set(curated.map((conference) => conference.key));
     expect(curated.every((conference) => !manualKeys.has(conference.key))).toBe(true);
-    expect(new Set(legacy.map((conference) => conference.key))).toEqual(manualKeys);
+    // extra.yaml は旧データ移行の入力であり正典ではない。extra.yaml の収録が
+    // manual.yaml から欠けないことだけを保証する（移行後の手入力収録 — 国内研究会など — は
+    // AGENTS.md の収録契約どおり manual.yaml に増えてよい）。
+    const legacyKeys = new Set(legacy.map((conference) => conference.key));
+    expect([...legacyKeys].every((key) => manualKeys.has(key))).toBe(true);
+    const added = manual.filter((conference) => !legacyKeys.has(conference.key));
+    expect(added.every((conference) => Boolean(conference.link))).toBe(true);
     expect(legacy.every((conference) => !curatedKeys.has(conference.key))).toBe(true);
 
     const resolutionIds = new Set<string>();

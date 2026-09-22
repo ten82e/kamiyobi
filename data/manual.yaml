@@ -378,7 +378,12 @@ conferences:
         place: 大分県（未定）／オンライン
         year: 2026
       - date_text: 2026年12月17日-18日
-        deadlines: []
+        # 根拠: https://ken.ieice.org/ken/program/?tgid=IEICE-NS (2026-09-22 取得) 発表申込締切日
+        deadlines:
+          - date: '2026-10-13'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
         event_end: '2026-12-18'
         event_start: '2026-12-17'
         id: ieice-ns-2026-12
@@ -435,7 +440,12 @@ conferences:
         place: 東北大学 電気通信研究所／オンライン（宮城）
         year: 2026
       - date_text: 2026年12月3日-4日
-        deadlines: []
+        # 根拠: https://ken.ieice.org/ken/program/?tgid=IEICE-IN (2026-09-22 取得) 発表申込締切日
+        deadlines:
+          - date: '2026-10-09'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
         event_end: '2026-12-04'
         event_start: '2026-12-03'
         id: ieice-in-2026-12
@@ -3923,6 +3933,14 @@ conferences:
         link: https://www.ieice.org/iss/isec/
         place: Japan
         year: 2026
+      - date_text: 2026年11月19日-20日
+        deadlines: []
+        event_end: '2026-11-20'
+        event_start: '2026-11-19'
+        id: ieice-isec-2026-11
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-ISEC
+        place: 御影公会堂（兵庫県）
+        year: 2026
     full_name: 電子情報通信学会 情報セキュリティ研究会 (ISEC)
     key: ieice-isec
     link: https://www.ieice.org/iss/isec/
@@ -4045,6 +4063,51 @@ conferences:
         link: https://www.ieice.org/cs/rcs/
         place: Japan
         year: 2026
+      - date_text: 2026年10月15日-16日
+        deadlines: []
+        event_end: '2026-10-16'
+        event_start: '2026-10-15'
+        id: ieice-rcs-2026-10
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-RCS
+        place: ATR（京都府）／オンライン
+        year: 2026
+      - date_text: 2026年11月18日-20日
+        deadlines: []
+        event_end: '2026-11-20'
+        event_start: '2026-11-18'
+        id: ieice-rcs-2026-11
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-RCS
+        place: 富山国際会議場（富山県）／オンライン
+        year: 2026
+      - date_text: 2026年12月17日-18日
+        # 根拠: https://ken.ieice.org/ken/program/?tgid=IEICE-RCS (2026-09-22 取得) 発表申込締切日
+        deadlines:
+          - date: '2026-10-13'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
+        event_end: '2026-12-18'
+        event_start: '2026-12-17'
+        id: ieice-rcs-2026-12
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-RCS
+        place: 函館サーモン・まるなまアリーナ（北海道）／オンライン
+        year: 2026
+      - date_text: 2027年1月19日-20日
+        deadlines: []
+        event_end: '2027-01-20'
+        event_start: '2027-01-19'
+        id: ieice-rcs-2027-01
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-RCS
+        place: 北海道大学 学術交流会館（北海道）／オンライン
+        year: 2027
+      - date_text: 2027年3月1日-3日
+        deadlines: []
+        event_end: '2027-03-03'
+        event_start: '2027-03-01'
+        id: ieice-rcs-2027-03
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-RCS
+        place: 大阪公立大学 中百舌鳥キャンパス B1棟（大阪府）／オンライン
+        year: 2027
     full_name: 電子情報通信学会 無線通信システム研究会 (RCS)
     key: ieice-rcs
     link: https://www.ieice.org/cs/rcs/
@@ -4059,6 +4122,19 @@ conferences:
         id: ieice-cpsy-2026
         link: https://www.ieice.org/cpsy/
         place: Japan
+        year: 2026
+      - date_text: 2026年12月1日-2日
+        # 根拠: https://ken.ieice.org/ken/program/?tgid=IEICE-CPSY (2026-09-22 取得) 発表申込締切日
+        deadlines:
+          - date: '2026-09-30'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
+        event_end: '2026-12-02'
+        event_start: '2026-12-01'
+        id: ieice-cpsy-2026-12
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-CPSY
+        place: 沖縄産業支援センター（沖縄県）／オンライン
         year: 2026
     full_name: 電子情報通信学会 コンピュータシステム研究会 (CPSY)
     key: ieice-cpsy
@@ -6755,4 +6831,22 @@ conferences:
     key: ccnc27-track-on-networking-solutions-for-metaverse-social-applications-multimedia-and-games
     link: https://ccnc2027.ieee-ccnc.org/authors/call-technical-papers
     title: CCNC27 track on Networking Solutions for Metaverse, Social Applications, Multimedia, and Games
+  # 根拠: https://ken.ieice.org/ken/program/?tgid=IEICE-NV (2026-09-22 取得) 研究会開催スケジュールの表
+  - categories:
+      - networking
+    editions:
+      - date_text: 2026年11月5日-6日
+        deadlines: []
+        event_end: '2026-11-06'
+        event_start: '2026-11-05'
+        id: ieice-nv-2026-11
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-NV
+        place: 別府国際コンベンションセンター/ビーコンプラザ（大分県）／オンライン
+        year: 2026
+    full_name: 電子情報通信学会 ネットワーク仮想化研究会 (NV)
+    key: ieice-nv
+    link: https://ken.ieice.org/ken/program/?tgid=IEICE-NV
+    tags:
+      - domestic-jp
+    title: 電子情報通信学会 NV 研究会
 schema_version: 1
