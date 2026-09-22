@@ -801,7 +801,10 @@ footer a:hover { text-decoration: underline; }
   /* 行がページのまたぎで分断されると「どの締切か」わからなくなる。 */
   tbody tr, .month-row { break-inside: avoid; page-break-inside: avoid; }
   a { color: #111 !important; text-decoration: none; }
-  #tbody a[href^="http"]::after {
+  /* 候補のカードも同じ扱いにする（紙では URL を押せない。投稿先の一覧は公式ページの URL が無いと
+     次の行動が取れない）。 */
+  #tbody a[href^="http"]::after,
+  #recommendationCards a[href^="http"]::after {
     content: " (" attr(href) ")";
     font-size: 8pt;
     color: #444;
@@ -1058,7 +1061,7 @@ footer a:hover { text-decoration: underline; }
         印刷物だけ途中までになってしまうためです）。表の上には、条件の書き下ろし・表示件数・
         印刷した日時（JST）・データ生成日時（JST）・<strong>並び順</strong>が紙に残ります。研究室に貼る・会議で回覧する
         ときに、条件の分からない一覧にならないためです。並び順は絞り込みではありませんが、同じ一覧を
-        会期順やランク順に並べ替えて配ることがあるので、紙のうえで何の順か分かります。ヘッダーの「データ生成」も印刷に残ります。</dd>
+        会期順やランク順に並べ替えて配ることがあるので、紙のうえで何の順か分かります。ヘッダーの「データ生成」も印刷に残ります（生成から時間が経っているときの注意書きも一緒に残ります）。「投稿先を探す」画面で印刷したときは、紙に残るのは候補のカードと各候補の公式ページのアドレスです。このときの但し書きは「投稿先を探す画面 ／ 候補 N 件」となり、締切一覧の絞り込み条件は書きません（並んでいる物が別物なので、条件を書くと紙のうえで噓になるためです。</dd>
         <dt class="only-keyboard">キーボードで一覧を動かす</dt>
         <dd><code>j</code> / <code>k</code>（または <code>↓</code> / <code>↑</code>）で選択行を動かし、<code>Enter</code> で公式ページを開き、<code>d</code> で行の詳細を出します。<code>/</code> で検索欄に飛び、その欄にいるときに<code>Esc</code> を押すと検索語を消さずに欄を出て、選んでいた行にフォーカスが戻ります（<code>Esc</code> は行の詳細を閉じるのにも使います）。選んだ行にはフォーカスも一緒に動くので、支援技術では行の内容が読まれます。入力欄の中ではこれらのキーはただの文字として扱われるので、検索語に <code>j</code> や <code>k</code> を含んでも行は動きません。条件のチェックや並び替えの<strong>ボタンを押した直後も、そのまま打てます</strong>（ボタン自身の操作である <code>Enter</code> と <code>Space</code> だけがボタンに渡ります）。投稿先を探すモードでは表用の操作は使いません。</dd>
       </div>

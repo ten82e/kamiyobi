@@ -12124,3 +12124,87 @@ it("収録元の締切名は「原表記」と書いて、画面の種別と混�
   const html = readFileSync(join(site, "index.html"), "utf8");
   expect(html, "原表記という語がてびきから引けない").toContain("原表記:");
 });
+
+it("投稿先を探す画面で印刷すると、紙に出る但し書きが実際の内容と一致する（SPEC §7）", () => {
+  /* 印刷物の但し書き（`#printMeta`）は表用の文言を常時書いていた。推薦画面では
+   * `shown` が空になる（`render` の `shown = recMode && !recommendationData ? [] : filter()`）
+   * ので、候補のカードが並んだ紙に「表示 0 件」と刷れていた（2026-09-23 実測）。
+   * 紙が自分を噓をつく形なので、画面の実物（モードのボタン名）を使った文にする。 */
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  // 画面のモード名は正本から取る（テスト側に書き写すと、呼び方が変わったときに気づけない）。
+  const modeBtn = /id="modeRecommend"[^>]*>([^<]+)</.exec(html);
+  expect(modeBtn, "モードの切替ボタンが見当たらない（検査が空振り）").not.toBeNull();
+  const modeWord = String(modeBtn![1]).trim();
+  expect(modeWord).not.toBe("");
+
+  const app = siteRuntime("app.js");
+  // 但し書きは `state` を直読みするので、モードごとに組み直して 2 回走らせる。
+  const run = (mode: string, shownCount: number, cardCount: number) => {
+    const body = [
+      "function countJa(n) { const int = Math.trunc(Number(n) || 0); const d = String(Math.abs(int)).replace(/\\B(?=(\\d{3})+$)/g, ','); return int < 0 ? '-' + d : d; }",
+      "const meta = { textContent: '' };",
+      `const cards = { children: ${JSON.stringify(new Array(cardCount).fill(null).map(() => ({})))} };`,
+      "const $ = (id) => (id === 'printMeta' ? meta : id === 'recommendationCards' ? cards : null);",
+      "const valueElement = () => ({ options: [{ text: '30 日以内' }], selectedIndex: 0 });",
+      "function describeFilters() { return '投稿締切（概要・論文）／締切まで 30 日以内'; }",
+      "const fmtJst = () => '2026-08-09 (日) 09:00 JST';",
+      "function generatedAtLabel(v) { return 'データ生成: ' + v; }",
+      "const KIND_LABEL = { paper: '論文締切' };",
+      "const Recommender = { categoryLabelJa: (c) => c };",
+      "const DATA = { generated_at: '2026-08-09T09:00:00Z' };",
+      "let sortKey = 'deadline', sortAsc = true, sortColumnLabel = '日時（JST）';",
+      `let shown = ${JSON.stringify(new Array(shownCount).fill(null))};`,
+      `let state = { mode: ${JSON.stringify(mode)}, win: '30d', kind: '', cats: [], rank: '', past: false };`,
+      jsFunction(app, "fillPrintMeta"),
+      "fillPrintMeta();",
+      "console.log(JSON.stringify({ out: meta.textContent }));",
+    ].join("\n");
+    const proc = spawnSync("node", ["-e", vmSafeSource(body)], {
+      encoding: "utf8",
+      timeout: 60_000,
+    });
+    expect(proc.status, proc.stderr).toBe(0);
+    return (JSON.parse(proc.stdout) as { out: string }).out;
+  };
+  const rec = run("recommend", 0, 3);
+  expect(rec, "推薦画面の印刷物に表の件数が刷れている").not.toContain("表示 0 件");
+  expect(rec).toContain(modeWord);
+  expect(rec, "候補の数が紙に残っていない").toContain("候補 3 件");
+  expect(rec).toContain("2026-08-09 (日) 09:00 JST");
+  const recEmpty = run("recommend", 0, 0);
+  expect(recEmpty).toContain("候補 0 件");
+  const dl = run("deadlines", 10, 0);
+  expect(dl).toContain("表示 10 件");
+  expect(dl, "締切一覧の但し書きまで候補の語を出している").not.toContain("候補");
+
+  // 紙に候補が残ること自体は従来どおり（印刷で隠している規則が無いこと）。
+  const css = (html.match(/<style>([\s\S]*?)<\/style>/) || ["", ""])[1].replace(
+    /\/\*[\s\S]*?\*\//g,
+    "",
+  );
+  const printBlocks: string[] = [];
+  const re = /@media[^{]*\{/g;
+  for (let m = re.exec(css); m !== null; m = re.exec(css)) {
+    const query = m[0].slice(0, -1).replace(/\s+/g, " ").trim();
+    let depth = 1;
+    let j = m.index + m[0].length;
+    while (j < css.length && depth > 0) {
+      if (css[j] === "{") depth += 1;
+      else if (css[j] === "}") depth -= 1;
+      j += 1;
+    }
+    if (query.includes("print")) printBlocks.push(css.slice(m.index + m[0].length, j));
+  }
+  expect(printBlocks.length, "印刷用の規則が読めない（検査が空振り）").toBeGreaterThan(0);
+  const printCss = printBlocks.join("\n");
+  expect(printCss, "候補のカードが印刷で消えている").not.toMatch(
+    /#recommendationCards[^{]*\{[^}]*display:\s*none/,
+  );
+  // 紙では URL を押せない。表と同じく候補のカードにもアドレスを併記する。
+  expect(printCss).toMatch(/#tbody a\[href\^="http"\]::after/);
+  expect(printCss, "候補のカードだけ公式ページのアドレスが紙に残らない").toMatch(
+    /#recommendationCards a\[href\^="http"\]::after/,
+  );
+  // てびきにも同じ事実を書く（画面の語を引けるようにする）。
+  expect(html).toContain("投稿先を探す画面 ／ 候補 N 件");
+});

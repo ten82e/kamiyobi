@@ -4052,6 +4052,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         : null;
     const winText = opt ? String(opt.text || opt.textContent || "").trim() : "";
     const winLabel = state.win && state.win !== "all" ? winText || state.win : "";
+    const printedTail = ` ／ 印刷した日時 ${fmtJst(new Date())} ／ ${generatedAtLabel(genAt)}`;
+    /* 投稿先を探す画面では、表の絞り込み条件も「表示 N 件」も紙に意味がない（並ぶのは
+     * 候補のカードだけ）。従来は表用の文言をそのまま書いていて、カードが並んだ紙に
+     * 「表示 0 件」と刷れていた（2026-09-23 実測: 推薦画面では `shown` が空になる –
+     * `render` の `shown = recMode && !recommendationData ? [] : filter()`）。
+     * 紙に出る語は画面の実物（「投稿先を探す」）に揃える。 */
+    if (state.mode !== "deadlines") {
+      const cards = $("recommendationCards");
+      const n = cards?.children?.length ?? 0;
+      box.textContent = `この印刷物: 投稿先を探す画面 ／ 候補 ${countJa(n)} 件${printedTail}`;
+      return;
+    }
     box.textContent =
       `この印刷物: ${describeFilters(
         state,
@@ -4060,8 +4072,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         winLabel,
         { key: sortKey, asc: sortAsc },
         sortColumnLabel,
-      )}` +
-      ` ／ 表示 ${countJa(shown.length)} 件 ／ 印刷した日時 ${fmtJst(new Date())} ／ ${generatedAtLabel(genAt)}`;
+      )}` + ` ／ 表示 ${countJa(shown.length)} 件${printedTail}`;
   }
   window.addEventListener("beforeprint", () => {
     fillPrintMeta();
