@@ -2060,9 +2060,14 @@ it("venues without a prefecture are findable by prefecture (SPEC §7)", () => {
   // 参照する定数と関数は正本をそのまま注入する（書き写すと正本とズレる）。
   const citySrc = runtime.match(/const CITY_PREFECTURE_JA[\s\S]*?\];/)?.[0];
   expect(citySrc, "CITY_PREFECTURE_JA 定義が見つからない").toBeTruthy();
+  const officialSrc = runtime.match(/const PREFECTURE_OFFICIAL_JA[\s\S]*?\};/)?.[0];
+  expect(officialSrc, "PREFECTURE_OFFICIAL_JA 定義が見つからない").toBeTruthy();
   const [bare, withPref] = new Function(
     [
       citySrc as string,
+      officialSrc as string,
+      jsFunction(runtime, "prefectureOfficialJa"),
+      jsFunction(runtime, "placePrefectures"),
       jsFunction(runtime, "placePrefectureJa"),
       jsFunction(runtime, "placeWithPrefectureJa"),
       "return [placePrefectureJa, placeWithPrefectureJa];",
@@ -2074,6 +2079,15 @@ it("venues without a prefecture are findable by prefecture (SPEC §7)", () => {
     "飛騨・世界生活文化センター（岐阜県高山市）",
   );
   expect(bare("未定")).toBe("");
+  // 「県」を一律に足すと実在しない地名ができる。都・道・府は正式名で出す。
+  expect(withPref("札幌市教育文化会館")).toBe("札幌市教育文化会館 北海道");
+  expect(bare("東京（ハイブリッド）")).toBe("東京 東京都");
+  expect(bare("大阪")).toBe("大阪 大阪府");
+  expect(bare("京都大学 楽友会館")).toBe("京都 京都府");
+  // 正式名がそのまま都道府県名ものの語は繰り返さない。
+  expect(bare("札幌市教育文化会館")).toBe("北海道");
+  // 複数の都道府県に読める表記では補わない（間違った土地を載せるほうが悪い）。
+  expect(withPref("東京都市大学")).toBe("東京都市大学");
 });
 
 it("relative months in the query are resolved and shown (SPEC §7)", () => {

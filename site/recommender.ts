@@ -2217,30 +2217,67 @@ const Recommender = (() => {
     ["香美", "高知"],
     ["御影", "兵庫"],
     ["芸文館", "岡山"],
+    // 2026-09-22 に実データ（`data.json` の開催地）に出てくる都市だけを足した。
+    // 都市名と都道府県名が同じものは、補記はされないが検索語には正式名が必要になる。
+    ["東京", "東京"],
+    ["大阪", "大阪"],
+    ["京都", "京都"],
+    ["熊本", "熊本"],
+    ["鹿児島", "鹿児島"],
+    ["高知", "高知"],
+    ["岐阜", "岐阜"],
+    ["和歌山", "和歌山"],
+    ["大津", "滋賀"],
   ];
+
+  /* 都道府県の正式名称。「県」を一律に足すと `北海道県` `東京県` `京都府県` という
+   * 実在しない地名ができる（札幌の会場補記で実際に発生していた）。 */
+  const PREFECTURE_OFFICIAL_JA: Record<string, string> = {
+    東京: "東京都",
+    京都: "京都府",
+    大阪: "大阪府",
+    北海道: "北海道",
+  };
+
+  function prefectureOfficialJa(prefecture: string): string {
+    return PREFECTURE_OFFICIAL_JA[prefecture] || `${prefecture}県`;
+  }
 
   /** 開催地に都道府県が書かれていないときだけ補う（`upcoming.md` の開催地列用）。
    * 公式表記を書き換えないため、末尾に空白区切りで添えるだけにする。 */
   function placeWithPrefectureJa(value: unknown): string {
     const raw = typeof value === "string" ? value.trim() : "";
     if (!raw) return "";
-    const terms = placePrefectureJa(raw);
-    if (!terms) return raw;
-    const prefecture = terms.split(" ")[0] as string;
+    const prefectures = placePrefectures(raw);
+    // 複数の都道府県に読める表記（大学名に他の土地名が含まれる等）では補わない。
+    // 間違った土地をprinted に載せるほうが悪い。
+    if (prefectures.length !== 1) return raw;
+    const prefecture = prefectures[0] as string;
     if (raw.indexOf(prefecture) >= 0) return raw;
-    return `${raw} ${prefecture}県`;
+    return `${raw} ${prefectureOfficialJa(prefecture)}`;
   }
 
-  /** 会場表記から都道府県の検索語を作る（`岡山 岡山県`。「岡山県」と打っても引けるように両方）。 */
-  function placePrefectureJa(value: unknown): string {
+  /** 会場表記から割り出せる都道府県（表記に現れた順、重複なし）。 */
+  function placePrefectures(value: unknown): string[] {
     const raw = typeof value === "string" ? value : "";
-    if (!raw) return "";
     const hits: string[] = [];
     CITY_PREFECTURE_JA.forEach(([city, prefecture]) => {
       if (raw.indexOf(city) < 0) return;
       if (hits.indexOf(prefecture) < 0) hits.push(prefecture);
     });
-    return hits.map((prefecture) => `${prefecture} ${prefecture}県`).join(" ");
+    return hits;
+  }
+
+  /** 会場表記から都道府県の検索語を作る（`岡山 岡山県`。「岡山県」と打っても引けるように両方）。
+   * 正式名を使うので `東京 東京都` `大阪 大阪府` となる（`東京県` を作らない）。 */
+  function placePrefectureJa(value: unknown): string {
+    return placePrefectures(value)
+      .map((prefecture) => {
+        const official = prefectureOfficialJa(prefecture);
+        // `北海道` のように正式名がそのまま都道府県名のものは語を繰り返さない。
+        return official === prefecture ? prefecture : `${prefecture} ${official}`;
+      })
+      .join(" ");
   }
 
   function placeJa(value: unknown): string {
