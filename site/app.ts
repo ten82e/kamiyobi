@@ -790,15 +790,27 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   };
 
   // Column Sorting
-  // 現在の並び順を aria-sort でスクリーンリーダーに伝える（昇順/降順/指定なし）。
+  /* 並び順の目印。ひきがし `↕` だけが見えていると、どの列がどちら向きで並んでいるか
+   * 押した人にも分からない（`aria-sort` はスクリーンリーダー向けで、マウス利用者には
+   * 見えない）。押している列は ↑ / ↓、他は ↕ のままにする。 */
+  function sortMarkJa(active: boolean, asc: boolean): string {
+    if (!active) return "↕";
+    return asc ? "↑" : "↓";
+  }
+
+  // 現在の並び順を aria-sort（支援技術向け）と見出しの目印（目に見える方）で伝える。
   function setSortAria(key: string | null) {
     document.querySelectorAll<HTMLTableCellElement>("th[data-sort]").forEach((th) => {
       const k = th.getAttribute("data-sort");
+      const active = k === key;
       let state = "none";
-      if (k === key) {
+      if (active) {
         state = sortAsc ? "ascending" : "descending";
       }
       th.setAttribute("aria-sort", state);
+      // 見出しは「語 + 目印」の一字列。語のほうは触らず、語尾の目印だけ入れ替える。
+      const label = String(th.textContent || "").replace(/[↑↓↕]\s*$/, "");
+      th.textContent = `${label}${sortMarkJa(active, sortAsc)}`;
     });
   }
 

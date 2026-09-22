@@ -758,11 +758,11 @@ footer a:hover { text-decoration: underline; }
     <table>
       <thead>
         <tr>
-          <th tabindex="0" aria-sort="ascending" data-sort="rem" onclick="toggleSort('rem')">残り ↕</th>
-          <th tabindex="0" aria-sort="none" data-sort="date" onclick="toggleSort('date')">日時（JST） ↕</th>
-          <th tabindex="0" aria-sort="none" data-sort="conf" onclick="toggleSort('conf')">会議 ↕</th>
+          <th tabindex="0" aria-sort="ascending" data-sort="rem" onclick="toggleSort('rem')" title="ここを押すと「残り」の昇順・降順を切り替えます">残り ↕
+          <th tabindex="0" aria-sort="none" data-sort="date" onclick="toggleSort('date')" title="ここを押すと「日時（JST）」の昇順・降順を切り替えます">日時（JST） ↕
+          <th tabindex="0" aria-sort="none" data-sort="conf" onclick="toggleSort('conf')" title="ここを押すと「会議」の昇順・降順を切り替えます">会議 ↕
           <th>種別</th>
-          <th tabindex="0" aria-sort="none" data-sort="rank" onclick="toggleSort('rank')">ランク ↕</th>
+          <th tabindex="0" aria-sort="none" data-sort="rank" onclick="toggleSort('rank')" title="ここを押すと「ランク」の昇順・降順を切り替えます">ランク ↕
           <th>会期</th>
           <th>開催地</th>
         </tr>
@@ -815,6 +815,10 @@ footer a:hover { text-decoration: underline; }
       <div>
         <dt>締切まで</dt>
         <dd>締切日からの日数で絞ります（<strong>開催日ではありません</strong>）。「過去の締切も表示」と一緒にすると、過ぎた締切は期間の外に出ます。既定は「かまわない」で、期限なく先の締切も出します。</dd>
+      </div>
+      <div>
+        <dt>並び順</dt>
+        <dd>列の見出し（残り・日時・会議・ランク）を押すと並び替わります。押している列だけが <code>↑</code> / <code>↓</code>（他は <code>↕</code>）なので、今の画面が何の順で並んでいるかを見出しだけで確かめられます。残りの昇順（既定）と日時の昇順では同じ月の締切をまとめて区切るため、降順にすると月でくくれた行になります。並び順も URL に残るので、そのまま共有可能です。</dd>
       </div>
       <div>
         <dt>検索</dt>

@@ -2799,33 +2799,49 @@ it("sortable headers are keyboard-operable and expose sort state (aria-sort)", (
   // 既定の並び（残り昇順）に合わせて rem のみ ascending、他は none
   const attrs = Object.fromEntries(ths.map((m) => [m[2], /aria-sort="([^"]+)"/.exec(m[1])?.[1]]));
   expect(attrs).toEqual({ rem: "ascending", date: "none", conf: "none", rank: "none" });
+  // 押す前に意味が分かるよう、見出しに title を持つ（語は崩さない）。
+  for (const m of ths) {
+    expect(m[1], `${m[2]} の見出しに説明が無い`).toContain("昇順・降順を切り替えます");
+  }
   // 実行検証: setSortAria を抽出して fake DOM で状態遷移を確認する
   const src = jsFunction(html, "setSortAria");
   const script = [
-    "const ths = ['rem','date','conf','rank'].map(k => ({ k, attrs: {} }));",
+    // 見出しは「語 + 目印」の一字列。テンプレートと同じ初期値から始め、書き換えを見る。
+    "const LABELS = { rem: '残り', date: '日時（JST）', conf: '会議', rank: 'ランク' };",
+    "const ths = ['rem','date','conf','rank'].map(k => ({ k, attrs: {}, text: LABELS[k] + ' ↕' }));",
     "const document = {",
     "  querySelectorAll: () => ths.map(t => ({",
     "    getAttribute: (a) => a === 'data-sort' ? t.k : null,",
     "    setAttribute: (a, v) => { t.attrs[a] = v; },",
+    "    get textContent() { return t.text; },",
+    "    set textContent(v) { t.text = v; },",
     "  })),",
     "};",
+    // 目印の書き方は本物の実装を入れる（書き写すと矢印の対応がズレる）。
+    `const sortMarkJa = ${jsFunction(html, "sortMarkJa")};`,
     `const setSortAria = ${src};`,
     "let sortAsc = true;",
     "setSortAria('rem');",
     "const s1 = JSON.stringify(ths.map(t => t.attrs['aria-sort']));",
+    "const m1 = JSON.stringify(ths.map(t => t.text));",
     "setSortAria('date');",
     "const s2 = JSON.stringify(ths.map(t => t.attrs['aria-sort']));",
     "sortAsc = false;",
     "setSortAria('date');",
     "const s3 = JSON.stringify(ths.map(t => t.attrs['aria-sort']));",
-    "console.log(s1 + '|' + s2 + '|' + s3);",
+    "const m3 = JSON.stringify(ths.map(t => t.text));",
+    "console.log(s1 + '|' + s2 + '|' + s3 + '|' + m1 + '|' + m3);",
   ].join("\n");
   const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
   expect(proc.status, proc.stderr).toBe(0);
-  const [r1, r2, r3] = proc.stdout.trim().split("|");
+  const [r1, r2, r3, m1, m3] = proc.stdout.trim().split("|");
   expect(JSON.parse(r1)).toEqual(["ascending", "none", "none", "none"]);
   expect(JSON.parse(r2)).toEqual(["none", "ascending", "none", "none"]);
   expect(JSON.parse(r3)).toEqual(["none", "descending", "none", "none"]);
+  /* `aria-sort` だけ変えても、マウス利用者には何も見えない。押している列の目印を
+   * ↑ / ↓ に変え、他の列は `↕` のままにする（語が削れてはいけない）。 */
+  expect(JSON.parse(m1)).toEqual(["残り ↑", "日時（JST） ↕", "会議 ↕", "ランク ↕"]);
+  expect(JSON.parse(m3)).toEqual(["残り ↕", "日時（JST） ↓", "会議 ↕", "ランク ↕"]);
 });
 
 it("dark theme via prefers-color-scheme overrides the palette (SPEC §7)", () => {
