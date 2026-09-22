@@ -1552,10 +1552,11 @@ it("index.html 7d preset uses a real 7-day window", () => {
   const html = siteHtmlRuntime();
   // 「締切直近 (7日以内)」プリセットは 7 日窓で動作し、ドロップダウンに 7d がある
   expect(html).toContain("applyPreset('7d')");
-  expect(html).toMatch(/if\s*\(type\s*===\s*["']7d["']\)\s*state\.win\s*=\s*["']7d["']/);
+  // 7 日窓の対応は recommender の条件表が正本（ボタン側は出し入れの規則を持たない）。
+  expect(siteRuntime("recommender.js")).toMatch(/"7d":\s*\{\s*win:\s*"7d"/);
   expect(html).toContain('value="7d">7 日以内</option>');
   // 30 日窓への偽代入が残っていない（回帰防止）
-  expect(html).not.toMatch(/if\s*\(type\s*===\s*["']7d["']\)\s*state\.win\s*=\s*["']30d["']/);
+  expect(siteRuntime("recommender.js")).not.toMatch(/"7d":\s*\{\s*win:\s*"30d"/);
 });
 
 it("index.html has domestic filter and tag", () => {
@@ -5114,9 +5115,12 @@ it("締切までの選択肢は URL と表裏一体で、窓は入れ子にな�
   }
 });
 
-it("プリセットボタンは、その状態そのもののときだけ点灯する（SPEC §7）", () => {
+it("早め絞り込みのボタンは、入っている条件が点く（SPEC §7）", () => {
   const runtime = siteRuntime();
   const script = [
+    "const { default: Recommender } = await import(" +
+      JSON.stringify(`file://${join(site, "recommender.js")}`) +
+      ");",
     jsFunction(runtime, "updatePresetActive"),
     // `updatePresetActive` はモジュールスコープの `state` を読む（引数取らず）。
     "let state = {};",
@@ -5145,20 +5149,30 @@ it("プリセットボタンは、その状態そのもののときだけ点灯�
     "  nothing: lit({}),",
     "  domestic: lit({ domestic: true }),",
     "  online: lit({ online: true }),",
+    "  // 複合状態は、掛かっている条件のボタンがすべて点く（変更前はどれでもない表示で、",
+    "  // 押したことが画面から読めなかった）。",
     "  both: lit({ domestic: true, online: true }),",
     "  domesticPlusQuery: lit({ domestic: true, q: 'nsdi' }),",
     "  sevenDays: lit({ win: '7d' }),",
+    "  sevenDaysAndRank: lit({ win: '7d', rank: 'A*' }),",
+    "  queryOnly: lit({ q: 'スパコン' }),",
     "}));",
   ].join("\n");
-  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
   expect(proc.status, proc.stderr).toBe(0);
   const out = JSON.parse(proc.stdout) as Record<string, string[]>;
   expect(out.nothing).toEqual([]);
   expect(out.domestic).toEqual(["domestic"]);
   expect(out.online).toEqual(["online"]);
-  // 複合状態はどのプリセットでもない（片方だけ点灯すると、押した意味が読めない）。
-  expect(out.both).toEqual([]);
-  expect(out.domesticPlusQuery).toEqual([]);
+  expect(out.both.sort()).toEqual(["domestic", "online"]);
+  // 検索語を足しても、掛かっている条件は点いたまま。
+  expect(out.domesticPlusQuery).toEqual(["domestic"]);
+  expect(out.sevenDays).toEqual(["7d"]);
+  expect(out.sevenDaysAndRank.sort()).toEqual(["7d", "a_star"]);
+  expect(out.queryOnly).toEqual([]);
 });
 
 it("実カタログで、表に出す語はすべて日本語表記を持つ（SPEC §7）", () => {
@@ -6494,4 +6508,76 @@ it("収録 5 行以上の開催都市は、カタカナの入力でたどれな�
     [],
   );
   expect(out.dead, "日本語表記の表に、1 件も当たらない語がある").toEqual([]);
+});
+
+it("早め絞り込みのボタンは、押した条件だけを出し入れし、押されたまま見える（SPEC §7）", () => {
+  /* 変更前: ボタンを押すたびに検索語・締切種別・推定まで初期値へ戻り、点灯は他の条件が
+   * すべて空のときだけだった。`スパコン` と打ってから「オンライン参加可」を押すと
+   * 検索語が消えて 15 件（無関係なオンライン会議）が並び、押したボタンは点かない。
+   * ここはビルド後の成果物で、(1) 検索語を消さないこと (2) 点灯が状態を見ること
+   * (3) ボタンの名前と条件表がズレていないこと を見る。
+   * 出し入れの規則そのものは `tests/recommender.test.ts` で実行して確かめる。 */
+  const app = siteRuntime("app.js");
+  const html = readFileSync(join(site, "index.html"), "utf8");
+
+  const presetBody = app.slice(
+    app.indexOf("window.applyPreset = "),
+    app.indexOf("// Column Sorting"),
+  );
+  expect(presetBody, "ボタンが状態をまるごと戻している（正本は recommender）").toContain(
+    "presetNextSelection",
+  );
+  expect(presetBody, "ボタンが検索語を消している").not.toContain('q: ""');
+  expect(presetBody, "ボタンが締切種別を消している").not.toContain('kind: ""');
+
+  const activeBody = jsFunction(app, "updatePresetActive");
+  expect(activeBody, "点灯が recommender の判定を見ていない").toContain("presetIsActive");
+  expect(activeBody, "他の条件が空のときだけ点く判定が残っている").not.toContain("!state.q");
+
+  // 一覧のボタンと条件表の名前がズレると、押しても効かないボタンが黙って増える。
+  const buttons = [...html.matchAll(/data-preset="([^"]+)"/g)].map((m) => m[1]).sort();
+  expect(buttons.length).toBeGreaterThan(3);
+  const script = [
+    "(async () => {",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const buttons = ${JSON.stringify(buttons)};`,
+    "const empty = { win: 'all', rank: '', cats: [], domestic: false, online: false };",
+    // 名前のないボタンは状態を変えられない（黙って効かないボタンにしない）。
+    "const inert = buttons.filter((b) => {",
+    "  const next = Recommender.presetNextSelection(b, empty);",
+    "  return JSON.stringify(next) === JSON.stringify(empty);",
+    "});",
+    // 二度押しで戻る（押した意味を取り消せる）。
+    "const noUndo = buttons.filter((b) => {",
+    "  const once = Recommender.presetNextSelection(b, empty);",
+    "  return JSON.stringify(Recommender.presetNextSelection(b, once)) !== JSON.stringify(empty);",
+    "});",
+    // 押している間は点く（他の条件を足した画面でも）。
+    "const neverLit = buttons.filter((b) => {",
+    "  const once = Recommender.presetNextSelection(b, empty);",
+    "  // 他の条件を足した画面（検索語はここで渡さないが、分野・ランク・窓を埋めた状態）でも点くか。",
+    "  return !Recommender.presetIsActive(b, once) || !Recommender.presetIsActive(b, {",
+    "    ...once,",
+    "    cats: b === 'hpc_sys' ? once.cats : ['security'],",
+    "    rank: b === 'a_star' ? once.rank : 'A',",
+    "    win: b === '7d' ? once.win : '90d',",
+    "  });",
+    "});",
+    "console.log(JSON.stringify({ inert, noUndo, neverLit }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 120_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as { inert: string[]; noUndo: string[]; neverLit: string[] };
+  expect(out.inert, "押しても効かない早め絞り込みのボタンがある: " + out.inert.join(", ")).toEqual(
+    [],
+  );
+  expect(out.noUndo, "もう一度押しても外せないボタンがある: " + out.noUndo.join(", ")).toEqual([]);
+  expect(
+    out.neverLit,
+    "他の条件を足した画面で点かないボタンがある: " + out.neverLit.join(", "),
+  ).toEqual([]);
 });

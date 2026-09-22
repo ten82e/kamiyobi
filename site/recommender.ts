@@ -3317,6 +3317,61 @@ const Recommender = (() => {
     return placeOffersOnline(value) ? ONLINE_PARTICIPATION_LABEL_JA : "";
   }
 
+  /* 早め絞り込みのボタン（プリセット）。**自分の担当する条件だけ**を出し入れする切り替えに
+   * する。以前は押すたびに検索語・種別・推定まで初期値へ戻し、点灯も「その条件だけで
+   * 画面が埋まっているとき」だけだった（2026-09-23 実測: `スパコン` と打った後に
+   * 「オンライン参加可」を押すと検索語が消えてのぞく前の 15 件になり、押されているはずの
+   * ボタンは点かない。押した意味が分からず、もう一度押すと再び全件に戻る）。
+   * 押した条件だけが戻ること、押されている条件が点いていること、もう一度押して
+   * 外せることが、ボタンの最低限の約束。 */
+  const PRESET_TARGETS: Record<string, PresetSelection> = {
+    "7d": { win: "7d", rank: "", cats: [], domestic: false, online: false },
+    a_star: { win: "all", rank: "A*", cats: [], domestic: false, online: false },
+    hpc_sys: { win: "all", rank: "", cats: ["hpc", "systems"], domestic: false, online: false },
+    domestic: { win: "all", rank: "", cats: [], domestic: true, online: false },
+    online: { win: "all", rank: "", cats: [], domestic: false, online: true },
+  };
+
+  /* そのボタンの担当する条件が入っているか（点灯の正）。検索語など他の条件は見る必要が
+   * 無い — 条件を足した画面でも「押されている」ことは分からないといけない。 */
+  function presetIsActive(preset: unknown, current: PresetSelection | null): boolean {
+    const target = PRESET_TARGETS[typeof preset === "string" ? preset : ""];
+    if (!target || !current) return false;
+    if (target.win !== "all" && current.win !== target.win) return false;
+    if (target.rank && current.rank !== target.rank) return false;
+    if (target.domestic && !current.domestic) return false;
+    if (target.online && !current.online) return false;
+    if (target.cats.length) {
+      const held = current.cats.slice().sort().join(",");
+      if (held !== target.cats.slice().sort().join(",")) return false;
+    }
+    return Boolean(
+      target.win !== "all" || target.rank || target.domestic || target.online || target.cats.length,
+    );
+  }
+
+  /* 押した結果の状態を返す（入力の正本を app 側に置いたまま、出し入れの規則だけをここで持つ）。
+   * 未知のボタン名は何もしない（ボタンを増やして表を忘れたときに、状態を壊さない）。 */
+  function presetNextSelection(preset: unknown, current: PresetSelection | null): PresetSelection {
+    const base: PresetSelection = {
+      win: current ? current.win : "all",
+      rank: current ? current.rank : "",
+      cats: current ? current.cats.slice() : [],
+      domestic: current ? current.domestic : false,
+      online: current ? current.online : false,
+    };
+    const target = PRESET_TARGETS[typeof preset === "string" ? preset : ""];
+    if (!target) return base;
+    const on = presetIsActive(preset, current);
+    return {
+      win: target.win !== "all" ? (on ? "all" : target.win) : base.win,
+      rank: target.rank ? (on ? "" : target.rank) : base.rank,
+      cats: target.cats.length ? (on ? [] : target.cats.slice()) : base.cats,
+      domestic: target.domestic ? !base.domestic : base.domestic,
+      online: target.online ? !base.online : base.online,
+    };
+  }
+
   function placeOffersOnline(value: unknown): boolean {
     let text = kanaFold(searchNormalize(value));
     if (!text) return false;
@@ -3325,6 +3380,16 @@ const Recommender = (() => {
     for (const term of ONLINE_TERMS_EN) if (text.indexOf(term) >= 0) return true;
     return false;
   }
+
+  /* プリセットボタンが担当する条件。検索語・締切種別・推定・過去表示は**ここで扱わない**
+   * （ボタンが利用者の入力を消さないための型）。 */
+  type PresetSelection = {
+    win: string;
+    rank: string;
+    cats: string[];
+    domestic: boolean;
+    online: boolean;
+  };
 
   function placeJa(value: unknown): string {
     const raw = typeof value === "string" ? value.trim() : "";
@@ -4570,6 +4635,8 @@ const Recommender = (() => {
     relativeDayNotes: relativeDayNotes,
     placePrefectureJa: placePrefectureJa,
     placeOffersOnline: placeOffersOnline,
+    presetIsActive: presetIsActive,
+    presetNextSelection: presetNextSelection,
     unconfirmedLabelJa: unconfirmedLabelJa,
     rankPairLabelJa: rankPairLabelJa,
     rankScaleLabelJa: rankScaleLabelJa,

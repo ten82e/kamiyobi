@@ -726,93 +726,26 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return `${t} ${year}`;
   }
 
-  // Quick Presets
+  /* 早め絞り込みのボタン。点灯は「その条件が入っているか」だけを見る（`presetIsActive` が
+   * 正本）。以前は他の条件がすべて空のときだけ点いていたので、検索語を打った後に
+   * 「オンライン参加可」を押すと、条件は掛かっているのにボタンは点かず、押した意味が
+   * 画面から読めなかった（2026-09-23）。 */
   function updatePresetActive() {
-    const p7d =
-      state.win === "7d" &&
-      !state.q &&
-      !state.cats.length &&
-      !state.kind &&
-      !state.rank &&
-      !state.est &&
-      !state.domestic &&
-      !state.online &&
-      !state.past;
-    const paStar =
-      state.rank === "A*" &&
-      !state.q &&
-      !state.cats.length &&
-      !state.kind &&
-      state.win === "all" &&
-      !state.est &&
-      !state.domestic &&
-      !state.online &&
-      !state.past;
-    const pHpcSys =
-      state.cats.length === 2 &&
-      state.cats.indexOf("hpc") >= 0 &&
-      state.cats.indexOf("systems") >= 0 &&
-      !state.q &&
-      !state.kind &&
-      !state.rank &&
-      state.win === "all" &&
-      !state.est &&
-      !state.domestic &&
-      !state.online &&
-      !state.past;
-    // 各ボタンは「その状態そのもの」の時だけ点灯させる。国内に online の条件を忘れると、
-    // 国内＋オンラインの画面で片方のボタンだけ押された表示になり、押した意味が読めない。
-    const pDom =
-      state.domestic &&
-      !state.online &&
-      !state.q &&
-      !state.cats.length &&
-      !state.kind &&
-      !state.rank &&
-      state.win === "all" &&
-      !state.est &&
-      !state.past;
-    const pOnline =
-      state.online &&
-      !state.q &&
-      !state.cats.length &&
-      !state.kind &&
-      !state.rank &&
-      state.win === "all" &&
-      !state.est &&
-      !state.domestic &&
-      !state.past;
-    const map: Record<string, boolean> = {
-      "7d": p7d,
-      a_star: paStar,
-      hpc_sys: pHpcSys,
-      domestic: pDom,
-      online: pOnline,
-    };
     document.querySelectorAll<HTMLElement>(".preset-btn").forEach((btn) => {
-      const p = btn.getAttribute("data-preset");
-      btn.classList.toggle("active", p !== null && Boolean(map[p]));
+      btn.classList.toggle(
+        "active",
+        Recommender.presetIsActive(btn.getAttribute("data-preset"), state),
+      );
     });
   }
 
+  /* ボタンは**自分が担当する条件だけ**を出し入れする（`presetNextSelection` が正本）。
+   * 以前は押すたびに検索語・締切種別・推定まで初期値へ戻していた。検索語を打った人が
+   * 「オンライン参加可」で絞り直したのに全件に戻るなど、意図と逆のことになっていた。
+   * 条件をまとめて外す操作は、0 件案内の「条件をまとめて外す」が自分で状態を戻して
+   * 担っているので、ボタン側で初期値に戻す役まで兼ねる必要はない。 */
   window.applyPreset = (type: string) => {
-    state = {
-      mode: state.mode,
-      q: "",
-      cats: [],
-      kind: "",
-      rank: "",
-      win: "all",
-      est: false,
-      domestic: false,
-      online: false,
-      past: false,
-    };
-    if (type === "7d") state.win = "7d";
-    if (type === "a_star") state.rank = "A*";
-    if (type === "hpc_sys") state.cats = ["hpc", "systems"];
-    if (type === "domestic") state.domestic = true;
-    if (type === "online") state.online = true;
+    state = { ...state, ...Recommender.presetNextSelection(type, state) };
     stopHistoryLoad();
     if (state.mode === "deadlines") setDeadlineProfile(DATA);
     toForm();
@@ -3308,7 +3241,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   });
   catsBox.addEventListener("change", apply);
   $("more").addEventListener("click", drawMore);
-  // 0 件時の「条件をまとめて外す」。`applyPreset` が既に持つ初期値への戻し方を真似るが、
+  // 0 件時の「条件をまとめて外す」。早め絞り込みのボタンは自分の条件だけを出し入れする
+  // 切り替えなので、まとめて外す役はここで状態を戻して担う。
   // 一覧の意味を変える「過去の締切も表示」は利用者の選択として残す。
   $("emptyReset").addEventListener("click", () => {
     const past = state.past;

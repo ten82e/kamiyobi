@@ -1,3 +1,12 @@
+/** 早め絞り込みのボタンが担当する条件（検索語・締切種別・推定・過去表示は含まない）。 */
+type PresetSelection = {
+  win: string;
+  rank: string;
+  cats: string[];
+  domestic: boolean;
+  online: boolean;
+};
+
 interface SiteDeadline {
   kind: string;
   label?: string;
@@ -158,6 +167,10 @@ interface SiteRecommenderApi {
   placeWithPrefectureJa(value: unknown): string;
   /** 会場表記にオンライン参加の記述があるか（対面かどうかは判定しない）。 */
   placeOffersOnline(value: unknown): boolean;
+  /** 早め絞り込みのボタンが押されている状態か（点灯の正本）。 */
+  presetIsActive(preset: unknown, current: PresetSelection | null): boolean;
+  /** 早め絞り込みのボタンを押した後の状態（自分の担当する条件だけを出し入れする）。 */
+  presetNextSelection(preset: unknown, current: PresetSelection | null): PresetSelection;
   /** 空の会期・開催地・ランクを表で出す語（検索側と同じ正本）。 */
   unconfirmedLabelJa(): string;
   querySynonymNotes(query: unknown): string[];

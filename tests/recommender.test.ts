@@ -5049,3 +5049,62 @@ describe("海外の開催都市をカタカナで打つ", () => {
     expect(hits("リール 並列")).toEqual([]);
   });
 });
+
+describe("早め絞り込みのボタンは、自分の条件だけを出し入れする", () => {
+  const EMPTY = { win: "all", rank: "", cats: [], domestic: false, online: false };
+  const json = (v: unknown) => JSON.stringify(v);
+
+  it("押した条件が入り、他の条件はそのまま残る", () => {
+    const typed = { ...EMPTY, win: "30d", rank: "A" };
+    const next = R.presetNextSelection("domestic", typed);
+    expect(next.domestic).toBe(true);
+    expect(next.win).toBe("30d");
+    expect(next.rank).toBe("A");
+    // 検索語・締切種別・推定・過去表示はここで扱わない（型に無い＝消しようがない）。
+    expect(Object.keys(next).sort()).toEqual(["cats", "domestic", "online", "rank", "win"]);
+  });
+
+  it("もう一度押すと外れる（押した意味を取り消せる）", () => {
+    for (const preset of ["7d", "a_star", "hpc_sys", "domestic", "online"]) {
+      const once = R.presetNextSelection(preset, EMPTY);
+      expect(json(once), preset).not.toBe(json(EMPTY));
+      expect(json(R.presetNextSelection(preset, once)), preset).toBe(json(EMPTY));
+    }
+  });
+
+  it("別のボタンを重ねられる（前の条件が消えない）", () => {
+    const both = R.presetNextSelection("online", R.presetNextSelection("domestic", EMPTY));
+    expect(both.domestic).toBe(true);
+    expect(both.online).toBe(true);
+    // 片方だけ外すこともできる。
+    const onlyDomestic = R.presetNextSelection("online", both);
+    expect(onlyDomestic).toEqual({ ...EMPTY, domestic: true });
+  });
+
+  it("分野のボタンは、その分野が入っている間だけ点く", () => {
+    const hpc = R.presetNextSelection("hpc_sys", EMPTY);
+    expect(hpc.cats).toEqual(["hpc", "systems"]);
+    expect(R.presetIsActive("hpc_sys", hpc)).toBe(true);
+    // 並び順を変えて持ってきても点灯は崩れない。
+    expect(R.presetIsActive("hpc_sys", { ...hpc, cats: ["systems", "hpc"] })).toBe(true);
+    expect(R.presetIsActive("hpc_sys", { ...hpc, cats: ["hpc"] })).toBe(false);
+    expect(R.presetIsActive("hpc_sys", { ...hpc, cats: ["security"] })).toBe(false);
+  });
+
+  it("他の条件を足した画面でも、押しているボタンは点いたまま", () => {
+    // 変更前は他の条件が空のときだけ点いていたので、検索語を打つと押したことが
+    // 画面から読めなかった。
+    const busy = { win: "7d", rank: "A*", cats: ["hpc", "systems"], domestic: true, online: true };
+    for (const preset of ["7d", "a_star", "hpc_sys", "domestic", "online"]) {
+      expect(R.presetIsActive(preset, busy), preset).toBe(true);
+    }
+    expect(R.presetIsActive("online", { ...busy, online: false })).toBe(false);
+  });
+
+  it("未知のボタン名は状態を壊さず、点きもしない", () => {
+    const busy = { ...EMPTY, domestic: true };
+    expect(json(R.presetNextSelection("nope", busy))).toBe(json(busy));
+    expect(R.presetIsActive("nope", busy)).toBe(false);
+    expect(json(R.presetNextSelection(null, null))).toBe(json(EMPTY));
+  });
+});

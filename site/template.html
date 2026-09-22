@@ -667,11 +667,11 @@ footer a:hover { text-decoration: underline; }
   <div class="panel mode-deadlines" id="controlsPanel">
     <div class="presets-bar deadline-only">
       <span style="font-size: 0.78rem; color: var(--muted); align-self: center; margin-right: 4px;">クイック抽出:</span>
-      <button class="preset-btn" data-preset="7d" onclick="applyPreset('7d')">締切まで 7 日以内</button>
-      <button class="preset-btn" data-preset="a_star" onclick="applyPreset('a_star')">A*ランク</button>
-      <button class="preset-btn" data-preset="hpc_sys" onclick="applyPreset('hpc_sys')">HPC・システム</button>
-      <button class="preset-btn" data-preset="domestic" onclick="applyPreset('domestic')">国内研究会</button>
-      <button class="preset-btn" data-preset="online" onclick="applyPreset('online')">オンライン参加可</button>
+      <button class="preset-btn" data-preset="7d" onclick="applyPreset('7d')" title="押すと 7 日以内に絞ります。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">締切まで 7 日以内</button>
+      <button class="preset-btn" data-preset="a_star" onclick="applyPreset('a_star')" title="押すと A*ランクだけに絞ります。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">A*ランク</button>
+      <button class="preset-btn" data-preset="hpc_sys" onclick="applyPreset('hpc_sys')" title="押すと分野を HPC とシステムに絞ります。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">HPC・システム</button>
+      <button class="preset-btn" data-preset="domestic" onclick="applyPreset('domestic')" title="押すと国内研究会・国内シンポジウムに絞ります（チェック欄と同じ条件です）。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">国内研究会</button>
+      <button class="preset-btn" data-preset="online" onclick="applyPreset('online')" title="押すとオンライン参加可に絞ります（チェック欄と同じ条件です）。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">オンライン参加可</button>
     </div>
 
     <div class="row deadline-only" style="margin-bottom: 14px;">
@@ -852,6 +852,10 @@ footer a:hover { text-decoration: underline; }
       <div>
         <dt>未確認</dt>
         <dd>会期・開催地・ランクの値が空のセルは「未確認」と出します（「-」などの記号ではありません）。<strong>会議側が未定にしていることとは別</strong>で、kamiyobi が公式で裏を取れていないという意味です。空のまま置きたくない情報は公式の発表を待つしかありません。</dd>
+      </div>
+      <div>
+        <dt>早め絞り込みのボタン</dt>
+        <dd>画面上部のボタン（「締切まで 7 日以内」「A*ランク」「HPC・システム」「国内研究会」「オンライン参加可」）は、<strong>その条件だけを出し入れします</strong>。押すと入ってもう一度押すと外れ、押している間は点いたままです。入力済みの検索語や他の条件は<strong>消えません</strong>（変更前は押すたびに初期値へ戻っていました）。条件を一度に外したいときは、0 件案内の「条件をまとめて外す」を使ってください。</dd>
       </div>
       <div>
         <dt>海外の開催都市</dt>
