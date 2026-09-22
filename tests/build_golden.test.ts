@@ -8648,3 +8648,41 @@ it("「本日終了」は JST の暦日で決まる（SPEC §7）", () => {
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
   expect(template).toContain("日数は JST の暦日");
 });
+
+it("収録状況の四つ組は、何を数えているかと単位がラベルに出る（SPEC §7）", () => {
+  /* 画面上部の四つの数は、単位を書かないまま会議の数と締切の件数を並べていた
+   * （2026-09-23 実測: 「追跡会議数 680」と「直近30日締切 176」が同じ物だと読める）。
+   * 「穴場/特化誌」はラベルだけ 2 つの集まりを騙っていた（実数を入れていたのは
+   * niche タグの会議 63 だけで、journal タグは数えていない）。国内もチェックボックスは
+   * 「国内研究会・国内シンポジウム」なのに、ここは「国内研究会」だった。 */
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const barStart = template.indexOf('<div class="summary-bar">');
+  expect(barStart).toBeGreaterThan(0);
+  const bar = template.slice(barStart, template.indexOf("</header>", barStart));
+  // 絞り込みで動かない数なので、その旨をキャプションに書く。
+  expect(bar).toContain("絞り込み前の収録全体");
+  expect(bar).toContain("収録している会議:");
+  expect(bar).toContain("これからの30日間の締切:");
+  expect(bar, "締切の件数に単位が無い").toContain('class="stat-unit">件<');
+  // ラベルと実数がズレていた 2 件を戻さない。
+  expect(bar).not.toContain("穴場/特化誌");
+  expect(bar).toContain("穴場として収録した会議:");
+  expect(bar).not.toContain("<span>国内研究会:</span>");
+  expect(bar).toContain("国内研究会・国内シンポジウム:");
+  // 開発よりの語だった「追跡会議数」を戻さない。
+  expect(bar).not.toContain("追跡会議数");
+  // てびきに単位と数え方の説明がある（画面が示す語をてびきが説明していないと調べられない）。
+  const help = template.slice(template.indexOf('id="helpPanel"'));
+  const guide = help.slice(0, help.indexOf("</dl>"));
+  expect(guide).toContain("画面上部の四つの数");
+  expect(guide, "四つ組が絞り込みで動かないことをてびきが書いていない").toContain(
+    "絞り込み前の収録全体",
+  );
+  expect(guide).toContain("niche");
+  expect(guide).toContain("domestic-jp");
+  // id はそのまま（JS 側の更新先が生きていること）。
+  const runtime = siteRuntime();
+  for (const id of ["statConfs", "statUpcoming", "statNiche", "statDomestic"]) {
+    expect(runtime, `収録状況の更新先が消えている: ${id}`).toContain(`"${id}"`);
+  }
+});
