@@ -735,7 +735,10 @@ footer a:hover { text-decoration: underline; }
     </div>
 
     <div class="row deadline-only" style="margin-top: 14px;">
-      <label class="check"><input type="checkbox" id="domestic"> <span>国内研究会・国内シンポジウムのみ</span></label>
+      <label class="check"
+        ><input type="checkbox" id="domestic" />
+        <span title="情報処理学会・電子情報通信学会などの国内研究会と国内シンポジウムに絞ります。日本の開催かどうかは関係ありません。日本で開催される国際会議（開催地が Tokyo, 日本 のように書かれる行）を見たいときは、このチェックを外して検索に「東京」「日本」などと打ってください。">国内研究会・国内シンポジウムのみ</span></label
+      >
       <label class="check"><input type="checkbox" id="online"> <span>オンライン参加可のみ</span></label>
       <label class="check"><input type="checkbox" id="est"> <span>推定締切を含める</span></label>
       <label class="check"><input type="checkbox" id="past"> <span>過去の締切も表示</span></label>
@@ -839,7 +842,7 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div>
         <dt>国内</dt>
-        <dd>情報処理学会・電子情報通信学会などの国内研究会と国内シンポジウム。「国内研究会」のボタンだけで絞り込める。</dd>
+        <dd>情報処理学会・電子情報通信学会などの国内研究会と国内シンポジウムに絞ります。「国内研究会」のボタンでも同じ絞り込みができて、件数欄にはのぞいた件数も出ます。<strong>日本の開催かどうかとは別物</strong>で、日本で開催される国際会議（開催地が `Tokyo, 日本` のように書かれる行）はここを付けると消えます。日本開催の会議を見たいときはチェックを外し、検索に「東京」「日本」などと打ってください。</dd>
       </div>
       <div>
         <dt>種別</dt>

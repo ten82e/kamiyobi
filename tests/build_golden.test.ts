@@ -2492,7 +2492,7 @@ const FILTER_RUNTIME_STUBS = [
   ...SORT_CANON.all,
   "let semQuery = null, semEmbeddings = null;",
   "let catFacetCounts = {};",
-  "let hiddenCounts = { past: 0, est: 0, kind: 0 };",
+  "let hiddenCounts = { past: 0, est: 0, kind: 0, domestic: 0 };",
   "const activeData = { conferences: [] };",
   ...SEARCH_CANON,
   "let searchQuery = '';",
@@ -4687,7 +4687,8 @@ it("のぞいた行数を件数欄で説明する（SPEC §7）", () => {
   };
   // 既定: 過去の締切・推定・投稿締切以外の種別が落ちる。
   expect(out.defaults.shown.slice().sort()).toEqual(["future-abstract", "future-paper"]);
-  expect(out.defaults.hidden).toEqual({ past: 2, kind: 2, est: 1 });
+  // 国内チェックは入れていないので domestic は 0 のまま（件数を出すのは効いたときだけ）。
+  expect(out.defaults.hidden).toEqual({ past: 2, kind: 2, est: 1, domestic: 0 });
   // 「過去の締切も表示」をオンにすると過去の分はのぞかなくなる（他はそのまま）。
   expect(out.withPast.hidden.past).toBe(0);
   expect(out.withPast.hidden.kind).toBe(2);
@@ -5006,7 +5007,7 @@ it("締切までの選択肢は URL と表裏一体で、窓は入れ子にな�
     "const document = {};",
     "function $(id) { return null; }",
     "const window = {};",
-    "let hiddenCounts = { past: 0, est: 0, kind: 0 };",
+    "let hiddenCounts = { past: 0, est: 0, kind: 0, domestic: 0 };",
     "let catFacetCounts = {};",
     "let searchQuery = '';",
     "const activeData = { conferences: [] };",
@@ -5783,4 +5784,56 @@ it("別表記の表は、実際に新しい行を増やしている（SPEC §7�
     expect(stat.total, `${name} の表で判定できる条目が無さすぎる`).toBeGreaterThan(3);
     expect(stat.dead.length).toBeLessThanOrEqual(Math.max(1, Math.ceil(stat.total * 0.2)));
   }
+});
+
+it("「国内研究会・国内シンポジウムのみ」で消えた行を件数欄が説明する（SPEC §7）", () => {
+  /* このチェックは主催の区分で、日本の開催かどうかではない。付けたままだと
+   * `Tokyo, 日本` と書かれた行が黙って消える（実測: 既定画面 477 行のうち 448 行が落ち、
+   * そのうち 11 行は日本開催）。のぞいた件数を出さないと「国内に無かった」と誤解される。 */
+  const filterSrc = jsFunction(siteRuntime(), "filter");
+  const script = [
+    "const DAY = 86400000;",
+    `const FILTER = ${JSON.stringify(filterSrc)};`,
+    'const now = Date.parse("2026-08-10T00:00:00Z");',
+    "class FakeDate extends Date { static now() { return now; } }",
+    "function row(key, tags, place) {",
+    "  return { kind: 'paper', est: false, cats: ['hpc'], rankPairs: [], hay: key,",
+    "    tags: tags, t: now + DAY, tLast: now + DAY, ed: { place: place, deadlines: [] },",
+    "    conf: { key: key } };",
+    "}",
+    "const rows = [",
+    "  row('ieice-nolta', ['domestic-jp'], '京都大学 楽友会館（京都府）／オンライン'),",
+    "  row('icde', [], 'Tokyo, 日本'),",
+    "  row('sc', [], 'St. Louis, USA'),",
+    "];",
+    FILTER_RUNTIME_STUBS,
+    "const run = (domestic) => new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
+    "  'return (' + FILTER + ')')(FakeDate, DAY, rows,",
+    "  { q: '', cats: [], kind: '', rank: '', win: 'all', est: false, domestic: domestic }, true, 'rem');",
+    // `new Function` は絞り込み関数を返すので、ここから一度呼ぶ。
+    "const shown = run(false)().map((r) => r.conf.key);",
+    "run(true)();",
+    "console.log(JSON.stringify({ shown, domestic: hiddenCounts.domestic }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as { shown: string[]; domestic: number };
+  // 同じ締切時刻なので、並び順は表に出る会議名の昇順（SPEC §7 のタイ処理）。
+  expect(out.shown).toEqual(["icde", "ieice-nolta", "sc"]);
+  // チェックを付けると国内研究会の 1 行だけになり、のぞいた 2 行が件数へ出る。
+  expect(out.domestic, "のぞいた件数が出ていない").toBe(2);
+
+  const app = siteRuntime();
+  // 件数欄の実装がその件数を出していること。
+  expect(app).toContain("国内研究会・国内シンポジウム以外 ${hidden.domestic} 件");
+  // 説明は「日本の開催とは別物」と、戻し方（検索で引く）を同じ箇所に書く。
+  const html = siteHtmlRuntime();
+  const dd = html.slice(html.indexOf("<dt>国内</dt>"), html.indexOf("<dt>種別</dt>"));
+  expect(dd).toContain("日本の開催かどうかとは別物");
+  expect(dd).toContain("Tokyo, 日本");
+  expect(dd).toContain("のぞいた件数");
+  // チェックボックス自体にも同じ注意を出す（てびきは畳まれているので）。
+  const box = html.slice(html.indexOf('id="domestic"'), html.indexOf('id="online"'));
+  expect(box).toContain("日本の開催かどうかは関係ありません");
+  expect(box).toContain("検索に「東京」");
 });

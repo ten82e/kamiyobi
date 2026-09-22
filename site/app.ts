@@ -1475,13 +1475,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   /* 「N 件 / 全 M 件」の差の内訳。既定で隠れる行（過去の締切・推定・投稿締切以外の種別）を
    * 数える。隠れていることを説明しないと、探した締切が「無い」と誤解される。 */
-  let hiddenCounts = { past: 0, est: 0, kind: 0 };
+  let hiddenCounts = { past: 0, est: 0, kind: 0, domestic: 0 };
 
   /* URL で渡された種別のうち、表に出さないものを読み捨てたときの説明。
    * 黙って条件が変わったように見えるのを避ける（相対月を解決したときと同じ方針）。 */
   let droppedKindNotice = "";
 
-  function hiddenDeadlineCounts(): { past: number; est: number; kind: number } {
+  function hiddenDeadlineCounts(): { past: number; est: number; kind: number; domestic: number } {
     return hiddenCounts;
   }
 
@@ -1640,6 +1640,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         }
       }
       if (!inRecommend && state.domestic && (r.tags || []).indexOf("domestic-jp") < 0) {
+        // 「国内研究会・国内シンポジウムのみ」は**主催の区分**で、日本で開かれる会議のことでは
+        // ない。チェックしたままだと `Tokyo, 日本` のような行が黙って消えるので、
+        // のぞいた件数を件数欄に出す（利用者が「日本で開かれる会議を見たい」に気づける形で）。
+        if (!inRecommend) hiddenCounts.domestic += 1;
         return false;
       }
       // 開催形式は会場表記に書かれた記述だけで絞る（書かれていないことから対面を断定しない）。
@@ -1654,7 +1658,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       return true;
     };
 
-    hiddenCounts = { past: 0, est: 0, kind: 0 };
+    hiddenCounts = { past: 0, est: 0, kind: 0, domestic: 0 };
     catFacetCounts = {};
     let out: AppRow[] = pool.filter((r) => {
       if (!matchesExceptCats(r)) {
@@ -2717,6 +2721,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (hidden.past) parts.push(`過去の締切 ${hidden.past} 件`);
       if (hidden.kind) parts.push(`投稿締切以外の種別 ${hidden.kind} 件`);
       if (hidden.est) parts.push(`推定 ${hidden.est} 件`);
+      // 国内チェックで消えた行は「国内研究会ではない」だけの理由で落ちている。
+      // 日本開催の国際会議もここに入るため、件数だけ出しておかないと検索をやめてしまう。
+      if (hidden.domestic) parts.push(`国内研究会・国内シンポジウム以外 ${hidden.domestic} 件`);
       if (parts.length) cnt += ` ｜ のぞく: ${parts.join("・")}`;
       // 「スパコン」などを分野名に寄せたときは、寄せた先をその場で書く。
       // 理由も見ずに分野全体の行を並べると、なぜ出たか分からないまま行の壁になる。
