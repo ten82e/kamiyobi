@@ -3353,9 +3353,10 @@ it("toUpcomingMd escapes pipe characters in title and place preserving 7-column 
   ];
   const md = toUpcomingMd(records, new Date("2026-08-10T00:00:00Z"));
   expect(md).toContain("[Test \\| Workshop 2026](https://example.com)");
-  expect(md).toContain("Tokyo \\| Online (Hybrid)");
+  // 開催地はサイトの表と同じ日本語表記を出す（パイプのエスケープはそのまま保つ）。
+  expect(md).toContain("Tokyo \\| オンライン (ハイブリッド)");
   expect(md).toContain("[Symposium \\| Special Track 2026](https://example.com)");
-  expect(md).toContain("Kyoto \\| In-person");
+  expect(md).toContain("Kyoto \\| 対面");
 
   // テーブルの各行の列区切り（エスケープされていないパイプ）が正確に 8 本（7 列）であることを検証
   const tableRows = md.split("\n").filter((l) => l.startsWith("|") && !l.includes("---"));
@@ -4999,4 +5000,39 @@ it("実カタログで、表に出す語はすべて日本語表記を持つ（S
         `${c.key}: 開催地がオンライン参加可を示さないのにタグが主題から落ちる`,
       ).toBe(true);
     });
+});
+
+it("upcoming.md の開催地は、サイトの表と同じ日本語表記で出る（SPEC §7）", () => {
+  // 以前は md 側が `placeWithPrefectureJa` だけを使い、サイト側は `placeJa` だけを使っていた。
+  // 両方が持ちつづつ半分ずつで、md の海外行は "Kunming, China" のまま残っていた
+  // （「日本」で grep しても国内の行に当たらない）。
+  const buildSrc = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
+  expect(buildSrc, "md の開催地は placeJa と placeWithPrefectureJa を組み合わせて出す").toContain(
+    "Recommender.placeJa(Recommender.placeWithPrefectureJa(ed.place))",
+  );
+
+  const rec = siteRuntime("recommender.js");
+  // ビルド後は型注釈が消えるので、型名を問わずに読む。
+  const terms = rec.match(/const PLACE_TERMS_JA[^=]*= \[([\s\S]*?)\n\s*\];/);
+  expect(terms, "PLACE_TERMS_JA が見つからない").toBeTruthy();
+  const keys = [...String(terms![1]).matchAll(/\["((?:[^"\\]|\\.)+)",/g)].map((m) => m[1]);
+  expect(keys.length, "対応表が読めない").toBeGreaterThan(40);
+
+  const md = readFileSync(join(site, "upcoming.md"), "utf8");
+  const offenders: string[] = [];
+  md.split("\n").forEach((line) => {
+    if (!line.startsWith("| ")) return;
+    const cells = line.split("|").map((c) => c.trim());
+    const venue = cells[cells.length - 2];
+    if (!venue || venue === "開催地" || venue === "---") return;
+    venue.split("/").forEach((segment) => {
+      const at = segment.lastIndexOf(",");
+      const tail = (at < 0 ? segment : segment.slice(at + 1)).trim();
+      // 対応表に載っている語が英語のまま残っていたら、md だけ日本語化が効いていない。
+      if (/[A-Za-z]/.test(tail) && keys.indexOf(tail.toLowerCase()) >= 0) {
+        offenders.push(`${venue} → ${tail}`);
+      }
+    });
+  });
+  expect(offenders, `md の開催地が未翻訳: ${offenders.join(" / ")}`).toEqual([]);
 });

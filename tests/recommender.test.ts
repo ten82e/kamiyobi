@@ -4358,3 +4358,46 @@ describe("ランクの表示語と検索語", () => {
     expect(recommender.hayMatches("usenix nsdi 2027", "nsdi")).toBe(true);
   });
 });
+
+describe("開催地の日本語表記（表と upcoming.md が同じ語で読める）", () => {
+  const ja = (p: string) => R.placeJa(p);
+
+  it("国名を書かない表記でも、末尾の州・地域が日本語で読める", () => {
+    // 末尾の `, USA` が無い行（"Boulder, Colorado"）が英語のまま残っていた。
+    expect(ja("Boulder, Colorado")).toBe("Boulder, コロラド州");
+    expect(ja("Portland, Oregon")).toBe("Portland, オレゴン州");
+    expect(ja("Memorial Auditorium, Stanford, Palo Alto, CA")).toBe(
+      "Memorial Auditorium, Stanford, Palo Alto, カリフォルニア州",
+    );
+    expect(ja("Lucca, Tuscany")).toBe("Lucca, トスカーナ州");
+    expect(ja("Taipei, Taiwan")).toBe("Taipei, 台湾");
+    expect(ja("Tallinn, Estonia")).toBe("Tallinn, エストニア");
+    expect(ja("Kigali, Rwanda")).toBe("Kigali, ルワンダ");
+    expect(ja("New York City, US")).toBe("New York City, アメリカ");
+    expect(ja("Denver, U.S.A.")).toBe("Denver, アメリカ");
+    // 都市だけを書く行も、読み手を置いていかない。
+    expect(ja("Paris")).toBe("パリ");
+    expect(ja("Montreal")).toBe("モントリオール");
+    expect(ja("Donostia / San Sebastian, Spain")).toBe("ドノスティア / San Sebastian, スペイン");
+  });
+
+  it("上流の誤記も同じ国・都市に寄せる（原文の訂正は overrides 側）", () => {
+    expect(ja("London, United Kindom")).toBe("London, イギリス");
+    expect(ja("Chania, Greec")).toBe("Chania, ギリシャ");
+    expect(ja("Amsterdam, Netherland.")).toBe("Amsterdam, オランダ.");
+    // 正しい綴りが壊れていないこと（置換が語として当たっている）。
+    expect(ja("Amsterdam, Netherlands")).toBe("Amsterdam, オランダ");
+    expect(ja("Seattle, United States")).toBe("Seattle, アメリカ");
+  });
+
+  it("歧う語と会場名は置換しない（推測で土地を書かない）", () => {
+    // 二字の国コードは州コードと歧うのでそのまま残す。
+    expect(ja("Antwerp, BE")).toBe("Antwerp, BE");
+    // 会場名の中に国名が含まれる行は、置換が会場名を壊す。
+    expect(ja("Radisson Grenada Beach Resort Grenada")).toBe(
+      "Radisson Grenada Beach Resort Grenada",
+    );
+    // 語の途中に当たさない（"USC" を「アメリカC」にしない）。
+    expect(ja("Los Angeles, USC")).toBe("Los Angeles, USC");
+  });
+});

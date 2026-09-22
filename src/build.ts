@@ -2673,14 +2673,16 @@ export function toUpcomingMd(
     const link = rawLink ? escapeMdUrl(rawLink) : "";
     const titleEscaped = escapeMdCell(titleWithYear(conf.title, ed.year));
     const name = link ? `[${titleEscaped}](${link})` : titleEscaped;
-    // 開催地に都道府県が書かれていない行（`倉敷市芸文館` など）は、土地で探すと
-    // 見つからない。サイト側の検索と同じ都道府県語を md の開催地列にも添える
-    // （公式表記は変えないので末尾に空白区切りで添えるだけ）。
+    // md の開催地列は、サイトの表が見せている日本語表記をそのまま使う。
+    // `placeWithPrefectureJa` だけだと海外行が "Kunming, China" のまま残り、
+    // 「日本」で grep しても国内の行に当たらない（国名の日本語化は `placeJa` が持つ）。
+    // 都道府県を添えるのは md 側だけ（サイトは title に原文を落とせるが、md は持てない）。
     // 空の開催地は、空欄にせずサイトと同じ「未確認」を出す。空欄だと公式が出ていないのと
     // 収録漏れが区別できない（SPEC §7 の表と同じ判断）。語は recommender の正本を使い、
     // md に書いた語がサイトの検索で引ける状態も保つ。
     const placeEscaped = escapeMdCell(
-      Recommender.placeWithPrefectureJa(ed.place) || Recommender.unconfirmedLabelJa(),
+      Recommender.placeJa(Recommender.placeWithPrefectureJa(ed.place)) ||
+        Recommender.unconfirmedLabelJa(),
     );
     if (rec.type === "deadline") {
       const dl = rec.deadline;

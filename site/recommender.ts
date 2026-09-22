@@ -2203,6 +2203,54 @@ const Recommender = (() => {
     ["switzerland", "スイス"],
     ["lithuania", "リトアニア"],
     ["slovakia", "スロバキア"],
+    // 以下は収録済みカタログの開催地末尾に実際に現れた語だけを追加する
+    // （都道府県の補完と同じ方針。来ていない語を先回りで入れても検証できない）。
+    ["czech republic", "チェコ"],
+    ["united arab emirates", "アラブ首長国連邦"],
+    ["u.s.a.", "アメリカ"],
+    ["u.s.a", "アメリカ"],
+    ["netherland", "オランダ"], // 上流の誤記。"netherlands" は上の語が先に当たる
+    ["taiwan", "台湾"],
+    ["israel", "イスラエル"],
+    ["colombia", "コロンビア"],
+    ["russia", "ロシア"],
+    ["slovenia", "スロベニア"],
+    // 国名を書かない表記では州が末尾に来る（"Boulder, Colorado"）。
+    ["pennsylvania", "ペンシルベニア州"],
+    ["california", "カリフォルニア州"],
+    ["tennessee", "テネシー州"],
+    ["louisiana", "ルイジアナ州"],
+    ["colorado", "コロラド州"],
+    ["hawaii", "ハワイ州"],
+    ["ca", "カリフォルニア州"],
+    // 国名を省略した行で末尾になる都市（都市名そのものの置換はfront側を壊すので末尾だけ）。
+    ["los angeles", "ロサンゼルス"],
+    ["san francisco", "サンフランシスコ"],
+    ["denver", "デンバー"],
+    ["vancouver", "バンクーバー"],
+    ["leuven", "ルーヴェン"],
+    ["santiago de compostela", "サンティアゴ・デ・コンポステーラ"],
+    ["united kindom", "イギリス"], // 上流の誤記 (Kindom)
+    ["estonia", "エストニア"],
+    ["argentina", "アルゼンチン"],
+    ["rwanda", "ルワンダ"],
+    ["greec", "ギリシャ"], // 上流で切れた表記 (Greec)
+    ["tuscany", "トスカーナ州"],
+    ["indiana", "インディアナ州"],
+    ["oregon", "オレゴン州"],
+    ["abu dhabi", "アブダビ"],
+    ["st. kitts", "セントクリストファー・ネイビス"],
+    ["montreal", "モントリオール"],
+    ["birmingham", "バーミンガム"],
+    ["donostia", "ドノスティア"],
+    ["paris", "パリ"],
+    ["madrid", "マドリード"],
+    ["europe", "ヨーロッパ"],
+    ["us", "アメリカ"],
+    /* 意図的に入れていない語:
+     *   BE      … 二字の国コードは "GA"（州か国か）のように歧うので推測しない
+     *   Grenada … `Radisson Grenada Beach Resort Grenada` の会場名の中で置換が当たり、
+     *               会場名が壊れる（国名の行は他に無い） */
     ["online only", "オンラインのみ"],
     ["online", "オンライン"],
     ["virtual", "オンライン"],
