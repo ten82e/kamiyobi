@@ -1859,6 +1859,7 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
   const appForHint = siteRuntime();
   const hint = new Function(
     `${appForHint.match(/const KIND_ALL_LABEL_JA = [^\n]*;/)?.[0] ?? ""}
+     ${jsFunction(appForHint, "countJa")};
      return (${jsFunction(appForHint, "emptyDeadlineHint")});`,
   )() as (f: {
     window: string;
@@ -2913,6 +2914,7 @@ it("site UI is readable for Japanese researchers: field names, JST header, help 
 it("month headings appear only while browsing in chronological order (SPEC §7)", () => {
   const runtime = siteRuntime();
   const script = [
+    `const countJa = (${jsFunction(runtime, "countJa")});`,
     "function pad(n) { return (n < 10 ? '0' : '') + n; }",
     jsFunction(runtime, "shouldGroupMonths"),
     jsFunction(runtime, "monthKey"),
@@ -5856,10 +5858,11 @@ it("論文から探すの候補も「さらに表示」で全件に到達する�
   // 「さらに表示 (残り N 件)」の組み立ては一か所（表とカードで文言がズレないようにする）。
   expect((runtime.match(/さらに表示 \(残り/g) || []).length).toBe(1);
   // 件数欄の言い切りと画面を食い違わせない。
-  expect(runtime).toContain("まず上位 ${RECOMMENDATION_PAGE} 件を表示");
+  expect(runtime).toContain("まず上位 ${countJa(RECOMMENDATION_PAGE)} 件を表示");
 
   // ラベルと表示可否は本物を実行して見る（書き写すと「残り」の対応がズレる）。
   const script = [
+    `const countJa = (${jsFunction(runtime, "countJa")});`,
     "const more = { hidden: null, textContent: '' };",
     "const $ = () => more;",
     `const moreButtonLabel = ${jsFunction(runtime, "moreButtonLabel")};`,
@@ -6176,7 +6179,7 @@ it("「国内研究会・国内シンポジウムのみ」で消えた行を件�
 
   const app = siteRuntime();
   // 件数欄の実装がその件数を出していること。
-  expect(app).toContain("国内研究会・国内シンポジウム以外 ${hidden.domestic} 件");
+  expect(app).toContain("国内研究会・国内シンポジウム以外 ${countJa(hidden.domestic)} 件");
   // 説明は「日本の開催とは別物」と、戻し方（検索で引く）を同じ箇所に書く。
   const html = siteHtmlRuntime();
   const dd = html.slice(html.indexOf("<dt>国内</dt>"), html.indexOf("<dt>種別</dt>"));
@@ -6197,6 +6200,7 @@ it("「オンライン参加可のみ」で出ない理由を 2 通りに分け�
    * 開催地が空だった。 */
   const filterSrc = jsFunction(siteRuntime(), "filter");
   const script = [
+    `const countJa = (${jsFunction(siteRuntime(), "countJa")});`,
     "const DAY = 86400000;",
     `const FILTER = ${JSON.stringify(filterSrc)};`,
     'const now = Date.parse("2026-08-10T00:00:00Z");',
@@ -6234,8 +6238,8 @@ it("「オンライン参加可のみ」で出ない理由を 2 通りに分け�
   expect(out.unknown, "開催地が未確認の行数を分けていない").toBe(1);
 
   const app = siteRuntime();
-  expect(app).toContain("オンライン参加の記載がない ${hidden.online} 件");
-  expect(app).toContain("うち開催地が未確認 ${hidden.onlinePlaceUnknown} 件");
+  expect(app).toContain("オンライン参加の記載がない ${countJa(hidden.online)} 件");
+  expect(app).toContain("うち開催地が未確認 ${countJa(hidden.onlinePlaceUnknown)} 件");
   // チェックボックスの tool tip にも、対面を断定していないことと確認先を書く。
   const html = siteHtmlRuntime();
   const box = html.slice(html.indexOf('id="online"'), html.indexOf('id="est"'));
@@ -7308,7 +7312,7 @@ it("「評価でしぼる」でのぞいた件数を件数欄に出す（SPEC §
 
   const app = runtime;
   expect(app, "件数欄が評価で絞った件数を書いていない").toContain(
-    "評価「${state.rank}」を持たない行 ${hidden.rank} 件",
+    "評価「${state.rank}」を持たない行 ${countJa(hidden.rank)} 件",
   );
 });
 
@@ -7401,6 +7405,7 @@ it("分野チップでのぞいた件数を件数欄に出す（SPEC §7）", ()
   const runtime = siteRuntime();
   const filterSrc = jsFunction(runtime, "filter");
   const script = [
+    `const countJa = (${jsFunction(runtime, "countJa")});`,
     "const DAY = 86400000;",
     `const FILTER = ${JSON.stringify(filterSrc)};`,
     'const now = Date.parse("2026-08-10T00:00:00Z");',
@@ -7455,7 +7460,7 @@ it("分野チップでのぞいた件数を件数欄に出す（SPEC §7）", ()
 
   const app = runtime;
   expect(app, "件数欄が分野で絞った件数を書いていない").toContain(
-    '分野「${state.cats.map((key) => catLabel(key)).join("・")}」を持たない行 ${hidden.cats} 件',
+    '分野「${state.cats.map((key) => catLabel(key)).join("・")}」を持たない行 ${countJa(hidden.cats)} 件',
   );
 });
 
@@ -8932,7 +8937,7 @@ it("過去の締切も表示すると、過ぎた行が画面の先頭を埋め�
   // 支援技術に同じ扱いをさせるため。キーボード移動が飛ばすのと同じ規則でもある）。
   expect(app).toContain('tr.className = "month-row section-row"');
   expect(app).toContain('"過ぎた締切"');
-  expect(app).toContain("過ぎた締切 ${pastBlockTotal} 件は下にまとめました");
+  expect(app).toContain("過ぎた締切 ${countJa(pastBlockTotal)} 件は下にまとめました");
 });
 
 it("「本日終了」は JST の暦日で決まる（SPEC §7）", () => {
@@ -10068,7 +10073,10 @@ it("0 件の理由は読み上げにも短的に出る（長い文を aria-live 
    * とはいえ長い説明文を aria-live に流すと 1 打鍵ごとに数十語が読まれる（第 88 回で
    * 実際に起きた）。同じ原因を短い形で読み上げに出す。 */
   const app = siteRuntime();
-  const note = new Function(`return (${jsFunction(app, "zeroResultLiveNote")});`)() as (f: {
+  const note = new Function(
+    `${jsFunction(app, "countJa")};
+     return (${jsFunction(app, "zeroResultLiveNote")});`,
+  )() as (f: {
     hiddenKindWords: string[];
     termCounts: Array<{ term: string; count: number }>;
     catalogConferences: number;
@@ -11562,6 +11570,7 @@ it("0 件の案内が、各条件で今何行が隠れているかを並べて�
   const hintFn = jsFunction(app, "emptyDeadlineHint");
   expect(hintFn, "0 件案内の関数が見当たらない（検査が空振り）").not.toBe("");
   const script = [
+    `const countJa = (${jsFunction(app, "countJa")});`,
     "const KIND_ALL_LABEL_JA = 'すべての種別';",
     `${hintFn.replace("function emptyDeadlineHint", "const emptyDeadlineHint = function")}`,
     "const base = {",
@@ -11617,7 +11626,7 @@ it("0 件の案内が、各条件で今何行が隠れているかを並べて�
   };
   // 各項目に、件数欄と同じ名前で同じ数字が添わる。
   expect(out.counted).toContain("「締切まで 7 日以内」を超える 438 件");
-  expect(out.counted).toContain("「過去の締切も表示」をオン（過去の締切 1231 件）");
+  expect(out.counted).toContain("「過去の締切も表示」をオン（過去の締切 1,231 件）");
   expect(out.counted).toContain("「推定締切を含める」をオン（推定 134 件）");
   expect(out.counted).toContain("評価「A*」を持たない行 416 件");
   expect(out.counted).toContain("選んだ分野を持たない行 88 件");
@@ -11948,4 +11957,63 @@ it("0 件の読み上げが、画面に出ている案内の有無と緩めら�
   // 呼び出し側が、0 件案内と同じ数え合わせを渡していること。
   expect(app).toContain("clearable: filtersClearable(");
   expect(app).toContain("pastShown: state.past");
+});
+
+it("画面の件数は 3 桁ごとに区切り、てびきの書き方と揃える（SPEC §7）", () => {
+  /* 既定画面の件数欄は「478 件 / 全 3235 件」、0 件の案内は「過去の締切 2317 件」と出ていた
+   * （2026-09-23 実測）。一方てびきは同じ数を「全 3,235 件」と書いていて、同じ数が画面と
+   * 案内で二つの形になっていた。4 桁以上の数を素で出すと、表示件数と収録総数を見比べたとき
+   * に桁の大きさが取り出しにくい。`toLocaleString` は環境で区切り文字が変わるので、
+   * 区切りは自前で書く。 */
+  const app = siteRuntime("app.js");
+  const fnSrc = jsFunction(app, "countJa");
+  expect(fnSrc, "件数の数え合わせの関数が見当たらない（検査が空振り）").not.toBe("");
+  const script = [
+    "const countJa = (" + fnSrc + ");",
+    "console.log(JSON.stringify({",
+    "  small: countJa(478),",
+    "  edge999: countJa(999),",
+    "  edge1000: countJa(1000),",
+    "  pool: countJa(3235),",
+    "  past: countJa(2317),",
+    "  big: countJa(1234567),",
+    "  negative: countJa(-5),",
+    "  zero: countJa(0),",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout) as { [k: string]: string };
+  expect(got.small).toBe("478");
+  expect(got.edge999).toBe("999");
+  expect(got.edge1000, "4 桁目から区切れていない").toBe("1,000");
+  expect(got.pool).toBe("3,235");
+  expect(got.past).toBe("2,317");
+  expect(got.big).toBe("1,234,567");
+  // 残り日数などでも使うので、符号と区切りを壊さない。
+  expect(got.negative).toBe("-5");
+  expect(got.zero).toBe("0");
+  // 1 箇所でも素の数値があると、その欄だけ区切りの無い数になる。
+  const unwrapped = [...app.matchAll(/\$\{([^{}"]+)\} 件/g)].filter(
+    (m) => !m[1].trim().startsWith("countJa("),
+  );
+  expect(
+    unwrapped.map((m) => m[1]),
+    "countJa を経ずに件数を出している個所がある",
+  ).toEqual([]);
+  // 案内側の書き方と実際の画面が同じであることを、実行した結果で結ぶ。
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  expect(html).toContain(`全 ${got.pool} 件`);
+  const guideCounts = [...html.matchAll(/([0-9][0-9,]{3,}) 件/g)].map((m) => m[1]);
+  expect(guideCounts.length, "てびきに 4 桁以上の件数が出ていない（検査が空振り）").toBeGreaterThan(
+    0,
+  );
+  for (const c of guideCounts) {
+    expect(c, `てびきの「${c} 件」が画面の数え方と違う形になっている`).toMatch(
+      /^[0-9]{1,3}(,[0-9]{3})*$/,
+    );
+  }
 });

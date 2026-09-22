@@ -456,6 +456,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 案内が古いラベルを指すと、その語が画面に見つからない。 */
   const KIND_ALL_LABEL_JA = "投稿締切（概要・論文）";
 
+  /* 件数の数え方。てびきは「全 3,235 件」と書いていたのに、画面は同じ数を「全 3235 件」と
+   * 出していた（2026-09-23 実測: 既定画面は「478 件 / 全 3235 件」、0 件の案内は
+   * 「過去の締切 2317 件」）。4 桁以上の数を素で出されると、一覧の件数と収録総数を
+   * 見比べたときに桁の大きさが取り出しにくい。てびきの書き方に合わせて 3 桁ごとに区切る。
+   * `toLocaleString` は環境の実装差に左右される（地域によって区切り文字が違う）ので、
+   * 区切りは自分で書く。 */
+  function countJa(n: number): string {
+    const int = Math.trunc(Number(n) || 0);
+    const digits = String(Math.abs(int)).replace(/\B(?=(\d{3})+$)/g, ",");
+    return int < 0 ? `-${digits}` : digits;
+  }
+
   /* ランク絞り込みの選択肢（data の grade と一致させる。SPEC §2: `N` はランク無し）。 */
   // 等級の順は recommender の正本から取る（並び順と同じ順序で選択肢を出す）。
   const RANK_GRADE_OPTIONS = Recommender.rankGradeOrderJa();
@@ -1759,7 +1771,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       );
     if (filter.queryMatch.catalog > 0)
       return (
-        ` ｜ 検索語は収録で ${filter.queryMatch.catalog} 件に当たりますが、いまの条件では 0 件です` +
+        ` ｜ 検索語は収録で ${countJa(filter.queryMatch.catalog)} 件に当たりますが、いまの条件では 0 件です` +
         pointer
       );
     // 何も絞り込んでいないのに 0 件なら、緩める条件ではなく収録の時刻の話をする。
@@ -2139,10 +2151,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 投稿締切・未来だけなので起こる）。「 kamiyobi に無い」と誤解させない。 */
     const catalogNote =
       trimmedQuery && filter.queryMatch.catalog > 0
-        ? ` 検索語「${trimmedQuery}」は収録済みで ${filter.queryMatch.catalog} 件に当たります` +
+        ? ` 検索語「${trimmedQuery}」は収録済みで ${countJa(filter.queryMatch.catalog)} 件に当たります` +
           "（表は投稿締切でこれから先のものだけを出す既定と、いまの絞り込みで 0 件になっています）。" +
           (filter.queryMatch.journal > 0
-            ? ` 常時受付のジャーナル ${filter.queryMatch.journal} 件は「種別」で選べます。`
+            ? ` 常時受付のジャーナル ${countJa(filter.queryMatch.journal)} 件は「種別」で選べます。`
             : "")
         : "";
     /* 語を並べて打ったのに 0 件のとき、どの語が足りなかったのかを言う（2026-09-23 実測:
@@ -2189,7 +2201,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       // （件数欄に内訳として出ていない条件と同じ理屈）。
       const n = filter.hidden ? filter.hidden[key] || 0 : 0;
       if (!n) return;
-      tips.push(`${text}（${label} ${n} 件）`);
+      tips.push(`${text}（${label} ${countJa(n)} 件）`);
     };
     const tips: string[] = [];
     // 選択肢の実際のラベルを書く（「すべて」に変えた旧名を案内すると、その語が見つからない）。
@@ -2402,7 +2414,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   function monthHeading(key: string, count: number): string {
     const parts = key.split("-");
-    return `${parts[0]}年${Number(parts[1])}月（${count} 件）`;
+    return `${parts[0]}年${Number(parts[1])}月（${countJa(count)} 件）`;
   }
 
   function makeMonthRow(key: string, count: number) {
@@ -2424,7 +2436,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const th = document.createElement("th");
     th.colSpan = TABLE_COLUMNS_JA;
     th.scope = "colgroup";
-    th.textContent = `${label}（${count} 件）`;
+    th.textContent = `${label}（${countJa(count)} 件）`;
     tr.appendChild(th);
     return tr;
   }
@@ -2906,7 +2918,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   /** 「さらに表示」のラベル（残り件数を出す。表と推薦カードで同じ形にする）。 */
   function moreButtonLabel(drawnCount: number, total: number): string {
-    return `さらに表示 (残り ${total - drawnCount} 件)`;
+    return `さらに表示 (残り ${countJa(total - drawnCount)} 件)`;
   }
 
   /** 「さらに表示」の表示可否とラベルを、描画済み件数と総数からそろえる。 */
@@ -3225,12 +3237,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const paperText = valueElement("paperText").value;
     const paperMode = recMode && Boolean(paperText.trim());
     let cnt = paperMode
-      ? `あなたの論文に合う投稿先 ${shown.length} 件${
-          shown.length > RECOMMENDATION_PAGE ? `（まず上位 ${RECOMMENDATION_PAGE} 件を表示）` : ""
+      ? `あなたの論文に合う投稿先 ${countJa(shown.length)} 件${
+          shown.length > RECOMMENDATION_PAGE
+            ? `（まず上位 ${countJa(RECOMMENDATION_PAGE)} 件を表示）`
+            : ""
         }`
       : recMode
         ? "投稿先を探すには論文情報を入力してください"
-        : `${shown.length} 件 / 全 ${rows.length} 件`;
+        : `${countJa(shown.length)} 件 / 全 ${countJa(rows.length)} 件`;
     // 読み上げ用の一行。`#count` は「のぞく」の内訳まで載せる長い欄なので、そこを
     // そのまま aria-live にすると 1 打鍵ごとに数十語が流れる（第 88 回で付けて実測）。
     // 件数と、解決結果・取得状態の短い通知だけをこちらに出す。
@@ -3253,34 +3267,35 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (!recMode && !paperMode) {
       const hidden = hiddenDeadlineCounts();
       const parts: string[] = [];
-      if (hidden.past) parts.push(`過去の締切 ${hidden.past} 件`);
-      if (hidden.kind) parts.push(`投稿締切以外の種別 ${hidden.kind} 件`);
+      if (hidden.past) parts.push(`過去の締切 ${countJa(hidden.past)} 件`);
+      if (hidden.kind) parts.push(`投稿締切以外の種別 ${countJa(hidden.kind)} 件`);
       // 「推定」の語は一覧の検索でも引ける（`推定` バッジの語を hay に入れている）が、
       // 既定ではここで行が落ちたままなので、出し方を同じ行に書く。
-      if (hidden.est) parts.push(`推定 ${hidden.est} 件（「推定締切を含める」で出ます）`);
+      if (hidden.est) parts.push(`推定 ${countJa(hidden.est)} 件（「推定締切を含める」で出ます）`);
       // 国内チェックで消えた行は「国内研究会ではない」だけの理由で落ちている。
       // 日本開催の国際会議もここに入るため、件数だけ出しておかないと検索をやめてしまう。
       if (hidden.window && state.win !== "all") {
         // 選んだ窓の名前は選択欄の表記のまま書く（「どのボタンを戻せばいいか」が分かる形で）。
         parts.push(
-          `「締切まで ${Number.parseInt(state.win, 10)} 日以内」を超える ${hidden.window} 件`,
+          `「締切まで ${Number.parseInt(state.win, 10)} 日以内」を超える ${countJa(hidden.window)} 件`,
         );
       }
       // 評価で絞った件数。選択欄の等級表記をそのまま書く（画面の語で探す人が探せる形に）。
       if (hidden.rank && state.rank)
-        parts.push(`評価「${state.rank}」を持たない行 ${hidden.rank} 件`);
+        parts.push(`評価「${state.rank}」を持たない行 ${countJa(hidden.rank)} 件`);
       // 分野チップも同じ。チップに押した語が並ぶので、外した語を日本語でそのまま書く。
       if (hidden.cats && state.cats.length)
         parts.push(
-          `分野「${state.cats.map((key: string) => catLabel(key)).join("・")}」を持たない行 ${hidden.cats} 件`,
+          `分野「${state.cats.map((key: string) => catLabel(key)).join("・")}」を持たない行 ${countJa(hidden.cats)} 件`,
         );
-      if (hidden.domestic) parts.push(`国内研究会・国内シンポジウム以外 ${hidden.domestic} 件`);
+      if (hidden.domestic)
+        parts.push(`国内研究会・国内シンポジウム以外 ${countJa(hidden.domestic)} 件`);
       if (hidden.online) {
         // 「記載が無いだけ」の行数を括弧で添える（対面だと断定していないことの説明にもなる）。
         parts.push(
           hidden.onlinePlaceUnknown
-            ? `オンライン参加の記載がない ${hidden.online} 件（うち開催地が未確認 ${hidden.onlinePlaceUnknown} 件）`
-            : `オンライン参加の記載がない ${hidden.online} 件`,
+            ? `オンライン参加の記載がない ${countJa(hidden.online)} 件（うち開催地が未確認 ${countJa(hidden.onlinePlaceUnknown)} 件）`
+            : `オンライン参加の記載がない ${countJa(hidden.online)} 件`,
         );
       }
       if (parts.length) cnt += ` ｜ のぞく: ${parts.join("・")}`;
@@ -3289,7 +3304,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
        * （2026-09-23 実測: 「研究会」は表 16 件に対し会期だけの該当 28 件、
        * 「ネットワーク」は 39 件に対し 31 件が画面に出ていなかった）。 */
       if (shown.length && scheduleOnly.length) {
-        const scheduleNote = ` ｜ 同じ条件で会期だけが確定している会 ${scheduleOnly.length} 件（締切は未定）`;
+        const scheduleNote = ` ｜ 同じ条件で会期だけが確定している会 ${countJa(scheduleOnly.length)} 件（締切は未定）`;
         cnt += scheduleNote;
         cntLive += scheduleNote;
       }
@@ -3353,7 +3368,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
     // 過ぎた締切を下へまとめたことは、件数欄に書く（黙って並びを変えないため）。
     if (!recMode && pastBlockTotal > 0 && pastBlockTotal < shown.length) {
-      const blockNote = ` ｜ 過ぎた締切 ${pastBlockTotal} 件は下にまとめました`;
+      const blockNote = ` ｜ 過ぎた締切 ${countJa(pastBlockTotal)} 件は下にまとめました`;
       cnt += blockNote;
       cntLive += blockNote;
     }
@@ -3401,7 +3416,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // CSV 書き出しは締切一覧の絞り込み結果に対してだけ意味がある（推薦モードでは出さない）。
     const exportBtn = $("exportCsv");
     if (exportBtn) {
-      exportBtn.textContent = `表示中の ${shown.length} 件を CSV でダウンロード`;
+      exportBtn.textContent = `表示中の ${countJa(shown.length)} 件を CSV でダウンロード`;
       exportBtn.hidden = recMode || !shown.length;
     }
     const showHistoryStatus =
@@ -4037,7 +4052,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         { key: sortKey, asc: sortAsc },
         sortColumnLabel,
       )}` +
-      ` ／ 表示 ${shown.length} 件 ／ 印刷した日時 ${fmtJst(new Date())} ／ ${generatedAtLabel(genAt)}`;
+      ` ／ 表示 ${countJa(shown.length)} 件 ／ 印刷した日時 ${fmtJst(new Date())} ／ ${generatedAtLabel(genAt)}`;
   }
   window.addEventListener("beforeprint", () => {
     fillPrintMeta();
