@@ -2147,6 +2147,11 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     // 別の人がその URL を開いたときの復元。
     "window.location.search = sent.slice(1); sortKey = DEFAULT_SORT_KEY; sortAsc = true; readUrl();",
     "const got = [sortKey, sortAsc];",
+    // 会期順で共有しても、開いた人の画面で同じ並びになる（新しい鍵も読み書きが対）。
+    "state.domestic = false; state.win = 'all'; sortKey = 'event'; sortAsc = true; writeUrl();",
+    "const sentEvent = written;",
+    "window.location.search = sentEvent.slice(1); sortKey = DEFAULT_SORT_KEY; sortAsc = false; readUrl();",
+    "const gotEvent = [sortKey, sortAsc];",
     // 表に出さない種別を URL で受けたら、既定に戻して理由を残す（黙って条件を変えない）。
     "state.kind = 'paper'; droppedKindNotice = ''; window.location.search = '?kind=notification'; readUrl();",
     "const droppedKind = [state.kind, droppedKindNotice];",
@@ -2154,18 +2159,18 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     "const restoredRank = state.rank;",
     // 既定の並びなら引数を足さない（URL は必要な情報だけ乗せる）。
     "sortKey = DEFAULT_SORT_KEY; sortAsc = true; state.domestic = false; writeUrl();",
-    "console.log(JSON.stringify([sent, got, written, droppedKind, restoredRank]));",
+    "console.log(JSON.stringify([sent, got, written, droppedKind, restoredRank, sentEvent, gotEvent]));",
   ].join("\n");
   const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
   expect(proc.status, proc.stderr).toBe(0);
-  const [sent, got, defaultUrl, droppedKind, restoredRank] = JSON.parse(proc.stdout.trim()) as [
-    string,
-    [string, boolean],
-    string,
-    [string, string],
-    string,
-  ];
+  const [sent, got, defaultUrl, droppedKind, restoredRank, sentEvent, gotEvent] = JSON.parse(
+    proc.stdout.trim(),
+  ) as [string, [string, boolean], string, [string, string], string, string, [string, boolean]];
   expect(sent).toContain("sort=date");
+  // 会期順の共有も対で動く（既定の向きなので `dir` は付かない）。
+  expect(sentEvent).toContain("sort=event");
+  expect(sentEvent).not.toContain("dir=");
+  expect(gotEvent).toEqual(["event", true]);
   expect(sent).toContain("dir=desc");
   expect(sent).toContain("domestic=1");
   expect(got).toEqual(["date", false]);
@@ -2888,16 +2893,25 @@ it("列見出しは並び替えの目印（aria-sort と語尾の矢印）を持
   // キーを押す検査をしていなかった（実装は張れているので不具合ではなかったが、検査が
   // 画面の挙動を語った形になっていた）。キー操作は
   // 「見出しの並び替えは Enter・Space で効き、行用の Enter と衝突しない」で実際に押す。
-  // 静的検証: ソート可能 4 ヘッダーに tabindex / aria-sort / data-sort がある
+  // 静的検証: ソート可能な各ヘッダーに tabindex / aria-sort / data-sort がある
+  // （第 126 回で「会期」が増えたので、個数の書写ではなく実装の鍵から数える）。
   const ths = [...html.matchAll(/<th([^>]*data-sort="([^"]+)"[^>]*)>/g)];
-  expect(ths.length).toBe(4);
   for (const m of ths) {
     expect(m[1]).toContain('tabindex="0"');
     expect(m[1]).toContain("aria-sort=");
   }
   // 既定の並び（残り昇順）に合わせて rem のみ ascending、他は none
   const attrs = Object.fromEntries(ths.map((m) => [m[2], /aria-sort="([^"]+)"/.exec(m[1])?.[1]]));
-  expect(attrs).toEqual({ rem: "ascending", date: "none", conf: "none", rank: "none" });
+  expect(attrs).toEqual({
+    rem: "ascending",
+    date: "none",
+    event: "none",
+    conf: "none",
+    rank: "none",
+  });
+  // 見出しの数は実装の並べ替え可能な鍵と一致する（どちらか一方だけ増える事故を防ぐ）。
+  const keys = /const SORTABLE_KEYS = \[([^\]]*)\];/.exec(siteRuntime())?.[1] || "";
+  expect(ths.length).toBe(keys.split(",").length);
   // 押す前に意味が分かるよう、見出しに title を持つ（語は崩さない）。
   for (const m of ths) {
     expect(m[1], `${m[2]} の見出しに説明が無い`).toContain("昇順・降順を切り替えます");
@@ -10536,4 +10550,119 @@ it("意味検索が使えない理由は、画面では日本語で出る（英�
   const guide = readFileSync(join(site, "index.html"), "utf8");
   expect(guide).toContain("意味検索が使えないとき");
   expect(guide).toContain("意味検索は利用不可");
+});
+
+it("会期でも並び替えられる（出張の計画は「いつ開かれるか」で見ることが多い・SPEC §7）", () => {
+  /* 並び替えられたのは 残り・日時・会議・ランク の 4 列だけで、表示している「会期」の列は
+   * 押せなかった（2026-09-23 実測: `SORTABLE_KEYS = ["rem", "date", "conf", "rank"]`）。
+   * 出張の計画は「いつ開かれるか」順で見ることが多く、締切順では会期が飛び飛びになる
+   * （既定画面 478 行を締切順で見たまま会期の昇順を数えると 707 箇所の逆転）。*/
+  const app = siteRuntime();
+  const cmp = jsFunction(app, "compareEventRows");
+  const due = jsFunction(app, "dueShown");
+  const group = jsFunction(app, "shouldGroupMonths");
+  const script = [
+    `const DUE_SRC = ${JSON.stringify(due)};`,
+    `const CMP_SRC = ${JSON.stringify(cmp)};`,
+    `const GROUP_SRC = ${JSON.stringify(group)};`,
+    "const dueShown = new Function('return (' + DUE_SRC + ')')();",
+    "const cmp = new Function('dueShown', 'return (' + CMP_SRC + ')')(dueShown);",
+    "const groups = new Function('return (' + GROUP_SRC + ')')();",
+    "const row = (name, event, due) => ({",
+    "  title: name, tEvent: event ? Date.parse(event + 'T00:00:00Z') + 3 * 3600000 : Number.NaN,",
+    "  t: due ? Date.parse(due + 'T15:00:00Z') : Number.NaN, tShown: due ? Date.parse(due + 'T15:00:00Z') : Number.NaN,",
+    "});",
+    "const rows = [row('a', '2026-10-01', '2026-05-01'), row('b', '2026-09-01', '2026-06-01'), row('c', '', '2026-04-01')];",
+    "const asc = rows.slice().sort((x, y) => cmp(x, y, 1)).map((r) => r.title).join('');",
+    "const desc = rows.slice().sort((x, y) => cmp(x, y, -1)).map((r) => r.title).join('');",
+    // 会期が同じ行は締切の近い順に揃う（同日に複数開く研究会で並びが揺れない）。
+    "const tied = [row('x', '2026-09-01', '2026-07-01'), row('y', '2026-09-01', '2026-03-01')]",
+    "  .sort((p, q) => cmp(p, q, 1)).map((r) => r.title).join('');",
+    "const groupingFor = (key) => groups({ sortKey: key, sortAsc: true, paper: false });",
+    "console.log(JSON.stringify({ asc, desc, tied, groupEvent: groupingFor('event'), groupDate: groupingFor('date') }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    asc: string;
+    desc: string;
+    tied: string;
+    groupEvent: boolean;
+    groupDate: boolean;
+  };
+  // 会期が決まっている行は会期順。未確認は向きに関係なく末尾（画面で「未確認」と
+  // 読める行が先頭に来る形を許さない）。
+  expect(out.asc).toBe("bac");
+  expect(out.desc).toBe("abc");
+  expect(out.tied).toBe("yx");
+  // 月のまとめ見出しは、締切の日付順をまとめるもの。会期順では出さない。
+  expect(out.groupDate, "締切順の月のまとめまで消えている").toBe(true);
+  expect(out.groupEvent, "会期順で締切月の見出しが出ている").toBe(false);
+
+  // 入口が三つ（見出し・狭い画面のボタン・実装の鍵）そろっていること。1 つ欠けると
+  // 押せない列になるか、押せない鍵を URL が受け付けることになる。
+  expect(app).toContain('SORTABLE_KEYS = ["rem", "date", "event", "conf", "rank"]');
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  expect(html).toContain('data-sort="event"');
+  expect(
+    (html.match(/data-sort="event"/g) || []).length,
+    "見出しと並び替えバーの両方に入口が必要",
+  ).toBe(2);
+  expect(html).toContain("会期 ↕");
+  // てびきが画面に出る語を説明していること。
+  expect(html).toContain("会期</strong>の順は出張の計画に向きます");
+  expect(html).toContain("昇順・降順のどちらでも<strong>末尾</strong>");
+});
+
+it("実データで会期順が並びとして成立している（未確認が末尾に固まる・SPEC §7）", () => {
+  const app = siteRuntime();
+  const script = [
+    `const { default: Recommender } = await import(${JSON.stringify(
+      `file://${join(site, "recommender.js")}`,
+    )});`,
+    `const CMP_SRC = ${JSON.stringify(jsFunction(app, "compareEventRows"))};`,
+    `const DUE_SRC = ${JSON.stringify(jsFunction(app, "dueShown"))};`,
+    "const fs = await import('node:fs');",
+    "const data = JSON.parse(fs.readFileSync(process.env.DSH_SITE_DATA || '', 'utf8'));",
+    "const dueShown = new Function('return (' + DUE_SRC + ')')();",
+    "const cmp = new Function('dueShown', 'return (' + CMP_SRC + ')')(dueShown);",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const rows = Recommender.candidateRows(data, now).filter((r) => (r.kind === 'abstract' || r.kind === 'paper') && r.t >= now && !r.ed.estimated);",
+    "const known = rows.filter((r) => Number.isFinite(r.tEvent)).length;",
+    "const sorted = rows.slice().sort((a, b) => cmp(a, b, 1));",
+    "let bad = 0, seenUnknown = false, prev = -Infinity;",
+    "for (const r of sorted) {",
+    "  if (!Number.isFinite(r.tEvent)) { seenUnknown = true; continue; }",
+    "  if (seenUnknown) bad++;",
+    "  if (r.tEvent < prev) bad++;",
+    "  if (r.tEvent > prev) prev = r.tEvent;",
+    "}",
+    // 並び替える前（既定の締切順）は同じ指標でどれくらい飛んでいるかも出す（空振りでないこと）。
+    "let before = 0, prev2 = -Infinity;",
+    "for (const r of rows) { if (!Number.isFinite(r.tEvent)) continue; if (r.tEvent < prev2) before++; if (r.tEvent > prev2) prev2 = r.tEvent; }",
+    "console.log(JSON.stringify({ total: rows.length, known, unknown: rows.length - known, bad, before }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 120_000,
+    env: { ...process.env, DSH_SITE_DATA: join(site, "data.json") },
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    total: number;
+    known: number;
+    unknown: number;
+    bad: number;
+    before: number;
+  };
+  expect(out.total).toBeGreaterThan(100);
+  // 会期が決まっている行と未確認の行、両方が実際に有ること（片だけなら検査が空振りする）。
+  expect(out.known).toBeGreaterThan(100);
+  expect(out.unknown).toBeGreaterThan(0);
+  expect(out.bad, "会期順に並べても逆転か未確認の先頭混入がある").toBe(0);
+  // 並べる前は飛んでいる（＝この並びが実際に効いている）。
+  expect(out.before).toBeGreaterThan(0);
 });

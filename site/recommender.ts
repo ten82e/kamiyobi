@@ -101,6 +101,10 @@ interface CandidateRow {
    * 食い違うため（SPEC §7）。 */
   tShown: number;
   tLast: number;
+  /** 会期（開催日）の開始 instant。JST の正午として置く（会期は暦日で持っていて、
+   *  時刻は持たない）。会期が決まっていない行は `NaN` – その行は並びの末尾に置く
+   *  （SPEC §7）。 */
+  tEvent: number;
   dateOnly?: boolean;
   localDate?: string;
   cats: string[];
@@ -416,6 +420,8 @@ function normalizeCandidateLike(value: unknown): CandidateRow | null {
     // 旧い呼び出し側が `tShown` を持たない場合は `t` に寄せる（行を落とさない）。
     tShown:
       typeof value.tShown === "number" ? value.tShown : typeof value.t === "number" ? value.t : 0,
+    // 会期の開始。持たない呼び出し側からも作れるように、無いときは「未確認」の形にする。
+    tEvent: typeof value.tEvent === "number" ? value.tEvent : Number.NaN,
     tLast: typeof value.tLast === "number" ? value.tLast : 0,
     dateOnly: Boolean(value.dateOnly),
     localDate: typeof value.localDate === "string" ? value.localDate : "",
@@ -4018,6 +4024,10 @@ const Recommender = (() => {
            * 終了したかどうかの判定は従来の幅（`t` / `tLast`）のまま – 「表示した日より
            * 前に終わっている可能性がある」という約束はそこが担っている。 */
           const tShown = dateOnly ? jstNoonMs(dl.local_date, t) : t;
+          /* 会期の並び順の基準。会期は時刻を持たないので、画面と同じ暦日の正午に置く。
+           * 未確認（`ed.event_start` が無い・読めない）は NaN のままにして、並びでは
+           * 末尾に寄せる（画面の「未確認」と同じ意味）。 */
+          const tEvent = jstNoonMs(String(ed.event_start || ""), Number.NaN);
           out.push({
             conf,
             ed,
@@ -4027,6 +4037,7 @@ const Recommender = (() => {
             t,
             tShown,
             tLast,
+            tEvent,
             dateOnly,
             localDate: dateOnly ? String(dl.local_date || "") : "",
             cats: conf.categories || [],
@@ -4080,6 +4091,8 @@ const Recommender = (() => {
         t: now,
         tShown: now,
         tLast: now,
+        // 常時受付のジャーナルに会期は無い（未確認の形にする）。
+        tEvent: Number.NaN,
         cats: cats,
         tags: tags,
         rankPairs: pairs,

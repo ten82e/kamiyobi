@@ -943,7 +943,8 @@ footer a:hover { text-decoration: underline; }
     <button type="button" data-sort="rem" onclick="toggleSort('rem')">残り ↕</button>
     <button type="button" data-sort="date" onclick="toggleSort('date')">日時（JST） ↕</button>
     <button type="button" data-sort="conf" onclick="toggleSort('conf')">会議 ↕</button>
-    <button type="button" data-sort="rank" onclick="toggleSort('rank')">ランク ↕</button>
+    <button type="button" data-sort="event" onclick="toggleSort('event')">会期 ↕</button>
+        <button type="button" data-sort="rank" onclick="toggleSort('rank')">ランク ↕</button>
   </div>
   <main id="results" tabindex="-1">
   <div class="print-meta" id="printMeta"></div>
@@ -957,7 +958,7 @@ footer a:hover { text-decoration: underline; }
           <th scope="col" tabindex="0" aria-sort="none" data-sort="conf" onclick="toggleSort('conf')" title="ここを押すと「会議」の昇順・降順を切り替えます">会議 ↕
           <th scope="col">種別</th>
           <th scope="col" tabindex="0" aria-sort="none" data-sort="rank" onclick="toggleSort('rank')" title="ここを押すと「ランク」の昇順・降順を切り替えます">ランク ↕
-          <th scope="col">会期</th>
+          <th scope="col" tabindex="0" aria-sort="none" data-sort="event" onclick="toggleSort('event')" title="ここを押すと「会期」の昇順・降順を切り替えます。会期が未確認の行は、向きに関係なく末尾に置きます">会期 ↕</th>
           <th scope="col">開催地</th>
         </tr>
       </thead>
@@ -1027,7 +1028,7 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div>
         <dt>並び順</dt>
-        <dd>列の見出し（残り・日時・会議・ランク）を押すと並び替わります。押している列だけが <code>↑</code> / <code>↓</code>（他は <code>↕</code>）なので、今の画面が何の順で並んでいるかを見出しだけで確かめられます。支援技術には、件数といっしょに「並び順: 残り 昇順」のように読まれます（見出しの矢印は読んでも変わらないので）。残りの昇順（既定）と日時の昇順では同じ月の締切をまとめて区切るため、降順にすると月でくくれた行になります。同じ締切日・同じランクの行が並んだときは、表に出る会議名（日本語は読み基準の五十音順）→ 種別（概要・論文）の順でぞろえます。狭い画面（スマートフォンの幅）では列の見出しを消して行をカードにするため、代わりに表の上に <strong>並べ替え</strong> の列を出します（押している列だけ <code>↑</code> / <code>↓</code>）。<code>ランク</code> は評価の<strong>体系名ではなく等級</strong>で並びます（<code>降順</code>がいちばん評価の高い行から。変更前は体系名が先に効いて、降順でも評価の付いていない行が先頭に来ていた）。複数の評価を持つ会議は最良の等級で入り、評価の無い行は降順では末尾に回ります。並び順も URL に残るので、そのまま共有可能です。</dd>
+        <dd>列の見出し（残り・日時・会期・会議・ランク）を押すと並び替わります。<strong>会期</strong>の順は出張の計画に向きます（いつ開かれるかで見る）。会期が<strong>未確認</strong>の行は、昇順・降順のどちらでも<strong>末尾</strong>に置きます – 画面で「未確認」と読める行が先頭に来るのは誤解を招くためです（会期順のときは月のまとめ見出しは出しません。月でくくるのは締切の日付順のときだけです）。押している列だけが <code>↑</code> / <code>↓</code>（他は <code>↕</code>）なので、今の画面が何の順で並んでいるかを見出しだけで確かめられます。支援技術には、件数といっしょに「並び順: 残り 昇順」のように読まれます（見出しの矢印は読んでも変わらないので）。残りの昇順（既定）と日時の昇順では同じ月の締切をまとめて区切るため、降順にすると月でくくれた行になります。同じ締切日・同じランクの行が並んだときは、表に出る会議名（日本語は読み基準の五十音順）→ 種別（概要・論文）の順でぞろえます。狭い画面（スマートフォンの幅）では列の見出しを消して行をカードにするため、代わりに表の上に <strong>並べ替え</strong> の列を出します（押している列だけ <code>↑</code> / <code>↓</code>）。<code>ランク</code> は評価の<strong>体系名ではなく等級</strong>で並びます（<code>降順</code>がいちばん評価の高い行から。変更前は体系名が先に効いて、降順でも評価の付いていない行が先頭に来ていた）。複数の評価を持つ会議は最良の等級で入り、評価の無い行は降順では末尾に回ります。並び順も URL に残るので、そのまま共有可能です。</dd>
       </div>
       <div>
         <dt>印刷</dt>

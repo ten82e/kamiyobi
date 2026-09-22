@@ -431,7 +431,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   const RECOMMENDATION_PAGE = 20;
   let selectedIndex = -1;
   /** ソートできる列の key。`th[data-sort]` と一致させる（ズレは検査で拾う）。 */
-  const SORTABLE_KEYS = ["rem", "date", "conf", "rank"];
+  const SORTABLE_KEYS = ["rem", "date", "event", "conf", "rank"];
   const DEFAULT_SORT_KEY = "rem";
   let sortKey = DEFAULT_SORT_KEY;
   let sortAsc = true;
@@ -780,6 +780,32 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const cmp = conferenceNameCell(a).localeCompare(conferenceNameCell(b), "ja");
     if (cmp) return cmp * mult;
     return (kindSortIndex(a.kind) - kindSortIndex(b.kind)) * mult;
+  }
+
+  /** 会期順の比較。会期が決まっていない行（表では「未確認」）は末尾に寄せる –
+   * 画面で「未確認」と読める行が、並び順では先頭に来るのは噓になる（時刻未確認の行を
+   * 末尾に置くのと同じ約束）。同じ会期の行は締切の近い順に揃える。 */
+  function compareEventRows(a: AppRow, b: AppRow, mult: number = 1): number {
+    const key = (r: AppRow) => (Number.isFinite(r.tEvent) ? r.tEvent : Number.NaN);
+    const aKey = key(a);
+    const bKey = key(b);
+    const aTail = Number.isFinite(aKey) ? 0 : 1;
+    const bTail = Number.isFinite(bKey) ? 0 : 1;
+    if (aTail !== bTail) return aTail - bTail;
+    const at = Number.isFinite(aKey) ? aKey : 0;
+    const bt = Number.isFinite(bKey) ? bKey : 0;
+    if (at !== bt) return at < bt ? -1 * mult : 1 * mult;
+    // 会期が同じ行（同日に複数ある研究会など）は、締切の基準でそろえる。
+    const aDue = Number.isFinite(dueShown(a)) ? dueShown(a) : 0;
+    const bDue = Number.isFinite(dueShown(b)) ? dueShown(b) : 0;
+    if (aDue !== bDue) return aDue < bDue ? -1 * mult : 1 * mult;
+    return 0;
+  }
+
+  /** 比較に使う締切の基準（`compareDeadlineRows` と同じ組み立て。検査で単位切り出し
+   * するので、外部の決まり値を見ずにこの中で完結させる）。 */
+  function dueShown(r: AppRow): number {
+    return Number.isFinite(r.tShown) ? r.tShown : Number.isFinite(r.t) ? r.t : Number.NaN;
   }
 
   /** 種別の並び順（種別セレクトに並べる順と共通。書き写さない）。 */
@@ -1921,6 +1947,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         // のでカタカナ語は漢字語より前の段に出る（異スクリプト間の段差は越えられない）。
         const cmp = conferenceNameCell(a).localeCompare(conferenceNameCell(b), "ja");
         return cmp ? cmp * mult : (a.tShown - b.tShown) * mult;
+      } else if (sortKey === "event") {
+        // 会期順（出張の計画は「いつ開かれるか」で見ることが多い）。未確認は末尾。
+        return compareEventRows(a, b, mult);
       } else if (sortKey === "rank") {
         // 等級の点数で並べる（`rankSortKey` が正本）。`rankPairs` をそのまま文字列比較
         // すると体系名が先に効いて `ccf:C` が `core:A*` より前に来ていた。
