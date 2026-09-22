@@ -868,7 +868,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     html +=
       '<div style="font-size: 0.85rem;">' +
       '<p style="margin-bottom: 8px;"><strong>開催地:</strong> ' +
-      esc(placeShown || "未定") +
+      esc(placeShown || UNCONFIRMED_JA) +
       "</p>" +
       (placeShown && placeShown !== placeRaw
         ? '<p style="margin-bottom: 8px; color: var(--muted); font-size: 0.8rem;">原表記: ' +
@@ -876,7 +876,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           "</p>"
         : "") +
       '<p style="margin-bottom: 8px;"><strong>会期:</strong> ' +
-      esc(r.ed.date_text || r.ed.event_start || "未定") +
+      esc(r.ed.date_text || r.ed.event_start || UNCONFIRMED_JA) +
       "</p>" +
       laterEditionsHtml +
       // 主題タグは日本語表記で出す（会議名から場を推定しないため）。
@@ -1356,6 +1356,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   /** 相対月を展開した後の検索語。`filter()` の描画周期内でだけ有効（利用者の入力文は `state.q`）。 */
   let searchQuery = "";
+
+  /* 値が空のとき、記号「-」だけを出さない。利用者は「該当なし」「収録漏れ」
+   * 「公式が出ていない」を区別できない。確認できていないことを短い語で出し、
+   * 詳しい理由は title に落とす。「未定」にすると会議が決めていないことになり、
+   * kamiyobi が確認できていないという事実とは別の話になるため使わない。 */
+  const UNCONFIRMED_JA = "未確認";
+  const UNCONFIRMED_TITLES_JA = {
+    event: " kamiyobi が公式で会期を確認できていません。".trim(),
+    place: " kamiyobi が公式で開催地を確認できていません。".trim(),
+    rank: "CCF・CORE の一覧でこの会議の評価が確認できていません。".trim(),
+  };
 
   /** 分野チップの件数（`filter()` が分野以外の条件を通った行について数え直す）。 */
   let catFacetCounts: Record<string, number> = {};
@@ -1950,11 +1961,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         c4.appendChild(e);
       });
     } else {
-      line(c4, "-", "sub");
+      const rankCell = line(c4, UNCONFIRMED_JA, "sub");
+      if (rankCell) rankCell.title = UNCONFIRMED_TITLES_JA.rank;
     }
 
     const c5 = td(tr, "会期");
-    let span = "-";
+    let span = UNCONFIRMED_JA;
     if (r.ed.event_start) {
       // 出張・会場押さえは曜日で見込むので、ISO 日付に曜日を添える（不明なら出さない）。
       const startDay = Recommender.weekdayJaFromDate(r.ed.event_start);
@@ -1964,13 +1976,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           ? `${r.ed.event_start}${startDay ? `(${startDay})` : ""} 〜 ${r.ed.event_end}${endDay ? `(${endDay})` : ""}`
           : `${r.ed.event_start}${startDay ? `(${startDay})` : ""}`;
     }
-    line(c5, span, "sub nowrap");
+    const spanCell = line(c5, span, "sub nowrap");
+    if (spanCell && span === UNCONFIRMED_JA) spanCell.title = UNCONFIRMED_TITLES_JA.event;
 
     const c6 = td(tr, "開催地");
     const placeShown = Recommender.placeJa(r.ed.place);
-    const placeCell = line(c6, placeShown || "-", "sub");
-    // 日本語化は流し読み用。会場名・市区郡を含む原文は title に落とす。
-    if (placeCell && r.ed.place && placeShown !== r.ed.place) placeCell.title = r.ed.place;
+    const placeCell = line(c6, placeShown || UNCONFIRMED_JA, "sub");
+    if (placeCell) {
+      // 日本語化は流し読み用。会場名・市区郡を含む原文は title に落とす。
+      if (placeShown && placeShown !== r.ed.place) placeCell.title = String(r.ed.place || "");
+      else if (!placeShown) placeCell.title = UNCONFIRMED_TITLES_JA.place;
+    }
 
     return tr;
   }

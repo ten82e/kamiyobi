@@ -2494,7 +2494,7 @@ it("site UI is readable for Japanese researchers: field names, JST header, help 
   expect(template).toMatch(/\.count-kbd \{ display: none; \}/);
   // 開催地は国名・開催形式を日本語に寄せ、原文（会場名・市区郡）は title と詳細に残す。
   expect(runtime).toContain("Recommender.placeJa(r.ed.place)");
-  expect(runtime).toContain("placeCell.title = r.ed.place");
+  expect(runtime).toContain("placeCell.title = String(r.ed.place");
   expect(runtime).toContain("原表記: ");
   // 月見出し行は選択・詳細・キーボード移動の対象にしない（shown[] とのズレ防止）。
   expect(runtime).toContain('classList.contains("month-row")');
@@ -4246,4 +4246,92 @@ it("説明文に開発用語を残さない（SPEC §7）", () => {
     const hits = literals.filter((text) => text.includes(word));
     expect(hits, `画面に出る文言に「${word}」が残っている`).toEqual([]);
   }
+});
+
+it("unknown 会期・開催地・ランクを「未確認」として出す（SPEC §7）", () => {
+  const app = siteRuntime("app.js");
+  const dir = mkdtempSync(join(tmpdir(), "cfp-unknown-"));
+  const recPath = join(dir, "recommender.mjs");
+  writeFileSync(recPath, siteRuntime("recommender.js"));
+  const script = [
+    "(async () => {",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${recPath}`)});`,
+    "const mkEl = (tag) => ({ tagName: tag, children: [], childNodes: [], textContent: '',",
+    "  className: '', title: '', href: '', target: '', rel: '', tabIndex: 0, style: {},",
+    "  hidden: false, colSpan: 0, attrs: {},",
+    "  appendChild(n) { this.children.push(n); this.childNodes.push(n); return n; },",
+    "  setAttribute(k, v) { this.attrs[k] = v; },",
+    "  addEventListener() {}, querySelectorAll() { return []; },",
+    "  classList: { contains: () => false, toggle() {}, add() {}, remove() {} } });",
+    "const document = { createElement: mkEl, createTextNode: (t) => ({ textContent: t }) };",
+    "const KIND_LABEL = { paper: '論文締切', abstract: '概要締切', journal: '常時受付' };",
+    "const now = Date.UTC(2026, 7, 10);",
+    "const fmtJst = () => 'JST';",
+    "const fmtDate = () => 'DATE';",
+    "const fmtAoE = () => 'AoE';",
+    "const officialZone = () => 'JST';",
+    "const catLabel = (k) => k;",
+    "const titleWithYear = (t) => String(t);",
+    "const verificationTag = () => null;",
+    "const verificationAlert = () => '';",
+    "const toggleDetail = () => {};",
+    "const openDrawer = () => {};",
+    "const esc = (s) => String(s == null ? '' : s);",
+    "const safeExternalUrl = (u) => u;",
+    "const $ = () => null;",
+    "const window = {};",
+    jsFunction(app, "td"),
+    jsFunction(app, "line"),
+    // 定数も正本から写す（文言の正典をテスト側に二重化しない）。
+    app.match(/const UNCONFIRMED_JA = [^\n]*;/)?.[0] ?? "",
+    app.match(/const UNCONFIRMED_TITLES_JA = \{[\s\S]*?\};/)?.[0] ?? "",
+    // 経過状態の判定は純粋なので正本から取る（書かない）。
+    jsFunction(app, "rowDateOnlyState"),
+    jsFunction(app, "rowIsPast"),
+    jsFunction(app, "rowIsFuture"),
+    // 「あと N 日」も正本から（ダミー値で通す検査にしない）。
+    jsFunction(app, "remain"),
+    "const DAY = 86400000;",
+    jsFunction(app, "makeRow"),
+    "const flat = (n) => (n.textContent || '') + n.children.map((c) => '|' + flat(c)).join('');",
+    "const titles = (n, out = []) => { if (n.title) out.push(n.title); n.children.forEach((c) => titles(c, out)); return out; };",
+    "const cells = (n, out = {}) => {",
+    "  if (n.attrs && n.attrs['data-label']) out[n.attrs['data-label']] = flat(n);",
+    "  n.children.forEach((c) => cells(c, out));",
+    "  return out;",
+    "};",
+    "const mk = (place, eventStart) => ({ kind: 'paper', est: false, cats: ['hpc'], rankPairs: [],",
+    "  hay: 'x', tags: ['domestic-jp'], t: Date.UTC(2026, 8, 1), tLast: Date.UTC(2026, 8, 1),",
+    "  dateOnly: false, ed: { place, event_start: eventStart, event_end: eventStart, deadlines: [], date_text: '' },",
+    "  dl: { kind: 'paper' }, conf: { key: 'k', title: '研究会', link: '' } });",
+    "const empty = makeRow(mk('', null));",
+    "const known = makeRow(mk('Kyoto, Japan', '2026-11-12'));",
+    "console.log(JSON.stringify({",
+    "  emptyCells: cells(empty), emptyTitles: titles(empty),",
+    "  knownCells: cells(known), knownTitles: titles(known),",
+    "}));",
+    "})().catch((e) => { console.error(e && e.stack || String(e)); process.exit(1); });",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    emptyCells: Record<string, string>;
+    emptyTitles: string[];
+    knownCells: Record<string, string>;
+    knownTitles: string[];
+  };
+  // 空の値は「-」ではなく、確認できていないことを短い語で出す。
+  expect(out.emptyCells["会期"]).toContain("未確認");
+  expect(out.emptyCells["開催地"]).toContain("未確認");
+  expect(out.emptyCells["ランク"]).toContain("未確認");
+  expect(out.emptyTitles.join(" ")).toContain("CCF・CORE");
+  // 会議が決めていないこととは別の話なので、「未定」にしない。
+  expect(JSON.stringify(out.emptyCells)).not.toContain("未定");
+  // 値がある行は従来どおり（会期は ISO + 曜日、開催地は日本語化し、原表記は title に残す）。
+  expect(out.knownCells["会期"]).toContain("2026-11-12(木)");
+  expect(out.knownCells["開催地"]).toContain("日本");
+  expect(out.knownTitles.join(" ")).toContain("Kyoto, Japan");
+  // ドロワーも同じ語を使う（表とドロワーで言い方が割れないようにする）。
+  expect(app).toContain("esc(placeShown || UNCONFIRMED_JA)");
+  expect(app).toContain("esc(r.ed.date_text || r.ed.event_start || UNCONFIRMED_JA)");
 });
