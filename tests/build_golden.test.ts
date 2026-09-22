@@ -4913,3 +4913,90 @@ it("プリセットボタンは、その状態そのもののときだけ点灯�
   expect(out.both).toEqual([]);
   expect(out.domesticPlusQuery).toEqual([]);
 });
+
+it("実カタログで、表に出す語はすべて日本語表記を持つ（SPEC §7）", () => {
+  // 「表に出す語が検索で引けない」と同じ系列の欠陥を先回りする検査。
+  // 内部トークン（kind・分野・主題タグ）に対応する日本語表記が無いと、
+  // 種別と分野は英語のまま出たり、主題ドロワーから語が消えたりする。
+  // 対応表に無い語をどう扱うかを、実データで全値なべて確認する。
+  const runtime = siteRuntime("recommender.js");
+  const dataPath = join(site, "data.json");
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(dataPath)}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const kindTable = Recommender.kindLabelTable();",
+    "const kinds = new Map();",
+    "rows.forEach((r) => {",
+    "  kinds.set(r.kind, (kinds.get(r.kind) || 0) + 1);",
+    "});",
+    // 分野は対応表が無ければ key をそのまま返す実装。key と一致 = 未整備。
+    "const cats = new Map();",
+    "rows.forEach((r) => {",
+    "  (r.cats || []).forEach((c) => {",
+    "    cats.set(c, (cats.get(c) || 0) + 1);",
+    "  });",
+    "});",
+    "const tags = new Map();",
+    "DATA.conferences.forEach((c) => {",
+    "  (c.tags || []).forEach((t) => {",
+    "    tags.set(t, (tags.get(t) || 0) + 1);",
+    "  });",
+    "});",
+    "console.log(JSON.stringify({",
+    "  kindsNoJa: [...kinds.keys()].filter((k) => !kindTable[k]),",
+    "  catsNoJa: [...cats.keys()].filter((c) => Recommender.categoryLabelJa(c) === c),",
+    "  tagsNoJa: [...tags.entries()]",
+    "    .filter(([t]) => !Recommender.tagLabelJa(t))",
+    "    .map(([t, n]) => ({ tag: t, conferences: n })),",
+    // 日本語表記を持ちながらドロワーに出ない語（＝主題から落ちる情報）。
+    "  tagsHiddenWithJa: [...tags.entries()]",
+    "    .filter(([t]) => {",
+    "      const label = Recommender.tagLabelJa(t);",
+    "      return Boolean(label) && Recommender.topicTagsJa([t]).indexOf(label) < 0;",
+    "    })",
+    "    .map(([t, n]) => ({ tag: t, conferences: n })),",
+    "}));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    kindsNoJa: string[];
+    catsNoJa: string[];
+    tagsNoJa: { tag: string; conferences: number }[];
+    tagsHiddenWithJa: { tag: string; conferences: number }[];
+  };
+  expect(out.kindsNoJa, "日本語表記の無い締切種別").toEqual([]);
+  expect(out.catsNoJa, "日本語表記の無い分野").toEqual([]);
+  // 日本語表記を持ちながら主題から落ちる語は、理由を持つものだけ。
+  // `journal` はジャーナルを表す構造タグで、種別列が「常時受付」として既に伝えている
+  // （主題に並べると分野と種別が混ざるため出さない）。
+  expect(out.tagsHiddenWithJa.map((t) => t.tag).sort()).toEqual(["journal"]);
+  expect(out.tagsHiddenWithJa[0].conferences, "journal タグの件数").toBeGreaterThan(0);
+  /* 主題に出さないタグの許容リスト。増えたら理由を書く — 対応表に無い語は主題から
+   * 黙って消えるので、データにタグを足した人が気づかないままたくさん溜まるのをここで止める。
+   *   domestic-jp       … 「国内のみ」しぼりの構造タグ（行頭に「国内」を出すので主題には出さない）
+   *   sensys            … 統合先の名前（「掲載終了」「統合済み」の語が既に伝える）
+   *   virtual-execution … 開催地が "Virtual" を示し「オンライン参加可」が伝える */
+  const ALLOWED_UNLABELED = ["domestic-jp", "sensys", "virtual-execution"];
+  expect(
+    out.tagsNoJa.filter((t) => ALLOWED_UNLABELED.indexOf(t.tag) < 0),
+    "理由の無い、日本語表記の無い主題タグ",
+  ).toEqual([]);
+  // 開催地がオンライン参加可を示さない会議に `virtual-execution` を付けると、
+  // 主題から落ちた情報がどこにも出なくなる。実データで当たった行について確かめる。
+  const catalog = JSON.parse(readFileSync(dataPath, "utf8")) as {
+    conferences: { key: string; tags?: string[]; editions?: { place?: string }[] }[];
+  };
+  catalog.conferences
+    .filter((c) => (c.tags || []).indexOf("virtual-execution") >= 0)
+    .forEach((c) => {
+      expect(
+        (c.editions || []).some((ed) => Recommender.placeOffersOnline(String(ed.place || ""))),
+        `${c.key}: 開催地がオンライン参加可を示さないのにタグが主題から落ちる`,
+      ).toBe(true);
+    });
+});
