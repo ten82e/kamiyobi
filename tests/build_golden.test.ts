@@ -8686,3 +8686,47 @@ it("収録状況の四つ組は、何を数えているかと単位がラベル�
     expect(runtime, `収録状況の更新先が消えている: ${id}`).toContain(`"${id}"`);
   }
 });
+
+it("早め絞り込みのボタンは、同じ条件を出す欄と同じ語で書かれている（SPEC §7）", () => {
+  /* ボタンの語が、同じ条件を出す欄と割れていた（2026-09-23 実測）。
+   * 分野チップは「高性能計算」なのに、ボタンだけ内部キーの HPC を出していた。
+   * チェック欄は「国内研究会・国内シンポジウムのみ」なのに、ボタンは「国内研究会」だけで、
+   * プリセットの方が狭い条件だと読めた（中身は同じ domestic-jp）。
+   * てびきが並べる語も実装と食い違っていた。 */
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const barStart = template.indexOf('<div class="presets-bar');
+  expect(barStart).toBeGreaterThan(0);
+  const bar = template.slice(barStart, template.indexOf("</div>", barStart));
+  const buttons = Array.from(bar.matchAll(/data-preset="([a-z_0-9]+)"[^>]*>([^<]*)<\/button>/g));
+  expect(buttons.length, "早め絞り込みのボタンが見つからない").toBe(5);
+  const labels = new Map(buttons.map((m) => [m[1], m[2]]));
+
+  // 分野のボタンは、分野チップと同じ日本語の語を使う（内部キーを画面に出さない）。
+  const rec = siteRuntime("recommender.js");
+  const catLabel = (key: string) => {
+    const at = rec.indexOf("CATEGORY_LABELS_JA");
+    expect(at, "CATEGORY_LABELS_JA が見つからない").toBeGreaterThan(0);
+    const m = new RegExp(`\\b${key}: "([^"]+)"`).exec(rec.slice(at, at + 2000));
+    expect(m, `分野の語が見つからない: ${key}`).not.toBeNull();
+    return (m as RegExpExecArray)[1];
+  };
+  const hpc = catLabel("hpc");
+  const systems = catLabel("systems");
+  expect(labels.get("hpc_sys")).toBe(`${hpc}・${systems}`);
+  expect(bar, "内部キーの HPC を画面に出している").not.toContain("HPC");
+
+  // 国内のボタンは、チェック欄と同じ集まり名を使う（同じ物に二つの名前を付けない）。
+  const checkbox = /<span title="[^"]*">([^<]*国内研究会[^<]*)<\/span>/.exec(template);
+  expect(checkbox, "国内のチェック欄の語が見つからない").not.toBeNull();
+  const domestic = labels.get("domestic") || "";
+  expect(checkbox![1], `ボタンの語がチェック欄と違う集まり名: ${domestic}`).toContain(domestic);
+
+  // てびきが並べる語が実装と同じ（案内と実装のズレ検出）。
+  const help = template.slice(template.indexOf('id="helpPanel"'));
+  const guide = help.slice(0, help.indexOf("</dl>"));
+  for (const [, , label] of buttons) {
+    expect(guide, `てびきにボタン「${label}」が実装と同じ語で書かれていない`).toContain(
+      `「${label}」`,
+    );
+  }
+});
