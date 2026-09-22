@@ -9970,3 +9970,32 @@ it("画面に出る曜日が検索の語になり、週末・平日も寄せた�
   expect(template, "てびきが曜日の検索を説明していない").toContain("曜日も引けます");
   expect(template).toContain("「週末」（土曜日・日曜日）");
 });
+
+it("「視差効果を減らす」設定では動きが消え、開閉自体はそのまま効く（SPEC §7）", () => {
+  /* OS の設定で動きを抑えている人。第 110 回で JS のスクロールはこの設定を見たが、
+   * CSS の遷移は見ていなかった（2026-09-23 実測: `prefers-reduced-motion` の扱いが
+   * スタイル内に 0 箇所で、行の詳細は 0.25 秒で滑り込んでいた）。*/
+  const html = siteHtmlRuntime();
+  const style = html.slice(html.indexOf("<style"), html.indexOf("</style>"));
+  const blocks = cssBlocks(style);
+  const reduced = blocks.filter((b) => /prefers-reduced-motion/.test(b.media || ""));
+  expect(reduced.length, "動きを抑える設定の扱いがスタイルに無い").toBeGreaterThan(0);
+  const star = reduced.find((b) => b.selector === "*");
+  expect(star, "要素全体の動きを止めていない").toBeDefined();
+  expect(star!.body, "遷移の長さを短くしていない").toContain("transition-duration: 0.01ms");
+  // 待ち受けの安全のため `none` ではなく 0.01ms にする（0 にすると遷移終了が来ない）。
+  expect(star!.body).not.toMatch(/transition[^:]*:\s*none/);
+  // 解決関数（メディアクエリの条件は幅だけを見る）でも、動きが消えた値になること。
+  expect(effectiveCss(style, "*", "transition-duration", 1200)).toContain("0.01ms");
+  // 通常時の動きまで潰していたら意味が無い（既定は従来のままだこと）。
+  expect(effectiveCss(style, ".drawer", "transition", 1200)).toContain("0.25s");
+  expect(effectiveCss(style, ".drawer-backdrop", "transition", 1200)).toContain("0.2s");
+  // 開閉はクラスの宣言で決まり、遷移の完了に依存しない（動きを消しても開く・閉じるが
+  // そのまま効くことを、宣言そのもので見る）。
+  expect(effectiveCss(style, ".drawer-backdrop", "visibility", 1200)).toBe("hidden");
+  expect(effectiveCss(style, ".drawer-backdrop.active", "visibility", 1200)).toBe("visible");
+  expect(effectiveCss(style, ".drawer", "right", 1200)).toBe("-480px");
+  expect(effectiveCss(style, ".drawer-backdrop.active .drawer", "right", 1200)).toBe("0");
+  // JS 側（行のスクロール）も同じ設定を見ている – 片方だけ守る形に戻さない。
+  expect(siteRuntime()).toContain("prefers-reduced-motion");
+});

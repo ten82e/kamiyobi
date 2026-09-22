@@ -713,6 +713,25 @@ footer a:hover { text-decoration: underline; }
 
 /* 印刷: 締切一覧を研究室に貼る・グループ会議で回覧する需要に応える。
    画面用の操作要素を落として紙で役に立つ情報だけ残し、紙で押せないリンクは URL を印字する。 */
+/* OS の「視差効果を減らす」設定の人。動きを消す。
+   * 第 110 回で JS のスクロール（`scrollIntoView`）はこの設定を見たが、CSS の遷移は
+   * そのまま残っていた – 同じ設定を JS だけ守っても半止まりだった（2026-09-23 実測:
+   * `prefers-reduced-motion` の扱いがスタイル内に 0 箇所。ドロワーは 0.25 秒で滑り込む）。
+   * `none` にせず 0.01ms にするのは、遷移終了を待つコードが入っても止まらないようにする
+   * ため（実測で待ち受けは無いが、将来に備える）。表示/非表示は `.active` クラスが
+   * 直接決めるので、閉じる操作が効かなくなることはない（下の検査で見る）。 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @media print {
   @page { margin: 14mm; }
   body {
