@@ -2530,6 +2530,13 @@ it("upcoming.md keeps a running meeting and drops a finished one", async () => {
 
 // --- the site's meeting rows run to the end of the meeting (SPEC.md 7) -----
 
+/* `onKeydown` を抜き出して叩く検査は、第 135 回で増えたキーの振り分け関数も一緒に渡す
+ * （抜き出した関数は独立していないと `ReferenceError` になる – 同じ穴に二度落ちないため、
+ * 生の抜き出しではなくこの helper を使う）。 */
+function keydownWithBlockers(src: string): string {
+  return `${jsFunction(src, "keyBlockedByTarget")}\n${jsFunction(src, "onKeydown")}`;
+}
+
 function jsFunction(html: string, name: string): string {
   const start = html.indexOf(`function ${name}(`);
   let depth = 0;
@@ -3240,7 +3247,7 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
   expect(html).toContain("tr.tabIndex = -1;");
   expect(html).toContain("<kbd>d</kbd> 詳細");
   // 実行検証: d キーで選択行のドロワーが開き、開閉でフォーカスが移る / 戻る
-  const keySrc = jsFunction(html, "onKeydown");
+  const keySrc = keydownWithBlockers(html);
   const drawerDepsSrc = [
     jsFunction(html, "meetingRangeJa"),
     jsFunction(html, "upcomingEditionsOf"),
@@ -3273,7 +3280,7 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
     `const SUMMARY = ${JSON.stringify(summarySrc)};`,
     `const CLOSE = ${JSON.stringify(closeSrc)};`,
     drawerDepsSrc as string,
-    "const onKeydown = new Function('window', 'document', '$', 'selectedIndex', 'shown', 'openDrawer', 'closeDrawer', 'return (' + KEY + ')')(window, document, $, 1, ['A', 'B'], openSpy, closeSpy);",
+    "const onKeydown = new Function('window', 'document', '$', 'selectedIndex', 'shown', 'openDrawer', 'closeDrawer', KEY + ';return onKeydown;')(window, document, $, 1, ['A', 'B'], openSpy, closeSpy);",
     // d キー → 選択行 (shown[1]) のドロワーが開き、行にフォーカスが移る
     "onKeydown({ key: 'd', preventDefault() {}, target: { tagName: 'BODY' } });",
     "const dOpened = calls.open.length === 1 && calls.open[0] === 'B';",
@@ -3302,14 +3309,14 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
 
 it("global shortcuts respect editable targets and recommendation mode", () => {
   const html = siteHtmlRuntime();
-  const keySrc = jsFunction(html, "onKeydown");
+  const keySrc = keydownWithBlockers(html);
   const script = [
     "const calls = { prevented: 0, focused: 0, opened: 0 };",
     "const state = { mode: 'recommend' };",
     "const window = {};",
     "const document = {};",
     "function $(id) { return id === 'q' ? { focus() { calls.focused++; } } : null; }",
-    "const onKeydown = new Function('state', 'window', 'document', '$', 'selectedIndex', 'shown', 'openDrawer', 'closeDrawer', 'return (' + KEY + ')')(state, window, document, $, 0, [], () => { calls.opened++; }, () => {});",
+    "const onKeydown = new Function('state', 'window', 'document', '$', 'selectedIndex', 'shown', 'openDrawer', 'closeDrawer', KEY + ';return onKeydown;')(state, window, document, $, 0, [], () => { calls.opened++; }, () => {});",
     "function event(key, target) { onKeydown({ key, target, preventDefault() { calls.prevented++; } }); }",
     "event('j', { tagName: 'TEXTAREA', isContentEditable: false });",
     "event('j', { tagName: 'DIV', isContentEditable: true });",
@@ -8186,7 +8193,7 @@ it("キーボード操作は効き、入力中は効かない（SPEC §7）", ()
   const runtime = siteRuntime();
   const script = [
     "(async () => {",
-    `const src = ${JSON.stringify(jsFunction(runtime, "onKeydown"))};`,
+    `const src = ${JSON.stringify(keydownWithBlockers(runtime))};`,
     "const calls = { update: 0, open: [], drawer: [], close: 0, focus: [] };",
     // `onKeydown` の `d` と `updateRowSelection` は行の classList を見るので、作り物でも持つ。
     "const rows = [0, 1, 2].map((i) => ({",
@@ -8210,7 +8217,7 @@ it("キーボード操作は効き、入力中は効かない（SPEC §7）", ()
     "  const fn = new Function(",
     "    'state', 'shown', 'selectedIndex', 'updateRowSelection', 'openDrawer', 'closeDrawer',",
     "    'safeExternalUrl', '$', 'window',",
-    "    'return (' + src + ')',",
+    "    src + ';return onKeydown;',",
     "  );",
     "  const e = {",
     "    key,",
@@ -9288,8 +9295,10 @@ it("てびきのキーボード表記が、実装が扱うキーと欠けずに�
     "const row = { conf: { link: 'https://example.org' }, ed: { link: 'https://example.org/e' } };",
     "const rowEl = { classList: { contains: () => false }, focus() {} };",
     `const KEY = ${JSON.stringify(jsFunction(app, "onKeydown"))};`,
+    // onKeydown はキーの振り分け関数を呼ぶので、抜き出した 2 つを一緒に作る。
+    `const KEYBLOCK = ${JSON.stringify(jsFunction(app, "keyBlockedByTarget"))};`,
     'const onKeydown = new Function("state", "window", "document", "$", "selectedIndex", "shown",',
-    '  "openDrawer", "closeDrawer", "safeExternalUrl", "return (" + KEY + ")")(',
+    '  "openDrawer", "closeDrawer", "safeExternalUrl", KEYBLOCK + ";" + KEY + ";return onKeydown;")(',
     "  { mode: 'deadlines' },",
     "  { open: () => { calls.openUrl++; } },",
     "  { activeElement: null },",
@@ -10199,7 +10208,7 @@ it("検索欄で Esc を押すと、語を消さずに欄を出て選択行に�
    * （2026-09-23 実測: 選択行に返していなかった – 行の詳細を閉じるときだけ戻す形）。
    * 支援技術では「どこを読めばいいのか」が分からなくなる。*/
   const html = siteRuntime();
-  const keySrc = jsFunction(html, "onKeydown");
+  const keySrc = keydownWithBlockers(html);
   const selectSrc = jsFunction(html, "updateRowSelection");
   const script = [
     "const calls = [];",
@@ -10225,7 +10234,7 @@ it("検索欄で Esc を押すと、語を消さずに欄を出て選択行に�
     `const KEY = ${JSON.stringify(keySrc)};`,
     `const SELECT = ${JSON.stringify(selectSrc)};`,
     "const make = (selectedIndex) =>",
-    "  new Function('window', 'document', '$', 'selectedIndex', 'shown', 'openDrawer', 'closeDrawer', 'updateRowSelection', 'return (' + KEY + ')')(",
+    "  new Function('window', 'document', '$', 'selectedIndex', 'shown', 'openDrawer', 'closeDrawer', 'updateRowSelection', KEY + ';return onKeydown;')(",
     "    window, document, $, selectedIndex, shown, () => {}, () => {}, updateRowSelection);",
     "const updateRowSelection = new Function('window', 'document', '$', 'selectedIndex', 'return (' + SELECT + ')')(window, document, $, 1);",
     // ① 検索欄で Esc → 欄を出て（blur）、選んでいた行にフォーカスが戻る。
@@ -11324,4 +11333,126 @@ it("CSV の状態の列に書いた語は、そのまま検索で引ける（SPE
   expect(recSrc, "検索語の組み立てが二重実装になっている").not.toContain("unconfirmedSearchTerms");
   // 締切行と常時受付の行、両方の検索語が同じ関数から出ている。
   expect((recSrc.match(/unconfirmedHayJa\(/g) || []).length).toBeGreaterThanOrEqual(3);
+});
+
+it("ボタンを押した直後も快捷键が効く（SPEC §7）", () => {
+  /* 完成した画面の `onKeydown` をビルド成果物から抜き出して動かした（2026-09-23 実測）。
+   * 入力欄・選択欄・ボタン・編集できる欄ではすべてのキーを止める作りだったので、
+   * **画面をクリックするたびに快捷键が死んでいた**: 「過去の締切も表示」のボタンを
+   * クリックした直後、`/` は検索欄にフォーカスを移さず、`j` は行を動かさなかった
+   * （飲み込まれることも無く無反応）。`j` / `k` を使う人はボタンを踏んだ直後である
+   * ことが多いので、ボタンが本当に受け取るキー（Enter と Space）だけ残して通す。 */
+  const app = siteRuntime("app.js");
+  const keyFn = jsFunction(app, "keyBlockedByTarget");
+  const keydownFn = jsFunction(app, "onKeydown");
+  expect(keyFn, "キーの振り分け関数が見当たらない（検査が空振り）").not.toBe("");
+  expect(keydownFn, "onKeydown が見当たらない").not.toBe("");
+  const script = [
+    // 抜き出した 2 つの関数を、画面と同じ外部の値と一緒に作って動かす。
+    "const fn = new Function(",
+    "  '$',",
+    "  'state',",
+    "  'shown',",
+    "  'selectedIndex',",
+    "  'updateRowSelection',",
+    "  'openDrawer',",
+    "  'closeDrawer',",
+    "  'safeExternalUrl',",
+    "  'window',",
+    "  " +
+      JSON.stringify(`${keyFn}\n${keydownFn}\nreturn { onKeydown, keyBlockedByTarget };`) +
+      ",",
+    ");",
+    "let moved = 0;",
+    "let closed = 0;",
+    "const log = [];",
+    "const qEl = { tagName: 'INPUT', focus: () => log.push('検索欄にfocus'), blur: () => log.push('blur') };",
+    "const made = fn(",
+    "  () => qEl,",
+    "  { mode: 'deadlines' },",
+    // 選択行が末尾だと `j` は行を動かさない（画面と同じ）ので、3 行渡す。
+    "  [{ ed: {}, conf: {} }, { ed: {}, conf: {} }, { ed: {}, conf: {} }],",
+    "  0,",
+    "  () => { moved += 1; log.push('行が動いた'); },",
+    "  () => {},",
+    "  () => { closed += 1; },",
+    "  (x) => x,",
+    "  { open: () => {}, matchMedia: () => ({ matches: false }) },",
+    ");",
+    "const run = (tag, key, inSearch) => {",
+    "  log.length = 0;",
+    "  moved = 0;",
+    "  const target = inSearch ? qEl : { tagName: tag, blur: () => log.push('blur') };",
+    "  let prevented = 0;",
+    "  made.onKeydown({",
+    "    target,",
+    "    key,",
+    "    preventDefault: () => {",
+    "      prevented += 1;",
+    "      log.push('飲み込み');",
+    "    },",
+    "  });",
+    "  return { log: log.slice(), prevented };",
+    "};",
+    "const blocked = made.keyBlockedByTarget;",
+    "console.log(JSON.stringify({",
+    "  table: {",
+    "    input: blocked('INPUT', 'j', false),",
+    "    select: blocked('SELECT', 'j', false),",
+    "    textarea: blocked('TEXTAREA', '/', false),",
+    "    editable: blocked('BODY', 'j', true),",
+    "    buttonEnter: blocked('BUTTON', 'Enter', false),",
+    "    buttonSpace: blocked('BUTTON', ' ', false),",
+    "    buttonJ: blocked('BUTTON', 'j', false),",
+    "    buttonSlash: blocked('BUTTON', '/', false),",
+    "    bodyJ: blocked('BODY', 'j', false),",
+    "  },",
+    "  buttonSlash: run('BUTTON', '/', false),",
+    "  buttonJ: run('BUTTON', 'j', false),",
+    "  buttonSpace: run('BUTTON', ' ', false),",
+    "  buttonEnter: run('BUTTON', 'Enter', false),",
+    "  textareaSlash: run('TEXTAREA', '/', false),",
+    "  searchEscape: run('INPUT', 'Escape', true),",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    table: { [k: string]: boolean };
+    buttonSlash: { log: string[]; prevented: number };
+    buttonJ: { log: string[]; prevented: number };
+    buttonSpace: { log: string[]; prevented: number };
+    buttonEnter: { log: string[]; prevented: number };
+    textareaSlash: { log: string[]; prevented: number };
+    searchEscape: { log: string[]; prevented: number };
+  };
+  // 欄ではすべてのキーを欄に渡す（論文の本文に `/` が打てるようにする）。
+  expect(out.table.input).toBe(true);
+  expect(out.table.select).toBe(true);
+  expect(out.table.textarea).toBe(true);
+  expect(out.table.editable).toBe(true);
+  // ボタンが本当に受け取るキーだけボタンに残す。
+  expect(out.table.buttonEnter, "ボタンの Enter をショートカットに取った").toBe(true);
+  expect(out.table.buttonSpace, "ボタンの Space をショートカットに取った").toBe(true);
+  // 他はショートカットに渡す（ここが直しどころ）。
+  expect(out.table.buttonJ, "ボタン押下後に j が死んでいる").toBe(false);
+  expect(out.table.buttonSlash, "ボタン押下後に / が死んでいる").toBe(false);
+  expect(out.table.bodyJ).toBe(false);
+  // 実際に `onKeydown` を通しても同じ（`/` が検索欄へ飛び、`j` が行を動かす）。
+  expect(out.buttonSlash.log).toContain("検索欄にfocus");
+  expect(out.buttonJ.log).toContain("行が動いた");
+  expect(out.buttonSpace.prevented, "ボタンの Space を飲み込んだ").toBe(0);
+  expect(out.buttonEnter.prevented, "ボタンの Enter を飲み込んだ").toBe(0);
+  expect(out.textareaSlash.prevented, "論文欄の / をショートカットに取った").toBe(0);
+  // 検索欄での Esc は従来のまま（欄を出て、選んでいた行に返す）。
+  expect(out.searchEscape.log).toContain("blur");
+  expect(out.searchEscape.log).toContain("行が動いた");
+  // てびきが同じ約束を書いているか（画面の挙動と案内をズレさせない）。
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const at = html.indexOf('<dt class="only-keyboard">キーボードで一覧を動かす</dt>');
+  expect(at, "キーボードの項が無くなった").toBeGreaterThan(-1);
+  expect(html.slice(at, html.indexOf("</dd>", at))).toContain("ボタンを押した直後も");
 });

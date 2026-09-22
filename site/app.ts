@@ -1099,30 +1099,48 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
   window.closeDrawer = closeDrawer;
 
+  /* どのキーを入力欄・ボタン自身が受け取るかの判断（SPEC §7）。
+   *
+   * 文字を打つ欄（入力欄・選択欄・改行が打てる欄）では、すべてのキーを欄に渡す –
+   * 「/」を検索のショートカットとして奪うと、論文の本文に「GPU/vGPU」や URL を
+   * 打てなくなる。ボタンは Enter と Space だけが操作に効くので、それ以外は
+   * ショートカットに渡す。
+   *
+   * 以前はボタンにフォーカスが乗っているとすべてのキーを止めていた（2026-09-23 実測:
+   * 完成した画面の `onKeydown` を実行して確かめた – 「過去の締切も表示」のボタンを
+   * クリックした直後、`/` で検索欄にフォーカスが移らず、`j` も効かなかった –
+   * 画面をクリックするたびに快捷键が死んでいた。`j` / `k` を打つ人はボタンを
+   * 踏んだ直後であることが多い）。 */
+  function keyBlockedByTarget(tag: string, key: string, contentEditable: boolean): boolean {
+    if (contentEditable) return true;
+    if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return true;
+    if (tag === "BUTTON") return key === "Enter" || key === " " || key === "Spacebar";
+    return false;
+  }
+
   // Keyboard Navigation (j/k/Enter/Esc//)
   function onKeydown(e: KeyboardEvent) {
     const target = e.target;
     if (!target || !("tagName" in target) || typeof target.tagName !== "string") return;
     const tag = target.tagName;
     const isContentEditable = "isContentEditable" in target && target.isContentEditable === true;
-    if (
+    const onControl =
       tag === "INPUT" ||
       tag === "SELECT" ||
       tag === "TEXTAREA" ||
       tag === "BUTTON" ||
-      isContentEditable
-    ) {
-      if (e.key === "Escape") {
-        if ("blur" in target && typeof target.blur === "function") target.blur();
-        /* `/` で検索欄に入って Esc で出た人は、そのまま `j` / `k` を打ちたい。
-         * フォーカスが body に落ちると、支援技術ではどこを読めばいいのか分からない
-         * （2026-09-23 実測: 選択行に返していなかった – 行の詳細を閉じたときだけ
-         * 戻す形になっていた）。選択行があるときだけ返す。検索語は消さない
-         * （消すと打ち直しが発生して却って困る）。 */
-        if (target === $("q") && selectedIndex >= 0 && shown.length) updateRowSelection();
-      }
+      isContentEditable;
+    if (onControl && e.key === "Escape") {
+      if ("blur" in target && typeof target.blur === "function") target.blur();
+      /* `/` で検索欄に入って Esc で出た人は、そのまま `j` / `k` を打ちたい。
+       * フォーカスが body に落ちると、支援技術ではどこを読めばいいのか分からない
+       * （2026-09-23 実測: 選択行に返していなかった – 行の詳細を閉じたときだけ
+       * 戻す形になっていた）。選択行があるときだけ返す。検索語は消さない
+       * （消すと打ち直しが発生して却って困る）。 */
+      if (target === $("q") && selectedIndex >= 0 && shown.length) updateRowSelection();
       return;
     }
+    if (keyBlockedByTarget(tag, e.key, isContentEditable)) return;
     // 推薦モードでは非表示の締切表用ショートカットを無効化する。
     if (
       typeof state !== "undefined" &&
