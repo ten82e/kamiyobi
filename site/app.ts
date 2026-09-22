@@ -418,7 +418,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   const DAY = 86400000;
   const PAGE = 40;
   let selectedIndex = -1;
-  let sortKey = "rem";
+  /** ソートできる列の key。`th[data-sort]` と一致させる（ズレは検査で拾う）。 */
+  const SORTABLE_KEYS = ["rem", "date", "conf", "rank"];
+  const DEFAULT_SORT_KEY = "rem";
+  let sortKey = DEFAULT_SORT_KEY;
   let sortAsc = true;
 
   const KIND_LABEL: Record<string, string> = {
@@ -751,6 +754,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       sortAsc = true;
     }
     setSortAria(key);
+    writeUrl();
     render();
   };
 
@@ -2422,6 +2426,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     state.cats = (p.get("cats") || "")
       .split(",")
       .filter((category) => Boolean(category) && Boolean(DATA.categories[category]));
+    const rawSort = p.get("sort");
+    sortKey = rawSort && SORTABLE_KEYS.indexOf(rawSort) >= 0 ? rawSort : DEFAULT_SORT_KEY;
+    sortAsc = p.get("dir") !== "desc";
   }
 
   function writeUrl() {
@@ -2435,6 +2442,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (state.domestic) p.set("domestic", "1");
     if (state.past) p.set("past", "1");
     if (state.cats.length) p.set("cats", state.cats.join(","));
+    // 並び順も URL に入れる。「国内研究会を締切の新しい順で」のような共有が、
+    // 開いた人の画面で元の並びにならないのは惜しい。既定の並びなら参数を足さない。
+    if (sortKey !== DEFAULT_SORT_KEY) p.set("sort", sortKey);
+    if (!sortAsc) p.set("dir", "desc");
     const str = p.toString();
     history.replaceState(null, "", str ? `?${str}` : window.location.pathname);
   }
@@ -2798,6 +2809,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   readUrl();
+  // URL から復元した並び順をヘッダーの矢印と aria-sort にも反映する（表の中身だけ
+  // 並び、見出しが既定を指しているのは読み違えのもと）。
+  setSortAria(sortKey);
   updateModeUi();
   toForm();
   if (state.mode === "deadlines" && state.past) loadHistoryData();

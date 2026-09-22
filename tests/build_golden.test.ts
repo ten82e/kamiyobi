@@ -1906,6 +1906,64 @@ it("the deadline search index carries Japanese month terms (SPEC §7)", () => {
   expect(runtime).toMatch(/monthTermsJa[\s\S]*new Date\(value \+ 9 \* 3_600_000\)/);
 });
 
+it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", () => {
+  const runtime = siteRuntime();
+  const sortable = runtime.match(/const SORTABLE_KEYS = \[[^\]]*\];/)?.[0];
+  const defaultKey = runtime.match(/const DEFAULT_SORT_KEY = "[^"]*";/)?.[0];
+  expect(sortable, "SORTABLE_KEYS 定義が見つからない").toBeTruthy();
+  expect(defaultKey, "DEFAULT_SORT_KEY 定義が見つからない").toBeTruthy();
+  // readUrl / writeUrl は正本をそのまま動かす（書き写すと実装とズレる）。
+  const script = [
+    sortable as string,
+    defaultKey as string,
+    "let sortKey = DEFAULT_SORT_KEY, sortAsc = true;",
+    "const state = { mode: 'deadlines', q: '', kind: '', rank: '', win: 'all', est: false, domestic: false, past: false, cats: [] };",
+    "const DATA = { categories: { hpc: {}, systems: {} } };",
+    "const KIND_LABEL = { abstract: '概要締切', paper: '論文締切' };",
+    "let written = '';",
+    "const window = { location: { search: '', pathname: '/index.html' } };",
+    "const history = { replaceState: (_s, _t, url) => { written = String(url); } };",
+    jsFunction(runtime, "readUrl"),
+    jsFunction(runtime, "writeUrl"),
+    // 送信者の画面（国内研究会・締切順・降順）を URL に写出する。
+    "state.domestic = true; state.win = '180d'; sortKey = 'date'; sortAsc = false; writeUrl();",
+    "const sent = written;",
+    // 別の人がその URL を開いたときの復元。
+    "window.location.search = sent.slice(1); sortKey = DEFAULT_SORT_KEY; sortAsc = true; readUrl();",
+    "const got = [sortKey, sortAsc];",
+    // 既定の並びなら参数を足さない（URL は必要な情報だけ乗せる）。
+    "sortKey = DEFAULT_SORT_KEY; sortAsc = true; state.domestic = false; writeUrl();",
+    "console.log(JSON.stringify([sent, got, written]));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const [sent, got, defaultUrl] = JSON.parse(proc.stdout.trim()) as [
+    string,
+    [string, boolean],
+    string,
+  ];
+  expect(sent).toContain("sort=date");
+  expect(sent).toContain("dir=desc");
+  expect(sent).toContain("domestic=1");
+  expect(got).toEqual(["date", false]);
+  expect(defaultUrl).not.toContain("sort=");
+  expect(defaultUrl).not.toContain("dir=");
+  // 知らない key は既定に戻る（URL を叩いて並べ替え式を壊せないようにする）。
+  const bogus = spawnSync(
+    "node",
+    ["-e", script.replace("sent.slice(1)", String.raw`"sort=bogus&dir=up"`)],
+    {
+      encoding: "utf8",
+      timeout: 60_000,
+    },
+  );
+  expect(bogus.status, bogus.stderr).toBe(0);
+  expect((JSON.parse(bogus.stdout.trim()) as [string, [string, boolean], string])[1]).toEqual([
+    "rem",
+    true,
+  ]);
+});
+
 it("venues without a prefecture are findable by prefecture (SPEC §7)", () => {
   const build = readFileSync(new URL("../src/build.ts", import.meta.url), "utf8");
   const runtime = siteRuntime("recommender.js");
