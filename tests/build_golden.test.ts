@@ -2878,8 +2878,12 @@ it("recommendation filter ignores deadline-only state", () => {
   expect(proc.stdout.trim()).toBe("1|2");
 });
 
-it("sortable headers are keyboard-operable and expose sort state (aria-sort)", () => {
+it("列見出しは並び替えの目印（aria-sort と語尾の矢印）を持つ（キーで押せることは別の検査で見る・SPEC §7）", () => {
   const html = siteHtmlRuntime();
+  // ここでは目印だけを見る。以前はタイトルで「キーボードで操作できる」と言いながら
+  // キーを押す検査をしていなかった（実装は張れているので不具合ではなかったが、検査が
+  // 画面の挙動を語った形になっていた）。キー操作は
+  // 「見出しの並び替えは Enter・Space で効き、行用の Enter と衝突しない」で実際に押す。
   // 静的検証: ソート可能 4 ヘッダーに tabindex / aria-sort / data-sort がある
   const ths = [...html.matchAll(/<th([^>]*data-sort="([^"]+)"[^>]*)>/g)];
   expect(ths.length).toBe(4);
@@ -9334,4 +9338,120 @@ it("支援技術に本文の位置と表の名前を伝え、跳ぶ導線を置�
   expect(skipRule![1], "跳ぶ導線を display: none で消している").not.toContain("display: none");
   // フォーカスしたら画面に出てくること（見えない導線はキーボードでは使えない）。
   expect(html).toMatch(/\.skip-link:focus \{[^}]*left: ?(?!-9999)/);
+});
+
+it("見出しの並び替えは Enter・Space で効き、行用の Enter と衝突しない（SPEC §7）", () => {
+  /* 「sortable headers are keyboard-operable」という検査が有ったが、実際にキーを押す所を
+   * 一度も見ておらず、`tabindex` と `aria-sort` の有無だけを見ていた（2026-09-23 確認）。
+   * 実装は `th` に keydown を張る形なので、その張られた handler をビルド成果物から
+   * 抜き出して本当に押す（検査が画面の挙動を語っている形に戻す）。 */
+  const app = siteRuntime();
+  const at = app.indexOf('th.addEventListener("keydown"');
+  expect(at, "見出しのキーボード処理が見当たらない").toBeGreaterThan(0);
+  const head = 'th.addEventListener("keydown", ';
+  const start = at + head.length;
+  let depth = 0;
+  let end = start;
+  for (let i = start; i < app.length; i++) {
+    const ch = app[i];
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (!depth) {
+        end = i + 1;
+        break;
+      }
+    }
+  }
+  const handler = app.slice(start, end);
+  const script = [
+    "(async () => {",
+    `const HANDLER = ${JSON.stringify(handler)};`,
+    "const out = [];",
+    "const window = { toggleSort: (k) => out.push(['toggle', k]) };",
+    "const th = { getAttribute: (a) => (a === 'data-sort' ? 'date' : null) };",
+    "const onKey = new Function('th', 'window', 'return (' + HANDLER + ')')(th, window);",
+    "const fire = (key) => {",
+    "  let prevented = false, stopped = false;",
+    "  onKey({ key, preventDefault: () => { prevented = true; }, stopPropagation: () => { stopped = true; } });",
+    "  out.push([key, prevented, stopped]);",
+    "};",
+    "fire('Enter');",
+    "fire(' ');",
+    "fire('j');",
+    "console.log(JSON.stringify(out));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  // 混ざった組（['toggle', 列] と ['Enter', 停止, 伝搬]）なので型を寄せておく。
+  const out = JSON.parse(proc.stdout.trim().split("\n").pop() || "[]") as Array<
+    [string, unknown, unknown?]
+  >;
+  const toggled = out.filter((x) => x[0] === "toggle").map((x) => x[1]);
+  // Enter と Space の両方が、押した列の並び替えを呼ぶ（Space が抜けている実装はよくある）。
+  expect(toggled, "Enter・Space で並び替えが起きていない").toEqual(["date", "date"]);
+  // `j` は選択行を動かすキーなので、見出しが食ってはいけない。
+  expect(
+    out.some((x) => x[0] === "j" && x[1] === false),
+    "j キーを止めている",
+  ).toBe(true);
+  // グローバルの「Enter = 選択行の公式ページを開く」に奪われないよう、止めてから渡す。
+  const enter = out.find((x) => x[0] === "Enter");
+  expect(enter, "Enter を押した記録が無い（検査が空振り）").toBeDefined();
+  expect(enter![1], "Enter で既定動作を止めていない").toBe(true);
+  expect(enter![2], "Enter がグローバル側に伝わる（公式ページが開いてしまう）").toBe(true);
+});
+
+it("並び替えの状態は読み上げに伝わる（見出しの矢印だけだった・SPEC §7）", () => {
+  /* 並び順は見出しの語尾の矢印（↑/↓/↕）にしか出ていなかった（2026-09-23 実測）。
+   * キーボードでヘッダーを押して並びが変わっても読み上げは何も言わない。過ぎた締切を
+   * 下にまとめたときは件数欄に書く（黙って並びを変えない）ので、その方針と同じにする。
+   * 画面は混むので読み上げ専用の短い欄にだけ足す（第 89 回で分けた仕組み）。 */
+  const app = siteRuntime();
+  const script = [
+    "(async () => {",
+    `const NOTE_SRC = ${JSON.stringify(jsFunction(app, "sortNoteJa"))};`,
+    'const LABELS = { rem: "残り ↕", date: "日時（JST） ↓", conf: "会議 ↕", rank: "ランク ↑" };',
+    "const document = {",
+    "  querySelector: (sel) => {",
+    `    const k = /data-sort="([^"]+)"/.exec(sel);`,
+    "    if (!k || !(k[1] in LABELS)) return null;",
+    "    return { textContent: LABELS[k[1]] };",
+    "  },",
+    "};",
+    "const note = new Function('document', 'return (' + NOTE_SRC + ')')(document);",
+    "console.log(JSON.stringify({",
+    "  rem: note('rem', true),",
+    "  dateDesc: note('date', false),",
+    "  rank: note('rank', false),",
+    "  none: note('', true),",
+    "  unknown: note('other', true),",
+    "}));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout.trim().split("\n").pop() || "{}");
+  // 語尾の矢印を落とした見出しの語を使い、向きを日本語で書く。
+  expect(got.rem).toBe(" ｜ 並び順: 残り 昇順");
+  expect(got.dateDesc).toBe(" ｜ 並び順: 日時（JST） 降順");
+  expect(got.rank).toBe(" ｜ 並び順: ランク 降順");
+  expect(got.none, "並び順が無いのに文を出す").toBe("");
+  expect(got.unknown, "見出しの無い列の語をこしらえている").toBe("");
+  // 画面に出す文には足さない（読み上げ専用の欄にだけ入れる）。読み上げ欄の語を
+  // てびきにも書いておくので、三者がズレないようにする。
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const at = template.indexOf("<dt>並び順</dt>");
+  expect(at).toBeGreaterThan(0);
+  const guide = template.slice(at, template.indexOf("</dd>", at));
+  expect(guide, "てびきを読み上げの語と揃えないと、画面の説明が噓になる").toContain(
+    "並び順: 残り 昇順",
+  );
 });

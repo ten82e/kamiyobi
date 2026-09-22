@@ -792,6 +792,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return asc ? "↑" : "↓";
   }
 
+  /* 並び替えの状態は、見出しの語尾の矢印にしか出ていなかった（2026-09-23 実測）。
+   * キーボードでヘッダーを押して並びが変わっても読み上げは何も言わない。「並びを
+   * 変えたら黙らない」方針（過ぎた締切を下にまとめた件数を件数欄に書くのと同じ）に
+   * 従っていない。画面は混むので、読み上げ専用の短い欄にだけ足す（第 89 回で分けた仕組み）。
+   * 列の語は見出し自身から取る（テストにもソートバーにも書き写さない）。 */
+  function sortNoteJa(key: string, asc: boolean): string {
+    if (!key) return "";
+    const th = document.querySelector<HTMLElement>(`th[data-sort="${key}"]`);
+    const label = String((th && th.textContent) || "")
+      .replace(/[↑↓↕]\s*$/, "")
+      .trim();
+    if (!label) return "";
+    return ` ｜ 並び順: ${label} ${asc ? "昇順" : "降順"}`;
+  }
+
   // 現在の並び順を aria-sort（支援技術向け）と見出しの目印（目に見える方）で伝える。
   function setSortAria(key: string | null) {
     // 列見出しと、狭い画面に出す並べ替えバー（`button[data-sort]`）が同じ目印を使う。
@@ -2941,6 +2956,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       cnt += blockNote;
       cntLive += blockNote;
     }
+    // 並び替えの状態を読み上げに足す（表が出ているときだけ。推薦のカードでは
+    // 見出しが消えているので、見出しの語から作るこの文は出さない）。
+    if (!recMode && !paperMode) cntLive += sortNoteJa(sortKey, sortAsc);
     $("count").textContent = cnt;
     // 読み上げはこちらの短い欄だけ（画面に出す文は `#count` のまま）。
     const countLive = $("countLive");
