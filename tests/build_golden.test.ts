@@ -2312,6 +2312,7 @@ const SEARCH_CANON = (() => {
 })();
 const FILTER_RUNTIME_STUBS = [
   "let semQuery = null, semEmbeddings = null;",
+  "let catFacetCounts = {};",
   "const activeData = { conferences: [] };",
   ...SEARCH_CANON,
   "let searchQuery = '';",
@@ -4081,4 +4082,87 @@ it("the card layout actually fits a phone width (SPEC §7)", () => {
   // 広い画面では従来どおり（横並びの表・スクロール可）でないと意味が無い。
   expect(effectiveCss(style, "table", "min-width", 1200)).toBe("880px");
   expect(effectiveCss(style, ".tablewrap", "overflow-x", 1200)).toBe("auto");
+});
+
+it("category chips count the rows that pass the other filters (SPEC §7)", () => {
+  const html = siteHtmlRuntime();
+  const filterSrc = jsFunction(html, "filter");
+  const countsSrc = jsFunction(html, "categoryCounts");
+  const updateSrc = jsFunction(html, "updateCategoryCounts");
+  const template = readFileSync(join(site, "index.html"), "utf8");
+  // 件数を出す場所（チップごとに span を 1 つずつ増やす）と、0 を消さないための
+  // スタイルが無くなっていないこと。
+  const app = siteRuntime("app.js");
+  expect(app).toContain('"chip-count"');
+  expect(app).toContain("updateCategoryCounts();");
+  expect(template).toContain(".chips .chip-count.zero");
+
+  const script = [
+    "const DAY = 86400000;",
+    `const FILTER = ${JSON.stringify(filterSrc)};`,
+    'const now = Date.parse("2026-08-10T00:00:00Z");',
+    "class FakeDate extends Date { static now() { return now; } }",
+    "const document = {};",
+    "function $(id) { return null; }",
+    "const window = {};",
+    "function row(key, cats, domestic) {",
+    "  return { kind: 'paper', est: false, cats, rankPairs: ['B'], hay: key,",
+    "    tags: domestic ? ['domestic-jp'] : [], t: now + 86400000, tLast: now + 86400000,",
+    "    ed: { place: '京都', deadlines: [] }, conf: { key } };",
+    "}",
+    "const rows = [",
+    "  row('a', ['hpc'], true),",
+    "  row('b', ['hpc', 'db'], false),",
+    "  row('c', ['security'], true),",
+    "];",
+    countsSrc,
+    updateSrc,
+    "const nodes = {};",
+    "const mkNode = () => ({ textContent: '', cls: new Set(), classList: {",
+    "  toggle(name, on) { if (on) this.owner.cls.add(name); else this.owner.cls.delete(name); },",
+    "}, });",
+    "for (const key of ['hpc', 'db', 'security', 'ai']) {",
+    "  const node = mkNode();",
+    "  node.classList.owner = node;",
+    "  nodes[key] = node;",
+    "}",
+    "const state = { mode: 'deadlines', q: '', cats: ['hpc'], kind: '', rank: '', win: 'all', est: false, domestic: true, online: false, past: false };",
+    FILTER_RUNTIME_STUBS,
+    "const filter = new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
+    "  'return (' + FILTER + ')')(FakeDate, DAY, rows, state, true, 'rem');",
+    "const shownKeys = filter().map((r) => r.conf.key);",
+    // 選んだ分野 (hpc) で自分の選択肢を潰さない: hpc の件数は選んだ後も 1（国内を通る行）。
+    "const counts = categoryCounts();",
+    // chip への反映（0 は消さず zero クラスで薄くする）。
+    "catFacetCounts = { hpc: 1, db: 0 };",
+    "const catCountNodes = nodes;",
+    "updateCategoryCounts();",
+    "console.log(JSON.stringify({",
+    "  shownKeys,",
+    "  counts,",
+    "  hpcText: nodes.hpc.textContent,",
+    "  dbText: nodes.db.textContent,",
+    "  dbZero: nodes.db.cls.has('zero'),",
+    "  hpcZero: nodes.hpc.cls.has('zero'),",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    shownKeys: string[];
+    counts: Record<string, number>;
+    hpcText: string;
+    dbText: string;
+    dbZero: boolean;
+    hpcZero: boolean;
+  };
+  // 表は hpc かつ国内の行だけ。
+  expect(out.shownKeys).toEqual(["a"]);
+  // 件数は分野の絞り込みを見る前で数える: hpc=1（a）, db=0（b は国内で落ちる）, security=1（c）。
+  expect(out.counts).toEqual({ hpc: 1, security: 1 });
+  // 0 の分野は消さず、薄く出す。
+  expect(out.hpcText).toBe("1");
+  expect(out.dbText).toBe("0");
+  expect(out.dbZero).toBe(true);
+  expect(out.hpcZero).toBe(false);
 });

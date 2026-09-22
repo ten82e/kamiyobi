@@ -326,6 +326,15 @@ textarea:focus { border-color: var(--accent); }
   border-color: var(--accent);
   color: var(--fg);
 }
+/* 分野チップの件数。0 は薄くして「今は該当が無い」と分かるようにする（消すと
+   収録が無いのか絞り込みのせいか区別できない）。 */
+.chips .chip-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+.chips .chip-count.zero {
+  opacity: 0.5;
+}
 .chips input { display: none; }
 .chips input:checked + span { color: var(--accent); font-weight: 500; }
 

@@ -991,6 +991,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   // ---- CATEGORIES ----
   const catsBox = $("cats");
+  const catCountNodes: Record<string, HTMLElement> = {};
   Object.keys(DATA.categories).forEach((k) => {
     const lbl = document.createElement("label");
     const chk = document.createElement("input");
@@ -1003,8 +1004,26 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     span.textContent = en && en.toLowerCase() !== k ? `${catLabel(k)}（${en}）` : catLabel(k);
     span.title = `${k}: ${en}`;
     lbl.appendChild(span);
+    // 件数（他の絞り込みを通った行の数）。何を選ぶと何が残りそうか分からないと、
+    // チップを試すたびに表が空になる。0 の分野も消さずに薄く残す（収録が無いことが分かる）。
+    const countNode = document.createElement("span");
+    countNode.className = "chip-count";
+    countNode.textContent = "0";
+    lbl.appendChild(countNode);
+    catCountNodes[k] = countNode;
     catsBox.appendChild(lbl);
   });
+
+  /** 分野チップの件数を書き換える。`filter()` が数え直した `categoryCounts()` を使う。 */
+  function updateCategoryCounts(): void {
+    const counts = categoryCounts();
+    Object.keys(catCountNodes).forEach((key) => {
+      const node = catCountNodes[key] as HTMLElement;
+      const value = counts[key] || 0;
+      node.textContent = String(value);
+      node.classList.toggle("zero", value === 0);
+    });
+  }
 
   // ---- SELECTS ----
   const kindSel = $("kind");
@@ -1338,6 +1357,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /** 相対月を展開した後の検索語。`filter()` の描画周期内でだけ有効（利用者の入力文は `state.q`）。 */
   let searchQuery = "";
 
+  /** 分野チップの件数（`filter()` が分野以外の条件を通った行について数え直す）。 */
+  let catFacetCounts: Record<string, number> = {};
+
+  function categoryCounts(): Record<string, number> {
+    return catFacetCounts;
+  }
+
   function filter(): AppRow[] {
     const now = Date.now();
     // `来月` などの相対月を検索語として受け付ける。展開式の一覧への反映は recommender が
@@ -1387,7 +1413,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 適用しない（手動指定の分野・国内フィルタは反映）。pool は既に未来締切+常時受付+過去代表行で構成済み。
     const inRecommend = state.mode === "recommend" && pLines.length > 0;
 
-    let out: AppRow[] = pool.filter((r) => {
+    // 分野だけを覗いた述語。分野チップの件数は「他の条件を通った行」を数えるため、
+    // ここで区切っておく（選んだ分野で自分の選択肢を潰さない、facet の普通の形にする）。
+    const matchesExceptCats = (r: AppRow): boolean => {
       if (!inRecommend && !state.est && r.est && !pLines.length) {
         return false;
       }
@@ -1424,18 +1452,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           return false;
         }
       }
-      if (!inRecommend && cats.length) {
-        let hit = false;
-        for (let i = 0; i < cats.length; i++) {
-          if (r.cats.indexOf(cats[i]) >= 0) {
-            hit = true;
-            break;
-          }
-        }
-        if (!hit) {
-          return false;
-        }
-      }
       if (!inRecommend && state.domestic && (r.tags || []).indexOf("domestic-jp") < 0) {
         return false;
       }
@@ -1448,7 +1464,30 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (!inRecommend && !matchesQuery(r.hay)) {
         return false;
       }
+      return true;
+    };
 
+    catFacetCounts = {};
+    let out: AppRow[] = pool.filter((r) => {
+      if (!matchesExceptCats(r)) {
+        return false;
+      }
+      // チップの件数: 分野の絞り込みを見る前の状態で数える。
+      for (const cat of r.cats || []) {
+        catFacetCounts[cat] = (catFacetCounts[cat] || 0) + 1;
+      }
+      if (!inRecommend && cats.length) {
+        let hit = false;
+        for (let i = 0; i < cats.length; i++) {
+          if (r.cats.indexOf(cats[i]) >= 0) {
+            hit = true;
+            break;
+          }
+        }
+        if (!hit) {
+          return false;
+        }
+      }
       r._boosted = false;
       return true;
     });
@@ -2360,6 +2399,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const recMode = state.mode === "recommend";
     if (recMode && !recommendationData && !recommendationError) loadRecommendationData();
     shown = recMode && !recommendationData ? [] : filter();
+    // チップの件数は分野以外の条件で絞った後の数。推薦モードではチップを見せないので更新しない。
+    if (!recMode) updateCategoryCounts();
     drawn = 0;
     selectedIndex = -1;
     groupMonths = shouldGroupMonths({
