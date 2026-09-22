@@ -1254,6 +1254,31 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
   });
 
+  describe("ラウンドの語が画面の書き方で引ける", () => {
+    /* 表の種別セルと行の詳細は「第 2 ラウンド」と書く。CSV は `R1` `R2`。
+     * どちらも検索用の文字列に入れていなかったので、画面の語を写すと当たらなかった
+     * （2026-09-23 実測: 2 ラウンドの行は 387 件あるのに「R2」3 件、「第2」5 件）。 */
+    it("画面の書き方と CSV の表記の両方を含む", () => {
+      expect(R.roundSearchTerms(2)).toEqual(["第2ラウンド", "第 2 ラウンド", "r2"]);
+      expect(R.roundSearchTerms(1)).toContain("r1");
+      // ラウンドの無い入力は語を増やさない。
+      expect(R.roundSearchTerms(undefined)).toEqual([]);
+      expect(R.roundSearchTerms(0)).toEqual([]);
+    });
+
+    it("画面どおりにスペースを入れて写すと 1 まとめの語に寄せる", () => {
+      // そのまま割ると 「第」 AND「2」 AND「ラウンド」 になり、全件に化ける。
+      expect(R.queryTokenGroups("第 2 ラウンド")).toEqual([["第2ラウンド"]]);
+      expect(R.queryTokenGroups("第2ラウンド")).toEqual([["第2ラウンド"]]);
+      // 他の語は従来どおり別グループ（AND は保つ）。
+      const groups = R.queryTokenGroups("第 2 ラウンド スパコン");
+      expect(groups.length).toBe(2);
+      expect(groups[0]).toEqual(["第2ラウンド"]);
+      // 別の年の入力を巻き込まない（2026-09-23 の略称+年の扱いとの取り違え防止）。
+      expect(R.queryTokenGroups("nsdi 27").length).toBe(2);
+    });
+  });
+
   describe("deadlinesToCsv（絞り込み結果を表計算へ持ち出す）", () => {
     const now = Date.parse("2026-09-22T00:00:00+09:00");
     const rowOf = (over: Record<string, unknown>) => ({

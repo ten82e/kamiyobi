@@ -1925,6 +1925,19 @@ const Recommender = (() => {
     journal: "常時受付",
   };
 
+  /* 表の種別セルと行の詳細に出す「第 N ラウンド」を、検索でも引けるようにする。
+   * ラウンドの区別は画面ではこの書き方しかなく、CSV も `R1` `R2` と書いているのに、
+   * 検索用の文字列に入れていなかったため、**画面に出ている語をそのまま打つと当たらない**
+   * だった（2026-09-23 実測: 2 ラウンドの行は 387 件あるのに「R2」は 3 件、
+   * 「第2」は 5 件）。画面に出る語は検索でも引ける、という規則をここで保つ。
+   * 1 ラウンド目は画面に何も出さないが、CSV と並びの正本で `R1` を使っているので通す。
+   * 半角スペースの有無は人の入力なので、両方の形をおく。 */
+  function roundSearchTerms(round: unknown): string[] {
+    const n = Number(round);
+    if (!Number.isInteger(n) || n < 1) return [];
+    return [`第${n}ラウンド`, `第 ${n} ラウンド`, `r${n}`];
+  }
+
   /* 締切セル・CSV・一覧の検索に出す**状態の語**をここで一本化する。
    * 画面は `推定` のバッジを出し、CSV にも同じ語を書いているのに、検索用の文字列
    * （hay）に入れていなかったため、**「推定」と打つと収録 134 件が 1 件も引けなかった**
@@ -2975,7 +2988,25 @@ const Recommender = (() => {
     });
 
     const groups: string[][] = [];
-    const tokens = queryTokens(query);
+    let tokens = queryTokens(query);
+    /* 画面は「第 2 ラウンド」と半角スペースを入れて書く（表の種別セル・行の詳細）。
+     * そのまま写すと 「第」 AND「2」 AND「ラウンド」 になり、どの語もほぼ全行に
+     * 含まれるので全件に化ける（2026-09-23 実測で確認）。ラウンドの語は 1 まとめで
+     * 打たれたものとして扱う。 */
+    const merged: string[] = [];
+    for (let i = 0; i < tokens.length; i += 1) {
+      if (
+        tokens[i] === "第" &&
+        /^\d{1,2}$/.test(tokens[i + 1] || "") &&
+        (tokens[i + 2] === "ラウンド" || tokens[i + 2] === "round" || tokens[i + 2] === "rounds")
+      ) {
+        merged.push(`第${tokens[i + 1]}ラウンド`);
+        i += 2;
+      } else {
+        merged.push(tokens[i]);
+      }
+    }
+    tokens = merged;
     /* 会議の略称らしき語が同じ入力に混ざっているか（`nsdi 27` の `27` を年の 2027 として
      * 扱うための条件）。略称は 2 文字以上の英文字のかたまりだけなので、月日だけの入力
      * （`8月 27`）や裸の `27` は対象にならない。裸の 2 桁は暦日の「27日」と衝突するので、
@@ -3709,7 +3740,7 @@ const Recommender = (() => {
             tags: conf.tags || [],
             rankPairs,
             hay: searchNormalize(
-              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${unconfirmedSearchTerms(ed, rankPairs)} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`,
+              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedSearchTerms(ed, rankPairs)} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`,
             ),
             dupLabel: dl.comment || "",
           });
@@ -4903,6 +4934,7 @@ const Recommender = (() => {
     scheduleOnlyEditions: scheduleOnlyEditions,
     kindLabelJa: kindLabelJa,
     kindLabelTable: () => ({ ...KIND_LABEL_JA }),
+    roundSearchTerms: roundSearchTerms,
     categorySearchTerms: categorySearchTerms,
     pastRepresentatives: pastRepresentatives,
     pickRepresentative: pickRepresentative,

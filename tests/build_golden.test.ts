@@ -7534,3 +7534,67 @@ it("日本開催の行は、開催地の市区郡・会場を日本語で打つ�
   ).toEqual([]);
   expect(out.misses, "日本語で引いても行が出ない:\n" + out.misses.join("\n")).toEqual([]);
 });
+
+it("ラウンドは画面の書き方でも CSV の表記でも、実カタログで同じ行を出す（SPEC §7）", () => {
+  /* 表の種別セルは「第 N ラウンド」、CSV は `RN`。画面の語が検索で引けないと、
+   * 複数ラウンドの会議（PVLDB や SIGMOD など）を絞り込めない。
+   * 画面どおりにスペースを入れて写した入力が全件に化けていないこともここで見る。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(new URL("../data/snapshot.json", import.meta.url).pathname)}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const rows = Recommender.candidateRows(DATA);",
+    "const keys = (q) => { const m = Recommender.searchMatcher(q, now); return rows.filter((r) => m(r.hay)).map((r) => r.conf.key + '@' + r.ed.year + '#' + r.dl.kind + '#' + r.dl.round).sort(); };",
+    "const out = [];",
+    "for (const n of [1, 2, 3, 12]) {",
+    "  const own = rows.filter((r) => Number(r.dl.round) === n)",
+    "    .map((r) => r.conf.key + '@' + r.ed.year + '#' + r.dl.kind + '#' + r.dl.round).sort();",
+    "  if (own.length === 0) continue;",
+    "  const spaced = keys('第 ' + n + ' ラウンド');",
+    "  const compact = keys('第' + n + 'ラウンド');",
+    "  const csv = keys('R' + n);",
+    "  const missing = own.filter((k) => compact.indexOf(k) < 0).length;",
+    "  const csvMissing = own.filter((k) => csv.indexOf(k) < 0).length;",
+    "  out.push({ n, own: own.length, spaced: spaced.length, compact: compact.length, csv: csv.length, missing, csvMissing });",
+    "}",
+    // 全件に化けていないこと（割れた語が緩いので、必ず上位桁で抑える）。
+    "const all = rows.length;",
+    "const wide = keys('第 2 ラウンド').length;",
+    "console.log(JSON.stringify({ all, wide, out }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    all: number;
+    wide: number;
+    out: Array<{
+      n: number;
+      own: number;
+      spaced: number;
+      compact: number;
+      csv: number;
+      missing: number;
+      csvMissing: number;
+    }>;
+  };
+  expect(out.out.length, "ラウンド付きの行が数え上げられていない").toBeGreaterThan(2);
+  for (const row of out.out) {
+    expect(
+      row.missing,
+      `第 ${row.n} ラウンドの行が ${row.missing} 件届かない（画面の書き方）`,
+    ).toBe(0);
+    expect(
+      row.csvMissing,
+      `第 ${row.n} ラウンドの行が ${row.csvMissing} 件届かない（CSV の表記）`,
+    ).toBe(0);
+    // 寄せた形はきっちりそのラウンドの行だけ（他ラウンドを交えない）。
+    expect(row.spaced, `第 ${row.n} ラウンド: スペース入り写しが件数の違う結果を出した`).toBe(
+      row.compact,
+    );
+    expect(row.compact, `第 ${row.n} ラウンド: 寄せた形がそのラウンド以外も出した`).toBe(row.own);
+  }
+  expect(out.wide, "画面どおりに写した入力が全件に化けている").toBeLessThan(out.all / 4);
+});
