@@ -2691,11 +2691,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const deadlineTrust = axes.deadline_trust;
     line(
       card,
-      `研究適合度: ${r._fitLabel || "評価保留"}（順位評価）`,
-      "card-section recommendation-axes",
-    );
-    line(
-      card,
       // 「観測年数」「プロフィール」も実装側の語。`profileCoverage` はその会議の
       // 論文サンプル数（`recommendation-core.ts` の `strings(conference.papers)`）なので、
       // 数えているものを書く。

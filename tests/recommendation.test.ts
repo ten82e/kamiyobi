@@ -49,9 +49,13 @@ function conference(overrides: Record<string, unknown> = {}): Record<string, unk
 
 describe("recommendation axes", () => {
   it("labels research fit as an ordinal assessment rather than a probability", () => {
+    // 画面に出る語は「一致評価」で統一した（第 104 回まで、カードの頭のチップは
+    // 「一致評価」、その下の行は「研究適合度」と、同じ値に二つの名前を付けていた）。
+    // 順位の形であって確率ではない、という型はそのまま保つ。
     const app = readFileSync(new URL("../site/app.ts", import.meta.url), "utf8");
-    expect(app).toMatch(/研究適合度: \$\{r\._fitLabel \|\| "評価保留"\}（順位評価）/);
-    expect(app).not.toMatch(/研究適合度:[^\n]*%/);
+    expect(app).toMatch(/一致評価 \$\{r\._fitLabel \|\| "評価保留"\}/);
+    expect(app).not.toMatch(/一致評価[^\n]*%/);
+    expect(app).not.toContain("研究適合度");
   });
 
   it("returns independent research fit, established maturity evidence, and deadline trust", () => {

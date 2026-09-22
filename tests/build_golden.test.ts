@@ -9184,3 +9184,40 @@ it("PDF 読み込みの失敗は日本語と打ち手で出る（SPEC §7）", (
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
   expect(template).toContain("選んだファイルは送信しません");
 });
+
+it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7）", () => {
+  /* 推薦のカードは、同じ値に二つの名前を付けていた（頭のチップは「一致評価」、その下の
+   * 行は「研究適合度」で、どちらも `r._fitLabel`・2026-09-23 実測）。てびきは
+   * 「4行並べます」と書きながら、実際は 5 行で、しかも載っていない行が1つ有った
+   * （「締切と種別」）。第 100 回のキー操作と同じ型なので、**行のラベルをビルド成果物から
+   * 洗って**てびきと突き合わせる（語も件数もテスト側に書き写さない）。 */
+  const app = siteRuntime();
+  const card = jsFunction(app, "makeRecommendationCard");
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const labels = Array.from(
+    new Set(
+      Array.from(
+        card.matchAll(/`([^`\n$]{2,20})[^`]*`,\s*\n?\s*"card-section recommendation-axes"/g),
+        // ラベルは最初の読点・コロンまで（「締切の確認状況: 日付 …」の行がある）。
+        (m) => m[1].split(/[:：]/)[0].trim(),
+      ),
+    ),
+  );
+  expect(labels.length, "カードの行が見当たらない（検査が空振り）").toBeGreaterThan(2);
+  // 同じ値の言い替えを戻さない。画面に出る語はテンプレートとランタイムの文字列から出る
+  // （`public/` は CI ではテスト後にビルドするので、ビルド成果物を読まない）。
+  expect(card, "同じ評価に二つ目の名前を付けた").not.toContain("研究適合度");
+  expect(template, "画面に二つ目の名前が残っている").not.toContain("研究適合度");
+  const at = template.indexOf("カードの頭にある<strong>一致評価</strong>");
+  expect(at).toBeGreaterThan(0);
+  const guide = template.slice(template.lastIndexOf("<dd>", at), template.indexOf("</dd>", at));
+  // てびきが数える行数と、実装の行数が合うこと。
+  const counted = /判断材料を(\d+)行/.exec(guide);
+  expect(counted, "てびきがカードの行数を数えていない").not.toBeNull();
+  expect(Number(counted![1]), "てびきの行数と実装の行数が割れている").toBe(labels.length);
+  for (const label of labels) {
+    expect(guide, `てびきがカードの行「${label}」を挙げていない`).toContain(label);
+  }
+  // 一致評価はカードの頭に出る語として説明する（行として数えない）。
+  expect(guide).toContain("一致評価");
+});
