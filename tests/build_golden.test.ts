@@ -7761,6 +7761,8 @@ it("案内文に書いた実測値が、ビルド成果物に対して今も合�
     "  ai: hits('人工知能', view),",
     "  astar: hits('A*', view),",
     "  round2: rows.filter((r) => Number(r.dl.round) === 2).length,",
+    "  extendedView: view.filter((r) => Recommender.isExtendedDeadline(r.dl)).length,",
+    "  extendedAll: rows.filter((r) => Recommender.isExtendedDeadline(r.dl)).length,",
     "  middleDot: rows.filter((r) =>",
     "    (r.cats || []).map((c) => Recommender.categoryLabelJa(c)).join('・').indexOf('・') >= 0).length,",
     "  cancun: rows.filter((r) => Recommender.kanaFold(String(r.ed.place || '')).indexOf('cancun') >= 0).length,",
@@ -7790,6 +7792,8 @@ it("案内文に書いた実測値が、ビルド成果物に対して今も合�
     ["開催地が未確認の行", "110 件", m.unknownPlace],
     ["収録のオンライン可", "117 件", m.onlineCatalog],
     ["2 ラウンドの行", "378 件", m.round2],
+    ["既定画面で延長の目印が付く行", "9 行", m.extendedView],
+    ["収録全体の延長の目印", "33 件", m.extendedAll],
     ["・付きの分野表記を持つ行", "397 行", m.middleDot],
     ["Cancún の行", "23 行", m.cancun],
     ["プライバシー", "16 件", m.privacy],
@@ -8555,6 +8559,7 @@ it("日本語の案内に中国語の略語を混ぜない（SPEC §7）", () =>
     // 日本語の語として成り立たない二字目以上の語（同じ字を使う中華語）。
     "\u53c2\u6570",
     "\u5176\u4ed6",
+    "\u6b67",
   ];
   const targets = [
     "README.md",

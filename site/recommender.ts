@@ -3473,7 +3473,7 @@ const Recommender = (() => {
     ["europe", "ヨーロッパ"],
     ["us", "アメリカ"],
     /* 意図的に入れていない語:
-     *   BE      … 二字の国コードは "GA"（州か国か）のように歧うので推測しない
+     *   BE      … 二字の国コードは "GA"（州か国か）のように迷うので推測しない
      *   Grenada … `Radisson Grenada Beach Resort Grenada` の会場名の中で置換が当たり、
      *               会場名が壊れる（国名の行は他に無い） */
     ["online only", "オンラインのみ"],
