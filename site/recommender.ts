@@ -2590,6 +2590,7 @@ const Recommender = (() => {
     ["クラクフ", "krakow"],
     ["ピサ", "pisa"],
     ["ノッティンガム", "nottingham"],
+    ["マインツ", "mainz"],
     // 国名の翻訳から守って公式表記のまま置いた州（`PLACE_NAME_SHIELDS_JA`）。
     ["ニューメキシコ", "new mexico"],
   ];
@@ -2947,7 +2948,15 @@ const Recommender = (() => {
     });
 
     const groups: string[][] = [];
-    queryTokens(query).forEach((token) => {
+    const tokens = queryTokens(query);
+    /* 会議の略称らしき語が同じ入力に混ざっているか（`nsdi 27` の `27` を年の 2027 として
+     * 扱うための条件）。略称は 2 文字以上の英文字のかたまりだけなので、月日だけの入力
+     * （`8月 27`）や裸の `27` は対象にならない。裸の 2 桁は暦日の「27日」と衝突するので、
+     * 略称があるときだけ年としても見る。 */
+    const hasAbbrevToken = tokens.some(
+      (token) => /^[a-z][a-z0-9]{1,15}$/.test(token) && !/^\d+$/.test(token),
+    );
+    tokens.forEach((token) => {
       const group = [token];
       const expanded = resolved[kanaFold(token)];
       if (expanded) {
@@ -2969,6 +2978,13 @@ const Recommender = (() => {
         calendar.forEach((name) => {
           if (group.indexOf(name) < 0) group.push(name);
         });
+      }
+      /* 略称と年を離して打つ人は多い（`NSDI 27`）。貼り付けて打たれる前提の
+       * `abbrevYearGroups` では割れたまま通り、変更前は 0 件だった（実測: `NSDI 27`
+       * `ICDE 27` はいずれも 0 件で、`NSDI 2027` は出る）。 */
+      if (hasAbbrevToken && /^\d{2}$/.test(token)) {
+        const year = `20${token}`;
+        if (group.indexOf(year) < 0) group.push(year);
       }
       const split = abbrevYearGroups(token);
       if (split) {

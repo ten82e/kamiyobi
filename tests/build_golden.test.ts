@@ -7259,6 +7259,7 @@ it("新しい開催市の言い方が、収録の開催地に届いている（S
     ["クラクフ", "krakow"],
     ["ピサ", "pisa"],
     ["ノッティンガム", "nottingham"],
+    ["マインツ", "mainz"],
   ];
   const script = [
     "(async () => {",
@@ -7302,4 +7303,45 @@ it("新しい開催市の言い方が、収録の開催地に届いている（S
     ).toBeGreaterThan(0);
     expect(row.missing, `「${row.ja}」で引くとその都市の行が ${row.missing} 件届かない`).toBe(0);
   }
+});
+
+it("略称と年をスペースで離して 2 桁打つ入力も、実カタログで 4 桁と同じ行を出す（SPEC §7）", () => {
+  /* `nsdi27`（貼り付け）と `NSDI 2027`（4 桁）は通っていたのに、いちばん打ちやすい
+   * `NSDI 27` が 0 件だった（2026-09-23 実測）。**裸の 2 桁を年として扱うのは、
+   * 同じ入力に略称があるときだけ**なので、月日や裸の数字の当たり方が広まっていないことも
+   * 同じ実データで確認する。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(new URL("../data/snapshot.json", import.meta.url).pathname)}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const keys = (q) => { const m = Recommender.searchMatcher(q); return rows.filter((r) => m(r.hay)).map((r) => r.conf.key + '@' + r.ed.year).sort(); };",
+    "const pairs = [['NSDI 27', 'NSDI 2027'], ['ICDE 27', 'ICDE 2027'], ['OSDI 26', 'OSDI 2026']]",
+    "  .map((pair) => ({ short: keys(pair[0]), long: keys(pair[1]) }));",
+    "const bare = keys('27').length;",
+    "const monthDay = keys('8月 27').length;",
+    // 暦日で引ける入力は従来どおり（年の展開で減っていないこと）。
+    "const isoMonth = keys('2026-12').length;",
+    "console.log(JSON.stringify({ pairs, bare, monthDay, isoMonth }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    pairs: Array<{ short: string[]; long: string[] }>;
+    bare: number;
+    monthDay: number;
+    isoMonth: number;
+  };
+  out.pairs.forEach((pair, i) => {
+    expect(pair.long.length, `${i} 件目の 4 桁入力が 0 件`).toBeGreaterThan(0);
+    expect(pair.short, `${i} 件目: 離して 2 桁打つ入力が 4 桁と同じ行を出さない`).toEqual(
+      pair.long,
+    );
+  });
+  // 裸の 2 桁・月日の入力は広げていない（暦日の当たり方のまま）。
+  expect(out.bare).toBeGreaterThan(0);
+  expect(out.monthDay).toBeGreaterThan(0);
+  expect(out.isoMonth).toBeGreaterThan(0);
 });

@@ -1181,6 +1181,32 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
   });
 
+  describe("略称と年を離して打つ（`NSDI 27`）", () => {
+    /* 貼り付けて打つ形は既に通っていたが、実務ではスペースで切る入力がふつう多い
+     * （2026-09-23 実測: `NSDI 27` `ICDE 27` はいずれも 0 件で、`NSDI 2027` は出ていた）。 */
+    const groupsOf = (q: string) => R.queryTokenGroups(q);
+
+    it("同じ入力に略称があるときだけ、裸の 2 桁を年としても見る", () => {
+      const [abbr, year] = groupsOf("NSDI 27");
+      expect(abbr[0]).toBe("nsdi");
+      expect(year).toContain("27");
+      expect(year).toContain("2027");
+      // 裸の 2 桁は暦日（27日）のままとする。年として広げない。
+      expect(groupsOf("27")[0]).not.toContain("2027");
+      // 月日を打っている入力も年として扱わない（`8月 27` は 8/27 の話）。
+      groupsOf("8月 27").forEach((group: string[]) => {
+        expect(group).not.toContain("2027");
+      });
+    });
+
+    it("離して打った入力が、年に 4 桁を打ったときと同じ行を出す", () => {
+      const hay = "usenix conference on networked systems design and implementation nsdi 2027";
+      expect(R.hayMatches(hay, "NSDI 27")).toBe(true);
+      expect(R.hayMatches(hay, "NSDI 2027")).toBe(true);
+      expect(R.hayMatches(hay, "NSDI 26")).toBe(false);
+    });
+  });
+
   describe("deadlinesToCsv（絞り込み結果を表計算へ持ち出す）", () => {
     const now = Date.parse("2026-09-22T00:00:00+09:00");
     const rowOf = (over: Record<string, unknown>) => ({
