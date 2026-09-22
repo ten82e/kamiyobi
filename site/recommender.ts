@@ -1623,14 +1623,19 @@ const Recommender = (() => {
         const note = `「${token}」は${hit[0]}で探しています`;
         if (notes.indexOf(note) < 0) notes.push(note);
       }
-      // 地域まとめ（`ヨーロッパ` → 欧州の国名）は当たり行が一桁増えるので、広げた先を書く。
+      // 地域まとめ（`ヨーロッパ` → 欧州の国名）と地方まとめ（`関東` → 都道府県と都市名）は
+      // 当たり行が一桁増えるので、広げた先を書く。
       const foldedToken = kanaFold(token);
-      const region = CONTINENT_READINGS.filter(
-        (entry) => kanaFold(entry[0]) === foldedToken || kanaFold(entry[1]) === foldedToken,
-      );
+      const matches = (entry: string[]) =>
+        kanaFold(entry[0]) === foldedToken || kanaFold(entry[1]) === foldedToken;
+      const continent = CONTINENT_READINGS.filter(matches);
+      const region = continent.length ? continent : REGION_READINGS.filter(matches);
       if (region.length) {
-        const members = String(region[0][2]).split(",");
-        const note = `「${token}」は地域まとめ（${members.slice(0, 2).join("・")} など ${members.length} か所の表記）で探しています`;
+        const members = regionEntryMembers(region[0]);
+        // 地方は都道府県だけでは届かない（開催市だけ書かれた行がある）ので、
+        // 展開した先の実態を語列表に書く。
+        const label = continent.length ? "地域まとめ" : "地方の都道府県と開催市";
+        const note = `「${token}」は${label}（${members.slice(0, 2).join("・")} など ${members.length} か所の表記）で探しています`;
         if (notes.indexOf(note) < 0) notes.push(note);
         // この語にさらに付ける説明はない。
         return;
@@ -2314,6 +2319,16 @@ const Recommender = (() => {
     ["大阪", "osaka"],
     ["名古屋", "nagoya"],
     ["福岡", "fukuoka"],
+    // 以下は収録カタログの日本開催行に実際のつづりで現れる都市（2026-09-23 に
+    // `data/snapshot.json` の日本開催行 72 行の都市表記 18 種を数えて追記）。
+    // 日本語で打つと 0 件、英文字で打つと当たる、という状態を無くす。
+    ["金沢", "kanazawa"],
+    ["福井", "fukui"],
+    ["岐阜", "gifu"],
+    ["長崎", "nagasaki"],
+    ["沖縄", "okinawa"],
+    ["筑波", "tsukuba"],
+    ["宮古島", "miyakojima"],
     ["シカゴ", "chicago"],
     ["シドニー", "sydney"],
     ["メルボルン", "melbourne"],
@@ -2481,8 +2496,66 @@ const Recommender = (() => {
     ["近畿", "きんき", "滋賀,京都,大阪,兵庫,奈良,和歌山"],
     ["中国地方", "ちゅうごくちほう", "鳥取,島根,岡山,広島,山口"],
     ["四国", "しこく", "徳島,香川,愛媛,高知"],
-    ["九州", "きゅうしゅう", "福岡,佐賀,長崎,熊本,大分,宮崎,鹿児島"],
+    // 沖縄は総務省の区分では「九州・沖縄地方」。`沖縄` 単独でも引けるので、
+    // ここに入れることで `九州` の当たり方が狭まることはない。
+    ["九州", "きゅうしゅう", "福岡,佐賀,長崎,熊本,大分,宮崎,鹿児島,沖縄"],
   ];
+
+  /* 地方で引いたときに、**開催市だけ**が書かれた行を落とさないための表。
+   * 国内の国際会議の開催地は上流どおりの英字表記（`Tokyo, Japan`）で、都道府県が
+   * 書かれないことが多い。地方名を都道府県に展開するだけでは取りこぼすため
+   * （実測で `東京` は 28 件当たるのに `関東` は 1 件だった）、各都道府県の都市表記も
+   * 同じ組に入れる。ここに挙げる都市は収録カタログに実際のつづりで現れるものだけ。
+   * 日本語の表記（`横浜` など）は `PLACE_QUERY_ALIASES_JA` から引くので書かない。 */
+  const PREFECTURE_CITIES_JA: string[][] = [
+    ["東京", "tokyo"],
+    ["神奈川", "yokohama"],
+    ["茨城", "tsukuba"],
+    ["京都", "kyoto"],
+    ["大阪", "osaka"],
+    ["兵庫", "kobe"],
+    ["奈良", "nara"],
+    ["愛知", "nagoya"],
+    ["岐阜", "gifu"],
+    ["福井", "fukui"],
+    ["石川", "kanazawa"],
+    ["福岡", "fukuoka"],
+    ["長崎", "nagasaki"],
+    ["沖縄", "okinawa,miyakojima"],
+  ];
+
+  const CITIES_BY_PREFECTURE: Record<string, string[]> = {};
+  PREFECTURE_CITIES_JA.forEach(([prefecture, cities]) => {
+    CITIES_BY_PREFECTURE[prefecture] = String(cities).split(",");
+  });
+
+  /* 表の見出し語（地方名・地域名）を展開した語の組。検索語の展開と件数欄の
+   * 「こう探しました」で**同じ語列表**を使う（片方だけ直して説明が嘘になるのを防ぐ）。
+   * 地方には都道府県と、その県の都市の表記まで入れる。 */
+  function regionEntryMembers(entry: string[]): string[] {
+    if (!entry[2]) return [entry[0]];
+    const out = String(entry[2]).split(",");
+    if (REGION_READINGS.indexOf(entry) < 0) return out;
+    out.slice().forEach((member) => {
+      (CITIES_BY_PREFECTURE[member] || []).forEach((city) => {
+        cityQueryForms(city).forEach((form) => {
+          if (out.indexOf(form) < 0) out.push(form);
+        });
+      });
+    });
+    return out;
+  }
+
+  /* 都市の英文字つづりから、画面・検索の両方で使う表記の組を作る。
+   * 日本語側は `PLACE_QUERY_ALIASES_JA` の国名・都市名の表を引く（書き写さない）。 */
+  function cityQueryForms(latinCity: string): string[] {
+    const out = [latinCity];
+    PLACE_QUERY_ALIASES_JA.forEach((entry) => {
+      if (String(entry[1]).toLowerCase() === latinCity && out.indexOf(entry[0]) < 0)
+        out.push(entry[0]);
+    });
+    return out;
+  }
 
   /* 開催地の**地域まとめ**で引けるようにする。画面の開催地は公式表記（`Seattle, USA`）を
    * 基本にしつつ、末尾の国名だけは日本語へ寄せて表示する（`placeJa`）。収録カタログの
@@ -2606,7 +2679,7 @@ const Recommender = (() => {
     PLACE_READINGS.concat(REGION_READINGS)
       .concat(CONTINENT_READINGS)
       .forEach((entry) => {
-        const members = entry[2] ? String(entry[2]).split(",") : [entry[0]];
+        const members = regionEntryMembers(entry);
         const keys = [kanaFold(entry[1])];
         // 地方名は漢字そのものが会場地名に書かれるとは限らない（「九州」で別府を引きたい）。
         // 漢字見出しも同じ展開語彙に入れる。市名は会場文字列にそのまま出るので kana のみ。

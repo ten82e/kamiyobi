@@ -4821,3 +4821,61 @@ describe("日付を数字で打つ（12/25・2026-12-25・2026-12）", () => {
     expect(glued.filter((r) => m(r.hay)).map((r) => r.conf.key)).toEqual(["x"]);
   });
 });
+
+describe("地方で引く（関東・関西で、開催市だけ書かれた国内行も出る）", () => {
+  const NOW = Date.parse("2026-08-09T00:00:00Z");
+  // 国内の国際会議は上流どおりの英字表記で `Tokyo, 日本` のように国名だけ日本語になる。
+  // 研究会の行は「（埼玉）」のように都道府県が書かれる。両方に地方名で届くこと。
+  const rows = [
+    {
+      conf: { key: "ieee-tokyo", title: "IEEE", editions: [] },
+      hay: "ieee conference tokyo, 日本 東京",
+    },
+    {
+      conf: { key: "ieice-saitama", title: "研究会", editions: [] },
+      hay: "ieice 研究会 さいたま市（埼玉）",
+    },
+    { conf: { key: "ieee-kyoto", title: "IEEE", editions: [] }, hay: "ieee workshop kyoto, 日本" },
+    {
+      conf: { key: "ieee-fukuoka", title: "IEEE", editions: [] },
+      hay: "ieee symposium fukuoka, 日本",
+    },
+    {
+      conf: { key: "ieee-kanazawa", title: "IEEE", editions: [] },
+      hay: "ieee siggraph asia kanazawa, 日本",
+    },
+    {
+      conf: { key: "ieee-osaka", title: "IEEE", editions: [] },
+      hay: "ieee conference osaka, 日本",
+    },
+  ];
+  const hits = (q: string) => {
+    const m = R.searchMatcher(q, NOW);
+    return rows.filter((r) => m(r.hay)).map((r) => String(r.conf.key));
+  };
+
+  it("開催市だけの行も地方名で当たる", () => {
+    expect(hits("関東").sort()).toEqual(["ieee-tokyo", "ieice-saitama"]);
+    expect(hits("関西").sort()).toEqual(["ieee-kyoto", "ieee-osaka"]);
+    expect(hits("九州")).toEqual(["ieee-fukuoka"]);
+  });
+
+  it("収録にある都市は、日本語の表記で引ける", () => {
+    expect(hits("金沢")).toEqual(["ieee-kanazawa"]);
+    expect(hits("かなざわ")).toEqual([]);
+  });
+
+  it("展開は一方向だけ（都市名を打った人の当たり方を地方全体に広げない）", () => {
+    const group = R.queryTokenGroups("東京", NOW)[0].map(String);
+    expect(group.some((term: string) => /神奈川|埼玉|千葉/.test(term))).toBe(false);
+    expect(hits("東京")).toEqual(["ieee-tokyo"]);
+  });
+
+  it("広げた先を件数欄のおしらせに出す", () => {
+    expect(R.querySynonymNotes("関東")).toEqual([
+      "「関東」は地方の都道府県と開催市（茨城・栃木 など 12 か所の表記）で探しています",
+    ]);
+    // 精密に引ける語には付けない。
+    expect(R.querySynonymNotes("東京")).toEqual([]);
+  });
+});

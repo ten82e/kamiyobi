@@ -2438,6 +2438,9 @@ const SEARCH_CANON = (() => {
     ["NORTH_AMERICA_JA", /const NORTH_AMERICA_JA =[\s\S]*?;/],
     ["OCEANIA_JA", /const OCEANIA_JA =[\s\S]*?;/],
     ["CONTINENT_READINGS", /const CONTINENT_READINGS[\s\S]*?\];/],
+    // 地方名 → 都道府県 + 開催市（`関東` で `Tokyo, Japan` を引く）の定義。
+    ["PREFECTURE_CITIES_JA", /const PREFECTURE_CITIES_JA[\s\S]*?\];/],
+    ["CITIES_BY_PREFECTURE", /const CITIES_BY_PREFECTURE[\s\S]*?\};/],
     ["QUERY_EDGE_PUNCTUATION", /const QUERY_EDGE_PUNCTUATION = [^\n]*;/],
     ["COMPOUND_MIN_LENGTH_JA", /const COMPOUND_MIN_LENGTH_JA = [^\n]*;/],
     ["ONLINE_TERMS_JA", /const ONLINE_TERMS_JA = [^\n]*;/],
@@ -2480,6 +2483,8 @@ const SEARCH_CANON = (() => {
       "isShortLatinTerm",
       "foldedLetterAtWordBoundary",
       "placeLatinTerms",
+      "cityQueryForms",
+      "regionEntryMembers",
       "matchFoldedGroups",
       "searchMatcher",
       "hayMatches",
@@ -6221,4 +6226,74 @@ it("画面に出る状態の語（推定）が一覧の検索でも引ける（S
   // 件数欄は、落ちた行の出し方まで同じ行に書く（回復経路を検索語から探させない）。
   const app = siteRuntime("app.js");
   expect(app).toContain("件（「推定締切を含める」で出ます）");
+});
+
+it("地方名で引くと、開催市だけ書かれた国内行も漏れない（SPEC §7）", () => {
+  /* 国内の国際会議の開催地は上流どおりの英字表記（`Tokyo, Japan`）で都道府県が書かれない。
+   * 地方名を都道府県に展開するだけでは取りこぼしていた（実測で `東京` 28 件に対し `関東` 1 件）。
+   * **収録カタログ（`data/snapshot.json`）**で、都市→地方の対応をここでおいて、その地方の語で
+   * その行が引けることを見る（検査用のビルドはカタログが小さく空振りするため）。
+   * 新しい都市が増えたときはこれが失敗するので、表を足す案内になる。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    // 開催地の語はビルド後の成果物から、行は収録カタログから読む。
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(new URL("../data/snapshot.json", import.meta.url).pathname)}, 'utf8'));`,
+    `const src = readFileSync(${JSON.stringify(join(site, "recommender.js"))}, 'utf8');`,
+    "const i = src.indexOf('const PREFECTURE_CITIES_JA = [');",
+    "const table = eval(src.slice(i + 'const PREFECTURE_CITIES_JA = '.length, src.indexOf('];', i) + 1));",
+    "const rows = Recommender.candidateRows(DATA);",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    // 都市 → 地方（表の書き写しではなく、検査側で独立に言い直した対応）。
+    "const REGION_OF_CITY = {",
+    "  tokyo: '関東', yokohama: '関東', tsukuba: '関東',",
+    "  kyoto: '関西', osaka: '関西', kobe: '関西', nara: '関西',",
+    "  nagoya: '中部', gifu: '中部', fukui: '中部', kanazawa: '中部',",
+    "  fukuoka: '九州', nagasaki: '九州', okinawa: '九州', miyakojima: '九州',",
+    "};",
+    "const hitKeys = (q) => {",
+    "  const m = Recommender.searchMatcher(q, now);",
+    "  return new Set(rows.filter((r) => m(r.hay)).map((r) => r.conf.key + '@' + r.ed.year + '@' + r.kind));",
+    "};",
+    "const regionHits = {};",
+    "Object.values(REGION_OF_CITY).forEach((region) => {",
+    "  if (!regionHits[region]) regionHits[region] = hitKeys(region);",
+    "});",
+    "const missing = [];",
+    "const citiesSeen = new Set();",
+    "rows.forEach((r) => {",
+    "  const place = String(r.ed.place || '').toLowerCase();",
+    "  if (!/japan|日本/.test(String(r.ed.place) + String(Recommender.placeJa(r.ed.place)))) return;",
+    "  const city = Object.keys(REGION_OF_CITY).find((c) => place.includes(c));",
+    "  if (!city) return;",
+    "  citiesSeen.add(city);",
+    "  const key = r.conf.key + '@' + r.ed.year + '@' + r.kind;",
+    "  if (!regionHits[REGION_OF_CITY[city]].has(key))",
+    "    missing.push(`${city} (${String(r.ed.place)}) が ${REGION_OF_CITY[city]} で引けない`);",
+    "});",
+    // 表に、収録カタログで 1 件も当たらない都市を置いていないこと。
+    "const dead = [];",
+    "table.forEach(([, cities]) => {",
+    "  String(cities).split(',').forEach((city) => {",
+    "    if (hitKeys(city).size === 0) dead.push(city);",
+    "  });",
+    "});",
+    "console.log(JSON.stringify({",
+    "  cities: citiesSeen.size, tableRows: table.length, missing, dead,",
+    "}));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 120_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    cities: number;
+    tableRows: number;
+    missing: string[];
+    dead: string[];
+  };
+  // 検査が空振りで通らないように、実際に都市の行を拾えている件数を見る。
+  expect(out.cities, "収録カタログで都市の行を 1 つも拾えていない").toBeGreaterThanOrEqual(14);
+  expect(out.missing, "地方名で引けない国内行がある:\n" + out.missing.join("\n")).toEqual([]);
+  expect(out.dead, "都市の表に、収録カタログで当たらない語がある").toEqual([]);
 });
