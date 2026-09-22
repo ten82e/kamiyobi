@@ -1878,6 +1878,20 @@ it("weekday suffixes for date-only deadlines and 会期 are viewer-timezone inde
   expect(app).toContain("Recommender.weekdayJaFromDate(r.ed.event_end)");
 });
 
+it("filtered rows can be exported to a spreadsheet as BOM-prefixed CSV (SPEC §7)", () => {
+  const template = readFileSync(join(site, "index.html"), "utf8");
+  const runtime = siteRuntime();
+  // 書き出し本文は recommender の単一正典を通す（一覧の表示式とズレないようにする）。
+  expect(runtime).toContain("Recommender.deadlinesToCsv(");
+  // Excel は BOM の無い UTF-8 を日本語として読めない。
+  expect(runtime).toContain('"\\ufeff" + csv');
+  // 推薦モードでは出さず、締切一覧の絞り込み件数ラベルをそのまま使う。
+  expect(runtime).toContain("exportBtn.hidden = recMode || !shown.length;");
+  expect(runtime).toContain("件を CSV でダウンロード");
+  // 行はクリックで開いたまま、ボタン行は表のヘッダー選択対象にしない。
+  expect(template).toContain('id="exportCsv"');
+});
+
 it("upcoming.md lists meetings as well as deadlines", () => {
   const rows = upcomingRows(site);
   const kinds = new Set(rows.map((r) => r[3]));

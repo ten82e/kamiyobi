@@ -1637,6 +1637,123 @@ const Recommender = (() => {
     return parts.filter(Boolean).join(" ");
   }
 
+  /* SPEC §7: 絞り込んだ結果を丸ごと表計算に持ち出せるようにする。研究室内の予定表や
+   * 経費申請の下書きに貼る用途が多く、ページングされた行だけを拾っても仕方がないため
+   * 呼び出し側は絞り込み後の全行を渡す。
+   * 列は日本語、文字コードは Excel が BOM 無しで読み替えると日本語が文字化けするため
+   * 付け外しは呼び出し側（ダウンロード処理）に任せる。 */
+  const CSV_HEADERS_JA = [
+    "締切",
+    "公式表記",
+    "残り",
+    "会議",
+    "種別",
+    "ラウンド",
+    "CCF",
+    "CORE",
+    "会期",
+    "開催地",
+    "状態",
+    "URL",
+  ];
+
+  function csvField(value: unknown): string {
+    const raw = value == null ? "" : String(value);
+    return /[",\r\n]/.test(raw) ? `"${raw.replace(/"/g, '""')}"` : raw;
+  }
+
+  function csvJstInstant(ms: number): string {
+    const d = new Date(ms + 9 * 3600000);
+    const p = (n: number) => (n < 10 ? `0${n}` : String(n));
+    return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())} JST(${CALENDAR_DATE_JA[d.getUTCDay()]})`;
+  }
+
+  /* AoE は UTC-12 の壁時計（§1）。一覧と同じ形を出す。 */
+  function fmtAoEText(ms: number): string {
+    const d = new Date(ms - 12 * 3600000);
+    const p = (n: number) => (n < 10 ? `0${n}` : String(n));
+    return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())} AoE`;
+  }
+
+  const KIND_LABELS_JA: Record<string, string> = {
+    abstract: "概要締切",
+    paper: "論文締切",
+    journal: "常時受付",
+  };
+
+  function deadlinesToCsv(
+    rows: readonly Record<string, unknown>[] | null | undefined,
+    nowMs: number,
+  ): string {
+    const lines: string[] = [CSV_HEADERS_JA.join(",")];
+    (rows || []).forEach((row) => {
+      const conf = (row.conf || {}) as Record<string, unknown>;
+      const ed = (row.ed || {}) as Record<string, unknown>;
+      const dl = (row.dl || {}) as Record<string, unknown>;
+      const rank = (conf.rank || {}) as Record<string, unknown>;
+      const kind = String(row.kind || dl.kind || "");
+      const dateOnly = row.dateOnly === true;
+      const t = typeof row.t === "number" ? row.t : Number.NaN;
+      let when = "";
+      let official = "";
+      if (kind === "journal") {
+        when = "随時受付";
+      } else if (dateOnly) {
+        const day = weekdayJaFromDate(row.localDate);
+        when = day ? `${row.localDate}(${day})` : String(row.localDate || "");
+        official = "時刻未確認";
+      } else if (Number.isFinite(t)) {
+        when = csvJstInstant(t);
+        const zone = officialZone(dl);
+        if (zone === "JST") official = "JST";
+        else if (zone === "AoE") official = fmtAoEText(t);
+        else if (zone && zone !== "UTC") official = `${zone} ／ UTC`;
+        else official = "UTC";
+      }
+      let left = "";
+      if (kind !== "journal" && Number.isFinite(t)) {
+        const days = Math.floor((t - nowMs) / 86400000);
+        left = dateOnly ? "時刻未確認" : days >= 0 ? `残り${days}日` : "経過";
+      }
+      const status = [
+        ed.estimated ? "推定" : "",
+        dl.needs_reconfirm ? "再確認待ち" : "",
+        dl.verification === "unverified" ? "要確認" : "",
+      ]
+        .filter(Boolean)
+        .join("・");
+      const place = placeJa(ed.place) || String(ed.place || "");
+      lines.push(
+        [
+          when,
+          official,
+          left,
+          conf.title,
+          KIND_LABELS_JA[kind] || kind,
+          dl.round == null ? "" : `R${dl.round}`,
+          rank.ccf,
+          rank.core,
+          // 一覧の会期列と同じ形（ISO + 暦日）を優先し、読めない会期は原文を残す。
+          ed.event_start
+            ? [ed.event_start, ed.event_end]
+                .filter(Boolean)
+                .map((d) => {
+                  const day = weekdayJaFromDate(d);
+                  return day ? `${d}(${day})` : String(d);
+                })
+                .join(" 〜 ")
+            : ed.date_text,
+          place,
+          status,
+          ed.link || conf.link,
+        ]
+          .map(csvField)
+          .join(","),
+      );
+    });
+    return `${lines.join("\r\n")}\r\n`;
+  }
+
   /* SPEC §7: 暦日だけの値に曜日を添える。`YYYY-MM-DD` を UTC の暦日として読み、
    * 閲覧者のタイムゾーンでシフトさせない（date-only の締切は UTC/JST/AoE に
    * 変換しないという §4 の約束を守るため、瞬間を作らず部分文字列から取る）。 */
@@ -2991,6 +3108,7 @@ const Recommender = (() => {
     officialZone: officialZone,
     placeJa: placeJa,
     weekdayJaFromDate: weekdayJaFromDate,
+    deadlinesToCsv: deadlinesToCsv,
     searchNormalize: searchNormalize,
     queryTokens: queryTokens,
     hayMatches: hayMatches,

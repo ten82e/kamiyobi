@@ -346,8 +346,9 @@ label.check input:checked + span { color: var(--fg); }
 .sample-btn:hover { color: var(--accent); border-color: var(--accent); border-style: solid; }
 
 /* Main Table */
-.count { font-size: 0.82rem; color: var(--muted); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.count { font-size: 0.82rem; color: var(--muted); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .count-hint { text-align: right; }
+.count #exportCsv { white-space: nowrap; }
 /* 月ごとの区切り行。日時順の見やすさのためで、行として選択させない。
    列ヘッダーは固定していないので、月見出しも固定しない（見出しだけが残ると迷う）。 */
 .month-row th {
@@ -654,6 +655,8 @@ footer a:hover { text-decoration: underline; }
   <!-- Items Counter & Keyboard Shortcuts Hint -->
   <div class="count">
     <span id="count"></span>
+    <!-- 絞り込んだ結果は表計算へ持ち出して研究室内の予定表に貼れる（BOM 付き UTF-8） -->
+    <button id="exportCsv" type="button" class="btn-reset" hidden></button>
     <span class="count-hint">行を選ぶと詳細（公式確認の状態と根拠）<span class="count-kbd" style="font-family: var(--font-mono); font-size: 0.75rem;"> ｜ ショートカット: <kbd>j</kbd>/<kbd>k</kbd> 選択 | <kbd>Enter</kbd> 開く | <kbd>d</kbd> 詳細 | <kbd>Esc</kbd> 閉じる | <kbd>/</kbd> 検索</span></span>
   </div>
   <div id="historyStatus" hidden style="padding: 0 0 12px; text-align: center; color: var(--muted);">

@@ -147,6 +147,10 @@ interface SiteRecommenderApi {
   officialZone(dl: unknown): string;
   placeJa(value: unknown): string;
   weekdayJaFromDate(value: unknown): string;
+  deadlinesToCsv(
+    rows: readonly Record<string, unknown>[] | null | undefined,
+    nowMs: number,
+  ): string;
   searchNormalize(value: unknown): string;
   queryTokens(query: unknown): string[];
   hayMatches(hay: unknown, query: unknown): boolean;

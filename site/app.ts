@@ -1448,6 +1448,27 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   // 選択・詳細・キーボード移動はこれらの行を数えない（off-by-one の再発防止）。
   // 日時順で見ているときだけ月で区切る。一致度順やランク順で区切ると、
   // 月が往復してかえって読めなくなる。
+  /* SPEC §7: 絞り込み後の全行を表計算へ持ち出せるようにする。ページング後の表示分だけ
+   * ではなく `shown` 全体を書き出す。Excel は BOM の無い UTF-8 を日本語として読めないため
+   * BOM を付けて渡す（本文の区切りは recommender の deadlinesToCsv が単一正典）。 */
+  function exportShownCsv() {
+    const csv = Recommender.deadlinesToCsv(
+      shown as unknown as Record<string, unknown>[],
+      Date.now(),
+    );
+    if (typeof Blob === "undefined" || typeof URL === "undefined" || !URL.createObjectURL) return;
+    const url = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" }));
+    const now = new Date();
+    const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `kamiyobi-deadlines-${stamp}.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    if (URL.revokeObjectURL) URL.revokeObjectURL(url);
+  }
+
   /* SPEC §7: 0 件のとき、原因になりやすい条件をそのまま並べる。
    * 期間窓・過去非表示・「開催行は表に出さない」が重なると、収録が無いのだと
    * 誤解して離脱するため、いま外せる条件を実名で示す。*/
@@ -2198,6 +2219,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       }
     }
     $("count").textContent = cnt;
+    // CSV 書き出しは締切一覧の絞り込み結果に対してだけ意味がある（推薦モードでは出さない）。
+    const exportBtn = $("exportCsv");
+    if (exportBtn) {
+      exportBtn.textContent = `表示中の ${shown.length} 件を CSV でダウンロード`;
+      exportBtn.hidden = recMode || !shown.length;
+    }
     const showHistoryStatus =
       !recMode && state.past && (historyStatus === "loading" || historyStatus === "error");
     $("historyStatus").hidden = !showHistoryStatus;
@@ -2621,6 +2648,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   });
   catsBox.addEventListener("change", apply);
   $("more").addEventListener("click", drawMore);
+  const exportCsvButton = $("exportCsv");
+  if (exportCsvButton) exportCsvButton.addEventListener("click", exportShownCsv);
   $("modeRecommend").addEventListener("click", () => setMode("recommend"));
   $("modeDeadlines").addEventListener("click", () => setMode("deadlines"));
   $("historyRetry").addEventListener("click", () => {

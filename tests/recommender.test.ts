@@ -958,6 +958,99 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
   });
 
+  describe("deadlinesToCsv（絞り込み結果を表計算へ持ち出す）", () => {
+    const now = Date.parse("2026-09-22T00:00:00+09:00");
+    const rowOf = (over: Record<string, unknown>) => ({
+      kind: "paper",
+      conf: {
+        key: "demo",
+        title: "Demo Symposium",
+        rank: { ccf: "A", core: "A*" },
+        link: "https://example.org/",
+      },
+      ed: {
+        year: 2027,
+        place: "Alicante, Spain / Online",
+        date_text: "June 7-11, 2027",
+        event_start: "2027-06-07",
+        event_end: "2027-06-11",
+        link: "https://example.org/cfp",
+      },
+      dl: { round: 1, kind: "paper", tz_raw: "AoE" },
+      t: Date.parse("2026-10-05T14:59:00Z"),
+      tLast: Date.parse("2026-10-05T14:59:00Z"),
+      dateOnly: false,
+      localDate: "",
+      ...over,
+    });
+
+    it("日本語ヘッダーで 1 行 1 締切写出す", () => {
+      const csv = R.deadlinesToCsv([rowOf({})], now);
+      const [header, first] = csv.split("\r\n");
+      expect(header).toBe("締切,公式表記,残り,会議,種別,ラウンド,CCF,CORE,会期,開催地,状態,URL");
+      const cells = first.split(",");
+      // JST 主表記 + 曜日（2026-10-05 14:59 UTC = JST 23:59）。
+      expect(cells[0]).toBe("2026-10-05 23:59 JST(月)");
+      // AoE は UTC-12 の壁時計（2026-10-05 14:59 UTC = AoE 02:59）。
+      expect(cells[1]).toBe("2026-10-05 02:59 AoE");
+      expect(cells[2]).toBe("残り13日");
+      expect(cells[4]).toBe("論文締切");
+      expect(cells[5]).toBe("R1");
+      expect(cells[6]).toBe("A");
+      // 会期は一覧と同じ ISO + 暦日、開催地は日本語に寄せた表記。
+      expect(csv).toContain("2027-06-07(月) 〜 2027-06-11(金)");
+      expect(csv).toContain("Alicante, スペイン / オンライン");
+      expect(csv.endsWith("\r\n")).toBe(true);
+    });
+
+    it("時刻未確認・推定・経過を区別する", () => {
+      const dateOnly = R.deadlinesToCsv(
+        [
+          rowOf({
+            dateOnly: true,
+            localDate: "2026-09-30",
+            t: Date.parse("2026-09-29T10:00:00Z"),
+            dl: { kind: "abstract", precision: "date-only", local_date: "2026-09-30" },
+          }),
+        ],
+        now,
+      );
+      expect(dateOnly).toContain("2026-09-30(水),時刻未確認,時刻未確認");
+
+      const past = R.deadlinesToCsv([rowOf({ t: now - 5 * 86400000, tLast: now })], now);
+      expect(past).toContain(",経過,");
+
+      const estimated = R.deadlinesToCsv(
+        [rowOf({ ed: { ...rowOf({}).ed, estimated: true } })],
+        now,
+      );
+      expect(estimated).toContain(",推定,");
+    });
+
+    it("カンマと引用符を含む値を RFC4180 でエスケープする", () => {
+      const csv = R.deadlinesToCsv(
+        [
+          rowOf({
+            conf: { key: "d", title: 'Workshop, "Edge" Cases', rank: {}, link: "https://x/" },
+          }),
+        ],
+        now,
+      );
+      expect(csv).toContain('"Workshop, ""Edge"" Cases"');
+    });
+
+    it("常時受付ジャーナルと空入力を壊さない", () => {
+      const journal = R.deadlinesToCsv([rowOf({ kind: "journal", t: Number.NaN })], now);
+      expect(journal).toContain("随時受付,");
+      expect(R.deadlinesToCsv([], now)).toBe(
+        "締切,公式表記,残り,会議,種別,ラウンド,CCF,CORE,会期,開催地,状態,URL\r\n",
+      );
+      expect(R.deadlinesToCsv(null, now)).toBe(
+        "締切,公式表記,残り,会議,種別,ラウンド,CCF,CORE,会期,開催地,状態,URL\r\n",
+      );
+    });
+  });
+
   describe("weekdayJaFromDate（暦日だけの値に曜日を添える）", () => {
     it("YYYY-MM-DD を UTC の暦日として読む", () => {
       expect(R.weekdayJaFromDate("2026-12-17")).toBe("木");
