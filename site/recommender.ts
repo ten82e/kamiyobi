@@ -2128,7 +2128,8 @@ const Recommender = (() => {
         if (!text) return "";
         return RANK_ABSENT_GRADES.indexOf(text.toLowerCase()) >= 0 ? RANK_UNRATED_LABEL_JA : text;
       };
-      const status = statusBadgeWords(ed, dl).join("・");
+      // 画面が「未確認」「該当なし」と出す項目も、この列が引き受ける（値の列は空のまま）。
+      const status = statusBadgeWords(ed, dl).concat(unconfirmedFieldsJa(row)).join("・");
       const place = placeJa(ed.place) || String(ed.place || "");
       // 分野は画面と同じ日本語の語を書く（英字の key を表計算に渡さない）。
       const catsJa = (
@@ -3811,6 +3812,28 @@ const Recommender = (() => {
     return /[\u3041-\u309f\u30a1-\u30ff\u4e00-\u9fff]/.test(value) ? value : "その他の問題";
   }
 
+  /* 画面が「未確認」「該当なし」と出す項目の一覧（SPEC §7）。一覧のセルを作る条件と
+   * 揃えるため、行から取る。
+   *   - 一覧のセルは空欄を作らないので、この語が画面に出る。
+   *   - CSV の状態の列も同じ語を使う（値の列は空のまま – 表計算では値の側で並べ替える
+   *     ほうが都合がよく、空・未確認・該当なしの区別はこの列が持つ）。画面が「未確認」と
+   *     出す行が、書き出すとただの空欄になっていた（2026-09-23 実測: 会期が未知の行で
+   *     状態・会期・開催地の各列がすべて空。常時受付の行も、画面は「該当なし」と読むのに
+   *     CSV では同じ空欄で、区別できなかった）。 */
+  function unconfirmedFieldsJa(row: unknown): string[] {
+    const rec = row as { kind?: unknown; ed?: unknown; rankPairs?: unknown } | null;
+    const ed = (rec?.ed || {}) as Record<string, unknown>;
+    const notApplicable = fieldNotApplicableJa(row);
+    const state = notApplicable ? NOT_APPLICABLE_LABEL_JA : UNCONFIRMED_LABEL_JA;
+    const fields: string[] = [];
+    if (!String(ed.event_start || "").trim()) fields.push(`会期${state}`);
+    if (!String(ed.place || "").trim()) fields.push(`開催地${state}`);
+    // ランクは常時受付の行にも付き得るので、該当なしにはならない（未確認だけ）。
+    const pairs = (rec?.rankPairs || []) as readonly string[];
+    if (!pairs.length) fields.push(`ランク${UNCONFIRMED_LABEL_JA}`);
+    return fields;
+  }
+
   /** 表が「未確認」を出す項目の検索語。条件は表のセルの作り方と揃える。 */
   function unconfirmedSearchTerms(
     ed: { event_start?: string | null; place?: string | null },
@@ -5280,6 +5303,7 @@ const Recommender = (() => {
     presetIsActive: presetIsActive,
     presetNextSelection: presetNextSelection,
     unconfirmedLabelJa: unconfirmedLabelJa,
+    unconfirmedFieldsJa: unconfirmedFieldsJa,
     dataAgeNoteJa: dataAgeNoteJa,
     dataStaleDaysJa: DATA_STALE_DAYS_JA,
     notApplicableLabelJa: notApplicableLabelJa,

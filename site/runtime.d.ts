@@ -194,6 +194,7 @@ interface SiteRecommenderApi {
   semanticReasonJa(value: unknown): string;
   dataAgeNoteJa(generatedAt: unknown, nowMs: number): string;
   notApplicableLabelJa(): string;
+  unconfirmedFieldsJa(row: unknown): string[];
   notApplicableTitleJa(field: string): string;
   fieldNotApplicableJa(row: unknown): boolean;
   readonly dataStaleDaysJa: number;

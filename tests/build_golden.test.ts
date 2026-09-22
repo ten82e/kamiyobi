@@ -11094,3 +11094,122 @@ it("upcoming.md は、表のうえで列の意味が分かる（SPEC §7）", as
   const sep = lines[headerAt + 1];
   expect(sep.split("|").slice(1, -1).length).toBe(cells.length);
 });
+
+it("CSV の状態の列に、画面の「未確認」「該当なし」を残す（SPEC §7）", () => {
+  /* 一覧のセルは空欄を作らないので「未確認」「該当なし」と書く（第 129 回で「該当なし」を
+   * 分けた）。ところが CSV に書き出すと、値の列（会期・開催地・ランク）が空になるだけで、
+   * その状態は消えていた（2026-09-23 実測: 会期が未知の締切行で状態・会期・開催地の各列が
+   * すべて空。常時受付の行も、画面は「該当なし」と読むのに CSV では同じ空欄）。
+   * 表計算に持ち出した人は「収録が無いのか、まだ確認できていないのか」を区別できない。 */
+  const rec = join(site, "recommender.js");
+  const script = [
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${rec}`)});`,
+    "const { readFileSync } = await import('node:fs');",
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const deadlines = Recommender.candidateRows(DATA, now);",
+    "const journals = Recommender.journalRows(DATA.conferences, now);",
+    "const fields = (rows) => rows.filter((r) => Recommender.unconfirmedFieldsJa(r).length);",
+    // 条件（行の値）から期待する件数をその場で作る（数字を書き写さない）。
+    "const unknownEvent = deadlines.filter((r) => !String(r.ed.event_start || '').trim());",
+    "const withTerm = unknownEvent.filter((r) => Recommender.unconfirmedFieldsJa(r).includes('会期未確認'));",
+    "const journalNa = journals.filter((r) => Recommender.unconfirmedFieldsJa(r).includes('会期該当なし'));",
+    "const journalUnconfirmed = journals.filter((r) => Recommender.unconfirmedFieldsJa(r).includes('会期未確認'));",
+    // ランクは常時受付にも付き得るので「該当なし」にはならない。
+    "const journalNaRank = journals.filter((r) => Recommender.unconfirmedFieldsJa(r).includes('ランク該当なし'));",
+    // CSV の実物を読む（列名で見出しから洗う）。
+    "const parse = (line) => {",
+    "  const out = [];",
+    "  let cur = '';",
+    "  let quoted = false;",
+    "  for (let i = 0; i < line.length; i++) {",
+    "    const ch = line[i];",
+    "    if (ch === '\"') {",
+    "      if (quoted && line[i + 1] === '\"') {",
+    "        cur += '\"';",
+    "        i++;",
+    "      } else {",
+    "        quoted = !quoted;",
+    "      }",
+    "    } else if (ch === ',' && !quoted) {",
+    "      out.push(cur);",
+    "      cur = '';",
+    "    } else {",
+    "      cur += ch;",
+    "    }",
+    "  }",
+    "  out.push(cur);",
+    "  return out;",
+    "};",
+    "const csv = Recommender.deadlinesToCsv(unknownEvent.slice(0, 5).concat(journals.slice(0, 5)), now);",
+    // 改行は CRLF の可能性があるので両方受ける。
+    "const lines = csv.split(/\\r?\\n/);",
+    "const cols = parse(lines[0].replace(/^\\\\uFEFF/, ''));",
+    "const at = (name) => cols.indexOf(name);",
+    "const rows = lines.slice(1).filter(Boolean).map(parse);",
+    "console.log(JSON.stringify({",
+    "  headers: cols,",
+    "  unknownEvent: unknownEvent.length,",
+    "  withTerm: withTerm.length,",
+    "  fieldsOfUnknown: Recommender.unconfirmedFieldsJa(unknownEvent[0]),",
+    "  journalRows: journals.length,",
+    "  journalNa: journalNa.length,",
+    "  journalUnconfirmed: journalUnconfirmed.length,",
+    "  journalNaRank: journalNaRank.length,",
+    "  statusCells: rows.map((r) => [r[at('種別')], r[at('会期')], r[at('状態')]]),",
+    "  broken: [null, undefined, {}].map((v) => Recommender.unconfirmedFieldsJa(v).length > 0),",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    headers: string[];
+    unknownEvent: number;
+    withTerm: number;
+    fieldsOfUnknown: string[];
+    journalRows: number;
+    journalNa: number;
+    journalUnconfirmed: number;
+    journalNaRank: number;
+    statusCells: string[][];
+    broken: boolean[];
+  };
+  // 状態の列は元からある（列を増やさず、この列が区別を引き受ける）。
+  expect(out.headers).toContain("状態");
+  expect(out.headers).toContain("会期");
+  expect(out.unknownEvent, "会期が未知の行が実データに無い").toBeGreaterThan(0);
+  expect(out.withTerm, "画面が「未確認」と出す行が CSV で区別できない").toBe(out.unknownEvent);
+  expect(out.fieldsOfUnknown).toContain("会期未確認");
+  expect(out.journalRows).toBeGreaterThan(0);
+  expect(out.journalNa, "常時受付の行が「該当なし」として出ていない").toBe(out.journalRows);
+  // 第 129 回の区別が書き出し後も保つか（確認待ちと混ざらない）。
+  expect(out.journalUnconfirmed, "常時受付の行が「未確認」に化けている").toBe(0);
+  expect(out.journalNaRank, "ランクを「該当なし」にしている").toBe(0);
+  // CSV の実物: 状態の列に語があり、値の列は空のまま。
+  const deadlineCells = out.statusCells.filter((c) => c[0] !== "常時受付");
+  expect(deadlineCells.length).toBeGreaterThan(0);
+  for (const [, eventCell, status] of deadlineCells) {
+    expect(eventCell, "値の列まで語で埋めた（空のままが正しい）").toBe("");
+    expect(status).toContain("会期未確認");
+  }
+  const journalCells = out.statusCells.filter((c) => c[0] === "常時受付");
+  expect(journalCells.length).toBeGreaterThan(0);
+  for (const [, , status] of journalCells) {
+    expect(status).toContain("会期該当なし");
+    // 「ランク未確認」は有り得るので、会期・開催地が確認待ちに化けていないことを見る。
+    expect(status).not.toContain("会期未確認");
+    expect(status).not.toContain("開催地未確認");
+  }
+  // 壊れた行で落ちない（値が無い行は未確認として扱う）。
+  for (const ok of out.broken) expect(ok).toBe(true);
+  // てびきが状態の列の説明を持っている（画面に出る語をてびきが説明する約束）。
+  const guide = readFileSync(join(site, "index.html"), "utf8");
+  const at = guide.indexOf("<dt>CSV</dt>");
+  expect(at, "CSV の項が無くなった").toBeGreaterThan(-1);
+  const entry = guide.slice(at, guide.indexOf("</dd>", at));
+  expect(entry).toContain("状態");
+  expect(entry).toContain("該当なし");
+});
