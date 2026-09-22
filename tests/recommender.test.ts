@@ -888,6 +888,19 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     const rows = R.journalRows(confs, NOW);
     expect(rows[0].hay).toContain("セキュリティ");
   });
+
+  it("officialZone は公式表記を JST / UTC / AoE に寄せ、未知は原文のまま", () => {
+    // JST 宣言の国内締切に AoE を併記しない判定の正本。
+    expect(R.officialZone({ tz_raw: "AoE" })).toBe("AoE");
+    expect(R.officialZone({ tz_raw: "JST" })).toBe("JST");
+    expect(R.officialZone({ tz_raw: "UTC+9" })).toBe("JST");
+    expect(R.officialZone({ tz_raw: "Asia/Tokyo" })).toBe("JST");
+    expect(R.officialZone({ tz_raw: "UTC" })).toBe("UTC");
+    expect(R.officialZone({ tz_raw: " PT " })).toBe("PT");
+    expect(R.officialZone({ tz_raw: null })).toBe("");
+    expect(R.officialZone({})).toBe("");
+    expect(R.officialZone(null)).toBe("");
+  });
 });
 
 describe("pastRepresentatives", () => {

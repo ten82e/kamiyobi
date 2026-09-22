@@ -1921,7 +1921,7 @@ it("site runtime never emits the invalid let() CSS function (#223 follow-up)", (
   }
 });
 
-it("deadline times render as JST with weekday first, viewer-timezone independent (SPEC §7)", () => {
+it("drawer shows JST with weekday and the official timezone, viewer-timezone independent (SPEC §7)", () => {
   // 2026-02-06 23:59 AoE = 2026-02-07T11:59:00Z = JST 2026-02-07(土) 20:59。
   // AoE 締切は JST では翌日の夜になるため、JST を主表記にしないと
   // 日本の利用者がいつ提出すべきか判定できない。
@@ -1935,6 +1935,10 @@ it("deadline times render as JST with weekday first, viewer-timezone independent
     jsFunction(runtime, "fmtDate"),
     jsFunction(runtime, "fmtJst"),
     jsFunction(runtime, "fmtAoE"),
+    // 公式表記の判定は recommender.js の正本をそのまま注入する（規則の書き写しは
+    // 正本とズレるため避ける）。officialZone の依存は isRecord のみ。
+    jsFunction(siteRuntime("recommender.js"), "isRecord"),
+    `const Recommender = { officialZone: ${jsFunction(siteRuntime("recommender.js"), "officialZone")} };`,
     "const body = { innerHTML: '' };",
     "const els = {",
     "  drawerBackdrop: { classList: { add() {} } }, drawerTitle: {}, drawerFullName: {},",
@@ -1943,13 +1947,18 @@ it("deadline times render as JST with weekday first, viewer-timezone independent
     "const document = { activeElement: null, getElementById: (id) => els[id] || null };",
     "function $(id) { return document.getElementById(id); }",
     "const window = { _prevFocus: null };",
-    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, { paper: '論文締切' }, (t) => t, fmtDate, fmtJst, fmtAoE, (s) => String(s ?? ''), (v) => String(v ?? ''), () => null, () => '');`,
-    "openDrawer({",
-    "  kind: 'paper', conf: { key: 'demo', title: 'Demo' },",
-    "  ed: { year: 2026, place: 'P', date_text: 'D', link: 'https://example.org' },",
-    "  t: Date.parse('2026-02-07T11:59:00Z'), tLast: Date.parse('2026-02-07T11:59:00Z'), dl: {},",
-    "});",
-    "console.log(body.innerHTML);",
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, { paper: '論文締切' }, (t) => t, fmtDate, fmtJst, fmtAoE, (s) => String(s ?? ''), (v) => String(v ?? ''), () => null, () => '', Recommender);`,
+    "const draw = (tzRaw) => {",
+    "  body.innerHTML = '';",
+    "  openDrawer({",
+    "    kind: 'paper', conf: { key: 'demo', title: 'Demo' },",
+    "    ed: { year: 2026, place: 'P', date_text: 'D', link: 'https://example.org' },",
+    "    t: Date.parse('2026-02-07T11:59:00Z'), tLast: Date.parse('2026-02-07T11:59:00Z'),",
+    "    dl: tzRaw === null ? {} : { tz_raw: tzRaw },",
+    "  });",
+    "  return body.innerHTML;",
+    "};",
+    "console.log(JSON.stringify([draw('AoE'), draw('UTC+9'), draw('UTC'), draw(null)]));",
   ].join("\n");
   const outputs = ["Asia/Tokyo", "UTC", "America/Los_Angeles"].map((TZ) => {
     const proc = spawnSync("node", ["-e", script], {
@@ -1958,31 +1967,42 @@ it("deadline times render as JST with weekday first, viewer-timezone independent
       timeout: 60_000,
     });
     expect(proc.status, proc.stderr).toBe(0);
-    return proc.stdout;
+    return JSON.parse(proc.stdout) as string[];
   });
-  expect(outputs[1]).toBe(outputs[0]);
-  expect(outputs[2]).toBe(outputs[0]);
-  const html = outputs[0];
-  expect(html).toContain("2026-02-07(土) 20:59 JST");
-  // JST が主表記: UTC / AoE より前に出す（公式突き合わせ情報は副次）。
-  expect(html.indexOf("JST")).toBeLessThan(html.indexOf("UTC"));
-  expect(html.indexOf("UTC")).toBeLessThan(html.indexOf("AoE"));
+  expect(outputs[1]).toEqual(outputs[0]);
+  expect(outputs[2]).toEqual(outputs[0]);
+  const [aoeRow, jstRow, utcRow, rawRow] = outputs[0];
+  // JST が主表記で曜日を伴う。
+  expect(aoeRow).toContain("2026-02-07(土) 20:59 JST");
+  expect(jstRow).toContain("2026-02-07(土) 20:59 JST");
+  // AoE 締切は公式表記として AoE を併記（JST の直後、UTC を挟まない）。
+  expect(aoeRow).toContain("公式 2026-02-06 23:59 AoE");
+  expect(aoeRow.indexOf("JST")).toBeLessThan(aoeRow.indexOf("AoE"));
+  // JST 宣言の締切（国内研究会など）に AoE は出さない。
+  expect(jstRow).toContain("公式 JST 締切");
+  expect(jstRow).not.toContain("AoE");
+  // 公式が UTC / 表記なしは UTC を添える。
+  expect(utcRow).toContain("2026-02-07 11:59 UTC");
+  expect(rawRow).toContain("2026-02-07 11:59 UTC");
   // inline style は var() で CSS 変数を読む。
-  expect(html).toContain("background: var(--chip)");
-  expect(html).toContain("background: var(--accent)");
+  expect(aoeRow).toContain("background: var(--chip)");
+  expect(aoeRow).toContain("background: var(--accent)");
 });
 
-it("table row puts JST above UTC and AoE (SPEC §7)", () => {
+it("table row leads with JST and guards AoE behind the official zone (SPEC §7)", () => {
   const runtime = siteRuntime();
+  const template = readFileSync(join(site, "index.html"), "utf8");
   const makeRow = jsFunction(runtime, "makeRow");
-  const jst = makeRow.indexOf('line(c1, fmtJst(d), "nowrap")');
-  // 探しているのは fmtDate(d) を UTC 行に使う箇所。文字列内の "${" を
-  // そのまま書くとテンプレート補間と誤認されるため "}" 側から照合する。
-  const utc = makeRow.indexOf("fmtDate(d)} UTC");
-  const aoe = makeRow.indexOf("fmtAoE(d)");
-  expect(jst).toBeGreaterThanOrEqual(0);
-  expect(utc).toBeGreaterThan(jst);
-  expect(aoe).toBeGreaterThan(utc);
+  // 日時列の最上段は JST。UTC などは公式表記の注記として後に続く。
+  expect(makeRow.indexOf('line(c1, fmtJst(d), "nowrap")')).toBeLessThan(
+    makeRow.indexOf("line(c1, sub,"),
+  );
+  // AoE は公式表記が AoE のときだけ併記する（JST 宣言の国内締切に出さない）。
+  expect(makeRow).toContain('if (zone === "JST")');
+  expect(makeRow.indexOf('else if (zone === "AoE")')).toBeLessThan(makeRow.indexOf("fmtAoE(d)"));
+  // 列名（カード表示の列名含む）で JST であることを明示する。
+  expect(makeRow).toContain('td(tr, "日時（JST）")');
+  expect(template).toContain("日時（JST）");
 });
 
 it("site UI is readable for Japanese researchers: field names, JST header, help panel (SPEC §7)", () => {
@@ -2224,11 +2244,14 @@ it("narrow screens fall back to card layout (SPEC §7)", () => {
   expect(html).toContain('td(tr, "残り", "c-deadline")');
 });
 
-it("deadline display includes AoE notation (SPEC §7)", () => {
+it("deadline display includes AoE notation for AoE deadlines only (SPEC §7)", () => {
   const html = siteHtmlRuntime();
-  // 静的検証: 表の日時セルとドロワーの両方に AoE 併記がある
-  expect(html).toContain('line(c1, fmtAoE(d), "sub nowrap")');
-  expect(html).toContain("fmtAoE(new Date(r.t))");
+  // 表とドロワーの両方が、公式表記が AoE のときだけ AoE を出す式になっている。
+  // JST 宣言の国内締切まで AoE を並記すると、実在しない AoE 締切を検知させる。
+  expect(html).toContain("Recommender.officialZone(r.dl)");
+  expect(html).toMatch(/公式 \$\{fmtAoE\(d\)\}/);
+  expect(html).toMatch(/crossCheck = `公式 \$\{fmtAoE\(new Date\(r\.t\)\)\}`/);
+  expect(html).toContain('"公式 JST 締切"');
   // 実行検証: fmtAoE は UTC-12 の壁時計を返す（例: 12:00 UTC → 00:00 AoE）
   const src = jsFunction(html, "fmtAoE");
   const script = [
@@ -2317,7 +2340,7 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
     "const dOpened = calls.open.length === 1 && calls.open[0] === 'B';",
     "const dFocusedRow = calls.focus[calls.focus.length - 1] === 'row1';",
     "const verificationSummary = new Function('esc', 'return (' + SUMMARY + ')')((s) => String(s ?? ''));",
-    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary);",
+    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '' });",
     "document.activeElement = prevEl;",
     "openDrawer({ kind: 'journal', conf: { title: 'X' }, ed: { place: 'P', date_text: 'D' } });",
     "const focusedClose = document.activeElement === closeBtn;",
@@ -2638,7 +2661,7 @@ it("normal deadline drawer includes verification details", () => {
     "function $(id) { return document.getElementById(id); }",
     "const window = { _prevFocus: null };",
     `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')((s) => String(s ?? ''));`,
-    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary);`,
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '' });`,
     "openDrawer({",
     "  kind: 'paper', conf: { key: 'demo', title: 'Demo' },",
     "  ed: { year: 2026, place: 'P', date_text: 'D' }, t: 0, tLast: 0,",

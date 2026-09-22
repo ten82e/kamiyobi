@@ -780,6 +780,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           ? "（締切日経過）"
           : "（時刻未確認）";
 
+    // 表と同じ式で併記を出す。AoE は公式が AoE 締めの場合だけ見せる
+    // （JST 宣言の国内締切に AoE を出すと、実在しない AoE 締切があると誤解させる）。
+    const zone = Recommender.officialZone(r.dl);
+    let crossCheck = `${fmtDate(new Date(r.t))} UTC`;
+    if (zone === "AoE") crossCheck = `公式 ${fmtAoE(new Date(r.t))}`;
+    else if (zone === "JST") crossCheck = "公式 JST 締切";
+    else if (zone && zone !== "UTC") crossCheck = `公式 ${zone} ／ ${fmtDate(new Date(r.t))} UTC`;
+
     let html =
       '<div style="background: var(--chip); padding: 14px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 16px;">' +
       '<div style="font-size: 0.78rem; color: var(--muted);">種別・日時</div>' +
@@ -796,9 +804,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           : '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">' +
             fmtJst(new Date(r.t)) +
             "（" +
-            fmtDate(new Date(r.t)) +
-            " UTC / " +
-            fmtAoE(new Date(r.t)) +
+            crossCheck +
             "）</div>") +
       "</div>";
 
@@ -1487,7 +1493,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const c0 = td(tr, "残り", "c-deadline");
     line(c0, rem.text, `left ${rem.cls}`);
 
-    const c1 = td(tr, "日時");
+    const c1 = td(tr, "日時（JST）");
     if (r.kind === "journal") {
       line(c1, "随時受付", "nowrap");
     } else if (r.dateOnly) {
@@ -1495,11 +1501,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       line(c1, "時刻未確認", "sub nowrap");
     } else {
       const d = new Date(r.t);
-      // JST を主表記、UTC / AoE は照合用の副情報。AoE 23:59 締切は JST では翌日の夜なので、
+      // JST を主表記にする。AoE 23:59 締切は JST では翌日の夜になるため、
       // UTC 優先だと日本で何時までに提出すればよいか判定できない。
+      // 2 行目は公式ページの表記。AoE 併記は AoE で締切る会議だけに出す
+      // （JST 宣言の国内締切に AoE を見せると、実在しない AoE 締切があると誤解させる）。
       line(c1, fmtJst(d), "nowrap");
-      line(c1, `${fmtDate(d)} UTC`, "sub nowrap");
-      line(c1, fmtAoE(d), "sub nowrap");
+      const zone = Recommender.officialZone(r.dl);
+      let sub = `${fmtDate(d)} UTC`;
+      if (zone === "JST") sub = "公式 JST 締切";
+      else if (zone === "AoE") sub = `公式 ${fmtAoE(d)}`;
+      else if (zone && zone !== "UTC") sub = `公式 ${zone} ／ ${fmtDate(d)} UTC`;
+      line(c1, sub, "sub nowrap");
     }
 
     const c2 = td(tr, "会議");

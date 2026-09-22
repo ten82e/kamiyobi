@@ -45,6 +45,7 @@ interface DeadlineRecord {
   latest_utc?: string;
   utc?: string | null;
   at_utc?: string | null;
+  tz_raw?: string | null;
   round?: number;
 }
 
@@ -1540,6 +1541,22 @@ const Recommender = (() => {
     return parts.filter(Boolean).join(" ");
   }
 
+  /* 締切の公式表記（tz_raw）を、日本側で注記する簡潔な形に寄せる。
+   * AoE 併記は「AoE で締切る会議」にしか意味がない。JST 宣言の国内締切に
+   * AoE を併記すると、実在しない AoE 締切があると誤解させる。
+   * 未知の値はそのまま返す（推測して JST/UTC に寄せない）。 */
+  function officialZone(dl: unknown): string {
+    const raw = dl && isRecord(dl) ? String((dl as DeadlineRecord).tz_raw || "") : "";
+    const norm = raw.toUpperCase().replace(/\s/g, "");
+    if (!norm) return "";
+    if (norm.indexOf("AOE") >= 0) return "AoE";
+    if (norm === "JST" || norm === "ASIA/TOKYO") return "JST";
+    if (norm === "UTC+9" || norm === "UTC+09" || norm === "+09:00" || norm === "GMT+9")
+      return "JST";
+    if (norm === "UTC" || norm === "Z" || norm === "UTC+0" || norm === "UTC+00:00") return "UTC";
+    return raw.trim();
+  }
+
   /** Shared candidate-to-row boundary for browser rendering and offline ranking. */
   function candidateRows(data: unknown): CandidateRow[] {
     const out: CandidateRow[] = [];
@@ -2693,6 +2710,7 @@ const Recommender = (() => {
     rankMatches: rankMatches,
     candidateRows: candidateRows,
     categoryLabelJa: categoryLabelJa,
+    officialZone: officialZone,
     categorySearchTerms: categorySearchTerms,
     pastRepresentatives: pastRepresentatives,
     pickRepresentative: pickRepresentative,
