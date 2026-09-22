@@ -765,17 +765,19 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   // 現在の並び順を aria-sort（支援技術向け）と見出しの目印（目に見える方）で伝える。
   function setSortAria(key: string | null) {
-    document.querySelectorAll<HTMLTableCellElement>("th[data-sort]").forEach((th) => {
-      const k = th.getAttribute("data-sort");
+    // 列見出しと、狭い画面に出す並べ替えバー（`button[data-sort]`）が同じ目印を使う。
+    // 見出しには `aria-sort`、ボタンには `aria-pressed`（ボタンに aria-sort は意味不通）。
+    document.querySelectorAll<HTMLElement>("[data-sort]").forEach((node) => {
+      const k = node.getAttribute("data-sort");
       const active = k === key;
-      let state = "none";
-      if (active) {
-        state = sortAsc ? "ascending" : "descending";
+      if (node.tagName === "BUTTON") {
+        node.setAttribute("aria-pressed", active ? "true" : "false");
+      } else {
+        node.setAttribute("aria-sort", active ? (sortAsc ? "ascending" : "descending") : "none");
       }
-      th.setAttribute("aria-sort", state);
-      // 見出しは「語 + 目印」の一字列。語のほうは触らず、語尾の目印だけ入れ替える。
-      const label = String(th.textContent || "").replace(/[↑↓↕]\s*$/, "");
-      th.textContent = `${label}${sortMarkJa(active, sortAsc)}`;
+      // 語尾の目印だけ入れ替える（語のほうは触らない）。
+      const label = String(node.textContent || "").replace(/[↑↓↕]\s*$/, "");
+      node.textContent = `${label}${sortMarkJa(active, sortAsc)}`;
     });
   }
 

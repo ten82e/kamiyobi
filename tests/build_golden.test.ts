@@ -8118,7 +8118,11 @@ it("キーボードの既定操作は、てびきに書いたとおりに実装�
     ['key === "ArrowUp"', "↑"],
   ];
   expect(keys.length).toBeGreaterThanOrEqual(8);
-  const guide = template.slice(template.indexOf("<dt>キーボードで一覧を動かす</dt>"));
+  // 第 86 回でこの項には class が付いた（狭い画面では隠す）。なので語句ではなく
+  // 項の名前で探して、その <dt> から dd の終わりまでを取り出す。
+  const named = template.indexOf("キーボードで一覧を動かす");
+  expect(named, "てびきにキーボードの項がない").toBeGreaterThan(0);
+  const guide = template.slice(template.lastIndexOf("<dt", named));
   const entry = guide.slice(0, guide.indexOf("</dd>"));
   expect(entry.length, "てびきにキーボードの項がない").toBeGreaterThan(40);
   for (const [code, shown] of keys) {
@@ -8130,4 +8134,82 @@ it("キーボードの既定操作は、てびきに書いたとおりに実装�
   // 入力欄の中で効かないことも、案内と実装が揃っている。
   expect(entry).toContain("入力欄の中ではこれらのキーはただの文字");
   expect(runtime).toContain('tag === "INPUT"');
+});
+
+it("狭い画面でも並び替えできる（見出しを消すなら並べ替えの列を対で出す・SPEC §7）", () => {
+  /* 640px 以下では `thead { display: none }`で行をカード化するが、並び替えの入口は
+   * 見出ししかなかった（2026-09-23 実測: スマートフォンの幅で並び替えが operation
+   * 不能だった。てびきは「列の見出しを押すと並び替わります」と書いている）。
+   * 同じ `toggleSort` を呼ぶ列を表の上に増やし、**見出しを消す規則と並べ替えバーを
+   * 対で**見る（どちらか一方だけ変わると落ちる）。 */
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const media = template.slice(template.indexOf("@media (max-width: 640px)"));
+  const block = media.slice(0, media.indexOf("\n}"));
+  expect(block, "狭い画面で見出しを隠す規則が無い（この検査の前提）").toContain(
+    "thead { display: none; }",
+  );
+  expect(block, "見出しを隠すのに並べ替えの列を出していない（並び替え不能に戻る）").toContain(
+    ".sortbar { display: flex; }",
+  );
+  // 並べ替えバーの列は、実装が並び替え可能な列と Exactly 同じであること（双方向）。
+  const bar = template.slice(template.indexOf('<div class="sortbar"'));
+  const barBlock = bar.slice(0, bar.indexOf("</div>"));
+  const barKeys = Array.from(barBlock.matchAll(/data-sort="([^"]+)"/g)).map((m) => m[1]);
+  const headerKeys = Array.from(
+    template
+      .slice(template.indexOf("<thead>"), template.indexOf("</thead>"))
+      .matchAll(/data-sort="([^"]+)"/g),
+  ).map((m) => m[1]);
+  expect(barKeys.length).toBeGreaterThanOrEqual(4);
+  expect(barKeys.sort()).toEqual(headerKeys.sort());
+  // 画面に出る語も見出しと同じ（別名にすると引けない語になる）。
+  for (const label of ["残り", "日時（JST）", "会議", "ランク"]) {
+    expect(barBlock, `並べ替えバーに ${label} の列がない`).toContain(`>${label}`);
+  }
+  // キーボードの案内は狭い画面では消す（ショートカットの無い端末で誤導しない）。
+  expect(block, "キーボードの案内を狭い画面で消していない").toContain(
+    ".only-keyboard { display: none; }",
+  );
+  expect(template).toContain('<dt class="only-keyboard">キーボードで一覧を動かす</dt>');
+  // てびきも同じことを書いている。
+  const guide = template.slice(template.indexOf("<dt>並び順</dt>"));
+  expect(guide.slice(0, guide.indexOf("</dd>"))).toContain("並べ替え");
+});
+
+it("並べ替えの目印は列見出しと並べ替えバーの両方に付く（SPEC §7）", () => {
+  const runtime = siteRuntime();
+  const script = [
+    "(async () => {",
+    `const src = ${JSON.stringify(jsFunction(runtime, "setSortAria"))};`,
+    "const nodes = [];",
+    "const mk = (tag, key) => ({",
+    "  tagName: tag,",
+    "  attrs: {},",
+    "  text: (key === 'rem' ? '残り ↕' : 'ランク ↕'),",
+    "  getAttribute(n) { return n === 'data-sort' ? key : null; },",
+    "  setAttribute(n, v) { this.attrs[n] = v; },",
+    "  get textContent() { return this.text; },",
+    "  set textContent(v) { this.text = v; },",
+    "});",
+    "const th = mk('TH', 'rem');",
+    "const button = mk('BUTTON', 'rank');",
+    "const other = mk('BUTTON', 'rem');",
+    "const document = { querySelectorAll: (sel) => (sel === '[data-sort]' ? [th, button, other] : []) };",
+    "const fn = new Function('document', 'sortAsc', 'sortMarkJa', 'return (' + src + ')');",
+    // `sortMarkJa` の実際の契約（見出しでは語に続けて置く。先頭スペースは付けない）。
+    "const setSortAria = fn(document, false, (active, asc) => (active ? (asc ? '↑' : '↓') : '↕'));",
+    "const out = [];",
+    "setSortAria('rank');",
+    "out.push({ th: [th.attrs['aria-sort'], th.text], button: [button.attrs['aria-pressed'], button.text], other: [other.attrs['aria-pressed'], other.text] });",
+    "console.log(JSON.stringify(out[0]));",
+    "})().catch((e) => { console.error(e && e.stack || String(e)); process.exit(1); });",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as Record<string, [string, string]>;
+  // 押している列だけ目印が変わる（見出しとバーで同じ規則）。
+  expect(out.button).toEqual(["true", "ランク ↓"]);
+  expect(out.th).toEqual(["none", "残り ↕"]);
+  // 別の列のボタンが押したことにされないこと。
+  expect(out.other).toEqual(["false", "残り ↕"]);
 });

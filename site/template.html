@@ -68,7 +68,37 @@
 }
 
 /* SPEC §7: 狭い画面ではカード表示に落とす。td() が付与する data-label を列名に使う。 */
+.sortbar {
+  display: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.sortbar-label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-right: 2px;
+}
+.sortbar button {
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--fg);
+  cursor: pointer;
+}
+.sortbar button[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--panel-hover);
+}
+/* 狭い画面（ほぼスマホ）: 見出しを隠す代わりに並べ替えの列を出す。
+   2 つは対で動く（`thead { display: none }` だけが増えると並び替え不能になる）。 */
 @media (max-width: 640px) {
+  .sortbar { display: flex; }
   thead { display: none; }
   tbody tr {
     display: block;
@@ -102,8 +132,10 @@
     padding: 6px 10px;
   }
   /* 狭い画面（ほぼスマホ）ではキーボード ショートカットを使えない。
-     誤導する案内は消し、タップで詳細が見られることだけ残す。 */
+     誤導する案内は消し、タップで詳細が見られることだけ残す。
+     てびきのキーボードの項も同じ（第 85 回で追記したとき、ここを閉じ忘れていた）。*/
   .count-kbd { display: none; }
+  .only-keyboard { display: none; }
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -601,6 +633,7 @@ footer a:hover { text-decoration: underline; }
   #drawer,
   #drawerBackdrop,
   .count-hint,
+  .sortbar,
   .recommend-only,
   footer .btn-reset { display: none !important; }
   /* 幅せまカード表示のメディアクエリが印刷幅でも当たることがあるため、表として印刷する。 */
@@ -755,6 +788,16 @@ footer a:hover { text-decoration: underline; }
   </div>
 
   <!-- Table Container -->
+  <!-- 狭い画面では thead を消して行をカードにする（上の @media）。そのままだと
+       並び替えの入口が見出しと一緒に失われる（2026-09-23 実測: スマホ幅で押せる場所が
+       無かった）。同じ `toggleSort` を呼ぶ列を表の上に置き、 desktop では隠す。 -->
+  <div class="sortbar" id="sortBar" role="group" aria-label="並べ替え">
+    <span class="sortbar-label">並べ替え</span>
+    <button type="button" data-sort="rem" onclick="toggleSort('rem')">残り ↕</button>
+    <button type="button" data-sort="date" onclick="toggleSort('date')">日時（JST） ↕</button>
+    <button type="button" data-sort="conf" onclick="toggleSort('conf')">会議 ↕</button>
+    <button type="button" data-sort="rank" onclick="toggleSort('rank')">ランク ↕</button>
+  </div>
   <div class="tablewrap" id="deadlineTableWrap">
     <table>
       <thead>
@@ -827,10 +870,10 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div>
         <dt>並び順</dt>
-        <dd>列の見出し（残り・日時・会議・ランク）を押すと並び替わります。押している列だけが <code>↑</code> / <code>↓</code>（他は <code>↕</code>）なので、今の画面が何の順で並んでいるかを見出しだけで確かめられます。残りの昇順（既定）と日時の昇順では同じ月の締切をまとめて区切るため、降順にすると月でくくれた行になります。同じ締切日・同じランクの行が並んだときは、表に出る会議名（日本語は読み基準の五十音順）→ 種別（概要・論文）の順でぞろえます。<code>ランク</code> は評価の<strong>体系名ではなく等級</strong>で並びます（<code>降順</code>がいちばん評価の高い行から。変更前は体系名が先に効いて、降順でも評価の付いていない行が先頭に来ていた）。複数の評価を持つ会議は最良の等級で入り、評価の無い行は降順では末尾に回ります。並び順も URL に残るので、そのまま共有可能です。</dd>
+        <dd>列の見出し（残り・日時・会議・ランク）を押すと並び替わります。押している列だけが <code>↑</code> / <code>↓</code>（他は <code>↕</code>）なので、今の画面が何の順で並んでいるかを見出しだけで確かめられます。残りの昇順（既定）と日時の昇順では同じ月の締切をまとめて区切るため、降順にすると月でくくれた行になります。同じ締切日・同じランクの行が並んだときは、表に出る会議名（日本語は読み基準の五十音順）→ 種別（概要・論文）の順でぞろえます。狭い画面（スマートフォンの幅）では列の見出しを消して行をカードにするため、代わりに表の上に <strong>並べ替え</strong> の列を出します（押している列だけ <code>↑</code> / <code>↓</code>）。<code>ランク</code> は評価の<strong>体系名ではなく等級</strong>で並びます（<code>降順</code>がいちばん評価の高い行から。変更前は体系名が先に効いて、降順でも評価の付いていない行が先頭に来ていた）。複数の評価を持つ会議は最良の等級で入り、評価の無い行は降順では末尾に回ります。並び順も URL に残るので、そのまま共有可能です。</dd>
       </div>
       <div>
-        <dt>キーボードで一覧を動かす</dt>
+        <dt class="only-keyboard">キーボードで一覧を動かす</dt>
         <dd><code>j</code> / <code>k</code>（または <code>↓</code> / <code>↑</code>）で選択行を動かし、<code>Enter</code> で公式ページを開き、<code>d</code> で行の詳細を出します。<code>/</code> を押すと検索欄に飛び、<code>Esc</code> で詳細を閉じます。入力欄の中ではこれらのキーはただの文字として扱われるので、検索語に <code>j</code> や <code>k</code> を含んでも行は動きません。論文から探すモードでは表用の操作は使いません。</dd>
       </div>
       <div>
