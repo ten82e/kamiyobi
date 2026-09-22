@@ -1179,10 +1179,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   // ---- REMAIN / STATUS ----
   function remain(ms: number) {
-    const diff = ms - Date.now();
+    const now = Date.now();
+    const diff = ms - now;
     if (diff < 0) {
-      const pd = Math.floor(-diff / DAY);
-      return { text: pd === 0 ? "本日終了" : `${pd} 日前に終了`, cls: "past" };
+      /* 「本日終了」は経過時間ではなく **JST の暦日**で決める。経過日数の floor だと
+       * 23 時間 59 分前（JST では昨日）まで「本日終了」になり、いつ締切ったかが読め
+       * なかった（2026-09-23 実測: JST で前日に終わった締切が「本日終了」出る。一覧は
+       * JST を単位にしているので、ここも揃える）。
+       * JST のオフセットは monthKey と同じ理由でインラインに置く（この関数はビルド
+       * 成果物から抜き出して検査するので、依存を増やさない。第 91 回）。 */
+      const jstDay = (t: number) => Math.floor((t + 9 * 3600000) / DAY);
+      const days = jstDay(now) - jstDay(ms);
+      return { text: days <= 0 ? "本日終了" : `${days} 日前に終了`, cls: "past" };
     }
     const d = Math.floor(diff / DAY);
     if (d === 0) {

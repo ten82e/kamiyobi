@@ -8593,3 +8593,58 @@ it("過去の締切も表示すると、過ぎた行が画面の先頭を埋め�
   expect(app).toContain('"過ぎた締切"');
   expect(app).toContain("過ぎた締切 ${pastBlockTotal} 件は下にまとめました");
 });
+
+it("「本日終了」は JST の暦日で決まる（SPEC §7）", () => {
+  /* 経過日数の floor で決めていたため、JST で昨日終わった締切が「本日終了」になっていた
+   * （2026-09-23 実測: JST 15:00 に見た JST 前日 19:00 締切 = 20 時間前 → 「本日終了」）。
+   * 「今日の締切だと思って開いたら昨日だった」になり、一覧が JST を単位にしている約束とも
+   * 食い違う。暦日の差で数えることにして、てびきにもその旨を書いた。 */
+  const app = siteRuntime();
+  const script = [
+    "(async () => {",
+    'const now = Date.parse("2026-08-10T06:00:00Z"); // JST 2026-08-10 15:00',
+    "class FakeDate extends Date { static now() { return now; } }",
+    // 関数本体はテンプレートリテラルを含むので、JSON 化して渡す（素で埋めると
+    // 外側のテンプレートが壊れる。2026-09-23 に実発生）。
+    `const REMAIN_SRC = ${JSON.stringify(jsFunction(app, "remain"))};`,
+    'const remain = new Function("Date", "DAY", "return (" + REMAIN_SRC + ")")(FakeDate, 86400000);',
+    "const H = 3600000;",
+    "const at = (hoursAgo) => remain(now - hoursAgo * H).text;",
+    "console.log(JSON.stringify({",
+    "  sameDay1h: at(1),            // JST 同日 14:00",
+    "  sameDay8h: at(8),            // JST 同日 07:00",
+    "  sameDay14h: at(14),          // JST 同日 01:00（日付は同じ）",
+    "  yesterdayJst20h: at(20),     // JST 前日 19:00 ← 旧実装は「本日終了」",
+    "  yesterdayJst26h: at(26),     // JST 前日 13:00",
+    "  twoDays: at(50),             // JST 2 日前 13:00",
+    "  futureNow: remain(now + 30 * 60000).text,",
+    "  futureHours: remain(now + 5 * H).text,",
+    "  futureDays: remain(now + 3 * 86400000).text,",
+    "  soonClass: remain(now + 3 * 86400000).cls,",
+    "  farClass: remain(now + 20 * 86400000).cls,",
+    " }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout.trim().split("\n").pop() || "{}");
+  expect(got.sameDay1h).toBe("本日終了");
+  expect(got.sameDay8h).toBe("本日終了");
+  expect(got.sameDay14h).toBe("本日終了");
+  // 暦日で数えるので、20 時間前（JST では昨日）は「1 日前」。
+  expect(got.yesterdayJst20h).toBe("1 日前に終了");
+  expect(got.yesterdayJst26h).toBe("1 日前に終了");
+  expect(got.twoDays).toBe("2 日前に終了");
+  // 先の側は今までどおり（境界を同時に抑える）。
+  expect(got.futureNow).toBe("まもなく");
+  expect(got.futureHours).toBe("あと 5 時間");
+  expect(got.futureDays).toBe("あと 3 日");
+  expect(got.soonClass).toBe("soon");
+  expect(got.farClass).toBe("");
+  // 実装が暦日で数えることを、てびきが同じ約束で書いている（案内と実装のズレ検出）。
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  expect(template).toContain("日数は JST の暦日");
+});
