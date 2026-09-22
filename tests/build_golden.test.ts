@@ -9104,3 +9104,59 @@ it("二つの画面の呼び方が、切り替えボタンの語と揃ってい�
   const csvDd = template.slice(template.indexOf("<dt>CSV</dt>"));
   expect(csvDd.slice(0, csvDd.indexOf("</dd>"))).toContain(recommend);
 });
+
+it("PDF 読み込みの失敗は日本語と打ち手で出る（SPEC §7）", () => {
+  /* 失敗時に内部の英語文字列をそのまま画面へ出していた（2026-09-23 実測）。
+   * 「PDF 読込に失敗しました: pdfjs unavailable」「: file is too large」
+   * 「: PDF has too many pages」「: PDF extraction timed out」など。
+   * 日本語の利用者には何が起きたか直せない。特に `pdfjs unavailable` は、
+   * 学内のプロキシで CDN が塞がれると起きる一番よくある失敗だった。 */
+  const app = siteRuntime();
+  const maxBytes = 20 * 1024 * 1024;
+  const script = [
+    "(async () => {",
+    `const FAIL_SRC = ${JSON.stringify(jsFunction(app, "pdfFailureMessageJa"))};`,
+    `const MAX_BYTES = ${maxBytes};`,
+    'const f = new Function("PDF_MAX_BYTES", "PDF_MAX_PAGES", "return (" + FAIL_SRC + ")")(MAX_BYTES, 100);',
+
+    "const cases = {",
+    "  cdn: new Error('pdfjs unavailable'),",
+    "  large: new Error('file is too large'),",
+    "  pages: new Error('PDF has too many pages'),",
+    "  slow: new Error('PDF extraction timed out'),",
+    "  broken: new Error('Invalid PDF structure.'),",
+    "  unknown: new Error('boom'),",
+    " };",
+    "const out = {};",
+    "for (const k of Object.keys(cases)) out[k] = f(cases[k]);",
+    "const aborted = new Error(' aborted');",
+    "aborted.name = 'AbortError';",
+    "out.aborted = f(aborted);",
+    "console.log(JSON.stringify(out));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout.trim().split("\n").pop() || "{}");
+  // 内部の英語をそのまま出さない。
+  for (const key of Object.keys(got)) {
+    const text = got[key];
+    expect(text, `${key} が日本語になっていない`).toMatch(/[ぁ-んァ-ン一-龯]/);
+    expect(text, `${key} が内部の英語文字列を写している`).not.toMatch(
+      /pdfjs unavailable|file is too large|too many pages|timed out|Invalid PDF/i,
+    );
+    expect(text, `${key} に打ち手が無い（何が起きたかだけで終わる）`).toMatch(
+      /貼|キャンセル|確かめる|指定して/,
+    );
+  }
+  // 上限値は実装の定数から出る（テスト側に数字を書き写していない証明）。
+  expect(got.large).toContain("20 MB");
+  expect(got.pages).toContain("100 ページ");
+  expect(got.aborted).toBe("PDF 読込をキャンセルしました");
+  // 未発表の論文を預ける操作なので、送信しないことを画面に書く。
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  expect(template).toContain("選んだファイルは送信しません");
+});

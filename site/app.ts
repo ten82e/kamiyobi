@@ -3272,6 +3272,55 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function textRecord(name: string, text: string) {
     return Recommender.textPaperRecord(text, name);
   }
+  /* PDF 読み込みの失敗を、画面に出せる日本語と打ち手へ寄せる。内部の英語文字列を
+   * そのまま出していた（2026-09-23 実測: 「PDF 読込に失敗しました: pdfjs unavailable」
+   * 「: file is too large」「: PDF has too many pages」「: PDF extraction timed out」、
+   * pdf.js 由来の "Invalid PDF structure." など）。日本語の利用者は何が起きたか
+   * 直せないので、原因の心当たりと代替手段（貼り付け）を出す。
+   * 上限値はテスト側にも書き写さず、同じ定数から作る。 */
+  function pdfFailureMessageJa(error: unknown): string {
+    const name = error instanceof Error ? error.name : "";
+    if (name === "AbortError") return "PDF 読込をキャンセルしました";
+    const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
+    const pasteHint = "タイトルと概要を下の欄に貼り付けてください";
+    if (
+      message.indexOf("pdfjs") >= 0 ||
+      message.indexOf("cdnjs") >= 0 ||
+      message.indexOf("failed to fetch") >= 0
+    ) {
+      return (
+        "PDF を読む仕組みが呼び出せませんでした（外部から部品を取れないネットワーク状況の" +
+        "可能性があります）。" +
+        pasteHint
+      );
+    }
+    if (message.indexOf("too large") >= 0 || message.indexOf("size") >= 0) {
+      const mb = Math.round(PDF_MAX_BYTES / (1024 * 1024));
+      return `PDF が大きすぎます（${mb} MB まで）。抜粋を TXT にして貼るか、小さいファイルを指定してください`;
+    }
+    if (message.indexOf("too many pages") >= 0) {
+      return (
+        `PDF のページが多すぎます（${PDF_MAX_PAGES} ページまで）。` +
+        "先頭部分を TXT に書き出して貼ってください"
+      );
+    }
+    if (message.indexOf("timed out") >= 0 || message.indexOf("timeout") >= 0) {
+      return "PDF の読み込みが遅すぎて中断しました。" + pasteHint;
+    }
+    if (
+      message.indexOf("invalid pdf") >= 0 ||
+      message.indexOf("password") >= 0 ||
+      message.indexOf("structure") >= 0
+    ) {
+      return (
+        "PDF から文字を読み取れませんでした（文字が入っていない PDF や、パスワード付きは" +
+        "読めません）。" +
+        pasteHint
+      );
+    }
+    return "PDF を読み込めませんでした。ファイルを確かめるか、" + pasteHint;
+  }
+
   function readPaperFile(file: File, signal: AbortSignal): Promise<PaperRecord> {
     if (file.size > PDF_MAX_BYTES) return Promise.reject(new Error("file is too large"));
     if (/\.txt$/i.test(file.name)) return file.text().then((text) => textRecord(file.name, text));
@@ -3337,12 +3386,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         scheduleSemantic();
       })
       .catch((error: unknown) => {
-        const name = error instanceof Error ? error.name : "Error";
-        const message = error instanceof Error ? error.message : String(error);
-        label.textContent =
-          name === "AbortError"
-            ? "PDF 読込をキャンセルしました"
-            : `PDF 読込に失敗しました: ${message}`;
+        label.textContent = pdfFailureMessageJa(error);
       })
       .finally(() => {
         if (job === pdfJob) {
