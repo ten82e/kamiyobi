@@ -2988,35 +2988,65 @@ const Recommender = (() => {
     });
 
     const groups: string[][] = [];
-    let tokens = queryTokens(query);
+    /* 中黒（・）は site 自身の区切り文字なので、入力でも区切りとして扱う。
+     * 件数欄・CSV・行の詳細は分野を `人工知能・データベース` のように・で並べて書く
+     * （この表記を持つ行は収録 397 行）。そのまま写すと 1 語になり、打ち写した語が
+     * 0 件に当たっていた（2026-09-23 実測）。切る方向は他の語と同じく AND。
+     * ただし `サン・マロ`（saint-malo）のように 1 つの地名に・が入るものがあるので、
+     * 語全体が別表に載っているときは、その寄せ先を各部分にも持たせる
+     * （どちらの組からも同じ行に届くようにする）。 */
+    const middleParts = (token: string): string[] => {
+      if (token.indexOf("・") < 0) return [token];
+      const parts = token
+        .split("・")
+        .map((part) => part.trim())
+        .filter(Boolean);
+      return parts.length >= 2 ? parts : [token];
+    };
+    const middleWhole = (token: string): string[] =>
+      token.indexOf("・") < 0 ? [] : resolved[kanaFold(token)] || [];
+    const units: Array<{ token: string; whole: string[] }> = [];
+    queryTokens(query).forEach((raw) => {
+      middleParts(raw).forEach((part) => {
+        units.push({ token: part, whole: middleWhole(raw) });
+      });
+    });
     /* 画面は「第 2 ラウンド」と半角スペースを入れて書く（表の種別セル・行の詳細）。
      * そのまま写すと 「第」 AND「2」 AND「ラウンド」 になり、どの語もほぼ全行に
      * 含まれるので全件に化ける（2026-09-23 実測で確認）。ラウンドの語は 1 まとめで
-     * 打たれたものとして扱う。 */
-    const merged: string[] = [];
-    for (let i = 0; i < tokens.length; i += 1) {
+     * 打たれたものとして扱う。*/
+    const mergedUnits: Array<{ token: string; whole: string[] }> = [];
+    for (let i = 0; i < units.length; i += 1) {
+      const unit = units[i];
+      const next = units[i + 1];
+      const next2 = units[i + 2];
+      if (!unit) continue;
+      const roundWord = next2 ? next2.token : "";
       if (
-        tokens[i] === "第" &&
-        /^\d{1,2}$/.test(tokens[i + 1] || "") &&
-        (tokens[i + 2] === "ラウンド" || tokens[i + 2] === "round" || tokens[i + 2] === "rounds")
+        unit.token === "第" &&
+        /^\d{1,2}$/.test(next ? next.token : "") &&
+        (roundWord === "ラウンド" || roundWord === "round" || roundWord === "rounds")
       ) {
-        merged.push(`第${tokens[i + 1]}ラウンド`);
+        mergedUnits.push({ token: `第${next ? next.token : ""}ラウンド`, whole: [] });
         i += 2;
       } else {
-        merged.push(tokens[i]);
+        mergedUnits.push(unit);
       }
     }
-    tokens = merged;
     /* 会議の略称らしき語が同じ入力に混ざっているか（`nsdi 27` の `27` を年の 2027 として
      * 扱うための条件）。略称は 2 文字以上の英文字のかたまりだけなので、月日だけの入力
      * （`8月 27`）や裸の `27` は対象にならない。裸の 2 桁は暦日の「27日」と衝突するので、
      * 略称があるときだけ年としても見る。 */
-    const hasAbbrevToken = tokens.some(
-      (token) => /^[a-z][a-z0-9]{1,15}$/.test(token) && !/^\d+$/.test(token),
+    const hasAbbrevToken = mergedUnits.some(
+      (unit) => /^[a-z][a-z0-9]{1,15}$/.test(unit.token) && !/^\d+$/.test(unit.token),
     );
-    tokens.forEach((token) => {
+    mergedUnits.forEach((unit) => {
+      const token = unit.token;
       const group = [token];
       const expanded = resolved[kanaFold(token)];
+      unit.whole.forEach((name) => {
+        if (group.indexOf(name) < 0) group.push(name);
+      });
       if (expanded) {
         expanded.forEach((name) => {
           if (group.indexOf(name) < 0) group.push(name);

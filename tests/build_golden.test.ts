@@ -7598,3 +7598,48 @@ it("ラウンドは画面の書き方でも CSV の表記でも、実カタロ�
   }
   expect(out.wide, "画面どおりに写した入力が全件に化けている").toBeLessThan(out.all / 4);
 });
+
+it("画面が・で並べた分野の語をそのまま写すと、その行に出会える（SPEC §7）", () => {
+  /* 件数欄・CSV の分野列・行の詳細は `人工知能・データベース` の形で行を説明する。
+   * 変更前は写した語が 0 件だったので、**その表記を実際に持つ行**が全部出ることを
+   * 実データで見る（AND なので、持たない行が増えてよいことは要求しない）。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const label = (r) => (r.cats || []).map((c) => Recommender.categoryLabelJa(c)).join('・');",
+    "const byLabel = new Map();",
+    "rows.forEach((r) => {",
+    "  const l = label(r);",
+    "  if (l.indexOf('・') < 0) return;",
+    "  if (!byLabel.has(l)) byLabel.set(l, []);",
+    "  byLabel.get(l).push(r.conf.key + '@' + r.ed.year);",
+    "});",
+    // 件数の多い表記だけ見る（1 行の表記は収録欠落と区別できない）。
+    "const labels = [...byLabel.entries()].filter(([, v]) => v.length >= 5).sort((a, b) => b[1].length - a[1].length).slice(0, 8);",
+    "const out = labels.map(([l, own]) => {",
+    "  const m = Recommender.searchMatcher(l);",
+    "  const hit = rows.filter((r) => m(r.hay)).map((r) => r.conf.key + '@' + r.ed.year);",
+    "  return { l, own: own.length, hit: hit.length, missing: own.filter((k) => hit.indexOf(k) < 0).length };",
+    "});",
+    "console.log(JSON.stringify({ kinds: byLabel.size, out }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    kinds: number;
+    out: Array<{ l: string; own: number; hit: number; missing: number }>;
+  };
+  expect(out.kinds, "・ で並ぶ分野表記が数え上げられていない").toBeGreaterThan(3);
+  expect(out.out.length).toBeGreaterThan(2);
+  for (const row of out.out) {
+    expect(row.missing, `「${row.l}」を写すとその表記を持つ行が ${row.missing} 件届かない`).toBe(0);
+    // AND なので、ヒットはその表記を持つ行数以上（1 語だけの行も入る）。
+    expect(row.hit, `「${row.l}」の当たり方が表記を持つ行数より少ない`).toBeGreaterThanOrEqual(
+      row.own,
+    );
+  }
+});

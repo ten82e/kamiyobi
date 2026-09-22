@@ -1279,6 +1279,38 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
   });
 
+  describe("中黒で並んだ語をそのまま写す（件数欄・CSV・行の詳細の分野列）", () => {
+    /* 件数欄・CSV・行の詳細は分野を `人工知能・データベース` のように・で並べて書く。
+     * そのまま写すと 1 語になって 0 件に当たっていた（2026-09-23 実測: ・付きの分野列を
+     * 持つ行は収録 397 行あったのに、写した語は全部 0 件）。 */
+    it("・ で区切った語は別グループ（両方持つ行を探す）", () => {
+      const groups = R.queryTokenGroups("人工知能・データベース");
+      expect(groups.length).toBe(2);
+      // それぞれは単独で打ったときと同じexpandedを持つ（英語表記にも届く）。
+      expect(groups[0]).toEqual(R.queryTokenGroups("人工知能")[0]);
+      expect(groups[1]).toEqual(R.queryTokenGroups("データベース")[0]);
+      // AND なので、どちらか一方だけの行は出ない。
+      expect(R.hayMatches("artificial intelligence ai 人工知能", "人工知能・データベース")).toBe(
+        false,
+      );
+      expect(
+        R.hayMatches(
+          "artificial intelligence 人工知能 database データベース",
+          "人工知能・データベース",
+        ),
+      ).toBe(true);
+      // ・ だけの入力は語を作らない（全件に化けない）。
+      expect(R.queryTokenGroups("・")).toEqual([]);
+    });
+
+    it("ラウンドの語と組み合わせても壊れない", () => {
+      // `スパコン・第 2 ラウンド` のように、サイトの語を続けて書いても各語が立つ。
+      const groups = R.queryTokenGroups("スパコン・第 2 ラウンド");
+      expect(groups.some((g: string[]) => g.indexOf("第2ラウンド") >= 0)).toBe(true);
+      expect(groups.length).toBe(R.queryTokenGroups("スパコン 第 2 ラウンド").length);
+    });
+  });
+
   describe("deadlinesToCsv（絞り込み結果を表計算へ持ち出す）", () => {
     const now = Date.parse("2026-09-22T00:00:00+09:00");
     const rowOf = (over: Record<string, unknown>) => ({
