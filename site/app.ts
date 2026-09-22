@@ -693,11 +693,28 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 日本語名は `"ja"` collation を使う（漢字は読み基準の五十音順になる。実測で
    * 航空(か) → 情報(ざ) → 電子(た) と並ぶ。カタカナ語は漢字語より前に出る）。
    * 日付だけ_unknown_の行（175 件）は JST 00:00 相当なので、同じ日内では先に並ぶ。 */
-  function compareDeadlineRows(a: AppRow, b: AppRow): number {
-    if (a.t !== b.t) return a.t < b.t ? -1 : 1;
+  /* SPEC §7: 締切の時刻を持たない行（常時受付の学術誌など）の並び方。
+   * `a.t < b.t` は片側が NaN だと常に false なので、旧実装は比較の向きが定まらなかった
+   * （2026-09-23 実測: 時刻の無い行を交ぜて並べ替えると、入力順を変えただけで結果が
+   * 変わり、昇順では先頭に出て「いちばん近い締切」と誤読させる）。収録カタログには
+   * 現時点で時刻の無い行が 0 件なので今日の見え方は変わらないが、学術誌を 1 行足すと
+   * 日時順の表全体が崩れる形だった。ここを直す。
+   * 約束: 時刻の無い行は向きの影響を受けない場所（最後尾）にまとめる。未知の種別を
+   * 末尾に置く `kindSortIndex` と同じ型。 */
+  /* `mult` を中を取る: 昇順・降順は締切のある行の中での向きで、時刻の無い行は
+   * どちらの向きでも最後尾に置く（外で `* mult` をすると降順で先頭に反転して
+   * 「いちばん遠い」に化ける）。依存を新たに増やさないよう NaN はここで寄せる
+   * （ビルド成果物から関数を抜き出す検査は、自由変数を全部渡し直す必要がある）。 */
+  function compareDeadlineRows(a: AppRow, b: AppRow, mult: number = 1): number {
+    const aTail = Number.isFinite(a.t) ? 0 : 1;
+    const bTail = Number.isFinite(b.t) ? 0 : 1;
+    if (aTail !== bTail) return aTail - bTail;
+    const at = Number.isFinite(a.t) ? a.t : 0;
+    const bt = Number.isFinite(b.t) ? b.t : 0;
+    if (at !== bt) return (at < bt ? -1 : 1) * mult;
     const cmp = conferenceNameCell(a).localeCompare(conferenceNameCell(b), "ja");
-    if (cmp) return cmp;
-    return kindSortIndex(a.kind) - kindSortIndex(b.kind);
+    if (cmp) return cmp * mult;
+    return (kindSortIndex(a.kind) - kindSortIndex(b.kind)) * mult;
   }
 
   /** 種別の並び順（種別セレクトに並べる順と共通。書き写さない）。 */
@@ -1744,9 +1761,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         const br = Recommender.rankSortKey(b.rankPairs);
         const cmp = ar === br ? 0 : ar < br ? -1 : 1;
         // ランクが同じ行は締切の近い順（同じ評価の塊の中を読める順にする）。
-        return cmp ? cmp * mult : compareDeadlineRows(a, b) * mult;
+        return cmp ? cmp * mult : compareDeadlineRows(a, b, mult);
       }
-      return compareDeadlineRows(a, b) * mult;
+      return compareDeadlineRows(a, b, mult);
     });
 
     return out;

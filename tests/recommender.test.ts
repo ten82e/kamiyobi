@@ -1903,7 +1903,7 @@ describe("score labels and transient UI state", () => {
     expect(template).toContain("Recommender.rankSortKey(b.rankPairs)");
     expect(template).not.toContain("const ar = a.rankPairs[0]");
     // 同じランクの塊の中は締切の近い順（同じ評価の行がデータ源順でバラバラにならない）。
-    expect(template).toContain("compareDeadlineRows(a, b) * mult");
+    expect(template).toContain("compareDeadlineRows(a, b, mult)");
     expect(template).toContain('const PDFJS_VERSION = "3.11.174";');
     expect(template).toContain("const PDF_PAGE_LIMIT = 3;");
     expect(template).toContain("const PDF_MAX_BYTES = 20 * 1024 * 1024;");

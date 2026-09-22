@@ -4045,7 +4045,12 @@ const Recommender = (() => {
     if (aJ !== bJ) {
       return aJ ? 1 : -1;
     }
-    return a.t - b.t;
+    /* 時刻の無い行（常時受付など）は上で既に後方へ寄せているが、同士どうしの比較は
+     * NaN になる（`NaN - NaN` は並びの向きを決めない。app.ts の compareDeadlineRows と
+     * 同じ理由で、入力の順によって並びが変わる）。数値へ寄せてから引く。 */
+    const at = Number.isFinite(a.t) ? a.t : 0;
+    const bt = Number.isFinite(b.t) ? b.t : 0;
+    return at - bt;
   }
 
   /* 掲載先タグが属するカテゴリを全会議から推定する。

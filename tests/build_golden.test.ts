@@ -5655,9 +5655,12 @@ it("同じ締切時刻の行は表に出る会議名と種別で並ぶ（SPEC §
   const runtime = siteRuntime("app.js");
   // 既定画面 477 行のうち 303 行が別の行と同じ締切時刻を持つ（同値グループは最大 17 行）。
   // 変更前のタイはデータ源の順のままだった。
-  expect(runtime).toContain("return compareDeadlineRows(a, b) * mult;");
+  // 第 91 回で昇降の掛け算は比較関数の内側へ移した（外で掛けると、締切の時刻を
+  // 持たない行が降順で先頭に反転して「いちばん遠い」に化けるため）。
+  expect(runtime).toContain("return compareDeadlineRows(a, b, mult);");
   // ランク順も同じ評価の塊の中を読めるようにする。
-  expect(runtime).toContain("return cmp ? cmp * mult : compareDeadlineRows(a, b) * mult;");
+  expect(runtime).toContain("return cmp ? cmp * mult : compareDeadlineRows(a, b, mult);");
+  expect(runtime).not.toContain("compareDeadlineRows(a, b) * mult");
   // 並び順は表のセルに出る語を共通の helper で使う（セルとSORTが別文字列を持つのが原因）。
   expect(runtime).toContain("const name = conferenceNameCell(r);");
   expect(runtime).not.toContain('localeCompare(b.conf.title || "")');
@@ -6841,10 +6844,13 @@ it("ランク順は等級で並び、評価の無い行は末尾に回る（SPEC
    * 一覧の比較式がそれを使っていること、選択欄の等級順と同じ正本であることを見る。 */
   const app = siteRuntime("app.js");
   const html = readFileSync(join(site, "index.html"), "utf8");
-  const rankBlock = app.slice(
-    app.indexOf('sortKey === "rank"'),
-    app.indexOf("compareDeadlineRows(a, b) * mult", app.indexOf('sortKey === "rank"')),
-  );
+  const rankAt = app.indexOf('sortKey === "rank"');
+  const rankEnd = app.indexOf("compareDeadlineRows(a, b, mult)", rankAt);
+  // 目印が見つからず -1 になると slice の終端が化けて、中身を見ているのに見ていない
+  // 検査になる（第 91 回で呼び出し形を変えたときに実際へ起きた）。
+  expect(rankAt, "ランク順の並び替え箇所が見つからない").toBeGreaterThan(0);
+  expect(rankEnd, "ランク順が比較関数を呼んでいない").toBeGreaterThan(rankAt);
+  const rankBlock = app.slice(rankAt, rankEnd);
   expect(rankBlock, "ランク順が recommender の等級キーを見ていない").toContain("rankSortKey");
   expect(rankBlock, "rankPairs を直接比較している").not.toContain("rankPairs[0]");
   // 選択欄の等級は app 側で組み立てるので、静的な HTML には無い。
@@ -8462,4 +8468,75 @@ it("日本語の案内に中国語の略語を混ぜない（SPEC §7）", () =>
       expect(text, `${rel} に中国語の略語「${word}」が混入している`).not.toContain(word);
     }
   }
+});
+
+it("締切の時刻を持たない行を交ぜても日時順が崩れない（SPEC §7）", () => {
+  /* `a.t < b.t` は片側が NaN だと常に false なので、締切の時刻を持たない行
+   * （常時受付の学術誌など）を交ぜた並べ替えで比較の向きが定まらなかった。
+   * 2026-09-23 実測（修正前のビルド成果物）: cmp(時刻なし, 時刻あり) = 1 かつ
+   * cmp(時刻あり, 時刻なし) = 1 で反対称でなく、同じ集合を入力順を変えて sort すると
+   * 結果が変わり、昇順では時刻の無い行が先頭に出て「いちばん近い締切」と誤読させた。
+   * 収録カタログには現時点で時刻の無い行が 0 件（実測）なので今日の見え方は変わらないが、
+   * 学術誌を 1 行追加するだけで日時順の表全体が崩れる形だった。ビルド成果物の比較関数で
+   * 性質を検める。 */
+  const rt = siteRuntime();
+  // 会議名と種別の並びは本検査の本題ではないので、決定的な簡潔実装を渡す。
+  // 比較関数はこれ以外の自由変数を持たせないこと（第 91 回でヘルパーを増やしたら、
+  // 既存の抽出検査が `ReferenceError` で 6 件落ちた。渡す物を増やさない設計にする）。
+  const compare = new Function(
+    "conferenceNameCell",
+    "kindSortIndex",
+    `return (${jsFunction(rt, "compareDeadlineRows")});`,
+  )(
+    (r: { n?: string }) => String(r?.n ?? ""),
+    () => 0,
+  );
+
+  type Row = { t: number; n: string; kind: string };
+  const rows: Row[] = [
+    { t: Number.NaN, n: "J1", kind: "journal" },
+    { t: Number.NaN, n: "J2", kind: "journal" },
+    { t: Date.parse("2026-09-03T00:00:00Z"), n: "p3", kind: "paper" },
+    { t: Date.parse("2026-09-01T00:00:00Z"), n: "p1", kind: "paper" },
+    { t: Date.parse("2026-09-02T00:00:00Z"), n: "p2", kind: "paper" },
+  ];
+  // ① 反対称性（比較関数の契約）。旧実装はここが 1 / 1 だった。
+  for (const a of rows) {
+    for (const b of rows) {
+      expect(
+        Math.sign(compare(a, b, 1)) + Math.sign(compare(b, a, 1)),
+        `反対称でない: ${a.n} と ${b.n}`,
+      ).toBe(0);
+    }
+  }
+  // ② 入力順を変えても結果が同じ（NaN で順序が不定になっていたことの直接の検査）。
+  const orders = [
+    rows,
+    rows.slice().reverse(),
+    [rows[2], rows[0], rows[3], rows[1], rows[4]],
+    [rows[1], rows[4], rows[3], rows[0], rows[2]],
+  ];
+  const asc = new Set(
+    orders.map((o) =>
+      o
+        .slice()
+        .sort((x, y) => compare(x, y, 1))
+        .map((r) => r.n)
+        .join(" "),
+    ),
+  );
+  const desc = new Set(
+    orders.map((o) =>
+      o
+        .slice()
+        .sort((x, y) => compare(x, y, -1))
+        .map((r) => r.n)
+        .join(" "),
+    ),
+  );
+  expect(asc.size, `昇順が入力順に依存している: ${[...asc].join(" / ")}`).toBe(1);
+  expect(desc.size, `降順が入力順に依存している: ${[...desc].join(" / ")}`).toBe(1);
+  // ③ 時刻の無い行は向きに関係なく最後尾（降順で先頭に反転すると「いちばん遠い」に化ける）。
+  expect([...asc][0], "昇順で時刻の無い行が末尾に無い").toBe("p1 p2 p3 J1 J2");
+  expect([...desc][0], "降順で時刻の無い行が末尾に無い").toBe("p3 p2 p1 J2 J1");
 });
