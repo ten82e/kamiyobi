@@ -2071,6 +2071,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     online: boolean;
     rank: string;
     kind: string;
+    est: boolean;
+    hidden: Record<string, number>;
     query: string;
     hiddenKindWords: string[];
     queryMatch: { catalog: number; journal: number };
@@ -2133,16 +2135,49 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 的外れなので出さない。 */
     const specific = Boolean(kindNote || catalogNote || deadTerms.length);
 
+    /* 0 件案内はこれまで「外せる条件」の名前だけを並べていた。同じ画面上の件数欄は
+     * 同じ条件で消えた件数を書いているのに、案内の側には数字が無く、6 項目のうち
+     * どれから外す価値があるかが読めなかった（2026-09-23 実測: 窓を 7 日・評価を A* に
+     * 絞って 0 件にした画面の案内は「外せる条件: …」の羅列だけだった）。
+     * 件数欄と同じ名前の同じ数字を項目に添える – 「外せば増える」という約束ではなく、
+     * 「いまこの条件で隠れている行数」なので、そのように書く。 */
+    /* 案内の項目は「いまこの条件で隠れている行数」を添える。件数欄は同じ画面上で同じ
+     * 条件の数字を内訳として書いているのに、案内の側には数字が無かった（2026-09-23 実測:
+     * 窓を 7 日・評価を A* に絞った 0 件画面の案内は条件名の羅列だけで、どれから外す
+     * 価値があるか読めなかった）。外せば増えるという約束ではなく、いま隠れている行数なので、
+     * そのように書く。件数欄と同じ名前の同じ数字を使う（案内と件数欄が違う行の話をするのを防ぐ）。 */
+    const tip = (text: string, key: string, label: string): void => {
+      // 隠している行数が 0 の条件を勧めても、行は増えずに外し直しの手だけ増える
+      // （件数欄に内訳として出ていない条件と同じ理屈）。
+      const n = filter.hidden ? filter.hidden[key] || 0 : 0;
+      if (!n) return;
+      tips.push(`${text}（${label} ${n} 件）`);
+    };
     const tips: string[] = [];
     // 選択肢の実際のラベルを書く（「すべて」に変えた旧名を案内すると、その語が見つからない）。
-    if (filter.window && filter.window !== "all") tips.push("「締切まで」を「かまわない」に変更");
-    if (!filter.past) tips.push("「過去の締切も表示」をオン");
-    if (filter.cats > 0) tips.push("分野チップをはずす");
-    if (filter.domestic) tips.push("「国内研究会・国内シンポジウムのみ」をオフ");
-    if (filter.online) tips.push("「オンライン参加可のみ」をオフ");
-    if (filter.rank && filter.rank !== "all") tips.push("ランクを「すべて」に変更");
+    if (filter.window && filter.window !== "all")
+      tip(
+        "「締切まで」を「かまわない」に変更",
+        "window",
+        `「締切まで ${Number.parseInt(filter.window, 10)} 日以内」を超える`,
+      );
+    if (!filter.past) tip("「過去の締切も表示」をオン", "past", "過去の締切");
+    // 推定は既定で出さない。0 件の画面でこれに触れないと、収録にある語を「無い」と
+    // 誤解したまま検索をやめてしまう（件数欄は同じ数を「推定 N 件」として書いている）。
+    if (!filter.est) tip("「推定締切を含める」をオン", "est", "推定");
+    if (filter.cats > 0) tip("分野チップをはずす", "cats", "選んだ分野を持たない行");
+    if (filter.domestic)
+      tip(
+        "「国内研究会・国内シンポジウムのみ」をオフ",
+        "domestic",
+        "国内研究会・国内シンポジウム以外",
+      );
+    if (filter.online)
+      tip("「オンライン参加可のみ」をオフ", "online", "オンライン参加の記載がない");
+    if (filter.rank && filter.rank !== "all")
+      tip("ランクを「すべて」に変更", "rank", `評価「${filter.rank}」を持たない行`);
     // 種別も絞り込みである。これを数えないと、案内どおりに他を外しても 0 件のままになる。
-    if (filter.kind) tips.push(`「種別」を「${KIND_ALL_LABEL_JA}」に変更`);
+    if (filter.kind) tip(`「種別」を「${KIND_ALL_LABEL_JA}」に変更`, "kind", "投稿締切以外の種別");
     if (trimmedQuery && !specific)
       tips.push("検索語を短くする（分野名・主題・開催地の日本語でも引けます）");
 
@@ -3287,7 +3322,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             online: state.online,
             rank: state.rank,
             kind: state.kind,
+            est: state.est,
             query: state.q,
+            // 0 件の案内が、件数欄と同じ数字を項目ごとに添えられるようにする。
+            hidden: hiddenDeadlineCounts(),
             hiddenKindWords: hiddenKindQueryWords(searchQuery),
             queryMatch: queryMatchCounts(searchQuery),
             termCounts: queryTermNotes(searchQuery),

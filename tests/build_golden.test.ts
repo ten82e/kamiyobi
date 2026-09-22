@@ -1873,7 +1873,11 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
     termCounts: Array<{ term: string; count: number }>;
     catalogConferences: number;
     online?: boolean;
+    est?: boolean;
+    hidden?: Record<string, number>;
   }) => string;
+  /* 案内は「いまその条件で何行が隠れているか」を添える（第 136 回）。外している条件の
+   * 数字は並ばないので、見立ての側でも内訳を渡す（渡さないと呼び出し側の実装と違う）。 */
   const clear = {
     window: "all",
     past: true,
@@ -1882,10 +1886,21 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
     rank: "all",
     kind: "",
     query: "",
+    est: true,
     hiddenKindWords: [],
     queryMatch: { catalog: 0, journal: 0 },
     termCounts: [],
     catalogConferences: 12,
+    hidden: {
+      past: 1200,
+      est: 134,
+      window: 438,
+      rank: 416,
+      cats: 88,
+      domestic: 61,
+      online: 462,
+      kind: 900,
+    },
   };
   // 条件を全部外して 0 件のときは、表に出ない種別（開催行）を説明する。
   expect(hint(clear)).toContain("upcoming.md");
@@ -1937,8 +1952,11 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
     runtimeForKindLabel.match(/const KIND_ALL_LABEL_JA = "投稿締切（概要・論文）";/g)?.length,
   ).toBe(1);
   expect(runtimeForKindLabel).toContain("optAllK.textContent = KIND_ALL_LABEL_JA;");
+  /* 案内の書き方そのもの（`tips.push` か別の helper 経由か）は固定しない。
+   * 見たいのは「案内がセレクトと同じ定数を読んでいる」ことだけ（第 136 回で案内の項目は
+   * `tip(...)` 経由になり、呼び出し形のピンは実装の形を縛るだけになった）。 */
   expect(
-    /tips\.push\(`「種別」を「\$\{KIND_ALL_LABEL_JA\}」に変更`\)/.test(runtimeForKindLabel),
+    /`「種別」を「\$\{KIND_ALL_LABEL_JA\}」に変更`/.test(runtimeForKindLabel),
     "案内がラベルを読み替えている",
   ).toBe(true);
 
@@ -11455,4 +11473,93 @@ it("ボタンを押した直後も快捷键が効く（SPEC §7）", () => {
   const at = html.indexOf('<dt class="only-keyboard">キーボードで一覧を動かす</dt>');
   expect(at, "キーボードの項が無くなった").toBeGreaterThan(-1);
   expect(html.slice(at, html.indexOf("</dd>", at))).toContain("ボタンを押した直後も");
+});
+
+it("0 件の案内が、各条件で今何行が隠れているかを並べて書く（SPEC §7）", () => {
+  /* 0 件の画面は「外せる条件」を実名で並べる（第 66 回以降で整えてきた）。しかし条件の
+   * 名前だけが並び、6 項目のどれから外す価値があるかは書かれていなかった（2026-09-23 実測:
+   * 窓を 7 日・評価を A* に絞った 0 件画面の案内は「外せる条件: …」の羅列だけ）。
+   * 同じ画面上の件数欄は、同じ条件で消えた行数を内訳として書いているので、その数字を
+   * 項目に添って、案内と件数欄が同じ行の話をするようにする。 */
+  const app = siteRuntime("app.js");
+  const hintFn = jsFunction(app, "emptyDeadlineHint");
+  expect(hintFn, "0 件案内の関数が見当たらない（検査が空振り）").not.toBe("");
+  const script = [
+    "const KIND_ALL_LABEL_JA = 'すべての種別';",
+    `${hintFn.replace("function emptyDeadlineHint", "const emptyDeadlineHint = function")}`,
+    "const base = {",
+    "  window: '7d',",
+    "  past: false,",
+    "  cats: 2,",
+    "  domestic: true,",
+    "  online: true,",
+    "  rank: 'A*',",
+    "  kind: 'paper',",
+    "  est: false,",
+    "  query: '',",
+    "  hiddenKindWords: [],",
+    "  queryMatch: { catalog: 0, journal: 0 },",
+    "  termCounts: [],",
+    "  catalogConferences: 40,",
+    "};",
+    "const counted = emptyDeadlineHint({",
+    "  ...base,",
+    "  hidden: {",
+    "    window: 438,",
+    "    past: 1231,",
+    "    est: 134,",
+    "    rank: 416,",
+    "    cats: 88,",
+    "    domestic: 61,",
+    "    online: 462,",
+    "    kind: 900,",
+    "  },",
+    "});",
+    // どの条件も行を隠していないとき、外し直しの案内を並べても打ち直しが増えるだけ。
+    "const plain = emptyDeadlineHint({ ...base, hidden: {} });",
+    "const noData = emptyDeadlineHint({ ...base, catalogConferences: 0, hidden: { past: 5 } });",
+    // 外していない条件の数字は書かない（窓を「かまわない」にしているのに
+    // 「締切まで」の項目を並べないのと同じ扱い）。
+    "const allWindow = emptyDeadlineHint({",
+    "  ...base,",
+    "  window: 'all',",
+    "  hidden: { window: 9999, past: 3 },",
+    "});",
+    "console.log(JSON.stringify({ counted, plain, noData, allWindow }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    counted: string;
+    plain: string;
+    noData: string;
+    allWindow: string;
+  };
+  // 各項目に、件数欄と同じ名前で同じ数字が添わる。
+  expect(out.counted).toContain("「締切まで 7 日以内」を超える 438 件");
+  expect(out.counted).toContain("「過去の締切も表示」をオン（過去の締切 1231 件）");
+  expect(out.counted).toContain("「推定締切を含める」をオン（推定 134 件）");
+  expect(out.counted).toContain("評価「A*」を持たない行 416 件");
+  expect(out.counted).toContain("選んだ分野を持たない行 88 件");
+  expect(out.counted).toContain("国内研究会・国内シンポジウム以外 61 件");
+  expect(out.counted).toContain("オンライン参加の記載がない 462 件");
+  expect(out.counted).toContain("投稿締切以外の種別 900 件");
+  // どの条件も行を隠していないなら、外し直しの案内を並べない（打ち直しが増えるだけ）。
+  // 「（ 0 件）」を出すのは画面の噓にもなる。
+  expect(out.plain).not.toContain("件）");
+  expect(out.plain).not.toContain("過去の締切も表示");
+  expect(out.plain).not.toContain("推定締切を含める");
+  // データその物が無いときの文は条件の話に埋もれない（先にそれを言う）。
+  expect(out.noData).toContain("締切のデータが入っていません");
+  expect(out.noData).not.toContain("過去の締切");
+  // 隠している行数が 0 の条件を勧めない（窓を外し切っているのに「締切まで」を出さない）。
+  expect(out.allWindow).not.toContain("9999");
+  expect(out.allWindow).not.toContain("締切まで");
+  expect(out.allWindow).toContain("過去の締切 3 件");
+  // 呼び出し側が内訳を渡していること（渡さなければ上の数字は永遠に 0 のまま）。
+  expect(app).toContain("hidden: hiddenDeadlineCounts()");
+  expect(app).toContain("est: state.est");
 });
