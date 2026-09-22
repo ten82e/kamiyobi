@@ -1130,6 +1130,7 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
         event_end: "2027-06-11",
         link: "https://example.org/cfp",
       },
+      cats: ["ai", "hpc"],
       dl: { round: 1, kind: "paper", tz_raw: "AoE" },
       t: Date.parse("2026-10-05T14:59:00Z"),
       tLast: Date.parse("2026-10-05T14:59:00Z"),
@@ -1142,7 +1143,7 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       const csv = R.deadlinesToCsv([rowOf({})], now);
       const [header, first] = csv.split("\r\n");
       expect(header).toBe(
-        "締切,公式表記,残り日数,会議,種別,ラウンド,CCF,CORE,THCPL,会期,開催地,状態,URL",
+        "締切,公式表記,残り日数,会議,分野,種別,ラウンド,CCF,CORE,THCPL,会期,開催地,状態,URL",
       );
       const cells = first.split(",");
       // JST 主表記 + 曜日（2026-10-05 14:59 UTC = JST 23:59）。
@@ -1151,12 +1152,15 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(cells[1]).toBe("2026-10-05 02:59 AoE");
       // 残りは数値（表計算で並べ替えられる形）。画面の「あと N 日」とは書き方が違う。
       expect(cells[2]).toBe("13");
-      expect(cells[4]).toBe("論文締切");
-      expect(cells[5]).toBe("R1");
-      expect(cells[6]).toBe("A");
-      expect(cells[7]).toBe("A*");
+      // 分野は画面（分野チップ・行の詳細）と同じ日本語の語を書く。絞り込みで使った
+      // 次元が表計算に無いと、分野ごとに並べ替えられない。
+      expect(cells[4]).toBe("人工知能・高性能計算");
+      expect(cells[5]).toBe("論文締切");
+      expect(cells[6]).toBe("R1");
+      expect(cells[7]).toBe("A");
+      expect(cells[8]).toBe("A*");
       // 画面に出す評価一覧は CSV にも載せる（見えている情報を落とさない）。
-      expect(cells[8]).toBe("");
+      expect(cells[9]).toBe("");
       // 会期は一覧と同じ ISO + 暦日、開催地は日本語に寄せた表記。
       expect(csv).toContain("2027-06-07(月) 〜 2027-06-11(金)");
       expect(csv).toContain("Alicante, スペイン / オンライン");
@@ -1207,10 +1211,10 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       // 日時セルの語は種別ラベルと同じ `常時受付`（行の中で 2 つの名前を見せない）。
       expect(journal).toContain("常時受付,");
       expect(R.deadlinesToCsv([], now)).toBe(
-        "締切,公式表記,残り日数,会議,種別,ラウンド,CCF,CORE,THCPL,会期,開催地,状態,URL\r\n",
+        "締切,公式表記,残り日数,会議,分野,種別,ラウンド,CCF,CORE,THCPL,会期,開催地,状態,URL\r\n",
       );
       expect(R.deadlinesToCsv(null, now)).toBe(
-        "締切,公式表記,残り日数,会議,種別,ラウンド,CCF,CORE,THCPL,会期,開催地,状態,URL\r\n",
+        "締切,公式表記,残り日数,会議,分野,種別,ラウンド,CCF,CORE,THCPL,会期,開催地,状態,URL\r\n",
       );
     });
 
@@ -1247,8 +1251,9 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       )
         .split("\r\n")[1]
         .split(",");
-      expect(thcplCells[8]).toBe("B");
-      expect(thcplCells[6]).toBe("");
+      // 分野列（5 列目）のぶん、評価一覧の列は 1 つ後ろにずれている。
+      expect(thcplCells[9]).toBe("B");
+      expect(thcplCells[7]).toBe("");
     });
   });
 

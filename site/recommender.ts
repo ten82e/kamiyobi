@@ -1886,6 +1886,10 @@ const Recommender = (() => {
     // 数値を入れる列なので、単位を見出しに書く（「残り」だと文字列に見えて順を変えられない）。
     "残り日数",
     "会議",
+    // 分野は画面では分野チップと行の詳細に出る語。絞り込みで使った次元が
+    // 表計算側に無いと、分野ごとに並べ替えることができない（2026-09-23 時点の
+    // 一覧は 7 列で分野列を持たないので、CSV だけに見出す意味がある）。
+    "分野",
     "種別",
     "ラウンド",
     "CCF",
@@ -1977,12 +1981,21 @@ const Recommender = (() => {
       }
       const status = statusBadgeWords(ed, dl).join("・");
       const place = placeJa(ed.place) || String(ed.place || "");
+      // 分野は画面と同じ日本語の語を書く（英字の key を表計算に渡さない）。
+      const catsJa = (
+        (row.cats as string[] | undefined) ||
+        (conf.categories as string[] | undefined) ||
+        []
+      )
+        .map((c: string) => categoryLabelJa(c))
+        .join("・");
       lines.push(
         [
           when,
           official,
           left,
           conf.title,
+          catsJa,
           KIND_LABELS_JA[kind] || kind,
           dl.round == null ? "" : `R${dl.round}`,
           rank.ccf,

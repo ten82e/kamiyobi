@@ -7014,3 +7014,83 @@ it("「評価でしぼる」でのぞいた件数を件数欄に出す（SPEC §
     "評価「${state.rank}」を持たない行 ${hidden.rank} 件",
   );
 });
+
+it("CSV の分野列は画面と同じ日本語の語で、英字のキーを書かない（SPEC §7）", () => {
+  /* 分野は絞り込みで使う次元なのに、一覧は 7 列で分野列を持たないため、
+   * 表計算に持ち出すと分野ごとに並べ替えられなかった。CSV だけに見出すとき、
+   * 書く語は画面（分野チップ・行の詳細）と同じ日本語で、`hpc` のような
+   * 内部キーを表計算に渡さない。収録カタログ全体で列の組み立ても確かめる。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(new URL("../data/snapshot.json", import.meta.url).pathname)}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    // RFC4180 の読み方で 1 行ずつ分ける（開催地などにカンマが入る）。
+    "function splitLine(line) {",
+    "  const out = [];",
+    "  let cur = '', quoted = false;",
+    "  for (let i = 0; i < line.length; i++) {",
+    "    const ch = line[i];",
+    "    if (quoted) {",
+    "      if (ch === '\"' && line[i + 1] === '\"') { cur += '\"'; i++; }",
+    "      else if (ch === '\"') quoted = false;",
+    "      else cur += ch;",
+    "    } else if (ch === '\"') quoted = true;",
+    "    else if (ch === ',') { out.push(cur); cur = ''; }",
+    "    else cur += ch;",
+    "  }",
+    "  out.push(cur);",
+    "  return out;",
+    "}",
+    "const csv = Recommender.deadlinesToCsv(rows, now);",
+    "const lines = csv.split('\\r\\n').filter((l) => l.length);",
+    "const header = splitLine(lines[0]);",
+    "const at = header.indexOf('分野');",
+    "const cells = lines.slice(1).map((l) => splitLine(l)[at]);",
+    "const widths = new Set(lines.map((l) => splitLine(l).length));",
+    // キーがそのまま出ている例（ラベル表に無い語）を集める。
+    "const asciiCells = [...new Set(cells.filter((c) => c && !/[ぁ-んァ-ン一-龥]/.test(c)))];",
+    "const emptyWhereCats = lines.slice(1)",
+    "  .map((l, i) => ({ cats: (rows[i].cats || []).length, cell: cells[i] }))",
+    "  .filter((x) => x.cats > 0 && !x.cell).length;",
+    "const mismatch = lines.slice(1)",
+    "  .map((l, i) => (rows[i].cats || []).map((c) => Recommender.categoryLabelJa(c)).join('・'))",
+    "  .filter((want, i) => want !== cells[i]).length;",
+    "console.log(JSON.stringify({",
+    "  header, at, dataRows: lines.length - 1, widths: [...widths],",
+    "  sample: cells.filter((c) => c).slice(0, 3),",
+    "  asciiCells: asciiCells.slice(0, 5),",
+    "  emptyWhereCats, mismatch,",
+    "  labeled: rows.reduce((n, r) => n + (r.cats || []).length, 0),",
+    "}));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    header: string[];
+    at: number;
+    dataRows: number;
+    widths: number[];
+    sample: string[];
+    asciiCells: string[];
+    emptyWhereCats: number;
+    mismatch: number;
+    labeled: number;
+  };
+  expect(out.header, "CSV の見出しに分野がない").toContain("分野");
+  expect(out.at).toBeGreaterThan(0);
+  expect(out.dataRows).toBeGreaterThan(1000);
+  // 列の組み立てが全行で揃っている（1 列だけ欠ける行を作らない）。
+  expect(out.widths, "行によって列数が違う").toEqual([out.header.length]);
+  expect(out.labeled).toBeGreaterThan(0);
+  expect(out.sample.length, "分野が書かれた行がない（検査が空振りする）").toBeGreaterThan(0);
+  expect(
+    out.asciiCells,
+    "分野列に日本語でない語が混ざっている: " + out.asciiCells.join(", "),
+  ).toEqual([]);
+  expect(out.emptyWhereCats, "分野を持つ行の分野列が空").toBe(0);
+  expect(out.mismatch, "分野列が画面と同じ語になっていない行がある").toBe(0);
+});
