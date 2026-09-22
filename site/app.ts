@@ -1076,7 +1076,20 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       tr.classList.toggle("selected", idx === selectedIndex);
     });
     if (trs[selectedIndex]) {
-      trs[selectedIndex].scrollIntoView({ block: "nearest", behavior: "smooth" });
+      /* フォーカスも選んだ行へ移す。クラス目印だけ変えてスクロールしていたので、
+       * キーボードで `j` / `k` を押しても支援技術には何も読まれなかった（2026-09-23 実測:
+       * てびきは「キーボードで一覧を動かす」と案内しているのに、支援技術には無音だった）。
+       * `preventScroll` は効かない環境があるので、自分で scrollIntoView する。 */
+      trs[selectedIndex].focus({ preventScroll: true });
+      /* 1 打鍵ごとに なめらかスクロールを続けると酔う人がいる（「動きを抑える」設定は
+       * JS の `behavior` を自動では見ない – 2026-09-23 実測）。設定があれば瞬間移動にする。 */
+      const reduced =
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      trs[selectedIndex].scrollIntoView({
+        block: "nearest",
+        behavior: reduced ? "auto" : "smooth",
+      });
     }
   }
 

@@ -9568,3 +9568,74 @@ it("表の公式表記に出る語（時刻未確認・AoE・JST）はその語�
   // 「確認できたものだけ」はチェックボックスの側で絞る）。
   expect(rows.filter((r) => Recommender.hayMatches(r.hay, "公式")).length).toBe(0);
 });
+
+it("キーボードで選んだ行にフォーカスが動く（支援技術に読まれる・SPEC §7）", () => {
+  /* `j` / `k` は行のクラス目印だけ変えてスクロールしていた（2026-09-23 実測）。
+   * てびきは「キーボードで一覧を動かす」と案内しているので、支援技術を使う人にも
+   * 選んだ行が読める形（フォーカスを移す）にする。なめらかスクロールは「動きを抑える」
+   * 設定を見ないまま効いていたので、その向きも見る。 */
+  const app = siteRuntime();
+  const script = [
+    "(async () => {",
+    `const UPDATE = ${JSON.stringify(jsFunction(app, "updateRowSelection"))};`,
+    // shown[] と 1:1 の行のほかに、展開行と月見出し行が混ざる（除外されないと行がズレる）。
+    "const mk = (name, classes) => {",
+    "  return {",
+    "    name,",
+    "    classList: { contains: (c) => classes.indexOf(c) >= 0, toggle: () => {} },",
+    "    focused: 0,",
+    "    focusArgs: null,",
+    "    scrollArgs: null,",
+    "    focus(o) { this.focused++; this.focusArgs = o || null; },",
+    "    scrollIntoView(o) { this.scrollArgs = o || null; },",
+    "  };",
+    "};",
+    'const rows = [mk("row0", ["row"]), mk("detail", ["detail-row"]), mk("row1", ["row"]), mk("row2", ["row"])];',
+    "const mkWindow = (reduce) => ({",
+    "  matchMedia: (q) => ({ matches: reduce && q.indexOf('prefers-reduced-motion') >= 0 }),",
+    "});",
+    // 実装の関数宣言を、自由変数（`$`・`window`・`selectedIndex`）を渡して呼ぶ。
+    "const run = (index, reduce) => {",
+    "  const window = mkWindow(reduce);",
+    "  rows.forEach((r) => { r.focused = 0; r.focusArgs = null; r.scrollArgs = null; });",
+    "  const fn = new Function('$', 'window', 'selectedIndex',",
+    "    UPDATE + '; return updateRowSelection();');",
+    "  fn(() => ({ querySelectorAll: () => rows }), window, index);",
+    "};",
+    // shown[] の 2 番目（実体 3 行目の row2 を index 2 で選ぶ。除外行を数えるとズレる）。
+    "run(1, false);",
+    "const a = rows.map((r) => [r.name, r.focused, JSON.stringify(r.focusArgs), JSON.stringify(r.scrollArgs)]);",
+    "run(2, true);",
+    "const b = rows.map((r) => [r.name, r.focused, JSON.stringify(r.scrollArgs)]);",
+    "console.log(JSON.stringify({ a, b }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const { a, b } = JSON.parse(proc.stdout.trim().split("\n").pop() || "{}") as {
+    a: unknown[][];
+    b: unknown[][];
+  };
+  const focused = a.filter((x) => Number(x[1]) > 0).map((x) => String(x[0]));
+  // 選んだ行だけフォーカスされる（除外行ではないこと – 除外が効くと 1 行ズレる）。
+  expect(focused, "選んだ行にフォーカスが動いていない").toEqual(["row1"]);
+  const row1 = a.find((x) => x[0] === "row1");
+  expect(row1, "row1 の記録が無い（検査が空振り）").toBeDefined();
+  // なめらかスクロールと二重にスクロールしないよう、フォーカスはスクロールを抑える。
+  expect(String(row1![2]), "フォーカスが画面を動かして二重にスクロールする").toContain(
+    "preventScroll",
+  );
+  // 「動きを抑える」設定が無ければなめらか、あれば瞬間移動。
+  expect(String(row1![3])).toContain("smooth");
+  const row2 = b.find((x) => x[0] === "row2");
+  expect(row2, "row2 の記録が無い（検査が空振り）").toBeDefined();
+  expect(String(row2![2]), "「動きを抑える」設定でもなめらかに動く").toContain("auto");
+  // てびきにも、選んだ行が読まれることを書いておく（案内と実装のズレを防ぐ）。
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const at = template.indexOf("<code>d</code> で行の詳細を出します。");
+  expect(at).toBeGreaterThan(0);
+  expect(template.slice(at, at + 260), "てびきに読み上げの説明が無い").toContain("支援技術");
+});
