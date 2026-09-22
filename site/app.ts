@@ -2608,8 +2608,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   // ---- wiring ----
   let timer: ReturnType<typeof setTimeout> | undefined;
-  $("q").addEventListener("input", () => {
+  // 日本語 IME の変換中は絞り込みを走らせない。未確定のひらがな（「きかい」）で一覧が
+  // 入れ替わって見えいうえ、変換候補ウィンドウを開いたままの再描画はもたつく。
+  // 確定（compositionend）後に一度だけ適用するため、値は apply() 内で入力欄から読む。
+  let composing = false;
+  valueElement("q").addEventListener("compositionstart", () => {
+    composing = true;
+  });
+  valueElement("q").addEventListener("compositionend", () => {
+    composing = false;
     clearTimeout(timer);
+    timer = setTimeout(apply, 180);
+  });
+  valueElement("q").addEventListener("input", () => {
+    clearTimeout(timer);
+    if (composing) return;
     timer = setTimeout(apply, 180);
   });
   $("paperText").addEventListener("input", () => {
@@ -2650,6 +2663,20 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   $("more").addEventListener("click", drawMore);
   const exportCsvButton = $("exportCsv");
   if (exportCsvButton) exportCsvButton.addEventListener("click", exportShownCsv);
+  // 印刷時は絞り込み後の全行を描画する。画面は 40 行ずつしか出さないので、
+  // この措置が無いと印刷物だけ「直近 40 件」で途中までになる。印刷後に戻す。
+  let printExpanded = false;
+  window.addEventListener("beforeprint", () => {
+    if (state.mode !== "deadlines" || drawn >= shown.length) return;
+    const target = shown.length;
+    while (drawn < target) drawMore();
+    printExpanded = true;
+  });
+  window.addEventListener("afterprint", () => {
+    if (!printExpanded) return;
+    printExpanded = false;
+    render();
+  });
   $("modeRecommend").addEventListener("click", () => setMode("recommend"));
   $("modeDeadlines").addEventListener("click", () => setMode("deadlines"));
   $("historyRetry").addEventListener("click", () => {

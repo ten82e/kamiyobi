@@ -561,6 +561,55 @@ footer {
 footer a { color: var(--accent); text-decoration: none; }
 footer a:hover { text-decoration: underline; }
 
+/* 印刷: 締切一覧を研究室に貼る・グループ会議で回覧する需要に応える。
+   画面用の操作要素を落として紙で役に立つ情報だけ残し、紙で押せないリンクは URL を印字する。 */
+@media print {
+  @page { margin: 14mm; }
+  body {
+    background: #fff;
+    color: #111;
+    font-size: 10.5pt;
+  }
+  .wrap { max-width: none; padding: 0; }
+  .mode-switch,
+  #controlsPanel,
+  #helpPanel,
+  #exportCsv,
+  #more,
+  #historyStatus,
+  #drawer,
+  #drawerBackdrop,
+  .count-hint,
+  .recommend-only,
+  footer .btn-reset { display: none !important; }
+  /* 幅せまカード表示のメディアクエリが印刷幅でも当たることがあるため、表として印刷する。 */
+  thead { display: table-header-group; }
+  tbody tr { display: table-row; }
+  tbody td { display: table-cell; }
+  .tablewrap { overflow: visible; border: 0; }
+  th, td {
+    color: #111 !important;
+    background: transparent !important;
+    border-bottom: 1px solid #bbb;
+    padding: 4px 6px;
+  }
+  .month-row th { background: #eee !important; color: #111 !important; }
+  /* 行がページのまたぎで分断されると「どの締切か」わからなくなる。 */
+  tbody tr, .month-row { break-inside: avoid; page-break-inside: avoid; }
+  a { color: #111 !important; text-decoration: none; }
+  #tbody a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 8pt;
+    color: #444;
+    word-break: break-all;
+  }
+  .brand-badge, .lead { color: #444 !important; }
+  /* 紙では URL を押せない。データ源（出典）は printed でも価値があるので残し、
+     サイト内導線だけ落とす。 */
+  footer { color: #444; font-size: 8.5pt; border-top: 1px solid #bbb; }
+  footer #repolink { display: none !important; }
+}
+
 </style>
 </head>
 <body>

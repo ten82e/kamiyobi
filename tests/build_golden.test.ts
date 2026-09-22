@@ -1895,6 +1895,30 @@ it("weekday suffixes for date-only deadlines and 会期 are viewer-timezone inde
   expect(app).toContain("Recommender.weekdayJaFromDate(r.ed.event_end)");
 });
 
+it("the deadline table is usable on paper and with a Japanese IME (SPEC §7)", () => {
+  const template = readFileSync(join(site, "index.html"), "utf8");
+  const runtime = siteRuntime();
+  // 印刷: 画面用の操作要素を落とし、紙で押せないリンクは URL を印字する。
+  const print = template.slice(template.indexOf("@media print"));
+  expect(print).toContain("@media print {");
+  for (const hide of ["#controlsPanel", "#helpPanel", "#exportCsv", "#more", "#drawer"]) {
+    expect(print, `印刷時に ${hide} を消さない`).toContain(`${hide},`);
+  }
+  expect(print).toContain('content: " (" attr(href) ")"');
+  // 幅せまカード表示のメディアクエリが印刷幅でも当たるため、表として印刷させる。
+  expect(print).toContain("thead { display: table-header-group; }");
+  // 行がページのまたぎで分断されると「どの締切か」わからなくなる。
+  expect(print).toContain("break-inside: avoid");
+  // 印刷物だけ直近 40 件で打ち切られないよう、印刷前に全行を描画して印刷後に戻す。
+  expect(runtime).toContain('window.addEventListener("beforeprint"');
+  expect(runtime).toContain('window.addEventListener("afterprint"');
+  // 日本語 IME: 未確定のひらがなで絞り込み直さず、変換確定後に一度だけ適用する。
+  expect(runtime).toContain('valueElement("q").addEventListener("compositionstart"');
+  expect(runtime).toContain('valueElement("q").addEventListener("compositionend"');
+  // ビルド成果物では `if (composing)` と `return;` が改行で分かれるため、条件だけ見る。
+  expect(runtime).toMatch(/if \(composing\)\s*\n?\s*return;/);
+});
+
 it("index.html tells Japanese readers what the site is before they open it (SPEC §7)", () => {
   const template = readFileSync(join(site, "index.html"), "utf8");
   // 検索結果とチャットのリンクプレビューに効くのは description / og まで。
