@@ -2593,20 +2593,34 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const a = r._availability;
     if (!a) return "受付状況不明";
     if (a.status === "ongoing") return "常時受付";
+    // 日付の向きは表と揃える（JST を主表記、曜日を添える、公式の表記は副で出す）。
+    // カードだけ UTC 主表記だった（2026-09-23 実測: 「次回締切: 2026-10-05 23:59 UTC /
+    // 2026-10-05 15:59 AoE」）。AoE 23:59 締切は JST では翌日の夜になるので、UTC 優先だと
+    // 日本で何時までに出せばよいか決められない。表は第 65 回から JST を主にしている。
+    const dayJa = (date: string) => {
+      const weekday = Recommender.weekdayJaFromDate(date);
+      return weekday ? `${date}(${weekday})` : date;
+    };
     if (a.status === "uncertain" && a.local_date) {
-      return `次回締切: ${a.local_date}（時刻未確認。終了済みの可能性があります）`;
+      return `次回締切: ${dayJa(a.local_date)}（時刻未確認。終了済みの可能性があります）`;
     }
     if (a.status === "open" && a.local_date) {
-      return `次回締切: ${a.local_date}（時刻未確認）`;
+      return `次回締切: ${dayJa(a.local_date)}（時刻未確認）`;
     }
     if (a.status === "open" && a.timestamp) {
-      return (
-        "次回締切: " +
-        fmtDate(new Date(a.timestamp)) +
-        " UTC / " +
-        fmtAoE(new Date(a.timestamp)) +
-        (a.estimated ? "（推定）" : "")
-      );
+      const d = new Date(a.timestamp);
+      const zone = Recommender.officialZone(r.dl);
+      // AoE 併記は AoE で締切る会議だけに出す（表と同じ理由。JST 宣言の締切に AoE を
+      // 見せると、実在しない AoE 締切があると誤解させる）。
+      const official =
+        zone === "JST"
+          ? "（公式 JST 締切）"
+          : zone === "AoE"
+            ? `（公式 AoE ${fmtAoE(d)}）`
+            : zone && zone !== "UTC"
+              ? `（公式 ${zone} ／ ${fmtDate(d)} UTC）`
+              : `（公式 ${fmtDate(d)} UTC）`;
+      return "次回締切: " + fmtJst(d) + official + (a.estimated ? "（推定）" : "");
     }
     if (a.status === "past") {
       return a.timestamp || a.local_date ? "締切済み" : "締切済み（次回情報なし）";
@@ -2699,7 +2713,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     );
     line(
       card,
-      `締切: ${recommendationAvailability(r)} ／ 種別: ${KIND_LABEL[r.kind] || r.kind || "未確認"}`,
+      `種別: ${KIND_LABEL[r.kind] || r.kind || "未確認"}`,
       "card-section recommendation-axes",
     );
     line(

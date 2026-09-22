@@ -9221,3 +9221,80 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
   // 一致評価はカードの頭に出る語として説明する（行として数えない）。
   expect(guide).toContain("一致評価");
 });
+
+it("推薦のカードの締切は表と同じ向き（JST と曜日）で出る（SPEC §7）", () => {
+  /* 表は JST を主表記にしている（AoE 23:59 締切は JST では翌日の夜になるため、UTC 優先だと
+   * 日本で何時までに出せばよいか分からない – `makeRow` のコメント）。ところが推薦のカードの
+   * 受付状況は `fmtDate(ts) + " UTC / " + fmtAoE(ts)` で、UTC 主表記だった（2026-09-23 実測:
+   * 「次回締切: 2026-10-05 23:59 UTC / 2026-10-05 15:59 AoE」）。同じ画面の表では
+   * 「2026-10-06(火) 08:59 JST」が出るので、同じ締切に二つの時刻が並んでいた。
+   * 加えて同じ値を「締切:」でもう一行出していて、「締切: 次回締切: …」の二重ラベルだった。 */
+  const app = siteRuntime();
+  const script = [
+    "(async () => {",
+    `const AVAIL_SRC = ${JSON.stringify(jsFunction(app, "recommendationAvailability"))};`,
+    `const FMTJST_SRC = ${JSON.stringify(jsFunction(app, "fmtJst"))};`,
+    `const FMTDATE_SRC = ${JSON.stringify(jsFunction(app, "fmtDate"))};`,
+    `const FMTAOE_SRC = ${JSON.stringify(jsFunction(app, "fmtAoE"))};`,
+    // 抽出関数の自由変数は正本から揃える（`pad` を自作すると書式がズレる）。
+    `const PAD_SRC = ${JSON.stringify(jsFunction(app, "pad"))};`,
+    "const pad = new Function('return (' + PAD_SRC + ')')();",
+    // `fmtJst` の自由変数（曜日の配列）も正本の宣言から作る。
+    `const WEEKDAY_DECL = ${JSON.stringify((app.match(/const WEEKDAY_JA = \[[^\]]*\];/) || [""])[0])};`,
+    "const WEEKDAY_JA = new Function('return ' + WEEKDAY_DECL.replace(/^const WEEKDAY_JA = /, '').replace(/;$/, ''))();",
+    "if (!Array.isArray(WEEKDAY_JA) || WEEKDAY_JA.length !== 7) throw new Error('曜日の配列が取れていない');",
+    "const fmtJst = new Function('WEEKDAY_JA', 'pad', 'return (' + FMTJST_SRC + ')')(WEEKDAY_JA, pad);",
+    "const fmtDate = new Function('pad', 'return (' + FMTDATE_SRC + ')')(pad);",
+    "const fmtAoE = new Function('pad', 'return (' + FMTAOE_SRC + ')')(pad);",
+    // 表で使う曜日の語はビルド成果物から取る（テスト側に書き写さない）。
+    `const WEEKDAY_SRC = ${JSON.stringify(jsFunction(siteRuntime("recommender.js"), "weekdayJaFromDate"))};`,
+    // helper の自由変数（暦日の曜日の配列）も正本から揃える。
+    `const CAL_DECL = ${JSON.stringify((siteRuntime("recommender.js").match(/const CALENDAR_DATE_JA = \[[^\]]*\];/) || [""])[0])};`,
+    "const CALENDAR_DATE_JA = new Function('return ' + CAL_DECL.replace(/^const CALENDAR_DATE_JA = /, '').replace(/;$/, ''))();",
+    "if (!Array.isArray(CALENDAR_DATE_JA) || CALENDAR_DATE_JA.length !== 7) throw new Error('暦日の曜日の配列が取れていない');",
+    "const weekdayJaFromDate = new Function('CALENDAR_DATE_JA', 'return (' + WEEKDAY_SRC + ')')(CALENDAR_DATE_JA);",
+    "const Recommender = {",
+    "  officialZone: (dl) => Recommender.zone,",
+    "  weekdayJaFromDate,",
+    "  zone: 'AoE',",
+    "};",
+    "const avail = new Function('fmtJst', 'fmtDate', 'fmtAoE', 'Recommender',",
+    "  'return (' + AVAIL_SRC + ')')(fmtJst, fmtDate, fmtAoE, Recommender);",
+    // UTC では 10/5、JST では 10/6 になる締切（AoE 23:59 型の例）。
+    "const ts = Date.UTC(2026, 9, 5, 15, 59);",
+    "const jstShown = fmtJst(new Date(ts));",
+    "const aoe = avail({ _availability: { status: 'open', timestamp: ts }, dl: {} });",
+    "Recommender.zone = 'JST';",
+    "const jst = avail({ _availability: { status: 'open', timestamp: ts }, dl: {} });",
+    "Recommender.zone = 'UTC';",
+    "const utc = avail({ _availability: { status: 'open', timestamp: ts }, dl: {} });",
+    "const dateOnly = avail({ _availability: { status: 'open', local_date: '2026-10-06' }, dl: {} });",
+    "console.log(JSON.stringify({ jstShown, aoe, jst, utc, dateOnly }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout.trim().split("\n").pop() || "{}");
+  // JST（曜日付き）が主表記で、表と同じ文字列になる。
+  expect(got.aoe, "JST の主表記が出ていない").toContain(got.jstShown);
+  expect(got.aoe.startsWith("次回締切: " + got.jstShown), "JST が先頭ではない").toBe(true);
+  // AoE 併記は AoE 宣言の会議だけ。
+  expect(got.aoe).toContain("公式 AoE");
+  expect(got.jst, "JST 宣言の締切に AoE を併記している").not.toContain("AoE");
+  expect(got.jst).toContain("公式 JST 締切");
+  expect(got.utc).toContain("UTC");
+  // 暦日だけの締切も曜日を添える（表と同じ）。
+  expect(got.dateOnly, "暦日だけの締切に曜日が無い").toMatch(
+    /^次回締切: 2026-10-06\(.+\)（時刻未確認）$/,
+  );
+  // 同じ値をカード内で二回出さない（「締切: 次回締切: …」の二重ラベルを戻さない）。
+  const card = jsFunction(app, "makeRecommendationCard");
+  expect(
+    card.match(/recommendationAvailability\(r\)/g) || [],
+    "同じ値を二行に出している",
+  ).toHaveLength(1);
+  expect(card).not.toMatch(/締切: \$\{recommendationAvailability/);
+});
