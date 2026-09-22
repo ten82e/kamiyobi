@@ -71,6 +71,19 @@
     font-weight: 600;
     color: var(--muted);
   }
+  /* カード化の中でも月見出しは通し見出しのままにする（1 枚のカードにしない）。 */
+  tbody tr.month-row {
+    display: table-row;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    margin: 0;
+    padding: 0;
+  }
+  tbody tr.month-row th {
+    display: table-cell;
+    padding: 6px 10px;
+  }
   /* 狭い画面（ほぼスマホ）ではキーボード ショートカットを使えない。
      誤導する案内は消し、タップで詳細が見られることだけ残す。 */
   .count-kbd { display: none; }
@@ -335,6 +348,16 @@ label.check input:checked + span { color: var(--fg); }
 /* Main Table */
 .count { font-size: 0.82rem; color: var(--muted); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
 .count-hint { text-align: right; }
+/* 月ごとの区切り行。日時順の見やすさのためで、行として選択させない。
+   列ヘッダーは固定していないので、月見出しも固定しない（見出しだけが残ると迷う）。 */
+.month-row th {
+  background: var(--accent-subtle);
+  color: var(--fg);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 6px 10px;
+}
 /* 見方のてびき: 初回利用者が最初に詰まる用語（JST/AoE・時刻未確認・推定・公式確認）を
    別ファイルに飛ばさずその場で説明する。初期状態は畳んで表のじゃまにしない。 */
 .help {

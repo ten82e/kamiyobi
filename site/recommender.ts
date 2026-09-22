@@ -1541,6 +1541,125 @@ const Recommender = (() => {
     return parts.filter(Boolean).join(" ");
   }
 
+  /* SPEC §7: 日本語 UI。開催地は出張・オンライン参加の判断材料だが、
+   * 原文は "Alicante, Spain / Online" のような英字表記で、一覧を流し読みしたときに
+   * 国が判別しにくい。国名と開催形式の語だけを日本語に寄せる。
+   * 都市名は網羅できる形にできず、誤変換すると場所の特定ができなくなるため変換しない。
+   * 対応表に無い語は推測せず原文を残す（data の開催地 307 通りの実値を見て持つ）。 */
+  const PLACE_TERMS_JA: Array<[string, string]> = [
+    ["united states of america", "アメリカ"],
+    ["united states", "アメリカ"],
+    // 上流の誤記 (United State) も同じ国として寄せる。原文の訂正は overrides 側で行う。
+    ["united state", "アメリカ"],
+    ["usa", "アメリカ"],
+    ["south korea", "韓国"],
+    ["republic of korea", "韓国"],
+    ["korea", "韓国"],
+    ["the netherlands", "オランダ"],
+    ["netherlands", "オランダ"],
+    ["united kingdom", "イギリス"],
+    ["uk", "イギリス"],
+    ["england", "イギリス"],
+    ["new zealand", "ニュージーランド"],
+    ["south africa", "南アフリカ"],
+    ["costa rica", "コスタリカ"],
+    ["türkiye", "トルコ"],
+    ["turkey", "トルコ"],
+    ["uae", "アラブ首長国連邦"],
+    ["hong kong", "香港"],
+    ["canada", "カナダ"],
+    ["china", "中国"],
+    ["italy", "イタリア"],
+    ["japan", "日本"],
+    ["australia", "オーストラリア"],
+    ["spain", "スペイン"],
+    ["singapore", "シンガポール"],
+    ["germany", "ドイツ"],
+    ["france", "フランス"],
+    ["portugal", "ポルトガル"],
+    ["india", "インド"],
+    ["greece", "ギリシャ"],
+    ["brazil", "ブラジル"],
+    ["belgium", "ベルギー"],
+    ["vietnam", "ベトナム"],
+    ["thailand", "タイ"],
+    ["sweden", "スウェーデン"],
+    ["hungary", "ハンガリー"],
+    ["czechia", "チェコ"],
+    ["ireland", "アイルランド"],
+    ["romania", "ルーマニア"],
+    ["morocco", "モロッコ"],
+    ["denmark", "デンマーク"],
+    ["austria", "オーストリア"],
+    ["bulgaria", "ブルガリア"],
+    ["poland", "ポーランド"],
+    ["iceland", "アイスランド"],
+    ["finland", "フィンランド"],
+    ["cyprus", "キプロス"],
+    ["panama", "パナマ"],
+    ["malaysia", "マレーシア"],
+    ["indonesia", "インドネシア"],
+    ["mexico", "メキシコ"],
+    ["cameroon", "カメルーン"],
+    ["luxembourg", "ルクセンブルク"],
+    ["ghana", "ガーナ"],
+    ["ecuador", "エクアドル"],
+    ["malta", "マルタ"],
+    ["armenia", "アルメニア"],
+    ["chile", "チリ"],
+    ["croatia", "クロアチア"],
+    ["nigeria", "ナイジェリア"],
+    ["cambodia", "カンボジア"],
+    ["norway", "ノルウェー"],
+    ["switzerland", "スイス"],
+    ["lithuania", "リトアニア"],
+    ["slovakia", "スロバキア"],
+    ["online only", "オンラインのみ"],
+    ["online", "オンライン"],
+    ["virtual", "オンライン"],
+    ["hybrid", "ハイブリッド"],
+    ["in person", "対面"],
+    ["in-person", "対面"],
+    ["onsite", "対面"],
+    ["on-site", "対面"],
+    ["tbd", "未定"],
+  ];
+
+  // 語として置換する。語句の途中にマッチすると都市名を壊すため、
+  // 前後は単語境界（ラテン文字・数字・ハイフン以外）に限定する。
+  const PLACE_TERM_PATTERNS: Array<[RegExp, string]> = PLACE_TERMS_JA.map(([term, ja]) => [
+    new RegExp(
+      `(?<![A-Za-z0-9-])${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![A-Za-z0-9-])`,
+      "gi",
+    ),
+    ja,
+  ]);
+
+  function placeTermJa(text: string): string {
+    let out = text;
+    PLACE_TERM_PATTERNS.forEach(([pattern, ja]) => {
+      out = out.replace(pattern, ja);
+    });
+    // "UK and hybrid" 等の接続詞は中点に寄せる（一覧の 1 行で読める形にする）。
+    return out.replace(/\s+and\s+|\s*&\s*/gi, "・");
+  }
+
+  function placeJa(value: unknown): string {
+    const raw = typeof value === "string" ? value.trim() : "";
+    if (!raw) return "";
+    // 置換は各 "/" 区切りの末尾カンマ句に限定する。国名・開催形式はそこに来る。
+    // 先頭側（会場名・都市名）を置換すると "Panama City, Panama" が
+    // 「パナマ City」に化けて場所を特定できなくなる。
+    return raw
+      .split("/")
+      .map((segment) => {
+        const at = segment.lastIndexOf(",");
+        if (at < 0) return placeTermJa(segment);
+        return segment.slice(0, at + 1) + placeTermJa(segment.slice(at + 1));
+      })
+      .join("/");
+  }
+
   /* 締切の公式表記（tz_raw）を、日本側で注記する簡潔な形に寄せる。
    * AoE 併記は「AoE で締切る会議」にしか意味がない。JST 宣言の国内締切に
    * AoE を併記すると、実在しない AoE 締切があると誤解させる。
@@ -1574,7 +1693,7 @@ const Recommender = (() => {
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
-        const catHay = categorySearchTerms(conf.categories, confTags);
+        const catHay = `${categorySearchTerms(conf.categories, confTags)} ${placeJa(ed.place)}`;
         (ed.deadlines || []).forEach((dl) => {
           const dateOnly = dl.precision === "date-only";
           const window = dateOnly ? dateOnlyWindowMs(dl.local_date) : null;
@@ -2711,6 +2830,7 @@ const Recommender = (() => {
     candidateRows: candidateRows,
     categoryLabelJa: categoryLabelJa,
     officialZone: officialZone,
+    placeJa: placeJa,
     categorySearchTerms: categorySearchTerms,
     pastRepresentatives: pastRepresentatives,
     pickRepresentative: pickRepresentative,

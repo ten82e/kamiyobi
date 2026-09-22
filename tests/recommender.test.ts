@@ -901,6 +901,65 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     expect(R.officialZone({})).toBe("");
     expect(R.officialZone(null)).toBe("");
   });
+
+  describe("placeJa（開催地の国名・開催形式だけを日本語に寄せる）", () => {
+    it("末尾カンマ句の国名と開催形式を変換する", () => {
+      expect(R.placeJa("Barcelona, Spain")).toBe("Barcelona, スペイン");
+      expect(R.placeJa("Alicante, Spain / Online")).toBe("Alicante, スペイン / オンライン");
+      expect(R.placeJa("Chicago, IL, USA")).toBe("Chicago, IL, アメリカ");
+      expect(R.placeJa("Royal Holloway, Egham, UK")).toBe("Royal Holloway, Egham, イギリス");
+      expect(R.placeJa("Tokyo, Japan")).toBe("Tokyo, 日本");
+      expect(R.placeJa("Seoul, South Korea")).toBe("Seoul, 韓国");
+      expect(R.placeJa("Costa Rica (hybrid)")).toBe("コスタリカ (ハイブリッド)");
+      expect(R.placeJa("Online Only")).toBe("オンラインのみ");
+      expect(R.placeJa("UK and hybrid")).toBe("イギリス・ハイブリッド");
+      expect(R.placeJa("Vienna, Austria & Virtual")).toBe("Vienna, オーストリア・オンライン");
+      expect(R.placeJa("TBD")).toBe("未定");
+      // 上流の誤記も同じ国として寄せる（原文訂正は overrides の役割）。
+      expect(R.placeJa("Phoenix, Arizona, United State")).toBe("Phoenix, Arizona, アメリカ");
+    });
+
+    it("都市名・会場名は壊さない", () => {
+      // 先頭側を置換すると "Panama City" が「パナマ City」に化けて場所を特定できない。
+      expect(R.placeJa("Panama City, Panama")).toBe("Panama City, パナマ");
+      expect(R.placeJa("Salt Lake City, Utah, USA")).toBe("Salt Lake City, Utah, アメリカ");
+      expect(
+        R.placeJa("Virginia Tech Academic Building One, Alexandria, Virginia, United States"),
+      ).toBe("Virginia Tech Academic Building One, Alexandria, Virginia, アメリカ");
+      // すでに日本語の開催地はそのまま。
+      expect(R.placeJa("飛騨・世界生活文化センター（岐阜県高山市）／オンライン")).toBe(
+        "飛騨・世界生活文化センター（岐阜県高山市）／オンライン",
+      );
+    });
+
+    it("未知の語は推測せず原文を残し、入力が文字店でなければ空文字", () => {
+      expect(R.placeJa("Atlantis, Nowhere")).toBe("Atlantis, Nowhere");
+      expect(R.placeJa(null)).toBe("");
+      expect(R.placeJa(undefined)).toBe("");
+      expect(R.placeJa(42)).toBe("");
+    });
+
+    it("行の検索語に開催地の日本語表記を含める", () => {
+      const confs = [
+        {
+          key: "demo",
+          title: "Demo Conf",
+          categories: ["hpc"],
+          tags: [],
+          editions: [
+            {
+              year: 2026,
+              place: "Seoul, South Korea",
+              deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }],
+            },
+          ],
+        },
+      ];
+      const rows = R.candidateRows(confs);
+      expect(rows[0].hay).toContain("韓国");
+      expect(rows[0].hay).toContain("seoul, south korea");
+    });
+  });
 });
 
 describe("pastRepresentatives", () => {

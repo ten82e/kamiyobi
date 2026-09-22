@@ -1938,7 +1938,7 @@ it("drawer shows JST with weekday and the official timezone, viewer-timezone ind
     // 公式表記の判定は recommender.js の正本をそのまま注入する（規則の書き写しは
     // 正本とズレるため避ける）。officialZone の依存は isRecord のみ。
     jsFunction(siteRuntime("recommender.js"), "isRecord"),
-    `const Recommender = { officialZone: ${jsFunction(siteRuntime("recommender.js"), "officialZone")} };`,
+    `const Recommender = { officialZone: ${jsFunction(siteRuntime("recommender.js"), "officialZone")}, placeJa: (v) => String(v ?? "") };`,
     "const body = { innerHTML: '' };",
     "const els = {",
     "  drawerBackdrop: { classList: { add() {} } }, drawerTitle: {}, drawerFullName: {},",
@@ -2023,6 +2023,57 @@ it("site UI is readable for Japanese researchers: field names, JST header, help 
   // スマホではキーボード案内を出さず、タップで詳細が見られることだけ伝える。
   expect(template).toContain("行を選ぶと詳細");
   expect(template).toMatch(/\.count-kbd \{ display: none; \}/);
+  // 開催地は国名・開催形式を日本語に寄せ、原文（会場名・市区郡）は title と詳細に残す。
+  expect(runtime).toContain("Recommender.placeJa(r.ed.place)");
+  expect(runtime).toContain("placeCell.title = r.ed.place");
+  expect(runtime).toContain("原表記: ");
+  // 月見出し行は選択・詳細・キーボード移動の対象にしない（shown[] とのズレ防止）。
+  expect(runtime).toContain('classList.contains("month-row")');
+  expect(template).toContain(".month-row th");
+});
+
+it("month headings appear only while browsing in chronological order (SPEC §7)", () => {
+  const runtime = siteRuntime();
+  const script = [
+    "function pad(n) { return (n < 10 ? '0' : '') + n; }",
+    jsFunction(runtime, "shouldGroupMonths"),
+    jsFunction(runtime, "monthKey"),
+    jsFunction(runtime, "monthHeading"),
+    // JST 2026-10-01 09:00 と JST 2026-09-30 23:30 は UTC では同じ 9/30 だが、JST では別月。
+    "const a = { kind: 'paper', t: Date.parse('2026-10-01T00:00:00Z') };",
+    "const b = { kind: 'paper', t: Date.parse('2026-09-30T14:30:00Z') };",
+    "const j = { kind: 'journal', t: Date.parse('2026-09-30T14:30:00Z') };",
+    "const nan = { kind: 'paper', t: NaN };",
+    "console.log(JSON.stringify({",
+    "  groups: [",
+    "    shouldGroupMonths({ sortKey: 'rem', sortAsc: true, paper: false }),",
+    "    shouldGroupMonths({ sortKey: 'date', sortAsc: true, paper: false }),",
+    "    shouldGroupMonths({ sortKey: 'date', sortAsc: false, paper: false }),",
+    "    shouldGroupMonths({ sortKey: 'rank', sortAsc: true, paper: false }),",
+    "    shouldGroupMonths({ sortKey: 'conf', sortAsc: true, paper: false }),",
+    "    shouldGroupMonths({ sortKey: 'rem', sortAsc: true, paper: true }),",
+    "  ],",
+    "  keys: [monthKey(a), monthKey(b), monthKey(j), monthKey(nan)],",
+    "  heading: monthHeading(monthKey(a), 7),",
+    "}));",
+  ].join("\n");
+  const outputs = ["Asia/Tokyo", "UTC", "America/Los_Angeles"].map((TZ) => {
+    const proc = spawnSync("node", ["-e", script], {
+      encoding: "utf8",
+      env: { ...process.env, TZ },
+      timeout: 60_000,
+    });
+    expect(proc.status, proc.stderr).toBe(0);
+    return JSON.parse(proc.stdout);
+  });
+  expect(outputs[1]).toEqual(outputs[0]);
+  expect(outputs[2]).toEqual(outputs[0]);
+  const got = outputs[0] as { groups: boolean[]; keys: string[]; heading: string };
+  // 日時順（昇順）のときだけ区切る。逆順・ランク順・会議名順・推薦順では区切らない。
+  expect(got.groups).toEqual([true, true, false, false, false, false]);
+  // 月は JST で決める（表示が JST なので単位をずらさない）。
+  expect(got.keys).toEqual(["2026-10", "2026-09", "", ""]);
+  expect(got.heading).toBe("2026年10月（7 件）");
 });
 
 it("recommendation data arrival re-schedules semantic for pending paper text", () => {
@@ -2340,7 +2391,7 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
     "const dOpened = calls.open.length === 1 && calls.open[0] === 'B';",
     "const dFocusedRow = calls.focus[calls.focus.length - 1] === 'row1';",
     "const verificationSummary = new Function('esc', 'return (' + SUMMARY + ')')((s) => String(s ?? ''));",
-    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '' });",
+    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? '') });",
     "document.activeElement = prevEl;",
     "openDrawer({ kind: 'journal', conf: { title: 'X' }, ed: { place: 'P', date_text: 'D' } });",
     "const focusedClose = document.activeElement === closeBtn;",
@@ -2661,7 +2712,7 @@ it("normal deadline drawer includes verification details", () => {
     "function $(id) { return document.getElementById(id); }",
     "const window = { _prevFocus: null };",
     `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')((s) => String(s ?? ''));`,
-    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '' });`,
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? '') });`,
     "openDrawer({",
     "  kind: 'paper', conf: { key: 'demo', title: 'Demo' },",
     "  ed: { year: 2026, place: 'P', date_text: 'D' }, t: 0, tLast: 0,",

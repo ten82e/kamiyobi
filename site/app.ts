@@ -826,11 +826,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         '" target="_blank" style="display: block; text-align: center; background: var(--accent); color: #fff; text-decoration: none; padding: 10px; border-radius: 6px; font-weight: 600; margin-bottom: 20px;">公式サイトを開く</a>';
     }
 
+    const placeRaw = String(r.ed.place || "");
+    const placeShown = Recommender.placeJa(placeRaw);
     html +=
       '<div style="font-size: 0.85rem;">' +
       '<p style="margin-bottom: 8px;"><strong>開催地:</strong> ' +
-      esc(r.ed.place || "未定") +
+      esc(placeShown || "未定") +
       "</p>" +
+      (placeShown && placeShown !== placeRaw
+        ? '<p style="margin-bottom: 8px; color: var(--muted); font-size: 0.8rem;">原表記: ' +
+          esc(r.ed.place || "") +
+          "</p>"
+        : "") +
       '<p style="margin-bottom: 8px;"><strong>会期:</strong> ' +
       esc(r.ed.date_text || r.ed.event_start || "未定") +
       "</p>" +
@@ -899,7 +906,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       // openDrawer が _prevFocus として保存する。
       e.preventDefault();
       const dtrs = [...$("tbody").querySelectorAll<HTMLTableRowElement>("tr")].filter(
-        (row) => !row.classList.contains("detail-row"),
+        (row) => !(row.classList.contains("detail-row") || row.classList.contains("month-row")),
       );
       if (dtrs[selectedIndex]) dtrs[selectedIndex].focus();
       openDrawer(shown[selectedIndex]);
@@ -928,7 +935,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function updateRowSelection() {
     // 展開用 detail-row を除外し、shown[] の行と 1:1 対応を保つ
     const trs = [...$("tbody").querySelectorAll<HTMLTableRowElement>("tr")].filter(
-      (row) => !row.classList.contains("detail-row"),
+      (row) => !(row.classList.contains("detail-row") || row.classList.contains("month-row")),
     );
     trs.forEach((tr, idx) => {
       tr.classList.toggle("selected", idx === selectedIndex);
@@ -1427,9 +1434,50 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return out;
   }
 
+  // 月見出し行（.month-row）と推薦理由の行内展開（.detail-row）は shown[] と 1:1 にならない。
+  // 選択・詳細・キーボード移動はこれらの行を数えない（off-by-one の再発防止）。
+  // 日時順で見ているときだけ月で区切る。一致度順やランク順で区切ると、
+  // 月が往復してかえって読めなくなる。
+  function shouldGroupMonths(grouping: {
+    sortKey: string | null;
+    sortAsc: boolean;
+    paper: boolean;
+  }): boolean {
+    if (grouping.paper) return false;
+    if (!grouping.sortAsc) return false;
+    return !grouping.sortKey || grouping.sortKey === "rem" || grouping.sortKey === "date";
+  }
+
+  // 月キーは JST で決める（表示が JST なので、表示と違う単位で区切ると迷う）。
+  function monthKey(r: AppRow): string {
+    if (r.kind === "journal" || !Number.isFinite(r.t)) return "";
+    const jst = new Date(r.t + 9 * 3600000);
+    return `${jst.getUTCFullYear()}-${pad(jst.getUTCMonth() + 1)}`;
+  }
+
+  function monthHeading(key: string, count: number): string {
+    const parts = key.split("-");
+    return `${parts[0]}年${Number(parts[1])}月（${count} 件）`;
+  }
+
+  function makeMonthRow(key: string, count: number) {
+    const tr = document.createElement("tr");
+    tr.className = "month-row";
+    const th = document.createElement("th");
+    th.colSpan = 7;
+    th.scope = "colgroup";
+    th.textContent = monthHeading(key, count);
+    tr.appendChild(th);
+    return tr;
+  }
+
   // ---- RENDERING ----
   let shown: AppRow[] = [];
   let drawn = 0;
+  // 月見出しの描画条件と、描画対象における月ごとの件数（見出しの「N 件」用）。
+  let groupMonths = false;
+  let monthCounts: Record<string, number> = {};
+  let lastMonthKey = "";
 
   function td(tr: HTMLTableRowElement, label: string, cls = "") {
     const e = document.createElement("td");
@@ -1636,7 +1684,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     line(c5, span, "sub nowrap");
 
     const c6 = td(tr, "開催地");
-    line(c6, r.ed.place || "-", "sub");
+    const placeShown = Recommender.placeJa(r.ed.place);
+    const placeCell = line(c6, placeShown || "-", "sub");
+    // 日本語化は流し読み用。会場名・市区郡を含む原文は title に落とす。
+    if (placeCell && r.ed.place && placeShown !== r.ed.place) placeCell.title = r.ed.place;
 
     return tr;
   }
@@ -1833,7 +1884,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   function toggleDetail(r: AppRow, tr: HTMLTableRowElement) {
     const next = tr.nextElementSibling;
-    if (next?.classList.contains("detail-row")) {
+    if (next && (next.classList.contains("detail-row") || next.classList.contains("month-row"))) {
       next.remove();
       return;
     }
@@ -1845,6 +1896,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const frag = document.createDocumentFragment();
     const end = Math.min(drawn + PAGE, shown.length);
     for (let i = drawn; i < end; i++) {
+      if (groupMonths) {
+        const key = monthKey(shown[i]);
+        // 前のページ末尾と同じ月の行なら見出しは繰り返さない。
+        if (key && key !== lastMonthKey) {
+          frag.appendChild(makeMonthRow(key, monthCounts[key] || 0));
+        }
+        lastMonthKey = key;
+      }
       frag.appendChild(makeRow(shown[i]));
     }
     tbody.appendChild(frag);
@@ -2059,6 +2118,19 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     shown = recMode && !recommendationData ? [] : filter();
     drawn = 0;
     selectedIndex = -1;
+    groupMonths = shouldGroupMonths({
+      sortKey: sortKey,
+      sortAsc: sortAsc,
+      paper: recMode && Boolean(valueElement("paperText").value.trim()),
+    });
+    monthCounts = {};
+    lastMonthKey = "";
+    if (groupMonths) {
+      shown.forEach((r) => {
+        const key = monthKey(r);
+        if (key) monthCounts[key] = (monthCounts[key] || 0) + 1;
+      });
+    }
     $("tbody").textContent = "";
     const paperText = valueElement("paperText").value;
     const paperMode = recMode && Boolean(paperText.trim());
