@@ -313,8 +313,17 @@ export function planIeiceUpdate(
       .filter((row) => row.event_end >= today && existingStarts.indexOf(row.event_start) < 0)
       .sort((a, b) => a.event_start.localeCompare(b.event_start));
     if (additions.length) {
-      const insertAt = block.indexOf(`${CONFERENCE_FIELD_INDENT}full_name:`);
+      let insertAt = block.indexOf(`${CONFERENCE_FIELD_INDENT}full_name:`);
       if (insertAt < 0) throw new Error(`${key}: editions の末尾位置を特定できない`);
+      // 収録したての会議は `editions: []`（インラインの空リスト）で持つ。そのまま版を足すと
+      // `editions: []` の直下に 6 字下げの項が来て YAML が壊れるので、ブロック表記へ直す。
+      const emptyEditions = `${CONFERENCE_FIELD_INDENT}editions: []\n`;
+      const emptyEditionAsBlock = `${CONFERENCE_FIELD_INDENT}editions:\n`;
+      const emptyAt = block.indexOf(emptyEditions);
+      if (emptyAt >= 0 && emptyAt < insertAt) {
+        block = block.replace(emptyEditions, emptyEditionAsBlock);
+        insertAt += emptyEditionAsBlock.length - emptyEditions.length;
+      }
       const lines: string[] = [];
       for (const row of additions) lines.push(...editionLines(row, key, today));
       block = `${block.slice(0, insertAt)}${lines.join("\n")}\n${block.slice(insertAt)}`;

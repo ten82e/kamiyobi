@@ -120,7 +120,8 @@ describe("local source data integrity", () => {
     expect(rows.length).toBeGreaterThan(100);
     // 基準値。local 源の締切精度が意図せず動いたら気づくためのピン（国内研究会の
     // 発表申込締切は公式が日只显示のため date-only で数える）。
-    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(178);
+    // 178 -> 181: IEICE の IBISML・DE・SS 研究会の発表申込締切を公式ページから追記した分。
+    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(181);
 
     for (const row of rows) {
       if (row.precision === "date-only") {

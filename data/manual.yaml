@@ -6849,4 +6849,118 @@ conferences:
     tags:
       - domestic-jp
     title: 電子情報通信学会 NV 研究会
+  - categories:
+      - networking
+    editions:
+      - date_text: 2027年1月21日-22日
+        deadlines: []
+        event_end: '2027-01-22'
+        event_start: '2027-01-21'
+        id: ieice-nws-2027-01
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-NWS
+        place: 愛媛県男女共同参画センター（愛媛県）／オンライン
+        year: 2027
+    full_name: 電子情報通信学会 ネットワークソフトウェア研究会 (NWS)
+    key: ieice-nws
+    link: https://ken.ieice.org/ken/program/?tgid=IEICE-NWS
+    tags:
+      - domestic-jp
+    title: 電子情報通信学会 NWS 研究会
+  - categories:
+      - systems
+    editions:
+      - date_text: 2026年12月2日-4日
+        deadlines: []
+        event_end: '2026-12-04'
+        event_start: '2026-12-02'
+        id: ieice-dc-2026-12
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-DC
+        place: 札幌市教育文化会館(札幌)（北海道）
+        year: 2026
+    full_name: 電子情報通信学会 ディペンダブルコンピューティング研究会 (DC)
+    key: ieice-dc
+    link: https://ken.ieice.org/ken/program/?tgid=IEICE-DC
+    tags:
+      - domestic-jp
+    title: 電子情報通信学会 DC 研究会
+  - categories:
+      - security
+    editions:
+      - date_text: 2026年11月17日-18日
+        deadlines: []
+        event_end: '2026-11-18'
+        event_start: '2026-11-17'
+        id: ieice-icss-2026-11
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-ICSS
+        place: ステータシー武道館(大津市)（滋賀県）
+        year: 2026
+    full_name: 電子情報通信学会 情報通信システムセキュリティ研究会 (ICSS)
+    key: ieice-icss
+    link: https://ken.ieice.org/ken/program/?tgid=IEICE-ICSS
+    tags:
+      - domestic-jp
+    title: 電子情報通信学会 ICSS 研究会
+  - categories:
+      - ai
+    editions:
+      - date_text: 2026年12月16日-17日
+        deadlines:
+          - date: '2026-10-23'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
+        event_end: '2026-12-17'
+        event_start: '2026-12-16'
+        id: ieice-ibisml-2026-12
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-IBISML
+        place: 京都大学 楽友会館（京都府）／オンライン
+        year: 2026
+    full_name: 電子情報通信学会 情報論的学習理論と機械学習研究会 (IBISML)
+    key: ieice-ibisml
+    link: https://ken.ieice.org/ken/program/?tgid=IEICE-IBISML
+    tags:
+      - domestic-jp
+    title: 電子情報通信学会 IBISML 研究会
+  - categories:
+      - db
+    editions:
+      - date_text: 2026年12月18日-19日
+        deadlines:
+          - date: '2026-10-23'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
+        event_end: '2026-12-19'
+        event_start: '2026-12-18'
+        id: ieice-de-2026-12
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-DE
+        place: 北國会館 香林坊プラザ（石川県）／オンライン
+        year: 2026
+    full_name: 電子情報通信学会 データ工学研究会 (DE)
+    key: ieice-de
+    link: https://ken.ieice.org/ken/program/?tgid=IEICE-DE
+    tags:
+      - domestic-jp
+    title: 電子情報通信学会 DE 研究会
+  - categories:
+      - systems
+    editions:
+      - date_text: 2026年12月10日-11日
+        deadlines:
+          - date: '2026-10-13'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
+        event_end: '2026-12-11'
+        event_start: '2026-12-10'
+        id: ieice-ss-2026-12
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-SS
+        place: 高知工科大学 永国寺キャンパス（高知県）
+        year: 2026
+    full_name: 電子情報通信学会 ソフトウェアサイエンス研究会 (SS)
+    key: ieice-ss
+    link: https://ken.ieice.org/ken/program/?tgid=IEICE-SS
+    tags:
+      - domestic-jp
+    title: 電子情報通信学会 SS 研究会
 schema_version: 1

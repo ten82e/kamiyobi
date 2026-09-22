@@ -102,6 +102,36 @@ describe("IEICE 研究会の更新を data/manual.yaml に反映する", () => {
 
   const rows = parseSchedule(fixture("NS"));
 
+  it("editions: [] の会議に版を追加しても YAML が壊れない", () => {
+    // 収録したての研究会は `editions: []`（インラインの空リスト）で持つ。
+    // ここに版を足すとき `editions: []` の直下へ 6 字下げの項を置くと YAML が壊れる
+    // （実際に --apply 前の検査で割った）。ブロック表記へ直してから追記する。
+    const manual = [
+      `conferences:`,
+      `  - categories:`,
+      `      - networking`,
+      `    editions: []`,
+      `    full_name: 電子情報通信学会 ネットワークソフトウェア研究会 (NWS)`,
+      `    key: ieice-nws`,
+      `    link: https://ken.ieice.org/ken/program/?tgid=IEICE-NWS`,
+      `    tags:`,
+      `      - domestic-jp`,
+      `    title: 電子情報通信学会 NWS 研究会`,
+      `schema_version: 1`,
+      "",
+    ].join("\n");
+    const plan = planIeiceUpdate(manual, { "ieice-nws": rows }, "2026-09-22");
+    const entry = plan.entries.find((e) => e.key === "ieice-nws");
+    expect((entry?.editionsAdded.length ?? 0) > 0).toBe(true);
+    expect(plan.text).not.toContain("editions: []");
+    const parsed = loadYaml(plan.text) as {
+      conferences: Array<{ key: string; editions: unknown[] }>;
+    };
+    const conf = parsed.conferences.find((c) => c.key === "ieice-nws");
+    expect(Array.isArray(conf?.editions)).toBe(true);
+    expect((conf?.editions || []).length).toBe((entry?.editionsAdded.length ?? 0) as number);
+  });
+
   it("空の deadlines: [] だけを発表申込締切で埋める", () => {
     const manual = manualConference("ieice-ns-2026-12", "2026-12-17", `        deadlines: []`);
     const plan = planIeiceUpdate(manual, { "ieice-ns": rows }, "2026-09-22");
