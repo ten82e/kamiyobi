@@ -6,6 +6,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { load as loadYaml } from "js-yaml";
 import { describe, expect, it } from "vitest";
 import { restoreRecommendationBundle } from "../scripts/restore-recommendation-bundle.ts";
 import {
@@ -814,6 +815,78 @@ describe("journalRows", () => {
       },
     ];
     expect(R.journalRows(confs, NOW)).toEqual([]);
+  });
+});
+
+describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
+  it("categoryLabelJa は日本語名を返し、未知のキーはそのまま返す", () => {
+    expect(R.categoryLabelJa("networking")).toBe("ネットワーク");
+    expect(R.categoryLabelJa("hpc")).toBe("高性能計算");
+    expect(R.categoryLabelJa("security")).toBe("セキュリティ");
+    expect(R.categoryLabelJa("unknown-field")).toBe("unknown-field");
+    expect(R.categoryLabelJa(undefined)).toBe("");
+  });
+
+  it("config.yaml の categories 分野はすべて日本語名を持つ", () => {
+    const config = loadYaml(readFileSync(join(REPO_ROOT, "config.yaml"), "utf8")) as {
+      categories: Record<string, string>;
+    };
+    const keys = Object.keys(config.categories);
+    expect(keys.length).toBeGreaterThanOrEqual(9);
+    const missing = keys.filter((k) => R.categoryLabelJa(k) === k);
+    expect(missing, `分野 ${missing.join(", ")} の日本語名が未定義`).toEqual([]);
+  });
+
+  it("検索語に分野の日本語名と国内を含める（チップ使わず検索だけで絞り込める）", () => {
+    const confs = [
+      {
+        key: "sigops-atc",
+        title: "SIGOPS ATC",
+        categories: ["systems", "hpc"],
+        tags: [],
+        editions: [
+          {
+            year: 2026,
+            deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }],
+          },
+        ],
+      },
+      {
+        key: "ieice-cq",
+        title: "電子情報通信学会 CQ研究会",
+        categories: ["networking"],
+        tags: ["domestic-jp"],
+        editions: [
+          {
+            year: 2026,
+            deadlines: [{ kind: "paper", utc: "2026-09-10T04:00:00Z" }],
+          },
+        ],
+      },
+    ];
+    const rows = R.candidateRows(confs);
+    const atc = rows.find((r: any) => r.conf.key === "sigops-atc");
+    const cq = rows.find((r: any) => r.conf.key === "ieice-cq");
+    expect(atc.hay).toContain("システム");
+    expect(atc.hay).toContain("高性能計算");
+    expect(atc.hay).not.toContain("国内");
+    expect(cq.hay).toContain("ネットワーク");
+    expect(cq.hay).toContain("国内");
+    expect(cq.hay).toContain("domestic");
+  });
+
+  it("常時受付ジャーナル行にも分野の日本語名を入れる", () => {
+    const confs = [
+      {
+        key: "j-sec",
+        title: "Journal of Security",
+        categories: ["security"],
+        tags: ["journal"],
+        editions: [],
+      },
+    ];
+    const rows = R.journalRows(confs, NOW);
+    expect(rows[0].hay).toContain("セキュリティ");
   });
 });
 

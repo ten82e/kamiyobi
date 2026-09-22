@@ -71,6 +71,9 @@
     font-weight: 600;
     color: var(--muted);
   }
+  /* 狭い画面（ほぼスマホ）ではキーボード ショートカットを使えない。
+     誤導する案内は消し、タップで詳細が見られることだけ残す。 */
+  .count-kbd { display: none; }
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -331,6 +334,25 @@ label.check input:checked + span { color: var(--fg); }
 
 /* Main Table */
 .count { font-size: 0.82rem; color: var(--muted); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.count-hint { text-align: right; }
+/* 見方のてびき: 初回利用者が最初に詰まる用語（JST/AoE・時刻未確認・推定・公式確認）を
+   別ファイルに飛ばさずその場で説明する。初期状態は畳んで表のじゃまにしない。 */
+.help {
+  margin-top: 28px;
+  padding: 14px 16px;
+  background: var(--panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  font-size: 0.83rem;
+}
+.help > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--fg);
+}
+.help dl { margin-top: 12px; display: grid; gap: 12px; }
+.help dt { font-weight: 600; }
+.help dd { margin: 2px 0 0; color: var(--muted); }
 .tablewrap {
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -542,7 +564,7 @@ footer a:hover { text-decoration: underline; }
 
     <div class="row deadline-only" style="margin-bottom: 14px;">
       <div class="search-wrap">
-        <input type="search" id="q" placeholder="会議名・フルネーム・開催地を検索 (例: NSDI, NVMW)...">
+        <input type="search" id="q" placeholder="会議名・分野・開催地で検索（例: NSDI、ネットワーク、国内）...">
       </div>
       <div class="field">
         <span>種別</span>
@@ -609,7 +631,7 @@ footer a:hover { text-decoration: underline; }
   <!-- Items Counter & Keyboard Shortcuts Hint -->
   <div class="count">
     <span id="count"></span>
-    <span style="font-family: var(--font-mono); font-size: 0.75rem;">ショートカット: <kbd>j</kbd>/<kbd>k</kbd> 選択 | <kbd>Enter</kbd> 開く | <kbd>d</kbd> 詳細 | <kbd>Esc</kbd> 閉じる | <kbd>/</kbd> 検索</span>
+    <span class="count-hint">行を選ぶと詳細（公式確認の状態と根拠）<span class="count-kbd" style="font-family: var(--font-mono); font-size: 0.75rem;"> ｜ ショートカット: <kbd>j</kbd>/<kbd>k</kbd> 選択 | <kbd>Enter</kbd> 開く | <kbd>d</kbd> 詳細 | <kbd>Esc</kbd> 閉じる | <kbd>/</kbd> 検索</span></span>
   </div>
   <div id="historyStatus" hidden style="padding: 0 0 12px; text-align: center; color: var(--muted);">
     <span id="historyStatusText"></span>
@@ -622,7 +644,7 @@ footer a:hover { text-decoration: underline; }
       <thead>
         <tr>
           <th tabindex="0" aria-sort="ascending" data-sort="rem" onclick="toggleSort('rem')">残り ↕</th>
-          <th tabindex="0" aria-sort="none" data-sort="date" onclick="toggleSort('date')">日時 ↕</th>
+          <th tabindex="0" aria-sort="none" data-sort="date" onclick="toggleSort('date')">日時（JST） ↕</th>
           <th tabindex="0" aria-sort="none" data-sort="conf" onclick="toggleSort('conf')">会議 ↕</th>
           <th>種別</th>
           <th tabindex="0" aria-sort="none" data-sort="rank" onclick="toggleSort('rank')">ランク ↕</th>
@@ -638,6 +660,45 @@ footer a:hover { text-decoration: underline; }
 
   <div class="empty" id="empty" style="padding: 32px; text-align: center; color: var(--muted);" hidden>該当する締切はありません。</div>
   <div style="margin-top: 20px; text-align: center;"><button id="more">さらに表示</button></div>
+
+  <!-- 見方のてびき: 締切一覧の用語をその場で説明する（外部の解説ページを必要としない） -->
+  <details class="help" id="helpPanel">
+    <summary>見方のてびき（JST・AoE・「推定」の意味）</summary>
+    <dl>
+      <div>
+        <dt>日時</dt>
+        <dd>日本時間（JST）と曜日を最初に表示する。2 行目以降の UTC と AoE は公式ページと突き合わせるための表記。</dd>
+      </div>
+      <div>
+        <dt>AoE</dt>
+        <dd>Anywhere on Earth（UTC-12）の略。「世界のどこかでその日が終わるまで受け付ける」という国際会議の締め方。AoE 2026-02-06 23:59 は JST では 2026-02-07 20:59 で、日本では AoE の翌日まで提出できる。</dd>
+      </div>
+      <div>
+        <dt>時刻未確認</dt>
+        <dd>締切日だけを公式で確認し、時刻とタイムゾーンが未確認のもの。UTC+14 の始まりから UTC-12 の終わりまでを幅に持つため、表示した日より前に終わっている可能性がある。</dd>
+      </div>
+      <div>
+        <dt>推定</dt>
+        <dd>前年までの実績から機械的に置いた未確認の値。公式サイトで裏が取れるまで確定扱いせず、既定では一覧に出さない。</dd>
+      </div>
+      <div>
+        <dt>再確認待ち・要確認</dt>
+        <dd>公式ページの見直しを予定している状態、または本文から締切を 1 つに確定できなかった状態。行を選ぶと確認元・確認範囲・次回確認予定が出る。</dd>
+      </div>
+      <div>
+        <dt>国内</dt>
+        <dd>情報処理学会・電子情報通信学会などの国内研究会と国内シンポジウム。「国内研究会」のボタンだけで絞り込める。</dd>
+      </div>
+      <div>
+        <dt>ランク</dt>
+        <dd>CCF と CORE の評価。空は未評価で、収録している穴場会議・ワークショップはここに入らない。</dd>
+      </div>
+      <div>
+        <dt>データ更新</dt>
+        <dd>右上の更新時刻までが公開済み。掲載値は集約データと公式ページの自動確認に基づくが、投稿前に必ず公式サイトの募集要項を確認する。</dd>
+      </div>
+    </dl>
+  </details>
 
   <!-- Footer -->
   <footer>

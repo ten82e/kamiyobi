@@ -139,6 +139,7 @@ interface SiteRecommenderApi {
   rankMatches(rankPairs: string[], grade: string): boolean;
   comparePapers(a: SiteRow, b: SiteRow, now: number): number;
   candidateRows(data: unknown): SiteRow[];
+  categoryLabelJa(key: unknown): string;
   safeExternalUrl(value: unknown): string;
   pdfPaperRecord(metadata: unknown, pages: unknown[], fallbackText: string): SitePaperRecord;
   textPaperRecord(text: string, fallbackText: string): SitePaperRecord;

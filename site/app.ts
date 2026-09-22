@@ -590,6 +590,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return r.t > limit;
   }
 
+  // 投稿作業は日本の時刻で回る。JST を主表記にし、曜日を必ず添える。
+  // AoE 締切（23:59 AoE 等）は JST では翌日の夜になるため、UTC 優先では
+  // 「日本でいつまでに提出すればよいか」が判定できない。
+  const WEEKDAY_JA = ["日", "月", "火", "水", "木", "金", "土"];
+
   function fmtJst(d: Date) {
     const jst = new Date(d.getTime() + 9 * 3600000);
     return (
@@ -598,7 +603,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       pad(jst.getUTCMonth() + 1) +
       "-" +
       pad(jst.getUTCDate()) +
-      " " +
+      "(" +
+      WEEKDAY_JA[jst.getUTCDay()] +
+      ") " +
       pad(jst.getUTCHours()) +
       ":" +
       pad(jst.getUTCMinutes()) +
@@ -623,8 +630,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     );
   }
 
+  // SPEC §7: 日本語 UI。分野は日本語名で示す（英表記の正本は data.json の categories）。
   function catLabel(key: string) {
-    return DATA.categories?.[key] ? key.toUpperCase() : key;
+    return Recommender.categoryLabelJa(key);
   }
 
   // タイトル + 開催年。タイトルが既にその年で終わっていれば年を二重に付けない。
@@ -773,34 +781,34 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           : "（時刻未確認）";
 
     let html =
-      '<div style="background: let(--chip); padding: 14px; border-radius: 6px; border: 1px solid let(--border); margin-bottom: 16px;">' +
-      '<div style="font-size: 0.78rem; color: let(--muted);">種別・日時</div>' +
-      '<div style="font-size: 1.1rem; font-weight: 600; color: let(--fg); margin-top: 2px;">' +
+      '<div style="background: var(--chip); padding: 14px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 16px;">' +
+      '<div style="font-size: 0.78rem; color: var(--muted);">種別・日時</div>' +
+      '<div style="font-size: 1.1rem; font-weight: 600; color: var(--fg); margin-top: 2px;">' +
       esc(KIND_LABEL[r.kind] || r.kind) +
       "</div>" +
       (r.kind === "journal"
-        ? '<div style="font-family: let(--font-mono); font-size: 0.85rem; color: let(--accent); margin-top: 4px;">随時受付（締切なし）</div>'
+        ? '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">随時受付（締切なし）</div>'
         : r.dateOnly
-          ? '<div style="font-family: let(--font-mono); font-size: 0.85rem; color: let(--accent); margin-top: 4px;">' +
+          ? '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">' +
             esc(r.localDate) +
             dateOnlyText +
             "</div>"
-          : '<div style="font-family: let(--font-mono); font-size: 0.85rem; color: let(--accent); margin-top: 4px;">' +
-            fmtDate(new Date(r.t)) +
-            " UTC (" +
+          : '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">' +
             fmtJst(new Date(r.t)) +
-            " / " +
+            "（" +
+            fmtDate(new Date(r.t)) +
+            " UTC / " +
             fmtAoE(new Date(r.t)) +
-            ")</div>") +
+            "）</div>") +
       "</div>";
 
     let actionRow = "";
     if (r.kind === "journal") {
       actionRow =
-        '<div style="font-size: 0.85rem; color: let(--muted); margin-bottom: 16px;">常時受付のジャーナル（締切なし）です。投稿規程を公式サイトで確認してください。</div>';
+        '<div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 16px;">常時受付のジャーナル（締切なし）です。投稿規程を公式サイトで確認してください。</div>';
     } else {
       actionRow =
-        '<div style="font-size: 0.85rem; color: let(--muted); margin-bottom: 16px;">投稿前に公式サイトで最新の募集要項と締切を確認してください。</div>';
+        '<div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 16px;">投稿前に公式サイトで最新の募集要項と締切を確認してください。</div>';
     }
     html += actionRow;
 
@@ -809,7 +817,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       html +=
         '<a href="' +
         esc(officialLink) +
-        '" target="_blank" style="display: block; text-align: center; background: let(--accent); color: #fff; text-decoration: none; padding: 10px; border-radius: 6px; font-weight: 600; margin-bottom: 20px;">公式サイトを開く</a>';
+        '" target="_blank" style="display: block; text-align: center; background: var(--accent); color: #fff; text-decoration: none; padding: 10px; border-radius: 6px; font-weight: 600; margin-bottom: 20px;">公式サイトを開く</a>';
     }
 
     html +=
@@ -933,7 +941,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     chk.value = k;
     lbl.appendChild(chk);
     const span = document.createElement("span");
-    span.textContent = `${k.toUpperCase()} (${DATA.categories[k]})`;
+    // 日本語名を主、英表記は併記（現場では分野の英語名で覚えている人もいるため）。
+    const en = String(DATA.categories?.[k] || "");
+    span.textContent = en && en.toLowerCase() !== k ? `${catLabel(k)}（${en}）` : catLabel(k);
+    span.title = `${k}: ${en}`;
     lbl.appendChild(span);
     catsBox.appendChild(lbl);
   });
@@ -1484,8 +1495,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       line(c1, "時刻未確認", "sub nowrap");
     } else {
       const d = new Date(r.t);
-      line(c1, `${fmtDate(d)} UTC`, "nowrap");
-      line(c1, fmtJst(d), "sub nowrap");
+      // JST を主表記、UTC / AoE は照合用の副情報。AoE 23:59 締切は JST では翌日の夜なので、
+      // UTC 優先だと日本で何時までに提出すればよいか判定できない。
+      line(c1, fmtJst(d), "nowrap");
+      line(c1, `${fmtDate(d)} UTC`, "sub nowrap");
       line(c1, fmtAoE(d), "sub nowrap");
     }
 
@@ -2049,9 +2062,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const _lines = Recommender.parsePaperLines(paperText);
       const _auto = _lines.length ? Recommender.autoDetectCats(_lines) : [];
       if (_auto.length && !state.cats.length) {
-        cnt +=
-          " ｜ 分野自動判定: " +
-          _auto.map((k) => (DATA.categories[k] ? DATA.categories[k] : k)).join(", ");
+        cnt += ` ｜ 分野自動判定: ${_auto.map((k) => catLabel(k)).join("・")}`;
       }
       // 意味検索の状態を明示（初回はモデル読込に数秒かかる）
       if (semState === "loading") {
@@ -2100,6 +2111,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     panel.classList.toggle("mode-deadlines", !recommend);
     $("modeRecommend").setAttribute("aria-pressed", String(recommend));
     $("modeDeadlines").setAttribute("aria-pressed", String(!recommend));
+    // てびきは締切一覧の読み方を説明するもの。推薦画面では表が消えるので畳む。
+    $("helpPanel").hidden = recommend;
   }
 
   function loadRecommendationData() {

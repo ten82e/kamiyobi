@@ -1502,6 +1502,44 @@ const Recommender = (() => {
     return (rankPairs || []).some((pair) => pair.slice(pair.indexOf(":") + 1) === grade);
   }
 
+  /* SPEC §7: サイト UI は日本語。data.json の categories は機械可読の英表記を保つため、
+   * 日本語表示名はここを単一正典にする（絞り込みチップ・行タグ・検索語の共通元）。 */
+  const CATEGORY_LABELS_JA: Record<string, string> = {
+    ai: "人工知能",
+    db: "データベース",
+    graphics: "グラフィックス",
+    hci: "人間情報処理",
+    hpc: "高性能計算",
+    networking: "ネットワーク",
+    security: "セキュリティ",
+    systems: "システム",
+    theory: "計算理論",
+  };
+
+  function categoryLabelJa(key: unknown): string {
+    const k = typeof key === "string" ? key : "";
+    return CATEGORY_LABELS_JA[k] || k;
+  }
+
+  /* 分野名と国内区分は会議名に現れない。検索語（hay）に含めておかないと、
+   * チップを知らない利用者は「ネットワーク」「国内」と打っても絞り込めない。 */
+  function categorySearchTerms(
+    cats: readonly string[] | null | undefined,
+    tags: readonly string[] | null | undefined,
+  ): string {
+    const parts = [""];
+    (cats || []).forEach((c) => {
+      if (!c) return;
+      parts.push(c);
+      parts.push(CATEGORY_LABELS_JA[c] || "");
+    });
+    if ((tags || []).indexOf("domestic-jp") >= 0) {
+      parts.push("国内");
+      parts.push("domestic");
+    }
+    return parts.filter(Boolean).join(" ");
+  }
+
   /** Shared candidate-to-row boundary for browser rendering and offline ranking. */
   function candidateRows(data: unknown): CandidateRow[] {
     const out: CandidateRow[] = [];
@@ -1514,10 +1552,12 @@ const Recommender = (() => {
         Object.keys(rank).forEach((name) => {
           if (rank[name]) rankPairs.push(`${name}:${rank[name]}`);
         });
+        const confTags = conf.tags || [];
         const baseHay = [conf.title, conf.full_name, conf.key, ed.place, ed.date_text]
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
+        const catHay = categorySearchTerms(conf.categories, confTags);
         (ed.deadlines || []).forEach((dl) => {
           const dateOnly = dl.precision === "date-only";
           const window = dateOnly ? dateOnlyWindowMs(dl.local_date) : null;
@@ -1539,7 +1579,7 @@ const Recommender = (() => {
             cats: conf.categories || [],
             tags: conf.tags || [],
             rankPairs,
-            hay: `${baseHay} ${dl.label || ""} ${dl.kind || ""}`,
+            hay: `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${catHay}`,
             dupLabel: dl.comment || "",
           });
         });
@@ -1585,7 +1625,7 @@ const Recommender = (() => {
         cats: cats,
         tags: tags,
         rankPairs: pairs,
-        hay: `${baseHay} journal 常時受付`,
+        hay: `${baseHay} journal 常時受付 ${categorySearchTerms(cats, tags)}`,
         name: conf.title,
         year: null,
       });
@@ -2652,6 +2692,8 @@ const Recommender = (() => {
     journalRows: journalRows,
     rankMatches: rankMatches,
     candidateRows: candidateRows,
+    categoryLabelJa: categoryLabelJa,
+    categorySearchTerms: categorySearchTerms,
     pastRepresentatives: pastRepresentatives,
     pickRepresentative: pickRepresentative,
     comparePapers: comparePapers,

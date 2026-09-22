@@ -1905,6 +1905,106 @@ it("browser date-only state is independent of the viewer timezone", () => {
   expect(outputs).toEqual([expected, expected, expected]);
 });
 
+it("site runtime never emits the invalid let() CSS function (#223 follow-up)", () => {
+  // site/app.ts が組み立てる inline style を `let(--chip)` にすると、CSS として
+  // 不正な関数ごと宣言が破棄される。詳細ドロワーの「公式サイトを開く」は
+  // `color: #fff` と組み合わさり、白抜きの追跡不能なボタンになった（実障害）。
+  const runtimeFiles = [
+    "app.js",
+    "recommender.js",
+    "recommendation-core.js",
+    "publish.js",
+  ] as const;
+  for (const name of runtimeFiles) {
+    expect(siteRuntime(name), `${name} に let(-- を検出`).not.toContain("let(--");
+    expect(siteRuntime(name)).not.toMatch(/style="[^"]*\blet\(/);
+  }
+});
+
+it("deadline times render as JST with weekday first, viewer-timezone independent (SPEC §7)", () => {
+  // 2026-02-06 23:59 AoE = 2026-02-07T11:59:00Z = JST 2026-02-07(土) 20:59。
+  // AoE 締切は JST では翌日の夜になるため、JST を主表記にしないと
+  // 日本の利用者がいつ提出すべきか判定できない。
+  const runtime = siteRuntime();
+  const weekdayConst = runtime.match(/const WEEKDAY_JA = \[[^\]]*\];/)?.[0];
+  expect(weekdayConst, "WEEKDAY_JA 定義が見つからない").toBeTruthy();
+  const openSrc = jsFunction(runtime, "openDrawer");
+  const script = [
+    weekdayConst as string,
+    jsFunction(runtime, "pad"),
+    jsFunction(runtime, "fmtDate"),
+    jsFunction(runtime, "fmtJst"),
+    jsFunction(runtime, "fmtAoE"),
+    "const body = { innerHTML: '' };",
+    "const els = {",
+    "  drawerBackdrop: { classList: { add() {} } }, drawerTitle: {}, drawerFullName: {},",
+    "  drawerBody: body, drawerClose: { focus() {} },",
+    "};",
+    "const document = { activeElement: null, getElementById: (id) => els[id] || null };",
+    "function $(id) { return document.getElementById(id); }",
+    "const window = { _prevFocus: null };",
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, { paper: '論文締切' }, (t) => t, fmtDate, fmtJst, fmtAoE, (s) => String(s ?? ''), (v) => String(v ?? ''), () => null, () => '');`,
+    "openDrawer({",
+    "  kind: 'paper', conf: { key: 'demo', title: 'Demo' },",
+    "  ed: { year: 2026, place: 'P', date_text: 'D', link: 'https://example.org' },",
+    "  t: Date.parse('2026-02-07T11:59:00Z'), tLast: Date.parse('2026-02-07T11:59:00Z'), dl: {},",
+    "});",
+    "console.log(body.innerHTML);",
+  ].join("\n");
+  const outputs = ["Asia/Tokyo", "UTC", "America/Los_Angeles"].map((TZ) => {
+    const proc = spawnSync("node", ["-e", script], {
+      encoding: "utf8",
+      env: { ...process.env, TZ },
+      timeout: 60_000,
+    });
+    expect(proc.status, proc.stderr).toBe(0);
+    return proc.stdout;
+  });
+  expect(outputs[1]).toBe(outputs[0]);
+  expect(outputs[2]).toBe(outputs[0]);
+  const html = outputs[0];
+  expect(html).toContain("2026-02-07(土) 20:59 JST");
+  // JST が主表記: UTC / AoE より前に出す（公式突き合わせ情報は副次）。
+  expect(html.indexOf("JST")).toBeLessThan(html.indexOf("UTC"));
+  expect(html.indexOf("UTC")).toBeLessThan(html.indexOf("AoE"));
+  // inline style は var() で CSS 変数を読む。
+  expect(html).toContain("background: var(--chip)");
+  expect(html).toContain("background: var(--accent)");
+});
+
+it("table row puts JST above UTC and AoE (SPEC §7)", () => {
+  const runtime = siteRuntime();
+  const makeRow = jsFunction(runtime, "makeRow");
+  const jst = makeRow.indexOf('line(c1, fmtJst(d), "nowrap")');
+  // 探しているのは fmtDate(d) を UTC 行に使う箇所。文字列内の "${" を
+  // そのまま書くとテンプレート補間と誤認されるため "}" 側から照合する。
+  const utc = makeRow.indexOf("fmtDate(d)} UTC");
+  const aoe = makeRow.indexOf("fmtAoE(d)");
+  expect(jst).toBeGreaterThanOrEqual(0);
+  expect(utc).toBeGreaterThan(jst);
+  expect(aoe).toBeGreaterThan(utc);
+});
+
+it("site UI is readable for Japanese researchers: field names, JST header, help panel (SPEC §7)", () => {
+  const template = readFileSync(join(site, "index.html"), "utf8");
+  const runtime = siteRuntime();
+  // 分野は日本語名（英表記は data.json の正本を維持したまま併記だけ出す）。
+  expect(runtime).toContain("Recommender.categoryLabelJa(key)");
+  expect(runtime).not.toContain("key.toUpperCase()");
+  // 日時列は JST であることをヘッダーで示す。
+  expect(template).toContain("日時（JST）");
+  // 初回利用者が用語で詰まらないよう、てびきを一覧の下に置く（既定は折り畳み）。
+  expect(template).toContain("見方のてびき");
+  expect(template).toContain("Anywhere on Earth");
+  expect(template).toContain('id="helpPanel"');
+  expect(runtime).toContain('$("helpPanel").hidden = recommend');
+  // 検索で分野名・国内が引けることを案内する。
+  expect(template).toContain("会議名・分野・開催地で検索");
+  // スマホではキーボード案内を出さず、タップで詳細が見られることだけ伝える。
+  expect(template).toContain("行を選ぶと詳細");
+  expect(template).toMatch(/\.count-kbd \{ display: none; \}/);
+});
+
 it("recommendation data arrival re-schedules semantic for pending paper text", () => {
   // 再現バグ: 埋め込み到着前に scheduleSemantic が走ると error で固着し、
   // データが揃っても再計算されず「意味検索は利用不可」が出続ける。
