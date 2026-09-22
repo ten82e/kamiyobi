@@ -1207,6 +1207,29 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
   });
 
+  describe("分野の言い方を書く（第 3 群: 英語表記しか収録に無い語）", () => {
+    /* 同じ型の調べものを続けた群（2026-09-23 実測: `プライバシー` は日本語 0 件で
+     * `privacy` は 116 行、`データマイニング` は 162/183 行、`プロトコル` は 0/22 行）。 */
+    it("漢字・カタカナの分野語が英文字表記と同じ組になる", () => {
+      const group = (q: string) => R.queryTokenGroups(q)[0];
+      expect(group("プライバシー")).toContain("privacy");
+      expect(group("医療")).toContain("medical");
+      // 「医用」と「医療」は同じ英文字表記に寄せる（学会の書き方の差）。
+      expect(group("医用")).toContain("medical");
+      expect(group("データマイニング")).toContain("data mining");
+      expect(group("推論")).toContain("reasoning");
+      expect(group("プロトコル")).toContain("protocol");
+      expect(group("知識グラフ")).toContain("knowledge graph");
+    });
+
+    it("収録の英文字より狭い日本語は置かない（`自動運転` の代わりに `自律`）", () => {
+      // 収録側の英文字は `autonomous` で、自律システムまで含む。`自動運転` に寄せると
+      // 当たらない語を約束することになるので、日本語の対応が広い側の語を置いた。
+      expect(R.queryTokenGroups("自動運転")).toEqual([["自動運転"]]);
+      expect(R.queryTokenGroups("自律")[0]).toContain("autonomous");
+    });
+  });
+
   describe("deadlinesToCsv（絞り込み結果を表計算へ持ち出す）", () => {
     const now = Date.parse("2026-09-22T00:00:00+09:00");
     const rowOf = (over: Record<string, unknown>) => ({

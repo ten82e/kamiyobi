@@ -2665,6 +2665,21 @@ const Recommender = (() => {
     ["計算機アーキテクチャ", "computer architecture"],
     ["データ分析", "data analytics"],
     ["パターン認識", "pattern recognition"],
+    /* 同じ調べものを続けて足した群（2026-09-23 実測: 日本語は 0 件も、英文字表記は
+     * 1〜183 行当たっていた）。`自動運転` は入れていない（収録の英文字は `autonomous` で、
+     * 自律システムまで入る。日本語の `自律` のほうを置いた）。 */
+    ["プライバシー", "privacy"],
+    ["医療", "medical"],
+    ["医用", "medical"],
+    ["健康", "health"],
+    ["認知", "cognitive"],
+    ["ドローン", "drone"],
+    ["知識グラフ", "knowledge graph"],
+    ["データマイニング", "data mining"],
+    ["推論", "reasoning"],
+    ["プロトコル", "protocol"],
+    ["センサネットワーク", "sensor network"],
+    ["自律", "autonomous"],
     // `画像認識` は入れていない（英文字側が `image recognition` の語順で収録に現れない。
     // 当たった 3 行は `graphics, patterns and images` + 別箇所の `recognition` で、
     // 別表記として置く語ではない）。`画像`・`パターン認識`・`コンピュータビジョン` で引ける。

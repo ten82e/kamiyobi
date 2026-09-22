@@ -7197,6 +7197,19 @@ it("新しい分野の言い方が、収録カタログの英文字表記に届�
     ["計算機アーキテクチャ", "computer architecture"],
     ["データ分析", "data analytics"],
     ["パターン認識", "pattern recognition"],
+    // 第 3 群（英文字側が 1〜183 行当たり、日本語は 0 件だった語）。
+    ["プライバシー", "privacy"],
+    ["医療", "medical"],
+    ["医用", "medical"],
+    ["健康", "health"],
+    ["認知", "cognitive"],
+    ["ドローン", "drone"],
+    ["知識グラフ", "knowledge graph"],
+    ["データマイニング", "data mining"],
+    ["推論", "reasoning"],
+    ["プロトコル", "protocol"],
+    ["センサネットワーク", "sensor network"],
+    ["自律", "autonomous"],
   ];
   const script = [
     "(async () => {",
