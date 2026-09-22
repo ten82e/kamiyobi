@@ -1880,8 +1880,24 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
   const hiddenKind = hint({ ...clear, query: "採否", hiddenKindWords: ["採否通知"] });
   expect(hiddenKind).toContain("検索語は「採否通知」の種別に当たります");
   expect(hiddenKind).toContain("表には投稿締切だけを出します");
-  // 原因がこれなら、外せる条件の並べ替えより先に見せる（「多いのは」の外し方リストより前に立つ）。
-  expect(hiddenKind.indexOf("検索語は")).toBeLessThan(hiddenKind.indexOf("多いのは"));
+  // 外せる条件が無いなら、原因だけで打ち切る（使えない助言を並べない）。
+  expect(hiddenKind).not.toContain("多いのは");
+  expect(hiddenKind).not.toContain("外せる条件");
+  /* 原因が特定できたなら、推測で並べる「多いのは」には切り替えない。
+   * 原因を先に立て、後ろに実際に外せる条件だけを添う。 */
+  const hiddenKindFiltered = hint({
+    ...clear,
+    past: false,
+    domestic: true,
+    query: "採否",
+    hiddenKindWords: ["採否通知"],
+  });
+  expect(hiddenKindFiltered).toContain("外せる条件:");
+  expect(hiddenKindFiltered).not.toContain("多いのは");
+  expect(hiddenKindFiltered.indexOf("検索語は")).toBeLessThan(
+    hiddenKindFiltered.indexOf("外せる条件"),
+  );
+  expect(hiddenKindFiltered).toContain("「国内研究会・国内シンポジウムのみ」をオフ");
   // 当たっていないときに誤った説明を出さない。
   expect(hint({ ...clear, query: "nsdi", hiddenKindWords: [] })).not.toContain("種別に当たります");
 
@@ -1899,6 +1915,20 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
   expect(hint({ ...clear, query: "情報検索", queryMatch: { catalog: 20, journal: 3 } })).toContain(
     "常時受付のジャーナル 3 件は「種別」で選べます",
   );
+  // 原因が分かっていれば、別の理由を並べて「結局どうすればいいか」を埋めない。
+  const catalogCase = hint({
+    ...clear,
+    past: false,
+    query: "情報検索",
+    queryMatch: { catalog: 17, journal: 0 },
+  });
+  expect(catalogCase).not.toContain("upcoming.md");
+  expect(catalogCase).not.toContain("検索語を短くする");
+  // 外せる条件が残っていれば、それは後ろに添う（原因だけで打ち切らない）。
+  expect(catalogCase).toContain("「過去の締切も表示」をオン");
+  // 原因が特定できないときは、今までどおり会期のみ案内を添える。
+  expect(hint({ ...clear, past: false, query: "xyzzy" })).toContain("upcoming.md");
+
   // 収録に無い語で「当たります」と嘘をつかない。
   expect(hint({ ...clear, query: "xyzzy", queryMatch: { catalog: 0, journal: 0 } })).not.toContain(
     "収録済みで",

@@ -1710,6 +1710,29 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     hiddenKindWords: string[];
     queryMatch: { catalog: number; journal: number };
   }): string {
+    const base = "該当する締切はありません。";
+    const trimmedQuery = filter.query.trim();
+    /* 検索語が採否通知・査読結果公開など、表に出さない種別に当たっていることがある。
+     * 外せる条件とは別枠の「なぜ 0 件か」なので、先に文として立てる。 */
+    const kindNote = filter.hiddenKindWords.length
+      ? ` 検索語は${filter.hiddenKindWords.map((w) => `「${w}」`).join("・")}の種別に当たります` +
+        "（表には投稿締切だけを出します）。"
+      : "";
+    /* 検索語が収録データ全体では行に当たっているのに 0 件のとき（既定で出す行が
+     * 投稿締切・未来だけなので起こる）。「 kamiyobi に無い」と誤解させない。 */
+    const catalogNote =
+      trimmedQuery && filter.queryMatch.catalog > 0
+        ? ` 検索語「${trimmedQuery}」は収録済みで ${filter.queryMatch.catalog} 件に当たります` +
+          "（表は投稿締切でこれから先のものだけを出す既定と、いまの絞り込みで 0 件になっています）。" +
+          (filter.queryMatch.journal > 0
+            ? ` 常時受付のジャーナル ${filter.queryMatch.journal} 件は「種別」で選べます。`
+            : "")
+        : "";
+    /* 原因を特定できたときは、他の説明文を足さない。考えられる理由を全部並べると
+     * 「結局どうすればいい」が読めなくなる。検索語を短くする助言も、原因が分かっていれば
+     * 的外れなので出さない。 */
+    const specific = Boolean(kindNote || catalogNote);
+
     const tips: string[] = [];
     // 選択肢の実際のラベルを書く（「すべて」に変えた旧名を案内すると、その語が見つからない）。
     if (filter.window && filter.window !== "all") tips.push("「締切まで」を「かまわない」に変更");
@@ -1718,29 +1741,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (filter.domestic) tips.push("「国内研究会・国内シンポジウムのみ」をオフ");
     if (filter.online) tips.push("「オンライン参加可のみ」をオフ");
     if (filter.rank && filter.rank !== "all") tips.push("ランクを「すべて」に変更");
-    if (filter.query.trim())
+    if (trimmedQuery && !specific)
       tips.push("検索語を短くする（分野名・主題・開催地の日本語でも引けます）");
-    const base = "該当する締切はありません。";
-    /* 検索語が採否通知・査読結果公開など、表に出さない種別に当たっていることがある。
-     * の外せる条件とは別枠の「なぜ 0 件か」なので、「多いのは …」の前に文として立てる。
-     * 「収録が無い」と誤解して離脱しないよう、実名で書く。 */
-    /* 検索語が収録データ全体では行に当たっているのに 0 件のとき（既定で出す行が
-     * 投稿締切・未来だけなので起こる）。「収録が無い」と誤解させない。 */
-    const catalogNote =
-      filter.query.trim() && filter.queryMatch.catalog > 0
-        ? ` 検索語「${filter.query.trim()}」は収録済みで ${filter.queryMatch.catalog} 件に当たります` +
-          "（表は投稿締切でこれから先のものだけを出す既定と、いまの絞り込みで 0 件になっています）。" +
-          (filter.queryMatch.journal > 0
-            ? ` 常時受付のジャーナル ${filter.queryMatch.journal} 件は「種別」で選べます。`
-            : "")
-        : "";
-    const kindNote = filter.hiddenKindWords.length
-      ? ` 検索語は${filter.hiddenKindWords.map((w) => `「${w}」`).join("・")}の種別に当たります` +
-        "（表には投稿締切だけを出します）。"
-      : "";
+
     const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.md に載せています。";
-    if (!tips.length) return `${base}${kindNote}${catalogNote} ${meetingNote}`;
-    return `${base}${kindNote}${catalogNote} 多いのは ${tips.join(" / ")}。${meetingNote}`;
+    if (specific) {
+      return tips.length
+        ? `${base}${kindNote}${catalogNote} 外せる条件: ${tips.join(" / ")}。`
+        : `${base}${kindNote}${catalogNote}`;
+    }
+    if (!tips.length) return `${base} ${meetingNote}`;
+    return `${base} 多いのは ${tips.join(" / ")}。${meetingNote}`;
   }
 
   /**
