@@ -1906,6 +1906,43 @@ it("the deadline search index carries Japanese month terms (SPEC §7)", () => {
   expect(runtime).toMatch(/monthTermsJa[\s\S]*new Date\(value \+ 9 \* 3_600_000\)/);
 });
 
+it("upcoming.md keeps domestic deadlines off AoE and official-zone notation (SPEC §4)", () => {
+  const data = JSON.parse(readFileSync(join(site, "data.json"), "utf8")) as {
+    conferences: Array<{
+      key: string;
+      link?: string;
+      tags?: string[];
+      editions?: Array<{ link?: string }>;
+    }>;
+  };
+  // md の行は公式ページへのリンクを持つので、そこから国内会議かを判定する。
+  const domesticByLink = new Map<string, boolean>();
+  for (const conf of data.conferences) {
+    const domestic = (conf.tags || []).indexOf("domestic-jp") >= 0;
+    const links = new Set<string>([conf.link || ""]);
+    for (const ed of conf.editions || []) links.add(ed.link || "");
+    for (const link of links) if (link) domesticByLink.set(link, domestic);
+  }
+  let domesticDeadlineRows = 0;
+  for (const line of readFileSync(join(site, "upcoming.md"), "utf8").split("\n")) {
+    if (!line.startsWith("| ") || /^\|-/.test(line)) continue;
+    const cells = line
+      .slice(1, -1)
+      .split("|")
+      .map((cell) => cell.trim());
+    if (cells.length < 7 || cells[0] === "日付" || cells[3] === "開催") continue;
+    const link = /\]\((https?:\/\/[^)]+)\)/.exec(cells[2]);
+    if (!link || domesticByLink.get(link[1]) !== true) continue;
+    domesticDeadlineRows += 1;
+    // JST 宣言が大半で、時刻未確認は日付だけ。AoE や「公式 PT」を国内の締切に載せない
+    // という規則は md でも同じ（ビルド側だけ崩れてもテストが黙っている状態を避ける）。
+    expect(cells[0], `${cells[2]} の国内締切行に AoE/公式ゾーン表記が出ている`).not.toMatch(/AoE/);
+    expect(cells[0]).not.toMatch(/公式 PT|公式 UTC/);
+  }
+  // 1 件も無いと検査が空回りするので、この検査が実際に効いていることを確認する。
+  expect(domesticDeadlineRows).toBeGreaterThan(0);
+});
+
 it("the 残り vocabulary in the table is documented in the guide (SPEC §7)", () => {
   const runtime = siteRuntime();
   const template = readFileSync(join(site, "index.html"), "utf8");
