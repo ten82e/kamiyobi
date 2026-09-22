@@ -22,6 +22,7 @@ import { runHealthGate } from "../scripts/health-gate.ts";
 import type { HealthDeadlineRef, HealthReport } from "../src/build.ts";
 import {
   buildAll,
+  calendarDayJa,
   compileSiteRuntime,
   DEFAULT_CATEGORIES,
   deadlineSlotId,
@@ -539,7 +540,7 @@ it("date-only deadlines stay date-only in JSON, CSV, and upcoming output", () =>
   expect(records[0].start.toISOString()).toBe("2026-08-09T10:00:00.000Z");
   expect(records[0].end.toISOString()).toBe("2026-08-11T11:59:59.999Z");
   expect(toCsv(records)).toContain("date-only,2026-08-10,,,,");
-  expect(toUpcomingMd(records, NOW)).toContain("2026-08-10（時刻未確認）");
+  expect(toUpcomingMd(records, NOW)).toContain("2026-08-10(月)（時刻未確認）");
   expect(toUpcomingMd(records, new Date("2026-08-11T11:59:59.999Z"))).toContain("締切日");
   expect(toUpcomingMd(records, new Date("2026-08-11T12:00:00.000Z"))).not.toContain("Date Only");
 
@@ -1798,17 +1799,33 @@ function upcomingRows(dir: string): string[][] {
 
 it("upcoming.md writes each deadline in its official zone, not blanket AoE (SPEC §4)", () => {
   // JST 宣言の締切を AoE 壁時計で出すと「当日早朝まで」と誤読される（site の §7 と同じ規則）。
-  expect(deadlineWhenText(new Date("2026-08-17T14:59:00Z"), "UTC+9")).toBe("2026-08-17 23:59 JST");
-  expect(deadlineWhenText(new Date("2026-08-17T14:59:00Z"), "JST")).toBe("2026-08-17 23:59 JST");
+  // 暦日の曜日も添える（一覧と同じ規則。ビルド・閲覧者のタイムゾーンに依存しない）。
+  expect(deadlineWhenText(new Date("2026-08-17T14:59:00Z"), "UTC+9")).toBe(
+    "2026-08-17(月) 23:59 JST",
+  );
+  expect(deadlineWhenText(new Date("2026-08-17T14:59:00Z"), "JST")).toBe(
+    "2026-08-17(月) 23:59 JST",
+  );
   // AoE は UTC-12 の壁時計。UTC 2026-02-07 11:59 は AoE では 2026-02-06 23:59。
-  expect(deadlineWhenText(new Date("2026-02-07T11:59:00Z"), "AoE")).toBe("2026-02-06 23:59:00 AoE");
+  expect(deadlineWhenText(new Date("2026-02-07T11:59:00Z"), "AoE")).toBe(
+    "2026-02-06(金) 23:59:00 AoE",
+  );
   expect(deadlineWhenText(new Date("2026-02-07T11:59:00Z"), "UTC-12")).toContain("AoE");
-  expect(deadlineWhenText(new Date("2026-02-06T11:59:00Z"), "UTC")).toBe("2026-02-06 11:59:00 UTC");
-  expect(deadlineWhenText(new Date("2026-02-06T11:59:00Z"), null)).toBe("2026-02-06 11:59:00 UTC");
+  expect(deadlineWhenText(new Date("2026-02-06T11:59:00Z"), "UTC")).toBe(
+    "2026-02-06(金) 11:59:00 UTC",
+  );
+  expect(deadlineWhenText(new Date("2026-02-06T11:59:00Z"), null)).toBe(
+    "2026-02-06(金) 11:59:00 UTC",
+  );
   // 未知の公式表記は換算せず、UTC 壁時計に原文を添える。
   expect(deadlineWhenText(new Date("2026-02-06T11:59:00Z"), "PT")).toBe(
-    "2026-02-06 11:59:00 UTC（公式 PT）",
+    "2026-02-06(金) 11:59:00 UTC（公式 PT）",
   );
+  // 暦日として読めない値には曜日を付けない（Date.UTC の暦月繰り越しに騙されない）。
+  expect(calendarDayJa("2026-13-45")).toBe("");
+  expect(calendarDayJa("2026-08-17")).toBe("月");
+  expect(calendarDayJa(new Date("2026-08-17T23:00:00Z"))).toBe("月");
+  expect(calendarDayJa(null)).toBe("");
 
   const rows = upcomingRows(site);
   const domestic = rows.filter((r) => /研究会|シンポジウム/.test(r[2]));

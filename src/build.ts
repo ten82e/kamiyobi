@@ -344,12 +344,44 @@ function aoeText(atUtc: Date): string {
 /** JST 宣言の締切は JST の壁時計で出す（SPEC §7 の site 表示と同じ規則）。
  * JST 23:59 締切を AoE 02:59 と見せると「当日早朝まで」と誤読される。 */
 function jstText(atUtc: Date): string {
-  return `${fmtUTC(new Date(atUtc.getTime() + 9 * 3_600_000), "%Y-%m-%d %H:%M")} JST`;
+  const jst = new Date(atUtc.getTime() + 9 * 3_600_000);
+  const day = fmtDate(jst);
+  const weekday = calendarDayJa(day);
+  return `${day}${weekday ? `(${weekday})` : ""} ${fmtUTC(jst, "%H:%M")} JST`;
 }
 
 /** Markdown 表の日付列は締切の公式表記（`tz_raw`）にあった書き方をする。
  * AoE を出すのは公式が AoE の締切だけ。それ以外を AoE 壁時計へ勝手に直さない。
  * 未知の表記（PT・Europe/London など）は UTC 壁時計に公式表記を添え、換算はしない。 */
+/* Markdown 表の日付に添える曜日。閲覧者のタイムゾーンではなく `YYYY-MM-DD` の暦日を
+ * そのまま読む（site の weekdayJaFromDate と同じ規則）。Date.UTC は範囲外の日付を
+ * 翌月へ繰り越すので、読み直した暦日が元値と一致するときだけ曜日を返す。 */
+const CALENDAR_WEEKDAY_JA = ["日", "月", "火", "水", "木", "金", "土"];
+
+export function calendarDayJa(value: Date | string | null | undefined): string {
+  const raw = value instanceof Date ? fmtDate(value) : String(value ?? "").trim();
+  const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+  if (!matched) return "";
+  const y = Number(matched[1]);
+  const m = Number(matched[2]);
+  const d = Number(matched[3]);
+  if (m < 1 || m > 12 || d < 1 || d > 31) return "";
+  const instant = new Date(Date.UTC(y, m - 1, d));
+  if (
+    instant.getUTCFullYear() !== y ||
+    instant.getUTCMonth() + 1 !== m ||
+    instant.getUTCDate() !== d
+  )
+    return "";
+  return CALENDAR_WEEKDAY_JA[instant.getUTCDay()];
+}
+
+/** Markdown 専用の AoE 壁時計（`data.json` / `data.csv` の `aoe` は曜日を付けないので分ける）。 */
+function mdAoEText(atUtc: Date): string {
+  const shifted = addDays(atUtc, -0.5);
+  return `${fmtDate(shifted)}${calendarDayJa(shifted) ? `(${calendarDayJa(shifted)})` : ""} ${fmtUTC(shifted, "%H:%M:%S")} AoE`;
+}
+
 const JST_TZ_VALUES = ["JST", "UTC+9", "UTC+09", "UTC+09:00", "GMT+9", "ASIA/TOKYO"];
 const AOE_TZ_VALUES = ["AOE", "UTC-12", "UTC-12:00"];
 const UTC_TZ_VALUES = ["", "UTC", "UTC+0", "UTC+00", "GMT"];
@@ -358,8 +390,10 @@ export function deadlineWhenText(atUtc: Date, tzRaw: string | null | undefined):
   const raw = String(tzRaw ?? "").trim();
   const zone = raw.toUpperCase().replace(/\s+/g, "");
   if (JST_TZ_VALUES.indexOf(zone) >= 0) return jstText(atUtc);
-  if (AOE_TZ_VALUES.indexOf(zone) >= 0) return aoeText(atUtc);
-  const utc = `${fmtUTC(atUtc, "%Y-%m-%d %H:%M:%S")} UTC`;
+  if (AOE_TZ_VALUES.indexOf(zone) >= 0) return mdAoEText(atUtc);
+  const jstDay = fmtUTC(atUtc, "%Y-%m-%d");
+  const weekday = calendarDayJa(jstDay);
+  const utc = `${jstDay}${weekday ? `(${weekday})` : ""} ${fmtUTC(atUtc, "%H:%M:%S")} UTC`;
   return UTC_TZ_VALUES.indexOf(zone) >= 0 ? utc : `${utc}（公式 ${raw}）`;
 }
 
@@ -2668,7 +2702,8 @@ export function toUpcomingMd(
           state === "uncertain-on-date"
             ? "締切日"
             : `${Math.max(1, Math.ceil((window.earliestPossibleUtc.getTime() - safeNow.getTime()) / DAY_MS))}日`;
-        when = `${dl.local_date}（時刻未確認）`;
+        const day = calendarDayJa(dl.local_date);
+        when = `${dl.local_date}${day ? `(${day})` : ""}（時刻未確認）`;
       } else {
         if (
           exactDeadlineState(dl.at_utc, safeNow) === "past" ||
@@ -2718,8 +2753,10 @@ export function toUpcomingMd(
       } else {
         left = `開催中(残り${(endDay - today.getTime()) / DAY_MS + 1}日)`;
       }
-      const when =
-        end.getTime() !== start.getTime() ? `${fmtDate(start)} 〜 ${fmtDate(end)}` : fmtDate(start);
+      // 会期も曜日を添える（出張・会場押さえは曜日で見込むため）。
+      const startText = `${fmtDate(start)}${calendarDayJa(start) ? `(${calendarDayJa(start)})` : ""}`;
+      const endText = `${fmtDate(end)}${calendarDayJa(end) ? `(${calendarDayJa(end)})` : ""}`;
+      const when = end.getTime() !== start.getTime() ? `${startText} 〜 ${endText}` : startText;
       rows.push(
         `| ${when} | ${left} | ${name} | 開催 | - | ${ed.estimated ? "推定" : ""} | ${placeEscaped} |`,
       );

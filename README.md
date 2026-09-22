@@ -33,7 +33,7 @@
 | `https://ten82e.github.io/kamiyobi/publish.json` | 公開成果物のハッシュ、`content_id` / `build_id`、元 commit、入力 hash、実行元、build 時刻・Node 版・offline/cache 方針、`semantic_status`。公開物の再現元を示す |
 
 他に、1 行 1 締切の平坦な表 [`data.csv`](https://ten82e.github.io/kamiyobi/data.csv) と、直近 180 日の締切と開催の表 `upcoming.md` がある。
-`upcoming.md` の日付も公式表記どおりに書く。JST 宣言の国内会議は `2026-08-17 23:59 JST`、公式が AoE のものだけ `… AoE`、
+`upcoming.md` の日付も公式表記どおりに書き、曜日を添える（`2026-08-17(月) 23:59 JST`）。JST 宣言の国内会議は `2026-08-17 23:59 JST`、公式が AoE のものだけ `… AoE`、
 表記なしは `… UTC`、`PT` などそれ以外の表記は `… UTC（公式 PT）`（換算せず原文を添える）。
 
 ## サイトの読み方（締切一覧）
