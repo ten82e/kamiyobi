@@ -45,6 +45,8 @@ type AppRow = Omit<CandidateRow, "conf" | "ed" | "dl"> & {
   _semanticRank?: number | null;
   _semScore?: number;
   _availability?: RecommendationResult["availability"];
+  /** 「過去の締切も表示」のとき、過ぎた行を後ろの塊に寄せるための目印（0: これから / 1: 過ぎた）。 */
+  _pastBlock?: number;
 };
 
 interface DrawerRow {
@@ -1739,6 +1741,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         );
     }
 
+    /* 「過去の締切も表示」を入れると、既定の並び（残りの昇順）では 2019 年の行が画面の
+     * 先頭になり、これからの締切が 2,318 行の下に沈んでいた（2026-09-23 実測: 収録 3,235 行の
+     * うち締切時刻が過ぎた行が 2,318 行）。過ぎた行を後ろの塊に寄せる目印を先に置く。
+     * 比較関数（抽出して検査する）の依存を増やさないため、計算はここでやる。 */
+    if (state.past) {
+      out.forEach((r) => {
+        r._pastBlock = Number.isFinite(r.t) && r.t < now ? 1 : 0;
+      });
+    }
+
     // Custom Sorting
     out.sort((a, b) => {
       if (pLines.length && Rec) {
@@ -1763,6 +1775,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         // ランクが同じ行は締切の近い順（同じ評価の塊の中を読める順にする）。
         return cmp ? cmp * mult : compareDeadlineRows(a, b, mult);
       }
+      // ここは「残り」「日時」の列を見ているときだけ通る。過ぎた締切の塊は、昇順・降順の
+      // 向きに関係なく後ろに置く（塊の中は選んだ向きそのまま。降順で先頭に反転させると
+      // 「いちばん遠い」ではなく「いちばん近い過去の締切」が画面の先頭になって誤解を招く）。
+      const block = (a._pastBlock || 0) - (b._pastBlock || 0);
+      if (block) return block;
       return compareDeadlineRows(a, b, mult);
     });
 
@@ -2013,6 +2030,19 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return tr;
   }
 
+  /* 過ぎた締切の塊の先頭に出す見出し行。月見出しと同じ `month-row` を併せ持つ
+   * （支援技術のコラム対応と同じにしておかないと、列を跨ぐ行として読まれない）。 */
+  function makeSectionRow(label: string, count: number) {
+    const tr = document.createElement("tr");
+    tr.className = "month-row section-row";
+    const th = document.createElement("th");
+    th.colSpan = 7;
+    th.scope = "colgroup";
+    th.textContent = `${label}（${count} 件）`;
+    tr.appendChild(th);
+    return tr;
+  }
+
   // ---- RENDERING ----
   let shown: AppRow[] = [];
   let drawn = 0;
@@ -2023,6 +2053,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   let groupMonths = false;
   let monthCounts: Record<string, number> = {};
   let lastMonthKey = "";
+  // 過ぎた締切の塊の件数と、ページ末尾で出していた見出し（「さらに表示」で繰り返さない）。
+  let pastBlockTotal = 0;
+  let lastPastBlock = -1;
 
   function td(tr: HTMLTableRowElement, label: string, cls = "") {
     const e = document.createElement("td");
@@ -2502,6 +2535,20 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         }
         lastMonthKey = key;
       }
+      // 過ぎた締切を表示に含めるときは、塊の切り替わりに見出しを出す（件数が分かれて
+      // いるのに理由が分からない行の壁にしないため。SPEC §7）。
+      if (pastBlockTotal > 0 && pastBlockTotal < shown.length) {
+        const block = shown[i]._pastBlock || 0;
+        if (block !== lastPastBlock) {
+          frag.appendChild(
+            makeSectionRow(
+              block ? "過ぎた締切" : "これからの締切",
+              block ? pastBlockTotal : shown.length - pastBlockTotal,
+            ),
+          );
+          lastPastBlock = block;
+        }
+      }
       frag.appendChild(makeRow(shown[i]));
     }
     tbody.appendChild(frag);
@@ -2735,6 +2782,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     });
     monthCounts = {};
     lastMonthKey = "";
+    pastBlockTotal = shown.reduce((n: number, r: AppRow) => n + (r._pastBlock ? 1 : 0), 0);
+    lastPastBlock = -1;
     if (groupMonths) {
       shown.forEach((r) => {
         const key = monthKey(r);
@@ -2843,6 +2892,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         cnt += note;
         cntLive += note;
       }
+    }
+    // 過ぎた締切を下へまとめたことは、件数欄に書く（黙って並びを変えないため）。
+    if (!recMode && pastBlockTotal > 0 && pastBlockTotal < shown.length) {
+      const blockNote = ` ｜ 過ぎた締切 ${pastBlockTotal} 件は下にまとめました`;
+      cnt += blockNote;
+      cntLive += blockNote;
     }
     $("count").textContent = cnt;
     // 読み上げはこちらの短い欄だけ（画面に出す文は `#count` のまま）。

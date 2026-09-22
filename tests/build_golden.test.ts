@@ -8540,3 +8540,56 @@ it("締切の時刻を持たない行を交ぜても日時順が崩れない（S
   expect([...asc][0], "昇順で時刻の無い行が末尾に無い").toBe("p1 p2 p3 J1 J2");
   expect([...desc][0], "降順で時刻の無い行が末尾に無い").toBe("p3 p2 p1 J2 J1");
 });
+
+it("過去の締切も表示すると、過ぎた行が画面の先頭を埋め尽くさない（SPEC §7）", () => {
+  /* 「過去の締切も表示」を入れると、既定の並び（残りの昇順）では過ぎた行がそのまま
+   * 先頭に来る。収録カタログは締切時刻が過ぎた行が 2,318 行（総 3,235 行。2026-09-23 実測）
+   * で、2019 年 5 月の行が画面の先頭になり、これからの締切はすべてその下に沈んでいた。
+   * 過ぎた行を後ろの塊へ寄せ、塊の切り替わりに見出しを出すことを、ビルド成果物の
+   * `filter` で検査する（並びの契約そのものを見るため、行は合成する。件数の実測値は
+   * 上のコメントに書いたとおり）。 */
+  const app = siteRuntime();
+  const filterSrc = jsFunction(app, "filter");
+  const script = [
+    "const DAY = 86400000;",
+    `const FILTER = ${JSON.stringify(filterSrc)};`,
+    'const now = Date.parse("2026-08-09T00:00:00Z");',
+    "class FakeDate extends Date { static now() { return now; } }",
+    // 3 行はこれからの締切、2 行は過ぎた締切（古い順に 2019, 2026-08-08）。
+    "function row(key, t) {",
+    "  return { kind: 'paper', est: false, cats: ['hpc'], rankPairs: [], hay: key,",
+    "    t: t, tLast: t, dateOnly: false, localDate: '',",
+    "    ed: { year: 2026, deadlines: [], place: '', date_text: '', event_start: '', event_end: '' },",
+    "    dl: { kind: 'paper', round: 1 }, conf: { key: key, title: key, link: '' } };",
+    "}",
+    "const rows = [",
+    "  row('near', now + DAY), row('mid', now + 30 * DAY), row('far', now + 400 * DAY),",
+    "  row('just-closed', now - DAY), row('old', Date.parse('2019-05-25T00:00:00Z')),",
+    "];",
+    'const state = { q: "", cats: [], kind: "", rank: "", win: "all", est: false, past: true };',
+    FILTER_RUNTIME_STUBS,
+    'const filter = new Function("Date", "DAY", "rows", "state", "sortAsc", "sortKey",',
+    '                            "return (" + FILTER + ")")(FakeDate, DAY, rows, state, true, "rem");',
+    "const out = filter();",
+    "console.log(JSON.stringify({",
+    "  order: out.map((r) => r.conf.key),",
+    "  flags: out.map((r) => r._pastBlock),",
+    " }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout.trim().split("\n").pop() || "{}");
+  // これからの 3 行が先頭、過ぎた 2 行が後ろの塊（変更前は古い 2019 年の行が画面の先頭だった）。
+  // 塊の**内側**は選んだ列の向きそのまま（残りの昇順なので、過ぎた塊は古い順になる）。
+  // 塊の中で向きを反転させると列見出しの ↑ と食い違うので、そこは正直に保つ。
+  expect(got.order).toEqual(["near", "mid", "far", "old", "just-closed"]);
+  expect(got.flags).toEqual([0, 0, 0, 1, 1]);
+  // 塊の切り替わりに見出し行を出す（`month-row` を併せ持つのは、列を跨ぐ見出しとして
+  // 支援技術に同じ扱いをさせるため。キーボード移動が飛ばすのと同じ規則でもある）。
+  expect(app).toContain('tr.className = "month-row section-row"');
+  expect(app).toContain('"過ぎた締切"');
+  expect(app).toContain("過ぎた締切 ${pastBlockTotal} 件は下にまとめました");
+});
