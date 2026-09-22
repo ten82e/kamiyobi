@@ -1623,10 +1623,20 @@ const Recommender = (() => {
         const note = `「${token}」は${hit[0]}で探しています`;
         if (notes.indexOf(note) < 0) notes.push(note);
       }
-      // 主題のことばを英語表記の会議名へ広げたときは、広げたことを件数欄に書く
-      // （黙って当たり範囲が変わると、自分が何を入力したのか分からなくなる）。
-      // ただし分野・主題の寄せ説明が出ている語では二重になるので、そちらに譲る。
+      // 地域まとめ（`ヨーロッパ` → 欧州の国名）は当たり行が一桁増えるので、広げた先を書く。
       const foldedToken = kanaFold(token);
+      const region = CONTINENT_READINGS.filter(
+        (entry) => kanaFold(entry[0]) === foldedToken || kanaFold(entry[1]) === foldedToken,
+      );
+      if (region.length) {
+        const members = String(region[0][2]).split(",");
+        const note = `「${token}」は地域まとめ（${members.slice(0, 2).join("・")} など ${members.length} か所の表記）で探しています`;
+        if (notes.indexOf(note) < 0) notes.push(note);
+        // この語にさらに付ける説明はない。
+        return;
+      }
+      // 主題のことばを英語表記の会議名へ広げたときも同じ。分野・主題の寄せ説明が
+      // 既に出ている語では二重になるので、そちらに譲る。
       const topic = hit
         ? []
         : TOPIC_QUERY_ALIASES_JA.filter((entry) => kanaFold(entry[0]) === foldedToken).map(
@@ -2410,6 +2420,9 @@ const Recommender = (() => {
    * 会議名に現れる英文字を同じ検索語の組に入れるしかない（開催地と同じ方針。表示は変えない）。
    * 収録カタログの会議名に現れる語だけに限る（実測で下表の語が 4〜258 行に現れる。現れない
    * `自動運転` `省電力` `仮想化` などは置いていない）。
+   * `視覚`→vision は語境界の照合（下の `foldedLetterAtWordBoundary`）を導入するまで
+   * 置けなかった（`division` `supervision` に当たり、実測で 258 行に誤爆していた。
+   * 語境界で照らすようにして 248 行になり、当たり例はすべて computer vision 系だった）。
    * **新しい行を増やさない条目は置かない**（実測で追加 0 件だった `機械学習`→machine learning、
    * `データベース`→database は、分野ラベルや主題の日本語名が既に同じ行を拾えていた）。
    * `シンガポール`→singapore も同様（開催地の表記が既に日本語化されていた）。 */
@@ -2419,6 +2432,7 @@ const Recommender = (() => {
     ["深層学習", "deep learning"],
     ["ディープラーニング", "deep learning"],
     ["画像", "image"],
+    ["視覚", "vision"],
     ["音声", "speech"],
     ["無線", "wireless"],
     ["信号", "signal"],
@@ -2458,6 +2472,52 @@ const Recommender = (() => {
     ["九州", "きゅうしゅう", "福岡,佐賀,長崎,熊本,大分,宮崎,鹿児島"],
   ];
 
+  /* 開催地の**地域まとめ**で引けるようにする。画面の開催地は公式表記（`Seattle, USA`）を
+   * 基本にしつつ、末尾の国名だけは日本語へ寄せて表示する（`placeJa`）。収録カタログの
+   * 開催地に実際に現れる国名だけを上げている（2026-09-23 に末尾国名を数えて作成:
+   * `USA` 611 行 / 画面 175 行、`Italy` 120/14、`Greece` 60/33 など）。
+   * 展開は一方向だけ（`ヨーロッパ` → 国名）。逆をやると `イタリア` と打った人の結果が
+   * 欧州全体に広がって精密さを失う。
+   * 境界の判断は明記しておく:
+   *  - `アジア` に日本は入れない。日本人の利用で「アジア」に国内研究会が混ざると誤解になる。
+   *    国内を見たいときは `国内` か `日本` で引く。
+   *  - `トルコ` は `中東` だけに入れる（地理的には欧州でもあるが、二重に主張しない）。
+   *  - キプロスは EU 運用に合わせて `ヨーロッパ` に置く。
+   *  - アルメニアは欧州・中東のどちらにも入れない（収録 3 行で、境界を断定しない）。
+   *  - `北米` はアメリカ・カナダ（メキシコは `中南米`）。
+   *  - `アメリカ` には州表記の行も入れる。開催地に国名を書かず州だけ書く上流が多い
+   *    （`San Diego, CA` / `Colorado` など。実測で `CA` だけ 26 行）。 */
+  const EUROPE_JA =
+    "イタリア,ドイツ,スペイン,フランス,イギリス,オーストリア,デンマーク,オランダ,ポルトガル,ギリシャ,アイルランド,ベルギー,スウェーデン,キプロス,フィンランド,スイス,チェコ,ハンガリー,ポーランド,リトアニア,ノルウェー,クロアチア,ルクセンブルク,アイスランド,ルーマニア,スロベニア,エストニア,ブルガリア,ロシア";
+  const ASIA_JA =
+    "中国,韓国,シンガポール,インド,ベトナム,台湾,マレーシア,タイ,インドネシア,カンボジア,香港";
+  const US_STATES_JA =
+    "カリフォルニア州,コロラド州,ハワイ州,ペンシルベニア州,ルイジアナ州,テネシー州,インディアナ州,オレゴン州";
+  const US_JA = `アメリカ,${US_STATES_JA}`;
+  const NORTH_AMERICA_JA = `アメリカ,カナダ,${US_STATES_JA}`;
+  const OCEANIA_JA = "オーストラリア,ニュージーランド";
+  const CONTINENT_READINGS: string[][] = [
+    ["ヨーロッパ", "よーろっぱ", EUROPE_JA],
+    ["欧州", "こうしゅう", EUROPE_JA],
+    ["ヨーロッパ圏", "よーろっぱけん", EUROPE_JA],
+    ["アジア", "あじあ", ASIA_JA],
+    ["北米", "ほくべい", NORTH_AMERICA_JA],
+    ["北アメリカ", "きたアメリカ", NORTH_AMERICA_JA],
+    [
+      "中南米",
+      "ちゅうなんべい",
+      "メキシコ,ブラジル,チリ,コロンビア,アルゼンチン,コスタリカ,パナマ",
+    ],
+    ["中東", "ちゅうとう", "イスラエル,アラブ首長国連邦,トルコ"],
+    ["アフリカ", "アフリカ".toLowerCase(), "モロッコ,南アフリカ,ルワンダ,ガーナ,ナイジェリア"],
+    ["オセアニア", "おせあにあ", OCEANIA_JA],
+    ["アメリカ", "アメリカ".toLowerCase(), US_JA],
+    // 「米国」と打った人にも州表記の行を同じにして出す（実測で `米国` だけ 135 行少なかった）。
+    ["米国", "べいこく", US_JA],
+    // 欧米は「欧州＋北米」と読む（豪州は入れない。日本語でのふつうの使い方に合わせる）。
+    ["欧米", "おうべい", `${NORTH_AMERICA_JA},${EUROPE_JA}`],
+  ];
+
   /* 会議の略称と年は、表では `NSDI 2027` のように別々の語に割れて書かれる。
    * ところが打たれるのは `nsdi27`（年を 4 桁で打つ人も `nsdi2027`）のような 1 語の形で、
    * そのままでは 1 件も当たらなかった（実測: `ICDE2027` 0 件 / `ICDE 2027` 6 件、
@@ -2487,19 +2547,22 @@ const Recommender = (() => {
     Object.keys(synonyms).forEach((key) => {
       byReading[key] = synonyms[key][1];
     });
-    PLACE_READINGS.concat(REGION_READINGS).forEach((entry) => {
-      const members = entry[2] ? String(entry[2]).split(",") : [entry[0]];
-      const keys = [kanaFold(entry[1])];
-      // 地方名は漢字そのものが会場地名に書かれるとは限らない（「九州」で別府を引きたい）。
-      // 漢字見出しも同じ展開語彙に入れる。市名は会場文字列にそのまま出るので kana のみ。
-      if (REGION_READINGS.indexOf(entry) >= 0) keys.push(kanaFold(entry[0]));
-      for (const key of keys) {
-        if (!byReading[key]) byReading[key] = [];
-        members.forEach((member) => {
-          if (byReading[key].indexOf(member) < 0) byReading[key].push(member);
-        });
-      }
-    });
+    PLACE_READINGS.concat(REGION_READINGS)
+      .concat(CONTINENT_READINGS)
+      .forEach((entry) => {
+        const members = entry[2] ? String(entry[2]).split(",") : [entry[0]];
+        const keys = [kanaFold(entry[1])];
+        // 地方名は漢字そのものが会場地名に書かれるとは限らない（「九州」で別府を引きたい）。
+        // 漢字見出しも同じ展開語彙に入れる。市名は会場文字列にそのまま出るので kana のみ。
+        if (REGION_READINGS.indexOf(entry) >= 0 || CONTINENT_READINGS.indexOf(entry) >= 0)
+          keys.push(kanaFold(entry[0]));
+        for (const key of keys) {
+          if (!byReading[key]) byReading[key] = [];
+          members.forEach((member) => {
+            if (byReading[key].indexOf(member) < 0) byReading[key].push(member);
+          });
+        }
+      });
     /* 日本語表記で打たれた国名・都市名を、画面に出る英文字表記と同じ組に入れる。
      * 開催地は公式表記（`Seattle, USA`）を変えないので、日本語で打った人に届くように
      * するのは検索語側だけ。逆方向（`seattle` と打ったときに国内表記も見る）も同じ表から
@@ -2582,12 +2645,20 @@ const Recommender = (() => {
     return /^[a-z]{1,2}$/.test(term);
   }
 
-  /* 英字 1〜2 文字を部分一致で明けると、ほとんど全行に当たってしまう（実測で `N` が
-   * 3234 行中 3219 行、`sc` が 342 行で、後者は "science" などの一部まで拾っていた）。
-   * 表に出している語（`CCF B` の `B`、略称 `SC` など）で引けるようにしたいので、
+  /* 英字を部分一致で開けると、語の途中に当たって誤爆する。実測（2026-09-23）:
+   *   - `N` は 3234 行中 3,219 行、`sc` は 342 行（"science" の一部まで拾った）。
+   *   - `usa` は `evomusart`・`usage` に当たり、`america` は `latin american` に当たった。
+   *     `米国` でパナマとドイツの会議が 4 件出る誤りになった（SPEC §7）。
+   * 表に出している語（`CCF B` の `B`、略称 `SC` など）は引けるようにしたいので、
    * 一致そのものはやめず、**英数字に挟まれた位置の一致は使わない**ことにする。
+   * ただし語頭の一致まで捨てると `crypto` が `cryptography` に当たらなくなるので、
+   * 要求する境界は語の性質で分ける:
+   *   - 英字 1〜2 文字: 前後 both（従来どおり）。
+   *   - 開催地として置く語（国名・都市名・地域まとめの構成員）: 前後 both。
+   *     略称（`usa`）や語の一部（`usage`, `american`）を同じ場所と見なさないため。
+   *   - それ以外の英字語: 左端だけ（`robot` → `robots`、`crypto` → `cryptography` は残す）。
    * 正規表現を作らずに走査する（語の分解は 1 描画 1 回で、行ごとに作るものではない）。 */
-  function foldedLetterAtWordBoundary(target: string, term: string): boolean {
+  function foldedLetterAtWordBoundary(target: string, term: string, leftOnly = false): boolean {
     let from = 0;
     for (;;) {
       const at = target.indexOf(term, from);
@@ -2596,9 +2667,36 @@ const Recommender = (() => {
       const after = at + term.length < target.length ? target.charAt(at + term.length) : "";
       const gluedBefore = before !== "" && /[a-z0-9]/.test(before);
       const gluedAfter = after !== "" && /[a-z0-9]/.test(after);
-      if (!gluedBefore && !gluedAfter) return true;
+      if (!gluedBefore && (leftOnly || !gluedAfter)) return true;
       from = at + 1;
     }
+  }
+
+  const LATIN_TERM_TOKEN = /^[a-z0-9][a-z0-9 .'-]*$/;
+
+  let wholeWordLatinTerms: Record<string, true> | null = null;
+
+  /* 開催地として置く英字語（国名・都市名・地域まとめの構成員）。ここに入っている語は
+   * 語全体で当たったときだけ採用する（`usa` を `usage` と同じ場所にしない）。 */
+  function placeLatinTerms(): Record<string, true> {
+    if (wholeWordLatinTerms) return wholeWordLatinTerms;
+    const out: Record<string, true> = {};
+    const add = (value: string) => {
+      const term = kanaFold(value.trim());
+      if (term.length >= 3 && LATIN_TERM_TOKEN.test(term)) out[term] = true;
+    };
+    PLACE_QUERY_ALIASES_JA.forEach((entry) => {
+      add(entry[0]);
+      add(entry[1]);
+    });
+    PLACE_READINGS.forEach((entry) => {
+      if (entry[2]) String(entry[2]).split(",").forEach(add);
+    });
+    CONTINENT_READINGS.forEach((entry) => {
+      String(entry[2]).split(",").forEach(add);
+    });
+    wholeWordLatinTerms = out;
+    return out;
   }
 
   /** 畳み済みの語グループ（語ごとに OR、語同士は AND）を行に照合する。 */
@@ -2609,6 +2707,14 @@ const Recommender = (() => {
         const term = groups[i][k];
         if (isShortLatinTerm(term)) {
           if (foldedLetterAtWordBoundary(target, term)) {
+            hit = true;
+            break;
+          }
+          continue;
+        }
+        if (LATIN_TERM_TOKEN.test(term)) {
+          // 開催地の語は語全体、その他の英字語は語頭が英数字でつながっていない位置だけ。
+          if (foldedLetterAtWordBoundary(target, term, !placeLatinTerms()[term])) {
             hit = true;
             break;
           }

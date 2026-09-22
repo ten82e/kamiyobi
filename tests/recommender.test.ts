@@ -4639,3 +4639,129 @@ describe("相対日・相対週（明日・今週・来週）", () => {
     expect(R.relativeDayNotes("nsdi", NOW)).toEqual([]);
   });
 });
+
+describe("開催地の地域まとめ（ヨーロッパ・アジアなどで引ける）", () => {
+  const NOW = Date.parse("2026-08-09T00:00:00Z");
+  // hay は実データと同じ形にする: 公式表記（英文字）+ 画面に出る日本語の国名（`placeJa`）。
+  const mk = (key: string, place: string, extra: string) => ({
+    conf: { key, title: key.toUpperCase(), editions: [] },
+    ed: { place, deadlines: [], date_text: "" },
+    dl: { kind: "paper", label: "" },
+    kind: "paper",
+    t: NOW + 86_400_000,
+    tLast: NOW + 86_400_000,
+    hay: `${key} ${extra}`,
+  });
+  const rows = [
+    mk("euro1", "Milan, Italy", "euro1 milan italy milan, イタリア"),
+    mk("euro2", "London, UK", "euro2 london uk london, イギリス"),
+    mk("asia", "Seoul, South Korea", "asia seoul south korea ソウル, 韓国"),
+    mk("jp", "京都大学 楽友会館（京都府）", "jp きょうとどうだいがく 京都 国内研究会"),
+    mk("canada", "Toronto, Canada", "canada toronto canada トロント, カナダ"),
+    mk("usstate", "San Diego, CA", "usstate san diego ca san diego, カリフォルニア州"),
+    mk("oceania", "Sydney, Australia", "oceania sydney australia シドニー, オーストラリア"),
+    mk(
+      "africa",
+      "Cape Town, South Africa",
+      "africa cape town south africa ケープタウン, 南アフリカ",
+    ),
+    mk("mideast", "Istanbul, Turkey", "mideast istanbul turkey イスタンブール, トルコ"),
+    mk("latam", "Santiago, Chile", "latam santiago chile サンティアゴ, チリ"),
+  ];
+  const hits = (q: string) => {
+    const m = R.searchMatcher(q, NOW);
+    return rows.filter((r) => m(r.hay)).map((r) => String(r.conf.key));
+  };
+
+  it("地域のことばで、その地域の行に届く", () => {
+    expect(hits("ヨーロッパ").sort()).toEqual(["euro1", "euro2"]);
+    // 表記ゆれ（欧州・ヨーロッパ圏）は同じ結果にする。
+    expect(hits("欧州").sort()).toEqual(hits("ヨーロッパ").sort());
+    expect(hits("ヨーロッパ圏").sort()).toEqual(hits("ヨーロッパ").sort());
+    expect(hits("アジア")).toEqual(["asia"]);
+    expect(hits("北米").sort()).toEqual(["canada", "usstate"]);
+    expect(hits("オセアニア")).toEqual(["oceania"]);
+    expect(hits("アフリカ")).toEqual(["africa"]);
+    expect(hits("中東")).toEqual(["mideast"]);
+    expect(hits("中南米")).toEqual(["latam"]);
+    // 欧米は欧州＋北米（オーストラリアは入らない）。
+    expect(hits("欧米").sort()).toEqual(["canada", "euro1", "euro2", "usstate"]);
+  });
+
+  it("「アジア」に国内研究会を混ぜない", () => {
+    // 日本人の利用で「アジア」に国内の研究会が混ざると誤解になる。国内は `国内`・`日本` で引く。
+    expect(hits("アジア")).not.toContain("jp");
+    // 国内は `国内` で引ける（こちらは tags ではなく開催地・主催の表記に現れる）。
+    expect(hits("国内")).toEqual(["jp"]);
+  });
+
+  it("国名で引いた人の当たり方を地域で広くしない", () => {
+    // 展開は一方向だけ。`イタリア` → 欧州全体 に広がると精密さが失われる。
+    expect(hits("イタリア")).toEqual(["euro1"]);
+    expect(R.queryTokenGroups("イタリア", NOW)).toEqual([["イタリア"]]);
+    expect(hits("カナダ")).toEqual(["canada"]);
+  });
+
+  it("州表記だけの開催地も「アメリカ」「米国」で出る", () => {
+    // 上流は国名を書かず州だけ書くことがある（`San Diego, CA`）。
+    expect(hits("アメリカ")).toEqual(["usstate"]);
+    expect(hits("米国")).toEqual(["usstate"]);
+  });
+
+  it("地域まとめを広げたことは件数欄に書き、国名では書かない", () => {
+    const notes = R.querySynonymNotes("ヨーロッパ");
+    expect(notes).toHaveLength(1);
+    expect(notes[0]).toContain("地域まとめ");
+    expect(notes[0]).toContain("イタリア");
+    expect(notes[0]).toContain("か所");
+    expect(R.querySynonymNotes("イタリア")).toEqual([]);
+    expect(R.querySynonymNotes("欧州")[0]).toContain("地域まとめ");
+  });
+});
+
+describe("英字の語は語境界で当てる（語の途中での誤爆を防ぐ）", () => {
+  const NOW = Date.parse("2026-08-09T00:00:00Z");
+  const hit = (query: string, hay: string) => R.searchMatcher(query, NOW)(hay);
+
+  it("開催地の語は、語として書かれた行だけに当たる", () => {
+    // `usa` を語の途中に含むつづりで引けてしまっていた（2026-09-23 実測で `米国` に
+    // 収録 18 行の誤り: ドイツ 1 行・パナマ 3 行・`usage` を含む IEICE 特集号 など）。
+    expect(hit("米国", "evomusart 2027 mainz, german")).toBe(false);
+    expect(hit("米国", "special section on log data usage techniques")).toBe(false);
+    expect(hit("米国", "lascas ieee latin american symposium panama city, panama")).toBe(false);
+    // 語として書かれていれば当たる（略称・正式表記・画面の日本語表記）。
+    expect(hit("米国", "sigcomm 2027 alexandria, va, usa")).toBe(true);
+    // 画面には `Detroite, アメリカ` のように日本語の国名が出る（`placeJa`）ので、その形でも当たる。
+    expect(hit("米国", "icde detroit, united states デトロイト, アメリカ")).toBe(true);
+    expect(hit("米国", "ieee sdr conferência chicago, アメリカ")).toBe(true);
+    // 州表記だけの開催地も同じ場所として拾う（上流は国名を書かないことがある）。
+    expect(hit("米国", "asplos san diego, カリフォルニア州")).toBe(true);
+    expect(hit("アメリカ", "hotchips san diego, カリフォルニア州")).toBe(true);
+  });
+
+  it("主題の語は語頭が繋がっていなければ当たり、語頭が繋がっていなければ外れる", () => {
+    // 語頭だけを見るので、語幹→派生語（複数形や -graphy）は今までどおり当たる。
+    expect(hit("暗号", "applied cryptography and network security acns athens, ギリシャ")).toBe(
+      true,
+    );
+    expect(hit("暗号", "crypto 2028 santa clara, usa")).toBe(true);
+    expect(hit("ロボット", "ieee international conference on robotics and automation icra")).toBe(
+      true,
+    );
+    // 語の途中の一致は使わない（`division` を `vision` と同じ場所にしない。
+    // 2026-09-23 の時点で収録 258 行に当たっていた誤り）。
+    expect(hit("視覚", "ieee conference on computer division and supervision")).toBe(false);
+    expect(hit("視覚", "ieee conference on machine vision")).toBe(true);
+    // `視覚` 自体は会議名の語として英語で書かれている行に届く（2026-09-23 実測: 収録 3→248 行）。
+    expect(hit("視覚", "ieee conference on computer vision and pattern recognition cvpr")).toBe(
+      true,
+    );
+  });
+
+  it("1〜2 文字の語は前後とも境界が必要（従来どおり）", () => {
+    expect(hit("sc", "special interest group on computer science and engineering sigsc")).toBe(
+      false,
+    );
+    expect(hit("sc", "supercomputing sc 26 st. louis, usa")).toBe(true);
+  });
+});

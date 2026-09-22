@@ -2429,6 +2429,15 @@ const SEARCH_CANON = (() => {
     ["RELATIVE_MONTH_OFFSETS_JA", /const RELATIVE_MONTH_OFFSETS_JA[\s\S]*?\};/],
     ["PLACE_READINGS", /const PLACE_READINGS[\s\S]*?\];/],
     ["REGION_READINGS", /const REGION_READINGS[\s\S]*?\];/],
+    // 地域まとめ（`ヨーロッパ` → 国名）は shared の国名リスト変数に依存するので、
+    // 定義順（TDZ）を崩さないようにリストを先に、表を後に inject する。
+    ["EUROPE_JA", /const EUROPE_JA =[\s\S]*?;/],
+    ["ASIA_JA", /const ASIA_JA =[\s\S]*?;/],
+    ["US_STATES_JA", /const US_STATES_JA =[\s\S]*?;/],
+    ["US_JA", /const US_JA =[\s\S]*?;/],
+    ["NORTH_AMERICA_JA", /const NORTH_AMERICA_JA =[\s\S]*?;/],
+    ["OCEANIA_JA", /const OCEANIA_JA =[\s\S]*?;/],
+    ["CONTINENT_READINGS", /const CONTINENT_READINGS[\s\S]*?\];/],
     ["QUERY_EDGE_PUNCTUATION", /const QUERY_EDGE_PUNCTUATION = [^\n]*;/],
     ["COMPOUND_MIN_LENGTH_JA", /const COMPOUND_MIN_LENGTH_JA = [^\n]*;/],
     ["ONLINE_TERMS_JA", /const ONLINE_TERMS_JA = [^\n]*;/],
@@ -2436,6 +2445,9 @@ const SEARCH_CANON = (() => {
     ["ONLINE_VENUE_FALSE_POSITIVES", /const ONLINE_VENUE_FALSE_POSITIVES = [^\n]*;/],
     ["QUERY_SYNONYMS_JA", /const QUERY_SYNONYMS_JA[\s\S]*?\];/],
     ["ABBREV_YEAR_TOKEN", /const ABBREV_YEAR_TOKEN = [^\n]*;/],
+    // 英字語の語境界照合（開催地の語は語全体で当てる）が使う定義。
+    ["LATIN_TERM_TOKEN", /const LATIN_TERM_TOKEN = [^\n]*;/],
+    ["wholeWordLatinTerms", /let wholeWordLatinTerms[^\n]*;/],
     ["RELATIVE_DAY_OFFSETS_JA", /const RELATIVE_DAY_OFFSETS_JA[\s\S]*?\};/],
     ["RELATIVE_WEEK_OFFSETS_JA", /const RELATIVE_WEEK_OFFSETS_JA[\s\S]*?\};/],
   ].map(([name, re]) => {
@@ -2461,6 +2473,7 @@ const SEARCH_CANON = (() => {
       "placeOffersOnline",
       "isShortLatinTerm",
       "foldedLetterAtWordBoundary",
+      "placeLatinTerms",
       "matchFoldedGroups",
       "searchMatcher",
       "hayMatches",
@@ -5698,7 +5711,25 @@ it("開催地を日本語で引け、アクセント付きのつづりは ASCII 
     "const beikoku = keys('米国');",
     // 誤爆検査: 「米国」が出した行は、どれも hay に usa / america を持つ。
     "const m = Recommender.searchMatcher('米国');",
-    "const phantoms = rows.filter((r) => m(r.hay) && !/usa|america/.test(String(r.hay))).length;",
+    // 別表記の寄せで当たり方が広がった結果、**語の途中**で当たっている行が混ざる
+    // （`evomusart` の中に `usa`、`latin american` に `america`。2026-09-23 実測で
+    // `米国` に収録 18 行の誤りが残る。語境界で照らす修法に変えるまで、ここでは
+    // 寄せた語そのものが誤って入っていないことだけを見る）。
+    // 誤爆の判定は画面に出る開催地表記で見る。`米国` は開催地の日本語化（`United States` →
+    // `アメリカ`）と州表記（`San Diego, CA` → `カリフォルニア州`。上流は国名を書かない）で
+    // 当たる行が増えていて、hay の英文字だけを見るとそれを誤爆として拾ってしまう。
+    // ただし語の途中当たり（`evomusart` の中の `usa`、`latin american`）は別の話で、
+    // 語境界で照らす修法に変えるまで語として現れる行は許す（§7 の既知の誤り）。
+    "const US_STATES = ['カリフォルニア州', 'コロラド州', 'ハワイ州', 'ペンシルベニア州', 'ルイジアナ州', 'テネシー州', 'インディアナ州', 'オレゴン州'];",
+    "const wordHit = (hay) => /(^|[^a-z0-9])(usa|america)($|[^a-z0-9])/.test(hay);",
+    "const phantoms = rows.filter((r) => {",
+    "  if (!m(r.hay)) return false;",
+    "  const place = String(Recommender.placeJa(r.ed.place)).trim();",
+    "  if (!place) return !wordHit(String(r.hay));",
+    "  if (/(usa|america|united state|アメリカ)/i.test(place)) return false;",
+    "  if (US_STATES.some((x) => place.includes(x))) return false;",
+    "  return !wordHit(String(r.hay));",
+    "}).length;",
     // 別表記の表に、収録カタログで 1 件も当たらない英文字表記を置いていないこと。
     "const src = readFileSync(" + JSON.stringify(join(site, "recommender.js")) + ", 'utf8');",
     "const i = src.indexOf('const PLACE_QUERY_ALIASES_JA = [');",
@@ -5967,4 +5998,113 @@ it("「締切まで N 日以内」の窓で外れた件数を件数欄に出す�
   expect(dd).toContain("「締切まで 7 日以内」を超える N 件");
   expect(dd).toContain("収録が薄いわけではありません");
   expect(dd).toContain("「かまわない」");
+});
+
+it("地域まとめの構成員は、収録カタログの開催地に現れる（SPEC §7）", () => {
+  /* `ヨーロッパ` → 国名、という寄せは「画面の開催地に出る語」だけで作る。
+   * 収録に無い国名を混ぜると、件数欄の説明だけが長くなって当たり方が変わらない
+   * （§7 の別表記と同じ基準）。構成員が実際の開催地に現れることと、
+   * 各地域の語で実際に一行以上当たることを見る。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    // 検査用ビルドのカタログは小さい（小型 fixtures）ので、開催地の語は収録カタログ
+    // （`data/snapshot.json`）で見る。件数の検査だけ実行ビルドのコードを使う。
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(
+      new URL("../data/snapshot.json", import.meta.url).pathname,
+    )}, 'utf8'));`,
+    `const rec = readFileSync(${JSON.stringify(join(site, "recommender.js"))}, 'utf8');`,
+    "const head = 'const CONTINENT_READINGS = ';",
+    "const i = rec.indexOf(head);",
+    "const j = rec.indexOf('\\n    ];', i);",
+    // 表は `EUROPE_JA` などの変数で国名リストを共有しているので、その定義も eval に入れる。
+    'const decls = (rec.match(/const [A-Z_]+_JA =\\s*\\n?\\s*(?:`[^`]*`|"[^"]*");/g) || [])',
+    "  .map((d) => vmSafeSource(d))",
+    "  .join('\\n');",
+    "const table = eval(`${decls}\\n${vmSafeSource(rec.slice(i + head.length, j))}\\n];`);",
+    "const rows = Recommender.candidateRows(DATA);",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const norm = (s) => String(s).normalize('NFKC').toLowerCase();",
+    "const places = rows.map((r) => norm(Recommender.placeJa(r.ed.place) + ' ' + String(r.ed.place || '')));",
+    "const missing = [];",
+    "const emptyRegions = [];",
+    "const seen = new Set();",
+    "for (const entry of table) {",
+    "  const heading = entry[0];",
+    "  if (seen.has(heading)) continue;",
+    "  seen.add(heading);",
+    "  for (const member of String(entry[2]).split(',')) {",
+    "    if (!places.some((p) => p.includes(norm(member)))) missing.push(heading + '→' + member);",
+    "  }",
+    "  const m = Recommender.searchMatcher(heading, now);",
+    "  if (!rows.some((r) => m(r.hay))) emptyRegions.push(heading);",
+    "}",
+    "console.log(JSON.stringify({ regions: [...seen], missing, emptyRegions }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync(
+    "node",
+    ["-e", `const vmSafeSource = ${vmSafeSource.toString()};\n${script}`],
+    {
+      encoding: "utf8",
+      timeout: 120_000,
+    },
+  );
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    regions: string[];
+    missing: string[];
+    emptyRegions: string[];
+  };
+  expect(out.regions.length).toBeGreaterThanOrEqual(8);
+  expect(out.missing, `収録の開催地に現れない構成員: ${out.missing.join(" ")}`).toEqual([]);
+  expect(out.emptyRegions, `1 行も当たらない地域の語: ${out.emptyRegions.join(" ")}`).toEqual([]);
+});
+
+it("ビルド後の照合式は英字語を語の途中では当てない（SPEC §7）", () => {
+  /* 語境界の照合は `matchFoldedGroups` の規則で、一覧の絞り込みはビルド後の
+   * `recommender.js` を通る。ここで見ておくのは「実装が効いて shipped の挙動が直っているか」。
+   * `米国` が語の途中当たりでパナマ・ドイツの会議を出していた実発生をそのまま固定する。 */
+  const script = [
+    "(async () => {",
+    "const { default: Recommender } = await import(",
+    `  ${JSON.stringify(`file://${join(site, "recommender.js")}`)},`,
+    ");",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const hays = [",
+    "  'evomusart 2027 16th international conference mainz, ドイツ',",
+    "  'ieice trans. inf. & syst. special section on log data usage techniques',",
+    "  'lascas ieee latin american symposium on circuits and systems panama city, パナマ',",
+    "  'sigcomm 2027 alexandria, va, usa アメリカ',",
+    "  'asplos vienna, オーストリア computer-vision computer vision',",
+    "];",
+    "const match = (q) => {",
+    "  const m = Recommender.searchMatcher(q, now);",
+    "  return hays.map((hay) => (m(hay) ? 1 : 0));",
+    "};",
+    "console.log(JSON.stringify({",
+    "  us: match('米国'),",
+    "  eu: match('ヨーロッパ'),",
+    "  vision: match('視覚'),",
+    "  sc: match('sc'),",
+    "}));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 120_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    us: number[];
+    eu: number[];
+    vision: number[];
+    sc: number[];
+  };
+  // 語の途中当たり（evomusart / usage / latin american）は落ち、語として出る行だけ残る。
+  expect(out.us, "`米国` の語の途中当たりが残っている").toEqual([0, 0, 0, 1, 0]);
+  // 地域まとめは画面に出る日本語の国名で当たる（Mainz は `ドイツ`、Wien は `オーストリア`）。
+  expect(out.eu).toEqual([1, 0, 0, 0, 1]);
+  // 語頭の一致（computer-vision のハイフン越え）は生かす。
+  expect(out.vision).toEqual([0, 0, 0, 0, 1]);
+  // 1〜2 文字は従来どおり前後の境界を見る。
+  expect(out.sc).toEqual([0, 0, 0, 0, 0]);
 });
