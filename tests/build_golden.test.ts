@@ -2492,7 +2492,9 @@ const FILTER_RUNTIME_STUBS = [
   ...SORT_CANON.all,
   "let semQuery = null, semEmbeddings = null;",
   "let catFacetCounts = {};",
-  "let hiddenCounts = { past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0 };",
+  "let hiddenCounts = {",
+  "  past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0, window: 0,",
+  "};",
   "const activeData = { conferences: [] };",
   ...SEARCH_CANON,
   "let searchQuery = '';",
@@ -4696,6 +4698,7 @@ it("のぞいた行数を件数欄で説明する（SPEC §7）", () => {
     domestic: 0,
     online: 0,
     onlinePlaceUnknown: 0,
+    window: 0,
   });
   // 「過去の締切も表示」をオンにすると過去の分はのぞかなくなる（他はそのまま）。
   expect(out.withPast.hidden.past).toBe(0);
@@ -5015,7 +5018,9 @@ it("締切までの選択肢は URL と表裏一体で、窓は入れ子にな�
     "const document = {};",
     "function $(id) { return null; }",
     "const window = {};",
-    "let hiddenCounts = { past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0 };",
+    "let hiddenCounts = {",
+    "  past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0, window: 0,",
+    "};",
     "let catFacetCounts = {};",
     "let searchQuery = '';",
     "const activeData = { conferences: [] };",
@@ -5903,4 +5908,63 @@ it("「オンライン参加可のみ」で出ない理由を 2 通りに分け�
     html.indexOf("<dt>会期のみ・締切未定</dt>"),
   );
   expect(dd).toContain("オンライン参加が無いのだと誤解しないでください");
+});
+
+it("「締切まで N 日以内」の窓で外れた件数を件数欄に出す（SPEC §7）", () => {
+  /* 窓は選択欄の下側にも効くのに、件数欄は過去の締切・種別・推定しか言わなかった。
+   * 「7 日以内」を選ぶと実測で対象 477 行のうち 39 行しか出ず、のこり 438 行が黙って
+   * 消えるので「今週は収録が薄い」と誤解される。外れた件数と戻し方を出す。 */
+  const filterSrc = jsFunction(siteRuntime(), "filter");
+  const script = [
+    "const DAY = 86400000;",
+    `const FILTER = ${JSON.stringify(filterSrc)};`,
+    'const now = Date.parse("2026-08-10T00:00:00Z");',
+    "class FakeDate extends Date { static now() { return now; } }",
+    "function row(key, offset) {",
+    "  return { kind: 'paper', est: false, cats: ['hpc'], rankPairs: [], tags: [], hay: key,",
+    "    t: now + offset * DAY, tLast: now + offset * DAY,",
+    "    ed: { place: 'Kyoto, 日本', deadlines: [] }, conf: { key: key } };",
+    "}",
+    "const rows = [row('soon', 2), row('far', 40), row('old', -40)];",
+    FILTER_RUNTIME_STUBS,
+    "const run = (win, past) => new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
+    "  'return (' + FILTER + ')')(FakeDate, DAY, rows,",
+    "  { q: '', cats: [], kind: '', rank: '', win: win, est: false, past: past }, true, 'rem');",
+    "const all = run('all', false)().length;",
+    "const narrow = run('7d', false)().map((r) => r.conf.key);",
+    "const narrowWindow = hiddenCounts.window;",
+    // 「過去の締切も表示」と併用すると窓は前後対称になる（下限側も同じ計数にまとめる）。
+    "const both = run('7d', true)().map((r) => r.conf.key);",
+    "const bothWindow = hiddenCounts.window;",
+    "console.log(JSON.stringify({ all, narrow, narrowWindow, both, bothWindow }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    all: number;
+    narrow: string[];
+    narrowWindow: number;
+    both: string[];
+    bothWindow: number;
+  };
+  // 窓を「かまわない」にしても、40 日前の行は既定では「過去の締切」の内訳で落ちる。
+  expect(out.all).toBe(2);
+  // 7 日以内: 40 日後の行が上限側で外れる（40 日前の行は「過去の締切」側の内訳なので窓に数えない）。
+  expect(out.narrow).toEqual(["soon"]);
+  expect(out.narrowWindow, "窓で外れた件数が出ていない").toBe(1);
+  // 過去表示と併用: 下限側（40 日前）も同じ窓として数える。
+  expect(out.both).toEqual(["soon"]);
+  expect(out.bothWindow, "対称窓の下限側を窓に数えていない").toBe(2);
+
+  const app = siteRuntime();
+  expect(app).toContain("`「締切まで ${Number.parseInt(state.win, 10)} 日以内」を超える");
+  // 選択欄の表記（「7 日以内」）とその戻し方を選んで書く。
+  const html = siteHtmlRuntime();
+  const dd = html.slice(
+    html.indexOf("<dt>締切まで</dt>"),
+    html.indexOf("<dt>過去の締切も表示</dt>"),
+  );
+  expect(dd).toContain("「締切まで 7 日以内」を超える N 件");
+  expect(dd).toContain("収録が薄いわけではありません");
+  expect(dd).toContain("「かまわない」");
 });

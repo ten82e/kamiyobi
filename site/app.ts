@@ -1483,6 +1483,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 「オンライン参加可のみ」で落ちた行数と、そのうち開催地自体が未確認の行数。
     online: 0,
     onlinePlaceUnknown: 0,
+    // 「締切まで N 日以内」の窓（上限・下限の両方）で落ちた行数。
+    window: 0,
   };
 
   /* URL で渡された種別のうち、表に出さないものを読み捨てたときの説明。
@@ -1496,6 +1498,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     domestic: number;
     online: number;
     onlinePlaceUnknown: number;
+    window: number;
   } {
     return hiddenCounts;
   }
@@ -1636,10 +1639,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         return false;
       }
       if (!inRecommend && isAfter(r, limit)) {
+        // 「締切まで 7 日以内」を選ぶと 438 件が黙って消える（実測: 対象 477 行のうち表示 39 件）。
+        // 件数欄が窓の話をしないと「今週は収録が薄い」と誤解して検索をやめてしまう。
+        hiddenCounts.window += 1;
         return false;
       }
       // 日付だけの行は当日中が有効なので、終端側（tLast）で窓に触れているかを見る。
       if (!inRecommend && (r.dateOnly ? r.tLast < floor : r.t < floor)) {
+        // 「過去の締切も表示」と併用したときの下限側。同じ窓の話なので上の計数とまとめる。
+        hiddenCounts.window += 1;
         return false;
       }
       if (!inRecommend && state.kind && r.kind !== state.kind) {
@@ -1687,6 +1695,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       domestic: 0,
       online: 0,
       onlinePlaceUnknown: 0,
+      window: 0,
     };
     catFacetCounts = {};
     let out: AppRow[] = pool.filter((r) => {
@@ -2752,6 +2761,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (hidden.est) parts.push(`推定 ${hidden.est} 件`);
       // 国内チェックで消えた行は「国内研究会ではない」だけの理由で落ちている。
       // 日本開催の国際会議もここに入るため、件数だけ出しておかないと検索をやめてしまう。
+      if (hidden.window && state.win !== "all") {
+        // 選んだ窓の名前は選択欄の表記のまま書く（「どのボタンを戻せばいいか」が分かる形で）。
+        parts.push(
+          `「締切まで ${Number.parseInt(state.win, 10)} 日以内」を超える ${hidden.window} 件`,
+        );
+      }
       if (hidden.domestic) parts.push(`国内研究会・国内シンポジウム以外 ${hidden.domestic} 件`);
       if (hidden.online) {
         // 「記載が無いだけ」の行数を括弧で添える（対面だと断定していないことの説明にもなる）。
