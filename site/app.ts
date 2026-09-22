@@ -422,6 +422,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   const DAY = 86400000;
   const PAGE = 40;
+  /* 推薦カードの初期表示件数。件数欄は候補の総数を出すので、ここで打ち切ったまま
+   * 「さらに表示」を出さないと「200 件」と言いながら 5 件しか見えない画面になる
+   * （変更前は 5 件 fixed で、残りの候補に到達する手段が無かった）。 */
+  const RECOMMENDATION_PAGE = 20;
   let selectedIndex = -1;
   /** ソートできる列の key。`th[data-sort]` と一致させる（ズレは検査で拾う）。 */
   const SORTABLE_KEYS = ["rem", "date", "conf", "rank"];
@@ -1927,6 +1931,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   // ---- RENDERING ----
   let shown: AppRow[] = [];
   let drawn = 0;
+  // 推薦カード側の描画進捗（「さらに表示」を表と同じボタンで共有するため分けて持つ）。
+  let cardsDrawn = 0;
+  let recommendationList: AppRow[] = [];
   // 月見出しの描画条件と、描画対象における月ごとの件数（見出しの「N 件」用）。
   let groupMonths = false;
   let monthCounts: Record<string, number> = {};
@@ -2362,7 +2369,40 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     tr.parentNode?.insertBefore(makeDetailRow(r), tr.nextSibling);
   }
 
+  /** 「さらに表示」のラベル（残り件数を出す。表と推薦カードで同じ形にする）。 */
+  function moreButtonLabel(drawnCount: number, total: number): string {
+    return `さらに表示 (残り ${total - drawnCount} 件)`;
+  }
+
+  /** 「さらに表示」の表示可否とラベルを、描画済み件数と総数からそろえる。 */
+  function updateMoreButton(drawnCount: number, total: number) {
+    const btn = $("more");
+    if (drawnCount < total) {
+      btn.hidden = false;
+      btn.textContent = moreButtonLabel(drawnCount, total);
+    } else {
+      btn.hidden = true;
+    }
+  }
+
+  /** 「さらに表示」を推薦カードで押したとき: 次の 20 件を足す（表と違い作り直しは不要）。 */
+  function drawMoreCards() {
+    const cards = $("recommendationCards");
+    const now = Date.now();
+    const end = Math.min(cardsDrawn + RECOMMENDATION_PAGE, recommendationList.length);
+    for (let i = cardsDrawn; i < end; i += 1) {
+      cards.appendChild(makeRecommendationCard(recommendationList[i], now));
+    }
+    cardsDrawn = end;
+    updateMoreButton(cardsDrawn, recommendationList.length);
+  }
+
   function drawMore() {
+    // 推薦モードでは表が出ていない。同じボタンでカードの続きを出す。
+    if (!$("recommendationCards").hidden) {
+      drawMoreCards();
+      return;
+    }
     const tbody = $("tbody");
     const frag = document.createDocumentFragment();
     const end = Math.min(drawn + PAGE, shown.length);
@@ -2379,13 +2419,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
     tbody.appendChild(frag);
     drawn = end;
-    const btn = $("more");
-    if (drawn < shown.length) {
-      btn.hidden = false;
-      btn.textContent = `さらに表示 (残り ${shown.length - drawn} 件)`;
-    } else {
-      btn.hidden = true;
-    }
+    updateMoreButton(drawn, shown.length);
   }
 
   function recommendationAvailability(r: AppRow) {
@@ -2555,6 +2589,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function renderRecommendationCards(list: AppRow[], now = Date.now()) {
     const cards = $("recommendationCards");
     cards.textContent = "";
+    recommendationList = list;
+    cardsDrawn = 0;
     if (!recommendationData) {
       line(
         cards,
@@ -2573,14 +2609,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       return;
     }
     if (!list.length) {
+      // 推薦モードでは締切画面の絞り込み（検索・分野・国内など）を見せていないので、
+      // 「条件を変えてみてください」は画面に無いものを探す案内になる。
+      // 実際に打てる手（論文の情報量、入力形式の見本）だけを書く。
       line(
         cards,
-        "該当する投稿先がありません。論文本文を長めに入れるか、条件を変えてみてください。",
+        "この論文の語と重なる投稿先が見つかりませんでした。タイトル・概要・キーワードを足すと当たりやすくなります。上のサンプルボタンで入力の形を確かめられます。",
         "recommendation-card",
       );
       return;
     }
-    list.slice(0, 5).forEach((r) => {
+    cardsDrawn = Math.min(list.length, RECOMMENDATION_PAGE);
+    list.slice(0, cardsDrawn).forEach((r) => {
       cards.appendChild(makeRecommendationCard(r, now));
     });
   }
@@ -2610,7 +2650,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const paperText = valueElement("paperText").value;
     const paperMode = recMode && Boolean(paperText.trim());
     let cnt = paperMode
-      ? `あなたの論文に合う投稿先 ${shown.length} 件`
+      ? `あなたの論文に合う投稿先 ${shown.length} 件${
+          shown.length > RECOMMENDATION_PAGE ? `（まず上位 ${RECOMMENDATION_PAGE} 件を表示）` : ""
+        }`
       : recMode
         ? "投稿先を探すには論文情報を入力してください"
         : `${shown.length} 件 / 全 ${rows.length} 件`;
@@ -2678,8 +2720,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       $("deadlineTableWrap").hidden = true;
       $("recommendationCards").hidden = false;
       $("empty").hidden = true;
-      $("more").hidden = true;
       renderRecommendationCards(paperMode ? shown : []);
+      // 件数欄は総数を出すので、打ち切ったぶんは「さらに表示」に載せ直す
+      // （数の言い切りと画面の食い違いを残さない）。
+      updateMoreButton(cardsDrawn, recommendationList.length);
     } else {
       $("deadlineTableWrap").hidden = false;
       $("recommendationCards").hidden = true;

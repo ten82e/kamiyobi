@@ -5440,3 +5440,50 @@ it("相対週が実カタログで其の週 7 日と同じ行を出し、暦日�
   expect(out.outside, "週の外の日を持つ行を交えている").toBe(0);
   expect(out.byDay, "暦日（8月22日）で引けない").toBeGreaterThan(0);
 });
+
+it("論文から探すの候補も「さらに表示」で全件に到達する（SPEC §7）", () => {
+  const runtime = siteRuntime("app.js");
+  // 変更前は推薦カードを 5 件で打ち切り、`#more` を常に隠していた。件数欄は候補総数
+  // （実測で 49〜200 件）を出すので、「200 件」と言いながら 5 件しか見えず、
+  // 残りに到達する手段が無い画面になっていた。
+  const page = runtime.match(/const RECOMMENDATION_PAGE = (\d+);/);
+  expect(page, "推薦カードの初期表示件数が決まっていない").not.toBeNull();
+  expect(Number(page?.[1])).toBeGreaterThan(5);
+  expect(runtime).toContain("cardsDrawn = Math.min(list.length, RECOMMENDATION_PAGE);");
+  expect(runtime).toContain("list.slice(0, cardsDrawn)");
+  // 推薦モードでも「さらに表示」を生かし、残り件数を同じ形で見せる。
+  expect(runtime).toContain("updateMoreButton(cardsDrawn, recommendationList.length);");
+  expect(runtime).toContain('if (!$("recommendationCards").hidden) {');
+  expect(runtime).toContain("drawMoreCards();");
+  // 「さらに表示 (残り N 件)」の組み立ては一か所（表とカードで文言がズレないようにする）。
+  expect((runtime.match(/さらに表示 \(残り/g) || []).length).toBe(1);
+  // 件数欄の言い切りと画面を食い違わせない。
+  expect(runtime).toContain("まず上位 ${RECOMMENDATION_PAGE} 件を表示");
+
+  // ラベルと表示可否は本物を実行して見る（書き写すと「残り」の対応がズレる）。
+  const script = [
+    "const more = { hidden: null, textContent: '' };",
+    "const $ = () => more;",
+    `const moreButtonLabel = ${jsFunction(runtime, "moreButtonLabel")};`,
+    `const updateMoreButton = ${jsFunction(runtime, "updateMoreButton")};`,
+    "const seen = [];",
+    "for (const [drawn, total] of [[0, 200], [20, 200], [180, 200], [200, 200]]) {",
+    "  updateMoreButton(drawn, total);",
+    "  seen.push([more.hidden, more.textContent].join('/'));",
+    "}",
+    "console.log(JSON.stringify(seen));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  expect(JSON.parse(proc.stdout)).toEqual([
+    "false/さらに表示 (残り 200 件)",
+    "false/さらに表示 (残り 180 件)",
+    "false/さらに表示 (残り 20 件)",
+    "true/さらに表示 (残り 20 件)",
+  ]);
+
+  // 0 件の案内は、この画面に無い条件へ利用者を送らない（推薦モードでは
+  // 検索・分野・国内などの絞り込みを見せていない）。
+  expect(runtime).not.toContain("該当する投稿先がありません。論文本文を長めに入れるか");
+  expect(runtime).toContain("タイトル・概要・キーワードを足すと当たりやすくなります");
+});
