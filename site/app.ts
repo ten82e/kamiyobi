@@ -439,6 +439,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * それらを追うのは `upcoming.md`（SPEC §4・§7）。 */
   const SELECTABLE_KINDS = ["abstract", "paper", "journal"];
 
+  /* 種別セレクトの既定（絞り込みなし）の書き方。0 件の案内もこの語を書く —
+   * 案内が古いラベルを指すと、その語が画面に見つからない。 */
+  const KIND_ALL_LABEL_JA = "投稿締切（概要・論文）";
+
   /* ランク絞り込みの選択肢（data の grade と一致させる。SPEC §2: `N` はランク無し）。 */
   const RANK_GRADE_OPTIONS = ["A*", "A", "B", "C", "N"];
   const RANK_UNRATED_JA = Recommender.rankUnratedLabelJa();
@@ -1082,7 +1086,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   const kindSel = $("kind");
   const optAllK = document.createElement("option");
   optAllK.value = "";
-  optAllK.textContent = "投稿締切（概要・論文）";
+  optAllK.textContent = KIND_ALL_LABEL_JA;
   kindSel.appendChild(optAllK);
   SELECTABLE_KINDS.forEach((k) => {
     const opt = document.createElement("option");
@@ -1706,6 +1710,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     domestic: boolean;
     online: boolean;
     rank: string;
+    kind: string;
     query: string;
     hiddenKindWords: string[];
     queryMatch: { catalog: number; journal: number };
@@ -1741,6 +1746,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (filter.domestic) tips.push("「国内研究会・国内シンポジウムのみ」をオフ");
     if (filter.online) tips.push("「オンライン参加可のみ」をオフ");
     if (filter.rank && filter.rank !== "all") tips.push("ランクを「すべて」に変更");
+    // 種別も絞り込みである。これを数えないと、案内どおりに他を外しても 0 件のままになる。
+    if (filter.kind) tips.push(`「種別」を「${KIND_ALL_LABEL_JA}」に変更`);
     if (trimmedQuery && !specific)
       tips.push("検索語を短くする（分野名・主題・開催地の日本語でも引けます）");
 
@@ -1857,6 +1864,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     domestic: boolean;
     online: boolean;
     rank: string;
+    kind: string;
     query: string;
   }): boolean {
     return Boolean(
@@ -1865,6 +1873,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         filter.domestic ||
         filter.online ||
         (filter.rank && filter.rank !== "all" && filter.rank !== "") ||
+        // 種別だけを掛けた状態で 0 件になった人に「外せる条件はありません」と言わない。
+        filter.kind ||
         filter.query.trim(),
     );
   }
@@ -2665,6 +2675,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           domestic: state.domestic,
           online: state.online,
           rank: state.rank,
+          kind: state.kind,
           query: state.q,
           hiddenKindWords: hiddenKindQueryWords(searchQuery),
           queryMatch: queryMatchCounts(searchQuery),

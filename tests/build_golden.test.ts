@@ -1840,14 +1840,18 @@ it("upcoming.md writes each deadline in its official zone, not blanket AoE (SPEC
 });
 
 it("the empty deadline state names the filters that caused it (SPEC §7)", () => {
+  // 案内は選択肢の実ラベルを指すので、その定数も正本（ビルド後）から入れる。
+  const appForHint = siteRuntime();
   const hint = new Function(
-    `return (${jsFunction(siteRuntime(), "emptyDeadlineHint")});`,
+    `${appForHint.match(/const KIND_ALL_LABEL_JA = [^\n]*;/)?.[0] ?? ""}
+     return (${jsFunction(appForHint, "emptyDeadlineHint")});`,
   )() as (f: {
     window: string;
     past: boolean;
     cats: number;
     domestic: boolean;
     rank: string;
+    kind: string;
     query: string;
     hiddenKindWords: string[];
     queryMatch: { catalog: number; journal: number };
@@ -1859,6 +1863,7 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
     cats: 0,
     domestic: false,
     rank: "all",
+    kind: "",
     query: "",
     hiddenKindWords: [],
     queryMatch: { catalog: 0, journal: 0 },
@@ -1900,6 +1905,23 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
   expect(hiddenKindFiltered).toContain("「国内研究会・国内シンポジウムのみ」をオフ");
   // 当たっていないときに誤った説明を出さない。
   expect(hint({ ...clear, query: "nsdi", hiddenKindWords: [] })).not.toContain("種別に当たります");
+
+  /* 種別の絞り込みも外せる条件として名指す。数えないと、案内どおりに他を外しても 0 件のまま。
+   * 書き方はセレクトの実ラベルに揃える。 */
+  const kindFilter = hint({ ...clear, kind: "abstract", query: "音声" });
+  expect(kindFilter).toContain("「種別」を「投稿締切（概要・論文）」に変更");
+  expect(hint({ ...clear, kind: "" })).not.toContain("「種別」を");
+  /* ラベルは 1 箇所の実装から出す。選択肢の生成も案内も定数を読む形にして、
+   * 案内が古いラベルを指す事故を防ぐ（説明コメントに同じ語が現れるのは許す）。 */
+  const runtimeForKindLabel = siteRuntime();
+  expect(
+    runtimeForKindLabel.match(/const KIND_ALL_LABEL_JA = "投稿締切（概要・論文）";/g)?.length,
+  ).toBe(1);
+  expect(runtimeForKindLabel).toContain("optAllK.textContent = KIND_ALL_LABEL_JA;");
+  expect(
+    /tips\.push\(`「種別」を「\$\{KIND_ALL_LABEL_JA\}」に変更`\)/.test(runtimeForKindLabel),
+    "案内がラベルを読み替えている",
+  ).toBe(true);
 
   /* 検索語が収録データ全体では行に当たるのに、既定（投稿締切・未来だけ）といまの絞り込みで
    * 0 件になることがある（`情報検索` は 17 件収録なのに既定画面では 0 件）。
@@ -2209,14 +2231,14 @@ it("relative months in the query are resolved and shown (SPEC §7)", () => {
 it("the empty deadline state offers a one-click way to drop the filters (SPEC §7)", () => {
   const template = readFileSync(join(site, "index.html"), "utf8");
   const runtime = siteRuntime();
-  // 文章で条件を名指しするだけでは劳があるので、まとめて外すボタンを同じ場所に出す。
+  // 文章で条件を名指しするだけでは足りないので、まとめて外すボタンを同じ場所に出す。
   expect(template).toContain('id="emptyText"');
   expect(template).toContain('<button id="emptyReset" type="button" hidden>');
   // 説明文は要素を消さないよう専用の span へ書く（textContent だと子要素が消える）。
   expect(runtime).toContain('$("emptyText").textContent = emptyDeadlineHint(');
   expect(runtime).toContain('$("emptyReset").hidden = !filtersClearable(filter);');
   // 一覧の意味を変える「過去の締切も表示」は利用者の選択として残す。
-  const clear = { window: "all", cats: 0, domestic: false, rank: "", query: "" };
+  const clear = { window: "all", cats: 0, domestic: false, rank: "", kind: "", query: "" };
   const isClearable = new Function(`return (${jsFunction(runtime, "filtersClearable")});`)() as (
     f: typeof clear,
   ) => boolean;
@@ -2225,6 +2247,9 @@ it("the empty deadline state offers a one-click way to drop the filters (SPEC §
   expect(isClearable({ ...clear, window: "7d" })).toBe(true);
   expect(isClearable({ ...clear, domestic: true })).toBe(true);
   expect(isClearable({ ...clear, rank: "A*", cats: 2 })).toBe(true);
+  /* 種別だけ掛けた状態で 0 件になった人に「外せる条件はありません」と打ち止めさせない
+   * （`音声` + 概要締切で 0 件、検索語だけなら 1 件、は実データで実際に起こる）。 */
+  expect(isClearable({ ...clear, kind: "abstract" })).toBe(true);
 });
 
 it("the deadline table is usable on paper and with a Japanese IME (SPEC §7)", () => {
