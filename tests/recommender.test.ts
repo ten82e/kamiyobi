@@ -1443,6 +1443,52 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       ...over,
     });
 
+    it("ランクの番兵 `N` を表計算へ渡さず、画面と同じ「評価なし」と書く", () => {
+      /* 上流の `N` は「ランクが付いていない」ことを表す番兵で等級ではない（SPEC §2）。
+       * 画面と行の詳細は同じ所を「評価なし」と出しているのに、CSV だけが `N` を
+       * そのまま出していた（2026-09-23 実測: 将来締切 917 行のうち 271 マス）。 */
+      const split = (line: string) => {
+        const cells: string[] = [];
+        let cur = "";
+        let quoted = false;
+        for (let i = 0; i < line.length; i += 1) {
+          const c = line[i];
+          if (quoted) {
+            if (c === '"') {
+              if (line[i + 1] === '"') {
+                cur += '"';
+                i += 1;
+              } else quoted = false;
+            } else cur += c;
+          } else if (c === '"') quoted = true;
+          else if (c === ",") {
+            cells.push(cur);
+            cur = "";
+          } else cur += c;
+        }
+        cells.push(cur);
+        return cells;
+      };
+      const csv = R.deadlinesToCsv(
+        [
+          rowOf({
+            conf: { key: "a", title: "Unrated Conf", rank: { ccf: "N", core: "None" }, link: "" },
+          }),
+          rowOf({ conf: { key: "b", title: "Tracked Conf", rank: { ccf: "B" }, link: "" } }),
+        ],
+        now,
+      );
+      const cells: string[][] = csv.split("\r\n").slice(1).map(split);
+      expect(cells[0][7]).toBe("評価なし");
+      expect(cells[0][8]).toBe("評価なし");
+      // 体系その物が無い欄は空のまま（「評価なし」と「その体系を未追跡」を混ぜない）。
+      expect(cells[1][7]).toBe("B");
+      expect(cells[1][8]).toBe("");
+      expect(cells[1][9]).toBe("");
+      // 表計算で「N」という等級で絞り込めてしまう形に戻していないこと。
+      expect(cells.some((c) => c.includes("N"))).toBe(false);
+    });
+
     it("日本語ヘッダーで 1 行 1 締切写出す", () => {
       const csv = R.deadlinesToCsv([rowOf({})], now);
       const [header, first] = csv.split("\r\n");

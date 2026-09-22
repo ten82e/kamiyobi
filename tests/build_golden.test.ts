@@ -8331,7 +8331,7 @@ it("表の列見出しと件数欄が支援技術に伝わる（SPEC §7）", ()
 
 it("絞り込みの各欄に名前があり、支援技術から消していない（SPEC §7）", () => {
   /* 種別・ランク・締切までの見出しはただの `<span>` で、`<label for>` では無かった
-   * （2026-09-23 実測）。支援技術では 3 つの下拉が「すべて」としか読めず、どれが
+   * （2026-09-23 実測）。支援技術では 3 つの選択欄が「すべて」としか読めず、どれが
    * 種別でどれがランクか分からない。検索欄は見出し自体を置いていなかった
    * （placeholder だけ。打つと消える）。 */
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
@@ -8357,7 +8357,7 @@ it("絞り込みの各欄に名前があり、支援技術から消していな�
     // 隠れた保持用（`paperText` など）やファイル選択は、ここでの点検対象から除く。
     if (/\shidden\b|type="hidden"|type="file"/.test(tag)) continue;
     const hasName = labelled.has(id) || /aria-label=|placeholder=/.test(tag) || wrappedInLabel(id);
-    // 下拉と検索欄は「名前がある」だけでは足りない（placeholder は打つと消える）。
+    // 選択欄と検索欄は「名前がある」だけでは足りない（placeholder は打つと消える）。
     const needsLabel = /<select|type="search"/.test(tag);
     if (needsLabel) {
       expect(
@@ -8379,4 +8379,87 @@ it("絞り込みの各欄に名前があり、支援技術から消していな�
   expect(sr.slice(0, 260)).not.toContain("display: none");
   // 画面に出る見出しは従来どおりスタイルが当たる（見た目を壊していない）。
   expect(template).toContain(".field > span, .field > label");
+});
+
+it("CSV のランク列は画面と同じ書き方で、番兵の `N` を渡さない（SPEC §7）", () => {
+  /* 画面と行の詳細はランクの無い所を「評価なし」と出す（第 47 回）が、CSV 書き出しは
+   * 上流の番兵 `N` をそのまま出していた（2026-09-23 実測: 将来締切 917 行で 271 マス）。
+   * 表計算で「N という等級」で絞り込めてしまい、空欄との違いも読めない。
+   * 収録カタログから組んだ実データの CSV で検査する（合成 fixture では 0 マスになる）。 */
+  const out = join(mkdtempSync(join(tmpdir(), "cfp-csv-rank-")), "public");
+  const emptyCache = mkdtempSync(join(tmpdir(), "cfp-csv-rank-cache-"));
+  const built = runCli(out, {
+    now: "2026-08-09T00:00:00Z",
+    cache: emptyCache,
+    extra: ["--no-embeddings"],
+  });
+  expect(built.status, built.stderr).toBe(0);
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(out, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(out, "data.json"))}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const rows = Recommender.candidateRows(DATA).filter((r) => r.t > now);",
+    "const csv = Recommender.deadlinesToCsv(rows, now);",
+    "const split = (line) => { const out2 = []; let cur = ''; let q = false;",
+    "  for (let i = 0; i < line.length; i += 1) { const c = line[i];",
+    "    if (q) { if (c === '\\\"') { if (line[i + 1] === '\\\"') { cur += '\\\"'; i += 1; } else { q = false; } } else { cur += c; } }",
+    "    else if (c === '\\\"') { q = true; }",
+    "    else if (c === ',') { out2.push(cur); cur = ''; } else { cur += c; } }",
+    "  out2.push(cur); return out2; };",
+    "const lines = csv.split('\\r\\n').filter((l) => l.length > 0);",
+    "const head = split(lines[0]);",
+    "const body = lines.slice(1).map(split);",
+    "const cols = head.length;",
+    "const idx = ['CCF', 'CORE', 'THCPL'].map((h) => head.indexOf(h));",
+    "let wrong = 0; let sentinelCells = 0; let unratedCells = 0;",
+    "body.forEach((c) => { if (c.length !== cols) { wrong += 1; return; }",
+    "  idx.forEach((i) => { if (c[i] === 'N') sentinelCells += 1; if (c[i] === '評価なし') unratedCells += 1; }); });",
+    // 収録データ側の番兵の数を数え、CSV の「評価なし」と突き合わせる（双方向の検査）。
+    "const absent = ['n', 'none', '-'];",
+    "let sentinelData = 0;",
+    "rows.forEach((r) => { const rk = (r.conf && r.conf.rank) || {};",
+    "  ['ccf', 'core', 'thcpl'].forEach((k) => { const v = String(rk[k] ?? '').trim().toLowerCase();",
+    "    if (v && absent.indexOf(v) >= 0) sentinelData += 1; }); });",
+    "console.log(JSON.stringify({ rows: rows.length, cols, wrong, sentinelCells, unratedCells, sentinelData }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout.trim().split("\n").pop() || "{}");
+  expect(got.rows).toBeGreaterThan(500);
+  expect(got.cols).toBe(14);
+  // 引用符で括った欄も含めて列がずれていないこと（表計算で化ける元）。
+  expect(got.wrong, "CSV の列数が揃わない行がある").toBe(0);
+  expect(
+    got.sentinelData,
+    "実データにランクの番兵が含まれていない（検査が空振り）",
+  ).toBeGreaterThan(0);
+  expect(got.sentinelCells, "ランクの番兵 `N` が表計算へそのまま出ている").toBe(0);
+  // 番兵の数だけ「評価なし」が出ている（書き換え漏れと過剰変換の両方を見る）。
+  expect(got.unratedCells).toBe(got.sentinelData);
+});
+
+it("日本語の案内に中国語の略語を混ぜない（SPEC §7）", () => {
+  /* dropdown に当たる中国語表記を説明文に混入させては 3 回指摘している（2026-09-23 まで）。
+   * 画面に出す語・案内に書く語は日本語で書く、という §7 の約束をファイル横断で検める。
+   * 語列出典が自分自身を参照して落ちないよう、点検語は文字番号で書く。
+   * 引用（実物の誤記をバッククォートで書いた記録）は対象外。 */
+  const words = ["\u4e0b\u62c9", "\u6298\u53e0", "\u8fd9\u4e9b", "\u6279\u91cf"];
+  const targets = [
+    "README.md",
+    "SPEC.md",
+    "site/template.html",
+    "site/app.ts",
+    "site/recommender.ts",
+    "tests/build_golden.test.ts",
+    "tests/recommender.test.ts",
+  ];
+  for (const rel of targets) {
+    const text = readFileSync(join(REPO_ROOT, rel), "utf8").replace(/`[^`\n]*`/g, "");
+    for (const word of words) {
+      expect(text, `${rel} に中国語の略語「${word}」が混入している`).not.toContain(word);
+    }
+  }
 });

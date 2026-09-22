@@ -2026,6 +2026,16 @@ const Recommender = (() => {
       if (kind !== "journal" && Number.isFinite(t)) {
         left = String(Math.floor((t - nowMs) / 86400000));
       }
+      /* ランクは画面と同じ書き方にする。上流の `N` は「ランクが付いていない」ことを
+       * 表す番兵で等級ではない（SPEC §2）ので、表計算にそのまま渡すと「N という等級」
+       * と読める（2026-09-23 実測: 将来締切 917 行の CSV に `N` が 271 マス出ていた。
+       * 画面と行の詳細は同じ所を「評価なし」と出している）。体系その物が無い欄は
+       * 空のまま出す（「評価なし」と「収録で未追跡」を混ぜない）。 */
+      const csvRank = (value: unknown): string => {
+        const text = String(value ?? "").trim();
+        if (!text) return "";
+        return RANK_ABSENT_GRADES.indexOf(text.toLowerCase()) >= 0 ? RANK_UNRATED_LABEL_JA : text;
+      };
       const status = statusBadgeWords(ed, dl).join("・");
       const place = placeJa(ed.place) || String(ed.place || "");
       // 分野は画面と同じ日本語の語を書く（英字の key を表計算に渡さない）。
@@ -2045,9 +2055,9 @@ const Recommender = (() => {
           catsJa,
           KIND_LABELS_JA[kind] || kind,
           dl.round == null ? "" : `R${dl.round}`,
-          rank.ccf,
-          rank.core,
-          rank.thcpl,
+          csvRank(rank.ccf),
+          csvRank(rank.core),
+          csvRank(rank.thcpl),
           // 一覧の会期列と同じ形（ISO + 暦日）を優先し、読めない会期は原文を残す。
           ed.event_start
             ? [ed.event_start, ed.event_end]
