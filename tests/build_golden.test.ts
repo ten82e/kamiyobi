@@ -9074,3 +9074,33 @@ it("てびきのキーボード表記が、実装が扱うキーと欠けずに�
     expect(detailGuide, `行の詳細の説明に ${word} が無い`).toContain(word);
   }
 });
+
+it("二つの画面の呼び方が、切り替えボタンの語と揃っている（SPEC §7）", () => {
+  /* 切り替えボタンは「投稿先を探す」／「締切を検索」なのに、てびきだけ別の呼び方
+   * （「論文から探す」）で 3 か所書いていた（2026-09-23 実測）。案内を読んだ人が
+   * どのボタンか特定できない。第 94 回の収録状況、第 95 回の早め絞り込みと同じ型なので、
+   * ボタンの語を正本にして検査に入れる（テスト側に語を書き写さない）。 */
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const label = (id: string) => {
+    const at = template.indexOf(`id="${id}"`);
+    expect(at, `切り替えボタンが見つからない: ${id}`).toBeGreaterThan(0);
+    const open = template.indexOf(">", at);
+    const m = />([^<]+)<\/button>/.exec(template.slice(open, open + 200));
+    expect(m, `ボタンの語が取れない: ${id}`).not.toBeNull();
+    return (m as RegExpExecArray)[1];
+  };
+  const recommend = label("modeRecommend");
+  const deadlines = label("modeDeadlines");
+  expect(recommend.length).toBeGreaterThan(0);
+  // 見出し・案内はボタンと同じ語を使う。
+  const guide = template.slice(template.indexOf('id="helpPanel"'));
+  expect(guide).toContain(recommend);
+  // 「締切を検索」側は既定の画面で、案内は表その物の語（「一覧」）で書いているので
+  // 画面名の一致は要求しない（締切一覧＝表の意味で使っていて、誤りではない）。
+  expect(deadlines.length).toBeGreaterThan(0);
+  // 別の呼び方に寄せる書き方を戻さない（第 95 回の検査と同じ趣旨）。
+  expect(guide, "ボタンに無い画面名を案内に書かない").not.toContain("論文から探す");
+  // 画面の下（CSV の説明など）も同じ。
+  const csvDd = template.slice(template.indexOf("<dt>CSV</dt>"));
+  expect(csvDd.slice(0, csvDd.indexOf("</dd>"))).toContain(recommend);
+});
