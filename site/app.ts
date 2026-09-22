@@ -413,8 +413,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 }
 
 (() => {
-  // SPEC.md section 7: catalog.json is injected by the build. Defaults to empty so that
-  // opening the template standalone displays a blank table instead of throwing.
+  /* ビルド時にデータが差し込まれる（SPEC §7）。無い状態で開いても例外にせず、
+   * 空の一覧として出す – ただし「絞り込みで 0 件」と取り違えない案内を後段で出す
+   * （`emptyDeadlineHint` の冒頭）。 */
   const DATA = catalogFrom(window.__KAMIYOBI_DATA__) ?? {
     generated_at: "",
     sources: [],
@@ -703,8 +704,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * → JST では同日 09:00。夜ビルドなら日付その物が翌日になる）。一覧と同じ JST + 曜日 に
    * 寄せる。読めない値には嘘の日付を作らず原文を残す。 */
   function generatedAtLabel(value: string): string {
-    const at = new Date(value);
-    if (Number.isNaN(at.getTime())) return `データ生成: ${value}`;
+    /* ヘッダーに常に出る語なので、値が欠けているときの書き方まで決める
+     * （2026-09-23 実測: 空文字で「データ生成: 」の語だけ、`undefined` ではその英字が、
+     * `null` では 1970-01-01 がそのまま出ていた – 締切のサイトで間違った日付を
+     * 「データ生成」として見せるのが最悪）。値その物は読めない表記として残す
+     * （原因の切り分けに要る）が、主語にはしない。 */
+    const raw = typeof value === "string" ? value.trim() : "";
+    if (!raw) return `データ生成: ${UNCONFIRMED_JA}`;
+    const at = new Date(raw);
+    // 日付として読めない値は、そのまま書く。人が読める印字（「未取得」など）を
+    // 運営が置くことがあるので、それを「未確認」に潰さない – 危険なのは空欄と、
+    // 読めるのに間違った日付（`null` → 1970-01-01）を見ることだけだった。
+    if (Number.isNaN(at.getTime())) return `データ生成: ${raw}`;
     return `データ生成: ${fmtJst(at)}`;
   }
 
@@ -1613,7 +1624,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     hiddenKindWords: string[];
     termCounts: Array<{ term: string; count: number }>;
     queryMatch: { catalog: number; journal: number };
+    catalogConferences: number;
   }): string {
+    // データその物が無いときは、他のどの説明より先にそれを言う（読み上げは短い形で）。
+    if (!filter.catalogConferences) return " ｜ 締切のデータが入っていません";
     const dead = filter.termCounts.filter((t) => t.count === 0).map((t) => t.term);
     if (dead.length) return ` ｜ 語「${dead[0]}」は収録データにありません`;
     if (filter.hiddenKindWords.length)
@@ -1965,7 +1979,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     hiddenKindWords: string[];
     queryMatch: { catalog: number; journal: number };
     termCounts: Array<{ term: string; count: number }>;
+    catalogConferences: number;
   }): string {
+    /* 収録データその物が無いとき（データが差し込まれていない HTML を開いた、組み込みの
+     * データを拡張機能が止めた等）は、条件の話をする前にそれを伝える
+     * （2026-09-23 実測: 「該当する締切はありません。条件を緩めると出ます」と出ていて、
+     * 緩めても何も出ない人に的外れの案内になっていた）。*/
+    if (!filter.catalogConferences) {
+      return (
+        "締切のデータが入っていません。ページの読み込みに失敗している可能性があります。" +
+        "時間をおいて再読み込みするか、サイトの一覧を開き直してください。"
+      );
+    }
     const base = "該当する締切はありません。";
     const trimmedQuery = filter.query.trim();
     /* 検索語が採否通知・査読結果公開など、表に出さない種別に当たっていることがある。
@@ -3157,6 +3182,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             hiddenKindWords: hiddenKindQueryWords(searchQuery),
             queryMatch: queryMatchCounts(searchQuery),
             termCounts: queryTermNotes(searchQuery),
+            // データその物が無い場合と、絞り込みで 0 件の場合を区別する材料。
+            catalogConferences: DATA.conferences.length,
           }
         : null;
     if (zeroFilter) cntLive += zeroResultLiveNote(zeroFilter);

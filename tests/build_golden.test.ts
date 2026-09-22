@@ -1869,6 +1869,7 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
     hiddenKindWords: string[];
     queryMatch: { catalog: number; journal: number };
     termCounts: Array<{ term: string; count: number }>;
+    catalogConferences: number;
     online?: boolean;
   }) => string;
   const clear = {
@@ -1882,6 +1883,7 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
     hiddenKindWords: [],
     queryMatch: { catalog: 0, journal: 0 },
     termCounts: [],
+    catalogConferences: 12,
   };
   // 条件を全部外して 0 件のときは、表に出ない種別（開催行）を説明する。
   expect(hint(clear)).toContain("upcoming.md");
@@ -9776,6 +9778,8 @@ it("語を並べた検索で 0 件のとき、原因の語を名指す（SPEC §
     query: "ネットワーク 福岡 GPU",
     hiddenKindWords: [],
     queryMatch: { catalog: 0, journal: 0 },
+    // 収録データは入っている前提の検査（無いときの説明は別の検査で見る）。
+    catalogConferences: 12,
   };
   const dead = hint({
     ...base,
@@ -9805,6 +9809,7 @@ it("語を並べた検索で 0 件のとき、原因の語を名指す（SPEC §
     ...base,
     query: "データベース",
     termCounts: [{ term: "データベース", count: 456 }],
+    catalogConferences: 12,
   });
   expect(one).not.toContain("語をすべて含む行はありません");
   expect(one).not.toContain("収録データにも見当たりません");
@@ -9819,9 +9824,16 @@ it("0 件の理由は読み上げにも短的に出る（長い文を aria-live 
   const note = new Function(`return (${jsFunction(app, "zeroResultLiveNote")});`)() as (f: {
     hiddenKindWords: string[];
     termCounts: Array<{ term: string; count: number }>;
+    catalogConferences: number;
     queryMatch: { catalog: number; journal: number };
   }) => string;
-  const empty = { hiddenKindWords: [], termCounts: [], queryMatch: { catalog: 0, journal: 0 } };
+  const empty = {
+    hiddenKindWords: [],
+    termCounts: [],
+    queryMatch: { catalog: 0, journal: 0 },
+    // データは入っている前提の検査（無いときの説明は別の検査で見る）。
+    catalogConferences: 12,
+  };
   // 収録に無い語が最優先（その語を外さないと何も変わらないので）。
   const dead = note({
     ...empty,
@@ -10371,4 +10383,85 @@ it("選んだ行は支援技術にも伝わる（視覚の目印だけで状態�
   // 実物のビルド成果物にも属性の操作が入っていること（上の抜き出しが空振りでないこと）。
   expect(app).toContain('setAttribute("aria-current", "row")');
   expect(app).toContain('removeAttribute("aria-current")');
+});
+
+it("締切のデータが無い画面は、それを条件の話より先に言う（SPEC §7）", () => {
+  /* データが差し込まれていない HTML を開いたとき、画面は「該当する締切はありません。
+   * 条件を緩めると出ます」と言っていた（2026-09-23 実測）。緩めても何も出ないので、
+   * 的外れの案内になる。ヘッダーの「データ生成」も、値が欠けていると語だけ残る
+   * （空文字 → 「データ生成: 」、`undefined` → その英字、`null` → 1970-01-01）。
+   * 締切のサイトで間違った日付を「データ生成」として見せるのが最悪だった。*/
+  const app = siteRuntime();
+  const script = [
+    `const LABEL_SRC = ${JSON.stringify(jsFunction(app, "generatedAtLabel"))};`,
+    `const HINT_SRC = ${JSON.stringify(jsFunction(app, "emptyDeadlineHint"))};`,
+    `const LIVE_SRC = ${JSON.stringify(jsFunction(app, "zeroResultLiveNote"))};`,
+    // fmtJst はビルド成果物から取る（表示形式をここにもう一度書かない）。
+    `const FMT_SRC = ${JSON.stringify(jsFunction(app, "fmtJst"))};`,
+    "const fmtJst = new Function(",
+    "  'WEEKDAY_JA',",
+    "  'pad',",
+    "  'return (' + FMT_SRC + ')'",
+    ")(['日','月','火','水','木','金','土'], (n) => String(n).padStart(2, '0'));",
+    "const generatedAtLabel = new Function('fmtJst', 'UNCONFIRMED_JA', 'return (' + LABEL_SRC + ')')(fmtJst, '未確認');",
+    "const hint = new Function('return (' + HINT_SRC + ')')();",
+    "const live = new Function('return (' + LIVE_SRC + ')')();",
+    "const empty = {",
+    "  window: 'all', past: false, cats: 0, domestic: false, online: false, rank: '',",
+    "  kind: '', query: '', hiddenKindWords: [], queryMatch: { catalog: 0, journal: 0 },",
+    "  termCounts: [], catalogConferences: 0,",
+    "};",
+    "const labels = ['', undefined, null, 'junk'].map((v) => generatedAtLabel(v));",
+    "const goodLabel = generatedAtLabel('2026-08-09T00:00:00Z');",
+    "const noData = hint(empty);",
+    "const noDataLive = live(empty);",
+    // 同じ画面でデータが入っていれば、従来どおり条件の話をする（空振りでないこと）。
+    "const withData = hint(",
+    "  Object.assign({}, empty, {",
+    "    catalogConferences: 12,",
+    "    query: '人工知能 gpu',",
+    "    // 語を並べて打った形（原因の語を名指す案内は二語以上のときに出る）。",
+    "    termCounts: [{ term: '人工知能', count: 12 }, { term: 'gpu', count: 0 }],",
+    "    queryMatch: { catalog: 0, journal: 0 },",
+    "  }),",
+    ");",
+    "const withDataLive = live(Object.assign({}, empty, { catalogConferences: 12, termCounts: [{ term: 'gpu', count: 0 }] }));",
+    "console.log(JSON.stringify({ labels, goodLabel, noData, noDataLive, withData, withDataLive }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    labels: string[];
+    goodLabel: string;
+    noData: string;
+    noDataLive: string;
+    withData: string;
+    withDataLive: string;
+  };
+  // 値が欠けている三类（空欄・`undefined`・`null`）で、語だけの空欄・英字・1970 年を
+  // 画面に出さない。
+  for (const label of out.labels.slice(0, 3)) {
+    expect(label, "データ生成の表示に値の欠け方が漏れている").toBe("データ生成: 未確認");
+  }
+  // 読めるのに日付ではない値（運営が置く「未取得」などの印字）はそのまま出す –
+  // 「未確認」に潰すと、運営側の切り分けができなくなる（別の検査が実物を見ている）。
+  expect(out.labels[3], "日付として読めない印字を潰している").toBe("データ生成: junk");
+  expect(out.goodLabel).toContain("2026-08-09");
+  expect(out.goodLabel).not.toContain("undefined");
+  // データが無いときは、条件を緩める案内を出さない。
+  expect(out.noData).toContain("締切のデータが入っていません");
+  expect(out.noData).not.toContain("条件を緩める");
+  expect(out.noData).not.toContain("外せる条件");
+  expect(out.noDataLive, "読み上げがデータが無いことを言っていない").toContain(
+    "データが入っていません",
+  );
+  // データが入っているときは従来の案内が生きている。
+  expect(out.withData).toContain("該当する締切はありません");
+  expect(out.withData).toContain("gpu");
+  expect(out.withDataLive).toContain("gpu");
+  // 呼び出し側が収録件数を通していること（上だけ見ていても実画面は変わらない）。
+  expect(app).toContain("catalogConferences: DATA.conferences.length");
 });
