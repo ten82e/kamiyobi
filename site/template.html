@@ -12,6 +12,23 @@
      frame-ancestors は meta 経由では無効 (console エラーの元) のため置かない。 -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://cdn-lfs.huggingface.co https://*.cdn.hf.co https://*.xethub.hf.co; worker-src 'self' blob: https://cdnjs.cloudflare.com;">
 <title>kamiyobi：CS国際会議・穴場ワークショップ締切探知</title>
+<!-- 検索結果とチャット（Slack / Teams / X）のリンクプレビューで何のサイトかわかるようにする。
+     日本語利用者が「学会 締切」で検索したときと、研究室グループに貼ったときの両方が入口になる。
+     og:url と canonical は config.yaml の site.base_url と一致させる（テストで検査する）。 -->
+<meta name="description" content="CS分野の国際会議・穴場ワークショップと、情報処理学会・電子情報通信学会の国内研究会の締切を、日本時間（JST）と曜日で一覧化する。検索は全角入力や「機械学習」「韓国」などの日本語でも引ける。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="kamiyobi">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="kamiyobi：CS国際会議・穴場ワークショップ締切探知">
+<meta property="og:description" content="CS国際会議・穴場ワークショップ・国内研究会の締切を JST と曜日で一覧。全角入力や日本語の主題語でも検索でき、絞り込み結果は CSV で持ち出せる。">
+<meta property="og:url" content="https://ten82e.github.io/kamiyobi/">
+<meta name="twitter:card" content="summary">
+<!-- tab で他タブと見分けるための自前アイコン（外部アセットは読まない）。
+     og:image を置いていないのは、チャット側が SVG をプレビューに使えないため。 -->
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="canonical" href="https://ten82e.github.io/kamiyobi/">
+<meta name="theme-color" content="#f7f7f8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#18181b">
 <style>
 :root {
   color-scheme: light dark;

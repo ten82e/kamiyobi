@@ -597,6 +597,7 @@ node --experimental-strip-types src/cli.ts evidence [verify|gc] [--dry-run]
 | `recommendation-core.js` | `site/recommendation-core.ts` から生成する共有推薦軸 |
 | `publish.js` | `site/publish.ts` から生成する publish manifest 検証 |
 | `app.js` | `site/app.ts` から生成するブラウザ UI 実行時処理 |
+| `icon.svg` | サイト自前のファビコン（図形のみ。外部フォントに依存しない） |
 | `.nojekyll` | Pages の Jekyll 処理を無効化 |
 
 `health.json` は `profile_hash`、`confirmed_future_deadlines`、`estimated_future_deadlines`、
@@ -921,6 +922,11 @@ conferences:
   ランクを「すべて」に変更 / 検索語を短くする）。条件をすべて外して 0 件のときは
   「開催日だけが確定している会議は表に出さず upcoming.md に載せる」と説明する
   （§7 の表は投稿締切だけ、という仕様を読者に伝えるため）。
+- **開く前に何のサイトかわからせる**: `index.html` は `lang="ja"` に加え、日本語の
+  `description` と Open Graph（`og:locale: ja_JP` 含む）を持つ。入口は検索とチャット
+  （研究室のグループに貼ったとき）の両方なので、どちらでも「JST・曜日で見る締切一覧」
+  が伝わる文面にする。`canonical` と `og:url` は `config.yaml` の `site.base_url` と
+  一致させる（テストで検査）。`og:image` は SVG をプレビューできないチャットがあるため置かない。
 - **絞り込んだ結果を CSV で書き出せる**（`Recommender.deadlinesToCsv`）。書き出すのはページング後の
   表示分ではなく `shown`（絞り込み後の全行）。列は日本語（締切 / 公式表記 / 残り / 会議 / 種別 /
   ラウンド / CCF / CORE / 会期 / 開催地 / 状態 / URL）、改行は CRLF、締切は JST＋曜日を主とし

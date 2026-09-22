@@ -1878,6 +1878,37 @@ it("weekday suffixes for date-only deadlines and 会期 are viewer-timezone inde
   expect(app).toContain("Recommender.weekdayJaFromDate(r.ed.event_end)");
 });
 
+it("index.html tells Japanese readers what the site is before they open it (SPEC §7)", () => {
+  const template = readFileSync(join(site, "index.html"), "utf8");
+  // 検索結果とチャットのリンクプレビューに効くのは description / og まで。
+  expect(template).toContain('<html lang="ja">');
+  const description = template.match(/<meta name="description" content="([^"]+)">/)?.[1] ?? "";
+  expect(description.length).toBeGreaterThan(60);
+  // 「何時まで？」が日本語で伝わることを説明に含める（JST と曜日を主にする主旨）。
+  expect(description).toContain("JST");
+  expect(description).toContain("国内研究会");
+  for (const prop of ["og:type", "og:site_name", "og:locale", "og:title", "og:description"]) {
+    expect(template, `${prop} が無い`).toContain(`<meta property="${prop}"`);
+  }
+  expect(template).toContain('<meta property="og:locale" content="ja_JP">');
+  // SVG の og:image はチャット側でプレビューに使えないので置かない（説明文中の語ではなく tag を見る）。
+  expect(template).not.toMatch(/<meta[^>]+property="og:image"/);
+  // canonical と og:url は config.yaml の site.base_url と同じ所在を指す（ズレ防止）。
+  const config = loadYaml(readFileSync(join(REPO_ROOT, "config.yaml"), "utf8")) as {
+    site: { base_url: string };
+  };
+  const base = config.site.base_url.replace(/\/+$/, "");
+  expect(template).toContain(`<link rel="canonical" href="${base}/">`);
+  expect(template).toContain(`<meta property="og:url" content="${base}/">`);
+  // ファビコンは自前 SVG（外部アセットを読み込まない）。
+  expect(template).toContain('<link rel="icon" type="image/svg+xml" href="icon.svg">');
+  expect(existsSync(join(site, "icon.svg"))).toBe(true);
+  const icon = readFileSync(join(site, "icon.svg"), "utf8");
+  expect(icon).toContain("<svg");
+  // アイコンに文字を入れると日本語フォントの無い環境で文字化けしうるので図形で描く。
+  expect(icon).not.toMatch(/<text|<textPath/);
+});
+
 it("filtered rows can be exported to a spreadsheet as BOM-prefixed CSV (SPEC §7)", () => {
   const template = readFileSync(join(site, "index.html"), "utf8");
   const runtime = siteRuntime();

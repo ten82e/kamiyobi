@@ -93,6 +93,7 @@ const MANAGED_OUTPUT_FILES = [
   "data.csv",
   "upcoming.md",
   "llms.txt",
+  "icon.svg",
   ".nojekyll",
   "embeddings.json",
   ...SITE_RUNTIME_FILES,
@@ -315,6 +316,23 @@ export function embeddingsStale(
   if (manifest.paper_vecs?.dim !== EMBEDDING_DIM) return true;
   return false;
 }
+
+/* サイトの自前アイコン（favicon）。外部フォント・外部画像に依存しないよう、
+ * 文字を使わず図形で描く（日本語フォントが無い環境でも文字化けしない）。
+ * 色は site/template.html の --accent と揃える。 */
+const SITE_ICON_SVG = [
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="kamiyobi">',
+  '<rect width="32" height="32" rx="7" fill="#2f5fd0"/>',
+  '<rect x="6" y="9" width="20" height="17" rx="2.5" fill="#ffffff"/>',
+  '<rect x="6" y="9" width="20" height="4" rx="1.5" fill="#2f5fd0"/>',
+  '<rect x="9.5" y="6" width="2.6" height="5.5" rx="1.3" fill="#ffffff"/>',
+  '<rect x="19.9" y="6" width="2.6" height="5.5" rx="1.3" fill="#ffffff"/>',
+  '<rect x="9.5" y="16.5" width="7" height="2.4" rx="1.2" fill="#2f5fd0"/>',
+  '<rect x="9.5" y="21" width="4" height="2.4" rx="1.2" fill="#9dbdf5"/>',
+  '<circle cx="21.5" cy="22.2" r="3.1" fill="#d84343"/>',
+  "</svg>",
+  "",
+].join("\n");
 
 // --- record extraction -------------------------------------------------------
 
@@ -2965,6 +2983,7 @@ export async function buildAll(
   }
 
   write("llms.txt", toLlmsTxt(safeConfig));
+  write("icon.svg", SITE_ICON_SVG);
   write(".nojekyll", "");
 
   const template = String(safeConfig.template ?? "site/template.html");
