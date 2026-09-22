@@ -2403,6 +2403,15 @@ function jsFunction(html: string, name: string): string {
 }
 
 // filter() is extracted from the emitted module; provide only its explicit module dependencies.
+/* Node 26 は `-e` に渡したソースを ESM かどうか機械的に判定するようで、配列のリテラルに
+ * `"crypto"` が 1 語で含まれていると**モジュール扱いになり、トップレベルの `const`/`var` が
+ * `new Function` の本体から見えなくなる**（`Recommender is not defined` に化ける。
+ * 2026-09-23 に実発生: `cryptography` `xcrypto` は大丈夫で、`crypto` だけ該当した）。
+ * 実行時に同じ文字列になる Unicode エスケープへ書き換えて回避する（正本はそのまま）。 */
+function vmSafeSource(src: string): string {
+  return src.replace(/"crypto"/g, '"cr\\u0079pto"');
+}
+
 const SEARCH_CANON = (() => {
   // 検索照合の規則は recommender.js の正本をそのまま注入する（書き写すと正本とズレるため、
   // スタブでの再現は避ける）。
@@ -2416,6 +2425,7 @@ const SEARCH_CANON = (() => {
     ["LATIN_DIACRITIC_CHARS", /const LATIN_DIACRITIC_CHARS = [^\n]*;/],
     ["COMBINING_MARKS", /const COMBINING_MARKS = [^\n]*;/],
     ["PLACE_QUERY_ALIASES_JA", /const PLACE_QUERY_ALIASES_JA[\s\S]*?\];/],
+    ["TOPIC_QUERY_ALIASES_JA", /const TOPIC_QUERY_ALIASES_JA[\s\S]*?\];/],
     ["RELATIVE_MONTH_OFFSETS_JA", /const RELATIVE_MONTH_OFFSETS_JA[\s\S]*?\};/],
     ["PLACE_READINGS", /const PLACE_READINGS[\s\S]*?\];/],
     ["REGION_READINGS", /const REGION_READINGS[\s\S]*?\];/],
@@ -2431,7 +2441,7 @@ const SEARCH_CANON = (() => {
   ].map(([name, re]) => {
     const src = rec.match(re)?.[0];
     expect(src, `${name} 定義が見つからない`).toBeTruthy();
-    return src as string;
+    return vmSafeSource(src as string);
   });
   return [
     ...consts,
@@ -5704,4 +5714,73 @@ it("開催地を日本語で引け、アクセント付きのつづりは ASCII 
   expect(out.same, "日本語表記と英文字表記で出会う行が違う").toBe(true);
   expect(out.beikoku, "「米国」が 0 件").toBeGreaterThan(0);
   expect(out.phantoms, "別表記の寄せが誤爆している行がある").toBe(0);
+});
+
+it("別表記の表は、実際に新しい行を増やしている（SPEC §7）", () => {
+  /* 開催地・主題の別表記は「打たれた語」と「画面に出る語」をつなぐためだけのもの。
+   * 分野ラベルや日本語の開催地表記が既に同じ行を拾えているのに表へ足すと、
+   * 説明だけが増えて当たり方が変わらない（例: `データベース`→database は追加 0 件だった）。
+   * 収録カタログで、別表記側の語が**日本語表記だけのときより多く**の行を出すことを見る。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    `const rec = readFileSync(${JSON.stringify(join(site, "recommender.js"))}, 'utf8');`,
+    "const rows = Recommender.candidateRows(DATA);",
+    "const norm = (s) => String(s).normalize('NFKC').toLowerCase();",
+    "const keys = (pred) => new Set(rows.filter(pred).map((r) => r.conf.key + '@' + r.ed.year));",
+    "const grab = (name) => {",
+    "  const head = 'const ' + name + ' = ';",
+    "  const i = rec.indexOf(head);",
+    "  const j = rec.indexOf('\\n    ];', i);",
+    // Node の ESM 検出回避は検索の正典の注入と同じものを使う（`vmSafeSource`）。
+    "  return eval(vmSafeSource(rec.slice(i + head.length, j)) + ']');",
+    "};",
+    "const stats = (name) => {",
+    "  let alive = 0;",
+    "  let total = 0;",
+    "  const dead = [];",
+    "  for (const [ja, latin] of grab(name)) {",
+    "    const m = Recommender.searchMatcher(latin);",
+    "    const latinKeys = keys((r) => m(r.hay));",
+    "    const jaKeys = keys((r) => norm(r.hay).includes(norm(ja)));",
+    // 検査用のビルドは小型カタログなので、英文字側が 1 行も出ない条目は判定しない
+    // （収録欠落ではなく、単にその会議が無いだけ）。当たった条目だけを見る。
+    "    if (latinKeys.size === 0) continue;",
+    "    total += 1;",
+    "    const added = [...latinKeys].filter((k) => !jaKeys.has(k)).length;",
+    "    if (added > 0) alive += 1;",
+    "    else dead.push(ja + '→' + latin);",
+    "  }",
+    "  return { alive, total, dead };",
+    "};",
+    "console.log(JSON.stringify({",
+    "  place: stats('PLACE_QUERY_ALIASES_JA'),",
+    "  topic: stats('TOPIC_QUERY_ALIASES_JA'),",
+    "}));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync(
+    "node",
+    ["-e", `const vmSafeSource = ${vmSafeSource.toString()};\n${script}`],
+    {
+      encoding: "utf8",
+      timeout: 120_000,
+    },
+  );
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    place: { alive: number; total: number; dead: string[] };
+    topic: { alive: number; total: number; dead: string[] };
+  };
+  /* 別表記は「打てば行が増える」ためだけに置く。当たった条目で追加 0 件が続くなら、
+   * その条目は説明だけを太らせる死んだ寄せなので、割愛する判断の材料にする
+   * （`データベース`→database は実カタログで追加 0 件だったので実際に削った）。
+   * ただし開催地の日本語化（`Kyoto, Japan` → `京都, 日本`）で日本語側が既に拾える場合が
+   * あるため、0 件は少数派であることまでしか要求しない。 */
+  for (const [name, stat] of Object.entries(out)) {
+    expect(stat.total, `${name} の表で判定できる条目が無さすぎる`).toBeGreaterThan(3);
+    expect(stat.dead.length).toBeLessThanOrEqual(Math.max(1, Math.ceil(stat.total * 0.2)));
+  }
 });

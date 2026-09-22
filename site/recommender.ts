@@ -1623,6 +1623,19 @@ const Recommender = (() => {
         const note = `「${token}」は${hit[0]}で探しています`;
         if (notes.indexOf(note) < 0) notes.push(note);
       }
+      // 主題のことばを英語表記の会議名へ広げたときは、広げたことを件数欄に書く
+      // （黙って当たり範囲が変わると、自分が何を入力したのか分からなくなる）。
+      // ただし分野・主題の寄せ説明が出ている語では二重になるので、そちらに譲る。
+      const foldedToken = kanaFold(token);
+      const topic = hit
+        ? []
+        : TOPIC_QUERY_ALIASES_JA.filter((entry) => kanaFold(entry[0]) === foldedToken).map(
+            (entry) => entry[1],
+          );
+      if (topic.length) {
+        const note = `「${token}」は英語で書かれた会議名（${topic.slice(0, 2).join(" / ")} など）も探しています`;
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
       const parts = ABBREV_YEAR_TOKEN.exec(token);
       if (parts) {
         const digits = parts[2];
@@ -2278,10 +2291,8 @@ const Recommender = (() => {
     ["奈良", "nara"],
     ["大阪", "osaka"],
     ["名古屋", "nagoya"],
-    ["札幌", "sapporo"],
     ["福岡", "fukuoka"],
     ["シカゴ", "chicago"],
-    ["シンガポール", "singapore"],
     ["シドニー", "sydney"],
     ["メルボルン", "melbourne"],
     ["パース", "perth"],
@@ -2393,6 +2404,48 @@ const Recommender = (() => {
     ["フロリアノポリス", "florianopolis"],
   ];
 
+  /* 主題のことばも、日本語で打った人に届くようにする。分野ラベル（`セキュリティ` など）は
+   * 画面に出るが、会議名そのものに主題が英文字で書かれている行が多い
+   * （`Applied Cryptography and Network Security`）。`暗号` と打つ人にその行を渡すには、
+   * 会議名に現れる英文字を同じ検索語の組に入れるしかない（開催地と同じ方針。表示は変えない）。
+   * 収録カタログの会議名に現れる語だけに限る（実測で下表の語が 4〜258 行に現れる。現れない
+   * `自動運転` `省電力` `仮想化` などは置いていない）。
+   * **新しい行を増やさない条目は置かない**（実測で追加 0 件だった `機械学習`→machine learning、
+   * `データベース`→database は、分野ラベルや主題の日本語名が既に同じ行を拾えていた）。
+   * `シンガポール`→singapore も同様（開催地の表記が既に日本語化されていた）。 */
+  const TOPIC_QUERY_ALIASES_JA: string[][] = [
+    ["暗号", "crypto"],
+    ["暗号理論", "crypto"],
+    ["深層学習", "deep learning"],
+    ["ディープラーニング", "deep learning"],
+    ["画像", "image"],
+    ["音声", "speech"],
+    ["無線", "wireless"],
+    ["信号", "signal"],
+    ["通信", "communication"],
+    ["人間", "human"],
+    ["ロボット", "robot"],
+    ["ロボティクス", "robot"],
+    ["センサー", "sensor"],
+    ["統計", "statistics"],
+    ["量子", "quantum"],
+    ["ブロックチェーン", "blockchain"],
+    ["信頼性", "reliability"],
+    ["シミュレーション", "simulation"],
+    ["最適化", "optimization"],
+    ["検証", "verification"],
+    ["教育", "education"],
+    ["分散", "distributed"],
+    ["分散処理", "distributed"],
+    ["並列", "parallel"],
+    ["並列処理", "parallel"],
+    ["高性能計算", "high performance"],
+    ["組み込み", "embedded"],
+    ["組込み", "embedded"],
+    ["形式手法", "formal method"],
+    ["宇宙", "space"],
+  ];
+
   const REGION_READINGS: string[][] = [
     ["東北", "とうほく", "青森,岩手,宮城,秋田,山形,福島"],
     ["関東", "かんとう", "茨城,栃木,群馬,埼玉,千葉,東京,神奈川"],
@@ -2451,7 +2504,7 @@ const Recommender = (() => {
      * 開催地は公式表記（`Seattle, USA`）を変えないので、日本語で打った人に届くように
      * するのは検索語側だけ。逆方向（`seattle` と打ったときに国内表記も見る）も同じ表から
      * 作るが、組の中身は同じ場所を指す語に限定する。 */
-    PLACE_QUERY_ALIASES_JA.forEach(([ja, latin]) => {
+    PLACE_QUERY_ALIASES_JA.concat(TOPIC_QUERY_ALIASES_JA).forEach(([ja, latin]) => {
       const key = kanaFold(ja);
       if (!byReading[key]) byReading[key] = [];
       if (byReading[key].indexOf(latin) < 0) byReading[key].push(latin);

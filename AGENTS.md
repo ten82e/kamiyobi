@@ -17,6 +17,10 @@ node src/cli.ts build --out public --offline --no-embeddings --cache .cache --no
   `--write .` を掛けると `data/**` の JSON まで再整形され、`data/recommender-reranker.json` の
   `input_hashes` 固定（`pins the reranker development inputs by hash`）が壊れる
   （2026-09-23 に実発生。`git checkout -- data/` で戻せる）。
+- テストハーネスが `node -e` に渡すソースは `tests/build_golden.test.ts` の `vmSafeSource` を
+  通すこと。Node 26 は `-e` のソースを ESM 判定しており、配列リテラルに `"crypto"` が 1 語で
+  含まれるとモジュール扱いになり、トップレベルの `const`/`var` が `new Function` の本体から
+  見えなくなる（`ReferenceError: Recommender is not defined` に化ける。2026-09-23 に実発生）。
 - `public/` は `.gitignore`（CI が生成）。`data/snapshot.json` は健全な online ビルドが更新する。
 - offline ビルドは snapshot を書かない（fixtures 汚染防止）。実キャッシュ成果を snapshot に載せるときは手でコピー。
 
