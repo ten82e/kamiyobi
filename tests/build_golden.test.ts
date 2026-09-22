@@ -1849,8 +1849,18 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
     domestic: boolean;
     rank: string;
     query: string;
+    hiddenKindWords: string[];
+    online?: boolean;
   }) => string;
-  const clear = { window: "all", past: true, cats: 0, domestic: false, rank: "all", query: "" };
+  const clear = {
+    window: "all",
+    past: true,
+    cats: 0,
+    domestic: false,
+    rank: "all",
+    query: "",
+    hiddenKindWords: [],
+  };
   // 条件を全部外して 0 件のときは、表に出ない種別（開催行）を説明する。
   expect(hint(clear)).toContain("upcoming.md");
   expect(hint(clear)).not.toContain("期間を");
@@ -1863,10 +1873,20 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
   expect(hint({ ...clear, domestic: true, cats: 2, rank: "A*" })).toContain(
     "「国内研究会・国内シンポジウムのみ」をオフ",
   );
+  /* 検索語が表に出さない種別（採否通知など）に当たっている場合。語は てびき と件数欄に
+   * 出るのに表は投稿締切だけを出すので、「収録が無い」と誤解させる案内では止めない。 */
+  const hiddenKind = hint({ ...clear, query: "採否", hiddenKindWords: ["採否通知"] });
+  expect(hiddenKind).toContain("検索語は「採否通知」の種別に当たります");
+  expect(hiddenKind).toContain("表には投稿締切だけを出します");
+  // 原因がこれなら、外せる条件の並べ替えより先に見せる（「多いのは」の外し方リストより前に立つ）。
+  expect(hiddenKind.indexOf("検索語は")).toBeLessThan(hiddenKind.indexOf("多いのは"));
+  // 当たっていないときに誤った説明を出さない。
+  expect(hint({ ...clear, query: "nsdi", hiddenKindWords: [] })).not.toContain("種別に当たります");
   // 0 件メッセージは表の直下に出る（別ページへ飛ばさない）。
   const runtime = siteRuntime();
-  // 0 件メッセージは表の直下に出る（別ページへ飛ばさない）。
   expect(runtime).toContain('$("emptyText").textContent = emptyDeadlineHint(');
+  // 案内が使う語は `SELECTABLE_KINDS` から求める（書き写すと増えた種別が案内から落ちる）。
+  expect(runtime).toContain("hiddenKindQueryWords(searchQuery)");
 });
 
 it("weekday suffixes for date-only deadlines and 会期 are viewer-timezone independent (SPEC §7)", () => {
@@ -5061,23 +5081,19 @@ it("分野の言い方は、画面に出る語だけを指す（SPEC §7）", ()
     const quoted = entry.shown.match(/「([^」]+)」/)?.[1];
     expect(quoted, `${entry.word} の説明に表示語を書いていない`).toBeTruthy();
     expect(entry.terms, `${entry.word} の展開語が無い`).toContain(quoted);
-    // 展開語は分野名か主題タグの日本語表記である（内部キーだけの指向にしない）。
-    const isCategory =
-      [
-        "人工知能",
-        "データベース",
-        "グラフィックス",
-        "人間情報処理",
-        "高性能計算",
-        "ネットワーク",
-        "セキュリティ",
-        "システム",
-        "計算理論",
-      ].indexOf(String(quoted)) >= 0;
-    const isTagLabel = Boolean(
-      rec.match(new RegExp(`"${entry.terms[entry.terms.length - 1]}": "${quoted}"`)),
+    /* 展開語は、画面に出す表記そのもの。分野名・締切種別・主題タグの対応表に無い語を
+     * 指したら失敗する（寄せ先が行に見えない語だと、なぜ出たか分からなくなる）。 */
+    const labelBlocks = [
+      /const CATEGORY_LABELS_JA[^=]*= \{([\s\S]*?)\n\s*\};/,
+      /const KIND_LABEL_JA[^=]*= \{([\s\S]*?)\n\s*\};/,
+      /const TAG_LABELS_JA[^=]*= \{([\s\S]*?)\n\s*\};/,
+    ]
+      .map((re) => rec.match(re)?.[0] ?? "")
+      .join("\n");
+    expect(labelBlocks.length, "表示語の対応表が読めない").toBeGreaterThan(100);
+    expect(labelBlocks, `${entry.word} → ${quoted} が画面に出る語ではない`).toContain(
+      `"${quoted}"`,
     );
-    expect(isCategory || isTagLabel, `${entry.word} → ${quoted} が画面に出る語ではない`).toBe(true);
   });
   // 件数欄で説明すること（理由も出さずに分野全体の行を並べない）。
   expect(app).toContain("querySynonymNotes(searchQuery)");

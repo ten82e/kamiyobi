@@ -4436,3 +4436,34 @@ describe("分野の言い方（スパコンなどで引ける）", () => {
     ]);
   });
 });
+
+describe("締切種別の言い方と、表に出さない種別の案内", () => {
+  it("抄録・要旨が「概要締切」に当たる", () => {
+    // 学会側は「抄録締切」と書くが、表は「概要締切」を出す。
+    expect(R.searchMatcher("抄録")("SC26 概要締切 abstract")).toBe(true);
+    expect(R.searchMatcher("要旨")("概要締切")).toBe(true);
+    expect(R.searchMatcher("アブストラクト")("概要締切")).toBe(true);
+    expect(R.searchMatcher("全文")("論文締切 paper")).toBe(true);
+    expect(R.searchMatcher("本論文")("論文締切")).toBe(true);
+    expect(R.querySynonymNotes("抄録")).toEqual(["「抄録」は種別「概要締切」で探しています"]);
+    // 誤った寄せ方をしていないこと（抄録を論文に寄せない）。
+    expect(R.searchMatcher("抄録")("論文締切")).toBe(false);
+  });
+
+  it("表に出さない種別に当たった検索語を、案内が名前で言える", () => {
+    const table = R.kindLabelTable();
+    const hidden = ["notification", "camera_ready", "review_release", "registration"].map((kind) =>
+      String(table[kind] || ""),
+    );
+    expect(R.queryHiddenKindMatches("採否", hidden)).toEqual(["採否通知"]);
+    expect(R.queryHiddenKindMatches("通知", hidden)).toEqual(["採否通知"]);
+    // 部分一致が及ばない言い方は別名で受ける。
+    expect(R.queryHiddenKindMatches("合否", hidden)).toEqual(["採否通知"]);
+    expect(R.queryHiddenKindMatches("camera ready", hidden)).toEqual(["カメラレディ締切"]);
+    expect(R.queryHiddenKindMatches("査読", hidden)).toEqual(["査読結果公開"]);
+    // 表に出す種別や、無関係な語で誤爆させない。
+    expect(R.queryHiddenKindMatches("cs", hidden)).toEqual([]);
+    expect(R.queryHiddenKindMatches("", hidden)).toEqual([]);
+    expect(R.queryHiddenKindMatches("論文", hidden)).toEqual([]);
+  });
+});

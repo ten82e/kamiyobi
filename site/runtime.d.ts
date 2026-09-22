@@ -161,6 +161,7 @@ interface SiteRecommenderApi {
   /** 空の会期・開催地・ランクを表で出す語（検索側と同じ正本）。 */
   unconfirmedLabelJa(): string;
   querySynonymNotes(query: unknown): string[];
+  queryHiddenKindMatches(query: unknown, hiddenKindLabels: readonly string[]): string[];
   rankPairLabelJa(pair: string): string;
   rankScaleLabelJa(name: string): string;
   rankUnratedLabelJa(): string;

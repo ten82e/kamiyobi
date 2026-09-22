@@ -1438,6 +1438,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return hiddenCounts;
   }
 
+  /* 検索語が「表に出さない種別」の表示語に当たるか。`SELECTABLE_KINDS` に無い種別が対象で、
+   * 選択肢と同じ列表から求める（書き写すと増えた種別が案内から落ちる）。 */
+  function hiddenKindQueryWords(query: string): string[] {
+    const table = Recommender.kindLabelTable();
+    const hidden = Object.keys(table)
+      .filter((kind) => SELECTABLE_KINDS.indexOf(kind) < 0)
+      .map((kind) => String(table[kind] || ""));
+    return Recommender.queryHiddenKindMatches(query, hidden);
+  }
+
   /** 分野チップの件数（`filter()` が分野以外の条件を通った行について数え直す）。 */
   let catFacetCounts: Record<string, number> = {};
 
@@ -1675,6 +1685,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     online: boolean;
     rank: string;
     query: string;
+    hiddenKindWords: string[];
   }): string {
     const tips: string[] = [];
     // 選択肢の実際のラベルを書く（「すべて」に変えた旧名を案内すると、その語が見つからない）。
@@ -1687,9 +1698,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (filter.query.trim())
       tips.push("検索語を短くする（分野名・主題・開催地の日本語でも引けます）");
     const base = "該当する締切はありません。";
+    /* 検索語が採否通知・査読結果公開など、表に出さない種別に当たっていることがある。
+     * の外せる条件とは別枠の「なぜ 0 件か」なので、「多いのは …」の前に文として立てる。
+     * 「収録が無い」と誤解して離脱しないよう、実名で書く。 */
+    const kindNote = filter.hiddenKindWords.length
+      ? ` 検索語は${filter.hiddenKindWords.map((w) => `「${w}」`).join("・")}の種別に当たります` +
+        "（表には投稿締切だけを出します）。"
+      : "";
     const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.md に載せています。";
-    if (!tips.length) return `${base} ${meetingNote}`;
-    return `${base} 多いのは ${tips.join(" / ")}。${meetingNote}`;
+    if (!tips.length) return `${base}${kindNote} ${meetingNote}`;
+    return `${base}${kindNote} 多いのは ${tips.join(" / ")}。${meetingNote}`;
   }
 
   /**
@@ -2604,6 +2622,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           online: state.online,
           rank: state.rank,
           query: state.q,
+          hiddenKindWords: hiddenKindQueryWords(searchQuery),
         };
         $("emptyText").textContent = emptyDeadlineHint(filter);
         renderNextMeetingNote({

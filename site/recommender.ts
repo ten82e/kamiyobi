@@ -1535,7 +1535,9 @@ const Recommender = (() => {
 
   /* 検索の言いゆれの吸収: 日本の研究者が口にする語を、表に書いてある分野名に寄せる。
    * 「スパコン」は 0 件になるが「高性能計算」は収録済み、という食い違いを防ぐためで、
-   * 対応は**画面に出す分野名そのもの**に向ける（寄せた先が必ず行に見える形にする）。
+   * 対応は**画面に出す語（分野名・締切種別・主題タグの表記）そのもの**に向ける。
+   * 表の語ではない別名（会議名の中の言葉など）は 寄せない。画面に出る語へ寄せる
+   * ことを不変条件にすると、寄せ先が行に見えない語に化ける事故を防げる。
    * 真ん中の語は件数欄に「こう探しました」と出して説明する。理由も見せずに
    * 分野全体の行を並べると、なぜ出たか分からないまま壁になる。
    * 精密な語（`機械学習` など）は寄せない。寄せるのは、そのままでは当たらない語だけにする。
@@ -1559,7 +1561,43 @@ const Recommender = (() => {
     ["ヒューマンインタフェース", "分野「人間情報処理」", ["人間情報処理", "hci"]],
     ["ヒューマンインターフェース", "分野「人間情報処理」", ["人間情報処理", "hci"]],
     ["人間中心", "分野「人間情報処理」", ["人間情報処理", "hci"]],
+    // 締切種別も言い方が分かれる。学会側は「抄録」「要旨」と書くことが多いが、
+    // 表は「概要締切」を出す（実測: `抄録` 0 件 / `概要` 660 件）。
+    ["抄録", "種別「概要締切」", ["概要締切", "abstract"]],
+    ["要旨", "種別「概要締切」", ["概要締切", "abstract"]],
+    ["アブストラクト", "種別「概要締切」", ["概要締切", "abstract"]],
+    ["全文", "種別「論文締切」", ["論文締切", "paper"]],
+    ["フルペーパー", "種別「論文締切」", ["論文締切", "paper"]],
+    ["本論文", "種別「論文締切」", ["論文締切", "paper"]],
   ];
+
+  /* 検索語が、表に出さない締切種別の表示語に当たるかを聞く（0 件の案内が使う）。
+   * 「採否通知」は てびき と件数欄に語が出るのに、表は投稿締切だけを出すため検索すると
+   * 0 件になる。収録が無いのだと誤解させないため、区別できる案内を出せるようにする。
+   * 当たった種別名を返す（案内側で実名を書くため、真偽値だけでは使えない）。 */
+  /* 部分一致では捕まえられない言い方（ラベルと語が噛み合わないものだけ足す）。 */
+  const HIDDEN_KIND_ALIASES_JA: Record<string, string[]> = {
+    採否通知: ["合否", "結果通知", "採択通知"],
+    カメラレディ締切: ["最終稿", "最終原稿", "camera ready", "camera-ready"],
+    反論期間開始: ["リバットル", "rebuttal"],
+    反論期間終了: ["リバットル", "rebuttal"],
+    査読結果公開: ["ピアレビュー結果"],
+  };
+
+  function queryHiddenKindMatches(query: unknown, hiddenKindLabels: readonly string[]): string[] {
+    const tokens = queryTokens(query);
+    if (!tokens.length) return [];
+    const out: string[] = [];
+    hiddenKindLabels.forEach((label) => {
+      if (!label) return;
+      const words = [label].concat(HIDDEN_KIND_ALIASES_JA[label] || []);
+      const hit = tokens.some((token) =>
+        words.some((word) => word.indexOf(token) >= 0 || token.indexOf(word) >= 0),
+      );
+      if (hit && out.indexOf(label) < 0) out.push(label);
+    });
+    return out;
+  }
 
   /** 検索語の同義展開（キーはかな正規化した語）。 */
   function querySynonymMap(): Record<string, [string, string[]]> {
@@ -3757,6 +3795,7 @@ const Recommender = (() => {
     deadlinesToCsv: deadlinesToCsv,
     searchNormalize: searchNormalize,
     querySynonymNotes: querySynonymNotes,
+    queryHiddenKindMatches: queryHiddenKindMatches,
     monthTermsJa: monthTermsJa,
     placePrefectureJa: placePrefectureJa,
     placeOffersOnline: placeOffersOnline,
