@@ -1849,6 +1849,35 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
   expect(runtime).toContain('$("empty").textContent = emptyDeadlineHint(');
 });
 
+it("weekday suffixes for date-only deadlines and 会期 are viewer-timezone independent (SPEC §7)", () => {
+  const rec = siteRuntime("recommender.js");
+  const constSrc = rec.match(/const CALENDAR_DATE_JA = \[[^\]]*\];/)?.[0];
+  expect(constSrc, "CALENDAR_DATE_JA 定義が見つからない").toBeTruthy();
+  const script = [
+    constSrc as string,
+    jsFunction(rec, "weekdayJaFromDate"),
+    "const days = ['2026-12-17', '2026-12-18', '2026-09-30', '2027-03-01', '2026-13-45', ''];",
+    "console.log(JSON.stringify(days.map(weekdayJaFromDate)));",
+  ].join("\n");
+  const outputs = ["Asia/Tokyo", "UTC", "America/Los_Angeles", "Pacific/Kiritimati"].map((TZ) => {
+    const proc = spawnSync("node", ["-e", script], {
+      encoding: "utf8",
+      env: { ...process.env, TZ },
+      timeout: 60_000,
+    });
+    expect(proc.status, proc.stderr).toBe(0);
+    return proc.stdout.trim();
+  });
+  expect(outputs[0]).toBe(JSON.stringify(["木", "金", "水", "月", "", ""]));
+  for (const out of outputs) expect(out).toBe(outputs[0]);
+
+  // 一覧の date-only 行と会期列が同じ関数を通す（瞬間を作って TZ でズレさせない）。
+  const app = siteRuntime();
+  expect(app).toContain("Recommender.weekdayJaFromDate(r.localDate)");
+  expect(app).toContain("Recommender.weekdayJaFromDate(r.ed.event_start)");
+  expect(app).toContain("Recommender.weekdayJaFromDate(r.ed.event_end)");
+});
+
 it("upcoming.md lists meetings as well as deadlines", () => {
   const rows = upcomingRows(site);
   const kinds = new Set(rows.map((r) => r[3]));
@@ -2000,7 +2029,10 @@ it("drawer shows JST with weekday and the official timezone, viewer-timezone ind
     // 公式表記の判定は recommender.js の正本をそのまま注入する（規則の書き写しは
     // 正本とズレるため避ける）。officialZone の依存は isRecord のみ。
     jsFunction(siteRuntime("recommender.js"), "isRecord"),
-    `const Recommender = { officialZone: ${jsFunction(siteRuntime("recommender.js"), "officialZone")}, placeJa: (v) => String(v ?? ""), topicTagsJa: () => [] };`,
+    // 暦日の曜日も recommender.js の正本を注入する（TZ でズレないことの確認を兼ねる）。
+    siteRuntime("recommender.js").match(/const CALENDAR_DATE_JA = \[[^\]]*\];/)?.[0] ?? "",
+    jsFunction(siteRuntime("recommender.js"), "weekdayJaFromDate"),
+    `const Recommender = { officialZone: ${jsFunction(siteRuntime("recommender.js"), "officialZone")}, placeJa: (v) => String(v ?? ""), topicTagsJa: () => [], weekdayJaFromDate: weekdayJaFromDate };`,
     "const body = { innerHTML: '' };",
     "const els = {",
     "  drawerBackdrop: { classList: { add() {} } }, drawerTitle: {}, drawerFullName: {},",
@@ -2020,7 +2052,18 @@ it("drawer shows JST with weekday and the official timezone, viewer-timezone ind
     "  });",
     "  return body.innerHTML;",
     "};",
-    "console.log(JSON.stringify([draw('AoE'), draw('UTC+9'), draw('UTC'), draw(null)]));",
+    "const drawDateOnly = () => {",
+    "  body.innerHTML = '';",
+    "  openDrawer({",
+    "    kind: 'paper', dateOnly: true, localDate: '2026-09-30',",
+    "    conf: { key: 'demo', title: 'Demo' },",
+    "    ed: { year: 2026, place: 'P', date_text: 'D', link: 'https://example.org' },",
+    "    t: Date.parse('2026-09-29T10:00:00.000Z'), tLast: Date.parse('2026-10-01T11:59:59.999Z'),",
+    "    dl: { precision: 'date-only', local_date: '2026-09-30' },",
+    "  });",
+    "  return body.innerHTML;",
+    "};",
+    "console.log(JSON.stringify([draw('AoE'), draw('UTC+9'), draw('UTC'), draw(null), drawDateOnly()]));",
   ].join("\n");
   const outputs = ["Asia/Tokyo", "UTC", "America/Los_Angeles"].map((TZ) => {
     const proc = spawnSync("node", ["-e", script], {
@@ -2033,7 +2076,9 @@ it("drawer shows JST with weekday and the official timezone, viewer-timezone ind
   });
   expect(outputs[1]).toEqual(outputs[0]);
   expect(outputs[2]).toEqual(outputs[0]);
-  const [aoeRow, jstRow, utcRow, rawRow] = outputs[0];
+  const [aoeRow, jstRow, utcRow, rawRow, dateOnlyRow] = outputs[0];
+  // 時刻未確認（date-only）の行も曜日を添える（動作計画は曜日で見込むため）。
+  expect(dateOnlyRow).toContain("2026-09-30(水)");
   // JST が主表記で曜日を伴う。
   expect(aoeRow).toContain("2026-02-07(土) 20:59 JST");
   expect(jstRow).toContain("2026-02-07(土) 20:59 JST");
@@ -2460,7 +2505,7 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
     "const dOpened = calls.open.length === 1 && calls.open[0] === 'B';",
     "const dFocusedRow = calls.focus[calls.focus.length - 1] === 'row1';",
     "const verificationSummary = new Function('esc', 'return (' + SUMMARY + ')')((s) => String(s ?? ''));",
-    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [] });",
+    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '' });",
     "document.activeElement = prevEl;",
     "openDrawer({ kind: 'journal', conf: { title: 'X' }, ed: { place: 'P', date_text: 'D' } });",
     "const focusedClose = document.activeElement === closeBtn;",
@@ -2781,7 +2826,7 @@ it("normal deadline drawer includes verification details", () => {
     "function $(id) { return document.getElementById(id); }",
     "const window = { _prevFocus: null };",
     `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')((s) => String(s ?? ''));`,
-    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [] });`,
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '' });`,
     "openDrawer({",
     "  kind: 'paper', conf: { key: 'demo', title: 'Demo' },",
     "  ed: { year: 2026, place: 'P', date_text: 'D' }, t: 0, tLast: 0,",

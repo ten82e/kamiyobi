@@ -1637,6 +1637,31 @@ const Recommender = (() => {
     return parts.filter(Boolean).join(" ");
   }
 
+  /* SPEC §7: 暦日だけの値に曜日を添える。`YYYY-MM-DD` を UTC の暦日として読み、
+   * 閲覧者のタイムゾーンでシフトさせない（date-only の締切は UTC/JST/AoE に
+   * 変換しないという §4 の約束を守るため、瞬間を作らず部分文字列から取る）。 */
+  const CALENDAR_DATE_JA = ["日", "月", "火", "水", "木", "金", "土"];
+
+  function weekdayJaFromDate(value: unknown): string {
+    const raw = typeof value === "string" ? value.trim() : "";
+    const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+    if (!matched) return "";
+    const y = Number(matched[1]);
+    const m = Number(matched[2]);
+    const d = Number(matched[3]);
+    if (m < 1 || m > 12 || d < 1 || d > 31) return "";
+    const instant = new Date(Date.UTC(y, m - 1, d));
+    // Date.UTC は範囲外の日付を翌月に繰り越す（2026-13-45 が読めてしまう）。
+    // 読み直した暦日が元値と一致するときだけ曜日を返す。
+    if (
+      instant.getUTCFullYear() !== y ||
+      instant.getUTCMonth() + 1 !== m ||
+      instant.getUTCDate() !== d
+    )
+      return "";
+    return CALENDAR_DATE_JA[instant.getUTCDay()];
+  }
+
   /* SPEC §7: 検索の照合は日本語入力に現れる表記ゆれを吸収する。
    * - 全角英数・全角記号は NFKC で半角に寄せる（「ＮＳＤＩ」を "nsdi" と同じ扱いにする）。
    * - 全角スペースも半角スペースに畳む（「ネットワーク　システム」で語が割れた扱いになるのを防ぐ）。
@@ -2965,6 +2990,7 @@ const Recommender = (() => {
     categoryLabelJa: categoryLabelJa,
     officialZone: officialZone,
     placeJa: placeJa,
+    weekdayJaFromDate: weekdayJaFromDate,
     searchNormalize: searchNormalize,
     queryTokens: queryTokens,
     hayMatches: hayMatches,

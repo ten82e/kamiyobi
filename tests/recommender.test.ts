@@ -958,6 +958,32 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
   });
 
+  describe("weekdayJaFromDate（暦日だけの値に曜日を添える）", () => {
+    it("YYYY-MM-DD を UTC の暦日として読む", () => {
+      expect(R.weekdayJaFromDate("2026-12-17")).toBe("木");
+      expect(R.weekdayJaFromDate("2026-12-18")).toBe("金");
+      expect(R.weekdayJaFromDate("2026-09-30")).toBe("水");
+    });
+
+    it("閲覧者のタイムゾーンに依存しない", () => {
+      // TZ は親プロセスで差し替えた実行（tests/build_golden.test.ts の TZ スイープ）でも
+      // 同じ値になることを、瞬間を作らない実装で保証する。
+      expect(R.weekdayJaFromDate("2027-03-01")).toBe("月");
+    });
+
+    it("暦日として読めない値には曜日を付けない", () => {
+      // Date.UTC の繰り越し（2026-13-45 -> 2027-02-14）に曜日を付けない。
+      expect(R.weekdayJaFromDate("2026-13-45")).toBe("");
+      expect(R.weekdayJaFromDate("2026-02-30")).toBe("");
+      expect(R.weekdayJaFromDate("2026-1-7")).toBe("");
+      expect(R.weekdayJaFromDate("2026年1月7日")).toBe("");
+      expect(R.weekdayJaFromDate("")).toBe("");
+      expect(R.weekdayJaFromDate(null)).toBe("");
+      expect(R.weekdayJaFromDate(undefined)).toBe("");
+      expect(R.weekdayJaFromDate(20260107)).toBe("");
+    });
+  });
+
   describe("主題タグの日本語化と検索（tags）", () => {
     it("実データに現れるタグを日本語で返す", () => {
       expect(R.tagLabelJa("machine-learning")).toBe("機械学習");

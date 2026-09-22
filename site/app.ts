@@ -799,7 +799,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         ? '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">随時受付（締切なし）</div>'
         : r.dateOnly
           ? '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">' +
-            esc(r.localDate) +
+            esc(
+              `${r.localDate}${Recommender.weekdayJaFromDate(r.localDate) ? `(${Recommender.weekdayJaFromDate(r.localDate)})` : ""}`,
+            ) +
             dateOnlyText +
             "</div>"
           : '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">' +
@@ -1578,7 +1580,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (r.kind === "journal") {
       line(c1, "随時受付", "nowrap");
     } else if (r.dateOnly) {
-      line(c1, r.localDate, "nowrap");
+      // 暦日だけ分かっている締切でも、動作計画は曜日で見込むので曜日を添える。
+      const dateOnlyDay = Recommender.weekdayJaFromDate(r.localDate);
+      line(c1, dateOnlyDay ? `${r.localDate}(${dateOnlyDay})` : r.localDate, "nowrap");
       line(c1, "時刻未確認", "sub nowrap");
     } else {
       const d = new Date(r.t);
@@ -1709,10 +1713,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const c5 = td(tr, "会期");
     let span = "-";
     if (r.ed.event_start) {
+      // 出張・会場押さえは曜日で見込むので、ISO 日付に曜日を添える（不明なら出さない）。
+      const startDay = Recommender.weekdayJaFromDate(r.ed.event_start);
+      const endDay = Recommender.weekdayJaFromDate(r.ed.event_end);
       span =
         r.ed.event_end && r.ed.event_end !== r.ed.event_start
-          ? `${r.ed.event_start} 〜 ${r.ed.event_end}`
-          : r.ed.event_start;
+          ? `${r.ed.event_start}${startDay ? `(${startDay})` : ""} 〜 ${r.ed.event_end}${endDay ? `(${endDay})` : ""}`
+          : `${r.ed.event_start}${startDay ? `(${startDay})` : ""}`;
     }
     line(c5, span, "sub nowrap");
 
