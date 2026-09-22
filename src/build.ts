@@ -323,6 +323,28 @@ function aoeText(atUtc: Date): string {
   return `${fmtUTC(addDays(atUtc, -0.5), "%Y-%m-%d %H:%M:%S")} AoE`;
 }
 
+/** JST 宣言の締切は JST の壁時計で出す（SPEC §7 の site 表示と同じ規則）。
+ * JST 23:59 締切を AoE 02:59 と見せると「当日早朝まで」と誤読される。 */
+function jstText(atUtc: Date): string {
+  return `${fmtUTC(new Date(atUtc.getTime() + 9 * 3_600_000), "%Y-%m-%d %H:%M")} JST`;
+}
+
+/** Markdown 表の日付列は締切の公式表記（`tz_raw`）にあった書き方をする。
+ * AoE を出すのは公式が AoE の締切だけ。それ以外を AoE 壁時計へ勝手に直さない。
+ * 未知の表記（PT・Europe/London など）は UTC 壁時計に公式表記を添え、換算はしない。 */
+const JST_TZ_VALUES = ["JST", "UTC+9", "UTC+09", "UTC+09:00", "GMT+9", "ASIA/TOKYO"];
+const AOE_TZ_VALUES = ["AOE", "UTC-12", "UTC-12:00"];
+const UTC_TZ_VALUES = ["", "UTC", "UTC+0", "UTC+00", "GMT"];
+
+export function deadlineWhenText(atUtc: Date, tzRaw: string | null | undefined): string {
+  const raw = String(tzRaw ?? "").trim();
+  const zone = raw.toUpperCase().replace(/\s+/g, "");
+  if (JST_TZ_VALUES.indexOf(zone) >= 0) return jstText(atUtc);
+  if (AOE_TZ_VALUES.indexOf(zone) >= 0) return aoeText(atUtc);
+  const utc = `${fmtUTC(atUtc, "%Y-%m-%d %H:%M:%S")} UTC`;
+  return UTC_TZ_VALUES.indexOf(zone) >= 0 ? utc : `${utc}（公式 ${raw}）`;
+}
+
 function sortedDeadlines(edition: Edition): Deadline[] {
   return [...edition.deadlines].sort(
     (a, b) =>
@@ -2651,7 +2673,7 @@ export function toUpcomingMd(
         when =
           ed.estimated && ed.estimate
             ? `推定期間 ${ed.estimate.window_start}〜${ed.estimate.window_end}`
-            : aoeText(dl.at_utc);
+            : deadlineWhenText(dl.at_utc, dl.tz_raw);
       }
       const kindText = escapeMdCell(rec.kind_label);
       const roundText = `R${dl.round}`;

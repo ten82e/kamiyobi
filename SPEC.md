@@ -648,6 +648,12 @@ schema 4 は `source_commit`、`data_commit`、`workflow_run_id`、`dirty_worktr
 **`upcoming.md` の行の選び方**: `exact` の締切行は `at_utc` が `now` から N 日以内のもの、`date-only` の締切行は不確実性区間が `now` から N 日以内と重なるもの。
 `date-only` には時刻単位の残り時間を表示しない。
 不確実性区間より前は「時刻未確認」、区間内は「締切日」と表示し、区間を過ぎた行は除く。
+**`exact` の日付欄は公式表記（`tz_raw`）どおりに書く**（`deadlineWhenText`）。
+`JST` / `UTC+9` / `Asia/Tokyo` 宣言は `2026-08-17 23:59 JST`、`AoE` / `UTC-12` 宣言だけ AoE 壁時計で
+`2026-02-06 23:59:00 AoE`、`UTC` / `GMT` / 表記なしは `… UTC`、それ以外の表記（`PT` など）は
+`… UTC（公式 PT）` と換算せずに原文を添える。JST 宣言の締切を AoE で出さないのは §7 の site と同じ理由
+（`23:59 JST` を `02:59 AoE` と見ると当日早朝までと誤読される）。`data.json` / `data.csv` の
+`utc` / `aoe` / `tz_raw` 列は機械可読なので変えない。
 開催行は開始日が N 日以内で、最終日をまだ過ぎていないものを載せる。
 開催行の「残り」欄は開始前が日数、開始日が `本日開催`、会期中が `開催中(残りN日)`。
 

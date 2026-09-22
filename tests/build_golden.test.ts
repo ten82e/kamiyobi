@@ -25,6 +25,7 @@ import {
   compileSiteRuntime,
   DEFAULT_CATEGORIES,
   deadlineSlotId,
+  deadlineWhenText,
   embeddingsStale,
   escapeMdCell,
   escapeMdUrl,
@@ -1795,6 +1796,31 @@ function upcomingRows(dir: string): string[][] {
   return rows.slice(1);
 }
 
+it("upcoming.md writes each deadline in its official zone, not blanket AoE (SPEC §4)", () => {
+  // JST 宣言の締切を AoE 壁時計で出すと「当日早朝まで」と誤読される（site の §7 と同じ規則）。
+  expect(deadlineWhenText(new Date("2026-08-17T14:59:00Z"), "UTC+9")).toBe("2026-08-17 23:59 JST");
+  expect(deadlineWhenText(new Date("2026-08-17T14:59:00Z"), "JST")).toBe("2026-08-17 23:59 JST");
+  // AoE は UTC-12 の壁時計。UTC 2026-02-07 11:59 は AoE では 2026-02-06 23:59。
+  expect(deadlineWhenText(new Date("2026-02-07T11:59:00Z"), "AoE")).toBe("2026-02-06 23:59:00 AoE");
+  expect(deadlineWhenText(new Date("2026-02-07T11:59:00Z"), "UTC-12")).toContain("AoE");
+  expect(deadlineWhenText(new Date("2026-02-06T11:59:00Z"), "UTC")).toBe("2026-02-06 11:59:00 UTC");
+  expect(deadlineWhenText(new Date("2026-02-06T11:59:00Z"), null)).toBe("2026-02-06 11:59:00 UTC");
+  // 未知の公式表記は換算せず、UTC 壁時計に原文を添える。
+  expect(deadlineWhenText(new Date("2026-02-06T11:59:00Z"), "PT")).toBe(
+    "2026-02-06 11:59:00 UTC（公式 PT）",
+  );
+
+  const rows = upcomingRows(site);
+  const domestic = rows.filter((r) => /研究会|シンポジウム/.test(r[2]));
+  expect(domestic.length).toBeGreaterThan(0);
+  // 国内研究会・シンポジウムの行は JST 表記で、AoE 壁時計が残っていない。
+  for (const row of domestic) {
+    if (row[0].includes("時刻未確認")) continue;
+    expect(row[0]).not.toContain("AoE");
+  }
+  expect(rows.some((r) => r[0].endsWith("JST"))).toBe(true);
+});
+
 it("upcoming.md lists meetings as well as deadlines", () => {
   const rows = upcomingRows(site);
   const kinds = new Set(rows.map((r) => r[3]));
@@ -2043,7 +2069,7 @@ it("site UI is readable for Japanese researchers: field names, JST header, help 
   expect(runtime).toContain("Recommender.hayMatches(r.hay, state.q)");
   // 主題タグ（tags）も日本語で詳細に出す（会議名から場を推定させないため）。
   expect(runtime).toContain("Recommender.topicTagsJa(r.conf.tags)");
-  expect(runtime).toContain("<strong>\u4e3b\u984c:</strong>");
+  expect(runtime).toContain("<strong>主題:</strong>");
   expect(runtime).not.toContain("r.hay.indexOf(");
 });
 
