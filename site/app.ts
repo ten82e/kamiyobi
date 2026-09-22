@@ -96,6 +96,8 @@ interface UiState {
   win: string;
   est: boolean;
   domestic: boolean;
+  /** 会場表記にオンライン参加の記述がある行だけを出す（対面の判定はしない）。 */
+  online: boolean;
   past: boolean;
 }
 
@@ -527,6 +529,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     win: "all",
     est: false,
     domestic: false,
+    online: false,
     past: false,
   };
 
@@ -665,6 +668,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       !state.rank &&
       !state.est &&
       !state.domestic &&
+      !state.online &&
       !state.past;
     const paStar =
       state.rank === "A*" &&
@@ -674,6 +678,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       state.win === "all" &&
       !state.est &&
       !state.domestic &&
+      !state.online &&
       !state.past;
     const pHpcSys =
       state.cats.length === 2 &&
@@ -685,6 +690,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       state.win === "all" &&
       !state.est &&
       !state.domestic &&
+      !state.online &&
       !state.past;
     const pDom =
       state.domestic &&
@@ -695,11 +701,22 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       state.win === "all" &&
       !state.est &&
       !state.past;
+    const pOnline =
+      state.online &&
+      !state.q &&
+      !state.cats.length &&
+      !state.kind &&
+      !state.rank &&
+      state.win === "all" &&
+      !state.est &&
+      !state.domestic &&
+      !state.past;
     const map: Record<string, boolean> = {
       "7d": p7d,
       a_star: paStar,
       hpc_sys: pHpcSys,
       domestic: pDom,
+      online: pOnline,
     };
     document.querySelectorAll<HTMLElement>(".preset-btn").forEach((btn) => {
       const p = btn.getAttribute("data-preset");
@@ -717,12 +734,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       win: "all",
       est: false,
       domestic: false,
+      online: false,
       past: false,
     };
     if (type === "7d") state.win = "7d";
     if (type === "a_star") state.rank = "A*";
     if (type === "hpc_sys") state.cats = ["hpc", "systems"];
     if (type === "domestic") state.domestic = true;
+    if (type === "online") state.online = true;
     stopHistoryLoad();
     if (state.mode === "deadlines") setDeadlineProfile(DATA);
     toForm();
@@ -1420,6 +1439,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (!inRecommend && state.domestic && (r.tags || []).indexOf("domestic-jp") < 0) {
         return false;
       }
+      // 開催形式は会場表記に書かれた記述だけで絞る（書かれていないことから対面を断定しない）。
+      if (!inRecommend && state.online && !Recommender.placeOffersOnline(r.ed.place)) {
+        return false;
+      }
       // 検索は正規化した語の AND 判定（全角入力・全角スペース・複数語に対応するため
       // 照合式は recommender の searchMatcher を単一正典にする）。
       if (!inRecommend && !matchesQuery(r.hay)) {
@@ -1517,6 +1540,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     past: boolean;
     cats: number;
     domestic: boolean;
+    online: boolean;
     rank: string;
     query: string;
   }): string {
@@ -1525,6 +1549,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (!filter.past) tips.push("「過去の締切も表示」をオン");
     if (filter.cats > 0) tips.push("分野チップをはずす");
     if (filter.domestic) tips.push("「国内研究会・国内シンポジウムのみ」をオフ");
+    if (filter.online) tips.push("「オンライン参加可のみ」をオフ");
     if (filter.rank && filter.rank !== "all") tips.push("ランクを「すべて」に変更");
     if (filter.query.trim())
       tips.push("検索語を短くする（分野名・主題・開催地の日本語でも引けます）");
@@ -1582,6 +1607,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     window: string;
     cats: string[];
     domestic: boolean;
+    online: boolean;
   }): void {
     const box = $("emptyMeeting");
     if (!box) return;
@@ -1597,6 +1623,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       .filter((m) => {
         if (searchQuery.trim() && !meetsQuery(m.hay)) return false;
         if (filter.domestic && m.tags.indexOf("domestic-jp") < 0) return false;
+        if (filter.online && !Recommender.placeOffersOnline(m.place)) return false;
         if (filter.cats.length && !filter.cats.some((c) => m.cats.indexOf(c) >= 0)) return false;
         const startMs = Date.parse(`${m.eventStart}T00:00:00+09:00`);
         return Number.isFinite(startMs) && startMs >= now && startMs <= limit;
@@ -1636,6 +1663,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     window: string;
     cats: number;
     domestic: boolean;
+    online: boolean;
     rank: string;
     query: string;
   }): boolean {
@@ -1643,6 +1671,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       (filter.window && filter.window !== "all" && filter.window !== "") ||
         filter.cats > 0 ||
         filter.domestic ||
+        filter.online ||
         (filter.rank && filter.rank !== "all" && filter.rank !== "") ||
         filter.query.trim(),
     );
@@ -2410,11 +2439,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           past: state.past,
           cats: state.cats.length,
           domestic: state.domestic,
+          online: state.online,
           rank: state.rank,
           query: state.q,
         };
         $("emptyText").textContent = emptyDeadlineHint(filter);
-        renderNextMeetingNote({ window: state.win, cats: state.cats, domestic: state.domestic });
+        renderNextMeetingNote({
+          window: state.win,
+          cats: state.cats,
+          domestic: state.domestic,
+          online: state.online,
+        });
         // 「過去の締切も表示」だけは一覧の意味を変える（過去行の読み込みを伴う）ので
         // まとめて外す側では触らず、文章での案内に留める。
         $("emptyReset").hidden = !filtersClearable(filter);
@@ -2535,6 +2570,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         : "all";
     state.est = p.get("est") === "1";
     state.domestic = p.get("domestic") === "1";
+    state.online = p.get("online") === "1";
     state.past = p.get("past") === "1";
     state.cats = (p.get("cats") || "")
       .split(",")
@@ -2553,6 +2589,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (state.win !== "all") p.set("win", state.win);
     if (state.est) p.set("est", "1");
     if (state.domestic) p.set("domestic", "1");
+    if (state.online) p.set("online", "1");
     if (state.past) p.set("past", "1");
     if (state.cats.length) p.set("cats", state.cats.join(","));
     // 並び順も URL に入れる。「国内研究会を締切の新しい順で」のような共有が、
@@ -2570,6 +2607,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     valueElement("win").value = state.win;
     inputElement("est").checked = state.est;
     inputElement("domestic").checked = state.domestic;
+    inputElement("online").checked = state.online;
     inputElement("past").checked = state.past;
     catsBox.querySelectorAll<HTMLInputElement>("input").forEach((chk) => {
       chk.checked = state.cats.indexOf(chk.value) >= 0;
@@ -2584,6 +2622,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     state.win = valueElement("win").value;
     state.est = inputElement("est").checked;
     state.domestic = inputElement("domestic").checked;
+    state.online = inputElement("online").checked;
     state.past = inputElement("past").checked;
     state.cats = [];
     catsBox.querySelectorAll<HTMLInputElement>("input").forEach((chk) => {
@@ -2828,7 +2867,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       scheduleSemantic();
     });
   });
-  ["kind", "rank", "win", "est", "domestic", "past"].forEach((id) => {
+  ["kind", "rank", "win", "est", "domestic", "online", "past"].forEach((id) => {
     $(id).addEventListener("change", apply);
   });
   catsBox.addEventListener("change", apply);
@@ -2846,6 +2885,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       win: "all",
       est: false,
       domestic: false,
+      online: false,
       past,
     };
     stopHistoryLoad();
@@ -2887,6 +2927,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       win: "all",
       est: false,
       domestic: false,
+      online: false,
       past: false,
     };
     valueElement("paperText").value = "";

@@ -2285,6 +2285,9 @@ const SEARCH_CANON = (() => {
     ["REGION_READINGS", /const REGION_READINGS[\s\S]*?\];/],
     ["QUERY_EDGE_PUNCTUATION", /const QUERY_EDGE_PUNCTUATION = [^\n]*;/],
     ["COMPOUND_MIN_LENGTH_JA", /const COMPOUND_MIN_LENGTH_JA = [^\n]*;/],
+    ["ONLINE_TERMS_JA", /const ONLINE_TERMS_JA = [^\n]*;/],
+    ["ONLINE_TERMS_EN", /const ONLINE_TERMS_EN = [^\n]*;/],
+    ["ONLINE_VENUE_FALSE_POSITIVES", /const ONLINE_VENUE_FALSE_POSITIVES = [^\n]*;/],
   ].map(([name, re]) => {
     const src = rec.match(re)?.[0];
     expect(src, `${name} 定義が見つからない`).toBeTruthy();
@@ -2300,6 +2303,7 @@ const SEARCH_CANON = (() => {
       "queryTokens",
       "queryTokenGroups",
       "compoundSplitHit",
+      "placeOffersOnline",
       "matchFoldedGroups",
       "searchMatcher",
       "hayMatches",
@@ -2311,7 +2315,7 @@ const FILTER_RUNTIME_STUBS = [
   "const activeData = { conferences: [] };",
   ...SEARCH_CANON,
   "let searchQuery = '';",
-  "const Recommender = { searchNormalize: searchNormalize, queryTokens: queryTokens, kanaFold: kanaFold, queryTokenGroups: queryTokenGroups, searchMatcher: searchMatcher, matchFoldedGroups: matchFoldedGroups, monthTermsJa: monthTermsJa, expandRelativeMonths: expandRelativeMonths, hayMatches: hayMatches, parsePaperLines: (text) => text ? [{ title: text }] : [], hasJapanese: () => false, contentWordCount: () => 0, autoDetectCats: () => [], venueCategories: () => [], journalRows: () => [], pastRepresentatives: () => [], rankMatches: (pairs, rank) => pairs.includes(rank), venueRecommendations: (rows) => rows.map((row) => ({ row, boosted: false, match: null, availability: null, fit: { score: 10, lexicalScore: 10, label: '', lexicalRank: 0, semanticRank: 0, semanticScore: 0 } })), comparePapers: () => 0 };",
+  "const Recommender = { searchNormalize: searchNormalize, queryTokens: queryTokens, kanaFold: kanaFold, queryTokenGroups: queryTokenGroups, searchMatcher: searchMatcher, matchFoldedGroups: matchFoldedGroups, placeOffersOnline: placeOffersOnline, monthTermsJa: monthTermsJa, expandRelativeMonths: expandRelativeMonths, hayMatches: hayMatches, parsePaperLines: (text) => text ? [{ title: text }] : [], hasJapanese: () => false, contentWordCount: () => 0, autoDetectCats: () => [], venueCategories: () => [], journalRows: () => [], pastRepresentatives: () => [], rankMatches: (pairs, rank) => pairs.includes(rank), venueRecommendations: (rows) => rows.map((row) => ({ row, boosted: false, match: null, availability: null, fit: { score: 10, lexicalScore: 10, label: '', lexicalRank: 0, semanticRank: 0, semanticScore: 0 } })), comparePapers: () => 0 };",
 ].join("\n");
 
 it("browser date-only state is independent of the viewer timezone", () => {
@@ -3938,4 +3942,53 @@ it("the per-query matcher agrees with hayMatches and is not rebuilt per row (SPE
   expect(elapsed, `20,000 行の照合が ${elapsed} ms（行ごとに分解し直していないか？）`).toBeLessThan(
     1_500,
   );
+});
+
+it("the online-participation filter keeps only venues that say so (SPEC §7)", () => {
+  const html = siteHtmlRuntime();
+  const filterSrc = jsFunction(html, "filter");
+  const template = readFileSync(join(site, "index.html"), "utf8");
+  // 入口（チェックボックス・ショートカット・てびき）が画面から消えないようにする。
+  expect(template).toContain('<input type="checkbox" id="online">');
+  expect(template).toContain('data-preset="online" onclick="applyPreset(\'online\')"');
+  const guide = template.slice(template.indexOf('id="helpPanel"'), template.indexOf("</dl>"));
+  expect(guide).toContain("オンライン参加可");
+  expect(guide).toContain("対面とは判定しません");
+  const app = siteRuntime("app.js");
+  // 絞り込みは recommender の判定を呼ぶ（UI 側に表記の規則を写さない）。
+  expect(app).toContain("Recommender.placeOffersOnline(r.ed.place)");
+  // 共有できる状態にする（「オンライン参加可で国内」のような見方を貼り付けられる）。
+  expect(app).toContain('p.set("online", "1");');
+  expect(app).toContain('state.online = p.get("online") === "1";');
+
+  const script = [
+    "const DAY = 86400000;",
+    `const FILTER = ${JSON.stringify(filterSrc)};`,
+    'const now = Date.parse("2026-08-10T00:00:00Z");',
+    "class FakeDate extends Date { static now() { return now; } }",
+    "const document = {};",
+    "function $(id) { return null; }",
+    "const window = {};",
+    "function row(key, place) {",
+    "  return { kind: 'paper', est: false, cats: ['hpc'], rankPairs: ['B'], hay: key, tags: [],",
+    "    t: now + 86400000, tLast: now + 86400000, ed: { place, deadlines: [] }, conf: { key } };",
+    "}",
+    "const rows = [",
+    "  row('hybrid', '和歌山ビッグ愛（和歌山県）／オンライン'),",
+    "  row('inperson', '京都大学 楽友会館（京都府）'),",
+    "  row('venue-name', 'San Francisco Bay, USA and KSIR Virtual Conference Center, USA'),",
+    "  row('english', 'Toronto, Canada & Virtual'),",
+    "];",
+    "const state = { mode: 'deadlines', q: '', cats: [], kind: '', rank: '', win: 'all', est: false, domestic: false, online: true, past: false };",
+    FILTER_RUNTIME_STUBS,
+    "const filter = new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
+    "  'return (' + FILTER + ')')(FakeDate, DAY, rows, state, true, 'rem');",
+    "console.log(JSON.stringify({ online: filter().map((r) => r.conf.key), all: (() => { state.online = false; return filter().map((r) => r.conf.key); })() }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as { online: string[]; all: string[] };
+  // 会場名に語が含まれるだけの行は残さない。
+  expect(out.online).toEqual(["hybrid", "english"]);
+  expect(out.all).toEqual(["hybrid", "inperson", "venue-name", "english"]);
 });

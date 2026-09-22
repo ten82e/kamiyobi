@@ -2280,6 +2280,27 @@ const Recommender = (() => {
       .join(" ");
   }
 
+  /* 会場表記にオンライン参加の記述があるか。出張できないときの参加手段は実務上よく見る
+   * 条件だが、表記はdataの文字列に依存する（「会場名／オンライン」「〜 & Virtual」など）。
+   * 対面かどうかは**判定しない**（書かれていないことから参加形式は推定できない）。
+   * `Virtual Conference Center` のように会場名そのものに語が含まれる場合は除外する。 */
+  // 比較側は `kanaFold` 済み（カタカナはひらがなに畳まれ、小さな仮名も伸びる）なので、
+  // 照合語も同じ形にしておく（「オンライン」は「おんらいん」になる）。
+  const ONLINE_TERMS_JA = ["オンライン", "ハイブリッド"].map((term) => kanaFold(term));
+  const ONLINE_TERMS_EN = ["online", "virtual"];
+  // 会場名の一部として現れる句（2026-09-22 の実データ `San Francisco Bay, USA and KSIR
+  // Virtual Conference Center, USA` で誤って online 扱いになった）。
+  const ONLINE_VENUE_FALSE_POSITIVES = ["virtual conference center"];
+
+  function placeOffersOnline(value: unknown): boolean {
+    let text = kanaFold(searchNormalize(value));
+    if (!text) return false;
+    for (const phrase of ONLINE_VENUE_FALSE_POSITIVES) text = text.split(phrase).join(" ");
+    for (const term of ONLINE_TERMS_JA) if (text.indexOf(term) >= 0) return true;
+    for (const term of ONLINE_TERMS_EN) if (text.indexOf(term) >= 0) return true;
+    return false;
+  }
+
   function placeJa(value: unknown): string {
     const raw = typeof value === "string" ? value.trim() : "";
     if (!raw) return "";
@@ -3518,6 +3539,7 @@ const Recommender = (() => {
     searchNormalize: searchNormalize,
     monthTermsJa: monthTermsJa,
     placePrefectureJa: placePrefectureJa,
+    placeOffersOnline: placeOffersOnline,
     placeWithPrefectureJa: placeWithPrefectureJa,
     expandRelativeMonths: expandRelativeMonths,
     kanaFold: kanaFold,

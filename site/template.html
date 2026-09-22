@@ -650,6 +650,7 @@ footer a:hover { text-decoration: underline; }
       <button class="preset-btn" data-preset="a_star" onclick="applyPreset('a_star')">A*ランク</button>
       <button class="preset-btn" data-preset="hpc_sys" onclick="applyPreset('hpc_sys')">HPC・システム</button>
       <button class="preset-btn" data-preset="domestic" onclick="applyPreset('domestic')">国内研究会</button>
+      <button class="preset-btn" data-preset="online" onclick="applyPreset('online')">オンライン参加可</button>
     </div>
 
     <div class="row deadline-only" style="margin-bottom: 14px;">
@@ -713,6 +714,7 @@ footer a:hover { text-decoration: underline; }
 
     <div class="row deadline-only" style="margin-top: 14px;">
       <label class="check"><input type="checkbox" id="domestic"> <span>国内研究会・国内シンポジウムのみ</span></label>
+      <label class="check"><input type="checkbox" id="online"> <span>オンライン参加可のみ</span></label>
       <label class="check"><input type="checkbox" id="est"> <span>推定締切を含める</span></label>
       <label class="check"><input type="checkbox" id="past"> <span>過去の締切も表示</span></label>
     </div>
@@ -796,6 +798,10 @@ footer a:hover { text-decoration: underline; }
       <div>
         <dt>国内</dt>
         <dd>情報処理学会・電子情報通信学会などの国内研究会と国内シンポジウム。「国内研究会」のボタンだけで絞り込める。</dd>
+      </div>
+      <div>
+        <dt>オンライン参加可</dt>
+        <dd>会場表記に「オンライン」「ハイブリッド」「Online」「Virtual」などの記述がある行だけを出します。記述が無い行を<strong>対面とは判定しません</strong>（公式サイトで確認してください）。会場名の一部として語が含まれる例（<code>KSIR Virtual Conference Center</code>）は除外しています。</dd>
       </div>
       <div>
         <dt>会期のみ・締切未定</dt>

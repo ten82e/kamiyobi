@@ -4165,3 +4165,41 @@ describe("長い和語を二語が並ぶ行にも当てる", () => {
     );
   });
 });
+
+describe("会場表記からオンライン参加かを見る", () => {
+  it("日本語・英語の記述を見る", () => {
+    for (const place of [
+      "沖縄産業支援センター（沖縄県）／オンライン",
+      "北海道大学 情報基盤センター南館2階（ハイブリッド）",
+      "Alicante, Spain / Online",
+      "Toronto, Canada & Virtual",
+      "Canterbury, Great Britain(online)",
+      "Online Only",
+    ]) {
+      expect(recommender.placeOffersOnline(place), `${place} が online でない`).toBe(true);
+    }
+  });
+
+  it("記述の無い行を対面と判定しない（＝書かれた語だけを見る）", () => {
+    for (const place of [
+      "京都大学 楽友会館（京都府）",
+      "未定",
+      "",
+      "名古屋大学 基盤センター２F演習室",
+      "Vienna, Austria",
+    ]) {
+      expect(recommender.placeOffersOnline(place), `${place} が online になる`).toBe(false);
+    }
+  });
+
+  it("会場名の一部として語が入っている例は除外する", () => {
+    // 実データ: 会場名に Virtual を含む。オンライン開催ではない。
+    expect(
+      recommender.placeOffersOnline(
+        "San Francisco Bay, USA and KSIR Virtual Conference Center, USA",
+      ),
+    ).toBe(false);
+    // 同じ行にもう一つの会場がある表記は online のまま（語が実際に使われている）。
+    expect(recommender.placeOffersOnline("Online / Co-located")).toBe(true);
+  });
+});

@@ -156,6 +156,8 @@ interface SiteRecommenderApi {
   monthTermsJa(value: unknown): string;
   placePrefectureJa(value: unknown): string;
   placeWithPrefectureJa(value: unknown): string;
+  /** 会場表記にオンライン参加の記述があるか（対面かどうかは判定しない）。 */
+  placeOffersOnline(value: unknown): boolean;
   expandRelativeMonths(query: unknown, nowMs: number): string;
   queryTokenGroups(query: unknown): string[][];
   queryTokens(query: unknown): string[];
