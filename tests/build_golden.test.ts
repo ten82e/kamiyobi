@@ -2036,14 +2036,10 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
   expect(defaultUrl).not.toContain("sort=");
   expect(defaultUrl).not.toContain("dir=");
   // 知らない key は既定に戻る（URL を叩いて並べ替え式を壊せないようにする）。
-  const bogus = spawnSync(
-    "node",
-    ["-e", script.replace("sent.slice(1)", String.raw`"sort=bogus&dir=up"`)],
-    {
-      encoding: "utf8",
-      timeout: 60_000,
-    },
-  );
+  const bogus = spawnSync("node", ["-e", script.replace("sent.slice(1)", '"sort=bogus&dir=up"')], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
   expect(bogus.status, bogus.stderr).toBe(0);
   expect((JSON.parse(bogus.stdout.trim()) as [string, [string, boolean], string])[1]).toEqual([
     "rem",
@@ -2055,9 +2051,11 @@ it("venues without a prefecture are findable by prefecture (SPEC §7)", () => {
   const build = readFileSync(new URL("../src/build.ts", import.meta.url), "utf8");
   const runtime = siteRuntime("recommender.js");
   // 土地で絞る入口はサイトと同じ語を使う（md 側で都道府県表を二重実装しない）。
-  expect(runtime).toContain("${placePrefectureJa(ed.place)}");
   expect(build).toContain("Recommender.placeWithPrefectureJa(ed.place)");
   // 公式表記を書き換えないので、補うのは末尾に空白区切りで添える形だけ。
+  // 生成 JS の補間式そのものを見て、ビルド側が同じ語を呼んでいることを確認する。
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: コンパイル後の JS 断片をそのまま照合するため ${...} を文字列として持つ
+  expect(runtime).toContain("${placePrefectureJa(ed.place)}");
   // 参照する定数と関数は正本をそのまま注入する（書き写すと正本とズレる）。
   const citySrc = runtime.match(/const CITY_PREFECTURE_JA[\s\S]*?\];/)?.[0];
   expect(citySrc, "CITY_PREFECTURE_JA 定義が見つからない").toBeTruthy();

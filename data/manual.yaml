@@ -229,7 +229,11 @@ conferences:
         place: 名古屋大学 基盤センター２F演習室
         year: 2026
       - date_text: 2026年12月1日-2日 (第207回)
-        deadlines: []
+        deadlines:
+          - date: '2026-09-30'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
         event_end: '2026-12-02'
         event_start: '2026-12-01'
         id: ipsj-hpc-2026-12
@@ -262,7 +266,11 @@ conferences:
         place: 飛騨・世界生活文化センター（岐阜県高山市）
         year: 2026
       - date_text: 2026年12月1日-2日
-        deadlines: []
+        deadlines:
+          - date: '2026-09-30'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
         event_end: '2026-12-02'
         event_start: '2026-12-01'
         id: ipsj-arc-2026-12

@@ -9,10 +9,13 @@ import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
 import { describe, expect, it } from "vitest";
 import {
+  editionIdPrefix,
   keyToTgid,
   parseSchedule,
   placeFromCell,
   planIeiceUpdate,
+  programUrl,
+  tgidToKey,
 } from "../scripts/refresh-ieice.ts";
 
 const FIXTURES = join(import.meta.dirname, "fixtures", "ieice");
@@ -101,6 +104,57 @@ describe("IEICE 研究会の更新を data/manual.yaml に反映する", () => {
     ].join("\n");
 
   const rows = parseSchedule(fixture("NS"));
+
+  it("研究会キーと版 id の接頭語が違う学会でも締切を正しい版に載せる", () => {
+    // 情報処理学会の研究会は会議キーが ipsj-sighpc でも版 id は ipsj-hpc-2026-12。
+    // 会議キーで id を組み立てると既存版に届かず、締切が黙って取りこぼされる
+    // （2026-09-22 の dry-run が「更新なし」で通った実原因）。
+    const manual = [
+      `conferences:`,
+      `  - categories:`,
+      `      - hpc`,
+      `    editions:`,
+      `      - date_text: 2026年12月1日-2日 (第207回)`,
+      `        deadlines: []`,
+      `        event_end: '2026-12-02'`,
+      `        event_start: '2026-12-01'`,
+      `        id: ipsj-hpc-2026-12`,
+      `        link: https://sighpc.ipsj.or.jp/`,
+      `        place: 富山大学 富山キャンパス／オンライン`,
+      `        year: 2026`,
+      `    full_name: 情報処理学会 ハイパフォーマンスコンピューティング研究会 (SIGHPC)`,
+      `    key: ipsj-sighpc`,
+      `    link: https://sighpc.ipsj.or.jp/`,
+      `    tags:`,
+      `      - domestic-jp`,
+      `    title: 情報処理学会 HPC 研究会`,
+      `schema_version: 1`,
+      "",
+    ].join("\n");
+    const rows = parseSchedule(fixture("IPSJ-HPC"));
+    const plan = planIeiceUpdate(manual, { "ipsj-sighpc": rows }, "2026-09-22");
+    const entry = plan.entries.find((e) => e.key === "ipsj-sighpc");
+    expect(entry?.deadlinesFilled).toEqual(["ipsj-hpc-2026-12 2026-09-30"]);
+    expect(plan.text).toContain(`          - date: '2026-09-30'`);
+    expect(loadYaml(plan.text)).toBeTruthy();
+    // 会議名付き tgid はそのまま URL に入り、研究会キーへ戻せる。
+    expect(programUrl("IPSJ-HPC")).toBe("https://ken.ieice.org/ken/program/?tgid=IPSJ-HPC");
+    expect(programUrl("NS")).toBe("https://ken.ieice.org/ken/program/?tgid=IEICE-NS");
+    expect(tgidToKey("IPSJ-HPC")).toBe("ipsj-sighpc");
+    expect(tgidToKey("NWS")).toBe("ieice-nws");
+  });
+
+  it("版 id の接頭語を既存の版 id から導く", () => {
+    expect(
+      editionIdPrefix(
+        "        id: ipsj-hpc-2026-08-swopp\n        id: ipsj-hpc-2026-09\n",
+        "ipsj-sighpc",
+      ),
+    ).toBe("ipsj-hpc");
+    // 版がまだ無い、または会議キーと同じ流儀のときは会議キーをそのまま使う。
+    expect(editionIdPrefix("", "ieice-nws")).toBe("ieice-nws");
+    expect(editionIdPrefix("        id: ieice-ns-2026-12\n", "ieice-ns")).toBe("ieice-ns");
+  });
 
   it("editions: [] の会議に版を追加しても YAML が壊れない", () => {
     // 収録したての研究会は `editions: []`（インラインの空リスト）で持つ。

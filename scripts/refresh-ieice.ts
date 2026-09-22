@@ -222,7 +222,20 @@ function fillDeadline(block: string, editionId: string, iso: string): string | n
   return null;
 }
 
-function editionLines(ed: ScheduleRow, key: string, today: string): string[] {
+/** 版 id の接頭語。既存の版 id（ipsj-hpc-2026-09 など）から日付より前を取り出す。 */
+export function editionIdPrefix(block: string, key: string): string {
+  const ids = [...block.matchAll(/^\s+id: (\S+?)-\d{4}-\d{2}(?:[-\w]*)$/gm)].map((m) => m[1]);
+  // 会議キーと違う接頭語で統一されている研究会（ipsj-sighpc → ipsj-hpc）に合わせる。
+  for (const id of ids.reverse()) if (id !== key) return id;
+  return key;
+}
+
+function editionLines(
+  ed: ScheduleRow,
+  key: string,
+  today: string,
+  idPrefix = editionIdPrefix("", key),
+): string[] {
   const out = [`${EDITION_ITEM_INDENT}- date_text: ${ed.date_text}`];
   // 過ぎた締切を「これから来る締切」として収録しない（公式が過去の日付を出す回がある）。
   if (ed.deadline && ed.deadline >= today) {
@@ -237,7 +250,7 @@ function editionLines(ed: ScheduleRow, key: string, today: string): string[] {
   out.push(`${EDITION_FIELD_INDENT}event_end: '${ed.event_end}'`);
   out.push(`${EDITION_FIELD_INDENT}event_start: '${ed.event_start}'`);
   out.push(
-    `${EDITION_FIELD_INDENT}id: ${key}-${ed.event_start.slice(0, 4)}-${ed.event_start.slice(5, 7)}`,
+    `${EDITION_FIELD_INDENT}id: ${idPrefix}-${ed.event_start.slice(0, 4)}-${ed.event_start.slice(5, 7)}`,
   );
   out.push(`${EDITION_FIELD_INDENT}link: ${programUrl(keyToTgid(key))}`);
   out.push(`${EDITION_FIELD_INDENT}place: ${ed.place}`);
@@ -245,6 +258,10 @@ function editionLines(ed: ScheduleRow, key: string, today: string): string[] {
   return out;
 }
 
+/* 研究会キーと研究会発表申込システムの tgid の対応表。情報処理学会の研究会も
+ * 同じシステム（ken.ieice.org）でスケジュール表を出しているので、学会名付きの
+ * tgid（IPSJ-HPC など）はここに名指しで持つ。tgid に "-" を含むものは学会名付きと
+ * みなしてそのまま URL に使う。 */
 const TGID_BY_KEY: Record<string, string> = {
   "ieice-ns": "NS",
   "ieice-in": "IN",
@@ -252,14 +269,28 @@ const TGID_BY_KEY: Record<string, string> = {
   "ieice-cpsy": "CPSY",
   "ieice-rcs": "RCS",
   "ieice-nv": "NV",
+  "ipsj-sighpc": "IPSJ-HPC",
+  "ipsj-sigsec": "IPSJ-CSEC",
+  "ipsj-sigarc": "IPSJ-ARC",
+  "ipsj-sigemb": "IPSJ-EMB",
+  "ipsj-sigse": "IPSJ-SE",
+  "ipsj-sigdps": "IPSJ-DPS",
+  "ipsj-sigubi": "IPSJ-UBI",
 };
 
 export function keyToTgid(key: string): string {
   return TGID_BY_KEY[key] ?? key.replace(/^ieice-/, "").toUpperCase();
 }
 
+/** tgid から研究会キーを組み立てる（逆引きに無いものは IEICE の略称とみなす）。 */
+export function tgidToKey(tgid: string): string {
+  for (const [key, value] of Object.entries(TGID_BY_KEY)) if (value === tgid) return key;
+  return `ieice-${tgid.toLowerCase()}`;
+}
+
 export function programUrl(tgid: string): string {
-  return `https://ken.ieice.org/ken/program/?tgid=IEICE-${tgid}`;
+  const tgidParam = tgid.includes("-") ? tgid : `IEICE-${tgid}`;
+  return `https://ken.ieice.org/ken/program/?tgid=${tgidParam}`;
 }
 
 function conferenceRange(text: string, key: string): { start: number; end: number } | null {
@@ -296,6 +327,8 @@ export function planIeiceUpdate(
     }
     let block = text.slice(range.start, range.end);
     const entry: PlanEntry = { key, deadlinesFilled: [], editionsAdded: [] };
+    // 版 id の接頭語は会議キーと限らない（ipsj-sighpc の版は ipsj-hpc-2026-12）。
+    const idPrefix = editionIdPrefix(block, key);
     const existingStarts: string[] = [];
     for (const match of block.matchAll(/event_start: '(\d{4}-\d{2}-\d{2})'/g)) {
       existingStarts.push(match[1]);
@@ -303,7 +336,7 @@ export function planIeiceUpdate(
     for (const row of rows) {
       if (row.event_end < today || existingStarts.indexOf(row.event_start) < 0) continue;
       if (!row.deadline || row.deadline < today) continue;
-      const id = `${key}-${row.event_start.slice(0, 4)}-${row.event_start.slice(5, 7)}`;
+      const id = `${idPrefix}-${row.event_start.slice(0, 4)}-${row.event_start.slice(5, 7)}`;
       const updated = fillDeadline(block, id, row.deadline);
       if (updated === null) continue;
       block = updated;
@@ -325,7 +358,7 @@ export function planIeiceUpdate(
         insertAt += emptyEditionAsBlock.length - emptyEditions.length;
       }
       const lines: string[] = [];
-      for (const row of additions) lines.push(...editionLines(row, key, today));
+      for (const row of additions) lines.push(...editionLines(row, key, today, idPrefix));
       block = `${block.slice(0, insertAt)}${lines.join("\n")}\n${block.slice(insertAt)}`;
       entry.editionsAdded.push(...additions.map((row) => row.event_start));
     }
@@ -377,6 +410,14 @@ const TGID_ORDER = [
   "IBISML",
   "DE",
   "SS",
+  // 情報処理学会の研究会も同じシステムでスケジュール表が出る（ipsj.or.jp は 403 で機械取得不能）。
+  "IPSJ-HPC",
+  "IPSJ-CSEC",
+  "IPSJ-ARC",
+  "IPSJ-EMB",
+  "IPSJ-SE",
+  "IPSJ-DPS",
+  "IPSJ-UBI",
 ];
 
 function parseArgs(argv: string[]): {
@@ -413,7 +454,7 @@ async function main(): Promise<void> {
   const rowsByCommittee: Record<string, ScheduleRow[]> = {};
   const failures: string[] = [];
   for (const tgid of wanted) {
-    const key = `ieice-${tgid.toLowerCase()}`;
+    const key = tgidToKey(tgid);
     const registered = manualKeys.has(key);
     let html: string | null = null;
     if (args.cacheDir) html = readCached(args.cacheDir, tgid);

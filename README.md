@@ -194,8 +194,10 @@ main では `deploy.yml` が Pages を配信する。
 node src/fetch-primary.ts --apply
 # 1b. 国内研究会の会期・締切を研究会別スケジュール表から更新する（既定は dry-run）
 node scripts/refresh-ieice.ts --cache-dir .cache/ieice
-#     新しい研究会を足すときは data/manual.yaml へ `editions: []` のブロックを置いてから
+#     新しい研究会を足すときは data/manual.yaml へ editions: [] のブロックを置いてから
 #     実行する（研究会名は公式ページのタイトルから取る。dry-run で追加予定が出るはず）
+#     情報処理学会の研究会も同じスケジュール表に乗っているので、ipsj.or.jp が 403 でも
+#     収録済みの IPSJ 研究会（HPC・CSEC・ARC・EMB・SE・DPS・UBI）はここで更新できる
 node scripts/refresh-ieice.ts --cache-dir .cache/ieice --apply
 # 2. 候補探索（新規会議の発見）
 node src/cli.ts discover
