@@ -9999,3 +9999,81 @@ it("「視差効果を減らす」設定では動きが消え、開閉自体は�
   // JS 側（行のスクロール）も同じ設定を見ている – 片方だけ守る形に戻さない。
   expect(siteRuntime()).toContain("prefers-reduced-motion");
 });
+
+it("検索欄で Esc を押すと、語を消さずに欄を出て選択行に戻る（SPEC §7）", () => {
+  /* `/` で検索欄に飛び、打ち終わって `j` / `k` を打ちたい、というのが実際の動きだった。
+   * 入力欄にいる間の `j` / `k` は文字入力になるので、Esc で欄を出る必要がある。
+   * Esc 自体は入力欄で効いていたが、フォーカスが body に落ちるだけだった
+   * （2026-09-23 実測: 選択行に返していなかった – 行の詳細を閉じるときだけ戻す形）。
+   * 支援技術では「どこを読めばいいのか」が分からなくなる。*/
+  const html = siteRuntime();
+  const keySrc = jsFunction(html, "onKeydown");
+  const selectSrc = jsFunction(html, "updateRowSelection");
+  const script = [
+    "const calls = [];",
+    "function row(name) {",
+    "  return {",
+    "    name,",
+    "    classList: { contains: () => false, toggle: (c, on) => calls.push(name + ':' + c + ':' + on) },",
+    "    focus() { calls.push('focus:' + name); },",
+    "    scrollIntoView() { calls.push('scroll:' + name); },",
+    "  };",
+    "}",
+    "const rows = [row('row0'), row('row1')];",
+    // 検索欄（id は q）。フォーカスを戻す対象と区別できるので、blur を数える。
+    "const search = { tagName: 'INPUT', blur() { calls.push('blur:q'); }, focus() {} };",
+    "const paper = { tagName: 'TEXTAREA', blur() { calls.push('blur:paper'); }, focus() {} };",
+    "const els = { q: search, tbody: { querySelectorAll: () => rows } };",
+    "const document = { activeElement: null, getElementById: (id) => els[id] || null };",
+    "function $(id) { return document.getElementById(id); }",
+    "const window = { matchMedia: () => ({ matches: false }) };",
+    "const shown = [{ key: 'A' }, { key: 'B' }];",
+    `const KEY = ${JSON.stringify(keySrc)};`,
+    `const SELECT = ${JSON.stringify(selectSrc)};`,
+    "const make = (selectedIndex) =>",
+    "  new Function('window', 'document', '$', 'selectedIndex', 'shown', 'openDrawer', 'closeDrawer', 'updateRowSelection', 'return (' + KEY + ')')(",
+    "    window, document, $, selectedIndex, shown, () => {}, () => {}, updateRowSelection);",
+    "const updateRowSelection = new Function('window', 'document', '$', 'selectedIndex', 'return (' + SELECT + ')')(window, document, $, 1);",
+    // ① 検索欄で Esc → 欄を出て（blur）、選んでいた行にフォーカスが戻る。
+    "calls.length = 0;",
+    "make(1)({ key: 'Escape', preventDefault() {}, target: search });",
+    "const fromSearch = calls.slice();",
+    // ② 他の入力欄（論文の本文など）で Esc → 欄は出るが、表の行に奪わない。
+    "calls.length = 0;",
+    "make(1)({ key: 'Escape', preventDefault() {}, target: paper });",
+    "const fromPaper = calls.slice();",
+    // ③ 行を選んでいないとき（まだ 0 件・未選択）は行にフォーカスを移さない。
+    "calls.length = 0;",
+    "make(-1)({ key: 'Escape', preventDefault() {}, target: search });",
+    "const noRow = calls.slice();",
+    // ④ そのほかの鍵では何もしない（入力の内容を壊さない）。
+    "calls.length = 0;",
+    "make(1)({ key: 'x', preventDefault() {}, target: search });",
+    "const other = calls.slice();",
+    "console.log(JSON.stringify({ fromSearch, fromPaper, noRow, other }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as Record<string, string[]>;
+  expect(out.fromSearch, "検索欄から出られていない").toContain("blur:q");
+  expect(out.fromSearch, "選択行にフォーカスが戻っていない").toContain("focus:row1");
+  // 検索語を消す実装に戻っていないこと（blur 以外の操作を足していない）。
+  expect(out.fromSearch.filter((c) => c.startsWith("blur:"))).toEqual(["blur:q"]);
+  // 他の入力欄では表の行を奪わない（論文の本文に打っていて Esc を押した人が、表の行に
+  // 飛ばされることがあってはいけない）。
+  expect(out.fromPaper).toContain("blur:paper");
+  expect(
+    out.fromPaper.filter((c) => c.startsWith("focus:")),
+    "他の入力欄で Esc を押した人が表の行に飛ばされている",
+  ).toEqual([]);
+  // 行が未選択のときはフォーカスを移さない（存在しない行を触らない）。
+  expect(out.noRow.filter((c) => c.startsWith("focus:"))).toEqual([]);
+  // 他の鍵は入力欄では素通り（文字が入るだけ）。
+  expect(out.other).toEqual([]);
+  // 手引きが二つの導線を説明している（ショートカットの一覧は件数欄にもある）。
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  expect(template, "てびきが / と Esc の導線を説明していない").toContain(
+    "<code>/</code> で検索欄に飛び",
+  );
+  expect(template).toContain("検索語を消さずに欄を出て");
+});

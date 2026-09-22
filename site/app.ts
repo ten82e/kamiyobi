@@ -1015,6 +1015,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     ) {
       if (e.key === "Escape") {
         if ("blur" in target && typeof target.blur === "function") target.blur();
+        /* `/` で検索欄に入って Esc で出た人は、そのまま `j` / `k` を打ちたい。
+         * フォーカスが body に落ちると、支援技術ではどこを読めばいいのか分からない
+         * （2026-09-23 実測: 選択行に返していなかった – 行の詳細を閉じたときだけ
+         * 戻す形になっていた）。選択行があるときだけ返す。検索語は消さない
+         * （消すと打ち直しが発生して却って困る）。 */
+        if (target === $("q") && selectedIndex >= 0 && shown.length) updateRowSelection();
       }
       return;
     }
