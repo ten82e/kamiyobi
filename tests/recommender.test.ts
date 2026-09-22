@@ -1303,6 +1303,31 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.queryTokenGroups("・")).toEqual([]);
     });
 
+    it("他の並べ語と句読点でも切る（画面の古い書き方・表計算からの貼付）", () => {
+      // 行の詳細は以前、分野を全角コンマで並べていた（`人工知能，データベース`）。
+      // 写した語が 1 語扱いで 0 件に当たっていた（2026-09-23 実測）。
+      for (const q of ["人工知能，データベース", "人工知能、データベース"]) {
+        const groups = R.queryTokenGroups(q);
+        expect(groups.length, q).toBe(2);
+        expect(groups[0]).toEqual(R.queryTokenGroups("人工知能")[0]);
+        expect(groups[1]).toEqual(R.queryTokenGroups("データベース")[0]);
+      }
+      // `AI/ML` のように自分で区切って打つ入力も 2 語として扱う。
+      // （変更前は `ai/ml` が 1 語になり 0 件だった。）
+      expect(R.queryTokenGroups("ai/ml").length).toBe(2);
+      // カンマは表計算からの貼付でも入る。
+      expect(R.queryTokenGroups("ai, security").length).toBe(2);
+    });
+
+    it("並べ語だけの入力は語を作らない", () => {
+      // `，` だけの入力は「カンマを含む行」全件（3,014 件）に化けていた。
+      // 句読点だけでは絞り込まない（空入力と同じく語を作らない）。
+      expect(R.queryTokenGroups("，")).toEqual([]);
+      expect(R.queryTokenGroups("、")).toEqual([]);
+      expect(R.queryTokenGroups("/")).toEqual([]);
+      expect(R.queryTokenGroups("／")).toEqual([]);
+    });
+
     it("ラウンドの語と組み合わせても壊れない", () => {
       // `スパコン・第 2 ラウンド` のように、サイトの語を続けて書いても各語が立つ。
       const groups = R.queryTokenGroups("スパコン・第 2 ラウンド");

@@ -3022,23 +3022,38 @@ const Recommender = (() => {
     });
 
     const groups: string[][] = [];
-    /* 中黒（・）は site 自身の区切り文字なので、入力でも区切りとして扱う。
+    /* 中黒（・）などの並べ語は site 自身の区切り文字なので、入力でも区切りとして
+     * 扱う（一覧・CSV・件数欄・行の詳細の分野/主題/ランクの並び）。
      * 件数欄・CSV・行の詳細は分野を `人工知能・データベース` のように・で並べて書く
      * （この表記を持つ行は収録 397 行）。そのまま写すと 1 語になり、打ち写した語が
      * 0 件に当たっていた（2026-09-23 実測）。切る方向は他の語と同じく AND。
      * ただし `サン・マロ`（saint-malo）のように 1 つの地名に・が入るものがあるので、
      * 語全体が別表に載っているときは、その寄せ先を各部分にも持たせる
      * （どちらの組からも同じ行に届くようにする）。 */
+    /* 並べ語の文字類。`・` は画面の並べ書き（一覧・CSV・件数欄・行の詳細）、
+     * `，` `、` も以前の書き方として残るため切っておく。`,` と `/` は表計算からの
+     * 貼付と、`AI/ML` のように自分で区切る入力に必要（2026-09-23 実測: `ai/ml` は
+     * 1 語扱いで 0 件だった）。`／` は正規化で `/` になるので、ここでまとめて受ける。
+     * `・` を含む見出しは別表に `サン・マロ` の 1 件だけなので、下の束ねで救う。 */
+    const JOIN_WORDS = /[・，、,/]/;
+    /* `2026-08-22` `12/25` のような日付入力は、`/` を区切りにしない
+     * （日付として読む語なので、割ると暦日検索が壊れる。2026-09-23 に実測で拾った）。 */
+    const dateLike = (token: string): boolean => {
+      const parts = token.split("/");
+      return parts.length >= 2 && parts.every((part) => /^[0-9]{1,4}$/.test(part));
+    };
     const middleParts = (token: string): string[] => {
-      if (token.indexOf("・") < 0) return [token];
+      if (!JOIN_WORDS.test(token) || dateLike(token)) return [token];
       const parts = token
-        .split("・")
+        .split(JOIN_WORDS)
         .map((part) => part.trim())
         .filter(Boolean);
-      return parts.length >= 2 ? parts : [token];
+      // 並べ語だけの入力（`，` など）は語を作らない。句読点を含む行全件に化けるため。
+      if (parts.length === 0) return [];
+      return parts;
     };
     const middleWhole = (token: string): string[] =>
-      token.indexOf("・") < 0 ? [] : resolved[kanaFold(token)] || [];
+      JOIN_WORDS.test(token) ? resolved[kanaFold(token)] || [] : [];
     const units: Array<{ token: string; whole: string[] }> = [];
     queryTokens(query).forEach((raw) => {
       middleParts(raw).forEach((part) => {

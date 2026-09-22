@@ -913,18 +913,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       esc(r.ed.date_text || r.ed.event_start || UNCONFIRMED_JA) +
       "</p>" +
       laterEditionsHtml +
+      // 並べ語は中黒（・）に統一する。一覧・CSV・件数欄はすでに中黒で並べていて、
+      // 行の詳細だけ全角コンマ（，）だと、同じ情報を 2 通りの書き方で見る上に、
+      // 行の詳細から検索欄へ写したときに 1 語扱いで 0 件へ落ちる（2026-09-23 実測）。
       // 主題タグは日本語表記で出す（会議名から場を推定しないため）。
       // 表にある分野・ランクをドロワーで落とさない（詳細を開いたのに一覧より分からない、を
       // 避ける）。分野は日本語名、ランクの表記は表のセルと同じ形にする。
       (catNamesJa.length
-        ? `<p style="margin-bottom: 8px;"><strong>分野:</strong> ${esc(catNamesJa.join("，"))}</p>`
+        ? `<p style="margin-bottom: 8px;"><strong>分野:</strong> ${esc(catNamesJa.join("・"))}</p>`
         : "") +
       (rankShown.length
-        ? `<p style="margin-bottom: 8px;"><strong>ランク:</strong> ${esc(rankShown.join("，"))}</p>`
+        ? `<p style="margin-bottom: 8px;"><strong>ランク:</strong> ${esc(rankShown.join("・"))}</p>`
         : "") +
       (Recommender.topicTagsJa(r.conf.tags).length
         ? '<p style="margin-bottom: 8px;"><strong>主題:</strong> ' +
-          esc(Recommender.topicTagsJa(r.conf.tags).join("，")) +
+          esc(Recommender.topicTagsJa(r.conf.tags).join("・")) +
           "</p>"
         : "") +
       "</div>";

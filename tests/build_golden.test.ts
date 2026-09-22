@@ -4799,8 +4799,10 @@ it("ドロワーは表の情報（分野・ランク・ラウンド）を落と�
   // 分野は日本語名（英表記だけを出さない）。
   expect(out.withFields).toContain("分野:");
   expect(out.withFields).toContain("高性能計算");
-  // ラベルはサイトの正典（`systems` は「システム」と出す）。
-  expect(out.withFields).toContain("高性能計算，システム");
+  // ラベルはサイトの正典（`systems` は「システム」と出す）。並べ語は中黒（・）で、
+  // 一覧・CSV・件数欄と同じ（行の詳細だけ全角コンマだと、写して引いたときに
+  // 1 語扱いで 0 件になる。2026-09-23 実測）。
+  expect(out.withFields).toContain("高性能計算・システム");
   // ランクは表のセルと同じ表記。
   expect(out.withFields).toContain("ランク:");
   expect(out.withFields).toContain("CCF B");
@@ -7736,4 +7738,39 @@ it("案内文に書いた実測値が、ビルド成果物に対して今も合�
     // 案内文の実際にその数を書いていることも見る（検査だけ先に绿になるのを防ぐ）。
     expect(template, `案内文に「${label}」の値 ${written} が書かれていない`).toContain(written);
   }
+});
+
+it("行の詳細の分野・主題・ランクは、一覧と同じ中黒で並び、写すとその行に出会える（SPEC §7）", () => {
+  /* 一覧・CSV・件数欄は分野を中黒（・）で並べるのに、行の詳細だけ全角コンマ（，）で
+   * 並べていた。同じ情報を 2 通りの書き方で見せるうえ、行の詳細から検索欄へ写した人が
+   * 1 語扱いで 0 件に当たった（2026-09-23 実測: `人工知能，データベース` 0 件）。 */
+  const runtime = siteRuntime();
+  expect(runtime, "行の詳細がまだ全角コンマで並べている").not.toContain('join("，")');
+  expect(
+    runtime.match(/\.join\("・"\)/g)?.length,
+    "分野・主題・ランクの並べ語が揃っていない",
+  ).toBeGreaterThanOrEqual(3);
+  // 写した形（中黒で並べた分野）が、実カタログでその行に戻ってくることは
+  // 「画面が・で並べた分野の語をそのまま写すと」の検査が見ている。ここでは
+  // 行の詳細がその形を出することだけ確かめる。
+  const rows = spawnSync(
+    "node",
+    [
+      "-e",
+      [
+        "(async () => {",
+        "const { readFileSync } = await import('node:fs');",
+        `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+        `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+        "const rows = Recommender.candidateRows(DATA);",
+        "const multi = rows.filter((r) => (r.cats || []).length >= 2).length;",
+        "console.log(JSON.stringify({ multi }));",
+        "})();",
+      ].join("\n"),
+    ],
+    { encoding: "utf8", timeout: 180_000 },
+  );
+  expect(rows.status, rows.stderr).toBe(0);
+  const out = JSON.parse(rows.stdout) as { multi: number };
+  expect(out.multi, "分野を 2 つ以上持つ行が無いとこの検査が空振りする").toBeGreaterThan(20);
 });
