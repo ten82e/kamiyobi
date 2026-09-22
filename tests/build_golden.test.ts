@@ -7643,3 +7643,97 @@ it("画面が・で並べた分野の語をそのまま写すと、その行に�
     );
   }
 });
+
+it("案内文に書いた実測値が、ビルド成果物に対して今も合っている（SPEC §7）", () => {
+  /* 案内文は「既定画面 478 行のうち 15 行だけ」のような実測値を根拠に書いている。
+   * それが収録や実装の change でズレると、案内文が噓をつく（画面の件数欄と合わない）。
+   * 2026-09-23 に実際に 7 か所ズレていた（477→478 行、のぞく 462→463 件、
+   * 2 ラウンド 387→378 件、`プライバシー` 20→16 件など）。
+   * 測る基準は **オフラインビルド（収録 `data/snapshot.json` + 固定時刻 2026-08-09）**。
+   * 上流キャッシュ込みのビルドは再現しないので、案内文の基準にしない。 */
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  /* 測る基準は **固定時刻のオフラインビルド**。`tests/helpers.ts` の既定時刻だと
+     窓に入る行数が変わるので、案内文が書いた時刻（2026-08-09）で組み直す。 */
+  const basis = join(mkdtempSync(join(tmpdir(), "cfp-basis-")), "public");
+  /* `tempCache()` は合成した fixture キャッシュを書く（収録が差し替わる）。
+     案内文の実測値は **収録 `data/snapshot.json` から組んだ成果物**について書いたもの
+     なので、空キャッシュ（= snapshot へフォールバック）で組む。ここを取り違えると
+     既定画面が 306 行になって案内文と合わない（2026-09-23 に実測）。 */
+  const emptyCache = mkdtempSync(join(tmpdir(), "cfp-empty-cache-"));
+  const built = runCli(basis, {
+    now: "2026-08-09T00:00:00Z",
+    cache: emptyCache,
+    extra: ["--no-embeddings"],
+  });
+  expect(built.status, built.stderr).toBe(0);
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(basis, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(basis, "data.json"))}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const DAY = 86400000;",
+    "const rows = Recommender.candidateRows(DATA);",
+    "const view = rows.filter((r) => (r.kind === 'abstract' || r.kind === 'paper') && r.t >= now && !r.ed.estimated);",
+    "const hits = (q, pool) => { const m = Recommender.searchMatcher(q, now); return pool.filter((r) => m(r.hay)).length; };",
+    "const online = view.filter((r) => Recommender.placeOffersOnline(r.ed.place)).length;",
+    "const unknownPlace = view",
+    "  .filter((r) => !Recommender.placeOffersOnline(r.ed.place))",
+    "  .filter((r) => !String(r.ed.place || '').trim()).length;",
+    "console.log(JSON.stringify({",
+    "  catalog: rows.length,",
+    "  view: view.length,",
+    "  estimated: rows.filter((r) => r.ed.estimated).length,",
+    "  onlineView: online,",
+    "  onlineCatalog: rows.filter((r) => Recommender.placeOffersOnline(r.ed.place)).length,",
+    "  unknownPlace,",
+    "  in7d: view.filter((r) => r.t - now <= 7 * DAY).length,",
+    "  ai: hits('人工知能', view),",
+    "  astar: hits('A*', view),",
+    "  round2: rows.filter((r) => Number(r.dl.round) === 2).length,",
+    "  middleDot: rows.filter((r) =>",
+    "    (r.cats || []).map((c) => Recommender.categoryLabelJa(c)).join('・').indexOf('・') >= 0).length,",
+    "  cancun: rows.filter((r) => Recommender.kanaFold(String(r.ed.place || '')).indexOf('cancun') >= 0).length,",
+    "  privacy: hits('プライバシー', view),",
+    "  dataMining: hits('データマイニング', view),",
+    "  dataAnalytics: hits('データ分析', view),",
+    "  vr: hits('仮想現実', view),",
+    "  realtime: hits('リアルタイム', view),",
+    " }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const m = JSON.parse(proc.stdout) as Record<string, number>;
+  // 案内文が書いている数（左）と、いま測れる数（右）を突合する。
+  const claims: Array<[string, string, number]> = [
+    ["既定画面の行数", "478 行", m.view],
+    ["推定で出さない行", "134 件", m.estimated],
+    ["7 日以内の行", "39 行", m.in7d],
+    ["7 日以内で窓の外", "439 行", m.view - m.in7d],
+    ["人工知能の行", "182 行", m.ai],
+    ["人工知能でのこり", "296 行", m.view - m.ai],
+    ["A* の行", "61 行", m.astar],
+    ["A* でのこり", "417 行", m.view - m.astar],
+    ["オンラインに書ける行", "15 行", m.onlineView],
+    ["オンラインでのぞく件", "463 件", m.view - m.onlineView],
+    ["開催地が未確認の行", "110 件", m.unknownPlace],
+    ["収録のオンライン可", "117 件", m.onlineCatalog],
+    ["2 ラウンドの行", "378 件", m.round2],
+    ["・付きの分野表記を持つ行", "397 行", m.middleDot],
+    ["Cancún の行", "23 行", m.cancun],
+    ["プライバシー", "16 件", m.privacy],
+    ["データマイニング", "22 件", m.dataMining],
+    ["データ分析", "7 件", m.dataAnalytics],
+    ["仮想現実", "6 件", m.vr],
+    ["リアルタイム", "2 件", m.realtime],
+  ];
+  expect(claims.length).toBeGreaterThan(15);
+  for (const [label, written, measured] of claims) {
+    expect(measured, `案内文の「${label}」は ${written} と書いてあるが、いま ${measured}`).toBe(
+      Number(written.replace(/[^0-9]/g, "")),
+    );
+    // 案内文の実際にその数を書いていることも見る（検査だけ先に绿になるのを防ぐ）。
+    expect(template, `案内文に「${label}」の値 ${written} が書かれていない`).toContain(written);
+  }
+});
