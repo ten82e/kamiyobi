@@ -9819,3 +9819,29 @@ it("0 件の理由は読み上げにも短的に出る（長い文を aria-live 
   expect(guard![0], "0 件以外でも数え上げている").toContain("!shown.length");
   expect(guard![0], "推薦のカードでも数え上げている").toContain("!recMode");
 });
+
+it("手引きが名指すファイルは、画面から押して辿れる（SPEC §7）", () => {
+  /* てびきと 0 件の注記は「会期だけ確定の会は upcoming.md に載せます」と何回も言うが、
+   * ファイル名を書くだけだと、画面を読む人はそこにたどれない（URL を打ち込むだけになる）。
+   * 同じビルドの中に有るファイルなので、押せる形にする（2026-09-23 実測: リンク 0 本）。 */
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const mentions = template.match(/<code>upcoming\.md<\/code>/g) || [];
+  expect(
+    mentions.length,
+    "てびきがファイルを名指す箇所が数え上げられていない",
+  ).toBeGreaterThanOrEqual(2);
+  const linked =
+    template.match(/<a href="upcoming\.md"[^>]*><code>upcoming\.md<\/code><\/a>/g) || [];
+  expect(linked.length, "てびきのファイル名が押せる形になっていない").toBe(mentions.length);
+  // 印刷物でもファイル名は残る（リンクの文字自体が名前なので、印刷で消える書き方はしない）。
+  expect(template, "印刷でリンク欄を丸ごと消すと名前が読めない").not.toContain(
+    "main a { display: none",
+  );
+  // 画面の 0 件注記（ビルド後のコード）も同じファイルを指す。
+  const app = siteRuntime();
+  expect(app, "0 件の注記がファイルをまだ文字列に埋めている").toContain('href = "upcoming.md"');
+  expect(app).not.toContain("会期は upcoming.md にも掲載");
+  // 指す先がビルド成果物に本当に有る（リンク切れを防ぐ）。
+  const builder = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
+  expect(builder, "ビルドが upcoming.md を出さなくなったらリンクが死ぬ").toContain("upcoming.md");
+});

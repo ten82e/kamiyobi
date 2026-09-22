@@ -2069,10 +2069,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         box.appendChild(placeNode);
       }
     });
-    const note = document.createTextNode(
-      " 締切が未定の会は表に載せません（会期は upcoming.md にも掲載）。",
-    );
-    box.appendChild(note);
+    /* 「upcoming.md に載せます」と言うだけだと、画面を読む人にはファイル名が打てない
+     * （このファイルはこのサイトの同じ場所に有るので、押せば届く）。文章の中も押せる形に
+     * する（外側の文章はそのまま – 読み上げで同じ語を二度読ませない）。 */
+    box.appendChild(document.createTextNode(" 締切が未定の会は表に載せません（会期は"));
+    const upcoming = document.createElement("a");
+    upcoming.href = "upcoming.md";
+    upcoming.textContent = "upcoming.md";
+    box.appendChild(upcoming);
+    box.appendChild(document.createTextNode("にも掲載）。"));
     box.hidden = false;
   }
 
