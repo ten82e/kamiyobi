@@ -1324,6 +1324,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // `来月` などの相対月を検索語として受け付ける。展開式の一覧への反映は recommender が
     // 持つ（`来月` がどの月を指すかの判断を UI 側に二重化しない）。
     searchQuery = Recommender.expandRelativeMonths(state.q, now);
+    // 検索語の分解は 1 描画に 1 回で足りる。行ごとに `hayMatches` を呼ぶと、そのたびに
+    // 語を分解し直す（3234 行で 1 打鍵あたり約 83 ms かかっていた）。
+    const matchesQuery = Recommender.searchMatcher(searchQuery);
     const isPast = (row: AppRow) => (row.dateOnly ? now > row.tLast : row.t < now);
     const isAfter = (row: AppRow, dateLimit: number) => row.t > dateLimit;
     const isWinFuture = state.win === "future";
@@ -1418,8 +1421,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         return false;
       }
       // 検索は正規化した語の AND 判定（全角入力・全角スペース・複数語に対応するため
-      // 照合式は recommender の hayMatches を単一正典にする）。
-      if (!inRecommend && !Recommender.hayMatches(r.hay, searchQuery)) {
+      // 照合式は recommender の searchMatcher を単一正典にする）。
+      if (!inRecommend && !matchesQuery(r.hay)) {
         return false;
       }
 
@@ -1589,9 +1592,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       filter.window === "all" || filter.window === "future"
         ? Number.POSITIVE_INFINITY
         : now + Number.parseInt(filter.window, 10) * DAY;
+    const meetsQuery = Recommender.searchMatcher(searchQuery);
     const found = Recommender.scheduleOnlyEditions(DATA)
       .filter((m) => {
-        if (searchQuery.trim() && !Recommender.hayMatches(m.hay, searchQuery)) return false;
+        if (searchQuery.trim() && !meetsQuery(m.hay)) return false;
         if (filter.domestic && m.tags.indexOf("domestic-jp") < 0) return false;
         if (filter.cats.length && !filter.cats.some((c) => m.cats.indexOf(c) >= 0)) return false;
         const startMs = Date.parse(`${m.eventStart}T00:00:00+09:00`);

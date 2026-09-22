@@ -2081,7 +2081,11 @@ it("relative months in the query are resolved and shown (SPEC §7)", () => {
   const template = readFileSync(join(site, "index.html"), "utf8");
   // 展開式は recommender に一本化し、UI は展開後の語で絞り込む。
   expect(runtime).toContain("searchQuery = Recommender.expandRelativeMonths(state.q, now);");
-  expect(runtime).toContain("Recommender.hayMatches(r.hay, searchQuery)");
+  // 照合式は recommender 側（`searchMatcher`）に置く。語の分解を行ごとにやり直すと、
+  // 行の数だけ遅くなる（3234 行で 1 打鍵あたり約 83 ms 実測）。
+  expect(runtime).toContain("Recommender.searchMatcher(searchQuery)");
+  expect(runtime).toContain("matchesQuery(r.hay)");
+  expect(runtime).not.toContain("Recommender.hayMatches(r.hay, searchQuery)");
   // てびきに相対月の説明がある（仕様が画面から追える状態にする）。
   expect(template).toContain("「今月」「来月」「再来月」「先月」");
   // 「来月」がどの月に解決されたかをその場で見せる（伏せた展開は誤信を生む）。
@@ -2282,6 +2286,8 @@ const SEARCH_CANON = (() => {
       "queryTokens",
       "queryTokenGroups",
       "compoundSplitHit",
+      "matchFoldedGroups",
+      "searchMatcher",
       "hayMatches",
     ].map((name) => jsFunction(rec, name)),
   ];
@@ -2291,7 +2297,7 @@ const FILTER_RUNTIME_STUBS = [
   "const activeData = { conferences: [] };",
   ...SEARCH_CANON,
   "let searchQuery = '';",
-  "const Recommender = { searchNormalize: searchNormalize, queryTokens: queryTokens, kanaFold: kanaFold, queryTokenGroups: queryTokenGroups, monthTermsJa: monthTermsJa, expandRelativeMonths: expandRelativeMonths, hayMatches: hayMatches, parsePaperLines: (text) => text ? [{ title: text }] : [], hasJapanese: () => false, contentWordCount: () => 0, autoDetectCats: () => [], venueCategories: () => [], journalRows: () => [], pastRepresentatives: () => [], rankMatches: (pairs, rank) => pairs.includes(rank), venueRecommendations: (rows) => rows.map((row) => ({ row, boosted: false, match: null, availability: null, fit: { score: 10, lexicalScore: 10, label: '', lexicalRank: 0, semanticRank: 0, semanticScore: 0 } })), comparePapers: () => 0 };",
+  "const Recommender = { searchNormalize: searchNormalize, queryTokens: queryTokens, kanaFold: kanaFold, queryTokenGroups: queryTokenGroups, searchMatcher: searchMatcher, matchFoldedGroups: matchFoldedGroups, monthTermsJa: monthTermsJa, expandRelativeMonths: expandRelativeMonths, hayMatches: hayMatches, parsePaperLines: (text) => text ? [{ title: text }] : [], hasJapanese: () => false, contentWordCount: () => 0, autoDetectCats: () => [], venueCategories: () => [], journalRows: () => [], pastRepresentatives: () => [], rankMatches: (pairs, rank) => pairs.includes(rank), venueRecommendations: (rows) => rows.map((row) => ({ row, boosted: false, match: null, availability: null, fit: { score: 10, lexicalScore: 10, label: '', lexicalRank: 0, semanticRank: 0, semanticScore: 0 } })), comparePapers: () => 0 };",
 ].join("\n");
 
 it("browser date-only state is independent of the viewer timezone", () => {
@@ -2476,7 +2482,11 @@ it("site UI is readable for Japanese researchers: field names, JST header, help 
   expect(template).toContain(".month-row th");
   // 検索照合は recommender の正規化判定に一元化する（全角入力・複数語対応のため、
   // 一覧側で r.hay.indexOf(q) を直呼びしない。`来月` の展開も recommender 側で行う）。
-  expect(runtime).toContain("Recommender.hayMatches(r.hay, searchQuery)");
+  // 照合式は recommender 側（`searchMatcher`）に置く。語の分解を行ごとにやり直すと、
+  // 行の数だけ遅くなる（3234 行で 1 打鍵あたり約 83 ms 実測）。
+  expect(runtime).toContain("Recommender.searchMatcher(searchQuery)");
+  expect(runtime).toContain("matchesQuery(r.hay)");
+  expect(runtime).not.toContain("Recommender.hayMatches(r.hay, searchQuery)");
   // 主題タグ（tags）も日本語で詳細に出す（会議名から場を推定させないため）。
   expect(runtime).toContain("Recommender.topicTagsJa(r.conf.tags)");
   expect(runtime).toContain("<strong>主題:</strong>");
@@ -3878,4 +3888,40 @@ it("every kind label shown in upcoming.md is searchable (SPEC §7)", () => {
       `upcoming.md の種別「${label}」が検索で引けない`,
     ).toBe(true);
   }
+});
+
+it("the per-query matcher agrees with hayMatches and is not rebuilt per row (SPEC §7)", () => {
+  const queries = [
+    "ネットワーク",
+    "国内 オンライン",
+    "論文締切",
+    "ネットワークセキュリティ",
+    "きゅうしゅう",
+    "九州",
+    "来月 国内",
+    "ＮＳＤＩ",
+    "12月",
+    "",
+  ];
+  const rows = Recommender.candidateRows(data);
+  expect(rows.length).toBeGreaterThan(100);
+  for (const q of queries) {
+    const matcher = Recommender.searchMatcher(q);
+    const viaMatcher = rows.filter((r) => matcher(r.hay)).length;
+    const viaHay = rows.filter((r) => Recommender.hayMatches(r.hay, q)).length;
+    expect(viaMatcher, `「${q}」で searchMatcher と hayMatches がズレた`).toBe(viaHay);
+  }
+
+  // 行ごとに語を分解し直していないことの保険（形そのものは上のドリフトガードで見る）。
+  // 実測は新形が約 50 ms、行ごとに分解する古い形が約 500 ms / 20,000 行なので、
+  // 壊れてもすぐには落ちない緩さで、桁違いの退化だけつかまえる。
+  const many = Array.from({ length: 20_000 }, (_, i) => rows[i % rows.length]);
+  const started = Date.now();
+  const matcher = Recommender.searchMatcher("ネットワーク");
+  const hits = many.filter((r) => matcher(r.hay)).length;
+  const elapsed = Date.now() - started;
+  expect(hits).toBeGreaterThan(0);
+  expect(elapsed, `20,000 行の照合が ${elapsed} ms（行ごとに分解し直していないか？）`).toBeLessThan(
+    1_500,
+  );
 });

@@ -1059,6 +1059,11 @@ conferences:
   戻す。一覧の意味を変える「過去の締切も表示」（過去行の読み込みを伴う）はまとめて外す側に
   含めず、文章での案内に留める。説明文は専用の span へ書く（`#empty` の `textContent` を
   直接書き換えると中に置いたボタンが消える）。
+- 一覧の絞り込みは `Recommender.searchMatcher(query)` で**照合関数を 1 描画に 1 回**作る。
+  `hayMatches(hay, query)` は薄い入口（`searchMatcher(query)(hay)`）で、行ごとに検索語を
+  分解し直すため、3234 行で 1 打鍵あたり約 83 ms（うち約 69 ms が分解）かかった。作り直すと
+  約 8 ms。検索語の分解を行ごとにやらない、という形はビルド後の `app.js` を見るガードで固定する
+  （`searchMatcher(searchQuery)` を使い `hayMatches(r.hay, searchQuery)` を呼ばないこと）。
 - 検索の照合は `site/recommender.ts` の `searchNormalize` / `queryTokens` / `hayMatches` を単一正典と
   する。照合前に **NFKC 正規化・小文字化・空白圧縮**を施す（日本語入力では全角の会議名
   「ＮＳＤＩ」や全角スペース区切りが打たれるため）。検索語は空白で語に割し、**全語が

@@ -160,6 +160,8 @@ interface SiteRecommenderApi {
   queryTokenGroups(query: unknown): string[][];
   queryTokens(query: unknown): string[];
   hayMatches(hay: unknown, query: unknown): boolean;
+  /** 検索語ごとの照合関数を 1 回だけ作る（一覧の絞り込みは行ごとに作り直さない）。 */
+  searchMatcher(query: unknown): (hay: unknown) => boolean;
   scheduleOnlyEditions(data: unknown): Array<{
     key: string;
     name: string;
