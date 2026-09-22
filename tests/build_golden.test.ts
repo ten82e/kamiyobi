@@ -4587,15 +4587,23 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
     "  n.children.forEach((c) => cells(c, out));",
     "  return out;",
     "};",
-    "const mk = (place, eventStart) => ({ kind: 'paper', est: false, cats: ['hpc'], rankPairs: [],",
+    // 一致評価のチップ（行内展開のトリガ）も同じハーネスで見る（行の中に有る物なので）。
+    "const mk = (place, eventStart) => ({ kind: 'paper', est: false, cats: ['hpc'], rankPairs: [], _matchScore: 40, _fitLabel: 'B',",
     "  hay: 'x', tags: ['domestic-jp'], t: Date.UTC(2026, 8, 1), tLast: Date.UTC(2026, 8, 1),",
     "  dateOnly: false, ed: { place, event_start: eventStart, event_end: eventStart, deadlines: [], date_text: '' },",
     "  dl: { kind: 'paper' }, conf: { key: 'k', title: '研究会', link: '' } });",
     "const empty = makeRow(mk('', null));",
     "const known = makeRow(mk('Kyoto, Japan', '2026-11-12'));",
+    "const findByClass = (n, cls, out = []) => {",
+    "  if (n.className && String(n.className).split(' ').includes(cls)) out.push(n);",
+    "  (n.children || []).forEach((c) => findByClass(c, cls, out));",
+    "  return out;",
+    "};",
+    "const trig = findByClass(known, 'match-trigger')[0] || null;",
     "console.log(JSON.stringify({",
     "  emptyCells: cells(empty), emptyTitles: titles(empty),",
     "  knownCells: cells(known), knownTitles: titles(known),",
+    "  trigger: trig && { tag: trig.tagName, type: trig.type, attrs: trig.attrs, cls: trig.className },",
     "}));",
     "})().catch((e) => { console.error(e && e.stack || String(e)); process.exit(1); });",
   ].join("\n");
@@ -4606,11 +4614,22 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
     emptyTitles: string[];
     knownCells: Record<string, string>;
     knownTitles: string[];
+    trigger: { tag: string; type: string; attrs: Record<string, string>; cls: string } | null;
   };
   // 空の値は「-」ではなく、確認できていないことを短い語で出す。
   expect(out.emptyCells["会期"]).toContain("未確認");
   expect(out.emptyCells["開催地"]).toContain("未確認");
   expect(out.emptyCells["ランク"]).toContain("未確認");
+  // 一致評価のチップ（行内展開のトリガ）: `<span>` + `onclick` だとキーボードで開けなかった
+  // （Tab で届かず、行の Enter はドロワーを開く。2026-09-23 実測: ビルド成果物に
+  // `aria-expanded` は 1 箇所も無く、トリガは span）。ボタンにして開閉状態を出す。
+  expect(out.trigger, "一致評価のチップが行に出ていない（検査が空振り）").not.toBeNull();
+  // 偽 DOM は tagName を渡したまま入れるので、大文字小文字は正規化して見る（実 DOM は "BUTTON"）。
+  expect(out.trigger?.tag.toLowerCase()).toBe("button");
+  expect(out.trigger?.type, "タイプ未指定だとブラウザは提出ボタンにする").toBe("button");
+  expect(out.trigger?.attrs["aria-expanded"], "初期の開閉状態が支援技術に伝わらない").toBe("false");
+  // 行のクリック側がこの語でトリガを判別しているので、崩れたら開閉が壊れる。
+  expect(out.trigger?.cls).toContain("match-trigger");
   expect(out.emptyTitles.join(" ")).toContain("CCF・CORE");
   // 会議が決めていないこととは別の話なので、「未定」にしない。
   expect(JSON.stringify(out.emptyCells)).not.toContain("未定");
@@ -8467,6 +8486,7 @@ it("日本語の案内に中国語の略語を混ぜない（SPEC §7）", () =>
     "\u53d8\u91cf",
     "\u51fd\u6570",
     "\u5df2\u7ecf",
+    "\u8fd9\u91cc",
   ];
   const targets = [
     "README.md",
@@ -8843,4 +8863,79 @@ it("データ源の行は内部の実装語を出さず、上流は一次資料�
   expect(guide).toContain("<dt>データ源</dt>");
   expect(guide).toContain("このサイトで収録した分（上流に無いもの）");
   expect(guide).toContain("一次資料");
+});
+
+it("一致評価の行内展開は、開閉状態を支援技術に伝える（SPEC §7）", () => {
+  /* `aria-expanded` がビルド成果物に 1 箇所も無かった（2026-09-23 実測）。
+   * トリガが `<span>` + `onclick` のときはキーボードで開けず、支援技術には
+   * 「押せる物」「今開いている物」として伝わらなかった。ボタン化に合わせて、
+   * 開いたとき true / 閉じたとき false をトリガに載せる。 */
+  const app = siteRuntime();
+  const script = [
+    "(async () => {",
+    "const mkRow = () => {",
+    "  const trigger = {",
+    "    tagName: 'BUTTON', attrs: { 'aria-expanded': 'false' },",
+    "    setAttribute(k, v) { this.attrs[k] = v; },",
+    "  };",
+    "  const parentNode = { inserted: [], insertBefore(node, ref) { this.inserted.push([node, ref]); } };",
+    "  return {",
+    "    tagName: 'TR', parentNode, nextSibling: null, attrs: trigger.attrs,",
+    "    nextElementSibling: null, // 最初は次の行が無い（= 閉じている）",
+    "    querySelector: () => trigger,",
+    "    remove() {},",
+    "  };",
+    "};",
+    `const TOGGLE_SRC = ${JSON.stringify(jsFunction(app, "toggleDetail"))};`,
+    "const detailRows = [];",
+    "const makeDetailRow = () => {",
+    "  const row = { className: 'detail-row', removed: false, nextElementSibling: null,",
+    "    classList: { contains: (c) => c === 'detail-row' },",
+    "    remove() { this.removed = true; } };",
+    "  detailRows.push(row);",
+    "  return row;",
+    "};",
+    'const toggleDetail = new Function("makeDetailRow", "return (" + TOGGLE_SRC + ")")(makeDetailRow);',
+    "const tr = mkRow();",
+    "const state = () => tr.attrs['aria-expanded'];",
+    "const before = state();",
+    "toggleDetail({}, tr); // 開く",
+    "const opened = state();",
+    "const inserted = tr.parentNode.inserted.length;",
+    "tr.nextElementSibling = detailRows[0]; // 挿直後の並び（次の行が行内展開）",
+    "toggleDetail({}, tr); // 閉じる",
+    "const closed = state();",
+    "const removed = detailRows[0].removed;",
+    "console.log(JSON.stringify({ before, opened, closed, inserted, removed }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout.trim().split("\n").pop() || "{}");
+  expect(got.before).toBe("false");
+  expect(got.opened, "開いても aria-expanded が変わらない").toBe("true");
+  expect(got.closed, "閉じても aria-expanded が変わらない").toBe("false");
+  expect(got.inserted, "行内展開が挿さっていない（検査が空振り）").toBe(1);
+  expect(got.removed, "2 回目の押しが閉じていない").toBe(true);
+  // てびきの書き方が実装とズレていない（「Tab で Enter」を実際に効かせるのはボタンだから）。
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  expect(template).toContain("Tab でチップに移動して Enter");
+  // チップの見た目を崩さないためのリセットが入っていること。
+  expect(template).toMatch(/button\.tag \{[\s\S]{0,160}appearance: none;/);
+  // てびきの用語集が構造的に壊れていないこと。第 98 回で、ある項に `</dd>` が余分に
+  // 含まれていて、追記した文章が最初の閉じタグの後ろにぶら下がっていた（実測 27 個に対し
+  // 閉じタグ 28 個）。画面に出る説明文が化けないための最低限の点検。
+  const help = template.slice(template.indexOf('id="helpPanel"'));
+  const guide = help.slice(0, help.indexOf("</dl>"));
+  const ddOpen = (guide.match(/<dd>/g) || []).length;
+  const ddClose = (guide.match(/<\/dd>/g) || []).length;
+  expect(ddOpen, "てびきの語が説明を持っていない").toBeGreaterThan(20);
+  expect(ddClose, `てびきの </dd> が <dd> と揃わない（開き ${ddOpen} / 閉じ ${ddClose}）`).toBe(
+    ddOpen,
+  );
+  const dtCount = (guide.match(/<dt[ >]/g) || []).length;
+  expect(dtCount, "てびきの見出しが減っている").toBe(ddOpen - 1); // 1 項だけ dd を 2 つ持つ
 });

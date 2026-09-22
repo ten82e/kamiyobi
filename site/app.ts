@@ -2189,9 +2189,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       tags.appendChild(s);
     });
     if (r._matchScore && r._matchScore >= 10) {
-      const ms = document.createElement("span");
-      // match-trigger: クリックで行内展開（この会議が選ばれた理由の内訳）
+      // match-trigger: 行内展開（この会議が選ばれた理由の内訳）。
+      // `<span>` + `onclick` だとキーボードで開けなかった（Tab で届かず、行の Enter は
+      // ドロワーを開くので理由の内訳に到達できない。2026-09-23 実測: ビルド成果物に
+      // `aria-expanded` は 1 箇所も無く、トリガは span）。ボタンにして開閉状態を出す。
+      const ms = document.createElement("button");
+      ms.type = "button";
       ms.className = "tag match match-trigger";
+      ms.setAttribute("aria-expanded", "false");
       ms.textContent = `一致評価 ${r._fitLabel || "評価保留"} ▾`;
       if (r._match?.agg) {
         const agg = r._match.agg;
@@ -2500,11 +2505,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   function toggleDetail(r: AppRow, tr: HTMLTableRowElement) {
     const next = tr.nextElementSibling;
+    // 開閉を支援技術に伝える（行そのものは `detail-row` の追加・削除で分かるが、
+    // トリガの状態が分からないと「押せる物」だと気づけない）。
+    const setExpanded = (open: boolean) => {
+      const trigger = tr.querySelector<HTMLElement>(".match-trigger");
+      if (trigger && trigger.tagName === "BUTTON") {
+        trigger.setAttribute("aria-expanded", String(open));
+      }
+    };
     if (next && (next.classList.contains("detail-row") || next.classList.contains("month-row"))) {
       next.remove();
+      setExpanded(false);
       return;
     }
     tr.parentNode?.insertBefore(makeDetailRow(r), tr.nextSibling);
+    setExpanded(true);
   }
 
   /** 「さらに表示」のラベル（残り件数を出す。表と推薦カードで同じ形にする）。 */
