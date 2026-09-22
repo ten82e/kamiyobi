@@ -902,6 +902,108 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     expect(R.officialZone(null)).toBe("");
   });
 
+  describe("検索の表記ゆれ吸収（NFKC と複数語 AND）", () => {
+    it("全角英数・全角記号・全角スペースを半角に寄せる", () => {
+      expect(R.searchNormalize("ＮＳＤＩ")).toBe("nsdi");
+      expect(R.searchNormalize("ＮＳＤＩ　２０２７")).toBe("nsdi 2027");
+      expect(R.searchNormalize("  NSDI   Symposium ")).toBe("nsdi symposium");
+      expect(R.searchNormalize("ﾄｳｷｮｳ")).toBe("トウキョウ");
+      expect(R.searchNormalize(null)).toBe("");
+      expect(R.searchNormalize(undefined)).toBe("");
+    });
+
+    it("検索語は空白で語に割って重複を除く", () => {
+      expect(R.queryTokens("ネットワーク　システム")).toEqual(["ネットワーク", "システム"]);
+      expect(R.queryTokens("NSDI nsdi")).toEqual(["nsdi"]);
+      expect(R.queryTokens("   ")).toEqual([]);
+      expect(R.queryTokens(null)).toEqual([]);
+    });
+
+    it("hayMatches は全語が含まれるときだけ真（語順と間隔は問わない）", () => {
+      const hay = "usenix symposium on networked systems design and implementation nsdi";
+      expect(R.hayMatches(hay, "networked systems")).toBe(true);
+      expect(R.hayMatches(hay, "systems networked")).toBe(true);
+      // 連結文字列探しのままでは "systems networked" は当たらない（AND 判定へ変えた根拠）。
+      expect(hay.indexOf("systems networked")).toBeLessThan(0);
+      expect(R.hayMatches(hay, "networked security")).toBe(false);
+      // 全角入力も同じ結果にする。
+      expect(R.hayMatches(hay, "ＮＳＤＩ")).toBe(true);
+      expect(R.hayMatches(hay, "")).toBe(true);
+      expect(R.hayMatches(undefined, "nsdi")).toBe(false);
+    });
+
+    it("行の検索語（hay）は正規化した形で保持される", () => {
+      const confs = [
+        {
+          key: "demo",
+          title: "Demo Symposium on Networks",
+          full_name: "Demo Symposium on Networks (DEMO)",
+          categories: ["networking"],
+          tags: [],
+          editions: [
+            {
+              year: 2026,
+              place: "Tokyo, Japan",
+              deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }],
+            },
+          ],
+        },
+      ];
+      const row = R.candidateRows(confs)[0];
+      expect(row.hay).toBe(R.searchNormalize(row.hay));
+      // 英語会議名・分野の日本語名・開催地の日本語名を混ぜて打っても同時に引ける。
+      expect(R.hayMatches(row.hay, "ネットワーク tokyo")).toBe(true);
+      expect(R.hayMatches(row.hay, "日本 symposium")).toBe(true);
+      expect(R.hayMatches(row.hay, "ネットワーク 存在しない語")).toBe(false);
+    });
+  });
+
+  describe("主題タグの日本語化と検索（tags）", () => {
+    it("実データに現れるタグを日本語で返す", () => {
+      expect(R.tagLabelJa("machine-learning")).toBe("機械学習");
+      // 半角スペース表記のタグも同じ語として引ける。
+      expect(R.tagLabelJa("machine learning")).toBe("機械学習");
+      expect(R.tagLabelJa("computer vision")).toBe("コンピュータビジョン");
+      expect(R.tagLabelJa("niche")).toBe("穴場");
+      expect(R.tagLabelJa("storage")).toBe("ストレージ");
+      // 対応表に無い語は作らない。
+      expect(R.tagLabelJa("sensys")).toBe("");
+      expect(R.tagLabelJa(null)).toBe("");
+    });
+
+    it("topicTagsJa は構造タグを除いて並べる", () => {
+      expect(R.topicTagsJa(["machine-learning", "domestic-jp", "niche", "journal"])).toEqual([
+        "機械学習",
+        "穴場",
+      ]);
+      expect(R.topicTagsJa([])).toEqual([]);
+      expect(R.topicTagsJa(null)).toEqual([]);
+    });
+
+    it("タグは検索語に入り、日本語でも 2 語でも当たる", () => {
+      const confs = [
+        {
+          key: "ml-demo",
+          title: "Demo Conference on Systems",
+          categories: ["systems"],
+          tags: ["machine-learning", "storage"],
+          editions: [
+            {
+              year: 2026,
+              place: "Kyoto, Japan",
+              deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }],
+            },
+          ],
+        },
+      ];
+      const row = R.candidateRows(confs)[0];
+      expect(R.hayMatches(row.hay, "機械学習")).toBe(true);
+      expect(R.hayMatches(row.hay, "ストレージ")).toBe(true);
+      expect(R.hayMatches(row.hay, "machine learning")).toBe(true);
+      expect(R.hayMatches(row.hay, "machine-learning")).toBe(true);
+    });
+  });
+
   describe("placeJa（開催地の国名・開催形式だけを日本語に寄せる）", () => {
     it("末尾カンマ句の国名と開催形式を変換する", () => {
       expect(R.placeJa("Barcelona, Spain")).toBe("Barcelona, スペイン");

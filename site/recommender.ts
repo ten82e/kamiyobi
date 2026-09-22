@@ -1541,6 +1541,136 @@ const Recommender = (() => {
     return parts.filter(Boolean).join(" ");
   }
 
+  /* SPEC §7: 分野（categories）とは別に、会議には主題タグ (tags) が付く。
+   * 200 会議が machine-learning や storage などのタグを持つのに検索語へ入れておらず、
+   * 「機械学習」「ストレージ」「穴場」で引いても 0 件になっていた。
+   * 対応表は実データに現れるタグだけを載せる（存在しない語を翻訳して作らない）。
+   * 区切り（半角スペース / ハイフン）は吸収して引く（machine learning と machine-learning）。 */
+  const TAG_LABELS_JA: Record<string, string> = {
+    "computer-vision": "コンピュータビジョン",
+    "computer-graphics": "コンピュータグラフィクス",
+    "content-analysis": "コンテンツ解析",
+    "data-mining": "データマイニング",
+    "deep-learning": "ディープラーニング",
+    discontinued: "掲載終了",
+    dormant: "活動休止",
+    fairness: "公平性",
+    "human-computer-interaction": "人間情報処理",
+    "image-processing": "画像処理",
+    "information-retrieval": "情報検索",
+    "information-systems": "情報システム",
+    iot: "IoT",
+    journal: "ジャーナル",
+    "knowledge-representation": "知識表現",
+    "knowledge-graphs": "ナレッジグラフ",
+    "large-language-models": "大規模言語モデル",
+    "lifelong-learning": "生涯学習",
+    "machine-learning": "機械学習",
+    mathematics: "数理",
+    merged: "統合済み",
+    "natural-language-processing": "自然言語処理",
+    networking: "ネットワーク",
+    niche: "穴場",
+    "optimization-methods": "最適化",
+    "pattern-recognition": "パターン認識",
+    quantum: "量子",
+    reasoning: "推論",
+    recommendation: "推薦",
+    "reinforcement-learning": "強化学習",
+    "representation-learning": "表現学習",
+    retrieval: "検索",
+    robotics: "ロボティクス",
+    security: "セキュリティ",
+    "semantics-and-knowledge": "意味論と知識処理",
+    "signal-processing": "信号処理",
+    "software-engineering": "ソフトウェア工学",
+    "special-issue": "特集号",
+    speech: "音声",
+    storage: "ストレージ",
+    symposium: "シンポジウム",
+    sysadmin: "運用管理",
+    systems: "システム",
+    "visual-information-processing": "視覚情報処理",
+    "web-mining": "Web マイニング",
+    "web-search": "ウェブ検索",
+    workshop: "ワークショップ",
+  };
+
+  // 構造タグ（収録状態や国内区分）は主題として表示しても検索の助けにならない除外対象。
+  const TAG_HIDDEN_FROM_UI = ["domestic-jp", "journal", "sensys", "virtual-execution"];
+
+  function tagKey(tag: unknown): string {
+    const raw = typeof tag === "string" ? tag : "";
+    return raw
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_-]+/g, "-");
+  }
+
+  function tagLabelJa(tag: unknown): string {
+    return TAG_LABELS_JA[tagKey(tag)] || "";
+  }
+
+  /* 検索語には原文タグ・語に割った形・日本語表記の三れを入れる。
+   * 「machine learning」を 2 語で打っても machine-learning に当たるようにするため、
+   * ハイフンは空白にも置き換えておく。 */
+  /* 詳細ドロワーに並べる主題タグ（日本語表記）。構造タグと、対応表に無い語は出さない。 */
+  function topicTagsJa(tags: readonly string[] | null | undefined): string[] {
+    const out: string[] = [];
+    (tags || []).forEach((tag) => {
+      if (!tag) return;
+      if (TAG_HIDDEN_FROM_UI.indexOf(tagKey(tag)) >= 0) return;
+      const label = tagLabelJa(tag);
+      if (label && out.indexOf(label) < 0) out.push(label);
+    });
+    return out;
+  }
+
+  function tagSearchTerms(tags: readonly string[] | null | undefined): string {
+    const parts: string[] = [];
+    (tags || []).forEach((tag) => {
+      if (!tag) return;
+      parts.push(tag);
+      parts.push(String(tag).replace(/[-_]+/g, " "));
+      parts.push(tagLabelJa(tag));
+    });
+    return parts.filter(Boolean).join(" ");
+  }
+
+  /* SPEC §7: 検索の照合は日本語入力に現れる表記ゆれを吸収する。
+   * - 全角英数・全角記号は NFKC で半角に寄せる（「ＮＳＤＩ」を "nsdi" と同じ扱いにする）。
+   * - 全角スペースも半角スペースに畳む（「ネットワーク　システム」で語が割れた扱いになるのを防ぐ）。
+   * - 大文字小文字は無視する。
+   * hay を作る側でも同じ正規化を通し、照合側だけがズレることがないようにする。 */
+  function searchNormalize(value: unknown): string {
+    const raw = typeof value === "string" ? value : value == null ? "" : String(value);
+    const folded = typeof raw.normalize === "function" ? raw.normalize("NFKC") : raw;
+    return folded.toLowerCase().replace(/\s+/g, " ").trim();
+  }
+
+  /* 検索語は空白区切りの複数語として扱う。日本語で「ネットワーク 仮想化」のように
+   * 語を並べて打つ利用者が多く、連結文字列そのものを haystack の中を探すでは当たらない。
+   * 全語が含まれるときだけ一致とみなす（AND）。 */
+  function queryTokens(query: unknown): string[] {
+    const normalized = searchNormalize(query);
+    if (!normalized) return [];
+    const seen: string[] = [];
+    normalized.split(" ").forEach((token) => {
+      if (token && seen.indexOf(token) < 0) seen.push(token);
+    });
+    return seen;
+  }
+
+  function hayMatches(hay: unknown, query: unknown): boolean {
+    const tokens = queryTokens(query);
+    if (!tokens.length) return true;
+    const target = searchNormalize(hay);
+    for (let i = 0; i < tokens.length; i++) {
+      if (target.indexOf(tokens[i]) < 0) return false;
+    }
+    return true;
+  }
+
   /* SPEC §7: 日本語 UI。開催地は出張・オンライン参加の判断材料だが、
    * 原文は "Alicante, Spain / Online" のような英字表記で、一覧を流し読みしたときに
    * 国が判別しにくい。国名と開催形式の語だけを日本語に寄せる。
@@ -1715,7 +1845,9 @@ const Recommender = (() => {
             cats: conf.categories || [],
             tags: conf.tags || [],
             rankPairs,
-            hay: `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${catHay}`,
+            hay: searchNormalize(
+              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${catHay} ${tagSearchTerms(confTags)}`,
+            ),
             dupLabel: dl.comment || "",
           });
         });
@@ -1761,7 +1893,9 @@ const Recommender = (() => {
         cats: cats,
         tags: tags,
         rankPairs: pairs,
-        hay: `${baseHay} journal 常時受付 ${categorySearchTerms(cats, tags)}`,
+        hay: searchNormalize(
+          `${baseHay} journal 常時受付 ${categorySearchTerms(cats, tags)} ${tagSearchTerms(tags)}`,
+        ),
         name: conf.title,
         year: null,
       });
@@ -2831,6 +2965,12 @@ const Recommender = (() => {
     categoryLabelJa: categoryLabelJa,
     officialZone: officialZone,
     placeJa: placeJa,
+    searchNormalize: searchNormalize,
+    queryTokens: queryTokens,
+    hayMatches: hayMatches,
+    tagLabelJa: tagLabelJa,
+    topicTagsJa: topicTagsJa,
+    tagSearchTerms: tagSearchTerms,
     categorySearchTerms: categorySearchTerms,
     pastRepresentatives: pastRepresentatives,
     pickRepresentative: pickRepresentative,

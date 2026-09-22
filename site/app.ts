@@ -53,6 +53,7 @@ interface DrawerRow {
     title?: string;
     full_name?: string;
     link?: string;
+    tags?: string[];
   };
   ed: {
     year?: number;
@@ -841,6 +842,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       '<p style="margin-bottom: 8px;"><strong>会期:</strong> ' +
       esc(r.ed.date_text || r.ed.event_start || "未定") +
       "</p>" +
+      // 主題タグは日本語表記で出す（会議名から場を推定しないため）。
+      (Recommender.topicTagsJa(r.conf.tags).length
+        ? '<p style="margin-bottom: 8px;"><strong>主題:</strong> ' +
+          esc(Recommender.topicTagsJa(r.conf.tags).join("，")) +
+          "</p>"
+        : "") +
       "</div>";
     html += verificationSummary(r.dl);
 
@@ -1280,7 +1287,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const now = Date.now();
     const isPast = (row: AppRow) => (row.dateOnly ? now > row.tLast : row.t < now);
     const isAfter = (row: AppRow, dateLimit: number) => row.t > dateLimit;
-    const q = state.q.toLowerCase();
     const isWinFuture = state.win === "future";
     const limit =
       state.win === "all" || isWinFuture ? Infinity : now + parseInt(state.win, 10) * DAY;
@@ -1372,7 +1378,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (!inRecommend && state.domestic && (r.tags || []).indexOf("domestic-jp") < 0) {
         return false;
       }
-      if (!inRecommend && q && r.hay.indexOf(q) < 0) {
+      // 検索は正規化した語の AND 判定（全角入力・全角スペース・複数語に対応するため
+      // 照合式は recommender の hayMatches を単一正典にする）。
+      if (!inRecommend && !Recommender.hayMatches(r.hay, state.q)) {
         return false;
       }
 

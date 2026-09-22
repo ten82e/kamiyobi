@@ -140,6 +140,17 @@ interface SiteRecommenderApi {
   comparePapers(a: SiteRow, b: SiteRow, now: number): number;
   candidateRows(data: unknown): SiteRow[];
   categoryLabelJa(key: unknown): string;
+  categorySearchTerms(
+    cats: readonly string[] | null | undefined,
+    tags: readonly string[] | null | undefined,
+  ): string;
+  officialZone(dl: unknown): string;
+  placeJa(value: unknown): string;
+  searchNormalize(value: unknown): string;
+  queryTokens(query: unknown): string[];
+  hayMatches(hay: unknown, query: unknown): boolean;
+  tagLabelJa(tag: unknown): string;
+  topicTagsJa(tags: readonly string[] | null | undefined): string[];
   safeExternalUrl(value: unknown): string;
   pdfPaperRecord(metadata: unknown, pages: unknown[], fallbackText: string): SitePaperRecord;
   textPaperRecord(text: string, fallbackText: string): SitePaperRecord;

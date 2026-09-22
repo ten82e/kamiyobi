@@ -1866,10 +1866,18 @@ function jsFunction(html: string, name: string): string {
 }
 
 // filter() is extracted from the emitted module; provide only its explicit module dependencies.
+const SEARCH_CANON = [
+  // 検索照合の規則は recommender.js の正本をそのまま注入する（書き写すと正本とズレるため、
+  // スタブでの再現は避ける）。
+  ...["searchNormalize", "queryTokens", "hayMatches"].map((name) =>
+    jsFunction(siteRuntime("recommender.js"), name),
+  ),
+];
 const FILTER_RUNTIME_STUBS = [
   "let semQuery = null, semEmbeddings = null;",
   "const activeData = { conferences: [] };",
-  "const Recommender = { parsePaperLines: (text) => text ? [{ title: text }] : [], hasJapanese: () => false, contentWordCount: () => 0, autoDetectCats: () => [], venueCategories: () => [], journalRows: () => [], pastRepresentatives: () => [], rankMatches: (pairs, rank) => pairs.includes(rank), venueRecommendations: (rows) => rows.map((row) => ({ row, boosted: false, match: null, availability: null, fit: { score: 10, lexicalScore: 10, label: '', lexicalRank: 0, semanticRank: 0, semanticScore: 0 } })), comparePapers: () => 0 };",
+  ...SEARCH_CANON,
+  "const Recommender = { searchNormalize: searchNormalize, queryTokens: queryTokens, hayMatches: hayMatches, parsePaperLines: (text) => text ? [{ title: text }] : [], hasJapanese: () => false, contentWordCount: () => 0, autoDetectCats: () => [], venueCategories: () => [], journalRows: () => [], pastRepresentatives: () => [], rankMatches: (pairs, rank) => pairs.includes(rank), venueRecommendations: (rows) => rows.map((row) => ({ row, boosted: false, match: null, availability: null, fit: { score: 10, lexicalScore: 10, label: '', lexicalRank: 0, semanticRank: 0, semanticScore: 0 } })), comparePapers: () => 0 };",
 ].join("\n");
 
 it("browser date-only state is independent of the viewer timezone", () => {
@@ -1938,7 +1946,7 @@ it("drawer shows JST with weekday and the official timezone, viewer-timezone ind
     // 公式表記の判定は recommender.js の正本をそのまま注入する（規則の書き写しは
     // 正本とズレるため避ける）。officialZone の依存は isRecord のみ。
     jsFunction(siteRuntime("recommender.js"), "isRecord"),
-    `const Recommender = { officialZone: ${jsFunction(siteRuntime("recommender.js"), "officialZone")}, placeJa: (v) => String(v ?? "") };`,
+    `const Recommender = { officialZone: ${jsFunction(siteRuntime("recommender.js"), "officialZone")}, placeJa: (v) => String(v ?? ""), topicTagsJa: () => [] };`,
     "const body = { innerHTML: '' };",
     "const els = {",
     "  drawerBackdrop: { classList: { add() {} } }, drawerTitle: {}, drawerFullName: {},",
@@ -2030,6 +2038,13 @@ it("site UI is readable for Japanese researchers: field names, JST header, help 
   // 月見出し行は選択・詳細・キーボード移動の対象にしない（shown[] とのズレ防止）。
   expect(runtime).toContain('classList.contains("month-row")');
   expect(template).toContain(".month-row th");
+  // 検索照合は recommender の正規化判定に一元化する（全角入力・複数語対応のため、
+  // 一覧側で r.hay.indexOf(q) を直呼びしない）。
+  expect(runtime).toContain("Recommender.hayMatches(r.hay, state.q)");
+  // 主題タグ（tags）も日本語で詳細に出す（会議名から場を推定させないため）。
+  expect(runtime).toContain("Recommender.topicTagsJa(r.conf.tags)");
+  expect(runtime).toContain("<strong>\u4e3b\u984c:</strong>");
+  expect(runtime).not.toContain("r.hay.indexOf(");
 });
 
 it("month headings appear only while browsing in chronological order (SPEC §7)", () => {
@@ -2391,7 +2406,7 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
     "const dOpened = calls.open.length === 1 && calls.open[0] === 'B';",
     "const dFocusedRow = calls.focus[calls.focus.length - 1] === 'row1';",
     "const verificationSummary = new Function('esc', 'return (' + SUMMARY + ')')((s) => String(s ?? ''));",
-    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? '') });",
+    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [] });",
     "document.activeElement = prevEl;",
     "openDrawer({ kind: 'journal', conf: { title: 'X' }, ed: { place: 'P', date_text: 'D' } });",
     "const focusedClose = document.activeElement === closeBtn;",
@@ -2712,7 +2727,7 @@ it("normal deadline drawer includes verification details", () => {
     "function $(id) { return document.getElementById(id); }",
     "const window = { _prevFocus: null };",
     `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')((s) => String(s ?? ''));`,
-    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? '') });`,
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [] });`,
     "openDrawer({",
     "  kind: 'paper', conf: { key: 'demo', title: 'Demo' },",
     "  ed: { year: 2026, place: 'P', date_text: 'D' }, t: 0, tLast: 0,",
