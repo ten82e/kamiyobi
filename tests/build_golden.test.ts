@@ -9915,3 +9915,58 @@ it("表に行が出ていても、会期だけ確定の該当件数が件数欄�
   );
   expect(runtime, "読み上げに伝えていない").toContain("cntLive += scheduleNote");
 });
+
+it("画面に出る曜日が検索の語になり、週末・平日も寄せた先を出す（SPEC §7）", () => {
+  /* 一覧の日付欄は JST の曜日を一文字で出しているのに（既定画面 478 行は全て曜日付き）、
+   * 「金曜日」で引くと 0 件だった（2026-09-23 実測）。画面に出る語は検索でも引ける、
+   * という規則を曜日に適用する。一文字（`土`）は他の語を巻くので入れない。 */
+  const rows = Recommender.candidateRows(data);
+  const now = Date.UTC(2026, 7, 9);
+  const view = rows.filter(
+    (r) => (r.kind === "abstract" || r.kind === "paper") && r.t >= now && !r.ed.estimated,
+  );
+  const hits = (q: string) => {
+    const m = Recommender.searchMatcher(q, now);
+    return view.filter((r) => m(r.hay)).length;
+  };
+  const days = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"];
+  const per = days.map((w) => hits(w));
+  days.forEach((w, i) => {
+    expect(per[i], `${w} の行が引けない`).toBeGreaterThan(0);
+  });
+  // 各行は必ずちょうど一日に当たる（合計が行数と一致 = 漏れも重複もない）。
+  expect(
+    per.reduce((a, b) => a + b, 0),
+    "曜日の当たり方が行数と合わない",
+  ).toBe(view.length);
+  // 週末・平日は寄せた先を件数欄に出す（語を増やしたことを隠さない）。
+  expect(hits("週末")).toBe(hits("土曜") + hits("日曜"));
+  expect(hits("平日")).toBe(view.length - hits("週末"));
+  // 寄せたことを件数欄のおしらせで言う（語を増やしたことを隠さない）。
+  expect(Recommender.querySynonymNotes("週末").join("")).toContain("土曜日の行と日曜日の行");
+  expect(Recommender.querySynonymNotes("平日").join("")).toContain("月曜日から金曜日の行");
+  // 曜日の寄せ先は、分野などを画面に出るラベルへ寄せる表には混ぜていない（別の検査が
+  // あの表の展開語を「列にそのまま出るラベル」に限定しているため）。
+  const rec = readFileSync(join(REPO_ROOT, "site", "recommender.ts"), "utf8");
+  const labelTable = /const QUERY_SYNONYMS_JA[\s\S]*?\n {2}\];/.exec(rec);
+  expect(labelTable, "寄せ語の対応表が読めない").not.toBeNull();
+  expect(labelTable![0], "曜日の語を分野などの表に混ぜている").not.toContain("週末");
+  expect(rec, "曜日の寄せ語の表が無い").toContain("WEEKDAY_QUERY_SYNONYMS_JA");
+  // 一文字の語を入れなかった理由（「土木」が曜日で引えるようになってはいけない）。
+  expect(hits("土木")).toBe(0);
+  // 時刻未確認の行は、表示している暦日（local_date）の曜日で引ける。
+  const dateOnly = view.filter((r) => String(r.localDate || "").trim());
+  expect(dateOnly.length, "時刻未確認の行が無く検査が空振りする").toBeGreaterThan(0);
+  for (const r of dateOnly.slice(0, 40)) {
+    const term = Recommender.weekdaySearchTerms(r.localDate).split(" ")[0];
+    expect(term, `${String(r.localDate)} の曜日が作れない`).not.toBe("");
+    expect(
+      Recommender.searchMatcher(term, now)(r.hay),
+      `表示の暦日 ${String(r.localDate)} の曜日でその行が引けない`,
+    ).toBe(true);
+  }
+  // 手引きが曜日の引き方を説明している（語の形も実装と同じものを使う）。
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  expect(template, "てびきが曜日の検索を説明していない").toContain("曜日も引けます");
+  expect(template).toContain("「週末」（土曜日・日曜日）");
+});

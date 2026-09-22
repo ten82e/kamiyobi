@@ -1651,9 +1651,28 @@ const Recommender = (() => {
   }
 
   /** 検索語の同義展開（キーはかな正規化した語）。 */
+  /* 「週末に締めたい」「平日の締切だけ」という探し方を、曜日の語に寄せる。
+   * 分野・種別・タグを画面に出るラベルへ寄せる表（`QUERY_SYNONYMS_JA`）とは別に持つ。
+   * あの表の展開語は、列にそのまま出るラベルでなければならない（別の検査がそれを
+   * 見ていて、曜日の語はあの対応表に存在しない語だから同じ検査には載せられない）。
+   * 件数欄のおしらせは同じ仕組みで出す（語を増やしたことをその場で書く）。 */
   function querySynonymMap(): Record<string, [string, string[]]> {
+    /* 曜日の意的な探し方の表。分野などを画面に出るラベルへ寄せる表（`QUERY_SYNONYMS_JA`）
+     * とは別に持つ – あの表の展開語は列にそのまま出るラベルでなければならず（別の検査が
+     * それを見ている）、曜日の語はその対応表に存在しない語なので載せられない。
+     * 表は関数の中に置く（この関数は検査で単位切り出しして動かすので、モジュール級の
+     * 別名前に依存させない）。 */
+    const WEEKDAY_QUERY_SYNONYMS_JA: Array<[string, string, string[]]> = [
+      ["週末", "土曜日の行と日曜日の行", ["土曜", "土曜日", "日曜", "日曜日"]],
+      ["しゅうまつ", "土曜日の行と日曜日の行", ["土曜", "土曜日", "日曜", "日曜日"]],
+      [
+        "平日",
+        "月曜日から金曜日の行",
+        ["月曜", "月曜日", "火曜", "火曜日", "水曜", "水曜日", "木曜", "木曜日", "金曜", "金曜日"],
+      ],
+    ];
     const out: Record<string, [string, string[]]> = {};
-    QUERY_SYNONYMS_JA.forEach(([word, shown, terms]) => {
+    QUERY_SYNONYMS_JA.concat(WEEKDAY_QUERY_SYNONYMS_JA).forEach(([word, shown, terms]) => {
       out[kanaFold(word)] = [shown, terms];
     });
     return out;
@@ -2274,6 +2293,23 @@ const Recommender = (() => {
    * 「明日」「今週」も 1 件も当たらなかった。締切（JST の暦日）から
    * `2026年8月10日 8月10日` を hay に足す。
    * 会期は締切ではないので足さない（表は締切で並び、締切までで絞る）。 */
+  /* 一覧の日付欄は JST の曜日を「(土)」の一文字で出している（2026-09-23 実測: 既定画面
+   * 478 行は全て曜日付き。月55・火76・水69・木59・金69・土99・日51）。なのに「金曜日」で
+   * 引くと 0 件だった – 画面に出ている語が検索で引けない。
+   * ただし一文字（`土`）を語として入れると「土木」「地球」などの表記を巻き込んで誤爆する
+   * ので、「土曜」「土曜日」の形で受ける（週末・平日の意的な探し方は
+   * `WEEKDAY_QUERY_SYNONYMS_JA` で寄せる）。 */
+  const WEEKDAY_TERMS_JA = ["日曜", "月曜", "火曜", "水曜", "木曜", "金曜", "土曜"];
+
+  function weekdaySearchTerms(value: unknown): string {
+    // 表示と同じ JST の暦日で曜日を数える（UTC の曜日を混ぜない）。暦日の読み方は
+    // 月日・日の語と同じ `calendarDateJa` を使う（ parser を増やさない）。
+    const ymd = calendarDateJa(value);
+    if (!ymd) return "";
+    const term = WEEKDAY_TERMS_JA[new Date(Date.UTC(ymd[0], ymd[1] - 1, ymd[2])).getUTCDay()];
+    return `${term} ${term}日`;
+  }
+
   function dayTermsJa(value: unknown): string {
     const ymd = calendarDateJa(value);
     if (!ymd) return "";
@@ -3920,7 +3956,9 @@ const Recommender = (() => {
             tags: conf.tags || [],
             rankPairs,
             hay: searchNormalize(
-              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedSearchTerms(ed, rankPairs)} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)} ${zoneSearchWords(dl, dateOnly)}`,
+              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedSearchTerms(ed, rankPairs)} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)} ${weekdaySearchTerms(
+                dateOnly ? dl.local_date : t,
+              )} ${zoneSearchWords(dl, dateOnly)}`,
             ),
             dupLabel: dl.comment || "",
           });
@@ -4011,7 +4049,7 @@ const Recommender = (() => {
             `${baseHay} ${ed.place || ""} ${ed.date_text || ""} ` +
               `${categorySearchTerms(conf.categories, confTags)} ${tagSearchTerms(confTags)} ` +
               `${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ` +
-              `${monthTermsJa(start)} ${monthTermsJa(end)}`,
+              `${monthTermsJa(start)} ${monthTermsJa(end)} ${weekdaySearchTerms(start)}`,
           ),
         });
       });
@@ -5086,6 +5124,7 @@ const Recommender = (() => {
     categoryLabelJa: categoryLabelJa,
     officialZone: officialZone,
     isExtendedDeadline: isExtendedDeadline,
+    weekdaySearchTerms: weekdaySearchTerms,
     queryTermCounts: queryTermCounts,
     extendedLabelJa: () => EXTENDED_LABEL_JA,
     placeJa: placeJa,

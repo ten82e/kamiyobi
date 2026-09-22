@@ -161,6 +161,9 @@ interface SiteRecommenderApi {
     hays: readonly unknown[],
     nowMs?: number,
   ): Array<{ term: string; count: number }>;
+  /** 一覧の日付欄に出す JST の曜日を、検索の語として返す（「土曜 土曜日」）。
+   * 一文字（`土`）は他の語を巻くので入れていない。 */
+  weekdaySearchTerms(value: unknown): string;
   /** 上流の締切名が延長を示しているか（一覧・CSV・検索で同じ判定を使う）。 */
   isExtendedDeadline(dl: unknown): boolean;
   /** 延長を示すチップの語（画面・CSV・検索で同じ語を使う）。 */
