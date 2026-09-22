@@ -8053,6 +8053,8 @@ it("キーボード操作は効き、入力中は効かない（SPEC §7）", ()
     "  classList: { contains: () => false, toggle() {} },",
     "  focus() { calls.focus.push('row' + i); },",
     "  scrollIntoView() {},",
+    "  setAttribute(k, v) { calls.focus.push('aria' + i + ':' + k + '=' + v); },",
+    "  removeAttribute(k) { calls.focus.push('aria' + i + ':-' + k); },",
     "}));",
     "const els = {",
     "  q: { focus() { calls.focus.push('q'); } },",
@@ -9645,8 +9647,11 @@ it("キーボードで選んだ行にフォーカスが動く（支援技術に�
     "    focused: 0,",
     "    focusArgs: null,",
     "    scrollArgs: null,",
+    "    attrs: {},",
     "    focus(o) { this.focused++; this.focusArgs = o || null; },",
     "    scrollIntoView(o) { this.scrollArgs = o || null; },",
+    "    setAttribute(k, v) { this.attrs[k] = v; },",
+    "    removeAttribute(k) { delete this.attrs[k]; },",
     "  };",
     "};",
     'const rows = [mk("row0", ["row"]), mk("detail", ["detail-row"]), mk("row1", ["row"]), mk("row2", ["row"])];',
@@ -10046,6 +10051,8 @@ it("検索欄で Esc を押すと、語を消さずに欄を出て選択行に�
     "    classList: { contains: () => false, toggle: (c, on) => calls.push(name + ':' + c + ':' + on) },",
     "    focus() { calls.push('focus:' + name); },",
     "    scrollIntoView() { calls.push('scroll:' + name); },",
+    "    setAttribute(k, v) { calls.push(name + ':' + k + '=' + v); },",
+    "    removeAttribute(k) { calls.push(name + ':-' + k); },",
     "  };",
     "}",
     "const rows = [row('row0'), row('row1')];",
@@ -10294,4 +10301,74 @@ it("印刷物に、条件・件数・日時が残り、画面では見えない�
   expect(app, "データ生成日時を残していない").toContain("generatedAtLabel(genAt)");
   // てびきが印刷の説明を持っている（押せる場所が無いと分からない）。
   expect(template).toContain("<dt>印刷</dt>");
+});
+
+it("選んだ行は支援技術にも伝わる（視覚の目印だけで状態を出さない・SPEC §7）", () => {
+  /* 選んだ行は `selected` クラスの切り替えだけを変えていた（2026-09-23 実測: ビルド
+   * 成果物に `aria-current`・`aria-selected` は 1 箇所も無い）。クラスは色と枠でしか
+   * 伝わらないので、キーボードで何行目を選んでいるかが支援技術に読めない。*/
+  const app = siteRuntime();
+  const selectSrc = jsFunction(app, "updateRowSelection");
+  const script = [
+    "function mk(name, cls) {",
+    "  return {",
+    "    name,",
+    "    attrs: {},",
+    "    classes: cls.slice(),",
+    "    classList: {",
+    "      contains: (c) => cls.indexOf(c) >= 0,",
+    "      toggle: (c, on) => {",
+    "        const at = cls.indexOf(c);",
+    "        if (on && at < 0) cls.push(c);",
+    "        if (!on && at >= 0) cls.splice(at, 1);",
+    "      },",
+    "    },",
+    "    setAttribute(k, v) { this.attrs[k] = String(v); },",
+    "    removeAttribute(k) { delete this.attrs[k]; },",
+    "    focus() {},",
+    "    scrollIntoView() {},",
+    "  };",
+    "}",
+    "const rows = [mk('r0', ['row']), mk('detail', ['detail-row']), mk('r1', ['row']), mk('r2', ['row'])];",
+    "const document = { getElementById: (id) => (id === 'tbody' ? tbody : null) };",
+    "const tbody = { querySelectorAll: () => rows };",
+    "function $(id) { return document.getElementById(id); }",
+    "const window = { matchMedia: () => ({ matches: true }) };",
+    `const SELECT = ${JSON.stringify(selectSrc)};`,
+    "const run = (index) => {",
+    "  const fn = new Function('window', 'document', '$', 'selectedIndex', 'return (' + SELECT + ')')(window, document, $, index);",
+    "  fn();",
+    "  return rows.filter((r) => r.attrs['aria-current']).map((r) => r.name + '=' + r.attrs['aria-current']);",
+    "};",
+    "const one = run(1);",
+    "const clsAfterOne = rows.map((r) => r.name + ':' + (r.classList.contains('selected') ? 1 : 0)).join(' ');",
+    // クラスの付き方はこの時点で写す（後に選び直すと消える）。
+    "const moved = run(2);",
+    "const none = run(-1);",
+    "const cls = clsAfterOne;",
+    "console.log(JSON.stringify({ one, moved, none, cls }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    one: string[];
+    moved: string[];
+    none: string[];
+    cls: string;
+  };
+  // 選んだ行だけが行番号を宣言する（クラスと同じ一行）。
+  expect(out.one, "選んだ行が支援技術に分かる属性を持っていない").toEqual(["r1=row"]);
+  // 選び直したら前の行の宣言は消える（二行が「今選んでいる行」になる形を許さない）。
+  expect(out.moved, "選び直したあと前の行が宣言を残している").toEqual(["r2=row"]);
+  // 未選択（再描画直後）は宣言が残らない。
+  expect(out.none, "未選択なのに宣言が残っている").toEqual([]);
+  // 展開行・月見出し行は対応表から除外されている（属性も付けない）。
+  // 展開行（detail）は対応表から除外されているので、選んでもいないのに印を付けられない。
+  expect(out.cls).toBe("r0:0 detail:0 r1:1 r2:0");
+  // 実物のビルド成果物にも属性の操作が入っていること（上の抜き出しが空振りでないこと）。
+  expect(app).toContain('setAttribute("aria-current", "row")');
+  expect(app).toContain('removeAttribute("aria-current")');
 });

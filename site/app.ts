@@ -1121,7 +1121,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       (row) => !(row.classList.contains("detail-row") || row.classList.contains("month-row")),
     );
     trs.forEach((tr, idx) => {
-      tr.classList.toggle("selected", idx === selectedIndex);
+      const on = idx === selectedIndex;
+      tr.classList.toggle("selected", on);
+      /* 選んだ行はクラスの目印だけ変えていた。視覚だけの状態は支援技術に伝わらない
+       * （2026-09-23 実測: ビルド成果物に `aria-current`・`aria-selected` は 1 箇所も
+       * 無く、`selected` クラスの切り替えだけだった）。表の行なので `aria-current="row"`
+       * を使う。選ぶのをやめた行からは消す（付けっぱなしだと 2 行が「今選んでいる行」に
+       * なる）。再描画時は選択が解かれるので、付けっぱなしにはならない。 */
+      if (on) tr.setAttribute("aria-current", "row");
+      else tr.removeAttribute("aria-current");
     });
     if (trs[selectedIndex]) {
       /* フォーカスも選んだ行へ移す。クラス目印だけ変えてスクロールしていたので、
