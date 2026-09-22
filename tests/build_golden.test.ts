@@ -4868,7 +4868,7 @@ it("種別セレクトに並ぶ選択肢は、選べば行が返る（SPEC §7�
   const filterSrc = jsFunction(runtime, "filter");
   const kindSrc = jsFunction(runtime, "selectableKind");
   // 選択肢は `SELECTABLE_KINDS`（＝ `filter()` が通す種別）から作る。
-  // `KIND_LABEL` の全鍵を並べると、選んでも 0 件になる選択肢が並ぶ（実際に发生过）。
+  // `KIND_LABEL` の全鍵を並べると、選んでも 0 件になる選択肢が並ぶ（実際に起きた）。
   expect(app).toContain("SELECTABLE_KINDS.forEach");
   expect(app).not.toContain("Object.keys(KIND_LABEL).forEach");
   // URL で捨てた種別は件数欄で理由を出す。
@@ -8489,6 +8489,10 @@ it("日本語の案内に中国語の略語を混ぜない（SPEC §7）", () =>
     "\u51fd\u6570",
     "\u5df2\u7ecf",
     "\u8fd9\u91cc",
+    // 簡体字専用の一字目（日本語の新字体 労 U+52B3 / 過 U+904E / 発 U+767A とは別物）。
+    "\u52b3",
+    "\u8fc7",
+    "\u53d1",
   ];
   const targets = [
     "README.md",
@@ -9297,4 +9301,37 @@ it("推薦のカードの締切は表と同じ向き（JST と曜日）で出る
     "同じ値を二行に出している",
   ).toHaveLength(1);
   expect(card).not.toMatch(/締切: \$\{recommendationAvailability/);
+});
+
+it("支援技術に本文の位置と表の名前を伝え、跳ぶ導線を置く（SPEC §7）", () => {
+  /* 検索欄・プリセット・分野チップを全部 Tab で辿らないと表に届かず、本文へ飛ぶ導線が
+   * 無かった。`<table>` にも名前が無く（`<caption>` も `aria-label` も無し）、支援技術には
+   * 「表」だとだけ伝わっていた（2026-09-23 実測）。結果のまとまりを示すランドマークも無い。 */
+  const html = siteHtmlRuntime();
+  const body = html.slice(html.indexOf("<body>"));
+  // 跳ぶ導線が最初の操作可能な要素であること（後から足すと意味が無い）。
+  const focusables = Array.from(body.matchAll(/<(a|button|input|select)\b/g));
+  expect(focusables.length).toBeGreaterThan(5);
+  expect(focusables[0][1], "最初の操作可能要素が跳ぶ導線ではない").toBe("a");
+  const skip = /<a class="skip-link" href="#([^"]+)">([^<]*)<\/a>/.exec(body);
+  expect(skip, "本文へ跳ぶ導線が有らない").not.toBeNull();
+  expect(skip![2]).toContain("締切の一覧");
+  // 飛び先が実在し、フォーカスを当てられること（`tabindex="-1"` が無いと飛んでも読まない）。
+  const target = new RegExp(`<(main|div|section)[^>]*id="${skip![1]}"[^>]*>`).exec(body);
+  expect(target, `跳ぶ導線の飛び先 ${skip![1]} が無い`).not.toBeNull();
+  expect(target![0], "飛び先にフォーカスを当てられない").toContain('tabindex="-1"');
+  // 結果のまとまりのランドマークは一つだけ。
+  expect((body.match(/<main\b/g) || []).length, "main が重複している").toBe(1);
+  // 画面に描画しない支援技術向けの語を、`display: none` で消していないこと。
+  const caption = /<caption class="only-sr">([^<]*)<\/caption>/.exec(body);
+  expect(caption, "表に名前が無い").not.toBeNull();
+  expect(caption![1]).toContain("締切");
+  const onlySr = /\.only-sr \{([^}]*)\}/.exec(html);
+  expect(onlySr, "支援技術向けの語の隠し方が無いか、壊れている").not.toBeNull();
+  expect(onlySr![1], "display: none にすると読み上げ自体が消える").not.toContain("display: none");
+  const skipRule = /\.skip-link \{([^}]*)\}/.exec(html.slice(html.indexOf(".skip-link {")));
+  expect(skipRule, "跳ぶ導線の基準の style が無いか、壊れている").not.toBeNull();
+  expect(skipRule![1], "跳ぶ導線を display: none で消している").not.toContain("display: none");
+  // フォーカスしたら画面に出てくること（見えない導線はキーボードでは使えない）。
+  expect(html).toMatch(/\.skip-link:focus \{[^}]*left: ?(?!-9999)/);
 });

@@ -483,7 +483,33 @@ label.check input:checked + span { color: var(--fg); }
 }
 .help dl { margin-top: 12px; display: grid; gap: 12px; }
 .help dt { font-weight: 600; }
-.help dd { margin: 2px 0 0; color: var(--muted); }
+/* 画面には見せず、支援技術にだけ読む語（`display: none` は読み上げも消してしまう）。 */
+.only-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 60;
+  background: var(--accent);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+}
+.skip-link:focus {
+  left: 8px;
+  top: 8px;
+}
 .tablewrap {
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -707,6 +733,7 @@ footer a:hover { text-decoration: underline; }
   .sortbar,
   .recommend-only,
   footer .btn-reset { display: none !important; }
+  .skip-link { display: none !important; }
   /* 幅せまカード表示のメディアクエリが印刷幅でも当たることがあるため、表として印刷する。 */
   thead { display: table-header-group; }
   tbody tr { display: table-row; }
@@ -738,6 +765,10 @@ footer a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
+  <!-- 検索欄・プリセット・分野チップを全部 Tab で辿らないと表に届かないので、本文へ飛ぶ
+       導線を最初に置く（フォーカスされるまで画面外。`display: none` にすると
+       支援技術からも消えるので使わない）。 -->
+  <a class="skip-link" href="#results">締切の一覧へ進む</a>
 
 <div class="wrap">
   <!-- Header & Editorial Branding -->
@@ -879,8 +910,10 @@ footer a:hover { text-decoration: underline; }
     <button type="button" data-sort="conf" onclick="toggleSort('conf')">会議 ↕</button>
     <button type="button" data-sort="rank" onclick="toggleSort('rank')">ランク ↕</button>
   </div>
+  <main id="results" tabindex="-1">
   <div class="tablewrap" id="deadlineTableWrap">
     <table>
+      <caption class="only-sr">締切の一覧（日時は JST で出しています）</caption>
       <thead>
         <tr>
           <th scope="col" tabindex="0" aria-sort="ascending" data-sort="rem" onclick="toggleSort('rem')" title="ここを押すと「残り」の昇順・降順を切り替えます">残り ↕
@@ -899,7 +932,7 @@ footer a:hover { text-decoration: underline; }
   <div id="recommendationCards" class="recommendation-cards" hidden></div>
 
   <!-- 0 件のときは外せる条件を実名で示し、まとめて外す導線も置く（各チェックを順番に
-       外させるのは劳苦なので）。ボタンは実際に外せる条件が残っているときだけ出す。 -->
+       外させるのは手間なので）。ボタンは実際に外せる条件が残っているときだけ出す。 -->
   <div class="empty" id="empty" style="padding: 32px; text-align: center; color: var(--muted);" hidden>
     <span id="emptyText">該当する締切はありません。</span>
     <p id="emptyMeeting" style="margin: 12px 0 0; font-size: 13px;" hidden></p>
@@ -908,6 +941,7 @@ footer a:hover { text-decoration: underline; }
     </div>
   </div>
   <div style="margin-top: 20px; text-align: center;"><button id="more">さらに表示</button></div>
+  </main>
 
   <!-- 見方のてびき: 締切一覧の用語をその場で説明する（外部の解説ページを必要としない） -->
   <details class="help" id="helpPanel">
