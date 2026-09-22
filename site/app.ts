@@ -2968,7 +2968,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   function recommendationAvailability(r: AppRow) {
     const a = r._availability;
-    if (!a) return "受付状況不明";
+    // 画面の「分からない」の語は 未確認 / 該当なし / 評価なし に揃えてある（てびきの
+    // 「空欄の出し方」に同じ約束を書いている）。カードだけが「不明」を出していた
+    // （2026-09-23 実測: 「受付状況不明」。てびきにも出てこない語だった）。
+    if (!a) return `受付状況${UNCONFIRMED_JA}`;
     if (a.status === "ongoing") return "常時受付";
     // 日付の向きは表と揃える（JST を主表記、曜日を添える、公式の表記は副で出す）。
     // カードだけ UTC 主表記だった（2026-09-23 実測: 「次回締切: 2026-10-05 23:59 UTC /
@@ -3002,7 +3005,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (a.status === "past") {
       return a.timestamp || a.local_date ? "締切済み" : "締切済み（次回情報なし）";
     }
-    return "受付状況不明";
+    // 受け付け中なのに次回の日付が出ていない行がある（表の「時刻未確認」より情報が薄い）。
+    // ここで「受付状況が分かりません」と言うと、受け付けていることまで分からないので、
+    // 分からない部分だけを書く。
+    if (a.status === "open") return `次回締切の日付が${UNCONFIRMED_JA}`;
+    return `受付状況${UNCONFIRMED_JA}`;
   }
 
   const trustLabel: Record<string, string> = {

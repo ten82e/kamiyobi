@@ -9554,13 +9554,20 @@ it("推薦のカードの締切は表と同じ向き（JST と曜日）で出る
     "const CALENDAR_DATE_JA = new Function('return ' + CAL_DECL.replace(/^const CALENDAR_DATE_JA = /, '').replace(/;$/, ''))();",
     "if (!Array.isArray(CALENDAR_DATE_JA) || CALENDAR_DATE_JA.length !== 7) throw new Error('暦日の曜日の配列が取れていない');",
     "const weekdayJaFromDate = new Function('CALENDAR_DATE_JA', 'return (' + WEEKDAY_SRC + ')')(CALENDAR_DATE_JA);",
+    // 「分からない」の語（未確認）も正本から取る（テスト側に書き写さない）。
+    // 関数は宣言済みの語を返すだけなので、語の宣言そのものを取りに出す。
+    `const UNCONFIRMED_DECL = ${JSON.stringify(
+      (siteRuntime("recommender.js").match(/const UNCONFIRMED_LABEL_JA = [^;]*;/) || [""])[0],
+    )};`,
+    "const UNCONFIRMED_JA = new Function('return ' + UNCONFIRMED_DECL.replace(/^const UNCONFIRMED_LABEL_JA = /, '').replace(/;$/, ''))();",
+    "if (typeof UNCONFIRMED_JA !== 'string' || !UNCONFIRMED_JA.length) throw new Error('未確認の語が取れない（検査が空振り）');",
     "const Recommender = {",
     "  officialZone: (dl) => Recommender.zone,",
     "  weekdayJaFromDate,",
     "  zone: 'AoE',",
     "};",
-    "const avail = new Function('fmtJst', 'fmtDate', 'fmtAoE', 'Recommender',",
-    "  'return (' + AVAIL_SRC + ')')(fmtJst, fmtDate, fmtAoE, Recommender);",
+    "const avail = new Function('fmtJst', 'fmtDate', 'fmtAoE', 'Recommender', 'UNCONFIRMED_JA',",
+    "  'return (' + AVAIL_SRC + ')')(fmtJst, fmtDate, fmtAoE, Recommender, UNCONFIRMED_JA);",
     // UTC では 10/5、JST では 10/6 になる締切（AoE 23:59 型の例）。
     "const ts = Date.UTC(2026, 9, 5, 15, 59);",
     "const jstShown = fmtJst(new Date(ts));",
@@ -9570,7 +9577,25 @@ it("推薦のカードの締切は表と同じ向き（JST と曜日）で出る
     "Recommender.zone = 'UTC';",
     "const utc = avail({ _availability: { status: 'open', timestamp: ts }, dl: {} });",
     "const dateOnly = avail({ _availability: { status: 'open', local_date: '2026-10-06' }, dl: {} });",
-    "console.log(JSON.stringify({ jstShown, aoe, jst, utc, dateOnly }));",
+    // 受付状況が確認できない行の語（第 142 回）。画面 other 箇所と同じ語に揃える。
+    "const noAvail = avail({});",
+    "const ongoing = avail({ _availability: { status: 'ongoing' }, dl: {} });",
+    "const openNoDate = avail({ _availability: { status: 'open' }, dl: {} });",
+    "const uncertainNoDate = avail({ _availability: { status: 'uncertain' }, dl: {} });",
+    "const weirdStatus = avail({ _availability: { status: 'someday' }, dl: {} });",
+    "console.log(JSON.stringify({",
+    "  jstShown,",
+    "  aoe,",
+    "  jst,",
+    "  utc,",
+    "  dateOnly,",
+    "  noAvail,",
+    "  ongoing,",
+    "  openNoDate,",
+    "  uncertainNoDate,",
+    "  weirdStatus,",
+    "  unconfirmed: UNCONFIRMED_JA,",
+    "}));",
     "})();",
   ].join("\n");
   const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
@@ -9598,6 +9623,31 @@ it("推薦のカードの締切は表と同じ向き（JST と曜日）で出る
     "同じ値を二行に出している",
   ).toHaveLength(1);
   expect(card).not.toMatch(/締切: \$\{recommendationAvailability/);
+  /* 受付状況が確認できない行の語。画面の「分からない」は 未確認 / 該当なし / 評価なし の
+   * 3 つに揃えてあって、てびきの「空欄の出し方」に同じ約束を書いている。カードだけが
+   * 「受付状況不明」を出していた（2026-09-23 実測）。てびきにも無い語だったので、
+   * 画面で見た人が意味を引けない語だった。 */
+  expect(got.noAvail).toBe("受付状況" + got.unconfirmed);
+  expect(got.noAvail).not.toContain("不明");
+  expect(got.weirdStatus).toBe("受付状況" + got.unconfirmed);
+  expect(got.uncertainNoDate).toBe("受付状況" + got.unconfirmed);
+  // 受け付け中なのに日付が出ていない行は、分からない部分だけを書く。
+  expect(got.openNoDate).toBe("次回締切の日付が" + got.unconfirmed);
+  // 「常時受付」は実在する状態（2026-09-23 実測: プール 3,257 行で 4 件）で、てびきが書く語。
+  expect(got.ongoing).toBe("常時受付");
+  const guide = readFileSync(join(site, "index.html"), "utf8");
+  for (const word of [
+    "受付状況" + got.unconfirmed,
+    "次回締切の日付が" + got.unconfirmed,
+    "常時受付",
+  ]) {
+    expect(guide, `カードに出す「${word}」がてびきから引けない`).toContain(word);
+  }
+  // 表示文に「不明」を戻さない（コメントには出てよいので、文字列リテラルだけ見る）。
+  expect(got.aoe + got.jst + got.utc + got.dateOnly + got.noAvail + got.openNoDate).not.toContain(
+    "不明",
+  );
+  expect(jsFunction(app, "recommendationAvailability")).not.toMatch(/"[^"]*不明[^"]*"/);
 });
 
 it("支援技術に本文の位置と表の名前を伝え、跳ぶ導線を置く（SPEC §7）", () => {
