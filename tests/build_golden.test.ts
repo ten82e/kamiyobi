@@ -8080,7 +8080,7 @@ it("キーボード操作は効き、入力中は効かない（SPEC §7）", ()
   expect(out.inInput, "検索欄で j を打ったときに処理を止めていない").toBe(false);
   expect(out.inInputUpdate, "検索欄で j を打つと行の選択が動いた").toBe(0);
   expect(out.inTextarea, "概要欄で k を打つと行の選択が動いた").toBe(false);
-  expect(out.inSelect, "下拉で / を打つと検索欄に飛んだ").toBe(false);
+  expect(out.inSelect, "選択欄で / を打つと検索欄に飛んだ").toBe(false);
   expect(out.editable, "編集中の欄で j を打つと行の選択が動いた").toBe(false);
   // 入力以外は効く。
   expect(out.list, "一覧で j が効かない").toBe(true);
@@ -8212,4 +8212,83 @@ it("並べ替えの目印は列見出しと並べ替えバーの両方に付く�
   expect(out.th).toEqual(["none", "残り ↕"]);
   // 別の列のボタンが押したことにされないこと。
   expect(out.other).toEqual(["false", "残り ↕"]);
+});
+
+it("操作できる箇所に焦点の目印があり、隠した制御が操作不能になっていない（SPEC §7）", () => {
+  /* 分野チップの checkbox は `.chips input { display: none }` で消していた
+   * （2026-09-23 実測）。`display: none` はタブ順序からも外れるので、**分野での
+   * 絞り込みがキーボードで到達不能**だった。期間・種別・ランクの `<select>` も
+   * `outline: none` だけで焦点の目印を書いていなかった（入力欄は border-color が
+   * 変わるが、select は変わらない）。印刷 CSS を除いて検査する。 */
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const style = template.slice(template.indexOf("<style>"), template.indexOf("</style>"));
+  // 印刷 CSS は操作要素を意図的に消す（印刷した紙で操作はしない）ので対象外。
+  const printAt = style.indexOf("@media print");
+  let css = style;
+  if (printAt >= 0) {
+    let depth = 0;
+    let i = style.indexOf("{", printAt);
+    while (i < style.length) {
+      if (style[i] === "{") depth += 1;
+      else if (style[i] === "}") {
+        depth -= 1;
+        if (depth === 0) break;
+      }
+      i += 1;
+    }
+    css = style.slice(0, printAt) + style.slice(i + 1);
+  }
+  // CSS の注釈を落とす（注釈の中に `outline: none` と同じ語を書いているので、
+  // 規則の選抜が注釈ごと拾って誤判した）。
+  css = css.replace(/\/\*[\s\S]*?\*\//g, "");
+
+  // ① 操作要素そのものに display: none を掛けていないこと（タブ順序から外れて
+  //    操作不能になる。`display: none` と `opacity: 0` は見た目は同じだが違う）。
+  const rules = Array.from(css.matchAll(/([^{}]+)\{([^{}]*)\}/g));
+  expect(rules.length).toBeGreaterThan(40);
+  for (const [, selector, body] of rules) {
+    if (!/display:\s*none/.test(body)) continue;
+    const sel = selector.trim();
+    expect(
+      /\b(input|select|textarea|button)\b/.test(sel),
+      `操作要素を display:none にしている（キーボードで到達不能になる）: ${sel}`,
+    ).toBe(false);
+  }
+
+  // ② 分野チップは「見えなくするだけ」でタブに残り、焦点がラベルに出ること。
+  const chipRule = css.slice(css.indexOf(".chips input {"));
+  expect(chipRule.slice(0, 240), "チップの checkbox が元に戻って消えている").toContain(
+    "opacity: 0;",
+  );
+  expect(css, "チップの焦点の目印が無い").toContain(".chips label:has(input:focus-visible)");
+
+  // ③ 焦点の目印を落としている制御が無いこと（`outline: none` を掛けたら、
+  //    同じ要素に対する出す側の規則を書く。規則の有無を要素ごとに突き合わせる）。
+  const focusRules = Array.from(css.matchAll(/([^{}]+)\{[^{}]*outline:[^{}]*\}/g))
+    .filter(([, selector]) => /:focus/.test(selector))
+    .map(([, selector]) => selector);
+  expect(focusRules.length).toBeGreaterThanOrEqual(3);
+  const dropped = Array.from(css.matchAll(/([^{}]+)\{([^{}]*outline:\s*none[^{}]*)\}/g)).map((m) =>
+    m[1].trim(),
+  );
+  expect(dropped.length).toBeGreaterThanOrEqual(3);
+  for (const sel of dropped) {
+    for (const part of sel.split(",")) {
+      const probe = part.trim().replace(/:focus.*$/, "");
+      // `input[type=search]` なら要素名 + 属性まで、`select` なら要素名で探す。
+      const needle = probe.replace(/\s+/g, "");
+      const hit = focusRules.some((rule) =>
+        rule.split(",").some((f) =>
+          f
+            .replace(/:focus(-visible)?/, "")
+            .replace(/\s+/g, "")
+            .startsWith(needle),
+        ),
+      );
+      expect(hit, `${probe} は outline: none なのに焦点の目印の規則が無い`).toBe(true);
+    }
+  }
+  for (const sel of ["select:focus-visible", "button:focus-visible", "textarea:focus-visible"]) {
+    expect(css, `焦点の目印の規則に ${sel} が無い`).toContain(sel);
+  }
 });
