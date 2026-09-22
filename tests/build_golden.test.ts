@@ -2161,6 +2161,10 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     "let written = '';",
     "const window = { location: { search: '', pathname: '/index.html' } };",
     "const history = { replaceState: (_s, _t, url) => { written = String(url); } };",
+    // writeUrl / readUrl は `<details>` の開閉も読むので、見立てにも同じ形を置く。
+    "const helpPanel = { open: false };",
+    "const $ = (id) => (id === 'helpPanel' ? helpPanel : null);",
+    "state.online = false;",
     jsFunction(runtime, "readUrl"),
     jsFunction(runtime, "writeUrl"),
     // 送信者の画面（国内研究会・締切順・降順）を URL に写出する。
@@ -2205,6 +2209,15 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     "const unreadableMode = [state.mode, urlNotices.join(' ／ ')];",
     "urlNotices = []; window.location.search = '?mode=deadlines'; readUrl();",
     "const explicitMode = [state.mode, urlNotices.join(' ／ ')];",
+    // てびきを開いた状態も引き継ぐ。閉じた `<details>` の中はブラウザのページ内検索に
+    // 出ないので、開いた人一緒の画面をそのまま渡せるようにしたもの。
+    "helpPanel.open = true; window.location.search = ''; writeUrl();",
+    "const helpSent = written;",
+    "helpPanel.open = false; urlNotices = []; window.location.search = helpSent.slice(1); readUrl();",
+    "const openedByLink = helpPanel.open;",
+    // てびきは画面の条件ではないので、読めない値でも注意を出さない（画面の語が増える）。
+    "helpPanel.open = true; urlNotices = []; window.location.search = '?help=maybe'; readUrl();",
+    "const helpUnreadable = [helpPanel.open, urlNotices.join(' ／ ')];",
     "window.location.search = '?rank=A%2A'; readUrl();",
     "const restoredRank = state.rank;",
     // 既定の並びなら引数を足さない（URL は必要な情報だけ乗せる）。
@@ -2227,6 +2240,7 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     "  unreadableFlag,",
     "  unreadableMode,",
     "  explicitMode,",
+    "  [helpSent, openedByLink, helpUnreadable[0], helpUnreadable[1]],",
     "]));",
   ].join("\n");
   const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
@@ -2249,6 +2263,7 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     unreadableFlag,
     unreadableMode,
     explicitMode,
+    helpRound,
   ] = JSON.parse(proc.stdout.trim()) as [
     string,
     [string, boolean],
@@ -2267,6 +2282,7 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     [boolean, string],
     [string, string],
     [string, string],
+    [string, boolean, string, string],
   ];
   expect(sent).toContain("sort=date");
   // 会期順の共有も対で動く（既定の向きなので `dir` は付かない）。
@@ -2318,6 +2334,13 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
   expect(unreadableMode[1]).toContain("リンクのモード「posts」");
   expect(unreadableMode[1]).toContain("締切の一覧を開きました");
   expect(explicitMode).toEqual(["deadlines", ""]);
+  /* てびきを開いた状態も URL で引き継ぐ。閉じた `<details>` の中はブラウザのページ内検索に
+   * 出ないので、開いた人一緒の画面をそのまま渡せるようにしたもの（SPEC §7）。 */
+  expect(helpRound[0], "てびきを開いている状態が URL に残っていない").toContain("help=1");
+  expect(helpRound[1], "リンクを開いた人の画面でてびきが開かない").toBe(true);
+  // てびきは画面の絞り込みではないので、読めない値でも注意を出さない。
+  expect(helpRound[2]).toBe(false);
+  expect(helpRound[3], "てびきの値で件数欄に注意が並んでいる").toBe("");
   // 知らない key は既定に戻る（URL を叩いて並べ替え式を壊せないようにする）。
   const bogus = spawnSync("node", ["-e", script.replace("sent.slice(1)", '"sort=bogus&dir=up"')], {
     encoding: "utf8",
@@ -11762,4 +11785,36 @@ it("画面に出る文へ markdown の記号を混ぜない（SPEC §7）", () =
     .replace(/<script[^>]*>[\s\S]*?<\/script>/g, " ")
     .replace(/<!--[\s\S]*?-->/g, " ");
   expect(visible, "画面に出る文に markdown の強調記号が残っている").not.toContain("**");
+});
+
+it("閉じたままのてびきの入口に、中身とズレた見出しを置かない（SPEC §7）", () => {
+  /* 「見方のてびき」は `<details>` で畳んだまま開く。閉じた `<details>` の中はブラウザの
+   * ページ内検索（Ctrl+F）で出てこない（WebKit の既知の制限:
+   * https://bugs.webkit.org/show_bug.cgi?id=239940）。だから見出し（summary）だけが
+   * 常に読める案内になっていて、そこにうたった語が中身に見当たらないと、
+   * 「書いてあるはずなのに見つからない」で人が止まる。見出しの引用符の中の語を
+   * そのままてびき本文と突き合わせる。
+   * 併せて、開いた状態をリンクで引き継ぐ `?help=1` が画面の案内にもあることを見る。 */
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const headAt = html.indexOf("<summary>");
+  expect(headAt, "てびきの見出しが見当たらない").toBeGreaterThan(-1);
+  const summary = html.slice(headAt, html.indexOf("</summary>", headAt));
+  const advertised = [...summary.matchAll(/「([^」]+)」/g)].map((m) => m[1]);
+  expect(advertised.length, "てびきの見出しが語をうたっていない（検査が空振り）").toBeGreaterThan(
+    2,
+  );
+  const guideStart = html.indexOf('<details class="help"');
+  const guide = html.slice(guideStart, html.indexOf("</details>", guideStart));
+  expect(guide.length, "てびきの本文が読めない").toBeGreaterThan(1000);
+  for (const word of advertised) {
+    expect(guide, `てびきの見出しが「${word}」とうたっているが、中にその語の説明が無い`).toContain(
+      word,
+    );
+  }
+  // 開いた状態を渡せることを、画面の案内も書く（知り合いにリンクで教えられる形に）。
+  expect(guide).toContain("?help=1");
+  // 読み書きが対でないと、開いて共有したリンクを受けた人の画面で畳まれている。
+  const app = siteRuntime("app.js");
+  expect(app).toContain('p.set("help", "1")');
+  expect(app).toContain('p.get("help")');
 });

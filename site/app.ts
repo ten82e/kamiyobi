@@ -3543,6 +3543,19 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     state.domestic = domesticFlag.on;
     state.online = onlineFlag.on;
     state.past = pastFlag.on;
+    /* 「見方のてびき」を開いた状態もリンクで引き継ぐ。閉じた `<details>` の中は
+     * ブラウザのページ内検索（Ctrl+F）で出てこない（WebKit の既知の制限:
+     * https://bugs.webkit.org/show_bug.cgi?id=239940）。てびきを探している人が
+     * 「このページに書いてあるのに見つからない」で止まらないように、開いた状態で
+     * 渡せる道をここに置く（2026-09-23）。 */
+    const helpFlag = urlFlagJa(p.get("help"));
+    // 読めない値でも注意を出さない。てびきは画面の絞り込みではなく見せ方なので、
+    // 件数欄に「チェックは入りませんでした」を並べると、本当に外れた条件の案内が
+    // 埋もれる（チェック欄と同じ案内文もそこでは不通）。
+    // `<details>` の開閉なので型を落とす（`$` は HTMLElement を返す）。見出しは
+    // `site/template.html` に常に有るので存在チェックはしない（他の欄と同じ）。
+    const helpPanel = $("helpPanel") as HTMLDetailsElement;
+    helpPanel.open = helpFlag.on;
     const rawCats = (p.get("cats") || "").split(",").filter((category) => Boolean(category));
     state.cats = rawCats.filter((category) => Boolean(DATA.categories[category]));
     // 分野は「知らない鍵を黙って落とす」と、送った人の意図より広い一覧を開くことになる
@@ -3582,6 +3595,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 開いた人の画面で元の並びにならないのは惜しい。既定の並びなら引数を足さない。
     if (sortKey !== DEFAULT_SORT_KEY) p.set("sort", sortKey);
     if (!sortAsc) p.set("dir", "desc");
+    // てびきを開いている状態も同じ理屈で引き継ぐ（上の読み取り側参照）。
+    const helpPanelEl = $("helpPanel") as HTMLDetailsElement;
+    if (helpPanelEl.open) p.set("help", "1");
     const str = p.toString();
     history.replaceState(null, "", str ? `?${str}` : window.location.pathname);
   }
@@ -3921,6 +3937,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     $(id).addEventListener("change", apply);
   });
   catsBox.addEventListener("change", apply);
+  /* てびきを開閉したら URL も揃える。閉じた `<details>` の中はブラウザのページ内検索に
+   * 出ないので、開いた人一緒の画面をそのまま共有できるようにする（読み取り側は `readUrl`）。 */
+  $("helpPanel").addEventListener("toggle", () => writeUrl());
   $("more").addEventListener("click", drawMore);
   // 0 件時の「条件をまとめて外す」。早め絞り込みのボタンは自分の条件だけを出し入れする
   // 切り替えなので、まとめて外す役はここで状態を戻して担う。
