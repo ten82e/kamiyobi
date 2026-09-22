@@ -3834,20 +3834,17 @@ const Recommender = (() => {
     return fields;
   }
 
-  /** 表が「未確認」を出す項目の検索語。条件は表のセルの作り方と揃える。 */
-  function unconfirmedSearchTerms(
-    ed: { event_start?: string | null; place?: string | null },
-    rankPairs: readonly string[] | null | undefined,
-  ): string {
-    const parts: string[] = [];
-    const push = (field: string) => {
-      parts.push(UNCONFIRMED_LABEL_JA);
-      parts.push(`${field}${UNCONFIRMED_LABEL_JA}`);
-    };
-    if (!String(ed.event_start || "").trim()) push("会期");
-    if (!String(ed.place || "").trim()) push("開催地");
-    if (!(rankPairs || []).length) push("ランク");
-    return parts.join(" ");
+  /* 検索語に入れる「未確認」「該当なし」の語（SPEC §7）。画面に出る語は検索でも
+   * 引ける、という約束を守るため、セルの語と同じものを検索語にも置く（CSV の状態の列にも
+   * 同じ語を書くので、書き出し側で見た語をそのまま打てる）。 */
+  function unconfirmedHayJa(row: unknown): string {
+    const fields = unconfirmedFieldsJa(row);
+    if (!fields.length) return "";
+    // 項目名の付いた語だけでなく、セルにそのまま出る「未確認」でも引けるようにする。
+    const bare = fields.some((field) => field.endsWith(UNCONFIRMED_LABEL_JA))
+      ? ` ${UNCONFIRMED_LABEL_JA}`
+      : "";
+    return `${fields.join(" ")}${bare}`;
   }
 
   /* ランク表の `N` は「評価の一覧に載っているが評価が付いていない」意味だと §2 で検証済み
@@ -4112,7 +4109,7 @@ const Recommender = (() => {
             tags: conf.tags || [],
             rankPairs,
             hay: searchNormalize(
-              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedSearchTerms(ed, rankPairs)} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)} ${weekdaySearchTerms(
+              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedHayJa({ kind: dl.kind || "", ed, rankPairs })} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)} ${weekdaySearchTerms(
                 dateOnly ? dl.local_date : t,
               )} ${zoneSearchWords(dl, dateOnly)}`,
             ),
@@ -4165,7 +4162,11 @@ const Recommender = (() => {
         tags: tags,
         rankPairs: pairs,
         hay: searchNormalize(
-          `${baseHay} journal 常時受付 ${categorySearchTerms(cats, tags)} ${tagSearchTerms(tags)}`,
+          `${baseHay} journal 常時受付 ${unconfirmedHayJa({
+            kind: "journal",
+            ed: { place: "", event_start: "" },
+            rankPairs: pairs,
+          })} ${categorySearchTerms(cats, tags)} ${tagSearchTerms(tags)}`,
         ),
         name: conf.title,
         year: null,
@@ -5304,6 +5305,7 @@ const Recommender = (() => {
     presetNextSelection: presetNextSelection,
     unconfirmedLabelJa: unconfirmedLabelJa,
     unconfirmedFieldsJa: unconfirmedFieldsJa,
+    unconfirmedHayJa: unconfirmedHayJa,
     dataAgeNoteJa: dataAgeNoteJa,
     dataStaleDaysJa: DATA_STALE_DAYS_JA,
     notApplicableLabelJa: notApplicableLabelJa,

@@ -11213,3 +11213,115 @@ it("CSV の状態の列に、画面の「未確認」「該当なし」を残す
   expect(entry).toContain("状態");
   expect(entry).toContain("該当なし");
 });
+
+it("CSV の状態の列に書いた語は、そのまま検索で引ける（SPEC §7）", () => {
+  /* 第 133 回で CSV の状態の列に「会期未確認」「会期該当なし」を書けるようにした。
+   * ここで問題になるのが、その語を画面の検索欄に打ったとき – 検索語（行の `hay`）に
+   * 同じ語が無ければ「CSV に載っていたのに 0 件」になる（画面に出る語は検索でも引ける、
+   * という SPEC §2 の約束）。実測で常時受付の行は `会期該当なし` が 0 件、
+   * `ランク未確認` も 0 件だった（画面のセルには出ているのに）。 */
+  const rec = join(site, "recommender.js");
+  // 検索語も CSV も recommender の側で作るので、組み立てが一箇所かはそちらを見る。
+  const recSrc = siteRuntime("recommender.js");
+  const script = [
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${rec}`)});`,
+    "const { readFileSync } = await import('node:fs');",
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const deadlines = Recommender.candidateRows(DATA, now);",
+    "const journals = Recommender.journalRows(DATA.conferences, now);",
+    "const parse = (line) => {",
+    "  const out = [];",
+    "  let cur = '';",
+    "  let quoted = false;",
+    "  for (let i = 0; i < line.length; i++) {",
+    "    const ch = line[i];",
+    "    if (ch === '\"') {",
+    "      if (quoted && line[i + 1] === '\"') {",
+    "        cur += '\"';",
+    "        i++;",
+    "      } else {",
+    "        quoted = !quoted;",
+    "      }",
+    "    } else if (ch === ',' && !quoted) {",
+    "      out.push(cur);",
+    "      cur = '';",
+    "    } else {",
+    "      cur += ch;",
+    "    }",
+    "  }",
+    "  out.push(cur);",
+    "  return out;",
+    "};",
+    "const sample = deadlines.slice(0, 400).concat(deadlines.slice(-400)).concat(journals);",
+    "const csv = Recommender.deadlinesToCsv(sample, now);",
+    "const lines = csv.split(/\\r?\\n/).filter(Boolean);",
+    "const cols = parse(lines[0].replace(/^\\\\uFEFF/, ''));",
+    "const at = (name) => cols.indexOf(name);",
+    // プロパティ: CSV の状態の列に書いた語は、その行の検索語に入っている。
+    "const rows = [];",
+    "const bad = [];",
+    "let checked = 0;",
+    "lines.slice(1).forEach((line, i) => {",
+    "  if (!line.trim()) return;",
+    "  const row = sample[i];",
+    "  rows.push(row);",
+    "  parse(line)[at('状態')].split('・').filter(Boolean).forEach((word) => {",
+    "    checked += 1;",
+    "    if (!Recommender.searchMatcher(word, now)(row.hay)) bad.push(word);",
+    "  });",
+    "});",
+    "const hits = (word, rows) => rows.filter((r) => Recommender.searchMatcher(word, now)(r.hay)).length;",
+    "const naJournals = journals.filter((r) => Recommender.unconfirmedFieldsJa(r).some((f) => f === '会期該当なし'));",
+    "const unrankedJournals = journals.filter((r) => !(r.rankPairs || []).length);",
+    "console.log(JSON.stringify({",
+    "  checked,",
+    "  bad: bad.slice(0, 5),",
+    "  badCount: bad.length,",
+    "  journalRows: journals.length,",
+    "  naJournalRows: naJournals.length,",
+    "  eventNa: hits('会期該当なし', journals),",
+    "  eventNaInDeadlines: hits('会期未確認', journals),",
+    "  eventUnconfirmed: hits('会期未確認', deadlines),",
+    "  unconfirmedDeadlines: deadlines.filter((r) => !String(r.ed.event_start || '').trim()).length,",
+    "  rankUnconfirmedJournals: hits('ランク未確認', journals),",
+    "  unrankedJournals: unrankedJournals.length,",
+    "  naInDeadlines: hits('該当なし', deadlines),",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    checked: number;
+    bad: string[];
+    badCount: number;
+    journalRows: number;
+    naJournalRows: number;
+    eventNa: number;
+    eventNaInDeadlines: number;
+    eventUnconfirmed: number;
+    unconfirmedDeadlines: number;
+    rankUnconfirmedJournals: number;
+    unrankedJournals: number;
+    naInDeadlines: number;
+  };
+  // 検査が無意味にならないこと（状態の列が空ばかりなら何も見ていない）。
+  expect(out.checked, "CSV の状態の列が空で、検査が空振りしている").toBeGreaterThan(50);
+  expect(out.bad, `CSV に書いた語が引けない: ${out.bad.join(", ")}`).toEqual([]);
+  // 常時受付の行は「該当なし」の語で引ける（第 129 回の語が検索にも残る）。
+  expect(out.naJournalRows).toBeGreaterThan(0);
+  expect(out.eventNa).toBe(out.naJournalRows);
+  // 締切行と常時受付の行が混ざらない（逆も同じ）。
+  expect(out.eventNaInDeadlines, "常時受付の行が「会期未確認」で引ける").toBe(0);
+  expect(out.naInDeadlines, "締切行が「該当なし」で引ける").toBe(0);
+  expect(out.eventUnconfirmed).toBe(out.unconfirmedDeadlines);
+  // ランクが空の常時受付の行は、そのまま引ける。
+  expect(out.rankUnconfirmedJournals).toBe(out.unrankedJournals);
+  // 検索語の組み立ては一箇所（項目別の古い実装が残っていないことも見る）。
+  expect(recSrc, "検索語の組み立てが二重実装になっている").not.toContain("unconfirmedSearchTerms");
+  // 締切行と常時受付の行、両方の検索語が同じ関数から出ている。
+  expect((recSrc.match(/unconfirmedHayJa\(/g) || []).length).toBeGreaterThanOrEqual(3);
+});
