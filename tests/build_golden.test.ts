@@ -4067,8 +4067,11 @@ it("the next-meeting note formats the schedule-only edition for a Japanese reade
     "const document = { createElement: (tag) => ({ tagName: tag, textContent: '', href: '', target: '', rel: '' }), createTextNode: (text) => ({ textContent: text }) };",
     "const $ = () => box;",
     jsFunction(siteRuntime("app.js"), "meetingRangeJa"),
+    jsFunction(siteRuntime("app.js"), "scheduleOnlyMatches"),
     jsFunction(siteRuntime("app.js"), "renderNextMeetingNote"),
-    "renderNextMeetingNote({ window: '90', cats: [], domestic: true });",
+    // 数え上げ（`scheduleOnlyMatches`）と文の組み立て（`renderNextMeetingNote`）を
+    // 実際に繋いで動かす（画面と同じ繋ぎ方）。
+    "renderNextMeetingNote(scheduleOnlyMatches({ window: '90', cats: [], domestic: true }));",
     "console.log(JSON.stringify({ hidden: box.hidden, text: box.textContent }));",
     "})().catch((e) => { console.error(e && e.stack || String(e)); process.exit(1); });",
   ].join("\n");
@@ -7467,6 +7470,7 @@ it("会期だけの会の案内と行の詳細の開催地は、表と同じ書�
   expect(runtime).not.toContain("＠${m.place}");
   expect(runtime).not.toContain("＠${next.place}");
   const noteSrc = jsFunction(runtime, "renderNextMeetingNote");
+  const matchSrc = jsFunction(runtime, "scheduleOnlyMatches");
   const limitSrc = jsFunction(runtime, "windowLimitMs");
   const rangeSrc = jsFunction(runtime, "meetingRangeJa");
   const script = [
@@ -7492,8 +7496,9 @@ it("会期だけの会の案内と行の詳細の開催地は、表と同じ書�
     "let searchQuery = '';",
     `${limitSrc}`,
     `${rangeSrc}`,
+    `${matchSrc}`,
     `${noteSrc}`,
-    "renderNextMeetingNote({ window: 'all', cats: [], domestic: false, online: false });",
+    "renderNextMeetingNote(scheduleOnlyMatches({ window: 'all', cats: [], domestic: false, online: false }));",
     "const flat = (n) => (n.textContent || '') + n.children.map(flat).join('');",
     "const titles = [];",
     "(function walk(n) { if (n.title) titles.push(n.title); n.children.forEach(walk); })(box);",
@@ -9844,4 +9849,69 @@ it("手引きが名指すファイルは、画面から押して辿れる（SPEC
   // 指す先がビルド成果物に本当に有る（リンク切れを防ぐ）。
   const builder = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
   expect(builder, "ビルドが upcoming.md を出さなくなったらリンクが死ぬ").toContain("upcoming.md");
+});
+
+it("表に行が出ていても、会期だけ確定の該当件数が件数欄に出る（SPEC §7）", () => {
+  /* 「会期だけが確定している会」の存在は、表が 0 件のときの案内にしか出ていなかった。
+   * だから表に 1 行でも出た人は「これで全部だ」と受け取る（2026-09-23 実測:
+   * 「研究会」は表 16 件に対して会期だけの該当 28 件、「ネットワーク」は 39 件に対し 31 件が
+   * 画面に出ていなかった）。件数欄に出す。 */
+  const runtime = siteRuntime();
+  const script = [
+    "(async () => {",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    "const DAY = 86400000;",
+    'const now = Date.parse("2026-08-10T00:00:00Z");',
+    // 時計を止める（この検査機の実際の日付は 2026-09 以降なので、止めないと窓の検査が
+    // 実際の日付で走って空振りする – 2026-09-23 に実測）。
+    "Date.now = () => now;",
+    // 会期だけ確定の回を 3 件（合致 / 過去 / 国内限定で落ちる）。
+    "const DATA = { conferences: [",
+    "  { key: 'a', title: 'Alpha WS', categories: ['hpc'], tags: [], editions: [",
+    "    { event_start: '2026-09-30', event_end: '2026-10-01', place: 'Kyoto, Japan', deadlines: [] }] },",
+    "  { key: 'b', title: 'Beta WS', categories: ['hpc'], tags: [], editions: [",
+    "    { event_start: '2026-07-01', event_end: '2026-07-02', place: 'Osaka, Japan', deadlines: [] }] },",
+    "  { key: 'c', title: 'Gamma WS', categories: ['hpc'], tags: ['domestic-jp'], editions: [",
+    "    { event_start: '2026-10-20', event_end: '2026-10-21', place: '松江テルサ（島根県）', deadlines: [] }] },",
+    "] };",
+    "let searchQuery = '';",
+    `${jsFunction(runtime, "windowLimitMs")}`,
+    `${jsFunction(runtime, "scheduleOnlyMatches")}`,
+    "const all = scheduleOnlyMatches({ window: 'all', cats: [], domestic: false, online: false });",
+    "searchQuery = 'Alpha';",
+    "const q = scheduleOnlyMatches({ window: 'all', cats: [], domestic: false, online: false });",
+    "searchQuery = '';",
+    "const domestic = scheduleOnlyMatches({ window: 'all', cats: [], domestic: true, online: false });",
+    "const win = scheduleOnlyMatches({ window: '30d', cats: [], domestic: false, online: false });",
+    "console.log(JSON.stringify({",
+    "  all: all.map((m) => m.name), q: q.map((m) => m.name),",
+    "  domestic: domestic.map((m) => m.name), win: win.map((m) => m.name),",
+    " }));",
+    "})().catch((e) => { console.error(e && e.stack || String(e)); process.exit(1); });",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 120_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    all: string[];
+    q: string[];
+    domestic: string[];
+    win: string[];
+  };
+  // 過去の回は数えない（表と同じ「これからの会」の目盛り）。
+  expect(out.all).toEqual(["Alpha WS", "Gamma WS"]);
+  // 検索語でも絞れる（表と同じ目盛りであることの確認）。
+  expect(out.q).toEqual(["Alpha WS"]);
+  // 国内チェックをかければ国内の会だけになる。
+  expect(out.domestic).toEqual(["Gamma WS"]);
+  // 「締切まで」の窓も掛かる。
+  expect(out.win).toEqual([]);
+
+  // 件数欄への出し方（ビルド後）。表に行が有るときだけ出し、読み上げにも同じ語を流す。
+  expect(runtime, "件数欄に会期だけ確定の件数を出していない").toContain(
+    "同じ条件で会期だけが確定している会",
+  );
+  expect(runtime, "0 件のときと二重に出している").toContain(
+    "if (shown.length && scheduleOnly.length)",
+  );
+  expect(runtime, "読み上げに伝えていない").toContain("cntLive += scheduleNote");
 });

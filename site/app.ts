@@ -2017,20 +2017,28 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * （`upcoming.md` 側にしか出ない）ので、「検索語は合っているのに 0 件」をそのまま
    * 放置しない。表示する日程は表と同じく暦日 + 曜日で、時刻は付けない。
    */
-  function renderNextMeetingNote(filter: {
+  /* 会期だけが確定している回の形（表の行とは別物なので型も分けて持つ – 件数欄と 0 件の
+   * 案内で同じ型を使い回す）。 */
+  type ScheduleOnlyMatch = {
+    name: string;
+    eventStart: string;
+    eventEnd: string;
+    place?: string;
+    link?: string;
+  };
+
+  /* いまの絞り込みで残る「会期だけが確定している会」を数える（表に出さないだけで、
+   * 検索語・分野・国内・オンライン・締切までの窓は表と同じ目盛りで掛ける）。 */
+  function scheduleOnlyMatches(filter: {
     window: string;
     cats: string[];
     domestic: boolean;
     online: boolean;
-  }): void {
-    const box = $("emptyMeeting");
-    if (!box) return;
-    box.textContent = "";
-    box.hidden = true;
+  }): ScheduleOnlyMatch[] {
     const now = Date.now();
     const limit = windowLimitMs(filter.window, now);
     const meetsQuery = Recommender.searchMatcher(searchQuery);
-    const found = Recommender.scheduleOnlyEditions(DATA)
+    return Recommender.scheduleOnlyEditions(DATA)
       .filter((m) => {
         if (searchQuery.trim() && !meetsQuery(m.hay)) return false;
         if (filter.domestic && m.tags.indexOf("domestic-jp") < 0) return false;
@@ -2039,8 +2047,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         const startMs = Date.parse(`${m.eventStart}T00:00:00+09:00`);
         return Number.isFinite(startMs) && startMs >= now && startMs <= limit;
       })
-      .sort((a, b) => a.eventStart.localeCompare(b.eventStart))
-      .slice(0, 3);
+      .sort((a, b) => a.eventStart.localeCompare(b.eventStart)) as unknown as ScheduleOnlyMatch[];
+  }
+
+  function renderNextMeetingNote(matches: ScheduleOnlyMatch[]): void {
+    const box = $("emptyMeeting");
+    if (!box) return;
+    box.textContent = "";
+    box.hidden = true;
+    const found = matches.slice(0, 3);
     if (!found.length) return;
     const lead = document.createElement("strong");
     lead.textContent = "会期だけ確定している次回:";
@@ -2942,6 +2957,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // そのまま aria-live にすると 1 打鍵ごとに数十語が流れる（第 88 回で付けて実測）。
     // 件数と、解決結果・取得状態の短い通知だけをこちらに出す。
     let cntLive = cnt;
+    /* 会期だけが確定している会の当たり数を、件数欄と 0 件の案内で共用する（同じ絞り込みを
+     * 二箇所に書かない）。対象は数十件なので、毎回数えても打鍵のコストにはならない。 */
+    const scheduleOnly =
+      recMode || paperMode
+        ? []
+        : scheduleOnlyMatches({
+            window: state.win,
+            cats: state.cats,
+            domestic: state.domestic,
+            online: state.online,
+          });
     // 「全 M 件」との差をその場で説明する。内訳は独立に数えているので合計は全件にならない
     // （過去かつ投稿締切以外の行が両方に立つ）ため、「〜をのぞく」の形で書く。
     if (!recMode && !paperMode) {
@@ -2978,6 +3004,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         );
       }
       if (parts.length) cnt += ` ｜ のぞく: ${parts.join("・")}`;
+      /* 同じ条件で会期だけが確定している会の件数。これまでは表が 0 件のときにだけ
+       * 出していたので、表に 1 行でも出た人は「これで全部だ」と受け取ってしまう
+       * （2026-09-23 実測: 「研究会」は表 16 件に対し会期だけの該当 28 件、
+       * 「ネットワーク」は 39 件に対し 31 件が画面に出ていなかった）。 */
+      if (shown.length && scheduleOnly.length) {
+        const scheduleNote = ` ｜ 同じ条件で会期だけが確定している会 ${scheduleOnly.length} 件（締切は未定）`;
+        cnt += scheduleNote;
+        cntLive += scheduleNote;
+      }
       // 「スパコン」などを分野名に寄せたときは、寄せた先をその場で書く。
       // 理由も見ずに分野全体の行を並べると、なぜ出たか分からないまま行の壁になる。
       const synonymNotes = Recommender.querySynonymNotes(searchQuery).concat(
@@ -3093,12 +3128,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (zeroFilter) {
         const filter = zeroFilter;
         $("emptyText").textContent = emptyDeadlineHint(filter);
-        renderNextMeetingNote({
-          window: state.win,
-          cats: state.cats,
-          domestic: state.domestic,
-          online: state.online,
-        });
+        renderNextMeetingNote(scheduleOnly);
         // 「過去の締切も表示」だけは一覧の意味を変える（過去行の読み込みを伴う）ので
         // まとめて外す側では触らず、文章での案内に留める。
         $("emptyReset").hidden = !filtersClearable(filter);
