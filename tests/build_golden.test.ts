@@ -4335,3 +4335,75 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
   expect(app).toContain("esc(placeShown || UNCONFIRMED_JA)");
   expect(app).toContain("esc(r.ed.date_text || r.ed.event_start || UNCONFIRMED_JA)");
 });
+
+it("「未確認」と出した行はそのまま検索できる（SPEC §7）", () => {
+  const app = siteRuntime("app.js");
+  const build = readFileSync(new URL("../src/build.ts", import.meta.url), "utf8");
+  // 語を二重実装させない。表示も検索も md も recommender の正本から取る。
+  expect(app).toContain("Recommender.unconfirmedLabelJa()");
+  expect(build).toContain("Recommender.unconfirmedLabelJa()");
+
+  const rows = Recommender.candidateRows(data);
+  const word = Recommender.unconfirmedLabelJa();
+  expect(word).toBe("未確認");
+  // 表のセルの作り方と同じ条件（会期は event_start、開催地は place、ランクは rankPairs）。
+  const gapOf = (r: (typeof rows)[number]): string[] => {
+    const gaps: string[] = [];
+    if (!String(r.ed.event_start || "").trim()) gaps.push("会期");
+    if (!String(r.ed.place || "").trim()) gaps.push("開催地");
+    if (!r.rankPairs.length) gaps.push("ランク");
+    return gaps;
+  };
+  const shownSet = new Set(
+    rows
+      .map((r, i) => ({ r, i }))
+      .filter(({ r }) => gapOf(r).length > 0)
+      .map(({ i }) => i),
+  );
+  const foundSet = new Set(
+    rows
+      .map((r, i) => ({ r, i }))
+      .filter(({ r }) => Recommender.hayMatches(r.hay, word))
+      .map(({ i }) => i),
+  );
+  expect(shownSet.size, "検査が空回りしている").toBeGreaterThan(100);
+  // 表示しているのに引けない行、引けるのに表示していない行、どちらも無いこと。
+  expect([...foundSet].filter((i) => !shownSet.has(i))).toEqual([]);
+  expect([...shownSet].filter((i) => !foundSet.has(i))).toEqual([]);
+
+  // 項目名を添えても引ける（「開催地が分かっていない行だけ見たい」に応える）。
+  for (const field of ["会期", "開催地", "ランク"]) {
+    const expected = rows.filter((r) => gapOf(r).includes(field)).length;
+    expect(expected, `${field} の欠落が実データに無い`).toBeGreaterThan(0);
+    const hit = rows.filter((r) => Recommender.hayMatches(r.hay, `${field}${word}`)).length;
+    expect(hit, `${field}${word} の検索件数`).toBe(expected);
+  }
+  // 全て揃った行を「未確認」でヒットさせない。
+  const complete = rows.filter((r) => gapOf(r).length === 0);
+  // 検査が空回りしない程度の下限（このビルドの収録では全て揃った行は少数）。
+  expect(complete.length).toBeGreaterThan(10);
+  expect(complete.filter((r) => Recommender.hayMatches(r.hay, word))).toEqual([]);
+});
+
+it("upcoming.md の開催地列に空欄を残さない（SPEC §4）", () => {
+  const md = readFileSync(join(site, "upcoming.md"), "utf8");
+  const word = Recommender.unconfirmedLabelJa();
+  let blank = 0;
+  let unconfirmed = 0;
+  let counted = 0;
+  for (const line of md.split("\n")) {
+    if (!line.startsWith("| ") || line.startsWith("|---")) continue;
+    const cells = line
+      .slice(1, -1)
+      .split("|")
+      .map((c) => c.trim());
+    if (cells.length < 7 || cells[0] === "日付") continue;
+    counted += 1;
+    if (!cells[6]) blank += 1;
+    if (cells[6] === word) unconfirmed += 1;
+  }
+  expect(counted, "upcoming.md の本文を行えていない").toBeGreaterThan(100);
+  expect(blank, "空欄だと収録漏れと公式未発表が区別できない").toBe(0);
+  // 0 件になるようなら検査が無意味なので、実際に「未確認」が出ていることも見る。
+  expect(unconfirmed).toBeGreaterThan(0);
+});

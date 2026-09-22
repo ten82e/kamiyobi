@@ -1360,8 +1360,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* 値が空のとき、記号「-」だけを出さない。利用者は「該当なし」「収録漏れ」
    * 「公式が出ていない」を区別できない。確認できていないことを短い語で出し、
    * 詳しい理由は title に落とす。「未定」にすると会議が決めていないことになり、
-   * kamiyobi が確認できていないという事実とは別の話になるため使わない。 */
-  const UNCONFIRMED_JA = "未確認";
+   * kamiyobi が確認できていないという事実とは別の話になるため使わない。
+   * 語そのものは recommender の正本を使い、表に出る語が検索で引ける状態を保つ。 */
+  const UNCONFIRMED_JA = Recommender.unconfirmedLabelJa();
   const UNCONFIRMED_TITLES_JA = {
     event: " kamiyobi が公式で会期を確認できていません。".trim(),
     place: " kamiyobi が公式で開催地を確認できていません。".trim(),

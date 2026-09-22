@@ -2280,6 +2280,31 @@ const Recommender = (() => {
       .join(" ");
   }
 
+  /* 表は空の会期・開催地・ランクをこの語で出す（SPEC §7）。画面に書いた語は検索できるように
+   * する（「表示している語で検索できる」の不変条件）。分野ごとにも引けるよう修飾形も添える。
+   * 「未定」ではない — 会議が決めていないことと、 kamiyobi が確認できていないことは別。 */
+  const UNCONFIRMED_LABEL_JA = "未確認";
+
+  function unconfirmedLabelJa(): string {
+    return UNCONFIRMED_LABEL_JA;
+  }
+
+  /** 表が「未確認」を出す項目の検索語。条件は表のセルの作り方と揃える。 */
+  function unconfirmedSearchTerms(
+    ed: { event_start?: string | null; place?: string | null },
+    rankPairs: readonly string[] | null | undefined,
+  ): string {
+    const parts: string[] = [];
+    const push = (field: string) => {
+      parts.push(UNCONFIRMED_LABEL_JA);
+      parts.push(`${field}${UNCONFIRMED_LABEL_JA}`);
+    };
+    if (!String(ed.event_start || "").trim()) push("会期");
+    if (!String(ed.place || "").trim()) push("開催地");
+    if (!(rankPairs || []).length) push("ランク");
+    return parts.join(" ");
+  }
+
   /* 会場表記にオンライン参加の記述があるか。出張できないときの参加手段は実務上よく見る
    * 条件だが、表記はdataの文字列に依存する（「会場名／オンライン」「〜 & Virtual」など）。
    * 対面かどうかは**判定しない**（書かれていないことから参加形式は推定できない）。
@@ -2373,7 +2398,7 @@ const Recommender = (() => {
             tags: conf.tags || [],
             rankPairs,
             hay: searchNormalize(
-              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`,
+              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${unconfirmedSearchTerms(ed, rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`,
             ),
             dupLabel: dl.comment || "",
           });
@@ -3540,6 +3565,7 @@ const Recommender = (() => {
     monthTermsJa: monthTermsJa,
     placePrefectureJa: placePrefectureJa,
     placeOffersOnline: placeOffersOnline,
+    unconfirmedLabelJa: unconfirmedLabelJa,
     placeWithPrefectureJa: placeWithPrefectureJa,
     expandRelativeMonths: expandRelativeMonths,
     kanaFold: kanaFold,

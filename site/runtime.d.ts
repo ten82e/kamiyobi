@@ -158,6 +158,8 @@ interface SiteRecommenderApi {
   placeWithPrefectureJa(value: unknown): string;
   /** 会場表記にオンライン参加の記述があるか（対面かどうかは判定しない）。 */
   placeOffersOnline(value: unknown): boolean;
+  /** 空の会期・開催地・ランクを表で出す語（検索側と同じ正本）。 */
+  unconfirmedLabelJa(): string;
   expandRelativeMonths(query: unknown, nowMs: number): string;
   queryTokenGroups(query: unknown): string[][];
   queryTokens(query: unknown): string[];

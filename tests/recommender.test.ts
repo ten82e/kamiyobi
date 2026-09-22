@@ -4203,3 +4203,77 @@ describe("会場表記からオンライン参加かを見る", () => {
     expect(recommender.placeOffersOnline("Online / Co-located")).toBe(true);
   });
 });
+
+describe("表に出す「未確認」で検索できる", () => {
+  // ランクは会議単位（`conf.rank`）なので、欠落行と充足行を同じ会議に作れない。
+  const catalog = {
+    conferences: [
+      {
+        key: "demo-gap",
+        title: "Demo Gap WS",
+        categories: ["systems"],
+        editions: [
+          {
+            id: "demo-gap-2026",
+            // 開催地も会期も無い回（表では両方「未確認」になる）。
+            deadlines: [{ kind: "paper", precision: "exact", utc: "2026-10-01T12:00:00Z" }],
+          },
+        ],
+      },
+      {
+        key: "demo-full",
+        title: "Demo Full WS",
+        categories: ["systems"],
+        rank: { ccf: "B" },
+        editions: [
+          {
+            id: "demo-full-2026",
+            place: "Kyoto, Japan",
+            event_start: "2026-11-05",
+            deadlines: [{ kind: "paper", precision: "exact", utc: "2026-10-02T12:00:00Z" }],
+          },
+        ],
+      },
+    ],
+  } as never;
+  const rows = recommender.candidateRows(catalog);
+
+  it("語は recommender が持つ（画面と検索で言い方が割れない）", () => {
+    expect(recommender.unconfirmedLabelJa()).toBe("未確認");
+  });
+
+  it("空の項目だけ当てる", () => {
+    const gap = rows.find((r) => r.conf.key === "demo-gap");
+    const full = rows.find((r) => r.conf.key === "demo-full");
+    expect(gap && full, "fixture が行を作っていない").toBeTruthy();
+    expect(recommender.hayMatches(gap?.hay, "未確認")).toBe(true);
+    expect(recommender.hayMatches(gap?.hay, "開催地未確認")).toBe(true);
+    expect(recommender.hayMatches(gap?.hay, "会期未確認")).toBe(true);
+    expect(recommender.hayMatches(gap?.hay, "ランク未確認")).toBe(true);
+    // 値がある行を「未確認」でヒットさせない。
+    expect(recommender.hayMatches(full?.hay, "未確認")).toBe(false);
+    expect(recommender.hayMatches(full?.hay, "開催地未確認")).toBe(false);
+    // 会期がある行に開催地の欠落だけを混ぜない（項目を絞れた意味を持たせる）。
+    const placeOnly = recommender.candidateRows({
+      conferences: [
+        {
+          key: "demo-place-gap",
+          title: "Demo Place Gap WS",
+          categories: ["systems"],
+          rank: { ccf: "C" },
+          editions: [
+            {
+              id: "demo-place-gap-2026",
+              event_start: "2026-12-01",
+              deadlines: [{ kind: "paper", precision: "exact", utc: "2026-10-03T12:00:00Z" }],
+            },
+          ],
+        },
+      ],
+    } as never);
+    const hay = placeOnly[0]?.hay;
+    expect(recommender.hayMatches(hay, "開催地未確認")).toBe(true);
+    expect(recommender.hayMatches(hay, "会期未確認")).toBe(false);
+    expect(recommender.hayMatches(hay, "ランク未確認")).toBe(false);
+  });
+});

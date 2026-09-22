@@ -2676,7 +2676,12 @@ export function toUpcomingMd(
     // 開催地に都道府県が書かれていない行（`倉敷市芸文館` など）は、土地で探すと
     // 見つからない。サイト側の検索と同じ都道府県語を md の開催地列にも添える
     // （公式表記は変えないので末尾に空白区切りで添えるだけ）。
-    const placeEscaped = escapeMdCell(Recommender.placeWithPrefectureJa(ed.place));
+    // 空の開催地は、空欄にせずサイトと同じ「未確認」を出す。空欄だと公式が出ていないのと
+    // 収録漏れが区別できない（SPEC §7 の表と同じ判断）。語は recommender の正本を使い、
+    // md に書いた語がサイトの検索で引ける状態も保つ。
+    const placeEscaped = escapeMdCell(
+      Recommender.placeWithPrefectureJa(ed.place) || Recommender.unconfirmedLabelJa(),
+    );
     if (rec.type === "deadline") {
       const dl = rec.deadline;
       if (dl === null) continue;
