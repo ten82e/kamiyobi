@@ -205,6 +205,7 @@ kamiyobi/
 │   ├── generate-curated.ts      # promotion 正典から local 正典を再生成
 │   ├── generate-venue-profiles.ts # 出典情報付きプロフィール成果物の再生成
 │   ├── observe-cfp.ts           # CFP 本文・応答・抽出候補の保存
+│   ├── refresh-ieice.ts         # 研究会発表申込システムから国内研究会の会期・締切を更新
 │   ├── restore-recommendation-bundle.ts # 互換推薦 artifact の検証・復元
 │   ├── seal-recommendation-bundle.ts # semantic_content_id 付き bundle 封印
 │   ├── semantic-content.ts     # semantic content id の算出 CLI
@@ -843,6 +844,26 @@ conferences:
   Important Dates ページは抽出しやすい。JS レンダリングサイト（wacv.thecvf.com /
   vldb.org / bigdataieee.org 等）は静的 HTML に締切が無く現行抽出では 0 件になる
   ため登録しない。必要になったら個別の抽出ルールを `src/fetch-primary.ts` に足す。
+
+### 国内研究会のスケジュール表（`scripts/refresh-ieice.ts`）
+
+- 情報処理学会・電子情報通信学会の研究会は、個別イベントページの URL だけが `data/manual.yaml`
+  に残りがちで、会期が追加されても締切が増えない。`scripts/refresh-ieice.ts` は研究会別の
+  スケジュール表（`ken.ieice.org/ken/program/?tgid=IEICE-<略称>`）を巡回して、会期と
+  「発表申込締切日」を `data/manual.yaml` に反映する。既定は dry-run、`--apply` で書き込む。
+- **項目が日付しか持たない**ので `precision: date-only` で収録し、時刻（23:59 など）は補わない。
+  会期のみ・締切 `[未定]` の回は会期だけを追記する。
+- 反映は **空の `deadlines: []` の充填と、未登録の会期の追記だけ**。既存の締切値は書き換えない
+  （人手で確定済みの値を上流の下記修正で壊さない）。版をまたいだ前方検索は事故になる
+  （過ぎた回へ次回の締切を登録してしまう。2026-09-22 の dry-run で実検出し、版単位の
+  置換に直した）。
+- 収録していない研究会は自動で増やさない。名指しでの収録は人の判断なので、実行時には
+  「公式に N 回分の開催が出ている」という報告だけを出す。
+- 書込み前に変更後の YAML を読み直し、会議キーの増加・版の消失を検出したら中止する。
+- `ken.ieice.org` は既知のブラウザ UA 以外に 403 を返し、間隔を詰めると 503 を返す。
+  取得は逐次 + `--interval`（既定 12 秒）で、`--cache-dir` を併用すれば取得済み HTML から
+  オフラインで再実行できる。
+- スケジュール表の解釈は実ページの fixture（`tests/fixtures/ieice/`）で検査する。
 
 ### CFP 候補の証拠付き昇格
 

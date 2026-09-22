@@ -168,6 +168,9 @@ main では `deploy.yml` が Pages を配信する。
 ```sh
 # 1. 上流を取得して正規化し、一次ソース観測を適用する
 node src/fetch-primary.ts --apply
+# 1b. 国内研究会の会期・締切を研究会別スケジュール表から更新する（既定は dry-run）
+node scripts/refresh-ieice.ts --cache-dir .cache/ieice
+node scripts/refresh-ieice.ts --cache-dir .cache/ieice --apply
 # 2. 候補探索（新規会議の発見）
 node src/cli.ts discover
 # 3. promotion batch から local 正典を生成
