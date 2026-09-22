@@ -3122,14 +3122,15 @@ it("site template localized shortcuts label and preset button active sync", () =
   expect(template).not.toContain("Top Tier");
   expect(template).toContain("投稿予定概要");
   expect(template).not.toContain("投稿予定 Abstract");
-  expect(runtime).toContain("意味検索候補");
+  expect(runtime).toContain("意味検索の候補");
   expect(runtime).not.toContain("semantic 候補");
-  expect(runtime).toContain("意味類似度 ");
+  expect(runtime).toContain("意味の近さ ");
   // クイック抽出プリセットボタンが data-preset を持ち、updatePresetActive で同期されること
   expect(template).toContain('data-preset="7d"');
   expect(template).toContain('data-preset="a_star"');
   expect(template).toContain('data-preset="hpc_sys"');
   expect(template).toContain('data-preset="domestic"');
+  expect(template).toContain('data-preset="online"');
   expect(runtime).toContain("function updatePresetActive()");
 });
 
@@ -4165,4 +4166,84 @@ it("category chips count the rows that pass the other filters (SPEC §7)", () =>
   expect(out.dbText).toBe("0");
   expect(out.dbZero).toBe(true);
   expect(out.hpcZero).toBe(false);
+});
+
+/** 文字列リテラルだけを拾う（ビルド後はコメントが残るため、正規表現では混ざる）。 */
+function japaneseStringLiterals(src: string): string[] {
+  const out: string[] = [];
+  let i = 0;
+  while (i < src.length) {
+    const c = src[i];
+    if (c === "/" && src[i + 1] === "/") {
+      const nl = src.indexOf("\n", i);
+      if (nl < 0) break;
+      i = nl + 1;
+      continue;
+    }
+    if (c === "/" && src[i + 1] === "*") {
+      const close = src.indexOf("*/", i + 2);
+      if (close < 0) break;
+      i = close + 2;
+      continue;
+    }
+    if (c === '"' || c === "'" || c === "`") {
+      let j = i + 1;
+      let buf = "";
+      while (j < src.length) {
+        const d = src[j];
+        if (d === "\\") {
+          buf += src[j + 1] ?? "";
+          j += 2;
+          continue;
+        }
+        if (d === c) break;
+        if (d === "\n" && c !== "`") break;
+        buf += d;
+        j += 1;
+      }
+      if (/[\u3040-\u30ff\u4e00-\u9fff]/.test(buf)) out.push(buf);
+      i = j + 1;
+      continue;
+    }
+    i += 1;
+  }
+  return out;
+}
+
+it("説明文に開発用語を残さない（SPEC §7）", () => {
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const runtime = siteRuntime("app.js");
+  // サイトのビルドはコメントを残すので、コメントではなく**画面へ出る文字列**だけを見る。
+  // recommender.js もドロワー等の文言を出すので同じ検査に通す。
+  const literals = [
+    ...japaneseStringLiterals(runtime),
+    ...japaneseStringLiterals(siteRuntime("recommender.js")),
+    ...Array.from(template.matchAll(/>([^<>{}]*[\u3040-\u30ff\u4e00-\u9fff][^<>{}]*)</g)).map(
+      (m) => m[1] as string,
+    ),
+    ...Array.from(
+      template.matchAll(
+        /(?:placeholder|title|aria-label)="([^"]*[\u3040-\u30ff\u4e00-\u9fff][^"]*)"/g,
+      ),
+    ).map((m) => m[1] as string),
+  ];
+  expect(literals.length).toBeGreaterThan(80);
+  // 実装側の語をそのまま出さない。画面では 分野 / 主題 / 絞り込み / 言葉の一致 を使う。
+  const banned = [
+    "シグナル",
+    "カテゴリ",
+    "トピック",
+    "領域タグ",
+    "ブースト",
+    "RRF",
+    "閾値",
+    "埋め込み",
+    "語彙スコア",
+    "デッドライン",
+    "フィルタ",
+  ];
+  for (const word of banned) {
+    const hits = literals.filter((text) => text.includes(word));
+    expect(hits, `画面に出る文言に「${word}」が残っている`).toEqual([]);
+  }
 });

@@ -1876,13 +1876,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (r._match?.agg) {
         const agg = r._match.agg;
         const parts: string[] = [];
-        if (agg.domain > 0) parts.push(`分野シグナル +${agg.domain}`);
+        if (agg.domain > 0) parts.push(`分野の一致 +${agg.domain}`);
         if ((agg.venueName || 0) > 0) parts.push(`会議名一致 +${agg.venueName}`);
         if (agg.paper > 0) parts.push(`採択論文一致 +${agg.paper}`);
         if (agg.jp > 0) parts.push(`日本語一致 +${agg.jp}`);
-        if (agg.tags > 0) parts.push(`領域タグ +${agg.tags}`);
+        if (agg.tags > 0) parts.push(`主題の一致 +${agg.tags}`);
         if (agg.venue > 0) parts.push("過去掲載先一致");
-        if ((r._semScore ?? 0) > 0) parts.push(`意味類似度 ${r._semScore}点`);
+        if ((r._semScore ?? 0) > 0) parts.push(`意味の近さ ${r._semScore}点`);
         if (parts.length) ms.title = parts.join(" ／ ");
       }
       tags.appendChild(ms);
@@ -2049,9 +2049,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const chips: Array<[string, string, string]> = [];
     if (agg.domain > 0)
       chips.push([
-        "分野シグナル",
+        "分野の一致",
         `+${agg.domain}`,
-        "会議のカテゴリと論文キーワードが一致（HPC/AI/Security 等）",
+        "会議の分野と論文のキーワードが一致（HPC・AI・セキュリティなど）",
       ]);
     if ((agg.venueName || 0) > 0)
       chips.push([
@@ -2060,25 +2060,30 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         "会議名の内容語が論文タイトル・キーワードに含まれる",
       ]);
     if (agg.paper > 0)
-      chips.push(["採択論文一致", `+${agg.paper}`, "この会議の代表採択論文の語彙と一致"]);
+      chips.push(["採択論文一致", `+${agg.paper}`, "この会議で採択された論文に使われた語と一致"]);
     if (agg.jp > 0) chips.push(["日本語一致", `+${agg.jp}`, "日本語の会議名・論文語が一致"]);
     if (agg.tags > 0)
-      chips.push(["領域タグ", `+${agg.tags}`, "会議の領域タグ（real-time 等）が論文に含まれる"]);
+      chips.push([
+        "主題の一致",
+        `+${agg.tags}`,
+        "会議の主題（real-time など）が論文に書かれている",
+      ]);
     if (agg.venue > 0)
       chips.push([
         "過去掲載先一致",
         "補助",
-        "過去に同じ掲載先が確認された補助シグナル（トピック一致とは別）",
+        "過去にこの掲載先への投稿が確認されている（主題の一致とは別の補助情報）",
       ]);
     if ((r._semScore ?? 0) > 0)
       chips.push([
-        "意味検索候補",
+        "意味検索の候補",
         `順位 ${r._semanticRank || "—"}`,
-        "埋め込み検索の候補順位を RRF に加算",
+        "意味検索（文の意味の近さで探す検索）の順位も、順序決めに使う",
       ]);
     if (r._boosted)
-      chips.push(["同分野ブースト", "+10", "掲載先タグから推定した分野とこの会議が一致"]);
-    if (!chips.length) chips.push(["一致要素なし", "—", "低スコアでも閾値を超えたため表示"]);
+      chips.push(["同じ分野（掲載先から推定）", "+10", "掲載先から推定した分野とこの会議が一致"]);
+    if (!chips.length)
+      chips.push(["目立つ一致はない", "—", "一致の数は少ないが、表示の下限は超えている"]);
 
     let html = '<div class="detail-inner">';
     html +=
@@ -2088,23 +2093,23 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     let comp: string;
     if (r._semanticRank) {
       comp =
-        "RRF: 語彙検索順位 " +
+        "言葉の一致（語彙検索）で " +
         (r._lexicalRank || "—") +
-        " + 意味検索順位 " +
+        " 位、意味検索で " +
         r._semanticRank +
-        " → 一致評価 " +
+        " 位 → 合わせて 一致評価 " +
         esc(r._fitLabel || "評価保留");
     } else if (semState === "loading") {
-      comp = `語彙スコア ${r._vocabScore}点（意味検索を実行中…）`;
+      comp = `言葉の一致スコア ${r._vocabScore}点（意味検索を実行中…）`;
     } else if (semState === "error") {
-      comp = `語彙スコア ${r._vocabScore}点（埋め込みが使えないため意味検索なし）`;
+      comp = `言葉の一致スコア ${r._vocabScore}点（意味検索が使えないため、言葉の一致だけで順位を決めています）`;
     } else {
-      comp = `語彙スコア ${r._vocabScore}点`;
+      comp = `言葉の一致スコア ${r._vocabScore}点`;
     }
     html +=
       '<div class="detail-comp">' +
       comp +
-      (m?.evidence?.some((evidence) => evidence.rank) ? "（順位情報を RRF で集約）" : "") +
+      (m?.evidence?.some((evidence) => evidence.rank) ? "（2つの検索の順位を合わせて集約）" : "") +
       "</div>";
     html +=
       '<div class="reason-chips">' +
@@ -2333,21 +2338,23 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     };
     const reasons: string[] = [];
     const reasonSignals: Array<[string, number]> = [
-      ["分野シグナル", agg.domain],
+      ["分野の一致", agg.domain],
       ["会議名一致", agg.venueName ?? 0],
       ["採択論文一致", agg.paper],
       ["日本語一致", agg.jp],
-      ["領域タグ", agg.tags],
+      ["主題の一致", agg.tags],
     ];
     reasonSignals.forEach((item) => {
       if (item[1] > 0) reasons.push(`${item[0]} +${item[1]}`);
     });
     if (agg.venue > 0) reasons.push("過去掲載先一致");
     if (r._semanticRank) reasons.push(`意味検索順位 ${r._semanticRank}`);
-    if (r._boosted) reasons.push("同分野ブースト");
+    if (r._boosted) reasons.push("同じ分野（掲載先から推定）");
     line(
       card,
-      reasons.length ? `選定理由: ${reasons.join(" / ")}` : "選定理由: 一致要素を確認できる候補",
+      reasons.length
+        ? `選定理由: ${reasons.join(" / ")}`
+        : "選定理由: 目立つ一致はないが候補に入った",
       "card-section",
     );
     if (r.conf.link && safeExternalUrl(r.conf.link)) {
