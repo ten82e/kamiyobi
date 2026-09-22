@@ -452,6 +452,22 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * それらを追うのは `upcoming.md`（SPEC §4・§7）。 */
   const SELECTABLE_KINDS = ["abstract", "paper", "journal"];
 
+  /* 収録元がその締切に付けた名前（`dl.label`）の出し方。既定画面 478 行はすべて原語の名称を
+   * 持ち、無印で並べていた（2026-09-23 実測: いちばん多いのは「Submission deadline」の 129 行、
+   * ほか「Paper submission」56 行、「Submission」34 行…。国内分は「発表申込締切」など日本語）。
+   * 種別欄の本筋（概要締切・論文締切）と同じ列に、印の無い別の分類が並んで見えるため、
+   * 「画面の種別とは別物で、収録元の呼び方その物」であることを語で書く。会期の項で既に
+   * 使っている「原表記」の語をここでも使う。
+   * 表のセルと行の詳細で同じ式を使う（式が二つあると、片方だけ直してズレる – 第 128 回）。 */
+  function kindDetailJa(round: unknown, label: unknown): string {
+    const parts: string[] = [];
+    const r = Number(round);
+    if (Number.isFinite(r) && r > 1) parts.push(`第 ${r} ラウンド`);
+    const text = typeof label === "string" ? label.trim() : "";
+    if (text) parts.push(`原表記: ${text}`);
+    return parts.join(" / ");
+  }
+
   /* 種別セレクトの既定（絞り込みなし）の書き方。0 件の案内もこの語を書く —
    * 案内が古いラベルを指すと、その語が画面に見つからない。 */
   const KIND_ALL_LABEL_JA = "投稿締切（概要・論文）";
@@ -983,8 +999,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
     // 表の種別セルに出している「第 N ラウンド」「ラベル」をドロワーで落とさない。
     // 同じ会議の複数ラウンドを見分ける実務上有意のある情報で、詳細側で欠けると困る。
-    const roundLabel = r.dl && r.dl.round && r.dl.round > 1 ? `第 ${r.dl.round} ラウンド` : "";
-    const kindDetail = [roundLabel, (r.dl && r.dl.label) || ""].filter(Boolean).join(" / ");
+    const kindDetail = kindDetailJa(r.dl && r.dl.round, r.dl && r.dl.label);
     // 表と同じ式で併記を出す。AoE は公式が AoE 締めの場合だけ見せる
     // （JST 宣言の国内締切に AoE を出すと、実在しない AoE 締切があると誤解させる）。
     const zone = Recommender.officialZone(r.dl);
@@ -2642,15 +2657,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
     const c3 = td(tr, "種別");
     line(c3, (KIND_LABEL[r.kind] || r.kind) + (r.dupLabel ? `: ${r.dupLabel}` : ""));
-    const detail: string[] = [];
-    if (r.dl.round && r.dl.round > 1) {
-      detail.push(`第 ${r.dl.round} ラウンド`);
-    }
-    if (r.dl.label) {
-      detail.push(r.dl.label);
-    }
-    if (detail.length) {
-      line(c3, detail.join(" / "), "sub");
+    const detail = kindDetailJa(r.dl.round, r.dl.label);
+    if (detail) {
+      line(c3, detail, "sub");
     }
 
     const c4 = td(tr, "ランク");

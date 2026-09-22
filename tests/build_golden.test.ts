@@ -2802,7 +2802,7 @@ it("drawer shows JST with weekday and the official timezone, viewer-timezone ind
     "const document = { activeElement: null, getElementById: (id) => els[id] || null };",
     "function $(id) { return document.getElementById(id); }",
     "const window = { _prevFocus: null };",
-    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, { paper: '論文締切' }, (t) => t, fmtDate, fmtJst, fmtAoE, (s) => String(s ?? ''), (v) => String(v ?? ''), () => null, () => '', Recommender, meetingRangeJa, upcomingEditionsOf);`,
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, { paper: '論文締切' }, (t) => t, fmtDate, fmtJst, fmtAoE, (s) => String(s ?? ''), (v) => String(v ?? ''), () => null, () => '', Recommender, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}));`,
     "const draw = (tzRaw) => {",
     "  body.innerHTML = '';",
     "  openDrawer({",
@@ -3320,6 +3320,7 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
     "const closeSpy = () => {};",
     `const KEY = ${JSON.stringify(keySrc)};`,
     `const OPEN = ${JSON.stringify(openSrc)};`,
+    `const KIND_DETAIL = (${jsFunction(html, "kindDetailJa")});`,
     `const SUMMARY = ${JSON.stringify(summarySrc)};`,
     `const CLOSE = ${JSON.stringify(closeSrc)};`,
     drawerDepsSrc as string,
@@ -3329,7 +3330,7 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
     "const dOpened = calls.open.length === 1 && calls.open[0] === 'B';",
     "const dFocusedRow = calls.focus[calls.focus.length - 1] === 'row1';",
     "const verificationSummary = new Function('esc', 'return (' + SUMMARY + ')')((s) => String(s ?? ''));",
-    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '' }, meetingRangeJa, upcomingEditionsOf);",
+    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '' }, meetingRangeJa, upcomingEditionsOf, KIND_DETAIL);",
     "document.activeElement = prevEl;",
     "openDrawer({ kind: 'journal', conf: { title: 'X' }, ed: { place: 'P', date_text: 'D' } });",
     "const focusedClose = document.activeElement === closeBtn;",
@@ -3657,7 +3658,7 @@ it("normal deadline drawer includes verification details", () => {
     "function $(id) { return document.getElementById(id); }",
     "const window = { _prevFocus: null };",
     `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')((s) => String(s ?? ''));`,
-    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '' }, meetingRangeJa, upcomingEditionsOf);`,
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '' }, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}));`,
     "openDrawer({",
     "  kind: 'paper', conf: { key: 'demo', title: 'Demo' },",
     "  ed: { year: 2026, place: 'P', date_text: 'D' }, t: 0, tLast: 0,",
@@ -4776,6 +4777,7 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
     jsFunction(app, "remain"),
     "const DAY = 86400000;",
     ...SORT_CANON.fns,
+    jsFunction(app, "kindDetailJa"),
     jsFunction(app, "makeRow"),
     "const flat = (n) => (n.textContent || '') + n.children.map((c) => '|' + flat(c)).join('');",
     "const titles = (n, out = []) => { if (n.title) out.push(n.title); n.children.forEach((c) => titles(c, out)); return out; };",
@@ -4849,6 +4851,13 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
   expect(out.knownCells["会議"], "延長していない行まで目印を出している").not.toContain(
     out.extendedWord,
   );
+  /* 収録元の締切名は、印を付けずに種別欄へ並べると画面の種別と並ぶ別の分類に見えていた
+   * （第 146 回）。表のセルが「原表記: …」の形で描けることを、makeRow の実際の出力で見る。*/
+  expect(
+    out.extendedCells["種別"],
+    "収録元の締切名が、何の値か分からない形で種別欄に出ている",
+  ).toContain("原表記: Paper submission (Extended)");
+  expect(out.emptyCells["種別"] ?? "", "原表記の無い行に語だけが出ている").not.toContain("原表記");
   const guideText = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
   expect(guideText, "てびきが延長の語を説明していない").toContain(`<dt>${out.extendedWord}</dt>`);
   // ドロワーも同じ語を使う（表とドロワーで言い方が割れないようにする）。
@@ -5034,7 +5043,7 @@ it("ドロワーは表の情報（分野・ランク・ラウンド）を落と�
     jsFunction(runtime, "meetingRangeJa"),
     jsFunction(runtime, "upcomingEditionsOf"),
     `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')(esc);`,
-    `const openDrawer = new Function('window','document','$','KIND_LABEL','titleWithYear','fmtDate','fmtJst','fmtAoE','esc','safeExternalUrl','rowDateOnlyState','verificationSummary','Recommender','catLabel','meetingRangeJa','upcomingEditionsOf','UNCONFIRMED_JA','return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, KIND_LABEL, titleWithYear, () => 'UTC', () => 'JST', () => 'AoE', esc, (u) => String(u ?? ''), () => null, verificationSummary, Recommender, catLabel, meetingRangeJa, upcomingEditionsOf, Recommender.unconfirmedLabelJa());`,
+    `const openDrawer = new Function('window','document','$','KIND_LABEL','titleWithYear','fmtDate','fmtJst','fmtAoE','esc','safeExternalUrl','rowDateOnlyState','verificationSummary','Recommender','catLabel','meetingRangeJa','upcomingEditionsOf','UNCONFIRMED_JA','kindDetailJa', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, KIND_LABEL, titleWithYear, () => 'UTC', () => 'JST', () => 'AoE', esc, (u) => String(u ?? ''), () => null, verificationSummary, Recommender, catLabel, meetingRangeJa, upcomingEditionsOf, Recommender.unconfirmedLabelJa(), (${jsFunction(runtime, "kindDetailJa")}));`,
     "openDrawer({",
     "  kind: 'paper', cats: ['hpc', 'systems'], rankPairs: ['ccf:B', 'core:A*', 'thcpl:N'],",
     "  conf: { key: 'demo', title: 'Demo', tags: ['machine-learning'] },",
@@ -12070,4 +12079,48 @@ it("キー操作の案内は幅ではなく操作手段で出し、効いてい�
   const handler = jsFunction(app, "onKeydown");
   expect(handler, "キー処理本体が見当たらない（検査が空振り）").not.toBe("");
   expect(handler).not.toMatch(/innerWidth|clientWidth|offsetWidth|matchMedia/);
+});
+
+it("収録元の締切名は「原表記」と書いて、画面の種別と混ざらないようにする（SPEC §7）", () => {
+  /* 種別欄の本筋は「概要締切」「論文締切」だが、その下に収録元がその締切に付けた名前を
+   * 併記している。既定画面 478 行はすべて原表記を持ち、無印で並べていた（2026-09-23 実測:
+   * 「Submission deadline」129 行、「Paper submission」56 行、「Submission」34 行で、国内分は
+   * 「発表申込締切」など日本語）。印の無い別分類が同じ列に並んで見えたため、会期で既に
+   * 使っている「原表記」の語をここでも使う。表と行の詳細で式を共有する（式が二つあると
+   * 片方だけ直す – 第 128 回）。 */
+  const app = siteRuntime("app.js");
+  const fnSrc = jsFunction(app, "kindDetailJa");
+  expect(fnSrc, "締切名の併記を作る関数が見当たらない（検査が空振り）").not.toBe("");
+  const script = [
+    "const kindDetailJa = (" + fnSrc + ");",
+    "console.log(JSON.stringify({",
+    "  roundAndLabel: kindDetailJa(2, 'Paper submission'),",
+    "  firstRound: kindDetailJa(1, 'Submission deadline'),",
+    "  japanese: kindDetailJa(null, '発表申込締切'),",
+    "  blank: kindDetailJa(3, '   '),",
+    "  nothing: kindDetailJa(null, null),",
+    "  numericString: kindDetailJa('2', 'Abstract registration'),",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout) as { [k: string]: string };
+  expect(got.roundAndLabel).toBe("第 2 ラウンド / 原表記: Paper submission");
+  // 第 1 ラウンドは旧来どおり書かない（毎行に付いて読みにくくなる）。
+  expect(got.firstRound).toBe("原表記: Submission deadline");
+  expect(got.japanese).toBe("原表記: 発表申込締切");
+  expect(got.blank).toBe("第 3 ラウンド");
+  expect(got.nothing).toBe("");
+  expect(got.numericString, "数値が文字列で来るとラウンドが消える").toBe(
+    "第 2 ラウンド / 原表記: Abstract registration",
+  );
+  // 表のセルと行の詳細が同じ式を使う（どちらかだけ直す変更を落ちるようにする）。
+  expect((app.match(/kindDetailJa\(/g) || []).length, "併記の呼び出し箇所").toBe(3);
+  expect(app).not.toMatch(/detail\.push\(\s*r\.dl\.label\s*\)/);
+  // 画面に出る語として、てびきにも同じ語で書いてある。
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  expect(html, "原表記という語がてびきから引けない").toContain("原表記:");
 });
