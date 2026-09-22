@@ -1906,6 +1906,34 @@ it("the deadline search index carries Japanese month terms (SPEC §7)", () => {
   expect(runtime).toMatch(/monthTermsJa[\s\S]*new Date\(value \+ 9 \* 3_600_000\)/);
 });
 
+it("the 残り vocabulary in the table is documented in the guide (SPEC §7)", () => {
+  const runtime = siteRuntime();
+  const template = readFileSync(join(site, "index.html"), "utf8");
+  const remainSrc = jsFunction(runtime, "remain");
+  // 文言を変えても てびき だけ古いまま、ということが起きないようにする。
+  // ラベルは remain() 側の断片ごとに検査する（テンプレート文字列なので前後の空白込み）。
+  for (const fragment of ['"本日終了"', "日前に終了", '"まもなく"', "あと ${", " 時間`", " 日`"]) {
+    expect(remainSrc, `remain() の文言が変わった: ${fragment}`).toContain(fragment);
+  }
+  // 日付だけの締切の残りは `remain()` を通らない（呼び出し側で「時刻未確認」を出す）。
+  expect(runtime).toContain('{ text: "時刻未確認"');
+  const help = template.slice(template.indexOf('id="helpPanel"'));
+  const guide = help.slice(0, help.indexOf("</dl>"));
+  for (const word of [
+    "残り",
+    "あと N 日",
+    "あと N 時間",
+    "まもなく",
+    "本日終了",
+    "日前に終了",
+    "時刻未確認",
+  ]) {
+    expect(guide, `てびきに ${word} の説明がない`).toContain(word);
+  }
+  // 「過去の締切は既定で出さない」はEmpty 状態の案内と食い違うと誤解を招くので、同じ場所で説明する。
+  expect(guide).toContain("過去の締切も表示");
+});
+
 it("upcoming.md and llms.txt explain the coverage window and the JST basis (SPEC §4)", () => {
   const md = readFileSync(join(site, "upcoming.md"), "utf8");
   const head = md.split("\n").slice(0, 12).join("\n");
