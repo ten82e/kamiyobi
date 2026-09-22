@@ -7841,3 +7841,76 @@ it("月・日の語は、和暦の語を持つ行だけを出す（隣の月日�
     expect(row.miss, `「${row.q}」は和暦の語を持つ行を ${row.miss} 件落としている`).toBe(0);
   }
 });
+
+it("llms.txt に書いた検索の引き方が、ビルド成果物で実際に効く（SPEC §7）", () => {
+  /* `llms.txt` は「サイトの日本語での引き方」を書く。ここは機械（検索支援・要約支援）が
+   * 読むので、実装とズレた書き方を残すと、そのまま利用者に伝えられる。
+   * ラウンド（第 76 回）・並べ語（第 77・80 回）・月語の和暦展開（第 81 回）は
+   * 実装だけ先に進んでいて、llms.txt は知らなかった。本文と挙動を対で固定する。 */
+  const text = readFileSync(join(site, "llms.txt"), "utf8");
+  for (const phrase of [
+    "月語は和暦の語",
+    "画面が中黒で並べる語",
+    "ラウンドは画面の書き方",
+    "略称と年を離して",
+    // 第 81 回より前はこの 4 つが全部無かった。
+  ]) {
+    expect(text, `llms.txt に検索の案内として ${phrase} が無い`).toContain(phrase);
+  }
+
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const rows = Recommender.candidateRows(DATA);",
+    "const hits = (q) => rows.filter((r) => Recommender.searchMatcher(q, now)(r.hay)).length;",
+    "const groups = (q) => Recommender.queryTokenGroups(q, now);",
+    "console.log(JSON.stringify({",
+    // 月: `1月` は和暦の語を持つ行だけを出す。
+    "  monthExtra: rows",
+    "    .filter((r) => Recommender.searchMatcher('1月', now)(r.hay))",
+    "    .filter((r) => !/(^| )\\d{4}年1月/.test(r.hay)).length,",
+    "  monthFound: hits('1月') > 0,",
+    // 日: `1日` は 11日・21日・31日を混ぜない。
+    "  dayExtra: rows",
+    "    .filter((r) => Recommender.searchMatcher('1日', now)(r.hay))",
+    "    .filter((r) => !/(^| )(\\d{4}年)?\\d{1,2}月1日/.test(r.hay)).length,",
+    // 並べ語: 写した語が引けて、1語より狭い（AND）。
+    "  dot: hits('人工知能・データベース'),",
+    "  dotSingle: hits('人工知能'),",
+    "  dotComma: hits('人工知能，データベース'),",
+    "  dotPunctOnly: groups('，').length,",
+    // ラウンド: 画面の書き方 = 詰めた形 = R 表記。
+    "  roundSpaced: hits('第 2 ラウンド'),",
+    "  roundJoined: hits('第2ラウンド'),",
+    "  roundR: hits('r2'),",
+    "  roundCombined: groups('スパコン・第 2 ラウンド').length,",
+    // 略称と年: 離して打つと割れる。月日の裸の数字は割らない。
+    "  abbrevGroups: groups('NSDI 27').length,",
+    "  abbrevYear: groups('NSDI 27').some((g) => g.indexOf('2027') >= 0),",
+    "  monthDayGroups: groups('8月 27').some((g) => g.indexOf('2027') >= 0),",
+    " }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as Record<string, number | boolean>;
+  expect(out.monthExtra, "`1月` が和暦の語を持たない行を返す（llms.txt の案内と違う）").toBe(0);
+  expect(out.monthFound, "`1月` が 1 件も返さず検査が空振りしている").toBe(true);
+  expect(out.dayExtra, "`1日` が 11日・21日・31日の行を返す").toBe(0);
+  expect(out.dot, "中黒で並べた語が 0 件").toBeGreaterThan(0);
+  expect(out.dotComma, "全角コンマで並べた語が中黒と違う結果になる").toBe(out.dot);
+  expect(out.dot).toBeLessThanOrEqual(out.dotSingle as number);
+  expect(out.dotPunctOnly, "並べ語だけの入力が語を作っている").toBe(0);
+  expect(out.roundSpaced, "画面の書き方のラウンドが詰めた形と違う件数になる").toBe(out.roundJoined);
+  expect(
+    out.roundR,
+    "R 表記が画面の書き方より少ない（打ち方が統一されていない）",
+  ).toBeGreaterThanOrEqual(out.roundJoined as number);
+  expect(out.roundCombined, "並べ語とラウンドの語を一緒に書くと壊れる").toBe(2);
+  expect(out.abbrevGroups, "`NSDI 27` が 2 語に割れない").toBe(2);
+  expect(out.abbrevYear, "`NSDI 27` の 27 が 2027 として引けない").toBe(true);
+  expect(out.monthDayGroups, "月日の裸の数字（`8月 27`）を年に展開している").toBe(false);
+});
