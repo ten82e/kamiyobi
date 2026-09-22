@@ -1634,6 +1634,42 @@ const Recommender = (() => {
     return notes;
   }
 
+  /* 相対日・相対週を解決したら、件数欄に解決結果を書く（相対月と同じ方針）。
+   * 黙って条件が変わったように見えると、自分が何を見たのか分からなくなる。 */
+  function relativeDayNotes(query: unknown, nowMs: number): string[] {
+    const notes: string[] = [];
+    queryTokens(query).forEach((token) => {
+      const dayOffset = RELATIVE_DAY_OFFSETS_JA[token];
+      if (dayOffset !== undefined) {
+        const ymd = offsetCalendarDay(nowMs, dayOffset);
+        const iso = `${ymd[0]}-${String(ymd[1]).padStart(2, "0")}-${String(ymd[2]).padStart(2, "0")}`;
+        const day = weekdayJaFromDate(iso);
+        notes.push(`${token} = ${ymd[0]}年${ymd[1]}月${ymd[2]}日${day ? `(${day})` : ""}`);
+        return;
+      }
+      const week = weekDayTermsJa(token, nowMs);
+      if (week.length === 7) {
+        const first = week[0].split("年");
+        const last = week[6].split("年");
+        const firstIso = toIsoDate(week[0]);
+        const lastIso = toIsoDate(week[6]);
+        const head = `${first[0]}年${first[1]}`;
+        const tail = first[0] === last[0] ? last[1] : `${last[0]}年${last[1]}`;
+        notes.push(
+          `${token} = ${head}(${weekdayJaFromDate(firstIso)})〜${tail}(${weekdayJaFromDate(lastIso)})`,
+        );
+      }
+    });
+    return notes;
+  }
+
+  /** `2026年8月10日` の形の語を `2026-08-10` にする（曜日を引き出すため）。 */
+  function toIsoDate(term: string): string {
+    const parts = /^(\d{4})年(\d{1,2})月(\d{1,2})日$/.exec(String(term || ""));
+    if (!parts) return "";
+    return `${parts[1]}-${parts[2].padStart(2, "0")}-${parts[3].padStart(2, "0")}`;
+  }
+
   function categoryLabelJa(key: unknown): string {
     const k = typeof key === "string" ? key : "";
     return CATEGORY_LABELS_JA[k] || k;
@@ -1937,31 +1973,50 @@ const Recommender = (() => {
    * 開始・終了から和暦風の月語を hay に足す（`2026年12月 12月`）。
    * 瞬間から月を引くときは JST の暦日で読む（一覧の日時列と同じ）。
    * `YYYY-MM-DD` の文字列は閲覧者のタイムゾーンに依存せず、そのまま暦日として読む。 */
-  function monthTermsJa(value: unknown): string {
-    let year = 0;
-    let month = 0;
+  function calendarDateJa(value: unknown): number[] | null {
     if (typeof value === "number" && Number.isFinite(value)) {
       const jst = new Date(value + 9 * 3_600_000);
-      year = jst.getUTCFullYear();
-      month = jst.getUTCMonth() + 1;
-    } else {
-      const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value ?? "").trim());
-      if (!matched) return "";
-      year = Number(matched[1]);
-      month = Number(matched[2]);
-      const day = Number(matched[3]);
-      // `weekdayJaFromDate` と同じ検査。`Date.UTC` は 2月30日のような値を翌月へ繰り越す
-      // ので、読み直した暦日が元値と一致するときだけ認める。
-      const check = new Date(Date.UTC(year, month - 1, day));
-      if (
-        check.getUTCFullYear() !== year ||
-        check.getUTCMonth() + 1 !== month ||
-        check.getUTCDate() !== day
-      )
-        return "";
+      return [jst.getUTCFullYear(), jst.getUTCMonth() + 1, jst.getUTCDate()];
     }
-    if (!year || month < 1 || month > 12) return "";
+    const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value ?? "").trim());
+    if (!matched) return null;
+    const year = Number(matched[1]);
+    const month = Number(matched[2]);
+    const day = Number(matched[3]);
+    // `weekdayJaFromDate` と同じ検査。`Date.UTC` は 2月30日のような値を翌月へ繰り越す
+    // ので、読み直した暦日が元値と一致するときだけ認める。
+    const check = new Date(Date.UTC(year, month - 1, day));
+    if (
+      check.getUTCFullYear() !== year ||
+      check.getUTCMonth() + 1 !== month ||
+      check.getUTCDate() !== day
+    )
+      return null;
+    return [year, month, day];
+  }
+
+  function monthTermsJa(value: unknown): string {
+    const ymd = calendarDateJa(value);
+    if (!ymd) return "";
+    const year = ymd[0];
+    const month = ymd[1];
+    if (month < 1 || month > 12) return "";
     return `${year}年${month}月 ${month}月`;
+  }
+
+  /* 暦日でも引けるようにする。「明日の締切」「8月10日」は月より細かく言う形で、
+   * 実測では ISO 暦日を含む行が既定画面 477 行中 12 行しかなく、`8月10日` はもちろん
+   * 「明日」「今週」も 1 件も当たらなかった。締切（JST の暦日）から
+   * `2026年8月10日 8月10日` を hay に足す。
+   * 会期は締切ではないので足さない（表は締切で並び、締切までで絞る）。 */
+  function dayTermsJa(value: unknown): string {
+    const ymd = calendarDateJa(value);
+    if (!ymd) return "";
+    const year = ymd[0];
+    const month = ymd[1];
+    const day = ymd[2];
+    if (month < 1 || month > 12 || day < 1 || day > 31) return "";
+    return `${year}年${month}月${day}日 ${month}月${day}日`;
   }
 
   /* かなのゆらぎを吸収する。国内の会場名は漢字、会議名はカタカナ表記が多く、
@@ -2018,6 +2073,69 @@ const Recommender = (() => {
       return `${shifted.getUTCFullYear()}年${shifted.getUTCMonth() + 1}月`;
     });
     return changed ? tokens.join(" ") : normalized;
+  }
+
+  /* 「明日の締切」「今週の締切」も言う。相対月と同じ方針で、表に出す語（暦日）へ
+   * クエリ側で展開する。展開先は `dayTermsJa` が hay に入れた形に揃える。 */
+  const RELATIVE_DAY_OFFSETS_JA: Record<string, number> = {
+    今日: 0,
+    きょう: 0,
+    本日: 0,
+    明日: 1,
+    あした: 1,
+    あす: 1,
+    明後日: 2,
+    あさって: 2,
+    昨日: -1,
+    きのう: -1,
+  };
+
+  /* 週の語。日本では月曜始まりで話すのが普通（「今週中に出す」は月〜日）。
+   * 週の語は 7 暦日の OR になるので、文字列展開では作れない（語同士は AND のため、
+   * スペースで並べた時点で 0 件になる）。`queryTokenGroups` の 1 グループとして返す。 */
+  const RELATIVE_WEEK_OFFSETS_JA: Record<string, number> = {
+    今週: 0,
+    こんしゅう: 0,
+    来週: 1,
+    らいしゅう: 1,
+    先週: -1,
+    せんしゅう: -1,
+  };
+
+  /** JST の暦日を基準時刻からの日数ぶん進めた `[年, 月, 日]`。 */
+  function offsetCalendarDay(nowMs: number, days: number): number[] {
+    const base = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
+    const shifted = new Date(
+      Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate() + days),
+    );
+    return [shifted.getUTCFullYear(), shifted.getUTCMonth() + 1, shifted.getUTCDate()];
+  }
+
+  /** 週の語に対して、その週の月〜日の暦日語（年付き）を返す。月曜始まり。 */
+  function weekDayTermsJa(token: string, nowMs: number): string[] {
+    const offset = RELATIVE_WEEK_OFFSETS_JA[token];
+    if (offset === undefined) return [];
+    const today = offsetCalendarDay(nowMs, 0);
+    const dow = new Date(Date.UTC(today[0], today[1] - 1, today[2])).getUTCDay();
+    const mondayShift = (dow + 6) % 7;
+    const out: string[] = [];
+    for (let i = 0; i < 7; i += 1) {
+      const ymd = offsetCalendarDay(nowMs, -mondayShift + offset * 7 + i);
+      out.push(`${ymd[0]}年${ymd[1]}月${ymd[2]}日`);
+    }
+    return out;
+  }
+
+  /** 相対日・相対日の語を、暦日の候補グループへ展開する（OR の組）。 */
+  function relativeDayGroups(token: string, nowMs: number): string[] | null {
+    const dayOffset = RELATIVE_DAY_OFFSETS_JA[token];
+    if (dayOffset !== undefined) {
+      const ymd = offsetCalendarDay(nowMs, dayOffset);
+      return [token, `${ymd[0]}年${ymd[1]}月${ymd[2]}日`, `${ymd[1]}月${ymd[2]}日`];
+    }
+    const week = weekDayTermsJa(token, nowMs);
+    if (week.length) return [token].concat(week);
+    return null;
   }
 
   /* 土地名での検索。出張先は「国内であってほしい」「四国であってほしい」という条件で
@@ -2131,7 +2249,8 @@ const Recommender = (() => {
   }
 
   /** 検索語を、かなで引いたときも含めた候補グループへ展開する（語ごとに OR の組）。 */
-  function queryTokenGroups(query: unknown): string[][] {
+  function queryTokenGroups(query: unknown, nowMs?: number): string[][] {
+    const now = Number.isFinite(Number(nowMs)) ? Number(nowMs) : Date.now();
     const byReading: Record<string, string[]> = {};
     const synonyms = querySynonymMap();
     Object.keys(synonyms).forEach((key) => {
@@ -2156,6 +2275,13 @@ const Recommender = (() => {
       const expanded = byReading[kanaFold(token)];
       if (expanded) {
         expanded.forEach((name) => {
+          if (group.indexOf(name) < 0) group.push(name);
+        });
+      }
+      // 「明日」「今週」は暦日へ展開する（展開しないと表の暦日語に当たらない）。
+      const relative = relativeDayGroups(token, now);
+      if (relative) {
+        relative.forEach((name) => {
           if (group.indexOf(name) < 0) group.push(name);
         });
       }
@@ -2198,8 +2324,10 @@ const Recommender = (() => {
    * 検索語を分解し直すため、行の数のぶんだけ無駄をする（実測 3234 行で 1 打鍵
    * 約 83 ms、うち約 69 ms が分解のやり直し）。一覧の絞り込みはこれを使う。
    */
-  function searchMatcher(query: unknown): (hay: unknown) => boolean {
-    const groups = queryTokenGroups(query).map((group) => group.map((term) => kanaFold(term)));
+  function searchMatcher(query: unknown, nowMs?: number): (hay: unknown) => boolean {
+    const groups = queryTokenGroups(query, nowMs).map((group) =>
+      group.map((term) => kanaFold(term)),
+    );
     if (!groups.length) return () => true;
     return (hay: unknown): boolean => {
       const target = kanaFold(hay);
@@ -2676,7 +2804,7 @@ const Recommender = (() => {
             tags: conf.tags || [],
             rankPairs,
             hay: searchNormalize(
-              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${unconfirmedSearchTerms(ed, rankPairs)} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`,
+              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${unconfirmedSearchTerms(ed, rankPairs)} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`,
             ),
             dupLabel: dl.comment || "",
           });
@@ -3843,6 +3971,9 @@ const Recommender = (() => {
     querySynonymNotes: querySynonymNotes,
     queryHiddenKindMatches: queryHiddenKindMatches,
     monthTermsJa: monthTermsJa,
+    dayTermsJa: dayTermsJa,
+    weekDayTermsJa: weekDayTermsJa,
+    relativeDayNotes: relativeDayNotes,
     placePrefectureJa: placePrefectureJa,
     placeOffersOnline: placeOffersOnline,
     unconfirmedLabelJa: unconfirmedLabelJa,

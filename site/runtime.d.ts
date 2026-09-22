@@ -161,6 +161,9 @@ interface SiteRecommenderApi {
   /** 空の会期・開催地・ランクを表で出す語（検索側と同じ正本）。 */
   unconfirmedLabelJa(): string;
   querySynonymNotes(query: unknown): string[];
+  dayTermsJa(value: unknown): string;
+  weekDayTermsJa(token: string, nowMs: number): string[];
+  relativeDayNotes(query: unknown, nowMs: number): string[];
   queryHiddenKindMatches(query: unknown, hiddenKindLabels: readonly string[]): string[];
   rankPairLabelJa(pair: string): string;
   rankScaleLabelJa(name: string): string;
@@ -171,7 +174,7 @@ interface SiteRecommenderApi {
   queryTokens(query: unknown): string[];
   hayMatches(hay: unknown, query: unknown): boolean;
   /** 検索語ごとの照合関数を 1 回だけ作る（一覧の絞り込みは行ごとに作り直さない）。 */
-  searchMatcher(query: unknown): (hay: unknown) => boolean;
+  searchMatcher(query: unknown, nowMs?: number): (hay: unknown) => boolean;
   scheduleOnlyEditions(data: unknown): Array<{
     key: string;
     name: string;

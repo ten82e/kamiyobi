@@ -4501,3 +4501,72 @@ describe("略称と年の合わせ打ち（`nsdi27`）・英字 1〜2 文字の�
     expect(R.searchMatcher("icde")("icde27 industrial conference")).toBe(true);
   });
 });
+
+describe("相対日・相対週（明日・今週・来週）", () => {
+  // 検証時計は 2026-08-09（JST では日曜）。月曜始まりで 今週 = 8/3〜8/9、来週 = 8/10〜8/16。
+  const NOW = Date.parse("2026-08-09T00:00:00Z");
+
+  it("週は月曜始まりの 7 暦日になる", () => {
+    expect(R.weekDayTermsJa("来週", NOW)).toEqual([
+      "2026年8月10日",
+      "2026年8月11日",
+      "2026年8月12日",
+      "2026年8月13日",
+      "2026年8月14日",
+      "2026年8月15日",
+      "2026年8月16日",
+    ]);
+    // 日曜に「今週」を打った日は、その週の日曜までを含む。
+    const thisWeek = R.weekDayTermsJa("今週", NOW);
+    expect(thisWeek[0]).toBe("2026年8月3日");
+    expect(thisWeek[6]).toBe("2026年8月9日");
+    // 年をまたぐ週（2026-12-31 は木曜 → 月曜は 12/28、日曜は翌年 1/3）。
+    const yearEnd = R.weekDayTermsJa("今週", Date.parse("2026-12-31T00:00:00Z"));
+    expect(yearEnd[0]).toBe("2026年12月28日");
+    expect(yearEnd[6]).toBe("2027年1月3日");
+    // 週の語でないと分かったものは空。
+    expect(R.weekDayTermsJa("来月", NOW)).toEqual([]);
+  });
+
+  it("暦日の語が hay に入り、その日で引ける", () => {
+    // 瞬間は JST の暦日で読む（UTC 8/9 15:30 = JST 8/10）。
+    expect(R.dayTermsJa(Date.parse("2026-08-09T15:30:00Z"))).toBe("2026年8月10日 8月10日");
+    // `YYYY-MM-DD` は閲覧者のタイムゾーンに依存せず暦日として読む。
+    expect(R.dayTermsJa("2026-08-10")).toBe("2026年8月10日 8月10日");
+    // 暦月繰り越しは語を作らない（`monthTermsJa` と同じ検査）。
+    expect(R.dayTermsJa("2026-02-30")).toBe("");
+    expect(R.dayTermsJa("")).toBe("");
+    const match = R.searchMatcher("8月10日");
+    expect(match("nsdi 2026年8月10日 8月10日 论文")).toBe(true);
+    expect(match("nsdi 2026年8月11日 8月11日")).toBe(false);
+  });
+
+  it("相対日・相対週は表の暦日に当たる（`明日` `来週` が 0 件でなくなる）", () => {
+    const tomorrow = R.searchMatcher("明日", NOW);
+    expect(tomorrow("sc 2026年8月10日 8月10日 論文締切")).toBe(true);
+    expect(tomorrow("sc 2026年8月11日 8月11日 論文締切")).toBe(false);
+    const nextWeek = R.searchMatcher("来週", NOW);
+    expect(nextWeek("sc 2026年8月10日 8月10日")).toBe(true);
+    expect(nextWeek("sc 2026年8月16日 8月16日")).toBe(true);
+    // 週の外（前週の日曜・翌週の月曜）を出さない。
+    expect(nextWeek("sc 2026年8月9日 8月9日")).toBe(false);
+    expect(nextWeek("sc 2026年8月17日 8月17日")).toBe(false);
+    // 他の語とは AND で交わる（「来週 国内」）。
+    const both = R.searchMatcher("来週 国内", NOW);
+    expect(both("国内 2026年8月11日 8月11日 研究会")).toBe(true);
+    expect(both("2026年8月11日 8月11日 研究会")).toBe(false);
+    // 相対月（既存）は壊さない。
+    expect(R.expandRelativeMonths("来月", NOW)).toBe("2026年9月");
+  });
+
+  it("解決結果を件数欄でおしらせする（黙って条件を変えない）", () => {
+    expect(R.relativeDayNotes("明日", NOW)).toEqual(["明日 = 2026年8月10日(月)"]);
+    expect(R.relativeDayNotes("来週", NOW)).toEqual(["来週 = 2026年8月10日(月)〜8月16日(日)"]);
+    // 今週は年をまたぐと両側に年を書く。
+    expect(R.relativeDayNotes("今週", Date.parse("2026-12-31T00:00:00Z"))).toEqual([
+      "今週 = 2026年12月28日(月)〜2027年1月3日(日)",
+    ]);
+    // 相対日でなければ何も言わない。
+    expect(R.relativeDayNotes("nsdi", NOW)).toEqual([]);
+  });
+});

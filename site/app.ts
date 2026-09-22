@@ -2625,7 +2625,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (parts.length) cnt += ` ｜ のぞく: ${parts.join("・")}`;
       // 「スパコン」などを分野名に寄せたときは、寄せた先をその場で書く。
       // 理由も見ずに分野全体の行を並べると、なぜ出たか分からないまま行の壁になる。
-      const synonymNotes = Recommender.querySynonymNotes(searchQuery);
+      const synonymNotes = Recommender.querySynonymNotes(searchQuery).concat(
+        // 「明日」「今週」を暦日へ解決したことも同じ欄に寄せる（相対月と同じ方針で、
+        // 黙って条件が変わったように見せない）。
+        Recommender.relativeDayNotes(searchQuery, Date.now()),
+      );
       if (synonymNotes.length) cnt += ` ｜ ${synonymNotes.join("・")}`;
     }
     if (!recMode && droppedKindNotice) cnt += ` ｜ ${droppedKindNotice}`;

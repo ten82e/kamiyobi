@@ -1966,6 +1966,8 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
   expect(runtime).toContain("hiddenKindQueryWords(searchQuery)");
   // 収録データ全体での当たり件数も同じ案内に渡す（「無い」と「出してない」を分けるため）。
   expect(runtime).toContain("queryMatch: queryMatchCounts(searchQuery)");
+  // 「明日」「今週」を暦日へ解決したことも、同じ件数欄でおしらせする。
+  expect(runtime).toContain("Recommender.relativeDayNotes(searchQuery, Date.now())");
 });
 
 it("weekday suffixes for date-only deadlines and 会期 are viewer-timezone independent (SPEC §7)", () => {
@@ -2003,8 +2005,12 @@ it("the deadline search index carries Japanese month terms (SPEC §7)", () => {
   expect(runtime).toContain("monthTermsJa(ed.event_start)");
   expect(runtime).toContain("monthTermsJa(ed.event_end)");
   // 締切側は日付だけの値をそのまま、時刻を持つ値は JST の暦日で読む。
+  // 暦日の読み出しは月語・日語で共有する（`calendarDateJa` に寄せる。書き写すと
+  // 月と日で違う基準日を使い得る）。
   expect(runtime).toContain("monthTermsJa(dateOnly ? dl.local_date : t)");
-  expect(runtime).toMatch(/monthTermsJa[\s\S]*new Date\(value \+ 9 \* 3_600_000\)/);
+  expect(runtime).toContain("dayTermsJa(dateOnly ? dl.local_date : t)");
+  expect(runtime).toMatch(/calendarDateJa[\s\S]*new Date\(value \+ 9 \* 3_600_000\)/);
+  expect(runtime).toMatch(/function monthTermsJa[\s\S]*?calendarDateJa\(value\)/);
 });
 
 it("upcoming.md keeps domestic deadlines off AoE and official-zone notation (SPEC §4)", () => {
@@ -2413,6 +2419,8 @@ const SEARCH_CANON = (() => {
     ["ONLINE_VENUE_FALSE_POSITIVES", /const ONLINE_VENUE_FALSE_POSITIVES = [^\n]*;/],
     ["QUERY_SYNONYMS_JA", /const QUERY_SYNONYMS_JA[\s\S]*?\];/],
     ["ABBREV_YEAR_TOKEN", /const ABBREV_YEAR_TOKEN = [^\n]*;/],
+    ["RELATIVE_DAY_OFFSETS_JA", /const RELATIVE_DAY_OFFSETS_JA[\s\S]*?\};/],
+    ["RELATIVE_WEEK_OFFSETS_JA", /const RELATIVE_WEEK_OFFSETS_JA[\s\S]*?\};/],
   ].map(([name, re]) => {
     const src = rec.match(re)?.[0];
     expect(src, `${name} 定義が見つからない`).toBeTruthy();
@@ -2428,6 +2436,9 @@ const SEARCH_CANON = (() => {
       "queryTokens",
       "querySynonymMap",
       "abbrevYearGroups",
+      "offsetCalendarDay",
+      "weekDayTermsJa",
+      "relativeDayGroups",
       "queryTokenGroups",
       "compoundSplitHit",
       "placeOffersOnline",
@@ -5384,4 +5395,48 @@ it("略称と年の合わせ打ちが実カタログで当たり、2 文字語�
   expect(out.scSpaced).toBeLessThan(out.gluedSc);
   expect(out.boundedSc).toBeGreaterThan(0);
   expect(out.boundedSc).toBeLessThan(out.gluedSc);
+});
+
+it("相対週が実カタログで其の週 7 日と同じ行を出し、暦日でも引ける（SPEC §7）", () => {
+  // 「来週」が 0 件、`8月11日` が 0 件だった（hay に暦日が無く、週の語も展開しなかった）。
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const rows = Recommender.candidateRows(DATA);",
+    "const view = rows.filter((r) => (r.kind === 'abstract' || r.kind === 'paper') && r.t >= now && !r.ed.estimated);",
+    "const hit = (q) => { const m = Recommender.searchMatcher(q, now); return view.filter((r) => m(r.hay)); };",
+    // 来週 = 8/10〜8/16（月曜始まり）。7 日の和集合と同じ行になること。
+    "const week = hit('来週');",
+    "const days = Recommender.weekDayTermsJa('来週', now);",
+    "const union = view.filter((r) => days.some((d) => String(r.hay).indexOf(d) >= 0));",
+    // 週の外の日を交えないことも、実際の行で見る（週末日曜の翌日を含む行があるとは限らないので、
+    // 週の日付そのものを持つ行が和集合に入っていることを確認する）。",
+    "const outside = view.filter((r) => {",
+    "  const j = new Date(r.t + 9 * 3600000);",
+    "  const key = j.getUTCFullYear() + '年' + (j.getUTCMonth() + 1) + '月' + j.getUTCDate() + '日';",
+    "  return !r.dateOnly && days.indexOf(key) < 0 && week.indexOf(r) >= 0;",
+    "});",
+    "const byDay = hit('8月22日').length;",
+    "console.log(JSON.stringify({ week: week.length, union: union.length, outside: outside.length, byDay, days: days.length }));",
+    "})();",
+  ]
+    .filter((line) => !line.trim().endsWith('",') || !line.includes("// "))
+    .join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    week: number;
+    union: number;
+    outside: number;
+    byDay: number;
+    days: number;
+  };
+  expect(out.days).toBe(7);
+  expect(out.week, "「来週」が 0 件のまま").toBeGreaterThan(0);
+  expect(out.week, "週 7 日の和集合と違う行を出している").toBe(out.union);
+  expect(out.outside, "週の外の日を持つ行を交えている").toBe(0);
+  expect(out.byDay, "暦日（8月22日）で引けない").toBeGreaterThan(0);
 });
