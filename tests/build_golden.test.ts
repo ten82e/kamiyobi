@@ -9004,3 +9004,73 @@ it("閉じた行の詳細は、支援技術からもタブ順序からも消え�
   const touched = JSON.parse(proc.stdout.trim().split("\n").pop() || "[]");
   expect(touched).toContainEqual(["drawerBackdrop", "remove", "active"]);
 });
+
+it("てびきのキーボード表記が、実装が扱うキーと欠けずに合う（SPEC §7）", () => {
+  /* 自分が案内文に「j/k + Enter でドロワーが開く」と誤記した（2026-09-23。実際は `Enter` は
+   * 公式ページ、`d` が行の詳細）。キーの操作説明は、一度ズレると画面の挙動と案内が別物を
+   * 指したまま永aku。ビルド成果物から実際に扱うキーを洗って、てびきが全て挙げているかを見る。
+   * キーの名前はテスト側に書き写さず、実装側から作る（語を二重化しない）。 */
+  const app = siteRuntime();
+  const keys = Array.from(
+    new Set(
+      Array.from(jsFunction(app, "onKeydown").matchAll(/\be\.key === "([^"]+)"/g), (m) => m[1]),
+    ),
+  );
+  expect(keys.length, "キー処理が見当たらない（検査が空振り）").toBeGreaterThan(5);
+  const NAMED: Record<string, string> = { ArrowDown: "↓", ArrowUp: "↑", Escape: "Esc" };
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  // 見出しには `class="only-keyboard"` が付く（狭い画面ではショートカットを使えないため）。
+  const dtAt = template.indexOf("キーボードで一覧を動かす</dt>");
+  expect(dtAt).toBeGreaterThan(0);
+  const keyGuide = template.slice(dtAt, template.indexOf("</dd>", dtAt));
+  for (const key of keys) {
+    const shown = NAMED[key] || key;
+    expect(keyGuide, `てびきがキー「${key}」（画面では ${shown}）を挙げていない`).toContain(shown);
+  }
+  // キーの名前が揃っても、**何をするキーか**がズレると案内が噓をつく（自分の誤記はこれ）。
+  // 実装側: `d` は行の詳細を開き、`Enter` は公式ページを開く（行の詳細は開かない）。
+  const script = [
+    "(async () => {",
+    "const calls = { openUrl: 0, drawer: 0 };",
+    "const row = { conf: { link: 'https://example.org' }, ed: { link: 'https://example.org/e' } };",
+    "const rowEl = { classList: { contains: () => false }, focus() {} };",
+    `const KEY = ${JSON.stringify(jsFunction(app, "onKeydown"))};`,
+    'const onKeydown = new Function("state", "window", "document", "$", "selectedIndex", "shown",',
+    '  "openDrawer", "closeDrawer", "safeExternalUrl", "return (" + KEY + ")")(',
+    "  { mode: 'deadlines' },",
+    "  { open: () => { calls.openUrl++; } },",
+    "  { activeElement: null },",
+    "  () => ({ querySelectorAll: () => [rowEl, rowEl] }), 1, [row, row],",
+    "  () => { calls.drawer++; }, () => {},",
+    "  (u) => (typeof u === 'string' && u.startsWith('https://') ? u : null),",
+    ");",
+    "const fire = (key) => onKeydown({ key, target: { tagName: 'BODY', isContentEditable: false }, preventDefault() {} });",
+    "fire('d');",
+    "const afterD = { drawer: calls.drawer, openUrl: calls.openUrl };",
+    "fire('Enter');",
+    "const afterEnter = { drawer: calls.drawer, openUrl: calls.openUrl };",
+    "console.log(JSON.stringify({ afterD, afterEnter }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout.trim().split("\n").pop() || "{}");
+  expect(got.afterD.drawer, "d が行の詳細を開いていない").toBe(1);
+  expect(got.afterD.openUrl, "d が公式ページも開いている").toBe(0);
+  // `window.open` は Enter のぶんだけ（d では開かないので計 1 回）。
+  expect(got.afterEnter.openUrl, "Enter が公式ページを開いていない").toBe(1);
+  expect(got.afterEnter.drawer, "Enter が行の詳細も開いている（案内と違う動き）").toBe(1);
+  // 案内側: 同じ対応で書けていること。
+  expect(keyGuide).toMatch(/<code>Enter<\/code>[^。]*公式ページ/);
+  expect(keyGuide).toMatch(/<code>d<\/code>[^。]*行の詳細/);
+  // 「行の詳細」の項（今回追加）: 開き方（押す / `d`）と閉じ方（`Esc`）を書く。
+  const detailAt = template.indexOf("<dt>行の詳細</dt>");
+  expect(detailAt).toBeGreaterThan(0);
+  const detailGuide = template.slice(detailAt, template.indexOf("</dd>", detailAt));
+  for (const word of ["行を押す", "<code>d</code>", "<code>Esc</code>", "公式サイト"]) {
+    expect(detailGuide, `行の詳細の説明に ${word} が無い`).toContain(word);
+  }
+});
