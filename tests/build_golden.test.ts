@@ -2914,7 +2914,10 @@ it("drawer shows JST with weekday and the official timezone, viewer-timezone ind
     "const document = { activeElement: null, getElementById: (id) => els[id] || null };",
     "function $(id) { return document.getElementById(id); }",
     "const window = { _prevFocus: null };",
-    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, { paper: '論文締切' }, (t) => t, fmtDate, fmtJst, fmtAoE, (s) => String(s ?? ''), (v) => String(v ?? ''), () => null, () => '', Recommender, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}), () => {});`,
+    // 「未確認」の語は正本（recommender.js の `UNCONFIRMED_LABEL_JA`）から取る。
+    (siteRuntime("recommender.js").match(/const UNCONFIRMED_LABEL_JA = [^\n]*;/) || [""])[0],
+    "const UNCONFIRMED_JA = UNCONFIRMED_LABEL_JA;",
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'UNCONFIRMED_JA', 'fieldReasonsJa', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, { paper: '論文締切' }, (t) => t, fmtDate, fmtJst, fmtAoE, (s) => String(s ?? ''), (v) => String(v ?? ''), () => null, () => '', Recommender, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}), () => {}, UNCONFIRMED_JA, { event: () => '', place: () => '', rank: () => '', note: (t) => (t ? '<i>' + t + '</i>' : '') });`,
     "const draw = (tzRaw) => {",
     "  body.innerHTML = '';",
     "  openDrawer({",
@@ -3452,7 +3455,10 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
     "const dOpened = calls.open.length === 1 && calls.open[0] === 'B';",
     "const dFocusedRow = calls.focus[calls.focus.length - 1] === 'row1';",
     "const verificationSummary = new Function('esc', 'return (' + SUMMARY + ')')((s) => String(s ?? ''));",
-    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: (v) => weekdayJaFromDate(v), eventCellJa: (r) => String(r?.ed?.event_start || r?.ed?.date_text || ''), meetingRangeJa: meetingRangeJa, upcomingEditionsOf: upcomingEditionsOf, laterEditionLineJa: laterEditionLineJa }, meetingRangeJa, upcomingEditionsOf, KIND_DETAIL, () => {});",
+    // 「未確認」の語は正本（recommender.js の `UNCONFIRMED_LABEL_JA`）から取る。
+    (siteRuntime("recommender.js").match(/const UNCONFIRMED_LABEL_JA = [^\n]*;/) || [""])[0],
+    "const UNCONFIRMED_JA = UNCONFIRMED_LABEL_JA;",
+    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'UNCONFIRMED_JA', 'fieldReasonsJa', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: (v) => weekdayJaFromDate(v), eventCellJa: (r) => String(r?.ed?.event_start || r?.ed?.date_text || ''), meetingRangeJa: meetingRangeJa, upcomingEditionsOf: upcomingEditionsOf, laterEditionLineJa: laterEditionLineJa }, meetingRangeJa, upcomingEditionsOf, KIND_DETAIL, () => {}, UNCONFIRMED_JA, { event: () => '', place: () => '', rank: () => '', note: (t) => (t ? '<i>' + t + '</i>' : '') });",
     "document.activeElement = prevEl;",
     "openDrawer({ kind: 'journal', conf: { title: 'X' }, ed: { place: 'P', date_text: 'D' } });",
     "const focusedClose = document.activeElement === closeBtn;",
@@ -3794,7 +3800,10 @@ it("normal deadline drawer includes verification details", () => {
     "function $(id) { return document.getElementById(id); }",
     "const window = { _prevFocus: null };",
     `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')((s) => String(s ?? ''));`,
-    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: (v) => weekdayJaFromDate(v), eventCellJa: (r) => String(r?.ed?.event_start || r?.ed?.date_text || ''), meetingRangeJa: meetingRangeJa, upcomingEditionsOf: upcomingEditionsOf, laterEditionLineJa: laterEditionLineJa }, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}), () => {});`,
+    // 「未確認」の語は正本（recommender.js の `UNCONFIRMED_LABEL_JA`）から取る。
+    (siteRuntime("recommender.js").match(/const UNCONFIRMED_LABEL_JA = [^\n]*;/) || [""])[0],
+    "const UNCONFIRMED_JA = UNCONFIRMED_LABEL_JA;",
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'UNCONFIRMED_JA', 'fieldReasonsJa', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: (v) => weekdayJaFromDate(v), eventCellJa: (r) => String(r?.ed?.event_start || r?.ed?.date_text || ''), meetingRangeJa: meetingRangeJa, upcomingEditionsOf: upcomingEditionsOf, laterEditionLineJa: laterEditionLineJa }, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}), () => {}, UNCONFIRMED_JA, { event: () => '', place: () => '', rank: () => '', note: (t) => (t ? '<i>' + t + '</i>' : '') });`,
     "openDrawer({",
     "  kind: 'paper', conf: { key: 'demo', title: 'Demo' },",
     "  ed: { year: 2026, place: 'P', date_text: 'D' }, t: 0, tLast: 0,",
@@ -4912,6 +4921,11 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
     // 定数も正本から写す（文言の正典をテスト側に二重化しない）。
     app.match(/const UNCONFIRMED_JA = [^\n]*;/)?.[0] ?? "",
     app.match(/const UNCONFIRMED_TITLES_JA = \{[\s\S]*?\};/)?.[0] ?? "",
+    /* 「未確認」「該当なし」「評価なし」の理由の語も正本から（表のセルの注記と行の詳細の
+     * 本文が同じ入口を見るようにした – 第 236 回）。塊ごと写すので、語も条件も二重化しない。 */
+    app.match(/const RANK_UNRATED_JA = [^\n]*;/)?.[0] ?? "",
+    app.match(/const RANK_UNRATED_TITLE_JA = [^\n]*;/)?.[0] ?? "",
+    app.match(/const fieldReasonsJa = \{[\s\S]*?\n {4}\};/)?.[0] ?? "",
     // 経過状態の判定は純粋なので正本から取る（書かない）。
     jsFunction(app, "rowDateOnlyState"),
     jsFunction(app, "rowIsPast"),
@@ -5215,7 +5229,14 @@ it("ドロワーは表の情報（分野・ランク・ラウンド）を落と�
     jsFunction(siteRuntime("recommender.js"), "upcomingEditionsOf"),
     jsFunction(siteRuntime("recommender.js"), "laterEditionLineJa"),
     `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')(esc);`,
-    `const openDrawer = new Function('window','document','$','KIND_LABEL','titleWithYear','fmtDate','fmtJst','fmtAoE','esc','safeExternalUrl','rowDateOnlyState','verificationSummary','Recommender','catLabel','meetingRangeJa','upcomingEditionsOf','UNCONFIRMED_JA','kindDetailJa', 'writeUrl', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, KIND_LABEL, titleWithYear, () => 'UTC', () => 'JST', () => 'AoE', esc, (u) => String(u ?? ''), () => null, verificationSummary, Recommender, catLabel, meetingRangeJa, upcomingEditionsOf, Recommender.unconfirmedLabelJa(), (${jsFunction(runtime, "kindDetailJa")}), () => {});`,
+    // 理由の語（「 kamiyobi が公式で…確認できていません」など）も正本の塊ごと注入する。
+    // 表のセルの注記と行の詳細の本文が同じ式を見るようにしたので、ここで写すと壊れる。
+    runtime.match(/const RANK_UNRATED_JA = [^\n]*;/)?.[0] ?? "",
+    runtime.match(/const RANK_UNRATED_TITLE_JA = [^\n]*;/)?.[0] ?? "",
+    runtime.match(/const UNCONFIRMED_TITLES_JA = \{[\s\S]*?\};/)?.[0] ?? "",
+    runtime.match(/const NOT_APPLICABLE_JA = [^\n]*;/)?.[0] ?? "",
+    runtime.match(/const fieldReasonsJa = \{[\s\S]*?\n {4}\};/)?.[0] ?? "",
+    `const openDrawer = new Function('window','document','$','KIND_LABEL','titleWithYear','fmtDate','fmtJst','fmtAoE','esc','safeExternalUrl','rowDateOnlyState','verificationSummary','Recommender','catLabel','meetingRangeJa','upcomingEditionsOf','UNCONFIRMED_JA','kindDetailJa', 'writeUrl', 'fieldReasonsJa', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, KIND_LABEL, titleWithYear, () => 'UTC', () => 'JST', () => 'AoE', esc, (u) => String(u ?? ''), () => null, verificationSummary, Recommender, catLabel, meetingRangeJa, upcomingEditionsOf, Recommender.unconfirmedLabelJa(), (${jsFunction(runtime, "kindDetailJa")}), () => {}, fieldReasonsJa);`,
     "openDrawer({",
     "  kind: 'paper', cats: ['hpc', 'systems'], rankPairs: ['ccf:B', 'core:A*', 'thcpl:N'],",
     "  conf: { key: 'demo', title: 'Demo', tags: ['machine-learning'] },",
@@ -5253,9 +5274,17 @@ it("ドロワーは表の情報（分野・ランク・ラウンド）を落と�
   // 第 1 ラウンド以外はそのこと自体が情報なので出す。
   expect(out.withFields).toContain("第 2 ラウンド");
   expect(out.withFields).toContain("Poster submission");
-  // 無い行で空の見出しを出さない（主題と同じ扱い）。
+  // 分野の値が無い行は見出しだけを出さない（値の無い欄を並べない）。
   expect(out.bare).not.toContain("分野:");
-  expect(out.bare).not.toContain("ランク:");
+  /* ランクは別の話 – 一覧のセルは同じ行に「未確認」と書くので、詳細でも同じ語を出す
+   * （2026-08-09 生成ビルドで実測: 等級の組が無い行は収録 863 行中 388 行で、一覧は
+   * 「未確認」と出し、行の詳細は「ランク」の行その物を落としていた。第 236 回）。 */
+  expect(out.bare).toMatch(/<strong>ランク:<\/strong> 未確認<\/p>/);
+  /* 理由の語は表のセルの注記（`title`）にしか無く、タッチ操作の端末と読み上げに
+   * 届かなかった。行の詳細の本文に出す（語は `recommender.js` 側の正本から来る）。 */
+  expect(out.bare, "ランクが未確認な理由を行の詳細が言っていない").toContain(
+    "CCF・CORE の一覧でこの会議の評価が確認できていません。",
+  );
   expect(out.bare).not.toContain("ラウンド");
   // 空の会期・開催地は表と同じ語で出す（表とドロワーで言い方が割れないようにする）。
   expect(out.bare).toContain("未確認");
@@ -17073,6 +17102,67 @@ it("等級を『A 類』と呼ぶ人が、`Aランク` と打った人と同じ�
   // てびきが同じ呼び方を書いているか（画面の語を文書で言い換えない）。
   expect(siteHtmlRuntime(), "てびきに『A 類』の言い方を書いていない").toContain(
     "『A 類』のような言い方も同じ行を出します",
+  );
+});
+
+it("「未確認」と「該当なし」の理由が、行の詳細の本文に表と同じ語で出る（SPEC §7）", async () => {
+  /* 第 236 回。理由の語（例「 kamiyobi が公式で会期を確認できていません。」）は表のセルの
+   * `title` の注記にしか無く、タッチ操作の端末と読み上げに届かなかった。
+   * 2026-08-09 生成ビルドの収録 863 行で実測: 会期 未確認 186 行 / 開催地 未確認 186 行 /
+   * 「評価なし」を含む 144 行 / 等級の組が無く表は「未確認」と出す 388 行。
+   * 理由の語と条件は `fieldReasonsJa` の一か所に集め、表のセルと行の詳細の両方から見る。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const app = siteRuntime();
+  const consts = [
+    /const RANK_UNRATED_JA = [^\n]*;/,
+    /const RANK_UNRATED_TITLE_JA = [^\n]*;/,
+    /const UNCONFIRMED_TITLES_JA = \{[\s\S]*?\};/,
+    /const NOT_APPLICABLE_JA = [^\n]*;/,
+    /const fieldReasonsJa = \{[\s\S]*?\n {4}\};/,
+  ].map((re2) => {
+    const found = app.match(re2);
+    expect(found, `組み立てに使った断片が見つからない: ${re2}`);
+    return (found as RegExpMatchArray)[0];
+  });
+  const reasons = new Function(
+    "Recommender",
+    "esc",
+    `${consts.join("\n")}\nreturn (fieldReasonsJa);`,
+  )(R, (v: unknown) => String(v ?? "")) as unknown as Record<string, (row: unknown) => string>;
+  // 説明が要らない行（値が出ている行）は空文字を返す（空の <p> を並べない）。
+  expect(reasons.note("")).toBe("");
+  // 本文の下に小さく添える行の形（「原表記」の行と同じ出し方。中身は `esc` を通す）。
+  expect(reasons.note("abc")).toContain("<p ");
+  expect(reasons.note("abc")).toContain("var(--muted)");
+  const rows = R.candidateRows(
+    JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+      typeof R.candidateRows
+    >[0],
+  ) as unknown as Array<{ ed: { place?: string }; rankPairs?: string[]; hay: string }>;
+  const 内訳 = { 会期: 0, 開催地: 0, 評価なし: 0, ランク無し: 0 };
+  rows.forEach((r) => {
+    if (reasons.event(r)) 内訳.会期 += 1;
+    if (reasons.place(r)) 内訳.開催地 += 1;
+    const 理由 = reasons.rank(r);
+    if (!理由) return;
+    if ((r.rankPairs || []).length) 内訳.評価なし += 1;
+    else 内訳.ランク無し += 1;
+  });
+  // 検査が空振りしていないこと（このビルドの収録で実際に該当行がある）。
+  expect(内訳.会期, "会期の説明が出る行が 1 も無く、この検査は空振り").toBeGreaterThan(0);
+  expect(内訳.開催地, "開催地の説明が出る行が 1 も無く、この検査は空振り").toBeGreaterThan(0);
+  expect(内訳.評価なし, "「評価なし」の説明が出る行が 1 も無い").toBeGreaterThan(0);
+  expect(内訳.ランク無し, "ランクを行その物で出す行が 1 も無い").toBeGreaterThan(0);
+  /* 条件と語が一か所であること（表のセルの注記と行の詳細の本文が同じ入口を見る）。
+   * どちらかだけ直して言い方が分かれる事故を、ここで落とす。 */
+  (["event", "place", "rank"] as const).forEach((field) => {
+    const wired = (app.match(new RegExp(`fieldReasonsJa\\.${field}\\(r\\)`, "g")) || []).length;
+    expect(wired, `${field} の理由が表と行の詳細のどちらかからしか見えていない`).toBe(2);
+  });
+  // てびきが同じ出し方を書いているか（画面の語を文書で言い換えない）。
+  expect(siteHtmlRuntime(), "てびきに行の詳細の出し方を書いていない").toContain(
+    "行の詳細の本文にも同じ語で出します",
   );
 });
 

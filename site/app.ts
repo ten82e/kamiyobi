@@ -1157,6 +1157,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           esc(r.ed.place || "") +
           "</p>"
         : "") +
+      fieldReasonsJa.note(fieldReasonsJa.place(r)) +
       '<p style="margin-bottom: 8px;"><strong>会期:</strong> ' +
       esc(
         eventShownJa || (Recommender.fieldNotApplicableJa(r) ? NOT_APPLICABLE_JA : UNCONFIRMED_JA),
@@ -1170,6 +1171,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           esc(eventRawJa) +
           "</p>"
         : "") +
+      fieldReasonsJa.note(fieldReasonsJa.event(r)) +
       laterEditionsHtml +
       // 並べ語は中黒（・）に統一する。一覧・CSV・件数欄はすでに中黒で並べていて、
       // 行の詳細だけ全角コンマ（，）だと、同じ情報を 2 通りの書き方で見る上に、
@@ -1180,9 +1182,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       (catNamesJa.length
         ? `<p style="margin-bottom: 8px;"><strong>分野:</strong> ${esc(catNamesJa.join("・"))}</p>`
         : "") +
-      (rankShown.length
-        ? `<p style="margin-bottom: 8px;"><strong>ランク:</strong> ${esc(rankShown.join("・"))}</p>`
-        : "") +
+      /* ランクの組が無い行で「ランク」の行その物を落としていた（2026-08-09 生成ビルドで実測:
+       * 収録 863 行のうち 388 行）。一覧のセルは同じ行に「未確認」と出すので、
+       * 「詳細を開いたのに一覧より分からない」状態だった（下の注で分野・ランクは
+       * 落とさない書いていたのに、コードは落としていた）。 */
+      `<p style="margin-bottom: 8px;"><strong>ランク:</strong> ${esc(
+        rankShown.length ? rankShown.join("・") : UNCONFIRMED_JA,
+      )}</p>` +
+      fieldReasonsJa.note(fieldReasonsJa.rank(r)) +
       (Recommender.topicTagsJa(r.conf.tags).length
         ? '<p style="margin-bottom: 8px;"><strong>主題:</strong> ' +
           esc(Recommender.topicTagsJa(r.conf.tags).join("・")) +
@@ -1805,6 +1812,58 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     event: " kamiyobi が公式で会期を確認できていません。".trim(),
     place: " kamiyobi が公式で開催地を確認できていません。".trim(),
     rank: "CCF・CORE の一覧でこの会議の評価が確認できていません。".trim(),
+  };
+
+  /* 「未確認」「該当なし」「評価なし」を出した場に添える理由の語を一か所で決める。
+   * 表のセルは `title` の注記に、行の詳細は本文に出す（第 233 回で内訳の説明を画面に
+   * 出したのと同じ判断 – 2026-08-09 生成ビルドで実測: ドロワーは 会期 未確認 186 行・
+   * 開催地 未確認 186 行・評価なしを含む 144 行を、理由もなく語だけ出していた。
+   * 注記はタッチ操作の端末と読み上げに届かない）。 */
+  /** 理由の語を出すのに必要な形。一覧の行（`AppRow`）も行の詳細が受ける `DrawerRow` も
+   * 入る（両方の形で同じ語を出したくて、必要な物だけ受ける型にした）。 */
+  type ReasonRow = {
+    ed: { place?: string };
+    rankPairs?: readonly string[] | null;
+  };
+
+  /* 「未確認」「該当なし」「評価なし」を出した場に添える理由の語を、一か所で決める。
+   * 表のセルは `title` の注記に、行の詳細は本文に出す（同じ式を両方から見せるための入口）。
+   * 2026-08-09 生成ビルドで実測: 行の詳細は 会期 未確認 186 行・開催地 未確認 186 行・
+   * 「評価なし」を含む 144 行を、理由もなく語だけ出していた。理由の語は `title` の注記に
+   * しか無く、タッチ操作の端末と読み上げに届かなかった（第 233 回で内訳の説明を画面に
+   * 出したのと同じ判断）。
+   * 関数を 1 つの塊にしてあるのは、行の詳細の組み立てを単体で動かす検査が、この塊だけを
+   * 注入すれば済むようにするため（語の組み立てを検査側に書き写さない）。 */
+  const fieldReasonsJa = {
+    /** 理由の語。説明が要らない（値が出ている）ときは空文字。 */
+    event: (r: ReasonRow): string =>
+      Recommender.eventCellJa(r)
+        ? ""
+        : Recommender.fieldNotApplicableJa(r)
+          ? Recommender.notApplicableTitleJa("event")
+          : UNCONFIRMED_TITLES_JA.event,
+    place: (r: ReasonRow): string =>
+      Recommender.placeJa(r.ed.place)
+        ? ""
+        : Recommender.fieldNotApplicableJa(r)
+          ? Recommender.notApplicableTitleJa("place")
+          : UNCONFIRMED_TITLES_JA.place,
+    rank: (r: ReasonRow): string => {
+      const pairs = r.rankPairs || [];
+      if (!pairs.length) return UNCONFIRMED_TITLES_JA.rank;
+      return pairs
+        .map((pair) => Recommender.rankPairLabelJa(pair))
+        .some((label) => label.indexOf(RANK_UNRATED_JA) >= 0)
+        ? RANK_UNRATED_TITLE_JA
+        : "";
+    },
+    /** 行の詳細で、本文の下に小さく添える行（「原表記」の行と同じ出し方）。 */
+    note: (text: string): string =>
+      text
+        ? '<p style="margin-bottom: 8px; color: var(--muted); font-size: 0.8rem;">' +
+          esc(text) +
+          "</p>"
+        : "",
   };
 
   /* 「N 件 / 全 M 件」の差の内訳。既定で隠れる行（過去の締切・推定・投稿締切以外の種別）を
@@ -2929,7 +2988,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       });
     } else {
       const rankCell = line(c4, UNCONFIRMED_JA, "sub");
-      if (rankCell) rankCell.title = UNCONFIRMED_TITLES_JA.rank;
+      // 理由の語は行の詳細と同じ入口から取る（注記と本文で言い方が分かれるのを防ぐ）。
+      if (rankCell) rankCell.title = fieldReasonsJa.rank(r);
     }
 
     const c5 = td(tr, "会期");
@@ -2938,20 +2998,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 行の詳細だけ公式ページの原文（英語）になった（SPEC §7）。
     const span = Recommender.eventCellJa(r) || (eventNa ? NOT_APPLICABLE_JA : UNCONFIRMED_JA);
     const spanCell = line(c5, span, "sub nowrap");
-    if (spanCell && span === UNCONFIRMED_JA) spanCell.title = UNCONFIRMED_TITLES_JA.event;
-    if (spanCell && eventNa) spanCell.title = Recommender.notApplicableTitleJa("event");
+    // 理由の語は行の詳細と同じ入口から取る（2 箇所で条件を書くと、どちらかだけ直る）。
+    if (spanCell) spanCell.title = fieldReasonsJa.event(r);
 
     const c6 = td(tr, "開催地");
     const placeShown = Recommender.placeJa(r.ed.place);
     const placeNa = Recommender.fieldNotApplicableJa(r);
     const placeCell = line(c6, placeShown || (placeNa ? NOT_APPLICABLE_JA : UNCONFIRMED_JA), "sub");
-    if (placeCell && !placeShown && placeNa) {
-      placeCell.title = Recommender.notApplicableTitleJa("place");
-    }
     if (placeCell) {
       // 日本語化は流し読み用。会場名・市区郡を含む原文は title に落とす。
       if (placeShown && placeShown !== r.ed.place) placeCell.title = String(r.ed.place || "");
-      else if (!placeShown) placeCell.title = UNCONFIRMED_TITLES_JA.place;
+      else placeCell.title = fieldReasonsJa.place(r);
     }
 
     return tr;
