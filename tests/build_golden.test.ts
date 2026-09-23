@@ -13240,3 +13240,64 @@ it("行の詳細の公式確認の日時は利用者の端末の時刻合わせ�
     first.compared,
   );
 });
+
+it("CSV のファイル名の日は端末の時刻合わせに左右されない（SPEC §7）", () => {
+  /* ファイル名 `kamiyobi-deadlines-<YYYYMMDD>.csv` の日付は `new Date()` のローカル日付を
+   * 使っていた（2026-08-09 実測: JST で 8/10 0:30 の瞬間に保存すると、UTC の端末では
+   * `kamiyobi-deadlines-20260809.csv`、日本の端末では `kamiyobi-deadlines-20260810.csv`）。
+   * このサイトは「日時は JST で出しています」と宣言し、一覧の日付も JST 固定で計算して
+   * いるので、同じ日に保存したファイルの日付が人によってズレた（夜に締切をまとめる、
+   * 出張先で端末を現地に合わせる、で起きます）。 */
+  const app = siteRuntime("app.js");
+  const script = [
+    "const RealDate = Date;",
+    // 保存した瞬間を固定する（この瞬間は JST と UTC で日付が違うことを下に確かめる）。
+    "const FIXED = RealDate.parse('2026-08-09T15:30:00Z');",
+    "globalThis.Date = class extends RealDate {",
+    "  constructor(...a) { if (a.length) super(...a); else super(FIXED); }",
+    "  static now() { return FIXED; }",
+    "};",
+    "let downloaded = '';",
+    "globalThis.Blob = class { constructor(parts) { this.parts = parts; } };",
+    "globalThis.URL = { createObjectURL: () => 'blob:fake' };",
+    "globalThis.document = {",
+    "  createElement: () => ({ click() {}, set download(v) { downloaded = v; }, get download() { return downloaded; } }),",
+    "  body: { appendChild() {}, removeChild() {} },",
+    "};",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const exportShownCsv = (${jsFunction(app, "exportShownCsv")});`,
+    "const shown = [{ t: FIXED, conf: { key: 'demo', title: 'Demo', categories: [] }, ed: { year: 2026 }, dl: { kind: 'paper' }, kind: 'paper' }];",
+    "exportShownCsv();",
+    // 基準: 同じ瞬間の JST の日付（+09:00 で数える。画面の日時の数え方と同じ）。
+    "const jst = new RealDate(FIXED + 9 * 3600000);",
+    "const utc = new RealDate(FIXED);",
+    // 注入する文字列の中ではテンプレート相当の記号を使わない（lint の指摘が増えるため、
+    // 連結で同じ日付の組み立てを書く）。
+    "const pad2 = (n) => String(n).padStart(2, '0');",
+    "const fmt = (x) => String(x.getUTCFullYear()) + pad2(x.getUTCMonth() + 1) + pad2(x.getUTCDate());",
+    "console.log(JSON.stringify({",
+    "  tz: process.env.TZ || '', downloaded, jst: fmt(jst), utc: fmt(utc),",
+    "}));",
+  ].join("\n");
+  const zones = ["UTC", "Asia/Tokyo", "America/Los_Angeles"];
+  const results = zones.map((tz) => {
+    const proc = spawnSync("node", ["--input-type=module", "-e", vmSafeSource(script)], {
+      encoding: "utf8",
+      timeout: 120_000,
+      env: { ...process.env, TZ: tz },
+    });
+    expect(proc.status, `${tz}: ${proc.stderr}`).toBe(0);
+    return JSON.parse(proc.stdout) as { tz: string; downloaded: string; jst: string; utc: string };
+  });
+  // 基準の瞬間が JST と UTC で違う日であること（検査が空振りしない）。
+  expect(results[0].jst === results[0].utc, "基準の瞬間が JST と UTC で同じ日になっている").toBe(
+    false,
+  );
+  const first = results[0];
+  for (const [i, got] of results.entries()) {
+    expect(got.downloaded, `${zones[i]} でファイル名が変わった`).toBe(first.downloaded);
+  }
+  // JST の日付を使う（UTC の日付ではない）。
+  expect(first.downloaded).toBe(`kamiyobi-deadlines-${first.jst}.csv`);
+  expect(first.downloaded).not.toBe(`kamiyobi-deadlines-${first.utc}.csv`);
+});

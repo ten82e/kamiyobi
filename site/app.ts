@@ -2168,8 +2168,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     );
     if (typeof Blob === "undefined" || typeof URL === "undefined" || !URL.createObjectURL) return;
     const url = URL.createObjectURL(new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8" }));
-    const now = new Date();
-    const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+    /* ファイル名の日は JST にする。このサイトは「日時は JST で出しています」と宣言し、
+     * 一覧の日付も JST 固定で計算しているのに、ここだけ端末の時刻合わせで出ていた
+     * （2026-08-09 実測: 同じ瞬間に保存しても、UTC の端末では
+     * `kamiyobi-deadlines-20260809.csv`、日本の端末では `kamiyobi-deadlines-20260810.csv`
+     * に化けた。JST で 0 時台に保存する – 夜に締切をまとめたり出張先のホテルで
+     * 端末を現地に合わせたり – ケースで日付が一日ずれる）。
+     * JST のオフセットはインラインに置く（この関数はビルド成果物から抜き出して検査する
+     * ので依存を増やさない。`remain`・`fmtJst` と同じ理由）。 */
+    const stampDate = new Date(Date.now() + 9 * 3600000);
+    const stamp = `${stampDate.getUTCFullYear()}${String(stampDate.getUTCMonth() + 1).padStart(2, "0")}${String(stampDate.getUTCDate()).padStart(2, "0")}`;
     const anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = `kamiyobi-deadlines-${stamp}.csv`;
