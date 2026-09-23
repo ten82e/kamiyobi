@@ -1925,6 +1925,76 @@ const Recommender = (() => {
     );
   }
 
+  /* 欄の名前その物を打つ人（第 244 回）。値ではなく軸の名前なので 1 行も減らないのに、
+   * 画面は「その語は収録に無い」と言っていた。2026-08-09 生成ビルドの実測（872 行）:
+   * `分野` `テーマ` `分類` `種別` `種類` `ステータス` `参加形式`
+   * `会場` `地域` `都道府県` はいずれも 0 件で、値の語（`セキュリティ` 152 件・
+   * `論文締切` 461 件・`オンライン参加可` 24 件・`アジア` 143 件）は当たっていた。
+   * 「カテゴリ」「カテゴリー」も 0 件だったが、打たれた語を案内に書き返すため、この画面で
+   * 使ってはいけない語を並べる検査（開発用語を残さない検査）に当たるので載せない。
+   * 値の例は画面に出る語だけを書く（別の検査が「例に挙げた語が本当に当たりを持つこと」を
+   * 見ている）。`ランク` 847 件・`会期` 185 件・`開催地` 180 件は当たりがあるので載せない。 */
+  const COLUMN_VALUE_EXAMPLES_JA: Record<string, string[]> = {
+    分野: ["セキュリティ", "機械学習", "高性能計算"],
+    種別: ["論文締切", "概要締切"],
+    参加形式: ["オンライン参加可"],
+    開催地: ["国内", "米国"],
+    地域: ["アジア", "ヨーロッパ"],
+  };
+  /* 打たれた語 -> 画面に出る欄の名前（`COLUMN_VALUE_EXAMPLES_JA` の keys）。 */
+  const COLUMN_QUERY_WORDS_JA: Array<[string, string]> = [
+    ["分野", "分野"],
+    ["テーマ", "分野"],
+    ["分類", "分野"],
+    ["種別", "種別"],
+    ["種類", "種別"],
+    ["ステータス", "種別"],
+    ["参加形式", "参加形式"],
+    ["会場", "開催地"],
+    ["都道府県", "開催地"],
+    ["地域", "地域"],
+  ];
+
+  function columnQueryEntry(query: unknown): [string, string] | null {
+    const q = String(query == null ? "" : query)
+      .trim()
+      .toLowerCase();
+    if (!q) return null;
+    const hit = COLUMN_QUERY_WORDS_JA.find(
+      ([word, column]) => word.toLowerCase() === q || column.toLowerCase() === q,
+    );
+    return hit ? [hit[0], hit[1]] : null;
+  }
+
+  /** 検索語が欄の名前のとき、打たれた語を返す（読み上げの分岐が使う）。 */
+  function columnQueryWordJa(query: unknown): string {
+    const hit = columnQueryEntry(query);
+    return hit ? hit[0] : "";
+  }
+
+  /** 0 件案内に出す打ち直し方（値の例は収録に実在する語だけ – 検査がそれを見る）。 */
+  function columnQueryNoteJa(query: unknown): string {
+    const hit = columnQueryEntry(query);
+    if (!hit) return "";
+    const examples = (COLUMN_VALUE_EXAMPLES_JA[hit[1]] || [])
+      .map((word) => `「${word}」`)
+      .join("・");
+    const column = hit[0] === hit[1] ? "この表の欄" : `この表の欄（${hit[1]}）`;
+    return (
+      ` 「${hit[0]}」は${column}の名前で、値その物ではありません。` +
+      `値で打ってください（例: ${examples}）。`
+    );
+  }
+
+  /** 読み上げ側の短い文（同じ表から作り、画面と読み上げが別のことを言わないようにする）。 */
+  function columnQueryLiveNoteJa(query: unknown): string {
+    const hit = columnQueryEntry(query);
+    if (!hit) return "";
+    const first = (COLUMN_VALUE_EXAMPLES_JA[hit[1]] || [])[0] || "";
+    const column = hit[0] === hit[1] ? "欄" : `欄（${hit[1]}）`;
+    return `「${hit[0]}」は${column}の名前です。値（「${first}」など）で打ってください`;
+  }
+
   /* 検索語を打っても 1 行も減らないときの打ち直し方（第 227 回）。
    * 2026-08-09 生成ビルドで実測: `月`・`日`・`年` はそれぞれ 863 / 863 行に当たり、件数欄の
    * 数字が 1 も動かずに画面はどこにも理由を書かなかった。数値だけでは暦日が決まらない
@@ -6436,6 +6506,9 @@ const Recommender = (() => {
     deadlinesToCsv: deadlinesToCsv,
     searchNormalize: searchNormalize,
     queryNarrowHintJa: queryNarrowHintJa,
+    columnQueryWordJa: columnQueryWordJa,
+    columnQueryNoteJa: columnQueryNoteJa,
+    columnQueryLiveNoteJa: columnQueryLiveNoteJa,
     wholeTableQueryWordJa: wholeTableQueryWordJa,
     wholeTableQueryNoteJa: wholeTableQueryNoteJa,
     querySynonymNotes: querySynonymNotes,

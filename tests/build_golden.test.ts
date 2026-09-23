@@ -1878,7 +1878,7 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
       * 見せるための注入で、検査側に語を書かない。 */
      ${(siteRuntime("recommender.js").match(/const RANK_UNRATED_LABEL_JA = [^\n]*;/) || ['""'])[0]}
      ${wholeTableQueryStubs(siteRuntime("recommender.js"))}
-     const Recommender = { rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA, wholeTableQueryWordJa, wholeTableQueryNoteJa };
+     const Recommender = { rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA, wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa };
      ${jsFunction(appForHint, "rankFilterLabelJa")};
      ${jsFunction(appForHint, "rankDropWordsJa")};
      return (${jsFunction(appForHint, "emptyDeadlineHint")});`,
@@ -2691,10 +2691,23 @@ function vmSafeSource(src: string): string {
 function wholeTableQueryStubs(rec: string): string {
   const list = rec.match(/const WHOLE_TABLE_QUERY_JA = [^\n]*;/)?.[0] ?? "";
   expect(list, "WHOLE_TABLE_QUERY_JA が見つからない").toBeTruthy();
+  /* 欄の名前の正本も同じ入口から注入する（第 244 回 – 書き写すと正本とズレる）。 */
+  const cols = [
+    rec.match(/const COLUMN_VALUE_EXAMPLES_JA[\s\S]*?\n\s*\};/)?.[0] ?? "",
+    rec.match(/const COLUMN_QUERY_WORDS_JA[\s\S]*?\n\s*\];/)?.[0] ?? "",
+  ];
+  cols.forEach((src) => {
+    expect(src, "欄の名前の表が見つからない").toBeTruthy();
+  });
   return [
     list,
     jsFunction(rec, "wholeTableQueryWordJa"),
     jsFunction(rec, "wholeTableQueryNoteJa"),
+    ...cols,
+    jsFunction(rec, "columnQueryEntry"),
+    jsFunction(rec, "columnQueryWordJa"),
+    jsFunction(rec, "columnQueryNoteJa"),
+    jsFunction(rec, "columnQueryLiveNoteJa"),
   ].join("\n");
 }
 
@@ -11438,7 +11451,7 @@ it("「締め切り」のように表その物を指す語を打った人に、0
     (app.match(/const KIND_ALL_LABEL_JA = [^\n]*;/) || ['""'])[0],
     jsFunction(app, "countJa"),
     wholeTableQueryStubs(rec),
-    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa };",
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa };",
   ].join("\n");
   const hint = new Function(`${stubs}\nreturn (${jsFunction(app, "emptyDeadlineHint")});`)() as (
     f: object,
@@ -11516,7 +11529,7 @@ it("締切のデータが無い画面は、それを条件の話より先に言�
     ")(['日','月','火','水','木','金','土'], (n) => String(n).padStart(2, '0'));",
     "const generatedAtLabel = new Function('fmtJst', 'UNCONFIRMED_JA', 'return (' + LABEL_SRC + ')')(fmtJst, '未確認');",
     wholeTableQueryStubs(siteRuntime("recommender.js")),
-    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa };",
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa };",
     "const hint = new Function('Recommender', 'return (' + HINT_SRC + ')')(Recommender);",
     "const live = new Function('Recommender', 'return (' + LIVE_SRC + ')')(Recommender);",
     "const empty = {",
@@ -12367,7 +12380,7 @@ it("0 件の案内が、各条件で今何行が隠れているかを並べて�
     // 評価の語は正本から取る（件数欄と同じ語を見るために）。
     (siteRuntime("recommender.js").match(/const RANK_UNRATED_LABEL_JA = [^\n]*;/) || [""])[0],
     wholeTableQueryStubs(siteRuntime("recommender.js")),
-    "const Recommender = { rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA, wholeTableQueryWordJa, wholeTableQueryNoteJa };",
+    "const Recommender = { rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA, wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa };",
     jsFunction(app, "rankFilterLabelJa"),
     jsFunction(app, "rankDropWordsJa"),
     `${hintFn.replace("function emptyDeadlineHint", "const emptyDeadlineHint = function")}`,
@@ -12727,7 +12740,7 @@ it("0 件の読み上げが、画面に出ている案内の有無と緩めら�
   const script = [
     // 0 件案内と読み上げが同じ語列表を見るので、正本を注入する（第 239 回）。
     wholeTableQueryStubs(siteRuntime("recommender.js")),
-    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa };",
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa };",
     // 抜き出した関数は式としてそのまま入れる（JSON.stringify すると文字列になる）。
     "const live = (" + liveFn + ");",
     "const base = {",
@@ -13432,7 +13445,7 @@ it("URL で引いて 0 件のときは「語が無い」とは言わず収録の
     "const hostFromUrl = (" + jsFunction(rec, "hostFromUrl") + ");",
     "const hostLabels = (" + jsFunction(rec, "hostLabels") + ");",
     wholeTableQueryStubs(rec),
-    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa };",
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa };",
     "const note = (" + jsFunction(app, "zeroResultLiveNote") + ");",
     // URL の形とそれ以外（日付・会議名・語の羅列）を混同しないこと。
     "const yes = ['https://www.example-university.edu/symposium-2027/cfp', 'example.ac.jp/workshop27', 'easychair.org/cfp/x'];",
@@ -13503,7 +13516,7 @@ it("0 件案内の画面側も URL を「語」と呼ばず、読み上げと同
   const script = [
     "const countJa = (n) => String(n);",
     wholeTableQueryStubs(siteRuntime("recommender.js")),
-    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa };",
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa };",
     `const hint = (${jsFunction(app, "emptyDeadlineHint")});`,
     `const note = (${jsFunction(app, "zeroResultLiveNote")});`,
     "const mk = (o) => Object.assign({",

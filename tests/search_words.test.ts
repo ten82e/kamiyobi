@@ -143,3 +143,60 @@ it("「オンライン開催」「hybrid」で引いた人が参加形式「オ�
   const andQuery = matched("オンライン参加可 オンライン");
   expect(andQuery.length, "語のかけ算で寄せ先の行が消えた").toBe(online.length);
 });
+
+it("欄の名前（分野・種別・参加形式）を打った人に、値の例を出す", () => {
+  /* 軸の名前を打つ人は 1 行も減らないのに、画面は「その語は収録に無い」と言っていた
+   * （2026-08-09 生成の実測: `分野` 0 行 / 値の `セキュリティ` 152 行、`種別` 0 行 /
+   * `論文締切` 461 行、`参加形式` 0 行 / `オンライン参加可` 24 行）。
+   * 「カテゴリ」「カテゴリー」も 0 行だが、打たれた語を案内に書き返すため、この画面で
+   * 使ってはいけない語を並べる検査（開発用語を残さない検査）に当たるので載せない。 */
+  const all = rows();
+  const hits = (query: string) => {
+    const matches = Recommender.searchMatcher(query);
+    return all.filter((row) => matches(String(row.hay))).length;
+  };
+  for (const word of [
+    "分野",
+    "テーマ",
+    "分類",
+    "種別",
+    "種類",
+    "ステータス",
+    "参加形式",
+    "会場",
+    "地域",
+    "都道府県",
+  ]) {
+    expect(hits(word), `「${word}」が当たりを持ってしまった（注記を出す前提が崩れた）`).toBe(0);
+    const note = Recommender.columnQueryNoteJa(word);
+    expect(note, `「${word}」に対する打ち直し方を出していない`).toContain("値で打ってください");
+    /* 例に挙げる語は、本当に当たりを持つ語だけにする（無い語を勧められても打てない）。 */
+    const examples = note.slice(note.indexOf("例: "));
+    const listed = [...examples.matchAll(/「([^」]+)」/g)].map((m) => m[1]);
+    expect(listed.length, `「${word}」の例を書いていない`).toBeGreaterThan(0);
+    for (const word2 of listed) {
+      expect(hits(word2), `「${word}」の例の「${word2}」が 0 行で打ち直せない`).toBeGreaterThan(0);
+    }
+    /* 読み上げも同じ表から作る（画面と読み上げが別のことを言わないようにする）。 */
+    const live = Recommender.columnQueryLiveNoteJa(word);
+    expect(live, `「${word}」の読み上げが打ち直し方を言わない`).toContain("欄");
+    expect(live, `「${word}」の読み上げが例の語を言わない`).toContain(listed[0]);
+  }
+  /* 値の語には注記を出さない（当たりがあるので、出すほうが噓になる）。 */
+  expect(Recommender.columnQueryNoteJa("セキュリティ"), "値の語に注記を出した").toBe("");
+  /* 配線: 0 件案内と読み上げの両方がこの注記を通る（実測で画面を見られないので、
+   * ビルド済み app.js の呼び出しと順番を見る – 「収録データにありません」より前）。 */
+  const app = readFileSync(join(builtSite(), "app.js"), "utf8");
+  expect(app, "0 件案内がこの注記を通っていない").toContain("Recommender.columnQueryNoteJa(");
+  const liveCall = app.indexOf("Recommender.columnQueryLiveNoteJa(");
+  expect(liveCall, "読み上げがこの注記を通っていない").toBeGreaterThan(-1);
+  // コメントの中にも同じ語が現れるので、読み上げの文その物（全角の区切りを付けた形）で測る。
+  expect(
+    liveCall < app.indexOf("\uff5c 語「"),
+    "読み上げが「収録データにありません」を先に言っている",
+  ).toBe(true);
+  /* てびき: built の index.html に当てる。 */
+  const html = readFileSync(join(builtSite(), "index.html"), "utf8");
+  expect(html, "てびきに欄の名前の話を書いていない").toContain("<strong>欄の名前</strong>");
+  expect(html, "てびきに値の例を書いていない").toContain("<code>オンライン参加可</code>");
+});

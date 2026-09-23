@@ -2018,6 +2018,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const wholeWord = Recommender.wholeTableQueryWordJa(filter.query);
       if (wholeWord)
         return ` ｜ 「${wholeWord}」はこの表の全行に当たる語なので、検索では絞れません${pointer}`;
+      /* 欄の名前その物を打たれた人（第 244 回）。`分野` は 1 行も減らないが、収録に無い
+       * 語ではない（実測: `分野` 0 件で「語「分野」は収録データにありません」と言っていた –
+       * 値の `セキュリティ` は 152 件当たる）。値の例を言って打ち直させる。 */
+      const columnNote = Recommender.columnQueryLiveNoteJa(filter.query);
+      if (columnNote) return ` ｜ ${columnNote}${pointer}`;
     }
     /* 「その語が収録に無い」は、語の数え上げ（表の行だけを見る）ではなく全体の当たり数で決める
      * （第 240 回）。`常時受付` は表 0 件・常時受付ジャーナル 22 件なのに、読み上げは
@@ -2528,9 +2533,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 0 件で、収録 863 行はすべて締切だった）。当たり数が 0 のときだけ立てる –
      * 当たっているときに「絞れません」と言うのは噓になる。 */
     const wholeNote = matchedRows === 0 ? Recommender.wholeTableQueryNoteJa(trimmedQuery) : "";
+    /* 欄の名前（`分野` `種別` `参加形式` など）を打たれた人は、語を外しても増えない –
+       値を打たないと直らないので、語ごとの件数案内の代わりにこれを立てる（第 244 回）。 */
+    const columnNote = matchedRows === 0 ? Recommender.columnQueryNoteJa(trimmedQuery) : "";
     // URL の検索語を語に分解して「〜は収録データにも見当たりません」と言うのは誤解になる
     // （分解された語はドメインの一部で、検索の失敗理由ではない）。
-    const terms = !filter.urlQuery && filter.termCounts.length > 1 ? filter.termCounts : [];
+    const terms =
+      !filter.urlQuery && !columnNote && filter.termCounts.length > 1 ? filter.termCounts : [];
     const deadTerms = terms.filter((t) => t.count === 0).map((t) => t.term);
     let termNote = "";
     if (deadTerms.length) {
@@ -2551,7 +2560,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /* 原因を特定できたときは、他の説明文を足さない。考えられる理由を全部並べると
      * 「結局どうすればいい」が読めなくなる。検索語を短くする助言も、原因が分かっていれば
      * 的外れなので出さない。 */
-    const specific = Boolean(kindNote || wholeNote || catalogNote || deadTerms.length || urlNote);
+    const specific = Boolean(
+      kindNote || wholeNote || columnNote || catalogNote || deadTerms.length || urlNote,
+    );
 
     /* 0 件案内はこれまで「外せる条件」の名前だけを並べていた。同じ画面上の件数欄は
      * 同じ条件で消えた件数を書いているのに、案内の側には数字が無く、6 項目のうち
@@ -2602,8 +2613,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.md に載せています。";
     if (specific) {
       return tips.length
-        ? `${base}${kindNote}${wholeNote}${catalogNote}${urlNote}${termNote} 外せる条件: ${tips.join(" / ")}。`
-        : `${base}${kindNote}${wholeNote}${catalogNote}${urlNote}${termNote}`;
+        ? `${base}${kindNote}${wholeNote}${columnNote}${catalogNote}${urlNote}${termNote} 外せる条件: ${tips.join(" / ")}。`
+        : `${base}${kindNote}${wholeNote}${columnNote}${catalogNote}${urlNote}${termNote}`;
     }
     if (!tips.length) return `${base}${termNote} ${meetingNote}`;
     return `${base}${termNote} 多いのは ${tips.join(" / ")}。${meetingNote}`;
