@@ -2713,6 +2713,7 @@ const SEARCH_CANON = (() => {
     ["wholeWordLatinTerms", /let wholeWordLatinTerms[^\n]*;/],
     ["RELATIVE_DAY_OFFSETS_JA", /const RELATIVE_DAY_OFFSETS_JA[\s\S]*?\};/],
     ["RELATIVE_WEEK_OFFSETS_JA", /const RELATIVE_WEEK_OFFSETS_JA[\s\S]*?\};/],
+    ["RELATIVE_YEAR_OFFSETS_JA", /const RELATIVE_YEAR_OFFSETS_JA[\s\S]*?\};/],
   ].map(([name, re]) => {
     const src = rec.match(re)?.[0];
     expect(src, `${name} 定義が見つからない`).toBeTruthy();
@@ -2738,6 +2739,7 @@ const SEARCH_CANON = (() => {
       "calendarDateGroups",
       "offsetCalendarDay",
       "weekDayTermsJa",
+      "yearMonthTermsJa",
       "relativeDayGroups",
       "queryTokenGroups",
       "compoundSplitHit",
@@ -16264,4 +16266,57 @@ it("一覧の会期欄に出る日付をそのまま打つと、その行に出�
   ).length;
   expect(金曜の締切, "金曜の締切行が無く、この検査が空振りしている").toBeGreaterThan(0);
   expect(金曜で当たった, "会期の日曜日が「金曜日」の検索に混ざった").toBe(金曜の締切);
+});
+
+it("「来年」「今年」を打つと、その年の締切がぜんぶ出る（SPEC §7）", async () => {
+  /* 「来月」「来週」は解決するのに、年の語だけ展開されずに語として検索されていた
+   * （2026-08-09 生成ビルドで実測: 「来年」は **0 件**。2027 年の締切は 863 行中 435 行
+   * あり、実際には最も広い該当がある）。年の語は 1〜12 か月語の OR なので、文字列展開では
+   * 作れず、`queryTokenGroups` の 1 グループとして返す実装にした。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const catalog = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+    typeof R.candidateRows
+  >[0];
+  const rows = R.candidateRows(catalog);
+  const hays = rows.map((r) => String(r.hay));
+  const at = Date.parse("2026-08-09T00:00:00Z");
+  const hit = (query: string, atMs: number) => {
+    const matches = R.searchMatcher(query, atMs);
+    return hays.filter((hay) => matches(hay) === true).length;
+  };
+  /* その年の 1〜12 か月語に当たる行数（OR の和集合。足し算だと同じ行を数え直す）。 */
+  const yearUnion = (year: number, atMs: number) => {
+    const seen = new Set<number>();
+    for (let month = 1; month <= 12; month += 1) {
+      const matches = R.searchMatcher(`${year}年${month}月`, atMs);
+      hays.forEach((hay, index) => {
+        if (matches(hay) === true) seen.add(index);
+      });
+    }
+    return seen.size;
+  };
+  const 来年 = yearUnion(2027, at);
+  const 今年 = yearUnion(2026, at);
+  expect(来年, "2027 年の締切行が無く、この検査が空振りしている").toBeGreaterThanOrEqual(100);
+  expect(hit("来年", at), "「来年」が 2027 年の和集合と違う件数を出した").toBe(来年);
+  expect(hit("今年", at), "「今年」が 2026 年の和集合と違う件数を出した").toBe(今年);
+  expect(hit("ことし", at), "ひらがなで打つと別の結果になった").toBe(hit("今年", at));
+  // 年跨ぎ（12 月に「来年」と打つと翌年、1 月に「去年」と打つと前年）。
+  const jan = Date.parse("2027-01-01T00:30:00Z");
+  expect(hit("今年", jan), "1 月に「今年」と打つと前年を引いた").toBe(来年);
+  expect(hit("去年", jan), "1 月に「去年」と打つと翌年を引いた").toBe(今年);
+  // 他の語とのかけ算（AND）は壊さない。
+  expect(
+    hit("来年 福岡", at) <= hit("来年", at) && hit("来年 福岡", at) <= hit("福岡", at),
+    "年の語と他の語を並べたときに絞り込みが効いていない",
+  ).toBe(true);
+  // 黙って条件が変わったように見せないため、解決結果を件数欄に出す。
+  expect(R.relativeDayNotes("来年", at).join("、"), "「来年」の解決結果が件数欄に出ない").toContain(
+    "来年 = 2027年",
+  );
+  expect(
+    R.relativeDayNotes("再来年", at).join("、"),
+    "「再来年」の解決結果が件数欄に出ない",
+  ).toContain("再来年 = 2028年");
 });

@@ -1900,6 +1900,12 @@ const Recommender = (() => {
         notes.push(`${token} = ${ymd[0]}年${ymd[1]}月${ymd[2]}日${day ? `(${day})` : ""}`);
         return;
       }
+      const yearOffset = RELATIVE_YEAR_OFFSETS_JA[token];
+      if (yearOffset !== undefined) {
+        const base = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
+        notes.push(`${token} = ${base.getUTCFullYear() + yearOffset}年の締切（1〜12 か月）`);
+        return;
+      }
       const week = weekDayTermsJa(token, nowMs);
       if (week.length === 7) {
         const first = week[0].split("年");
@@ -2665,6 +2671,38 @@ const Recommender = (() => {
     先週: -1,
     せんしゅう: -1,
   };
+
+  /* 年の語も同じ形で受ける。「来年の締切はまだ出ていないのか」「今年の締切はぜんぶで
+   * 几つなのか」は研究計画の立て方で必ず言う（2026-08-09 生成ビルドで実測: 「来年」は
+   * 展開されずにそのまま語として searchNormalize され、hay にその語が無いので **0 件**
+   * だった。2027年の締切は 863 行中 435 行あり、実際にはいちばん広い該当がある）。
+   * 「来月」と違い 12 か月の OR なので、文字列展開では作れない（語同士は AND）。週の語と
+   * 同じく `queryTokenGroups` の 1 グループとして返す。 */
+  const RELATIVE_YEAR_OFFSETS_JA: Record<string, number> = {
+    今年: 0,
+    ことし: 0,
+    本年: 0,
+    来年: 1,
+    らいねん: 1,
+    再来年: 2,
+    さらいねん: 2,
+    去年: -1,
+    きょねん: -1,
+    せんねん: -1,
+    一昨年: -2,
+    いとおととし: -2,
+  };
+
+  /** 年の語に対して、その年の 1〜12 か月語（年付き）を返す。基準は JST の暦年。 */
+  function yearMonthTermsJa(token: string, nowMs: number): string[] {
+    const offset = RELATIVE_YEAR_OFFSETS_JA[token];
+    if (offset === undefined) return [];
+    const base = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
+    const year = base.getUTCFullYear() + offset;
+    const out: string[] = [];
+    for (let month = 1; month <= 12; month += 1) out.push(`${year}年${month}月`);
+    return out;
+  }
 
   /** JST の暦日を基準時刻からの日数ぶん進めた `[年, 月, 日]`。 */
   function offsetCalendarDay(nowMs: number, days: number): number[] {
@@ -3564,6 +3602,11 @@ const Recommender = (() => {
           if (group.indexOf(name) < 0) group.push(name);
         });
       }
+      // 「来年」「今年」も 12 か月語へ展開する（同じく展開しないと当たらない）。
+      yearMonthTermsJa(token, now).forEach((name) => {
+        if (group.indexOf(name) < 0) group.push(name);
+      });
+
       // 数字だけの入力（`12/25` `2026-12-25` `2026-12`）は、hay に出る暦日の日本語形と
       // 同じ組に入れる。暦日への解決は月日そのものなので、日付の語とは違い説明は不要。
       const calendar = calendarDateGroups(token);
