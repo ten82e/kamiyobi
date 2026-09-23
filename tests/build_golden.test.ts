@@ -15395,3 +15395,42 @@ it("llms.txt が data.csv の列をビルドの列定義どおりに載せる（
   expect(declared, "本数の宣言が無い").not.toBeNull();
   expect(Number(declared?.[1]), "本数の宣言が data.csv の列数と違う").toBe(columns.length);
 });
+
+it("JavaScript が動かないとき、index.html が理由と読み替え先を自分で言う（SPEC §7）", () => {
+  /* 学内や端末側でスクリプトを止める運用、読み込みの失敗などで JS が動かないと、この画面は
+   * 黙って空になる。2026-08-09 生成のビルドで実測: JavaScript を使わないときに出る案内を
+   * 一つも置いておらず、表は空・件数は「--」のまま、検索も絞り込みも押せた。
+   * 検査は built の index.html から読む。 (1) 案内ブロックが 1 個ある (2) ブロックの中のリンクが
+   * すべて相対パスで、しかもビルド先に実在する（配信先はサブパスの下なので、絶対パスは 404 に
+   * なる。ビルドしなくなったファイルを指していてもいけない） (3) 空の表より前に出る
+   * (4) 静的な HTML に締切の件数を書かない（生成のたびに古くなる語を残さない）。 */
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const opens = [...html.matchAll(/<noscript>/g)].length;
+  expect(opens, "JavaScript を使わないときの案内が複数あるか、無い").toBe(1);
+  const block = /<noscript>([\s\S]*?)<\/noscript>/.exec(html);
+  expect(block, "案内ブロックの閉じが無い").not.toBeNull();
+  const inner = String(block?.[1]);
+  const text = inner
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  expect(text.length, "案内が空である").toBeGreaterThan(60);
+  expect(text.includes("JavaScript"), "何が効かないのかが書かれていない").toBe(true);
+  /* 静的な HTML に収録数の噓を置かない。締切の総数は生成のたびに動くので、ここで 3 桁以上の
+   * 「N 件」を書いた瞬間に古くなる（「1 行 1 件」のような形の話は残して良い）。 */
+  expect(
+    /[0-9][0-9,]{2,} ?件/.test(text),
+    `静的な HTML に収録数を書いている: ${text.slice(0, 60)}`,
+  ).toBe(false);
+  // リンクは相対パスで、実在する物だけ。
+  const hrefs = [...inner.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
+  expect(hrefs.length, "読み替え先の案内が無い").toBeGreaterThan(0);
+  for (const href of hrefs) {
+    expect(href, `絶対パスのリンクはサブパス配信で切れる: ${href}`).not.toMatch(/^(?:\/|https?:)/);
+    expect(existsSync(join(site, href)), `案内が指す ${href} がビルド先に無い`).toBe(true);
+  }
+  // 空の表より前に読む位置にあること。
+  const results = html.indexOf('id="results"');
+  expect(results, "一覧の目印が無い").toBeGreaterThan(-1);
+  expect(html.indexOf("<noscript>"), "案内が表のうしろに回っている").toBeLessThan(results);
+});
