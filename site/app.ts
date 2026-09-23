@@ -2706,11 +2706,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (r._match?.agg) {
         const agg = r._match.agg;
         const parts: string[] = [];
-        if (agg.domain > 0) parts.push(`分野の一致 +${agg.domain}`);
-        if ((agg.venueName || 0) > 0) parts.push(`会議名一致 +${agg.venueName}`);
-        if (agg.paper > 0) parts.push(`採択論文一致 +${agg.paper}`);
-        if (agg.jp > 0) parts.push(`日本語一致 +${agg.jp}`);
-        if (agg.tags > 0) parts.push(`主題の一致 +${agg.tags}`);
+        // 項目は当たった要素の名前だけを出す（てびきと同じ）。この数字は手作業の信号重みで、
+        // 画面のスコアとは別の計算なので、併記すると足して読む人だけに嘘が見える
+        // （2026-08-09 実測: 内訳を持つ候補 29 件すべてで内訳の和とスコアが違った。例は
+        // スコア 58 点 / 内訳の和 45、52 点 / 15）。以前ここから数字を外したとき、検査は
+        // ラベルの直後に値を繋ぐ古い書き方だけを禁じていたため、書き方を変えた数字が戻って
+        // いた（ビルド後もコメントは残るので、この説明に禁止された形その物を書かない）。
+        if (agg.domain > 0) parts.push("分野の一致");
+        if ((agg.venueName || 0) > 0) parts.push("会議名一致");
+        if (agg.paper > 0) parts.push("採択論文一致");
+        if (agg.jp > 0) parts.push("日本語一致");
+        if (agg.tags > 0) parts.push("主題の一致");
         if (agg.venue > 0) parts.push("過去掲載先一致");
         if ((r._semScore ?? 0) > 0) parts.push(`意味の近さ ${r._semScore}点`);
         if (parts.length) ms.title = parts.join(" ／ ");
@@ -3064,11 +3070,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         const sc = pl ? pl.score : 0;
         const parts: string[] = [];
         if (pl) {
-          if (pl.details.domain > 0) parts.push(`分野 +${pl.details.domain}`);
-          if (pl.details.name > 0) parts.push(`会議名 +${pl.details.name}`);
-          if (pl.details.paper > 0) parts.push(`採択論文 +${pl.details.paper}`);
-          if (pl.details.jp > 0) parts.push(`日本語 +${pl.details.jp}`);
-          if (pl.details.tags > 0) parts.push(`タグ +${pl.details.tags}`);
+          // 同じ理由で項目は名前だけ（`makeRow`・`makeRecommendationCard` と同じ約束）。
+          if (pl.details.domain > 0) parts.push("分野");
+          if (pl.details.name > 0) parts.push("会議名");
+          if (pl.details.paper > 0) parts.push("採択論文");
+          if (pl.details.jp > 0) parts.push("日本語");
+          if (pl.details.tags > 0) parts.push("タグ");
           if (pl.details.venue > 0) parts.push("過去掲載先");
         }
         html +=
@@ -3347,7 +3354,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       ["主題の一致", agg.tags],
     ];
     reasonSignals.forEach((item) => {
-      if (item[1] > 0) reasons.push(`${item[0]} +${item[1]}`);
+      // カードの「選定理由」も名前だけ。信号重みをここに書くと、カードごとに並ぶ数字が
+      // スコアと合わない（上の `makeRow` と同じ実測）。重みが必要な行は出す順が語る。
+      if (item[1] > 0) reasons.push(item[0]);
     });
     if (agg.venue > 0) reasons.push("過去掲載先一致");
     if (r._semanticRank) reasons.push(`意味検索順位 ${r._semanticRank}`);

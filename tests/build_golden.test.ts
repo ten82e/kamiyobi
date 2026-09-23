@@ -11925,8 +11925,17 @@ it("内訳の項目に、足して読むように見える数字を出さない�
    * 内訳は「当たった要素」の名前だけを出し、スコアとの関係を明文化する。 */
   const app = siteRuntime("app.js");
   expect(app).toContain("この会議で当たった要素");
-  // `+<数>` の形の項目を作らない（agg の値をそのまま出していた形）。
-  expect(app, "内訳に信号重みをそのまま出している").not.toMatch(/`\+\$\{agg/);
+  /* 項目は名前だけ。以前は「ラベルの直後に + と値を繋ぐ古い形」だけを禁じていたため、
+   * ラベルを先に書いて後ろへ足す書き方で数字が戻っていた（2026-08-09 実測: 内訳を持つ候補
+   * 29 件すべてで内訳の和とスコアが違い、例はスコア 58 点 / 内訳の和 45、52 点 / 15）。
+   * なので書き方に依存しない形で見る。内訳を出す 3 箇所の関数に、値を足す形が 1 つも
+   * 入っていないこと（画面に出る語と数字の対応は、ここで決める）。 */
+  const surfaces = ["makeRow", "makeDetailRow", "makeRecommendationCard"];
+  for (const name of surfaces) {
+    const body = jsFunction(app, name);
+    expect(body.length, `${name} が見つからない（内訳の実装が消えた）`).toBeGreaterThan(0);
+    expect(body, `${name} が内訳の項目に足し算に見える数字を出している`).not.toContain("+" + "${");
+  }
   expect(app, "内訳に足し算に見える数字を残している").not.toContain('"+10"');
   const html = readFileSync(join(site, "index.html"), "utf8");
   // スコアと内訳の関係を書いておく（点を足した値だと誤解させない）。
