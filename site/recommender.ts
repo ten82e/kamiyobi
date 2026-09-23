@@ -1952,6 +1952,19 @@ const Recommender = (() => {
     return CATEGORY_LABELS_JA[k] || k;
   }
 
+  /**
+   * 分野チップに並ぶ語（日本語名を主、英表記を併記）。チップの描画と検索索引が同じ式を
+   * 使うための入口 – 画面に並ぶ語を索引が持たないと、コピーして貼った人が 0 件に落ちる
+   * （第 215 回・第 216 回と同じ判断）。
+   */
+  function categoryChipLabelJa(key: unknown, enLabel: unknown): string {
+    const k = typeof key === "string" ? key : "";
+    const ja = categoryLabelJa(k);
+    const en = typeof enLabel === "string" ? enLabel.trim() : "";
+    if (!en || en.toLowerCase() === k.toLowerCase()) return ja;
+    return `${ja}（${en}）`;
+  }
+
   /* 分野名と国内区分は会議名に現れない。検索語（hay）に含めておかないと、
    * チップを知らない利用者は「ネットワーク」「国内」と打っても絞り込めない。 */
   function categorySearchTerms(
@@ -3523,7 +3536,32 @@ const Recommender = (() => {
     return urlLikeQueryTerms(query) !== null;
   }
 
+  /* 分野チップに並ぶ語（`システム（Systems, Architecture and Storage）`）は、画面から
+   * コピーして貼られる語なので、**括弧の中身を別語として扱わない**。括弧は並べ語なので
+   * 素通りさせると `システム` `systems` `architecture` `and` `storage` の AND に割れて
+   * どこにも届かない（2026-08-09 生成ビルドで実測: `システム（…）` は 0 件、
+   * `人工知能（…）` は 309 行中 55 件、`高性能計算（…）` は 102 行中 13 件）。
+   * 索引側に英表記を載せる手もあるが、それは別の語の精度を壊す – `プライバシー` が
+   * `セキュリティ（Security and Privacy）` に当たって 16 件 → 78 件に膨らんだ
+   * （第 219 回で実測。てびきに書いた実測値を検査する検査が検出した）。 */
+  const CATEGORY_CHIP_HEADS_JA = Object.keys(CATEGORY_LABELS_JA)
+    .map((key: string) => CATEGORY_LABELS_JA[key])
+    .filter((label: string) => Boolean(label))
+    .filter((label: string, i: number, all: string[]) => all.indexOf(label) === i)
+    .sort((a: string, b: string) => b.length - a.length)
+    .map((label: string) => label.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&"));
+  /* 括弧の中が英文字（分野の英表記）のときだけ落とす。日本語を含む括弧
+   * （`人工知能（チュートリアル）`）は意図した絞り込みなので落とさない。閉じ括弧が
+   * 無い形（コピー途中で切れた形）も受け取る。 */
+  const CATEGORY_CHIP_TAIL = new RegExp(
+    `(${CATEGORY_CHIP_HEADS_JA.join("|")})\\s*[（(][A-Za-z0-9 .,&/+\\-]*[A-Za-z][A-Za-z0-9 .,&/+\\-]*[)）]?`,
+    "gu",
+  );
+
   function queryTokenGroups(query: unknown, nowMs?: number): string[][] {
+    if (typeof query === "string" && CATEGORY_CHIP_HEADS_JA.length) {
+      query = query.replace(CATEGORY_CHIP_TAIL, "$1");
+    }
     const urlTerms = urlLikeQueryTerms(query);
     if (urlTerms !== null) query = urlTerms;
     const now = Number.isFinite(Number(nowMs)) ? Number(nowMs) : Date.now();
@@ -5894,6 +5932,7 @@ const Recommender = (() => {
     rankMatches: rankMatches,
     candidateRows: candidateRows,
     categoryLabelJa: categoryLabelJa,
+    categoryChipLabelJa: categoryChipLabelJa,
     officialZone: officialZone,
     isExtendedDeadline: isExtendedDeadline,
     weekdaySearchTerms: weekdaySearchTerms,

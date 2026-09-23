@@ -149,6 +149,7 @@ interface SiteRecommenderApi {
   comparePapers(a: SiteRow, b: SiteRow, now: number): number;
   candidateRows(data: unknown): SiteRow[];
   categoryLabelJa(key: unknown): string;
+  categoryChipLabelJa(key: unknown, enLabel: unknown): string;
   categorySearchTerms(
     cats: readonly string[] | null | undefined,
     tags: readonly string[] | null | undefined,

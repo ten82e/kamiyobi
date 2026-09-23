@@ -1346,8 +1346,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     lbl.appendChild(chk);
     const span = document.createElement("span");
     // 日本語名を主、英表記は併記（現場では分野の英語名で覚えている人もいるため）。
+    // 組み立ては recommender の 1 本だけ使う – 以前はここで式を書いていて、検索索引が
+    // 同じ語を持っておらず、チップの語をコピーして貼った人が 0 件に落ちた（第 219 回）。
     const en = String(DATA.categories?.[k] || "");
-    span.textContent = en && en.toLowerCase() !== k ? `${catLabel(k)}（${en}）` : catLabel(k);
+    span.textContent = Recommender.categoryChipLabelJa(k, en);
     span.title = `${k}: ${en}`;
     lbl.appendChild(span);
     // 件数（他の絞り込みを通った行の数）。何を選ぶと何が残りそうか分からないと、

@@ -2691,6 +2691,12 @@ const SEARCH_CANON = (() => {
     ["DIACRITIC_FOLD_CHARS", /const DIACRITIC_FOLD_CHARS = [^\n]*;/],
     ["LATIN_DIACRITIC_CHARS", /const LATIN_DIACRITIC_CHARS = [^\n]*;/],
     ["COMBINING_MARKS", /const COMBINING_MARKS = [^\n]*;/],
+    /* 分野チップの語（`システム（Systems, Architecture and Storage）`）を打ち手で寄せる
+     * ための定義。`queryTokenGroups` が読むので、抜き出した関数と一緒に注入する
+     * （定義順: 表 → 見出し → 正規表現）。 */
+    ["CATEGORY_LABELS_JA", /const CATEGORY_LABELS_JA[\s\S]*?\};/],
+    ["CATEGORY_CHIP_HEADS_JA", /const CATEGORY_CHIP_HEADS_JA[\s\S]*?\)\);/],
+    ["CATEGORY_CHIP_TAIL", /const CATEGORY_CHIP_TAIL = new RegExp\([\s\S]*?\);/],
     ["PLACE_QUERY_ALIASES_JA", /const PLACE_QUERY_ALIASES_JA[\s\S]*?\];/],
     ["TOPIC_QUERY_ALIASES_JA", /const TOPIC_QUERY_ALIASES_JA[\s\S]*?\];/],
     ["RELATIVE_MONTH_OFFSETS_JA", /const RELATIVE_MONTH_OFFSETS_JA[\s\S]*?\};/],
@@ -17264,4 +17270,105 @@ it("常時受付の行にだけ出る語を、0 件の案内が「収録に無�
   // C. 本当に無い語は、今までどおり其のまま言う。
   expect(out.absent.hint).toContain("収録データにも見当たりません");
   expect(out.absent.live).toContain("収録データにありません");
+});
+
+it("分野チップに並ぶ語（英表記を併記した形）をそのまま打つと、その分野の行に出会う（SPEC §7）", () => {
+  /* 分野チップは日本語名を主、英表記を併記して並ぶ（`システム（Systems, Architecture and
+   * Storage）`）。2026-08-09 生成ビルドで実測: チップの語をそのままコピーして貼ると
+   * `システム（…）` は 0 件、`人工知能（AI and Machine Learning）` は 309 行中 55 件、
+   * `高性能計算（High Performance Computing）` は 102 行中 13 件。日本語だけ打てば
+   * それぞれ 163 / 309 / 102 件に出会うのに、画面に並ぶ語をそのまま貼った人だけが
+   * 行に出会えなかった。括弧は並べ語なので英語の語に割れ、AND で全部を含む行が消える。
+   * 索引側へ英表記を載せる手もあるが、`プライバシー` が 16 件 → 78 件に膨らむなど別の語の
+   * 精度を壊すので、打ち手側で「分野名に続く英文字の括弧書き」を落とす寄せを入れた。 */
+  const app = siteRuntime();
+  const rec = join(site, "recommender.js");
+  const script = [
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${rec}`)});`,
+    "const { readFileSync } = await import('node:fs');",
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const rows = Recommender.candidateRows(DATA, now);",
+    "const journals = Recommender.journalRows(DATA.conferences, now);",
+    "const hays = rows.map((r) => String(r.hay));",
+    "const journalHays = journals.map((r) => String(r.hay));",
+    "const hitIn = (q, list) => {",
+    "  const m = Recommender.searchMatcher(Recommender.expandRelativeMonths(q, now), now);",
+    "  return list.filter((h) => m(h) === true).length;",
+    "};",
+    "const en = DATA.categories || {};",
+    "const 結果 = Object.keys(en).map((k) => {",
+    "  const chip = Recommender.categoryChipLabelJa(k, en[k]);",
+    "  const ja = Recommender.categoryLabelJa(k);",
+    "  const 行 = rows.filter((r) => ((r.cats || []).concat(((r.conf || {}).categories) || [])).includes(k)).length;",
+    "  return {",
+    "    key: k,",
+    "    chip,",
+    "    ja,",
+    "    行,",
+    "    チップ: hitIn(chip, hays),",
+    "    日本語: hitIn(ja, hays),",
+    "    // 日本語を含む括弧は意図した絞り込みなので落とさない（狭まったままか）。",
+    "    狭まり: hitIn(ja + '（第1回）', hays),",
+    "    ジャーナル: hitIn(chip, journalHays),",
+    "    ジャーナルの行: journals.filter((r) => (((r.conf || {}).categories) || []).includes(k)).length,",
+    "  };",
+    "});",
+    "console.log(JSON.stringify({ 結果, 併記: 結果.filter((i) => i.chip !== i.ja).length }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 120_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    結果: Array<{
+      key: string;
+      chip: string;
+      ja: string;
+      行: number;
+      チップ: number;
+      日本語: number;
+      狭まり: number;
+      ジャーナル: number;
+      ジャーナルの行: number;
+    }>;
+    併記: number;
+  };
+  expect(out.結果.length, "分野が無く、この検査が空振りしている").toBeGreaterThan(0);
+  // 英表記の併記が無いと検査が空振りする（日本語だけのチップは昔から引けた）。
+  expect(out.併記, "英表記を併記する分野が無く、この検査が空振りしている").toBeGreaterThan(0);
+  for (const item of out.結果) {
+    // 1. チップの語をそのまま打つと、その分野の行すべてに出会う。
+    if (item.行 > 0) {
+      expect(
+        item.チップ,
+        `チップ「${item.chip}」で ${item.行} 行のうち ${item.チップ} 行にしか出会えない`,
+      ).toBeGreaterThanOrEqual(item.行);
+    }
+    // 2. コピーした損をしない（チップの語の当たり数 = 日本語名だけの当たり数）。
+    expect(item.チップ, `チップ「${item.chip}」の当たり数が日本語名「${item.ja}」と違う`).toBe(
+      item.日本語,
+    );
+    // 3. 日本語を含む括弧は落とさない（`人工知能（第1回）` は意図した絞り込み）。
+    if (item.chip !== item.ja) {
+      expect(
+        item.狭まり,
+        `「${item.ja}（第1回）」が「${item.ja}」と同じ ${item.日本語} 件に広くなった（括弧の中身を消しすぎ）`,
+      ).toBeLessThan(item.日本語);
+    }
+    // 4. 常時受付の行でも分野のチップが引ける（分野で絞る操作はジャーナルでも同じ）。
+    if (item.ジャーナルの行 > 0) {
+      expect(
+        item.ジャーナル,
+        `常時受付の行で分野「${item.key}」のチップが引けない`,
+      ).toBeGreaterThanOrEqual(item.ジャーナルの行);
+    }
+  }
+  // 描画側も同じ 1 本を使う（式を書き写した場所が残っていると片方が古くなる）。
+  expect(app).toContain("Recommender.categoryChipLabelJa");
+  // 分野ラベルの正本は日本語名だけ（併記した形はチップの組み立てで決まる）。
+  for (const item of out.結果) {
+    expect(item.ja, `分野ラベルその物に括弧が入っている: ${item.ja}`).not.toContain("（");
+  }
 });
