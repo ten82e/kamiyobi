@@ -1009,6 +1009,37 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.expandRelativeMonths("国内の研究会", now)).toBe("国内の研究会");
     });
 
+    it("日数の範囲の言い方は、締切日からの日数で絞る欄の選択肢へ送る", () => {
+      /* 締切切り出しでいちばん言う言い方（第 253 回）。検索語としては当たらないので
+       * （実測: `1か月以内` 0 行）、画面にある同じ話の欄へ連れていく。暦日のグループへ
+       * 展開しないのは、表の暦日語が会期の日時も含むため – 「3 日以内に締切がある行」の
+       * つもりで会期が 3 日以内の行が混じる。 */
+      expect(R.dayRangeWindowJa("7日以内")).toEqual([7, "7 日以内", "same"]);
+      expect(R.dayRangeWindowJa("1週間以内")).toEqual([7, "7 日以内", "same"]);
+      expect(R.dayRangeWindowJa("1か月以内")).toEqual([30, "30 日以内", "same"]);
+      expect(R.dayRangeWindowJa("1カ月以内")).toEqual([30, "30 日以内", "same"]);
+      expect(R.dayRangeWindowJa("3ヶ月以内")).toEqual([90, "90 日以内", "same"]);
+      expect(R.dayRangeWindowJa("180日以内")).toEqual([180, "180 日以内", "same"]);
+      // 選択肢に無い長さは、いちばん近い上と、上限を区別して言う。
+      expect(R.dayRangeWindowJa("3日以内")?.[2]).toBe("near");
+      expect(R.dayRangeWindowJa("2週間以内")?.[2]).toBe("near");
+      expect(R.dayRangeWindowJa("1年以内")?.[2]).toBe("cap");
+      // 全角数字も折る（検索の正規化と同じ）。
+      expect(R.dayRangeWindowJa("１か月以内")).toEqual([30, "30 日以内", "same"]);
+      // 行き先がちがう語を期間の語として扱わない。
+      for (const word of ["9月", "明日", "3ヶ月から", "以内", "以内です", "来月", "", "0日以内"]) {
+        expect(R.dayRangeWindowJa(word), `「${word}」に期間の案内を出す`)?.toBeNull();
+      }
+      const note = String(R.dayRangeNoteJa("1か月以内"));
+      expect(note).toContain("締切まで");
+      expect(note).toContain("30 日以内");
+      // 読み上げは 1 打鍵ごとに流れる（画面と同じ判断を短い形で）。
+      for (const word of ["3日以内", "1週間以内", "1か月以内", "1年以内"]) {
+        const live = ` ｜ ${String(R.dayRangeLiveNoteJa(word))}。下に外せる条件も書いてあります`;
+        expect(live.length, `読み上げが長い（${word}）`).toBeLessThanOrEqual(60);
+      }
+    });
+
     it("月の範囲の言い方（以降・から〜月）は暦月語のグループに展開する", () => {
       const now = Date.parse("2026-08-09T00:00:00Z");
       // 「以降」は暦年の終わりまで。いつまで出したかは件数欄で言う（伏せない）。

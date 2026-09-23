@@ -2484,8 +2484,8 @@ it("relative months in the query are resolved and shown (SPEC §7)", () => {
   // てびきに相対月の説明がある（仕様が画面から追える状態にする）。
   expect(template).toContain("「今月」「来月」「再来月」「先月」");
   // 「来月」がどの月に解決されたかをその場で見せる（伏せた展開は誤信を生む）。
-  /* 件数欄の文言は本物の `relativeMonthNote` が作る。展開前後を番号で突き合わせる作り方は
-   * 助詞で繋がれた形で対応がずれるので、解決の内側でできた組を見る（第 251 回）。 */
+  /* 件数欄の文言は本物の `relativeMonthNote` が作る（展開前後の番号対応は助詞でずれるので
+   * 解決の内側でできた組を見る – 第 251 回）。 */
   const note = new Function("Recommender", `return (${jsFunction(runtime, "relativeMonthNote")});`)(
     Recommender as unknown as Record<string, unknown>,
   ) as (query: string, now: number) => string;
@@ -2739,12 +2739,10 @@ const SEARCH_CANON = (() => {
       "kanaFold",
       "monthTermsJa",
       "expandRelativeMonths",
-      // 相対月を暦月に解決する部品（第 251 回 – 抜くと `ReferenceError: relativeMonthTerm
-      // is not defined` になる。抜いた関数は独立していない）。
+      /* 相対月の解決と月の範囲の展開（第 251 回・第 252 回）。抜いた関数は独立では
+       * ないので `ReferenceError` になる。 */
       "relativeMonthTerm",
-      // 件数欄に出す「打った語 = 解決した暦月」の組を作る部品（第 251 回）。
       "relativeMonthPairs",
-      // 月の範囲の展開（第 252 回）。
       "monthTokenToYearMonth",
       "monthRangeTermsJa",
       "searchNormalize",
@@ -11476,7 +11474,7 @@ it("「締め切り」のように表その物を指す語を打った人に、0
     (app.match(/const KIND_ALL_LABEL_JA = [^\n]*;/) || ['""'])[0],
     jsFunction(app, "countJa"),
     wholeTableQueryStubs(rec),
-    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa };",
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa, dayRangeNoteJa, dayRangeLiveNoteJa };",
   ].join("\n");
   const hint = new Function(`${stubs}\nreturn (${jsFunction(app, "emptyDeadlineHint")});`)() as (
     f: object,
@@ -11554,7 +11552,7 @@ it("締切のデータが無い画面は、それを条件の話より先に言�
     ")(['日','月','火','水','木','金','土'], (n) => String(n).padStart(2, '0'));",
     "const generatedAtLabel = new Function('fmtJst', 'UNCONFIRMED_JA', 'return (' + LABEL_SRC + ')')(fmtJst, '未確認');",
     wholeTableQueryStubs(siteRuntime("recommender.js")),
-    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa };",
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa, dayRangeNoteJa, dayRangeLiveNoteJa };",
     "const hint = new Function('Recommender', 'return (' + HINT_SRC + ')')(Recommender);",
     "const live = new Function('Recommender', 'return (' + LIVE_SRC + ')')(Recommender);",
     "const empty = {",
@@ -12405,7 +12403,7 @@ it("0 件の案内が、各条件で今何行が隠れているかを並べて�
     // 評価の語は正本から取る（件数欄と同じ語を見るために）。
     (siteRuntime("recommender.js").match(/const RANK_UNRATED_LABEL_JA = [^\n]*;/) || [""])[0],
     wholeTableQueryStubs(siteRuntime("recommender.js")),
-    "const Recommender = { rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA, wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa };",
+    "const Recommender = { rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA, wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa, dayRangeNoteJa, dayRangeLiveNoteJa };",
     jsFunction(app, "rankFilterLabelJa"),
     jsFunction(app, "rankDropWordsJa"),
     `${hintFn.replace("function emptyDeadlineHint", "const emptyDeadlineHint = function")}`,
@@ -12765,7 +12763,7 @@ it("0 件の読み上げが、画面に出ている案内の有無と緩めら�
   const script = [
     // 0 件案内と読み上げが同じ語列表を見るので、正本を注入する（第 239 回）。
     wholeTableQueryStubs(siteRuntime("recommender.js")),
-    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa };",
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa, dayRangeNoteJa, dayRangeLiveNoteJa };",
     // 抜き出した関数は式としてそのまま入れる（JSON.stringify すると文字列になる）。
     "const live = (" + liveFn + ");",
     "const base = {",
@@ -13470,7 +13468,7 @@ it("URL で引いて 0 件のときは「語が無い」とは言わず収録の
     "const hostFromUrl = (" + jsFunction(rec, "hostFromUrl") + ");",
     "const hostLabels = (" + jsFunction(rec, "hostLabels") + ");",
     wholeTableQueryStubs(rec),
-    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa };",
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa, dayRangeNoteJa, dayRangeLiveNoteJa };",
     "const note = (" + liveNoteSource(app) + ");",
     // URL の形とそれ以外（日付・会議名・語の羅列）を混同しないこと。
     "const yes = ['https://www.example-university.edu/symposium-2027/cfp', 'example.ac.jp/workshop27', 'easychair.org/cfp/x'];",
@@ -13541,7 +13539,7 @@ it("0 件案内の画面側も URL を「語」と呼ばず、読み上げと同
   const script = [
     "const countJa = (n) => String(n);",
     wholeTableQueryStubs(siteRuntime("recommender.js")),
-    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa };",
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa, dayRangeNoteJa, dayRangeLiveNoteJa };",
     `const hint = (${jsFunction(app, "emptyDeadlineHint")});`,
     `const note = (${jsFunction(app, "zeroResultLiveNote")});`,
     "const mk = (o) => Object.assign({",

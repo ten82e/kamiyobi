@@ -60,12 +60,27 @@ export function wholeTableQueryStubs(rec: string): string {
   cols.forEach((src) => {
     expect(src, "欄の名前の表が見つからない").toBeTruthy();
   });
+  /* 日数の範囲の言い方（`1か月以内` など）の正本（第 253 回）。書き写すと画面とズレる。 */
+  const dayRange = [
+    rec.match(/const DAY_RANGE_DAYS = [^\n]*;/)?.[0] ?? "",
+    rec.match(/const DAY_RANGE_UNIT = [^\n]*;/)?.[0] ?? "",
+    rec.match(/const DAY_RANGE_UNIT_JA[\s\S]*?\n\s*\};/)?.[0] ?? "",
+    rec.match(/const WIN_LIMITS_JA[\s\S]*?\n\s*\];/)?.[0] ?? "",
+  ];
+  dayRange.forEach((src) => {
+    expect(src, "日数の範囲の定義が見つからない").toBeTruthy();
+  });
   return [
     list,
     // 欄の名前の定数も返す（抽出した `columnQueryEntry` は本体でこれらを読むので、関数だけ
     // 与えないと `COLUMN_QUERY_WORDS_JA is not defined` に化けた（第 248 回に実発生）。
     ...cols,
     uiWords,
+    ...dayRange,
+    jsFunction(rec, "dayRangeDaysJa"),
+    jsFunction(rec, "dayRangeWindowJa"),
+    jsFunction(rec, "dayRangeNoteJa"),
+    jsFunction(rec, "dayRangeLiveNoteJa"),
     jsFunction(rec, "uiWordEntry"),
     jsFunction(rec, "uiWordRawJa"),
     jsFunction(rec, "uiWordNoteJa"),
@@ -98,7 +113,7 @@ export function deadlineHintFunction(): (f: Record<string, unknown>) => string {
      ${jsFunction(app, "hiddenKindDeliveryJa")};
      ${(rec.match(/const RANK_UNRATED_LABEL_JA = [^\n]*;/) || ['""'])[0]}
      ${wholeTableQueryStubs(rec)}
-     const Recommender = { rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA, wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa };
+     const Recommender = { rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA, wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa, dayRangeNoteJa, dayRangeLiveNoteJa };
      ${jsFunction(app, "rankFilterLabelJa")};
      ${jsFunction(app, "rankDropWordsJa")};
      return (${jsFunction(app, "emptyDeadlineHint")});`,
@@ -112,7 +127,7 @@ export function zeroResultLiveFunction(): (f: Record<string, unknown>) => string
   return new Function(
     `${jsFunction(app, "countJa")};
      ${wholeTableQueryStubs(rec)}
-     const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa };
+     const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa, dayRangeNoteJa, dayRangeLiveNoteJa };
      return (${liveNoteSource(app)});`,
   )() as (f: Record<string, unknown>) => string;
 }

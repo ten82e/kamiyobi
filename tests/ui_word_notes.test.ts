@@ -7,7 +7,10 @@
  * 新しい検査はここに置く（同じ抜き出しハーネスは tests/runtime_extract.ts に共有した）。
  */
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { expect, it } from "vitest";
+import { builtSite } from "./built_site.ts";
 import { deadlineHintFunction, zeroResultLiveFunction } from "./runtime_extract.ts";
 
 /* 条件をすべて外した 0 件の見立て（案内は「いまその条件で何行が隠れているか」を添えるので、
@@ -102,4 +105,60 @@ it("画面自身の語を打った人に、読み上げでも行き先を言う�
     const live = note({ ...empty, query: word, termCounts: [{ term: word, count: 0 }] });
     expect(live.length, `「${word}」の読み上げが長い: ${live}`).toBeLessThanOrEqual(60);
   }
+});
+
+it("日数の範囲の言い方（`1か月以内`・`1週間以内`）を打った人を、実際に効く絞り込みへ送る（SPEC §7）", () => {
+  /* 研究計画の締切切り出しでいちばん言う言い方（2026-08-09 生成ビルド・固定時刻で実測:
+   * `3日以内` 0 行・`7日以内` 0 行・`1週間以内` 0 行・`1か月以内` 0 行・`90日以内` 0 行、
+   * 案内は「語がありません」だけで、締切日からの日数で絞る「締切まで」の選択欄のことを
+   * 言っていなかった）。暦日のグループへ展開しない – 表の暦日語は会期の日時も含まれるため
+   * 「3 日以内に締切がある行」のつもりで会期が 3 日以内の行が混じる
+   * （実測: `2026年8月30日` に当たる 14 行のうち締切がその日の行は 0 行）。 */
+  const hint = deadlineHintFunction();
+  const live = zeroResultLiveFunction();
+  const html = readFileSync(join(builtSite(), "index.html"), "utf8");
+  const win = /<select id="win"[^>]*>([\s\S]*?)<\/select>/.exec(html);
+  expect(win, "「締切まで」の選択欄がビルド済み画面に見つからない").toBeTruthy();
+  const options = [
+    ...String(win ? win[1] : "").matchAll(/<option value="[^"]*">([^<]*)<\/option>/g),
+  ].map((m) => String(m[1]));
+  expect(options.length, "選択肢が読み取れない（検査が空振りになる）").toBeGreaterThan(1);
+
+  let checked = 0;
+  for (const word of [
+    "3日以内",
+    "7日以内",
+    "1週間以内",
+    "2週間以内",
+    "1か月以内",
+    "3ヶ月以内",
+    "90日以内",
+    "180日以内",
+    "1年以内",
+  ]) {
+    const text = hint({ ...clear, query: word, termCounts: [{ term: word, count: 0 }] });
+    expect(text, `「${word}」の案内が行き先を言っていない`).toContain("締切まで");
+    expect(text, `「${word}」に対して直らない「語が無い」案内を立てている`).not.toContain(
+      "収録データにも見当たりません",
+    );
+    /* 案内が行き先に挙げる語は、選択欄に実在する選択肢でなければならない
+     * （画面に無い値を案内するのは別の噓になる）。 */
+    const named = /「締切まで」[^。]*?「([^」]+)」/.exec(text);
+    expect(named, `「${word}」の案内に行き先の語が無い`).toBeTruthy();
+    expect(options, `案内の「${named ? named[1] : ""}」は選択欄に無い語`).toContain(
+      named ? named[1] : "",
+    );
+    const said = live({ ...empty, query: word, termCounts: [{ term: word, count: 0 }] });
+    expect(said, `読み上げが行き先を言っていない（${word}）`).toContain("締切まで");
+    // 読み上げは 1 打鍵ごとに流れるので短い形で（同じ場所に出る他の案内と同じ約束）。
+    expect(said.length, `読み上げが長すぎる（${word}）`).toBeLessThanOrEqual(60);
+    checked += 1;
+  }
+  expect(checked, "案内を検査した語数が少ない（検査が空振り）").toBeGreaterThan(6);
+
+  /* 行き先が違う語に同じ案内を出さない（`9月` は検索語として当たる – 実測 687 行）。 */
+  const month = hint({ ...clear, query: "9月", termCounts: [{ term: "9月", count: 12 }] });
+  expect(month, "月の語に期間の絞り込みへ送る案内を出している").not.toContain(
+    "検索語としては当たりません",
+  );
 });

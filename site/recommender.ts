@@ -2228,6 +2228,110 @@ const Recommender = (() => {
     return ` 「${word}」${hit.note}`;
   }
 
+  /* 日数の範囲の言い方（`3日以内` `1週間以内` `1か月以内`）（第 253 回）。
+   * 2026-08-09 生成ビルド・固定時刻 2026-08-09T00:00:00Z で実測: `3日以内` 0 行・
+   * `7日以内` 0 行・`1週間以内` 0 行・`1か月以内` 0 行・`90日以内` 0 行で、案内も無かった。
+   * これを暦月・暦日のグループへ展開しない – 表の暦日語は締切日だけでなく会期の日時も
+   * 含む（実測: `2026年8月30日` に当たる 14 行のうち締切がその日の行は 0 行）ので、
+   * 「3 日以内に締切がある行」のつもりで会期が 3 日以内の行が混じる。画面には既に
+   * 締切日からの日数で絞る「締切まで」の選択欄（7・30・90・180 日以内）があるので、
+   * そちらへ連れていく。検索語として効くと見せるのがいちばん悪い。 */
+  const DAY_RANGE_DAYS = /^(\d{1,4})(?:日間)?以内$/;
+  const DAY_RANGE_UNIT = /^(\d{1,3})(.+?)以内$/;
+  const DAY_RANGE_UNIT_JA: Record<string, number> = {
+    日: 1,
+    日間: 1,
+    週間: 7,
+    しゅうかん: 7,
+    週: 7,
+    か月: 30,
+    カ月: 30,
+    ヶ月: 30,
+    ケ月: 30,
+    か年: 365,
+    ケ年: 365,
+    年間: 365,
+    年: 365,
+  };
+  /* 選択欄の実在する選択肢（テンプレートの `<select id="win">` と揃える – 画面に無い値を
+   * 案内しない）。 */
+  const WIN_LIMITS_JA: Array<[number, number]> = [
+    [7, 7],
+    [30, 30],
+    [90, 90],
+    [180, 180],
+  ];
+
+  /** 日数の範囲の言い方から日数を求める。該当しなければ null。
+   * 全角数字は NFKC で半角に折る（`１か月以内` で打つ人もいる – 検索の正規化と同じ折方）。 */
+  function dayRangeDaysJa(query: unknown): number | null {
+    const raw = typeof query === "string" ? query : query == null ? "" : String(query);
+    const normalized = (typeof raw.normalize === "function" ? raw.normalize("NFKC") : raw).trim();
+    if (!normalized) return null;
+    const plain = DAY_RANGE_DAYS.exec(normalized);
+    if (plain) {
+      const days = Number(plain[1]);
+      return days >= 1 && days <= 3650 ? days : null;
+    }
+    const unit = DAY_RANGE_UNIT.exec(normalized);
+    if (!unit) return null;
+    const per = DAY_RANGE_UNIT_JA[unit[2] as string];
+    if (per === undefined) return null;
+    const count = Number(unit[1]);
+    return count >= 1 ? count * per : null;
+  }
+
+  /** 日数の範囲の言い方に対して、選択欄で選べる値 `[値, ラベル]` を返す。 */
+  function dayRangeWindowJa(query: unknown): (number | string)[] | null {
+    const days = dayRangeDaysJa(query);
+    if (days === null) return null;
+    const exact = WIN_LIMITS_JA.filter((limit) => limit[0] === days)[0];
+    if (exact) return [exact[1], `${exact[0]} 日以内`, "same"];
+    const near = WIN_LIMITS_JA.filter((limit) => limit[0] >= days)[0];
+    if (near) return [near[1], `${near[0]} 日以内`, "near"];
+    const longest = WIN_LIMITS_JA[WIN_LIMITS_JA.length - 1] as [number, number];
+    return [longest[1], `${longest[0]} 日以内`, "cap"];
+  }
+
+  /** 画面側の案内（0 行のときに出す）。 */
+  function dayRangeNoteJa(query: unknown): string {
+    const hit = dayRangeWindowJa(query);
+    if (!hit) return "";
+    /* 打たれた形をそのまま返す（全角数字でも利用者の入力した文字を書く – 件数欄の
+     * 「検索語『X』」と同じ判断）。 */
+    const word = (typeof query === "string" ? query : query == null ? "" : String(query)).trim();
+    if (hit[2] === "same") {
+      return (
+        ` 「${word}」は検索語としては当たりません。締切日からの日数で絞る「締切まで」の` +
+        `選択欄で「${hit[1]}」を選ぶと同じ話です（締切日で数え、会期では数えません）。`
+      );
+    }
+    if (hit[2] === "near") {
+      return (
+        ` 「${word}」は検索語としては当たりません。締切日からの日数で絞る「締切まで」の` +
+        `選択欄は 7・30・90・180 日以内で、いちばん近いのは「${hit[1]}」です` +
+        `（締切日で数え、会期では数えません）。`
+      );
+    }
+    return (
+      ` 「${word}」は検索語としては当たりません。締切日からの日数で絞る「締切まで」の` +
+      `選択欄でいちばん長いのは「${hit[1]}」です。それより先まで見るには条件を置かずに` +
+      `一覧を出してください。`
+    );
+  }
+
+  /** 読み上げ側の短い文（60 文字以内に収まる形で – 件数欄の読み上げは同じ場所に出る）。 */
+  function dayRangeLiveNoteJa(query: unknown): string {
+    const hit = dayRangeWindowJa(query);
+    if (!hit) return "";
+    /* 打たれた形をそのまま返す（全角数字でも利用者の入力した文字を書く – 件数欄の
+     * 「検索語『X』」と同じ判断）。 */
+    const word = (typeof query === "string" ? query : query == null ? "" : String(query)).trim();
+    if (hit[2] === "same") return `「${word}」は「締切まで」の ${hit[1]}で絞えます`;
+    if (hit[2] === "near") return `「${word}」は「締切まで」の ${hit[1]}が近い`;
+    return `「${word}」は「締切まで」は ${hit[1]}まで`;
+  }
+
   /** 読み上げ側の短い文（同じ表から作る – 画面と読み上げが別のことを言わないようにする）。 */
   function uiWordLiveNoteJa(query: unknown): string {
     const hit = uiWordEntry(query);
@@ -6973,6 +7077,10 @@ const Recommender = (() => {
     columnQueryNoteJa: columnQueryNoteJa,
     columnQueryLiveNoteJa: columnQueryLiveNoteJa,
     uiWordNoteJa: uiWordNoteJa,
+    dayRangeDaysJa: dayRangeDaysJa,
+    dayRangeWindowJa: dayRangeWindowJa,
+    dayRangeNoteJa: dayRangeNoteJa,
+    dayRangeLiveNoteJa: dayRangeLiveNoteJa,
     uiWordLiveNoteJa: uiWordLiveNoteJa,
     wholeTableQueryWordJa: wholeTableQueryWordJa,
     wholeTableQueryNoteJa: wholeTableQueryNoteJa,
