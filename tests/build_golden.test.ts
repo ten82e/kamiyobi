@@ -12822,7 +12822,10 @@ it("既定に出ていない行の共有リンクを踏んだら、条件を外�
     `const rowShareKeyJa = (${jsFunction(app, "rowShareKeyJa")});`,
     `const sharedRowState = (${jsFunction(app, "sharedRowState")});`,
     `const sharedRowNotice = (${jsFunction(app, "sharedRowNotice")});`,
+    `const loosenSharedRowConditions = (${jsFunction(app, "loosenSharedRowConditions")});`,
     `const restoreDrawerFromUrl = (${jsFunction(app, "restoreDrawerFromUrl")});`,
+    // 抜き出した関数が参照する自由変数は、必ず上のスコープに置く（第 143 回の教訓）。
+    /const SELECTABLE_KINDS = \[[^\]]*\];/.exec(app)?.[0],
     "const rows = Rec.candidateRows(data.conferences, now);",
     // 分類が画面の判定（rowIsPast）と食い違わないこと。
     "let disagree = 0;",
@@ -13300,4 +13303,117 @@ it("CSV のファイル名の日は端末の時刻合わせに左右されない
   // JST の日付を使う（UTC の日付ではない）。
   expect(first.downloaded).toBe(`kamiyobi-deadlines-${first.jst}.csv`);
   expect(first.downloaded).not.toBe(`kamiyobi-deadlines-${first.utc}.csv`);
+});
+
+it("リンクについていた検索語で行が落ちていても、種別のせいにせずその行を開く（SPEC §7）", () => {
+  /* `?q=…&row=…` のように、検索語行と行の目印を同時に含む URL がある（`writeUrl` は
+   * モードを問わず両方を書き出す。/detail を開いたまま検索を打ち直す動きでも生まれる）。
+   * 従来はその行が一覧に無い理由を「過ぎた締切」「推定」「表に出さない種別」の三つで
+   * しか見ておらず、それ以外（検索語・ランク・期間窓・分野などの絞り込み）は種別のせいと
+   * 誤解する文を出していた（2026-08-09 実測: 表に出る `paper` の行へのリンクで
+   * 「その行は表に出さない種別（採否通知・カメラレディなど）なので…」が出ていた）。
+   * 送った人の画面では出ていた行なので、受け取った側で必要最小限の条件を外して開く。 */
+  const app = siteRuntime("app.js");
+  const recPath = `file://${join(site, "recommender.js")}`;
+  const dataPath = join(site, "data.json");
+  const script = [
+    `const { default: Rec } = await import(${JSON.stringify(recPath)});`,
+    "const fs = await import('node:fs');",
+    `const data = JSON.parse(fs.readFileSync(${JSON.stringify(dataPath)}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    `const rowDateOnlyState = (${jsFunction(app, "rowDateOnlyState")});`,
+    `const rowIsPast = (${jsFunction(app, "rowIsPast")});`,
+    `const rowShareKeyJa = (${jsFunction(app, "rowShareKeyJa")});`,
+    `const sharedRowState = (${jsFunction(app, "sharedRowState")});`,
+    `const sharedRowNotice = (${jsFunction(app, "sharedRowNotice")});`,
+    `const loosenSharedRowConditions = (${jsFunction(app, "loosenSharedRowConditions")});`,
+    `const restoreDrawerFromUrl = (${jsFunction(app, "restoreDrawerFromUrl")});`,
+    // 表に出る種別の正本はセレクトの選択肢と同じ（書き写さない）。
+    /const SELECTABLE_KINDS = \[[^\]]*\];/.exec(app)?.[0],
+    "const rows = Rec.candidateRows(data.conferences, now);",
+    "globalThis.Date = { now: () => now };",
+    // 画面と同じ条件で `shown` を組み直す（`render` の代わり。検索語・推定・過去・種別）。
+    // 抜き出した関数が参照する自由変数は、必ず上のスコープに置く（第 143 回の教訓）。
+    "let state = { mode: 'deadlines', q: '', kind: '', rank: '', win: 'all',",
+    "  est: false, domestic: false, online: false, past: false, cats: [] };",
+    "let shown = [];",
+    "let calls = [];",
+    "let pendingDrawerKey = '';",
+    "let selectedIndex = -1;",
+    "const live = {};",
+    // 常時受付のジャーナル行は「種別」で選んだときだけ出るので、ここでも同じにしておく。
+    "const redraw = () => {",
+    "  const m = Rec.searchMatcher(state.q, now);",
+    "  return rows.filter((r) => (state.est || !r.est)",
+    "    && (state.past || !rowIsPast(r, now))",
+    "    && SELECTABLE_KINDS.indexOf(r.kind) >= 0",
+    "    && (state.kind ? r.kind === state.kind : r.kind !== 'journal')",
+    "    && m(r.hay));",
+    "};",
+    "const toForm = () => { calls.push('toForm'); };",
+    "const render = () => { calls.push('render'); shown = redraw(); };",
+    "const ensureRowsDrawn = () => { calls.push('draw'); };",
+    "const updateRowSelection = () => { calls.push('select'); };",
+    "const openDrawer = (r) => { calls.push('open:' + (r && r.kind)); };",
+    "const $ = () => ({ set textContent(v) { live.v = v; }, get textContent() { return live.v || ''; } });",
+    "const make = (pastRow) => {",
+    "  const target = rows.filter((r) => r.kind === 'paper' && !r.est",
+    "    && (pastRow ? rowIsPast(r, now) : !rowIsPast(r, now)))[0];",
+    "  state = { mode: 'deadlines', q: 'zzzありえない検索語zzz', kind: '', rank: '',",
+    "    win: 'all', est: false, domestic: false, online: false, past: false, cats: [] };",
+    "  calls = [];",
+    "  live.v = '';",
+    "  shown = redraw();",
+    "  pendingDrawerKey = rowShareKeyJa(target);",
+    "  selectedIndex = -1;",
+    "  restoreDrawerFromUrl();",
+    "  return {",
+    "    見つかる: shown.some((r) => rowShareKeyJa(r) === pendingDrawerKey),",
+    "    calls: calls.slice(), live: live.v || '', q: state.q, past: state.past,",
+    "    est: state.est, 種別: target.kind,",
+    "  };",
+    "};",
+    "console.log(JSON.stringify({ 未来: make(false), 過去: make(true) }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["--input-type=module", "-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 120_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  type Got = {
+    見つかる: boolean;
+    calls: string[];
+    live: string;
+    q: string;
+    past: boolean;
+    est: boolean;
+    種別: string;
+  };
+  const got = JSON.parse(proc.stdout) as { 未来: Got; 過去: Got };
+  for (const key of ["未来", "過去"] as const) {
+    const one = got[key];
+    expect(one.種別, "検査に使った行の種別がおかしい").toBe("paper");
+    // 噓の文を出さない（表に出る種別なのに種別のせいにしない）。
+    expect(one.live, `${key}の行で種別のせいにしている`).not.toContain("表に出さない種別");
+    expect(one.live, `${key}の行で「収録に無い」と噓を言っている`).not.toContain(
+      "この収録に見当たりません",
+    );
+    // 外したものを名指しで書く（黙って条件を変えない）。
+    expect(one.live, `${key}の行で条件を外したことを書いていない`).toContain(
+      "その行を開くために、リンクについていた条件を自分から外しました",
+    );
+    expect(one.live, `${key}の行で検索語を名指ししていない`).toContain("検索語");
+    // 本当にその行が一覧へ戻る（「行の目印が出ない」扱いにしない）。
+    expect(one.見つかる, `${key}の行が一覧に戻っていない`).toBe(true);
+    expect(one.calls, `${key}の行に選択の目印を付けていない`).toContain("draw");
+    expect(one.calls).toContain("select");
+    expect(one.calls[one.calls.length - 1]).toBe("open:paper");
+    expect(one.q, "検索語が残ったままだった").toBe("");
+    // 最小限だけ触る（推定の行を外していない）。
+    expect(one.est, "推定の行まで外している").toBe(false);
+  }
+  // 過ぎた行のリンクでは「過去の締切も表示」が必要なので、それは入る。
+  expect(got.過去.past, "過ぎた行のリンクで「過去の締切も表示」が入っていない").toBe(true);
+  // 未来の行のリンクでまで過去表示を勝手に外さない。
+  expect(got.未来.past, "未来の行のリンクで「過去の締切も表示」まで外している").toBe(false);
 });

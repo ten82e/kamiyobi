@@ -4262,6 +4262,96 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return "other";
   }
 
+  /* 共有リンクの行を一覧に出すために、こちら側で緩める条件を 1 つずつ試す。緩めるたびに
+   * 描き直してその行が出るかを見る（まとめて全部外すと、関係の無い条件まで外れた画面に
+   * なるので、必要最小限だけ触る）。緩めた項目名を返すのは、件数のうしろにそのまま
+   * 書くため（外したことが見えないと、受け取った人は送った人と同じ画面を開けたのか
+   * 判断できない）。チェック欄の項目は「隠す条件を外した」という意味の語にしている –
+   * 「条件を外しました」に並べて筋が通る。 */
+  function loosenSharedRowConditions(find: () => number): string[] {
+    const steps: [string, () => void][] = [];
+    if (state.q) {
+      steps.push([
+        "検索語",
+        () => {
+          state.q = "";
+        },
+      ]);
+    }
+    if (state.kind) {
+      steps.push([
+        "種別",
+        () => {
+          state.kind = "";
+        },
+      ]);
+    }
+    if (state.rank) {
+      steps.push([
+        "ランク",
+        () => {
+          state.rank = "";
+        },
+      ]);
+    }
+    if (state.win !== "all") {
+      steps.push([
+        "締切まで",
+        () => {
+          state.win = "all";
+        },
+      ]);
+    }
+    if (state.cats.length) {
+      steps.push([
+        "分野",
+        () => {
+          state.cats = [];
+        },
+      ]);
+    }
+    if (state.domestic) {
+      steps.push([
+        "国内研究会・国内シンポジウムのみ",
+        () => {
+          state.domestic = false;
+        },
+      ]);
+    }
+    if (state.online) {
+      steps.push([
+        "オンライン参加可のみ",
+        () => {
+          state.online = false;
+        },
+      ]);
+    }
+    if (!state.past) {
+      steps.push([
+        "過去の締切を隠す条件",
+        () => {
+          state.past = true;
+        },
+      ]);
+    }
+    if (!state.est) {
+      steps.push([
+        "推定の行を隠す条件",
+        () => {
+          state.est = true;
+        },
+      ]);
+    }
+    const changed: string[] = [];
+    for (const [name, apply] of steps) {
+      apply();
+      changed.push(name);
+      render();
+      if (find() >= 0) return changed;
+    }
+    return changed;
+  }
+
   function restoreDrawerFromUrl() {
     if (!pendingDrawerKey) return;
     /* 投稿先を探す画面では表を描かないので、行の詳細は開けない。上の `setMode` が
@@ -4277,17 +4367,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (idx < 0) {
       const hit = rows.find((r) => rowShareKeyJa(r) === pendingDrawerKey) || null;
       const why = sharedRowState(hit, Date.now());
-      // 既定で隠している条件（過ぎた締切・推定）は、リンクが指す行のために自分で外す。
-      // 画面のチェックも同じにする – 外したことが見えないと「なぜ過去の行が出ているか」が
-      // 読めない（`toForm` は条件欄を state から書き直す）。
-      if (why === "past") state.past = true;
-      else if (why === "est") state.est = true;
-      else if (why === "missing") {
+      if (why === "missing") {
         sharedRowNotice(
           "共有された行はこの収録に見当たりません。データの更新で無くなった可能性があります。",
         );
         return;
-      } else {
+      }
+      if (SELECTABLE_KINDS.indexOf((hit as { kind: string }).kind) < 0) {
         /* 表に出さない種別（採否通知・カメラレディ・反論期間など）の行へのリンクは、
          * 絞り込みの問題ではないので「条件を確認してください」とは言わない（実測: 既定で
          * 一覧に出ない 2,732 件のうち 303 件がこの種別で、表に出さない行なのである）。
@@ -4299,14 +4385,40 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         openDrawer(hit as unknown as DrawerRow);
         return;
       }
+      /* 既定で隠している条件（過ぎた締切・推定）は、リンクが指す行のために自分で外す。
+       * 画面のチェックも同じにする – 外したことが見えないと「なぜ過去の行が出ているか」が
+       * 読めない（`toForm` は条件欄を state から書き直す）。 */
+      if (why === "past") state.past = true;
+      else if (why === "est") state.est = true;
       toForm();
       render();
-      idx = shown.findIndex((r) => rowShareKeyJa(r) === pendingDrawerKey);
+      /* まだ無い行は、リンクに書かれた検索語や絞り込みで落ちている（実測: `q` と `row` を
+       * 同時に含む URL で、表に出る `paper` の行が「表に出さない種別なので…」という
+       * 筋違いの案内を受けていた）。送った人の画面ではその行が出ていたので、受け取る側で
+       * 条件を緩めて開く（過ぎた締切・推定で決めた方針の続き）。 */
+      const keyAt = () => shown.findIndex((r) => rowShareKeyJa(r) === pendingDrawerKey);
+      idx = keyAt();
+      /* 過ぎた締切・推定を外しただけで出てくる行には、これ以上触らない（第 156 回の
+       * 扱いのまま）。それでも無い行だけ、リンクについていた条件を緩めに行く。 */
+      const loosened = idx < 0 ? loosenSharedRowConditions(keyAt) : [];
+      idx = keyAt();
       if (idx < 0) {
+        /* 収録に見当っても、いまの一覧に出さない行（会期だけの研究会など）がある。
+         * ここまで条件を緩めても出ない行を「見当たりません」とは言わない – 行は
+         * 有るので、開いて中身を出す。 */
         sharedRowNotice(
-          "共有された行はこの収録に見当たりません。データの更新で無くなった可能性があります。",
+          loosened.length
+            ? `その行はいまの一覧に出さない行なので、リンクについていた条件（${loosened.join("・")}）を外したうえで、行を開いて中身を出します。`
+            : "その行はいまの一覧に出さない行なので、行を開いて中身を出します。",
         );
+        openDrawer(hit as unknown as DrawerRow);
         return;
+      }
+      // `render()` が `#countLive` を書き直すので、案内は後から同じ欄に足す。
+      if (loosened.length) {
+        sharedRowNotice(
+          `その行を開くために、リンクについていた条件を自分から外しました（${loosened.join("・")}）。一覧はリンクの条件と違う範囲になっています。`,
+        );
       }
     } else {
       render();
