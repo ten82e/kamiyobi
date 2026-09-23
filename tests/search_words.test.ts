@@ -267,3 +267,66 @@ it("「セキュリティの会議」のように助詞で繋いだ検索語が�
     "表の全行にあてはまる語なので、他の語を一緒に打ったときは絞り込みに使いません",
   );
 });
+
+it("「採択通知」「最終原稿」で引いた人が種別の行に出会える", () => {
+  /* 種別の欄に出る語（採否通知・カメラレディ締切・登録締切・査読結果公開）の言い方を打つ人が
+   * 0 行に当たっていた（2026-08-09 生成ビルドの実測・872 行: `採択通知` `採択` `採択結果`
+   * `結果通知` `合否通知` `受理通知` `合否` は 0 行で、`採否通知` は 129 行。`最終原稿` `最終稿`
+   * `カメラレディ原稿` 0 行 / `カメラレディ締切` 70 行、`登録期限` `事前登録` `登録開始` 0 行 /
+   * `登録締切` 7 行、`レビュー結果` `審査結果` `査読公開` 0 行 / `査読結果公開` 13 行）。 */
+  const all = rows();
+  const matched = (query: string) => {
+    const matches = Recommender.searchMatcher(query);
+    return all.filter((row) => matches(String(row.hay)));
+  };
+  const groups = [
+    [
+      "採否通知",
+      "notification",
+      ["採択通知", "採択", "採択結果", "結果通知", "合否通知", "受理通知", "合否"],
+    ],
+    ["カメラレディ締切", "camera_ready", ["最終原稿", "最終稿", "カメラレディ原稿"]],
+    ["登録締切", "registration", ["登録期限", "事前登録", "登録開始"]],
+    ["査読結果公開", "review_release", ["レビュー結果", "審査結果", "査読公開"]],
+  ] as const;
+  let 行で確かめた組 = 0;
+  for (const [label, kind, words] of groups) {
+    for (const word of words) {
+      /* 語の寄せそのものは行の収録に依存しないので、作って置いた文字列で確かめる
+       * （行の検査は下の「収録のある種別だけ」の節でやる）。 */
+      const matches = Recommender.searchMatcher(word);
+      expect(matches(`締切 表記 ${label}`), `「${word}」が「${label}」に寄せられていない`).toBe(
+        true,
+      );
+      expect(matches("締切 別の表記"), `「${word}」が寄せ先以外の語にも当たった`).toBe(false);
+      expect(
+        Recommender.querySynonymNotes(word).join(""),
+        `「${word}」を寄せたことを出していない`,
+      ).toContain(`種別「${label}」で探しています`);
+    }
+    /* 検査のビルド（固定時計 + 収録の一部）に行が有る種別は、行レベルでも確かめる –
+     * 寄せた先の種別以外の行を交えないことを見る（第 243 回の教訓: 意味の違う語を寄せない）。 */
+    const labelRows = matched(label);
+    if (!labelRows.length) continue;
+    for (const word of words) {
+      const found = matched(word);
+      expect(found.length, `「${word}」で寄せ先の行に出会えない`).toBe(labelRows.length);
+      const kinds = [...new Set(found.map((row) => String(row.kind)))];
+      expect(kinds.join(","), `「${word}」で違う種別を交えた`).toBe(kind);
+    }
+    行で確かめた組 += 1;
+  }
+  expect(行で確かめた組, "行レベルの検査が 1 組も走らなかった（検査が空洞）").toBeGreaterThan(0);
+  /* 寄せない語も実測で決めている（意味が広がる語を寄せると嘘になる）。
+   * `最終版` `最終提出` は提出その物の話で論文締切と混じる。 */
+  for (const word of ["最終版", "最終提出", "リバットル", "採択通知日"]) {
+    expect(
+      Recommender.querySynonymNotes(word).join(""),
+      `「${word}」を寄せている（意味が広がる語）`,
+    ).toBe("");
+  }
+  /* 語のかけ算は絞ったまま効く。 */
+  expect(matched("採択通知 2027").length, "語のかけ算で寄せ先の行が消えた").toBeLessThanOrEqual(
+    matched("採択通知").length,
+  );
+});
