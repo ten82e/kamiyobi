@@ -4186,10 +4186,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     paperPrimaryVenue = input.venue;
   }
 
-  let paperInputBeforeSample: PaperInputJa | null = null;
+  let paperInputBeforeSwap: PaperInputJa | null = null;
 
-  function setSampleUndoVisible(visible: boolean): void {
-    const button = $("sampleUndo");
+  /** 入れ替え前の入力に戻せることを、ボタンで示す（ボタン名は画面側にある）。 */
+  function setPaperUndoVisible(visible: boolean): void {
+    const button = $("paperUndo");
     if (button) button.hidden = !visible;
   }
 
@@ -4227,13 +4228,26 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       .then(() => Promise.all(files.map((file) => readPaperFile(file, signal))))
       .then((records) => {
         if (job !== pdfJob || signal.aborted) throw abortError();
-        setPrimaryRecord(records[0] || {});
-        valueElement("paperReferences").value = records
-          .slice(1)
-          .map((record) =>
-            [record.title, record.keywords, record.venue].filter(Boolean).join(" | "),
-          )
-          .join("\n");
+        // 選んだファイルを欄に反映する差し替えも、例のボタンと同じ規則を通す。以前はここで
+        // 無条件に上書きしていて、打ち込んだ物や前に選んだファイル群が告げずに消えた
+        // （欄に「複数可」とあるので、足し算に読む人がいても不思議ではない）。
+        const first = records[0] || {};
+        const nextInput: PaperInputJa = {
+          title: first.title || "",
+          abstract: first.abstract || "",
+          keywords: first.keywords || "",
+          references: records
+            .slice(1)
+            .map((record) =>
+              [record.title, record.keywords, record.venue].filter(Boolean).join(" | "),
+            )
+            .join("\n"),
+          venue: first.venue || "",
+        };
+        const swap = paperInputWithSample(readPaperInput(), nextInput);
+        paperInputBeforeSwap = swap.kept;
+        setPaperUndoVisible(Boolean(swap.kept));
+        writePaperInput(swap.next);
         syncPaperText();
         label.textContent = files.map((file) => file.name).join(", ");
         apply();
@@ -4322,8 +4336,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         venue: parsed?.venue || "",
       };
       const swap = paperInputWithSample(readPaperInput(), sample);
-      paperInputBeforeSample = swap.kept;
-      setSampleUndoVisible(Boolean(swap.kept));
+      paperInputBeforeSwap = swap.kept;
+      setPaperUndoVisible(Boolean(swap.kept));
       writePaperInput(swap.next);
       syncPaperText();
       apply();
@@ -4332,12 +4346,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   });
   /* サンプルで差し替える前の入力に戻す。取り消しの入口が無いと、長い概要を貼った後に
    * 例を試すことができない（2026-08-09 実測: 以前は差し替えが元に戻せなかった）。 */
-  $("sampleUndo").addEventListener("click", () => {
-    const kept = paperInputBeforeSample;
+  $("paperUndo").addEventListener("click", () => {
+    const kept = paperInputBeforeSwap;
     if (!kept) return;
     writePaperInput(kept);
-    paperInputBeforeSample = null;
-    setSampleUndoVisible(false);
+    paperInputBeforeSwap = null;
+    setPaperUndoVisible(false);
     syncPaperText();
     apply();
     scheduleSemantic();
@@ -4646,8 +4660,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   $("paperReset").addEventListener("click", () => {
-    paperInputBeforeSample = null;
-    setSampleUndoVisible(false);
+    paperInputBeforeSwap = null;
+    setPaperUndoVisible(false);
     clearPaperInput();
     // 条件は触らない（`apply` は欄の中身を読み直し、候補を描き直すだけ）。
     apply();

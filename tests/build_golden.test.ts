@@ -14599,9 +14599,19 @@ it("入力の例を押すと、打ち込んだ物を取り消せる（SPEC §7�
   expect(out.refsOnly.kept, "参考論文だけの場合に取り消しが無い").toContain("先行研究 A");
 
   // 画面の配線: 差し替えの規則を使って書き、取り消しのボタンを出す。
-  expect(app, "サンプルの差し替えが規則関数を使っていない").toContain("paperInputWithSample(");
-  expect(app, "取り消しのボタンを操作していない").toContain("setSampleUndoVisible(");
-  const undo = /<button id="sampleUndo"[^>]*>([^<]+)</.exec(html);
+  expect(app, "差し替えが規則関数を使っていない").toContain("paperInputWithSample(");
+  // 例のボタンと、ファイル選んだときの差し替えが**同じ規則**を通ること（規則が又分岐して
+  // 一方だけ黙って消すようにならないように。ファイル欄には「複数可」と書いてあるので、
+  // 前に選んだ物が残ると読む人がいる）。
+  const swaps = (app.match(/paperInputWithSample\(/g) || []).length;
+  // 定義 1 箇所 + 例のボタン + ファイル選択 の 3 箇所が規則を通る（1 つでも欠ければ、
+  // その道だけは黙って消す側へ戻る）。
+  expect(
+    swaps,
+    "差し替えの規則を使う場所が足りない（黙って消す道が残っている）",
+  ).toBeGreaterThanOrEqual(3);
+  expect(app, "取り消しのボタンを操作していない").toContain("setPaperUndoVisible(");
+  const undo = /<button id="paperUndo"[^>]*>([^<]+)</.exec(html);
   expect(undo, "取り消しのボタンが画面に無い").not.toBeNull();
   const undoLabel = String(undo![1]).trim();
   expect(undoLabel, "取り消しのボタンが日本語で何を戻すか書いていない").toContain("戻す");
@@ -14612,6 +14622,8 @@ it("入力の例を押すと、打ち込んだ物を取り消せる（SPEC §7�
   const entry = html.slice(dtAt, html.indexOf("</dd>", dtAt)).replace(/<[^>]+>/g, "");
   expect(entry, "てびきが取り消しのボタン名で書いていない").toContain(undoLabel);
   expect(entry, "てびきが欄を入れ替えることを隠している").toContain("入れ替えます");
+  // ファイルを選んだときの差し替えも同じボタンで戻せる、と書いてあること。
+  expect(entry, "てびきがファイル選択でも戻せると書いていない").toContain("PDF・TXT を選んだとき");
 
   // 開発向けの群ラベルは画面から無くなる。
   expect(html, "開発向けの群ラベルが残っている").not.toContain("動作確認用サンプル");
