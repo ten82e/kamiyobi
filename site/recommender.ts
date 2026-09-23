@@ -1676,6 +1676,11 @@ const Recommender = (() => {
     // 「ランク」なので、その語で打つと 0 件に当たっていた（2026-08-09 生成ビルドで実測:
     // `ランクなし` 0 件 / 画面の語 `評価なし` 144 件）。
     ["ランクなし", "画面の語「評価なし」", ["評価なし"]],
+    // 「論文募集」は上流（Call for Papers）の言い方。表は種別を「論文締切」と出すので、
+    // その語へ寄せる（2026-08-09 生成ビルドで実測: `論文募集` 0 件 / `論文締切` 454 件）。
+    // 原文の "paper" には寄せない – 採否通知などのラベルにも出る語で、寄せる先として
+    // 誤っている（実測: "paper" を入れた形で出た行に種別「採否通知」が混ざった）。
+    ["論文募集", "種別「論文締切」", ["論文締切"]],
     ["抄録締切", "種別「概要締切」", ["概要締切", "abstract"]],
     ["要旨締切", "種別「概要締切」", ["概要締切", "abstract"]],
     ["抄録", "種別「概要締切」", ["概要締切", "abstract"]],
@@ -1737,9 +1742,29 @@ const Recommender = (() => {
       ],
     ];
     const out: Record<string, [string, string[]]> = {};
-    QUERY_SYNONYMS_JA.concat(WEEKDAY_QUERY_SYNONYMS_JA).forEach(([word, shown, terms]) => {
-      out[kanaFold(word)] = [shown, terms];
-    });
+    /* 上流の原文にしか出ていない語を、日本語の言い方で引けるようにする表。画面に対応する語が
+     * 無いので `QUERY_SYNONYMS_JA` には載せられない（あの表の展開語は列に出るラベルでなければ
+     * ならない。曜日の表と同じ理由で分離する）。並べる語は収録データに実在する物だけにする –
+     * 実在しない語を寄せても 0 件のままなので、表に置く意味が無い
+     * （2026-08-09 生成ビルドで実測: `ポスター` 0 件なのに原文の poster は 6 行、`デモ` 0 件 /
+     * demo 7 行、`チュートリアル` 0 件 / tutorial 6 行、`特別セッション` 0 件 / special session 3 行、
+     * `学生セッション` 0 件 / student 1 行）。寄せたことは件数欄に「原文の … という語で探しています」と出す。
+     */
+    const UPSTREAM_TEXT_QUERY_SYNONYMS_JA: Array<[string, string, string[]]> = [
+      ["ポスター", "原文の poster という語", ["poster"]],
+      ["ポスター発表", "原文の poster という語", ["poster"]],
+      ["デモ", "原文の demo という語", ["demo"]],
+      ["デモ発表", "原文の demo という語", ["demo"]],
+      ["チュートリアル", "原文の tutorial という語", ["tutorial"]],
+      ["特別セッション", "原文の special session という語", ["special session"]],
+      ["学生セッション", "原文の student という語", ["student"]],
+    ];
+
+    QUERY_SYNONYMS_JA.concat(WEEKDAY_QUERY_SYNONYMS_JA, UPSTREAM_TEXT_QUERY_SYNONYMS_JA).forEach(
+      ([word, shown, terms]) => {
+        out[kanaFold(word)] = [shown, terms];
+      },
+    );
     return out;
   }
 

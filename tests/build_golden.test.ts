@@ -15689,3 +15689,79 @@ it("半角カタカナで貼っても、全角で打ったのと同じ行に出�
     expect(hits(half), `半角「${half}」が全角「${word}」と違う行数を出した`).toBe(base);
   }
 });
+
+it("データに在る概念を、日本語の言い方で引ける（SPEC §7）", async () => {
+  /* ポスター発表・デモ発表・チュートリアル企画のように、上流は英語で書き、表は種別を
+   * 「その他」としか出さないことがある。日本語で打った人は 0 件になり、収録されているのに
+   * 「無い」と読むしかなかった（2026-08-09 生成ビルドで実測: `ポスター` 0 件なのに原文の
+   * poster は 6 行、`デモ` 0 件 / demo 7 行、`チュートリアル` 0 件 / tutorial 6 行）。
+   * 表の語は built の `recommender.js` から拾い、件数は built の行に対して数える
+   * （語も件数も書き写さない）。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const source = readFileSync(join(site, "recommender.js"), "utf8");
+  const clock = NOW.getTime();
+  const rows = R.candidateRows(
+    JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+      typeof R.candidateRows
+    >[0],
+  );
+  const hits = (query: string) =>
+    rows.filter((r) => R.searchMatcher(query, clock)(r.hay ?? "")).length;
+
+  const entries: Array<[string, string, string]> = [];
+  for (const m of source.matchAll(/\["([^"]+)", "(原文の [^"]+)", \["([^"]+)"\]\]/g)) {
+    entries.push([m[1], m[2], m[3]]);
+  }
+  expect(
+    entries.length,
+    "原文の語へ寄せる表から語を拾えない（検査が空振り）",
+  ).toBeGreaterThanOrEqual(5);
+
+  for (const [word, shown, term] of entries) {
+    const reached = hits(term);
+    expect(reached, `展開語「${term}」が収録データに無い（寄せた先が空）`).toBeGreaterThan(0);
+    expect(
+      hits(word),
+      `語「${word}」が展開語「${term}」と同じ行に出会えていない`,
+    ).toBeGreaterThanOrEqual(reached);
+    const notes = R.querySynonymNotes(word);
+    expect(notes.length, `語「${word}」を寄せたことが件数欄に出ない`).toBeGreaterThan(0);
+    const note = notes.join("・");
+    expect(note, `おしらせに打ち込んだ語が書かれていない: ${note}`).toContain(word);
+    expect(note, `おしらせが原文の語を言っていない: ${note}`).toContain(term);
+    expect(note, `おしらせが原文の語だと書いていない: ${note}`).toContain("原文");
+    expect(shown, `寄せ先の言い方に原文の語が在らない: ${shown}`).toContain(term);
+  }
+});
+
+it("上流の言い方で打った人が、画面の種別の語に出会える（SPEC §7）", async () => {
+  /* 「論文募集」は上流（Call for Papers）の言い方で、表は種別「論文締切」を出す。打ち込んだ
+   * 人に画面の語を知らないと 0 件を返していた（2026-08-09 生成ビルドで実測: `論文募集` 0 件）。
+   * 寄せた先の語は検査側で書かず、件数欄のおしらせから取り、行が持つ種別と照らす。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const clock = NOW.getTime();
+  const rows = R.candidateRows(
+    JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+      typeof R.candidateRows
+    >[0],
+  );
+  const word = "論文募集";
+  const notes = R.querySynonymNotes(word);
+  expect(notes.length, `語「${word}」を寄せたことが件数欄に出ない`).toBeGreaterThan(0);
+  const label = /種別「([^」]+)」/.exec(notes.join("・"))?.[1];
+  expect(label, `おしらせが種別の語を言っていない: ${notes.join("・")}`).toBeTruthy();
+  const labels = R.kindLabelTable();
+  expect(Object.values(labels), `おしらせが出した「${label}」は画面の種別の語ではない`).toContain(
+    label as string,
+  );
+  const matched = rows.filter((r) => R.searchMatcher(word, clock)(r.hay ?? ""));
+  expect(matched.length, `語「${word}」に出会う行が 0 件（空振り）`).toBeGreaterThan(0);
+  for (const r of matched) {
+    expect(
+      R.kindLabelJa((r as { kind?: string }).kind ?? ""),
+      `語「${word}」で出た行の種別が「${label}」ではない`,
+    ).toBe(label as string);
+  }
+});
