@@ -1351,9 +1351,25 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   // ---- CATEGORIES ----
+  /* 分野チップの並びは、チップに出る日本語名の五十音順（第 230 回）。上は上流の分野表の
+   * 項目順のままで、実測の並びは 高性能計算 / ネットワーク / システム / 人工知能 /
+   * セキュリティ / データベース / グラフィックス / 人間情報処理 / 計算理論 – 9 個の中に
+   * 探している語を探し出す形だった。同じ画面の「会議」列は `localeCompare(..., "ja")` で
+   * 五十音順に並ぶので、日本語の並びの約束が画面の中に二つあったことになる。上流の項目順が
+   * 変わると画面の並びも変わる問題も、ここで止める。
+   * 比較するのは画面に出る語そのもの（英表記を併記した形）。行に付くタグの順序は収録の
+   * 分野順のまま変えない（チップは探すための欄で、タグは行の情報なので役割が違う）。 */
+  function categoryChipKeys(categories: Record<string, string>): string[] {
+    return Object.keys(categories || {}).sort((a, b) => {
+      const la = Recommender.categoryChipLabelJa(a, String(categories[a] || ""));
+      const lb = Recommender.categoryChipLabelJa(b, String(categories[b] || ""));
+      return la.localeCompare(lb, "ja") || a.localeCompare(b);
+    });
+  }
+
   const catsBox = $("cats");
   const catCountNodes: Record<string, HTMLElement> = {};
-  Object.keys(DATA.categories).forEach((k) => {
+  categoryChipKeys(DATA.categories).forEach((k) => {
     const lbl = document.createElement("label");
     const chk = document.createElement("input");
     chk.type = "checkbox";

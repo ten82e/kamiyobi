@@ -6618,6 +6618,53 @@ it("「締切まで N 日以内」の窓で外れた件数を件数欄に出す�
   expect(dd).toContain("収録が薄いわけではありません");
   expect(dd).toContain("「かまわない」");
 });
+it("分野チップは、チップに出る日本語名の五十音順に並ぶ（SPEC §7）", async () => {
+  /* 第 230 回。上は上流の分野表の項目順のままで、2026-08-09 生成ビルドの実測は
+   * 高性能計算 / ネットワーク / システム / 人工知能 / セキュリティ / データベース /
+   * グラフィックス / 人間情報処理 / 計算理論 – 9 個から探している語を探し出す形だった。
+   * 同じ画面の「会議」列は `localeCompare(..., "ja")` で五十音順に並ぶので、日本語の
+   * 並びの約束が画面の中に二つあった。並びは `categoryChipKeys` の 1 本にまとめる。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const app = siteRuntime();
+  const fn = new Function("Recommender", `return (${jsFunction(app, "categoryChipKeys")});`)(R) as (
+    categories: Record<string, string>,
+  ) => string[];
+  const ラベル = (categories: Record<string, string>) =>
+    fn(categories).map((key) => R.categoryChipLabelJa(key, categories[key] || ""));
+  const 並んでいる = (labels: string[]) =>
+    labels.every((label, i) => i === 0 || labels[i - 1].localeCompare(label, "ja") <= 0);
+  // 入力の並びを逆にしても同じ順に出る（並び替えていること自体の証明。データ順が
+  // たまたま五十音順でも空振りしない）。
+  const 逆順 = (categories: Record<string, string>) => {
+    const keys = Object.keys(categories).reverse();
+    return Object.fromEntries(keys.map((key) => [key, categories[key]]));
+  };
+  expect(
+    fn(逆順({ hpc: "High Performance Computing", ai: "AI", sec: "Security" })),
+    "入力の並び順で出ていて、並び替えていない",
+  ).toEqual(fn({ hpc: "High Performance Computing", ai: "AI", sec: "Security" }));
+  // 収録している分野でも五十音順で、1 つも落とさない。
+  const categories = JSON.parse(readFileSync(join(site, "data.json"), "utf8")).categories as Record<
+    string,
+    string
+  >;
+  const 収録の順 = Object.keys(categories);
+  expect(収録の順.length, "分野が無く、この検査が空振りしている").toBeGreaterThan(1);
+  const 出てくる順 = fn(categories);
+  expect([...出てくる順].sort().join(), "チップから落ちる分野がある").toBe(
+    [...収録の順].sort().join(),
+  );
+  expect(並んでいる(ラベル(categories)), "チップが五十音順に並んでいない").toBe(true);
+  // チップの組み立てがその並びを見ていること（並びを決める関数を素で置かない）。
+  expect(app, "チップの組み立てが並びの正本を見ていない").toContain(
+    "categoryChipKeys(DATA.categories)",
+  );
+  // てびきも同じ約束を書いているか（画面の並びを文書で言い換えない）。
+  expect(siteHtmlRuntime(), "てびきにチップの並びを書いていない").toContain(
+    "チップの並びは日本語名の五十音順",
+  );
+});
 
 it("画面上部の「これからの30日間の締切」は「30 日以内」の一覧と同じ行を数える（SPEC §7）", () => {
   /* 第 228 回。上の四つの数は経過 24 時間で区切り、一覧の窓は JST の暦日で区切る（第 202 回）
