@@ -14861,3 +14861,127 @@ it("印刷した紙が、紙に出る語を紙の説明だけで読ませる（S
     expect(open - close, `てびきの項で括弧が釣り合っていない: ${text.slice(0, 40)}`).toBe(0);
   }
 });
+
+it("紙に刷られない語を、紙の但し書きが説明していない（SPEC §7）", () => {
+  /* 第 182 回で載せた但し書きが、自分自身で噓を書いていた。説明していた語の 2 つが
+   * 紙に現れない。行の詳細の「原表記:」は `@media print` で `#drawer` が消えるので
+   * 刷られず、残り欄の横線は現状のデータで一度も出ない（2026-08-09 実測: 候補行
+   * 3,235 件と期刊行 22 件の CSV に 0 件）。一方で紙に刷る「公式表記」の列と、
+   * ランの三列（CCF・CORE・THCPL）が 478 行中 280 行で空欄であることは
+   * 説明していなかった。紙の説明は紙に出る語だけを説明すべきなので、方向を直す。
+   * ここでは (1) 但し書きが説明する語が紙に刷られる値・見出しに実在すること、
+   * (2) 印刷行の 2 割以上で空欄になる列は名前を挙げて説明していること、
+   * (3) 「公式表記」と「種別」の中身が別物なら、両方の列名を説明に載せることを見る。 */
+  const app = siteRuntime("app.js");
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const script = [
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    jsFunction(app, "printLegendJa"),
+    "const legend = printLegendJa();",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const cr = String.fromCharCode(13, 10);",
+    "const q = String.fromCharCode(34);",
+    "const cells = (line) => {",
+    "  const out = []; let cur = ''; let quoted = false;",
+    "  for (let i = 0; i < line.length; i++) {",
+    "    const ch = line[i];",
+    "    if (quoted) {",
+    "      if (ch === q) { if (line[i + 1] === q) { cur += ch; i++; } else quoted = false; } else cur += ch;",
+    "    } else if (ch === q) quoted = true;",
+    "    else if (ch === ',') { out.push(cur); cur = ''; }",
+    "    else cur += ch;",
+    "  }",
+    "  out.push(cur); return out;",
+    "};",
+    // 印刷しうる行の全体（表の行と常時受付の行）。但し書きはどちらの印刷にも出る。
+    "const pool = Recommender.candidateRows(DATA, now).concat(Recommender.journalRows(DATA.conferences, now));",
+    "const csv = Recommender.deadlinesToCsv(pool, now);",
+    "const lines = csv.split(cr).filter((l) => l.length);",
+    "const head = cells(lines[0]);",
+    "const empties = {};",
+    "for (let i = 1; i < lines.length; i++) {",
+    "  const c = cells(lines[i]);",
+    "  for (let j = 0; j < head.length; j++) if (!String(c[j] || '')) empties[head[j]] = (empties[head[j]] || 0) + 1;",
+    "}",
+    // 「公式表記」と「種別」の中身が重なっているか（重なっていれば二つの説明は要らない）。
+    "const official = new Set();",
+    "const kinds = new Set();",
+    "const oi = head.indexOf('公式表記');",
+    "const ki = head.indexOf('種別');",
+    "for (let i = 1; i < lines.length; i++) {",
+    "  const c = cells(lines[i]);",
+    "  official.add(String(c[oi] || '')); kinds.add(String(c[ki] || ''));",
+    "}",
+    "let overlap = 0;",
+    "for (const v of kinds) if (official.has(v)) overlap += 1;",
+    "console.log(JSON.stringify({",
+    "  legend,",
+    "  rows: lines.length - 1,",
+    "  unconf: Recommender.unconfirmedLabelJa(),",
+    "  head,",
+    "  empties,",
+    "  overlap,",
+    "  printable: csv,",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 180_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    legend: string;
+    rows: number;
+    unconf: string;
+    head: string[];
+    empties: Record<string, number>;
+    overlap: number;
+    printable: string;
+  };
+  expect(out.rows, "印刷しうる行が読めていない").toBeGreaterThan(0);
+  // (1) 但し書きが説明する語は、紙に刷られる見出しか値に実在しなければならない。
+  const tokens = [...out.legend.matchAll(/「([^」]+)」/g)].map((m) => m[1]);
+  const lead = out.legend.slice(out.legend.indexOf(": ") + 2).split("は、")[0];
+  for (const w of lead.split("・")) if (w.trim()) tokens.push(w.trim());
+  expect(tokens.length, "但し書きが語を説明していない（検査が空振り）").toBeGreaterThan(3);
+  for (const t of tokens) {
+    if (t.length < 2) continue;
+    expect(
+      out.printable,
+      `紙に刷られない語「${t}」を但し書きが説明している（紙だけを読む人には存在しない語の説明）`,
+    ).toContain(t);
+  }
+  // (2) 既定の印刷対象で 2 割以上が空欄になる列は、並べても意味が読めないので説明する。
+  // 「状態」欄の語で説明する場合（「会期未確認」など）も説明と数える。
+  const sparse = out.head.filter((h) => (out.empties[h] || 0) >= out.rows * 0.2);
+  expect(sparse.length, "空欄の列が無く、この検査が空振りしている").toBeGreaterThan(0);
+  const explained = sparse.filter(
+    (h) => out.legend.includes(h) || out.legend.includes(`${h}${out.unconf}`),
+  );
+  for (const h of sparse) {
+    expect(
+      explained.length,
+      `印刷行の 2 割以上で「${h}」が空欄なのに、但し書きがその列を説明していない（説明済み: ${explained.join("・")}）`,
+    ).toBe(sparse.length);
+  }
+  // (3) 「公式表記」と「種別」は中身が別物なので、両方の列名を説明に載せる。
+  expect(out.overlap, "公式表記と種別が同じ値を共有している（前提が変わった）").toBe(0);
+  for (const h of ["公式表記", "種別"]) {
+    expect(out.legend, `列「${h}」が但し書きに出ない`).toContain(h);
+  }
+  // 画面のてびきも、但し書きが名指しで説明する列を同じ名前で案内している（語を書き写さない）。
+  const dtAt = html.indexOf("<dt>印刷</dt>");
+  expect(dtAt, "印刷の項が無い").toBeGreaterThan(-1);
+  const entry = html.slice(dtAt, html.indexOf("</dd>", dtAt)).replace(/<[^>]+>/g, "");
+  // 「開催地未確認」のように未確認の語で説明する列は、列名そのものを説明していないので、
+  // てびきに列名を書くことは要求しない（部分文字列で拾わない）。
+  const named = sparse.filter(
+    (h) => out.legend.includes(h) && !out.legend.includes(`${h}${out.unconf}`),
+  );
+  expect(named.length, "列を名指しで説明する項が無く、この検査が空振りしている").toBeGreaterThan(0);
+  for (const h of named) {
+    expect(entry, `てびきが列「${h}」の空欄を案内していない`).toContain(h);
+  }
+});
