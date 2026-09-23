@@ -3860,6 +3860,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (name === "AbortError") return "PDF 読込をキャンセルしました";
     const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
     const pasteHint = "タイトルと概要を下の欄に貼り付けてください";
+    /* 対応していない文書形式を「PDF が読めない」とは言わない（自分の PDF の文字化けを疑って、
+     * 直せない方向へ探させることになる – 第 150 回）。 */
+    if (message.indexOf("unsupported document") >= 0) {
+      const ext = /format:\s*([a-z0-9]+)/.exec(message);
+      return (
+        (ext ? `.${ext[1]} は` : "その形式のファイルは") +
+        "この欄で読めません（対応しているのは PDF と TXT です）。" +
+        "Word などは TXT に保存し直すか、" +
+        pasteHint
+      );
+    }
     if (
       message.indexOf("pdfjs") >= 0 ||
       message.indexOf("cdnjs") >= 0 ||
@@ -3898,7 +3909,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return "PDF を読み込めませんでした。ファイルを確かめるか、" + pasteHint;
   }
 
+  /* 対応していない文書形式（Word・一太郎・OpenDocument など）。これを PDF として読むと
+   * pdf.js が `Invalid PDF structure.` を落とし、画面は「文字が入っていない PDF や、
+   * パスワード付きは読めません」と言っていた（2026-09-23 実測: `.docx` を選んだ人がこの文を
+   * 受け、自分の PDF の文字化けを疑って直せない方向へ探した）。ピッカーは `accept` だけで
+   * 絞られるわけではなく、「すべてのファイル」に切り替えれば運べるので、拡張子で止める。 */
+  function unsupportedPaperFormatJa(name: unknown): string | null {
+    const text = String(name || "");
+    const m = /\.(docx?|odt|rtf|pages|wps|pptx?|odp|key|epub|zip)$/i.exec(text);
+    if (!m) return null;
+    return `unsupported document format: ${m[1].toLowerCase()}`;
+  }
+
   function readPaperFile(file: File, signal: AbortSignal): Promise<PaperRecord> {
+    const unsupported = unsupportedPaperFormatJa(file.name);
+    if (unsupported) return Promise.reject(new Error(unsupported));
     if (file.size > PDF_MAX_BYTES) return Promise.reject(new Error("file is too large"));
     if (/\.txt$/i.test(file.name)) return file.text().then((text) => textRecord(file.name, text));
     return file
@@ -3941,7 +3966,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     pdfAbortController = new AbortController();
     const signal = pdfAbortController.signal;
     /** @type {Promise<void>} */
-    const load: Promise<void> = files.some((file) => !/\.txt$/i.test(file.name))
+    const load: Promise<void> = files.some(
+      (file) => !/\.txt$/i.test(file.name) && !unsupportedPaperFormatJa(file.name),
+    )
       ? new Promise((resolve, reject) =>
           loadPdfJs((ok) => (ok ? resolve() : reject(new Error("pdfjs unavailable")))),
         )

@@ -12310,3 +12310,58 @@ it("開いていた行の詳細まで共有し、てびきの説明と実際の�
   // 案内にも同じ事実を書く（画面の語を引けるようにする）。
   expect(html, "?row= のことがてびきに無い").toContain("<code>?row=</code>");
 });
+
+it("読めない形式のファイルを PDF のせいにしない（SPEC §7）", () => {
+  /* 論文を選ぶ欄は `accept=".pdf,.txt"` だが、ピッカーは「すべてのファイル」に切り替えられる
+   * ので他の形式も運ばれてくる。従来は拡張子を見ておらず、Word なども PDF として pdf.js に
+   * 渡していた（2026-09-23 実測: `.docx` を選ぶと pdf.js が `Invalid PDF structure.` を落とし、
+   * 画面は「PDF から文字を読み取れませんでした（文字が入っていない PDF や、パスワード付きは
+   * 読めません）」と言った。自分の PDF の文字化けを疑って、直せない方向へ探してしまう）。 */
+  const app = siteRuntime("app.js");
+  const script = [
+    "const PDF_MAX_BYTES = 20 * 1024 * 1024;",
+    "const PDF_MAX_PAGES = 3;",
+    "const unsupportedPaperFormatJa = (" + jsFunction(app, "unsupportedPaperFormatJa") + ");",
+    "const message = (" + jsFunction(app, "pdfFailureMessageJa") + ");",
+    "const names = ['paper.docx', 'ronbun.doc', 'talk.odp', 'TALK.ODP', 'notes.txt', 'paper.pdf', 'paper.PDF', 'summary', 'book.epub'];",
+    "console.log(JSON.stringify({",
+    "  verdicts: names.map((n) => {",
+    "    const u = unsupportedPaperFormatJa(n);",
+    "    return { name: n, msg: u ? message(new Error(u)) : '' };",
+    "  }),",
+    "  // PDF の失敗の言い方は従来どおり残る（増やした分岐が既存の案内を潰していないこと）。",
+    "  invalid: message(new Error('Invalid PDF structure.')),",
+    "  cancelled: message(Object.assign(new Error('x'), { name: 'AbortError' })),",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout) as {
+    verdicts: Array<{ name: string; msg: string }>;
+    invalid: string;
+    cancelled: string;
+  };
+  const byName: { [k: string]: string } = {};
+  for (const v of got.verdicts) byName[v.name] = v.msg;
+  for (const n of ["paper.docx", "ronbun.doc", "talk.odp", "TALK.ODP", "book.epub"]) {
+    expect(byName[n], `${n} が読み取れることになっている（検査が空振り）`).not.toBe("");
+    // 「あなたの PDF が壊れている」とは言わない。拡張子を実名で出して、次を指示する。
+    expect(byName[n]).not.toMatch(/PDF (から|を)(文字)?が?読み取れ/);
+    expect(byName[n]).toContain("対応しているのは PDF と TXT です");
+    expect(byName[n]).toContain("貼り付けてください");
+  }
+  expect(byName["TALK.ODP"], "大文字の拡張子を取りこぼしている").toContain(".odp");
+  for (const n of ["notes.txt", "paper.pdf", "paper.PDF", "summary"]) {
+    expect(byName[n], `${n} を弾いている（従来読めていたものを壊した）`).toBe("");
+  }
+  expect(got.invalid).toContain("PDF から文字を読み取れませんでした");
+  expect(got.cancelled).toBe("PDF 読込をキャンセルしました");
+  // 弾く場所: 大きさの判定より前で、ファイル名を見る（読みに行かない）。
+  expect(app).toContain("unsupportedPaperFormatJa(file.name)");
+  // 欄の注記にも対応形式を書いておく（押す前に分かるようにする）。
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  expect(html, "対応形式の注記が無い").toContain("Word などの文書形式は読めません");
+});
