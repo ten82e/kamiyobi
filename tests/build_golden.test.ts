@@ -12504,14 +12504,19 @@ it("キーボードで選んだ行がまだ描画されていなくても、そ�
     /e\.key === "d" && selectedIndex >= 0[\s\S]{0,600}?ensureRowsDrawn\(selectedIndex\);/.test(app),
     "d が未描画の行に対してフォーカス先を探している",
   ).toBe(true);
-  // 共有リンクの受け取り側: render → 選択 → 描画 → 目印 → 詳細 の順。
+  /* 共有リンクの受け取り側: render → 選択 → 描画 → 目印 → 詳細 の順。
+   * 第 156 回で render は分岐の中に置く形になった（既定に出ていない行は条件を外して
+   * 作り直すため）。守るべきは「render の後に目印を付ける」なので、render の呼び出しが
+   * 何箇所あっても最後に走る物が選択より前であることを見る。 */
   const restore = body("restoreDrawerFromUrl");
   const marks = [
-    restore.search(/[^a-zA-Z]render\(\);/),
+    restore.lastIndexOf("render();"),
     restore.indexOf("selectedIndex = idx;"),
     restore.indexOf("ensureRowsDrawn(idx);"),
     restore.indexOf("updateRowSelection();"),
-    restore.indexOf("openDrawer("),
+    // 表に出さない種別の枝にも `openDrawer` がある（第 156 回）。見るのは末尾の
+    // 「描き終えた後に目印を付けてから詳細を開く」手順なので最後を見る。
+    restore.lastIndexOf("openDrawer("),
   ];
   expect(marks, "受け取り側の復元の手順が揃っていない").toEqual(
     [...marks].map((_, i) => (i === 0 ? marks[0] : marks[i])).map((v) => v),
@@ -12793,4 +12798,122 @@ it("0 件案内の画面側も URL を「語」と呼ばず、読み上げと同
   // 両方に同じ判定が渡っている（片方だけ直す状態を許さない）。
   expect(jsFunction(app, "emptyDeadlineHint")).toContain("filter.urlQuery");
   expect(jsFunction(app, "zeroResultLiveNote")).toContain("filter.urlQuery");
+});
+
+it("既定に出ていない行の共有リンクを踏んだら、条件を外してその行を開く（SPEC §7）", () => {
+  /* 行の詳細のURL（`?row=`）は、その行が既定の一覧に出ていないと黙って何もしなかった
+   * （2026-09-23 実測: `restoreDrawerFromUrl` の本体は `shown` に見当たらなければ `return`
+   * するだけ。ビルド後のデータで数えると、行の共有キー 3,207 件のうち既定の一覧に
+   * 出る物は 475 件だけで、残り 2,732 件 – 過ぎた締切 2,295 件・推定 134 件・表に出さない
+   * 種別 303 件 – へのリンクを踏んでも一覧が出るだけだった）。論文のメモに残った
+   * 去年の締切のリンクを踏む操作は普通にあるので、外せる条件は自分で外して見せる。 */
+  const app = siteRuntime("app.js");
+  const recPath = `file://${join(site, "recommender.js")}`;
+  const dataPath = join(site, "data.json");
+  const script = [
+    `const { default: Rec } = await import(${JSON.stringify(recPath)});`,
+    "const fs = await import('node:fs');",
+    `const data = JSON.parse(fs.readFileSync(${JSON.stringify(dataPath)}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    `const rowDateOnlyState = (${jsFunction(app, "rowDateOnlyState")});`,
+    `const rowIsPast = (${jsFunction(app, "rowIsPast")});`,
+    `const rowShareKeyJa = (${jsFunction(app, "rowShareKeyJa")});`,
+    `const sharedRowState = (${jsFunction(app, "sharedRowState")});`,
+    `const sharedRowNotice = (${jsFunction(app, "sharedRowNotice")});`,
+    `const restoreDrawerFromUrl = (${jsFunction(app, "restoreDrawerFromUrl")});`,
+    "const rows = Rec.candidateRows(data.conferences, now);",
+    // 分類が画面の判定（rowIsPast）と食い違わないこと。
+    "let disagree = 0;",
+    "for (const r of rows) {",
+    "  const want = rowIsPast(r, now) ? 'past' : r.est ? 'est' : 'other';",
+    "  if (sharedRowState(r, now) !== want) disagree += 1;",
+    "}",
+    // 配線の実行。一覧の作り直し（render）は画面と同じ規則 – 推定を含まない・
+    // 表に出す種別だけ・過ぎた締切はチェックがオンのときだけ – で、判定自体は
+    // ビルド済みの `rowIsPast` を使う。
+    "globalThis.Date = { now: () => now };",
+    "let state = { past: false, est: false };",
+    "let shown = [];",
+    "let calls = [];",
+    "let pendingDrawerKey = '';",
+    "let selectedIndex = -1;",
+    "const toForm = () => { calls.push('toForm:' + state.past + '/' + state.est); };",
+    "const render = () => {",
+    "  selectedIndex = -1;",
+    "  shown = rows.filter((r) =>",
+    "    (state.est || !r.est) &&",
+    "    ['abstract', 'paper', 'journal'].includes(r.kind) &&",
+    "    (state.past || !rowIsPast(r, now)));",
+    "};",
+    "const ensureRowsDrawn = () => { calls.push('draw'); };",
+    "const updateRowSelection = () => { calls.push('select:' + selectedIndex); };",
+    "const openDrawer = (r) => { calls.push('open:' + rowShareKeyJa(r)); };",
+    "const live = {};",
+    "const $ = () => ({ set textContent(v) { live.v = v; }, get textContent() { return live.v || ''; } });",
+    "const run = (key, initial) => {",
+    "  state = { past: false, est: false };",
+    "  shown = initial;",
+    "  calls = [];",
+    "  delete live.v;",
+    "  pendingDrawerKey = key;",
+    "  restoreDrawerFromUrl();",
+    "  return { state, calls, live: live.v || '' };",
+    "};",
+    "const first = (pred) => rows.filter(pred)[0];",
+    "const pastRow = first((r) => !r.est && rowIsPast(r, now) && r.kind === 'paper');",
+    "const estRow = first((r) => r.est && r.kind === 'paper');",
+    "const hiddenKindRow = first((r) => !r.est && !rowIsPast(r, now) && r.kind === 'notification');",
+    "const out = {};",
+    "out.disagree = disagree;",
+    "out.past = run(rowShareKeyJa(pastRow), []);",
+    "out.pastKey = rowShareKeyJa(pastRow);",
+    "out.est = run(rowShareKeyJa(estRow), []);",
+    "out.estKey = rowShareKeyJa(estRow);",
+    "out.hiddenKind = run(rowShareKeyJa(hiddenKindRow), []);",
+    "out.hiddenKindKey = rowShareKeyJa(hiddenKindRow);",
+    "out.missing = run('kaminari-2099-not-recorded#x', []);",
+    "console.log(JSON.stringify(out));",
+  ].join("\n");
+  const proc = spawnSync("node", ["--input-type=module", "-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 120_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout) as {
+    disagree: number;
+    past: { state: { past: boolean; est: boolean }; calls: string[]; live: string };
+    pastKey: string;
+    est: { state: { past: boolean; est: boolean }; calls: string[]; live: string };
+    estKey: string;
+    hiddenKind: { state: { past: boolean; est: boolean }; calls: string[]; live: string };
+    hiddenKindKey: string;
+    missing: { state: { past: boolean; est: boolean }; calls: string[]; live: string };
+  };
+  expect(got.disagree, "行の分類が画面の「過ぎた締切」の判定と食い違っている").toBe(0);
+  // 過ぎた締切のリンク: 「過去の締切も表示」を外して（チェック欄にも出して）行を開く。
+  expect(got.past.state.past, "過ぎた締切のリンクで「過去の締切も表示」が入らない").toBe(true);
+  expect(got.past.state.est, "推定まで巻き込んで外している").toBe(false);
+  expect(got.past.calls, "チェック欄を書き直していない（外れたことが画面に出ない）").toContain(
+    "toForm:true/false",
+  );
+  expect(got.past.calls).toContain(`open:${got.pastKey}`);
+  expect(got.past.live, "見つかっているのに「見つかりません」を流している").toBe("");
+  // 推定のリンク: 同じやり方で「推定締切を含める」だけを外す。
+  expect(got.est.state.est).toBe(true);
+  expect(got.est.state.past, "過ぎた締切まで巻き込んで外している").toBe(false);
+  expect(got.est.calls).toContain(`open:${got.estKey}`);
+  // 表に出さない種別（採否通知・カメラレディなど）: 絞り込みの問題ではないので、
+  // 「条件を確認してください」とは言わず、その行を開く。
+  expect(got.hiddenKind.state).toEqual({ past: false, est: false });
+  expect(got.hiddenKind.calls).toContain(`open:${got.hiddenKindKey}`);
+  expect(got.hiddenKind.live).toContain("表に出さない種別");
+  expect(got.hiddenKind.live).not.toContain("絞り込み");
+  // 収録に無いキー: 開かず、その旨をそのまま出す（黙ったままにしない）。
+  expect(got.missing.calls).toEqual([]);
+  expect(got.missing.live).toContain("この収録に見当たりません");
+  // てびきにも同じ振る舞いを書く。
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  expect(html, "共有リンクの振る舞いがてびきに無い").toContain(
+    "その行のために条件を自分から外して",
+  );
 });

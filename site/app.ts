@@ -4157,11 +4157,59 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* 送られてきたリンクで、送った人が開いていた行の詳細を開く。条件も一緒に来るので
    * 通常は同じ行が見つかるが、データの生成日が違うと無いことがある（そのときは
    * 表だけを出す – 存在しない行を開くより、開かないほうがマシな誤解で済む）。 */
+  /* 共有された行のURL（`?row=`）を受け取った人は、その行が既定の一覧に出ていないと
+   * これまで**何も起きなかった**（2026-09-23 実測: 収録の共有キー 3,207 件のうち既定の
+   * 画面に出るのは 475 件で、残り 2,732 件 – 過ぎた締切 2,295 件・推定 134 件・表の既定の
+   * 種別以外 303 件 – へのリンクは黙って一覧だけが出ていた）。論文のメモやスライドに
+   * 残った去年の締切のリンクを踏む操作はふつうにあるので、外せる条件を自分で外して
+   * 見せ、それでも見つからないときだけその旨を言う。 */
+  function sharedRowState(row: AppRow | null, now: number): "past" | "est" | "other" | "missing" {
+    if (!row) return "missing";
+    if (rowIsPast(row, now)) return "past";
+    if (row.est) return "est";
+    return "other";
+  }
+
   function restoreDrawerFromUrl() {
     if (!pendingDrawerKey) return;
-    const idx = shown.findIndex((r) => rowShareKeyJa(r) === pendingDrawerKey);
-    if (idx < 0) return;
-    render();
+    let idx = shown.findIndex((r) => rowShareKeyJa(r) === pendingDrawerKey);
+    if (idx < 0) {
+      const hit = rows.find((r) => rowShareKeyJa(r) === pendingDrawerKey) || null;
+      const why = sharedRowState(hit, Date.now());
+      // 既定で隠している条件（過ぎた締切・推定）は、リンクが指す行のために自分で外す。
+      // 画面のチェックも同じにする – 外したことが見えないと「なぜ過去の行が出ているか」が
+      // 読めない（`toForm` は条件欄を state から書き直す）。
+      if (why === "past") state.past = true;
+      else if (why === "est") state.est = true;
+      else if (why === "missing") {
+        sharedRowNotice(
+          "共有された行はこの収録に見当たりません。データの更新で無くなった可能性があります。",
+        );
+        return;
+      } else {
+        /* 表に出さない種別（採否通知・カメラレディ・反論期間など）の行へのリンクは、
+         * 絞り込みの問題ではないので「条件を確認してください」とは言わない（実測: 既定で
+         * 一覧に出ない 2,732 件のうち 303 件がこの種別で、表に出さない行なのである）。
+         * 行その物を見せて中身を読むことができる – 行の目印は出せない（一覧に無い）ので、
+         * その旨を添える。 */
+        sharedRowNotice(
+          "その行は表に出さない種別（採否通知・カメラレディなど）なので、行を開いて中身を出します。",
+        );
+        openDrawer(hit as unknown as DrawerRow);
+        return;
+      }
+      toForm();
+      render();
+      idx = shown.findIndex((r) => rowShareKeyJa(r) === pendingDrawerKey);
+      if (idx < 0) {
+        sharedRowNotice(
+          "共有された行はこの収録に見当たりません。データの更新で無くなった可能性があります。",
+        );
+        return;
+      }
+    } else {
+      render();
+    }
     /* `render()` は本体の先頭で `selectedIndex = -1` と `drawn = 0` に戻す（2026-09-23 実測:
      * `render` の本体の最初に両方の代入がある）。従来は render の前に選択を置いていたため、
      * 共有リンクを受け取った側の画面で、開いた行に目印が付かなかった。描き終えた後に付け直す。 */
@@ -4169,6 +4217,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     ensureRowsDrawn(idx);
     updateRowSelection();
     openDrawer(shown[idx] as unknown as DrawerRow);
+  }
+
+  /* 起動時のみ使うお知らせ。`render()` が `#countLive` を書き直すので、この関数は
+   * render の後に呼ぶ（0 件案内と同じ 「 ｜ 」 の形で流す – 支援技術では同じ場所から
+   * 読まれる）。 */
+  function sharedRowNotice(text: string) {
+    const live = $("countLive");
+    if (live) live.textContent = ` ｜ ${text}`;
   }
 
   function fillPrintMeta() {
