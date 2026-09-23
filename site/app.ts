@@ -3160,6 +3160,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       }
       html += "</div>";
     }
+    /* 上流が締切を差し替えた行は、前に出ていた日付を行の詳細に出す（第 224 回）。
+     * 文組みは recommender.js の正本を使う – 表示と検索の語が別々にならないようにする。 */
+    const shiftLineJa = Recommender.deadlineShiftLineJa(r.dl);
+    if (shiftLineJa) {
+      html += `<p style="margin-bottom: 8px;">${esc(shiftLineJa)}</p>`;
+    }
     html += verificationSummary(r.dl);
     html += "</div>";
     td.innerHTML = html;

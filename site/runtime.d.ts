@@ -176,6 +176,9 @@ interface SiteRecommenderApi {
   weekdaySearchTerms(value: unknown): string;
   /** 上流の締切名が延長を示しているか（一覧・CSV・検索で同じ判定を使う）。 */
   isExtendedDeadline(dl: unknown): boolean;
+  deadlineShiftsOf(dl: unknown): Array<{ fromJa: string; toJa: string; later: boolean }>;
+  deadlineShiftLineJa(dl: unknown): string;
+  deadlineShiftSearchWords(dl: unknown): string;
   /** 延長を示すチップの語（画面・CSV・検索で同じ語を使う）。 */
   extendedLabelJa(): string;
   placeJa(value: unknown): string;

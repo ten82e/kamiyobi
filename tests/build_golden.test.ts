@@ -8284,8 +8284,8 @@ it("案内文に書いた実測値が、ビルド成果物に対して今も合�
     ["開催地が未確認の行", "110 件", m.unknownPlace],
     ["収録のオンライン可", "117 件", m.onlineCatalog],
     ["2 ラウンドの行", "378 件", m.round2],
-    ["既定画面で延長の目印が付く行", "9 行", m.extendedView],
-    ["収録全体の延長の目印", "33 件", m.extendedAll],
+    ["既定画面で延長の目印が付く行", "12 行", m.extendedView],
+    ["収録全体の延長の目印", "36 件", m.extendedAll],
     ["・付きの分野表記を持つ行", "397 行", m.middleDot],
     ["Cancún の行", "23 行", m.cancun],
     ["プライバシー", "16 件", m.privacy],
@@ -8299,7 +8299,7 @@ it("案内文に書いた実測値が、ビルド成果物に対して今も合�
     expect(measured, `案内文の「${label}」は ${written} と書いてあるが、いま ${measured}`).toBe(
       Number(written.replace(/[^0-9]/g, "")),
     );
-    // 案内文の実際にその数を書いていることも見る（検査だけ先に绿になるのを防ぐ）。
+    // 案内文の実際にその数を書いていることも見る（検査だけ先に緑になるのを防ぐ）。
     expect(template, `案内文に「${label}」の値 ${written} が書かれていない`).toContain(written);
   }
 });
@@ -16454,6 +16454,101 @@ it("一覧の会期欄に出る日付をそのまま打つと、その行に出�
   expect(金曜で当たった, "会期の日曜日が「金曜日」の検索に混ざった").toBe(金曜の締切);
 });
 
+it("締切が差し替わった行は、前に出ていた日付が行の詳細に出て、その日付で引ける（SPEC §7）", async () => {
+  /* kamiyobi は公式ページの差し替えを検知すると前の値を `superseded_deadlines` に持つ。
+   * それなのに画面にも検索にも出ていなかった（2026-08-09 生成ビルドで実測: 収録 863 行の
+   * うち 21 行が前の締刻を持つ。前に見た日付 `2026-09-27` を検索欄に貼ってもその行に
+   * 出会えず、「延長後」の印は締切名に Extended を持つ行だけだった）。前に見た日付と
+   * 違う行を開いた人は、サイトが古いのか会議が動いたのかを判定できない。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const catalog = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+    typeof R.candidateRows
+  >[0];
+  const at = Date.parse("2026-08-09T00:00:00Z");
+  type ShiftRow = { hay: string; dl: unknown; conf?: { key?: string }; ed?: { id?: string } };
+  const rows = R.candidateRows(catalog) as unknown as ShiftRow[];
+  /* 同じ会議の同じ回に締切が複数ある（抄録と論文）ので、鍵は締切まで入れる
+   * – さもないと兄弟の方が「延長後」で当たって、この前の検査が誤って通る。 */
+  const key = (r: ShiftRow) => {
+    const d = r.dl as { kind?: string; utc?: string; label?: string };
+    return `${r.conf?.key}|${r.ed?.id}|${d?.kind}|${d?.utc}|${d?.label}`;
+  };
+  const hitRows = (query: string) => {
+    const matches = R.searchMatcher(R.expandRelativeMonths(query, at), at);
+    return new Set(rows.filter((r) => matches(r.hay) === true).map(key));
+  };
+  const 差し替え = rows
+    .map((r) => ({ row: r, shifts: R.deadlineShiftsOf(r.dl) }))
+    .filter((x) => x.shifts.length > 0);
+  expect(
+    差し替え.length,
+    "差し替え前の締切を持つ行が無く、この検査が空振りしている",
+  ).toBeGreaterThanOrEqual(10);
+  // 1. 前に出ていた日付（ISO と 日付+曜日の形）を貼ると、その行に必ず出会う。
+  const 出会えない: string[] = [];
+  差し替え.forEach(({ row, shifts }) => {
+    shifts.forEach((s) => {
+      for (const q of [s.fromIso, s.fromDayJa]) {
+        if (!hitRows(q).has(key(row))) 出会えない.push(`${key(row)} ← 「${q}」`);
+      }
+    });
+  });
+  expect(
+    出会えない,
+    `前に出ていた日付を貼ってもその行に出会えない: ${出会えない.slice(0, 2).join(" / ")}`,
+  ).toEqual([]);
+  // 2. 行の詳細に並ぶ一行その物（日付の語）も、その行に戻ってこられる。
+  差し替え.forEach(({ row }) => {
+    const line = R.deadlineShiftLineJa(row.dl);
+    expect(line, "行の詳細に出す一行が空になっている").toContain("前に出ていた締切:");
+    const 日付 = line.match(/\d{4}-\d{2}-\d{2}\(.{1}\)/g) || [];
+    expect(日付.length, "一行に日付+曜日の形が並んでいない").toBeGreaterThanOrEqual(2);
+    日付.forEach((token) => {
+      expect(hitRows(token).has(key(row)), `一行の「${token}」でその行が引けない`).toBe(true);
+    });
+  });
+  // 3. 印は延びた行だけ。「前倒し」（前へ動いた）を「延長後」と呼ばない。
+  let 延び = 0;
+  let 前へ = 0;
+  差し替え.forEach(({ row, shifts }) => {
+    const later = shifts.some((s) => s.later);
+    if (later) 延び += 1;
+    if (shifts.some((s) => !s.later)) 前へ += 1;
+    if (later) {
+      expect(R.isExtendedDeadline(row.dl), "延びた行に「延長後」の印が出ていない").toBe(true);
+      expect(hitRows("延長後").has(key(row)), "「延長後」でその行が引けない").toBe(true);
+    } else {
+      // 前へ動いた行を「延長後」とは呼ばない（締切名その物に Extended を書く行は
+      // もともと印が付くので、それだけを除いて見る）。
+      const 締切名 = String((row.dl as { label?: string }).label || "");
+      if (!/extend/i.test(締切名) && 締切名.indexOf("延長") < 0) {
+        expect(R.isExtendedDeadline(row.dl), "前へ動いた行に「延長後」の印を付けた").toBe(false);
+        expect(hitRows("延長後").has(key(row)), "前へ動いた行が「延長後」で引けてしまう").toBe(
+          false,
+        );
+      }
+      expect(hitRows("前倒し").has(key(row)), "前へ動いた行が「前倒し」で引けない").toBe(true);
+    }
+  });
+  expect(延び, "延びた行が無く、印の検査が空振りしている").toBeGreaterThanOrEqual(1);
+  expect(前へ, "前へ動いた行が無く、前倒しの検査が空振りしている").toBeGreaterThanOrEqual(1);
+  // 4. 索引に時刻を入れない。行の詳細には時刻が並ぶが、その語で他の欄の精度を落とさない
+  //    （第 224 回の実測: 一行をそのまま索引に入れると「08:59」の当たり行が 57 → 58 になった）。
+  const 語 = 差し替え.map(({ row }) => R.deadlineShiftSearchWords(row.dl)).filter(Boolean);
+  expect(語.length).toBeGreaterThan(0);
+  語.forEach((words) => {
+    expect(words, "検索の語に時刻が混んでいる（他の欄の精度を落とす）").not.toMatch(
+      /\d{1,2}:\d{2}/,
+    );
+  });
+  // 5. 表示と索引が同じ 1 本を向いている（ドロワーが built の正本を呼んでいる）。
+  const app = siteRuntime("app.js");
+  expect(app, "行の詳細が前に出ていた日付を出していない").toContain(
+    "Recommender.deadlineShiftLineJa(r.dl)",
+  );
+});
+
 it("残り欄に並ぶ「あと 51 日」をそのまま貼ると、その分だけ先の締切に出会う（SPEC §7）", async () => {
   /* 残り欄は 863 行中 785 行で「あと N 日」に並ぶ（2026-08-09 生成ビルドで実測）。なのに
    * その語をそのまま貼ると 0 件だった – 空格で `あと` `51` `日` の 3 語に割れて AND に
@@ -17348,6 +17443,21 @@ it("会期欄のセルをコピーして貼ると、その行に出会う（SPEC
     });
     return set;
   });
+  /* 第 224 回: 行の詳細は「前に出ていた締切: 2026-09-27(日) → 2027-01-08(金)」も載せる。
+   * その日付を索引に入れたので、表示側にも同じ形を数えて入れる（当たり増分は
+   * 「画面に出している行」に限定したまま保つ）。 */
+  const 差し替えの語 = rows.map((r) => {
+    const set = new Set<string>();
+    R.deadlineShiftsOf((r as { dl?: unknown }).dl).forEach((s) => {
+      `${s.fromJa} ${s.toJa}`
+        .toLowerCase()
+        .split(/[\s（）:：/／→]+/u)
+        .forEach((part) => {
+          if (part) set.add(part);
+        });
+    });
+    return set;
+  });
   const 食い違い: string[] = [];
   for (const token of tokens) {
     const 表示 = rowCells.filter(
@@ -17357,7 +17467,9 @@ it("会期欄のセルをコピーして貼ると、その行に出会う（SPEC
             .toLowerCase()
             .split(" ")
             .includes(token.toLowerCase()),
-        ) || 今後の会期の語[i].has(token.toLowerCase()),
+        ) ||
+        今後の会期の語[i].has(token.toLowerCase()) ||
+        差し替えの語[i].has(token.toLowerCase()),
     ).length;
     const hits = hitRows(token).length;
     if (hits !== 表示) 食い違い.push(`「${token}」 hit ${hits} 件 / 表示 ${表示} 行`);

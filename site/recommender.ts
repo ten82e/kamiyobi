@@ -2178,7 +2178,118 @@ const Recommender = (() => {
 
   function isExtendedDeadline(dl: unknown): boolean {
     const label = String((dl as Record<string, unknown> | null)?.label || "");
+    // 差し替え前の日付を持つ行（下を参照）も、日付が後ろへ動いていれば同じ印を出す。
+    // 前倒し（前へ動く）を「延長後」とは呼ばない。
+    if (deadlineShiftsOf(dl).some((s) => s.later)) return true;
     return /extend/i.test(label) || label.indexOf("延長") >= 0;
+  }
+
+  /* 上流が締切を差し替えた行（`superseded_deadlines`）は、前の値を kamiyobi が持っている。
+   * それなのに画面にも検索にも出ていなかった（2026-08-09 生成ビルドで実測・第 224 回:
+   * 収録 863 行のうち 21 行が前の締切を持ち、うち 15 行は日付その物が動いているのに、
+   * 「延長後」の印はラベルに "Extended" を持つ 3 行だけ。前に見た日付と違う行を開いた人は、
+   * 「このサイトは古いのか / 会議が動いたのか」を判定できなかった）。
+   * 前の日付を行の詳細に出し、その日付を貼るとその行に出会えるようにする（第 220 回と同じ
+   * 約束 – ドロワーに並ぶ語は引ける）。延びた行は既存の「延長後」の印も出す。 */
+  const PULL_FORWARD_LABEL_JA = "前倒し";
+  /* 行の詳細に出す一行の先頭語。索引にも同じ語を入れるので、この文をそのまま貼った人も
+   * 日付の語でその行に戻ってこられる。 */
+  const SHIFT_LINE_HEAD_JA = "前に出ていた締切";
+
+  /** 差し替え前後の締切の一つ（表示は `fromJa`/`toJa`、索引は日付の語だけを使う）。 */
+  type DeadlineShiftJa = {
+    fromIso: string;
+    fromDayJa: string;
+    fromJa: string;
+    toIso: string;
+    toDayJa: string;
+    toJa: string;
+    later: boolean;
+  };
+
+  /** 締切の値（差し替え前後のどちら側でも）を、画面に出す暦日 + 時刻に直す。 */
+  function deadlineValuePartsJa(value: unknown, precision: unknown) {
+    const raw = String(value ?? "").trim();
+    if (!raw) return null;
+    const dateOnly = precision === "date-only" || /^\d{4}-\d{2}-\d{2}$/.test(raw);
+    const instant = dateOnly ? jstNoonMs(raw, Number.NaN) : (parsedInstant(raw) ?? Number.NaN);
+    if (!Number.isFinite(instant)) return null;
+    const ymd = calendarDateJa(instant);
+    if (!ymd) return null;
+    const iso = `${ymd[0]}-${String(ymd[1]).padStart(2, "0")}-${String(ymd[2]).padStart(2, "0")}`;
+    const weekday = weekdayJaFromDate(iso);
+    // 時刻を持つ値だけ時刻を添える（一覧の日付欄と同じ JST の暦日・同じ零詰め）。
+    let clock = "";
+    if (!dateOnly) {
+      const jst = new Date(instant + 9 * 3_600_000);
+      clock = ` ${String(jst.getUTCHours()).padStart(2, "0")}:${String(jst.getUTCMinutes()).padStart(2, "0")}`;
+    }
+    return { iso, ja: weekday ? `${iso}(${weekday})` : iso, clock, instant };
+  }
+
+  /** いま出している締切の値（行の基準と同じ欄を見る）。 */
+  function currentDeadlineValuePartsJa(dl: Record<string, unknown>) {
+    const dateOnly = dl.precision === "date-only";
+    return deadlineValuePartsJa(dateOnly ? dl.local_date : (dl.utc ?? dl.at_utc), dl.precision);
+  }
+
+  /** 差し替え前の締切と、いま出している締切の組（同じ値の差し替えは何も返さない）。 */
+  function deadlineShiftsOf(dl: unknown): DeadlineShiftJa[] {
+    const d = dl as Record<string, unknown> | null;
+    const list = d?.superseded_deadlines;
+    if (!Array.isArray(list) || !list.length) return [];
+    const to = currentDeadlineValuePartsJa(d as Record<string, unknown>);
+    if (!to) return [];
+    const out: DeadlineShiftJa[] = [];
+    list.forEach((entry) => {
+      const e = entry as Record<string, unknown>;
+      const from = deadlineValuePartsJa(e.value, e.precision);
+      if (!from || from.instant === to.instant) return;
+      out.push({
+        fromIso: from.iso,
+        fromDayJa: from.ja,
+        fromJa: `${from.ja}${from.clock}`,
+        toIso: to.iso,
+        toDayJa: to.ja,
+        toJa: `${to.ja}${to.clock}`,
+        later: from.instant < to.instant,
+      });
+    });
+    return out;
+  }
+
+  /* 行の詳細に出す一行。無いときは空文字。表示と検索の語はここが 1 本（第 212 回の規則）。
+   * 「延長」「前倒し」は**表示していた日付同士の関係**として書く。上流が締切を動かしたのか、
+   * こちらの以前の記録が弱かったのかはデータから分からないので、会議の動作を推測した文は
+   * 書かない（「締切の推測はしない」という収録契約と同じ）。 */
+  function deadlineShiftLineJa(dl: unknown): string {
+    const shifts = deadlineShiftsOf(dl);
+    if (!shifts.length) return "";
+    return `前に出ていた締切: ${shifts
+      .map((s) => `${s.fromJa} → ${s.toJa}（${s.later ? "延長" : PULL_FORWARD_LABEL_JA}）`)
+      .join(" ／ ")}`;
+  }
+
+  /* 検索の語に入れるのは**日付の語と差し替えを示す語だけ**。行の詳細の文をそのまま入れると、
+   * その文に混じる時刻が 締切欄・公式表記欄の時刻の精度を落とす（2026-08-09 生成ビルドで実測・
+   * 第 224 回: 文ごと入れたら「08:59」の当たり行が 57 → 58 になって、曜日の検査と同じ
+   * 「見ていない語で当たった」形になった）。第 220 回で今後の会期の開催地を索引に
+   *入れなかったのと同じ判断。 */
+  function deadlineShiftSearchWords(dl: unknown): string {
+    const shifts = deadlineShiftsOf(dl);
+    if (!shifts.length) return "";
+    const words: string[] = [SHIFT_LINE_HEAD_JA];
+    shifts.forEach((s) => {
+      // 暦日その物と、画面に並ぶ日付+曜日の形を両方入れる（貼った人がどちらを持っても引ける）。
+      words.push(
+        s.fromIso,
+        s.fromDayJa,
+        s.toIso,
+        s.toDayJa,
+        s.later ? "延長" : PULL_FORWARD_LABEL_JA,
+      );
+    });
+    return words.join(" ");
   }
 
   /* 締切の検証状態が画面に出す語。一覧の印・行の詳細・検索用の語の三箇所が同じ表を
@@ -4805,6 +4916,9 @@ const Recommender = (() => {
           const tEvent = jstNoonMs(String(ed.event_start || ""), Number.NaN);
           const cellWords = deadlineCellSearchWords(dl, t, dateOnly);
           const officialWords = officialDateSearchWords(dl, t, dateOnly);
+          /* 差し替え前の締切（行の詳細に並ぶ語）も引けるようにする（第 224 回）。日付だけ
+           * 入れる – 会期のときと同じで、場所の名前と違い日付の語は他の欄の精度を落とさない。 */
+          const shiftWords = deadlineShiftSearchWords(dl);
           out.push({
             conf,
             ed,
@@ -4823,7 +4937,7 @@ const Recommender = (() => {
             hay: searchNormalize(
               `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedHayJa({ kind: dl.kind || "", ed, rankPairs })} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)} ${weekdaySearchTerms(
                 dateOnly ? dl.local_date : t,
-              )} ${zoneSearchWords(dl, dateOnly)} ${cellWords} ${officialWords} ${eventDaySearchWords(
+              )} ${zoneSearchWords(dl, dateOnly)} ${cellWords} ${officialWords} ${shiftWords} ${eventDaySearchWords(
                 {
                   ed,
                 },
@@ -6063,6 +6177,9 @@ const Recommender = (() => {
     categoryChipLabelJa: categoryChipLabelJa,
     officialZone: officialZone,
     isExtendedDeadline: isExtendedDeadline,
+    deadlineShiftsOf: deadlineShiftsOf,
+    deadlineShiftLineJa: deadlineShiftLineJa,
+    deadlineShiftSearchWords: deadlineShiftSearchWords,
     weekdaySearchTerms: weekdaySearchTerms,
     queryTermCounts: queryTermCounts,
     extendedLabelJa: () => EXTENDED_LABEL_JA,
