@@ -2780,9 +2780,14 @@ export function toUpcomingMd(
           const hours = Math.floor(remainMs / 3_600_000);
           if (hours >= 1) {
             left = `${hours}時間`;
+          } else if (Math.floor(remainMs / 60_000) >= 1) {
+            left = `${Math.floor(remainMs / 60_000)}分`;
           } else {
-            const mins = Math.max(1, Math.floor(remainMs / 60_000));
-            left = `${mins}分`;
+            /* 1 分を切った行を「1分」と書かない。上は 日・時間・分 いずれも切り下げなのに、
+             * ここだけ 1 に切り上げていた（2026-08-09 実測: 生成時刻ちょうどに締まる行が
+             * 「1分」になっていた。同じ行の画面は「まもなく」を出す）。存在しない猶予を
+             * 約束するのがいちばん悪いので、画面と同じ語で「猶予を数えられない」を出す。 */
+            left = "まもなく";
           }
         }
         when =

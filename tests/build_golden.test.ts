@@ -15152,3 +15152,104 @@ it("書き出した CSV の残り日数が、画面の「残り」の数と全�
   expect(out.datedLabeled, "日数を出す行が無く、この検査は空振りしている").toBeGreaterThan(0);
   expect(out.bad, `画面と CSV の残り日数が食い違う行がある\n${out.bad.join("\n")}`).toEqual([]);
 });
+
+it("upcoming.md の「残り」が、実在しない猶予を約束していない（SPEC §7）", () => {
+  /* `upcoming.md` の「残り」欄は、日・時間・分はいずれも切り下げで書く欄である。ところが分の
+   * 欄だけ 1 に切り上げていた（`Math.max(1, …)`）。2026-08-09 生成のビルドで実測: 生成時刻
+   * ちょうどに締まる行が「1分」と書かれていた（同じ行の画面は「まもなく」を出す）。「まだ
+   * 1 分ある」と読んだ人が、締まり切った行を眺めていたことになる。
+   * 検査は 2 方向。
+   * (1) 通常のビルドの全行で、書いた猶予が実在し、次の単位までは届いていないこと。
+   * (2) 分の欄は通常のビルドでは踏まないので、`upcoming.md` に載る最も早い締切の 30 秒前に
+   *     生成時刻を置いたビルドを別途作り、その行を通す（切り上げなら「1分」と書いて落ちる）。
+   * 語の形は検査側で組み立てて比べ、実装の語を検査に書き写さない。 */
+  const rowsOf = (mdPath: string, jsonPath: string) =>
+    [
+      "const { readFileSync } = await import('node:fs');",
+      `const MD = readFileSync('${mdPath}', 'utf8');`,
+      `const DATA = JSON.parse(readFileSync('${jsonPath}', 'utf8'));`,
+      "const now = Date.parse(DATA.generated_at);",
+      "if (!Number.isFinite(now)) throw new Error('生成時刻が読めない');",
+      "const MIN = 60_000, HOUR = 3_600_000, DAY = 86_400_000;",
+      // 「2026-08-09(日) 00:00:00 UTC」の形だけ読む。末尾の「（公式 PT）」などは落として良い。
+      "const INST = /^([0-9]{4})-([0-9]{2})-([0-9]{2})\\(([日月火水木金土])\\) ([0-9]{2}):([0-9]{2}):([0-9]{2}) (UTC|JST|AoE)(?:（[^）]*）)?$/;",
+      // AoE は UTC-12、JST は UTC+9。表示されているInstantに戻す。
+      "function instantOf(text) {",
+      "  const m = text.match(INST);",
+      "  if (!m) return NaN;",
+      "  const base = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]),",
+      "    Number(m[5]), Number(m[6]), Number(m[7]));",
+      "  if (m[8] === 'JST') return base - 9 * HOUR;",
+      "  if (m[8] === 'AoE') return base + 12 * HOUR;",
+      "  return base;",
+      "}",
+      // 「残り」欄の形を (書いた猶予, 単位) に落とす。数えられない形は数えない。
+      "function claimOf(text) {",
+      "  const t = text.trim();",
+      "  if (t === 'まもなく') return { want: 0, unit: MIN };",
+      "  let m = t.match(/^([0-9]+)分$/);",
+      "  if (m) return { want: Number(m[1]) * MIN, unit: MIN };",
+      "  m = t.match(/^([0-9]+)時間$/);",
+      "  if (m) return { want: Number(m[1]) * HOUR, unit: HOUR };",
+      "  m = t.match(/^([0-9]+)日$/);",
+      "  if (m) return { want: Number(m[1]) * DAY, unit: DAY };",
+      "  return null;",
+      "}",
+      "const bad = [], targets = [];",
+      "let parsed = 0, claims = 0, soon = 0;",
+      "for (const line of MD.split('\\n')) {",
+      "  if (!line.startsWith('| ')) continue;",
+      "  const cells = line.slice(2).split(' | ');",
+      "  if (cells.length < 7 || cells[0] === '日付' || /^-+$/.test(cells[0])) continue;",
+      "  const at = instantOf(cells[0].trim());",
+      "  if (!Number.isFinite(at)) continue;",
+      "  parsed++;",
+      "  const left = at - now;",
+      "  if (left > 2 * MIN && left < 170 * DAY) targets.push(String(at));",
+      "  const claim = claimOf(cells[1]);",
+      "  if (!claim) continue;",
+      "  claims++;",
+      "  if (left >= 0 && left < MIN) soon++;",
+      "  // 書き方は切り下げなので、書いた猶予は実在し、次の単位までは届いていないはず。",
+      "  if (left < claim.want || left >= claim.want + claim.unit) {",
+      "    if (bad.length < 5)",
+      "      bad.push('「' + cells[1].trim() + '」の実残り ' + Math.floor(left / MIN) + '分 ' +",
+      "        cells[0].trim() + ' ／ ' + String(cells[2]).slice(0, 26));",
+      "  }",
+      "}",
+      "console.log(JSON.stringify({ bad, parsed, claims, soon, targets }));",
+    ].join("\n");
+  const run = (mdPath: string, jsonPath: string) => {
+    const proc = spawnSync("node", ["-e", vmSafeSource(rowsOf(mdPath, jsonPath))], {
+      encoding: "utf8",
+      timeout: 120_000,
+    });
+    expect(proc.status, proc.stderr).toBe(0);
+    return JSON.parse(proc.stdout) as {
+      bad: string[];
+      parsed: number;
+      claims: number;
+      soon: number;
+      targets: string[];
+    };
+  };
+  const main = run(join(site, "upcoming.md"), join(site, "data.json"));
+  expect(main.parsed, "upcoming.md から時刻を読み取れた行が無い").toBeGreaterThan(100);
+  expect(main.claims, "「残り」の猶予欄を読み取れた行が無い").toBeGreaterThan(100);
+  // 締切の 30 秒前に生成したビルドで、分の欄を実際に通す。
+  expect(main.targets.length, "作り直しの対象にできる締切が無い").toBeGreaterThan(0);
+  const target = Math.min(...main.targets.map((t) => Number(t)));
+  const stamp = new Date(target - 30_000).toISOString().replace(/\.[0-9]{3}Z$/, "Z");
+  const outSub = join(mkdtempSync(join(tmpdir(), "kamiyobi-soon-")), "public");
+  const built = runCli(outSub, { now: stamp, extra: ["--no-embeddings"] });
+  expect(built.status, built.stderr).toBe(0);
+  const sub = run(join(outSub, "upcoming.md"), join(outSub, "data.json"));
+  expect(
+    sub.soon,
+    "締切 30 秒前のビルドで分の欄を通れていない（この検査は空振りになる）",
+  ).toBeGreaterThan(0);
+  expect(
+    [...main.bad, ...sub.bad],
+    "実在しない（または次の単位に届かない）猶予を書いた行がある",
+  ).toEqual([]);
+});
