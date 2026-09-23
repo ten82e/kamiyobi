@@ -14985,3 +14985,65 @@ it("紙に刷られない語を、紙の但し書きが説明していない（S
     expect(entry, `てびきが列「${h}」の空欄を案内していない`).toContain(h);
   }
 });
+
+it("`llms.txt` が、月の相対語を実装と違う月に決めていない（SPEC §7）", () => {
+  /* `llms.txt` は AI に読ませる案内なので、ここに間違った月が書いてあると、画面を
+   * 見ていない人にそのまま伝わる。2026-08-09 生成のビルドで実測: 実装は `来月` を
+   * 2026年9月 に解決する（2026年10月は `再来月`）。ところが `llms.txt` は
+   * `来月 = 2026年10月` と書いていた – 画面のてびきでは第 180 回ごろに直した
+   * 固定の例が、こちらの文に残っていた。画面と同じ「打った語 = 解決した西暦月」の
+   * 形に替え、月の語のずれ分だけを数で書くことにする。
+   * ここでは (1) 文が書くずれ分が実装と一致すること、(2) 固定の月を書いている箇所が
+   * あれば、その月が実装の答えと一致すること、(3) 画面と同じ形の名前が載っていることを見る。 */
+  const rec = join(site, "recommender.js");
+  const script = [
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${rec}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    `const llms = readFileSync(${JSON.stringify(join(site, "llms.txt"))}, 'utf8');`,
+    "const now = Date.parse(DATA.generated_at);",
+    "const words = [['今月', 0], ['来月', 1], ['再来月', 2], ['先月', -1]];",
+    "const DAY = 86400000;",
+    "const jst = new Date(now + 9 * 3600000);",
+    "const base = Date.UTC(jst.getUTCFullYear(), jst.getUTCMonth(), 1);",
+    "const rows = words.map(([w, off]) => {",
+    "  const d = new Date(base + off * 31 * DAY);",
+    "  const y = d.getUTCFullYear();",
+    "  const m = d.getUTCMonth() + 1;",
+    "  const want = y + '年' + m + '月';",
+    "  return { w, off, want, got: Recommender.expandRelativeMonths(w, now) };",
+    "});",
+    "console.log(JSON.stringify({ rows, llms }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 120_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    rows: { w: string; off: number; want: string; got: string }[];
+    llms: string;
+  };
+  expect(out.rows.length, "月の語が読めない").toBe(4);
+  // (1) 文が書くずれ分（+0 / +1 / +2 / -1 ヶ月）が、実装の答えと一致する。
+  for (const r of out.rows) {
+    expect(r.got, `\`${r.w}\` の解決が実装と違う（展開結果: ${r.got}）`).toBe(r.want);
+  }
+  // (2) 固定の月を例に書いている箇所があれば、その月は実装の答えでなければならない。
+  const claims = [...out.llms.matchAll(/(今月|来月|再来月|先月)`?\s*=\s*(\d{4}年\d{1,2}月)/g)];
+  for (const m of claims) {
+    const row = out.rows.find((r) => r.w === m[1]);
+    expect(row, `案内に \`月\` の語があるが読み取れない: ${m[0]}`).toBeDefined();
+    expect(
+      row!.want,
+      `案内が \`${m[0]}\` と書いているが、実装は ${row!.want} と読む（生成日からずれている）`,
+    ).toBe(m[2]);
+  }
+  expect(claims.length, "固定の月の例が復活している（実装とズレる書き方）").toBe(0);
+  // (3) 画面の件数欄と同じ形の名称を使っている（書き写しで別名称にならないように）。
+  expect(out.llms, "件数欄の形の説明が無い").toContain("打った語 = 解決した西暦月");
+  // 四つの語をまとめて説明していること（1 語だけ説明が落ちると、その語だけが画面と違う）。
+  for (const r of out.rows) {
+    expect(out.llms, `案内に ${r.w} の説明が無い`).toContain(`\`${r.w}\``);
+  }
+});
