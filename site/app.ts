@@ -2466,6 +2466,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const upcoming = document.createElement("a");
     upcoming.href = "upcoming.md";
     upcoming.textContent = "upcoming.md";
+    /* md はマークダウンのまま配るので、ブラウザでは表に整形されない（実測: 配信先の
+     * `content-type` は `text/markdown` で、ブラウザはこれを表として描画しない。記号が並んだ
+     * 文章で見えるか、ダウンロードされる）。てびきの項と同じ説明を title に添える
+     * （見出し文を長くして読み上げで同じ語を二度読ませないため）。 */
+    upcoming.title =
+      "マークダウンで書いた表なので、ブラウザでは表に整形されず、記号が並んだ文章として開くか、" +
+      "そのままダウンロードされます（開き方はブラウザで違います）。表が見たいだけならこの画面の" +
+      "一覧が早く、締切が未定で会期だけ決まっている会はこのファイルにしか載りません。";
     box.appendChild(upcoming);
     box.appendChild(document.createTextNode("にも掲載）。"));
     box.hidden = false;

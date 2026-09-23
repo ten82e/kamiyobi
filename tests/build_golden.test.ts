@@ -14074,3 +14074,59 @@ it("会議名は CSV と同じ語が出る（表計算で画面の語が引け�
     Math.floor(out.rowCount / 10),
   );
 });
+
+it("upcoming.md へのリンクは、ブラウザで表に整形されないことを正直に書く（SPEC §7）", () => {
+  /* 締切が未定で会期だけ決まっている会は `upcoming.md` にしか載らず、画面・てびきの両方から
+   * そのリンクを送っている。リンクの説明が「ブラウザでは文章で開きます」と言っていたが、
+   * 実測は違った。配信先の HEAD は `content-type: text/markdown` を返し（2026-08-09 実測:
+   * `https://ten82e.github.io/kamiyobi/upcoming.md`）、ビルドした `upcoming.md` は
+   * 1,117 行が `|` の表組みで、会議名は 1,115 行が `[名前](URL)` のマークダウン記号のまま。
+   * ブラウザは `text/markdown` を表として描画しないので、記号が並んだ文章で見えるか
+   * ダウンロードされる – 「文章で開きます」は噓で、しかも押した人が表を見つけられない。 */
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const links = [...html.matchAll(/<a\b[^>]*href="upcoming\.md"[^>]*>/g)];
+  expect(
+    links.length,
+    "upcoming.md へのリンクが無くなった（案内の実体が変わった）",
+  ).toBeGreaterThan(0);
+  for (const m of links) {
+    const tag = m[0];
+    expect(tag, "リンクに説明が無い").toContain("title=");
+    // 「文章で開きます」という旧い噓だけを書いていないこと。
+    expect(tag).not.toMatch(/文章で開きます/);
+    // 実態（マークダウンの表であること・整形されない／ダウンロードされ得ること）を書くこと。
+    expect(tag, "リンクの説明がマークダウンの表だと伝えていない").toContain("マークダウン");
+    expect(tag, "リンクの説明がダウンロードされ得ると伝えていない").toContain("ダウンロード");
+  }
+
+  // `title` はマウスを載せたときだけ出る。触る端末では読めないので、てびきの本文にも
+  // 同じ実態を書く（案内と実装のずれは画面の外側でも起きる）。
+  const gStart = html.indexOf("<dt>会期のみ・締切未定</dt>");
+  expect(gStart, "てびきの該当項が無い").toBeGreaterThan(-1);
+  const guideNote = html.slice(gStart, html.indexOf("</dd>", gStart));
+  expect(guideNote, "てびきの本文がマークダウンの表だと伝えていない").toContain("マークダウン");
+  expect(guideNote, "てびきの本文がダウンロードされ得ると伝えていない").toContain("ダウンロード");
+  expect(guideNote).not.toMatch(/文章で開きます/);
+
+  // 画面の中のリンク（0 件・会期だけ確定の案内）も同じ説明を持つ。
+  const runtime = siteRuntime();
+  expect(runtime).toContain('upcoming.href = "upcoming.md"');
+  const notice = runtime.slice(
+    runtime.indexOf('upcoming.href = "upcoming.md"'),
+    runtime.indexOf('upcoming.href = "upcoming.md"') + 1400,
+  );
+  expect(notice, "画面の中の upcoming.md リンクが実態を伝えていない").toContain("upcoming.title");
+  expect(notice).toContain("マークダウン");
+  expect(notice).toContain("ダウンロード");
+
+  // 噓の無い説明にしておく根拠を、ビルド成果物自身で確認する（md はマークダウンのまま配られる）。
+  const md = readFileSync(join(site, "upcoming.md"), "utf8");
+  expect(md.startsWith("# "), "upcoming.md がマークダウン文書でない").toBe(true);
+  const tableRows = md.split("\n").filter((l) => l.startsWith("| "));
+  expect(tableRows.length, "upcoming.md に行が見つからない").toBeGreaterThan(10);
+  const bracketLinks = tableRows.filter((l) => /\[[^\]]+\]\(https?:\/\//.test(l));
+  expect(
+    bracketLinks.length,
+    "upcoming.md の会議名がマークダウンの記号で書かれていない（説明の実態が変わった）",
+  ).toBeGreaterThan(0);
+});
