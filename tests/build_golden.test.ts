@@ -10651,6 +10651,7 @@ it("印刷物に、条件・並び順・件数・日時が残り、画面では�
     "      over,",
     "    ),",
     "    kind,",
+    "    (g) => (g === 'N' ? '評価なし' : g),",
     "    cat,",
     "    win || '',",
     "    sort || { key: 'rem', asc: true },",
@@ -10662,6 +10663,8 @@ it("印刷物に、条件・並び順・件数・日時が残り、画面では�
     "const many = f({ q: '研究会', kind: 'paper', cats: ['net', 'hpc'], domestic: true, online: true, past: true, est: true }, '30日以内');",
     // ランクは画面に出る等級そのものを書く（内部の番兵を書かない）。
     "const ranked = f({ rank: 'A*' });",
+    // 「評価なし」を選ぶと紙に「ランク: N」と出ていた（選択欄は日本語に出すと同じ語にする）。
+    "const unrated = f({ rank: 'N' });",
     // 並び順は絞り込みではないが、紙には要る（並べ替えて配ることもある）。
     "const byEvent = f({ q: '研究会' }, '', { key: 'event', asc: true });",
     "const byDateDesc = f({}, '', { key: 'date', asc: false });",
@@ -10669,7 +10672,7 @@ it("印刷物に、条件・並び順・件数・日時が残り、画面では�
     "const byDefault = f({}, '', { key: 'rem', asc: true });",
     // 見出しに見当たらない鍵のときは並び順を書かない（噓を書かない）。
     "const unknownKey = f({}, '', { key: 'nope', asc: true });",
-    "console.log(JSON.stringify({ nothing, blank, many, ranked, byEvent, byDateDesc, byDefault, unknownKey }));",
+    "console.log(JSON.stringify({ nothing, blank, many, ranked, unrated, byEvent, byDateDesc, byDefault, unknownKey }));",
   ].join("\n");
   const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
     encoding: "utf8",
@@ -10688,6 +10691,9 @@ it("印刷物に、条件・並び順・件数・日時が残り、画面では�
   expect(out.many).toContain("オンライン参加可のみ");
   expect(out.many).toContain("過去の締切も表示");
   expect(out.ranked).toContain("ランク: A*");
+  // 「評価なし」は選択欄と同じ語で紙に書く。N はデータ内部の番兵で、紙で意味が読めない。
+  expect(out.unrated, "条件の書き下ろしが評価なしを日本語で出さない").toContain("ランク: 評価なし");
+  expect(out.unrated, "条件の書き下ろしが内部の番兵 N を書いている").not.toMatch(/ランク: N(\D|$)/);
   // 並び順（第 126 回で会期順が増えたので、紙で区別できる必要がある）。
   expect(out.byEvent).toContain("検索語「研究会」");
   expect(out.byEvent).toContain("並び順: 会期 昇順");
@@ -12286,6 +12292,9 @@ it("投稿先を探す画面で印刷すると、紙に出る但し書きが実�
       "let sortKey = 'deadline', sortAsc = true, sortColumnLabel = '日時（JST）';",
       `let shown = ${JSON.stringify(new Array(shownCount).fill(null))};`,
       `let state = { mode: ${JSON.stringify(mode)}, win: '30d', kind: '', cats: [], rank: '', past: false };`,
+      // 条件の書き下ろしに渡すラベル関数（この検査は describeFilters をスタブにするので
+      // 呼ばれないが、名前だけは必要）。語の正本は注入済みの Recommender 側にある。
+      jsFunction(app, "rankFilterLabelJa"),
       jsFunction(app, "fillPrintMeta"),
       "fillPrintMeta();",
       "console.log(JSON.stringify({ out: meta.textContent }));",
@@ -14335,4 +14344,63 @@ it("画面に出る語と CSV の値に計算の失敗が混ざらない（SPEC 
   expect(out.cells, "CSV のマス数が行数と列数の積にならない").toBe(out.rows * out.cols);
   expect(out.probe, "計算の失敗を検出する検査自体が壊れている").toBe(1);
   expect(out.bad, `CSV に計算の失敗が混ざっている: ${out.where.join(" / ")}`).toBe(0);
+});
+
+it("「評価なし」で印刷すると、紙の条件にも同じ語が出る（SPEC §7）", () => {
+  /* ランクの選択欄は、値 `N`（データ内部の番兵）を日本語の「評価なし」で出している –
+   * 実装のコメントも「読み手には意味が伝わらない」と書いていた。ところが印刷物の条件の
+   * 書き下ろしは値をそのまま書いていて、「評価なし」で絞って印刷すると紙に
+   * 「ランク: N」と刷れていた（2026-08-09 実測: ビルドした describeFilters に
+   * rank='N' を渡すと「検索語「HPC」 ／ ランク: N ／ …」）。紙を配った人にだけ意味が
+   * 読めない語なので、選択欄と同じ式（`rankFilterLabelJa`）を使うようにした。 */
+  const app = siteRuntime("app.js");
+  const rec = join(site, "recommender.js");
+  const body = [
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${rec}`)});`,
+    "const RANK_UNRATED = Recommender.rankUnratedLabelJa();",
+    "const meta = { textContent: '' };",
+    "const cards = { children: [] };",
+    "const $ = (id) => (id === 'printMeta' ? meta : id === 'recommendationCards' ? cards : null);",
+    "const valueElement = () => ({ options: [{ text: '30 日以内' }], selectedIndex: 0 });",
+    "const countJa = (n) => String(n);",
+    "const fmtJst = () => '2026-08-09 (日) 09:00 JST';",
+    "function generatedAtLabel(v) { return 'データ生成: ' + v; }",
+    "const KIND_LABEL = { paper: '論文締切' };",
+    "const DATA = { generated_at: '2026-08-09T09:00:00Z' };",
+    "let sortKey = 'date', sortAsc = true;",
+    "const sortColumnLabel = (k) => ({ date: '日時（JST）', rem: '残り', event: '会期' })[k] || '';",
+    "let shown = [null, null];",
+    "let state = { mode: 'deadlines', q: 'HPC', win: '30d', kind: '', rank: 'N', est: false, domestic: false, online: false, past: false, cats: [] };",
+    // 印刷の但し書きは本物の 3 関数を繋いで走らせる（配線を確かめるため）。
+    jsFunction(app, "rankFilterLabelJa"),
+    jsFunction(app, "describeFilters"),
+    jsFunction(app, "fillPrintMeta"),
+    "fillPrintMeta();",
+    // 選択肢のラベルも同じ式を使う（規則を 2 箇所に書かない）。
+    "const labelOf = (g) => Recommender.rankGradeOrderJa().map((x) => (x === g ? (x === 'N' ? RANK_UNRATED : x) : null)).filter(Boolean)[0];",
+    "console.log(JSON.stringify({",
+    "  out: meta.textContent,",
+    "  unrated: RANK_UNRATED,",
+    "  optionLabel: labelOf('N'),",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(body)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as { out: string; unrated: string; optionLabel: string };
+  // 紙に出る語が、選択欄と同じ語であることを正本から確かめる。
+  expect(out.optionLabel, "選択肢のラベルが日本語で無い").toBe(out.unrated);
+  expect(out.out, `紙の条件に選択肢と同じ語が出ていない: ${out.out}`).toContain(
+    `ランク: ${out.unrated}`,
+  );
+  expect(out.out, `紙の条件に内部の番兵が残っている: ${out.out}`).not.toMatch(/ランク: N(\D|$)/);
+
+  // 同じ式を両方で使っていること（書き写しが再び生まれないように）。
+  const uses = app.match(/rankFilterLabelJa/g) || [];
+  expect(
+    uses.length,
+    "条件の書き下ろしか選択肢のどちらかが別の式になっている",
+  ).toBeGreaterThanOrEqual(3);
 });

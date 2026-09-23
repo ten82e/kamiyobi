@@ -511,6 +511,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   // 等級の順は recommender の正本から取る（並び順と同じ順序で選択肢を出す）。
   const RANK_GRADE_OPTIONS = Recommender.rankGradeOrderJa();
   const RANK_UNRATED_JA = Recommender.rankUnratedLabelJa();
+  /* ランクの絞り込み値を選択欄と同じ語にする関数は 1 本だけ持つ。印刷の条件の書き下ろしも
+   * 同じ語を書く – 以前はここでだけ値をそのまま書いていて、「評価なし」を選ぶと紙に
+   * 「ランク: N」と出ていた（2026-08-09 実測。N はデータ内部の番兵で、選択欄の側は
+   * 「読み手には意味が伝わらない」とコメントして日本語に直していた）。 */
+  function rankFilterLabelJa(grade: string): string {
+    // 語は正本（`recommender.js`）から取る。ここに文字列を書くと、選択欄と紙で別々の
+    // 「評価なし」になり得る。
+    return grade === "N" ? Recommender.rankUnratedLabelJa() : grade;
+  }
   /* 「評価なし」の吹き出し。中身は画面の語だけで書く – 折り返し形式の指定（markdown の
    * バッククォート）は `title` で効かず「内部表記では `N`」のように記号がそのまま出ていた
    * （2026-09-23 実測）。同じく開発寄りの「内部表記」という語も画面のどこにも出てこない。
@@ -664,6 +673,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       past: boolean;
     },
     kindLabel: (k: string) => string,
+    rankLabel: (g: string) => string,
     categoryLabel: (c: string) => string,
     windowLabel: string,
     sort: { key: string; asc: boolean },
@@ -673,7 +683,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const query = String(s.q || "").trim();
     if (query) out.push(`検索語「${query}」`);
     if (s.kind) out.push(`種別: ${kindLabel(s.kind)}`);
-    if (s.rank) out.push(`ランク: ${s.rank}`);
+    if (s.rank) out.push(`ランク: ${rankLabel(s.rank)}`);
     if (s.cats.length) out.push(`分野: ${s.cats.map((c) => categoryLabel(c)).join("・")}`);
     if (windowLabel) out.push(`締切まで: ${windowLabel}`);
     if (s.est) out.push("推定締切を含める");
@@ -1378,7 +1388,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   RANK_GRADE_OPTIONS.forEach((r) => {
     const opt = document.createElement("option");
     opt.value = r;
-    opt.textContent = r === "N" ? RANK_UNRATED_JA : r;
+    opt.textContent = rankFilterLabelJa(r);
     opt.title = r === "N" ? RANK_UNRATED_TITLE_JA : RANK_FILTER_NOTE_JA;
     rankSel.appendChild(opt);
   });
@@ -4504,6 +4514,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       `この印刷物: ${describeFilters(
         state,
         (k) => KIND_LABEL[k] || k,
+        rankFilterLabelJa,
         (c) => Recommender.categoryLabelJa(c),
         winLabel,
         { key: sortKey, asc: sortAsc },
