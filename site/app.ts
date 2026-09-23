@@ -2805,14 +2805,56 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   function verificationSummary(dl?: DeadlineRecord) {
-    const verification = dl?.verification;
-    if (!verification) return "";
-    const sourceLabels: Record<string, string> = {
+    /* 行の詳細の「公式確認」に出る語は、収録データの内部表記のまま見せない（2026-08-09 実測:
+     * ビルド後のデータで `source_class` が `unknown` の締切が 236 件あり「確認元: unknown」と
+     * 出ていた。`verifiedFields` は `date・kind・round` のような内部の項目名でそのまま
+     * 出ていた（項目その物が無いときの既定値は「日付・時刻・タイムゾーン」と日本語なので、
+     * 同じ欄の中で日本語と機械の表記が混ざっていた）。知らない語を勝手に翻訳しない –
+     * 中身を推測して書くほうが悪いので、そのまま出す。
+     * （下の語彙表はこの関数の内側にある。検査が関数ごと抜き出して実行できる形に
+     * 保っておくため – 外に出すと抜き出した側で参照が切れる）。 */
+    const VERIFY_SOURCE_LABELS_JA: Record<string, string> = {
       "official-cfp": "公式CFP",
       publisher: "出版社ページ",
       "official-homepage": "公式ホームページ",
       aggregator: "集約サイト",
+      unknown: "不明",
     };
+
+    const VERIFY_FIELD_LABELS_JA: Record<string, string> = {
+      date: "日付",
+      time: "時刻",
+      timezone: "タイムゾーン",
+      kind: "種別",
+      round: "ラウンド",
+      track: "トラック",
+      deadline: "締切",
+    };
+
+    /* `selector_or_field` は公式ページのどこを読んだかを示す機械の判定名
+     * （実測で `deadline-text-window` 3 件・`table-row:deadline` 2 件）。確認範囲では
+     * ないので、読み方を訳せる物だけ訳して出す。 */
+    const VERIFY_SELECTOR_LABELS_JA: Record<string, string> = {
+      "deadline-text-window": "本文中の締切の記述",
+      "table-row:deadline": "公式ページ内の表の締切欄",
+    };
+
+    const verifiedFieldsJa = (list: readonly unknown[]): string =>
+      list.map((item) => VERIFY_FIELD_LABELS_JA[String(item)] || String(item)).join("・");
+
+    const fieldsJa = (
+      verified: readonly unknown[] | null | undefined,
+      selector: unknown,
+    ): string => {
+      if (Array.isArray(verified)) return verifiedFieldsJa(verified);
+      const name = typeof selector === "string" ? selector.trim() : "";
+      if (!name) return "日付・時刻・タイムゾーン";
+      const label = VERIFY_SELECTOR_LABELS_JA[name];
+      return label ? `${label}（公式ページの読み取り箇所）` : `機械の判定名のまま: ${name}`;
+    };
+
+    const verification = dl?.verification;
+    if (!verification) return "";
     const statusLabels: Record<string, string> = {
       verified: "確認済み",
       pending: "再確認待ち",
@@ -2826,9 +2868,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       (item) => item.verifiedFields ?? item.verified_fields,
     );
     const verified = evidence?.verifiedFields ?? evidence?.verified_fields;
-    const fields = Array.isArray(verified)
-      ? verified.join("・")
-      : verification.selector_or_field || "日付・時刻・タイムゾーン";
+    const fields = fieldsJa(
+      Array.isArray(verified) ? verified : null,
+      verification.selector_or_field,
+    );
     const verifiedAt = verification.last_verified_at
       ? new Date(verification.last_verified_at).toLocaleString("ja-JP")
       : "未確認";
@@ -2836,7 +2879,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       '<div class="verification-summary"><b>公式確認</b> ' +
       esc(verifiedAt) +
       "<br><b>確認元</b> " +
-      esc(sourceLabels[verification.source_class || ""] || verification.source_class || "公式") +
+      esc(
+        VERIFY_SOURCE_LABELS_JA[verification.source_class || ""] ||
+          verification.source_class ||
+          "公式",
+      ) +
       "<br><b>確認範囲</b> " +
       esc(fields) +
       "<br><b>状態</b> " +

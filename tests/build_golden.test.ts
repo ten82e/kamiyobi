@@ -3706,7 +3706,9 @@ it("normal deadline drawer includes verification details", () => {
   expect(proc.status, proc.stderr).toBe(0);
   expect(proc.stdout).toContain("公式確認");
   expect(proc.stdout).toContain("公式CFP");
-  expect(proc.stdout).toContain("date・time・timezone");
+  // 項目名は日本語に直して出す（収録データの内部表記 `date・time・timezone` のままを見せない）。
+  expect(proc.stdout).toContain("日付・時刻・タイムゾーン");
+  expect(proc.stdout).not.toContain("date・time・timezone");
   expect(proc.stdout).toContain("確認済み");
   expect(proc.stdout).toContain("次回確認予定");
 });
@@ -13063,4 +13065,75 @@ it("語に付いた疑問符・括弧で検索が 0 件にならない（SPEC §
   expect(got.termNote).toEqual([got.term]);
   // `C++` の語尾の `+` を削ると `c` に化けて別物になる（実測で 0 件 → 745 行）。
   expect(got.plus.cpp, "語尾の + が削られて `c` と同じ検索になっている").not.toBe(got.plus.c);
+});
+
+it("行の詳細の公式確認は内部表記のまま見せない（SPEC §7）", () => {
+  /* 行の詳細の「公式確認」欄は、収録データの値をそのまま出していた（2026-08-09 実測:
+   * ビルド後の data.json で `verification.source_class` が `unknown` の締切 236 件は
+   * 「確認元: unknown」と出ていた。`verifiedFields` は項目名そのもので
+   * `date・kind・round` 15 件、`date` 8 件、`date・kind` 5 件など 33 件。
+   * 項目その物が無い行の既定値は「日付・時刻・タイムゾーン」と日本語なので、
+   * 同じ欄の中で日本語と機械の表記が混ざっていた。 */
+  const app = siteRuntime("app.js");
+  const script = [
+    "const esc = (x) => String(x);",
+    `const verificationSummary = (${jsFunction(app, "verificationSummary")});`,
+    "const fs = await import('node:fs');",
+    `const data = JSON.parse(fs.readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    // ビルド後の収録すべてに対して、画面に出る語を集める。
+    "const src = {}; const fld = {}; let n = 0;",
+    "for (const c of data.conferences)",
+    "  for (const ed of c.editions || [])",
+    "    for (const dl of ed.deadlines || []) {",
+    "      const v = dl.verification; if (!v) continue; n += 1;",
+    "      const html = verificationSummary(dl);",
+    "      const a = (html.match(/確認元<\\/b> ([^<]*)/) || [, '(なし)'])[1];",
+    "      const b = (html.match(/確認範囲<\\/b> ([^<]*)/) || [, '(なし)'])[1];",
+    "      src[a] = (src[a] || 0) + 1;",
+    "      fld[b] = (fld[b] || 0) + 1;",
+    "    }",
+    // 知らない項目名を勝手に翻訳しない約束（合成の入力で見る）。
+    "const mystery = verificationSummary({",
+    "  verification: { status: 'verified', source_class: 'mystery-source' },",
+    "  evidence: [{ verifiedFields: ['date', 'mystery_field'] }],",
+    "});",
+    "const onlySelector = verificationSummary({",
+    "  verification: { status: 'verified', selector_or_field: 'table-row:deadline' },",
+    "  evidence: [],",
+    "});",
+    "console.log(JSON.stringify({ n, src, fld, mystery, onlySelector }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["--input-type=module", "-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 120_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout) as {
+    n: number;
+    src: Record<string, number>;
+    fld: Record<string, number>;
+    mystery: string;
+    onlySelector: string;
+  };
+  expect(got.n, "検査できる確認付きの締切が無かった").toBeGreaterThan(0);
+  // 英文字だけの語（機械の表記）をそのまま出さない。`公式CFP` のように和英混在は許す。
+  const asciiOnly = (value: string) => /^[a-z0-9 ._:/+-]+$/i.test(value);
+  const badSrc = Object.keys(got.src).filter(asciiOnly);
+  expect(badSrc, `確認元に内部表記が残っている: ${badSrc.join(" / ")}`).toEqual([]);
+  const badFld = Object.keys(got.fld).filter(asciiOnly);
+  expect(badFld, `確認範囲に内部表記が残っている: ${badFld.join(" / ")}`).toEqual([]);
+  // `unknown` は「不明」に直す（中身を推測して「記録なし」などとは書かない）。
+  const countOf = (map: Record<string, number>, key: string): number => map[key] ?? 0;
+  expect(countOf(got.src, "unknown"), "unknown がそのまま出ている").toBe(0);
+  expect(countOf(got.src, "不明"), "unknown を「不明」以外の言い方にした").toBeGreaterThan(0);
+  // 収録の実データで確認範囲が日本語化されている。
+  expect(
+    Object.keys(got.fld).filter((k) => k.includes("日付")).length,
+    "確認範囲が日本語化されていない",
+  ).toBeGreaterThan(0);
+  // 知らない語は翻訳せずそのまま残す（無い語を作らない）。
+  expect(got.mystery).toContain("日付・mystery_field");
+  expect(got.mystery).toContain("mystery-source");
+  // 機械の判定名しか無い行は、それが読み取り箇所だと分かる言い方にする。
+  expect(got.onlySelector).toContain("公式ページ内の表の締切欄");
 });
