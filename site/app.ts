@@ -1729,6 +1729,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* 「未確認」（確認できていない）と「該当なし」（そもそも存在しない）は別の話なので、
    * 常時受付の行には後者を出す（SPEC §7）。 */
   const NOT_APPLICABLE_JA = Recommender.notApplicableLabelJa();
+  /* 過去の締切の読み込み状態。件数欄と専用の状態欄は**同じ読み込み**を指すので、名前は
+   * 1 箇所で決める。以前は件数欄が「全履歴を読み込み中…」、状態欄が「過去の締切を読み込んで
+   * います…」で、チェックした直後に 2 つの語が同時に出て、別々の読み込みが始まったように
+   * 読めた（2026-08-09 実測）。状態欄の語には「表示中のカタログ」という画面のどこにも出て
+   *こない語も混ざっていた。短い形は件数欄用だが、名詞は揃える。 */
+  const HISTORY_NOUN_JA = "過去の締切";
+  const HISTORY_LOADING_SHORT_JA = `${HISTORY_NOUN_JA}を読み込み中…`;
+  const HISTORY_ERROR_SHORT_JA = `${HISTORY_NOUN_JA}の読み込みに失敗`;
+  const HISTORY_LOADING_JA = `${HISTORY_NOUN_JA}を読み込んでいます…`;
+  const HISTORY_ERROR_JA = `${HISTORY_NOUN_JA}の読み込みに失敗しました。いま表示している一覧は使えます。`;
+
   const UNCONFIRMED_TITLES_JA = {
     event: " kamiyobi が公式で会期を確認できていません。".trim(),
     place: " kamiyobi が公式で開催地を確認できていません。".trim(),
@@ -3549,12 +3560,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       cntLive += noticeText;
     }
     if (!recMode && state.past && historyStatus === "loading") {
-      cnt += " ｜ 全履歴を読み込み中…";
-      cntLive += " ｜ 全履歴を読み込み中…";
+      cnt += ` ｜ ${HISTORY_LOADING_SHORT_JA}`;
+      cntLive += ` ｜ ${HISTORY_LOADING_SHORT_JA}`;
     }
     if (!recMode && state.past && historyStatus === "error") {
-      cnt += " ｜ 全履歴を読み込めませんでした";
-      cntLive += " ｜ 全履歴を読み込めませんでした";
+      cnt += ` ｜ ${HISTORY_ERROR_SHORT_JA}`;
+      cntLive += ` ｜ ${HISTORY_ERROR_SHORT_JA}`;
     }
     if (paperMode) {
       const _lines = Recommender.parsePaperLines(paperText);
@@ -3648,9 +3659,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     $("historyStatus").hidden = !showHistoryStatus;
     if (showHistoryStatus) {
       $("historyStatusText").textContent =
-        historyStatus === "loading"
-          ? "過去の締切を読み込んでいます…"
-          : "全履歴を読み込めませんでした。表示中のカタログは利用できます。";
+        historyStatus === "loading" ? HISTORY_LOADING_JA : HISTORY_ERROR_JA;
       $("historyRetry").hidden = historyStatus !== "error";
     }
     if (recMode) {

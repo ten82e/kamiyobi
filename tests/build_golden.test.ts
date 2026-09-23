@@ -14471,3 +14471,86 @@ it("相対月の展開を、てびきは固定の日付で約束していない�
   }
   expect(out.note, "件数欄に展開した語が出ない").toContain(out.expectedNote);
 });
+
+it("過去の締切の読み込み状態は、同じ画面上で二つの名前を持たない（SPEC §7）", () => {
+  /* 「過去の締切も表示」にチェックした直後、件数欄は「全履歴を読み込み中…」、状態欄は
+   * 「過去の締切を読み込んでいます…」と出していた（2026-08-09 実測）。同じ 1 回の読み込みを
+   * 指すのに別の語が並び、別々の読み込みが始まったように読める。状態欄の語には
+   * 「表示中のカタログ」という、画面のどこにも出ていない語も混ざっていた。名詞を 1 箇所で
+   * 決め（`HISTORY_NOUN_JA`）、件数欄の短い形も状態欄の長い形もそこから作るようにした。 */
+  const app = siteRuntime("app.js");
+  const html = readFileSync(join(site, "index.html"), "utf8");
+
+  // 定義その物を実行して語を取り出す（画面に出る語を、この検査に写さない）。
+  const block = /(const HISTORY_NOUN_JA = [\s\S]{0,700}?const HISTORY_ERROR_JA = [^;]+;)/.exec(app);
+  expect(block, "読み込み状態の語の定義が見つからない（検査が空振り）").not.toBeNull();
+  const script = [
+    block![1],
+    "console.log(JSON.stringify({ nounJa: HISTORY_NOUN_JA, shortLoad: HISTORY_LOADING_SHORT_JA, shortErr: HISTORY_ERROR_SHORT_JA, load: HISTORY_LOADING_JA, err: HISTORY_ERROR_JA }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const words = JSON.parse(proc.stdout) as {
+    nounJa: string;
+    shortLoad: string;
+    shortErr: string;
+    load: string;
+    err: string;
+  };
+  expect(words.nounJa.length).toBeGreaterThan(0);
+  // 四つの形がすべて同じ名詞で始まる（ここで又分岐しない）。
+  for (const [name, text] of [
+    ["件数欄の読み込み中", words.shortLoad],
+    ["件数欄の失敗", words.shortErr],
+    ["状態欄の読み込み中", words.load],
+    ["状態欄の失敗", words.err],
+  ] as const) {
+    expect(text, `${name} が同じ名詞で始まっていない（別名で読める語になる）`).toContain(
+      words.nounJa,
+    );
+  }
+  // 状態欄は『どうなったか』と『いま使える物』を書く（短い形だけでは追い切れない）。
+  expect(words.err, "状態欄の語が使える範囲を伝えていない").toContain("一覧");
+
+  // 件数欄と状態欄の両方が同じ定義を参照していること。
+  expect(
+    (app.match(/HISTORY_LOADING_SHORT_JA/g) || []).length,
+    "件数欄が短い方を使っていない",
+  ).toBeGreaterThanOrEqual(3);
+  expect(
+    (app.match(/HISTORY_ERROR_SHORT_JA/g) || []).length,
+    "件数欄が短い方を使っていない",
+  ).toBeGreaterThanOrEqual(3);
+  expect(
+    (app.match(/HISTORY_LOADING_JA(?!_)/g) || []).length,
+    "状態欄が長い方を使っていない",
+  ).toBeGreaterThanOrEqual(2);
+  expect(
+    (app.match(/HISTORY_ERROR_JA(?!_)/g) || []).length,
+    "状態欄が長い方を使っていない",
+  ).toBeGreaterThanOrEqual(2);
+
+  // 二つ目の名前（全履歴）は、画面に出る文字列から無くなっている。
+  const literals = app.match(/"[^"\n]*"/g) || [];
+  expect(
+    literals.filter((text) => text.includes("全履歴")),
+    "画面に出る語に別名が残っている",
+  ).toEqual([]);
+
+  // てびきが、画面に出る語そのもので状態を説明している。
+  const dtAt = html.indexOf("<dt>過去の締切も表示</dt>");
+  expect(dtAt, "てびきの項が見つからない").toBeGreaterThan(-1);
+  const entry = html.slice(dtAt, html.indexOf("</dd>", dtAt)).replace(/<[^>]+>/g, "");
+  expect(entry, "てびきが読み込み中の語で説明していない").toContain(
+    words.shortLoad.replace("…", ""),
+  );
+  expect(entry, "てびきが読み込みに失敗したときの話をしていない").toContain("失敗");
+  const retry = /<button id="historyRetry"[^>]*>([^<]+)</.exec(html);
+  expect(retry, "再試行のボタンが見当たらない").not.toBeNull();
+  expect(entry, "てびきが再試行のボタンの名前で書いていない").toContain(String(retry![1]).trim());
+  // 再試行のボタンも同じ名詞を使う（名前が又分岐しないように）。
+  expect(String(retry![1]), "再試行のボタンが別の名詞になっている").toContain(words.nounJa);
+});
