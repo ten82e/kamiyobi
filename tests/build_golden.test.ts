@@ -16860,6 +16860,50 @@ it("主題の日本語で打つ人が、会議名に書かれた英語の語で�
   });
 });
 
+it("会の催し物の日本語で打つ人が、原文の英文字で打った人と同じ行に出会う（SPEC §7）", async () => {
+  /* 第 232 回。2026-08-09 生成ビルドの実測: `ワークショップ` 74 件 / `workshop` 126 件。
+   * 74 件は種別ラベルが日本語で出ていた行で、「The 3rd International Workshop on …」のよう
+   * に会議名へ書く 52 件が抜けていた。`セッション` 0 件 / `session` 3 件、`学生` 0 件 /
+   * `student` 1 件も同じ形で抜けていた（`パネル` は収録 1 件なので入れていない）。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const catalog = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+    typeof R.candidateRows
+  >[0];
+  const at = Date.parse("2026-08-09T00:00:00Z");
+  type Hay = { hay: string };
+  const rows = R.candidateRows(catalog) as unknown as Hay[];
+  expect(rows.length, "行が無く、この検査が空振りしている").toBeGreaterThan(0);
+  // 行固有の id が無いので、並びの中の位置を id にする（比較は同じ `rows` の中だけで行う）。
+  const hitIdx = (query: string) => {
+    const matches = R.searchMatcher(R.expandRelativeMonths(query, at), at);
+    return rows.map((r, i) => (matches(r.hay) === true ? i : -1)).filter((i) => i >= 0);
+  };
+  const 対応: Array<[string, string]> = [
+    ["ワークショップ", "workshop"],
+    ["セッション", "session"],
+    ["学生", "student"],
+  ];
+  let 数えた = 0;
+  対応.forEach(([word, latin]) => {
+    const 原文の行 = hitIdx(latin);
+    if (!原文の行.length) return; // fixture に寄せ先の行が無い語は数えない
+    数えた += 1;
+    expect(hitIdx(word), `「${word}」で打つと原文の ${latin} と書く行に届かない`).toEqual(
+      expect.arrayContaining(原文の行),
+    );
+    expect(
+      R.querySynonymNotes(word).join(" "),
+      `「${word}」は寄せたことが件数欄に出ない（理由なしで英語名の行が並ぶ）`,
+    ).toContain("原文の");
+  });
+  expect(数えた, "fixture に寄せ先の行が 1 件も無く、この検査が空振りしている").toBeGreaterThan(0);
+  // てびきも同じ寄せ方を書いているか（画面の語を文書で言い換えない）。
+  expect(siteHtmlRuntime(), "てびきに催し物の語の寄せを書いていない").toContain(
+    "「ワークショップ」は原文の workshop という語で探しています",
+  );
+});
+
 it("過ぎた締切の印は、根拠があるときだけ「次回予定」と書く（SPEC §7）", async () => {
   /* 「過去の締切も表示」で並ぶ行には以前、一律に `締切済み（次回予定）` の印を付けていた。
    * 収録データで次回が確認できる行は极少数（2026-08-09 生成ビルドで実測: 過去行 77 件のうち
