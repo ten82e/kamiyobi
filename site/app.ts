@@ -1911,6 +1911,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   /** 分野チップの件数（`filter()` が分野以外の条件を通った行について数え直す）。 */
   let catFacetCounts: Record<string, number> = {};
+  /* 掲載先欄に入れた語が、いま並んでいる行の会議に見当たらなかった語（第 200 回）。
+   * `filter()` の中で数え、件数欄で言う（分野の件数 `catFacetCounts` と同じ置き方）。 */
+  let venueLookupMiss: string[] = [];
 
   function categoryCounts(): Record<string, number> {
     return catFacetCounts;
@@ -1964,6 +1967,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 掲載先タグの属するカテゴリ（例: RTSS タグ → systems）。同カテゴリの会議を僅かにブースト
     const autoCats = pLines.length && Rec ? Rec.autoDetectCats(pLines) : [];
     const detectedVenueCats = pLines.length && Rec ? Rec.venueCategories(pLines, rows) : [];
+    // 掲載先に入れた語に当たる会議が今並んでいる行に無ければ、そのことを件数欄で言う。
+    // 「入力の例」が掲載先まで打ち替えるので、例どおりに押すと探している掲載先だけが
+    // 黙って消える（2026-08-09 生成ビルドの実測: 例の 1 件は掲載先を `IEEE RTSS` と指定し、
+    // 検索対象 863 行に RTSS は 0 行。候補は 44 件出るので、画面は動いている）。
+    venueLookupMiss = pLines.length && Rec ? Rec.unmatchedVenues(pLines, rows) : [];
     const venueCats = [...new Set([...(state.cats || []), ...detectedVenueCats, ...autoCats])];
 
     // 論文モードおよび常時受付モード: 未来締切 + 常時受付ジャーナル + 未来締切の無い会議の過去代表行
@@ -3470,12 +3478,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     $("tbody").textContent = "";
     const paperText = valueElement("paperText").value;
     const paperMode = recMode && Boolean(paperText.trim());
+    // 掲載先に入れた語が行に見当たらないときは、候補の数だけ出して黙っていない。
+    // 例を使った人は「掲載先が消えた」と読む（第 200 回）。文は recommender の正本。
+    const venueMissNotice = Recommender.venueLookupNoticeJa(venueLookupMiss);
     let cnt = paperMode
       ? `あなたの論文に合う投稿先 ${countJa(shown.length)} 件${
           shown.length > RECOMMENDATION_PAGE
             ? `（まず上位 ${countJa(RECOMMENDATION_PAGE)} 件を表示）`
             : ""
-        }`
+        }${venueMissNotice ? ` ｜ ${venueMissNotice}` : ""}`
       : recMode
         ? "投稿先を探すには論文情報を入力してください"
         : `${countJa(shown.length)} 件 / 全 ${countJa(rows.length)} 件`;

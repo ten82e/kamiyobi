@@ -4623,6 +4623,54 @@ const Recommender = (() => {
     return Object.keys(out);
   }
 
+  /* 掲載先に入れた語が、いま締切の並んでいる行の会議に見当たらないことを数える。
+   * 「入力の例」は掲載先まで打ち替えてくれる（2026-08-09 生成ビルドの実測で、例の 1 件は
+   * 掲載先を `IEEE RTSS` と指定する）が、その会議の締切が今は出ていないことがある
+   * （同じビルドで実測: 検索対象 863 行に RTSS は 0 行）。候補はタイトルとキーワードから
+   * 別に出るので、画面は動いているのに「例が教えた掲載先だけが黙って消えた」状態になる。
+   * 一致の見方は `venueCategories` と揃える（書き分けると絞り込みと案内で答えが違ってしまう）。 */
+  function unmatchedVenues(lines: readonly PaperRecord[], rows: readonly CandidateRow[]): string[] {
+    const out: string[] = [];
+    lines.forEach((p) => {
+      const text = typeof p.venue === "string" ? p.venue.trim() : "";
+      if (!text) return;
+      const nv = normKey(text);
+      if (nv.length <= 2) return;
+      if (out.indexOf(text) !== -1) return;
+      const matchesName = rows.some((r) => {
+        const c = r.conf || {};
+        return [normKey(c.key), normKey(c.title), normKey(c.full_name)]
+          .filter(Boolean)
+          .some((h) => h.indexOf(nv) !== -1 || nv.indexOf(h) !== -1);
+      });
+      /* 名前で当たらなくても、行の検索文で当たるなら「見当たらない」とは書かない。
+       * ここは出さないことが正で、出すときは誤りがあってはいけない側なので、
+       * 緩く寄せる（2026-08-09 生成ビルドで実測: 掲載先「情報処理学会」は名前の照合でも
+       * 11 行に当たるので不要だったが、和名が略称にしか入っていない行で誤る余地を消す）。 */
+      const matchesHay = matchesName ? false : rowHayMatcher(text, rows);
+      if (!matchesName && !matchesHay) out.push(text);
+    });
+    return out;
+  }
+
+  /* 掲載先に入れた語が行に見当たらなかったことを、人の読む文で返す（空欄のとき空文字）。
+   * 文をここに置くのは、built の成果物から検査できるようにするため（「評価なし」などの
+   * 画面の語をこの文件が持っているのと同じ置き方）。区切りは UI 側が足す。 */
+  /* 掲載先に入れた語で行が引けるか（1 語について 1 回だけ照合式を作る）。 */
+  function rowHayMatcher(venue: string, rows: readonly CandidateRow[]): boolean {
+    const match = searchMatcher(venue);
+    return rows.some((r) => match(r.hay));
+  }
+
+  function venueLookupNoticeJa(venues: readonly string[]): string {
+    if (venues.length === 0) return "";
+    return (
+      `掲載先に入れた${venues.map((v) => `「${v}」`).join("・")}は、` +
+      "いま締切が並んでいる会議に見当たりません（収録していないか、まだ締切が出ていません）。" +
+      "候補はタイトル・キーワードから出しています"
+    );
+  }
+
   function breakdown(
     r: unknown,
     lines: readonly PaperRecord[],
@@ -5567,6 +5615,8 @@ const Recommender = (() => {
     textPaperRecord: textPaperRecord,
     autoDetectCats: autoDetectCats,
     venueCategories: venueCategories,
+    unmatchedVenues: unmatchedVenues,
+    venueLookupNoticeJa: venueLookupNoticeJa,
     scorePapers: scorePapers,
     paperWeights: paperWeights,
     breakdown: breakdown,

@@ -2785,7 +2785,7 @@ const FILTER_RUNTIME_STUBS = [
   "const activeData = { conferences: [] };",
   ...SEARCH_CANON,
   "let searchQuery = '';",
-  "const Recommender = { searchNormalize: searchNormalize, queryTokens: queryTokens, kanaFold: kanaFold, queryTokenGroups: queryTokenGroups, searchMatcher: searchMatcher, matchFoldedGroups: matchFoldedGroups, placeOffersOnline: placeOffersOnline, monthTermsJa: monthTermsJa, expandRelativeMonths: expandRelativeMonths, hayMatches: hayMatches, parsePaperLines: (text) => text ? [{ title: text }] : [], hasJapanese: () => false, contentWordCount: () => 0, autoDetectCats: () => [], venueCategories: () => [], journalRows: () => [], pastRepresentatives: () => [], rankMatches: (pairs, rank) => pairs.includes(rank), venueRecommendations: (rows) => rows.map((row) => ({ row, boosted: false, match: null, availability: null, fit: { score: 10, lexicalScore: 10, label: '', lexicalRank: 0, semanticRank: 0, semanticScore: 0 } })), comparePapers: () => 0 };",
+  "const Recommender = { searchNormalize: searchNormalize, queryTokens: queryTokens, kanaFold: kanaFold, queryTokenGroups: queryTokenGroups, searchMatcher: searchMatcher, matchFoldedGroups: matchFoldedGroups, placeOffersOnline: placeOffersOnline, monthTermsJa: monthTermsJa, expandRelativeMonths: expandRelativeMonths, hayMatches: hayMatches, parsePaperLines: (text) => text ? [{ title: text }] : [], hasJapanese: () => false, contentWordCount: () => 0, autoDetectCats: () => [], venueCategories: () => [], unmatchedVenues: () => [], journalRows: () => [], pastRepresentatives: () => [], rankMatches: (pairs, rank) => pairs.includes(rank), venueRecommendations: (rows) => rows.map((row) => ({ row, boosted: false, match: null, availability: null, fit: { score: 10, lexicalScore: 10, label: '', lexicalRank: 0, semanticRank: 0, semanticScore: 0 } })), comparePapers: () => 0 };",
 ].join("\n");
 
 it("browser date-only state is independent of the viewer timezone", () => {
@@ -15764,4 +15764,85 @@ it("上流の言い方で打った人が、画面の種別の語に出会える�
       `語「${word}」で出た行の種別が「${label}」ではない`,
     ).toBe(label as string);
   }
+});
+
+it("掲載先に入れた語が今の行に無いことを、件数欄が誤らずに言う（SPEC §7）", async () => {
+  /* 「入力の例」は掲載先まで打ち替えてくれるが、その会議の締切が今は出ていないことがあり、
+   * 候補は別に出るため、探している掲載先だけが黙って消えたように見えていた
+   * （2026-08-09 生成ビルドで実測: 例の 1 件は掲載先を `IEEE RTSS` と指定し、検索対象
+   * 863 行に RTSS は 0 行で、候補は 44 件出ていた）。
+   * 言う・言わないの境目を、built の行と built の検索式から求める（語も件数も書き写さない）。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const clock = NOW.getTime();
+  const rows = R.candidateRows(
+    JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+      typeof R.candidateRows
+    >[0],
+  );
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const venues = [...html.matchAll(/data-sample="([^"]+)"/g)]
+    .map((m) => String(m[1].split("|")[2] || "").trim())
+    .filter(Boolean);
+  expect(venues.length, "入力の例から掲載先を拾えない（検査が空振り）").toBeGreaterThanOrEqual(1);
+
+  const bySearch = (venue: string) =>
+    rows.filter((r) => R.searchMatcher(venue, clock)(r.hay ?? "")).length;
+  const lookup = (venue: string) =>
+    R.unmatchedVenues([{ title: "Test title", keywords: "test", venue }], rows);
+
+  for (const venue of venues) {
+    const miss = lookup(venue);
+    if (bySearch(venue) > 0) {
+      expect(miss, `掲載先「${venue}」はその語で行が引けるのに「見当たりません」と出す`).toEqual(
+        [],
+      );
+    } else {
+      expect(miss, `掲載先「${venue}」はどの行にも当たらないのに黙っている`).toEqual([venue]);
+      const notice = R.venueLookupNoticeJa(miss);
+      expect(notice, `おしらせに打ち込んだ掲載先が書かれていない: ${notice}`).toContain(venue);
+      expect(notice, `おしらせが掲載先の話だと書いていない: ${notice}`).toContain("掲載先");
+    }
+  }
+
+  /* 会議名のかたまり（名前の照合が使う文字列）。下の 2 つの検査で使う。 */
+  const names = rows
+    .map((r) => `${r.conf.key || ""} ${r.conf.title || ""} ${r.conf.full_name || ""}`.toLowerCase())
+    .join(" ");
+
+  /* 空欄のときにおしらせを出さないことと、必ず見当たらない語では言うこと。後者は収録に
+   * 左右されない語で見るが、当たらないこと（検索でも名前でも）を先に測ってから使う。 */
+  expect(R.venueLookupNoticeJa([]), "掲載先が空のときにおしらせを出す").toBe("");
+  const absent = "掲載先テスト専門誌";
+  expect(bySearch(absent), `「${absent}」が引けてしまう（検査が空振り）`).toBe(0);
+  expect(names.includes(absent), `「${absent}」が会議名に入ってしまっている`).toBe(false);
+  expect(lookup(absent), "見当たらない掲載先をおしらせしない").toEqual([absent]);
+
+  /* その語で行が引けるときに「見当たりません」と言わないこと（名前の照合だけでは足りない側）。
+   * 行の検索文に出てくる和語のうち、どの会議名にも入っていない物から引く。
+   * 当たった語が必ずしも掲載先の名前ではなくても、照合の経路は同じなので有効に検査になる。 */
+  const candidates = [
+    ...new Set(
+      rows.flatMap((r) =>
+        String(r.hay ?? "")
+          .split(/[ 　,;|]+/)
+          .filter((t) => /[぀-ヿ]{4,}/.test(t)),
+      ),
+    ),
+  ];
+  const hayOnly = candidates.find((word) => !names.includes(word) && bySearch(word) > 0);
+  expect(hayOnly, "検索文にだけ入る和語が見つからない（検査が空振り）").toBeTruthy();
+  expect(
+    lookup(String(hayOnly)),
+    `その語で行が引けるのに「${hayOnly}」を「見当たりません」と出した`,
+  ).toEqual([]);
+});
+
+it("掲載先のおしらせは画面の組み立てに繋がっている（SPEC §7）", () => {
+  /* 判定を recommender に移したとき、UI 側から外れて黙って消える経路を塞ぐ。 */
+  const app = readFileSync(join(site, "app.js"), "utf8");
+  expect(app, "built の app.js が行に見当たらない掲載先を数えていない").toContain(
+    "unmatchedVenues(",
+  );
+  expect(app, "built の app.js おしらせを件数欄に載せていない").toContain("venueLookupNoticeJa(");
 });
