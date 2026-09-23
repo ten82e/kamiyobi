@@ -453,3 +453,67 @@ it("画面自身の語（使い方・並び替え・出典・カテゴリなど�
   expect(Recommender.uiWordNoteJa("セキュリティ")).toBe("");
   expect(Recommender.uiWordNoteJa("")).toBe("");
 });
+
+it("参加形式の「対面」側を打った人に、収録していないことを正直に言う", () => {
+  /* 2026-08-09 生成ビルドの実測: `対面` `対面開催` `オフライン` `オンサイト` `現地` `現地開催`
+   * `リアル` `リアル開催` はいずれも 0 行で、案内も読み上げも空だった。オンライン側
+   * （`ハイブリッド` `リモート` `遠隔`）は『オンライン参加可』に寄せて行が出るので、
+   * 対面側だけ行き先が無い。 */
+  const hays = rows().map((row) => String(row.hay));
+  /* 噓を書かない根拠: ビルド後の行に「対面」の表記が 1 つも無いことを実データで見る。
+   * 収録するようになればこの検査が落ちて、案内の文を見直させる。 */
+  expect(
+    hays.filter((hay) => hay.includes("対面")).length,
+    "行に『対面』が出るようになった（案内の文直しが要る）",
+  ).toBe(0);
+  let checked = 0;
+  for (const word of [
+    "対面",
+    "対面開催",
+    "オフライン",
+    "オンサイト",
+    "現地",
+    "現地開催",
+    "リアル",
+    "リアル開催",
+  ]) {
+    const hits = hays.filter((hay) => Recommender.searchMatcher(word)(hay)).length;
+    expect(hits, `「${word}」は当たりが出るようになった（前提が変わった）`).toBe(0);
+    const note = Recommender.uiWordNoteJa(word);
+    expect(note, `「${word}」の案内が出ていない`).toContain("オンライン参加可");
+    expect(note, "収録していないことを言っていない").toContain("収録していません");
+    const live = Recommender.uiWordLiveNoteJa(word);
+    expect(live, `「${word}」の読み上げが出ていない`).toContain("オンライン参加可");
+    expect(
+      ` ｜ ${live}。下に外せる条件も書いてあります`.length,
+      `「${word}」の読み上げが長い`,
+    ).toBeLessThanOrEqual(60);
+    checked += 1;
+  }
+  expect(checked, "案内を検査した語が 0 件（検査が空洞）").toBe(8);
+  /* `仮想` は寄せない – 「仮想マシン」等の会議名に当たって行をよけいに出す（第 246 回の
+   * `virtual` と同じ理由）。案内も出さない（0 行のままなので場所を言えない）。 */
+  expect(Recommender.uiWordNoteJa("仮想")).toBe("");
+});
+
+it("「国内開催」で打った人を国内研究会・国内シンポジウムの行に出会わせる", () => {
+  /* 実測: HEAD のビルドでは `国内開催` `国内会議` `日本開催` `国内向け` が 0 行で、
+   * `国内` は 46 行に当たっていた（行は「国内研究会」等の表記を持つ）。 */
+  const hays = rows().map((row) => String(row.hay));
+  const hits = (query: string) => {
+    const matches = Recommender.searchMatcher(query);
+    return hays.filter((hay) => matches(String(hay))).length;
+  };
+  const domestic = hits("国内");
+  expect(domestic, "国内の行が 0 件（検査の前提が変わった）").toBeGreaterThan(20);
+  for (const word of ["国内開催", "国内会議", "日本開催", "国内向け"]) {
+    expect(hits(word), `「${word}」で国内の行に出会えない`).toBe(domestic);
+    const note = String(Recommender.querySynonymNotes(word));
+    expect(note, `「${word}」の寄せ先を件数欄が言っていない`).toContain("国内研究会");
+  }
+  /* `米国開催` は寄せていない（第 249 回の実測: `米国` は 787 行に当たるが、行のなかに
+   * 「米国」の表記は 1 つも無く、国名の別名展開が効いて初めて当たる語だった。ここに
+   * `["米国"]` と書くと 0 行のままで噓の案内になる）。 */
+  expect(Recommender.querySynonymNotes("米国開催")).toEqual([]);
+  expect(Recommender.querySynonymNotes("海外開催")).toEqual([]);
+});

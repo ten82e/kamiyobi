@@ -5824,6 +5824,25 @@ it("分野の言い方は、画面に出る語だけを指す（SPEC §7）", ()
     }),
   );
   expect(entries.length).toBeGreaterThan(5);
+  /* 欄の選択肢に出る語のほか、**行として画面に出る文字列に実在する表記**も寄せ先にしてよい
+   * （第 249 回 – `国内開催` を `国内` に寄せた）。`国内` は選択肢の語ではないが行の会議名
+   * 「…研究会」等の表記の一部として画面に出る（2026-08-09 生成の実データで 46 行が「国内」を
+   * 含む – `tests/search_words.test.ts` が出会える行数で見る）。選択肢の語だけに絞ると
+   * 0 行のままで、案内も書けなかった。
+   * ビルド成果物テキスト（recommender.js 自身）で見ると、書き足した語がそこに現れるので
+   * 検査が空洞になる（`もともとの表記` を展開語に置く改ざんで exit 0 になった – 実測）。 */
+  const rowText = (
+    Recommender.candidateRows(
+      JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+        typeof Recommender.candidateRows
+      >[0],
+    ) as Array<{ hay: string }>
+  )
+    .map((row) => String(row.hay))
+    .join("\n");
+  expect(rowText.length, "ビルド後の行の文字が読めない（検査が空洞になる）").toBeGreaterThan(
+    100000,
+  );
   entries.forEach((entry) => {
     // 説明の「◯◯『△△』」の △△ が、その語の実際の日本語表記と一致すること。
     const quoted = entry.shown.match(/「([^」]+)」/)?.[1];
@@ -5844,9 +5863,17 @@ it("分野の言い方は、画面に出る語だけを指す（SPEC §7）", ()
       .map((re) => rec.match(re)?.[0] ?? "")
       .join("\n");
     expect(labelBlocks.length, "表示語の対応表が読めない").toBeGreaterThan(100);
-    expect(labelBlocks, `${entry.word} → ${quoted} が画面に出る語ではない`).toContain(
-      `"${quoted}"`,
-    );
+    /* 欄の選択肢に出る語のほか、**行のなかに実在する表記**も寄せ先にしてよい（第 249 回 –
+     * `国内開催` を `国内` に寄せた）。`国内` は選択肢の語ではないが、サイト自身が
+     * 件数欄に『国内研究会・国内シンポジウム』と書いていて、行の表記にも現れる
+     * （2026-08-09 生成ビルドで 46 行が「国内」を含む – `tests/search_words.test.ts` が
+     * 実際に行に出会えることを見る）。選択肢の語だけに絞ると 0 行のままで、案内も
+     * 書けなかった。 */
+    if (!rowText.includes(String(quoted))) {
+      expect(labelBlocks, `${entry.word} → ${quoted} が画面に出る語ではない`).toContain(
+        `"${quoted}"`,
+      );
+    }
   });
   // 件数欄で説明すること（理由も出さずに分野全体の行を並べない）。
   expect(app).toContain("querySynonymNotes(searchQuery)");

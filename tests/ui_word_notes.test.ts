@@ -66,6 +66,10 @@ it("画面自身の語を打った人に、0 件の案内が行き先を言う�
   /* 出典の語は、出典を出している場所を言う。 */
   const uiSource = hint({ ...clear, query: "出典" });
   expect(uiSource, "データ源の場所を言っていない").toContain("データ源");
+  /* 参加形式の「対面」側（行に表記が 1 つも無い語）は、収録していないことを言う。 */
+  const uiOffline = hint({ ...clear, query: "対面" });
+  expect(uiOffline, "参加形式の印の言い方を言っていない").toContain("オンライン参加可");
+  expect(uiOffline, "収録していないことを言っていない").toContain("収録していません");
   /* 欄の名前の言い方（この画面で説明文に書かない語）は、打たれた語を書き返さない。 */
   const uiAlias = hint({ ...clear, query: "カテゴリ" });
   expect(uiAlias, "欄の名前への打ち直し方を言っていない").toContain("上の『分野』");
@@ -79,8 +83,22 @@ it("画面自身の語を打った人に、読み上げでも行き先を言う�
   const uiWord = note({ ...empty, query: "使い方", termCounts: [{ term: "使い方", count: 0 }] });
   expect(uiWord, "てびきの場所をよみ上げていない").toContain("見方のてびき");
   expect(uiWord, "収録に無い語と言ったままになっている").not.toContain("収録データにありません");
+  /* 「対面」の読み上げも同じことを言う（行に出る語ではないので、絞れない理由を言う –
+   * 実測: HEAD のビルドでは読み上げが空だった）。 */
+  const offline = note({ ...empty, query: "対面", termCounts: [{ term: "対面", count: 0 }] });
+  expect(offline, "参加形式の印の言い方を読み上げていない").toContain("オンライン参加可");
   /* 読み上げは長い文を流さない（同じ画面の別の検査が 60 字を見ているので、同じ上限で切る）。 */
-  for (const word of ["使い方", "並び替え", "絞り込み", "フィルタ", "出典", "カテゴリ"]) {
+  for (const word of [
+    "使い方",
+    "並び替え",
+    "絞り込み",
+    "フィルタ",
+    "出典",
+    "カテゴリ",
+    "対面",
+    "対面開催",
+    "オンサイト",
+  ]) {
     const live = note({ ...empty, query: word, termCounts: [{ term: word, count: 0 }] });
     expect(live.length, `「${word}」の読み上げが長い: ${live}`).toBeLessThanOrEqual(60);
   }
