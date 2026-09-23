@@ -15,6 +15,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { env } from "@huggingface/transformers";
 import { load as loadYaml } from "js-yaml";
 import { beforeAll, describe, expect, it } from "vitest";
@@ -7396,7 +7397,7 @@ it("「評価でしぼる」でのぞいた件数を件数欄に出す（SPEC §
     "  row('n1', ['ccf:N']), row('n2', ['ccf:N', 'core:A*']),",
     "];",
     FILTER_RUNTIME_STUBS,
-    // 等级判定だけ正本に差し替える（スタブの `includes` は部分一致で誤マッチする）。
+    // 等級の判定だけ正本に差し替える（スタブの `includes` は部分一致で誤マッチする）。
     `Recommender.rankMatches = ${rankMatchesSrc};`,
     "const run = (rank) => {",
     // `hiddenCounts` はスタブ側の `let` 束縛そのものを戻す（globalThis に書いても
@@ -15463,5 +15464,84 @@ it("llms.txt の出力一覧が、ビルドが置いたファイルを一つも�
   }
   for (const name of readdirSync(site)) {
     expect(named.includes(name), `ビルドが置いた ${name} が出力一覧に無い`).toBe(true);
+  }
+});
+
+it("画面が「ランク」と呼ぶ語で、等級の行に実際に出会える（SPEC §7）", async () => {
+  /* 列の見出し・選択欄・早め絞り込みのボタンは等級を「ランク」と呼ぶ（ボタンは `A*ランク`）。
+   * 2026-08-09 生成のビルドで実測: ボタン名どおり `A*ランク` と打つと 0 件、半角スペースを挟んだ
+   * `A* ランク` も 0 件、語順を逆にした `ランク A*` も 0 件で、`A*` 単体の 156 件に出会えなかった。
+   * 「表に出す語で検索できる」を検索の実装の不変条件にしているので、画面の語の形でも引けるように
+   * 直す。検査は built の recommender.js を built の catalog.json に走らせて数える。等級の並び、
+   * 画面のボタン名、正解の集合のすべてを実行時と画面から取る（等級を書き写さない）。
+   * 正解は「その等級を画面のランク表記で表示している行」とし、同じ関数の出力から組み立てる。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const clock = NOW.getTime();
+  const rows = R.candidateRows(
+    JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+      typeof R.candidateRows
+    >[0],
+  );
+  const rowId = (r: (typeof rows)[number]) =>
+    `${String(r.conf.title ?? "")}|${String(r.ed.year ?? "")}|${String(r.dl?.utc ?? "")}`;
+  const hits = (query: string) =>
+    new Set(rows.filter((r) => R.searchMatcher(query, clock)(r.hay ?? "")).map(rowId));
+  /* 正解の集合は、検索の実装ではなく**行が持つ等級の組**から作る。`N`（一覧に載っているが
+   * 評価が付いていない）は画面が「評価なし」と出す語なので、等級としては数えない。 */
+  const unrated = R.rankUnratedLabelJa();
+  const showingGrade = (grade: string) =>
+    new Set(
+      rows
+        .filter((r) =>
+          (r.rankPairs ?? []).some(
+            (pair: string) =>
+              pair.slice(pair.indexOf(":") + 1).toUpperCase() === grade.toUpperCase() &&
+              !R.rankPairLabelJa(pair).includes(unrated),
+          ),
+        )
+        .map(rowId),
+    );
+  const same = (a: Set<string>, b: Set<string>) =>
+    a.size === b.size && [...a].every((x) => b.has(x));
+
+  /* (1) 全等級で、画面の書き方「Xランク」はその等級を表示している行だけを出す。 */
+  let tested = 0;
+  for (const grade of R.rankGradeOrderJa()) {
+    const exact = showingGrade(grade);
+    expect(
+      same(hits(`${grade}ランク`), exact),
+      `語「${grade}ランク」が表示している行と食い違う`,
+    ).toBe(true);
+    if (exact.size > 0) tested += 1;
+  }
+  // データ側の空振り確認: 等級の表示を持つ行が1行も無いビルドなら、上の照合は全部空になる。
+  expect(
+    rows.filter((r) => (r.rankPairs ?? []).length > 0).length,
+    "ランク表記を持つ行がテストのビルドに無い",
+  ).toBeGreaterThan(0);
+  expect(tested, "等級の表示を持つ行があるのに、どの等級でも一致しなかった").toBeGreaterThan(0);
+
+  /* (2) 画面に出ている早め絞り込みのボタン名を、そのまま検索に打てる。 */
+  const labels = [...html.matchAll(/class="preset-btn"[^>]*>([A-C]\*?)ランク<\/button>/g)].map(
+    (m) => m[1],
+  );
+  expect(labels.length, "ランクの早め絞り込みが画面に見当たらない").toBeGreaterThan(0);
+  // テストのビルドは固定の収録データなので、この等級の行が 0 件のことがある。空の集合同士の
+  // 一致を許すと空振りするので、行を持つ等級が1つ以上あることを上で確かめておく。
+  for (const grade of labels) {
+    const base = hits(grade);
+    // ボタン名どおり、語順を変えても、語を離して打っても、同じ行に出会う。
+    for (const variant of [
+      `${grade}ランク`,
+      `${grade} ランク`,
+      `ランク ${grade}`,
+      `${grade}評価`,
+    ]) {
+      expect(same(hits(variant), base), `語「${variant}」が「${grade}」と同じ行を出さない`).toBe(
+        true,
+      );
+    }
   }
 });

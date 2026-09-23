@@ -4101,6 +4101,7 @@ const Recommender = (() => {
   /** 表に出すランクの語を検索語として受け付ける（「表示している語で検索できる」）。 */
   function rankSearchTerms(rankPairs: readonly string[] | null | undefined): string {
     const parts: string[] = [];
+    let hasGrade = false;
     (rankPairs || []).forEach((pair) => {
       const text = String(pair || "");
       const at = text.indexOf(":");
@@ -4115,7 +4116,18 @@ const Recommender = (() => {
       }
       parts.push(grade.toLowerCase());
       parts.push(`${scale} ${grade.toLowerCase()}`);
+      /* 画面はこの等級を「ランク」とも呼ぶ（列の見出し・選択欄のラベル・早め絞り込みのボタンが
+       * `A*ランク`。2026-08-09 生成のビルドで実測: ボタンの語どおり `A*ランク` と打つと 0 件、
+       * 半角スペースを挟んだ `A* ランク` も 0 件で、`A*` 単体の 156 件に出会えなかった）。
+       * 「表示している語で検索できる」をこの関数の不変条件にしているので、画面が書く語の形も
+       * ここに寄せる（`評価` はてびき・件数欄・印刷の注記で同じ等級に使う語）。 */
+      parts.push(`${grade.toLowerCase()}ランク`, `${grade.toLowerCase()}評価`);
+      hasGrade = true;
     });
+    /* 等級を持つ行に限って、単独の「ランク」「評価」も通す。半角スペースを挟んで
+     * `A* ランク` と打つ人（`ランク A*` の語順Reverse）が、同じ行に出会えるようにするため。
+     * 評価の無い行まで広げると、「ランク」で全件が返って語の意味が薄くなる。 */
+    if (hasGrade) parts.push("ランク", "評価");
     return parts.join(" ");
   }
 
