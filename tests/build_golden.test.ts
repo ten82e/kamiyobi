@@ -6167,6 +6167,121 @@ it("共有URLに論文の本文を載せず、そのことを画面で伝える�
   expect(panel).toContain("共有用URLには論文のタイトル・概要を含めません");
 });
 
+it("論文の入力は同じタブなら刷新を耐え、リンクには乗らない（SPEC §7・§10）", () => {
+  /* 2026-09-23 実測: 論文の入力（タイトル・概要・キーワード・参考論文）は DOM の中にしか無く、
+   * `sessionStorage` / `localStorage` への書き込みは源码に 0 件だった。概要を数百文字貼って
+   * 画面を刷新すると貼り直しになる – 「投稿先を探す」で失う量が最も大きい画面なので、
+   * 同じタブのセッション中だけ憶える形にした（上の検査の通り、URL には載せない）。 */
+  const app = siteRuntime("app.js");
+  const src = [
+    app.match(/const PAPER_DRAFT_KEY = "[^"]*";/)?.[0] ?? "",
+    jsFunction(app, "paperInputHasText"),
+    jsFunction(app, "readPaperInput"),
+    jsFunction(app, "writePaperInput"),
+    jsFunction(app, "savePaperDraft"),
+    jsFunction(app, "loadPaperDraft"),
+    jsFunction(app, "restorePaperDraft"),
+  ];
+  expect(src[0], "下書きの key 定義が見つからない").toBeTruthy();
+  const script = [
+    "(async () => {",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    "const els = {};",
+    "for (const id of ['paperPrimaryTitle', 'paperPrimaryAbstract', 'paperPrimaryKeywords', 'paperReferences']) els[id] = { value: '' };",
+    "function $(id) { return els[id] || null; }",
+    "function valueElement(id) { return els[id]; }",
+    "function inputElement(id) { return els[id]; }",
+    "let paperPrimaryVenue = '';",
+    "const store = new Map();",
+    "const throwing = Boolean(Number(process.env.DRAFT_THROW));",
+    "const window = {",
+    "  sessionStorage: {",
+    "    getItem: (k) => { if (throwing) throw new Error('denied'); return store.has(k) ? store.get(k) : null; },",
+    "    setItem: (k, v) => { if (throwing) throw new Error('denied'); store.set(k, String(v)); },",
+    "    removeItem: (k) => { if (throwing) throw new Error('denied'); store.delete(k); },",
+    "  },",
+    "};",
+    src.join("\n"),
+    "const setAll = (v) => {",
+    "  els.paperPrimaryTitle.value = v.title || '';",
+    "  els.paperPrimaryAbstract.value = v.abstract || '';",
+    "  els.paperPrimaryKeywords.value = v.keywords || '';",
+    "  els.paperReferences.value = v.references || '';",
+    "  paperPrimaryVenue = v.venue || '';",
+    "};",
+    "const out = {};",
+    // 1) 打ち込んだ内容は key を分けて憶える
+    "setAll({ title: '低遅延ミドルウェア', abstract: '概要です'.repeat(40), keywords: '分散, ミドルウェア', references: 'Ref A | x | ICDCS', venue: 'ICDCS' });",
+    "savePaperDraft(readPaperInput());",
+    "const saved = JSON.parse(store.get(PAPER_DRAFT_KEY) || 'null');",
+    "out.saved = saved && { title: saved.title, abstract: saved.abstract.slice(0, 2), keywords: saved.keywords, references: saved.references, venue: saved.venue };",
+    // 2) 全部消したら記憶も消える（「論文の入力を消す」で消えた物が戻ってくる形を作らない）
+    "setAll({});",
+    "savePaperDraft(readPaperInput());",
+    "out.消したあと = store.has(PAPER_DRAFT_KEY);",
+    // 3) 欄が空なら戻す（掲載先の指定も戻る）
+    "setAll({ title: '低遅延ミドルウェア', abstract: 'あ'.repeat(80), venue: 'ICDCS' });",
+    "savePaperDraft(readPaperInput());",
+    "setAll({});",
+    "out.戻った = restorePaperDraft();",
+    "out.戻った内容 = { title: els.paperPrimaryTitle.value, abstract: els.paperPrimaryAbstract.value.length, venue: paperPrimaryVenue };",
+    // 4) 打ち込み中の物があれば上書きしない
+    "setAll({ title: '打ち込み中' });",
+    "out.上書きした = restorePaperDraft();",
+    "out.打ち込み中が残った = els.paperPrimaryTitle.value;",
+    // 5) 空の下書きは戻さない
+    "store.set(PAPER_DRAFT_KEY, JSON.stringify({ title: '   ', abstract: '' }));",
+    "setAll({});",
+    "out.空を戻した = restorePaperDraft();",
+    // 6) 壊れた JSON・記憶できない環境でも落ちない
+    "store.set(PAPER_DRAFT_KEY, '{');",
+    "setAll({});",
+    "out.壊れたとき = restorePaperDraft();",
+    "console.log(JSON.stringify(out));",
+    "})().catch((e) => { console.error(e && e.stack || String(e)); process.exit(1); });",
+  ].join("\n");
+  const run = (env: Record<string, string>) =>
+    spawnSync("node", ["-e", vmSafeSource(script)], {
+      encoding: "utf8",
+      timeout: 60_000,
+      env: { ...process.env, ...env },
+    });
+  const proc = run({ DRAFT_THROW: "0" });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as Record<string, unknown>;
+  expect(out.saved).toEqual({
+    title: "低遅延ミドルウェア",
+    abstract: "概要",
+    keywords: "分散, ミドルウェア",
+    references: "Ref A | x | ICDCS",
+    venue: "ICDCS",
+  });
+  expect(out.消したあと, "欄を空にしたのに記憶が残っている").toBe(false);
+  expect(out.戻った).toBe(true);
+  expect(out.戻った内容).toEqual({ title: "低遅延ミドルウェア", abstract: 80, venue: "ICDCS" });
+  expect(out.上書きした, "打ち込み中の欄を下書きで上書きした").toBe(false);
+  expect(out.打ち込み中が残った).toBe("打ち込み中");
+  expect(out.空を戻した, "空の下書きを戻した").toBe(false);
+  expect(out.壊れたとき).toBe(false);
+  // 記憶できない環境（シークレットモード等）では、例外で見えなくならない
+  const denied = run({ DRAFT_THROW: "1" });
+  expect(denied.status, denied.stderr).toBe(0);
+  expect(JSON.parse(denied.stdout).戻った).toBe(false);
+
+  /* 実際に効いている場所（欄の読み直し・消す操作・起動時）で呼ばれていることを、源码で押さえる。
+   * 上の検査は関数を直接動かすので、配線を外しても通ってしまう – ここが実動作の検査になる。 */
+  expect(jsFunction(app, "syncPaperText")).toContain("savePaperDraft(readPaperInput())");
+  expect(jsFunction(app, "clearPaperInput")).toContain("savePaperDraft(readPaperInput())");
+  const boot = app.slice(app.lastIndexOf("toForm();"));
+  expect(boot).toContain("restorePaperDraft()");
+  /* 覚えておくことは、気づかないと「相手の原稿が来た」と誤読される。欄の下に書く。 */
+  const html = siteHtmlRuntime();
+  expect(html).toContain("このタブの間は覚えておきます");
+  expect(html).toContain("相手の原稿ではなく自分の下書き");
+  // 上の不変条件（URL に本文を載せない）を、記憶の導入でも崩していないこと。
+  expect(jsFunction(app, "writeUrl").toLowerCase()).not.toMatch(/paper|abstract|keyword|draft/);
+});
+
 it("開催地を日本語で引け、アクセント付きのつづりは ASCII で当たる（SPEC §7）", () => {
   /* 開催地は公式表記（`Seattle, USA` / `Montréal`）のまま変えない。日本人は「シアトル」
    * 「米国」「montreal」と打つので、検索語側だけで届かせる。実データで測る:
@@ -12565,12 +12680,26 @@ it("条件クリアは論文の入力を消さず、消す操作は名前の書�
     "const label = { textContent: 'paper.docx' };",
     "const $ = (id) => (id === 'paperFileLabel' ? label : {});",
     "const paperFiles = { value: 'stale' };",
+    // 「論文の入力を消す」は下書きの記憶も消す（消した物が次の刷新で戻ってくる形を作らない）。
+    // そこで記憶の側も本物と同じ形で生やす（第 222 回）。
+    "const PAPER_DRAFT_KEY = 'draft.key';",
+    "const store = new Map([['draft.key', JSON.stringify({ title: '打った本文' })]]);",
+    "const window = {",
+    "  sessionStorage: {",
+    "    setItem: (k, v) => { store.set(k, String(v)); },",
+    "    getItem: (k) => (store.has(k) ? store.get(k) : null),",
+    "    removeItem: (k) => { store.delete(k); },",
+    "  },",
+    "};",
+    jsFunction(app, "paperInputHasText"),
+    jsFunction(app, "readPaperInput"),
+    jsFunction(app, "savePaperDraft"),
     jsFunction(app, "clearPaperInput").replace(
       "function clearPaperInput",
       "const clearPaperInput = function",
     ),
     "clearPaperInput();",
-    "console.log(JSON.stringify({ vals, venue: paperPrimaryVenue, file: paperFiles.value, label: label.textContent, invalidated }));",
+    "console.log(JSON.stringify({ vals, venue: paperPrimaryVenue, file: paperFiles.value, label: label.textContent, invalidated, draft: store.size }));",
   ].join("\n");
   const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
     encoding: "utf8",
@@ -12583,6 +12712,7 @@ it("条件クリアは論文の入力を消さず、消す操作は名前の書�
     file: string;
     label: string;
     invalidated: number;
+    draft: number;
   };
   expect(got.vals).toEqual({
     paperText: "",
@@ -12594,6 +12724,7 @@ it("条件クリアは論文の入力を消さず、消す操作は名前の書�
   expect(got.venue, "PDF から取った掲載先の想定が残っている").toBe("");
   expect(got.file).toBe("");
   expect(got.label).toBe("未選択");
+  expect(got.draft, "欄を消したのに下書きの記憶が残っている（刷新で戻ってくる）").toBe(0);
   expect(got.invalidated, "意味検索の使い回しを無効化していない").toBe(1);
   // 消す操作は、その名前のボタンが受け持つ（てびきの説明と同じ語で出す）。
   const html = readFileSync(join(site, "index.html"), "utf8");

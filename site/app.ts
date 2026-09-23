@@ -4177,6 +4177,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       primary.title || primary.abstract || primary.keywords ? [primary] : [];
     records = records.concat(Recommender.parsePaperLines(valueElement("paperReferences").value));
     valueElement("paperText").value = records.length ? JSON.stringify(records) : "";
+    // 欄の読み直しは必ずここを通るので、下書きの保存もここに寄せる（呼び出し側 4 箇所に
+    // ばら撒くと、増やした日がどこかで記憶が漏れる）。
+    savePaperDraft(readPaperInput());
   }
   /* サンプルボタンは欄を差し替える。利用者が打ち込んだ物を黙って消さないために、差し替えの
    * 規則を決める関数と、画面を読み書きする関数を分けておいた（規則の側は画面を作らずに
@@ -4225,6 +4228,54 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     valueElement("paperPrimaryKeywords").value = input.keywords;
     valueElement("paperReferences").value = input.references;
     paperPrimaryVenue = input.venue;
+  }
+
+  /* 論文の入力（タイトル・概要・キーワード・参考論文）は DOM の中にしか無く、画面を刷新すると
+   * 消えた。長い概要を貼って並びを変えたり、うっかり更新したりすると貼り直しになる –
+   * 「投稿先を探す」は概要を何百文字も貼る画面なので、失う量が大きい（第 222 回）。
+   * 同じタブのセッション中だけ sessionStorage に覚えておく。アドレスバーには載せない –
+   * 未発表の原稿をリンクや閲覧履歴に残さない方針（上の注意書き）はそのまま保つ。 */
+  const PAPER_DRAFT_KEY = "kamiyobi.paperDraft.v1";
+
+  function savePaperDraft(input: PaperInputJa): void {
+    try {
+      if (!paperInputHasText(input)) {
+        window.sessionStorage.removeItem(PAPER_DRAFT_KEY);
+        return;
+      }
+      window.sessionStorage.setItem(PAPER_DRAFT_KEY, JSON.stringify(input));
+    } catch {
+      // 記憶できない環境（シークレットモード等）ではそのまま進む。打ち込み自体は消さない。
+    }
+  }
+
+  function loadPaperDraft(): PaperInputJa | null {
+    try {
+      const raw = window.sessionStorage.getItem(PAPER_DRAFT_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as Partial<PaperInputJa> | null;
+      if (!parsed || typeof parsed !== "object") return null;
+      const draft: PaperInputJa = {
+        title: String(parsed.title ?? ""),
+        abstract: String(parsed.abstract ?? ""),
+        keywords: String(parsed.keywords ?? ""),
+        references: String(parsed.references ?? ""),
+        venue: String(parsed.venue ?? ""),
+      };
+      // 空の下書きを戻すと「何も打っていないのに欄が埋まっている」形になるので戻さない。
+      return paperInputHasText(draft) ? draft : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** 画面を開いたとき、欄が空なら下書きを戻す。打ち込み中の物が有るなら上書きしない。 */
+  function restorePaperDraft(): boolean {
+    if (paperInputHasText(readPaperInput())) return false;
+    const draft = loadPaperDraft();
+    if (!draft) return false;
+    writePaperInput(draft);
+    return true;
   }
 
   let paperInputBeforeSwap: PaperInputJa | null = null;
@@ -4758,6 +4809,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     valueElement("paperText").value = "";
     setPrimaryRecord();
     valueElement("paperReferences").value = "";
+    // 消したのに次の刷新で戻ってくる、という形を作らない。
+    savePaperDraft(readPaperInput());
     paperFiles.value = "";
     $("paperFileLabel").textContent = "未選択";
     invalidateSemantic();
@@ -4856,6 +4909,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   setSortAria(sortKey);
   updateModeUi();
   toForm();
+  /* 欄が空なら下書きを戻す（`toForm` は絞り込みの欄だけを見るので、この時点では論文の欄が
+   * 空のまま）。戻した後に `syncPaperText` を呼ぶと、候補の描画も刷新前の形に戻る。 */
+  if (restorePaperDraft()) syncPaperText();
   if (state.mode === "deadlines" && state.past) loadHistoryData();
   render();
   restoreDrawerFromUrl();
