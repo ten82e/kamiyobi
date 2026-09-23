@@ -15604,3 +15604,88 @@ it("等級を呼ぶ語だけで打った人に、絞れていないことと別�
   expect(R.querySynonymNotes(`一致${stem}`), "別の合成語につられた").toEqual([]);
   expect(R.querySynonymNotes(unrated), "画面の語そのものに教える必要は無い").toEqual([]);
 });
+
+it("半角カタカナで貼っても、全角で打ったのと同じ行に出会える（SPEC §7）", async () => {
+  /* 古いメーリングリストの書き込みや端末の出力には半角カタカナが混ざることがあり、それを検索欄に
+   * 貼る人がいる。検索は両側を NFKC に寄せているので、濁点（ｶﾞ）と小文字（ｬ）を分けた形でも
+   * 同じ行に出会えるはずがある。2026-08-09 生成のビルドで実測: 収録データに出てくるカタカナ語
+   * 7 語（シンガポール・ハンガリー・ポルトガル・ブルガリア・キャンパス・ハイパフォーマンス
+   * コンピューティング・パターン）で全角と半角の件数が一致した。この一致を検査で留める。
+   * 変換表は検査側に持つので、**半角に直してから組み戻すと元の語になること**を先に確かめる
+   * （このラウンドの実測で、表の語の数が1つ足りずに "undefined" が混ざった変換を確かめず
+   * 使い、0 件を欠陥だと読み違えかけた。その経路を閉じる）。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const clock = NOW.getTime();
+  const rows = R.candidateRows(
+    JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+      typeof R.candidateRows
+    >[0],
+  );
+  const hits = (query: string) =>
+    rows.filter((r) => R.searchMatcher(query, clock)(r.hay ?? "")).length;
+
+  const FULL =
+    "ァィゥェォャュョッーアイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン";
+  const HALF = "ｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝ";
+  expect(HALF.length, "半角カタカナの変換表の語の数が合っていない").toBe(FULL.length);
+  const VOICED: Array<[string, string]> = [
+    ["ガ", "ｶﾞ"],
+    ["ギ", "ｷﾞ"],
+    ["グ", "ｸﾞ"],
+    ["ゲ", "ｹﾞ"],
+    ["ゴ", "ｺﾞ"],
+    ["ザ", "ｻﾞ"],
+    ["ジ", "ｼﾞ"],
+    ["ズ", "ｽﾞ"],
+    ["ゼ", "ｾﾞ"],
+    ["ゾ", "ｿﾞ"],
+    ["ダ", "ﾀﾞ"],
+    ["デ", "ﾃﾞ"],
+    ["ド", "ﾄﾞ"],
+    ["バ", "ﾊﾞ"],
+    ["ビ", "ﾋﾞ"],
+    ["ブ", "ﾌﾞ"],
+    ["ベ", "ﾍﾞ"],
+    ["ボ", "ﾎﾞ"],
+    ["パ", "ﾊﾟ"],
+    ["ピ", "ﾋﾟ"],
+    ["プ", "ﾌﾟ"],
+    ["ペ", "ﾍﾟ"],
+    ["ポ", "ﾎﾟ"],
+  ];
+  const toHalf = (word: string): string => {
+    let out = "";
+    for (const ch of word) {
+      const voiced = VOICED.find((pair) => pair[0] === ch);
+      if (voiced) {
+        out += voiced[1];
+        continue;
+      }
+      const at = FULL.indexOf(ch);
+      out += at >= 0 ? HALF[at] : ch;
+    }
+    return out;
+  };
+
+  /* 収録データに実在する、濁点を含むカタカナ語を集める（画面の語を書き写さない）。 */
+  const words: string[] = [];
+  for (const r of rows) {
+    for (const m of String(r.hay ?? "").matchAll(/[\u30a2-\u30f3][\u30a1-\u30f3\u30fc]{3,}/g)) {
+      if (/[\u30ac\u30d0\u30d1]/.test(m[0]) && words.indexOf(m[0]) < 0) words.push(m[0]);
+    }
+    if (words.length >= 5) break;
+  }
+  expect(
+    words.length,
+    "濁点を含むカタカナ語が収録データに見当たらない（検査が空振り）",
+  ).toBeGreaterThanOrEqual(3);
+  for (const word of words) {
+    const half = toHalf(word);
+    // 変換表の自己検査: ここで壊れていたら、下の一致は意味を持たない。
+    expect(half.normalize("NFKC"), `半角への変換が「${word}」を組み戻せない`).toBe(word);
+    const base = hits(word);
+    expect(base, `語「${word}」が 0 件（空振り）`).toBeGreaterThan(0);
+    expect(hits(half), `半角「${half}」が全角「${word}」と違う行数を出した`).toBe(base);
+  }
+});
