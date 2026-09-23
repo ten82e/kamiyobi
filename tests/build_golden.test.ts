@@ -16904,6 +16904,46 @@ it("会の催し物の日本語で打つ人が、原文の英文字で打った�
   );
 });
 
+it("一致評価の内訳の説明は、マウスを乗せなくても読める（SPEC §7）", () => {
+  /* 第 233 回。内訳の項目は「当たり方の説明」を持つが、ビルド後の `app.js` で `title="` を
+   * 数えると 2 箇所あり、その 1 箇所が内訳チップの説明だった（マウスを乗せたときだけ出る
+   * 注記）。タッチ操作の端末では注記が出ず、キーボードと読み上げでも辿れない。
+   * 同じ行の詳細の中にも、開催地は「原表記」を本文に出すのに今後の会期は `title` に置く
+   * 書き分けがあった。説明を項目の下に出すようにした。 */
+  const app = siteRuntime("app.js");
+  const escJa = (value: unknown) =>
+    String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+  const render = new Function("esc", `return (${jsFunction(app, "reasonChipHtml")});`)(escJa) as (
+    chips: Array<[string, string, string]>,
+  ) => string;
+  const html = render([
+    ["分野の一致", "", "会議の分野と論文のキーワードが一致（HPC・AI・セキュリティなど）"],
+    ["意味検索の候補", "3 位", "意味検索の順位も、順序決めに使う"],
+  ]);
+  expect(html, "当たり方の説明が画面に出ていない").toContain("会議の分野と論文のキーワードが一致");
+  expect(html, "説明を `title` の注記に押し込んでいる（タッチ端末で読めない）").not.toContain(
+    "title=",
+  );
+  expect(html, "順位などの実数を落とした").toContain("3 位");
+  // 説明の語は項目と同じ組のデータから来る（組み立ては `reasonChipHtml` 一か所）。
+  // 定義 1 回 + 面板の中の呼び出し 1 回で 2 回。組み立てを面板に戻して `chips.map` を
+  // 直接書いたら 3 回以上になるので、数で押さえる（文字列の組み立て方は整形で変わる）。
+  expect((app.match(/reasonChipHtml/g) || []).length, "内訳の組み立てが一か所に無い").toBe(2);
+  expect(
+    (app.match(/class="reason-chip"/g) || []).length,
+    "内訳の項目を組み立てる箇所が重複している",
+  ).toBe(1);
+  // 行の詳細の今後の会期も、原表記を `title` に置かない（開催地と同じ書き方にする）。
+  expect(app, "今後の会期の原表記が `title` の注記に戻っている").not.toContain('title="原表記');
+  // 画面に出る「原表記」の行（開催地・会期・今後の会期）が 3 箇所あることを数で見る。
+  const shownRaw = (app.match(/font-size: 0.8rem;">原表記: /g) || []).length;
+  expect(shownRaw, "原表記を画面に出す行が減っている（開催地・会期・今後の会期）").toBe(3);
+  // てびきも同じ説明を書く（画面の言い方を文書で言い換えない）。
+  const htmlGuide = siteHtmlRuntime();
+  expect(htmlGuide, "てびきに内訳の説明が常に出ると書いていない").toContain(
+    "当たり方の説明を項目の下に書いています",
+  );
+});
 it("過ぎた締切の印は、根拠があるときだけ「次回予定」と書く（SPEC §7）", async () => {
   /* 「過去の締切も表示」で並ぶ行には以前、一律に `締切済み（次回予定）` の印を付けていた。
    * 収録データで次回が確認できる行は极少数（2026-08-09 生成ビルドで実測: 過去行 77 件のうち

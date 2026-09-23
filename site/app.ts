@@ -1127,7 +1127,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const rankShown = (r.rankPairs || []).map((pair) => Recommender.rankPairLabelJa(pair));
     // 今後の会期の開催地も、表と同じ書き方で日本語に寄せる（行の詳細の中で
     // 「開催地: 京都, 日本」と「今後の会期: … ＠Kyoto, Japan」が両方出ると、
-    // 別の場所だと誤解する。原文は title に残す）。
+    // 別の場所だと誤解する）。原文は下に同じ「原表記」の書き方で出す – 開催地の行と
+    // 同じ作法に揃える（以前はここだけ `title` の注記で、タッチ操作の端末と読み上げで
+    // 原文に辿れなかった。2026-08-09 生成ビルドで実測）。
     const laterEditionsText = laterEditions
       .map((next) => Recommender.laterEditionLineJa(next))
       .join(" / ");
@@ -1136,9 +1138,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       .filter((place) => place && Recommender.placeJa(place) !== place)
       .join(" / ");
     const laterEditionsHtml = laterEditions.length
-      ? `<p style="margin-bottom: 8px;"${
-          laterEditionsRaw ? ` title="原表記: ${esc(laterEditionsRaw)}"` : ""
-        }><strong>今後の会期:</strong> ${esc(laterEditionsText)}</p>`
+      ? `<p style="margin-bottom: 4px;"><strong>今後の会期:</strong> ${esc(laterEditionsText)}</p>` +
+        (laterEditionsRaw
+          ? '<p style="margin-bottom: 8px; color: var(--muted); font-size: 0.8rem;">原表記: ' +
+            esc(laterEditionsRaw) +
+            "</p>"
+          : '<p style="margin-bottom: 8px;"></p>')
       : "";
     html +=
       '<div style="font-size: 0.85rem;">' +
@@ -3081,6 +3086,26 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     );
   }
 
+  /* 内訳の項目は「当たり方の説明」を項目の下にそのまま書く。以前は説明を `title` 属性
+   * （マウスを乗せたときだけ出る注記）に入れていたが、タッチ操作の端末では注記が出ず、
+   * キーボードや読み上げでも辿れなかった（2026-08-09 生成ビルドで実測: 内訳に出る 9 項目の
+   * 説明が `title` にしか無く、ビルド後の `app.js` に残る `title="` は 2 箇所だけだった）。
+   * 項目と説明は同じ組のデータなので、組み立ても一か所に寄せる。 */
+  function reasonChipHtml(chips: Array<[string, string, string]>): string {
+    return chips
+      .map(
+        (chip) =>
+          '<span class="reason-chip"><b>' +
+          esc(chip[0]) +
+          "</b>" +
+          // 順位など実数がある項目だけ値を出す（空の <em> は空白の塊に見える）。
+          (chip[1] ? `<em>${esc(chip[1])}</em>` : "") +
+          (chip[2] ? `<span class="reason-why">${esc(chip[2])}</span>` : "") +
+          "</span>",
+      )
+      .join("");
+  }
+
   function makeDetailRow(r: AppRow) {
     const tr = document.createElement("tr");
     tr.className = "detail-row";
@@ -3171,22 +3196,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       comp +
       (m?.evidence?.some((evidence) => evidence.rank) ? "（2つの検索の順位を合わせて集約）" : "") +
       "</div>";
-    html +=
-      '<div class="reason-chips">' +
-      chips
-        .map(
-          (chip) =>
-            '<span class="reason-chip" title="' +
-            esc(chip[2]) +
-            '"><b>' +
-            esc(chip[0]) +
-            "</b>" +
-            // 順位など実数がある項目だけ値を出す（空の <em> は空白の塊に見える）。
-            (chip[1] ? "<em>" + esc(chip[1]) + "</em>" : "") +
-            "</span>",
-        )
-        .join("") +
-      "</div>";
+    html += `<div class="reason-chips">${reasonChipHtml(chips)}</div>`;
 
     if (lines.length > 1) {
       html += '<div class="perline">';
