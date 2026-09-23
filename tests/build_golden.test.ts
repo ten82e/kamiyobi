@@ -17020,6 +17020,62 @@ it("言い方を伸ばした語（`今日中` `ワークショップ提案`）�
   expect(siteHtmlRuntime(), "てびきに言い方の幅を書いていない").toContain("『今日中』は今日の話");
 });
 
+it("等級を『A 類』と呼ぶ人が、`Aランク` と打った人と同じ行に出会う（SPEC §7）", async () => {
+  /* 第 235 回。2026-08-09 生成ビルドで実測した直し前の当たり数: `Aランク` 286 件 /
+   * `A評価` 286 件なのに `A類` は 0 件、`B類` `C類` `A*類` も 0 件だった。
+   * 等級の語を作る `rankSearchTerms` が「ランク」「評価」の形しか持っていなかったため。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  // 等級の語は一か所で組み立てる（画面の語と同じ式を見ている）。
+  const terms = R.rankSearchTerms(["ccf:A"]);
+  expect(terms, "等級の語に `類` の形が無く、この呼び方が引けない").toContain("a類");
+  expect(R.rankSearchTerms(["core:A*"]), "A* に `類` の形が無い").toContain("a*類");
+  const catalog = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+    typeof R.candidateRows
+  >[0];
+  const at = NOW.getTime();
+  type Hay = { hay: string };
+  const rows = R.candidateRows(catalog) as unknown as Hay[];
+  const hitIdx = (query: string) => {
+    const matches = R.searchMatcher(R.expandRelativeMonths(query, at), at);
+    return rows.map((r, i) => (matches(r.hay) === true ? i : -1)).filter((i) => i >= 0);
+  };
+  const つながり: Array<[string, string]> = [
+    ["Aランク", "A類"],
+    ["A評価", "A類"],
+    ["A*ランク", "A*類"],
+  ];
+  let 数えた = 0;
+  つながり.forEach(([shown, word]) => {
+    const 基準 = hitIdx(shown);
+    if (!基準.length) return; // fixture に等級の行が無い組み合せは数えない
+    数えた += 1;
+    expect(hitIdx(word), `「${word}」が「${shown}」と違う行を並べる`).toEqual(基準);
+  });
+  expect(数えた, "fixture に等級の行が無く、この検査が空振りしている").toBeGreaterThan(1);
+  /* `類` だけでは等級を絞れていない（`ランク` と同じ約束）。逆に等級の語がいっしょにあるときは
+   * 絞れているので、同じ注意を出さない。 */
+  expect(
+    R.querySynonymNotes("類").join(" "),
+    "`類` だけでは絞れないことを件数欄が言っていない",
+  ).toContain("だけでは等級を絞れていません");
+  /* 等級の語がいっしょに入れば絞れている、という判定にも `類` が効くこと。
+   * `ランク` だけなら注意が出る画面で、`ランク A類` と打った人に同じ注意を出したら
+   * 噓になる（実測: 直し前の照合式は `A類` を等級の語と見なさず、この注意が出ていた）。 */
+  expect(
+    R.querySynonymNotes("ランク").join(" "),
+    "`ランク` だけ打った人に『絞れていません』が出ていない",
+  ).toContain("だけでは等級を絞れていません");
+  expect(
+    R.querySynonymNotes("ランク A類").join(" "),
+    "「A類」が等級の語として数えられていない",
+  ).not.toContain("だけでは等級を絞れていません");
+  // てびきが同じ呼び方を書いているか（画面の語を文書で言い換えない）。
+  expect(siteHtmlRuntime(), "てびきに『A 類』の言い方を書いていない").toContain(
+    "『A 類』のような言い方も同じ行を出します",
+  );
+});
+
 it("過ぎた締切の印は、根拠があるときだけ「次回予定」と書く（SPEC §7）", async () => {
   /* 「過去の締切も表示」で並ぶ行には以前、一律に `締切済み（次回予定）` の印を付けていた。
    * 収録データで次回が確認できる行は极少数（2026-08-09 生成ビルドで実測: 過去行 77 件のうち

@@ -1904,7 +1904,7 @@ const Recommender = (() => {
      * 混ざっていないときだけ、そのことを書く。 */
     /* 照合には小文字化した形を使い、人に見せる例は画面と同じ大文字のままする
      * （`rankGradeOrderJa()` の並びは画面の選択欄と同じなので、例もそこから取る）。 */
-    const labelWords = ["ランク", "評価"];
+    const labelWords = ["ランク", "評価", "類"];
     const gradeWordsShown = rankGradeOrderJa().map((grade) => String(grade));
     const gradeWords = gradeWordsShown.map((grade) => grade.toLowerCase());
     const queryForms = queryTokens(query).map((token) => kanaFold(String(token)));
@@ -1982,7 +1982,7 @@ const Recommender = (() => {
     const graded = queryForms.some(
       (form) =>
         gradeWords.indexOf(form) >= 0 ||
-        /^[a-c]\*?(ランク|評価)$/.test(form) ||
+        /^[a-c]\*?(ランク|評価|類)$/.test(form) ||
         form.indexOf("ccf") === 0 ||
         form.indexOf("core") === 0 ||
         form.indexOf("thcpl") === 0,
@@ -4857,12 +4857,17 @@ const Recommender = (() => {
        * 「表示している語で検索できる」をこの関数の不変条件にしているので、画面が書く語の形も
        * ここに寄せる（`評価` はてびき・件数欄・印刷の注記で同じ等級に使う語）。 */
       parts.push(`${grade.toLowerCase()}ランク`, `${grade.toLowerCase()}評価`);
+      /* 等級の呼び方は「ランク」「評価」で止まらない。等級を並べて呼ぶ日本語として
+       * `A 類` `B 類` が一般的（2026-08-09 生成ビルドで実測・第 235 回:
+       * `Aランク` 286 件 / `A評価` 286 件なのに `A類` は **0 件**、`B類` `C類` `A*類` も
+       * 0 件）。表の等級その物は変えず、この行が持つ等級の語として足す。 */
+      parts.push(`${grade.toLowerCase()}類`);
       hasGrade = true;
     });
     /* 等級を持つ行に限って、単独の「ランク」「評価」も通す。半角スペースを挟んで
      * `A* ランク` と打つ人（`ランク A*` の語順Reverse）が、同じ行に出会えるようにするため。
      * 評価の無い行まで広げると、「ランク」で全件が返って語の意味が薄くなる。 */
-    if (hasGrade) parts.push("ランク", "評価");
+    if (hasGrade) parts.push("ランク", "評価", "類");
     return parts.join(" ");
   }
 
