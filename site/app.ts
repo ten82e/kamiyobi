@@ -3624,6 +3624,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   function setMode(mode: UiMode) {
+    /* モードを変えると表は消える（推薦画面では行を一覧に描かない）ので、開いていた行の
+     * 詳細は閉じる。閉じないと `?row=` が投稿先を探す画面の URL に残る（`writeUrl` は
+     * `drawerRow` をモードが見ていずに書く）。その URL を受け取った人は、表の出ない画面で
+     * 行を開こうとして、収録があるのに「収録に見当たりません」と読まされた
+     * （2026-08-09 実測: `setMode` はドロワーを閉めていなかった）。 */
+    if (drawerRow) closeDrawer();
+    window._prevFocus = null;
     state.mode = mode === "recommend" ? "recommend" : "deadlines";
     updateModeUi();
     writeUrl();
@@ -4172,6 +4179,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   function restoreDrawerFromUrl() {
     if (!pendingDrawerKey) return;
+    /* 投稿先を探す画面では表を描かないので、行の詳細は開けない。上の `setMode` が
+     * モード変更時に閉じるので、こういう URL はふつうは生まれない（手入力と、直す前の
+     * 版本が作ったリンクで受け取る）。条件を勝手に外さず、理由をそのまま言う。 */
+    if (state.mode !== "deadlines") {
+      sharedRowNotice(
+        "リンクに行の詳細が含まれていますが、投稿先を探す画面では行を開きません。締切の一覧に戻すと開けます。",
+      );
+      return;
+    }
     let idx = shown.findIndex((r) => rowShareKeyJa(r) === pendingDrawerKey);
     if (idx < 0) {
       const hit = rows.find((r) => rowShareKeyJa(r) === pendingDrawerKey) || null;

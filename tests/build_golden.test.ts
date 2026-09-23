@@ -12832,7 +12832,8 @@ it("既定に出ていない行の共有リンクを踏んだら、条件を外�
     // 表に出す種別だけ・過ぎた締切はチェックがオンのときだけ – で、判定自体は
     // ビルド済みの `rowIsPast` を使う。
     "globalThis.Date = { now: () => now };",
-    "let state = { past: false, est: false };",
+    // `mode` は締切の一覧の画面（行の詳細を開ける画面）で受け取った場合。
+    "let state = { past: false, est: false, mode: 'deadlines' };",
     "let shown = [];",
     "let calls = [];",
     "let pendingDrawerKey = '';",
@@ -12851,7 +12852,7 @@ it("既定に出ていない行の共有リンクを踏んだら、条件を外�
     "const live = {};",
     "const $ = () => ({ set textContent(v) { live.v = v; }, get textContent() { return live.v || ''; } });",
     "const run = (key, initial) => {",
-    "  state = { past: false, est: false };",
+    "  state = { past: false, est: false, mode: 'deadlines' };",
     "  shown = initial;",
     "  calls = [];",
     "  delete live.v;",
@@ -12904,7 +12905,8 @@ it("既定に出ていない行の共有リンクを踏んだら、条件を外�
   expect(got.est.calls).toContain(`open:${got.estKey}`);
   // 表に出さない種別（採否通知・カメラレディなど）: 絞り込みの問題ではないので、
   // 「条件を確認してください」とは言わず、その行を開く。
-  expect(got.hiddenKind.state).toEqual({ past: false, est: false });
+  expect(got.hiddenKind.state.past, "表に出さない種別で過去表示を外している").toBe(false);
+  expect(got.hiddenKind.state.est, "表に出さない種別で推定を外している").toBe(false);
   expect(got.hiddenKind.calls).toContain(`open:${got.hiddenKindKey}`);
   expect(got.hiddenKind.live).toContain("表に出さない種別");
   expect(got.hiddenKind.live).not.toContain("絞り込み");
@@ -12916,4 +12918,80 @@ it("既定に出ていない行の共有リンクを踏んだら、条件を外�
   expect(html, "共有リンクの振る舞いがてびきに無い").toContain(
     "その行のために条件を自分から外して",
   );
+});
+
+it("投稿先を探す画面に切り替えると行の詳細を閉じ、その URL を受け取っても噓を言わない（SPEC §7）", () => {
+  /* 行の詳細（`?row=`）を開いたまま「投稿先を探す」に切り替えると、ドロワーは閉じられず
+   * `?row=` が推薦画面の URL に残った（`writeUrl` はモードを見ずに `row`を書く – 2026-08-09
+   * 実測: `setMode` の本体にドロワーを閉じる箇所が無かった）。その URL を受け取った人は、
+   * 表が描かれない画面で行を探そうとして、収録されている行なのに
+   * 「共有された行はこの収録に見当たりません。データの更新で無くなった可能性があります」
+   * と読まされていた（第 156 回で入れた「見つかりません」の文が、画面をまたぐと
+   * むしろ噓になった）。条件（過去の締切も表示）を勝手に外してもいた。 */
+  const app = siteRuntime("app.js");
+  const recPath = `file://${join(site, "recommender.js")}`;
+  const dataPath = join(site, "data.json");
+  // 配線の検査: 推薦画面で受け取ったときに何もしないこと。
+  const script = [
+    `const { default: Rec } = await import(${JSON.stringify(recPath)});`,
+    "const fs = await import('node:fs');",
+    `const data = JSON.parse(fs.readFileSync(${JSON.stringify(dataPath)}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    `const rowDateOnlyState = (${jsFunction(app, "rowDateOnlyState")});`,
+    `const rowIsPast = (${jsFunction(app, "rowIsPast")});`,
+    `const rowShareKeyJa = (${jsFunction(app, "rowShareKeyJa")});`,
+    `const sharedRowState = (${jsFunction(app, "sharedRowState")});`,
+    `const sharedRowNotice = (${jsFunction(app, "sharedRowNotice")});`,
+    `const restoreDrawerFromUrl = (${jsFunction(app, "restoreDrawerFromUrl")});`,
+    "const rows = Rec.candidateRows(data.conferences, now);",
+    "globalThis.Date = { now: () => now };",
+    "let state = { past: false, est: false, mode: 'recommend' };",
+    "let shown = [];",
+    "let calls = [];",
+    "let pendingDrawerKey = '';",
+    "const toForm = () => { calls.push('toForm'); };",
+    "const render = () => { calls.push('render'); };",
+    "const ensureRowsDrawn = () => { calls.push('draw'); };",
+    "const updateRowSelection = () => { calls.push('select'); };",
+    "const openDrawer = () => { calls.push('open'); };",
+    "const live = {};",
+    "const $ = () => ({ set textContent(v) { live.v = v; }, get textContent() { return live.v || ''; } });",
+    "const pastRow = rows.filter((r) => !r.est && rowIsPast(r, now) && r.kind === 'paper')[0];",
+    "pendingDrawerKey = rowShareKeyJa(pastRow);",
+    "restoreDrawerFromUrl();",
+    "console.log(JSON.stringify({",
+    "  recorded: rows.some((r) => rowShareKeyJa(r) === pendingDrawerKey),",
+    "  calls, live: live.v || '', pastFlipped: state.past, estFlipped: state.est,",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["--input-type=module", "-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 120_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout) as {
+    recorded: boolean;
+    calls: string[];
+    live: string;
+    pastFlipped: boolean;
+    estFlipped: boolean;
+  };
+  expect(got.recorded, "検査に使える収録済みの行が無かった").toBe(true);
+  // 収録されている行について「収録に無い」と言わない（噓の文を流さない）。
+  expect(got.live).not.toContain("この収録に見当たりません");
+  expect(got.live).toContain("投稿先を探す画面では行を開きません");
+  // 表の画面に戻れば開けることを言う（操作を止めない）。
+  expect(got.live).toContain("締切の一覧に戻すと開けます");
+  // 条件を勝手に外さない。
+  expect(got.pastFlipped, "推薦画面で「過去の締切も表示」を外している").toBe(false);
+  expect(got.estFlipped, "推薦画面で「推定締切を含める」を外している").toBe(false);
+  expect(got.calls, "表の無い画面で一覧を描き直している").toEqual([]);
+  // 発生源: モードを変えたら開いていた行を閉じる（`?row=` を推薦画面の URL に残さない）。
+  const setMode = jsFunction(app, "setMode");
+  // ビルド後の整形で改行が入るので、形では見る（開いていた行を閉じる呼び出しがあること）。
+  expect(
+    /if \(drawerRow\)\s*\n?\s*closeDrawer\(\);/.test(setMode),
+    "モード変更時にドロワーを閉じていない",
+  ).toBe(true);
+  expect(setMode.indexOf("closeDrawer()")).toBeLessThan(setMode.indexOf("state.mode ="));
 });
