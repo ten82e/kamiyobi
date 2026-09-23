@@ -2237,20 +2237,35 @@ const Recommender = (() => {
     return `${ymd[0]}-${pad2(ymd[1])}-${pad2(ymd[2])}`;
   }
 
-  /* 締切欄・公式表記欄に並ぶ時刻の語（`20:59`・`23:59`）を hay に入れる。実測:
-   * 2026-08-09 生成ビルドでは 863 行中 679 行がどちらかの欄に時刻を出している
-   * （21 種・最多は `20:59` の 508 行）のに、その語を打つとぜんぶ 0 件だった。
-   * 語は**画面と同じ列を組み立てる関数から取る**（書き写すと表示とズレる）。
-   * AoE 宣言の行は公式表記欄に AoE の時刻も出る（同じ行に二つの時刻が並ぶ）ので、
-   * それも入れる。日付しか確認できていない行は時刻を出さないので語を入れない。 */
-  function timeSearchWords(dl: unknown, t: number, dateOnly: boolean): string {
+  /* 締切欄・公式表記欄に並ぶ語を hay に入れる。語は**画面と同じ列を組み立てる関数
+   * （`csvJstInstant` / `fmtAoEText`）の出力から取る**（書き写すと表示とズレる – 第 209 回）。
+   * 入れるのは 2 種の語。
+   *
+   * 1. 時刻の語（`20:59`・`23:59`）。2026-08-09 生成ビルドでは 863 行中 679 行がどちらかの欄に
+   *    時刻を出している（21 種・最多は `20:59` の 508 行）のに、その語を打つとぜんぶ 0 件だった
+   *    （第 213 回）。
+   * 2. 時刻帯の語（`JST`・`AoE`）。`csvJstInstant` は**公式の zone 宣言が有る無しにかかわらず**
+   *    締切欄を `2026-08-22 03:00 JST(土)` の形で書く。ところが `zoneSearchWords` は公式の zone
+   *    宣言を読む関数なので、宣言が無い行と AoE 宣言の行（合わせて 659 行）に `JST` が
+   *    入っておらず、締切欄のセルをコピーして検索欄に貼ると 0 件になった。一覧で最も頻繁に
+   *    コピーされる欄なので、表示式に語を聴く（第 216 回）。
+   *
+   * AoE 宣言の行は公式表記欄に AoE の時刻も出る（同じ行に二つの時刻が並ぶ）のでそれも入れる。
+   * 日付しか確認できていない行は時刻も `JST` も出さないので語を入れない。 */
+  function deadlineCellSearchWords(dl: unknown, t: number, dateOnly: boolean): string {
     if (dateOnly || !Number.isFinite(t)) return "";
     const texts = [csvJstInstant(t)];
     if (officialZone(dl) === "AoE") texts.push(fmtAoEText(t));
     const words: string[] = [];
     texts.forEach((text) => {
       text.split(" ").forEach((part) => {
-        if (/^\d{1,2}:\d{2}$/.test(part) && words.indexOf(part) < 0) words.push(part);
+        /* `JST(土)` のように曜日と続けて書いてあるので、括弧より前だけを見る
+         * （曜日の語は `dayTermsJa` が既に hay に入れている）。 */
+        const head = part.replace(/\(.*$/u, "");
+        let word = "";
+        if (/^\d{1,2}:\d{2}$/u.test(part)) word = part;
+        else if (head === "JST" || head === "AoE") word = head;
+        if (word && words.indexOf(word) < 0) words.push(word);
       });
     });
     return words.join(" ");
@@ -4585,7 +4600,7 @@ const Recommender = (() => {
            * 未確認（`ed.event_start` が無い・読めない）は NaN のままにして、並びでは
            * 末尾に寄せる（画面の「未確認」と同じ意味）。 */
           const tEvent = jstNoonMs(String(ed.event_start || ""), Number.NaN);
-          const timeWords = timeSearchWords(dl, t, dateOnly);
+          const cellWords = deadlineCellSearchWords(dl, t, dateOnly);
           const officialWords = officialDateSearchWords(dl, t, dateOnly);
           out.push({
             conf,
@@ -4605,7 +4620,7 @@ const Recommender = (() => {
             hay: searchNormalize(
               `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedHayJa({ kind: dl.kind || "", ed, rankPairs })} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)} ${weekdaySearchTerms(
                 dateOnly ? dl.local_date : t,
-              )} ${zoneSearchWords(dl, dateOnly)} ${timeWords} ${officialWords} ${eventDaySearchWords(
+              )} ${zoneSearchWords(dl, dateOnly)} ${cellWords} ${officialWords} ${eventDaySearchWords(
                 {
                   ed,
                 },

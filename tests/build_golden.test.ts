@@ -16854,3 +16854,119 @@ it("一覧に出る会議名（年を後付けした形）をそのまま打つ�
   expect(hitRows("時刻未確認").length, "「時刻未確認」が壊れた").toBeGreaterThan(0);
   expect(hitRows("複数候補のため要確認").length, "印の語が壊れた").toBeGreaterThan(0);
 });
+
+it("締切欄のセルをコピーして貼ると、その行に出会う（SPEC §7）", async () => {
+  // 2026-08-09 生成ビルドで実測: 締切欄は公式の zone 宣言が有る無しにかかわらず
+  // `2026-08-22 03:00 JST(土)` の形で書かれる。ところが検索の語は `zoneSearchWords` が
+  // **公式の zone 宣言**から作っていたので、宣言が無い行と AoE 宣言の行（合わせて 659 行）に
+  // `JST` が無く、**締切欄のセルをコピーして検索欄に貼ると 0 件**だった。一覧で最も頻繁に
+  // コピーされる欄なので、表示式に語を聴く形へ直した。
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const built = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as unknown as Record<
+    string,
+    unknown
+  >;
+  const at = Date.parse("2026-08-09T00:00:00Z");
+  const rows = R.candidateRows(built as Parameters<typeof R.candidateRows>[0]);
+  const hays = rows.map((r) => String(r.hay));
+  const cells = (line: string): string[] => {
+    const out: string[] = [];
+    let cur = "";
+    let quoted = false;
+    for (let i = 0; i < line.length; i += 1) {
+      const ch = line[i];
+      if (quoted) {
+        if (ch === '"') {
+          if (line[i + 1] === '"') {
+            cur += ch;
+            i += 1;
+          } else quoted = false;
+        } else cur += ch;
+      } else if (ch === '"') quoted = true;
+      else if (ch === ",") {
+        out.push(cur);
+        cur = "";
+      } else cur += ch;
+    }
+    out.push(cur);
+    return out;
+  };
+  const cr = "\r\n";
+  const header = cells(
+    R.deadlinesToCsv([rows[0] as unknown as Record<string, unknown>], at).split(cr)[0],
+  );
+  const column = (name: string): number => {
+    const i = header.indexOf(name);
+    expect(i, `CSV に「${name}」列が無い`).toBeGreaterThan(-1);
+    return i;
+  };
+  const iDeadline = column("締切");
+  const iOfficial = column("公式表記");
+  const iName = column("会議");
+  const rowCells = rows.map((r) =>
+    cells(R.deadlinesToCsv([r as unknown as Record<string, unknown>], at).split(cr)[1] || ""),
+  );
+  const hitRows = (query: string): number[] => {
+    const matches = R.searchMatcher(R.expandRelativeMonths(query, at), at);
+    return hays.map((hay, i) => (matches(hay) === true ? i : -1)).filter((i) => i >= 0);
+  };
+
+  // 1. **締切欄のセルをそのまま打つと、その行に出会う**（時刻未確認の行は除く – あの欄は
+  //    `2026-09-30(水)` の形所以外に書き、それも第 209 回で引けるようになっている）。
+  const 時刻を出す行 = rowCells.filter((row) => /\d{1,2}:\d{2}/u.test(row[iDeadline]));
+  expect(時刻を出す行.length, "時刻を出す行が無く、この検査が空振りしている").toBeGreaterThan(0);
+  const コピーで会えない = rowCells.filter(
+    (row, i) => /\d{1,2}:\d{2}/u.test(row[iDeadline]) && !hitRows(row[iDeadline]).includes(i),
+  );
+  expect(
+    コピーで会えない.length,
+    `締切欄をコピーして貼ると出会えない行が ${コピーで会えない.length} 件（例: ${
+      コピーで会えない[0]
+        ? `${コピーで会えない[0][iName]} の「${コピーで会えない[0][iDeadline]}」`
+        : ""
+    }）`,
+  ).toBe(0);
+
+  // 2. `JST` の語は、締切欄にその語を書く行とちょうど一致する（多よせも漏れも無い）。
+  const JSTを出す行 = rowCells.filter((row) => row[iDeadline].includes("JST("));
+  expect(
+    JSTを出す行.length,
+    "締切欄に JST を出す行が無く、この検査が空振りしている",
+  ).toBeGreaterThan(0);
+  expect(hitRows("JST").length, "「JST」の件数が表示行数と違う").toBe(JSTを出す行.length);
+
+  // 3. **直したpopulationを実際に踏んでいること**: 公式表記欄に JST と書かない行
+  //    （zone 宣言が無い行・AoE 宣言の行）でも締切欄は JST と書く。第 216 回の欠陥は
+  //    まさにこの行で起きていた（`zoneSearchWords` は公式の zone 宣言を読むから）。
+  const 公式にJSTなし = JSTを出す行.filter((row) => !row[iOfficial].includes("JST"));
+  expect(
+    公式にJSTなし.length,
+    "公式表記欄に JST を書かない行が無く、この検査が空振りしている",
+  ).toBeGreaterThan(0);
+
+  // 4. 時刻の語は第 213 回のとおり、表示行数と件数が一致し続ける（同じ関数を作り直したので見る）。
+  const words = new Map<string, number>();
+  rowCells.forEach((row) => {
+    const shown = new Set(`${row[iDeadline]} ${row[iOfficial]}`.match(/\d{1,2}:\d{2}/gu) || []);
+    shown.forEach((w) => {
+      words.set(w, (words.get(w) || 0) + 1);
+    });
+  });
+  for (const [word, 表示行数] of words) {
+    expect(hitRows(word).length, `「${word}」の件数表示行数が食い違った`).toBe(表示行数);
+  }
+
+  // 5. 日付しか確認できていない行は `JST` を出さないので、その語でも出ない。
+  const 未確認 = rowCells.filter((row) => row[iOfficial] === "時刻未確認");
+  expect(未確認.length, "時刻未確認の行が無く、この検査が空振りしている").toBeGreaterThan(0);
+  const JSTで当たる未確認 = rowCells.filter(
+    (row, i) => row[iOfficial] === "時刻未確認" && hitRows("JST").includes(i),
+  );
+  expect(JSTで当たる未確認.length, "時刻未確認の行が JST で出てしまった").toBe(0);
+
+  // 6. 既存の語の回帰を見る。
+  expect(hitRows("来年").length, "「来年」が壊れた").toBeGreaterThan(0);
+  expect(hitRows("複数候補のため要確認").length, "印の語が壊れた").toBeGreaterThan(0);
+  expect(hitRows("推定").length, "「推定」が壊れた").toBeGreaterThan(0);
+});
