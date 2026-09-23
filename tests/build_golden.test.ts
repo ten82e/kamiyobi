@@ -16944,6 +16944,82 @@ it("一致評価の内訳の説明は、マウスを乗せなくても読める�
     "当たり方の説明を項目の下に書いています",
   );
 });
+it("言い方を伸ばした語（`今日中` `ワークショップ提案`）が、素の語と同じ行に出会う（SPEC §7）", async () => {
+  /* 第 234 回。2026-08-09 生成ビルドで実測した直し前の当たり数:
+   * `今日` 2 件 / `今日中` 0 件、`今週` 19 件 / `今週中` 0 件、`今月` 189 件 / `今月中` 0 件、
+   * `チュートリアル` 6 件 / `チュートリアル提案` 0 件、`ワークショップ` 126 件 /
+   * `ワークショップ提案` 0 件、`学生` 1 件 / `学生発表` 0 件。
+   * `中` を足すだけ、`提案` `募集` `発表` を足すだけで 0 件の壁に当たっていた。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const catalog = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+    typeof R.candidateRows
+  >[0];
+  const at = NOW.getTime();
+  type Hay = { hay: string };
+  const rows = R.candidateRows(catalog) as unknown as Hay[];
+  const hitIdx = (query: string) => {
+    const matches = R.searchMatcher(R.expandRelativeMonths(query, at), at);
+    return rows.map((r, i) => (matches(r.hay) === true ? i : -1)).filter((i) => i >= 0);
+  };
+  /* 相対日の語: 同じ展開先に向き、件数欄に展開した暦日が出ることを見る（行の当たり数は
+   * 生成時計で 0 件になり得るので、ここでは数が無くても成立する関係を見る）。 */
+  const 相対語: Array<[string, string]> = [
+    ["今日", "今日中"],
+    ["本日", "本日中"],
+    ["明日", "明日中"],
+    ["今週", "今週中"],
+    ["来週", "来週中"],
+  ];
+  相対語.forEach(([base, word]) => {
+    const 基準 = R.relativeDayNotes(base, at).join("");
+    expect(基準, `素の語「${base}」の展開が件数欄に出ない`).not.toBe("");
+    expect(
+      R.relativeDayNotes(word, at).join(""),
+      `「${word}」が「${base}」と同じ日に展開されていない`,
+    ).toBe(基準.replace(base, word));
+    expect(hitIdx(word), `「${word}」が「${base}」と違う行を並べる`).toEqual(hitIdx(base));
+  });
+  /* 相対月: 暦月へ展開される（件数欄の相対月の説明は無いので、当たり数で見る）。 */
+  const 相対月: Array<[string, string]> = [
+    ["今月", "今月中"],
+    ["来月", "来月中"],
+    ["再来月", "再来月中"],
+  ];
+  相対月.forEach(([base, word]) => {
+    expect(
+      R.expandRelativeMonths(word, at),
+      `「${word}」が「${base}」と同じ暦月に展開されていない`,
+    ).toBe(R.expandRelativeMonths(base, at));
+    expect(hitIdx(word), `「${word}」が「${base}」と違う行を並べる`).toEqual(hitIdx(base));
+  });
+  /* 催し物の複合語: 素の語と同じ行に出て、寄せたことが件数欄に出る。 */
+  const 催し物: Array<[string, string]> = [
+    ["チュートリアル", "チュートリアル提案"],
+    ["チュートリアル", "チュートリアル募集"],
+    ["ワークショップ", "ワークショップ提案"],
+    ["ワークショップ", "ワークショップ募集"],
+    ["セッション", "セッション募集"],
+    ["特別セッション", "特別セッション募集"],
+    ["学生", "学生発表"],
+    ["ポスター", "ポスター提案"],
+  ];
+  let 数えた = 0;
+  催し物.forEach(([base, word]) => {
+    const 基準 = hitIdx(base);
+    if (!基準.length) return; // fixture に素の語の行が無い語は数えない
+    数えた += 1;
+    expect(hitIdx(word), `「${word}」が素の語「${base}」の行に届かない`).toEqual(基準);
+    expect(
+      R.querySynonymNotes(word).join(" "),
+      `「${word}」は寄せたことが件数欄に出ない`,
+    ).toContain("原文の");
+  });
+  expect(数えた, "fixture に素の語の行が 1 件も無く、この検査が空振りしている").toBeGreaterThan(3);
+  // てびきが言い方の幅を書いているか（画面の語を文書で言い換えない）。
+  expect(siteHtmlRuntime(), "てびきに言い方の幅を書いていない").toContain("『今日中』は今日の話");
+});
+
 it("過ぎた締切の印は、根拠があるときだけ「次回予定」と書く（SPEC §7）", async () => {
   /* 「過去の締切も表示」で並ぶ行には以前、一律に `締切済み（次回予定）` の印を付けていた。
    * 収録データで次回が確認できる行は极少数（2026-08-09 生成ビルドで実測: 過去行 77 件のうち
