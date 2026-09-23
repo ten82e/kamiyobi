@@ -228,6 +228,7 @@ interface SiteRecommenderApi {
   fieldNotApplicableJa(row: unknown): boolean;
   readonly dataStaleDaysJa: number;
   readonly semanticReasonLabelsJa: { [code: string]: string };
+  queryNarrowHintJa(query: unknown): string;
   querySynonymNotes(query: unknown): string[];
   dayTermsJa(value: unknown): string;
   weekDayTermsJa(token: string, nowMs: number): string[];

@@ -1781,6 +1781,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     window: 0,
     // 「評価でしぼる」で落ちた行数（選択した等級を持たない行）。
     rank: 0,
+    // 検索語でのぞいた行数。0 のときは検索語が 1 行も絞れていないので、件数欄で
+    // 打ち直し方を示す（第 227 回）。
+    query: 0,
     // 分野チップで落ちた行数（選んだ分野を持たない行）。
     cats: 0,
   };
@@ -1822,6 +1825,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     window: number;
     rank: number;
     cats: number;
+    query: number;
   } {
     return hiddenCounts;
   }
@@ -2138,6 +2142,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       // 検索は正規化した語の AND 判定（全角入力・全角スペース・複数語に対応するため
       // 照合式は recommender の searchMatcher を単一正典にする）。
       if (!inRecommend && !matchesQuery(r.hay)) {
+        // 「他の条件を通った行のうち、検索語だけで何行落ちたか」。0 のときは検索語が
+        // 何も絞れていないので、件数欄で打ち直し方を示す（同じ述語を外に書き出して
+        // 二重実装しないため、通過条件を見るこの場所で数える）。
+        hiddenCounts.query = (hiddenCounts.query || 0) + 1;
         return false;
       }
       return true;
@@ -2153,6 +2161,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       window: 0,
       rank: 0,
       cats: 0,
+      query: 0,
     };
     catFacetCounts = {};
     let out: AppRow[] = pool.filter((r) => {
@@ -3606,6 +3615,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (synonymNotes.length) {
         cnt += ` ｜ ${synonymNotes.join("・")}`;
         cntLive += ` ｜ ${synonymNotes.join("・")}`;
+      }
+      /* 検索語を打っても 1 行も減らなかったとき、打ち直し方を出す（第 227 回）。
+       * 2026-08-09 生成ビルドで実測: `月`・`日`・`年` は各 863 / 863 行に当たり、件数欄の
+       * 数字が 1 も動かないまま画面はどこにも理由を書かなかった。一覧が数行しか出ていない
+       * 画面で「絞れていません」と言うのは誤解なので、一覧が出ているときだけ書く。 */
+      if (state.q.trim() && !hidden.query && shown.length >= 5) {
+        const hint = Recommender.queryNarrowHintJa(state.q);
+        if (hint) {
+          cnt += ` ｜ ${hint}`;
+          cntLive += ` ｜ ${hint}`;
+        }
       }
     }
     if (!recMode && urlNotices.length) {

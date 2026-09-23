@@ -5167,6 +5167,8 @@ it("のぞいた行数を件数欄で説明する（SPEC §7）", () => {
     // 評価でしぼるのは選択欄を動かしたときだけなので、既定では内訳に立たない。
     rank: 0,
     cats: 0,
+    // 検索語だけでのぞいた行数（第 227 回）。この組み立ては検索語を空で回すので 0。
+    query: 0,
   });
   // 「過去の締切も表示」をオンにすると過去の分はのぞかなくなる（他はそのまま）。
   expect(out.withPast.hidden.past).toBe(0);
@@ -16463,6 +16465,85 @@ it("一覧の会期欄に出る日付をそのまま打つと、その行に出�
   ).length;
   expect(金曜の締切, "金曜の締切行が無く、この検査が空振りしている").toBeGreaterThan(0);
   expect(金曜で当たった, "会期の日曜日が「金曜日」の検索に混ざった").toBe(金曜の締切);
+});
+
+it("検索語が 1 行も落とさないとき、件数欄が打ち直し方を言う（SPEC §7）", async () => {
+  /* 2026-08-09 生成ビルドで実測・第 227 回: `月`・`日`・`年` は各 863 / 863 行に当たり、
+   * 件数欄の数字が 1 も動かないまま画面はどこにも理由を書かなかった。数値だけの打ち方も
+   * 同じで、`25` は 2025 や 11月25日 に混なって 105 行に当たり、`25日` の 94 行と一致しない。
+   * 索引側では直せないので、絞れていないことをその場で言って打ち直させる。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const catalog = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+    typeof R.candidateRows
+  >[0];
+  const at = Date.parse("2026-08-09T00:00:00Z");
+  type Hay = { hay: string };
+  const rows = R.candidateRows(catalog) as unknown as Hay[];
+  expect(rows.length).toBeGreaterThan(200);
+  ["月", "日", "年"].forEach((word) => {
+    const matches = R.searchMatcher(R.expandRelativeMonths(word, at), at);
+    const 落ちた = rows.filter((r) => matches(r.hay) !== true).length;
+    expect(落ちた, `「${word}」で行が落ちるビルドになった（前提の実測が変わった）`).toBe(0);
+    const お知らせ = String(R.queryNarrowHintJa(word));
+    expect(お知らせ.trim(), `「${word}」の打ち直し方が出ていない`).not.toBe("");
+  });
+  // 数値だけの入力は暦日の単位を促す（`25` を打った人に `25日` を示す）。
+  const 数値向け = String(R.queryNarrowHintJa("25"));
+  expect(数値向け, "数値だけの入力に単位のある打ち方を出していない").toContain("`25日`");
+  expect(数値向け).toContain("単位");
+  // 打ち直しの例は、打たれた語その物を例に書かない。
+  expect(String(R.queryNarrowHintJa("セキュリティ")), "打った語を例に書いた").not.toContain(
+    "`セキュリティ`",
+  );
+  expect(String(R.queryNarrowHintJa("オンライン"))).not.toContain("`オンライン`");
+  expect(String(R.queryNarrowHintJa("SC"))).not.toContain("`SC`");
+  expect(String(R.queryNarrowHintJa(""))).toBe("");
+  // 絞り込みの本体が「検索語だけで落ちた行数」を数えている（判断材料を UI に二重化しない）。
+  const filterSrc = jsFunction(siteRuntime("app.js"), "filter");
+  const script = [
+    "const DAY = 86400000;",
+    `const FILTER = ${JSON.stringify(filterSrc)};`,
+    'const now = Date.parse("2026-08-10T00:00:00Z");',
+    "class FakeDate extends Date { static now() { return now; } }",
+    "function row(hay, key) {",
+    "  return { kind: 'paper', est: false, cats: ['hpc'], rankPairs: [], hay: hay,",
+    "    tags: [], t: now + DAY, tLast: now + DAY, ed: { place: 'Paris, 日本', deadlines: [] },",
+    "    conf: { key: key } };",
+    "}",
+    "const rows = [",
+    "  row('2026年10月5日(月) sc 2027', 'sc'),",
+    "  row('2026年11月9日(月) icde 2027', 'icde'),",
+    "  row('2026年12月1日(火) sc 2027', 'sc2'),",
+    "];",
+    FILTER_RUNTIME_STUBS,
+    "const run = (q) => new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
+    "  'return (' + FILTER + ')')(FakeDate, DAY, rows,",
+    "  { q: q, cats: [], kind: '', rank: '', win: 'all', est: false, domestic: false }, true, 'rem');",
+    // どの行にも当たる語は 1 行も落とさない。
+    "run('\\u6708')();",
+    "const 全部当たる = hiddenCounts.query || 0;",
+    "run('icde')();",
+    "const 一部落ちる = hiddenCounts.query || 0;",
+    "console.log(JSON.stringify({ 全部当たる, 一部落ちる }));",
+  ].join("\n");
+  // `vmSafeSource` を適用した文字列をそのまま渡す（関数の源码を本文中に注入すると、そこに
+  // 現れる語で Node が ESM 判定をし、`new Function` の内側から最上位の const が見えなくなる。
+  // 2026-09-23 以降の実測で、この検査でも実際に踏んだ）。
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 120_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const 数え = JSON.parse(proc.stdout) as { 全部当たる: number; 一部落ちる: number };
+  expect(数え.全部当たる, "どの行にも当たる語で落ちた行数が出ている").toBe(0);
+  expect(数え.一部落ちる, "検索語で落ちた行数が数えられていない").toBe(2);
+  // 件数欄は「1 行も落ちていない」ときだけ打ち直し方を出す。
+  const render = jsFunction(siteRuntime("app.js"), "render");
+  expect(render, "打ち直し方をおしらせしていない").toContain("Recommender.queryNarrowHintJa(");
+  expect(render, "落ちた行数での絞り込みが無い（常に打ち直し方を出す実装）").toContain(
+    "!hidden.query",
+  );
 });
 
 it("主題の日本語で打つ人が、会議名に書かれた英語の語で行に辿り着ける（SPEC §7）", async () => {

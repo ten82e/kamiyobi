@@ -1828,6 +1828,45 @@ const Recommender = (() => {
     return displayedPlaceTermSet;
   }
 
+  /* 検索語を打っても 1 行も減らないときの打ち直し方（第 227 回）。
+   * 2026-08-09 生成ビルドで実測: `月`・`日`・`年` はそれぞれ 863 / 863 行に当たり、件数欄の
+   * 数字が 1 も動かずに画面はどこにも理由を書かなかった。数値だけでは暦日が決まらない
+   * （`25` は 2025 や 11月25日 に混なって 105 行に当たり、`25日` の 94 行と一致しない）。
+   * 行のどの欄にも寄らない語を伸ばすのは索引側ではできないので、ここで言い直す。 */
+  function queryNarrowHintJa(query: unknown): string {
+    const q = String(query == null ? "" : query).trim();
+    if (!q) return "";
+    const tokens = queryTokens(q)
+      .map((token) => String(token))
+      .filter((token) => token.length > 0);
+    if (!tokens.length) return "";
+    // 数値だけ（`25`、`12 25`）。暦日の単位を付ければ日付で絞れる。
+    if (tokens.every((token) => /^[0-9]{1,3}$/.test(token))) {
+      return `数値だけでは締め切日を絞れていません（\`${tokens[0]}\` は 2025 や 11月25日 に混なります）。\`${tokens[0]}日\`・\`8月\`・\`2027年\` のように単位を付けてください`;
+    }
+    // 1 文字だけ（`S`・`会`）。ほとんどの行が含むので 2 文字以上を求める。
+    if (tokens.length === 1 && tokens[0].length === 1) {
+      return "1 文字だけではほとんどの行に当たって絞れていません。`SC`・`関西`・`HCI` のように 2 文字以上で打ってください";
+    }
+    /* 打ち直しの例は、打たれた語その物を例に書かない（`セキュリティ` と打った人に
+       「分野（`セキュリティ`）で絞れます」と言うのは役に立たない）。 */
+    const 例: Array<[string, string]> = [
+      ["会議名", "SC"],
+      ["分野", "セキュリティ"],
+      ["開催地", "パリ"],
+      ["参加形式", "オンライン"],
+    ];
+    const 打った語 = q.toLowerCase();
+    const 使える例 = 例.filter(([, 語]) => 打った語.indexOf(語.toLowerCase()) < 0);
+    if (!使える例.length) {
+      return "この検索語はどの行にも当たっていて、絞り込みにはなっていません。会議の略称など、もっと具体的な語を足してください";
+    }
+    return `この検索語はどの行にも当たっていて、絞り込みにはなっていません。${使える例
+      .slice(0, 2)
+      .map(([項目, 語]) => `${項目}（\`${語}\`）`)
+      .join("・")}などの語を足してください`;
+  }
+
   function querySynonymNotes(query: unknown): string[] {
     const map = querySynonymMap();
     const notes: string[] = [];
@@ -6261,6 +6300,7 @@ const Recommender = (() => {
     titleWithYearJa: titleWithYearJa,
     deadlinesToCsv: deadlinesToCsv,
     searchNormalize: searchNormalize,
+    queryNarrowHintJa: queryNarrowHintJa,
     querySynonymNotes: querySynonymNotes,
     queryHiddenKindMatches: queryHiddenKindMatches,
     looksLikeUrlQuery: looksLikeUrlQuery,
