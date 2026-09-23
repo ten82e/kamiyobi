@@ -2977,7 +2977,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if ((r._semScore ?? 0) > 0)
       chips.push([
         "意味検索の候補",
-        `順位 ${r._semanticRank || "—"}`,
+        /* 順位は上位の候補にだけ付く（近さを示す点は上位以外にも付く）。横棒の記号で
+         * 誤魔化さず語で書く。このサイトの「分からない」は 未確認 / 該当なし / 評価なし
+         * の語で出すことにしていて、記号は使わない（2026-08-09 実測: ビルド後の
+         * `app.js` に U+2014 の横棒が 2 箇所残り、候補を 200 件出した画面で 44 件が
+         * 「順位 —」になっていた）。 */
+        r._semanticRank ? `順位 ${r._semanticRank}` : "順位は出ていません",
         "意味検索（文の意味の近さで探す検索）の順位も、順序決めに使う",
       ]);
     if (r._boosted)
@@ -2992,10 +2997,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       " の内訳（この会議で当たった要素）</div>";
     let comp: string;
     if (r._semanticRank) {
+      /* 語彙検索の順位は、言葉が重なった候補にだけ付く（語彙の点が 0 の行には付かない）。
+       * 意味検索で見つかる行は語彙の点が 0 ことがあり（2026-08-09 実測: 候補 200 件中
+       * 3 件。例 `cade` は語彙 0 点・意味の近さ 0.899 で意味検索 1 位）、その行で
+       * 「言葉の一致（語彙検索）で — 位」と横棒を出していて、順位が無いのか値が壊れたのか
+       * 読めなかった。
+       * 語彙の点はその行に実際に出ている値なので、それをそのまま書く（記号で潰さない）。 */
+      const lexicalJa = r._lexicalRank
+        ? `言葉の一致（語彙検索）で ${r._lexicalRank} 位`
+        : `言葉の一致（語彙検索）では ${r._vocabScore} 点で順位は無く`;
       comp =
-        "言葉の一致（語彙検索）で " +
-        (r._lexicalRank || "—") +
-        " 位、意味検索で " +
+        lexicalJa +
+        "、意味検索で " +
         r._semanticRank +
         " 位 → 合わせて 一致評価 " +
         esc(r._fitLabel || "評価保留");

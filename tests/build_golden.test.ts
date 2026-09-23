@@ -13417,3 +13417,106 @@ it("リンクについていた検索語で行が落ちていても、種別の�
   // 未来の行のリンクでまで過去表示を勝手に外さない。
   expect(got.未来.past, "未来の行のリンクで「過去の締切も表示」まで外している").toBe(false);
 });
+
+it("投稿先を探す画面の順位が無い行を横棒の記号にしない（SPEC §7）", () => {
+  /* 内訳の chip と比較文は、順位が無いとき横棒（U+2014）を出していた。順位は上位の
+   * 候補にだけ付く（語彙検索の順位は言葉が重なった行にだけ、意味検索の順位は上位にだけ
+   * 付く）ので、この状態は珍しくない（2026-08-09 実測: ビルドした `venueRecommendations`
+   * に意味検索の点を与えて候補を 200 件出すと、44 件が「順位 —」、3 件が
+   * 「言葉の一致（語彙検索）で — 位」になっていた。例は `cade` で語彙 0 点・
+   * 意味の近さ 0.899・意味検索 1 位）。横棒は支援技術で読まれず、値が壊れたのか
+   * 順位が無いのか利用者には判別できない。 */
+  const app = siteRuntime("app.js");
+  const detail = jsFunction(app, "makeDetailRow");
+  // 抜き出した内訳の組み立ての中に、記号だけの値が残っていないこと。
+  expect(detail, "内訳に横棒の記号が値として残っている").not.toContain(`"—"`);
+  expect(detail, "内訳に縦棒の記号が値として残っている").not.toContain(`"―"`);
+  // 語で出す方に切り替わっている（ビルド後の成果物で確かめる）。
+  expect(detail, "順位が無いことを語で書いていない").toContain("順位は出ていません");
+  expect(detail, "語彙検索の点が無いことを語と実数で書いていない").toContain("点で順位は無く");
+  // 記号を使わない方針は、行の詳細の比較文にも及んでいる（他の箇所に横棒が残って
+  // いないか、ビルド全体を一度見る）。
+  const quoted = app.match(/["'`]—["'`]/g) || [];
+  expect(
+    quoted,
+    `ビルド後のコードに横棒だけを値にした箇所が残っている: ${quoted.length} 箇所`,
+  ).toHaveLength(0);
+
+  // 上の書き方が正しいための条件を、ビルドした検索で確かめる。
+  //  (1) 語彙検索の順位は「言葉が重なった行（語彙の点が 0 より大きい行）」にだけ付く。
+  //      これが崩れると「N 点で順位は無く」という文が噓になる（N が 0 ではなくなる）。
+  //  (2) 順位は上位 `topN` までしか付かないので、点があっても順位が無い行が生まれる
+  //      （`topN` を小さくして、収録の大きさに関わらず必ず起きることを確かめる）。
+  const recPath = `file://${join(site, "recommender.js")}`;
+  const dataPath = join(site, "data.json");
+  const script = [
+    `const { default: Rec } = await import(${JSON.stringify(recPath)});`,
+    "const fs = await import('node:fs');",
+    `const data = JSON.parse(fs.readFileSync(${JSON.stringify(dataPath)}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const rows = Rec.candidateRows(data.conferences, now);",
+    "const paper = [",
+    "  'Title: Storage-efficient checkpointing for large-scale LLM training on clusters',",
+    "  'Abstract: Periodic state saving with erasure coding across object stores reduces',",
+    "  'bandwidth at the expense of recovery latency in HPC environments.',",
+    "  'Keywords: fault tolerance, checkpointing, storage systems',",
+    "].join('\\n');",
+    "const lines = Rec.parsePaperLines(paper);",
+    // 意味検索が動いている状態を再現する（鍵から決まる値なので実行のたびに同じになる）。
+    "const sem = {};",
+    "for (const r of rows) {",
+    "  const key = String((r.conf && r.conf.key) || '');",
+    "  if (!key) continue;",
+    "  let h = 0;",
+    "  for (const ch of key) h = (h * 31 + ch.codePointAt(0)) % 10007;",
+    "  sem[key] = (h % 900) / 1000;",
+    "}",
+    "const run = (topN) =>",
+    "  Rec.venueRecommendations(rows, lines, sem, now, {",
+    "    venueCats: ['hpc', 'system'],",
+    "    fieldedLexical: true,",
+    "    topN,",
+    "  })",
+    "    .filter((x) => x.fit.score >= 10)",
+    "    .slice(0, 200);",
+    "const wide = run(200);",
+    "const narrow = run(3);",
+    // (1) 語彙の順位が欠ける行は、語彙の点が 0 の行だけ。
+    "let lexMismatch = 0;",
+    "let lexNoRank = 0;",
+    "for (const x of wide) {",
+    "  if (!x.fit.lexicalRank) lexNoRank += 1;",
+    "  if (Boolean(x.fit.lexicalRank) !== x.fit.lexicalScore > 0) lexMismatch += 1;",
+    "}",
+    // (2) 点があるのに順位が無い行（`topN` の外）。
+    "let semNoRank = 0;",
+    "for (const x of narrow) {",
+    "  if ((x.fit.semanticScore || 0) > 0 && !x.fit.semanticRank) semNoRank += 1;",
+    "}",
+    "console.log(JSON.stringify({",
+    "  shown: wide.length,",
+    "  lexNoRank,",
+    "  lexMismatch,",
+    "  narrowShown: narrow.length,",
+    "  semNoRank,",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["--input-type=module", "-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 120_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout) as {
+    shown: number;
+    lexNoRank: number;
+    lexMismatch: number;
+    narrowShown: number;
+    semNoRank: number;
+  };
+  expect(got.shown, "候補が一件も出ない画面では検査できない").toBeGreaterThan(0);
+  // (1) 「N 点で順位は無く」が噓にならないこと（順位が無い行の語彙の点は必ず 0）。
+  expect(got.lexMismatch, "語彙の順位の有無と点の一致が崩れた（文を見直す）").toBe(0);
+  // (2) 点があっても順位が無い行が実際に生まれる（無くなったら語で書く案内ごと見直す）。
+  expect(got.narrowShown, "候補が出ない画面では検査できない").toBeGreaterThan(0);
+  expect(got.semNoRank, "順位が欠ける行が生まれなくなった（案内ごと見直す）").toBeGreaterThan(0);
+});
