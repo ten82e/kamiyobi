@@ -16124,3 +16124,90 @@ it("印刷前に推薦のカードを候補ぶんぜんぶ出している（SPEC
     "見出しの件数がカードの枚数を数える前に書かれている",
   ).toBeLessThan(handler.indexOf("fillPrintMeta();"));
 });
+
+it("印刷の但し書きは「公式表記」列の実物を説明している（SPEC §7）", async () => {
+  /* 但し書きは「「公式表記」は収録元がその締切に付けた呼び方そのもの」と刷っていたが、
+   * 列に入っているのはいつ締めるかの宣言だった（2026-08-09 生成ビルドで実測: 値は
+   * 「2026-07-21 23:59 AoE」「PDT ／ UTC」「時刻未確認」など 18 種で、収録元の締切名は
+   * 候補行 863 行のどこにも入っていない。締切名は「種別」列に出る）。説明を信じて表計算で
+   * この列を分類として読む人が、探している行を 1 行も出せない。
+   * 但し書きの文を built から抜き、列の実値と突き合わせる（語の書き写しはしない）。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const app = siteRuntime();
+  const legend = (
+    new Function("Recommender", `${jsFunction(app, "printLegendJa")}\nreturn printLegendJa;`)(
+      R,
+    ) as () => string
+  )();
+  const built = R.candidateRows(
+    JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+      typeof R.candidateRows
+    >[0],
+  ) as unknown as Record<string, unknown>[];
+  const csv = R.deadlinesToCsv(built, NOW.getTime());
+  const cells = (line: string): string[] => {
+    const out: string[] = [];
+    let cur = "";
+    let quoted = false;
+    const q = '"';
+    for (let i = 0; i < line.length; i += 1) {
+      const ch = line[i];
+      if (quoted) {
+        if (ch === q) {
+          if (line[i + 1] === q) {
+            cur += ch;
+            i += 1;
+          } else quoted = false;
+        } else cur += ch;
+      } else if (ch === q) quoted = true;
+      else if (ch === ",") {
+        out.push(cur);
+        cur = "";
+      } else cur += ch;
+    }
+    out.push(cur);
+    return out;
+  };
+  const lines = csv.split("\r\n").filter((l) => l.length > 0);
+  const head = cells(lines[0]);
+  const official = new Set<string>();
+  const kinds = new Set<string>();
+  for (let i = 1; i < lines.length; i += 1) {
+    const c = cells(lines[i]);
+    official.add(String(c[head.indexOf("公式表記")] || ""));
+    kinds.add(String(c[head.indexOf("種別")] || ""));
+  }
+  expect(
+    [...official].filter(Boolean).length,
+    "公式表記の値が少なすぎる（検査が空振り）",
+  ).toBeGreaterThanOrEqual(5);
+  expect(
+    [...kinds].filter(Boolean).length,
+    "種別の値が少なすぎる（検査が空振り）",
+  ).toBeGreaterThanOrEqual(3);
+  // 前提: 公式表記の列は締切名の分類ではない（種別の値と重ならない）
+  const overlap = [...kinds].filter((k) => official.has(k));
+  expect(overlap, "公式表記の列に種別の値が入るようになった（前提が変わった）").toEqual([]);
+
+  const sentences = legend.split("。").filter((seg) => seg.includes("公式表記"));
+  expect(sentences.length, "但し書きが公式表記の列を説明していない").toBeGreaterThan(0);
+  const said = sentences.join("。");
+  // 説明が挙げる語は、実際にその列へ入っている物だけでなければならない
+  const real = ["AoE", "UTC", R.notApplicableLabelJa() === "" ? "" : "", "時刻未確認"].filter(
+    (w) => w !== "" && [...official].some((v) => v.includes(w)),
+  );
+  expect(
+    real.length,
+    "公式表記の列に見当たらない語を検査している（検査が空振り）",
+  ).toBeGreaterThanOrEqual(2);
+  const 列の実物から説明している語 = real.filter((w) => said.includes(w));
+  expect(
+    列の実物から説明している語.length,
+    `但し書きの公式表記の説明が、列の実値（${real.join("・")}）のどれにも触れていない: ${said}`,
+  ).toBeGreaterThanOrEqual(2);
+  expect(
+    said,
+    "締切名は別列（種別）に出しているのに、但し書きが公式表記の列の呼び方だと刷っている",
+  ).not.toContain("呼び方");
+});
