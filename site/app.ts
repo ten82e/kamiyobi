@@ -4680,8 +4680,19 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 紙に出る語は画面の実物（「投稿先を探す」）に揃える。 */
     if (state.mode !== "deadlines") {
       const cards = $("recommendationCards");
-      const n = cards?.children?.length ?? 0;
-      box.textContent = `この印刷物: 投稿先を探す画面 ／ 候補 ${countJa(n)} 件${printedTail}。${printLegendJa()}`;
+      const drawn = cards?.children?.length ?? 0;
+      /* 用紙に載るのは描画済みのカードだけなので、候補の総数と違うときは両方書く。
+       * 「候補 20 件」とだけ刷ると、この先にも候補が有ることが紙で分からない
+       * （2026-08-09 生成ビルドで実測: サンプル論文の候補 114 件、画面は
+       * 「まず上位 20 件を表示」と言うのに、用紙は「候補 20 件」と刷れていた –
+       * 印刷前にカードを足す処理が表の枝にしか無かった。上の `beforeprint` で直す）。
+       * `recommendationList` は画面が候補として持っている一覧（「さらに表示」の元）。 */
+      const total = Math.max(recommendationList.length, drawn);
+      const listed =
+        total > drawn
+          ? `候補 ${countJa(total)} 件のうちこの用紙に ${countJa(drawn)} 件（続きは画面の「さらに表示」）`
+          : `候補 ${countJa(drawn)} 件`;
+      box.textContent = `この印刷物: 投稿先を探す画面 ／ ${listed}${printedTail}。${printLegendJa()}`;
       return;
     }
     box.textContent =
@@ -4696,8 +4707,19 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       )}` + ` ／ 表示 ${countJa(shown.length)} 件${printedTail}。${printLegendJa()}`;
   }
   window.addEventListener("beforeprint", () => {
+    /* 推薦画面も表と同じ扱い: 用紙には候補を全部載せる。ここが表の枝にしか無く、
+     * 20 枚しか無いカードの列に「候補 20 件」と見出しが刷れていた（2026-08-09 生成
+     * ビルドで実測: 候補 114 件の論文で用紙は 20 枚 + 「候補 20 件」）。
+     * 見出しは描画のうしろに書かないと 20 枚の数を数える。 */
+    if (state.mode !== "deadlines") {
+      if (cardsDrawn < recommendationList.length) {
+        while (cardsDrawn < recommendationList.length) drawMoreCards();
+        printExpanded = true;
+      }
+      fillPrintMeta();
+      return;
+    }
     fillPrintMeta();
-    if (state.mode !== "deadlines") return;
     if (drawn >= shown.length) return;
     const target = shown.length;
     while (drawn < target) drawMore();

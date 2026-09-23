@@ -12286,6 +12286,10 @@ it("投稿先を探す画面で印刷すると、紙に出る但し書きが実�
       "function countJa(n) { const int = Math.trunc(Number(n) || 0); const d = String(Math.abs(int)).replace(/\\B(?=(\\d{3})+$)/g, ','); return int < 0 ? '-' + d : d; }",
       "const meta = { textContent: '' };",
       `const cards = { children: ${JSON.stringify(new Array(cardCount).fill(null).map(() => ({})))} };`,
+      // 印刷前には候補のカードがぜんぶ描画されている（第 204 回）。だからこの検査では
+      // 画面が候補として持つ一覧も同じ長さにする（枚数だけを渡すと、見出しは総数と
+      // 枚数の違いを書き分ける側に通る）。
+      `let recommendationList = { length: ${cardCount} };`,
       "const $ = (id) => (id === 'printMeta' ? meta : id === 'recommendationCards' ? cards : null);",
       "const valueElement = () => ({ options: [{ text: '30 日以内' }], selectedIndex: 0 });",
       "function describeFilters() { return '投稿締切（概要・論文）／締切まで 30 日以内'; }",
@@ -16011,4 +16015,112 @@ it("締切の窓は行の「表示している暦日」で比べている（SPEC
   const body = jsFunction(app, "filter");
   expect(body, "窓の比較が行の表示暦日を使っていない").toContain("shownDayMs(row) > dateLimit");
   expect(body, "窓の下側が行の表示暦日を使っていない").toContain("shownDayMs(r) < floor");
+});
+
+it("推薦画面の印刷見出しは、用紙に載る枚数と候補の総数を言い分ける（SPEC §7）", async () => {
+  /* 推薦画面は印刷前にカードを足す処理が無く、20 枚しか無い列に「候補 20 件」と
+   * 見出しが刷れていた（2026-08-09 生成ビルドで実測: サンプル論文の候補 114 件、
+   * 画面は「まず上位 20 件を表示」と言うのに用紙は「候補 20 件」＝ 94 件が紙に無い
+   * ことが分からない）。見出しの組み立てをビルド成果物から抜き出して、
+   * 載る枚数と総数が違うときに両方を書くことを見る。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const app = siteRuntime();
+  const helpers = ["pad", "countJa", "fmtJst", "generatedAtLabel", "printLegendJa", "fillPrintMeta"]
+    .map((name) => jsFunction(app, name))
+    .join("\n");
+  const weekday = /\bconst WEEKDAY_JA = \[[^\]]*\];/.exec(app);
+  if (!weekday) throw new Error("WEEKDAY_JA が見つからない（検査の組み立てを直す）");
+  const body = `${weekday[0]}\n${helpers}\nreturn fillPrintMeta;`;
+  const names = [
+    "$",
+    "DATA",
+    "state",
+    "valueElement",
+    "shown",
+    "sortKey",
+    "sortAsc",
+    "sortColumnLabel",
+    "KIND_LABEL",
+    "rankFilterLabelJa",
+    "Recommender",
+    "describeFilters",
+    "recommendationList",
+  ];
+  const used = names.filter((name) =>
+    name === "$" ? body.includes("$(") : new RegExp(`\\b${name.replace("$", "\\$")}\\b`).test(body),
+  );
+  const build = new Function(...used, "Date", body) as (...args: unknown[]) => () => void;
+
+  const header = (drawn: number, total: number): string => {
+    const box: { textContent: string } = { textContent: "" };
+    const env: Record<string, unknown> = {
+      $: (id: string) =>
+        id === "printMeta"
+          ? box
+          : id === "recommendationCards"
+            ? { children: { length: drawn } }
+            : null,
+      DATA: { generated_at: "2026-08-09T00:00:00Z" },
+      state: { mode: "recommend", win: "all" },
+      valueElement: () => null,
+      shown: [],
+      sortKey: "deadline",
+      sortAsc: true,
+      sortColumnLabel: "",
+      KIND_LABEL: {},
+      rankFilterLabelJa: () => "",
+      Recommender: R,
+      describeFilters: () => "",
+      recommendationList: { length: total },
+    };
+    class FixedDate extends Date {
+      static now() {
+        return NOW.getTime();
+      }
+    }
+    build(...used.map((name) => env[name]), FixedDate)();
+    return box.textContent;
+  };
+
+  const すくない = header(1, 3);
+  expect(
+    すくない,
+    "用紙に載る枚数より候補が多いのに、枚数だけを候補の数として書いている",
+  ).toContain("候補 3 件のうちこの用紙に 1 件");
+  expect(すくない, "続きが画面にあることが紙で読めない").toContain("さらに表示");
+
+  const ぜんぶ = header(3, 3);
+  expect(ぜんぶ).toContain("候補 3 件");
+  expect(ぜんぶ, "全部載っている紙に「この用紙に」を足さない").not.toContain("この用紙に");
+  expect(すくない === ぜんぶ, "載る枚数が違っても同じ見出しになる（検査が空振り）").toBe(false);
+});
+
+it("印刷前に推薦のカードを候補ぶんぜんぶ出している（SPEC §7）", () => {
+  /* 表の枝には「用紙に載せるためにもっと見る」処理が有って、推薦の枝は抜けていた。
+   * 見出しの文言を直しても、カードが 20 枚のままで候補 114 件の紙は刷れない。
+   * `"beforeprint"` を引用符付きで探す（注釈の中の語に当たって空振りしたため –
+   * 第 204 回に実際へしこた）。 */
+  const app = siteRuntime();
+  const at = app.indexOf(`"beforeprint"`);
+  expect(at, "印刷前の処理が見当たらない").toBeGreaterThan(-1);
+  const open = app.indexOf("{", at);
+  let depth = 0;
+  let close = -1;
+  for (let i = open; i < app.length; i += 1) {
+    if (app[i] === "{") depth += 1;
+    else if (app[i] === "}") {
+      depth -= 1;
+      if (!depth) {
+        close = i;
+        break;
+      }
+    }
+  }
+  const handler = app.slice(open, close + 1);
+  expect(handler, "印刷前に推薦のカードを足す処理が無い").toContain("drawMoreCards(");
+  expect(
+    handler.indexOf("drawMoreCards("),
+    "見出しの件数がカードの枚数を数える前に書かれている",
+  ).toBeLessThan(handler.indexOf("fillPrintMeta();"));
 });
