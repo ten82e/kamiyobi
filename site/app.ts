@@ -760,8 +760,20 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return !rowIsPast(r, now);
   }
 
-  function rowAfter(r: AppRow, limit: number) {
-    return r.t > limit;
+  /* 行が「表示している暦日」の時刻。締切欄・残り欄・CSV の残り列はここを見ているので、
+   * 期間の窓もここを見る。`row.t` で比べると締切欄に書いた日付より 1 日早く窓から出る
+   * （2026-08-09 生成ビルドで実測: `t` が JST 2026-09-09 19:00 なのに締切欄は 9/10 と出る行が
+   * 10 件あり、「30 日以内」に並びながら「あと 31 日」と出ていた）。第 202 回に一覧を、
+   * 第 228 回に画面上部の数を、ここへ揃えた。 */
+  function rowShownDayMs(r: AppRow) {
+    return Number.isFinite(r.tShown) ? r.tShown : r.t;
+  }
+
+  /* 期間の窓の上側を超えているか。`limit` は `windowLimitMs`（JST の暦日で切る）から渡す。
+   * 経過 24 時間で区切ると、一覧が「あと 30 日」と出す行が上の数だけから落ちる
+   * （2026-08-09T21:00Z 見立ての実測: 上部 176 件・一覧 177 件で `pacificvis` が足りなかった）。 */
+  function rowAfter(r: AppRow, dateLimit: number) {
+    return rowShownDayMs(r) > dateLimit;
   }
 
   // 投稿作業は日本の時刻で回る。JST を主表記にし、曜日を必ず添える。
@@ -1442,25 +1454,32 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   const historyLoader = createHistoryLoader(fetchHistoryJson, syncHistoryState);
 
-  // Update Summary Dashboard Stats
-  $("statConfs").textContent = String((DATA.conferences || []).length);
-  const nowMs = Date.now();
-  const next30 = rows.filter(
-    (r) =>
-      (r.kind === "abstract" || r.kind === "paper") &&
-      !r.est &&
-      rowIsFuture(r, nowMs) &&
-      !rowAfter(r, nowMs + 30 * DAY),
-  ).length;
-  $("statUpcoming").textContent = String(next30);
-  const nicheCount = (DATA.conferences || []).filter(
-    (c) => (c.tags || []).indexOf("niche") !== -1,
-  ).length;
-  $("statNiche").textContent = String(nicheCount);
-  const domCount = (DATA.conferences || []).filter(
-    (c) => (c.tags || []).indexOf("domestic-jp") !== -1,
-  ).length;
-  $("statDomestic").textContent = String(domCount);
+  /* 画面上部の四つの数。絞り込み前の収録全体の数を出す（検索やチェックボックスでは動かない）
+   * が、「これからの30日間の締切」だけは一覧の窓と同じ目盛りで見ないと画面が自己矛盾する
+   * （第 228 回: 2026-08-09T21:00Z 見立てで上部 176 件・「30 日以内」の一覧 177 件。一覧が
+   * 「あと 30 日」と出す `pacificvis` が上の数だけに入っていなかった）。描画ごとに数えるので、
+   * 日をまたいで開いたタブでも一覧とズレない。 */
+  function renderSummaryStats() {
+    $("statConfs").textContent = String((DATA.conferences || []).length);
+    const nowMs = Date.now();
+    const next30 = rows.filter(
+      (r) =>
+        (r.kind === "abstract" || r.kind === "paper") &&
+        !r.est &&
+        rowIsFuture(r, nowMs) &&
+        !rowAfter(r, windowLimitMs("30", nowMs)),
+    ).length;
+    $("statUpcoming").textContent = String(next30);
+    const nicheCount = (DATA.conferences || []).filter(
+      (c) => (c.tags || []).indexOf("niche") !== -1,
+    ).length;
+    $("statNiche").textContent = String(nicheCount);
+    const domCount = (DATA.conferences || []).filter(
+      (c) => (c.tags || []).indexOf("domestic-jp") !== -1,
+    ).length;
+    $("statDomestic").textContent = String(domCount);
+  }
+  renderSummaryStats();
 
   // ---- REMAIN / STATUS ----
   function remain(ms: number) {
@@ -2009,12 +2028,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 語を分解し直す（3234 行で 1 打鍵あたり約 83 ms かかっていた）。
     const matchesQuery = Recommender.searchMatcher(searchQuery);
     const isPast = (row: AppRow) => (row.dateOnly ? now > row.tLast : row.t < now);
-    /* 窓の比較は、行が「表示している暦日」でやる。`remain`・締切欄・CSV の残り列は
-     * そこを見ているので、`row.t` で比べると締切欄に書いた日付より 1 日早く窓から出る
-     * （2026-08-09 生成ビルドで実測: `t` が JST 2026-09-09 19:00 なのに締切欄は 9/10 と
-     * 出る行が 10 件あり、「30 日以内」に並びながら「あと 31 日」と出ていた）。 */
-    const shownDayMs = (row: AppRow) => (Number.isFinite(row.tShown) ? row.tShown : row.t);
-    const isAfter = (row: AppRow, dateLimit: number) => shownDayMs(row) > dateLimit;
+    /* 窓の比較は「表示している暦日」でやる（`rowShownDayMs`・`rowAfter` がその正本で、
+     * 画面上部の「これからの30日間の締切」も同じ関数を見る。基準を分けると、一覧が
+     * 「あと 30 日」と出す行が上の数から落ちて画面が自己矛盾する）。 */
     const limit = windowLimitMs(state.win, now);
     const floor = state.past ? windowFloorMs(state.win, now) : Number.NEGATIVE_INFINITY;
     const pElem = typeof document !== "undefined" ? $("paperText") : null;
@@ -2091,7 +2107,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (byEst || byPast || byEstimatedPast || byKind) {
         return false;
       }
-      if (!inRecommend && isAfter(r, limit)) {
+      if (!inRecommend && rowAfter(r, limit)) {
         // 「締切まで 7 日以内」を選ぶと 438 件が黙って消える（実測: 対象 477 行のうち表示 39 件）。
         // 件数欄が窓の話をしないと「今週は収録が薄い」と誤解して検索をやめてしまう。
         hiddenCounts.window += 1;
@@ -2099,7 +2115,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       }
       // 日付だけの行は当日中が有効なので、終端側（tLast）で窓に触れているかを見る。
       // 下側も同じ「表示している暦日」で比べる（上側と基準を分けるのが今回の原因）
-      if (!inRecommend && shownDayMs(r) < floor) {
+      if (!inRecommend && rowShownDayMs(r) < floor) {
         // 「過去の締切も表示」と併用したときの下限側。同じ窓の話なので上の計数とまとめる。
         hiddenCounts.window += 1;
         return false;
@@ -3505,6 +3521,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   function render() {
+    // 上の四つの数もそのときの時計で数え直す（一覧と同じ目盛りを保つため）。
+    renderSummaryStats();
     const recMode = state.mode === "recommend";
     if (recMode && !recommendationData && !recommendationError) loadRecommendationData();
     shown = recMode && !recommendationData ? [] : filter();

@@ -2804,6 +2804,10 @@ const FILTER_RUNTIME_STUBS = [
   jsFunction(siteRuntime(), "windowLimitMs"),
   // 「締切まで」の上下限は絞り込み本体が共有する実装（窓の解釈を二重化しない）。
   jsFunction(siteRuntime(), "windowFloorMs"),
+  // 窓の比較そのもの（行の表示暦日）も共有実装（第 228 回に絞り込みと画面上部の数が 1 本に
+  // 寄ったので、ハーネスもそこを注入する。書かないと `rowAfter is not defined` になる）。
+  jsFunction(siteRuntime(), "rowShownDayMs"),
+  jsFunction(siteRuntime(), "rowAfter"),
   ...SORT_CANON.all,
   "let semQuery = null, semEmbeddings = null;",
   "let catFacetCounts = {};",
@@ -5275,6 +5279,9 @@ it("種別セレクトに並ぶ選択肢は、選べば行が返る（SPEC §7�
     // 間接 eval でグローバルに置く（`new Function` の中身はグローバルスコープで解決されるため、
     // async IIFE の中の変数は見えない）。
     `(0, eval)(${JSON.stringify(jsFunction(runtime, "windowLimitMs"))});`,
+    // 窓の比較（行の表示暦日）は絞り込み本体と画面上部の数が共有する（第 228 回）。
+    `(0, eval)(${JSON.stringify(jsFunction(runtime, "rowShownDayMs"))});`,
+    `(0, eval)(${JSON.stringify(jsFunction(runtime, "rowAfter"))});`,
     // 並び順の比較もグローバルに（`new Function` 内はグローバルで解決される）。
     // 手書きの `SELECTABLE_KINDS` は種別セレクトの正本から取る。
     `(0, eval)(${JSON.stringify(SORT_CANON_EVAL)});`,
@@ -5380,6 +5387,9 @@ it("ランクの選択肢は選べば行が返り、表示語はそのまま引�
     // 間接 eval でグローバルに置く（`new Function` の中身はグローバルスコープで解決されるため、
     // async IIFE の中の変数は見えない）。
     `(0, eval)(${JSON.stringify(jsFunction(runtime, "windowLimitMs"))});`,
+    // 窓の比較（行の表示暦日）は絞り込み本体と画面上部の数が共有する（第 228 回）。
+    `(0, eval)(${JSON.stringify(jsFunction(runtime, "rowShownDayMs"))});`,
+    `(0, eval)(${JSON.stringify(jsFunction(runtime, "rowAfter"))});`,
     // 並び順の比較もグローバルに（`new Function` 内はグローバルで解決される）。
     // 手書きの `SELECTABLE_KINDS` は種別セレクトの正本から取る。
     `(0, eval)(${JSON.stringify(SORT_CANON_EVAL)});`,
@@ -5504,6 +5514,10 @@ it("締切までの選択肢は URL と表裏一体で、窓は入れ子にな�
     "const activeData = { conferences: [] };",
     jsFunction(runtime, "windowLimitMs"),
     jsFunction(runtime, "windowFloorMs"),
+    // 窓の比較（行の表示暦日）も共有実装（第 228 回）。書かないと `filter` が
+    // `rowAfter is not defined` で落ちる。
+    jsFunction(runtime, "rowShownDayMs"),
+    jsFunction(runtime, "rowAfter"),
     ...SORT_CANON.all,
     "const Recommender = {",
     "  expandRelativeMonths: (q) => q || '', searchMatcher: () => () => true,",
@@ -6183,7 +6197,7 @@ it("共有URLに論文の本文を載せず、そのことを画面で伝える�
 
 it("論文の入力は同じタブなら刷新を耐え、リンクには乗らない（SPEC §7・§10）", () => {
   /* 2026-09-23 実測: 論文の入力（タイトル・概要・キーワード・参考論文）は DOM の中にしか無く、
-   * `sessionStorage` / `localStorage` への書き込みは源码に 0 件だった。概要を数百文字貼って
+   * `sessionStorage` / `localStorage` への書き込みはソースコードに 0 件だった。概要を数百文字貼って
    * 画面を刷新すると貼り直しになる – 「投稿先を探す」で失う量が最も大きい画面なので、
    * 同じタブのセッション中だけ憶える形にした（上の検査の通り、URL には載せない）。 */
   const app = siteRuntime("app.js");
@@ -6282,7 +6296,7 @@ it("論文の入力は同じタブなら刷新を耐え、リンクには乗ら�
   expect(denied.status, denied.stderr).toBe(0);
   expect(JSON.parse(denied.stdout).戻った).toBe(false);
 
-  /* 実際に効いている場所（欄の読み直し・消す操作・起動時）で呼ばれていることを、源码で押さえる。
+  /* 実際に効いている場所（欄の読み直し・消す操作・起動時）で呼ばれていることを、ソースコードで押さえる。
    * 上の検査は関数を直接動かすので、配線を外しても通ってしまう – ここが実動作の検査になる。 */
   expect(jsFunction(app, "syncPaperText")).toContain("savePaperDraft(readPaperInput())");
   expect(jsFunction(app, "clearPaperInput")).toContain("savePaperDraft(readPaperInput())");
@@ -6603,6 +6617,93 @@ it("「締切まで N 日以内」の窓で外れた件数を件数欄に出す�
   expect(dd).toContain("「締切まで 7 日以内」を超える N 件");
   expect(dd).toContain("収録が薄いわけではありません");
   expect(dd).toContain("「かまわない」");
+});
+
+it("画面上部の「これからの30日間の締切」は「30 日以内」の一覧と同じ行を数える（SPEC §7）", () => {
+  /* 第 228 回。上の四つの数は経過 24 時間で区切り、一覧の窓は JST の暦日で区切る（第 202 回）
+   * という二重実装になっていた。2026-08-09 生成ビルドで実測: JST 8/10 朝の見立て
+   * （2026-08-09T21:00Z）で上部 176 件・「30 日以内」の一覧 177 件。一覧が「あと 30 日」と
+   * 出す `pacificvis`（締切 JST 9/9 20:59）が上の数だけに入っていなかった。
+   * 画面の上と下が同じ語について違う数を言うのは、どちらを信じてよいか分からない。 */
+  const app = siteRuntime();
+  const fn = (name: string) => jsFunction(app, name);
+  const script = [
+    "const DAY = 86400000;",
+    "let NOW = 0;",
+    "const RealDate = Date;",
+    // 時計を止めた Date を、絞り込みにも渡す（素の Date を渡すと現実の時刻で走って
+    // すべての行が「過ぎた」になる）。
+    "const StoppedDate = class extends RealDate { static now() { return NOW; } };",
+    "globalThis.Date = StoppedDate;",
+    // 絞り込みの本体が使う語彙（検索照合の正本など）をビルド成果物から注入する。
+    FILTER_RUNTIME_STUBS,
+    // 過ぎたかの判定は一覧と同じ正本を見る（規則をテスト側に書き写さない）。
+    "Recommender.deadlineRowIsPast = " +
+      jsFunction(siteRuntime("recommender.js"), "deadlineRowIsPast") +
+      ";",
+    // 窓の上下限・表示暦日の比較は FILTER_RUNTIME_STUBS が正本から注入している。
+    fn("rowIsPast"),
+    fn("rowIsFuture"),
+    `const ROWS_SRC = ${JSON.stringify([
+      // 30 日後の JST 暦日の中、その日の遅い時刻（経過 24 時間だと窓の外になる）。
+      { key: "later-in-the-day", t: "2026-09-09T11:59:00Z", kind: "paper" },
+      // 31 日後の暦日（どちらの目盛りでも窓の外）。
+      { key: "next-day", t: "2026-09-10T02:00:00Z", kind: "paper" },
+      // 締切の瞬間は窓の中、でも画面に出る暦日は 31 日後（AoE 詰めなどでずれる行）。
+      // 窓は「表示している暦日」で切る（第 202 回）ので、この行は出ない。
+      {
+        key: "shown-later",
+        t: "2026-09-09T10:00:00Z",
+        tShown: "2026-09-10T03:00:00Z",
+        kind: "paper",
+      },
+      // 推定（既定では数えない・一覧にも出ない）。
+      { key: "estimated", t: "2026-09-01T03:00:00Z", kind: "paper", est: true },
+      // 投稿締切以外の種別（同じく数えない）。
+      { key: "notification-only", t: "2026-09-01T03:00:00Z", kind: "notification" },
+    ])};`,
+    "const rows = ROWS_SRC.map((d) => ({",
+    "  kind: d.kind, est: Boolean(d.est), cats: ['hpc'], rankPairs: [], hay: d.key, tags: [],",
+    "  t: RealDate.parse(d.t), tLast: RealDate.parse(d.t),",
+    "  tShown: d.tShown ? RealDate.parse(d.tShown) : NaN, dateOnly: false,",
+    "  ed: { place: 'Paris, 日本', deadlines: [] }, conf: { key: d.key },",
+    "}));",
+    "const DATA = { conferences: [{ key: 'a', editions: [] }, { key: 'b', editions: [] }] };",
+    "const els = {};",
+    "const $ = (id) => (els[id] = els[id] || { textContent: '' });",
+    fn("renderSummaryStats"),
+    `const FILTER = ${JSON.stringify(fn("filter"))};`,
+    // 同じ行・同じ時計で、上の数と「30 日以内」の一覧をそれぞれ本物の実装で数える。
+    "NOW = RealDate.parse('2026-08-09T21:00:00Z');",
+    "renderSummaryStats();",
+    "const 上の数 = Number(els.statUpcoming.textContent);",
+    "const runFilter = new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
+    "  'return (' + FILTER + ')')(StoppedDate, DAY, rows,",
+    "  { mode: 'deadlines', q: '', cats: [], kind: '', rank: '', win: '30', est: false,",
+    "    domestic: false, online: false, past: false }, true, 'rem');",
+    "const 一覧 = runFilter().map((r) => r.conf.key);",
+    // 経過 24 時間での数え方（直前の実装）はここより 1 件少ない。時計と行の組み合わせが
+    // 検査を決めていることを、この数字で示す。
+    "const 経過24時間 = rows.filter((r) => (r.kind === 'abstract' || r.kind === 'paper') && !r.est &&",
+    "  rowIsFuture(r, NOW) && !(r.t > NOW + 30 * DAY)).length;",
+    "console.log(JSON.stringify({ 上の数, 一覧, 経過24時間 }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 120_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const 結果 = JSON.parse(proc.stdout) as { 上の数: number; 一覧: string[]; 経過24時間: number };
+  expect(結果.一覧, "窓の想定と違う行が出た").toEqual(["later-in-the-day"]);
+  expect(結果.経過24時間, "経過 24 時間でも同じ結果ならこの時計は検査になっていない").toBe(0);
+  expect(
+    結果.上の数,
+    `上部 ${結果.上の数} 件・一覧 ${結果.一覧.length} 件で画面が自己矛盾している`,
+  ).toBe(結果.一覧.length);
+  // 日をまたいで開いたタブでもズレないよう、四つの数は描画ごとに数え直す。
+  expect(jsFunction(app, "render"), "四つの数を描画ごとに数え直していない").toContain(
+    "renderSummaryStats()",
+  );
 });
 
 it("地域まとめの構成員は、収録カタログの開催地に現れる（SPEC §7）", () => {
@@ -16212,9 +16313,17 @@ it("締切の窓は行の「表示している暦日」で比べている（SPEC
    * （`t` は JST 2026-09-09 19:00 なのに締切欄に 9/10 と出る行が 10 件在った）。
    * `filter` の組み立てをビルド成果物から見て、比較を表示暦日に揃えたことを確かめる。 */
   const app = siteRuntime();
+  // 第 228 回で比較は共有関数に寄せた（画面上部の「これからの30日間の締切」と一覧が
+  // 違う目盛りを持つようになったので、1 本にまとめる側の検査に組み替える）。
+  expect(jsFunction(app, "rowShownDayMs"), "表示暦日が tShown を見ていない").toContain("r.tShown");
+  const after = jsFunction(app, "rowAfter");
+  expect(after, "窓の上側が行の表示暦日で比較されていない").toContain(
+    "rowShownDayMs(r) > dateLimit",
+  );
+  expect(after, "窓の上側が締切の瞬間で比較している").not.toContain("r.t >");
   const body = jsFunction(app, "filter");
-  expect(body, "窓の比較が行の表示暦日を使っていない").toContain("shownDayMs(row) > dateLimit");
-  expect(body, "窓の下側が行の表示暦日を使っていない").toContain("shownDayMs(r) < floor");
+  expect(body, "絞り込みが共有した窓の比較を見ていない").toContain("rowAfter(r, limit)");
+  expect(body, "窓の下側が行の表示暦日を使っていない").toContain("rowShownDayMs(r) < floor");
 });
 
 it("推薦画面の印刷見出しは、用紙に載る枚数と候補の総数を言い分ける（SPEC §7）", async () => {
@@ -16527,7 +16636,7 @@ it("検索語が 1 行も落とさないとき、件数欄が打ち直し方を�
     "const 一部落ちる = hiddenCounts.query || 0;",
     "console.log(JSON.stringify({ 全部当たる, 一部落ちる }));",
   ].join("\n");
-  // `vmSafeSource` を適用した文字列をそのまま渡す（関数の源码を本文中に注入すると、そこに
+  // `vmSafeSource` を適用した文字列をそのまま渡す（関数の本体を本文中に注入すると、そこに
   // 現れる語で Node が ESM 判定をし、`new Function` の内側から最上位の const が見えなくなる。
   // 2026-09-23 以降の実測で、この検査でも実際に踏んだ）。
   const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
