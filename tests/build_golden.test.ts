@@ -11306,6 +11306,134 @@ it("選んだ行は支援技術にも伝わる（視覚の目印だけで状態�
   expect(app).toContain('removeAttribute("aria-current")');
 });
 
+it("常時受付ジャーナルに当たる語を、読み上げが「収録データにありません」と言わない（SPEC §7）", () => {
+  /* 語の数え上げ（`queryTermCounts`）は表の行だけを見ていて、常時受付のジャーナルを
+   * 読まない。`常時受付` は表 0 件・ジャーナル 22 件なのに、読み上げは
+   * 「語「常時受付」は収録データにありません」と言っていた（2026-08-09 生成ビルドで実測）。
+   * 同じ画面の案内は「収録済みの行 22 件に当たります（いずれも常時受付のジャーナルで…）」と
+   * 出していて、目の字と読み上げが逆のことを並べていた。てびきは「種別の選択欄に並ぶのは、
+   * 選べば結果が返る種別（概要・論文・常時受付）だけ」と先に書いているので、噓は読み上げ側。 */
+  const app = siteRuntime("app.js");
+  const rec = siteRuntime("recommender.js");
+  const real = JSON.parse(readFileSync(join(site, "data.json"), "utf8")) as {
+    conferences: unknown;
+  };
+  const tableRows = Recommender.candidateRows(real) as Array<{ hay: string }>;
+  const journals = Recommender.journalRows(
+    real.conferences,
+    Date.parse("2026-08-09T00:00:00Z"),
+  ) as Array<{ hay: string }>;
+  const matcher = Recommender.searchMatcher("常時受付");
+  const tableHits = tableRows.filter((row) => matcher(String(row.hay))).length;
+  const journalHits = journals.filter((row) => matcher(String(row.hay))).length;
+  expect(tableHits, "表にも常時受付の語が出るようになった（検査の前提が変わった）").toBe(0);
+  expect(journalHits, "ジャーナルの行が読めない（検査が空振り）").toBeGreaterThan(0);
+
+  const live = new Function(
+    "Recommender",
+    `${jsFunction(app, "countJa")};\nreturn (${jsFunction(app, "zeroResultLiveNote")});`,
+  )(Recommender) as (f: object) => string;
+  const hint = new Function(
+    "Recommender",
+    `${(rec.match(/const KIND_ALL_LABEL_JA = [^\n]*;/) || app.match(/const KIND_ALL_LABEL_JA = [^\n]*;/) || ['""'])[0]}
+     ${jsFunction(app, "countJa")};
+     return (${jsFunction(app, "emptyDeadlineHint")});`,
+  )(Recommender) as (f: object) => string;
+  const base = {
+    window: "all",
+    past: false,
+    cats: 0,
+    domestic: false,
+    online: false,
+    rank: "",
+    kind: "",
+    hidden: {},
+    hiddenKindWords: [],
+    urlQuery: false,
+    query: "常時受付",
+    termCounts: [{ term: "常時受付", count: 0 }],
+    catalogConferences: tableRows.length,
+    clearable: true,
+    pastShown: false,
+  };
+  const journalMatch = { queryMatch: { catalog: 0, journal: journalHits } };
+
+  const spoken = live({ ...base, ...journalMatch });
+  expect(spoken, "表に出ない語を『収録データにありません』と言った").not.toContain(
+    "収録データにありません",
+  );
+  expect(spoken, "当たっている側の話をしている").toContain("当たります");
+  expect(spoken, "ジャーナルの件数を出していない").toContain("常時受付ジャーナル");
+  expect(spoken).toContain(`${journalHits} 件`);
+  // 出しかたまで読む（「いまの条件では 0 件です」で止めると、ここで読む人はやめる）。
+  expect(spoken, "外し方を出していない").toContain("種別");
+  /* 同じ 0 件画面の案内と読み上げが、同じ方向を向いていること（数字の内訳まで
+   * 同じであることは別の検査で既にしているので、ここでは噓の矛盾だけを見る）。 */
+  const shown = hint({ ...base, ...journalMatch });
+  expect(shown, "画面の案内がジャーナルを言っていない").toContain("ジャーナル");
+  expect(shown).toContain("当たります");
+
+  // 収録のどこにも当たらないときは、従来どおり語を名指す（外すと何が変わるか伝えるため）。
+  const nowhere = live({ ...base, queryMatch: { catalog: 0, journal: 0 } });
+  expect(nowhere, "当たらない語を名指さなくなった").toContain("収録データにありません");
+  expect(nowhere).toContain("常時受付");
+
+  // 表に当たりがある語も、従来どおり「いまの条件では 0 件」側の話を続ける。
+  const catalogHit = live({
+    ...base,
+    query: "〆切",
+    termCounts: [{ term: "〆切", count: 4 }],
+    queryMatch: { catalog: 4, journal: 0 },
+  });
+  expect(catalogHit, "表に当たりがある語の話が変わった").toContain(
+    "収録で 4 件に当たりますが、いまの条件では 0 件です",
+  );
+  const gpu = live({
+    ...base,
+    query: "ネットワーク GPU",
+    termCounts: [
+      { term: "ネットワーク", count: 39 },
+      { term: "gpu", count: 0 },
+    ],
+    queryMatch: { catalog: 0, journal: 0 },
+  });
+  expect(gpu, "収録に無い語を名指さなくなった").toContain("語「gpu」");
+  expect(gpu).toContain("収録データにありません");
+});
+
+it("README と SPEC の回の記録に、同じ見出しが二度並んでいない（重複追記の再発防止・SPEC §7）", () => {
+  /* 第 239 回の記録を書いたとき、文書へ追記する手順を 4 度走らせて、同じ項が 4 並んだまま
+   * コミットしていた（自查で発覚・2026-08-09 実測: README の第 239 回の変更履歴が 7 行 × 4、
+   * 使い方の項も 4 重複）。人間が読む文書で同じ話を 4 回するのは使いにくいし、
+   * 「今回の話」の位置が分からなくなる。同じ見出しが並んでいないことを検査にする。 */
+  for (const name of ["README.md", "SPEC.md"]) {
+    const lines = readFileSync(join(REPO_ROOT, name), "utf8").split("\n");
+    const heads = lines.filter((line) => /^ {0,2}- \*\*/.test(line));
+    expect(heads.length, `${name} の回の記録が見当たらない（検査が空振り）`).toBeGreaterThan(5);
+    const counts = new Map<string, number>();
+    heads.forEach((line) => {
+      counts.set(line, (counts.get(line) || 0) + 1);
+    });
+    const dup = [...counts.entries()]
+      .filter(([, n]) => n > 1)
+      .map(([line, n]) => `${n} 度: ${line.slice(0, 54)}`);
+    expect(dup, `${name} に同じ見出しが並んでいる`).toEqual([]);
+  }
+  /* 回の番号でも数える（見出しの語句を言い換えて重複を隠した日にも落ちるようにする）。 */
+  for (const name of ["README.md", "SPEC.md"]) {
+    const text = readFileSync(join(REPO_ROOT, name), "utf8");
+    const rounds = [...text.matchAll(/^- \*\*.*?（(?:[^）]*?・)?第 (\d+) 回）/gm)].map((m) => m[1]);
+    expect(rounds.length, `${name} の回番号が読めない（書式が変わった）`).toBeGreaterThan(5);
+    const counts = new Map<string, number>();
+    rounds.forEach((round) => {
+      counts.set(round, (counts.get(round) || 0) + 1);
+    });
+    const dup = [...counts.entries()]
+      .filter(([, n]) => n > 1)
+      .map(([round, n]) => `第 ${round} 回 × ${n} 度`);
+    expect(dup, `${name} に同じ回の記録が複数並んでいる`).toEqual([]);
+  }
+});
 it("「締め切り」のように表その物を指す語を打った人に、0 件の理由と打ち直し方を出す（SPEC §7）", () => {
   /* この表は締切を並べた物なので「締め切り」は全行に当てはまるが、欄の文字列には
    * 現れない（種別の欄に出る語は「論文締切」などで違う）。直し前は 0 件画面が

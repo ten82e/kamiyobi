@@ -2019,7 +2019,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (wholeWord)
         return ` ｜ 「${wholeWord}」はこの表の全行に当たる語なので、検索では絞れません${pointer}`;
     }
-    const dead = filter.termCounts.filter((t) => t.count === 0).map((t) => t.term);
+    /* 「その語が収録に無い」は、語の数え上げ（表の行だけを見る）ではなく全体の当たり数で決める
+     * （第 240 回）。`常時受付` は表 0 件・常時受付ジャーナル 22 件なのに、読み上げは
+     * 「語「常時受付」は収録データにありません」と言っていた（2026-08-09 生成ビルドで実測）。
+     * 同じ画面の案内は「収録済みの行 22 件に当たります」と出していて、目の字と読み上げが
+     * 逆のことを並べていた。全体で 1 件も当たらないときだけ、語を名指す。 */
+    const dead =
+      matchedRows === 0 ? filter.termCounts.filter((t) => t.count === 0).map((t) => t.term) : [];
     if (dead.length) return ` ｜ 語「${dead[0]}」は収録データにありません${pointer}`;
     if (filter.hiddenKindWords.length)
       return (
