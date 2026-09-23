@@ -2299,6 +2299,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* SPEC §7: 絞り込み後の全行を表計算へ持ち出せるようにする。ページング後の表示分だけ
    * ではなく `shown` 全体を書き出す。Excel は BOM の無い UTF-8 を日本語として読めないため
    * BOM を付けて渡す（本文の区切りは recommender の deadlinesToCsv が単一正典）。 */
+  /* ボタンのラベル。数字は件数欄と同じ `shown.length` を見せるが、「表示中の」とは書かない
+   * （第 229 回）。一覧は一度に先頭 40 件（`PAGE = 40`）しか並べず、残りはずっと下にある
+   * 「さらに表示」のボタンで足す。既定の 478 件の一覧でラベルは
+   * 「表示中の 478 件を CSV でダウンロード」と言っていた – 画面に並んでいるのは 40 件なので、
+   * 438 件について噓になる。書き出しの中身（絞り込み後の全行）は正しく、語が誤っていた。
+   * てびきと README に「ページ送りで画面に出ている分ではなく」という言い訳を添えて
+   * ごまかしていたが、原因は語なので語を直す。`countJa` を呼ぶので検査は両方を抜き出す。 */
+  function exportCsvLabelJa(total: number): string {
+    return `この一覧の ${countJa(total)} 件を CSV でダウンロード`;
+  }
+
   function exportShownCsv() {
     const csv = Recommender.deadlinesToCsv(
       shown as unknown as Record<string, unknown>[],
@@ -3743,7 +3754,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // CSV 書き出しは締切一覧の絞り込み結果に対してだけ意味がある（推薦モードでは出さない）。
     const exportBtn = $("exportCsv");
     if (exportBtn) {
-      exportBtn.textContent = `表示中の ${countJa(shown.length)} 件を CSV でダウンロード`;
+      exportBtn.textContent = exportCsvLabelJa(shown.length);
       exportBtn.hidden = recMode || !shown.length;
     }
     const showHistoryStatus =

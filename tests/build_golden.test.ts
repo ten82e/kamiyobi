@@ -6705,6 +6705,44 @@ it("画面上部の「これからの30日間の締切」は「30 日以内」�
     "renderSummaryStats()",
   );
 });
+it("CSV ボタンのラベルは、画面に並んでいない行を「表示中」と数えない（SPEC §7）", () => {
+  /* 第 229 回。ラベルは「表示中の 478 件を CSV でダウンロード」だったが、一覧は一度に
+   * 先頭 40 件（`PAGE = 40`）しか並べず、残りはずっと下の「さらに表示」で足す。
+   * つまり 438 件について噓を言っていた。書き出しの中身（絞り込み後の全行）は正しく、
+   * 語だけが誤っていたので、語を直す側の検査にする。 */
+  const app = siteRuntime();
+  const page = Number(/const PAGE = (\d+);/.exec(app)?.[1]);
+  expect(page, "一覧のページングサイズが読めない").toBeGreaterThan(0);
+  const 総数 = page + 438; // 既定の一覧を再現（40 件だけ画面に並び、438 件は下にある）
+  const script = [
+    // `exportCsvLabelJa` は `countJa`（桁区切りの正本）を呼ぶので、両方抜き出す。
+    [jsFunction(app, "countJa"), jsFunction(app, "exportCsvLabelJa")].join("\n"),
+    `console.log(JSON.stringify({ ラベル: exportCsvLabelJa(${総数}), 総数: ${総数}, ページ: ${page} }));`,
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 120_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const 結果 = JSON.parse(proc.stdout) as { ラベル: string; 総数: number; ページ: number };
+  expect(結果.総数, "ページ数より少ない件数ではこの検査は意味がない").toBeGreaterThan(結果.ページ);
+  expect(結果.ラベル, "件数欄と同じ数字が出ない").toBe(
+    `この一覧の ${結果.総数} 件を CSV でダウンロード`,
+  );
+  expect(結果.ラベル, "画面に並んでいない行まで「表示中」と数えている").not.toContain("表示中");
+  // 数字は件数欄と同じ `shown.length` を見る（ラベルだけ別の数を言わないように）。
+  const render = jsFunction(app, "render");
+  expect(render, "ボタンがラベルの組み立てを見ていない").toContain(
+    "exportCsvLabelJa(shown.length)",
+  );
+  expect(render, "件数欄が `shown.length` を言っていない").toMatch(
+    /countJa\(shown\.length\)\} 件 \/ 全/,
+  );
+  // てびきがボタンと同じ語を引用しているか（画面の語を文書で言い換えない）。
+  expect(siteHtmlRuntime(), "てびきの CSV の項がボタンの語とズレている").toContain(
+    "この一覧の N 件を CSV でダウンロード",
+  );
+});
 
 it("地域まとめの構成員は、収録カタログの開催地に現れる（SPEC §7）", () => {
   /* `ヨーロッパ` → 国名、という寄せは「画面の開催地に出る語」だけで作る。
