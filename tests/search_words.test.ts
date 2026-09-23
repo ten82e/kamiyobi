@@ -599,3 +599,91 @@ it("助詞で繋がれた相対月（来月の締切）でも同じ行に出会�
     `検索語の組に暦月が出てこない: ${JSON.stringify(groups)}`,
   ).toBe(true);
 });
+
+it("月の範囲の言い方（9月以降・9月から11月）で、計画の期間そのままの行に出会える", () => {
+  /* 研究計画・出張の相談では期間で言う（2026-08-09 生成ビルド・固定時刻で実測）。
+   * `9月` は 687 行に当たるのに、**`9月以降` 0 行・`9月から` 0 行・`9月から11月` 0 行**で
+   * 案内も無かった（2026年9〜12月に当たる行は 957 行ある）。 */
+  const all = rows();
+  const NOW = Date.parse("2026-08-09T00:00:00Z");
+  const hits = (query: string) => {
+    const matches = Recommender.searchMatcher(Recommender.expandRelativeMonths(query, NOW), NOW);
+    return all.filter((row) => matches(String(row.hay)));
+  };
+  /* 期待値は実装の範囲計算を写さず、行が持つ暦月語から独立に作る。 */
+  const expected = (specs: number[][]) => {
+    const terms = specs.map(([year, month]) => `${year}年${month}月`);
+    return all.filter((row) => terms.some((term) => String(row.hay).includes(term)));
+  };
+  const same = (query: string, want: number[][]) => {
+    const set = new Set(expected(want).map((row) => String(row.hay)));
+    expect(
+      set.size,
+      `基準の「${query}」の期待値が行に出会えない（前提が変わった）`,
+    ).toBeGreaterThan(0);
+    const got = hits(query);
+    expect(got.length, `「${query}」の行数が期待値と違う`).toBe(set.size);
+    expect(
+      got.every((row) => set.has(String(row.hay))),
+      `「${query}」で期待していない行が出た`,
+    ).toBe(true);
+  };
+
+  same("9月以降", [
+    [2026, 9],
+    [2026, 10],
+    [2026, 11],
+    [2026, 12],
+  ]);
+  same("9月から", [
+    [2026, 9],
+    [2026, 10],
+    [2026, 11],
+    [2026, 12],
+  ]);
+  same("9月から11月", [
+    [2026, 9],
+    [2026, 10],
+    [2026, 11],
+  ]);
+  // 年跨ぎ（11月から2月）は翌年まで出す。
+  same("11月から2月", [
+    [2026, 11],
+    [2026, 12],
+    [2027, 1],
+    [2027, 2],
+  ]);
+  // 相対月にも同じ形が効く（来月 = 固定時刻の翌月）。
+  const nextMonth = new Date(Date.UTC(2026, 8, 1));
+  same("来月以降", [
+    [nextMonth.getUTCFullYear(), nextMonth.getUTCMonth() + 1],
+    [2026, 10],
+    [2026, 11],
+    [2026, 12],
+  ]);
+  // 基準月より前の月を打たれたら翌年として受ける（過ぎた月は計画の対象ではない）。
+  const wholeNextYear: number[][] = [];
+  for (let month = 1; month <= 12; month += 1) wholeNextYear.push([2027, month]);
+  same("1月以降", wholeNextYear);
+
+  // 他の語とのかけ算は絞込みとして効く。
+  const rangeAndTopic = hits("9月以降 セキュリティ");
+  const security = hits("セキュリティ");
+  expect(security.length, "前提: セキュリティの行が無い").toBeGreaterThan(0);
+  expect(rangeAndTopic.length, "月の範囲と他の語のかけ算が効いていない").toBeLessThan(
+    security.length,
+  );
+  expect(rangeAndTopic.length, "月の範囲と他の語のかけ算が行に当たらない").toBeGreaterThan(0);
+  // 範囲は単月の上位互換になる（9月を含む範囲は 9月 単体より狭くならない）。
+  expect(hits("9月以降").length).toBeGreaterThanOrEqual(hits("9月").length);
+
+  // 件数欄が範囲を言う（伏せた範囲指定は誤信を生む – 同じ画面の約束）。
+  const notes = Recommender.monthRangePairs("9月以降", NOW) as Array<[string, string]>;
+  expect(notes.length, "範囲の案内が出ていない").toBe(1);
+  expect(String(notes[0]), "案内が出す範囲がちがう").toContain("2026年9月から2026年12月");
+  const builtApp = readFileSync(join(builtSite(), "app.js"), "utf8");
+  expect(
+    builtApp.includes("monthRangePairs"),
+    "件数欄が月の範囲の案内を出していない（ビルド済み app.js に部品が無い）",
+  ).toBe(true);
+});

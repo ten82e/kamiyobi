@@ -3687,6 +3687,96 @@ const Recommender = (() => {
     return out;
   }
 
+  /* 月の範囲の言い方を受ける（第 252 回）。研究計画・出張の相談では「9月以降の締切を
+   * 見たい」「9月から11月あたりの会議を出したい」がそのまま打たれる。2026-08-09 生成ビルド
+   * （固定時刻 2026-08-09T00:00:00Z）で実測: `9月` は 687 行に当たるのに、
+   * **`9月以降` 0 行・`9月から` 0 行・`9月から11月` 0 行・`来月以降` 0 行**で、
+   * 案内も出ていなかった（2026年9〜12月に当たる行は 957 行ある）。
+   * 週の語・年の語と同じく、表に出る暦月語（`monthTermsJa` が hay に入れる形）の
+   * OR グループへ展開する。 */
+  const MONTH_RANGE_FROM = /^(.+)月(?:以降|以来|から)$/;
+  const MONTH_RANGE_SPAN = /^(.+)月から(\d{1,2})月(?:まで)?$/;
+
+  /** 月の語（`9月`・相対月語）を `[年, 月]` に解決する。解決できなければ null。
+   * 基準月より前の月を打たれたときは翌年として受け取る – 過ぎた月は計画の対象では
+   * ないため（`1月以降` を 8 月に打つ人は翌年 1 月を見る）。 */
+  function monthTokenToYearMonth(token: string, nowMs: number): number[] | null {
+    const jst = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
+    const year = jst.getUTCFullYear();
+    const current = jst.getUTCMonth() + 1;
+    const absolute = /^(\d{1,2})月$/.exec(token);
+    if (absolute) {
+      const month = Number(absolute[1]);
+      if (month < 1 || month > 12) return null;
+      return month < current ? [year + 1, month] : [year, month];
+    }
+    const term = relativeMonthTerm(token, nowMs);
+    if (term) {
+      const resolved = /^(\d{4})年(\d{1,2})月$/.exec(term);
+      if (resolved) return [Number(resolved[1]), Number(resolved[2])];
+    }
+    return null;
+  }
+
+  /* 「来年9月以降」のように年の語を冠で付ける人もいる（計画の立て方では「来年の秋」と
+   * 並べて言う）。冠があるときは基準月より前でも翌年へ繰らない – 年を言っている。 */
+  const MONTH_RANGE_YEAR_PREFIX =
+    /^(今年|ことし|本年|来年|らいねん|再来年|さらいねん|去年|きょねん)(.+)$/;
+
+  /** 月の範囲の語を、表に出る暦月語（`YYYY年M月`）の OR グループへ展開する。 */
+  function monthRangeTermsJa(token: string, nowMs: number): string[] {
+    const prefixed = MONTH_RANGE_YEAR_PREFIX.exec(token);
+    const yearOffset = prefixed ? RELATIVE_YEAR_OFFSETS_JA[prefixed[1]] : undefined;
+    const body = prefixed ? (prefixed[2] as string) : token;
+    const span = MONTH_RANGE_SPAN.exec(body);
+    const from = span ? null : MONTH_RANGE_FROM.exec(body);
+    const head = span ? `${span[1]}月` : from ? `${from[1]}月` : "";
+    if (!head) return [];
+    let start = monthTokenToYearMonth(head, nowMs);
+    if (start && yearOffset !== undefined) {
+      const jst = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
+      start = [jst.getUTCFullYear() + yearOffset, start[1]];
+    }
+    if (!start) return [];
+    let last: number[];
+    if (span) {
+      const second = Number(span[2]);
+      if (second < 1 || second > 12) return [];
+      last = second >= start[1] ? [start[0], second] : [start[0] + 1, second];
+    } else {
+      // 「以降」は暦年の終わりまでを出す。先にいつまで出したかは件数欄で言う
+      // （伏せた範囲指定は誤信を生む – 同じ画面の約束）。
+      last = [start[0], 12];
+    }
+    const out: string[] = [];
+    let y = start[0];
+    let m = start[1];
+    for (let guard = 0; guard < 25; guard += 1) {
+      out.push(`${y}年${m}月`);
+      if (y === last[0] && m === last[1]) break;
+      m += 1;
+      if (m > 12) {
+        m = 1;
+        y += 1;
+      }
+    }
+    return out;
+  }
+
+  /** 月の範囲の語について `打った語 -> 出した範囲` の組を返す（件数欄の説明用）。 */
+  function monthRangePairs(query: unknown, nowMs: number): Array<[string, string]> {
+    const normalized = searchNormalize(query);
+    if (!normalized) return [];
+    const pairs: Array<[string, string]> = [];
+    normalized.split(" ").forEach((token) => {
+      splitQueryToken(token).forEach((part) => {
+        const terms = monthRangeTermsJa(part, nowMs);
+        if (terms.length) pairs.push([part, `${terms[0]}から${terms[terms.length - 1]}`]);
+      });
+    });
+    return pairs;
+  }
+
   /** JST の暦日を基準時刻からの日数ぶん進めた `[年, 月, 日]`。 */
   function offsetCalendarDay(nowMs: number, days: number): number[] {
     const base = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
@@ -4700,6 +4790,11 @@ const Recommender = (() => {
       yearMonthTermsJa(token, now).forEach((name) => {
         if (group.indexOf(name) < 0) group.push(name);
       });
+      /* 「9月以降」「9月から11月」も暦月語のグループへ展開する（第 252 回）。
+       * 展開できたときは元の語を組に残さない – 表にその語が無いので、残しても
+       * 当たり方を狭めるだけになる。 */
+      const monthRange = monthRangeTermsJa(token, now);
+      if (monthRange.length) group = monthRange.slice();
 
       /* 時刻の語は零詰めた形に寄せる。画面に出る 21 種はすべて `08:59` の形所以外に
        * 無いので（2026-08-09 生成ビルドで実測）、打った側を画面の形に直す。元の形も
@@ -6911,6 +7006,8 @@ const Recommender = (() => {
     placeWithPrefectureJa: placeWithPrefectureJa,
     expandRelativeMonths: expandRelativeMonths,
     relativeMonthPairs: relativeMonthPairs,
+    monthRangeTermsJa: monthRangeTermsJa,
+    monthRangePairs: monthRangePairs,
     kanaFold: kanaFold,
     queryTokenGroups: queryTokenGroups,
     queryTokens: queryTokens,

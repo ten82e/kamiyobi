@@ -2726,6 +2726,8 @@ const SEARCH_CANON = (() => {
      * 抜き出して注入する（書き写すと正本とズレる）。 */
     ["WHOLE_TABLE_QUERY_JA", /const WHOLE_TABLE_QUERY_JA[\s\S]*?\];/],
     ["QUERY_PARTICLE_SPLIT_CHARS", /const QUERY_PARTICLE_SPLIT_CHARS = [^\n]*;/],
+    // 月の範囲の言い方（`9月以降`）が使う定義（第 252 回 – 連なった定義をまとめて抜く）。
+    ["MONTH_RANGE", /const MONTH_RANGE_FROM[\s\S]*?MONTH_RANGE_YEAR_PREFIX = [^\n]*;/],
   ].map(([name, re]) => {
     const src = rec.match(re)?.[0];
     expect(src, `${name} 定義が見つからない`).toBeTruthy();
@@ -2742,6 +2744,9 @@ const SEARCH_CANON = (() => {
       "relativeMonthTerm",
       // 件数欄に出す「打った語 = 解決した暦月」の組を作る部品（第 251 回）。
       "relativeMonthPairs",
+      // 月の範囲の展開（第 252 回）。
+      "monthTokenToYearMonth",
+      "monthRangeTermsJa",
       "searchNormalize",
       // 第 153 回: URL を検索欄に貼れるようにしたので、その部品も一緒に抜く
       // （抜いた関数は独立していないと `ReferenceError` になる）。
