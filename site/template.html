@@ -890,11 +890,11 @@ footer a:hover { text-decoration: underline; }
   <div class="panel mode-deadlines" id="controlsPanel">
     <div class="presets-bar deadline-only">
       <span style="font-size: 0.78rem; color: var(--muted); align-self: center; margin-right: 4px;">クイック抽出:</span>
-      <button class="preset-btn" data-preset="7d" onclick="applyPreset('7d')" title="押すと 7 日以内に絞ります。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">締切まで 7 日以内</button>
-      <button class="preset-btn" data-preset="a_star" onclick="applyPreset('a_star')" title="押すと A*ランクだけに絞ります。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">A*ランク</button>
-      <button class="preset-btn" data-preset="hpc_sys" onclick="applyPreset('hpc_sys')" title="押すと分野を高性能計算とシステムに絞ります。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">高性能計算・システム</button>
-      <button class="preset-btn" data-preset="domestic" onclick="applyPreset('domestic')" title="押すと国内研究会・国内シンポジウムに絞ります（下のチェック欄と同じ条件です）。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">国内研究会・国内シンポジウム</button>
-      <button class="preset-btn" data-preset="online" onclick="applyPreset('online')" title="押すとオンライン参加可に絞ります（チェック欄と同じ条件です）。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">オンライン参加可</button>
+      <button class="preset-btn" data-preset="7d" onclick="applyPreset('7d')" type="button" aria-pressed="false" title="押すと 7 日以内に絞ります。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">締切まで 7 日以内</button>
+      <button class="preset-btn" data-preset="a_star" onclick="applyPreset('a_star')" type="button" aria-pressed="false" title="押すと A*ランクだけに絞ります。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">A*ランク</button>
+      <button class="preset-btn" data-preset="hpc_sys" onclick="applyPreset('hpc_sys')" type="button" aria-pressed="false" title="押すと分野を高性能計算とシステムに絞ります。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">高性能計算・システム</button>
+      <button class="preset-btn" data-preset="domestic" onclick="applyPreset('domestic')" type="button" aria-pressed="false" title="押すと国内研究会・国内シンポジウムに絞ります（下のチェック欄と同じ条件です）。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">国内研究会・国内シンポジウム</button>
+      <button class="preset-btn" data-preset="online" onclick="applyPreset('online')" type="button" aria-pressed="false" title="押すとオンライン参加可に絞ります（チェック欄と同じ条件です）。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">オンライン参加可</button>
     </div>
 
     <div class="row deadline-only" style="margin-bottom: 14px;">
@@ -1140,7 +1140,7 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div>
         <dt>早め絞り込みのボタン</dt>
-        <dd>画面上部のボタン（「締切まで 7 日以内」「A*ランク」「高性能計算・システム」「国内研究会・国内シンポジウム」「オンライン参加可」）は、<strong>その条件だけを出し入れします</strong>。押すと入ってもう一度押すと外れ、押している間は点いたままです。入力済みの検索語や他の条件は<strong>消えません</strong>（変更前は押すたびに初期値へ戻っていました）。条件を一度に外したいときは、0 件案内の「条件をまとめて外す」を使ってください。ボタンの語はそのまま検索欄にも打てます（<code>A*ランク</code>・<code>A* ランク</code>で同じ行）。等級の呼び方はこれだけでは止まりません – <strong>『A 類』のような言い方も同じ行を出します</strong>（2026-08-09 生成ビルドで実測: 直し前は <code>A類</code> 0 件 / <code>Aランク</code> 286 件、<code>B類</code> 0 件 → 260 件、<code>C類</code> 0 件 → 145 件、<code>A*類</code> 0 件 → 156 件）。<code>類</code> だけ・<code>ランク</code> だけでは等級を絞れないので、そのことは件数欄が出します。</dd>
+        <dd>画面上部のボタン（「締切まで 7 日以内」「A*ランク」「高性能計算・システム」「国内研究会・国内シンポジウム」「オンライン参加可」）は、<strong>その条件だけを出し入れします</strong>。押すと入ってもう一度押すと外れ、押している間は点いたままです。点いていることは<strong>読み上げにも同じ状態として伝わります</strong>（並び順や画面切替のボタンと同じ <code>aria-pressed</code> を出します）。2026-08-09 生成ビルドの実測では、この 5 ボタンだけにそれが無く、押したままか外れたかが画面読み上げで読めませんでした。入力済みの検索語や他の条件は<strong>消えません</strong>（変更前は押すたびに初期値へ戻っていました）。条件を一度に外したいときは、0 件案内の「条件をまとめて外す」を使ってください。ボタンの語はそのまま検索欄にも打てます（<code>A*ランク</code>・<code>A* ランク</code>で同じ行）。等級の呼び方はこれだけでは止まりません – <strong>『A 類』のような言い方も同じ行を出します</strong>（2026-08-09 生成ビルドで実測: 直し前は <code>A類</code> 0 件 / <code>Aランク</code> 286 件、<code>B類</code> 0 件 → 260 件、<code>C類</code> 0 件 → 145 件、<code>A*類</code> 0 件 → 156 件）。<code>類</code> だけ・<code>ランク</code> だけでは等級を絞れないので、そのことは件数欄が出します。</dd>
       </div>
       <div>
         <dt>地名はひらがなでもカタカナでも</dt>

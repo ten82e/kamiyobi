@@ -959,10 +959,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 画面から読めなかった（2026-09-23）。 */
   function updatePresetActive() {
     document.querySelectorAll<HTMLElement>(".preset-btn").forEach((btn) => {
-      btn.classList.toggle(
-        "active",
-        Recommender.presetIsActive(btn.getAttribute("data-preset"), state),
-      );
+      const active = Recommender.presetIsActive(btn.getAttribute("data-preset"), state);
+      btn.classList.toggle("active", active);
+      /* 点灯は目にしか見えない合図で、読み上げには「押されている」状態が伝わらない。
+       * 並び順のボタンと画面切替のボタンは `aria-pressed` を出しているので、同じ約束に
+       * 揃える（2026-08-09 生成ビルドで実測: 早め絞り込みのボタン 5 個だけ `aria-pressed` が
+       * 無く、てびきが書く「押している間は点いたまま」の状態が読み上げで読めなかった）。
+       * 条件は点灯と同じ正本 `presetIsActive` を一度だけ見る。 */
+      btn.setAttribute("aria-pressed", active ? "true" : "false");
     });
   }
 

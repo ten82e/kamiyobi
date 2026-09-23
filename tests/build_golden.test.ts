@@ -5628,11 +5628,14 @@ it("早め絞り込みのボタンは、入っている条件が点く（SPEC §
     // `updatePresetActive` はモジュールスコープの `state` を読む（引数取らず）。
     "let state = {};",
     "function btn(preset) {",
-    "  const b = { preset, active: false };",
+    "  const b = { preset, active: false, pressed: '' };",
     "  b.classList = {",
     "    toggle: (_name, on) => {",
     "      b.active = Boolean(on);",
     "    },",
+    "  };",
+    "  b.setAttribute = (name, value) => {",
+    "    if (name === 'aria-pressed') b.pressed = String(value);",
     "  };",
     "  b.getAttribute = (name) => (name === 'data-preset' ? preset : null);",
     "  return b;",
@@ -5643,9 +5646,18 @@ it("早め絞り込みのボタンは、入っている条件が点く（SPEC §
     "  state = Object.assign({}, base, next);",
     "  buttons.forEach((b) => {",
     "    b.active = false;",
+    "    b.pressed = '';",
     "  });",
     "  updatePresetActive();",
-    "  return buttons.filter((b) => b.active).map((b) => b.preset);",
+    "  const on = buttons.filter((b) => b.active).map((b) => b.preset);",
+    "  const read = buttons.filter((b) => b.pressed === 'true').map((b) => b.preset);",
+    "  if (read.join(',') !== on.join(',')) {",
+    "    throw new Error('点灯と読み上げの状態が違う: 点灯 [' + on.join('・') + '] / 読み上げ [' + read.join('・') + ']');",
+    "  }",
+    "  if (buttons.some((b) => b.pressed !== 'true' && b.pressed !== 'false')) {",
+    "    throw new Error('状態を書いていない早め絞り込みのボタンがいる');",
+    "  }",
+    "  return on;",
     "}",
     "const base = { q: '', cats: [], kind: '', rank: '', win: 'all', est: false, domestic: false, online: false, past: false };",
     "console.log(JSON.stringify({",
@@ -17233,6 +17245,78 @@ it("評価なしで絞った人が、件数欄で選択欄と同じ語に出会�
   // てびきが同じ文の形を書いているか。
   expect(siteHtmlRuntime(), "てびきに評価なしの件数欄の出し方を書いていない").toContain(
     "評価なしの行以外 N 件",
+  );
+});
+
+it("早め絞り込みのボタンは、押している状態が目以外の手段にも伝わる（SPEC §7）", () => {
+  /* 第 238 回。早め絞り込みのボタンは点灯（CSS のクラス）だけで状態を出していた。点灯は
+   * 目に見える合図なのでタッチ操作の端末では分かるが、画面読み上げには「押されている」か
+   * 「押されていない」が読めない。並び順のボタンと画面切替のボタンは `aria-pressed` を
+   * 出しており、この 5 個だけ約束から漏れていた（2026-08-09 生成ビルドで実測:
+   * プリセットのボタン 5 個のうち `aria-pressed` を持つ物 0 個 / 他の面のボタン 4 箇所は出ている）。 */
+  const app = siteRuntime("app.js");
+  const fn = jsFunction(app, "updatePresetActive");
+  expect(fn, "早め絞り込みの点灯関数が見当たらない（検査が空振り）").not.toBe("");
+  const script = [
+    "(async () => {",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    "const mk = (preset) => {",
+    "  const btn = { preset: preset, cls: {}, attrs: {} };",
+    "  btn.classList = { toggle: (name, on) => { btn.cls[name] = on === true; } };",
+    "  btn.setAttribute = (name, value) => { btn.attrs[name] = String(value); };",
+    "  btn.getAttribute = (name) => (name === 'data-preset' ? preset : null);",
+    "  return btn;",
+    "};",
+    "const PRESETS = ['7d', 'a_star', 'hpc_sys', 'domestic', 'online'];",
+    "const btns = PRESETS.map(mk);",
+    "const document = { querySelectorAll: () => btns };",
+    // 点灯関数は画面の状態 `state` を語で読むので、注入側の世界に置いておく。
+    "globalThis.state = null;",
+    `const updatePresetActive = new Function('document', 'Recommender', ${JSON.stringify(`return (${fn});`)})(document, Recommender);`,
+    "const out = [];",
+    "PRESETS.forEach((preset) => {",
+    // 空の状態からそのボタンを一度押した形（条件の組み立ても正本 `presetNextSelection` に従う）。
+    "  globalThis.state = { ...Recommender.presetNextSelection(preset, null) };",
+    "  updatePresetActive();",
+    "  out.push({",
+    "    preset: preset,",
+    "    lit: btns.filter((b) => b.cls.active).map((b) => b.preset),",
+    "    read: PRESETS.map((key) => btns.find((b) => b.preset === key).attrs['aria-pressed']),",
+    "  });",
+    "  btns.forEach((b) => { delete b.cls.active; b.attrs = {}; });",
+    "});",
+    "console.log(JSON.stringify(out));",
+    "})().catch((e) => { console.error(e && e.stack || String(e)); process.exit(1); });",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as Array<{ preset: string; lit: string[]; read: string[] }>;
+  const PRESETS = ["7d", "a_star", "hpc_sys", "domestic", "online"];
+  expect(out).toHaveLength(5);
+  out.forEach((row) => {
+    // 前提: 押した本人だけが点く（ハネスが効いていることの確認）。
+    expect(row.lit, `${row.preset} を押したときに点くボタンが違っている`).toEqual([row.preset]);
+    // 読み上げに伝える状態が、点いているボタンと同じでなければならない。
+    expect(row.read, `${row.preset} を押したとき読み上げに伝わる状態`).toEqual(
+      PRESETS.map((key) => (key === row.preset ? "true" : "false")),
+    );
+  });
+  /* 押していないボタンも `false` を書く（属性を消すと「押されているか分からない」に戻る）。 */
+  out.forEach((row) => {
+    expect(
+      row.read.filter((v) => v === undefined),
+      "状態を書いていないボタンがある",
+    ).toHaveLength(0);
+  });
+  // 組み立てた画面でも、ボタンは初期値の状態を持って並ぶ（JS が走る前も同じ形にする）。
+  const html = siteHtmlRuntime();
+  const buttons = (html.match(/<button class="preset-btn"[^>]*>/g) || []).filter((tag) =>
+    tag.includes('aria-pressed="false"'),
+  );
+  expect(buttons.length, "初期状態を書いていない早め絞り込みのボタンがある").toBe(5);
+  // てびきが同じ状態の出し方を書いているか。
+  expect(html, "てびきに読み上げへの出し方を書いていない").toContain(
+    "読み上げにも同じ状態として伝わります",
   );
 });
 
