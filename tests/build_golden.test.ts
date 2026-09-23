@@ -13638,3 +13638,96 @@ it("データ生成からの日数は JST の暦日で数える（SPEC §7）", 
   const html = readFileSync(join(site, "index.html"), "utf8");
   expect(html, "てびきが日数の数え方（JST の暦日）を書いていない").toContain("JST の暦日");
 });
+
+it("CSV の種別列は画面と同じ日本語の語で、英字の内部表記を書かない（SPEC §7）", () => {
+  /* deadlinesToCsv は種別を 3 件だけの表（abstract/paper/journal）で訳していて、それ
+   * 以外の種別は内部表記をそのまま出していた（2026-08-09 実測: `notification` /
+   * `camera_ready` / `rebuttal_end` / `other` / `rebuttal_start` / `review_release` /
+   * `registration` / `supplementary`）。**正直な到達性の記録**: 収録のそれらの行は
+   * 一覧に出さない種別（`SELECTABLE_KINDS` は abstract/paper/journal のみ）で、画面の
+   * CSV は `shown` を渡すため、現時点で利用者が英字の入った CSV を得る経路は無い。
+   * ビルドが書く `data.csv`（全収録のフラット表）は正本の `kindLabelTable` を使って
+   * 既に正しく、ここだけが古い表を別に持つ唯一の経路だった。種別を表に出す変更をした
+   * 瞬間に英字が漏れる地雷なので、分野列が `categoryLabelJa` を使うのと同じ形で正本に
+   * 揃えた。この検査は「既知の種別なら内部表記を書かない」という関数の契約を見る。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(new URL("../data/snapshot.json", import.meta.url).pathname)}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const rows = Recommender.candidateRows(DATA, now);",
+    // RFC4180 の読み方で 1 行ずつ分ける（会議名などにカンマが入る）。
+    "function splitLine(line) {",
+    "  const out = [];",
+    "  let cur = '', quoted = false;",
+    "  for (let i = 0; i < line.length; i++) {",
+    "    const ch = line[i];",
+    "    if (quoted) {",
+    "      if (ch === '\"' && line[i + 1] === '\"') { cur += '\"'; i++; }",
+    "      else if (ch === '\"') quoted = false;",
+    "      else cur += ch;",
+    "    } else if (ch === '\"') quoted = true;",
+    "    else if (ch === ',') { out.push(cur); cur = ''; }",
+    "    else cur += ch;",
+    "  }",
+    "  out.push(cur);",
+    "  return out;",
+    "}",
+    "const csv = Recommender.deadlinesToCsv(rows, now);",
+    "const lines = csv.split('\\r\\n').filter((l) => l.length);",
+    "const header = splitLine(lines[0]);",
+    "const at = header.indexOf('種別');",
+    "const cells = lines.slice(1).map((l) => splitLine(l)[at]);",
+    "const widths = new Set(lines.map((l) => splitLine(l).length));",
+    "const labels = Recommender.kindLabelTable();",
+    "const kinds = lines.slice(1).map((l) => {",
+    "  const c = splitLine(l);",
+    "  return c[at];",
+    "});",
+    // 内部表記のまま（日本語を含まない）セルが残っていないか。
+    "const asciiCells = [...new Set(cells.filter((c) => c && !/[ぁ-んァ-ン一-龥]/.test(c)))];",
+    // CSV の種別列が、その行の種別から画面のラベル表で引いた語と一致するか。
+    "const kindsInData = lines.slice(1).map((l, i) => String((rows[i].dl && rows[i].dl.kind) || rows[i].kind || ''));",
+    "const mismatch = kindsInData",
+    "  .map((k) => labels[k] || k)",
+    "  .filter((want, i) => want !== cells[i]).length;",
+    // 直前の 3 件の表では訳せなかった種別（= 旧バグで英字が出ていた行）が実際に有ること。
+    "const oldTableKinds = { abstract: 1, paper: 1, journal: 1 };",
+    "const wasAscii = kindsInData.filter((k) => k && !oldTableKinds[k] && labels[k]).length;",
+    "console.log(JSON.stringify({",
+    "  header, at, dataRows: lines.length - 1, widths: [...widths],",
+    "  distinct: [...new Set(cells)].sort(),",
+    "  asciiCells, mismatch, wasAscii,",
+    "  allLabeled: [...new Set(cells)].every((c) => Object.values(labels).includes(c)),",
+    "}));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    header: string[];
+    at: number;
+    dataRows: number;
+    widths: number[];
+    distinct: string[];
+    asciiCells: string[];
+    mismatch: number;
+    wasAscii: number;
+    allLabeled: boolean;
+  };
+  expect(out.header, "CSV の見出しに種別がない").toContain("種別");
+  expect(out.at).toBeGreaterThan(0);
+  expect(out.dataRows).toBeGreaterThan(1000);
+  expect(out.widths, "行によって列数が違う").toEqual([out.header.length]);
+  // 種別列の語はすべて画面のラベル表の語（= 表計算で画面と同じ語で絞り込める）。
+  expect(out.allLabeled, "CSV の種別列に画面に無い語が出ている").toBe(true);
+  // 旧バグ（英字の内部表記）が 0 件であること。
+  expect(
+    out.asciiCells,
+    `種別列に日本語でない内部表記が混ざっている: ${out.asciiCells.join(", ")}`,
+  ).toEqual([]);
+  expect(out.mismatch, "種別列が画面と同じ語になっていない行がある").toBe(0);
+  // 空振り防止: 3 件の表では訳せなかった種別の行が実データに有ること。
+  expect(out.wasAscii, "種別列の英字化を踏む行が無い（検査が空振り）").toBeGreaterThan(0);
+});

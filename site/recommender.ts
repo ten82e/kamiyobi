@@ -1987,11 +1987,15 @@ const Recommender = (() => {
     return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())} AoE`;
   }
 
-  const KIND_LABELS_JA: Record<string, string> = {
-    abstract: "概要締切",
-    paper: "論文締切",
-    journal: "常時受付",
-  };
+  /* 種別の日本語ラベルは下に持つ `KIND_LABEL_JA`（`kindLabelJa`）を正本にする。ここに
+   * 3 件だけの別の表を持っていたため、この経路だけが `notification` / `camera_ready` 等の
+   * 内部表記を英字のまま返す可能性を持っていた。上の分野列が `categoryLabelJa` を使い、
+   * ビルドが書く `data.csv` が正本の `kindLabelTable` を使うのに、ここだけ古い表を別で
+   * 持っていた（同じ語彙に表を 2 つ持つと必ず片方が古くなる）。
+   * **到達性の注記**: 一覧は概要・論文・常時受付の種別しか出さず（`SELECTABLE_KINDS`）、
+   * 画面の CSV は `shown` を渡すので、現時点で利用者が英字の入った CSV を得る経路は無い。
+   * よってこれは表示が変わる欠陥ではなく、採否通知など種別を一覧に出す変更をした瞬間に
+   * 英字が漏れる地雷の除去。関数の契約として「既知の種別なら内部表記を書かない」を守る。 */
 
   /* 表の種別セルと行の詳細に出す「第 N ラウンド」を、検索でも引けるようにする。
    * ラウンドの区別は画面ではこの書き方しかなく、CSV も `R1` `R2` と書いているのに、
@@ -2148,7 +2152,7 @@ const Recommender = (() => {
           left,
           conf.title,
           catsJa,
-          KIND_LABELS_JA[kind] || kind,
+          kindLabelJa(kind),
           dl.round == null ? "" : `R${dl.round}`,
           csvRank(rank.ccf),
           csvRank(rank.core),
