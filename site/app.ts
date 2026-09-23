@@ -1104,17 +1104,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const eventRawJa = String(r.ed.date_text || "").trim();
     // 研究会は毎月開くので、この行の回より後の会期も併記する（「次はいつか」を
     // 行をめくって探さなくて済むように）。日程の書き方は表と揃える。
-    const laterEditions = upcomingEditionsOf(r.conf, String(r.ed.event_start || ""), Date.now());
+    const laterEditions = Recommender.upcomingEditionsOf(
+      r.conf,
+      String(r.ed.event_start || ""),
+      Date.now(),
+    );
     const catNamesJa = (r.cats || []).map((key) => catLabel(key));
     const rankShown = (r.rankPairs || []).map((pair) => Recommender.rankPairLabelJa(pair));
     // 今後の会期の開催地も、表と同じ書き方で日本語に寄せる（行の詳細の中で
     // 「開催地: 京都, 日本」と「今後の会期: … ＠Kyoto, Japan」が両方出ると、
     // 別の場所だと誤解する。原文は title に残す）。
     const laterEditionsText = laterEditions
-      .map((next) => {
-        const place = String(next.place || "");
-        return `${meetingRangeJa(next.start, next.end)}${place ? ` ＠${Recommender.placeJa(place)}` : ""}`;
-      })
+      .map((next) => Recommender.laterEditionLineJa(next))
       .join(" / ");
     const laterEditionsRaw = laterEditions
       .map((next) => String(next.place || ""))
@@ -2451,45 +2452,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   /**
-   * 会期の暦日表示。表の日付列と同じ書き方（暦日 + 曜日、時刻は付けない、
-   * 同じ年会期で年を二度書かない）を案内とドロワーで共有する。
-   */
-  function meetingRangeJa(start: string, end: string): string {
-    const startDay = Recommender.weekdayJaFromDate(start);
-    let when = `${start}${startDay ? `(${startDay})` : ""}`;
-    if (end && end !== start) {
-      const endDay = Recommender.weekdayJaFromDate(end);
-      const endHead = end.slice(0, 4) === start.slice(0, 4) ? "" : `${end.slice(0, 4)}-`;
-      when += `〜${endHead}${end.slice(5)}${endDay ? `(${endDay})` : ""}`;
-    }
-    return when;
-  }
-
-  /** 同じ研究会のこれから先の会期（行になっている回を除く）。研究会は毎月開くので、
-   *  1 行だけ見て「次はいつか」が分からないのは惜しい。 */
-  function upcomingEditionsOf(
-    conf: unknown,
-    exceptStart: string,
-    nowMs: number,
-    max = 3,
-  ): Array<{ start: string; end: string; place: string }> {
-    const record = conf as { editions?: Array<Record<string, unknown>> };
-    const out: Array<{ start: string; end: string; place: string }> = [];
-    for (const ed of record.editions || []) {
-      const start = String(ed.event_start || "");
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) continue;
-      if (start === exceptStart) continue;
-      const startMs = Date.parse(`${start}T00:00:00+09:00`);
-      // 会期が終わった回を出さない（開始日が今を向いていても終了日が過ぎていれば除外）。
-      const endMs = Date.parse(`${String(ed.event_end || start)}T23:59:59+09:00`);
-      if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) continue;
-      if (endMs < nowMs) continue;
-      out.push({ start, end: String(ed.event_end || start), place: String(ed.place || "") });
-    }
-    return out.sort((a, b) => a.start.localeCompare(b.start)).slice(0, max);
-  }
-
-  /**
    * 0 件のとき、会期だけ確定している次回開催を案内する。締切が未定の会は表に載らない
    * （`upcoming.md` 側にしか出ない）ので、「検索語は合っているのに 0 件」をそのまま
    * 放置しない。表示する日程は表と同じく暦日 + 曜日で、時刻は付けない。
@@ -2540,7 +2502,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     found.forEach((m, index) => {
       const sep = document.createTextNode(index === 0 ? " " : " / ");
       box.appendChild(sep);
-      const label = document.createTextNode(`${meetingRangeJa(m.eventStart, m.eventEnd)} `);
+      const label = document.createTextNode(
+        `${Recommender.meetingRangeJa(m.eventStart, m.eventEnd)} `,
+      );
       box.appendChild(label);
       if (m.link) {
         const a = document.createElement("a");

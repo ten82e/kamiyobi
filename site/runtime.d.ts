@@ -149,6 +149,15 @@ interface SiteRecommenderApi {
   comparePapers(a: SiteRow, b: SiteRow, now: number): number;
   candidateRows(data: unknown): SiteRow[];
   categoryLabelJa(key: unknown): string;
+  meetingRangeJa(start: string, end: string): string;
+  upcomingEditionsOf(
+    conf: unknown,
+    exceptStart: string,
+    nowMs: number,
+    max?: number,
+  ): Array<{ start: string; end: string; place: string }>;
+  laterEditionSearchWords(conf: unknown, exceptStart: string): string;
+  laterEditionLineJa(ed: { start: string; end: string; place: string }): string;
   categoryChipLabelJa(key: unknown, enLabel: unknown): string;
   categorySearchTerms(
     cats: readonly string[] | null | undefined,

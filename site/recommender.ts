@@ -2398,6 +2398,78 @@ const Recommender = (() => {
    * CSV がもともとやっていたことと同じ）。 */
   /* 出張・会場押さえは曜日で見込むので、ISO 日付に曜日を添える（曜日が出せなければ添えない）。
    * 終了日が開始日と同じ・無い場合は1日分として出す。 */
+  /**
+   * 会期の暦日表示。表の日付列と同じ書き方（暦日 + 曜日、時刻は付けない、同じ年会期で年を
+   * 二度書かない）を一覧・行の詳細・0 件の案内・検索索引で共有する。索引がこの形を持たないと、
+   * 行の詳細に並ぶ「今後の会期」をコピーして検索欄に貼った人だけ 0 件に落ちる（第 220 回）。
+   */
+  function meetingRangeJa(start: string, end: string): string {
+    const startDay = weekdayJaFromDate(start);
+    let when = `${start}${startDay ? `(${startDay})` : ""}`;
+    if (end && end !== start) {
+      const endDay = weekdayJaFromDate(end);
+      const endHead = end.slice(0, 4) === start.slice(0, 4) ? "" : `${end.slice(0, 4)}-`;
+      when += `〜${endHead}${end.slice(5)}${endDay ? `(${endDay})` : ""}`;
+    }
+    return when;
+  }
+
+  /** 同じ会議のこれから先の会期（行になっている回を除く）。研究会は毎月開くので、
+   *  1 行だけ見て「次はいつか」が分からないのは惜しい。 */
+  function upcomingEditionsOf(
+    conf: unknown,
+    exceptStart: string,
+    nowMs: number,
+    max = 3,
+  ): Array<{ start: string; end: string; place: string }> {
+    const record = conf as { editions?: Array<Record<string, unknown>> };
+    const out: Array<{ start: string; end: string; place: string }> = [];
+    for (const ed of record.editions || []) {
+      const start = String(ed.event_start || "");
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) continue;
+      if (start === exceptStart) continue;
+      const startMs = Date.parse(`${start}T00:00:00+09:00`);
+      // 会期を終えた回は出さない（開始日が今を向いていても、終了日が過ぎていれば除く）。
+      const endMs = Date.parse(`${String(ed.event_end || start)}T23:59:59+09:00`);
+      if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) continue;
+      if (endMs < nowMs) continue;
+      out.push({ start, end: String(ed.event_end || start), place: String(ed.place || "") });
+    }
+    return out.sort((a, b) => a.start.localeCompare(b.start)).slice(0, max);
+  }
+
+  /** 行の詳細に並ぶ「今後の会期」1 回の書き方（日程 ＠開催地）。表示と索引で同じ形を持つため
+   * の入口 – ＠を含めておかないと、画面からコピーした語の先頭に ＠ が残り、索引の語と
+   * つながらずに 0 件へ落ちる（第 220 回）。 */
+  function laterEditionLineJa(ed: { start: string; end: string; place: string }): string {
+    const place = String(ed.place || "");
+    return `${meetingRangeJa(ed.start, ed.end)}${place ? ` ＠${placeJa(place)}` : ""}`;
+  }
+
+  /* 行の詳細に並ぶ「今後の会期」の語。表示と同じ `meetingRangeJa` で組み、**この行の回以外の
+   * 回をすべて**載せる。画面は「これから先の回を最大 3 回」なので、その集合は必ずここに収まる
+   * （行になっている回より前の回でも、まだ開いていなければ画面に出る – CHES の 2026 年回と
+   * 2027 年回の関係で実測）。時計で絞らないのは、索引が画面より古くなるのを避けるためで、
+   * 逆に広く取りすぎるだけなので検索の当たり方が噓にならない方を取った（第 220 回）。 */
+  function laterEditionSearchWords(conf: unknown, exceptStart: string): string {
+    const record = conf as { editions?: Array<Record<string, unknown>> };
+    const parts: string[] = [];
+    for (const ed of record.editions || []) {
+      const start = String(ed.event_start || "");
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) continue;
+      if (exceptStart && start === exceptStart) continue;
+      const end = String(ed.event_end || start);
+      /* 日程だけ載せる。併記する開催地をここに載せると、**他の語の当たり方を壊す** –
+       * 実際に載せて測ったところ、この行の開催地欄がヨーロッパの行が「南米」で 118 件当たり、
+       * 「ハイブリッド」がオンライン参加の記載のない行を出し、「別表記の寄せ」の誤爆が 11 件
+       * 増えた（第 220 回。既存の開催地・参加形式の検査がまとめて検出した。第 219 回の
+       * `プライバシー` と同じ型）。今後の会期の開催地で行を絞り込みたい人は、その回が
+       * 行になったときに引ける（行の会期欄とその回の開催地は必ず対で出ている）。 */
+      parts.push(meetingRangeJa(start, end), start, end);
+    }
+    return parts.join(" ");
+  }
+
   function eventCellJa(row: unknown): string {
     const ed = ((row as { ed?: unknown } | null)?.ed || {}) as Record<string, unknown>;
     const start = String(ed.event_start || "").trim();
@@ -4658,7 +4730,7 @@ const Recommender = (() => {
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
-        const catHay = `${categorySearchTerms(conf.categories, confTags)} ${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ${participationSearchTerms(ed.place)} ${domesticFacetSearchTerms(confTags, conf.title)}`;
+        const catHay = `${laterEditionSearchWords(conf, String(ed.event_start || ""))} ${categorySearchTerms(conf.categories, confTags)} ${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ${participationSearchTerms(ed.place)} ${domesticFacetSearchTerms(confTags, conf.title)}`;
         (ed.deadlines || []).forEach((dl) => {
           const dateOnly = dl.precision === "date-only";
           const window = dateOnly ? dateOnlyWindowMs(dl.local_date) : null;
@@ -5932,6 +6004,10 @@ const Recommender = (() => {
     rankMatches: rankMatches,
     candidateRows: candidateRows,
     categoryLabelJa: categoryLabelJa,
+    meetingRangeJa: meetingRangeJa,
+    upcomingEditionsOf: upcomingEditionsOf,
+    laterEditionSearchWords: laterEditionSearchWords,
+    laterEditionLineJa: laterEditionLineJa,
     categoryChipLabelJa: categoryChipLabelJa,
     officialZone: officialZone,
     isExtendedDeadline: isExtendedDeadline,

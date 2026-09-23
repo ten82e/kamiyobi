@@ -2866,9 +2866,12 @@ it("drawer shows JST with weekday and the official timezone, viewer-timezone ind
   const weekdayConst = runtime.match(/const WEEKDAY_JA = \[[^\]]*\];/)?.[0];
   expect(weekdayConst, "WEEKDAY_JA 定義が見つからない").toBeTruthy();
   // ドロワーは「今後の会期」も組むので、依存も正本から注入する（書き写さない）。
+  // 会期の書き方は recommender.js の正本へ移した（索引と同じ 1 本。第 220 回）。
+  const recSrc = siteRuntime("recommender.js");
   const drawerDepsSrc = [
-    jsFunction(runtime, "meetingRangeJa"),
-    jsFunction(runtime, "upcomingEditionsOf"),
+    jsFunction(recSrc, "meetingRangeJa"),
+    jsFunction(recSrc, "upcomingEditionsOf"),
+    jsFunction(recSrc, "laterEditionLineJa"),
   ].join("\n");
   const openSrc = jsFunction(runtime, "openDrawer");
   const script = [
@@ -2886,7 +2889,7 @@ it("drawer shows JST with weekday and the official timezone, viewer-timezone ind
     jsFunction(siteRuntime("recommender.js"), "weekdayJaFromDate"),
     // 会期の式も正本を注入する（一覧・行の詳細・CSV が同じ式を使う。書き写さない）。
     jsFunction(siteRuntime("recommender.js"), "eventCellJa"),
-    `const Recommender = { officialZone: ${jsFunction(siteRuntime("recommender.js"), "officialZone")}, placeJa: (v) => String(v ?? ""), topicTagsJa: () => [], weekdayJaFromDate: weekdayJaFromDate, eventCellJa: eventCellJa };`,
+    `const Recommender = { officialZone: ${jsFunction(siteRuntime("recommender.js"), "officialZone")}, placeJa: (v) => String(v ?? ""), topicTagsJa: () => [], weekdayJaFromDate: weekdayJaFromDate, eventCellJa: eventCellJa, meetingRangeJa: meetingRangeJa, upcomingEditionsOf: upcomingEditionsOf, laterEditionLineJa: laterEditionLineJa };`,
     "const body = { innerHTML: '' };",
     "const els = {",
     "  drawerBackdrop: { classList: { add() {} } }, drawerTitle: {}, drawerFullName: {},",
@@ -3389,8 +3392,13 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
   // 実行検証: d キーで選択行のドロワーが開き、開閉でフォーカスが移る / 戻る
   const keySrc = keydownWithBlockers(html);
   const drawerDepsSrc = [
-    jsFunction(html, "meetingRangeJa"),
-    jsFunction(html, "upcomingEditionsOf"),
+    // 会期の書き方の正本は recommender.js に移した（一覧・行の詳細・索引が同じ 1 本。第 220 回）。
+    siteRuntime("recommender.js").match(/const CALENDAR_DATE_JA = \[[^\]]*\];/)?.[0] ?? "",
+    jsFunction(siteRuntime("recommender.js"), "weekdayJaFromDate"),
+    'const placeJa = (v) => String(v ?? "");',
+    jsFunction(siteRuntime("recommender.js"), "meetingRangeJa"),
+    jsFunction(siteRuntime("recommender.js"), "upcomingEditionsOf"),
+    jsFunction(siteRuntime("recommender.js"), "laterEditionLineJa"),
   ].join("\n");
   const openSrc = jsFunction(html, "openDrawer");
   const summarySrc = jsFunction(html, "verificationSummary");
@@ -3427,7 +3435,7 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
     "const dOpened = calls.open.length === 1 && calls.open[0] === 'B';",
     "const dFocusedRow = calls.focus[calls.focus.length - 1] === 'row1';",
     "const verificationSummary = new Function('esc', 'return (' + SUMMARY + ')')((s) => String(s ?? ''));",
-    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '', eventCellJa: (r) => String(r?.ed?.event_start || r?.ed?.date_text || '') }, meetingRangeJa, upcomingEditionsOf, KIND_DETAIL, () => {});",
+    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: (v) => weekdayJaFromDate(v), eventCellJa: (r) => String(r?.ed?.event_start || r?.ed?.date_text || ''), meetingRangeJa: meetingRangeJa, upcomingEditionsOf: upcomingEditionsOf, laterEditionLineJa: laterEditionLineJa }, meetingRangeJa, upcomingEditionsOf, KIND_DETAIL, () => {});",
     "document.activeElement = prevEl;",
     "openDrawer({ kind: 'journal', conf: { title: 'X' }, ed: { place: 'P', date_text: 'D' } });",
     "const focusedClose = document.activeElement === closeBtn;",
@@ -3747,8 +3755,13 @@ it("normal deadline drawer includes verification details", () => {
   // ドロワーは「今後の会期」も組むので、依存も正本から注入する（書き写さない）。
   const drawerDepsSrc = [
     verificationLabelsSource(),
-    jsFunction(runtime, "meetingRangeJa"),
-    jsFunction(runtime, "upcomingEditionsOf"),
+    // 会期の書き方の正本は recommender.js に移した（一覧・行の詳細・索引が同じ 1 本。第 220 回）。
+    siteRuntime("recommender.js").match(/const CALENDAR_DATE_JA = \[[^\]]*\];/)?.[0] ?? "",
+    jsFunction(siteRuntime("recommender.js"), "weekdayJaFromDate"),
+    'const placeJa = (v) => String(v ?? "");',
+    jsFunction(siteRuntime("recommender.js"), "meetingRangeJa"),
+    jsFunction(siteRuntime("recommender.js"), "upcomingEditionsOf"),
+    jsFunction(siteRuntime("recommender.js"), "laterEditionLineJa"),
   ].join("\n");
   const openSrc = jsFunction(runtime, "openDrawer");
   const summarySrc = jsFunction(runtime, "verificationSummary");
@@ -3764,7 +3777,7 @@ it("normal deadline drawer includes verification details", () => {
     "function $(id) { return document.getElementById(id); }",
     "const window = { _prevFocus: null };",
     `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')((s) => String(s ?? ''));`,
-    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '', eventCellJa: (r) => String(r?.ed?.event_start || r?.ed?.date_text || '') }, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}), () => {});`,
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: (v) => weekdayJaFromDate(v), eventCellJa: (r) => String(r?.ed?.event_start || r?.ed?.date_text || ''), meetingRangeJa: meetingRangeJa, upcomingEditionsOf: upcomingEditionsOf, laterEditionLineJa: laterEditionLineJa }, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}), () => {});`,
     "openDrawer({",
     "  kind: 'paper', conf: { key: 'demo', title: 'Demo' },",
     "  ed: { year: 2026, place: 'P', date_text: 'D' }, t: 0, tLast: 0,",
@@ -4362,7 +4375,6 @@ it("the next-meeting note formats the schedule-only edition for a Japanese reade
     "const box = { hidden: true, textContent: '', appendChild(node) { if (node.textContent) this.textContent += node.textContent; } };",
     "const document = { createElement: (tag) => ({ tagName: tag, textContent: '', href: '', target: '', rel: '' }), createTextNode: (text) => ({ textContent: text }) };",
     "const $ = () => box;",
-    jsFunction(siteRuntime("app.js"), "meetingRangeJa"),
     jsFunction(siteRuntime("app.js"), "scheduleOnlyMatches"),
     jsFunction(siteRuntime("app.js"), "renderNextMeetingNote"),
     // 数え上げ（`scheduleOnlyMatches`）と文の組み立て（`renderNextMeetingNote`）を
@@ -4419,14 +4431,13 @@ it("the drawer lists the same conference's later meetings (SPEC §7)", () => {
     "  { event_start: '2027-06-01', event_end: '2027-06-02', place: '将来分' },",
     "] };",
     "const now = Date.UTC(2026, 8, 22, 3, 0, 0);", // 2026-09-22 12:00 JST
-    jsFunction(app, "meetingRangeJa"),
-    jsFunction(app, "upcomingEditionsOf"),
-    "const later = upcomingEditionsOf(conf, '2026-09-28', now);",
+    // 会期の書き方は recommender.js の正本をそのまま使う（第 220 回にそこへ移した）。
+    "const later = Recommender.upcomingEditionsOf(conf, '2026-09-28', now);",
     "console.log(JSON.stringify({",
-    "  sameYear: meetingRangeJa('2026-12-01', '2026-12-02'),",
-    "  crossYear: meetingRangeJa('2026-12-30', '2027-01-02'),",
-    "  oneDay: meetingRangeJa('2026-12-01', '2026-12-01'),",
-    "  later: later.map((e) => meetingRangeJa(e.start, e.end) + (e.place ? ' ＠' + e.place : '')),",
+    "  sameYear: Recommender.meetingRangeJa('2026-12-01', '2026-12-02'),",
+    "  crossYear: Recommender.meetingRangeJa('2026-12-30', '2027-01-02'),",
+    "  oneDay: Recommender.meetingRangeJa('2026-12-01', '2026-12-01'),",
+    "  later: later.map((e) => Recommender.laterEditionLineJa(e)),",
     "  capped: later.length,",
     "}));",
     "})().catch((e) => { console.error(e && e.stack || String(e)); process.exit(1); });",
@@ -5177,8 +5188,13 @@ it("ドロワーは表の情報（分野・ランク・ラウンド）を落と�
     "const KIND_LABEL = Recommender.kindLabelTable();",
     jsFunction(runtime, "titleWithYear"),
     jsFunction(runtime, "catLabel"),
-    jsFunction(runtime, "meetingRangeJa"),
-    jsFunction(runtime, "upcomingEditionsOf"),
+    // 会期の書き方の正本は recommender.js に移した（一覧・行の詳細・索引が同じ 1 本。第 220 回）。
+    siteRuntime("recommender.js").match(/const CALENDAR_DATE_JA = \[[^\]]*\];/)?.[0] ?? "",
+    jsFunction(siteRuntime("recommender.js"), "weekdayJaFromDate"),
+    'const placeJa = (v) => String(v ?? "");',
+    jsFunction(siteRuntime("recommender.js"), "meetingRangeJa"),
+    jsFunction(siteRuntime("recommender.js"), "upcomingEditionsOf"),
+    jsFunction(siteRuntime("recommender.js"), "laterEditionLineJa"),
     `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')(esc);`,
     `const openDrawer = new Function('window','document','$','KIND_LABEL','titleWithYear','fmtDate','fmtJst','fmtAoE','esc','safeExternalUrl','rowDateOnlyState','verificationSummary','Recommender','catLabel','meetingRangeJa','upcomingEditionsOf','UNCONFIRMED_JA','kindDetailJa', 'writeUrl', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, KIND_LABEL, titleWithYear, () => 'UTC', () => 'JST', () => 'AoE', esc, (u) => String(u ?? ''), () => null, verificationSummary, Recommender, catLabel, meetingRangeJa, upcomingEditionsOf, Recommender.unconfirmedLabelJa(), (${jsFunction(runtime, "kindDetailJa")}), () => {});`,
     "openDrawer({",
@@ -7809,14 +7825,17 @@ it("会期だけの会の案内と行の詳細の開催地は、表と同じ書�
   const runtime = siteRuntime();
   const recSrc = readFileSync(join(site, "recommender.js"), "utf8");
   expect(runtime).toContain("＠${shownPlace}");
-  expect(runtime).toContain("＠${Recommender.placeJa(place)}");
+  // 行の詳細の「今後の会期」の書き方は recommender.js の正本へ移した（索引と同じ 1 本）。
+  expect(siteRuntime("recommender.js")).toContain("\uff20${placeJa(place)}");
+  expect(siteRuntime("recommender.js")).not.toContain("\uff20${next.place}");
   // 原文を出しっぱなしにする形に戻っていないこと（表題の語で探す人が探せる形）。
   expect(runtime).not.toContain("＠${m.place}");
   expect(runtime).not.toContain("＠${next.place}");
   const noteSrc = jsFunction(runtime, "renderNextMeetingNote");
   const matchSrc = jsFunction(runtime, "scheduleOnlyMatches");
   const limitSrc = jsFunction(runtime, "windowLimitMs");
-  const rangeSrc = jsFunction(runtime, "meetingRangeJa");
+  // 会期の書き方は recommender.js の正本へ移したので、この検査は import した本物を使う（第 220 回）。
+  const rangeSrc = "const meetingRangeJa = Recommender.meetingRangeJa;";
   const script = [
     "(async () => {",
     "const { readFileSync } = await import('node:fs');",
@@ -17063,6 +17082,9 @@ it("会期欄のセルをコピーして貼ると、その行に出会う（SPEC
 
   // 3. 会期欄に並ぶ `2026-12-03(木)` の形は、**その形を書く行とちょうど一致**する
   //    （多よせも漏れも無い）。表示している欄は会期欄とは限らない（日付だけの行は締切欄に書く）。
+  //    行の詳細に「今後の会期」として同じ形を載せる行もあるので、表示側にはそれも数える
+  //    （第 220 回 – その日程をコピーして貼れるように索引へ入れたため、当たり増分は
+  //    「画面に出している行」に限定したまま保つ）。
   const tokens = new Set<string>();
   rowCells.forEach((row) => {
     String(row[iEvent] || "")
@@ -17072,15 +17094,33 @@ it("会期欄のセルをコピーして貼ると、その行に出会う（SPEC
       });
   });
   expect(tokens.size, "会期欄に日付+曜日の形が無く、この検査が空振りしている").toBeGreaterThan(0);
+  const 今後の会期の語 = rows.map((r) => {
+    const later = R.upcomingEditionsOf(
+      (r as { conf?: unknown }).conf,
+      String((r as { ed?: { event_start?: string } }).ed?.event_start || ""),
+      at,
+    );
+    const set = new Set<string>();
+    later.forEach((next) => {
+      String(R.laterEditionLineJa(next))
+        .toLowerCase()
+        .split(/[\s〜/＠]+/u)
+        .forEach((part) => {
+          set.add(part);
+        });
+    });
+    return set;
+  });
   const 食い違い: string[] = [];
   for (const token of tokens) {
-    const 表示 = rowCells.filter((row) =>
-      [iEvent, iDeadline].some((col) =>
-        String(row[col] || "")
-          .toLowerCase()
-          .split(" ")
-          .includes(token.toLowerCase()),
-      ),
+    const 表示 = rowCells.filter(
+      (row, i) =>
+        [iEvent, iDeadline].some((col) =>
+          String(row[col] || "")
+            .toLowerCase()
+            .split(" ")
+            .includes(token.toLowerCase()),
+        ) || 今後の会期の語[i].has(token.toLowerCase()),
     ).length;
     const hits = hitRows(token).length;
     if (hits !== 表示) 食い違い.push(`「${token}」 hit ${hits} 件 / 表示 ${表示} 行`);
@@ -17124,6 +17164,101 @@ it("会期欄のセルをコピーして貼ると、その行に出会う（SPEC
     名前例を引ける行数(rowCells, hitRows, iName, 名前の例),
     `会議名「${名前の例}」が壊れた`,
   ).toBe(rowCells.filter((row) => String(row[iName] || "") === 名前の例).length);
+});
+
+it("行の詳細に並ぶ今後の会期の日付をコピーして貼ると、その行に出会う（SPEC §7）", async () => {
+  // 2026-08-09 生成ビルドで実測: 研究会などの行の詳細は「今後の会期: 2026-10-11(日)〜10-15(木) ＠…」
+  // を 56 行に出すのに、その日程は索引に入っていなかった。**そのまま貼ると 56 行すべてが 0 件**、
+  // 先頭の日程だけに絞っても自分の行に当たるのは 8 件だけで、当たった 8 件も別の会だった。
+  // 会期の暦日表示 `meetingRangeJa` を app.js から recommender.js へ移して表示と索引の 1 本にし、
+  // その形そのままをこの行の語へ入れた（第 220 回）。
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const built = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as unknown as Record<
+    string,
+    unknown
+  >;
+  const at = Date.parse("2026-08-09T00:00:00Z");
+  const rows = R.candidateRows(built as Parameters<typeof R.candidateRows>[0]);
+  const hays = rows.map((r) => String(r.hay));
+  const hitsThat = (query: string, index: number): boolean =>
+    R.searchMatcher(R.expandRelativeMonths(query, at), at)(hays[index]) === true;
+  const laterOf = (r: (typeof rows)[number]) =>
+    R.upcomingEditionsOf(
+      (r as { conf?: unknown }).conf,
+      String((r as { ed?: { event_start?: string } }).ed?.event_start || ""),
+      at,
+    );
+
+  let 出す行 = 0;
+  const 会わない: string[] = [];
+  rows.forEach((r, i) => {
+    const later = laterOf(r);
+    if (!later.length) return;
+    出す行 += 1;
+    for (const next of later) {
+      const shown = String(R.meetingRangeJa(next.start, next.end));
+      if (!hitsThat(shown, i)) 会わない.push(`「${shown}」（日程だけの形）`);
+      if (!hitsThat(next.start, i)) 会わない.push(`「${next.start}」（日付だけ）`);
+    }
+  });
+  expect(出す行, "行の詳細に今後の会期を出す行が無く、この検査は空振りしている").toBeGreaterThan(0);
+  expect(会わない, `今後の会期を貼ってもその行に出会えない例: ${会わない.join(" / ")}`).toEqual([]);
+
+  /* 併記する**開催地**は索引へ入れない。入れたうえで測ったところ、この行の開催地欄が
+   * ヨーロッパの行が「南米」で 118 件当たり、「ハイブリッド」がオンライン参加の記載のない行を
+   * 出し、「別表記の寄せ」の誤爆が 11 件増えた（第 220 回。第 219 回の `プライバシー` と同じ型で、
+   * 既存の開催地・参加形式の検査がまとめて検出した）。行の詳細にだけ出る語で行が当たって
+   * いないことを、その語を実際に引いて確かめる。 */
+  const cr = "\r\n";
+  const cellsOf = (line: string): string[] => {
+    const out: string[] = [];
+    let cur = "";
+    let quoted = false;
+    for (let i = 0; i < line.length; i += 1) {
+      const ch = line[i];
+      if (quoted) {
+        if (ch === '"') {
+          if (line[i + 1] === '"') {
+            cur += ch;
+            i += 1;
+          } else quoted = false;
+        } else cur += ch;
+      } else if (ch === '"') quoted = true;
+      else if (ch === ",") {
+        out.push(cur);
+        cur = "";
+      } else cur += ch;
+    }
+    out.push(cur);
+    return out;
+  };
+  const header = cellsOf(
+    R.deadlinesToCsv([rows[0] as unknown as Record<string, unknown>], at).split(cr)[0],
+  );
+  const iPlace = header.indexOf("開催地");
+  expect(iPlace, "CSV に開催地の列が無い").toBeGreaterThan(-1);
+  const placeCell = (r: (typeof rows)[number]): string =>
+    cellsOf(
+      R.deadlinesToCsv([r as unknown as Record<string, unknown>], at)
+        .split(cr)
+        .slice(1)
+        .join(cr),
+    )[iPlace] ?? "";
+  let 調べた語 = 0;
+  const 誤爆: string[] = [];
+  rows.forEach((r, i) => {
+    if (誤爆.length >= 4) return;
+    const own = placeCell(r);
+    for (const next of laterOf(r)) {
+      const word = String(R.placeJa(next.place) || "").trim();
+      if (word.length < 2 || own.includes(word)) continue;
+      調べた語 += 1;
+      if (hitsThat(word, i)) 誤爆.push(`${word}（この行の開催地欄は「${own}」）`);
+    }
+  });
+  expect(調べた語, "行の詳細にだけ出る開催地が無く、この検査は空振りしている").toBeGreaterThan(0);
+  expect(誤爆, `行の詳細にだけ並ぶ開催地でその行が当たっている: ${誤爆.join(" / ")}`).toEqual([]);
 });
 
 it("常時受付の行にだけ出る語を、0 件の案内が「収録に無い」と言わない（SPEC §7）", () => {
