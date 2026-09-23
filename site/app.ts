@@ -888,6 +888,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return titleWithYear(r.conf.title || r.conf.key || "", r.ed.year);
   }
 
+  /* 会議名+年の組み立ては site/recommender.ts の `titleWithYearJa` と**同じ式**を使う。
+   * 本体をここに置くのは、検査が表の並び順を実行するときにこの関数を単独で動かすため
+   * （他モジュールへの呼び出しにすると、検査側が正本を注入し直しになる）。式がズレたら
+   * 一覧と CSV が違う会議名を書くので、`会議名は CSV と同じ語が出る` の検査が両方を
+   * 突き合わせて弾く（実装を 2 本持つ代价は検査で払う）。 */
   function titleWithYear(title: string | undefined, year: number | null | undefined) {
     const t = String(title || "").trim();
     if (!t) return "";

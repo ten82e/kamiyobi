@@ -1555,7 +1555,10 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
         ],
         now,
       );
-      expect(csv).toContain('"Workshop, ""Edge"" Cases"');
+      // 引用符は二重に、セル全体を引用符で囲む（RFC4180）。会議名には開催年が添えられる
+      // ので、引用符の中まで含めて年までが 1 セルだと分かる形で見る（第 170 回）。
+      expect(csv).toContain('"Workshop, ""Edge"" Cases ');
+      expect(csv).toMatch(/"Workshop, ""Edge"" Cases \d{4}"/);
     });
 
     it("常時受付ジャーナルと空入力を壊さない", () => {

@@ -2127,6 +2127,28 @@ const Recommender = (() => {
     });
   }
 
+  /* 会議名+開催年の組み立て式。一覧・行の詳細・CSV・Markdown で同じ語を見せるために
+   * 一箇所へ寄せる。以前は CSV だけが年を足さない別実装（素の `conf.title`）で、画面で
+   * `3DV 2024` と見える行の CSV は `3DV` だった（2026-08-09 実測: 候補行 3,235 件のうち
+   * 2,996 件で画面と CSV の会議名が違い、既定画面の 478 行中 422 件が該当。CSV には年の列が
+   * 無いので、表計算で画面と同じ名前や西暦で絞り込んだ人が 0 行になる上、同じ会議の別回が
+   * 一つの語に潰れて分離できた）。タイトルに既に年（`CANOPIE-HPC 2026`）や短縮年
+   * （`SC '26`・`SC ’26`）が入っているときは二重に付けない。year が無いときはタイトルだけ返す。 */
+  function titleWithYearJa(title: unknown, year: unknown): string {
+    const t = String(title ?? "").trim();
+    if (!t) return "";
+    const y = Number(year);
+    if (!Number.isFinite(y) || !y) return t;
+    const yStr = String(y);
+    const yy = yStr.slice(-2);
+    const normT = t.normalize ? t.normalize("NFKC").trim() : t;
+    const hasYear =
+      normT.endsWith(yStr) ||
+      normT.endsWith(`'${yy}`) ||
+      (yy && new RegExp(`(?:20${yy}|['’]?${yy})$`).test(normT));
+    return hasYear ? t : `${t} ${y}`;
+  }
+
   /* 会期の表示語を決める式を一箇所にする。一覧・行の詳細・CSV が別々に組み立てていて
    * 行の詳細だけ公式ページの原文をそのまま出していた（2026-08-09 実測: 会期に ISO を持つ
    * 2,971 行のうち 2,933 行で行の詳細が `March 18-21, 2024` のような英語の原文になり、
@@ -2214,7 +2236,9 @@ const Recommender = (() => {
           when,
           official,
           left,
-          conf.title,
+          // 会議名は画面と同じ式（年を添え、title が無ければ key）。CSV には年の列が
+          // 無いので、素の title を書くと表計算で画面と同じ名前が引けない。
+          titleWithYearJa(conf.title || conf.key || "", ed.year),
           catsJa,
           kindLabelJa(kind),
           dl.round == null ? "" : `R${dl.round}`,
@@ -5470,6 +5494,7 @@ const Recommender = (() => {
     placeJa: placeJa,
     weekdayJaFromDate: weekdayJaFromDate,
     eventCellJa: eventCellJa,
+    titleWithYearJa: titleWithYearJa,
     deadlinesToCsv: deadlinesToCsv,
     searchNormalize: searchNormalize,
     querySynonymNotes: querySynonymNotes,

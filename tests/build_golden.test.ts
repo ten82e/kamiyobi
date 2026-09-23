@@ -13976,3 +13976,101 @@ it("会期は一覧・行の詳細・CSV で同じ式を使い、行の詳細が
   );
   expect(openBody).toContain("原表記: ");
 });
+
+it("会議名は CSV と同じ語が出る（表計算で画面の語が引ける。SPEC §7）", () => {
+  /* 会議名列は画面で行の詳細で「タイトル + 開催年」を出す（`3DV 2024`）。CSV だけは年の
+   * 足し算を持たない別実装（素の `conf.title`）で、同じ行が `3DV` になっていた（2026-08-09
+   * 実測: 候補行 3,235 件のうち 2,996 件で画面と CSV の会議名が違い、既定画面の 478 行中
+   * 422 件が該当）。CSV には年の列が無いので、表計算で画面で見た名前や西暦で絞り込むと
+   * 0 行になり、同じ会議の別回も一つの語に潰れていた。組み立て式を
+   * `site/recommender.ts` の `titleWithYearJa` に寄せて CSV を同じ語にした
+   * （md を作る src/build.ts も同じ正本を呼ぶ）。 */
+  const app = siteRuntime();
+  const script = [
+    "import fs from 'node:fs';",
+    `import Recommender from ${JSON.stringify(`file://${join(site, "recommender.js")}`)};`,
+    // 画面側の組み立てはビルドした app.js の実装をそのまま使う（書き写さない）。
+    jsFunction(app, "titleWithYear"),
+    jsFunction(app, "conferenceNameCell"),
+    "const R = Recommender;",
+    `const DATA = JSON.parse(fs.readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const NOW = Date.parse('2026-08-09T00:00:00Z');",
+    "const rows = R.candidateRows(DATA, NOW);",
+    // エスケープの事故（第 169 回で \\b が不可視のバックスペースになった）を呼ばないよう、
+    // 引用符と改行は文字組みで作る。
+    "const Q = String.fromCharCode(34);",
+    "const CR = String.fromCharCode(13);",
+    "const LF = String.fromCharCode(10);",
+    "const parseLine = (line) => {",
+    "  const out = [];",
+    "  let cur = '';",
+    "  let q = false;",
+    "  for (let i = 0; i < line.length; i++) {",
+    "    const ch = line[i];",
+    "    if (q) {",
+    "      if (ch === Q) {",
+    "        if (line[i + 1] === Q) { cur += Q; i++; } else { q = false; }",
+    "      } else { cur += ch; }",
+    "    } else if (ch === Q) { q = true; }",
+    "    else if (ch === ',') { out.push(cur); cur = ''; }",
+    "    else { cur += ch; }",
+    "  }",
+    "  out.push(cur);",
+    "  return out;",
+    "};",
+    // CSV は入力行と 1:1 で並ぶ（実測で確認済み）ので位置で突き合わせる。
+    "const csv = R.deadlinesToCsv(rows, NOW);",
+    "const lines = csv.split(CR + LF).filter((l) => l.length);",
+    "const head = parseLine(lines[0]);",
+    "const nameIdx = head.indexOf('会議');",
+    "const cells = lines.slice(1).map((l) => parseLine(l)[nameIdx]);",
+    "let mismatch = 0;",
+    "let emptyCell = 0;",
+    "let withYear = 0;",
+    "let wasBare = 0;",
+    "const miss = [];",
+    "for (let i = 0; i < rows.length; i++) {",
+    "  const r = rows[i];",
+    "  const shown = conferenceNameCell(r);",
+    "  const cell = cells[i];",
+    "  if (shown !== cell) {",
+    "    mismatch += 1;",
+    "    if (miss.length < 3) miss.push('画面=「' + shown + '」 CSV=「' + cell + '」');",
+    "  }",
+    "  if (shown && !cell) emptyCell += 1;",
+    // 年が添えられていること（直前はここが空だった）。
+    "  const y = r.ed && r.ed.year ? String(r.ed.year) : '';",
+    "  if (y && cell.slice(-y.length) === y && cell.length > y.length) withYear += 1;",
+    // 素の title と違う行＝直し前は壊れていた行（検査が空振りでない証明）。
+    "  if (cell !== String(r.conf.title || '')) wasBare += 1;",
+    "}",
+    "console.log(JSON.stringify({ rowCount: rows.length, csvRows: cells.length, nameIdx, mismatch, emptyCell, withYear, wasBare, miss }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    rowCount: number;
+    csvRows: number;
+    nameIdx: number;
+    mismatch: number;
+    emptyCell: number;
+    withYear: number;
+    wasBare: number;
+    miss: string[];
+  };
+  expect(out.rowCount, "候補行が出ていない").toBeGreaterThan(200);
+  expect(out.csvRows, "CSV と候補行が 1:1 で並ばない（突き合わせの前提が変わった）").toBe(
+    out.rowCount,
+  );
+  expect(out.nameIdx, "CSV に会議名欄が無い").toBeGreaterThan(-1);
+  // 直し前は画面と CSV で会議名が違っていた（＝この検査は空振りではない）。
+  expect(out.wasBare, "年が添えられた行が無く、検査が空振り").toBeGreaterThan(
+    Math.floor(out.rowCount / 10),
+  );
+  // 画面と同じ語が CSV に出る。
+  expect(out.mismatch, `画面と CSV の会議名が違う行: ${out.miss.join(" / ")}`).toBe(0);
+  expect(out.emptyCell, "画面は名前を出すのに CSV は空欄の行がある").toBe(0);
+  expect(out.withYear, "CSV の会議名に年が添えられていない").toBeGreaterThan(
+    Math.floor(out.rowCount / 10),
+  );
+});

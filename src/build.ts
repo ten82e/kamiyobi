@@ -192,20 +192,9 @@ export function titleWithYear(
   title: string | null | undefined,
   year: number | null | undefined,
 ): string {
-  const t = String(title ?? "").trim();
-  if (!t) return "";
-  if (!year) return t;
-  const yStr = String(year);
-  const yy = yStr.slice(-2);
-  const normT = t.normalize("NFKC").trim();
-  const hasYear =
-    normT.endsWith(yStr) ||
-    normT.endsWith(`'${yy}`) ||
-    (yy && new RegExp(`(?:20${yy}|['’]?${yy})$`).test(normT));
-  if (hasYear) {
-    return t;
-  }
-  return `${t} ${year}`;
+  // 組み立て式は site/recommender.ts が正本。サイトの表・行の詳細・CSV と同じ名前の列を
+  // md も出す（実装を 2 本持つと片方が古くなる）。
+  return Recommender.titleWithYearJa(title, year);
 }
 
 type EmbeddingFile = {
