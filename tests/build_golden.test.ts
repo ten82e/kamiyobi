@@ -3606,7 +3606,10 @@ it("site template localized shortcuts label and preset button active sync", () =
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
   const runtime = siteRuntime();
   // SPEC §7: 日本語 UI。Shortcuts: ではなく ショートカット:
-  expect(template).toContain("ショートカット: <kbd>j</kbd>/<kbd>k</kbd> 選択");
+  // 案内の語そのものは見ない（キーの並びは「効いているキーと画面のショートカット案内・
+  // てびきの並び替えの導線がズレない」の検査が、ビルド後のコードから受け取るキーを
+  // 正本に確かめる）。ここでは「読み上げられる欄にショートカット案内が有るか」だけを見る。
+  expect(template).toContain("ショートカット: <kbd>j</kbd>");
   expect(template).not.toContain("Shortcuts: <kbd>j</kbd>");
   expect(template).toContain("A*ランク");
   expect(template).not.toContain("Top Tier");
@@ -13519,4 +13522,64 @@ it("投稿先を探す画面の順位が無い行を横棒の記号にしない�
   // (2) 点があっても順位が無い行が実際に生まれる（無くなったら語で書く案内ごと見直す）。
   expect(got.narrowShown, "候補が出ない画面では検査できない").toBeGreaterThan(0);
   expect(got.semNoRank, "順位が欠ける行が生まれなくなった（案内ごと見直す）").toBeGreaterThan(0);
+});
+
+it("効いているキーと画面のショートカット案内・てびきの並び替えの導線がズレない（SPEC §7）", () => {
+  /* `onKeydown` は `j` / `k` のほかに `ArrowUp` / `ArrowDown` も選択行の移動に使って
+   * いるのに、画面の案内（「ショートカット: j / k 選択 | …」）とてびきのキーボードの項の
+   * どちらにも矢印が出ていなかった（2026-08-09 実測: 処理しているキーは
+   * `/`・`ArrowDown`・`ArrowUp`・`Enter`・`Escape`・`d`・`j`・`k` の 8 種で、案内は 6 種）。
+   * また列の見出しは `tabindex="0"` + `Enter` / `スペース` で並び替えが効くのに、
+   * てびきはマウスで「押す」話しか書いておらず、キーボードだけの利用者には
+   * 並び替えの導線が届いていなかった。 */
+  const app = siteRuntime("app.js");
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  // 1) ビルド後のコードが実際に受け取っているキーの集合。
+  const handler = jsFunction(app, "onKeydown");
+  const handled = [
+    ...new Set(
+      [...handler.matchAll(/e\.key === "([^"]+)"/g)].map((m) => (m[1] === undefined ? "" : m[1])),
+    ),
+  ].filter((k) => k !== "");
+  expect(handled.sort(), "想定していないキーの受け取り方になった（案内も直す）").toEqual(
+    ["/", "ArrowDown", "ArrowUp", "Enter", "Escape", "d", "j", "k"].sort(),
+  );
+  // 2) 画面に出るショートカット案内が、受け取っているキーを全部書いている。
+  const hint = html.slice(
+    html.indexOf("ショートカット:"),
+    html.indexOf("</span>", html.indexOf("ショートカット:")),
+  );
+  expect(hint.length, "画面のショートカット案内が見つからない").toBeGreaterThan(0);
+  // 読み方の対応（矢印キーは画面では ↑ / ↓、Esc は Esc と書く）。
+  const notation: Record<string, string> = {
+    ArrowUp: "↑",
+    ArrowDown: "↓",
+    Escape: "Esc",
+  };
+  for (const key of handled) {
+    expect(hint, `画面の案内に ${key}（${notation[key] || key}）が書かれていない`).toContain(
+      notation[key] || key,
+    );
+  }
+  // 3) 並び替えの導線: 見出しがフォーカス出来て、Enter / スペースで効くこと。
+  const ths = [...html.matchAll(/<th\b[^>]*data-sort="[^"]*"[^>]*>/g)].map((m) => m[0]);
+  expect(ths.length, "並び替え出来る列の見出しが見つからない").toBeGreaterThan(0);
+  for (const th of ths) {
+    expect(th.includes('tabindex="0"'), `見出しがタブで移動できない: ${th}`).toBe(true);
+  }
+  expect(
+    /e\.key === "Enter" \|\| e\.key === " "/.test(app),
+    "見出しの Enter / スペースで並び替えが効かない",
+  ).toBe(true);
+  // 4) てびきのキーボードの項に、並び替えの導線が書かれていること。
+  const kb = html.slice(html.indexOf('<dt class="only-keyboard">キーボードで一覧を動かす</dt>'));
+  const entry = kb.slice(0, kb.indexOf("</dd>") + 5);
+  expect(entry.length, "てびきのキーボードの項が見つからない").toBeGreaterThan(0);
+  for (const word of ["Tab", "見出し", "並び替え", "スペース", "↑", "↓"]) {
+    expect(entry, `てびきのキーボードの項に ${word} が無い`).toContain(word);
+  }
+  // ソートできる列の正本と見出しが一致している（案内に列名を書いたので、ズレたら気づく）。
+  const keys = JSON.parse(/const SORTABLE_KEYS = (\[[^\]]*\])/.exec(app)?.[1] || "[]") as string[];
+  const thKeys = ths.map((th) => /data-sort="([^"]*)"/.exec(th)?.[1] || "");
+  expect([...thKeys].sort()).toEqual([...keys].sort());
 });
