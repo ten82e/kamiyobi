@@ -13583,3 +13583,58 @@ it("効いているキーと画面のショートカット案内・てびきの�
   const thKeys = ths.map((th) => /data-sort="([^"]*)"/.exec(th)?.[1] || "");
   expect([...thKeys].sort()).toEqual([...keys].sort());
 });
+
+it("データ生成からの日数は JST の暦日で数える（SPEC §7）", () => {
+  /* 「データは N 日前に生成されたものです」の N が経過 24 時間で数えていた。
+   * この画面は生成時刻も一覧の日時も JST で出していて、「残り」も JST の暦日が正本
+   * なので、生成時刻の直後に並ぶ「N 日前」だけ別単位で数えると隣に書いた日時と
+   * 合わなかった。ビルドした `dataAgeNoteJa` で実測:
+   *   JST 8/6 23:00 生成 → JST 8/9 01:00 閲覧: 経過 2 日（旧: 警告なし）/ 暦日 3 日（新: 警告）
+   *   JST 8/6 23:00 生成 → JST 8/10 00:30 閲覧: 経過 3 日（旧: 「3 日前」）/ 暦日 4 日（新: 「4 日前」）
+   * 警告が遅くとも約一日遅れて届くと、古い一覧を最新と誤る失敗を防げない。 */
+  const rec = join(site, "recommender.js");
+  const script = [
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${rec}`)});`,
+    // 生成は JST 2026-08-06 23:00（UTC では 8/6 14:00。暦日だけ跨界隈に置く）。
+    "const gen = Date.parse('2026-08-06T14:00:00Z');",
+    "const note = (iso) => Recommender.dataAgeNoteJa(new Date(gen).toISOString(), Date.parse(iso));",
+    // 経過 24 時間と JST 暦日がズレる 2 点を見る。
+    "const earlyMorning = note('2026-08-08T16:00:00Z'); // JST 8/9 01:00, 経過2日/暦日3日",
+    "const lateNight = note('2026-08-09T15:30:00Z'); // JST 8/10 00:30, 経過3日/暦日4日",
+    // 生成当日（JST で同日）は何も言わない。
+    "const sameDay = note('2026-08-06T14:30:00Z'); // JST 8/6 23:30, 暦日 0 日",
+    "console.log(JSON.stringify({",
+    "  threshold: Recommender.dataStaleDaysJa,",
+    "  earlyMorning,",
+    "  lateNight,",
+    "  sameDay,",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    threshold: number;
+    earlyMorning: string;
+    lateNight: string;
+    sameDay: string;
+  };
+  // 暦日 3 日目で警告が出る（経過 2 日では出ない旧挙動に戻ったら落ちる）。
+  expect(
+    out.earlyMorning,
+    "JST 暦日 3 日目で警告が出ていない（経過 24 時間で数え直した？）",
+  ).toContain("データは 3 日前");
+  // 暦日 4 日目は「4 日前」（経過 3 日の「3 日前」で止まっていたら落ちる）。
+  expect(out.lateNight, "日数が JST 暦日ではなく経過 24 時間で止まっている").toContain(
+    "データは 4 日前",
+  );
+  expect(out.lateNight).not.toContain("3 日前");
+  // 生成当日（JST 暦日で同日）は何も言わない。閾値はてびきの値（書き写さず実装から取る）。
+  expect(out.sameDay, "生成当日に警告が出ている").toBe("");
+  expect(out.threshold).toBe(3);
+  // てびきが数え方（JST の暦日）を宣言していること。
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  expect(html, "てびきが日数の数え方（JST の暦日）を書いていない").toContain("JST の暦日");
+});

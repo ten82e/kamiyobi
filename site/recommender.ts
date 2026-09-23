@@ -3856,13 +3856,23 @@ const Recommender = (() => {
    * ここはデータの生成時刻の話で、締切の日付を推測する話ではない。 */
   const DATA_STALE_DAYS_JA = 3;
 
-  /** データ生成からの日数が指定日数（`DATA_STALE_DAYS_JA`）以上のときだけ、
+  /** データ生成からの日数（**JST の暦日**で数える）が指定日数
+   * （`DATA_STALE_DAYS_JA`）以上のときだけ、
    *  読めない値・未来の値（閲覧側の時計のズレ）では空文字 – 根拠の無い警告を出さない。 */
   function dataAgeNoteJa(generatedAt: unknown, nowMs: number): string {
     const raw = typeof generatedAt === "string" ? generatedAt.trim() : "";
     const at = raw ? Date.parse(raw) : Number.NaN;
     if (!Number.isFinite(at) || !Number.isFinite(nowMs)) return "";
-    const days = Math.floor((nowMs - at) / 86400000);
+    /* 「N 日前」は JST の暦日で数える。この画面はデータ生成の時刻も一覧の日時も JST で
+     * 出していて（「残り」も JST の暦日が正本）、生成時刻の直後に「データは N 日前」と
+     * 並ぶので、ここだけ経過 24 時間で数えると隣に書いた日時と合わなかった
+     * （2026-08-09 実測: JST で 8/6 23:00 生成のデータは、JST の暦日では 8/9 01:00 に
+     * 3 日経過しているのに「2 日前」と数えられ、「3 日以上」のお知らせが出なかった。
+     * 逆に 8/10 00:30 では暦日 4 日なのに「3 日前」と出た。警告が遅くとも約一日遅れて
+     * 届くので、古い一覧を最新と誤る失敗を防げない）。
+     * JST のオフセットはインラインに置く（月見出し・`remain` と同じ理由）。 */
+    const jstDay = (t: number) => Math.floor((t + 9 * 3600000) / 86400000);
+    const days = jstDay(nowMs) - jstDay(at);
     if (days < DATA_STALE_DAYS_JA) return "";
     return (
       ` データは ${days} 日前に生成されたものです。` +
