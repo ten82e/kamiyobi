@@ -511,9 +511,51 @@ it("「国内開催」で打った人を国内研究会・国内シンポジウ�
     const note = String(Recommender.querySynonymNotes(word));
     expect(note, `「${word}」の寄せ先を件数欄が言っていない`).toContain("国内研究会");
   }
-  /* `米国開催` は寄せていない（第 249 回の実測: `米国` は 787 行に当たるが、行のなかに
-   * 「米国」の表記は 1 つも無く、国名の別名展開が効いて初めて当たる語だった。ここに
-   * `["米国"]` と書くと 0 行のままで噓の案内になる）。 */
-  expect(Recommender.querySynonymNotes("米国開催")).toEqual([]);
+  /* `米国開催` は第 249 回では寄せられなかった（`米国` は 787 行に当たるが、行のなかに
+   * 「米国」の表記は 1 つも無く、地域まとめの展開が効いて初めてあたる語で、hop 合成が
+   * 見出しで止まっていた）。第 250 回で hop を直し、**言い換えた語と同じ行数に出会える**
+   * ことをここで見る（違えば噓の案内になる – `米国` に寄せただけで 0 行だった頃に戻る）。 */
+  const usa = hits("米国");
+  expect(usa, "米国の行が 0 件（検査の前提が変わった）").toBeGreaterThan(100);
+  for (const word of ["米国開催", "アメリカ開催", "米国向け"]) {
+    expect(hits(word), `「${word}」で米国の行に出会えない`).toBe(usa);
+    expect(
+      String(Recommender.querySynonymNotes(word)),
+      `「${word}」の寄せ先を言っていない`,
+    ).toContain("米国");
+  }
+  /* `海外` には寄せ先が無い（行に「海外」の表記が無く、対応する欄もない）ので載せない。
+   * 載せると「探しています」の噓になる – 実測で 0 行。 */
   expect(Recommender.querySynonymNotes("海外開催")).toEqual([]);
+});
+
+it("言い換えの先が地域まとめの見出しでも行に届く（打ち込まれた見出しは今までどおり）", () => {
+  /* 第 250 回: hop 合成は地域まとめの見出しで止めていた（`アジア` → `中国` → 都道府県と
+   * 連鎖して組が膨らむのを防ぐため – SPEC §7 の既定の約束）。そのせいで、言い換えの先が
+   * `米国` のような見出しのときだけ 0 行のままだった。見出しを越えるのは**打ち込まれた語が
+   * 見出しでないときだけ**にしているので、両方をここで見る。 */
+  const hays = rows().map((row) => String(row.hay));
+  const matches = (query: string) => {
+    const test = Recommender.searchMatcher(query);
+    return hays.filter((hay) => test(String(hay)));
+  };
+  /* 言い換えの先（`米国開催` → `米国`）は見出しを越えて届く。 */
+  expect(matches("米国開催").length, "言い換えが地域まとめの見出しで止まっている").toBe(
+    matches("米国").length,
+  );
+  /* 打ち込まれた見出し（`アジア`）は越えない – 国内研究会の行が混ざらないこと
+   * （「『アジア』に国内の行は入らない」という既定の約束）。 */
+  const asia = matches("アジア");
+  expect(asia.length, "アジアの行が 0 件（検査の前提が変わった）").toBeGreaterThan(10);
+  expect(
+    asia.filter((hay) => String(hay).includes("国内研究会")).length,
+    "アジアの展開が国内の行まで広かった",
+  ).toBe(0);
+  /* 地方の見出しも同じ – `九州` の行に他の地方の行が混ざらない。 */
+  const kyushu = matches("九州");
+  expect(kyushu.length, "九州の行が 0 件（検査の前提が変わった）").toBeGreaterThan(0);
+  expect(
+    kyushu.filter((hay) => String(hay).includes("北海道")).length,
+    "九州の展開が他の地方の行まで広かった",
+  ).toBe(0);
 });

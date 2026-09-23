@@ -5843,6 +5843,18 @@ it("分野の言い方は、画面に出る語だけを指す（SPEC §7）", ()
   expect(rowText.length, "ビルド後の行の文字が読めない（検査が空洞になる）").toBeGreaterThan(
     100000,
   );
+  /* サイトが場所の別名として知っている見出し（`米国` など）も寄せ先にできる。
+   * これらの語は行にそのままは出ないが行の英文字表記（州・都市）と同じ場所を指し、
+   * 画面が行の開催地として出す表記の読みそのもの（第 250 回 – `米国開催` を `米国` に
+   * 寄せた。実測で 787 行に出会える）。見出し語の一覧はビルド後の成果物から読む。 */
+  const knownReadings = [
+    rec.match(/const PLACE_READINGS[\s\S]*?\];/)?.[0] ?? "",
+    rec.match(/const REGION_READINGS[\s\S]*?\];/)?.[0] ?? "",
+    rec.match(/const CONTINENT_READINGS[\s\S]*?\];/)?.[0] ?? "",
+  ].join("\n");
+  expect(knownReadings.length, "場所の別名見出しが読めない（検査が空洞になる）").toBeGreaterThan(
+    2000,
+  );
   entries.forEach((entry) => {
     // 説明の「◯◯『△△』」の △△ が、その語の実際の日本語表記と一致すること。
     const quoted = entry.shown.match(/「([^」]+)」/)?.[1];
@@ -5869,7 +5881,7 @@ it("分野の言い方は、画面に出る語だけを指す（SPEC §7）", ()
      * （2026-08-09 生成ビルドで 46 行が「国内」を含む – `tests/search_words.test.ts` が
      * 実際に行に出会えることを見る）。選択肢の語だけに絞ると 0 行のままで、案内も
      * 書けなかった。 */
-    if (!rowText.includes(String(quoted))) {
+    if (!rowText.includes(String(quoted)) && !knownReadings.includes(String(quoted))) {
       expect(labelBlocks, `${entry.word} → ${quoted} が画面に出る語ではない`).toContain(
         `"${quoted}"`,
       );
