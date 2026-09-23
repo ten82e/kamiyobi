@@ -1477,7 +1477,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const h = Math.floor(diff / 3600000);
       return { text: h <= 0 ? "まもなく" : `あと ${h} 時間`, cls: "today" };
     }
-    return { text: `あと ${d} 日`, cls: d <= 14 ? "soon" : "" };
+    /* これからの分も **JST の暦日**で数える（過ぎた分と同じ規則で、`dataAgeNoteJa` が
+     * 「残りは JST の暦日が正本」と書いている側）。経過 24 時間の floor だと、同じ行の
+     * 締切日より 1 日短く出て、しかも見る人の時計の時刻で数字が動く（2026-08-09 生成
+     * ビルドで実測: 締切 2026-08-22 03:00 JST の行は JST 09:00 の眺めると「あと 12 日」で、
+     * JST の暦日では 13 日後。締切の日付が動いていないのに、ずれは JST 09:00 で 97 行、
+     * 20:00 で 320 行（並んでいる 785 行中）、翌朝 06:00 で 7 行）。
+     * 暦日が 1 日違っても 24 時間未満の行は上の時刻表示に任せる（「あと 2 時間」を
+     * 「あと 1 日」とは言わない。急ぎを過小に見せないためで、表計算の欄も 0 のまま）。
+     * JST のオフセットはインラインに置く（この関数はビルド成果物から抜き出して検査する）。 */
+    const cal = Math.floor((ms + 9 * 3600000) / DAY) - Math.floor((now + 9 * 3600000) / DAY);
+    return { text: `あと ${cal} 日`, cls: cal <= 14 ? "soon" : "" };
   }
 
   // Paper Text Matching Score。ロジックは recommender.js (Recommender.breakdown) に移管

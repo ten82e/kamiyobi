@@ -15052,6 +15052,84 @@ it("`llms.txt` が、月の相対語を実装と違う月に決めていない�
   }
 });
 
+it("一覧の「残り」は、同じ行の締切の日付から数えた日数とずれない（SPEC §7）", async () => {
+  /* 「残り」のこれからの分だけ経過 24 時間の floor で数えていて、過ぎた分と過去・現在で
+   * 数え方が違っていた（`dataAgeNoteJa` は「残りは JST の暦日が正本」と書いている）。
+   * 2026-08-09 生成ビルドで実測: 締切 2026-08-22 03:00 JST の行は JST 09:00 の眺めで
+   * 「あと 12 日」（暦日では 13 日後）で、締切の日付が動いていないのにずれは JST 09:00 で
+   * 97 行 / 20:00 で 320 行（785 行中）/ 翌朝 06:00 で 7 行出た。表計算で締切日から
+   * 逆算する人が 1 日損をする。
+   * 画面の関数その物をビルド成果物から抜き出して、全行で暦日差と突き合わせる。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const app = siteRuntime();
+  const f = new Function("Date", "DAY", `${jsFunction(app, "remain")}\nreturn remain;`) as (
+    dateCtor: unknown,
+    day: number,
+  ) => (ms: number) => { text: string };
+  const DAY = 86400000;
+  const rows = R.candidateRows(
+    JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+      typeof R.candidateRows
+    >[0],
+  );
+  const jstDay = (t: number) => Math.floor((t + 9 * 3600000) / DAY);
+  let 日の表示 = 0;
+  let 時刻の表示 = 0;
+  let 数え方で変わった行 = 0;
+
+  // 見る人の時計の時刻で数字が動く不具合なので、同じ行を複数の時刻で眺める
+  // （JST の朝・夕方・深夜。生成基準時刻の 09:00 JST だけで見ると分からない）。
+  // 時刻で出す枝は、いちばん近い締切の 30 分前を足して通す（収録に 24 時間以内の行が
+  //無いビルドでも検査が回るよう、日付から作る。第 202 回）。
+  const clocks = [0, 11 * 3600000, 21 * 3600000];
+  const next = Math.min(
+    ...rows
+      .map((row) => (Number.isFinite(row.tShown) ? row.tShown : row.t))
+      .filter((t) => Number.isFinite(t) && t >= NOW.getTime()),
+  );
+  if (Number.isFinite(next)) clocks.push(next - NOW.getTime() - 30 * 60000);
+  for (const offset of clocks) {
+    const now = NOW.getTime() + offset;
+    class FakeDate extends Date {
+      static now() {
+        return now;
+      }
+    }
+    const remain = f(FakeDate, DAY);
+    for (const row of rows) {
+      const t = Number.isFinite(row.tShown) ? row.tShown : row.t;
+      if (!Number.isFinite(t) || t < now) continue;
+      const cell = remain(t).text;
+      const days = /^あと (\d+) 日$/.exec(cell);
+      if (days) {
+        日の表示 += 1;
+        const cal = jstDay(t) - jstDay(now);
+        expect(
+          Number(days[1]),
+          `${String(row.conf.title).slice(0, 28)} の「${cell}」は JST の暦日 ${cal} 日とずれている`,
+        ).toBe(cal);
+        // 直す前の数え方（経過 24 時間）と実際に関係が変わった行があることを数える
+        if (Math.floor((t - now) / DAY) !== cal) 数え方で変わった行 += 1;
+        continue;
+      }
+      if (cell === "まもなく" || /^あと \d+ 時間$/.test(cell)) {
+        時刻の表示 += 1;
+        expect(
+          t - now < DAY,
+          `${String(row.conf.title).slice(0, 28)} の「${cell}」は 24 時間以上先に出ている`,
+        ).toBe(true);
+      }
+    }
+  }
+  expect(日の表示, "「あと N 日」が出る行が無い（検査が空振り）").toBeGreaterThan(0);
+  expect(時刻の表示, "時刻で出る行が無い（検査が空振り）").toBeGreaterThan(0);
+  expect(
+    数え方で変わった行,
+    "どの行でも経過 24 時間と暦日差が同じ（検査が空振り）",
+  ).toBeGreaterThan(0);
+});
+
 it("書き出した CSV の残り日数が、画面の「残り」の数と全行で一致する（SPEC §7）", () => {
   /* 表計算で並び替える人は、画面の「残り」を確かめてから CSV を開く。両方の数が違えば、
    * どちらを信じるか分からなくなる。2026-08-09 生成のビルドで実測: 過ぎた行 2,317 件のうち
