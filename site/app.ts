@@ -2023,6 +2023,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
        * 値の `セキュリティ` は 152 件当たる）。値の例を言って打ち直させる。 */
       const columnNote = Recommender.columnQueryLiveNoteJa(filter.query);
       if (columnNote) return ` ｜ ${columnNote}${pointer}`;
+      /* 画面自身の操作・説明・出典の語を打たれた人（第 248 回）。同じ表から短い文を作る。 */
+      const uiNote = Recommender.uiWordLiveNoteJa(filter.query);
+      if (uiNote) return ` ｜ ${uiNote}${pointer}`;
     }
     /* 「その語が収録に無い」は、語の数え上げ（表の行だけを見る）ではなく全体の当たり数で決める
      * （第 240 回）。`常時受付` は表 0 件・常時受付ジャーナル 22 件なのに、読み上げは
@@ -2558,10 +2561,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /* 欄の名前（`分野` `種別` `参加形式` など）を打たれた人は、語を外しても増えない –
        値を打たないと直らないので、語ごとの件数案内の代わりにこれを立てる（第 244 回）。 */
     const columnNote = matchedRows === 0 ? Recommender.columnQueryNoteJa(trimmedQuery) : "";
+    /* 画面自身の操作・説明・出典の語（`使い方` `並び替え` `出典` `カテゴリ` など）を打たれた人
+       （第 248 回）。値の語ではないので語を短くしても増えない – 場所を言ってそっちへ送る。 */
+    const uiNote = matchedRows === 0 ? Recommender.uiWordNoteJa(trimmedQuery) : "";
     // URL の検索語を語に分解して「〜は収録データにも見当たりません」と言うのは誤解になる
     // （分解された語はドメインの一部で、検索の失敗理由ではない）。
     const terms =
-      !filter.urlQuery && !columnNote && filter.termCounts.length > 1 ? filter.termCounts : [];
+      !filter.urlQuery && !columnNote && !uiNote && filter.termCounts.length > 1
+        ? filter.termCounts
+        : [];
     const deadTerms = terms.filter((t) => t.count === 0).map((t) => t.term);
     let termNote = "";
     if (deadTerms.length) {
@@ -2583,7 +2591,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 「結局どうすればいい」が読めなくなる。検索語を短くする助言も、原因が分かっていれば
      * 的外れなので出さない。 */
     const specific = Boolean(
-      kindNote || wholeNote || columnNote || catalogNote || deadTerms.length || urlNote,
+      kindNote || wholeNote || columnNote || uiNote || catalogNote || deadTerms.length || urlNote,
     );
 
     /* 0 件案内はこれまで「外せる条件」の名前だけを並べていた。同じ画面上の件数欄は
@@ -2629,14 +2637,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       tip("ランクを「すべて」に変更", "rank", rankDropWordsJa(filter.rank));
     // 種別も絞り込みである。これを数えないと、案内どおりに他を外しても 0 件のままになる。
     if (filter.kind) tip(`「種別」を「${KIND_ALL_LABEL_JA}」に変更`, "kind", "投稿締切以外の種別");
-    if (trimmedQuery && !specific)
+    // 欄の名前や画面自身の語を打たれた人に「検索語を短くする」と言っても直らない（第 248 回）。
+    if (trimmedQuery && !specific && !columnNote && !uiNote)
       tips.push("検索語を短くする（分野名・主題・開催地の日本語でも引けます）");
 
     const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.md に載せています。";
     if (specific) {
       return tips.length
-        ? `${base}${kindNote}${wholeNote}${columnNote}${catalogNote}${urlNote}${termNote} 外せる条件: ${tips.join(" / ")}。`
-        : `${base}${kindNote}${wholeNote}${columnNote}${catalogNote}${urlNote}${termNote}`;
+        ? `${base}${kindNote}${wholeNote}${columnNote}${uiNote}${catalogNote}${urlNote}${termNote} 外せる条件: ${tips.join(" / ")}。`
+        : `${base}${kindNote}${wholeNote}${columnNote}${uiNote}${catalogNote}${urlNote}${termNote}`;
     }
     if (!tips.length) return `${base}${termNote} ${meetingNote}`;
     return `${base}${termNote} 多いのは ${tips.join(" / ")}。${meetingNote}`;

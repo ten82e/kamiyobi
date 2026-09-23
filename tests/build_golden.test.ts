@@ -68,15 +68,20 @@ import {
   runCli,
   utc,
 } from "./helpers.ts";
+/* ビルド成果物からの抜き出しは共有モジュールに置いた（第 248 回 – このファイルが biome の
+ * 1 MiB 上限に張り付いており、検査を追しただけで lint がファイルを丸ごと飛ばす危険がある。
+ * tests/lint_budget.test.ts が同じ話をしている）。 */
+import {
+  deadlineHintFunction,
+  jsFunction,
+  liveNoteSource,
+  siteRuntime,
+  vmSafeSource,
+  wholeTableQueryStubs,
+} from "./runtime_extract.ts";
 
 let site: string;
 let data: Record<string, any>;
-let compiledRuntime: ReturnType<typeof compileSiteRuntime> | null = null;
-
-function siteRuntime(name: keyof ReturnType<typeof compileSiteRuntime> = "app.js"): string {
-  compiledRuntime ??= compileSiteRuntime();
-  return compiledRuntime[name];
-}
 
 /* 検証状態の語彙を built の recommender から取り出して注入する行。画面の関数は
  * recommender の正本から作った module 直下の定数を見るので、ビルド成果物から抜き出した
@@ -1869,36 +1874,9 @@ it("upcoming.md writes each deadline in its official zone, not blanket AoE (SPEC
 });
 
 it("the empty deadline state names the filters that caused it (SPEC §7)", () => {
-  // 案内は選択肢の実ラベルを指すので、その定数も正本（ビルド後）から入れる。
-  const appForHint = siteRuntime();
-  const hint = new Function(
-    `${appForHint.match(/const KIND_ALL_LABEL_JA = [^\n]*;/)?.[0] ?? ""}
-     ${jsFunction(appForHint, "countJa")};
-     ${jsFunction(appForHint, "hiddenKindDeliveryJa")};
-     /* 評価の語（「評価なし」）と、のぞいた行を指す語も正本から入れる – 件数欄と同じ語を
-      * 見せるための注入で、検査側に語を書かない。 */
-     ${(siteRuntime("recommender.js").match(/const RANK_UNRATED_LABEL_JA = [^\n]*;/) || ['""'])[0]}
-     ${wholeTableQueryStubs(siteRuntime("recommender.js"))}
-     const Recommender = { rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA, wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa };
-     ${jsFunction(appForHint, "rankFilterLabelJa")};
-     ${jsFunction(appForHint, "rankDropWordsJa")};
-     return (${jsFunction(appForHint, "emptyDeadlineHint")});`,
-  )() as (f: {
-    window: string;
-    past: boolean;
-    cats: number;
-    domestic: boolean;
-    rank: string;
-    kind: string;
-    query: string;
-    hiddenKindWords: string[];
-    queryMatch: { catalog: number; journal: number };
-    termCounts: Array<{ term: string; count: number }>;
-    catalogConferences: number;
-    online?: boolean;
-    est?: boolean;
-    hidden?: Record<string, number>;
-  }) => string;
+  // 案内は選択肢の実ラベルを指すので、その定数も正本（ビルド後）から入れる
+  // （抜き出しは tests/runtime_extract.ts に共有した – 第 248 回）。
+  const hint = deadlineHintFunction();
   /* 案内は「いまその条件で何行が隠れているか」を添える（第 136 回）。外している条件の
    * 数字は並ばないので、見立ての側でも内訳を渡す（渡さないと呼び出し側の実装と違う）。 */
   const clear = {
@@ -2678,55 +2656,6 @@ function keydownWithBlockers(src: string): string {
   return `const ensureRowsDrawn = () => {};\n${jsFunction(src, "keyBlockedByTarget")}\n${jsFunction(src, "onKeydown")}`;
 }
 
-function jsFunction(html: string, name: string): string {
-  const start = html.indexOf(`function ${name}(`);
-  let depth = 0;
-  let i = html.indexOf("{", start);
-  while (true) {
-    if (html[i] === "{") depth += 1;
-    else if (html[i] === "}") {
-      depth -= 1;
-      if (depth === 0) return html.slice(start, i + 1);
-    }
-    i += 1;
-  }
-}
-
-// filter() is extracted from the emitted module; provide only its explicit module dependencies.
-/* Node 26 は `-e` に渡したソースを ESM かどうか機械的に判定するようで、配列のリテラルに
- * `"crypto"` が 1 語で含まれていると**モジュール扱いになり、トップレベルの `const`/`var` が
- * `new Function` の本体から見えなくなる**（`Recommender is not defined` に化ける。
- * 2026-09-23 に実発生: `cryptography` `xcrypto` は大丈夫で、`crypto` だけ該当した）。
- * 実行時に同じ文字列になる Unicode エスケープへ書き換えて回避する（正本はそのまま）。 */
-function vmSafeSource(src: string): string {
-  return src.replace(/"crypto"/g, '"cr\\u0079pto"');
-}
-
-/* 「この表その物を指す語」の正本（第 239 回）。0 件案内と読み上げが同じ語列表を向くので、
- * 検査側もビルド成果物から注入する（書き写すと正本とズレる）。 */
-function wholeTableQueryStubs(rec: string): string {
-  const list = rec.match(/const WHOLE_TABLE_QUERY_JA[\s\S]*?\];/)?.[0] ?? "";
-  expect(list, "WHOLE_TABLE_QUERY_JA が見つからない").toBeTruthy();
-  /* 欄の名前の正本も同じ入口から注入する（第 244 回 – 書き写すと正本とズレる）。 */
-  const cols = [
-    rec.match(/const COLUMN_VALUE_EXAMPLES_JA[\s\S]*?\n\s*\};/)?.[0] ?? "",
-    rec.match(/const COLUMN_QUERY_WORDS_JA[\s\S]*?\n\s*\];/)?.[0] ?? "",
-  ];
-  cols.forEach((src) => {
-    expect(src, "欄の名前の表が見つからない").toBeTruthy();
-  });
-  return [
-    list,
-    jsFunction(rec, "wholeTableQueryWordJa"),
-    jsFunction(rec, "wholeTableQueryNoteJa"),
-    ...cols,
-    jsFunction(rec, "columnQueryEntry"),
-    jsFunction(rec, "columnQueryWordJa"),
-    jsFunction(rec, "columnQueryNoteJa"),
-    jsFunction(rec, "columnQueryLiveNoteJa"),
-  ].join("\n");
-}
-
 const SEARCH_CANON = (() => {
   // 検索照合の規則は recommender.js の正本をそのまま注入する（書き写すと正本とズレるため、
   // スタブでの再現は避ける）。
@@ -2856,14 +2785,6 @@ const SORT_CANON_EVAL = [
   ...SORT_CANON.consts.map((src) => src.replace(/^const /, "var ")),
   ...SORT_CANON.fns,
 ].join("\n");
-
-/* 読み上げの案内は行き先一文（`hiddenKindDeliveryJa`）を呼ぶ（第 247 回）。抽出した関数は
- * 独立していないので、使う側も一緒に抜く – 抜くと `hiddenKindDeliveryJa is not defined` になる。 */
-const liveNoteSource = (app: string) =>
-  /* 呼ぶ側を `var` で宣言したうえで、本文の関数を値として返す。関数式を並べるだけでは
-   * 名前が作られないので、中で呼んだときに `hiddenKindDeliveryJa is not defined` になる
-   * （実測: カンマ式で済ませたとき、それで落ちた）。 */
-  `(function () {\n    var hiddenKindDeliveryJa = ${jsFunction(app, "hiddenKindDeliveryJa")};\n    return ${jsFunction(app, "zeroResultLiveNote")};\n  })()`;
 
 const FILTER_RUNTIME_STUBS = [
   // 窓の上限時刻は絞り込みと 0 件時の会期案内で共有する実装（書かないと両者が違う窓で動く）。
@@ -4920,13 +4841,14 @@ it("説明文に開発用語を残さない（SPEC §7）", () => {
     ).toBe(true);
   }
   // 実装側の語をそのまま出さない。画面では 分野 / 主題 / 絞り込み / 言葉の一致 を使う。
+  // `カテゴリ` `カテゴリー` `フィルタ` は下の `inputAliasOnly` に分けた（打たれた語としてだけ
+  // 受け入れ、説明文には出さない – 第 248 回）。
   const banned = [
     // 推薦カードから出した語（第 84 回）。`キャッシュ退避` 等は実装側の言い方。
     "退避",
     "観測年数",
     "プロフィール",
     "シグナル",
-    "カテゴリ",
     "トピック",
     "領域タグ",
     "ブースト",
@@ -4935,11 +4857,26 @@ it("説明文に開発用語を残さない（SPEC §7）", () => {
     "埋め込み",
     "語彙スコア",
     "デッドライン",
-    "フィルタ",
   ];
   for (const word of banned) {
     const hits = literals.filter((text) => text.includes(word));
     expect(hits, `画面に出る文言に「${word}」が残っている`).toEqual([]);
+  }
+  /* 打たれた語としてだけ受け入れる実装側の語（第 248 回）。`カテゴリ` `カテゴリー` `フィルタ` は
+   * 利用者が実際に打つ語なので、検索語の別名（`UI_WORD_GROUPS_JA`）として受け入れる
+   * （第 244 回ではこの検査に当たるため別名に載せられず、これらの語を打った人は 0 件と
+   * 何も書かれていない案内だけを受け取っていた – 2026-08-09 生成ビルドで実測）。
+   * ただし画面の説明文・てびき・ビルド済みの HTML には出さない。説明文に出ないことは
+   * `tests/search_words.test.ts` が案内文そのもので見る（ここでは静的な出ない方を見る）。 */
+  const inputAliasOnly = ["カテゴリ", "カテゴリー", "フィルタ"];
+  // ビルド済み HTML の画面に出る部分だけ見る（<script> の中はコードなので除外する）。
+  const builtHtml = readFileSync(join(site, "index.html"), "utf8").replace(
+    /<script[\s\S]*?<\/script>/g,
+    "",
+  );
+  for (const word of inputAliasOnly) {
+    expect(template.includes(word), `てびきに「${word}」が出ている`).toBe(false);
+    expect(builtHtml.includes(word), `ビルド済みの HTML に「${word}」が出ている`).toBe(false);
   }
 });
 
@@ -11484,7 +11421,7 @@ it("「締め切り」のように表その物を指す語を打った人に、0
     (app.match(/const KIND_ALL_LABEL_JA = [^\n]*;/) || ['""'])[0],
     jsFunction(app, "countJa"),
     wholeTableQueryStubs(rec),
-    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa };",
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa };",
   ].join("\n");
   const hint = new Function(`${stubs}\nreturn (${jsFunction(app, "emptyDeadlineHint")});`)() as (
     f: object,
@@ -11562,7 +11499,7 @@ it("締切のデータが無い画面は、それを条件の話より先に言�
     ")(['日','月','火','水','木','金','土'], (n) => String(n).padStart(2, '0'));",
     "const generatedAtLabel = new Function('fmtJst', 'UNCONFIRMED_JA', 'return (' + LABEL_SRC + ')')(fmtJst, '未確認');",
     wholeTableQueryStubs(siteRuntime("recommender.js")),
-    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa };",
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa };",
     "const hint = new Function('Recommender', 'return (' + HINT_SRC + ')')(Recommender);",
     "const live = new Function('Recommender', 'return (' + LIVE_SRC + ')')(Recommender);",
     "const empty = {",
@@ -12413,7 +12350,7 @@ it("0 件の案内が、各条件で今何行が隠れているかを並べて�
     // 評価の語は正本から取る（件数欄と同じ語を見るために）。
     (siteRuntime("recommender.js").match(/const RANK_UNRATED_LABEL_JA = [^\n]*;/) || [""])[0],
     wholeTableQueryStubs(siteRuntime("recommender.js")),
-    "const Recommender = { rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA, wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa };",
+    "const Recommender = { rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA, wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa };",
     jsFunction(app, "rankFilterLabelJa"),
     jsFunction(app, "rankDropWordsJa"),
     `${hintFn.replace("function emptyDeadlineHint", "const emptyDeadlineHint = function")}`,
@@ -12773,7 +12710,7 @@ it("0 件の読み上げが、画面に出ている案内の有無と緩めら�
   const script = [
     // 0 件案内と読み上げが同じ語列表を見るので、正本を注入する（第 239 回）。
     wholeTableQueryStubs(siteRuntime("recommender.js")),
-    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa };",
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa };",
     // 抜き出した関数は式としてそのまま入れる（JSON.stringify すると文字列になる）。
     "const live = (" + liveFn + ");",
     "const base = {",
@@ -13478,7 +13415,7 @@ it("URL で引いて 0 件のときは「語が無い」とは言わず収録の
     "const hostFromUrl = (" + jsFunction(rec, "hostFromUrl") + ");",
     "const hostLabels = (" + jsFunction(rec, "hostLabels") + ");",
     wholeTableQueryStubs(rec),
-    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa };",
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa };",
     "const note = (" + liveNoteSource(app) + ");",
     // URL の形とそれ以外（日付・会議名・語の羅列）を混同しないこと。
     "const yes = ['https://www.example-university.edu/symposium-2027/cfp', 'example.ac.jp/workshop27', 'easychair.org/cfp/x'];",
@@ -13549,7 +13486,7 @@ it("0 件案内の画面側も URL を「語」と呼ばず、読み上げと同
   const script = [
     "const countJa = (n) => String(n);",
     wholeTableQueryStubs(siteRuntime("recommender.js")),
-    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa };",
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa };",
     `const hint = (${jsFunction(app, "emptyDeadlineHint")});`,
     `const note = (${jsFunction(app, "zeroResultLiveNote")});`,
     "const mk = (o) => Object.assign({",

@@ -392,3 +392,64 @@ it("表に出さない種別を名指す案内は、打たれた語から筋道�
     );
   }
 });
+
+it("画面自身の語（使い方・並び替え・出典・カテゴリなど）を打った人に行き先を言う", () => {
+  /* 2026-08-09 生成ビルドの実測: `使い方` `ヘルプ` `てびき` `つかいかた` `みかた` `確定`
+   * `並び替え` `並び順` `絞り込み` `フィルタ` `条件` `出典` `一次情報` `データ源`
+   * `カテゴリ` `カテゴリー` `ラベル` `フィールド` はいずれも 0 行で、案内も空だった。
+   * 表の値ではない語なので、語を短くしても増えない – 場所を言う（第 248 回）。 */
+  const hays = rows().map((row) => String(row.hay));
+  const groups: Array<[string[], string]> = [
+    [["使い方", "ヘルプ", "てびき", "つかいかた", "みかた", "確定"], "見方のてびき"],
+    [["並び替え", "並び順", "絞り込み", "フィルタ", "条件"], "上にある欄"],
+    [["出典", "一次情報", "データ源"], "データ源"],
+    [["カテゴリ", "カテゴリー", "ラベル", "フィールド"], "分野"],
+  ];
+  let checked = 0;
+  for (const [words, destination] of groups) {
+    for (const word of words) {
+      const hits = hays.filter((hay) => Recommender.searchMatcher(word)(hay)).length;
+      expect(hits, `「${word}」は表に当たりがあるので案内の前提が崩れている`).toBe(0);
+      const note = Recommender.uiWordNoteJa(word);
+      const live = Recommender.uiWordLiveNoteJa(word);
+      expect(note, `「${word}」の案内が出ていない`).toContain(destination);
+      expect(live, `「${word}」の読み上げが出ていない`).toContain(destination);
+      checked += 1;
+    }
+  }
+  expect(checked, "案内を検査した語が 0 件（検査が空洞）").toBeGreaterThan(10);
+  /* 画面に実在しない場所へ送らない（案内が名指す画面の語はビルド済み HTML に実在する）。 */
+  const html = readFileSync(join(builtSite(), "index.html"), "utf8");
+  for (const word of ["見方のてびき", "データ源", "並び順", "条件クリア", "参加形式", "ランク"]) {
+    expect(html, `案内が名指す「${word}」が画面に無い`).toContain(word);
+  }
+  /* 実装側の語を案内に書き返さない（別名として受け入れるだけの語 – 開発用語の検査が
+   * 「打たれた語としてだけ受け入れる」に分けているので、ここでは案内文で確かめる）。 */
+  for (const word of ["カテゴリ", "カテゴリー", "フィルタ", "トピック", "シグナル"]) {
+    for (const [words] of groups) {
+      for (const query of words) {
+        expect(Recommender.uiWordNoteJa(query), `案内に「${word}」を書き返した`).not.toContain(
+          word,
+        );
+        expect(
+          Recommender.uiWordLiveNoteJa(query),
+          `読み上げに「${word}」を書き返した`,
+        ).not.toContain(word);
+      }
+    }
+  }
+  /* 表その物を指す語（`一覧` `締切一覧`）は、絞り込みに使わない（第 245 回の `会議` と同じ）。
+   * 実測: HEAD のビルドでは `一覧` `一覧表` `締切一覧` が 0 行だった。 */
+  for (const word of ["一覧", "一覧表", "締切一覧"]) {
+    expect(
+      Recommender.wholeTableQueryWordJa(word),
+      `「${word}」が表の全行の語になっていない`,
+    ).not.toBe("");
+    expect(Recommender.uiWordNoteJa(word), `「${word}」を二つの案内で重複して説明している`).toBe(
+      "",
+    );
+  }
+  /* 値の語には何も言わない（`セキュリティ` に場所を言ってはいけない）。 */
+  expect(Recommender.uiWordNoteJa("セキュリティ")).toBe("");
+  expect(Recommender.uiWordNoteJa("")).toBe("");
+});

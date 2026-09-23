@@ -2000,6 +2000,12 @@ const Recommender = (() => {
     "会議",
     "大会",
     "カンファレンス",
+    // 表その物を指す言い方は、この画面を見ている人が「一覧が見たい」と打つ語なので、
+    // 絞り込みには使わない（第 248 回の実測: `一覧` `一覧表` `締切一覧` はいずれも 0 行で、
+    // 収録の全行が締切の一覧だった。`リスト` は 1 行に当たるので載せない）。
+    "一覧",
+    "一覧表",
+    "締切一覧",
     // ひらがなで打つ人と同じ判断をするための生字（`wholeTableQueryWordJa` は小文字化だけで
     // 比べる – 第 239 回の方針）。片仮名は `kanaFold` が折るので書かなくていい。
     "かいぎ",
@@ -2098,6 +2104,96 @@ const Recommender = (() => {
     const first = (COLUMN_VALUE_EXAMPLES_JA[hit[1]] || [])[0] || "";
     const column = hit[0] === hit[1] ? "欄" : `欄（${hit[1]}）`;
     return `「${hit[0]}」は${column}の名前です。値（「${first}」など）で打ってください`;
+  }
+
+  /* 画面自身の操作・説明・出典にあたる語（第 248 回）。表の値ではないので 1 行も減らないのに、
+   * 画面は「その語は収録データにありません」としか言わなかった。2026-08-09 生成ビルドで実測
+   * （候補 3,253 行に対して当たり 0 件、言い換えの案内も無し）: `使い方` `ヘルプ` `てびき`
+   * `つかいかた` `みかた` `並び替え` `並び順` `絞り込み` `フィルタ` `条件` `一覧` `確定`
+   * `出典` `一次情報` `カテゴリ` `カテゴリー` `ラベル` `フィールド`。
+   * 案内が名指す画面の語は、ビルド済みの index.html に実在するものだけにする
+   * （『見方のてびき』『データ源』『並び順』『条件クリア』 – 検査が実在を見る）。
+   * `カテゴリ` `カテゴリー` はこの画面で使わない語なので、打たれた語を文に織り込まない
+   * （第 244 回で欄の名前の表に載せられなかった分の救済）。 */
+  /* `quiet` に置いた語は案内に書き返さない（この画面の説明文に書かない実装側の語なので、
+   * 開発用語を残さない検査に当たる – `カテゴリ` 系と同じ扱い）。主語の無い文で同じことを言う。 */
+  const UI_WORD_GROUPS_JA: Array<{
+    words: string[];
+    echo: boolean;
+    note: string;
+    live: string;
+    quiet?: string[];
+    noteQuiet?: string;
+    liveQuiet?: string;
+  }> = [
+    {
+      words: ["使い方", "ヘルプ", "てびき", "つかいかた", "みかた", "確定"],
+      echo: true,
+      note: "はこの表の語ではなく、ページの下にある『見方のてびき』に書いています。検索では絞り込めません。",
+      live: "は下の『見方のてびき』に書いています（検索では絞れません）",
+    },
+    {
+      words: ["並び替え", "並び順", "絞り込み", "フィルタ", "条件"],
+      echo: true,
+      note: "はこの表の語ではなく、上にある欄（『並び順』『種別』『ランク』『締切まで』『条件クリア』）で操作します。検索欄には打ち込まないでください。",
+      live: "は上にある欄で操作します（検索欄には打ち込まないでください）",
+      quiet: ["フィルタ"],
+      noteQuiet:
+        "操作はこの表の話ではなく、上にある欄（『並び順』『種別』『ランク』『締切まで』『条件クリア』）で行います。検索欄には打ち込まないでください。",
+      liveQuiet: "操作は上にある欄（『並び順』『種別』など）で行います。検索欄には打ち込みません",
+    },
+    {
+      words: ["出典", "一次情報", "データ源"],
+      echo: true,
+      note: "はページ下の『データ源』に出します。名前はリンクで、その配布物のページ（一次資料）に飛べます。くわしくは『見方のてびき』に書いてあります。",
+      live: "はページ下の『データ源』に出します（リンクから一次資料に飛べます）",
+    },
+    {
+      words: ["カテゴリ", "カテゴリー", "ラベル", "フィールド"],
+      // 打たれた語を書き返さない組（この画面で使わない語なので）。
+      echo: false,
+      note: "欄の名前の言い方ですが、この画面にその名前の欄はありません。上の『分野』『種別』『参加形式』で選ぶか、値で打ってください（例: 「セキュリティ」「論文締切」「オンライン参加可」）。",
+      live: "欄の名前では絞れません。上の『分野』『種別』で選ぶか、値で打ってください",
+    },
+  ];
+
+  function uiWordEntry(query: unknown) {
+    const q = String(query == null ? "" : query)
+      .trim()
+      .toLowerCase();
+    if (!q) return null;
+    const hit = UI_WORD_GROUPS_JA.find((group) =>
+      group.words.some((word) => word.toLowerCase() === q),
+    );
+    return hit || null;
+  }
+
+  /** 打ち返された語を正本の表記で返す（案内に書き返すか決めるのに使う）。 */
+  function uiWordRawJa(query: unknown): string {
+    const hit = uiWordEntry(query);
+    if (!hit) return "";
+    const q = String(query).trim().toLowerCase();
+    return hit.words.find((word) => word.toLowerCase() === q) || "";
+  }
+
+  /** 0 件案内に出す一文（画面の使い方・操作・出典の語を打たれた人向け – 第 248 回）。 */
+  function uiWordNoteJa(query: unknown): string {
+    const hit = uiWordEntry(query);
+    if (!hit) return "";
+    if (!hit.echo) return ` ${hit.note}`;
+    const word = uiWordRawJa(query);
+    if (hit.quiet && hit.quiet.indexOf(word) >= 0) return ` ${hit.noteQuiet || hit.note}`;
+    return ` 「${word}」${hit.note}`;
+  }
+
+  /** 読み上げ側の短い文（同じ表から作る – 画面と読み上げが別のことを言わないようにする）。 */
+  function uiWordLiveNoteJa(query: unknown): string {
+    const hit = uiWordEntry(query);
+    if (!hit) return "";
+    if (!hit.echo) return hit.live;
+    const word = uiWordRawJa(query);
+    if (hit.quiet && hit.quiet.indexOf(word) >= 0) return hit.liveQuiet || hit.live;
+    return `「${word}」${hit.live}`;
   }
 
   /* 検索語を打っても 1 行も減らないときの打ち直し方（第 227 回）。
@@ -6674,6 +6770,8 @@ const Recommender = (() => {
     columnQueryWordJa: columnQueryWordJa,
     columnQueryNoteJa: columnQueryNoteJa,
     columnQueryLiveNoteJa: columnQueryLiveNoteJa,
+    uiWordNoteJa: uiWordNoteJa,
+    uiWordLiveNoteJa: uiWordLiveNoteJa,
     wholeTableQueryWordJa: wholeTableQueryWordJa,
     wholeTableQueryNoteJa: wholeTableQueryNoteJa,
     querySynonymNotes: querySynonymNotes,
