@@ -2813,12 +2813,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 中身を推測して書くほうが悪いので、そのまま出す。
      * （下の語彙表はこの関数の内側にある。検査が関数ごと抜き出して実行できる形に
      * 保っておくため – 外に出すと抜き出した側で参照が切れる）。 */
+    /* 「分からない」を出す語は 未確認 / 該当なし / 評価なし に揃える画面の約束がある
+     * （`recommendationAvailability` の comment と、てびきの「未確認」の項）。
+     * 第 159 回ではここに `不明` を入れてしまった（2026-08-09 実測: ビルド後の app.js で
+     * 利用者に出る 「不明」 はこの 1 箇所だけで、てびきに無い語だった – 同じ種の欠陥が
+     * 2026-09-23 にも記録されている: カードだけが「受付状況不明」と出て直している）。
+     * てびきの語に寄せる。 */
     const VERIFY_SOURCE_LABELS_JA: Record<string, string> = {
       "official-cfp": "公式CFP",
       publisher: "出版社ページ",
       "official-homepage": "公式ホームページ",
       aggregator: "集約サイト",
-      unknown: "不明",
+      unknown: "未確認",
     };
 
     const VERIFY_FIELD_LABELS_JA: Record<string, string> = {

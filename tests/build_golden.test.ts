@@ -13122,10 +13122,26 @@ it("行の詳細の公式確認は内部表記のまま見せない（SPEC §7�
   expect(badSrc, `確認元に内部表記が残っている: ${badSrc.join(" / ")}`).toEqual([]);
   const badFld = Object.keys(got.fld).filter(asciiOnly);
   expect(badFld, `確認範囲に内部表記が残っている: ${badFld.join(" / ")}`).toEqual([]);
-  // `unknown` は「不明」に直す（中身を推測して「記録なし」などとは書かない）。
+  // `unknown` を機械の表記のまま出さない（中身を推測して「記録なし」などとは書かない）。
   const countOf = (map: Record<string, number>, key: string): number => map[key] ?? 0;
   expect(countOf(got.src, "unknown"), "unknown がそのまま出ている").toBe(0);
-  expect(countOf(got.src, "不明"), "unknown を「不明」以外の言い方にした").toBeGreaterThan(0);
+  /* 「分からない」を出す語は 未確認 / 該当なし / 評価なし に揃える画面の約束がある
+   * （てびきの「未確認」の項）。第 159 回では一時「不明」を入れてしまった
+   * （2026-08-09 実測: ビルド後に利用者へ出る「不明」はその 1 箇所だけで、てびきに無い語。
+   * 同じ種の欠陥は 2026-09-23 にもある – カードだけが「受付状況不明」と出て直している）。 */
+  expect(countOf(got.src, "不明"), "てびきに無い「不明」を出している").toBe(0);
+  expect(countOf(got.fld, "不明"), "てびきに無い「不明」を出している").toBe(0);
+  expect(
+    countOf(got.src, "未確認"),
+    "unknown をてびきの語（未確認）に寄せていない",
+  ).toBeGreaterThan(0);
+  // てびきが、公式確認の欄で同じ語を使うことを載せている（画面の語が案内に有る）。
+  const help = readFileSync(join(site, "index.html"), "utf8");
+  const entry = help.slice(help.indexOf("<dt>未確認</dt>"));
+  const dd = entry.slice(0, entry.indexOf("</dd>"));
+  expect(dd.replace(/<[^>]*>/g, ""), "てびきが確認元で同じ語を使うことを書いていない").toContain(
+    "確認元",
+  );
   // 収録の実データで確認範囲が日本語化されている。
   expect(
     Object.keys(got.fld).filter((k) => k.includes("日付")).length,
