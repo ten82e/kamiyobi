@@ -2973,6 +2973,17 @@ const Recommender = (() => {
     return hostLabels(hostFromUrl(link)).join(" ");
   }
 
+  /* 漢字の略字・異字体を折込む（第 241 回）。`〆` は「締」の略字で、収録元が原表記のまま
+   * 入る行がある（2026-08-09 生成ビルドの実測: 情報処理学会研究会の「発表申込〆切(延長後)」
+   * 「発表原稿〆切」の 4 行）。折込まないと `〆切` は 4 行にしか当たらず、同じ意味の `締切`
+   * （700 行）で引いた人と同じ画面に出会えなかった。全角・半角をならす NFKC は漢字の
+   * 略字を折込まないので、ここで受ける。照合側（hay）も検索語側も同じ関数を通るので、
+   * 一か所で両方に効く。画面に出す文字はここを通らないので表示は変わらない。 */
+  const KANJI_VARIANT_FOLD_JA: Record<string, string> = {
+    〆: "締",
+  };
+  const KANJI_VARIANT_FOLD_CHARS = /[〆]/g;
+
   function searchNormalize(value: unknown): string {
     const raw = typeof value === "string" ? value : value == null ? "" : String(value);
     let folded = typeof raw.normalize === "function" ? raw.normalize("NFKC") : raw;
@@ -2982,6 +2993,7 @@ const Recommender = (() => {
       );
     }
     folded = folded.replace(DIACRITIC_FOLD_CHARS, (ch) => DIACRITIC_FOLD_JA[ch] || ch);
+    folded = folded.replace(KANJI_VARIANT_FOLD_CHARS, (ch) => KANJI_VARIANT_FOLD_JA[ch] || ch);
     return folded.toLowerCase().replace(/\s+/g, " ").trim();
   }
 

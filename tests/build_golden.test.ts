@@ -2710,6 +2710,9 @@ const SEARCH_CANON = (() => {
     ["DIACRITIC_FOLD_CHARS", /const DIACRITIC_FOLD_CHARS = [^\n]*;/],
     ["LATIN_DIACRITIC_CHARS", /const LATIN_DIACRITIC_CHARS = [^\n]*;/],
     ["COMBINING_MARKS", /const COMBINING_MARKS = [^\n]*;/],
+    // 漢字の略字を折る表（第 241 回）。同じく `searchNormalize` が読むので先に置く。
+    ["KANJI_VARIANT_FOLD_JA", /const KANJI_VARIANT_FOLD_JA[\s\S]*?\};/],
+    ["KANJI_VARIANT_FOLD_CHARS", /const KANJI_VARIANT_FOLD_CHARS = [^\n]*;/],
     /* 分野チップの語（`システム（Systems, Architecture and Storage）`）を打ち手で寄せる
      * ための定義。`queryTokenGroups` が読むので、抜き出した関数と一緒に注入する
      * （定義順: 表 → 見出し → 正規表現）。 */
@@ -11304,6 +11307,61 @@ it("選んだ行は支援技術にも伝わる（視覚の目印だけで状態�
   // 実物のビルド成果物にも属性の操作が入っていること（上の抜き出しが空振りでないこと）。
   expect(app).toContain('setAttribute("aria-current", "row")');
   expect(app).toContain('removeAttribute("aria-current")');
+});
+
+it("「〆切」で引いた人が「締切」で引いた人と同じ行に出会える（略字は照合の内側で折る・SPEC §7）", () => {
+  /* 「〆」は「締」の略字で、収録元が原表記のまま入る行がある（2026-08-09 生成ビルドの実測:
+   * 情報処理学会研究会の「発表申込〆切(延長後)」ほか）。NFKC は漢字の略字を折込まないので、
+   * `〆切` は 4 行に当たり、同じ意味の `締切`（700 行）で引いた人と同じ画面に出会えなかった。 */
+  const real = JSON.parse(readFileSync(join(site, "data.json"), "utf8")) as {
+    conferences: unknown;
+  };
+  const rows = Recommender.candidateRows(real) as Array<{ hay: string }>;
+  const hits = (query: string) => {
+    const matches = Recommender.searchMatcher(query);
+    return rows.filter((row) => matches(String(row.hay))).length;
+  };
+  const shime = hits("締切");
+  expect(shime, "締切で引ける行が無い（検査が空振り）").toBeGreaterThan(0);
+  expect(hits("〆切"), "略字が折込まれていない（`〆切` が単独の語のまま残った）").toBe(shime);
+
+  /* 折込みは両側に効いていること – 原表記が「〆」の行を「締」で引けて、その逆も引ける。 */
+  ["発表申込締切", "発表申込〆切"].forEach((query) => {
+    const matches = Recommender.searchMatcher(query);
+    const found = rows.filter((row) => matches(String(row.hay))).length;
+    expect(
+      found,
+      `「${query}」で当たる行が無い（照合側か検索語側のどちらかだけが折れている）`,
+    ).toBeGreaterThan(0);
+  });
+
+  /* もう一つの手がかり – 検索に使う文字列（hay）に略字が 1 つも残っていないこと。
+   * ここが折れていないと、「締切」で引いた人が「〆切」の行をまだ逃がす。 */
+  expect(
+    rows.filter((row) => String(row.hay).includes("〆")).length,
+    "検索に使う文字列に略字が残っている（照合側が折れていない）",
+  ).toBe(0);
+  /* 画面に出る文字は変えていない – 原表記はそのまま収録に残っている。 */
+  expect(JSON.stringify(real), "原表記が書き換わった").toContain("〆切");
+
+  // 折込みの正本は `searchNormalize` に一か所（照合側・検索語側が同じ関数を通る）。
+  const normalize = new Function(`${SEARCH_CANON.join("\n")}
+     return searchNormalize;`)() as (value: unknown) => string;
+  expect(normalize("応募〆切"), "検索語側が折れていない").toBe("応募締切");
+  expect(normalize("発表申込〆切(延長後)")).toBe("発表申込締切(延長後)");
+  /* 他の表記ゆれは従来どおり – 英字の折込みと全角・半角を壊していない。 */
+  expect(normalize("München")).toBe("munchen");
+  expect(normalize("ＥＤＧＥ")).toBe("edge");
+
+  /* 略字を含まない文字列は、この折込みで何も変わらない（当たり数を固定時計ビルドの実測値に
+   * 固定すると、テストのビルドは実際の時計で組むので日の経過で偽りに落ちる）。 */
+  ["論文締切", "セキュリティ", "機械学習", "発表申込締切"].forEach((text) => {
+    expect(normalize(text), `「${text}」が折込みで変わった`).toBe(text);
+  });
+
+  // てびきにも、いま折込む略字を書いておく（画面の内側だけで起きると分からない）。
+  const guide = readFileSync(join(site, "index.html"), "utf8");
+  expect(guide, "てびきにこの話を書いていない").toContain("〆");
 });
 
 it("常時受付ジャーナルに当たる語を、読み上げが「収録データにありません」と言わない（SPEC §7）", () => {
