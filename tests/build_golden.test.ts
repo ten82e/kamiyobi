@@ -16320,3 +16320,91 @@ it("「来年」「今年」を打つと、その年の締切がぜんぶ出る�
     "「再来年」の解決結果が件数欄に出ない",
   ).toContain("再来年 = 2028年");
 });
+
+it("「ポスター募集」のような複合の言い方も、表に出る語へ寄せる（SPEC §7）", async () => {
+  // 表に無い複合の言い方だけを打つと 0 件だった（2026-08-09 生成ビルドで実測:
+  // `ポスター` 6 件・`ポスター発表` 6 件なのに `ポスター募集` `ポスター投稿` は 0 件、
+  // `特集号` 15 件なのに `特集号募集` `特集号投稿` は 0 件、`研究会` 23 件なのに
+  // `研究会発表` は 0 件）。寄せ先は必ず表（会議名・種別ラベル）に出る語にする –
+  // 画面に出ない語へ寄せると、当たった行になぜ当たったか読める語が残らない。
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const built = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as unknown as Record<
+    string,
+    unknown
+  >;
+  const catalog = built as Parameters<typeof R.candidateRows>[0];
+  const rows = R.candidateRows(catalog);
+  const hays = rows.map((r) => String(r.hay));
+  const at = Date.parse("2026-08-09T00:00:00Z");
+  const hit = (query: string, list: string[]) => {
+    const matches = R.searchMatcher(R.expandRelativeMonths(query, at), at);
+    return list.filter((hay) => matches(hay) === true).length;
+  };
+  const cases: Array<[string, string]> = [
+    ["ポスター募集", "poster"],
+    ["ポスター投稿", "poster"],
+    ["特集号募集", "特集号"],
+    ["特集号投稿", "特集号"],
+    ["研究会発表", "研究会"],
+  ];
+  for (const [打ち方, 寄せ先] of cases) {
+    const 件数 = hit(打ち方, hays);
+    expect(件数, `「${打ち方}」が 0 件のまま（寄せが効いていない）`).toBeGreaterThan(0);
+    expect(件数, `「${打ち方}」が寄せ先「${寄せ先}」と違う件数を出した`).toBe(hit(寄せ先, hays));
+  }
+  // 学会誌・ジャーナルは常時受付の期刊へ寄せる。常時受付の行は既定の一覧プールに
+  // 入らないので、種別を選ぶと出る行（built の journalRows）で測る。
+  const journals = R.journalRows(built.conferences as Parameters<typeof R.journalRows>[0], at).map(
+    (r) => String(r.hay),
+  );
+  for (const 打ち方 of ["学会誌", "ジャーナル"]) {
+    expect(hit(打ち方, journals), `「${打ち方}」が常時受付の行を出さない`).toBe(
+      hit("常時受付", journals),
+    );
+  }
+  expect(hit("常時受付", journals), "常時受付の行が無く、この検査が空振りしている").toBeGreaterThan(
+    0,
+  );
+  // 寄せの説明が画面に出る（件数欄の「こう探しました」）。語は表側と同じ正本から来る。
+  expect(R.querySynonymNotes("ポスター募集").join("、")).toContain("poster");
+  expect(R.querySynonymNotes("特集号募集").join("、")).toContain("特集号");
+  // 寄せ先が行に表示される語であることを、built の CSV で確かめる（会议名欄に出る語）。
+  /* built の CSV から会議欄だけ取る（列順は 締切, 公式表記, 残り日数, 会議, …。
+     開催地に読点が入るので引用符を見たうえで割る – 素朴な分割ではズレる）。 */
+  function cells(line: string): string[] {
+    const out: string[] = [];
+    let cell = "";
+    let quoted = false;
+    for (const ch of line) {
+      if (ch === '"') quoted = !quoted;
+      else if (ch === "," && !quoted) {
+        out.push(cell);
+        cell = "";
+      } else cell += ch;
+    }
+    out.push(cell);
+    return out;
+  }
+  const 会議欄 = (row: (typeof rows)[number]): string =>
+    cells(
+      R.deadlinesToCsv([row as unknown as Record<string, unknown>], at).split("\r\n")[1] || "",
+    )[3];
+  const 特集号の行 = rows.filter((r) => hit("特集号募集", [String(r.hay)]) === 1);
+  expect(特集号の行.length, "『特集号募集』の行が無く、この検査が空振りしている").toBeGreaterThan(
+    0,
+  );
+  expect(
+    特集号の行.some((r) => 会議欄(r).includes("特集号")),
+    "寄せ先の語が会議名に出ない行に当たっている（画面に出る語への寄せという不変条件に反する）",
+  ).toBe(true);
+  // 画面に出ない語へは寄せない – `シンポジウム` で当たる行の会議名は `SCIS 2027` なので、
+  // 「シンポジウム発表」を寄せると理由の読めない行が増える。表側の語そのものだけが当たる。
+  expect(R.querySynonymNotes("シンポジウム発表").length, "画面に出ない語へ寄せた").toBe(0);
+  // 既存の言いゆれ吸収は動かさない。
+  // 寄せは OR（同義語の和集合）なので、寄せた語の件数を下回ることが壊れ方になる。
+  expect(hit("スパコン", hays), "「スパコン」の寄せが壊れた").toBeGreaterThanOrEqual(
+    hit("高性能計算", hays),
+  );
+  expect(hit("論文募集", hays), "「論文募集」の寄せが壊れた").toBe(hit("論文締切", hays));
+});
