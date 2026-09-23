@@ -2649,9 +2649,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return `${jst.getUTCFullYear()}-${pad(jst.getUTCMonth() + 1)}`;
   }
 
+  /* 月の見出しは「何の月」かを書く（第 231 回）。表には締切の日時列と会期列の両方があり、
+   * 区切っているのは締切の日付なのに、見出しが「2026年11月（N 件）」だけだと会期の月だと
+   * 読める。2026-08-09 生成ビルドの実測で、会期が分かる投稿締切の行 94 件のうち 89 件
+   * （94.7%）は見出しの月と会期の月が違い、30 件は年まで違った（例: `aila2027` は
+   * 締切 2026-11-15 / 会期 2027-04）。読み間違いが出やすい側に語を足す。
+   * 並びの単位は変えていない – 区切る月は `monthKey`（表示している暦日）のまま。 */
   function monthHeading(key: string, count: number): string {
     const parts = key.split("-");
-    return `${parts[0]}年${Number(parts[1])}月（${countJa(count)} 件）`;
+    return `締切 ${parts[0]}年${Number(parts[1])}月（${countJa(count)} 件）`;
   }
 
   function makeMonthRow(key: string, count: number) {

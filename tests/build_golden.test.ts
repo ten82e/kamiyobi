@@ -3065,7 +3065,8 @@ it("month headings appear only while browsing in chronological order (SPEC §7)"
   expect(got.groups).toEqual([true, true, false, false, false, false]);
   // 月は JST で決める（表示が JST なので単位をずらさない）。
   expect(got.keys).toEqual(["2026-10", "2026-09", "", ""]);
-  expect(got.heading).toBe("2026年10月（7 件）");
+  // 見出しは「何の月」かを書く（第 231 回。会期列と読み違えるため）。
+  expect(got.heading).toBe("締切 2026年10月（7 件）");
 });
 
 it("recommendation data arrival re-schedules semantic for pending paper text", () => {
@@ -6605,7 +6606,6 @@ it("「締切まで N 日以内」の窓で外れた件数を件数欄に出す�
   // 過去表示と併用: 下限側（40 日前）も同じ窓として数える。
   expect(out.both).toEqual(["soon"]);
   expect(out.bothWindow, "対称窓の下限側を窓に数えていない").toBe(2);
-
   const app = siteRuntime();
   expect(app).toContain("`「締切まで ${Number.parseInt(state.win, 10)} 日以内」を超える");
   // 選択欄の表記（「7 日以内」）とその戻し方を選んで書く。
@@ -6618,6 +6618,41 @@ it("「締切まで N 日以内」の窓で外れた件数を件数欄に出す�
   expect(dd).toContain("収録が薄いわけではありません");
   expect(dd).toContain("「かまわない」");
 });
+
+it("月の見出しは、会期の月ではなく締切の月だと書く（SPEC §7）", () => {
+  /* 第 231 回。表には締切の日時列と会期列の両方がある。2026-08-09 生成ビルドの実測で、
+   * 会期が分かる投稿締切の行 94 件のうち 89 件（94.7%）は見出しの月と会期の月が違い、
+   * 30 件は年まで違った（`aila2027`: 締切 2026-11-15 / 会期 2027-04）。月だけの見出しは
+   * そこへ読み違える余地を残す。 */
+  const app = siteRuntime();
+  const script = [
+    `const countJa = (${jsFunction(app, "countJa")});`,
+    // `monthKey` は月の零埋めに `pad` を使うので、一緒に置いてやる。
+    "function pad(n) { return (n < 10 ? '0' : '') + n; }",
+    jsFunction(app, "monthKey"),
+    jsFunction(app, "monthHeading"),
+    "const 行 = { kind: 'paper', t: Date.parse('2026-11-15T02:00:00Z') };",
+    "console.log(JSON.stringify({ 見出し: monthHeading(monthKey(行), 12) }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 120_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const 結果 = JSON.parse(proc.stdout) as { 見出し: string };
+  expect(結果.見出し).toBe("締切 2026年11月（12 件）");
+  expect(結果.見出し, "会期の月だと読む余地を残している").toContain("締切");
+  // 区切る月自体は表示している暦日から決める（残り・並びと同じ基準。第 202 回）。
+  expect(jsFunction(app, "monthKey"), "月の基準が表示暦日でない").toContain("r.tShown");
+  // 見出しの行が、見出しの組み立てを見ていること（別の場所で月を組み直さない）。
+  // 呼び出しの形で見る（関数名だけだと `function monthHeading(key, count)` の宣言にも当たる）。
+  expect(app, "月見出しが見出しの正本を見ていない").toContain(
+    "textContent = monthHeading(key, count)",
+  );
+  // てびきも同じ読み方をしているか（画面の語を文書で言い換えない）。
+  expect(siteHtmlRuntime(), "てびきに月の基準を書いていない").toContain("締切 2026年11月（N 件）");
+});
+
 it("分野チップは、チップに出る日本語名の五十音順に並ぶ（SPEC §7）", async () => {
   /* 第 230 回。上は上流の分野表の項目順のままで、2026-08-09 生成ビルドの実測は
    * 高性能計算 / ネットワーク / システム / 人工知能 / セキュリティ / データベース /
