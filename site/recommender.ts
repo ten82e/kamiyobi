@@ -4547,6 +4547,14 @@ const Recommender = (() => {
         const confTags = conf.tags || [];
         const baseHay = [
           conf.title,
+          /* 会議名は**画面と同じ式**（年を添えた `titleWithYearJa`）でも hay に入れる。
+           * 素の `conf.title` だけだと、年を後付けした行の画面に出る名前が引けない
+           * （2026-08-09 生成ビルドで実測: 一覧に出る会議名 429 種のうち 26 種 – 影響 35 行 –
+           * が `ACISP 2027` の形そのままで 0 件。`ACISP` は 1 件引ける。これらの回は
+           * 会期が未定なので hay に 2027 が無く、画面に並ぶ語が索引に無い語だった）。
+           * 年は回ごとなので editions のループ内で組む（第 205 回で CSV をこの式に寄せた
+           * のと同じ正本を使う）。 */
+          titleWithYearJa(conf.title || conf.key || "", ed.year),
           conf.full_name,
           conf.key,
           ed.place,

@@ -16748,3 +16748,109 @@ it("公式表記欄に書く AoE の日付をそのまま打つと、その行�
   expect(hitRows("複数候補のため要確認").length, "印の語が壊れた").toBeGreaterThan(0);
   expect(hitRows("来年").length, "「来年」が壊れた").toBeGreaterThan(0);
 });
+
+it("一覧に出る会議名（年を後付けした形）をそのまま打つと、その行に出会う（SPEC §7）", async () => {
+  // 2026-08-09 生成ビルドで実測: 一覧に出る会議名 429 種のうち **26 種（影響 35 行）**は、
+  // 画面に並ぶそのままの形で打つと 0 件だった（`ACISP 2027`・`CAiSE 2027`・`EuroS&P 2027` …）。
+  // 年を後付けした行で、検索用の語が素の `conf.title`（年なし）しか持っていなかった。
+  // `ACISP` は 1 件引けるので、画面の語が索引に無い語だった（これらの回は会期が未定で、
+  // hay の中に 2027 という数字が無かった）。第 205 回で CSV を `titleWithYearJa` に寄せた
+  // と同じ正本を、索引側にも入れる。
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const built = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as unknown as Record<
+    string,
+    unknown
+  >;
+  const at = Date.parse("2026-08-09T00:00:00Z");
+  const rows = R.candidateRows(built as Parameters<typeof R.candidateRows>[0]);
+  const hays = rows.map((r) => String(r.hay));
+  const cells = (line: string): string[] => {
+    const out: string[] = [];
+    let cur = "";
+    let quoted = false;
+    for (let i = 0; i < line.length; i += 1) {
+      const ch = line[i];
+      if (quoted) {
+        if (ch === '"') {
+          if (line[i + 1] === '"') {
+            cur += ch;
+            i += 1;
+          } else quoted = false;
+        } else cur += ch;
+      } else if (ch === '"') quoted = true;
+      else if (ch === ",") {
+        out.push(cur);
+        cur = "";
+      } else cur += ch;
+    }
+    out.push(cur);
+    return out;
+  };
+  const cr = "\r\n";
+  const header = cells(
+    R.deadlinesToCsv([rows[0] as unknown as Record<string, unknown>], at).split(cr)[0],
+  );
+  const iName = header.indexOf("会議");
+  expect(iName, "CSV に「会議」列が無い").toBeGreaterThan(-1);
+  const rowCells = rows.map((r) =>
+    cells(R.deadlinesToCsv([r as unknown as Record<string, unknown>], at).split(cr)[1] || ""),
+  );
+  const hitRows = (query: string): number[] => {
+    const matches = R.searchMatcher(R.expandRelativeMonths(query, at), at);
+    return hays.map((hay, i) => (matches(hay) === true ? i : -1)).filter((i) => i >= 0);
+  };
+  const nameOf = (row: (typeof rows)[number]): string => {
+    const conf = row.conf as { title?: string; key?: string };
+    const ed = row.ed as { year?: number };
+    return R.titleWithYearJa(conf.title || conf.key || "", ed.year);
+  };
+
+  // 会議名は CSV も画面と同じ式で書かれている（ここで読む「画面に出る名前」の前提）。
+  rows.forEach((row, i) => {
+    expect(rowCells[i][iName], "CSV の会議名が画面と同じ式になっていない").toBe(nameOf(row));
+  });
+
+  const names = new Map<string, number[]>();
+  rowCells.forEach((row, i) => {
+    const list = names.get(row[iName]) || [];
+    list.push(i);
+    names.set(row[iName], list);
+  });
+  expect(names.size, "会議名が数えられず、この検査が空振りしている").toBeGreaterThan(10);
+  // 表示名をそのまま打つと、その名前を書く行がぜんぶ出る。
+  for (const [name, 書く行] of names) {
+    const 当たった = new Set(hitRows(name));
+    const 出会えない = 書く行.filter((i) => !当たった.has(i));
+    expect(
+      出会えない.length,
+      `「${name}」を書く ${書く行.length} 行のうち ${出会えない.length} 行が出ていない`,
+    ).toBe(0);
+  }
+  // **この検査が空振りしていないこと**: 後付けした年が、その行の他の欄（締切欄・公式表記欄・
+  // 会期欄）にも書いていない名前が 1 件以上あること。そういう名前は年を索引に入れて
+  // いなければ 0 件になる（2026-08-09 生成ビルドでは 26 種が該当し、ぜんぶ 0 件だった）。
+  const otherColumns = (row: string[]): string => row.filter((_, i) => i !== iName).join(" ");
+  const 年を後付けした名前 = [...names.keys()].filter((name) => /(?:20\d{2})$/u.test(name.trim()));
+  expect(
+    年を後付けした名前.length,
+    "年を含む表示名が無く、この検査が空振りしている",
+  ).toBeGreaterThan(0);
+  const 年が他の欄に無い名前 = 年を後付けした名前.filter((name) => {
+    const y = String(/(?:20\d{2})$/u.exec(name.trim())?.[0]);
+    return (names.get(name) || []).some((i) => !otherColumns(rowCells[i]).includes(y));
+  });
+  expect(
+    年が他の欄に無い名前.length,
+    "後付けした年が他の欄にも無い名前が無く、この検査は空振りしている",
+  ).toBeGreaterThan(0);
+
+  // 他の語とのかけ算は壊れない（名前で絞った件数は単独より減る）。
+  const 例 = 年を後付けした名前[0];
+  expect(hitRows(例).length, "名前で単独で引けない").toBeGreaterThan(0);
+  expect(hitRows(`${例} 存在しない会議名`).length, "存在しない語を足しても残った").toBe(0);
+  // 既存の語の回帰を見る。
+  expect(hitRows("来年").length, "「来年」が壊れた").toBeGreaterThan(0);
+  expect(hitRows("時刻未確認").length, "「時刻未確認」が壊れた").toBeGreaterThan(0);
+  expect(hitRows("複数候補のため要確認").length, "印の語が壊れた").toBeGreaterThan(0);
+});
