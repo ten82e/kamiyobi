@@ -1700,7 +1700,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   // ---- FILTERING ----
-  /** 展開で置き換わった語だけ `来月 = 2026年10月` の形で返す（説明用の補助）。 */
+  /** 展開で置き換わった語だけ `打った語 = 解決した西暦月` の形で返す（説明用の補助）。
+   * 例をこのコメントに日付で書かなかった – てびきの側で同じ例を「来月 = 再来月の値」と
+   * 取り違えて書いていた（SPEC §7）ので、固定の日付は書かない。 */
   function relativeMonthNote(query: string, expanded: string): string {
     const before = String(query || "")
       .trim()

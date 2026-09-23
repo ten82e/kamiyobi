@@ -14404,3 +14404,70 @@ it("「評価なし」で印刷すると、紙の条件にも同じ語が出る�
     "条件の書き下ろしか選択肢のどちらかが別の式になっている",
   ).toBeGreaterThanOrEqual(3);
 });
+
+it("相対月の展開を、てびきは固定の日付で約束していない（SPEC §7）", () => {
+  /* てびきの「今月」「来月」「再来月」「先月」の項は、展開結果の例を「来月 = 2026年10月」と
+   * 書いていた。しかし 2026-08-09 のビルドで実装が返すのは 2026年9月 で、10月は
+   * 「再来月」の値だった（ビルドした recommender.js で実測: 今月 2026年8月 / 来月 2026年9月 /
+   * 再来月 2026年10月 / 先月 2026年7月）。静的な文に固定の日付で例を書くと、その月を離れた
+   * 読者には画面と食い違う語になる – 「来月」が 2 ヶ月先だと受け取った人は出張の月を
+   * 間違える。項からは日付の例を外し、「打った語 = 解決した西暦月」という形の記述に替えた。 */
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const helpStart = html.indexOf('id="helpPanel"');
+  expect(helpStart, "てびきの欄が見つからない（検査が空振り）").toBeGreaterThan(-1);
+  const help = html.slice(helpStart, html.indexOf("</details>", helpStart));
+  const visible = help.replace(/<[^>]+>/g, "");
+
+  // てびきの項に、画面で無くなっている可能性のある展開例（語 = 具体的な日付）を書かない。
+  for (const word of ["今月", "来月", "再来月", "先月", "明日", "今週", "来週", "先週"]) {
+    expect(visible, `てびきが「${word}」の展開例を固定の日付で書いている`).not.toMatch(
+      new RegExp(`${word} = 20\\d\\d`),
+    );
+  }
+  // 展開結果の形だけは教えてくれないと、件数欄の語が何かわからない。
+  expect(visible, "展開結果の形を書いていない").toContain("打った語 = 解決した西暦月");
+
+  // 規則そのものは実測で守られている（期待値は実装から写さず、この検査が固定した
+  // 時計から導く。ずらす月数はてびきに書いた意味そのもの）。
+  const rec = join(site, "recommender.js");
+  const app = siteRuntime("app.js");
+  const script = [
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${rec}`)});`,
+    "const NOW = Date.parse('2026-08-09T00:00:00Z');",
+    "const base = new Date(NOW + 9 * 3600000);",
+    // 日本時間の暦月から期待する月を独立に作る（実装の月加算を写さない）。
+    "const monthAt = (offset) => {",
+    "  const d = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + offset, 1));",
+    "  return d.getUTCFullYear() + '年' + (d.getUTCMonth() + 1) + '月';",
+    "};",
+    "const offsets = { 今月: 0, 来月: 1, 再来月: 2, 先月: -1 };",
+    "const expanded = {};",
+    "const expected = {};",
+    "for (const [word, offset] of Object.entries(offsets)) {",
+    "  expanded[word] = Recommender.expandRelativeMonths(word, NOW);",
+    "  expected[word] = monthAt(offset);",
+    "}",
+    // 件数欄に書く語は本物の `relativeMonthNote` が作る（画面の文と検査が離れないように）。
+    jsFunction(app, "relativeMonthNote"),
+    "const note = relativeMonthNote('来月', Recommender.expandRelativeMonths('来月', NOW));",
+    "console.log(JSON.stringify({ expanded, expected, note, expectedNote: '来月 = ' + monthAt(1) }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    expanded: Record<string, string>;
+    expected: Record<string, string>;
+    note: string;
+    expectedNote: string;
+  };
+  for (const word of Object.keys(out.expected)) {
+    expect(
+      out.expanded[word],
+      `「${word}」の展開が ${out.expected[word]} ではない（取り違えると画面とてびきがズレる）`,
+    ).toBe(out.expected[word]);
+  }
+  expect(out.note, "件数欄に展開した語が出ない").toContain(out.expectedNote);
+});
