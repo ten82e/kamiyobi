@@ -2237,6 +2237,25 @@ const Recommender = (() => {
     return `${ymd[0]}-${pad2(ymd[1])}-${pad2(ymd[2])}`;
   }
 
+  /* 締切欄・公式表記欄に並ぶ時刻の語（`20:59`・`23:59`）を hay に入れる。実測:
+   * 2026-08-09 生成ビルドでは 863 行中 679 行がどちらかの欄に時刻を出している
+   * （21 種・最多は `20:59` の 508 行）のに、その語を打つとぜんぶ 0 件だった。
+   * 語は**画面と同じ列を組み立てる関数から取る**（書き写すと表示とズレる）。
+   * AoE 宣言の行は公式表記欄に AoE の時刻も出る（同じ行に二つの時刻が並ぶ）ので、
+   * それも入れる。日付しか確認できていない行は時刻を出さないので語を入れない。 */
+  function timeSearchWords(dl: unknown, t: number, dateOnly: boolean): string {
+    if (dateOnly || !Number.isFinite(t)) return "";
+    const texts = [csvJstInstant(t)];
+    if (officialZone(dl) === "AoE") texts.push(fmtAoEText(t));
+    const words: string[] = [];
+    texts.forEach((text) => {
+      text.split(" ").forEach((part) => {
+        if (/^\d{1,2}:\d{2}$/.test(part) && words.indexOf(part) < 0) words.push(part);
+      });
+    });
+    return words.join(" ");
+  }
+
   /* 会期欄に並ぶ日付の語をまとめて返す（開始日・終了日の和暦形と ISO）。
    * 曜日は足さない。会期欄は `2026-12-03(木) 〜 2026-12-04(金)` と曜日も二つ出すが、
    * 会期の曜日まで検索に入れると「金曜日」が締切の日で引けなくなる（2026-08-09 生成ビルドで
@@ -3547,6 +3566,11 @@ const Recommender = (() => {
       const parts = token.split("/");
       return parts.length >= 2 && parts.every((part) => /^[0-9]{1,4}$/.test(part));
     };
+    /* 時刻の語も割らない。`23:59` をコロンで割ると `59` が立った語になり、その語を
+     * 含む行が 1 件も無いので全体が 0 件になる（2026-08-09 生成ビルドで実測:
+     * 一覧の 863 行中 679 行が締切欄か公式表記欄に時刻を出している – 21 種・最多は
+     * `20:59` の 508 行 – のに、その語はぜんぶ 0 件だった）。全角コロンも受ける。 */
+    const timeLike = (token: string): boolean => /^\d{1,2}[:：]\d{2}$/.test(token);
     const LEADING_PUNCT = /^[（）()［］[\]【】〈〉《》「」『』！？!?。．.,:：;；〜~"'“”‘’`]+/u;
 
     function trimEdgePunct(value: string): string {
@@ -3557,7 +3581,7 @@ const Recommender = (() => {
     }
 
     const middleParts = (token: string): string[] => {
-      if (!JOIN_WORDS.test(token) || dateLike(token)) {
+      if (!JOIN_WORDS.test(token) || dateLike(token) || timeLike(token)) {
         const only = trimEdgePunct(token);
         return only ? [only] : [];
       }
@@ -3665,6 +3689,19 @@ const Recommender = (() => {
       yearMonthTermsJa(token, now).forEach((name) => {
         if (group.indexOf(name) < 0) group.push(name);
       });
+
+      /* 時刻の語は零詰めた形に寄せる。画面に出る 21 種はすべて `08:59` の形所以外に
+       * 無いので（2026-08-09 生成ビルドで実測）、打った側を画面の形に直す。元の形も
+       * 同じ組に入れると部分一致で化ける – `8:59` に `08:59` の 88 行に加えて
+       * 締切欄が `2026-11-09 18:59 JST(月)` の NOMS 2027 が 1 件混んだ（実測）ので、
+       * 零詰めた形だけを入れる。 */
+      if (timeLike(token)) {
+        const clock = /^(\d{1,2})[:：](\d{2})$/.exec(token);
+        if (clock) {
+          // 元の形は組に残さない（`let group = [token]` から組み替える – 上の暦日と同じ）。
+          group = [`${clock[1].length === 1 ? `0${clock[1]}` : clock[1]}:${clock[2]}`];
+        }
+      }
 
       // 数字だけの入力（`12/25` `2026-12-25` `2026-12`）は、hay に出る暦日の日本語形と
       // 同じ組に入れる。暦日への解決は月日そのものなので、日付の語とは違い説明は不要。
@@ -4522,6 +4559,7 @@ const Recommender = (() => {
            * 未確認（`ed.event_start` が無い・読めない）は NaN のままにして、並びでは
            * 末尾に寄せる（画面の「未確認」と同じ意味）。 */
           const tEvent = jstNoonMs(String(ed.event_start || ""), Number.NaN);
+          const timeWords = timeSearchWords(dl, t, dateOnly);
           out.push({
             conf,
             ed,
@@ -4540,7 +4578,7 @@ const Recommender = (() => {
             hay: searchNormalize(
               `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedHayJa({ kind: dl.kind || "", ed, rankPairs })} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)} ${weekdaySearchTerms(
                 dateOnly ? dl.local_date : t,
-              )} ${zoneSearchWords(dl, dateOnly)} ${eventDaySearchWords({ ed })}`,
+              )} ${zoneSearchWords(dl, dateOnly)} ${timeWords} ${eventDaySearchWords({ ed })}`,
             ),
             dupLabel: dl.comment || "",
           });

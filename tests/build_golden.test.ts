@@ -16512,3 +16512,122 @@ it("行に出る検証状態の印が、そのまま打つと 1 件も引けな�
   expect(hit("推定"), "「推定」の語が壊れた").toBeGreaterThan(0);
   expect(hit("時刻未確認"), "「時刻未確認」の語が壊れた").toBeGreaterThan(0);
 });
+
+it("締切欄・公式表記欄に出る時刻をそのまま打つと、その行に出会う（SPEC §7）", async () => {
+  // 2026-08-09 生成ビルドで実測: 収録 863 行中 679 行が締切欄か公式表記欄に時刻を
+  // 出している（21 種・最多は `20:59` の 508 行）のに、その語を打つとぜんぶ 0 件だった。
+  // 二つの原因が重なっていた。①検索用の語を作る側が時刻を hay に置いていない、
+  // ②打った語を割る側がコロンで `23:59` を二つに割り、`59` を含む行が 1 件もないので
+  // 全体が 0 件になる（`queryTokenGroups("23:59")` が `[["23"],["59"]]` だった）。
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const built = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as unknown as Record<
+    string,
+    unknown
+  >;
+  const at = Date.parse("2026-08-09T00:00:00Z");
+  const rows = R.candidateRows(built as Parameters<typeof R.candidateRows>[0]);
+  const hays = rows.map((r) => String(r.hay));
+  const hit = (query: string): number => {
+    const matches = R.searchMatcher(R.expandRelativeMonths(query, at), at);
+    return hays.filter((hay) => matches(hay) === true).length;
+  };
+  // CSV は一覧と同じ式で列を組み立てる（`fmtJst` との一致は別の検査が既にみている）。
+  // 引用符を持つ欄があるので、取り出す側も CSV の書き方で読む。
+  const cells = (line: string): string[] => {
+    const out: string[] = [];
+    let cur = "";
+    let quoted = false;
+    for (let i = 0; i < line.length; i += 1) {
+      const ch = line[i];
+      if (quoted) {
+        if (ch === '"') {
+          if (line[i + 1] === '"') {
+            cur += ch;
+            i += 1;
+          } else quoted = false;
+        } else cur += ch;
+      } else if (ch === '"') quoted = true;
+      else if (ch === ",") {
+        out.push(cur);
+        cur = "";
+      } else cur += ch;
+    }
+    out.push(cur);
+    return out;
+  };
+  const cr = "\r\n";
+  const header = cells(
+    R.deadlinesToCsv([rows[0] as unknown as Record<string, unknown>], at).split(cr)[0],
+  );
+  const iDeadline = header.indexOf("締切");
+  const iOfficial = header.indexOf("公式表記");
+  const iName = header.indexOf("会議");
+  expect(iDeadline, "CSV に「締切」列が無い").toBeGreaterThan(-1);
+  expect(iOfficial, "CSV に「公式表記」列が無い").toBeGreaterThan(-1);
+  const rowCells = rows.map((r) =>
+    cells(R.deadlinesToCsv([r as unknown as Record<string, unknown>], at).split(cr)[1] || ""),
+  );
+  const shownTime = (row: string[]): string[] => [
+    ...new Set(`${row[iDeadline]} ${row[iOfficial]}`.match(/\d{1,2}:\d{2}/g) || []),
+  ];
+
+  // 画面に出る時刻の語ごとに、**その語を出している行数と検索の件数が一致**すること。
+  const words = new Map<string, number>();
+  rowCells.forEach((row) => {
+    shownTime(row).forEach((w) => {
+      words.set(w, (words.get(w) || 0) + 1);
+    });
+  });
+  const 時刻を出す行 = rowCells.filter((row) => shownTime(row).length > 0).length;
+  expect(時刻を出す行, "時刻を出す行が無く、この検査が空振りしている").toBeGreaterThan(0);
+  expect(words.size, "画面に出る時刻の語が 1 種しか無く、この検査が空振りしている").toBeGreaterThan(
+    1,
+  );
+  for (const [word, 表示行数] of [...words.entries()].sort((a, b) => b[1] - a[1])) {
+    expect(hit(word), `「${word}」を出している ${表示行数} 行と違う件数になった`).toBe(表示行数);
+  }
+  // 当たった行は、その語を実際に出している（逆方向の誤爆も見ると両側から締まる）。
+  for (const word of [...words.keys()].slice(0, 3)) {
+    const matches = R.searchMatcher(word, at);
+    const 当たった行 = rowCells.filter((_, i) => matches(hays[i]) === true);
+    expect(
+      当たった行.every((row) => shownTime(row).includes(word)),
+      `「${word}」が誤爆した`,
+    ).toBe(true);
+  }
+  // 零詰めしていない入力は、画面の形に寄せる。元の形を同じ組に残すと `8:59` に
+  // 締切欄が `18:59` の行が混む（2026-08-09 生成ビルドで 1 件実測）ので、寄せるだけ。
+  const padded = [...words.keys()].find((w) => /^[01]\d:/.test(w));
+  expect(padded, "零詰めされた時刻の語が無く、この検査が空振りしている").toBeTruthy();
+  expect(hit(String(padded).replace(/^0(\d)/u, "$1")), "零詰めを外して打つと別の行になった").toBe(
+    hit(String(padded)),
+  );
+  // 全角コロンでも同じ行に出会う（全角入力は同じ結果になる、というてびきの約束）。
+  expect(R.queryTokenGroups("20：59", at), "全角コロンで打つと別の語になった").toEqual(
+    R.queryTokenGroups("20:59", at),
+  );
+  // 時刻は他の語と組み合わせられる（AND）。
+  expect(hit("20:59"), "時刻の語が単独で引けない").toBeGreaterThanOrEqual(hit("20:59 機械学習"));
+  // 語の割れ方そのもの（②の原因が戻っていないこと）。
+  expect(R.queryTokenGroups("23:59", at), "時刻の語がまだ割れている").toEqual([["23:59"]]);
+  expect(R.queryTokenGroups("8:59", at), "零詰めの寄せ方が変わった").toEqual([["08:59"]]);
+  // 日付の入力は従来どおり割らない（`dateLike` と同じ判断を時刻にも広げたので、隣を見る）。
+  expect(
+    R.queryTokenGroups("2026-08-22", at).some((g) => g.includes("2026年8月22日")),
+    "日付入力の暦日展開が壊れた",
+  ).toBe(true);
+  // 時刻未確認（日付しか確認できていない）の行は時刻を出さないので、時刻では出ない。
+  const 未確認 = rowCells.filter((row) => row[iOfficial] === "時刻未確認");
+  expect(未確認.length, "時刻未確認の行が無く、この検査が空振りしている").toBeGreaterThan(0);
+  const anyTime = (hay: string): boolean =>
+    [...words.keys()].some((w) => R.searchMatcher(w, at)(hay) === true);
+  expect(
+    未確認.filter((row) => anyTime(hays[rowCells.indexOf(row)])).length,
+    `時刻未確認の行が時刻の語で出てしまった（例: ${未確認[0][iName]}）`,
+  ).toBe(0);
+  // 同じ行で壊れやすい語の回帰を見る。
+  expect(hit("時刻未確認"), "「時刻未確認」の語が壊れた").toBeGreaterThan(0);
+  expect(hit("複数候補のため要確認"), "印の語が壊れた").toBeGreaterThan(0);
+  expect(hit("来年"), "「来年」が壊れた").toBeGreaterThan(0);
+});
