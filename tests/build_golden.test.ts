@@ -14209,3 +14209,121 @@ it("常時受付の行にも公式ページの URL が出る（SPEC §7）", () 
     "safeExternalUrl(r.ed.link || r.conf.link)",
   );
 });
+
+it("画面に出る語と CSV の値に計算の失敗が混ざらない（SPEC §7）", () => {
+  /* 第 174 回の点検で、ビルドした成果物を見て確かめた項目は、どれも問題なしだった。画面の噓は
+   * 見つからなかったが、問題なしだという事実には検査が無かった（第 167 回・第 169 回・第 170 回・
+   * 第 172 回の欠陥は、どれも「別の場所が同じ値を出しているか」の検査が有ればもっと早く落ちた）。
+   * そこで点検内容をそのまま検査に落とす。
+   *   - CSV の全マス（45,290 マス実測）に undefined・NaN・Invalid Date・null・Infinity が無い
+   *   - 狭い画面のカード化で列の名前（`data-label`）が 7 列すべてに出る
+   *   - てびきの「並び順」の項に並ぶ列名が、実装の並び替え可能な列と一致する
+   * いずれも実装から語を導いて比べる（数字や語を書き写さない）。 */
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const app = siteRuntime();
+
+  // ---- 1. カード化の列名 == 表の見出し ----
+  const headerCells = [
+    ...html.slice(html.indexOf("<thead"), html.indexOf("</thead>")).matchAll(/<th\b[^>]*>([^<]*)/g),
+  ]
+    .map((m) => m[1].replace(/[↕↑↓]/g, "").trim())
+    .filter((t) => t.length > 0);
+  expect(headerCells.length, "表の見出しが見つからない").toBeGreaterThan(3);
+  const cardLabels = [...app.matchAll(/td\([A-Za-z]+, "([^"]+)"/g)].map((m) => m[1]);
+  expect(cardLabels.length, "カード化の列名が 1 つも付いていない").toBe(headerCells.length);
+  for (const label of headerCells) {
+    expect(cardLabels, `カード化したとき「${label}」の列名が消える`).toContain(label);
+  }
+
+  // ---- 2. てびきの並び順の項 == 並び替え可能な列 ----
+  const sortable = [
+    ...html
+      .slice(html.indexOf("<thead"), html.indexOf("</thead>"))
+      .matchAll(/data-sort="([a-z]+)"[^>]*>([^<]*)/g),
+  ].map((m) => ({ key: m[1], label: m[2].replace(/[↕↑↓]/g, "").trim() }));
+  expect(sortable.length, "並び替え可能な列が無い").toBeGreaterThan(3);
+  const gStart = html.indexOf("<dt>並び順</dt>");
+  expect(gStart, "てびきの並び順の項が無い").toBeGreaterThan(-1);
+  const guideSort = html.slice(gStart, html.indexOf("</dd>", gStart));
+  for (const col of sortable) {
+    // 見出しは「日時（JST）」の様に但し書きを添えるので、てびき側は語の始めで当たる。
+    const head = col.label.replace(/（.*$/, "");
+    expect(guideSort, `てびきの並び順の項に「${col.label}」が書かれていない`).toContain(head);
+  }
+  // てびきに並んだ語が実装に無い列を指しても困るので、両側を同じ数で見ておく。
+  const listed = ["残り", "日時", "会期", "会議", "ランク"].filter((w) => guideSort.includes(w));
+  expect(listed.length, "てびきに並ぶ列数が実装と違う").toBe(sortable.length);
+
+  // ---- 3. CSV の値に計算の失敗が混ざらない ----
+  const rec = join(site, "recommender.js");
+  const script = [
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${rec}`)});`,
+    "const { readFileSync } = await import('node:fs');",
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const rows = Recommender.candidateRows(DATA, now);",
+    // バックスラッシュ入りの正規表現を文字列に書くと不可視の制御文字になる（第 169 回で実発生）。
+    // なので語の切れ目を見たい項目は部分一致で見る。
+    "const BAD = ['undefined', 'NaN', 'Invalid Date', 'null', 'Infinity'];",
+    "const Q = String.fromCharCode(34);",
+    "const CRLF = String.fromCharCode(13) + String.fromCharCode(10);",
+    "const parseLine = (line) => {",
+    "  const out = [];",
+    "  let cur = '';",
+    "  let q = false;",
+    "  for (let i = 0; i < line.length; i++) {",
+    "    const ch = line[i];",
+    "    if (q) {",
+    "      if (ch === Q) {",
+    "        if (line[i + 1] === Q) { cur += Q; i++; } else { q = false; }",
+    "      } else { cur += ch; }",
+    "    } else if (ch === Q) { q = true; }",
+    "    else if (ch === ',') { out.push(cur); cur = ''; }",
+    "    else { cur += ch; }",
+    "  }",
+    "  out.push(cur);",
+    "  return out;",
+    "};",
+    "const lines = Recommender.deadlinesToCsv(rows, now).split(CRLF).filter((l) => l.length);",
+    "const head = parseLine(lines[0]);",
+    "let cells = 0;",
+    "let bad = 0;",
+    "const where = [];",
+    "for (let i = 1; i < lines.length; i++) {",
+    "  const cellsRow = parseLine(lines[i]);",
+    "  for (let c = 0; c < cellsRow.length; c++) {",
+    "    const v = cellsRow[c];",
+    "    cells += 1;",
+    "    if (BAD.some((w) => v.indexOf(w) >= 0)) {",
+    "      bad += 1;",
+    "      if (where.length < 3) where.push(head[c] + ' = ' + v.slice(0, 30));",
+    "    }",
+    "  }",
+    "}",
+    // 検出器が死んでいると「0 件」が空振りになるので、わざと壊した 1 マスで自查する。
+    "const probe = parseLine('a,NaN,c').filter((v) => BAD.some((w) => v.indexOf(w) >= 0)).length;",
+    "console.log(JSON.stringify({",
+    "  rows: rows.length,",
+    "  cols: head.length,",
+    "  cells,",
+    "  bad,",
+    "  where,",
+    "  probe,",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    rows: number;
+    cols: number;
+    cells: number;
+    bad: number;
+    where: string[];
+    probe: number;
+  };
+  expect(out.rows, "候補行が出ていない").toBeGreaterThan(200);
+  // CSV は行と 1:1 で並び、列数は全行で同じ（マスの総数はその積になる）。
+  expect(out.cells, "CSV のマス数が行数と列数の積にならない").toBe(out.rows * out.cols);
+  expect(out.probe, "計算の失敗を検出する検査自体が壊れている").toBe(1);
+  expect(out.bad, `CSV に計算の失敗が混ざっている: ${out.where.join(" / ")}`).toBe(0);
+});
