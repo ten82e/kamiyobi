@@ -2292,6 +2292,52 @@ const Recommender = (() => {
     return words.join(" ");
   }
 
+  /* 締切を過ぎた行に出す印の形。以前の版は「過去の締切も表示」で出した行に一律
+   * `締切済み（次回予定）` と書いていたが、収録データで次回が確認できる行は极少数だった
+   * （2026-08-09 生成ビルドで実測: 過去行 77 件のうち **会期がまだ来ていない行 76 件**、
+   * 同じ会議の次の回が確認できる行 0 件、会期も過ぎて次の回が無い行 1 件）。つまり
+   * 76 件が根拠のない「次回予定」を出していて、読者は「この会議の次回は出る」と
+   * 誤解する。会期の状態に応じて三つの形に分ける（行の詳細の「今後の会期」と同じ
+   * `upcomingEditionsOf` を見る – 印だけが別の判断をしない）。 */
+  const PAST_DEADLINE_TAG_JA = "締切済み";
+
+  /** 行が締切を過ぎたかどうか（一覧の印・過去の締切の絞り込み・残り欄が同じ 1 本を見る）。 */
+  function deadlineRowIsPast(
+    row: { t?: unknown; tLast?: unknown; dateOnly?: unknown },
+    nowMs: number,
+  ): boolean {
+    if (row?.dateOnly) {
+      // 幅を持つ行（時刻未確認）は「表示したより前に終わった可能性がある」の間は過ぎたと呼ばない
+      // （画面の「不確か」と同じ。`t`・`tLast` の両方が読めるときだけ判定する）。
+      const first = Number(row.t);
+      const last = Number(row.tLast);
+      return Number.isFinite(first) && Number.isFinite(last) && last < nowMs;
+    }
+    const t = Number(row ? row.t : Number.NaN);
+    return Number.isFinite(t) && t < nowMs;
+  }
+
+  /** 過ぎた締切の行の印。根拠のあるときだけ「次回予定」と書く。 */
+  function pastDeadlineTagJa(
+    row: {
+      t?: unknown;
+      tLast?: unknown;
+      tEvent?: unknown;
+      dateOnly?: unknown;
+      conf?: unknown;
+      ed?: { event_start?: unknown } | null;
+    },
+    nowMs: number,
+  ): string {
+    if (!deadlineRowIsPast(row, nowMs)) return "";
+    const tEvent = Number(row.tEvent);
+    if (Number.isFinite(tEvent) && tEvent >= nowMs)
+      return `${PAST_DEADLINE_TAG_JA}（会期がこれから）`;
+    const next = upcomingEditionsOf(row.conf, String(row.ed?.event_start || ""), nowMs);
+    if (next.length) return `${PAST_DEADLINE_TAG_JA}（次回予定）`;
+    return PAST_DEADLINE_TAG_JA;
+  }
+
   /* 締切の検証状態が画面に出す語。一覧の印・行の詳細・検索用の語の三箇所が同じ表を
    * 見るための正本（ここに寄せる前は、画面の印を作る語と検索用の語が別実装で、
    * **画面が 375 行に出していた「複数候補のため要確認」が検索で 1 件も引けなかった**
@@ -6177,6 +6223,8 @@ const Recommender = (() => {
     categoryChipLabelJa: categoryChipLabelJa,
     officialZone: officialZone,
     isExtendedDeadline: isExtendedDeadline,
+    deadlineRowIsPast: deadlineRowIsPast,
+    pastDeadlineTagJa: pastDeadlineTagJa,
     deadlineShiftsOf: deadlineShiftsOf,
     deadlineShiftLineJa: deadlineShiftLineJa,
     deadlineShiftSearchWords: deadlineShiftSearchWords,

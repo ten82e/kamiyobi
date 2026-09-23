@@ -2824,6 +2824,11 @@ it("browser date-only state is independent of the viewer timezone", () => {
     // site/app.js source text.
     "const Recommender = { candidateRows: (data) => { const dl = data.conferences[0].editions[0].deadlines[0]; return [{ dateOnly: true, localDate: dl.local_date, t: Date.parse(dl.earliest_utc), tLast: Date.parse(dl.latest_utc) }]; } };",
     jsFunction(app, "buildRows"),
+    // `rowIsPast` は recommender.js の判定に寄った（第 225 回）ので、雛形の Recommender に
+    // その正本を足す – 規則をテスト側に書き写さない。
+    "Recommender.deadlineRowIsPast = " +
+      jsFunction(siteRuntime("recommender.js"), "deadlineRowIsPast") +
+      ";",
     jsFunction(app, "rowDateOnlyState"),
     jsFunction(app, "rowIsPast"),
     "const data = { conferences: [{ key: 'x', title: 'X', editions: [{ year: 2026, deadlines: [{ kind: 'paper', precision: 'date-only', local_date: '2026-08-24', earliest_utc: '2026-08-23T10:00:00.000Z', latest_utc: '2026-08-25T11:59:59.999Z' }] }] }] };",
@@ -13086,6 +13091,8 @@ it("既定に出ていない行の共有リンクを踏んだら、条件を外�
   const dataPath = join(site, "data.json");
   const script = [
     `const { default: Rec } = await import(${JSON.stringify(recPath)});`,
+    // 抜き出した app の関数は `Recommender.` を呼ぶので、同じ 1 本を別名でも置いてやる（第 225 回）。
+    "const Recommender = Rec;",
     "const fs = await import('node:fs');",
     `const data = JSON.parse(fs.readFileSync(${JSON.stringify(dataPath)}, 'utf8'));`,
     "const now = Date.parse('2026-08-09T00:00:00Z');",
@@ -13211,6 +13218,8 @@ it("投稿先を探す画面に切り替えると行の詳細を閉じ、その 
   // 配線の検査: 推薦画面で受け取ったときに何もしないこと。
   const script = [
     `const { default: Rec } = await import(${JSON.stringify(recPath)});`,
+    // 抜き出した app の関数は `Recommender.` を呼ぶので、同じ 1 本を別名でも置いてやる（第 225 回）。
+    "const Recommender = Rec;",
     "const fs = await import('node:fs');",
     `const data = JSON.parse(fs.readFileSync(${JSON.stringify(dataPath)}, 'utf8'));`,
     "const now = Date.parse('2026-08-09T00:00:00Z');",
@@ -13592,6 +13601,8 @@ it("リンクについていた検索語で行が落ちていても、種別の�
   const dataPath = join(site, "data.json");
   const script = [
     `const { default: Rec } = await import(${JSON.stringify(recPath)});`,
+    // 抜き出した app の関数は `Recommender.` を呼ぶので、同じ 1 本を別名でも置いてやる（第 225 回）。
+    "const Recommender = Rec;",
     "const fs = await import('node:fs');",
     `const data = JSON.parse(fs.readFileSync(${JSON.stringify(dataPath)}, 'utf8'));`,
     "const now = Date.parse('2026-08-09T00:00:00Z');",
@@ -16452,6 +16463,119 @@ it("一覧の会期欄に出る日付をそのまま打つと、その行に出�
   ).length;
   expect(金曜の締切, "金曜の締切行が無く、この検査が空振りしている").toBeGreaterThan(0);
   expect(金曜で当たった, "会期の日曜日が「金曜日」の検索に混ざった").toBe(金曜の締切);
+});
+
+it("過ぎた締切の印は、根拠があるときだけ「次回予定」と書く（SPEC §7）", async () => {
+  /* 「過去の締切も表示」で並ぶ行には以前、一律に `締切済み（次回予定）` の印を付けていた。
+   * 収録データで次回が確認できる行は极少数（2026-08-09 生成ビルドで実測: 過去行 77 件のうち
+   * **会期がまだ来ていない行 76 件**、次の回が確認できる行 0 件、会期も過ぎて次の回が無い行
+   * 1 件）。76 件が根拠のない語を出していて、「この会議の次回は出る」と誤解させた。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const catalog = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+    typeof R.candidateRows
+  >[0];
+  const at = Date.parse("2026-08-09T00:00:00Z");
+  type TagRow = {
+    t: number;
+    tLast: number;
+    tEvent: number;
+    dateOnly: boolean;
+    conf: unknown;
+    ed: { event_start?: string };
+  };
+  const rows = R.candidateRows(catalog) as unknown as TagRow[];
+  const 過去 = rows.filter((r) => R.deadlineRowIsPast(r, at));
+  expect(過去.length, "過去行が無く、この検査が空振りしている").toBeGreaterThanOrEqual(5);
+  expect(
+    rows.filter((r) => R.pastDeadlineTagJa(r, at) !== "").length,
+    "印が出る行と過去行が食い違った",
+  ).toBe(過去.length);
+  // 画面に並ばない形を作らない（三つのいずれか）。
+  const 形 = new Set(過去.map((r) => R.pastDeadlineTagJa(r, at)));
+  形.forEach((tag) => {
+    expect(
+      ["締切済み", "締切済み（会期がこれから）", "締切済み（次回予定）"],
+      `想定していない印の形: ${tag}`,
+    ).toContain(tag);
+  });
+  /* 中核の約束: 「次回予定」と書く行は、必ず行の詳細に今後の会期が並ぶ
+   * （印だけが別の判断をしない）。収録データに次回の確認できる過去行が無くても
+   * 壊れないように、下の合成行の検査と同じ式で見る。 */
+  const 根拠なし = 過去.filter(
+    (r) =>
+      R.pastDeadlineTagJa(r, at).indexOf("次回予定") >= 0 &&
+      R.upcomingEditionsOf(r.conf, String(r.ed?.event_start || ""), at).length === 0,
+  );
+  expect(
+    根拠なし.map((r) => String((r.conf as { key?: string }).key)).slice(0, 3),
+    "次回が確認できない行に「次回予定」と書いている",
+  ).toEqual([]);
+  // 会期がまだ先の行を「次回予定」と呼ばない（その会は終わっていない）。
+  const 会期がこれから = 過去.filter((r) => Number.isFinite(r.tEvent) && r.tEvent >= at);
+  expect(
+    会期がこれから.length,
+    "会期がこれからの過去行が無く、この検査が空振りしている",
+  ).toBeGreaterThanOrEqual(1);
+  会期がこれから.forEach((r) => {
+    expect(R.pastDeadlineTagJa(r, at), "会期がこれからの行に次回予定と書いた").toBe(
+      "締切済み（会期がこれから）",
+    );
+  });
+  /* 合成行で三つの形と「不確か」を確定させる（収録データに少ない形を検査の空振りにしない）。 */
+  const now = Date.parse("2026-06-01T00:00:00Z");
+  const 会期済み = (eventStart: string, nextEventStart: string | null) => ({
+    t: Date.parse("2026-01-10T12:00:00Z"),
+    tLast: Date.parse("2026-01-10T12:00:00Z"),
+    tEvent: Date.parse(`${eventStart}T12:00:00Z`),
+    dateOnly: false,
+    conf: {
+      editions: [
+        { year: 2026, event_start: eventStart, deadlines: [] },
+        ...(nextEventStart ? [{ year: 2027, event_start: nextEventStart, deadlines: [] }] : []),
+      ],
+    },
+    ed: { event_start: eventStart },
+  });
+  expect(
+    R.pastDeadlineTagJa(会期済み("2026-02-02", "2027-02-02") as unknown as TagRow, now),
+    "次の回が確認できる行が「次回予定」でなくなった",
+  ).toBe("締切済み（次回予定）");
+  expect(
+    R.pastDeadlineTagJa(会期済み("2026-02-02", null) as unknown as TagRow, now),
+    "次の回が無い行に根拠のある語を付けた",
+  ).toBe("締切済み");
+  const 会期がこれから行 = 会期済み("2026-02-02", null) as unknown as TagRow;
+  会期がこれから行.tEvent = Date.parse("2027-02-02T12:00:00Z");
+  expect(R.pastDeadlineTagJa(会期がこれから行, now), "会期がこれからの行の印が違う").toBe(
+    "締切済み（会期がこれから）",
+  );
+  // 幅を持つ行（時刻未確認）は「表示したより前に終わった可能性がある」の間は過ぎたと呼ばない。
+  const 幅 = {
+    t: Date.parse("2026-05-20T00:00:00Z"),
+    tLast: Date.parse("2026-06-20T00:00:00Z"),
+    dateOnly: true,
+  };
+  expect(R.deadlineRowIsPast(幅, now), "幅の途中でpastと判定した").toBe(false);
+  expect(
+    R.deadlineRowIsPast(幅, Date.parse("2026-07-01T00:00:00Z")),
+    "幅の終わりを過ぎてもpastと言わない",
+  ).toBe(true);
+  expect(
+    R.deadlineRowIsPast(幅, Date.parse("2026-05-01T00:00:00Z")),
+    "幅の前からpastと言った",
+  ).toBe(false);
+  // 画面の配線: 印の語を app.js に写さず、built の正本を呼ぶ。
+  const app = siteRuntime("app.js");
+  expect(app, "行の印が正本の語を呼んでいない").toContain(
+    "Recommender.pastDeadlineTagJa(r, Date.now())",
+  );
+  expect(app, "印の語が app.js に写しられている（正本とズレる）").not.toContain(
+    '"締切済み（次回予定）"',
+  );
+  expect(jsFunction(app, "rowIsPast"), "行の過ぎた判定が正本に寄っていない").toContain(
+    "Recommender.deadlineRowIsPast",
+  );
 });
 
 it("締切が差し替わった行は、前に出ていた日付が行の詳細に出て、その日付で引ける（SPEC §7）", async () => {

@@ -751,7 +751,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   function rowIsPast(r: AppRow, now: number) {
-    return r.dateOnly ? rowDateOnlyState(r, now) === "definitely-past" : r.t < now;
+    // 過ぎたかどうかの判定は recommender.js の正本に寄せる（一覧の印・絞り込み・残り欄が
+    // 同じ規則を見るようにするため。第 225 回）。
+    return Recommender.deadlineRowIsPast(r, now);
   }
 
   function rowIsFuture(r: AppRow, now: number) {
@@ -2062,7 +2064,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       // ようにするためで、条件式を外に書き出して二重実装する代わりにここで名前を付ける。
       const byEst = !inRecommend && !state.est && r.est && !pLines.length;
       // 過去行は通常モードで除外（「過去の締切も表示」トグルで表示）。
-      // 論文モードでは「締切済みだが次回予定あり」の会議として許容
+      // 論文モード（論文の投稿先を探す画面）では過ぎた締切の行も候補にする –
+      // ここでは「次回予定がある」とは判定しない（第 225 回: 一覧の印で同じ語を根拠なく
+      // 使っていたので、コメントから外した）。
       const byPast = isPast(r) && !pLines.length && !state.past;
       // 推定日程がすでに過ぎた行は「推定を含める」でも出さない（未来の約束ではない）。
       const byEstimatedPast = r.est && isPast(r);
@@ -2825,7 +2829,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     } else if (rowIsPast(r, Date.now())) {
       const pp = document.createElement("span");
       pp.className = "tag past";
-      pp.textContent = "締切済み（次回予定）";
+      /* 「締切済み（次回予定）」を固定の文字列にしていた間、過去行 77 件のうち 76 件が
+       * 次回を出せる根拠のないままその語を出していた（第 225 回）。会期の状態に合わせた
+       * 三つの形を recommender.js が返す。 */
+      pp.textContent = Recommender.pastDeadlineTagJa(r, Date.now());
       tags.appendChild(pp);
     }
     if ((r.tags || []).indexOf("domestic-jp") >= 0) {

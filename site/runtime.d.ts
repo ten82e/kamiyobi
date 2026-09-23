@@ -176,6 +176,21 @@ interface SiteRecommenderApi {
   weekdaySearchTerms(value: unknown): string;
   /** 上流の締切名が延長を示しているか（一覧・CSV・検索で同じ判定を使う）。 */
   isExtendedDeadline(dl: unknown): boolean;
+  deadlineRowIsPast(
+    row: { t?: unknown; tLast?: unknown; dateOnly?: unknown },
+    nowMs: number,
+  ): boolean;
+  pastDeadlineTagJa(
+    row: {
+      t?: unknown;
+      tLast?: unknown;
+      tEvent?: unknown;
+      dateOnly?: unknown;
+      conf?: unknown;
+      ed?: { event_start?: unknown } | null;
+    },
+    nowMs: number,
+  ): string;
   deadlineShiftsOf(dl: unknown): Array<{ fromJa: string; toJa: string; later: boolean }>;
   deadlineShiftLineJa(dl: unknown): string;
   deadlineShiftSearchWords(dl: unknown): string;
