@@ -16970,3 +16970,152 @@ it("締切欄のセルをコピーして貼ると、その行に出会う（SPEC
   expect(hitRows("複数候補のため要確認").length, "印の語が壊れた").toBeGreaterThan(0);
   expect(hitRows("推定").length, "「推定」が壊れた").toBeGreaterThan(0);
 });
+
+it("会期欄のセルをコピーして貼ると、その行に出会う（SPEC §7）", async () => {
+  // 2026-08-09 生成ビルドで実測: 会期欄は `2026-12-03(木) 〜 2026-12-04(金)` の形に並ぶ
+  // （一覧・CSV 同じ式）が、括弧で割れて `木` のような1文字の語が立った組になり、組は AND
+  // なので、**セルをコピーして貼ると 677 行中 559 行が 0 件**だった。打つ側は日付と曜日を
+  // 割らず、表示側は `eventCellJa` の出力からその形そのままを語に入れる形で直した。
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const built = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as unknown as Record<
+    string,
+    unknown
+  >;
+  const at = Date.parse("2026-08-09T00:00:00Z");
+  const rows = R.candidateRows(built as Parameters<typeof R.candidateRows>[0]);
+  const hays = rows.map((r) => String(r.hay));
+  const cellsOf = (line: string): string[] => {
+    const out: string[] = [];
+    let cur = "";
+    let quoted = false;
+    for (let i = 0; i < line.length; i += 1) {
+      const ch = line[i];
+      if (quoted) {
+        if (ch === '"') {
+          if (line[i + 1] === '"') {
+            cur += ch;
+            i += 1;
+          } else quoted = false;
+        } else cur += ch;
+      } else if (ch === '"') quoted = true;
+      else if (ch === ",") {
+        out.push(cur);
+        cur = "";
+      } else cur += ch;
+    }
+    out.push(cur);
+    return out;
+  };
+  const cr = "\r\n";
+  const header = cellsOf(
+    R.deadlinesToCsv([rows[0] as unknown as Record<string, unknown>], at).split(cr)[0],
+  );
+  const column = (name: string): number => {
+    const i = header.indexOf(name);
+    expect(i, `CSV に「${name}」列が無い`).toBeGreaterThan(-1);
+    return i;
+  };
+  const iEvent = column("会期");
+  const iDeadline = column("締切");
+  const iName = column("会議");
+  const rowCells = rows.map((r) =>
+    cellsOf(R.deadlinesToCsv([r as unknown as Record<string, unknown>], at).split(cr)[1] || ""),
+  );
+  const hitRows = (query: string): number[] => {
+    const matches = R.searchMatcher(R.expandRelativeMonths(query, at), at);
+    return hays.map((hay, i) => (matches(hay) === true ? i : -1)).filter((i) => i >= 0);
+  };
+  const cellValue = (row: string[], col: number): string => {
+    const v = String(row[col] || "");
+    return v === "未確認" || v === "常時受付" || v === "時刻未確認" ? "" : v;
+  };
+
+  // 1. **会期欄のセルをそのまま打つと、その行に出会う**。
+  const 会期を持つ行 = rowCells.filter((row) => cellValue(row, iEvent));
+  expect(会期を持つ行.length, "会期欄を持つ行が無く、この検査が空振りしている").toBeGreaterThan(0);
+  const 会期で会えない = rowCells.filter(
+    (row, i) => cellValue(row, iEvent) && !hitRows(cellValue(row, iEvent)).includes(i),
+  );
+  expect(
+    会期で会えない.length,
+    `会期欄をコピーして貼ると出会えない行が ${会期で会えない.length} 件（例: ${
+      会期で会えない[0] ? `${会期で会えない[0][iName]} の「${会期で会えない[0][iEvent]}」` : ""
+    }）`,
+  ).toBe(0);
+
+  // 2. 締切欄も同じ（曜日が括弧で続く形に変わったので、第 216 回の検査と同じ要求をここでも見る）。
+  const 締切で会えない = rowCells.filter(
+    (row, i) => cellValue(row, iDeadline) && !hitRows(cellValue(row, iDeadline)).includes(i),
+  );
+  expect(
+    締切で会えない.length,
+    `締切欄をコピーして貼ると出会えない行が ${締切で会えない.length} 件（例: ${
+      締切で会えない[0] ? `${締切で会えない[0][iName]} の「${締切で会えない[0][iDeadline]}」` : ""
+    }）`,
+  ).toBe(0);
+
+  // 3. 会期欄に並ぶ `2026-12-03(木)` の形は、**その形を書く行とちょうど一致**する
+  //    （多よせも漏れも無い）。表示している欄は会期欄とは限らない（日付だけの行は締切欄に書く）。
+  const tokens = new Set<string>();
+  rowCells.forEach((row) => {
+    String(row[iEvent] || "")
+      .split(" ")
+      .forEach((part) => {
+        if (/\(.\)$/u.test(part)) tokens.add(part);
+      });
+  });
+  expect(tokens.size, "会期欄に日付+曜日の形が無く、この検査が空振りしている").toBeGreaterThan(0);
+  const 食い違い: string[] = [];
+  for (const token of tokens) {
+    const 表示 = rowCells.filter((row) =>
+      [iEvent, iDeadline].some((col) =>
+        String(row[col] || "")
+          .toLowerCase()
+          .split(" ")
+          .includes(token.toLowerCase()),
+      ),
+    ).length;
+    const hits = hitRows(token).length;
+    if (hits !== 表示) 食い違い.push(`「${token}」 hit ${hits} 件 / 表示 ${表示} 行`);
+  }
+  expect(食い違い, "日付+曜日の語が表示と食い違った行がある").toEqual([]);
+
+  // 4. 曜日を**単独の語として索引に入れていない**こと（誤爆の防止）。2文字以上の `X曜` は
+  //    今も「締切の曜日」だけを指す – 会期欄の `2027-04-09(金)` は `金曜` を含まない。
+  for (const day of ["月", "火", "水", "木", "金", "土", "日"]) {
+    const 締切がその曜日 = rowCells.filter((row) =>
+      String(row[iDeadline] || "").includes(`(${day})`),
+    ).length;
+    expect(hitRows(`${day}曜`).length, `「${day}曜」の件数が締切の曜日行数と食い違った`).toBe(
+      締切がその曜日,
+    );
+  }
+
+  // 5. 打つ側が曜日を割っていないこと（実在の語で見る – 割れると上の 3. が通らないが、
+  //    原因が分かる形でここにも置いておく）。
+  const 実在の語 = [...tokens][0];
+  expect(実在の語, "検査の語が無い").toBeTruthy();
+  const groups = R.queryTokenGroups(実在の語, at);
+  expect(groups.length, `語「${実在の語}」が ${groups.length} 組に割れている`).toBe(1);
+  expect(groups[0][0], `語「${実在の語}」の先頭の語が形を変えている`).toContain("(");
+
+  // 6. 既存の語の回帰。
+  const 名前例を引ける行数 = (
+    all: string[][],
+    hits: (query: string) => number[],
+    col: number,
+    name: string,
+  ): number => hits(name).filter((i) => String(all[i][col] || "") === name).length;
+  expect(hitRows("JST").length, "「JST」が壊れた").toBe(
+    rowCells.filter((row) => String(row[iDeadline] || "").includes("JST(")).length,
+  );
+  expect(hitRows("20:59").length, "「20:59」が壊れた").toBeGreaterThan(0);
+  expect(hitRows("来年").length, "「来年」が壊れた").toBeGreaterThan(0);
+  // 会議名（第 215 回）も生きたまま。語はビルドから取る（fixtures に特定の名前があると限らない）。
+  const 名前の例 = rowCells.map((row) => String(row[iName] || "")).find((v) => v.length > 0) || "";
+  expect(
+    名前例を引ける行数(rowCells, hitRows, iName, 名前の例),
+    `会議名「${名前の例}」が壊れた`,
+  ).toBe(rowCells.filter((row) => String(row[iName] || "") === 名前の例).length);
+});

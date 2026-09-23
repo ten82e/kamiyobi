@@ -2253,7 +2253,14 @@ const Recommender = (() => {
    * AoE 宣言の行は公式表記欄に AoE の時刻も出る（同じ行に二つの時刻が並ぶ）のでそれも入れる。
    * 日付しか確認できていない行は時刻も `JST` も出さないので語を入れない。 */
   function deadlineCellSearchWords(dl: unknown, t: number, dateOnly: boolean): string {
-    if (dateOnly || !Number.isFinite(t)) return "";
+    if (dateOnly) {
+      /* 日付しか確認できていない行の締切欄は `2026-09-30(水)` の形（`deadlinesToCsv` と同じ式）。
+       * 打つ側は日付と曜日を割らない（上の `weekdayTail`）ので、この形その物を入れる。 */
+      const local = String((dl as { local_date?: unknown } | null)?.local_date || "");
+      const day = weekdayJaFromDate(local);
+      return day ? `${local}(${day})` : "";
+    }
+    if (!Number.isFinite(t)) return "";
     const texts = [csvJstInstant(t)];
     if (officialZone(dl) === "AoE") texts.push(fmtAoEText(t));
     const words: string[] = [];
@@ -2264,7 +2271,13 @@ const Recommender = (() => {
         const head = part.replace(/\(.*$/u, "");
         let word = "";
         if (/^\d{1,2}:\d{2}$/u.test(part)) word = part;
-        else if (head === "JST" || head === "AoE") word = head;
+        else if (head === "JST" || head === "AoE") {
+          word = head;
+          /* 締切欄は `JST(土)` と曜日が続括弧で書くので、**その形そのまま**も語に入れる
+           * （打つ側は日付・時刻帯と曜日を割らない – `weekdayTail`）。`JST` だけを入れて
+           * おけば足りるわけではない: 括弧を含む語として絞りたい人が同じ形を打てるようにする。 */
+          if (/^JST[（(][日月火水木金土][）)]$/u.test(part)) word = part;
+        }
         if (word && words.indexOf(word) < 0) words.push(word);
       });
     });
@@ -2302,6 +2315,14 @@ const Recommender = (() => {
       if (!iso) return;
       words.push(dayTermsJa(value), iso);
     });
+    /* 会期欄に並ぶ `2026-12-03(木)` の形も、**表示と同じ `eventCellJa` の出力から**語にする
+     * （第 209 回・第 213 回と同じ判断）。打つ側もこの形を割らないので、セルをコピーして貼れば
+     * その行に出会う。曜日を単独の語としては入れない – `金` ひとつで数百行に膨れる。 */
+    eventCellJa({ ed: ev })
+      .split(" ")
+      .forEach((part) => {
+        if (/^\d{4}-\d{2}-\d{2}[（(][日月火水木金土][）)]$/u.test(part)) words.push(part);
+      });
     return words.filter(Boolean).join(" ");
   }
 
@@ -3604,6 +3625,22 @@ const Recommender = (() => {
      * 一覧の 863 行中 679 行が締切欄か公式表記欄に時刻を出している – 21 種・最多は
      * `20:59` の 508 行 – のに、その語はぜんぶ 0 件だった）。全角コロンも受ける。 */
     const timeLike = (token: string): boolean => /^\d{1,2}[:：]\d{2}$/.test(token);
+    /* 日付・時刻帯に続く括弧書きの曜日は**離さない**。締切欄は `2026-08-22 03:00 JST(土)`、
+     * 日付しか確認できていない行は `2026-09-30(水)`、会期欄は `2026-12-03(木) 〜 2026-12-04(金)`
+     * と書く（一覧・CSV は同じ式）。括弧で割ると `木` のような1文字の語が立った組になり、組は
+     * AND なので、**セルをコピーして貼ると 559 行（会期欄を持つ 677 行）が 0 件**だった
+     * （2026-08-09 生成ビルドで実測）。かといって会期欄の曜日を素の語として hay に入れると
+     * `金` ひとつで 131 件 → 数百件に膨れる。そこで**画面に並ぶ形そのもの**を 1 まとめの語として
+     * 扱い、表示側もその形を入れる（下の `eventDaySearchWords` と `deadlineCellSearchWords`）。
+     * 全角括弧は正規化で半角になる。末尾の `)` は `queryTokens` が落とす（`2026-12-03(木` に
+     * なる）ので閉じ括弧は無くても受ける – 落ちた形は hay 側の `2026-12-03(木)` に部分一致で
+     * 届く。ここまで直しても `金` のような**1文字だけの曜日**を単独で打つと、表示している
+     * 行が締切欄ぶん 131 件 → 締切欄+会期欄ぶん 398 件に増える（`月` `日` は月日の漢字その物で
+     * 既に 863 件＝全件）。2文字以上の `金曜` `金曜日` は変わりに変わらない（131 件のまま –
+     * 会期欄の語は `2027-04-09(金)` なので `金曜` を含まない）。1文字の曜日はそれ自体が
+     * 曖昧な語なので、受け入れる。 */
+    const weekdayTail = (token: string): boolean =>
+      /^(?:\d{4}-\d{2}-\d{2}|jst|aoe)[（(][日月火水木金土][）)]?$/u.test(token);
     const LEADING_PUNCT = /^[（）()［］[\]【】〈〉《》「」『』！？!?。．.,:：;；〜~"'“”‘’`]+/u;
 
     function trimEdgePunct(value: string): string {
@@ -3614,6 +3651,10 @@ const Recommender = (() => {
     }
 
     const middleParts = (token: string): string[] => {
+      if (weekdayTail(token)) {
+        // 括弧を落とすと語の形が変わるので、そのまま返す（`trimEdgePunct` は末尾の `)` を落とす）。
+        return [token];
+      }
       if (!JOIN_WORDS.test(token) || dateLike(token) || timeLike(token)) {
         const only = trimEdgePunct(token);
         return only ? [only] : [];
