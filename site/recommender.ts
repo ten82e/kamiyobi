@@ -2256,6 +2256,24 @@ const Recommender = (() => {
     return words.join(" ");
   }
 
+  /* 公式表記欄に出る AoE の暦日を、検索の語に入れる（第 214 回）。AoE 宣言行は締切欄の
+   * JST の日付と公式表記欄の AoE の日付が違い（2026-08-09 生成ビルドで 863 行中 486 行）、
+   * 画面に書いた日付をそのまま打つと その行に出会わなかった（公式表記欄の日付 165 種のうち
+   * 39 種がその日を書く行をぜんぶ拾えず、例: AAAI 2027 は 公式表記 `2026-07-21 23:59 AoE` /
+   * 締切欄 `2026-07-22 20:59 JST(水)`）。暦日だけでなく「N月」「YYYY年」の語も同じ式から足す
+   * （AoE は前日なので月をまたぐ行が 26 行、年をまたぐ行が 1 行ある – 「11月30日」「2026年」が
+   * その行を拾えないままになる）。語は**公式表記欄を組み立てる `fmtAoEText` の出力から取る**
+   * （表示と同じ式を使う – 第 209 回・第 213 回と同じ判断）。曜日は足さない: 公式表記欄は
+   * 曜日を出さない（締切欄の曜日は JST のもので、AoE の曜日ではない）。 */
+  function officialDateSearchWords(dl: unknown, t: number, dateOnly: boolean): string {
+    if (dateOnly || !Number.isFinite(t)) return "";
+    if (officialZone(dl) !== "AoE") return "";
+    const iso = /^(\d{4}-\d{2}-\d{2})/u.exec(fmtAoEText(t));
+    if (!iso) return "";
+    const day = iso[1];
+    return [day, monthTermsJa(day), dayTermsJa(day)].filter(Boolean).join(" ");
+  }
+
   /* 会期欄に並ぶ日付の語をまとめて返す（開始日・終了日の和暦形と ISO）。
    * 曜日は足さない。会期欄は `2026-12-03(木) 〜 2026-12-04(金)` と曜日も二つ出すが、
    * 会期の曜日まで検索に入れると「金曜日」が締切の日で引けなくなる（2026-08-09 生成ビルドで
@@ -4560,6 +4578,7 @@ const Recommender = (() => {
            * 末尾に寄せる（画面の「未確認」と同じ意味）。 */
           const tEvent = jstNoonMs(String(ed.event_start || ""), Number.NaN);
           const timeWords = timeSearchWords(dl, t, dateOnly);
+          const officialWords = officialDateSearchWords(dl, t, dateOnly);
           out.push({
             conf,
             ed,
@@ -4578,7 +4597,11 @@ const Recommender = (() => {
             hay: searchNormalize(
               `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedHayJa({ kind: dl.kind || "", ed, rankPairs })} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)} ${weekdaySearchTerms(
                 dateOnly ? dl.local_date : t,
-              )} ${zoneSearchWords(dl, dateOnly)} ${timeWords} ${eventDaySearchWords({ ed })}`,
+              )} ${zoneSearchWords(dl, dateOnly)} ${timeWords} ${officialWords} ${eventDaySearchWords(
+                {
+                  ed,
+                },
+              )}`,
             ),
             dupLabel: dl.comment || "",
           });

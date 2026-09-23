@@ -16631,3 +16631,120 @@ it("締切欄・公式表記欄に出る時刻をそのまま打つと、その�
   expect(hit("複数候補のため要確認"), "印の語が壊れた").toBeGreaterThan(0);
   expect(hit("来年"), "「来年」が壊れた").toBeGreaterThan(0);
 });
+
+it("公式表記欄に書く AoE の日付をそのまま打つと、その行に出会う（SPEC §7）", async () => {
+  // 2026-08-09 生成ビルドで実測: 863 行中 486 行は、締切欄の JST の日付と公式表記欄の
+  // AoE の日付が違う（AoE 23:59 は JST では翌日の 20:59）。画面に書いた日付をそのまま
+  // 打つと、その行に出会わなかった（点検した (行, 日付語) の組 5,124 件のうち
+  // 486 行・330 語が漏れ。例: AAAI 2027 は 公式表記 `2026-07-21 23:59 AoE` /
+  // 締切欄 `2026-07-22 20:59 JST(水)` で、検索用の語は JST の日付だけを持っていた）。
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const built = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as unknown as Record<
+    string,
+    unknown
+  >;
+  const at = Date.parse("2026-08-09T00:00:00Z");
+  const rows = R.candidateRows(built as Parameters<typeof R.candidateRows>[0]);
+  const hays = rows.map((r) => String(r.hay));
+  const cells = (line: string): string[] => {
+    const out: string[] = [];
+    let cur = "";
+    let quoted = false;
+    for (let i = 0; i < line.length; i += 1) {
+      const ch = line[i];
+      if (quoted) {
+        if (ch === '"') {
+          if (line[i + 1] === '"') {
+            cur += ch;
+            i += 1;
+          } else quoted = false;
+        } else cur += ch;
+      } else if (ch === '"') quoted = true;
+      else if (ch === ",") {
+        out.push(cur);
+        cur = "";
+      } else cur += ch;
+    }
+    out.push(cur);
+    return out;
+  };
+  const cr = "\r\n";
+  const header = cells(
+    R.deadlinesToCsv([rows[0] as unknown as Record<string, unknown>], at).split(cr)[0],
+  );
+  const column = (name: string): number => {
+    const i = header.indexOf(name);
+    expect(i, `CSV に「${name}」列が無い`).toBeGreaterThan(-1);
+    return i;
+  };
+  const iDeadline = column("締切");
+  const iOfficial = column("公式表記");
+  const iEvent = column("会期");
+  const rowCells = rows.map((r) =>
+    cells(R.deadlinesToCsv([r as unknown as Record<string, unknown>], at).split(cr)[1] || ""),
+  );
+  const 和暦 = (iso: string): string => `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日`;
+  const shownDates = (row: string[]): string[] => [
+    ...new Set(
+      `${row[iDeadline]} ${row[iOfficial]} ${row[iEvent]}`.match(/\d{4}-\d{2}-\d{2}/g) || [],
+    ),
+  ];
+  const hitRows = (query: string): number[] => {
+    const matches = R.searchMatcher(R.expandRelativeMonths(query, at), at);
+    return hays.map((hay, i) => (matches(hay) === true ? i : -1)).filter((i) => i >= 0);
+  };
+
+  // 総点検: **その日を書く行は、その日で必ず出会う**（ISO と和暦の両方）。
+  // 行ごとに数える – 上の欄で同じ日を二度書く行（会期の開始日と終了日が同じ日など）を
+  // 二度数えると、直ったあとも 1 件残ったように化ける（本作成中に実際に踏んだ）。
+  let 点検した組 = 0;
+  const 漏れ行 = new Set<number>();
+  rows.forEach((_, i) => {
+    shownDates(rowCells[i]).forEach((iso) => {
+      [iso, 和暦(iso)].forEach((query) => {
+        点検した組 += 1;
+        if (!hitRows(query).includes(i)) 漏れ行.add(i);
+      });
+    });
+  });
+  expect(点検した組, "日付の点検が空振りしている").toBeGreaterThan(100);
+  expect(漏れ行.size, `日付を書く行のうち ${漏れ行.size} 行がその日で出ていない`).toBe(0);
+
+  // 公式表記欄に別の日を書く行（AoE 宣言行）が点検に実際に含まれていること。
+  const aoeRows = rowCells.filter((row) => {
+    const off = (row[iOfficial].match(/\d{4}-\d{2}-\d{2}/u) || [])[0];
+    const dl = (row[iDeadline].match(/\d{4}-\d{2}-\d{2}/u) || [])[0];
+    return Boolean(off) && off !== dl;
+  });
+  expect(
+    aoeRows.length,
+    "公式表記欄に別の日を書く行が無く、この検査が空振りしている",
+  ).toBeGreaterThan(0);
+  //AoE の日付で打った行が、その日を実際に出していることも見る（多よせの検査）。
+  const 例 = aoeRows[0];
+  const 例の日 = String((例[iOfficial].match(/\d{4}-\d{2}-\d{2}/u) || [])[0]);
+  const 当たった = hitRows(例の日);
+  expect(当たった.length, "公式表記欄の日付でその行が出ていない").toBeGreaterThan(0);
+  expect(
+    rowCells[rows.indexOf(rows[0])].length >= 0 &&
+      当たった.every((i) => shownDates(rowCells[i]).includes(例の日)),
+    `「${例の日}」がその日を書いていない行をよせた`,
+  ).toBe(true);
+  //AoE の日付は前日なので、和暦で打っても同じ行に出会う。
+  expect(hitRows(和暦(例の日)).length, "AoE の日付を和暦で打つと出会えない").toBeGreaterThan(0);
+  expect(
+    hitRows(和暦(例の日)).every((i) => shownDates(rowCells[i]).includes(例の日)),
+    "和暦で打つとその日を書いていない行をよせた",
+  ).toBe(true);
+
+  // 既存の語の回帰を見る（日付まわりは壊れやすい）。
+  /* 日付の入力形も同じ行で見る（固定の日付を書くと、収録にその日が無いビルドで
+     空振りする – 本作成中に `2026-12-25` が 0 件で落ちた）。 */
+  expect(hitRows(例の日).length, "暦日そのままの入力が壊れた").toBeGreaterThan(0);
+  const slash = `${Number(例の日.slice(5, 7))}/${Number(例の日.slice(8, 10))}`;
+  expect(hitRows(slash).length, `「${slash}」の入力が壊れた`).toBeGreaterThan(0);
+  expect(hitRows("時刻未確認").length, "「時刻未確認」が壊れた").toBeGreaterThan(0);
+  expect(hitRows("複数候補のため要確認").length, "印の語が壊れた").toBeGreaterThan(0);
+  expect(hitRows("来年").length, "「来年」が壊れた").toBeGreaterThan(0);
+});
