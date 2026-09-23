@@ -77,6 +77,9 @@ interface ScheduleOnlyEdition {
 
 interface ConferenceRecord {
   key: string;
+  /** 会議・ジャーナルの公式ページの URL。画面は `ed.link || conf.link` でリンクを出すので、
+   * 正規化の段階で落とすと、そこを通る行（常時受付のジャーナル）だけリンクの無い行になる。 */
+  link?: string;
   title?: string;
   full_name?: string;
   categories?: string[];
@@ -393,6 +396,7 @@ function normalizeConference(value: unknown): ConferenceRecord | null {
   }
   return {
     key: typeof value.key === "string" ? value.key : "",
+    link: typeof value.link === "string" ? value.link : undefined,
     title: typeof value.title === "string" ? value.title : "",
     full_name: typeof value.full_name === "string" ? value.full_name : "",
     categories: normalizedStrings(value.categories),

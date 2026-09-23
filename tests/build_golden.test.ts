@@ -14130,3 +14130,82 @@ it("upcoming.md へのリンクは、ブラウザで表に整形されないこ�
     "upcoming.md の会議名がマークダウンの記号で書かれていない（説明の実態が変わった）",
   ).toBeGreaterThan(0);
 });
+
+it("常時受付の行にも公式ページの URL が出る（SPEC §7）", () => {
+  /* 種別で「常時受付」を選ぶと、締切を持たないジャーナルをその場で行に組み立てる
+   * （`journalRows`）。この経路だけ会議レコードを `normalizeConference` を通して作っていたが、
+   * その正規化が `link` を持っていなかった（型にも無い）。画面は `ed.link || conf.link` で
+   * リンクを出すので、常時受付の行だけが公式ページへ飛べない形になっていた（2026-08-09 実測:
+   * 常時受付 22 行のうちリンクを持つ物 0 件。同じ 22 件は収録データの `conference.link` に
+   * 公式 URL を持っていた）。表のリンク・行の詳細の「公式サイトを開く」・CSV の URL 欄の
+   * すべてが空で、常に投稿できる掲載先を探している人がそこで手が止まる。 */
+  const rec = join(site, "recommender.js");
+  const script = [
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${rec}`)});`,
+    // `node -e` のソースは require とトップレベル await を同時に持てない（AGENTS.md）。
+    "const { readFileSync } = await import('node:fs');",
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const srcLink = new Map();",
+    "for (const c of (DATA.conferences || [])) {",
+    "  if (typeof c.key === 'string' && typeof c.link === 'string' && c.link) srcLink.set(c.key, c.link);",
+    "}",
+    "const journals = Recommender.journalRows(DATA.conferences, now);",
+    "const linkOf = (r) => String((r.ed && r.ed.link) || (r.conf && r.conf.link) || '');",
+    "let missing = 0;",
+    "let notWeb = 0;",
+    "let invented = 0;",
+    "const miss = [];",
+    "for (const r of journals) {",
+    "  const u = linkOf(r);",
+    "  const name = String((r.conf && r.conf.title) || (r.conf && r.conf.key) || '');",
+    "  if (!u) { missing += 1; if (miss.length < 3) miss.push(name); continue; }",
+    "  if (!/^https?:\\/\\//.test(u)) notWeb += 1;",
+    "  const src = srcLink.get(String((r.conf && r.conf.key) || ''));",
+    // 収録データに有る URL を引き継ぐだけ。こちらで作り込んでいない（締切と同じで推測しない）。
+    "  if (src && u !== src) invented += 1;",
+    "}",
+    "const CRLF = String.fromCharCode(13) + String.fromCharCode(10);",
+    "const lines = Recommender.deadlinesToCsv(journals, now).split(CRLF).filter((l) => l.length);",
+    // URL は最後の列（ヘッダの語で位置を決める）。
+    "const head = lines[0].split(',');",
+    "const urlIdx = head.indexOf('URL');",
+    "const blankUrl = lines.slice(1).filter((l) => !String(l.split(',').pop() || '').trim()).length;",
+    "console.log(JSON.stringify({",
+    "  journalRows: journals.length,",
+    "  urlIdx,",
+    "  csvRows: lines.length - 1,",
+    "  missing, notWeb, invented, blankUrl, miss,",
+    "  sample: journals.slice(0, 2).map((r) => linkOf(r)),",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout.split("\n")[0]) as {
+    journalRows: number;
+    urlIdx: number;
+    csvRows: number;
+    missing: number;
+    notWeb: number;
+    invented: number;
+    blankUrl: number;
+    miss: string[];
+    sample: string[];
+  };
+  expect(out.journalRows, "常時受付の行が実データに無い（検査が空振り）").toBeGreaterThan(0);
+  expect(out.urlIdx, "CSV に URL 欄が無い").toBeGreaterThan(-1);
+  expect(out.csvRows).toBe(out.journalRows);
+  expect(out.missing, `公式ページの URL が無い常時受付行: ${out.miss.join("、")}`).toBe(0);
+  expect(out.notWeb, "http/https でないリンクを載せている").toBe(0);
+  expect(out.invented, "収録データに無い URL を行に載せている").toBe(0);
+  expect(out.blankUrl, "CSV の URL 欄が空の常時受付行がある").toBe(0);
+  for (const u of out.sample)
+    expect(u.startsWith("https://") || u.startsWith("http://")).toBe(true);
+
+  // 持たせても画面が読まなければ直らない。実際に使われている式と、href 前の検査を見る。
+  const app = siteRuntime();
+  expect(app).toContain("r.ed.link || r.conf.link");
+  expect(app, "リンクをそのまま href に置いている").toContain(
+    "safeExternalUrl(r.ed.link || r.conf.link)",
+  );
+});
