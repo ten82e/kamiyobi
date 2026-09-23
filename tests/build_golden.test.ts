@@ -15924,3 +15924,91 @@ it("掲載先のおしらせは画面の組み立てに繋がっている（SPEC
   );
   expect(app, "built の app.js おしらせを件数欄に載せていない").toContain("venueLookupNoticeJa(");
 });
+
+it("「締切まで N 日」の窓は、同じ画面が「あと N 日」と出す行を落とさない（SPEC §7）", async () => {
+  /* 窓は経過 24 時間（`now + N 日`）で切り、行の「残り」と締切欄は JST の暦日を見ていた。
+   * 2026-08-09 生成ビルドで実測: 「締切まで 7 日」を選ぶと、同じ画面が「あと 7 日」と
+   * 出す行が JST 09:00 の眺めで 10 件、20:00 で 8 件、翌朝 06:00 で 5 件、窓の外に落ちて
+   * 消えた（30 日で 5 件、90 日で 2 件）。逆方向もあった: 締切欄が 9/10 なのに `t` が
+   * JST 9/9 19:00 の行 10 件が「30 日以内」に並びながら「あと 31 日」と出ていた。
+   * 窓の式・行の比較・「残り」をビルド成果物から抜き出して、全行で食い違い 0 件を見る。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const app = siteRuntime();
+  const api = new Function(
+    "Date",
+    "DAY",
+    `${[
+      jsFunction(app, "windowLimitMs"),
+      jsFunction(app, "windowFloorMs"),
+      jsFunction(app, "remain"),
+    ].join("\n")}
+return { limit: windowLimitMs, floor: windowFloorMs, remain };`,
+  ) as (
+    dateCtor: unknown,
+    day: number,
+  ) => {
+    limit: (win: string, now: number) => number;
+    floor: (win: string, now: number) => number;
+    remain: (ms: number) => { text: string };
+  };
+  const rows = R.candidateRows(
+    JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+      typeof R.candidateRows
+    >[0],
+  );
+  const DAY = 86400000;
+  let 暦日だから並ぶ行 = 0;
+  let 見た行 = 0;
+
+  // 見る時刻で窓の端が動いていた不具合なので、複数の時刻で同じ行を眺める
+  for (const offset of [0, 5 * 3600000, 11 * 3600000, 21 * 3600000]) {
+    const now = NOW.getTime() + offset;
+    class FakeDate extends Date {
+      static now() {
+        return now;
+      }
+    }
+    const { limit, floor, remain } = api(FakeDate, DAY);
+    for (const days of [7, 30, 90, 180]) {
+      const win = `${days}d`;
+      const hi = limit(win, now);
+      const lo = floor(win, now);
+      for (const row of rows) {
+        const shown = Number.isFinite(row.tShown) ? row.tShown : row.t;
+        if (!Number.isFinite(shown) || shown < now) continue;
+        const hit = /^あと (\d+) 日$/.exec(remain(shown).text);
+        const counted = hit ? Number(hit[1]) : shown - now < DAY ? 0 : null;
+        if (counted === null) continue;
+        見た行 += 1;
+        const inWindow = shown <= hi && shown >= lo;
+        const title = String(row.conf.title).slice(0, 24);
+        expect(
+          inWindow || counted > days,
+          `「あと ${counted} 日」の ${title} が「${days} 日以内」に並ばない`,
+        ).toBe(true);
+        expect(
+          !inWindow || counted <= days,
+          `「${days} 日以内」に「あと ${counted} 日」の ${title} が並ぶ`,
+        ).toBe(true);
+        // 直す前の式（経過 24 時間）では窓の外だった行があることを数える（空振り防止）
+        if (counted <= days && !(row.t <= now + days * DAY)) 暦日だから並ぶ行 += 1;
+      }
+    }
+  }
+  expect(見た行, "窓の中で見る行が無い（検査が空振り）").toBeGreaterThan(0);
+  expect(
+    暦日だから並ぶ行,
+    "経過 24 時間と暦日で窓の入り方が変わる行が無い（検査が空振り）",
+  ).toBeGreaterThan(0);
+});
+
+it("締切の窓は行の「表示している暦日」で比べている（SPEC §7）", () => {
+  /* 窓の端を暦日にしても、比較する値が `row.t` のままなら同じ噓が残る
+   * （`t` は JST 2026-09-09 19:00 なのに締切欄に 9/10 と出る行が 10 件在った）。
+   * `filter` の組み立てをビルド成果物から見て、比較を表示暦日に揃えたことを確かめる。 */
+  const app = siteRuntime();
+  const body = jsFunction(app, "filter");
+  expect(body, "窓の比較が行の表示暦日を使っていない").toContain("shownDayMs(row) > dateLimit");
+  expect(body, "窓の下側が行の表示暦日を使っていない").toContain("shownDayMs(r) < floor");
+});

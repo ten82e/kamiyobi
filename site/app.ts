@@ -1935,7 +1935,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* 窓の上限時刻。絞り込みと 0 件時の会期案内で別の式を書くと、表と案内が違う窓で
    * 動く（過去行を出すか否かは `past` のチェックボックスだけが決める）。 */
   function windowLimitMs(win: string, now: number): number {
-    return win === "all" ? Number.POSITIVE_INFINITY : now + Number.parseInt(win, 10) * DAY;
+    if (win === "all") return Number.POSITIVE_INFINITY;
+    const n = Number.parseInt(win, 10);
+    if (!Number.isFinite(n)) return Number.POSITIVE_INFINITY;
+    /* 窓の上側は **JST の暦日**で切る（「n 日後の暦日まで」の終わり際）。経過 24 時間で
+     * 区切ると、同じ画面が「あと n 日」と出す行が窓の外に落ちて消える（「残り」と締切欄は
+     * JST の暦日が正本で、第 202 回にそこへ揃えた）。2026-08-09 生成ビルドで実測:
+     * 「締切まで 7 日」で JST 09:00 の眺め 10 件・20:00 で 8 件・翌朝 06:00 で 5 件が、
+     * 「あと 7 日」と出ているのに並ばなかった（30 日で 5 件、90 日で 2 件）。
+     * JST のオフセットはインラインに置く（`remain`・`monthKey` と同じ理由で、この関数は
+     * ビルド成果物から抜き出して検査する）。 */
+    return (Math.floor((now + 9 * 3600000) / DAY) + n + 1) * DAY - 9 * 3600000;
   }
 
   /* 「締切まで N 日」の下側。既定（過去を表示しない）は過去分がそもそも出ないので要らないが、
@@ -1943,7 +1953,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 窓が意味を失う（実測: 7 日以内 + 過去表示で 2,059 行）。過去を見せているときは
    * 同じ日数の前後の窓として扱う（「先週出た締切と今週の締切」が見られる形）。 */
   function windowFloorMs(win: string, now: number): number {
-    return win === "all" ? Number.NEGATIVE_INFINITY : now - Number.parseInt(win, 10) * DAY;
+    if (win === "all") return Number.NEGATIVE_INFINITY;
+    const n = Number.parseInt(win, 10);
+    if (!Number.isFinite(n)) return Number.NEGATIVE_INFINITY;
+    /* 上側と同じ暦日の基準で、n 日前の暦日の始まりから。経過 24 時間で数えると、
+     * 「7 日以内 + 過去表示」で昨日の締切が今日何時に見るかによって入り出た。 */
+    return (Math.floor((now + 9 * 3600000) / DAY) - n) * DAY - 9 * 3600000;
   }
 
   function filter(): AppRow[] {
@@ -1955,7 +1970,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 語を分解し直す（3234 行で 1 打鍵あたり約 83 ms かかっていた）。
     const matchesQuery = Recommender.searchMatcher(searchQuery);
     const isPast = (row: AppRow) => (row.dateOnly ? now > row.tLast : row.t < now);
-    const isAfter = (row: AppRow, dateLimit: number) => row.t > dateLimit;
+    /* 窓の比較は、行が「表示している暦日」でやる。`remain`・締切欄・CSV の残り列は
+     * そこを見ているので、`row.t` で比べると締切欄に書いた日付より 1 日早く窓から出る
+     * （2026-08-09 生成ビルドで実測: `t` が JST 2026-09-09 19:00 なのに締切欄は 9/10 と
+     * 出る行が 10 件あり、「30 日以内」に並びながら「あと 31 日」と出ていた）。 */
+    const shownDayMs = (row: AppRow) => (Number.isFinite(row.tShown) ? row.tShown : row.t);
+    const isAfter = (row: AppRow, dateLimit: number) => shownDayMs(row) > dateLimit;
     const limit = windowLimitMs(state.win, now);
     const floor = state.past ? windowFloorMs(state.win, now) : Number.NEGATIVE_INFINITY;
     const pElem = typeof document !== "undefined" ? $("paperText") : null;
@@ -2037,7 +2057,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         return false;
       }
       // 日付だけの行は当日中が有効なので、終端側（tLast）で窓に触れているかを見る。
-      if (!inRecommend && (r.dateOnly ? r.tLast < floor : r.t < floor)) {
+      // 下側も同じ「表示している暦日」で比べる（上側と基準を分けるのが今回の原因）
+      if (!inRecommend && shownDayMs(r) < floor) {
         // 「過去の締切も表示」と併用したときの下限側。同じ窓の話なので上の計数とまとめる。
         hiddenCounts.window += 1;
         return false;
