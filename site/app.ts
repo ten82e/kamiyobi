@@ -4137,6 +4137,62 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     records = records.concat(Recommender.parsePaperLines(valueElement("paperReferences").value));
     valueElement("paperText").value = records.length ? JSON.stringify(records) : "";
   }
+  /* サンプルボタンは欄を差し替える。利用者が打ち込んだ物を黙って消さないために、差し替えの
+   * 規則を決める関数と、画面を読み書きする関数を分けておいた（規則の側は画面を作らずに
+   * 検査で動かせる）。
+   * 以前は、空のときの案内が「上のサンプルボタンで入力の形を確かめられます」と押すことを
+   * 勧めていたのに、押すと打ち込んだタイトル・概要・キーワード・掲載先が告げずに消えた。 */
+  type PaperInputJa = {
+    title: string;
+    abstract: string;
+    keywords: string;
+    references: string;
+    venue: string;
+  };
+
+  function paperInputHasText(input: PaperInputJa): boolean {
+    return [input.title, input.abstract, input.keywords, input.references].some(
+      (text) => String(text || "").trim() !== "",
+    );
+  }
+
+  /** 現在の入力があれば保持する（戻す物が無いときは戻すボタンを出さない）。 */
+  function paperInputWithSample(
+    current: PaperInputJa,
+    sample: PaperInputJa,
+  ): { kept: PaperInputJa | null; next: PaperInputJa } {
+    return {
+      kept: paperInputHasText(current) ? current : null,
+      next: sample,
+    };
+  }
+
+  /** 打ち込み中の論文の入力をまとめて取る。 */
+  function readPaperInput(): PaperInputJa {
+    return {
+      title: valueElement("paperPrimaryTitle").value,
+      abstract: valueElement("paperPrimaryAbstract").value,
+      keywords: valueElement("paperPrimaryKeywords").value,
+      references: valueElement("paperReferences").value,
+      venue: paperPrimaryVenue,
+    };
+  }
+
+  function writePaperInput(input: PaperInputJa): void {
+    valueElement("paperPrimaryTitle").value = input.title;
+    valueElement("paperPrimaryAbstract").value = input.abstract;
+    valueElement("paperPrimaryKeywords").value = input.keywords;
+    valueElement("paperReferences").value = input.references;
+    paperPrimaryVenue = input.venue;
+  }
+
+  let paperInputBeforeSample: PaperInputJa | null = null;
+
+  function setSampleUndoVisible(visible: boolean): void {
+    const button = $("sampleUndo");
+    if (button) button.hidden = !visible;
+  }
+
   function setPrimaryRecord(record?: Partial<PaperRecord>) {
     valueElement("paperPrimaryTitle").value = record?.title || "";
     valueElement("paperPrimaryAbstract").value = record?.abstract || "";
@@ -4257,13 +4313,34 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   document.querySelectorAll<HTMLElement>(".sample-btn").forEach((button) => {
     button.addEventListener("click", () => {
-      const sample = Recommender.parsePaperLines(button.getAttribute("data-sample"))[0];
-      setPrimaryRecord(sample);
-      valueElement("paperReferences").value = "";
+      const parsed = Recommender.parsePaperLines(button.getAttribute("data-sample"))[0];
+      const sample: PaperInputJa = {
+        title: parsed?.title || "",
+        abstract: parsed?.abstract || "",
+        keywords: parsed?.keywords || "",
+        references: "",
+        venue: parsed?.venue || "",
+      };
+      const swap = paperInputWithSample(readPaperInput(), sample);
+      paperInputBeforeSample = swap.kept;
+      setSampleUndoVisible(Boolean(swap.kept));
+      writePaperInput(swap.next);
       syncPaperText();
       apply();
       scheduleSemantic();
     });
+  });
+  /* サンプルで差し替える前の入力に戻す。取り消しの入口が無いと、長い概要を貼った後に
+   * 例を試すことができない（2026-08-09 実測: 以前は差し替えが元に戻せなかった）。 */
+  $("sampleUndo").addEventListener("click", () => {
+    const kept = paperInputBeforeSample;
+    if (!kept) return;
+    writePaperInput(kept);
+    paperInputBeforeSample = null;
+    setSampleUndoVisible(false);
+    syncPaperText();
+    apply();
+    scheduleSemantic();
   });
   ["kind", "rank", "win", "est", "domestic", "online", "past"].forEach((id) => {
     $(id).addEventListener("change", apply);
@@ -4569,6 +4646,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   $("paperReset").addEventListener("click", () => {
+    paperInputBeforeSample = null;
+    setSampleUndoVisible(false);
     clearPaperInput();
     // 条件は触らない（`apply` は欄の中身を読み直し、候補を描き直すだけ）。
     apply();

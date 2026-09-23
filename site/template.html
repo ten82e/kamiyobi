@@ -907,6 +907,7 @@ footer a:hover { text-decoration: underline; }
         <span id="paperFileLabel" style="font-size: 0.72rem; color: var(--muted); margin-left: 8px;">未選択</span>
         <button id="cancelPdf" type="button" hidden>PDF読み込みをキャンセル</button>
         <button id="paperReset" type="button">論文の入力を消す</button>
+        <button id="sampleUndo" type="button" hidden>サンプル前の入力に戻す</button>
       </div>
       <div style="font-size: 0.7rem; color: var(--muted); margin-top: 2px;">PDF は先頭3ページのタイトル・概要・キーワードだけを読み取ります（Word などの文書形式は読めません。TXT に保存し直すか、下の欄に貼ってください）。抽出結果は編集してから推薦できます。<strong>選んだファイルは送信しません</strong>（文字の読み取りはこの端末の中で行います。PDF を読む部品だけを初回に外部から取りにいきます）。</div>
       <div style="font-size: 0.7rem; color: var(--muted); margin-top: 2px;">共有用URLには論文のタイトル・概要を含めません。未発表の原稿がリンクや閲覧履歴に残るためです。共有されるのはモードと絞り込みだけなので、リンクを受け取った側には同じ情報を入力してもらってください。</div>
@@ -917,12 +918,12 @@ footer a:hover { text-decoration: underline; }
         <label>参考論文<textarea id="paperReferences" rows="3" placeholder="参考論文（1行1件: タイトル | キーワード | 掲載先）"></textarea></label>
       </div>
       <div style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px;">
-        <span style="font-size: 0.7rem; color: var(--muted); align-self: center;">動作確認用サンプル:</span>
+        <span style="font-size: 0.7rem; color: var(--muted); align-self: center;">入力の例（押すと欄の中身を入れ替えます）:</span>
         <button class="sample-btn" type="button" data-sample="Time-Sensitive Networking Scheduling for Deterministic Industrial Networks | tsn, real-time, scheduling, deterministic | IEEE RTSS">TSN スケジューリング</button>
         <button class="sample-btn" type="button" data-sample="High-Performance Key-Value Store with RDMA and NVMe | storage, rdma, nvme | USENIX FAST">分散ストレージ</button>
         <button class="sample-btn" type="button" data-sample="Kubernetes Service Mesh with eBPF-based Packet Processing | kubernetes, ebpf, network, packet">K8s ネットワーク</button>
         <button class="sample-btn" type="button" data-sample="Confidential Computing with SGX Enclaves in Cloud | sgx, enclave, confidential computing">SGX セキュリティ</button>
-        <button class="sample-btn" type="button" data-sample="分散システムにおける低遅延ミドルウェアの設計と評価 | 分散, ミドルウェア, 低遅延, リアルタイム">日本語 分散システム</button>
+        <button class="sample-btn" type="button" data-sample="分散システムにおける低遅延ミドルウェアの設計と評価 | 分散, ミドルウェア, 低遅延, リアルタイム">日本語の例（分散システム）</button>
       </div>
     </div>
     <textarea id="paperText" hidden></textarea>
@@ -1136,7 +1137,11 @@ footer a:hover { text-decoration: underline; }
       <dt>会期</dt>
       <dd>会議が開かれる日程で、締切とは別の情報です。一覧・行の詳細・CSV は同じ式を使い、<code>2024-03-18(月) 〜 2024-03-21(木)</code> のように日付へ JST の曜日を添えます（出張・会場押さえの会は曜日で見込む人が多いので、分かる範囲で出しています）。公式ページに書いてある表記は、行の詳細に「原表記」として別に残します。変更前は行の詳細だけが公式の英語表記を主に表示していて、同じ行なのに一覧と書き方が違っていました（2026-08-09 実測: 会期に日付を持つ 2,971 行のうち 2,933 行で、一覧が <code>2024-03-18(月) 〜 2024-03-21(木)</code> なのに詳細は <code>March 18-21, 2024</code> と出ていた）。会期そのものを検索語には使えません。検索に入るのは締切の暦日と、会期の「何月」までです（表は締切で並び、締切で絞るため）。</dd>
       </div>
-    </dl>
+      <div>
+    <dt>論文の入力とサンプル</dt>
+    <dd>「投稿先を探す」には、投稿予定の論文を PDF・TXT で選ぶか、下の欄に直接打ちます。欄の下の「入力の例」のボタンは、押すと欄の中身をその例に<strong>入れ替えます</strong>。すでに打ち込んだ物があるときは、押した直後に「サンプル前の入力に戻す」が出るので元に戻せます（変更前は、何も告げずに打ち込んだ物を消していました）。押すと検索も一緒に走るので、入力の形を確かめたらそのまま候補を見られます。</dd>
+  </div>
+</dl>
   </details>
 
   <!-- Footer -->

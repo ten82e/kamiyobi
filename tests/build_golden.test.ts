@@ -14554,3 +14554,65 @@ it("過去の締切の読み込み状態は、同じ画面上で二つの名前�
   // 再試行のボタンも同じ名詞を使う（名前が又分岐しないように）。
   expect(String(retry![1]), "再試行のボタンが別の名詞になっている").toContain(words.nounJa);
 });
+
+it("入力の例を押すと、打ち込んだ物を取り消せる（SPEC §7）", () => {
+  /* 投稿先を探す画面の「入力の例」（以前の群ラベルは「動作確認用サンプル」）は、
+   * 欄をその例で上書きする。空のときの案内は『上のサンプルボタンで入力の形を確かめ
+   * られます』と押すことを勧めていたのに、押すと打ち込んだタイトル・概要・キーワード・
+   * 掲載先が告げずに消え、元に戻せなかった（2026-08-09 実測: ハンドラが
+   * `setPrimaryRecord` と参考論文欄のクリアを無条件に呼んでいた）。長い概要を貼った後に
+   * 形を確かめることができなかった。今は差し替え前に入力を保持し、取り消しのボタンを
+   * 出す。規則は純粋な関数にしてある（画面を作らずに検査で動かせる）。 */
+  const app = siteRuntime("app.js");
+  const html = readFileSync(join(site, "index.html"), "utf8");
+
+  const script = [
+    jsFunction(app, "paperInputHasText"),
+    jsFunction(app, "paperInputWithSample"),
+    "const empty = { title: '', abstract: '', keywords: '', references: '', venue: '' };",
+    "const typed = { title: '自分の論文', abstract: 'とても長い概要'.repeat(40), keywords: '', references: '', venue: '' };",
+    "const blanks = { title: '   ', abstract: '', keywords: '', references: '', venue: '' };",
+    "const refsOnly = { title: '', abstract: '', keywords: '', references: '先行研究 A | 先行 | ICSE', venue: '' };",
+    "const out = {};",
+    "for (const [name, current] of Object.entries({ empty, typed, blanks, refsOnly })) {",
+    "  const swap = paperInputWithSample(current, { ...empty, title: '例のタイトル' });",
+    "  out[name] = {",
+    "    kept: swap.kept ? [swap.kept.title, swap.kept.abstract, swap.kept.references].join('|') : null,",
+    "    next: swap.next.title,",
+    "  };",
+    "}",
+    "console.log(JSON.stringify(out));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as Record<string, { kept: string | null; next: string }>;
+  // 空の欄では戻す物がないので取り消しを出さない（押すたびにボタンが出るのも嘘になる）。
+  expect(out.empty.kept, "空の欄でも取り消しを出している").toBeNull();
+  expect(out.blanks.kept, "空白だけを取り消し可能な入力にしている").toBeNull();
+  // 打ち込んでいれば、そのまま残る（タイトルと長い概要が戻る）。
+  expect(out.typed.kept, "打ち込んだ概要が保持されない").toContain("とても長い概要");
+  expect(out.typed.next, "例の方が入力になっていない").toBe("例のタイトル");
+  // 本文欄が空でも、参考論文を挙げていれば戻す物がある。
+  expect(out.refsOnly.kept, "参考論文だけの場合に取り消しが無い").toContain("先行研究 A");
+
+  // 画面の配線: 差し替えの規則を使って書き、取り消しのボタンを出す。
+  expect(app, "サンプルの差し替えが規則関数を使っていない").toContain("paperInputWithSample(");
+  expect(app, "取り消しのボタンを操作していない").toContain("setSampleUndoVisible(");
+  const undo = /<button id="sampleUndo"[^>]*>([^<]+)</.exec(html);
+  expect(undo, "取り消しのボタンが画面に無い").not.toBeNull();
+  const undoLabel = String(undo![1]).trim();
+  expect(undoLabel, "取り消しのボタンが日本語で何を戻すか書いていない").toContain("戻す");
+
+  // てびきが、画面のボタン名で説明している（語を写さず、ビルドから取る）。
+  const dtAt = html.indexOf("<dt>論文の入力とサンプル</dt>");
+  expect(dtAt, "てびきの項が無い").toBeGreaterThan(-1);
+  const entry = html.slice(dtAt, html.indexOf("</dd>", dtAt)).replace(/<[^>]+>/g, "");
+  expect(entry, "てびきが取り消しのボタン名で書いていない").toContain(undoLabel);
+  expect(entry, "てびきが欄を入れ替えることを隠している").toContain("入れ替えます");
+
+  // 開発向けの群ラベルは画面から無くなる。
+  expect(html, "開発向けの群ラベルが残っている").not.toContain("動作確認用サンプル");
+});
