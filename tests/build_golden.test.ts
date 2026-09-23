@@ -16465,6 +16465,91 @@ it("一覧の会期欄に出る日付をそのまま打つと、その行に出�
   expect(金曜で当たった, "会期の日曜日が「金曜日」の検索に混ざった").toBe(金曜の締切);
 });
 
+it("主題の日本語で打つ人が、会議名に書かれた英語の語で行に辿り着ける（SPEC §7）", async () => {
+  /* 推薦の照合には日本語→英語の対応表（`JP_EN`）があったが、検索の側に同じ対応が無く、
+   * 日本語で打つと 0 件になっていた（2026-08-09 生成ビルドで実測・第 226 回:
+   * `アルゴリズム` 0 件 / 会議名に algorithm と書く会 19 行、`異常検知` 0 件 / GeoAnomalies 2026
+   * が 3 行、`オーケストレーション` 0 件 / CANOPIE-HPC 2026 が 4 行、`コンテナ` 0 件、
+   * `メモリ` 0 件 / HMEM 2026 が 1 行）。穴場ワークショップを探す人の主な打ち方で、
+   * 0 件の壁に当たる損が最も大きい箇所だった。 */
+  const src = readFileSync(join(site, "recommender.js"), "utf8");
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const catalog = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+    typeof R.candidateRows
+  >[0];
+  const at = Date.parse("2026-08-09T00:00:00Z");
+  type Hay = { hay: string };
+  const rows = R.candidateRows(catalog) as unknown as Hay[];
+  const hitRows = (query: string) => {
+    const matches = R.searchMatcher(R.expandRelativeMonths(query, at), at);
+    return rows.filter((r) => matches(r.hay) === true);
+  };
+  /* 下限は 1 件だけにしておく（収録は動くので生成時計で行数が変わる。直し前は全部 0 件
+   * だったので、1 件を見るだけでこの検査は空振りしない）。 */
+  const 救う語: string[] = [
+    "アルゴリズム",
+    "自動化",
+    "ニューラル",
+    "ニューラルネットワーク",
+    "コンテナ",
+    "コンテナオーケストレーション",
+    "ミドルウェア",
+    "オーケストレーション",
+    "マイクロアーキテクチャ",
+    "異常検知",
+    "メモリ",
+    "エッジ",
+    "エッジコンピューティング",
+    "エッジコンピュティング",
+  ];
+  expect(救う語.length).toBeGreaterThan(8);
+  救う語.forEach((word) => {
+    const n = hitRows(word).length;
+    expect(
+      n,
+      `「${word}」が ${n} 件しかない（会議名に書かれた英語の語で行に辿れていない）`,
+    ).toBeGreaterThanOrEqual(1);
+    const notes = R.querySynonymNotes(word).join(" ");
+    expect(
+      notes,
+      `「${word}」は寄せたことが件数欄に出ない（理由なしで英語名の行が並ぶ）`,
+    ).toContain("原文の");
+  });
+  /* `edge` はそのまま寄せない。`knowledge` の中に含まれるので、CIKM・KR などが「エッジ」で
+   * 出てしまう（同じビルドで実測: `edge` を含む行 30 件のうち 26 件が knowledge 由来）。 */
+  const グループ = (R.queryTokenGroups("エッジ", at)[0] || []).map((word) => String(word));
+  expect(グループ, "「エッジ」が edge computing に寄っていない").toContain("edge computing");
+  expect(グループ, "「エッジ」が `edge` 単独に寄った（knowledge で誤爆する）").not.toContain(
+    "edge",
+  );
+  expect(
+    hitRows("エッジ").filter((r) => String(r.hay).indexOf("knowledge") >= 0).length,
+    "「エッジ」が knowledge を含む行を出している",
+  ).toBe(0);
+  // 推薦の照合（`JP_EN`）と同じ対応を見ていること。表を 2 本書いたズレはここで止める。
+  const 表 = /const JP_EN = (\{[\s\S]*?\n\s*\});/.exec(src);
+  expect(表, "JP_EN がビルド成果物から取れない（対応の一致を見られない）").not.toBeNull();
+  const JP_EN = new Function(`return ${表![1]}`)() as Record<string, string>;
+  /* 対応表の見出しその物ではない語（長音の書き方と複合語）は、基準となる見出し語に寄せて
+   * 同じ対応を見せる – 「ゆらぎの語だけ別の語を向く」ことをここで止める。 */
+  const 基準語: Record<string, string> = {
+    エッジ: "エッジコンピューティング",
+    エッジコンピュティング: "エッジコンピューティング",
+    コンテナオーケストレーション: "オーケストレーション",
+  };
+  救う語.forEach((word) => {
+    const key = 基準語[word] || word;
+    expect(
+      JP_EN[key],
+      `JP_EN に ${key} が無い（対応表が動いたときは検索の寄せも直す）`,
+    ).toBeTruthy();
+    const 期待 = String(JP_EN[key]).toLowerCase();
+    const 語組 = (R.queryTokenGroups(word, at)[0] || []).map((w) => String(w));
+    expect(語組, `「${word}」の寄せが JP_EN（${期待}）と違う語を向いている`).toContain(期待);
+  });
+});
+
 it("過ぎた締切の印は、根拠があるときだけ「次回予定」と書く（SPEC §7）", async () => {
   /* 「過去の締切も表示」で並ぶ行には以前、一律に `締切済み（次回予定）` の印を付けていた。
    * 収録データで次回が確認できる行は极少数（2026-08-09 生成ビルドで実測: 過去行 77 件のうち

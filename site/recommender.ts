@@ -1776,6 +1776,30 @@ const Recommender = (() => {
       ["チュートリアル", "原文の tutorial という語", ["tutorial"]],
       ["特別セッション", "原文の special session という語", ["special session"]],
       ["学生セッション", "原文の student という語", ["student"]],
+      /* 主題の日本語（推薦の照合では `JP_EN` という対応表で扱っている語）。検索の側には
+       * 対応が無く、日本語で打つと 0 件になっていた（2026-08-09 生成ビルドで実測・第 226 回:
+       * `アルゴリズム` 0 件 / 会議名に algorithm と書く会 19 行、`自動化` 0 件 / 13 行、
+       * `ニューラル` 0 件 / 7 行、`コンテナ` 0 件・`ミドルウェア` 0 件・`オーケストレーション`
+       * 0 件 / 各 4 行、`異常検知` 0 件・`マイクロアーキテクチャ` 0 件・`ニューラルネットワーク`
+       * 0 件 / 各 3 行、`メモリ` 0 件 / 1 行）。寄せるのは**そのままでは 1 行も当たらない語だけ**
+       * （§7 の「精密な語は寄せない」）。対応が `JP_EN` とズレないことは検査が見る。 */
+      ["アルゴリズム", "原文の algorithm という語", ["algorithm"]],
+      ["自動化", "原文の automation という語", ["automation"]],
+      ["オーケストレーション", "原文の orchestration という語", ["orchestration"]],
+      ["コンテナ", "原文の container という語", ["container"]],
+      ["コンテナオーケストレーション", "原文の orchestration という語", ["orchestration"]],
+      ["ミドルウェア", "原文の middleware という語", ["middleware"]],
+      ["マイクロアーキテクチャ", "原文の microarchitecture という語", ["microarchitecture"]],
+      ["ニューラル", "原文の neural という語", ["neural"]],
+      ["ニューラルネットワーク", "原文の neural network という語", ["neural network"]],
+      ["異常検知", "原文の anomaly detection という語", ["anomaly detection"]],
+      ["メモリ", "原文の memory という語", ["memory"]],
+      /* `edge` は寄せない – `knowledge` の中に含まれて CIKM・KR など 26 行が「エッジ」で
+       * 出てしまう（同じビルドで実測: `edge` を含む行 30 件のうち 26 件が knowledge 由来）。
+       * 語として出る `edge computing` だけに寄せる。 */
+      ["エッジ", "原文の edge computing という語", ["edge computing"]],
+      ["エッジコンピューティング", "原文の edge computing という語", ["edge computing"]],
+      ["エッジコンピュティング", "原文の edge computing という語", ["edge computing"]],
     ];
 
     QUERY_SYNONYMS_JA.concat(WEEKDAY_QUERY_SYNONYMS_JA, UPSTREAM_TEXT_QUERY_SYNONYMS_JA).forEach(
