@@ -3244,28 +3244,62 @@ const Recommender = (() => {
      * 貼付と、`AI/ML` のように自分で区切る入力に必要（2026-09-23 実測: `ai/ml` は
      * 1 語扱いで 0 件だった）。`／` は正規化で `/` になるので、ここでまとめて受ける。
      * `・` を含む見出しは別表に `サン・マロ` の 1 件だけなので、下の束ねで救う。 */
-    const JOIN_WORDS = /[・，、,/]/;
+    /* 全角の括弧・句読点・疑問符も区切りにする。日本語は語の間にスペースを入れないので、
+     * `ICDE（2027）` `オンライン（予定）` のように括弧が語にくっついて 1 語になる
+     * （2026-08-09 実測: `ICDE` は 18 行なのに `ICDE（2027）` は 0 行だった）。
+     * 半角は語の前後にスペースが入ることが多いので、下の端の取り方で受ける
+     * （`-` を区切りにしないのは `saint-malo` のような表記と日付 `2026-08-22` を
+     * 壊さないため – `dateLike` と同じ判断）。 */
+    const JOIN_WORDS = /[・，、,/()（）[\]［］！？:：;；「」『』【】〈〉〜{}]/;
+    /* 語の端に付いた句読点・括弧（`sigcomm.` `(online)` `ICDE?`）は落とす。
+     * `+` と `-` は端にあっても削らない – `C++` の語尾と `saint-malo` の表記を
+     * 壊すため（実測で `c++` を端の記号として削ると 0 件のはずが 745 行に化けた）。
+     * 中の記号もそのまま残す。 */
+    const EDGE_PUNCT = /[（）()［］[\]【】〈〉《》「」『』！？!?。．.,:：;；〜~"'“”‘’`]+$/u;
     /* `2026-08-22` `12/25` のような日付入力は、`/` を区切りにしない
      * （日付として読む語なので、割ると暦日検索が壊れる。2026-09-23 に実測で拾った）。 */
     const dateLike = (token: string): boolean => {
       const parts = token.split("/");
       return parts.length >= 2 && parts.every((part) => /^[0-9]{1,4}$/.test(part));
     };
+    const LEADING_PUNCT = /^[（）()［］[\]【】〈〉《》「」『』！？!?。．.,:：;；〜~"'“”‘’`]+/u;
+
+    function trimEdgePunct(value: string): string {
+      let out = value.trim();
+      while (LEADING_PUNCT.test(out)) out = out.replace(LEADING_PUNCT, "");
+      while (EDGE_PUNCT.test(out)) out = out.replace(EDGE_PUNCT, "");
+      return out;
+    }
+
     const middleParts = (token: string): string[] => {
-      if (!JOIN_WORDS.test(token) || dateLike(token)) return [token];
+      if (!JOIN_WORDS.test(token) || dateLike(token)) {
+        const only = trimEdgePunct(token);
+        return only ? [only] : [];
+      }
       const parts = token
         .split(JOIN_WORDS)
-        .map((part) => part.trim())
+        .map((part) => trimEdgePunct(part))
         .filter(Boolean);
       // 並べ語だけの入力（`，` など）は語を作らない。句読点を含む行全件に化けるため。
       if (parts.length === 0) return [];
       return parts;
     };
+    /* 記号だけから出る語（`？` `?` `（` `）` `-` `＋` …）は検索語にしない。画面の文字列は
+     * `Lodz, Po (Poland)` のように括弧や記号を含むので、記号を語として要求すると文末に
+     * 疑問符を打ちただけで 0 件になる（2026-08-09 実測: `ICDE` は 18 行なのに `ICDE？`
+     * と `ICDE?` は 0 行で、0 件案内は収録されているのに `語「icde？」は収録データに
+     * ありません` と出ていた）。逆に記号が行の一部に当たる絞りは効いてしまう
+     * （`-` は 3,123 行、`（）` は 504 行、`＋` は 85 行）ので、同じ種類の入力が
+     * 「全件」「一部」「0 件」の三通りに割れていた。上の `middleParts` が並べ語だけ
+     * （`，` など）で語を作らないのと同じ判断を、記号全体に広げる。 */
+    const hasWordChar = (value: string): boolean => /[\p{L}\p{N}]/u.test(value);
+
     const middleWhole = (token: string): string[] =>
       JOIN_WORDS.test(token) ? resolved[kanaFold(token)] || [] : [];
     const units: Array<{ token: string; whole: string[] }> = [];
     queryTokens(query).forEach((raw) => {
       middleParts(raw).forEach((part) => {
+        if (!hasWordChar(part)) return;
         units.push({ token: part, whole: middleWhole(raw) });
       });
     });

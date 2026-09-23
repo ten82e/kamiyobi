@@ -12995,3 +12995,72 @@ it("投稿先を探す画面に切り替えると行の詳細を閉じ、その 
   ).toBe(true);
   expect(setMode.indexOf("closeDrawer()")).toBeLessThan(setMode.indexOf("state.mode ="));
 });
+
+it("語に付いた疑問符・括弧で検索が 0 件にならない（SPEC §7）", () => {
+  /* 画面の文字列は括弧や句読点を含む（`Lodz, Po (Poland)`、種別セルの「(AoE)」など）。
+   * 従来はそれらを語の成分として扱っていたので、文末に疑問符を打ちただけで 0 件になった
+   * （2026-08-09 実測: `ICDE` は 18 行、`ICDE？` と `ICDE?` は 0 行、`ICDE (2027)` と
+   * `ICDE（2027）` も 0 行、`sigcomm.` も 0 行）。0 件案内は収録されているのに
+   * `語「icde？」は収録データにありません` と出し、検索の仕方のせいだと誤解させた。
+   * 逆に記号だけを入力に含む絞りは効いてしまい（`-` は 3,123 行・`（）` は 504 行・
+   * `＋` は 85 行）、同じ種類の入力が三通りに割れていた。 */
+  const recPath = `file://${join(site, "recommender.js")}`;
+  const dataPath = join(site, "data.json");
+  const script = [
+    `const { default: Rec } = await import(${JSON.stringify(recPath)});`,
+    "const fs = await import('node:fs');",
+    `const data = JSON.parse(fs.readFileSync(${JSON.stringify(dataPath)}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const rows = Rec.candidateRows(data.conferences, now);",
+    "const hays = rows.map((r) => r.hay);",
+    "const count = (q) => {",
+    "  const m = Rec.searchMatcher(q, now);",
+    "  return rows.filter((r) => m(r.hay)).length;",
+    "};",
+    // ビルド後の収録から語を取り出して、その周りに記号を置く（語を hardcoded しない）。
+    "const withTerm = rows.find((r) => {",
+    "  const t = String(r.conf.key || '').split('-').find((p) => /^[a-z]{4,}$/.test(p));",
+    "  return !!t && count(t) > 0 && count(t) < rows.length;",
+    "});",
+    "const term = String(withTerm.conf.key).split('-').find((p) => /^[a-z]{4,}$/.test(p));",
+    "const forms = [term, '？' + term, term + '？', term + '?', '（' + term + '）', '(' + term + ')', term + '.', term + '。'];",
+    "const hits = forms.map((q) => ({ q, n: count(q), self: (() => { const m = Rec.searchMatcher(q, now); return rows.some((r) => m(r.hay) && r.conf.key === withTerm.conf.key); })() }));",
+    // 記号だけの入力は「何も打っていない」と同じ（三通りに割れない）。
+    "const symbols = ['-', '（）', '()', '...', '＋', '？', '?', '；', '～'];",
+    "const symCounts = symbols.map((q) => count(q));",
+    // 語の成分になり得る記号（`+`）は端にあっても削らない。
+    "const plus = { c: count('c'), cpp: count('c++') };",
+    // 0 件案内は語を名指すが、記号だけの入力で「語」を作らない。",
+    "const symTerms = Rec.queryTermCounts('（）', hays, now);",
+    "const termNote = Rec.queryTermCounts(term + '？', hays, now).map((t) => t.term);",
+    "console.log(JSON.stringify({ term, hits, symCounts, total: rows.length, plus, symTerms, termNote }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["--input-type=module", "-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 120_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout) as {
+    term: string;
+    hits: Array<{ q: string; n: number; self: boolean }>;
+    symCounts: number[];
+    total: number;
+    plus: { c: number; cpp: number };
+    symTerms: Array<{ term: string }>;
+    termNote: string[];
+  };
+  expect(got.hits[0].n, "基準の語その物が引けない").toBeGreaterThan(0);
+  for (const h of got.hits) {
+    expect(h.n, `語に記号を付けただけの検索語「${h.q}」が 0 行`).toBeGreaterThan(0);
+    expect(h.self, `検索語「${h.q}」で元の行が引けない`).toBe(true);
+  }
+  // 記号だけ（・記号だけを重ねた入力）は全件。全部が同じ数になる。
+  for (const [i, n] of got.symCounts.entries()) {
+    expect(n, `記号だけの入力の件数がバラバラ（${i} 番目）`).toBe(got.total);
+  }
+  expect(got.symTerms, "記号だけから語を作って 0 件案内に載せる").toEqual([]);
+  // 疑問符を取った語として数える（案内が「語「icde？」」にならない）。
+  expect(got.termNote).toEqual([got.term]);
+  // `C++` の語尾の `+` を削ると `c` に化けて別物になる（実測で 0 件 → 745 行）。
+  expect(got.plus.cpp, "語尾の + が削られて `c` と同じ検索になっている").not.toBe(got.plus.c);
+});
