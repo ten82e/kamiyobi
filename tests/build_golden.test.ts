@@ -15298,3 +15298,58 @@ it("health.md の出力ファイル表が、載せないファイルを自分で
   // 自分自身のハッシュを持てない物だけを除いている（何でも除外して良いことにしない）。
   expect(omitted.includes("publish.json"), "publish.json が除かれていない").toBe(true);
 });
+
+it("upcoming.md の会期行の「残り」が、JST の同じ日なら同じ読みになる（SPEC §7）", () => {
+  /* 「本日開催」「開催中(残り N 日)」「N 日後」は暦日で決める表記である。ところが 今日 を UTC の
+   * 暦日から取っていた（`dateOnly(safeNow)`）。この表の日付は会期そのもの（時刻を持たない暦日）で、
+   * サイトの一覧は JST 固定なので、日本の午前 9 時までのあいだだけ表が一日古くなる。
+   * 2026-08-10 08:30 JST 生成で実測: 前日に終わった会期（WISA 2026）が「開催中(残り1日)」として
+   * 載り、当日開始の CCCG 2026 と USENIX Security 2026 の 2 件が「1日」＝明日になっていた。
+   * 検査は語を書き写さない。JST で同じ日の 2 時刻（生成時刻の 30 分前と 90 分後。UTC の日は
+   * 変わる）で 2 通作り、会期行の並びと「残り」が同じであることを比べる。
+   * 締切行を比べないのは、締切の残りは経過時間で決まるので 2 通のあいだで正当に変わるため。 */
+  const nowMs = Date.parse(data.generated_at);
+  const clocks = [new Date(nowMs - 30 * 60_000), new Date(nowMs + 90 * 60_000)];
+  // 2 通が JST の同じ日にあること（無ければこの検査は意味を失う）。
+  const jstDay = (ms: number) => new Date(ms + 9 * 3_600_000).toISOString().slice(0, 10);
+  expect(jstDay(clocks[1].getTime()), "2 通が JST の同じ日に無い").toBe(
+    jstDay(clocks[0].getTime()),
+  );
+  // UTC の日は違っていなければ、直前の実装でも通ってしまう。
+  expect(clocks[1].toISOString().slice(0, 10)).not.toBe(clocks[0].toISOString().slice(0, 10));
+
+  const eventRows = (outdir: string) => {
+    const md = readFileSync(join(outdir, "upcoming.md"), "utf8");
+    const map = new Map<string, string>();
+    for (const line of md.split("\n")) {
+      if (!line.startsWith("| ")) continue;
+      const cells = line.slice(2).split(" | ");
+      if (cells.length < 7 || cells[3] !== "開催") continue;
+      map.set(cells[2], cells[1]);
+    }
+    return map;
+  };
+  const dirs = clocks.map((clock, index) => {
+    const outdir = join(mkdtempSync(join(tmpdir(), `kamiyobi-jst-day-${index}-`)), "public");
+    const run = runCli(outdir, {
+      now: clock.toISOString().replace(/\.[0-9]{3}Z$/, "Z"),
+      extra: ["--no-embeddings"],
+    });
+    expect(run.status, run.stderr).toBe(0);
+    return { dir: outdir, rows: eventRows(outdir) };
+  });
+  const [morningJst, laterJst] = dirs;
+  expect(morningJst.rows.size, "会期行が 1 件も読めない（この検査は空振りになる）").toBeGreaterThan(
+    0,
+  );
+  // 同じ日なら、載る会期も「残り」の読みも同じでなければ噓をつく。
+  expect(
+    [...morningJst.rows.keys()].filter((key) => !laterJst.rows.has(key)),
+    "JST の同じ日に、片方にしか載らない会期がある",
+  ).toEqual([]);
+  const drift = [...morningJst.rows.keys()]
+    .filter((key) => laterJst.rows.has(key) && morningJst.rows.get(key) !== laterJst.rows.get(key))
+    .slice(0, 4)
+    .map((key) => `${key}: 「${morningJst.rows.get(key)}」 -> 「${laterJst.rows.get(key)}」`);
+  expect(drift, "JST の同じ日に「残り」の読みが変わる会期がある").toEqual([]);
+});

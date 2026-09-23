@@ -2739,7 +2739,12 @@ export function toUpcomingMd(
   const safeDays =
     Number.isFinite(rawDays) && Number.isInteger(rawDays) && rawDays > 0 ? rawDays : 180;
   const horizon = addDays(safeNow, safeDays);
-  const today = dateOnly(safeNow);
+  /* 「本日開催」「残り N 日」「N 日後」の 今日 は **JST の暦日**で決める。この表の日付は会期
+   * そのもの（時刻を持たない暦日）で、サイトの一覧も JST 固定。UTC の暦日を今日にすると、
+   * 日本の午前 9 時までのあいだだけ表が一日古くなる（2026-08-10 08:30 JST 生成で実測: 前日に
+   * 終わった会期が「開催中(残り1日)」、当日開始の 2 件が「1日」＝明日になっていた）。日本の朝に
+   * この表で出張の予定を読む人が、噓をつかずに済む側へ寄せる。 */
+  const today = dateOnly(new Date(safeNow.getTime() + 9 * 3_600_000));
   const rows: string[] = [];
   for (const rec of records ?? []) {
     if (!rec || typeof rec !== "object") continue;
