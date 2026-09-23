@@ -430,6 +430,29 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * （変更前は 5 件 fixed で、残りの候補に到達する手段が無かった）。 */
   const RECOMMENDATION_PAGE = 20;
   let selectedIndex = -1;
+  /* いま開いている行の詳細（ドロワー）の行。URL に載せる対象として持つ。
+   * 「この画面を見る？」で送った人は、送った人が開いていた行の詳細も一緒に開いていて
+   * ほしい（2026-09-23 実測: 絞り込みと並び順、てびきの開閉（第 140 回）は URL に残るが、
+   * 行の詳細を開いた状態はどこにも残っておらず、送られた側は表の一覧だけを受け取った）。 */
+  let drawerRow: AppRow | null = null;
+  /* URL から受け取った行の鍵。起動時の描き込みが終わってから行を探す。 */
+  let pendingDrawerKey = "";
+
+  /* 共有用の行の鍵。同じ一覧の中でも区別が要る（同じ会議は概要締切と論文締切で別行に
+   * なり、同じ種別でも第 1 ラウンドと第 2 ラウンドが並ぶ）ので、会議の鍵に年・種別・
+   * 締切時刻を添える。値その物ではなく照合にだけ使う。 */
+  function rowShareKeyJa(r: {
+    conf?: { key?: string };
+    ed?: { year?: unknown };
+    kind?: string;
+    t?: number;
+  }): string {
+    const key = String(r.conf?.key || "");
+    const year = r.ed && r.ed.year !== undefined && r.ed.year !== null ? String(r.ed.year) : "";
+    const kind = String(r.kind || "");
+    const t = Number.isFinite(Number(r.t)) ? String(Math.trunc(Number(r.t))) : "";
+    return `${key}|${year}|${kind}|${t}`;
+  }
   /** ソートできる列の key。`th[data-sort]` と一致させる（ズレは検査で拾う）。 */
   /* 表の列数。行をまたぐ見出し（月見出し・過ぎた締切の見出し・行の詳細）はここを使う
    * （直書きを 3 箇所に分けると、列を増やした日に見出しの跨ぎが足りず右に列が余る –
@@ -984,6 +1007,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   // Drawer Controls
   function openDrawer(r: DrawerRow) {
+    drawerRow = r as unknown as AppRow;
+    writeUrl();
     // フォーカス管理: 開く直前の要素を保存し、ドロワー内（閉じるボタン）へフォーカスを移す。
     window._prevFocus = document.activeElement as HTMLElement | null;
     $("drawerBackdrop").classList.add("active");
@@ -1129,6 +1154,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function closeDrawer(e: Event | null = null) {
     if (!e || e.target === $("drawerBackdrop")) {
       $("drawerBackdrop").classList.remove("active");
+      drawerRow = null;
+      writeUrl();
       // フォーカスを開く直前の要素へ戻す。
       const prev = window._prevFocus;
       window._prevFocus = null;
@@ -3618,6 +3645,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 「このページに書いてあるのに見つからない」で止まらないように、開いた状態で
      * 渡せる道をここに置く（2026-09-23）。 */
     const helpFlag = urlFlagJa(p.get("help"));
+    // 開いていた行の詳細も引き継ぐ（行が見つからないときは静かに開かない –
+    // 件数欄に注意を足すと、行の有り無しと無関係な読み上げが増えるため第 140 回と同じ扱い）。
+    const rowFlag = p.get("row");
+    pendingDrawerKey = typeof rowFlag === "string" ? rowFlag : "";
     // 読めない値でも注意を出さない。てびきは画面の絞り込みではなく見せ方なので、
     // 件数欄に「チェックは入りませんでした」を並べると、本当に外れた条件の案内が
     // 埋もれる（チェック欄と同じ案内文もそこでは不通）。
@@ -3667,6 +3698,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // てびきを開いている状態も同じ理屈で引き継ぐ（上の読み取り側参照）。
     const helpPanelEl = $("helpPanel") as HTMLDetailsElement;
     if (helpPanelEl.open) p.set("help", "1");
+    if (drawerRow) p.set("row", rowShareKeyJa(drawerRow));
     const str = p.toString();
     history.replaceState(null, "", str ? `?${str}` : window.location.pathname);
   }
@@ -4041,6 +4073,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* 印刷物に「いつのデータで、どんな条件の一覧か」を残す。画面の絞り込み欄は印刷で
    * 落ちるので、これがないと紙だけ条件の分からない一覧になる（データ生成日はヘッダーに
    * 残るが、絞り込み条件はどこにも残っていなかった – 2026-09-23 実測）。 */
+  /* 送られてきたリンクで、送った人が開いていた行の詳細を開く。条件も一緒に来るので
+   * 通常は同じ行が見つかるが、データの生成日が違うと無いことがある（そのときは
+   * 表だけを出す – 存在しない行を開くより、開かないほうがマシな誤解で済む）。 */
+  function restoreDrawerFromUrl() {
+    if (!pendingDrawerKey) return;
+    const idx = shown.findIndex((r) => rowShareKeyJa(r) === pendingDrawerKey);
+    if (idx < 0) return;
+    selectedIndex = idx;
+    render();
+    openDrawer(shown[idx] as unknown as DrawerRow);
+  }
+
   function fillPrintMeta() {
     const box = $("printMeta");
     if (!box) return;
@@ -4188,4 +4232,5 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   toForm();
   if (state.mode === "deadlines" && state.past) loadHistoryData();
   render();
+  restoreDrawerFromUrl();
 })();

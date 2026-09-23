@@ -2165,6 +2165,9 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     // writeUrl / readUrl は `<details>` の開閉も読むので、見立てにも同じ形を置く。
     "const helpPanel = { open: false };",
     "const $ = (id) => (id === 'helpPanel' ? helpPanel : null);",
+    jsFunction(runtime, "rowShareKeyJa"),
+    "let drawerRow = null;",
+    "let pendingDrawerKey = '';",
     "state.online = false;",
     jsFunction(runtime, "readUrl"),
     jsFunction(runtime, "writeUrl"),
@@ -2219,6 +2222,17 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     // てびきは画面の条件ではないので、読めない値でも注意を出さない（画面の語が増える）。
     "helpPanel.open = true; urlNotices = []; window.location.search = '?help=maybe'; readUrl();",
     "const helpUnreadable = [helpPanel.open, urlNotices.join(' ／ ')];",
+    "const rowRound = [];",
+    // 開いていた行の詳細も同じ理屈で引き継ぐ（第 147 回の印刷物の話と同じで、送った人の
+    // 画面と送られた人の画面が別物になるのがいちばん親切じゃない）。
+    "drawerRow = { conf: { key: 'SC', title: 'SC' }, ed: { year: 2026 }, kind: 'paper', t: 1794883140000 }; writeUrl();",
+    "const rowSent = written;",
+    "drawerRow = null; pendingDrawerKey = ''; window.location.search = rowSent.slice(1); readUrl();",
+    "const rowRestored = [pendingDrawerKey, rowShareKeyJa({ conf: { key: 'SC' }, ed: { year: 2026 }, kind: 'paper', t: 1794883140000 })];",
+    // 詳細を閉じて送ると、開いた人の画面でも開かない（幽霊の詳細を残さない）。
+    "drawerRow = null; pendingDrawerKey = ''; writeUrl();",
+    "const rowClosedSent = written;",
+    "rowRound.push(rowSent, rowRestored[0], rowRestored[1], rowClosedSent);",
     "window.location.search = '?rank=A%2A'; readUrl();",
     "const restoredRank = state.rank;",
     // 既定の並びなら引数を足さない（URL は必要な情報だけ乗せる）。
@@ -2242,6 +2256,7 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     "  unreadableMode,",
     "  explicitMode,",
     "  [helpSent, openedByLink, helpUnreadable[0], helpUnreadable[1]],",
+    "  rowRound,",
     "]));",
   ].join("\n");
   const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
@@ -2265,6 +2280,7 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     unreadableMode,
     explicitMode,
     helpRound,
+    rowRound,
   ] = JSON.parse(proc.stdout.trim()) as [
     string,
     [string, boolean],
@@ -2284,6 +2300,7 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     [string, string],
     [string, string],
     [string, boolean, string, string],
+    [string, string, string, string],
   ];
   expect(sent).toContain("sort=date");
   // 会期順の共有も対で動く（既定の向きなので `dir` は付かない）。
@@ -2340,6 +2357,13 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
   expect(helpRound[0], "てびきを開いている状態が URL に残っていない").toContain("help=1");
   expect(helpRound[1], "リンクを開いた人の画面でてびきが開かない").toBe(true);
   // てびきは画面の絞り込みではないので、読めない値でも注意を出さない。
+  // 開いていた行の詳細も対で引き継がれ、閉じて送れば開かない。
+  expect(rowRound[0], "開いていた行の詳細が URL に残っていない").toContain(
+    "row=SC%7C2026%7Cpaper%7C",
+  );
+  expect(rowRound[1], "送られた側で行の鍵が復元されていない").toBe(rowRound[2]);
+  expect(rowRound[1]).toBe("SC|2026|paper|1794883140000");
+  expect(rowRound[3], "詳細を閉じて送ったのに行の引数が残っている").not.toContain("row=");
   expect(helpRound[2]).toBe(false);
   expect(helpRound[3], "てびきの値で件数欄に注意が並んでいる").toBe("");
   // 知らない key は既定に戻る（URL を叩いて並べ替え式を壊せないようにする）。
@@ -2802,7 +2826,7 @@ it("drawer shows JST with weekday and the official timezone, viewer-timezone ind
     "const document = { activeElement: null, getElementById: (id) => els[id] || null };",
     "function $(id) { return document.getElementById(id); }",
     "const window = { _prevFocus: null };",
-    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, { paper: '論文締切' }, (t) => t, fmtDate, fmtJst, fmtAoE, (s) => String(s ?? ''), (v) => String(v ?? ''), () => null, () => '', Recommender, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}));`,
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, { paper: '論文締切' }, (t) => t, fmtDate, fmtJst, fmtAoE, (s) => String(s ?? ''), (v) => String(v ?? ''), () => null, () => '', Recommender, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}), () => {});`,
     "const draw = (tzRaw) => {",
     "  body.innerHTML = '';",
     "  openDrawer({",
@@ -3171,6 +3195,10 @@ it("drawer closes only on ✕ / backdrop click, not on inner elements", () => {
     "const backdrop = { classList: { remove: () => removals.push(1) } };",
     "const document = { getElementById: (id) => (id === 'drawerBackdrop' ? backdrop : null) };",
     "function $(id) { return document.getElementById(id); }",
+    // 閉じると URL から行の引数が外れる（第 148 回）ので、その口も見立てに置く。
+    // `node -e` は ESM（厳格モード）なので、代入される変数は宣言が要る。
+    "let drawerRow = { conf: { key: 'x' } };",
+    "const writeUrl = () => {};",
     `const closeDrawer = ${src};`,
     // 1. ✕ の自前 onclick 経路（引数なし）→ 閉じる
     "closeDrawer();",
@@ -3330,12 +3358,12 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
     "const dOpened = calls.open.length === 1 && calls.open[0] === 'B';",
     "const dFocusedRow = calls.focus[calls.focus.length - 1] === 'row1';",
     "const verificationSummary = new Function('esc', 'return (' + SUMMARY + ')')((s) => String(s ?? ''));",
-    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '' }, meetingRangeJa, upcomingEditionsOf, KIND_DETAIL);",
+    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '' }, meetingRangeJa, upcomingEditionsOf, KIND_DETAIL, () => {});",
     "document.activeElement = prevEl;",
     "openDrawer({ kind: 'journal', conf: { title: 'X' }, ed: { place: 'P', date_text: 'D' } });",
     "const focusedClose = document.activeElement === closeBtn;",
     "const savedPrev = window._prevFocus === prevEl;",
-    "const closeDrawer = new Function('window', 'document', '$', 'return (' + CLOSE + ')')(window, document, $);",
+    "const closeDrawer = new Function('window', 'document', '$', 'writeUrl', 'return (' + CLOSE + ')')(window, document, $, () => {});",
     "closeDrawer();",
     "const restored = document.activeElement === prevEl;",
     "console.log(JSON.stringify({ dOpened, dFocusedRow, focusedClose, savedPrev, restored }));",
@@ -3658,7 +3686,7 @@ it("normal deadline drawer includes verification details", () => {
     "function $(id) { return document.getElementById(id); }",
     "const window = { _prevFocus: null };",
     `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')((s) => String(s ?? ''));`,
-    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '' }, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}));`,
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '' }, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}), () => {});`,
     "openDrawer({",
     "  kind: 'paper', conf: { key: 'demo', title: 'Demo' },",
     "  ed: { year: 2026, place: 'P', date_text: 'D' }, t: 0, tLast: 0,",
@@ -5043,7 +5071,7 @@ it("ドロワーは表の情報（分野・ランク・ラウンド）を落と�
     jsFunction(runtime, "meetingRangeJa"),
     jsFunction(runtime, "upcomingEditionsOf"),
     `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')(esc);`,
-    `const openDrawer = new Function('window','document','$','KIND_LABEL','titleWithYear','fmtDate','fmtJst','fmtAoE','esc','safeExternalUrl','rowDateOnlyState','verificationSummary','Recommender','catLabel','meetingRangeJa','upcomingEditionsOf','UNCONFIRMED_JA','kindDetailJa', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, KIND_LABEL, titleWithYear, () => 'UTC', () => 'JST', () => 'AoE', esc, (u) => String(u ?? ''), () => null, verificationSummary, Recommender, catLabel, meetingRangeJa, upcomingEditionsOf, Recommender.unconfirmedLabelJa(), (${jsFunction(runtime, "kindDetailJa")}));`,
+    `const openDrawer = new Function('window','document','$','KIND_LABEL','titleWithYear','fmtDate','fmtJst','fmtAoE','esc','safeExternalUrl','rowDateOnlyState','verificationSummary','Recommender','catLabel','meetingRangeJa','upcomingEditionsOf','UNCONFIRMED_JA','kindDetailJa', 'writeUrl', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, KIND_LABEL, titleWithYear, () => 'UTC', () => 'JST', () => 'AoE', esc, (u) => String(u ?? ''), () => null, verificationSummary, Recommender, catLabel, meetingRangeJa, upcomingEditionsOf, Recommender.unconfirmedLabelJa(), (${jsFunction(runtime, "kindDetailJa")}), () => {});`,
     "openDrawer({",
     "  kind: 'paper', cats: ['hpc', 'systems'], rankPairs: ['ccf:B', 'core:A*', 'thcpl:N'],",
     "  conf: { key: 'demo', title: 'Demo', tags: ['machine-learning'] },",
@@ -9317,7 +9345,7 @@ it("閉じた行の詳細は、支援技術からもタブ順序からも消え�
     "const el = (id) => ({ id, classList: { remove: (c) => touched.push([id, 'remove', c]),",
     "  add: (c) => touched.push([id, 'add', c]) } });",
     `const CLOSE_SRC = ${JSON.stringify(jsFunction(app, "closeDrawer"))};`,
-    'const closeDrawer = new Function("$", "window", "return (" + CLOSE_SRC + ")")(el, {});',
+    'const closeDrawer = new Function("$", "window", "writeUrl", "return (" + CLOSE_SRC + ")")(el, {}, () => {});',
     "closeDrawer();",
     "console.log(JSON.stringify(touched));",
     "})();",
@@ -12207,4 +12235,49 @@ it("投稿先を探す画面で印刷すると、紙に出る但し書きが実�
   );
   // てびきにも同じ事実を書く（画面の語を引けるようにする）。
   expect(html).toContain("投稿先を探す画面 ／ 候補 N 件");
+});
+
+it("開いていた行の詳細まで共有し、てびきの説明と実際の引き継ぎをズレさせない（SPEC §7）", () => {
+  /* 「画面を共有する」は絞り込み・並び順・てびきの開閉を URL に載せる（第 99 回・第 140 回）。
+   * 一方で、いちばん共有したい単位である「この締切」が行として残っておらず、送られた側は
+   * 表のなかから同じ行を探さなければならなかった（2026-09-23 実測: ビルド成果物の URL の
+   * 書き出しに行に関する引数は 1 つも無かった）。 */
+  const app = siteRuntime("app.js");
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  // 書き出しと読み取りが対で存在すること（片方だけの実装は黙って消える）。
+  expect(app).toContain('p.set("row", rowShareKeyJa(');
+  expect(app).toContain('p.get("row")');
+  // 起動時は `render()` の後に復元する（`shown` が揃う前だと行を探せない）。
+  // 起動時の並び: `readUrl()` → 描き込み → 行の詳細の復元（`shown` が揃う前では探せない）。
+  // ビルド後はインデントが変わるので、行の並びで見つける。
+  const wired = /\n\s*render\(\);\n\s*restoreDrawerFromUrl\(\);/.exec(app);
+  expect(wired, "描き込みの後で行の詳細を開いていない（URL を受け取らない画面）").not.toBeNull();
+  const firstRead = app.lastIndexOf("readUrl();", (wired as RegExpExecArray).index);
+  expect(firstRead, "URL を読む前に開こうとしている").toBeGreaterThan(0);
+  // 行の鍵は同じ会議の別締切を区別できる（概要/論文・年違い）。
+  const script = [
+    "const rowShareKeyJa = (" + jsFunction(app, "rowShareKeyJa") + ");",
+    "const a = { conf: { key: 'SC' }, ed: { year: 2026 }, kind: 'paper', t: 1794883140000 };",
+    "console.log(JSON.stringify({",
+    "  a: rowShareKeyJa(a),",
+    "  same: rowShareKeyJa({ ...a }) === rowShareKeyJa(a),",
+    "  kind: rowShareKeyJa({ ...a, kind: 'abstract', t: 1 }) !== rowShareKeyJa(a),",
+    "  year: rowShareKeyJa({ ...a, ed: { year: 2027 } }) !== rowShareKeyJa(a),",
+    "  sparse: rowShareKeyJa({ conf: {}, ed: {}, kind: '', t: NaN }),",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout) as { [k: string]: string };
+  expect(got.same).toBe(true);
+  expect(got.kind).toBe(true);
+  expect(got.year).toBe(true);
+  expect(got.a).toBe("SC|2026|paper|1794883140000");
+  // 情報が無い行でも例外にはせず、空の欄を残す（照合にしか使わない）。
+  expect(got.sparse).toBe("|||");
+  // 案内にも同じ事実を書く（画面の語を引けるようにする）。
+  expect(html, "?row= のことがてびきに無い").toContain("<code>?row=</code>");
 });
