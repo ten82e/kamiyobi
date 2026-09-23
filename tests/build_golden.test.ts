@@ -15353,3 +15353,45 @@ it("upcoming.md の会期行の「残り」が、JST の同じ日なら同じ読
     .map((key) => `${key}: 「${morningJst.rows.get(key)}」 -> 「${laterJst.rows.get(key)}」`);
   expect(drift, "JST の同じ日に「残り」の読みが変わる会期がある").toEqual([]);
 });
+
+it("llms.txt が data.csv の列をビルドの列定義どおりに載せる（SPEC §7）", () => {
+  /* `data.csv` は README でも入口に挙がる成果物なのに、列の辞書がどの公開文書にも無かった。
+   * 2026-08-09 生成のビルドで実測: 25 本の列名のうち 7 本（`rank_ccf`・`rank_core`・`edition_id`・
+   * `deadline_utc`・`deadline_aoe`・`estimate_window_start`・`estimate_window_end`）は
+   * `llms.txt` のどこにも出てこず、Excel で開いた人が空欄と値 'N' の違いを確かめられなかった。
+   * 検査は列名を書き写さない。ビルドした `data.csv` のヘッダー行を正として、`llms.txt` の
+   * 「## data.csv の列」節が同じ名前を同じ順で、空欄でない説明付きで載せることを見る。
+   * 列を足した／削った／順を変えたときに辞書だけが古くなる状態を、この検査が止める。 */
+  const csv = readFileSync(join(site, "data.csv"), "utf8");
+  const headerLine = csv.split("\n")[0];
+  expect(headerLine.includes('"'), "ヘッダー行の読み方が変わる").toBe(false);
+  const columns = headerLine.split(",").map((name) => name.trim());
+  expect(columns.length, "data.csv のヘッダーが読めない").toBeGreaterThan(10);
+
+  const txt = readFileSync(join(site, "llms.txt"), "utf8");
+  const head = txt.indexOf("## data.csv の列");
+  expect(head, "llms.txt に「## data.csv の列」の節が無い").toBeGreaterThan(-1);
+  const next = txt.indexOf("\n## ", head + 1);
+  const section = txt.slice(head, next < 0 ? txt.length : next);
+
+  const entries = section
+    .split("\n")
+    .filter((line) => line.startsWith("- "))
+    .map((line) => {
+      const at = line.indexOf("：");
+      expect(at, `説明の区切り「：」が無い行: ${line.slice(0, 40)}`).toBeGreaterThan(1);
+      return { name: line.slice(2, at).trim(), note: line.slice(at + 1).trim() };
+    });
+  expect(entries.length, "列の項目が読めない").toBeGreaterThan(10);
+  expect(
+    entries.map((entry) => entry.name),
+    "載る列の名前が data.csv と違う",
+  ).toEqual(columns);
+  for (const entry of entries) {
+    expect(entry.note, `列「${entry.name}」の説明が空欄`).not.toBe("");
+  }
+  // 「この順で N 本」という宣言が実数と合っているか（宣言を書き写すと必ずズレる）。
+  const declared = /列はこの順で ([0-9]+) 本。/.exec(section);
+  expect(declared, "本数の宣言が無い").not.toBeNull();
+  expect(Number(declared?.[1]), "本数の宣言が data.csv の列数と違う").toBe(columns.length);
+});

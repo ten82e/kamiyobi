@@ -181,6 +181,53 @@ const CSV_COLUMNS = [
   "link",
 ];
 
+/* `data.csv` の列辞書。列名は `CSV_COLUMNS` から書き出し、説明だけをここに持つ（列を足したときに
+ * 名前の方が古くなる事故を防ぐため、説明側は名前で引く）。空欄の意味や 'N' のような番兵を
+ * 書かないと、Excel で開いた人が「評価なし」と「ランク無し」を同じものとして扱ってしまう。 */
+const CSV_COLUMN_NOTES_JA: Record<string, string> = {
+  key: "会議の正規化キー（slug）。`data.json` の `conferences[].key` と同じ。",
+  title: "会議の略称。例 'SIGCOMM'。",
+  full_name: "会議の正式名称（上流の原文）。",
+  categories:
+    "分野。`data.json` の `categories` のキーを `;` で連結する（例 'ai;db'）。" +
+    "画面の分野チップに出る日本語ではなく英語のキーである。",
+  rank_ccf:
+    "CCF の等級。空欄は未評価。値 'N' は上流でランクが付いていないことを示す番兵で、等級ではない。",
+  rank_core: "CORE の等級（例 'A*'）。空欄は未評価。値 'N' は CCF と同じ番兵。",
+  year: "開催年（整数）。",
+  edition_id: "開催回の ID（例 'sigcomm26'）。`data.json` の `editions[].id` と同じ。",
+  kind:
+    "締切の種別。'abstract'・'paper'・'supplementary'・'notification'・'camera_ready'・" +
+    "'rebuttal_start'・'rebuttal_end'・'review_release'・'registration'・'other' の 10 種。" +
+    "画面の「種別」で選べる概要・論文以外の種別もこの表には含まれる。",
+  label: "上流の表示用ラベル（原文。翻訳しない）。",
+  round: "投稿ラウンド（1 起点の整数）。複数のラウンドを持つ会議がある。",
+  deadline_precision:
+    "締切値の精度。'exact' は時刻まで確定、'date-only' は暦日までは確定で時刻は未確認。",
+  deadline_local_date:
+    "'YYYY-MM-DD'。`deadline_precision` が 'date-only' の行だけに入る。'exact' の行では空欄。",
+  deadline_utc:
+    "締切の瞬間 'YYYY-MM-DDTHH:MM:SSZ'（UTC）。'date-only' の行では空欄（いつ締まるか分かっていないため書けない）。",
+  deadline_aoe:
+    "AoE（UTC-12）基準で読み替えた締切 'YYYY-MM-DD HH:MM:SS AoE'。'date-only' の行では空欄。",
+  tz_raw:
+    "上流が書いたままのタイムゾーン表記（'AoE'、'UTC-12'、'PT' など）。'date-only' の行では空欄。",
+  event_start: "会期の開始日 'YYYY-MM-DD'。分かっていない行は空欄。",
+  event_end: "会期の終了日 'YYYY-MM-DD'。分かっていない行は空欄。",
+  place:
+    "開催地（上流の原文。例 'Zurich, Switzerland'）。画面と `upcoming.md` に入れる日本語化" +
+    "（県名の補完や国名の変換）は施していないので、日本語で検索するときは画面を使う。",
+  date_text: "上流の自由文の会期表記（例 'October 21-23, 2019'）。構造化されていない。",
+  estimated:
+    "推定版かどうかの 'true' / 'false'。'true' は過去実績からの機械推定で、公式に裏を取ったデータではない。",
+  estimate_window_start:
+    "推定版の表示用の窓の開始日 'YYYY-MM-DD'。確定版の行は空欄。公式締切ではない。",
+  estimate_window_end:
+    "推定版の表示用の窓の終了日 'YYYY-MM-DD'。確定版の行は空欄。公式締切ではない。",
+  sources: "この行を出した出典名を `;` で連結したもの（例 'aideadlines;ccfddl'）。",
+  link: "会議の公式サイトの URL。",
+};
+
 const TEMPLATE_MARKER = "/*__DATA__*/null";
 
 /**
@@ -2989,6 +3036,21 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "      - selection_rule: string：採用値を選んだ決定規則。",
     "      - evidence: array：source_name/source_url/observed_at/original_value/confidence。",
     "      - conflicts: array：採用しなかった候補値とその evidence（存在時のみ）。",
+    "",
+    /* `data.csv` は README でも入口に挙がる成果物なのに、列の辞書がどの公開文書にも無かった
+     * （2026-08-09 生成のビルドで実測: 25 本の列名のうち 7 本 ― `rank_ccf`・`rank_core`・
+     * `edition_id`・`deadline_utc`・`deadline_aoe`・`estimate_window_start`・
+     * `estimate_window_end` ― は `llms.txt` のどこにも出てこなかった）。Excel で開いた人は
+     * 空欄と 'N' の違いを確かめようが無い。列名はビルドの列定義から書き出す（書き写すと、
+     * 列を足したときに辞書だけが残る）。 */
+    "## data.csv の列",
+    "",
+    "1 行 1 締切の平坦な表で、`data.json` の `conferences[].editions[].deadlines[]` を展開した物である。",
+    "推定版と過去の締切もそのまま含まれる。画面や `upcoming.md` と違い、**値は機械可読のまま**にしてある。",
+    "「未確認」「該当なし」などの日本語は書かない（空欄は「その値が分かっていない」を意味する）。",
+    `列はこの順で ${String(CSV_COLUMNS.length)} 本。`,
+    "",
+    ...CSV_COLUMNS.map((name) => `- ${name}：${CSV_COLUMN_NOTES_JA[name] ?? ""}`),
     "",
     "## 利用上の注意",
     "",
