@@ -57,6 +57,8 @@ interface EditionRecord {
   event_start?: string;
   event_end?: string;
   estimated?: boolean;
+  /** 公式ページ。検索欄に URL を貼って収録確認をする人が使えるように、検索語へ入れる。 */
+  link?: string;
   deadlines?: DeadlineRecord[];
 }
 
@@ -2237,6 +2239,40 @@ const Recommender = (() => {
    * 画面に見える地名が引けない。NFKC だけでは é が分解されないので NFD にしてから
    * 合成記号を落とす。検索語・行の両方がこの関数を通るので、どちらで打っても同じ結果になる。
    * 表示（開催地セル）は公式表記のまま変えない。 */
+  /* メーリングリストで CFP のリンクを受け取った人が、その URL を検索欄に貼って収録確認を
+   * していた（2026-09-23 実測: 「https://warwick.ac.uk/fac/sci/dcs/aamas2027/」をそのまま貼る
+   * と 0 行で、収録されていないと誤解していた）。会議の検索語に公式ページのホスト名の成分を
+   * 足す。パスの語（fac・sci・index など）は他の語と衝突して誤爆の種になるだけなので入れない。
+   * `www` も除く（どの会議でも同じ語になるので絞り込みにならない）。 */
+  function hostFromUrl(value: unknown): string {
+    let rest = typeof value === "string" ? value.trim() : "";
+    if (!rest) return "";
+    const scheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.exec(rest);
+    if (scheme) rest = rest.slice(scheme[0].length);
+    rest = rest.replace(/^[^/@?#]*@/, "");
+    const boundary = rest.search(/[/?#]/);
+    if (boundary >= 0) rest = rest.slice(0, boundary);
+    return rest.replace(/:\d+$/, "");
+  }
+
+  function hostLabels(host: unknown): string[] {
+    const text = typeof host === "string" ? host : "";
+    return (
+      text
+        .toLowerCase()
+        .split(".")
+        .map((part) => part.trim())
+        // 2 文字以下の成分（`ac`・`uk`・`jp`・`co`）は落とす。どの会議のドメインにも出る語なので、
+        // 入れると「SC」のような短い略称の検索がドメインで誤爆する（2026-09-23 実測: 45 行が
+        // 47 行になった）。照合側も同じ表を通るので、URL を貼った検索はそのまま引ける。
+        .filter((part) => part.length >= 3 && part !== "www")
+    );
+  }
+
+  function linkSearchTerms(link: unknown): string {
+    return hostLabels(hostFromUrl(link)).join(" ");
+  }
+
   function searchNormalize(value: unknown): string {
     const raw = typeof value === "string" ? value : value == null ? "" : String(value);
     let folded = typeof raw.normalize === "function" ? raw.normalize("NFKC") : raw;
@@ -3106,7 +3142,25 @@ const Recommender = (() => {
   const MONTH_QUERY_YEAR_FROM = 2018;
   const MONTH_QUERY_YEAR_TO = 2032;
 
+  /* 検索語その物が URL / ホスト名になるとき、そのまま語に分解するとパスの語（index・fac）や
+   * `https` まで AND 条件に入って必ず 0 件になる（2026-09-23 実測）。ホストの成分だけに直して
+   * から分解する（照合側の検索語にも同じホストの成分を入れている – `linkSearchTerms`）。 */
+  function urlLikeQueryTerms(query: unknown): string | null {
+    const text = typeof query === "string" ? query.trim() : "";
+    if (!text || /\s/.test(text)) return null;
+    const isUrl = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\/\S+$/i.test(text);
+    // スキーム無しで運ばれてくることも多い（チャットやメーリングリストからのコピー）。
+    const isHost = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?([.:][a-z0-9-]+)*(:\d+)?(\/\S*)?$/i.test(text)
+      ? /\.[a-z]{2,}/i.test(text)
+      : false;
+    if (!isUrl && !isHost) return null;
+    const labels = hostLabels(hostFromUrl(text));
+    return labels.length ? labels.join(" ") : null;
+  }
+
   function queryTokenGroups(query: unknown, nowMs?: number): string[][] {
+    const urlTerms = urlLikeQueryTerms(query);
+    if (urlTerms !== null) query = urlTerms;
     const now = Number.isFinite(Number(nowMs)) ? Number(nowMs) : Date.now();
     const byReading: Record<string, string[]> = {};
     const synonyms = querySynonymMap();
@@ -4068,7 +4122,14 @@ const Recommender = (() => {
           if (rank[name]) rankPairs.push(`${name}:${rank[name]}`);
         });
         const confTags = conf.tags || [];
-        const baseHay = [conf.title, conf.full_name, conf.key, ed.place, ed.date_text]
+        const baseHay = [
+          conf.title,
+          conf.full_name,
+          conf.key,
+          ed.place,
+          ed.date_text,
+          linkSearchTerms(ed.link),
+        ]
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
@@ -4206,7 +4267,8 @@ const Recommender = (() => {
           cats: conf.categories || [],
           tags: confTags,
           hay: searchNormalize(
-            `${baseHay} ${ed.place || ""} ${ed.date_text || ""} ` +
+            /* 会期だけの行も、公式ページの URL で引けるようにする（上の締切行と同じ理由）。 */
+            `${baseHay} ${ed.place || ""} ${ed.date_text || ""} ${linkSearchTerms(ed.link)} ` +
               `${categorySearchTerms(conf.categories, confTags)} ${tagSearchTerms(confTags)} ` +
               `${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ` +
               `${monthTermsJa(start)} ${monthTermsJa(end)} ${weekdaySearchTerms(start)}`,

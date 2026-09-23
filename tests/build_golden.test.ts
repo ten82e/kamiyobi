@@ -2688,6 +2688,12 @@ const SEARCH_CANON = (() => {
       "monthTermsJa",
       "expandRelativeMonths",
       "searchNormalize",
+      // 第 153 回: URL を検索欄に貼れるようにしたので、その部品も一緒に抜く
+      // （抜いた関数は独立していないと `ReferenceError` になる）。
+      "hostFromUrl",
+      "hostLabels",
+      "linkSearchTerms",
+      "urlLikeQueryTerms",
       "queryTokens",
       "querySynonymMap",
       "abbrevYearGroups",
@@ -12552,4 +12558,90 @@ it("キーボードで選んだ行がまだ描画されていなくても、そ�
     [95, 3],
     [95, 3],
   ]);
+});
+
+it("公式ページの URL を検索欄に貼るとその会議が見つかる（SPEC §7）", () => {
+  /* メーリングリストで CFP のリンクを受け取った人が、検索欄にその URL を貼って収録確認を
+   * していた。会議の検索語（hay）に URL が無く、照合側も URL を語に分解してしまうので
+   * 0 件になり、収録されていないと誤解していた（2026-09-23 実測: ビルド後の `searchMatcher` で
+   * 「https://warwick.ac.uk/fac/sci/dcs/aamas2027/」は 0 行）。 */
+  const rec = readFileSync(join(site, "recommender.js"), "utf8");
+  // 実行検証 1: URL からホストの成分を取り出す式そのもの。
+  const script = [
+    `const hostFromUrl = (${jsFunction(rec, "hostFromUrl")});`,
+    `const hostLabels = (${jsFunction(rec, "hostLabels")});`,
+    `const linkSearchTerms = (${jsFunction(rec, "linkSearchTerms")});`,
+    "const urls = [",
+    "  'https://warwick.ac.uk/fac/sci/dcs/aamas2027/',",
+    "  'http://www.kyoto.example.ac.jp/index.html',",
+    "  'https://asiaccs2027.cityu.edu.mo:8443/index.html',",
+    "  'ftp://mail.server.example.org/pub',",
+    "  '',",
+    "];",
+    "console.log(JSON.stringify({",
+    "  hosts: urls.map((u) => hostFromUrl(u)),",
+    "  terms: urls.map((u) => linkSearchTerms(u)),",
+    "  // 2 文字以下の成分（`ac`・`jp`・`www`）を入れない約束。",
+    "  shortKept: urls.some((u) => hostLabels(hostFromUrl(u)).some((p) => p.length < 3)),",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout) as { hosts: string[]; terms: string[]; shortKept: boolean };
+  expect(got.hosts).toEqual([
+    "warwick.ac.uk",
+    "www.kyoto.example.ac.jp",
+    "asiaccs2027.cityu.edu.mo",
+    "mail.server.example.org",
+    "",
+  ]);
+  expect(got.terms[0].split(" ")).toEqual(["warwick"]);
+  expect(got.terms[2]).toBe("asiaccs2027 cityu edu");
+  expect(got.shortKept, "2 文字以下の成分が混ざっている（短い略称の検索が誤爆する）").toBe(false);
+  // 実行検証 2: ビルド後の検索で、URL を貼った人が該当会議にたどり着けるか。
+  const script2 = [
+    "const { default: Recommender } = await import(" +
+      JSON.stringify(`file://${join(site, "recommender.js")}`) +
+      ");",
+    "const fs = await import('node:fs');",
+    "const data = JSON.parse(fs.readFileSync(" +
+      JSON.stringify(join(site, "data.json")) +
+      ", 'utf8'));",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const rows = Recommender.candidateRows(data.conferences, now);",
+    "const targets = [];",
+    "for (const r of rows) {",
+    "  const link = String((r.ed && r.ed.link) || '');",
+    "  if (/^https?:\\/\\/[a-z0-9.-]+\\.[a-z]{2,}/i.test(link)) targets.push({ link, key: r.conf.key });",
+    "  if (targets.length >= 4) break;",
+    "}",
+    "const out = [];",
+    "for (const t of targets) {",
+    "  const bare = t.link.replace(/^https?:\\/\\//, '').replace(/\\/$/, '');",
+    "  const host = bare.split('/')[0];",
+    "  for (const q of [t.link, bare, host]) {",
+    "    const m = Recommender.searchMatcher(q, now);",
+    "    const hit = rows.filter((r) => m(r.hay));",
+    "    out.push({ q, hits: hit.length, self: hit.some((r) => r.conf.key === t.key) });",
+    "  }",
+    "}",
+    "console.log(JSON.stringify(out));",
+  ].join("\n");
+  const proc2 = spawnSync("node", ["--input-type=module", "-e", vmSafeSource(script2)], {
+    encoding: "utf8",
+    timeout: 120_000,
+  });
+  expect(proc2.status, proc2.stderr).toBe(0);
+  const found = JSON.parse(proc2.stdout) as Array<{ q: string; hits: number; self: boolean }>;
+  expect(found.length, "検査対象の URL が無かった").toBeGreaterThanOrEqual(9);
+  for (const f of found) {
+    expect(f.hits, `URL 検索「${f.q}」で 0 行（収録なしと誤解されるまま）`).toBeGreaterThan(0);
+    expect(f.self, `URL 検索「${f.q}」で該当会議が引けない`).toBe(true);
+  }
+  // 案内にも同じ操作が書いてある（画面だけで増えて、てびきが古い状態を残さない）。
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  expect(html).toContain("URL をそのまま貼っても引けます");
 });
