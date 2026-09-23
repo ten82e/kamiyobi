@@ -1874,6 +1874,12 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
   const hint = new Function(
     `${appForHint.match(/const KIND_ALL_LABEL_JA = [^\n]*;/)?.[0] ?? ""}
      ${jsFunction(appForHint, "countJa")};
+     /* 評価の語（「評価なし」）と、のぞいた行を指す語も正本から入れる – 件数欄と同じ語を
+      * 見せるための注入で、検査側に語を書かない。 */
+     ${(siteRuntime("recommender.js").match(/const RANK_UNRATED_LABEL_JA = [^\n]*;/) || ['""'])[0]}
+     const Recommender = { rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA };
+     ${jsFunction(appForHint, "rankFilterLabelJa")};
+     ${jsFunction(appForHint, "rankDropWordsJa")};
      return (${jsFunction(appForHint, "emptyDeadlineHint")});`,
   )() as (f: {
     window: string;
@@ -7855,9 +7861,8 @@ it("「評価でしぼる」でのぞいた件数を件数欄に出す（SPEC §
   expect(out.grades.C.hidden, "0 件の評価でのぞいた数が出ていない").toBe(8);
 
   const app = runtime;
-  expect(app, "件数欄が評価で絞った件数を書いていない").toContain(
-    "評価「${state.rank}」を持たない行 ${countJa(hidden.rank)} 件",
-  );
+  // 件数欄が評価で絞った件数を書く（語の形は下の検査で見る – ここは配線だけ）。
+  expect(app, "件数欄が評価で絞った件数を書いていない").toContain("rankDropWordsJa(state.rank)");
 });
 
 it("CSV の分野列は画面と同じ日本語の語で、英字のキーを書かない（SPEC §7）", () => {
@@ -12137,6 +12142,11 @@ it("0 件の案内が、各条件で今何行が隠れているかを並べて�
   const script = [
     `const countJa = (${jsFunction(app, "countJa")});`,
     "const KIND_ALL_LABEL_JA = 'すべての種別';",
+    // 評価の語は正本から取る（件数欄と同じ語を見るために）。
+    (siteRuntime("recommender.js").match(/const RANK_UNRATED_LABEL_JA = [^\n]*;/) || [""])[0],
+    "const Recommender = { rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA };",
+    jsFunction(app, "rankFilterLabelJa"),
+    jsFunction(app, "rankDropWordsJa"),
     `${hintFn.replace("function emptyDeadlineHint", "const emptyDeadlineHint = function")}`,
     "const base = {",
     "  window: '7d',",
@@ -17163,6 +17173,66 @@ it("「未確認」と「該当なし」の理由が、行の詳細の本文に�
   // てびきが同じ出し方を書いているか（画面の語を文書で言い換えない）。
   expect(siteHtmlRuntime(), "てびきに行の詳細の出し方を書いていない").toContain(
     "行の詳細の本文にも同じ語で出します",
+  );
+});
+
+it("評価なしで絞った人が、件数欄で選択欄と同じ語に出会う（SPEC §7）", async () => {
+  /* 第 237 回。件数欄と 0 件案内は絞り込みの**値**をそのまま書いていたため、選択欄が
+   * 「評価なし」と出す等級で「評価「N」を持たない行 719 件」という文章になっていた。
+   * `N` は一覧にも行の詳細にも出さない語にしている（てびきも「データ内部の表記は N」と
+   * 別に書く）ので、件数欄だけ内部トークンを見る面になっていた。
+   * 2026-08-09 生成ビルドで実測: 収録 863 行のうち評価なしを含む行は 144 行なので、
+   * 評価なしを選んだ人は 719 行がこの数え方で落ちる側に回る。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const app = siteRuntime();
+  const words = new Function(
+    "Recommender",
+    `${jsFunction(app, "rankFilterLabelJa")}\n${jsFunction(app, "rankDropWordsJa")}\nreturn rankDropWordsJa;`,
+  )(R) as (grade: string) => string;
+  const label = new Function("Recommender", `return (${jsFunction(app, "rankFilterLabelJa")});`)(
+    R,
+  ) as (grade: string) => string;
+  // 選択欄に並ぶ値はすべて、その欄の見出しと同じ語で件数欄に出る。
+  const 値 = R.rankGradeOrderJa();
+  expect(値.length, "選択欄の等級が 1 も無い組み立てになっている").toBeGreaterThan(1);
+  値.forEach((grade) => {
+    const 文 = words(grade);
+    expect(文.length, `評価「${grade}」でのぞいた行を指す語が空`).toBeGreaterThan(0);
+    expect(文, `評価「${grade}」の説明が選択欄の語（${label(grade)}）を含まない`).toContain(
+      label(grade),
+    );
+  });
+  /* 値の `N` は画面の語ではないので、どこにも「N」を括弧で囲んで書かない。 */
+  値.forEach((grade) => {
+    expect(words(grade), `評価「${grade}」の説明に内部トークンがそのまま出た`).not.toContain(
+      "「N」",
+    );
+  });
+  // 評価なしは文の形も違う（「評価「評価なし」を持たない」は日本語として読めない）。
+  expect(words("N"), "評価なしの文が読める形になっていない").toBe(
+    `${R.rankUnratedLabelJa()}の行以外`,
+  );
+  /* 件数欄と 0 件案内の両方が同じ入口を見る（語の組み立てを 2 箇所に書かない）。 */
+  expect(
+    (app.match(/rankDropWordsJa\(/g) || []).length,
+    "のぞいた行の語が定義以外から 1 か所でしか使われていない",
+  ).toBe(3);
+  // 評価なしの行が実際に在ること（無ければこの語は空振りになる）。
+  const rows = R.candidateRows(
+    JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+      typeof R.candidateRows
+    >[0],
+  );
+  const 該当 = rows.filter((row) =>
+    ((row as unknown as { rankPairs?: string[] }).rankPairs || [])
+      .map((pair) => R.rankPairLabelJa(pair))
+      .some((text) => text.indexOf(R.rankUnratedLabelJa()) >= 0),
+  ).length;
+  expect(該当, "評価なしの行が 1 も無いので、この語は空振りしている").toBeGreaterThan(0);
+  // てびきが同じ文の形を書いているか。
+  expect(siteHtmlRuntime(), "てびきに評価なしの件数欄の出し方を書いていない").toContain(
+    "評価なしの行以外 N 件",
   );
 });
 

@@ -536,6 +536,19 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   const RANK_FILTER_NOTE_JA =
     "CCF・CORE・THCPL のいずれかの一覧で、その評価が付いている会議を出します。";
 
+  /* 評価で絞ったとき「のぞいた行」を指す語。選択欄の見出し（`rankFilterLabelJa`）を
+   * そのまま使う – 値のまま書くと、評価なしを選んだ人に「評価「N」を持たない行」と
+   * 内部トークンが見えていた（2026-08-09 生成ビルドで実測: 収録 863 行の評価なしは
+   * 144 行なので、この選び方では 719 行がその数え方で落ちる。`N` は表にも行の詳細にも
+   * 出さない語にしている – てびきの「データ内部の表記は N」が言う通り）。
+   * `評価なし` だけが文の形も変える（「評価「評価なし」を持たない」は読めない）。 */
+  function rankDropWordsJa(grade: string): string {
+    const label = rankFilterLabelJa(grade);
+    return label === Recommender.rankUnratedLabelJa()
+      ? `${label}の行以外`
+      : `評価「${label}」を持たない行`;
+  }
+
   /** URL やフォームから来た種別を選択可能なものにする。捨てた場合は理由を返す。 */
   function selectableKind(raw: string | null): { kind: string; notice: string } {
     const value = raw || "";
@@ -2555,7 +2568,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (filter.online)
       tip("「オンライン参加可のみ」をオフ", "online", "オンライン参加の記載がない");
     if (filter.rank && filter.rank !== "all")
-      tip("ランクを「すべて」に変更", "rank", `評価「${filter.rank}」を持たない行`);
+      tip("ランクを「すべて」に変更", "rank", rankDropWordsJa(filter.rank));
     // 種別も絞り込みである。これを数えないと、案内どおりに他を外しても 0 件のままになる。
     if (filter.kind) tip(`「種別」を「${KIND_ALL_LABEL_JA}」に変更`, "kind", "投稿締切以外の種別");
     if (trimmedQuery && !specific)
@@ -3696,8 +3709,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         );
       }
       // 評価で絞った件数。選択欄の等級表記をそのまま書く（画面の語で探す人が探せる形に）。
+      // 値の `N` をそのまま書かないのはその約束の実装で、`rankDropWordsJa` が持つ。
       if (hidden.rank && state.rank)
-        parts.push(`評価「${state.rank}」を持たない行 ${countJa(hidden.rank)} 件`);
+        parts.push(`${rankDropWordsJa(state.rank)} ${countJa(hidden.rank)} 件`);
       // 分野チップも同じ。チップに押した語が並ぶので、外した語を日本語でそのまま書く。
       if (hidden.cats && state.cats.length)
         parts.push(
