@@ -991,6 +991,34 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       const hay = `電子情報通信学会 NS 研究会 ${R.monthTermsJa("2026-10-07")}`;
       expect(R.hayMatches(hay, R.expandRelativeMonths("来月", now))).toBe(true);
     });
+
+    it("助詞で繋がれた相対月も同じ暦月に解決する", () => {
+      /* 研究計画の立て方でいちばん言う形（第 251 回）。日本語は助詞のまわりに空白を
+       * 書かないので、空白で区切られた語だけを見ていては `来月の締切` が展開を通り越す
+       * （2026-08-09 生成ビルドの実測: `来月` 343 行 / `来月の締切` 0 行）。 */
+      expect(R.expandRelativeMonths("来月の締切", now)).toBe("2026年10月 締切");
+      expect(R.expandRelativeMonths("今月中の締切", now)).toBe("2026年9月 締切");
+      const hay = `研究会 論文提出 締切 ${R.monthTermsJa("2026-10-07")}`;
+      expect(
+        R.hayMatches(hay, R.expandRelativeMonths("来月の締切", now)),
+        "助詞で繋がれた形が展開されていない",
+      ).toBe(true);
+      /* 相対月を含まない語は**打たれた形のまま**返す（件数欄が「検索語『X』」にその形を
+       * 書くので、利用者の入力と違う文字列にしない）。 */
+      expect(R.expandRelativeMonths("セキュリティの会議", now)).toBe("セキュリティの会議");
+      expect(R.expandRelativeMonths("国内の研究会", now)).toBe("国内の研究会");
+    });
+
+    it("件数欄に出す組は、打った相対月の語と解決した暦月が対応している", () => {
+      /* 件数欄は `来月 = 2026年10月` の形を出す（相対指定が裏でどう解決されたかを
+       * 見せないのは誤信を生む）。展開後の文字列と番号で突き合わせる作り方は、
+       * 助詞で繋がれた形（1 語が 2 語になる）で対応がずれるので、組を正本側で持つ。 */
+      expect(R.relativeMonthPairs("来月", now)).toEqual([["来月", "2026年10月"]]);
+      expect(R.relativeMonthPairs("来月の締切", now)).toEqual([["来月", "2026年10月"]]);
+      expect(R.relativeMonthPairs("来月中の締切", now)).toEqual([["来月中", "2026年10月"]]);
+      expect(R.relativeMonthPairs("再来月 国内", now)).toEqual([["再来月", "2026年11月"]]);
+      expect(R.relativeMonthPairs("セキュリティの会議", now)).toEqual([]);
+    });
   });
 
   describe("会場表記から都道府県で引く（placePrefectureJa / placeWithPrefectureJa）", () => {

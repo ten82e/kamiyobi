@@ -1788,18 +1788,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /** 展開で置き換わった語だけ `打った語 = 解決した西暦月` の形で返す（説明用の補助）。
    * 例をこのコメントに日付で書かなかった – てびきの側で同じ例を「来月 = 再来月の値」と
    * 取り違えて書いていた（SPEC §7）ので、固定の日付は書かない。 */
-  function relativeMonthNote(query: string, expanded: string): string {
-    const before = String(query || "")
-      .trim()
-      .split(/\s+/);
-    const after = String(expanded || "")
-      .trim()
-      .split(/\s+/);
-    const pairs: string[] = [];
-    for (let i = 0; i < before.length; i++) {
-      if (after[i] && before[i] !== after[i]) pairs.push(`${before[i]} = ${after[i]}`);
-    }
-    return pairs.length ? ` ｜ ${pairs.join("、")}` : "";
+  function relativeMonthNote(query: string, now: number): string {
+    /* 展開前後の文字列を番号で突き合わせると、助詞で繋がれた形で対応がずれる
+     * （`来月の締切` は 1 語のまま展開されて 2 語になり、`来月の締切 = 2026年9月` と
+     * 読めてしまう – 第 251 回）。解決の内側でできた組をそのまま出す。 */
+    const pairs = Recommender.relativeMonthPairs(query, now);
+    return pairs.length ? ` ｜ ${pairs.map((pair) => `${pair[0]} = ${pair[1]}`).join("、")}` : "";
   }
 
   /** 相対月を展開した後の検索語。`filter()` の描画周期内でだけ有効（利用者の入力文は `state.q`）。 */
@@ -3867,7 +3861,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 「来月」で検索したとき、何月に絞ったのかを利用者が確認できるようにする
     // （相対指定が裏でどう解決されたかを見せないのは誤信を生む）。
     if (!recMode) {
-      const note = relativeMonthNote(state.q, searchQuery);
+      const note = relativeMonthNote(state.q, Date.now());
       if (note) {
         cnt += note;
         cntLive += note;

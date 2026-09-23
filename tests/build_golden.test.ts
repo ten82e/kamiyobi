@@ -2484,13 +2484,19 @@ it("relative months in the query are resolved and shown (SPEC §7)", () => {
   // てびきに相対月の説明がある（仕様が画面から追える状態にする）。
   expect(template).toContain("「今月」「来月」「再来月」「先月」");
   // 「来月」がどの月に解決されたかをその場で見せる（伏せた展開は誤信を生む）。
-  const note = new Function(`return (${jsFunction(runtime, "relativeMonthNote")});`)() as (
-    query: string,
-    expanded: string,
-  ) => string;
-  expect(note("来月", "2026年10月")).toBe(" ｜ 来月 = 2026年10月");
-  expect(note("来月 国内", "2026年10月 国内")).toBe(" ｜ 来月 = 2026年10月");
-  expect(note("機械学習", "機械学習")).toBe("");
+  /* 件数欄の文言は本物の `relativeMonthNote` が作る。展開前後を番号で突き合わせる作り方は
+   * 助詞で繋がれた形で対応がずれるので、解決の内側でできた組を見る（第 251 回）。 */
+  const note = new Function("Recommender", `return (${jsFunction(runtime, "relativeMonthNote")});`)(
+    Recommender as unknown as Record<string, unknown>,
+  ) as (query: string, now: number) => string;
+  const noteAt = (query: string) => note(query, Date.parse("2026-09-15T00:00:00Z"));
+  expect(noteAt("来月")).toBe(" ｜ 来月 = 2026年10月");
+  expect(noteAt("来月 国内")).toBe(" ｜ 来月 = 2026年10月");
+  expect(noteAt("来月の締切"), "助詞で繋がれた形が説明に出ていない").toBe(" ｜ 来月 = 2026年10月");
+  expect(noteAt("来月中の締切")).toBe(" ｜ 来月中 = 2026年10月");
+  expect(noteAt("来月 再来月")).toBe(" ｜ 来月 = 2026年10月、再来月 = 2026年11月");
+  expect(noteAt("機械学習")).toBe("");
+  expect(noteAt("セキュリティの会議")).toBe("");
 });
 
 it("the empty deadline state offers a one-click way to drop the filters (SPEC §7)", () => {
@@ -2731,6 +2737,11 @@ const SEARCH_CANON = (() => {
       "kanaFold",
       "monthTermsJa",
       "expandRelativeMonths",
+      // 相対月を暦月に解決する部品（第 251 回 – 抜くと `ReferenceError: relativeMonthTerm
+      // is not defined` になる。抜いた関数は独立していない）。
+      "relativeMonthTerm",
+      // 件数欄に出す「打った語 = 解決した暦月」の組を作る部品（第 251 回）。
+      "relativeMonthPairs",
       "searchNormalize",
       // 第 153 回: URL を検索欄に貼れるようにしたので、その部品も一緒に抜く
       // （抜いた関数は独立していないと `ReferenceError` になる）。
@@ -15179,8 +15190,9 @@ it("相対月の展開を、てびきは固定の日付で約束していない�
     "}",
     // 件数欄に書く語は本物の `relativeMonthNote` が作る（画面の文と検査が離れないように）。
     jsFunction(app, "relativeMonthNote"),
-    "const note = relativeMonthNote('来月', Recommender.expandRelativeMonths('来月', NOW));",
-    "console.log(JSON.stringify({ expanded, expected, note, expectedNote: '来月 = ' + monthAt(1) }));",
+    "const note = relativeMonthNote('来月', NOW);",
+    "const particleNote = relativeMonthNote('来月の締切', NOW);",
+    "console.log(JSON.stringify({ expanded, expected, note, particleNote, expectedNote: '来月 = ' + monthAt(1) }));",
   ].join("\n");
   const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
     encoding: "utf8",
@@ -15191,8 +15203,12 @@ it("相対月の展開を、てびきは固定の日付で約束していない�
     expanded: Record<string, string>;
     expected: Record<string, string>;
     note: string;
+    particleNote: string;
     expectedNote: string;
   };
+  /* 助詞で繋がれた入力（`来月の締切`）も、同じ説明が出ることをここで見る
+   * （第 251 回 – 以前は展開が通らず、説明も出なかった）。 */
+  expect(out.particleNote, "助詞で繋がれた相対月の説明が出ていない").toContain(out.expectedNote);
   for (const word of Object.keys(out.expected)) {
     expect(
       out.expanded[word],

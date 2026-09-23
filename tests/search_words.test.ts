@@ -559,3 +559,43 @@ it("言い換えの先が地域まとめの見出しでも行に届く（打ち�
     "九州の展開が他の地方の行まで広かった",
   ).toBe(0);
 });
+
+it("助詞で繋がれた相対月（来月の締切）でも同じ行に出会える", () => {
+  /* 研究計画の立て方でいちばん言う形（2026-08-09 生成ビルド・固定時刻で実測）。
+   * 相対月は `expandRelativeMonths` が `YYYY年M月` に展開するが、空白で区切られた語しか
+   * 見ていなかった。日本語は助詞のまわりに空白を書かないので `来月の締切` は 1 語のまま
+   * 展開を通り越し、助詞で割られた `来月` が語として残って行に当たらない。
+   * 実測: `来月` 343 行 / `来月 セキュリティ` 41 行 / `来月の締切` **0 行**。 */
+  const all = rows();
+  const NOW = Date.parse("2026-08-09T00:00:00Z");
+  const hits = (query: string) => {
+    // 画面と同じ経路（展開 → 照合）で数える。
+    const matches = Recommender.searchMatcher(Recommender.expandRelativeMonths(query, NOW), NOW);
+    return all.filter((row) => matches(String(row.hay))).length;
+  };
+  /* 助詞で繋いだ形と、空白で区いた形が同じ行数になること（違いがあれば画面側の噓）。 */
+  for (const [joined, spaced] of [
+    ["来月の締切", "来月 締切"],
+    ["来月の論文締切", "来月 論文締切"],
+    ["今月の会議", "今月 会議"],
+    ["再来月の国内研究会", "再来月 国内研究会"],
+    ["先月の締切", "先月 締切"],
+    ["来月中の締切", "来月 締切"],
+  ]) {
+    const expected = hits(spaced);
+    expect(expected, `基準の「${spaced}」が行に出会えない（前提が変わった）`).toBeGreaterThan(0);
+    expect(hits(joined), `「${joined}」で同じ行に出会えない`).toBe(expected);
+  }
+  /* 件数欄が展開結果を出す根拠: 助詞で繋がれた形でも暦月に解決されていること
+   * （「来月と打てば 2026年9月 へ化けたことがその場で読める」という画面の約束）。 */
+  const expanded = String(Recommender.expandRelativeMonths("来月の締切", NOW));
+  expect(expanded, "相対月が暦月に解決されていない").toContain("2026年9月");
+  expect(expanded, "一緒に打った語が消えた").toContain("締切");
+  /* 展開を呼ばずに検索語の組を作る経路（件数点検・照合の内部）でも同じ解決をすること。
+   * ここが違っていると、画面の場所によって当たり方が変わる。 */
+  const groups = Recommender.queryTokenGroups("来月の締切", NOW) as string[][];
+  expect(
+    groups.some((group) => group.indexOf("2026年9月") >= 0),
+    `検索語の組に暦月が出てこない: ${JSON.stringify(groups)}`,
+  ).toBe(true);
+});

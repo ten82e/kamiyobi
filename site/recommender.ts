@@ -3548,21 +3548,65 @@ const Recommender = (() => {
     再来月中: 2,
   };
 
-  /** 相対月の語を `YYYY年M月` へ置き換えた検索語を返す（該当がなければ元の検索語のまま）。 */
+  /** 相対月の語 1 つを `YYYY年M月` に解決する。該当しなければ空文字を返す。
+   * 基準は JST の暦月（一覧の日時列と同じ）。年跨ぎ（12月 → 翌年1月）に対応する。 */
+  function relativeMonthTerm(token: string, nowMs: number): string {
+    const offset = RELATIVE_MONTH_OFFSETS_JA[token];
+    if (offset === undefined) return "";
+    const base = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
+    // 月の加算は日付を足さず月だけで行う（1/31 に 1 ヶ月足すと 3/3 になるため）。
+    const shifted = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + offset, 1));
+    return `${shifted.getUTCFullYear()}年${shifted.getUTCMonth() + 1}月`;
+  }
+
+  /** 相対月の語を `YYYY年M月` へ置き換えた検索語を返す（該当がなければ元の検索語のまま）。
+   *
+   * 助詞で繋がれた入力も同じ展開をする（第 251 回）。`来月の締切` は空白で区切られないので
+   * 丸ごと 1 語として残り、展開が効かなかった – 実測（2026-08-09 生成ビルド・固定時刻
+   * 2026-08-09T00:00:00Z）で `来月` 343 行 / `来月 セキュリティ` 41 行なのに
+   * **`来月の締切` 0 行**・`来月の論文締切` 0 行。助詞で割った語を同じ表に通す。 */
   function expandRelativeMonths(query: unknown, nowMs: number): string {
     const normalized = searchNormalize(query);
     if (!normalized) return normalized;
     let changed = false;
-    const tokens = normalized.split(" ").map((token) => {
-      const offset = RELATIVE_MONTH_OFFSETS_JA[token];
-      if (offset === undefined) return token;
-      const base = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
-      // 月の加算は日付を足さず月だけで行う（1/31 に 1 ヶ月足すと 3/3 になるため）。
-      const shifted = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + offset, 1));
-      changed = true;
-      return `${shifted.getUTCFullYear()}年${shifted.getUTCMonth() + 1}月`;
+    const tokens: string[] = [];
+    normalized.split(" ").forEach((token) => {
+      /* 相対月の語を含むときだけ書き換える。含まない語は**打たれた形のまま**返す –
+       * 助詞で割った形に直すと、展開結果をそのまま画面に書く場所（件数欄の
+       * 「検索語『X』」）が利用者の入力と違う文字列になり、説明がちぐはぐになる。 */
+      const parts = splitQueryToken(token);
+      const terms = parts.map((part) => relativeMonthTerm(part, nowMs));
+      if (terms.some((term) => term)) {
+        tokens.push(
+          terms
+            .map((term, index) => term || (parts[index] as string))
+            .filter((value) => value)
+            .join(" "),
+        );
+        changed = true;
+      } else {
+        tokens.push(token);
+      }
     });
     return changed ? tokens.join(" ") : normalized;
+  }
+
+  /** 相対月の語がどの暦月に解決されたかを `打った語 -> 解決した暦月` の組で返す（第 251 回）。
+   *
+   * 展開後の文字列と打った文字列を番号で突き合わせるやり方は、助詞で繋がれた形で
+   * 壊れる（`来月の締切` は 1 語のまま展開され 2 語になるため、対応がずれ
+   * 「来月の締切 = 2026年9月」という読み違えの案内になった）。解決の内側でできた組をそのまま返す。 */
+  function relativeMonthPairs(query: unknown, nowMs: number): Array<[string, string]> {
+    const normalized = searchNormalize(query);
+    if (!normalized) return [];
+    const pairs: Array<[string, string]> = [];
+    normalized.split(" ").forEach((token) => {
+      splitQueryToken(token).forEach((part) => {
+        const term = relativeMonthTerm(part, nowMs);
+        if (term) pairs.push([part, term]);
+      });
+    });
+    return pairs;
   }
 
   /* 「明日の締切」「今週の締切」も言う。相対月と同じ方針で、表に出す語（暦日）へ
@@ -4567,6 +4611,15 @@ const Recommender = (() => {
     queryTokens(query).forEach((raw) => {
       middleParts(raw).forEach((part) => {
         if (!hasWordChar(part)) return;
+        /* 相対月の語はここで暦月に解決する（第 251 回）。`expandRelativeMonths` は空白で
+         * 区切られた語しか見ておらず、助詞で割られた `来月の締切` の `来月` がそのまま
+         * 残って 0 行になっていた（実測: `来月` 343 行 / `来月の締切` 0 行）。
+         * 年の語・週の語・日の語がここで解決されているのと同じ場所にする。 */
+        const monthTerm = relativeMonthTerm(part, now);
+        if (monthTerm) {
+          units.push({ token: monthTerm, whole: [] });
+          return;
+        }
         units.push({ token: part, whole: middleWhole(raw) });
       });
     });
@@ -6857,6 +6910,7 @@ const Recommender = (() => {
     rankSearchTerms: rankSearchTerms,
     placeWithPrefectureJa: placeWithPrefectureJa,
     expandRelativeMonths: expandRelativeMonths,
+    relativeMonthPairs: relativeMonthPairs,
     kanaFold: kanaFold,
     queryTokenGroups: queryTokenGroups,
     queryTokens: queryTokens,
