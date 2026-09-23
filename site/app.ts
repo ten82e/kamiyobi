@@ -2539,6 +2539,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         toggleDetail(r, tr);
         return;
       }
+      /* 行の文字をドラッグして選んだ人（会議名・会場・公式ページの名前をコピーしたかった）
+       * にもドロワーが開いていた（2026-09-23 実測: リンクと一致評価の目印以外では必ず開く
+       * 書き方で、`getSelection` の参照はビルド成果物に 1 件も無かった）。選んだ物が
+       * ドロワーと背景に隠れて、コピーしたい文字が消える。選択しているときは開かない。
+       * 選択がこの行のなかにあるときだけ止める（他所に残った選択を理由に、いま押した行を
+       * 開かないのは別の不親切になる）。 */
+      const selection = typeof window.getSelection === "function" ? window.getSelection() : null;
+      if (selection && !selection.isCollapsed && String(selection.toString()).trim()) {
+        if (tr.contains(selection.anchorNode)) return;
+      }
       if (target?.tagName !== "A") {
         openDrawer(r);
       }

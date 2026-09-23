@@ -4774,8 +4774,13 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
     "  appendChild(n) { this.children.push(n); this.childNodes.push(n); return n; },",
     "  setAttribute(k, v) { this.attrs[k] = v; },",
     "  addEventListener() {}, querySelectorAll() { return []; },",
+    "  contains(n) { if (n === this) return true; return this.children.some((c) => c && c.contains && c.contains(n)); },",
     "  classList: { contains: () => false, toggle() {}, add() {}, remove() {} } });",
+    // tr.onclick は event.target を HTMLElement で絞るので、見立てにも同じ判定を通す。
+    "class FakeElement {}",
+    "const mkClick = (n) => ({ target: Object.assign(Object.create(FakeElement.prototype), n) });",
     "const document = { createElement: mkEl, createTextNode: (t) => ({ textContent: t }) };",
+    "globalThis.HTMLElement = FakeElement;",
     "const KIND_LABEL = { paper: '論文締切', abstract: '概要締切', journal: '常時受付' };",
     "const now = Date.UTC(2026, 7, 10);",
     "const fmtJst = () => 'JST';",
@@ -4787,11 +4792,13 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
     "const verificationTag = () => null;",
     "const verificationAlert = () => '';",
     "const toggleDetail = () => {};",
-    "const openDrawer = () => {};",
+    "const opened = [];",
+    "const openDrawer = (r) => { opened.push(r.conf.key); };",
     "const esc = (s) => String(s == null ? '' : s);",
     "const safeExternalUrl = (u) => u;",
     "const $ = () => null;",
-    "const window = {};",
+    "const window = { getSelection: () => selection };",
+    "let selection = { isCollapsed: true, toString: () => '', anchorNode: null };",
     jsFunction(app, "td"),
     jsFunction(app, "line"),
     // 定数も正本から写す（文言の正典をテスト側に二重化しない）。
@@ -4823,6 +4830,23 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
     "const known = makeRow(mk('Kyoto, Japan', '2026-11-12'));",
     // 上流の締切名に Extended と付いていた行（延長の事実はここにしか情報がない）。
     "const extended = makeRow(mk('Kyoto, Japan', '2026-11-12', 'Paper submission (Extended)'));",
+    // 行クリックと文字選択の relations（第 149 回: 選んだ離すでもドロワーが開いていた）。
+    "const selLog = [];",
+    "selection = { isCollapsed: true, toString: () => '', anchorNode: null };",
+    "known.onclick(mkClick(known));",
+    "selLog.push(opened.length);",
+    "const cellInside = known.children[0];",
+    "selection = { isCollapsed: false, toString: () => '研究会', anchorNode: cellInside };",
+    "known.onclick(mkClick(known));",
+    "selLog.push(opened.length);",
+    // 1 文字も含まないドラッグ（空いた場所をクリックしただけ）では開いてよい。
+    "selection = { isCollapsed: false, toString: () => '   ', anchorNode: cellInside };",
+    "known.onclick(mkClick(known));",
+    "selLog.push(opened.length);",
+    // 他所に残った選択を理由に、いま押した行を開かないのは別の不親切。
+    "selection = { isCollapsed: false, toString: () => '研究会', anchorNode: { marker: 'elsewhere' } };",
+    "known.onclick(mkClick(known));",
+    "selLog.push(opened.length);",
     "const findByClass = (n, cls, out = []) => {",
     "  if (n.className && String(n.className).split(' ').includes(cls)) out.push(n);",
     "  (n.children || []).forEach((c) => findByClass(c, cls, out));",
@@ -4833,6 +4857,7 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
     "  emptyCells: cells(empty), emptyTitles: titles(empty),",
     "  knownCells: cells(known), knownTitles: titles(known),",
     "  extendedCells: cells(extended), extendedWord: Recommender.extendedLabelJa(),",
+    "  selLog,",
     "  trigger: trig && { tag: trig.tagName, type: trig.type, attrs: trig.attrs, cls: trig.className },",
     "}));",
     "})().catch((e) => { console.error(e && e.stack || String(e)); process.exit(1); });",
@@ -4846,6 +4871,7 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
     knownTitles: string[];
     extendedCells: Record<string, string>;
     extendedWord: string;
+    selLog: number[];
     trigger: { tag: string; type: string; attrs: Record<string, string>; cls: string } | null;
   };
   // 空の値は「-」ではなく、確認できていないことを短い語で出す。
@@ -4873,6 +4899,9 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
    * "Extended" と付く行が画面では他の行と区別が無く、検索も英語でしか引けなかった）。
    * 語は recommender の正本から取り、てびきの語と揃える（テスト側に書き写さない）。 */
   expect(out.extendedWord).not.toBe("");
+  // 選択が無い行クリックは開く / 行内を選択した離すは開かない / 空のドラッグは開く /
+  // 他所の選択は邪魔しない。
+  expect(out.selLog, "文字選択とドロワーの開閉が噛み合っていない").toEqual([1, 1, 2, 3]);
   expect(out.extendedCells["会議"], "延長していた行に一覧で目印が出ていない").toContain(
     out.extendedWord,
   );
