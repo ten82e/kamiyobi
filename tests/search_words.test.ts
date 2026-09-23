@@ -93,3 +93,53 @@ it("「投稿締切」「論文提出」で引いた人が種別「論文締切�
   expect(both, "語のかけ算で 0 件になった").toBeGreaterThan(0);
   expect(both, "語のかけ算が絞れていない").toBeLessThan(paper);
 });
+
+it("「オンライン開催」「hybrid」で引いた人が参加形式「オンライン参加可」の行に出会える", () => {
+  /* 画面に出る参加形式の語は「オンライン参加可」だけなので、いちばん自然な言い方を打つ人が
+   * 0 行に当たっていた（2026-08-09 生成の実測: `オンライン開催` 0 行 / `ハイブリッド開催` 0 行 /
+   * `リモート` 0 行 / `遠隔` 0 行 / `ウェブ開催` 0 行、英語も `hybrid` 4 行・`online` 3 行で、
+   * 同じ意味の `オンライン参加可` は 24 行）。 */
+  const all = rows();
+  const matched = (query: string) => {
+    const matches = Recommender.searchMatcher(query);
+    return all.filter((row) => matches(String(row.hay)));
+  };
+  const online = matched("オンライン参加可");
+  expect(online.length, "参加形式の印が付いた行が無い（検査が空振り）").toBeGreaterThan(0);
+  for (const query of [
+    "オンライン開催",
+    "ハイブリッド開催",
+    "リモート",
+    "遠隔",
+    "ウェブ開催",
+    "web開催",
+    "hybrid",
+    "remote",
+    "online",
+  ]) {
+    const found = matched(query);
+    expect(found.length, `「${query}」で参加形式の行に出会えない`).toBeGreaterThanOrEqual(
+      online.length,
+    );
+    /* 印の付いた行は必ず含まれる（寄せた先を見ていることの確認）。 */
+    for (const row of online) {
+      expect(found.includes(row), `「${query}」で寄せ先の行が落ちた`).toBe(true);
+    }
+    expect(
+      Recommender.querySynonymNotes(query).join(""),
+      `「${query}」を寄せたことを出していない`,
+    ).toContain("参加形式「オンライン参加可」で探しています");
+  }
+  /* 寄せない語も検査にする – 逆の言い方（対面・in-person）は収録に語が無く、寄せると
+   * 逆の意味の行を出すことになる。`virtual` は会議名の "Virtual Reality" に当たるので
+   * 寄せない（実測: 寄せると 24 行のところ 34 行になり、余分は会議名の行だった）。 */
+  for (const query of ["対面", "in-person", "onsite", "現地参加", "virtual"]) {
+    expect(
+      Recommender.querySynonymNotes(query).join(""),
+      `「${query}」を寄せている（逆の意味や会議名を引く語）`,
+    ).toBe("");
+  }
+  /* 語のかけ算は絞ったまま効く。 */
+  const andQuery = matched("オンライン参加可 オンライン");
+  expect(andQuery.length, "語のかけ算で寄せ先の行が消えた").toBe(online.length);
+});
