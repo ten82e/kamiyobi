@@ -15434,3 +15434,34 @@ it("JavaScript が動かないとき、index.html が理由と読み替え先を
   expect(results, "一覧の目印が無い").toBeGreaterThan(-1);
   expect(html.indexOf("<noscript>"), "案内が表のうしろに回っている").toBeLessThan(results);
 });
+
+it("llms.txt の出力一覧が、ビルドが置いたファイルを一つも漏らさない（SPEC §7）", () => {
+  /* `llms.txt` は機械が読む索引なのに、2026-08-09 生成のビルドで実測すると「出力一覧」は
+   * 16 件中 10 件しか並べておらず、`recommendation-core.js`・`publish.js`・`icon.svg`・
+   * `.nojekyll` など公開物の 4 割が何かも分からないままだった（第 189 回に health.md で
+   * 見たのと同じ形）。名前はビルドの定数から生成しているので、**ビルド先に実在する物を
+   * 全部載せているか**をビルドした出力から確かめる（定数を書き写さない）。
+   * 載せたのに無いファイルは、その行が自分で「こういうビルドだけに出る」と説明していること。
+   * 黙って載せたまま 404 を教えないようにする。 */
+  const llms = readFileSync(join(site, "llms.txt"), "utf8");
+  const start = llms.indexOf("## 出力一覧");
+  expect(start, "出力一覧の節が無い").toBeGreaterThanOrEqual(0);
+  const rest = llms.slice(start);
+  const end = rest.slice(1).search(/^## /m);
+  const section = end < 0 ? rest : rest.slice(0, end + 1);
+  const entries = [...section.matchAll(/^- ([^：\r\n]+)：([^\r\n]*)/gm)];
+  expect(entries.length, "出力一覧が空である").toBeGreaterThan(0);
+  const named = entries.map((m) => m[1].trim());
+  expect(new Set(named).size, "同じファイルを二回載せている").toBe(named.length);
+  for (const [name, note] of entries.map((m) => [m[1].trim(), m[2].trim()] as const)) {
+    expect(note.length, `説明が空欄: ${name}`).toBeGreaterThan(4);
+    if (existsSync(join(site, name))) continue;
+    expect(
+      note.includes("出ない"),
+      `ビルド先に無い ${name} を載せているのに、どのビルドに出ないのかを書いていない`,
+    ).toBe(true);
+  }
+  for (const name of readdirSync(site)) {
+    expect(named.includes(name), `ビルドが置いた ${name} が出力一覧に無い`).toBe(true);
+  }
+});

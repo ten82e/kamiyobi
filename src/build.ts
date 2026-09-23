@@ -228,6 +228,52 @@ const CSV_COLUMN_NOTES_JA: Record<string, string> = {
   link: "会議の公式サイトの URL。",
 };
 
+/* `llms.txt` の「出力一覧」に置く説明。名前は `MANAGED_OUTPUT_FILES` から書き出し、
+ * 実装側に置くのは説明だけ（公開物を増やしたときに索引だけが古くなる状態を作らない）。
+ * 2026-08-09 生成のビルドで実測: 出力一覧は 16 件のうち 10 件しか並べておらず、
+ * `recommendation-core.js`・`publish.js`・`index.html`・`icon.svg`・`.nojekyll`・
+ * `llms.txt` 自身へのふれが公開物の一覧のどこにも無かった。 */
+const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
+  "index.html":
+    "画面そのもの。`app.js` をモジュールとして読み、`app.js` の側が `recommender.js`・" +
+    "`recommendation-core.js`・`publish.js` を import する（2026-08-09 生成ビルドの import 文で実測）。" +
+    "JavaScript が動かないときの案内と、`data.csv`・`upcoming.md` への導線を内側に持つ。" +
+    "人間の読み方はこのファイルではなく、画面の中の「見方のてびき」に書く。",
+  "data.json": "正規化データ全体（機械可読の正）。",
+  "health.json": "配信前ゲートにも使う確定/推定締切とソース状態の健全性レポート。",
+  "health.md":
+    "health.json の人間向け要約。載っていない公開物（`health.json` 自身・`health.md` 自身・" +
+    "`publish.json`）と完全なハッシュ一覧の所在を、表の直前に書いてある。",
+  "publish.json":
+    "最終公開セットのハッシュ、元 commit、入力 hash、build 条件と、意味検索用の埋め込みが公開物に" +
+    "含まれるかを示す semantic_status（ready / lexical-only）。自分自身のハッシュは持てない。",
+  "catalog.json": "締切画面向けの現在・近日期間カタログ。",
+  "recommendation-index.json": "投稿先推薦の会議プロフィールと埋め込み参照。",
+  "data.csv":
+    "1 行 1 締切のフラット表。列の意味は下の「data.csv の列」に書く。文字コードは BOM を付けない" +
+    " UTF-8（画面のダウンロードボタンが書く CSV は Excel を助けるため BOM 付きで、別物）。",
+  "upcoming.md": "直近の締切と会期の表。",
+  "llms.txt": "このファイル。機械が読む索引で、人間の操作説明は画面の中に書く。",
+  "icon.svg": "ブラウザのタブとブックマークに出すアイコン（SVG）。",
+  ".nojekyll":
+    "GitHub Pages に Jekyll での処理をさせないための目印。中身は 0 バイトの空ファイルで、" +
+    "データとは関係無い。",
+  "embeddings.json":
+    "意味検索用の埋め込み。埋め込みを有効にしたビルドだけに出る（`--no-embeddings` では出ない）。" +
+    "無いときの検索は語の一致だけで動く。",
+  "recommender.js":
+    "site/recommender.ts から生成する推薦実行時処理。検索・絞り込み・並び・CSV 書き出しの本体で、" +
+    "画面の `app.js` が呼ぶ。",
+  "recommendation-core.js":
+    "site/recommendation-core.ts から生成する共有の推薦軸。画面もビルド側も同じ軸を読む" +
+    "（`src/build.ts` が読み込んでいる）。",
+  "publish.js":
+    "site/publish.ts から生成する、公開物をつき合わせる部品。画面はここから `publish.json` と" +
+    "`recommendation-index.json` のハッシュ検証を読む。検証が通らないときは語の一致だけの推薦に" +
+    "落ちる（意味検索を黙って止めない）。",
+  "app.js": "site/app.ts から生成するブラウザ UI 実行時処理。",
+};
+
 const TEMPLATE_MARKER = "/*__DATA__*/null";
 
 /**
@@ -2945,18 +2991,20 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "2 行目に公式表記を添える。国際会議は AoE（UTC-12）や UTC 宣言のまま併記し、",
     "時刻を公式で確認できていない日付は「時刻未確認」として幅を持つ値として扱う。",
     "",
+    /* 「出力一覧」は名前の通り公開物全体の索引だが、10 件だけを並べて残りを黙っていた
+     * （2026-08-09 生成のビルドで実測: ビルドが置くファイルは 16 件、この表は 10 件で、
+     * `recommendation-core.js`・`publish.js`・`index.html`・`icon.svg`・`.nojekyll`・
+     * `llms.txt` 自身にはどこにもふれていなかった）。名前はビルドが管理する出力一覧
+     * `MANAGED_OUTPUT_FILES` から書き出す（書き写すと、公開物を増やしたときに索引だけ古くなる）。 */
     "## 出力一覧",
     "",
-    "- data.json：正規化データ全体（機械可読の正）。",
-    "- health.json：配信前ゲートにも使う確定/推定締切とソース状態の健全性レポート。",
-    "- publish.json：最終公開セットのハッシュ、元 commit、入力 hash、build 条件と、意味検索用の埋め込みが公開物に含まれるかを示す semantic_status（ready / lexical-only）。",
-    "- catalog.json：締切画面向けの現在・近日期間カタログ。",
-    "- recommendation-index.json：投稿先推薦の会議プロフィールと埋め込み参照。",
-    "- app.js：site/app.ts から生成するブラウザ UI 実行時処理。",
-    "- recommender.js：site/recommender.ts から生成する推薦実行時処理。",
-    "- health.md：health.json の人間向け要約。",
-    "- data.csv：1 行 1 締切のフラット表。",
-    `- upcoming.md：直近 ${String((safeConfig.site as Record<string, unknown> | null)?.upcoming_days ?? 180)} 日の締切と開催の表。`,
+    ...MANAGED_OUTPUT_FILES.map((name) =>
+      name === "upcoming.md"
+        ? `- ${name}：直近 ${String(
+            Number((safeConfig.site as Record<string, unknown> | null)?.upcoming_days ?? 180),
+          )} 日の締切と開催の表。`
+        : `- ${name}：${LLMS_OUTPUT_NOTES_JA[name] ?? ""}`,
+    ),
   ];
   lines.push(
     "",
