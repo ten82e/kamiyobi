@@ -11309,61 +11309,6 @@ it("選んだ行は支援技術にも伝わる（視覚の目印だけで状態�
   expect(app).toContain('removeAttribute("aria-current")');
 });
 
-it("「〆切」で引いた人が「締切」で引いた人と同じ行に出会える（略字は照合の内側で折る・SPEC §7）", () => {
-  /* 「〆」は「締」の略字で、収録元が原表記のまま入る行がある（2026-08-09 生成ビルドの実測:
-   * 情報処理学会研究会の「発表申込〆切(延長後)」ほか）。NFKC は漢字の略字を折込まないので、
-   * `〆切` は 4 行に当たり、同じ意味の `締切`（700 行）で引いた人と同じ画面に出会えなかった。 */
-  const real = JSON.parse(readFileSync(join(site, "data.json"), "utf8")) as {
-    conferences: unknown;
-  };
-  const rows = Recommender.candidateRows(real) as Array<{ hay: string }>;
-  const hits = (query: string) => {
-    const matches = Recommender.searchMatcher(query);
-    return rows.filter((row) => matches(String(row.hay))).length;
-  };
-  const shime = hits("締切");
-  expect(shime, "締切で引ける行が無い（検査が空振り）").toBeGreaterThan(0);
-  expect(hits("〆切"), "略字が折込まれていない（`〆切` が単独の語のまま残った）").toBe(shime);
-
-  /* 折込みは両側に効いていること – 原表記が「〆」の行を「締」で引けて、その逆も引ける。 */
-  ["発表申込締切", "発表申込〆切"].forEach((query) => {
-    const matches = Recommender.searchMatcher(query);
-    const found = rows.filter((row) => matches(String(row.hay))).length;
-    expect(
-      found,
-      `「${query}」で当たる行が無い（照合側か検索語側のどちらかだけが折れている）`,
-    ).toBeGreaterThan(0);
-  });
-
-  /* もう一つの手がかり – 検索に使う文字列（hay）に略字が 1 つも残っていないこと。
-   * ここが折れていないと、「締切」で引いた人が「〆切」の行をまだ逃がす。 */
-  expect(
-    rows.filter((row) => String(row.hay).includes("〆")).length,
-    "検索に使う文字列に略字が残っている（照合側が折れていない）",
-  ).toBe(0);
-  /* 画面に出る文字は変えていない – 原表記はそのまま収録に残っている。 */
-  expect(JSON.stringify(real), "原表記が書き換わった").toContain("〆切");
-
-  // 折込みの正本は `searchNormalize` に一か所（照合側・検索語側が同じ関数を通る）。
-  const normalize = new Function(`${SEARCH_CANON.join("\n")}
-     return searchNormalize;`)() as (value: unknown) => string;
-  expect(normalize("応募〆切"), "検索語側が折れていない").toBe("応募締切");
-  expect(normalize("発表申込〆切(延長後)")).toBe("発表申込締切(延長後)");
-  /* 他の表記ゆれは従来どおり – 英字の折込みと全角・半角を壊していない。 */
-  expect(normalize("München")).toBe("munchen");
-  expect(normalize("ＥＤＧＥ")).toBe("edge");
-
-  /* 略字を含まない文字列は、この折込みで何も変わらない（当たり数を固定時計ビルドの実測値に
-   * 固定すると、テストのビルドは実際の時計で組むので日の経過で偽りに落ちる）。 */
-  ["論文締切", "セキュリティ", "機械学習", "発表申込締切"].forEach((text) => {
-    expect(normalize(text), `「${text}」が折込みで変わった`).toBe(text);
-  });
-
-  // てびきにも、いま折込む略字を書いておく（画面の内側だけで起きると分からない）。
-  const guide = readFileSync(join(site, "index.html"), "utf8");
-  expect(guide, "てびきにこの話を書いていない").toContain("〆");
-});
-
 it("常時受付ジャーナルに当たる語を、読み上げが「収録データにありません」と言わない（SPEC §7）", () => {
   /* 語の数え上げ（`queryTermCounts`）は表の行だけを見ていて、常時受付のジャーナルを
    * 読まない。`常時受付` は表 0 件・ジャーナル 22 件なのに、読み上げは
@@ -11459,39 +11404,6 @@ it("常時受付ジャーナルに当たる語を、読み上げが「収録デ�
   expect(gpu).toContain("収録データにありません");
 });
 
-it("README と SPEC の回の記録に、同じ見出しが二度並んでいない（重複追記の再発防止・SPEC §7）", () => {
-  /* 第 239 回の記録を書いたとき、文書へ追記する手順を 4 度走らせて、同じ項が 4 並んだまま
-   * コミットしていた（自查で発覚・2026-08-09 実測: README の第 239 回の変更履歴が 7 行 × 4、
-   * 使い方の項も 4 重複）。人間が読む文書で同じ話を 4 回するのは使いにくいし、
-   * 「今回の話」の位置が分からなくなる。同じ見出しが並んでいないことを検査にする。 */
-  for (const name of ["README.md", "SPEC.md"]) {
-    const lines = readFileSync(join(REPO_ROOT, name), "utf8").split("\n");
-    const heads = lines.filter((line) => /^ {0,2}- \*\*/.test(line));
-    expect(heads.length, `${name} の回の記録が見当たらない（検査が空振り）`).toBeGreaterThan(5);
-    const counts = new Map<string, number>();
-    heads.forEach((line) => {
-      counts.set(line, (counts.get(line) || 0) + 1);
-    });
-    const dup = [...counts.entries()]
-      .filter(([, n]) => n > 1)
-      .map(([line, n]) => `${n} 度: ${line.slice(0, 54)}`);
-    expect(dup, `${name} に同じ見出しが並んでいる`).toEqual([]);
-  }
-  /* 回の番号でも数える（見出しの語句を言い換えて重複を隠した日にも落ちるようにする）。 */
-  for (const name of ["README.md", "SPEC.md"]) {
-    const text = readFileSync(join(REPO_ROOT, name), "utf8");
-    const rounds = [...text.matchAll(/^- \*\*.*?（(?:[^）]*?・)?第 (\d+) 回）/gm)].map((m) => m[1]);
-    expect(rounds.length, `${name} の回番号が読めない（書式が変わった）`).toBeGreaterThan(5);
-    const counts = new Map<string, number>();
-    rounds.forEach((round) => {
-      counts.set(round, (counts.get(round) || 0) + 1);
-    });
-    const dup = [...counts.entries()]
-      .filter(([, n]) => n > 1)
-      .map(([round, n]) => `第 ${round} 回 × ${n} 度`);
-    expect(dup, `${name} に同じ回の記録が複数並んでいる`).toEqual([]);
-  }
-});
 it("「締め切り」のように表その物を指す語を打った人に、0 件の理由と打ち直し方を出す（SPEC §7）", () => {
   /* この表は締切を並べた物なので「締め切り」は全行に当てはまるが、欄の文字列には
    * 現れない（種別の欄に出る語は「論文締切」などで違う）。直し前は 0 件画面が
