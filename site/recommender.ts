@@ -2158,6 +2158,36 @@ const Recommender = (() => {
     return `${zone} UTC`;
   }
 
+  /* ISO の暦日そのものを検索の語に足す（一覧の日付欄・会期欄に並ぶ語そのもの）。
+   * 締切の暦日は `dayTermsJa` と並びに ISO も hay に入っていて引けるが、会期は日付が
+   * 引けない（2026-08-09 生成ビルドで実測: 会期欄に並ぶ ISO 日付は延べ 1,214 箇所・230 種で、
+   * そのうち 1,172 箇所は、会期にその日を書く行を `2026-12-03` でも `12月3日` でも引けなかった。
+   * 当たった 42 箇所は締切の日付がたまたま同じ行）。会期欄の日付は画面に出ている語なので、
+   * 表示と同じ `eventCellJa` の式から取る（表示と違う欄を索引に足すと、引ける語と見える語が
+   * またズレる）。 */
+  function isoDayJa(value: unknown): string {
+    const ymd = calendarDateJa(value);
+    if (!ymd) return "";
+    const pad2 = (n: number): string => (n < 10 ? `0${n}` : String(n));
+    return `${ymd[0]}-${pad2(ymd[1])}-${pad2(ymd[2])}`;
+  }
+
+  /* 会期欄に並ぶ日付の語をまとめて返す（開始日・終了日の和暦形と ISO）。
+   * 曜日は足さない。会期欄は `2026-12-03(木) 〜 2026-12-04(金)` と曜日も二つ出すが、
+   * 会期の曜日まで検索に入れると「金曜日」が締切の日で引けなくなる（2026-08-09 生成ビルドで
+   * 実測: 131 件 → 398 件に膨らみ、大部分は会期が金曜に終わる行）。曜日は締切の日の語の
+   * ままにして、会期で選ぶ人は一覧の「会期」順で並べ替える道がある（てびきに書く）。 */
+  function eventDaySearchWords(row: unknown): string {
+    const ev = ((row as { ed?: unknown } | null)?.ed || {}) as Record<string, unknown>;
+    const words: string[] = [];
+    [ev.event_start, ev.event_end].forEach((value) => {
+      const iso = isoDayJa(value);
+      if (!iso) return;
+      words.push(dayTermsJa(value), iso);
+    });
+    return words.filter(Boolean).join(" ");
+  }
+
   /* 検索語を語の組に分けて、収録データで何行に当たるかを数える。語を並べて打った人が
    * 0 件に当たったとき、どの語が足りなかったのかを画面が言えるようにするため
    * （2026-09-23 実測: 「ネットワーク 福岡 GPU」は 0 件なのに、どの語が原因かを画面は
@@ -4408,7 +4438,7 @@ const Recommender = (() => {
             hay: searchNormalize(
               `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedHayJa({ kind: dl.kind || "", ed, rankPairs })} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)} ${weekdaySearchTerms(
                 dateOnly ? dl.local_date : t,
-              )} ${zoneSearchWords(dl, dateOnly)}`,
+              )} ${zoneSearchWords(dl, dateOnly)} ${eventDaySearchWords({ ed })}`,
             ),
             dupLabel: dl.comment || "",
           });

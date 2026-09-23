@@ -16211,3 +16211,57 @@ it("印刷の但し書きは「公式表記」列の実物を説明している�
     "締切名は別列（種別）に出しているのに、但し書きが公式表記の列の呼び方だと刷っている",
   ).not.toContain("呼び方");
 });
+
+it("一覧の会期欄に出る日付をそのまま打つと、その行に出会う（SPEC §7）", async () => {
+  /* 会期欄は `2026-12-03(木) 〜 2026-12-04(金)` と ISO 日付を出しているのに、その語を
+   * 打つと会期がその日の行が 1 行も出なかった（2026-08-09 生成ビルドで実測: 会期欄の
+   * ISO 日付は延べ 1,214 箇所・230 種、うち 1,172 箇所は表示している行自身が引けず、
+   * 「12月3日」で残った 4 件は締切がたまたま同じ日の行だった）。画面に出ている語が
+   * 引けない状態なので、表示と同じ `eventCellJa` の式から日付を数える。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const catalog = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+    typeof R.candidateRows
+  >[0];
+  const rows = R.candidateRows(catalog);
+  const だめ: string[] = [];
+  let 箇所 = 0;
+  let 会期でしか当たらない = 0;
+  rows.forEach((r) => {
+    const hay = String(r.hay);
+    const shown = new Date(r.tShown + 9 * 3_600_000);
+    [...R.eventCellJa(r).matchAll(/(20\d{2})-(\d{2})-(\d{2})/g)].forEach((m) => {
+      箇所 += 1;
+      const iso = m[0];
+      const wa = `${Number(m[2])}月${Number(m[3])}日`;
+      const 和暦年 = `${m[1]}年${Number(m[2])}月${Number(m[3])}日`;
+      const hit = (q: string) => R.searchMatcher(q, NOW.getTime())(hay);
+      if (!(hit(iso) && hit(wa) && hit(和暦年))) {
+        だめ.push(`${iso}（${String(r.conf.title).slice(0, 18)}）`);
+      }
+      const 締切が同じ日 =
+        shown.getUTCFullYear() === Number(m[1]) &&
+        shown.getUTCMonth() + 1 === Number(m[2]) &&
+        shown.getUTCDate() === Number(m[3]);
+      if (!締切が同じ日 && hit(iso)) 会期でしか当たらない += 1;
+    });
+  });
+  expect(箇所, "会期欄の日付が読めていない（検査が空振り）").toBeGreaterThanOrEqual(400);
+  expect(だめ.slice(0, 3).join(" / "), `会期欄の日付が引けない箇所が ${だめ.length} 箇所有る`).toBe(
+    "",
+  );
+  expect(
+    会期でしか当たらない,
+    "会期の日付でしか当たらない行が無い（実装が締切の日付を足し直しているだけ）",
+  ).toBeGreaterThanOrEqual(20);
+  // 曜日は締切の日の語のままにする（会期終了日の曜日を検索語に足すと「金曜日」が
+  // 131 件 → 398 件に膨らみ、締切の日で選ぶ人が使えなくなる – 第 209 回で却下した）。
+  const 金曜の締切 = rows.filter(
+    (r) => new Date(r.tShown + 9 * 3_600_000).getUTCDay() === 5,
+  ).length;
+  const 金曜で当たった = rows.filter(
+    (r) => R.searchMatcher("金曜日", NOW.getTime())(String(r.hay)) === true,
+  ).length;
+  expect(金曜の締切, "金曜の締切行が無く、この検査が空振りしている").toBeGreaterThan(0);
+  expect(金曜で当たった, "会期の日曜日が「金曜日」の検索に混ざった").toBe(金曜の締切);
+});
