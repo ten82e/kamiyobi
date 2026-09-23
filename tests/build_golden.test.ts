@@ -13153,3 +13153,90 @@ it("行の詳細の公式確認は内部表記のまま見せない（SPEC §7�
   // 機械の判定名しか無い行は、それが読み取り箇所だと分かる言い方にする。
   expect(got.onlySelector).toContain("公式ページ内の表の締切欄");
 });
+
+it("行の詳細の公式確認の日時は利用者の端末の時刻合わせに左右されない（SPEC §7）", () => {
+  /* 表の日時は `fmtJst` が +09:00 固定で計算し、ヘッダーにも「日時は JST で出しています」と
+   * 書いてある。行の詳細の公式確認の欄だけが `toLocaleString("ja-JP")` を使っていて、
+   * これは利用者の端末の時刻合わせで変わる（2026-08-09 実測: `2026-08-01T18:30:00Z` が
+   * TZ=UTC で `2026/8/1 18:30:00`、TZ=Asia/Tokyo で `2026/8/2 3:30:00`、
+   * TZ=America/Los_Angeles で `2026/8/1 11:30:00`。次回確認予定は
+   * `2026/8/9 21:00` と `2026/8/10 6:00` に分かれ、日付その物がずれた）。
+   * 出張先で端末を現地に合わせる人は珍しくなく、そのとき同じ行の表と詳細が違う日時を
+   * 書く。`toLocaleString` は数の区切りでも既に避けることにしてある（`countJa` の comment）。 */
+  const app = siteRuntime("app.js");
+  const script = [
+    "const esc = (x) => String(x);",
+    // `fmtJst` は `pad` と `WEEKDAY_JA` を使うので、もろもろビルド成果から取る。
+    /const WEEKDAY_JA = \[[^\]]*\]/.exec(app)?.[0] ?? "",
+    `const pad = (${jsFunction(app, "pad")});`,
+    `const fmtJst = (${jsFunction(app, "fmtJst")});`,
+    `const verificationSummary = (${jsFunction(app, "verificationSummary")});`,
+    "const fs = await import('node:fs');",
+    `const data = JSON.parse(fs.readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    // 1) 表示の語: JST のラベルを付けて、一覧と同じ形（`2026-08-02(日) 03:30 JST`）で出す。
+    "const probe = verificationSummary({",
+    "  verification: {",
+    "    last_verified_at: '2026-08-01T18:30:00Z',",
+    "    next_check_at: '2026-08-09T21:00:00Z',",
+    "    source_class: 'official-cfp',",
+    "    status: 'verified',",
+    "  },",
+    "  evidence: [],",
+    "});",
+    "const shown = (label) => (probe.match(new RegExp('<b>' + label + '</b> ([^<]*)')) || [, ''])[1];",
+    // 2) 収録の全タイムスタンプで `fmtJst` と同じ結果になること（書き写しのズレを見る）。
+    "const stamps = [];",
+    "let compared = 0; let agreed = 0;",
+    "for (const c of data.conferences)",
+    "  for (const ed of c.editions || [])",
+    "    for (const dl of ed.deadlines || []) {",
+    "      const v = dl.verification; if (!v) continue;",
+    "      for (const key of ['last_verified_at', 'next_check_at']) {",
+    "        const raw = v[key]; if (typeof raw !== 'string' || !raw) continue;",
+    "        compared += 1;",
+    "        const out = verificationSummary({ verification: v, evidence: [] });",
+    "        const want = fmtJst(new Date(raw));",
+    "        if (out.includes(want)) agreed += 1;",
+    "        else if (stamps.length < 3) stamps.push({ key, raw, want });",
+    "      }",
+    "    }",
+    "console.log(JSON.stringify({",
+    "  tz: process.env.TZ || '', 確認: shown('公式確認'), 次回: shown('次回確認予定'),",
+    "  compared, agreed, stamps,",
+    "}));",
+  ].join("\n");
+  const run = (tz: string) =>
+    spawnSync("node", ["--input-type=module", "-e", vmSafeSource(script)], {
+      encoding: "utf8",
+      timeout: 120_000,
+      env: { ...process.env, TZ: tz },
+    });
+  const zones = ["UTC", "Asia/Tokyo", "America/Los_Angeles"];
+  const results = zones.map((tz) => {
+    const proc = run(tz);
+    expect(proc.status, `${tz}: ${proc.stderr}`).toBe(0);
+    return JSON.parse(proc.stdout) as {
+      tz: string;
+      確認: string;
+      次回: string;
+      compared: number;
+      agreed: number;
+      stamps: unknown[];
+    };
+  });
+  // 端末の時刻合わせが変わっても、出る日時が変わらない。
+  const first = results[0];
+  for (const [i, got] of results.entries()) {
+    expect(got.確認, `${zones[i]} で公式確認の日時が変わった`).toBe(first.確認);
+    expect(got.次回, `${zones[i]} で次回確認予定の日時が変わった`).toBe(first.次回);
+  }
+  // 一覧と同じ形（`-` 区切りの日付・曜日・時刻・JST の語）。
+  expect(first.確認, "JST を名乗らない、または一覧と違う形の日時になっている").toMatch(
+    /^\d{4}-\d{2}-\d{2}\([日月火水木金土]\) \d{2}:\d{2} JST$/,
+  );
+  // 収録の実データで一覧の計算式と一致する（内側の書き写しがズレていない）。
+  expect(first.compared, "検査できるタイムスタンプが無かった").toBeGreaterThan(0);
+  expect(first.agreed, `fmtJst と違う日時を出している: ${JSON.stringify(first.stamps)}`).toBe(
+    first.compared,
+  );
+});

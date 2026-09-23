@@ -2870,6 +2870,31 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       "parser-failed": "複数候補のため要確認",
       "manual-required": "複数候補のため要確認",
     };
+    /* 日時はこの画面の他の場所と同じ JST で出す。表のヘッダーは「日時は JST で出しています」
+     * と書いてあり、一覧の日時は `fmtJst` が +09:00 固定で計算している。一方ここは
+     * `toLocaleString("ja-JP")` だった – これは**利用者の端末の時刻合わせ**で変わる
+     * （2026-08-09 実測: `2026-08-01T18:30:00Z` が TZ=UTC では `2026/8/1 18:30:00`、
+     * TZ=Asia/Tokyo では `2026/8/2 3:30:00`、TZ=America/Los_Angeles では
+     * `2026/8/1 11:30:00` になり、次回確認予定は日付その物が一日ずれる
+     * `2026/8/9 21:00` と `2026/8/10 6:00` の差になった）。会議への出張先で端末の時計を
+     * 現地に合わせる人は珍しくなく、そのとき行の表と行の詳細が同じ会議について違う
+     * 日時を書くことになる。`toLocaleString` は区切りの実装差でも既に避けることにして
+     * ある（上の `countJa` の comment と同じ理由）。
+     * 下の計算は `fmtJst` と同じ式をこの関数の内側に置いたもの – 検査がこの関数だけを
+     * `new Function` で抜き出して実行できる形を保つため（語彙表と同じ理由で、第 159 回で
+     * 実際に検査が切れた）。上の検査が `fmtJst` との結果の一致を見ている。 */
+    const jstStamp = (value: string): string => {
+      const d = new Date(value);
+      if (!Number.isFinite(d.getTime())) return `読み取り不能（原文: ${value}）`;
+      const jst = new Date(d.getTime() + 9 * 3600000);
+      const p = (n: number): string => String(n).padStart(2, "0");
+      const weekday = ["日", "月", "火", "水", "木", "金", "土"][jst.getUTCDay()];
+      // `fmtJst` と同じ並び（`2026-08-02(日) 03:30 JST`）を、内側で組み立てる。
+      return `${jst.getUTCFullYear()}-${p(jst.getUTCMonth() + 1)}-${p(jst.getUTCDate())}(${weekday}) ${p(
+        jst.getUTCHours(),
+      )}:${p(jst.getUTCMinutes())} JST`;
+    };
+
     const evidence = (dl.evidence ?? []).find(
       (item) => item.verifiedFields ?? item.verified_fields,
     );
@@ -2879,7 +2904,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       verification.selector_or_field,
     );
     const verifiedAt = verification.last_verified_at
-      ? new Date(verification.last_verified_at).toLocaleString("ja-JP")
+      ? jstStamp(verification.last_verified_at)
       : "未確認";
     return (
       '<div class="verification-summary"><b>公式確認</b> ' +
@@ -2895,8 +2920,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       "<br><b>状態</b> " +
       esc(statusLabels[verification.status || ""] || verification.status || "未確認") +
       (verification.next_check_at
-        ? "<br><b>次回確認予定</b> " +
-          esc(new Date(verification.next_check_at).toLocaleString("ja-JP"))
+        ? `<br><b>次回確認予定</b> ${esc(jstStamp(verification.next_check_at))}`
         : "") +
       "</div>"
     );
