@@ -692,6 +692,45 @@ const Recommender = (() => {
       .filter((paper) => Boolean(paper.title));
   }
 
+  /* 投稿先を探す画面の貼り付け欄は、説明が日本語（「タイトルと概要を下の欄に貼り付けて
+   * ください」）なので、項目名も日本語で書いた物が来る。以前は英語の項目名しか見ておらず、
+   * 「タイトル:」「概要:」と書かれた 1 論文が各行に分裂して、ラベルごと title に入る
+   * 壊れた候補が並んでいた（2026-08-09 実測: 英語ラベルは 1 論文に読めるのに、日本語ラベル
+   * の同じ内容は 4 論文に化け、それぞれ title="タイトル: …" のようになった）。
+   * 表記の揺れ（全角コロン・「keyword」と「keywords」）も吸収する。 */
+  const PAPER_FIELD_ALIASES_JA: Record<string, string> = {
+    タイトル: "title",
+    表題: "title",
+    標題: "title",
+    題目: "title",
+    論文名: "title",
+    概要: "abstract",
+    抄録: "abstract",
+    要旨: "abstract",
+    アブストラクト: "abstract",
+    キーワード: "keywords",
+    検索語: "keywords",
+    掲載先: "venue",
+    投稿先: "venue",
+    掲載学会: "venue",
+    ベニュー: "venue",
+    会議名: "venue",
+  };
+  const PAPER_FIELD_ESCAPED = Object.keys(PAPER_FIELD_ALIASES_JA).map((label) =>
+    label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+  );
+  const PAPER_FIELD_RE_JA = new RegExp(
+    `^[\\s　]*(title|abstract|keywords?|venue|${PAPER_FIELD_ESCAPED.join("|")})[\\s　]*[:：][\\s　]*(.*)$`,
+    "i",
+  );
+  function paperFieldKeyJa(label: string): string {
+    const lower = label.toLowerCase();
+    if (lower === "keyword") return "keywords";
+    if (PAPER_FIELD_ALIASES_JA[label]) return PAPER_FIELD_ALIASES_JA[label];
+    if (["title", "abstract", "keywords", "venue"].indexOf(lower) >= 0) return lower;
+    return "";
+  }
+
   function parseStructuredPapers(text: unknown): PaperRecord[] | null {
     const raw = String(text).trim();
     if (!raw) return [];
@@ -707,13 +746,16 @@ const Recommender = (() => {
         return null;
       }
     }
-    if (!/^\s*title\s*:/im.test(raw)) return null;
+    // タイトルラベルが 1 つも無ければ構造化入力ではないとみなす（表形式の生テキストを
+    // 壊さないため。英語・日本語のどちらのタイトル表記でも通す）。
+    if (!/^[\s　]*(title|タイトル|表題|標題|題目|論文名)[\s　]*[:：]/im.test(raw)) return null;
     const fields: Record<string, string> = { title: "", abstract: "", keywords: "", venue: "" };
     let current = "";
     raw.split(/\r?\n/).forEach((line) => {
-      const match = /^\s*(title|abstract|keywords?|venue)\s*:\s*(.*)$/i.exec(line);
+      const match = PAPER_FIELD_RE_JA.exec(line);
       if (match) {
-        current = match[1].toLowerCase().replace(/^keyword$/, "keywords");
+        current = paperFieldKeyJa(match[1]);
+        if (!current) return;
         fields[current] = match[2].trim();
       } else if (current && line.trim()) {
         fields[current] += (fields[current] ? "\n" : "") + line.trim();

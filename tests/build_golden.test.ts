@@ -11923,8 +11923,15 @@ it("内訳の項目に、足して読むように見える数字を出さない�
   const out = JSON.parse(proc.stdout) as { checked: number; differs: number; shown: number };
   expect(out.shown, "推薦の行が出ず、検査が空振り").toBeGreaterThan(5);
   expect(out.checked, "内訳の項目がある行が出ず、検査が空振り").toBeGreaterThan(5);
-  expect(out.differs, "内訳の合計とスコアが一致するなら、この検査の前提が変わった").toBe(
-    out.checked,
+  // 内訳の重みの合計は、スコアと**ほとんどの行で一致しない**（足してスコアになるのでは
+  // ない）。ここで「全行で一致しない」を主張するのは強すぎる。スコアはこれらの信号から
+  // 計算されるので、低い点の行では重みの合計がたまたまスコアと同じ値になることがある
+  // （2026-08-09 実測: 入力論文を日本語ラベルで書くと 1 論文として読めるようになり（第 168
+  // 回）、推薦される行の組みが変わって 30 点の行が 1 件一致した）。利用者への実際の約束は
+  // 上の変側（`+<数>` を作らない・てびきの「スコア（点）はこの内訳を足した値ではありません」）
+  // が持っていて、ここは「合計＝スコアと読むのがほとんどの行で噓になる」の実測として残す。
+  expect(out.differs, "内訳の合計がスコアと一致する行が過半（前提が変わった）").toBeGreaterThan(
+    Math.floor(out.checked / 2),
   );
 });
 
@@ -13730,4 +13737,81 @@ it("CSV の種別列は画面と同じ日本語の語で、英字の内部表記
   expect(out.mismatch, "種別列が画面と同じ語になっていない行がある").toBe(0);
   // 空振り防止: 3 件の表では訳せなかった種別の行が実データに有ること。
   expect(out.wasAscii, "種別列の英字化を踏む行が無い（検査が空振り）").toBeGreaterThan(0);
+});
+
+it("論文の貼り付けは日本語の項目名でも 1 論文として読める（SPEC §7）", () => {
+  /* 投稿先を探す画面は日本語で「タイトルと概要を…貼り付けてください」と言い、参考論文欄も
+   * 日本語ラベル（タイトル | キーワード | 掲載先）を載せているのに、構造化パーサは英語の
+   * 項目名（title:/abstract:）しか見ていなかった。そのため「タイトル:」「概要:」で書いた
+   * 1 論文が各行に分裂し、ラベルごと title に入る壊れた候補が並んだ（2026-08-09 実測:
+   * 英語ラベルの同じ内容は 1 論文に読めるのに、日本語ラベルだと 4 論文に化け、それぞれ
+   * title="タイトル: …" のようになった）。参考論文欄（可視）と .txt アップロードは
+   * parsePaperLines を通るので、到達経路は有る。全角コロンも吸う。ラベル表を増やさず、
+   * 項目名の別名として日本語を受ける。 */
+  const script = [
+    "(async () => {",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    "const P = (t) => Recommender.parsePaperLines(t);",
+    // 日本語ラベル（半角コロン）: 1 論文として全項目が分かれること。
+    "const ja = P(['タイトル: Attention Is All You Need',",
+    "  '概要: We propose the Transformer.',",
+    "  'キーワード: transformer, attention',",
+    "  '掲載先: NeurIPS'].join('\\n'));",
+    // 全角コロン + 抄録/検索語の別名。
+    "const jaWide = P('タイトル：深層学習\\n抄録：データ並列の最適化\\n検索語：ml').length;",
+    // 英語ラベルは従来どおり 1 論文。
+    "const en = P(['Title: X', 'Abstract: Y', 'Keywords: z'].join('\\n'));",
+    // 従来動作の維持: 参考論文欄のパイプ書式（タイトル | キーワード | 掲載先）。
+    "const pipe = P('SC 2026 | hpc, storage | SC');",
+    // 従来動作の維持: ラベル無しの 1 行はそのまま 1 論文（title=その行）。
+    "const bare = P('分散学習の高速化');",
+    // タイトル行が 1 つも無い貼り付けは構造化入力とみなさない（各行に落ちる＝ゲートの維持）。
+    "const noTitle = P('概要: 本文のみ\\nキーワード: x').length;",
+    "console.log(JSON.stringify({",
+    "  jaCount: ja.length,",
+    "  jaTitle: ja[0] && ja[0].title,",
+    "  jaAbs: ja[0] && ja[0].abstract,",
+    "  jaKw: ja[0] && ja[0].keywords,",
+    "  jaVenue: ja[0] && ja[0].venue,",
+    "  jaWide, enCount: en.length, enTitle: en[0] && en[0].title,",
+    "  pipeVenue: pipe[0] && pipe[0].venue, pipeCount: pipe.length,",
+    "  bareCount: bare.length, bareTitle: bare[0] && bare[0].title,",
+    "  noTitle,",
+    "}));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    jaCount: number;
+    jaTitle: string;
+    jaAbs: string;
+    jaKw: string;
+    jaVenue: string;
+    jaWide: number;
+    enCount: number;
+    enTitle: string;
+    pipeVenue: string;
+    pipeCount: number;
+    bareCount: number;
+    bareTitle: string;
+    noTitle: number;
+  };
+  // 日本語ラベルでも 1 論文にまとまり、ラベルが title に混ざらない。
+  expect(out.jaCount, "日本語ラベルの 1 論文が各行に分裂している").toBe(1);
+  expect(out.jaTitle).toBe("Attention Is All You Need");
+  expect(out.jaAbs).toContain("Transformer");
+  expect(out.jaKw).toContain("transformer");
+  expect(out.jaVenue).toBe("NeurIPS");
+  expect(out.jaWide, "全角コロンや抄録/検索語の別名が効かない").toBe(1);
+  // 英語ラベルは維持。
+  expect(out.enCount).toBe(1);
+  expect(out.enTitle).toBe("X");
+  // 参考論文欄のパイプ書式と、ラベル無し 1 行の従来動作を壊していない。
+  expect(out.pipeCount, "パイプ書式の参考論文が壊れた").toBe(1);
+  expect(out.pipeVenue).toBe("SC");
+  expect(out.bareCount).toBe(1);
+  expect(out.bareTitle).toBe("分散学習の高速化");
+  // タイトル行の無い貼り付けは構造化しない（ゲートを緩めすぎていない）。
+  expect(out.noTitle, "タイトル行の無い入力を 1 論文に潰してしまった").toBeGreaterThan(1);
 });
