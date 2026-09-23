@@ -12645,3 +12645,73 @@ it("公式ページの URL を検索欄に貼るとその会議が見つかる�
   const html = readFileSync(join(site, "index.html"), "utf8");
   expect(html).toContain("URL をそのまま貼っても引けます");
 });
+
+it("URL で引いて 0 件のときは「語が無い」とは言わず収録の範囲を言う（SPEC §7）", () => {
+  /* 第 153 回で URL 検索を通したので、URL を貼って 0 件になるのは「その会議が収録に無い」という
+   * 意味になった。ところが 0 件案内は従来「語「〜」は収録データにありません」の形で、打った
+   * 文字列を語として扱う案内をしていた（2026-09-23 実測: URL を貼った場合もこの文が出ていた）。
+   * 収録の範囲（何を収めていて何が無いのか）が伝わらず、検索の仕方が悪いと誤解される。 */
+  const app = siteRuntime("app.js");
+  const rec = readFileSync(join(site, "recommender.js"), "utf8");
+  const script = [
+    "const countJa = (n) => String(n);",
+    "const looksLikeUrlQuery = (" + jsFunction(rec, "looksLikeUrlQuery") + ");",
+    "const urlLikeQueryTerms = (" + jsFunction(rec, "urlLikeQueryTerms") + ");",
+    "const hostFromUrl = (" + jsFunction(rec, "hostFromUrl") + ");",
+    "const hostLabels = (" + jsFunction(rec, "hostLabels") + ");",
+    "const note = (" + jsFunction(app, "zeroResultLiveNote") + ");",
+    // URL の形とそれ以外（日付・会議名・語の羅列）を混同しないこと。
+    "const yes = ['https://www.example-university.edu/symposium-2027/cfp', 'example.ac.jp/workshop27', 'easychair.org/cfp/x'];",
+    "const no = ['機械学習', 'ICDE 2026', '3/5', '研究会', ''];",
+    "const mk = (q, term) => ({",
+    "  hiddenKindWords: [],",
+    "  termCounts: [{ term, count: 0 }],",
+    "  urlQuery: looksLikeUrlQuery(q),",
+    "  queryMatch: { catalog: 0, journal: 0 },",
+    "  catalogConferences: 1880,",
+    "  clearable: false,",
+    "  pastShown: false,",
+    "  hidden: { past: 10 },",
+    "});",
+    "console.log(JSON.stringify({",
+    "  yes: yes.map((q) => [q, looksLikeUrlQuery(q)]),",
+    "  no: no.map((q) => [q, looksLikeUrlQuery(q)]),",
+    "  urlNote: note(mk('example.ac.jp/workshop27', 'example-university')),",
+    "  wordNote: note(mk('機械学習', '機械学習')),",
+    // データその物が無いときは、URL でもやはりそれを先に言う。
+    "  emptyData: note({ ...mk('example.ac.jp'), catalogConferences: 0 }),",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout) as {
+    yes: Array<[string, boolean]>;
+    no: Array<[string, boolean]>;
+    urlNote: string;
+    wordNote: string;
+    emptyData: string;
+  };
+  for (const [q, flag] of got.yes) expect(flag, `URL の形を URL と見分けていない: ${q}`).toBe(true);
+  for (const [q, flag] of got.no)
+    expect(flag, `URL ではない語を URL 扱いしている: ${q}`).toBe(false);
+  expect(got.urlNote).toContain("URL の会議は収録に見当たりません");
+  // 打った文字列を「語」と呼ばない（長文の URL を「語」と出してもしゃべらない）。
+  expect(got.urlNote, "URL を語として扱う案内のまま").not.toContain("語「");
+  // 収録の中心と、次に何を打つかも書く（0 件で操作をやめないようにする）。
+  expect(got.urlNote).toContain("ランク付けの一覧");
+  expect(got.urlNote).toContain("国内研究会");
+  expect(got.urlNote).toContain("会議名");
+  // 「下に外せる条件も書いてあります」の言いぶりは他の 0 件案内と同じ（検査で語を固定している）。
+  expect(got.urlNote).toContain("下に外せる条件も書いてあります");
+  // URL 以外の従来の文は変わっていない。
+  expect(got.wordNote).toContain("語「機械学習」は収録データにありません");
+  expect(got.emptyData).toBe(" ｜ 締切のデータが入っていません");
+  // 組み込み: 検索語から判定を渡している（渡していないとこの枝は死んだまま）。
+  expect(app).toContain("urlQuery: Recommender.looksLikeUrlQuery(searchQuery)");
+  // てびきにも収録の範囲を書く（画面だけが増えて、案内が古いままにならないようにする）。
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  expect(html).toContain("URL で引いて出てこないときは、その会議は収録していません");
+});

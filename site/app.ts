@@ -1797,6 +1797,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function zeroResultLiveNote(filter: {
     hiddenKindWords: string[];
     termCounts: Array<{ term: string; count: number }>;
+    // 検索語が公式ページの URL の形か（URL で引いた人は「語が無い」話では済まない）。
+    urlQuery: boolean;
     queryMatch: { catalog: number; journal: number };
     catalogConferences: number;
     // 下に並ぶ「外せる条件」が 1 つ以上あるか（0 件案内と数え上げを同じにする）。
@@ -1820,6 +1822,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // いずれも噓になる）。2026-09-23 の収録では踏めない（今後より後の締切が多数ある）
     // ので、収録が古くなった日に効く形の防御である。
     if (!loosenable) return " ｜ 収録にいま以降の締切が残っていません。データ更新をお待ちください";
+    /* URL を貼った人（メーリングリストの CFP リンクで収録確認をしている – 第 153 回）には、
+     * 打った文字列を「語が無い」と言っても収録の範囲が伝わらない。何を引いたのかを名指しして、
+     * 収録の中心を言う。会議名でも引けるので、その案内も添える。 */
+    if (filter.urlQuery)
+      return (
+        " ｜ 検索語の URL の会議は収録に見当たりません。収録の中心はランク付けの一覧に載る会議と" +
+        "国内研究会です。公式ページのアドレスではなく会議名（「ICDE」など）でも試してください" +
+        pointer
+      );
     const dead = filter.termCounts.filter((t) => t.count === 0).map((t) => t.term);
     if (dead.length) return ` ｜ 語「${dead[0]}」は収録データにありません${pointer}`;
     if (filter.hiddenKindWords.length)
@@ -3454,6 +3465,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             // 0 件の案内が、件数欄と同じ数字を項目ごとに添えられるようにする。
             hidden: hiddenDeadlineCounts(),
             hiddenKindWords: hiddenKindQueryWords(searchQuery),
+            urlQuery: Recommender.looksLikeUrlQuery(searchQuery),
             queryMatch: queryMatchCounts(searchQuery),
             termCounts: queryTermNotes(searchQuery),
             // データその物が無い場合と、絞り込みで 0 件の場合を区別する材料。

@@ -3158,6 +3158,13 @@ const Recommender = (() => {
     return labels.length ? labels.join(" ") : null;
   }
 
+  /* 0 件の案内が「語「〜」は収録データにありません」と言う形は、URL を貼った人には当たり方が
+   * 違う（打ったのは語ではなく公式ページのアドレスで、収録の範囲の話になる – 第 154 回）。
+   * 判定だけを外に出す（照合側は `queryTokenGroups` の中で同じ式を通る）。 */
+  function looksLikeUrlQuery(query: unknown): boolean {
+    return urlLikeQueryTerms(query) !== null;
+  }
+
   function queryTokenGroups(query: unknown, nowMs?: number): string[][] {
     const urlTerms = urlLikeQueryTerms(query);
     if (urlTerms !== null) query = urlTerms;
@@ -5362,6 +5369,7 @@ const Recommender = (() => {
     searchNormalize: searchNormalize,
     querySynonymNotes: querySynonymNotes,
     queryHiddenKindMatches: queryHiddenKindMatches,
+    looksLikeUrlQuery: looksLikeUrlQuery,
     monthTermsJa: monthTermsJa,
     dayTermsJa: dayTermsJa,
     weekDayTermsJa: weekDayTermsJa,
