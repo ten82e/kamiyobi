@@ -17119,3 +17119,149 @@ it("会期欄のセルをコピーして貼ると、その行に出会う（SPEC
     `会議名「${名前の例}」が壊れた`,
   ).toBe(rowCells.filter((row) => String(row[iName] || "") === 名前の例).length);
 });
+
+it("常時受付の行にだけ出る語を、0 件の案内が「収録に無い」と言わない（SPEC §7）", () => {
+  /* 2026-08-09 生成ビルドで実測: 「常時受付」は候補行 0 件なのに常時受付の行 22 件がその語を
+   * 書いていて、読み上げは「語「常時受付」は収録データにありません」と言い、画面は
+   * 「検索語を短くする」としか言わなかった。語の当たり数を数える場所が 2 か所あり
+   * （`queryMatchCounts` は候補行 + ジャーナル行、`queryTermNotes` は候補行だけ）、
+   * 片方だけが古い集合を見ていた。同じ集合に直し、0 件の案内にジャーナルの行の話をさせる。 */
+  const app = siteRuntime();
+  const rec = join(site, "recommender.js");
+  const fn = (name: string) => jsFunction(app, name);
+  const script = [
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${rec}`)});`,
+    "const { readFileSync } = await import('node:fs');",
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "Date.now = () => now;",
+    "const DAY = 86400000;",
+    `const KIND_ALL_LABEL_JA = ${JSON.stringify("すべて")};`,
+    fn("countJa"),
+    fn("queryMatchCounts"),
+    fn("queryTermNotes"),
+    fn("emptyDeadlineHint"),
+    fn("zeroResultLiveNote"),
+    // ---- A. 実データ: 語の当たり数は「候補行 + 常時受付の行」として数える（同じ集合） ----
+    "let activeData = DATA;",
+    "let rows = Recommender.candidateRows(DATA, now);",
+    "const journals = Recommender.journalRows(DATA.conferences, now);",
+    "const candHays = rows.map((r) => String(r.hay));",
+    "const journalHays = journals.map((r) => String(r.hay));",
+    "const journalLabel = String(Recommender.kindLabelTable().journal || '');",
+    /* 候補行側にだけ出る語も拾う（ジャーナル側で 0 件の語で、数え上げが過剰になっていないか見る）。 */
+    "const onlyCandidate = candHays[0].split(' ').filter((w) => w.length >= 4).find((w) => !journalHays.some((h) => h.includes(w)));",
+    "const words = [journalLabel, onlyCandidate].filter(Boolean);",
+    "const invariant = words.map((w) => {",
+    "  const m = Recommender.searchMatcher(Recommender.expandRelativeMonths(w, now), now);",
+    "  const seen = new Set();",
+    "  candHays.concat(journalHays).forEach((h) => { if (m(h)) seen.add(h); });",
+    "  const notes = queryTermNotes(w);",
+    "  return { w, 期待: seen.size, 案内: notes.length === 1 ? notes[0].count : -1, 候補: candHays.filter((h) => m(h)).length, ジャーナル: journalHays.filter((h) => m(h)).length };",
+    "});",
+    // ---- B. 行の話に切り替わる（候補行 0 件・ジャーナル 1 件の小さなデータで決定的に） ----
+    "activeData = { conferences: [",
+    "  { key: 'jj-journal', title: 'JJ Journal', full_name: 'Journal of JJ', categories: ['networking'], tags: ['journal'], rank: {}, link: 'https://example.invalid/jj-journal', editions: [{ id: 'jj-journal-1', date_text: '', deadlines: [] }] },",
+    "  { key: 'jj-conf', title: 'JJ Conf', full_name: 'JJ Conference', categories: ['networking'], rank: {}, link: 'https://example.invalid/jj-conf', editions: [{ id: 'jj-conf-2026', date_text: '2026-10-05', event_start: '2026-10-05', place: 'Tokyo', deadlines: [{ kind: 'paper', precision: 'date-only', local_date: '2026-09-01' }] }] },",
+    "]};",
+    "rows = Recommender.candidateRows(activeData, now);",
+    "const mk = (q) => {",
+    "  const queryMatch = queryMatchCounts(q);",
+    "  const termCounts = queryTermNotes(q);",
+    "  const hidden = { past: 4, window: 6, cats: 2, domestic: 1, online: 1, rank: 1, kind: 0 };",
+    "  const filter = { window: '90', past: false, cats: 0, domestic: false, online: false, rank: '', kind: '', est: false, hidden, query: q, hiddenKindWords: [], queryMatch, termCounts, urlQuery: false, catalogConferences: activeData.conferences.length };",
+    "  return { queryMatch, termCounts, hint: emptyDeadlineHint(filter), live: zeroResultLiveNote({ ...filter, clearable: true, pastShown: false }) };",
+    "};",
+    "const journal = mk(journalLabel);",
+    /* 候補行と常時受付の行の両方に当たる語では、画面と読み上げが同じ内訳の数を言う
+     * （読み上げだけ合計を数えると、同じ 0 件画面で別の数を言う）。 */
+    "const 候補だけ = rows.map((r) => String(r.hay));",
+    "const ジャーナルだけ = Recommender.journalRows(activeData.conferences, now).map((r) => String(r.hay));",
+    "const 両方 = ジャーナルだけ[0].split(' ').filter((w) => w.length >= 4).find((w) => 候補だけ.some((h) => h.includes(w)));",
+    "const both = 両方 ? mk(両方) : null;",
+    // ---- C. 制御群: 本当に無い語は今までどおり「収録データに無い」と言う（直しすぎの防止） ----
+    "const absent = mk(journalLabel + ' ZZZ存在しない語');",
+    "console.log(JSON.stringify({ journalLabel, journalRowCount: journals.length, invariant, journal, both, 両方, absent }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 120_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    journalLabel: string;
+    journalRowCount: number;
+    invariant: Array<{
+      w: string;
+      期待: number;
+      案内: number;
+      候補: number;
+      ジャーナル: number;
+    }>;
+    journal: {
+      queryMatch: { catalog: number; journal: number };
+      termCounts: Array<{ term: string; count: number }>;
+      hint: string;
+      live: string;
+    };
+    both: {
+      queryMatch: { catalog: number; journal: number };
+      hint: string;
+      live: string;
+    } | null;
+    両方: string | undefined;
+    absent: { hint: string; live: string };
+  };
+  expect(out.journalLabel, "種別ラベルの表に常時受付の語が無い").toBeTruthy();
+  expect(out.journalRowCount, "常時受付の行が実データに無い").toBeGreaterThan(0);
+
+  // A. 語の当たり数が、候補行 + 常時受付の行（重複を除く）と一致する。
+  expect(out.invariant.length, "検査の語が無く、この検査が空振りしている").toBeGreaterThanOrEqual(
+    2,
+  );
+  for (const item of out.invariant) {
+    expect(item.案内, `語「${item.w}」の当たり数が候補行+ジャーナル行と違う`).toBe(item.期待);
+  }
+  expect(
+    out.invariant.some((i) => i.ジャーナル > 0 && i.候補 === 0),
+    "ジャーナル側にだけ出る語が無く、直した箇所を踏めていない",
+  ).toBe(true);
+  expect(
+    out.invariant.some((i) => i.候補 > 0 && i.ジャーナル === 0),
+    "候補行側にだけ出る語が無く、直しすぎ（ジャーナルを足して水増し）を検出できない",
+  ).toBe(true);
+
+  // B. 候補行に無く常時受付の行にだけある語: 案内はその行の数と選び方を出す。
+  expect(out.journal.queryMatch.catalog, "このデータで候補行に語が出てしまった").toBe(0);
+  expect(out.journal.queryMatch.journal, "常時受付の行が 1 件になっていない").toBe(1);
+  expect(out.journal.termCounts[0].count, "語の当たり数が 0 のまま（収録に無い語扱い）").toBe(1);
+  expect(out.journal.hint).not.toContain("収録データにも見当たりません");
+  expect(out.journal.hint).toContain(out.journalLabel);
+  expect(out.journal.hint, "ジャーナルの行の数を言っていない").toContain("1 件");
+  expect(out.journal.hint, "ジャーナルの行だと言っていない").toContain("ジャーナル");
+  expect(out.journal.hint, "「種別」での選び方を導いていない").toContain("種別");
+  // 原因が特定できているので、的外れな「検索語を短くする」は出さない（画面の既存の約束）。
+  expect(out.journal.hint).not.toContain("検索語を短くする");
+  expect(out.journal.live).not.toContain("収録データにありません");
+  expect(out.journal.live, "読み上げがジャーナルの行を数えていない").toContain("ジャーナル 1 件");
+
+  // B2. 両方の行に当たる語は、画面と読み上げが同じ内訳の数を言う。
+  expect(out.両方, "両方の行に当たる語が無く、この検査が空振りしている").toBeTruthy();
+  expect(out.both, "両方の行に当たる語で案内を組み立てていない").not.toBeNull();
+  const 両 = out.both as {
+    queryMatch: { catalog: number; journal: number };
+    hint: string;
+    live: string;
+  };
+  expect(両.queryMatch.catalog, "候補行が 1 件になっていない").toBe(1);
+  expect(両.queryMatch.journal, "常時受付の行が 1 件になっていない").toBe(1);
+  expect(両.hint).toContain("収録済みで 1 件");
+  expect(両.hint, "ジャーナルの内訳を分けていない").toContain("ジャーナル 1 件");
+  expect(両.live, "読み上げが候補行の数を言っていない").toContain(
+    "収録で 1 件と常時受付ジャーナル 1 件",
+  );
+
+  // C. 本当に無い語は、今までどおり其のまま言う。
+  expect(out.absent.hint).toContain("収録データにも見当たりません");
+  expect(out.absent.live).toContain("収録データにありません");
+});

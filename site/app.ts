@@ -1878,7 +1878,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /* URL を貼った人（メーリングリストの CFP リンクで収録確認をしている – 第 153 回）には、
      * 打った文字列を「語が無い」と言っても収録の範囲が伝わらない。何を引いたのかを名指しして、
      * 収録の中心を言う。会議名でも引けるので、その案内も添える。 */
-    if (filter.urlQuery && filter.queryMatch.catalog === 0)
+    const matchedRows = filter.queryMatch.catalog + filter.queryMatch.journal;
+    if (filter.urlQuery && matchedRows === 0)
       return (
         " ｜ 検索語の URL の会議は収録に見当たりません。収録の中心はランク付けの一覧に載る会議と" +
         "国内研究会です。公式ページのアドレスではなく会議名（「ICDE」など）でも試してください" +
@@ -1891,11 +1892,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         ` ｜ 検索語は「${filter.hiddenKindWords[0]}」の種別に当たります（表に出さない種別です）` +
         pointer
       );
-    if (filter.queryMatch.catalog > 0)
+    if (matchedRows > 0) {
+      /* 画面と同じ内訳で数字を出す（読み上げだけ合計を数えると、同じ 0 件画面で
+       * 画面と読み上げが別の数を言い、どちらも信じられなくなる）。 */
+      if (filter.queryMatch.catalog === 0)
+        return (
+          ` ｜ 検索語は収録の常時受付ジャーナル ${countJa(matchedRows)} 件に当たります（「種別」で選べます）` +
+          pointer
+        );
+      if (filter.queryMatch.journal > 0)
+        return ` ｜ 検索語は収録で ${countJa(filter.queryMatch.catalog)} 件と常時受付ジャーナル ${countJa(filter.queryMatch.journal)} 件に当たりますが、いまの条件では 0 件です${pointer}`;
       return (
-        ` ｜ 検索語は収録で ${countJa(filter.queryMatch.catalog)} 件に当たりますが、いまの条件では 0 件です` +
+        ` ｜ 検索語は収録で ${countJa(matchedRows)} 件に当たりますが、いまの条件では 0 件です` +
         pointer
       );
+    }
     // 何も絞り込んでいないのに 0 件なら、緩める条件ではなく収録の時刻の話をする。
     if (!filter.clearable && !filter.pastShown && filter.hidden?.past)
       return " ｜ 収録の締切はすべて過ぎています。「過去の締切も表示」で出ます";
@@ -1908,11 +1919,24 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const trimmed = query.trim();
     if (!trimmed) return [];
     const now = Date.now();
-    return Recommender.queryTermCounts(
-      Recommender.expandRelativeMonths(trimmed, now),
-      rows.map((row) => row.hay),
-      now,
-    );
+    /* 数える行は `queryMatchCounts` と**同じ集合**にする（候補行 + 常時受付のジャーナル行）。
+     * ここは候補行だけ数えていたため、ジャーナル側にだけ出る語を収録に無い語と呼んでいた
+     * （2026-08-09 生成ビルドで実測: 「常時受付」は候補行 0 件なのに、常時受付の行 22 件が
+     * その語を書いている。読み上げは「語「常時受付」は収録データにありません」と言い、
+     * 画面は「検索語を短くする」としか言わなかった）。同じ数の数え上げが 2 か所にあり
+     * 片方だけが新しい、という形で（同じ語彙に表を 2 つ持つと必ず片方が古くなる – 第 215 回など
+     * と同じ判断）。プールには既に入っている行があるので、行の hay で寄せる。 */
+    const seen: Record<string, boolean> = {};
+    const hays: string[] = [];
+    (rows as AppRow[])
+      .concat(Recommender.journalRows(activeData.conferences, now) as unknown as AppRow[])
+      .forEach((row) => {
+        const hay = String(row.hay);
+        if (seen[hay]) return;
+        seen[hay] = true;
+        hays.push(hay);
+      });
+    return Recommender.queryTermCounts(Recommender.expandRelativeMonths(trimmed, now), hays, now);
   }
 
   /* 検索語が「表に出さない種別」の表示語に当たるか。`SELECTABLE_KINDS` に無い種別が対象で、
@@ -2320,15 +2344,23 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         ? " 検索語の URL の会議は収録に見当たりません。収録の中心はランク付けの一覧に載る会議と" +
           "国内研究会です。公式ページのアドレスではなく会議名（「ICDE」など）で試してください。"
         : "";
+    /* 当たり数は候補行と常時受付のジャーナル行を**合わせて**見る。表に出さない行にだけ
+     * 当たっているとき、以前は文が丸ごと立たず（`catalog > 0` の条件）、読み上げが
+     * 「収録データにありません」と噓を言っていた（2026-08-09 生成ビルドで実測）。 */
+    const matchedRows = filter.queryMatch.catalog + filter.queryMatch.journal;
     const catalogNote =
-      trimmedQuery && filter.queryMatch.catalog > 0
-        ? (filter.urlQuery
-            ? ` その URL のドメインは収録済みで ${countJa(filter.queryMatch.catalog)} 件に当たります`
-            : ` 検索語「${trimmedQuery}」は収録済みで ${countJa(filter.queryMatch.catalog)} 件に当たります`) +
-          "（表は投稿締切でこれから先のものだけを出す既定と、いまの絞り込みで 0 件になっています）。" +
-          (filter.queryMatch.journal > 0
-            ? ` 常時受付のジャーナル ${countJa(filter.queryMatch.journal)} 件は「種別」で選べます。`
-            : "")
+      trimmedQuery && matchedRows > 0
+        ? filter.queryMatch.catalog === 0
+          ? ` 検索語「${trimmedQuery}」は収録済みの行 ${countJa(matchedRows)} 件に当たります` +
+            "（いずれも常時受付のジャーナルで、表は投稿締切を出す既定なので、" +
+            "「種別」で常時受付を選ぶと出ます）。"
+          : (filter.urlQuery
+              ? ` その URL のドメインは収録済みで ${countJa(filter.queryMatch.catalog)} 件に当たります`
+              : ` 検索語「${trimmedQuery}」は収録済みで ${countJa(filter.queryMatch.catalog)} 件に当たります`) +
+            "（表は投稿締切でこれから先のものだけを出す既定と、いまの絞り込みで 0 件になっています）。" +
+            (filter.queryMatch.journal > 0
+              ? ` 常時受付のジャーナル ${countJa(filter.queryMatch.journal)} 件は「種別」で選べます。`
+              : "")
         : "";
     /* 語を並べて打ったのに 0 件のとき、どの語が足りなかったのかを言う（2026-09-23 実測:
      * 「ネットワーク 福岡 GPU」も「人工知能 だけ」も 0 件なのに、画面は原因の語を言わず
