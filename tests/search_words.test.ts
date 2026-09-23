@@ -330,3 +330,65 @@ it("「採択通知」「最終原稿」で引いた人が種別の行に出会�
     matched("採択通知").length,
   );
 });
+
+it("表に出さない種別を名指す案内は、打たれた語から筋道が通った語だけを出す", () => {
+  /* 案内は「検索語は『X』の種別に当たります（表に出さない種別です）」を出す。その X が
+   * 的外れだと、目の前の 0 件の説明が噓になる（2026-08-09 生成ビルドの実測）。
+   *  - HEAD: `〆切` と `締切 福岡` が 補足資料締切・カメラレディ締切・登録締切・締切 の四つに
+   *    当たっていた（正規化で `〆切` -> `締切` となり、種別 `other` の表示語「締切」が他の種別の
+   *    語にすっぽり含まれるため）。
+   *  - HEAD: 第 246 回で言い換え表に載せた `登録期限` `レビュー結果` は、検索は寄せているのに
+   *    この案内は別名の表しか見ていなかったので、種別を名指さなかった。 */
+  const labels = Object.keys(Recommender.kindLabelTable())
+    .filter((kind) => ["abstract", "paper", "journal"].indexOf(kind) < 0)
+    .map((kind) => String(Recommender.kindLabelTable()[kind] || ""));
+  const named = (query: string) => Recommender.queryHiddenKindMatches(query, labels);
+  /* 打たれた語がそのまま種別の語のとき。 */
+  expect(named("カメラレディ").join(",")).toBe("カメラレディ締切");
+  expect(named("camera ready").join(",")).toBe("カメラレディ締切");
+  expect(named("補足資料").join(",")).toBe("補足資料締切");
+  /* 言い換えの正本（`QUERY_SYNONYMS_JA`）を通した語も同じ案内を出す（第 246 回で載せた言い換えと同じ正本を通す）。 */
+  for (const [word, label] of [
+    ["採択", "採否通知"],
+    ["登録期限", "登録締切"],
+    ["事前登録", "登録締切"],
+    ["レビュー結果", "査読結果公開"],
+    ["査読公開", "査読結果公開"],
+  ] as const) {
+    expect(named(word).join(","), `「${word}」が種別「${label}」を名指さない`).toContain(label);
+  }
+  /* 語の途中での一致は、複数の種別に同時に当たった瞬間に区別ではなくなるので名指さない。
+   * 一方で 1 つの種別にしか当たらない語は、語の途中の一致でも名指してよい（従来どおり）。 */
+  for (const word of ["〆切", "締切 福岡", "締め切り", "セキュリティ", "機械学習", "反論"]) {
+    expect(named(word).join(","), `「${word}」で筋の違う種別を名指した`).toBe("");
+  }
+  /* 反論は 反論期間開始・反論期間終了 の二つにまたがるので名指さない。別名（語がその物）なら
+   * 二つとも名指してよい（第 246 回で `リバットル` を言い換え表に載せなかったのと同じ理由）。 */
+  expect(named("リバットル").join(",")).toBe("反論期間開始,反論期間終了");
+  expect(named("通知").join(","), "1 つの種別にしか当たらない語を落とした").toBe("採否通知");
+  expect(named("査読").join(","), "1 つの種別にしか当たらない語を落とした").toBe("査読結果公開");
+  /* 部分一致で寄せた語の途中で別の種別に当たらない（`最終原稿` -> カメラレディ締切 の中に
+   * 種別「締切」が含まれる事故を実測で防いでいる）。 */
+  expect(named("最終原稿").join(",")).toBe("カメラレディ締切");
+  /* 言い換えを二箇所に書かない（`HIDDEN_KIND_ALIASES_JA` の語が `QUERY_SYNONYMS_JA` の語と
+   * 重なったら、片方だけ直してズレる – 第 246 回に実際に起きた。検査機のビルドではなく
+   * ソースを見るのは、正本の重複を防ぐ検査だから）。 */
+  const src = readFileSync(join(process.cwd(), "site", "recommender.ts"), "utf8");
+  // 型注釈を持つ宣言なので `= ` を挟むとは限らない（実測で抜けないことが分かった）。
+  const synonyms = src.match(/const QUERY_SYNONYMS_JA[\s\S]*?\n {2}\];/)?.[0] ?? "";
+  const aliases = src.match(/const HIDDEN_KIND_ALIASES_JA[\s\S]*?\n {2}\};/)?.[0] ?? "";
+  expect(synonyms, "言い換えの表を抜き出せない（検査が空洞）").not.toBe("");
+  expect(aliases, "別名の表を抜き出せない（検査が空洞）").not.toBe("");
+  const synonymWords = new Set([...synonyms.matchAll(/^\s{4}\["([^"]+)"/gm)].map((m) => m[1]));
+  // 別名の表では列の名（`カメラレディ締切:`）は引用符で囲まず、値だけを下げて書くので、
+  // 引用符の中身が別名である。
+  const aliasWords = [...aliases.matchAll(/"([^"]+)"/g)]
+    .map((m) => m[1])
+    .filter((w) => w.length > 1);
+  expect(aliasWords.length, "別名を 1 つも抜き出せない（検査が空洞）").toBeGreaterThan(0);
+  for (const word of aliasWords) {
+    expect(synonymWords.has(word), `「${word}」を言い換えの表と別名の表の二箇所に書いている`).toBe(
+      false,
+    );
+  }
+});

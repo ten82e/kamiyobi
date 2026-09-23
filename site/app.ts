@@ -2034,7 +2034,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (dead.length) return ` ｜ 語「${dead[0]}」は収録データにありません${pointer}`;
     if (filter.hiddenKindWords.length)
       return (
-        ` ｜ 検索語は「${filter.hiddenKindWords[0]}」の種別に当たります（表に出さない種別です）` +
+        /* 読み上げは 60 字までの検査が見ている（長い文を aria-live に流さない – SPEC §7）。
+         * 画面に出る長い一文（`hiddenKindDeliveryJa`）と同じことを、行先の語だけを短く添える。
+         * 「upcoming.md」を入れる枠が他に無いので、括弧の中で行先を言ってしまう。 */
+        ` ｜ 検索語は「${filter.hiddenKindWords[0]}」の種別に当たります（表に出さず upcoming.md）` +
         pointer
       );
     if (matchedRows > 0) {
@@ -2086,6 +2089,22 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   /* 検索語が「表に出さない種別」の表示語に当たるか。`SELECTABLE_KINDS` に無い種別が対象で、
    * 選択肢と同じ列表から求める（書き写すと増えた種別が案内から落ちる）。 */
+  /**
+   * 表に出さない種別の行の行き先を言う一文（0 件案内と読み上げで文言を分けない）。
+   * 種別の行は条件を変えても表に出ないので、「絞り込みで消えています」と書くのは噓になる
+   * （2026-08-09 生成ビルドの実測: 「採択通知」は収録 129 件に当たり、その全部が 採否通知 の
+   * 種別なのに、0 件案内は「既定と、いまの絞り込みで 0 件になっています」と言っていた）。
+   */
+  function hiddenKindDeliveryJa(count?: number): string {
+    if (count === undefined) {
+      return "その種別は表には出さず、締切一覧のファイル upcoming.md に載せています。";
+    }
+    return (
+      `その種別は表には出しません。条件を変えてもこの ${countJa(count)} 件は表には出ず、` +
+      "締切一覧のファイル upcoming.md に載せています。"
+    );
+  }
+
   function hiddenKindQueryWords(query: string): string[] {
     const table = Recommender.kindLabelTable();
     const hidden = Object.keys(table)
@@ -2517,7 +2536,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           : (filter.urlQuery
               ? ` その URL のドメインは収録済みで ${countJa(filter.queryMatch.catalog)} 件に当たります`
               : ` 検索語「${trimmedQuery}」は収録済みで ${countJa(filter.queryMatch.catalog)} 件に当たります`) +
-            "（表は投稿締切でこれから先のものだけを出す既定と、いまの絞り込みで 0 件になっています）。" +
+            /* 種別に当たっているときは「絞り込みで消えている」と書かない（外しても増えない）。 */
+            (filter.hiddenKindWords.length
+              ? `（${hiddenKindDeliveryJa(filter.queryMatch.catalog)}）`
+              : "（表は投稿締切でこれから先のものだけを出す既定と、いまの絞り込みで 0 件になっています）。") +
             (filter.queryMatch.journal > 0
               ? ` 常時受付のジャーナル ${countJa(filter.queryMatch.journal)} 件は「種別」で選べます。`
               : "")

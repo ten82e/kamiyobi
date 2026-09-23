@@ -1758,9 +1758,13 @@ const Recommender = (() => {
    * 0 件になる。収録が無いのだと誤解させないため、区別できる案内を出せるようにする。
    * 当たった種別名を返す（案内側で実名を書くため、真偽値だけでは使えない）。 */
   /* 部分一致では捕まえられない言い方（ラベルと語が噛み合わないものだけ足す）。 */
+  /* 表に出さない種別の別名。ここでしか言えない語だけを置く – 画面に出る種別ラベルへの
+   * 言い換え（`採択通知` `合否` `結果通知` `最終稿` `最終原稿` `登録期限` `レビュー結果` など）は
+   * `QUERY_SYNONYMS_JA` が正本で、上を見る（第 246 回に二箇所で同じ言い換えを持ってしまい、
+   * `登録期限` だけが案内から落ちた。実測で検査した）。英文は画面のラベルに対応語が無いので
+   * ここに置く。 */
   const HIDDEN_KIND_ALIASES_JA: Record<string, string[]> = {
-    採否通知: ["合否", "結果通知", "採択通知"],
-    カメラレディ締切: ["最終稿", "最終原稿", "camera ready", "camera-ready"],
+    カメラレディ締切: ["camera ready", "camera-ready"],
     反論期間開始: ["リバットル", "rebuttal"],
     反論期間終了: ["リバットル", "rebuttal"],
     査読結果公開: ["ピアレビュー結果"],
@@ -1769,14 +1773,73 @@ const Recommender = (() => {
   function queryHiddenKindMatches(query: unknown, hiddenKindLabels: readonly string[]): string[] {
     const tokens = queryTokens(query);
     if (!tokens.length) return [];
-    const out: string[] = [];
+    /* 言い換えの表（`querySynonymMap`）も通して当てる。第 246 回で「採択」-> 「採否通知」のような
+     * 言い換えを `QUERY_SYNONYMS_JA` に載せたが、この側は打たれた語しか見ていなかったため、
+     * 検索は寄せているのに案内は種別を名指さない行が生まれた（2026-08-09 生成ビルドの実測:
+     * `登録期限` は 登録締切 の 7 行に寄せているのに、案内は「いまの絞り込みで 0 件」と言った）。
+     * 同じ言い換えを `HIDDEN_KIND_ALIASES_JA` に二度書くのはやめる（正本は一つ – 二箇所に書いた
+     * 言い換えは必ずズレる）。 */
+    const synonyms = querySynonymMap();
+    const folded: string[] = [];
+    tokens.forEach((token) => {
+      const entry = synonyms[kanaFold(token)];
+      if (entry) {
+        entry[1].forEach((term) => {
+          folded.push(kanaFold(term));
+        });
+      }
+    });
+    /* 種別ごとに、語がどう当たったかを数える（第 247 回）。
+     *  - 語がその物（打たれた語や寄せ先の語が種別の語・別名と一致）なら、その語は種別を区別できる。
+     *  - 語の途中で重なる一致（部分一致）は、複数の種別に同時に当たった瞬間に区別ではなくなる。
+     *    実測: HEAD のビルドでは `〆切`（正規化で `締切`）が 補足資料締切・カメラレディ締切・
+     *    登録締切・締切 の四つに当たり、`反論` は 反論期間開始・反論期間終了 の二つに当たった。
+     *    四つ目（種別 `other` の表示語「締切」）は他の種別の語にすっぽり含まれるので、
+     *    そもそも名指す語にしない。 */
+    const equal: boolean[] = [];
+    const fragmentTokens: string[][] = [];
+    const nameable: boolean[] = [];
     hiddenKindLabels.forEach((label) => {
-      if (!label) return;
+      if (!label) {
+        nameable.push(false);
+        return;
+      }
       const words = [label].concat(HIDDEN_KIND_ALIASES_JA[label] || []);
-      const hit = tokens.some((token) =>
-        words.some((word) => word.indexOf(token) >= 0 || token.indexOf(word) >= 0),
-      );
-      if (hit && out.indexOf(label) < 0) out.push(label);
+      let isNameable = true;
+      /* 他の種別の語にすっぽり含まれる語は、その種別を名指せない。 */
+      hiddenKindLabels.forEach((other) => {
+        if (other && other !== label && other.indexOf(label) >= 0) isNameable = false;
+      });
+      nameable.push(isNameable);
+      let same = false;
+      const frag: string[] = [];
+      tokens.forEach((token) => {
+        words.forEach((word) => {
+          if (token === word) same = true;
+          else if (word.indexOf(token) >= 0 || token.indexOf(word) >= 0) frag.push(token);
+        });
+      });
+      folded.forEach((term) => {
+        words.forEach((word) => {
+          if (kanaFold(word) === term) same = true;
+        });
+      });
+      equal.push(same);
+      fragmentTokens.push(frag);
+    });
+    const out: string[] = [];
+    hiddenKindLabels.forEach((label, index) => {
+      if (!label || !nameable[index]) return;
+      const enough =
+        equal[index] ||
+        fragmentTokens[index].some((token) => {
+          let touched = 0;
+          fragmentTokens.forEach((frag, other) => {
+            if (nameable[other] && frag.indexOf(token) >= 0) touched += 1;
+          });
+          return touched === 1;
+        });
+      if (enough && out.indexOf(label) < 0) out.push(label);
     });
     return out;
   }

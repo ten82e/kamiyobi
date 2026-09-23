@@ -1874,6 +1874,7 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
   const hint = new Function(
     `${appForHint.match(/const KIND_ALL_LABEL_JA = [^\n]*;/)?.[0] ?? ""}
      ${jsFunction(appForHint, "countJa")};
+     ${jsFunction(appForHint, "hiddenKindDeliveryJa")};
      /* 評価の語（「評価なし」）と、のぞいた行を指す語も正本から入れる – 件数欄と同じ語を
       * 見せるための注入で、検査側に語を書かない。 */
      ${(siteRuntime("recommender.js").match(/const RANK_UNRATED_LABEL_JA = [^\n]*;/) || ['""'])[0]}
@@ -1961,6 +1962,21 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
   expect(hiddenKindFiltered).toContain("「国内研究会・国内シンポジウムのみ」をオフ");
   // 当たっていないときに誤った説明を出さない。
   expect(hint({ ...clear, query: "nsdi", hiddenKindWords: [] })).not.toContain("種別に当たります");
+  /* 種別に当たっているとき、件数の説明で「いまの絞り込みで 0 件」とは書かない（外しても
+   * 増えないので噓になる）。行き先のファイルを、件数と一緒に言う（第 247 回。
+   * 2026-08-09 生成ビルドの実測: 「採択通知」は収録 129 件に当たって画面は 0 件なのに、
+   * 案内は「既定と、いまの絞り込みで 0 件になっています」と言っていた）。 */
+  const hiddenKindHits = hint({
+    ...clear,
+    query: "採択通知",
+    hiddenKindWords: ["採否通知"],
+    queryMatch: { catalog: 129, journal: 0 },
+  });
+  expect(hiddenKindHits, "当たった件数を出していない").toContain("この 129 件は表には出ず");
+  expect(hiddenKindHits, "行き先を書いていない").toContain("upcoming.md");
+  expect(hiddenKindHits, "外しても増えないのに絞り込みのせいにしている").not.toContain(
+    "いまの絞り込みで 0 件",
+  );
 
   /* 種別の絞り込みも外せる条件として名指す。数えないと、案内どおりに他を外しても 0 件のまま。
    * 書き方はセレクトの実ラベルに揃える。 */
@@ -2840,6 +2856,14 @@ const SORT_CANON_EVAL = [
   ...SORT_CANON.consts.map((src) => src.replace(/^const /, "var ")),
   ...SORT_CANON.fns,
 ].join("\n");
+
+/* 読み上げの案内は行き先一文（`hiddenKindDeliveryJa`）を呼ぶ（第 247 回）。抽出した関数は
+ * 独立していないので、使う側も一緒に抜く – 抜くと `hiddenKindDeliveryJa is not defined` になる。 */
+const liveNoteSource = (app: string) =>
+  /* 呼ぶ側を `var` で宣言したうえで、本文の関数を値として返す。関数式を並べるだけでは
+   * 名前が作られないので、中で呼んだときに `hiddenKindDeliveryJa is not defined` になる
+   * （実測: カンマ式で済ませたとき、それで落ちた）。 */
+  `(function () {\n    var hiddenKindDeliveryJa = ${jsFunction(app, "hiddenKindDeliveryJa")};\n    return ${jsFunction(app, "zeroResultLiveNote")};\n  })()`;
 
 const FILTER_RUNTIME_STUBS = [
   // 窓の上限時刻は絞り込みと 0 件時の会期案内で共有する実装（書かないと両者が違う窓で動く）。
@@ -10687,7 +10711,7 @@ it("0 件の理由は読み上げにも短的に出る（長い文を aria-live 
   const note = new Function(
     "Recommender",
     `${jsFunction(app, "countJa")};
-     return (${jsFunction(app, "zeroResultLiveNote")});`,
+     return (${liveNoteSource(app)});`,
   )(Recommender) as (f: {
     hiddenKindWords: string[];
     termCounts: Array<{ term: string; count: number }>;
@@ -10718,6 +10742,8 @@ it("0 件の理由は読み上げにも短的に出る（長い文を aria-live 
   const kindHit = note({ ...empty, hiddenKindWords: ["採否通知"] });
   expect(kindHit).toContain("採否通知");
   expect(kindHit).toContain("種別");
+  /* 行先も短い形で言う（60 字の上限は別の検査が見ている – 第 247 回）。 */
+  expect(kindHit).toContain("upcoming.md");
   // 収録では当たるがいまの条件で 0 件、は件数を書く（「kamiyobi に無い」と誤らせない）。
   const inCatalog = note({ ...empty, queryMatch: { catalog: 31, journal: 0 } });
   expect(inCatalog).toContain("31 件");
@@ -11354,7 +11380,7 @@ it("常時受付ジャーナルに当たる語を、読み上げが「収録デ�
 
   const live = new Function(
     "Recommender",
-    `${jsFunction(app, "countJa")};\nreturn (${jsFunction(app, "zeroResultLiveNote")});`,
+    `${jsFunction(app, "countJa")};\nreturn (${liveNoteSource(app)});`,
   )(Recommender) as (f: object) => string;
   const hint = new Function(
     "Recommender",
@@ -11463,7 +11489,7 @@ it("「締め切り」のように表その物を指す語を打った人に、0
   const hint = new Function(`${stubs}\nreturn (${jsFunction(app, "emptyDeadlineHint")});`)() as (
     f: object,
   ) => string;
-  const live = new Function(`${stubs}\nreturn (${jsFunction(app, "zeroResultLiveNote")});`)() as (
+  const live = new Function(`${stubs}\nreturn (${liveNoteSource(app)});`)() as (
     f: object,
   ) => string;
   const base = {
@@ -11526,7 +11552,7 @@ it("締切のデータが無い画面は、それを条件の話より先に言�
   const script = [
     `const LABEL_SRC = ${JSON.stringify(jsFunction(app, "generatedAtLabel"))};`,
     `const HINT_SRC = ${JSON.stringify(jsFunction(app, "emptyDeadlineHint"))};`,
-    `const LIVE_SRC = ${JSON.stringify(jsFunction(app, "zeroResultLiveNote"))};`,
+    `const LIVE_SRC = ${JSON.stringify(liveNoteSource(app))};`,
     // fmtJst はビルド成果物から取る（表示形式をここにもう一度書かない）。
     `const FMT_SRC = ${JSON.stringify(jsFunction(app, "fmtJst"))};`,
     "const fmtJst = new Function(",
@@ -12742,7 +12768,7 @@ it("0 件の読み上げが、画面に出ている案内の有無と緩めら�
    * 支援技術では下に出ている案内が見えないので、0 件とだけ聞いて操作をやめる人が出る。
    * 逆に、外せる条件が 1 つも残っていない画面で「緩めると出ます」と言うのは噓だった。 */
   const app = siteRuntime("app.js");
-  const liveFn = jsFunction(app, "zeroResultLiveNote");
+  const liveFn = liveNoteSource(app);
   expect(liveFn, "0 件の読み上げ文言が見当たらない（検査が空振り）").not.toBe("");
   const script = [
     // 0 件案内と読み上げが同じ語列表を見るので、正本を注入する（第 239 回）。
@@ -13453,7 +13479,7 @@ it("URL で引いて 0 件のときは「語が無い」とは言わず収録の
     "const hostLabels = (" + jsFunction(rec, "hostLabels") + ");",
     wholeTableQueryStubs(rec),
     "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa };",
-    "const note = (" + jsFunction(app, "zeroResultLiveNote") + ");",
+    "const note = (" + liveNoteSource(app) + ");",
     // URL の形とそれ以外（日付・会議名・語の羅列）を混同しないこと。
     "const yes = ['https://www.example-university.edu/symposium-2027/cfp', 'example.ac.jp/workshop27', 'easychair.org/cfp/x'];",
     "const no = ['機械学習', 'ICDE 2026', '3/5', '研究会', ''];",
@@ -18848,6 +18874,7 @@ it("常時受付の行にだけ出る語を、0 件の案内が「収録に無�
     fn("queryMatchCounts"),
     fn("queryTermNotes"),
     fn("emptyDeadlineHint"),
+    fn("hiddenKindDeliveryJa"),
     fn("zeroResultLiveNote"),
     // ---- A. 実データ: 語の当たり数は「候補行 + 常時受付の行」として数える（同じ集合） ----
     "let activeData = DATA;",
