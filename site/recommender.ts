@@ -2212,7 +2212,16 @@ const Recommender = (() => {
       // 「あと N 日」と表計算の数が違うと、どちらを信じていいか分からなくなる。
       const tShown = typeof row.tShown === "number" && Number.isFinite(row.tShown) ? row.tShown : t;
       if (kind !== "journal" && Number.isFinite(tShown)) {
-        left = String(Math.floor((tShown - nowMs) / 86400000));
+        /* 過ぎた分の数え方は、画面と同じ **JST の暦日差**にする。経過時間の floor だと、
+         * 午前中の締切で「画面は 2019 日前に終了、表計算は -2020」と 1 日ずれる
+         * （2026-08-09 実測: 過ぎた行 2,317 件のうち 279 件が 1 日大きかった）。画面の数を
+         * 確認するために表計算を開く人が、どちらを信じるか分からなくなるため。
+         * 先の分は画面も経過時間の floor なので、そのまま同じ式を使う。 */
+        const jstDay = (value: number) => Math.floor((value + 9 * 3600000) / 86400000);
+        left =
+          tShown < nowMs
+            ? String(-(jstDay(nowMs) - jstDay(tShown)))
+            : String(Math.floor((tShown - nowMs) / 86400000));
       }
       /* ランクは画面と同じ書き方にする。上流の `N` は「ランクが付いていない」ことを
        * 表す番兵で等級ではない（SPEC §2）ので、表計算にそのまま渡すと「N という等級」

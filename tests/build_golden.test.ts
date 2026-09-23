@@ -15047,3 +15047,108 @@ it("`llms.txt` が、月の相対語を実装と違う月に決めていない�
     expect(out.llms, `案内に ${r.w} の説明が無い`).toContain(`\`${r.w}\``);
   }
 });
+
+it("書き出した CSV の残り日数が、画面の「残り」の数と全行で一致する（SPEC §7）", () => {
+  /* 表計算で並び替える人は、画面の「残り」を確かめてから CSV を開く。両方の数が違えば、
+   * どちらを信じるか分からなくなる。2026-08-09 生成のビルドで実測: 過ぎた行 2,317 件のうち
+   * 279 件で CSV の数が 1 日大きかった（画面「2019 日前に終了」に CSV「-2020」）。
+   * 画面は JST の暦日差で数えるのに、CSV の過去側は経過時間の floor を使っていたため。
+   * 先の行は同じ基準だったので 0 件だった。
+   * ここでは画面の関数その物（ビルドした app.js から `remain` を抜き出す）と CSV を全行で
+   * 突き合わせる。画面の語を組み立てて比べるので、実装の語を検査に書き写さない。 */
+  const rec = join(site, "recommender.js");
+  const dataFile = join(site, "data.json");
+  const appFile = join(site, "app.js");
+  const script = [
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import('file://${rec}');`,
+    `const APP = readFileSync('${appFile}', 'utf8');`,
+    `const DATA = JSON.parse(readFileSync('${dataFile}', 'utf8'));`,
+    "const CR = String.fromCharCode(13, 10);",
+    "const Q = String.fromCharCode(34);",
+    "function jsFunction(name) {",
+    "  const i = APP.indexOf('function ' + name);",
+    "  if (i < 0) throw new Error('not found: ' + name);",
+    "  let depth = 0;",
+    "  const start = APP.indexOf('{', i);",
+    "  for (let k = start; k < APP.length; k++) {",
+    "    if (APP[k] === '{') depth++;",
+    "    else if (APP[k] === '}') { depth--; if (!depth) return APP.slice(i, k + 1); }",
+    "  }",
+    "  throw new Error('unbalanced: ' + name);",
+    "}",
+    "const DAY = Number(APP.match(/(?:const|var|let) DAY = ([0-9e_]+)/)[1].replace(/_/g, ''));",
+    "if (!Number.isFinite(DAY) || DAY <= 0) throw new Error('DAY が読めない');",
+    "const now = Date.parse(DATA.generated_at);",
+    "if (!Number.isFinite(now)) throw new Error('生成時刻が読めない');",
+    "const remain = new Function('Date', 'DAY',",
+    "  jsFunction('remain') + '; return remain;')({ now: () => now }, DAY);",
+    "function cells(line) {",
+    "  const out = [];",
+    "  let cur = '', inQ = false;",
+    "  for (let i = 0; i < line.length; i++) {",
+    "    const ch = line[i];",
+    "    if (inQ) {",
+    "      if (ch === Q) { if (line[i + 1] === Q) { cur += ch; i++; } else inQ = false; }",
+    "      else cur += ch;",
+    "    } else if (ch === Q) inQ = true;",
+    "    else if (ch === ',') { out.push(cur); cur = ''; }",
+    "    else cur += ch;",
+    "  }",
+    "  out.push(cur);",
+    "  return out;",
+    "}",
+    "const rows = Recommender.candidateRows(DATA, now);",
+    "const lines = Recommender.deadlinesToCsv(rows, now).split(CR).filter(Boolean);",
+    "const head = cells(lines[0]);",
+    "const iLeft = head.indexOf('残り日数');",
+    "if (iLeft < 0) throw new Error('残り日数 列が無い');",
+    "const bad = [];",
+    "let checked = 0, pastLabeled = 0, datedLabeled = 0, skipped = 0;",
+    "for (let j = 1; j < lines.length; j++) {",
+    "  const row = rows[j - 1];",
+    "  if (!row) continue;",
+    "  const t = Number.isFinite(row.tShown) ? row.tShown : row.dateOnly ? row.tLast : row.t;",
+    "  if (!Number.isFinite(t)) continue;",
+    "  const label = remain(t).text;",
+    "  const value = cells(lines[j])[iLeft];",
+    "  const mDay = label.match(/^あと ([0-9]+) 日$/);",
+    "  const mPast = label.match(/^([0-9]+) 日前に終了$/);",
+    "  let want = 0;",
+    "  if (label === '本日終了' || label === 'まもなく' || /^あと [0-9]+ 時間$/.test(label)) want = 0;",
+    "  else if (mDay) want = Number(mDay[1]);",
+    "  else if (mPast) { want = -Number(mPast[1]); pastLabeled++; }",
+    "  else { skipped++; continue; }",
+    "  checked++;",
+    "  if (want !== 0) datedLabeled++;",
+    "  if (Number(value) !== want && bad.length < 4)",
+    "    bad.push('画面「' + label + '」 -> CSV「' + value + '」 ' + String(row.conf.title).slice(0, 22));",
+    "}",
+    "console.log(JSON.stringify({ bad, checked, pastLabeled, datedLabeled, skipped, rows: rows.length }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 120_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    bad: string[];
+    checked: number;
+    pastLabeled: number;
+    datedLabeled: number;
+    skipped: number;
+    rows: number;
+  };
+  // 候補行を 1 行も取りこぼさずに比較していること（行数の固定値はハーネスのビルドと
+  // 配信ビルドで違うので、常に全行を比べる条件にする）。
+  expect(out.rows, "候補行が無い").toBeGreaterThan(100);
+  expect(out.checked, "比較から漏れた行がある").toBe(out.rows);
+  expect(out.skipped, "画面の語が読み解けず比較できなかった行がある").toBe(0);
+  // 過去側の基準を実際に通っていること（無ければこの検査は空振りになる）。
+  expect(
+    out.pastLabeled,
+    "「N 日前に終了」の行が無く、過去側の基準を検査できていない",
+  ).toBeGreaterThan(0);
+  expect(out.datedLabeled, "日数を出す行が無く、この検査は空振りしている").toBeGreaterThan(0);
+  expect(out.bad, `画面と CSV の残り日数が食い違う行がある\n${out.bad.join("\n")}`).toEqual([]);
+});
