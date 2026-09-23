@@ -200,3 +200,70 @@ it("欄の名前（分野・種別・参加形式）を打った人に、値の�
   expect(html, "てびきに欄の名前の話を書いていない").toContain("<strong>欄の名前</strong>");
   expect(html, "てびきに値の例を書いていない").toContain("<code>オンライン参加可</code>");
 });
+
+it("「セキュリティの会議」のように助詞で繋いだ検索語が当たる", () => {
+  /* 検索語を空白でしか分けていなかったので、助詞を挟んで打った人が 0 行に当たっていた
+   * （2026-08-09 生成ビルドの実測・872 行: `セキュリティの会議` 0 行で `セキュリティ` は
+   * 152 行、`9月の締切` 0 行で `9月 締切` は 209 行、`国内の研究会` 0 行で `国内研究会` は
+   * 23 行、`採否の通知` 0 行で `採否通知` は 129 行）。 */
+  const all = rows();
+  const matched = (query: string) => {
+    const matches = Recommender.searchMatcher(query);
+    return all.filter((row) => matches(String(row.hay)));
+  };
+  const hits = (query: string) => matched(query).length;
+  /* 助詞で切った語は、語を並べて打ったのと同じ行に出会う。 */
+  for (const [phrase, words] of [
+    ["セキュリティの会議", "セキュリティ"],
+    ["9月の締切", "9月 締切"],
+    ["国内の研究会", "国内 研究会"],
+  ] as const) {
+    expect(hits(words), `比べる側の「${words}」が 0 行で検査が空振りしている`).toBeGreaterThan(0);
+    expect(hits(phrase), `「${phrase}」が「${words}」と同じ行に出会えない`).toBe(hits(words));
+  }
+  /* 表の全行にあてはまる語（`会議` `大会`）は、他の語があるとき絞り込みに使わない。
+   * 部分集合の語（`ワークショップ`）はそのまま絞れることも同時に検査する。 */
+  const security = hits("セキュリティ");
+  expect(hits("セキュリティの会議"), "「会議」で絞れてしまった").toBe(security);
+  expect(hits("セキュリティのワークショップ"), "部分集合の語まで落とした").toBeLessThan(security);
+  expect(hits("セキュリティ 会議"), "語を並べて打った場合と助詞で繋いだ場合がズレた").toBe(
+    hits("セキュリティの会議"),
+  );
+  /* 助詞の字を含むひらがなの地名は壊さない（実測: `ながさき` を `が` で割ると 1 行も
+   * 当たらない語になった）。分けた語が短くなる分割は捨てている。 */
+  for (const word of ["ながさき", "やまぐち", "おきなわ", "きょうと"]) {
+    const matches = Recommender.searchMatcher(word);
+    expect(matches(`ふりがな ${word} 開会`), `「${word}」を助詞で割った`).toBe(true);
+  }
+  /* 分割を採る条件そのものの検査 – 割れた部品を別々に含む行に当たってはならない
+   * （`ながさき` を `が` で割ると `な` と `さき` を別々に探す照合になる）。 */
+  const 地名 = [
+    ["ながさき", "ながれ さきした"],
+    ["やまぐち", "まぐち の 会場"],
+    ["おきなわ", "おき にな わ かり"],
+    ["きょうと", "きょう と する"],
+  ] as const;
+  for (const [word, hay] of 地名) {
+    const matches = Recommender.searchMatcher(word);
+    expect(matches(hay), `「${word}」を助詞で割った（別々に含む行に当たっている）`).toBe(false);
+  }
+  /* 表じゅうの語だけを打った人は、0 行のまま理由を出す（絞れたと読ませない）。 */
+  for (const word of ["会議", "大会", "かいぎ"]) {
+    expect(hits(word), `「${word}」だけ打ったときに何かが出てしまった`).toBe(0);
+    expect(
+      Recommender.wholeTableQueryNoteJa(word),
+      `「${word}」に対する説明を出していない`,
+    ).toContain("検索では絞り込めません");
+  }
+  const note = Recommender.querySynonymNotes("セキュリティの会議").join("");
+  expect(note, "どう探したかを出していない").toContain(
+    "この表の全行にあてはまる語なので絞り込みに使い",
+  );
+  expect(note, "代わりに使った語を書いていない").toContain("「セキュリティ」");
+  /* てびき: built の index.html に当てる。 */
+  const html = readFileSync(join(builtSite(), "index.html"), "utf8");
+  expect(html, "てびきに助詞の読み方を書いていない").toContain("助詞で繋いだ文のままでも引けます");
+  expect(html, "てびきに表じゅうの語の話を書いていない").toContain(
+    "表の全行にあてはまる語なので、他の語を一緒に打ったときは絞り込みに使いません",
+  );
+});

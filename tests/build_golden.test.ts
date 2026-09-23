@@ -2689,7 +2689,7 @@ function vmSafeSource(src: string): string {
 /* 「この表その物を指す語」の正本（第 239 回）。0 件案内と読み上げが同じ語列表を向くので、
  * 検査側もビルド成果物から注入する（書き写すと正本とズレる）。 */
 function wholeTableQueryStubs(rec: string): string {
-  const list = rec.match(/const WHOLE_TABLE_QUERY_JA = [^\n]*;/)?.[0] ?? "";
+  const list = rec.match(/const WHOLE_TABLE_QUERY_JA[\s\S]*?\];/)?.[0] ?? "";
   expect(list, "WHOLE_TABLE_QUERY_JA が見つからない").toBeTruthy();
   /* 欄の名前の正本も同じ入口から注入する（第 244 回 – 書き写すと正本とズレる）。 */
   const cols = [
@@ -2771,6 +2771,10 @@ const SEARCH_CANON = (() => {
      * 読むので、抜き出した関数と一緒に注入する（書き写すと正本とズレる）。 */
     ["RELATIVE_DAY_PHRASES_JA", /const RELATIVE_DAY_PHRASES_JA[\s\S]*?\];/],
     ["RELATIVE_YEAR_OFFSETS_JA", /const RELATIVE_YEAR_OFFSETS_JA[\s\S]*?\};/],
+    /* 表の全行にあてはまる語（第 245 回）。照合でのく側と注記の側が同じ列を向くので、
+     * 抜き出して注入する（書き写すと正本とズレる）。 */
+    ["WHOLE_TABLE_QUERY_JA", /const WHOLE_TABLE_QUERY_JA[\s\S]*?\];/],
+    ["QUERY_PARTICLE_SPLIT_CHARS", /const QUERY_PARTICLE_SPLIT_CHARS = [^\n]*;/],
   ].map(([name, re]) => {
     const src = rec.match(re)?.[0];
     expect(src, `${name} 定義が見つからない`).toBeTruthy();
@@ -2790,6 +2794,9 @@ const SEARCH_CANON = (() => {
       "linkSearchTerms",
       "urlLikeQueryTerms",
       "queryTokens",
+      // 助詞の分割と全行の語をのく処理は `queryTokens` / `searchMatcher` が呼ぶ（第 245 回）。
+      "splitQueryToken",
+      "withoutWholeTableGroups",
       "querySynonymMap",
       "abbrevYearGroups",
       "isCalendarMonthDay",

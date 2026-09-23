@@ -1899,7 +1899,24 @@ const Recommender = (() => {
    * 0 件のまま「該当する締切はありません」とだけ出すと、この表に締切が無いと読める。
    * 当てるのは検索語まるごとの一致だけにする – 「締め切り 関西」のように他の語を足した
    * 人は打ち直しが効いている側の話で、語を名指すのは的外れになる。 */
-  const WHOLE_TABLE_QUERY_JA = ["締め切り", "締切り", "しめきり", "締切日", "提出期限"];
+  const WHOLE_TABLE_QUERY_JA = [
+    "締め切り",
+    "締切り",
+    "しめきり",
+    "締切日",
+    "提出期限",
+    // 「〜の会議」で打つ人は表の subject を打ち返しているだけで、絞り込みになっていない
+    // （第 245 回・2026-08-09 生成ビルドの実測: `会議` `大会` `カンファレンス` は 0 行で、
+    // `セキュリティの会議` も 0 行だった。`セキュリティ` だけなら 152 行）。
+    // 「シンポジウム」3 行・「ワークショップ」126 行のような部分集合の語は載せない。
+    "会議",
+    "大会",
+    "カンファレンス",
+    // ひらがなで打つ人と同じ判断をするための生字（`wholeTableQueryWordJa` は小文字化だけで
+    // 比べる – 第 239 回の方針）。片仮名は `kanaFold` が折るので書かなくていい。
+    "かいぎ",
+    "たいかい",
+  ];
 
   /**
    * 検索語がこの表その物を指す語のとき、打たれた語を返す（そうでなければ空）。
@@ -2037,6 +2054,24 @@ const Recommender = (() => {
   function querySynonymNotes(query: unknown): string[] {
     const map = querySynonymMap();
     const notes: string[] = [];
+    /* 表の全行にあてはまる語を照合でのいたときは、そのことを書く（第 245 回）。
+     * `セキュリティの会議` を `セキュリティ` で探したので、画面の件数は
+     * 「セキュリティの会議」だけの数ではない – 絞れたと読み違えられないようにする。 */
+    {
+      const tokens = queryTokens(query);
+      const whole = WHOLE_TABLE_QUERY_JA.map((word) => kanaFold(word));
+      const dropped = tokens.filter((token) => whole.indexOf(kanaFold(token)) >= 0);
+      const kept = tokens.filter((token) => whole.indexOf(kanaFold(token)) < 0);
+      if (dropped.length && kept.length) {
+        const note =
+          `「${dropped[0]}」はこの表の全行にあてはまる語なので絞り込みに使い、` +
+          `他の語（${kept
+            .slice(0, 2)
+            .map((token) => `「${token}」`)
+            .join("・")}）で探しています`;
+        notes.push(note);
+      }
+    }
     /* 第 194 回に、画面が等級を呼ぶ語（列の見出し・選択欄の「ランク」、てびきと件数欄の「評価」）を
      * 検索語に入れた。ただしこの語だけは等級を絞らない（2026-08-09 生成のビルドで実測: `ランク`
      * だけで 839 / 863 行、`評価` だけで 475 / 863 行）。絞れたと読み違えないよう、等級の語が
@@ -3112,13 +3147,42 @@ const Recommender = (() => {
   const QUERY_EDGE_PUNCTUATION =
     /^[。、，．・：:；;！？!？」』）)】\]]+|[。、，．・：:；;！？!？」』）)】\]]+$/g;
 
+  /* 助詞は語の区切りとして読む（第 245 回）。検索語を空白でしか分けていなかったので、
+   * 助詞を挟んで打った日本人利用者が 0 行に当たっていた（2026-08-09 生成ビルドの実測・872 行:
+   * `セキュリティの会議` 0 行（`セキュリティ` 152 行）・`9月の締切` 0 行（`9月 締切` 209 行）・
+   * `国内の研究会` 0 行（`国内研究会` 23 行）・`査読の期間` 0 行（`査読` 13 行）。
+   * 助詞は行の文字列でも大量に当たる語なので、内容語としても使えていない（実測: `の` 単体で
+   * 390 行・`で` 197 行・`と` 121 行 – 「その語で何を絞りたかったのか」がゼロになる）。
+   * 文字は `searchNormalize` を通した語から切る – 片仮名はそのまま残るので `ソフトウェア` の
+   * `ト` は平仮名 `と` と違い、語を壊さない（実測: `ソフトウェア` は 4 行のまま変えていない）。
+   * 切って語が残らないときは元の語に戻す（`を` だけを打った人に 0 行を返さない）。 */
+  const QUERY_PARTICLE_SPLIT_CHARS = "のもへがをやをでには";
+
+  function splitQueryToken(token: string): string[] {
+    const parts = token
+      .split(new RegExp(`[${QUERY_PARTICLE_SPLIT_CHARS}]`))
+      .filter((part) => part.length > 0);
+    /* 分けた語が 2 つ以上で、それぞれ 2 文字以上のときだけ採用する。ひらがなの地名は
+     * 助詞と同じ字を語の中に持っている（実測: `ながさき` は `が` で割れて `な` + `さき` に、
+     * `やまぐち` は `や` が取れて `まぐち` になった – どちらも 1 行も当たらなくなる）。
+     * そのような分割は捨てて、打たれた語をそのまま使う。 */
+    if (parts.length < 2) return [token];
+    for (let i = 0; i < parts.length; i += 1) {
+      if (parts[i].length < 2) return [token];
+    }
+    return parts;
+  }
+
   function queryTokens(query: unknown): string[] {
     const normalized = searchNormalize(query);
     if (!normalized) return [];
     const seen: string[] = [];
     normalized.split(" ").forEach((raw) => {
       const token = raw.replace(QUERY_EDGE_PUNCTUATION, "");
-      if (token && seen.indexOf(token) < 0) seen.push(token);
+      if (!token) return;
+      splitQueryToken(token).forEach((part) => {
+        if (part && seen.indexOf(part) < 0) seen.push(part);
+      });
     });
     return seen;
   }
@@ -4413,8 +4477,21 @@ const Recommender = (() => {
    * 検索語を分解し直すため、行の数のぶんだけ無駄をする（実測 3234 行で 1 打鍵
    * 約 83 ms、うち約 69 ms が分解のやり直し）。一覧の絞り込みはこれを使う。
    */
+  /* 表の全行にあてはまる語（`WHOLE_TABLE_QUERY_JA`）は、他の語があるときのぞく
+   * （第 245 回）。`セキュリティの会議` は 0 行だった – `会議` を要求するからで、
+   * 表は会议その物を並べた物なので要求しても 1 行も減らない（実測: `会議` 0 行、
+   * `セキュリティ` 152 行）。その語だけを打った人は 0 行のままなので、注記で理由を言う。 */
+  function withoutWholeTableGroups(groups: string[][]): string[][] {
+    if (groups.length < 2) return groups;
+    const whole = WHOLE_TABLE_QUERY_JA.map((word) => kanaFold(word));
+    const kept = groups.filter(
+      (group) => !group.every((term) => whole.indexOf(kanaFold(term)) >= 0),
+    );
+    return kept.length ? kept : groups;
+  }
+
   function searchMatcher(query: unknown, nowMs?: number): (hay: unknown) => boolean {
-    const groups = queryTokenGroups(query, nowMs).map((group) =>
+    const groups = withoutWholeTableGroups(queryTokenGroups(query, nowMs)).map((group) =>
       group.map((term) => kanaFold(term)),
     );
     if (!groups.length) return () => true;
