@@ -2030,11 +2030,47 @@ it("weekday suffixes for date-only deadlines and 会期 are viewer-timezone inde
   expect(outputs[0]).toBe(JSON.stringify(["木", "金", "水", "月", "", ""]));
   for (const out of outputs) expect(out).toBe(outputs[0]);
 
-  // 一覧の date-only 行と会期列が同じ関数を通す（瞬間を作って TZ でズレさせない）。
+  // 一覧の date-only 行は同じ関数を通す（瞬間を作って TZ でズレさせない）。
   const app = siteRuntime();
   expect(app).toContain("Recommender.weekdayJaFromDate(r.localDate)");
-  expect(app).toContain("Recommender.weekdayJaFromDate(r.ed.event_start)");
-  expect(app).toContain("Recommender.weekdayJaFromDate(r.ed.event_end)");
+  // 会期は一覧・行の詳細・CSV で共有する式（`eventCellJa`）へ寄った。画面側はその式を
+  // 呼ぶこと、式中の曜日が正本の `weekdayJaFromDate` が出ることを確かめる。
+  expect(app).toContain("Recommender.eventCellJa(r)");
+  const evSrc = jsFunction(rec, "eventCellJa");
+  expect(evSrc, "eventCellJa が見つからない").toBeTruthy();
+  expect(evSrc).toContain("weekdayJaFromDate(");
+  // 会期列の表示語そのものが TZ でズレないことの実測（一覧・詳細・CSV が同じ式を使う
+  // ので、この実測が3画面分をまとめて持つ）。
+  const evScript = [
+    constSrc as string,
+    jsFunction(rec, "weekdayJaFromDate"),
+    jsFunction(rec, "eventCellJa"),
+    "const rows = [",
+    "  { event_start: '2026-12-03', event_end: '2026-12-04' },",
+    "  { event_start: '2026-09-30', event_end: '' },",
+    "  { event_start: '2027-03-01', event_end: '2027-03-05' },",
+    "  { date_text: 'TBD 2027' },",
+    "].map((ed) => eventCellJa({ ed }));",
+    "console.log(JSON.stringify(rows));",
+  ].join("\n");
+  const evOutputs = ["Asia/Tokyo", "UTC", "America/Los_Angeles", "Pacific/Kiritimati"].map((TZ) => {
+    const proc = spawnSync("node", ["-e", evScript], {
+      encoding: "utf8",
+      env: { ...process.env, TZ },
+      timeout: 60_000,
+    });
+    expect(proc.status, proc.stderr).toBe(0);
+    return proc.stdout.trim();
+  });
+  expect(evOutputs[0]).toBe(
+    JSON.stringify([
+      "2026-12-03(木) 〜 2026-12-04(金)",
+      "2026-09-30(水)",
+      "2027-03-01(月) 〜 2027-03-05(金)",
+      "TBD 2027",
+    ]),
+  );
+  for (const out of evOutputs) expect(out).toBe(evOutputs[0]);
 });
 
 it("the deadline search index carries Japanese month terms (SPEC §7)", () => {
@@ -2825,7 +2861,9 @@ it("drawer shows JST with weekday and the official timezone, viewer-timezone ind
     // 暦日の曜日も recommender.js の正本を注入する（TZ でズレないことの確認を兼ねる）。
     siteRuntime("recommender.js").match(/const CALENDAR_DATE_JA = \[[^\]]*\];/)?.[0] ?? "",
     jsFunction(siteRuntime("recommender.js"), "weekdayJaFromDate"),
-    `const Recommender = { officialZone: ${jsFunction(siteRuntime("recommender.js"), "officialZone")}, placeJa: (v) => String(v ?? ""), topicTagsJa: () => [], weekdayJaFromDate: weekdayJaFromDate };`,
+    // 会期の式も正本を注入する（一覧・行の詳細・CSV が同じ式を使う。書き写さない）。
+    jsFunction(siteRuntime("recommender.js"), "eventCellJa"),
+    `const Recommender = { officialZone: ${jsFunction(siteRuntime("recommender.js"), "officialZone")}, placeJa: (v) => String(v ?? ""), topicTagsJa: () => [], weekdayJaFromDate: weekdayJaFromDate, eventCellJa: eventCellJa };`,
     "const body = { innerHTML: '' };",
     "const els = {",
     "  drawerBackdrop: { classList: { add() {} } }, drawerTitle: {}, drawerFullName: {},",
@@ -3366,7 +3404,7 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
     "const dOpened = calls.open.length === 1 && calls.open[0] === 'B';",
     "const dFocusedRow = calls.focus[calls.focus.length - 1] === 'row1';",
     "const verificationSummary = new Function('esc', 'return (' + SUMMARY + ')')((s) => String(s ?? ''));",
-    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '' }, meetingRangeJa, upcomingEditionsOf, KIND_DETAIL, () => {});",
+    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '', eventCellJa: (r) => String(r?.ed?.event_start || r?.ed?.date_text || '') }, meetingRangeJa, upcomingEditionsOf, KIND_DETAIL, () => {});",
     "document.activeElement = prevEl;",
     "openDrawer({ kind: 'journal', conf: { title: 'X' }, ed: { place: 'P', date_text: 'D' } });",
     "const focusedClose = document.activeElement === closeBtn;",
@@ -3660,7 +3698,12 @@ it("openDrawer escapes place, date_text, and official-site href (#390)", () => {
   expect(end).toBeGreaterThan(start);
   const body = runtime.slice(start, end);
   expect(body).toContain("esc(r.ed.place");
-  expect(body).toContain("esc(r.ed.date_text");
+  // 会期の公式表記は原表記として別に出す（主語は一覧と同じ式）。公式表記が主語だった頃と
+  // 違って `eventRawJa` 経由になるので、生値が `date_text` から来ることごと確かめる。
+  expect(body).toContain("esc(eventRawJa");
+  expect(body).toContain('String(r.ed.date_text || "")');
+  // 主語の会期も esc を通す（`eventCellJa` の値を、esc を通さずに混ぜない）。
+  expect(body).toMatch(/esc\(\s*\n?\s*eventShownJa/);
   expect(body).toContain("safeExternalUrl(r.ed.link || r.conf.link)");
   expect(body).toContain("esc(officialLink)");
 });
@@ -3697,7 +3740,7 @@ it("normal deadline drawer includes verification details", () => {
     "function $(id) { return document.getElementById(id); }",
     "const window = { _prevFocus: null };",
     `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')((s) => String(s ?? ''));`,
-    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '' }, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}), () => {});`,
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: () => '', eventCellJa: (r) => String(r?.ed?.event_start || r?.ed?.date_text || '') }, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}), () => {});`,
     "openDrawer({",
     "  kind: 'paper', conf: { key: 'demo', title: 'Demo' },",
     "  ed: { year: 2026, place: 'P', date_text: 'D' }, t: 0, tLast: 0,",
@@ -13814,4 +13857,122 @@ it("論文の貼り付けは日本語の項目名でも 1 論文として読め�
   expect(out.bareTitle).toBe("分散学習の高速化");
   // タイトル行の無い貼り付けは構造化しない（ゲートを緩めすぎていない）。
   expect(out.noTitle, "タイトル行の無い入力を 1 論文に潰してしまった").toBeGreaterThan(1);
+});
+
+it("会期は一覧・行の詳細・CSV で同じ式を使い、行の詳細が公式の英語表記を主語にしない（SPEC §7）", () => {
+  /* 会期の式を一覧・行の詳細・CSV が別々に持っていた。行の詳細だけ公式ページの原文を先に
+   * 出していたので、一覧が `2024-03-18(月) 〜 2024-03-21(木)` の行を開くと詳細は
+   * `March 18-21, 2024` と英語だけが出ていた（2026-08-09 実測: 会期に ISO を持つ 2,971 行の
+   * うち 2,933 行でズレ、既定画面にも 338 行あった）。てびきの「日時」は「表と詳細で同じ
+   * 式を使う」と書いているので、案内と実装のずれでもあった。正式な日付が読める行は必ず
+   * 一覧と同じ式に直し、公式表記は「原表記」として別に残す（開催地と同じ作法）。 */
+  const script = [
+    "import fs from 'node:fs';",
+    `import Recommender from ${JSON.stringify(`file://${join(site, "recommender.js")}`)};`,
+    "const R = Recommender;",
+    `const DATA = JSON.parse(fs.readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const NOW = Date.parse('2026-08-09T00:00:00Z');",
+    "const rows = R.candidateRows(DATA, NOW);",
+    "const HAS_ASCII_ALPHA = /[A-Za-z]/; // \\b は文字列リテラル内で不可視のバックスペースになるため使わない",
+    // 壊れていた行が実際に何件有ったか（検査が空振りでないことの証明）。
+    "let wasEnglish = 0;",
+    "let englishNow = 0;",
+    "let fallback = 0;",
+    "for (const r of rows) {",
+    "  const start = String((r.ed && r.ed.event_start) || '').trim();",
+    "  const raw = String((r.ed && r.ed.date_text) || '').trim();",
+    "  if (start && raw && HAS_ASCII_ALPHA.test(raw)) wasEnglish += 1;",
+    "  const shown = R.eventCellJa(r);",
+    "  if (start && HAS_ASCII_ALPHA.test(shown)) englishNow += 1;",
+    "  if (!start && shown) fallback += 1;",
+    "}",
+    // 行単位の式: 1日だけ・期間・ISO 無し（原文）。
+    "const single = R.eventCellJa({ ed: { event_start: '2026-01-05', event_end: '2026-01-05' } });",
+    "const range = R.eventCellJa({ ed: { event_start: '2026-12-03', event_end: '2026-12-04' } });",
+    "const rawOnly = R.eventCellJa({ ed: { date_text: 'TBD 2027' } });",
+    "const nothing = R.eventCellJa({ ed: {} });",
+    // CSV の会期列が画面と同じ式か（表計算へ出したときだけ書き方が違う、を弾く）。
+    "const SEL = ['abstract', 'paper', 'journal'];",
+    "const shownRows = rows.filter((r) => SEL.indexOf(r.kind) >= 0);",
+    "const csv = R.deadlinesToCsv(shownRows, NOW);",
+    "const parseLine = (line) => {",
+    "  const out = [];",
+    "  let cur = '';",
+    "  let q = false;",
+    "  for (let i = 0; i < line.length; i++) {",
+    "    const ch = line[i];",
+    "    if (q) {",
+    "      if (ch === '\"') {",
+    "        if (line[i + 1] === '\"') { cur += '\"'; i++; } else q = false;",
+    "      } else cur += ch;",
+    "    } else if (ch === '\"') q = true;",
+    "    else if (ch === ',') { out.push(cur); cur = ''; }",
+    "    else cur += ch;",
+    "  }",
+    "  out.push(cur);",
+    "  return out;",
+    "};",
+    "const lines = csv.split('\\r\\n').filter((l) => l.length);",
+    "const head = parseLine(lines[0]);",
+    "const evIdx = head.indexOf('会期');",
+    "const csvVals = new Set(lines.slice(1).map((l) => parseLine(l)[evIdx]));",
+    "let csvChecked = 0;",
+    "let csvMiss = 0;",
+    "for (const r of shownRows) {",
+    "  const want = R.eventCellJa(r);",
+    "  if (!want) continue;",
+    "  csvChecked += 1;",
+    "  if (!csvVals.has(want)) csvMiss += 1;",
+    "}",
+    "console.log(JSON.stringify({ rowCount: rows.length, wasEnglish, englishNow, fallback, single, range, rawOnly, nothing, evIdx, csvChecked, csvMiss }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    rowCount: number;
+    wasEnglish: number;
+    englishNow: number;
+    fallback: number;
+    single: string;
+    range: string;
+    rawOnly: string;
+    nothing: string;
+    evIdx: number;
+    csvChecked: number;
+    csvMiss: number;
+  };
+  // 壊れていた行は大量に有った（＝この検査は空振りではない）。
+  // 閾値は絶対値で書かない。テストハーネスのビルドは自分自身の固定時刻で走るため、
+  // 候補行数は締切の過ぎ具合で大きく変わる（2026-08-09 固定の検査用ビルドでは 3,235 行、
+  // ハーネスのビルドでは 510 行だった。割合で書かないと時刻が動いた日に検査が壊れる）。
+  expect(out.rowCount, "候補行が出ていない").toBeGreaterThan(200);
+  expect(out.wasEnglish, "公式表記が英語の行が見つからず、検査が空振り").toBeGreaterThan(
+    Math.floor(out.rowCount / 10),
+  );
+  // 直後は正式な日付が読める行で英語の原文を主語にしない。
+  expect(out.englishNow, "行の詳細と同じ式なのに会期が英語の原文になっている").toBe(0);
+  // ISO が無い行だけ原文を主語にする（12 行あるうちの何行かは選択可能種別で画面に出る）。
+  expect(out.fallback, "ISO の無い行の原文フォールバックが消えている").toBeGreaterThan(0);
+  // 式の形。1日だけの行は期間を書かない。
+  expect(out.single).toBe("2026-01-05(月)");
+  expect(out.range).toBe("2026-12-03(木) 〜 2026-12-04(金)");
+  expect(out.rawOnly).toBe("TBD 2027");
+  expect(out.nothing).toBe("");
+  // CSV の会期列が画面と同じ式。
+  expect(out.evIdx, "CSV に対象の会期列が無い").toBeGreaterThan(-1);
+  expect(out.csvChecked, "CSV と突き合わせる行が出ていない").toBeGreaterThan(
+    Math.floor(out.rowCount / 10),
+  );
+  expect(out.csvMiss, `CSV の会期列が画面と違う行が ${out.csvMiss} 件`).toBe(0);
+
+  // 行の詳細（ドロワー）は同じ式を呼び、公式表記を主語にしないこと。
+  const runtime = siteRuntime();
+  const start = runtime.indexOf("function openDrawer");
+  const openBody = runtime.slice(start, runtime.indexOf("window.openDrawer", start));
+  expect(start).toBeGreaterThanOrEqual(0);
+  expect(openBody).toContain("Recommender.eventCellJa(r)");
+  expect(openBody, "公式表記を主語に戻していた").not.toMatch(
+    /r\.ed\.date_text\s*\|\|\s*r\.ed\.event_start/,
+  );
+  expect(openBody).toContain("原表記: ");
 });

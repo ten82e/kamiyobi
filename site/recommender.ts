@@ -2127,6 +2127,28 @@ const Recommender = (() => {
     });
   }
 
+  /* 会期の表示語を決める式を一箇所にする。一覧・行の詳細・CSV が別々に組み立てていて
+   * 行の詳細だけ公式ページの原文をそのまま出していた（2026-08-09 実測: 会期に ISO を持つ
+   * 2,971 行のうち 2,933 行で行の詳細が `March 18-21, 2024` のような英語の原文になり、
+   * 同じ行の一覧は `2024-03-18(月) 〜 2024-03-21(木)` と出ていた。既定画面にも 338 行
+   * 出ている）。てびきの「日時」は「表と詳細で同じ式を使う」と書いているので、その案内に
+   * 合わせる。読み取れる ISO があれば一覧と同じ式、ISO が無い行だけ原文を返す
+   * （原文しか無い行は 12 行あり、そこに「未確認」より実際に決まっている会期を書くのは
+   * CSV がもともとやっていたことと同じ）。 */
+  /* 出張・会場押さえは曜日で見込むので、ISO 日付に曜日を添える（曜日が出せなければ添えない）。
+   * 終了日が開始日と同じ・無い場合は1日分として出す。 */
+  function eventCellJa(row: unknown): string {
+    const ed = ((row as { ed?: unknown } | null)?.ed || {}) as Record<string, unknown>;
+    const start = String(ed.event_start || "").trim();
+    if (!start) return String(ed.date_text || "").trim();
+    const withDay = (date: string): string => {
+      const day = weekdayJaFromDate(date);
+      return day ? `${date}(${day})` : date;
+    };
+    const end = String(ed.event_end || "").trim();
+    return end && end !== start ? `${withDay(start)} 〜 ${withDay(end)}` : withDay(start);
+  }
+
   function deadlinesToCsv(
     rows: readonly Record<string, unknown>[] | null | undefined,
     nowMs: number,
@@ -2199,16 +2221,8 @@ const Recommender = (() => {
           csvRank(rank.ccf),
           csvRank(rank.core),
           csvRank(rank.thcpl),
-          // 一覧の会期列と同じ形（ISO + 暦日）を優先し、読めない会期は原文を残す。
-          ed.event_start
-            ? [ed.event_start, ed.event_end]
-                .filter(Boolean)
-                .map((d) => {
-                  const day = weekdayJaFromDate(d);
-                  return day ? `${d}(${day})` : String(d);
-                })
-                .join(" 〜 ")
-            : ed.date_text,
+          // 会期は画面と同じ式（一覧・行の詳細・CSV で `eventCellJa` を共有する）。
+          eventCellJa(row),
           place,
           status,
           ed.link || conf.link,
@@ -5455,6 +5469,7 @@ const Recommender = (() => {
     extendedLabelJa: () => EXTENDED_LABEL_JA,
     placeJa: placeJa,
     weekdayJaFromDate: weekdayJaFromDate,
+    eventCellJa: eventCellJa,
     deadlinesToCsv: deadlinesToCsv,
     searchNormalize: searchNormalize,
     querySynonymNotes: querySynonymNotes,

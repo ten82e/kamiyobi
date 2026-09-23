@@ -1078,6 +1078,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
     const placeRaw = String(r.ed.place || "");
     const placeShown = Recommender.placeJa(placeRaw);
+    // 会期も一覧・CSV と同じ式を使う（`eventCellJa` を共有）。公式表記は原表記として添える。
+    const eventShownJa = Recommender.eventCellJa(r);
+    const eventRawJa = String(r.ed.date_text || "").trim();
     // 研究会は毎月開くので、この行の回より後の会期も併記する（「次はいつか」を
     // 行をめくって探さなくて済むように）。日程の書き方は表と揃える。
     const laterEditions = upcomingEditionsOf(r.conf, String(r.ed.event_start || ""), Date.now());
@@ -1115,11 +1118,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         : "") +
       '<p style="margin-bottom: 8px;"><strong>会期:</strong> ' +
       esc(
-        r.ed.date_text ||
-          r.ed.event_start ||
-          (Recommender.fieldNotApplicableJa(r) ? NOT_APPLICABLE_JA : UNCONFIRMED_JA),
+        eventShownJa || (Recommender.fieldNotApplicableJa(r) ? NOT_APPLICABLE_JA : UNCONFIRMED_JA),
       ) +
       "</p>" +
+      // 公式ページの会期表記は「原表記」として下に添える（開催地と同じ作法）。前にここを
+      // 主語にしていたので、一覧が `2024-03-18(月) 〜 2024-03-21(木)` の行の詳細が
+      // `March 18-21, 2024` と英語だけ書いていた（SPEC §7）。
+      (eventRawJa && eventRawJa !== eventShownJa
+        ? '<p style="margin-bottom: 8px; color: var(--muted); font-size: 0.8rem;">原表記: ' +
+          esc(eventRawJa) +
+          "</p>"
+        : "") +
       laterEditionsHtml +
       // 並べ語は中黒（・）に統一する。一覧・CSV・件数欄はすでに中黒で並べていて、
       // 行の詳細だけ全角コンマ（，）だと、同じ情報を 2 通りの書き方で見る上に、
@@ -2769,16 +2778,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
     const c5 = td(tr, "会期");
     const eventNa = Recommender.fieldNotApplicableJa(r);
-    let span = eventNa ? NOT_APPLICABLE_JA : UNCONFIRMED_JA;
-    if (r.ed.event_start) {
-      // 出張・会場押さえは曜日で見込むので、ISO 日付に曜日を添える（不明なら出さない）。
-      const startDay = Recommender.weekdayJaFromDate(r.ed.event_start);
-      const endDay = Recommender.weekdayJaFromDate(r.ed.event_end);
-      span =
-        r.ed.event_end && r.ed.event_end !== r.ed.event_start
-          ? `${r.ed.event_start}${startDay ? `(${startDay})` : ""} 〜 ${r.ed.event_end}${endDay ? `(${endDay})` : ""}`
-          : `${r.ed.event_start}${startDay ? `(${startDay})` : ""}`;
-    }
+    // 会期の式は一覧・行の詳細・CSV で `eventCellJa` を共有する。ここで別の式を持つと
+    // 行の詳細だけ公式ページの原文（英語）になった（SPEC §7）。
+    const span = Recommender.eventCellJa(r) || (eventNa ? NOT_APPLICABLE_JA : UNCONFIRMED_JA);
     const spanCell = line(c5, span, "sub nowrap");
     if (spanCell && span === UNCONFIRMED_JA) spanCell.title = UNCONFIRMED_TITLES_JA.event;
     if (spanCell && eventNa) spanCell.title = Recommender.notApplicableTitleJa("event");
