@@ -1909,13 +1909,21 @@ const Recommender = (() => {
    * 黙って条件が変わったように見えると、自分が何を見たのか分からなくなる。 */
   function relativeDayNotes(query: unknown, nowMs: number): string[] {
     const notes: string[] = [];
-    queryTokens(query).forEach((token) => {
+    queryTokens(collapseRelativeDayPhrase(query)).forEach((token) => {
       const dayOffset = RELATIVE_DAY_OFFSETS_JA[token];
       if (dayOffset !== undefined) {
         const ymd = offsetCalendarDay(nowMs, dayOffset);
         const iso = `${ymd[0]}-${String(ymd[1]).padStart(2, "0")}-${String(ymd[2]).padStart(2, "0")}`;
         const day = weekdayJaFromDate(iso);
         notes.push(`${token} = ${ymd[0]}年${ymd[1]}月${ymd[2]}日${day ? `(${day})` : ""}`);
+        return;
+      }
+      const numeric = numericRelativeDay(token, nowMs);
+      if (numeric) {
+        const ymd = /^([0-9]{4})年([0-9]{1,2})月([0-9]{1,2})日$/.exec(numeric[1]);
+        if (!ymd) return;
+        const day = weekdayJaFromDate(toIsoDate(numeric[1]));
+        notes.push(`${token} = ${ymd[1]}年${ymd[2]}月${ymd[3]}日${day ? `(${day})` : ""}`);
         return;
       }
       const yearOffset = RELATIVE_YEAR_OFFSETS_JA[token];
@@ -2875,6 +2883,10 @@ const Recommender = (() => {
     あさって: 2,
     昨日: -1,
     きのう: -1,
+    // 残り欄が今日出す語（過ぎた分と、1 時間以内の分）。この欄の語を貼れるようにする
+    // （第 223 回）。`N 日前に終了` は `N日前` として上の数値側で受ける。
+    本日終了: 0,
+    まもなく: 0,
   };
 
   /* 週の語。日本では月曜始まりで話すのが普通（「今週中に出す」は月〜日）。
@@ -2945,8 +2957,47 @@ const Recommender = (() => {
     return out;
   }
 
+  /* 画面の残り欄は「あと 51 日」に並ぶ（785 行）。そのまま貼ると `あと` `51` `日` の 3 語に
+   * 割れて AND になり、どの行にも当たらなかった（2026-08-09 生成ビルドで実測: 「あと 51 日」
+   * 「51日後」「51 日後」「残り51日」はすべて 0 件。数値の `51` だけ打つと日付の途中で
+   * 当たって 0 件または無関係な当たり方になった）。同じ欄の「本日終了」も同じ形の日付語に
+   * 展開すれば届く（「明日」などの相対日と同じ経路）。
+   * 語が空格で割けるので、文字列の段階で `51日後` の 1 語に寄せる。`5日` だけの語は
+   * 「今月の 5 日」の意味で使われる（上の 12 か月展開がすでにある）ので、数値だけでは
+   * 絶対 day 語に寄せない。 */
+  const RELATIVE_DAY_PHRASES_JA: Array<[RegExp, (n: number) => string]> = [
+    [/(?:あと|残り|のこり)\s*([0-9]{1,4})\s*(?:日間|日|にち)/g, (n) => `${n}日後`],
+    [/([0-9]{1,4})\s*(?:日間|日|にち)\s*(?:後|あと)/g, (n) => `${n}日後`],
+    [/([0-9]{1,4})\s*(?:日|にち)\s*(?:前|まえ)/g, (n) => `${n}日前`],
+  ];
+
+  /** 「あと 51 日」「51 日後」を `51日後` の 1 語に寄せる（語が割ける前にやる）。 */
+  function collapseRelativeDayPhrase(query: unknown): unknown {
+    if (typeof query !== "string" || !query) return query;
+    let out = query;
+    RELATIVE_DAY_PHRASES_JA.forEach(([pattern, to]) => {
+      out = out.replace(pattern, (_all, digits) => {
+        const n = Number(digits);
+        return n >= 1 && n <= 3650 ? to(n) : _all;
+      });
+    });
+    return out;
+  }
+
+  /** 数値の相対日（`51日後` `3日前`）。語の形を壊さない範囲で 1 暦日に展開する。 */
+  function numericRelativeDay(token: string, nowMs: number): string[] | null {
+    const matched = /^([0-9]{1,4})(日後|日前)$/.exec(token);
+    if (!matched) return null;
+    const n = Number(matched[1]);
+    if (!(n >= 1 && n <= 3650)) return null;
+    const ymd = offsetCalendarDay(nowMs, matched[2] === "日後" ? n : -n);
+    return [token, `${ymd[0]}年${ymd[1]}月${ymd[2]}日`, `${ymd[1]}月${ymd[2]}日`];
+  }
+
   /** 相対日・相対日の語を、暦日の候補グループへ展開する（OR の組）。 */
   function relativeDayGroups(token: string, nowMs: number): string[] | null {
+    const numeric = numericRelativeDay(token, nowMs);
+    if (numeric) return numeric;
     const dayOffset = RELATIVE_DAY_OFFSETS_JA[token];
     if (dayOffset !== undefined) {
       const ymd = offsetCalendarDay(nowMs, dayOffset);
@@ -3634,6 +3685,7 @@ const Recommender = (() => {
     if (typeof query === "string" && CATEGORY_CHIP_HEADS_JA.length) {
       query = query.replace(CATEGORY_CHIP_TAIL, "$1");
     }
+    query = collapseRelativeDayPhrase(query);
     const urlTerms = urlLikeQueryTerms(query);
     if (urlTerms !== null) query = urlTerms;
     const now = Number.isFinite(Number(nowMs)) ? Number(nowMs) : Date.now();

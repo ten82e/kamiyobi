@@ -2732,6 +2732,9 @@ const SEARCH_CANON = (() => {
     ["wholeWordLatinTerms", /let wholeWordLatinTerms[^\n]*;/],
     ["RELATIVE_DAY_OFFSETS_JA", /const RELATIVE_DAY_OFFSETS_JA[\s\S]*?\};/],
     ["RELATIVE_WEEK_OFFSETS_JA", /const RELATIVE_WEEK_OFFSETS_JA[\s\S]*?\};/],
+    /* 画面の残り欄の語（`あと 51 日`）を 1 語に寄せる表（第 223 回）。`queryTokenGroups` が
+     * 読むので、抜き出した関数と一緒に注入する（書き写すと正本とズレる）。 */
+    ["RELATIVE_DAY_PHRASES_JA", /const RELATIVE_DAY_PHRASES_JA[\s\S]*?\];/],
     ["RELATIVE_YEAR_OFFSETS_JA", /const RELATIVE_YEAR_OFFSETS_JA[\s\S]*?\};/],
   ].map(([name, re]) => {
     const src = rec.match(re)?.[0];
@@ -2759,6 +2762,10 @@ const SEARCH_CANON = (() => {
       "offsetCalendarDay",
       "weekDayTermsJa",
       "yearMonthTermsJa",
+      // 数値の相対日（`あと 51 日` → `51日後` → 暦日）。`relativeDayGroups` と
+      // `queryTokenGroups` が呼ぶので、定義順で先に置く（第 223 回）。
+      "collapseRelativeDayPhrase",
+      "numericRelativeDay",
       "relativeDayGroups",
       "queryTokenGroups",
       "compoundSplitHit",
@@ -16445,6 +16452,105 @@ it("一覧の会期欄に出る日付をそのまま打つと、その行に出�
   ).length;
   expect(金曜の締切, "金曜の締切行が無く、この検査が空振りしている").toBeGreaterThan(0);
   expect(金曜で当たった, "会期の日曜日が「金曜日」の検索に混ざった").toBe(金曜の締切);
+});
+
+it("残り欄に並ぶ「あと 51 日」をそのまま貼ると、その分だけ先の締切に出会う（SPEC §7）", async () => {
+  /* 残り欄は 863 行中 785 行で「あと N 日」に並ぶ（2026-08-09 生成ビルドで実測）。なのに
+   * その語をそのまま貼ると 0 件だった – 空格で `あと` `51` `日` の 3 語に割れて AND に
+   * なるため（`51日後` `51 日後` `残り51日` もすべて 0 件）。数値の `51` だけ打つと
+   * 日付の途中で当たって 0 件または無関係な当たり方になった。表計算の「残り日数」列は
+   * 並べ替え用に数値のまま（`deadlinesToCsv` の側）なので、画面の語で引けるようにする。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const catalog = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+    typeof R.candidateRows
+  >[0];
+  const at = Date.parse("2026-08-09T00:00:00Z");
+  /* 画面と同じ式で残り欄を作る（`remain` はビルド成果物から抜き出し、時計だけ固定する。
+   * 渡す値も画面と同じ `tShown` – 幅を持つ行は表示している暦日が正本（第 216 回）。 */
+  const app = siteRuntime("app.js");
+  const remain = new Function(
+    "DAY",
+    "FixedDate",
+    [jsFunction(app, "remain").replace(/Date\.now\(\)/g, "FixedDate.now()"), "return remain;"].join(
+      "\n",
+    ),
+  )(Number(/const DAY = (\d+);/.exec(app)?.[1] ?? 86400000), { now: () => at });
+  type ShownRow = { hay: string; tShown: number };
+  const rows = R.candidateRows(catalog) as unknown as ShownRow[];
+  const 表示 = (r: ShownRow) => String(remain(r.tShown).text);
+  const hitRows = (query: string) => {
+    const matches = R.searchMatcher(R.expandRelativeMonths(query, at), at);
+    return new Set(rows.filter((r) => matches(r.hay) === true));
+  };
+  /* 表示している行は必ず引ける（当たり増分は「その日の暦日を書く行」を含むので、
+   * ここは足りない側だけを見る – 暦日で引く以上、会期がその日の行が入るのは `明日` と同じ）。 */
+  const 数 = new Set(
+    rows.map((r) => 表示(r).match(/^あと (\d+) 日$/)?.[1]).filter(Boolean) as string[],
+  );
+  expect(
+    [...数].length,
+    "残り欄が「あと N 日」を出していない（この検査が空振りしている）",
+  ).toBeGreaterThanOrEqual(5);
+  const 出会えない: string[] = [];
+  for (const n of [...数].map(Number)) {
+    const 表示している = rows.filter((r) => 表示(r) === `あと ${n} 日`);
+    for (const q of [`あと ${n} 日`, `${n}日後`, `${n} 日後`, `残り${n}日`, `残り ${n} 日`]) {
+      const 当たり = hitRows(q);
+      表示している.forEach((r) => {
+        if (!当たり.has(r)) 出会えない.push(`「${q}」← 表示 ${表示している.length} 行のうち`);
+      });
+    }
+  }
+  expect(
+    出会えない,
+    `残り欄の語を貼ってもその日数の行に出会えない: ${[...new Set(出会えない)].slice(0, 2).join(" / ")}`,
+  ).toEqual([]);
+  // 過ぎた分の語（`N 日前に終了`）と今日の語も同じ経路で引ける。
+  for (const 語 of ["本日終了", "まもなく"]) {
+    const 表示している = rows.filter((r) => 表示(r) === 語);
+    expect(hitRows(語).size >= 表示している.length, `「${語}」が表示より少ない`).toBe(true);
+  }
+  const 前 = new Set(
+    rows.map((r) => 表示(r).match(/^(\d+) 日前に終了$/)?.[1]).filter(Boolean) as string[],
+  );
+  expect([...前].length, "過ぎた締切の行が無く、この検査が空振りしている").toBeGreaterThanOrEqual(
+    1,
+  );
+  [...前].forEach((n) => {
+    const 表示している = rows.filter((r) => 表示(r) === `${n} 日前に終了`);
+    表示している.forEach((r) => {
+      expect(hitRows(`${n}日前`).has(r), `「${n}日前」が表示している行を引けない`).toBe(true);
+    });
+  });
+  /* 数値だけの語（`5日`）は「今月の 5 日」の意味で使われている（12 か月語への展開がすでに
+   * ある）ので、数値だけを day 語へ寄せることはしない。ここを壊すと「5日に締切の会議」が
+   * 引けなくなる。 */
+  expect(R.queryTokenGroups("5日", at)[0]?.length, "「5日」が 12 か月語でなくなった").toBe(12);
+  expect(R.queryTokenGroups("5日", at)[0]).toContain("9月5日");
+  // 黙って暦日に変えない。件数欄に解決結果を書く（相対月・相対週と同じ約束）。
+  expect(
+    R.relativeDayNotes("あと 51 日", at).join("、"),
+    "「あと 51 日」の解決結果が件数欄に出ない",
+  ).toContain("2026年9月29日");
+  expect(
+    R.relativeDayNotes("3 日前", at).join("、"),
+    "「3 日前」の解決結果が件数欄に出ない",
+  ).toContain("2026年8月6日");
+  // 他の語とのかけ算（AND）は壊さない。
+  const hitCount = (query: string) => {
+    const matches = R.searchMatcher(R.expandRelativeMonths(query, at), at);
+    return rows.filter((r) => matches(r.hay) === true).length;
+  };
+  expect(
+    hitCount("2日後 福岡") <= hitCount("2日後") && hitCount("2日後 福岡") <= hitCount("福岡"),
+    "数値の相対日と他の語を並べたときに絞り込みが効いていない",
+  ).toBe(true);
+  // 年を跨いでも解決する（12 月に「10日後」は翌年）。
+  const dec = Date.parse("2026-12-28T00:30:00Z");
+  expect(R.relativeDayNotes("10日後", dec).join("、"), "年跨ぎの解決が間違っている").toContain(
+    "2027年1月7日",
+  );
 });
 
 it("「来年」「今年」を打つと、その年の締切がぜんぶ出る（SPEC §7）", async () => {
