@@ -1672,6 +1672,10 @@ const Recommender = (() => {
     // ほかのサイトや昔の表記で「随時受付」と書くところがある。表の語は `常時受付`
     // （種別ラベル・CSV・並び順・てびきですべて同じ語を使っているので、そこへ寄せる）。
     ["随時受付", "種別「常時受付」", ["常時受付", "journal"]],
+    // 等級の列を見出しの語で打つ人。画面は評価の無い行に「評価なし」と出すのに、列の見出しは
+    // 「ランク」なので、その語で打つと 0 件に当たっていた（2026-08-09 生成ビルドで実測:
+    // `ランクなし` 0 件 / 画面の語 `評価なし` 144 件）。
+    ["ランクなし", "画面の語「評価なし」", ["評価なし"]],
     ["抄録締切", "種別「概要締切」", ["概要締切", "abstract"]],
     ["要旨締切", "種別「概要締切」", ["概要締切", "abstract"]],
     ["抄録", "種別「概要締切」", ["概要締切", "abstract"]],
@@ -1760,6 +1764,16 @@ const Recommender = (() => {
   function querySynonymNotes(query: unknown): string[] {
     const map = querySynonymMap();
     const notes: string[] = [];
+    /* 第 194 回に、画面が等級を呼ぶ語（列の見出し・選択欄の「ランク」、てびきと件数欄の「評価」）を
+     * 検索語に入れた。ただしこの語だけは等級を絞らない（2026-08-09 生成のビルドで実測: `ランク`
+     * だけで 839 / 863 行、`評価` だけで 475 / 863 行）。絞れたと読み違えないよう、等級の語が
+     * 混ざっていないときだけ、そのことを書く。 */
+    /* 照合には小文字化した形を使い、人に見せる例は画面と同じ大文字のままする
+     * （`rankGradeOrderJa()` の並びは画面の選択欄と同じなので、例もそこから取る）。 */
+    const labelWords = ["ランク", "評価"];
+    const gradeWordsShown = rankGradeOrderJa().map((grade) => String(grade));
+    const gradeWords = gradeWordsShown.map((grade) => grade.toLowerCase());
+    const queryForms = queryTokens(query).map((token) => kanaFold(String(token)));
     queryTokens(query).forEach((token) => {
       const hit = map[kanaFold(token)];
       if (hit) {
@@ -1830,6 +1844,21 @@ const Recommender = (() => {
         if (notes.indexOf(note) < 0) notes.push(note);
       }
     });
+    /* 等級の語が混ざっていないのに、画面が等級を呼ぶ語だけを打った場合。 */
+    const graded = queryForms.some(
+      (form) =>
+        gradeWords.indexOf(form) >= 0 ||
+        /^[a-c]\*?(ランク|評価)$/.test(form) ||
+        form.indexOf("ccf") === 0 ||
+        form.indexOf("core") === 0 ||
+        form.indexOf("thcpl") === 0,
+    );
+    const bareLabel = labelWords.find((word) => queryForms.indexOf(kanaFold(word)) >= 0);
+    if (bareLabel && !graded) {
+      notes.push(
+        `「${bareLabel}」だけでは等級を絞れていません（${gradeWordsShown[0]}ランク のように等級の語をいっしょに入れてください）`,
+      );
+    }
     return notes;
   }
 

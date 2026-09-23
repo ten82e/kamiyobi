@@ -5726,6 +5726,9 @@ it("分野の言い方は、画面に出る語だけを指す（SPEC §7）", ()
       /const KIND_LABEL_JA[^=]*= \{([\s\S]*?)\n\s*\};/,
       /const TAG_LABELS_JA[^=]*= \{([\s\S]*?)\n\s*\};/,
       /const ONLINE_PARTICIPATION_LABEL_JA[^\n]*;/,
+      // ランクの列に出る語（評価の無い行に「評価なし」と出す）。`ランクなし` をここへ寄せる
+      // 検索の言い方が増えるまで、この検査の並べ先に含まれていなかった。
+      /const RANK_UNRATED_LABEL_JA[^\n]*;/,
     ]
       .map((re) => rec.match(re)?.[0] ?? "")
       .join("\n");
@@ -12201,7 +12204,7 @@ it("キー操作の案内は幅ではなく操作手段で出し、効いてい�
       body: noComments.slice(m.index + m[0].length, j),
     });
   }
-  expect(blocks.length, "@media の块が読めない（検査が空振り）").toBeGreaterThan(2);
+  expect(blocks.length, "@media のブロックが読めない（検査が空振り）").toBeGreaterThan(2);
   const selectors = [".count-kbd", ".only-keyboard"];
   for (const sel of selectors) {
     const hiding = blocks.filter((b) => b.body.includes(`${sel} {`) || b.body.includes(`${sel},`));
@@ -15544,4 +15547,60 @@ it("画面が「ランク」と呼ぶ語で、等級の行に実際に出会え�
       );
     }
   }
+});
+
+it("等級を呼ぶ語だけで打った人に、絞れていないことと別の言い方を与える（SPEC §7）", async () => {
+  /* 列の見出しは等級を「ランク」と呼ぶので、その語に「なし」を添えて打つ人と、単独の「ランク」を
+   * 打つ人がいた。2026-08-09 生成のビルドで実測: `ランクなし` は 0 件（画面の語 `評価なし` は
+   * 139 件）、`ランク` 単体は 798 / 863 行を返して何も説明しておらず、絞れたと読み違えられる。
+   * 直す。検査は built の recommender.js を built の catalog.json に走らせる。見出しの語は画面から、
+   * 評価の語の語幹と等級の例は実行時の出力から取る（画面の語を書き写さない）。 */
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const clock = NOW.getTime();
+  const rows = R.candidateRows(
+    JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
+      typeof R.candidateRows
+    >[0],
+  );
+  const rowId = (r: (typeof rows)[number]) =>
+    `${String(r.conf.title ?? "")}|${String(r.ed.year ?? "")}|${String(r.dl?.utc ?? "")}`;
+  const hits = (query: string) =>
+    new Set(rows.filter((r) => R.searchMatcher(query, clock)(r.hay ?? "")).map(rowId));
+  const same = (a: Set<string>, b: Set<string>) =>
+    a.size === b.size && [...a].every((x) => b.has(x));
+
+  const unrated = R.rankUnratedLabelJa();
+  const grade = R.rankGradeOrderJa()[0];
+
+  /* (1) 見出しの語 + 「なし」は、画面の語で引いた人と同じ行に出会う。 */
+  expect(hits(unrated).size, "評価の無い行がテストのビルドに無い").toBeGreaterThan(0);
+  expect(
+    same(hits("ランクなし"), hits(unrated)),
+    "語「ランクなし」が画面の語と同集合を出さない",
+  ).toBe(true);
+  expect(R.querySynonymNotes("ランクなし").join(""), "寄せた先を説明していない").toContain(unrated);
+
+  /* (2) 等級を呼ぶ語だけを打った人には、絞れていないことと等級の語の例を書く。 */
+  const heading = /<label for="rank"[^>]*>([^<]+)<\/label>/.exec(html)?.[1] ?? "";
+  expect(heading.length, "ランクの見出しが画面に見当たらない").toBeGreaterThan(0);
+  // 画面は評価の無い行に「評価なし」と出すので、その語幹も等級を呼ぶ語として同じ扱いになる。
+  const stem = unrated.replace(/なし$/, "");
+  expect(stem.length, "評価の語の語幹が空").toBeGreaterThan(0);
+  for (const word of [heading, stem]) {
+    expect(hits(word).size, `語「${word}」が 0 件（おしらせ以前の問題）`).toBeGreaterThan(0);
+    const notes = R.querySynonymNotes(word).join("");
+    expect(notes.length, `語「${word}」のおしらせが出ていない`).toBeGreaterThan(0);
+    expect(notes).toContain(word);
+    expect(notes, "等級の語の例を置いていない").toContain(`${grade}ランク`);
+  }
+
+  /* (3) 等級の語をいっしょに入れた人には、余計なおしらせを出さない。 */
+  for (const word of [heading, stem]) {
+    expect(R.querySynonymNotes(`${grade}${word}`), "等級を絞れているのに教えた").toEqual([]);
+    expect(R.querySynonymNotes(`${grade} ${word}`), "語を離しても同じ").toEqual([]);
+  }
+  expect(R.querySynonymNotes(`一致${stem}`), "別の合成語につられた").toEqual([]);
+  expect(R.querySynonymNotes(unrated), "画面の語そのものに教える必要は無い").toEqual([]);
 });
