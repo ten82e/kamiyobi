@@ -468,6 +468,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   // 種別の日本語表記は recommender の正典と同じ表を使う（表示している語で検索できない、
   // という状態を作らないため）。
   const KIND_LABEL: Record<string, string> = Recommender.kindLabelTable();
+  /* 検証状態の語も recommender の正本から取る（上の KIND_LABEL と同じ理由）。
+   * 関数の中で `Recommender.…` を参照しないこと – 行の詳細を作る関数は検査が
+   * ビルド成果物から単独で抜き出して動かすので、依存を増やすと抜き出した先に
+   * `Recommender` が居なくなる（第 212 回で実際に踏んだ）。 */
+  const VERIFICATION_STATUS_LABELS: Record<string, string> =
+    Recommender.verificationStatusLabelTable();
 
   /* 種別セレクトの選択肢。`filter()` の `byKind` が通す種別と必ず揃える —
    * 選んでも 0 件になる選択肢を並べるのが最もまずい（選択肢が噺になる）。
@@ -2657,12 +2663,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return d;
   }
 
+  /* 検証状態の語は recommender の正本から取る。以前はここに語を書き写していて、
+   * 検索用の語を作る側はまた別の比較（`verification === "unverified"`）を見ていたため、
+   * 画面が 375 行に出している「複数候補のため要確認」が検索で 0 件だった
+   * （2026-08-09 生成ビルドで実測・第 212 回）。 */
   function verificationAlert(status: string | undefined): string | null {
     if (!status || status === "verified") return null;
-    if (status === "changed") return "変更を検出";
-    if (status === "source-unreachable") return "公式ページ取得不能";
-    if (status === "manual-required" || status === "parser-failed") return "複数候補のため要確認";
-    return "再確認待ち";
+    return VERIFICATION_STATUS_LABELS[status] || "再確認待ち";
   }
 
   function makeRow(r: AppRow) {
@@ -2952,15 +2959,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
     const verification = dl?.verification;
     if (!verification) return "";
-    const statusLabels: Record<string, string> = {
-      verified: "確認済み",
-      pending: "再確認待ち",
-      changed: "変更を検出",
-      retryable: "再試行待ち",
-      "source-unreachable": "公式ページ取得不能",
-      "parser-failed": "複数候補のため要確認",
-      "manual-required": "複数候補のため要確認",
-    };
+    /* 語彙は一覧の印・検索用の語と同じ正本（第 212 回。書き写した三箇所がズレて、
+     * 画面に出る語が検索で引けない状態になっていた）。 */
+    const statusLabels: Record<string, string> = VERIFICATION_STATUS_LABELS;
     /* 日時はこの画面の他の場所と同じ JST で出す。表のヘッダーは「日時は JST で出しています」
      * と書いてあり、一覧の日時は `fmtJst` が +09:00 固定で計算している。一方ここは
      * `toLocaleString("ja-JP")` だった – これは**利用者の端末の時刻合わせ**で変わる
@@ -3009,7 +3010,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       "<br><b>確認範囲</b> " +
       esc(fields) +
       "<br><b>状態</b> " +
-      esc(statusLabels[verification.status || ""] || verification.status || "未確認") +
+      esc(statusLabels[verification.status || ""] || "再確認待ち") +
       (verification.next_check_at
         ? `<br><b>次回確認予定</b> ${esc(jstStamp(verification.next_check_at))}`
         : "") +
@@ -4647,6 +4648,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       `ランク${unconfirmed} はどのランク表にも載っていない行、「${unrated}」は表に載っているが評価が付いていない行です`,
       `「${extended}」は、上流が延長した締切です`,
       `「${notApplicable}」は、常時受付の期刊行で、締切というものがない行です`,
+      // 検証状態の印も紙に刷られる。第 212 回まで検索用の語と CSV の「状態」列から
+      // 抜けていて、紙のうえに意味が書かれていなかった（2026-08-09 生成ビルドで実測:
+      // 状態列には 複数候補のため要確認 375 件・確認済み 25 件・再確認待ち 2 件が入る）。
+      // 語は画面と同じ語彙表から取る（書き写すと紙と画面がズレる）。
+      `「${VERIFICATION_STATUS_LABELS["manual-required"]}」は公式ページに候補が複数あって人の確認が必要な行、「${VERIFICATION_STATUS_LABELS.pending}」は次の確認予定に回した行、「${VERIFICATION_STATUS_LABELS.verified}」は公式ページで確認した行です`,
       // ここに並べる語は、必ずこの用紙に刷られるものだけにする。前回は画面でしか見えない
       // 語（行の詳細の「原表記:」）と、現状のデータで一度も出ない語（残り欄の横線）を
       // 説明していた（2026-08-09 実測: 詳細欄は印刷で隠れ、横線は候補行 3,235 件の CSV に

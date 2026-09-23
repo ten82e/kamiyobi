@@ -78,6 +78,19 @@ function siteRuntime(name: keyof ReturnType<typeof compileSiteRuntime> = "app.js
   return compiledRuntime[name];
 }
 
+/* 検証状態の語彙を built の recommender から取り出して注入する行。画面の関数は
+ * recommender の正本から作った module 直下の定数を見るので、ビルド成果物から抜き出した
+ * 関数を動かす検査も同じ語彙で支える（語を書き写さない – 上の等級順と同じやり方）。 */
+function verificationLabelsSource(): string {
+  const rec = siteRuntime("recommender.js");
+  const table = rec.match(/const VERIFICATION_STATUS_LABELS_JA = \{[\s\S]*?\};/u)?.[0];
+  expect(table, "recommender の検証状態の語彙表が見つからない").toBeTruthy();
+  return `const VERIFICATION_STATUS_LABELS = ${String(table).replace(
+    "const VERIFICATION_STATUS_LABELS_JA = ",
+    "",
+  )}`;
+}
+
 /* 等級順の列表をビルド成果から取り出す（テスト側に書き写さない）。
  * app.js の `RANK_GRADE_OPTIONS` は recommender の正本から作るので、
  * ハーネスへ入れるときは recommender 側の定義をそのまま使う。 */
@@ -3727,6 +3740,7 @@ it("normal deadline drawer includes verification details", () => {
   const runtime = siteRuntime();
   // ドロワーは「今後の会期」も組むので、依存も正本から注入する（書き写さない）。
   const drawerDepsSrc = [
+    verificationLabelsSource(),
     jsFunction(runtime, "meetingRangeJa"),
     jsFunction(runtime, "upcomingEditionsOf"),
   ].join("\n");
@@ -12315,6 +12329,7 @@ it("投稿先を探す画面で印刷すると、紙に出る但し書きが実�
       // 条件の書き下ろしに渡すラベル関数（この検査は describeFilters をスタブにするので
       // 呼ばれないが、名前だけは必要）。語の正本は注入済みの Recommender 側にある。
       jsFunction(app, "rankFilterLabelJa"),
+      verificationLabelsSource(),
       jsFunction(app, "printLegendJa"),
       jsFunction(app, "fillPrintMeta"),
       "fillPrintMeta();",
@@ -12336,7 +12351,9 @@ it("投稿先を探す画面で印刷すると、紙に出る但し書きが実�
   expect(recEmpty).toContain("候補 0 件");
   const dl = run("deadlines", 10, 0);
   expect(dl).toContain("表示 10 件");
-  expect(dl, "締切一覧の但し書きまで候補の語を出している").not.toContain("候補");
+  /* 見張るのは推薦画面の枚数表記の方（第 212 回まで「候補」の二字で見ていたが、
+     状態列に「複数候補のため要確認」が正しく入るようになったので、二字では見れなくなった）。 */
+  expect(dl, "締切一覧の但し書きまで推薦の枚数表記が出ている").not.toMatch(/候補 \d+ 件/);
 
   // 紙に候補が残ること自体は従来どおり（印刷で隠している規則が無いこと）。
   const css = (html.match(/<style>([\s\S]*?)<\/style>/) || ["", ""])[1].replace(
@@ -13171,6 +13188,7 @@ it("行の詳細の公式確認は内部表記のまま見せない（SPEC §7�
    * 同じ欄の中で日本語と機械の表記が混ざっていた。 */
   const app = siteRuntime("app.js");
   const script = [
+    verificationLabelsSource(),
     "const esc = (x) => String(x);",
     `const verificationSummary = (${jsFunction(app, "verificationSummary")});`,
     "const fs = await import('node:fs');",
@@ -13260,6 +13278,7 @@ it("行の詳細の公式確認の日時は利用者の端末の時刻合わせ�
    * 書く。`toLocaleString` は数の区切りでも既に避けることにしてある（`countJa` の comment）。 */
   const app = siteRuntime("app.js");
   const script = [
+    verificationLabelsSource(),
     "const esc = (x) => String(x);",
     // `fmtJst` は `pad` と `WEEKDAY_JA` を使うので、もろもろビルド成果から取る。
     /const WEEKDAY_JA = \[[^\]]*\]/.exec(app)?.[0] ?? "",
@@ -14395,6 +14414,7 @@ it("「評価なし」で印刷すると、紙の条件にも同じ語が出る�
     // 印刷の但し書きは本物の 3 関数を繋いで走らせる（配線を確かめるため）。
     jsFunction(app, "rankFilterLabelJa"),
     jsFunction(app, "describeFilters"),
+    verificationLabelsSource(),
     jsFunction(app, "printLegendJa"),
     jsFunction(app, "fillPrintMeta"),
     "fillPrintMeta();",
@@ -14754,6 +14774,7 @@ it("印刷した紙が、紙に出る語を紙の説明だけで読ませる（S
   const app = siteRuntime("app.js");
   const html = readFileSync(join(site, "index.html"), "utf8");
   const script = [
+    verificationLabelsSource(),
     "const { readFileSync } = await import('node:fs');",
     `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
     `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
@@ -14888,6 +14909,7 @@ it("紙に刷られない語を、紙の但し書きが説明していない（S
     "const { readFileSync } = await import('node:fs');",
     `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
     `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    verificationLabelsSource(),
     jsFunction(app, "printLegendJa"),
     "const legend = printLegendJa();",
     "const now = Date.parse('2026-08-09T00:00:00Z');",
@@ -16033,7 +16055,7 @@ it("推薦画面の印刷見出しは、用紙に載る枚数と候補の総数�
     .join("\n");
   const weekday = /\bconst WEEKDAY_JA = \[[^\]]*\];/.exec(app);
   if (!weekday) throw new Error("WEEKDAY_JA が見つからない（検査の組み立てを直す）");
-  const body = `${weekday[0]}\n${helpers}\nreturn fillPrintMeta;`;
+  const body = `${weekday[0]}\n${verificationLabelsSource()}\n${helpers}\nreturn fillPrintMeta;`;
   const names = [
     "$",
     "DATA",
@@ -16138,9 +16160,10 @@ it("印刷の但し書きは「公式表記」列の実物を説明している�
     .default as typeof Recommender;
   const app = siteRuntime();
   const legend = (
-    new Function("Recommender", `${jsFunction(app, "printLegendJa")}\nreturn printLegendJa;`)(
-      R,
-    ) as () => string
+    new Function(
+      "Recommender",
+      `${verificationLabelsSource()}\n${jsFunction(app, "printLegendJa")}\nreturn printLegendJa;`,
+    )(R) as () => string
   )();
   const built = R.candidateRows(
     JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Parameters<
@@ -16407,4 +16430,85 @@ it("「ポスター募集」のような複合の言い方も、表に出る語�
     hit("高性能計算", hays),
   );
   expect(hit("論文募集", hays), "「論文募集」の寄せが壊れた").toBe(hit("論文締切", hays));
+});
+
+it("行に出る検証状態の印が、そのまま打つと 1 件も引けなかった（SPEC §7）", async () => {
+  // 2026-08-09 生成ビルドで実測: 一覧は 863 行中 375 行に「複数候補のため要確認」の印を
+  // 出しているのに、その語を打つと 0 件だった（`確認済み` 25 行、`再確認待ち` 2 行も 0 件）。
+  // 検索用の語を作る側が `verification === "unverified"` という文字列比較を見ていて、
+  // 実データは `{status: "manual-required"}` のオブジェクトだったため、語が 1 つも
+  // hay に入っていなかった。画面の印・行の詳細・検索用の語を同じ表に直したので、
+  // ここでは**画面が実際にその語を出している行だけが当たる**ことを両側から測る。
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
+    .default as typeof Recommender;
+  const built = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as unknown as Record<
+    string,
+    unknown
+  >;
+  const rows = R.candidateRows(built as Parameters<typeof R.candidateRows>[0]);
+  const hays = rows.map((r) => String(r.hay));
+  const at = Date.parse("2026-08-09T00:00:00Z");
+  const hit = (query: string): number => {
+    const matches = R.searchMatcher(R.expandRelativeMonths(query, at), at);
+    return hays.filter((hay) => matches(hay) === true).length;
+  };
+  // built の app.js から画面が印を作る関数をそのまま抜き出して動かす（語を書き写さない）。
+  const appSrc = siteRuntime("app.js");
+  // 画面は語彙表を recommender の正本から module 直下の定数に落としているので、
+  // 抜き出す関数と一緒にその語彙も built から入れる（書き写さない）。
+  const alert = new Function(
+    `${verificationLabelsSource()}\n${jsFunction(appSrc, "verificationAlert")}\nreturn verificationAlert;`,
+  )() as (status?: string) => string | null;
+  // 行が持つ検証状態の語（上流の欄名なので画面には出ない。画面に出る語へ写すための足場）。
+  const statusOf = (row: (typeof rows)[number]): string => {
+    const dl = (row as unknown as Record<string, unknown>).dl as
+      | Record<string, unknown>
+      | undefined;
+    const verification = dl?.verification as { status?: unknown } | undefined;
+    return String(verification?.status ?? "");
+  };
+
+  // 印を出さない状態（未設定・確認済み）は null のまま。ここを壊すと全行に印が出る。
+  expect(alert(undefined), "状態の無い行に印を出すようになった").toBeNull();
+  expect(alert("verified"), "確認済みの行に印を出すようになった").toBeNull();
+  // 状態ごとの語。未知の状態は機械の語をそのまま出さず「再確認待ち」にする（画面の従来動作）。
+  expect(alert("manual-required")).toBe("複数候補のため要確認");
+  expect(alert("parser-failed")).toBe("複数候補のため要確認");
+  expect(alert("pending")).toBe("再確認待ち");
+  expect(alert("source-unreachable")).toBe("公式ページ取得不能");
+  expect(alert("思いもよらない状態名"), "機械の語をそのまま画面に出した").toBe("再確認待ち");
+  // 画面と検索が同じ正本を見る（語彙表を書き写していないこと）。
+  const table = R.verificationStatusLabelTable();
+  expect(table["manual-required"], "検索側の語彙表と画面の語がズレた").toBe(
+    alert("manual-required"),
+  );
+  expect(table.verified, "行の詳細に出す語が検索側の語彙表に無い").toBe("確認済み");
+
+  // その印を出している行だけが当たること（件数と、当たった行の状態の一致の両方を見る）。
+  const cases: Array<[string, string[]]> = [
+    ["複数候補のため要確認", ["manual-required", "parser-failed"]],
+    ["再確認待ち", ["pending"]],
+    ["確認済み", ["verified"]],
+  ];
+  for (const [印, statuses] of cases) {
+    const 期待 = rows.filter((r) => statuses.includes(statusOf(r))).length;
+    expect(期待, `「${印}」の印を出す行が無く、この検査が空振りしている`).toBeGreaterThan(0);
+    expect(hit(印), `「${印}」を打った行数が印を出している行数と違う`).toBe(期待);
+    const matches = R.searchMatcher(印, at);
+    const 当たった行 = rows.filter((r) => matches(String(r.hay)) === true);
+    expect(
+      当たった行.every((r) => statuses.includes(statusOf(r))),
+      `「${印}」がその印を出していない行をよせた`,
+    ).toBe(true);
+    // 画面が印を作る関数も、同じ行について同じ語を返す（確認済みは一覧の印に出さない語）。
+    const 状態 = statusOf(当たった行[0]);
+    expect(印 === "確認済み" ? table[状態] : alert(状態), `「${印}」の語が画面と違う`).toBe(印);
+  }
+  // 「要確認」だけでも同じ行に出会う（語の一部を打つ人は多い）。
+  expect(hit("要確認"), "「要確認」が「複数候補のため要確認」の行をよせない").toBe(
+    hit("複数候補のため要確認"),
+  );
+  // 既存の状態の語は動かさない（同じ関数で組み立てている語の回帰を見る）。
+  expect(hit("推定"), "「推定」の語が壊れた").toBeGreaterThan(0);
+  expect(hit("時刻未確認"), "「時刻未確認」の語が壊れた").toBeGreaterThan(0);
 });

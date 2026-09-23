@@ -2134,6 +2134,15 @@ const Recommender = (() => {
     return [`第${n}ラウンド`, `第 ${n} ラウンド`, `r${n}`];
   }
 
+  /* 検索用の語は、行の詳細に並ぶ語も含める（一覧の印は確認済みを出さないが、
+   * 行の詳細は「確認済み」と出す – 2026-08-09 生成ビルドで 25 行。画面に出る語が
+   * 引けない状態をなくすための足し方なので、印の有無ではなく状態そのものを見る）。 */
+  function verificationSearchWords(value: unknown): string {
+    const status = verificationStatusKey(value);
+    if (!status) return "";
+    return VERIFICATION_STATUS_LABELS_JA[status] || "再確認待ち";
+  }
+
   /* 締切セル・CSV・一覧の検索に出す**状態の語**をここで一本化する。
    * 画面は `推定` のバッジを出し、CSV にも同じ語を書いているのに、検索用の文字列
    * （hay）に入れていなかったため、**「推定」と打つと収録 134 件が 1 件も引けなかった**
@@ -2151,6 +2160,38 @@ const Recommender = (() => {
     return /extend/i.test(label) || label.indexOf("延長") >= 0;
   }
 
+  /* 締切の検証状態が画面に出す語。一覧の印・行の詳細・検索用の語の三箇所が同じ表を
+   * 見るための正本（ここに寄せる前は、画面の印を作る語と検索用の語が別実装で、
+   * **画面が 375 行に出していた「複数候補のため要確認」が検索で 1 件も引けなかった**
+   * （2026-08-09 生成ビルドで実測・第 212 回。`確認済み` 25 行、`再確認待ち` 2 行も 0 件。
+   * 原因は検索側が `d.verification === "unverified"` という文字列比較を見ていたことで、
+   * 実データの形は `{status: "manual-required"}` のオブジェクトだった）。
+   * 未知の状態は画面と同じ「再確認待ち」にする – 機械の語をそのまま出さない。 */
+  const VERIFICATION_STATUS_LABELS_JA: Record<string, string> = {
+    verified: "確認済み",
+    pending: "再確認待ち",
+    retryable: "再試行待ち",
+    changed: "変更を検出",
+    "source-unreachable": "公式ページ取得不能",
+    "manual-required": "複数候補のため要確認",
+    "parser-failed": "複数候補のため要確認",
+    unverified: "要確認",
+  };
+
+  /** 検証状態の欄の形（オブジェクト・文字列・無し）を状態語に落とす。 */
+  function verificationStatusKey(value: unknown): string {
+    if (value && typeof value === "object")
+      return String((value as { status?: unknown }).status ?? "");
+    return String(value ?? "");
+  }
+
+  /** 検証状態が画面に出す語。未設定と確認済みは空（一覧の印は出さない）。 */
+  function verificationStatusLabelJa(value: unknown): string {
+    const status = verificationStatusKey(value);
+    if (!status || status === "verified") return "";
+    return VERIFICATION_STATUS_LABELS_JA[status] || "再確認待ち";
+  }
+
   function statusBadgeWords(ed: object, dl: object): string[] {
     // `needs_reconfirm` と `verification` は型に生えていない上流由来の欄なので、
     // ここでは広く取る（2026-09-23 時点で収録カタログには 0 行。出た日に検索できることが
@@ -2160,7 +2201,7 @@ const Recommender = (() => {
     return [
       e.estimated ? "推定" : "",
       d.needs_reconfirm ? "再確認待ち" : "",
-      d.verification === "unverified" ? "要確認" : "",
+      verificationSearchWords(d.verification),
       isExtendedDeadline(dl) ? EXTENDED_LABEL_JA : "",
     ].filter(Boolean);
   }
@@ -5779,6 +5820,8 @@ const Recommender = (() => {
     scheduleOnlyEditions: scheduleOnlyEditions,
     kindLabelJa: kindLabelJa,
     kindLabelTable: () => ({ ...KIND_LABEL_JA }),
+    verificationStatusLabelTable: () => ({ ...VERIFICATION_STATUS_LABELS_JA }),
+    verificationStatusLabelJa: verificationStatusLabelJa,
     roundSearchTerms: roundSearchTerms,
     categorySearchTerms: categorySearchTerms,
     pastRepresentatives: pastRepresentatives,
