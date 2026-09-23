@@ -1979,6 +1979,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     urlQuery: boolean;
     queryMatch: { catalog: number; journal: number };
     catalogConferences: number;
+    // この表その物を指す語（「締め切り」など）を打ったかを見る（第 239 回）。
+    query: string;
     // 下に並ぶ「外せる条件」が 1 つ以上あるか（0 件案内と数え上げを同じにする）。
     clearable: boolean;
     pastShown: boolean;
@@ -2010,6 +2012,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         "国内研究会です。公式ページのアドレスではなく会議名（「ICDE」など）でも試してください" +
         pointer
       );
+    /* 表その物を指す語を打たれた人は、収録に無いと誤解してやめる（画面と同じ判断を
+     * 同じ語列表で言う – 第 239 回）。当たり数が 0 のときだけ立てる。 */
+    if (matchedRows === 0) {
+      const wholeWord = Recommender.wholeTableQueryWordJa(filter.query);
+      if (wholeWord)
+        return ` ｜ 「${wholeWord}」はこの表の全行に当たる語なので、検索では絞れません${pointer}`;
+    }
     const dead = filter.termCounts.filter((t) => t.count === 0).map((t) => t.term);
     if (dead.length) return ` ｜ 語「${dead[0]}」は収録データにありません${pointer}`;
     if (filter.hiddenKindWords.length)
@@ -2507,6 +2516,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 「検索語を短くする」しか出さなかった）。収録データに無い語があればそれを名指す
      * （その語を待っても行は増えない）。語が全部当たっている場合は、すべてを含む行が
      * 無いだけなので語ごとの件数を示し、いずれかを外すよう導く。 */
+    /* 検索語がこの表その物を指す語（「締め切り」など）のときは、0 件は検索の失敗では
+     * ない。そのことを書かないと「該当する締切はありません」がこの表に締切の無い話に
+     * 読める（2026-08-09 生成ビルドで実測: `締め切り` `締切り` `締切日` `提出期限` はいずれも
+     * 0 件で、収録 863 行はすべて締切だった）。当たり数が 0 のときだけ立てる –
+     * 当たっているときに「絞れません」と言うのは噓になる。 */
+    const wholeNote = matchedRows === 0 ? Recommender.wholeTableQueryNoteJa(trimmedQuery) : "";
     // URL の検索語を語に分解して「〜は収録データにも見当たりません」と言うのは誤解になる
     // （分解された語はドメインの一部で、検索の失敗理由ではない）。
     const terms = !filter.urlQuery && filter.termCounts.length > 1 ? filter.termCounts : [];
@@ -2530,7 +2545,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /* 原因を特定できたときは、他の説明文を足さない。考えられる理由を全部並べると
      * 「結局どうすればいい」が読めなくなる。検索語を短くする助言も、原因が分かっていれば
      * 的外れなので出さない。 */
-    const specific = Boolean(kindNote || catalogNote || deadTerms.length || urlNote);
+    const specific = Boolean(kindNote || wholeNote || catalogNote || deadTerms.length || urlNote);
 
     /* 0 件案内はこれまで「外せる条件」の名前だけを並べていた。同じ画面上の件数欄は
      * 同じ条件で消えた件数を書いているのに、案内の側には数字が無く、6 項目のうち
@@ -2581,8 +2596,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.md に載せています。";
     if (specific) {
       return tips.length
-        ? `${base}${kindNote}${catalogNote}${urlNote}${termNote} 外せる条件: ${tips.join(" / ")}。`
-        : `${base}${kindNote}${catalogNote}${urlNote}${termNote}`;
+        ? `${base}${kindNote}${wholeNote}${catalogNote}${urlNote}${termNote} 外せる条件: ${tips.join(" / ")}。`
+        : `${base}${kindNote}${wholeNote}${catalogNote}${urlNote}${termNote}`;
     }
     if (!tips.length) return `${base}${termNote} ${meetingNote}`;
     return `${base}${termNote} 多いのは ${tips.join(" / ")}。${meetingNote}`;

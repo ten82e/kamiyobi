@@ -1856,6 +1856,39 @@ const Recommender = (() => {
     return displayedPlaceTermSet;
   }
 
+  /* この表その物を指す語（第 239 回）。表は締切を並べた物なので「締め切り」は全行に
+   * あてはまるが、行の文字列には現れない（種別の欄は「論文締切」「概要締切」など語が
+   * 違う）。2026-08-09 生成ビルドで実測（収録 863 行）:
+   *   `締め切り` `締切り` `締切日` `提出期限` はいずれも 0 件 / `締切` は 700 行。
+   * 0 件のまま「該当する締切はありません」とだけ出すと、この表に締切が無いと読める。
+   * 当てるのは検索語まるごとの一致だけにする – 「締め切り 関西」のように他の語を足した
+   * 人は打ち直しが効いている側の話で、語を名指すのは的外れになる。 */
+  const WHOLE_TABLE_QUERY_JA = ["締め切り", "締切り", "しめきり", "締切日", "提出期限"];
+
+  /**
+   * 検索語がこの表その物を指す語のとき、打たれた語を返す（そうでなければ空）。
+   * 小文字化と前後の空白だけ整える – `kanaFold` に寄せると、漢字の語に対して
+   * 不要な依存（発音記号の表）を検査側に押し付けることになる。
+   */
+  function wholeTableQueryWordJa(query: unknown): string {
+    const q = String(query == null ? "" : query)
+      .trim()
+      .toLowerCase();
+    if (!q) return "";
+    const hit = WHOLE_TABLE_QUERY_JA.find((word) => word.toLowerCase() === q);
+    return hit || "";
+  }
+
+  /** 0 件の画面に出す打ち直し方（読み上げ側の短い文も同じ語列表から作る）。 */
+  function wholeTableQueryNoteJa(query: unknown): string {
+    const word = wholeTableQueryWordJa(query);
+    if (!word) return "";
+    return (
+      ` 「${word}」はこの表の全行にあてはまる語なので、検索では絞り込めません。` +
+      "会議名（`SC`）・分野（`セキュリティ`）・開催地（`パリ`）のように、表の欄に出る語で打ってください。"
+    );
+  }
+
   /* 検索語を打っても 1 行も減らないときの打ち直し方（第 227 回）。
    * 2026-08-09 生成ビルドで実測: `月`・`日`・`年` はそれぞれ 863 / 863 行に当たり、件数欄の
    * 数字が 1 も動かずに画面はどこにも理由を書かなかった。数値だけでは暦日が決まらない
@@ -1870,7 +1903,7 @@ const Recommender = (() => {
     if (!tokens.length) return "";
     // 数値だけ（`25`、`12 25`）。暦日の単位を付ければ日付で絞れる。
     if (tokens.every((token) => /^[0-9]{1,3}$/.test(token))) {
-      return `数値だけでは締め切日を絞れていません（\`${tokens[0]}\` は 2025 や 11月25日 に混なります）。\`${tokens[0]}日\`・\`8月\`・\`2027年\` のように単位を付けてください`;
+      return `数値だけでは締切日を絞れていません（\`${tokens[0]}\` は 2025 や 11月25日 に混なります）。\`${tokens[0]}日\`・\`8月\`・\`2027年\` のように単位を付けてください`;
     }
     // 1 文字だけ（`S`・`会`）。ほとんどの行が含むので 2 文字以上を求める。
     if (tokens.length === 1 && tokens[0].length === 1) {
@@ -6355,6 +6388,8 @@ const Recommender = (() => {
     deadlinesToCsv: deadlinesToCsv,
     searchNormalize: searchNormalize,
     queryNarrowHintJa: queryNarrowHintJa,
+    wholeTableQueryWordJa: wholeTableQueryWordJa,
+    wholeTableQueryNoteJa: wholeTableQueryNoteJa,
     querySynonymNotes: querySynonymNotes,
     queryHiddenKindMatches: queryHiddenKindMatches,
     looksLikeUrlQuery: looksLikeUrlQuery,

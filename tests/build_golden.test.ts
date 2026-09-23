@@ -1877,7 +1877,8 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
      /* 評価の語（「評価なし」）と、のぞいた行を指す語も正本から入れる – 件数欄と同じ語を
       * 見せるための注入で、検査側に語を書かない。 */
      ${(siteRuntime("recommender.js").match(/const RANK_UNRATED_LABEL_JA = [^\n]*;/) || ['""'])[0]}
-     const Recommender = { rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA };
+     ${wholeTableQueryStubs(siteRuntime("recommender.js"))}
+     const Recommender = { rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA, wholeTableQueryWordJa, wholeTableQueryNoteJa };
      ${jsFunction(appForHint, "rankFilterLabelJa")};
      ${jsFunction(appForHint, "rankDropWordsJa")};
      return (${jsFunction(appForHint, "emptyDeadlineHint")});`,
@@ -2683,6 +2684,18 @@ function jsFunction(html: string, name: string): string {
  * 実行時に同じ文字列になる Unicode エスケープへ書き換えて回避する（正本はそのまま）。 */
 function vmSafeSource(src: string): string {
   return src.replace(/"crypto"/g, '"cr\\u0079pto"');
+}
+
+/* 「この表その物を指す語」の正本（第 239 回）。0 件案内と読み上げが同じ語列表を向くので、
+ * 検査側もビルド成果物から注入する（書き写すと正本とズレる）。 */
+function wholeTableQueryStubs(rec: string): string {
+  const list = rec.match(/const WHOLE_TABLE_QUERY_JA = [^\n]*;/)?.[0] ?? "";
+  expect(list, "WHOLE_TABLE_QUERY_JA が見つからない").toBeTruthy();
+  return [
+    list,
+    jsFunction(rec, "wholeTableQueryWordJa"),
+    jsFunction(rec, "wholeTableQueryNoteJa"),
+  ].join("\n");
 }
 
 const SEARCH_CANON = (() => {
@@ -10590,9 +10603,10 @@ it("語を並べた検索で 0 件のとき、原因の語を名指す（SPEC §
   // 0 件案内の文面（ビルド成果物の関数を使う）。
   const app = siteRuntime();
   const hint = new Function(
+    "Recommender",
     `${app.match(/const KIND_ALL_LABEL_JA = [^\n]*;/)?.[0] ?? ""}
      return (${jsFunction(app, "emptyDeadlineHint")});`,
-  )() as (f: object) => string;
+  )(Recommender) as (f: object) => string;
   const base = {
     window: "all",
     past: true,
@@ -10648,17 +10662,21 @@ it("0 件の理由は読み上げにも短的に出る（長い文を aria-live 
    * 実際に起きた）。同じ原因を短い形で読み上げに出す。 */
   const app = siteRuntime();
   const note = new Function(
+    "Recommender",
     `${jsFunction(app, "countJa")};
      return (${jsFunction(app, "zeroResultLiveNote")});`,
-  )() as (f: {
+  )(Recommender) as (f: {
     hiddenKindWords: string[];
     termCounts: Array<{ term: string; count: number }>;
     catalogConferences: number;
     queryMatch: { catalog: number; journal: number };
+    query: string;
   }) => string;
   const empty = {
     hiddenKindWords: [],
     termCounts: [],
+    // 表その物を指す語を打っていない前提の検査（打ったときは別の検査で見る）。
+    query: "",
     queryMatch: { catalog: 0, journal: 0 },
     // データは入っている前提の検査（無いときの説明は別の検査で見る）。
     catalogConferences: 12,
@@ -11288,6 +11306,98 @@ it("選んだ行は支援技術にも伝わる（視覚の目印だけで状態�
   expect(app).toContain('removeAttribute("aria-current")');
 });
 
+it("「締め切り」のように表その物を指す語を打った人に、0 件の理由と打ち直し方を出す（SPEC §7）", () => {
+  /* この表は締切を並べた物なので「締め切り」は全行に当てはまるが、欄の文字列には
+   * 現れない（種別の欄に出る語は「論文締切」などで違う）。直し前は 0 件画面が
+   * 「該当する締切はありません。多いのは 検索語を短くする」とだけ出し、読み上げも
+   * 「語がありません」と言っていた（2026-08-09 生成ビルドで実測 – 収録 863 行）。
+   * この表に締切が無いように読めるので、その場で理由と打ち直し方を書く（第 239 回）。 */
+  const app = siteRuntime("app.js");
+  const rec = siteRuntime("recommender.js");
+  const real = JSON.parse(readFileSync(join(site, "data.json"), "utf8")) as Parameters<
+    typeof Recommender.candidateRows
+  >[0];
+  const rows = Recommender.candidateRows(real) as Array<{ hay: string }>;
+  expect(rows.length, "ビルド成果物の行が読めない（検査が空振り）").toBeGreaterThan(100);
+
+  const words = ["締め切り", "締切り", "しめきり", "締切日", "提出期限"];
+  words.forEach((word) => {
+    const matches = Recommender.searchMatcher(word);
+    const hits = rows.filter((row) => matches(String(row.hay))).length;
+    expect(hits, `${word} が当たるようになった（この検査の前提が変わった）`).toBe(0);
+    expect(Recommender.wholeTableQueryWordJa(word), `${word} を表その物の語としていない`).toBe(
+      word,
+    );
+  });
+  /* 絞り込みとして効く語、他の語を足した打ち方には立てない。`〆切` は収録の 4 行に
+   * 本当に当たるので、「絞れません」と言うのは噓になる（実測）。 */
+  ["論文締切", "セキュリティ", "〆切", "締切", "締め切り 関西", ""].forEach((word) => {
+    expect(Recommender.wholeTableQueryWordJa(word), `${word} に立ててしまった`).toBe("");
+  });
+
+  // 画面の 0 件案内と読み上げは、ビルド成果物の関数をそのまま動かす（正本を注入する）。
+  const stubs = [
+    (app.match(/const KIND_ALL_LABEL_JA = [^\n]*;/) || ['""'])[0],
+    jsFunction(app, "countJa"),
+    wholeTableQueryStubs(rec),
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa };",
+  ].join("\n");
+  const hint = new Function(`${stubs}\nreturn (${jsFunction(app, "emptyDeadlineHint")});`)() as (
+    f: object,
+  ) => string;
+  const live = new Function(`${stubs}\nreturn (${jsFunction(app, "zeroResultLiveNote")});`)() as (
+    f: object,
+  ) => string;
+  const base = {
+    window: "all",
+    past: false,
+    cats: 0,
+    domestic: false,
+    online: false,
+    rank: "",
+    kind: "",
+    // 「外せる条件」が 1 つある画面（原因が分かっているときに余計な助言を出さないことを
+    // 見るには、助言が出る側の形で使う必要がある）。
+    hidden: { past: 5 },
+    hiddenKindWords: [],
+    urlQuery: false,
+    termCounts: [],
+    catalogConferences: rows.length,
+    queryMatch: { catalog: 0, journal: 0 },
+    clearable: true,
+    pastShown: false,
+  };
+
+  const shown = hint({ ...base, query: "締め切り" });
+  expect(shown, "0 件になる理由を書いていない").toContain("全行にあてはまる語");
+  expect(shown).toContain("検索では絞り込めません");
+  expect(shown, "打ち直しの例を書いていない").toContain("会議名");
+  expect(shown, "原因が分かっているのに『検索語を短くする』を出した").not.toContain(
+    "検索語を短くする",
+  );
+
+  const spoken = live({ ...base, query: "締め切り" });
+  expect(spoken, "読み上げに理由を出していない").toContain("検索では絞れません");
+  expect(spoken.length, `読み上げが長い（${spoken.length} 字）`).toBeLessThan(90);
+  expect(
+    spoken.length,
+    `読み上げが画面の文より長い（読み上げ ${spoken.length} 字 / 画面 ${shown.length} 字）`,
+  ).toBeLessThan(shown.length);
+
+  // 当たり数が 0 のときだけ立てる（当たっているときに「絞れません」と言うのは噓）。
+  const withHits = { query: "セキュリティ", queryMatch: { catalog: 149, journal: 0 } };
+  expect(hint({ ...base, ...withHits })).not.toContain("全行にあてはまる語");
+  expect(live({ ...base, ...withHits })).not.toContain("検索では絞れません");
+
+  // 数値だけの打ち直し方は、他の欄と同じ「締切日」で書く（崩れた語を残さない）。
+  const narrow = Recommender.queryNarrowHintJa("25");
+  expect(narrow).toContain("締切日");
+  expect(narrow, "崩れた語が残っている").not.toContain("締め切日");
+
+  // てびきも同じ説明を書く（画面の外でも同じ話をさせる）。
+  expect(siteHtmlRuntime(), "てびきにこの話を書いていない").toContain("この表その物を指す語");
+});
+
 it("締切のデータが無い画面は、それを条件の話より先に言う（SPEC §7）", () => {
   /* データが差し込まれていない HTML を開いたとき、画面は「該当する締切はありません。
    * 条件を緩めると出ます」と言っていた（2026-09-23 実測）。緩めても何も出ないので、
@@ -11307,8 +11417,10 @@ it("締切のデータが無い画面は、それを条件の話より先に言�
     "  'return (' + FMT_SRC + ')'",
     ")(['日','月','火','水','木','金','土'], (n) => String(n).padStart(2, '0'));",
     "const generatedAtLabel = new Function('fmtJst', 'UNCONFIRMED_JA', 'return (' + LABEL_SRC + ')')(fmtJst, '未確認');",
-    "const hint = new Function('return (' + HINT_SRC + ')')();",
-    "const live = new Function('return (' + LIVE_SRC + ')')();",
+    wholeTableQueryStubs(siteRuntime("recommender.js")),
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa };",
+    "const hint = new Function('Recommender', 'return (' + HINT_SRC + ')')(Recommender);",
+    "const live = new Function('Recommender', 'return (' + LIVE_SRC + ')')(Recommender);",
     "const empty = {",
     "  window: 'all', past: false, cats: 0, domestic: false, online: false, rank: '',",
     "  kind: '', query: '', hiddenKindWords: [], queryMatch: { catalog: 0, journal: 0 },",
@@ -12156,7 +12268,8 @@ it("0 件の案内が、各条件で今何行が隠れているかを並べて�
     "const KIND_ALL_LABEL_JA = 'すべての種別';",
     // 評価の語は正本から取る（件数欄と同じ語を見るために）。
     (siteRuntime("recommender.js").match(/const RANK_UNRATED_LABEL_JA = [^\n]*;/) || [""])[0],
-    "const Recommender = { rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA };",
+    wholeTableQueryStubs(siteRuntime("recommender.js")),
+    "const Recommender = { rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA, wholeTableQueryWordJa, wholeTableQueryNoteJa };",
     jsFunction(app, "rankFilterLabelJa"),
     jsFunction(app, "rankDropWordsJa"),
     `${hintFn.replace("function emptyDeadlineHint", "const emptyDeadlineHint = function")}`,
@@ -12514,6 +12627,9 @@ it("0 件の読み上げが、画面に出ている案内の有無と緩めら�
   const liveFn = jsFunction(app, "zeroResultLiveNote");
   expect(liveFn, "0 件の読み上げ文言が見当たらない（検査が空振り）").not.toBe("");
   const script = [
+    // 0 件案内と読み上げが同じ語列表を見るので、正本を注入する（第 239 回）。
+    wholeTableQueryStubs(siteRuntime("recommender.js")),
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa };",
     // 抜き出した関数は式としてそのまま入れる（JSON.stringify すると文字列になる）。
     "const live = (" + liveFn + ");",
     "const base = {",
@@ -13217,6 +13333,8 @@ it("URL で引いて 0 件のときは「語が無い」とは言わず収録の
     "const urlLikeQueryTerms = (" + jsFunction(rec, "urlLikeQueryTerms") + ");",
     "const hostFromUrl = (" + jsFunction(rec, "hostFromUrl") + ");",
     "const hostLabels = (" + jsFunction(rec, "hostLabels") + ");",
+    wholeTableQueryStubs(rec),
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa };",
     "const note = (" + jsFunction(app, "zeroResultLiveNote") + ");",
     // URL の形とそれ以外（日付・会議名・語の羅列）を混同しないこと。
     "const yes = ['https://www.example-university.edu/symposium-2027/cfp', 'example.ac.jp/workshop27', 'easychair.org/cfp/x'];",
@@ -13286,6 +13404,8 @@ it("0 件案内の画面側も URL を「語」と呼ばず、読み上げと同
   const app = siteRuntime("app.js");
   const script = [
     "const countJa = (n) => String(n);",
+    wholeTableQueryStubs(siteRuntime("recommender.js")),
+    "const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa };",
     `const hint = (${jsFunction(app, "emptyDeadlineHint")});`,
     `const note = (${jsFunction(app, "zeroResultLiveNote")});`,
     "const mk = (o) => Object.assign({",
