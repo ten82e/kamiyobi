@@ -2743,6 +2743,7 @@ const SEARCH_CANON = (() => {
       "placeOffersOnline",
       "isShortLatinTerm",
       "foldedLetterAtWordBoundary",
+      "termEndsInDigit",
       "placeLatinTerms",
       "cityQueryForms",
       "regionEntryMembers",
@@ -14627,4 +14628,95 @@ it("入力の例を押すと、打ち込んだ物を取り消せる（SPEC §7�
 
   // 開発向けの群ラベルは画面から無くなる。
   expect(html, "開発向けの群ラベルが残っている").not.toContain("動作確認用サンプル");
+});
+
+it("ラウンドの R 表記が、別の周目の行を混ぜない（SPEC §7）", () => {
+  /* 検索は英字語を語頭だけ閉じた形で開く（`crypto` が `cryptography` に当たる）。
+   * 同じ規則を `R1` にも利かせていたため、右に数字が続いても打ち切れず、1 周目を引い
+   * たのに 10・11・12 周目の行が混ざっていた（2026-08-09 実測: 既定画面で `R1` が 426 行
+   * に当たり、そのうち 6 行は round が 10・11・12。てびきは「CSV に書く R2 と同じ語で
+   * 引ける」と書いていたので、表計算から画面に戻った人が見落とす形だった）。末尾が数字
+   * の語だけ右端も閉じるようにした。英字で終わる語の前缀一致はそのまま残す。
+   * 規則その物は合成した行に当てて確かめる（テスト用ビルドの収録に左右されない）。 */
+  const script = [
+    "(async () => {",
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const rows = Recommender.candidateRows(DATA, now);",
+    "const match = (q) => Recommender.searchMatcher(q, now);",
+    "const hit = (r, q) => match(q)(r.hay);",
+    "const round = (r) => Number((r.dl && r.dl.round) || 0);",
+    // 規則の直接検査: 末尾が数字の語は右も閉じ、英字で終わる語は語頭だけ開く。
+    "  const digits = {",
+    "    open: match('R1')('venue r1 paper'),",
+    "    ten: match('R1')('venue r10 paper'),",
+    "    glued: match('R1')('venue r1b paper'),",
+    "    tenItself: match('R10')('venue r10 paper'),",
+    "    tenFromOne: match('R10')('venue r100 paper'),",
+    "  };",
+    "  const letters = {",
+    "    prefix: match('crypto')('field cryptography systems'),",
+    "    plural: match('robot')('field robotics lab'),",
+    "    leftGlued: match('crypto')('xcryptographyy'),",
+    "  };",
+    // 収録全体: 周目の数だけ、それぞれの R 表記がその周目の行にだけ当たることを見る。
+    "  const seen = {};",
+    "  for (const r of rows) { const n = round(r); if (n > 0) seen[n] = (seen[n] || 0) + 1; }",
+    "  const perRound = Object.keys(seen).map(Number).sort((a, b) => a - b).map((n) => ({",
+    "    n,",
+    "    present: seen[n],",
+    "    hits: rows.filter((r) => hit(r, 'R' + n)).length,",
+    "    wrong: rows.filter((r) => hit(r, 'R' + n) && round(r) !== n).length,",
+    "    ja: rows.filter((r) => hit(r, '第 ' + n + ' ラウンド')).length,",
+    "  }));",
+    "  console.log(JSON.stringify({ digits, letters, perRound, total: rows.length }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 180_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    digits: Record<string, boolean>;
+    letters: Record<string, boolean>;
+    perRound: { n: number; present: number; hits: number; wrong: number; ja: number }[];
+    total: number;
+  };
+  expect(out.total, "収録行が読めていない").toBeGreaterThan(0);
+  // 右端を閉じたこと。
+  expect(out.digits.open, "R1 がその物の周目に当たらない").toBe(true);
+  expect(out.digits.ten, "R1 が 10 周目の行をまだ返す").toBe(false);
+  expect(out.digits.glued, "R1 が続きの数字以外的な語に当たる").toBe(false);
+  expect(out.digits.tenItself, "R10 が自分の周目に当たらない（閉めすぎ）").toBe(true);
+  expect(out.digits.tenFromOne, "R10 が 100 周目を返す").toBe(false);
+  // 英字で終わる語の語頭開きは捨てていない。
+  expect(out.letters.prefix, "英字語の前缀一致まで失われている").toBe(true);
+  expect(out.letters.plural, "複数形への語頭開きが失われている").toBe(true);
+  expect(out.letters.leftGlued, "語頭が英数字でつながる位置を許している").toBe(false);
+  // 実データ: 収録されているすべての周目について、R 表記はその周目にだけ当たる。
+  expect(out.perRound.length, "周目を持つ行が収録に無い（検査が空振りしている）").toBeGreaterThan(
+    1,
+  );
+  const wide = out.perRound.filter((e) => e.n >= 10);
+  for (const e of out.perRound) {
+    expect(e.hits, `R${e.n} が 1 件も返さない`).toBeGreaterThan(0);
+    expect(e.hits, `R${e.n} の当たった行数がその周目の行数と違う`).toBe(e.present);
+    expect(e.wrong, `R${e.n} が別の周目の行を返す`).toBe(0);
+    expect(e.ja, `第 ${e.n} ラウンド と R${e.n} で当たった行数が違う`).toBe(e.present);
+  }
+  // NOTE: この収録に 10 周目以上の行が無いときは、混入その物は上の `digits`（合成行）でだけ
+  // 確かまる。本番の収録では 2026-08-09 に 6 行の混入を実測している。
+  void wide;
+
+  // てびき: 表に 1 周目を添えないことと、それでも語が引けることを書いておく。
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const dtAt = html.indexOf("<dt>検索</dt>");
+  expect(dtAt, "検索の項が無い").toBeGreaterThan(-1);
+  const entry = html.slice(dtAt, html.indexOf("</dd>", dtAt)).replace(/<[^>]+>/g, "");
+  expect(entry, "てびきが 1 周目を表に添えないと書いていない").toContain("1 ラウンド目");
+  expect(entry, "てびきが 1 周目の語を挙げていない").toContain("第 1 ラウンド");
+  expect(entry, "てびきが CSV の書き方を挙げていない").toContain("R1");
 });

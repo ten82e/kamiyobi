@@ -3588,6 +3588,14 @@ const Recommender = (() => {
     return out;
   }
 
+  /* 末尾が数字の語は、右に続くと**別の値**になる（ラウンドの `r1` に `r10` は 10 周目）。
+   * 英字語と同じく語頭だけ開けた形にすると、1 周目を引いたのに 10・11・12 周目の行が
+   * 混ざる（2026-08-09 実測: 「R1」で既定画面 426 行に当たり、そのうち 6 行は round が
+   * 10・11・12 の行だった）。だからこの形に限って右端も要求する。 */
+  function termEndsInDigit(term: string): boolean {
+    return /[0-9]$/.test(term);
+  }
+
   /** 畳み済みの語グループ（語ごとに OR、語同士は AND）を行に照合する。 */
   function matchFoldedGroups(target: string, groups: string[][]): boolean {
     for (let i = 0; i < groups.length; i++) {
@@ -3603,7 +3611,14 @@ const Recommender = (() => {
         }
         if (LATIN_TERM_TOKEN.test(term)) {
           // 開催地の語は語全体、その他の英字語は語頭が英数字でつながっていない位置だけ。
-          if (foldedLetterAtWordBoundary(target, term, !placeLatinTerms()[term])) {
+          // ただし末尾が数字の語は右も閉じる（上の `termEndsInDigit`）。
+          if (
+            foldedLetterAtWordBoundary(
+              target,
+              term,
+              !placeLatinTerms()[term] && !termEndsInDigit(term),
+            )
+          ) {
             hit = true;
             break;
           }
