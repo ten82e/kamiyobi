@@ -1825,7 +1825,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /* URL を貼った人（メーリングリストの CFP リンクで収録確認をしている – 第 153 回）には、
      * 打った文字列を「語が無い」と言っても収録の範囲が伝わらない。何を引いたのかを名指しして、
      * 収録の中心を言う。会議名でも引けるので、その案内も添える。 */
-    if (filter.urlQuery)
+    if (filter.urlQuery && filter.queryMatch.catalog === 0)
       return (
         " ｜ 検索語の URL の会議は収録に見当たりません。収録の中心はランク付けの一覧に載る会議と" +
         "国内研究会です。公式ページのアドレスではなく会議名（「ICDE」など）でも試してください" +
@@ -2196,6 +2196,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     hiddenKindWords: string[];
     queryMatch: { catalog: number; journal: number };
     termCounts: Array<{ term: string; count: number }>;
+    urlQuery: boolean;
     catalogConferences: number;
   }): string {
     /* 収録データその物が無いとき（データが差し込まれていない HTML を開いた、組み込みの
@@ -2218,9 +2219,22 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       : "";
     /* 検索語が収録データ全体では行に当たっているのに 0 件のとき（既定で出す行が
      * 投稿締切・未来だけなので起こる）。「 kamiyobi に無い」と誤解させない。 */
+    /* URL を貼った人に、アドレスを「語」と呼んではいけない（読み上げでは数十文字の URL が
+     * 語として読まれ、収録の範囲の話も伝わらない – 第 153 回で URL 検索を通した続き）。
+     * 読み上げ側の `zeroResultLiveNote` と同じことを書く（画面と読み上げで噓が違うと
+     * どちらも信じられなくなる）。 */
+    // ドメインが収録に当たっている場合は「収録にあるが条件で消えている」が正しいので、
+    // その場合はこの文を立てない（上の catalogNote が受け持つ）。
+    const urlNote =
+      filter.urlQuery && filter.queryMatch.catalog === 0
+        ? " 検索語の URL の会議は収録に見当たりません。収録の中心はランク付けの一覧に載る会議と" +
+          "国内研究会です。公式ページのアドレスではなく会議名（「ICDE」など）で試してください。"
+        : "";
     const catalogNote =
       trimmedQuery && filter.queryMatch.catalog > 0
-        ? ` 検索語「${trimmedQuery}」は収録済みで ${countJa(filter.queryMatch.catalog)} 件に当たります` +
+        ? (filter.urlQuery
+            ? ` その URL のドメインは収録済みで ${countJa(filter.queryMatch.catalog)} 件に当たります`
+            : ` 検索語「${trimmedQuery}」は収録済みで ${countJa(filter.queryMatch.catalog)} 件に当たります`) +
           "（表は投稿締切でこれから先のものだけを出す既定と、いまの絞り込みで 0 件になっています）。" +
           (filter.queryMatch.journal > 0
             ? ` 常時受付のジャーナル ${countJa(filter.queryMatch.journal)} 件は「種別」で選べます。`
@@ -2231,7 +2245,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 「検索語を短くする」しか出さなかった）。収録データに無い語があればそれを名指す
      * （その語を待っても行は増えない）。語が全部当たっている場合は、すべてを含む行が
      * 無いだけなので語ごとの件数を示し、いずれかを外すよう導く。 */
-    const terms = filter.termCounts.length > 1 ? filter.termCounts : [];
+    // URL の検索語を語に分解して「〜は収録データにも見当たりません」と言うのは誤解になる
+    // （分解された語はドメインの一部で、検索の失敗理由ではない）。
+    const terms = !filter.urlQuery && filter.termCounts.length > 1 ? filter.termCounts : [];
     const deadTerms = terms.filter((t) => t.count === 0).map((t) => t.term);
     let termNote = "";
     if (deadTerms.length) {
@@ -2252,7 +2268,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /* 原因を特定できたときは、他の説明文を足さない。考えられる理由を全部並べると
      * 「結局どうすればいい」が読めなくなる。検索語を短くする助言も、原因が分かっていれば
      * 的外れなので出さない。 */
-    const specific = Boolean(kindNote || catalogNote || deadTerms.length);
+    const specific = Boolean(kindNote || catalogNote || deadTerms.length || urlNote);
 
     /* 0 件案内はこれまで「外せる条件」の名前だけを並べていた。同じ画面上の件数欄は
      * 同じ条件で消えた件数を書いているのに、案内の側には数字が無く、6 項目のうち
@@ -2303,8 +2319,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.md に載せています。";
     if (specific) {
       return tips.length
-        ? `${base}${kindNote}${catalogNote}${termNote} 外せる条件: ${tips.join(" / ")}。`
-        : `${base}${kindNote}${catalogNote}${termNote}`;
+        ? `${base}${kindNote}${catalogNote}${urlNote}${termNote} 外せる条件: ${tips.join(" / ")}。`
+        : `${base}${kindNote}${catalogNote}${urlNote}${termNote}`;
     }
     if (!tips.length) return `${base}${termNote} ${meetingNote}`;
     return `${base}${termNote} 多いのは ${tips.join(" / ")}。${meetingNote}`;

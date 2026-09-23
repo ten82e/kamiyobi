@@ -12715,3 +12715,82 @@ it("URL で引いて 0 件のときは「語が無い」とは言わず収録の
   const html = readFileSync(join(site, "index.html"), "utf8");
   expect(html).toContain("URL で引いて出てこないときは、その会議は収録していません");
 });
+
+it("0 件案内の画面側も URL を「語」と呼ばず、読み上げと同じことを言う（SPEC §7）", () => {
+  /* 第 154 回は読み上げ側（`zeroResultLiveNote`）だけを直した。画面に出る 0 件案内
+   * （`emptyDeadlineHint`）は URL を知らず、検索語その物を引用した（2026-09-23 実測:
+   * ビルド後の関数に「https://warwick.ac.uk/fac/sci/dcs/aamas2027/」を渡すと
+   * `検索語「https://warwick.ac.uk/fac/sci/dcs/aamas2027/」は収録済みで 6 件に当たります`
+   * と出し、同じ画面の読み上げは「収録に見当たりません」と言っていた）。同じ画面の中で
+   * 目の字と読み上げが逆のことを言い、数十文字のアドレスが読み上げられる。
+   * また収録に無い URL には「その語を外すと増えます」と出していて、URL には外せる語が
+   * 無いので実行不能な案内だった。 */
+  const app = siteRuntime("app.js");
+  const script = [
+    "const countJa = (n) => String(n);",
+    `const hint = (${jsFunction(app, "emptyDeadlineHint")});`,
+    `const note = (${jsFunction(app, "zeroResultLiveNote")});`,
+    "const mk = (o) => Object.assign({",
+    "  window: '', past: false, cats: 0, domestic: false, online: false,",
+    "  rank: '', kind: '', est: false, hidden: {}, query: '',",
+    "  hiddenKindWords: [], queryMatch: { catalog: 0, journal: 0 },",
+    "  termCounts: [], urlQuery: false, catalogConferences: 1880,",
+    "  clearable: false, pastShown: false,",
+    "}, o);",
+    "const url = 'https://warwick.ac.uk/fac/sci/dcs/aamas2027/';",
+    "const cases = {",
+    "  // ドメインが収録に無い URL。",
+    "  missing: mk({",
+    "    query: 'https://www.example-university.edu/symposium-2027/cfp',",
+    "    urlQuery: true,",
+    "    termCounts: [{ term: 'example-university', count: 0 }, { term: 'edu', count: 40 }],",
+    "  }),",
+    "  // ドメインが収録に当たっているのに、いまの条件で 0 件の URL。",
+    "  present: mk({",
+    "    query: url,",
+    "    urlQuery: true,",
+    "    queryMatch: { catalog: 6, journal: 0 },",
+    "    termCounts: [{ term: 'warwick', count: 6 }],",
+    "  }),",
+    "  // 語を並べた従来の検索語（挙動を変えない）。",
+    "  words: mk({",
+    "    query: '機械学習 福岡 GPU',",
+    "    termCounts: [",
+    "      { term: '機械学習', count: 494 },",
+    "      { term: '福岡', count: 8 },",
+    "      { term: 'GPU', count: 0 },",
+    "    ],",
+    "  }),",
+    "};",
+    "const out = {};",
+    "for (const [k, f] of Object.entries(cases)) out[k] = { screen: hint(f), live: note(f) };",
+    "console.log(JSON.stringify(out));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout) as Record<string, { screen: string; live: string }>;
+  // 画面側も URL を「語」と呼ばない。
+  expect(got.missing.screen).toContain("URL の会議は収録に見当たりません");
+  expect(got.missing.screen, "URL を語として外す案内のまま").not.toContain(
+    "その語を外すと増えます",
+  );
+  expect(got.missing.screen).toContain("ランク付けの一覧");
+  // 同じ画面の読み上げと目の字が同じことを言う（前回までの矛盾）。
+  expect(got.missing.live).toContain("URL の会議は収録に見当たりません");
+  // ドメインが収録済みなら「収録に無い」とは言わない（前回まで読み上げ側が噓をついていた）。
+  expect(got.present.screen).toContain("その URL のドメインは収録済みで 6 件");
+  expect(got.present.screen).not.toContain("収録に見当たりません");
+  expect(got.present.live).not.toContain("収録に見当たりません");
+  // 数十文字のアドレスをそのまま引用しない（読み上げでも目の字でも読みにくい）。
+  expect(got.present.screen, "URL をそのまま引用している").not.toContain("warwick.ac.uk/fac");
+  expect(got.missing.screen).not.toContain("example-university.edu/symposium");
+  // 語の検索語の案内はそのまま。
+  expect(got.words.screen).toContain("検索語のうち「GPU」は収録データにも見当たりません");
+  expect(got.words.live).toContain("語「GPU」は収録データにありません");
+  // 両方に同じ判定が渡っている（片方だけ直す状態を許さない）。
+  expect(jsFunction(app, "emptyDeadlineHint")).toContain("filter.urlQuery");
+  expect(jsFunction(app, "zeroResultLiveNote")).toContain("filter.urlQuery");
+});
