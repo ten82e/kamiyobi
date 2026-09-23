@@ -15253,3 +15253,48 @@ it("upcoming.md の「残り」が、実在しない猶予を約束していな�
     "実在しない（または次の単位に届かない）猶予を書いた行がある",
   ).toEqual([]);
 });
+
+it("health.md の出力ファイル表が、載せないファイルを自分で言い切っている（SPEC §7）", () => {
+  /* 「## 出力ファイル」の下に一部のファイルだけを並べると、読者はそれが配付物の全部だと読む。
+   * 2026-08-09 生成のビルドで実測: 配付先に置くファイルは 16 件、この表は 13 件で、
+   * 除く 3 件（`health.json`・`health.md`・`publish.json`）のことはどこにも書いていなかった。
+   * 収録を確かめる人と、ハッシュを突き合わせる機械の両方がそこで止まる。
+   * 検査は 3 点。(1) ビルド後の実ファイルと表の対応 (2) 載らないファイルが表の直前の但し書きに
+   * 名前で挙がっているか (3) 但し書きが「完全な一覧」として指す `publish.json` の `artifacts` が、
+   * 実ファイルを漏れなく載せているか（自分自身の `publish.json` を除く）。 */
+  const md = readFileSync(join(site, "health.md"), "utf8");
+  const head = md.indexOf("## 出力ファイル");
+  expect(head, "health.md に見出し「出力ファイル」が無い").toBeGreaterThan(-1);
+  const section = md.slice(head);
+  const listed = new Set(
+    [...section.matchAll(/^\| (\S+) \| [0-9]+ \| [0-9a-f]{64} \|$/gm)].map((m) => m[1]),
+  );
+  expect(listed.size, "health.md の出力ファイル表から行が読めない").toBeGreaterThan(5);
+  const present = readdirSync(site, { withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name);
+  const omitted = present.filter((name) => !listed.has(name)).sort();
+  // このビルドでは実際に載らない物が出ている（載らない物が無くなったときは但し書きごと
+  // 用がなくなるので、この検査も外す）。
+  expect(
+    omitted,
+    "出力ファイル表が実ファイルを全て載せていて、この検査は空振りになる",
+  ).not.toHaveLength(0);
+  // 表の直前（但し書き）に、載らない物が名前で挙がっている。
+  const tableAt = section.indexOf("\n| ");
+  const note = section.slice(0, tableAt < 0 ? section.length : tableAt);
+  for (const name of omitted) {
+    expect(note, `但し書きが「${name}」にふれていない`).toContain(`\`${name}\``);
+  }
+  // 但し書きが指す先の publish.json が、本当に漏れなく全ファイルを載せているか。
+  const publish = JSON.parse(readFileSync(join(site, "publish.json"), "utf8")) as {
+    artifacts: Record<string, { bytes: number; sha256: string }>;
+  };
+  const covered = Object.keys(publish.artifacts);
+  expect(
+    present.filter((name) => name !== "publish.json" && !covered.includes(name)),
+    "publish.json の artifacts が実ファイルを漏らしている",
+  ).toEqual([]);
+  // 自分自身のハッシュを持てない物だけを除いている（何でも除外して良いことにしない）。
+  expect(omitted.includes("publish.json"), "publish.json が除かれていない").toBe(true);
+});

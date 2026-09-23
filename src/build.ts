@@ -2451,7 +2451,7 @@ export function evaluateHealthGate(
   return { ok: reasons.length === 0, reasons, warnings };
 }
 
-export function healthMarkdown(report: HealthReport): string {
+export function healthMarkdown(report: HealthReport, omittedOutputs: string[] = []): string {
   /* 「health.md：health.json の人間向け要約」と書きながら、本文だけ英語のままだった
    * （2026-09-23 確認）。読むのは収録を確かめる人なので日本語に寄せる。
    * 機械可読の正は `health.json` なので、見出しには JSON のキーを併記する
@@ -2576,6 +2576,21 @@ export function healthMarkdown(report: HealthReport): string {
     "",
     "## 出力ファイル",
     "",
+    /* 「出力ファイル」という見出しの下に一部だけを並べると、読者はそれが配付物の全部だと
+     * 読む（2026-08-09 生成のビルドで実測: 配付先に置くファイルは 16 件、この表は 13 件で、
+     * 除く 3 件のことをどこにも書いていなかった）。載らない物とその理由を、表の直前で
+     * 自分で言う。名前は呼び出し側の実際の書き出し順から渡す（書き写すと順が変わったとき
+     * に噓をつく）。 */
+    ...(omittedOutputs.length
+      ? [
+          `> この表に載るのは、表を組み立てた時点で書き終わっていた出力だけです。載らないのは ${omittedOutputs
+            .map((name) => `\`${name}\``)
+            .join(
+              "・",
+            )} です。\`health.json\` と \`health.md\` はこの表のうしろに書き出すので、自分自身のハッシュをここには書けません。\`publish.json\` は後段の公開手順が書き出します。配付物のバイト数とハッシュの完全な一覧は \`publish.json\` の \`artifacts\` にあります（そこに \`publish.json\` 自身は載りません）。`,
+          "",
+        ]
+      : []),
     "| ファイル | バイト数 | SHA-256 |",
     "|---|---:|---|",
     ...Object.entries(report.output_files).map(
@@ -3167,7 +3182,11 @@ export async function buildAll(
     outputFiles: outputFileManifest(outdir, written),
   });
   write("health.json", `${JSON.stringify(report, null, 2)}\n`);
-  write("health.md", healthMarkdown(report));
+  // この表に載せられなかった物（後から書き出す物）を、md の側に名前で宣言させる。
+  const omittedOutputs = [...new Set([...written, "health.md", "publish.json"])].filter(
+    (name) => !Object.hasOwn(report.output_files, name),
+  );
+  write("health.md", healthMarkdown(report, omittedOutputs));
   writePublishManifest(
     outdir,
     written,
