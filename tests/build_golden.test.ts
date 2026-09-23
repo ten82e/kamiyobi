@@ -2600,7 +2600,9 @@ it("upcoming.md keeps a running meeting and drops a finished one", async () => {
  * （抜き出した関数は独立していないと `ReferenceError` になる – 同じ穴に二度落ちないため、
  * 生の抜き出しではなくこの helper を使う）。 */
 function keydownWithBlockers(src: string): string {
-  return `${jsFunction(src, "keyBlockedByTarget")}\n${jsFunction(src, "onKeydown")}`;
+  // 第 152 回: `j` は選択が行の描画範囲を越えないか確認するので、抜き出した関数に
+  // その関数も必要（独立していないと `ReferenceError` – 同じ helper の趣旨と同じ）。
+  return `const ensureRowsDrawn = () => {};\n${jsFunction(src, "keyBlockedByTarget")}\n${jsFunction(src, "onKeydown")}`;
 }
 
 function jsFunction(html: string, name: string): string {
@@ -9421,12 +9423,12 @@ it("てびきのキーボード表記が、実装が扱うキーと欠けずに�
     // onKeydown はキーの振り分け関数を呼ぶので、抜き出した 2 つを一緒に作る。
     `const KEYBLOCK = ${JSON.stringify(jsFunction(app, "keyBlockedByTarget"))};`,
     'const onKeydown = new Function("state", "window", "document", "$", "selectedIndex", "shown",',
-    '  "openDrawer", "closeDrawer", "safeExternalUrl", KEYBLOCK + ";" + KEY + ";return onKeydown;")(',
+    '  "openDrawer", "closeDrawer", "ensureRowsDrawn", "safeExternalUrl", KEYBLOCK + ";" + KEY + ";return onKeydown;")(',
     "  { mode: 'deadlines' },",
     "  { open: () => { calls.openUrl++; } },",
     "  { activeElement: null },",
     "  () => ({ querySelectorAll: () => [rowEl, rowEl] }), 1, [row, row],",
-    "  () => { calls.drawer++; }, () => {},",
+    "  () => { calls.drawer++; }, () => {}, () => {},",
     "  (u) => (typeof u === 'string' && u.startsWith('https://') ? u : null),",
     ");",
     "const fire = (key) => onKeydown({ key, target: { tagName: 'BODY', isContentEditable: false }, preventDefault() {} });",
@@ -11539,7 +11541,9 @@ it("ボタンを押した直後も快捷键が効く（SPEC §7）", () => {
     "  'safeExternalUrl',",
     "  'window',",
     "  " +
-      JSON.stringify(`${keyFn}\n${keydownFn}\nreturn { onKeydown, keyBlockedByTarget };`) +
+      JSON.stringify(
+        `const ensureRowsDrawn = () => {};\n${keyFn}\n${keydownFn}\nreturn { onKeydown, keyBlockedByTarget };`,
+      ) +
       ",",
     ");",
     "let moved = 0;",
@@ -12454,4 +12458,98 @@ it("条件クリアは論文の入力を消さず、消す操作は名前の書�
   const btn = /<button id="paperReset"[^>]*>([^<]+)<\/button>/.exec(html);
   expect(btn, "論文の入力を消すボタンが無い").not.toBeNull();
   expect(html, "てびきがボタンの語で案内していない").toContain(`ボタン「${btn![1]}」`);
+});
+
+it("キーボードで選んだ行がまだ描画されていなくても、その場で続きを描く（SPEC §7）", () => {
+  /* 選択は `shown`（絞り込み後の全行）まで進むが、表に描いてある行は `drawn` 行だけだった
+   * （2026-09-23 実測: 既定の PAGE は 40 行で、`j` を 40 回押すとハイライトとフォーカスは
+   * 40 行目に残ったまま、内部の選択だけ 41 行目以降へ進んだ）。`d` を押すと画面に出ていない
+   * 行の詳細が開き、キーが効かなくなったように見えていた。共有リンクで受け取った側も
+   * 同じ状態で、しかも `render()` が先頭で選択を解くため開いた行に目印も付かなかった。 */
+  const app = siteRuntime("app.js");
+  const body = (name: string) => {
+    const at = app.indexOf(`function ${name}(`);
+    expect(at, `function ${name} が見つからない（検査が空振り）`).toBeGreaterThan(0);
+    let depth = 0;
+    let started = false;
+    for (let i = at; i < app.length; i++) {
+      if (app[i] === "{") {
+        depth++;
+        started = true;
+      } else if (app[i] === "}") {
+        depth--;
+        if (started && depth === 0) return app.slice(at, i + 1);
+      }
+    }
+    throw new Error(`unbalanced: ${name}`);
+  };
+  // 前提: render() は選択と描画位置を戻す（顺序の要求はこれに由来する）。
+  const renderBody = body("render");
+  expect(renderBody).toContain("drawn = 0;");
+  expect(renderBody).toContain("selectedIndex = -1;");
+  // `j` / ↓: 選択を進めたら、描画をそれから追いつかせてから目印を動かす。
+  const jBranch = /selectedIndex\+\+;[\s\S]{0,160}/.exec(app)?.[0] ?? "";
+  expect(jBranch, "j の選択移動が描画に追いついていない（見えない行を選ぶまま）").toContain(
+    "ensureRowsDrawn(selectedIndex)",
+  );
+  expect(jBranch.indexOf("ensureRowsDrawn")).toBeLessThan(jBranch.indexOf("updateRowSelection"));
+  // `d`: フォーカス先の行が存在する必要がある。
+  expect(
+    /e\.key === "d" && selectedIndex >= 0[\s\S]{0,600}?ensureRowsDrawn\(selectedIndex\);/.test(app),
+    "d が未描画の行に対してフォーカス先を探している",
+  ).toBe(true);
+  // 共有リンクの受け取り側: render → 選択 → 描画 → 目印 → 詳細 の順。
+  const restore = body("restoreDrawerFromUrl");
+  const marks = [
+    restore.search(/[^a-zA-Z]render\(\);/),
+    restore.indexOf("selectedIndex = idx;"),
+    restore.indexOf("ensureRowsDrawn(idx);"),
+    restore.indexOf("updateRowSelection();"),
+    restore.indexOf("openDrawer("),
+  ];
+  expect(marks, "受け取り側の復元の手順が揃っていない").toEqual(
+    [...marks].map((_, i) => (i === 0 ? marks[0] : marks[i])).map((v) => v),
+  );
+  for (let i = 1; i < marks.length; i++) {
+    expect(marks[i], `復元の手順 ${i} 番目が見当たらない`).toBeGreaterThan(marks[i - 1]);
+  }
+  // 実行検証: 描画済みを越えるindexを頼むと、足りるまで描き、末尾では以上描かない。
+  const script = [
+    "let drawn = 0;",
+    "const shown = { length: 95 };",
+    "const PAGE = 40;",
+    "let calls = 0;",
+    "function drawMore() {",
+    "  calls += 1;",
+    "  if (calls > 200) throw new Error('ended rows keep drawing');",
+    "  drawn = Math.min(drawn + PAGE, shown.length);",
+    "}",
+    "const ensureRowsDrawn = (" + jsFunction(app, "ensureRowsDrawn") + ");",
+    "const steps = [];",
+    "ensureRowsDrawn(5);",
+    "steps.push([drawn, calls]);",
+    "ensureRowsDrawn(41);",
+    "steps.push([drawn, calls]);",
+    "ensureRowsDrawn(94);",
+    "steps.push([drawn, calls]);",
+    "ensureRowsDrawn(94);",
+    "steps.push([drawn, calls]);",
+    "ensureRowsDrawn(500);",
+    "steps.push([drawn, calls]);",
+    "console.log(JSON.stringify(steps));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  // 40 行ずつ描かれる: 5 → 40、41 → 80、94 → 95（全行）、リピートでも増えない、
+  // 全体より遠いindexを頼んでも 95 行で止まる（絞り込み後の行数を越えて描かない）。
+  expect(JSON.parse(proc.stdout)).toEqual([
+    [40, 1],
+    [80, 2],
+    [95, 3],
+    [95, 3],
+    [95, 3],
+  ]);
 });

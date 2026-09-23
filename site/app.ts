@@ -1228,6 +1228,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       // 行にフォーカスしてから開き、
       // openDrawer が _prevFocus として保存する。
       e.preventDefault();
+      // 選択行がまだ描画されていなければ先に描く（下のフォーカス先が存在しないため）。
+      ensureRowsDrawn(selectedIndex);
       const dtrs = [...$("tbody").querySelectorAll<HTMLTableRowElement>("tr")].filter(
         (row) => !(row.classList.contains("detail-row") || row.classList.contains("month-row")),
       );
@@ -1237,6 +1239,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       e.preventDefault();
       if (selectedIndex < shown.length - 1) {
         selectedIndex++;
+        ensureRowsDrawn(selectedIndex);
         updateRowSelection();
       }
     } else if (e.key === "k" || e.key === "ArrowUp") {
@@ -1254,6 +1257,19 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
   }
   window.addEventListener("keydown", onKeydown);
+
+  /* 選択は `shown`（絞り込み後の全行）まで進められるが、表に描いてある行は `drawn` 行だけ
+   * （既定は PAGE=40 行 – 2026-09-23 実測）。`j` を 40 回押すと、ハイライトとフォーカスは
+   * 40 行目に残ったまま内部の選択だけ 41 行目以降へ進み、`d` を押すと画面に出ていない行の
+   * 詳細が開いていた。マウスなら「さらに表示」を自分で押せるが、キーボードだけで操作する人に
+   * その入口を探させるのは無理があるので、必要になった時点で描く。 */
+  function ensureRowsDrawn(index: number): void {
+    let guard = 0;
+    while (drawn <= index && drawn < shown.length && guard <= shown.length) {
+      drawMore();
+      guard += 1;
+    }
+  }
 
   function updateRowSelection() {
     // 展開用 detail-row を除外し、shown[] の行と 1:1 対応を保つ
@@ -4117,8 +4133,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (!pendingDrawerKey) return;
     const idx = shown.findIndex((r) => rowShareKeyJa(r) === pendingDrawerKey);
     if (idx < 0) return;
-    selectedIndex = idx;
     render();
+    /* `render()` は本体の先頭で `selectedIndex = -1` と `drawn = 0` に戻す（2026-09-23 実測:
+     * `render` の本体の最初に両方の代入がある）。従来は render の前に選択を置いていたため、
+     * 共有リンクを受け取った側の画面で、開いた行に目印が付かなかった。描き終えた後に付け直す。 */
+    selectedIndex = idx;
+    ensureRowsDrawn(idx);
+    updateRowSelection();
     openDrawer(shown[idx] as unknown as DrawerRow);
   }
 
