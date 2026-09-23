@@ -4177,6 +4177,26 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     loadHistoryData();
     render();
   });
+  /* 「条件クリア」は名前の通り条件だけを外す。論文のタイトル・概要・参考論文の欄まで
+   * 消していた（2026-09-23 実測: `#reset` の中に `paperText` と `paperReferences` の代入が
+   * 残っていた）。絞り込みをまとめ直したいだけの人（CSV を条件なしで出したいためだけに
+   * 押す人也 – てびきがそう案内している）が、打ち込んだ概要を Confirmation も Undo も無く
+   * 失っていた。消す操作は、そう書かれた別のボタンに寄せる。 */
+  function clearPaperInput() {
+    valueElement("paperText").value = "";
+    setPrimaryRecord();
+    valueElement("paperReferences").value = "";
+    paperFiles.value = "";
+    $("paperFileLabel").textContent = "未選択";
+    invalidateSemantic();
+  }
+
+  $("paperReset").addEventListener("click", () => {
+    clearPaperInput();
+    // 条件は触らない（`apply` は欄の中身を読み直し、候補を描き直すだけ）。
+    apply();
+  });
+
   $("reset").addEventListener("click", () => {
     state = {
       mode: state.mode,
@@ -4190,11 +4210,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       online: false,
       past: false,
     };
-    valueElement("paperText").value = "";
-    setPrimaryRecord();
-    valueElement("paperReferences").value = "";
-    paperFiles.value = "";
-    $("paperFileLabel").textContent = "未選択";
     stopHistoryLoad();
     if (state.mode === "deadlines") setDeadlineProfile(DATA);
     invalidateSemantic();

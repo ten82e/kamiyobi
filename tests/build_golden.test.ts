@@ -12365,3 +12365,93 @@ it("読めない形式のファイルを PDF のせいにしない（SPEC §7）
   const html = readFileSync(join(site, "index.html"), "utf8");
   expect(html, "対応形式の注記が無い").toContain("Word などの文書形式は読めません");
 });
+
+it("条件クリアは論文の入力を消さず、消す操作は名前の書いたボタンが受け持つ（SPEC §7）", () => {
+  /* 「条件クリア」は絞り込みだけをまとめる操作だが、論文のタイトル・概要・参考論文の欄と
+   * 選んだファイルまで消していた（2026-09-23 実測: `#reset` の節に `paperText` と
+   * `paperReferences` への代入が残っていた）。てびきは CSV を条件なしで出す手順として
+   * 「条件クリアを押してください」と案内しているので、絞り込みを直したいだけの人が
+   * Confirmation も Undo も無く打ち込んだ概要を失っていた。 */
+  const app = siteRuntime("app.js");
+  // `#reset` の節に論文の入力を消す代入が残っていないこと（節の範囲は次の addEventListener まで）。
+  const resetAt = app.indexOf('$("reset").addEventListener');
+  expect(resetAt, "条件クリアの処理が見当たらない（検査が空振り）").toBeGreaterThan(0);
+  // 自分自身の `addEventListener("click"` を飛ばしてから、次の節の開始を探す。
+  const selfAt = app.indexOf('addEventListener("click"', resetAt);
+  const nextAt = app.indexOf('addEventListener("click"', selfAt + 22);
+  const resetBody = app.slice(resetAt, nextAt > 0 ? nextAt : resetAt + 1600);
+  expect(resetBody).toContain('q: ""');
+  for (const paperField of [
+    "paperText",
+    "paperReferences",
+    "paperPrimaryTitle",
+    "paperFileLabel",
+  ]) {
+    expect(
+      resetBody,
+      `条件クリアが ${paperField} を消している（概要を失う操作のまま）`,
+    ).not.toContain(paperField);
+  }
+  // 実行検証: 論文の入力を消す操作は、五つの欄をまとめて白紙にする。
+  const script = [
+    "const vals = {",
+    "  paperText: '打った本文',",
+    "  paperPrimaryTitle: 'タイトル',",
+    "  paperPrimaryAbstract: '概要',",
+    "  paperPrimaryKeywords: 'キーワード',",
+    "  paperReferences: 'ref | k | v',",
+    "};",
+    "const valueElement = (id) => ({",
+    "  get value() {",
+    "    return vals[id];",
+    "  },",
+    "  set value(v) {",
+    "    vals[id] = v;",
+    "  },",
+    "});",
+    "let paperPrimaryVenue = 'ICDE';",
+    "let invalidated = 0;",
+    "const invalidateSemantic = () => { invalidated += 1; };",
+    jsFunction(app, "setPrimaryRecord").replace(
+      "function setPrimaryRecord",
+      "const setPrimaryRecord = function",
+    ),
+    "const label = { textContent: 'paper.docx' };",
+    "const $ = (id) => (id === 'paperFileLabel' ? label : {});",
+    "const paperFiles = { value: 'stale' };",
+    jsFunction(app, "clearPaperInput").replace(
+      "function clearPaperInput",
+      "const clearPaperInput = function",
+    ),
+    "clearPaperInput();",
+    "console.log(JSON.stringify({ vals, venue: paperPrimaryVenue, file: paperFiles.value, label: label.textContent, invalidated }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout) as {
+    vals: { [k: string]: string };
+    venue: string;
+    file: string;
+    label: string;
+    invalidated: number;
+  };
+  expect(got.vals).toEqual({
+    paperText: "",
+    paperPrimaryTitle: "",
+    paperPrimaryAbstract: "",
+    paperPrimaryKeywords: "",
+    paperReferences: "",
+  });
+  expect(got.venue, "PDF から取った掲載先の想定が残っている").toBe("");
+  expect(got.file).toBe("");
+  expect(got.label).toBe("未選択");
+  expect(got.invalidated, "意味検索の使い回しを無効化していない").toBe(1);
+  // 消す操作は、その名前のボタンが受け持つ（てびきの説明と同じ語で出す）。
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const btn = /<button id="paperReset"[^>]*>([^<]+)<\/button>/.exec(html);
+  expect(btn, "論文の入力を消すボタンが無い").not.toBeNull();
+  expect(html, "てびきがボタンの語で案内していない").toContain(`ボタン「${btn![1]}」`);
+});
