@@ -4589,6 +4589,29 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (live) live.textContent = ` ｜ ${text}`;
   }
 
+  /* 紙にだけ載せる但し書き。画面のてびきは印刷時に隠れる（`@media print` で `#helpPanel` を
+   * 消している）ので、紙だけで読める語の解説を同じ帯に添える。語は正本（`recommender.js` の
+   * 公開している名前）から組み立てる – 手コピーすると画面の語とズレる。
+   * 2026-08-09 実測: 既定の印刷対象 478 行のうち 280 行が「ランク未確認」を刷っていたが、
+   * 紙のうえにはその意味がどこにも書かれていなかった（受け取った人は画面を開かないと読めない）。 */
+  function printLegendJa(): string {
+    const unconfirmed = Recommender.unconfirmedLabelJa();
+    const unrated = Recommender.rankUnratedLabelJa();
+    const extended = Recommender.extendedLabelJa();
+    const notApplicable = Recommender.notApplicableLabelJa();
+    const unconfirmedWords = ["ランク", "会期", "開催地"].map((p) => `${p}${unconfirmed}`);
+    const parts = [
+      `${unconfirmedWords.join("・")} は、その項目を公式に裏取りできていない行です（確認元・確認範囲・次回確認予定は、画面で行を開くと出ます）`,
+      `ランク${unconfirmed} はどのランク表にも載っていない行、「${unrated}」は表に載っているが評価が付いていない行です`,
+      `「${extended}」は、上流が延長した締切です`,
+      `「${notApplicable}」は、常時受付の期刊行で、締切というものがない行です`,
+      "「原表記:」は収録元がその締切に付けた呼び方そのもので、画面の種別とは別の分類です",
+      "「AoE」は UTC-12 の時刻で締める締切です",
+      "「―」は、締切の瞬間を数えられない行です",
+    ];
+    return `この用紙の表記: ${parts.join("。")}。`;
+  }
+
   function fillPrintMeta() {
     const box = $("printMeta");
     if (!box) return;
@@ -4609,7 +4632,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (state.mode !== "deadlines") {
       const cards = $("recommendationCards");
       const n = cards?.children?.length ?? 0;
-      box.textContent = `この印刷物: 投稿先を探す画面 ／ 候補 ${countJa(n)} 件${printedTail}`;
+      box.textContent = `この印刷物: 投稿先を探す画面 ／ 候補 ${countJa(n)} 件${printedTail}。${printLegendJa()}`;
       return;
     }
     box.textContent =
@@ -4621,7 +4644,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         winLabel,
         { key: sortKey, asc: sortAsc },
         sortColumnLabel,
-      )}` + ` ／ 表示 ${countJa(shown.length)} 件${printedTail}`;
+      )}` + ` ／ 表示 ${countJa(shown.length)} 件${printedTail}。${printLegendJa()}`;
   }
   window.addEventListener("beforeprint", () => {
     fillPrintMeta();

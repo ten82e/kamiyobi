@@ -12288,7 +12288,16 @@ it("投稿先を探す画面で印刷すると、紙に出る但し書きが実�
       "const fmtJst = () => '2026-08-09 (日) 09:00 JST';",
       "function generatedAtLabel(v) { return 'データ生成: ' + v; }",
       "const KIND_LABEL = { paper: '論文締切' };",
-      "const Recommender = { categoryLabelJa: (c) => c };",
+      // 語の正本はビルドした `recommender.js`。印刷の但し書きが使う語も本物から借りる
+      // （検査に語を書き写すと、画面の語が変わっても気づけない）。
+      `const { default: REAL } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+      "const Recommender = {",
+      "  categoryLabelJa: (c) => c,",
+      "  unconfirmedLabelJa: () => REAL.unconfirmedLabelJa(),",
+      "  rankUnratedLabelJa: () => REAL.rankUnratedLabelJa(),",
+      "  extendedLabelJa: () => REAL.extendedLabelJa(),",
+      "  notApplicableLabelJa: () => REAL.notApplicableLabelJa(),",
+      "};",
       "const DATA = { generated_at: '2026-08-09T09:00:00Z' };",
       "let sortKey = 'deadline', sortAsc = true, sortColumnLabel = '日時（JST）';",
       `let shown = ${JSON.stringify(new Array(shownCount).fill(null))};`,
@@ -12296,6 +12305,7 @@ it("投稿先を探す画面で印刷すると、紙に出る但し書きが実�
       // 条件の書き下ろしに渡すラベル関数（この検査は describeFilters をスタブにするので
       // 呼ばれないが、名前だけは必要）。語の正本は注入済みの Recommender 側にある。
       jsFunction(app, "rankFilterLabelJa"),
+      jsFunction(app, "printLegendJa"),
       jsFunction(app, "fillPrintMeta"),
       "fillPrintMeta();",
       "console.log(JSON.stringify({ out: meta.textContent }));",
@@ -14375,6 +14385,7 @@ it("「評価なし」で印刷すると、紙の条件にも同じ語が出る�
     // 印刷の但し書きは本物の 3 関数を繋いで走らせる（配線を確かめるため）。
     jsFunction(app, "rankFilterLabelJa"),
     jsFunction(app, "describeFilters"),
+    jsFunction(app, "printLegendJa"),
     jsFunction(app, "fillPrintMeta"),
     "fillPrintMeta();",
     // 選択肢のラベルも同じ式を使う（規則を 2 箇所に書かない）。
@@ -14719,4 +14730,134 @@ it("ラウンドの R 表記が、別の周目の行を混ぜない（SPEC §7�
   expect(entry, "てびきが 1 周目を表に添えないと書いていない").toContain("1 ラウンド目");
   expect(entry, "てびきが 1 周目の語を挙げていない").toContain("第 1 ラウンド");
   expect(entry, "てびきが CSV の書き方を挙げていない").toContain("R1");
+});
+
+it("印刷した紙が、紙に出る語を紙の説明だけで読ませる（SPEC §7）", () => {
+  /* 画面のてびきは印刷時に隠れる（`@media print` で `#helpPanel` を消す）。ところが紙には
+   * 画面と同じ語が刷られる。2026-08-09 実測: 既定の印刷対象 478 行のうち 280 行が
+   * 「ランク未確認」で、会期未確認 114 行・開催地未確認 110 行・延長後 9 行が続く。
+   * 変更前の紙にはこれらの意味がどこにも書かれておらず、受け取った人は画面を開かないと
+   * 読めなかった（研究室に貼る・回覧する用途では足りない）。印刷帯に但し書きを載せ、
+   * 語は正本（`recommender.js` の公開している名前）から組み立てるようにした。
+   * ここで見るのは (1) 紙に出る語が漏れなく説明されていること、(2) 説明側に自作の語が
+   * 無いこと、(3) 紙にだけ出ること、(4) てびきがその但し書きを画面の語で書いていること。 */
+  const app = siteRuntime("app.js");
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const script = [
+    "const { readFileSync } = await import('node:fs');",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    jsFunction(app, "printLegendJa"),
+    "const legend = printLegendJa();",
+    "const now = Date.parse('2026-08-09T00:00:00Z');",
+    "const rows = Recommender.candidateRows(DATA, now);",
+    "const printPool = rows.filter((r) => (r.kind === 'abstract' || r.kind === 'paper') && !r.est);",
+    "const cr = String.fromCharCode(13, 10);",
+    "const q = String.fromCharCode(34);",
+    "const cells = (line) => {",
+    "  const out = []; let cur = ''; let quoted = false;",
+    "  for (let i = 0; i < line.length; i++) {",
+    "    const ch = line[i];",
+    "    if (quoted) {",
+    "      if (ch === q) { if (line[i + 1] === q) { cur += ch; i++; } else quoted = false; } else cur += ch;",
+    "    } else if (ch === q) quoted = true;",
+    "    else if (ch === ',') { out.push(cur); cur = ''; }",
+    "    else cur += ch;",
+    "  }",
+    "  out.push(cur); return out;",
+    "};",
+    "const tableCsv = Recommender.deadlinesToCsv(printPool, now);",
+    "const lines = tableCsv.split(cr).filter((l) => l.length);",
+    "const head = cells(lines[0]);",
+    "const at = head.indexOf('状態');",
+    "const counts = {};",
+    "for (let i = 1; i < lines.length; i++) {",
+    "  const v = cells(lines[i])[at] || '';",
+    "  for (const w of v.split('・')) if (w) counts[w] = (counts[w] || 0) + 1;",
+    "}",
+    // 説明側が使って良い語の集合: CSV に出る値（状態・ランク・種別・締切）。
+    "const all = Recommender.deadlinesToCsv(rows, now).split(cr);",
+    "const seen = new Set();",
+    "for (let i = 1; i < all.length; i++) {",
+    "  const c = cells(all[i]);",
+    "  for (const k of ['状態', 'ランク', '種別', '締切']) {",
+    "    const j = head.indexOf(k);",
+    "    if (j < 0) continue;",
+    "    for (const w of String(c[j] || '').split('・')) if (w) seen.add(w);",
+    "  }",
+    "}",
+    "console.log(JSON.stringify({",
+    "  legend,",
+    "  rows: printPool.length,",
+    "  counts,",
+    "  vocab: [...seen].join(String.fromCharCode(10)),",
+    "}));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 180_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    legend: string;
+    rows: number;
+    counts: Record<string, number>;
+    vocab: string;
+  };
+  expect(out.rows, "印刷対象の行が読めていない").toBeGreaterThan(0);
+  const counts = Object.entries(out.counts).sort((a, b) => b[1] - a[1]);
+  expect(counts.length, "紙に出る状態の語が無い（検査が空振りしている）").toBeGreaterThanOrEqual(2);
+  // (1) 印刷行の 2 割以上に付く語は、紙の説明に載っていなければならない。
+  const frequent = counts.filter(([, n]) => n >= out.rows * 0.2);
+  expect(frequent.length, "多く付く語が無く、この検査が空振りしている").toBeGreaterThan(0);
+  for (const [word, n] of frequent) {
+    expect(out.legend, `紙に ${n} 行刷られる「${word}」を但し書きが説明していない`).toContain(word);
+  }
+  // (2) 但し書きが自作の語を紙に書かない（画面の語か CSV の値に実在するものだけ）。
+  const tokens = [...out.legend.matchAll(/「([^」]+)」/g)].map((m) => m[1]);
+  const lead = out.legend.slice(out.legend.indexOf(": ") + 2).split("は、")[0];
+  for (const w of lead.split("・")) if (w.trim()) tokens.push(w.trim());
+  // 照合先は「紙に刷られる値」と「画面に見える文」だけに絞る。実装のソース全体を照合先に
+  // すると、説明文に偶々現れる語を拾って検査が実質的に効かなくなる（第 182 回に実際に踏んだ:
+  // 無い語を但し書きへ足しても、コメント中の語と当たって通ってしまった）。
+  const visible = html
+    .replace(/<style[\s\S]*?<\/style>/g, "")
+    .replace(/<script[\s\S]*?<\/script>/g, "")
+    .replace(/<[^>]+>/g, "");
+  const hay = [out.vocab, visible].join("\n");
+  for (const t of tokens) {
+    if (t.length < 2) continue;
+    expect(hay, `但し書きの「${t}」が画面にも CSV にも無い自作の語になっている`).toContain(t);
+  }
+  // (3) 紙にだけ出る（画面では隠れ、印刷で見える）。
+  expect(html, "印刷の帯が画面に出る設定になっている").toMatch(
+    /\.print-meta\s*\{[^}]*display:\s*none/,
+  );
+  expect(html, "印刷の帯が紙に出る設定が無い").toMatch(
+    /\.print-meta\s*\{[^}]*display:\s*block\s*!important/,
+  );
+  const printBlock = /@media print\s*\{([\s\S]*?)\n\}/.exec(html);
+  expect(printBlock, "印刷の取りまとめが見つからない").not.toBeNull();
+  expect(printBlock![1], "印刷でてびきが消えない（紙の説明が二つになる）").toContain("#helpPanel");
+
+  // (4) てびきが、紙の但し書きを画面の語で案内している（語を検査に写さない）。
+  const prefix = out.legend.slice(0, out.legend.indexOf(": "));
+  const dtAt = html.indexOf("<dt>印刷</dt>");
+  expect(dtAt, "印刷の項が無い").toBeGreaterThan(-1);
+  const entry = html.slice(dtAt, html.indexOf("</dd>", dtAt)).replace(/<[^>]+>/g, "");
+  expect(entry, "てびきが紙の但し書きを案内していない").toContain("但し書き");
+  expect(entry, "てびきが紙に出る見出しの語と違う語で書いている").toContain(prefix);
+
+  // 点検: てびきの項は括弧が釣り合っていること（印刷の項で 1 つ開きっぱなしだった）。
+  const helpStart = html.indexOf('id="helpPanel"');
+  const dl = html.indexOf("<dl", helpStart);
+  const dlEnd = html.indexOf("</dl>", dl);
+  const items = [...html.slice(dl, dlEnd).matchAll(/<dd>([\s\S]*?)<\/dd>/g)];
+  expect(items.length, "てびきの項が読めない").toBeGreaterThan(10);
+  for (const m of items) {
+    const text = m[1].replace(/<[^>]+>/g, "");
+    const open = text.split("（").length - 1;
+    const close = text.split("）").length - 1;
+    expect(open - close, `てびきの項で括弧が釣り合っていない: ${text.slice(0, 40)}`).toBe(0);
+  }
 });
