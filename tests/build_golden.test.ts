@@ -2099,7 +2099,7 @@ it("the 残り vocabulary in the table is documented in the guide (SPEC §7)", (
   // 日付だけの締切の残りは `remain()` を通らない（呼び出し側で「時刻未確認」を出す）。
   expect(runtime).toContain('{ text: "時刻未確認"');
   const help = template.slice(template.indexOf('id="helpPanel"'));
-  const guide = help.slice(0, help.indexOf("</dl>"));
+  const guide = help.slice(0, help.indexOf("</details>"));
   for (const word of [
     "残り",
     "あと N 日",
@@ -4223,7 +4223,7 @@ it("the drawer lists the same conference's later meetings (SPEC §7)", () => {
   expect(app).toContain("今後の会期");
   // てびき に語彙を書かないと、案内だけ増えて説明が追いつかない状態になる。
   const html = readFileSync(join(site, "index.html"), "utf8");
-  const guide = html.slice(html.indexOf('id="helpPanel"'), html.indexOf("</dl>"));
+  const guide = html.slice(html.indexOf('id="helpPanel"'), html.indexOf("</details>"));
   for (const word of ["会期のみ・締切未定", "upcoming.html", "今後の会期"]) {
     expect(guide, `てびき に「${word}」が無い`).toContain(word);
   }
@@ -4348,7 +4348,7 @@ it("the online-participation filter keeps only venues that say so (SPEC §7)", (
   // 入口（チェックボックス・ショートカット・てびき）が画面から消えないようにする。
   expect(template).toContain('<input type="checkbox" id="online">');
   expect(template).toContain('data-preset="online" onclick="applyPreset(\'online\')"');
-  const guide = template.slice(template.indexOf('id="helpPanel"'), template.indexOf("</dl>"));
+  const guide = template.slice(template.indexOf('id="helpPanel"'), template.indexOf("</details>"));
   expect(guide).toContain("オンライン参加可");
   expect(guide).toContain("対面とは判定しません");
   const app = siteRuntime("app.js");

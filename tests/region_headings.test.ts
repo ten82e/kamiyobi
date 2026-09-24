@@ -68,7 +68,9 @@ describe("画面の領域が見出しで飛べる（第 274 回）", () => {
       if (!h.text) continue; // ドロワーの見出しは実行時に埋まる（次の検査で見る）。
       // 見出しを構成する語が本文のよそにも出ていれば、画面自身の語で名乗っていることに
       // なる（見出しは組み立てなので、そのままの文字列が HTML に無いことがある）。
-      for (const word of h.text.split(/\s+/).filter((w) => w.length >= 2)) {
+      /* 日本語の見出しは空白で割れないので、「・」でも割る（列挙の見出しは
+       * 画面がよそで使う語を並べた物なので、語ごとに確かめる）。 */
+      for (const word of h.text.split(/[\s・]+/).filter((w) => w.length >= 2)) {
         const uses = (html.match(new RegExp(word, "g")) || []).length;
         expect(
           uses,

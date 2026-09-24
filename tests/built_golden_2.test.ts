@@ -3576,7 +3576,7 @@ it("収録状況の四つ組は、何を数えているかと単位がラベル�
   expect(bar).not.toContain("追跡会議数");
   // てびきに単位と数え方の説明がある（画面が示す語をてびきが説明していないと調べられない）。
   const help = template.slice(template.indexOf('id="helpPanel"'));
-  const guide = help.slice(0, help.indexOf("</dl>"));
+  const guide = help.slice(0, help.indexOf("</details>"));
   expect(guide).toContain("画面上部の四つの数");
   expect(guide, "四つ組が絞り込みで動かないことをてびきが書いていない").toContain(
     "絞り込み前の収録全体",
@@ -3626,7 +3626,7 @@ it("早め絞り込みのボタンは、同じ条件を出す欄と同じ語で�
 
   // てびきが並べる語が実装と同じ（案内と実装のズレ検出）。
   const help = template.slice(template.indexOf('id="helpPanel"'));
-  const guide = help.slice(0, help.indexOf("</dl>"));
+  const guide = help.slice(0, help.indexOf("</details>"));
   for (const [, , label] of buttons) {
     expect(guide, `てびきにボタン「${label}」が実装と同じ語で書かれていない`).toContain(
       `「${label}」`,
@@ -3680,7 +3680,7 @@ it("「データ生成」の時刻は JST と曜日で出る（SPEC §7）", () 
   // てびきが「右上の更新時刻」とだけ書いていた（実際の語は「データ生成」で、単位も
   // 出さなかった）。画面に出る語と単位をそのまま引けるようにする。
   const help = template.slice(template.indexOf('id="helpPanel"'));
-  const guide = help.slice(0, help.indexOf("</dl>"));
+  const guide = help.slice(0, help.indexOf("</details>"));
   expect(guide).toContain("右上");
   expect(guide, "てびきが画面の語「データ生成」を挙げていない").toContain("データ生成");
   expect(guide, "てびきが生成時刻の単位を書いていない").toContain("JST");
@@ -3723,7 +3723,7 @@ it("データ源の行は内部の実装語を出さず、上流は一次資料�
   // てびきに画面の語そのままの説明がある（26 項目あっても「データ源」だけ無かった）。
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
   const help = template.slice(template.indexOf('id="helpPanel"'));
-  const guide = help.slice(0, help.indexOf("</dl>"));
+  const guide = help.slice(0, help.indexOf("</details>"));
   expect(guide).toContain("<dt>データ源</dt>");
   expect(guide).toContain("このサイトで収録した分（上流に無いもの）");
   expect(guide).toContain("一次資料");
@@ -3793,7 +3793,7 @@ it("一致評価の行内展開は、開閉状態を支援技術に伝える（S
   // 含まれていて、追記した文章が最初の閉じタグの後ろにぶら下がっていた（実測 27 個に対し
   // 閉じタグ 28 個）。画面に出る説明文が化けないための最低限の点検。
   const help = template.slice(template.indexOf('id="helpPanel"'));
-  const guide = help.slice(0, help.indexOf("</dl>"));
+  const guide = help.slice(0, help.indexOf("</details>"));
   const ddOpen = (guide.match(/<dd>/g) || []).length;
   const ddClose = (guide.match(/<\/dd>/g) || []).length;
   expect(ddOpen, "てびきの語が説明を持っていない").toBeGreaterThan(20);

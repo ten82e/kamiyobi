@@ -226,7 +226,7 @@ it("印刷した紙が、紙に出る語を紙の説明だけで読ませる（S
   // 点検: てびきの項は括弧が釣り合っていること（印刷の項で 1 つ開きっぱなしだった）。
   const helpStart = html.indexOf('id="helpPanel"');
   const dl = html.indexOf("<dl", helpStart);
-  const dlEnd = html.indexOf("</dl>", dl);
+  const dlEnd = html.indexOf("</details>", dl);
   const items = [...html.slice(dl, dlEnd).matchAll(/<dd>([\s\S]*?)<\/dd>/g)];
   expect(items.length, "てびきの項が読めない").toBeGreaterThan(10);
   for (const m of items) {
