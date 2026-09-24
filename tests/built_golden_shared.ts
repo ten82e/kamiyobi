@@ -214,6 +214,9 @@ export const SEARCH_CANON = (() => {
       "cityQueryForms",
       "regionEntryMembers",
       "matchFoldedGroups",
+      // `searchMatcher` は述語の組み立てを `searchGroups` に移したので、注入も一緒にする
+      // （共有部品を 1 本足すたびに、ハーネスはそれを知らないまま古い形を組む – 第 257 回と同じ穴）。
+      "searchGroups",
       "searchMatcher",
       "hayMatches",
     ].map((name) => jsFunction(rec, name)),

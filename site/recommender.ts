@@ -3163,14 +3163,23 @@ const Recommender = (() => {
       if (!raw || Array.from(raw).length !== Array.from(normalized).length) return normalized;
       return raw;
     };
+    /* 行の畳み込み（`kanaFold`）は 1 回だけやる。打ち直しの見当は同じ表に 10〜20 の語を
+     * 掛けるので、語ごとに畳み直すと同じ表を 20 回読む（2026-08-09 生成ビルド・候補行
+     * 3,275 行 / 210 万字で実測: `分散並列処理基盤システム` 1 語の見当に **640 ms**、
+     * `高速計算` 157 ms – 1 打鍵で検索欄が固まる。畳んでから数えると 35 ms）。
+     * 述語の作り方は `searchMatcher` と同じ `searchGroups` を使うので、数は同じものになる。 */
+    const folded: string[] = [];
+    for (let i = 0; i < list.length; i++) folded.push(kanaFold(list[i]));
     const cache: Record<string, number> = {};
     const countOf = (word: string): number => {
       if (!word) return 0;
       if (cache[word] !== undefined) return cache[word];
-      const matcher = searchMatcher(word, nowMs);
+      const groups = searchGroups(word, nowMs);
       let n = 0;
-      for (let i = 0; i < list.length; i++) {
-        if (matcher(list[i])) n += 1;
+      if (groups.length) {
+        for (let i = 0; i < folded.length; i++) {
+          if (matchFoldedGroups(folded[i], groups)) n += 1;
+        }
       }
       cache[word] = n;
       return n;
@@ -5247,10 +5256,17 @@ const Recommender = (() => {
     return kept.length ? kept : groups;
   }
 
-  function searchMatcher(query: unknown, nowMs?: number): (hay: unknown) => boolean {
-    const groups = withoutWholeTableGroups(queryTokenGroups(query, nowMs)).map((group) =>
+  /* 検索語から述語（語の組）を作る。`searchMatcher` と、同じ表に複数の語を掛ける
+   * 数え上げ（`shorterHitWordsJa`）で**同じ述語の作り方を共有する**（第 257 回 –
+   * 述語の組み立てを 2 か所に持つと必ず片方が古くなる）。 */
+  function searchGroups(query: unknown, nowMs?: number): string[][] {
+    return withoutWholeTableGroups(queryTokenGroups(query, nowMs)).map((group) =>
       group.map((term) => kanaFold(term)),
     );
+  }
+
+  function searchMatcher(query: unknown, nowMs?: number): (hay: unknown) => boolean {
+    const groups = searchGroups(query, nowMs);
     if (!groups.length) return () => true;
     return (hay: unknown): boolean => {
       const target = kanaFold(hay);
