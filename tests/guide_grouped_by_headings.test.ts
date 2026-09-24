@@ -71,9 +71,10 @@ describe("てびきが見出しで群れている", () => {
       huge.map((g) => `${g.title}: ${String(g.terms.length)} 語`),
       "集団が大きすぎて壁になっている",
     ).toEqual([]);
-    // 語の総数は 39（見出しに吸い取られて減っていない）。
+    // 語の総数（見出しに吸い取られて減っていない）。第 308 回で「データの健全性
+    // （health.md）」を 1 語足したので 40 – てびきに語を足す変更はこの数を巻き込む。
     const total = built.reduce((acc, g) => acc + g.terms.length, 0);
-    expect(total, "てびきの語の数が減った").toBe(39);
+    expect(total, "てびきの語の数が減った").toBe(40);
     for (const g of built) {
       expect(g.terms.length, `「${g.title}」に語が有らない`).toBeGreaterThan(0);
       for (const t of g.terms) {

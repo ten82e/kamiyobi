@@ -1702,9 +1702,6 @@ const Recommender = (() => {
     // `virtual` は寄せていない – 会議名の "Virtual Reality" に当たって 10 行よけいに出る
     // （実測: `virtual` は 34 行に増え、そのうち参加形式の印がある行は 24 行で、残りは
     // 「International Conference on Virtual Reality and Visualization」などの会議名だった）。
-    // `virtual` は寄せていない – 会議名の "Virtual Reality" に当たって 10 行よけいに出る
-    // （実測: `virtual` は 34 行に増え、そのうち参加形式の印がある行は 24 行で、残りは
-    // 「International Conference on Virtual Reality and Visualization」などの会議名だった）。
     // 逆の言い方（`対面` `in-person` `onsite` `現地`）は収録に語その物が無いので
     // 寄せない – 0 件の案内に任せる（実測: データに "in-person"・"onsite"・「対面」は
     // 1 度も出てこない）。
