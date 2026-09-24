@@ -5592,11 +5592,17 @@ const Recommender = (() => {
 
   function placeTermJa(text: string): string {
     let out = text;
+    /* 都市名などの語を、後で国名などに置き換える対象から一時的に退避する。退避は
+     * 「目印 + 番号 + 目印」の形で行い、語の置き換えが終わったら元に戻す。目印は
+     * 文字 NUL（U+0000）で良いが、**ソースに生の NUL バイトを書かない**こと。
+     * 生で書くと、そのファイルを一続きのテキストとして開けなくなる仕組みがあり、
+     * 編集も差分も検査も困る（2026-09-24 に正本 4 箇所で実発生）。必ず `\u0000` の
+     * 書き表しで書く（意味は同じで、画面に出る値も変わらない）。 */
     const shielded: string[] = [];
     PLACE_NAME_SHIELDS_JA.forEach((name) => {
       out = out.replace(new RegExp(`(?<![A-Za-z0-9-])${name}(?![A-Za-z0-9-])`, "gi"), (matched) => {
         shielded.push(matched);
-        return ` ${shielded.length - 1} `;
+        return `\u0000${shielded.length - 1}\u0000`;
       });
     });
     PLACE_TERM_PATTERNS.concat(
@@ -5608,7 +5614,7 @@ const Recommender = (() => {
       out = out.replace(pattern, ja);
     });
     shielded.forEach((matched, i) => {
-      out = out.split(` ${i} `).join(matched);
+      out = out.split(`\u0000${i}\u0000`).join(matched);
     });
     // "UK and hybrid" 等の接続詞は中点に寄せる（一覧の 1 行で読める形にする）。
     return out.replace(/\s+and\s+|\s*&\s*/gi, "・");
