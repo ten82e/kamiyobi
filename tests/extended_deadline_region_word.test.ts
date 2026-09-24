@@ -11,6 +11,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 import { builtSite } from "./built_site.ts";
+import { jsFunction } from "./runtime_extract.ts";
 
 const 基準 = Date.parse("2026-08-09T00:00:00Z");
 
@@ -124,8 +125,11 @@ describe("成果物", () => {
     const rec = readFileSync(join(builtSite(), "recommender.js"), "utf8");
     expect(rec.includes("中近東"), "中近東が消えた").toBe(true);
     expect(rec.includes("原文の virtual"), "バーチャルの寄せが消えた").toBe(true);
-    /* 締切の延伸の寄せは `jsFunction` 抜き出し検査が在るので関数の中に有る事（第 341 回）。 */
-    const 関数 = rec.slice(rec.indexOf("function collapseRelativeDayPhrase"));
-    expect(関数.slice(0, 2600).includes("延長"), "延伸の寄せが関数の外に出た").toBe(true);
+    /* 締切の延伸の寄せは `jsFunction` 抜き出し検査が在るので関数の中に有る事（第 341 回）。
+     * 固定長の窓で見るのは取り違える – 中に規則を足すたびに長くなる（第 346 回の実発生）。 */
+    expect(
+      jsFunction(rec, "collapseRelativeDayPhrase").includes("延長"),
+      "延伸の寄せが関数の外に出た",
+    ).toBe(true);
   });
 });

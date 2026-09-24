@@ -11,6 +11,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 import { builtSite } from "./built_site.ts";
+import { jsFunction } from "./runtime_extract.ts";
 
 const 基準 = Date.parse("2026-08-09T00:00:00Z");
 
@@ -133,14 +134,15 @@ describe("和暦の日付", () => {
 describe("成果物", () => {
   it("組み立てた品が三つの言い方を持ち、寄せが関数の中にある", () => {
     const rec = readFileSync(join(builtSite(), "recommender.js"), "utf8");
-    const 関数 = rec.slice(rec.indexOf("function collapseRelativeDayPhrase("));
-    expect(関数.length, "`collapseRelativeDayPhrase` が見つからない").toBeGreaterThan(0);
-    const 本文 = 関数.slice(0, 3000);
+    /* 関数本体は `jsFunction` で切り出す（固定長の窓は、中に規則を足すたびにずれる –
+     * 第 346 回の実発生）。 */
+    const 本文 = jsFunction(rec, "collapseRelativeDayPhrase");
+    expect(本文.length, "`collapseRelativeDayPhrase` が見つからない").toBeGreaterThan(0);
     expect(本文.includes("月末"), "`N月末` の寄せが成果物から消えた").toBe(true);
     expect(本文.includes("$1 締切"), "繋げた締切の語の寄せが成果物から消えた").toBe(true);
-    const 和暦関数 = rec.slice(rec.indexOf("function eraYearTermsJa("));
+    const 和暦関数 = jsFunction(rec, "eraYearTermsJa");
     expect(
-      /\(\(\?:\[0-9\]\{1,2\}\)日\)/.test(和暦関数.slice(0, 2600)),
+      /\(\(\?:\[0-9\]\{1,2\}\)日\)/.test(和暦関数),
       "和暦の日（`令和8年8月22日`）を受ける形が消えた",
     ).toBe(true);
     /* 裸の『締め』を『締切』へ寄せる案は棄却した – 寄せた形の説明が成果物に立っていない事で
