@@ -117,6 +117,8 @@ export const SEARCH_CANON = (() => {
     ["PLACE_QUERY_ALIASES_JA", /const PLACE_QUERY_ALIASES_JA[\s\S]*?\];/],
     ["TOPIC_QUERY_ALIASES_JA", /const TOPIC_QUERY_ALIASES_JA[\s\S]*?\];/],
     ["RELATIVE_MONTH_OFFSETS_JA", /const RELATIVE_MONTH_OFFSETS_JA[\s\S]*?\};/],
+    // 「今月末」「年内」の語の表（第 327 回）。`queryTokenGroups` が呼ぶ関数と一緒に注入する。
+    ["PERIOD_MONTH_WORDS_JA", /const PERIOD_MONTH_WORDS_JA[\s\S]*?\};/],
     ["PLACE_READINGS", /const PLACE_READINGS[\s\S]*?\];/],
     ["REGION_READINGS", /const REGION_READINGS[\s\S]*?\];/],
     // 地域まとめ（`ヨーロッパ` → 国名）は shared の国名リスト変数に依存するので、
@@ -202,6 +204,11 @@ export const SEARCH_CANON = (() => {
       "offsetCalendarDay",
       "weekDayTermsJa",
       "yearMonthTermsJa",
+      // 月のまとまりの語（`今月末` `年内`）は暦月語へ展開する（第 327 回）– 解決の関数も
+      // 同じ入口から注入する（一覧を知らない抽出検査が `not defined` で落ちる – 第 257 回と同じ穴）。
+      "relativeMonthTerm",
+      "monthTokenToYearMonth",
+      "periodMonthTermsJa",
       // 数値の相対日（`あと 51 日` → `51日後` → 暦日）。`relativeDayGroups` と
       // `queryTokenGroups` が呼ぶので、定義順で先に置く（第 223 回）。
       "collapseRelativeDayPhrase",

@@ -4422,6 +4422,9 @@ const Recommender = (() => {
     去年: -1,
     きょねん: -1,
     せんねん: -1,
+    /* `昨年` だけが表に無く、0 行で件数欄の解決も無かった（第 327 回の実測 – `去年` は
+     * 同じ年の語なのに通っていた）。 */
+    昨年: -1,
     一昨年: -2,
     いとおととし: -2,
   };
@@ -4642,6 +4645,80 @@ const Recommender = (() => {
       splitQueryToken(token).forEach((part) => {
         const terms = monthRangeTermsJa(part, nowMs);
         if (terms.length) pairs.push([part, `${terms[0]}から${terms[terms.length - 1]}`]);
+      });
+    });
+    return pairs;
+  }
+
+  /* 月のまとまり・年の中の地点の語（第 327 回）。実測（2026-09-26 – 2026-08-09 生成ビルドの
+   * 品書 872 行・固定時刻 2026-08-09T00:00:00Z）: `今月` 189 行なのに `今月末` **0 行**、
+   * `来月` 240 行なのに `来月末` **0 行**、`年内` **0 行**、`年度末` **0 行**、`年末` **0 行**、
+   * `年明け` **0 行**で、件数欄の解決も出ていなかった。研究計画では「今月末までに間に合うか」
+   * 「年内に出せる枠」という聞き方をするので、暦月語のグループへ展開する。
+   * 展開先は**その月の締切** – 行の日付で末日より前を削る作りはしていないので、
+   * 「末日より前だけ」とは言わない（締切の推測はしない – AGENTS.md）。 */
+  const PERIOD_MONTH_WORDS_JA: Record<string, string> = {
+    今月末: "今月",
+    今月終わり: "今月",
+    月末: "今月",
+    この月末: "今月",
+    来月末: "来月",
+    来月終わり: "来月",
+    再来月末: "再来月",
+    年度末: "3月",
+    年初: "1月",
+    年明け: "1月",
+    年度初め: "4月",
+    年度当初: "4月",
+    年末: "12月",
+    // 「年内」は今月〜12月（過ぎた月を出さない – `@年内` で受ける）。
+    年内: "@年内",
+  };
+
+  /** 月のまとまりの語を、表に出る暦月語（`YYYY年M月`）のグループへ展開する。 */
+  function periodMonthTermsJa(token: string, nowMs: number): string[] {
+    const target = PERIOD_MONTH_WORDS_JA[token];
+    if (!target) return [];
+    const jst = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
+    if (target === "@年内") {
+      const out: string[] = [];
+      for (let month = jst.getUTCMonth() + 1; month <= 12; month += 1) {
+        out.push(`${jst.getUTCFullYear()}年${month}月`);
+      }
+      return out;
+    }
+    const resolved = monthTokenToYearMonth(target, nowMs);
+    if (!resolved) return [];
+    return [`${resolved[0]}年${resolved[1]}月`];
+  }
+
+  /** 月のまとまりの語について `打った語 -> 出した範囲` の組を返す（件数欄の説明用）。
+   * `月末` の付く語には末日の日付を添える – 打った人が気にしているのは日付の方で、
+   * 展開先の月だけ書いても答えにならない。 */
+  function periodMonthPairs(query: unknown, nowMs: number): Array<[string, string]> {
+    const normalized = searchNormalize(query);
+    if (!normalized) return [];
+    const pairs: Array<[string, string]> = [];
+    normalized.split(" ").forEach((token) => {
+      splitQueryToken(token).forEach((part) => {
+        const terms = periodMonthTermsJa(part, nowMs);
+        if (!terms.length) return;
+        const first = terms[0];
+        const last = terms[terms.length - 1];
+        let label = first === last ? `${first}の締切` : `${first}から${last}の締切`;
+        if (part.indexOf("月末") >= 0 || part.indexOf("終わり") >= 0) {
+          const ym = /^(\d{4})年(\d{1,2})月$/.exec(last);
+          if (ym) {
+            const end = new Date(Date.UTC(Number(ym[1]), Number(ym[2]), 0));
+            const iso = `${ym[1]}-${ym[2].padStart(2, "0")}-${String(end.getUTCDate()).padStart(
+              2,
+              "0",
+            )}`;
+            const day = weekdayJaFromDate(iso);
+            label += `（末日は ${ym[1]}年${ym[2]}月${end.getUTCDate()}日${day ? `(${day})` : ""}）`;
+          }
+        }
+        pairs.push([part, label]);
       });
     });
     return pairs;
@@ -5959,6 +6036,13 @@ const Recommender = (() => {
       /* 「秋」「春」などの季節の語も同じ暦月語のグループへ展開する（第 254 回）。 */
       const season = seasonTermsJa(token, now);
       if (season.length) group = season.slice();
+      /* 「今月末」「年内」のような月のまとまりの語も同じ暦月語の組へ展開する（第 327 回）。
+       * 展開できたときは元の語を組に残さない – 組の中は OR なので残しても当たり方は
+       * 変わらない（実測で差分 0 を確かめた – 第 327 回の改ざんで発覚）が、表に無い語が
+       * 混ざった組になるだけで、0 件のときの案内が打った語を読む余地を無くす。
+       * `monthRange`・`season` と同じ書き方に揃える。 */
+      const period = periodMonthTermsJa(token, now);
+      if (period.length) group = period.slice();
 
       /* 時刻の語は零詰めた形に寄せる。画面に出る 21 種はすべて `08:59` の形所以外に
        * 無いので（2026-08-09 生成ビルドで実測）、打った側を画面の形に直す。元の形も
@@ -8240,6 +8324,8 @@ const Recommender = (() => {
     yearSeasonTermsJa: yearSeasonTermsJa,
     mergeSeasonTokens: mergeSeasonTokens,
     seasonPairs: seasonPairs,
+    periodMonthPairs: periodMonthPairs,
+    periodMonthTermsJa: periodMonthTermsJa,
     kanaFold: kanaFold,
     queryTokenGroups: queryTokenGroups,
     queryTokens: queryTokens,

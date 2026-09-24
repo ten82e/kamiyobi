@@ -1881,7 +1881,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const pairs = Recommender.relativeMonthPairs(query, now)
       .concat(Recommender.monthRangePairs(query, now) as unknown as Array<[string, string]>)
       // 季節の語も「どの月へ展開したか」を同じ形で出す（第 254 回）。
-      .concat(Recommender.seasonPairs(query, now) as unknown as Array<[string, string]>);
+      .concat(Recommender.seasonPairs(query, now) as unknown as Array<[string, string]>)
+      // 「今月末」「年内」も同じ形でどこへ展開したか出す（第 327 回）。
+      .concat(Recommender.periodMonthPairs(query, now) as unknown as Array<[string, string]>);
     return pairs.length ? ` ｜ ${pairs.map((pair) => `${pair[0]} = ${pair[1]}`).join("、")}` : "";
   }
 
