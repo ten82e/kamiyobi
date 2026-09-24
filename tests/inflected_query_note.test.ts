@@ -32,7 +32,6 @@ const 言い方: Array<[string, string]> = [
 const 寄せない = [
   "クリアランス",
   "条件付き",
-  "未確定",
   "解像度",
   "戻り値",
   "除外",
@@ -77,6 +76,11 @@ describe("画面の語を活用の形で打つ人", () => {
       expect(Recommender.uiWordNoteJa(語), `"${語}" に案内を立てた（語の一部を拾った）`).toBe("");
       expect(Recommender.uiWordLiveNoteJa(語), `"${語}": 読み上げが誤発火`).toBe("");
     });
+    /* `未確定` は第 337 回で自分の案内を持つ語になった（収録に「仮の締切」という扱いが
+     * 無い事を言う）。ここで守るのは – 画面のボタン語 `確定` の案内（『見方のてびき』）を
+     * 語の一部として拾わない事。 */
+    expect(Recommender.uiWordNoteJa("未確定")).not.toContain("見方のてびき");
+    expect(Recommender.uiWordNoteJa("未確定")).toContain("公式に出した日付");
   });
 
   it("条件を戻したい人には『条件クリア』の名前を出す（欄の名前の案内に譲らない）", () => {
