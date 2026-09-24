@@ -87,7 +87,10 @@ export function upcomingRows(dir: string): string[][] {
 export function keydownWithBlockers(src: string): string {
   // 第 152 回: `j` は選択が行の描画範囲を越えないか確認するので、抜き出した関数に
   // その関数も必要（独立していないと `ReferenceError` – 同じ helper の趣旨と同じ）。
-  return `const ensureRowsDrawn = () => {};\n${jsFunction(src, "keyBlockedByTarget")}\n${jsFunction(src, "onKeydown")}`;
+  // 第 273 回: 行の選び方を `dataRows` にまとめたので、それも入れる。実行時に新しい関数を
+  // 足すたびにここへ来るのが正で、検査側ごとに別の抜き出しを作ると同じ穴に三度目落ちする
+  // （`ReferenceError: dataRows is not defined` を実際に踏んだ）。
+  return `const ensureRowsDrawn = () => {};\n${jsFunction(src, "dataRows")}\n${jsFunction(src, "keyBlockedByTarget")}\n${jsFunction(src, "onKeydown")}`;
 }
 
 export const SEARCH_CANON = (() => {

@@ -3899,16 +3899,22 @@ it("てびきのキーボード表記が、実装が扱うキーと欠けずに�
     "const row = { conf: { link: 'https://example.org' }, ed: { link: 'https://example.org/e' } };",
     "const rowEl = { classList: { contains: () => false }, focus() {} };",
     `const KEY = ${JSON.stringify(jsFunction(app, "onKeydown"))};`,
+    // 第 273 回: 行の選び方を `dataRows` にまとめたので、式として作って渡す。
+    `const DATA_ROWS = ${JSON.stringify(jsFunction(app, "dataRows"))};`,
+    "const rowsForKeys = [rowEl, rowEl];",
+    "const $keys = () => ({ querySelectorAll: () => rowsForKeys });",
+    "const dataRows = new Function('$', 'return (' + DATA_ROWS + ')')($keys);",
     // onKeydown はキーの振り分け関数を呼ぶので、抜き出した 2 つを一緒に作る。
     `const KEYBLOCK = ${JSON.stringify(jsFunction(app, "keyBlockedByTarget"))};`,
     'const onKeydown = new Function("state", "window", "document", "$", "selectedIndex", "shown",',
-    '  "openDrawer", "closeDrawer", "ensureRowsDrawn", "safeExternalUrl", KEYBLOCK + ";" + KEY + ";return onKeydown;")(',
+    '  "openDrawer", "closeDrawer", "ensureRowsDrawn", "safeExternalUrl", "dataRows",',
+    '  KEYBLOCK + ";" + KEY + ";return onKeydown;")(',
     "  { mode: 'deadlines' },",
     "  { open: () => { calls.openUrl++; } },",
     "  { activeElement: null },",
-    "  () => ({ querySelectorAll: () => [rowEl, rowEl] }), 1, [row, row],",
+    "  $keys, 1, [row, row],",
     "  () => { calls.drawer++; }, () => {}, () => {},",
-    "  (u) => (typeof u === 'string' && u.startsWith('https://') ? u : null),",
+    "  (u) => (typeof u === 'string' && u.startsWith('https://') ? u : null), dataRows,",
     ");",
     "const fire = (key) => onKeydown({ key, target: { tagName: 'BODY', isContentEditable: false }, preventDefault() {} });",
     "fire('d');",
@@ -4449,6 +4455,8 @@ it("キーボードで選んだ行にフォーカスが動く（支援技術に�
   const app = siteRuntime();
   const script = [
     "(async () => {",
+    // 第 273 回: 行の選び方を `dataRows` にまとめたので、呼び先も併れる。
+    `const DATA_ROWS = ${JSON.stringify(jsFunction(app, "dataRows"))};`,
     `const UPDATE = ${JSON.stringify(jsFunction(app, "updateRowSelection"))};`,
     // shown[] と 1:1 の行のほかに、展開行と月見出し行が混ざる（除外されないと行がズレる）。
     "const mk = (name, classes) => {",
@@ -4474,7 +4482,7 @@ it("キーボードで選んだ行にフォーカスが動く（支援技術に�
     "  const window = mkWindow(reduce);",
     "  rows.forEach((r) => { r.focused = 0; r.focusArgs = null; r.scrollArgs = null; });",
     "  const fn = new Function('$', 'window', 'selectedIndex',",
-    "    UPDATE + '; return updateRowSelection();');",
+    "    DATA_ROWS + '; ' + UPDATE + '; return updateRowSelection();');",
     "  fn(() => ({ querySelectorAll: () => rows }), window, index);",
     "};",
     // shown[] の 2 番目（実体 3 行目の row2 を index 2 で選ぶ。除外行を数えるとズレる）。

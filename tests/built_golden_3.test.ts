@@ -204,10 +204,14 @@ it("検索欄で Esc を押すと、語を消さずに欄を出て選択行に�
     "const shown = [{ key: 'A' }, { key: 'B' }];",
     `const KEY = ${JSON.stringify(keySrc)};`,
     `const SELECT = ${JSON.stringify(selectSrc)};`,
+    // 第 273 回: 行の選び方を `dataRows` にまとめたので、抜き出した関数に渡す。
+    // （宣言を並べるだけでは、`return (…)` の形と合わない – 式として作ってから渡す。）
+    `const DATA_ROWS = ${JSON.stringify(jsFunction(html, "dataRows"))};`,
+    "const dataRows = new Function('return (' + DATA_ROWS + ')')();",
     "const make = (selectedIndex) =>",
-    "  new Function('window', 'document', '$', 'selectedIndex', 'shown', 'openDrawer', 'closeDrawer', 'updateRowSelection', KEY + ';return onKeydown;')(",
-    "    window, document, $, selectedIndex, shown, () => {}, () => {}, updateRowSelection);",
-    "const updateRowSelection = new Function('window', 'document', '$', 'selectedIndex', 'return (' + SELECT + ')')(window, document, $, 1);",
+    "  new Function('window', 'document', '$', 'selectedIndex', 'shown', 'openDrawer', 'closeDrawer', 'updateRowSelection', 'dataRows', KEY + ';return onKeydown;')(",
+    "    window, document, $, selectedIndex, shown, () => {}, () => {}, updateRowSelection, dataRows);",
+    "const updateRowSelection = new Function('window', 'document', '$', 'selectedIndex', 'dataRows', 'return (' + SELECT + ')')(window, document, $, 1, dataRows);",
     // ① 検索欄で Esc → 欄を出て（blur）、選んでいた行にフォーカスが戻る。
     "calls.length = 0;",
     "make(1)({ key: 'Escape', preventDefault() {}, target: search });",
@@ -545,8 +549,12 @@ it("選んだ行は支援技術にも伝わる（視覚の目印だけで状態�
     "function $(id) { return document.getElementById(id); }",
     "const window = { matchMedia: () => ({ matches: true }) };",
     `const SELECT = ${JSON.stringify(selectSrc)};`,
+    // 第 273 回: 行の選び方を `dataRows` にまとめたので、抜き出した関数に渡す。
+    // （宣言を並べるだけでは、`return (…)` の形と合わない – 式として作ってから渡す。）
+    `const DATA_ROWS = ${JSON.stringify(jsFunction(app, "dataRows"))};`,
+    "const dataRows = new Function('return (' + DATA_ROWS + ')')();",
     "const run = (index) => {",
-    "  const fn = new Function('window', 'document', '$', 'selectedIndex', 'return (' + SELECT + ')')(window, document, $, index);",
+    "  const fn = new Function('window', 'document', '$', 'selectedIndex', 'dataRows', 'return (' + SELECT + ')')(window, document, $, index, dataRows);",
     "  fn();",
     "  return rows.filter((r) => r.attrs['aria-current']).map((r) => r.name + '=' + r.attrs['aria-current']);",
     "};",

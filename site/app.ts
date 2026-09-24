@@ -1304,9 +1304,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       e.preventDefault();
       // 選択行がまだ描画されていなければ先に描く（下のフォーカス先が存在しないため）。
       ensureRowsDrawn(selectedIndex);
-      const dtrs = [...$("tbody").querySelectorAll<HTMLTableRowElement>("tr")].filter(
-        (row) => !(row.classList.contains("detail-row") || row.classList.contains("month-row")),
-      );
+      const dtrs = dataRows();
       if (dtrs[selectedIndex]) dtrs[selectedIndex].focus();
       openDrawer(shown[selectedIndex]);
     } else if (e.key === "j" || e.key === "ArrowDown") {
@@ -1347,11 +1345,19 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
   }
 
-  function updateRowSelection() {
-    // 展開用 detail-row を除外し、shown[] の行と 1:1 対応を保つ
-    const trs = [...$("tbody").querySelectorAll<HTMLTableRowElement>("tr")].filter(
+  /* 一覧の「データの行」だけを出す。月見出し（`.month-row`）と行内展開（`.detail-row`）は
+   * `shown[]` と 1:1 にならないので、行の選択・フォーカス・1:1 対応を見る所では常に除く。
+   * 同じ式を 2 か所に書いていた（第 273 回: フォーカスの面倒を見る場所を足したときに
+   * 3 か所目になるのを避け、ここへ集めた）。 */
+  function dataRows(): HTMLTableRowElement[] {
+    return [...$("tbody").querySelectorAll<HTMLTableRowElement>("tr")].filter(
       (row) => !(row.classList.contains("detail-row") || row.classList.contains("month-row")),
     );
+  }
+
+  function updateRowSelection() {
+    // 展開用 detail-row を除外し、shown[] の行と 1:1 対応を保つ
+    const trs = dataRows();
     trs.forEach((tr, idx) => {
       const on = idx === selectedIndex;
       tr.classList.toggle("selected", on);
@@ -3579,6 +3585,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
     cardsDrawn = end;
     updateMoreButton(cardsDrawn, recommendationList.length);
+    keepFocusAfterMoreDraw();
   }
 
   /** 「すべて表示」: 残りを一気に入れる。推薦カードでも表でも、続きの出し方は
@@ -3599,6 +3606,41 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (after <= before) break;
       guard += 1;
     }
+    keepFocusAfterMoreDraw();
+  }
+
+  /* 「さらに表示」「すべて表示」を最後まで押すと、押した人自身のフォーカスが、消えた物に
+   * 乗ったままになる。そのままだと次の Tab は画面の先頭からやり直しになり、読み上げも
+   * 居場所を失う（マウスならスクロールバーで済むが、キーボードだけの人には一番きつい）。
+   * **押して足した場合だけ**、最後に足した行（カードならそのカード）へ移す。条件を変えて
+   * `render()` から呼ばれたときはフォーカスが条件の欄に乗っているので、この関数は入らない。 */
+  function keepFocusAfterMoreDraw() {
+    const more = $("more");
+    const all = $("showAll");
+    const active = document.activeElement as HTMLElement | null;
+    if (active !== more && active !== all) return;
+    // まだ足す物が残っているなら、ボタンは生きているので動かさない。
+    if (!more.hidden || !all.hidden) return;
+    const cards = $("recommendationCards");
+    let target: HTMLElement | null = null;
+    if (!cards.hidden) {
+      const last = cards.lastElementChild as HTMLElement | null;
+      if (last) {
+        // カードは既定でフォーカスをもらえない（行は `tabIndex = -1` を持っている）。
+        if (last.tabIndex < 0) last.tabIndex = -1;
+        target = last;
+      }
+    } else {
+      const rows = dataRows();
+      target = rows.length ? rows[rows.length - 1] : null;
+    }
+    if (!target) return;
+    target.focus();
+    sharedRowNotice(
+      cards.hidden
+        ? `この一覧 ${countJa(shown.length)} 件をすべて出しました`
+        : `候補 ${countJa(recommendationList.length)} 件をすべて出しました`,
+    );
   }
 
   function drawMore() {
@@ -3638,6 +3680,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     tbody.appendChild(frag);
     drawn = end;
     updateMoreButton(drawn, shown.length);
+    keepFocusAfterMoreDraw();
   }
 
   function recommendationAvailability(r: AppRow) {
