@@ -2932,7 +2932,20 @@ const Recommender = (() => {
    * 黙って条件が変わったように見えると、自分が何を見たのか分からなくなる。 */
   function relativeDayNotes(query: unknown, nowMs: number): string[] {
     const notes: string[] = [];
+    /* 月の語と旬を**離して**打った形（`来月 下旬`）は、解く前に一語へ寄せる（第 332 回）。
+     * 寄せないで語ごとに解くと、行は 9 月下旬のものなのに案内は「8月下旬」と書いてしまう –
+     * 案内は画面に出る物なので、行と食い違うと嘘になる。 */
+    const 解いた語: Array<{ 見せ: string; 解: string }> = [];
     queryTokens(collapseRelativeDayPhrase(query)).forEach((token) => {
+      const 前 = 解いた語[解いた語.length - 1];
+      if (前 && monthPartRangeJa(`${前.解}${token}`, nowMs) !== null) {
+        前.見せ = `${前.見せ} ${token}`;
+        前.解 = `${前.解}${token}`;
+        return;
+      }
+      解いた語.push({ 見せ: token, 解: token });
+    });
+    解いた語.forEach(({ 見せ: token, 解 }) => {
       /* 「明日まで」「今日から 3 日」は幅なので、幅のまま書く（第 328 回）。 */
       const span = untilDayTermsJa(token, nowMs) || fromTodayTermsJa(token, nowMs);
       if (span) {
@@ -3007,6 +3020,26 @@ const Recommender = (() => {
           return;
         }
       }
+      /* 「8月下旬」「来月上旬」は幅なので、出した範囲と分け方の決まりを書く（第 332 回）。
+       * 「いついつまで」を尋ねているのに、打たれた語を繰り返すだけの案内は答えにならない。 */
+      const part = monthPartRangeJa(解 || key, nowMs);
+      if (part) {
+        const 初日 = `${part.year}年${part.month}月${part.from}日`;
+        const 末日 = `${part.year}年${part.month}月${part.to}日`;
+        const 初曜 = weekdayJaFromDate(toIsoDate(初日));
+        const 末曜 = weekdayJaFromDate(toIsoDate(末日));
+        const 過ぎ = isPastJstDay([part.year, part.month, part.to], nowMs)
+          ? "（その範囲は過ぎています – 「過去の締切も表示」を付けると並びます）"
+          : "";
+        notes.push(
+          `${token} = ${初日}${初曜 ? `(${初曜})` : ""}〜${末日}${
+            末曜 ? `(${末曜})` : ""
+          }の締切 – ${part.label}は月の ${part.from} 日から ${part.to} 日までです${
+            part.label === "下旬" ? "（下旬は月末まで）" : ""
+          }${過ぎ}`,
+        );
+        return;
+      }
       /* 「今年度」「来年度中」は年度（4 月〜翌年 3 月）の幅で答える（第 330 回）。
        * 年度跨ぎの相談がそのまま打てるように、初日と末日を曜日まで書く。 */
       const fiscalBase = fiscalYearBaseJa(key, nowMs);
@@ -3041,6 +3074,13 @@ const Recommender = (() => {
           first = `${ymd[0]}年${ymd[1]}月${ymd[2]}日`;
         } else if (onwardWeek.length === 7) {
           first = onwardWeek[0];
+        } else if (monthPartRangeJa(stem, nowMs) !== null) {
+          const 旬 = monthPartRangeJa(stem, nowMs) as {
+            year: number;
+            month: number;
+            from: number;
+          };
+          first = `${旬.year}年${旬.month}月${旬.from}日`;
         } else if (fiscalYearBaseJa(stem, nowMs) !== null) {
           first = `${fiscalYearBaseJa(stem, nowMs) as number}年4月1日`;
         } else if (RELATIVE_YEAR_OFFSETS_JA[relativeYearKeyJa(stem)] !== undefined) {
@@ -4876,6 +4916,61 @@ const Recommender = (() => {
     return [`${resolved[0]}年${resolved[1]}月`];
   }
 
+  /* 上旬・中旬・下旬（第 332 回）。三日ごとの区切りは JIS X 0412 の分け方に習う –
+   * 上旬 1〜10 日、中旬 11〜20 日、下旬 21 日から月末。実測（2026-08-09 生成ビルドの品書
+   * 872 行・固定時刻 2026-08-09T00:00:00Z）で `下旬` `上旬` `中旬` `8月下旬` `来月上旬`
+   * `今月中旬` はいずれも **0 行**だった（同じ月の `月末` 189 行・`来月末` 240 行は通る）。
+   * 月のまとまりを「旬」で聞くのは日本語の普通の名前なので、語尾を剥がすのではなく
+   * 条目として受ける。切り方の取り決めが公用の定義に無い語（`月初` `前半` `後半`）は
+   * 受けない – 締切の推測はしない（AGENTS.md）。 */
+  const MONTH_PART_DAYS_JA: Record<string, [number, number]> = {
+    上旬: [1, 10],
+    中旬: [11, 20],
+    下旬: [21, 0],
+  };
+  const MONTH_PART_TAIL_JA = /^(.*?)の?(上旬|中旬|下旬)$/;
+
+  /** 「8月下旬」「来月上旬」「下旬」を暦日の幅へ解く（当てはまらなければ null）。 */
+  function monthPartRangeJa(
+    token: string,
+    nowMs: number,
+  ): { year: number; month: number; from: number; to: number; label: string } | null {
+    const hit = MONTH_PART_TAIL_JA.exec(String(token || ""));
+    if (!hit) return null;
+    const days = MONTH_PART_DAYS_JA[hit[2]];
+    if (!days) return null;
+    /* 冠の無い `下旬` だけは今月を基準にする（「下旬の締切」は今月の話をしている）。
+     * `来月` のような月の語は検索語の段で既に `2026年9月` へ書き換わる（第 251 回）ので、
+     * 西历付きの月の形も受ける – 離して打たれた `来月 下旬` が割れないようにする（第 332 回）。 */
+    const 冠 = hit[1] === "" ? "今月" : hit[1];
+    const 絶対月 = /^(\d{4})年(\d{1,2})月$/.exec(冠);
+    const resolved = 絶対月
+      ? [Number(絶対月[1]), Number(絶対月[2])]
+      : monthTokenToYearMonth(冠, nowMs);
+    if (!resolved) return null;
+    const year = Number(resolved[0]);
+    const month = Number(resolved[1]);
+    const 末日 = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    return {
+      year,
+      month,
+      from: days[0],
+      to: days[1] === 0 ? 末日 : Math.min(days[1], 末日),
+      label: hit[2],
+    };
+  }
+
+  /** 旬の語を暦日の候補（`2026年8月21日` の形）へ展開する。他の年の同じ月日を混ぜる
+   * 短い形（`8月21日`）は出さない – 旬は月を名乗った語なので年まで書く。 */
+  function monthPartTermsJa(token: string, nowMs: number): string[] | null {
+    const range = monthPartRangeJa(dateTokenStemJa(token) || String(token || ""), nowMs);
+    if (!range) return null;
+    const out: string[] = [];
+    for (let d = range.from; d <= range.to; d += 1) {
+      out.push(`${range.year}年${range.month}月${d}日`);
+    }
+    return out;
+  }
   /** 月のまとまりの語について `打った語 -> 出した範囲` の組を返す（件数欄の説明用）。
    * `月末` の付く語には末日の日付を添える – 打った人が気にしているのは日付の方で、
    * 展開先の月だけ書いても答えにならない。 */
@@ -5044,7 +5139,8 @@ const Recommender = (() => {
       RELATIVE_YEAR_OFFSETS_JA[word] !== undefined ||
       PERIOD_MONTH_WORDS_JA[word] !== undefined ||
       FISCAL_YEAR_OFFSETS_JA[word] !== undefined ||
-      SEASON_MONTHS_JA[word] !== undefined
+      SEASON_MONTHS_JA[word] !== undefined ||
+      MONTH_PART_TAIL_JA.test(word)
     );
   }
 
@@ -5177,6 +5273,9 @@ const Recommender = (() => {
     if (!stem && !pressed) return null;
     const dayOffset = RELATIVE_DAY_OFFSETS_JA[stem];
     let last: number[] | null = null;
+    /* 「今月下旬までに」は下旬の末日までの幅（第 332 回）。 */
+    const part = monthPartRangeJa(stem || q, nowMs);
+    if (part) last = [part.year, part.month, part.to];
     if (dayOffset !== undefined) {
       last = offsetCalendarDay(nowMs, dayOffset >= 0 ? dayOffset : 0);
     } else {
@@ -5226,6 +5325,9 @@ const Recommender = (() => {
     /* 「今年度」「来年度中」は年度（4 月〜翌年 3 月）の月語に展開する（第 330 回）。 */
     const fiscal = fiscalYearTermsJa(token, nowMs);
     if (fiscal) return [token].concat(fiscal);
+    /* 「8月下旬」「来月上旬」は月の三日ごとの区切り（第 332 回）。 */
+    const monthPart = monthPartTermsJa(token, nowMs);
+    if (monthPart) return [token].concat(monthPart);
     /* 「半年（以内）」は `6か月以内` と同じ幅（第 330 回 – 数字の無い語は下の表が読めない）。 */
     const halfYear = HALF_YEAR_JA.test(String(token || ""));
     if (halfYear) {
@@ -6341,6 +6443,13 @@ const Recommender = (() => {
       ) {
         mergedUnits.push({ token: `第${next ? next.token : ""}ラウンド`, whole: [] });
         i += 2;
+      } else if (next && monthPartRangeJa(`${unit.token}${next.token}`, now) !== null) {
+        /* 月の語と旬を**離して**打った形（`来月 下旬` `8月 上旬`）も 1 group にまとめる
+         * （第 332 回）。単位が割れたままだと「来月の行 AND 今月の下旬の日」になり、
+         * どちらも当たらない 0 行になった。 */
+        const 繋いだ語 = `${unit.token}${next ? next.token : ""}`;
+        mergedUnits.push({ token: 繋いだ語, whole: monthPartTermsJa(繋いだ語, now) || [] });
+        i += 1;
       } else if (pressedWeekdayJa(`${unit.token}${next ? next.token : ""}`, now) !== null) {
         /* 週と曜日を**離して**打った形（`今週 水曜` `来週の木曜`）も 1 group にまとめる
          * （第 329 回）。単位が割れたままだと「今週の行 AND 水曜の語」になり、締切日が
@@ -8743,6 +8852,8 @@ const Recommender = (() => {
     seasonPairs: seasonPairs,
     periodMonthPairs: periodMonthPairs,
     periodMonthTermsJa: periodMonthTermsJa,
+    monthPartTermsJa: monthPartTermsJa,
+    monthPartRangeJa: monthPartRangeJa,
     pressedWeekdayJa: pressedWeekdayJa,
     fiscalYearTermsJa: fiscalYearTermsJa,
     kanaFold: kanaFold,

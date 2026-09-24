@@ -125,6 +125,9 @@ export const SEARCH_CANON = (() => {
     ["YEAR_SPAN_TAIL_JA", /const YEAR_SPAN_TAIL_JA = [^\n]*;/],
     ["HALF_YEAR_JA", /const HALF_YEAR_JA = [^\n]*;/],
     ["HALF_YEAR_DAYS_JA", /const HALF_YEAR_DAYS_JA = [^\n]*;/],
+    /* 上旬・中旬・下旬（第 332 回）。 */
+    ["MONTH_PART_DAYS_JA", /const MONTH_PART_DAYS_JA[\s\S]*?\};/],
+    ["MONTH_PART_TAIL_JA", /const MONTH_PART_TAIL_JA = [^\n]*;/],
     // 助詞・期日の言い回しの表と「今日から N 日」の単位（第 328 回）。
     ["DATE_TOKEN_TAILS_JA", /const DATE_TOKEN_TAILS_JA[\s\S]*?\];/],
     ["FROM_TODAY_UNIT", /const FROM_TODAY_UNIT[\s\S]*?\};/],
@@ -236,6 +239,9 @@ export const SEARCH_CANON = (() => {
       "relativeYearKeyJa",
       "fiscalYearBaseJa",
       "fiscalYearTermsJa",
+      // 月の三日ごとの区切り（`8月下旬` `来月 下旬`）を暦日へ解く部品（第 332 回）。
+      "monthPartRangeJa",
+      "monthPartTermsJa",
       // 数値の相対日（`あと 51 日` → `51日後` → 暦日）。`relativeDayGroups` と
       // `queryTokenGroups` が呼ぶので、定義順で先に置く（第 223 回）。
       "collapseRelativeDayPhrase",
