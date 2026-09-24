@@ -2894,25 +2894,34 @@ export function icsEscapeText(value: unknown): string {
  * **文字数ではなくオクテット数**で見る。日本語の 1 文字は UTF-8 で 3 オクテットあるので、
  * 文字数で切ると相手のカレンダー側で文字化けする。続け字（surrogate pair など）の
  * 途中でも切らない – 1 文字単位で数える。
+ *
+ * **2 文字の転義（`\n`・`\,`・`\;`・`\\`）をまたいでも切らない**（§3.1 が禁じている）。
+ * 以前は切れ目でバックスラッシュが前の行に残り、続きの行が `n…` で始まっていた
+ * （2026-09-24 実測: 配信した `deadlines.ics` に 30 箇所）。開いてから解く受け手では
+ * 元に戻るが、行ごとに扱う受け手では転義が解けず `\` がそのまま画面に出る。
+ * 切れ目が転義の先頭になったときは **バックスラッシュを続きの行へ送る**
+ * （前の行を短くする形で、75 オクテットの上限は保つ）。
  */
 export function icsFoldLine(line: string): string {
   const value = String(line ?? "");
   if (Buffer.byteLength(value, "utf8") <= ICS_MAX_LINE_OCTETS) return value;
+  const chars = [...value];
+  const sizes = chars.map((ch) => Buffer.byteLength(ch, "utf8"));
   const out: string[] = [];
-  let cur = "";
-  let used = 0;
-  for (const ch of value) {
-    const size = Buffer.byteLength(ch, "utf8");
-    if (used + size > ICS_MAX_LINE_OCTETS) {
-      out.push(cur);
-      /* 続きの行は半角スペース 1 個で始める（相手側はそれを戻して結合する）。 */
-      cur = " ";
-      used = 1;
+  let start = 0;
+  while (start < chars.length) {
+    // 2 行目以降は、折り返しの半角スペース 1 オクテットを込んで数える（相手はそれを戻す）。
+    let end = start;
+    let used = start === 0 ? 0 : 1;
+    while (end < chars.length && used + sizes[end] <= ICS_MAX_LINE_OCTETS) {
+      used += sizes[end];
+      end += 1;
     }
-    cur += ch;
-    used += size;
+    // 転義の先頭で切らない（ただし 1 文字は必ず残す – さもないと前に進まない）。
+    if (end > start + 1 && chars[end - 1] === "\\") end -= 1;
+    out.push((start === 0 ? "" : " ") + chars.slice(start, end).join(""));
+    start = end;
   }
-  out.push(cur);
   return out.join("\r\n");
 }
 

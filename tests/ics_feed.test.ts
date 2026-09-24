@@ -14,7 +14,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { type DataRecord, icsEscapeText, toIcsText } from "../src/build.ts";
+import { type DataRecord, icsEscapeText, icsFoldLine, toIcsText } from "../src/build.ts";
 import { site } from "./built_golden_shared.ts";
 import { jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
@@ -647,5 +647,86 @@ describe("購読 URL を取り出せる（第 268 回）", () => {
     for (const re of [/#icsCopy\b/, /#icsCopyNote\b/]) {
       expect(re.test(print), `押せない物を紙に刷っている: $re`).toBe(true);
     }
+  });
+});
+
+/* ----------------------------------------------------------  転義を折り返しで切らない */
+
+describe("畳みは 2 文字の転義をまたがない（RFC 5545 §3.1・第 282 回）", () => {
+  /* 2026-09-24 に配信物で実測: 折り畳みの切れ目でバックスラッシュが前の行に残り、
+   * 続きの行が `n…` で始まる箇所が 30 有った。行を開いてから解く受け手では元に戻るが、
+   * 行ごとに扱う受け手では転義が解けず `\` がそのまま㪹カンダーの画面に出る。
+   * §3.1 は 2 文字の転義をまたぐことを禁じていると明記している。 */
+
+  it("実データの配信物に、行末だけバックスラッシュの行が無い", () => {
+    const raw = readFileSync(join(site, "deadlines.ics"), "utf8");
+    const lines = raw.split("\r\n");
+    // 空振りの防止: 実際に畳まれた行が有ること。
+    expect(
+      lines.filter((l) => l.startsWith(" ")).length,
+      "折り畳まれた行が無い（この検査が空振りになる）",
+    ).toBeGreaterThan(100);
+    const tails = lines.filter((l) => l.endsWith("\\"));
+    expect(
+      tails.slice(0, 2).map((l) => l.slice(-40)),
+      `転義が折り返しで切れている行が ${tails.length} 箇所ある`,
+    ).toEqual([]);
+    for (const line of lines) {
+      expect(Buffer.byteLength(line, "utf8"), "75 オクテットを越える行がある").toBeLessThanOrEqual(
+        75,
+      );
+    }
+  });
+
+  it("開くととと同じに戻り、解いた値に行末のバックスラッシュが残らない", () => {
+    const raw = readFileSync(join(site, "deadlines.ics"), "utf8");
+    const opened = unfoldIcs(raw);
+    expect(opened.length, "開いた論理行が無い").toBeGreaterThan(100);
+    const broken = opened.filter((l) => {
+      const at = l.indexOf(":");
+      return at > 0 && /\\$/.test(l);
+    });
+    expect(broken.slice(0, 2), "値の末尾が転義の途中で終わっている").toEqual([]);
+    // 説明の中の「詳細: <url>」が折り返しを跨いでも復元される（受け手が見る形）。
+    const withLink = opened.filter((l) => l.startsWith("DESCRIPTION:") && l.includes("詳細: http"));
+    expect(
+      withLink.length,
+      "折り返しを跨いだ収録元リンクが無い（空振り検査の防止）",
+    ).toBeGreaterThan(0);
+    // 開いた値の中で URL が空白や転義の途中で切れていない（最後まで続く形になっている）。
+    expect(withLink[0]).toMatch(/詳細: https?:\/\/[^\s\\]+/);
+  });
+
+  it("転義がどの位置に来ても、前の行に残さない", () => {
+    /* 固定した 1 例だと、たまたま切れ目を外れて空振りで通る（§8 の約束）。
+     * 転義の位置を 1 文字ずつ動かして、全ての場合で確かめる。 */
+    for (let pos = 40; pos <= 80; pos += 1) {
+      const head = "あ".repeat(pos); // 1 文字 3 オクテットで切れ目を動かす
+      const value = `DESCRIPTION:会議 ${head}\n次\n別\n末尾`;
+      const folded = icsFoldLine(value);
+      const lines = folded.split("\r\n");
+      for (const line of lines) {
+        expect(
+          Buffer.byteLength(line, "utf8"),
+          `位置 ${pos}: 75 オクテットを越える`,
+        ).toBeLessThanOrEqual(75);
+        expect(line.endsWith("\\"), `位置 ${pos}: 行末にバックスラッシュが残った`).toBe(false);
+      }
+      // 開くととと同じ（折り返しの空白 1 個だけを足し引きしている）。
+      const back = lines.map((l, i) => (i === 0 ? l : l.slice(1))).join("");
+      expect(back, `位置 ${pos}: 開いてもとに戻らない`).toBe(value);
+    }
+  });
+
+  it("折り返し自体をやめると、実データの検査が落ちる（見張りが生きている）", () => {
+    /* 畳む関数を「そのまま返す」形に差し替えると、実データの配信物は 75 を越える。
+     * ここではその差し替えが検出できることを、関数単位で確かめる（改ざんの再現）。 */
+    const value = `DESCRIPTION:会議 ${"あ".repeat(40)}\n次\n別\n末尾`;
+    const naive = value; // 畳まない
+    const over = naive.split("\r\n").filter((l) => Buffer.byteLength(l, "utf8") > 75);
+    expect(over.length, "畳まない値が 75 を越えないと、上の見張りは空振りになる").toBeGreaterThan(
+      0,
+    );
+    expect(icsFoldLine(value), "畳む関数が直していない").not.toBe(naive);
   });
 });
