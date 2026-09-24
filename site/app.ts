@@ -2697,7 +2697,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* 名前は品書の名簿に見えるのに、いま読み込んでいるデータに締切の行が 1 本も無い会議を数える
    * （第 294 回）。実測（2026-08-09 生成ビルド）で品書の会議 687 件のうち 248 件が締切行を 1 本も
    * 持たない – NETYS・FORTE・CoNLL など、締切がデータの切れ目より先にある会議たちで、名前で引くと
-   * 0 件になる。行を持つ会議はここから除く（収録の全体を読んだあとは行が出るので、この話が消える）。 */
+   * 0 件になる。行を持つ会議はここから除く（収録の全体を読んだあとは行が出るので、この話が消える）。
+   * 打ち方に日付が混ざるときは、名前の語だけで引く（第 296 回） – 実測で `NETYS 2027` に
+   * 「似た名前の会議が 35 件」と出ていたが、35 の内訳は key に年を持つ別々の会議で、名前一つで
+   * 引けた人が自分を疑う形になっていた。件数も例も、名前の語すべてに当たる物だけを数える。 */
   function nameOnlyConferenceMatch(
     query: string,
     list: AppRow[],
@@ -2707,6 +2710,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       .map((t) => t.trim())
       .filter((t) => t.length >= 2);
     if (!terms.length) return null;
+    /* 数字と日付の言い方の部品（`年` `月` `日` `/` `-` など）だけで出来ている語は、締切の日の
+       指定として打ち足された物と見る – 品書の key は年を含む物が多いので、年の語を名前の語と
+       一緒に数えると、別々の会議がまとまって「似た名前」として出てしまう（第 296 回）。 */
+    const looksLikeDate = (t: string): boolean =>
+      /\d/u.test(t) && /^[\d\s./\-年月日時分秒週周]+$/u.test(t);
+    const nameTerms = terms.filter((t) => !looksLikeDate(t));
+    // 日付だけで引いたときは、名簿の話をしない（第 293 回の範囲の案内が言う番）。
+    if (!nameTerms.length) return null;
     const withRows: Record<string, boolean> = {};
     list.forEach((row) => {
       const key = typeof row?.conf?.key === "string" ? row.conf.key : "";
@@ -2730,7 +2741,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       return false;
     };
     let count = 0;
-    let allMatches = 0;
     let example = "";
     let recordDay = "";
     let recordNull = false;
@@ -2739,33 +2749,35 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (!conf || typeof conf.key !== "string" || withRows[conf.key]) return;
       const hay =
         `${conf.acronym || ""} ${conf.title || ""} ${conf.full_name || ""} ${conf.key}`.toLowerCase();
-      const hits = terms.filter((term) => matchesName(term, hay));
-      if (!hits.length) return;
-      count += 1;
-      /* 名簿の例として挙げるのは、打った語すべてに当たる会議が 1 件だけるときにする –
-         `CoNLL 2027` に別の会議の名前を挙げても、人はそれを信じない（件数だけを出す）。 */
-      if (hits.length === terms.length) {
-        allMatches += 1;
-        example = String(conf.acronym || conf.title || conf.key);
-        // 収録の側にその会の締切が在るか（第 295 回 – 品書が申告している）。
-        const recordLast = conf.record_deadline_last;
-        if (recordLast === null) recordNull = true;
-        else if (typeof recordLast === "string" && /^\d{4}-\d{2}-\d{2}$/.test(recordLast)) {
-          recordDay = recordLast;
-        }
-      }
+      const hits = nameTerms.filter((term) => matchesName(term, hay));
       hits.forEach((term) => {
         if (hitTerms.indexOf(term) < 0) hitTerms.push(term);
       });
+      if (!hits.length) return;
+      /* 件数と例に数えるのは、打った名前の語すべてに当たる会議だけにする（第 296 回）。
+         いずれかに当たる物まで数えると `distributed systems` で 103 件になる（実測） – 名前の語を
+         二つ打った人に 103 件と言われても、打ち直しようがない。 */
+      if (hits.length !== nameTerms.length) return;
+      count += 1;
+      /* 名簿の例として挙げるのは、1 件に絞れたときだけにする – `CoNLL 2027` に別の会議の名前を
+         挙げても、人はそれを信じない（件数だけを出す）。 */
+      example = String(conf.acronym || conf.title || conf.key);
+      // 収録の側にその会の締切が在るか（第 295 回 – 品書が申告している）。
+      const recordLast = conf.record_deadline_last;
+      if (recordLast === null) recordNull = true;
+      else if (typeof recordLast === "string" && /^\d{4}-\d{2}-\d{2}$/.test(recordLast)) {
+        recordDay = recordLast;
+      }
     });
-    if (!count) return null;
-    const named = allMatches === 1;
+    // 名前の語が名簿に見えたのに 0 件のときは、件数を作らないで語だけを返す（第 294 回の
+    // 「無い」の列から外す話はここでも生きる – 全ての語に当たる会議が無くても語は名簿に在る）。
+    if (!count && !hitTerms.length) return null;
     return {
-      example: named ? example : "",
+      example: count === 1 ? example : "",
       count,
       terms: hitTerms,
       // 例を 1 件に絞れたときだけ、収録側の締切日の話をできる（第 295 回）。
-      recordLast: named ? (recordNull ? null : recordDay) : "",
+      recordLast: count === 1 ? (recordNull ? null : recordDay) : "",
     };
   }
 
@@ -2925,10 +2937,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /* 名前は名簿に在るのに締切が行に無い会議（第 294 回）。「別の語で試す」も「過去の締切も
        表示」も、この人には効かない – 締切がデータの切れ目より先にしかない。 */
     let nameNote = "";
-    if (filter.nameOnly?.count) {
+    /* 名簿に似た名前が見える語が 1 つでもあれば話す（第 296 回）。件数が 0 の打ち方 – 語を
+       並べたいっしょに含む会議が名簿に無い形（`ACL international` など）– では、従来
+       「いずれかの語を外すと増えます」だけが出て、引いた会議の締切がそもそも読み込めていない
+       ことが伝わらなかった。 */
+    if (filter.nameOnly?.count || filter.nameOnly?.terms.length) {
       const named = filter.nameOnly.example
         ? `打った語に似た名前の会議（${filter.nameOnly.example}）は、収録の名簿に見えます。`
-        : `打った語に似た名前の会議が、収録の名簿に ${countJa(filter.nameOnly.count)} 件見えます。`;
+        : (filter.nameOnly.count || 0) > 1
+          ? `打った語に似た名前の会議が、収録の名簿に ${countJa(filter.nameOnly.count)} 件見えます。`
+          : "打った語に似た名前の会議は、収録の名簿に見えます。";
       /* 収録の側に何が待っているかで言い分ける（第 295 回）。実測で品書に締切行の無い会議
          248 件のうち 74 件は収録にも締切が 1 本も無い – そこへ「収録の全体を読み込む」を勧げるのは、
          6 MB 強を読ませて 1 件も増えない人にボタンを押させることになる。 */

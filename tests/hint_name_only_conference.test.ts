@@ -8,6 +8,9 @@
  * だけ – どれを勧めても 1 件も増えない。`NETYS 2027` は「検索語のうち「NETYS」・「2027」は
  * 収録データにも見当たりません」と言い、これは噓だった（NETYS は名簿に在り、収録には
  * 2028-03-30 の締切が在る）。
+ *
+ * 第 296 回では、同じ案内が打ち方に日付を添えると壊れていたことを扱う（実測で `NETYS 2027` に
+ * 「似た名前の会議が 35 件」– 35 の内訳は品書の key に年を持つ別々の会議だった）。
  */
 
 import { readFileSync } from "node:fs";
@@ -431,4 +434,89 @@ it("名簿の案内が原因を言い切った 0 件案内に、効かない条�
   expect(blind, "向きを数えないで過ぎた締切と言った").not.toContain("過ぎた締切");
   expect(blind, "向きを数えないで載せられると言った").not.toContain("載せられます");
   expect(blind, "向きが不明なときに引き直しを送っていない").toContain("同じ語を引き直します");
+});
+
+describe("打ち方に日付を添えても、名前一つと同じ答えになる（第 296 回）", () => {
+  /* 品書の key は年を含む物が多い（`ambre-2026` など）ので、年の語を名前の語と一緒に数えると
+     別々の会議がまとまって「似た名前」として出る。実測で 35 件（`NETYS 2027`）。 */
+
+  function sameAsName(name: string, extra: string) {
+    const alone = nameOnly(name);
+    const withDate = nameOnly(`${name} ${extra}`);
+    return { alone, withDate };
+  }
+
+  it("年だけを添えた打ち方で、名前一つのときと同じ会議に絞れる", () => {
+    const name = example().name;
+    const { alone, withDate } = sameAsName(name, "2027");
+    expect(withDate, "日付を添えたら名簿の案内が消えた").not.toBeNull();
+    expect(withDate?.count, "年の語で件数が膨らんだ").toBe(alone?.count);
+    expect(withDate?.example, "年の語で例を挙げなくなった").toBe(alone?.example);
+    expect(withDate?.recordLast, "年の語で収録側の締切日が消えた").toBe(alone?.recordLast);
+    expect(withDate?.count || 0, "例に絞れていない").toBeGreaterThan(0);
+  });
+
+  it("和暦風の月の指定を添えても同じ", () => {
+    const name = example().name;
+    for (const extra of ["2027年3月", "2027-03-15", "3/15", "12月", "2027 年"]) {
+      const { alone, withDate } = sameAsName(name, extra);
+      expect(withDate?.count, `日の語 ${extra} を名前の語に混ぜた`).toBe(alone?.count);
+      expect(withDate?.example, `日の語 ${extra} で例を挙げない`).toBe(alone?.example);
+    }
+  });
+
+  it("日付だけで引いたときは、名簿の話をしない", () => {
+    // 第 293 回の範囲の案内が言う番で、ここでは数を作らない。
+    for (const q of ["2027", "2027年", "2027年3月", "2027-03", "12月"]) {
+      expect(nameOnly(q), `日付だけの打ち方 ${q} に名簿の件数を作った`).toBeNull();
+    }
+    // 実測で `2027` には「似た名前の会議が 34 件」出ていた。
+    expect(nameOnly("2027"), "年の語だけで名簿を数えた").toBeNull();
+  });
+
+  it("語が名前の途中に隠れる打ち方は、日付としても数えない", () => {
+    // `netys-2027` の語は名前の語 – 品書の key にこの形が在るなら別物として扱う。
+    expect(nameOnly("netys-2027"), "語の形を曲げて名簿に立てた").toBeNull();
+    expect(nameOnly("sc2027"), "語の形を曲げて名簿に立てた").toBeNull();
+  });
+
+  it("件数は、打った名前の語すべてに当たる物だけを数える", () => {
+    const name = example().name;
+    const many = nameOnly("international");
+    expect(many?.count || 0, "語の組み合わせを見る前提が崩れた").toBeGreaterThan(1);
+    const both = nameOnly(`${name} international`);
+    if (both) {
+      expect(both.count, "いずれかに当たる物まで数えた").toBeLessThanOrEqual(
+        Math.min(nameOnly(name)?.count || 0, many?.count || 0),
+      );
+    }
+  });
+
+  it("全ての語に当たる会議が無くても、名簿に在る語は「無い」の列から外れる", () => {
+    const name = example().name;
+    const both = nameOnly(`${name} international`);
+    expect(both, "語が名簿に見えるのに案内が黙った").not.toBeNull();
+    expect(both?.count, "該当する会議が無いのに件数を作った").toBe(0);
+    expect(both?.terms, "名簿に在る語を返していない").toContain(name);
+    const out = hintFor(`${name} international`, {
+      nameOnly: both || undefined,
+      termCounts: [
+        { term: name, count: 0 },
+        { term: "international", count: 0 },
+      ],
+    });
+    expect(out, "名簿に在ると言っていない").toContain("収録の名簿");
+    expect(out, "切れ目の話をしていない").toContain("2027-02-04");
+    expect(out, "名簿に在る語を収録に無いと言った").not.toContain("検索語のうち");
+    expect(out, "語を変えれば増えると言った").not.toContain("別の語で試す");
+  });
+
+  it("日付を添えた打ち方の 0 件案内も、収録側の話と押し先を送る", () => {
+    const name = example().name;
+    const found = nameOnly(`${name} 2027`);
+    const out = hintFor(`${name} 2027`, { nameOnly: found || undefined });
+    expect(out, "名簿に在ると言っていない").toContain("収録の名簿");
+    expect(out, "ボタン名が書き写し").toContain(fullRecordButton());
+    expect(out, "効かない条件を並べた").not.toContain("外せる条件");
+  });
 });
