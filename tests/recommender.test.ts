@@ -1287,7 +1287,11 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(groups("実時間")).toContain("real-time");
       expect(groups("プログラミング言語")).toContain("programming language");
       expect(groups("計算機アーキテクチャ")).toContain("computer architecture");
-      expect(groups("侵入検知")).toContain("intrusion detection");
+      // 寄せ先は語を分けた `intrusion`（第 324 回）。かたまり `intrusion detection` のままだと、
+      // 寄せは連続した書き方にしか当たらず、画面に出る品書 872 行では**追加 0 行**だった
+      // （実測: 品書 0 行 / 収録 5 行）。語を分けて品書 1 行・収録 15 行になり、見つかる行は
+      // 従来と同じ "Intrusion Detection …" の会議なので、この語を打った人への約束は強くなった。
+      expect(groups("侵入検知")).toContain("intrusion");
       expect(groups("脆弱性")).toContain("vulnerability");
       expect(groups("バイオインフォマティクス")).toContain("bioinformatics");
       expect(groups("エッジコンピューティング")).toContain("edge computing");
