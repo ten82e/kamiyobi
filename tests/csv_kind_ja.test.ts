@@ -288,10 +288,19 @@ describe("生の CSV の日本語の種別欄（第 270 回）", () => {
       [],
     );
 
-    // カレンダーも同じ語。75 オクテットで折られた行は戻して読み、語だけ取り出す。
+    /* カレンダーも同じ語。75 オクテットで折られた行は戻して読み、語だけ取り出す。第 303 回から、
+       区別の為の上流ラベルは語の後ろに全角の括弧で括るので、それを落としてから比べる。 */
     const ics = readFileSync(join(site, "deadlines.ics"), "utf8").replace(/\r\n /g, "");
     const icsWords = new Set(
-      [...ics.matchAll(/種別:([^|\\]+)/g)].map((m) => m[1].trim().split(": ")[0].trim()),
+      [...ics.matchAll(/種別:([^|\\]+)/g)]
+        .map((m) =>
+          m[1]
+            .trim()
+            .replace(/（[^（）]*）$/u, "")
+            .split(": ")[0]
+            .trim(),
+        )
+        .filter((w) => w !== ""),
     );
     expect(icsWords.size, "カレンダーから種別が読めない").toBeGreaterThanOrEqual(2);
     const missing2 = [...icsWords].filter((w) => w !== "開催" && !inCsv.has(w));

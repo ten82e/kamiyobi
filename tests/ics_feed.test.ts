@@ -322,9 +322,13 @@ describe("ビルド成果物に出るカレンダーのファイル", () => {
     }
     expect(mdKinds.size, "upcoming.md から種別が読めない").toBeGreaterThan(0);
     const icsKinds = new Set<string>();
+    /* 第 303 回から、区別の為の上流ラベルを添える形が出口で違う: `upcoming.md` は語の後ろに
+       ': ' で継ぎ、カレンダーは全角の括弧で括る（値の側が欄名の区切りを真似ないため）。載せる物が
+       同じなのは変わらないので、形を直してから照合する。 */
+    const icsKindShape = (value: string): string => value.replace(/（([^（）]*)）$/u, ": $1");
     for (const ev of eventsOf(icsText())) {
       const m = /種別: ([^\\]*)/.exec((ev.DESCRIPTION ?? [])[0] ?? "");
-      if (m && m[1].trim() !== "") icsKinds.add(m[1].trim());
+      if (m && m[1].trim() !== "") icsKinds.add(icsKindShape(m[1].trim()));
     }
     const missing = [...mdKinds].filter((k) => !icsKinds.has(k));
     expect(missing, `てびきに有る種別がカレンダーに無い: ${missing.join(" / ")}`).toEqual([]);
@@ -613,7 +617,7 @@ describe("購読 URL を取り出せる（第 268 回）", () => {
         },
       });
       await r.done;
-      expect(written[0], `base が $String(base)のときに何も出ない`).toBeTruthy();
+      expect(written[0], `base が ${String(base)} のときに何も出ない`).toBeTruthy();
       expect(written[0]).toContain("deadlines.ics");
     }
   });
@@ -647,7 +651,7 @@ describe("購読 URL を取り出せる（第 268 回）", () => {
     /* `#icsCopy` を文字列で探すと `#icsCopyNote` にも当たって、片方を消しても黙って
        通る（改ざんで実測）。語の区切りまで見る。 */
     for (const re of [/#icsCopy\b/, /#icsCopyNote\b/]) {
-      expect(re.test(print), `押せない物を紙に刷っている: $re`).toBe(true);
+      expect(re.test(print), `押せない物を紙に刷っている: ${re}`).toBe(true);
     }
   });
 });
@@ -857,5 +861,117 @@ describe("締切ではない日に「締切」と書かない（第 299 回）",
     });
     expect(informative, "締切ではない種別が 1 件も無い（検査が無意味）").toBeGreaterThan(0);
     expect(deadlines, "締切の欄が 1 件も無い（検査が無意味）").toBeGreaterThan(0);
+  });
+});
+
+/* ----------------------------------------------------------  種別の区切り（第 303 回） */
+
+describe("種別の語が、自分の区切りを真似ない（第 303 回）", () => {
+  const kindsJa = Object.values(Recommender.kindLabelTable());
+
+  function builtEvents(): Record<string, string[]>[] {
+    return eventsOf(readFileSync(join(site, "deadlines.ics"), "utf8"));
+  }
+
+  function kindLinesOf(event: Record<string, string[]>): string[] {
+    return (event.DESCRIPTION?.[0] ?? "").split("\\n");
+  }
+
+  function kindLine(event: Record<string, string[]>): string {
+    // 本文は 1 つの値に畳まれているので、転義した改行（バックスラッシュ + n）で割る（第 299 回）。
+    return kindLinesOf(event).find((l) => l.startsWith("種別: ")) ?? "";
+  }
+
+  it("ビルド成果の題名は「：」が 1 本だけで、種別のうしろに半角の「: 」が継がれていない", () => {
+    /* 実測（2026-08-09 生成ビルド・2026-09-24）: 928 件のうち **15 件**の `SUMMARY` が
+       「WSDM 2027：概要締切: Abstract submission」の形で、全角の区切りのうしろに半角の区切りが
+       重なっていた。本文の「種別: 」も **12 件**が同じ形 – 欄名で値を切る受信側は値を壊して読む。
+       直し後は、区別が必要なお互いは全角の括弧で括る（会議の正式名称自体が ': ' を持つ例は
+       除く – ここでは種別の語の直後に付いた物だけを見る）。 */
+    const events = builtEvents();
+    expect(events.length, "イベントが読めない").toBeGreaterThan(100);
+    const twoColon = events.filter((e) => (e.SUMMARY?.[0] ?? "").split("：").length !== 2);
+    expect(twoColon.slice(0, 2), `「：」が 1 本でない題名が ${twoColon.length} 件`).toEqual([]);
+    const suffixed = events.filter((e) => {
+      const tail = (e.SUMMARY?.[0] ?? "").split("：").slice(1).join("：");
+      return kindsJa.some((w) => tail.startsWith(`${w}: `));
+    });
+    expect(
+      suffixed.slice(0, 2),
+      `種別の語の直後に ': ' を継いだ題名が ${suffixed.length} 件`,
+    ).toEqual([]);
+    const descBad = events.filter((e) => kindLine(e).slice("種別: ".length).includes(": "));
+    expect(descBad.slice(0, 2), `種別欄の値が ': ' を継ぐ行が ${descBad.length} 件`).toEqual([]);
+  });
+
+  it("区別を添えた行が実在し、語の後ろに全角の括弧で続く", () => {
+    const events = builtEvents();
+    const withNote = events.filter((e) => /種別: [^\n]*（[A-Za-z][^（）]*）/.test(kindLine(e)));
+    expect(
+      withNote.length,
+      "区別を添えた行が 1 件も無い（実データに重なる種別が無い？）",
+    ).toBeGreaterThan(0);
+    // 語その物はそのまま – 括弧の中身だけが足されている（語で絞る人が語を見つけられる）。
+    const spoken = withNote.filter((e) => {
+      const value = kindLine(e).slice("種別: ".length);
+      return !kindsJa.some((w) => value.startsWith(w));
+    });
+    expect(spoken.slice(0, 2), `語ではない物が先に来る種別欄が ${spoken.length} 件`).toEqual([]);
+  });
+
+  it("合成の行で、題名と本文の出し方が決まったとおりになる", () => {
+    const note = "Round 2 Full Papers";
+    const rows = toIcsText(
+      [
+        rec({
+          kind_label: `論文締切: ${note}`,
+          kind_ja: "論文締切",
+          kind_note: note,
+        }),
+      ],
+      NOW,
+    );
+    const event = eventsOf(rows)[0];
+    expect(event.SUMMARY?.[0] ?? "", "題名に区別が括弧で入らない").toBe(
+      "SC 2027：論文締切（Round 2 Full Papers）",
+    );
+    expect(event.SUMMARY?.[0] ?? "", "「：」が増えている").toContain("：");
+    expect((event.SUMMARY?.[0] ?? "").split("：").length, "題名の「：」が 2 本以上").toBe(2);
+    expect(kindLine(event), "本文の種別欄が語と区別を ': ' で繋いだまま").toBe(
+      "種別: 論文締切（Round 2 Full Papers）",
+    );
+    // 推定の印は種別の後ろに残る（カレンダーの側で「裏が取れていない」と読める形）。
+    const est = eventsOf(
+      toIcsText(
+        [
+          rec({
+            kind_label: `論文締切: ${note}`,
+            kind_ja: "論文締切",
+            kind_note: note,
+            estimated: true,
+          }),
+        ],
+        NOW,
+      ),
+    )[0];
+    expect(est.SUMMARY?.[0] ?? "", "推定の印が消えた").toMatch(/（推定）$/u);
+    // 区別が要らない行は括弧を付けない（見かけを増やさない）。
+    const plain = eventsOf(toIcsText([rec()], NOW))[0];
+    expect(kindLine(plain), "区別が無い行に括弧が現れた").toBe("種別: 論文締切");
+  });
+
+  it("区別の欄を足した事で、同じ締切の UID が動いていない", () => {
+    /* UID は「同じ締切かどうか」の目印（第 266 回 – 日付を載せると締切が動いたときに古い物が
+       残る）。表示用の語から作る形を、語を分けたときも動かさない。 */
+    const base = rec({ kind_label: "論文締切: Round 2 Full Papers" });
+    const split = rec({
+      kind_label: "論文締切: Round 2 Full Papers",
+      kind_ja: "論文締切",
+      kind_note: "Round 2 Full Papers",
+    });
+    const uidOf = (rows: string) => (eventsOf(rows)[0].UID?.[0] ?? "").replace(/-\d+@/u, "@");
+    expect(uidOf(toIcsText([split], NOW)), "語を分けたことで UID が変わった").toBe(
+      uidOf(toIcsText([base], NOW)),
+    );
   });
 });

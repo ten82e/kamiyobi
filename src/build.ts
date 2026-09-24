@@ -669,6 +669,14 @@ export interface DataRecord {
   kind_label: string;
   /** 種別の語だけ（接頭辞も接尾辞も足さない – 第 301 回）。`data.csv` の `kind_ja` はこれを書く。 */
   kind_ja: string;
+  /**
+   * 同じ版に同じ種別が重なる行だけが持つ、区別の為の上流のラベル（無ければ空欄 – 第 303 回）。
+   * 表示用の `kind_label` は語の後ろに ': ' で継いでいた為、それをそのまま書き出した出口
+   * （`deadlines.ics`）では、値の側が自分の区切りを真似る形になった – 「SUMMARY:WSDM 2027：
+   * 概要締切: Abstract submission」・「種別: 概要締切: Abstract submission」（実測 15 件と 12 件）。
+   * カレンダーの側は全角の括弧で括るので、欄名と値の区切りは 1 本に保てる。
+   */
+  kind_note: string;
   /** その日の行を何と呼ぶか（「締切」/「通知日」など – 第 299 回）。種別の正本で決める。 */
   date_field: string;
   estimated: boolean;
@@ -714,6 +722,7 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
           // 同じ年の同じ種別が重ねて在る行だけ `kind_label` に上流のラベルを続ける – 画面では
           // それが要るが、表では語が割れる原因になる（区別は `label` と `round` で付く）。
           kind_ja: labelBase,
+          kind_note: labelJa === labelBase ? "" : String(dl.label ?? "").trim(),
           date_field: Recommender.kindDateFieldJa(dl.kind),
           estimated: ed.estimated,
           conf,
@@ -730,6 +739,7 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
           categories: cats,
           kind_label: "開催",
           kind_ja: "開催",
+          kind_note: "",
           /* 会期は締切ではない（第 299 回）。この行がカレンダーに載ったとき、日付の欄を
              「締切」にすると締切に見える。 */
           date_field: "会期",
@@ -3288,7 +3298,15 @@ export function icsEventRows(
       atMs = dl.at_utc.getTime();
     }
     const title = titleWithYear(conf.title, ed.year);
-    const summary = rec.estimated ? `${title}：${kind}（推定）` : `${title}：${kind}`;
+    /* 種別の表示: 語だけを出す（`kind_ja`）– 区別の文言は全角の括弧で括う（第 303 回）。
+       表示用の `kind_label` をそのまま載せると「種別: 概要締切: Abstract submission」の様に値の
+       側が ': ' を含み、欄名で切る受信側が値を壊して読む（実測 12 件）。題名も同じで、全角の
+       「：」で区切ったうしろに半角の「: 」が重なる（実測 15 件）。UID は今までどおり `kind` から
+       作る – 購読先が同じ締切と分かる値は動かさない（第 266 回）。 */
+    const kindWord = String(rec.kind_ja ?? "").trim() || kind;
+    const kindNote = String(rec.kind_note ?? "").trim();
+    const kindShown = kindNote ? `${kindWord}（${kindNote}）` : kindWord;
+    const summary = rec.estimated ? `${title}：${kindShown}（推定）` : `${title}：${kindShown}`;
     const link = ed.link || conf.link || "";
     /* 開催地を、カレンダーに載る行にも書く（第 288 回）。実測（2026-08-09 生成ビルド）で
      * 928 個の `VEVENT` の `LOCATION` は 1 個も無く、`DESCRIPTION` も会議・種別・締切・
@@ -3303,7 +3321,7 @@ export function icsEventRows(
     const catsJa = icsCategoryLabels(conf.categories);
     const desc = [
       `会議: ${title}`,
-      `種別: ${kind}`,
+      `種別: ${kindShown}`,
       /* 分野を本文に書く（第 292 回）。受信側が `CATEGORIES` を表示しなくても、本文の語は
        * カレンダーの検索に掛かるので「セキュリティだけ」が引ける。語は画面と同じ。 */
       catsJa.length ? `分野: ${catsJa.join("・")}` : "",
