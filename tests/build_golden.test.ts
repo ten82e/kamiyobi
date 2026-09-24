@@ -2726,8 +2726,10 @@ const SEARCH_CANON = (() => {
      * 抜き出して注入する（書き写すと正本とズレる）。 */
     ["WHOLE_TABLE_QUERY_JA", /const WHOLE_TABLE_QUERY_JA[\s\S]*?\];/],
     ["QUERY_PARTICLE_SPLIT_CHARS", /const QUERY_PARTICLE_SPLIT_CHARS = [^\n]*;/],
-    // 月の範囲の言い方（`9月以降`）が使う定義（第 252 回 – 連なった定義をまとめて抜く）。
+    /* 月の範囲（第 252 回）と季節の語（第 254 回）が使う定義。連なった定義をまとめて抜く
+     * （このファイルは biome の 1 MiB 上限に近いので 1 エントリにまとめる）。 */
     ["MONTH_RANGE", /const MONTH_RANGE_FROM[\s\S]*?MONTH_RANGE_YEAR_PREFIX = [^\n]*;/],
+    ["SEASON", /const SEASON_YEAR_PREFIX[\s\S]*?SEASON_MONTHS_JA[\s\S]*?\};/],
   ].map(([name, re]) => {
     const src = rec.match(re)?.[0];
     expect(src, `${name} 定義が見つからない`).toBeTruthy();
@@ -2739,12 +2741,18 @@ const SEARCH_CANON = (() => {
       "kanaFold",
       "monthTermsJa",
       "expandRelativeMonths",
-      /* 相対月の解決と月の範囲の展開（第 251 回・第 252 回）。抜いた関数は独立では
-       * ないので `ReferenceError` になる。 */
+      /* 相対月・月の範囲・季節の展開（第 251〜254 回）。抜いた関数は独立ではないので
+       * `ReferenceError` になる。 */
       "relativeMonthTerm",
       "relativeMonthPairs",
       "monthTokenToYearMonth",
       "monthRangeTermsJa",
+      "monthSpanTerms",
+      "seasonSpanJa",
+      "seasonInsideSpan",
+      "seasonTermsJa",
+      "yearSeasonTermsJa",
+      "mergeSeasonTokens",
       "searchNormalize",
       // 第 153 回: URL を検索欄に貼れるようにしたので、その部品も一緒に抜く
       // （抜いた関数は独立していないと `ReferenceError` になる）。

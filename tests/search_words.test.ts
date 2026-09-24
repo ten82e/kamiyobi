@@ -687,3 +687,85 @@ it("月の範囲の言い方（9月以降・9月から11月）で、計画の期
     "件数欄が月の範囲の案内を出していない（ビルド済み app.js に部品が無い）",
   ).toBe(true);
 });
+
+it("季節の語（秋・春・来年の秋）で、計画の立て方そのままの行に出会える", () => {
+  /* 「秋の学会に出したい」は分野をまたいだ計画の言い方（2026-08-09 生成ビルド・固定時刻
+   * 2026-08-09T00:00:00Z で実測）。**`秋` 0 行・`春` 0 行・`夏` 0 行・`冬` 0 行・
+   * `秋の会議` 0 行**で案内も無かった（2026年9〜11月に当たる行は 802 行ある）。 */
+  const all = rows();
+  const NOW = Date.parse("2026-08-09T00:00:00Z");
+  const hits = (query: string) => {
+    const matches = Recommender.searchMatcher(Recommender.expandRelativeMonths(query, NOW), NOW);
+    return all.filter((row) => matches(String(row.hay)));
+  };
+  const expected = (specs: number[][]) => {
+    const terms = specs.map(([year, month]) => `${year}年${month}月`);
+    return all.filter((row) => terms.some((term) => String(row.hay).includes(term)));
+  };
+  const same = (query: string, want: number[][]) => {
+    const set = new Set(expected(want).map((row) => String(row.hay)));
+    expect(set.size, `期待値が行に出会えない（前提が変わった）: ${query}`).toBeGreaterThan(0);
+    const got = hits(query);
+    expect(got.length, `「${query}」の行数が期待値と違う`).toBe(set.size);
+    expect(
+      got.every((row) => set.has(String(row.hay))),
+      `「${query}」で期待していない行が出た`,
+    ).toBe(true);
+  };
+  const AUTUMN_2026 = [
+    [2026, 9],
+    [2026, 10],
+    [2026, 11],
+  ];
+
+  same("秋", AUTUMN_2026);
+  // 助詞で繋がれた形も同じ行に出会う（第 251 回の相対月と同じ話）。
+  same("秋の会議", AUTUMN_2026);
+  same("春", [
+    [2027, 3],
+    [2027, 4],
+    [2027, 5],
+  ]);
+  // 季節の途中では、これから来る月だけ出す（8 月に `夏` と打って 7 月の締切を出さない）。
+  same("夏", [[2026, 8]]);
+  same("冬", [
+    [2026, 12],
+    [2027, 1],
+    [2027, 2],
+  ]);
+  // 年を冠で書いたときは繰り上げない（`来年9月以降` と同じ判断）。
+  same("来年の秋", [
+    [2027, 9],
+    [2027, 10],
+    [2027, 11],
+  ]);
+  // `去年の秋` は行セットに 2025 年の締切が無いと期待値が作れない（単位の検査で形を見る）。
+  same("今年の夏", [
+    [2026, 6],
+    [2026, 7],
+    [2026, 8],
+  ]);
+
+  // 他の語とのかけ算も壊れていない（助詞で繋いだ形と空白で並べた形が同じ行に出会う）。
+  expect(hits("秋の国内").length, "季節と場所のかけ算が落ちた").toBeGreaterThan(0);
+  expect(hits("秋の国内").length).toBe(hits("秋 国内").length);
+  expect(hits("秋のセキュリティ").length).toBe(hits("秋 セキュリティ").length);
+  // 単月の語より広いことは無い（`秋` は 9〜11 月の和集合なので）。
+  expect(hits("秋").length).toBeGreaterThanOrEqual(hits("9月").length);
+
+  // 季節の語でないものを割らない（地名を守る検査 – 第 251 回と同じ危険）。
+  expect(hits("ながさき").length, "ひらがなの地名が割れて落ちた").toBe(hits("ながさき").length);
+  expect(Recommender.queryTokenGroups("ながさき", NOW)[0], "地名が割れた").toContain("長崎");
+  expect(Recommender.queryTokenGroups("秋田", NOW), "地名の語を季節に寄せるな").toEqual([["秋田"]]);
+
+  // 件数欄に出した範囲（伏せた範囲指定は誤信を生む – 同じ画面の約束）。
+  expect(Recommender.seasonPairs("秋", NOW)).toEqual([["秋", "2026年9月から2026年11月"]]);
+  expect(Recommender.seasonPairs("来年の秋", NOW)).toEqual([
+    ["来年の秋", "2027年9月から2027年11月"],
+  ]);
+  expect(Recommender.seasonPairs("9月", NOW)).toEqual([]);
+
+  // ビルド済み画面が同じ部品を使う（正本をapp側が呼んでいない検査は空振りになる）。
+  const app = readFileSync(join(builtSite(), "app.js"), "utf8");
+  expect(app, "ビルド済み app.js が季節の展開を件数欄に出していない").toContain("seasonPairs");
+});

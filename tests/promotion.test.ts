@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { generateCurated } from "../scripts/generate-curated.ts";
 import { observeCfp } from "../scripts/observe-cfp.ts";
 import type { Conference } from "../src/model.ts";
@@ -14,14 +14,63 @@ import {
   isOfficialUrl,
   type PromotionObservation,
   providerIdentityFromUrl,
-  resolvePromotion,
-  resolvePromotionAgainst,
-  verifyBatch,
-  verifyCapture,
-  verifyPromotionObservation,
-  writePromotionBatch,
+  resolvePromotionAgainst as resolvePromotionAgainstAt,
+  resolvePromotion as resolvePromotionAt,
+  verifyBatch as verifyBatchAt,
+  verifyCapture as verifyCaptureAt,
+  verifyPromotionObservation as verifyPromotionObservationAt,
+  writePromotionBatch as writePromotionBatchAt,
 } from "../src/promotion.ts";
 import { makeConference, makeDeadline, makeEdition, REPO_ROOT } from "./helpers.ts";
+
+/* 検査は実行時の時計に依存させない。`resolvePromotion` の既定の現在時刻は `new Date()` で、
+ * ここに書いた fixture の締切（2026-09・2026-10・2027-01）は現実の日付が過ぎた瞬間に
+ * 「過ぎた締切」として hold へ変わる（2026-09-24 に 13 件が落ちた – 検査の日付が
+ * その日の人にしか通らない形になっていた）。`options.now` が注入できるので、
+ * fixture の収集時刻の直後に固定する。*/
+const PROMOTION_CLOCK = "2026-08-25T00:02:00.000Z";
+
+/* テーブルの同じ判断を、時刻を読む入口すべてに適用する。テスト側で `now` を渡した場合は
+ * そちらを優先させる（古い証拠を意図的に作る検査があるため、既定値の上書き順に注意）。 */
+type CaptureOptions = NonNullable<Parameters<typeof verifyCaptureAt>[1]>;
+
+function resolvePromotion(observation: PromotionObservation, options: CaptureOptions = {}) {
+  return resolvePromotionAt(observation, { now: PROMOTION_CLOCK, ...options });
+}
+
+function resolvePromotionAgainst(
+  observation: PromotionObservation,
+  options: NonNullable<Parameters<typeof resolvePromotionAgainstAt>[1]>,
+) {
+  return resolvePromotionAgainstAt(observation, { now: PROMOTION_CLOCK, ...options });
+}
+
+function verifyCapture(capture: CfpCapture, options: CaptureOptions = {}) {
+  return verifyCaptureAt(capture, { now: PROMOTION_CLOCK, ...options });
+}
+
+function verifyPromotionObservation(
+  observation: PromotionObservation,
+  options: CaptureOptions = {},
+) {
+  return verifyPromotionObservationAt(observation, { now: PROMOTION_CLOCK, ...options });
+}
+
+function verifyBatch(path: string, options: CaptureOptions = {}) {
+  return verifyBatchAt(path, { now: PROMOTION_CLOCK, ...options });
+}
+
+function writePromotionBatch(
+  observationsPath: string,
+  resolutionsPath: string,
+  manifestPath: string,
+  options: CaptureOptions = {},
+) {
+  return writePromotionBatchAt(observationsPath, resolutionsPath, manifestPath, {
+    now: PROMOTION_CLOCK,
+    ...options,
+  });
+}
 
 const evidence = {
   sourceRevision: "rev-1",
@@ -871,6 +920,35 @@ describe("promotion batch", () => {
     expect(regularCandidate).not.toHaveProperty("track");
   });
 
+  it("判定は実行時の時計を変えても変わらない（`--now` と同じ時刻で再現する）", () => {
+    /* fixture の締切は 2026-09・2027-01 で、実行時の時計に任せた判定は現実の日付が過ぎた
+     * 瞬間に promote から hold へ変わった（2026-09-24 に 13 件が落ちた）。時刻の引き継ぎを
+     * 一か所でも忘れると同じ症状が戻るため、時計を未来へ動かして確かめる。 */
+    vi.useFakeTimers({ toFake: ["Date"], now: Date.parse("2028-05-05T00:00:00.000Z") });
+    try {
+      expect(resolvePromotion(observation()).decision).toBe("promote");
+      const dir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-clock-"));
+      const observations = join(dir, "observations.jsonl");
+      writeFileSync(observations, `${JSON.stringify(observation())}\n`);
+      const resolutions = writePromotionBatch(
+        observations,
+        join(dir, "resolutions.json"),
+        join(dir, "manifest.json"),
+      );
+      expect(resolutions[0]?.decision, "バッチの判定が実行時の時計で変わった").toBe("promote");
+      const badNow = spawnSync(
+        "node",
+        ["scripts/promote-candidates.ts", observations, "--now", "明日"],
+        { cwd: REPO_ROOT, encoding: "utf8" },
+      );
+      expect(badNow.status, "不正な --now を通した").toBe(2);
+      expect(badNow.stderr).toContain("--now needs a valid date-time value");
+      rmSync(dir, { recursive: true, force: true });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("requires explicit venue and category review before promotion", () => {
     expect(resolvePromotion(observation({ reviewState: undefined })).decision).toBe("hold");
     expect(resolvePromotion(observation({ categories: [] })).decision).toBe("hold");
@@ -1381,17 +1459,21 @@ describe("promotion batch", () => {
     });
     expect(JSON.parse(first["manifest.json"]).extra).toBeUndefined();
     expect(existsSync(join(dir, "extra.yaml"))).toBe(false);
-    const verified = spawnSync("node", ["scripts/verify-cfp.ts", "--file", observations], {
-      cwd: REPO_ROOT,
-      encoding: "utf8",
-    });
+    const verified = spawnSync(
+      "node",
+      ["scripts/verify-cfp.ts", "--file", observations, "--now", PROMOTION_CLOCK],
+      {
+        cwd: REPO_ROOT,
+        encoding: "utf8",
+      },
+    );
     expect(verified.status).toBe(1);
     expect(JSON.parse(verified.stdout)).toHaveLength(3);
 
     const generated = join(dir, "generated");
     const promoted = spawnSync(
       "node",
-      ["scripts/promote-candidates.ts", observations, "--out", generated],
+      ["scripts/promote-candidates.ts", observations, "--out", generated, "--now", PROMOTION_CLOCK],
       { cwd: REPO_ROOT, encoding: "utf8" },
     );
     expect(promoted.status).toBe(0);
@@ -1407,6 +1489,8 @@ describe("promotion batch", () => {
         observations,
         "--existing",
         join(REPO_ROOT, "data/snapshot.json"),
+        "--now",
+        PROMOTION_CLOCK,
       ],
       { cwd: REPO_ROOT, encoding: "utf8" },
     );
@@ -1503,6 +1587,8 @@ describe("promotion batch", () => {
         outDir,
         "--existing",
         join(sourceDir, "missing.json"),
+        "--now",
+        PROMOTION_CLOCK,
       ],
       { cwd: REPO_ROOT, encoding: "utf8" },
     );
@@ -1540,6 +1626,8 @@ describe("promotion batch", () => {
         outDir,
         "--existing",
         join(dir, "missing.json"),
+        "--now",
+        PROMOTION_CLOCK,
       ],
       { cwd: REPO_ROOT, encoding: "utf8" },
     );
@@ -1686,10 +1774,14 @@ describe("promotion batch", () => {
       observations,
       `${[JSON.stringify(changedObservation), ...remainingObservations].join("\n")}\n`,
     );
-    const tampered = spawnSync("node", ["scripts/verify-cfp.ts", "--file", observations], {
-      cwd: REPO_ROOT,
-      encoding: "utf8",
-    });
+    const tampered = spawnSync(
+      "node",
+      ["scripts/verify-cfp.ts", "--file", observations, "--now", PROMOTION_CLOCK],
+      {
+        cwd: REPO_ROOT,
+        encoding: "utf8",
+      },
+    );
     expect(tampered.status).toBe(1);
     expect(tampered.stderr).toContain("manifest observations hash mismatch");
     writeFileSync(observations, originalObservation);
@@ -1701,7 +1793,7 @@ describe("promotion batch", () => {
     );
     const tamperedResolutions = spawnSync(
       "node",
-      ["scripts/verify-cfp.ts", "--file", observations],
+      ["scripts/verify-cfp.ts", "--file", observations, "--now", PROMOTION_CLOCK],
       { cwd: REPO_ROOT, encoding: "utf8" },
     );
     expect(tamperedResolutions.status).toBe(1);
@@ -1719,7 +1811,7 @@ describe("promotion batch", () => {
     writeFileSync(manifestPath, `${JSON.stringify(semanticManifest, null, 2)}\n`);
     const semanticallyTampered = spawnSync(
       "node",
-      ["scripts/verify-cfp.ts", "--file", observations],
+      ["scripts/verify-cfp.ts", "--file", observations, "--now", PROMOTION_CLOCK],
       { cwd: REPO_ROOT, encoding: "utf8" },
     );
     expect(semanticallyTampered.status).toBe(1);
@@ -1758,10 +1850,14 @@ describe("promotion batch", () => {
       decision: "hold",
       verification: { errors: expect.arrayContaining(["manifest body hash mismatch"]) },
     });
-    const verified = spawnSync("node", ["scripts/verify-cfp.ts", "--file", observations], {
-      cwd: REPO_ROOT,
-      encoding: "utf8",
-    });
+    const verified = spawnSync(
+      "node",
+      ["scripts/verify-cfp.ts", "--file", observations, "--now", PROMOTION_CLOCK],
+      {
+        cwd: REPO_ROOT,
+        encoding: "utf8",
+      },
+    );
     expect(verified.status).toBe(1);
     expect(JSON.parse(verified.stdout)[0]).toMatchObject({
       decision: "hold",

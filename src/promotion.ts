@@ -2208,6 +2208,10 @@ export function writePromotionBatch(
     outputObservationsPath?: string;
     existingConferences?: readonly Conference[];
     canonicalizationMargin?: number;
+    /* 判定の現在時刻。渡さない場合は実行時の時計になるが、バッチの判定はそれで変わる
+     * （同じ入力・同じ `--now` でも結果が変わる – 第 254 回に検査が日付の経過で 13 件落ちた）。
+     * ここに渡した値は個々の判定へ必ず引き継ぐ。 */
+    now?: string | Date;
   } = {},
 ): PromotionResolution[] {
   const batchDir = dirname(manifestPath);
@@ -2242,8 +2246,9 @@ export function writePromotionBatch(
               baseDir,
               existingConferences: options.existingConferences,
               canonicalizationMargin: options.canonicalizationMargin,
+              now: options.now,
             })
-          : resolvePromotion(observation, { baseDir }),
+          : resolvePromotion(observation, { baseDir, now: options.now }),
       )
       .sort((a, b) => cmpStr(a.candidate, b.candidate)),
   );

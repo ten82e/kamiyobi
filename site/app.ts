@@ -1792,9 +1792,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /* 展開前後の文字列を番号で突き合わせると、助詞で繋がれた形で対応がずれる
      * （`来月の締切` は 1 語のまま展開されて 2 語になり、`来月の締切 = 2026年9月` と
      * 読めてしまう – 第 251 回）。解決の内側でできた組をそのまま出す。 */
-    const pairs = Recommender.relativeMonthPairs(query, now).concat(
-      Recommender.monthRangePairs(query, now) as unknown as Array<[string, string]>,
-    );
+    const pairs = Recommender.relativeMonthPairs(query, now)
+      .concat(Recommender.monthRangePairs(query, now) as unknown as Array<[string, string]>)
+      // 季節の語も「どの月へ展開したか」を同じ形で出す（第 254 回）。
+      .concat(Recommender.seasonPairs(query, now) as unknown as Array<[string, string]>);
     return pairs.length ? ` ｜ ${pairs.map((pair) => `${pair[0]} = ${pair[1]}`).join("、")}` : "";
   }
 

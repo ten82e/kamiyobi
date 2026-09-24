@@ -1009,6 +1009,63 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.expandRelativeMonths("国内の研究会", now)).toBe("国内の研究会");
     });
 
+    it("季節の語は暦月語のグループに展開し、年を冠したら繰り上げない", () => {
+      const now = Date.parse("2026-08-09T00:00:00Z");
+      expect(R.seasonTermsJa("秋", now)).toEqual(["2026年9月", "2026年10月", "2026年11月"]);
+      expect(R.seasonTermsJa("春", now)).toEqual(["2027年3月", "2027年4月", "2027年5月"]);
+      // 季節の途中ではこれから来る月だけ（8 月に `夏` を打って 7 月を出さない）。
+      expect(R.seasonTermsJa("夏", now)).toEqual(["2026年8月"]);
+      // 年を跨ぐ季節は次の年まで続ける。
+      expect(R.seasonTermsJa("冬", now)).toEqual(["2026年12月", "2027年1月", "2027年2月"]);
+      // 年を跨ぐ季節の途中では、その年の残りを出す（打った月で終了年が変わる）。
+      expect(R.seasonTermsJa("冬", Date.parse("2027-01-20T00:00:00Z"))).toEqual([
+        "2027年1月",
+        "2027年2月",
+      ]);
+      expect(R.seasonTermsJa("冬", Date.parse("2026-12-05T00:00:00Z"))).toEqual([
+        "2026年12月",
+        "2027年1月",
+        "2027年2月",
+      ]);
+      expect(R.seasonTermsJa("春", Date.parse("2027-04-05T00:00:00Z"))).toEqual([
+        "2027年4月",
+        "2027年5月",
+      ]);
+      // 年を冠で書いたときは繰り上げない（`来年9月以降` と同じ判断）。
+      expect(R.yearSeasonTermsJa("来年の秋", now)).toEqual([
+        "2027年9月",
+        "2027年10月",
+        "2027年11月",
+      ]);
+      expect(R.yearSeasonTermsJa("去年の秋", now)).toEqual([
+        "2025年9月",
+        "2025年10月",
+        "2025年11月",
+      ]);
+      expect(R.yearSeasonTermsJa("今年 秋", now)).toEqual([]);
+      // 助詞で割られた語を 1 まとめに寄せる（寄せないと「2027 年のどこか」と
+      // 「2026 年 9〜11 月」のかけ算になる – 実測 245 行で噓だった）。
+      expect(R.mergeSeasonTokens(["来年", "秋", "国内"])).toEqual(["来年の秋", "国内"]);
+      expect(R.mergeSeasonTokens(["来年", "秋田"])).toEqual(["来年", "秋田"]);
+      // 季節の語ではないものを展開しない。
+      for (const word of ["秋田", "秋日", "9月", "来月", "秋の", ""]) {
+        expect(R.seasonTermsJa(word, now), `「${word}」を季節として扱った`)?.toEqual([]);
+      }
+      // 助詞で繋がれた形も同じグループに解決する（第 251 回の相対月と同じ）。
+      expect(R.queryTokenGroups("秋の会議", now)).toEqual([
+        ["2026年9月", "2026年10月", "2026年11月"],
+        ["会議"],
+      ]);
+      expect(R.queryTokenGroups("来年の秋", now)).toEqual([
+        ["2027年9月", "2027年10月", "2027年11月"],
+      ]);
+      // ひらがなの地名を割らない検査は生きている（季節の語だけ 1 文字を通す）。
+      expect(
+        R.queryTokenGroups("ながさき", now)[0]?.length,
+        "地名の寄せが無くなった",
+      ).toBeGreaterThan(1);
+    });
+
     it("日数の範囲の言い方は、締切日からの日数で絞る欄の選択肢へ送る", () => {
       /* 締切切り出しでいちばん言う言い方（第 253 回）。検索語としては当たらないので
        * （実測: `1か月以内` 0 行）、画面にある同じ話の欄へ連れていく。暦日のグループへ

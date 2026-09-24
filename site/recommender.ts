@@ -3498,7 +3498,13 @@ const Recommender = (() => {
      * そのような分割は捨てて、打たれた語をそのまま使う。 */
     if (parts.length < 2) return [token];
     for (let i = 0; i < parts.length; i += 1) {
-      if (parts[i].length < 2) return [token];
+      /* 季節の語は 1 文字（`秋の会議` の `秋`）なので、上の長さの検査を通すと割れない
+       * （第 254 回 – 実測: `秋` 802 行 / `秋の会議` 0 行）。表に合う語だと決まっている
+       * ものだけ通す – ひらがなの地名を守るための検査なので、語彙が決まっている語は
+       * 危険が無い（`春` `夏` `秋` `冬` は地名の一部にはならない – `秋田` は割れない）。 */
+      if (parts[i].length < 2 && SEASON_MONTHS_JA[parts[i] as string] === undefined) {
+        return [token];
+      }
     }
     return parts;
   }
@@ -3852,6 +3858,11 @@ const Recommender = (() => {
       // （伏せた範囲指定は誤信を生む – 同じ画面の約束）。
       last = [start[0], 12];
     }
+    return monthSpanTerms(start, last);
+  }
+
+  /** `[年, 月]` の開始から終了までの暦月語（`YYYY年M月`）を並べる（年跨ぎ対応）。 */
+  function monthSpanTerms(start: number[], last: number[]): string[] {
     const out: string[] = [];
     let y = start[0];
     let m = start[1];
@@ -3865,6 +3876,121 @@ const Recommender = (() => {
       }
     }
     return out;
+  }
+
+  /* 季節の語（第 254 回）。「秋の会議を出したい」は分野をまたいだ計画の立て方で普通に言う。
+   * 2026-08-09 生成ビルド・固定時刻 2026-08-09T00:00:00Z で実測: **`秋` 0 行・`春` 0 行・
+   * `夏` 0 行・`冬` 0 行・`秋の会議` 0 行・`来年の秋` 0 行**（2026年9〜11月に当たる行は
+   * 802 行ある）。月の範囲と同じ暦月語の OR グループへ展開する。
+   * 区切りは気象月の四つ組み（春 3〜5・夏 6〜8・秋 9〜11・冬 12〜2）。上流の締切名にも
+   * 「秋開催」のような表記は無いため、季節の語は表に書かれていない語として扱う
+   * （展開された月は件数欄で言う – 伏せた範囲指定は誤信を生む）。 */
+  const SEASON_YEAR_PREFIX =
+    /^(今年|ことし|来年|らいねん|再来年|さらいねん|去年|きょねん)(?:の)?(.+)$/;
+  const SEASON_YEAR_OFFSET: Record<string, number> = {
+    今年: 0,
+    ことし: 0,
+    来年: 1,
+    らいねん: 1,
+    再来年: 2,
+    さらいねん: 2,
+    去年: -1,
+    きょねん: -1,
+  };
+  const SEASON_MONTHS_JA: Record<string, number[]> = {
+    春: [3, 5],
+    はる: [3, 5],
+    夏: [6, 8],
+    なつ: [6, 8],
+    秋: [9, 11],
+    あき: [9, 11],
+    冬: [12, 2],
+    ふゆ: [12, 2],
+  };
+
+  /** `[開始月, 終了月]` の季節を、指定した年から始めた暦月語の組へ展開する（年跨ぎ対応）。 */
+  function seasonSpanJa(startYear: number, span: number[]): string[] {
+    const start = [startYear, span[0]];
+    const last = span[1] >= span[0] ? [startYear, span[1]] : [startYear + 1, span[1]];
+    return monthSpanTerms(start, last);
+  }
+
+  /** 季節の語が基準月の季節に含まれているか（`冬` は年を跨ぐので開始月 > 終了月に注意）。 */
+  function seasonInsideSpan(current: number, span: number[]): boolean {
+    return span[0] <= span[1]
+      ? span[0] <= current && current <= span[1]
+      : current >= span[0] || current <= span[1];
+  }
+
+  /** 季節の語を暦月語の OR グループへ展開する。 */
+  function seasonTermsJa(token: string, nowMs: number, forcedYear?: number): string[] {
+    const span = SEASON_MONTHS_JA[token];
+    if (!span) return [];
+    if (forcedYear) return seasonSpanJa(forcedYear, span);
+    const jst = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
+    const year = jst.getUTCFullYear();
+    const current = jst.getUTCMonth() + 1;
+    if (seasonInsideSpan(current, span)) {
+      // 季節の途中なら、これから来る月だけ出す（8 月に `夏` と打って 7 月の締切を出さない）。
+      return span[0] <= span[1]
+        ? monthSpanTerms([year, current], [year, span[1]])
+        : // `冬` は年を跨ぐので、12 月に打ったときと 1・2 月に打ったときで終了年が変わる。
+          current >= span[0]
+          ? monthSpanTerms([year, current], [year + 1, span[1]])
+          : monthSpanTerms([year, current], [year, span[1]]);
+    }
+    // まだ来ていない季節は今年、過ぎた季節は来年（単月の `9月` が基準月より前なら来年、と揃える）。
+    return seasonSpanJa(span[0] < current ? year + 1 : year, span);
+  }
+
+  /** 助詞で割られた `来年` + `秋` を `来年の秋` の形に寄せる（第 254 回）。
+   * `queryTokens` が助詞で割ったあとだと、年の語と季節の語が別々の語になり
+   * 「2027 年のどこか」と「2026 年 9〜11 月」のかけ算になってしまう
+   * （実測: `来年の秋` 245 行 – 期待は 2027年9〜11月 に当たる 34 行）。 */
+  function mergeSeasonTokens(tokens: string[]): string[] {
+    const out: string[] = [];
+    tokens.forEach((token) => {
+      const prev = out.length ? (out[out.length - 1] as string) : "";
+      if (prev && SEASON_YEAR_OFFSET[prev] !== undefined && SEASON_MONTHS_JA[token] !== undefined) {
+        out[out.length - 1] = `${prev}の${token}`;
+        return;
+      }
+      out.push(token);
+    });
+    return out;
+  }
+
+  /** `来年の秋` のように年を冠した言い方を、その年の季節として展開する。 */
+  function yearSeasonTermsJa(token: string, nowMs: number): string[] {
+    const hit = SEASON_YEAR_PREFIX.exec(token);
+    if (!hit) return [];
+    const span = SEASON_MONTHS_JA[hit[2] as string];
+    if (!span) return [];
+    const jst = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
+    const year = jst.getUTCFullYear();
+    const delta = SEASON_YEAR_OFFSET[hit[1] as string];
+    if (delta === undefined) return [];
+    // 年を冠で書いたときは繰り上げない（`来年9月以降` と同じ判断）。
+    return seasonSpanJa(year + delta, span);
+  }
+
+  /** 季節の語について `打った語 -> 出した範囲` の組を返す（件数欄の説明用）。 */
+  function seasonPairs(query: unknown, nowMs: number): Array<[string, string]> {
+    const normalized = searchNormalize(query);
+    if (!normalized) return [];
+    const pairs: Array<[string, string]> = [];
+    mergeSeasonTokens(normalized.split(" ")).forEach((token) => {
+      const yearSeason = yearSeasonTermsJa(token, nowMs);
+      if (yearSeason.length) {
+        pairs.push([token, `${yearSeason[0]}から${yearSeason[yearSeason.length - 1]}`]);
+        return;
+      }
+      splitQueryToken(token).forEach((part) => {
+        const terms = seasonTermsJa(part, nowMs);
+        if (terms.length) pairs.push([part, `${terms[0]}から${terms[terms.length - 1]}`]);
+      });
+    });
+    return pairs;
   }
 
   /** 月の範囲の語について `打った語 -> 出した範囲` の組を返す（件数欄の説明用）。 */
@@ -4802,7 +4928,7 @@ const Recommender = (() => {
     const middleWhole = (token: string): string[] =>
       JOIN_WORDS.test(token) ? resolved[kanaFold(token)] || [] : [];
     const units: Array<{ token: string; whole: string[] }> = [];
-    queryTokens(query).forEach((raw) => {
+    mergeSeasonTokens(queryTokens(query)).forEach((raw) => {
       middleParts(raw).forEach((part) => {
         if (!hasWordChar(part)) return;
         /* 相対月の語はここで暦月に解決する（第 251 回）。`expandRelativeMonths` は空白で
@@ -4812,6 +4938,15 @@ const Recommender = (() => {
         const monthTerm = relativeMonthTerm(part, now);
         if (monthTerm) {
           units.push({ token: monthTerm, whole: [] });
+          return;
+        }
+        /* 季節の語もここで暦月語に展開する（第 254 回）。1 まとめの語（`秋`）と違い、
+         * 助詞で割られた `秋の会議` は下の組み替えに届かないので、ここで扱う。
+         * 展開した月は 1 つの OR グループにまとめる – `units` の要素同士は AND なので、
+         * 月ごとに分ける「9 月と 10 月と 11 月」の要求になってしまう。 */
+        const yearSeason = yearSeasonTermsJa(raw, now);
+        if (yearSeason.length) {
+          units.push({ token: yearSeason[0], whole: yearSeason.slice(1) });
           return;
         }
         units.push({ token: part, whole: middleWhole(raw) });
@@ -4899,6 +5034,9 @@ const Recommender = (() => {
        * 当たり方を狭めるだけになる。 */
       const monthRange = monthRangeTermsJa(token, now);
       if (monthRange.length) group = monthRange.slice();
+      /* 「秋」「春」などの季節の語も同じ暦月語のグループへ展開する（第 254 回）。 */
+      const season = seasonTermsJa(token, now);
+      if (season.length) group = season.slice();
 
       /* 時刻の語は零詰めた形に寄せる。画面に出る 21 種はすべて `08:59` の形所以外に
        * 無いので（2026-08-09 生成ビルドで実測）、打った側を画面の形に直す。元の形も
@@ -7116,6 +7254,10 @@ const Recommender = (() => {
     relativeMonthPairs: relativeMonthPairs,
     monthRangeTermsJa: monthRangeTermsJa,
     monthRangePairs: monthRangePairs,
+    seasonTermsJa: seasonTermsJa,
+    yearSeasonTermsJa: yearSeasonTermsJa,
+    mergeSeasonTokens: mergeSeasonTokens,
+    seasonPairs: seasonPairs,
     kanaFold: kanaFold,
     queryTokenGroups: queryTokenGroups,
     queryTokens: queryTokens,
