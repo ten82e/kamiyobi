@@ -2901,6 +2901,25 @@ const Recommender = (() => {
           return;
         }
       }
+      /* 「今週金曜」のように週+曜日を繋げた形は、解けた 1 日を出す（第 329 回）。 */
+      const pressed = pressedWeekdayJa(token, nowMs);
+      if (pressed) {
+        const parts = /^(\d{4})年(\d{1,2})月(\d{1,2})日$/.exec(pressed[0]);
+        if (parts) {
+          const 日付 = `${parts[1]}年${parts[2]}月${parts[3]}日`;
+          const 曜 = weekdayJaFromDate(toIsoDate(日付));
+          const 過ぎている = isPastJstDay(
+            [Number(parts[1]), Number(parts[2]), Number(parts[3])],
+            nowMs,
+          );
+          notes.push(
+            `${token} = ${日付}${曜 ? `(${曜})` : ""}の締切${
+              過ぎている ? `（その日は過ぎています – 「過去の締切も表示」を付けると並びます）` : ""
+            }`,
+          );
+          return;
+        }
+      }
       /* 助詞が付きただけの形（`明日中に` `今週中に`）は表の形に寄せてから解く –
        * 案内は打たれた語のまま出す（見えているのはその語なので – 第 328 回）。 */
       const key = dateTokenStemJa(token) || token;
@@ -4946,6 +4965,41 @@ const Recommender = (() => {
   /** `今月以内` `来月以内` はその月の間のこと（`3月以内` は「3 か月以内」にも読めるので寄せない）。 */
   const RELATIVE_MONTH_WITHIN = /^(今月|来月|再来月|先月|こんげつ|らいげつ|せんげつ)以内(?:に)?$/;
 
+  /* 週と曜日を**繋げて**打った形（`今週金曜` `来週木曜日`）。実測（2026-09-28 –
+   * 2026-08-09 生成ビルドの品書 872 行・固定時刻 2026-08-09T00:00:00Z）で、助詞を挟む形は
+   * 当たるのに繋げた形は 0 行だった – `今週の水曜` 1 行 / `今週金曜` **0 行**、
+   * `来週の木曜日` 4 行 / `来週月曜` **0 行**・`来週火曜` **0 行**・`来週土曜` **0 行**。
+   * 離して打たれた形（`今週 水曜`）は「今週の行 AND 水曜の語」になるため、締切日が別の日の
+   * 行が混ざっていた（`今週の水曜` 1 行 / `2026年8月5日` 3 行で**別の行** – 第 329 回）。
+   * なので両方を同じ 1 日へ解く。月の語（`来月中`）とは語が重ならない（`中` を要求しない）。 */
+  const PRESSED_WEEKDAY_JA =
+    /^(今週|こんしゅう|来週|らいしゅう|再来週|さいしゅう|先週|せんしゅう)(?:の)?([月火水木金土日])(?:曜)?(?:日)?$/;
+  const WEEKDAY_ORDER_JA = "月火水木金土日";
+
+  function pressedWeekdayJa(token: string, nowMs: number): string[] | null {
+    const matched = PRESSED_WEEKDAY_JA.exec(String(token || ""));
+    if (!matched) return null;
+    const days = weekDayTermsJa(matched[1], nowMs);
+    if (days.length !== 7) return null;
+    const index = WEEKDAY_ORDER_JA.indexOf(matched[2]);
+    if (index < 0) return null;
+    const day = String(days[index] || "");
+    /* 年を付けない `8月5日` の形は足さない – 部分一致なので他の年の同じ日の行を拾う
+     * （第 329 回の実測: 年付き 3 行に対して 8 行に化けた）。hay は和暦付きの語を持つ。 */
+    return [day];
+  }
+
+  /** 与えた暦日（[年, 月, 日]）が基準時刻の JST の日より前か（第 329 回）。
+   * 件数欄の幅と週+曜日の案内で同じ判断を二重に書くと、改ざんでも片方だけ壊れて
+   * 検査が黙っていた（第 329 回の改ざんで実発生）。 */
+  function isPastJstDay(ymd: number[], nowMs: number): boolean {
+    const today = offsetCalendarDay(nowMs, 0);
+    return (
+      ymd[0] < today[0] ||
+      (ymd[0] === today[0] && (ymd[1] < today[1] || (ymd[1] === today[1] && ymd[2] < today[2])))
+    );
+  }
+
   /** 展開語の並びから最後の `YYYY年M月D日` を読む（幅の案内に使う）。 */
   function lastFullDateJa(terms: string[]): number[] | null {
     for (let i = terms.length - 1; i >= 0; i -= 1) {
@@ -4960,6 +5014,14 @@ const Recommender = (() => {
     const first = offsetCalendarDay(nowMs, 0);
     const head = `${first[0]}年${first[1]}月${first[2]}日`;
     const headDay = weekdayJaFromDate(toIsoDate(head));
+    /* 期日が既に過ぎている幅は逆向きになるので、その日 1 日として書き、過ぎていることを言う
+     * （`今週金曜までに` を日曜に打つと金曜は過ぎている – 第 329 回）。 */
+    if (isPastJstDay(lastYmd, nowMs)) {
+      const 日付 = `${lastYmd[0]}年${lastYmd[1]}月${lastYmd[2]}日`;
+      return `${token} = ${日付}${
+        weekdayJaFromDate(toIsoDate(日付)) ? `(${weekdayJaFromDate(toIsoDate(日付))})` : ""
+      }の締切（その日は過ぎています – 「過去の締切も表示」を付けると並びます）`;
+    }
     /* 一日ぶんだけの幅（`今日まで`）に「〜同じ日」を書いても役に立たない（第 328 回）。 */
     if (first[0] === lastYmd[0] && first[1] === lastYmd[1] && first[2] === lastYmd[2]) {
       return `${token} = ${head}${headDay ? `(${headDay})` : ""}の締切 – 行に書かれた他の日付（別の締切ラウンド・会期）でも当たるので、締切日からの日数で絞る「締切まで」の欄が確かです`;
@@ -4980,7 +5042,11 @@ const Recommender = (() => {
     const q = String(token || "");
     if (!/(?:までに|まで)$/.test(q)) return null;
     const stem = dateTokenStemJa(q);
-    if (!stem) return null;
+    const head = /^(.+?)(?:までに|まで)$/.exec(q);
+    const pressed = head ? pressedWeekdayJa(head[1], nowMs) : null;
+    /* 週+曜日を繋げた形（`今週金曜まで`）は表に無い語なので、剥がした形が無くても続ける
+     * （第 329 回 – ここでの早期 return で 0 行のままだった）。 */
+    if (!stem && !pressed) return null;
     const dayOffset = RELATIVE_DAY_OFFSETS_JA[stem];
     let last: number[] | null = null;
     if (dayOffset !== undefined) {
@@ -4990,9 +5056,17 @@ const Recommender = (() => {
       if (week.length === 7) {
         const parts = /^(\d{4})年(\d{1,2})月(\d{1,2})日$/.exec(week[6]);
         if (parts) last = [Number(parts[1]), Number(parts[2]), Number(parts[3])];
+      } else if (pressed) {
+        const parts = /^(\d{4})年(\d{1,2})月(\d{1,2})日$/.exec(pressed[0]);
+        if (parts) last = [Number(parts[1]), Number(parts[2]), Number(parts[3])];
       }
     }
     if (!last) return null;
+    /* 期日が既に過ぎているときに今日からの幅を作ると、過ぎた方を無視した幅になる
+     * （第 329 回）。その日 1 日だけを出す – 過ぎた締切の扱いは下の案内で言う。 */
+    if (isPastJstDay(last, nowMs)) {
+      return [`${last[0]}年${last[1]}月${last[2]}日`, `${last[1]}月${last[2]}日`];
+    }
     const out: string[] = [];
     for (let d = 0; d <= 370; d += 1) {
       const ymd = offsetCalendarDay(nowMs, d);
@@ -5010,6 +5084,9 @@ const Recommender = (() => {
     /* 「今日から 3 日」は `3日以内` と同じ幅（第 328 回）。 */
     const fromToday = fromTodayTermsJa(token, nowMs);
     if (fromToday) return [token].concat(fromToday);
+    /* 「今週金曜」「来週木曜日」は締切日がその日の行に出会う（第 329 回）。 */
+    const pressedDay = pressedWeekdayJa(token, nowMs);
+    if (pressedDay) return [token].concat(pressedDay);
     /* 助詞が付きただけの形は表の形に寄せる（`明日中に` → `明日中` – 第 328 回）。 */
     const stem = dateTokenStemJa(token) || token;
     const numeric = numericRelativeDay(stem, nowMs);
@@ -6119,6 +6196,16 @@ const Recommender = (() => {
       ) {
         mergedUnits.push({ token: `第${next ? next.token : ""}ラウンド`, whole: [] });
         i += 2;
+      } else if (pressedWeekdayJa(`${unit.token}${next ? next.token : ""}`, now) !== null) {
+        /* 週と曜日を**離して**打った形（`今週 水曜` `来週の木曜`）も 1 group にまとめる
+         * （第 329 回）。単位が割れたままだと「今週の行 AND 水曜の語」になり、締切日が
+         * 別の日の行が混ざった（実測で `今週の水曜` 1 行と `2026年8月5日` 3 行は別の行）。 */
+        const joined = `${unit.token}${next ? next.token : ""}`;
+        mergedUnits.push({
+          token: joined,
+          whole: (pressedWeekdayJa(joined, now) as string[]) || [],
+        });
+        i += 1;
       } else {
         mergedUnits.push(unit);
       }
@@ -8511,6 +8598,7 @@ const Recommender = (() => {
     seasonPairs: seasonPairs,
     periodMonthPairs: periodMonthPairs,
     periodMonthTermsJa: periodMonthTermsJa,
+    pressedWeekdayJa: pressedWeekdayJa,
     kanaFold: kanaFold,
     queryTokenGroups: queryTokenGroups,
     queryTokens: queryTokens,

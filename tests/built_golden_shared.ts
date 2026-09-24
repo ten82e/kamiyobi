@@ -124,6 +124,8 @@ export const SEARCH_CANON = (() => {
     ["FROM_TODAY_UNIT", /const FROM_TODAY_UNIT[\s\S]*?\};/],
     ["FROM_TODAY_HEAD", /const FROM_TODAY_HEAD = [^\n]*;/],
     ["RELATIVE_MONTH_WITHIN", /const RELATIVE_MONTH_WITHIN = [^\n]*;/],
+    ["PRESSED_WEEKDAY_JA", /const PRESSED_WEEKDAY_JA[\s\S]*?;\n/],
+    ["WEEKDAY_ORDER_JA", /const WEEKDAY_ORDER_JA = [^\n]*;/],
     // `dateTokenStemJa` が読む表（週の語・年の語・季節の語）は既に上の注入にあるので、
     // 同じ定数を二度並べない（`Identifier ... has already been declared` – 第 328 回で実発生）。
     ["PLACE_READINGS", /const PLACE_READINGS[\s\S]*?\];/],
@@ -221,6 +223,9 @@ export const SEARCH_CANON = (() => {
       "dateTokenStemJa",
       "untilDayTermsJa",
       "fromTodayTermsJa",
+      // 週と曜日を繋げた形（`今週金曜`）を 1 日に解く部品（第 329 回）。
+      "pressedWeekdayJa",
+      "isPastJstDay",
       // 数値の相対日（`あと 51 日` → `51日後` → 暦日）。`relativeDayGroups` と
       // `queryTokenGroups` が呼ぶので、定義順で先に置く（第 223 回）。
       "collapseRelativeDayPhrase",
