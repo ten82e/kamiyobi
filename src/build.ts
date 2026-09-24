@@ -188,6 +188,13 @@ const CSV_COLUMNS = [
    * （`KIND_LABEL_JA`）から入れるので、言い回しは増えない。列の順序で読む下流を壊さない
    * よう、**末尾に置く**。 */
   "kind_ja",
+  /* その日が締切なのか、その他の予定日なのか。`deadlines.ics` と `data.json` は第 299 回から
+   * この値を出していたが、表計算に渡すこの表だけが持たなかった（2026-09-24 実測: 3,253 行のうち
+   * **311 行** – 採否通知 242・反論期間開始 37・査読結果公開 32 – が締切ではない日で、そのうち
+   * 307 行が「締切の瞬間」と説明した `deadline_utc` に値を持っていた）。日付で並べ替え・絞り込み
+   * をする人は、通知日を締切として数えてしまう。画面と同じ語の正本（`kindDateFieldJa`）から
+   * 引くので、言い回しは増えない。 */
+  "date_field",
 ];
 
 /* `data.csv` の列辞書。列名は `CSV_COLUMNS` から書き出し、説明だけをここに持つ（列を足したときに
@@ -206,19 +213,23 @@ const CSV_COLUMN_NOTES_JA: Record<string, string> = {
   year: "開催年（整数）。",
   edition_id: "開催回の ID（例 'sigcomm26'）。`data.json` の `editions[].id` と同じ。",
   kind:
-    "締切の種別。'abstract'・'paper'・'supplementary'・'notification'・'camera_ready'・" +
+    "日付の種別。'abstract'・'paper'・'supplementary'・'notification'・'camera_ready'・" +
     "'rebuttal_start'・'rebuttal_end'・'review_release'・'registration'・'other' の 10 種。" +
-    "画面の「種別」で選べる概要・論文以外の種別もこの表には含まれる。",
+    "画面の「種別」で選べる概要・論文以外の種別もこの表には含まれる – 採否通知のように、その日" +
+    "が締切ではない物を含む（日付の列が何を指すかは `date_field` で決まる – 第 302 回）。",
   label: "上流の表示用ラベル（原文。翻訳しない）。",
   round: "投稿ラウンド（1 起点の整数）。複数のラウンドを持つ会議がある。",
   deadline_precision:
     "締切値の精度。'exact' は時刻まで確定、'date-only' は暦日までは確定で時刻は未確認。",
   deadline_local_date:
-    "'YYYY-MM-DD'。`deadline_precision` が 'date-only' の行だけに入る。'exact' の行では空欄。",
+    "'YYYY-MM-DD'。`deadline_precision` が 'date-only' の行だけに入る。'exact' の行では空欄。" +
+    "`date_field` が「締切」以外の行では、この日は締切ではなくその他の予定日（第 302 回）。",
   deadline_utc:
-    "締切の瞬間 'YYYY-MM-DDTHH:MM:SSZ'（UTC）。'date-only' の行では空欄（いつ締まるか分かっていないため書けない）。",
+    "その日の瞬間 'YYYY-MM-DDTHH:MM:SSZ'（UTC）。'date-only' の行では空欄（いつ始まるか終えるか分かっていないため書けない）。" +
+    "`date_field` が「締切」以外（採否通知・査読結果公開・反論期間の開始）の行では、この日は**締切ではない** – 307 行が該当する（第 302 回）。",
   deadline_aoe:
-    "AoE（UTC-12）基準で読み替えた締切 'YYYY-MM-DD HH:MM:SS AoE'。'date-only' の行では空欄。",
+    "AoE（UTC-12）基準で読み替えた瞬間 'YYYY-MM-DD HH:MM:SS AoE'。'date-only' の行では空欄。" +
+    "意味は `deadline_utc` と同じで、`date_field` が「締切」以外の行では締切ではない日に入る。",
   tz_raw:
     "上流が書いたままのタイムゾーン表記（'AoE'、'UTC-12'、'PT' など）。'date-only' の行では空欄。",
   event_start: "会期の開始日 'YYYY-MM-DD'。分かっていない行は空欄。",
@@ -241,6 +252,12 @@ const CSV_COLUMN_NOTES_JA: Record<string, string> = {
     "（第 301 回 – 実測で 3,253 行のうち 55 行が '論文締切: Paper submission' の様な値に割れて" +
     "いた）。同じ年に同じ種別が重なる行の区別は `label`（上流の表示用ラベル）と `round` で見る。" +
     "画面の「種別」は、区別の要る行だけ語の後ろに上流のラベルを添える – この欄は添えない。",
+  date_field:
+    "その日を何と呼ぶか（'締切'・'通知日'・'公開日'・'開始日'）。`deadlines.ics` の本文に書く語と" +
+    "同じで、語の正本も同じ（第 302 回）。**日付の列を締切として扱うかどうかを決めるのはこの欄** –" +
+    " '締切' 以外の行は、その日までに何かを出す必要が無い日（採否通知の通知日、査読結果の公開日、" +
+    "反論期間の開始日）に入る。会期の行はこの表に含まれない（会期は `data.json` と" +
+    "`deadlines.ics` だけに出る）。",
   link: "会議の公式サイトの URL。",
 };
 
@@ -320,7 +337,9 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
     "1 行 1 締切のフラット表。列の意味は下の「data.csv の列」に書く。文字コードは BOM を付けない" +
     " UTF-8（画面のダウンロードボタンが書く CSV は Excel を助けるため BOM 付きで、別物）。" +
     "種別は英語のキー `kind` と、画面と同じ日本語の `kind_ja` を併記する（`label` は上流の" +
-    "自由文で、つづりが揺れる – 'Paper submission' と 'Paper Submission' が同じ物として並ぶ）。",
+    "自由文で、つづりが揺れる – 'Paper submission' と 'Paper Submission' が同じ物として並ぶ）。" +
+    "日付の列が**締切の日を指すかその他の予定日かを区別する欄は `date_field`**（実測で 3,253 行の" +
+    "うち 311 行が締切ではない日 – 締切として数えると間違える）。",
   "upcoming.md": "直近の締切と会期の表。",
   "upcoming.html":
     "`upcoming.md` と同じ表を、ブラウザでそのまま読める形にしたもの（第 263 回）。Markdown の" +
@@ -3024,6 +3043,8 @@ export function toCsv(records: DataRecord[] | null | undefined): string {
            の様な値で、語の種類は 10 の筈が 41 に割れていた）。表で語を選ぶ人はそれで
            行を取りこぼす。行の区別は `label` と `round` で付く。 */
         String(rec.kind_ja ?? rec.kind_label ?? "").trim() || KIND_LABEL_JA.other,
+        // 日付の列が締切の日を指しているかどうかは、この欄で決まる（第 302 回）。
+        String(rec.date_field ?? "").trim() || "締切",
       ]
         .map((v) => csvField(v))
         .join(","),

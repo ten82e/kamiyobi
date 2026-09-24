@@ -111,16 +111,25 @@ function builtJapaneseWords(): Set<string> {
   return new Set(japaneseStringLiterals(rec));
 }
 
+/** `llms.txt` の「data.csv の列」から、指定の欄の説明だけを取り出す。 */
+function csvColumnNote(name: string): string {
+  const text = readFileSync(join(site, "llms.txt"), "utf8");
+  const line = text.split("\n").find((l) => l.startsWith(`- ${name}：`));
+  expect(line, `列の辞書に ${name} が無い`).toBeDefined();
+  return (line ?? "").slice(`- ${name}：`.length);
+}
+
 /* ---------------------------------------------------------------------- 検査 */
 
 describe("生の CSV の日本語の種別欄（第 270 回）", () => {
   it("欄が末尾に有り、既存の列順を変えていない", () => {
     const { header } = csvRows();
-    expect(header[header.length - 1], "日本語の種別欄が末尾に無い").toBe("kind_ja");
+    // 第 302 回で日付の意味の欄を末尾に足したので、日本語の種別欄は後ろから 2 番目。
+    expect(header[header.length - 2], "日本語の種別欄の位置が変わった").toBe("kind_ja");
     expect(header.indexOf("kind"), "英語のキーの欄が消えた").toBeGreaterThanOrEqual(0);
     expect(header.filter((h) => h === "kind_ja").length, "同じ欄が 2 本有る").toBe(1);
     // 末尾に足したので、従来いちばん後ろだった欄はそのまま残る。
-    expect(header[header.length - 2], "列の並びが変わっている").toBe("link");
+    expect(header[header.length - 3], "列の並びが変わっている").toBe("link");
   });
 
   it("全行の欄数が揃っており、日本語の種別が空欄の行が無い", () => {
@@ -133,6 +142,54 @@ describe("生の CSV の日本語の種別欄（第 270 回）", () => {
     // 行数は生成時刻とカタログで動く（共有ハーネスは縮約カタログで 510 行、実カタログの
     // 2026-08-09 生成で 3,253 行を実測）。ここは「全行」を見ることが目的なので下限は緩くする。
     expect(values.length, "行数が読めない").toBeGreaterThan(100);
+  });
+
+  it("日付の列が締切を指すかその他の日かを分ける欄が有る（第 302 回）", async () => {
+    /* 実測（2026-09-24・2026-08-09 生成ビルド）: 3,253 行のうち **311 行**が締切ではない日
+       （採否通知 242・反論期間開始 37・査読結果公開 32）で、そのうち **307 行**が「締切の瞬間」と
+       説明した `deadline_utc` に値を持っていた。この欄が無い表で日付から絞り込む人は、通知日を
+       締切として数える（カレンダーと `data.json` は第 299 回から呼ぶ語を出していた – 表計算に
+       渡す表だけ持たなかった）。 */
+    const { header, values } = column("date_field");
+    expect(values.length, "行数が読めない").toBeGreaterThan(100);
+    const blank = values.filter((v) => !v.trim());
+    expect(blank.length, `呼びが空欄の行が ${blank.length} 本有る`).toBe(0);
+    /* 値は語の正本（ビルド成果の `kindDateFieldJa`）が英語のキーから決める物と一致する。
+       表の中で独自の言い回しを増やしていないことの検査でもある。 */
+    const Recommender = (await import(pathToFileURL(join(site, "recommender.js")).href))
+      .default as unknown as { kindDateFieldJa: (kind: unknown) => string };
+    const ki = header.indexOf("kind");
+    const bad: string[] = [];
+    csvRows().body.forEach((r) => {
+      const want = Recommender.kindDateFieldJa(r[ki]);
+      if ((r[header.indexOf("date_field")] ?? "") !== want) bad.push(`${r[ki]} -> ${want}`);
+    });
+    expect(bad.slice(0, 4), `語の正本と違う呼びが ${bad.length} 本有る`).toEqual([]);
+    // 締切ではない日が実際に在る（無ければこの検査は空振りなので張る）。
+    const notDeadline = values.filter((v) => v !== "締切");
+    expect(notDeadline.length, "締切ではない日の行が 1 本も無い").toBeGreaterThan(0);
+    expect(new Set(notDeadline).size, "締切ではない日の呼びが 1 種類しか無い").toBeGreaterThan(1);
+    expect(values.filter((v) => v === "締切").length, "締切の行が無い").toBeGreaterThan(0);
+  });
+
+  it("締切の列が締切ではない日を含むことを、列の辞書がそれぞれの欄に書いている（第 302 回）", () => {
+    /* Excel で列名だけ見て使う人は、列の辞書を llms.txt から読む – 日付の 3 本それぞれの説明が
+       `date_field` を指していなければ、「採否通知の行の deadline_utc」に気づけない。 */
+    const { values } = column("date_field");
+    expect(
+      values.some((v) => v !== "締切"),
+      "締切ではない日の行が無い（検査が空振り）",
+    ).toBe(true);
+    for (const name of ["deadline_local_date", "deadline_utc", "deadline_aoe"]) {
+      const note = csvColumnNote(name);
+      expect(note.length, `${name} の説明が空欄`).toBeGreaterThan(0);
+      expect(note, `${name} の説明が date_field に触れていない`).toContain("date_field");
+    }
+    // 欄自身の説明も、締切として扱って良い日を決める欄だと書いている。
+    const own = csvColumnNote("date_field");
+    expect(own.length, "date_field の説明が空欄").toBeGreaterThan(0);
+    expect(own).toContain("締切");
+    expect(own).toContain("data.json");
   });
 
   it("値は種別の語だけで、その他を継いでいない（第 301 回）", async () => {
