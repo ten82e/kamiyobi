@@ -1,0 +1,184 @@
+/**
+ * `upcoming.html` / `upcoming.md` を単体で開いた人が、目印の語の意味を確定できるかの検査
+ * （SPEC §7・第 275 回）。
+ *
+ * 2026-08-09 生成ビルドで実測した形:
+ *   - `upcoming.html` の 1,127 行のうち、開催地が「未確認」の行が **182 行**、日付に
+ *     「（時刻未確認）」を持つ行が **180 行**、`AoE` の宣言が **410 か所** あった。
+ *   - 表のうえの説明は「残り」「開催」「ラウンド」「推定」にしか触れておらず、いちばん多く
+ *     出る「未確認」の意味がそのページに無かった。読み手は「収録元が無いと決めたのだ」と
+ *     誤読して、探している会議を捨てうる（ kamiyobi が裏取りできていないだけなので事実と違う）。
+ *   - 意味の文を 3 か所（画面のてびき・印刷の但し書き・この表）に手コピーすると必ずズレる
+ *     ので、`recommender.js` の一文を両方から呼ぶ形にした。
+ */
+
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { site, verificationLabelsSource } from "./built_golden_shared.ts";
+import { jsFunction, siteRuntime } from "./runtime_extract.ts";
+
+function page(name: string): string {
+  return readFileSync(join(site, name), "utf8");
+}
+
+/** 表より前の説明（マークダウンの引用ブロック）を、行のまま取り出す。 */
+function legendLines(src: string): string[] {
+  const lines = src.split("\n");
+  const tableAt = lines.findIndex((l) => l.startsWith("| 日付 |"));
+  expect(tableAt, "表が見つからない（表より前を切り出せない）").toBeGreaterThan(0);
+  return lines.slice(0, tableAt).filter((l) => l.startsWith(">"));
+}
+
+/** そのページの「表より前の説明」を、生のマークダウンか HTML から取り出す。 */
+function legendText(name: string): string {
+  const src = page(name);
+  if (name.endsWith(".md")) return legendLines(src).join("\n");
+  const body = src.replace(/<style>[\s\S]*?<\/style>|<script>[\s\S]*?<\/script>/g, "");
+  return body
+    .slice(0, body.indexOf("<table"))
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ");
+}
+
+/** 説明が「定義している」語（「◯◯」は、と名乗っている部分）。例として挙げているだけの
+ * 語（「本日開催」など）は除外する – それらは表の側の値の言い回しで、説明の主題ではない。 */
+function quotedTerms(lines: string[]): string[] {
+  const out: string[] = [];
+  for (const l of lines) for (const m of l.matchAll(/「([^」]+)」は/g)) out.push(m[1]);
+  return out;
+}
+
+/** 開きの数と閉じの数を数える（タグの入れ子のずれを見る）。 */
+function lenTags(body: string, tag: string): [number, number] {
+  return [
+    (body.match(new RegExp(`<${tag}[ >]`, "g")) || []).length,
+    (body.match(new RegExp(`</${tag}>`, "g")) || []).length,
+  ];
+}
+
+/** `recommender.js` のラベルの語を取り出す（関数本体からでも、定数への転記からでも読む）。
+ * 語はいずれも module 直下の定数（`const UNCONFIRMED_LABEL_JA = "未確認";`）が生えていて、
+ * 参照の仕方は `function unconfirmedLabelJa() { return …; }` と
+ * `extendedLabelJa: () => EXTENDED_LABEL_JA` の 2 通りある（第 275 回の実測）。 */
+function labelValue(rec: string, name: string): string {
+  const viaAlias = new RegExp(`${name}: \\(\\) => ([A-Z_][A-Z_0-9]*)`).exec(rec);
+  const viaFn = new RegExp(`function ${name}[\\s\\S]{0,160}?return ([A-Z_][A-Z_0-9]*);`).exec(rec);
+  const constName = viaAlias?.[1] ?? viaFn?.[1];
+  if (!constName) throw new Error(`${name} が読む定数が分からない（空振り検査の防止）`);
+  const value = new RegExp(`const ${constName} = "([^"]+)"`).exec(rec);
+  if (!value) throw new Error(`${constName} の値が読めない（空振り検査の防止）`);
+  return value[1];
+}
+
+describe("upcoming を単体で読める（第 275 回）", () => {
+  it("表に並ぶ目印の語は、表のうえで全部説明している", () => {
+    // 実測で多く出る目印: 未確認 182 行 / 時刻未確認 180 行 / 推定 66 行 / AoE 410 か所。
+    // 「語が一度出ていれば良い」では足りない – 先頭の案内文は AoE を語として挙げ、
+    // 「未確認」は「時刻未確認」の一部として現れるので、挙げだけの変更が通った
+    // （第 275 回の改ざんで実発生）。定義の形「◯◯」は、で見る。
+    for (const name of ["upcoming.md", "upcoming.html"]) {
+      const legend = legendText(name);
+      for (const marker of ["未確認", "時刻未確認", "推定", "AoE"]) {
+        const defined = new RegExp(`「[（(]?${marker}[）)]?」は`).test(legend);
+        expect(defined, `${name} で目印「${marker}」を定義していない（挙げただけ）`).toBe(true);
+      }
+    }
+    // 説明文が自分で名乗った語が、表のどこにも並ばない語なら、読める説明にならない。
+    const lines = legendLines(page("upcoming.md"));
+    const table = page("upcoming.md").slice(page("upcoming.md").indexOf("| 日付 |"));
+    for (const term of quotedTerms(lines)) {
+      expect(
+        table.includes(term) || term.length <= 1,
+        `説明が名乗る「${term}」はこの表に並ばない`,
+      ).toBe(true);
+    }
+  });
+
+  it("「未確認」を“収録元が無いと決めた意味”と読み違えない文が書いてある", () => {
+    const rec = siteRuntime("recommender.js");
+    const core = jsFunction(rec, "unconfirmedMeaningJa");
+    expect(core, "「未確認」の一文の正本が、無いという意味だと書いていない").toContain(
+      "収録元が無いと決めた意味ではない",
+    );
+    for (const name of ["upcoming.md", "upcoming.html"]) {
+      expect(legendText(name), `${name} に「未確認」の但し書きが無い`).toContain(
+        "収録元が無いと決めた意味ではない",
+      );
+    }
+  });
+
+  it("意味の文は正本 1 個（画面・印刷・この表の 3 か所で組み立てる）", () => {
+    const app = siteRuntime("app.js");
+    const rec = siteRuntime("recommender.js");
+    // recommender に一文があり、
+    expect(jsFunction(rec, "unconfirmedMeaningJa")).not.toEqual("");
+    expect(jsFunction(rec, "aoeMeaningJa")).not.toEqual("");
+    // 呼び側は同じ関数を読む（書き写しを残さない。書き写すと 3 か所がズレる）。
+    expect(app).toContain("Recommender.unconfirmedMeaningJa()");
+    expect(app).toContain("Recommender.aoeMeaningJa()");
+    // 書き写した語が混ざっていないこと（同じ文が 2 か所に有る状態を防ぐ）。
+    expect(app.match(/収録元が無いと決めた/g) || []).toHaveLength(0);
+    expect((app.match(/「AoE」は UTC-12/g) || []).length).toBeLessThan(1);
+  });
+
+  it("印刷の但し書きは、正本の文を繋いでも文が壊れない", () => {
+    const app = siteRuntime("app.js");
+    const rec = siteRuntime("recommender.js");
+    const labelNames = [
+      "unconfirmedLabelJa",
+      "rankUnratedLabelJa",
+      "extendedLabelJa",
+      "notApplicableLabelJa",
+    ];
+    /* ラベルは関数として生えている物と、`extendedLabelJa: () => EXTENDED_LABEL_JA` のように
+     * 定数への転記だけの物がある。どちらも語として取り出して注入する（語を書き写すと
+     * 正本とズレた検査になる）。 */
+    const stub = `const Recommender = {
+${labelNames.map((n) => `      ${n}: () => ${JSON.stringify(labelValue(rec, n))},`).join("\n")}
+      unconfirmedMeaningJa: (${jsFunction(rec, "unconfirmedMeaningJa")}),
+      aoeMeaningJa: (${jsFunction(rec, "aoeMeaningJa")}),
+    };`;
+    const legend = new Function(
+      "VERIFICATION_STATUS_LABELS",
+      `${stub}\nreturn (${jsFunction(app, "printLegendJa")});`,
+    )(verificationLabelsSource())();
+    // 「…行です」の語尾を「…です」に直したので、繋がって読める（第 275 回の組み立て）。
+    expect(legend).toContain("収録元が無いと決めた意味ではない）です");
+    expect(legend, "文を繋いだところで語尾が破れている").not.toContain("ないです");
+    // AoE の一文も同じ正本から印刷に出る。
+    expect(legend).toContain("「AoE」は UTC-12 の時刻で締める締切です");
+  });
+
+  it("ラベルの語は書き写さず、`recommender.js` の語を使う", () => {
+    const rec = siteRuntime("recommender.js");
+    const label = labelValue(rec, "unconfirmedLabelJa");
+    const md = legendLines(page("upcoming.md")).join("");
+    expect(label, "正本の語が空だった（説明文が宙に浮く）").toBeTruthy();
+    expect(md, `説明文が正本の語「${label}」で名乗っていない`).toContain(`「${label}」は`);
+    // 「時刻未確認」の語も正本から取る（画面の日付欄とスペルがズレると探せない）。
+    const timeLabel = labelValue(rec, "timeUnconfirmedLabelJa");
+    expect(timeLabel, "時刻未確認の語の正本が見つからない").toBeTruthy();
+    expect(md).toContain(`（${timeLabel}）`);
+  });
+
+  it("HTML では説明が表の外に有る（表の中に入る組み立てに戻さない）", () => {
+    /* 以前は呼び出し側が `out` 全体を <table> で囲んでいて、表のうえの見出し・生成時刻・
+     * 列の意味が表の中に落ちていた（2026-08-09 生成ビルドで実測）。ブラウザは表に置け
+     * ない要素を外へ押し出すので、マークアップと見えがズレ、支援技術には読まれない。 */
+    const html = page("upcoming.html");
+    const body = html.replace(/<style>[\s\S]*?<\/style>|<script>[\s\S]*?<\/script>/g, "");
+    const open = body.indexOf("<table");
+    const close = body.indexOf("</table>");
+    expect(open, "表が無い").toBeGreaterThan(0);
+    expect(body.indexOf("列の意味"), "説明が表より前に無い").toBeLessThan(open);
+    expect(body.indexOf("<h1"), "見出しが表より前に無い").toBeLessThan(open);
+    const inside = body.slice(open, close);
+    expect(inside, "表の中に h1 や blockquote が落ちている").not.toMatch(
+      /<(h[1-6]|blockquote|p)\b/,
+    );
+    // 表の入れ子が壊れていない（開と閉が同じ数）。
+    expect(lenTags(body, "table")[0], "table の開きがずれている").toBe(lenTags(body, "table")[1]);
+    expect(lenTags(body, "div")[0], "div の開きがずれている").toBe(lenTags(body, "div")[1]);
+  });
+});

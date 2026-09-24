@@ -3111,21 +3111,31 @@ export function toUpcomingHtml(markdown: string, styleBlock = ""): string {
     );
     const body = rows.filter((cells) => !cells.every((cell) => /^:?-{2,}:?$/.test(cell)));
     const head = body.length ? body[0] : null;
+    const rest = body.slice(1);
+    const parts: string[] = [];
     if (head) {
-      out.push(
+      parts.push(
         `<thead><tr>${head
           .map((cell) => `<th scope="col">${inlineMd(cell)}</th>`)
           .join("")}</tr></thead>`,
       );
     }
-    const rest = body.slice(1);
     if (rest.length) {
-      out.push(
+      parts.push(
         `<tbody>\n${rest
           .map((cells) => `<tr>${cells.map((cell) => `<td>${inlineMd(cell)}</td>`).join("")}</tr>`)
           .join("\n")}\n</tbody>`,
       );
     }
+    /* 表のwrapper は表の直前に置く。以前は呼び出し側が `out` 全体を <table> で囲んで
+     * いたため、表のうえの見出し・生成時刻・列の意味（読み方が分からないと表が
+     * 使えない、と第 263 回以降ずっと書いてきた物）が <table> の中に落ちていた
+     * （2026-08-09 生成ビルドで実測: `<table class="upcoming">` の直後に h1 と
+     * blockquote が並んでいた）。ブラウザは表に置けない要素を表の外へ押し出すので、
+     * 画面の見えとマークアップがズレ、支援技術には表の見出しとして読まれない。 */
+    out.push(
+      `<div class="tablewrap">\n<table class="upcoming">\n${parts.join("\n")}\n</table>\n</div>`,
+    );
     table = [];
   };
 
@@ -3170,11 +3180,7 @@ export function toUpcomingHtml(markdown: string, styleBlock = ""): string {
       '<a href="upcoming.md">upcoming.md</a>、全件は <a href="data.csv">data.csv</a> にあります。' +
       '締切を自分のカレンダーに入れるには <a href="deadlines.ics">deadlines.ics</a>（今後の締切が全て、' +
       "1 件 = 1 つの終日（JST の暦日）で、このページの絞り込みはありません）。</p>",
-    '<div class="tablewrap">',
-    '<table class="upcoming">',
     out.join("\n"),
-    "</table>",
-    "</div>",
     // 長い表の終端にも出口を置く（先頭まで戻れないまま画面を閉じないために）。
     '<p><a href="#top">' +
       UPCOMING_TOP_LABEL_JA +
@@ -3330,6 +3336,15 @@ export function toUpcomingMd(
     "> 締切ではなく会議の会期そのもので、残りの列は「本日開催」「開催中(残り N 日)」と書く。",
     "> 「ラウンド」は同じ会議の中の繰り返しの募集（R1・R2 のように数える。会期行は「-」）。",
     "> 「推定」は前年までの実績から機械的に置いた未確認の値で、公式の発表ではない。",
+    /* 目印の語はこの表に実際に並ぶ物だけ説明する（2026-08-09 生成ビルドの実測: 1,127 行の
+     * うち開催地が「未確認」182 行、日付に「（時刻未確認）」を持つ行 180 行、AoE の宣言が
+     * 410 箇所）。「未確認」を「収録元が無いと決めた意味」と誤読されると、探している会議を
+     * 捨ててしまう。意味の文は画面のてびき・印刷の但し書きと同じ正本から取る。 */
+    `> 「${Recommender.unconfirmedLabelJa()}」は${Recommender.unconfirmedMeaningJa()}です。この表では開催地の列に`,
+    "> 出ます。",
+    `> 日付列の「（${Recommender.timeUnconfirmedLabelJa()}）」は、その日であることだけを確認できて、何時までに`,
+    "> 出すかが公式に出ていない行。",
+    `> ${Recommender.aoeMeaningJa()}。`,
     "",
     "| 日付 | 残り | 会議 | 種別 | ラウンド | 推定 | 開催地 |",
     "|---|---|---|---|---|---|---|",

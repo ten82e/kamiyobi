@@ -5835,6 +5835,20 @@ const Recommender = (() => {
     return `${fields.join(" ")}${bare}`;
   }
 
+  /* 「未確認」と「AoE」の意味を一文で書く（SPEC §7・第 275 回）。画面のてびき、印刷の
+   * 但し書き（`printLegendJa`）、`upcoming.html` の列の意味が同じ文を使う – 手コピーすると
+   * 3 か所でズレる。とくに「未確認」は、 kamiyobi が裏取りできていないだけなのに
+   * 「収録元が無いと決めたのだ」と誤読されやすい（2026-08-09 生成ビルドの実測:
+   * `upcoming.html` 1,127 行のうち開催地が「未確認」182 行、日付に「（時刻未確認）」を持つ行
+   * 180 行あったのに、そのページには「推定」の説明しか無く、意味が確定できなかった）。 */
+  function unconfirmedMeaningJa(): string {
+    return ` kamiyobi がその項目を公式に裏取りできていないという印（収録元が無いと決めた意味ではない）`;
+  }
+
+  function aoeMeaningJa(): string {
+    return "「AoE」は UTC-12 の時刻で締める締切です";
+  }
+
   /* ランク表の `N` は「評価の一覧に載っているが評価が付いていない」意味だと §2 で検証済み
    * （`ccf: N` など）。表に内部トークンの `N` をそのまま出すと読み手には読めないので、
    * 表示語に直す。評価の一覧にそもそも載らない行は「未確認」なので、語を使い分ける
@@ -7417,6 +7431,9 @@ const Recommender = (() => {
     presetIsActive: presetIsActive,
     presetNextSelection: presetNextSelection,
     unconfirmedLabelJa: unconfirmedLabelJa,
+    unconfirmedMeaningJa: unconfirmedMeaningJa,
+    timeUnconfirmedLabelJa: () => TIME_UNCONFIRMED_LABEL_JA,
+    aoeMeaningJa: aoeMeaningJa,
     unconfirmedFieldsJa: unconfirmedFieldsJa,
     unconfirmedHayJa: unconfirmedHayJa,
     dataAgeNoteJa: dataAgeNoteJa,

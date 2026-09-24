@@ -2243,6 +2243,9 @@ it("投稿先を探す画面で印刷すると、紙に出る但し書きが実�
       "  rankUnratedLabelJa: () => REAL.rankUnratedLabelJa(),",
       "  extendedLabelJa: () => REAL.extendedLabelJa(),",
       "  notApplicableLabelJa: () => REAL.notApplicableLabelJa(),",
+      // 第 275 回: 「未確認」と「AoE」の意味の文も正本（`recommender.js`）から取る。
+      "  unconfirmedMeaningJa: () => REAL.unconfirmedMeaningJa(),",
+      "  aoeMeaningJa: () => REAL.aoeMeaningJa(),",
       "};",
       "const DATA = { generated_at: '2026-08-09T09:00:00Z' };",
       "let sortKey = 'deadline', sortAsc = true, sortColumnLabel = '日時（JST）';",

@@ -5180,7 +5180,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const notApplicable = Recommender.notApplicableLabelJa();
     const unconfirmedWords = ["ランク", "会期", "開催地"].map((p) => `${p}${unconfirmed}`);
     const parts = [
-      `${unconfirmedWords.join("・")} は、その項目を公式に裏取りできていない行です（確認元・確認範囲・次回確認予定は、画面で行を開くと出ます）`,
+      `${unconfirmedWords.join("・")} は、${Recommender.unconfirmedMeaningJa()}です（確認元・確認範囲・次回確認予定は、画面で行を開くと出ます）`,
       `ランク${unconfirmed} はどのランク表にも載っていない行、「${unrated}」は表に載っているが評価が付いていない行です`,
       `「${extended}」は、上流が延長した締切です`,
       `「${notApplicable}」は、常時受付の期刊行で、締切というものがない行です`,
@@ -5204,7 +5204,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       // 「状態」が空欄の行は注記が無いという意味（2026-08-09 実測: 既定の印刷対象 478 行の
       // うち 189 行が空欄で、その 189 行はランク・会期・開催地の列にも空欄が無かった）。
       "「状態」が空欄の行は、この行に注記がない行です",
-      "「AoE」は UTC-12 の時刻で締める締切です",
+      Recommender.aoeMeaningJa(),
     ];
     return `この用紙の表記: ${parts.join("。")}。`;
   }
