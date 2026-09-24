@@ -2119,8 +2119,10 @@ it("upcoming.md and llms.txt explain the coverage window and the JST basis (SPEC
   const md = readFileSync(join(site, "upcoming.md"), "utf8");
   const head = md.split("\n").slice(0, 12).join("\n");
   // md を単体で読む人に「いつの時点の、いつまでの表か」伝えないと表を使えない。
+  /* 単位は括弧の外に一度だけ。「JST では … 09:00 JST」のように二度書くと読みづらい
+   * （第 283 回まで `upcoming.md` と `upcoming.html` に出ていた – SPEC §7）。 */
   expect(head).toMatch(
-    /生成時刻: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z（JST では \d{4}-\d{2}-\d{2}\([月火水木金土日]\) \d{2}:\d{2} JST）/,
+    /生成時刻: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z（JST では \d{4}-\d{2}-\d{2}\([月火水木金土日]\) \d{2}:\d{2}）/,
   );
   expect(head).toMatch(/対象期間: \d{4}-\d{2}-\d{2} 〜 \d{4}-\d{2}-\d{2}\([月火水木金土日]\)/);
   // 会期行は生成時刻より前に開いていても載る（説明と実データが噛み合っていればよい）。

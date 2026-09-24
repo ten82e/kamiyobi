@@ -436,13 +436,20 @@ function aoeText(atUtc: Date): string {
   return `${fmtUTC(addDays(atUtc, -0.5), "%Y-%m-%d %H:%M:%S")} AoE`;
 }
 
-/** JST 宣言の締切は JST の壁時計で出す（SPEC §7 の site 表示と同じ規則）。
- * JST 23:59 締切を AoE 02:59 と見せると「当日早朝まで」と誤読される。 */
-function jstText(atUtc: Date): string {
+/** JST の壁時計（曜日付き）。**単位は付けない** – 文の中で既に JST と書いてある所で
+ * 単位を二度出さないため（`生成時刻: …（JST では 2026-08-09(日) 09:00 JST）` の様な
+ * 言い直しは、第 283 回まで `upcoming.md` / `upcoming.html` に出ていた）。 */
+function jstClock(atUtc: Date): string {
   const jst = new Date(atUtc.getTime() + 9 * 3_600_000);
   const day = fmtDate(jst);
   const weekday = calendarDayJa(day);
-  return `${day}${weekday ? `(${weekday})` : ""} ${fmtUTC(jst, "%H:%M")} JST`;
+  return `${day}${weekday ? `(${weekday})` : ""} ${fmtUTC(jst, "%H:%M")}`;
+}
+
+/** JST 宣言の締切は JST の壁時計で出す（SPEC §7 の site 表示と同じ規則）。
+ * JST 23:59 締切を AoE 02:59 と見せると「当日早朝まで」と誤読される。 */
+function jstText(atUtc: Date): string {
+  return `${jstClock(atUtc)} JST`;
 }
 
 /** Markdown 表の日付列は締切の公式表記（`tz_raw`）にあった書き方をする。
@@ -3345,7 +3352,7 @@ export function toUpcomingMd(
   const head = [
     `# 直近 ${safeDays} 日の締切と開催`,
     "",
-    `生成時刻: ${fmtUTC(safeNow, "%Y-%m-%dT%H:%M:%SZ")}（JST では ${jstText(safeNow)}）`,
+    `生成時刻: ${fmtUTC(safeNow, "%Y-%m-%dT%H:%M:%SZ")}（JST では ${jstClock(safeNow)}）`,
     `対象期間: ${fmtDate(safeNow)} 〜 ${spanEnd}${spanEndWeekday ? `(${spanEndWeekday})` : ""}（生成時刻から ${safeDays} 日先まで。進行中の会期は開始日が生成時刻より前でも載る）`,
     "",
     "> 日付列は締切の公式表記（AoE / UTC / JST 宣言）をそのまま載せている。日本時間への換算と",
