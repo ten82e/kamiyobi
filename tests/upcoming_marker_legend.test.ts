@@ -10,6 +10,10 @@
  *     誤読して、探している会議を捨てうる（ kamiyobi が裏取りできていないだけなので事実と違う）。
  *   - 意味の文を 3 か所（画面のてびき・印刷の但し書き・この表）に手コピーすると必ずズレる
  *     ので、`recommender.js` の一文を両方から呼ぶ形にした。
+ *
+ * 第 276 回で同じページに見つけた別の欠陥もここで見る: この表には `<caption>` が無く、
+ * 支援技術では名前の付かない 1,127 行の表になっていた（一覧の側には有った）。説明は
+ * ページの見出しと列の名前から組み立てるので、書き写しによるズレが起きない。
  */
 
 import { readFileSync } from "node:fs";
@@ -180,5 +184,47 @@ ${labelNames.map((n) => `      ${n}: () => ${JSON.stringify(labelValue(rec, n))}
     // 表の入れ子が壊れていない（開と閉が同じ数）。
     expect(lenTags(body, "table")[0], "table の開きがずれている").toBe(lenTags(body, "table")[1]);
     expect(lenTags(body, "div")[0], "div の開きがずれている").toBe(lenTags(body, "div")[1]);
+  });
+
+  it("表その物に、支援技術が読める名前と列の並びがある", () => {
+    /* 一覧の表には `<caption>` が有るのに、この表には無かった（2026-08-09 生成ビルドで実測:
+     * `upcoming.html` の `<table>` 1 個に対する `<caption>` 0 個、1,127 行）。支援技術では
+     * 名前の無い表に入り、何の表か分からないまま 1,127 行を辿ることになる。 */
+    const html = page("upcoming.html");
+    const caption = /<caption\b([^>]*)>([\s\S]*?)<\/caption>/.exec(html);
+    expect(caption, "表に説明（`<caption>`）が無い").toBeTruthy();
+    expect(caption![1], "表の説明が画面に出てしまう（`only-sr` を外した）").toContain("only-sr");
+    const cap = caption![2].replace(/<[^>]+>/g, "");
+    // 説明が名乗る列の並びが、実際に並ぶ列と一字一句同じ（書き写すと必ずズレる）。
+    const cols = [...html.matchAll(/<th scope="col">([\s\S]*?)<\/th>/g)].map((m) =>
+      m[1].replace(/<[^>]+>/g, "").trim(),
+    );
+    expect(cols.length, "列が見当たらない").toBeGreaterThan(3);
+    expect(cap, `説明が数える列が、実際の列（${cols.join("・")}）と違う`).toContain(
+      cols.join("・"),
+    );
+    // 表の見出し（h1）から作った説明なので、ページの見出しと食い違わない。
+    const h1 = /<h1[^>]*>([\s\S]*?)<\/h1>/.exec(html);
+    expect(h1, "ページの見出しが無い").toBeTruthy();
+    expect(cap).toContain(h1![1].replace(/<[^>]+>/g, "").trim());
+    // `<caption>` は `<table>` の最初の子（`<thead>` より前）に置く。
+    expect(html.indexOf("<caption"), "説明が列見出しより後ろに有る").toBeLessThan(
+      html.indexOf("<thead"),
+    );
+    expect(html.indexOf("<table")).toBeLessThan(html.indexOf("<caption"));
+  });
+
+  it("一覧の表と静的な表で、説明の形を揃えている", () => {
+    // 両方の表が「支援技術にだけ出る説明」を持ち、言い回しの形が同じ（「〜の一覧」）。
+    const capOf = (name: string) => {
+      const m = /<caption\b([^>]*)>([\s\S]*?)<\/caption>/.exec(page(name));
+      expect(m, `${name} の表に説明が無い`).toBeTruthy();
+      expect(m![1], `${name} の表の説明が画面に出てしまう`).toContain("only-sr");
+      return m![2].replace(/<[^>]+>/g, "");
+    };
+    const list = capOf("index.html");
+    const upcoming = capOf("upcoming.html");
+    expect(list).toContain("の一覧");
+    expect(upcoming).toContain("の一覧");
   });
 });

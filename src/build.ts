@@ -3093,6 +3093,10 @@ export function toUpcomingHtml(markdown: string, styleBlock = ""): string {
   const out: string[] = [];
   let quote: string[] = [];
   let table: string[] = [];
+  /* 表より前に出る h1 を覚えておく。表に付ける説明（`<caption>`）は、この見出しと
+   * 列の名前（表の 1 行目）から組み立てる – 同じ語を 2 か所に書くと、片方だけ
+   * 変わったときに支援技術へ違うことを伝える（第 276 回）。 */
+  let heading = "";
   const flushQuote = (): void => {
     if (!quote.length) return;
     out.push(
@@ -3114,6 +3118,15 @@ export function toUpcomingHtml(markdown: string, styleBlock = ""): string {
     const rest = body.slice(1);
     const parts: string[] = [];
     if (head) {
+      /* 支援技術には「何の表か」「何が何列並ぶか」が先に入ってほしい。この表は
+       * 1,127 行あるので、名前の無い表では現在地が分からない（2026-08-09 生成ビルドで
+       * 実測: `upcoming.html` の `<table>` に `<caption>` は 0 個で、一覧の側には有った）。
+       * 画面には出さない（一覧の `<caption>` と同じ `only-sr` を使う）。 */
+      parts.push(
+        `<caption class="only-sr">${inlineMd(heading)}の一覧。列は ${head
+          .map((cell) => inlineMd(cell))
+          .join("・")} です。列の意味と但し書きは表のうえに書いてあります。</caption>`,
+      );
       parts.push(
         `<thead><tr>${head
           .map((cell) => `<th scope="col">${inlineMd(cell)}</th>`)
@@ -3127,7 +3140,7 @@ export function toUpcomingHtml(markdown: string, styleBlock = ""): string {
           .join("\n")}\n</tbody>`,
       );
     }
-    /* 表のwrapper は表の直前に置く。以前は呼び出し側が `out` 全体を <table> で囲んで
+    /* 表を囲む枠は表の直前に置く。以前は呼び出し側が `out` 全体を <table> で囲んで
      * いたため、表のうえの見出し・生成時刻・列の意味（読み方が分からないと表が
      * 使えない、と第 263 回以降ずっと書いてきた物）が <table> の中に落ちていた
      * （2026-08-09 生成ビルドで実測: `<table class="upcoming">` の直後に h1 と
@@ -3146,6 +3159,7 @@ export function toUpcomingHtml(markdown: string, styleBlock = ""): string {
       continue;
     }
     flushTable();
+    if (line.startsWith("# ")) heading = line.slice(2).trim();
     if (line.startsWith("# ") || line.startsWith("## ")) {
       flushQuote();
       const level = line.startsWith("# ") ? 1 : 2;
