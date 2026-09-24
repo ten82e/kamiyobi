@@ -76,7 +76,7 @@ describe("「N 日以内」の案内が引き方の範囲を言う", () => {
     });
     /* 寄せない語（月の単位）は第 253 回の案内が持っていて、二重に言わない。 */
     expect(幅の案内("1か月以内"), "寄せない語に幅の案内まで出した").toBe("");
-    const 既存 = Recommender.dayRangeNoteJa("1か月以内", AT);
+    const 既存 = Recommender.dayRangeNoteJa("1か月以内");
     expect(既存.includes("締切まで"), "月の単位を絞り込み欄へ導いていない").toBe(true);
     expect(既存.includes(注意), "同じ注意を二つの案内で言っている").toBe(false);
   });
