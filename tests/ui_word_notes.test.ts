@@ -63,9 +63,12 @@ it("画面自身の語を打った人に、0 件の案内が行き先を言う�
   expect(uiHits, "直らない打ち直し方（語を短くする）を出している").not.toContain(
     "検索語を短くする",
   );
-  /* 操作の語は、操作する欄の場所を言う。 */
-  const uiOps = hint({ ...clear, query: "並び替え" });
-  expect(uiOps, "操作の欄の場所を言っていない").toContain("上にある欄");
+  /* 操作の語は、操作する場所を言う – ただし並び替えと絞り込みでは場所が違う（第 338 回:
+   * 並び替えは列の見出しを押す操作で、『並び順』という欄は在らない）。 */
+  const uiSort = hint({ ...clear, query: "並び替え" });
+  expect(uiSort, "並び替えが見出しの操作を言っていない").toContain("列の見出し");
+  const uiFilter = hint({ ...clear, query: "絞り込み" });
+  expect(uiFilter, "絞り込みが操作する欄の場所を言っていない").toContain("上にある欄");
   /* 出典の語は、出典を出している場所を言う。 */
   const uiSource = hint({ ...clear, query: "出典" });
   expect(uiSource, "データ源の場所を言っていない").toContain("データ源");
