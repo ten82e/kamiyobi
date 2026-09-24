@@ -4723,10 +4723,13 @@ it("手引きが名指すファイルは、画面から押して辿れる（SPEC
   expect(app).not.toContain("会期は upcoming.html にも掲載");
   // 指す先がビルド成果物に本当に有る（リンク切れを防ぐ）。読みやすい版と Markdown 版の両方。
   const builder = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
-  expect(builder, "ビルドが upcoming.md を出さなくなったらリンクが死ぬ").toContain(
-    'write("upcoming.md"',
-  );
-  expect(builder, "ビルドが upcoming.html を出さなくなったらリンクが死ぬ").toContain(
-    'write("upcoming.html"',
-  );
+  /* 呼び出しの行数が変わっても（引数が増えて折り返しても）検査が空振りしないよう、
+   * 名前の直後の括弧とファイル名は空白を跨いで照合する（第 286 回の実発生:
+   * 引数を 1 つ増やして折り返しただけで「ビルドが出さなくなった」事になった）。 */
+  for (const name of ["upcoming.md", "upcoming.html"]) {
+    expect(
+      new RegExp(`write\\(\\s*"${name}"`).test(builder),
+      `ビルドが ${name} を出さなくなったらリンクが死ぬ`,
+    ).toBe(true);
+  }
 });

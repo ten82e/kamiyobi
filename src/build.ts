@@ -3090,13 +3090,40 @@ export function toIcsText(
  * 「戻る」は先頭に 1 つしか無かった（最後の行を読んだ人は約 50 画面ぶん上に戻ら
  * なければならなかった – 2026-09-23 実測: `index.html` へのリンクは文書全体で 1 個、
  * `</table>` のうしろには何も無い）。 */
+/* `upcoming.html` のページ情報（第 286 回）。画面（`index.html`）は検索結果とチャットの
+   プレビューに向けて説明・og・twitter・アイコン・theme-color を載せているが、同じ表の静的な
+   ページは head が 3 個だけだった（2026-09-24 実測）。同じ表の別入口なので、揃える。 */
+const UPCOMING_TITLE_JA = "直近の締切と会期 | kamiyobi";
+/* 面板と同じ 2 色。`site/template.html` に書いてある物と必ず揃える（ズレは検査で止める）。 */
+const UPCOMING_THEME_LIGHT = "#f7f7f8";
+const UPCOMING_THEME_DARK = "#18181b";
+/* このページは JavaScript を 1 文字も読み込まない（実測: 画面の `script` は 0 個）ので、
+   画面より強く締められる。`style-src` の `'unsafe-inline'` は埋め込む様式（`siteStyleBlock`）用。
+   `frame-ancestors` は meta 経由では効かないので書かない（画面と同じ理由）。 */
+const UPCOMING_CSP =
+  "default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'none'; " +
+  "style-src 'unsafe-inline'; img-src 'self' data:; form-action 'none'";
+
 /* 画面の表へ戻る口の言い回し。HTML（`upcoming.html`）とマークダウン（`upcoming.md`）で
  * 同じ語を使うため、矢印を外した本文だけをここに持つ（同じ語を 2 か所に持たない）。 */
 const UPCOMING_BACK_TEXT_JA = "締切の一覧に戻る";
 const UPCOMING_BACK_LABEL_JA = `&larr; ${UPCOMING_BACK_TEXT_JA}`;
 const UPCOMING_TOP_LABEL_JA = "&uarr; 先頭に戻る";
 
-export function toUpcomingHtml(markdown: string, styleBlock = ""): string {
+/* `upcoming.html` の説明文。見出し（`heading`）と列の名前（`pageColumns`）から作る –
+   同じ語を手写しすると、表の語だけ変わったときに説明が噓を書く（第 276 回の `<caption>` と
+   おなじ方針）。日付・残りなどの意味はこのページ自身の但し書きが既に書いている。 */
+function pageDescription(heading: string, columns: string[]): string {
+  const title = heading.trim() || "直近の締切と会期";
+  const cols = columns.length ? `${columns.join("・")}の列で、` : "";
+  return (
+    `${title}を一覧にしたページです。${cols}日時は日本時間（JST）と曜日で出します。` +
+    "画面の絞り込みを使わない方向けの静的な表で、同じデータは upcoming.md・data.csv・" +
+    "deadlines.ics でも配信しています。"
+  );
+}
+
+export function toUpcomingHtml(markdown: string, styleBlock = "", baseUrl = ""): string {
   const inlineMd = (value: string): string =>
     escapeHtmlText(value)
       .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, (_all, text: string, url: string) => {
@@ -3113,6 +3140,8 @@ export function toUpcomingHtml(markdown: string, styleBlock = ""): string {
    * 列の名前（表の 1 行目）から組み立てる – 同じ語を 2 か所に書くと、片方だけ
    * 変わったときに支援技術へ違うことを伝える（第 276 回）。 */
   let heading = "";
+  /* 表を組み立てる最中にしか分からない列の名前を、head の説明にも使う。 */
+  let pageColumns: string[] = [];
   const flushQuote = (): void => {
     if (!quote.length) return;
     out.push(
@@ -3155,6 +3184,7 @@ export function toUpcomingHtml(markdown: string, styleBlock = ""): string {
      * ようにラベルの空いた記号だけが出て、何が何列か読めなかった。列名は上の
      * 列ヘッダー（`scope="col"`）と同じ物を使う（手で書き写すと列の並びが変わる）。 */
     const columnLabels = head ? head.map((cell) => inlineMd(cell).replace(/<[^>]*>/g, "")) : [];
+    pageColumns = columnLabels.map((cell) => cell.trim()).filter((cell) => cell.length > 0);
     /* 「会議」の列を**行ヘッダー**にする。1,126 行を一マスずつ読む時、列名だけでは
      * 「どの会議の行か」が分からず、種別や「推定」が何に対する値か取り出せない
      * （2026-09-24 実測: 行ヘッダーは 0 個で、全マスが `td` だった）。
@@ -3221,7 +3251,26 @@ export function toUpcomingHtml(markdown: string, styleBlock = ""): string {
     "<head>",
     '<meta charset="utf-8">',
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
-    "<title>直近の締切と会期 | kamiyobi</title>",
+    `<meta http-equiv="Content-Security-Policy" content="${UPCOMING_CSP}">`,
+    `<title>${UPCOMING_TITLE_JA}</title>`,
+    `<meta name="description" content="${escapeHtmlText(pageDescription(heading, pageColumns))}">`,
+    '<meta property="og:type" content="website">',
+    '<meta property="og:site_name" content="kamiyobi">',
+    '<meta property="og:locale" content="ja_JP">',
+    `<meta property="og:title" content="${escapeHtmlText(UPCOMING_TITLE_JA)}">`,
+    `<meta property="og:description" content="${escapeHtmlText(pageDescription(heading, pageColumns))}">`,
+    '<meta name="twitter:card" content="summary">',
+    // tab で他タブと見分けるための自前アイコン（画面と同じ物。外部アセットは読まない）。
+    '<link rel="icon" type="image/svg+xml" href="icon.svg">',
+    // 自分の場所（og:url と canonical は config.yaml の site.base_url から組み立てる）。
+    ...(baseUrl
+      ? [
+          `<meta property="og:url" content="${escapeHtmlText(`${baseUrl}/upcoming.html`)}">`,
+          `<link rel="canonical" href="${escapeHtmlText(`${baseUrl}/upcoming.html`)}">`,
+        ]
+      : []),
+    `<meta name="theme-color" content="${UPCOMING_THEME_LIGHT}">`,
+    `<meta name="theme-color" media="(prefers-color-scheme: dark)" content="${UPCOMING_THEME_DARK}">`,
     styleBlock,
     "</head>",
     "<body>",
@@ -3735,7 +3784,14 @@ export async function buildAll(
     for (const [name, source] of Object.entries(compileSiteRuntime())) write(name, source);
     // `upcoming.md` は Markdown のまま渡すとブラウザが表に整形してくれないので、
     // 同じ内容の読みやすい版を隣に置く（第 263 回）。画面からの導線はこっちに向ける。
-    write("upcoming.html", toUpcomingHtml(upcomingMd, siteStyleBlock));
+    write(
+      "upcoming.html",
+      toUpcomingHtml(
+        upcomingMd,
+        siteStyleBlock,
+        String(site.base_url ?? `https://${String(site.domain ?? "kamiyobi")}`).replace(/\/+$/, ""),
+      ),
+    );
   } else {
     throw new Error(`required site template missing: ${templatePath}`);
   }
