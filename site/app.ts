@@ -2986,8 +2986,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   let pastBlockTotal = 0;
   let lastPastBlock = -1;
 
-  function td(tr: HTMLTableRowElement, label: string, cls = "") {
-    const e = document.createElement("td");
+  /* 表のセルを作る。`rowHeader` を付けたセルは「その行が何の行か」を表す
+     **行ヘッダー**（`<th scope="row">`）にする – 1,126 行の表を一マスずつ読む時、
+     列名だけ読めても「どの会議か」が分からないと意味が取れない（2026-09-24 実測:
+     行ヘッダーは 0 個で、全マスが `td` だった）。見た目は `td` のまま（CSS 側）。 */
+  function td(tr: HTMLTableRowElement, label: string, cls = "", rowHeader = false) {
+    const e = document.createElement(rowHeader ? "th" : "td");
+    if (rowHeader) {
+      e.setAttribute("scope", "row");
+    }
     if (label) {
       e.setAttribute("data-label", label);
     }
@@ -3084,7 +3091,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       line(c1, sub, "sub nowrap");
     }
 
-    const c2 = td(tr, "会議");
+    const c2 = td(tr, "会議", "", true);
     const head = document.createElement("div");
     head.className = "conf";
     const name = conferenceNameCell(r);

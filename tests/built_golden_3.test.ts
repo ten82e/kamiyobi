@@ -1751,7 +1751,10 @@ it("行をまたぐ見出しの列数と、外せる条件の数え上げを実�
     .filter(Boolean);
   expect(headerLabels.length, "見出しの列が読めない").toBeGreaterThan(4);
   // 行側も同じ数のラベルを持っている（カード化ではこの語が列名になる）。
-  const cellLabels = [...app.matchAll(/td\(tr, "([^"]+)"(?:, "[^"]*")?\)/g)].map((m) => m[1]);
+  /* 第 284 回から、行ヘッダーにする列だけ 3 番目の引数（`true`）が付く。 */
+  const cellLabels = [...app.matchAll(/td\(tr, "([^"]+)"(?:, "[^"]*")?(?:, true)?\)/g)].map(
+    (m) => m[1],
+  );
   expect(cellLabels.length, "行のラベルが読めない").toBe(headerLabels.length);
   expect([...new Set(cellLabels)].length, "行のラベルが重複している").toBe(cellLabels.length);
   // 跨ぎの列数は 1 箇所に寄せてある（直書きに戻ると、列を変えた日に静かに壊れる）。
@@ -4145,7 +4148,9 @@ it("締切一覧のファイルは、読みやすい版へ導線を送り、Mark
   /* セルの中の縦棒は `escapeMdCell` が `\|` に逃がす（例: 会議名の括弧）。**エスケープで
    * 区切らない数**で比べないと、正しく作った側の数が足りなく見える。 */
   const mdCells = bodyRows.reduce((acc, l) => acc + l.split(/(?<!\\)\|/).length - 2, 0);
-  const htmlCells = page.split("<td>").length - 1 + (page.split("<th ").length - 1);
+  /* マスには列名（`data-label`）と、会議の列に行ヘッダー（`<th scope="row">`）が乗る
+     ので、タグ名の完全一致ではなく先頭の語で数える（第 284 回）。 */
+  const htmlCells = (page.match(/<t[hd]\b/g) || []).length;
   expect(htmlCells, "html のセルが Markdown のセルと数が違う").toBe(mdCells);
   /* 列の名前は `<th>` で出す（`<td>` に落とすと数が合っていても「どの列か」が機械に伝わらない）。
      Markdown のヘッダ行の列数と、`<thead>` の `<th>` の数が同じであることを見る。 */

@@ -3149,10 +3149,33 @@ export function toUpcomingHtml(markdown: string, styleBlock = ""): string {
           .join("")}</tr></thead>`,
       );
     }
+    /* 幅せま画面（`@media (max-width: 640px)`）では列見出しを消し、各マスの先頭に
+     * `data-label` の値を接頭（先頭に付く語）として添えてカードに積む。`upcoming.html` の全マス 6,756 個に
+     * `data-label` が **1 個も無く**（2026-09-24 実測）、その幅では各行が「：論文締切」の
+     * ようにラベルの空いた記号だけが出て、何が何列か読めなかった。列名は上の
+     * 列ヘッダー（`scope="col"`）と同じ物を使う（手で書き写すと列の並びが変わる）。 */
+    const columnLabels = head ? head.map((cell) => inlineMd(cell).replace(/<[^>]*>/g, "")) : [];
+    /* 「会議」の列を**行ヘッダー**にする。1,126 行を一マスずつ読む時、列名だけでは
+     * 「どの会議の行か」が分からず、種別や「推定」が何に対する値か取り出せない
+     * （2026-09-24 実測: 行ヘッダーは 0 個で、全マスが `td` だった）。
+     * 列名は上の列ヘッダーと同じ語を使うので、番号は書き込まない。 */
+    const rowHeadColumn = columnLabels.findIndex((cell) => cell.trim() === "会議");
     if (rest.length) {
       parts.push(
         `<tbody>\n${rest
-          .map((cells) => `<tr>${cells.map((cell) => `<td>${inlineMd(cell)}</td>`).join("")}</tr>`)
+          .map(
+            (cells) =>
+              `<tr>${cells
+                .map((cell, i) => {
+                  const label = columnLabels[i]
+                    ? ` data-label="${escapeHtmlText(columnLabels[i])}"`
+                    : "";
+                  return i === rowHeadColumn
+                    ? `<th scope="row"${label}>${inlineMd(cell)}</th>`
+                    : `<td${label}>${inlineMd(cell)}</td>`;
+                })
+                .join("")}</tr>`,
+          )
           .join("\n")}\n</tbody>`,
       );
     }

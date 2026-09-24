@@ -122,9 +122,11 @@ describe("縦に長い静的な一覧（第 269 回）", () => {
     expect(
       effectiveCss(css, ".tablewrap thead th:not([data-sort])", "background-color", 1200),
     ).toBe("var(--panel)");
-    expect(effectiveCss(css, "th", "background", 1200), "並び替えられる列の地が消えた").toContain(
-      "var(--chip)",
-    );
+    /* 第 284 回から、列見出しの地は `thead th` に限定している（行ヘッダーを混ぜない）。 */
+    expect(
+      effectiveCss(css, "thead th", "background", 1200),
+      "並び替えられる列の地が消えた",
+    ).toContain("var(--chip)");
   });
 
   it("紙には粘着を混ぜない（印刷では見出しが繰り返される）", () => {
