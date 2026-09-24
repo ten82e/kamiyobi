@@ -492,11 +492,23 @@ export function deadlineWhenText(atUtc: Date, tzRaw: string | null | undefined):
   const raw = String(tzRaw ?? "").trim();
   const zone = raw.toUpperCase().replace(/\s+/g, "");
   if (JST_TZ_VALUES.indexOf(zone) >= 0) return jstText(atUtc);
-  if (AOE_TZ_VALUES.indexOf(zone) >= 0) return mdAoEText(atUtc);
+  /* 公式表記のままの行に、日本時間での読みを後ろから添える（第 287 回）。
+   * 実測（2026-08-09 生成ビルド）: 1,126 行のうち **497 行は日本時間に直すと日が違う**
+   * （AoE 23:59 は日本では翌日 20:59、UTC 23:59 は日本では翌朝 08:59）。画面は「投稿作業は
+   * 日本の時刻で回る」と JST を主表記にしている（SPEC §7）ので、この表だけ
+   * 「日本ではいつまでか」を index.html に投げると、印刷した行・携帯で開いた行で
+   * 一日間違える。公式表記は消さない – 換算は算術で、上流の宣言の書き換えではない。 */
+  if (AOE_TZ_VALUES.indexOf(zone) >= 0) return `${mdAoEText(atUtc)}（${jstReadingJa(atUtc)}）`;
   const jstDay = fmtUTC(atUtc, "%Y-%m-%d");
   const weekday = calendarDayJa(jstDay);
   const utc = `${jstDay}${weekday ? `(${weekday})` : ""} ${fmtUTC(atUtc, "%H:%M:%S")} UTC`;
-  return UTC_TZ_VALUES.indexOf(zone) >= 0 ? utc : `${utc}（公式 ${raw}）`;
+  if (UTC_TZ_VALUES.indexOf(zone) >= 0) return `${utc}（${jstReadingJa(atUtc)}）`;
+  return `${utc}（公式 ${raw}・${jstReadingJa(atUtc)}）`;
+}
+
+/** 日付欄に添える日本時間の読み。単位は 1 度だけ（第 283 回の言い直しを避ける）。 */
+function jstReadingJa(atUtc: Date): string {
+  return `JST では ${jstClock(atUtc)}`;
 }
 
 function sortedDeadlines(edition: Edition): Deadline[] {
@@ -3427,9 +3439,15 @@ export function toUpcomingMd(
     `生成時刻: ${fmtUTC(safeNow, "%Y-%m-%dT%H:%M:%SZ")}（JST では ${jstClock(safeNow)}）`,
     `対象期間: ${fmtDate(safeNow)} 〜 ${spanEnd}${spanEndWeekday ? `(${spanEndWeekday})` : ""}（生成時刻から ${safeDays} 日先まで。進行中の会期は開始日が生成時刻より前でも載る）`,
     "",
-    "> 日付列は締切の公式表記（AoE / UTC / JST 宣言）をそのまま載せている。日本時間への換算と",
-    "> 曜日は [日本時間に換算した一覧（`index.html`）](index.html) が同じ式で出すので、",
-    "> 直近の締切を眺める用途はそちらが早い。",
+    /* 日付欄の読み方。実測で 1,126 行のうち 497 行は日本時間に直すと日が違うので、
+     * 換算を画面へ投げると、この表だけで読む人（印刷・携帯・JavaScript なし）が一日
+     * 間違える（第 287 回）。行の並びは瞬間順で、表示する暦日の順ではない事も書く。
+     * それを書いておかないと、日付が戻って見える 150 箇所が表の壊れに見える。 */
+    "> 日付列は締切の公式表記（AoE / UTC / JST 宣言）をそのまま載せ、日本時間での読みを後に添える",
+    "> （`2026-02-06(金) 23:59:00 AoE（JST では 2026-02-07(土) 20:59）` の形。AoE 23:59 は",
+    "> 日本では翌日の夜で、日が変わる行が多い）。行の並びは締切の瞬間の古い順で、日付列に書いた",
+    "> 暦日の順ではない（時刻未確認の行はその日の 00:00 UTC に並ぶ）。絞り込みと並び替えは、",
+    "> 同じ式を出す [絞り込みの効く一覧（`index.html`）](index.html) が早い。",
     "> 会期行の日付は開催日そのもの（暦日）で、時刻は持たない。",
     "",
     // 列の名前だけでは読めない（特に短縮した見出し）。この表を単体で開いた人が、

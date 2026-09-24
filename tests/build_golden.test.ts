@@ -1786,20 +1786,24 @@ it("upcoming.md writes each deadline in its official zone, not blanket AoE (SPEC
     "2026-08-17(月) 23:59 JST",
   );
   // AoE は UTC-12 の壁時計。UTC 2026-02-07 11:59 は AoE では 2026-02-06 23:59。
+  // 公式表記の後ろに日本時間での読みを添える（第 287 回）。AoE 23:59 は日本では翌日の夜で、
+  // この表だけで「日本ではいつまでか」を決められるようにする – 実測で 497 行は日が違う。
   expect(deadlineWhenText(new Date("2026-02-07T11:59:00Z"), "AoE")).toBe(
-    "2026-02-06(金) 23:59:00 AoE",
+    "2026-02-06(金) 23:59:00 AoE（JST では 2026-02-07(土) 20:59）",
   );
   expect(deadlineWhenText(new Date("2026-02-07T11:59:00Z"), "UTC-12")).toContain("AoE");
   expect(deadlineWhenText(new Date("2026-02-06T11:59:00Z"), "UTC")).toBe(
-    "2026-02-06(金) 11:59:00 UTC",
+    "2026-02-06(金) 11:59:00 UTC（JST では 2026-02-06(金) 20:59）",
   );
   expect(deadlineWhenText(new Date("2026-02-06T11:59:00Z"), null)).toBe(
-    "2026-02-06(金) 11:59:00 UTC",
+    "2026-02-06(金) 11:59:00 UTC（JST では 2026-02-06(金) 20:59）",
   );
-  // 未知の公式表記は換算せず、UTC 壁時計に原文を添える。
+  // 未知の公式表記は換算せず、UTC 壁時計に原文を添える（日本時間の読みも同じ括弧に載る）。
   expect(deadlineWhenText(new Date("2026-02-06T11:59:00Z"), "PT")).toBe(
-    "2026-02-06(金) 11:59:00 UTC（公式 PT）",
+    "2026-02-06(金) 11:59:00 UTC（公式 PT・JST では 2026-02-06(金) 20:59）",
   );
+  // JST 宣言の行はそのまま（単位を二度書かない – 第 283 回）。
+  expect(deadlineWhenText(new Date("2026-08-17T14:59:00Z"), "JST")).not.toContain("JST では");
   // 暦日として読めない値には曜日を付けない（Date.UTC の暦月繰り越しに騙されない）。
   expect(calendarDayJa("2026-13-45")).toBe("");
   expect(calendarDayJa("2026-08-17")).toBe("月");
