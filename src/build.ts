@@ -247,13 +247,62 @@ const CSV_COLUMN_NOTES_JA: Record<string, string> = {
  * 2026-08-09 生成のビルドで実測: 出力一覧は 16 件のうち 10 件しか並べておらず、
  * `recommendation-core.js`・`publish.js`・`index.html`・`icon.svg`・`.nojekyll`・
  * `llms.txt` 自身へのふれが公開物の一覧のどこにも無かった。 */
+/* 締切の分布（件数と、JST の暦日での最初・最後）。`llms.txt` の索引は、この値を成果物から
+ * 数えて書く – 定数で書くと次のビルドで噓になる（第 291 回）。 */
+export type DeadlineSpan = { deadline_count: number; first_day: string; last_day: string };
+
+export function deadlineSpan(root: unknown): DeadlineSpan | null {
+  const conferences = (root as { conferences?: unknown } | null)?.conferences;
+  if (!Array.isArray(conferences)) return null;
+  let count = 0;
+  let first = "";
+  let last = "";
+  const dayOf = (deadline: Record<string, unknown>): string => {
+    const utc = deadline.utc;
+    if (typeof utc === "string" && utc.length >= 19) {
+      // `utc` は協定世界時 – カレンダーと画面が見る JST の暦日に揃える。
+      const at = Date.parse(utc);
+      if (Number.isFinite(at)) return new Date(at + 9 * 3600000).toISOString().slice(0, 10);
+    }
+    const local = deadline.local_date ?? deadline.utc;
+    return typeof local === "string" && /^\d{4}-\d{2}-\d{2}/.test(local) ? local.slice(0, 10) : "";
+  };
+  conferences.forEach((conference) => {
+    const editions = (conference as { editions?: unknown })?.editions;
+    if (!Array.isArray(editions)) return;
+    editions.forEach((edition) => {
+      const deadlines = (edition as { deadlines?: unknown })?.deadlines;
+      if (!Array.isArray(deadlines)) return;
+      deadlines.forEach((deadline) => {
+        const rec = deadline as Record<string, unknown>;
+        const day = dayOf(rec);
+        if (!day) return;
+        count += 1;
+        if (!first || day < first) first = day;
+        if (!last || day > last) last = day;
+      });
+    });
+  });
+  return count > 0 ? { deadline_count: count, first_day: first, last_day: last } : null;
+}
+
+/* `llms.txt` の索引に添える実測の範囲。ビルドが書いた成果物と同じ物から導く。 */
+export type LlmsSpans = {
+  all?: DeadlineSpan | null;
+  catalog?: DeadlineSpan | null;
+  horizonDays?: number | null;
+  calendar?: IcsCalendarMeta | null;
+};
+
 const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
   "index.html":
     "画面そのもの。`app.js` をモジュールとして読み、`app.js` の側が `recommender.js`・" +
     "`recommendation-core.js`・`publish.js` を import する（2026-08-09 生成ビルドの import 文で実測）。" +
     "JavaScript が動かないときの案内と、`data.csv`・`upcoming.md`・`deadlines.ics` への導線を内側に持つ。" +
     "人間の読み方はこのファイルではなく、画面の中の「見方のてびき」に書く。",
-  "data.json": "正規化データ全体（機械可読の正）。",
+  "data.json":
+    "正規化データ全体（機械可読の正）。画面の最初の一覧に並ぶのはこのうち `catalog.json` に" +
+    "収まる分だけで、過去の全履歴とそれより先の締切はここだけに在る。",
   "health.json": "配信前ゲートにも使う確定/推定締切とソース状態の健全性レポート。",
   "health.md":
     "health.json の人間向け要約。載っていない公開物（`health.json` 自身・`health.md` 自身・" +
@@ -261,7 +310,9 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
   "publish.json":
     "最終公開セットのハッシュ、元 commit、入力 hash、build 条件と、意味検索用の埋め込みが公開物に" +
     "含まれるかを示す semantic_status（ready / lexical-only）。自分自身のハッシュは持てない。",
-  "catalog.json": "締切画面向けの現在・近日期間カタログ。",
+  "catalog.json":
+    "締切画面向けの現在・近日期間カタログ。画面の最初の一覧はこのファイルに載る締切だけを出し、" +
+    "それより先を見るには画面で「収録の全体を読み込む」を選ぶ。",
   "recommendation-index.json": "投稿先推薦の会議プロフィールと埋め込み参照。",
   "data.csv":
     "1 行 1 締切のフラット表。列の意味は下の「data.csv の列」に書く。文字コードは BOM を付けない" +
@@ -295,6 +346,43 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
     "落ちる（意味検索を黙って止めない）。",
   "app.js": "site/app.ts から生成するブラウザ UI 実行時処理。",
 };
+
+/* 索引に添える収録範囲の文。`llms.txt` だけが読める情報として、
+ * 「このファイルに何が入っているか」を件数と両端の暦日で書く。 */
+function llmsScopeJa(name: string, spans: LlmsSpans | null): string {
+  const countJa = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  if (name === "data.json") {
+    const span = spans?.all;
+    return span
+      ? `収録している締切は ${countJa(span.deadline_count)} 件（${span.first_day} 〜 ${span.last_day}、JST の暦日）。`
+      : "";
+  }
+  if (name === "catalog.json") {
+    const span = spans?.catalog;
+    if (!span) return "";
+    const horizon =
+      typeof spans?.horizonDays === "number" && spans.horizonDays > 0
+        ? `生成から ${String(spans.horizonDays)} 日先で`
+        : "直近の期間で";
+    const calendar = spans?.calendar;
+    return (
+      `載る締切は ${countJa(span.deadline_count)} 件（${span.first_day} 〜 ${span.last_day}、` +
+      `JST の暦日）で、${horizon}切る。それより先の締切と過去の全履歴は \`data.json\` に在り、` +
+      (calendar
+        ? `カレンダー（\`deadlines.ics\`）には ${countJa(calendar.event_count)} 件` +
+          `（${calendar.first_day} 〜 ${calendar.last_day}）が入る。`
+        : "カレンダー（`deadlines.ics`）にはこれより先も入る。")
+    );
+  }
+  if (name === "deadlines.ics") {
+    const meta = spans?.calendar;
+    return meta
+      ? `収録しているのは今後の締切 ${countJa(meta.event_count)} 件（${meta.first_day} 〜 ${meta.last_day}、` +
+          "JST の暦日）で、この範囲は画面に並べる期間より長い。"
+      : "";
+  }
+  return "";
+}
 
 const TEMPLATE_MARKER = "/*__DATA__*/null";
 
@@ -3559,7 +3647,10 @@ export function toUpcomingMd(
   return `${[...head, ...rows, ...tail].join("\n")}\n`;
 }
 
-export function toLlmsTxt(config: Record<string, unknown> | null | undefined): string {
+export function toLlmsTxt(
+  config: Record<string, unknown> | null | undefined,
+  spans?: LlmsSpans | null,
+): string {
   const safeConfig = config ?? {};
   const categories = (safeConfig.categories as Record<string, string> | null) ?? DEFAULT_CATEGORIES;
   const sources = (safeConfig.sources as Array<Record<string, unknown>> | null) ?? DEFAULT_SOURCES;
@@ -3586,13 +3677,21 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
      * `MANAGED_OUTPUT_FILES` から書き出す（書き写すと、公開物を増やしたときに索引だけ古くなる）。 */
     "## 出力一覧",
     "",
-    ...MANAGED_OUTPUT_FILES.map((name) =>
-      name === "upcoming.md"
-        ? `- ${name}：直近 ${String(
-            Number((safeConfig.site as Record<string, unknown> | null)?.upcoming_days ?? 180),
-          )} 日の締切と開催の表。`
-        : `- ${name}：${LLMS_OUTPUT_NOTES_JA[name] ?? ""}`,
-    ),
+    ...MANAGED_OUTPUT_FILES.map((name) => {
+      const note = LLMS_OUTPUT_NOTES_JA[name] ?? "";
+      if (name === "upcoming.md") {
+        return `- ${name}：直近 ${String(
+          Number((safeConfig.site as Record<string, unknown> | null)?.upcoming_days ?? 180),
+        )} 日の締切と開催の表。`;
+      }
+      /* 収録の範囲は、索引を読む側が最初に知りたがる情報なのに、かつての索引は「現在・近日期間」
+       * という語だけで、何日先まで・何件・いつまでを一切言わなかった（第 291 回）。値は必ず
+       * このビルドが書いた成果物から数えた物を書く – 定数を書いた時点で古くなる。 */
+      // 句点の後に空白を挟むと、機械が 2 つの項目と取り違える。読み終えた文の後ろに
+      // 実測の範囲をそのまま続ける。
+      const spanOf = llmsScopeJa(name, spans ?? null);
+      return `- ${name}：${spanOf ? `${note}${spanOf}` : note}`;
+    }),
   ];
   lines.push(
     "",
@@ -3798,12 +3897,12 @@ export async function buildAll(
    * 同じ行から導かないと本文とズレる（第 289 回）。 */
   const icsRows = icsEventRows(records, nowUtc);
   const icsMeta = icsCalendarMeta(icsRows);
+  // 品書は 1 回だけ組む（`catalog.json` と、画面に差し込む物と、索引の申告が
+  // それぞれ違う品書を指さないため。第 289 回と同じ轍を踏まない）。
+  const catalog = toCatalog(data, nowUtc, upcomingDays, icsMeta);
   const jsonText = JSON.stringify(data, null, 2);
   write("data.json", `${jsonText}\n`);
-  write(
-    "catalog.json",
-    `${JSON.stringify(toCatalog(data, nowUtc, upcomingDays, icsMeta), null, 2)}\n`,
-  );
+  write("catalog.json", `${JSON.stringify(catalog, null, 2)}\n`);
   const publishProvenance =
     opts.publishProvenance ?? collectPublishProvenance(ROOT, undefined, { now: nowUtc });
   const contentId = publishContentId(publishProvenance, embeddingProfileHash(data));
@@ -3861,7 +3960,15 @@ export async function buildAll(
     }
   }
 
-  write("llms.txt", toLlmsTxt(safeConfig));
+  write(
+    "llms.txt",
+    toLlmsTxt(safeConfig, {
+      all: deadlineSpan(data),
+      catalog: deadlineSpan(catalog),
+      horizonDays: upcomingDays,
+      calendar: icsMeta,
+    }),
+  );
   write("icon.svg", SITE_ICON_SVG);
   write(".nojekyll", "");
 
@@ -3880,10 +3987,7 @@ export async function buildAll(
     // 画面と同じ見た目にするため、`index.html` と同じ様子の塊を取り出して使う
     // （データを書き込む前の本文から読む – JSON をまたぐ正規表現にしない）。
     const siteStyleBlock = /<style>[\s\S]*?<\/style>/.exec(templateText)?.[0] ?? "";
-    templateText = templateText.replace(
-      TEMPLATE_MARKER,
-      embedJson(jsonCompact(toCatalog(data, nowUtc, upcomingDays, icsMeta))),
-    );
+    templateText = templateText.replace(TEMPLATE_MARKER, embedJson(jsonCompact(catalog)));
     write("index.html", templateText);
     for (const [name, source] of Object.entries(compileSiteRuntime())) write(name, source);
     // `upcoming.md` は Markdown のまま渡すとブラウザが表に整形してくれないので、
