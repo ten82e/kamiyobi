@@ -147,6 +147,26 @@
   .count-kbd { display: none; }
   .only-keyboard,
   .only-keyboard + dd { display: none; }
+  /* 指で押す端末では、操作できるものの高さを広げる。ビルド済み画面のスタイルから実測した
+     高さ（上余白 + 下余白 + 文字の高さ + 枠）:
+       チェック欄（過去の締切も表示 など）  約 19.7 px
+       主題の絞り込みボタン（`button.tag`）  約 17.8 px
+       入力の例・preset のボタン            約 24.4 / 25 px
+       分野チップ                          約 29.2 px
+       並び替え・表示切替                   約 33.7 / 34.3 px
+     上の 2 つは WCAG 2.5.8（_target size minimum 24×24 CSS px）に届いていなかった。
+     幅ではなく操作手段で分ける条件の中に入れるので、パソコンの見た目は変えない
+     （同じ分け方は上のキー操作の案内で行っている – 第 85 回）。 */
+  .sortbar button,
+  .mode-switch button,
+  .btn-reset,
+  .preset-btn,
+  .sample-btn,
+  .chips label,
+  label.check,
+  button.tag {
+    min-height: 44px;
+  }
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
