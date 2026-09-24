@@ -237,8 +237,10 @@ const CSV_COLUMN_NOTES_JA: Record<string, string> = {
   kind_ja:
     "種別の日本語表記。画面の「種別」と同じ語で、`kind`（英語のキー）と 1 対 1。" +
     "例 'paper' は '論文締切'、'abstract' は '概要締切'。上流の自由文を訳した物ではなく、" +
-    "画面・マークダウン・カレンダーと同じ表から引いている。同じ年に同じ種別の締切が複数" +
-    "ある行だけは、区別のため ': ' に続けて上流のラベルを添える（画面と同じ出し方）。",
+    "画面・マークダウン・カレンダーと同じ表から引く。**この欄は種別の語だけで、その他を継がない**" +
+    "（第 301 回 – 実測で 3,253 行のうち 55 行が '論文締切: Paper submission' の様な値に割れて" +
+    "いた）。同じ年に同じ種別が重なる行の区別は `label`（上流の表示用ラベル）と `round` で見る。" +
+    "画面の「種別」は、区別の要る行だけ語の後ろに上流のラベルを添える – この欄は添えない。",
   link: "会議の公式サイトの URL。",
 };
 
@@ -646,6 +648,8 @@ export interface DataRecord {
   type: "deadline" | "event";
   categories: string[];
   kind_label: string;
+  /** 種別の語だけ（接頭辞も接尾辞も足さない – 第 301 回）。`data.csv` の `kind_ja` はこれを書く。 */
+  kind_ja: string;
   /** その日の行を何と呼ぶか（「締切」/「通知日」など – 第 299 回）。種別の正本で決める。 */
   date_field: string;
   estimated: boolean;
@@ -675,7 +679,8 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
         const dateValue = isDateOnlyDeadline(dl)
           ? `date:${dl.local_date}`
           : `instant:${dl.at_utc.getTime()}`;
-        let labelJa = KIND_LABEL_JA[dl.kind] ?? KIND_LABEL_JA.other;
+        const labelBase = KIND_LABEL_JA[dl.kind] ?? KIND_LABEL_JA.other;
+        let labelJa = labelBase;
         if (collides.has(`${ed.year}\u0000${dl.kind}\u0000${dateValue}`) && dl.label) {
           labelJa = `${labelJa}: ${dl.label}`;
         }
@@ -686,6 +691,10 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
           type: "deadline",
           categories: cats,
           kind_label: labelJa,
+          // 表に計算（ピボット）を作る人は語で選ぶので、語の純粋な形を別に持つ（第 301 回）。
+          // 同じ年の同じ種別が重ねて在る行だけ `kind_label` に上流のラベルを続ける – 画面では
+          // それが要るが、表では語が割れる原因になる（区別は `label` と `round` で付く）。
+          kind_ja: labelBase,
           date_field: Recommender.kindDateFieldJa(dl.kind),
           estimated: ed.estimated,
           conf,
@@ -701,6 +710,7 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
           type: "event",
           categories: cats,
           kind_label: "開催",
+          kind_ja: "開催",
           /* 会期は締切ではない（第 299 回）。この行がカレンダーに載ったとき、日付の欄を
              「締切」にすると締切に見える。 */
           date_field: "会期",
@@ -3008,8 +3018,12 @@ export function toCsv(records: DataRecord[] | null | undefined): string {
         ed.estimate?.window_end ?? "",
         conf.sources.join(";"),
         ed.link || conf.link || "",
-        // マークダウンと同じ正本（`kind_label`）を使う（種別の言い回しを 2 か所に持たない）。
-        String(rec.kind_label ?? "").trim() || KIND_LABEL_JA.other,
+        /* 語の正本はマークダウンと同じ表だが、この欄は種別の語だけを書く（第 301 回）。
+           列の辞書は「`kind` と 1 対 1」と約束していて、同じ年に同じ種別が重なる行だけ
+           上流のラベルを続けていた（実測 – 3,253 行のうち 55 行が「論文締切: Paper submission」
+           の様な値で、語の種類は 10 の筈が 41 に割れていた）。表で語を選ぶ人はそれで
+           行を取りこぼす。行の区別は `label` と `round` で付く。 */
+        String(rec.kind_ja ?? rec.kind_label ?? "").trim() || KIND_LABEL_JA.other,
       ]
         .map((v) => csvField(v))
         .join(","),

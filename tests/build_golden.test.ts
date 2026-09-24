@@ -3669,6 +3669,7 @@ it("toUpcomingMd escapes pipe characters in title and place preserving 7-column 
       type: "deadline" as const,
       categories: ["ai"],
       kind_label: "論文締切",
+      kind_ja: "論文締切",
       date_field: "締切",
       estimated: false,
       conf: makeConference({
@@ -3701,6 +3702,7 @@ it("toUpcomingMd escapes pipe characters in title and place preserving 7-column 
       type: "event" as const,
       categories: ["ai"],
       kind_label: "開催",
+      kind_ja: "開催",
       date_field: "会期",
       estimated: false,
       conf: makeConference({
@@ -3781,6 +3783,7 @@ it("toUpcomingMd escapes pipe characters in URLs and preserves 7 table columns (
       type: "deadline" as const,
       categories: ["networking"],
       kind_label: "論文締切",
+      kind_ja: "論文締切",
       date_field: "締切",
       estimated: false,
       conf: makeConference({

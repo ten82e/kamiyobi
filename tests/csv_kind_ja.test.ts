@@ -14,6 +14,7 @@
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 import { japaneseStringLiterals, site } from "./built_golden_shared.ts";
 
@@ -134,6 +135,46 @@ describe("生の CSV の日本語の種別欄（第 270 回）", () => {
     expect(values.length, "行数が読めない").toBeGreaterThan(100);
   });
 
+  it("値は種別の語だけで、その他を継いでいない（第 301 回）", async () => {
+    /* 実測（2026-08-09 生成ビルド・2026-09-24）: `kind_ja` の 3,253 行のうち **55 行**が
+       「論文締切: Paper submission」のような値で、語の種類は 10 の筈が **41** に割れていた。
+       列の辞書は第一文で「`kind`（英語のキー）と 1 対 1」と約束しているので、種別で
+       フィルタ・ピボットを作る人はその 55 行を静かに取りこぼす。画面がダウンロードさせる
+       CSV（`deadlinesToCsv`）は最初から語だけだった – 生データだけが違う形だった。 */
+    const { values } = column("kind_ja");
+    const suffixed = values.filter((v) => v.includes(": "));
+    expect(suffixed.slice(0, 3), `種別の語にその他を継いだ値が ${suffixed.length} 本有る`).toEqual(
+      [],
+    );
+    // 語彙は品選びの正本に在る物だけ（新しい語を足したときも通る）。
+    const Recommender = (await import(pathToFileURL(join(site, "recommender.js")).href))
+      .default as unknown as { kindLabelTable: () => Record<string, string> };
+    const words = new Set(Object.values(Recommender.kindLabelTable()));
+    const unknown = [...new Set(values)].filter((v) => !words.has(v));
+    expect(unknown, `正本に無い種別が出ている: ${unknown.join(", ")}`).toEqual([]);
+    /* 接尾辞を落とす直し方が、行の区別を奪っていないこと – 同じ版に同じ種別が重なる行は
+       上流のラベルを持つので、`label` と `round` で区別できる。重なる行が 1 本も無いなら
+       この検査は空振りなので張る。 */
+    const { header, body } = csvRows();
+    const at = (name: string) => header.indexOf(name);
+    const rows = body.map((r) => ({
+      ed: r[at("edition_id")] ?? "",
+      kind: r[at("kind")] ?? "",
+      label: (r[at("label")] ?? "").trim(),
+    }));
+    const seen = new Map<string, number>();
+    rows.forEach((r) => {
+      const key = `${r.ed}|${r.kind}`;
+      seen.set(key, (seen.get(key) || 0) + 1);
+    });
+    const doubled = new Set([...seen].filter(([, n]) => n > 1).map(([k]) => k));
+    expect(doubled.size, "同じ版に同じ種別が重なる行が 1 本も無い（検査が空振り）").toBeGreaterThan(
+      0,
+    );
+    const lost = rows.filter((r) => doubled.has(`${r.ed}|${r.kind}`) && !r.label);
+    expect(lost.length, `重なる行で上流のラベルが空欄: ${lost.length} 本`).toBe(0);
+  });
+
   it("値はサイト自身が持つ語だけで、英語のキーとの対応も割れていない", () => {
     const words = builtJapaneseWords();
     expect(words.size, "ビルド成果物から日本語の語が読めない").toBeGreaterThan(50);
@@ -143,9 +184,8 @@ describe("生の CSV の日本語の種別欄（第 270 回）", () => {
     const bad: string[] = [];
     body.forEach((r) => {
       const ja = r[ji] ?? "";
-      // 同じ年に同じ種別が複数ある行だけは、区別のため ': ' + 上流のラベルを続ける（画面と同じ）。
-      const base = ja.split(": ")[0];
-      if (!words.has(base)) bad.push(`${r[ki]} -> ${ja}`);
+      // 第 301 回から語だけを書くので、そのまま正本の語彙と比べる。
+      if (!words.has(ja)) bad.push(`${r[ki]} -> ${ja}`);
     });
     expect(bad.slice(0, 4), `サイトの語彙に無い種別が出ている: ${bad.length} 件`).toEqual([]);
     // 英語のキーと同じ行に乗り、キーごとに日本語が 1 語に決まっている（対応が 2 通りに割れない）。
@@ -153,7 +193,7 @@ describe("生の CSV の日本語の種別欄（第 270 回）", () => {
     body.forEach((r) => {
       const key = r[ki] ?? "";
       const set = byKind.get(key) ?? new Set<string>();
-      set.add((r[ji] ?? "").split(": ")[0]);
+      set.add(r[ji] ?? "");
       byKind.set(key, set);
     });
     expect(byKind.size, "英語のキーが読めない").toBeGreaterThanOrEqual(8);
@@ -162,6 +202,15 @@ describe("生の CSV の日本語の種別欄（第 270 回）", () => {
       doubled,
       `1 つのキーに日本語が 2 つ以上割り当てられている: ${doubled.join(", ")}`,
     ).toEqual([]);
+  });
+
+  it("マークダウンは、区別の要る行の接尾辞を残している（第 301 回 – 直し過ぎの防止）", () => {
+    /* 画面の表と `upcoming.md` は、同じ版に同じ種別が重なる行を語の後ろに上流のラベルを
+       継いで区別する – 人が読む表ではそれが要るので、落としてはいけない（落とした側は
+       表計算で語を選ぶ人向け）。 */
+    const words = markdownColumn(readFileSync(join(site, "upcoming.md"), "utf8"), "種別");
+    const kept = words.filter((v) => v.includes(": "));
+    expect(kept.length, "接尾辞が消えて行を区別できなくなっている").toBeGreaterThan(0);
   });
 
   it("マークダウンとカレンダーが出す種別と同じ語を指している（成果物間で語彙が割れない）", () => {
