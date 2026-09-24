@@ -19,6 +19,9 @@ import { describe, expect, it } from "vitest";
 import { site } from "./built_golden_shared.ts";
 import { deadlineHintFunction, jsFunction, siteRuntime } from "./runtime_extract.ts";
 
+/* 画面の時計。ビルドの実測と同じ 2026-08-09（JST 正午）に固定して、開催日の向きを数える。 */
+const SCREEN_NOW = Date.UTC(2026, 7, 9, 3, 0, 0);
+
 type Conf = {
   acronym?: string;
   title?: string;
@@ -33,6 +36,8 @@ type NameOnly = {
   count: number;
   terms: string[];
   recordLast?: string | null | "";
+  /** その会のこれからの開催日（第 297 回）。 */
+  eventNext?: string;
 } | null;
 
 /* `site` は共有ハーネスがビルドを作り終えてから決まるので、品書は引くたびに読む。 */
@@ -56,17 +61,35 @@ function example(): { name: string; key: string } {
   };
 }
 
-/* 画面と同じ関数で名簿を引く（検査が別の世界を語らないために）。 */
-function nameOnly(query: string, rowKeys: string[] = []): NameOnly {
-  const fn = jsFunction(siteRuntime(), "nameOnlyConferenceMatch");
+/* 画面と同じ関数で名簿を引く（検査が別の世界を語らないために）。日の向きは、一覧の過去判定と
+   同じ品選びの関数で見る – 検査の側に同じ規則を書き写さない。 */
+function nameOnly(query: string, rowKeys: string[] = [], confs: Conf[] = conferences()): NameOnly {
   const run = new Function(
     "DATA",
-    `${fn}; return (q, keys) => nameOnlyConferenceMatch(q, keys.map((k) => ({ conf: { key: k } })));`,
-  )({ conferences: conferences() } as never) as (q: string, keys: string[]) => NameOnly;
+    "SCREEN_NOW",
+    `${jsFunction(siteRuntime("recommender.js"), "jstNoonMs")};
+     const Recommender = { jstNoonMs };
+     ${jsFunction(siteRuntime(), "nameOnlyConferenceMatch")};
+     return (q, keys) =>
+       nameOnlyConferenceMatch(q, keys.map((k) => ({ conf: { key: k } })), SCREEN_NOW);`,
+  )({ conferences: confs } as never, SCREEN_NOW) as (q: string, keys: string[]) => NameOnly;
   return run(query, rowKeys);
 }
 
 /* 画面が「収録の全体を読み込む」へ送っていいのかを、品書が申告している（build の `record_deadline_last`）。 */
+function deadlineDays(conf: Conf): string[] {
+  const out: string[] = [];
+  (conf.editions || []).forEach((raw) => {
+    const deadlines = (raw as { deadlines?: unknown[] }).deadlines || [];
+    deadlines.forEach((d) => {
+      const day = d as { local_date?: string; value?: string; utc?: string };
+      const v = day.local_date || day.value || day.utc || "";
+      if (v.slice(0, 10).length === 10) out.push(v.slice(0, 10));
+    });
+  });
+  return out;
+}
+
 function marked(): Conf[] {
   return conferences().filter((c) => c.record_deadline_last !== undefined);
 }
@@ -243,7 +266,7 @@ describe("名簿に在る会議の話を 0 件の案内が言う（第 294 回�
   it("描画側が、名簿の話を案内に渡している（渡し忘れで案内が黙らない）", () => {
     const app = siteRuntime();
     expect(app).toMatch(
-      /nameOnly:\s*nameOnlyRecordInfo\(\s*nameOnlyConferenceMatch\(searchQuery,\s*rows\)/,
+      /nameOnly:\s*nameOnlyRecordInfo\(\s*nameOnlyConferenceMatch\(\s*searchQuery,\s*rows,\s*Date\.now\(\)\s*\)/,
     );
     // 読み込めている行を照合して「行が在るか」で判断している。
     expect(jsFunction(app, "nameOnlyConferenceMatch")).toContain("withRows");
@@ -251,19 +274,6 @@ describe("名簿に在る会議の話を 0 件の案内が言う（第 294 回�
 });
 
 describe("収録の側に何が待っているかで、0 件の案内が言い分ける（第 295 回）", () => {
-  function deadlineDays(conf: Conf): string[] {
-    const out: string[] = [];
-    (conf.editions || []).forEach((raw) => {
-      const deadlines = (raw as { deadlines?: unknown[] }).deadlines || [];
-      deadlines.forEach((d) => {
-        const day = d as { local_date?: string; value?: string; utc?: string };
-        const v = day.local_date || day.value || day.utc || "";
-        if (v.slice(0, 10).length === 10) out.push(v.slice(0, 10));
-      });
-    });
-    return out;
-  }
-
   it("申告を付けるのは、品の窓に締切が 1 本も入らない会議だけ", () => {
     const list = marked();
     expect(list.length, "品書が収録側の締切を申告していない").toBeGreaterThan(0);
@@ -518,5 +528,129 @@ describe("打ち方に日付を添えても、名前一つと同じ答えにな�
     expect(out, "名簿に在ると言っていない").toContain("収録の名簿");
     expect(out, "ボタン名が書き写し").toContain(fullRecordButton());
     expect(out, "効かない条件を並べた").not.toContain("外せる条件");
+  });
+});
+
+describe("0 件の案内が、その会のこれからの開催日を添える（第 297 回）", () => {
+  /* 実測（2026-09-24・2026-08-09 生成ビルド）で、過ぎた締切しか持たない会議 174 件のうち 118 件・
+     収録に締切の無い会議 74 件のうち 31 件は、品書にこれからの開催日が在る。締切が過ぎただけの
+     会と、まだ開かれるだけの会を分けないと、人は「終わった会議の話をした」と誤解する。 */
+
+  function one(name: string, editions: unknown[]): Conf[] {
+    return [{ acronym: name, key: name.toLowerCase(), editions } as unknown as Conf];
+  }
+
+  it("これからの開催日を、一番近い物から選んでいる", () => {
+    const found = nameOnly(
+      "FUTCONF",
+      [],
+      one("FUTCONF", [{ event_start: "2026-10-01" }, { event_start: "2026-09-09" }]),
+    );
+    expect(found?.eventNext, "一番近い開催日を選んでいない").toBe("2026-09-09");
+  });
+
+  it("過ぎた開催日と、推定の開催日は数えない", () => {
+    expect(
+      nameOnly("FUTCONF", [], one("FUTCONF", [{ event_start: "2026-08-08" }]))?.eventNext,
+      "過ぎた開催日をこれからの開催日と言った",
+    ).toBe("");
+    expect(
+      nameOnly("FUTCONF", [], one("FUTCONF", [{ event_start: "2027-01-05", estimated: true }]))
+        ?.eventNext,
+      "推定の開催日を確定のように言った",
+    ).toBe("");
+    // 当日は「これから」に残る（一覧の過去判定と同じ目 – 第 295 回）。
+    expect(
+      nameOnly("FUTCONF", [], one("FUTCONF", [{ event_start: "2026-08-09" }]))?.eventNext,
+      "当日の開催日を過ぎた扱いにした",
+    ).toBe("2026-08-09");
+  });
+
+  it("例に絞れない会議では、開催日も言わない", () => {
+    const found = nameOnly("international");
+    expect(found?.count || 0, "前提が崩れた").toBeGreaterThan(1);
+    expect(found?.eventNext, "曖昧な会議に開催日を添えた").toBe("");
+  });
+
+  it("締切ゼロの案内は、開催日と upcoming.html の行き先を添える", () => {
+    const name = "CCPE";
+    const out = hintFor(name, {
+      nameOnly: {
+        example: name,
+        count: 1,
+        terms: [name.toLowerCase()],
+        recordLast: null,
+        recordFuture: false,
+        eventNext: "2026-10-01",
+      },
+    });
+    expect(out, "開催日を言っていない").toContain("開催日（2026-10-01）");
+    expect(out, "行き先を言っていない").toContain("upcoming.html");
+    expect(out, "押せば増えると約束した").toContain("押しても 1 件も増えません");
+    // 画面に出る語に内部語を混ぜない。
+    expect(out, "内部語が画面に出た").not.toContain("品書");
+  });
+
+  it("過ぎた締切だけの案内は、会議が終わったのではないことを添える", () => {
+    const name = "NETYS";
+    const out = hintFor(name, {
+      nameOnly: {
+        example: name,
+        count: 1,
+        terms: [name.toLowerCase()],
+        recordLast: "2026-06-27",
+        recordFuture: false,
+        eventNext: "2027-06-01",
+      },
+    });
+    expect(out, "過ぎた締切の話を消した").toContain("過ぎた締切（2026-06-27）");
+    expect(out, "開催日がこれからだと言っていない").toContain("開催日（2027-06-01）はこれからです");
+    expect(out, "終わった会議として扱った").toContain("会議が終わったわけではありません");
+    expect(out, "過去表示に送っていない").toContain("「過去の締切も表示」もいっしょにオン");
+  });
+
+  it("これからの開催日が読み込めていなければ、従来の文のまま", () => {
+    for (const over of [
+      { recordLast: null, recordFuture: false },
+      { recordLast: "2026-06-27", recordFuture: false },
+    ]) {
+      const out = noteFor(example().name, over);
+      expect(out, "在らない開催日を言った").not.toContain("upcoming.html");
+      expect(out, "在らない開催日を言った").not.toContain("開催日（");
+    }
+  });
+
+  it("実ビルドの品書で、開催日を添えられる会議を数えている", () => {
+    let checked = 0;
+    let withEvent = 0;
+    marked().forEach((conf) => {
+      const name = String(conf.acronym || conf.title || conf.key);
+      const found = nameOnly(name);
+      if (found?.count !== 1) return;
+      checked += 1;
+      expect(deadlineDays(conf).length, `${name}: 品の窓に締切の在る会議に申告が付いている`).toBe(
+        0,
+      );
+      const editions = (Array.isArray(conf.editions) ? conf.editions : []) as {
+        event_start?: string;
+        estimated?: boolean;
+      }[];
+      const future = editions
+        .map((e) => (typeof e.event_start === "string" ? e.event_start : ""))
+        .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d) && d >= "2026-08-09" && e2(d))
+        .sort();
+      function e2(d: string): boolean {
+        return editions.some((e) => e.event_start === d && e.estimated !== true);
+      }
+      if (future.length) withEvent += 1;
+      const day = found.eventNext || "";
+      if (day) {
+        expect(future[0], `${name}: 一番近い開催日を挙げていない`).toBe(day);
+      } else {
+        expect(future.length, `${name}: 品書にこれからの開催日が在るのに黙っている`).toBe(0);
+      }
+    });
+    expect(checked, "名前で絞れる締切ゼロの会議が 1 件もない").toBeGreaterThan(0);
+    expect(withEvent, "これからの開催日を添えられる会議が 1 件もない").toBeGreaterThan(0);
   });
 });

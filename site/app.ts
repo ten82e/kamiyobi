@@ -2704,7 +2704,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function nameOnlyConferenceMatch(
     query: string,
     list: AppRow[],
-  ): { example: string; count: number; terms: string[]; recordLast: string | null | "" } | null {
+    nowMs: number,
+  ): {
+    example: string;
+    count: number;
+    terms: string[];
+    recordLast: string | null | "";
+    eventNext: string;
+  } | null {
     const terms = String(query || "")
       .split(/\s+/u)
       .map((t) => t.trim())
@@ -2744,6 +2751,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     let example = "";
     let recordDay = "";
     let recordNull = false;
+    /* その会のこれからの開催日（第 297 回）。実測で、過ぎた締切しか持たない会議 174 件のうち
+       118 件・収録に締切の無い会議 74 件のうち 31 件は、品書にこれからの開催日が在る –
+       締切が過ぎただけの会と、まだ開かれるだけの会を分けないと、人は「終わった会議の話を
+       見た」と誤解する。推定の会期は数えない。 */
+    let eventNext = "";
     const hitTerms: string[] = [];
     DATA.conferences.forEach((conf) => {
       if (!conf || typeof conf.key !== "string" || withRows[conf.key]) return;
@@ -2762,6 +2774,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       /* 名簿の例として挙げるのは、1 件に絞れたときだけにする – `CoNLL 2027` に別の会議の名前を
          挙げても、人はそれを信じない（件数だけを出す）。 */
       example = String(conf.acronym || conf.title || conf.key);
+      (conf.editions || []).forEach((ed) => {
+        const day = typeof ed.event_start === "string" ? ed.event_start : "";
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || ed.estimated === true) return;
+        if (Recommender.jstNoonMs(day, Number.NaN) < nowMs) return;
+        if (!eventNext || day < eventNext) eventNext = day;
+      });
       // 収録の側にその会の締切が在るか（第 295 回 – 品書が申告している）。
       const recordLast = conf.record_deadline_last;
       if (recordLast === null) recordNull = true;
@@ -2778,6 +2796,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       terms: hitTerms,
       // 例を 1 件に絞れたときだけ、収録側の締切日の話をできる（第 295 回）。
       recordLast: count === 1 ? (recordNull ? null : recordDay) : "",
+      // 開催日も同じ理屈で、1 件に絞れたときだけ言う（第 297 回）。
+      eventNext: count === 1 ? eventNext : "",
     };
   }
 
@@ -2789,6 +2809,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       count: number;
       terms: string[];
       recordLast: string | null | "";
+      eventNext?: string;
     } | null,
     nowMs: number,
   ): {
@@ -2797,6 +2818,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     terms: string[];
     recordLast: string | null | "";
     recordFuture: boolean;
+    eventNext?: string;
   } | null {
     if (!found) return null;
     if (found.recordLast === null) return { ...found, recordFuture: false };
@@ -2833,6 +2855,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       terms: string[];
       recordLast?: string | null | "";
       recordFuture?: boolean;
+      /** その会のこれからの開催日（いま読み込んでいる名簿に在る分だけ – 第 297 回）。 */
+      eventNext?: string;
     } | null;
     loadedLastDay?: string;
     recordLastDay?: string;
@@ -2959,7 +2983,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (named_only && record === null) {
         tail =
           "その会について、収録は締切を 1 本も持っていません。一覧に出ないのはそのためで、" +
-          "この欄の「収録の全体を読み込む」を押しても 1 件も増えません。";
+          "この欄の「収録の全体を読み込む」を押しても 1 件も増えません。" +
+          // 締切の無い会でも、開かる日が決まっていることがある（実測 74 件のうち 31 件 –
+          // 締切の無い会議は一覧に出ないので、行き先を添える）。
+          (filter.nameOnly.eventNext
+            ? ` その会の開催日（${filter.nameOnly.eventNext}）は決まっています。締切の無い会議は一覧に出ないので、upcoming.html に載せています。`
+            : "");
       } else if (
         named_only &&
         typeof record === "string" &&
@@ -2971,7 +3000,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           ? `その会には ${record} の締切が収録に在りますが、${beyond}` +
             "この欄の「収録の全体を読み込む」を押すと、その締切も一覧に載せられます。"
           : `収録にあるのは過ぎた締切（${record}）だけで、${beyond}` +
-            "読み込まれるときは「過去の締切も表示」もいっしょにオンにしてください。";
+            "読み込まれるときは「過去の締切も表示」もいっしょにオンにしてください。" +
+            // 締切が過ぎただけで、会議が終わったわけではない（実測 – 過ぎた締切だけの会議
+            // 174 件のうち 118 件は、品書にこれからの開催日が在る）。
+            (filter.nameOnly.eventNext
+              ? ` なお、その会の開催日（${filter.nameOnly.eventNext}）はこれからです。締切が過ぎたというだけで、会議が終わったわけではありません。`
+              : "");
       } else {
         tail =
           "ただしその締切は、いま読み込んでいるデータに 1 本も入っていません" +
@@ -4510,7 +4544,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             loadedLastDay: farthestRowDayJa(rows),
             // 名簿に在るのに締切の行が 1 本も無い会議（第 294 回）。`rows` は絞り込み前なので、
             // 「読み込めているデータに行が在るか」で判断できる（読み込んだあとは行が出る）。
-            nameOnly: nameOnlyRecordInfo(nameOnlyConferenceMatch(searchQuery, rows), Date.now()),
+            nameOnly: nameOnlyRecordInfo(
+              nameOnlyConferenceMatch(searchQuery, rows, Date.now()),
+              Date.now(),
+            ),
             recordLastDay: DATA.calendar ? DATA.calendar.last_day : "",
             horizonDays: DATA.window ? DATA.window.upcoming_days : 0,
           }
