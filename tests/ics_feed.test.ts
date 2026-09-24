@@ -15,7 +15,13 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
-import { type DataRecord, icsEscapeText, icsFoldLine, toIcsText } from "../src/build.ts";
+import {
+  type DataRecord,
+  icsEscapeText,
+  icsFoldLine,
+  icsSessionSpanJa,
+  toIcsText,
+} from "../src/build.ts";
 import { site } from "./built_golden_shared.ts";
 import { jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
@@ -759,7 +765,9 @@ describe("締切ではない日に「締切」と書かない（第 299 回）",
     date_field: Recommender.kindDateFieldJa(kind),
   });
 
-  const DATE_FIELDS = ["締切", "通知日", "公開日", "開始日", "会期"];
+  /* 予定その物の日付の欄名（第 299 回）。第 304 回から本文に「会期: 」の補助行が並ぶ – 会期の
+     予定は立てないので（第 266 回）、この語が予定の日付の欄名として出る事は無い（下の検査で見る）。 */
+  const DATE_FIELDS = ["締切", "通知日", "公開日", "開始日"];
   const fieldLines = (desc: string[]): string[] =>
     desc.filter((line) => DATE_FIELDS.some((f) => line.startsWith(`${f}: `)));
 
@@ -973,5 +981,119 @@ describe("種別の語が、自分の区切りを真似ない（第 303 回）",
     expect(uidOf(toIcsText([split], NOW)), "語を分けたことで UID が変わった").toBe(
       uidOf(toIcsText([base], NOW)),
     );
+  });
+});
+
+/* ---------------------------------------------------------------  会期（第 304 回） */
+
+describe("会期を出張の段取りに使えるよう、予定の本文に書く（第 304 回）", () => {
+  function sessionLine(event: Record<string, string[]>): string {
+    const desc = (event.DESCRIPTION?.[0] ?? "").split("\\n");
+    return desc.filter((l) => l.startsWith("会期: "))[0] ?? "";
+  }
+
+  it("ビルド成果の全ての予定に、会期の行が 1 本だけ在る", () => {
+    /* 実測（2026-08-09 生成ビルド）: 928 個の `VEVENT` の `DESCRIPTION` に会期は 1 行も無く、
+       出張の段取りをカレンダーの側で決められなかった（会期の日を知りたくてサイトを再び開く形）。
+       直し後は 928 個すべてに 1 本入り、日付が分かる物が 680 個・分かっていない物が 248 個。 */
+    const events = eventsOf(readFileSync(join(site, "deadlines.ics"), "utf8"));
+    expect(events.length, "イベントが読めない").toBeGreaterThan(100);
+    const counts = new Map<number, number>();
+    let dated = 0;
+    let unknown = 0;
+    events.forEach((ev) => {
+      const line = sessionLine(ev);
+      const n = (event: Record<string, string[]>): number =>
+        (event.DESCRIPTION?.[0] ?? "").split("\\n").filter((l) => l.startsWith("会期: ")).length;
+      counts.set(n(ev), (counts.get(n(ev)) || 0) + 1);
+      const value = line.slice("会期: ".length);
+      if (value === Recommender.unconfirmedLabelJa()) unknown += 1;
+      else if (
+        /^\d{4}-\d{2}-\d{2}\([日月火水木金土]\)( 〜 \d{4}-\d{2}-\d{2}\([日月火水木金土]\))?(?:（推定）)?$/.test(
+          value,
+        )
+      )
+        dated += 1;
+    });
+    expect([...counts.keys()], `会期の行の本数が揃っていない: ${[...counts].join(", ")}`).toEqual([
+      1,
+    ]);
+    expect(dated, "会期の日付が入った行が 1 本も無い").toBeGreaterThan(0);
+    expect(
+      unknown,
+      "会期が未確認の行が 1 本も無い（分からない日の言い方を検査できない）",
+    ).toBeGreaterThan(0);
+    expect(dated + unknown, "会期の値が日付でも未確認でもない行が有る").toBe(events.length);
+  });
+
+  it("会期その物を並べる予定を立てていない（終日で締切を埋めない – 第 266 回）", () => {
+    const events = eventsOf(readFileSync(join(site, "deadlines.ics"), "utf8"));
+    const sessionEvents = events.filter((ev) => {
+      const kind = (ev.SUMMARY?.[0] ?? "").split("：").slice(1).join("：");
+      return kind.startsWith("会期") || kind.startsWith("開催");
+    });
+    expect(sessionEvents.slice(0, 2), `会期の予定が ${sessionEvents.length} 件並んでいる`).toEqual(
+      [],
+    );
+  });
+
+  it("合成の行で、会期の形が決まったとおりになる", () => {
+    const span = icsSessionSpanJa;
+    // 複数日 – 曜日を添えて「 〜 」で繋ぐ（`upcoming.md` の会期欄と同じ手の値）。
+    expect(span("2027-04-06", "2027-04-09", false), "範囲の形が違う").toBe(
+      "2027-04-06(火) 〜 2027-04-09(金)",
+    );
+    // 1 日だけの会期 – 範囲を書かない。
+    expect(span("2027-04-06", "2027-04-06", false), "1 日の会期に範囲を書いた").toBe(
+      "2027-04-06(火)",
+    );
+    expect(span("2027-04-06", null, false), "終了日が無い時に噓を足した").toBe("2027-04-06(火)");
+    // 上流が推定とした会期は、その印を残す（裏取り済みの日と同じ顔で出さない）。
+    expect(span("2027-04-06", "2027-04-07", true), "推定の印が消えた").toBe(
+      "2027-04-06(火) 〜 2027-04-07(水)（推定）",
+    );
+    // 分からない日は空欄で返す（出口が「未確認」に訳す）。
+    expect(span(null, null, false), "知らない日に値を付けた").toBe("");
+    const plain = eventsOf(
+      toIcsText([rec({ kind_label: "論文締切", date_field: "締切" })], NOW),
+    )[0];
+    expect(sessionLine(plain), "分からない日の言い方が決まった物と違う").toBe(
+      `会期: ${Recommender.unconfirmedLabelJa()}`,
+    );
+  });
+
+  it("日付の欄と会期の行が互いに化けない", () => {
+    const event = eventsOf(
+      toIcsText([rec({ kind_label: "採否通知", date_field: "通知日" })], NOW),
+    )[0];
+    const lines = (event.DESCRIPTION?.[0] ?? "").split("\\n");
+    const dateFields = ["締切", "通知日", "公開日", "開始日"];
+    const own = lines.filter((l) => dateFields.some((f) => l.startsWith(`${f}: `)));
+    expect(own.length, "予定その物の日付の欄が 1 本でない").toBe(1);
+    expect(sessionLine(event), "会期の行が日付の欄と混ざっている").not.toBe(own[0]);
+    expect(own[0].startsWith("通知日: "), "予定その物の日付の欄が化けた").toBe(true);
+  });
+
+  it("出口の言い回しが、会期を並べない事と本文に書く事を同じ事実で言う", () => {
+    /* 「出口の在りかを言う場所が、実物とずれていない」の系譜 – 第 302 回で自分は列の辞書に
+       「会期は `deadlines.ics` だけに出る」と書いたが、実測ではカレンダーに会期は 1 件も無く噓だった。 */
+    const llms = readFileSync(join(site, "llms.txt"), "utf8");
+    const ics = readFileSync(join(site, "deadlines.ics"), "utf8");
+    const html = readFileSync(join(site, "index.html"), "utf8");
+    const js = readFileSync(join(site, "app.js"), "utf8");
+    const unfolded = ics.replace(/\r\n /g, "");
+    expect(llms, "索引が会期を並べない事を言っていない").toContain(
+      "会議が開かれている日（会期）を並べる予定は立てない",
+    );
+    expect(llms, "索引が本文に書く事を言っていない").toContain(
+      "会期は各予定の本文の「会期: 」に書く",
+    );
+    expect(unfolded, "カレンダー自身が会期を並べない事を言っていない").toContain(
+      "会議が開かれている日（会期）その物を並べる予定は",
+    );
+    expect(html, "導線の説明が会期に黙っている").toContain("会議が開かれている日（会期）は並べず");
+    expect(js, "画面の注記が会期に黙っている").toContain("会期は各予定の本文に書きます");
+    // 第 302 回の嘘がそのまま残っていない事（列の辞書は実態を言う）。
+    expect(llms, "列の辞書が噓のまま残っている").not.toContain("`deadlines.ics` だけに出る");
   });
 });

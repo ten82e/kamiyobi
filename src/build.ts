@@ -256,8 +256,8 @@ const CSV_COLUMN_NOTES_JA: Record<string, string> = {
     "その日を何と呼ぶか（'締切'・'通知日'・'公開日'・'開始日'）。`deadlines.ics` の本文に書く語と" +
     "同じで、語の正本も同じ（第 302 回）。**日付の列を締切として扱うかどうかを決めるのはこの欄** –" +
     " '締切' 以外の行は、その日までに何かを出す必要が無い日（採否通知の通知日、査読結果の公開日、" +
-    "反論期間の開始日）に入る。会期の行はこの表に含まれない（会期は `data.json` と" +
-    "`deadlines.ics` だけに出る）。",
+    "反論期間の開始日）に入る。会期の行はこの表には入らない（会期は `data.json`・`upcoming.md`・" +
+    "画面に出る – カレンダーでは各予定の本文の「会期: 」に書く – 第 304 回）。",
   link: "会議の公式サイトの URL。",
 };
 
@@ -405,7 +405,8 @@ function llmsScopeJa(name: string, spans: LlmsSpans | null): string {
       ? `収録しているのは今後の日 ${countJa(meta.event_count)} 件（${meta.first_day} 〜 ${meta.last_day}、` +
           `JST の暦日）で、うち締切は ${countJa(meta.deadline_count)} 件 – 残りは採否通知・` +
           "査読結果公開・反論期間の開始のように、その日までに何かを出す必要の無い日である" +
-          "（本文の日付の欄も「通知日」などになる）。この範囲は画面に並べる期間より長い。"
+          "（本文の日付の欄も「通知日」などになる）。この範囲は画面に並べる期間より長い。" +
+          "**会議が開かれている日（会期）を並べる予定は立てない**（終日が並ぶと締切が見えなくなるため）で、会期は各予定の本文の「会期: 」に書く。"
       : "";
   }
   return "";
@@ -3134,7 +3135,8 @@ function icsCalendarDescriptionJa(meta: IcsCalendarMeta, stamp: { human: string 
     `入るのは収録している今後の日付すべてで、${span}。${mix}画面の絞り込みと並び替えは引き継がれない。`,
     "収録の期間は画面の表示窓より長い（画面は指定した期間だけを出し、こちらには出ている締切が",
     "全て入る）。時刻が公式に出ていない締切は「時刻未確認」と書き、上流が推定としている日付には",
-    "「推定」と付ける。過ぎた日は入れない。",
+    "「推定」と付ける。過ぎた日は入れない。会議が開かれている日（会期）その物を並べる予定は" +
+      "立てません – 終日が並ぶと締切が見えなくなるためで、会期は各予定の本文に書きます。",
     stamp ? `データ生成: ${stamp.human}（JST）。` : "",
   ]
     .filter(Boolean)
@@ -3256,6 +3258,25 @@ export function icsCategoryList(labels: string[]): string {
     .join(",");
 }
 
+/* カレンダーの本文に書く会期の表示（第 304 回）。`upcoming.md` の会期行と同じ手の値にする –
+ * 曜日を添えるのも同じ（出張・会場押さえは曜日で見込むため）。会期その物の終日イベントは立てない
+ * – 終日が並ぶと締切の行が見えなくなる（第 266 回）。 */
+export function icsSessionSpanJa(
+  start: unknown,
+  end: unknown,
+  estimated: boolean | null | undefined,
+): string {
+  const from = asDate(start);
+  if (!from) return "";
+  const to = asDate(end) ?? from;
+  const one = (d: Date): string => {
+    const day = calendarDayJa(d);
+    return day ? `${fmtDate(d)}(${day})` : fmtDate(d);
+  };
+  const span = from.getTime() === to.getTime() ? one(from) : `${one(from)} 〜 ${one(to)}`;
+  return estimated ? `${span}（推定）` : span;
+}
+
 export function icsEventRows(
   records: DataRecord[] | null | undefined,
   now: Date | null | undefined,
@@ -3326,6 +3347,11 @@ export function icsEventRows(
        * カレンダーの検索に掛かるので「セキュリティだけ」が引ける。語は画面と同じ。 */
       catsJa.length ? `分野: ${catsJa.join("・")}` : "",
       `${rec.date_field}: ${whenText}`,
+      /* 会期を本文に書く（第 304 回）。実測（2026-08-09 生成ビルド）で、928 個の `VEVENT` の
+       * `DESCRIPTION` に会期は 1 行も無く、出張の段取りをカレンダーでは決められなかった（会期の
+       * 日を知りたくてサイトを再び開く形）。会期その物の終日イベントは立てられないので（第 266
+       * 回）、予定の本文に 1 行足す形にした – `LOCATION` を足した第 288 回と同じ動機。 */
+      `会期: ${icsSessionSpanJa(ed.event_start, ed.event_end, ed.estimated) || Recommender.unconfirmedLabelJa()}`,
       `開催地: ${placeJa || Recommender.unconfirmedLabelJa()}`,
       rec.estimated ? "この日付は上流が推定として出したもので、公式で裏を取れていません" : "",
       link ? `詳細: ${link}` : "",

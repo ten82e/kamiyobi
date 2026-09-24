@@ -2625,7 +2625,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       `カレンダーに追加（.ics）に入る日は ${countJa(span.event_count)} 件` +
       `（${span.first_day} 〜 ${span.last_day}）。` +
       mix +
-      "この一覧に並ぶのは選んだ期間までで、絞り込みは引き継がれません。"
+      "会議が開かれている日（会期）その物は入れません – 会期は各予定の本文に書きます。この一覧に並ぶのは選んだ期間までで、絞り込みは引き継がれません。"
     );
   }
 
