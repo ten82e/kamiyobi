@@ -2373,6 +2373,35 @@ const Recommender = (() => {
       live: "のことなら、印刷はブラウザの印刷で絞り込んだ一覧の全行が出ます。共有はアドレスバーの URL をコピーしてください – ページ下の『見方のてびき』に書いてあります",
     },
     {
+      /* 条件を戻したい人（第 326 回）。実測: `リセット` `元に戻す` `クリア` `解除` は 0 行で
+       * 案内も無く、`条件クリア` `条件を消す` は第 326 回の活用の形の寄せ以後、欄の名前の案内
+       * （「上にある欄で選ぶか、値で打ってください」）に拾われて – 押すべきボタンの話を
+       * していなかった。正本は `<button id="reset">条件クリア</button>`（`site/template.html`）と
+       * `site/app.ts` の `$("reset")` の処理（検索欄の語も含めた条件を一度に戻す –
+       * 論文の欄は触らない）。 */
+      words: [
+        "条件クリア",
+        "条件を消す",
+        "条件を戻す",
+        "条件を解除",
+        "条件を外す",
+        "絞り込みを消す",
+        "絞り込み解除",
+        "絞り込みを外す",
+        "検索条件を消す",
+        "リセット",
+        "リセットする",
+        "元に戻す",
+        "戻す",
+        "クリア",
+        "解除",
+        "全部外す",
+      ],
+      echo: true,
+      note: "のことなら、絞り込みの欄の右に『条件クリア』のボタンが有ります – 押すと、検索欄に打った語・締切まで・分野・種別・参加形式・ランク・過去の締切が一度に戻ります。名前の通り条件だけで、論文のタイトル・概要・参考論文の欄は消しません（論文の欄を消すのは推薦の欄にある『論文の入力を消す』で、消した直後は『直前の入力に戻す』が同じ欄に出ます）。",
+      live: "のことなら、絞り込みの欄の右の『条件クリア』で、検索欄の語も含めた条件が一度に戻ります。論文の欄は消しません",
+    },
+    {
       /* `ics` はこの画面が配るファイルの名前でもあり、会議名の一部分でもある（第 323 回）。
        * 実測（2026-08-09 生成ビルドの品書 872 行）: `ics` は 14 行に当たり、**10 行は会議名の
        * 語の途中に貼り付いた物**（"ICSOC" `@icsa2027`）、`ical` は 2 行で同じ形。
@@ -2456,23 +2485,117 @@ const Recommender = (() => {
     },
   ];
 
-  function uiWordEntry(query: unknown) {
+  type UIWordGroup = (typeof UI_WORD_GROUPS_JA)[number];
+
+  /* 活用の形で打たれた人を、名詞形の案内へ寄せる（第 326 回）。
+   * 実測（2026-08-09 生成ビルドの品書 872 行・固定時刻 2026-08-09T00:00:00Z）:
+   * `書き出す` `書き出したい` `保存する` `ダウンロードする` `購読する` `購読したい`
+   * `印刷したい` `カレンダーに入れる` `絞り込みを消す` `並び替える` の 10 表は、名詞形
+   * （`書き出し` `保存` `購読` `印刷` `カレンダー` `絞り込み` `並び替え`）に案内が在るのに
+   * 何も言わず、読み上げは「収録データにありません」とだけ言っていた（第 325 回で直した語の
+   * 活用形にあたる）。画面の語を名前の一部に含むので、一番長く含む組の案内を出す。
+   * 実際の打ち方 114 表（分野・場所・時期・欄の名前）で誤発火 0 を実測 – 案内は 0 件のときだけ
+   * 画面に出す門を通るので、行が出ている打ち方には影響しない。 */
+  /* 画面の語の後ろに付くだけの人（活用の形・言い方の続き）。ここを並べ替えない理由は、
+   * 語が**文の途中や前に有るだけ**の場合に寄せないため – 第 326 回の実測で、語を含むだけの
+   * 打ち方は誤発火になった（`クリアランス` が `クリア` に、`条件付き` が `条件` に、
+   * `未確定` が `確定` に拾われた）。語の後に続く物が下の言い回しのときだけ寄せる。 */
+  const UI_WORD_TAILS_JA = [
+    "したい",
+    "します",
+    "する",
+    "して",
+    "しとく",
+    "し方",
+    "しかた",
+    "の仕方",
+    "のやり方",
+    "のしかた",
+    "の場所",
+    "はどこ",
+    "はどこですか",
+    "できる",
+    "できます",
+    "たい",
+    "ほう",
+    "る",
+    "し",
+    "を消す",
+    "を解除",
+    "を外す",
+    "を戻す",
+    "をコピー",
+    "に追加",
+    "に加える",
+    "に入れる",
+    "に入れて",
+    "に付ける",
+    "につける",
+    "の書き出し方",
+    "の仕方を知りたい",
+  ];
+
+  /* 「書き出す」のように、用言の活用で語幹の母音が違う形（出し / 出す）で打たれることがある
+   * （第 326 回の実測 – この形だけ寄せが漏れた）。語の最後の母音を連用形の形に直した物でも
+   * 同じ検査を通す。 */
+  function uiWordStemForms(q: string): string[] {
+    const 表: Record<string, string> = {
+      う: "い",
+      く: "き",
+      ぐ: "ぎ",
+      す: "し",
+      ず: "し",
+      つ: "ち",
+      ぬ: "ん",
+      ぶ: "び",
+      む: "み",
+      る: "り",
+    };
+    const last = q.slice(-1);
+    const 直 = 表[last];
+    return 直 ? [q, q.slice(0, -1) + 直] : [q];
+  }
+
+  function uiWordContain(q: string): { group: UIWordGroup; word: string } | null {
+    if (q.length < 3 || q.length > 16) return null;
+    let best: UIWordGroup | null = null;
+    let bestWord = "";
+    for (const form of uiWordStemForms(q)) {
+      for (const group of UI_WORD_GROUPS_JA) {
+        for (const word of group.words) {
+          const folded = word.toLowerCase();
+          if (folded.length < 2 || folded.length <= bestWord.length) continue;
+          if (!form.startsWith(folded)) continue;
+          const tail = q.slice(folded.length);
+          if (tail && !UI_WORD_TAILS_JA.includes(tail)) continue;
+          best = group;
+          bestWord = folded;
+        }
+      }
+    }
+    return best ? { group: best, word: bestWord } : null;
+  }
+
+  /** 打たれた語がどの案内の組に掛かるか（完全一致 → 活用の形の順で探す）。 */
+  function uiWordMatch(query: unknown): { group: UIWordGroup; word: string } | null {
     const q = String(query == null ? "" : query)
       .trim()
       .toLowerCase();
     if (!q) return null;
-    const hit = UI_WORD_GROUPS_JA.find((group) =>
-      group.words.some((word) => word.toLowerCase() === q),
-    );
-    return hit || null;
+    for (const group of UI_WORD_GROUPS_JA) {
+      const word = group.words.find((candidate) => candidate.toLowerCase() === q);
+      if (word) return { group, word };
+    }
+    return uiWordContain(q);
+  }
+
+  function uiWordEntry(query: unknown): UIWordGroup | null {
+    return uiWordMatch(query)?.group || null;
   }
 
   /** 打ち返された語を正本の表記で返す（案内に書き返すか決めるのに使う）。 */
   function uiWordRawJa(query: unknown): string {
-    const hit = uiWordEntry(query);
-    if (!hit) return "";
-    const q = String(query).trim().toLowerCase();
-    return hit.words.find((word) => word.toLowerCase() === q) || "";
+    return uiWordMatch(query)?.word || "";
   }
 
   /** 0 件案内に出す一文（画面の使い方・操作・出典の語を打たれた人向け – 第 248 回）。 */

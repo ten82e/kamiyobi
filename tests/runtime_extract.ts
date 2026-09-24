@@ -64,6 +64,9 @@ export function wholeTableQueryStubs(rec: string): string {
   /* 画面自身の語（`使い方` `並び替え` `出典` など）の正本も同じ入口から（第 248 回）。 */
   const uiWords = rec.match(/const UI_WORD_GROUPS_JA[\s\S]*?\n\s*\];/)?.[0] ?? "";
   expect(uiWords, "UI_WORD_GROUPS_JA が見つからない").toBeTruthy();
+  /* 活用の形の寄せ（第 326 回）– 画面の語の後ろに付く言い回しの正本。書き写すと画面とズレる。 */
+  const uiTails = rec.match(/const UI_WORD_TAILS_JA[\s\S]*?\n\s*\];/)?.[0] ?? "";
+  expect(uiTails, "UI_WORD_TAILS_JA が見つからない").toBeTruthy();
   cols.forEach((src) => {
     expect(src, "欄の名前の表が見つからない").toBeTruthy();
   });
@@ -83,11 +86,15 @@ export function wholeTableQueryStubs(rec: string): string {
     // 与えないと `COLUMN_QUERY_WORDS_JA is not defined` に化けた（第 248 回に実発生）。
     ...cols,
     uiWords,
+    uiTails,
     ...dayRange,
     jsFunction(rec, "dayRangeDaysJa"),
     jsFunction(rec, "dayRangeWindowJa"),
     jsFunction(rec, "dayRangeNoteJa"),
     jsFunction(rec, "dayRangeLiveNoteJa"),
+    jsFunction(rec, "uiWordStemForms"),
+    jsFunction(rec, "uiWordContain"),
+    jsFunction(rec, "uiWordMatch"),
     jsFunction(rec, "uiWordEntry"),
     jsFunction(rec, "uiWordRawJa"),
     jsFunction(rec, "uiWordNoteJa"),
