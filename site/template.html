@@ -329,7 +329,8 @@ input[type=search], input[type=text] {
   border-radius: 6px;
   color: var(--fg);
   font: inherit;
-  font-size: 0.88rem;
+  font-size: 1rem; /* iOS は 16 px 未満の入力欄を触ると画面を自動拡大する（拡大すると表が見えなくなる）。
+                     拡大を禁止するのではなく、文字を大きくして解く（SPEC §7・第 259 回）。 */
   outline: none;
   transition: border-color 0.15s ease;
 }
@@ -352,7 +353,7 @@ select {
   border-radius: 6px;
   color: var(--fg);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: 1rem;
   outline: none;
 }
 /* 期間・種別・ランクの <select> は `outline: none` だけで焦点の目印を書いていなかった
@@ -372,7 +373,7 @@ textarea {
   border-radius: 6px;
   color: var(--fg);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: 1rem;
   outline: none;
   resize: vertical;
   min-height: 72px;
