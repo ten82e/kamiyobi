@@ -325,7 +325,9 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
     " 方は機械が読む用のまま残してある。",
   "deadlines.ics":
     "締切をカレンダーに入れるための 1 本（RFC 5545）。1 締切 = 1 イベントの終日（JST の暦日）で、" +
-    "画面の絞り込みは効かない。時刻未確認と推定はそのまま書く（第 266 回）。",
+    "画面の絞り込みは効かない。時刻未確認と推定はそのまま書く（第 266 回）。分野は画面と同じ日本語で " +
+    "`CATEGORIES` と説明行の `分野:` の両方に載せる（第 292 回）。受信側の表示対応は kamiyobi 側では" +
+    "検証していないが、説明行の語はカレンダー本文の検索に掛かる。",
   "llms.txt": "このファイル。機械が読む索引で、人間の操作説明は画面の中に書く。",
   "icon.svg": "ブラウザのタブとブックマークに出すアイコン（SVG）。",
   ".nojekyll":
@@ -3102,6 +3104,28 @@ function icsUidSafe(value: unknown): string {
  *   - `estimated`（上流の推定）は行の語と同じ「推定」を要約に付ける。
  *   - `UID` はビルドをまたいで同じ。購読先では同じ締切が更新になり、重複しない。
  */
+/* カレンダーに載せる分野（第 292 回）。語は画面の分野列と同じ入口
+ * （`Recommender.categoryLabelJa`）から取り、書き写しでズレないようにする。未知の語は
+ * 画面と同じく原文のまま – 画面に無い語をカレンダーだけ作らない。 */
+export function icsCategoryLabels(categories: readonly string[] | null | undefined): string[] {
+  const raw = categories;
+  if (!Array.isArray(raw)) return [];
+  const out: string[] = [];
+  raw.forEach((key) => {
+    const label = String(Recommender.categoryLabelJa(key) ?? "").trim();
+    if (label && out.indexOf(label) < 0) out.push(label);
+  });
+  return out;
+}
+
+/* `CATEGORIES` は値の区切りにカンマを使うので、`icsEscapeText`（カンマを \, に逃がす）を
+ * そのまま使えない。値の中のセミコロンとバックスラッシュだけ逃がし、区切りは残す。 */
+export function icsCategoryList(labels: string[]): string {
+  return labels
+    .map((label) => label.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,"))
+    .join(",");
+}
+
 export function icsEventRows(
   records: DataRecord[] | null | undefined,
   now: Date | null | undefined,
@@ -3156,9 +3180,13 @@ export function icsEventRows(
     const placeJa = String(
       Recommender.placeJa(Recommender.placeWithPrefectureJa(ed.place)) ?? "",
     ).trim();
+    const catsJa = icsCategoryLabels(conf.categories);
     const desc = [
       `会議: ${title}`,
       `種別: ${kind}`,
+      /* 分野を本文に書く（第 292 回）。受信側が `CATEGORIES` を表示しなくても、本文の語は
+       * カレンダーの検索に掛かるので「セキュリティだけ」が引ける。語は画面と同じ。 */
+      catsJa.length ? `分野: ${catsJa.join("・")}` : "",
       `締切: ${whenText}`,
       `開催地: ${placeJa || Recommender.unconfirmedLabelJa()}`,
       rec.estimated ? "この日付は上流が推定として出したもので、公式で裏を取れていません" : "",
@@ -3197,6 +3225,7 @@ export function icsEventRows(
         `DESCRIPTION:${icsEscapeText(desc.join("\n"))}`,
         link ? `URL:${String(link).trim()}` : "",
         // 並び替えは上の `SUMMARY`（本文の 6 行目）を見るので、挿れるのはうしろ側。
+        catsJa.length ? `CATEGORIES:${icsCategoryList(catsJa)}` : "",
         placeJa ? `LOCATION:${icsEscapeText(placeJa)}` : "",
         "TRANSP:TRANSPARENT",
         "END:VEVENT",
