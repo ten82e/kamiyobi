@@ -206,6 +206,8 @@ export const SEARCH_CANON = (() => {
       // `queryTokenGroups` が呼ぶので、定義順で先に置く（第 223 回）。
       "collapseRelativeDayPhrase",
       "numericRelativeDay",
+      // 「N 日以内」の範囲展開（第 315 回）: `relativeDayGroups` が呼ぶので注入も一緒にする。
+      "withinDaysTermsJa",
       "relativeDayGroups",
       "queryTokenGroups",
       "compoundSplitHit",

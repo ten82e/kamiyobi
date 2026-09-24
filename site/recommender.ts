@@ -4369,6 +4369,9 @@ const Recommender = (() => {
     [/(?:あと|残り|のこり)\s*([0-9]{1,4})\s*(?:日間|日|にち)/g, (n) => `${n}日後`],
     [/([0-9]{1,4})\s*(?:日間|日|にち)\s*(?:後|あと)/g, (n) => `${n}日後`],
     [/([0-9]{1,4})\s*(?:日|にち)\s*(?:前|まえ)/g, (n) => `${n}日前`],
+    /* 「30 日以内」は画面の絞り込み（`7 日以内` `30 日以内` `90 日以内` `180 日以内`）と同じ
+     * 文言なので、語が割ける前に 1 語へ寄せる（第 315 回）。 */
+    [/([0-9]{1,4})\s*(?:日間|日|にち)\s*以内/g, (n) => `${n}日以内`],
   ];
 
   /** 「あと 51 日」「51 日後」を `51日後` の 1 語に寄せる（語が割ける前にやる）。 */
@@ -4394,10 +4397,38 @@ const Recommender = (() => {
     return [token, `${ymd[0]}年${ymd[1]}月${ymd[2]}日`, `${ymd[1]}月${ymd[2]}日`];
   }
 
+  /* 「7日以内」「30日以内」を、今日から N 日後までの暦日の候補グループへ展開する（第 315 回）。
+   * 画面は同じ文言の絞り込み（`7 日以内` `30 日以内` `90 日以内` `180 日以内`）を持つので、
+   * 検索欄に打った人が 0 行に当たっていた（2026-09-25 実測・2026-08-09 生成ビルドの品書 872 行:
+   * `7 日以内` `7日以内` `30 日以内` `30日以内` `90日以内` `180日以内` すべて **0 行** –
+   * 実際に 30 日以内に締切を持つ行は 210 行、7 日以内は 40 行あった）。
+   * 「N 日前」のように 1 暦日へは畳まない – 「以内」は範囲なので、`N日後` の 1 語と同じ
+   * 扱いにすると 1 日ぶんの行しか返らない（実測: `30日後` は 10 行）。
+   * 週・月の単位は展開しない – 「1 か月 = 30 日」のような換算を画面のどこにも書いていないので、
+   * 検索の側だけで換算を發明しない（第 311 回の曜日表・暦月語とは意味が重ならない）。 */
+  function withinDaysTermsJa(token: string, nowMs: number): string[] | null {
+    const matched = /^([0-9]{1,4})日以内$/.exec(token);
+    if (!matched) return null;
+    const days = Number(matched[1]);
+    /* 展開する範囲の上限は 1 年 – それ以上は「来年」などの暦月語で引く方が速い
+     * （上限を置くのは検査ハーネスの都合でもある – ハーネスは関数を 1 本ずつ抽出して
+     * 組み立てるので、モジュール定数を関数の中に置かないと `not defined` になる – 第 257 回）。 */
+    if (!(days >= 1 && days <= 365)) return null;
+    const out: string[] = [token];
+    for (let d = 0; d <= days; d++) {
+      const ymd = offsetCalendarDay(nowMs, d);
+      const yearMonthDay = `${ymd[0]}年${ymd[1]}月${ymd[2]}日`;
+      if (out.indexOf(yearMonthDay) < 0) out.push(yearMonthDay, `${ymd[1]}月${ymd[2]}日`);
+    }
+    return out;
+  }
+
   /** 相対日・相対日の語を、暦日の候補グループへ展開する（OR の組）。 */
   function relativeDayGroups(token: string, nowMs: number): string[] | null {
     const numeric = numericRelativeDay(token, nowMs);
     if (numeric) return numeric;
+    const within = withinDaysTermsJa(token, nowMs);
+    if (within) return within;
     const dayOffset = RELATIVE_DAY_OFFSETS_JA[token];
     if (dayOffset !== undefined) {
       const ymd = offsetCalendarDay(nowMs, dayOffset);
