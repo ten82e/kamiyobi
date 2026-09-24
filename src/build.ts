@@ -93,6 +93,7 @@ const MANAGED_OUTPUT_FILES = [
   "data.csv",
   "upcoming.md",
   "upcoming.html",
+  "deadlines.ics",
   "llms.txt",
   "icon.svg",
   ".nojekyll",
@@ -257,6 +258,9 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
   "upcoming.html":
     "`upcoming.md` と同じ表を、ブラウザでそのまま読める形にしたもの（第 263 回）。Markdown の" +
     " 方は機械が読む用のまま残してある。",
+  "deadlines.ics":
+    "締切をカレンダーに入れるための 1 本（RFC 5545）。1 締切 = 1 イベントの終日（JST の暦日）で、" +
+    " 画面の絞り込みは効かない。時刻未確認と推定はそのまま書く（第 266 回）。",
   "llms.txt": "このファイル。機械が読む索引で、人間の操作説明は画面の中に書く。",
   "icon.svg": "ブラウザのタブとブックマークに出すアイコン（SVG）。",
   ".nojekyll":
@@ -2846,6 +2850,209 @@ function escapeHtmlText(value: string): string {
  * 扱うのは生成物が出る形だけ: `# ` 見出し / `> ` 注記 / `|` で並ぶ表 / それ以外行として書く。
  * セルの中の `[文字列](URL)` と `コード` は実際に出るので起こす。セルの中の縦棒は
  * `escapeMdCell` が `\|` に逃がすので、そこで区切ってから戻す。 */
+/* ------------------------------------------------------------------ カレンダー配信 */
+
+/** カレンダーアプリの棚に出る名前（`X-WR-CALNAME`）。 */
+const ICS_CAL_NAME_JA = "kamiyobi 締切一覧";
+
+/** カレンダーアプリの説明欄に出る文。ここだけは相手側が翻訳しないので日本語で書く。 */
+const ICS_CAL_DESC_JA =
+  " kamiyobi が収録した会議の締切。1 件 = 1 つの締切で、その日（JST の暦日）を埋める形で出る。" +
+  "画面の絞り込みは効かない（上の全件）。時刻が公式に出ていない締切は「時刻未確認」と書き、" +
+  "上流が推定としている日付には「推定」と付ける。過ぎた締切は入らない。";
+
+/** 1 行の上限（RFC 5545 §3.1 は 75 オクテット）。 */
+const ICS_MAX_LINE_OCTETS = 75;
+
+/** RFC 5545 の TEXT 値で意味を持つ文字（バックスラッシュ・セミコロン・カンマ・改行）。 */
+export function icsEscapeText(value: unknown): string {
+  return String(value ?? "")
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\r\n|\r|\n/g, "\\n");
+}
+
+/**
+ * 1 行を 75 オクテット以内へ畳む（RFC 5545 §3.1 – 第 266 回）。
+ * **文字数ではなくオクテット数**で見る。日本語の 1 文字は UTF-8 で 3 オクテットあるので、
+ * 文字数で切ると相手のカレンダー側で文字化けする。続け字（surrogate pair など）の
+ * 途中でも切らない – 1 文字単位で数える。
+ */
+export function icsFoldLine(line: string): string {
+  const value = String(line ?? "");
+  if (Buffer.byteLength(value, "utf8") <= ICS_MAX_LINE_OCTETS) return value;
+  const out: string[] = [];
+  let cur = "";
+  let used = 0;
+  for (const ch of value) {
+    const size = Buffer.byteLength(ch, "utf8");
+    if (used + size > ICS_MAX_LINE_OCTETS) {
+      out.push(cur);
+      /* 続きの行は半角スペース 1 個で始める（相手側はそれを戻して結合する）。 */
+      cur = " ";
+      used = 1;
+    }
+    cur += ch;
+    used += size;
+  }
+  out.push(cur);
+  return out.join("\r\n");
+}
+
+/** JST の暦日（`YYYYMMDD`）と、人が読む形（`YYYY-MM-DD HH:MM`）をまとめて返す。 */
+function jstParts(at: Date | null | undefined): { day: string; human: string } | null {
+  if (!(at instanceof Date) || Number.isNaN(at.getTime())) return null;
+  const iso = new Date(at.getTime() + 9 * 3_600_000).toISOString();
+  return {
+    day: iso.slice(0, 10).replace(/-/g, ""),
+    human: `${iso.slice(0, 10)} ${iso.slice(11, 16)}`,
+  };
+}
+
+/** JST の暦日を 1 日後ろへ（終日イベントの `DTEND` は「その日の終わり」ではないため）。 */
+function icsNextDay(day: string): string {
+  const y = Number(day.slice(0, 4));
+  const m = Number(day.slice(4, 6));
+  const d = Number(day.slice(6, 8));
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return day;
+  const next = new Date(Date.UTC(y, m - 1, d + 1));
+  return next.toISOString().slice(0, 10).replace(/-/g, "");
+}
+
+/** UID に載せる語を作る（同じ締切が再購読で重複しないよう、ビルドをまたいで同じ値にする）。 */
+function icsUidSafe(value: unknown): string {
+  return String(value ?? "")
+    .replace(/[^A-Za-z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 96);
+}
+
+/**
+ * カレンダー購信用の 1 本（`deadlines.ics`）を作る（第 266 回）。
+ *
+ * 画面の一覧は便利だが、締切はそこに開いて読まないと見えない。研究者の実際の動作は
+ * 「自分のカレンダーに入れておく」で、これまでその出口が画面にも機械にも無かった
+ * （`llms.txt` の一覧にも `.ics` は無く、実在しない物として検査で縛られていた）。
+ *
+ * 形:
+ *   - **1 締切 = 1 イベント**（会期は入れない。会期は `type === "event"` の側）。
+ *   - **終日イベント**（`VALUE=DATE`）で、日は **JST の暦日**。サイトの「日時（JST）」欄が
+ *     出している日と同じ日になる。終日にするのは、締切に継続時間が無いから –
+ *     「何時から何時まで」を作るのは締切の推測になる（収録の契約）。時刻その物は
+ *     `DESCRIPTION` に JST で書く。
+ *   - 過ぎた締切は入れない。日付だけ出ていて過ぎたか確かめられない物は残す（消すほうが噓）。
+ *   - `estimated`（上流の推定）は行の語と同じ「推定」を要約に付ける。
+ *   - `UID` はビルドをまたいで同じ。購読先では同じ締切が更新になり、重複しない。
+ */
+export function toIcsText(
+  records: DataRecord[] | null | undefined,
+  now: Date | null | undefined,
+): string {
+  const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
+  const stamp = jstParts(safeNow);
+  const rows: Array<{ day: string; at: number; body: string[] }> = [];
+  const used = new Map<string, number>();
+  for (const rec of records ?? []) {
+    if (!rec || typeof rec !== "object" || rec.type !== "deadline") continue;
+    const dl = rec.deadline;
+    if (!dl) continue;
+    const conf = rec.conf ?? {};
+    const ed = rec.edition ?? {};
+    const kind = String(rec.kind_label ?? "").trim() || "締切";
+    let day: string;
+    let whenText: string;
+    let atMs: number;
+    if (isDateOnlyDeadline(dl)) {
+      if (dateOnlyState(dl.local_date, safeNow) === "definitely-past") continue;
+      const raw = String(dl.local_date ?? "")
+        .replace(/-/g, "")
+        .slice(0, 8);
+      if (!/^\d{8}$/.test(raw)) continue;
+      day = raw;
+      whenText = `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}（時刻未確認）`;
+      // 並び順のための時刻（JST 正午）。表示には使わない – 終日イベントにするため。
+      atMs = Date.UTC(
+        Number(raw.slice(0, 4)),
+        Number(raw.slice(4, 6)) - 1,
+        Number(raw.slice(6, 8)),
+        12 - 9,
+      );
+    } else {
+      if (exactDeadlineState(dl.at_utc, safeNow) === "past") continue;
+      const parts = jstParts(dl.at_utc);
+      if (!parts) continue;
+      day = parts.day;
+      whenText = `${parts.human}（JST）`;
+      atMs = dl.at_utc.getTime();
+    }
+    const title = titleWithYear(conf.title, ed.year);
+    const summary = rec.estimated ? `${title}：${kind}（推定）` : `${title}：${kind}`;
+    const link = ed.link || conf.link || "";
+    const desc = [
+      `会議: ${title}`,
+      `種別: ${kind}`,
+      `締切: ${whenText}`,
+      rec.estimated ? "この日付は上流が推定として出したもので、公式で裏を取れていません" : "",
+      link ? `詳細: ${link}` : "",
+      `収録: ${ICS_CAL_NAME_JA}（データ生成: ${stamp ? `${stamp.human}（JST）` : "未確認"}）`,
+    ].filter(Boolean);
+    /* UID に日付は載せない。上流で一番起きる変更は締切日その物で、日付を UID に載せると
+       「同じ締切が動いた」のに新しい UID になり、購読先には古い日付のイベントが残る
+       （第 266 回 – 古い方が画面に出続けたままになるのが一番危ない）。
+       種別は日本語なのでそのままでは UID の文字種に収まらない。収まる物は残し、
+       収まらない物は短くハッシュする（ビルドをまたいで同じ値）。 */
+    const kindTag =
+      icsUidSafe(kind) || createHash("sha1").update(kind, "utf8").digest("hex").slice(0, 8);
+    const base = [
+      "kamiyobi",
+      icsUidSafe(ed.edition_id || `${conf.key ?? "conf"}-${ed.year ?? ""}`),
+      kindTag,
+    ]
+      .filter(Boolean)
+      .join("-");
+    const n = used.get(base) ?? 0;
+    used.set(base, n + 1);
+    rows.push({
+      day,
+      at: atMs,
+      body: [
+        "BEGIN:VEVENT",
+        `UID:${base}${n === 0 ? "" : `-${n + 1}`}@kamiyobi`,
+        `DTSTAMP:${safeNow
+          .toISOString()
+          .replace(/[-:]/g, "")
+          .replace(/\.\d{3}/, "")}`,
+        `DTSTART;VALUE=DATE:${day}`,
+        `DTEND;VALUE=DATE:${icsNextDay(day)}`,
+        `SUMMARY:${icsEscapeText(summary)}`,
+        `DESCRIPTION:${icsEscapeText(desc.join("\n"))}`,
+        link ? `URL:${String(link).trim()}` : "",
+        "TRANSP:TRANSPARENT",
+        "END:VEVENT",
+      ].filter(Boolean),
+    });
+  }
+  rows.sort((a, b) => a.at - b.at || cmpStr(a.body[5] ?? "", b.body[5] ?? ""));
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//kamiyobi//deadlines//JA",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    `X-WR-CALNAME:${icsEscapeText(ICS_CAL_NAME_JA)}`,
+    `X-WR-CALDESC:${icsEscapeText(ICS_CAL_DESC_JA)}`,
+    "X-WR-TIMEZONE:Asia/Tokyo",
+    "X-PUBLISHED-TTL:P1D",
+    "REFRESH-INTERVAL;VALUE=DURATION:P1D",
+    ...rows.flatMap((r) => r.body),
+    "END:VCALENDAR",
+    "",
+  ]
+    .map(icsFoldLine)
+    .join("\r\n");
+}
+
 export function toUpcomingHtml(markdown: string, styleBlock = ""): string {
   const inlineMd = (value: string): string =>
     escapeHtmlText(value)
@@ -3354,6 +3561,7 @@ export async function buildAll(
    * この文字列から作る（同じ表を二重に作らないため）。 */
   const upcomingMd = toUpcomingMd(records, nowUtc, upcomingDays);
   write("upcoming.md", upcomingMd);
+  write("deadlines.ics", toIcsText(records, nowUtc));
 
   // セマンティックレコメンド用の埋め込み（transformers.js が無ければスキップして語彙のみで動作）
   if (!opts.noEmbeddings) {

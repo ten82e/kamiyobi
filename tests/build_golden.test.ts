@@ -1180,10 +1180,15 @@ it("llms.txt indexes generated outputs", () => {
     "catalog.json",
     "recommendation-index.json",
     "app.js",
+    "deadlines.ics",
   ]) {
     expect(text, `llms.txt 出力一覧は ${name} を載せる`).toContain(name);
   }
-  expect(text).not.toMatch(/\.ics/);
+  /* 実在しない出力を載せない見張り（第 242 回）。`deadlines.ics` は第 266 回から実在するので、
+     カレンダーのファイル名が 1 本きりであることを見る（増えたのに索引に無い、を許さない）。 */
+  expect(text.match(/[\w.-]+\.ics/g), "llms.txt に出る .ics が一覧と違う").toEqual([
+    "deadlines.ics",
+  ]);
 });
 
 it("README links every machine-readable output file (data.csv regression)", () => {
@@ -3376,7 +3381,7 @@ it("toLlmsTxt documents outputs and categories correctly", () => {
   expect(text).toContain("catalog.json");
   expect(text).toContain("recommendation-index.json");
   expect(text).toContain("app.js");
-  expect(text).not.toMatch(/\.ics/);
+  expect(text).toContain("deadlines.ics");
   expect(text).toContain("実在値: systems");
 });
 
@@ -3925,7 +3930,14 @@ it("buildAll handles null and undefined arguments safely and setRoot works (#336
   expect(stats.deadlines).toBe(0);
   expect(existsSync(join(tmpDir, "data.json"))).toBe(true);
   expect(existsSync(join(tmpDir, "data.csv"))).toBe(true);
-  expect(readdirSync(tmpDir).some((name) => name.endsWith(".ics"))).toBe(false);
+  /* 収録が 0 件のときのカレンダーは、空でも形式として成立していること（購読する側は
+     ファイルの在無で壊れたか分からない）。ただし**イベントを 1 件も作らない**こと –
+     何もない状態から締切を作らない（第 266 回で `.ics` が出たので、見張りの意味を移す）。 */
+  expect(readdirSync(tmpDir).some((name) => name.endsWith(".ics"))).toBe(true);
+  const emptyIcs = readFileSync(join(tmpDir, "deadlines.ics"), "utf8");
+  expect(emptyIcs).toContain("BEGIN:VCALENDAR");
+  expect(emptyIcs).toContain("END:VCALENDAR");
+  expect(emptyIcs).not.toContain("BEGIN:VEVENT");
 });
 
 it("parseCliArgs and cliMain handle null/undefined and direct arguments (#340)", async () => {

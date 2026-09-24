@@ -488,6 +488,12 @@ label.check input:checked + span { color: var(--fg); }
   margin-left: auto;
 }
 .btn-reset:hover { color: var(--fg); border-color: var(--muted); }
+/* ボタンの格好を `<a>` に借りさせる（第 266 回 – カレンダー配用の導線）。下線を引くと
+   本文のリンクと混ざって、押せる物なのか読み分けにくい。 */
+a.btn-reset {
+  display: inline-block;
+  text-decoration: none;
+}
 
 .sample-btn {
   font-size: 0.75rem;
@@ -821,6 +827,7 @@ footer a:hover { text-decoration: underline; }
   #drawerBackdrop,
   .count-hint,
   #tableScrollHint,
+  #icsLink,
   .sortbar,
   .recommend-only,
   footer .btn-reset { display: none !important; }
@@ -1024,6 +1031,10 @@ footer a:hover { text-decoration: underline; }
     <span id="countLive" class="sr-label" aria-live="polite"></span><span id="count"></span>
     <!-- 絞り込んだ結果は表計算へ持ち出して研究室内の予定表に貼れる（BOM 付き UTF-8） -->
     <button id="exportCsv" type="button" class="btn-reset" hidden></button>
+    <!-- 締切はカレンダーに入れておかないと、この画面を開いた人にしか見えない（第 266 回）。
+         画面の絞り込みは引き継げないので、収録の全体を購読する形になることはリンクの注記とてびきに書く。 -->
+    <!-- 閉じタグを折り畳まない（`</a\n>` の形にすると、タグの対応を見る検査が素直に読めない）。 -->
+    <a id="icsLink" class="btn-reset" href="deadlines.ics" title="収録している今後の締切を全て、カレンダーアプリで読める形（RFC 5545）にしたファイルです。画面の絞り込みは引き継がれません。同じ場所を購読先に指定すると毎日更新されます。">カレンダーに追加（.ics）</a>
     <span class="count-hint">行を選ぶと詳細（公式確認の状態と根拠）<span class="count-kbd" style="font-family: var(--font-mono); font-size: 0.75rem;"> ｜ ショートカット: <kbd>j</kbd>/<kbd>k</kbd>・<kbd>↓</kbd>/<kbd>↑</kbd> 選択 | <kbd>Enter</kbd> 開く | <kbd>d</kbd> 詳細 | <kbd>Esc</kbd> 閉じる | <kbd>/</kbd> 検索</span></span>
   </div>
   <div id="historyStatus" aria-live="polite" hidden style="padding: 0 0 12px; text-align: center; color: var(--muted);">
@@ -1224,6 +1235,18 @@ footer a:hover { text-decoration: underline; }
       <div>
     <dt>論文の入力とサンプル</dt>
     <dd>「投稿先を探す」には、投稿予定の論文を PDF・TXT で選ぶか、下の欄に直接打ちます。欄の下の「入力の例」のボタンは、押すと欄の中身をその例に<strong>入れ替えます</strong>。すでに打ち込んだ物があるときは、押した直後に「直前の入力に戻す」が出るので元に戻せます（変更前は、何も告げずに打ち込んだ物を消していました）。PDF・TXT を選んだときの差し替えも同じボタンで戻せます（「複数可」とあっても、新しく選んだ物で入れ替わります）。押すと検索も一緒に走るので、入力の形を確かめたらそのまま候補を見られます。</dd>
+    <dt>カレンダーに追加（.ics）</dt>
+    <dd>
+      締切はこの画面を開いた人にしか見えません。<strong>自分のカレンダーに入れておくと、締切の朝に
+      自分で覚えに行かなくて良くなります</strong>。「カレンダーに追加（.ics）」のリンクがそのファイル
+      （<code>deadlines.ics</code>）で、開くとカレンダーアプリが立ち上がることがあります。
+      <strong>収録している今後の締切が全て対象で、画面の絞り込みは引き継がれません</strong>（過ぎた締切は
+      入りません）。1 件 = 1 つの締切で、その日（JST の暦日）を埋める形に出します。締切に継続時間は
+      無いので、時間帯は作りません。時刻が公式に出ていない物には説明に「<strong>時刻未確認</strong>」、
+      上流が推定として出した日付には要約に「<strong>推定</strong>」と書きます。このファイルの場所を
+      そのままカレンダーの<strong>購読先（URL）</strong>に指定すると、毎日（日本時間の朝の更新のあと）
+      新しい一覧に置き換わります。ダウンロードしたファイルは写しなので、置きっ放しにすると古くなります。
+    </dd>
   </div>
 </dl>
   </details>
