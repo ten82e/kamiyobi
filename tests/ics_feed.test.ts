@@ -19,7 +19,7 @@ import {
   type DataRecord,
   icsEscapeText,
   icsFoldLine,
-  icsSessionSpanJa,
+  sessionSpanJa,
   toIcsText,
 } from "../src/build.ts";
 import { site } from "./built_golden_shared.ts";
@@ -1038,7 +1038,7 @@ describe("会期を出張の段取りに使えるよう、予定の本文に書�
   });
 
   it("合成の行で、会期の形が決まったとおりになる", () => {
-    const span = icsSessionSpanJa;
+    const span = sessionSpanJa;
     // 複数日 – 曜日を添えて「 〜 」で繋ぐ（`upcoming.md` の会期欄と同じ手の値）。
     expect(span("2027-04-06", "2027-04-09", false), "範囲の形が違う").toBe(
       "2027-04-06(火) 〜 2027-04-09(金)",

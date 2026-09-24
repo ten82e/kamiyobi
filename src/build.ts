@@ -3261,7 +3261,7 @@ export function icsCategoryList(labels: string[]): string {
 /* カレンダーの本文に書く会期の表示（第 304 回）。`upcoming.md` の会期行と同じ手の値にする –
  * 曜日を添えるのも同じ（出張・会場押さえは曜日で見込むため）。会期その物の終日イベントは立てない
  * – 終日が並ぶと締切の行が見えなくなる（第 266 回）。 */
-export function icsSessionSpanJa(
+export function sessionSpanJa(
   start: unknown,
   end: unknown,
   estimated: boolean | null | undefined,
@@ -3351,7 +3351,7 @@ export function icsEventRows(
        * `DESCRIPTION` に会期は 1 行も無く、出張の段取りをカレンダーでは決められなかった（会期の
        * 日を知りたくてサイトを再び開く形）。会期その物の終日イベントは立てられないので（第 266
        * 回）、予定の本文に 1 行足す形にした – `LOCATION` を足した第 288 回と同じ動機。 */
-      `会期: ${icsSessionSpanJa(ed.event_start, ed.event_end, ed.estimated) || Recommender.unconfirmedLabelJa()}`,
+      `会期: ${sessionSpanJa(ed.event_start, ed.event_end, ed.estimated) || Recommender.unconfirmedLabelJa()}`,
       `開催地: ${placeJa || Recommender.unconfirmedLabelJa()}`,
       rec.estimated ? "この日付は上流が推定として出したもので、公式で裏を取れていません" : "",
       link ? `詳細: ${link}` : "",
@@ -3774,8 +3774,15 @@ export function toUpcomingMd(
       }
       const kindText = escapeMdCell(rec.kind_label);
       const roundText = `R${dl.round}`;
+      /* 会期列（第 305 回）。実測（2026-08-09 生成ビルド）で、この表の 1,126 行のうち 795 行は
+       * 締切・採否通知などで、日付列に会議が開かれている日が入らない – カレンダー（第 304 回）と
+       * 画面には会期が有るのに、この表だけで読む人（印刷・JavaScript なし）だけ出張の段取りが
+       * 決まらなかった。形はカレンダーの本文と同じ正本を呼ぶ。列は末尾に足す（第 302 回）。 */
+      const sessionText =
+        sessionSpanJa(ed.event_start, ed.event_end, ed.estimated) ||
+        Recommender.unconfirmedLabelJa();
       rows.push(
-        `| ${when} | ${left} | ${name} | ${kindText} | ${roundText} | ${ed.estimated ? "推定" : ""} | ${placeEscaped} |`,
+        `| ${when} | ${left} | ${name} | ${kindText} | ${roundText} | ${ed.estimated ? "推定" : ""} | ${placeEscaped} | ${sessionText} |`,
       );
     } else {
       const start = ed.event_start;
@@ -3802,7 +3809,7 @@ export function toUpcomingMd(
       const endText = `${fmtDate(end)}${calendarDayJa(end) ? `(${calendarDayJa(end)})` : ""}`;
       const when = end.getTime() !== start.getTime() ? `${startText} 〜 ${endText}` : startText;
       rows.push(
-        `| ${when} | ${left} | ${name} | 開催 | - | ${ed.estimated ? "推定" : ""} | ${placeEscaped} |`,
+        `| ${when} | ${left} | ${name} | 開催 | - | ${ed.estimated ? "推定" : ""} | ${placeEscaped} | ${when} |`,
       );
     }
   }
@@ -3833,6 +3840,9 @@ export function toUpcomingMd(
     "> 列の意味: 「残り」は生成時刻からの残り（1 分未満は 1 分、以降は日）。種別が「開催」の行は",
     "> 締切ではなく会議の会期そのもので、残りの列は「本日開催」「開催中(残り N 日)」と書く。",
     "> 「ラウンド」は同じ会議の中の繰り返しの募集（R1・R2 のように数える。会期行は「-」）。",
+    "> 「会期」は会議が開かれている日の範囲で、出張の段取りはこの列を見る（`deadlines.ics` の",
+    "> 各予定の本文に書いた物と同じ値で、上流が推定とした会期には「（推定）」を添える）。種別が",
+    "> 「開催」の行は日付列が会期その物なので、同じ値を繰り返す。",
     "> 「推定」は前年までの実績から機械的に置いた未確認の値で、公式の発表ではない。",
     /* 目印の語はこの表に実際に並ぶ物だけ説明する（2026-08-09 生成ビルドの実測: 1,127 行の
      * うち開催地が「未確認」182 行、日付に「（時刻未確認）」を持つ行 180 行、AoE の宣言が
@@ -3844,10 +3854,10 @@ export function toUpcomingMd(
     "> 出すかが公式に出ていない行。",
     `> ${Recommender.aoeMeaningJa()}。`,
     "",
-    "| 日付 | 残り | 会議 | 種別 | ラウンド | 推定 | 開催地 |",
-    "|---|---|---|---|---|---|---|",
+    "| 日付 | 残り | 会議 | 種別 | ラウンド | 推定 | 開催地 | 会期 |",
+    "|---|---|---|---|---|---|---|---|",
   ];
-  if (rows.length === 0) rows.push("| - | - | 該当なし | - | - | - | - |");
+  if (rows.length === 0) rows.push("| - | - | 該当なし | - | - | - | - | - |");
   /* 1,000 行を超える表なので、最後まで読んだ人にも出口を置く（`upcoming.html` と同じ言い回しを
    * 同じ正本から使う）。GitHub の生的な表示では、この名前はコードspanになるだけで辿れない。 */
   const tail = [

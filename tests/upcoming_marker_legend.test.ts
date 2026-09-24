@@ -228,3 +228,141 @@ ${labelNames.map((n) => `      ${n}: () => ${JSON.stringify(labelValue(rec, n))}
     expect(upcoming).toContain("の一覧");
   });
 });
+
+/* --- 第 305 回: この表だけで出張の段取りを決められるか -------------------------
+ *
+ * 2026-08-09 生成ビルドで実測した形:
+ *   - 1,126 データ行のうち **795 行**が締切・採否通知などで、日付列に会議が開かれている日が
+ *     入らなかった。品書では 1,434 の版が会期を持ち、画面には「会期」列が、`deadlines.ics` の
+ *     本文にも「会期: 」（第 304 回）が有った – この表だけで読む人（印刷・JavaScript なし）だけ
+ *     が会期を知らされず、出張の段取りを決めるためにサイトを再び開く形。
+ *   - 直し方: 見出しの末尾に「会期」列を足し、`sessionSpanJa`（カレンダーの本文と同じ正本）を
+ *     呼んだ。既存の列の位置は変えない（第 302 回と同じ約束）。
+ *   - 実測（同じビルド）: 日付の入った会期 942 行・未確認 184 行（合計 1,126 – 全行に 1 個）。
+ *     `upcoming.md` +34,486 B・`upcoming.html` +63,829 B で、他の出口は 0 B。
+ */
+describe("表だけで出張の段取りを決められるよう、会期列を足す（第 305 回）", () => {
+  /* ページ本体は検査の中で読む（`site` は共有部品が beforeAll で決めるので、describe の
+   * 本体で読むと未確定のパスを渡してしまう）。 */
+  const md = () => page("upcoming.md");
+  const html = () => page("upcoming.html");
+
+  function mdRows(src: string): { head: string[]; rows: string[][] } {
+    const lines = src.split("\n").filter((l) => l.startsWith("|"));
+    const head = lines[0]
+      .split("|")
+      .slice(1, -1)
+      .map((c) => c.trim());
+    const rows = lines
+      .slice(1)
+      .filter((l) => !/^\|[-| ]+\|$/.test(l))
+      .map((l) =>
+        l
+          .split("|")
+          .slice(1, -1)
+          .map((c) => c.trim()),
+      );
+    return { head, rows };
+  }
+
+  /* 会期の値の形（第 304 回でカレンダーに書いた形と同一の正本）。 */
+  const SPAN =
+    /^\d{4}-\d{2}-\d{2}\([日月火水木金土]\)( 〜 \d{4}-\d{2}-\d{2}\([日月火水木金土]\))?(?:（推定）)?$/;
+
+  it("見出しは末尾に会期が増え、既存の列の位置は変わっていない", () => {
+    const { head } = mdRows(md());
+    expect(head.slice(0, 7), "既存の列の並びが変わった").toEqual([
+      "日付",
+      "残り",
+      "会議",
+      "種別",
+      "ラウンド",
+      "推定",
+      "開催地",
+    ]);
+    expect(head[7], "会期列が末尾に無い").toBe("会期");
+  });
+
+  it("全行に会期が 1 個並び、列の数も揃う", () => {
+    const { head, rows } = mdRows(md());
+    expect(rows.length, "データ行が読めない").toBeGreaterThan(100);
+    let dated = 0;
+    let unknown = 0;
+    for (const cells of rows) {
+      expect(cells.length, `列数が揃っていない行: ${cells.join(" | ").slice(0, 60)}`).toBe(
+        head.length,
+      );
+      const value = cells[7];
+      if (value === "未確認") unknown += 1;
+      else if (SPAN.test(value)) dated += 1;
+      else expect.fail(`想定外の会期の値: ${JSON.stringify(value)}`);
+    }
+    expect(dated, "会期の日付が入った行が 1 行も無い（空振りの検査になる）").toBeGreaterThan(0);
+    expect(unknown, "分からない会期が 1 件も無い（空振りの検査になる）").toBeGreaterThan(0);
+    expect(dated + unknown, "会期の行の数がデータ行と合わない").toBe(rows.length);
+  });
+
+  it("種別が「開催」の行は、日付列と同じ会期を書く（二重の意味を持たせない）", () => {
+    const { rows } = mdRows(md());
+    const eventRows = rows.filter((cells) => cells[3] === "開催");
+    expect(eventRows.length, "会期行が 1 行も読めない").toBeGreaterThan(0);
+    for (const cells of eventRows) {
+      expect(cells[7], `日付列と会期列がずれている: ${cells[2]}`).toBe(cells[0]);
+    }
+  });
+
+  it("カレンダーの本文に書いた会期と、この表の会期が同じ文字列（正本は 1 本）", () => {
+    const ics = readFileSync(join(site, "deadlines.ics"), "utf8")
+      .replace(/\r\n(?=[ \t])/g, "")
+      .replace(/\r/g, "");
+    const byConf = new Map<string, string>();
+    for (const block of ics.split("BEGIN:VEVENT").slice(1)) {
+      const body = block.split("END:VEVENT")[0];
+      const conf = /^DESCRIPTION:(.*)$/m
+        .exec(body)?.[1]
+        .split("\\n")[0]
+        ?.replace(/^会議: /u, "");
+      const span = String(
+        /^DESCRIPTION:(.*)$/m
+          .exec(body)?.[1]
+          .split("\\n")
+          .find((l) => l.startsWith("会期: ")) ?? "",
+      ).slice("会期: ".length);
+      if (conf && SPAN.test(span)) byConf.set(conf, span);
+    }
+    expect(byConf.size, "カレンダー側で会期の日付が読める予定が 1 件も無い").toBeGreaterThan(0);
+    const { rows } = mdRows(md());
+    let checked = 0;
+    for (const cells of rows) {
+      const title = /^\[(.*)\]\(.*\)$/.exec(cells[2])?.[1];
+      const fromIcs = title ? byConf.get(title) : undefined;
+      if (!fromIcs) continue;
+      expect(cells[7], `表とカレンダーで会期がずれている: ${title}`).toBe(fromIcs);
+      checked += 1;
+      if (checked >= 8) break;
+    }
+    expect(checked, "表とカレンダーを突き合わせられた行が 1 件も無い").toBeGreaterThanOrEqual(8);
+  });
+
+  it("HTML の側にも会期列が並び、値はマークダウンと同じ形", () => {
+    expect(html().includes('<th scope="col">会期</th>'), "HTML に見出しの会期列が無い").toBe(true);
+    const cells = [...html().matchAll(/data-label="会期"[^>]*>([^<]*)</g)].map((m) => m[1].trim());
+    expect(cells.length, "HTML の会期欄が 1 個も読めない").toBeGreaterThan(100);
+    const dated = cells.filter((v) => SPAN.test(v));
+    expect(dated.length, "HTML の会期欄に日付が 1 個も無い").toBeGreaterThan(0);
+    expect(cells.filter((v) => v === "未確認").length, "HTML に未確認の会期が無い").toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("列の意味の説明に、会期列の読み方が書いてある", () => {
+    for (const line of legendLines(md())) {
+      if (line.includes("「会期」")) return;
+    }
+    expect.fail("マークダウンの説明に「会期」列の意味が無い");
+  });
+
+  it("HTML の側にも同じ説明が並ぶ（説明を 2 か所に手書きしない）", () => {
+    expect(html().includes("出張の段取りはこの列を見る"), "HTML に会期列の説明が無い").toBe(true);
+  });
+});

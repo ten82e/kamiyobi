@@ -94,22 +94,22 @@ describe("一覧の表が閉じ要素まで揃った HTML で出る（第 279 �
     }
   });
 
-  it("直近の締切と会期の表は、すべての行が 7 列持っている", () => {
+  it("直近の締切と会期の表は、すべての行が 8 列持っている", () => {
     const src = body("upcoming.html");
     const list = rows(src);
     expect(list.length, "行が無い（組み立てが壊れた）").toBeGreaterThan(100);
-    // 見出しの行（`scope="col"` を持つ行）は別扱いで、そちらも 7 個であることを見る。
+    // 見出しの行（`scope="col"` を持つ行）は別扱いで、そちらも 8 個であることを見る。
     const headRow = list.find((r) => r.includes('scope="col"'));
     expect(headRow, "見出しの行が無い").toBeTruthy();
     expect(
       [...String(headRow).matchAll(/<th\b[\s\S]*?<\/th>/g)].map((m) => cellText(m[0])),
       "列の名が変わった",
-    ).toEqual(["日付", "残り", "会議", "種別", "ラウンド", "推定", "開催地"]);
+    ).toEqual(["日付", "残り", "会議", "種別", "ラウンド", "推定", "開催地", "会期"]);
     const data = list.filter((r) => r.includes("<td"));
     expect(data.length, "データの行が無い").toBeGreaterThan(100);
     /* 第 284 回から行の先頭（「どの会議か」）が行ヘッダー（`<th scope="row">`）なので、
      * マスの数は `td` だけで数えると足りなく見える。両方合わせて数える。 */
-    const bad = data.filter((r) => (r.match(/<t[hd]\b/g) || []).length !== 7);
+    const bad = data.filter((r) => (r.match(/<t[hd]\b/g) || []).length !== 8);
     expect(bad.slice(0, 2), `${bad.length} 行が 7 列でない`).toEqual([]);
   });
 });

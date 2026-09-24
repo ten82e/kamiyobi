@@ -3663,7 +3663,7 @@ it("escapeMdCell escapes pipe characters and collapses newlines (#236)", () => {
   expect(escapeMdCell(undefined)).toBe("");
 });
 
-it("toUpcomingMd escapes pipe characters in title and place preserving 7-column table layout (#236)", () => {
+it("toUpcomingMd escapes pipe characters in title and place preserving 8-column table layout (#236)", () => {
   const records = [
     {
       type: "deadline" as const,
@@ -3736,11 +3736,11 @@ it("toUpcomingMd escapes pipe characters in title and place preserving 7-column 
   expect(md).toContain("[Symposium \\| Special Track 2026](https://example.com)");
   expect(md).toContain("Kyoto \\| 対面");
 
-  // テーブルの各行の列区切り（エスケープされていないパイプ）が正確に 8 本（7 列）であることを検証
+  // テーブルの各行の列区切り（エスケープされていないパイプ）が正確に 9 本（8 列）であることを検証
   const tableRows = md.split("\n").filter((l) => l.startsWith("|") && !l.includes("---"));
   for (const row of tableRows) {
     const unescapedPipes = row.split(/(?<!\\)\|/g).length - 1;
-    expect(unescapedPipes).toBe(8);
+    expect(unescapedPipes).toBe(9);
   }
 });
 
@@ -3779,7 +3779,7 @@ it("escapeMdUrl sanitizes pipes, spaces, newlines, and parentheses (#284)", () =
   expect(escapeMdUrl(undefined)).toBe("");
 });
 
-it("toUpcomingMd escapes pipe characters in URLs and preserves 7 table columns (#284)", () => {
+it("toUpcomingMd escapes pipe characters in URLs and preserves 8 table columns (#284)", () => {
   const records = [
     {
       type: "deadline" as const,
@@ -3824,7 +3824,7 @@ it("toUpcomingMd escapes pipe characters in URLs and preserves 7 table columns (
   const tableRows = md.split("\n").filter((l) => l.startsWith("|") && !l.includes("---"));
   for (const row of tableRows) {
     const unescapedPipes = row.split(/(?<!\\)\|/g).length - 1;
-    expect(unescapedPipes).toBe(8); // 8 pipes = 7 columns
+    expect(unescapedPipes).toBe(9); // 9 pipes = 8 columns
   }
 });
 
