@@ -874,6 +874,32 @@ footer a:hover { text-decoration: underline; }
   footer #repolink { display: none !important; }
 }
 
+/* 縦に長い表（静的な一覧 `upcoming.html` は実測 1,127 行）では、少しスクロールするだけで
+ * 列の名前が画面から消え、800 行目の数字が「残り」なのか「会期」か読めなかった
+ * （2026-09-23 実測: スタイルシートに `sticky` は 1 度も無い）。見出しを粘らせる。
+ * ただし `.tablewrap` の `overflow-x: auto` は粘着を止める（内側に貼り付く扱いになり、
+ * この箱は高さを持たないので効かない）。横に越えない幅だけ `overflow` を戻す。
+ * 越えない幅の計算: 表の `min-width: 880px` + `.wrap` の左右 24 px x 2 +
+ * `.tablewrap` の枠 1 px x 2 + 縦スクロールバー 17 px = 947 px。**バーの分を忘れると、
+ * ぎりぎりの幅でページ全体の横スクロールが起きてしまう**（はみ出した物を隠す `auto` を
+ * 外すため）。余裕を持って 960 px とする。狭い幅では表がはみ出すので `auto` のまま
+ * （その幅では横スクロールの案内が出ている）。 */
+@media (min-width: 960px) {
+  .tablewrap {
+    overflow-x: visible;
+  }
+  .tablewrap thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  /* 並び替えられない列の見出し地は半透明なので、粘着中に下を走る行が透ける。
+     不透明な下地を敷く（並び替えられる列は不透明な地を既に持っている）。 */
+  .tablewrap thead th:not([data-sort]) {
+    background-color: var(--panel);
+  }
+}
+
 </style>
 </head>
 <body>

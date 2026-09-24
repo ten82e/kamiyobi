@@ -35,6 +35,7 @@
 | `https://ten82e.github.io/kamiyobi/deadlines.ics` | 締切をカレンダーに入れる 1 本（RFC 5545）。終日（JST の暦日）で 1 締切 = 1 イベント。購読先に指定すると毎日置き換わる |
 他に、1 行 1 締切の平坦な表 [`data.csv`](https://ten82e.github.io/kamiyobi/data.csv) と、直近 180 日の締切と開催の表 `upcoming.md` がある。
 `upcoming.md` の日付も公式表記どおりに書き、曜日を添える（`2026-08-17(月) 23:59 JST`）。JST 宣言の国内会議は `2026-08-17 23:59 JST`、公式が AoE のものだけ `… AoE`、
+- 静的な直近一覧 [`upcoming.html`](https://ten82e.github.io/kamiyobi/upcoming.html) は 1,000 行を超える長さがあるので、**終端にも「先頭に戻る」「締切の一覧に戻る」を置きました**（以前は先頭に 1 個だけで、最後の行まで読むと約 50 画面ぶん戻らなりませんでした）。広い画面では**列の名前がスクロール後も残ります**（横に越えない幅だけ粘着させ、越える幅では従来どおり横スクロールで続きに辿れます）。
 - 静的な直近一覧のページ [`upcoming.html`](https://ten82e.github.io/kamiyobi/upcoming.html) の先頭からも、同じ場所の `deadlines.ics` へ辿れます（JavaScript が動かない画面の案内にも同じ出口を置きました）。
 表記なしは `… UTC`、`PT` などそれ以外の表記は `… UTC（公式 PT）`（換算せず原文を添える）。
 

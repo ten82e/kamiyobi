@@ -4401,9 +4401,14 @@ it("the card layout actually fits a phone width (SPEC §7)", () => {
   // 880px を残したままだとカード自体が 880px になり、1 行読むのに横スワイプが要る。
   expect(effectiveCss(style, "table", "min-width", 400)).toBe("0");
   expect(effectiveCss(style, ".tablewrap", "overflow-x", 400)).not.toBe("auto");
-  // 広い画面では従来どおり（横並びの表・スクロール可）でないと意味が無い。
+  // 広い画面では従来どおり（横並びの表）でないと意味が無い。
   expect(effectiveCss(style, "table", "min-width", 1200)).toBe("880px");
-  expect(effectiveCss(style, ".tablewrap", "overflow-x", 1200)).toBe("auto");
+  /* 第 269 回まで、広い画面では `.tablewrap` が `overflow-x: auto` であることをここで
+     見ていた。意図は「表が潰れない」ことだったが、列の名前をスクロール後も残すため、
+     横に越えない幅では `overflow` を戻すようになった（`overflow` が有ると見出しの粘着が
+     効かない）。なので、はみ出す幅で `auto` のままと見る（粘着の幅その物は
+     `tests/upcoming_long_table.test.ts` が「越えない幅だけ」で見る）。 */
+  expect(effectiveCss(style, ".tablewrap", "overflow-x", 900)).toBe("auto");
 });
 
 it("category chips count the rows that pass the other filters (SPEC §7)", () => {

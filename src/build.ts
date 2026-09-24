@@ -3053,6 +3053,14 @@ export function toIcsText(
     .join("\r\n");
 }
 
+/* 静的な一覧（`upcoming.html`）の入口と終端で使う言い回し。同じ語を 2 か所に書くと
+ * 片方だけ直してズレるので、1 個の正本から組む。このページの本文は 1,127 行あり、
+ * 「戻る」は先頭に 1 つしか無かった（最後の行を読んだ人は約 50 画面ぶん上に戻ら
+ * なければならなかった – 2026-09-23 実測: `index.html` へのリンクは文書全体で 1 個、
+ * `</table>` のうしろには何も無い）。 */
+const UPCOMING_BACK_LABEL_JA = "&larr; 締切の一覧に戻る";
+const UPCOMING_TOP_LABEL_JA = "&uarr; 先頭に戻る";
+
 export function toUpcomingHtml(markdown: string, styleBlock = ""): string {
   const inlineMd = (value: string): string =>
     escapeHtmlText(value)
@@ -3136,7 +3144,9 @@ export function toUpcomingHtml(markdown: string, styleBlock = ""): string {
     "</head>",
     "<body>",
     '<main class="wrap">',
-    '<p><a href="index.html">&larr; 締切の一覧に戻る</a>（同じ収録内容の一覧で、日本時間への' +
+    '<p id="top"><a href="index.html">' +
+      UPCOMING_BACK_LABEL_JA +
+      "</a>（同じ収録内容の一覧で、日本時間への" +
       "換算と残り日数も出します。機械が読む形のマークダウンは " +
       '<a href="upcoming.md">upcoming.md</a>、全件は <a href="data.csv">data.csv</a> にあります。' +
       '締切を自分のカレンダーに入れるには <a href="deadlines.ics">deadlines.ics</a>（今後の締切が全て、' +
@@ -3146,6 +3156,12 @@ export function toUpcomingHtml(markdown: string, styleBlock = ""): string {
     out.join("\n"),
     "</table>",
     "</div>",
+    // 長い表の終端にも出口を置く（先頭まで戻れないまま画面を閉じないために）。
+    '<p><a href="#top">' +
+      UPCOMING_TOP_LABEL_JA +
+      '</a> <a href="index.html">' +
+      UPCOMING_BACK_LABEL_JA +
+      "</a></p>",
     "</main>",
     "</body>",
     "</html>",
