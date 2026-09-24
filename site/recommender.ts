@@ -2631,6 +2631,28 @@ const Recommender = (() => {
         notes.push(`${token} = ${ymd[1]}年${ymd[2]}月${ymd[3]}日${day ? `(${day})` : ""}`);
         return;
       }
+      /* 「7日以内」「14日以内」（週から寄せた形を含む）は範囲なので、件数欄に幅を書く（第 318 回）。
+       * 週で打った人には日数への換算が見えないと「何で 60 行なのか」が分からない –
+       * 1 週 = 7 日の換算を隠さず出すための案内。 */
+      const within = withinDaysTermsJa(token, nowMs);
+      if (within) {
+        const matched = /^([0-9]{1,4})日以内$/.exec(token);
+        const days = matched ? Number(matched[1]) : 0;
+        if (days >= 1 && days <= 365) {
+          const from = offsetCalendarDay(nowMs, 0);
+          const to = offsetCalendarDay(nowMs, days);
+          const first = `${from[0]}年${from[1]}月${from[2]}日`;
+          const last = `${to[0]}年${to[1]}月${to[2]}日`;
+          const firstDay = weekdayJaFromDate(toIsoDate(first));
+          const lastDay = weekdayJaFromDate(toIsoDate(last));
+          const tail =
+            from[0] === to[0] ? `${to[1]}月${to[2]}日` : `${to[0]}年${to[1]}月${to[2]}日`;
+          notes.push(
+            `${token} = ${first}${firstDay ? `(${firstDay})` : ""}〜${tail}${lastDay ? `(${lastDay})` : ""}`,
+          );
+          return;
+        }
+      }
       const yearOffset = RELATIVE_YEAR_OFFSETS_JA[token];
       if (yearOffset !== undefined) {
         const base = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
@@ -4089,6 +4111,20 @@ const Recommender = (() => {
     来週中: 1,
     らいしゅう中: 1,
     先週中: -1,
+    /* 「再来週」は「来週」の次 – 月曜始まりの数えで今日から 8〜14 日後の塊になる。
+     * 対応する月語（`再来月`）は既に通るので、週の語だけ 0 件だった
+     * （2026-09-26 実測・2026-08-09 生成ビルドの品書 872 行: `来週` 53 行 / `再来週` **0 行**、
+     * `来週中` 53 行 / `再来週中` **0 行**、`先週` 26 行 / `先々週` **0 行**、
+     * `再来月` 188 行）。 */
+    再来週: 2,
+    再々週: 2,
+    来々週: 2,
+    さいしゅう: 2,
+    さらいしゅう: 2,
+    再来週中: 2,
+    先々週: -2,
+    せんせんしゅう: -2,
+    先々週中: -2,
   };
 
   /* 年の語も同じ形で受ける。「来年の締切はまだ出ていないのか」「今年の締切はぜんぶで
@@ -4372,12 +4408,23 @@ const Recommender = (() => {
     /* 「30 日以内」は画面の絞り込み（`7 日以内` `30 日以内` `90 日以内` `180 日以内`）と同じ
      * 文言なので、語が割ける前に 1 語へ寄せる（第 315 回）。 */
     [/([0-9]{1,4})\s*(?:日間|日|にち)\s*以内/g, (n) => `${n}日以内`],
+    /* 「1 週間以内」「2 週間後」を日数の語に寄せる（第 318 回）。**1 週 = 7 日**は暦の定義で、
+     * 画面の絞り込み（`7 日以内` `30 日以内`）と同じ形に寄せるだけで換算の發明ではない
+     * （月・年は月の長さが違うので寄せない – 下の注）。2026-09-26 実測・同じビルド:
+     * `1週間以内` `2週間以内` `3週間以内` `3週間後` すべて **0 行** / 寄せ先の `7日以内` 60 行、
+     * `14日後` 19 行、`21日後` 8 行。 */
+    [/([0-9]{1,2})\s*(?:週間|週)\s*以内/g, (n) => `${n * 7}日以内`],
+    [/([0-9]{1,2})\s*(?:週間|週)\s*(?:後|あと|先)/g, (n) => `${n * 7}日後`],
   ];
 
   /** 「あと 51 日」「51 日後」を `51日後` の 1 語に寄せる（語が割ける前にやる）。 */
   function collapseRelativeDayPhrase(query: unknown): unknown {
     if (typeof query !== "string" || !query) return query;
-    let out = query;
+    /* 全角数字はここで半角に寄せる – 上の規則は数字の形を見るので、全角のまま空格を
+       含めた打ち方（`３０ 日以内`）が語に割れて 0 件になっていた
+       （2026-09-26 実測: `３０日以内` 249 行 / `３０ 日以内` **0 行** – 照合は NFKC で畳むので
+       詰め打ちだけ救われていた）。行の語その物は畳まない – 検索語の側のみの寄せる。 */
+    let out = query.replace(/[０-９]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0xfee0));
     RELATIVE_DAY_PHRASES_JA.forEach(([pattern, to]) => {
       out = out.replace(pattern, (_all, digits) => {
         const n = Number(digits);
