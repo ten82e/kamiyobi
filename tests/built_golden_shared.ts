@@ -119,6 +119,13 @@ export const SEARCH_CANON = (() => {
     ["RELATIVE_MONTH_OFFSETS_JA", /const RELATIVE_MONTH_OFFSETS_JA[\s\S]*?\};/],
     // 「今月末」「年内」の語の表（第 327 回）。`queryTokenGroups` が呼ぶ関数と一緒に注入する。
     ["PERIOD_MONTH_WORDS_JA", /const PERIOD_MONTH_WORDS_JA[\s\S]*?\};/],
+    // 助詞・期日の言い回しの表と「今日から N 日」の単位（第 328 回）。
+    ["DATE_TOKEN_TAILS_JA", /const DATE_TOKEN_TAILS_JA[\s\S]*?\];/],
+    ["FROM_TODAY_UNIT", /const FROM_TODAY_UNIT[\s\S]*?\};/],
+    ["FROM_TODAY_HEAD", /const FROM_TODAY_HEAD = [^\n]*;/],
+    ["RELATIVE_MONTH_WITHIN", /const RELATIVE_MONTH_WITHIN = [^\n]*;/],
+    // `dateTokenStemJa` が読む表（週の語・年の語・季節の語）は既に上の注入にあるので、
+    // 同じ定数を二度並べない（`Identifier ... has already been declared` – 第 328 回で実発生）。
     ["PLACE_READINGS", /const PLACE_READINGS[\s\S]*?\];/],
     ["REGION_READINGS", /const REGION_READINGS[\s\S]*?\];/],
     // 地域まとめ（`ヨーロッパ` → 国名）は shared の国名リスト変数に依存するので、
@@ -209,6 +216,11 @@ export const SEARCH_CANON = (() => {
       "relativeMonthTerm",
       "monthTokenToYearMonth",
       "periodMonthTermsJa",
+      // 日付の語に付きだけの助詞・「まで」「今日から N 日」を剥がす部品（第 328 回）。
+      "isDateTableWordJa",
+      "dateTokenStemJa",
+      "untilDayTermsJa",
+      "fromTodayTermsJa",
       // 数値の相対日（`あと 51 日` → `51日後` → 暦日）。`relativeDayGroups` と
       // `queryTokenGroups` が呼ぶので、定義順で先に置く（第 223 回）。
       "collapseRelativeDayPhrase",

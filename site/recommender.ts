@@ -2892,7 +2892,19 @@ const Recommender = (() => {
   function relativeDayNotes(query: unknown, nowMs: number): string[] {
     const notes: string[] = [];
     queryTokens(collapseRelativeDayPhrase(query)).forEach((token) => {
-      const dayOffset = RELATIVE_DAY_OFFSETS_JA[token];
+      /* 「明日まで」「今日から 3 日」は幅なので、幅のまま書く（第 328 回）。 */
+      const span = untilDayTermsJa(token, nowMs) || fromTodayTermsJa(token, nowMs);
+      if (span) {
+        const lastYmd = lastFullDateJa(span);
+        if (lastYmd) {
+          notes.push(spanNoteFromTodayJa(token, nowMs, lastYmd));
+          return;
+        }
+      }
+      /* 助詞が付きただけの形（`明日中に` `今週中に`）は表の形に寄せてから解く –
+       * 案内は打たれた語のまま出す（見えているのはその語なので – 第 328 回）。 */
+      const key = dateTokenStemJa(token) || token;
+      const dayOffset = RELATIVE_DAY_OFFSETS_JA[key];
       if (dayOffset !== undefined) {
         const ymd = offsetCalendarDay(nowMs, dayOffset);
         const iso = `${ymd[0]}-${String(ymd[1]).padStart(2, "0")}-${String(ymd[2]).padStart(2, "0")}`;
@@ -2900,7 +2912,7 @@ const Recommender = (() => {
         notes.push(`${token} = ${ymd[0]}年${ymd[1]}月${ymd[2]}日${day ? `(${day})` : ""}`);
         return;
       }
-      const numeric = numericRelativeDay(token, nowMs);
+      const numeric = numericRelativeDay(key, nowMs);
       if (numeric) {
         const ymd = /^([0-9]{4})年([0-9]{1,2})月([0-9]{1,2})日$/.exec(numeric[1]);
         if (!ymd) return;
@@ -2911,9 +2923,9 @@ const Recommender = (() => {
       /* 「7日以内」「14日以内」（週から寄せた形を含む）は範囲なので、件数欄に幅を書く（第 318 回）。
        * 週で打った人には日数への換算が見えないと「何で 60 行なのか」が分からない –
        * 1 週 = 7 日の換算を隠さず出すための案内。 */
-      const within = withinDaysTermsJa(token, nowMs);
+      const within = withinDaysTermsJa(key, nowMs);
       if (within) {
-        const matched = /^([0-9]{1,4})日以内$/.exec(token);
+        const matched = /^([0-9]{1,4})日以内$/.exec(key);
         const days = matched ? Number(matched[1]) : 0;
         if (days >= 1 && days <= 365) {
           const from = offsetCalendarDay(nowMs, 0);
@@ -2931,13 +2943,34 @@ const Recommender = (() => {
           return;
         }
       }
-      const yearOffset = RELATIVE_YEAR_OFFSETS_JA[token];
+      const yearOffset = RELATIVE_YEAR_OFFSETS_JA[key];
       if (yearOffset !== undefined) {
         const base = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
         notes.push(`${token} = ${base.getUTCFullYear() + yearOffset}年の締切（1〜12 か月）`);
         return;
       }
-      const week = weekDayTermsJa(token, nowMs);
+      /* 「明日以降」「来週から」は「それより後」の意味で、一日ぶんの語に寄せると嘘に
+       * なる（第 328 回）。なので絞り込まず、並び方と絞れる欄の場所を言う。 */
+      const onward = /^(.+?)(?:以降|から)$/.exec(token);
+      if (onward) {
+        const stem = onward[1];
+        const dayOffset = RELATIVE_DAY_OFFSETS_JA[stem];
+        const onwardWeek = weekDayTermsJa(stem, nowMs);
+        let first = "";
+        if (dayOffset !== undefined) {
+          const ymd = offsetCalendarDay(nowMs, dayOffset);
+          first = `${ymd[0]}年${ymd[1]}月${ymd[2]}日`;
+        } else if (onwardWeek.length === 7) {
+          first = onwardWeek[0];
+        }
+        if (first) {
+          notes.push(
+            `${token} = ${first}以降のこと – 初期画面は締切の近い順に並んでいて、その以降の締切も並びます（締切までの日数で絞るなら上の『締切まで』の欄が確かです）`,
+          );
+          return;
+        }
+      }
+      const week = weekDayTermsJa(key, nowMs);
       if (week.length === 7) {
         const first = week[0].split("年");
         const last = week[6].split("年");
@@ -4287,7 +4320,11 @@ const Recommender = (() => {
   /** 相対月の語 1 つを `YYYY年M月` に解決する。該当しなければ空文字を返す。
    * 基準は JST の暦月（一覧の日時列と同じ）。年跨ぎ（12月 → 翌年1月）に対応する。 */
   function relativeMonthTerm(token: string, nowMs: number): string {
-    const offset = RELATIVE_MONTH_OFFSETS_JA[token];
+    /* `来月中に` `今月までに` `今月以内` の形で落ちた（第 328 回）。`3月以内` は
+     * 「3 か月以内」にも読めるので、相対月の語だけを寄せる。 */
+    const within = RELATIVE_MONTH_WITHIN.exec(String(token || ""));
+    const key = within ? within[1] : dateTokenStemJa(token) || token;
+    const offset = RELATIVE_MONTH_OFFSETS_JA[key];
     if (offset === undefined) return "";
     const base = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
     // 月の加算は日付を足さず月だけで行う（1/31 に 1 ヶ月足すと 3/3 になるため）。
@@ -4677,7 +4714,8 @@ const Recommender = (() => {
 
   /** 月のまとまりの語を、表に出る暦月語（`YYYY年M月`）のグループへ展開する。 */
   function periodMonthTermsJa(token: string, nowMs: number): string[] {
-    const target = PERIOD_MONTH_WORDS_JA[token];
+    /* `年内に` `今月末まで` の形も同じ表に寄せる（第 328 回 – 助詞を剥がした形が表に有るときだけ）。 */
+    const target = PERIOD_MONTH_WORDS_JA[dateTokenStemJa(token) || token];
     if (!target) return [];
     const jst = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
     if (target === "@年内") {
@@ -4825,18 +4863,165 @@ const Recommender = (() => {
     return out;
   }
 
+  /* 日付の語に**付きただけ**で 0 件になる言い方（第 328 回）。実測（2026-09-27 –
+   * 2026-08-09 生成ビルドの品書 872 行・固定時刻 2026-08-09T00:00:00Z）:
+   * `明日中` は通るのに `明日中に` **0 行**、`今週中` 19 行 / `今週中に` **0 行**、
+   * `来週中` 53 行 / `来週中に` **0 行**、`来月中` 240 行 / `来月中に` **0 行**、
+   * `年内` 772 行 / `年内に` **0 行**、`今月末` 189 行 / `今月末に` **0 行**、
+   * `明日` 4 行 / `明日まで` **0 行**・`明日までに` **0 行**・`今日までに` **0 行**・
+   * `来週までに` **0 行**・`今月までに` **0 行**・`3月までに` **0 行**。
+   * 剥がした後に残る形が日付の表に**有るときだけ**寄せる（無い物は寄せない –
+   * 第 326 回と同じ判断）。`から` と `以降` は意味が「それ以降」になるので、ここで剥がさない
+   * （一日分の行だけ出して「以降」とは言えない）。 */
+  const DATE_TOKEN_TAILS_JA = [
+    "までに",
+    "まで",
+    "中に",
+    "に",
+    "で",
+    "の",
+    "も",
+    "は",
+    "が",
+    "や",
+    "か",
+    "だけ",
+    "しか",
+  ];
+
+  /** 日付の語の表に載っている形か（助詞を剥がした後の検証に使う）。 */
+  function isDateTableWordJa(word: string): boolean {
+    return (
+      RELATIVE_DAY_OFFSETS_JA[word] !== undefined ||
+      RELATIVE_WEEK_OFFSETS_JA[word] !== undefined ||
+      RELATIVE_MONTH_OFFSETS_JA[word] !== undefined ||
+      RELATIVE_YEAR_OFFSETS_JA[word] !== undefined ||
+      PERIOD_MONTH_WORDS_JA[word] !== undefined ||
+      SEASON_MONTHS_JA[word] !== undefined
+    );
+  }
+
+  /** 日付の語に助詞などが付きただけの形を、表に有る形へ寄せる（無ければ空文字）。 */
+  function dateTokenStemJa(token: string): string {
+    const q = String(token || "");
+    if (q.length < 3) return "";
+    for (const tail of DATE_TOKEN_TAILS_JA) {
+      if (q.length <= tail.length + 1 || !q.endsWith(tail)) continue;
+      const stem = q.slice(0, -tail.length);
+      if (isDateTableWordJa(stem)) return stem;
+    }
+    return "";
+  }
+
+  /* 「今日から 3 日」「今日から 1 週間」は、同じ幅を `3日以内` `1週間以内` と言う形と
+   * 同じ締切を指す（第 328 回の実測: `今日から3日` **0 行** / `3日以内` 17 行で、同じ行集合）。
+   * 幅の日数は `withinDaysTermsJa` が持つ物（1〜365）だけ通す。 */
+  const FROM_TODAY_HEAD = /^今日から([0-9]{1,3})(.+)$/;
+  const FROM_TODAY_UNIT: Record<string, number> = {
+    日: 1,
+    日間: 1,
+    週間: 7,
+    しゅうかん: 7,
+    週: 7,
+    か月: 30,
+    ヶ月: 30,
+    カ月: 30,
+  };
+
+  function fromTodayTermsJa(token: string, nowMs: number): string[] | null {
+    const matched = FROM_TODAY_HEAD.exec(String(token || "").replace(/からに$/, ""));
+    if (!matched) return null;
+    const per = FROM_TODAY_UNIT[matched[2]];
+    if (per === undefined) return null;
+    const days = Number(matched[1]) * per;
+    if (!(days >= 1 && days <= 365)) return null;
+    const out: string[] = [];
+    for (let d = 0; d <= days; d += 1) {
+      const ymd = offsetCalendarDay(nowMs, d);
+      out.push(`${ymd[0]}年${ymd[1]}月${ymd[2]}日`, `${ymd[1]}月${ymd[2]}日`);
+    }
+    return out;
+  }
+
+  /** `今月以内` `来月以内` はその月の間のこと（`3月以内` は「3 か月以内」にも読めるので寄せない）。 */
+  const RELATIVE_MONTH_WITHIN = /^(今月|来月|再来月|先月|こんげつ|らいげつ|せんげつ)以内(?:に)?$/;
+
+  /** 展開語の並びから最後の `YYYY年M月D日` を読む（幅の案内に使う）。 */
+  function lastFullDateJa(terms: string[]): number[] | null {
+    for (let i = terms.length - 1; i >= 0; i -= 1) {
+      const parts = /^(\d{4})年(\d{1,2})月(\d{1,2})日$/.exec(String(terms[i] || ""));
+      if (parts) return [Number(parts[1]), Number(parts[2]), Number(parts[3])];
+    }
+    return null;
+  }
+
+  /** 今日から指定した暦日までの幅を、件数欄の形で書く（第 328 回）。 */
+  function spanNoteFromTodayJa(token: string, nowMs: number, lastYmd: number[]): string {
+    const first = offsetCalendarDay(nowMs, 0);
+    const head = `${first[0]}年${first[1]}月${first[2]}日`;
+    const headDay = weekdayJaFromDate(toIsoDate(head));
+    /* 一日ぶんだけの幅（`今日まで`）に「〜同じ日」を書いても役に立たない（第 328 回）。 */
+    if (first[0] === lastYmd[0] && first[1] === lastYmd[1] && first[2] === lastYmd[2]) {
+      return `${token} = ${head}${headDay ? `(${headDay})` : ""}の締切 – 行に書かれた他の日付（別の締切ラウンド・会期）でも当たるので、締切日からの日数で絞る「締切まで」の欄が確かです`;
+    }
+    const tail =
+      first[0] === lastYmd[0]
+        ? `${lastYmd[1]}月${lastYmd[2]}日`
+        : `${lastYmd[0]}年${lastYmd[1]}月${lastYmd[2]}日`;
+    const lastDay = weekdayJaFromDate(toIsoDate(`${lastYmd[0]}年${lastYmd[1]}月${lastYmd[2]}日`));
+    return `${token} = ${head}${headDay ? `(${headDay})` : ""}〜${tail}${
+      lastDay ? `(${lastDay})` : ""
+    }の締切 – 行に書かれた他の日付（別の締切ラウンド・会期）でも当たるので、締切日からの日数で絞る「締切まで」の欄が確かです`;
+  }
+
+  /** `明日まで` `来週までに` の形 – 期日までと聞く人なので、今日からその日までを出す
+   * （行は締切日を 1 つ持つので OR の並びで受ける – `withinDaysTermsJa` と同じ組み立て）。 */
+  function untilDayTermsJa(token: string, nowMs: number): string[] | null {
+    const q = String(token || "");
+    if (!/(?:までに|まで)$/.test(q)) return null;
+    const stem = dateTokenStemJa(q);
+    if (!stem) return null;
+    const dayOffset = RELATIVE_DAY_OFFSETS_JA[stem];
+    let last: number[] | null = null;
+    if (dayOffset !== undefined) {
+      last = offsetCalendarDay(nowMs, dayOffset >= 0 ? dayOffset : 0);
+    } else {
+      const week = weekDayTermsJa(stem, nowMs);
+      if (week.length === 7) {
+        const parts = /^(\d{4})年(\d{1,2})月(\d{1,2})日$/.exec(week[6]);
+        if (parts) last = [Number(parts[1]), Number(parts[2]), Number(parts[3])];
+      }
+    }
+    if (!last) return null;
+    const out: string[] = [];
+    for (let d = 0; d <= 370; d += 1) {
+      const ymd = offsetCalendarDay(nowMs, d);
+      out.push(`${ymd[0]}年${ymd[1]}月${ymd[2]}日`, `${ymd[1]}月${ymd[2]}日`);
+      if (ymd[0] === last[0] && ymd[1] === last[1] && ymd[2] === last[2]) break;
+    }
+    return out;
+  }
+
   /** 相対日・相対日の語を、暦日の候補グループへ展開する（OR の組）。 */
   function relativeDayGroups(token: string, nowMs: number): string[] | null {
-    const numeric = numericRelativeDay(token, nowMs);
+    /* 「明日まで」「来週までに」は期日なので、今日からその日まで（第 328 回）。 */
+    const until = untilDayTermsJa(token, nowMs);
+    if (until) return [token].concat(until);
+    /* 「今日から 3 日」は `3日以内` と同じ幅（第 328 回）。 */
+    const fromToday = fromTodayTermsJa(token, nowMs);
+    if (fromToday) return [token].concat(fromToday);
+    /* 助詞が付きただけの形は表の形に寄せる（`明日中に` → `明日中` – 第 328 回）。 */
+    const stem = dateTokenStemJa(token) || token;
+    const numeric = numericRelativeDay(stem, nowMs);
     if (numeric) return numeric;
-    const within = withinDaysTermsJa(token, nowMs);
+    const within = withinDaysTermsJa(stem, nowMs);
     if (within) return within;
-    const dayOffset = RELATIVE_DAY_OFFSETS_JA[token];
+    const dayOffset = RELATIVE_DAY_OFFSETS_JA[stem];
     if (dayOffset !== undefined) {
       const ymd = offsetCalendarDay(nowMs, dayOffset);
       return [token, `${ymd[0]}年${ymd[1]}月${ymd[2]}日`, `${ymd[1]}月${ymd[2]}日`];
     }
-    const week = weekDayTermsJa(token, nowMs);
+    const week = weekDayTermsJa(stem, nowMs);
     if (week.length) return [token].concat(week);
     return null;
   }
