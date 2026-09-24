@@ -3126,6 +3126,135 @@ const Recommender = (() => {
     });
   }
 
+  /* 0 件のときに「検索語を短くする」とだけ書いても、直らないことがある（第 256 回）。
+   * 2026-08-09 生成ビルドで自然な打ち方 93 語を調べると 47 語が 0 行で、案内はどれにも
+   * 同じ「検索語を短くする」を出していた。実際には 3 種類の打ち直しがある –
+   *  (a) 複合語の一方だけを打つ（`生成AI` → `AI`）
+   *  (b) 長い語の続きを落とす / 前を落とす（`高速計算` → `高速`）
+   *  (c) 2 つの語に割る（`学生論文` → `学生 論文`）
+   * どっちも 0 行なら「短くする」は直らない助言なので、出さない判断もここで決める。
+   * 数の数え上げは 0 件案内と同じ集合（候補行 + 常時受付のジャーナル行）を使う –
+   * `queryTermCounts` と同じ理由（同じ語彙を 2 か所に持つと必ず片方が古くなる）。 */
+  function shorterHitWordsJa(
+    query: unknown,
+    hays: readonly unknown[],
+    nowMs?: number,
+    limit = 2,
+  ): Array<{ word: string; count: number; how: string; pair?: string }> {
+    const list = Array.isArray(hays) ? hays : [];
+    const words: string[] = [];
+    /* 展開（`来月` → 暦月など）は数え上げのためにここで掛ける。打たれた文字その物は
+     * 下の `rawWords` で別に読む – 展開済みの文字列を渡されると、見本が小文字に化ける
+     * （`生成AI` に `ai` と出すと、読み手はそのまま打てない – 第 256 回）。 */
+    queryTokenGroups(expandRelativeMonths(query, nowMs ?? Date.now()), nowMs).forEach((group) => {
+      const term = String(((group || [])[0] as string) || "").trim();
+      if (term) words.push(term);
+    });
+    if (!words.length || words.length > 6) return [];
+    /* 数え上げは展開済みの語（小文字・NFKC）でやるが、画面に出す見本は**打たれた形**で無いと
+     * 読み手が打てない（`生成AI` に `ai` と出しても、そのまま打てない – 第 256 回）。
+     * 語の数が合っていれば元の文字列から語を割り出し、見本はそちらを使う。 */
+    const rawWords = String(query ?? "")
+      .trim()
+      .split(/\s+/)
+      .filter((w) => w);
+    const shown = (index: number, normalized: string): string => {
+      const raw = rawWords.length === words.length ? String(rawWords[index] || "") : "";
+      if (!raw || Array.from(raw).length !== Array.from(normalized).length) return normalized;
+      return raw;
+    };
+    const cache: Record<string, number> = {};
+    const countOf = (word: string): number => {
+      if (!word) return 0;
+      if (cache[word] !== undefined) return cache[word];
+      const matcher = searchMatcher(word, nowMs);
+      let n = 0;
+      for (let i = 0; i < list.length; i++) {
+        if (matcher(list[i])) n += 1;
+      }
+      cache[word] = n;
+      return n;
+    };
+    const found: Array<{ word: string; count: number; how: string; pair?: string }> = [];
+    const pushShown = (display: string, word: string, how: string, pair?: string): void => {
+      const n = countOf(word);
+      if (n <= 0) return;
+      if (found.some((item) => item.word === display)) return;
+      found.push({ word: display, count: n, how: how, pair: pair });
+    };
+    /* (a) 複数語を打たれているときは、語を 1 つに絞った数を each 語について出す。 */
+    if (words.length >= 2)
+      words.forEach((word, index) => {
+        pushShown(shown(index, word), word, "alone");
+      });
+    words.forEach((word, index) => {
+      /* 当たっている語をこれ以上短くしても、見当の打ち直しにならない（第 256 回実測:
+       * `ネットワーク 福岡 GPU` に `ネットワー` を勧めていた – 語を外す話と混ざる）。 */
+      if (countOf(word) > 0) return;
+      const chars = Array.from(word);
+      const raw = shown(index, word);
+      const rawChars = Array.from(raw);
+      if (chars.length < 3) return;
+      /* (b) 続きを落とす、あるいは前を落とす。元の語に近いほう（長く残すほう）を先に取る。 */
+      for (let k = chars.length - 1; k >= 2; k--) {
+        const head = chars.slice(0, k).join("");
+        if (countOf(head) > 0) {
+          pushShown(
+            rawChars.length === chars.length ? rawChars.slice(0, k).join("") : head,
+            head,
+            "shorten",
+          );
+          break;
+        }
+      }
+      for (let k = 1; k <= chars.length - 2; k++) {
+        const tail = chars.slice(k).join("");
+        if (countOf(tail) > 0) {
+          pushShown(
+            rawChars.length === chars.length ? rawChars.slice(k).join("") : tail,
+            tail,
+            "shorten",
+          );
+          break;
+        }
+      }
+      /* (c) 2 つの語に割って、両方が立っているものだけ出す。 */
+      if (found.some((item) => item.how === "split")) return;
+      for (let k = 2; k <= chars.length - 2; k++) {
+        const left = chars.slice(0, k).join("");
+        const right = chars.slice(k).join("");
+        if (countOf(left) <= 0) continue;
+        /* 割った 2 語を別々に打った人数ではなく、**両方を含む行**の数を数える
+         * （`学生 論文` と打ち直した人に見える件数なので、それで無いと噓になる）。 */
+        const both = countOf(`${left} ${right}`);
+        if (both <= 0) continue;
+        const shownPair =
+          rawChars.length === chars.length
+            ? `${rawChars.slice(0, k).join("")} ${rawChars.slice(k).join("")}`
+            : `${left} ${right}`;
+        found.push({
+          word: shownPair,
+          count: both,
+          how: "split",
+          pair: `${left},${right}`,
+        });
+        break;
+      }
+    });
+    /* 並べ替えは「元の語の意味を残せている順」が先（第 256 回）。割って両方残す見当は
+     * 打ち直しても探している物から遠ざからないので、語を 1 つ落とす・短くするより先に置く。
+     * 件数の大きさは同じ形の中では見る（1 件だけの見当より当たりのある見当のほうが役に立つ）。 */
+    const RANK: Record<string, number> = { split: 0, alone: 1, shorten: 2 };
+    return found
+      .sort((a, b) => {
+        const ra = RANK[a.how] === undefined ? 3 : RANK[a.how];
+        const rb = RANK[b.how] === undefined ? 3 : RANK[b.how];
+        if (ra !== rb) return ra - rb;
+        return b.count - a.count;
+      })
+      .slice(0, limit > 0 ? limit : 1);
+  }
+
   /* 会議名+開催年の組み立て式。一覧・行の詳細・CSV・Markdown で同じ語を見せるために
    * 一箇所へ寄せる。以前は CSV だけが年を足さない別実装（素の `conf.title`）で、画面で
    * `3DV 2024` と見える行の CSV は `3DV` だった（2026-08-09 実測: 候補行 3,235 件のうち
@@ -7203,6 +7332,7 @@ const Recommender = (() => {
     deadlineShiftSearchWords: deadlineShiftSearchWords,
     weekdaySearchTerms: weekdaySearchTerms,
     queryTermCounts: queryTermCounts,
+    shorterHitWordsJa: shorterHitWordsJa,
     extendedLabelJa: () => EXTENDED_LABEL_JA,
     placeJa: placeJa,
     weekdayJaFromDate: weekdayJaFromDate,

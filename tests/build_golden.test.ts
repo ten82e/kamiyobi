@@ -1850,7 +1850,11 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
   // 案内は選択肢の実ラベルを書く（古いラベルを出すと、その語が画面に見つからない）。
   expect(filtered).toContain("「締切まで」を「かまわない」に変更");
   expect(filtered).toContain("「過去の締切も表示」をオン");
-  expect(filtered).toContain("検索語を短くする");
+  /* 第 256 回: 「検索語を短くする」は、短くしても 0 件の語に効かない助言だったので、
+   * 収録の上で効く見当が無ければ「別の語で試す」に変わった（効く見当があるときの文は
+   * tests/zero_result_recovery.test.ts で見る）。 */
+  expect(filtered).toContain("別の語で試す");
+  expect(filtered).not.toContain("検索語を短くする");
   expect(hint({ ...clear, domestic: true, cats: 2, rank: "A*" })).toContain(
     "「国内研究会・国内シンポジウムのみ」をオフ",
   );

@@ -1972,6 +1972,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function zeroResultLiveNote(filter: {
     hiddenKindWords: string[];
     termCounts: Array<{ term: string; count: number }>;
+    // 打ち直しの見当（第 256 回 – 0 件案内と同じ判断を読み上げでも言う）。
+    shorterHits?: Array<{ word: string; count: number; how: string; pair?: string }>;
     // 検索語が公式ページの URL の形か（URL で引いた人は「語が無い」話では済まない）。
     urlQuery: boolean;
     queryMatch: { catalog: number; journal: number };
@@ -2036,7 +2038,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 逆のことを並べていた。全体で 1 件も当たらないときだけ、語を名指す。 */
     const dead =
       matchedRows === 0 ? filter.termCounts.filter((t) => t.count === 0).map((t) => t.term) : [];
-    if (dead.length) return ` ｜ 語「${dead[0]}」は収録データにありません${pointer}`;
+    if (dead.length) {
+      /* 「語が無い」で止める読み上げは、打ち直しを知らない人に打ち切らせる（第 256 回）。
+       * 同じ 0 件画面で効く打ち直しを数えているので、それを先に言う（画面と同じ判断）。 */
+      const alt = (filter.shorterHits || []).filter((h) => String(h.word || "").trim())[0];
+      if (alt) {
+        const note = ` ｜ 「${dead[0]}」は無くて「${alt.word}」なら ${countJa(alt.count)} 件当たります${pointer}`;
+        // aria-live に長い文を流さない約束（SPEC §7 – 60 字）。収まらないなら短いほうに落ちる。
+        if (note.length <= 60) return note;
+      }
+      return ` ｜ 語「${dead[0]}」は収録データにありません${pointer}`;
+    }
     if (filter.hiddenKindWords.length)
       return (
         /* 読み上げは 60 字までの検査が見ている（長い文を aria-live に流さない – SPEC §7）。
@@ -2090,6 +2102,27 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         hays.push(hay);
       });
     return Recommender.queryTermCounts(Recommender.expandRelativeMonths(trimmed, now), hays, now);
+  }
+
+  /* 0 件のとき、打ち直しの見当まで数える（第 256 回）。数える集合は `queryTermNotes` と
+   * 同じにする – 同じ表を 2 か所で違う範囲で数えると、案内だけが古くなる（第 215 回など）。 */
+  function shorterWordNotes(
+    query: string,
+  ): Array<{ word: string; count: number; how: string; pair?: string }> {
+    const trimmed = query.trim();
+    if (!trimmed) return [];
+    const now = Date.now();
+    const seen: Record<string, boolean> = {};
+    const hays: string[] = [];
+    (rows as AppRow[])
+      .concat(Recommender.journalRows(activeData.conferences, now) as unknown as AppRow[])
+      .forEach((row) => {
+        const hay = String(row.hay);
+        if (seen[hay]) return;
+        seen[hay] = true;
+        hays.push(hay);
+      });
+    return Recommender.shorterHitWordsJa(trimmed, hays, now);
   }
 
   /* 検索語が「表に出さない種別」の表示語に当たるか。`SELECTABLE_KINDS` に無い種別が対象で、
@@ -2494,6 +2527,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     hiddenKindWords: string[];
     queryMatch: { catalog: number; journal: number };
     termCounts: Array<{ term: string; count: number }>;
+    // 打ち直しの見当（第 256 回）。0 件のときだけ数える – 通常描画では走らせない。
+    shorterHits?: Array<{ word: string; count: number; how: string; pair?: string }>;
     urlQuery: boolean;
     catalogConferences: number;
   }): string {
@@ -2651,8 +2686,38 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 種別も絞り込みである。これを数えないと、案内どおりに他を外しても 0 件のままになる。
     if (filter.kind) tip(`「種別」を「${KIND_ALL_LABEL_JA}」に変更`, "kind", "投稿締切以外の種別");
     // 欄の名前や画面自身の語を打たれた人に「検索語を短くする」と言っても直らない（第 248 回）。
-    if (trimmedQuery && !specific && !columnNote && !uiNote && !dayRangeNote)
-      tips.push("検索語を短くする（分野名・主題・開催地の日本語でも引けます）");
+    /* 同じ穴がもう 1 本あった（第 256 回）: 2026-08-09 生成ビルドで自然な打ち方 93 語を
+     * 調べると 47 語が 0 件で、案内はどれにも「検索語を短くする」を出していた。短くしても
+     * 0 件の語（`高速計算` `採択率` `博士前期` など）にその助言は直らない – 短くした語が
+     * 収録に無いので、打ち直しても 0 件のまま画面が動かないだけ。効く打ち直しは収録の上で
+     * 数えているので、あるときはそれを名指し、無いときは「別の語を試す」に切り替える。 */
+    const altTips: string[] = [];
+    (filter.shorterHits || []).slice(0, 2).forEach((hit) => {
+      const word = String(hit.word || "").trim();
+      if (!word) return;
+      /* 件数は `countJa` を通した式をその場で書く（変数に抜くと、件数の数え上げを
+       * 3 桁区切りにしている検査が「素の数字を出している」と見て落ちる – 第 256 回）。 */
+      if (hit.how === "split") {
+        altTips.push(
+          `検索語を「${word}」に分けて打つ（両方を書く行が収録で ${countJa(hit.count)} 件）`,
+        );
+      } else if (hit.how === "alone" && word.indexOf(" ") < 0) {
+        altTips.push(`検索語を「${word}」だけに絞る（収録で ${countJa(hit.count)} 件当たります）`);
+      } else {
+        altTips.push(
+          `検索語を「${word}」に打ち替える（収録で ${countJa(hit.count)} 件当たります）`,
+        );
+      }
+    });
+    if (trimmedQuery && !specific && !columnNote && !uiNote && !dayRangeNote) {
+      if (altTips.length) {
+        altTips.forEach((t) => {
+          tips.push(t);
+        });
+      } else {
+        tips.push("別の語で試す（分野名・主題・開催地の日本語でも引けます）");
+      }
+    }
 
     const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.md に載せています。";
     if (specific) {
@@ -3915,6 +3980,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             urlQuery: Recommender.looksLikeUrlQuery(searchQuery),
             queryMatch: queryMatchCounts(searchQuery),
             termCounts: queryTermNotes(searchQuery),
+            shorterHits: shorterWordNotes(searchQuery),
             // データその物が無い場合と、絞り込みで 0 件の場合を区別する材料。
             catalogConferences: DATA.conferences.length,
           }
