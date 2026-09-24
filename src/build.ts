@@ -324,7 +324,8 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
     "`upcoming.md` と同じ表を、ブラウザでそのまま読める形にしたもの（第 263 回）。Markdown の" +
     " 方は機械が読む用のまま残してある。",
   "deadlines.ics":
-    "締切をカレンダーに入れるための 1 本（RFC 5545）。1 締切 = 1 イベントの終日（JST の暦日）で、" +
+    "収録した会議の日付をカレンダーに入れるための 1 本（RFC 5545）。1 日 = 1 イベントの終日" +
+    "（JST の暦日）で、" +
     "画面の絞り込みは効かない。時刻未確認と推定はそのまま書く（第 266 回）。分野は画面と同じ日本語で " +
     "`CATEGORIES` と説明行の `分野:` の両方に載せる（第 292 回）。受信側の表示対応は kamiyobi 側では" +
     "検証していないが、説明行の語はカレンダー本文の検索に掛かる。",
@@ -372,15 +373,18 @@ function llmsScopeJa(name: string, spans: LlmsSpans | null): string {
       `JST の暦日）で、${horizon}切る。それより先の締切と過去の全履歴は \`data.json\` に在り、` +
       (calendar
         ? `カレンダー（\`deadlines.ics\`）には ${countJa(calendar.event_count)} 件` +
-          `（${calendar.first_day} 〜 ${calendar.last_day}）が入る。`
+          `（うち締切 ${countJa(calendar.deadline_count)} 件、` +
+          `${calendar.first_day} 〜 ${calendar.last_day}）が入る。`
         : "カレンダー（`deadlines.ics`）にはこれより先も入る。")
     );
   }
   if (name === "deadlines.ics") {
     const meta = spans?.calendar;
     return meta
-      ? `収録しているのは今後の締切 ${countJa(meta.event_count)} 件（${meta.first_day} 〜 ${meta.last_day}、` +
-          "JST の暦日）で、この範囲は画面に並べる期間より長い。"
+      ? `収録しているのは今後の日 ${countJa(meta.event_count)} 件（${meta.first_day} 〜 ${meta.last_day}、` +
+          `JST の暦日）で、うち締切は ${countJa(meta.deadline_count)} 件 – 残りは採否通知・` +
+          "査読結果公開・反論期間の開始のように、その日までに何かを出す必要の無い日である" +
+          "（本文の日付の欄も「通知日」などになる）。この範囲は画面に並べる期間より長い。"
       : "";
   }
   return "";
@@ -3072,12 +3076,20 @@ function icsCalendarDescriptionJa(meta: IcsCalendarMeta, stamp: { human: string 
     meta.event_count > 0
       ? `いま ${meta.event_count} 件（${meta.first_day} 〜 ${meta.last_day}）`
       : "いま 0 件";
+  /* 内訳（第 300 回）。第 299 回まで、この説明は入る物を「締切」と呼んでいたが、実測で
+     928 件のうち 167 件は採否通知・査読結果公開・反論期間の開始だった。カレンダーアプリは
+     この文をカレンダーの情報欄に出すので、購読する人が最初に読む話になる。 */
+  const mix =
+    meta.deadline_count > 0 && meta.deadline_count < meta.event_count
+      ? `うち締切は ${meta.deadline_count} 件で、残りは採否通知・査読結果公開・反論期間の開始の` +
+        "ように、その日までに何かを出す必要の無い日（本文の日付の欄も「通知日」などになる）。"
+      : "";
   return [
-    "kamiyobi が収録した会議の締切。1 件 = 1 つの締切で、その日（JST の暦日）を埋める形で出る。",
-    `入るのは収録している今後の締切すべてで、${span}。画面の絞り込みと並び替えは引き継がれない。`,
+    "kamiyobi が収録した会議の日付。1 件 = 1 つの日で、その日（JST の暦日）を埋める形で出る。",
+    `入るのは収録している今後の日付すべてで、${span}。${mix}画面の絞り込みと並び替えは引き継がれない。`,
     "収録の期間は画面の表示窓より長い（画面は指定した期間だけを出し、こちらには出ている締切が",
     "全て入る）。時刻が公式に出ていない締切は「時刻未確認」と書き、上流が推定としている日付には",
-    "「推定」と付ける。過ぎた締切は入れない。",
+    "「推定」と付ける。過ぎた日は入れない。",
     stamp ? `データ生成: ${stamp.human}（JST）。` : "",
   ]
     .filter(Boolean)
@@ -3285,6 +3297,8 @@ export function icsEventRows(
     rows.push({
       day,
       at: atMs,
+      // 欄名を決めた所で「締切かどうか」も決めておく（数え方を後から真似ない – 第 300 回）。
+      deadline: rec.date_field === "締切",
       body: [
         "BEGIN:VEVENT",
         `UID:${base}${n === 0 ? "" : `-${n + 1}`}@kamiyobi`,
@@ -3311,8 +3325,20 @@ export function icsEventRows(
 
 /* 購読先に申告する事実。行から導く – 別々に数えると、申告と中身がズレる
  * （「928 件」と書いて 927 件しか入っていない、が一番信用を失う）。 */
-export type IcsRow = { day: string; at: number; body: string[] };
-export type IcsCalendarMeta = { event_count: number; first_day: string; last_day: string };
+export type IcsRow = {
+  day: string;
+  at: number;
+  body: string[];
+  /** 日付の欄が「締切」の行か（第 300 回）。採否通知などは False で、申告の内訳に使う。 */
+  deadline: boolean;
+};
+export type IcsCalendarMeta = {
+  event_count: number;
+  /** 配信行の内、日付の欄が「締切」の物（第 300 回）。採否通知などは数えない。 */
+  deadline_count: number;
+  first_day: string;
+  last_day: string;
+};
 
 /** `YYYYMMDD` を人が読む形に直す（カレンダーの申告文と画面の注記で同じ形を使う）。 */
 function icsDayIso(day: string): string {
@@ -3327,6 +3353,10 @@ export function icsCalendarMeta(rows: IcsRow[] | null | undefined): IcsCalendarM
     .sort(cmpStr);
   return {
     event_count: safe.length,
+    /* 中身の内訳を、書き出した行から数える（第 300 回）。第 299 回まで配信物は締切では無い日
+       （採否通知・査読結果公開・反論期間の開始）も含むのに、画面も索引も「締切 N 件」と言って
+       いた。欄名が「締切」の行だけを締切として数える – 数え方を 2 か所に持たない。 */
+    deadline_count: safe.filter((r) => r.deadline).length,
     first_day: days.length ? icsDayIso(days[0]) : "",
     last_day: days.length ? icsDayIso(days[days.length - 1]) : "",
   };

@@ -86,6 +86,8 @@ interface SourceRecord {
  * – ここで数え直すと、配信物と違う数を画面が言い出す（第 289 回）。 */
 interface CalendarSpan {
   event_count: number;
+  /** 内、日付の欄が「締切」の件数（無いビルドもある – 第 300 回）。 */
+  deadline_count?: number;
   first_day: string;
   last_day: string;
 }
@@ -293,7 +295,15 @@ function calendarSpan(value: unknown): CalendarSpan | undefined {
   const last = typeof value.last_day === "string" ? value.last_day : "";
   const day = /^\d{4}-\d{2}-\d{2}$/u;
   if (!count || !day.test(first) || !day.test(last)) return undefined;
-  return { event_count: count, first_day: first, last_day: last };
+  // 内訳はあっても無くても注記は出る（無いときに締切の数を言い出さない – 「知らない」と
+  // 「0 件」を混ぜない）。
+  const dead =
+    typeof value.deadline_count === "number" &&
+    value.deadline_count >= 0 &&
+    value.deadline_count <= count
+      ? value.deadline_count
+      : undefined;
+  return { event_count: count, deadline_count: dead, first_day: first, last_day: last };
 }
 
 /* 品の窓の申告を受け取る。正の整数で無い物は無し扱いにする（無いときは画面が日数を
@@ -2601,10 +2611,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   function icsScopeNoteJa(span: CalendarSpan): string {
+    /* 第 299 回まで、カレンダーに入る物は全部「締切」と呼んでいた。実測（2026-08-09 生成ビルド）
+       で 928 件のうち 167 件は採否通知・査読結果公開・反論期間の開始で、その日までに何かを
+       出す必要は無い – 購読する人に「何が入るか」を押す前に伝える（第 289 回の方針と同じ）。
+       内訳の申告が無いビルドでは、日を数えるだけにして締切の数は言わない。 */
+    const dead = span.deadline_count;
+    const mix =
+      dead === undefined || dead >= span.event_count
+        ? ""
+        : `うち締切が ${countJa(dead)} 件で、残りの ${countJa(span.event_count - dead)} 件は` +
+          `採否通知・査読結果公開・反論期間の開始のように、その日までに何かを出す必要の無い日です。`;
     return (
-      `カレンダーに追加（.ics）に入る締切は ${countJa(span.event_count)} 件` +
-      `（${span.first_day} 〜 ${span.last_day}）。この一覧に並ぶのは選んだ期間までで、` +
-      `絞り込みは引き継がれません。`
+      `カレンダーに追加（.ics）に入る日は ${countJa(span.event_count)} 件` +
+      `（${span.first_day} 〜 ${span.last_day}）。` +
+      mix +
+      "この一覧に並ぶのは選んだ期間までで、絞り込みは引き継がれません。"
     );
   }
 

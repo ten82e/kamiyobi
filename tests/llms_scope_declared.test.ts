@@ -64,8 +64,15 @@ describe("索引が収録範囲を実測で言う（第 291 回）", () => {
       `${String(windowDays)} 日先`,
     );
     // 数え直した値と索引が食い違っていないこと（違う数を 2 か所に書く設計にしない）。
-    expect(line.match(/(\d[\d,]*) 件/g)?.length, "件数の申告が多い（同じ数を二度書かない）").toBe(
-      2,
+    // 第 300 回に同じ行へカレンダーの内訳（総数と締切の件数）を足したので、件数の個数を数える
+    // 代わりに「同じ数を二度書いていないか」を見る – 内訳は別の事実で、重複ではない。
+    const counts = (line.match(/([\d,]+) 件/g) ?? []).map((m) => m.replace(/ 件$/, ""));
+    expect(
+      counts.length,
+      "件数の申告が無さすぎる（索引が数を言わなくなった）",
+    ).toBeGreaterThanOrEqual(2);
+    expect(new Set(counts).size, `同じ件数を二度書いている: ${counts.join(" / ")}`).toBe(
+      counts.length,
     );
   });
 
