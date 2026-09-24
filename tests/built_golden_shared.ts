@@ -151,7 +151,13 @@ export const SEARCH_CANON = (() => {
     ["SOUTH_AMERICA_JA", /const SOUTH_AMERICA_JA =[\s\S]*?;/],
     ["CENTRAL_AMERICA_JA", /const CENTRAL_AMERICA_JA =[\s\S]*?;/],
     ["OCEANIA_JA", /const OCEANIA_JA =[\s\S]*?;/],
+    ["MIDDLE_EAST_JA", /const MIDDLE_EAST_JA =[\s\S]*?;/],
+    ["AFRICA_JA", /const AFRICA_JA =[\s\S]*?;/],
+    // 「海外」は地域まとめの構成員から導く（国を並べ直さない – 第 335 回）ので、先に要る。
+    ["OVERSEAS_JA", /const OVERSEAS_JA =[\s\S]*?;/],
     ["CONTINENT_READINGS", /const CONTINENT_READINGS[\s\S]*?\];/],
+    ["OVERSEAS_HEADS_JA", /const OVERSEAS_HEADS_JA =[\s\S]*?\];/],
+    ["OVERSEAS_COVERAGE_NOTE_TAIL_JA", /const OVERSEAS_COVERAGE_NOTE_TAIL_JA =[\s\S]*?;/],
     // 地方名 → 都道府県 + 開催市（`関東` で `Tokyo, Japan` を引く）の定義。
     ["PREFECTURE_CITIES_JA", /const PREFECTURE_CITIES_JA[\s\S]*?\];/],
     ["CITIES_BY_PREFECTURE", /const CITIES_BY_PREFECTURE[\s\S]*?\};/],
