@@ -40,6 +40,9 @@
   --fg: #1c1c1e;
   --muted: #6b6b72;
   --accent: #2f5fd0;
+  /* アクセントの色を背景に敷いた上の文字の色。1 色で両方の画面に使える値は無い
+     （白は暗い画面で 2.11 – 読めない – 第 262 回）。 */
+  --on-accent: #ffffff;
   --accent-subtle: rgba(47, 95, 208, 0.08);
   --warn: #b3382c;
   /* 「まもなく」の茶。薄い背景（`.tag.est`）の上で 4.5 を切るため、画面の語として
@@ -65,6 +68,7 @@
     --fg: #e4e4e7;
     --muted: #9d9da6;
     --accent: #8ab4f8;
+    --on-accent: #18181b;
     --accent-subtle: rgba(138, 180, 248, 0.12);
     --warn: #f28b82;
     --soon: #e5c07b;
@@ -545,7 +549,7 @@ label.check input:checked + span { color: var(--fg); }
   top: 0;
   z-index: 60;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   padding: 8px 12px;
   border-radius: 6px;
   text-decoration: none;
