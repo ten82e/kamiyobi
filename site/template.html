@@ -828,6 +828,8 @@ footer a:hover { text-decoration: underline; }
   .count-hint,
   #tableScrollHint,
   #icsLink,
+  #icsCopy,
+  #icsCopyNote,
   .sortbar,
   .recommend-only,
   footer .btn-reset { display: none !important; }
@@ -1039,8 +1041,14 @@ footer a:hover { text-decoration: underline; }
          画面の絞り込みは引き継げないので、収録の全体を購読する形になることはリンクの注記とてびきに書く。 -->
     <!-- 閉じタグを折り畳まない（`</a\n>` の形にすると、タグの対応を見る検査が素直に読めない）。 -->
     <a id="icsLink" class="btn-reset" href="deadlines.ics" title="収録している今後の締切を全て、カレンダーアプリで読める形（RFC 5545）にしたファイルです。画面の絞り込みは引き継がれません。同じ場所を購読先に指定すると毎日更新されます。">カレンダーに追加（.ics）</a>
+    <!-- 購読には URL をカレンダーアプリに打ち込む必要があるのに、その場所を画面が
+         取り出せなかった（右クリックでしかコピーできなかった – 第 268 回）。押せる物として置く。 -->
+    <button id="icsCopy" type="button" class="btn-reset" hidden>購読 URL をコピー</button>
     <span class="count-hint">行を選ぶと詳細（公式確認の状態と根拠）<span class="count-kbd" style="font-family: var(--font-mono); font-size: 0.75rem;"> ｜ ショートカット: <kbd>j</kbd>/<kbd>k</kbd>・<kbd>↓</kbd>/<kbd>↑</kbd> 選択 | <kbd>Enter</kbd> 開く | <kbd>d</kbd> 詳細 | <kbd>Esc</kbd> 閉じる | <kbd>/</kbd> 検索</span></span>
   </div>
+  <!-- 「購読 URL をコピー」を押した後の返事。自動でコピーできない環境（このページを http で
+       開くなど）でも、この文字列を選べば同じことができる。 -->
+  <div id="icsCopyNote" class="scrollhint" aria-live="polite" hidden></div>
   <div id="historyStatus" aria-live="polite" hidden style="padding: 0 0 12px; text-align: center; color: var(--muted);">
     <span id="historyStatusText"></span>
     <button id="historyRetry" type="button" hidden>過去の締切を再試行</button>
@@ -1249,7 +1257,9 @@ footer a:hover { text-decoration: underline; }
       無いので、時間帯は作りません。時刻が公式に出ていない物には説明に「<strong>時刻未確認</strong>」、
       上流が推定として出した日付には要約に「<strong>推定</strong>」と書きます。このファイルの場所を
       そのままカレンダーの<strong>購読先（URL）</strong>に指定すると、毎日（日本時間の朝の更新のあと）
-      新しい一覧に置き換わります。ダウンロードしたファイルは写しなので、置きっ放しにすると古くなります。
+      新しい一覧に置き換わります。場所の取り出し方は、「<strong>購読 URL をコピー</strong>」を押すのが
+      いちばん速いです（自動でコピーできない開き方では、押すと URL が画面に出るので、それを
+      そのまま指定します）。ダウンロードしたファイルは写しなので、置きっ放しにすると古くなります。
     </dd>
   </div>
 </dl>

@@ -20,7 +20,14 @@ export function siteRuntime(name: keyof ReturnType<typeof compileSiteRuntime> = 
 
 /** ビルド成果物から `function name(...) {...}` を中身ごと抜き出す。 */
 export function jsFunction(html: string, name: string): string {
-  const start = html.indexOf(`function ${name}(`);
+  let start = html.indexOf(`function ${name}(`);
+  if (start < 0) throw new Error(`jsFunction: ${name} が見つからない（空振り検査の防止）`);
+  /* `async function` / `export function` の修飾語を落とすと、抜き出した本体は `await` を
+   * 持ったままの同期関数になり、`new Function` が構文エラーになる（第 268 回の実発生:
+   * `copyIcsSubscribeUrl` を抜いたとき「await は async 関数の中でだけ」と言われた。
+   * 検索は `function 名前(` なので、修飾語は自動的にこぼれる）。直前の修飾語を連れてくる。 */
+  const modifier = /(?:(?:async|export|default)\s+)+$/.exec(html.slice(0, start));
+  if (modifier) start -= modifier[0].length;
   let depth = 0;
   let i = html.indexOf("{", start);
   while (true) {

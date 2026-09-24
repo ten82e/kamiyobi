@@ -16,6 +16,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { type DataRecord, icsEscapeText, toIcsText } from "../src/build.ts";
 import { site } from "./built_golden_shared.ts";
+import { jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
 /* ------------------------------------------------------------------  Helpers */
 
@@ -352,22 +353,24 @@ describe("画面のカレンダーへの導線（第 266 回）", () => {
     expect(link![0], "絞り込みが引き継がれないことを隠している").toContain("絞り込みは引き継がれ");
   });
 
-  it("てびきに、中身の約束を書いている（時刻未確認・推定・購読）", () => {
+  it("てびきに、中身の約束と入口を書いている（時刻未確認・推定・購読）", () => {
     const p = page();
     const i = p.indexOf("<dt>カレンダーに追加（.ics）</dt>");
     expect(i, "てびきの項目が無い").toBeGreaterThan(-1);
     const entry = p.slice(i, p.indexOf("</dd>", i));
+    /* 画面に物を足したら、てびきも同時に直す（第 267 回で「出口の在りかを言う場所が
+     * 3 か所噓だった」のと同じ過ちを繰り返さない）。 */
     for (const word of [
       "絞り込みは引き継がれません",
       "時刻未確認",
       "推定",
       "購読先",
       "JST の暦日",
+      "購読 URL をコピー",
     ]) {
       expect(entry, `てびきが ${word} を書いていない`).toContain(word);
     }
   });
-
   it("紙には導線を刷らない（紙から押せない）", () => {
     const css = [...page().matchAll(/<style>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join("\n");
     const print = /@media print\s*\{([\s\S]*?)\n\}/.exec(css)?.[0] ?? "";
@@ -445,5 +448,201 @@ describe("出口の在りかを言う場所が、実物とずれていない", (
       txt.slice(Math.max(0, (m.index ?? 0) - 20), (m.index ?? 0) + 14),
     );
     expect(bad, `全角の読点のうしろに空白がある: ${bad.join(" / ")}`).toEqual([]);
+  });
+});
+
+/* ----------------------------------------------- 購読 URL を取り出す（第 268 回） */
+
+/** 抜き出して走らせるための、DOM のにせ物（押された結果だけを見る最小の形）。 */
+interface FakeNode {
+  tag: string;
+  textContent: string;
+  children: FakeNode[];
+  hidden: boolean;
+  appendChild: (child: FakeNode) => FakeNode;
+}
+interface FakeNote extends FakeNode {
+  htmlWrites: number;
+}
+
+function fakeNode(tag: string): FakeNode {
+  const node: FakeNode = {
+    tag,
+    textContent: "",
+    children: [],
+    hidden: false,
+    appendChild: (child: FakeNode) => {
+      node.children.push(child);
+      return child;
+    },
+  };
+  return node;
+}
+
+function runIcsCopy(opts: {
+  base: string | undefined;
+  clipboard: { writeText: (value: string) => Promise<void> } | undefined;
+}): { note: FakeNote; done: Promise<void> } {
+  const app = siteRuntime();
+  const note = fakeNode("div") as FakeNote;
+  note.hidden = true;
+  note.htmlWrites = 0;
+  Object.defineProperty(note, "innerHTML", {
+    set: () => {
+      note.htmlWrites += 1;
+    },
+    get: () => "",
+  });
+  const doc = {
+    baseURI: opts.base,
+    createElement: (tag: string) => fakeNode(tag),
+    createTextNode: (text: string) => Object.assign(fakeNode("#text"), { textContent: text }),
+  };
+  const nav = opts.clipboard ? { clipboard: opts.clipboard } : {};
+  /* 関数が参照している語は、正本をビルド成果物から注入する（書き写すとズレ、抜くと
+     `ReferenceError` – 第 265 回の教訓）。 */
+  const fileName = app.match(/const ICS_FILE_NAME =\s*"[^"]*";/)?.[0];
+  expect(fileName, "カレンダーのファイル名の正本が見つからない").toBeTruthy();
+  const body = [
+    String(fileName),
+    "function $(id) { return els[id]; }",
+    /* 抜き出した関数は最後に必ず呼ぶ（呼ばないと検査は空振りになる – 第 265 回の実発生）。 */
+    jsFunction(app, "icsSubscribeUrl"),
+    jsFunction(app, "icsCopyNoteJa"),
+    jsFunction(app, "showIcsCopyNote"),
+    jsFunction(app, "copyIcsSubscribeUrl"),
+    "return copyIcsSubscribeUrl();",
+  ].join("\n");
+  const done = new Function("els", "document", "navigator", vmSafeSource(body))(
+    { icsCopyNote: note },
+    doc,
+    nav,
+  ) as Promise<void>;
+  return { note, done };
+}
+
+/** 注記の中身を、読み上げが受け取る順に並べた文字列（にせ DOM の中の本文をつなぎ合わせる）。 */
+function noteText(note: FakeNode): string {
+  return note.children.map((c) => c.textContent).join("");
+}
+
+describe("購読 URL を取り出せる（第 268 回）", () => {
+  it("async の関数を抜き出せる（修飾語を落とすと await で構文エラーになる）", () => {
+    const src = jsFunction(siteRuntime(), "copyIcsSubscribeUrl");
+    expect(src, "抜き出しが `async` を落としている").toMatch(
+      /^\s*async\s+function\s+copyIcsSubscribeUrl/,
+    );
+  });
+
+  it("サブパス配信でも自前ホストでも、このページの場所から絶対 URL を組み立てる", async () => {
+    const written: string[] = [];
+    const r = runIcsCopy({
+      base: "https://example.org/sub/kamiyobi/index.html",
+      clipboard: {
+        writeText: (v) => {
+          written.push(v);
+          return Promise.resolve();
+        },
+      },
+    });
+    await r.done;
+    expect(written, "購読 URL がクリップボードに入っていない").toEqual([
+      "https://example.org/sub/kamiyobi/deadlines.ics",
+    ]);
+  });
+
+  it("公開物に特定のホスト名を打ち込まない（自前ホストで噓になる）", () => {
+    const app = siteRuntime();
+    expect(app, "購読 URL に配信先を打ち込んでいる").not.toMatch(/github\.io/);
+  });
+
+  it("押すと返事が出、URL が選べる形で残る（コードとして解釈させない）", async () => {
+    const r = runIcsCopy({
+      base: "https://example.org/kamiyobi/",
+      clipboard: { writeText: () => Promise.resolve() },
+    });
+    await r.done;
+    expect(r.note.hidden, "自動コピーできたのに返事が出ない").toBe(false);
+    const text = noteText(r.note);
+    expect(text, "コピーできたことが伝わらない").toContain("コピーしました");
+    expect(text, "カレンダーでの次の一手を書いていない").toMatch(/URL から追加|購読先/);
+    expect(text, "毎日置き換わることを言っていない").toContain("毎日");
+    expect(text).toContain("https://example.org/kamiyobi/deadlines.ics");
+    expect(r.note.htmlWrites, "URL を HTML として入れている").toBe(0);
+    const code = r.note.children.find((c) => c.tag === "code");
+    expect(code, "URL が selectable な形（code）で残らない").toBeTruthy();
+    expect(code!.textContent).toBe("https://example.org/kamiyobi/deadlines.ics");
+  });
+
+  it("クリップボードを許可していない環境では、同じ文字列を手で使える", async () => {
+    const r = runIcsCopy({ base: "https://example.org/kamiyobi/", clipboard: undefined });
+    await r.done;
+    const text = noteText(r.note);
+    expect(r.note.hidden, "自動コピーできない返事が出ない").toBe(false);
+    expect(text, "自動でできないことを隠している").toContain("自動でコピーできませんでした");
+    expect(text, "どこへ入れるのかを書いていない").toContain("購読先");
+    expect(text).toContain("https://example.org/kamiyobi/deadlines.ics");
+  });
+
+  it("ブラウザのコピーが失敗しても、噓の成功を出さない", async () => {
+    const r = runIcsCopy({
+      base: "https://example.org/kamiyobi/",
+      clipboard: { writeText: () => Promise.reject(new Error("denied")) },
+    });
+    await r.done;
+    const text = noteText(r.note);
+    expect(text, "失敗したのにコピーしたと言っている").not.toContain("コピーしました");
+    expect(text).toContain("https://example.org/kamiyobi/deadlines.ics");
+  });
+
+  it("このページの場所が読めないときも、リンクと同じ相対のままとる（空を出さない）", async () => {
+    for (const base of [undefined, "", "not a url"]) {
+      const written: string[] = [];
+      const r = runIcsCopy({
+        base,
+        clipboard: {
+          writeText: (v) => {
+            written.push(v);
+            return Promise.resolve();
+          },
+        },
+      });
+      await r.done;
+      expect(written[0], `base が $String(base)のときに何も出ない`).toBeTruthy();
+      expect(written[0]).toContain("deadlines.ics");
+    }
+  });
+
+  it("画面には押せる物が既定で隠れて出て、押した後の場は読み上げに流れる", () => {
+    const page = readFileSync(join(site, "index.html"), "utf8");
+    const btn =
+      /<button id="icsCopy" type="button" class="btn-reset" hidden>([^<]*)<\/button>/.exec(page);
+    expect(btn, "購読 URL をコピーする物が無い").toBeTruthy();
+    expect(btn![1], "ラベルが何をする物か言わない").toMatch(/購読/);
+    expect(btn![1]).toContain("URL");
+    const note = /<div id="icsCopyNote"[^>]*>/.exec(page);
+    expect(note, "押した後の場が無い").toBeTruthy();
+    expect(note![0], "読み上げが返事を追えない").toContain('aria-live="polite"');
+    expect(note![0], "既定で見える位置に返事を置いている").toContain("hidden");
+    // JavaScript が動いていない画面に、押せない物を置かない（`app.js` が現す）。
+    const app = siteRuntime();
+    expect(app, "JavaScript が動いているときに出す手続きが無い").toMatch(
+      /\$\("icsCopy"\)[\s\S]{0,160}addEventListener\(\s*"click"[\s\S]{0,60}copyIcsSubscribeUrl/,
+    );
+  });
+
+  it("紙にはコピーの導線を刷らない（紙から押せない）", () => {
+    const css = [
+      ...readFileSync(join(site, "index.html"), "utf8").matchAll(/<style>([\s\S]*?)<\/style>/g),
+    ]
+      .map((m) => m[1])
+      .join("\n");
+    const print = /@media print\s*\{([\s\S]*?)\n\}/.exec(css)?.[0] ?? "";
+    expect(print, "印刷用の規則が見つからない").not.toBe("");
+    /* `#icsCopy` を文字列で探すと `#icsCopyNote` にも当たって、片方を消しても黙って
+       通る（改ざんで実測）。語の区切りまで見る。 */
+    for (const re of [/#icsCopy\b/, /#icsCopyNote\b/]) {
+      expect(re.test(print), `押せない物を紙に刷っている: $re`).toBe(true);
+    }
   });
 });

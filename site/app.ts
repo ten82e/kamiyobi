@@ -2486,6 +2486,64 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return `この一覧の ${countJa(total)} 件を CSV でダウンロード`;
   }
 
+  /* 購読（カレンダーに URL で入れておく形）には、このファイルの場所をカレンダーアプリに
+   * 打ち込む必要がある。画面は「購読先に指定すると毎日置き換わる」と教えていたのに、その
+   * 場所を取り出す手段が無かった（リンクを右クリックしてコピーするしかない – 2026-09-23 実測:
+   * クリップボードに触るコードはビルド前の `app.ts` に 1 行も無い）。
+   * URL はこのページの場所から組み立てる。配信先を代码に書くと、サブパス配信と自前ホストで
+   * 噓になる（公開物に特定ホスト名を 1 度も書かない方針は第 242 回から）。 */
+  const ICS_FILE_NAME = "deadlines.ics";
+
+  function icsSubscribeUrl(): string {
+    const base = typeof document === "undefined" ? "" : String(document.baseURI || "");
+    if (!base) return ICS_FILE_NAME;
+    try {
+      return new URL(ICS_FILE_NAME, base).href;
+    } catch {
+      // 組み立てられなければ、リンクと同じ相対のままとる（空文字を返して押せないふりをしない）。
+      return ICS_FILE_NAME;
+    }
+  }
+
+  /** 押した後の案内文。URL はこのうしろに選べる形で載せる（書き換えられないため）。 */
+  function icsCopyNoteJa(copied: boolean): string {
+    return copied
+      ? "購読用の URL をコピーしました。カレンダーアプリの「URL から追加」「購読先」に貼り付けてください（データ更新のあと、毎日新しい一覧に置き換わります）。指定する URL:"
+      : "このページでは自動でコピーできませんでした（ブラウザがクリップボードを許可していません）。カレンダーの購読先に、次をそのまま指定してください:";
+  }
+
+  function showIcsCopyNote(copied: boolean): void {
+    const note = $("icsCopyNote");
+    note.textContent = "";
+    const lead = document.createElement("span");
+    lead.textContent = icsCopyNoteJa(copied);
+    const url = document.createElement("code");
+    // 必ずテキストとして入れる（URL の中の文字をタグとして解釈させない）。
+    url.textContent = icsSubscribeUrl();
+    note.appendChild(lead);
+    note.appendChild(document.createTextNode(" "));
+    note.appendChild(url);
+    note.hidden = false;
+  }
+
+  /* Promise を返す（押した側は捨てて良いが、検査は結果を待って確かめる。タイマーは
+     使わない – 待ち時間を見る検査は禁止なので、ここで待たせる物は何も無い）。 */
+  async function copyIcsSubscribeUrl(): Promise<void> {
+    const url = icsSubscribeUrl();
+    const clip = typeof navigator === "undefined" ? null : navigator.clipboard;
+    if (!clip || typeof clip.writeText !== "function") {
+      // 許可されていない環境（このページを http で開くなど）でも、同じことが手でできる。
+      showIcsCopyNote(false);
+      return;
+    }
+    try {
+      await clip.writeText(url);
+      showIcsCopyNote(true);
+    } catch {
+      showIcsCopyNote(false);
+    }
+  }
+
   function exportShownCsv() {
     const csv = Recommender.deadlinesToCsv(
       shown as unknown as Record<string, unknown>[],
@@ -4830,6 +4888,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   });
   const exportCsvButton = $("exportCsv");
   if (exportCsvButton) exportCsvButton.addEventListener("click", exportShownCsv);
+  // JavaScript が動いているときだけ出る（押せない物を紙と JavaScript 無効の画面に出さない）。
+  const icsCopyButton = $("icsCopy");
+  icsCopyButton.addEventListener("click", () => {
+    void copyIcsSubscribeUrl();
+  });
   // 印刷時は絞り込み後の全行を描画する。画面は 40 行ずつしか出さないので、
   // この措置が無いと印刷物だけ「直近 40 件」で途中までになる。印刷後に戻す。
   let printExpanded = false;
