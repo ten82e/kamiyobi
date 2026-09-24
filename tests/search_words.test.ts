@@ -769,3 +769,66 @@ it("季節の語（秋・春・来年の秋）で、計画の立て方そのま�
   const app = readFileSync(join(builtSite(), "app.js"), "utf8");
   expect(app, "ビルド済み app.js が季節の展開を件数欄に出していない").toContain("seasonPairs");
 });
+
+it("分野の和名（画像認識・ビッグデータ・知識発見など）で打った人が、原文の英文字を書く行に出会える（第 306 回）", () => {
+  /* 品書の行は会議名に原文の英文字をそのまま載せるので、日本語で打った人だけ届かなかった
+   * （2026-08-09 生成の実ビルドの品書 872 行で実測: `画像認識` 0 行 / `computer vision` と書く会
+   * 48 行、`ビッグデータ` 0 行 / 20 行、`知識発見` 0 行 / 9 行、`レコメンド` 0 行 / 7 行）。
+   * `ワークショップ` で引いた人が英文の会議名に行き着けなかったのと同じ形（第 232 回）なので、
+   * 同じ表に足した。検査は検査用の収録データ（435 行）で見るので、行数は実ビルドと違う –
+   * ここでは「原文にその語を書く行を 1 行もこぼさない」ことと「寄せ先以外の行を呼ばない」こと
+   * を見る（収録データに左右されない不変条件）。 */
+  const at = Date.parse("2026-08-09T00:00:00Z");
+  const list = rows();
+  const hits = (query: string): Row[] => {
+    const matches = Recommender.searchMatcher(Recommender.expandRelativeMonths(query, at));
+    return list.filter((r) => matches(r.hay) === true);
+  };
+  const cases: Array<[string, string]> = [
+    ["画像認識", "computer vision"],
+    ["マルチメディア", "multimedia"],
+    ["ビッグデータ", "big data"],
+    ["大量データ", "big data"],
+    ["知識発見", "knowledge discovery"],
+    ["データサイエンス", "data science"],
+    ["生体", "bio"],
+    ["バイオ", "bio"],
+    ["リコメンデーション", "recommendation"],
+    ["レコメンデーション", "recommendation"],
+    ["レコメンド", "recommendation"],
+  ];
+  let 出会えた行数 = 0;
+  let 和名を書かない行に出会えた数 = 0;
+  for (const [word, en] of cases) {
+    const got = hits(word);
+    const enRows = list.filter((r) => String(r.hay).toLowerCase().includes(en));
+    /* 寄せたことは件数欄が説明する（理由も見さないで行の壁を出さない – §7 の同じ約束）。
+       注記は収録データに依存しないので、11 語すべてで見る。 */
+    expect(Recommender.querySynonymNotes(word).length, `「${word}」の寄せの注記が無い`).toBe(1);
+    /* 注記は寄せ先を名指す（「何で探したか」が分からないと、件数だけ出て壁になる – §7）。
+       説明の欄を別語に化かした改ざんをここで止める。 */
+    expect(
+      Recommender.querySynonymNotes(word)[0],
+      `「${word}」の注記が寄せ先（${en}）を名指していない`,
+    ).toContain(en);
+    const missed = enRows.filter((r) => !got.includes(r)).length;
+    expect(missed, `「${word}」で原文に ${en} と書く行が ${missed} 行こぼれている`).toBe(0);
+    const strays = got
+      .filter((r) => !enRows.includes(r) && !String(r.hay).includes(word))
+      .map((r) => String(r.hay).slice(0, 40));
+    expect(strays, `「${word}」の寄せが ${en} 以外の行を呼んだ: ${strays.join(" / ")}`).toEqual([]);
+    出会えた行数 += got.length;
+    和名を書かない行に出会えた数 += got.filter((r) => !String(r.hay).includes(word)).length;
+  }
+  /* 寄せが仕事をしていること – 打たれた和名を行の側が書いているだけで当たった行を除いても、
+     残りの行に会えている（表に載せる意味が有る証拠）。 */
+  expect(出会えた行数, "11 語の寄せが 1 行にも繋がっていない").toBeGreaterThan(40);
+  expect(
+    和名を書かない行に出会えた数,
+    "寄せが仕事をしていない（和名その物で当たっているだけ）",
+  ).toBeGreaterThan(40);
+  /* 精密な語は寄せない（§7）。`コンピュータビジョン` は行が和名を書くので当たり、`推薦` は
+     そのまま当たるので、表に載せない。 */
+  expect(Recommender.querySynonymNotes("コンピュータビジョン").length).toBe(0);
+  expect(Recommender.querySynonymNotes("推薦").length).toBe(0);
+});

@@ -12,7 +12,7 @@ import {
   siteHtmlRuntime,
   verificationLabelsSource,
 } from "./built_golden_shared.ts";
-import { NOW, runCli } from "./helpers.ts";
+import { NOW, REPO_ROOT, runCli } from "./helpers.ts";
 import { jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
 it("ラウンドの R 表記が、別の周目の行を混ぜない（SPEC §7）", () => {
@@ -1168,13 +1168,37 @@ it("データに在る概念を、日本語の言い方で引ける（SPEC §7�
     "原文の語へ寄せる表から語を拾えない（検査が空振り）",
   ).toBeGreaterThanOrEqual(5);
 
+  /* 展開語が検査用の品書に無い語を、収録の側と突き合わせる（第 306 回）。検査用の品書は
+     `tests/fixtures` だけから作る 435 行で、実ビルドの品書 872 行より小さい – `recommendation`
+     は実ビルドで 7 行に出会えるが、検査用の収録には収録元が来ていない。ここで見るのは
+     「実在しない語を寄せない」なので、収録の側（`data/snapshot.json`）に在れば通す
+     （検査用の品書だけで見ると、実データに在る語を寄せるたびに検査が落ちる）。 */
+  const shipped = readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8").toLowerCase();
   for (const [word, shown, term] of entries) {
     const reached = hits(term);
-    expect(reached, `展開語「${term}」が収録データに無い（寄せた先が空）`).toBeGreaterThan(0);
+    if (reached === 0) {
+      expect(
+        shipped.includes(term.toLowerCase()),
+        `展開語「${term}」が収録にも検査用のデータにも無い（寄せた先が空）`,
+      ).toBe(true);
+    }
+    /* 寄せた側は展開語を **括った語** として括る（`ビッグデータ` → "big data"）。展開語その物を
+     * 打たれた検索は 2 つの語にばらして括るので、`big data` は `Big Spatial Data` を含む行も
+     * つかまえる（2026-08-09 生成の検査用の品書で実測: ばらして 20 行、括った語で 19 行 –
+     * 第 306 回）。基準は画面の照合と同じ語の区切りにする – 画面は `demo` を `demons` の中に
+     * 当てない（その語を書く 2 行のうち 1 行は部分一致だけで、画面は括らなかった）。
+     * なので 1 語の展開語は画面の照合その物（`reached`）を、2 語以上の英文字の展開語は
+     * 語として括った行数を基準にする。*/
+    const 語として含む = (hay: string): boolean =>
+      new RegExp(`(^|[^a-z0-9])${term.toLowerCase()}([^a-z0-9]|$)`).test(hay);
+    const 出会うべき行数 =
+      /^[a-z0-9]+ [a-z0-9 ]+$/.test(term.toLowerCase()) && term.includes(" ")
+        ? rows.filter((r) => 語として含む(String(r.hay ?? "").toLowerCase())).length
+        : reached;
     expect(
       hits(word),
-      `語「${word}」が展開語「${term}」と同じ行に出会えていない`,
-    ).toBeGreaterThanOrEqual(reached);
+      `語「${word}」が展開語「${term}」を書く行に出会えていない（その語を書く行は ${出会うべき行数} 行）`,
+    ).toBeGreaterThanOrEqual(出会うべき行数);
     const notes = R.querySynonymNotes(word);
     expect(notes.length, `語「${word}」を寄せたことが件数欄に出ない`).toBeGreaterThan(0);
     const note = notes.join("・");
