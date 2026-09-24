@@ -2942,9 +2942,11 @@ const Recommender = (() => {
       /* 「7日以内」「14日以内」（週から寄せた形を含む）は範囲なので、件数欄に幅を書く（第 318 回）。
        * 週で打った人には日数への換算が見えないと「何で 60 行なのか」が分からない –
        * 1 週 = 7 日の換算を隠さず出すための案内。 */
-      const within = withinDaysTermsJa(key, nowMs);
+      const halfYear = HALF_YEAR_JA.test(token);
+      const withinKey = halfYear ? `${HALF_YEAR_DAYS_JA}日以内` : key;
+      const within = withinDaysTermsJa(withinKey, nowMs);
       if (within) {
-        const matched = /^([0-9]{1,4})日以内$/.exec(key);
+        const matched = /^([0-9]{1,4})日以内$/.exec(withinKey);
         const days = matched ? Number(matched[1]) : 0;
         if (days >= 1 && days <= 365) {
           const from = offsetCalendarDay(nowMs, 0);
@@ -2957,12 +2959,29 @@ const Recommender = (() => {
             from[0] === to[0] ? `${to[1]}月${to[2]}日` : `${to[0]}年${to[1]}月${to[2]}日`;
           notes.push(
             `${token} = ${first}${firstDay ? `(${firstDay})` : ""}〜${tail}${lastDay ? `(${lastDay})` : ""}` +
-              " – 行に書かれた他の日付（別の締切ラウンド・会期）でも当たるので、締切日からの日数で絞る「締切まで」の欄が確かです",
+              (halfYear
+                ? " – 画面上の『180 日以内』を受けています（暦の半年は 180〜184 日なので、日数では少しずれます）"
+                : " – 行に書かれた他の日付（別の締切ラウンド・会期）でも当たるので、締切日からの日数で絞る「締切まで」の欄が確かです"),
           );
           return;
         }
       }
-      const yearOffset = RELATIVE_YEAR_OFFSETS_JA[key];
+      /* 「今年度」「来年度中」は年度（4 月〜翌年 3 月）の幅で答える（第 330 回）。
+       * 年度跨ぎの相談がそのまま打てるように、初日と末日を曜日まで書く。 */
+      const fiscalBase = fiscalYearBaseJa(key, nowMs);
+      if (fiscalBase !== null) {
+        const 初日 = `${fiscalBase}年4月1日`;
+        const 末日 = `${fiscalBase + 1}年3月31日`;
+        const 初曜 = weekdayJaFromDate(toIsoDate(初日));
+        const 末曜 = weekdayJaFromDate(toIsoDate(末日));
+        notes.push(
+          `${token} = ${初日}${初曜 ? `(${初曜})` : ""}〜${末日}${
+            末曜 ? `(${末曜})` : ""
+          }の締切 – 年度は 4 月から翌年 3 月までです`,
+        );
+        return;
+      }
+      const yearOffset = RELATIVE_YEAR_OFFSETS_JA[relativeYearKeyJa(key)];
       if (yearOffset !== undefined) {
         const base = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
         notes.push(`${token} = ${base.getUTCFullYear() + yearOffset}年の締切（1〜12 か月）`);
@@ -2981,6 +3000,12 @@ const Recommender = (() => {
           first = `${ymd[0]}年${ymd[1]}月${ymd[2]}日`;
         } else if (onwardWeek.length === 7) {
           first = onwardWeek[0];
+        } else if (fiscalYearBaseJa(stem, nowMs) !== null) {
+          first = `${fiscalYearBaseJa(stem, nowMs) as number}年4月1日`;
+        } else if (RELATIVE_YEAR_OFFSETS_JA[relativeYearKeyJa(stem)] !== undefined) {
+          const baseNow = Number.isFinite(nowMs) ? nowMs : Date.now();
+          const baseYear = new Date(baseNow + 9 * 3_600_000).getUTCFullYear();
+          first = `${baseYear + (RELATIVE_YEAR_OFFSETS_JA[relativeYearKeyJa(stem)] as number)}年1月1日`;
         }
         if (first) {
           notes.push(
@@ -4483,11 +4508,72 @@ const Recommender = (() => {
     昨年: -1,
     一昨年: -2,
     いとおととし: -2,
+    /* 申請書・経理の文脈で「翌年度」「翌年」が普通に出る – 第 330 回の実測で 0 行だった。 */
+    翌年: 1,
+    よくねん: 1,
+    翌々年: 2,
+    よくよくねん: 2,
   };
+
+  /* 「今年中」「来年中」「今年いっぱい」は年の語に期間の語が付きただけなので、同じ年へ寄せる
+   * （第 330 回）。実測（2026-08-09 生成ビルドの品書 872 行・固定時刻 2026-08-09T00:00:00Z）で
+   * `今年` 789 行 / `今年中` **0 行**、`来年` 452 行 / `来年中` **0 行**、`今年いっぱい` **0 行**。
+   * 助詞の表（`DATE_TOKEN_TAILS_JA`）に `中` を足すと `来年中` より前の形が壊れるので、
+   * 年の語の側で受ける（第 328 回で決めた境界）。 */
+  const YEAR_SPAN_TAIL_JA = /^(.+?)(?:中|中間|かけて|いっぱい|以内)$/;
+
+  function relativeYearKeyJa(token: string): string {
+    const q = String(token || "");
+    if (RELATIVE_YEAR_OFFSETS_JA[q] !== undefined) return q;
+    const matched = YEAR_SPAN_TAIL_JA.exec(q);
+    if (matched && RELATIVE_YEAR_OFFSETS_JA[matched[1]] !== undefined) return matched[1];
+    return "";
+  }
+
+  /* 年度（4 月から翌年 3 月）のかたまり。研究費・出張の年度跨ぎは此処で聞く
+   * （第 330 回 – 実測で `今年度` `来年度` `前年度` `翌年度` がすべて 0 行だった）。
+   * `年度末` `年度初め` は月のまとまりの語（第 327 回）が先に受けるので、此処には置かない。 */
+  const FISCAL_YEAR_OFFSETS_JA: Record<string, number> = {
+    今年度: 0,
+    こん年度: 0,
+    来年度: 1,
+    らいねんど: 1,
+    翌年度: 1,
+    よくねんど: 1,
+    再来年度: 2,
+    去年度: -1,
+    前年度: -1,
+    ぜんねんど: -1,
+    一昨年度: -2,
+  };
+  const FISCAL_YEAR_TAIL_JA = /^(.+?)(?:中|以内)$/;
+
+  /** 年度のかたまりを、その年度の始まる年（4 月始まり）で返す。解けなければ null。 */
+  function fiscalYearBaseJa(token: string, nowMs: number): number | null {
+    let q = String(token || "");
+    const matched = FISCAL_YEAR_TAIL_JA.exec(q);
+    if (matched && FISCAL_YEAR_OFFSETS_JA[matched[1]] !== undefined) q = matched[1];
+    const offset = FISCAL_YEAR_OFFSETS_JA[q];
+    if (offset === undefined) return null;
+    const today = offsetCalendarDay(nowMs, 0);
+    /* 基準が 1〜3 月のときは前年度が現在の年度（日本の年度は 4 月始まり）。 */
+    return (today[1] >= 4 ? today[0] : today[0] - 1) + offset;
+  }
+
+  function fiscalYearTermsJa(token: string, nowMs: number): string[] | null {
+    const base = fiscalYearBaseJa(token, nowMs);
+    if (base === null) return null;
+    const out: string[] = [];
+    for (let i = 0; i < 12; i += 1) {
+      const month = 4 + i;
+      out.push(month <= 12 ? `${base}年${month}月` : `${base + 1}年${month - 12}月`);
+    }
+    return out;
+  }
 
   /** 年の語に対して、その年の 1〜12 か月語（年付き）を返す。基準は JST の暦年。 */
   function yearMonthTermsJa(token: string, nowMs: number): string[] {
-    const offset = RELATIVE_YEAR_OFFSETS_JA[token];
+    const offset = RELATIVE_YEAR_OFFSETS_JA[relativeYearKeyJa(token)];
     if (offset === undefined) return [];
     const base = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
     const year = base.getUTCFullYear() + offset;
@@ -4916,6 +5002,7 @@ const Recommender = (() => {
       RELATIVE_MONTH_OFFSETS_JA[word] !== undefined ||
       RELATIVE_YEAR_OFFSETS_JA[word] !== undefined ||
       PERIOD_MONTH_WORDS_JA[word] !== undefined ||
+      FISCAL_YEAR_OFFSETS_JA[word] !== undefined ||
       SEASON_MONTHS_JA[word] !== undefined
     );
   }
@@ -5077,6 +5164,14 @@ const Recommender = (() => {
   }
 
   /** 相対日・相対日の語を、暦日の候補グループへ展開する（OR の組）。 */
+  /* 「半年」は画面が持つ幅の選択肢（『締切まで』の `180 日以内`）を受けて受ける（第 330 回 –
+   * 実測で `半年` `半年以内` は 0 行だった。月の単位を検索側で換算しない決裁（第 315 回 –
+   * `3か月以内` は展開しない。`6か月以内` も展開されないのを第 330 回の実測で確認した –
+   * 「半年」だけは画面の 180 日という幅がそのまま使えるので受け、暦の半年と 1〜3 日ずれる
+   * 事は件の数欄で正直に書く（締切の推測はしない – AGENTS.md）。 */
+  const HALF_YEAR_JA = /^半年(?:以内|間)?$/;
+  const HALF_YEAR_DAYS_JA = 180;
+
   function relativeDayGroups(token: string, nowMs: number): string[] | null {
     /* 「明日まで」「来週までに」は期日なので、今日からその日まで（第 328 回）。 */
     const until = untilDayTermsJa(token, nowMs);
@@ -5087,6 +5182,15 @@ const Recommender = (() => {
     /* 「今週金曜」「来週木曜日」は締切日がその日の行に出会う（第 329 回）。 */
     const pressedDay = pressedWeekdayJa(token, nowMs);
     if (pressedDay) return [token].concat(pressedDay);
+    /* 「今年度」「来年度中」は年度（4 月〜翌年 3 月）の月語に展開する（第 330 回）。 */
+    const fiscal = fiscalYearTermsJa(token, nowMs);
+    if (fiscal) return [token].concat(fiscal);
+    /* 「半年（以内）」は `6か月以内` と同じ幅（第 330 回 – 数字の無い語は下の表が読めない）。 */
+    const halfYear = HALF_YEAR_JA.test(String(token || ""));
+    if (halfYear) {
+      const terms = withinDaysTermsJa(`${HALF_YEAR_DAYS_JA}日以内`, nowMs);
+      if (terms) return terms;
+    }
     /* 助詞が付きただけの形は表の形に寄せる（`明日中に` → `明日中` – 第 328 回）。 */
     const stem = dateTokenStemJa(token) || token;
     const numeric = numericRelativeDay(stem, nowMs);
@@ -8599,6 +8703,7 @@ const Recommender = (() => {
     periodMonthPairs: periodMonthPairs,
     periodMonthTermsJa: periodMonthTermsJa,
     pressedWeekdayJa: pressedWeekdayJa,
+    fiscalYearTermsJa: fiscalYearTermsJa,
     kanaFold: kanaFold,
     queryTokenGroups: queryTokenGroups,
     queryTokens: queryTokens,

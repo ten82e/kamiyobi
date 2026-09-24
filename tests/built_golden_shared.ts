@@ -119,6 +119,12 @@ export const SEARCH_CANON = (() => {
     ["RELATIVE_MONTH_OFFSETS_JA", /const RELATIVE_MONTH_OFFSETS_JA[\s\S]*?\};/],
     // 「今月末」「年内」の語の表（第 327 回）。`queryTokenGroups` が呼ぶ関数と一緒に注入する。
     ["PERIOD_MONTH_WORDS_JA", /const PERIOD_MONTH_WORDS_JA[\s\S]*?\};/],
+    /* 年度・期間の語（第 330 回）。 */
+    ["FISCAL_YEAR_OFFSETS_JA", /const FISCAL_YEAR_OFFSETS_JA[\s\S]*?\};/],
+    ["FISCAL_YEAR_TAIL_JA", /const FISCAL_YEAR_TAIL_JA = [^\n]*;/],
+    ["YEAR_SPAN_TAIL_JA", /const YEAR_SPAN_TAIL_JA = [^\n]*;/],
+    ["HALF_YEAR_JA", /const HALF_YEAR_JA = [^\n]*;/],
+    ["HALF_YEAR_DAYS_JA", /const HALF_YEAR_DAYS_JA = [^\n]*;/],
     // 助詞・期日の言い回しの表と「今日から N 日」の単位（第 328 回）。
     ["DATE_TOKEN_TAILS_JA", /const DATE_TOKEN_TAILS_JA[\s\S]*?\];/],
     ["FROM_TODAY_UNIT", /const FROM_TODAY_UNIT[\s\S]*?\};/],
@@ -226,6 +232,10 @@ export const SEARCH_CANON = (() => {
       // 週と曜日を繋げた形（`今週金曜`）を 1 日に解く部品（第 329 回）。
       "pressedWeekdayJa",
       "isPastJstDay",
+      // 年度・年のまとまりの語（第 330 回）。
+      "relativeYearKeyJa",
+      "fiscalYearBaseJa",
+      "fiscalYearTermsJa",
       // 数値の相対日（`あと 51 日` → `51日後` → 暦日）。`relativeDayGroups` と
       // `queryTokenGroups` が呼ぶので、定義順で先に置く（第 223 回）。
       "collapseRelativeDayPhrase",
