@@ -33,6 +33,12 @@
 | `https://ten82e.github.io/kamiyobi/publish.json` | 公開成果物のハッシュ、`content_id` / `build_id`、元 commit、入力 hash、実行元、build 時刻・Node 版・offline/cache 方針、`semantic_status`。公開物の再現元を示す |
 
 | `https://ten82e.github.io/kamiyobi/deadlines.ics` | 締切をカレンダーに入れる 1 本（RFC 5545）。終日（JST の暦日）で 1 締切 = 1 イベント。各行に開催地（`LOCATION`）も入るので、カレンダーのうえで国内か海外かが分かります。購読先に指定すると毎日置き換わる |
+- 見つけられなかった場所を開いた人への**日本語の案内ページ `404.html` を出すようになりました**。
+  これまで URL の打ち間違い（サイトの prefix を落として `https://ten82e.github.io/deadlines.ics` と
+  開くなど）や古いリンクを踏むと、kamiyobi の物ではない 404 の画面が出て、締切の一覧へ戻る口が
+  ありませんでした。新しいページは画面・直近の一覧・カレンダー・`data.json`・`llms.txt` への口を
+  **サイトの絶対 URL** で並べるので、どの場所から開いても帰れます。このページ自体は締切も会期も
+  載せません（日付を推測しないため）（第 307 回）。
 - 公開している平坦な表 [`data.csv`](https://ten82e.github.io/kamiyobi/data.csv) に、**種別を日本語で
   書いた欄 `kind_ja` を 1 本足しました**（列は 25 本 → 26 本。順序で読む側を壊さないよう末尾に追加）。
   以前は `kind`（`paper` などの英語のキー）と `label`（上流の自由文で、'Paper submission' と

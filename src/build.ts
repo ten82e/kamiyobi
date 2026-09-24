@@ -93,6 +93,7 @@ const MANAGED_OUTPUT_FILES = [
   "data.csv",
   "upcoming.md",
   "upcoming.html",
+  "404.html",
   "deadlines.ics",
   "llms.txt",
   "icon.svg",
@@ -344,6 +345,10 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
   "upcoming.html":
     "`upcoming.md` と同じ表を、ブラウザでそのまま読める形にしたもの（第 263 回）。Markdown の" +
     " 方は機械が読む用のまま残してある。",
+  "404.html":
+    "見つけられなかった場所に対する日本語の案内（GitHub Pages が無い場所に対して出すページ）。" +
+    "画面・直近の一覧・カレンダー・機械可読のデータへの口を、サイトの絶対 URL で並べる" +
+    "（第 307 回）。日付は載せない。",
   "deadlines.ics":
     "収録した会議の日付をカレンダーに入れるための 1 本（RFC 5545）。1 日 = 1 イベントの終日" +
     "（JST の暦日）で、" +
@@ -3513,6 +3518,65 @@ function pageDescription(heading: string, columns: string[]): string {
   );
 }
 
+/* 見つけられなかった場所への案内（第 307 回）。GitHub Pages は `404.html` を無い場所の
+ * 応答として出すので、ここに口を置いておく。相対リンクにすると、サイトの直下
+ * （`https://<domain>/deadlines.ics` のように場所の prefix を落とした打ち方）で開いたときに
+ * 別々のおかしい場所に飛ぶ – **サイトの絶対 URL で書く**（`site.base_url` が正本）。
+ * 日付は載せない – 快照を何時までも見せる物なので、古い日付を置いて嘘を言わないため。 */
+export function toNotFoundHtml(styleBlock = "", baseUrl = ""): string {
+  const base = baseUrl.replace(/\/+$/, "");
+  const link = (file: string): string => (base ? `${base}/${file}` : file);
+  const row = (file: string, label: string, note: string): string =>
+    `<li><a href="${escapeHtmlText(link(file))}">${label}</a>${note}</li>`;
+  return [
+    "<!doctype html>",
+    '<html lang="ja">',
+    "<head>",
+    '<meta charset="utf-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    // 無い場所の応答なので、検索エンジンに本文として拾わせない。
+    '<meta name="robots" content="noindex">',
+    "<title>ページが見つかりません - kamiyobi</title>",
+    `<link rel="icon" href="${escapeHtmlText(link("icon.svg"))}" type="image/svg+xml">`,
+    styleBlock,
+    "</head>",
+    "<body>",
+    "<main>",
+    "<h1>そのページは見つかりません</h1>",
+    "<p>URL の打ち間違いか、リンクが古くなっています。締切と会期の情報は次の場所に在ります。</p>",
+    "<ul>",
+    row(
+      "index.html",
+      "締切の一覧（画面）",
+      " – 残り日数・日本時間への換算・絞り込み・検索はそちらでできます。収録の全体を読むこともできます",
+    ),
+    row(
+      "upcoming.html",
+      "直近の締切と会期の表",
+      " – 実行処理を必要としない版（印刷・JavaScript なしで読める）",
+    ),
+    row("deadlines.ics", "カレンダー（deadlines.ics）", " – 収録している今後の締切を全て"),
+    row(
+      "data.json",
+      "機械可読のデータ（data.json）",
+      " – 画面より広い期間（過去の全履歴とそれより先の締切）まで入っている",
+    ),
+    row(
+      "llms.txt",
+      "機械向けの索引（llms.txt）",
+      " – 出口が何で、それぞれに何が載っているかを並べた物",
+    ),
+    "</ul>",
+    "<p>探している会議が収録に在るか分からないときは、画面の検索欄に会議名の固有名詞を打ってください。" +
+      "0 件のときは、その名前が収録の名簿に在るかどうかも画面が言います。</p>",
+    "<p>このページ自体は締切も会期も載せません（日付を推測しないため）。</p>",
+    "</main>",
+    "</body>",
+    "</html>",
+    "",
+  ].join("\n");
+}
+
 export function toUpcomingHtml(markdown: string, styleBlock = "", baseUrl = ""): string {
   const inlineMd = (value: string): string =>
     escapeHtmlText(value)
@@ -4208,19 +4272,18 @@ export async function buildAll(
     // 画面と同じ見た目にするため、`index.html` と同じ様子の塊を取り出して使う
     // （データを書き込む前の本文から読む – JSON をまたぐ正規表現にしない）。
     const siteStyleBlock = /<style>[\s\S]*?<\/style>/.exec(templateText)?.[0] ?? "";
+    // サイトの所在地は 1 か所で決める（`upcoming.html` の canonical と `404.html` の口が同じ値を向く）。
+    const siteBaseUrl = String(
+      site.base_url ?? `https://${String(site.domain ?? "kamiyobi")}`,
+    ).replace(/\/+$/, "");
     templateText = templateText.replace(TEMPLATE_MARKER, embedJson(jsonCompact(catalog)));
     write("index.html", templateText);
     for (const [name, source] of Object.entries(compileSiteRuntime())) write(name, source);
     // `upcoming.md` は Markdown のまま渡すとブラウザが表に整形してくれないので、
     // 同じ内容の読みやすい版を隣に置く（第 263 回）。画面からの導線はこっちに向ける。
-    write(
-      "upcoming.html",
-      toUpcomingHtml(
-        upcomingMd,
-        siteStyleBlock,
-        String(site.base_url ?? `https://${String(site.domain ?? "kamiyobi")}`).replace(/\/+$/, ""),
-      ),
-    );
+    write("upcoming.html", toUpcomingHtml(upcomingMd, siteStyleBlock, siteBaseUrl));
+    // 無い場所を開いた人に日本語で口を渡す（第 307 回）。画面の見た目のままにする。
+    write("404.html", toNotFoundHtml(siteStyleBlock, siteBaseUrl));
   } else {
     throw new Error(`required site template missing: ${templatePath}`);
   }
