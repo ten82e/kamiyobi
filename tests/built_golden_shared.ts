@@ -246,6 +246,10 @@ export const SEARCH_CANON = (() => {
       // 年度・年のまとまりの語（第 330 回）。
       "relativeYearKeyJa",
       "fiscalYearBaseJa",
+      // 年度の 12 か月語の組み立て（第 330 回）と和暦の寄せ（第 343 回）。`relativeDayGroups`
+      // と `fiscalYearTermsJa` が呼ぶので、定義順で先に置く（第 257 回と同じ穴を踏まない）。
+      "fiscalTermsFromYearJa",
+      "eraYearTermsJa",
       "fiscalYearTermsJa",
       // 月の三日ごとの区切り（`8月下旬` `来月 下旬`）を暦日へ解く部品（第 332 回）。
       "monthPartRangeJa",

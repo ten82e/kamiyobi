@@ -3176,6 +3176,16 @@ const Recommender = (() => {
           return;
         }
       }
+      /* 和暦で打たれた時は、何年に直して探したかを其の場で書く（第 343 回）。 */
+      const 和暦の解 = eraYearTermsJa(token);
+      if (和暦の解) {
+        notes.push(
+          和暦の解.年度
+            ? `${token} = ${和暦の解.西暦}年4月〜${和暦の解.西暦 + 1}年3月の締切 – 年度は 4 月始まりで、この表は締切を西暦でしか書いていないので西暦の月語に直して探しています`
+            : `${token} = ${和暦の解.西暦}年の締切 – この表は締切を西暦でしか書いていないので、年号は西暦に直して探しています（年号と西暦の対応は暦の決まりです）`,
+        );
+        return;
+      }
       /* 「今週金曜」のように週+曜日を繋げた形は、解けた 1 日を出す（第 329 回）。 */
       const pressed = pressedWeekdayJa(token, nowMs);
       if (pressed) {
@@ -4942,12 +4952,71 @@ const Recommender = (() => {
   function fiscalYearTermsJa(token: string, nowMs: number): string[] | null {
     const base = fiscalYearBaseJa(token, nowMs);
     if (base === null) return null;
+    return fiscalTermsFromYearJa(base);
+  }
+
+  /** 与えた年度（4 月始まり）の 12 か月語（第 330 回と同じ組み立て – 二箇所に書かない）。 */
+  function fiscalTermsFromYearJa(base: number): string[] {
     const out: string[] = [];
     for (let i = 0; i < 12; i += 1) {
       const month = 4 + i;
       out.push(month <= 12 ? `${base}年${month}月` : `${base + 1}年${month - 12}月`);
     }
     return out;
+  }
+
+  /* 和暦で打つ人が引けない（2026-10-01 実測・2026-08-09 生成の実ビルド・品書 872 行・固定時刻
+   * 2026-08-09T00:00:00Z）: `2026年` 789 行・`2027年` 452 行・`今年度` 872 行が通るのに、
+   * `令和8年` **0 行**・`令和8年度` **0 行**・`令和7年` **0 行**・`令和8年4月` **0 行**・
+   * `平成30年` **0 行**・`昭和60年` **0 行**・西暦の `2026年度` も **0 行**。品書に和暦は
+   * 一箇所も無く（`令和` 0 回・`平成` 0 回・`昭和` 0 回）、締切は西暦でしか書かれていない
+   * （其の事は裸の `令和` を打った人への案内が既に画面に書いている）。なので**年号を西暦に
+   * 直して探す** – 年号と西暦の対応は暦の決まり（其の年号の始まりの西暦年）で、締切の推測では
+   * 無い。和暦の年その物が西暦の何年かの対応だけを使い、**其の年号が続いていた範囲外の数値は
+   * 直さない**（`平成32年` は直さない – 有り得ない打ち方は其の侭 0 行にして、間違った年に
+   * 寄せる事を避ける）。 */
+  /** 和暦（`令和8年` `令和8年度` `令和8年4月`）と西暦の年度（`2026年度`）を暦語へ解く。
+   * 年号の表は**此処に置く** – 検査は `tests/runtime_extract.ts` の `jsFunction` で関数だけを
+   * 組み立てた品から抜き出して走らせるので、関数の外の `const` に置くと届かない（第 341 回・
+   * 第 343 回の実発生 – 三度目の同じ穴）。 */
+  /* 基準時刻は要らない – 年号と西暦の対応は其の年号が始まった年にだけ決まる（相対的な語と
+   * 違って「今年」のような基準を持たない）。 */
+  function eraYearTermsJa(token: string): { terms: string[]; 西暦: number; 年度: boolean } | null {
+    /* 其の年号が始まった西暦年と、其の年号が続いた最長の年数（元年 = 開始の翌年）。 */
+    const 年号の始まり: Record<string, [number, number]> = {
+      明治: [1867, 45],
+      大正: [1911, 15],
+      昭和: [1925, 64],
+      平成: [1988, 31],
+      令和: [2018, 99],
+    };
+    /* `元年` はそれ自体に「年」が含まれる（`令和元年年` とは書かない）– 数値の形だけが
+     * 後ろの「年」を要求する（第 343 回の実発生 – 初回は `令和元年` が解けなかった）。 */
+    const 和暦の形 = /^(明治|大正|昭和|平成|令和)(?:元年|([0-9]{1,2})年)(度)?((?:[0-9]{1,2})月)?$/;
+    /* `度` を必ず要求する – 付けなければ裸の `2026年`（暦年）を年度に化けさせる
+     * （第 343 回の実測: 789 行が 872 行になった）。 */
+    const 西暦の年度の形 = /^([0-9]{4})年度$/;
+    const 西暦の年度 = 西暦の年度の形.exec(String(token || ""));
+    if (西暦の年度) {
+      const year = Number(西暦の年度[1]);
+      if (!(year >= 1900 && year <= 2200)) return null;
+      return { terms: fiscalTermsFromYearJa(year), 西暦: year, 年度: true };
+    }
+    const matched = 和暦の形.exec(String(token || ""));
+    if (!matched) return null;
+    const 範囲 = 年号の始まり[matched[1]];
+    if (!範囲) return null;
+    const 年数 = matched[2] === undefined ? 1 : Number(matched[2]);
+    if (!(年数 >= 1 && 年数 <= 範囲[1])) return null;
+    const 西暦 = 範囲[0] + 年数;
+    if (matched[4]) {
+      /* `令和8年4月` は其の月の語（月の語は他の月語と同じ経路で 12 か年にまたがって当たる）。 */
+      const 月 = Number.parseInt(matched[4], 10);
+      if (!(月 >= 1 && 月 <= 12)) return null;
+      return { terms: [`${西暦}年${月}月`], 西暦, 年度: false };
+    }
+    if (matched[3]) return { terms: fiscalTermsFromYearJa(西暦), 西暦, 年度: true };
+    return { terms: [`${西暦}年`], 西暦, 年度: false };
   }
 
   /** 年の語に対して、その年の 1〜12 か月語（年付き）を返す。基準は JST の暦年。 */
@@ -5713,6 +5782,9 @@ const Recommender = (() => {
     /* 「今日から 3 日」は `3日以内` と同じ幅（第 328 回）。 */
     const fromToday = fromTodayTermsJa(token, nowMs);
     if (fromToday) return [token].concat(fromToday);
+    /* `令和8年` `令和8年度` `2026年度` は西暦の暦語に解ける（第 343 回 – 品書は西暦のみ）。 */
+    const 和暦 = eraYearTermsJa(token);
+    if (和暦) return [token].concat(和暦.terms);
     /* 「今週金曜」「来週木曜日」は締切日がその日の行に出会う（第 329 回）。 */
     const pressedDay = pressedWeekdayJa(token, nowMs);
     if (pressedDay) return [token].concat(pressedDay);
