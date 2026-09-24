@@ -26,6 +26,9 @@ node src/cli.ts build --out public --offline --no-embeddings --cache .cache --no
   （2026-09-25 に実測 – `site/recommender.ts` のコメントに書いたもので 14 本の検査が落ちた）。
   回避策を通していない呼び出し方も有るので、`site/**` のコメントや画面に出す説明に其の語を
   書かない（必要なら「其の英字語」のように伏せる）。
+- 改ざん検査（ソースを一時的に壊して検査が落ちることを確かめる手順）を走らせている間は、
+  ビルドとテストを併走させない。壊した一時点を読むので、**偽の失敗**が出る（2026-09-25 に実測 –
+  併走した `npm test` は 14 本落ち、2 回ビルドの diff は 4 ファイル出た。どちらも復元後に消えた）。
 - `public/` は `.gitignore`（CI が生成）。`data/snapshot.json` は健全な online ビルドが更新する。
 - offline ビルドは snapshot を書かない（fixtures 汚染防止）。実キャッシュ成果を snapshot に載せるときは手でコピー。
 
