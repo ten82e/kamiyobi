@@ -3020,6 +3020,28 @@ const Recommender = (() => {
           return;
         }
       }
+      /* 「20時」「午後8時59分」は収録の時刻の表記に寄せた結果を出す（第 333 回）。
+       * 午後 → 24 時間表記の換算は打った人に見えないので、解けた形をそのまま書く。 */
+      const clock = clockTimeTermsJa(token);
+      if (clock) {
+        notes.push(
+          `${token} = ${clock.解} の締切 – 収録の時刻は 24 時間表記（\`20:59\` のように時の頭を 0 埋め）で書かれています。${
+            clock.幅
+              ? "冠の無い「N時」はその 1 時間ぶん（00 分〜59 分）を受けます"
+              : "分まで打たれたときはその 1 点だけを見ます"
+          }。タイムゾーン（JST・UTC・AoE）は行に書かれています`,
+        );
+        return;
+      }
+      /* 「20時59分までに」は“それ以前の時刻”という頼み方で、部分一致では作れない幅なので
+       * 絞り込まず、確かでする欄を言う（第 333 回 – 黙って 0 件にしない）。 */
+      const clockUntil = clockUntilQueryJa(token);
+      if (clockUntil) {
+        notes.push(
+          `${token} = 時刻までで絞り込む事は検索欄では出来ません（収録は締切の日で並び、時刻は行に 24 時間表記で書かれています）。締切までの日数で絞るなら上の『締切まで』の欄が確かです – ${clockUntil} という時刻は行に書かれています`,
+        );
+        return;
+      }
       /* 「8月下旬」「来月上旬」は幅なので、出した範囲と分け方の決まりを書く（第 332 回）。
        * 「いついつまで」を尋ねているのに、打たれた語を繰り返すだけの案内は答えにならない。 */
       const part = monthPartRangeJa(解 || key, nowMs);
@@ -4971,6 +4993,57 @@ const Recommender = (() => {
     }
     return out;
   }
+  /* 「20時」「午後8時59分」の打ち方（第 333 回）。収録の時刻は 24 時間表記の `HH:MM` で、
+   * 時の頭は 0 埋めされている（2026-08-09 生成ビルドの品書 872 行の実測: 時刻を持つ 688 行が
+   * すべて 2 桁の時で、1 桁の時は 0 行。内訳は `20:59` 516 行・`23:59` 507 行・`08:59` 88 行）。
+   * ところが日本語の打ち方 `20時` `午後8時` `20時59分` は 1 語も当たらず黙っていた。
+   * 0 埋め以外の形（`9:00`）は出さない – 照合は部分一致なので `9:00` は `19:00` を含み、
+   * 9 時で絞ったのに 19 時の行が混ざる（`1月` と `11月` の同じ穴 – 第 315 回）。 */
+  /* 「までに」「まで」はここに含めない – 「その時刻より前」という幅は部分一致では作れないので、
+   * 下の `clockUntilQueryJa` が案内だけを立てる（第 333 回）。 */
+  const CLOCK_JA =
+    /^(?:(午前|午後|ごぜん|ごご)?([0-9]{1,2})時(?:(?:([0-9]{1,2})分)|(半))?(台)?|正午)$/;
+
+  /** 時刻の語を `HH:MM` の候補へ解く（当てはまらなければ null）。分が有れば 1 点、
+   * 無いときはその 1 時間ぶん（`20時` = 20:00〜20:59）を出す。 */
+  function clockTimeTermsJa(token: string): { terms: string[]; 幅: boolean; 解: string } | null {
+    const 打たれた語 = String(token || "").trim();
+    if (打たれた語 === "正午") {
+      return { terms: ["12:00"], 幅: false, 解: "12:00（正午）" };
+    }
+    const hit = CLOCK_JA.exec(打たれた語);
+    if (!hit) return null;
+    const 午前午後 = hit[1];
+    const 時の数字 = Number(hit[2]);
+    const 分の数字 = hit[3] === undefined ? null : Number(hit[3]);
+    const 半 = hit[4] === "半";
+    /* 「午前12時」は正午にも 0 時にも読めるので受けない（締切の推測はしない – AGENTS.md）。
+     * 「午後12時」は日本語では正午なので 12 のままする。 */
+    if ((午前午後 === "午前" || 午前午後 === "ごぜん") && 時の数字 === 12) return null;
+    let hour = 時の数字;
+    if ((午前午後 === "午後" || 午前午後 === "ごご") && hour < 12) hour += 12;
+    if (!(hour >= 0 && hour <= 23)) return null;
+    let minute = 分の数字;
+    if (minute === null && 半) minute = 30;
+    if (minute !== null && !(minute >= 0 && minute <= 59)) return null;
+    const 時 = String(hour).padStart(2, "0");
+    const 分 = (m: number) => String(m).padStart(2, "0");
+    if (minute === null) {
+      const terms: string[] = [];
+      for (let m = 0; m <= 59; m += 1) terms.push(`${時}:${分(m)}`);
+      return { terms, 幅: true, 解: `${時}:00〜${時}:59` };
+    }
+    return { terms: [`${時}:${分(minute)}`], 幅: false, 解: `${時}:${分(minute)}` };
+  }
+
+  /** 「20時59分までに」のような“それ以前の時刻”という頼み方（第 333 回）。部分一致では
+   * 作れない幅なので絞り込まず、確かでする欄の場所を言う側に回す。 */
+  function clockUntilQueryJa(token: string): string {
+    const q = String(token || "").trim();
+    if (!/(?:までに|まで)$/.test(q)) return "";
+    const 芯 = q.replace(/(?:までに|まで)$/, "");
+    return clockTimeTermsJa(芯) === null ? "" : 芯;
+  }
   /** 月のまとまりの語について `打った語 -> 出した範囲` の組を返す（件数欄の説明用）。
    * `月末` の付く語には末日の日付を添える – 打った人が気にしているのは日付の方で、
    * 展開先の月だけ書いても答えにならない。 */
@@ -5328,6 +5401,9 @@ const Recommender = (() => {
     /* 「8月下旬」「来月上旬」は月の三日ごとの区切り（第 332 回）。 */
     const monthPart = monthPartTermsJa(token, nowMs);
     if (monthPart) return [token].concat(monthPart);
+    /* 「20時」「午後8時59分」は収録の 24 時間表記 `HH:MM` に寄せる（第 333 回）。 */
+    const clock = clockTimeTermsJa(token);
+    if (clock) return [token].concat(clock.terms);
     /* 「半年（以内）」は `6か月以内` と同じ幅（第 330 回 – 数字の無い語は下の表が読めない）。 */
     const halfYear = HALF_YEAR_JA.test(String(token || ""));
     if (halfYear) {
@@ -8852,6 +8928,7 @@ const Recommender = (() => {
     seasonPairs: seasonPairs,
     periodMonthPairs: periodMonthPairs,
     periodMonthTermsJa: periodMonthTermsJa,
+    clockTimeTermsJa: clockTimeTermsJa,
     monthPartTermsJa: monthPartTermsJa,
     monthPartRangeJa: monthPartRangeJa,
     pressedWeekdayJa: pressedWeekdayJa,
