@@ -33,6 +33,10 @@
 | `https://ten82e.github.io/kamiyobi/publish.json` | 公開成果物のハッシュ、`content_id` / `build_id`、元 commit、入力 hash、実行元、build 時刻・Node 版・offline/cache 方針、`semantic_status`。公開物の再現元を示す |
 
 | `https://ten82e.github.io/kamiyobi/deadlines.ics` | 締切をカレンダーに入れる 1 本（RFC 5545）。終日（JST の暦日）で 1 締切 = 1 イベント。各行に開催地（`LOCATION`）も入るので、カレンダーのうえで国内か海外かが分かります。購読先に指定すると毎日置き換わる |
+- 検索欄に**語をハイフンで繋いで打っても**（`paper-submission` `CCF-B` `deep-learning`）、スペースで
+  打ったときと同じ行に会えるようにしました。CFP を写す語や URL のスラッグは語をハイフンで繋ぐため、
+  今まで 0 件でした（2026-09-25 実測 – `catalog.json` に載る締切行 872 件で頻出の並び 171 件のうち
+  166 件で件数が違い、延べ 5,007 行見えていなかった – 第 317 回）。
 - 検索欄に分野の**英語の正式名称で打っても**、和名で打ったときと同じ結果が返るようにしました。
   「情報セキュリティ」で 152 行当たるのに `information security` と打つと 13 行しか当たらず、
   `database systems` は 2 行でした（直し後はそれぞれ 152 行・118 行 – 第 316 回）。ハイフンや

@@ -5543,10 +5543,26 @@ const Recommender = (() => {
        * （2026-09-25 実測・収録 872 行: `abstracts` 5 行 / `abstract` 146 行、
        * `deadlines` 0 行 / `deadline` 231 行、`papers` 25 行 / `paper` 510 行、
        * 収録に稀な語では `databases` 0 行 / `database` 13 行）。
-       * 照合の側ではなく、語の組を作ここで寄せる – 単数形が**別の語への寄せ語彙を
+       * 照合の側ではなく、語の組を作ところで寄せる – 単数形が**別の語への寄せ語彙を
        * 持つ**場合があるため（`communication` は「通信」の寄せ語 – 照合側で畳むと
        * `communications` は其の道に載れず、15 行が取りこぼされたままだった – 実測）。
        * 単数形の組その物を使うので、展開語（地域まとめ・漢字表記など）も同じ組に乗る。 */
+      /* ハイフンで繋いだ語は、スペースで繋いだ形でも引く（第 317 回）。CFP を写す語と
+       * URL のスラッグは `paper-submission` `international-conference` のように語をハイフンで
+       * 繋ぐので、其の形で打つ人は其の並びを行うに書く行にしか当たらなかった
+       * （2026-09-25 実測 – 品書に頻出の 171 並びのうち 166 並びで件数が違い、減った行の延べ
+       * 5,007 行。収録 3,250 行では 400 並び中 393 並び・延べ 24,758 行 –
+       * `paper-submission` 0 行 / `paper submission` 1,768 行、`international-conference` 3 行 /
+       * 341 行、`CCF-B` 0 行 / `CCF B` 264 行）。語に割った形を OR で足すだけなので、
+       * 今当たっている行は残る。 */
+      /*英文字を含む語だけ – 数字とハイフンの語（`2026-12-25` `2026-13`）は其の場で
+       * 暦日・暦月として扱われており、語に割った形を足すと数字の羅列として他に当たる
+       * （実測 – `2026-13` に `2026 13` が載ると、ありえない数字の日付扱いを見る検査が落ちた –
+       * 第 317 回）。 */
+      if (token.indexOf("-") >= 0 && /[a-z]/i.test(token)) {
+        const spaced = token.split("-").filter(Boolean).join(" ");
+        if (spaced && group.indexOf(spaced) < 0) group.push(spaced);
+      }
       pluralStems(kanaFold(token)).forEach((stem) => {
         if (group.indexOf(stem) < 0) group.push(stem);
         const stemGroup = resolved[stem];
