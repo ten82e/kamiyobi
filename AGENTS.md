@@ -21,6 +21,11 @@ node src/cli.ts build --out public --offline --no-embeddings --cache .cache --no
   通すこと。Node 26 は `-e` のソースを ESM 判定しており、配列リテラルに `"crypto"` が 1 語で
   含まれるとモジュール扱いになり、トップレベルの `const`/`var` が `new Function` の本体から
   見えなくなる（`ReferenceError: Recommender is not defined` に化ける。2026-09-23 に実発生）。
+  **判定は生テキストに対して行われるので、ビルド成果物に残るコメントに同じ語を書いただけでも
+  発火する**
+  （2026-09-25 に実測 – `site/recommender.ts` のコメントに書いたもので 14 本の検査が落ちた）。
+  回避策を通していない呼び出し方も有るので、`site/**` のコメントや画面に出す説明に其の語を
+  書かない（必要なら「其の英字語」のように伏せる）。
 - `public/` は `.gitignore`（CI が生成）。`data/snapshot.json` は健全な online ビルドが更新する。
 - offline ビルドは snapshot を書かない（fixtures 汚染防止）。実キャッシュ成果を snapshot に載せるときは手でコピー。
 
