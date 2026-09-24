@@ -4661,7 +4661,7 @@ it("0 件の理由は読み上げにも短的に出る（長い文を aria-live 
   expect(kindHit).toContain("採否通知");
   expect(kindHit).toContain("種別");
   /* 行先も短い形で言う（60 字の上限は別の検査が見ている – 第 247 回）。 */
-  expect(kindHit).toContain("upcoming.md");
+  expect(kindHit).toContain("upcoming.html");
   // 収録では当たるがいまの条件で 0 件、は件数を書く（「kamiyobi に無い」と誤らせない）。
   const inCatalog = note({ ...empty, queryMatch: { catalog: 31, journal: 0 } });
   expect(inCatalog).toContain("31 件");
@@ -4688,17 +4688,17 @@ it("0 件の理由は読み上げにも短的に出る（長い文を aria-live 
 });
 
 it("手引きが名指すファイルは、画面から押して辿れる（SPEC §7）", () => {
-  /* てびきと 0 件の注記は「会期だけ確定の会は upcoming.md に載せます」と何回も言うが、
+  /* てびきと 0 件の注記は「会期だけ確定の会は upcoming.html に載せます」と何回も言うが、
    * ファイル名を書くだけだと、画面を読む人はそこにたどれない（URL を打ち込むだけになる）。
    * 同じビルドの中に有るファイルなので、押せる形にする（2026-09-23 実測: リンク 0 本）。 */
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
-  const mentions = template.match(/<code>upcoming\.md<\/code>/g) || [];
+  const mentions = template.match(/<code>upcoming\.html<\/code>/g) || [];
   expect(
     mentions.length,
     "てびきがファイルを名指す箇所が数え上げられていない",
   ).toBeGreaterThanOrEqual(2);
   const linked =
-    template.match(/<a href="upcoming\.md"[^>]*><code>upcoming\.md<\/code><\/a>/g) || [];
+    template.match(/<a href="upcoming\.html"[^>]*><code>upcoming\.html<\/code><\/a>/g) || [];
   expect(linked.length, "てびきのファイル名が押せる形になっていない").toBe(mentions.length);
   // 印刷物でもファイル名は残る（リンクの文字自体が名前なので、印刷で消える書き方はしない）。
   expect(template, "印刷でリンク欄を丸ごと消すと名前が読めない").not.toContain(
@@ -4706,9 +4706,14 @@ it("手引きが名指すファイルは、画面から押して辿れる（SPEC
   );
   // 画面の 0 件注記（ビルド後のコード）も同じファイルを指す。
   const app = siteRuntime();
-  expect(app, "0 件の注記がファイルをまだ文字列に埋めている").toContain('href = "upcoming.md"');
-  expect(app).not.toContain("会期は upcoming.md にも掲載");
-  // 指す先がビルド成果物に本当に有る（リンク切れを防ぐ）。
+  expect(app, "0 件の注記がファイルをまだ文字列に埋めている").toContain('href = "upcoming.html"');
+  expect(app).not.toContain("会期は upcoming.html にも掲載");
+  // 指す先がビルド成果物に本当に有る（リンク切れを防ぐ）。読みやすい版と Markdown 版の両方。
   const builder = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
-  expect(builder, "ビルドが upcoming.md を出さなくなったらリンクが死ぬ").toContain("upcoming.md");
+  expect(builder, "ビルドが upcoming.md を出さなくなったらリンクが死ぬ").toContain(
+    'write("upcoming.md"',
+  );
+  expect(builder, "ビルドが upcoming.html を出さなくなったらリンクが死ぬ").toContain(
+    'write("upcoming.html"',
+  );
 });

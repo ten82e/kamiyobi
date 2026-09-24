@@ -4073,51 +4073,42 @@ it("会議名は CSV と同じ語が出る（表計算で画面の語が引け�
   );
 });
 
-it("upcoming.md へのリンクは、ブラウザで表に整形されないことを正直に書く（SPEC §7）", () => {
+it("締切一覧のファイルは、読みやすい版へ導線を送り、Markdown 版の実態も正直に書く（SPEC §7）", () => {
   /* 締切が未定で会期だけ決まっている会は `upcoming.md` にしか載らず、画面・てびきの両方から
-   * そのリンクを送っている。リンクの説明が「ブラウザでは文章で開きます」と言っていたが、
-   * 実測は違った。配信先の HEAD は `content-type: text/markdown` を返し（2026-08-09 実測:
-   * `https://ten82e.github.io/kamiyobi/upcoming.md`）、ビルドした `upcoming.md` は
-   * 1,117 行が `|` の表組みで、会議名は 1,115 行が `[名前](URL)` のマークダウン記号のまま。
-   * ブラウザは `text/markdown` を表として描画しないので、記号が並んだ文章で見えるか
-   * ダウンロードされる – 「文章で開きます」は噓で、しかも押した人が表を見つけられない。 */
+   * そのリンクを送っていた。配信先の HEAD は `content-type: text/markdown` を返し（2026-08-09
+   * 実測: `https://ten82e.github.io/kamiyobi/upcoming.md`）、ブラウザはそれを表として描画しない
+   * （記号が並んだ文章で開くか、そのままダウンロードになる）。表を見にきた人が止まるので、
+   * 同じ場所にもう 1 つ **ブラウザで読める版** `upcoming.html` を出し、導線はこちらへ向け直した
+   * （第 263 回）。Markdown 版は機械が読む用のまま残すので、実態も書き続ける。 */
   const html = readFileSync(join(site, "index.html"), "utf8");
-  const links = [...html.matchAll(/<a\b[^>]*href="upcoming\.md"[^>]*>/g)];
-  expect(
-    links.length,
-    "upcoming.md へのリンクが無くなった（案内の実体が変わった）",
-  ).toBeGreaterThan(0);
-  for (const m of links) {
+  const reading = [...html.matchAll(/<a\b[^>]*href="upcoming\.html"[^>]*>/g)];
+  expect(reading.length, "読みやすい版への導線が無くなった").toBeGreaterThanOrEqual(3);
+  const raw = [...html.matchAll(/<a\b[^>]*href="upcoming\.md"[^>]*>/g)];
+  expect(raw.length, "Markdown 版への導線まで消えた（機械が読む用は残す）").toBeGreaterThanOrEqual(
+    1,
+  );
+  for (const m of raw) {
     const tag = m[0];
     expect(tag, "リンクに説明が無い").toContain("title=");
     // 「文章で開きます」という旧い噓だけを書いていないこと。
-    expect(tag).not.toMatch(/文章で開きます/);
+    expect(tag).not.toMatch(/文章で開きます。/);
     // 実態（マークダウンの表であること・整形されない／ダウンロードされ得ること）を書くこと。
     expect(tag, "リンクの説明がマークダウンの表だと伝えていない").toContain("マークダウン");
     expect(tag, "リンクの説明がダウンロードされ得ると伝えていない").toContain("ダウンロード");
   }
 
-  // `title` はマウスを載せたときだけ出る。触る端末では読めないので、てびきの本文にも
-  // 同じ実態を書く（案内と実装のずれは画面の外側でも起きる）。
+  // てびきの本文も、押した先が読みやすい形であることを書く（案内と実装のずれは画面の外側でも起きる）。
   const gStart = html.indexOf("<dt>会期のみ・締切未定</dt>");
   expect(gStart, "てびきの該当項が無い").toBeGreaterThan(-1);
   const guideNote = html.slice(gStart, html.indexOf("</dd>", gStart));
-  expect(guideNote, "てびきの本文がマークダウンの表だと伝えていない").toContain("マークダウン");
-  expect(guideNote, "てびきの本文がダウンロードされ得ると伝えていない").toContain("ダウンロード");
-  expect(guideNote).not.toMatch(/文章で開きます/);
+  expect(guideNote, "てびきが読みやすい版へ送っていない").toContain("upcoming.html");
+  expect(guideNote).not.toMatch(/文章で開きます。/);
 
-  // 画面の中のリンク（0 件・会期だけ確定の案内）も同じ説明を持つ。
+  // 画面の中のリンク（0 件・会期だけ確定の案内）も読みやすい版を指す。
   const runtime = siteRuntime();
-  expect(runtime).toContain('upcoming.href = "upcoming.md"');
-  const notice = runtime.slice(
-    runtime.indexOf('upcoming.href = "upcoming.md"'),
-    runtime.indexOf('upcoming.href = "upcoming.md"') + 1400,
-  );
-  expect(notice, "画面の中の upcoming.md リンクが実態を伝えていない").toContain("upcoming.title");
-  expect(notice).toContain("マークダウン");
-  expect(notice).toContain("ダウンロード");
+  expect(runtime).toContain('upcoming.href = "upcoming.html"');
 
-  // 噓の無い説明にしておく根拠を、ビルド成果物自身で確認する（md はマークダウンのまま配られる）。
+  // 中身は 1 本（Markdown）から作ったことを、両方の成果物で突き合わせて確かめる。
   const md = readFileSync(join(site, "upcoming.md"), "utf8");
   expect(md.startsWith("# "), "upcoming.md がマークダウン文書でない").toBe(true);
   const tableRows = md.split("\n").filter((l) => l.startsWith("| "));
@@ -4127,6 +4118,45 @@ it("upcoming.md へのリンクは、ブラウザで表に整形されないこ�
     bracketLinks.length,
     "upcoming.md の会議名がマークダウンの記号で書かれていない（説明の実態が変わった）",
   ).toBeGreaterThan(0);
+
+  const page = readFileSync(join(site, "upcoming.html"), "utf8");
+  expect(page, "ブラウザで読める版がマークダウン文書のまま").not.toMatch(/^\|/m);
+  expect(page, "見出しが起きていない").toContain("<h1>");
+  expect(page, "行が表になっていない").toContain("<table");
+  // md の表の行（見出し行と区切り行を除く）と、html の <tr> が同じ数（作り直しの漏れが無い）。
+  const bodyRows = tableRows.filter((l) => !/^\|[ :|-]+\|$/.test(l));
+  const trs = page.split("<tr>").length - 1;
+  expect(trs, "html の行が Markdown の行と数が違う").toBe(bodyRows.length);
+  // セルの中身も突き合わせる（1 セルだけ比べて通った気にならない）。
+  /* セルの中の縦棒は `escapeMdCell` が `\|` に逃がす（例: 会議名の括弧）。**エスケープで
+   * 区切らない数**で比べないと、正しく作った側の数が足りなく見える。 */
+  const mdCells = bodyRows.reduce((acc, l) => acc + l.split(/(?<!\\)\|/).length - 2, 0);
+  const htmlCells = page.split("<td>").length - 1 + (page.split("<th ").length - 1);
+  expect(htmlCells, "html のセルが Markdown のセルと数が違う").toBe(mdCells);
+  /* 列の名前は `<th>` で出す（`<td>` に落とすと数が合っていても「どの列か」が機械に伝わらない）。
+     Markdown のヘッダ行の列数と、`<thead>` の `<th>` の数が同じであることを見る。 */
+  const headCells = bodyRows[0].split(/(?<!\\)\|/).length - 2;
+  const thead = /<thead>[\s\S]*?<\/thead>/.exec(page)?.[0] ?? "";
+  expect(thead, "列の名前の塊が無い").not.toBe("");
+  expect(
+    thead.split("<th ").length - 1,
+    "列の名前がマークダウンの列数と違う（<td> に落ちていないか）",
+  ).toBe(headCells);
+  for (const cell of bodyRows[0]
+    .split(/(?<!\\)\|/)
+    .slice(1, -1)
+    .map((c) => c.trim())) {
+    expect(thead, `列の名前「${cell}」が出ていない`).toContain(`>${cell}</th>`);
+  }
+  // 会議名へのリンクがMarkdown側の実数で起こっている。
+  /* 会議名へのリンクは `http://` の上流も有るので、スキームは選ばずに数える
+   * （`https://` だけで数えると 23 本が取りこぼしたように見える – 実発生）。 */
+  const pageLinks = page.split('<a href="http').length - 1;
+  expect(pageLinks, "会議名のリンクが取りこぼされている").toBe(bracketLinks.length);
+  // 見た目は画面と同じ様子の塊を載せ、一覧へ戻れる（別のサイトのようになるのを防ぐ）。
+  expect(page, "画面と同じ見た目になっていない").toContain("<style>");
+  expect(page, "締切の一覧へ戻れない").toContain('href="index.html"');
+  expect(page, "触る端末で読めないサイズ指定が無い").toContain("width=device-width");
 });
 
 it("常時受付の行にも公式ページの URL が出る（SPEC §7）", () => {

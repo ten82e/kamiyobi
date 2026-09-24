@@ -478,7 +478,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* 種別セレクトの選択肢。`filter()` の `byKind` が通す種別と必ず揃える —
    * 選んでも 0 件になる選択肢を並べるのが最もまずい（選択肢が噺になる）。
    * 採否通知・カメラレディ・登録締切などはサイト表に出さない仕様で、
-   * それらを追うのは `upcoming.md`（SPEC §4・§7）。 */
+   * それらを追うのは `upcoming.html`（SPEC §4・§7）。 */
   const SELECTABLE_KINDS = ["abstract", "paper", "journal"];
 
   /* 収録元がその締切に付けた名前（`dl.label`）の出し方。既定画面 478 行はすべて原語の名称を
@@ -559,7 +559,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       // 実在する種別なのに表に出さない場合だけ、理由を伝える（不明な値は黙って落とす）。
       return {
         kind: "",
-        notice: `${KIND_LABEL[value]} は表に出しません（upcoming.md で確認できます）`,
+        notice: `${KIND_LABEL[value]} は表に出しません（upcoming.html で確認できます）`,
       };
     }
     return { kind: "", notice: "" };
@@ -2053,8 +2053,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       return (
         /* 読み上げは 60 字までの検査が見ている（長い文を aria-live に流さない – SPEC §7）。
          * 画面に出る長い一文（`hiddenKindDeliveryJa`）と同じことを、行先の語だけを短く添える。
-         * 「upcoming.md」を入れる枠が他に無いので、括弧の中で行先を言ってしまう。 */
-        ` ｜ 検索語は「${filter.hiddenKindWords[0]}」の種別に当たります（表に出さず upcoming.md）` +
+         * 「upcoming.html」を入れる枠が他に無いので、括弧の中で行先を言ってしまう。 */
+        ` ｜ 検索語は「${filter.hiddenKindWords[0]}」の種別に当たります（表に出さず upcoming.html）` +
         pointer
       );
     if (matchedRows > 0) {
@@ -2135,11 +2135,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    */
   function hiddenKindDeliveryJa(count?: number): string {
     if (count === undefined) {
-      return "その種別は表には出さず、締切一覧のファイル upcoming.md に載せています。";
+      return "その種別は表には出さず、締切一覧のファイル upcoming.html に載せています。";
     }
     return (
       `その種別は表には出しません。条件を変えてもこの ${countJa(count)} 件は表には出ず、` +
-      "締切一覧のファイル upcoming.md に載せています。"
+      "締切一覧のファイル upcoming.html に載せています。"
     );
   }
 
@@ -2719,7 +2719,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       }
     }
 
-    const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.md に載せています。";
+    const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.html に載せています。";
     if (specific) {
       return tips.length
         ? `${base}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${catalogNote}${urlNote}${termNote} 外せる条件: ${tips.join(" / ")}。`
@@ -2731,7 +2731,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   /**
    * 0 件のとき、会期だけ確定している次回開催を案内する。締切が未定の会は表に載らない
-   * （`upcoming.md` 側にしか出ない）ので、「検索語は合っているのに 0 件」をそのまま
+   * （`upcoming.html` 側にしか出ない）ので、「検索語は合っているのに 0 件」をそのまま
    * 放置しない。表示する日程は表と同じく暦日 + 曜日で、時刻は付けない。
    */
   /* 会期だけが確定している回の形（表の行とは別物なので型も分けて持つ – 件数欄と 0 件の
@@ -2803,13 +2803,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         box.appendChild(placeNode);
       }
     });
-    /* 「upcoming.md に載せます」と言うだけだと、画面を読む人にはファイル名が打てない
+    /* 「upcoming.html に載せます」と言うだけだと、画面を読む人にはファイル名が打てない
      * （このファイルはこのサイトの同じ場所に有るので、押せば届く）。文章の中も押せる形に
      * する（外側の文章はそのまま – 読み上げで同じ語を二度読ませない）。 */
     box.appendChild(document.createTextNode(" 締切が未定の会は表に載せません（会期は"));
     const upcoming = document.createElement("a");
-    upcoming.href = "upcoming.md";
-    upcoming.textContent = "upcoming.md";
+    upcoming.href = "upcoming.html";
+    upcoming.textContent = "upcoming.html";
     /* md はマークダウンのまま配るので、ブラウザでは表に整形されない（実測: 配信先の
      * `content-type` は `text/markdown` で、ブラウザはこれを表として描画しない。記号が並んだ
      * 文章で見えるか、ダウンロードされる）。てびきの項と同じ説明を title に添える

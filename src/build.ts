@@ -92,6 +92,7 @@ const MANAGED_OUTPUT_FILES = [
   "recommendation-index.json",
   "data.csv",
   "upcoming.md",
+  "upcoming.html",
   "llms.txt",
   "icon.svg",
   ".nojekyll",
@@ -253,6 +254,9 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
     "1 行 1 締切のフラット表。列の意味は下の「data.csv の列」に書く。文字コードは BOM を付けない" +
     " UTF-8（画面のダウンロードボタンが書く CSV は Excel を助けるため BOM 付きで、別物）。",
   "upcoming.md": "直近の締切と会期の表。",
+  "upcoming.html":
+    "`upcoming.md` と同じ表を、ブラウザでそのまま読める形にしたもの（第 263 回）。Markdown の" +
+    " 方は機械が読む用のまま残してある。",
   "llms.txt": "このファイル。機械が読む索引で、人間の操作説明は画面の中に書く。",
   "icon.svg": "ブラウザのタブとブックマークに出すアイコン（SVG）。",
   ".nojekyll":
@@ -2822,6 +2826,124 @@ export function escapeMdUrl(url: string | null | undefined): string {
   return u;
 }
 
+/** HTML に出す文字をエスケープする（セルに `<` を含む表記が来ない保証は無いため）。 */
+function escapeHtmlText(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** 生成した Markdown を、ブラウザで読める形に起こす（第 263 回）。
+ *
+ * `upcoming.md` は Pages 上では `text/markdown` で配られ、ブラウザは表を整形してくれない
+ * （記号が並んだ文章で開くか、そのままダウンロードになる）。「表に出さない種別はここを
+ * 見る」と案内している行き先がそれでは人が止まるので、同じ場所に**ブラウザで読める版**を
+ * 1 つ増やす。
+ *
+ * 中身を二重に持たせないため、**Markdown の出力を変換**する（画面に出す形をもう 1 本作らない）。
+ * 扱うのは生成物が出る形だけ: `# ` 見出し / `> ` 注記 / `|` で並ぶ表 / それ以外行として書く。
+ * セルの中の `[文字列](URL)` と `コード` は実際に出るので起こす。セルの中の縦棒は
+ * `escapeMdCell` が `\|` に逃がすので、そこで区切ってから戻す。 */
+export function toUpcomingHtml(markdown: string, styleBlock = ""): string {
+  const inlineMd = (value: string): string =>
+    escapeHtmlText(value)
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, (_all, text: string, url: string) => {
+        // URL は `escapeMdUrl` でパーセント形式（`&` を含まない）にしているが、
+        // 属性の引用符は念のため守る。
+        return `<a href="${url.replace(/"/g, "%22")}" rel="noopener">${text}</a>`;
+      })
+      .replace(/`([^`]+)`/g, "<code>$1</code>");
+
+  const out: string[] = [];
+  let quote: string[] = [];
+  let table: string[] = [];
+  const flushQuote = (): void => {
+    if (!quote.length) return;
+    out.push(
+      `<blockquote>\n${quote.map((l) => `<p>${inlineMd(l)}</p>`).join("\n")}\n</blockquote>`,
+    );
+    quote = [];
+  };
+  const flushTable = (): void => {
+    if (!table.length) return;
+    const rows = table.map((line) =>
+      line
+        .replace(/^\s*\|/, "")
+        .replace(/\|\s*$/, "")
+        .split(/(?<!\\)\|/)
+        .map((cell) => cell.trim().replace(/\\\|/g, "|")),
+    );
+    const body = rows.filter((cells) => !cells.every((cell) => /^:?-{2,}:?$/.test(cell)));
+    const head = body.length ? body[0] : null;
+    if (head) {
+      out.push(
+        `<thead><tr>${head
+          .map((cell) => `<th scope="col">${inlineMd(cell)}</th>`)
+          .join("")}</tr></thead>`,
+      );
+    }
+    const rest = body.slice(1);
+    if (rest.length) {
+      out.push(
+        `<tbody>\n${rest
+          .map((cells) => `<tr>${cells.map((cell) => `<td>${inlineMd(cell)}</td>`).join("")}</tr>`)
+          .join("\n")}\n</tbody>`,
+      );
+    }
+    table = [];
+  };
+
+  for (const line of markdown.split("\n")) {
+    if (line.startsWith("|")) {
+      flushQuote();
+      table.push(line);
+      continue;
+    }
+    flushTable();
+    if (line.startsWith("# ") || line.startsWith("## ")) {
+      flushQuote();
+      const level = line.startsWith("# ") ? 1 : 2;
+      out.push(`<h${level}>${inlineMd(line.slice(level + 1))}</h${level}>`);
+      continue;
+    }
+    if (line.startsWith(">")) {
+      quote.push(line.replace(/^>\s?/, ""));
+      continue;
+    }
+    flushQuote();
+    if (line.trim()) out.push(`<p>${inlineMd(line)}</p>`);
+  }
+  flushTable();
+  flushQuote();
+
+  return [
+    "<!doctype html>",
+    '<html lang="ja">',
+    "<head>",
+    '<meta charset="utf-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    "<title>直近の締切と会期 | kamiyobi</title>",
+    styleBlock,
+    "</head>",
+    "<body>",
+    '<main class="wrap">',
+    '<p><a href="index.html">&larr; 締切の一覧に戻る</a>（同じ収録内容の一覧で、日本時間への' +
+      "換算と残り日数も出します。機械が読む形のマークダウンは " +
+      '<a href="upcoming.md">upcoming.md</a>、全件は <a href="data.csv">data.csv</a> にあります）。</p>',
+    '<div class="tablewrap">',
+    '<table class="upcoming">',
+    out.join("\n"),
+    "</table>",
+    "</div>",
+    "</main>",
+    "</body>",
+    "</html>",
+    "",
+  ].join("\n");
+}
+
 export function toUpcomingMd(
   records: DataRecord[] | null | undefined,
   now: Date | null | undefined,
@@ -3228,7 +3350,10 @@ export async function buildAll(
     )}\n`,
   );
   write("data.csv", toCsv(records));
-  write("upcoming.md", toUpcomingMd(records, nowUtc, upcomingDays));
+  /* 「直近の締切と会期」の表はここが 1 本。ブラウザで読める版（下の `upcoming.html`）は
+   * この文字列から作る（同じ表を二重に作らないため）。 */
+  const upcomingMd = toUpcomingMd(records, nowUtc, upcomingDays);
+  write("upcoming.md", upcomingMd);
 
   // セマンティックレコメンド用の埋め込み（transformers.js が無ければスキップして語彙のみで動作）
   if (!opts.noEmbeddings) {
@@ -3276,12 +3401,18 @@ export async function buildAll(
     if (!templateText.includes(TEMPLATE_MARKER)) {
       throw new Error(`required site template marker missing: ${templatePath}`);
     }
+    // 画面と同じ見た目にするため、`index.html` と同じ様子の塊を取り出して使う
+    // （データを書き込む前の本文から読む – JSON をまたぐ正規表現にしない）。
+    const siteStyleBlock = /<style>[\s\S]*?<\/style>/.exec(templateText)?.[0] ?? "";
     templateText = templateText.replace(
       TEMPLATE_MARKER,
       embedJson(jsonCompact(toCatalog(data, nowUtc, upcomingDays))),
     );
     write("index.html", templateText);
     for (const [name, source] of Object.entries(compileSiteRuntime())) write(name, source);
+    // `upcoming.md` は Markdown のまま渡すとブラウザが表に整形してくれないので、
+    // 同じ内容の読みやすい版を隣に置く（第 263 回）。画面からの導線はこっちに向ける。
+    write("upcoming.html", toUpcomingHtml(upcomingMd, siteStyleBlock));
   } else {
     throw new Error(`required site template missing: ${templatePath}`);
   }

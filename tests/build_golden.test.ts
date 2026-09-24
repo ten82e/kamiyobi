@@ -1843,7 +1843,7 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
     },
   };
   // 条件を全部外して 0 件のときは、表に出ない種別（開催行）を説明する。
-  expect(hint(clear)).toContain("upcoming.md");
+  expect(hint(clear)).toContain("upcoming.html");
   expect(hint(clear)).not.toContain("期間を");
   // 条件が残っているときは、外せる条件を実名で挙げる。
   const filtered = hint({ ...clear, window: "7d", past: false, query: "機械学" });
@@ -1894,7 +1894,7 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
     queryMatch: { catalog: 129, journal: 0 },
   });
   expect(hiddenKindHits, "当たった件数を出していない").toContain("この 129 件は表には出ず");
-  expect(hiddenKindHits, "行き先を書いていない").toContain("upcoming.md");
+  expect(hiddenKindHits, "行き先を書いていない").toContain("upcoming.html");
   expect(hiddenKindHits, "外しても増えないのに絞り込みのせいにしている").not.toContain(
     "いまの絞り込みで 0 件",
   );
@@ -1940,12 +1940,12 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
     query: "情報検索",
     queryMatch: { catalog: 17, journal: 0 },
   });
-  expect(catalogCase).not.toContain("upcoming.md");
+  expect(catalogCase).not.toContain("upcoming.html");
   expect(catalogCase).not.toContain("検索語を短くする");
   // 外せる条件が残っていれば、それは後ろに添う（原因だけで打ち切らない）。
   expect(catalogCase).toContain("「過去の締切も表示」をオン");
   // 原因が特定できないときは、今までどおり会期のみ案内を添える。
-  expect(hint({ ...clear, past: false, query: "xyzzy" })).toContain("upcoming.md");
+  expect(hint({ ...clear, past: false, query: "xyzzy" })).toContain("upcoming.html");
 
   // 収録に無い語で「当たります」と嘘をつかない。
   expect(hint({ ...clear, query: "xyzzy", queryMatch: { catalog: 0, journal: 0 } })).not.toContain(
@@ -2308,7 +2308,7 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
   expect(defaultUrl).not.toContain("dir=");
   // 捨てたことを読み手に伝えず条件だけ変わる、を避ける。
   expect(droppedKind[0]).toBe("");
-  expect(droppedKind[1]).toContain("upcoming.md");
+  expect(droppedKind[1]).toContain("upcoming.html");
   expect(restoredRank).toBe("A*");
   // 使えない値を黙って落とさない。送った人は自分が映っていた画面を信じて共有する。
   expect(droppedRankWin[0], "使えないランクが適用されている").toBe("");
@@ -4210,7 +4210,7 @@ it("the drawer lists the same conference's later meetings (SPEC §7)", () => {
   // てびき に語彙を書かないと、案内だけ増えて説明が追いつかない状態になる。
   const html = readFileSync(join(site, "index.html"), "utf8");
   const guide = html.slice(html.indexOf('id="helpPanel"'), html.indexOf("</dl>"));
-  for (const word of ["会期のみ・締切未定", "upcoming.md", "今後の会期"]) {
+  for (const word of ["会期のみ・締切未定", "upcoming.html", "今後の会期"]) {
     expect(guide, `てびき に「${word}」が無い`).toContain(word);
   }
 
@@ -4975,7 +4975,7 @@ it("種別セレクトに並ぶ選択肢は、選べば行が返る（SPEC §7�
   expect(app).not.toContain("Object.keys(KIND_LABEL).forEach");
   // URL で捨てた種別は件数欄で理由を出す。
   expect(app).toContain("urlNotices");
-  expect(app).toContain("upcoming.md で確認できます");
+  expect(app).toContain("upcoming.html で確認できます");
 
   const recPath = join(site, "recommender.js");
   const dataPath = join(site, "data.json");
@@ -5063,7 +5063,7 @@ it("種別セレクトに並ぶ選択肢は、選べば行が返る（SPEC §7�
   // 実在する種別を URL で受けたときは、黙って捨てず理由を返す。
   expect(out.dropped.kind).toBe("");
   expect(out.dropped.notice).toContain("採否通知");
-  expect(out.dropped.notice).toContain("upcoming.md");
+  expect(out.dropped.notice).toContain("upcoming.html");
   expect(out.kept).toEqual({ kind: "paper", notice: "" });
   // 不明な値は説明を出さない（存在しない種別の名前を教えない）。
   expect(out.unknown).toEqual({ kind: "", notice: "" });
