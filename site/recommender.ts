@@ -5184,11 +5184,88 @@ const Recommender = (() => {
     "gu",
   );
 
+  /* 英語の正式名称（長い分野名）で打つ人を、和名で打った人と同じ語の組に載せる（第 316 回）。
+   * 検索語は語に割って AND を取るため、分野の正式名称をそのまま打つとその語の並びを行う
+   * 行にしか当たらない（2026-09-25 実測・2026-08-09 生成の実ビルドの品書 872 行 –
+   * `情報セキュリティ` 152 行 / "information security" **13** 行、`人工知能` 314 /
+   * "artificial intelligence" **61**、`データベース` 118 / "database systems" **2**、
+   * `計算理論` 44 / "theoretical computer science" **3**、`音声認識` 3 / "speech recognition"
+   * **0**）。分野のチップは `高性能計算（High Performance Computing）` のように英表記を
+   * 括弧で併記するので、画面から貼った人は救われている（上の `CATEGORY_CHIP_TAIL`）。
+   * 和名で検索した場合の展開をそのまま使わせるため、語に割る前に和名へ寄せる。
+   * 寄せ先は 正本 の `QUERY_SYNONYMS_JA` と分野名その物で、新しい寄せ語彙は足さない。 */
+  /* 打たれた検索語に英語の正式名称が有るか見て、和名へ寄せる。実際に寄めた物だけを
+   * `寄せた` に返す – 打ってもいない語の綴りを語の組に載せると、分野名その物を打った人の
+   * 当たりまで変わる（実測 – 常時載せにすると分野の絞り込みと件数欄の検査 16 本が
+   * 画面の実測値と合わなくなった – 第 316 回）。
+   * 表・綴りの形・判定を 1 本の関数の中に置く – 検査ハーネスは関数を 1 本ずつ抽出して
+   * 画面の代码を組み立てるので、モジュール定数を参照すると `not defined` になる
+   * （第 257 回と同じ穴）。 */
+  function collapseFieldPhraseEnglish(query: unknown): {
+    query: unknown;
+    /* 寄せ先の和名と、其の語の組に載せるべき英語の綴り */
+    寄せた: Array<[string, string[]]>;
+  } {
+    const aliases: Array<[string[], string]> = [
+      [["information", "security"], "情報セキュリティ"],
+      [["cyber", "security"], "情報セキュリティ"],
+      [["network", "security"], "情報セキュリティ"],
+      [["computer", "networks"], "ネットワーク"],
+      [["computer", "networking"], "ネットワーク"],
+      [["computer", "graphics"], "グラフィックス"],
+      [["high", "performance", "computing"], "高性能計算"],
+      [["human", "computer", "interaction"], "人間情報処理"],
+      [["theoretical", "computer", "science"], "計算理論"],
+      [["artificial", "intelligence"], "人工知能"],
+      [["database", "systems"], "データベース"],
+      [["operating", "systems"], "システム"],
+      [["speech", "recognition"], "音声認識"],
+    ];
+    /* 和名だけに寄せると、英語の綴りを行に持つ行が打ち直し前より減る（実測 – 品書 872 行で
+     * 8 行: "artificial intelligence" を打つ人が AI4S 2026 に会えなくなる – 和名経由の寄せは
+     * 原文の語を直接寄せ先にすべき、という第 313 回の教訓と同じ）。語と語の間はスペース・
+     * ハイフン・無しで書かれ、末尾の語は単数で書かれることもある（実測 – NOSSDAV は
+     * "operating system support" と単数で書く）ので、其の形を載せる。 */
+    const formsEn = (words: string[]): string[] => {
+      const last = words[words.length - 1];
+      const stem =
+        last.length >= 4 && last.endsWith("s") && !/(ss|us|is)$/.test(last)
+          ? last.slice(0, -1)
+          : last;
+      const out: string[] = [];
+      [words, [...words.slice(0, -1), stem]].forEach((ws) => {
+        [ws.join(" "), ws.join("-")].forEach((form) => {
+          if (out.indexOf(form) < 0) out.push(form);
+        });
+        if (ws.length > 1 && out.indexOf(ws.join("")) < 0) out.push(ws.join(""));
+      });
+      return out;
+    };
+    if (typeof query !== "string" || !query) return { query, 寄せた: [] };
+    let out = query;
+    const 寄せた: Array<[string, string[]]> = [];
+    aliases.forEach(([words, to]) => {
+      /* 前後が英文字・数字のときは別語の一部なので寄せない。後読みの先出し
+       * （lookbehind）は古い Safari で構文エラーになるため使わない。 */
+      const body = words.join("[\\s-]*");
+      const before = out;
+      out = out.replace(
+        new RegExp(`(^|[^a-z0-9])(?:${body})(?![a-z0-9])`, "gi"),
+        (_all: string, head: string) => `${head}${to}`,
+      );
+      if (out !== before && !寄せた.some((pair) => pair[0] === to))
+        寄せた.push([to, formsEn(words)]);
+    });
+    return { query: out, 寄せた };
+  }
+
   function queryTokenGroups(query: unknown, nowMs?: number): string[][] {
     if (typeof query === "string" && CATEGORY_CHIP_HEADS_JA.length) {
       query = query.replace(CATEGORY_CHIP_TAIL, "$1");
     }
     query = collapseRelativeDayPhrase(query);
+    const collapsed = collapseFieldPhraseEnglish(query);
+    query = collapsed.query;
     const urlTerms = urlLikeQueryTerms(query);
     if (urlTerms !== null) query = urlTerms;
     const now = Number.isFinite(Number(nowMs)) ? Number(nowMs) : Date.now();
@@ -5260,6 +5337,19 @@ const Recommender = (() => {
           if (byReading[key].indexOf(extra) < 0) byReading[key].push(extra);
         });
       });
+    });
+    /* 和名へ寄せた語の組に、打たれた英語の綴りも載せる（上の `fieldPhraseFormsEn`）。
+     * 載せないで寄せると、英語の綴りを行うに持つ行が打ち直し前より減る
+     * （2026-09-25 実測 – 品書 872 行で 8 行）。載せるのは実際に寄せた語だけ –
+     * 打ってもいない語の綴りを載せると、分野名その物を打った人の当たりまで変わる。
+     * `byReading[key]` は寄せ表（cache 済み）の配列その物なので、直さないで写してから足す。 */
+    collapsed.寄せた.forEach(([ja, forms]) => {
+      const key = kanaFold(ja);
+      const base = byReading[key] ? byReading[key].slice() : [];
+      forms.forEach((form) => {
+        if (base.indexOf(form) < 0) base.push(form);
+      });
+      byReading[key] = base;
     });
     Object.keys(byReading).forEach((key) => {
       resolved[key] = byReading[key].slice();

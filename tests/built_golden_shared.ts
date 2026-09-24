@@ -208,6 +208,8 @@ export const SEARCH_CANON = (() => {
       "numericRelativeDay",
       // 「N 日以内」の範囲展開（第 315 回）: `relativeDayGroups` が呼ぶので注入も一緒にする。
       "withinDaysTermsJa",
+      // 英語の正式名称の寄せ（第 316 回）: 表・綴りの形・判定を関数 1 本に閉じた。
+      "collapseFieldPhraseEnglish",
       "relativeDayGroups",
       "queryTokenGroups",
       "compoundSplitHit",

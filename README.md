@@ -33,6 +33,10 @@
 | `https://ten82e.github.io/kamiyobi/publish.json` | 公開成果物のハッシュ、`content_id` / `build_id`、元 commit、入力 hash、実行元、build 時刻・Node 版・offline/cache 方針、`semantic_status`。公開物の再現元を示す |
 
 | `https://ten82e.github.io/kamiyobi/deadlines.ics` | 締切をカレンダーに入れる 1 本（RFC 5545）。終日（JST の暦日）で 1 締切 = 1 イベント。各行に開催地（`LOCATION`）も入るので、カレンダーのうえで国内か海外かが分かります。購読先に指定すると毎日置き換わる |
+- 検索欄に分野の**英語の正式名称で打っても**、和名で打ったときと同じ結果が返るようにしました。
+  「情報セキュリティ」で 152 行当たるのに `information security` と打つと 13 行しか当たらず、
+  `database systems` は 2 行でした（直し後はそれぞれ 152 行・118 行 – 第 316 回）。ハイフンや
+  詰めた書き方（`high-performance computing`）も同じ結果です。
 - 検索欄に**「30 日以内」と打っても**、同じ結果が返るようにしました。画面には同じ文言の
   絞り込みが有るのに、打った人だけ 0 件でした（直し後は詰め打ち・離し打ちどちらでも同じ行に
   会えます – 第 315 回）。「1か月以内」のような週・月の単位は、画面で換算をうたっていないため
