@@ -1014,7 +1014,10 @@ footer a:hover { text-decoration: underline; }
     </div>
 
     <!-- Paper Title / Abstract / Keyword Smart Recommender -->
-    <div class="recommend-only" style="margin-top: 14px;">
+    <!-- 推薦モードの欄も、塊として名前を持たせる（この中身は 4 つの欄とサンプルのボタンが
+     * 並ぶだけで、支援技術には「編集領域が 4 つ」にしか見えなかった）。 -->
+    <div class="recommend-only" style="margin-top: 14px;" role="region" aria-labelledby="paperInputHeading">
+      <h2 class="only-sr" id="paperInputHeading">論文の入力</h2>
       <span style="font-size: 0.78rem; color: var(--muted); font-weight: 500;">投稿先推薦</span>
       <div style="margin-top: 4px;">
         <label style="display: inline-block; cursor: pointer; padding: 8px 14px; border: 1px dashed var(--border); border-radius: 8px; font-size: 0.85rem; color: var(--accent);">
@@ -1096,7 +1099,13 @@ footer a:hover { text-decoration: underline; }
     <button type="button" data-sort="event" onclick="toggleSort('event')">会期 ↕</button>
         <button type="button" data-sort="rank" onclick="toggleSort('rank')">ランク ↕</button>
   </div>
-  <main id="results" tabindex="-1">
+  <!-- 支援技術は見出しとランドマークで画面を飛ぶ。この画面は見出しが h1 とドロワーの 2 つ
+     だけ（2026-08-09 生成ビルドで実測: 静的な HTML の見出しは 2 個、本文欄より前に
+     Tab で止まる物が 44 個）で、44 個を越えて辿り着いた先が何なのか、見出し一覧では
+     分からなかった。語はいずれも画面に既に出ている物を使う（てびきの「論文の入力とサンプル」、
+     スキップリンクと表の見出しの「締切の一覧」）。見た目は変えない（`only-sr` は紙にも出ない）。 -->
+  <main id="results" tabindex="-1" aria-labelledby="resultsHeading">
+  <h2 class="only-sr" id="resultsHeading">締切の一覧</h2>
   <div class="print-meta" id="printMeta"></div>
   <p class="scrollhint" id="tableScrollHint" hidden></p>
   <div class="tablewrap" id="deadlineTableWrap">
