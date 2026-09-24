@@ -1047,6 +1047,36 @@ function recordDeadlineLastDay(conf: JsonRecord): string | null | "" {
   return new Date(last + 9 * 3600000).toISOString().slice(0, 10);
 }
 
+/* 収録の側にこれからの締切が在るとき、人が必要なのは一番遠い日ではなく一番近い日だ
+   （実測 – 収録にこれからの締切が在る会議 42 件のうち 19 件は、一番近い締切が品書の申告より
+   前に在った。CADE は申告が 2027-06-01 で、一番近いのは 2027-02-16 の要旨の締切）。
+   画面が数え直さずに言えるよう、近い日・その種別・本数をここに書く（第 298 回）。 */
+function recordDeadlineNext(
+  conf: JsonRecord,
+  nowMs: number,
+): { day: string; kind: string; count: number } {
+  let bestMs = Number.NaN;
+  let bestKind = "";
+  let count = 0;
+  jsonRecords(conf.editions).forEach((edition) => {
+    jsonRecords(edition.deadlines).forEach((deadline) => {
+      const range = jsonDeadlineRange(deadline);
+      if (range === null || range[1] < nowMs) return;
+      count += 1;
+      if (!Number.isFinite(bestMs) || range[1] < bestMs) {
+        bestMs = range[1];
+        bestKind = typeof deadline.kind === "string" ? deadline.kind : "";
+      }
+    });
+  });
+  if (!Number.isFinite(bestMs)) return { day: "", kind: "", count };
+  return {
+    day: new Date(bestMs + 9 * 3600000).toISOString().slice(0, 10),
+    kind: bestKind,
+    count,
+  };
+}
+
 function compactEdition(edition: JsonRecord, deadlines: JsonRecord[]): JsonRecord {
   return {
     year: edition.year,
@@ -1131,6 +1161,14 @@ export function toCatalog(
        画面が数え直さずに言えるよう、収録側の一番遠い締切日をここへ書いておく（第 295 回）。 */
     if (!editions.some((edition) => jsonRecords(edition.deadlines).length > 0)) {
       entry.record_deadline_last = recordDeadlineLastDay(conf);
+      // 収録の側に締切が在るときは、近い日も添える（第 298 回 – 待っている物が無い会には
+      // 書かないので、画面は「在らない」と「数えていない」を混めない）。
+      const next = recordDeadlineNext(conf, safeNow.getTime());
+      if (next.count) {
+        entry.record_deadline_next = next.day;
+        entry.record_deadline_next_kind = next.kind;
+        entry.record_deadline_count = next.count;
+      }
     }
     return entry;
   });

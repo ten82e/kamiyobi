@@ -262,6 +262,11 @@ function isConferenceRecord(value: unknown): value is ConferenceRecord {
     (value.record_deadline_last === undefined ||
       value.record_deadline_last === null ||
       typeof value.record_deadline_last === "string") &&
+    hasOptionalString(value, "record_deadline_next") &&
+    hasOptionalString(value, "record_deadline_next_kind") &&
+    (value.record_deadline_count === undefined ||
+      (typeof value.record_deadline_count === "number" &&
+        Number.isFinite(value.record_deadline_count))) &&
     rankValid &&
     (value.editions === undefined ||
       (Array.isArray(value.editions) && value.editions.every(isEditionRecord)))
@@ -2711,6 +2716,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     terms: string[];
     recordLast: string | null | "";
     eventNext: string;
+    nextDay: string;
+    nextKind: string;
+    nextCount: number;
   } | null {
     const terms = String(query || "")
       .split(/\s+/u)
@@ -2756,6 +2764,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
        締切が過ぎただけの会と、まだ開かれるだけの会を分けないと、人は「終わった会議の話を
        見た」と誤解する。推定の会期は数えない。 */
     let eventNext = "";
+    /* 収録の側に残っている締切の、一番近い日と種別と本数（第 298 回）。実測で、収録に
+       これからの締切が在る会議 42 件のうち 19 件は、一番近い締切が品書の申告（一番遠い日）より
+       前に在る – 遠い日だけ教えると、人は間違った日に間に合うと思う。 */
+    let nextDay = "";
+    let nextKind = "";
+    let nextCount = 0;
     const hitTerms: string[] = [];
     DATA.conferences.forEach((conf) => {
       if (!conf || typeof conf.key !== "string" || withRows[conf.key]) return;
@@ -2780,6 +2794,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         if (Recommender.jstNoonMs(day, Number.NaN) < nowMs) return;
         if (!eventNext || day < eventNext) eventNext = day;
       });
+      // 収録の側に残っている締切の話（第 298 回 – 品書が申告している）。
+      if (typeof conf.record_deadline_count === "number" && conf.record_deadline_count > 0) {
+        nextCount = conf.record_deadline_count;
+        nextDay = typeof conf.record_deadline_next === "string" ? conf.record_deadline_next : "";
+        nextKind =
+          typeof conf.record_deadline_next_kind === "string" ? conf.record_deadline_next_kind : "";
+      }
       // 収録の側にその会の締切が在るか（第 295 回 – 品書が申告している）。
       const recordLast = conf.record_deadline_last;
       if (recordLast === null) recordNull = true;
@@ -2798,6 +2819,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       recordLast: count === 1 ? (recordNull ? null : recordDay) : "",
       // 開催日も同じ理屈で、1 件に絞れたときだけ言う（第 297 回）。
       eventNext: count === 1 ? eventNext : "",
+      // 締切の日も同じ – 曖昧な会議に「一番近い日」を教えない（第 298 回）。
+      nextDay: count === 1 ? nextDay : "",
+      nextKind: count === 1 ? nextKind : "",
+      nextCount: count === 1 ? nextCount : 0,
     };
   }
 
@@ -2810,8 +2835,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       terms: string[];
       recordLast: string | null | "";
       eventNext?: string;
+      nextDay?: string;
+      nextKind?: string;
+      nextCount?: number;
     } | null,
     nowMs: number,
+    kindLabel: Record<string, string>,
   ): {
     example: string;
     count: number;
@@ -2819,13 +2848,36 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     recordLast: string | null | "";
     recordFuture: boolean;
     eventNext?: string;
+    /** 収録の側に残っている一番近い締切（過ぎた日は教えない – 第 298 回）。 */
+    nextDay: string;
+    /** その種別の日本語（表と同じ語）。未登録の種別は空にして括弧を付けない。 */
+    nextLabel: string;
+    nextCount: number;
   } | null {
     if (!found) return null;
-    if (found.recordLast === null) return { ...found, recordFuture: false };
-    if (!found.recordLast) return { ...found, recordFuture: false };
+    const nextOf = (
+      f: typeof found,
+    ): {
+      nextDay: string;
+      nextLabel: string;
+      nextCount: number;
+    } => {
+      const day = typeof f?.nextDay === "string" ? f.nextDay : "";
+      const kind = typeof f?.nextKind === "string" ? f.nextKind : "";
+      const count = typeof f?.nextCount === "number" && f.nextCount > 0 ? f.nextCount : 0;
+      const noon = /^\d{4}-\d{2}-\d{2}$/.test(day)
+        ? Recommender.jstNoonMs(day, Number.NaN)
+        : Number.NaN;
+      if (!Number.isFinite(noon) || noon < nowMs || !count)
+        return { nextDay: "", nextLabel: "", nextCount: 0 };
+      return { nextDay: day, nextLabel: kindLabel[kind] || "", nextCount: count };
+    };
+    const next = nextOf(found);
+    if (found.recordLast === null) return { ...found, recordFuture: false, ...next };
+    if (!found.recordLast) return { ...found, recordFuture: false, ...next };
     const noon = Recommender.jstNoonMs(found.recordLast, Number.NaN);
-    if (!Number.isFinite(noon)) return { ...found, recordLast: "", recordFuture: false };
-    return { ...found, recordFuture: noon >= nowMs };
+    if (!Number.isFinite(noon)) return { ...found, recordLast: "", recordFuture: false, ...next };
+    return { ...found, recordFuture: noon >= nowMs, ...next };
   }
 
   function emptyDeadlineHint(filter: {
@@ -2857,6 +2909,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       recordFuture?: boolean;
       /** その会のこれからの開催日（いま読み込んでいる名簿に在る分だけ – 第 297 回）。 */
       eventNext?: string;
+      /** 収録の側に残っている一番近い締切（第 298 回）。 */
+      nextDay?: string;
+      nextLabel?: string;
+      nextCount?: number;
     } | null;
     loadedLastDay?: string;
     recordLastDay?: string;
@@ -2997,8 +3053,26 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         typeof filter.nameOnly.recordFuture === "boolean"
       ) {
         tail = filter.nameOnly.recordFuture
-          ? `その会には ${record} の締切が収録に在りますが、${beyond}` +
-            "この欄の「収録の全体を読み込む」を押すと、その締切も一覧に載せられます。"
+          ? (() => {
+              // 一番近い日を教える（第 298 回 – 実測 42 件のうち 19 件は、遠い日だけを教えて
+              // いたため、人は間の締切を見落とす）。近い日が読み込めないときは従来どおり。
+              const near = filter.nameOnly.nextDay
+                ? filter.nameOnly.nextLabel
+                  ? `${filter.nameOnly.nextDay}（${filter.nameOnly.nextLabel}）`
+                  : filter.nameOnly.nextDay
+                : "";
+              const n = filter.nameOnly.nextCount || 0;
+              const head = !near
+                ? `その会には ${record} の締切が収録に在りますが、`
+                : n > 1
+                  ? `その会の締切が収録に ${n} 本在って、一番近いのは ${near}です。`
+                  : `その会の締切が収録に ${n} 本在って、${near}です。`;
+              return (
+                head +
+                beyond +
+                "この欄の「収録の全体を読み込む」を押すと、その締切も一覧に載せられます。"
+              );
+            })()
           : `収録にあるのは過ぎた締切（${record}）だけで、${beyond}` +
             "読み込まれるときは「過去の締切も表示」もいっしょにオンにしてください。" +
             // 締切が過ぎただけで、会議が終わったわけではない（実測 – 過ぎた締切だけの会議
@@ -4547,6 +4621,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             nameOnly: nameOnlyRecordInfo(
               nameOnlyConferenceMatch(searchQuery, rows, Date.now()),
               Date.now(),
+              KIND_LABEL,
             ),
             recordLastDay: DATA.calendar ? DATA.calendar.last_day : "",
             horizonDays: DATA.window ? DATA.window.upcoming_days : 0,

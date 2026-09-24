@@ -15,6 +15,7 @@
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 import { site } from "./built_golden_shared.ts";
 import { deadlineHintFunction, jsFunction, siteRuntime } from "./runtime_extract.ts";
@@ -30,6 +31,9 @@ type Conf = {
   editions?: unknown[];
   /** 品の窓に締切が入らない会議にだけ、品書が載せる収録側の締切日（第 295 回）。 */
   record_deadline_last?: string | null;
+  record_deadline_next?: string;
+  record_deadline_next_kind?: string;
+  record_deadline_count?: number;
 };
 type NameOnly = {
   example: string;
@@ -38,6 +42,10 @@ type NameOnly = {
   recordLast?: string | null | "";
   /** その会のこれからの開催日（第 297 回）。 */
   eventNext?: string;
+  /** 収録の側に残っている一番近い締切（第 298 回）。 */
+  nextDay?: string;
+  nextKind?: string;
+  nextCount?: number;
 } | null;
 
 /* `site` は共有ハーネスがビルドを作り終えてから決まるので、品書は引くたびに読む。 */
@@ -266,7 +274,7 @@ describe("名簿に在る会議の話を 0 件の案内が言う（第 294 回�
   it("描画側が、名簿の話を案内に渡している（渡し忘れで案内が黙らない）", () => {
     const app = siteRuntime();
     expect(app).toMatch(
-      /nameOnly:\s*nameOnlyRecordInfo\(\s*nameOnlyConferenceMatch\(\s*searchQuery,\s*rows,\s*Date\.now\(\)\s*\)/,
+      /nameOnly:\s*nameOnlyRecordInfo\(\s*nameOnlyConferenceMatch\(\s*searchQuery,\s*rows,\s*Date\.now\(\)\s*\),\s*Date\.now\(\),\s*KIND_LABEL\s*\)/,
     );
     // 読み込めている行を照合して「行が在るか」で判断している。
     expect(jsFunction(app, "nameOnlyConferenceMatch")).toContain("withRows");
@@ -343,7 +351,7 @@ describe("収録の側に何が待っているかで、0 件の案内が言い�
     const fn = jsFunction(siteRuntime(), "nameOnlyRecordInfo");
     const run = new Function(
       "Recommender",
-      `${fn}; return (found, now) => nameOnlyRecordInfo(found, now);`,
+      `${fn}; return (found, now) => nameOnlyRecordInfo(found, now, {});`,
     )({
       // 画面の行と同じ `jstNoonMs`（JST 正午 = UTC 03:00）を再現する。
       jstNoonMs: (raw: unknown, fallback: number): number => {
@@ -652,5 +660,245 @@ describe("0 件の案内が、その会のこれからの開催日を添える�
     });
     expect(checked, "名前で絞れる締切ゼロの会議が 1 件もない").toBeGreaterThan(0);
     expect(withEvent, "これからの開催日を添えられる会議が 1 件もない").toBeGreaterThan(0);
+  });
+});
+
+/* 品選び（`nameOnlyRecordInfo`）を、ビルド成果の品選びと種別の表そのもので走らせる
+   （検査の側に同じ規則や訳語を書き写さない – 第 295 回の教訓）。 */
+type Found = {
+  example: string;
+  count: number;
+  terms: string[];
+  recordLast: string | null | "";
+  eventNext?: string;
+  nextDay?: string;
+  nextKind?: string;
+  nextCount?: number;
+};
+
+type RecordInfo = {
+  example: string;
+  count: number;
+  terms: string[];
+  recordLast: string | null | "";
+  recordFuture: boolean;
+  eventNext?: string;
+  nextDay?: string;
+  nextLabel?: string;
+  nextCount?: number;
+};
+
+async function recordRuntime() {
+  // 品選びと種別の表は、ビルド成果そのものから取る（同じ規則・同じ訳語を検査の側に
+  // 書き写さない – 第 295 回の教訓）。
+  const R = (await import(pathToFileURL(join(site, "recommender.js")).href)) as unknown as {
+    default: {
+      jstNoonMs: (raw: unknown, fallback: number) => number;
+      kindLabelTable: () => Record<string, string>;
+    };
+  };
+  const table = R.default.kindLabelTable();
+  const run = new Function(
+    "Recommender",
+    `${jsFunction(siteRuntime(), "nameOnlyRecordInfo")};
+     return (found, now, labels) => nameOnlyRecordInfo(found, now, labels);`,
+  )({ jstNoonMs: R.default.jstNoonMs } as never) as (
+    found: Found | null,
+    now: number,
+    labels: Record<string, string>,
+  ) => RecordInfo | null;
+  return { run, table };
+}
+
+describe("収録の側に締切が在るとき、案内は一番近い日を言う（第 298 回）", () => {
+  /* 実測（2026-09-24・2026-08-09 生成ビルド）: 収録にこれからの締切が在る会議 42 件のうち **19 件**は、
+     一番近い締切が品書の申告（一番遠い日）より前に在る。例: CADE は申告 2027-06-01 で、一番近い
+     のは 2027-02-16 の概要締切（全 4 本）。遠い日だけを教えても、人は間の締切に間に合うと思う。 */
+
+  it("品書の申告から、近い日・種別・本数を読んでいる", () => {
+    const confs: Conf[] = [
+      {
+        acronym: "CADECONF",
+        key: "cadeconf",
+        record_deadline_last: "2027-06-01",
+        record_deadline_next: "2027-02-16",
+        record_deadline_next_kind: "abstract",
+        record_deadline_count: 4,
+      } as unknown as Conf,
+    ];
+    const found = nameOnly("CADECONF", [], confs);
+    expect(found?.nextDay, "近い日を読んでいない").toBe("2027-02-16");
+    expect(found?.nextKind, "種別を読んでいない").toBe("abstract");
+    expect(found?.nextCount, "本数を読んでいない").toBe(4);
+  });
+
+  it("例に絞れない会議には、近い日を教えない", () => {
+    const found = nameOnly("international");
+    expect(found?.count || 0, "前提が崩れた").toBeGreaterThan(1);
+    expect(found?.nextDay, "曖昧な会議に日を教えた").toBe("");
+    expect(found?.nextCount, "曖昧な会議に本数を教えた").toBe(0);
+  });
+
+  it("品書の種別を、表と同じ日本語に直している", async () => {
+    const { run, table } = await recordRuntime();
+    const info = run(
+      {
+        example: "CADE",
+        count: 1,
+        terms: ["cade"],
+        recordLast: "2027-06-01",
+        nextDay: "2027-02-16",
+        nextKind: "abstract",
+        nextCount: 4,
+      },
+      SCREEN_NOW,
+      table,
+    );
+    expect(info?.nextLabel, "種別を表の語に直していない").toBe(table.abstract);
+    expect(info?.nextDay, "近い日を落とした").toBe("2027-02-16");
+  });
+
+  it("近い日が過ぎていたら、古い申告の日で言う（品書の生成は一度きり）", async () => {
+    const { run, table } = await recordRuntime();
+    const found: Found = {
+      example: "CADE",
+      count: 1,
+      terms: ["cade"],
+      recordLast: "2027-06-01",
+      nextDay: "2027-02-16",
+      nextKind: "abstract",
+      nextCount: 4,
+    };
+    const later = Date.UTC(2027, 2, 1, 3, 0, 0);
+    const info = run(found, later, table);
+    expect(info?.nextDay, "過ぎた近い日をこれからの締切と言った").toBe("");
+    expect(info?.nextCount, "過ぎた近い日の本数を言った").toBe(0);
+    const out = hintFor("CADE", { nameOnly: info || undefined });
+    expect(out, "近い日の話を消さなかった").not.toContain("2027-02-16");
+    expect(out, "古い申告の日を言わなかった").toContain("2027-06-01");
+  });
+
+  it("何本残っているかと、一番近い日を一緒に言う", () => {
+    const out = hintFor("CADE", {
+      nameOnly: {
+        example: "CADE",
+        count: 1,
+        terms: ["cade"],
+        recordLast: "2027-06-01",
+        recordFuture: true,
+        nextDay: "2027-02-16",
+        nextLabel: "概要締切",
+        nextCount: 4,
+      },
+    });
+    expect(out, "本数を言っていない").toContain("収録に 4 本在って");
+    expect(out, "近い日を言っていない").toContain("一番近いのは 2027-02-16（概要締切）です");
+    expect(out, "遠い日だけを示す旧文が残った").not.toContain("2027-06-01");
+    expect(out, "読み込みを勧めていない").toContain("収録の全体を読み込む");
+  });
+
+  it("1 本しかないときは「一番近い」と言わない", () => {
+    const out = hintFor("FORTE", {
+      nameOnly: {
+        example: "FORTE",
+        count: 1,
+        terms: ["forte"],
+        recordLast: "2028-02-05",
+        recordFuture: true,
+        nextDay: "2028-01-29",
+        nextLabel: "概要締切",
+        nextCount: 1,
+      },
+    });
+    expect(out, "1 本に「一番近い」と言った").not.toContain("一番近いのは");
+    expect(out, "近い日を言っていない").toContain(
+      "その会の締切が収録に 1 本在って、2028-01-29（概要締切）です。",
+    );
+  });
+
+  it("種別を表が知らないときは、括弧を付けない", () => {
+    const out = hintFor("XCON", {
+      nameOnly: {
+        example: "XCON",
+        count: 1,
+        terms: ["xcon"],
+        recordLast: "2028-02-05",
+        recordFuture: true,
+        nextDay: "2028-01-29",
+        nextLabel: "",
+        nextCount: 1,
+      },
+    });
+    expect(out, "空の括弧を付けた").not.toContain("（）");
+    expect(out, "日だけを言わなかった").toContain("2028-01-29です。");
+  });
+
+  it("過ぎた締切だけの案内は、近い日の話を出さない", () => {
+    const out = hintFor("NETYS", {
+      nameOnly: {
+        example: "NETYS",
+        count: 1,
+        terms: ["netys"],
+        recordLast: "2026-06-27",
+        recordFuture: false,
+        eventNext: "2027-06-01",
+        nextDay: "",
+        nextLabel: "",
+        nextCount: 0,
+      },
+    });
+    expect(out, "過ぎた締切の案内に近い日の文を混ぜた").not.toContain("本在って");
+    expect(out, "開催日の話を落とした").toContain("会議が終わったわけではありません");
+  });
+
+  it("実ビルドの品書で、近い日が遠い日より後ろにならないことを数えている", () => {
+    const marked2 = conferences().filter((c) => typeof c.record_deadline_next === "string");
+    let apart = 0;
+    marked2.forEach((c) => {
+      const next = String(c.record_deadline_next);
+      const last = String(c.record_deadline_last || "");
+      const count = c.record_deadline_count;
+      expect(count, `${c.key}: 本数が無いのに近い日が在る`).toBeGreaterThan(0);
+      expect(next <= last, `${c.key}: 近い日が遠い日より後ろ`).toBe(true);
+      expect(deadlineDays(c).length, `${c.key}: 品の窓に締切の在る会議に申告が付いた`).toBe(0);
+      if (next !== last) apart += 1;
+    });
+    expect(marked2.length, "近い日の申告が 1 件も無い").toBeGreaterThan(0);
+    expect(apart, "近い日と遠い日が違う会議が 1 件も無い – 検査が無意味").toBeGreaterThan(0);
+  });
+
+  it("品書が言う本数は、収録の締切の数え上げとずれていない", () => {
+    /* 画面は品書の申告をそのまま数として出すので、収録の側を数え直して突き合わせる
+       （「4 本在って」と言って 1 本しか無い、が起きないようにする – 第 298 回）。 */
+    const catalog = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as {
+      generated_at?: string;
+      conferences: Conf[];
+    };
+    const record = JSON.parse(readFileSync(join(site, "data.json"), "utf8")) as {
+      conferences: {
+        key?: string;
+        editions?: {
+          deadlines?: { utc?: string; latest_utc?: string; earliest_utc?: string }[];
+        }[];
+      }[];
+    };
+    const now = Date.parse(String(catalog.generated_at || ""));
+    expect(Number.isFinite(now), "品の窓の生成時刻が読めない").toBe(true);
+    const by = new Map(record.conferences.map((c) => [String(c.key), c]));
+    let checked = 0;
+    (catalog.conferences || []).forEach((c) => {
+      const count = c.record_deadline_count;
+      if (typeof count !== "number") return;
+      let seen = 0;
+      (by.get(String(c.key))?.editions || []).forEach((ed) => {
+        (ed.deadlines || []).forEach((d) => {
+          const ms = Date.parse(String(d.latest_utc || d.utc || d.earliest_utc || ""));
+          if (Number.isFinite(ms) && ms >= now) seen += 1;
+        });
+      });
+      expect(seen, `${c.key}: 品書は ${count} 本と言うが収録は ${seen} 本`).toBe(count);
+      checked += 1;
+    });
+    expect(checked, "本数の申告が 1 件もない").toBeGreaterThan(0);
   });
 });

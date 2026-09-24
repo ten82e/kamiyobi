@@ -96,6 +96,12 @@ interface ConferenceRecord {
    * 収録に締切が 1 本も無いは `null`、日付が読めない物しかない等は `""`（画面は数を言わない）。
    * 第 295 回 – 画面が「読み込んでも増えない」を数え直さずに言えるようにする。 */
   record_deadline_last?: string | null;
+  /** 収録の側で一番近い締切の日（品の窓の外も含む – 第 298 回）。 */
+  record_deadline_next?: string;
+  /** その締切の種別（`abstract` など – 画面の日本語に直す）。 */
+  record_deadline_next_kind?: string;
+  /** 品書の生成時点で残っていた締切の本数（第 298 回）。 */
+  record_deadline_count?: number;
 }
 
 interface CandidateRow {
