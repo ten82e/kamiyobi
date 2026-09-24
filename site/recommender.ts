@@ -3156,17 +3156,25 @@ const Recommender = (() => {
       /* 「今週金曜」のように週+曜日を繋げた形は、解けた 1 日を出す（第 329 回）。 */
       const pressed = pressedWeekdayJa(token, nowMs);
       if (pressed) {
-        const parts = /^(\d{4})年(\d{1,2})月(\d{1,2})日$/.exec(pressed[0]);
-        if (parts) {
-          const 日付 = `${parts[1]}年${parts[2]}月${parts[3]}日`;
-          const 曜 = weekdayJaFromDate(toIsoDate(日付));
-          const 過ぎている = isPastJstDay(
-            [Number(parts[1]), Number(parts[2]), Number(parts[3])],
-            nowMs,
+        /* 解けた日を**すべて**書く – `今週末` は土曜・日曜の二日へ展開するので、一日目だけ
+         * 名指す案内は実物（出る行）とズレる（第 341 回 – 案内と実照合の一致）。 */
+        const 刻列表 = pressed
+          .map((語) => /^([0-9]{4})年([0-9]{1,2})月([0-9]{1,2})日$/.exec(String(語)))
+          .filter((刻): 刻 is RegExpExecArray => 刻 !== null);
+        if (刻列表.length >= 1) {
+          const 日付列表 = 刻列表.map((刻) => {
+            const 日付 = `${刻[1]}年${刻[2]}月${刻[3]}日`;
+            const 曜 = weekdayJaFromDate(toIsoDate(日付));
+            return `${日付}${曜 ? `(${曜})` : ""}`;
+          });
+          const 過ぎている = 刻列表.every((刻) =>
+            isPastJstDay([Number(刻[1]), Number(刻[2]), Number(刻[3])], nowMs),
           );
           notes.push(
-            `${token} = ${日付}${曜 ? `(${曜})` : ""}の締切${
-              過ぎている ? `（その日は過ぎています – 「過去の締切も表示」を付けると並びます）` : ""
+            `${token} = ${日付列表.join("・")}の締切${日付列表.length > 1 ? " – 土曜・日曜に締まる物です（別の週の週末は含みません）" : ""}${
+              過ぎている
+                ? `（${日付列表.length > 1 ? "両日とも" : "その日は"}過ぎています – 「過去の締切も表示」を付けると並びます）`
+                : ""
             }`,
           );
           return;
@@ -5369,6 +5377,12 @@ const Recommender = (() => {
     [/([0-9]{1,2})\s*(?:週間|週)\s*(?:後|あと|先)/g, (n) => `${n * 7}日後`],
   ];
 
+  /* 「3月中に出せるか」「11月中の締切」は月のまとまりの言い方で、`今月中`（4,698 行の表）と
+   * 同じ頼み方だが、数値の月では引けなかった（2026-09-30 実測・固定時刻 2026-08-09T00:00:00Z・
+   * 品書 872 行）: `3月中` **0 行**・`11月中` **0 行** / 同じ月の `3月` 253 行・`11月` は通る。
+   * `中` を剥がして其の月の語に寄せる – 月の長さを換えないので、寄せ先は其の月の締切のまま
+   * （締切の推測はしない）。`5人中` のような数え手の打ち方と取り違えないため、月として
+   * 有り得る 1〜12 だけ寄せる。 */
   /** 「あと 51 日」「51 日後」を `51日後` の 1 語に寄せる（語が割ける前にやる）。 */
   function collapseRelativeDayPhrase(query: unknown): unknown {
     if (typeof query !== "string" || !query) return query;
@@ -5377,11 +5391,23 @@ const Recommender = (() => {
        （2026-09-26 実測: `３０日以内` 249 行 / `３０ 日以内` **0 行** – 照合は NFKC で畳むので
        詰め打ちだけ救われていた）。行の語その物は畳まない – 検索語の側のみの寄せる。 */
     let out = query.replace(/[０-９]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0xfee0));
+    /* 上の注の `N月中` の寄せ。**此処で宣言する** – 検査は `tests/runtime_extract.ts` の
+     * `jsFunction` で此の関数だけを組み立てた成果物から抜き出して走らせるので、関数の外の
+     * `const` に置くと参照が届かない（第 341 回の実発生 – 組み立てた品で
+     * `ReferenceError: … is not defined` になった）。毎回作る形は `/g` の続き読みも残さない。 */
+    /* `N月中` の後ろに他の語が続く形は寄せない – `12月中旬` を `12月旬` に壊した
+     * （第 341 回の実発生 – 上旬・中旬・下旬の表（第 332 回）と同じ月で collision した）。
+     * 上旬・中旬・下旬・中旬頃・途中で切れる打ち方が其のまま通る形に留める。 */
+    const 月のまとまり = /([0-9]{1,2})月中(?!旬|頃|途|止|断)(?:に)?/g;
     RELATIVE_DAY_PHRASES_JA.forEach(([pattern, to]) => {
       out = out.replace(pattern, (_all, digits) => {
         const n = Number(digits);
         return n >= 1 && n <= 3650 ? to(n) : _all;
       });
+    });
+    out = out.replace(月のまとまり, (全部, digits) => {
+      const n = Number(digits);
+      return n >= 1 && n <= 12 ? `${n}月` : 全部;
     });
     return out;
   }
@@ -5516,7 +5542,7 @@ const Recommender = (() => {
    * 行が混ざっていた（`今週の水曜` 1 行 / `2026年8月5日` 3 行で**別の行** – 第 329 回）。
    * なので両方を同じ 1 日へ解く。月の語（`来月中`）とは語が重ならない（`中` を要求しない）。 */
   const PRESSED_WEEKDAY_JA =
-    /^(今週|こんしゅう|来週|らいしゅう|再来週|さいしゅう|先週|せんしゅう)(?:の)?([月火水木金土日])(?:曜)?(?:日)?$/;
+    /^(今週|こんしゅう|来週|らいしゅう|再来週|さいしゅう|先週|せんしゅう|前週|翌週)(?:の)?(?:([月火水木金土日])(?:曜)?(?:日)?|末)$/;
   const WEEKDAY_ORDER_JA = "月火水木金土日";
 
   function pressedWeekdayJa(token: string, nowMs: number): string[] | null {
@@ -5524,6 +5550,17 @@ const Recommender = (() => {
     if (!matched) return null;
     const days = weekDayTermsJa(matched[1], nowMs);
     if (days.length !== 7) return null;
+    /* 「今週末に締まる物が欲しい」は研究計画で普通に言う（2026-09-30 実測・固定時刻
+     * 2026-08-09T00:00:00Z・品書 872 行）: `週末` 268 行が通るのに `今週末` **0 行**・
+     * `来週末` **0 行**・`先週末` **0 行**だった。裸の `週末`（上の 1,953 行の語群）は
+     * 「土曜・日曜の締切全般」なので、週を名指した形をそこに寄せると**別週の週末まで出す**
+     * （実測で `週末` 268 行には今週以外も含まれる）。なので其の週の暦日 2 日に解く –
+     * 週は月〜日の塊（上の暦の決まり）で、土曜は 6 番目・日曜は 7 番目。*/
+    if (matched[2] === undefined) {
+      const 土曜 = String(days[5] || "");
+      const 日曜 = String(days[6] || "");
+      return 土曜 && 日曜 ? [土曜, 日曜] : null;
+    }
     const index = WEEKDAY_ORDER_JA.indexOf(matched[2]);
     if (index < 0) return null;
     const day = String(days[index] || "");
