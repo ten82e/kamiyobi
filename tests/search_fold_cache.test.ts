@@ -6,7 +6,12 @@
  *   - 1 打鍵で表 1 回ぶんの畳み込みを組み直し、同じ量の文字列（4 MB）を捨て続けていた
  *   - 検索欄 1 打鍵 83 ms の内訳の大半で、語を並べた人ほど重かった
  * 畳んだ結果を憶えると 検索 1 走 0.8 ms・語ごとの件数 4 ms になった（件数は 16 語で完全一致）。
- * 絶対時間は機械の負荷で化けるので、**同じビルドの中で初回と 2 回目を比べる**形で見た。
+ *
+ * **第 264 回に、速さの检测方法を変えた。** 以前は同じビルドの中で「初回 / 2 回目」の時間を
+ * 比べて 3 倍以上を見ていたが、同じ機械で検査を並列実行したときに平気で落ちた
+ * （2026-09-24 実測: 初回 4.6 ms / 2 回目 6.2 ms – 比 0.73）。主張したいのは
+ * 「時間が短かった」ではなく「**同じ行を二度畳まなかった**」なので、畳む関数に差し込んだ
+ * `Map` の数え上げで検める（時間の話は上の実測値の記録としてだけ残す）。
  */
 
 import { pathToFileURL } from "node:url";
@@ -14,6 +19,26 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { site } from "./built_golden_shared.ts";
 
 type SearchFn = (hay: unknown) => boolean;
+type FoldFn = ((value: unknown) => string) & { kanaFoldCache?: Map<string, string> };
+
+/** 畳み込みが憶えた量を見えるようにする `Map`（読み・書き・捨ての各回数を持つ）。 */
+class CountingMap extends Map<string, string> {
+  gets = 0;
+  sets = 0;
+  clears = 0;
+  get(key: string): string | undefined {
+    this.gets += 1;
+    return super.get(key);
+  }
+  set(key: string, value: string): this {
+    this.sets += 1;
+    return super.set(key, value);
+  }
+  clear(): void {
+    this.clears += 1;
+    super.clear();
+  }
+}
 
 interface Reco {
   searchMatcher: (query: unknown, nowMs?: number) => SearchFn;
@@ -22,6 +47,9 @@ interface Reco {
     hays: readonly unknown[],
     nowMs?: number,
   ) => Array<{ term: string; count: number }>;
+  /* 畳む関数の窓（`site/recommender.ts` の同じ名前の項参照）。無いとこの検査は
+   * 空振りになるので、無ければそこで落ちる。 */
+  kanaFoldMemo?: () => FoldFn;
 }
 
 let Rec: Reco;
@@ -40,32 +68,59 @@ function longRows(count: number, marker: string): string[] {
   return rows;
 }
 
-function measure(run: () => number): number {
-  const started = performance.now();
-  run();
-  return performance.now() - started;
-}
-
 describe("検索の畳み込みを憶える（第 258 回）", () => {
-  it("同じ行を二度畳まない（初回と 2 回目を同じビルドで比べる）", () => {
-    /* 暖機（JIT）は別の文字列で済ませてから測る – さもないと初回が遅い理由が
-     * 畳み込みの組み直しではなくなってしまう。 */
-    const warm = longRows(300, "暖機");
-    Rec.searchMatcher("性能評価", NOW);
-    warm.forEach(Rec.searchMatcher("性能評価", NOW));
+  it("同じ行を二度畳まない（第 264 回: 壁時計ではなく働き方で検める）", () => {
+    /* 畳む関数に検査側の `Map` を差し込んで、読み・書きの回数を数える。
+       「2 回目は速かった」ではなく「2 回目は同じ行を畳み直していない」を見る。 */
+    const fold = Rec.kanaFoldMemo?.();
+    expect(fold, "畳む関数の窓が無い（検査が空振りになる）").toBeTypeOf("function");
+    const counter = new CountingMap();
+    fold!.kanaFoldCache = counter;
 
     const rows = longRows(400, "本題");
-    const first = measure(() => rows.filter(Rec.searchMatcher("性能評価", NOW)).length);
-    const second = measure(() => rows.filter(Rec.searchMatcher("性能評価", NOW)).length);
-    /* 憶えていなければ 2 回目は 1 回目と同じ作業をするので比は 1 に近い。
-     * 憶えていれば 2 回目は配列を舴めるだけで、実測比は 20 倍を超えた。 */
-    expect(
-      first / Math.max(second, 0.01),
-      `2 回目が初回と同じ作業をしている（初回 ${first.toFixed(1)} ms / 2 回目 ${second.toFixed(1)} ms）`,
-    ).toBeGreaterThan(3);
-    /* 早さだけを見て中身を変えていないことも同時に検める。 */
-    expect(rows.filter(Rec.searchMatcher("性能評価", NOW)).length).toBe(400);
-    expect(rows.filter(Rec.searchMatcher("存在しない語", NOW)).length).toBe(0);
+    for (const row of rows) {
+      fold!(row);
+    }
+    const firstGets = counter.gets;
+    const firstSets = counter.sets;
+    /* 初回はまだ憶えていないので、読むたびに作り直して書く。 */
+    expect(firstGets, "初回から読み取りに当たっている").toBe(400);
+    expect(firstSets, "初回の書き込みが足りない").toBe(400);
+    expect(counter.size, "初回に憶えた量が行の数と違う").toBe(400);
+
+    for (const row of rows) {
+      fold!(row);
+    }
+    /* 2 回目は読みだけに当たり、組み直し（書き込み）は起きない。 */
+    expect(counter.gets - firstGets, "2 回目で読み取りをしていない（憶える道が消えた）").toBe(400);
+    expect(counter.sets - firstSets, "2 回目で同じ行を畳み直している").toBe(0);
+    expect(counter.size, "2 回目で憶えた量が増えた").toBe(400);
+
+    /* 憶えた結果は、その場で畳んだ結果と同じ（速さのために意味を変えていない）。 */
+    const fresh = Rec.kanaFoldMemo!();
+    expect(fold!("ｾｷｭﾘﾃｨ 特集"), "憶えた値がその場の畳み込みと違う").toBe(
+      fresh("セキュリティ 特集"),
+    );
+
+    /* 画面と同じ経路（`searchMatcher`）でも、同じ表を 2 回掛けて畳み直しは起きない。 */
+    const counter2 = new CountingMap();
+    fold!.kanaFoldCache = counter2;
+    const hit = () => rows.filter(Rec.searchMatcher("性能評価", NOW)).length;
+    expect(hit()).toBe(400);
+    const setsAfterFirstPass = counter2.sets;
+    expect(hit()).toBe(400);
+    expect(counter2.sets, "画面の経路で 2 回目に畳み直している").toBe(setsAfterFirstPass);
+  });
+
+  it("憶える数に上限を設けている（上限を越えたらまとめて捨てる）", () => {
+    const fold = Rec.kanaFoldMemo!();
+    const counter = new CountingMap();
+    fold.kanaFoldCache = counter;
+    for (let i = 0; i < 12_001; i++) fold(`溢れ ${i} の性能評価`);
+    expect(counter.clears, "上限で捨てていない（表が育ち続ける）").toBeGreaterThanOrEqual(1);
+    /* 捨てた後も畳み込みの結果は同じ。 */
+    expect(fold("溢れ 0 の性能評価")).toBe(fold("溢れ 0 の性能評価"));
+    expect(counter.size, "捨てた後に憶え直していない").toBeLessThanOrEqual(12_000);
   });
 
   it("文字列以外を `null` と同じ鍵で憶えない", () => {

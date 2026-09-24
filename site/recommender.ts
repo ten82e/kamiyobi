@@ -7444,6 +7444,11 @@ const Recommender = (() => {
     queryTokens: queryTokens,
     hayMatches: hayMatches,
     searchMatcher: searchMatcher,
+    /* 検査用の窓（第 264 回）: 「同じ行を二度畳まない」を壁時計ではなく**働き方**で検めるため、
+       畳む関数そのものを渡す。速さを時間で測る検査は、同じ機械の並列実行で平気で落ちる
+       （第 258 回の検査が第 263 回の連続実行で落ちた – 実発生）。憶えた量は検査側の `Map` を
+       差し込んで数えるので、憶える仕組みを外してからでも落ちる。 */
+    kanaFoldMemo: (): typeof kanaFold => kanaFold,
     tagLabelJa: tagLabelJa,
     topicTagsJa: topicTagsJa,
     tagSearchTerms: tagSearchTerms,
