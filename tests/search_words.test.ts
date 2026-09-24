@@ -845,50 +845,130 @@ it("開催地の州名を日本語で打った人が、英語表記の行に出�
     },
   ) as Array<{ hay: string; ed?: { place?: string } }>;
   const at = Date.parse("2026-08-09T00:00:00Z");
-  const cases: Array<[string, string]> = [
-    ["カリフォルニア", "california"],
-    ["カリフォルニア州", "california"],
-    ["コロラド", "colorado"],
-    ["コロラド州", "colorado"],
-    ["テキサス", "texas"],
-    ["テキサス州", "texas"],
-    ["ジョージア", "georgia"],
-    ["ジョージア州", "georgia"],
-    ["ペンシルベニア", "pennsylvania"],
-    ["ペンシルベニア州", "pennsylvania"],
-    ["バージニア", "virginia"],
-    ["バージニア州", "virginia"],
-    ["アリゾナ", "arizona"],
-    ["アリゾナ州", "arizona"],
+  /* 第 310 回: 州名を寄せても届かない行がいちばん多い形は、開催地が州を郵便略記で書く形だった
+   * （`Chicago, IL, USA` – `イリノイ` 0 行 / 開催地に IL と書く 57 行）。寄せ先に略記を足したので、
+   * 略記を独立の語として書く行も含めて漏れないことを見る。 */
+  const cases: Array<[string, string[]]> = [
+    ["カリフォルニア", ["california", "ca"]],
+    ["カリフォルニア州", ["california", "ca"]],
+    ["コロラド", ["colorado", "co"]],
+    ["コロラド州", ["colorado", "co"]],
+    ["テキサス", ["texas"]],
+    ["テキサス州", ["texas"]],
+    ["ジョージア", ["georgia", "ga"]],
+    ["ジョージア州", ["georgia", "ga"]],
+    ["ペンシルベニア", ["pennsylvania"]],
+    ["ペンシルベニア州", ["pennsylvania"]],
+    ["バージニア", ["virginia"]],
+    ["バージニア州", ["virginia"]],
+    ["アリゾナ", ["arizona"]],
+    ["アリゾナ州", ["arizona"]],
+    ["イリノイ", ["illinois", "il"]],
+    ["イリノイ州", ["illinois", "il"]],
+    ["フロリダ", ["florida", "fl"]],
+    ["フロリダ州", ["florida", "fl"]],
+    ["マサチューセッツ", ["massachusetts", "ma"]],
+    ["マサチューセッツ州", ["massachusetts", "ma"]],
+    ["メリーランド", ["maryland", "md"]],
+    ["メリーランド州", ["maryland", "md"]],
+    ["ワシントン", ["washington", "wa"]],
+    ["ワシントン州", ["washington", "wa"]],
   ];
   let 出会えた行数 = 0;
-  for (const [word, en] of cases) {
+  const 語として = (t: string) => new RegExp(`\\b${t}\\b`, "i");
+  for (const [word, terms] of cases) {
     const notes = Recommender.querySynonymNotes(word);
     expect(notes.length, `「${word}」が寄せになっていない`).toBe(1);
-    expect(notes[0], `「${word}」の注記が寄せ先を名指していない`).toContain(en);
+    for (const en of terms) {
+      expect(notes[0], `「${word}」の注記が寄せ先 ${en} を名指していない`).toContain(en);
+    }
     const matcher = Recommender.searchMatcher(word, at);
     const got = rows.filter((r) => matcher(r.hay) === true);
-    const 州 = new RegExp(`\\b${en}\\b`, "i");
     const missed = rows
-      .filter((r) => 州.test(String(r.ed?.place ?? "")) && matcher(r.hay) !== true)
+      .filter((r) => terms.some((t) => 語として(t).test(String(r.ed?.place ?? ""))))
+      .filter((r) => matcher(r.hay) !== true)
       .map((r) => String(r.ed?.place).slice(0, 40));
     expect(
       missed,
-      `「${word}」で開催地に ${en} と書く行がこぼれている: ${missed.join(" / ")}`,
+      `「${word}」で開催地に ${terms.join("/")} と書く行がこぼれている: ${missed.join(" / ")}`,
     ).toEqual([]);
+    /* 寄せ先（フル名か略記）を行の原文に書かない行を呼んでいないこと – 略記を寄せ先に足すとき
+     * いちばん怖いのは英語の一般語に当たって余計な行を呼ぶことで、`or` はそれで置かなかった
+     * （SPEC §7・第 310 回）。 */
     const strays = got
-      .filter((r) => !州.test(String(r.hay)))
+      .filter((r) => !terms.some((t) => 語として(t).test(String(r.hay))))
       .map((r) => String(r.hay).slice(0, 40));
-    expect(strays, `「${word}」の寄せが ${en} を書かない行を呼んだ: ${strays.join(" / ")}`).toEqual(
-      [],
-    );
+    expect(
+      strays,
+      `「${word}」の寄せが ${terms.join("/")} を書かない行を呼んだ: ${strays.join(" / ")}`,
+    ).toEqual([]);
     出会えた行数 += got.length;
   }
   expect(出会えた行数, "州名の寄せが 1 行にも繋がっていない").toBeGreaterThan(0);
   /* 置かなかった語（SPEC §7）。`ユタ` は小文字と長音の折り合わせで `コンピュータ` を含む行に
    * 当たって 51 行を出す（実測: 開催地に utah を書く行は 11 行）ので英文字のまま引くのに任せる。
-   * `ワシントン` はそのまま 4 行当たり、`ハワイ` は開催地に Hawaii を書く行が 0 行。 */
-  for (const word of ["ユタ", "ワシントン", "ハワイ"]) {
+   * `ハワイ` は開催地に Hawaii を書く行が 0 行で、`ホノルル` はそのまま 4 行当たる。
+   * `オレゴン` は州の略記 `or` が英語の接続詞に当たって寄与外 2 行を出した（実測: 検索 2 行 /
+   * 開催地に or を書く 0 行）ので略記を寄せない。`オンタリオ` は開催地に其の語を書く行が 0 行で、
+   * 略記 `on` は 662 行に当たる英語の語なので置かない。 */
+  for (const word of ["ユタ", "ハワイ", "オレゴン", "オンタリオ"]) {
     expect(Recommender.querySynonymNotes(word), `「${word}」を寄せてしまっている`).toEqual([]);
+  }
+});
+
+it("開催地が州を郵便略記で書く行に、和名で打って出会える（第 310 回）", () => {
+  /* 画面の開催地は `Chicago, IL, USA` のように州を郵便略記で書く行が在る（実測: `IL` を書く 57 行、
+   * `CA` 38 行 – `ILLINOIS`・`CALIFORNIA` とフル名で書く行は 0 行と 10 行）。和名を打った人に
+   * 届かせるには略記を寄せ先に足す必要が在った – 検証ハーネスの品書（435 行）には略記を書く行が
+   * 無いので、ここでは正本の表その物を見る（画面に出る注記と寄せ先がずれていないことも同時に見る）。 */
+  const src = readFileSync(join(REPO_ROOT, "site", "recommender.ts"), "utf8");
+  const 表 = src.slice(
+    src.indexOf("UPSTREAM_TEXT_QUERY_SYNONYMS_JA"),
+    src.indexOf("QUERY_SYNONYMS_JA.concat("),
+  );
+  const 行 = (word: string): string => {
+    const hit = 表.split("\n").find((l) => l.trimStart().startsWith(`["${word}",`));
+    expect(hit, `州の寄せに「${word}」が在らない`).not.toBeUndefined();
+    return String(hit);
+  };
+  /* フル名だけでは届かない州は、略記も寄せ先に持っている。 */
+  for (const [word, full, abbr] of [
+    ["カリフォルニア", "california", "ca"],
+    ["コロラド", "colorado", "co"],
+    ["ジョージア", "georgia", "ga"],
+    ["イリノイ", "illinois", "il"],
+    ["フロリダ", "florida", "fl"],
+    ["マサチューセッツ", "massachusetts", "ma"],
+    ["メリーランド", "maryland", "md"],
+    ["ワシントン", "washington", "wa"],
+  ] as const) {
+    for (const w of [word, `${word}州`]) {
+      const line = 行(w);
+      expect(line, `「${w}」の寄せ先にフル名 ${full} が無い`).toContain(`"${full}"`);
+      expect(
+        line,
+        `「${w}」の寄せ先に略記 ${abbr} が無い（開催地に略記を書く行に届かない）`,
+      ).toContain(`"${abbr}"`);
+      /* 画面に出る注記が、実際の寄せ先を言い当てている（注記だけ直して寄せ先とずれた検査を作らない）。 */
+      const shown = line.slice(line.indexOf('", "原文の') + 4, line.lastIndexOf('", ['));
+      for (const t of [full, abbr]) {
+        /* 注記が語として名指していること – `california` に `ca` は部分文字列で入るので、
+         * 語の区切りで確かめないと「略記を消した」変化をすかす（第 310 回で実測）。 */
+        expect(
+          new RegExp(`(^|[^a-z])${t}([^a-z]|$)`).test(shown),
+          `「${w}」の注記が ${t} を語として名指していない: ${shown}`,
+        ).toBe(true);
+      }
+    }
+  }
+  /* 英語の一般語に当たる略記は、寄せ先に置いていない（第 310 回の実測で決めたこと）。
+   * `or` は `Montréal, Canada` と `Lucca, Italy` を呼んだ（検索 2 行 / 開催地に or を書く 0 行）、
+   * `on` は 662 行に当たる。将来「オレゴンも足そう」という変更が入ったら、これで落とす。 */
+  for (const abbr of ['"or"', '"on"', '"mi"', '"in"', '"as"']) {
+    const 混入 = 表
+      .split("\n")
+      .filter((l) => l.trimStart().startsWith('["') && l.includes(`, ${abbr}]`))
+      .map((l) => l.trim().slice(0, 56));
+    expect(混入, `英語の一般語になり得る略記 ${abbr} を寄せ先にしている`).toEqual([]);
   }
 });
