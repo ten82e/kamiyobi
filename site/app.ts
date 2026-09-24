@@ -259,6 +259,9 @@ function isConferenceRecord(value: unknown): value is ConferenceRecord {
     (value.categories === undefined || isStringArray(value.categories)) &&
     (value.tags === undefined || isStringArray(value.tags)) &&
     (value.papers === undefined || isStringArray(value.papers)) &&
+    (value.record_deadline_last === undefined ||
+      value.record_deadline_last === null ||
+      typeof value.record_deadline_last === "string") &&
     rankValid &&
     (value.editions === undefined ||
       (Array.isArray(value.editions) && value.editions.every(isEditionRecord)))
@@ -2698,7 +2701,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function nameOnlyConferenceMatch(
     query: string,
     list: AppRow[],
-  ): { example: string; count: number; terms: string[] } | null {
+  ): { example: string; count: number; terms: string[]; recordLast: string | null | "" } | null {
     const terms = String(query || "")
       .split(/\s+/u)
       .map((t) => t.trim())
@@ -2729,6 +2732,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     let count = 0;
     let allMatches = 0;
     let example = "";
+    let recordDay = "";
+    let recordNull = false;
     const hitTerms: string[] = [];
     DATA.conferences.forEach((conf) => {
       if (!conf || typeof conf.key !== "string" || withRows[conf.key]) return;
@@ -2742,12 +2747,51 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (hits.length === terms.length) {
         allMatches += 1;
         example = String(conf.acronym || conf.title || conf.key);
+        // 収録の側にその会の締切が在るか（第 295 回 – 品書が申告している）。
+        const recordLast = conf.record_deadline_last;
+        if (recordLast === null) recordNull = true;
+        else if (typeof recordLast === "string" && /^\d{4}-\d{2}-\d{2}$/.test(recordLast)) {
+          recordDay = recordLast;
+        }
       }
       hits.forEach((term) => {
         if (hitTerms.indexOf(term) < 0) hitTerms.push(term);
       });
     });
-    return count ? { example: allMatches === 1 ? example : "", count, terms: hitTerms } : null;
+    if (!count) return null;
+    const named = allMatches === 1;
+    return {
+      example: named ? example : "",
+      count,
+      terms: hitTerms,
+      // 例を 1 件に絞れたときだけ、収録側の締切日の話をできる（第 295 回）。
+      recordLast: named ? (recordNull ? null : recordDay) : "",
+    };
+  }
+
+  /* 名簿の案内に添える、収録側の締切日の向き（第 295 回）。読み方が分からない日は、数を
+     言わない方（""）に寄せる。 */
+  function nameOnlyRecordInfo(
+    found: {
+      example: string;
+      count: number;
+      terms: string[];
+      recordLast: string | null | "";
+    } | null,
+    nowMs: number,
+  ): {
+    example: string;
+    count: number;
+    terms: string[];
+    recordLast: string | null | "";
+    recordFuture: boolean;
+  } | null {
+    if (!found) return null;
+    if (found.recordLast === null) return { ...found, recordFuture: false };
+    if (!found.recordLast) return { ...found, recordFuture: false };
+    const noon = Recommender.jstNoonMs(found.recordLast, Number.NaN);
+    if (!Number.isFinite(noon)) return { ...found, recordLast: "", recordFuture: false };
+    return { ...found, recordFuture: noon >= nowMs };
   }
 
   function emptyDeadlineHint(filter: {
@@ -2770,8 +2814,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     catalogConferences: number;
     // 打った日付と、いま読み込んでいるデータの果て（第 293 回）。
     queryDaySpan?: { first: string; last: string; label: string } | null;
-    // 名簿に在るのに締切の行が無い会議（第 294 回）。
-    nameOnly?: { example: string; count: number; terms: string[] } | null;
+    // 名簿に在るのに締切の行が無い会議（第 294 回 – 収録側の締切は第 295 回）。
+    nameOnly?: {
+      example: string;
+      count: number;
+      terms: string[];
+      recordLast?: string | null | "";
+      recordFuture?: boolean;
+    } | null;
     loadedLastDay?: string;
     recordLastDay?: string;
     horizonDays?: number;
@@ -2879,15 +2929,41 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const named = filter.nameOnly.example
         ? `打った語に似た名前の会議（${filter.nameOnly.example}）は、収録の名簿に見えます。`
         : `打った語に似た名前の会議が、収録の名簿に ${countJa(filter.nameOnly.count)} 件見えます。`;
-      nameNote =
-        ` ${named}` +
-        "ただしその締切は、いま読み込んでいるデータに 1 本も入っていません" +
-        (horizonDay
-          ? `（一覧に出せる締切は ${horizonDay} まで – 締切がそれより先の会議は、名簿だけが残っています）。`
-          : "（締切がデータの切れ目より先の会議は、名簿だけが残っています）。") +
-        // 収録の側にも締切が 1 本も無い会（実測 248 件中 74 件）が在るので、「出る」とは言わない –
-        // 押せば全体の締切から同じ語を引き直すとまでしか言わない。
-        "この欄の「収録の全体を読み込む」を押すと、収録の全体の締切から同じ語を引き直します。";
+      /* 収録の側に何が待っているかで言い分ける（第 295 回）。実測で品書に締切行の無い会議
+         248 件のうち 74 件は収録にも締切が 1 本も無い – そこへ「収録の全体を読み込む」を勧げるのは、
+         6 MB 強を読ませて 1 件も増えない人にボタンを押させることになる。 */
+      const record = filter.nameOnly.recordLast;
+      const named_only = Boolean(filter.nameOnly.example);
+      const beyond = horizonDay
+        ? `いま読み込んでいるデータには入りません（一覧に出せる締切は ${horizonDay} まで）。`
+        : "いま読み込んでいるデータには入りません。";
+      let tail: string;
+      if (named_only && record === null) {
+        tail =
+          "その会について、収録は締切を 1 本も持っていません。一覧に出ないのはそのためで、" +
+          "この欄の「収録の全体を読み込む」を押しても 1 件も増えません。";
+      } else if (
+        named_only &&
+        typeof record === "string" &&
+        record &&
+        // 向きを渡されなければ、これからだとも過ぎたのだと教えない（第 295 回）。
+        typeof filter.nameOnly.recordFuture === "boolean"
+      ) {
+        tail = filter.nameOnly.recordFuture
+          ? `その会には ${record} の締切が収録に在りますが、${beyond}` +
+            "この欄の「収録の全体を読み込む」を押すと、その締切も一覧に載せられます。"
+          : `収録にあるのは過ぎた締切（${record}）だけで、${beyond}` +
+            "読み込まれるときは「過去の締切も表示」もいっしょにオンにしてください。";
+      } else {
+        tail =
+          "ただしその締切は、いま読み込んでいるデータに 1 本も入っていません" +
+          (horizonDay
+            ? `（一覧に出せる締切は ${horizonDay} まで – 締切がそれより先の会議は、名簿だけが残っています）。`
+            : "（締切がデータの切れ目より先の会議は、名簿だけが残っています）。") +
+          // 収録の側に締切が在るか分からないときは、「出る」とは言わない。
+          "この欄の「収録の全体を読み込む」を押すと、収録の全体の締切から同じ語を引き直します。";
+      }
+      nameNote = ` ${named}${tail}`;
     }
     const horizonOnly = Boolean(horizonNote) && (!filter.window || filter.window === "all");
     const nameOnlyOnly = Boolean(nameNote) && (!filter.window || filter.window === "all");
@@ -3019,6 +3095,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         tips.push("別の語で試す（分野名・主題・開催地の日本語でも引けます）");
       }
     }
+
+    /* 名簿の案内が原因と押し先を言い切ったときは、「外せる条件」を並べない（第 295 回）。
+       過去の締切をオンにしても推定を足しても、その会は 1 件も増えない – 実測で品書に締切行の
+       無い会議 248 件のうち 74 件は収録に締切が 1 本も無い。効かない条件を「外せる条件」として
+       並べるのは、空振りへの誘いになる（第 247 回と同じ判断）。 */
+    if (nameOnlyOnly) tips.length = 0;
 
     const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.html に載せています。";
     if (specific) {
@@ -4410,7 +4492,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             loadedLastDay: farthestRowDayJa(rows),
             // 名簿に在るのに締切の行が 1 本も無い会議（第 294 回）。`rows` は絞り込み前なので、
             // 「読み込めているデータに行が在るか」で判断できる（読み込んだあとは行が出る）。
-            nameOnly: nameOnlyConferenceMatch(searchQuery, rows),
+            nameOnly: nameOnlyRecordInfo(nameOnlyConferenceMatch(searchQuery, rows), Date.now()),
             recordLastDay: DATA.calendar ? DATA.calendar.last_day : "",
             horizonDays: DATA.window ? DATA.window.upcoming_days : 0,
           }

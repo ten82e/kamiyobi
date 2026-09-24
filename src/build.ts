@@ -1026,6 +1026,27 @@ function jsonDeadlineRange(deadline: JsonRecord): [number, number] | null {
   return window ? [window.earliestPossibleUtc.getTime(), window.latestPossibleUtc.getTime()] : null;
 }
 
+/** 収録の中でその会議の締切が最も遠い JST の暦日。品の窓の外に残った分も数える。
+ * 締切が 1 本も無い会議は null（画面は「収録の全体を読み込んでも増えない」と言える – 第 295 回）、
+ * 日付が読めない物だけなら "" を返す（画面は数を言わない）。 */
+function recordDeadlineLastDay(conf: JsonRecord): string | null | "" {
+  let last = Number.NaN;
+  let sawUndated = false;
+  jsonRecords(conf.editions).forEach((edition) => {
+    jsonRecords(edition.deadlines).forEach((deadline) => {
+      const range = jsonDeadlineRange(deadline);
+      if (range === null) {
+        sawUndated = true;
+        return;
+      }
+      if (!Number.isFinite(last) || range[1] > last) last = range[1];
+    });
+  });
+  if (!Number.isFinite(last)) return sawUndated ? "" : null;
+  // 協定世界時の幅の終端 – 画面とカレンダーが見る JST の暦日に揃える。
+  return new Date(last + 9 * 3600000).toISOString().slice(0, 10);
+}
+
 function compactEdition(edition: JsonRecord, deadlines: JsonRecord[]): JsonRecord {
   return {
     year: edition.year,
@@ -1103,7 +1124,15 @@ export function toCatalog(
         return inWindow || deadlines.length ? compactEdition(edition, deadlines) : null;
       })
       .filter((edition): edition is JsonRecord => edition !== null);
-    return compactConference(conf, editions, false);
+    const entry = compactConference(conf, editions, false);
+    /* 品の窓に締切が 1 本も入らない会議は、品書に名簿だけが残る – 画面はそこで名前の語を引いた
+       人を「収録の全体を読み込む」へ送るが、収録の側に締切が 1 本も無い会も在る（実測 248 件のうち
+       74 件 – 6 MB 強を読んでも 1 件も増えない）。読み込む価値があるか、どんな締切が待っているかを
+       画面が数え直さずに言えるよう、収録側の一番遠い締切日をここへ書いておく（第 295 回）。 */
+    if (!editions.some((edition) => jsonRecords(edition.deadlines).length > 0)) {
+      entry.record_deadline_last = recordDeadlineLastDay(conf);
+    }
+    return entry;
   });
   return {
     generated_at: data.generated_at,

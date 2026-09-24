@@ -22,8 +22,15 @@ type Conf = {
   full_name?: string;
   key?: string;
   editions?: unknown[];
+  /** 品の窓に締切が入らない会議にだけ、品書が載せる収録側の締切日（第 295 回）。 */
+  record_deadline_last?: string | null;
 };
-type NameOnly = { example: string; count: number; terms: string[] } | null;
+type NameOnly = {
+  example: string;
+  count: number;
+  terms: string[];
+  recordLast?: string | null | "";
+} | null;
 
 /* `site` は共有ハーネスがビルドを作り終えてから決まるので、品書は引くたびに読む。 */
 function conferences(): Conf[] {
@@ -54,6 +61,23 @@ function nameOnly(query: string, rowKeys: string[] = []): NameOnly {
     `${fn}; return (q, keys) => nameOnlyConferenceMatch(q, keys.map((k) => ({ conf: { key: k } })));`,
   )({ conferences: conferences() } as never) as (q: string, keys: string[]) => NameOnly;
   return run(query, rowKeys);
+}
+
+/* 画面が「収録の全体を読み込む」へ送っていいのかを、品書が申告している（build の `record_deadline_last`）。 */
+function marked(): Conf[] {
+  return conferences().filter((c) => c.record_deadline_last !== undefined);
+}
+
+function noteFor(name: string, over: Record<string, unknown>): string {
+  const found = nameOnly(name) || { example: name, count: 1, terms: [name] };
+  return hintFor(name, { nameOnly: { ...found, example: name, ...over } });
+}
+
+function fullRecordButton(): string {
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const m = /id="fullRecordButton"[^>]*>([^<]+)</.exec(html);
+  expect(m, "「収録の全体を読み込む」のボタンが画面に無い").not.toBeNull();
+  return String(m?.[1]);
 }
 
 function hintFor(query: string, over: Record<string, unknown> = {}): string {
@@ -108,7 +132,11 @@ describe("名簿に在る会議の話を 0 件の案内が言う（第 294 回�
   });
 
   it("締切が行に無いことを切れ目の日数といっしょに言い、全体を読み込むへ送る", () => {
-    const out = hintFor(example().name, { nameOnly: nameOnly(example().name) || undefined });
+    // 品書に申告が無い（古いビルド・日付の読めない物）ときは、出る約束を言わない。
+    const found = nameOnly(example().name);
+    const out = hintFor(example().name, {
+      nameOnly: found ? { ...found, example: "", recordLast: "" } : undefined,
+    });
     expect(out).toContain("収録の名簿");
     expect(out, "データの切れ目の日数が無い").toContain("2027-02-04");
     expect(out, "押し先を送っていない").toContain("収録の全体を読み込む");
@@ -199,15 +227,208 @@ describe("名簿に在る会議の話を 0 件の案内が言う（第 294 回�
     const html = readFileSync(join(site, "index.html"), "utf8");
     const label = (/id="fullRecordButton"[^>]*>([^<]+)</.exec(html)?.[1] || "").trim();
     expect(label).toBeTruthy();
-    expect(hintFor(example().name, { nameOnly: nameOnly(example().name) || undefined })).toContain(
-      label,
-    );
+    const base = nameOnly(example().name) || { example: "", count: 1, terms: [] };
+    // 収録の側が不明 / 締切ゼロ / これからの締切が在る – ボタンにふれる三つの形で同じ語を使う。
+    for (const recordLast of ["", null, "2028-03-30"] as const) {
+      const out = hintFor(example().name, {
+        nameOnly: { ...base, example: "", recordLast, recordFuture: true },
+      });
+      expect(out, `ボタン名が書き写し（${String(recordLast)} の形）`).toContain(label);
+    }
   });
 
   it("描画側が、名簿の話を案内に渡している（渡し忘れで案内が黙らない）", () => {
     const app = siteRuntime();
-    expect(app).toMatch(/nameOnly:\s*nameOnlyConferenceMatch\(searchQuery,\s*rows\)/);
+    expect(app).toMatch(
+      /nameOnly:\s*nameOnlyRecordInfo\(\s*nameOnlyConferenceMatch\(searchQuery,\s*rows\)/,
+    );
     // 読み込めている行を照合して「行が在るか」で判断している。
     expect(jsFunction(app, "nameOnlyConferenceMatch")).toContain("withRows");
   });
+});
+
+describe("収録の側に何が待っているかで、0 件の案内が言い分ける（第 295 回）", () => {
+  function deadlineDays(conf: Conf): string[] {
+    const out: string[] = [];
+    (conf.editions || []).forEach((raw) => {
+      const deadlines = (raw as { deadlines?: unknown[] }).deadlines || [];
+      deadlines.forEach((d) => {
+        const day = d as { local_date?: string; value?: string; utc?: string };
+        const v = day.local_date || day.value || day.utc || "";
+        if (v.slice(0, 10).length === 10) out.push(v.slice(0, 10));
+      });
+    });
+    return out;
+  }
+
+  it("申告を付けるのは、品の窓に締切が 1 本も入らない会議だけ", () => {
+    const list = marked();
+    expect(list.length, "品書が収録側の締切を申告していない").toBeGreaterThan(0);
+    const wrong = list.filter((c) => deadlineDays(c).length > 0);
+    expect(wrong, "締切の在る会議に申告が混じっている").toEqual([]);
+    // 締切の在る会議には付いていない（品書の側で既に読める – 二重に数えさせない）。
+    const unmarked = conferences().filter(
+      (c) => deadlineDays(c).length > 0 && marked().includes(c),
+    );
+    expect(unmarked, "締切の読める会議まで申告した").toEqual([]);
+  });
+
+  it("申告の形は、収録に締切が 1 本も無い（null）か暦日か", () => {
+    const list = marked();
+    const bad = list.filter(
+      (c) =>
+        c.record_deadline_last !== null &&
+        !/^\d{4}-\d{2}-\d{2}$/.test(String(c.record_deadline_last)),
+    );
+    expect(bad, "読み方の分からない申告が混じっている").toEqual([]);
+    const nulls = list.filter((c) => c.record_deadline_last === null);
+    expect(nulls.length, "収録に締切の無い会が 1 件も申告されていない").toBeGreaterThan(0);
+    expect(nulls[0]?.key, "締切ゼロの例が特定できない").toBeTruthy();
+  });
+
+  it("収録に締切が 1 本も無い会は、読んでも増えないと言う", () => {
+    const out = noteFor(example().name, { recordLast: null, recordFuture: false });
+    expect(out, "収録に締切が無いと言っていない").toContain("締切を 1 本も持っていません");
+    expect(out, "空振りを送っている").toContain("押しても 1 件も増えません");
+    expect(out, "出る約束をした").not.toContain("載せられます");
+    expect(out, "日付を作った").not.toMatch(/その会には \d{4}-\d{2}-\d{2}/);
+    // 締切が 1 本も無いのが原因なので、データの切れ目の話を混ぜない。
+    expect(out, "原因をデータの切れ目にした").not.toContain("一覧に出せる締切は");
+    expect(out, "ボタン名が書き写し").toContain(fullRecordButton());
+  });
+
+  it("収録にこれからの締切が在る会は、その日を言って読み込むへ送る", () => {
+    const out = noteFor(example().name, { recordLast: "2028-03-30", recordFuture: true });
+    expect(out, "収録の締切日を言っていない").toContain("2028-03-30");
+    expect(out, "読み込めば出ると言っていない").toContain("その締切も一覧に載せられます");
+    expect(out, "切れ目の日数が無い").toContain("2027-02-04");
+    expect(out, "過ぎた締切と言った").not.toContain("過ぎた締切");
+    expect(out, "ボタン名が書き写し").toContain(fullRecordButton());
+    // 収録の側の日と、一覧に出せる日を、それぞれ別々に言わせている。
+    expect(out, "収録の側の日の言い方が違う").toContain("2028-03-30 の締切が収録に在ります");
+    expect(out, "一覧に出せる日の言い方が違う").toContain("一覧に出せる締切は 2027-02-04 まで");
+  });
+
+  it("収録にあるのが過ぎた締切だけの会は、過去の表示も一緒に勧める", () => {
+    const out = noteFor(example().name, { recordLast: "2026-06-27", recordFuture: false });
+    expect(out, "過ぎた締切と言っていない").toContain("過ぎた締切（2026-06-27）だけ");
+    // 「過去の締切も表示」は他の案内も言うので、この案内自身の文であることを確かめる。
+    expect(out, "過去の表示を送っていない").toContain("「過去の締切も表示」もいっしょにオン");
+    expect(out, "これからの締切と言った").not.toContain("載せられます");
+  });
+
+  it("例を 1 件に絞れない会議では、収録側の話をしない", () => {
+    const many = nameOnly("international");
+    expect((many?.count || 0) > 1, "1 件に絞れる語になってしまった").toBe(true);
+    expect(many?.recordLast, "曖昧な会議に収録側の話を添えた").toBe("");
+    const out = hintFor("international", { nameOnly: many || undefined });
+    expect(out, "曖昧な会議に締切日を教えた").not.toMatch(/その会には \d{4}-\d{2}-\d{2}/);
+    expect(out, "曖昧な会議に空振りを読ませた").not.toContain("載せられます");
+  });
+
+  it("収録側の締切がこれからか過ぎたかは、行と同じ暦日の基準で見る", () => {
+    const fn = jsFunction(siteRuntime(), "nameOnlyRecordInfo");
+    const run = new Function(
+      "Recommender",
+      `${fn}; return (found, now) => nameOnlyRecordInfo(found, now);`,
+    )({
+      // 画面の行と同じ `jstNoonMs`（JST 正午 = UTC 03:00）を再現する。
+      jstNoonMs: (raw: unknown, fallback: number): number => {
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(raw ?? "").trim());
+        if (!m) return fallback;
+        return Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 3, 0, 0);
+      },
+    } as never) as (
+      found: {
+        example: string;
+        count: number;
+        terms: string[];
+        recordLast: string | null | "";
+      } | null,
+      now: number,
+    ) => { recordLast: string | null | ""; recordFuture: boolean } | null;
+    const base = { example: "NETYS", count: 1, terms: ["netys"] };
+    const now = Date.UTC(2026, 7, 9, 3, 0, 0);
+    expect(
+      run({ ...base, recordLast: "2028-03-30" }, now)?.recordFuture,
+      "来月を過ぎたと言った",
+    ).toBe(true);
+    expect(
+      run({ ...base, recordLast: "2026-06-27" }, now)?.recordFuture,
+      "過ぎた日をこれからの日と言った",
+    ).toBe(false);
+    // 当日の締切を「過ぎた」と呼ばない（人が読んだ日がその日だから）。
+    expect(
+      run({ ...base, recordLast: "2026-08-09" }, now)?.recordFuture,
+      "当日を過ぎた日にした",
+    ).toBe(true);
+    expect(
+      run({ ...base, recordLast: "2027-3-4" }, now)?.recordLast,
+      "読めない日を日付として通した",
+    ).toBe("");
+    expect(
+      run({ ...base, recordLast: null }, now)?.recordLast,
+      "締切ゼロを不明に潰した",
+    ).toBeNull();
+    expect(run(null, now), "名簿に何も無いときに数を作った").toBeNull();
+  });
+
+  it("画面の品選びが、品書の申告を読んでいる", () => {
+    const app = readFileSync(join(process.cwd(), "site/app.ts"), "utf8");
+    expect(app, "品書の申告を読まないで名簿の案内をしている").toContain(
+      "conf.record_deadline_last",
+    );
+    expect(app, "収録の側の向きを見ないで案内している").toContain("Recommender.jstNoonMs(");
+    const build = readFileSync(join(process.cwd(), "src/build.ts"), "utf8");
+    expect(build, "品書に収録側の締切日を載せていない").toContain("record_deadline_last");
+  });
+});
+
+it("品選びは、品書の申告をそのまま案内に渡している", () => {
+  // 検査が別の世界を語らないように、ビルドした品書の申告その物を読む（null と暦日の両方）。
+  const list = marked()
+    .map((c) => {
+      const name = String(c.acronym || c.title || c.key || "");
+      const found = nameOnly(name);
+      return { name, key: String(c.key || ""), declared: c.record_deadline_last, found };
+    })
+    .filter((x) => x.found?.example === x.name);
+  expect(list.length, "例に絞れる申告済みの会議が 1 件も無い").toBeGreaterThan(0);
+  for (const x of list) {
+    expect(x.found?.recordLast, `${x.key} の申告を画面が読み違えている`).toBe(
+      x.declared === undefined ? "" : x.declared,
+    );
+  }
+  const nulls = list.filter((x) => x.declared === null);
+  const dated = list.filter((x) => typeof x.declared === "string" && x.declared);
+  expect(
+    nulls.length + dated.length,
+    "null と暦日の両方を読めているか確かめられない",
+  ).toBeGreaterThan(0);
+  expect(nulls.length, "締切ゼロの申告を読めている例が無い").toBeGreaterThan(0);
+});
+
+it("名簿の案内が原因を言い切った 0 件案内に、効かない条件を並べない", () => {
+  for (const over of [
+    { recordLast: null, recordFuture: false },
+    { recordLast: "2028-03-30", recordFuture: true },
+    { recordLast: "2026-06-27", recordFuture: false },
+    { recordLast: "", recordFuture: false },
+  ]) {
+    const out = noteFor(example().name, over);
+    expect(out, `効かない条件を並べた（${String(over.recordLast)} の形）`).not.toContain(
+      "外せる条件",
+    );
+    expect(out, `効かない条件を読み上げた（${String(over.recordLast)} の形）`).not.toContain(
+      "推定締切を含める」をオン",
+    );
+  }
+  // 締切が過ぎただけの会には、過去表示をオンにすると自分で言う（押し先を二重に教えない）。
+  const past = noteFor(example().name, { recordLast: "2026-06-27", recordFuture: false });
+  expect(past, "過去表示の送り先が消えた").toContain("「過去の締切も表示」もいっしょにオン");
+  // 向きを渡されない（古い描画側の形）ときは、これからだとも過ぎたのだとも教えない。
+  const blind = noteFor(example().name, { recordLast: "2028-03-30" });
+  expect(blind, "向きを数えないで過ぎた締切と言った").not.toContain("過ぎた締切");
+  expect(blind, "向きを数えないで載せられると言った").not.toContain("載せられます");
+  expect(blind, "向きが不明なときに引き直しを送っていない").toContain("同じ語を引き直します");
 });

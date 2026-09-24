@@ -92,6 +92,10 @@ interface ConferenceRecord {
   keywords?: string[];
   rank?: Record<string, string>;
   editions?: EditionRecord[];
+  /** 品の窓に締切が 1 本も入らない会議にだけ付く、収録側の一番遠い締切日（JST の暦日）。
+   * 収録に締切が 1 本も無いは `null`、日付が読めない物しかない等は `""`（画面は数を言わない）。
+   * 第 295 回 – 画面が「読み込んでも増えない」を数え直さずに言えるようにする。 */
+  record_deadline_last?: string | null;
 }
 
 interface CandidateRow {
@@ -7440,6 +7444,7 @@ const Recommender = (() => {
     officialZone: officialZone,
     isExtendedDeadline: isExtendedDeadline,
     deadlineRowIsPast: deadlineRowIsPast,
+    jstNoonMs: jstNoonMs,
     pastDeadlineTagJa: pastDeadlineTagJa,
     deadlineShiftsOf: deadlineShiftsOf,
     deadlineShiftLineJa: deadlineShiftLineJa,
