@@ -1868,6 +1868,29 @@ conferences:
     - 抜き出し関数を増やすときは、その関数が**読む定数も一緒に**注入する（`uiWordNoteJa` などを
       足したとき `COLUMN_QUERY_WORDS_JA is not defined` に化けた – `columnQueryEntry` が本体で
       読む定数を返し忘れていた。実発生）。
+    - **第 255 回に 4 ファイルへ分割した（上の「次回の候補」の完成形）**: `tests/build_golden.test.ts` が
+      **1,048,272 バイト**（上限まで 304 バイト）になり、検査を 1 本足すだけで黙って上限を越える
+      状態だった。ビルド成果物を読む検査を
+      `tests/build_golden.test.ts`（276,540 B）・`tests/built_golden_2.test.ts`（274,983 B）・
+      `tests/built_golden_3.test.ts`（272,302 B）・`tests/built_golden_4.test.ts`（208,802 B）に分け、
+      テストの合間に置かれていたトップレベルの定義（`site` `data` `siteHtmlRuntime` `conf`
+      `SEARCH_CANON` `SORT_CANON` `SORT_CANON_EVAL` `FILTER_RUNTIME_STUBS` `cssBlocks`
+      `effectiveCss` など 17 個）と `beforeAll` は `tests/built_golden_shared.ts`（18,112 B）へ
+      移して export した（**書き写さない**方針はそのまま – 元の行をそのまま動かす）。
+      - 分割は列順を変えない（最初の `it(` 以降を、0 桁に始まる構文塊の単位で、その順序のまま
+        約 275 KB ごとに切る）。どの行もどれかの塊に属していることを分割スクリプト自身の検査で
+        確かめた – 終端の行の形（`}` `};` `});` `];` `].join(…);` `})();`）を 1 つ読み忘れると、
+        その定義が**黙って消える**（実際に `FILTER_RUNTIME_STUBS` が消えた – 網羅検査で止めた）。
+      - 各ファイルへ全 import をコピーすると未使用の import が 29 本残って警告が増えた
+        （35 件 → 64 件）。 biome の `noUnusedImports` で落として **32 件**（参考 62 件 → 5 件 –
+        未整列の import が片付いた分）。検査の本数は分割の前後で **2,027 件のまま**（ビルド成果物の
+        検査は 351 件が 4 ファイルに散っただけ）。
+      - 再び 1 ファイルに育つのを止めるため、`tests/lint_budget.test.ts` に作業上限 400 KB を足した
+        （1 MiB まで残り 304 バイト、という状態は「越えたら分かる」では守れない – 越えた日は
+        何も出ない）。改ざんで落ちることを実測: 検査ファイルを 1 本 400 KB 超に膨らませると
+        「検査ファイルが大きすぎる（新しい検査ファイルに分け、共通の部品は
+        tests/built_golden_shared.ts へ移す – 書き写すと正本とズレる）」で落ちる。
+
 
   - 検査を 2 本追加（2,005 件 / 32 ファイル）。改ざんで落ちることを 4 通り実測:
     - 折込みの適用を消す / 違う漢字に折る（`〆` → `抱`）/ 折込みの表を空にする

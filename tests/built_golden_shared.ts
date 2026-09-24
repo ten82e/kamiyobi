@@ -1,0 +1,376 @@
+/**
+ * ビルド成果物を読む検査たちで共有する部品（SPEC §8）。
+ *
+ * ビルド後の画面・検索の検査は 1 ファイルに置ける量に上限がある（1 MiB を越えると biome が
+ * 黙ってそのファイルを追わなくなる – tests/lint_budget.test.ts）。検査本体を複数のファイルに
+ * 分けたので、そこで共有する読み込みの部品をここに移した（書き写すと正本とズレる – 同じ約束）。
+ */
+
+import { mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { beforeAll, expect } from "vitest";
+import { runCli } from "./helpers.ts";
+import { jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
+
+export let site: string;
+
+export let data: Record<string, any>;
+
+/* 検証状態の語彙を built の recommender から取り出して注入する行。画面の関数は
+ * recommender の正本から作った module 直下の定数を見るので、ビルド成果物から抜き出した
+ * 関数を動かす検査も同じ語彙で支える（語を書き写さない – 上の等級順と同じやり方）。 */
+export function verificationLabelsSource(): string {
+  const rec = siteRuntime("recommender.js");
+  const table = rec.match(/const VERIFICATION_STATUS_LABELS_JA = \{[\s\S]*?\};/u)?.[0];
+  expect(table, "recommender の検証状態の語彙表が見つからない").toBeTruthy();
+  return `const VERIFICATION_STATUS_LABELS = ${String(table).replace(
+    "const VERIFICATION_STATUS_LABELS_JA = ",
+    "",
+  )}`;
+}
+
+/* 等級順の列表をビルド成果から取り出す（テスト側に書き写さない）。
+ * app.js の `RANK_GRADE_OPTIONS` は recommender の正本から作るので、
+ * ハーネスへ入れるときは recommender 側の定義をそのまま使う。 */
+export function rankGradeOptionsSource(): string {
+  const rec = siteRuntime("recommender.js");
+  const order = rec.match(/const RANK_GRADE_ORDER_JA = \[[^\]]*\];/)?.[0];
+  expect(order, "recommender の等級順（RANK_GRADE_ORDER_JA）が見つからない").toBeTruthy();
+  return `${String(order).replace("const RANK_GRADE_ORDER_JA", "const RANK_GRADE_OPTIONS")};`;
+}
+
+export function siteHtmlRuntime(): string {
+  return `${readFileSync(join(site, "index.html"), "utf8")}\n${siteRuntime()}`;
+}
+
+beforeAll(() => {
+  const outdir = join(mkdtempSync(join(tmpdir(), "cfp-site-")), "public");
+  // 埋め込み生成は 2 モデル（英語+多言語）で数秒かかるため、このテスト群ではスキップ
+  const run = runCli(outdir, { extra: ["--no-embeddings"] });
+  expect(
+    run.status,
+    `cli build failed\n--- stdout ---\n${run.stdout}\n--- stderr ---\n${run.stderr}`,
+  ).toBe(0);
+  site = outdir;
+  data = JSON.parse(readFileSync(join(site, "data.json"), "utf8"));
+}, 300_000);
+
+export function conf(key: string): any {
+  const matches = data.conferences.filter((c: any) => c.key === key);
+  expect(matches.length).toBeGreaterThan(0);
+  return matches[0];
+}
+
+// --- upcoming.md carries meetings too (SPEC.md 4) --------------------------
+
+export function upcomingRows(dir: string): string[][] {
+  const text = readFileSync(join(dir, "upcoming.md"), "utf8");
+  const rows: string[][] = [];
+  for (const line of text.split("\n")) {
+    if (!line.startsWith("|") || new Set(line).isSubsetOf(new Set("|- "))) continue;
+    rows.push(
+      line
+        .slice(1, -1)
+        .split("|")
+        .map((c) => c.trim()),
+    );
+  }
+  return rows.slice(1);
+}
+
+// --- the site's meeting rows run to the end of the meeting (SPEC.md 7) -----
+
+/* `onKeydown` を抜き出して叩く検査は、第 135 回で増えたキーの振り分け関数も一緒に渡す
+ * （抜き出した関数は独立していないと `ReferenceError` になる – 同じ穴に二度落ちないため、
+ * 生の抜き出しではなくこの helper を使う）。 */
+export function keydownWithBlockers(src: string): string {
+  // 第 152 回: `j` は選択が行の描画範囲を越えないか確認するので、抜き出した関数に
+  // その関数も必要（独立していないと `ReferenceError` – 同じ helper の趣旨と同じ）。
+  return `const ensureRowsDrawn = () => {};\n${jsFunction(src, "keyBlockedByTarget")}\n${jsFunction(src, "onKeydown")}`;
+}
+
+export const SEARCH_CANON = (() => {
+  // 検索照合の規則は recommender.js の正本をそのまま注入する（書き写すと正本とズレるため、
+  // スタブでの再現は避ける）。
+  const rec = siteRuntime("recommender.js");
+  const consts = [
+    ["SMALL_KANA_JA", /const SMALL_KANA_JA[\s\S]*?\};/],
+    // `searchNormalize` がアクセントを折るための表（正本から注入し、写しは作らない）。
+    // 他の定数の定義中に `searchNormalize` が呼ばれるので、必ず先に置く。
+    ["DIACRITIC_FOLD_JA", /const DIACRITIC_FOLD_JA[\s\S]*?\};/],
+    ["DIACRITIC_FOLD_CHARS", /const DIACRITIC_FOLD_CHARS = [^\n]*;/],
+    ["LATIN_DIACRITIC_CHARS", /const LATIN_DIACRITIC_CHARS = [^\n]*;/],
+    ["COMBINING_MARKS", /const COMBINING_MARKS = [^\n]*;/],
+    // 漢字の略字を折る表（第 241 回）。同じく `searchNormalize` が読むので先に置く。
+    ["KANJI_VARIANT_FOLD_JA", /const KANJI_VARIANT_FOLD_JA[\s\S]*?\};/],
+    ["KANJI_VARIANT_FOLD_CHARS", /const KANJI_VARIANT_FOLD_CHARS = [^\n]*;/],
+    /* 分野チップの語（`システム（Systems, Architecture and Storage）`）を打ち手で寄せる
+     * ための定義。`queryTokenGroups` が読むので、抜き出した関数と一緒に注入する
+     * （定義順: 表 → 見出し → 正規表現）。 */
+    ["CATEGORY_LABELS_JA", /const CATEGORY_LABELS_JA[\s\S]*?\};/],
+    ["CATEGORY_CHIP_HEADS_JA", /const CATEGORY_CHIP_HEADS_JA[\s\S]*?\)\);/],
+    ["CATEGORY_CHIP_TAIL", /const CATEGORY_CHIP_TAIL = new RegExp\([\s\S]*?\);/],
+    ["PLACE_QUERY_ALIASES_JA", /const PLACE_QUERY_ALIASES_JA[\s\S]*?\];/],
+    ["TOPIC_QUERY_ALIASES_JA", /const TOPIC_QUERY_ALIASES_JA[\s\S]*?\];/],
+    ["RELATIVE_MONTH_OFFSETS_JA", /const RELATIVE_MONTH_OFFSETS_JA[\s\S]*?\};/],
+    ["PLACE_READINGS", /const PLACE_READINGS[\s\S]*?\];/],
+    ["REGION_READINGS", /const REGION_READINGS[\s\S]*?\];/],
+    // 地域まとめ（`ヨーロッパ` → 国名）は shared の国名リスト変数に依存するので、
+    // 定義順（TDZ）を崩さないようにリストを先に、表を後に inject する。
+    ["EUROPE_JA", /const EUROPE_JA =[\s\S]*?;/],
+    ["ASIA_JA", /const ASIA_JA =[\s\S]*?;/],
+    ["US_STATES_JA", /const US_STATES_JA =[\s\S]*?;/],
+    ["US_JA", /const US_JA =[\s\S]*?;/],
+    ["NORTH_AMERICA_JA", /const NORTH_AMERICA_JA =[\s\S]*?;/],
+    ["SOUTH_AMERICA_JA", /const SOUTH_AMERICA_JA =[\s\S]*?;/],
+    ["CENTRAL_AMERICA_JA", /const CENTRAL_AMERICA_JA =[\s\S]*?;/],
+    ["OCEANIA_JA", /const OCEANIA_JA =[\s\S]*?;/],
+    ["CONTINENT_READINGS", /const CONTINENT_READINGS[\s\S]*?\];/],
+    // 地方名 → 都道府県 + 開催市（`関東` で `Tokyo, Japan` を引く）の定義。
+    ["PREFECTURE_CITIES_JA", /const PREFECTURE_CITIES_JA[\s\S]*?\];/],
+    ["CITIES_BY_PREFECTURE", /const CITIES_BY_PREFECTURE[\s\S]*?\};/],
+    ["QUERY_EDGE_PUNCTUATION", /const QUERY_EDGE_PUNCTUATION = [^\n]*;/],
+    ["COMPOUND_MIN_LENGTH_JA", /const COMPOUND_MIN_LENGTH_JA = [^\n]*;/],
+    ["ONLINE_TERMS_JA", /const ONLINE_TERMS_JA = [^\n]*;/],
+    ["ONLINE_TERMS_EN", /const ONLINE_TERMS_EN = [^\n]*;/],
+    ["ONLINE_VENUE_FALSE_POSITIVES", /const ONLINE_VENUE_FALSE_POSITIVES = [^\n]*;/],
+    ["QUERY_SYNONYMS_JA", /const QUERY_SYNONYMS_JA[\s\S]*?\];/],
+    ["ABBREV_YEAR_TOKEN", /const ABBREV_YEAR_TOKEN = [^\n]*;/],
+    // 数字だけの入力（`12/25` `2026-12`）を暦日へ解決するための定義。
+    ["DATE_WITH_YEAR_TOKEN", /const DATE_WITH_YEAR_TOKEN = [^\n]*;/],
+    ["DATE_MONTH_DAY_TOKEN", /const DATE_MONTH_DAY_TOKEN = [^\n]*;/],
+    ["DATE_YEAR_MONTH_TOKEN", /const DATE_YEAR_MONTH_TOKEN = [^\n]*;/],
+    // 英字語の語境界照合（開催地の語は語全体で当てる）が使う定義。
+    ["LATIN_TERM_TOKEN", /const LATIN_TERM_TOKEN = [^\n]*;/],
+    ["wholeWordLatinTerms", /let wholeWordLatinTerms[^\n]*;/],
+    ["RELATIVE_DAY_OFFSETS_JA", /const RELATIVE_DAY_OFFSETS_JA[\s\S]*?\};/],
+    ["RELATIVE_WEEK_OFFSETS_JA", /const RELATIVE_WEEK_OFFSETS_JA[\s\S]*?\};/],
+    /* 画面の残り欄の語（`あと 51 日`）を 1 語に寄せる表（第 223 回）。`queryTokenGroups` が
+     * 読むので、抜き出した関数と一緒に注入する（書き写すと正本とズレる）。 */
+    ["RELATIVE_DAY_PHRASES_JA", /const RELATIVE_DAY_PHRASES_JA[\s\S]*?\];/],
+    ["RELATIVE_YEAR_OFFSETS_JA", /const RELATIVE_YEAR_OFFSETS_JA[\s\S]*?\};/],
+    /* 表の全行にあてはまる語（第 245 回）。照合でのく側と注記の側が同じ列を向くので、
+     * 抜き出して注入する（書き写すと正本とズレる）。 */
+    ["WHOLE_TABLE_QUERY_JA", /const WHOLE_TABLE_QUERY_JA[\s\S]*?\];/],
+    ["QUERY_PARTICLE_SPLIT_CHARS", /const QUERY_PARTICLE_SPLIT_CHARS = [^\n]*;/],
+    /* 月の範囲（第 252 回）と季節の語（第 254 回）が使う定義。連なった定義をまとめて抜く
+     * （このファイルは biome の 1 MiB 上限に近いので 1 エントリにまとめる）。 */
+    ["MONTH_RANGE", /const MONTH_RANGE_FROM[\s\S]*?MONTH_RANGE_YEAR_PREFIX = [^\n]*;/],
+    ["SEASON", /const SEASON_YEAR_PREFIX[\s\S]*?SEASON_MONTHS_JA[\s\S]*?\};/],
+  ].map(([name, re]) => {
+    const src = rec.match(re)?.[0];
+    expect(src, `${name} 定義が見つからない`).toBeTruthy();
+    return vmSafeSource(src as string);
+  });
+  return [
+    ...consts,
+    ...[
+      "kanaFold",
+      "monthTermsJa",
+      "expandRelativeMonths",
+      /* 相対月・月の範囲・季節の展開（第 251〜254 回）。抜いた関数は独立ではないので
+       * `ReferenceError` になる。 */
+      "relativeMonthTerm",
+      "relativeMonthPairs",
+      "monthTokenToYearMonth",
+      "monthRangeTermsJa",
+      "monthSpanTerms",
+      "seasonSpanJa",
+      "seasonInsideSpan",
+      "seasonTermsJa",
+      "yearSeasonTermsJa",
+      "mergeSeasonTokens",
+      "searchNormalize",
+      // 第 153 回: URL を検索欄に貼れるようにしたので、その部品も一緒に抜く
+      // （抜いた関数は独立していないと `ReferenceError` になる）。
+      "hostFromUrl",
+      "hostLabels",
+      "linkSearchTerms",
+      "urlLikeQueryTerms",
+      "queryTokens",
+      // 助詞の分割と全行の語をのく処理は `queryTokens` / `searchMatcher` が呼ぶ（第 245 回）。
+      "splitQueryToken",
+      "withoutWholeTableGroups",
+      "querySynonymMap",
+      "abbrevYearGroups",
+      "isCalendarMonthDay",
+      "calendarDateGroups",
+      "offsetCalendarDay",
+      "weekDayTermsJa",
+      "yearMonthTermsJa",
+      // 数値の相対日（`あと 51 日` → `51日後` → 暦日）。`relativeDayGroups` と
+      // `queryTokenGroups` が呼ぶので、定義順で先に置く（第 223 回）。
+      "collapseRelativeDayPhrase",
+      "numericRelativeDay",
+      "relativeDayGroups",
+      "queryTokenGroups",
+      "compoundSplitHit",
+      "placeOffersOnline",
+      "isShortLatinTerm",
+      "foldedLetterAtWordBoundary",
+      "termEndsInDigit",
+      "placeLatinTerms",
+      "cityQueryForms",
+      "regionEntryMembers",
+      "matchFoldedGroups",
+      "searchMatcher",
+      "hayMatches",
+    ].map((name) => jsFunction(rec, name)),
+  ];
+})();
+
+/* 並び順の比較は表の実装そのものを注入する。SORT はセルに出る語（`conferenceNameCell`）で
+ * 決まるので、スタブにすると「見ていない語で並ぶ」欠けを検査できない。 */
+export const SORT_CANON = (() => {
+  const app = siteRuntime();
+  const consts = [/const SELECTABLE_KINDS = [^\n]*;/.exec(app)?.[0] || ""];
+  const fns = ["titleWithYear", "conferenceNameCell", "kindSortIndex", "compareDeadlineRows"].map(
+    (name) => jsFunction(app, name),
+  );
+  return { consts, fns, all: [...consts, ...fns] };
+})();
+
+/* 間接 eval で関数はグローバルに載るが、`const` は eval 用の宣言環境に閉じる
+ * （`globalThis.X` にならない）。eval に渡す側だけ `var` に直す（正本の値はそのまま）。 */
+export const SORT_CANON_EVAL = [
+  ...SORT_CANON.consts.map((src) => src.replace(/^const /, "var ")),
+  ...SORT_CANON.fns,
+].join("\n");
+
+export const FILTER_RUNTIME_STUBS = [
+  // 窓の上限時刻は絞り込みと 0 件時の会期案内で共有する実装（書かないと両者が違う窓で動く）。
+  jsFunction(siteRuntime(), "windowLimitMs"),
+  // 「締切まで」の上下限は絞り込み本体が共有する実装（窓の解釈を二重化しない）。
+  jsFunction(siteRuntime(), "windowFloorMs"),
+  // 窓の比較そのもの（行の表示暦日）も共有実装（第 228 回に絞り込みと画面上部の数が 1 本に
+  // 寄ったので、ハーネスもそこを注入する。書かないと `rowAfter is not defined` になる）。
+  jsFunction(siteRuntime(), "rowShownDayMs"),
+  jsFunction(siteRuntime(), "rowAfter"),
+  ...SORT_CANON.all,
+  "let semQuery = null, semEmbeddings = null;",
+  "let catFacetCounts = {};",
+  "let hiddenCounts = {",
+  "  past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0, window: 0, rank: 0, cats: 0,",
+  "};",
+  "const activeData = { conferences: [] };",
+  ...SEARCH_CANON,
+  "let searchQuery = '';",
+  "const Recommender = { searchNormalize: searchNormalize, queryTokens: queryTokens, kanaFold: kanaFold, queryTokenGroups: queryTokenGroups, searchMatcher: searchMatcher, matchFoldedGroups: matchFoldedGroups, placeOffersOnline: placeOffersOnline, monthTermsJa: monthTermsJa, expandRelativeMonths: expandRelativeMonths, hayMatches: hayMatches, parsePaperLines: (text) => text ? [{ title: text }] : [], hasJapanese: () => false, contentWordCount: () => 0, autoDetectCats: () => [], venueCategories: () => [], unmatchedVenues: () => [], journalRows: () => [], pastRepresentatives: () => [], rankMatches: (pairs, rank) => pairs.includes(rank), venueRecommendations: (rows) => rows.map((row) => ({ row, boosted: false, match: null, availability: null, fit: { score: 10, lexicalScore: 10, label: '', lexicalRank: 0, semanticRank: 0, semanticScore: 0 } })), comparePapers: () => 0 };",
+].join("\n");
+
+/** ビルド後の CSS をルール単位に割る（ネストは @media のみ）。
+ * コメントは前置されるとセレクタや @media の判定を壊すので、先に落とす。 */
+export function cssBlocks(
+  css: string,
+  media = "",
+): Array<{ media: string; selector: string; body: string }> {
+  const source = media === "" ? css.replace(/\/\*[\s\S]*?\*\//g, "") : css;
+  const out: Array<{ media: string; selector: string; body: string }> = [];
+  let i = 0;
+  while (i < source.length) {
+    const open = source.indexOf("{", i);
+    if (open < 0) break;
+    const prelude = source.slice(i, open).trim();
+    const closeBrace = (from: number): number => {
+      let depth = 1;
+      let j = from;
+      while (j < source.length && depth > 0) {
+        if (source[j] === "{") depth += 1;
+        else if (source[j] === "}") depth -= 1;
+        j += 1;
+      }
+      return j - 1;
+    };
+    if (/^@(media|supports)/.test(prelude)) {
+      const end = closeBrace(open + 1);
+      const cond = prelude.replace(/^@(media|supports)\s*/, "");
+      for (const rule of cssBlocks(source.slice(open + 1, end), cond)) out.push(rule);
+      i = end + 1;
+      continue;
+    }
+    if (prelude.startsWith("@")) {
+      i = closeBrace(open + 1) + 1;
+      continue;
+    }
+    const end = source.indexOf("}", open);
+    if (end < 0) break;
+    for (const sel of prelude
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)) {
+      out.push({ media, selector: sel, body: source.slice(open + 1, end) });
+    }
+    i = end + 1;
+  }
+  return out;
+}
+
+export function cssMediaApplies(media: string, width: number): boolean {
+  if (!media) return true;
+  if (/\bprint\b/.test(media)) return false;
+  const max = media.match(/max-width:\s*(\d+)px/);
+  if (max && width > Number(max[1])) return false;
+  const min = media.match(/min-width:\s*(\d+)px/);
+  if (min && width < Number(min[1])) return false;
+  return true;
+}
+
+/** 同じセレクタに後から書かれた宣言が勝つ、という単一の規則で解決する。 */
+export function effectiveCss(
+  css: string,
+  selector: string,
+  property: string,
+  width: number,
+): string | null {
+  let value: string | null = null;
+  for (const block of cssBlocks(css)) {
+    if (block.selector !== selector) continue;
+    if (!cssMediaApplies(block.media, width)) continue;
+    const hit = block.body.match(new RegExp(`(?:^|;)\\s*${property}\\s*:\\s*([^;]+)`));
+    if (hit) value = (hit[1] as string).trim();
+  }
+  return value;
+}
+
+/** 文字列リテラルだけを拾う（ビルド後はコメントが残るため、正規表現では混ざる）。 */
+export function japaneseStringLiterals(src: string): string[] {
+  const out: string[] = [];
+  let i = 0;
+  while (i < src.length) {
+    const c = src[i];
+    if (c === "/" && src[i + 1] === "/") {
+      const nl = src.indexOf("\n", i);
+      if (nl < 0) break;
+      i = nl + 1;
+      continue;
+    }
+    if (c === "/" && src[i + 1] === "*") {
+      const close = src.indexOf("*/", i + 2);
+      if (close < 0) break;
+      i = close + 2;
+      continue;
+    }
+    if (c === '"' || c === "'" || c === "`") {
+      let j = i + 1;
+      let buf = "";
+      while (j < src.length) {
+        const d = src[j];
+        if (d === "\\") {
+          buf += src[j + 1] ?? "";
+          j += 2;
+          continue;
+        }
+        if (d === c) break;
+        if (d === "\n" && c !== "`") break;
+        buf += d;
+        j += 1;
+      }
+      if (/[\u3040-\u30ff\u4e00-\u9fff]/.test(buf)) out.push(buf);
+      i = j + 1;
+      continue;
+    }
+    i += 1;
+  }
+  return out;
+}
