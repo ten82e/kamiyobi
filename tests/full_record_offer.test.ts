@@ -121,17 +121,36 @@ describe("品書の果てを伝える（第 290 回）", () => {
 
   it("注記の語が、一番遠い締切日・切れ方の理由・カレンダーの末尾を言う", () => {
     const app = siteRuntime("app.js");
+    /* 日の数は品書（`catalog.json` の `window.upcoming_days`）から読む。画面が 180 と
+     * 書き写していた昔の形に戻らない見張り（第 293 回）。 */
+    const days = (
+      JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as {
+        window?: { upcoming_days?: number };
+      }
+    ).window?.upcoming_days;
+    expect(days, "品書に品の窓の申告が無い").toBeTypeOf("number");
     const out = runInNode(
       [
+        `const countJa = ${jsFunction(app, "countJa")};`,
         `const fullRecordNoteJa = ${jsFunction(app, "fullRecordNoteJa")};`,
-        'console.log(fullRecordNoteJa("2027-02-04", "2028-03-30"));',
+        `console.log(fullRecordNoteJa("2027-02-04", "2028-03-30", ${days ?? 0}));`,
       ].join("\n"),
     );
     expect(out).toContain("2027-02-04");
-    expect(out).toContain("180 日");
+    expect(out, "品書の申告した日数が出ていない").toContain(`${days} 日`);
     expect(out).toContain("収録の全体を読み込む");
     expect(out).toContain("2028-03-30");
     expect(out).toContain("カレンダー");
+    // 品の窓の日数を知らない品書では、数を作らない（第 293 回）。
+    const noDays = runInNode(
+      [
+        `const countJa = ${jsFunction(app, "countJa")};`,
+        `const fullRecordNoteJa = ${jsFunction(app, "fullRecordNoteJa")};`,
+        'console.log(fullRecordNoteJa("2027-02-04", "2028-03-30", 0));',
+      ].join("\n"),
+    );
+    expect(noDays).toContain("収録の全体を読み込む");
+    expect(noDays, "日数をでっち上げた").not.toMatch(/生成から [0-9]+ 日/);
     // 品書の果てが読めないときに空の文を作らないこと（語組み立ては呼び出し側で分岐する）。
     const empty = runInNode(
       [

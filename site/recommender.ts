@@ -2550,6 +2550,49 @@ const Recommender = (() => {
     return `${parts[1]}-${parts[2].padStart(2, "0")}-${parts[3].padStart(2, "0")}`;
   }
 
+  /* 検索語に書かれた日付の幅を、ISO の暦日として返す（第 293 回）。解釈するのは一覧の検索が
+   * 実際に持つ形だけ – `monthTermsJa`（`2027年3月`）・`dayTermsJa`（`2027年3月10日`）・
+   * `isoDayJa`（`2027-03-10`）が hay に入れる語と同じ物にする（画面で引ける形以外を解釈すると、
+   * 案内が「引けるはずの語が引けない」話を始める）。
+   * 年を言わない `3月10日` は年を作る推測になるので返さない（締切の推測はしない – AGENTS.md）。
+   * 幅で返すのは「その月だけ」が収録の切れ目にかかる場合（`2027年2月` など）に、先とは
+   * 言わせないと噓になるため。 */
+  function queryDaySpanJa(query: unknown): { first: string; last: string; label: string } | null {
+    const text = String(query ?? "");
+    if (!text) return null;
+    const re = /(\d{4})年(\d{1,2})月(?:(\d{1,2})日)?|(\d{4})-(\d{1,2})(?:-(\d{1,2}))?/g;
+    const pad = (n: number): string => (n < 10 ? `0${n}` : String(n));
+    let first = "";
+    let last = "";
+    let label = "";
+    let m: RegExpExecArray | null = re.exec(text);
+    while (m) {
+      const at = m.index;
+      const before = at > 0 ? text.charAt(at - 1) : "";
+      const after = text.charAt(at + m[0].length);
+      /* 数字に貼り付いた一部分（品番・URL の末尾など）を日付として読まない。 */
+      const glued = /[0-9]/.test(before) || (/[0-9-]/.test(after) && m[0].includes("-"));
+      const year = Number.parseInt(m[1] || m[4] || "", 10);
+      const month = Number.parseInt(m[2] || m[5] || "", 10);
+      const dayText = m[3] || m[6] || "";
+      if (!glued && year >= 1900 && year <= 2999 && month >= 1 && month <= 12) {
+        // 月の末日は暦から求める（2 月 31 日を「その月の末尾」にしない）。
+        const monthEnd = new Date(Date.UTC(year, month, 0)).getUTCDate();
+        const day = dayText ? Number.parseInt(dayText, 10) : 0;
+        if (!dayText || (day >= 1 && day <= monthEnd)) {
+          const lo = day ? `${year}-${pad(month)}-${pad(day)}` : `${year}-${pad(month)}-01`;
+          const hi = day ? lo : `${year}-${pad(month)}-${pad(monthEnd)}`;
+          if (!first || lo < first) first = lo;
+          if (!last || hi > last) last = hi;
+          if (!label) label = m[0];
+        }
+      }
+      re.lastIndex = at + 1;
+      m = re.exec(text);
+    }
+    return first && last && label ? { first, last, label } : null;
+  }
+
   function categoryLabelJa(key: unknown): string {
     const k = typeof key === "string" ? key : "";
     return CATEGORY_LABELS_JA[k] || k;
@@ -7419,6 +7462,7 @@ const Recommender = (() => {
     dayRangeDaysJa: dayRangeDaysJa,
     dayRangeWindowJa: dayRangeWindowJa,
     dayRangeNoteJa: dayRangeNoteJa,
+    queryDaySpanJa: queryDaySpanJa,
     dayRangeLiveNoteJa: dayRangeLiveNoteJa,
     uiWordLiveNoteJa: uiWordLiveNoteJa,
     wholeTableQueryWordJa: wholeTableQueryWordJa,

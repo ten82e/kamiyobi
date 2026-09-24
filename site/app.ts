@@ -90,9 +90,17 @@ interface CalendarSpan {
   last_day: string;
 }
 
+/* 品書が「何日先までを一覧に出すために切ったか」を宣言する欄（`catalog.json` の `window`）。
+ * 画面が日数を書き写すと、設定を変えたビルドで嘘を言い続ける（第 293 回）。 */
+interface CatalogWindow {
+  lookback_days: number;
+  upcoming_days: number;
+}
+
 interface Catalog {
   generated_at?: string;
   calendar?: CalendarSpan;
+  window?: CatalogWindow;
   sources: SourceRecord[];
   categories: Record<string, string>;
   conferences: ConferenceRecord[];
@@ -280,6 +288,19 @@ function calendarSpan(value: unknown): CalendarSpan | undefined {
   return { event_count: count, first_day: first, last_day: last };
 }
 
+/* 品の窓の申告を受け取る。正の整数で無い物は無し扱いにする（無いときは画面が日数を
+ * 言い出さない – 「0 日」と「知らない」を混ぜない）。 */
+function catalogWindow(value: unknown): CatalogWindow | undefined {
+  if (!isRecord(value)) return undefined;
+  const back = value.lookback_days;
+  const ahead = value.upcoming_days;
+  if (typeof ahead !== "number" || !Number.isFinite(ahead) || ahead < 1) return undefined;
+  return {
+    lookback_days: typeof back === "number" && Number.isFinite(back) && back >= 0 ? back : 0,
+    upcoming_days: Math.floor(ahead),
+  };
+}
+
 function catalogFrom(value: unknown): Catalog | null {
   if (!isRecord(value) || !Array.isArray(value.conferences)) return null;
   const conferences = value.conferences.filter(isConferenceRecord);
@@ -299,6 +320,7 @@ function catalogFrom(value: unknown): Catalog | null {
     conferences,
     history_ref: typeof value.history_ref === "string" ? value.history_ref : undefined,
     calendar: calendarSpan(value.calendar),
+    window: catalogWindow(value.window),
     reranker: isRecord(value.reranker) ? value.reranker : undefined,
   };
 }
@@ -2558,10 +2580,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return `${jst.getUTCFullYear()}-${month}-${day}`;
   }
 
-  function fullRecordNoteJa(lastDay: string, calendarLastDay: string): string {
+  function fullRecordNoteJa(lastDay: string, calendarLastDay: string, horizonDays: number): string {
     return (
-      `この一覧に出る一番遠い締切は ${lastDay} です。速く開くためのデータが生成から 180 日先で` +
-      "切れているためで、収録その物にはこれより先の締切もあります。先まで見るにはこの欄の" +
+      `この一覧に出る一番遠い締切は ${lastDay} です。` +
+      (horizonDays
+        ? `速く開くためのデータが生成から ${countJa(horizonDays)} 日先で切れているためで、`
+        : "速く開くためのデータが生成からの期限で切れているためで、") +
+      "収録その物にはこれより先の締切もあります。先まで見るにはこの欄の" +
       "「収録の全体を読み込む」を押してください（一覧より大きめのデータを読みます）。" +
       (calendarLastDay ? `カレンダー（.ics）には ${calendarLastDay} まで入っています。` : "")
     );
@@ -2684,6 +2709,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     shorterHits?: Array<{ word: string; count: number; how: string; pair?: string }>;
     urlQuery: boolean;
     catalogConferences: number;
+    // 打った日付と、いま読み込んでいるデータの果て（第 293 回）。
+    queryDaySpan?: { first: string; last: string; label: string } | null;
+    loadedLastDay?: string;
+    recordLastDay?: string;
+    horizonDays?: number;
   }): string {
     /* 収録データその物が無いとき（データが差し込まれていない HTML を開いた、組み込みの
      * データを拡張機能が止めた等）は、条件の話をする前にそれを伝える
@@ -2758,6 +2788,30 @@ function semanticOutput(value: unknown): value is SemanticOutput {
        収録に無い語でもない – 締切日からの日数で絞る「締切まで」の選択欄が同じ話をする欄なので、
        そこへ送る。「語を外すと増えます」を同時に立てないため、下の条件にも入れる。 */
     const dayRangeNote = matchedRows === 0 ? Recommender.dayRangeNoteJa(trimmedQuery) : "";
+    /* 打った日付が、いま読み込んでいるデータの果てより先（第 293 回）。「締切まで」の窓も
+       狭いときは、そっちも外す価値があるので、この場合だけ他の案内に重ねる（窓を広げずに
+       全体を読み込んでも増えないので、原因を一つに絞れない）。 */
+    let horizonNote = "";
+    if (matchedRows === 0) {
+      const span = filter.queryDaySpan;
+      const horizonDay = filter.loadedLastDay || "";
+      // URL を貼った人を日付の話に引きずり込まない（語の分解と同じ判断 – 第 236 回）。
+      if (span?.first && !filter.urlQuery && horizonDay && span.first > horizonDay) {
+        const recordLast = filter.recordLastDay || "";
+        horizonNote =
+          recordLast && span.first > recordLast
+            ? // 収録その物より先。在るかどうかを kamiyobi が知らないので、無いとは言い切らない。
+              ` 打った日付「${span.label}」は、収録している中で一番遠い締切 ${recordLast} より先です。` +
+              "その日付に締切が在るかどうかも、まだ確認できていません。"
+            : ` 打った日付「${span.label}」は、いま読み込んでいるデータ（${horizonDay} まで）より先です。` +
+              (filter.horizonDays
+                ? `速く開くためのデータが生成から ${countJa(filter.horizonDays)} 日先で切れているためで、`
+                : "速く開くためのデータが生成から一定の日数先で切れているためで、") +
+              "この欄の「収録の全体を読み込む」を押すと、一覧がその先も探します" +
+              (recordLast ? `（収録の中で一番遠い締切は ${recordLast} です）。` : "。");
+      }
+    }
+    const horizonOnly = Boolean(horizonNote) && (!filter.window || filter.window === "all");
     // URL の検索語を語に分解して「〜は収録データにも見当たりません」と言うのは誤解になる
     // （分解された語はドメインの一部で、検索の失敗理由ではない）。
     const terms =
@@ -2792,7 +2846,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         dayRangeNote ||
         catalogNote ||
         deadTerms.length ||
-        urlNote,
+        urlNote ||
+        horizonOnly,
     );
 
     /* 0 件案内はこれまで「外せる条件」の名前だけを並べていた。同じ画面上の件数欄は
@@ -2862,7 +2917,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         );
       }
     });
-    if (trimmedQuery && !specific && !columnNote && !uiNote && !dayRangeNote) {
+    if (trimmedQuery && !specific && !columnNote && !uiNote && !dayRangeNote && !horizonNote) {
       if (altTips.length) {
         altTips.forEach((t) => {
           tips.push(t);
@@ -2875,11 +2930,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.html に載せています。";
     if (specific) {
       return tips.length
-        ? `${base}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${catalogNote}${urlNote}${termNote} 外せる条件: ${tips.join(" / ")}。`
-        : `${base}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${catalogNote}${urlNote}${termNote}`;
+        ? `${base}${horizonNote}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${catalogNote}${urlNote}${termNote} 外せる条件: ${tips.join(" / ")}。`
+        : `${base}${horizonNote}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${catalogNote}${urlNote}${termNote}`;
     }
-    if (!tips.length) return `${base}${termNote} ${meetingNote}`;
-    return `${base}${termNote} 多いのは ${tips.join(" / ")}。${meetingNote}`;
+    if (!tips.length) return `${base}${horizonNote}${termNote} ${meetingNote}`;
+    return `${base}${horizonNote}${termNote} 多いのは ${tips.join(" / ")}。${meetingNote}`;
   }
 
   /**
@@ -4254,6 +4309,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             shorterHits: shorterWordNotes(searchQuery),
             // データその物が無い場合と、絞り込みで 0 件の場合を区別する材料。
             catalogConferences: DATA.conferences.length,
+            // 打った日付がいま読み込んだデータの果てより先か（第 293 回）。`rows` は絞り込み
+            // 前の行なので、一覧に出せるデータの範囲が出る（0 件で空になった行数ではない）。
+            // 日付の幅は、一覧の検索と同じ入口で検索語から取る（第 293 回 – 案内が自分で
+            // 呼ばないのは、この関数の検査ハーネスが `Recommender` の一部分しか持たないため）。
+            queryDaySpan: Recommender.queryDaySpanJa(searchQuery),
+            loadedLastDay: farthestRowDayJa(rows),
+            recordLastDay: DATA.calendar ? DATA.calendar.last_day : "",
+            horizonDays: DATA.window ? DATA.window.upcoming_days : 0,
           }
         : null;
     if (zeroFilter)
@@ -4291,7 +4354,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (showFullRecordOffer) {
       const lastDay = farthestRowDayJa(rows);
       const calendarLastDay = DATA.calendar ? DATA.calendar.last_day : "";
-      $("fullRecordText").textContent = lastDay ? fullRecordNoteJa(lastDay, calendarLastDay) : "";
+      $("fullRecordText").textContent = lastDay
+        ? fullRecordNoteJa(lastDay, calendarLastDay, DATA.window ? DATA.window.upcoming_days : 0)
+        : "";
       fullRecordOffer.hidden = !lastDay;
     }
     if (showHistoryStatus) {
