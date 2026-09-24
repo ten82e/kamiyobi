@@ -118,7 +118,13 @@ describe("持ち出し・購読の語を打った人", () => {
         (row) => !new RegExp(`(^|[^a-z0-9])${語}([^a-z0-9]|$)`).test(String(row.hay).toLowerCase()),
       ).length;
       expect(貼り付き, `"${語}": 貼り付きの当たりが消えた（§7 の記述を見直す）`).toBeGreaterThan(0);
-      expect(Recommender.uiWordNoteJa(語), `"${語}" に案内を立てた（当たりが行に有る）`).toBe("");
+      /* `ics` は第 323 回で「当たりが行に在る語」のまま件数欄に出す案内を付けた
+       * （0 件案内の入口ではない – `tests/ics_query_note.test.ts`）。ここでは
+       * 持ち出し・購読の語の組に入れていないことだけ見る。 */
+      expect(
+        Recommender.uiWordNoteJa(語).includes("一覧の下の操作"),
+        `"${語}" を語の組に寄せた`,
+      ).toBe(false);
     });
     /* `excel` は収録の 1 行（ICRA 2023 の文中の語）に本当に当たる – 語としての検索が優先で、
      * 案内に奪わない。案内の語表に入れていないことをここで見る（入れても 1 行の人が

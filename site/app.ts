@@ -4528,6 +4528,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         // 「明日」「今週」を暦日へ解決したことも同じ欄に寄せる（相対月と同じ方針で、
         // 黙って条件が変わったように見せない）。
         Recommender.relativeDayNotes(searchQuery, Date.now()),
+        /* 打った語に行が当たるかに関わらず言う案内（`ics` – この画面が配るファイルの名前でも
+         * あり、会議名の語の途中でもある。当たりが行に有るので 0 件案内は立たない – 第 323 回）。
+         * 一覧が 0 件のときは 0 件案内が同じことを言うので、ここでは出さない。 */
+        shown.length
+          ? [Recommender.uiWordAlwaysNoteJa(searchQuery)].filter((note) => note !== "")
+          : [],
       );
       if (synonymNotes.length) {
         cnt += ` ｜ ${synonymNotes.join("・")}`;

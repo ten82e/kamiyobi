@@ -2255,6 +2255,9 @@ const Recommender = (() => {
     quiet?: string[];
     noteQuiet?: string;
     liveQuiet?: string;
+    /* 立てた語に行が当たるかに関わらず件数欄に出す（第 323 回 – 当たりが行に有る語は
+     * 0 件案内では届かない）。 */
+    always?: boolean;
   }> = [
     {
       words: ["使い方", "ヘルプ", "てびき", "つかいかた", "みかた", "確定"],
@@ -2293,6 +2296,18 @@ const Recommender = (() => {
       echo: true,
       note: "は参加形式の言い方ですが、この表は参加形式の印として『オンライン参加可』だけを出していて、対面かどうかは収録していません。オンラインで参加できる行は『オンライン参加可』で探せます。",
       live: "参加形式は『オンライン参加可』の印だけです。対面は収録していません",
+    },
+    {
+      /* `ics` はこの画面が配るファイルの名前でもあり、会議名の一部分でもある（第 323 回）。
+       * 実測（2026-08-09 生成ビルドの品書 872 行）: `ics` は 14 行に当たり、**10 行は会議名の
+       * 語の途中に貼り付いた物**（"ICSOC" `@icsa2027`）、`ical` は 2 行で同じ形。
+       * 当たりが行に有るので 0 件案内は立たない – 探している人が多くを受ける側に
+       * 件数欄（`always`）で言う。照合の貼り付き自体は別の手当（§7 同回に理由を書く）。 */
+      words: ["ics", "ical"],
+      echo: true,
+      always: true,
+      note: "のことなら、二つの物があり得ます – 表がその語で書いている行と、会議名の中に語の途中として含まれる行が混じります（表の語として当たっているわけではありません）。会議名をお探しならそのまま引けます。カレンダーに入れるファイルをお探しなら、一覧の下の『カレンダーに追加（.ics）』か『購読 URL をコピー』を使ってください（.ics は収録全体で、画面の絞り込みは引き継がれません）",
+      live: "のことなら、会議名など語の途中で当たった行が混じります。カレンダー用のファイルは一覧の下の『カレンダーに追加（.ics）』で出せます",
     },
     {
       /* 持ち出し・購読の語を検索欄に打つ人（第 321 回）。2026-08-09 生成ビルドで実測 –
@@ -2393,6 +2408,13 @@ const Recommender = (() => {
     const word = uiWordRawJa(query);
     if (hit.quiet && hit.quiet.indexOf(word) >= 0) return ` ${hit.noteQuiet || hit.note}`;
     return ` 「${word}」${hit.note}`;
+  }
+
+  /** 当たりが行に有るかに関わらず件数欄に出す一文（`always` を置いた語 – 第 323 回）。 */
+  function uiWordAlwaysNoteJa(query: unknown): string {
+    const hit = uiWordEntry(query);
+    if (!hit?.always) return "";
+    return uiWordNoteJa(query);
   }
 
   /* 日数の範囲の言い方（`3日以内` `1週間以内` `1か月以内`）（第 253 回）。
@@ -7947,6 +7969,7 @@ const Recommender = (() => {
     columnQueryNoteJa: columnQueryNoteJa,
     columnQueryLiveNoteJa: columnQueryLiveNoteJa,
     uiWordNoteJa: uiWordNoteJa,
+    uiWordAlwaysNoteJa: uiWordAlwaysNoteJa,
     dayRangeDaysJa: dayRangeDaysJa,
     dayRangeWindowJa: dayRangeWindowJa,
     dayRangeNoteJa: dayRangeNoteJa,
