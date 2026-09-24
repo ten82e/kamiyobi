@@ -564,6 +564,19 @@ label.check input:checked + span { color: var(--fg); }
   overflow-x: auto;
   background: var(--panel);
 }
+/* 641〜879 px の幅では表が横幅を越える（下の `table { min-width: 880px }` – iPad 縦持ち、
+   画面を半分に割った窓、拡大表示）。右に続きがあるとは気づけないまま左端だけ読んでしまうのと、
+   `overflow-x: auto` の箱は既定でフォーカスされないのでキーボードで動かせなかった（WCAG 2.1.1）。
+   越えているときだけ案内の文を出し、その箱を Tab で受けられるようにする（第 265 回 – JS 側）。 */
+.scrollhint {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.tablewrap:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 table { border-collapse: collapse; width: 100%; min-width: 880px; }
 /* 狭幅ではカード化するので、デスクトップ用の最小幅をここで解除する。カード自体が 880px に
    広がり、1 行を読むのに横スワイプが要ってしまう。上の規則より**後ろ**に置くこと
@@ -807,6 +820,7 @@ footer a:hover { text-decoration: underline; }
   #drawer,
   #drawerBackdrop,
   .count-hint,
+  #tableScrollHint,
   .sortbar,
   .recommend-only,
   footer .btn-reset { display: none !important; }
@@ -1031,6 +1045,7 @@ footer a:hover { text-decoration: underline; }
   </div>
   <main id="results" tabindex="-1">
   <div class="print-meta" id="printMeta"></div>
+  <p class="scrollhint" id="tableScrollHint" hidden></p>
   <div class="tablewrap" id="deadlineTableWrap">
     <table>
       <caption class="only-sr">締切の一覧（日時は JST で出しています）</caption>

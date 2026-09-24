@@ -1331,6 +1331,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
   }
   window.addEventListener("keydown", onKeydown);
+  /* 窓の幅が変わると越え方も変わる（拡大表示・画面分割を含む）ので、そのつど揃える。 */
+  window.addEventListener("resize", syncTableScroll);
 
   /* 選択は `shown`（絞り込み後の全行）まで進められるが、表に描いてある行は `drawn` 行だけ
    * （既定は PAGE=40 行 – 2026-09-23 実測）。`j` を 40 回押すと、ハイライトとフォーカスは
@@ -3778,6 +3780,41 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     });
   }
 
+  /* 641〜879 px の幅では締切の一覧が横幅を越える（`table { min-width: 880px }` で 7 列 –
+     2026-08-09 生成ビルドの収録 687 会議で実測）。越えたことが画面に出ず、`overflow-x: auto`
+     の箱は既定でフォーカスされないためキーボードでも動かせなかった（WCAG 2.1.1 – 第 265 回）。
+     越えているときだけ、その箱を Tab で受けられるようにして、案内の文を出す。
+     640 px 以下は行がカードになるので越えない（下の `@media (max-width: 640px)`）。 */
+  const TABLE_SCROLL_LABEL_JA =
+    "締切の一覧（この表は画面の幅を越えています。ここで Tab を受けると ← → キーで横に動かせます）";
+  const TABLE_SCROLL_HINT_JA =
+    "← → で横にスクロールできます（この表は画面の幅を越えています。右に続きがあります）";
+
+  /** 表が横幅を越えているか。1 px 以下の差は丸めとして無視する（越えていないときに
+   *  「続きがある」と噓を言うほうが害が大きい）。 */
+  function tableScrollOver(scrollWidth: number, clientWidth: number): boolean {
+    return scrollWidth - clientWidth > 1;
+  }
+
+  function syncTableScroll(): void {
+    const wrap = $("deadlineTableWrap");
+    const hint = $("tableScrollHint");
+    if (!wrap || !hint) return;
+    /* 一覧そのものが隠れている状態（投稿先を探す画面・0 件）では測れない。 */
+    const over = !wrap.hidden && tableScrollOver(wrap.scrollWidth, wrap.clientWidth);
+    hint.hidden = !over;
+    hint.textContent = over ? TABLE_SCROLL_HINT_JA : "";
+    if (over) {
+      wrap.setAttribute("role", "region");
+      wrap.setAttribute("aria-label", TABLE_SCROLL_LABEL_JA);
+      wrap.setAttribute("tabindex", "0");
+    } else {
+      wrap.removeAttribute("role");
+      wrap.removeAttribute("aria-label");
+      wrap.removeAttribute("tabindex");
+    }
+  }
+
   function render() {
     // 上の四つの数もそのときの時計で数え直す（一覧と同じ目盛りを保つため）。
     renderSummaryStats();
@@ -4038,6 +4075,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       }
       drawMore();
     }
+    syncTableScroll();
     updatePresetActive();
   }
 
