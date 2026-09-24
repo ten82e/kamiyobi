@@ -33,6 +33,13 @@
 | `https://ten82e.github.io/kamiyobi/publish.json` | 公開成果物のハッシュ、`content_id` / `build_id`、元 commit、入力 hash、実行元、build 時刻・Node 版・offline/cache 方針、`semantic_status`。公開物の再現元を示す |
 
 | `https://ten82e.github.io/kamiyobi/deadlines.ics` | 締切をカレンダーに入れる 1 本（RFC 5545）。終日（JST の暦日）で 1 締切 = 1 イベント。購読先に指定すると毎日置き換わる |
+- 公開している平坦な表 [`data.csv`](https://ten82e.github.io/kamiyobi/data.csv) に、**種別を日本語で
+  書いた欄 `kind_ja` を 1 本足しました**（列は 25 本 → 26 本。順序で読む側を壊さないよう末尾に追加）。
+  以前は `kind`（`paper` などの英語のキー）と `label`（上流の自由文で、'Paper submission' と
+  'Paper Submission' が同じ物として並ぶ）だけだったので、スプレッドシートで種別から絞り込む人が
+  英語に頼っていました。語は画面・`upcoming.md`・カレンダーと同じ表から引いているので、成果物の
+  間で言い回しが割れることはありません。`llms.txt` の列辞書にも理由込みで載せ、`label` との違いを
+  書きました（行の数は収録の更新で動きます）。
 他に、1 行 1 締切の平坦な表 [`data.csv`](https://ten82e.github.io/kamiyobi/data.csv) と、直近 180 日の締切と開催の表 `upcoming.md` がある。
 `upcoming.md` の日付も公式表記どおりに書き、曜日を添える（`2026-08-17(月) 23:59 JST`）。JST 宣言の国内会議は `2026-08-17 23:59 JST`、公式が AoE のものだけ `… AoE`、
 - 静的な直近一覧 [`upcoming.html`](https://ten82e.github.io/kamiyobi/upcoming.html) は 1,000 行を超える長さがあるので、**終端にも「先頭に戻る」「締切の一覧に戻る」を置きました**（以前は先頭に 1 個だけで、最後の行まで読むと約 50 画面ぶん戻らなりませんでした）。広い画面では**列の名前がスクロール後も残ります**（横に越えない幅だけ粘着させ、越える幅では従来どおり横スクロールで続きに辿れます）。

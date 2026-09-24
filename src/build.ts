@@ -181,6 +181,13 @@ const CSV_COLUMNS = [
   "estimate_window_end",
   "sources",
   "link",
+  /* 日本語の種別。`upcoming.md` と `deadlines.ics` は最初から日本語の種別を出していたのに、
+   * この表だけ上流の英語（`paper` など）と、揺れる自由文の `label`（'Paper submission' /
+   * 'Paper Submission' / 'Paper submission deadline' が同じ物として並ぶ）に頼る形だった
+   * （2026-09-23 実測: 3,253 行のうち日本語の種別欄は 0）。画面と同じ語を**同じ正本**
+   * （`KIND_LABEL_JA`）から入れるので、言い回しは増えない。列の順序で読む下流を壊さない
+   * よう、**末尾に置く**。 */
+  "kind_ja",
 ];
 
 /* `data.csv` の列辞書。列名は `CSV_COLUMNS` から書き出し、説明だけをここに持つ（列を足したときに
@@ -227,6 +234,11 @@ const CSV_COLUMN_NOTES_JA: Record<string, string> = {
   estimate_window_end:
     "推定版の表示用の窓の終了日 'YYYY-MM-DD'。確定版の行は空欄。公式締切ではない。",
   sources: "この行を出した出典名を `;` で連結したもの（例 'aideadlines;ccfddl'）。",
+  kind_ja:
+    "種別の日本語表記。画面の「種別」と同じ語で、`kind`（英語のキー）と 1 対 1。" +
+    "例 'paper' は '論文締切'、'abstract' は '概要締切'。上流の自由文を訳した物ではなく、" +
+    "画面・マークダウン・カレンダーと同じ表から引いている。同じ年に同じ種別の締切が複数" +
+    "ある行だけは、区別のため ': ' に続けて上流のラベルを添える（画面と同じ出し方）。",
   link: "会議の公式サイトの URL。",
 };
 
@@ -253,7 +265,9 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
   "recommendation-index.json": "投稿先推薦の会議プロフィールと埋め込み参照。",
   "data.csv":
     "1 行 1 締切のフラット表。列の意味は下の「data.csv の列」に書く。文字コードは BOM を付けない" +
-    " UTF-8（画面のダウンロードボタンが書く CSV は Excel を助けるため BOM 付きで、別物）。",
+    " UTF-8（画面のダウンロードボタンが書く CSV は Excel を助けるため BOM 付きで、別物）。" +
+    "種別は英語のキー `kind` と、画面と同じ日本語の `kind_ja` を併記する（`label` は上流の" +
+    "自由文で、つづりが揺れる – 'Paper submission' と 'Paper Submission' が同じ物として並ぶ）。",
   "upcoming.md": "直近の締切と会期の表。",
   "upcoming.html":
     "`upcoming.md` と同じ表を、ブラウザでそのまま読める形にしたもの（第 263 回）。Markdown の" +
@@ -2802,6 +2816,8 @@ export function toCsv(records: DataRecord[] | null | undefined): string {
         ed.estimate?.window_end ?? "",
         conf.sources.join(";"),
         ed.link || conf.link || "",
+        // マークダウンと同じ正本（`kind_label`）を使う（種別の言い回しを 2 か所に持たない）。
+        String(rec.kind_label ?? "").trim() || KIND_LABEL_JA.other,
       ]
         .map((v) => csvField(v))
         .join(","),
@@ -3443,6 +3459,8 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "1 行 1 締切の平坦な表で、`data.json` の `conferences[].editions[].deadlines[]` を展開した物である。",
     "推定版と過去の締切もそのまま含まれる。画面や `upcoming.md` と違い、**値は機械可読のまま**にしてある。",
     "「未確認」「該当なし」などの日本語は書かない（空欄は「その値が分かっていない」を意味する）。",
+    "ただ 1 つの例外が `kind_ja` で、種別だけは英語のキー（`paper` など）だけでは",
+    "絞り込み・並べ替えに困る人がいるため、画面と同じ日本語を併記している（語の正本も画面と同じ表）。",
     `列はこの順で ${String(CSV_COLUMNS.length)} 本。`,
     "",
     ...CSV_COLUMNS.map((name) => `- ${name}：${CSV_COLUMN_NOTES_JA[name] ?? ""}`),
