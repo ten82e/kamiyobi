@@ -213,6 +213,10 @@ export const SEARCH_CANON = (() => {
       "isShortLatinTerm",
       "foldedLetterAtWordBoundary",
       "termEndsInDigit",
+      // 複数形の寄せ（第 314 回）は `queryTokenGroups` が語の組を作るときに行うので、
+      // `pluralStems` も同じ入口から注入する（照合の側へ置くと、此の一覧を知らない
+      // 抽出検査が `pluralStems is not defined` で落ちる – 第 257 回と同じ穴）。
+      "pluralStems",
       "placeLatinTerms",
       "cityQueryForms",
       "regionEntryMembers",

@@ -5416,6 +5416,25 @@ const Recommender = (() => {
           if (group.indexOf(name) < 0) group.push(name);
         });
       }
+      /* 英字の**複数形**は、単数形の組に載せる（第 314 回）。語頭一致の規則は「打たれた語が
+       * 原文の語の左端に並ぶ」ときだけ通すので、語尾に `s` を足した瞬間に外れる – 収録に
+       * 5 回以上出る複数形の語 45 語のうち 24 語が、単数形で当たる行の一部を取りこぼしていた
+       * （2026-09-25 実測・収録 872 行: `abstracts` 5 行 / `abstract` 146 行、
+       * `deadlines` 0 行 / `deadline` 231 行、`papers` 25 行 / `paper` 510 行、
+       * 収録に稀な語では `databases` 0 行 / `database` 13 行）。
+       * 照合の側ではなく、語の組を作ここで寄せる – 単数形が**別の語への寄せ語彙を
+       * 持つ**場合があるため（`communication` は「通信」の寄せ語 – 照合側で畳むと
+       * `communications` は其の道に載れず、15 行が取りこぼされたままだった – 実測）。
+       * 単数形の組その物を使うので、展開語（地域まとめ・漢字表記など）も同じ組に乗る。 */
+      pluralStems(kanaFold(token)).forEach((stem) => {
+        if (group.indexOf(stem) < 0) group.push(stem);
+        const stemGroup = resolved[stem];
+        if (stemGroup) {
+          stemGroup.forEach((name) => {
+            if (group.indexOf(name) < 0) group.push(name);
+          });
+        }
+      });
       // 「明日」「今週」は暦日へ展開する（展開しないと表の暦日語に当たらない）。
       const relative = relativeDayGroups(token, now);
       if (relative) {
@@ -5601,6 +5620,31 @@ const Recommender = (() => {
     return /[0-9]$/.test(term);
   }
 
+  /* 英字語を**複数形で打つ人**は、単数形で当たる行の多くに会えない（2026-09-25 実測・
+   * 収録 872 行）。語頭一致の規則は「打たれた語が原文の語の左端に並ぶ」ときだけ通すので、
+   * 語尾に `s` を足した瞬間に外れる – 収録に 5 回以上出る複数形の語 45 語のうち 24 語が
+   * 単数形より少ない行にしか当たらなかった（`abstracts` 5 行 / `abstract` 146 行、
+   * `architectures` 8 行 / `architecture` 16 行）。収録に稀な語では 0 行になった
+   * （`databases` 0 行 / `database` 13 行、`computer networks` 0 行）。
+   * 外れたときだけ、単数形と見なせる形も照らす。照合は英字語と同じ語頭一致に置く
+   * （`mode` が `model` に当たる既存の緩さはそのまま – 打たれた語が短くなるだけなので
+   * 新種の通り道は増えない）。語尾が `ss` `us` `is` の語（`business` `campus` `analysis`）は
+   * 単数形その物なので触らない。語ごとの結果を覚えておかない – 照合 1 回あたりの仕事は
+   * 短い語の正規表現 1 本で足り、覚えた方が速くなるほど重复しない（`tests/bench_recommender.test.ts`
+   * が速さを検査している – 実測で変らない範囲）。 */
+  function pluralStems(term: string): string[] {
+    let out: string[] = [];
+    /* 語尾が `s` の語だけを対象にする（語尾を見て畳むと `cryptography` が `cryptograph`に
+     * 化けて、語の形を無視した通り道が出来る – 実測で 10 行 → 22 行に化けた）。 */
+    if (/^[a-z]{4,}s$/.test(term) && !/(ss|us|is)$/.test(term)) {
+      /* `databases` は `database` + `s`、`classes` は `class` + `es` – 綴りだけでは
+       * どちらか区別がつかないので、成り得る形を両方試す（当たるかどうかは行が決める）。 */
+      out = [term.slice(0, -1)];
+      if (/(xes|ses|zes|ches|shes)$/.test(term)) out.push(term.slice(0, -2));
+    }
+    return out;
+  }
+
   /** 畳み済みの語グループ（語ごとに OR、語同士は AND）を行に照合する。 */
   function matchFoldedGroups(target: string, groups: string[][]): boolean {
     for (let i = 0; i < groups.length; i++) {
@@ -5621,6 +5665,7 @@ const Recommender = (() => {
             foldedLetterAtWordBoundary(
               target,
               term,
+              // 開催地の語と末尾が数字の語は右端も閉じる。
               !placeLatinTerms()[term] && !termEndsInDigit(term),
             )
           ) {
