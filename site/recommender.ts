@@ -3110,13 +3110,23 @@ const Recommender = (() => {
     nowMs?: number,
   ): Array<{ term: string; count: number }> {
     const list = Array.isArray(hays) ? hays : [];
-    return queryTokenGroups(query, nowMs).map((group) => {
+    const groups = queryTokenGroups(query, nowMs);
+    /* 語ごとの件数は、語 1 つぶんずつ表を読み直す形だった。検索の述語は行ごとに
+     * `kanaFold(hay)`（全角・半角・仮名のゆらぎを寄せる）を掛けるので、**行の畳み込みが
+     * 語の数 × 同義語の数だけ走る**（2026-08-09 生成ビルド・候補行 3,253 行 / 210 万字で
+     * 実測: `ネットワーク 福岡` の件数欄だけで **93 ms** – 検索そのもの 31 ms の 3 倍。
+     * 検索欄 1 打鍵 83 ms の内訳の大半がこれで、語を並べた人ほど重かった – 第 258 回）。
+     * 行は 1 回だけ畳み、語の組み立ては `searchMatcher` と同じ `searchGroups` を使う。 */
+    const folded: string[] = [];
+    for (let i = 0; i < list.length; i++) folded.push(kanaFold(list[i]));
+    return groups.map((group) => {
       const alts = (group || []).length ? group : [""];
-      const matchers = alts.map((alt) => searchMatcher(alt, nowMs));
+      const matchers = alts.map((alt) => searchGroups(alt, nowMs));
       let count = 0;
-      for (let i = 0; i < list.length; i++) {
+      for (let i = 0; i < folded.length; i++) {
         for (let j = 0; j < matchers.length; j++) {
-          if (matchers[j](list[i])) {
+          // `searchMatcher` と同じく、述語が空の語は全行に当たる。
+          if (!matchers[j].length || matchFoldedGroups(folded[i], matchers[j])) {
             count += 1;
             break;
           }
@@ -3769,12 +3779,37 @@ const Recommender = (() => {
     ゎ: "わ",
   };
 
+  /* 畳み込みは入力の文字列だけで決まる（純粋な関数）。検索は行ごとにこれを掛けるので、
+   * 1 打鍵で表 1 回ぶん（3,253 行 / 210 万字）を毎回組み直し、同じ量の文字列をゴミとして
+   * 捨て続けていた（第 258 回実測: 畳み込み 1 走 13.6 ms、1 打鍵 4 MB のゴミ）。
+   * 畳んだ結果を憶えると、検索も語ごとの件数も表を畳み直ししなくなる
+   * （検索 1 走 31 ms → 4 ms）。表が無限に育っても困らないよう、上限を越えたらまとめて
+   * 捨てて組み直す。文字列以外は鍵が衝突しうる（`null` と `"null"`）ので憶えない。 */
+  /* 畳み込みは入力の文字列だけで決まる（純粋な関数）。検索は行ごとにこれを掛けるので、
+   * 1 打鍵で表 1 回ぶん（3,253 行 / 210 万字）を組み直し、同じ量の文字列をゴミとして捨てて
+   * いた（2026-08-09 生成ビルドで実測: 畳み込み 1 走 13.6 ms、1 打鍵 4 MB のゴミ、
+   * 検索 1 走 31 ms → **1.2 ms**、語ごとの件数 93 ms → **4 ms** – 第 258 回）。
+   * 憶えた結果はこの関数の側に持つ。検査ハーネスは関数を**名前で抜き出して**組み立てるので、
+   * 外側に `const` を増やすとハーネスがそれを知らないまま古い形を組んで落ちる
+   * （第 256 回 `shorterHitTipsJa`、第 257 回 `searchGroups`、この関数の 3 回目 – 実発生）。
+   * 表が無限に育っても困らないよう、上限を越えたらまとめて捨てて組み直す。
+   * 文字列以外は鍵が衝突しうる（`null` と `"null"`）ので憶えない。 */
   function kanaFold(value: unknown): string {
+    const holder = kanaFold as unknown as { kanaFoldCache?: Map<string, string> };
+    if (typeof value === "string" && holder.kanaFoldCache) {
+      const hit = holder.kanaFoldCache.get(value);
+      if (hit !== undefined) return hit;
+    }
     let text = searchNormalize(value);
     if (!text) return "";
     text = text.replace(/[\u30a1-\u30fa]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 96));
     text = text.replace(/[ー\u309b\u309c]/g, "");
     text = text.replace(/[ぁぃぅぇぉヵヶっゃゅょゎ]/g, (ch) => SMALL_KANA_JA[ch] || ch);
+    if (typeof value === "string") {
+      if (!holder.kanaFoldCache) holder.kanaFoldCache = new Map();
+      if (holder.kanaFoldCache.size >= 12_000) holder.kanaFoldCache.clear();
+      holder.kanaFoldCache.set(value, text);
+    }
     return text;
   }
 
