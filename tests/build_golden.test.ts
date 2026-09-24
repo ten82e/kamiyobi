@@ -3423,7 +3423,7 @@ it("site runtime lazy-loads deadline history with retry and stale-response guard
   expect(runtime).toContain("function createHistoryLoader(fetchJson, onState)");
   expect(runtime).toContain("function resolveHistoryRef()");
   expect(runtime).toMatch(
-    /if\s*\(state\.mode\s*===\s*"deadlines"\s*&&\s*state\.past\)\s*loadHistoryData\(\)/,
+    /if\s*\(state\.mode\s*===\s*"deadlines"\s*&&\s*fullRecordNeeded\([^)]*\)\)\s*loadHistoryData\(\);/,
   );
   expect(runtime).toMatch(
     /if\s*\(state\.mode\s*!==\s*"deadlines"\s*\|\|\s*!state\.past\)\s*return/,

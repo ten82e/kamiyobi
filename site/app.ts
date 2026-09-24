@@ -594,6 +594,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   let recommendationPromise: Promise<void> | null = null;
   let recommendationError = false;
   let historyStatus: LoadStatus = "idle";
+  // 「収録の全体を読む」ボタンで立つ旗。既定（この旗が下がったまま）は品書だけで開く –
+  // 6 MB 強を毎回読みに行くと開くのが遅くなる。
+  let fullRecordRequested = false;
+
+  /* 画面に差し込んだ品書（`catalog.json`）の外を読む必要があるか。
+   *
+   * 「締切まで: かまわない」は既定の選択で、てびきも「期限なく先の締切も出します」と書いて
+   * いた – が、品書は生成から 180 日先で切れている（2026-08-09 生成のビルドで一覧に出る一番
+   * 遠い締切は 2027-02-04）。収録には品書の果てを越える締切が **133 件（74 会議）** あり、
+   * カレンダーには 2028-03-30 まで入っている（2026-09-24 実測）。品書の外を読む入口は
+   * 「過去の締切も表示」だけだったので、先の締切を見るのに過去を見るチェックを外せない、と
+   * いう取り合わせになっていた。ここでは事実を伝えたうえで、押した人だけが読む形にする。 */
+  function fullRecordNeeded(past: boolean, win: string, requested: boolean): boolean {
+    return past === true || (win === "all" && requested === true);
+  }
 
   function createHistoryLoader(
     fetchJson: (ref: string) => Promise<Catalog>,
@@ -1510,7 +1525,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       historyStatus === "ready" &&
       historyLoader.data &&
       state.mode === "deadlines" &&
-      state.past
+      fullRecordNeeded(state.past, state.win, fullRecordRequested)
     ) {
       setDeadlineProfile(historyLoader.data);
     } else if (historyStatus === "error" && state.mode === "deadlines") {
@@ -1847,7 +1862,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * います…」で、チェックした直後に 2 つの語が同時に出て、別々の読み込みが始まったように
    * 読めた（2026-08-09 実測）。状態欄の語には「表示中のカタログ」という画面のどこにも出て
    *こない語も混ざっていた。短い形は件数欄用だが、名詞は揃える。 */
-  const HISTORY_NOUN_JA = "過去の締切";
+  /* 品書（画面に差し込む速く開くためのデータ）の外を読むときの語。かつては「過去の締切」だっ
+   * たが、読んでくる物は過去だけでは無い – 品書は生成から 180 日先でも切れているので、同じ
+   * 1 回の読み込みが「過去の行」と「品書の果てより先の締切」を一緒に連れてくる。どちらかに
+   * 寄いた語は噓になる（第 290 回）。 */
+  const HISTORY_NOUN_JA = "収録の全体の締切";
   const HISTORY_LOADING_SHORT_JA = `${HISTORY_NOUN_JA}を読み込み中…`;
   const HISTORY_ERROR_SHORT_JA = `${HISTORY_NOUN_JA}の読み込みに失敗`;
   const HISTORY_LOADING_JA = `${HISTORY_NOUN_JA}を読み込んでいます…`;
@@ -2516,6 +2535,38 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * この一覧に並べる期間（既定は生成から 180 日）よりずっと長い – 同じ物を想像して
    * 取り込むと、カレンダーアプリの方が 2 年分になる（2026-09-24 実測: 件数も範囲も、押す前に
    * 読める場所がどこにも無かった）。数字はこの一覧の件数と同じ数え方で区切りを入れる。 */
+  /* 一覧に並ぶ物の中で一番遠い締切日（JST の暦日）。品書の果てを、ハードコードせずに実測で
+   * 出す（ビルドごとに違う – 品書は生成からの日数で切れている）。 */
+  function farthestRowDayJa(list: AppRow[]): string {
+    let best = 0;
+    let found = false;
+    list.forEach((row) => {
+      const shown =
+        typeof row.tShown === "number" && Number.isFinite(row.tShown) ? row.tShown : row.t;
+      if (typeof shown !== "number" || !Number.isFinite(shown)) return;
+      // 時刻 0（1970 年）でも「無い」とは取り違えない – 有る物の中で一番遠い物を見る。
+      if (!found || shown > best) {
+        best = shown;
+        found = true;
+      }
+    });
+    if (!found) return "";
+    // JST の暦日（`remain`・`fmtJst` と同じ理由でオフセットはインライン）。
+    const jst = new Date(best + 9 * 3600000);
+    const month = String(jst.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(jst.getUTCDate()).padStart(2, "0");
+    return `${jst.getUTCFullYear()}-${month}-${day}`;
+  }
+
+  function fullRecordNoteJa(lastDay: string, calendarLastDay: string): string {
+    return (
+      `この一覧に出る一番遠い締切は ${lastDay} です。速く開くためのデータが生成から 180 日先で` +
+      "切れているためで、収録その物にはこれより先の締切もあります。先まで見るにはこの欄の" +
+      "「収録の全体を読み込む」を押してください（一覧より大きめのデータを読みます）。" +
+      (calendarLastDay ? `カレンダー（.ics）には ${calendarLastDay} まで入っています。` : "")
+    );
+  }
+
   function icsScopeNoteJa(span: CalendarSpan): string {
     return (
       `カレンダーに追加（.ics）に入る締切は ${countJa(span.event_count)} 件` +
@@ -4122,11 +4173,19 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       cnt += noticeText;
       cntLive += noticeText;
     }
-    if (!recMode && state.past && historyStatus === "loading") {
+    if (
+      !recMode &&
+      fullRecordNeeded(state.past, state.win, fullRecordRequested) &&
+      historyStatus === "loading"
+    ) {
       cnt += ` ｜ ${HISTORY_LOADING_SHORT_JA}`;
       cntLive += ` ｜ ${HISTORY_LOADING_SHORT_JA}`;
     }
-    if (!recMode && state.past && historyStatus === "error") {
+    if (
+      !recMode &&
+      fullRecordNeeded(state.past, state.win, fullRecordRequested) &&
+      historyStatus === "error"
+    ) {
       cnt += ` ｜ ${HISTORY_ERROR_SHORT_JA}`;
       cntLive += ` ｜ ${HISTORY_ERROR_SHORT_JA}`;
     }
@@ -4219,8 +4278,22 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       exportBtn.hidden = recMode || !shown.length;
     }
     const showHistoryStatus =
-      !recMode && state.past && (historyStatus === "loading" || historyStatus === "error");
+      !recMode &&
+      fullRecordNeeded(state.past, state.win, fullRecordRequested) &&
+      (historyStatus === "loading" || historyStatus === "error");
     $("historyStatus").hidden = !showHistoryStatus;
+    /* 品書を見ている間だけ、品書の果てを伝える（読んでしまったあとは件数が増えるので黙る）。
+     * `history_ref` が無い品書（古い差し込み）では押せる物を出さない。 */
+    const showFullRecordOffer =
+      !recMode && activeData === DATA && !showHistoryStatus && resolveHistoryRef() !== "";
+    const fullRecordOffer = $("fullRecord");
+    fullRecordOffer.hidden = !showFullRecordOffer;
+    if (showFullRecordOffer) {
+      const lastDay = farthestRowDayJa(rows);
+      const calendarLastDay = DATA.calendar ? DATA.calendar.last_day : "";
+      $("fullRecordText").textContent = lastDay ? fullRecordNoteJa(lastDay, calendarLastDay) : "";
+      fullRecordOffer.hidden = !lastDay;
+    }
     if (showHistoryStatus) {
       $("historyStatusText").textContent =
         historyStatus === "loading" ? HISTORY_LOADING_JA : HISTORY_ERROR_JA;
@@ -4315,7 +4388,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   function loadHistoryData() {
-    if (state.mode !== "deadlines" || !state.past) return;
+    if (state.mode !== "deadlines" || !fullRecordNeeded(state.past, state.win, fullRecordRequested))
+      return;
     if (historyLoader.data) {
       historyStatus = historyLoader.status;
       setDeadlineProfile(historyLoader.data);
@@ -4346,7 +4420,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       stopHistoryLoad();
       if (recommendationData) setRecommendationProfile(recommendationData);
       else loadRecommendationData();
-    } else if (state.past) {
+    } else if (fullRecordNeeded(state.past, state.win, fullRecordRequested)) {
       loadHistoryData();
     } else {
       stopHistoryLoad();
@@ -4505,7 +4579,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function apply() {
     fromForm();
     writeUrl();
-    if (state.mode === "deadlines" && state.past) {
+    if (
+      state.mode === "deadlines" &&
+      fullRecordNeeded(state.past, state.win, fullRecordRequested)
+    ) {
       loadHistoryData();
     } else {
       stopHistoryLoad();
@@ -5007,6 +5084,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   const exportCsvButton = $("exportCsv");
   if (exportCsvButton) exportCsvButton.addEventListener("click", exportShownCsv);
   // JavaScript が動いているときだけ出る（押せない物を紙と JavaScript 無効の画面に出さない）。
+  const fullRecordButton = $("fullRecordButton");
+  if (fullRecordButton)
+    fullRecordButton.addEventListener("click", () => {
+      fullRecordRequested = true;
+      loadHistoryData();
+      render();
+    });
+
   const icsCopyButton = $("icsCopy");
   icsCopyButton.addEventListener("click", () => {
     void copyIcsSubscribeUrl();
@@ -5450,7 +5535,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* 欄が空なら下書きを戻す（`toForm` は絞り込みの欄だけを見るので、この時点では論文の欄が
    * 空のまま）。戻した後に `syncPaperText` を呼ぶと、候補の描画も刷新前の形に戻る。 */
   if (restorePaperDraft()) syncPaperText();
-  if (state.mode === "deadlines" && state.past) loadHistoryData();
+  if (state.mode === "deadlines" && fullRecordNeeded(state.past, state.win, fullRecordRequested))
+    loadHistoryData();
   render();
   restoreDrawerFromUrl();
 })();
