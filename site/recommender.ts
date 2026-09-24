@@ -2002,6 +2002,31 @@ const Recommender = (() => {
       ["リコメンデーション", "原文の recommendation という語", ["recommendation"]],
       ["レコメンデーション", "原文の recommendation という語", ["recommendation"]],
       ["レコメンド", "原文の recommendation という語", ["recommendation"]],
+      /* 開催地の州名を日本語で打った人。画面の開催地は公式の英語表記（`Atlanta, Georgia, USA`）を
+       * そのまま載せるので、州名は行の原文に英文字で出ていて、日本語の州名を打った人だけが
+       * 壁に当たっていた（2026-08-09 生成の実ビルドの品書 872 行で、そのまま打った行数 /
+       * 開催地にその州名を書く行数: `テキサス` 0 / 3、`ジョージア` 0 / 8、`バージニア` 0 / 4、
+       * `アリゾナ` 0 / 2、`ペンシルベニア` 0 / 1、`カリフォルニア` 1 / 10、`コロラド` 3 / 5 –
+       * 州を付けた形 `テキサス州` も同じ 0 行）。`地域まとめ` の構成員は `テキサス州` の形の
+       * 見出し語で、行の表記には出ない語なので寄せて先にならなかった（第 250 回と同じ形）。
+       * `ワシントン` はそのまま 4 行当たるので置かない。`ユタ` は置かない – 小文字と長音の
+       * 折り合わせで `コンピュータ` を含む行に当たり 51 行を出す（実測: `ユタ` 51 行 / 開催地に
+       * utah を書く行は 11 行）ので、英文字のまま引くのに任せる。`ハワイ` も置かない – 開催地に
+       * Hawaii を書く行が 0 行で、`ホノルル` はそのまま 4 行当たる。 */
+      ["カリフォルニア", "原文の california という語", ["california"]],
+      ["カリフォルニア州", "原文の california という語", ["california"]],
+      ["コロラド", "原文の colorado という語", ["colorado"]],
+      ["コロラド州", "原文の colorado という語", ["colorado"]],
+      ["テキサス", "原文の texas という語", ["texas"]],
+      ["テキサス州", "原文の texas という語", ["texas"]],
+      ["ジョージア", "原文の georgia という語", ["georgia"]],
+      ["ジョージア州", "原文の georgia という語", ["georgia"]],
+      ["ペンシルベニア", "原文の pennsylvania という語", ["pennsylvania"]],
+      ["ペンシルベニア州", "原文の pennsylvania という語", ["pennsylvania"]],
+      ["バージニア", "原文の virginia という語", ["virginia"]],
+      ["バージニア州", "原文の virginia という語", ["virginia"]],
+      ["アリゾナ", "原文の arizona という語", ["arizona"]],
+      ["アリゾナ州", "原文の arizona という語", ["arizona"]],
     ];
 
     QUERY_SYNONYMS_JA.concat(WEEKDAY_QUERY_SYNONYMS_JA, UPSTREAM_TEXT_QUERY_SYNONYMS_JA).forEach(

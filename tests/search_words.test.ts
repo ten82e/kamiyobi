@@ -832,3 +832,63 @@ it("分野の和名（画像認識・ビッグデータ・知識発見など）�
   expect(Recommender.querySynonymNotes("コンピュータビジョン").length).toBe(0);
   expect(Recommender.querySynonymNotes("推薦").length).toBe(0);
 });
+
+it("開催地の州名を日本語で打った人が、英語表記の行に出会える（第 309 回）", () => {
+  /* 画面の開催地は公式の英語表記をそのまま載せる（`Atlanta, Georgia, USA`）。日本語の州名を打つ
+   * 人だけ 0 行だった（2026-08-09 生成の実ビルドの品書 872 行で `テキサス` 0 / 開催地 3 行、
+   * `ジョージア` 0 / 8 – SPEC §7）。検証ハーネスの品書（435 行）には州を書く行が 3 行しか無いので、
+   * 件数ではなく不変条件を見る: 「開催地に其の州名を書く行を 1 行もこぼさない」
+   * 「其の州名を書かない行を呼ばない」「注記が寄せ先を名指す」。 */
+  const rows = Recommender.candidateRows(
+    JSON.parse(readFileSync(join(builtSite(), "catalog.json"), "utf8")) as {
+      conferences: unknown;
+    },
+  ) as Array<{ hay: string; ed?: { place?: string } }>;
+  const at = Date.parse("2026-08-09T00:00:00Z");
+  const cases: Array<[string, string]> = [
+    ["カリフォルニア", "california"],
+    ["カリフォルニア州", "california"],
+    ["コロラド", "colorado"],
+    ["コロラド州", "colorado"],
+    ["テキサス", "texas"],
+    ["テキサス州", "texas"],
+    ["ジョージア", "georgia"],
+    ["ジョージア州", "georgia"],
+    ["ペンシルベニア", "pennsylvania"],
+    ["ペンシルベニア州", "pennsylvania"],
+    ["バージニア", "virginia"],
+    ["バージニア州", "virginia"],
+    ["アリゾナ", "arizona"],
+    ["アリゾナ州", "arizona"],
+  ];
+  let 出会えた行数 = 0;
+  for (const [word, en] of cases) {
+    const notes = Recommender.querySynonymNotes(word);
+    expect(notes.length, `「${word}」が寄せになっていない`).toBe(1);
+    expect(notes[0], `「${word}」の注記が寄せ先を名指していない`).toContain(en);
+    const matcher = Recommender.searchMatcher(word, at);
+    const got = rows.filter((r) => matcher(r.hay) === true);
+    const 州 = new RegExp(`\\b${en}\\b`, "i");
+    const missed = rows
+      .filter((r) => 州.test(String(r.ed?.place ?? "")) && matcher(r.hay) !== true)
+      .map((r) => String(r.ed?.place).slice(0, 40));
+    expect(
+      missed,
+      `「${word}」で開催地に ${en} と書く行がこぼれている: ${missed.join(" / ")}`,
+    ).toEqual([]);
+    const strays = got
+      .filter((r) => !州.test(String(r.hay)))
+      .map((r) => String(r.hay).slice(0, 40));
+    expect(strays, `「${word}」の寄せが ${en} を書かない行を呼んだ: ${strays.join(" / ")}`).toEqual(
+      [],
+    );
+    出会えた行数 += got.length;
+  }
+  expect(出会えた行数, "州名の寄せが 1 行にも繋がっていない").toBeGreaterThan(0);
+  /* 置かなかった語（SPEC §7）。`ユタ` は小文字と長音の折り合わせで `コンピュータ` を含む行に
+   * 当たって 51 行を出す（実測: 開催地に utah を書く行は 11 行）ので英文字のまま引くのに任せる。
+   * `ワシントン` はそのまま 4 行当たり、`ハワイ` は開催地に Hawaii を書く行が 0 行。 */
+  for (const word of ["ユタ", "ワシントン", "ハワイ"]) {
+    expect(Recommender.querySynonymNotes(word), `「${word}」を寄せてしまっている`).toEqual([]);
+  }
+});
