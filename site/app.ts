@@ -82,8 +82,17 @@ interface SourceRecord {
   url?: string;
 }
 
+/* カレンダー配信（`deadlines.ics`）の中身の実測。ビルドが行から導いた値で、画面は数え直さない
+ * – ここで数え直すと、配信物と違う数を画面が言い出す（第 289 回）。 */
+interface CalendarSpan {
+  event_count: number;
+  first_day: string;
+  last_day: string;
+}
+
 interface Catalog {
   generated_at?: string;
+  calendar?: CalendarSpan;
   sources: SourceRecord[];
   categories: Record<string, string>;
   conferences: ConferenceRecord[];
@@ -258,6 +267,19 @@ function sourceRecord(value: unknown): SourceRecord | null {
   };
 }
 
+/* カレンダーの申告を受け取る。型の違う物・日付の形の違う物は丸ごと無し扱いにする
+ * （無いときは注記を出さない – 「0 件」と「知らない」を混ぜない）。 */
+function calendarSpan(value: unknown): CalendarSpan | undefined {
+  if (!isRecord(value)) return undefined;
+  const count =
+    typeof value.event_count === "number" && value.event_count > 0 ? value.event_count : 0;
+  const first = typeof value.first_day === "string" ? value.first_day : "";
+  const last = typeof value.last_day === "string" ? value.last_day : "";
+  const day = /^\d{4}-\d{2}-\d{2}$/u;
+  if (!count || !day.test(first) || !day.test(last)) return undefined;
+  return { event_count: count, first_day: first, last_day: last };
+}
+
 function catalogFrom(value: unknown): Catalog | null {
   if (!isRecord(value) || !Array.isArray(value.conferences)) return null;
   const conferences = value.conferences.filter(isConferenceRecord);
@@ -276,6 +298,7 @@ function catalogFrom(value: unknown): Catalog | null {
     categories,
     conferences,
     history_ref: typeof value.history_ref === "string" ? value.history_ref : undefined,
+    calendar: calendarSpan(value.calendar),
     reranker: isRecord(value.reranker) ? value.reranker : undefined,
   };
 }
@@ -2488,6 +2511,19 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 438 件について噓になる。書き出しの中身（絞り込み後の全行）は正しく、語が誤っていた。
    * てびきと README に「ページ送りで画面に出ている分ではなく」という言い訳を添えて
    * ごまかしていたが、原因は語なので語を直す。`countJa` を呼ぶので検査は両方を抜き出す。 */
+  /* カレンダーのリンクのそばに、ファイルに入る物の実測を添える（第 289 回）。
+   * 収録の実期間は 2026-08-09 生成のビルドで **2026-08-09 〜 2028-03-30 の 928 件**で、
+   * この一覧に並べる期間（既定は生成から 180 日）よりずっと長い – 同じ物を想像して
+   * 取り込むと、カレンダーアプリの方が 2 年分になる（2026-09-24 実測: 件数も範囲も、押す前に
+   * 読める場所がどこにも無かった）。数字はこの一覧の件数と同じ数え方で区切りを入れる。 */
+  function icsScopeNoteJa(span: CalendarSpan): string {
+    return (
+      `カレンダーに追加（.ics）に入る締切は ${countJa(span.event_count)} 件` +
+      `（${span.first_day} 〜 ${span.last_day}）。この一覧に並ぶのは選んだ期間までで、` +
+      `絞り込みは引き継がれません。`
+    );
+  }
+
   function exportCsvLabelJa(total: number): string {
     return `この一覧の ${countJa(total)} 件を CSV でダウンロード`;
   }
@@ -5338,6 +5374,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     writeUrl();
     render();
   });
+
+  /* カレンダーに入る件数と範囲（`catalog.json` の申告）を一覧の上に出す（第 289 回）。 */
+  const icsScopeNode = $("icsScope");
+  const icsSpan = DATA.calendar;
+  if (icsScopeNode && icsSpan) {
+    icsScopeNode.textContent = icsScopeNoteJa(icsSpan);
+    icsScopeNode.hidden = false;
+  }
 
   if (DATA.generated_at) {
     const genAtNode = $("genat");

@@ -864,6 +864,7 @@ footer a:hover { text-decoration: underline; }
   #icsLink,
   #icsCopy,
   #icsCopyNote,
+  #icsScope,
   .sortbar,
   .recommend-only,
   footer .btn-reset { display: none !important; }
@@ -1113,6 +1114,10 @@ footer a:hover { text-decoration: underline; }
     <button id="icsCopy" type="button" class="btn-reset" hidden>購読 URL をコピー</button>
     <span class="count-hint">行を選ぶと詳細（公式確認の状態と根拠）<span class="count-kbd" style="font-family: var(--font-mono); font-size: 0.75rem;"> ｜ ショートカット: <kbd>j</kbd>/<kbd>k</kbd>・<kbd>↓</kbd>/<kbd>↑</kbd> 選択 | <kbd>Enter</kbd> 開く | <kbd>d</kbd> 詳細 | <kbd>Esc</kbd> 閉じる | <kbd>/</kbd> 検索</span></span>
   </div>
+  <!-- カレンダーに入る物の実測（件数と収録の期間）。購読すると自分の予定の上に 2 年分が
+       載る人もいるので、「押してから中身を知る」をやめる（第 289 回）。数字はビルドが
+       配信物から導いた値で、この欄が無い状態（古い差し込み）では黙って出る。 -->
+  <div id="icsScope" class="scrollhint" hidden></div>
   <!-- 「購読 URL をコピー」を押した後の返事。自動でコピーできない環境（このページを http で
        開くなど）でも、この文字列を選べば同じことができる。 -->
   <div id="icsCopyNote" class="scrollhint" aria-live="polite" hidden></div>
@@ -1380,7 +1385,10 @@ footer a:hover { text-decoration: underline; }
       入りません）。1 件 = 1 つの締切で、その日（JST の暦日）を埋める形に出します。締切に継続時間は
       無いので、時間帯は作りません。時刻が公式に出ていない物には説明に「<strong>時刻未確認</strong>」、
       上流が推定として出した日付には要約に「<strong>推定</strong>」と書きます。このファイルの場所を
-      そのままカレンダーの<strong>購読先（URL）</strong>に指定すると、毎日（日本時間の朝の更新のあと）
+      いま何件が入っていていつまでの締切を載せるかは、<strong>一覧の上</strong>（「カレンダーに追加
+      （.ics）」の下）に出しています。収録の期間は<strong>この一覧に並べる期間より長い</strong>ので、
+      購読すると画面で見ているよりずっと先まで載ることがあります。そのままカレンダーの
+      <strong>購読先（URL）</strong>に指定すると、毎日（日本時間の朝の更新のあと）
       新しい一覧に置き換わります。場所の取り出し方は、「<strong>購読 URL をコピー</strong>」を押すのが
       いちばん速いです（自動でコピーできない開き方では、押すと URL が画面に出るので、それを
       そのまま指定します）。ダウンロードしたファイルは写しなので、置きっ放しにすると古くなります。

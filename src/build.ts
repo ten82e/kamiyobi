@@ -992,6 +992,9 @@ export function toCatalog(
   data: Record<string, unknown>,
   now: Date | null | undefined,
   days = 180,
+  // カレンダー配信の実測（件数と収録の最初/最後の締切日）。画面の注記はここを読む –
+  // 画面側で数え直すと、配信物と同じ数を言えなくなる（第 289 回）。
+  calendar: IcsCalendarMeta | null | undefined = undefined,
 ): Record<string, unknown> {
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
   const horizon = safeNow.getTime() + Math.max(1, days) * DAY_MS;
@@ -1021,6 +1024,9 @@ export function toCatalog(
     window: { lookback_days: 30, upcoming_days: Math.max(1, days) },
     history_ref: "data.json",
     recommendation_ref: "recommendation-index.json",
+    // カレンダー配信の中身の実測（件数と収録の最初/最後の締切日）。画面の注記はここを読む –
+    // 画面側で数え直すと、配信物と同じ数を言えなくなる（第 289 回）。
+    calendar: calendar ?? null,
     conferences,
   };
 }
@@ -2890,11 +2896,30 @@ function escapeHtmlText(value: string): string {
 /** カレンダーアプリの棚に出る名前（`X-WR-CALNAME`）。 */
 const ICS_CAL_NAME_JA = "kamiyobi 締切一覧";
 
-/** カレンダーアプリの説明欄に出る文。ここだけは相手側が翻訳しないので日本語で書く。 */
-const ICS_CAL_DESC_JA =
-  " kamiyobi が収録した会議の締切。1 件 = 1 つの締切で、その日（JST の暦日）を埋める形で出る。" +
-  "画面の絞り込みは効かない（上の全件）。時刻が公式に出ていない締切は「時刻未確認」と書き、" +
-  "上流が推定としている日付には「推定」と付ける。過ぎた締切は入らない。";
+/* カレンダーアプリの説明欄に出る文。ここだけは相手側が翻訳しないので日本語で書く。
+ *
+ * 以前は決まった文章の先頭を半角スペースで始めていた（`" kamiyobi が…"`）。RFC 5545 §3.1 は
+ * 名前とコロンとの間に空白を置かないと定めており、相手はそれを値の一部に残す – カレンダーの
+ * 情報欄が「 kamiyobi …」と頭が空いて出ていた（2026-09-24 実測）。
+ * 「画面上の全件」とも書いていたが、カレンダー側に「上」は無い – 収録の**件数と期間**を
+ * 実測の値で書く（2026-08-09 生成ビルドで 928 件・2026-08-09 〜 2028-03-30。画面の表示窓は
+ * 生成から 180 日なので、同じ物を想像して取り込む人とズレる）。 */
+function icsCalendarDescriptionJa(meta: IcsCalendarMeta, stamp: { human: string } | null): string {
+  const span =
+    meta.event_count > 0
+      ? `いま ${meta.event_count} 件（${meta.first_day} 〜 ${meta.last_day}）`
+      : "いま 0 件";
+  return [
+    "kamiyobi が収録した会議の締切。1 件 = 1 つの締切で、その日（JST の暦日）を埋める形で出る。",
+    `入るのは収録している今後の締切すべてで、${span}。画面の絞り込みと並び替えは引き継がれない。`,
+    "収録の期間は画面の表示窓より長い（画面は指定した期間だけを出し、こちらには出ている締切が",
+    "全て入る）。時刻が公式に出ていない締切は「時刻未確認」と書き、上流が推定としている日付には",
+    "「推定」と付ける。過ぎた締切は入れない。",
+    stamp ? `データ生成: ${stamp.human}（JST）。` : "",
+  ]
+    .filter(Boolean)
+    .join("");
+}
 
 /** 1 行の上限（RFC 5545 §3.1 は 75 オクテット）。 */
 const ICS_MAX_LINE_OCTETS = 75;
@@ -2989,13 +3014,13 @@ function icsUidSafe(value: unknown): string {
  *   - `estimated`（上流の推定）は行の語と同じ「推定」を要約に付ける。
  *   - `UID` はビルドをまたいで同じ。購読先では同じ締切が更新になり、重複しない。
  */
-export function toIcsText(
+export function icsEventRows(
   records: DataRecord[] | null | undefined,
   now: Date | null | undefined,
-): string {
+): IcsRow[] {
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
   const stamp = jstParts(safeNow);
-  const rows: Array<{ day: string; at: number; body: string[] }> = [];
+  const rows: IcsRow[] = [];
   const used = new Map<string, number>();
   for (const rec of records ?? []) {
     if (!rec || typeof rec !== "object" || rec.type !== "deadline") continue;
@@ -3091,6 +3116,39 @@ export function toIcsText(
     });
   }
   rows.sort((a, b) => a.at - b.at || cmpStr(a.body[5] ?? "", b.body[5] ?? ""));
+  return rows;
+}
+
+/* 購読先に申告する事実。行から導く – 別々に数えると、申告と中身がズレる
+ * （「928 件」と書いて 927 件しか入っていない、が一番信用を失う）。 */
+export type IcsRow = { day: string; at: number; body: string[] };
+export type IcsCalendarMeta = { event_count: number; first_day: string; last_day: string };
+
+/** `YYYYMMDD` を人が読む形に直す（カレンダーの申告文と画面の注記で同じ形を使う）。 */
+function icsDayIso(day: string): string {
+  return /^\d{8}$/.test(day) ? `${day.slice(0, 4)}-${day.slice(4, 6)}-${day.slice(6, 8)}` : "";
+}
+
+export function icsCalendarMeta(rows: IcsRow[] | null | undefined): IcsCalendarMeta {
+  const safe = rows ?? [];
+  const days = safe
+    .map((r) => r.day)
+    .filter((d) => /^\d{8}$/.test(d))
+    .sort(cmpStr);
+  return {
+    event_count: safe.length,
+    first_day: days.length ? icsDayIso(days[0]) : "",
+    last_day: days.length ? icsDayIso(days[days.length - 1]) : "",
+  };
+}
+
+export function icsCalendarText(
+  rows: IcsRow[] | null | undefined,
+  now: Date | null | undefined,
+): string {
+  const safe = rows ?? [];
+  const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
+  const stamp = jstParts(safeNow);
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -3098,16 +3156,24 @@ export function toIcsText(
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     `X-WR-CALNAME:${icsEscapeText(ICS_CAL_NAME_JA)}`,
-    `X-WR-CALDESC:${icsEscapeText(ICS_CAL_DESC_JA)}`,
+    `X-WR-CALDESC:${icsEscapeText(icsCalendarDescriptionJa(icsCalendarMeta(safe), stamp))}`,
     "X-WR-TIMEZONE:Asia/Tokyo",
     "X-PUBLISHED-TTL:P1D",
     "REFRESH-INTERVAL;VALUE=DURATION:P1D",
-    ...rows.flatMap((r) => r.body),
+    ...safe.flatMap((r) => r.body),
     "END:VCALENDAR",
     "",
   ]
     .map(icsFoldLine)
     .join("\r\n");
+}
+
+/** 入口（行を作ってカレンダーの本文に組む）。行だけが必要なら `icsEventRows` を使う。 */
+export function toIcsText(
+  records: DataRecord[] | null | undefined,
+  now: Date | null | undefined,
+): string {
+  return icsCalendarText(icsEventRows(records, now), now);
 }
 
 /* 静的な一覧（`upcoming.html`）の入口と終端で使う言い回し。同じ語を 2 か所に書くと
@@ -3728,9 +3794,16 @@ export async function buildAll(
   };
 
   const data = toJson(safeConfs, safeConfig, nowUtc);
+  /* カレンダーの行は 1 回だけ作る – 件数と期間の申告（`catalog.json` 経由で画面に出す）は、
+   * 同じ行から導かないと本文とズレる（第 289 回）。 */
+  const icsRows = icsEventRows(records, nowUtc);
+  const icsMeta = icsCalendarMeta(icsRows);
   const jsonText = JSON.stringify(data, null, 2);
   write("data.json", `${jsonText}\n`);
-  write("catalog.json", `${JSON.stringify(toCatalog(data, nowUtc, upcomingDays), null, 2)}\n`);
+  write(
+    "catalog.json",
+    `${JSON.stringify(toCatalog(data, nowUtc, upcomingDays, icsMeta), null, 2)}\n`,
+  );
   const publishProvenance =
     opts.publishProvenance ?? collectPublishProvenance(ROOT, undefined, { now: nowUtc });
   const contentId = publishContentId(publishProvenance, embeddingProfileHash(data));
@@ -3756,7 +3829,7 @@ export async function buildAll(
    * この文字列から作る（同じ表を二重に作らないため）。 */
   const upcomingMd = toUpcomingMd(records, nowUtc, upcomingDays);
   write("upcoming.md", upcomingMd);
-  write("deadlines.ics", toIcsText(records, nowUtc));
+  write("deadlines.ics", icsCalendarText(icsRows, nowUtc));
 
   // セマンティックレコメンド用の埋め込み（transformers.js が無ければスキップして語彙のみで動作）
   if (!opts.noEmbeddings) {
@@ -3809,7 +3882,7 @@ export async function buildAll(
     const siteStyleBlock = /<style>[\s\S]*?<\/style>/.exec(templateText)?.[0] ?? "";
     templateText = templateText.replace(
       TEMPLATE_MARKER,
-      embedJson(jsonCompact(toCatalog(data, nowUtc, upcomingDays))),
+      embedJson(jsonCompact(toCatalog(data, nowUtc, upcomingDays, icsMeta))),
     );
     write("index.html", templateText);
     for (const [name, source] of Object.entries(compileSiteRuntime())) write(name, source);
