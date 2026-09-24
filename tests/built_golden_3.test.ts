@@ -1217,12 +1217,15 @@ it("常時受付の行の会期・開催地は「該当なし」と出す（SPEC
   expect(app).toContain('notApplicableTitleJa("event")');
   expect(app).toContain('notApplicableTitleJa("place")');
   const guide = readFileSync(join(site, "index.html"), "utf8");
-  // てびきが「未確認」との区別を説明していること。
-  const at = guide.indexOf("<dt>未確認</dt>");
-  expect(at, "未確認の説明が無くなった").toBeGreaterThan(-1);
+  /* てびきが「未確認」との区別を説明していること。第 277 回までこの説明は「未確認」の項目の
+   * 末尾に 1 文混じるだけで、入口（`<summary>`）が「該当なし」を名乗ってもいるのに項目が無く、
+   * 37 項目を流し読みしないと辿れなかった。専用の項目へ移したので、そこを見る。 */
+  const at = guide.indexOf("<dt>該当なし</dt>");
+  expect(at, "該当なしの説明が無くなった").toBeGreaterThan(-1);
   const entry = guide.slice(at, guide.indexOf("</dd>", at));
-  expect(entry).toContain("該当なし");
   expect(entry).toContain("常時受付");
+  // 「未確認」側の意味（ kamiyobi が裏取りできていないだけ）にも触れていなければ区別にならない。
+  expect(entry).toMatch(/ kamiyobi .*裏/);
 });
 
 it("upcoming.md は、表のうえで列の意味が分かる（SPEC §7）", async () => {
