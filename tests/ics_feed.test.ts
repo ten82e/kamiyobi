@@ -14,6 +14,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import Recommender from "../site/recommender.ts";
 import { type DataRecord, icsEscapeText, icsFoldLine, toIcsText } from "../src/build.ts";
 import { site } from "./built_golden_shared.ts";
 import { jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
@@ -60,6 +61,7 @@ function rec(over: Record<string, unknown> = {}): DataRecord {
     type: "deadline",
     categories: ["systems"],
     kind_label: "論文締切",
+    date_field: "締切",
     estimated: false,
     conf: { key: "sc", title: "SC", link: "https://sc.example/" },
     edition: { year: 2027, edition_id: "sc27", link: "https://sc27.example/" },
@@ -728,5 +730,132 @@ describe("畳みは 2 文字の転義をまたがない（RFC 5545 §3.1・第 2
       0,
     );
     expect(icsFoldLine(value), "畳む関数が直していない").not.toBe(naive);
+  });
+});
+
+/* ----------------------------------------  締切ではない日に「締切」と書かない（第 299 回） */
+
+/* 実測（2026-09-24・2026-08-09 生成ビルド）: `deadlines.ics` の 928 個のイベントのうち
+   **167 個**が採否通知・査読結果公開・反論期間開始だった。人が何かを提出する日では無いのに、
+   本文の行は全て「締切: 2026-08-09 09:00（JST）」だった。カレンダーでは本文の行がそのまま
+   見えるので、人はその日に締め切られると思う（表に出さない種別でもカレンダーには載る – 第 288 回）。
+   欄の名前を種別の正本で決めるようにした。 */
+
+describe("締切ではない日に「締切」と書かない（第 299 回）", () => {
+  /* `DESCRIPTION` は畳みを戻した 1 文字列で、項目の区切りは本文のエスケープ（文字としての
+     `
+`）なので、そこで割る。 */
+  const descLines = (value: string[] | undefined): string[] => (value ?? [""])[0].split("\\n");
+  const descOf = (over: Record<string, unknown>): string[] =>
+    descLines(eventsOf(toIcsText([rec(over)], NOW))[0].DESCRIPTION);
+
+  /** 品書きを作る側と同じ作り方（欄名を検査の側に書かない – 第 295 回の教訓）。 */
+  const recOfKind = (kind: string): Record<string, unknown> => ({
+    kind_label: Recommender.kindLabelJa(kind),
+    date_field: Recommender.kindDateFieldJa(kind),
+  });
+
+  const DATE_FIELDS = ["締切", "通知日", "公開日", "開始日", "会期"];
+  const fieldLines = (desc: string[]): string[] =>
+    desc.filter((line) => DATE_FIELDS.some((f) => line.startsWith(`${f}: `)));
+
+  it("採否通知は「通知日」と書く", () => {
+    const desc = descOf({ kind_label: "採否通知", date_field: "通知日" });
+    expect(
+      desc.some((l) => l.startsWith("通知日: ")),
+      "通知日と書いていない",
+    ).toBe(true);
+    expect(
+      desc.some((l) => l.startsWith("締切: ")),
+      "採否通知を締切と呼んだ",
+    ).toBe(false);
+  });
+
+  it("査読結果公開は「公開日」、反論期間開始は「開始日」と書く", () => {
+    const pub = descOf({ kind_label: "査読結果公開", date_field: "公開日" });
+    expect(
+      pub.some((l) => l.startsWith("公開日: ")),
+      "公開日と書いていない",
+    ).toBe(true);
+    expect(
+      pub.some((l) => l.startsWith("締切: ")),
+      "査読結果公開を締切と呼んだ",
+    ).toBe(false);
+    const beg = descOf({ kind_label: "反論期間開始", date_field: "開始日" });
+    expect(
+      beg.some((l) => l.startsWith("開始日: ")),
+      "開始日と書いていない",
+    ).toBe(true);
+    expect(
+      beg.some((l) => l.startsWith("締切: ")),
+      "反論期間開始を締切と呼んだ",
+    ).toBe(false);
+  });
+
+  it("提出する日は「締切」のまま（直し過ぎない）", () => {
+    ["paper", "abstract", "camera_ready", "registration", "rebuttal_end", "supplementary"].forEach(
+      (kind) => {
+        const desc = descOf(recOfKind(kind));
+        expect(
+          desc.some((l) => l.startsWith("締切: ")),
+          `${kind} を締切と言わなくなった`,
+        ).toBe(true);
+      },
+    );
+  });
+
+  it("日付の欄は必ず 1 個（無いも多重もない）", () => {
+    const one = fieldLines(descOf({ kind_label: "採否通知", date_field: "通知日" }));
+    expect(one.length, `日付の欄が ${one.length} 個`).toBe(1);
+    const other = fieldLines(descOf({}));
+    expect(other.length, `日付の欄が ${other.length} 個`).toBe(1);
+    expect(other[0].startsWith("締切: "), "既定の欄が締切では無い").toBe(true);
+  });
+
+  it("ビルド成果の品選びが欄名の正本になっている", () => {
+    // 画面・ビルドの両方で同じ表が動くこと（品書生成は同じ関数を読む）。
+    const built = new Function(
+      "Recommender2",
+      `${jsFunction(siteRuntime("recommender.js"), "kindDateFieldJa")};
+       const Recommender = Recommender2;
+       return (k) => kindDateFieldJa(k);`,
+    )({ kindDateFieldJa: Recommender.kindDateFieldJa } as never) as (kind: unknown) => string;
+    expect(built("notification"), "採否通知の欄名が違う").toBe("通知日");
+    expect(built("review_release"), "査読結果公開の欄名が違う").toBe("公開日");
+    expect(built("rebuttal_start"), "反論期間開始の欄名が違う").toBe("開始日");
+    expect(built("paper"), "論文締切の欄名が違う").toBe("締切");
+    expect(built("journal"), "常時受付の欄名が違う").toBe("締切");
+    // 品書きに無い種別が来ても「締切」以外の噓を付かない。
+    expect(built("whatever"), "知らない種別に別の語を付けた").toBe("締切");
+    expect(built(undefined), "種別が無い行で欄が消えた").toBe("締切");
+  });
+
+  it("実ビルドのカレンダーに、締切ではない日の『締切』が残っていない", () => {
+    const raw = readFileSync(join(site, "deadlines.ics"), "utf8");
+    const NOT_DEADLINE: Record<string, string> = {
+      採否通知: "通知日",
+      査読結果公開: "公開日",
+      反論期間開始: "開始日",
+    };
+    let informative = 0;
+    let deadlines = 0;
+    eventsOf(raw).forEach((ev) => {
+      const desc = descLines(ev.DESCRIPTION);
+      const kindRaw = desc.find((l) => l.startsWith("種別: ")) ?? "";
+      const kind = kindRaw.slice("種別: ".length).split(":")[0].trim();
+      const fields = fieldLines(desc);
+      expect(fields.length, `${ev.SUMMARY?.[0] ?? "?"} の日付の欄が ${fields.length} 個`).toBe(1);
+      const field = fields[0].split(":")[0];
+      const want = NOT_DEADLINE[kind];
+      if (want) {
+        informative += 1;
+        expect(field, `${kind} を ${field} と呼んだ`).toBe(want);
+      } else {
+        // 提出を待つ日と、それ以外の種別（会期など）は締切の欄のままで数える。
+        if (field === "締切") deadlines += 1;
+      }
+    });
+    expect(informative, "締切ではない種別が 1 件も無い（検査が無意味）").toBeGreaterThan(0);
+    expect(deadlines, "締切の欄が 1 件も無い（検査が無意味）").toBeGreaterThan(0);
   });
 });

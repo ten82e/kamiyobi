@@ -642,6 +642,8 @@ export interface DataRecord {
   type: "deadline" | "event";
   categories: string[];
   kind_label: string;
+  /** その日の行を何と呼ぶか（「締切」/「通知日」など – 第 299 回）。種別の正本で決める。 */
+  date_field: string;
   estimated: boolean;
   conf: Conference;
   edition: Edition;
@@ -680,6 +682,7 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
           type: "deadline",
           categories: cats,
           kind_label: labelJa,
+          date_field: Recommender.kindDateFieldJa(dl.kind),
           estimated: ed.estimated,
           conf,
           edition: ed,
@@ -694,6 +697,9 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
           type: "event",
           categories: cats,
           kind_label: "開催",
+          /* 会期は締切ではない（第 299 回）。この行がカレンダーに載ったとき、日付の欄を
+             「締切」にすると締切に見える。 */
+          date_field: "会期",
           estimated: false,
           conf,
           edition: ed,
@@ -3254,7 +3260,7 @@ export function icsEventRows(
       /* 分野を本文に書く（第 292 回）。受信側が `CATEGORIES` を表示しなくても、本文の語は
        * カレンダーの検索に掛かるので「セキュリティだけ」が引ける。語は画面と同じ。 */
       catsJa.length ? `分野: ${catsJa.join("・")}` : "",
-      `締切: ${whenText}`,
+      `${rec.date_field}: ${whenText}`,
       `開催地: ${placeJa || Recommender.unconfirmedLabelJa()}`,
       rec.estimated ? "この日付は上流が推定として出したもので、公式で裏を取れていません" : "",
       link ? `詳細: ${link}` : "",

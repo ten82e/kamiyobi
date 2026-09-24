@@ -1209,6 +1209,14 @@ it("README links every machine-readable output file (data.csv regression)", () =
   }
 });
 
+it("てびきの本文に、内部の語をそのまま書かない", () => {
+  /* 「品書」は `catalog.json` に付けている内部の名前で、置いてよいのはコードのコメントと
+     SPEC の中（第 299 回）。購読手順を読む研究者に通る語ではないので、てびきでは
+     「収録」「`catalog.json`」と書く。 */
+  const readme = readFileSync(join(REPO_ROOT, "README.md"), "utf8");
+  expect(readme.includes("品書"), "てびきの本文に内部の語が混んだ").toBe(false);
+});
+
 it("llms.txt URLs match the published site", () => {
   const config = (loadYaml(readFileSync(join(REPO_ROOT, "config.yaml"), "utf8")) ?? {}) as Record<
     string,
@@ -3661,6 +3669,7 @@ it("toUpcomingMd escapes pipe characters in title and place preserving 7-column 
       type: "deadline" as const,
       categories: ["ai"],
       kind_label: "論文締切",
+      date_field: "締切",
       estimated: false,
       conf: makeConference({
         key: "pipe-conf",
@@ -3692,6 +3701,7 @@ it("toUpcomingMd escapes pipe characters in title and place preserving 7-column 
       type: "event" as const,
       categories: ["ai"],
       kind_label: "開催",
+      date_field: "会期",
       estimated: false,
       conf: makeConference({
         key: "pipe-event",
@@ -3771,6 +3781,7 @@ it("toUpcomingMd escapes pipe characters in URLs and preserves 7 table columns (
       type: "deadline" as const,
       categories: ["networking"],
       kind_label: "論文締切",
+      date_field: "締切",
       estimated: false,
       conf: makeConference({
         key: "test-pipe-url",

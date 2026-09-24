@@ -43,3 +43,17 @@ it("README と SPEC の回の記録に、同じ見出しが二度並んでいな
     expect(dup, `${name} に同じ回の記録が複数並んでいる`).toEqual([]);
   }
 });
+
+it("README と SPEC で、箇条書きが前の項の文末に繋がっていない（第 299 回）", () => {
+  /* 文書に項を足すとき、錨の行の後ろに改行を足さないと次の項が同じ行に潰れる
+     （第 299 回で実測: 追記した 4 箇所が繋がっていて、見出しの字下げが消えて読めた）。
+     Markdown は同じ行の「- 」を項として認めないので、目次も飛べない。 */
+  for (const name of ["README.md", "SPEC.md"]) {
+    const lines = readFileSync(join(ROOT, name), "utf8").split("\n");
+    const glued = lines
+      .map((line, i) => [i + 1, line] as const)
+      .filter(([, line]) => /。\s*-\s+\*\*/.test(line) || /。\s*-\s+[^\d\s]/.test(line))
+      .map(([n, line]) => `${n} 行目: ${line.slice(0, 48)}`);
+    expect(glued, `${name} に繋がった箇条書きがある`).toEqual([]);
+  }
+});

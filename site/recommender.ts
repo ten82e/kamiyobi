@@ -4385,6 +4385,23 @@ const Recommender = (() => {
     return KIND_LABEL_JA[key] || key;
   }
 
+  /* 日付の欄を何と呼ぶか、種別ごとに決める（第 299 回）。カレンダー配信用の `deadlines.ics` は
+   * 本文の行がそのまま表示されるので、欄の名前がその日の呼称になる。実測（2026-09-24・
+   * 2026-08-09 生成ビルド）では 928 個のイベントのうち **167 個**が採否通知・査読結果公開・
+   * 反論期間開始で、人が何かを出す日ではないのに全て「締切: 2026-08-09 09:00（JST）」と
+   * 書かれていた。表に出さない種別でもカレンダーには載る（第 288 回）ので、ここで欄名を決める。
+   * 概要・論文・補足資料・カメラレディ・登録・反論期間終了・常時受付は、そのまま「締切」。 */
+  function kindDateFieldJa(kind: unknown): string {
+    // 検査がビルド成果からこの関数だけを抜き出して動かすので、表は関数の中に置く
+    // （外の変数にすると、抜き出した先で見えなくなる – 第 298 回に実際に踏んだ）。
+    const table: Record<string, string> = {
+      notification: "通知日",
+      review_release: "公開日",
+      rebuttal_start: "開始日",
+    };
+    return table[String(kind ?? "")] || "締切";
+  }
+
   /* 海外の開催地は画面に `Seattle, USA` のように英文字で書かれる（公式表記のまま変えない）。
    * それでも日本人は「シアトル」「米国」と打つので、**同じ場所を指す別表記**を検索語の組に
    * 足す。語自体は画面に出ている形のまま入れる（表示に無い語へ寄せない）。
@@ -7533,6 +7550,7 @@ const Recommender = (() => {
     scheduleOnlyEditions: scheduleOnlyEditions,
     kindLabelJa: kindLabelJa,
     kindLabelTable: () => ({ ...KIND_LABEL_JA }),
+    kindDateFieldJa: kindDateFieldJa,
     verificationStatusLabelTable: () => ({ ...VERIFICATION_STATUS_LABELS_JA }),
     verificationStatusLabelJa: verificationStatusLabelJa,
     roundSearchTerms: roundSearchTerms,
