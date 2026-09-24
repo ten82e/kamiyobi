@@ -3074,7 +3074,10 @@ export function toIcsText(
  * 「戻る」は先頭に 1 つしか無かった（最後の行を読んだ人は約 50 画面ぶん上に戻ら
  * なければならなかった – 2026-09-23 実測: `index.html` へのリンクは文書全体で 1 個、
  * `</table>` のうしろには何も無い）。 */
-const UPCOMING_BACK_LABEL_JA = "&larr; 締切の一覧に戻る";
+/* 画面の表へ戻る口の言い回し。HTML（`upcoming.html`）とマークダウン（`upcoming.md`）で
+ * 同じ語を使うため、矢印を外した本文だけをここに持つ（同じ語を 2 か所に持たない）。 */
+const UPCOMING_BACK_TEXT_JA = "締切の一覧に戻る";
+const UPCOMING_BACK_LABEL_JA = `&larr; ${UPCOMING_BACK_TEXT_JA}`;
 const UPCOMING_TOP_LABEL_JA = "&uarr; 先頭に戻る";
 
 export function toUpcomingHtml(markdown: string, styleBlock = ""): string {
@@ -3317,7 +3320,8 @@ export function toUpcomingMd(
     `対象期間: ${fmtDate(safeNow)} 〜 ${spanEnd}${spanEndWeekday ? `(${spanEndWeekday})` : ""}（生成時刻から ${safeDays} 日先まで。進行中の会期は開始日が生成時刻より前でも載る）`,
     "",
     "> 日付列は締切の公式表記（AoE / UTC / JST 宣言）をそのまま載せている。日本時間への換算と",
-    "> 曜日は `index.html` の表が同じ式で出すので、直近の締切を眺める用途はそちらが早い。",
+    "> 曜日は [日本時間に換算した一覧（`index.html`）](index.html) が同じ式で出すので、",
+    "> 直近の締切を眺める用途はそちらが早い。",
     "> 会期行の日付は開催日そのもの（暦日）で、時刻は持たない。",
     "",
     // 列の名前だけでは読めない（特に短縮した見出し）。この表を単体で開いた人が、
@@ -3331,7 +3335,14 @@ export function toUpcomingMd(
     "|---|---|---|---|---|---|---|",
   ];
   if (rows.length === 0) rows.push("| - | - | 該当なし | - | - | - | - |");
-  return `${[...head, ...rows].join("\n")}\n`;
+  /* 1,000 行を超える表なので、最後まで読んだ人にも出口を置く（`upcoming.html` と同じ言い回しを
+   * 同じ正本から使う）。GitHub の生的な表示では、この名前はコードspanになるだけで辿れない。 */
+  const tail = [
+    "",
+    `[${UPCOMING_BACK_TEXT_JA}](index.html) ―― 日本時間への換算・残り日数・絞り込みはそちら。` +
+      ` この表は生成時刻の時点で直近 ${String(safeDays)} 日を並べた静的な快照です。`,
+  ];
+  return `${[...head, ...rows, ...tail].join("\n")}\n`;
 }
 
 export function toLlmsTxt(config: Record<string, unknown> | null | undefined): string {
