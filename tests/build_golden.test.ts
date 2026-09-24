@@ -1186,9 +1186,9 @@ it("llms.txt indexes generated outputs", () => {
   }
   /* 実在しない出力を載せない見張り（第 242 回）。`deadlines.ics` は第 266 回から実在するので、
      カレンダーのファイル名が 1 本きりであることを見る（増えたのに索引に無い、を許さない）。 */
-  expect(text.match(/[\w.-]+\.ics/g), "llms.txt に出る .ics が一覧と違う").toEqual([
-    "deadlines.ics",
-  ]);
+  /* 別の名前のカレンダーのファイルが増えたのに索引から抜ける、を許さない。同じ名前は説明に
+     何度出ても良いので、名前の種類で比べる。 */
+  expect([...new Set(text.match(/[\w.-]+\.ics/g))]).toEqual(["deadlines.ics"]);
 });
 
 it("README links every machine-readable output file (data.csv regression)", () => {

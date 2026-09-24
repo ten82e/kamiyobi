@@ -330,7 +330,7 @@ describe("ビルド成果物に出るカレンダーのファイル", () => {
   it("llms.txt の出力一覧に 1 本だけ載る", () => {
     const txt = readFileSync(join(site, "llms.txt"), "utf8");
     expect(txt).toContain("deadlines.ics");
-    expect(txt.match(/deadlines\.ics/g)?.length).toBe(1);
+    expect(txt.match(/^- deadlines\.ics：/gm)?.length, "出力一覧の行が 1 本ではない").toBe(1);
   });
 });
 
@@ -377,7 +377,73 @@ describe("画面のカレンダーへの導線（第 266 回）", () => {
 
   it("リンクの行と閉じタグが素直に対応している（検査が読める形）", () => {
     const p = page();
-    expect(p.match(/<a [^>]*href="deadlines\.ics"[^>]*>/g)?.length, "導線が 2 本有る").toBe(1);
+    expect(p.match(/href="deadlines\.ics"/g)?.length, "導線が 1 本も無い").toBeGreaterThanOrEqual(
+      1,
+    );
+    expect(p.match(/id="icsLink"/g)?.length, "押せる導線が 1 本ではない").toBe(1);
     expect(p, "閉じタグが折り畳まれて読めない").not.toMatch(/<\/a\s*\n\s*>/);
+  });
+});
+
+/* ------------------------------------------------  出口の在りかを言う場所（第 267 回） */
+
+describe("出口の在りかを言う場所が、実物とずれていない", () => {
+  function page(): string {
+    return readFileSync(join(site, "index.html"), "utf8");
+  }
+
+  it("JavaScript が動かないときの案内に、カレンダーの出口が有る（数を言い切らない）", () => {
+    const p = page();
+    const block = /<noscript>([\s\S]*?)<\/noscript>/.exec(p);
+    expect(block, "案内ブロックが無い").not.toBeNull();
+    const inner = String(block![1]);
+    /* ここは「2 つのファイルで直接読めます」と数を言い切っていた場所である。物を足すたびに
+       噓になるので、数を書かない形にしてある（第 266 回で `.ics` を足したときにも直さなかった）。 */
+    expect(
+      inner.match(/[一二三四五六七八九十0-9]+ つのファイル/),
+      "ファイルを数で言い切っている（次に物を足すと噓になる）",
+    ).toBeNull();
+    const link = /<a href="deadlines\.ics"[^>]*>deadlines\.ics<\/a>/.exec(inner);
+    expect(link, "JavaScript が動かない人への案内にカレンダーが無い").toBeTruthy();
+    expect(link![0], "どんな形かを書いていない").toMatch(/終日|JST/);
+    expect(inner, "カレンダーの意味（表が見えない人に効く）を書いていない").toContain("カレンダー");
+  });
+
+  it("静的な直近一覧のページにも出口が有り、指す先が実在する", () => {
+    const up = readFileSync(join(site, "upcoming.html"), "utf8");
+    const link =
+      /締切を自分のカレンダーに入れるには <a href="deadlines\.ics">deadlines\.ics<\/a>（([^<]*)/.exec(
+        up,
+      );
+    expect(link, "upcoming.html にカレンダーへの導線が無い").toBeTruthy();
+    expect(link![1], "終日であること（時間帯を作らない）を書いていない").toContain("終日");
+    expect(link![1], "このページの絞り込みが無いことを隠している").toContain("絞り込み");
+    /* 先頭の案内の文は、サブパス配信の下で動くよう相対パスで、しかも実在する物だけを
+       指す（ページの本体は会議の公式ページへの外部リンクなので、そこは数えない）。 */
+    const lead = /<p>([\s\S]*?)<\/p>/.exec(up);
+    expect(lead, "先頭の案内の文が無い").not.toBeNull();
+    const hrefs = [...String(lead![1]).matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
+    expect(hrefs.length, "案内のリンクが読めない").toBeGreaterThanOrEqual(4);
+    for (const href of hrefs) {
+      expect(href, `絶対パスのリンクがある: ${href}`).not.toMatch(/^(?:\/|https?:)/);
+      expect(existsSync(join(site, href)), `案内が指す ${href} がビルド先に無い`).toBe(true);
+    }
+  });
+
+  it("llms.txt が、画面の中にカレンダーの導線があると正直に書いている", () => {
+    const txt = readFileSync(join(site, "llms.txt"), "utf8");
+    const line = txt.split("\n").find((l) => l.startsWith("- index.html："));
+    expect(line, "index.html の説明が無い").toBeTruthy();
+    expect(line!, "索引が画面の導線を 2 つのままと言う（実物は 3 つ）").toContain(
+      "`deadlines.ics` への導線",
+    );
+  });
+
+  it("説明文の全角句読点のうしろに半角空白を置かない（生成文の見た目の乱れ）", () => {
+    const txt = readFileSync(join(site, "llms.txt"), "utf8");
+    const bad = [...txt.matchAll(/[、。」）：] (?=[\u3041-\u30ff\u4e00-\u9fff])/g)].map((m) =>
+      txt.slice(Math.max(0, (m.index ?? 0) - 20), (m.index ?? 0) + 14),
+    );
+    expect(bad, `全角の読点のうしろに空白がある: ${bad.join(" / ")}`).toEqual([]);
   });
 });

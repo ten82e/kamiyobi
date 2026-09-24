@@ -239,7 +239,7 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
   "index.html":
     "画面そのもの。`app.js` をモジュールとして読み、`app.js` の側が `recommender.js`・" +
     "`recommendation-core.js`・`publish.js` を import する（2026-08-09 生成ビルドの import 文で実測）。" +
-    "JavaScript が動かないときの案内と、`data.csv`・`upcoming.md` への導線を内側に持つ。" +
+    "JavaScript が動かないときの案内と、`data.csv`・`upcoming.md`・`deadlines.ics` への導線を内側に持つ。" +
     "人間の読み方はこのファイルではなく、画面の中の「見方のてびき」に書く。",
   "data.json": "正規化データ全体（機械可読の正）。",
   "health.json": "配信前ゲートにも使う確定/推定締切とソース状態の健全性レポート。",
@@ -260,7 +260,7 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
     " 方は機械が読む用のまま残してある。",
   "deadlines.ics":
     "締切をカレンダーに入れるための 1 本（RFC 5545）。1 締切 = 1 イベントの終日（JST の暦日）で、" +
-    " 画面の絞り込みは効かない。時刻未確認と推定はそのまま書く（第 266 回）。",
+    "画面の絞り込みは効かない。時刻未確認と推定はそのまま書く（第 266 回）。",
   "llms.txt": "このファイル。機械が読む索引で、人間の操作説明は画面の中に書く。",
   "icon.svg": "ブラウザのタブとブックマークに出すアイコン（SVG）。",
   ".nojekyll":
@@ -3138,7 +3138,9 @@ export function toUpcomingHtml(markdown: string, styleBlock = ""): string {
     '<main class="wrap">',
     '<p><a href="index.html">&larr; 締切の一覧に戻る</a>（同じ収録内容の一覧で、日本時間への' +
       "換算と残り日数も出します。機械が読む形のマークダウンは " +
-      '<a href="upcoming.md">upcoming.md</a>、全件は <a href="data.csv">data.csv</a> にあります）。</p>',
+      '<a href="upcoming.md">upcoming.md</a>、全件は <a href="data.csv">data.csv</a> にあります。' +
+      '締切を自分のカレンダーに入れるには <a href="deadlines.ics">deadlines.ics</a>（今後の締切が全て、' +
+      "1 件 = 1 つの終日（JST の暦日）で、このページの絞り込みはありません）。</p>",
     '<div class="tablewrap">',
     '<table class="upcoming">',
     out.join("\n"),
