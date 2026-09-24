@@ -2691,6 +2691,65 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* SPEC §7: 0 件のとき、原因になりやすい条件をそのまま並べる。
    * 期間窓・過去非表示・「開催行は表に出さない」が重なると、収録が無いのだと
    * 誤解して離脱するため、いま外せる条件を実名で示す。*/
+  /* 名前は品書の名簿に見えるのに、いま読み込んでいるデータに締切の行が 1 本も無い会議を数える
+   * （第 294 回）。実測（2026-08-09 生成ビルド）で品書の会議 687 件のうち 248 件が締切行を 1 本も
+   * 持たない – NETYS・FORTE・CoNLL など、締切がデータの切れ目より先にある会議たちで、名前で引くと
+   * 0 件になる。行を持つ会議はここから除く（収録の全体を読んだあとは行が出るので、この話が消える）。 */
+  function nameOnlyConferenceMatch(
+    query: string,
+    list: AppRow[],
+  ): { example: string; count: number; terms: string[] } | null {
+    const terms = String(query || "")
+      .split(/\s+/u)
+      .map((t) => t.trim())
+      .filter((t) => t.length >= 2);
+    if (!terms.length) return null;
+    const withRows: Record<string, boolean> = {};
+    list.forEach((row) => {
+      const key = typeof row?.conf?.key === "string" ? row.conf.key : "";
+      if (key) withRows[key] = true;
+    });
+    /* 語が名前の途中に隠れただけ（`sc` が `science` を含む）を名前の語として数えない – 英数字の語は
+       前後が区切りであることを要求する。それ以外の語（日本語など）は部分一致で見る。 */
+    const matchesName = (term: string, hay: string): boolean => {
+      // 語の境界を見る目（この関数の中で持つ – 抜いた先でも動くように）。
+      const wordChar = /[a-z0-9]/u;
+      const t = term.toLowerCase();
+      if (!/^[a-z0-9][a-z0-9 .+-]*$/u.test(t)) return hay.indexOf(t) >= 0;
+      let at = hay.indexOf(t);
+      while (at >= 0) {
+        const before = at > 0 ? hay.charAt(at - 1) : " ";
+        const after = at + t.length < hay.length ? hay.charAt(at + t.length) : " ";
+        /* 前後が英数字でなければ、その語は名前の中で独立に立っている。 */
+        if (!wordChar.test(before) && !wordChar.test(after)) return true;
+        at = hay.indexOf(t, at + 1);
+      }
+      return false;
+    };
+    let count = 0;
+    let allMatches = 0;
+    let example = "";
+    const hitTerms: string[] = [];
+    DATA.conferences.forEach((conf) => {
+      if (!conf || typeof conf.key !== "string" || withRows[conf.key]) return;
+      const hay =
+        `${conf.acronym || ""} ${conf.title || ""} ${conf.full_name || ""} ${conf.key}`.toLowerCase();
+      const hits = terms.filter((term) => matchesName(term, hay));
+      if (!hits.length) return;
+      count += 1;
+      /* 名簿の例として挙げるのは、打った語すべてに当たる会議が 1 件だけるときにする –
+         `CoNLL 2027` に別の会議の名前を挙げても、人はそれを信じない（件数だけを出す）。 */
+      if (hits.length === terms.length) {
+        allMatches += 1;
+        example = String(conf.acronym || conf.title || conf.key);
+      }
+      hits.forEach((term) => {
+        if (hitTerms.indexOf(term) < 0) hitTerms.push(term);
+      });
+    });
+    return count ? { example: allMatches === 1 ? example : "", count, terms: hitTerms } : null;
+  }
+
   function emptyDeadlineHint(filter: {
     window: string;
     past: boolean;
@@ -2711,6 +2770,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     catalogConferences: number;
     // 打った日付と、いま読み込んでいるデータの果て（第 293 回）。
     queryDaySpan?: { first: string; last: string; label: string } | null;
+    // 名簿に在るのに締切の行が無い会議（第 294 回）。
+    nameOnly?: { example: string; count: number; terms: string[] } | null;
     loadedLastDay?: string;
     recordLastDay?: string;
     horizonDays?: number;
@@ -2791,10 +2852,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /* 打った日付が、いま読み込んでいるデータの果てより先（第 293 回）。「締切まで」の窓も
        狭いときは、そっちも外す価値があるので、この場合だけ他の案内に重ねる（窓を広げずに
        全体を読み込んでも増えないので、原因を一つに絞れない）。 */
+    const horizonDay = filter.loadedLastDay || "";
     let horizonNote = "";
     if (matchedRows === 0) {
       const span = filter.queryDaySpan;
-      const horizonDay = filter.loadedLastDay || "";
       // URL を貼った人を日付の話に引きずり込まない（語の分解と同じ判断 – 第 236 回）。
       if (span?.first && !filter.urlQuery && horizonDay && span.first > horizonDay) {
         const recordLast = filter.recordLastDay || "";
@@ -2811,14 +2872,37 @@ function semanticOutput(value: unknown): value is SemanticOutput {
               (recordLast ? `（収録の中で一番遠い締切は ${recordLast} です）。` : "。");
       }
     }
+    /* 名前は名簿に在るのに締切が行に無い会議（第 294 回）。「別の語で試す」も「過去の締切も
+       表示」も、この人には効かない – 締切がデータの切れ目より先にしかない。 */
+    let nameNote = "";
+    if (filter.nameOnly?.count) {
+      const named = filter.nameOnly.example
+        ? `打った語に似た名前の会議（${filter.nameOnly.example}）は、収録の名簿に見えます。`
+        : `打った語に似た名前の会議が、収録の名簿に ${countJa(filter.nameOnly.count)} 件見えます。`;
+      nameNote =
+        ` ${named}` +
+        "ただしその締切は、いま読み込んでいるデータに 1 本も入っていません" +
+        (horizonDay
+          ? `（一覧に出せる締切は ${horizonDay} まで – 締切がそれより先の会議は、名簿だけが残っています）。`
+          : "（締切がデータの切れ目より先の会議は、名簿だけが残っています）。") +
+        // 収録の側にも締切が 1 本も無い会（実測 248 件中 74 件）が在るので、「出る」とは言わない –
+        // 押せば全体の締切から同じ語を引き直すとまでしか言わない。
+        "この欄の「収録の全体を読み込む」を押すと、収録の全体の締切から同じ語を引き直します。";
+    }
     const horizonOnly = Boolean(horizonNote) && (!filter.window || filter.window === "all");
+    const nameOnlyOnly = Boolean(nameNote) && (!filter.window || filter.window === "all");
     // URL の検索語を語に分解して「〜は収録データにも見当たりません」と言うのは誤解になる
     // （分解された語はドメインの一部で、検索の失敗理由ではない）。
     const terms =
       !filter.urlQuery && !columnNote && !uiNote && !dayRangeNote && filter.termCounts.length > 1
         ? filter.termCounts
         : [];
-    const deadTerms = terms.filter((t) => t.count === 0).map((t) => t.term);
+    const deadAll = terms.filter((t) => t.count === 0).map((t) => t.term);
+    /* 名簿に在る語を「収録データにも見当たりません」と言うのは噓（第 294 回 – 実測で
+       `NETYS 2027` に「NETYS」をその語として挙げていた – NETYS は品書の名簿に在り、収録には
+       2028-03-30 の締切が在る）。名簿に在る語は上の案内が引き取る。 */
+    const nameTerms = filter.nameOnly ? filter.nameOnly.terms : [];
+    const deadTerms = deadAll.filter((t) => nameTerms.indexOf(t) < 0);
     let termNote = "";
     if (deadTerms.length) {
       termNote =
@@ -2847,7 +2931,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         catalogNote ||
         deadTerms.length ||
         urlNote ||
-        horizonOnly,
+        horizonOnly ||
+        nameOnlyOnly,
     );
 
     /* 0 件案内はこれまで「外せる条件」の名前だけを並べていた。同じ画面上の件数欄は
@@ -2917,7 +3002,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         );
       }
     });
-    if (trimmedQuery && !specific && !columnNote && !uiNote && !dayRangeNote && !horizonNote) {
+    if (
+      trimmedQuery &&
+      !specific &&
+      !columnNote &&
+      !uiNote &&
+      !dayRangeNote &&
+      !horizonNote &&
+      !nameNote
+    ) {
       if (altTips.length) {
         altTips.forEach((t) => {
           tips.push(t);
@@ -2930,11 +3023,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.html に載せています。";
     if (specific) {
       return tips.length
-        ? `${base}${horizonNote}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${catalogNote}${urlNote}${termNote} 外せる条件: ${tips.join(" / ")}。`
-        : `${base}${horizonNote}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${catalogNote}${urlNote}${termNote}`;
+        ? `${base}${horizonNote}${nameNote}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${catalogNote}${urlNote}${termNote} 外せる条件: ${tips.join(" / ")}。`
+        : `${base}${horizonNote}${nameNote}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${catalogNote}${urlNote}${termNote}`;
     }
-    if (!tips.length) return `${base}${horizonNote}${termNote} ${meetingNote}`;
-    return `${base}${horizonNote}${termNote} 多いのは ${tips.join(" / ")}。${meetingNote}`;
+    if (!tips.length) return `${base}${horizonNote}${nameNote}${termNote} ${meetingNote}`;
+    return `${base}${horizonNote}${nameNote}${termNote} 多いのは ${tips.join(" / ")}。${meetingNote}`;
   }
 
   /**
@@ -4315,6 +4408,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             // 呼ばないのは、この関数の検査ハーネスが `Recommender` の一部分しか持たないため）。
             queryDaySpan: Recommender.queryDaySpanJa(searchQuery),
             loadedLastDay: farthestRowDayJa(rows),
+            // 名簿に在るのに締切の行が 1 本も無い会議（第 294 回）。`rows` は絞り込み前なので、
+            // 「読み込めているデータに行が在るか」で判断できる（読み込んだあとは行が出る）。
+            nameOnly: nameOnlyConferenceMatch(searchQuery, rows),
             recordLastDay: DATA.calendar ? DATA.calendar.last_day : "",
             horizonDays: DATA.window ? DATA.window.upcoming_days : 0,
           }
