@@ -3547,14 +3547,25 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return `さらに表示 (残り ${countJa(total - drawnCount)} 件)`;
   }
 
-  /** 「さらに表示」の表示可否とラベルを、描画済み件数と総数からそろえる。 */
+  /* 「すべて表示」のラベル。「さらに表示」と同じ形にしておく（2 つ並んだときに、
+   * 片方だけ言い方が違うと違いが読めない）。40 件ずつの追加を 11 回押させるのは
+   * 現実的でないので、残りを一気に入れる口を同じ場所に出す（印刷では全行出る）。 */
+  function showAllButtonLabel(drawnCount: number, total: number): string {
+    return `すべて表示 (残り ${countJa(total - drawnCount)} 件)`;
+  }
+
+  /** 「さらに表示」と「すべて表示」の表示可否・ラベルを、描画済み件数と総数からそろえる。 */
   function updateMoreButton(drawnCount: number, total: number) {
     const btn = $("more");
+    const all = $("showAll");
     if (drawnCount < total) {
       btn.hidden = false;
       btn.textContent = moreButtonLabel(drawnCount, total);
+      all.hidden = false;
+      all.textContent = showAllButtonLabel(drawnCount, total);
     } else {
       btn.hidden = true;
+      all.hidden = true;
     }
   }
 
@@ -3568,6 +3579,26 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
     cardsDrawn = end;
     updateMoreButton(cardsDrawn, recommendationList.length);
+  }
+
+  /** 「すべて表示」: 残りを一気に入れる。推薦カードでも表でも、続きの出し方は
+   * 「さらに表示」と同じ関数を使う（式を 2 つ持つと片方だけ古くなる）。 */
+  function drawAll() {
+    let guard = 0;
+    while (guard <= shown.length + recommendationList.length) {
+      const before = !$("recommendationCards").hidden ? cardsDrawn : drawn;
+      if (!$("recommendationCards").hidden) {
+        if (cardsDrawn >= recommendationList.length) break;
+        drawMoreCards();
+      } else {
+        if (drawn >= shown.length) break;
+        drawMore();
+      }
+      // 進まなかったら無限ループにしない（`shown` が空のときにあり得る）。
+      const after = !$("recommendationCards").hidden ? cardsDrawn : drawn;
+      if (after <= before) break;
+      guard += 1;
+    }
   }
 
   function drawMore() {
@@ -4863,6 +4894,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 出ないので、開いた人一緒の画面をそのまま共有できるようにする（読み取り側は `readUrl`）。 */
   $("helpPanel").addEventListener("toggle", () => writeUrl());
   $("more").addEventListener("click", drawMore);
+  $("showAll").addEventListener("click", drawAll);
   // 0 件時の「条件をまとめて外す」。早め絞り込みのボタンは自分の条件だけを出し入れする
   // 切り替えなので、まとめて外す役はここで状態を戻して担う。
   // 一覧の意味を変える「過去の締切も表示」は利用者の選択として残す。

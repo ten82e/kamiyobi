@@ -82,8 +82,13 @@ it("論文から探すの候補も「さらに表示」で全件に到達する�
   const script = [
     `const countJa = (${jsFunction(runtime, "countJa")});`,
     "const more = { hidden: null, textContent: '' };",
-    "const $ = () => more;",
+    "const showAll = { hidden: null, textContent: '' };",
+    /* 画面には「さらに表示」と「すべて表示」の 2 つのボタンが並ぶので、返す物は id で
+     * 分ける。1 つの物を返すと、のちに足した側の文言が `more` に写ってしまい、この検査が
+     * 画面に無い文言を待つ形になる（第 272 回の実発生）。 */
+    "const $ = (id) => (id === 'showAll' ? showAll : more);",
     `const moreButtonLabel = ${jsFunction(runtime, "moreButtonLabel")};`,
+    `const showAllButtonLabel = ${jsFunction(runtime, "showAllButtonLabel")};`,
     `const updateMoreButton = ${jsFunction(runtime, "updateMoreButton")};`,
     "const seen = [];",
     "for (const [drawn, total] of [[0, 200], [20, 200], [180, 200], [200, 200]]) {",
