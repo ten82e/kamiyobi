@@ -3033,10 +3033,21 @@ export function toIcsText(
     const title = titleWithYear(conf.title, ed.year);
     const summary = rec.estimated ? `${title}：${kind}（推定）` : `${title}：${kind}`;
     const link = ed.link || conf.link || "";
+    /* 開催地を、カレンダーに載る行にも書く（第 288 回）。実測（2026-08-09 生成ビルド）で
+     * 928 個の `VEVENT` の `LOCATION` は 1 個も無く、`DESCRIPTION` も会議・種別・締切・
+     * 詳細・収録 だけだった。出張の段取りはカレンダーの側で読むので、国内か海外かを
+     * 確かめにサイトを再び開くしかない。語は `upcoming.md` と同じ手の同じ値（書き写しで
+     * ズレない – 県名の補いも国名の日本語化も同じ正本）。
+     * 出ていない行は `LOCATION` を **書かない**: カレンダーの場所欄に「未確認」は
+     * 場所として表示されるので、無い場所を渡すよりマシ（本当のことは下の `開催地:` に書く）。 */
+    const placeJa = String(
+      Recommender.placeJa(Recommender.placeWithPrefectureJa(ed.place)) ?? "",
+    ).trim();
     const desc = [
       `会議: ${title}`,
       `種別: ${kind}`,
       `締切: ${whenText}`,
+      `開催地: ${placeJa || Recommender.unconfirmedLabelJa()}`,
       rec.estimated ? "この日付は上流が推定として出したもので、公式で裏を取れていません" : "",
       link ? `詳細: ${link}` : "",
       `収録: ${ICS_CAL_NAME_JA}（データ生成: ${stamp ? `${stamp.human}（JST）` : "未確認"}）`,
@@ -3072,6 +3083,8 @@ export function toIcsText(
         `SUMMARY:${icsEscapeText(summary)}`,
         `DESCRIPTION:${icsEscapeText(desc.join("\n"))}`,
         link ? `URL:${String(link).trim()}` : "",
+        // 並び替えは上の `SUMMARY`（本文の 6 行目）を見るので、挿れるのはうしろ側。
+        placeJa ? `LOCATION:${icsEscapeText(placeJa)}` : "",
         "TRANSP:TRANSPARENT",
         "END:VEVENT",
       ].filter(Boolean),
@@ -3123,7 +3136,7 @@ const UPCOMING_BACK_LABEL_JA = `&larr; ${UPCOMING_BACK_TEXT_JA}`;
 const UPCOMING_TOP_LABEL_JA = "&uarr; 先頭に戻る";
 
 /* `upcoming.html` の説明文。見出し（`heading`）と列の名前（`pageColumns`）から作る –
-   同じ語を手写しすると、表の語だけ変わったときに説明が噓を書く（第 276 回の `<caption>` と
+   同じ語を書き写すと、表の語だけ変わったときに説明が噓を書く（第 276 回の `<caption>` と
    おなじ方針）。日付・残りなどの意味はこのページ自身の但し書きが既に書いている。 */
 function pageDescription(heading: string, columns: string[]): string {
   const title = heading.trim() || "直近の締切と会期";

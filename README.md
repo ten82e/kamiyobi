@@ -32,7 +32,7 @@
 | `https://ten82e.github.io/kamiyobi/health.json` | 確定/推定締切、ソース失敗、警告数、カテゴリ件数、必須会議の健全性レポート |
 | `https://ten82e.github.io/kamiyobi/publish.json` | 公開成果物のハッシュ、`content_id` / `build_id`、元 commit、入力 hash、実行元、build 時刻・Node 版・offline/cache 方針、`semantic_status`。公開物の再現元を示す |
 
-| `https://ten82e.github.io/kamiyobi/deadlines.ics` | 締切をカレンダーに入れる 1 本（RFC 5545）。終日（JST の暦日）で 1 締切 = 1 イベント。購読先に指定すると毎日置き換わる |
+| `https://ten82e.github.io/kamiyobi/deadlines.ics` | 締切をカレンダーに入れる 1 本（RFC 5545）。終日（JST の暦日）で 1 締切 = 1 イベント。各行に開催地（`LOCATION`）も入るので、カレンダーのうえで国内か海外かが分かります。購読先に指定すると毎日置き換わる |
 - 公開している平坦な表 [`data.csv`](https://ten82e.github.io/kamiyobi/data.csv) に、**種別を日本語で
   書いた欄 `kind_ja` を 1 本足しました**（列は 25 本 → 26 本。順序で読む側を壊さないよう末尾に追加）。
   以前は `kind`（`paper` などの英語のキー）と `label`（上流の自由文で、'Paper submission' と
@@ -47,6 +47,11 @@
 - 「投稿先を探す」の内訳に付く**当たり方の説明**の字を大きくしました。以前はマウスを乗せたとき
   だけ出る注記にしか無く、常に出るようにした先が画面で最も小さい 11.2px でした（2026-09-24 実測）。
   日本語を読む 4 箇所を 12.48px の床に揃えています。行の連番（数字だけ）は小さいままです。
+- カレンダーに入れる締切（[`deadlines.ics`](https://ten82e.github.io/kamiyobi/deadlines.ics)）に、
+  **開催地**を載せました。これまで 928 個のイベントに `LOCATION` は 1 個も無く、説明欄も
+  会議・種別・締切・詳細・収録 だけだったので、出張の段取りをカレンダーで読む人は国内か海外かを
+  確かめにサイトを再び開く必要がありました。サイトと同じ語（県名を補い、国名まで日本語）で
+  載せ、場所が判らない行には `LOCATION` を置かず説明欄の `開催地: 未確認` だけにしています。
 - 静的な一覧（`upcoming.md` / `upcoming.html`）の日付欄に、**日本時間での読み**を添えました。
   これまで公式表記（AoE・UTC・JST 宣言）だけを出して、換算は画面の側が早いと但し書きで
   書いていましたが、実測で 1,126 行のうち **497 行は日本時間に直すと日が変わります**
