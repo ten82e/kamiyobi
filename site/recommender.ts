@@ -4599,9 +4599,8 @@ const Recommender = (() => {
       }
       /* 「明日以降」「来週から」は「それより後」の意味で、一日ぶんの語に寄せると嘘に
        * なる（第 328 回）。なので絞り込まず、並び方と絞れる欄の場所を言う。 */
-      const onward = /^(.+?)(?:以降|から)$/.exec(token);
-      if (onward) {
-        const stem = onward[1];
+      const stem = より後を剥がす語Ja(token);
+      if (stem) {
         const dayOffset = RELATIVE_DAY_OFFSETS_JA[stem];
         const onwardWeek = weekDayTermsJa(stem, nowMs);
         let first = "";
@@ -4626,6 +4625,12 @@ const Recommender = (() => {
         } else {
           first = 以降の初日Ja(stem, nowMs);
         }
+        /* 暦日を打って其れより後と書いた形は上の機械が**絞る**ので、此處で「絞りません」と
+         * 書くのは噓になる（件の数欄に解けた範囲が出る – 第 413 回）。 */
+        if (暦日より後の語Ja(token, nowMs).length) return;
+        /* 暦に無い日を打たれた形（`2月30日以降`）は其の日を日めくりの語に出来ないので、
+         * 其の日を名乗る案内を書かない（在ら無い日を画面に出さない – 第 413 回）。 */
+        if (first && 暦日に解くJa(first) === null) first = "";
         if (first) {
           notes.push(
             `${token} = ${first}以降のこと – 初期画面は締切の近い順に並んでいて、その以降の締切も並びます（締切までの日数で絞るなら上の『締切まで』の欄が確かです）`,
@@ -7031,6 +7036,45 @@ const Recommender = (() => {
     return null;
   }
 
+  /** `8月22日以降` `9月15日から` のやうな「其れより後」の言い方から、前の語を取り出す
+   * （第 413 回 – 当たり方を作る機械と件の数欄の案内が同じ表を読む為の一個所）。 */
+  function より後を剥がす語Ja(語: string): string {
+    const 当たり = /^(.+?)(?:以降|以後|以来|この先|から)$/.exec(語);
+    return 当たり ? 当たり[1] : "";
+  }
+
+  /** `8月22日以降` のやうに暦日を打って其れより後と書く形を、其の日から暦年の終わりまでの
+   * 語に解く（第 413 回）。月の語で打つ `9月以降` が暦月の並びで受けるのと同じ決まりで、
+   * 其の日のある月は暦日、其れ以降の月は暦月で受ける（其の日からの暦日を全部並べると
+   * 二か月を超える幅に成り、其の方の表の限界を超える）。 */
+  function 暦日より後の語Ja(語: string, nowMs: number): string[] {
+    const 芯 = より後を剥がす語Ja(語);
+    if (!芯) return [];
+    const 解 = 暦日に解くJa(芯);
+    /* 月を打た無い日（`22日以降`）と暦に無い日（`2月30日以降`）は解かない – 月が決まらない、
+     * その日は在り得ない（締切の推測はしない）。 */
+    if (!解) return [];
+    const 基準日時 = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
+    const 並び = (年: number, 月: number, 日: number) => 年 * 10000 + 月 * 100 + 日;
+    let 年 = 解[0] >= 0 ? 解[0] : 基準日時.getUTCFullYear();
+    const 月 = 解[1];
+    const 日 = 解[2];
+    /* 年を打た無い形で其の月日が既に過ぎて居る時は翌年へ繰る（暦日の幅と同じ決まり）。 */
+    const 基準日 = 並び(
+      基準日時.getUTCFullYear(),
+      基準日時.getUTCMonth() + 1,
+      基準日時.getUTCDate(),
+    );
+    if (解[0] < 0 && 並び(年, 月, 日) < 基準日) 年 += 1;
+    const 語々: string[] = [];
+    const 末日 = new Date(Date.UTC(年, 月, 0)).getUTCDate();
+    for (let 日付 = 日; 日付 <= 末日; 日付 += 1) 語々.push(`${年}年${月}月${日付}日`);
+    if (月 < 12) {
+      for (const 暦月 of monthSpanTerms([年, 月 + 1], [年, 12])) 語々.push(暦月);
+    }
+    return 語々;
+  }
+
   /** 日の語を幅で打たれた形から暦日の語（`2026年8月10日`）の組へ展開する。 */
   function dayRangeTermsJa(token: string, nowMs: number): string[] {
     /* 幅の数えの漢数字は算用数字に寄せてから解く（第 392 回 – `明日から3日` は解けるのに
@@ -7038,6 +7082,12 @@ const Recommender = (() => {
      * 其の方の語をそのまま読むここで解けなかった – 件数欄の案内も其の方に従う）。 */
     const normalized = 幅の漢数字を寄せるJa(searchNormalize(token));
     if (!normalized) return [];
+    /* `8月22日以降` のやうに暦日を打って其れより後と書く形は先に受ける（第 413 回）。
+     * 其の日からの暦日を並べると二か月を超える幅に成るので、其の日のある月は暦日、
+     * 其れ以降の月は暦月で受ける – 下の幅の機械（暦日二つ）より先に置くのは、
+     * `2026-08-20から` のやうに区切り文字を含む暦日の形を幅と取り違える為。 */
+    const より後 = 暦日より後の語Ja(normalized, nowMs);
+    if (より後.length) return より後;
     const hit = DAY_RANGE.exec(normalized);
     /* 暦日を二つ並べた形以外に、相対語を二つ並べた幅を受ける（第 373 回 – 其の方の語は其処其処の
        規則が受けるので、其の方の語の解ける形だけここで受ける）。 */

@@ -254,6 +254,9 @@ export const SEARCH_CANON = (() => {
       "暦日に解くJa",
       /* 幅の数えの漢数字（第 392 回）– 上の寄せと `dayRangeTermsJa` が呼ぶ。 */
       "幅の漢数字を寄せるJa",
+      /* 暦日を打って其れより後と書く形（第 413 回）– `dayRangeTermsJa` が呼ぶ。 */
+      "より後を剥がす語Ja",
+      "暦日より後の語Ja",
       "dayRangeTermsJa",
       "dayRangePairs",
       "暦日の語から解くJa",
