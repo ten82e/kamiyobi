@@ -159,6 +159,7 @@ export const SEARCH_CANON = (() => {
     ["OVERSEAS_HEADS_JA", /const OVERSEAS_HEADS_JA =[\s\S]*?\];/],
     ["OVERSEAS_COVERAGE_NOTE_TAIL_JA", /const OVERSEAS_COVERAGE_NOTE_TAIL_JA =[\s\S]*?;/],
     // 地方名 → 都道府県 + 開催市（`関東` で `Tokyo, Japan` を引く）の定義。
+    ["DAY_RANGE", /const DAY_RANGE = new RegExp\([\s\S]*?\);/],
     ["PREFECTURE_CITIES_JA", /const PREFECTURE_CITIES_JA[\s\S]*?\];/],
     ["CITIES_BY_PREFECTURE", /const CITIES_BY_PREFECTURE[\s\S]*?\};/],
     ["QUERY_EDGE_PUNCTUATION", /const QUERY_EDGE_PUNCTUATION = [^\n]*;/],
@@ -207,6 +208,11 @@ export const SEARCH_CANON = (() => {
       "monthTokenToYearMonth",
       "monthRangeTermsJa",
       "monthSpanTerms",
+      /* 暦日を二つ並べた幅の展開（第 371 回）。抜いた関数は独立ではないので `ReferenceError`
+       * になる（上の月の展開と同じ理由 – tests/built_golden.test.ts で実測）。 */
+      "暦日に解くJa",
+      "dayRangeTermsJa",
+      "dayRangePairs",
       "seasonSpanJa",
       "seasonInsideSpan",
       "seasonTermsJa",

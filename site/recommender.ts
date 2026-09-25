@@ -6041,6 +6041,99 @@ const Recommender = (() => {
     return pairs;
   }
 
+  /* 暦日を二つ並べて打つ幅（第 371 回）。実測（2026-10-24 – 実ビルドの品書 872 行・固定時刻
+   * 2026-08-09T00:00:00Z）で、日の語が単体で通るのに幅が通らなかった –
+   * `8月10日` 4 行・`8月20日` 13 行 / `8月10日から8月20日` **0 行**・`8月10日〜8月20日` **0 行**・
+   * `8月10日から8月20日まで` **0 行**・`2026年8月10日から8月20日` **0 行**・`8月10日から20日`
+   * **0 行**・`8/10から8/20` **0 行**（其の方の区切りが有る形だけ其の方の規則が受けていた –
+   * 月の幅と同じ欠落 – 第 370 回）。研究計画では「8月10日から20日の間で出せる枠」という
+   * 聞き方をするので、其の間の日語の組（組の中は OR）へ展開する。
+   * 年の決まりは暦日の語と同じ – 年を打たれていない幅で、其の終わりが基準より前なら
+   * 翌年として受ける（過ぎた幅を其の年に黙って取らない – 締切の推測はしない – AGENTS.md）。
+   * 月を含まない形（`10日から20日`）はどの月の話か決まらないので解かない。
+   * 二か月を超える幅は其の方の暦語表の限界なので解かない（伏せた範囲で出さない）。 */
+  const DAY_RANGE = new RegExp(
+    `^((?:[0-9]{4}年)?[0-9]{1,2}月[0-9]{1,2}日?|(?:[0-9]{4}[-/])?[0-9]{1,2}[-/][0-9]{1,2}日?)` +
+      `(?:から|より|へ|[-〜～~－―‐−ー])` +
+      `((?:[0-9]{4}年)?[0-9]{1,2}月[0-9]{1,2}日?|(?:[0-9]{4}[-/])?[0-9]{1,2}[-/][0-9]{1,2}日?|[0-9]{1,2}日?)` +
+      `(?:まで|いっぱい|辺り|あたり|当たり|頃|ころ)?$`,
+  );
+
+  /** 「8月20日」「2026/8/20」「8-20」を [年, 月, 日] に解く（年が打たれていない時は -1）。 */
+  function 暦日に解くJa(語: string): number[] | null {
+    const 和暦 = /^(?:([0-9]{4})年)?([0-9]{1,2})月([0-9]{1,2})日?$/.exec(語);
+    const 区切り = 和暦 ? null : /^(?:([0-9]{4})[-/])?([0-9]{1,2})[-/]([0-9]{1,2})日?$/.exec(語);
+    const hit = 和暦 || 区切り;
+    if (!hit) return null;
+    const 年 = hit[1] ? Number(hit[1]) : -1;
+    const 月 = Number(hit[2]);
+    const 日 = Number(hit[3]);
+    if (月 < 1 || 月 > 12 || 日 < 1 || 日 > 31) return null;
+    /* 暦に無い日（`2月30日`）は解かない – 其の日の締切は在り得ないので、近い日に寄せる事も
+       しない（締切の推測はしない）。 */
+    const 日時の检验 = new Date(Date.UTC(年 < 0 ? 2001 : 年, 月 - 1, 日));
+    if (日時の检验.getUTCMonth() !== 月 - 1 || 日時の检验.getUTCDate() !== 日) return null;
+    return [年, 月, 日];
+  }
+
+  /** 日の語を幅で打たれた形から暦日の語（`2026年8月10日`）の組へ展開する。 */
+  function dayRangeTermsJa(token: string, nowMs: number): string[] {
+    const normalized = searchNormalize(token);
+    if (!normalized) return [];
+    const hit = DAY_RANGE.exec(normalized);
+    if (!hit) return [];
+    const 前 = 暦日に解くJa(hit[1] as string);
+    if (!前) return [];
+    const 後 = 暦日に解くJa(hit[2] as string);
+    /* 後側を日だけで打つ形（`8月10日から20日`）は解かない – 其の方の暦月に寄せる作りは
+       一度実装した形で解けなかった（実測で 0 語 – 理由を究明出来ないうちに置くのをやめた）。
+       解けない形を置いておくと、其の方の語が其れ以外の規則に化けるので – 其の月の語を付けて
+       打つ（`8月10日から8月20日`）方を件数欄で案内する余地は又の回に置く（第 371 回）。 */
+    if (!後) return [];
+    const 基準 = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3600 * 1000);
+    const 基準日 =
+      基準.getUTCFullYear() * 10000 + (基準.getUTCMonth() + 1) * 100 + 基準.getUTCDate();
+    let 年前 = 前[0] >= 0 ? 前[0] : 基準.getUTCFullYear();
+    let 年後 = 後[0] >= 0 ? 後[0] : 年前;
+    const 並び = (年: number, 月: number, 日: number) => 年 * 10000 + 月 * 100 + 日;
+    /* 前側より前の月日は翌年として受ける（暦月の幅と同じ決まり – 第 370 回）。 */
+    if (並び(年後, 後[1], 後[2]) < 並び(年前, 前[1], 前[2])) 年後 += 1;
+    /* 年を打たれていない幅で、其の終わりが既に過ぎている時も翌年へ繰る。 */
+    if (前[0] < 0 && 並び(年後, 後[1], 後[2]) < 基準日) {
+      年前 += 1;
+      年後 += 1;
+    }
+    const out: string[] = [];
+    let 年 = 年前;
+    let 月 = 前[1];
+    let 日 = 前[2];
+    for (let guard = 0; guard <= 62; guard += 1) {
+      out.push(`${年}年${月}月${日}日`);
+      if (年 === 年後 && 月 === 後[1] && 日 === 後[2]) return out;
+      /* 翌月（翌年）への繰り上げは暦の日数で決める – 月の長さを推測しない。 */
+      const つぎ = new Date(Date.UTC(年, 月 - 1, 日 + 1));
+      年 = つぎ.getUTCFullYear();
+      月 = つぎ.getUTCMonth() + 1;
+      日 = つぎ.getUTCDate();
+    }
+    /* 二か月を超える幅 – 其の方の暦語表の限界なので解かない。 */
+    return [];
+  }
+
+  /** 件数欄用 – 日の幅を打たれた語と解決した暦日の範囲で組にする。 */
+  function dayRangePairs(query: unknown, nowMs: number): Array<[string, string]> {
+    const normalized = searchNormalize(query);
+    if (!normalized) return [];
+    const pairs: Array<[string, string]> = [];
+    normalized.split(" ").forEach((token) => {
+      splitQueryToken(token).forEach((part) => {
+        const terms = dayRangeTermsJa(part, nowMs);
+        if (terms.length) pairs.push([part, `${terms[0]}から${terms[terms.length - 1]}`]);
+      });
+    });
+    return pairs;
+  }
+
   /* 月のまとまり・年の中の地点の語（第 327 回）。実測（2026-09-26 – 2026-08-09 生成ビルドの
    * 品書 872 行・固定時刻 2026-08-09T00:00:00Z）: `今月` 189 行なのに `今月末` **0 行**、
    * `来月` 240 行なのに `来月末` **0 行**、`年内` **0 行**、`年度末` **0 行**、`年末` **0 行**、
@@ -6390,6 +6483,21 @@ const Recommender = (() => {
      * 同じで、其方に範囲の規則は無いので接頭辞付き（`来週末いっぱい`）も受ける。 */
     const いっぱいの言い方 =
       /((?:[0-9]{4}[-/][0-9]{1,2}[-/][0-9]{1,2}|[0-9]{1,2}[-/][0-9]{1,2}|[0-9]{1,2}月[0-9]{1,2}日|(?:0?[1-9]|1[0-2])月末?|今月|来月|再来月|先月|(?:今週|来週|再来週|先週)(?:[月火水木金土日]曜(?:日)?|週末)|[月火水木金土日]曜(?:日)?|週末|平日|今週|来週|再来週|先週|今年|来年))いっぱい/g;
+    /* 暦日を二つ並べた幅の区切りも『から』に寄せる（第 371 回）。語を分ける規則が波ダッシュと
+     * `/` で語を割る為、其の方の語が日の幅の規則に届かない – 実測（2026-10-24 – 実ビルドの
+     * 品書 872 行・固定時刻 2026-08-09T00:00:00Z）で `8月10日から8月20日` 75 行 /
+     * `8月10日` + 波ダッシュ + `8月20日` **0 行**・`8/10から8/20` **0 行**（件数欄は其の方の幅を
+     * 書いていて、行だけ出ていなかった – 案内と行が食い違う形）。日の語 + 月 + 日の語の形だけ
+     * 幅の規則が受ける形に寄せる（其れ以外の語を波ダッシュで繋いだ打ち方は其の侭 – 第 370 回）。 */
+    out = out.replace(
+      /((?:[0-9]{4}年)?[0-9]{1,2})月([0-9]{1,2})日?[〜～~-]((?:[0-9]{4}年)?[0-9]{1,2})月([0-9]{1,2})日?/g,
+      "$1月$2日から$3月$4日",
+    );
+    out = out.replace(
+      /([0-9]{1,2})\/([0-9]{1,2})(?:から|より|へ|[〜～~-])([0-9]{1,2})\/([0-9]{1,2})/g,
+      "$1月$2日から$3月$4日",
+    );
+
     /* 波ダッシュで月と月を繋ぐ打ち方は『から』の形に寄せる（第 370 回）。語を分ける規則
      * （JOIN_WORDS）が波ダッシュ U+301C で語を割り、半角チルダ・全角チルダ・ハイフンは
      * 割らない – 実測（2026-10-24 – 実ビルドの品書 872 行・固定時刻 2026-08-09T00:00:00Z）で
@@ -8184,6 +8292,9 @@ const Recommender = (() => {
        * 当たり方を狭めるだけになる。 */
       const monthRange = monthRangeTermsJa(token, now);
       if (monthRange.length) group = monthRange.slice();
+      /* 暦日を二つ並べた幅（`8月10日から8月20日`）も暦日語の組へ展開する（第 371 回）。 */
+      const dayRange = dayRangeTermsJa(token, now);
+      if (dayRange.length) group = dayRange.slice();
       /* 「秋」「春」などの季節の語も同じ暦月語のグループへ展開する（第 254 回）。 */
       const season = seasonTermsJa(token, now);
       if (season.length) group = season.slice();
@@ -10471,6 +10582,13 @@ const Recommender = (() => {
     relativeMonthPairs: relativeMonthPairs,
     monthRangeTermsJa: monthRangeTermsJa,
     monthRangePairs: monthRangePairs,
+    dayRangeTermsJa: dayRangeTermsJa,
+    _debug暦日: 暦日に解くJa,
+    _debugDAY: (語: string) => {
+      const hit = DAY_RANGE.exec(searchNormalize(語));
+      return hit ? [hit[1], hit[2]] : null;
+    },
+    dayRangePairs: dayRangePairs,
     seasonTermsJa: seasonTermsJa,
     yearSeasonTermsJa: yearSeasonTermsJa,
     mergeSeasonTokens: mergeSeasonTokens,
