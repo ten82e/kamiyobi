@@ -4658,6 +4658,16 @@ const Recommender = (() => {
     const pushShown = (display: string, word: string, how: string, pair?: string): void => {
       const n = countOf(word);
       if (n <= 0) return;
+      /* **其の語では絞れない**物を打ち直しの候補にしない（第 364 回）。2026-10-21 実測
+       * （実ビルドの品書 872 行）: `締切間近` を打った人に「『締切』なら 709 件」（収録の 81%）と
+       * 出していた – このサイトは『締切』を「其の語では絞れません」と別に案内している語なので、
+       * 其方へ打ち直せと言うのは噓になる。`論文賞` → 『論文』461 件（53%）も同じ（其の方の語の
+       * 案内が「賞は収録していません」と言った直後に、其れを無効な打ち直しを出す事になる）。
+       * 半分以上の行に当たる語、および表その物を指す語（`wholeTableQueryWordJa` – 第 245 回）を落とす。
+       * 対象の行が少ない時（8 行未満）は半分でも絞り込みなので落とさない – 0 件画面では通常
+       * 収録全体が載るので、実データでは効く（実測で品書 872 行）。 */
+      if (wholeTableQueryWordJa(display)) return;
+      if (list.length >= 8 && n * 2 >= list.length) return;
       if (found.some((item) => item.word === display)) return;
       found.push({ word: display, count: n, how: how, pair: pair });
     };
