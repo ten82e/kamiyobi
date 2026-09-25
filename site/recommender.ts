@@ -5299,6 +5299,111 @@ const Recommender = (() => {
    * 切って語が残らないときは元の語に戻す（`を` だけを打った人に 0 行を返さない）。 */
   const QUERY_PARTICLE_SPLIT_CHARS = "のもへがをやをでには";
 
+  /* 分野の語を繋げて打たれた形を、空白で並べたのと同じ扱いに割る（第 372 回）。
+   * 実測（2026-10-24 – 実ビルドの品書 872 行・固定時刻 2026-08-09T00:00:00Z）:
+   * 分野の語を二つ並べた打ち方 552 通りの内 **326 通りが 0 行**だった – 部分語は両方行が出るのに
+   * （`HPCセキュリティ` 0 行 / `HPC` 108 行・`セキュリティ` 152 行、`機械学習ワークフロー` 0 行 /
+   * 81 行・6 行、`分散ストレージ` 0 行 / 23 行・3 行）。日本人は分野名を繋げて名詞にする
+   * （「組込みシステム」と同じ作り）ので、繋いだ語は**其の方の語を空白で並べた打ち方と同じ**
+   * 絞り込みになる。照合は部分一致なので、割った形は割る前の行集合を必ず含む –
+   * **一度も行を減らさない**（上の例 `ネットワークセキュリティ` 3 行 → 削れない）。
+   * 割るのは語彙表（`QUERY_SYNONYMS_JA` – 打ち方の語と寄せ先の分野語）に**繋いだ形その物が無い**
+   * ときだけ – `分散システム`・`機械学習`・`深層学習` など其の方の語を割ると意味が変わる。
+   * 語彙に無い語を挟んだ形（`情報科学`・`AI倫理`）は割らない – 其の方の語を行から勝手に作らない。 */
+  let 分野語彙Ja: Map<string, string> | null = null;
+
+  /** 畳んだ形 → 画面と行に出る表層形（片仮名を平仮名に畳んだ形で照合すると 0 行になる – 実測）。 */
+  function 分野語彙Ja取得(): Map<string, string> {
+    if (分野語彙Ja) return 分野語彙Ja;
+    const 集 = new Map<string, string>();
+    const 足す = (語: string) => {
+      const 表層 = searchNormalize(語);
+      const 形 = kanaFold(表層);
+      if (形.length >= 2 && 形.indexOf(" ") < 0 && !集.has(形)) 集.set(形, 表層);
+    };
+    /* 語彙は三つの正本から集める – 画面に分野語として出す表（`TAG_LABELS_JA`）、
+       寄せ表（`QUERY_SYNONYMS_JA` – 打ち方の語と其の寄せ先）、検索語の英訳表（`JP_EN`）。
+       其の方の表に無い語（`AI倫理` の `倫理` の様な物）は割らない – 行から勝手に語を作らない。 */
+    Object.keys(TAG_LABELS_JA).forEach((語) => {
+      足す(語.replace(/-/g, ""));
+      足す(TAG_LABELS_JA[語] as string);
+    });
+    QUERY_SYNONYMS_JA.forEach((条目) => {
+      [条目[0]].concat(条目[2]).forEach((語) => {
+        足す(語);
+      });
+    });
+    Object.keys(JP_EN).forEach((語) => {
+      足す(語);
+    });
+    分野語彙Ja = 集;
+    return 集;
+  }
+
+  /* 其の方の規則（言い換えの表）が其侭の語を受けるか、其の方の語が種別・列に寄る語か（第 372 回）。
+     言い換えの表は其処其処で語を作る為、其の方の語を割るのは其処其処の説明を壊す。 */
+  let 他の規則で受ける語Ja: Set<string> | null = null;
+  let 種別への寄せ語Ja: Set<string> | null = null;
+
+  function 他の規則で受ける語かJa(形: string): boolean {
+    if (!他の規則で受ける語Ja) {
+      他の規則で受ける語Ja = new Set(
+        Object.keys(querySynonymMap()).map((語) => kanaFold(searchNormalize(語))),
+      );
+    }
+    return 他の規則で受ける語Ja.has(形);
+  }
+
+  function 種別への寄せ語かJa(形: string): boolean {
+    if (!種別への寄せ語Ja) {
+      const 表 = querySynonymMap();
+      const 集 = new Set<string>();
+      Object.keys(表).forEach((語) => {
+        const 案内 = 表[語][0];
+        if (案内.startsWith("種別") || 案内.startsWith("列") || 案内.startsWith("締切の回"))
+          集.add(kanaFold(searchNormalize(語)));
+      });
+      種別への寄せ語Ja = 集;
+    }
+    return 種別への寄せ語Ja.has(形);
+  }
+
+  /** 分野の語を繋げた打ち方を、語彙表の語に割る（割れなければ元の語のまま返す）。 */
+  function 分野の複合に割るJa(token: string): string[] {
+    const 語彙 = 分野語彙Ja取得();
+    const 表層 = searchNormalize(token);
+    const 全体 = kanaFold(表層);
+    if (全体.length < 4 || 語彙.has(全体)) return [token];
+    /* 最も語数の少ない割方を探す – 長い語で取れる方は其の方の語なので、細かく割らない。 */
+    const 上限 = 10;
+    const 最善: Array<string[] | null> = new Array<string[] | null>(全体.length + 1).fill(null);
+    最善[0] = [];
+    for (let i = 1; i <= 全体.length; i += 1) {
+      for (let j = Math.max(0, i - 上限); j < i; j += 1) {
+        const 断片 = 全体.slice(j, i);
+        if (断片.length < 2) continue;
+        const 表層断片 = 語彙.get(断片);
+        if (!表層断片) continue;
+        const 前 = 最善[j];
+        if (!前) continue;
+        const 候補 = 前.concat([表層断片]);
+        const 今 = 最善[i];
+        if (!今 || 候補.length < 今.length) 最善[i] = 候補;
+      }
+    }
+    const 割れた = 最善[全体.length];
+    if (!割れた || 割れた.length < 2) return [token];
+    /* 其の方の規則が其の侭の語を受けるなら、其の方に任せる（第 372 回 – 実測で崩した物:
+       `リアルタイムシステム` は原文の real-time を探す規則が其の方の語に在り、割ると其の説明が
+       前の語だけの物に落ちた。`コンテナオーケストレーション` も同じ形）。 */
+    if (他の規則で受ける語かJa(全体)) return [token];
+    /* 割った語が種別や列の語に寄せられる語なら割らない（第 372 回 – 実測: `採択通知日` は
+       其の方の語では寄せない物として決まって居り、割ると `採択` と `通知日` が別々に種別
+       「採否通知」に寄って意味が広がった – 第 246 回の守りが其の処にある）。 */
+    if (割れた.some((断片) => 種別への寄せ語かJa(kanaFold(searchNormalize(断片))))) return [token];
+    return 割れた;
+  }
+
   function splitQueryToken(token: string): string[] {
     /* 「まで」は **助詞の `で` で割らない**（第 365 回）。実測（2026-10-22 – 実ビルドの品書
      * 872 行・固定時刻 2026-08-09T00:00:00Z）: `締切まで30日` は `締切ま` + `30日` に割れて
@@ -5318,7 +5423,9 @@ const Recommender = (() => {
      * 助詞と同じ字を語の中に持っている（実測: `ながさき` は `が` で割れて `な` + `さき` に、
      * `やまぐち` は `や` が取れて `まぐち` になった – どちらも 1 行も当たらなくなる）。
      * そのような分割は捨てて、打たれた語をそのまま使う。 */
-    if (parts.length < 2) return [token];
+    /* 助詞で割れなかった語でも、分野の語を繋げた名詞なら其処で割る（第 372 回 –
+       初めは下の割れた語の検査の後に置いていたので、此処で帰って一行も通らなかった）。 */
+    if (parts.length < 2) return 分野の複合に割るJa(token);
     for (let i = 0; i < parts.length; i += 1) {
       /* 季節の語は 1 文字（`秋の会議` の `秋`）なので、上の長さの検査を通すと割れない
        * （第 254 回 – 実測: `秋` 802 行 / `秋の会議` 0 行）。表に合う語だと決まっている
@@ -5328,7 +5435,9 @@ const Recommender = (() => {
         return [token];
       }
     }
-    return parts;
+    /* 助詞で割った後、其の方の語が分野の語を繋げた名詞なら其処でも割る（第 372 回）。 */
+    const 複合 = parts.flatMap((part) => 分野の複合に割るJa(part));
+    return 複合.length >= parts.length ? 複合 : parts;
   }
 
   function queryTokens(query: unknown): string[] {

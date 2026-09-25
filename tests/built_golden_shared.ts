@@ -169,6 +169,14 @@ export const SEARCH_CANON = (() => {
     ["ONLINE_VENUE_FALSE_POSITIVES", /const ONLINE_VENUE_FALSE_POSITIVES = [^\n]*;/],
     ["QUERY_SYNONYMS_JA", /const QUERY_SYNONYMS_JA[\s\S]*?\];/],
     ["ABBREV_YEAR_TOKEN", /const ABBREV_YEAR_TOKEN = [^\n]*;/],
+    // 分野の語を繋げて打った名詞を割る規則（第 372 回）が読む三つの正本の内、画面に分野語として
+    // 出す表と検索語の英訳表（寄せ表は上にある）。其の方の語を割った結果を入れる変数も同じで、
+    // 定義順（TDZ）を崩さない様に其の表の直後に置く。
+    ["TAG_LABELS_JA", /const TAG_LABELS_JA[\s\S]*?\};/],
+    ["JP_EN", /const JP_EN[\s\S]*?\};/],
+    ["分野語彙Ja", /let 分野語彙Ja[^\n]*;/],
+    ["他の規則で受ける語Ja", /let 他の規則で受ける語Ja[^\n]*;/],
+    ["種別への寄せ語Ja", /let 種別への寄せ語Ja[^\n]*;/],
     // 数字だけの入力（`12/25` `2026-12`）を暦日へ解決するための定義。
     ["DATE_WITH_YEAR_TOKEN", /const DATE_WITH_YEAR_TOKEN = [^\n]*;/],
     ["DATE_MONTH_DAY_TOKEN", /const DATE_MONTH_DAY_TOKEN = [^\n]*;/],
@@ -213,6 +221,10 @@ export const SEARCH_CANON = (() => {
       "暦日に解くJa",
       "dayRangeTermsJa",
       "dayRangePairs",
+      "分野語彙Ja取得",
+      "他の規則で受ける語かJa",
+      "種別への寄せ語かJa",
+      "分野の複合に割るJa",
       "seasonSpanJa",
       "seasonInsideSpan",
       "seasonTermsJa",
