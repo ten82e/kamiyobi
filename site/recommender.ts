@@ -4436,7 +4436,7 @@ const Recommender = (() => {
         return;
       }
       /* 「今週金曜」のように週+曜日を繋げた形は、解けた 1 日を出す（第 329 回）。 */
-      const pressed = pressedWeekdayJa(token, nowMs);
+      const pressed = pressedWeekdayJa(token, nowMs) || pressedMonthDayJa(token, nowMs);
       if (pressed) {
         /* 解けた日を**すべて**書く – `今週末` は土曜・日曜の二日へ展開するので、一日目だけ
          * 名指す案内は実物（出る行）とズレる（第 341 回 – 案内と実照合の一致）。 */
@@ -4688,7 +4688,7 @@ const Recommender = (() => {
       const 後 = numericRelativeDay(String(collapseRelativeDayPhrase(`${元}後`)), nowMs);
       if (後) return String(後[1] || "");
     }
-    const 曜日 = pressedWeekdayJa(元, nowMs);
+    const 曜日 = pressedWeekdayJa(元, nowMs) || pressedMonthDayJa(元, nowMs);
     if (曜日 && 曜日.length > 0) return String(曜日[0] || "");
     /* 和暦で打たれた日（`8月20日` `2026年8月20日`）は、暦日の表が `8/20` の形だけ
      * 受けるので此處で受ける – 年を付けない日は、過ぎた月日を打つ人は来年を見る
@@ -6031,7 +6031,10 @@ const Recommender = (() => {
       /^(?:春|夏|秋|冬|通年|年初夏|真冬)$/.test(語) ||
       /* 月の語は柄に寄せる（`dateTokenStemJa` は `8月` の `月` を落とす）ので、打たれた
        * 語の側でも見る（第 394 回 – これを柄だけで見た為 `8月と11月` が解けなかった）。 */
-      /^(?:[0-9]{1,2}月|今月|来月|先月)(?:上旬|中旬|下旬|最終週|最後の週|半分)?$/.test(語)
+      /^(?:[0-9]{1,2}月|今月|来月|先月)(?:上旬|中旬|下旬|最終週|最後の週|半分)?$/.test(語) ||
+      /* 月語に日を繋げた形（`来月10日と来月20日`）も其の方の規則が暦日に解く（第 400 回 –
+       * 其れを通さないと、並べた形が AND に割れて 1 行だけ出す誤つた当たり方になつた）。 */
+      /^(?:今月|来月|再来月|先月|昨月|先々月|翌月|前月)[0-9]{1,2}日$/.test(語)
     );
   }
 
@@ -6976,7 +6979,7 @@ const Recommender = (() => {
       基準日.setUTCDate(基準日.getUTCDate() + ((目標 - 基準日.getUTCDay() + 7) % 7));
       return [基準日.getUTCFullYear(), 基準日.getUTCMonth() + 1, 基準日.getUTCDate()];
     }
-    const 押し = pressedWeekdayJa(柄, nowMs);
+    const 押し = pressedWeekdayJa(柄, nowMs) || pressedMonthDayJa(柄, nowMs);
     if (押し?.length) return 暦日の語から解くJa(押し[0]);
     const 後 = 日の数の後Ja.exec(柄);
     if (後) return offsetCalendarDay(nowMs, Number(後[1]));
@@ -8068,6 +8071,34 @@ const Recommender = (() => {
     return [day];
   }
 
+  /* 月語に日を繋げた形（`来月10日` `今月15日` `再来月5日` `翌月1日` `先月20日`）を其の
+   * 暦日に解く（第 400 回 – 実測 2026-09-28 – 2026-08-09 生成の実ビルドの品書 872 行・
+   * 固定時刻 2026-08-09T00:00:00Z: `来月` 240 行・`来週月曜` 4 行・`9月10日` が通るのに、
+   * `来月10日` **0 行**・`来月10日までに` **0 行**・`今月15日` **0 行**・`再来月5日` **0 行**で
+   * 案内も無し – 申請の締切を「来月10日」と書く人は多く、週+曜日の形（第 329 回）と
+   * 同じ打ち方が月の側だけ空いて居た）。其の月に其の日が在らない形（`来月31日`）は
+   * 解かない（其の方の日は在らない – 締切の推測はしない）。年を付けない形は足さない –
+   * 部分一致なので他の年の同じ月日の行を拾う（第 329 回と同じ決まり）。 */
+  function pressedMonthDayJa(token: string, nowMs: number): string[] | null {
+    const q = String(token || "").replace(/\s+/g, "");
+    /* 表の語は長い物から当てる（`再来月` を `来月` で割らない – 語の順序に頼らない）。 */
+    const 月語 = Object.keys(RELATIVE_MONTH_OFFSETS_JA)
+      .sort((甲, 乙) => 乙.length - 甲.length)
+      .find((語) => q.startsWith(語));
+    if (!月語) return null;
+    const 日 = /^([0-9]{1,2})日$/.exec(q.slice(月語.length));
+    if (!日) return null;
+    const 番号 = Number(日[1]);
+    if (!(番号 >= 1 && 番号 <= 31)) return null;
+    const 基準 = new Date(nowMs + 9 * 60 * 60 * 1000);
+    const 連番 = 基準.getUTCMonth() + 1 + RELATIVE_MONTH_OFFSETS_JA[月語];
+    const 年 = 基準.getUTCFullYear() + Math.floor((連番 - 1) / 12);
+    const 月 = ((((連番 - 1) % 12) + 12) % 12) + 1;
+    const 末日 = new Date(Date.UTC(年, 月, 0)).getUTCDate();
+    if (番号 > 末日) return null;
+    return [`${年}年${月}月${番号}日`];
+  }
+
   /** 与えた暦日（[年, 月, 日]）が基準時刻の JST の日より前か（第 329 回）。
    * 件数欄の幅と週+曜日の案内で同じ判断を二重に書くと、改ざんでも片方だけ壊れて
    * 検査が黙っていた（第 329 回の改ざんで実発生）。 */
@@ -8163,7 +8194,9 @@ const Recommender = (() => {
     if (!/(?:までに|まで)$/.test(q)) return null;
     const stem = dateTokenStemJa(q);
     const head = /^(.+?)(?:までに|まで)$/.exec(q);
-    const pressed = head ? pressedWeekdayJa(head[1], nowMs) : null;
+    const pressed = head
+      ? pressedWeekdayJa(head[1], nowMs) || pressedMonthDayJa(head[1], nowMs)
+      : null;
     /* 暦日を名乗った形（`8月22日までに` `2026年8月22日までに` `8/22までに`）は其の方の日を
      * 幅の末尾に受ける（第 398 回 – 実測 2026-09-26 – 実ビルドの品書 872 行・固定時刻
      * 2026-08-09T00:00:00Z: `8月22日までに` **0 行**・`8月20日までに` **0 行**・
@@ -8183,6 +8216,8 @@ const Recommender = (() => {
      * 『前』の向きは解かない – 過去方向に開いた幅はいつまで遡るかが書かれて居ないので、
      * 終わりを決めるのは締切の推測になる（第 367 回の決まり – `3日前まで` で行を足さない）。 */
     const 数値 = 暦 || /前$/.test(stem) ? null : numericRelativeDay(stem, nowMs);
+    /* 月語に日を繋げた形（`来月10日までに`）も其の年の形だけで出す幅にする（第 400 回）。 */
+    const pressedMonthDay = head ? pressedMonthDayJa(head[1], nowMs) : null;
     /* 週+曜日を繋げた形（`今週金曜まで`）は表に無い語なので、剥がした形が無くても続ける
      * （第 329 回 – ここでの早期 return で 0 行のままだった）。 */
     if (!stem && !pressed && !暦) return null;
@@ -8203,6 +8238,10 @@ const Recommender = (() => {
         if (!isPastJstDay(翌年, nowMs)) 候補[0] = 翌年[0];
       }
       last = 候補;
+    } else if (pressed && pressedMonthDayJa(head ? head[1] : "", nowMs)) {
+      /* 月語に日を繋げた形（`来月10日までに`）も其の方の日を末尾に受ける（第 400 回）。 */
+      const 刻 = /^(\d{4})年(\d{1,2})月(\d{1,2})日$/.exec(pressed[0]);
+      if (刻) last = [Number(刻[1]), Number(刻[2]), Number(刻[3])];
     } else if (数値) {
       /* 数値の相対日は其の方の規則が暦日を出す（其の 2 語目が `YYYY年M月D日` の形）。 */
       const 刻 = /^(\d{4})年(\d{1,2})月(\d{1,2})日$/.exec(数値[1]);
@@ -8225,7 +8264,7 @@ const Recommender = (() => {
      * （`8月14日`）を混ぜると、其れより後の年の同じ月日 – 実測では USENIX Security 2027 の
      * 要旨締切の 5 行 – まで当たり、件数欄が書く「2026年8月9日(日)〜8月22日(土)」と
      * 当たり方が食い違う（相対語の幅は其の方の形も混ぜて居る – 其の方は別の回の種）。 */
-    const 年付きのみ = 暦 !== null || 数値 !== null;
+    const 年付きのみ = 暦 !== null || 数値 !== null || pressedMonthDay !== null;
     if (isPastJstDay(last, nowMs)) {
       const 語 = `${last[0]}年${last[1]}月${last[2]}日`;
       return 年付きのみ ? [語] : [語, `${last[1]}月${last[2]}日`];
@@ -8281,7 +8320,7 @@ const Recommender = (() => {
     const 位 = 位の付いた日を暦日に解くJa(token, nowMs);
     if (位) return [token].concat(位);
     /* 「今週金曜」「来週木曜日」は締切日がその日の行に出会う（第 329 回）。 */
-    const pressedDay = pressedWeekdayJa(token, nowMs);
+    const pressedDay = pressedWeekdayJa(token, nowMs) || pressedMonthDayJa(token, nowMs);
     if (pressedDay) return [token].concat(pressedDay);
     /* 「今年度」「来年度中」は年度（4 月〜翌年 3 月）の月語に展開する（第 330 回）。 */
     const fiscal = fiscalYearTermsJa(token, nowMs);

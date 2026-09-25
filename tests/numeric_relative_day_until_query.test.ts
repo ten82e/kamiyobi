@@ -159,7 +159,11 @@ describe("成果物", () => {
     expect(
       物.match(/if \(tail\.indexOf\("まで"\) === 0 && 数値の前の向きJa\.test\(stem\)\)/g) ?? [],
     ).toHaveLength(1);
-    expect(物.match(/const 年付きのみ = 暦 !== null \|\| 数値 !== null;/g) ?? []).toHaveLength(1);
+    expect(
+      物.match(
+        /const 年付きのみ = 暦 !== null \|\| 数値 !== null \|\| pressedMonthDay !== null;/g,
+      ) ?? [],
+    ).toHaveLength(1);
     /* 剥がした形を表に載つた語と見なす決まり – 数値の相対日と幅の二つ。 */
     expect(物.match(/数値の相対日の形Ja\.test\(word\)/g) ?? []).toHaveLength(1);
     expect(物.match(/数値の幅の形Ja\.test\(word\)/g) ?? []).toHaveLength(1);
