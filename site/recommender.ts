@@ -4416,7 +4416,13 @@ const Recommender = (() => {
           `${token} = ${初日}${初曜 ? `(${初曜})` : ""}〜${末日}${
             末曜 ? `(${末曜})` : ""
           }の締切 – ${part.label}は月の ${part.from} 日から ${part.to} 日までです${
-            part.label === "下旬" ? "（下旬は月末まで）" : ""
+            part.label === "下旬"
+              ? "（下旬は月末まで）"
+              : /^第/.test(part.label)
+                ? part.label === "第5週" || part.label === "第五週"
+                  ? "（月はじめから 7 日ずつ数えます – 第5週は月末まで）"
+                  : "（月はじめから 7 日ずつ数えます）"
+                : ""
           }${過ぎ}`,
         );
         return;
@@ -6681,7 +6687,9 @@ const Recommender = (() => {
     /* 冠の無い旬（`来月上旬から中旬` の `中旬`）は頭側の月を継ぐ – 其の方の月が其侭では
      * 決まらないので、其れ以外の月に直すと幅が逆向きになって解けない（実測 0 行）。 */
     const 旬 = monthPartRangeJa(
-      月のhint && /^(?:上旬|中旬|下旬)$/.test(柄) ? `${月のhint[0]}年${月のhint[1]}月${柄}` : 柄,
+      月のhint && /^(?:上旬|中旬|下旬|第[0-9一二三四五六七八九十]{1,3}週)$/.test(柄)
+        ? `${月のhint[0]}年${月のhint[1]}月${柄}`
+        : 柄,
       nowMs,
     );
     if (旬) return 側 === "頭" ? [旬.year, 旬.month, 旬.from] : [旬.year, 旬.month, 旬.to];
@@ -6863,7 +6871,51 @@ const Recommender = (() => {
     中旬: [11, 20],
     下旬: [21, 0],
   };
-  const MONTH_PART_TAIL_JA = /^(.*?)の?(上旬|中旬|下旬)$/;
+  /* 月の中之週（第 389 回）。2026-09-25 実測（2026-08-09 生成の実ビルドの品書 872 行・固定時刻
+   * 2026-08-09T00:00:00Z）: `8月上旬` 35 行・`8月中旬` 74 行・`8月下旬` 91 行が通るのに、
+   * `第1週` `第2週` `第3週` `第4週` `第一週` `第二週` `1週` `2週` `8月第1週` `8月第3週`
+   * `9月第2週` `来月第1週` はいずれも **0 行で案内も無し**だった。其の方の月の塊として
+   * 上旬・中旬・下旬と同じ道で受ける。
+   * 分け方は**月はじめから 7 日ずつ**（第1週 = 1〜7日・第2週 = 8〜14日 … 第5週 = 29 日〜月末）。
+   * 上旬を 15 日に寄せない判断（第 344 回）と同じで、公用の決まりの在る分け方は採れない –
+   * 月の第1週を「最初の月曜から」と読む人もいるが、其れは月の中途から始まる月が在る為、
+   * 上の決め方の方が画面に出る範囲が読める（件数欄に「第2週は月の 8 日から 14 日までです」と
+   * 必ず書く – hidden にしない）。`1週` `2週`（冠の無い数だけの週）は受けない – 「3週以内」
+   * という**日数**の話と混じる（実測 `3週間` は其の方の形で受けている – 第 328 回）。 */
+  const 週的形状Ja = /^第([0-9]{1,2}|[一二三四五六七八九十]{1,3})週$/;
+  const 漢の週Ja: Record<string, number> = {
+    一: 1,
+    二: 2,
+    三: 3,
+    四: 4,
+    五: 5,
+    六: 6,
+    七: 7,
+    八: 8,
+    九: 9,
+    十: 10,
+  };
+  function 週の数Ja(label: string): number | null {
+    const 拾 = 週的形状Ja.exec(String(label || ""));
+    if (!拾) return null;
+    const 字 = 拾[1];
+    if (/^[0-9]+$/.test(字)) return Number(字);
+    if (漢の週Ja[字] !== undefined) return 漢の週Ja[字];
+    /* 『十一』の様な二字の形（月の週は五までしか受けないので、在れば外れる – 安心側の為だけ）。 */
+    const 十の位 = /^([一二三四五六七八九]?)十([一二三四五六七八九])?$/.exec(字);
+    if (十の位) {
+      const 頭 = 十の位[1] ? 漢の週Ja[十の位[1]] : 1;
+      return 頭 * 10 + (十の位[2] ? 漢の週Ja[十の位[2]] : 0);
+    }
+    return null;
+  }
+  function 週の範囲Ja(label: string): [number, number] | null {
+    const 打 = 週の数Ja(label);
+    if (打 === null || 打 < 1 || 打 > 5) return null;
+    return [7 * (打 - 1) + 1, 打 === 5 ? 0 : 7 * 打];
+  }
+  const MONTH_PART_TAIL_JA =
+    /^(.*?)の?(上旬|中旬|下旬|第(?:[0-9]{1,2}|[一二三四五六七八九十]{1,3})週)$/;
 
   /** 「8月下旬」「来月上旬」「下旬」を暦日の幅へ解く（当てはまらなければ null）。 */
   function monthPartRangeJa(
@@ -6872,7 +6924,8 @@ const Recommender = (() => {
   ): { year: number; month: number; from: number; to: number; label: string } | null {
     const hit = MONTH_PART_TAIL_JA.exec(String(token || ""));
     if (!hit) return null;
-    const days = MONTH_PART_DAYS_JA[hit[2]];
+    /* 上旬・中旬・下旬の表に無ければ、月の中之週を見る（第 389 回）。 */
+    const days = MONTH_PART_DAYS_JA[hit[2]] ?? 週の範囲Ja(hit[2]);
     if (!days) return null;
     /* 冠の無い `下旬` だけは今月を基準にする（「下旬の締切」は今月の話をしている）。
      * `来月` のような月の語は検索語の段で既に `2026年9月` へ書き換わる（第 251 回）ので、
@@ -6886,6 +6939,9 @@ const Recommender = (() => {
     const year = Number(resolved[0]);
     const month = Number(resolved[1]);
     const 末日 = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    /* 月の週は五まで受けるが、其の月に其の週が在らない場合が在る（28 日の月の第5週 – 第 389 回）。
+     *其れは幅を作れないので解かない（黙って 1 日の幅にしない – 締切の推測をしないと同じ決まり）。 */
+    if (days[0] > 末日) return null;
     return {
       year,
       month,
