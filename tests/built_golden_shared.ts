@@ -160,6 +160,11 @@ export const SEARCH_CANON = (() => {
     ["OVERSEAS_COVERAGE_NOTE_TAIL_JA", /const OVERSEAS_COVERAGE_NOTE_TAIL_JA =[\s\S]*?;/],
     // 地方名 → 都道府県 + 開催市（`関東` で `Tokyo, Japan` を引く）の定義。
     ["DAY_RANGE", /const DAY_RANGE = new RegExp\([\s\S]*?\);/],
+    // 相対語を二つ並べて打つ幅（第 373 回）が使う定義 – 其の方の語を暦日に解く関数は
+    // 其の側の語（明日・来週・来週金曜・3日後）を上の表から読むので、表は既に注入済み。
+    ["幅の区切りJa", /const 幅の区切りJa =[\s\S]*?;/],
+    ["日の数の後Ja", /const 日の数の後Ja = [^\n]*;/],
+    ["日の数の前Ja", /const 日の数の前Ja = [^\n]*;/],
     ["PREFECTURE_CITIES_JA", /const PREFECTURE_CITIES_JA[\s\S]*?\];/],
     ["CITIES_BY_PREFECTURE", /const CITIES_BY_PREFECTURE[\s\S]*?\};/],
     ["QUERY_EDGE_PUNCTUATION", /const QUERY_EDGE_PUNCTUATION = [^\n]*;/],
@@ -221,6 +226,8 @@ export const SEARCH_CANON = (() => {
       "暦日に解くJa",
       "dayRangeTermsJa",
       "dayRangePairs",
+      "暦日の語から解くJa",
+      "幅の片側を暦日に解くJa",
       "分野語彙Ja取得",
       "他の規則で受ける語かJa",
       "種別への寄せ語かJa",
