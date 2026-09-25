@@ -411,7 +411,9 @@ it("画面自身の語（使い方・並び替え・出典・カテゴリなど�
   let checked = 0;
   for (const [words, destination] of groups) {
     for (const word of words) {
-      const hits = hays.filter((hay) => Recommender.searchMatcher(word)(hay)).length;
+      /* 照合関数は語ごとに一度だけ – 行の数だけ作り直さない（同じ結果で速い）。 */
+      const 照合 = Recommender.searchMatcher(word);
+      const hits = hays.filter((hay) => 照合(hay)).length;
       expect(hits, `「${word}」は表に当たりがあるので案内の前提が崩れている`).toBe(0);
       const note = Recommender.uiWordNoteJa(word);
       const live = Recommender.uiWordLiveNoteJa(word);
@@ -480,7 +482,8 @@ it("参加形式の「対面」側を打った人に、収録していないこ�
     "リアル",
     "リアル開催",
   ]) {
-    const hits = hays.filter((hay) => Recommender.searchMatcher(word)(hay)).length;
+    const 照合 = Recommender.searchMatcher(word);
+    const hits = hays.filter((hay) => 照合(hay)).length;
     expect(hits, `「${word}」は当たりが出るようになった（前提が変わった）`).toBe(0);
     const note = Recommender.uiWordNoteJa(word);
     expect(note, `「${word}」の案内が出ていない`).toContain("オンライン参加可");

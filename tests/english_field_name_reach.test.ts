@@ -161,12 +161,12 @@ describe("英語の正式名称で打った人", () => {
     corpora().forEach(({ label, rows }) => {
       ["quantum computing", "machine learning", "network monitoring"].forEach((phrase) => {
         const 熟的 = reaching(rows, phrase);
+        /* 照合関数は語ごとに一度だけ作る（行の数だけ作り直さない – 同じ結果で速い）。 */
+        const 語の照合 = (Recommender.queryTokens(phrase) as string[]).map((word) =>
+          Recommender.searchMatcher(word, AT),
+        );
         const 語を割 = new Set(
-          rows.filter((row) =>
-            (Recommender.queryTokens(phrase) as string[]).every(
-              (word) => Recommender.searchMatcher(word, AT)(row.hay) === true,
-            ),
-          ),
+          rows.filter((row) => 語の照合.every((matches) => matches(row.hay) === true)),
         );
         expect(熟的.size, `${label}: "${phrase}" が寄せられている`).toBe(語を割.size);
         熟的.forEach((row) => {

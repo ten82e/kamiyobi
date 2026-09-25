@@ -11,6 +11,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 import { builtSite } from "./built_site.ts";
+import { jsFunction } from "./runtime_extract.ts";
 
 const 基準 = Date.parse("2026-08-09T00:00:00Z");
 /* 暦の語の検査は基準日を動かして二本立てる（第 339 回の教訓 – 固定時刻は日曜）。 */
@@ -139,10 +140,11 @@ describe("成果物", () => {
     expect(rec.includes("月中"), "月中の寄せが消えた").toBe(true);
     /* 週の語に `末` を続ける形（`今週末`） – 週語の表に 前週・翌週 が入っている事も見る。 */
     expect(/前週\|翌週/.test(rec), "週語の選択が壊れた").toBe(true);
-    /* `jsFunction` で抜き出す検査が有るので、月の寄せは関数の中に入っている事。 */
-    const 関数 = rec.slice(rec.indexOf("function collapseRelativeDayPhrase"));
+    /* `jsFunction` で抜き出す検査が有るので、月の寄せは関数の中に入っている事。
+     * 此処は固定長の窓で見ていた – 規則を足すたびに窓がずれて誤検出になる（第 346 回の教訓を
+     * 第 349 回で実際に踏んだ – 関数本体その物を抜き出して見る）。 */
     expect(
-      関数.slice(0, 2400).includes("月中"),
+      jsFunction(rec, "collapseRelativeDayPhrase").includes("月中"),
       "月中の寄せが関数の外に出た（抜き出し検査が壊れる）",
     ).toBe(true);
   });

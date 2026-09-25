@@ -92,8 +92,10 @@ describe("「N 日以内」の案内が引き方の範囲を言う", () => {
     expect(rows.length, "ビルド成果物の行が読めない（検査が空振り）").toBeGreaterThan(100);
     let 混入 = 0;
     let 当たり = 0;
+    /* 照合関数は行ごとに作り直さない（同じ語なので一度で足りる）。 */
+    const 三十日の照合 = Recommender.searchMatcher("30日以内", AT);
     rows.forEach((row) => {
-      if (Recommender.searchMatcher("30日以内", AT)(row.hay) !== true) return;
+      if (三十日の照合(row.hay) !== true) return;
       当たり += 1;
       const 日数 = (Number(row.t) - AT) / DAY;
       if (!(日数 >= 0 && 日数 <= 30)) 混入 += 1;

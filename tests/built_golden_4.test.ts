@@ -939,8 +939,12 @@ it("画面が「ランク」と呼ぶ語で、等級の行に実際に出会え�
   );
   const rowId = (r: (typeof rows)[number]) =>
     `${String(r.conf.title ?? "")}|${String(r.ed.year ?? "")}|${String(r.dl?.utc ?? "")}`;
-  const hits = (query: string) =>
-    new Set(rows.filter((r) => R.searchMatcher(query, clock)(r.hay ?? "")).map(rowId));
+  /* 照合関数は語ごとに一度だけ作る – 行ごとに作り直すと収録行数の分だけ仕事が増える
+   * （2026-10-07 実測: この文件だけで 21.7 秒掛かり、並走時は既定の 30 秒に負けていた）。 */
+  const hits = (query: string) => {
+    const matches = R.searchMatcher(query, clock);
+    return new Set(rows.filter((r) => matches(r.hay ?? "")).map(rowId));
+  };
   /* 正解の集合は、検索の実装ではなく**行が持つ等級の組**から作る。`N`（一覧に載っているが
    * 評価が付いていない）は画面が「評価なし」と出す語なので、等級としては数えない。 */
   const unrated = R.rankUnratedLabelJa();
@@ -1016,8 +1020,12 @@ it("等級を呼ぶ語だけで打った人に、絞れていないことと別�
   );
   const rowId = (r: (typeof rows)[number]) =>
     `${String(r.conf.title ?? "")}|${String(r.ed.year ?? "")}|${String(r.dl?.utc ?? "")}`;
-  const hits = (query: string) =>
-    new Set(rows.filter((r) => R.searchMatcher(query, clock)(r.hay ?? "")).map(rowId));
+  /* 照合関数は語ごとに一度だけ作る – 行ごとに作り直すと収録行数の分だけ仕事が増える
+   * （2026-10-07 実測: この文件だけで 21.7 秒掛かり、並走時は既定の 30 秒に負けていた）。 */
+  const hits = (query: string) => {
+    const matches = R.searchMatcher(query, clock);
+    return new Set(rows.filter((r) => matches(r.hay ?? "")).map(rowId));
+  };
   const same = (a: Set<string>, b: Set<string>) =>
     a.size === b.size && [...a].every((x) => b.has(x));
 
@@ -1072,8 +1080,10 @@ it("半角カタカナで貼っても、全角で打ったのと同じ行に出�
       typeof R.candidateRows
     >[0],
   );
-  const hits = (query: string) =>
-    rows.filter((r) => R.searchMatcher(query, clock)(r.hay ?? "")).length;
+  const hits = (query: string) => {
+    const matches = R.searchMatcher(query, clock);
+    return rows.filter((r) => matches(r.hay ?? "")).length;
+  };
 
   const FULL =
     "ァィゥェォャュョッーアイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン";
@@ -1156,8 +1166,10 @@ it("データに在る概念を、日本語の言い方で引ける（SPEC §7�
       typeof R.candidateRows
     >[0],
   );
-  const hits = (query: string) =>
-    rows.filter((r) => R.searchMatcher(query, clock)(r.hay ?? "")).length;
+  const hits = (query: string) => {
+    const matches = R.searchMatcher(query, clock);
+    return rows.filter((r) => matches(r.hay ?? "")).length;
+  };
 
   const entries: Array<[string, string, string]> = [];
   for (const m of source.matchAll(/\["([^"]+)", "(原文の [^"]+)", \["([^"]+)"\]\]/g)) {
@@ -1230,7 +1242,8 @@ it("上流の言い方で打った人が、画面の種別の語に出会える�
   expect(Object.values(labels), `おしらせが出した「${label}」は画面の種別の語ではない`).toContain(
     label as string,
   );
-  const matched = rows.filter((r) => R.searchMatcher(word, clock)(r.hay ?? ""));
+  const 語の照合 = R.searchMatcher(word, clock);
+  const matched = rows.filter((r) => 語の照合(r.hay ?? ""));
   expect(matched.length, `語「${word}」に出会う行が 0 件（空振り）`).toBeGreaterThan(0);
   for (const r of matched) {
     expect(
@@ -1260,8 +1273,10 @@ it("掲載先に入れた語が今の行に無いことを、件数欄が誤ら�
     .filter(Boolean);
   expect(venues.length, "入力の例から掲載先を拾えない（検査が空振り）").toBeGreaterThanOrEqual(1);
 
-  const bySearch = (venue: string) =>
-    rows.filter((r) => R.searchMatcher(venue, clock)(r.hay ?? "")).length;
+  const bySearch = (venue: string) => {
+    const matches = R.searchMatcher(venue, clock);
+    return rows.filter((r) => matches(r.hay ?? "")).length;
+  };
   const lookup = (venue: string) =>
     R.unmatchedVenues([{ title: "Test title", keywords: "test", venue }], rows);
 
@@ -2877,8 +2892,9 @@ it("締切欄・公式表記欄に出る時刻をそのまま打つと、その�
   // 時刻未確認（日付しか確認できていない）の行は時刻を出さないので、時刻では出ない。
   const 未確認 = rowCells.filter((row) => row[iOfficial] === "時刻未確認");
   expect(未確認.length, "時刻未確認の行が無く、この検査が空振りしている").toBeGreaterThan(0);
-  const anyTime = (hay: string): boolean =>
-    [...words.keys()].some((w) => R.searchMatcher(w, at)(hay) === true);
+  /* 語の照合関数は先に作っておく – 行の数だけ作り直すとそれだけで数十秒になる。 */
+  const 時刻の照合 = [...words.keys()].map((w) => R.searchMatcher(w, at));
+  const anyTime = (hay: string): boolean => 時刻の照合.some((matches) => matches(hay) === true);
   expect(
     未確認.filter((row) => anyTime(hays[rowCells.indexOf(row)])).length,
     `時刻未確認の行が時刻の語で出てしまった（例: ${未確認[0][iName]}）`,
