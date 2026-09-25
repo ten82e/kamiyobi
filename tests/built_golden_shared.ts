@@ -165,6 +165,10 @@ export const SEARCH_CANON = (() => {
     ["幅の区切りJa", /const 幅の区切りJa =[\s\S]*?;/],
     ["日の数の後Ja", /const 日の数の後Ja = [^\n]*;/],
     ["日の数の前Ja", /const 日の数の前Ja = [^\n]*;/],
+    // 「8月10日頃」の位で打つ形（第 377 回）が読む定義 – 其の日が決まる語の形を見る表。
+    ["頃の尾Ja", /const 頃の尾Ja = [^\n]*;/],
+    ["和暦の日Ja", /const 和暦の日Ja =[\s\S]*?;/],
+    ["週の曜日Ja", /const 週の曜日Ja = [^\n]*;/],
     ["PREFECTURE_CITIES_JA", /const PREFECTURE_CITIES_JA[\s\S]*?\];/],
     ["CITIES_BY_PREFECTURE", /const CITIES_BY_PREFECTURE[\s\S]*?\};/],
     ["QUERY_EDGE_PUNCTUATION", /const QUERY_EDGE_PUNCTUATION = [^\n]*;/],
@@ -228,6 +232,8 @@ export const SEARCH_CANON = (() => {
       "dayRangePairs",
       "暦日の語から解くJa",
       "幅の片側を暦日に解くJa",
+      // 「8月10日頃」の位で打つ形の案内（第 377 回）が呼ぶ関数。
+      "位の付いた日を暦日に解くJa",
       "分野語彙Ja取得",
       "他の規則で受ける語かJa",
       "種別への寄せ語かJa",
