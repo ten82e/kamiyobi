@@ -6011,11 +6011,16 @@ const Recommender = (() => {
    * 2026-08-09T00:00:00Z: `8月10日から8月20日` 75 行 / `8月10日へ8月20日` **0 行**）。
    * 幅の解ける規則（DAY_RANGE・月の幅・幅の片側を暦日に解くJa）が受ける語は割らない。
    * 助詞の表に語を足した時は其の方の語の列挙も対にする（第 341 回・第 391 回と同じ穴）。 */
-  function 解ける日語かJa(語: string): boolean {
+  function 解ける日語かJa(語: string, 頭が決まつてるか = false): boolean {
     if (!語) return false;
     if (暦日に解くJa(語)) return true;
     const 柄 = dateTokenStemJa(語) || 語;
     if (typeof RELATIVE_DAY_OFFSETS_JA[柄] === "number") return true;
+    /* 裸の日（`11日`）と裸の旬（`下旬`）は其の方だけでは月が決まらないが、先頭の語が月を
+     * 名乗つて居れば其処へ継がせられる（第 395 回 – 実測 `8月10日と11日` 0 行 / `8月上旬と
+     * 下旬` 0 行 – `8月10日` 4 行・`11日` を継いだ 8月11日 12 行・`下旬` 91 行は通る）。
+     * 其の方が決まらない列挙（`10日と20日`）は解かない侭 – 幅の側と同じ決まり。 */
+    if (頭が決まつてるか && /^(?:[0-9]{1,2}日|[上中下]旬)$/.test(語)) return true;
     return (
       /^(?:今週|こんしゅう|来週|らいしゅう|再来週|先週|先々週)(?:[月火水木金土日]曜|末|中)?$/.test(
         柄,
@@ -7051,16 +7056,31 @@ const Recommender = (() => {
    * 其の方の語の展開は語組を作る機械が既に持つので、其処に一片だけを渡して同じ展開語を
    * 受け取る – 自分で月の表や暦日の表を書き写すと、後の回で其の方は表が足された時に
    * 列挙だけが解けない語になる（第 341 回・第 391 回と同じ穴 – 書き写しは対に保てない）。 */
-  function 単体の展開語Ja(語: string, nowMs: number): string[] {
-    /* 上旬・中旬・下旬は其の方の展開が語組の外（其の方の欄の語）なので、列挙で片方だけを
-     * 解いて片方を落とす訳にはいかない – 其のまま解かない（0 件の侭 – 締切の推測はしない）。 */
-    if (/旬|半/.test(語)) return [];
+  function 単体の展開語Ja(語: string, nowMs: number, 継ぐ?: number[] | null): string[] {
+    /* `半月` の様な幅の語は列挙で解かない（其の方の語は其の侭では日を決めない – 締切の推測は
+     * しない）。旬の語は語組を作る機械が暦日へ展開するので、其方に任せる（第 395 回 –
+     * 実測 `8月上旬と8月下旬` 0 行 / `8月上旬` 35 行・`8月下旬` 91 行が通つた）。 */
+    if (/半/.test(語)) return [];
+    /* 先頭の語が月を名乗つて居る時、裸の日・裸の旬は**其の月に継がせる** – 其の方の語を
+     * その侭語組に渡すと裸の日は十二か月分に広がる（実測 2026-09-26 – 実ビルドの品書
+     * 872 行 – `8月10日と11日` が 96 行 – 其の内 8月11日 12 行 + 8月10日 4 行だけの話では
+     * 無い – 其のままでは間違った広さになる – 第 395 回）。 */
+    if (継ぐ && 継ぐ.length >= 2) {
+      if (/^[0-9]{1,2}日$/.test(語)) {
+        const 継ぎ暦 = 幅の片側を暦日に解くJa(語, nowMs, "尾", 継ぐ);
+        if (!継ぎ暦) return [];
+        return [`${継ぎ暦[0] >= 0 ? 継ぎ暦[0] : 継ぐ[0]}年${継ぎ暦[1]}月${継ぎ暦[2]}日`];
+      }
+      if (/^[上中下]旬$/.test(語)) {
+        return monthPartTermsJa(`${継ぐ[1]}月${語}`, nowMs) || [];
+      }
+    }
     const 曜 = /^([月火水木金土日])曜(?:日)?$/.exec(dateTokenStemJa(語) || 語);
     if (曜) return [`${曜[1]}曜`];
     const 組 = queryTokenGroups(語, nowMs)[0] || [];
     const 語々 = 組.filter((項) => 項 !== 語);
     if (語々.length) return 語々;
-    const 暦 = 幅の片側を暦日に解くJa(語, nowMs, "頭", null);
+    const 暦 = 幅の片側を暦日に解くJa(語, nowMs, 継ぐ ? "尾" : "頭", 継ぐ || null);
     if (!暦) return [];
     const 基準 = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3600 * 1000);
     let 年 = 暦[0] >= 0 ? 暦[0] : 基準.getUTCFullYear();
@@ -7072,28 +7092,73 @@ const Recommender = (() => {
     return [`${年}年${暦[1]}月${暦[2]}日`];
   }
 
-  /** `と` で並べた列挙の語を割る。両側が日を決められる形だけ通す（第 394 回）。 */
+  /** `と` で並べた列挙の語を割る。先頭の語は其の方で日を決まり、其れ以降は先頭の語から
+   * 月を継げる形（裸の日・裸の旬）も通す（第 394 回 – 第 395 回で継がせる形を足した）。 */
   function 列挙の語に割るJa(語: string): string[] | null {
     const 断片 = String(語 || "")
       .split("と")
       .map((片) => 片.trim())
       .filter((片) => 片.length > 0);
     if (断片.length < 2 || 断片.length > 4) return null;
-    if (!断片.every((片) => 解ける日語かJa(片))) return null;
+    for (let i = 0; i < 断片.length; i += 1) {
+      if (!解ける日語かJa(断片[i], i > 0)) return null;
+    }
     return 断片;
   }
 
-  function 列挙の展開語Ja(語: string, nowMs: number): string[] {
+  /** 案内に書く一片ずつの代表の語 – 年をまたぐ表（`8月`）は基準の年の語だけ選ぶ。 */
+  function 列挙の代表語Ja(語々: string[], nowMs: number): string {
+    const 年付き = 語々.filter((項) => /^[0-9]{4}年/.test(項));
+    const 基準 = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3600 * 1000);
+    const 基準年の語 = 年付き.find((項) => 項.startsWith(`${基準.getUTCFullYear()}年`));
+    return 基準年の語 || 年付き[0] || 語々[0] || "";
+  }
+
+  /** 列挙を解いた物（当たり方に使う展開語と、案内に書く代表の語）。解けなければ null。 */
+  function 列挙の解きJa(語: string, nowMs: number): { 展開: string[]; 代表: string[] } | null {
     const 断片 = 列挙の語に割るJa(語);
-    if (!断片) return [];
-    const out: string[] = [];
-    for (const 片 of 断片) {
-      const 語々 = 単体の展開語Ja(片, nowMs);
-      /* 内の一つでも解けない語なら列挙全体を解かない – 片方だけの幅は噓になる。 */
-      if (!語々.length) return [];
-      for (const 語 of 語々) if (out.indexOf(語) < 0) out.push(語);
+    if (!断片) return null;
+    /* 先頭の語が名乗る月を其れ以降に継がせる – 幅の側が持つ月の印の形をそのまま使う
+     * （三つ目は裸の日を受ける目印 – 第 376 回）。 */
+    const 頭 = 幅の片側を暦日に解くJa(断片[0], nowMs, "頭", null);
+    /* 年を打たれて居ない頭（`8月10日と11日`）も其の年に継ぐ – 其の侭では過ぎた日に
+     * なる時だけ翌年へ回す（幅の側と同じ決まり – 第 376 回）。 */
+    const 基準 = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3600 * 1000);
+    const 並び = (年: number, 月: number, 日: number) => 年 * 10000 + 月 * 100 + 日;
+    let 継ぐ: number[] | null = null;
+    if (頭) {
+      let 継ぐ年 = 頭[0] >= 0 ? 頭[0] : 基準.getUTCFullYear();
+      if (
+        頭[0] < 0 &&
+        並び(継ぐ年, 頭[1], 頭[2]) <
+          並び(基準.getUTCFullYear(), 基準.getUTCMonth() + 1, 基準.getUTCDate())
+      )
+        継ぐ年 += 1;
+      継ぐ = [
+        継ぐ年,
+        頭[1],
+        頭[2],
+        /[0-9]{1,2}月|[0-9]{1,2}[-/][0-9]{1,2}/.test(断片[0]) ? 1 : 0,
+        0,
+      ];
     }
-    return out;
+    const 展開: string[] = [];
+    const 代表: string[] = [];
+    for (let i = 0; i < 断片.length; i += 1) {
+      const 語々 = 単体の展開語Ja(断片[i], nowMs, i === 0 ? null : 継ぐ);
+      /* 内の一つでも解けない語なら列挙全体を解かない – 片方だけの当たり方は噓になる。 */
+      if (!語々.length) return null;
+      for (const 語 of 語々) if (展開.indexOf(語) < 0) 展開.push(語);
+      const 代表語 = 列挙の代表語Ja(語々, nowMs);
+      if (代表語 && 代表.indexOf(代表語) < 0) 代表.push(代表語);
+    }
+    if (!代表.length) return null;
+    return { 展開, 代表 };
+  }
+
+  function 列挙の展開語Ja(語: string, nowMs: number): string[] {
+    const 解 = 列挙の解きJa(語, nowMs);
+    return 解 ? 解.展開 : [];
   }
 
   function dayRangePairs(query: unknown, nowMs: number): Array<[string, string]> {
@@ -7105,23 +7170,11 @@ const Recommender = (() => {
         const terms = dayRangeTermsJa(part, nowMs);
         if (terms.length) pairs.push([part, `${terms[0]}から${terms[terms.length - 1]}`]);
         /* `と` の列挙は幅ではないので「または」で繋いで書く（第 394 回）。 */
-        const 断片 = 列挙の語に割るJa(part);
-        if (!terms.length && 断片) {
-          const 語々: string[] = [];
-          for (const 片 of 断片) {
-            /* 一片の展開語が年をまたぐ表（`8月` は其の方の年の暦月語の並び）になる時、
-             * 案内には基準の年（其れが無い時は先頭）の語だけを書く – 全部を並べると
-             * 欄が読めなくなる（第 394 回）。当たり方は其の方の年の全部の侭。 */
-            const 語々2 = 単体の展開語Ja(片, nowMs);
-            const 年付き = 語々2.filter((項) => /^[0-9]{4}年/.test(項));
-            const 基準年の語 = 年付き.find((項) =>
-              項.startsWith(`${new Date(nowMs + 9 * 3600 * 1000).getUTCFullYear()}年`),
-            );
-            const 代表 = 基準年の語 || 年付き[0] || 語々2[0] || "";
-            if (代表 && 語々.indexOf(代表) < 0) 語々.push(代表);
-          }
-          if (語々.length) pairs.push([part, 語々.join("または")]);
-        }
+        /* 案内には一片ずつの代表の語だけを並べる – 年をまたぐ表（`8月` は其の方の年の
+         * 暦月語の並び）を全部並べると欄が読めない（第 394 回）。当たり方は其の方の年の
+         * 全部の侭 – 案内が狭く見えるのが噓になるのでは無いので、其処は変らない。 */
+        const 列挙 = 列挙の解きJa(part, nowMs);
+        if (!terms.length && 列挙) pairs.push([part, 列挙.代表.join("または")]);
       });
     });
     return pairs;

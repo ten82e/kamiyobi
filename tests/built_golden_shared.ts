@@ -269,6 +269,8 @@ export const SEARCH_CANON = (() => {
       "解ける日語かJa",
       "幅の語を割らないかJa",
       "単体の展開語Ja",
+      "列挙の代表語Ja",
+      "列挙の解きJa",
       "列挙の語に割るJa",
       "列挙の展開語Ja",
       "splitQueryToken",
