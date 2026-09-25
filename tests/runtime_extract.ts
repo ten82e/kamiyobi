@@ -76,6 +76,10 @@ export function wholeTableQueryStubs(rec: string): string {
     rec.match(/const DAY_RANGE_UNIT = [^\n]*;/)?.[0] ?? "",
     rec.match(/const DAY_RANGE_UNIT_JA[\s\S]*?\n\s*\};/)?.[0] ?? "",
     rec.match(/const WIN_LIMITS_JA[\s\S]*?\n\s*\];/)?.[0] ?? "",
+    /* 時間の単位で打たれた形（第 365 回）。`dayRangeDaysJa` が読むので、関数だけを渡すと
+     * `HOUR_RANGE_JA is not defined` に化ける（第 257 回と同じ穴 – 実際に落ちた）。 */
+    rec.match(/const HOUR_RANGE_JA = [^\n]*;/)?.[0] ?? "",
+    jsFunction(rec, "時間数から日数Ja"),
   ];
   dayRange.forEach((src) => {
     expect(src, "日数の範囲の定義が見つからない").toBeTruthy();
