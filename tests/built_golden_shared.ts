@@ -116,6 +116,10 @@ export const SEARCH_CANON = (() => {
     ["CATEGORY_CHIP_TAIL", /const CATEGORY_CHIP_TAIL = new RegExp\([\s\S]*?\);/],
     ["PLACE_QUERY_ALIASES_JA", /const PLACE_QUERY_ALIASES_JA[\s\S]*?\];/],
     ["TOPIC_QUERY_ALIASES_JA", /const TOPIC_QUERY_ALIASES_JA[\s\S]*?\];/],
+    /* 時刻に繋がれたタイムゾーンの語（第 412 回）。`queryTokenGroups` の内側から読むので、
+     * 抜き出す関数と一緒に注入しないと `new Function` の中で未定義になる。 */
+    ["時刻の後ろのゾーン語Ja", /const 時刻の後ろのゾーン語Ja = new Set\([\s\S]*?\]\);/],
+    ["時刻の後ろのゾーン語並びJa", /const 時刻の後ろのゾーン語並びJa =[\s\S]*?\.length\);/],
     ["RELATIVE_MONTH_OFFSETS_JA", /const RELATIVE_MONTH_OFFSETS_JA[\s\S]*?\};/],
     // 月に数字を打った『末』の案内（第 407 回 – `periodMonthPairs` が呼ぶ）。
     ["月の末の案内Ja", /function 月の末の案内Ja\([\s\S]*?\n {4}\}/],
