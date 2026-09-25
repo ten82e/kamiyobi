@@ -145,8 +145,11 @@ describe("成果物", () => {
     expect(物.match(/if \(継ぐ && 継ぐ\.length >= 2\)/g) ?? []).toHaveLength(1);
     expect(物.match(/monthPartTermsJa\(`\$\{継ぐ\[1\]\}月\$\{語\}`/g) ?? []).toHaveLength(1);
     expect(物.match(/let 継ぐ = null;/g) ?? []).toHaveLength(1);
-    /* 半月の様な幅の語は列挙で解かない決まり（其の方の語は日を決めない）。 */
-    expect(物.match(/if \(\/半\/\.test\(語\)\)/g) ?? []).toHaveLength(1);
+    /* 半月の様な幅の語は列挙で解かない決まりは其侭 – ただし半月後の様に日を決める形は
+     * 通す（第 426 回 – 判断は数値の相対日の規則に聞く）。*/
+    expect(
+      物.match(/if \(\/半\/\.test\(語\) && !numericRelativeDay\(語, nowMs\)\)/g) ?? [],
+    ).toHaveLength(1);
   });
 
   it("案内は列挙の解きから代表の語だけを書く（当たり方は広く見せない）", () => {
