@@ -4023,10 +4023,25 @@ const Recommender = (() => {
           const baseNow = Number.isFinite(nowMs) ? nowMs : Date.now();
           const baseYear = new Date(baseNow + 9 * 3_600_000).getUTCFullYear();
           first = `${baseYear + (RELATIVE_YEAR_OFFSETS_JA[relativeYearKeyJa(stem)] as number)}年1月1日`;
+        } else {
+          first = 以降の初日Ja(stem, nowMs);
         }
         if (first) {
           notes.push(
             `${token} = ${first}以降のこと – 初期画面は締切の近い順に並んでいて、その以降の締切も並びます（締切までの日数で絞るなら上の『締切まで』の欄が確かです）`,
+          );
+          return;
+        }
+        /* 前の語を日にちとして探せなかった形 – 黙って 0 行の侭にしない（第 369 回）。
+         * 月の語（`9月` など）は範囲の言い方の方が受けて**絞る**ので、其上に案内を足すと
+         * 「絞りません」と噓を書く（第 252 回の決まり – 実測で `9月から` 703 行）。 */
+        if (
+          日付らしき語Ja(stem) &&
+          monthTokenToYearMonth(stem, nowMs) === null &&
+          monthRangeTermsJa(stem, nowMs).length === 0
+        ) {
+          notes.push(
+            `${token} = 其れより後の締切の事だと思いますが、前の語を此の表の日として探せないので検索欄では絞り込まずにいます（日の形に直して打ってください）。締切の近さで絞るなら上の『締切まで』の欄、過ぎた締切も見るなら『過去の締切も表示』が使えます`,
           );
           return;
         }
@@ -4045,6 +4060,85 @@ const Recommender = (() => {
       }
     });
     return notes;
+  }
+
+  /* 数の付いた日の言い方・曜日の語で打たれた『から』『以降』を受ける（第 369 回）。
+   * 実測（2026-10-24 – 実ビルドの品書 872 行・固定時刻 2026-08-09T00:00:00Z）で、相対語
+   * （`明日から` `来週から` `来年から` `8月上旬から`）は日にちの案内が出ていたのに、
+   * 数が付いた形と曜日の語は**案内も無しで 0 行**だった – `3日前から` `1週間前から`
+   * `10日後から` `1か月前から` `2年後から` `3か月後から` `3日以降` `1週間以降` `1か月以降`
+   * `10日以降` `8月20日から` `2026-08-20から` `来週金曜から`（同じビルドで `3日前` 3 行・
+   * `1週間前` 7 行・`8月20日` は通る – 其の方の語は在り、『から』を付けた形だけが落ちていた）。
+   * 其れより後の締切は既定の並びに並ぶので絞り込まない（第 328 回の決まり）が、
+   * 其の方の日を名前で言う。 */
+  function 以降の初日Ja(stem: string, nowMs: number): string {
+    const 元 = String(collapseRelativeDayPhrase(stem) || "");
+    const 数値 = numericRelativeDay(元, nowMs);
+    if (数値) return String(数値[1] || "");
+    /* `3日以降` `1週間以降` `1か月以降` – 単位だけの形は其の方の単位ぶん後（後の語と
+     * 同じ暦の動き方をするので、後の語に直して数値の相対日に読む – 月・年は日数に換えない）。 */
+    const 単位だけ =
+      /^([0-9]{1,4})日間?$/.test(元) ||
+      /^([0-9]{1,2})(?:週間|週)$/.test(元) ||
+      /^([0-9]{1,4})(?:か月|カ月|ヵ月|ヶ月|ケ月|箇月)$/.test(元) ||
+      /^半年$/.test(元);
+    if (単位だけ) {
+      /* 単位の寄せ（`1週間後` → `7日後`）を挟んでから数値の相対日に読む – 週は其の方が
+       * 表に在るから（月・年は日数に換えない – 第 318 回の注と同じ）。 */
+      const 後 = numericRelativeDay(String(collapseRelativeDayPhrase(`${元}後`)), nowMs);
+      if (後) return String(後[1] || "");
+    }
+    const 曜日 = pressedWeekdayJa(元, nowMs);
+    if (曜日 && 曜日.length > 0) return String(曜日[0] || "");
+    /* 和暦で打たれた日（`8月20日` `2026年8月20日`）は、暦日の表が `8/20` の形だけ
+     * 受けるので此處で受ける – 年を付けない日は、過ぎた月日を打つ人は来年を見る
+     * （月の範囲の言い方と同じ決まり – 第 252 回）。 */
+    const 月日 = /^(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日$/.exec(元);
+    if (月日) {
+      const 月 = Number(月日[2]);
+      const 日 = Number(月日[3]);
+      if (月 >= 1 && 月 <= 12 && 日 >= 1 && 日 <= 31) {
+        if (月日[1] !== undefined) return `${Number(月日[1])}年${月}月${日}日`;
+        const 今 = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
+        const 今年 = 今.getUTCFullYear();
+        const 年 = isPastJstDay([今年, 月, 日], nowMs) ? 今年 + 1 : 今年;
+        return `${年}年${月}月${日}日`;
+      }
+    }
+    /* 月のまとまりの語（`来月末` `年度末`）は其の月の末日 – 表の決まりと同じ読み方。 */
+    const 月の対 = PERIOD_MONTH_WORDS_JA[元];
+    if (月の対 !== undefined) {
+      const 年月 = monthTokenToYearMonth(月の対, nowMs);
+      if (年月) {
+        /* 「末」の付く語は其の月の末日、初めの付く語は其の月の一日 – 其れ以外（`年内` など）は
+         * 幅のはじまりなので其の月の一日（其れより前を足さない – 幅の終わりは推測しない）。 */
+        const 日 = /末$/.test(元) ? new Date(Date.UTC(年月[0], 年月[1], 0)).getUTCDate() : 1;
+        return `${年月[0]}年${年月[1]}月${日}日`;
+      }
+    }
+    const 暦日 = calendarDateGroups(元);
+    if (暦日 && 暦日.length === 1) {
+      const 付き = /^(\d{4})年(\d{1,2})月(\d{1,2})日$/.exec(String(暦日[0] || ""));
+      if (付き) return String(暦日[0] || "");
+      const 年無し = /^(\d{1,2})月(\d{1,2})日$/.exec(String(暦日[0] || ""));
+      if (年無し) {
+        const 元日 = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
+        const 今年 = 元日.getUTCFullYear();
+        /* 過ぎた月日を打つ人は来年を見る – 月の範囲の言い方と同じ決まり（第 252 回）。 */
+        const 年 = isPastJstDay([今年, Number(年無し[1]), Number(年無し[2])], nowMs)
+          ? 今年 + 1
+          : 今年;
+        return `${年}年${Number(年無し[1])}月${Number(年無し[2])}日`;
+      }
+    }
+    return "";
+  }
+
+  /** 『から』『以降』の前に付く語が日付の言い方らしいか（第 369 回）。 */
+  function 日付らしき語Ja(stem: string): boolean {
+    return /(?:[0-9]{1,4}|一|二|三|四|五|六|七|八|九|十|半)(?:日|日間|週|週間|か月|ヶ月|カ月|ケ月|箇月|年|旬|月末|末|曜日|月初)|[日月年週]初め|[日月年]始め|年度|末日|曜日|前|後|今週|来週|先週|毎週|来月|先月|今月|来年|今年|去年|明後日|明日|昨日|一昨日/.test(
+      String(stem || ""),
+    );
   }
 
   /** `2026年8月10日` の形の語を `2026-08-10` にする（曜日を引き出すため）。 */

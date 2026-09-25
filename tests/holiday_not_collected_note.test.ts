@@ -118,7 +118,10 @@ describe("壊していない物", () => {
     const rec = readFileSync(join(builtSite(), "recommender.js"), "utf8");
     /* 「祝日」が寄せ先の表（`PERIOD_MONTH_WORDS_JA` – 暦月へ展開する表）に入っていない事。
      * 入れる事は祝日を其の月の全行に寄せる事になり、締切の推測になる（AGENTS.md）。 */
-    const 暦月の表 = rec.slice(rec.indexOf("PERIOD_MONTH_WORDS_JA"));
+    /* 宣言の先頭から切る – 語の文字列だけを捜すと、其の表を読む側の関数が先に在る場合
+     * その location から切り出して化ける（第 369 回で実発生 – 『から』『以降』を解く関数が
+     * 表を参照しただけで此の検査が落ちた – 表の中身は変わっていない）。 */
+    const 暦月の表 = rec.slice(rec.indexOf("const PERIOD_MONTH_WORDS_JA"));
     const 宣言 = 暦月の表.slice(0, 暦月の表.indexOf("};"));
     expect(宣言.includes("祝日"), "暦月の表に `祝日` が入った").toBe(false);
     expect(宣言.includes("年末"), "`年末` の寄せが消えた（第 352 回）").toBe(true);
