@@ -79,6 +79,8 @@ export function wholeTableQueryStubs(rec: string): string {
     /* 時間の単位で打たれた形（第 365 回）。`dayRangeDaysJa` が読むので、関数だけを渡すと
      * `HOUR_RANGE_JA is not defined` に化ける（第 257 回と同じ穴 – 実際に落ちた）。 */
     rec.match(/const HOUR_RANGE_JA = [^\n]*;/)?.[0] ?? "",
+    /* 過去方向の『まで』の案内が読む表（第 367 回）。関数だけ渡すと `not defined` に化ける。 */
+    rec.match(/const PAST_RANGE_UNTIL_JA = [^\n]*;/)?.[0] ?? "",
     jsFunction(rec, "時間数から日数Ja"),
   ];
   dayRange.forEach((src) => {
