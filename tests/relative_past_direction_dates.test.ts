@@ -151,7 +151,8 @@ describe("成果物", () => {
     const rec = readFileSync(join(builtSite(), "recommender.js"), "utf8");
     for (const [条目, 数] of [
       ["const PAST_RANGE_UNTIL_JA = ", 1],
-      ["半年後", 2],
+      /* `半年後` は相対語の表・数値の相対日の規則・日付の語の表（第 399 回）の三處に並ぶ。 */
+      ["半年後", 3],
       ["昨週: -1", 1],
       ["一昨日: -2", 1],
       ["昨月: -1", 1],

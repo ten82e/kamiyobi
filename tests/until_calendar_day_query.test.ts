@@ -173,7 +173,7 @@ describe("成果物", () => {
     expect(物.match(/const 暦 = head \? 暦日に解くJa\(head\[1\]\) : null;/g) ?? []).toHaveLength(1);
     /* 成果物では `return null;` が次の行に割れるので、目印は if の所まで。 */
     expect(物.match(/if \(!stem && !pressed && !暦\)/g) ?? []).toHaveLength(1);
-    expect(物.match(/const 年付きのみ = 暦 !== null;/g) ?? []).toHaveLength(1);
+    expect(物.match(/const 年付きのみ = 暦 !== null \|\| 数値 !== null;/g) ?? []).toHaveLength(1);
     /* `までに` を割らない決まりは語の末尾に付いた時だけ（後に語が控える形は二語に割る）。 */
     expect(物.match(/\/までに\$\/\.test\(token\)/g) ?? []).toHaveLength(1);
     /* 区切りの日付を守る処 – 期日を訊く語尾を落とした形で `/` を見る（第 398 回）。 */

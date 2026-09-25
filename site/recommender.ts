@@ -7938,7 +7938,20 @@ const Recommender = (() => {
 
   /** 日付の語の表に載っている形か（助詞を剥がした後の検証に使う）。 */
   function isDateTableWordJa(word: string): boolean {
+    /* 数値で書く相対日と幅の形（`3日後` `14日前` `1か月後` `30日以内`）は語の形だけ見る –
+     * 日数の換算は其の方の規則が持つので、ここで数を決めない。語は此處で列挙する –
+     * 検査は `tests/runtime_extract.ts` の `jsFunction` で此の側だけの成果物を作るので、
+     * 関数の外の `const` に置くと参照が届かない（第 341 回の実発生）。 */
+    const 数値の相対日の形Ja = /^[0-9]{1,4}(?:日|か月|カ月|ヵ月|ヶ月|ケ月|箇月|年)(?:後|前)$/;
+    const 数値の幅の形Ja = /^[0-9]{1,4}日以内$/;
     return (
+      /* 数値の相対日・幅に `に` を繋げただけの形（`3日以内に` `3日後までに`）を、
+       * 剥がした形へ寄せられるやうにする（第 399 回 – 実測で `3日以内に` **0 行** /
+       * `3日以内` 17 行、`1週間以内に` **0 行** / `1週間以内` 60 行だつた）。 */
+      数値の相対日の形Ja.test(word) ||
+      数値の幅の形Ja.test(word) ||
+      word === "半年後" ||
+      word === "半年前" ||
       RELATIVE_DAY_OFFSETS_JA[word] !== undefined ||
       RELATIVE_WEEK_OFFSETS_JA[word] !== undefined ||
       RELATIVE_MONTH_OFFSETS_JA[word] !== undefined ||
@@ -7954,9 +7967,15 @@ const Recommender = (() => {
   function dateTokenStemJa(token: string): string {
     const q = String(token || "");
     if (q.length < 3) return "";
+    /* 数値で書く相対日の『前』の向き – 語の形だけ見る（換算は其の方の規則が持つ）。 */
+    const 数値の前の向きJa = /^(?:[0-9]{1,4}(?:日|か月|カ月|ヵ月|ヶ月|ケ月|箇月|年)|半年)前$/;
     for (const tail of DATE_TOKEN_TAILS_JA) {
       if (q.length <= tail.length + 1 || !q.endsWith(tail)) continue;
       const stem = q.slice(0, -tail.length);
+      /* 『前』の向きに期日を訊く語尾を繋げた形（`3日前まで` `1か月前までに`）は寄せない –
+       * 過去方向に開いた幅はいつまで遡るかが書かれて居ないので、其の終わりを決めるのは
+       * 締切の推測になる（第 367 回の決まり – `3日前まで` で行を足さない）。 */
+      if (tail.indexOf("まで") === 0 && 数値の前の向きJa.test(stem)) continue;
       if (isDateTableWordJa(stem)) return stem;
     }
     return "";
@@ -8153,6 +8172,17 @@ const Recommender = (() => {
      * 相対語（`明日までに` 5 行・`来週までに` 60 行）は此処で今日からの幅に解けるので、
      * 同じ頼み方が日付で打たれた時だけ黙つて 0 行になつて居た）。 */
     const 暦 = head ? 暦日に解くJa(head[1]) : null;
+    /* 数値の相対日（`3日後までに` `5日後まで` `1か月後までに` `3日前までに` – 週は
+       `7日後` に寄る）も其の方の日を末尾に受ける（第 399 回 – 実測 2026-09-27 –
+       実ビルドの品書 872 行・固定時刻 2026-08-09T00:00:00Z: `3日後` 3 行・
+       `1週間後` 17 行・`1か月後` 18 行が通るのに、`3日後までに` **0 行**・
+       `2週間後までに` **0 行**・`1か月後までに` **0 行**・`3日前までに` **0 行**で
+       案内も無し – 其の方の語は日付の表に載つた語では無いので、剥がした形を見られなかつた）。 */
+    /* 剥がした形（`3日後までに` → `3日後`）が数値の相対日である形が最も多いので、
+     * 剥がした形を先に見る（`に` を剥いだだけの形も此方に乗る – 第 399 回）。
+     * 『前』の向きは解かない – 過去方向に開いた幅はいつまで遡るかが書かれて居ないので、
+     * 終わりを決めるのは締切の推測になる（第 367 回の決まり – `3日前まで` で行を足さない）。 */
+    const 数値 = 暦 || /前$/.test(stem) ? null : numericRelativeDay(stem, nowMs);
     /* 週+曜日を繋げた形（`今週金曜まで`）は表に無い語なので、剥がした形が無くても続ける
      * （第 329 回 – ここでの早期 return で 0 行のままだった）。 */
     if (!stem && !pressed && !暦) return null;
@@ -8173,6 +8203,11 @@ const Recommender = (() => {
         if (!isPastJstDay(翌年, nowMs)) 候補[0] = 翌年[0];
       }
       last = 候補;
+    } else if (数値) {
+      /* 数値の相対日は其の方の規則が暦日を出す（其の 2 語目が `YYYY年M月D日` の形）。 */
+      const 刻 = /^(\d{4})年(\d{1,2})月(\d{1,2})日$/.exec(数値[1]);
+      if (!刻) return null;
+      last = [Number(刻[1]), Number(刻[2]), Number(刻[3])];
     } else {
       const week = weekDayTermsJa(stem, nowMs);
       if (week.length === 7) {
@@ -8190,19 +8225,27 @@ const Recommender = (() => {
      * （`8月14日`）を混ぜると、其れより後の年の同じ月日 – 実測では USENIX Security 2027 の
      * 要旨締切の 5 行 – まで当たり、件数欄が書く「2026年8月9日(日)〜8月22日(土)」と
      * 当たり方が食い違う（相対語の幅は其の方の形も混ぜて居る – 其の方は別の回の種）。 */
-    const 年付きのみ = 暦 !== null;
+    const 年付きのみ = 暦 !== null || 数値 !== null;
     if (isPastJstDay(last, nowMs)) {
       const 語 = `${last[0]}年${last[1]}月${last[2]}日`;
       return 年付きのみ ? [語] : [語, `${last[1]}月${last[2]}日`];
     }
     const out: string[] = [];
+    let 届いた = false;
     for (let d = 0; d <= 370; d += 1) {
       const ymd = offsetCalendarDay(nowMs, d);
       out.push(`${ymd[0]}年${ymd[1]}月${ymd[2]}日`);
       if (!年付きのみ) out.push(`${ymd[1]}月${ymd[2]}日`);
-      if (ymd[0] === last[0] && ymd[1] === last[1] && ymd[2] === last[2]) break;
+      if (ymd[0] === last[0] && ymd[1] === last[1] && ymd[2] === last[2]) {
+        届いた = true;
+        break;
+      }
     }
-    return out;
+    /* 幅の展開は 370 日まで（上の循環の上限）。其れより後の日を末尾に持つ頼み方は、
+     * 途中までを幅として黙って出さない（第 399 回 – 其うで切ると、件数欄が書く末尾の日和
+     * 違う当たり方になる – `2年後までに` のやうな形は解かない事にすつて、画面の
+     * 「締切まで」の欄へ誘導する）。 */
+    return 届いた ? out : null;
   }
 
   /** 相対日・相対日の語を、暦日の候補グループへ展開する（OR の組）。 */
