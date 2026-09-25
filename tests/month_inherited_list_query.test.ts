@@ -145,7 +145,9 @@ describe("成果物", () => {
 
   it("案内は列挙の解きから代表の語だけを書く（当たり方は広く見せない）", () => {
     const 物 = readFileSync(join(builtSite(), "recommender.js"), "utf8");
-    expect(物.match(/列挙\.代表\.join\("または"\)/g) ?? []).toHaveLength(1);
+    expect(物.match(/pairs\.push\(\[part, 列挙\.代表\.join\("または"\)\]\)/g) ?? []).toHaveLength(
+      1,
+    );
     expect(物.match(/function 列挙の代表語Ja\(/g) ?? []).toHaveLength(1);
   });
 });

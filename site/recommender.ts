@@ -7092,6 +7092,15 @@ const Recommender = (() => {
     return [`${年}年${暦[1]}月${暦[2]}日`];
   }
 
+  /** 並べた語の断片が、全部 日語で決まる形か（先頭の語以降は月を継げる形も通す –
+   * 第 395 回）。`と` で並べた形と句読点で並べた形で同じ目印を使う（第 396 回）。 */
+  function 断片が皆決まるかJa(断片: string[]): boolean {
+    for (let i = 0; i < 断片.length; i += 1) {
+      if (!解ける日語かJa(断片[i], i > 0)) return false;
+    }
+    return true;
+  }
+
   /** `と` で並べた列挙の語を割る。先頭の語は其の方で日を決まり、其れ以降は先頭の語から
    * 月を継げる形（裸の日・裸の旬）も通す（第 394 回 – 第 395 回で継がせる形を足した）。 */
   function 列挙の語に割るJa(語: string): string[] | null {
@@ -7100,9 +7109,7 @@ const Recommender = (() => {
       .map((片) => 片.trim())
       .filter((片) => 片.length > 0);
     if (断片.length < 2 || 断片.length > 4) return null;
-    for (let i = 0; i < 断片.length; i += 1) {
-      if (!解ける日語かJa(断片[i], i > 0)) return null;
-    }
+    if (!断片が皆決まるかJa(断片)) return null;
     return 断片;
   }
 
@@ -7114,10 +7121,8 @@ const Recommender = (() => {
     return 基準年の語 || 年付き[0] || 語々[0] || "";
   }
 
-  /** 列挙を解いた物（当たり方に使う展開語と、案内に書く代表の語）。解けなければ null。 */
-  function 列挙の解きJa(語: string, nowMs: number): { 展開: string[]; 代表: string[] } | null {
-    const 断片 = 列挙の語に割るJa(語);
-    if (!断片) return null;
+  /** 並べた断片から列挙を解いた物（当たり方に使う展開語と、案内に書く代表の語）。 */
+  function 列挙を解くJa(断片: string[], nowMs: number): { 展開: string[]; 代表: string[] } | null {
     /* 先頭の語が名乗る月を其れ以降に継がせる – 幅の側が持つ月の印の形をそのまま使う
      * （三つ目は裸の日を受ける目印 – 第 376 回）。 */
     const 頭 = 幅の片側を暦日に解くJa(断片[0], nowMs, "頭", null);
@@ -7156,9 +7161,30 @@ const Recommender = (() => {
     return { 展開, 代表 };
   }
 
+  function 列挙の解きJa(語: string, nowMs: number): { 展開: string[]; 代表: string[] } | null {
+    const 断片 = 列挙の語に割るJa(語);
+    return 断片 ? 列挙を解くJa(断片, nowMs) : null;
+  }
+
   function 列挙の展開語Ja(語: string, nowMs: number): string[] {
     const 解 = 列挙の解きJa(語, nowMs);
     return 解 ? 解.展開 : [];
+  }
+
+  /* 「8月下旬、9月上旬」「8月10日、11日」の打ち方（第 396 回）。句読点は語の区切りに
+   * なる（其の方の表）ので、並べた日が別々の組に割れて AND になる – 実測で
+   * `8月下旬、9月上旬` **6 行**（`と` で並べた形 173 行 – 其の内 8月下旬 91 行 + 9月上旬 82 行）、
+   * `8月10日、11日` **3 行**（同じ日を `と` で並べた形 7 行）。並べた打ち方をした人が
+   * 黙って減った当たり方に気づかない。其の方の組が全部の日語で決まる時だけ和集合にする –
+   * 語を並べた物（`東京、大阪`）は其侭 AND の侭（語を又す訳では無い）。 */
+  function 句読点の列挙Ja(語: string, nowMs: number): { 展開: string[]; 代表: string[] } | null {
+    const 断片 = String(語 || "")
+      .split(/[、，,]+/)
+      .map((片) => 片.trim())
+      .filter((片) => 片.length > 0);
+    if (断片.length < 2 || 断片.length > 4) return null;
+    if (!断片が皆決まるかJa(断片)) return null;
+    return 列挙を解くJa(断片, nowMs);
   }
 
   function dayRangePairs(query: unknown, nowMs: number): Array<[string, string]> {
@@ -7175,6 +7201,11 @@ const Recommender = (() => {
          * 全部の侭 – 案内が狭く見えるのが噓になるのでは無いので、其処は変らない。 */
         const 列挙 = 列挙の解きJa(part, nowMs);
         if (!terms.length && 列挙) pairs.push([part, 列挙.代表.join("または")]);
+        /* 「、」で並べた形も同じ – 案内は「または」で繋ぐ（並べた日であって幅では無い）。 */
+        if (!terms.length && !列挙) {
+          const 句列挙 = 句読点の列挙Ja(part, nowMs);
+          if (句列挙) pairs.push([part, 句列挙.代表.join("または")]);
+        }
       });
     });
     return pairs;
@@ -9315,6 +9346,14 @@ const Recommender = (() => {
       JOIN_WORDS.test(token) ? resolved[kanaFold(token)] || [] : [];
     const units: Array<{ token: string; whole: string[] }> = [];
     mergeSeasonTokens(queryTokens(query)).forEach((raw) => {
+      /* 「、」で並べた日は**一つの和集合**として受ける – 句読点で割れると別々の組（AND）に
+       * なって当たり方が減る（第 396 回 – 其の方の語は下の枝で別々に解けるので、其処に
+       * 任すと減った物が出てしまう）。解けない語を混んだ物は下に流す（其侭 AND）。 */
+      const 句列挙 = 句読点の列挙Ja(raw, now);
+      if (句列挙) {
+        units.push({ token: 句列挙.展開[0], whole: 句列挙.展開.slice(1) });
+        return;
+      }
       middleParts(raw).forEach((part) => {
         if (!hasWordChar(part)) return;
         /* 相対月の語はここで暦月に解決する（第 251 回）。`expandRelativeMonths` は空白で
