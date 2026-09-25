@@ -119,6 +119,11 @@ export const SEARCH_CANON = (() => {
     ["RELATIVE_MONTH_OFFSETS_JA", /const RELATIVE_MONTH_OFFSETS_JA[\s\S]*?\};/],
     // 月に数字を打った『末』の案内（第 407 回 – `periodMonthPairs` が呼ぶ）。
     ["月の末の案内Ja", /function 月の末の案内Ja\([\s\S]*?\n {4}\}/],
+    // 助詞を付きただけの暦日・暦月・年・曜日を寄せる形（第 408 回 – 語の頭が呼ぶ）。
+    ["暦日の語に寄せるJa", /function 暦日の語に寄せるJa\([\s\S]*?\n {4}\}/],
+    ["暦日と暦月の形Ja", /const 暦日と暦月の形Ja =[\s\S]*?;/],
+    ["曜日の形Ja", /const 曜日の形Ja =[\s\S]*?;/],
+    ["同じ聞き方の助詞Ja", /const 同じ聞き方の助詞Ja = [^\n]*;/],
     // 「今月末」「年内」の語の表（第 327 回）。`queryTokenGroups` が呼ぶ関数と一緒に注入する。
     ["PERIOD_MONTH_WORDS_JA", /const PERIOD_MONTH_WORDS_JA[\s\S]*?\};/],
     /* 年度・期間の語（第 330 回）。 */
