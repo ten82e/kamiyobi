@@ -4044,7 +4044,16 @@ const Recommender = (() => {
    * 全角数字は NFKC で半角に折る（`１か月以内` で打つ人もいる – 検索の正規化と同じ折方）。 */
   function dayRangeDaysJa(query: unknown): number | null {
     const raw = typeof query === "string" ? query : query == null ? "" : String(query);
-    const normalized = (typeof raw.normalize === "function" ? raw.normalize("NFKC") : raw).trim();
+    /* 空格（全角空格を含む）を詰めてから読む（第 422 回）。実測（2026-10-08 – 実ビルドの品書
+     * 872 行）で、行を出す側は語の内の空格を既に受ける（`2 週間 以内` 111 行 ≡ `2週間以内`・
+     * `3 日以内` 17 行・`180 日以内` 854 行 – 検索の正規化が詰める）のに、案内通道の此処だけは
+     * trim だけなので其侭素通りして、**行は出るのに案内だけが黙つて居た** – `3 日以内` 17 行に
+     * 「7 日以内が近い」が書けない、`5 以内`・`10 以内`（半角・全角空格とも）0 行で案内も無し
+     * （`5以内` には出る）・`30 分 以内`・`1 時間 以内`・`半 日以内`・`二 週間以内` も同じ。
+     * 日の欄の案内含は行を決めない（行は検索の正規化が決める）ので、此処の詰めで行は動かない。*/
+    const normalized = (typeof raw.normalize === "function" ? raw.normalize("NFKC") : raw)
+      .trim()
+      .replace(/\s+/g, "");
     if (!normalized) return null;
     /* 「1時間以内」「24時間以内」「半日以内」（第 365 回）。2026-10-22 実測 – 実ビルドの品書
      * 872 行で `1時間以内` `3時間以内` `24時間以内` `48時間以内` `72時間以内` `半日以内` は
@@ -4130,10 +4139,13 @@ const Recommender = (() => {
     /* 打たれた形をそのまま返す（全角数字でも利用者の入力した文字を書く – 件数欄の
      * 「検索語『X』」と同じ判断）。 */
     const word = (typeof query === "string" ? query : query == null ? "" : String(query)).trim();
-    if (HOUR_RANGE_JA.test(word)) {
+    /* 枝分けは空格を詰めた形で見る（第 422 回 – 上の幅の読みと揃える）。詰めた侭で分けると
+     * 『30 分 以内』が分数の枝から落ちて、30 分に「30 日以内が近い」と別の話を書く事になる
+     * （実測 2026-10-08 – 直前の一歩でそうなつた）。echo は打たれた形を其侭書く（第 366 回）。*/
+    if (HOUR_RANGE_JA.test(打たれた形)) {
       /* 時間単位で打たれた人へ – 「7 日以内が近い」とは言わない（其方は 7 倍広い幅なので）。
        * 分数で打たれた人にも同じ話 – 打った単位の名前を書く（第 421 回）。*/
-      const 打った単位 = /分(?:間)?以内$/.test(word) ? "分数" : "時間";
+      const 打った単位 = /分(?:間)?以内$/.test(打たれた形) ? "分数" : "時間";
       return (
         ` 「${word}」のことなら、この表は締切を日単位で持っている（時に持たない）ので、${打った単位}` +
         `単位では絞れません。締切が今日・明日の行は『1 日以内』で出て、其れより短い幅は出せません。`
@@ -4169,7 +4181,7 @@ const Recommender = (() => {
     }
     const hit = dayRangeWindowJa(query);
     if (!hit) return "";
-    if (HOUR_RANGE_JA.test(String(query == null ? "" : query).trim())) {
+    if (HOUR_RANGE_JA.test(打たれた形)) {
       return ` は曖昧な幅では絞れません – 締切は日単位（時に持たない）。『1 日以内』か「締切まで」の欄で`;
     }
     /* 打たれた形をそのまま返す（全角数字でも利用者の入力した文字を書く – 件数欄の
