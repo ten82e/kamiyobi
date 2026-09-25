@@ -6232,13 +6232,54 @@ const Recommender = (() => {
   function queryTokens(query: unknown): string[] {
     const normalized = searchNormalize(query);
     if (!normalized) return [];
+    /* 相対日（週・月・年を含む）の語の内の空格（第 423 回）。実測（2026-10-09 – 実ビルドの
+     * 品書 872 行・固定時刻 2026-08-09T00:00:00Z）: `来 週` `今 週` `明 日` `来 月` `来 年`
+     * `今 日` `先 週` `再 来週` が **0 行**（寄せた語は 来週 53・来月 240・来年 452・明日 4 行）
+     * – 語の内の空格で行を出す側は既に受ける（第 422 回 – 幅側は読む所だけで詰める）のに、
+     * 二語に割れた物は片方が日時の語として解けず、AND で 0 行になる為。
+     * 寄せるのは表に書いた対だけ – 両側が其れだけで日時の語として解けず、寄せた語が解ける
+     * 形に限る（片段は単体 0 行の実測 – 来 明 今 再 先 翌 昨 週 後日）。だから今は 0 行の形に
+     * だけ効いて、在る検索（`月 曜` 872 行・`来週 月曜` 4 行 – 片側が其の方の語）には触らない。
+     * 表は此処に持つ – 上の折りの検査は此の関数を単体で抜くので、外の変数は見られない。*/
+    const 相対語の寄せJa: Array<[string, string, string]> = [
+      ["明", "日", "明日"],
+      ["今", "日", "今日"],
+      ["昨", "日", "昨日"],
+      ["明", "後日", "明後日"],
+      ["明後", "日", "明後日"],
+      ["今", "週", "今週"],
+      ["来", "週", "来週"],
+      ["先", "週", "先週"],
+      ["翌", "週", "翌週"],
+      ["再", "来週", "再来週"],
+      ["再来", "週", "再来週"],
+      ["今", "月", "今月"],
+      ["来", "月", "来月"],
+      ["先", "月", "先月"],
+      ["翌", "月", "翌月"],
+      ["再", "来月", "再来月"],
+      ["再来", "月", "再来月"],
+      ["来", "年", "来年"],
+      ["今", "年", "今年"],
+      ["翌", "年", "翌年"],
+    ];
     const seen: string[] = [];
+    const 語を足すJa = (part: string) => {
+      if (!part) return;
+      const 前 = seen.length ? seen[seen.length - 1] : "";
+      if (前) {
+        const 対 = 相対語の寄せJa.find(([甲, 乙]) => 甲 === 前 && 乙 === part);
+        if (対) {
+          seen[seen.length - 1] = 対[2];
+          return;
+        }
+      }
+      if (seen.indexOf(part) < 0) seen.push(part);
+    };
     normalized.split(" ").forEach((raw) => {
       const token = raw.replace(QUERY_EDGE_PUNCTUATION, "");
       if (!token) return;
-      splitQueryToken(token).forEach((part) => {
-        if (part && seen.indexOf(part) < 0) seen.push(part);
-      });
+      splitQueryToken(token).forEach(語を足すJa);
     });
     return seen;
   }
