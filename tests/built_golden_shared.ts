@@ -132,6 +132,8 @@ export const SEARCH_CANON = (() => {
     ["CLOCK_JA", /const CLOCK_JA =\s*\n?\s*\/[^\n]*;/],
     // 助詞・期日の言い回しの表と「今日から N 日」の単位（第 328 回）。
     ["DATE_TOKEN_TAILS_JA", /const DATE_TOKEN_TAILS_JA[\s\S]*?\];/],
+    /* 日を並べると書く区切り（第 406 回）。 */
+    ["列挙の区切りJa", /const 列挙の区切りJa = [^\n]*;/],
     /* 数値で書く相対日の形（第 405 回 – 列挙の目印が読む）。 */
     ["数値の相対日の形Ja", /const 数値の相対日の形Ja = [^\n]*;/],
     ["FROM_TODAY_UNIT", /const FROM_TODAY_UNIT[\s\S]*?\};/],
