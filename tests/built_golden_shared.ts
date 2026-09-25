@@ -297,6 +297,7 @@ export const SEARCH_CANON = (() => {
       "fromTodayTermsJa",
       // 週と曜日を繋げた形（`今週金曜`）を 1 日に解く部品（第 329 回）。
       "pressedWeekdayJa",
+      "連結の列挙Ja",
       "pressedMonthDayJa",
       "isPastJstDay",
       // 年度・年のまとまりの語（第 330 回）。
