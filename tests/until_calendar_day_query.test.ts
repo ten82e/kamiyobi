@@ -160,8 +160,13 @@ describe("暦日を名乗ったまでに", () => {
     /* 月を決めない裸の日は寄せない – 其の打ち方は今まで通り 0 行。 */
     expect(列("3日までに")).toEqual(new Set());
     expect(案内("3日までに")).toEqual([]);
-    /* 「頃」の付いた形は其の日自体を訪ねる別の規則が受けるので、幅に解かない。 */
-    expect(案内("8月22日頃までに")).toEqual([]);
+    /* 「頃」を付けた『までに』は第 403 回から其の日までの幅に解ける（実測で其れ迄 0 行で
+     * 案内も無く、別の規則が受けるとも言えなかつた – `8月22日までに` と対称差 0）。 */
+    expect(対称差(列("8月22日頃までに"), 列("8月22日までに"))).toBe(0);
+    expect(
+      案内("8月22日頃までに").length,
+      "位の付いた『までに』が案内を黙らせた侭",
+    ).toBeGreaterThan(0);
     /* 「迄」の字は今の処寄せない（壊れた語で探す位なら 0 行で案内を出さない）。 */
     expect(案内("8月22日迄に")).toEqual([]);
   });
@@ -172,10 +177,10 @@ describe("成果物", () => {
     const 物 = readFileSync(join(builtSite(), "recommender.js"), "utf8");
     expect(物.match(/const 暦 = head \? 暦日に解くJa\(head\[1\]\) : null;/g) ?? []).toHaveLength(1);
     /* 成果物では `return null;` が次の行に割れるので、目印は if の所まで。 */
-    expect(物.match(/if \(!stem && !pressed && !暦\)/g) ?? []).toHaveLength(1);
+    expect(物.match(/if \(!stem && !pressed && !暦 && !位の解\)/g) ?? []).toHaveLength(1);
     expect(
       物.match(
-        /const 年付きのみ = 暦 !== null \|\| 数値 !== null \|\| pressedMonthDay !== null;/g,
+        /const 年付きのみ = 暦 !== null \|\| 数値 !== null \|\| pressedMonthDay !== null \|\| 位の解 !== null;/g,
       ) ?? [],
     ).toHaveLength(1);
     /* `までに` を割らない決まりは語の末尾に付いた時だけ（後に語が控える形は二語に割る）。 */

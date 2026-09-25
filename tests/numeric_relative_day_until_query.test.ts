@@ -153,7 +153,7 @@ describe("成果物", () => {
       ) ?? [],
     ).toHaveLength(1);
     /* 成果物では `return null;` が次の行に割れるので、目印は if の所まで。 */
-    expect(物.match(/if \(!stem && !pressed && !暦\)/g) ?? []).toHaveLength(1);
+    expect(物.match(/if \(!stem && !pressed && !暦 && !位の解\)/g) ?? []).toHaveLength(1);
     /* 『前』の向きに期日を訊く語尾を繋げた形を寄せない決まり（第 367 回）。 */
     /* 成果物では `continue;` が次の行に割れるので、目印は if の所まで。 */
     expect(
@@ -161,7 +161,7 @@ describe("成果物", () => {
     ).toHaveLength(1);
     expect(
       物.match(
-        /const 年付きのみ = 暦 !== null \|\| 数値 !== null \|\| pressedMonthDay !== null;/g,
+        /const 年付きのみ = 暦 !== null \|\| 数値 !== null \|\| pressedMonthDay !== null \|\| 位の解 !== null;/g,
       ) ?? [],
     ).toHaveLength(1);
     /* 剥がした形を表に載つた語と見なす決まり – 数値の相対日と幅の二つ。 */
