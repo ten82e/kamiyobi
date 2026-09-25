@@ -3334,6 +3334,36 @@ const Recommender = (() => {
     return uiWordMatch(query)?.word || "";
   }
 
+  /* 案内に書く語は **打たれた形**（第 366 回）。照合は小文字に直した形で行うので、其の方の形を
+   * 書くと大文字で打った人の語が化けて見える（2026-10-22 実測 – 実ビルドの品書 872 行・固定時刻
+   * 2026-08-09T00:00:00Z: 『AI』を打った人に「ai」、「HPC」に「hpc」、「ICS」に「ics」、
+   * 『生成AI』に「生成ai」が出ていた）。其の方の欄は件数の行が「検索語『AI』」と**打たれた形**を
+   * 書く（site/app.ts）ので、案内が小文字の形を書くと同じ画面の中で食い違う。
+   * 照合の語が打たれた語の**先頭部分**（助詞を剥がした先 – 第 248 回）の時は、其れと 同じ長さの
+   * 先頭を返す（全角英字は NFKC で長さが変わらない）。当てが無い時は照合の語を其のまま返す。
+   * 見比べるのは英字の大文字と全角だけ直した形（片仮名を平仮名に直す折りは使わない –
+   * 其の方の折りは行に書かれた語を直してしまうので、其處で使うと別の語を同じ語と取り違える
+   * – 実測で「スパコン」が平仮名に化けた）。当たらない語は今までとおりの形を其のまま書く –
+   * 実測で片仮名・漢字で打たれた形の案内は一字も変わっていない）。 */
+  function 打たれた表記Ja(query: unknown, 照合の語: string): string {
+    const 折 = (値: string) =>
+      (typeof 値.normalize === "function" ? 値.normalize("NFKC") : 値).toLowerCase();
+    const 元 = String(query == null ? "" : query).trim();
+    if (!元 || !照合の語) return 照合の語;
+    const 照合 = 折(照合の語);
+    if (折(元) === 照合) return 元;
+    const 語列表 = 元.split(/\s+/).filter((語) => 語);
+    for (const 語 of 語列表) {
+      if (折(語) === 照合) return 語;
+    }
+    for (const 語 of 語列表) {
+      if (折(語).indexOf(照合) === 0 && 語.length >= 照合の語.length) {
+        return 語.slice(0, 照合の語.length);
+      }
+    }
+    return 照合の語;
+  }
+
   /** 0 件案内に出す一文（画面の使い方・操作・出典の語を打たれた人向け – 第 248 回）。 */
   function uiWordNoteJa(query: unknown): string {
     const hit = uiWordEntry(query);
@@ -3341,7 +3371,7 @@ const Recommender = (() => {
     if (!hit.echo) return ` ${hit.note}`;
     const word = uiWordRawJa(query);
     if (hit.quiet && hit.quiet.indexOf(word) >= 0) return ` ${hit.noteQuiet || hit.note}`;
-    return ` 「${word}」${hit.note}`;
+    return ` 「${打たれた表記Ja(query, word)}」${hit.note}`;
   }
 
   /** 当たりが行に有るかに関わらず件数欄に出す一文（`always` を置いた語 – 第 323 回）。 */
@@ -3619,10 +3649,10 @@ const Recommender = (() => {
       const kept = tokens.filter((token) => whole.indexOf(kanaFold(token)) < 0);
       if (dropped.length && kept.length) {
         const note =
-          `「${dropped[0]}」はこの表の全行にあてはまる語なので絞り込みに使い、` +
+          `「${打たれた表記Ja(query, dropped[0])}」はこの表の全行にあてはまる語なので絞り込みに使い、` +
           `他の語（${kept
             .slice(0, 2)
-            .map((token) => `「${token}」`)
+            .map((token) => `「${打たれた表記Ja(query, token)}」`)
             .join("・")}）で探しています`;
         notes.push(note);
       }
@@ -3640,7 +3670,7 @@ const Recommender = (() => {
     queryTokens(query).forEach((token) => {
       const hit = map[kanaFold(token)];
       if (hit) {
-        const note = `「${token}」は${hit[0]}で探しています`;
+        const note = `「${打たれた表記Ja(query, token)}」は${hit[0]}で探しています`;
         if (notes.indexOf(note) < 0) notes.push(note);
         /* タイムゾーンで打った人には、寄せた先が**行に書かれた表記**であることを書く –
          * 別の時間帯の行を変換して足す事はしない（第 336 回）。含みの範囲を実測で書く:
@@ -3680,12 +3710,12 @@ const Recommender = (() => {
           members.length > 2
             ? `${members.slice(0, 2).join("・")} など ${members.length} か所の表記`
             : members.join("・") || "この表記";
-        const note = `「${token}」は${label}（${where}）で探しています`;
+        const note = `「${打たれた表記Ja(query, token)}」は${label}（${where}）で探しています`;
         if (notes.indexOf(note) < 0) notes.push(note);
         /* 海外は「収録の国名から導いた」まとめなので、届かない行の範囲も書く –
          * 639 行が出ると 0 行が見えないと、無い物を無いと言えない（第 335 回）。 */
         if (OVERSEAS_HEADS_JA.indexOf(region[0][0]) >= 0) {
-          const 範囲の案内 = `「${token}」${OVERSEAS_COVERAGE_NOTE_TAIL_JA}`;
+          const 範囲の案内 = `「${打たれた表記Ja(query, token)}」${OVERSEAS_COVERAGE_NOTE_TAIL_JA}`;
           if (notes.indexOf(範囲の案内) < 0) notes.push(範囲の案内);
         }
         // これ以上の説明は付けない。

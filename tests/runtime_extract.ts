@@ -91,6 +91,9 @@ export function wholeTableQueryStubs(rec: string): string {
     ...cols,
     uiWords,
     uiTails,
+    /* 案内に書く語を**打たれた形**に戻す関数（第 366 回）。案内の関数が本体で読むので、関数だけ
+     * 渡すと `打たれた表記Ja is not defined` に化ける（第 257 回と同じ穴 – 実際に落ちた）。 */
+    jsFunction(rec, "打たれた表記Ja"),
     ...dayRange,
     jsFunction(rec, "dayRangeDaysJa"),
     jsFunction(rec, "dayRangeWindowJa"),
