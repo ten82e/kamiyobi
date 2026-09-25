@@ -4335,6 +4335,17 @@ const Recommender = (() => {
         const note = `「${token}」は英語で書かれた会議名（${topic.slice(0, 2).join(" / ")} など）も探しています`;
         if (notes.indexOf(note) < 0) notes.push(note);
       }
+      /*英文字の略語を広げた事も書く – 略語の侭では 0 行だつた人が、広げた先で行が出た事に
+       * 気づけるようにする（第 414 回 – 上の主題の寄せと同じ流儀で、广げた先を書く）。*/
+      const 略語の綴り = hit
+        ? []
+        : TOPIC_ABBREVIATIONS_EN.filter((entry) => kanaFold(entry[0]) === foldedToken).map(
+            (entry) => String(entry[1]),
+          );
+      if (略語の綴り.length) {
+        const note = `「${打たれた表記Ja(query, token)}」は ${略語の綴り.join(" / ")} の略として同じ意味の行を探しています`;
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
       /* 開催地の寄せで、**1 つの日本語が複数の英文字表記に広がるとき**だけ書く
        * （`バリ` → `bari`（イタリア）と `bali`（インドネシア））。違う場所を足して
        * いるので、おしらせがないと「なぜこの行が出たか」が画面のどこにも出ない
@@ -9168,6 +9179,28 @@ const Recommender = (() => {
     // 別表記として置く語ではない）。`画像`・`パターン認識`・`コンピュータビジョン` で引ける。
   ];
 
+  /** 英文字の略語を、収録の品書に書いてある綴りへ広げる（第 414 回）。実測 – 2026-08-09 生成の
+   * 実ビルドの品書 872 行・固定時刻 2026-08-09T00:00:00Z: `ml` **0 行**（`machine learning` 99 行・
+   * `機械学習` 81 行）、`cv` **0 行**（`computer vision` 48 行）、`nlp` 1 行（`natural language
+   * processing` 34 行）、`dl` **0 行**（`deep learning` 4 行）、`qc` **0 行**（`quantum computing`
+   * 3 行）、`kg` **0 行**（`knowledge graph` 2 行）、`iot` 5 行（`internet of things` を含めて 7 行）、
+   * `llm` 1 行（`large language model` 2 行）。
+   * **行を増やさない略語は置いていない**（`gnn` `ner` `xai` `mlops` `tee` `cdn` `p2p` `fl` は
+   * 広げた後も増える行が 0 行だった – 上の主題の寄せ表と同じ基準）。会議名の略語も置いていない –
+   * `osdi` を `operating systems design` に広げると別の会議名が 7 行増えた（名指しの収録意思を
+   * 略語で広げるのは別の話 – 締切の推測と同じ損になる）。
+   * 広げる方向は**略語 → 綴りの一方向だけ**（逆方向にすると、綴りを打った人側の当たりが変わる）。*/
+  const TOPIC_ABBREVIATIONS_EN: string[][] = [
+    ["ml", "machine learning"],
+    ["cv", "computer vision"],
+    ["nlp", "natural language processing"],
+    ["dl", "deep learning"],
+    ["qc", "quantum computing"],
+    ["kg", "knowledge graph"],
+    ["iot", "internet of things"],
+    ["llm", "large language model"],
+  ];
+
   const REGION_READINGS: string[][] = [
     ["東北", "とうほく", "青森,岩手,宮城,秋田,山形,福島"],
     ["関東", "かんとう", "茨城,栃木,群馬,埼玉,千葉,東京,神奈川"],
@@ -9626,6 +9659,14 @@ const Recommender = (() => {
       if (byReading[key].indexOf(latin) < 0) byReading[key].push(latin);
       if (!byReading[latin]) byReading[latin] = [];
       if (byReading[latin].indexOf(ja) < 0) byReading[latin].push(ja);
+    });
+    /*英文字の略語は、其の方の綴りが並ぶ組へ入れる（第 414 回）。略語を打つ人は其の方の綴りの
+     * 行を求て居る – 品書が英文字の綴りしか書かないので、略語の侭では默つて 0 行になる。
+     * 逆方向（綴り → 略語）はやらない – 其の方の綴りを打つ人の当たりを動かさない為。*/
+    TOPIC_ABBREVIATIONS_EN.forEach(([略語, 綴り]) => {
+      const key = kanaFold(略語);
+      if (!byReading[key]) byReading[key] = [];
+      if (byReading[key].indexOf(綴り) < 0) byReading[key].push(綴り);
     });
     /* 展開を 1 ホップだけ合成する。かな見出し（`とうきょう`）は漢字見出し（`東京`）へ
      * 寄せるが、漢字見出しが別に持つ英文字表記の寄せ（`tokyo`）は違う表にある。

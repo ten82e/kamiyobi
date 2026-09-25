@@ -105,8 +105,9 @@ describe("成果物", () => {
     const rec = readFileSync(join(builtSite(), "recommender.js"), "utf8");
     for (const [条目, 数] of [
       ["function 打たれた表記Ja", 1],
-      /* 呼出し六箇所 + 成果物に残る定義文一行（定義の文も同じ形を書く）。 */
-      ["打たれた表記Ja(query,", 7],
+      /* 呼出し七箇所 + 成果物に残る定義文一行（定義の文も同じ形を書く）。
+       * 七番目は分野の略語を広げた事を件の数欄に書く案内（第 414 回）。 */
+      ["打たれた表記Ja(query,", 8],
     ] as Array<[string, number]>) {
       expect(rec.split(条目).length - 1, `成果物の中の語の数: ${条目.slice(0, 18)}`).toBe(数);
     }
