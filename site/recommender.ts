@@ -6004,6 +6004,38 @@ const Recommender = (() => {
     return 割れた;
   }
 
+  /** 打たれた語が、両側の日を決められる幅か（第 394 回）。
+   * 助詞の表（`QUERY_PARTICLE_SPLIT_CHARS`）は `へ` を語の区切りに使うので、
+   * 「8月10日へ8月20日」の様な幅が二つの語に割れて **その両方を含む行**（＝ 0 行）に
+   * なって居た（実測 – 2026-08-09 生成の実ビルドの品書 872 行・固定時刻
+   * 2026-08-09T00:00:00Z: `8月10日から8月20日` 75 行 / `8月10日へ8月20日` **0 行**）。
+   * 幅の解ける規則（DAY_RANGE・月の幅・幅の片側を暦日に解くJa）が受ける語は割らない。
+   * 助詞の表に語を足した時は其の方の語の列挙も対にする（第 341 回・第 391 回と同じ穴）。 */
+  function 解ける日語かJa(語: string): boolean {
+    if (!語) return false;
+    if (暦日に解くJa(語)) return true;
+    const 柄 = dateTokenStemJa(語) || 語;
+    if (typeof RELATIVE_DAY_OFFSETS_JA[柄] === "number") return true;
+    return (
+      /^(?:今週|こんしゅう|来週|らいしゅう|再来週|先週|先々週)(?:[月火水木金土日]曜|末|中)?$/.test(
+        柄,
+      ) ||
+      /^[月火水木金土日]曜(?:日)?$/.test(柄) ||
+      /* 季節の語も其の方の規則が暦月語に解く（第 254 回）ので、並べた形が解ける –
+       * 其れ以外の語（`人と機械` の様な打ち方）を列挙にしない為の目印は上の検査。 */
+      /^(?:春|夏|秋|冬|通年|年初夏|真冬)$/.test(語) ||
+      /* 月の語は柄に寄せる（`dateTokenStemJa` は `8月` の `月` を落とす）ので、打たれた
+       * 語の側でも見る（第 394 回 – これを柄だけで見た為 `8月と11月` が解けなかった）。 */
+      /^(?:[0-9]{1,2}月|今月|来月|先月)(?:上旬|中旬|下旬|半分)?$/.test(語)
+    );
+  }
+
+  function 幅の語を割らないかJa(語: string): boolean {
+    const 区切り = 幅の区切りJa.exec(語);
+    if (!区切り) return false;
+    return 解ける日語かJa(区切り[1]) && 解ける日語かJa(区切り[2]);
+  }
+
   function splitQueryToken(token: string): string[] {
     /* 「まで」は **助詞の `で` で割らない**（第 365 回）。実測（2026-10-22 – 実ビルドの品書
      * 872 行・固定時刻 2026-08-09T00:00:00Z）: `締切まで30日` は `締切ま` + `30日` に割れて
@@ -6011,6 +6043,8 @@ const Recommender = (() => {
      * （`締切まで30日` 0 行 / 其の方の `30日以内` 249 行）。`までに` は `に` でも割れるので
      * 同じ処で外す – 期日の語（`明日までに` `8月22日までに`）は其の方の形を日付の範囲に解く
      * 規則が既に受けるので、割らない方が正しい（第 328 回）。 */
+    /* 両側の日が決まる幅は語ごと残す（其れ以外 – `東京へ` の様な打ち方は今まで通り割る）。 */
+    if (幅の語を割らないかJa(String(token || ""))) return [token];
     let 助詞々 = QUERY_PARTICLE_SPLIT_CHARS;
     if (token.indexOf("まで") >= 0) {
       /* `締切までの30日` は `の` でも割れて其れ迄 0 行だった（実測） – 期日を訊く語は
@@ -7005,6 +7039,63 @@ const Recommender = (() => {
   }
 
   /** 件数欄用 – 日の幅を打たれた語と解決した暦日の範囲で組にする。 */
+  /* `と` で並べた列挙（`8月と11月` `明日と明後日` `月曜と金曜`）は、其の方の日 **両方** の
+   * 話なので、組の中が OR である事を利用して展開語を並べる（第 394 回）。実測
+   * （2026-08-09 生成の実ビルドの品書 872 行・固定時刻 2026-08-09T00:00:00Z）:
+   * `8月` 189 行・`11月` が通るのに `8月と11月` **0 行**・`明日と明後日` **0 行**・
+   * `月曜と金曜` **0 行**（`月曜` 100 行・`金曜` も通る）。助詞の表（第 245 回）は `と` を
+   * 区切りに使わないので、其の方の語は一つの語として打たれて其侭 0 行に当たっていた。
+   * `と` を含む其れ以外 – 語の一部に `と` を持つ打ち方（`ひとと` など）– に化けない為、**両側が
+   * 日として決まる形だけ**通す。上旬・中旬・下旬の列挙は其の方の展開がこの枝に無いので解かない（0 件の侭）。 */
+  /** 列挙の一片（`8月` `明日` `月曜` `8月10日`）を展開語へ寄せる（第 394 回）。
+   * 其の方の語の展開は語組を作る機械が既に持つので、其処に一片だけを渡して同じ展開語を
+   * 受け取る – 自分で月の表や暦日の表を書き写すと、後の回で其の方は表が足された時に
+   * 列挙だけが解けない語になる（第 341 回・第 391 回と同じ穴 – 書き写しは対に保てない）。 */
+  function 単体の展開語Ja(語: string, nowMs: number): string[] {
+    /* 上旬・中旬・下旬は其の方の展開が語組の外（其の方の欄の語）なので、列挙で片方だけを
+     * 解いて片方を落とす訳にはいかない – 其のまま解かない（0 件の侭 – 締切の推測はしない）。 */
+    if (/旬|半/.test(語)) return [];
+    const 曜 = /^([月火水木金土日])曜(?:日)?$/.exec(dateTokenStemJa(語) || 語);
+    if (曜) return [`${曜[1]}曜`];
+    const 組 = queryTokenGroups(語, nowMs)[0] || [];
+    const 語々 = 組.filter((項) => 項 !== 語);
+    if (語々.length) return 語々;
+    const 暦 = 幅の片側を暦日に解くJa(語, nowMs, "頭", null);
+    if (!暦) return [];
+    const 基準 = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3600 * 1000);
+    let 年 = 暦[0] >= 0 ? 暦[0] : 基準.getUTCFullYear();
+    const 並び = (a: number, b: number, c: number) => a * 10000 + b * 100 + c;
+    const 基準日 = 並び(基準.getUTCFullYear(), 基準.getUTCMonth() + 1, 基準.getUTCDate());
+    /* 年を打たれて居ない月日は、其の侭では過ぎた日になる – 幅と同じ決まりで翌年として受ける
+     * （過ぎた日を其の年に黙って取らない – 締切の推測はしない）。 */
+    if (暦[0] < 0 && 並び(年, 暦[1], 暦[2]) < 基準日) 年 += 1;
+    return [`${年}年${暦[1]}月${暦[2]}日`];
+  }
+
+  /** `と` で並べた列挙の語を割る。両側が日を決められる形だけ通す（第 394 回）。 */
+  function 列挙の語に割るJa(語: string): string[] | null {
+    const 断片 = String(語 || "")
+      .split("と")
+      .map((片) => 片.trim())
+      .filter((片) => 片.length > 0);
+    if (断片.length < 2 || 断片.length > 4) return null;
+    if (!断片.every((片) => 解ける日語かJa(片))) return null;
+    return 断片;
+  }
+
+  function 列挙の展開語Ja(語: string, nowMs: number): string[] {
+    const 断片 = 列挙の語に割るJa(語);
+    if (!断片) return [];
+    const out: string[] = [];
+    for (const 片 of 断片) {
+      const 語々 = 単体の展開語Ja(片, nowMs);
+      /* 内の一つでも解けない語なら列挙全体を解かない – 片方だけの幅は噓になる。 */
+      if (!語々.length) return [];
+      for (const 語 of 語々) if (out.indexOf(語) < 0) out.push(語);
+    }
+    return out;
+  }
+
   function dayRangePairs(query: unknown, nowMs: number): Array<[string, string]> {
     const normalized = searchNormalize(query);
     if (!normalized) return [];
@@ -7013,6 +7104,24 @@ const Recommender = (() => {
       splitQueryToken(token).forEach((part) => {
         const terms = dayRangeTermsJa(part, nowMs);
         if (terms.length) pairs.push([part, `${terms[0]}から${terms[terms.length - 1]}`]);
+        /* `と` の列挙は幅ではないので「または」で繋いで書く（第 394 回）。 */
+        const 断片 = 列挙の語に割るJa(part);
+        if (!terms.length && 断片) {
+          const 語々: string[] = [];
+          for (const 片 of 断片) {
+            /* 一片の展開語が年をまたぐ表（`8月` は其の方の年の暦月語の並び）になる時、
+             * 案内には基準の年（其れが無い時は先頭）の語だけを書く – 全部を並べると
+             * 欄が読めなくなる（第 394 回）。当たり方は其の方の年の全部の侭。 */
+            const 語々2 = 単体の展開語Ja(片, nowMs);
+            const 年付き = 語々2.filter((項) => /^[0-9]{4}年/.test(項));
+            const 基準年の語 = 年付き.find((項) =>
+              項.startsWith(`${new Date(nowMs + 9 * 3600 * 1000).getUTCFullYear()}年`),
+            );
+            const 代表 = 基準年の語 || 年付き[0] || 語々2[0] || "";
+            if (代表 && 語々.indexOf(代表) < 0) 語々.push(代表);
+          }
+          if (語々.length) pairs.push([part, 語々.join("または")]);
+        }
       });
     });
     return pairs;
@@ -9316,6 +9425,10 @@ const Recommender = (() => {
        * 黙って間違った幅を出すのは 0 件より悪い（其れは第 370 回の実測 – 波ダッシュの項）。 */
       const dayRange = dayRangeTermsJa(token, now);
       if (dayRange.length) group = dayRange.slice();
+      /* `と` で並べた列挙（`8月と11月`）は両方の語の展開語を同じ組に入れる（第 394 回 –
+       * 実測 0 行だった – 並べた日の両方を出したい打ち方なので、解けない語を混んだ列挙は解かない）。 */
+      const 列挙 = 列挙の展開語Ja(token, now);
+      if (列挙.length) group = 列挙.slice();
       /* 「秋」「春」などの季節の語も同じ暦月語のグループへ展開する（第 254 回）。 */
       const season = seasonTermsJa(token, now);
       if (season.length) group = season.slice();

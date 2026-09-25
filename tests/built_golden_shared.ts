@@ -263,6 +263,14 @@ export const SEARCH_CANON = (() => {
       "urlLikeQueryTerms",
       "queryTokens",
       // 助詞の分割と全行の語をのく処理は `queryTokens` / `searchMatcher` が呼ぶ（第 245 回）。
+      // 第 394 回: 助詞 `へ` を含む幅を割らない決まりと、`と` の列挙を和集合に解く枝は
+      // `splitQueryToken` / `queryTokenGroups` から呼ぶので、同じ表に並べないと抜き出した
+      // 品が `ReferenceError` になる（第 257 回・第 341 回・第 392 回と同じ穴）。
+      "解ける日語かJa",
+      "幅の語を割らないかJa",
+      "単体の展開語Ja",
+      "列挙の語に割るJa",
+      "列挙の展開語Ja",
       "splitQueryToken",
       "withoutWholeTableGroups",
       "querySynonymMap",
