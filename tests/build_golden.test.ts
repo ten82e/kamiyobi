@@ -4567,7 +4567,9 @@ it("説明文に開発用語を残さない（SPEC §7）", () => {
     "閾値",
     "埋め込み",
     "語彙スコア",
-    "デッドライン",
+    /* `デッドライン` は此の方を打つ人が居る（第 379 回の実測: `デッドライン` `でっどらいん` は
+     * 0 行で案内も無し）ので、其れ下の `inputAliasOnly` に移した – 検索語としては受け、
+     * 画面の説明文には書かない（其の方で受ける事が其の方の検査で落ちる為、此処から外す）。 */
   ];
   for (const word of banned) {
     const hits = literals.filter((text) => text.includes(word));
@@ -4579,7 +4581,7 @@ it("説明文に開発用語を残さない（SPEC §7）", () => {
    * 何も書かれていない案内だけを受け取っていた – 2026-08-09 生成ビルドで実測）。
    * ただし画面の説明文・てびき・ビルド済みの HTML には出さない。説明文に出ないことは
    * `tests/search_words.test.ts` が案内文そのもので見る（ここでは静的な出ない方を見る）。 */
-  const inputAliasOnly = ["カテゴリ", "カテゴリー", "フィルタ"];
+  const inputAliasOnly = ["カテゴリ", "カテゴリー", "フィルタ", "デッドライン", "でっどらいん"];
   // ビルド済み HTML の画面に出る部分だけ見る（<script> の中はコードなので除外する）。
   const builtHtml = readFileSync(join(site, "index.html"), "utf8").replace(
     /<script[\s\S]*?<\/script>/g,

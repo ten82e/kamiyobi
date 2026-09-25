@@ -56,6 +56,10 @@ export function vmSafeSource(src: string): string {
 export function wholeTableQueryStubs(rec: string): string {
   const list = rec.match(/const WHOLE_TABLE_QUERY_JA[\s\S]*?\];/)?.[0] ?? "";
   expect(list, "WHOLE_TABLE_QUERY_JA が見つからない").toBeTruthy();
+  /* 案内に其の方の語を書き返さない語（第 379 回）。注記の側が読むので同じ列を注入する
+   * （書き写すと正本とズレる – 第 244 回）。 */
+  const 省略語 = rec.match(/const WHOLE_TABLE_COPY_OMITTED_JA = [^\n]*;/)?.[0] ?? "";
+  expect(省略語, "WHOLE_TABLE_COPY_OMITTED_JA が見つからない").toBeTruthy();
   /* 欄の名前の正本も同じ入口から注入する（第 244 回 – 書き写すと正本とズレる）。 */
   const cols = [
     rec.match(/const COLUMN_VALUE_EXAMPLES_JA[\s\S]*?\n\s*\};/)?.[0] ?? "",
@@ -88,6 +92,7 @@ export function wholeTableQueryStubs(rec: string): string {
   });
   return [
     list,
+    省略語,
     // 欄の名前の定数も返す（抽出した `columnQueryEntry` は本体でこれらを読むので、関数だけ
     // 与えないと `COLUMN_QUERY_WORDS_JA is not defined` に化けた（第 248 回に実発生）。
     ...cols,

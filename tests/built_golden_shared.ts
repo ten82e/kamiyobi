@@ -202,6 +202,8 @@ export const SEARCH_CANON = (() => {
     /* 表の全行にあてはまる語（第 245 回）。照合でのく側と注記の側が同じ列を向くので、
      * 抜き出して注入する（書き写すと正本とズレる）。 */
     ["WHOLE_TABLE_QUERY_JA", /const WHOLE_TABLE_QUERY_JA[\s\S]*?\];/],
+    /* 案内に其の方の語を書き返さない語（第 379 回）。注記の側が読むので同じ列を注入する。 */
+    ["WHOLE_TABLE_COPY_OMITTED_JA", /const WHOLE_TABLE_COPY_OMITTED_JA = [^\n]*;/],
     ["QUERY_PARTICLE_SPLIT_CHARS", /const QUERY_PARTICLE_SPLIT_CHARS = [^\n]*;/],
     /* 月の範囲（第 252 回）と季節の語（第 254 回）が使う定義。連なった定義をまとめて抜く
      * （このファイルは biome の 1 MiB 上限に近いので 1 エントリにまとめる）。 */
