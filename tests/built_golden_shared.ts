@@ -207,6 +207,10 @@ export const SEARCH_CANON = (() => {
     /* 和暦の区切りの暦日を其の方の暦日語に寄せる表（第 380 回）。`calendarDateGroups` が
      * 読むので、抜き出した関数と一緒に注入する（書き写すと正本とズレる – 第 379 回）。 */
     ["和暦の暦日", /const 和暦の暦日 = [^\n]*;/],
+    /* 幅の数えの漢数字と、尾側に付く数えの幅（第 392 回）。二行に跨る宣言なので
+     * 終端のセミコロンまで抜く（書き写すと正本とズレる – 第 379 回と同じ判断）。 */
+    ["幅の漢数字", /const 幅の漢数字 =[\s\S]*?;\n/],
+    ["数えの幅Ja", /const 数えの幅Ja =[\s\S]*?;\n/],
     ["QUERY_PARTICLE_SPLIT_CHARS", /const QUERY_PARTICLE_SPLIT_CHARS = [^\n]*;/],
     /* 月の範囲（第 252 回）と季節の語（第 254 回）が使う定義。連なった定義をまとめて抜く
      * （このファイルは biome の 1 MiB 上限に近いので 1 エントリにまとめる）。 */
@@ -233,6 +237,8 @@ export const SEARCH_CANON = (() => {
       /* 暦日を二つ並べた幅の展開（第 371 回）。抜いた関数は独立ではないので `ReferenceError`
        * になる（上の月の展開と同じ理由 – tests/built_golden.test.ts で実測）。 */
       "暦日に解くJa",
+      /* 幅の数えの漢数字（第 392 回）– 上の寄せと `dayRangeTermsJa` が呼ぶ。 */
+      "幅の漢数字を寄せるJa",
       "dayRangeTermsJa",
       "dayRangePairs",
       "暦日の語から解くJa",
@@ -295,6 +301,8 @@ export const SEARCH_CANON = (() => {
       "clockUntilQueryJa",
       // 数値の相対日（`あと 51 日` → `51日後` → 暦日）。`relativeDayGroups` と
       // `queryTokenGroups` が呼ぶので、定義順で先に置く（第 223 回）。
+      // 漢数字を算用数字に直す正本（第 392 回 – 上の語の寄せが呼ぶので先に置く）。
+      "漢の数字に直すJa",
       "collapseRelativeDayPhrase",
       "numericRelativeDay",
       // 「N 日以内」の範囲展開（第 315 回）: `relativeDayGroups` が呼ぶので注入も一緒にする。

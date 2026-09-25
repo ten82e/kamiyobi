@@ -86,6 +86,12 @@ export function wholeTableQueryStubs(rec: string): string {
     /* 過去方向の『まで』の案内が読む表（第 367 回）。関数だけ渡すと `not defined` に化ける。 */
     rec.match(/const PAST_RANGE_UNTIL_JA = [^\n]*;/)?.[0] ?? "",
     jsFunction(rec, "時間数から日数Ja"),
+    /* 幅の数を**漢数字**で打つ形（第 392 回）。`dayRangeDaysJa` と幅の展開がこの折り方を
+     * 読むので、関数だけ渡すと `幅の漢数字を寄せるJa is not defined` に化ける
+     * （第 257 回と同じ穴 – 実際に落ちた）。定数は二行に跨るので終端のセミコロンまで受ける。 */
+    rec.match(/const 幅の漢数字 =[\s\S]*?;\n/)?.[0] ?? "",
+    jsFunction(rec, "漢の数字に直すJa"),
+    jsFunction(rec, "幅の漢数字を寄せるJa"),
   ];
   dayRange.forEach((src) => {
     expect(src, "日数の範囲の定義が見つからない").toBeTruthy();
