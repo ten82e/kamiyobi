@@ -117,6 +117,8 @@ export const SEARCH_CANON = (() => {
     ["PLACE_QUERY_ALIASES_JA", /const PLACE_QUERY_ALIASES_JA[\s\S]*?\];/],
     ["TOPIC_QUERY_ALIASES_JA", /const TOPIC_QUERY_ALIASES_JA[\s\S]*?\];/],
     ["RELATIVE_MONTH_OFFSETS_JA", /const RELATIVE_MONTH_OFFSETS_JA[\s\S]*?\};/],
+    // 月に数字を打った『末』の案内（第 407 回 – `periodMonthPairs` が呼ぶ）。
+    ["月の末の案内Ja", /function 月の末の案内Ja\([\s\S]*?\n {4}\}/],
     // 「今月末」「年内」の語の表（第 327 回）。`queryTokenGroups` が呼ぶ関数と一緒に注入する。
     ["PERIOD_MONTH_WORDS_JA", /const PERIOD_MONTH_WORDS_JA[\s\S]*?\};/],
     /* 年度・期間の語（第 330 回）。 */

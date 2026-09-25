@@ -7324,6 +7324,10 @@ const Recommender = (() => {
   const PERIOD_MONTH_WORDS_JA: Record<string, string> = {
     今月末: "今月",
     今月終わり: "今月",
+    /* 頭の月を打た無い `月終わり` が表に無かつた（第 407 回 – 実測 2026-10-04 –
+     * 実ビルドの品書 872 行で当たり方は其の方の `月末` と一寸ちがわず（対称差 0）、
+     * 件の数欄にだけ何も出なかつた – 同じ表に在る `来月終わり` は案内を出す）。 */
+    月終わり: "今月",
     月末: "今月",
     この月末: "今月",
     来月末: "来月",
@@ -7540,6 +7544,30 @@ const Recommender = (() => {
   /** 月のまとまりの語について `打った語 -> 出した範囲` の組を返す（件数欄の説明用）。
    * `月末` の付く語には末日の日付を添える – 打った人が気にしているのは日付の方で、
    * 展開先の月だけ書いても答えにならない。 */
+  /** 月に数字を打った『末』の形の案内（其れ以外では null）。 */
+  function 月の末の案内Ja(token: string, nowMs: number): string | null {
+    /* 助詞を付きただけの形（`8月末まで` `来月末の締切`）も同じ案内を出す（第 328 回の
+     * 決まり – 助詞を剥がした形が表に在るときだけ寄せる）。 */
+    const 芯 = dateTokenStemJa(String(token || "")) || String(token || "");
+    const 形 = /^(?:(\d{4})年)?([0-9]{1,2})月の?(?:末|終わり)(?:までに|まで|に|で)?$/.exec(芯);
+    if (!形) return null;
+    const 月 = Number(形[2]);
+    if (月 < 1 || 月 > 12) return null;
+    /* 年を打たれて居ない形は、其の侭では他の年の同じ月も並ぶ – 其の方を先に書く
+     * （末日だけ書いて其の年決まつたと読ませるのは噓になる）。 */
+    const 基準 = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
+    const 年 = 形[1]
+      ? Number(形[1])
+      : 基準.getUTCFullYear() + (月 < 基準.getUTCMonth() + 1 ? 1 : 0);
+    const 日 = new Date(Date.UTC(年, 月, 0)).getUTCDate();
+    const 曜日 = weekdayJaFromDate(
+      `${年}-${String(月).padStart(2, "0")}-${String(日).padStart(2, "0")}`,
+    );
+    const 末日 = `${年}年${月}月${日}日${曜日 ? `(${曜日})` : ""}`;
+    if (形[1]) return `${年}年${月}月の締切（末日は ${末日}）`;
+    return `${月}月の締切（年を打たれて居ないので他の年の ${月}月 も並びます – 其の内 ${年}年${月}月 の末日は ${末日}）`;
+  }
+
   function periodMonthPairs(query: unknown, nowMs: number): Array<[string, string]> {
     const normalized = searchNormalize(query);
     if (!normalized) return [];
@@ -7547,7 +7575,21 @@ const Recommender = (() => {
     normalized.split(" ").forEach((token) => {
       splitQueryToken(token).forEach((part) => {
         const terms = periodMonthTermsJa(part, nowMs);
-        if (!terms.length) return;
+        if (!terms.length) {
+          /* 月に数字を打った『末』（`8月末` `3月末` `2026年12月末` `8月終わり`）は、其の
+           * 月の語と一寸ちがいの無い当たり方になる（実測 2026-10-04 – 実ビルドの品書
+           * 872 行・固定時刻 2026-08-09T00:00:00Z: `8月末` 210 行 = `8月` 210 行・
+           * `3月末` 80 行 = `3月` 80 行・`12月末` 183 行 = `12月` 183 行・`2026年12月末`
+           * 183 行 = `2026年12月` 183 行・`8月終わり` 210 行、対称差は総て 0）のに、
+           * 件の数欄は何も言わなかつた – 『末』が其の月の語に化けた事に気が付くのは、
+           * 月末を訊いた人だけになつて居た（第四条に書く決まりは月の語を名で打つ形にしか
+           * 届いて居なかつた – 第 368 回）。年を打たれた形は其の年の末日を、年を打たれて
+           * 居ない形は他の年も並ぶ事を共に書く（締切の推測はしない – 年を決めるのは
+           * 打った人 – AGENTS.md）。 */
+          const 案内 = 月の末の案内Ja(part, nowMs);
+          if (案内) pairs.push([part, 案内]);
+          return;
+        }
         const first = terms[0];
         const last = terms[terms.length - 1];
         let label = first === last ? `${first}の締切` : `${first}から${last}の締切`;
