@@ -5863,8 +5863,16 @@ const Recommender = (() => {
    * 一か所で両方に効く。画面に出す文字はここを通らないので表示は変わらない。 */
   const KANJI_VARIANT_FOLD_JA: Record<string, string> = {
     〆: "締",
+    /* 「まで」は漢字の「迄」で打たれる事も有る（第 404 回）。其の方の字で打つと締切を訊く語尾
+     * （`までに` `まで`）に当たら無く成り、相対日・暦日・週+曜日・月語に日・数値の相対日・旬の
+     * 全部で 0 行・案内も無しだつた（実測 2026-09-29 – 実ビルドの品書 872 行・固定時刻
+     * 2026-08-09T00:00:00Z: `明日迄に` **0 行** / `明日までに` 5 行、`8月22日迄に` **0 行** /
+     * `8月22日までに` 89 行、`来月上旬迄に` **0 行** / `来月上旬までに` 268 行、
+     * `3日後迄に` **0 行** / `3日後までに` 11 行）。其の方の字を書く行は収録品書に 0 件なので、
+     * 折込は検索語側にだけ効く（行の表記は何も変らない）。 */
+    迄: "まで",
   };
-  const KANJI_VARIANT_FOLD_CHARS = /[〆]/g;
+  const KANJI_VARIANT_FOLD_CHARS = /[〆迄]/g;
 
   function searchNormalize(value: unknown): string {
     const raw = typeof value === "string" ? value : value == null ? "" : String(value);
