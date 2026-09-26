@@ -181,7 +181,7 @@ describe("寄せない側に決めた物", () => {
     for (const [形, 度] of [
       ["const 漢数字の数Ja =", 1],
       ["const 漢数字の語 =", 1],
-      ["CLOCK_JA.exec(算用に直した語)", 1],
+      ["CLOCK_JA.exec(コロン直した語)", 1],
       ["/^一時(?:に)?", 1],
     ] as const) {
       const 数 = 物.split(形).length - 1;
@@ -190,7 +190,7 @@ describe("寄せない側に決めた物", () => {
     /* 直すのは `時` `分` の直前だけ – `日` `月` `秒` に化ける形を作らない事。 */
     const 表の箇所 = 物.slice(
       物.indexOf("const 漢数字の語 ="),
-      物.indexOf("CLOCK_JA.exec(算用に直した語)"),
+      物.indexOf("CLOCK_JA.exec(コロン直した語)"),
     );
     expect(表の箇所, "時の単位以外で直す形にしてしまった").toContain("(?=時|分)");
     expect(表の箇所, "其の他の単位を触る形が混んだ").not.toContain("?=時|分|日");
