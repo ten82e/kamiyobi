@@ -273,6 +273,10 @@ export const SEARCH_CANON = (() => {
       "seasonTermsJa",
       "yearSeasonTermsJa",
       "mergeSeasonTokens",
+      /* 数字と単位（年・月・日）の空格寄せ（第 456 回）– `queryTokenGroups` の内側が
+       * 呼ぶので同じ表に並べないと抜き出した品が `ReferenceError` になる
+       * （第 257 回・第 341 回・第 392 回・第 453 回・第 455 回と同じ穴）。 */
+      "単位を数字に寄せるJa",
       /* 「Xから Yまで」を空格で離って打った幅の寄せ（第 453 回）– `queryTokenGroups` が
        * 呼ぶので同じ表に並べないと、抜き出した品が `ReferenceError` になる
        * （第 257 回・第 341 回・第 392 回と同じ穴）。 */

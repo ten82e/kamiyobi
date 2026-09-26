@@ -125,12 +125,14 @@ describe("直した形がビルド成果物に残る（第 455 回）", () => {
     expect(物.split("function 暦日を境界に寄せるJa(").length - 1).toBe(1);
     expect(
       物.split(
-        "範囲の語を寄せるJa(暦日を境界に寄せるJa(mergeSeasonTokens(queryTokens(query, now)), now), now)",
+        "範囲の語を寄せるJa(暦日を境界に寄せるJa(mergeSeasonTokens(単位を数字に寄せるJa(queryTokens(query, now))), now), now)",
       ).length - 1,
     ).toBe(1);
   });
-  it("寄せた形を切りへ寄せる目（第 454 回の正規化）が寄せの中に 1 箇所", () => {
-    expect(物.split("暦日に境界を続けた形Ja(`").length - 1).toBe(1);
+  it("寄せた形を切りへ寄せる目（第 454 回の正規化）が寄せの中に 2 箇所", () => {
+    /* 第 456 回で裸の境界の語を寄せる決まりも同じ正規化を通すので 2 箇所
+       （実ビルドで測った `2026.7.1 以降` 789 行 ⇔ 詰め形が其侭 1 箇所の内）。 */
+    expect(物.split("暦日に境界を続けた形Ja(`").length - 1).toBe(2);
   });
   /* 芯の暦日検査を落とす改ざんは品書の行に差が出ない（実測 – 37 語ぜんぶ同数 –
    * GATE の解ける検査が其の方で弾く為 – 第 454 回と同じ穴）。なので字面を張る。 */
