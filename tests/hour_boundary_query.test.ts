@@ -121,9 +121,42 @@ describe("時間帯の名前+続き方は其の場で断る（第 436 回）", (
       expect(n, 語).toContain("時間帯の名前");
     });
   }
-  it("分入りの境界は解かない – 締切の推測をしない", () => {
-    expect(列("17時30分以降").size).toBe(0);
-    expect(Recommender.relativeDayNotes("17時30分以降", 基準).join("")).toContain("");
+  it("分入りの境界も解ける – 分の頭も 0 埋めなので列挙は正確（第 437 回）", () => {
+    const n = Recommender.relativeDayNotes("17時30分以降", 基準).join(" ");
+    expect(n).toContain("17:30〜23:59");
+    const m = Recommender.relativeDayNotes("17時30分前", 基準).join(" ");
+    expect(m).toContain("00:00〜17:29");
+    expect(Recommender.relativeDayNotes("23時59分以降", 基準).join(" ")).toContain("23:59〜23:59");
+    expect(Recommender.relativeDayNotes("0時30分前", 基準).join(" ")).toContain("00:00〜00:29");
+    /* 其の時を始点に含む – 17時30分以降 は 17時以降 の部分集合で、17時前 は
+     * 17時30分前 の部分集合（狭い方が広い方に吞まれる）。*/
+    expect(包含(列("17時以降"), 列("17時30分以降"))).toBe(true);
+    expect(包含(列("17時30分前"), 列("17時前"))).toBe(true);
+    expect(列("17時30分以降").size).toBeGreaterThan(0);
+  });
+  it("算用 0 分・午後・漢数字の同じ時間は同じ行集合", () => {
+    expect(列("17時以降").size).toBeGreaterThan(0);
+    for (const 語 of ["17時00分以降", "午後5時以降", "十七時以降"]) {
+      let n = 0;
+      for (const x of 列(語)) if (!列("17時以降").has(x)) n += 1;
+      for (const x of 列("17時以降")) if (!列(語).has(x)) n += 1;
+      expect(n, 語).toBe(0);
+      const 解 = Recommender.relativeDayNotes(語, 基準).join(" ");
+      expect(解, 語).toContain("17:00〜23:59");
+    }
+    /* 案内は打った表記を返す – 午後を落として 5時と書かない（午前と紛れる為）。*/
+    expect(Recommender.relativeDayNotes("午後5時以降", 基準).join(" ")).toContain(
+      "（午後5時以降）",
+    );
+  });
+  it("含むかが決まれぬ形と読めぬ形は 0 行の侭", () => {
+    expect(列("17時30分までに").size).toBe(0);
+    expect(Recommender.relativeDayNotes("17時30分までに", 基準).join("")).toContain(
+      "時刻までで絞り込む事は",
+    );
+    expect(列("午前12時以降").size).toBe(0);
+    expect(列("25時以降").size).toBe(0);
+    expect(列("0時0分前").size).toBe(0);
   });
   it("其它の時間帯の語は第 418 回の侭", () => {
     /* 『一時』は専用の断り（第 420 回）で別の文 – ここでは時間帯級の語だけ見る。*/
@@ -143,7 +176,7 @@ describe("割りの形がビルド成果物に残る（第 436 回）", () => {
   const 物 = readFileSync(join(builtSite(), "recommender.js"), "utf8");
   it("境界の式と語群の追加が入つて居る", () => {
     for (const 形 of [
-      /^([0-9]{1,2})時(?:([0-9]{1,2})分)?(以降|より|前|前に)$/.source,
+      /^(?:(午前|午後|ごぜん|ごご))?([0-9]{1,2})時(?:([0-9]{1,2})分)?(以降|より|前|前に)$/.source,
       "夜|夜中|今夜|朝|早朝|終業時間|終業|退勤|勤務終了",
       "(?:以降|前に|までに|過ぎ|後|後に)?",
     ]) {
