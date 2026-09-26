@@ -165,6 +165,7 @@ describe("成果物", () => {
       物.match(/暦日より後の語Ja\(normalized, nowMs\);/g) ?? [],
       "当たり方側の呼び出し",
     ).toHaveLength(1);
-    expect(物.match(/以降の初日Ja/g) ?? [], "案内の初日を数える語").toHaveLength(2);
+    /* 第 446 回の『週末以降』の枝が其の方の語を呼ぶので三つ（宣言・今週末・週末）。 */
+    expect(物.match(/以降の初日Ja/g) ?? [], "案内の初日を数える語").toHaveLength(3);
   });
 });
