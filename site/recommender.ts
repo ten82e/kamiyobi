@@ -3929,7 +3929,7 @@ const Recommender = (() => {
        * 案内も無し** – `明日あたり` は其の日で受けるのに幅の語だけ黙つて居た）。
        * 幅の語は其の日を決めないので其の方に寄せない – 其れ以前の打ち直しを書く。*/
       const 幅の語の近似Ja =
-        /^(?:今週|こんしゅう|来週|らいしゅう|翌週|再来週|再々週|来々週|先週|せんしゅう|昨週|前週|先々週|今月|来月|らいげつ|再来月|先月|せんげつ|去月|今年|来年|らいねん|再来年|去年|こぞとし|前年)(?:頃|ころ|ごろ|辺り|あたり|位|ぐらい|くらい|前後)(?:に)?\s*(?:でした|ですか|でしょうか|でしょう|でしたね|ですよ|ですね|です|だよ|かな)?$/;
+        /^(?:今週|こんしゅう|来週|らいしゅう|翌週|再来週|再々週|来々週|先週|せんしゅう|昨週|前週|先々週|今月|来月|らいげつ|再来月|先月|せんげつ|去月|[0-9]{1,2}月|今年|来年|らいねん|再来年|去年|こぞとし|前年|[0-9]{3,4}年)(?:頃|ころ|ごろ|辺り|あたり|位|ぐらい|くらい|前後)(?:に)?\s*(?:でした|ですか|でしょうか|でしょう|でしたね|ですよ|ですね|です|だよ|かな)?$/;
       if (幅の語の近似Ja.test(文)) {
         return (
           ` 「${文}」では絞れません。週や月・年と言ふ幅の語に頃・前後のやうな近似の語を` +
@@ -4591,7 +4591,7 @@ const Recommender = (() => {
      * 寄せないで語ごとに解くと、行は 9 月下旬のものなのに案内は「8月下旬」と書いてしまう –
      * 案内は画面に出る物なので、行と食い違うと嘘になる。 */
     const 解いた語: Array<{ 見せ: string; 解: string }> = [];
-    queryTokens(collapseRelativeDayPhrase(query)).forEach((token) => {
+    queryTokens(collapseRelativeDayPhrase(query), nowMs).forEach((token) => {
       const 前 = 解いた語[解いた語.length - 1];
       if (前 && monthPartRangeJa(`${前.解}${token}`, nowMs) !== null) {
         前.見せ = `${前.見せ} ${token}`;
@@ -6304,7 +6304,7 @@ const Recommender = (() => {
     return 解ける日語かJa(区切り[1]) && 解ける日語かJa(区切り[2]);
   }
 
-  function splitQueryToken(token: string): string[] {
+  function splitQueryToken(token: string, nowMs?: number): string[] {
     /* 「まで」は **助詞の `で` で割らない**（第 365 回）。実測（2026-10-22 – 実ビルドの品書
      * 872 行・固定時刻 2026-08-09T00:00:00Z）: `締切まで30日` は `締切ま` + `30日` に割れて
      * 0 行だった – 画面の日数の欄の語を写した打ち方が、語の壊れた物で探していた事になる
@@ -6321,11 +6321,28 @@ const Recommender = (() => {
      * 相対語の寄せと同じ流儀 – 頭が解けぬ語なら割らない方が今の断りで正しい）。*/
     const 日の頭の形Ja =
       /^(?:今日|明日|明後日|明々後日|あさって|昨日|一昨日|来週|今週|再来週|先週|先々週|週末|今週末|来週末|来月|今月|先月|来年|今年|去年|月末|月初|上旬|中旬|下旬|年末|年始|[0-9]{1,2}月[0-9]{1,2}日|[0-9]{1,2}日|[0-9]{1,2}月|[月火水木金土日]曜日?|(?:(?:来|今|再々?|先々?)?(?:周|週))(?:月|火|水|木|金|土|日|曜)日)$/;
+    /* 日の語に時刻の前後境界を直に続ける打ち方を二語に割る（第 438 回 – …）に、
+     * 裸の時刻点（`明日17時` `来週月曜17時30分`）と半（`5時半`）を足す（第 443 回 –
+     * 実測 2026-10-24 – 実ビルドの品書 872 行・固定時刻 2026-08-09T00:00:00Z: 空格を
+     * 挟んだ `明日 17時` も助詞の `明日の17時` も通るのに、繋げた `明日17時`
+     * `8月10日17時30分` `明日17時台` `来週月曜17時以降` だけ 0 行で案内も無しだった –
+     * 空格が有る人だけ通る状態）。 */
     const 日付境界Ja =
-      /^(.+?)((?:[0-9]{1,2}|[〇零一二三四五六七八九十]{1,3})時(?:[0-9]{1,2}分)?(?:以降|より|から|前|前に)|午前|午後|正午)$/.exec(
+      /^(.+?)((?:[0-9]{1,2}|[〇零一二三四五六七八九十]{1,3})時(?:[0-9]{1,2}分|半)?(?:以降|より|から|前|前に)?|[0-9]{1,2}時台|午前|午後|正午)$/.exec(
         String(token || ""),
       );
-    if (日付境界Ja && 日の頭の形Ja.test(日付境界Ja[1])) return [日付境界Ja[1], 日付境界Ja[2]];
+    const 頭Ja = 日付境界Ja
+      ? 日の頭の形Ja.test(日付境界Ja[1]) ||
+        /* 其の日を決める複合語（`来週月曜` `来月10日` `令和8年8月20日`）も頭に受ける
+         * （第 443 回 – 其の方が解ける語を前に持つ形だけ – 他の語を割らない守りは其侭）。 */
+        (Number.isFinite(nowMs as number) &&
+          pressedWeekdayJa(日付境界Ja[1], nowMs as number) !== null &&
+          日付境界Ja[1] !== String(token || "")) ||
+        (Number.isFinite(nowMs as number) &&
+          pressedMonthDayJa(日付境界Ja[1], nowMs as number) !== null) ||
+        eraYearTermsJa(日付境界Ja[1]) !== null
+      : false;
+    if (日付境界Ja && 頭Ja) return [日付境界Ja[1], 日付境界Ja[2]];
     if (幅の語を割らないかJa(String(token || ""))) return [token];
     /* 日を並べた語も語ごと残す（第 406 回）。助詞の表に `は`・`も` が有るので
      * `明日または明後日` は `明日また` + `明後日` に割れて、壊れた語で探す事になる
@@ -6387,7 +6404,7 @@ const Recommender = (() => {
     return 複合.length >= parts.length ? 複合 : parts;
   }
 
-  function queryTokens(query: unknown): string[] {
+  function queryTokens(query: unknown, nowMs?: number): string[] {
     const normalized = searchNormalize(query);
     if (!normalized) return [];
     /* 相対日（週・月・年を含む）の語の内の空格（第 423 回）。実測（2026-10-09 – 実ビルドの
@@ -6437,7 +6454,7 @@ const Recommender = (() => {
     normalized.split(" ").forEach((raw) => {
       const token = raw.replace(QUERY_EDGE_PUNCTUATION, "");
       if (!token) return;
-      splitQueryToken(token).forEach(語を足すJa);
+      splitQueryToken(token, nowMs).forEach(語を足すJa);
     });
     return seen;
   }
@@ -6658,7 +6675,7 @@ const Recommender = (() => {
       /* 相対月の語を含むときだけ書き換える。含まない語は**打たれた形のまま**返す –
        * 助詞で割った形に直すと、展開結果をそのまま画面に書く場所（件数欄の
        * 「検索語『X』」）が利用者の入力と違う文字列になり、説明がちぐはぐになる。 */
-      const parts = splitQueryToken(token);
+      const parts = splitQueryToken(token, nowMs);
       const terms = parts.map((part) => relativeMonthTerm(part, nowMs));
       if (terms.some((term) => term)) {
         tokens.push(
@@ -6685,7 +6702,7 @@ const Recommender = (() => {
     if (!normalized) return [];
     const pairs: Array<[string, string]> = [];
     normalized.split(" ").forEach((token) => {
-      splitQueryToken(token).forEach((part) => {
+      splitQueryToken(token, nowMs).forEach((part) => {
         const term = relativeMonthTerm(part, nowMs);
         if (term) pairs.push([part, term]);
       });
@@ -7186,7 +7203,7 @@ const Recommender = (() => {
         pairs.push([token, `${yearSeason[0]}から${yearSeason[yearSeason.length - 1]}`]);
         return;
       }
-      splitQueryToken(token).forEach((part) => {
+      splitQueryToken(token, nowMs).forEach((part) => {
         const terms = seasonTermsJa(part, nowMs);
         if (terms.length) pairs.push([part, `${terms[0]}から${terms[terms.length - 1]}`]);
       });
@@ -7200,7 +7217,7 @@ const Recommender = (() => {
     if (!normalized) return [];
     const pairs: Array<[string, string]> = [];
     normalized.split(" ").forEach((token) => {
-      splitQueryToken(token).forEach((part) => {
+      splitQueryToken(token, nowMs).forEach((part) => {
         const terms = monthRangeTermsJa(part, nowMs);
         if (terms.length) pairs.push([part, `${terms[0]}から${terms[terms.length - 1]}`]);
       });
@@ -7716,7 +7733,7 @@ const Recommender = (() => {
     if (!normalized) return [];
     const pairs: Array<[string, string]> = [];
     normalized.split(" ").forEach((token) => {
-      splitQueryToken(token).forEach((part) => {
+      splitQueryToken(token, nowMs).forEach((part) => {
         const terms = dayRangeTermsJa(part, nowMs);
         if (terms.length) pairs.push([part, `${terms[0]}から${terms[terms.length - 1]}`]);
         /* `と` の列挙は幅ではないので「または」で繋いで書く（第 394 回）。 */
@@ -8207,7 +8224,7 @@ const Recommender = (() => {
     if (!normalized) return [];
     const pairs: Array<[string, string]> = [];
     normalized.split(" ").forEach((token) => {
-      splitQueryToken(token).forEach((part) => {
+      splitQueryToken(token, nowMs).forEach((part) => {
         let 見る = part;
         let terms = periodMonthTermsJa(part, nowMs);
         if (!terms.length) {
@@ -10626,7 +10643,7 @@ const Recommender = (() => {
     const middleWhole = (token: string): string[] =>
       JOIN_WORDS.test(token) ? resolved[kanaFold(token)] || [] : [];
     const units: Array<{ token: string; whole: string[] }> = [];
-    mergeSeasonTokens(queryTokens(query)).forEach((raw) => {
+    mergeSeasonTokens(queryTokens(query, now)).forEach((raw) => {
       /* 「、」で並べた日は**一つの和集合**として受ける – 句読点で割れると別々の組（AND）に
        * なって当たり方が減る（第 396 回 – 其の方の語は下の枝で別々に解けるので、其処に
        * 任すと減った物が出てしまう）。解けない語を混んだ物は下に流す（其侭 AND）。 */
