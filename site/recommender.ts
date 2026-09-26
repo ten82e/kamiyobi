@@ -6385,7 +6385,14 @@ const Recommender = (() => {
           日付境界Ja[1] !== String(token || "")) ||
         (Number.isFinite(nowMs as number) &&
           pressedMonthDayJa(日付境界Ja[1], nowMs as number) !== null) ||
-        eraYearTermsJa(日付境界Ja[1]) !== null
+        eraYearTermsJa(日付境界Ja[1]) !== null ||
+        /* 暦日に解ける形（`2026年8月22日` `2026-08-22` – 第 448 回 – 実測 2026-10-25 –
+         * 実ビルドの品書 872 行・固定時刻 2026-08-09T00:00:00Z: `2026年8月22日17時以降`
+         * は 0 行で案内も無し – 空格の `2026年8月22日 17時以降` も助詞の形も其の方の語で
+         * 当たる（其の交わり 8 行）のに、繋げた形だけが詰まつて居た。其の日を決める暦日を
+         * 頭に受ける – 在ら無い日（`2月30日`）は解けないので今まで通り割れない（締切の
+         * 推測はしない）。*/
+        (Number.isFinite(nowMs as number) && 暦日に解くJa(日付境界Ja[1]) !== null)
       : false;
     if (日付境界Ja && 頭Ja) return [日付境界Ja[1], 日付境界Ja[2]];
     if (幅の語を割らないかJa(String(token || ""))) return [token];
@@ -10703,6 +10710,11 @@ const Recommender = (() => {
       if (
         !JOIN_WORDS.test(token) ||
         dateLike(token) ||
+        /* 暦日そのもの（`2026年8月22日` `2026-08-22`）は割らない（第 448 回 – 上の
+         * 割りで語として立った其の日を決める暦日を、其處から先の目（第 412 回の
+         * `:` と `-` の目 – 時刻とゾーン語の形に限定して居る）が `2026` + `年8月22日`
+         * に割つて了ひ、其の日が其処迄届かなかつた。其の日を決める暦日は其侭通す）。*/
+        暦日に解くJa(String(token || "")) !== null ||
         timeLike(token) ||
         コロン時刻を続ける形Ja.test(token)
       ) {
