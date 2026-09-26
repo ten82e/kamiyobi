@@ -266,7 +266,9 @@ describe("直した形がビルド成果物に残る（第 462 回）", () => {
   it("案内は寄せた形で解き、名乗りは打たれた侭にする", () => {
     /* 二つ（旬と幅の語尾）から七つに増えた – 第 464 回の時刻の寄せが五つ（冠の三語寄せ・
      * 単位・冠の後ろが繋がれた形・分の三語寄せ・分）*/
-    expect(物.match(/前\.見せ = /g)?.length).toBe(7);
+    /* 案内側で名乗りを継ぐ所は第 466 回の数値の相対日の目で二つ増えた（実測で張る –
+     * 數を張ると案内側の目が静かに落ちない）。*/
+    expect(物.match(/前\.見せ = /g)?.length).toBe(9);
     expect(物.split("解ける日語かJa(dateTokenStemJa(語))").length - 1).toBe(1);
     expect(物.split("const key = dateTokenStemJa(解 || token)").length - 1).toBe(1);
     expect(物.split("untilDayTermsJa(解 || token, nowMs)").length - 1).toBe(1);

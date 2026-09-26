@@ -232,7 +232,10 @@ describe("直した形がビルド成果物に残る（第 464 回）", () => {
     expect(物.split(`clockTimeTermsJa(\`\${前.解}\${token}\${次}\`)`).length - 1).toBe(2);
     expect(物.split(`clockTimeTermsJa(\`\${前.解}\${token}\`)`).length - 1).toBe(3);
     expect(物.split("clockTimeTermsJa(解 || token)").length - 1).toBe(1);
-    expect(物.split("次を飛ばす").length - 1).toBe(5);
+    /* 三語をまとめて飛ばす目は第 466 回の数値の相対日にも有るので、其れごと數える
+     * （宣言 1・読み 1・戻し 1・`true` を立てる所 3 – 実測で張る）。*/
+    expect(物.split("次を飛ばす").length - 1).toBe(6);
+    expect(物.split("次を飛ばす = true").length - 1).toBe(3);
   });
   it("語の表の目に時刻の境界が増えた", () => {
     expect(物.split("clockTimeTermsJa(語) !== null").length - 1).toBe(1);
