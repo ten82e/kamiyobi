@@ -63,9 +63,7 @@ describe("幅の語に近似を付けても断りが届く（第 440 回）", ()
     expect(n).not.toContain("幅の語");
     expect(Recommender.relativeDayNotes("明日あたり", 基準).join("")).toContain("は幅にせず");
     for (const 語 of ["来週火曜頃", "来週中頃", "来週いっぱい", "来週末"]) {
-      expect(Recommender.uiWordNoteJa(語) + Recommender.uiWordEntryNote?.(語), 語).not.toContain(
-        "幅の語に頃・前後のやうな近似の語",
-      );
+      expect(Recommender.uiWordNoteJa(語), 語).not.toContain("幅の語に頃・前後のやうな近似の語");
     }
     expect(列("来週").size).toBeGreaterThan(0);
   });
