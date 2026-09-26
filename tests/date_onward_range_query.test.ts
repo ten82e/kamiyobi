@@ -156,8 +156,10 @@ describe("守り", () => {
 describe("成果物", () => {
   it("其れより後の言い方の表と解く枝は一個所に決まる", () => {
     const 物 = readFileSync(join(builtSite(), "recommender.js"), "utf8");
+    /* 其の方の語尾の表 1 + 第 455 回の空格寄せの二目（語尾の目印と芯割り – 語の割りで
+     * 割らない決まりとは別の目）= 3 箇所。剥がす枝は其れ迄通り一個所（下の宣言の検査）。 */
     expect(物.match(/以降\|以後\|以来\|この先\|から/g) ?? [], "其れより後の語尾の表").toHaveLength(
-      1,
+      3,
     );
     expect(物.match(/function より後を剥がす語Ja/g) ?? [], "語尾を剥がす語の宣言").toHaveLength(1);
     expect(物.match(/より後を剥がす語Ja\(/g) ?? [], "其れより後の語の呼び出し").toHaveLength(3);

@@ -122,7 +122,10 @@ describe("直した形がビルド成果物に残る（第 453 回）", () => {
   const 物 = readFileSync(join(builtSite(), "recommender.js"), "utf8");
   it("寄せの呼び出しが 1 箇所・定義が 1 箇所", () => {
     expect(
-      物.split("範囲の語を寄せるJa(mergeSeasonTokens(queryTokens(query, now)), now)").length - 1,
+      /* 第 455 回の空格寄せが内側に入った – 幅の寄せが其の方の入力を包む侭居る事を張る。 */
+      物.split(
+        "範囲の語を寄せるJa(暦日を境界に寄せるJa(mergeSeasonTokens(queryTokens(query, now)), now), now)",
+      ).length - 1,
     ).toBe(1);
     expect(物.split("function 範囲の語を寄せるJa(").length - 1).toBe(1);
   });
