@@ -289,6 +289,10 @@ export const SEARCH_CANON = (() => {
       // 第 394 回: 助詞 `へ` を含む幅を割らない決まりと、`と` の列挙を和集合に解く枝は
       // `splitQueryToken` / `queryTokenGroups` から呼ぶので、同じ表に並べないと抜き出した
       // 品が `ReferenceError` になる（第 257 回・第 341 回・第 392 回と同じ穴）。
+      /* 暦日に境界の語を繋げた形を割らない決まり（第 454 回）– `splitQueryToken` と
+       * `queryTokenGroups` の内側が呼ぶので、同じ表に並べないと抜き出した品が
+       * `ReferenceError` になる（第 257 回・第 341 回・第 392 回と同じ穴）。 */
+      "暦日に境界を続けた形Ja",
       "解ける日語かJa",
       "幅の語を割らないかJa",
       "単体の展開語Ja",
