@@ -218,15 +218,25 @@ describe("直した形がビルド成果物に残る（第 463 回）", () => {
     expect(物.split("[ \\u3000]*まで/g;").length - 1).toBe(1);
     expect(物.split("(?:[ \\u3000]*いっぱい|一杯)").length - 1).toBe(1);
   });
-  it("語の表の目は六つから十一に増えた – 月の幅・暦年・暦月（第 463 回）", () => {
+  /* 目の数も張る – 1 箇所の宣言に目を足す圓なので、数を張つて置かないと古い目を静かに
+   * 落としても気づかない（第 465 回 – 実測で数へ直した：第 463 回で十一、第 464 回の時刻の目
+   * を足して十二、第 465 回の年度の目で十三）。*/
+  it("語の表の目は六つから十三に増えた – 月の幅・暦年・暦月・時刻・年度（第 463 回・第 465 回）", () => {
     expect(物.split("function 幅の語尾を継いだ形が解けるJa(").length - 1).toBe(1);
     for (const 目 of [
       "monthRangeTermsJa(語, nowMs).length > 0",
       "RELATIVE_YEAR_OFFSETS_JA[relativeYearKeyJa(語)] !== undefined",
       'relativeMonthTerm(語, nowMs) !== ""',
+      "fiscalYearTermsJa(語, nowMs) !== null",
+      "clockTimeTermsJa(語) !== null",
     ]) {
       expect(物.split(目).length - 1, 目).toBe(1);
     }
+    const 門 = 物.slice(
+      物.indexOf("function 幅の語尾を継いだ形が解けるJa("),
+      物.indexOf("解ける日語かJa(dateTokenStemJa(語))"),
+    );
+    expect(門.split("||").length - 1, "目の数").toBe(12);
     /* 暦日を打って其れより後の形は第 455 回で既に通つて居たので、此の圓では目にして居ない
      * （`8 月 22 日 以降` 744 行 – 前後で一字も違わない）。其の方の案内が噓を書かない事は
      * 下の「案内の語」の張りで見る。*/
