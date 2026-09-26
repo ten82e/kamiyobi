@@ -7235,6 +7235,31 @@ const Recommender = (() => {
     return out;
   }
 
+  /* 「から」と「まで」を空格で離って打った幅（第 453 回 – 実測 2026-10-26 – 実ビルドの
+   * 品書 872 行・固定時刻 2026-08-09T00:00:00Z: 寄せた `8月20日から25日まで` `8月20日から
+   * 8月25日まで` は 41 行で通るのに、間に空格を入れた `8月20日から 25日まで` は 0 行で
+   * 案内も無し – 幅の解きは語の其處其處で走る為、割れた二語の内の「25日まで」側が其の方
+   * の語に解けず AND で 0 行になつた）。寄せるのは両側を継いだ語が幅の解きで実際に解ける
+   * 時に限る（`明日から 17時まで` のやうに解けない語は其侭下流れ – 今の動きを変えない）。
+   * 第 332 回の季節の寄せと同じ置き場（行を出す側の語の列）に置く。*/
+  function 範囲の語を寄せるJa(tokens: string[], nowMs: number): string[] {
+    const out: string[] = [];
+    tokens.forEach((token) => {
+      const prev = out.length ? (out[out.length - 1] as string) : "";
+      if (
+        prev &&
+        /(?:から|より)$/.test(prev) &&
+        /(?:までに|まで)$/.test(token) &&
+        dayRangeTermsJa(prev + token, nowMs).length > 0
+      ) {
+        out[out.length - 1] = prev + token;
+        return;
+      }
+      out.push(token);
+    });
+    return out;
+  }
+
   /** `来年の秋` のように年を冠した言い方を、その年の季節として展開する。 */
   function yearSeasonTermsJa(token: string, nowMs: number): string[] {
     const hit = SEASON_YEAR_PREFIX.exec(token);
@@ -10747,7 +10772,7 @@ const Recommender = (() => {
     const middleWhole = (token: string): string[] =>
       JOIN_WORDS.test(token) ? resolved[kanaFold(token)] || [] : [];
     const units: Array<{ token: string; whole: string[] }> = [];
-    mergeSeasonTokens(queryTokens(query, now)).forEach((raw) => {
+    範囲の語を寄せるJa(mergeSeasonTokens(queryTokens(query, now)), now).forEach((raw) => {
       /* 「、」で並べた日は**一つの和集合**として受ける – 句読点で割れると別々の組（AND）に
        * なって当たり方が減る（第 396 回 – 其の方の語は下の枝で別々に解けるので、其処に
        * 任すと減った物が出てしまう）。解けない語を混んだ物は下に流す（其侭 AND）。 */

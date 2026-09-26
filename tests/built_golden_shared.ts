@@ -273,6 +273,10 @@ export const SEARCH_CANON = (() => {
       "seasonTermsJa",
       "yearSeasonTermsJa",
       "mergeSeasonTokens",
+      /* 「Xから Yまで」を空格で離って打った幅の寄せ（第 453 回）– `queryTokenGroups` が
+       * 呼ぶので同じ表に並べないと、抜き出した品が `ReferenceError` になる
+       * （第 257 回・第 341 回・第 392 回と同じ穴）。 */
+      "範囲の語を寄せるJa",
       "searchNormalize",
       // 第 153 回: URL を検索欄に貼れるようにしたので、その部品も一緒に抜く
       // （抜いた関数は独立していないと `ReferenceError` になる）。
