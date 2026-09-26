@@ -172,11 +172,57 @@ describe("時間帯の名前+続き方は其の場で断る（第 436 回）", (
   });
 });
 
+describe("日の語に境界を直に続けても掛け算になる（第 438 回）", () => {
+  for (const [頭, 尾] of [
+    ["明日", "17時以降"],
+    ["明後日", "17時以降"],
+    ["来週", "17時以降"],
+    ["金曜", "17時以降"],
+    ["8月15日", "17時以降"],
+    ["15日", "17時前"],
+    ["来週末", "9時30分以降"],
+  ] as Array<[string, string]>) {
+    it(`『${頭}${尾}』は其の日の締切と其の時刻の幅の両方で絞れる`, () => {
+      const 掛 = new Set<string>();
+      for (const x of 列(頭)) if (列(尾).has(x)) 掛.add(x);
+      const Q = 列(頭 + 尾);
+      expect(Q.size, 頭 + 尾).toBe(掛.size);
+      let n = 0;
+      for (const x of 掛) if (!Q.has(x)) n += 1;
+      expect(n, 頭 + 尾).toBe(0);
+      expect(Q.size, 頭 + 尾).toBeGreaterThan(0);
+    });
+  }
+  it("案内は日と時刻の両方が出て、相対日の断りは残らない", () => {
+    const 案内 = Recommender.relativeDayNotes("明日17時以降", 基準).join(" / ");
+    expect(案内).toContain("明日 = 2026年8月10日(月)");
+    expect(案内).toContain("17:00〜23:59");
+    expect(案内).not.toContain("此の表の日として探せ");
+  });
+  it("頭が日の語で無い物は割らない – 其れ以外の断りが其の侭", () => {
+    expect(列("会議17時以降").size).toBe(0);
+    expect(列("明日までに").size).toBeGreaterThanOrEqual(0);
+    /* 割らない決まりの語（第 365 回・第 406 回）を境界の割りより後に置く – 対稱差 0 で固定する。*/
+    let n1 = 0;
+    for (const x of 列("締切まで30日")) if (!列("30日以内").has(x)) n1 += 1;
+    for (const x of 列("30日以内")) if (!列("締切まで30日").has(x)) n1 += 1;
+    expect(n1).toBe(0);
+    const 和 = new Set<string>([...列("明日"), ...列("明後日")]);
+    let n2 = 0;
+    for (const x of 和) if (!列("明日または明後日").has(x)) n2 += 1;
+    for (const x of 列("明日または明後日")) if (!和.has(x)) n2 += 1;
+    expect(n2).toBe(0);
+  });
+});
+
 describe("割りの形がビルド成果物に残る（第 436 回）", () => {
   const 物 = readFileSync(join(builtSite(), "recommender.js"), "utf8");
   it("境界の式と語群の追加が入つて居る", () => {
     for (const 形 of [
       /^(?:(午前|午後|ごぜん|ごご))?([0-9]{1,2})時(?:([0-9]{1,2})分)?(以降|より|前|前に)$/.source,
+      /^(.+?)((?:[0-9]{1,2}|[〇零一二三四五六七八九十]{1,3})時(?:[0-9]{1,2}分)?(?:以降|より|前|前に))$/
+        .source,
+      "^(?:今日|明日|明後日|",
       "夜|夜中|今夜|朝|早朝|終業時間|終業|退勤|勤務終了",
       "(?:以降|前に|までに|過ぎ|後|後に)?",
     ]) {
