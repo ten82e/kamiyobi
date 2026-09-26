@@ -57,12 +57,16 @@ function 書き換え(語: string): string {
   const 表 = rec.slice(rec.indexOf("const RELATIVE_DAY_PHRASES_JA"));
   const 表の宣言 = 表.slice(0, 表.indexOf("];") + 2);
   expect(表の宣言.includes("["), "`RELATIVE_DAY_PHRASES_JA` の宣言が見つからない").toBe(true);
+  /* 語の助詞の表（第 458 回・第 459 回）– 此の書き換えが語を落とす時に読むので、
+   * 其の方の宣言も置く（第 347 回 – 参照する表を渡さないと同じ穴に落ちる）。*/
+  const 助詞の表 = rec.match(/const QUERY_PARTICLE_SPLIT_CHARS = [^\n]*;/)?.[0] ?? "";
+  expect(助詞の表, "`QUERY_PARTICLE_SPLIT_CHARS` の宣言が見つからない").not.toBe("");
   /* 漢数字を算用数字に直す正本（第 392 回）– 上の語の寄せが呼ぶので、関数だけ渡すと
    * `漢の数字に直すJa is not defined` に化ける（第 257 回と同じ穴 – 実際に落ちた）。 */
   const 下請け = jsFunction(rec, "漢の数字に直すJa");
   const 関数 = new Function(
     "Recommender",
-    `${表の宣言}\nconst 漢の数字に直すJa = ${下請け};\nreturn (${本体});`,
+    `${表の宣言}\n${助詞の表}\nconst 漢の数字に直すJa = ${下請け};\nreturn (${本体});`,
   )(Recommender) as (語: string) => string;
   return 関数(語);
 }
