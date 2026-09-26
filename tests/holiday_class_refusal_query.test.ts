@@ -65,6 +65,34 @@ describe("祝日級を数字や接語で繋げて打つも同じ案内を受け�
   }
 });
 
+describe("祝語の付き方も同じ案内を受ける（第 435 回）", () => {
+  for (const 語 of [
+    "GW明け",
+    "お盆明け",
+    "盆明け",
+    "お盆前",
+    "年末年始中",
+    "ゴールデンウィーク明け",
+    "大型連休明け",
+    "祝日明け",
+    "正月",
+    "正月明け",
+  ]) {
+    it(`『${語}』は 0 行の侭、打たれた表記で祝日級の案内が出る`, () => {
+      expect(列(語).size, 語).toBe(0);
+      const n = Recommender.uiWordNoteJa(語);
+      expect(n, 語).toContain(`「${語}」`);
+      expect(n, 語).toContain("祝日・休日の名前で打たれても");
+    });
+  }
+  it("『年始』『年末』は月の語 – 祝日級に引き寄せない", () => {
+    expect(列("年始").size).toBeGreaterThan(0);
+    expect(列("年末").size).toBeGreaterThan(0);
+    expect(Recommender.uiWordNoteJa("年始")).not.toContain("祝日");
+    expect(Recommender.uiWordNoteJa("年末")).not.toContain("祝日");
+  });
+});
+
 describe("其它の語を祝日級に引き寄せない（第 434 回）", () => {
   it("曜日と平日は普通に絞れて祝日案内が出ない", () => {
     expect(列("土日").size).toBeGreaterThan(0);
@@ -95,6 +123,8 @@ describe("割りの形がビルド成果物に残る（第 434 回）", () => {
       /* 語表の条目その物（コメントにも其の名が一寸出る為、行の形見る）。*/
       '"シルバーウィーク",',
       '"代替休日",',
+      /^(?:GW|ゴールデンウィーク|シルバーウィーク|大型連休|お盆|盆|年末年始|正月|祝日|祝祭日|振替休日|代替休日)(?:明け|前|中)?$/
+        .source,
     ]) {
       expect(物.split(形).length - 1, 形.slice(0, 18)).toBe(1);
     }
