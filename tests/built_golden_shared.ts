@@ -146,6 +146,9 @@ export const SEARCH_CANON = (() => {
     ["DATE_TOKEN_TAILS_JA", /const DATE_TOKEN_TAILS_JA[\s\S]*?\];/],
     /* 日を並べると書く区切り（第 406 回）。 */
     ["列挙の区切りJa", /const 列挙の区切りJa = [^\n]*;/],
+    /* 並べた語の助詞の表（第 457 回 – 空格で離った列挙を寄せる機械が読む）。 */
+    ["列挙の助詞Ja", /const 列挙の助詞Ja = [^\n]*;/],
+    ["列挙の助詞の尾Ja", /const 列挙の助詞の尾Ja = [^\n]*;/],
     /* 数値で書く相対日の形（第 405 回 – 列挙の目印が読む）。 */
     ["数値の相対日の形Ja", /const 数値の相対日の形Ja = [^\n]*;/],
     ["FROM_TODAY_UNIT", /const FROM_TODAY_UNIT[\s\S]*?\};/],
@@ -273,6 +276,10 @@ export const SEARCH_CANON = (() => {
       "seasonTermsJa",
       "yearSeasonTermsJa",
       "mergeSeasonTokens",
+      /* 並べた語（列挙）の空格寄せ（第 457 回）– `queryTokenGroups` の内側が呼ぶので
+       * 同じ表に並べないと抜き出した品が `ReferenceError` になる（第 257 回・第 453 回・
+       * 第 455 回・第 456 回と同じ穴）。 */
+      "列挙の語を寄せるJa",
       /* 数字と単位（年・月・日）の空格寄せ（第 456 回）– `queryTokenGroups` の内側が
        * 呼ぶので同じ表に並べないと抜き出した品が `ReferenceError` になる
        * （第 257 回・第 341 回・第 392 回・第 453 回・第 455 回と同じ穴）。 */
