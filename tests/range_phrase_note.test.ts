@@ -99,21 +99,23 @@ describe("曖昧な期間の言い方", () => {
     ["明日以降", "来週以降", "今週以降"].forEach((語) => {
       expect(Recommender.relativeDayNotes(語, 基準), `"${語}" に解答が残つた`).toEqual([]);
     });
-    expect(Recommender.relativeDayNotes("来週から", 基準).join("")).toContain("以降のこと");
+    /* 第 476 回で `から` を続ける形も幅で絞れる – 案内は出ない（前 0 件＋案内）。*/
+    expect(Recommender.relativeDayNotes("来週から", 基準)).toEqual([]);
     /* 基準日が変わると『明日以降』と『来週以降』は違う日付 – 日曜の基準では此れらが重なるので、
      * 水曜の基準で潰れていない事を見る（固定時刻のビルドだけでは見えない穴 – 第 339 回）。 */
     const 水曜 = Date.parse("2026-08-12T00:00:00Z");
     /* 案内が残る `から` の形で見る – 基準日が変わると『明日から』と『来週から』は違う日付で、
      * 水曜の基準では此れらが重なるので、日曜の基準で潰れていない事を見る（第 339 回と同じ目）。*/
-    const 明日 = Recommender.relativeDayNotes("明日から", 水曜).join("");
-    const 来週 = Recommender.relativeDayNotes("来週から", 水曜).join("");
-    expect(明日).toContain("2026年8月13日");
-    expect(来週).toContain("2026年8月17日");
+    /* 第 476 回で案内は消えた – 其の日の読み方は幅の機械（dayRangePairs）で張る。*/
+    const 範囲 = (文: string, 日: number) =>
+      ((Recommender.dayRangePairs(文, 日) as Array<[string, string]>)[0] || ["", ""])[1];
+    expect(範囲("明日から", 水曜)).toContain("2026年8月13日");
+    expect(範囲("来週から", 水曜)).toContain("2026年8月17日");
     /* 其の方の日の行が其のまま違う事 – 案内が消えても幅は別の日に解れて居る（第 475 回）。*/
     expect(行数("明日以降", 水曜), "水曜基準で『明日以降』の行が消えた").toBeGreaterThan(0);
     expect(行数("来週以降", 水曜), "水曜基準で『来週以降』の行が消えた").toBeGreaterThan(0);
     expect(行数("明日以降", 水曜)).not.toBe(行数("来週以降", 水曜));
-    expect(明日).not.toBe(来週);
+    expect(範囲("明日から", 水曜)).not.toBe(範囲("来週から", 水曜));
   });
 });
 
