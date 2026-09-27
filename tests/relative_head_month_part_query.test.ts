@@ -90,11 +90,10 @@ describe("相対の語に月の塊を続ける形が其の月の塊として解�
     expect(列("来 上旬 締切").size).toBe(56);
     expect(列("来 上旬 の 論文").size).toBe(45);
     expect(列("ml 来 上旬 締切").size).toBe(2);
-    expect(列("今 上旬 まで").size).toBe(2);
-    expect(案内("今 上旬 まで")).toContain("今月 上旬 まで = 2026年8月9日(日)〜8月10日(月)");
-    expect(列("今 下旬 まで").size).toBe(110);
-    expect(案内("今 下旬 まで")).toContain("今月 下旬 まで = 2026年8月9日(日)〜8月31日(月)");
-    expect(案内("来 上旬 まで")).toContain("来月 上旬 まで = 2026年8月9日(日)〜9月10日(木)");
+    /* `まで` を続けた形は第 474 回で別に解けるやうにした – 其の実測は
+     * `tests/spaced_month_part_range_query.test.ts` に載せ、此處では塊の範囲の名乗りだけ張る。*/
+    expect(案内("今 上旬 まで")).toContain("上旬");
+    expect(案内("来 上旬 まで")).toContain("上旬");
   });
 });
 
@@ -143,7 +142,8 @@ describe("ビルド成果物に目が在る事（第 466 回 – 成果物だけ
   const 物 = readFileSync(join(builtSite(), "recommender.js"), "utf-8");
   it("二つの目と空格を残す寄せが現れる", () => {
     expect(物.match(/複合語の切れ目/g)?.length).toBe(2);
-    expect(物.match(/\(上旬\|中旬\|下旬\)/g)?.length).toBe(2);
+    /* 三つ目 – 第 474 回が `塊 + まで` の目でも同じ塊の表を読むので、字面は三つになる。*/
+    expect(物.match(/\(上旬\|中旬\|下旬\)/g)?.length).toBe(3);
     expect(物).toContain('"$1$2月 $3"');
     expect(物).toContain('"$1月 $2"');
   });
