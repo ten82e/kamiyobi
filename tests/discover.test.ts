@@ -2,8 +2,7 @@
  * discover.ts / review-candidates.ts のテスト。
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
 import { describe, expect, it, vi } from "vitest";
@@ -41,7 +40,7 @@ import {
   stripSponsorPrefix,
   tagSource,
 } from "../src/review-candidates.ts";
-import { REPO_ROOT } from "./helpers.ts";
+import { REPO_ROOT, tempWork } from "./helpers.ts";
 
 const utcDate = (y: number, m: number, d: number): Date => new Date(Date.UTC(y, m - 1, d));
 
@@ -99,7 +98,7 @@ describe("multiple-deadline candidate review (#940)", () => {
   });
 
   it("uses the same next deadline in CLI review and lifecycle classification", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-review-multiple-"));
+    const root = tempWork("kamiyobi-review-multiple-");
     const rows = [
       candidate([{ date: "TBD" }, { date: "2026-10-01" }]),
       candidate([{ local_date: "2026-09-08" }], { key: "today", title: "Today Workshop" }),
@@ -136,7 +135,7 @@ describe("NicheDiscoverer", () => {
   });
 
   it("tracks local full names when the display title is abbreviated", () => {
-    const root = mkdtempSync("/tmp/kamiyobi-discover-known-");
+    const root = tempWork("kamiyobi-discover-known-");
     const dataDir = join(root, "data");
     mkdirSync(dataDir, { recursive: true });
     writeFileSync(
@@ -989,7 +988,7 @@ describe("review helpers", () => {
   });
 
   it("warns when tracked-input files exist but cannot be parsed", () => {
-    const root = mkdtempSync("/tmp/kamiyobi-tracked-input-");
+    const root = tempWork("kamiyobi-tracked-input-");
     const dataDir = join(root, "data");
     mkdirSync(dataDir, { recursive: true });
     for (const name of ["snapshot.json", "extra.yaml", "overrides.yaml"]) {
@@ -1046,7 +1045,7 @@ describe("review helpers", () => {
   });
 
   it("runReviewCandidates groups sponsor-prefixed duplicates and deduplicates future review queue", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-review-dups-"));
+    const root = tempWork("kamiyobi-review-dups-");
     const rows = [
       {
         title: "ACM ICCFI 2026",
@@ -1815,7 +1814,7 @@ describe("discover and review boundary handling", () => {
     });
 
     it("loadTrackedTitles indexes acronym and legacy_keys", () => {
-      const dir = mkdtempSync(join(tmpdir(), "tracked-test-"));
+      const dir = tempWork("tracked-test-");
       try {
         mkdirSync(join(dir, "data"), { recursive: true });
         writeFileSync(

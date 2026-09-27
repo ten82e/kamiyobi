@@ -1,6 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { expect, it } from "vitest";
@@ -12,7 +11,7 @@ import {
   site,
   siteHtmlRuntime,
 } from "./built_golden_shared.ts";
-import { REPO_ROOT, runCli } from "./helpers.ts";
+import { REPO_ROOT, runCli, tempWork } from "./helpers.ts";
 import { jsFunction, liveNoteSource, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
 it("相対週が実カタログで其の週 7 日と同じ行を出し、暦日でも引ける（SPEC §7）", () => {
@@ -2473,12 +2472,12 @@ it("案内文に書いた実測値が、ビルド成果物に対して今も合�
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
   /* 測る基準は **固定時刻のオフラインビルド**。`tests/helpers.ts` の既定時刻だと
      窓に入る行数が変わるので、案内文が書いた時刻（2026-08-09）で組み直す。 */
-  const basis = join(mkdtempSync(join(tmpdir(), "cfp-basis-")), "public");
+  const basis = join(tempWork("cfp-basis-"), "public");
   /* `tempCache()` は合成した fixture キャッシュを書く（収録が差し替わる）。
      案内文の実測値は **収録 `data/snapshot.json` から組んだ成果物**について書いたもの
      なので、空キャッシュ（= snapshot へフォールバック）で組む。ここを取り違えると
      既定画面が 306 行になって案内文と合わない（2026-09-23 に実測）。 */
-  const emptyCache = mkdtempSync(join(tmpdir(), "cfp-empty-cache-"));
+  const emptyCache = tempWork("cfp-empty-cache-");
   const built = runCli(basis, {
     now: "2026-08-09T00:00:00Z",
     cache: emptyCache,
@@ -2602,10 +2601,10 @@ it("月・日の語は、和暦の語を持つ行だけを出す（隣の月日�
    * **当たり = 和暦の語を持つ行** であることを双方向で見る（多くも少なくも出ない）。 */
   // 収録の和暦年（2019〜2028 実測）を月語の展開範囲が含んでいることも見るので、
   // 空キャッシュ（= 収録 snapshot）で組み直した成果物で測る。
-  const basis2 = join(mkdtempSync(join(tmpdir(), "cfp-month-")), "public");
+  const basis2 = join(tempWork("cfp-month-"), "public");
   const builtMonth = runCli(basis2, {
     now: "2026-08-09T00:00:00Z",
-    cache: mkdtempSync(join(tmpdir(), "cfp-empty-")),
+    cache: tempWork("cfp-empty-"),
     extra: ["--no-embeddings"],
   });
   expect(builtMonth.status, builtMonth.stderr).toBe(0);
@@ -3199,8 +3198,8 @@ it("CSV のランク列は画面と同じ書き方で、番兵の `N` を渡さ�
    * 上流の番兵 `N` をそのまま出していた（2026-09-23 実測: 将来締切 917 行で 271 マス）。
    * 表計算で「N という等級」で絞り込めてしまい、空欄との違いも読めない。
    * 収録カタログから組んだ実データの CSV で検査する（合成 fixture では 0 マスになる）。 */
-  const out = join(mkdtempSync(join(tmpdir(), "cfp-csv-rank-")), "public");
-  const emptyCache = mkdtempSync(join(tmpdir(), "cfp-csv-rank-cache-"));
+  const out = join(tempWork("cfp-csv-rank-"), "public");
+  const emptyCache = tempWork("cfp-csv-rank-cache-");
   const built = runCli(out, {
     now: "2026-08-09T00:00:00Z",
     cache: emptyCache,

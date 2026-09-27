@@ -4,16 +4,7 @@
 
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { env } from "@huggingface/transformers";
 import { load as loadYaml } from "js-yaml";
@@ -80,6 +71,7 @@ import {
   PUBLIC_FILES,
   REPO_ROOT,
   runCli,
+  tempWork,
   utc,
 } from "./helpers.ts";
 import { deadlineHintFunction, jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
@@ -959,7 +951,7 @@ it.each(PUBLIC_FILES)("public file is generated: %s", (name) => {
 });
 
 it("build is deterministic", () => {
-  const second = join(mkdtempSync(join(tmpdir(), "cfp-site2-")), "public2");
+  const second = join(tempWork("cfp-site2-"), "public2");
   const run = runCli(second, { extra: ["--no-embeddings"] });
   expect(run.status, run.stderr).toBe(0);
   for (const name of PUBLIC_FILES) {
@@ -1508,7 +1500,7 @@ it("carries every fielded recommendation profile value into the compact index", 
 });
 
 it("generated_at follows the --now argument", () => {
-  const other = join(mkdtempSync(join(tmpdir(), "cfp-site3-")), "public3");
+  const other = join(tempWork("cfp-site3-"), "public3");
   const run = runCli(other, { now: "2027-01-02T00:00:00Z", extra: ["--no-embeddings"] });
   expect(run.status, run.stderr).toBe(0);
   const payload = JSON.parse(readFileSync(join(other, "data.json"), "utf8"));
@@ -2601,7 +2593,7 @@ it("upcoming.md keeps a running meeting and drops a finished one", async () => {
     meeting("finished", utc(2026, 8, 1), utc(2026, 8, 8)),
     meeting("future", utc(2026, 8, 19), utc(2026, 8, 21)),
   ];
-  const outdir = mkdtempSync(join(tmpdir(), "cfp-mtg-"));
+  const outdir = tempWork("cfp-mtg-");
   await buildAll(confs, { categories: { hpc: "HPC" } }, outdir, NOW, { noEmbeddings: true });
   // 回帰ガード: noEmbeddings が第5引数で効いていれば埋め込みは生成されない
   expect(existsSync(join(outdir, "embeddings.json"))).toBe(false);
@@ -3340,7 +3332,7 @@ it("upcoming.md window honors config site.upcoming_days", async () => {
       ],
     }),
   ];
-  const outdir = mkdtempSync(join(tmpdir(), "cfp-win-"));
+  const outdir = tempWork("cfp-win-");
   await buildAll(confs, { categories: { hpc: "HPC" }, site: { upcoming_days: 60 } }, outdir, NOW, {
     noEmbeddings: true,
   });
@@ -3855,7 +3847,7 @@ it("parseCliArgs parses short flags with equals syntax (-o=dist, -c=config.yaml,
 });
 
 it("buildAll emits recommender.js when custom template is in separate directory (#306)", async () => {
-  const tmpDir = mkdtempSync(join(tmpdir(), "cfp-custom-tmpl-"));
+  const tmpDir = tempWork("cfp-custom-tmpl-");
   const customTmpl = join(tmpDir, "custom_template.html");
   writeFileSync(customTmpl, "<html><body>/*__DATA__*/null</body></html>", "utf8");
 
@@ -3877,7 +3869,7 @@ it("buildAll emits recommender.js when custom template is in separate directory 
 });
 
 it("buildAll removes stale managed files and requires the site template", async () => {
-  const tmpDir = mkdtempSync(join(tmpdir(), "cfp-missing-template-"));
+  const tmpDir = tempWork("cfp-missing-template-");
   const outDir = join(tmpDir, "out");
   mkdirSync(outDir, { recursive: true });
   for (const name of ["index.html", "recommender.js", "embeddings.json"]) {
@@ -3901,7 +3893,7 @@ it("buildAll removes stale managed files and requires the site template", async 
 });
 
 it("buildAll removes stale embeddings when local model generation fails", async () => {
-  const tmpDir = mkdtempSync(join(tmpdir(), "cfp-stale-embeddings-"));
+  const tmpDir = tempWork("cfp-stale-embeddings-");
   const outDir = join(tmpDir, "out");
   const template = join(tmpDir, "template.html");
   mkdirSync(outDir, { recursive: true });
@@ -3923,7 +3915,7 @@ it("buildAll removes stale embeddings when local model generation fails", async 
 });
 
 it("buildAll rejects a site template without the data marker", async () => {
-  const tmpDir = mkdtempSync(join(tmpdir(), "cfp-missing-marker-"));
+  const tmpDir = tempWork("cfp-missing-marker-");
   const outDir = join(tmpDir, "out");
   const template = join(tmpDir, "template.html");
   writeFileSync(template, "<!doctype html><title>empty</title>\n", "utf8");
@@ -3943,7 +3935,7 @@ it("buildAll handles null and undefined arguments safely and setRoot works (#336
     setRoot(originalRoot);
   }
 
-  const tmpDir = mkdtempSync(join(tmpdir(), "cfp-null-build-"));
+  const tmpDir = tempWork("cfp-null-build-");
   const stats = await buildAll(null, null, tmpDir, new Date("2026-08-09T00:00:00Z"), {
     noEmbeddings: true,
   });
@@ -3987,7 +3979,7 @@ it("buildAll, toJson, and toUpcomingMd handle null/undefined now and invalid upc
   const mdCustomNegative = toUpcomingMd([], null, -10 as any);
   expect(mdCustomNegative).toContain("直近 180 日の締切と開催");
 
-  const tmpDir = mkdtempSync(join(tmpdir(), "build-now-test-"));
+  const tmpDir = tempWork("build-now-test-");
   try {
     const stats = await buildAll([], { site: { upcoming_days: -50 } }, tmpDir, null, {
       noEmbeddings: true,
@@ -4143,7 +4135,7 @@ describe("jsonCompact and legacy_key_redirects fixes (#746)", () => {
         }),
       ],
     });
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-sortkey-"));
+    const dir = tempWork("kamiyobi-sortkey-");
     await buildAll([confDateOnly, confExactPrior], {}, dir, new Date("2026-08-09T00:00:00Z"));
     const upcoming = readFileSync(join(dir, "upcoming.md"), "utf8");
     const priorIdx = upcoming.indexOf("Exact Prior");
@@ -4190,7 +4182,7 @@ it("the next-meeting note formats the schedule-only edition for a Japanese reade
   // 生成された recommender.js を読み込む（正本とズレたスタブで通す検査にしない）。
   const runtime = compileSiteRuntime();
   if (!runtime) throw new Error("site runtime is not compiled");
-  const dir = mkdtempSync(join(tmpdir(), "cfp-note-"));
+  const dir = tempWork("cfp-note-");
   const recPath = join(dir, "recommender.mjs");
   writeFileSync(recPath, runtime["recommender.js"]);
   const script = [
@@ -4252,7 +4244,7 @@ it("the drawer lists the same conference's later meetings (SPEC §7)", () => {
   // ビルド後の関数をそのまま実行する（Recommender は同じビルドの正本を読み込む）。
   const runtime = compileSiteRuntime();
   if (!runtime) throw new Error("site runtime is not compiled");
-  const dir = mkdtempSync(join(tmpdir(), "cfp-later-"));
+  const dir = tempWork("cfp-later-");
   const recPath = join(dir, "recommender.mjs");
   writeFileSync(recPath, runtime["recommender.js"]);
   const script = [
@@ -4595,7 +4587,7 @@ it("説明文に開発用語を残さない（SPEC §7）", () => {
 
 it("unknown 会期・開催地・ランクを「未確認」として出す（SPEC §7）", () => {
   const app = siteRuntime("app.js");
-  const dir = mkdtempSync(join(tmpdir(), "cfp-unknown-"));
+  const dir = tempWork("cfp-unknown-");
   const recPath = join(dir, "recommender.mjs");
   writeFileSync(recPath, siteRuntime("recommender.js"));
   const script = [
@@ -4917,7 +4909,7 @@ it("のぞいた行数を件数欄で説明する（SPEC §7）", () => {
 
 it("ドロワーは表の情報（分野・ランク・ラウンド）を落とさない（SPEC §7）", () => {
   const runtime = siteRuntime();
-  const dir = mkdtempSync(join(tmpdir(), "cfp-drawer-fields-"));
+  const dir = tempWork("cfp-drawer-fields-");
   const recPath = join(dir, "recommender.mjs");
   writeFileSync(recPath, siteRuntime("recommender.js"));
   const openSrc = jsFunction(runtime, "openDrawer");

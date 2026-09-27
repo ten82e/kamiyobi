@@ -2,8 +2,7 @@
  * fetch-primary.ts の抽出ロジックの最小テスト。
  */
 
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -22,7 +21,7 @@ import {
   toLines,
 } from "../src/fetch-primary.ts";
 import { resolvePrimaryObservations } from "../src/sources/primary.ts";
-import { REPO_ROOT } from "./helpers.ts";
+import { REPO_ROOT, tempWork } from "./helpers.ts";
 
 let stderrSpy: ReturnType<typeof vi.spyOn> | null = null;
 
@@ -282,7 +281,7 @@ describe("fetch-primary extraction", () => {
 
   it("loadYamlFile warns and returns {} on unparsable YAML", () => {
     spyStderr();
-    const path = join(mkdtempSync(join(tmpdir(), "cfp-fp-")), "bad.yaml");
+    const path = join(tempWork("cfp-fp-"), "bad.yaml");
     writeFileSync(path, "conferences:\n  whpc: [unclosed\n", "utf8");
     expect(loadYamlFile(path)).toEqual({});
     const calls: string[] = (stderrSpy?.mock.calls ?? []).map((c: unknown[]) => String(c[0]));
@@ -291,7 +290,7 @@ describe("fetch-primary extraction", () => {
 
   it("loadYamlFile parses valid YAML without warning", () => {
     spyStderr();
-    const path = join(mkdtempSync(join(tmpdir(), "cfp-fp2-")), "ok.yaml");
+    const path = join(tempWork("cfp-fp2-"), "ok.yaml");
     writeFileSync(
       path,
       "conferences:\n  whpc:\n    editions:\n      2026:\n        deadlines:\n          - date: 2026-08-21\n",
@@ -472,7 +471,7 @@ describe("page-year diagnostics", () => {
 
 describe("runFetchPrimary", () => {
   it("resolves default input paths after the root is changed", async () => {
-    const root = mkdtempSync(join(tmpdir(), "cfp-primary-root-"));
+    const root = tempWork("cfp-primary-root-");
     mkdirSync(join(root, "data"), { recursive: true });
     writeFileSync(
       join(root, "data", "primary.yaml"),
@@ -496,7 +495,7 @@ describe("runFetchPrimary", () => {
 
   it("returns 2 when registry has no conferences", async () => {
     spyStderr();
-    const emptyRegistry = join(mkdtempSync(join(tmpdir(), "cfp-reg-")), "empty.yaml");
+    const emptyRegistry = join(tempWork("cfp-reg-"), "empty.yaml");
     writeFileSync(emptyRegistry, "conferences: {}\n", "utf8");
     const code = await runFetchPrimary(false, emptyRegistry);
     expect(code).toBe(2);
@@ -504,7 +503,7 @@ describe("runFetchPrimary", () => {
 
   it("keeps the previous observation when the page title is an older edition", async () => {
     spyStderr();
-    const dir = mkdtempSync(join(tmpdir(), "cfp-primary-year-"));
+    const dir = tempWork("cfp-primary-year-");
     const registryPath = join(dir, "primary.yaml");
     const outPath = join(dir, "primary_overrides.yaml");
     writeFileSync(
@@ -533,7 +532,7 @@ describe("runFetchPrimary", () => {
 
   it("keeps unobserved slots and emits revision evidence for observed slots", async () => {
     spyStderr();
-    const dir = mkdtempSync(join(tmpdir(), "cfp-primary-partial-"));
+    const dir = tempWork("cfp-primary-partial-");
     const registryPath = join(dir, "primary.yaml");
     const outPath = join(dir, "primary_overrides.yaml");
     writeFileSync(
@@ -580,7 +579,7 @@ describe("runFetchPrimary", () => {
   });
 
   it("does not let a generic fallback replace an exact deadline", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "cfp-primary-generic-"));
+    const dir = tempWork("cfp-primary-generic-");
     const registryPath = join(dir, "primary.yaml");
     const outPath = join(dir, "primary_overrides.yaml");
     writeFileSync(

@@ -1,8 +1,8 @@
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { assertSafePageUrl, capturePage, PageCaptureError, writeCasBody } from "../src/capture.ts";
+import { tempWork } from "./helpers.ts";
 
 describe("capture safety and SSRF protections", () => {
   it("blocks private, loopback, and documentation IPv4 addresses", () => {
@@ -147,7 +147,7 @@ describe("capturePage resource cleanup and error mapping", () => {
   });
 
   it("stores and validates CAS bodies correctly", () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-cas-test-"));
+    const dir = tempWork("kamiyobi-cas-test-");
     const data = new Uint8Array([1, 2, 3, 4, 5]);
     const hash = "74f81fe167d99b4cb41d6d0ccda82278caee9f3e2f25d5e5a3936ff3dcec60d0";
 

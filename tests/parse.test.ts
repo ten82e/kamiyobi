@@ -2,7 +2,7 @@
  * parse_instant / parse_date_range / slug: SPEC.md section 3.
  */
 
-import { existsSync, mkdtempSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -59,7 +59,7 @@ import {
   editionOf as localEditionOf,
   parseFile as localParseFile,
 } from "../src/sources/local.ts";
-import { exactAt, utc } from "./helpers.ts";
+import { exactAt, tempWork, utc } from "./helpers.ts";
 
 describe("deadline state", () => {
   it("uses the full UTC+14 through UTC-12 window for date-only deadlines", () => {
@@ -853,7 +853,7 @@ describe("aideadlines rankOf", () => {
   });
 
   it("rejects an existing scalar YAML file instead of treating it as an empty source", () => {
-    const tmpDir = mkdtempSync(join(tmpdir(), "aideadlines-shape-"));
+    const tmpDir = tempWork("aideadlines-shape-");
     const path = join(tmpDir, "broken.yml");
     writeFileSync(path, "not-a-conference\n", "utf8");
     try {
@@ -933,7 +933,7 @@ describe("local source utilities and defensive parsing", () => {
   });
 
   it("fails closed on malformed conference and edition entries", () => {
-    const tmpDir = mkdtempSync(join(tmpdir(), "kamiyobi-local-entry-shape-"));
+    const tmpDir = tempWork("kamiyobi-local-entry-shape-");
     const path = join(tmpDir, "broken.yaml");
     try {
       writeFileSync(path, "conferences:\n  - bad\n", "utf8");
@@ -1185,7 +1185,7 @@ describe("ccfddl parsing", () => {
   });
 
   it("rejects an existing scalar YAML file instead of treating it as an empty source", () => {
-    const tmpDir = mkdtempSync(join(tmpdir(), "ccfddl-shape-"));
+    const tmpDir = tempWork("ccfddl-shape-");
     const path = join(tmpDir, "broken.yml");
     writeFileSync(path, "not-a-conference\n", "utf8");
     try {
@@ -1542,7 +1542,7 @@ describe("aideadlines deadlinesOf parsing", () => {
   });
 
   it("aideadlines and local sources parse non-array tags and categories safely (#348)", () => {
-    const tmpDir = mkdtempSync(join(tmpdir(), "cfp-tags-test-"));
+    const tmpDir = tempWork("cfp-tags-test-");
     const yamlContent = `
 title: StringTagsConf
 year: 2026

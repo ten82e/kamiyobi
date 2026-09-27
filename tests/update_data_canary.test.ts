@@ -4,16 +4,15 @@
  * for each scenario class (edition-id rename, genuine disappearance, new
  * warning code, new identity conflict).
  */
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { evaluateHealthGate, type HealthReport, type ObservationBaseline } from "../src/build.ts";
-import { makeFixtureCache, runCli } from "./helpers.ts";
+import { makeFixtureCache, runCli, tempWork } from "./helpers.ts";
 
 const tempDirs: string[] = [];
 function scratch(): string {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-canary-"));
+  const dir = tempWork("kamiyobi-canary-");
   tempDirs.push(dir);
   return dir;
 }

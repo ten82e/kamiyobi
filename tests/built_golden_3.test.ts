@@ -1,6 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
@@ -14,7 +13,15 @@ import {
   siteHtmlRuntime,
   verificationLabelsSource,
 } from "./built_golden_shared.ts";
-import { makeConference, makeDeadline, makeEdition, NOW, REPO_ROOT, utc } from "./helpers.ts";
+import {
+  makeConference,
+  makeDeadline,
+  makeEdition,
+  NOW,
+  REPO_ROOT,
+  tempWork,
+  utc,
+} from "./helpers.ts";
 import {
   jsFunction,
   liveNoteSource,
@@ -1253,7 +1260,7 @@ it("upcoming.md は、表のうえで列の意味が分かる（SPEC §7）", as
       ],
     }),
   ];
-  const outdir = mkdtempSync(join(tmpdir(), "cfp-md-legend-"));
+  const outdir = tempWork("cfp-md-legend-");
   await buildAll(confs, { categories: { hpc: "HPC" } }, outdir, NOW, { noEmbeddings: true });
   const text = readFileSync(join(outdir, "upcoming.md"), "utf8");
   const lines = text.split("\n");

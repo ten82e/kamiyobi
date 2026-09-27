@@ -1,11 +1,10 @@
 import { spawnSync } from "node:child_process";
 import { createHash, webcrypto } from "node:crypto";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { loadPublishedRecommendation } from "../site/publish.ts";
-import { REPO_ROOT } from "./helpers.ts";
+import { REPO_ROOT, tempWork } from "./helpers.ts";
 
 Object.defineProperty(globalThis, "crypto", { value: webcrypto, configurable: true });
 
@@ -149,7 +148,7 @@ describe("browser publish manifest", () => {
   });
 
   it("emits every module referenced by the template in an offline build", () => {
-    const out = mkdtempSync(join(tmpdir(), "kamiyobi-site-"));
+    const out = tempWork("kamiyobi-site-");
     try {
       const built = spawnSync(
         "node",

@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
-  mkdtempSync,
   readdirSync,
   readFileSync,
   rmSync,
@@ -11,7 +10,6 @@ import {
   utimesSync,
   writeFileSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { dump as dumpYaml, load as loadYaml } from "js-yaml";
 import { describe, expect, it } from "vitest";
@@ -31,7 +29,7 @@ import {
   transitionVerificationResolution,
 } from "../src/reverify.ts";
 import { deadlinesOf } from "../src/sources/local.ts";
-import { makeConference, makeDeadline, makeEdition } from "./helpers.ts";
+import { makeConference, makeDeadline, makeEdition, tempWork } from "./helpers.ts";
 
 function dataFile(
   dir: string,
@@ -77,7 +75,7 @@ function dataFile(
 }
 
 it("keeps the ledger loadable when non-auto sources are routed to manual review", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-manual-page-"));
+  const dir = tempWork("kamiyobi-reverify-manual-page-");
   const dataPath = dataFile(dir, [
     {
       kind: "paper",
@@ -118,7 +116,7 @@ it("keeps the ledger loadable when non-auto sources are routed to manual review"
 });
 
 it("keeps the ledger loadable when a non-auto source moves to a different URL", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-manual-move-"));
+  const dir = tempWork("kamiyobi-reverify-manual-move-");
   const ledgerPath = join(dir, "verification-ledger.json");
   const deadlineFor = (url: string): Array<Record<string, unknown>> => [
     {
@@ -171,7 +169,7 @@ it("keeps the ledger loadable when a non-auto source moves to a different URL", 
 });
 
 it("preserves a captured page when its deadline later degrades to a non-auto source", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-manual-preserve-"));
+  const dir = tempWork("kamiyobi-reverify-manual-preserve-");
   const ledgerPath = join(dir, "verification-ledger.json");
   const dataPath = dataFile(dir);
   const body = "Paper submission deadline: January 2, 2027";
@@ -208,7 +206,7 @@ it("preserves a captured page when its deadline later degrades to a non-auto sou
 it("verifies both rounds of a multi-round venue from one official page", async () => {
   // 抽出候補は round/track を持たないため、既定値での不一致棄却は多ラウンド会場の
   // 照合を全滅させていた (#701)。値一致+兄弟スロットでの説明可能性で確認する。
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-multiround-"));
+  const dir = tempWork("kamiyobi-reverify-multiround-");
   const dataPath = dataFile(dir, [
     {
       kind: "paper",
@@ -260,7 +258,7 @@ it("verifies both rounds of a multi-round venue from one official page", async (
 it("confirms an exact deadline against a date-only official statement", async () => {
   // 原典に時刻表記が無い締切 (通知・camera-ready 等) は、保存 exact 値の公式 TZ での
   // 暦日一致で確認する (#701)。時刻の推測はしない。
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-dateonly-"));
+  const dir = tempWork("kamiyobi-reverify-dateonly-");
   const dataPath = dataFile(dir, [
     {
       kind: "notification",
@@ -293,7 +291,7 @@ it("confirms an exact deadline against a date-only official statement", async ()
 it("refuses to verify when an unexplained sibling candidate remains", async () => {
   // 保存値と一致する候補があっても、兄弟スロットで説明できない互換候補 (延長の
   // 新値かもしれない) が残る場合は verified にしない (#701 の安全側)。
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-unexplained-"));
+  const dir = tempWork("kamiyobi-reverify-unexplained-");
   const dataPath = dataFile(dir);
   const ledgerPath = join(dir, "verification-ledger.json");
   const result = await reverifyData({
@@ -313,7 +311,7 @@ it("refuses to verify when an unexplained sibling candidate remains", async () =
 it("refuses to verify when a same-label candidate shows a different (earlier) date", async () => {
   // ラベル署名が完全一致で値が異なる候補 = 同一スロットの訂正の強い兆候。
   // 前倒し訂正の併記で旧値が verified になる誤りを防ぐ (#701 レビュー R1/R3)。
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-samelabel-"));
+  const dir = tempWork("kamiyobi-reverify-samelabel-");
   const dataPath = dataFile(dir);
   const result = await reverifyData({
     dataPath,
@@ -332,7 +330,7 @@ it("refuses to verify when a same-label candidate shows a different (earlier) da
 it("refuses to verify when a change-marked candidate line shows a different date", async () => {
   // 'Extended deadline:' 等の変更語彙つき行はラベル署名が変形して互換候補から
   // 落ちるため、候補行スコープの変更語彙ガードで拒否する (#701 レビュー R6)。
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-marked-"));
+  const dir = tempWork("kamiyobi-reverify-marked-");
   const dataPath = dataFile(dir);
   const result = await reverifyData({
     dataPath,
@@ -351,7 +349,7 @@ it("refuses to verify when a change-marked candidate line shows a different date
 it("refuses to verify sibling rounds whose stored order contradicts round order", async () => {
   // 同 kind の round 順序と保存値の時系列が食い違う (取り違えの疑い) 場合、
   // 値照合が相互に誤りを追認しないよう verified を拒否する (#701 レビュー R2)。
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-roundswap-"));
+  const dir = tempWork("kamiyobi-reverify-roundswap-");
   const verification = {
     official_url: "https://example.test/cfp",
     source_class: "official-cfp",
@@ -397,7 +395,7 @@ it("refuses to verify sibling rounds whose stored order contradicts round order"
 
 it("does not confirm a date-only statement against an unconfirmed timezone", async () => {
   // TZ 未確認の exact 値を UTC 暦日で照合すると誤 verified になる (#701 レビュー R5)。
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-unknowntz-"));
+  const dir = tempWork("kamiyobi-reverify-unknowntz-");
   const dataPath = dataFile(dir, [
     {
       kind: "notification",
@@ -430,7 +428,7 @@ it("verifies when the same value appears in multiple page mentions", async () =>
   // CFP は Key dates 節と本文で同じ締切を二重掲載するのが一般形 (実例: genai4sg の
   // EasyChair メタデータ表 + 本文)。同一値の重複は裏付けの強化であって曖昧ではない —
   // 候補の「件数」でなく「異なり値の数」で一意性を判定する (#714)。
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-dupmention-"));
+  const dir = tempWork("kamiyobi-reverify-dupmention-");
   const dataPath = dataFile(dir);
   const result = await reverifyData({
     dataPath,
@@ -481,7 +479,7 @@ it("verifies a label whose signature carries a day-first date", async () => {
   // 実例: IEEE ComSoc 特集号 CFP (#716)。labelSignature が国際式日付
   // (15 September 2026) を除去できず、候補ラベルの署名に日付が残って
   // 保存ラベルとの包含照合が壊れていた。
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-dayfirst-"));
+  const dir = tempWork("kamiyobi-reverify-dayfirst-");
   const result = await reverifyPublisherBody(
     dir,
     "Manuscript Submission Deadline: 15 September 2026 (Extended Deadline)\n" +
@@ -494,7 +492,7 @@ it("does not treat a revised-manuscript stage as a change announcement", async (
   // 実例: IEEE WCM 特集号 CFP (#716)。「Revised Manuscript Due」(改訂稿提出の
   // 編集段階) が CHANGE_LANGUAGE の revised に誤ヒットし、値一致候補の verified を
   // 阻止していた。
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-revstage-"));
+  const dir = tempWork("kamiyobi-reverify-revstage-");
   const result = await reverifyPublisherBody(
     dir,
     "Manuscript Submission Deadline: 15 September 2026 (Extended Deadline)\n" +
@@ -508,7 +506,7 @@ it("still refuses a genuine revised-deadline announcement with a different date"
   // 中和は 'revised manuscript' に限る保証 — 「Revised paper submission deadline:
   // 新日付」型の真の変更告知は引き続きガード(2)で manual に落とす
   // (中和を revised paper/version へ広げると素通りする。#716 反証レビューで実証)。
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-reviseddl-"));
+  const dir = tempWork("kamiyobi-reverify-reviseddl-");
   const result = await reverifyPublisherBody(
     dir,
     "Manuscript Submission Deadline: 15 September 2026\n" +
@@ -519,7 +517,7 @@ it("still refuses a genuine revised-deadline announcement with a different date"
 
 it("keeps ambiguous multi-candidate slots free of proposed observed values", async () => {
   // 複数互換で一意照合できないときも特定候補の値を提案しない (#701 レビュー R4)。
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-ambnoval-"));
+  const dir = tempWork("kamiyobi-reverify-ambnoval-");
   const dataPath = dataFile(dir, [
     {
       kind: "paper",
@@ -558,7 +556,7 @@ it("keeps ambiguous multi-candidate slots free of proposed observed values", asy
 it("ignores earlier untracked-cycle dates but blocks later unexplained ones", async () => {
   // 保存値より前の未説明候補 (追跡外サイクル) は verified を妨げない一方、
   // 後ろ向きの未説明候補 (延長の可能性) はブロックする (M4 変異の検出)。
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-backfilter-"));
+  const dir = tempWork("kamiyobi-reverify-backfilter-");
   const verification = {
     official_url: "https://example.test/cfp",
     source_class: "official-cfp",
@@ -594,7 +592,7 @@ it("ignores earlier untracked-cycle dates but blocks later unexplained ones", as
 
 it("classifies final-paper-files lines as camera-ready and strips US from label signatures", async () => {
   // M9 ('us' 除去) と M10 (camera_ready 分類) の変異検出。実 NSDI と同形の行。
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-usenix-shape-"));
+  const dir = tempWork("kamiyobi-reverify-usenix-shape-");
   const verification = {
     official_url: "https://example.test/cfp",
     source_class: "official-cfp",
@@ -641,7 +639,7 @@ it("classifies final-paper-files lines as camera-ready and strips US from label 
 it("does not record an unrelated candidate when no compatible deadline matches", async () => {
   // round/track 不一致でページ上の締切と照合できなかった場合、無関係な先頭候補を
   // observed_value として resolution に書かない (#701 の安全化)。
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-incompatible-"));
+  const dir = tempWork("kamiyobi-reverify-incompatible-");
   const dataPath = dataFile(dir, [
     {
       kind: "paper",
@@ -677,7 +675,7 @@ it("does not record an unrelated candidate when no compatible deadline matches",
 });
 
 it("persists due verification, stores the body, and records a changed deadline", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-"));
+  const dir = tempWork("kamiyobi-reverify-");
   const dataPath = dataFile(dir);
   const ledgerPath = join(dir, "verification-ledger.json");
   const firstBody = "Paper submission deadline: January 2, 2027";
@@ -739,7 +737,7 @@ it("persists due verification, stores the body, and records a changed deadline",
 });
 
 it("routes multiple compatible deadline values to manual review even when one is current", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-ambiguous-values-"));
+  const dir = tempWork("kamiyobi-reverify-ambiguous-values-");
   const dataPath = dataFile(dir);
   const ledgerPath = join(dir, "verification-ledger.json");
   const result = await reverifyData({
@@ -768,7 +766,7 @@ it("routes multiple compatible deadline values to manual review even when one is
 });
 
 it("matches changed HTML evidence by normalized deadline text", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-html-evidence-"));
+  const dir = tempWork("kamiyobi-reverify-html-evidence-");
   const result = await reverifyData({
     dataPath: dataFile(dir, [
       {
@@ -804,7 +802,7 @@ it("matches changed HTML evidence by normalized deadline text", async () => {
 });
 
 it("reverifies a production-shaped EasyChair target with its adapter and selector", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-easychair-adapter-"));
+  const dir = tempWork("kamiyobi-reverify-easychair-adapter-");
   const result = await reverifyData({
     dataPath: dataFile(dir, [
       {
@@ -841,7 +839,7 @@ it("reverifies a production-shaped EasyChair target with its adapter and selecto
 });
 
 it("verifies equivalent exact instants without requiring millisecond notation", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-exact-instant-"));
+  const dir = tempWork("kamiyobi-reverify-exact-instant-");
   const result = await reverifyData({
     dataPath: dataFile(dir, [
       {
@@ -869,7 +867,7 @@ it("verifies equivalent exact instants without requiring millisecond notation", 
 });
 
 it("refreshes evidence on an existing resolution without creating a duplicate", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-resolution-refresh-"));
+  const dir = tempWork("kamiyobi-reverify-resolution-refresh-");
   const dataPath = dataFile(dir);
   const ledgerPath = join(dir, "verification-ledger.json");
   const body = "Official deadline extension: Paper submission deadline: January 3, 2027";
@@ -897,7 +895,7 @@ it("refreshes evidence on an existing resolution without creating a duplicate", 
 });
 
 it("bootstraps fresh official evidence without fetching it again", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-bootstrap-"));
+  const dir = tempWork("kamiyobi-reverify-bootstrap-");
   const dataPath = dataFile(dir, [
     {
       kind: "paper",
@@ -937,7 +935,7 @@ it("bootstraps fresh official evidence without fetching it again", async () => {
 });
 
 it("automatically rechecks an explicitly classified official homepage", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-official-homepage-"));
+  const dir = tempWork("kamiyobi-reverify-official-homepage-");
   const result = await reverifyData({
     dataPath: dataFile(dir, [
       {
@@ -964,7 +962,7 @@ it("automatically rechecks an explicitly classified official homepage", async ()
 });
 
 it("does not automatically fetch an aggregator-only target", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-aggregator-"));
+  const dir = tempWork("kamiyobi-reverify-aggregator-");
   let fetches = 0;
   const result = await reverifyData({
     dataPath: dataFile(dir, [
@@ -1000,7 +998,7 @@ it("does not automatically fetch an aggregator-only target", async () => {
 });
 
 it("takes an auto-fetch URL and trust class from the same evidence record", () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-evidence-source-"));
+  const dir = tempWork("kamiyobi-reverify-evidence-source-");
   const dataPath = dataFile(dir, [
     {
       kind: "paper",
@@ -1032,7 +1030,7 @@ it("takes an auto-fetch URL and trust class from the same evidence record", () =
 });
 
 it("records an unreachable source without overwriting the last verified value", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-unreachable-"));
+  const dir = tempWork("kamiyobi-reverify-unreachable-");
   const dataPath = dataFile(dir);
   const ledgerPath = join(dir, "verification-ledger.json");
   await reverifyData({
@@ -1060,7 +1058,7 @@ it("records an unreachable source without overwriting the last verified value", 
 });
 
 it("fetches one page once and distributes its four slots", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-page-"));
+  const dir = tempWork("kamiyobi-reverify-page-");
   const kinds = ["abstract", "paper", "notification", "camera_ready"];
   const labels = [
     "Abstract submission deadline",
@@ -1109,7 +1107,7 @@ it("fetches one page once and distributes its four slots", async () => {
 });
 
 it("records zero bytes for a successful empty response instead of stale length", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-empty-body-"));
+  const dir = tempWork("kamiyobi-reverify-empty-body-");
   const dataPath = dataFile(dir);
   const ledgerPath = join(dir, "verification-ledger.json");
   await reverifyData({
@@ -1133,7 +1131,7 @@ it("records zero bytes for a successful empty response instead of stale length",
 });
 
 it("reports page-limit targets as deferred instead of processed", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-deferred-"));
+  const dir = tempWork("kamiyobi-reverify-deferred-");
   const dataPath = dataFile(dir, [
     {
       kind: "paper",
@@ -1178,7 +1176,7 @@ it("reports page-limit targets as deferred instead of processed", async () => {
 });
 
 it("spaces concurrent reverification requests to the same host", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-host-rate-"));
+  const dir = tempWork("kamiyobi-reverify-host-rate-");
   const dataPath = dataFile(dir, [
     {
       kind: "paper",
@@ -1224,7 +1222,7 @@ it("spaces concurrent reverification requests to the same host", async () => {
 });
 
 it("uses conditional headers and reuses the old body on 304", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-304-"));
+  const dir = tempWork("kamiyobi-reverify-304-");
   const dataPath = dataFile(dir);
   const ledgerPath = join(dir, "verification-ledger.json");
   const bodyRoot = join(dir, "evidence", "blobs");
@@ -1261,7 +1259,7 @@ it("uses conditional headers and reuses the old body on 304", async () => {
 });
 
 it("does not rewrite an existing content-addressed body", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-capture-cas-"));
+  const dir = tempWork("kamiyobi-capture-cas-");
   const bodyRoot = join(dir, "evidence", "blobs");
   const options = {
     bodyRoot,
@@ -1333,7 +1331,7 @@ it("answers both lookup callback contracts from the pinned resolver", () => {
 });
 
 it("marks 429 as retryable and rejects oversized/private redirected pages", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-limits-"));
+  const dir = tempWork("kamiyobi-reverify-limits-");
   const result = await reverifyData({
     dataPath: dataFile(dir),
     ledgerPath: join(dir, "verification-ledger.json"),
@@ -1517,7 +1515,7 @@ it("classifies date-only deadline changes within and beyond 30 days (#752)", () 
 });
 
 it("routes pull-in and exact-to-date-only changes to manual resolution", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-change-"));
+  const dir = tempWork("kamiyobi-reverify-change-");
   const exactData = dataFile(dir, [
     {
       kind: "paper",
@@ -1563,7 +1561,7 @@ it("routes pull-in and exact-to-date-only changes to manual resolution", async (
     state: "applied",
   });
 
-  const downgradeDir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-downgrade-"));
+  const downgradeDir = tempWork("kamiyobi-reverify-downgrade-");
   const downgrade = await reverifyData({
     dataPath: dataFile(downgradeDir, [
       {
@@ -1590,7 +1588,7 @@ it("routes pull-in and exact-to-date-only changes to manual resolution", async (
   expect(downgrade.statuses).toEqual({ "manual-required": 1 });
   expect(downgrade.ledger.resolutions[0]?.change_kind).toBe("precision-downgrade");
 
-  const upgradeDir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-upgrade-"));
+  const upgradeDir = tempWork("kamiyobi-reverify-upgrade-");
   const upgrade = await reverifyData({
     dataPath: dataFile(upgradeDir),
     ledgerPath: join(upgradeDir, "verification-ledger.json"),
@@ -1605,7 +1603,7 @@ it("routes pull-in and exact-to-date-only changes to manual resolution", async (
 it.each([false, true])(
   "applies a promotion resolution and preserves history (exact: %s)",
   (exact) => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-promotion-apply-"));
+    const root = tempWork("kamiyobi-reverify-promotion-apply-");
     const data = join(root, "data");
     const batch = "2026-09-02-demo";
     const batchDir = join(data, "promotions", batch);
@@ -1800,7 +1798,7 @@ it.each([false, true])(
 );
 
 it("applies new verification evidence to non-promotion source data", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-source-evidence-"));
+  const root = tempWork("kamiyobi-reverify-source-evidence-");
   const data = join(root, "data");
   const body = "Official deadline extension: October 15, 2026 23:59 UTC.";
   const hash = createHash("sha256").update(body).digest("hex");
@@ -1996,7 +1994,7 @@ it.each([
 ])(
   "uses only a supported year format in resolution edition $editionId (#760)",
   ({ editionId, accepted }) => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-dup-year-"));
+    const root = tempWork("kamiyobi-reverify-dup-year-");
     const data = join(root, "data");
     const body = "Official deadline extension: October 15, 2026 23:59 UTC.";
     const hash = createHash("sha256").update(body).digest("hex");
@@ -2104,7 +2102,7 @@ it.each([
 );
 
 it("refuses to apply a resolution without captured body evidence", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-source-no-evidence-"));
+  const root = tempWork("kamiyobi-reverify-source-no-evidence-");
   const data = join(root, "data");
   const sourcePath = join(data, "manual.yaml");
   const ledgerPath = join(data, "verification-ledger.json");
@@ -2185,7 +2183,7 @@ it("refuses to apply a resolution without captured body evidence", () => {
 });
 
 it("refuses to apply when the captured body is missing or does not match its hash", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-source-invalid-evidence-"));
+  const root = tempWork("kamiyobi-reverify-source-invalid-evidence-");
   const data = join(root, "data");
   const sourcePath = join(data, "manual.yaml");
   const ledgerPath = join(data, "verification-ledger.json");
@@ -2288,7 +2286,7 @@ it("refuses to apply when the captured body is missing or does not match its has
 });
 
 it("does not overwrite a malformed source during resolution apply", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-source-shape-"));
+  const root = tempWork("kamiyobi-reverify-source-shape-");
   const data = join(root, "data");
   mkdirSync(data, { recursive: true });
   const sourcePath = join(data, "extra.yaml");
@@ -2340,7 +2338,7 @@ it("does not overwrite a malformed source during resolution apply", () => {
 });
 
 it("does not coerce malformed nested source data during resolution apply", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-nested-source-shape-"));
+  const root = tempWork("kamiyobi-reverify-nested-source-shape-");
   const data = join(root, "data");
   mkdirSync(data, { recursive: true });
   const sourcePath = join(data, "extra.yaml");
@@ -2392,7 +2390,7 @@ it("does not coerce malformed nested source data during resolution apply", () =>
 });
 
 it("rejects invalid resolution dates before writing source data", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-invalid-resolution-"));
+  const root = tempWork("kamiyobi-reverify-invalid-resolution-");
   const data = join(root, "data");
   mkdirSync(data, { recursive: true });
   const sourcePath = join(data, "extra.yaml");
@@ -2444,7 +2442,7 @@ it("rejects invalid resolution dates before writing source data", () => {
 });
 
 it("migrates V1 entries and fails loudly on malformed entries", () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-ledger-"));
+  const dir = tempWork("kamiyobi-reverify-ledger-");
   const path = join(dir, "ledger.json");
   writeFileSync(
     path,
@@ -2584,7 +2582,7 @@ it("migrates V1 entries and fails loudly on malformed entries", () => {
 });
 
 it("rejects malformed V2 alias graphs and preserves retry headers", () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-v2-validation-"));
+  const dir = tempWork("kamiyobi-reverify-v2-validation-");
   const path = join(dir, "ledger.json");
   const base = {
     schema_version: 2,
@@ -2888,7 +2886,7 @@ it("rejects malformed V2 alias graphs and preserves retry headers", () => {
 });
 
 it("moves legacy venue and edition identifiers to the canonical ledger slot", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-legacy-ids-"));
+  const dir = tempWork("kamiyobi-reverify-legacy-ids-");
   const dataPath = join(dir, "data.json");
   const ledgerPath = join(dir, "ledger.json");
   writeFileSync(
@@ -2964,7 +2962,7 @@ it("moves legacy venue and edition identifiers to the canonical ledger slot", as
 });
 
 it("uses the shared date-only uncertainty boundary for target scheduling", () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-date-only-"));
+  const dir = tempWork("kamiyobi-reverify-date-only-");
   const dataPath = dataFile(dir);
   const data = JSON.parse(readFileSync(dataPath, "utf8"));
   const ledger = loadVerificationLedger(join(dir, "missing-ledger.json"));
@@ -2983,7 +2981,7 @@ it("uses the shared date-only uncertainty boundary for target scheduling", () =>
 });
 
 it("carries an edition CallIdentity into verification targets", () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-call-identity-"));
+  const dir = tempWork("kamiyobi-reverify-call-identity-");
   const dataPath = dataFile(dir);
   const data = JSON.parse(readFileSync(dataPath, "utf8"));
   data.conferences[0].editions[0].call_identity = {
@@ -3002,7 +3000,7 @@ it("carries an edition CallIdentity into verification targets", () => {
 
 describe("fixes for reverify defects (#744)", () => {
   it("validateDeadline accepts last_attempt_at: null without throwing", () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-null-attempt-"));
+    const dir = tempWork("kamiyobi-reverify-null-attempt-");
     const path = join(dir, "ledger.json");
     writeFileSync(
       path,
@@ -3047,7 +3045,7 @@ describe("fixes for reverify defects (#744)", () => {
   });
 
   it("assertCapturedResolutionBody allows round 2 and tracked deadlines with untagged CFP candidates", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-r2-apply-"));
+    const root = tempWork("kamiyobi-reverify-r2-apply-");
     const data = join(root, "data");
     mkdirSync(join(data, "evidence", "blobs"), { recursive: true });
     const sourcePath = join(data, "manual.yaml");
@@ -3147,7 +3145,7 @@ describe("fixes for reverify defects (#744)", () => {
   });
 
   it("migrates resolution official_url and page_id when conference URL changes in data.json (#750)", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-url-mig-"));
+    const dir = tempWork("kamiyobi-reverify-url-mig-");
     const initialUrl = "https://example.test/cfp-v1";
     const updatedUrl = "https://example.test/cfp-v2";
     const initialPageId = pageIdForUrl(initialUrl);
@@ -3261,7 +3259,7 @@ describe("fixes for reverify defects (#744)", () => {
   });
 
   it("does not block verification when sibling rounds belong to different tracks (#756)", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-track-round-"));
+    const dir = tempWork("kamiyobi-reverify-track-round-");
     const ledgerPath = join(dir, "verification-ledger.json");
     const dataPath = dataFile(dir, [
       {
@@ -3346,7 +3344,7 @@ it("migrates a unique legacy ledger id and skips ambiguous legacy keys (#768)", 
     ],
   });
   const writeCase = (keys: string[]) => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-migrate-"));
+    const dir = tempWork("kamiyobi-reverify-migrate-");
     const dataPath = join(dir, "data.json");
     const ledgerPath = join(dir, "verification-ledger.json");
     const conferences = keys.map(conference);
@@ -3426,7 +3424,7 @@ it("migrates a unique legacy ledger id and skips ambiguous legacy keys (#768)", 
 });
 
 it("supports at_utc for exact deadline reverification matching and cutoff", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reverify-at-utc-"));
+  const dir = tempWork("kamiyobi-reverify-at-utc-");
   const dataPath = dataFile(dir, [
     {
       kind: "paper",

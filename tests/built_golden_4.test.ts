@@ -1,6 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readdirSync, readFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { expect, it } from "vitest";
@@ -12,7 +11,7 @@ import {
   siteHtmlRuntime,
   verificationLabelsSource,
 } from "./built_golden_shared.ts";
-import { NOW, REPO_ROOT, runCli } from "./helpers.ts";
+import { NOW, REPO_ROOT, runCli, tempWork } from "./helpers.ts";
 import { jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
 it("ラウンドの R 表記が、別の周目の行を混ぜない（SPEC §7）", () => {
@@ -694,7 +693,7 @@ it("upcoming.md の「残り」が、実在しない猶予を約束していな�
   expect(main.targets.length, "作り直しの対象にできる締切が無い").toBeGreaterThan(0);
   const target = Math.min(...main.targets.map((t) => Number(t)));
   const stamp = new Date(target - 30_000).toISOString().replace(/\.[0-9]{3}Z$/, "Z");
-  const outSub = join(mkdtempSync(join(tmpdir(), "kamiyobi-soon-")), "public");
+  const outSub = join(tempWork("kamiyobi-soon-"), "public");
   const built = runCli(outSub, { now: stamp, extra: ["--no-embeddings"] });
   expect(built.status, built.stderr).toBe(0);
   const sub = run(join(outSub, "upcoming.md"), join(outSub, "data.json"));
@@ -784,7 +783,7 @@ it("upcoming.md の会期行の「残り」が、JST の同じ日なら同じ読
     return map;
   };
   const dirs = clocks.map((clock, index) => {
-    const outdir = join(mkdtempSync(join(tmpdir(), `kamiyobi-jst-day-${index}-`)), "public");
+    const outdir = join(tempWork(`kamiyobi-jst-day-${index}-`), "public");
     const run = runCli(outdir, {
       now: clock.toISOString().replace(/\.[0-9]{3}Z$/, "Z"),
       extra: ["--no-embeddings"],

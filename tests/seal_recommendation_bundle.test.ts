@@ -1,7 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 import {
@@ -18,7 +17,7 @@ import {
   venuePapersHash,
 } from "../src/embeddings.ts";
 import { semanticContentIdForArtifacts } from "../src/semantic-content.ts";
-import { REPO_ROOT } from "./helpers.ts";
+import { REPO_ROOT, tempWork } from "./helpers.ts";
 
 function embeddingFixture(data: Parameters<typeof embeddingManifest>[0]): unknown {
   const probe = Array(EMBEDDING_DIM).fill(0);
@@ -34,7 +33,7 @@ function embeddingFixture(data: Parameters<typeof embeddingManifest>[0]): unknow
 }
 
 it("keeps the trusted-pipeline invocation compatible without report files", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-seal-"));
+  const root = tempWork("kamiyobi-seal-");
   const embeddings = join(root, "embeddings.json");
   const data = join(root, "data.json");
   const out = join(root, "manifest.json");
@@ -59,7 +58,7 @@ it("keeps the trusted-pipeline invocation compatible without report files", () =
 });
 
 it("requires distinct passed required and full real-paper reports", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-seal-"));
+  const root = tempWork("kamiyobi-seal-");
   const embeddings = join(root, "embeddings.json");
   const data = join(root, "data.json");
   const out = join(root, "manifest.json");

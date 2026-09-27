@@ -1,5 +1,4 @@
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -15,7 +14,7 @@ import {
   validateRequiredLanguageCounts,
 } from "../src/bench-recommender.ts";
 import { benchmarkEmbeddingManifestAtCutoff } from "../src/embeddings.ts";
-import { REPO_ROOT } from "./helpers.ts";
+import { REPO_ROOT, tempWork } from "./helpers.ts";
 
 const fixture = JSON.parse(
   readFileSync(join(REPO_ROOT, "tests", "fixtures", "recommendation-data-delta.json"), "utf8"),
@@ -45,7 +44,7 @@ describe("data-delta recommendation benchmark", () => {
     expect(dataDeltaRegressionReasons(changed, result)).toEqual(
       expect.arrayContaining([expect.stringContaining("recall_at_5 regressed")]),
     );
-    const path = `${mkdtempSync(`${tmpdir()}/kamiyobi-bench-`)}/fixture.json`;
+    const path = `${tempWork("kamiyobi-bench-")}/fixture.json`;
     writeFileSync(path, JSON.stringify(changed));
     expect(await benchMain(["--data-delta", path, "--json"])).toBe(1);
   });

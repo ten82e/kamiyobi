@@ -2,8 +2,7 @@
  * Embeddings generator and CLI tests.
  */
 
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { env } from "@huggingface/transformers";
 import { describe, expect, it } from "vitest";
@@ -32,6 +31,7 @@ import {
   venuePapersAtCutoff,
   venuePapersHash,
 } from "../src/embeddings.ts";
+import { tempWork } from "./helpers.ts";
 
 describe("profileTexts", () => {
   const confs = [
@@ -161,7 +161,7 @@ describe("profileTexts", () => {
 
 describe("offline embedding generation", () => {
   it("fails locally and keys failed attempts by cache directory", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-offline-embeddings-"));
+    const dir = tempWork("kamiyobi-offline-embeddings-");
     const previousCache = env.cacheDir;
     const data = join(dir, "data.json");
     writeFileSync(data, JSON.stringify({ conferences: [], categories: {} }));

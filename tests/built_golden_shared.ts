@@ -6,11 +6,10 @@
  * 分けたので、そこで共有する読み込みの部品をここに移した（書き写すと正本とズレる – 同じ約束）。
  */
 
-import { mkdtempSync, readFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeAll, expect } from "vitest";
-import { runCli } from "./helpers.ts";
+import { runCli, tempWork } from "./helpers.ts";
 import { jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
 export let site: string;
@@ -45,7 +44,7 @@ export function siteHtmlRuntime(): string {
 }
 
 beforeAll(() => {
-  const outdir = join(mkdtempSync(join(tmpdir(), "cfp-site-")), "public");
+  const outdir = join(tempWork("cfp-site-"), "public");
   // 埋め込み生成は 2 モデル（英語+多言語）で数秒かかるため、このテスト群ではスキップ
   const run = runCli(outdir, { extra: ["--no-embeddings"] });
   expect(

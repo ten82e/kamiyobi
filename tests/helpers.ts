@@ -3,7 +3,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readdirSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -114,8 +114,79 @@ export function makeFixtureCache(dir: string): string {
   return dir;
 }
 
+/**
+ * 検査が使う一時目録を作る（第 482 回の片付け）。
+ *
+ * 此處で作る目録は此のままだと残り續けた – 実測（2026-11-08）で、検査用ディレクトリの
+ * 使い捨て先（`$TMPDIR`）に `kamiyobi-*` が **139 546 個・約 40 GB** 積まつて居た（内訳は
+ * `kamiyobi-reverify-*` 76 271 個など – 一個の検査が一個の目録を作り、誰も消さなかつた）。
+ * なので此處で作った物は**プロセスの終了時に消す**（最善を尽くす – 消えぬ場合は OS の
+ * 一時ディレクトリ掃除に任せる）。目録其物が必要ならば、自分で中身を移すか読む事。
+ */
+/**
+ * 検査が残して行いた一時目録を掃く（第 482 回 – **明示的に呼んだ時だけ**）。
+ *
+ * `tempWork` から自動的に呼ぶ形も試みたが、並列で走るワーカーが他プロセスの使用中の目録を
+ * 消して了い、ビルドの決定性を見る検査が落ちた（実測 2026-11-08 – 84 本の失敗・品書のサイズが
+ * 1.37 MB ⇔ 0.80 MB に割れた）。なので自動では掃かない – 掃除は `npm run clean:tmp` で。
+ *
+ * vitest のワーカーは殺される事が在って、其の場合 `exit` の用意が走らない – 実測（2026-11-08）で
+ * 片付けの目録を作つた後でも 98 個が TMPDIR に残つた（其れ以前は `kamiyobi-*` が 139 546 個・
+ * 約 40 GB 積まつて居た – `df` のコンテナ空きが 66 GB まで減つて居た所）。なので**次に読む時に**
+ * 古い物を消す – 使はれて居る物は除ける為、最終更新から一時間以内の物は触らない（同時に走る
+ * 検査がある為）。
+ */
+export function 古い一時目録を掃く(): void {
+  const 猶予 = 60 * 60 * 1000;
+  const 今 = Date.now();
+  let 名前々: string[];
+  try {
+    名前々 = readdirSync(tmpdir());
+  } catch {
+    return;
+  }
+  for (const 名前 of 名前々) {
+    if (!/^(kamiyobi|cfp|build-now-test|tracked-test|aideadlines-shape|ccfddl-shape)-/.test(名前))
+      continue;
+    const 道 = join(tmpdir(), 名前);
+    try {
+      if (今 - statSync(道).mtimeMs <= 猶予) continue;
+      rmSync(道, { recursive: true, force: true });
+    } catch {
+      /* 掃けなければ見送る – 検査の結果を変へない */
+    }
+  }
+}
+
+const 作った一時目録 = new Set<string>();
+let 退出の用意有り = false;
+
+export function tempWork(prefix: string): string {
+  /* 名前に此のプロセスの PID を残す – 掃除の側が「生きて居るプロセスの目録」を判別出来るやうに
+   * （第 482 回 – 時間で判別すると、長く走つた検査の目録を消してビルドの決定性が割れた実測が
+   * ある。PID で見るので、同時に走る検査は壊さない）。*/
+  const dir = mkdtempSync(join(tmpdir(), `${prefix}p${process.pid}-`));
+  作った一時目録.add(dir);
+  if (!退出の用意有り) {
+    退出の用意有り = true;
+    const 掃除 = () => {
+      for (const 目録 of 作った一時目録) {
+        try {
+          rmSync(目録, { recursive: true, force: true });
+        } catch {
+          /* 片付けは最善を尽くす – 落ちても検査の結果を変へない */
+        }
+      }
+      作った一時目録.clear();
+    };
+    process.on("exit", 掃除);
+    process.on("beforeExit", 掃除);
+  }
+  return dir;
+}
+
 export function tempCache(): string {
-  return makeFixtureCache(mkdtempSync(join(tmpdir(), "cfp-cache-")));
+  return makeFixtureCache(tempWork("cfp-cache-"));
 }
 
 // --- run the CLI ---------------------------------------------------------------
@@ -131,7 +202,16 @@ export function runCli(
   outdir: string,
   options: { now?: string; cache?: string; extra?: string[] } = {},
 ): RunResult {
-  const cache = options.cache ?? tempCache();
+  /* 其の方が持つキャッシュを渡さ無い時は使い捨てを作る – 実測（2026-11-08）で其れが一個
+   * 約 2.5 MB あつて、呼ぶ度に増へて TMPDIR に 12 GB（4 897 個）を積ませた主因だつた（第 482 回）。
+   * ビルドした子プロセスが終へば其処で用が済むので、**其の場で消す**（プロセス終り待ちだと
+   * ワーカーが殺された時に残る）。明示的に渡されたキャッシュは消さない（其它の検査が読む為）。*/
+  let 使い捨てのキャッシュ = "";
+  let cache = options.cache ?? "";
+  if (cache === "") {
+    使い捨てのキャッシュ = makeFixtureCache(mkdtempSync(join(tmpdir(), "cfp-cache-")));
+    cache = 使い捨てのキャッシュ;
+  }
   const cmd = [
     "node",
     join(REPO_ROOT, "src", "cli.ts"),
@@ -150,5 +230,12 @@ export function runCli(
     encoding: "utf8",
     timeout: 300_000,
   });
+  if (使い捨てのキャッシュ) {
+    try {
+      rmSync(使い捨てのキャッシュ, { recursive: true, force: true });
+    } catch {
+      /* 片付けは最善を尽くす – 検査の結果を変へない */
+    }
+  }
   return { status: proc.status, stdout: proc.stdout, stderr: proc.stderr };
 }

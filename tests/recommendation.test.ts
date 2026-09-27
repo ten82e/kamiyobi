@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { recommendationAxes } from "../site/recommendation-core.ts";
@@ -8,6 +8,7 @@ import {
   setRoot as setBuildRoot,
   toRecommendationIndex,
 } from "../src/build.ts";
+import { tempWork } from "./helpers.ts";
 
 const NOW = Date.parse("2026-08-25T00:00:00Z");
 
@@ -344,7 +345,7 @@ describe("recommendation axes", () => {
   });
 
   it("fails closed when the reranker artifact cannot be parsed", () => {
-    const root = mkdtempSync("/tmp/kamiyobi-reranker-artifact-");
+    const root = tempWork("kamiyobi-reranker-artifact-");
     const dataDir = join(root, "data");
     mkdirSync(dataDir, { recursive: true });
     const artifact = join(dataDir, "recommender-reranker.json");
@@ -361,7 +362,7 @@ describe("recommendation axes", () => {
   });
 
   it("fails closed when the reranker artifact violates its numeric contract", () => {
-    const root = mkdtempSync("/tmp/kamiyobi-reranker-contract-");
+    const root = tempWork("kamiyobi-reranker-contract-");
     const dataDir = join(root, "data");
     mkdirSync(dataDir, { recursive: true });
     const model = JSON.parse(

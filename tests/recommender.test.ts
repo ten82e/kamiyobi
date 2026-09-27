@@ -3,8 +3,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
 import { describe, expect, it } from "vitest";
@@ -43,7 +42,7 @@ import {
   venuePapersHash,
 } from "../src/embeddings.ts";
 import { computeSemanticContentId } from "../src/semantic-content.ts";
-import { REPO_ROOT } from "./helpers.ts";
+import { REPO_ROOT, tempWork } from "./helpers.ts";
 
 const R = recommender as any;
 let emittedApp: string | null = null;
@@ -2349,7 +2348,7 @@ describe("venue recommendation fusion", () => {
   });
 
   it("trains from dev rows only and makes dev input changes visible", () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-reranker-"));
+    const dir = tempWork("kamiyobi-reranker-");
     const dev = join(dir, "dev.json");
     const features = join(dir, "features.json");
     const profiles = join(REPO_ROOT, "data", "venue-profiles.json");
@@ -2477,7 +2476,7 @@ describe("venue recommendation fusion", () => {
   });
 
   it("rejects duplicate feature rows and altered record hashes", () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-feature-store-"));
+    const dir = tempWork("kamiyobi-feature-store-");
     const path = join(dir, "features.jsonl");
     const record = {
       paper_id: "paper-1",
@@ -2795,7 +2794,7 @@ describe("venue recommendation fusion", () => {
 
 describe("recommendation bundle restoration", () => {
   it("accepts only the exact source/profile/model/runtime/hash/benchmark binding", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-bundle-"));
+    const root = tempWork("kamiyobi-bundle-");
     const out = join(root, "out");
     const bundleDir = join(root, "bundle");
     mkdirSync(out);

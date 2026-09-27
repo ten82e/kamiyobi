@@ -12,8 +12,7 @@
  * JSON / upcoming から落ちた。
  */
 
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
 import { describe, expect, it } from "vitest";
@@ -25,7 +24,7 @@ import {
   warningCounts,
 } from "../src/model.ts";
 import { LocalSource, parseFile } from "../src/sources/local.ts";
-import { REPO_ROOT } from "./helpers.ts";
+import { REPO_ROOT, tempWork } from "./helpers.ts";
 
 interface RawDeadline {
   src: string;
@@ -229,7 +228,7 @@ describe("local source data integrity", () => {
 });
 
 it("unions categories and tags when the same local key spans files (#768)", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-local-merge-"));
+  const dir = tempWork("kamiyobi-local-merge-");
   const venue = (categories: string, tags: string, year: number, id: string) =>
     [
       "conferences:",
@@ -266,7 +265,7 @@ it("unions categories and tags when the same local key spans files (#768)", asyn
 });
 
 it("merges rank, dblp, link, full_name, and acronym when the same local key spans files", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-local-merge-rank-"));
+  const dir = tempWork("kamiyobi-local-merge-rank-");
   const first = join(dir, "manual.yaml");
   const second = join(dir, "curated.yaml");
   writeFileSync(

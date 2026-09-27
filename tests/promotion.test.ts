@@ -1,7 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { generateCurated } from "../scripts/generate-curated.ts";
@@ -21,7 +20,7 @@ import {
   verifyPromotionObservation as verifyPromotionObservationAt,
   writePromotionBatch as writePromotionBatchAt,
 } from "../src/promotion.ts";
-import { makeConference, makeDeadline, makeEdition, REPO_ROOT } from "./helpers.ts";
+import { makeConference, makeDeadline, makeEdition, REPO_ROOT, tempWork } from "./helpers.ts";
 
 /* 検査は実行時の時計に依存させない。`resolvePromotion` の既定の現在時刻は `new Date()` で、
  * ここに書いた fixture の締切（2026-09・2026-10・2027-01）は現実の日付が過ぎた瞬間に
@@ -81,7 +80,7 @@ const evidence = {
 
 const capturedBody =
   "Paper deadline: January 2, 2027 23:59 AoE\nNotification: January 3, 2027 23:59 AoE";
-const capturedBodyPath = join(mkdtempSync(join(tmpdir(), "kamiyobi-promotion-body-")), "cfp.html");
+const capturedBodyPath = join(tempWork("kamiyobi-promotion-body-"), "cfp.html");
 writeFileSync(capturedBodyPath, capturedBody);
 const capturedHash = createHash("sha256").update(capturedBody).digest("hex");
 evidence.contentHash = capturedHash;
@@ -927,7 +926,7 @@ describe("promotion batch", () => {
     vi.useFakeTimers({ toFake: ["Date"], now: Date.parse("2028-05-05T00:00:00.000Z") });
     try {
       expect(resolvePromotion(observation()).decision).toBe("promote");
-      const dir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-clock-"));
+      const dir = tempWork("kamiyobi-promotion-clock-");
       const observations = join(dir, "observations.jsonl");
       writeFileSync(observations, `${JSON.stringify(observation())}\n`);
       const resolutions = writePromotionBatch(
@@ -1372,10 +1371,7 @@ describe("promotion batch", () => {
     ).toBe("hold");
     expect(resolvePromotion(observation({ eventEndDate: undefined })).decision).toBe("hold");
     const previousYearBody = "Paper deadline: January 2, 2026 23:59 UTC";
-    const previousYearBodyPath = join(
-      mkdtempSync(join(tmpdir(), "kamiyobi-promotion-previous-year-")),
-      "cfp.html",
-    );
+    const previousYearBodyPath = join(tempWork("kamiyobi-promotion-previous-year-"), "cfp.html");
     writeFileSync(previousYearBodyPath, previousYearBody);
     const previousYearHash = createHash("sha256").update(previousYearBody).digest("hex");
     const previousYearDeadline = resolvePromotion(
@@ -1419,7 +1415,7 @@ describe("promotion batch", () => {
   });
 
   it("writes byte-identical isolated batch artifacts and verifies JSONL files", () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-"));
+    const dir = tempWork("kamiyobi-promotion-");
     const observations = join(dir, "observations.jsonl");
     writeFileSync(
       observations,
@@ -1499,7 +1495,7 @@ describe("promotion batch", () => {
   });
 
   it("does not verify a replacement batch against its stale output manifest", () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-replace-"));
+    const dir = tempWork("kamiyobi-promotion-replace-");
     const observations = join(dir, "observations.jsonl");
     const resolutions = join(dir, "resolutions.json");
     const manifest = join(dir, "manifest.json");
@@ -1545,7 +1541,7 @@ describe("promotion batch", () => {
   });
 
   it("does not rewrite batch files when replacement validation throws", () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-invalid-replace-"));
+    const dir = tempWork("kamiyobi-promotion-invalid-replace-");
     const observations = join(dir, "observations.jsonl");
     const resolutions = join(dir, "resolutions.json");
     const manifest = join(dir, "manifest.json");
@@ -1565,8 +1561,8 @@ describe("promotion batch", () => {
   });
 
   it("relocates a flat capture when the CLI writes to another directory", () => {
-    const sourceDir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-flat-source-"));
-    const outDir = join(mkdtempSync(join(tmpdir(), "kamiyobi-promotion-flat-out-")), "batch");
+    const sourceDir = tempWork("kamiyobi-promotion-flat-source-");
+    const outDir = join(tempWork("kamiyobi-promotion-flat-out-"), "batch");
     const bodyPath = join(sourceDir, "capture.body");
     writeFileSync(bodyPath, capturedBody);
     const { bodyPath: _ignored, ...flatCapture } = defaultCapture;
@@ -1601,7 +1597,7 @@ describe("promotion batch", () => {
   });
 
   it("does not rewrite CLI batch files when validation throws", () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-cli-invalid-"));
+    const dir = tempWork("kamiyobi-promotion-cli-invalid-");
     const source = join(dir, "invalid.jsonl");
     const outDir = join(dir, "batch");
     const files = ["observations.jsonl", "resolutions.json", "manifest.json"];
@@ -1638,7 +1634,7 @@ describe("promotion batch", () => {
   });
 
   it("captures a deterministic body and verifies hash, excerpt, domain, extraction, and freshness", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-cfp-"));
+    const dir = tempWork("kamiyobi-cfp-");
     const bodyPath = join(dir, "nested", "body.html");
     const body = "<h1>ExampleConf 2027</h1>\n<p>Paper deadline: January 2, 2027 23:59 AoE</p>";
     await expect(
@@ -1733,7 +1729,7 @@ describe("promotion batch", () => {
   });
 
   it("rejects altered, missing, injected, and manifest-mismatched CFP evidence", () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-cfp-evidence-"));
+    const dir = tempWork("kamiyobi-cfp-evidence-");
     const bodyPath = join(dir, "cfp.html");
     writeFileSync(bodyPath, capturedBody);
     const capture = { ...defaultCapture, bodyPath };
@@ -1869,7 +1865,7 @@ describe("promotion batch", () => {
   });
 
   it("does not rewrite curated data from a semantically altered resolution", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-curated-semantic-tamper-"));
+    const root = tempWork("kamiyobi-curated-semantic-tamper-");
     const dataDir = join(root, "data");
     const batchDir = join(dataDir, "promotions", "batch");
     mkdirSync(batchDir, { recursive: true });
@@ -1909,7 +1905,7 @@ describe("promotion batch", () => {
   });
 
   it("rejects deleting an applied add-new-edition decision", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-curated-canonical-deletion-"));
+    const root = tempWork("kamiyobi-curated-canonical-deletion-");
     const dataDir = join(root, "data");
     const batchDir = join(dataDir, "promotions", "batch");
     mkdirSync(batchDir, { recursive: true });
@@ -1992,7 +1988,7 @@ describe("promotion batch", () => {
     });
 
     it("verifyBatch returns resolutions with valid resolution_id (#750)", () => {
-      const dir = mkdtempSync(join(tmpdir(), "kamiyobi-verify-batch-"));
+      const dir = tempWork("kamiyobi-verify-batch-");
       const obsPath = join(dir, "observations.jsonl");
       writeFileSync(obsPath, `${JSON.stringify(observation())}\n`);
       const resolutions = verifyBatch(obsPath);
@@ -2002,7 +1998,7 @@ describe("promotion batch", () => {
     });
 
     it("writePromotionBatch does not overwrite manifest decisions for multiple resolutions with same candidate (#750)", () => {
-      const dir = mkdtempSync(join(tmpdir(), "kamiyobi-manifest-decisions-"));
+      const dir = tempWork("kamiyobi-manifest-decisions-");
       const obsPath = join(dir, "observations.jsonl");
       const resPath = join(dir, "resolutions.json");
       const manifestPath = join(dir, "manifest.json");
@@ -2052,7 +2048,7 @@ describe("promotion batch", () => {
       const body =
         "Round 1 paper deadline: January 2, 2027 23:59 AoE\n" +
         "Round 2 paper deadline: June 1, 2027 23:59 AoE";
-      const dir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-round-"));
+      const dir = tempWork("kamiyobi-promotion-round-");
       const bodyPath = join(dir, "cfp.html");
       writeFileSync(bodyPath, body);
       const hash = createHash("sha256").update(body).digest("hex");

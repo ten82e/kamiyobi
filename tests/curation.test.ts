@@ -1,14 +1,5 @@
 import { createHash } from "node:crypto";
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
 import { describe, expect, it } from "vitest";
@@ -21,7 +12,7 @@ import {
 import { type Conference, conferencesFromJson } from "../src/model.ts";
 import { writePromotionBatch } from "../src/promotion.ts";
 import { LocalSource, localSourcePaths, parseFile } from "../src/sources/local.ts";
-import { REPO_ROOT } from "./helpers.ts";
+import { REPO_ROOT, tempWork } from "./helpers.ts";
 
 const issueKeys = [
   "bdiot-2026",
@@ -137,7 +128,7 @@ function writeVerifiedBatch(
 
 describe("canonical local inputs", () => {
   it("uses whichever canonical local files exist and rejects malformed shape", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-local-inputs-"));
+    const root = tempWork("kamiyobi-local-inputs-");
     const data = join(root, "data");
     mkdirSync(data, { recursive: true });
     const manual = join(data, "manual.yaml");
@@ -192,7 +183,7 @@ describe("canonical local inputs", () => {
   });
 
   it("generates promotion data from resolutions instead of legacy extra data", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-curation-source-"));
+    const root = tempWork("kamiyobi-curation-source-");
     const data = join(root, "data");
     const batch = "2026-09-02-demo";
     const batchDir = join(data, "promotions", batch);
@@ -238,7 +229,7 @@ describe("canonical local inputs", () => {
   });
 
   it("resolves evidence URL and venue link from snake_case source_url (#758)", async () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-curation-snake-case-"));
+    const root = tempWork("kamiyobi-curation-snake-case-");
     const data = join(root, "data");
     const batchDir = join(data, "promotions", "2026-09-02-demo");
     mkdirSync(batchDir, { recursive: true });
@@ -286,7 +277,7 @@ describe("canonical local inputs", () => {
   });
 
   it("keeps manual editions when a promoted edition is added to the same venue", async () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-curation-new-edition-"));
+    const root = tempWork("kamiyobi-curation-new-edition-");
     const data = join(root, "data");
     const batchDir = join(data, "promotions", "2026-09-02-demo");
     mkdirSync(batchDir, { recursive: true });
@@ -364,7 +355,7 @@ describe("canonical local inputs", () => {
   });
 
   it("does not rewrite canonical inputs when generated promotion data is invalid", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-curation-atomic-"));
+    const root = tempWork("kamiyobi-curation-atomic-");
     const data = join(root, "data");
     const batchDir = join(data, "promotions", "2026-09-02-demo");
     mkdirSync(batchDir, { recursive: true });
@@ -399,7 +390,7 @@ describe("canonical local inputs", () => {
   });
 
   it("rejects a promotion batch when any required artifact is missing", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-curation-incomplete-"));
+    const root = tempWork("kamiyobi-curation-incomplete-");
     const data = join(root, "data");
     const batchDir = join(data, "promotions", "2026-09-02-demo");
     mkdirSync(batchDir, { recursive: true });
@@ -411,7 +402,7 @@ describe("canonical local inputs", () => {
   });
 
   it("does not create an empty manual file from a malformed legacy root", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-curation-invalid-root-"));
+    const root = tempWork("kamiyobi-curation-invalid-root-");
     const data = join(root, "data");
     mkdirSync(join(data, "promotions"), { recursive: true });
     writeFileSync(join(data, "extra.yaml"), "- invalid-root\n");
