@@ -47,18 +47,17 @@ function 対称差(x: Set<string>, y: Set<string>): number {
 }
 
 describe("裸の『週末』以降も初日の案内が出る（第 446 回）", () => {
-  it("『週末以降』は『今週末以降』と同じ初日を名乗る", () => {
-    const 案内 = Recommender.relativeDayNotes("週末以降", 基準).join(" ");
-    expect(案内).toContain("週末以降 = 2026年8月8日以降のこと");
-    const 今 = Recommender.relativeDayNotes("今週末以降", 基準).join(" ");
-    expect(今).toContain("今週末以降 = 2026年8月8日以降のこと");
-    /* 幅は勝手に作らない – 其の方の決まりの侭 0 行。 */
-    expect(列("週末以降").size).toBe(0);
+  it("『週末以降』は『今週末以降』と同じ行に出る（第 475 回 – 其の初日から絞る）", () => {
+    /* 第 446 回は案内だけで 0 行の侭だつた（案内が「並びます」と書くのに画面が果たさぬ形）。
+     * 第 475 回で其の初日から其の年の中まで絞るので、行が出て案内は要らない（第 413 回と同じ）。*/
+    expect(列("週末以降").size).toBe(列("今週末以降").size);
+    expect(列("週末以降").size).toBeGreaterThan(100);
+    expect(Recommender.relativeDayNotes("週末以降", 基準)).toEqual([]);
+    expect(Recommender.relativeDayNotes("今週末以降", 基準)).toEqual([]);
   });
-  it("『土日以降』も其の週の土曜を初日に名乗る", () => {
-    expect(Recommender.relativeDayNotes("土日以降", 基準).join(" ")).toContain(
-      "2026年8月8日以降のこと",
-    );
+  it("『土日以降』も其の週の土曜を初日に行を出す", () => {
+    expect(列("土日以降").size).toBe(列("今週末以降").size);
+    expect(Recommender.relativeDayNotes("土日以降", 基準)).toEqual([]);
   });
   it("『週末』単体の当たり方は不変（其の方の語で受ける侭）", () => {
     expect(列("週末").size).toBeGreaterThan(0);
@@ -102,7 +101,9 @@ describe("直した形がビルド成果物に残る（第 446 回）", () => {
       物.split("/^([0-9]{4}-[0-9]{2}-[0-9]{2})[tT]([0-9]{1,2}):([0-9]{2})(?::[0-9]{2})?[zZ]?$/")
         .length - 1,
     ).toBe(1);
-    expect(物.split('stem === "週末" || stem === "土日"').length - 1).toBe(1);
-    expect(物.split('first = 以降の初日Ja("今週末", nowMs);').length - 1).toBe(1);
+    /* 第 475 回で其の枝は `其の日以降の初日Ja` の中に移つた（案内と検索が同じ目を読む – 第 464 回）。*/
+    expect(物.split('芯 === "週末" || 芯 === "土日"').length - 1).toBe(1);
+    /* 第 475 回で案内側の連鎖は `其の日以降の初日Ja` に抜け、其の中で呼ぶ形になつた。 */
+    expect(物.split('return 以降の初日Ja("今週末", nowMs);').length - 1).toBe(1);
   });
 });

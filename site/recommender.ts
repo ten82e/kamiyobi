@@ -5048,37 +5048,9 @@ const Recommender = (() => {
        * 既に其の幅で絞れて居るので噓になる（第 332 回・第 463 回 – 名乗るのは打たれた侭）。*/
       const stem = より後を剥がす語Ja(解 || token);
       if (stem) {
-        const dayOffset = RELATIVE_DAY_OFFSETS_JA[stem];
-        const onwardWeek = weekDayTermsJa(stem, nowMs);
-        let first = "";
-        if (dayOffset !== undefined) {
-          const ymd = offsetCalendarDay(nowMs, dayOffset);
-          first = `${ymd[0]}年${ymd[1]}月${ymd[2]}日`;
-        } else if (onwardWeek.length === 7) {
-          first = onwardWeek[0];
-        } else if (monthPartRangeJa(stem, nowMs) !== null) {
-          const 旬 = monthPartRangeJa(stem, nowMs) as {
-            year: number;
-            month: number;
-            from: number;
-          };
-          first = `${旬.year}年${旬.month}月${旬.from}日`;
-        } else if (fiscalYearBaseJa(stem, nowMs) !== null) {
-          first = `${fiscalYearBaseJa(stem, nowMs) as number}年4月1日`;
-        } else if (stem === "週末" || stem === "土日" || stem === "週末土日") {
-          /* 裸の『週末』は公用の読みで今週の週末 – 『今週末以降』と同じ初日（第 446 回 –
-           * 実測 2026-10-25 – 実ビルドの品書 872 行・固定時刻 2026-08-09T00:00:00Z:
-           * `今週末以降` は「2026年8月8日以降のこと」の案内が出るのに `週末以降` は
-           * 0 行で案内も無しだった）。其れ以降の幅を勝手に作りませんが、其の方が
-           * 何時からを指す語かは決まつて居る（締切の推測ではない）。*/
-          first = 以降の初日Ja("今週末", nowMs);
-        } else if (RELATIVE_YEAR_OFFSETS_JA[relativeYearKeyJa(stem)] !== undefined) {
-          const baseNow = Number.isFinite(nowMs) ? nowMs : Date.now();
-          const baseYear = new Date(baseNow + 9 * 3_600_000).getUTCFullYear();
-          first = `${baseYear + (RELATIVE_YEAR_OFFSETS_JA[relativeYearKeyJa(stem)] as number)}年1月1日`;
-        } else {
-          first = 以降の初日Ja(stem, nowMs);
-        }
+        /* 初日は `其の日以降の初日Ja` が決める – 検索の絞りも同じ関数を読む（第 475 回 –
+         * 第 464 回: 案内と検索で目が違うと案内が黙るか嘘を書く）。*/
+        let first = 其の日以降の初日Ja(解 || token, nowMs);
         /* 暦日を打って其れより後と書いた形は上の機械が**絞る**ので、此處で「絞りません」と
          * 書くのは噓になる（件の数欄に解けた範囲が出る – 第 413 回）。 */
         if (暦日より後の語Ja(解 || token, nowMs).length) return;
@@ -5130,6 +5102,43 @@ const Recommender = (() => {
    * `1週間前` 7 行・`8月20日` は通る – 其の方の語は在り、『から』を付けた形だけが落ちていた）。
    * 其れより後の締切は既定の並びに並ぶので絞り込まない（第 328 回の決まり）が、
    * 其の方の日を名前で言う。 */
+  /** 『明日以降』『来週以降』『下旬以降』『来月上旬以降』『週末以降』『来年度以降』のやうに、
+   * 相対の語に其れより後の語尾を続けた形の其の初日（第 475 回）。
+   * 件数欄の案内が元々名乗つて居た初日の決まりをそのまま抜いた物 – 案内と検索が同じ日を読む
+   * 為に一本に持つ（第 464 回）。解けぬ語は空文字（締切の推測はしない）。*/
+  function 其の日以降の初日Ja(語: string, nowMs: number): string {
+    const 芯 = より後を剥がす語Ja(String(語 || "")) || String(語 || "");
+    if (!芯) return "";
+    const dayOffset = RELATIVE_DAY_OFFSETS_JA[芯];
+    if (dayOffset !== undefined) {
+      const ymd = offsetCalendarDay(nowMs, dayOffset);
+      return `${ymd[0]}年${ymd[1]}月${ymd[2]}日`;
+    }
+    const 週の語 = weekDayTermsJa(芯, nowMs);
+    if (週の語.length === 7) return String(週の語[0] || "");
+    const 旬 = monthPartRangeJa(芯, nowMs);
+    if (旬 !== null) {
+      const 塊 = 旬 as { year: number; month: number; from: number };
+      return `${塊.year}年${塊.month}月${塊.from}日`;
+    }
+    const 年度 = fiscalYearBaseJa(芯, nowMs);
+    if (年度 !== null) return `${年度}年4月1日`;
+    if (芯 === "週末" || 芯 === "土日" || 芯 === "週末土日") {
+      /* 裸の『週末』は公用の読みで今週の週末 – 『今週末以降』と同じ初日（第 446 回 –
+       * 実測 2026-10-25 – 実ビルドの品書 872 行: `今週末以降` は「2026年8月8日以降のこと」の
+       * 案内が出るのに `週末以降` は 0 行で案内も無しだつた）。何時を指す語かは決まつて居る
+       * （締切の推測ではない）。*/
+      return 以降の初日Ja("今週末", nowMs);
+    }
+    const 年頃 = RELATIVE_YEAR_OFFSETS_JA[relativeYearKeyJa(芯)];
+    if (年頃 !== undefined) {
+      const baseNow = Number.isFinite(nowMs) ? nowMs : Date.now();
+      const baseYear = new Date(baseNow + 9 * 3_600_000).getUTCFullYear();
+      return `${baseYear + (年頃 as number)}年1月1日`;
+    }
+    return 以降の初日Ja(芯, nowMs);
+  }
+
   function 以降の初日Ja(stem: string, nowMs: number): string {
     const 元 = String(collapseRelativeDayPhrase(stem) || "");
     const 数値 = numericRelativeDay(元, nowMs);
@@ -8222,9 +8231,27 @@ const Recommender = (() => {
   function 暦日より後の語Ja(語: string, nowMs: number): string[] {
     const 芯 = より後を剥がす語Ja(語);
     if (!芯) return [];
-    const 解 = 暦日に解くJa(芯);
-    /* 月を打た無い日（`22日以降`）と暦に無い日（`2月30日以降`）は解かない – 月が決まらない、
-     * その日は在り得ない（締切の推測はしない）。 */
+    let 解 = 暦日に解くJa(芯);
+    /* 相対の語で其れより後と書く形（`明日以降` `今日から` `来週以降` `下旬以降` `来月上旬以降`
+     * `週末以降` `来年度以降` `来年以降` `3日後から` `来週金曜から`）も、其の初日から暦年の
+     * 終わりまでで絞る（第 475 回）。実測（2026-11-08 – 実ビルドの品書 868 行）で、此れ等は
+     * **0 行**なのに件数欄だけ「初期画面は締切の近い順に並んでいて、その以降の締切も並びます」
+     * と並ぶ事を書いて居た – 案内が書いて居る事を画面が果たさない形（第 332 回）。暦日を打つ
+     * 形（`8月22日以降` 751 行）が既に此の幅で絞つて居るので、其れと同じ決まりに揃える
+     * （第 453 回 – 其の方の機械が解ける形に寄せる）。初日は案内と同じ関数を読む（第 464 回）。
+     * 月を打た無い日（`22日以降`）と暦に無い日（`2月30日以降`）は解かない – 其れ等は此の目でも
+     * 初日が決まらない（月が決まらない・其の日は在り得ない – 締切の推測はしない）。 */
+    if (!解) {
+      /* 受けるのは `以降` `以後` `この先` `以来` を付けた形だけ – `から` `より` は其の方が幅の
+       * 区切りでも有る為、上の目と同じ理窟で外す（実測 2026-11-08 – `9月上旬から 中旬` を此の目で
+       * 受けると 0 行 → 57 行に化けて幅の終りが消える – 第 373 回の幅の機械が終りを決める迄は
+       * 今の侭）。 */
+      const 後尾 = /^(.+?)(?:以降|以後|この先|以来)$/.exec(String(語 || ""));
+      if (後尾) {
+        const 初日 = 其の日以降の初日Ja(芯, nowMs);
+        if (初日) 解 = 暦日に解くJa(初日);
+      }
+    }
     if (!解) return [];
     const 基準日時 = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
     const 並び = (年: number, 月: number, 日: number) => 年 * 10000 + 月 * 100 + 日;
@@ -9611,6 +9638,24 @@ const Recommender = (() => {
       ],
     ];
     for (const [切れ目, 複合語] of 複合語の切れ目) out = out.replace(切れ目, 複合語);
+    /* 其れより後の語を日の語から離って打つ形を、其の方の機械が幅に解ける詰め形に寄せる
+     * （第 475 回）。実測（2026-11-08 – 実ビルドの品書 868 行）で、`来週 以降` は語の割りで
+     * `以降` だけが另の語に残り、其の語が行に書かれて居ないので 0 行だつた – 繋げた
+     * `来週以降` は此の回から其の初日からの幅で絞れるので、空格の位置だけで 0 行に別れる
+     * 打ち方を残さない（第 468 回）。受けるのは**其の方が其の方で日付の語として解ける時だけ**
+     * （`17時 JST 以降` の `JST` のやうに、その他の語に付く `以降` は寄せない – 第 447 回の
+     * 案内が其侭出る形にする – 実測）。目の宣言は此處 – 検査は此の関数を単体で抜く（第 341 回）。
+     * 受ける尾は `以降` `以後` `この先` の三つ – `以来` を離つ形は寄せなくても其の方の語が
+     *     同じ行に出る（実測 2026-11-08 – 目に `以来` を载せた版で、其れを落とす改ざんは検査を落さなかつた
+     *     – 効かぬ条目は载せない – 第 463 回）。`から` `より` は**幅の区切り**でもあるので – `から` `より` は**幅の区切り**でもあるので
+     * 寄せない（実測 2026-11-08 – 寄せると `明日 から 明後日` 0 行 → 9 行（明後日だけの幅）に化け、
+     * 件の数欄から `明日 = …` の行が落ちた。`9月上旬から 中旬` 0 行 → 57 行・`来週 から 来月`
+     * 0 行 → 245 行も同じ型で、幅の終りが消える）。其の方の幅の機械（第 373 回）が終りまで解く
+     * 形に直す迄は今の侭にする（残した差に載せた）。 */
+    const 其れより後の尾Ja = /([^ \u3000]+)[ \u3000]+(以降|以後|この先)/g;
+    out = out.replace(其れより後の尾Ja, (全体, 頭, 尾) =>
+      日付らしき語Ja(頭) ? `${頭}${尾}` : 全体,
+    );
     out = out.replace(いっぱいの言い方, "$1");
     out = out.replace(期日までの言い方, "$1");
     out = out.replace(未定を繋げた言い方, "締切 未定");
