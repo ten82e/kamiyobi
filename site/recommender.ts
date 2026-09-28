@@ -5064,6 +5064,16 @@ const Recommender = (() => {
         );
         return;
       }
+      /* 數字で書いた年（`2028年`）も、其の年の語と同じ幅を名乗る（第 496 回）。実測（2026-11-08 –
+       * 実ビルドの品書 868 行・固定時刻 2026-08-09T00:00:00Z）で、`2028年` は 0 件で案内も無く、
+       * 同じ年を「再来年」と書けば「再来年 = 2028年の締切（1〜12 か月）」と出て居た – 打ち方で
+       * 案内が消える形（第 332 回）。行が出る年（`2027年` 465 件）にも同じ文を書く – 其の年の語で
+       * 書いた形（`来年` 465 件）が既に出して居るので、數字の側だけが黙つて居た。*/
+      const 數字の年 = /^([0-9]{4})年$/.exec(key);
+      if (數字の年) {
+        notes.push(`${token} = ${數字の年[1]}年の締切（1〜12 か月）`);
+        return;
+      }
       const yearOffset = RELATIVE_YEAR_OFFSETS_JA[relativeYearKeyJa(key)];
       if (yearOffset !== undefined) {
         const base = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
