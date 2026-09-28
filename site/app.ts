@@ -2059,6 +2059,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return { catalog, journal };
   }
 
+  /* 欄の名前が接頭辞に成つた連結形（`分野セキュリティ`）を案内するかを決める問答（第 508 回）。
+   * 正典 `site/recommender.ts` は品書を持たないので、**其れだけで行が出る語か**を畫面の方が答へる
+   *（検索の道で時計を讀まないのと同じ筋 – 第 464 回・第 495 回）。*/
+  function columnValueHitsJa(word: string): boolean {
+    const counted = queryMatchCounts(word);
+    return counted.catalog + counted.journal > 0;
+  }
+
   /* 0 件の理由を出したのは良いが、その文は表の場所（`#emptyText`）に書くだけで、
    * 支援技術には読まれていなかった（2026-09-23 実測: 読み上げ専用の欄は件数だけを
    * 言っていた）。長い文を aria-live に流すのは避ける方針なので、読み上げには同じ原因を
@@ -2066,6 +2074,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function zeroResultLiveNote(filter: {
     hiddenKindWords: string[];
     termCounts: Array<{ term: string; count: number }>;
+    /* 欄の名前の連結形（`分野セキュリティ`）を案内するかを決める問答（第 508 回）。
+       品書を持つこの側で答え、正典は渡されて動く（第 464 回・第 495 回と同じ筋）。*/
+    columnValueHits?: (語: string) => boolean;
     // 打ち直しの見当（第 256 回 – 0 件案内と同じ判断を読み上げでも言う）。
     shorterHits?: Array<{ word: string; count: number; how: string; pair?: string }>;
     // 検索語が公式ページの URL の形か（URL で引いた人は「語が無い」話では済まない）。
@@ -2114,7 +2125,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       /* 欄の名前その物を打たれた人（第 244 回）。`分野` は 1 行も減らないが、収録に無い
        * 語ではない（実測: `分野` 0 件で「語「分野」は収録データにありません」と言っていた –
        * 値の `セキュリティ` は 152 件当たる）。値の例を言って打ち直させる。 */
-      const columnNote = Recommender.columnQueryLiveNoteJa(filter.query);
+      const columnNote = Recommender.columnQueryLiveNoteJa(filter.query, filter.columnValueHits);
       if (columnNote) return ` ｜ ${columnNote}${pointer}`;
       /* 画面自身の操作・説明・出典の語を打たれた人（第 248 回）。同じ表から短い文を作る。 */
       const uiNote = Recommender.uiWordLiveNoteJa(filter.query);
@@ -2919,6 +2930,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     hiddenKindWords: string[];
     queryMatch: { catalog: number; journal: number };
     termCounts: Array<{ term: string; count: number }>;
+    /* 欄の名前の連結形（`分野セキュリティ`）を案内するかを決める問答（第 508 回）。
+       品書を持つこの側で答え、正典は渡されて動く（第 464 回・第 495 回と同じ筋）。*/
+    columnValueHits?: (語: string) => boolean;
     // 打ち直しの見当（第 256 回）。0 件のときだけ数える – 通常描画では走らせない。
     shorterHits?: Array<{ word: string; count: number; how: string; pair?: string }>;
     urlQuery: boolean;
@@ -3008,7 +3022,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const wholeNote = matchedRows === 0 ? Recommender.wholeTableQueryNoteJa(trimmedQuery) : "";
     /* 欄の名前（`分野` `種別` `参加形式` など）を打たれた人は、語を外しても増えない –
        値を打たないと直らないので、語ごとの件数案内の代わりにこれを立てる（第 244 回）。 */
-    const columnNote = matchedRows === 0 ? Recommender.columnQueryNoteJa(trimmedQuery) : "";
+    const columnNote =
+      matchedRows === 0 ? Recommender.columnQueryNoteJa(trimmedQuery, filter.columnValueHits) : "";
     /* 画面自身の操作・説明・出典の語（`使い方` `並び替え` `出典` `カテゴリ` など）を打たれた人
        （第 248 回）。値の語ではないので語を短くしても増えない – 場所を言ってそっちへ送る。 */
     const uiNote = matchedRows === 0 ? Recommender.uiWordNoteJa(trimmedQuery) : "";
@@ -4638,6 +4653,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             urlQuery: Recommender.looksLikeUrlQuery(searchQuery),
             queryMatch: queryMatchCounts(searchQuery),
             termCounts: queryTermNotes(searchQuery),
+            columnValueHits: columnValueHitsJa,
             shorterHits: shorterWordNotes(searchQuery),
             // データその物が無い場合と、絞り込みで 0 件の場合を区別する材料。
             catalogConferences: DATA.conferences.length,

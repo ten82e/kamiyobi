@@ -2621,7 +2621,35 @@ const Recommender = (() => {
     ["地域", "地域"],
   ];
 
-  function columnQueryEntry(query: unknown): [string, string] | null {
+  /** 欄の名前が**接頭辞**に成つた連結形（`分野セキュリティ`）を受ける（第 508 回）。
+   * 磁石の語（`分類` `地域` `種類` など、他の語の頭に成れる物）を寄せない為の門を二つ置く –
+   * ①残りが二文字以上、②**其れだけで行が出る**。打ち手が本当に欄の値を打つて居る時だけ案内が
+   * 出る爲で、實測（2026-11-09 – 實ビルドの品書 868 行）で `分類学`（残り「学」）・`地域性`（残り
+   * 「性」）は門①、`会場案内`（残り「案内」は其れだけで行が出ない）は門②で彈かれる。
+   * 品書を持つのは `site/app.ts` の方なので、正典は問答を**渡されて**動く（第 464 回・第 495 回と
+   * 同じ筋 – 検索の道で時計を讀まない決まりと同じ）。*/
+  function columnGluedEntryJa(
+    query: unknown,
+    値が当たるか: (語: string) => boolean,
+  ): [string, string] | null {
+    const 元 = String(query == null ? "" : query).trim();
+    const 折 = 元.toLowerCase();
+    let best: [string, string] | null = null;
+    for (const [word, column] of COLUMN_QUERY_WORDS_JA) {
+      const 語 = word.toLowerCase();
+      if (語.length < 2 || !折.startsWith(語)) continue;
+      const 値 = 元.slice(word.length).trim();
+      if (値.length < 2) continue;
+      if (!値が当たるか(値)) continue;
+      if (!best || word.length > best[0].length) best = [word, column];
+    }
+    return best;
+  }
+
+  function columnQueryEntry(
+    query: unknown,
+    値が当たるか?: (語: string) => boolean,
+  ): [string, string] | null {
     const q = String(query == null ? "" : query)
       .trim()
       .toLowerCase();
@@ -2640,13 +2668,20 @@ const Recommender = (() => {
      * 語に分けて一つの欄の名前が在ればそれを受ける（語を並べた打ち方の流れ – 第 354 回）。
      * コロン付き（`分野：セキュリティ`）も同じ打ち方なので、区切りに足す。*/
     const 語々 = q.split(/[\s、，,・：:]+/).filter((語) => 語.length >= 1);
-    if (語々.length < 2) return null;
+    if (語々.length < 2) {
+      /* separator の無い繋がれた形（`分野セキュリティ`）はここで切る – 上の門（其れだけで行が
+       * 出る残り）を通る時だけ受ける（第 508 回）。*/
+      return 値が当たるか ? columnGluedEntryJa(query, 値が当たるか) : null;
+    }
     let best: [string, string] | null = null;
     for (const 語 of 語々) {
       const 當 = 一致(語);
       if (當 && (!best || 語.length > best[0].toLowerCase().length)) best = [當[0], 當[1]];
     }
-    return best;
+    /* separator の無い繋がれた形（`分野セキュリティ`）は、其の語その物で行が出る時に限つて
+     * 受ける（第 508 回）。問答が渡されなければ舊の侭默る（畫面の道だけが渡す）。*/
+    if (best) return best;
+    return 値が当たるか ? columnGluedEntryJa(query, 値が当たるか) : null;
   }
 
   /** 検索語が欄の名前のとき、打たれた語を返す（読み上げの分岐が使う）。 */
@@ -2656,8 +2691,8 @@ const Recommender = (() => {
   }
 
   /** 0 件案内に出す打ち直し方（値の例は収録に実在する語だけ – 検査がそれを見る）。 */
-  function columnQueryNoteJa(query: unknown): string {
-    const hit = columnQueryEntry(query);
+  function columnQueryNoteJa(query: unknown, 値が当たるか?: (語: string) => boolean): string {
+    const hit = columnQueryEntry(query, 値が当たるか);
     if (!hit) return "";
     const examples = (COLUMN_VALUE_EXAMPLES_JA[hit[1]] || [])
       .map((word) => `「${word}」`)
@@ -2670,8 +2705,8 @@ const Recommender = (() => {
   }
 
   /** 読み上げ側の短い文（同じ表から作り、画面と読み上げが別のことを言わないようにする）。 */
-  function columnQueryLiveNoteJa(query: unknown): string {
-    const hit = columnQueryEntry(query);
+  function columnQueryLiveNoteJa(query: unknown, 値が当たるか?: (語: string) => boolean): string {
+    const hit = columnQueryEntry(query, 値が当たるか);
     if (!hit) return "";
     const first = (COLUMN_VALUE_EXAMPLES_JA[hit[1]] || [])[0] || "";
     const column = hit[0] === hit[1] ? "欄" : `欄（${hit[1]}）`;

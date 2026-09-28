@@ -126,6 +126,7 @@ export function wholeTableQueryStubs(rec: string): string {
     jsFunction(rec, "uiWordLiveNoteJa"),
     jsFunction(rec, "wholeTableQueryWordJa"),
     jsFunction(rec, "wholeTableQueryNoteJa"),
+    jsFunction(rec, "columnGluedEntryJa"),
     jsFunction(rec, "columnQueryEntry"),
     jsFunction(rec, "columnQueryWordJa"),
     jsFunction(rec, "columnQueryNoteJa"),

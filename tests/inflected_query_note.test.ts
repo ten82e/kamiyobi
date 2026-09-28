@@ -121,6 +121,7 @@ describe("画面の語を活用の形で打つ人", () => {
     [
       "UI_WORD_TAILS_JA",
       "UI_WORD_DEADLINE_TAILS_JA",
+      "function columnGluedEntryJa",
       "function uiWordStemForms",
       "function uiWordContain",
       "function uiWordMatch",
@@ -135,6 +136,7 @@ describe("画面の語を活用の形で打つ人", () => {
       "uiWordMatch",
       "UI_WORD_TAILS_JA",
       "UI_WORD_DEADLINE_TAILS_JA",
+      "columnGluedEntryJa",
     ].forEach((名前) => {
       expect(抜粋.includes(名前), `試験の注入に ${名前} が無い`).toBe(true);
     });
