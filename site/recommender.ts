@@ -4650,7 +4650,7 @@ const Recommender = (() => {
      * 2026-11-07 – 検索側だけ直した第一版は `17 時 以降` が 538 行に増えたのに案内は黙り、
      * `午後 5 時 以降` は行が 17:00 以降なのに案内は「午後 = 12:00〜23:59」と別な帯を書いて
      * 居た（案内は画面に出る物なので、黙つても嘘でもいけない – 第 332 回）。*/
-    const 語列 = queryTokens(collapseRelativeDayPhrase(query), nowMs);
+    const 語列 = queryTokens(collapseRelativeDayPhrase(query, nowMs), nowMs);
     let 次を飛ばす = false;
     /* 月の第何週の語を先頭から見て後ろに繋ぐ目（第 468 回）が飛ばす語の数 */
     let 週を飛ばす = 0;
@@ -9241,6 +9241,30 @@ const Recommender = (() => {
   }
 
   /** JST の暦日を基準時刻からの日数ぶん進めた `[年, 月, 日]`。 */
+  /** 渡された時刻（ミリ秒）から JST の暦年だけを取る – **Date を讀まない**。
+   * 此の口は検索の道（語を割る段）から呼ばれる。其処で `new Date` を使ふと、固定時計で走らせる
+   * 検査の足場（Date を差し替へて居る）で `Date is not a constructor` に成る（第 494 回に實測 –
+   * 五本落ちた）。日番号からの暦の計算は暦の決まり（うるう年）だけで書けるので、Date は要らない。
+   * 値は検査で `new Date(…).getUTCFullYear()` と總當たりで較べて張る（第 495 回）。*/
+  function 暦年Ja(nowMs: number): number {
+    const 日番号 = Math.floor((nowMs + 9 * 3_600_000) / 86_400_000);
+    /* 1970-01-01 を 0 とする日番号を、暦の年へ戻す（Howard Hinnant の days_from_civil の逆算 –
+     * 400 年 = 146097 日・100 年・4 年の規則を其の侭數へる）。*/
+    const ずらし = 日番号 + 719468;
+    const 時代 = Math.floor(ずらし / 146097);
+    const 時代の日 = ずらし - 時代 * 146097;
+    const 年の日 = Math.floor(
+      (時代の日 -
+        Math.floor(時代の日 / 1460) +
+        Math.floor(時代の日 / 36524) -
+        Math.floor(時代の日 / 146096)) /
+        365,
+    );
+    const 年内の日 = 時代の日 - (365 * 年の日 + Math.floor(年の日 / 4) - Math.floor(年の日 / 100));
+    const 月の番号 = Math.floor((5 * 年内の日 + 2) / 153);
+    return 年の日 + 時代 * 400 + (月の番号 >= 10 ? 1 : 0);
+  }
+
   function offsetCalendarDay(nowMs: number, days: number): number[] {
     const base = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
     const shifted = new Date(
@@ -9306,7 +9330,7 @@ const Recommender = (() => {
    * 語が割ける前に `延長` の 1 語へ寄せる。**延びた後の日付を保証しない** – 収録は `延長` と
    * 書かれた行を探すだけなので、日付で絞るなら画面の『締切まで』の欄が確かである事は其の侭書く。 */
   /** 「あと 51 日」「51 日後」を `51日後` の 1 語に寄せる（語が割ける前にやる）。 */
-  function collapseRelativeDayPhrase(query: unknown): unknown {
+  function collapseRelativeDayPhrase(query: unknown, nowMs?: number): unknown {
     if (typeof query !== "string" || !query) return query;
     /* 全角数字はここで半角に寄せる – 上の規則は数字の形を見るので、全角のまま空格を
        含めた打ち方（`３０ 日以内`）が語に割れて 0 件になっていた
@@ -9995,6 +10019,20 @@ const Recommender = (() => {
       /(^|[ \u3000])((?:来|明|翌)年|再来年)([0-9]{1,2}月|[〇一二三四五六七八九十]{1,3}月)(から|まで|より|以降|以後|この先|までに)/g,
       "$1$2 $3$4",
     );
+    /* 數字で書いた先の年（`2027年12月から` `2028年3月以降`）も同じく割る（第 495 回）。其方は
+     * 離して打てば通る（`2027年 12月から` 84 件）のに、詰めると 0 件で、件の数欄だけが幅を名乗つて
+     * 居た（第 485 回の案内 – 第 494 回に但し書を足した所）。**今の年より先の年だけ**を割る –
+     * 今の年・過ぎた年の形は割らずとも解けて居り、割ると行が減る（實測 – `2026年1月から` 796 件 →
+     * `2026年 1月から` 393 件・`2026年3月から` 796 → 317・`2027年3月から` 371 → 371・
+     * `2027年12月から` 0 → 84・`2028年3月から` 0 → 0）。今の年は渡された時刻から取る（此の段は
+     * 時計を自分で讀まない – 第 494 回の實測）。*/
+    if (Number.isFinite(nowMs)) {
+      const 今の年 = 暦年Ja(nowMs as number);
+      out = out.replace(
+        /(^|[ \u3000])([0-9]{4})年([0-9]{1,2}月|[〇一二三四五六七八九十]{1,3}月)(から|まで|より|以降|以後|この先|までに)/g,
+        (全部, 前, 年, 月, 尾) => (Number(年) > 今の年 ? `${前}${年}年 ${月}${尾}` : 全部),
+      );
+    }
     out = out.replace(
       /(^|[ \u3000])((?:来|今|去|明|昨|翌)年)([0-9]{1,2}月|[〇一二三四五六七八九十]{1,3}月)(?![ \u3000]*(?:から|より|以降|以後|この先|以来|までに|まで))/g,
       "$1$2 $3",
@@ -11935,7 +11973,7 @@ const Recommender = (() => {
     if (typeof query === "string" && CATEGORY_CHIP_HEADS_JA.length) {
       query = query.replace(CATEGORY_CHIP_TAIL, "$1");
     }
-    query = collapseRelativeDayPhrase(query);
+    query = collapseRelativeDayPhrase(query, nowMs);
     const collapsed = collapseFieldPhraseEnglish(query);
     query = collapsed.query;
     const urlTerms = urlLikeQueryTerms(query);
@@ -14610,6 +14648,7 @@ const Recommender = (() => {
   }
 
   const api = {
+    暦年Ja: 暦年Ja,
     DOMAIN_SIGNAL: DOMAIN_SIGNAL,
     STOPWORDS: STOPWORDS,
     parsePaperLines: parsePaperLines,
