@@ -120,6 +120,7 @@ describe("画面の語を活用の形で打つ人", () => {
     const js = readFileSync(join(builtSite(), "recommender.js"), "utf8");
     [
       "UI_WORD_TAILS_JA",
+      "UI_WORD_DEADLINE_TAILS_JA",
       "function uiWordStemForms",
       "function uiWordContain",
       "function uiWordMatch",
@@ -128,7 +129,13 @@ describe("画面の語を活用の形で打つ人", () => {
     });
     /* 試験ハーネスは関数名を並べて正本を注入する – 新しい語を足したとき同じ場所を直す。 */
     const 抜粋 = readFileSync(join(REPO_ROOT, "tests", "runtime_extract.ts"), "utf8");
-    ["uiWordStemForms", "uiWordContain", "uiWordMatch", "UI_WORD_TAILS_JA"].forEach((名前) => {
+    [
+      "uiWordStemForms",
+      "uiWordContain",
+      "uiWordMatch",
+      "UI_WORD_TAILS_JA",
+      "UI_WORD_DEADLINE_TAILS_JA",
+    ].forEach((名前) => {
       expect(抜粋.includes(名前), `試験の注入に ${名前} が無い`).toBe(true);
     });
   });

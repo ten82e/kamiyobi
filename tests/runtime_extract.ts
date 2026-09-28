@@ -71,6 +71,9 @@ export function wholeTableQueryStubs(rec: string): string {
   /* 活用の形の寄せ（第 326 回）– 画面の語の後ろに付く言い回しの正本。書き写すと画面とズレる。 */
   const uiTails = rec.match(/const UI_WORD_TAILS_JA[\s\S]*?\n\s*\];/)?.[0] ?? "";
   expect(uiTails, "UI_WORD_TAILS_JA が見つからない").toBeTruthy();
+  /* 締切らしい語尾の白一覧（第 505 回）も同じ入口から – 書き写すと畫面とズレる。*/
+  const ui締切Tails = rec.match(/const UI_WORD_DEADLINE_TAILS_JA[\s\S]*?\n\s*\];/)?.[0] ?? "";
+  expect(ui締切Tails, "UI_WORD_DEADLINE_TAILS_JA が見つからない").toBeTruthy();
   cols.forEach((src) => {
     expect(src, "欄の名前の表が見つからない").toBeTruthy();
   });
@@ -104,6 +107,7 @@ export function wholeTableQueryStubs(rec: string): string {
     ...cols,
     uiWords,
     uiTails,
+    ui締切Tails,
     /* 案内に書く語を**打たれた形**に戻す関数（第 366 回）。案内の関数が本体で読むので、関数だけ
      * 渡すと `打たれた表記Ja is not defined` に化ける（第 257 回と同じ穴 – 実際に落ちた）。 */
     jsFunction(rec, "打たれた表記Ja"),
