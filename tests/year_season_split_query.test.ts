@@ -100,9 +100,12 @@ describe("年の語に旬を直に繋いだ形が其の年 × 其の旬に解れ
     expect(列("来年上旬から").size).toBeGreaterThan(列("来年上旬").size);
   });
   it("週の語と過ぎた年は此の回で変へて居ない", () => {
-    /* 週の語は第 416 回・第 431 回・第 483 回の決まりで案内を出す側（繋げた形は 0 件の侭）。*/
-    expect(列("来週中旬").size).toBe(0);
-    expect(Recommender.uiWordNoteJa("来週中旬") || "").toContain("週の語に旬を繋げても");
+    /* 週の語＋旬は第 490 回で年の語と同じく二語に割れるやうになつた（此の頁を書いた時は案内を
+     * 出す側で、其の侭を張つて居た）。案内が殘るのは公用の決まりの無い前半・後半だけ。*/
+    expect(列("来週中旬").size).toBe(列("来週 中旬").size);
+    expect(列("来週中旬").size).toBeGreaterThan(0);
+    expect(Recommender.uiWordNoteJa("来週中旬") || "").toBe("");
+    expect(Recommender.uiWordNoteJa("来週前半") || "").toContain("週の語に前半・後半を繋げても");
     /* 過ぎた年は品書に無い（離しても 0 件 – 行が無いのが正しい）。*/
     expect(列("去年上旬").size).toBe(0);
     expect(列("去年 上旬").size).toBe(0);
