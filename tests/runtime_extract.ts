@@ -112,6 +112,7 @@ export function wholeTableQueryStubs(rec: string): string {
     jsFunction(rec, "dayRangeWindowJa"),
     jsFunction(rec, "dayRangeNoteJa"),
     jsFunction(rec, "dayRangeLiveNoteJa"),
+    jsFunction(rec, "uiWordExact"),
     jsFunction(rec, "uiWordStemForms"),
     jsFunction(rec, "uiWordContain"),
     jsFunction(rec, "uiWordMatch"),
