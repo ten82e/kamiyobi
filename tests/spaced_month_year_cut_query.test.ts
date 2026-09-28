@@ -125,7 +125,9 @@ describe("壊してはならない形（第 390 回・第 466 回・第 490 回�
     expect(列("来年度末").size).toBe(1);
     expect(列("来年度 末").size).toBe(1);
     expect(列("再来月 終わり").size).toBe(97);
-    expect(列("来年12月から").size).toBe(0);
+    /* 第 493 回に先の年の語を割る目を入れたので、離した形と同じ行が出る。*/
+    expect(列("来年12月から").size).toBe(21);
+    expect(列("来年12月から").size).toBe(列("来年 12月から").size);
     expect(列("今年1月から").size).toBe(426);
     expect(列("来年 12月").size).toBe(21);
     expect(列("来年上旬").size).toBe(2);

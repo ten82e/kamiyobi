@@ -99,7 +99,9 @@ describe("案内が殘る形は其の侭（第 416 回・第 431 回・第 483 �
     expect(列("来年度上旬").size).toBe(0);
     expect(列("来年度3月").size).toBe(1);
     expect(列("来年12月").size).toBe(21);
-    expect(列("来年12月から").size).toBe(0);
+    /* 第 493 回に先の年の語を割る目を入れたので、離した形と同じ行が出る。*/
+    expect(列("来年12月から").size).toBe(21);
+    expect(列("来年12月から").size).toBe(列("来年 12月から").size);
     expect(列("来月初め").size).toBe(0);
     expect(列("来月末").size).toBe(178);
     expect(列("週 末").size).toBe(145);
