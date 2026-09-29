@@ -339,6 +339,8 @@ export const SEARCH_CANON = (() => {
        * 同じ表に並べないと、抜き出した品が `ReferenceError` になる
        * （第 257 回・第 372 回・第 453 回と同じ穴）。*/
       "全行の語尾に割るJa",
+      /* 語の末尾に繋がれた締切の語を割る手順（第 517 回）– 同じく `splitQueryToken` が呼ぶ。*/
+      "締切の語尾に割るJa",
       "splitQueryToken",
       "withoutWholeTableGroups",
       "querySynonymMap",
