@@ -390,4 +390,11 @@ describe("細目の主題と募集対象の斷り", () => {
       expect(件(rows, w), `"${w}" は行を持つので彈くべき語だつた`).toBe(0);
     });
   });
+it("取消と出張の手續きも默らん", () => {
+    const rows = 品書();
+    ["出張報告", "発表取消", "参加取消"].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
