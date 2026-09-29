@@ -383,4 +383,11 @@ describe("細目の主題と募集対象の斷り", () => {
     const b = readFileSync("site/recommender.ts", "utf8");
     expect(b).toContain('"学生ポスター賞"');
   });
+  it("登録と可否を尋ねる語も默らん（第 551 回）", () => {
+    const rows = 品書();
+    ["当日登録", "所属の変更", "著者順", "発表の可否", "発表可否", "参加可否"].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length, `"${w}" が無言に逆戻りした`).toBeGreaterThan(0);
+      expect(件(rows, w), `"${w}" は行を持つので彈くべき語だつた`).toBe(0);
+    });
+  });
 });
