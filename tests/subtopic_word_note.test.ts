@@ -195,6 +195,34 @@ describe("細目の主題と募集対象の斷り", () => {
     });
   });
 
+  it("日時の聞き方で打つ人も默らず、當たる形へ導かれる（第 540 回）", () => {
+    const rows = 品書();
+    [
+      "何時",
+      "何日",
+      "何曜日",
+      "何時から",
+      "何時迄",
+      "何月",
+      "いつから",
+      "日程表",
+      "会期表",
+    ].forEach((語) => {
+      const 案内 = Recommender.uiWordNoteJa(語);
+      expect(案内.length, `"${語}" が無言に逆戻りした`).toBeGreaterThan(0);
+      expect(件(rows, 語), `"${語}" は行を持つので彈くべき語だつた`).toBe(0);
+    });
+    /* 導いた形は實際に行が出る（噓の例を示さん – 第 337 回）。 */
+    ["2026年", "8月", "今月"].forEach((形) => {
+      expect(件(rows, 形), `例に示した "${形}" に行が在ん`).toBeGreaterThan(0);
+    });
+    /* `いつまで` は曖昧な幅の群が持つ語なので、この群に混ぜん（實測 – 三本の檢査が守つて居た）。 */
+    const b = readFileSync("site/recommender.ts", "utf8");
+    const i = b.indexOf('note: "という聞き方では絞り込めません');
+    const a = b.lastIndexOf("words: [", i);
+    expect(b.slice(a, b.indexOf("      ],", a)).includes('"いつまで"')).toBe(false);
+  });
+
   it("他の群が持つ語と『開催地』に実在する語を、運営の群に混ぜん（第 539 回）", () => {
     const b = readFileSync("site/recommender.ts", "utf8");
     const i = b.indexOf('note: "はこの表が持つ欄の名前ではありません');

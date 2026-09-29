@@ -114,7 +114,7 @@ describe("収録に無い物を告げる群が、締切らしい語尾を受け�
     /* 第 516 回で二つ增える（採否の数の群・当日の様子の群）。*/
     /* 第 516 回で二つ增えて 37、第 517 回で『催し物の名前＋締切の言い方』の群が增えて 38。*/
     expect(物.split("deadlineTail: true").length - 1).toBe(38);
-    expect(物.split("anyTail: true").length - 1).toBe(9);
+    expect(物.split("anyTail: true").length - 1).toBe(11);
     /* 白一覧は十四の形だけ。語尾を問わない印の群（第 503 回・第 504 回）は其侭通る。*/
     expect(物).toContain('"の締切日"');
     expect(物).toContain('"のしめきり"');
