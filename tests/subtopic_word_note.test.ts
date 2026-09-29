@@ -444,4 +444,11 @@ it("登錄の種別と會場での身の回りの語も默らん（第 557 回�
       expect(件(rows, w)).toBe(0);
     });
   });
+it("機材とリハの語も默らん（第 558 回）", () => {
+    const rows = 品書();
+    ["プロジェクター", "電源", "有線LAN", "機材", "椅子", "配布物", "会場レイアウト", "搬入", "搬出", "設営", "解体", "登壇リハ", "事前リハ", ].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
