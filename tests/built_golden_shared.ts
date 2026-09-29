@@ -341,7 +341,8 @@ export const SEARCH_CANON = (() => {
       "全行の語尾に割るJa",
       /* 語の末尾に繋がれた締切の語を割る手順（第 517 回）– 同じく `splitQueryToken` が呼ぶ。*/
       "締切の語尾に割るJa",
-      "splitQueryToken",
+      "訪ねの語尾に落とすいつJa",
+  "splitQueryToken",
       "withoutWholeTableGroups",
       "querySynonymMap",
       "abbrevYearGroups",
