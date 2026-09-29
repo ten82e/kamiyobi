@@ -479,4 +479,11 @@ it("會員に關する語も默らん（第 565 回）", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+it("集録の類と配信の語も默らん（第 567 回）", () => {
+    const rows = 品書();
+    ["予稿集", "プログラム集", "講演集録", "抄録集", "プロシーディングス購読", "生配信", "アーカイブ配信", "見逃し配信", "後日視聴", ].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
