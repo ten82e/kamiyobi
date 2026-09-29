@@ -161,6 +161,7 @@ describe("ビルド成果物に目が在る事（第 466 回 – 成果物だけ
     expect(物).toContain("const 語々 = q.split(");
     /* multiword の印は第 506 回まで 25 箇處、第 507 回で五つ增える。
        第 516 回で二つ增える（採否の数の群・当日の様子の群 – 語を並べた打ち手も同じ案内を受ける）。*/
-    expect(物.split("multiword: true").length - 1).toBe(32);
+    // 第 525 回で會場バリアフリーの群を一つ增やしたので 32 → 33（此の數は群の總數の見張り）。
+    expect(物.split("multiword: true").length - 1).toBe(33);
   });
 });
