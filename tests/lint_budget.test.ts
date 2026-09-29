@@ -50,3 +50,28 @@ it("検査ファイルは作業上限（400 KB）の内側に保つ（1 MiB ま�
     "検査ファイルが大きすぎる（新しい検査ファイルに分け、共通の部品は tests/built_golden_shared.ts へ移す – 書き写すと正本とズレる）",
   ).toEqual([]);
 });
+
+it("案内の群に同じ注を寫し並べない（反復が 1 MiB の壁を食ふ – 第 520 回）", () => {
+  /* 2026-09-30 実測: `UI_WORD_GROUPS_JA` の群に付く注のうち、同一文のまま二つ以上並んで居る物が
+   * 三種類三十一箇所あり、其れだけで 18,001 バイト（`site/recommender.ts` は 1,048,152 バイトで
+   * biome の 1 MiB まで 424 バイト只剩かつて居た）。理由は同じなのに群の数だけ寫して居るので、
+   * 初出の一箇所に置いて其后は指針にする事にした。之を戻すと、理由が無くとも語を足せなくなる。 */
+  const src = readFileSync(join(ROOT, "site", "recommender.ts"), "utf8");
+  const 頭 = src.indexOf("const UI_WORD_GROUPS_JA");
+  const 末 = src.indexOf("type UIWordGroup");
+  expect(頭 >= 0 && 末 > 頭, "群の表の読み方が変わった（此處の切り出しを直す）").toBe(true);
+  const 域 = src.slice(頭, 末);
+  const counts = new Map<string, number>();
+  for (const m of 域.matchAll(/ {4,8}\/\*[^*]*(?:\*(?!\/)[^*]*)*\*\/\n/g)) {
+    // バイト數で測る（日本語の語は 1 字 3 バイト – 第 520 回の壁はバイト數で決まる）。
+    if (Buffer.byteLength(m[0], "utf8") < 200) continue;
+    counts.set(m[0], (counts.get(m[0]) || 0) + 1);
+  }
+  const 並んだ = [...counts.entries()]
+    .filter(([, n]) => n > 1)
+    .map(([t, n]) => `${n} 度: ${t.trim().slice(0, 44)}`);
+  expect(
+    並んだ,
+    "同じ注を二つ以上寫んで居る（初出の一箇所に置いて、其處には指針だけ置く – 第 520 回）",
+  ).toEqual([]);
+});
