@@ -2062,6 +2062,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* 欄の名前が接頭辞に成つた連結形（`分野セキュリティ`）を案内するかを決める問答（第 508 回）。
    * 正典 `site/recommender.ts` は品書を持たないので、**其れだけで行が出る語か**を畫面の方が答へる
    *（検索の道で時計を讀まないのと同じ筋 – 第 464 回・第 495 回）。*/
+  /* 語を分けて打った時に何件当たるか（第 532 回 – `splitHintJa` に渡す）。 */
+  function splitCountJa(文: string): number {
+    const c = queryMatchCounts(文);
+    return c.catalog + c.journal;
+  }
+
   function columnValueHitsJa(word: string): boolean {
     const counted = queryMatchCounts(word);
     return counted.catalog + counted.journal > 0;
@@ -2077,6 +2083,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /* 欄の名前の連結形（`分野セキュリティ`）を案内するかを決める問答（第 508 回）。
        品書を持つこの側で答え、正典は渡されて動く（第 464 回・第 495 回と同じ筋）。*/
     columnValueHits?: (語: string) => boolean;
+    splitCount?: (文: string) => number;
     // 打ち直しの見当（第 256 回 – 0 件案内と同じ判断を読み上げでも言う）。
     shorterHits?: Array<{ word: string; count: number; how: string; pair?: string }>;
     // 検索語が公式ページの URL の形か（URL で引いた人は「語が無い」話では済まない）。
@@ -2933,6 +2940,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /* 欄の名前の連結形（`分野セキュリティ`）を案内するかを決める問答（第 508 回）。
        品書を持つこの側で答え、正典は渡されて動く（第 464 回・第 495 回と同じ筋）。*/
     columnValueHits?: (語: string) => boolean;
+    splitCount?: (文: string) => number;
     // 打ち直しの見当（第 256 回）。0 件のときだけ数える – 通常描画では走らせない。
     shorterHits?: Array<{ word: string; count: number; how: string; pair?: string }>;
     urlQuery: boolean;
@@ -3161,6 +3169,26 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           .join("・") +
         "）。いずれかの語を外すと増えます。";
     }
+    /* 語を繋げて打つと 0 件で、分けると届く打ち方（第 532 回）。**他の案内が何も當たらん時だけ**立てる –
+       原因が他に分かつて居る時に重ねると、畫面が二つの話をして「どうすれば良い」が読めん（第 530 回・
+       第 531 回の実測 – 緩い門で四十本の檢査を落とした）。數へる側は `filter.splitCount` – 抜き出す檢査
+       （`tests/runtime_extract.ts`）は之を渡さんので、其處では默る（同じ形の `columnValueHits` に學ぶ）。*/
+    const splitNote =
+      matchedRows === 0 &&
+      !filter.urlQuery &&
+      !horizonNote &&
+      !nameNote &&
+      !kindNote &&
+      !wholeNote &&
+      !columnNote &&
+      !uiNote &&
+      !dayRangeNote &&
+      !catalogNote &&
+      !urlNote &&
+      !termNote &&
+      filter.splitCount
+        ? Recommender.splitHintJa(trimmedQuery, filter.splitCount)
+        : "";
     /* 原因を特定できたときは、他の説明文を足さない。考えられる理由を全部並べると
      * 「結局どうすればいい」が読めなくなる。検索語を短くする助言も、原因が分かっていれば
      * 的外れなので出さない。 */
@@ -3271,8 +3299,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.html に載せています。";
     if (specific) {
       return tips.length
-        ? `${base}${horizonNote}${nameNote}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${catalogNote}${urlNote}${termNote} 外せる条件: ${tips.join(" / ")}。`
-        : `${base}${horizonNote}${nameNote}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${catalogNote}${urlNote}${termNote}`;
+        ? `${base}${horizonNote}${nameNote}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${catalogNote}${urlNote}${termNote}${splitNote} 外せる条件: ${tips.join(" / ")}。`
+        : `${base}${horizonNote}${nameNote}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${catalogNote}${urlNote}${termNote}${splitNote}`;
     }
     if (!tips.length) return `${base}${horizonNote}${nameNote}${termNote} ${meetingNote}`;
     return `${base}${horizonNote}${nameNote}${termNote} 多いのは ${tips.join(" / ")}。${meetingNote}`;
@@ -4654,6 +4682,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             queryMatch: queryMatchCounts(searchQuery),
             termCounts: queryTermNotes(searchQuery),
             columnValueHits: columnValueHitsJa,
+            splitCount: splitCountJa,
             shorterHits: shorterWordNotes(searchQuery),
             // データその物が無い場合と、絞り込みで 0 件の場合を区別する材料。
             catalogConferences: DATA.conferences.length,

@@ -6708,6 +6708,31 @@ const Recommender = (() => {
    * （2026-09-23 実測: 「ネットワーク 福岡 GPU」は 0 件なのに、どの語が原因かを画面は
    * 何も言わなかった）。組の中は OR（同義・読み展開）、組の間は AND なので、
    * 数えるのも組の単位にする（1 語だけで数ると、展開で届く語を「無い」と誤報する）。 */
+  /* 語を繋げて打つと 0 件で、分けると当たる打ち方への導き（第 532 回 – 第 530 回・第 531 回の
+   * 撤回分の再實裝）。品書が行の名前に原文の英文字を載せる為、日本語で繋げた文字列はどの行にも
+   * 出ん（第 514 回・第 517 回・第 528 回と同じ壁）。割りの一覽に載らん語（`可視化` `高性能計算`
+   * `ロボティクス` – 寄せ表の語なので割れん）は、默るより分け方を敎う方が届く。數へる側は畫面の
+   * 持ち主に讓る（同じ數へ上げを二處に持つな – 第 215 回）。*/
+  function splitHintJa(query: unknown, 件數: (文: string) => number): string {
+    const 文 = String(query == null ? "" : query).trim();
+    if (文.length < 4 || 文.length > 20 || /\s/.test(文) || /\./.test(文)) return "";
+    let 最良 = "";
+    let 最良數 = 0;
+    for (let i = 2; i <= 文.length - 2; i += 1) {
+      const 候補 = `${文.slice(0, i)} ${文.slice(i)}`;
+      const n = 件數(候補);
+      if (n > 最良數) {
+        最良數 = n;
+        最良 = 候補;
+      }
+    }
+    if (!最良 || 最良數 === 0) return "";
+    return (
+      ` 語を分けて「${最良}」と打つと ${最良數} 件出ます。` +
+      "日本語で繋げた打ち方は、この表の行の文本にその形で見えん為、当たりません。"
+    );
+  }
+
   function queryTermCounts(
     query: unknown,
     hays: readonly unknown[],
@@ -15804,6 +15829,7 @@ const Recommender = (() => {
     deadlineShiftLineJa: deadlineShiftLineJa,
     deadlineShiftSearchWords: deadlineShiftSearchWords,
     weekdaySearchTerms: weekdaySearchTerms,
+    splitHintJa: splitHintJa,
     queryTermCounts: queryTermCounts,
     shorterHitWordsJa: shorterHitWordsJa,
     extendedLabelJa: () => EXTENDED_LABEL_JA,
