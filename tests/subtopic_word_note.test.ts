@@ -223,6 +223,50 @@ describe("細目の主題と募集対象の斷り", () => {
     expect(b.slice(a, b.indexOf("      ],", a)).includes('"いつまで"')).toBe(false);
   });
 
+  it("原稿と投稿の手続きを訪ねる人も、默らずに公式ページへ導かれる（第 541 回）", () => {
+    const rows = 品書();
+    [
+      "投稿規定",
+      "投稿要領",
+      "投稿フォーマット",
+      "原稿書式",
+      "テンプレート",
+      "二段組",
+      "ページ数",
+      "最大ページ数",
+      "ページ制限",
+      "英語原稿",
+      "和文原稿",
+      "図表",
+      "参考文献形式",
+      "引用形式",
+      "再投稿",
+      "著者情報",
+      "所属機関",
+      "肩書",
+      "連絡先",
+      "執筆料金",
+    ].forEach((語) => {
+      const 案内 = Recommender.uiWordNoteJa(語);
+      expect(案内.length, `"${語}" が無言に逆戻りした`).toBeGreaterThan(0);
+      expect(案内).toContain("公式ページ");
+      expect(件(rows, 語), `"${語}" は行を持つので彈くべき語だつた`).toBe(0);
+    });
+    /* `カメラレディ` は實測 70 件 – 行が出る語を「持つ欄の名前では無い」と斷たんとる（第 337 回）。 */
+    expect(件(rows, "カメラレディ")).toBeGreaterThan(0);
+    const b = readFileSync("site/recommender.ts", "utf8");
+    const i = b.indexOf(
+      'note: "はこの表が持つ欄の名前ではありません。この表は催し物の名前・締切の日・分野・種別・開催地・参加形式を出しています。原稿',
+    );
+    const a = b.lastIndexOf("words: [", i);
+    const 群 = b.slice(a, b.indexOf("      ],", a));
+    ["カメラレディ", "提出方法", "提出先"].forEach((語) => {
+      expect(群.includes(`"${語}"`), `"${語}" を混ぜた（行が出るか他の案内が引き取る語）`).toBe(
+        false,
+      );
+    });
+  });
+
   it("他の群が持つ語と『開催地』に実在する語を、運営の群に混ぜん（第 539 回）", () => {
     const b = readFileSync("site/recommender.ts", "utf8");
     const i = b.indexOf('note: "はこの表が持つ欄の名前ではありません');
