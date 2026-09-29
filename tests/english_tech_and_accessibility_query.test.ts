@@ -3,6 +3,21 @@ import { join } from "node:path";
 /** 英語の機械語とバリアフリーを訪ねる打ち方の檢査（SPEC §7・第 525 回）。 */
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
+
+/** 第 527 回 – 訪ね方だけでは決まる打ち方と、日付の欄の訪ね方。 */
+const ただ斷り = [
+  "日付",
+  "スケジュール",
+  "知りたい",
+  "教えて",
+  "何か教えて",
+  "詳細を教えて",
+  "どのくらい",
+  "わかります",
+  "分かる",
+  "わかる",
+];
+
 import { builtSite } from "./built_site.ts";
 
 const AT = Date.parse("2026-08-09T00:00:00Z");
@@ -75,6 +90,28 @@ describe("英語の機械語とバリアフリー", () => {
       expect(t.includes("持っていません"), `"${文}": 欄が無いと斷つて居ない`).toBe(true);
       expect(t.includes(文), `"${文}": 打ち込まれた語を名乘つて居ない`).toBe(true);
     });
+  });
+
+  it("訪ね方だけ・日付の欄の打ち方が斷りに就く（第 527 回）", () => {
+    const rows = 品書();
+    ただ斷り.forEach((文) => {
+      expect(件(rows, 文), `"${文}" が行に出る（斷るのは噓になる）`).toBe(0);
+      const t = 案内(文);
+      expect(t.length, `"${文}" が無言`).toBeGreaterThan(0);
+      expect(t.includes(文), `"${文}": 打ち込まれた語を名乘つて居ない`).toBe(true);
+    });
+    expect(案内("知りたい").includes("締切はいつ"), "`知りたい` に例を示して居ない").toBe(true);
+    expect(案内("日付").includes("論文締切"), "`日付` に種別の例を示して居ない").toBe(true);
+  });
+
+  it("其の方で行が出る語を二つの新群に混ぜない（第 337 回）", () => {
+    const b = readFileSync("site/recommender.ts", "utf8");
+    for (const 語 of ["日程", "締切日", "いつですか"]) {
+      const i = b.indexOf('note: "はこの表の日付の欄の名前です');
+      const j = b.indexOf('note: "だけでは、何を訪ねるか決まりません');
+      const 域 = b.slice(b.lastIndexOf("words: [", i), b.indexOf("];", j));
+      expect(域.includes(`"${語}"`), `"${語}" を新群に混ぜた（行が出る語）`).toBe(false);
+    }
   });
 
   it("寄せの先は品書に實在する語（第 322 回）", () => {
