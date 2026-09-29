@@ -2220,7 +2220,13 @@ it("会期だけの会の案内と行の詳細の開催地は、表と同じ書�
     `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
     "const DAY = 86400000;",
     'const now = Date.parse("2026-08-10T00:00:00Z");',
-    "class FakeDate extends Date { static now() { return now; } }",
+    /* 会期だけ確定の回（2026-09-30）を次回と数える検査なので、抜き出した関数が読む
+     * `Date.now()` を凍結した値に差し替える。此處で `class FakeDate` を宣言するだけに済ませると
+     * 関数は実時刻を読み続ける – 実行日が 2026-09-30 を越えた侭走らせると会期が「過去」に
+     * なつて案内が消え、空振りで落ちる（2026-09-30 深夜に実測。`build_golden.test.ts` の同じ形の
+     * 検査は `new Function("Date", …)` で注入して居るので免れて居た – 其の方と同じ事を
+     * 其の侭の世界でやる）。`extends Date` なので `new Date()` も素のままと同じに動く。 */
+    "globalThis.Date = class FakeDate extends Date { static now() { return now; } };",
     // 会期だけ確定している回（締切の無い edition）を 1 件置く。
     "const DATA = { conferences: [{ key: 'demo', title: 'Demo Conf', link: 'https://example.org/',",
     "  categories: ['hpc'], tags: [], editions: [{ event_start: '2026-09-30', event_end: '2026-10-02',",
