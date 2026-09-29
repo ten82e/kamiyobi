@@ -458,4 +458,11 @@ it("交流と採用關連の語も默らん（第 559 回）", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+it("發表の順と時間の語も默らん（第 561 回）", () => {
+    const rows = 品書();
+    ["発表順", "セッション順", "登壇時間", ].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
