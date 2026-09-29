@@ -308,6 +308,46 @@ describe("細目の主題と募集対象の斷り", () => {
     });
   });
 
+  it("参加する人・当日の進行・會場まわりを尋ねる語も受け取る（第 543 回）", () => {
+    const rows = 品書();
+    [
+      "傍聴",
+      "見学者",
+      "同伴者",
+      "家族",
+      "一般参加",
+      "学部生",
+      "大学生",
+      "高校生",
+      "教員",
+      "企業人",
+      "開演",
+      "開会",
+      "閉会",
+      "進行",
+      "登壇順",
+      "発言時間",
+      "昼休み",
+      "最寄り",
+      "駐車場",
+      "地図",
+      "会場地図",
+      "会場案内",
+    ].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length, `"${w}" が無言に逆戻りした`).toBeGreaterThan(0);
+      expect(件(rows, w), `"${w}" は行を持つので彈くべき語だつた`).toBe(0);
+    });
+    /* `聴講` は彈いた – `聴講料` を費用の案内へ導く檢査（第 516 回）が其の語を引き受けて居る。 */
+    expect(Recommender.uiWordNoteJa("聴講料")).toContain("費用");
+    const b = readFileSync("site/recommender.ts", "utf8");
+    const i = b.indexOf('note: "はこの表が持つ開催地（街の名前）とは別の案内です');
+    const a = b.lastIndexOf("words: [", i);
+    const 群 = b.slice(a, b.indexOf("      ],", a));
+    ["聴講", "ホテル", "駅"].forEach((w) => {
+      expect(群.includes(`"${w}"`), `"${w}" を會場まわりの群に混ぜた`).toBe(false);
+    });
+  });
+
   it("他の群が持つ語と『開催地』に実在する語を、運営の群に混ぜん（第 539 回）", () => {
     const b = readFileSync("site/recommender.ts", "utf8");
     const i = b.indexOf('note: "はこの表が持つ欄の名前ではありません');
