@@ -123,7 +123,8 @@ describe("他のの拒否群も締切らしい語尾を受ける（第 506 回�
   });
   it("印の數と、足場の新しさ（第 466 回・第 504 回 – 成果物だけの検査）", () => {
     const 物 = readFileSync(join(builtSite(), "recommender.js"), "utf8");
-    expect(物.split("deadlineTail: true").length - 1).toBe(35);
+    /* 第 516 回で二つ增える（採否の数の群・当日の様子の群）。*/
+    expect(物.split("deadlineTail: true").length - 1).toBe(37);
     expect(物.split("anyTail: true").length - 1).toBe(5);
     expect(物).toContain("UI_WORD_DEADLINE_TAILS_JA");
     /* 足場（tests/runtime_extract.ts）が新しい一覧を注入して居る事 – 第 504 回で四十一本落ちた
