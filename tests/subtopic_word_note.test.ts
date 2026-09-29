@@ -451,4 +451,11 @@ it("機材とリハの語も默らん（第 558 回）", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+it("交流と採用關連の語も默らん（第 559 回）", () => {
+    const rows = 品書();
+    ["名刺交換", "ネットワーキング", "情報交換", "採用", "求人", "リクルート", "企業説明", "産学交流", "連携提案", ].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
