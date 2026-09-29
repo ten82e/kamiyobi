@@ -486,4 +486,11 @@ it("集録の類と配信の語も默らん（第 567 回）", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+it("證明と郵送の語も默らん（第 568 回）", () => {
+    const rows = 品書();
+    ["在學証明", "在籍証明", "指導教員", "業績", "研究実績", "発表実績", "簡易書留", "書留", "消印", ].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
