@@ -437,4 +437,11 @@ describe("細目の主題と募集対象の斷り", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+it("登錄の種別と會場での身の回りの語も默らん（第 557 回）", () => {
+    const rows = 品書();
+    ["当日券", "正規登録", "グループ割", "無料参加", "聴講無料", "服装", "持ち物", "荷物", "手荷物", "両替", ].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
