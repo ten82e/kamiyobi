@@ -472,4 +472,11 @@ it("採否の照會と登錄の變更、金の明細の語も默らん（第 564
       expect(件(rows, w)).toBe(0);
     });
   });
+it("會員に關する語も默らん（第 565 回）", () => {
+    const rows = 品書();
+    ["個人会員", "法人会員", "会員費", "入会手続", "退会", "会員番号", "会員証", "二重会員", "会員種別の変更", "非会員参加", "会員以外", ].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
