@@ -267,6 +267,47 @@ describe("細目の主題と募集対象の斷り", () => {
     });
   });
 
+  it("協賛と催し物の形と役員を尋ねる語も、默らずに受け取る（第 542 回）", () => {
+    const rows = 品書();
+    const 語 = [
+      "広告",
+      "展示",
+      "実行委員長",
+      "プログラム委員長",
+      "実行委員",
+      "運営委員",
+      "組織委員",
+      "受賞者",
+      "学会賞",
+      "学生優秀賞",
+      "研究会誌",
+      "ハッカソン",
+      "アイディアソン",
+      "サマースクール",
+      "夏季学校",
+      "冬季学校",
+    ];
+    語.forEach((w) => {
+      const 案内 = Recommender.uiWordNoteJa(w);
+      expect(案内.length, `"${w}" が無言に逆戻りした`).toBeGreaterThan(0);
+      expect(件(rows, w), `"${w}" は行を持つので彈くべき語だつた`).toBe(0);
+    });
+    /* 弹いた語 – 其の方で行が出る語と、打ち方が曖昧な語を群に混ぜん。 */
+    expect(件(rows, "チュートリアル")).toBeGreaterThan(0);
+    const b = readFileSync("site/recommender.ts", "utf8");
+    const i = b.indexOf(
+      'note: "はこの表が載せる種別（会議・シンポジウム・ワークショップ）に入らん催し物の形です',
+    );
+    const a = b.lastIndexOf("words: [", i);
+    const 形 = b.slice(a, b.indexOf("      ],", a));
+    ["チュートリアル", "学校", "ジョイント"].forEach((w) => {
+      expect(
+        形.includes(`"${w}"`),
+        `"${w}" を催し物の形の群に混ぜた（行が出る／打ち方が曖昧）`,
+      ).toBe(false);
+    });
+  });
+
   it("他の群が持つ語と『開催地』に実在する語を、運営の群に混ぜん（第 539 回）", () => {
     const b = readFileSync("site/recommender.ts", "utf8");
     const i = b.indexOf('note: "はこの表が持つ欄の名前ではありません');

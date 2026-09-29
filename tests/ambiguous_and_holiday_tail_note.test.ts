@@ -144,6 +144,6 @@ describe("ビルド成果物に目が在る事（第 466 回 – 成果物だけ
     expect(前 < 後, "祝日級の表が群の引より後ろに居る").toBe(true);
     expect(物).toContain("if (!uiWordExact(文)) {");
     /* 印の數は五つ（第 503 回の三つ + 第 504 回の二つ）– その他の頁でも張つて居る。*/
-    expect(物.split("anyTail: true").length - 1).toBe(12);
+    expect(物.split("anyTail: true").length - 1).toBe(13);
   });
 });

@@ -142,11 +142,11 @@ describe("期の区分の語に語尾を繋げても案内が出る（第 503 �
 
 describe("ビルド成果物に印が在る事（第 466 回 – 成果物だけの検査でも捕まへる）", () => {
   const 物 = readFileSync(join(builtSite(), "recommender.js"), "utf8");
-  it("語尾を問わない印は十二の群だけ、語尾一覧は問いの形の侭（第 503 回・第 504 回）", () => {
+  it("語尾を問わない印は十三の群だけ、語尾一覧は問いの形の侭（第 503 回・第 504 回）", () => {
     /* 第 503 回に三つ（期の区分・月の初め・週の明け）、第 504 回に二つ（曖昧な幅・祝日級）。
      * 參加形式の群に付けて居ないのは `リアルタイム処理`（0 件）が「`リアル` は參加形式の言い方ですが」
      * に奪られる爲 – 第 504 回に實測で確かめた。*/
-    expect(物.split("anyTail: true").length - 1).toBe(12);
+    expect(物.split("anyTail: true").length - 1).toBe(13);
     expect(物).toContain("group.anyTail !== true");
     const 尾表 = 物.slice(物.indexOf("UI_WORD_TAILS_JA ="), 物.indexOf("UI_WORD_TAILS_JA =") + 900);
     expect(尾表).not.toContain('"の締切"');

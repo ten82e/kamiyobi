@@ -126,7 +126,7 @@ describe("他のの拒否群も締切らしい語尾を受ける（第 506 回�
     /* 第 516 回で二つ增える（採否の数の群・当日の様子の群）。*/
     /* 第 516 回で二つ增えて 37、第 517 回で『催し物の名前＋締切の言い方』の群が增えて 38。*/
     expect(物.split("deadlineTail: true").length - 1).toBe(38);
-    expect(物.split("anyTail: true").length - 1).toBe(12);
+    expect(物.split("anyTail: true").length - 1).toBe(13);
     expect(物).toContain("UI_WORD_DEADLINE_TAILS_JA");
     /* 足場（tests/runtime_extract.ts）が新しい一覧を注入して居る事 – 第 504 回で四十一本落ちた
      * 落とし穴の再発防止。*/
