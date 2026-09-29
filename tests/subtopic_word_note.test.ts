@@ -417,4 +417,24 @@ describe("細目の主題と募集対象の斷り", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+  it("變更と延期の告知も默らん（第 556 回）", () => {
+    const rows = 品書();
+    [
+      "アナウンス",
+      "更新情報",
+      "変更点",
+      "締切の変更",
+      "締切短縮",
+      "日時の変更",
+      "会場変更",
+      "会場の変更",
+      "振替",
+      "延期",
+      "中止",
+      "終了告知",
+    ].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
