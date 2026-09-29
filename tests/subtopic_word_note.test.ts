@@ -1,0 +1,83 @@
+/** 細目の主題と募集対象を打つ人の斷りの檢査（SPEC §7・第 535 回）。 */
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import Recommender from "../site/recommender.ts";
+import { builtSite } from "./built_site.ts";
+
+const AT = Date.parse("2026-08-09T00:00:00Z");
+type Row = { hay: string };
+function 品書(): Row[] {
+  return Recommender.candidateRows(
+    JSON.parse(readFileSync(join(builtSite(), "catalog.json"), "utf8")),
+  ) as Row[];
+}
+function 件(rows: Row[], 文: string): number {
+  const m = Recommender.searchMatcher(文, AT);
+  return rows.filter((r) => m(r.hay) === true).length;
+}
+
+/** 細目の主題の群に立てた打ち方（實測で 0 件・無言だつた語 – 數字は SPEC §8）。 */
+const 細目 = [
+  "GPU",
+  "CUDA",
+  "Kubernetes",
+  "OpenMP",
+  "PGAS",
+  "サーバーレス",
+  "連合学習",
+  "分散台帳",
+  "暗号通貨",
+  "省電力",
+  "サステナビリティ",
+  "ウェブ技術",
+  "オントロジー",
+  "産学セッション",
+  "学生向け",
+  "博士課程",
+];
+/** 群に混ぜん語（名簿の語・他の檢査が引き取る語 – 第 294 回・第 534 回の実測）。 */
+const 彈いた = ["MPI", "ACL", "CTF", "推薦システム", "ハッキングコンテスト"];
+
+describe("細目の主題と募集対象の斷り", () => {
+  it("默らずに、この表が持つ物を敎うる", () => {
+    細目.forEach((語) => {
+      const 案内 = Recommender.uiWordNoteJa(語);
+      expect(案内.length, `"${語}" が無言に逆戻りした`).toBeGreaterThan(0);
+      /* 噓の案内を立たん – 分野・種別・開催地・参加形式は実際にこの表の欄の名前。 */
+      ["分野", "種別", "開催地", "参加形式"].forEach((欄) => {
+        expect(
+          案内.includes(欄) || 案内.includes("公式ページ"),
+          `"${語}" の案内に欄の名前が無い`,
+        ).toBe(true);
+      });
+    });
+  });
+
+  it("寄せはして居らん（0 件の侭 – 正直な 0 件）", () => {
+    const rows = 品書();
+    ["GPU", "CUDA", "Kubernetes", "OpenMP", "連合学習"].forEach((語) => {
+      expect(件(rows, 語), `"${語}" が行を持つやうに廣がつた`).toBe(0);
+    });
+  });
+
+  it("弹いた語と空白を含む語を、群の一覽に混ぜん", () => {
+    const b = readFileSync("site/recommender.ts", "utf8");
+    const i = b.indexOf('        "GPU",');
+    expect(i).toBeGreaterThan(0);
+    const 群 = b.slice(i, b.indexOf('note: "はこの表の行に書かれて居らん', i));
+    彈いた.forEach((語) => {
+      expect(群.includes(`"${語}"`), `"${語}" を群に混ぜた（彈いた理由が崩れる）`).toBe(false);
+    });
+    /* 空白を含む語は網址の中に當たる（第 534 回の実測）。 */
+    [...群.matchAll(/"([^"\n]+)"/g)].forEach((m) => {
+      expect(/\s/.test(m[1]), `空白を含む語 "${m[1]}" を入れた`).toBe(false);
+    });
+  });
+
+  it("案内は「持って居らん」と言う所を數へて居る（無い欄の名前を在るかやうに書かん）", () => {
+    expect(Recommender.uiWordNoteJa("学生向け")).toContain("公式ページ");
+    /* この表に費用の欄は無い – 旅費を訪ねる人を在る欄に誤導せん。 */
+    expect(Recommender.uiWordNoteJa("学生向け")).not.toContain("参加費の欄");
+  });
+});
