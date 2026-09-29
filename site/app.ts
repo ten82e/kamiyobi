@@ -3197,6 +3197,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         wholeNote ||
         columnNote ||
         uiNote ||
+        splitNote ||
         dayRangeNote ||
         catalogNote ||
         deadTerms.length ||
