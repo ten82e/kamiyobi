@@ -465,4 +465,11 @@ it("發表の順と時間の語も默らん（第 561 回）", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+it("採否の照會と登錄の變更、金の明細の語も默らん（第 564 回）", () => {
+    const rows = 品書();
+    ["採否の照会", "採択証明", "掲載証明", "登録内容の変更", "口座情報", "名義変更", "明細書", ].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
