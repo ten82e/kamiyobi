@@ -335,6 +335,10 @@ export const SEARCH_CANON = (() => {
       "断片が皆決まるかJa",
       "列挙の語に割るJa",
       "列挙の展開語Ja",
+      /* 語の末尾に繋がれた全行の語を割る手順（第 514 回）– `splitQueryToken` が呼ぶので
+       * 同じ表に並べないと、抜き出した品が `ReferenceError` になる
+       * （第 257 回・第 372 回・第 453 回と同じ穴）。*/
+      "全行の語尾に割るJa",
       "splitQueryToken",
       "withoutWholeTableGroups",
       "querySynonymMap",
