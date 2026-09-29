@@ -374,4 +374,13 @@ describe("細目の主題と募集対象の斷り", () => {
     /* この表に費用の欄は無い – 旅費を訪ねる人を在る欄に誤導せん。 */
     expect(Recommender.uiWordNoteJa("学生向け")).not.toContain("参加費の欄");
   });
+  it("賞の語は賞の群が受け取る（運營の群に混ぜんと實測で定まつた置き場所を張る）", () => {
+    const rows = 品書();
+    ["学生ポスター賞", "口頭賞", "最優秀論文賞", "優秀論文賞"].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length, `"${w}" が無言に逆戻りした`).toBeGreaterThan(0);
+      expect(件(rows, w), `"${w}" は行を持つので彈くべき語だつた`).toBe(0);
+    });
+    const b = readFileSync("site/recommender.ts", "utf8");
+    expect(b).toContain('"学生ポスター賞"');
+  });
 });
