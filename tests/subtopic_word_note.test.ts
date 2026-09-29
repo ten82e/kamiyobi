@@ -75,6 +75,41 @@ describe("細目の主題と募集対象の斷り", () => {
     });
   });
 
+  it("運営・手続きと学会の出版物を訪ねる人も、默らずに受け取る（第 536 回）", () => {
+    const rows = 品書();
+    [
+      "特集セッション",
+      "企業展示",
+      "出展",
+      "ポスターサイズ",
+      "遅延申請",
+      "録画配信",
+      "領収書",
+      "謝金",
+      "当日参加",
+      "直前",
+      "キャンセル",
+      "学会誌",
+      "速報誌",
+      "紀要",
+    ].forEach((語) => {
+      const 案内 = Recommender.uiWordNoteJa(語);
+      expect(案内.length, `"${語}" が無言に逆戻りした`).toBeGreaterThan(0);
+      /* 斷りは実際に 0 件の語にだけ立つ – 行を持つ語に「出て居ません」と言わん（第 337 回）。 */
+      expect(件(rows, 語), `"${語}" は行を持つので彈くべき語だつた`).toBe(0);
+    });
+  });
+
+  it("行を持つ語を学会誌の群に混ぜん（實測で `論文誌` 5 件・`ジャーナル` 1 件）", () => {
+    const b = readFileSync("site/recommender.ts", "utf8");
+    const i = b.indexOf('      words: ["学会誌"');
+    expect(i).toBeGreaterThan(0);
+    const 群 = b.slice(i, b.indexOf("live:", i));
+    ["論文誌", "ジャーナル"].forEach((語) => {
+      expect(群.includes(`"${語}"`), `"${語}" を混ぜた（行を持つ – 噓の斷りになる）`).toBe(false);
+    });
+  });
+
   it("案内は「持って居らん」と言う所を數へて居る（無い欄の名前を在るかやうに書かん）", () => {
     expect(Recommender.uiWordNoteJa("学生向け")).toContain("公式ページ");
     /* この表に費用の欄は無い – 旅費を訪ねる人を在る欄に誤導せん。 */
