@@ -390,9 +390,29 @@ describe("細目の主題と募集対象の斷り", () => {
       expect(件(rows, w), `"${w}" は行を持つので彈くべき語だつた`).toBe(0);
     });
   });
-it("取消と出張の手續きも默らん", () => {
+  it("取消と出張の手續きも默らん", () => {
     const rows = 品書();
     ["出張報告", "発表取消", "参加取消"].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
+  it("提出物と代理出席の手續きも默らん", () => {
+    const rows = 品書();
+    [
+      "事前確認",
+      "原稿の言語",
+      "口頭の言語",
+      "質問の受付",
+      "連絡方法",
+      "資料配布",
+      "資料ダウンロード",
+      "スライド提出",
+      "動画提出",
+      "当日欠席",
+      "代理出席",
+      "代理発表",
+    ].forEach((w) => {
       expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
       expect(件(rows, w)).toBe(0);
     });
