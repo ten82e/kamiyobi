@@ -348,6 +348,14 @@ describe("細目の主題と募集対象の斷り", () => {
     });
   });
 
+  it("發表の形と採否の手続きの語も通じる（第 545 回）", () => {
+    const rows = 品書();
+    ["特別講演", "招待講演者", "登壇者", "投稿番号", "採択通知メール", "掲載確定"].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length, `"${w}" が無言に逆戻りした`).toBeGreaterThan(0);
+      expect(件(rows, w), `"${w}" は行を持つので彈くべき語だつた`).toBe(0);
+    });
+  });
+
   it("他の群が持つ語と『開催地』に実在する語を、運営の群に混ぜん（第 539 回）", () => {
     const b = readFileSync("site/recommender.ts", "utf8");
     const i = b.indexOf('note: "はこの表が持つ欄の名前ではありません');
