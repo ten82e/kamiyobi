@@ -112,7 +112,7 @@ describe("収録に無い物を告げる群が、締切らしい語尾を受け�
   });
   it("印を持つ群の数（第 503 回〜第 506 回で増えた順路を張る）", () => {
     const 物 = readFileSync(join(builtSite(), "recommender.js"), "utf8");
-    expect(物.split("deadlineTail: true").length - 1).toBe(34);
+    expect(物.split("deadlineTail: true").length - 1).toBe(35);
     expect(物.split("anyTail: true").length - 1).toBe(5);
     /* 白一覧は十四の形だけ。語尾を問わない印の群（第 503 回・第 504 回）は其侭通る。*/
     expect(物).toContain('"の締切日"');
