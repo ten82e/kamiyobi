@@ -4265,10 +4265,22 @@ const Recommender = (() => {
           if (folded.length < 2 || folded.length <= bestWord.length) continue;
           if (!form.startsWith(folded)) continue;
           const tail = q.slice(folded.length);
+          /* 其の名前が**連体の「の」で他のの説明に繋がれた**形（`参加費無料の会議` `費用の安い会議`
+           * `ビザの情報` `招待講演の nomination`）も受ける（第 513 回）。白一覧（第 505 回）は
+           * 語尾を其の儘で見る為、其后にも語が續くこの言ひ方では默つて居た – 実測（2026-11-11 –
+           * 実ビルドの品書 868 行・固定時刻 2026-08-09T00:00:00Z）で、印を持つ群の語 ×
+           * 「の+名詞」の 2 772 文の内 **2 321 文が 0 件で完全に無言**（其の名前單體では案内が出る）。
+           * 「其の欄はこの表に無い」といふ話は「の」で繋がれても同じなので受ける。
+           * 磁石の決まりは其侭 – `費用対効果分析` のやうに助詞を挟まない他のの語の頭は彈かれる。*/
+          /* ただし**語をまたがない時だけ** – 空格・読点の先へ續く打ち方（`過去の締切 関西`
+           * `招待講演の nomination`）は、値を並べた打ち手なので舊の決まり（第 250 回・第 354 回）が
+           * 勝つ。第 513 回の実測で、語をまたぐ形まで受けると `過去の締切 関西` に案内を被せて
+           * 落ちた（其の決まりを張つた検査が二頁在る）。*/
+          const 連体 = tail.startsWith("の") && !/[\s、，,]/.test(tail);
           if (
             tail &&
             group.anyTail !== true &&
-            !(group.deadlineTail === true && UI_WORD_DEADLINE_TAILS_JA.includes(tail)) &&
+            !(group.deadlineTail === true && (UI_WORD_DEADLINE_TAILS_JA.includes(tail) || 連体)) &&
             !UI_WORD_TAILS_JA.includes(tail)
           )
             continue;
