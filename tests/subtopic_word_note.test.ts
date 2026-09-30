@@ -493,4 +493,11 @@ it("證明と郵送の語も默らん（第 568 回）", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+it("日帰りと宿の打ち方も默らん（第 569 回）", () => {
+    const rows = 品書();
+    ["宿泊無し", "日帰り", "近場", ].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
