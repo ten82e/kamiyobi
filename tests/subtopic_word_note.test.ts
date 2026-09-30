@@ -509,4 +509,11 @@ it("參加の形の語は同じ導きを受ける（第 570 回）", () => {
       expect(件(rows, w), `"${w}" は行を持つので彈くべき語だつた`).toBe(0);
     });
   });
+it("學會の會務の語も默らん（第 571 回）", () => {
+    const rows = 品書();
+    ["総会", "理事会", "支部", "地域支部", "幹事", "役員の選出", "投票", "電子投票", "委任状", "議事録", ].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
