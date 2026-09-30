@@ -837,3 +837,61 @@ describe("稿種・審查の方式・費用の内譯・會場の手配の打ち�
     expect(件(rows, "採点")).toBe(0);
   });
 });
+
+describe("採否の結果・審查の物差し・提出の添付・證明の打ち方（第 599 回）", () => {
+  const rows = 品書();
+  const 見附 = [
+    ["不採択", "数の統計"],
+    ["落選", "数の統計"],
+    ["レビューコメント", "審査の方式"],
+    ["評価基準", "審査の方式"],
+    ["ルーブリック", "審査の方式"],
+    ["追加資料", "原稿の書式"],
+    ["動画", "原稿の書式"],
+    ["デモ動画", "原稿の書式"],
+    ["コード公開", "原稿の書式"],
+    ["連絡著者", "著者や発表者の役"],
+    ["corresponding", "著者や発表者の役"],
+    ["発表者登録", "運営と手続き"],
+    ["特殊セッション", "運営と手続き"],
+    ["トラック", "運営と手続き"],
+    ["終了時刻", "絞り込めません"],
+    ["受講証明", "あなたの所属で決まる話"],
+    ["継続教育", "あなたの所属で決まる話"],
+  ] as const;
+
+  it("打ち方を名前で呼び、其の筋の斷りに屆く", () => {
+    for (const [語, 目印] of 見附) {
+      const 群の注 = Recommender.uiWordNoteJa(語);
+      expect(群の注.length, 語).toBeGreaterThan(0);
+      expect(群の注, 語).toContain(語);
+      expect(群の注, `${語} の宛先`).toContain(目印);
+      expect(件(rows, 語), `${語} は行を持つのに敎へて居らん事（第 337 回）`).toBe(0);
+    }
+  });
+
+  it("行が出る兄弟語を敎へて居らん事（第 337 回）", () => {
+    /* 檢査の品書（tests/built_site.ts は fixture ビルド）で行が出る物だけを選んで張る –
+     * 實測の品書（public/）で數へた語を寫すと fixture では空振りになる（第 599 回）。 */
+    const 当たる = ["特集号", "論文誌", "研究会"].filter((語) => 件(rows, 語) > 0);
+    expect(当たる.length, "fixture の品書に行が出る兄弟語が無かつた").toBeGreaterThan(0);
+    for (const 語 of 当たる) {
+      expect(Recommender.uiWordNoteJa(語), `${語} に行が立つのに斷つて居る`).toBe("");
+    }
+    /* 斷りが出る語の方 – 彈いた語を增やしても他の群の斷りは其侪屆く（第 581 回）。
+     * 「採択通知」は行が出る語なので斷りを持たん（第 337 回） – ここに載せん。 */
+    for (const 語 of ["特集セッション", "座長"]) {
+      expect(Recommender.uiWordNoteJa(語).length, 語).toBeGreaterThan(0);
+    }
+  });
+
+  it("增やした語は導きの群に一度ずつ並ぶ（第 543 回 – 二つの群に載せず）", () => {
+    const 源 = readFileSync("site/recommender.ts", "utf8");
+    const i = 源.indexOf("const UI_WORD_GROUPS_JA");
+    const 表 = 源.slice(i, 源.indexOf("\n  ];\n", i));
+    for (const [語] of 見附) {
+      const 數 = 表.split('"@R@"'.replace("@R@", 語)).length - 1;
+      expect(數, `${語} が群に ${數} 回並んで居る`).toBe(1);
+    }
+  });
+});
