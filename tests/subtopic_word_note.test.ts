@@ -613,4 +613,16 @@ it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+  it("交歓と懇親の群が出來た（第 586 回）", () => {
+    const rows = 品書();
+    ["二次会", "ツアー", "交歓", "親睦", "レセプション", "観光地", ].forEach((w) => {
+      const 案内 = Recommender.uiWordNoteJa(w);
+      expect(案内.length).toBeGreaterThan(0);
+      expect(案内).toContain("交歓の段取り");
+      expect(案内.includes("社會")).toBe(false);
+      expect(件(rows, w)).toBe(0);
+    });
+    /* 別の群が受け居る語を奪つて居らん事（第 543 回の接頭奪ひ）。 */
+    expect(Recommender.uiWordNoteJa("懇親会")).toContain("欄の名前ではありません");
+  });
 });
