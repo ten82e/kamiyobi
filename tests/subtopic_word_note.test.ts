@@ -574,4 +574,13 @@ it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+  it("引率と介添の語も默らん（第 581 回）", () => {
+    const rows = 品書();
+    [["引率", "募集対象"], ["同行者", "募集対象"], ["介添", "会場の中と外"]].forEach(([w, 語]) => {
+      const 案内 = Recommender.uiWordNoteJa(w);
+      expect(案内.length).toBeGreaterThan(0);
+      expect(案内).toContain(語);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
