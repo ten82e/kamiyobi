@@ -180,7 +180,9 @@ describe("細目の主題と募集対象の斷り", () => {
 
   it("行を持つ語を学会誌の群に混ぜん（實測で行を持つ語 – 5 件・1 件・6 件・5 件・2 件・1 件）", () => {
     const b = readFileSync("site/recommender.ts", "utf8");
-    const i = b.indexOf('      words: ["学会誌"');
+    const 語の位置 = b.indexOf('\n        "学会誌",');
+    const i = b.lastIndexOf("words: [", 語の位置);
+    expect(語の位置).toBeGreaterThan(0);
     expect(i).toBeGreaterThan(0);
     const 群 = b.slice(i, b.indexOf("live:", i));
     [
@@ -540,6 +542,13 @@ it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
   it("緊急の session の打ち方も默らん（第 576 回）", () => {
     const rows = 品書();
     ["緊急セッション"].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
+  it("二つ目の日本語の分野名と集録の出版も默らん（第 577 回）", () => {
+    const rows = 品書();
+    ["機械翻訳", "意味解析", "プロシーディングス出版"].forEach((w) => {
       expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
       expect(件(rows, w)).toBe(0);
     });
