@@ -537,4 +537,11 @@ it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+  it("緊急の session の打ち方も默らん（第 576 回）", () => {
+    const rows = 品書();
+    ["緊急セッション"].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
