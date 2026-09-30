@@ -516,4 +516,11 @@ it("學會の會務の語も默らん（第 571 回）", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+it("出版倫理と別刷りの語も默らん（第 573 回）", () => {
+    const rows = 品書();
+    ["リジェクト", "別投稿", "転載", "二重投稿", "自己援用", "プレプリント", "arXiv投稿", "出版倫理", "利益相反", ].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
