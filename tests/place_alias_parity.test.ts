@@ -88,7 +88,7 @@ it("合衆国・USA は、開催地に其の国の表記を書く行をこぼさ
 it("同じ国を指す言い方の寄せ先は、正本の表で等しい（第 311 回）", () => {
   /* 画面の当たり方は地域まとめの層が混むので、寄せ語の層その物は等しいことを別に見る
    * （一方だけ直して言い方で結果がずれる変化を止める）。 */
-  const src = readFileSync(join(REPO_ROOT, "site", "recommender.ts"), "utf8");
+  const src = readFileSync(join(REPO_ROOT, "site", "place-aliases.ts"), "utf8");
   const begin = src.indexOf("const PLACE_QUERY_ALIASES_JA");
   expect(begin, "開催地の寄せ語の表が見当たらない").toBeGreaterThan(-1);
   const end = src.indexOf("];", begin);

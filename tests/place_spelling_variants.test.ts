@@ -28,7 +28,7 @@ function fold(value: string): string {
 }
 
 function source(): string {
-  return readFileSync(join(REPO_ROOT, "site", "recommender.ts"), "utf8");
+  return readFileSync(join(REPO_ROOT, "site", "place-aliases.ts"), "utf8");
 }
 
 function aliasTable(): Array<[string, string]> {

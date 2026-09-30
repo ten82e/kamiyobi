@@ -195,6 +195,7 @@ kamiyobi/
 │   ├── tsconfig.build.json      # public/ 用 JavaScript emit
 │   ├── template.html            # コア UI（表・絞り込み。外部 CDN なし）
 │   ├── app.ts                   # ブラウザ UI 実行時処理
+│   ├── place-aliases.ts         # 國名・都市名の打ち方を収録の表記へ寄せる表
 │   ├── recommender.ts           # 論文推薦（§10。任意 CDN）
 │   ├── recommendation-core.ts   # browser / benchmark / test 共通の推薦軸
 │   ├── publish.ts               # publish manifest のブラウザ側検証
@@ -596,6 +597,7 @@ node --experimental-strip-types src/cli.ts evidence [verify|gc] [--dry-run]
 | `llms.txt` | エージェント向け出力索引 |
 | `embeddings.json` | 会議スコープの埋め込み（§10）。`--no-embeddings` で省略可 |
 | `recommender.js` | `site/recommender.ts` から生成するサイトの推薦ロジック |
+| `place-aliases.js` | `site/place-aliases.ts` から生成する、開催地の寄せ先の表（`recommender.js` が import） |
 | `recommendation-core.js` | `site/recommendation-core.ts` から生成する共有推薦軸 |
 | `publish.js` | `site/publish.ts` から生成する publish manifest 検証 |
 | `app.js` | `site/app.ts` から生成するブラウザ UI 実行時処理 |
@@ -2489,6 +2491,14 @@ conferences:
   - 增やした打ち方（增やす前に實測 – 品書 868 行で 0 件・無言）– 旅の語 `査証` `パスポート` `在外参加` `時差` は「この表が持って居らん」級の斷りを持つ群（ビザ・招待状・宿泊を數へて居る群 – 其の斷りは費用の欄が無いと名指す）、送金の語 `送金` `外貨` `源泉徴収` `個人番号` は運營と手続きの群（振込・支払を數へて居る群）。增やす前に、その打ち方が受ける文（斷りの實物）を七語分讀んで配り先を決めた – 同じことを敎へる文が群ごとに別になつて居る事を実測で確認した（第 548 回と同じ敎へ）。
   - 增やした後の實測 – 八語が默らん事（無言 0）、搜しでは 0 件の侭。檢査三十二條目を增やした。
   - 失敗と是正 – 語列へ入れる時、閉ぢの括弧の**直前**に ", 語, 語" と繋いだ為、前の語の後の讀點と重なつて**構文が壊れ、ビルド出來ん狀帶になつた**（檢査 255 ファイルが落ち – 落ち方が「ファイルその物が讀めん」形なので構文だと分かつて居る）。`git checkout` で戻し、**一行一語の形を守つて**入れ直した。教へ – 語列への追加は行の形で書き、**入れ終へた直後にビルドを單體で走ませて**構文を確かめてから檢査を通す（檢査だけ通すと、落ち方の理由が構文か案内か見えん）。
+
+- **國名・都市名の表を別の產出物へ移した – `site/recommender.ts` の 1 MiB 上限に對する根本の治療（第 583 回）**
+  - 分け – `site/place-aliases.ts`（16,124 バイト – 表 231 條目とその閉ぢ）を作り、`recommender.js` が import する形にした。これで元の檔案の余裕は 2,778 バイトから **18,840 バイト**へ戻る（導きの語の增設を續けられる）。
+  - 繋ぎの決まり – この種の檔案は `src/build.ts` が `.ts` のまま読む為、import を `./place-aliases.ts` と書き、`site/tsconfig.build.json` に `allowImportingTsExtensions: true` と `rewriteRelativeImportExtensions: true`（TypeScript 7.0.2 で實測）を入れて、**成果物では `.js` に書き換はせる**事に決めた。之が無いとビルドが `ERR_MODULE_NOT_FOUND` で落ちる（實測）。
+  - 向け替へた讀み手 – `src/build.ts` の `SITE_RUNTIME_FILES` と `LLMS_OUTPUT_NOTES_JA`、`site/tsconfig.build.json` の `include`、檢査 `tests/place_alias_parity.test.ts`（ソース読む）・`tests/place_spelling_variants.test.ts`（同じ）・`tests/place_query_alias.test.ts`（成果物読む – 二箇所）・`tests/built_golden_2.test.ts`（成果物読む – 四箇所の內**表を読む二箇所だけ**向け、他の表を読む二箇所は元の侭）・`tests/built_golden_shared.ts` の `SEARCH_CANON`（二つの產出物を繋いで読む）・`tests/build_golden.test.ts`（一時目録へ寫す三箇所と、走査の対象列）。
+  - 檢査が彈いた實測の缺陷と直し – ① 汎用の `grab(name)` は名前の初出を搜す為、`recommender.js` の import 文に當たって化けた（`Invalid or unexpected token`）→ 讀み元を二つの產出物の繋ぎに直し、表の閉ぢが字下げ無しで出る形も通るやうにした。② 一時目録へ `recommender.mjs` だけ寫す檢査は、隣の產出物が無く `ERR_MODULE_NOT_FOUND`（三テスト）→ 寫しを增やした。③ SPEC §2 の木と生成物の表に新檔案を載せる檢査が彈いた → 载せた。
+  - 手順 – 每步でビルドを單體で走らせ（`exit 0`・品書 868 行・`data/` 無變更）、`npx tsc -p site/tsconfig.build.json`（exit 0）、`npm run typecheck`（exit 0）、`npx biome check`（當てた檔案は「No fixes applied」／新檔案は整形を通した）を通し、最後に檢査總當たり。別產出物が増へたので、檢査の列は `SITE_RUNTIME_FILES` から自動で來る物と、名指しの列が在る（後者は次の新檔案でも同じ手を打つ必要が在る – 之が次の調べ）。
+  - 結果 – 檢査 282 ファイルすべて綠（4,780 件）。`site/recommender.ts` は 1,029,736 バイト（1 MiB まで 18,840）。
 
 - **立場の名前の七語を通じた – 增設の枠をここで一度停める決まりを守つた最後の回合（第 582 回）**
   - 增やした打ち方（搜し 0 件を新字体で確かめ、その群を検査して居るファイルの `彈いた` 定數を通してから）– `聴講生` `研究生` `科目等履修生` `ポスドク` `技術職員` `研究員` は募集対象の群、`教務` は運營と手続きの群。增やした後に實測 – 七語がそれそれの群の斷りを受けた事（斷りの冒頭を七行印字して確かめ、檢査にも兩方を張つた）と、搜しでは 0 件の侭。

@@ -117,7 +117,7 @@ describe("開催地の日本語の別の言い方", () => {
 
 describe("成果物", () => {
   it("足した八つの条目が成果物の表に一度ずつ入っている", () => {
-    const rec = readFileSync(join(builtSite(), "recommender.js"), "utf8");
+    const rec = readFileSync(join(builtSite(), "place-aliases.js"), "utf8");
     for (const [日本語, 原文] of 開催地の寄せ) {
       const 断片 = `["${日本語}", "${原文}"]`;
       expect(rec.split(断片).length - 1, `成果物の中の条目 \`${断片}\` の数`).toBe(1);
@@ -128,7 +128,7 @@ describe("成果物", () => {
     /* 表その物を読む（第 297 回の手順 – 画面の語は画面の正本から読む）。此の回に足した条目が
      * 其の方の条目と並んでも壊れない事を見る – 語の順が違うだけの条目が在ると、後の物が影に
      * 隠れて検査から抜ける（第 353 回の実発生）。 */
-    const rec = readFileSync(join(builtSite(), "recommender.js"), "utf8");
+    const rec = readFileSync(join(builtSite(), "place-aliases.js"), "utf8");
     const 頭 = "const PLACE_QUERY_ALIASES_JA = [";
     const i = rec.indexOf(頭);
     expect(i, "成果物に表が見つからない").toBeGreaterThan(0);

@@ -95,7 +95,10 @@ export function keydownWithBlockers(src: string): string {
 export const SEARCH_CANON = (() => {
   // 検索照合の規則は recommender.js の正本をそのまま注入する（書き写すと正本とズレるため、
   // スタブでの再現は避ける）。
-  const rec = siteRuntime("recommender.js");
+  /* 検索照合の規則は recommender.js の正本をそのまま注入する（書き写すと正本とズレるため、
+   * スタブでの再現は避ける）。國名・都市名の表は別の產出物に移したので、その讀點も繋ぐ
+   * （第 583 回 – 1 MiB の上限を守る為の分け）。 */
+  const rec = `${siteRuntime("recommender.js")}\n${siteRuntime("place-aliases.js")}`;
   const consts = [
     ["SMALL_KANA_JA", /const SMALL_KANA_JA[\s\S]*?\};/],
     // `searchNormalize` がアクセントを折るための表（正本から注入し、写しは作らない）。

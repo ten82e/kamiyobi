@@ -2650,6 +2650,7 @@ it("site runtime never emits the invalid let() CSS function (#223 follow-up)", (
   const runtimeFiles = [
     "app.js",
     "recommender.js",
+    "place-aliases.js",
     "recommendation-core.js",
     "publish.js",
   ] as const;
@@ -4185,6 +4186,7 @@ it("the next-meeting note formats the schedule-only edition for a Japanese reade
   const dir = tempWork("cfp-note-");
   const recPath = join(dir, "recommender.mjs");
   writeFileSync(recPath, runtime["recommender.js"]);
+  writeFileSync(join(dir, "place-aliases.js"), runtime["place-aliases.js"]);
   const script = [
     // 間接 eval でグローバルに置く（`new Function` の中身はグローバルスコープで解決されるため、
     // async IIFE の中の変数は見えない）。
@@ -4247,6 +4249,7 @@ it("the drawer lists the same conference's later meetings (SPEC §7)", () => {
   const dir = tempWork("cfp-later-");
   const recPath = join(dir, "recommender.mjs");
   writeFileSync(recPath, runtime["recommender.js"]);
+  writeFileSync(join(dir, "place-aliases.js"), runtime["place-aliases.js"]);
   const script = [
     "(async () => {",
     `const { default: Recommender } = await import(${JSON.stringify(`file://${recPath}`)});`,
@@ -4590,6 +4593,7 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
   const dir = tempWork("cfp-unknown-");
   const recPath = join(dir, "recommender.mjs");
   writeFileSync(recPath, siteRuntime("recommender.js"));
+  writeFileSync(join(dir, "place-aliases.js"), siteRuntime("place-aliases.js"));
   const script = [
     "(async () => {",
     `const { default: Recommender } = await import(${JSON.stringify(`file://${recPath}`)});`,
@@ -4912,6 +4916,7 @@ it("ドロワーは表の情報（分野・ランク・ラウンド）を落と�
   const dir = tempWork("cfp-drawer-fields-");
   const recPath = join(dir, "recommender.mjs");
   writeFileSync(recPath, siteRuntime("recommender.js"));
+  writeFileSync(join(dir, "place-aliases.js"), siteRuntime("place-aliases.js"));
   const openSrc = jsFunction(runtime, "openDrawer");
   const summarySrc = jsFunction(runtime, "verificationSummary");
   const script = [
