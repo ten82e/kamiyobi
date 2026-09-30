@@ -553,4 +553,11 @@ it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+  it("參加重金の減免と助成の語も默らん（第 578 回）", () => {
+    const rows = 品書();
+    ["減免", "免除", "助成", "出張支援", "若手支援", ].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
