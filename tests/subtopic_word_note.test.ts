@@ -583,4 +583,16 @@ it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+  it("立場の名前の語も默らん（第 582 回）", () => {
+    const rows = 品書();
+    ["聴講生", "研究生", "科目等履修生", "ポスドク", "技術職員", "研究員", ].forEach((w) => {
+      const 案内 = Recommender.uiWordNoteJa(w);
+      expect(案内.length).toBeGreaterThan(0);
+      expect(案内).toContain("募集対象");
+      expect(件(rows, w)).toBe(0);
+    });
+    const 教務案 = Recommender.uiWordNoteJa("教務");
+    expect(教務案).toContain("欄の名前ではありません");
+    expect(件(rows, "教務")).toBe(0);
+  });
 });
