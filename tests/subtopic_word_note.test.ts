@@ -1006,3 +1006,40 @@ describe("窓口の打ち方と、性別・休暇・書誌の數の内譯（第 
     expect(行々.length).toBeGreaterThan(0);
   });
 });
+
+describe("言い回しの後に名詞を続ける打ち方（第 602 回）", () => {
+  const rows = 品書();
+
+  it("言い回しの後に催し物・支援の名を続けても斷りが屆く", () => {
+    for (const [語, 目印] of [
+      ["旅費が出る支援", "旅費"],
+      ["共催してもらえるか", "共催"],
+      ["発表者一人何本まで", "発表者"],
+      ["スライドは英語？", "録画"],
+      ["次回いつ開かれる", "日付で絞る"],
+      ["締切が延びた", "延長"],
+    ] as const) {
+      const 注 = Recommender.uiWordNoteJa(語);
+      expect(注.length, 語).toBeGreaterThan(0);
+      expect(注, `${語} の宛先`).toContain(目印);
+    }
+  });
+
+  it("物の名で無く内容語を續ける打ち方は寄せない（第 362 回 – 靜かに廣げん）", () => {
+    /* `参加費が高い会議` `旅費の出る学会で無い物` のやうに、助詞と形容詞で續ける打ち方は
+     * 其の名前單體での絞り込みを信じる人なので、斷りを被せん（實測 – 品書 155 問のうち
+     * 行の出方 126 問の內譯は不變）。 */
+    expect(Recommender.uiWordNoteJa("参加費が高い")).toBe("");
+    expect(Recommender.uiWordNoteJa("費用が安い会議")).toBe("");
+  });
+
+  it("表が實は持つ値と、他の表が持つ条目を導きに據へん（第 588 回・第 484 回）", () => {
+    /* `オンライン` は參加形式の印『オンライン参加可』として實測 24 行が出る – 斷りを立てれば噓。 */
+    expect(Recommender.uiWordNoteJa("オンライン")).toBe("");
+    expect(rows.length).toBeGreaterThan(0);
+    /* `来年度末` は其の方で 13 行絞れる – 「絞り込めません」を並べん（第 484 回の決まり）。 */
+    expect(Recommender.uiWordNoteJa("来年度末")).toBe("");
+    /* `いつ開催` は會期への寄せ先が既に持つ – 導きの語尾に二度據へん（第 602 回で彈かれた）。 */
+    expect(Recommender.uiWordNoteJa("いつ開催")).toBe("");
+  });
+});
