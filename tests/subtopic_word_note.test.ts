@@ -439,70 +439,145 @@ describe("細目の主題と募集対象の斷り", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
-it("登錄の種別と會場での身の回りの語も默らん（第 557 回）", () => {
+  it("登錄の種別と會場での身の回りの語も默らん（第 557 回）", () => {
     const rows = 品書();
-    ["当日券", "正規登録", "グループ割", "無料参加", "聴講無料", "服装", "持ち物", "荷物", "手荷物", "両替", ].forEach((w) => {
+    [
+      "当日券",
+      "正規登録",
+      "グループ割",
+      "無料参加",
+      "聴講無料",
+      "服装",
+      "持ち物",
+      "荷物",
+      "手荷物",
+      "両替",
+    ].forEach((w) => {
       expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
       expect(件(rows, w)).toBe(0);
     });
   });
-it("機材とリハの語も默らん（第 558 回）", () => {
+  it("機材とリハの語も默らん（第 558 回）", () => {
     const rows = 品書();
-    ["プロジェクター", "電源", "有線LAN", "機材", "椅子", "配布物", "会場レイアウト", "搬入", "搬出", "設営", "解体", "登壇リハ", "事前リハ", ].forEach((w) => {
+    [
+      "プロジェクター",
+      "電源",
+      "有線LAN",
+      "機材",
+      "椅子",
+      "配布物",
+      "会場レイアウト",
+      "搬入",
+      "搬出",
+      "設営",
+      "解体",
+      "登壇リハ",
+      "事前リハ",
+    ].forEach((w) => {
       expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
       expect(件(rows, w)).toBe(0);
     });
   });
-it("交流と採用關連の語も默らん（第 559 回）", () => {
+  it("交流と採用關連の語も默らん（第 559 回）", () => {
     const rows = 品書();
-    ["名刺交換", "ネットワーキング", "情報交換", "採用", "求人", "リクルート", "企業説明", "産学交流", "連携提案", ].forEach((w) => {
+    [
+      "名刺交換",
+      "ネットワーキング",
+      "情報交換",
+      "採用",
+      "求人",
+      "リクルート",
+      "企業説明",
+      "産学交流",
+      "連携提案",
+    ].forEach((w) => {
       expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
       expect(件(rows, w)).toBe(0);
     });
   });
-it("發表の順と時間の語も默らん（第 561 回）", () => {
+  it("發表の順と時間の語も默らん（第 561 回）", () => {
     const rows = 品書();
-    ["発表順", "セッション順", "登壇時間", ].forEach((w) => {
+    ["発表順", "セッション順", "登壇時間"].forEach((w) => {
       expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
       expect(件(rows, w)).toBe(0);
     });
   });
-it("採否の照會と登錄の變更、金の明細の語も默らん（第 564 回）", () => {
+  it("採否の照會と登錄の變更、金の明細の語も默らん（第 564 回）", () => {
     const rows = 品書();
-    ["採否の照会", "採択証明", "掲載証明", "登録内容の変更", "口座情報", "名義変更", "明細書", ].forEach((w) => {
+    [
+      "採否の照会",
+      "採択証明",
+      "掲載証明",
+      "登録内容の変更",
+      "口座情報",
+      "名義変更",
+      "明細書",
+    ].forEach((w) => {
       expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
       expect(件(rows, w)).toBe(0);
     });
   });
-it("會員に關する語も默らん（第 565 回）", () => {
+  it("會員に關する語も默らん（第 565 回）", () => {
     const rows = 品書();
-    ["個人会員", "法人会員", "会員費", "入会手続", "退会", "会員番号", "会員証", "二重会員", "会員種別の変更", "非会員参加", "会員以外", ].forEach((w) => {
+    [
+      "個人会員",
+      "法人会員",
+      "会員費",
+      "入会手続",
+      "退会",
+      "会員番号",
+      "会員証",
+      "二重会員",
+      "会員種別の変更",
+      "非会員参加",
+      "会員以外",
+    ].forEach((w) => {
       expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
       expect(件(rows, w)).toBe(0);
     });
   });
-it("集録の類と配信の語も默らん（第 567 回）", () => {
+  it("集録の類と配信の語も默らん（第 567 回）", () => {
     const rows = 品書();
-    ["予稿集", "プログラム集", "講演集録", "抄録集", "プロシーディングス購読", "生配信", "アーカイブ配信", "見逃し配信", "後日視聴", ].forEach((w) => {
+    [
+      "予稿集",
+      "プログラム集",
+      "講演集録",
+      "抄録集",
+      "プロシーディングス購読",
+      "生配信",
+      "アーカイブ配信",
+      "見逃し配信",
+      "後日視聴",
+    ].forEach((w) => {
       expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
       expect(件(rows, w)).toBe(0);
     });
   });
-it("證明と郵送の語も默らん（第 568 回）", () => {
+  it("證明と郵送の語も默らん（第 568 回）", () => {
     const rows = 品書();
-    ["在學証明", "在籍証明", "指導教員", "業績", "研究実績", "発表実績", "簡易書留", "書留", "消印", ].forEach((w) => {
+    [
+      "在學証明",
+      "在籍証明",
+      "指導教員",
+      "業績",
+      "研究実績",
+      "発表実績",
+      "簡易書留",
+      "書留",
+      "消印",
+    ].forEach((w) => {
       expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
       expect(件(rows, w)).toBe(0);
     });
   });
-it("日帰りと宿の打ち方も默らん（第 569 回）", () => {
+  it("日帰りと宿の打ち方も默らん（第 569 回）", () => {
     const rows = 品書();
-    ["宿泊無し", "日帰り", "近場", ].forEach((w) => {
+    ["宿泊無し", "日帰り", "近場"].forEach((w) => {
       expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
       expect(件(rows, w)).toBe(0);
     });
   });
-it("參加の形の語は同じ導きを受ける（第 570 回）", () => {
+  it("參加の形の語は同じ導きを受ける（第 570 回）", () => {
     const rows = 品書();
     ["部分参加", "対面参加", "オフライン参加"].forEach((w) => {
       const 案内 = Recommender.uiWordNoteJa(w);
@@ -511,30 +586,63 @@ it("參加の形の語は同じ導きを受ける（第 570 回）", () => {
       expect(件(rows, w), `"${w}" は行を持つので彈くべき語だつた`).toBe(0);
     });
   });
-it("學會の會務の語も默らん（第 571 回）", () => {
+  it("學會の會務の語も默らん（第 571 回）", () => {
     const rows = 品書();
-    ["総会", "理事会", "支部", "地域支部", "幹事", "役員の選出", "投票", "電子投票", "委任状", "議事録", ].forEach((w) => {
+    [
+      "総会",
+      "理事会",
+      "支部",
+      "地域支部",
+      "幹事",
+      "役員の選出",
+      "投票",
+      "電子投票",
+      "委任状",
+      "議事録",
+    ].forEach((w) => {
       expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
       expect(件(rows, w)).toBe(0);
     });
   });
-it("出版倫理と別刷りの語も默らん（第 573 回）", () => {
+  it("出版倫理と別刷りの語も默らん（第 573 回）", () => {
     const rows = 品書();
-    ["リジェクト", "別投稿", "転載", "二重投稿", "自己援用", "プレプリント", "arXiv投稿", "出版倫理", "利益相反", ].forEach((w) => {
+    [
+      "リジェクト",
+      "別投稿",
+      "転載",
+      "二重投稿",
+      "自己援用",
+      "プレプリント",
+      "arXiv投稿",
+      "出版倫理",
+      "利益相反",
+    ].forEach((w) => {
       expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
       expect(件(rows, w)).toBe(0);
     });
   });
-it("旅と送金の語も默らん（第 574 回）", () => {
+  it("旅と送金の語も默らん（第 574 回）", () => {
     const rows = 品書();
-    ["査証", "パスポート", "在外参加", "時差", "送金", "外貨", "源泉徴収", "個人番号", ].forEach((w) => {
-      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
-      expect(件(rows, w)).toBe(0);
-    });
+    ["査証", "パスポート", "在外参加", "時差", "送金", "外貨", "源泉徴収", "個人番号"].forEach(
+      (w) => {
+        expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+        expect(件(rows, w)).toBe(0);
+      },
+    );
   });
-it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
+  it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
     const rows = 品書();
-    ["撮影", "写真撮影", "報道", "取材", "記者", "プレス", "USBメモリ", "前日入り", "後片付け", ].forEach((w) => {
+    [
+      "撮影",
+      "写真撮影",
+      "報道",
+      "取材",
+      "記者",
+      "プレス",
+      "USBメモリ",
+      "前日入り",
+      "後片付け",
+    ].forEach((w) => {
       expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
       expect(件(rows, w)).toBe(0);
     });
@@ -555,28 +663,32 @@ it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
   });
   it("參加重金の減免と助成の語も默らん（第 578 回）", () => {
     const rows = 品書();
-    ["減免", "免除", "助成", "出張支援", "若手支援", ].forEach((w) => {
+    ["減免", "免除", "助成", "出張支援", "若手支援"].forEach((w) => {
       expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
       expect(件(rows, w)).toBe(0);
     });
   });
   it("發表の言語に關する語も默らん（第 579 回）", () => {
     const rows = 品書();
-    ["日本語発表", "英語必須", "発音", "翻訳サービス", "英語支援", "筆談", ].forEach((w) => {
+    ["日本語発表", "英語必須", "発音", "翻訳サービス", "英語支援", "筆談"].forEach((w) => {
       expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
       expect(件(rows, w)).toBe(0);
     });
   });
   it("事後の手続きと禮儀の語も默らん（第 580 回）", () => {
     const rows = 品書();
-    ["精算", "決算", "報告書", "お礼状", "謝辞", ].forEach((w) => {
+    ["精算", "決算", "報告書", "お礼状", "謝辞"].forEach((w) => {
       expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
       expect(件(rows, w)).toBe(0);
     });
   });
   it("引率と介添の語も默らん（第 581 回）", () => {
     const rows = 品書();
-    [["引率", "募集対象"], ["同行者", "募集対象"], ["介添", "会場の中と外"]].forEach(([w, 語]) => {
+    [
+      ["引率", "募集対象"],
+      ["同行者", "募集対象"],
+      ["介添", "会場の中と外"],
+    ].forEach(([w, 語]) => {
       const 案内 = Recommender.uiWordNoteJa(w);
       expect(案内.length).toBeGreaterThan(0);
       expect(案内).toContain(語);
@@ -585,7 +697,7 @@ it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
   });
   it("立場の名前の語も默らん（第 582 回）", () => {
     const rows = 品書();
-    ["聴講生", "研究生", "科目等履修生", "ポスドク", "技術職員", "研究員", ].forEach((w) => {
+    ["聴講生", "研究生", "科目等履修生", "ポスドク", "技術職員", "研究員"].forEach((w) => {
       const 案内 = Recommender.uiWordNoteJa(w);
       expect(案内.length).toBeGreaterThan(0);
       expect(案内).toContain("募集対象");
@@ -597,7 +709,7 @@ it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
   });
   it("登壇の形と記錄の配信の語も默らん（第 584 回）", () => {
     const rows = 品書();
-    ["パネリスト登壇", "後日配信", "記錄視聴", "ポスター発表時間", ].forEach((w) => {
+    ["パネリスト登壇", "後日配信", "記錄視聴", "ポスター発表時間"].forEach((w) => {
       const 案内 = Recommender.uiWordNoteJa(w);
       expect(案内.length).toBeGreaterThan(0);
       expect(案内).toContain("欄の名前ではありません");
@@ -615,7 +727,7 @@ it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
   });
   it("交歓と懇親の群が出來た（第 586 回）", () => {
     const rows = 品書();
-    ["二次会", "ツアー", "交歓", "親睦", "レセプション", "観光地", ].forEach((w) => {
+    ["二次会", "ツアー", "交歓", "親睦", "レセプション", "観光地"].forEach((w) => {
       const 案内 = Recommender.uiWordNoteJa(w);
       expect(案内.length).toBeGreaterThan(0);
       expect(案内).toContain("交歓の段取り");
@@ -627,7 +739,7 @@ it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
   });
   it("所屬先で決まる話と會場の機材の語が出來た（第 587 回）", () => {
     const rows = 品書();
-    ["単位認定", "修了要件", "博士号の要件", "出席扱い", "学務", "進級", ].forEach((w) => {
+    ["単位認定", "修了要件", "博士号の要件", "出席扱い", "学務", "進級"].forEach((w) => {
       const 案内 = Recommender.uiWordNoteJa(w);
       expect(案内.length).toBeGreaterThan(0);
       expect(案内).toContain("所属の大学・研究科の事務");
@@ -641,5 +753,17 @@ it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
     /* 隣りの語の案内を奪つて居らん事（第 543 回）。 */
     expect(Recommender.uiWordNoteJa("単位互換")).toContain("欄の名前ではありません");
     expect(Recommender.uiWordNoteJa("出張届")).toContain("欄の名前ではありません");
+  });
+  it("公式ページの繋ぎ先を尋ねる打ち方を行が持つと書く（第 588 回）", () => {
+    const rows = 品書();
+    ["公式ページ", "公式サイト", "URL", "url", "ホームページ"].forEach((w) => {
+      const 案内 = Recommender.uiWordNoteJa(w);
+      expect(案内.length).toBeGreaterThan(0);
+      expect(案内).toContain("公式サイトを開く");
+      /* 噓にならんと「持って居らん」と書かんで在る（持つつて實測 – 第 505 回・第 519 回）。 */
+      expect(案内.includes("持って居らん")).toBe(false);
+      expect(件(rows, w)).toBe(0);
+    });
+    expect(Recommender.uiWordNoteJa("リンク")).not.toContain("公式サイトを開く");
   });
 });
