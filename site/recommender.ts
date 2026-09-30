@@ -2651,6 +2651,36 @@ const Recommender = (() => {
     return best;
   }
 
+  /** 欄の名前が**接尾辭**に成つた連結形（`関西の会場` `東京の会場`）を受ける（第 608 回）。
+   * 上の接頭辭の道（第 508 回）の裏側 – 日本語は「値 + の + 欄の名前」と言い返すのが自然で、
+   * 實測（2026-08-09 生成の実ビルド 868 行）では `関西の会場` `東京の会場` `会場へのアクセス`
+   * `締切場所` のやうに**打ち方の末尾に 欄の名前が來る形**が 0 件で默つて居た（其の名前單體では
+   * 第 507 回の斷りが出る）。門は上のと同じ二つ – ①其の名前の前の部（値の方）が二文字以上、
+   * ②**其の部だけで行が出る**。門②が要る – `学生登録の締切` のやうに、前が値で無い打ち方に
+   * 「欄の名前ですね」と説くのは的を外れる（實測 – `学生登録` は 0 行なので彈かれる・
+   * `関西` は 6 行なので受ける）。此の道は**行の數を変へん**（案内だけ – 打ち方の割りは觸つて
+   * 居らん – 第 362 回）。 */
+  function columnGluedTailEntryJa(
+    query: unknown,
+    値が当たるか: (語: string) => boolean,
+  ): [string, string] | null {
+    const 元 = String(query == null ? "" : query).trim();
+    const 折 = 元.toLowerCase();
+    let best: [string, string] | null = null;
+    for (const [word, column] of COLUMN_QUERY_WORDS_JA) {
+      const 語 = word.toLowerCase();
+      if (語.length < 2 || !折.endsWith(語)) continue;
+      const 前 = 元
+        .slice(0, 元.length - word.length)
+        .replace(/の$/, "")
+        .trim();
+      if (前.length < 2) continue;
+      if (!値が当たるか(前)) continue;
+      if (!best || word.length > best[0].length) best = [word, column];
+    }
+    return best;
+  }
+
   function columnQueryEntry(
     query: unknown,
     値が当たるか?: (語: string) => boolean,
@@ -2733,7 +2763,12 @@ const Recommender = (() => {
     if (語々.length < 2) {
       /* separator の無い繋がれた形（`分野セキュリティ`）はここで切る – 上の門（其れだけで行が
        * 出る残り）を通る時だけ受ける（第 508 回）。*/
-      return 値が当たるか ? columnGluedEntryJa(query, 値が当たるか) : null;
+      if (値が当たるか) {
+        const 頭 = columnGluedEntryJa(query, 値が当たるか);
+        if (頭) return 頭;
+        return columnGluedTailEntryJa(query, 値が当たるか);
+      }
+      return null;
     }
     let best: [string, string] | null = null;
     for (const 語 of 語々) {
@@ -2743,7 +2778,12 @@ const Recommender = (() => {
     /* separator の無い繋がれた形（`分野セキュリティ`）は、其の語その物で行が出る時に限つて
      * 受ける（第 508 回）。問答が渡されなければ舊の侭默る（畫面の道だけが渡す）。*/
     if (best) return best;
-    return 値が当たるか ? columnGluedEntryJa(query, 値が当たるか) : null;
+    if (値が当たるか) {
+      const 頭 = columnGluedEntryJa(query, 値が当たるか);
+      if (頭) return 頭;
+      return columnGluedTailEntryJa(query, 値が当たるか);
+    }
+    return null;
   }
 
   /** 検索語が欄の名前のとき、打たれた語を返す（読み上げの分岐が使う）。 */
@@ -5004,6 +5044,30 @@ const Recommender = (() => {
       const 語 = 語尾の案内[1];
       for (const group of UI_WORD_GROUPS_JA) {
         if (group.words.indexOf(語) >= 0) return { group, word: 語 };
+      }
+    }
+    /* 案内の語が**連体の「の」の後**に來る形（第 608 回）。`uiWordContain` は案内の語が打ち方の**頭**に
+     * 來る物だけ見る為、`発表の持ち時間` `参加登録者の名簿` `旅費の補助` のやうに「別の語 + の +
+     * 案内の語」と打たれた形が默つて居た（實測 – 七十一文の打ち方の表で其の二文が 0 件・無言）。
+     * 「の」で繋がれた同じ話は頭の形では受けて居る（第 513 回）ので、其の**裏側**を通すだけ –
+     * 導く斷りは群の物が其侭なので、噓の説明は增へん。見るのは「の」の後が案内の語に**完全一致**する
+     * 時だけ（語尾の白一覧は頭の道が持つので、ここでは見ん）。前の語が其の方の案内の語を持つ時は讓る
+     * – 二つの群の斷りを乘せない為で、實測 `査読期間の締切` は前の方の『査読期間』の斷りだけ出る
+     * （後ろの語が群の語の時だけ讓る – 第 581 回）。 */
+    const 連体 = /^(.{2,}?)の(.+)$/.exec(q);
+    if (連体) {
+      const 前 = 連体[1];
+      const 後 = 連体[2];
+      const 前の語か = UI_WORD_GROUPS_JA.some((group) =>
+        group.words.some((候補) => 候補.toLowerCase() === 前),
+      );
+      if (!前の語か) {
+        let best: { group: UIWordGroup; word: string } | null = null;
+        for (const group of UI_WORD_GROUPS_JA) {
+          const word = group.words.find((候補) => 候補.toLowerCase() === 後);
+          if (word && (!best || word.length > best.word.length)) best = { group, word };
+        }
+        if (best) return best;
       }
     }
     /* 語を並べて打った人（第 354 回）。2026-10-12 実測（実ビルドの品書 872 行）: 空格で
