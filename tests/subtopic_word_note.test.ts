@@ -530,4 +530,11 @@ it("旅と送金の語も默らん（第 574 回）", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
+    const rows = 品書();
+    ["撮影", "写真撮影", "報道", "取材", "記者", "プレス", "USBメモリ", "前日入り", "後片付け", ].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
