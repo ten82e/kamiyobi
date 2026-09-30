@@ -500,4 +500,13 @@ it("日帰りと宿の打ち方も默らん（第 569 回）", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+it("參加の形の語は同じ導きを受ける（第 570 回）", () => {
+    const rows = 品書();
+    ["部分参加", "対面参加", "オフライン参加"].forEach((w) => {
+      const 案内 = Recommender.uiWordNoteJa(w);
+      expect(案内.length, `"${w}" が無言に逆戻りした`).toBeGreaterThan(0);
+      expect(案内).toContain("オンライン参加可");
+      expect(件(rows, w), `"${w}" は行を持つので彈くべき語だつた`).toBe(0);
+    });
+  });
 });
