@@ -135,11 +135,37 @@ describe("行の表記", () => {
   });
 });
 
+describe("舊字体で打つ人（第 589 回）", () => {
+  it("新字体で打った人と同じ行集合になる", () => {
+    // 實測（2026-11-15 – 実ビルドの品書 700 件）: 舊字体の打ち方は 0 件の侭畫面无言だつた。
+    // 収録の文字列に舊字体は進んで居らんので、折込は打つ人の方だけ到新字体に寄せる。
+    for (const [舊, 新] of [
+      ["學會", "学会"],
+      ["發表", "発表"],
+      ["處理", "処理"],
+      ["登錄", "登録"],
+      ["登錄", "登録"],
+      ["錄", "録"],
+      ["檢查", "検査"],
+    ]) {
+      expect(対称差(列(舊), 列(新)), `${舊} と ${新}`).toBe(0);
+    }
+    // 寄せが 실제로行を増やして居る事（0 對 0 の空振りで通さん）。
+    expect(列("學會").size).toBeGreaterThan(0);
+    expect(列("處理").size).toBeGreaterThan(0);
+    expect(列("登錄").size).toBeGreaterThan(0);
+    expect(列("錄").size).toBeGreaterThan(0);
+  });
+});
+
 describe("成果物", () => {
   it("折込の表に『迄』が入つている", () => {
     const 物 = readFileSync(join(builtSite(), "recommender.js"), "utf8");
     expect(物.match(/迄: "まで",/g) ?? []).toHaveLength(1);
-    expect(物.match(/KANJI_VARIANT_FOLD_CHARS = \/\[〆迄\]\/g;/g) ?? []).toHaveLength(1);
+    // 第 589 回で舊字体を十五字增やしたので、文字種の列は改行付きの形に變はつた。
+    expect(物).toMatch(
+      /KANJI_VARIANT_FOLD_CHARS =\s*\n?\s*\/\[〆迄會學發檢對經應圖實單處數讓歸錄\]\/g;/,
+    );
     /* 略字の折込は其の侭残る。 */
     expect(物.match(/〆: "締",/g) ?? []).toHaveLength(1);
   });
