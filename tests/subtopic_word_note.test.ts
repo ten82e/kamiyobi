@@ -784,3 +784,56 @@ describe("細目の主題と募集対象の斷り", () => {
     expect(件(rows, "特集号")).toBeGreaterThan(0);
   });
 });
+
+describe("稿種・審查の方式・費用の内譯・會場の手配の打ち方（第 598 回）", () => {
+  const rows = 品書();
+  /** 群の斷りが其の筋に屆いて居るかの目印（實測で 0 件・無言だつた打ち方 – SPEC §8）。 */
+  const 見附 = [
+    ["原著論文", "種別"],
+    ["短報", "種別"],
+    ["投稿論文", "種別"],
+    ["査読付き", "審査の方式"],
+    ["査読なし", "審査の方式"],
+    ["匿名化", "審査の方式"],
+    ["修正稿", "この表が持って"],
+    ["所属", "著者"],
+    ["ホテル手配", "会場の中と外"],
+    ["宿泊手配", "会場の中と外"],
+    ["学生参加費", "費用の欄"],
+    ["非会員", "費用の欄"],
+    ["非会員価格", "費用の欄"],
+    ["会員価格", "費用の欄"],
+    ["採点", "数の統計"],
+    ["発表形式", "この表が持って"],
+    ["口頭", "この表が持って"],
+    ["口頭発表", "この表が持って"],
+    ["執筆ガイドライン", "原稿の書式"],
+  ] as const;
+
+  it("打ち方を名前で呼び、其の筋の斷りに屆く", () => {
+    for (const [語, 目印] of 見附) {
+      const 群の注 = Recommender.uiWordNoteJa(語);
+      expect(群の注.length, 語).toBeGreaterThan(0);
+      expect(群の注, 語).toContain(語);
+      expect(群の注, `${語} の宛先`).toContain(目印);
+    }
+  });
+
+  it("行を持つ語を敎へて居らん事（第 337 回）", () => {
+    for (const 語 of ["ポスター", "特集号", "論文誌", "研究会", "journal"]) {
+      expect(件(rows, 語), 語).toBeGreaterThan(0);
+      expect(Recommender.uiWordNoteJa(語), `${語} に行が立つのに斷つて居る`).toBe("");
+    }
+  });
+
+  it("隣の語の宛先を奪つて居らん事（第 581 回）", () => {
+    /* 費用・著者・刊行物・書式の群は元からの斷りの文を持つ – 語を增やしても其のまま。 */
+    expect(Recommender.uiWordNoteJa("参加費")).toContain("費用の欄はありません");
+    expect(Recommender.uiWordNoteJa("筆頭著者")).toContain("著者");
+    expect(Recommender.uiWordNoteJa("学会誌")).toContain("種別");
+    expect(Recommender.uiWordNoteJa("ページ数")).toContain("原稿の書式");
+    expect(Recommender.uiWordNoteJa("ダブルブラインド")).toContain("審査の方式");
+    expect(件(rows, "所属")).toBe(0);
+    expect(件(rows, "採点")).toBe(0);
+  });
+});

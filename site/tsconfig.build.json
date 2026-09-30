@@ -9,5 +9,12 @@
     "outDir": "../.site-build",
     "rootDir": "."
   },
-  "include": ["app.ts", "recommender.ts", "place-aliases.ts", "recommendation-core.ts", "publish.ts", "runtime.d.ts"]
+  "include": [
+    "app.ts",
+    "recommender.ts",
+    "place-aliases.ts",
+    "recommendation-core.ts",
+    "publish.ts",
+    "runtime.d.ts"
+  ]
 }
