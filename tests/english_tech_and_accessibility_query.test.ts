@@ -120,4 +120,46 @@ describe("英語の機械語とバリアフリー", () => {
       expect(件(rows, 語), `寄せ先の "${語}" が品書に無い`).toBeGreaterThan(0);
     });
   });
+
+  describe("聞こえ方・見え方と配膳の申し出、當日の進行の打ち方（第 597 回）", () => {
+    // 同じ檔案の module 級の 品書()/件() を使う（書き寫すと正本とズレる – 第 244 回）。
+
+    it("聽覚・視覚・食事の打ち方がアクセシビリティの斷りを受ける", () => {
+      const rows = 品書();
+      for (const 語 of ["聴覚障害", "視覚障害", "食物アレルギー", "アレルギー", "ハラル"]) {
+        const 群の注 = Recommender.uiWordNoteJa(語);
+        expect(群の注.length, 語).toBeGreaterThan(0);
+        expect(群の注, 語).toContain(語);
+        expect(群の注, 語).toContain("公式ページ");
+        expect(件(rows, 語), `${語} は行を持つのに敎へて居らん事（第 337 回）`).toBe(0);
+      }
+      /* 斷りの文に配膳の話を增やした事（噓を書かん – 第 519 回）。 */
+      expect(Recommender.uiWordNoteJa("車椅子")).toContain("食事の申し出");
+    });
+
+    it("當日の進行と名簿の打ち方が運營と手続きの斷りを受ける", () => {
+      const rows = 品書();
+      for (const 語 of ["途中参加", "途中退出", "遅刻", "名簿", "参加者一覧", "スライド公開"]) {
+        const 群の注 = Recommender.uiWordNoteJa(語);
+        expect(群の注.length, 語).toBeGreaterThan(0);
+        expect(群の注, 語).toContain("運営と手続き");
+        expect(件(rows, 語), 語).toBe(0);
+      }
+      expect(Recommender.uiWordNoteJa("録画配信")).toContain("運営と手続き");
+      /* 「服装」を待つて居た群（會場の中と外）に「ドレスコード」も據へた – 手続きより會場の話（第 597 回）。 */
+      for (const 語 of ["ドレスコード", "服装"]) {
+        const 注 = Recommender.uiWordNoteJa(語);
+        expect(注, 語).toContain("会場の中と外");
+        expect(件(品書(), 語), `${語} は行を持つのに敎へて居らん事（第 337 回）`).toBe(0);
+      }
+    });
+
+    it("枠の打ち方が數の統計の斷りを受ける", () => {
+      for (const 語 of ["募集枠", "枠数"]) {
+        expect(Recommender.uiWordNoteJa(語), 語).toContain("数の統計");
+      }
+      /* 同じ語を二つの群に載せたら斷りの文が先取りされる（第 543 回） – 定員は其の群の侭。 */
+      expect(Recommender.uiWordNoteJa("定員")).toContain("定員");
+    });
+  });
 });
