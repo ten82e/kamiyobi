@@ -523,4 +523,11 @@ it("出版倫理と別刷りの語も默らん（第 573 回）", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+it("旅と送金の語も默らん（第 574 回）", () => {
+    const rows = 品書();
+    ["査証", "パスポート", "在外参加", "時差", "送金", "外貨", "源泉徴収", "個人番号", ].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
