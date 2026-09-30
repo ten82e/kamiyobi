@@ -1043,3 +1043,53 @@ describe("言い回しの後に名詞を続ける打ち方（第 602 回）", ()
     expect(Recommender.uiWordNoteJa("いつ開催")).toBe("");
   });
 });
+
+describe("締切が近い言い方と並びの打ち方の續き（第 604 回）", () => {
+  const rows = 品書();
+  const 見附 = [
+    ["締切が迫っている", "では絞りません"],
+    ["締切が迫る", "では絞りません"],
+    ["最近締切", "では絞りません"],
+    ["締切が近い会議", "では絞りません"],
+    ["締切が近づいている", "では絞りません"],
+    ["並びかえ", "列の見出し"],
+    ["並びかえる", "列の見出し"],
+    ["近い順に", "列の見出し"],
+    ["早い順に", "列の見出し"],
+    ["遅い順に", "列の見出し"],
+    ["新しい順に", "列の見出し"],
+    ["古い順に", "列の見出し"],
+    ["順に表示", "列の見出し"],
+  ] as const;
+
+  it("續きの打ち方も同じ筋の斷りに屆く", () => {
+    for (const [語, 目印] of 見附) {
+      const 注 = Recommender.uiWordNoteJa(語);
+      expect(注.length, 語).toBeGreaterThan(0);
+      expect(注, 語).toContain(語);
+      expect(注, `${語} の宛先`).toContain(目印);
+    }
+  });
+
+  it("幅を言つた打ち方は斷らん（第 484 回）・曖昧な言い方だけ斷つ", () => {
+    /* 畫面のボタンと通る語は在る – 「今週の締切」「来週の締切」は其の方で絞れるので斷らんで居る。 */
+    for (const 語 of ["今週の締切", "来週の締切", "明日の締切"]) {
+      expect(Recommender.uiWordNoteJa(語), 語).toBe("");
+    }
+    /* 斷りの文は通る打ち方を名指す – 噓の道を書かん為に見出しの語をそのまま載せる。 */
+    const 注 = Recommender.uiWordNoteJa("最近締切");
+    expect(注).toContain("今週");
+    expect(注).toContain("来週");
+  });
+
+  it("增やした語は導きの群に一度ずつ並ぶ（第 543 回）", () => {
+    const 源 = readFileSync("site/recommender.ts", "utf8");
+    const i = 源.indexOf("const UI_WORD_GROUPS_JA");
+    const 表 = 源.slice(i, 源.indexOf("\n    },\n  ];\n", i));
+    for (const [語] of 見附) {
+      const 數 = 表.split('"' + 語 + '"').length - 1;
+      expect(數, `${語} が導きの群に ${數} 回並んで居る`).toBe(1);
+    }
+    expect(rows.length).toBeGreaterThan(0);
+  });
+});
