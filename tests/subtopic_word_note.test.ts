@@ -595,4 +595,13 @@ it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
     expect(教務案).toContain("欄の名前ではありません");
     expect(件(rows, "教務")).toBe(0);
   });
+  it("登壇の形と記錄の配信の語も默らん（第 584 回）", () => {
+    const rows = 品書();
+    ["パネリスト登壇", "後日配信", "記錄視聴", "ポスター発表時間", ].forEach((w) => {
+      const 案内 = Recommender.uiWordNoteJa(w);
+      expect(案内.length).toBeGreaterThan(0);
+      expect(案内).toContain("欄の名前ではありません");
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
