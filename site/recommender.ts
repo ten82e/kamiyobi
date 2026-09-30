@@ -3184,6 +3184,7 @@ const Recommender = (() => {
       /* 弹いた語 – `論文誌`（實測 5 件）と `ジャーナル`（同 1 件）は行を持つので混ぜられん
        * （混ぜると「出て居ません」が噓になる – 第 337 回）。*/
       words: [
+        "掲載",
         "掲載誌",
 
         "ISBN",
@@ -4668,6 +4669,15 @@ const Recommender = (() => {
    * `未確定` が `確定` に拾われた）。語の後に続く物が下の言い回しのときだけ寄せる。 */
   const UI_WORD_TAILS_JA = [
     "したい",
+    "される",
+    "されます",
+    "されて",
+    "されました",
+    "されています",
+    "しています",
+    "しました",
+    "されますか",
+    "されるの",
     "か",
     "ますか",
     "ですか",
@@ -5054,17 +5064,27 @@ const Recommender = (() => {
      * 時だけ（語尾の白一覧は頭の道が持つので、ここでは見ん）。前の語が其の方の案内の語を持つ時は讓る
      * – 二つの群の斷りを乘せない為で、實測 `査読期間の締切` は前の方の『査読期間』の斷りだけ出る
      * （後ろの語が群の語の時だけ讓る – 第 581 回）。 */
-    const 連体 = /^(.{2,}?)の(.+)$/.exec(q);
+    /* 繋ぐ語は「の」限りでは無い – 訪ねは**助詞で繋がる**（`論文が掲載` `動画は録画` `名前は記載`）。
+     * ただし助詞を廣げると其の前の部が**其の方の群の語**である形を奪ふので、讓りの門（上）を
+     * 其侭置く（實測 – `査読期間の締切` は前の方の斷りだけ）。*/
+    const 連体 = /^(.{2,}?)(?:の|が|は|を|に|で|へ)(.+)$/.exec(q);
     if (連体) {
       const 前 = 連体[1];
       const 後 = 連体[2];
-      const 前の語か = UI_WORD_GROUPS_JA.some((group) =>
-        group.words.some((候補) => 候補.toLowerCase() === 前),
-      );
-      if (!前の語か) {
+      /* 讓る条件是「前の語が群の語」では無かった – 實測で `論文が掲載される` は頭の道が
+       * 受けれん（残り `が掲載される` が語尾の一覧に無い）のに讓つて默つた。そこで
+       * **頭の道（uiWordContain）が實際に受ける時だけ讓る**（第 581 回の意圖 – 斷りの二重乘せを
+       * 防ぎ、受けれる方には讓る）。*/
+      if (!uiWordContain(q)) {
         let best: { group: UIWordGroup; word: string } | null = null;
         for (const group of UI_WORD_GROUPS_JA) {
-          const word = group.words.find((候補) => 候補.toLowerCase() === 後);
+          /* 「の」の後が其侭案内の語か、**案内の語 + 既知の語尾**（第 505 回・第 607 回）か。
+           * 訪ねは動詞で終る（`論文が掲載される`）ので、語尾を殘した儘だと後ろの語が並ばん。*/
+          const word = group.words.find((候補) => {
+            if (候補.toLowerCase() === 後) return true;
+            const 低 = 候補.toLowerCase();
+            return 後.length > 低.length && 後.startsWith(低) && uiWordTailOk(後.slice(低.length));
+          });
           if (word && (!best || word.length > best.word.length)) best = { group, word };
         }
         if (best) return best;
