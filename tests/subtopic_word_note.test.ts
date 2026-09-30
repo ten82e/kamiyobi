@@ -1093,3 +1093,49 @@ describe("締切が近い言い方と並びの打ち方の續き（第 604 回�
     expect(rows.length).toBeGreaterThan(0);
   });
 });
+
+describe("前もって・いつまでの幅と審査の期間の續き（第 606 回）", () => {
+  const rows = 品書();
+  const 見附 = [
+    ["前もって", "曖昧な幅"],
+    ["前もってどれくらい", "曖昧な幅"],
+    ["前もって何日", "曖昧な幅"],
+    ["締切はいつまで", "曖昧な幅"],
+    ["審査期間は何日", "期間の欄"],
+    ["査読はいつからいつまで", "期間の欄"],
+    ["投稿はいつからいつまで", "期間の欄"],
+  ] as const;
+
+  it("續きの打ち方も同じ筋の斷りに屆く", () => {
+    for (const [語, 目印] of 見附) {
+      const 注 = Recommender.uiWordNoteJa(語);
+      expect(注.length, 語).toBeGreaterThan(0);
+      expect(注, 語).toContain(語);
+      expect(注, `${語} の宛先`).toContain(目印);
+      expect(件(rows, 語), `"${語}" は行が出る打ち方を斷つた`).toBe(0);
+    }
+  });
+
+  it("斷りは通る道を名指す（噓の道を書かん – 第 337 回）", () => {
+    /* 曖昧な幅を斷る文は、畫面に在る『締切まで』の欄と四つの幅を名指して居る（實在のボタン）。 */
+    const 幅 = Recommender.uiWordNoteJa("前もって");
+    for (const 道 of ["7 日以内", "30 日以内", "90 日以内", "180 日以内"]) {
+      expect(幅, `幅の斷りが ${道} を名指して居らん`).toContain(道);
+    }
+    /* 期間の欄を斷る文は、持つて居る段階の締切（審査の段の語）を行數添へて示す。 */
+    const 期 = Recommender.uiWordNoteJa("査読はいつからいつまで");
+    expect(期).toContain("締切");
+  });
+
+  it("增やした語は導きの群に一度ずつ並ぶ（第 552 回・第 543 回）", () => {
+    const 源 = readFileSync("site/recommender.ts", "utf8");
+    const i = 源.indexOf("const UI_WORD_GROUPS_JA");
+    const 表 = 源.slice(i, 源.indexOf("\n    },\n  ];\n", i));
+    for (const [語] of 見附) {
+      expect(表.split('"' + 語 + '"').length - 1, `${語} が導きの群に二度並んで居る`).toBe(1);
+    }
+    /* 他の打ち方を壞して居らん事 – 其の方の語の寄せと行の出は不變（第 581 回・第 587 回）。 */
+    expect(Recommender.queryTokenGroups("締切はいつまで", AT).length).toBeGreaterThan(0);
+    expect(rows.length).toBeGreaterThan(0);
+  });
+});
