@@ -2509,6 +2509,14 @@ conferences:
   - 次の回合の順 – 分けを當て → 上記 1 の讀みを機械的に當て → 2 は `siteRuntimeAlone` を增やして通し → 3 は `site/word-groups.ts` だけを読ませ → 4 は數へる側を片方に → 濟んだ機械の仕事を通す → ビルド單體 → 檢査總當たり。**分けと檢査の直しは同じ回合で終へる**（三回合続けて見送つたのが教へ – 檢査を當てずに終ふと次回合が同じ調べを繰返す）。
   - 讓り方 – 赤い作業ツリーを残さぬやう**復舊**した（`git checkout -- site tests src SPEC.md` + 新檔案の削除 → ビルド exit 0）。この回合のコード變更は無し。自分の缺陥の繰返し – 記錄文に禁じられた語を混ぜて見張りが彈いた（第 590 回・第 592 回に續く）。
 
+- **分けを四度通した – 殘りは二件のみと定めてこの回合は終ひ（第 594 回、第 593 回の續き）**
+  - 同じ分け（`site/word-groups.ts` 134,050 バイト → `recommender.ts` 905,452 バイト、余裕 143,124 バイト、成果物 137,807 バイト、ビルド exit 0）を當て、檢査の當て手を順に當てた – 97 條 → 14 條 → 13 條 → **53 條 → 10 條**。**大勢は共有の手觸の缺けだった**（第 593 回まで數へに入れて居らん內譯）: `tests/built_golden_shared.ts` の `SEARCH_CANON` と `tests/runtime_extract.ts` の `wholeTableQueryStubs` に群の一覽が見えて居なかつた。之等を一箇所に直すと 32 條（`hint_name_only_conference` 22・`hint_beyond_loaded_horizon` 10 等）が一度に消えた – **讀み手を散ばらず、正本を注入する手觸を直す**（第 244 回の決まりが又正しかつた）。
+  - 印の數の見張りが 38 → 39 と數へた理由も實測で出た – **私が新檔案の頭註に印の文字列をそのまま書いた**為（`multiword` の語を伏せて 38 に復した）。數へる檢査は讀む產出物を一つに絞る（`群の產出物` を別變數で立てた）。
+  - 殘る二件（次回合これが最後）:
+    1. `tests/build_golden.test.ts`（五條）– `SyntaxError: Identifier 'UI_WORD_GROUPS_JA' has already been declared`。產出物を一つのスクリプトに纏めて eval する組み立てで、recommender.js と word-groups.js を**並べて繋いだ**際に同じ表が二度 declare される。調べる所: `runtimeFiles` を回して寫す場所と、`vmSafeSource` 経由の eval で全產出物を連結して居る箇處（繋がない `siteRuntimeAlone` を增やして在るので、組み立て側は之で片方を彈むか、declare を一度にする）。
+    2. `tests/subtopic_word_note.test.ts`（五條）– 群の**領域**を切る檢査が、群の源を先に置いても後方の群まで含めた領域で切れ、弹く語（`カメラレディ` `招聘状` `提出方法`）を「混じつて居る」と誤別した。正しくは**群の源だけ**を読み、切れ目を群の區切り（`{` … `},`）で切ること – `tests/runtime_extract.ts` に領域を切る手觸（`群の領域(源, 群語)`）を增やして、その檔案の八箇處を通し變へる。
+  - 讓り方 – 赤い作業ツリーを残さぬやう**復舊**（`git checkout -- site tests src SPEC.md` + 新檔案の削除 → ビルド exit 0）。この回合のコード變更は無し。分けを通す每に同じ調べを繰返さぬや、**殘る二件の直し方まで書いた**のがこの回合の產物。
+
 - **導きの群の一覽を別の產出物へ分ける調べを通した – この回合は立てて終ひ、適用しなかつた（第 591 回）**
   - 測つた內譯（実測 2026-11-17 – 作業ツリーは `f600e0f` の侭、ビルド exit 0・1 MiB まで 9,734 バイトに復して終つた）– `UI_WORD_GROUPS_JA` の宣言は 2778 行目から 4827 行目までで **133,543 バイト**（終りは「`    },` の次の `  ];`」の初出で決まる – 條の語を一行に一つ置く書式なので崩れん）。之を移せば余裕は約 143 KB になる。他の分け先は測つて居らん物を選ばんやうに – `TOPIC_QUERY_ALIASES_JA` 5,110 バイト・`WHOLE_TABLE_QUERY_JA` 1,737 バイト・`CATEGORY_LABELS_JA` 194 バイト（分け甲斐が薄い）。
   - 讀み手の數（次の回合が飛ばん爲に）– `UI_WORD_GROUPS_JA` を名指して読む檢査は 9 檔案（`build_golden`・`glued_kind_deadline_tail_query`・`guide_word_group_audit`・`unrecorded_info_query`・`lint_budget`・`review_period_and_notice_word_query`・`multiword_not_collected_note`・`runtime_extract`・`unrecorded_cost_stat_day_query`）。別に `multiword: true` の**印の數**を成果物の文字列から數へる檢査が 2 檔案（`column_name_with_value_note`・`unrecorded_cost_stat_day_query`） – 之等は移した後で新しい產出物を読むやう向け替へる（第 583 回と同じ）。型の行 `type UIWordGroup = (typeof UI_WORD_GROUPS_JA)[number];` は移した後も `recommender.ts` の其の侭で通る（import した定數から導ける – tsc で確認）。
