@@ -560,4 +560,11 @@ it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+  it("發表の言語に關する語も默らん（第 579 回）", () => {
+    const rows = 品書();
+    ["日本語発表", "英語必須", "発音", "翻訳サービス", "英語支援", "筆談", ].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
