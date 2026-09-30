@@ -567,4 +567,11 @@ it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
       expect(件(rows, w)).toBe(0);
     });
   });
+  it("事後の手続きと禮儀の語も默らん（第 580 回）", () => {
+    const rows = 品書();
+    ["精算", "決算", "報告書", "お礼状", "謝辞", ].forEach((w) => {
+      expect(Recommender.uiWordNoteJa(w).length).toBeGreaterThan(0);
+      expect(件(rows, w)).toBe(0);
+    });
+  });
 });
