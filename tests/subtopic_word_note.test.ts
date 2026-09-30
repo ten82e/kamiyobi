@@ -625,4 +625,21 @@ it("撮りと會場の裏方の語も默らん（第 575 回）", () => {
     /* 別の群が受け居る語を奪つて居らん事（第 543 回の接頭奪ひ）。 */
     expect(Recommender.uiWordNoteJa("懇親会")).toContain("欄の名前ではありません");
   });
+  it("所屬先で決まる話と會場の機材の語が出來た（第 587 回）", () => {
+    const rows = 品書();
+    ["単位認定", "修了要件", "博士号の要件", "出席扱い", "学務", "進級", ].forEach((w) => {
+      const 案内 = Recommender.uiWordNoteJa(w);
+      expect(案内.length).toBeGreaterThan(0);
+      expect(案内).toContain("所属の大学・研究科の事務");
+      expect(件(rows, w)).toBe(0);
+    });
+    ["Wi-Fi", "無線LAN"].forEach((w) => {
+      const 案内 = Recommender.uiWordNoteJa(w);
+      expect(案内).toContain("会場の中と外");
+      expect(件(rows, w)).toBe(0);
+    });
+    /* 隣りの語の案内を奪つて居らん事（第 543 回）。 */
+    expect(Recommender.uiWordNoteJa("単位互換")).toContain("欄の名前ではありません");
+    expect(Recommender.uiWordNoteJa("出張届")).toContain("欄の名前ではありません");
+  });
 });
