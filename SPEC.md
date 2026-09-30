@@ -2498,6 +2498,17 @@ conferences:
   - 私が踏んだ穴（同じ穴の繰り返し – 直す手を記錄）– ① `src/build.ts` の導出物の註で**文字列の繋ぎの ` +` を落としたり**（第 583 回と同じ穴を二度踏んだ）。-build.ts に註を增やしたら、その場で `node src/cli.ts build` を單體で一回通す（之で捕まる）。② 置換の錨の字下げを四つと數へて居て、實物は二つ（`grep -n` で先に見る）。③ `python3 -c` の式にバッククォートを入れてシェルが樣に扱つた（決まり – heredoc を使ふ）。
   - 讓り方 – 殘り回合數で赤い作業ツリーを残す事を避け、**復舊**した（`git checkout` + 新檔案の削除 → ビルド exit 0、檢査 282 ファイル 4,787 件すべて綠を實測）。この回合のコード變更は無し。
 
+- **分けをもう一度通した – 檢査の向け替へは形が四つ在ると分かつて終ひ、この回合も見送（第 593 回、第 592 回の續き）**
+  - 分け自体は又通つた – `site/word-groups.ts`（134,044 バイト）に群の一覽を移し、`recommender.ts` は 1,038,842 → 905,452 バイト（余裕 143,124 バイト）、成果物 `public/word-groups.js` 137,801 バイト・`recommender.js` 943,115 バイト。tsc・ビルド exit 0、搜しの動作と品書 155 問の默り 29 問は變はり無し。
+  - 檢査の當て方（實測で彈いた數の徑 – 97 條 → 14 條 → 13 條）。**讀みの形は四つ**有り、一纏めに當てると壞れる:
+    1. 成果物の**文字を探**す檢査（`readFileSync(join(builtSite(), "recommender.js"), "utf8")` – `"utf-8"` の綴りも在つた）→ 二つの產出物の繋ぎで可 ✓ 195 箇處を機械的に當てて 97 → 14 條に減つた。
+    2. 成果物から**機能を切り出す**檢査（`jsFunction(siteRuntime("recommender.js"), …)`）と**深等**で比べる檢査（`build_golden.test.ts:966`）→ 繋いだ文字を渡すと切り出しが隣の產出物へ走り、格の語を拾つたり等しなくなつたりした（實測 – `主要` を寄せの目と間違へた）。`tests/runtime_extract.ts` に **`siteRuntimeAlone`（繋がない読み方）** を增やして其處へ通すのが正しい。
+    3. **源の文字を切る**檢査（`readFileSync("site/recommender.ts", "utf8")` – `join(REPO_ROOT, "site", "recommender.ts")` の形も在る）→ recommender.ts の源に繋ぐと、群の境界を搜す切れ目が迷つた（實測で 3 條が新たに彈いた – `expected true to be false` の種の誤別）。**群の一覽は `site/word-groups.ts` の源だけ**を読ませる。
+    4. **印の數**を張る檢査（`multiword: true` の數 – 38 を張つて居る）→ 二つの產出物を繋ぐと 39 と數へた（同じ印が兩方に出た為）。數へる側は**片方だけ**読む。
+  - 殘る機械の仕事（濟んだ物）– `site/tsconfig.build.json` の `include`、`src/build.ts` の `SITE_RUNTIME_FILES` と導出物の註（**註の二行の間に ` +` を忘れん** – 第 583 回・第 592 回で二度踏んだ穴）、`tests/build_golden.test.ts` の `runtimeFiles` の列（2650 行）と一時目録へ產出物を寫す四箇處（4189・4252・4596・4919 行）、SPEC §2 の木（198 行の隣）と生成物の一覽（`place-aliases.js` の行の隣）。
+  - 次の回合の順 – 分けを當て → 上記 1 の讀みを機械的に當て → 2 は `siteRuntimeAlone` を增やして通し → 3 は `site/word-groups.ts` だけを読ませ → 4 は數へる側を片方に → 濟んだ機械の仕事を通す → ビルド單體 → 檢査總當たり。**分けと檢査の直しは同じ回合で終へる**（三回合続けて見送つたのが教へ – 檢査を當てずに終ふと次回合が同じ調べを繰返す）。
+  - 讓り方 – 赤い作業ツリーを残さぬやう**復舊**した（`git checkout -- site tests src SPEC.md` + 新檔案の削除 → ビルド exit 0）。この回合のコード變更は無し。自分の缺陥の繰返し – 記錄文に禁じられた語を混ぜて見張りが彈いた（第 590 回・第 592 回に續く）。
+
 - **導きの群の一覽を別の產出物へ分ける調べを通した – この回合は立てて終ひ、適用しなかつた（第 591 回）**
   - 測つた內譯（実測 2026-11-17 – 作業ツリーは `f600e0f` の侭、ビルド exit 0・1 MiB まで 9,734 バイトに復して終つた）– `UI_WORD_GROUPS_JA` の宣言は 2778 行目から 4827 行目までで **133,543 バイト**（終りは「`    },` の次の `  ];`」の初出で決まる – 條の語を一行に一つ置く書式なので崩れん）。之を移せば余裕は約 143 KB になる。他の分け先は測つて居らん物を選ばんやうに – `TOPIC_QUERY_ALIASES_JA` 5,110 バイト・`WHOLE_TABLE_QUERY_JA` 1,737 バイト・`CATEGORY_LABELS_JA` 194 バイト（分け甲斐が薄い）。
   - 讀み手の數（次の回合が飛ばん爲に）– `UI_WORD_GROUPS_JA` を名指して読む檢査は 9 檔案（`build_golden`・`glued_kind_deadline_tail_query`・`guide_word_group_audit`・`unrecorded_info_query`・`lint_budget`・`review_period_and_notice_word_query`・`multiword_not_collected_note`・`runtime_extract`・`unrecorded_cost_stat_day_query`）。別に `multiword: true` の**印の數**を成果物の文字列から數へる檢査が 2 檔案（`column_name_with_value_note`・`unrecorded_cost_stat_day_query`） – 之等は移した後で新しい產出物を読むやう向け替へる（第 583 回と同じ）。型の行 `type UIWordGroup = (typeof UI_WORD_GROUPS_JA)[number];` は移した後も `recommender.ts` の其の侭で通る（import した定數から導ける – tsc で確認）。
