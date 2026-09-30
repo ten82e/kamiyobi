@@ -895,3 +895,44 @@ describe("採否の結果・審查の物差し・提出の添付・證明の打�
     }
   });
 });
+
+describe("公開料・目録の番号・採録・共催の後援・見方の打ち方（第 600 回）", () => {
+  const rows = 品書();
+  const 見附 = [
+    ["OA料金", "費用の欄"],
+    ["ISBN", "種別"],
+    ["DOI", "種別"],
+    ["採録", "数の統計"],
+    ["共催申請", "主催・共催・後援・協賛"],
+    ["後援申請", "主催・共催・後援・協賛"],
+    ["協賛申請", "主催・共催・後援・協賛"],
+    ["オンデマンド", "当日の様子"],
+    ["閲覧期限", "当日の様子"],
+  ] as const;
+
+  it("打ち方を名前で呼び、其の筋の斷りに屆く", () => {
+    for (const [語, 目印] of 見附) {
+      const 群の注 = Recommender.uiWordNoteJa(語);
+      expect(群の注.length, 語).toBeGreaterThan(0);
+      expect(群の注, 語).toContain(語);
+      expect(群の注, `${語} の宛先`).toContain(目印);
+      expect(件(rows, 語), `${語} は行を持つのに敎へて居らん事（第 337 回）`).toBe(0);
+    }
+  });
+
+  it("增やした語は導きの群に一度ずつ並び、隣の語の宛先を奪はん（第 543 回・第 581 回）", () => {
+    const 源 = readFileSync("site/recommender.ts", "utf8");
+    const i = 源.indexOf("const UI_WORD_GROUPS_JA");
+    const 表 = 源.slice(i, 源.indexOf("\n  ];\n", i));
+    for (const [語] of 見附) {
+      const 數 = 表.split('"' + 語 + '"').length - 1;
+      expect(數, `${語} が導きの群に ${數} 回並んで居る`).toBe(1);
+    }
+    /* multiword の群は語の続きの打ち方では默つた事（第 585 回）が、此處では其の方を受け取つた。
+     * 元の短い語の斷りは其侪屆く事。 */
+    expect(Recommender.uiWordNoteJa("共催")).toContain("主催・共催・後援・協賛");
+    expect(Recommender.uiWordNoteJa("アーカイブ")).toContain("当日の様子");
+    expect(Recommender.uiWordNoteJa("参加費")).toContain("費用の欄はありません");
+    expect(Recommender.uiWordNoteJa("採択率")).toContain("数の統計");
+  });
+});
