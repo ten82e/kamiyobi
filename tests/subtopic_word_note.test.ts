@@ -766,4 +766,21 @@ describe("細目の主題と募集対象の斷り", () => {
     });
     expect(Recommender.uiWordNoteJa("リンク")).not.toContain("公式サイトを開く");
   });
+  it("和文・英文の別で絞り込めんと書く（第 590 回）", () => {
+    const rows = 品書();
+    ["和文論文誌", "和文", "英文論文誌", "研究報告"].forEach((w) => {
+      const 案内 = Recommender.uiWordNoteJa(w);
+      expect(案内.length).toBeGreaterThan(0);
+      expect(案内).toContain("和文・英文の別");
+      expect(件(rows, w)).toBe(0);
+    });
+    /* 語を並べた打ち方も受ける（multiword）。 */
+    expect(Recommender.uiWordNoteJa("英文論文誌 関西")).toContain("和文・英文の別");
+    /* 別の群が受け居る語を奪つて居らん事（第 543 回）。 */
+    expect(Recommender.uiWordNoteJa("紀要")).not.toContain("和文・英文の別");
+    expect(Recommender.uiWordNoteJa("レター")).not.toContain("和文・英文の別");
+    /* 打ち直しの例は實測で行が出る（噓の例を書かん – 第 519 回）。 */
+    expect(件(rows, "論文誌")).toBeGreaterThan(0);
+    expect(件(rows, "特集号")).toBeGreaterThan(0);
+  });
 });
