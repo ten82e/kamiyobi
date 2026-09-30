@@ -936,3 +936,73 @@ describe("公開料・目録の番号・採録・共催の後援・見方の打�
     expect(Recommender.uiWordNoteJa("採択率")).toContain("数の統計");
   });
 });
+
+describe("窓口の打ち方と、性別・休暇・書誌の數の内譯（第 601 回）", () => {
+  const rows = 品書();
+  const 見附 = [
+    ["問い合わせ", "問い合わせ先、相談の窓口"],
+    ["問い合わせ先", "問い合わせ先、相談の窓口"],
+    ["相談", "問い合わせ先、相談の窓口"],
+    ["相談窓口", "問い合わせ先、相談の窓口"],
+    ["窓口", "問い合わせ先、相談の窓口"],
+    ["事務局", "問い合わせ先、相談の窓口"],
+    ["ハラスメント相談", "問い合わせ先、相談の窓口"],
+    ["女性", "募集対象"],
+    ["男性", "募集対象"],
+    ["ジェンダー", "募集対象"],
+    ["女性限定", "募集対象"],
+    ["男性限定", "募集対象"],
+    ["学生限定", "募集対象"],
+    ["若手限定", "募集対象"],
+    ["産休", "あなたの所属で決まる話"],
+    ["育休", "あなたの所属で決まる話"],
+    ["育児", "あなたの所属で決まる話"],
+    ["介護休", "あなたの所属で決まる話"],
+    ["インパクトファクター", "数の統計"],
+    ["影響度", "数の統計"],
+    ["引用数", "数の統計"],
+    ["被引用数", "数の統計"],
+    ["掲載誌", "種別"],
+    ["募集要項", "原稿の書式"],
+    ["プロポーザル", "運営と手続き"],
+  ] as const;
+
+  it("打ち方を名前で呼び、其の筋の斷りに屆く", () => {
+    for (const [語, 目印] of 見附) {
+      const 群の注 = Recommender.uiWordNoteJa(語);
+      expect(群の注.length, 語).toBeGreaterThan(0);
+      expect(群の注, 語).toContain(語);
+      expect(群の注, `${語} の宛先`).toContain(目印);
+      expect(件(rows, 語), `${語} は行を持つのに敎へて居らん事（第 337 回）`).toBe(0);
+    }
+  });
+
+  it("增やした語は導きの群に一度ずつ並び、元の短い語の宛先は其侪屆く（第 543 回・第 581 回）", () => {
+    const 源 = readFileSync("site/recommender.ts", "utf8");
+    const i = 源.indexOf("const UI_WORD_GROUPS_JA");
+    const 表 = 源.slice(i, 源.indexOf("\n  ];\n", i));
+    for (const [語] of 見附) {
+      const 數 = 表.split('"' + 語 + '"').length - 1;
+      expect(數, `${語} が導きの群に ${數} 回並んで居る`).toBe(1);
+    }
+    expect(Recommender.uiWordNoteJa("傍聴")).toContain("募集対象");
+    expect(Recommender.uiWordNoteJa("単位認定")).toContain("あなたの所属で決まる話");
+    expect(Recommender.uiWordNoteJa("採択率")).toContain("数の統計");
+    expect(Recommender.uiWordNoteJa("学会誌")).toContain("種別");
+    expect(Recommender.uiWordNoteJa("投稿規定")).toContain("原稿の書式");
+    expect(Recommender.uiWordNoteJa("特集セッション")).toContain("運営と手続き");
+  });
+
+  it("窓口の斷りは行の詳細の公式ページへ導く（噓を書かん – 第 588 回）", () => {
+    const 注 = Recommender.uiWordNoteJa("相談窓口");
+    expect(注).toContain("公式ページ");
+    /* 全行が繋ぎ先を持つ事實に立つ案内なので、其の事實を檢査でも見る（第 588 回 – 700/700）。 */
+    const 品 = JSON.parse(readFileSync(join(builtSite(), "catalog.json"), "utf8")) as unknown as {
+      conferences: Array<{ link?: string }>;
+    };
+    const 行々 = 品.conferences;
+    const 持つ = 行々.filter((行) => (行.link ?? "").trim().length > 0).length;
+    expect(持つ).toBe(行々.length);
+    expect(行々.length).toBeGreaterThan(0);
+  });
+});
