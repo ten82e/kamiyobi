@@ -2218,6 +2218,24 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return Recommender.queryTermCounts(Recommender.expandRelativeMonths(trimmed, now), hays, now);
   }
 
+  /* 死語を外した殘りで何件出るか（第 623 回）–「その語を外すと増えます」と言い切る前に測る。
+   * 打たれた語が總て死語なら外した殘りは空（= 全行）になるので數へん（null）。語を分けない
+   * 打ち方（語の一つしかない打ち方）は他の家が既に數へて居る（第 256 回）ので同じく null。 */
+  function deadTermRemainderCount(query: string): number | null {
+    const counts = queryTermNotes(query);
+    if (counts.length < 2) return null;
+    const 殘 = counts
+      .filter((t) => t.count > 0)
+      .map((t) => t.term)
+      .join(" ")
+      .trim();
+    if (!殘) return null;
+    return queryMatchCounts(殘).catalog;
+  }
+
+  /* 假名だけの語を見分ける目（第 623 回 – `shorterWordNotes` の屑除けにだけ使う）。 */
+  const HIRAGANA_ONLY_JA = /^[\u3041-\u309f]+$/;
+
   /* 0 件のとき、打ち直しの見当まで数える（第 256 回）。数える集合は `queryTermNotes` と
    * 同じにする – 同じ表を 2 か所で違う範囲で数えると、案内だけが古くなる（第 215 回など）。 */
   function shorterWordNotes(
@@ -2236,7 +2254,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         seen[hay] = true;
         hays.push(hay);
       });
-    return Recommender.shorterHitWordsJa(trimmed, hays, now);
+    /* 假名だけの短い語は打ち替えに出さん（第 623 回）。實測 – 0 件の 396 文が出す打ち替え
+     * 候選 266 件のうち 48 件（18%）が `ある` `たい` `いつ` `する` `える` 等の二文字の假名語で、
+     * 內譯は動詞の活用切れ端（見たい→たい）か疑問の助數（ある）だった。「『たい』だけに絞る
+     * （収録で 6 件当たります）」は次の打ち手を教へる樣で何も教へて居らん。假名だけ三字以下で
+     * 落とすと屑は 48/48 消え、內容語（発表・参加・登録・日本…）は殘つた侬殘る。 */
+    return Recommender.shorterHitWordsJa(trimmed, hays, now).filter((hit) => {
+      const 語 = String(hit.word || "").trim();
+      return !(HIRAGANA_ONLY_JA.test(語) && 語.length <= 3);
+    });
   }
 
   /* 検索語が「表に出さない種別」の表示語に当たるか。`SELECTABLE_KINDS` に無い種別が対象で、
@@ -2945,6 +2971,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     splitCount?: (文: string) => number;
     // 打ち直しの見当（第 256 回）。0 件のときだけ数える – 通常描画では走らせない。
     shorterHits?: Array<{ word: string; count: number; how: string; pair?: string }>;
+    termRemainder?: number | null;
     urlQuery: boolean;
     catalogConferences: number;
     // 打った日付と、いま読み込んでいるデータの果て（第 293 回）。
@@ -3172,11 +3199,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const deadTerms = deadAll.filter((t) => nameTerms.indexOf(t) < 0);
     let termNote = "";
     if (deadTerms.length) {
+      const 外しても零件 = filter.termRemainder === 0;
       termNote =
         ` 検索語のうち${deadTerms
           .slice(0, 2)
           .map((w) => `「${w}」`)
-          .join("・")}は` + "収録データにも見当たりません。その語を外すと増えます。";
+          .join("・")}は` +
+        "収録データにも見当たりません。" +
+        (外しても零件 ? "其れを外しても殘りの語では 0 件の侭です。" : "その語を外すと増えます。");
     } else if (terms.length > 1) {
       termNote =
         " 語をすべて含む行はありません（" +
@@ -3210,6 +3240,24 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /* 原因を特定できたときは、他の説明文を足さない。考えられる理由を全部並べると
      * 「結局どうすればいい」が読めなくなる。検索語を短くする助言も、原因が分かっていれば
      * 的外れなので出さない。 */
+    /* 打ち替えの案内まで門で閉め出さない為の判断（第 623 回）: `specific` は死語の有無でも真に
+     * なる（第 258 回）が、死語だけの時には次に打つ語を誰も教へて居なかつた（實測 –
+     * `スマホでも見られる` `再審査をお願いできる` 等 58 文が「その語を外すと増えます」で打ち止め）。 */
+    const 語が死んだだけ =
+      deadTerms.length > 0 &&
+      !(
+        kindNote ||
+        wholeNote ||
+        columnNote ||
+        uiNote ||
+        splitNote ||
+        dayRangeNote ||
+        conjunctionNote ||
+        catalogNote ||
+        urlNote ||
+        horizonOnly ||
+        nameOnlyOnly
+      );
     const specific = Boolean(
       kindNote ||
         wholeNote ||
@@ -3275,6 +3323,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 収録に無いので、打ち直しても 0 件のまま画面が動かないだけ。効く打ち直しは収録の上で
      * 数えているので、あるときはそれを名指し、無いときは「別の語を試す」に切り替える。 */
     const altTips: string[] = [];
+    /* 打ち替えの列は「外せる条件」でも「多いのは（外すと效く条件）」でもない – 同じ袋に入れると
+     * `高速計算` が「多いのは 検索語を『計算』に打ち替える」という意味の通らん文になつた（第 623 回）。
+     * 別の袋にして、出口で「打ち直すなら」で受ける。 */
+    const retypeTips: string[] = [];
     (filter.shorterHits || []).slice(0, 2).forEach((hit) => {
       const word = String(hit.word || "").trim();
       if (!word) return;
@@ -3294,7 +3346,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     });
     if (
       trimmedQuery &&
-      !specific &&
+      (!specific || 語が死んだだけ) &&
       !columnNote &&
       !uiNote &&
       !dayRangeNote &&
@@ -3304,10 +3356,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     ) {
       if (altTips.length) {
         altTips.forEach((t) => {
-          tips.push(t);
+          retypeTips.push(t);
         });
       } else {
-        tips.push("別の語で試す（分野名・主題・開催地の日本語でも引けます）");
+        retypeTips.push("別の語で試す（分野名・主題・開催地の日本語でも引けます）");
       }
     }
 
@@ -3318,13 +3370,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (nameOnlyOnly) tips.length = 0;
 
     const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.html に載せています。";
+    /* 打ち替えは別の言い出しで受ける（「外せる条件」に混ぜると条件の話と混同する – 第 623 回）。 */
+    const retypeNote = retypeTips.length ? ` 打ち直すなら ${retypeTips.join(" / ")}。` : "";
     if (specific) {
+      const 本 = `${base}${horizonNote}${nameNote}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${conjunctionNote}${catalogNote}${urlNote}${termNote}${splitNote}`;
       return tips.length
-        ? `${base}${horizonNote}${nameNote}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${conjunctionNote}${catalogNote}${urlNote}${termNote}${splitNote} 外せる条件: ${tips.join(" / ")}。`
-        : `${base}${horizonNote}${nameNote}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${conjunctionNote}${catalogNote}${urlNote}${termNote}${splitNote}`;
+        ? `${本} 外せる条件: ${tips.join(" / ")}。${retypeNote}`
+        : `${本}${retypeNote}`;
     }
-    if (!tips.length) return `${base}${horizonNote}${nameNote}${termNote} ${meetingNote}`;
-    return `${base}${horizonNote}${nameNote}${termNote} 多いのは ${tips.join(" / ")}。${meetingNote}`;
+    if (!tips.length)
+      return `${base}${horizonNote}${nameNote}${termNote}${retypeNote}${meetingNote}`;
+    return `${base}${horizonNote}${nameNote}${termNote} 多いのは ${tips.join(" / ")}。${retypeNote}${meetingNote}`;
   }
 
   /**
@@ -4705,6 +4761,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             columnValueHits: columnValueHitsJa,
             splitCount: splitCountJa,
             shorterHits: shorterWordNotes(searchQuery),
+            termRemainder: deadTermRemainderCount(searchQuery),
             // データその物が無い場合と、絞り込みで 0 件の場合を区別する材料。
             catalogConferences: DATA.conferences.length,
             // 打った日付がいま読み込んだデータの果てより先か（第 293 回）。`rows` は絞り込み
