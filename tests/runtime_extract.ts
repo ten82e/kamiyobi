@@ -128,6 +128,8 @@ export function wholeTableQueryStubs(rec: string): string {
     jsFunction(rec, "uiWordMatch"),
     jsFunction(rec, "uiWordEntry"),
     jsFunction(rec, "uiWordRawJa"),
+    // 形の斷りは畫面の導きと読み上げで一つの家（第 615 回）– 両方から呼ぶので一緒に抽出する。
+    jsFunction(rec, "uiWordShapeNoteJa"),
     jsFunction(rec, "uiWordNoteJa"),
     jsFunction(rec, "uiWordLiveNoteJa"),
     jsFunction(rec, "wholeTableQueryWordJa"),
