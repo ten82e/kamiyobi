@@ -35,6 +35,10 @@ const 細目 = [
   "産学セッション",
   "学生向け",
   "博士課程",
+  "federated",
+  "フェデレーテッド",
+  "性能評価",
+  "ソフトウェアインジニアリング",
 ];
 /** 群に混ぜん語（名簿の語・他の檢査が引き取る語 – 第 294 回・第 534 回の実測）。 */
 const 彈いた = ["MPI", "ACL", "CTF", "推薦システム", "ハッキングコンテスト"];
@@ -56,7 +60,10 @@ describe("細目の主題と募集対象の斷り", () => {
 
   it("寄せはして居らん（0 件の侭 – 正直な 0 件）", () => {
     const rows = 品書();
-    ["GPU", "CUDA", "Kubernetes", "OpenMP", "連合学習"].forEach((語) => {
+    /* `federated` 等も同じ – 細目の羣は案内を出すだけで行を増やさん（第 642 回）。
+     * `ハッキング`・`CTF` を此の羣に載せん理由（競技形式の名は行を出す搜しで直す – 第 534 回）を
+     * 上の `彈いた` 定數が張つて居る。*/
+    ["GPU", "CUDA", "Kubernetes", "OpenMP", "連合学習", "federated", "性能評価"].forEach((語) => {
       expect(件(rows, 語), `"${語}" が行を持つやうに廣がつた`).toBe(0);
     });
   });
@@ -80,7 +87,7 @@ describe("細目の主題と募集対象の斷り", () => {
     });
   });
 
-  it("弹いた語と空白を含む語を、群の一覽に混ぜん", () => {
+  it("弾いた語と空白を含む語を、群の一覽に混ぜん", () => {
     const b = readFileSync("site/recommender.ts", "utf8");
     const i = b.indexOf('        "GPU",');
     expect(i).toBeGreaterThan(0);
@@ -294,7 +301,7 @@ describe("細目の主題と募集対象の斷り", () => {
       expect(案内.length, `"${w}" が無言に逆戻りした`).toBeGreaterThan(0);
       expect(件(rows, w), `"${w}" は行を持つので彈くべき語だつた`).toBe(0);
     });
-    /* 弹いた語 – 其の方で行が出る語と、打ち方が曖昧な語を群に混ぜん。 */
+    /* 弾いた語 – 其の方で行が出る語と、打ち方が曖昧な語を群に混ぜん。 */
     expect(件(rows, "チュートリアル")).toBeGreaterThan(0);
     const b = readFileSync("site/recommender.ts", "utf8");
     const i = b.indexOf(
