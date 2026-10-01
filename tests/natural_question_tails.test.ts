@@ -116,7 +116,7 @@ describe("第 620 回 – 投稿の合否・寸法・役と、助詞が一枚挟
     }
   });
 
-  it("挟みの門 – 磁石・空格・十六字の壁は舊來通り（第 503・250・354 回）", () => {
+  it("挟みの門 – 磁石・空格・字數の壁は舊來通り（第 503・250・354 回）", () => {
     /* 助詞を含まん漢字の連なり（`参加費対効果分析ですか`）は語尾と數へん。 */
     expect(
       String(Recommender.uiWordNoteJa("参加費対効果分析ですか") || ""),
@@ -127,16 +127,21 @@ describe("第 620 回 – 投稿の合否・寸法・役と、助詞が一枚挟
       String(Recommender.uiWordNoteJa("リアルタイム処理は要りますか") || ""),
       "磁石を拾つた",
     ).toBe("");
-    /* 值を並べた打ち手（空格を跨ぐ）は舊來の決まりが勝つ（第 513 回が彈いた例）。 */
+    /* 値を並べた打ち手（空格を跨ぐ）は舊來の決まりが勝つ（第 513 回が彈いた例）。 */
     expect(
       String(Recommender.uiWordNoteJa("過去の締切 関西") || ""),
-      "值の並びに斷りを被せた",
+      "値の並びに斷りを被せた",
     ).toBe("");
-    expect(String(Recommender.uiWordNoteJa("会場 京都") || ""), "值の並びに斷りを被せた").toBe("");
-    /* 十六字の壁は其の侭（`プレプリントを出しても大丈夫ですか` は 17 字）。 */
+    expect(String(Recommender.uiWordNoteJa("会場 京都") || ""), "値の並びに斷りを被せた").toBe("");
+    /* 字數の壁は十六字から廿四字に上げた（第 621 回 – 語尾の門が續き十五字までしか
+     * 受けんので、上げても亂れん）。十七字の此れは舊來默つて居たが、今は語の門が受ける。 */
     const 長 = "プレプリントを出しても大丈夫ですか";
     expect([...長].length).toBe(17);
-    expect(String(Recommender.uiWordNoteJa(長) || ""), "十六字の壁を越えた").toBe("");
+    expect(String(Recommender.uiWordNoteJa(長) || "")).toContain("プレプリント");
+    /* 六字の壁 – 廿五字を越えると語の門は默り、打ち直しの形が受ける（第 621 回）。 */
+    const 最長 = "査読付きの国際会議で日本で開催される物はありますか";
+    expect([...最長].length).toBe(25);
+    expect(String(Recommender.uiWordNoteJa(最長) || "")).toContain("長い文のままでは絞れません");
     /* 六字までの挟みは通る（`招待状は発行してもらえますか` の挟みは五字）。 */
     expect(String(Recommender.uiWordNoteJa("招待状は発行してもらえますか") || "")).toContain(
       "招待状",
