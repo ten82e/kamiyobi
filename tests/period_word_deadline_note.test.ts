@@ -147,7 +147,8 @@ describe("ビルド成果物に印が在る事（第 466 回 – 成果物だけ
      * 參加形式の群に付けて居ないのは `リアルタイム処理`（0 件）が「`リアル` は參加形式の言い方ですが」
      * に奪られる爲 – 第 504 回に實測で確かめた。*/
     /* 第 648 回で日をまたぐ重なりを數へる羣（祝日級の次に置いた）を增やしたので 14 → 15。*/
-    expect(物.split("anyTail: true").length - 1).toBe(15);
+    /* 第 649 回で分野の一覽の羣（語尾を問わん印を開いた）を增やしたので 15 → 16。*/
+    expect(物.split("anyTail: true").length - 1).toBe(16);
     expect(物).toContain("group.anyTail !== true");
     const 尾表 = 物.slice(物.indexOf("UI_WORD_TAILS_JA ="), 物.indexOf("UI_WORD_TAILS_JA =") + 900);
     expect(尾表).not.toContain('"の締切"');

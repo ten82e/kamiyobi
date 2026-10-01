@@ -127,7 +127,8 @@ describe("他のの拒否群も締切らしい語尾を受ける（第 506 回�
     /* 第 516 回で二つ增えて 37、第 517 回で『催し物の名前＋締切の言い方』の群が增えて 38。*/
     expect(物.split("deadlineTail: true").length - 1).toBe(41);
     /* 第 648 回で日をまたぐ重なりを數へる羣（祝日級の次に置いた）を增やしたので 14 → 15。*/
-    expect(物.split("anyTail: true").length - 1).toBe(15);
+    /* 第 649 回で分野の一覽の羣（語尾を問わん印を開いた）を增やしたので 15 → 16。*/
+    expect(物.split("anyTail: true").length - 1).toBe(16);
     expect(物).toContain("UI_WORD_DEADLINE_TAILS_JA");
     /* 足場（tests/runtime_extract.ts）が新しい一覧を注入して居る事 – 第 504 回で四十一本落ちた
      * 落とし穴の再発防止。*/
