@@ -4975,6 +4975,16 @@ const Recommender = (() => {
     "して",
     "しとく",
     "し方",
+    /* 操作を賴む打ち方（第 625 回）– 實測 `カレンダー追加`（收錄 0 行）は羣の語に當るが
+       後ろが語表に無く默つて居た。`印刷する方法` `購読する方法` も同じ（其の方は「方法」を
+       名詞側の條で受ける）。 */
+    "追加",
+    /* 「で」で打ち切る頼み方（第 625 回 – `昇順で` `降順で` は羣の語に當るが後ろが語表に無く
+       默つて居た）。`表示` も同じ（`すべて表示`）。 */
+    "で",
+    "表示",
+    "ください",
+    "下さい",
     "しかた",
     "の仕方",
     "のやり方",
@@ -5255,6 +5265,7 @@ const Recommender = (() => {
     "際",
     "時",
     "予定",
+    "方法",
   ];
   function uiWordTailOk(tail: string): boolean {
     if (UI_WORD_TAILS_JA.includes(tail)) return true;
@@ -5278,6 +5289,12 @@ const Recommender = (() => {
       const 挟 = tail.slice(0, tail.length - 知.length);
       if (挟.length < 2 || 挟.length > 6 || /[\s、，,]/.test(挟)) continue;
       if (/[ぁ-ん]/.test(挟)) return true;
+    }
+    /* 敬語の尾を一枚剥がして同じ目で驗す（第 625 回）。實測 – `購読したいです` は羣の語に當るが
+     * 敬語が續いただけで默つて居た（`購読したい` では出る）。 */
+    for (const 敬 of ["です", "ですか", "でしょうか", "でした", "ですよ", "ですね", "たいです"]) {
+      if (!tail.endsWith(敬) || tail.length <= 敬.length) continue;
+      if (uiWordTailOk(tail.slice(0, tail.length - 敬.length))) return true;
     }
     return false;
   }
