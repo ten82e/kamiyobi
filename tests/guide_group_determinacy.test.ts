@@ -117,13 +117,13 @@ describe("同じ語を二つの群に持つ誤りを直し、てびきの群に�
 
 describe("ビルド成果物に目が在る事（第 466 回 – 成果物だけの検査でも捕まへる）", () => {
   const 物 = readFileSync(join(builtSite(), "recommender.js"), "utf8");
-  it("てびきの群から `確定` が消え、語尾の印が 39 群に付いた", () => {
+  it("てびきの群から `確定` が消え、語尾の印が 41 群に付いた", () => {
     const 群0 = 物.slice(物.indexOf('words: ["使い方"'), 物.indexOf('words: ["使い方"') + 1600);
     expect(群0).not.toContain('"確定"');
     expect(群0).toContain("deadlineTail: true");
     /* 第 516 回で二つ增える（採否の数の群・当日の様子の群）。*/
     /* 第 516 回で二つ增えて 37、第 517 回で『催し物の名前＋締切の言い方』の群が增えて 38。*/
-    expect(物.split("deadlineTail: true").length - 1).toBe(39);
+    expect(物.split("deadlineTail: true").length - 1).toBe(41);
     /* 同じ語を二つの群に持つ形（この回の原因）を `確定` に就て張る – 二つの群が同じ語を持つと
        完全一致は先勝ちで後ろの群の答えが屆かない。他のの群にも重なりは在るが（`データ源` は両方とも
        「畫面下の『データ源』」へ導くので噓に成らない）、応答が食い違う重なりは此为一つだけだつた。*/
