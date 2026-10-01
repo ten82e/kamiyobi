@@ -143,4 +143,46 @@ describe("持ち出し・購読の語を打った人", () => {
       expect(Recommender.uiWordNoteJa(語), `"${語}" に案内が立ってしまった`).toBe("");
     });
   });
+
+  /* 持ち出しの**形**を名指す打ち方（第 618 回）。羣は `csv` を見て居て JSON の語を見て居らず、
+     又 訪ねが動詞で終る形は語尾の白一覧（第 505 回）が切れて默つて居た。實測（2026-08-09 生成の
+     実ビルド）– `json` は品書 0 / 収録 0、`この一覧をJSONでもらえる` も 0 件・無言。*/
+  it("JSON など形を名指す打ち方も同じ案内を受け、data.json の在りかを言う", () => {
+    const 品書行 = 品書();
+    const 収録行 = 収録();
+    for (const 語 of ["json", "生データ", "機械可読", "フィード"]) {
+      expect(当たり(品書行, 語).length, `"${語}" が品書で当たった（前提が変わった）`).toBe(0);
+      expect(当たり(収録行, 語).length, `"${語}" が収録で当たった（前提が変わった）`).toBe(0);
+      const 文 = String(Recommender.uiWordNoteJa(語) || "");
+      expect(文, `"${語}" を打った人に何も案内していない`).not.toBe("");
+      expect(文.includes("一覧の下"), `"${語}": 操作の場所を言っていない`).toBe(true);
+      /* 画面上のボタンには JSON の物が無いので、**同じ場所の文件**を名前で言う（噓を書かんと為）。*/
+      expect(文.includes("data.json"), `"${語}": JSON の在りかを隠した`).toBe(true);
+    }
+    /* 助詞・用言で繋がれた形は連体の道（第 608 回）で受ける。*/
+    for (const 文 of [
+      "この一覧をJSONでもらえる",
+      "JSONでもらえますか",
+      "csvでもらえる",
+      "生データがほしい",
+    ]) {
+      expect(当たり(品書行, 文).length, `"${文}" が品書で当たった`).toBe(0);
+      const 注 = String(Recommender.uiWordNoteJa(文) || "");
+      expect(注.includes("data.json"), `"${文}": 案内が JSON に屆いていない`).toBe(true);
+      const 聲 = String(Recommender.uiWordLiveNoteJa(文) || "");
+      expect(聲, `"${文}": 読み上げが默つている`).not.toBe("");
+      expect(聲.includes("CSV"), `"${文}": 読み上げが持ち出しを言っていない`).toBe(true);
+    }
+  });
+
+  it("`データ` と `feed` は載せん – その語で絞れる行が實在する（門・第 337 回）", () => {
+    /* 實測（2026-08-09 生成の実ビルド）– `データ` は収録 477 行・品書 128 行、`feed` は収録 4 行が
+       通る。行が出る打ち方に「この表に無い」を被せん決まりなので、源に載せて居ない事を張る。*/
+    expect(当たり(収録(), "データ").length).toBeGreaterThan(0);
+    expect(当たり(収録(), "feed").length).toBeGreaterThan(0);
+    const 源 = readFileSync(join(REPO_ROOT, "site", "recommender.ts"), "utf8");
+    for (const 語 of ["データ", "feed"]) {
+      expect(源.includes(`"${語}",`), `"${語}" を羣に载せた`).toBe(false);
+    }
+  });
 });
