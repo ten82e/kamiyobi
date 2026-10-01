@@ -73,6 +73,39 @@ function 名指し(): Map<string, string> {
   return 出;
 }
 
+/** 語尾の表（`剥ぐ語尾`）を源から読む（第 655 回 – 順も見るので寫しは置かん）。 */
+function 語尾の一覽(): string[] {
+  const i = 源.indexOf("const 剥ぐ語尾 = [");
+  expect(i, "語尾の表が見つからん").toBeGreaterThan(0);
+  const 本 = 源.slice(i, 源.indexOf("\n    ];", i));
+  const 尾 = [...本.matchAll(/^\s{6}"([^"]+)",$/gm)].map((m) => m[1]);
+  expect(尾.length, "語尾が讀めとれる").toBeGreaterThan(0);
+  return 尾;
+}
+
+/** 欄の名前と、其に屆く打ち方の語（`COLUMN_QUERY_WORDS_JA`）。 */
+function 欄の語の一覽(): Set<string> {
+  const i = 源.indexOf("const COLUMN_QUERY_WORDS_JA");
+  const 本 = 源.slice(i, 源.indexOf("\n  ];", i));
+  const 出 = new Set<string>();
+  for (const m of 本.matchAll(/\["([^"]+)", "([^"]+)"\]/g)) {
+    出.add(m[1].toLowerCase());
+    出.add(m[2].toLowerCase());
+  }
+  return 出;
+}
+
+/** `columnQueryEntry` の中の同じ筋を再現する – 六度まで、當た最初の語尾を後ろから剥ぐ。 */
+function 剥いだ(語: string, 尾: string[]): string {
+  let 残 = 語.toLowerCase();
+  for (let i = 0; i < 6; i += 1) {
+    const 次 = 尾.find((t) => 残.length > t.length && 残.endsWith(t));
+    if (!次) break;
+    残 = 残.slice(0, 残.length - [...次].length);
+  }
+  return 残;
+}
+
 describe("案内が名指す道は本物か（第 652 回）", () => {
   it("全羣が名指す物を 100 種以上數へる（目が細つたら落ちる）", () => {
     const 名 = 名指し();
@@ -137,6 +170,13 @@ describe("案内が名指す道は本物か（第 652 回）", () => {
       "種別はどれですか",
       "開催地は何ですか",
       "会場はどちらですか",
+      /* 第 655 回 – 語尾の表を**長き順**に並べ直して開いた形（「ますか」が「ありますか」より先に
+       * 在つた為、23 組が默つて居た）。*/
+      "会場ありますか",
+      "分野ありますか",
+      "テーマありますか",
+      "参加形式ありますか",
+      "どこの国にありますか",
     ]) {
       const 讓 = 讓り(打ち方);
       expect(讓, `「${打ち方}」が默つた`).not.toBe("");
@@ -145,7 +185,7 @@ describe("案内が名指す道は本物か（第 652 回）", () => {
     expect(
       [...家.values()].filter((v) => v === "欄").length,
       "列訪ねの家に屆いた打ち手が少ない（其の方が欄の名前を受ける形）",
-    ).toBe(23);
+    ).toBe(28);
   });
 
   it("場所の聽き方で殘つた默りは事實として張る（第 653 回 – 直らん內を隱さん）", () => {
@@ -168,6 +208,39 @@ describe("案内が名指す道は本物か（第 652 回）", () => {
       expect(讓り(打ち方).trim(), `「${打ち方}」が立つやうになつた（この條を張り替へよ）`).toBe("");
       expect(当たり(打ち方), `「${打ち方}」に行が出るやうになつた`).toBe(0);
     }
+  });
+
+  it("語尾の表は長き順に並んで居る（順を崩せば長い形が剥げん – 第 655 回）", () => {
+    const 尾 = 語尾の一覽();
+    expect(尾.length, "語尾の本数が讀めとれる").toBeGreaterThanOrEqual(40);
+    const 崩 = 尾
+      .map((語尾, i) => [語尾, 尾[i + 1]] as [string, string | undefined])
+      .filter(([前, 後]) => 後 !== undefined && [...前].length < [...後].length)
+      .map(([前, 後]) => `${前} → ${後}`);
+    expect(
+      崩.join("・"),
+      "語尾の表が長き順で無い（後ろから當た最初を剥ぐ作りなので順が意味を持つ）",
+    ).toBe("");
+  });
+
+  it("欄の語 × 語尾の網羅で、剥げ残りが一つも無い（第 655 回 – 23 組の默りの再發防止）", () => {
+    const 尾 = 語尾の一覽();
+    const 名 = 欄の語の一覽();
+    expect(名.size, "欄の語が讀めとれる").toBeGreaterThanOrEqual(23);
+    const 残 = new Map<string, string>();
+    for (const W of [...名].sort()) {
+      for (const S of 尾) {
+        const 後 = 剥いだ(W + S, 尾);
+        if (!名.has(後)) 残.set(W + S, 後);
+      }
+    }
+    expect(
+      [...残.entries()]
+        .slice(0, 8)
+        .map(([問, 答]) => `${問} → 残り「${答}」`)
+        .join(" / "),
+      `語尾を剥いだ後に欄の名前にならんの組が ${残.size} 組在る（其のまま默る）`,
+    ).toBe("");
   });
 
   it("磁石は崩れん（語尾增しが行の數を作つたり奪つたりして居らん – 第 337 回）", () => {
