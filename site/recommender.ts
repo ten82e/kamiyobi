@@ -2909,7 +2909,7 @@ const Recommender = (() => {
   }> = [
     {
       /* SPEC 第 506・511 */
-      words: ["使い方", "ヘルプ", "てびき", "つかいかた", "みかた"],
+      words: ["使い方", "ヘルプ", "てびき", "つかいかた", "みかた", "見方"],
       /* SPEC 第 250・354・505・511 */
       deadlineTail: true,
       echo: true,
@@ -3375,6 +3375,7 @@ const Recommender = (() => {
         "何時",
         "何日",
         "何曜日",
+        "いつ迄",
         "何時から",
         "何時迄",
         "何月",
@@ -4393,6 +4394,7 @@ const Recommender = (() => {
         "更新頻度",
         "最新版",
         "鮮度",
+        "新しさ",
         "データの鮮度",
         "生成",
         "生成時刻",
@@ -4454,6 +4456,7 @@ const Recommender = (() => {
         "共有する",
         "リンク",
         "リンクをコピー",
+        "コピー",
         "共有リンク",
       ],
       echo: true,
@@ -4992,6 +4995,7 @@ const Recommender = (() => {
        が彈かれて居た（其れまで助詞付きの熟語 – `を知りたい` – しか載らなかつた為）。 */
     "知りたい",
     "見たい",
+    "てびき",
     "だけ",
     "のみ",
     "しか",
@@ -5280,7 +5284,7 @@ const Recommender = (() => {
     "予定",
     "方法",
   ];
-  function uiWordTailOk(tail: string): boolean {
+  function uiWordTailOk(tail: string, 敬語一枚可?: boolean): boolean {
     if (UI_WORD_TAILS_JA.includes(tail)) return true;
     /* 助詞を一枚挾んだ頼み方（第 626 回）。實測 – `データ源が見たいです` `カレンダーに入れたい`
      * `共著で出せますか` は羣の語に當るが、助詞が續いた事で彈かれて居た（其の語尾其々は通る）。 */
@@ -5311,9 +5315,29 @@ const Recommender = (() => {
     }
     /* 敬語の尾を一枚剥がして同じ目で驗す（第 625 回）。實測 – `購読したいです` は羣の語に當るが
      * 敬語が續いただけで默つて居た（`購読したい` では出る）。 */
+    /* 語尾が敬語一枚だけの打ち方（第 627 回 – `知りたいです` `購読です`）。**打ち頭の道だけ**で
+       通す – 助詞で繋がれた形（`締切を知りたいです`）は前の語が訪ねた物なので、其處で
+       「だけでは何を訪ねるか決まりません」と出すのは噓になる（實測で乘つたので讓りを狹めた）。 */
+    if (敬語一枚可 && ["です", "ですか", "でしょうか", "でした", "ですよ", "ですね"].includes(tail))
+      return true;
+    /* 望み形（第 627 回）。實測 – `条件を消したいです` `フィルタを外したいです` は羣の語に當るが、
+       動詞の語幹が語表に一枚も無いので默つて居た（`購読したいです` は「したい」が在つた）。
+       語幹は四字まで – それより長ければ主題を打つ文なので讓る。 */
+    if (
+      /^[ぁ-んァ-ヶ一-龥々〻]{1,4}(?:たく|たい)(?:です|ですか|でしょうか|でした|ましょうか)?$/u.test(
+        tail,
+      )
+    )
+      return true;
     for (const 敬 of ["です", "ですか", "でしょうか", "でした", "ですよ", "ですね", "たいです"]) {
       if (!tail.endsWith(敬) || tail.length <= 敬.length) continue;
       if (uiWordTailOk(tail.slice(0, tail.length - 敬.length))) return true;
+    }
+    /* 締切らしい語の後ろにもう一枚語尾が續いた打ち方（第 627 回 – `過去締切表示` `今月締切だけ`）。
+      deadlineTail の羣は此の語で門を通すので、其の後に通る語尾が續けば同じ目で見直す。 */
+    for (const 締 of UI_WORD_DEADLINE_TAILS_JA) {
+      if (!tail.startsWith(締) || tail.length <= 締.length) continue;
+      if (uiWordTailOk(tail.slice(締.length))) return true;
     }
     return false;
   }
@@ -5394,7 +5418,7 @@ const Recommender = (() => {
             tail &&
             group.anyTail !== true &&
             !(group.deadlineTail === true && (UI_WORD_DEADLINE_TAILS_JA.includes(tail) || 連体)) &&
-            !uiWordTailOk(tail)
+            !uiWordTailOk(tail, true)
           )
             continue;
           best = group;
