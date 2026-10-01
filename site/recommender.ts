@@ -7765,11 +7765,26 @@ const Recommender = (() => {
        * (b) 前が漢字で終る邊（熟語の継ぎ目 – 『論文誌』→『論文』『分散並列処理基盤システム』→
        * 『分散並列処理基盤』は正しい打ち直しなので殘す）。(b) を漢字に限定するのは、假名・欧文の
        * 連鎖の途中で切つた物が切れ端になる為（實測 – 「ベス」「ンダー」「ss」「rl」「たい」「べる」）。*/
-      const 継ぎ目Ja = (前: string, 後: string): boolean =>
-        (語の切れJa.test(後) && !語の切れJa.test(前)) || /[々〻一-龥]/.test(前);
+      const 語面Ja = (前文: string): boolean => {
+        const 字 = Array.from(前文);
+        if (!字.length) return false;
+        /* 假名で終る物は動詞・助數の語尾（『発表される』『いつ』）– 語の切れ端なので彈く。 */
+        if (/[ぁ-ん]/.test(字[字.length - 1])) return false;
+        for (const 文 of 字) if (語の切れJa.test(文) || 文 === "で") return false;
+        return true;
+      };
+      /* (c) 前が助詞・句讀を一つも含まん假名・欧文の語で、後が漢字の語（熟語の後附け – 系・
+       * 分野・併用・聴講・配信・掲示等）で始まる邊（第 624 回）。實測 – `セキュリティ系` →
+       * 『セキュリティ』535 件、`ネットワーク分野` → 『ネットワーク』257 件、`オンライン聴講` →
+       * 『オンライン』123 件が、(a)(b) だけの邊では切れ端と見て彈かれて居た。前に助詞が在れば
+       * 彈く（『日本で』『画像で』『審査結果はいつ』は效く樣で語で無い – 實測 79・24・2 件）。 */
+      const 継ぎ目Ja = (前: string, 後: string, 前文?: string): boolean =>
+        (語の切れJa.test(後) && !語の切れJa.test(前)) ||
+        /[々〻一-龥]/.test(前) ||
+        (!!前文 && /[々〻一-龥]/.test(後) && 語面Ja(前文));
       for (let k = chars.length - 1; k >= 2; k--) {
         const head = chars.slice(0, k).join("");
-        if (!継ぎ目Ja(chars[k - 1], chars[k])) continue;
+        if (!継ぎ目Ja(chars[k - 1], chars[k], head)) continue;
         if (countOf(head) > 0) {
           pushShown(
             rawChars.length === chars.length ? rawChars.slice(0, k).join("") : head,
