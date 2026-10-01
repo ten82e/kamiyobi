@@ -2135,7 +2135,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const columnNote = Recommender.columnQueryLiveNoteJa(filter.query, filter.columnValueHits);
       if (columnNote) return ` ｜ ${columnNote}${pointer}`;
       /* 画面自身の操作・説明・出典の語を打たれた人（第 248 回）。同じ表から短い文を作る。 */
-      const uiNote = Recommender.uiWordLiveNoteJa(filter.query);
+      /* 同じ讓りの判斷 – 畫面と讀み上げが別のことを言はん（第 392 回）。 */
+      const 打ち替えが在るか = (filter.shorterHits || []).length > 0;
+      const uiNote = Recommender.uiWordLiveNoteJa(filter.query, 打ち替えが在るか);
       if (uiNote) return ` ｜ ${uiNote}${pointer}`;
       /* 日数の範囲の言い方（`1か月以内` `1週間以内` など）を打たれた人（第 253 回）。
        * 実測: `1か月以内` 0 行・`1週間以内` 0 行・`3日以内` 0 行で、読み上げは
@@ -3034,7 +3036,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       matchedRows === 0 ? Recommender.columnQueryNoteJa(trimmedQuery, filter.columnValueHits) : "";
     /* 画面自身の操作・説明・出典の語（`使い方` `並び替え` `出典` `カテゴリ` など）を打たれた人
        （第 248 回）。値の語ではないので語を短くしても増えない – 場所を言ってそっちへ送る。 */
-    const uiNote = matchedRows === 0 ? Recommender.uiWordNoteJa(trimmedQuery) : "";
+    /* 實に絞れる語の打ち替え（第 256 回）が並んで居れば、長い文の打ち直し（第 621 回）は讓る。 */
+    const 打ち替えが在るか = (filter.shorterHits || []).length > 0;
+    const uiNote =
+      matchedRows === 0 ? Recommender.uiWordNoteJa(trimmedQuery, 打ち替えが在るか) : "";
     /* 日数の範囲の言い方（`1か月以内` など）（第 253 回）。これは検索語としては当たらないが
        収録に無い語でもない – 締切日からの日数で絞る「締切まで」の選択欄が同じ話をする欄なので、
        そこへ送る。「語を外すと増えます」を同時に立てないため、下の条件にも入れる。 */

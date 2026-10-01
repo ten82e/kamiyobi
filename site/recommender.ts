@@ -4507,6 +4507,8 @@ const Recommender = (() => {
         "予定表",
         "カレンダー",
         "カレンダーに追加",
+        /* 配る先を名乗り續ける打ち方（第 622 回 – `Googleカレンダーに出る` 實測 0 件で默り）。 */
+        "Googleカレンダー",
         "購読",
         "サブスクライブ",
         /* 持ち出しの**形**を名指す打ち方（第 618 回）。實測（2026-08-09 生成の実ビルド・固定時刻
@@ -5223,6 +5225,14 @@ const Recommender = (() => {
     /* 「〜すればいいですか」（`発表者だけ登録すればいいですか` – 實測 0 行 – 第 620 回）。*/
     "いいですか",
     "ばいいですか",
+    /* 畫面自身の操作を聽く語尾（第 622 回）。實測（2026-08-09 生成ビルド・品書 868 行）で
+     * `並び替えはどうする` `古い順に見たい` `Googleカレンダーに出る` は羣の語を持つ侭默つて居た –
+     * 語の門は通るが續きが語尾の白一覧に無かつた（斷りは列の見出しの押しさうな場所を言ふ）。
+     * `はある` は `見学会はある` のやうな聽き方（同じ羣の語で實測 0 件）。*/
+    "はどうする",
+    "に見たい",
+    "に出る",
+    "はある",
   ];
   /* 言い回しの後ろに名詞を続ける打ち方（第 602 回）。實測 – `オンライン参加できる会議`
    * `旅費が出る支援` `共催してもらえるか` のやうに、下の言い回しを其の侪終へず **催し物の名や
@@ -5505,7 +5515,7 @@ const Recommender = (() => {
    * 書くとズレる（第 392 回）。`短い形` をたてると讀み上げ用の短い文を返す。畫面上の文は一字も
    * 變へて居らん（各斷りの文字列を殘して、後に讀み上げ用を並べる書き方にした – 斷りの文字列を
    * 張つて居る檢査が其の侭通る）。表側で幅を決めん・勝手に寄せん等の決まりはそれぞれの條に學ぶ。*/
-  function uiWordShapeNoteJa(query: unknown, 短い形: boolean): string {
+  function uiWordShapeNoteJa(query: unknown, 短い形: boolean, 打ち替えが在るか?: boolean): string {
     const 文 = String(query == null ? "" : query).trim();
     if (!文) return "";
     const 選ぶ = (長: string, 短: string) => (短い形 ? 短 : 長);
@@ -5721,7 +5731,10 @@ const Recommender = (() => {
      * （語の門が先に走るで、斷れる文は舊來の精しき斷りが勝つ）。空格の有る打ち手はもう語で打つて居る
      * ので彈く（値を並べた人 – 第 250・354 回）、ひらがなを含まん打ち手も彈く。
      * 問ひの尾は か・？ の他に「〜は」「〜の」（語尾を省いた聽き方）と望みを待つ語。*/
+    /* 實に絞れる語と件數を名指す打ち替え（第 256 回）が有るときは、其の方に讓る –
+     * 「語を並べ直してください」より「『セッション』なら 3 件」の方が直ぐ効くから（第 622 回）。 */
     if (
+      !打ち替えが在るか &&
       文.length >= 17 &&
       文.length <= 60 &&
       !/\s/.test(文) &&
@@ -5738,7 +5751,7 @@ const Recommender = (() => {
     return "";
   }
 
-  function uiWordNoteJa(query: unknown): string {
+  function uiWordNoteJa(query: unknown, 打ち替えが在るか?: boolean): string {
     const 文 = String(query == null ? "" : query).trim();
     /* 週の明けに位を続ける形（第 439 回 – 実測 2026-10-24: `週明け` `来週明け`
      * `今週明け` は語表の案内が出るのに `週明け頃` `来週明けあたり` `週明けごろ` は
@@ -5781,7 +5794,7 @@ const Recommender = (() => {
     }
 
     const hit = uiWordEntry(query);
-    if (!hit) return uiWordShapeNoteJa(query, false);
+    if (!hit) return uiWordShapeNoteJa(query, false, 打ち替えが在るか);
     if (!hit.echo) return ` ${hit.note}`;
     const word = uiWordRawJa(query);
     if (hit.quiet && hit.quiet.indexOf(word) >= 0) return ` ${hit.noteQuiet || hit.note}`;
@@ -6053,9 +6066,9 @@ const Recommender = (() => {
   }
 
   /** 読み上げ側の短い文（同じ表から作る – 画面と読み上げが別のことを言わないようにする）。 */
-  function uiWordLiveNoteJa(query: unknown): string {
+  function uiWordLiveNoteJa(query: unknown, 打ち替えが在るか?: boolean): string {
     const hit = uiWordEntry(query);
-    if (!hit) return uiWordShapeNoteJa(query, true);
+    if (!hit) return uiWordShapeNoteJa(query, true, 打ち替えが在るか);
     if (!hit.echo) return hit.live;
     const word = uiWordRawJa(query);
     if (hit.quiet && hit.quiet.indexOf(word) >= 0) return hit.liveQuiet || hit.live;
@@ -7711,6 +7724,8 @@ const Recommender = (() => {
       cache[word] = n;
       return n;
     };
+    /* 語の切れ目 – 助詞と句讀。其れより外の切り方は語で無い切れ端になる。 */
+    const 語の切れJa = /^[、。，,・：:！？のをはにへをもやとが]$/;
     const found: Array<{ word: string; count: number; how: string; pair?: string }> = [];
     const pushShown = (display: string, word: string, how: string, pair?: string): void => {
       const n = countOf(word);
@@ -7742,8 +7757,19 @@ const Recommender = (() => {
       const rawChars = Array.from(raw);
       if (chars.length < 3) return;
       /* (b) 続きを落とす、あるいは前を落とす。元の語に近いほう（長く残すほう）を先に取る。 */
+      /* 切る所が助詞・句讀の所だけ通す（第 622 回）。實測 – 品書 868 行で
+       * `ベストペーパー賞はあるんですか、そういう情報は載っていますか` に「ベス」120 件、
+       * `筆頭著者じゃなくて共著での投稿も認められている会議は？` に「いる会議」17 件が出て居た
+       * – 效くが語で無い切れ端を打てとは言へん（語の後ろに助詞を殘す形も同じ）。 */
+      /* 切る邊の決まり（第 622 回）– (a) 助詞・句讀の邊（前に助詞殘しを残す形は彈く）、
+       * (b) 前が漢字で終る邊（熟語の継ぎ目 – 『論文誌』→『論文』『分散並列処理基盤システム』→
+       * 『分散並列処理基盤』は正しい打ち直しなので殘す）。(b) を漢字に限定するのは、假名・欧文の
+       * 連鎖の途中で切つた物が切れ端になる為（實測 – 「ベス」「ンダー」「ss」「rl」「たい」「べる」）。*/
+      const 継ぎ目Ja = (前: string, 後: string): boolean =>
+        (語の切れJa.test(後) && !語の切れJa.test(前)) || /[々〻一-龥]/.test(前);
       for (let k = chars.length - 1; k >= 2; k--) {
         const head = chars.slice(0, k).join("");
+        if (!継ぎ目Ja(chars[k - 1], chars[k])) continue;
         if (countOf(head) > 0) {
           pushShown(
             rawChars.length === chars.length ? rawChars.slice(0, k).join("") : head,
@@ -7755,6 +7781,7 @@ const Recommender = (() => {
       }
       for (let k = 1; k <= chars.length - 2; k++) {
         const tail = chars.slice(k).join("");
+        if (!継ぎ目Ja(chars[k - 1], chars[k])) continue;
         if (countOf(tail) > 0) {
           pushShown(
             rawChars.length === chars.length ? rawChars.slice(k).join("") : tail,
