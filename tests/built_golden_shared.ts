@@ -110,6 +110,9 @@ export const SEARCH_CANON = (() => {
     // 漢字の略字を折る表（第 241 回）。同じく `searchNormalize` が読むので先に置く。
     ["KANJI_VARIANT_FOLD_JA", /const KANJI_VARIANT_FOLD_JA[\s\S]*?\};/],
     ["KANJI_VARIANT_FOLD_CHARS", /const KANJI_VARIANT_FOLD_CHARS = [^\n]*;/],
+    /* 長音の打ち違ひを折る字（第 639 回）。同じく `searchNormalize` が読むので、漢字の表の
+     * 直後に置く（抜き出した関数と一緒に注入せんと `new Function` の中で未定義になる）。 */
+    ["KATAKANA_HYPHEN_CHARS", /const KATAKANA_HYPHEN_CHARS = [^\n]*;/],
     /* 分野チップの語（`システム（Systems, Architecture and Storage）`）を打ち手で寄せる
      * ための定義。`queryTokenGroups` が読むので、抜き出した関数と一緒に注入する
      * （定義順: 表 → 見出し → 正規表現）。 */

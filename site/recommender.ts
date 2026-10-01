@@ -2118,6 +2118,13 @@ const Recommender = (() => {
     ["ヒューマンコンピュータインタラクション", "分野「人間情報処理」", ["人間情報処理"]],
     ["データベース管理", "分野「データベース」", ["データベース"]],
     ["システム設計", "分野「システム」", ["システム"]],
+    /* 和語で書かれた締切の段階を、畫面の種別名に寄せる（第 639 回）。實測（品書 3,250 行）–
+     * `特別号` **0 行で案内も無し**（『特集号』は 17 行 – 收錄の表記は「特集号」に揃つて居る）。
+     * `校了` は載せん – 實測で既に案内が出て居た（羣の note – 欄の名前の話を受ける）。搜で
+     * 行を出す事に代へると其の案内が消える為、判斷を變へん（第 638 回の `情報処理` と同じ筋）。
+     * （『特集号』は 17 行 – 收錄の表記は「特集号」に揃つて居る）。
+     * `不採択` も載せん – 實測で案内が出て居る（採択率など數の統計の羣）。*/
+    ["特別号", "種別「特集号」", ["特集号"]],
   ];
 
   /* 検索語が、表に出さない締切種別の表示語に当たるかを聞く（0 件の案内が使う）。
@@ -5064,7 +5071,7 @@ const Recommender = (() => {
     {
       /* 手元の操作を訪ねる人（第 631 回）。實測 – `キーボード` `ショートカット` `キー操作` は
          0 件で無言だが、ページ下の『見方のてびき』に「キーボードで一覧を動かす」の項が在つて、
-         键の名まで書いて在る – 之を教へんのは案内として筋が落くらン。書き写す键は
+         鍵の名まで書いて在る – 之を教へんのは案内として筋が落くらン。書き写す鍵は
          `site/template.html` の項の侬（檢査が頁の字面と照合する）。 */
       words: ["キーボード", "キー操作", "キーバインド", "ショートカット"],
       echo: true,
@@ -8449,6 +8456,10 @@ const Recommender = (() => {
   };
   const KANJI_VARIANT_FOLD_CHARS = /[〆迄會學發檢對經應圖實單處數讓歸錄]/g;
 
+  /* 片假名に挾まれた長音さうな字を ー に寄せる字（第 639 回）。NFKC を通した後の字面 –
+   * - − ‐ ‑ – — ~ 〜（U+FF0D と U+FF5E は NFKC で - と ~ になる）。 */
+  const KATAKANA_HYPHEN_CHARS = /(?<=[\u30a1-\u30fa\u30fc])[-−‐‑–—~\u301c](?![a-z0-9])/g;
+
   function searchNormalize(value: unknown): string {
     const raw = typeof value === "string" ? value : value == null ? "" : String(value);
     let folded = typeof raw.normalize === "function" ? raw.normalize("NFKC") : raw;
@@ -8459,6 +8470,12 @@ const Recommender = (() => {
     }
     folded = folded.replace(DIACRITIC_FOLD_CHARS, (ch) => DIACRITIC_FOLD_JA[ch] || ch);
     folded = folded.replace(KANJI_VARIANT_FOLD_CHARS, (ch) => KANJI_VARIANT_FOLD_JA[ch] || ch);
+    /* 長音の打ち違は寄せる（第 639 回 – 實測は SPEC.md 同條）。品書 3,250 行で「データベース」の
+     * 長音を一文字變へるだけ – 本物の ー と `〜`（NFKC で ー になる）は 447 行、その他の九字
+     * （－ − ‐ ‑ – — - ～）はいずれも 0 行だつた。英字IMEやスマホで長音の代はりに打たれる字
+     * なので、片假名・長音の後に続くそれを ー に寄せる（語の中も語末も）。拉丁と数字の次は
+     * 寄せん – `HPC-Grid` `2024-2026` `C++` は區切りの本物。搜の語と品書に同じ目を通す。*/
+    folded = folded.replace(KATAKANA_HYPHEN_CHARS, "ー");
     return folded.toLowerCase().replace(/\s+/g, " ").trim();
   }
 
