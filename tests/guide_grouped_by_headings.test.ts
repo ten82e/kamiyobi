@@ -73,8 +73,10 @@ describe("てびきが見出しで群れている", () => {
     ).toEqual([]);
     // 語の総数（見出しに吸い取られて減っていない）。第 308 回で「データの健全性
     // （health.md）」を 1 語足したので 40 – てびきに語を足す変更はこの数を巻き込む。
+    // 第 619 回 – 一覧の下に『全データ（JSON）』の出口を足したので、てびきにも同じ語を
+    // 載せる（物を足したらてびきも直す – 第 267 回）。41 語。
     const total = built.reduce((acc, g) => acc + g.terms.length, 0);
-    expect(total, "てびきの語の数が減った").toBe(40);
+    expect(total, "てびきの語の数が増減した（てびきの項目を足す時はここも直す）").toBe(41);
     for (const g of built) {
       expect(g.terms.length, `「${g.title}」に語が有らない`).toBeGreaterThan(0);
       for (const t of g.terms) {

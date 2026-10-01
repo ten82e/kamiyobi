@@ -319,7 +319,7 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
   "index.html":
     "画面そのもの。`app.js` をモジュールとして読み、`app.js` の側が `recommender.js`・" +
     "`recommendation-core.js`・`publish.js` を import する（2026-08-09 生成ビルドの import 文で実測）。" +
-    "JavaScript が動かないときの案内と、`data.csv`・`upcoming.md`・`deadlines.ics` への導線を内側に持つ。" +
+    "JavaScript が動かないときの案内と、`data.csv`・`upcoming.md`・`data.json`・`deadlines.ics` への導線を内側に持つ。" +
     "人間の読み方はこのファイルではなく、画面の中の「見方のてびき」に書く。",
   "data.json":
     "正規化データ全体（機械可読の正）。画面の最初の一覧に並ぶのはこのうち `catalog.json` に" +

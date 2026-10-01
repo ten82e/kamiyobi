@@ -185,4 +185,46 @@ describe("持ち出し・購読の語を打った人", () => {
       expect(源.includes(`"${語}",`), `"${語}" を羣に载せた`).toBe(false);
     }
   });
+
+  /* 畫面の出口に JSON が在る事が正（第 619 回）。第 618 回の斷りは文件の名を言つたが、押せる物は
+     README と llms.txt の側にだけ在つた（出口の在りかを言う場所が噓だった過ち – 第 267 回）。
+     實測（2026-08-09 生成の実ビルド）– `data.json` は 6.0 MB・会議 700 件・開催回 1,677 件、
+     畫面の一覧が読む `catalog.json` は 1.9 MB・品書 868 行。*/
+  it("一覧の下の出口に『全データ（JSON）』が在り、案内が同じ語を名指す", () => {
+    const ページ = readFileSync(join(builtSite(), "index.html"), "utf8");
+    const 当たり = /<a id="jsonLink"[^>]*href="data\.json"[^>]*>([\s\S]*?)<\/a\s*>/.exec(ページ);
+    expect(当たり, "JSON の出口が畫面に無い").toBeTruthy();
+    const 語 = 当たり![1].trim();
+    expect(語, "出口の名前が変わった").toBe("全データ（JSON）");
+    /* 案内は畫面に在る語を名指す（ボタン名を勝手に書き換へん – 第 321 回と同じ決まり）。*/
+    for (const 文 of ["json", "この一覧をJSONでもらえる"]) {
+      const 注 = String(Recommender.uiWordNoteJa(文) || "");
+      expect(注.includes(語), `"${文}": 案内が畫面の語を名指していない`).toBe(true);
+    }
+    /* 押す前に範囲と重さを知る（第 289 回）。*/
+    const 説明 = /<a id="jsonLink"[^>]*title="([^"]*)"/.exec(ページ);
+    expect(説明, "出口の説明が無い").toBeTruthy();
+    expect(説明![1]).toContain("大きめ");
+    expect(説明![1]).toContain("CSV");
+    /* 紙に押せない導線を刷らん（印刷の目 – 第 354 回と同じ決まり）。*/
+    const i = ページ.indexOf("@media print");
+    expect(ページ.slice(i, i + 2400), "印刷時に #jsonLink を消さない").toContain("#jsonLink,");
+    /* 物を足したらてびきも直す（第 267 回 – 「出口の在りかを言う場所が噓だった」の再発防ぎ）。*/
+    expect(ページ.includes("「全データ（JSON）」のリンク"), "てびきが出口を書いていない").toBe(
+      true,
+    );
+    expect(ページ.includes("<dt>JSON</dt>"), "てびきに JSON の項目が無い").toBe(true);
+    /* JavaScript が動かん人にも同じ口を – noscript の一覧に JSON が在る（第 619 回）。*/
+    const 落とし穴 = /<noscript>([\s\S]*?)<\/noscript>/.exec(ページ);
+    expect(落とし穴, "案内ブロックが無い").toBeTruthy();
+    expect(
+      /href="data\.json"/.test(落とし穴![1]),
+      "JavaScript を使わない人には JSON の口が無い",
+    ).toBe(true);
+    /* 繋ぎ先は實在する配付物（README と llms.txt が載せる物と同じ）。*/
+    expect(
+      readFileSync(join(builtSite(), "data.json"), "utf8").length,
+      "data.json が空",
+    ).toBeGreaterThan(100_000);
+  });
 });
