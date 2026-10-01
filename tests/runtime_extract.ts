@@ -161,7 +161,8 @@ export function deadlineHintFunction(): (f: Record<string, unknown>) => string {
      ${(rec.match(/const RANK_UNRATED_LABEL_JA = [^\n]*;/) || ['""'])[0]}
      ${wholeTableQueryStubs(rec)}
      ${jsFunction(rec, "splitHintJa")};
-     const Recommender = { splitHintJa, rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA, wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa, dayRangeNoteJa, dayRangeLiveNoteJa, splitHintJa };
+     ${jsFunction(rec, "conjunctionQueryNoteJa")};
+     const Recommender = { splitHintJa, conjunctionQueryNoteJa, rankUnratedLabelJa: () => RANK_UNRATED_LABEL_JA, wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa, dayRangeNoteJa, dayRangeLiveNoteJa, splitHintJa };
      ${jsFunction(app, "rankFilterLabelJa")};
      ${jsFunction(app, "rankDropWordsJa")};
      return (${jsFunction(app, "emptyDeadlineHint")});`,
@@ -176,6 +177,7 @@ export function zeroResultLiveFunction(): (f: Record<string, unknown>) => string
     `${jsFunction(app, "countJa")};
      ${wholeTableQueryStubs(rec)}
      ${jsFunction(rec, "splitHintJa")};
+     ${jsFunction(rec, "conjunctionQueryNoteJa")};
      const Recommender = { wholeTableQueryWordJa, wholeTableQueryNoteJa, columnQueryNoteJa, columnQueryLiveNoteJa, uiWordNoteJa, uiWordLiveNoteJa, dayRangeNoteJa, dayRangeLiveNoteJa };
      return (${liveNoteSource(app)});`,
   )() as (f: Record<string, unknown>) => string;

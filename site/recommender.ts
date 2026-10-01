@@ -2834,6 +2834,50 @@ const Recommender = (() => {
     return `「${hit[0]}」は${column}の名前です。値（「${first}」など）で打ってください`;
   }
 
+  /* 二つの語を助詞で繋いで訪ねる打ち方（第 612 回）。實測（2026-08-09 生成の実ビルド 868 行・
+   * 固定時刻 2026-08-09T00:00:00Z）– `口頭発表とポスター発表` は語に割れて 0 件、畫面 は何も
+   * 言わなかつた（語ごとの件數案内は**群が二つ以上の時だけ**立つ – 第 256 回の門 –
+   * この形は繋げて打たれると群 1 つになる）。割つて直す道（`splitHintJa` – 第 532 回）も
+   * 通らん（どちらか一方を書く行が 0 件なので、空格を入れても AND は 0 件の侭）。
+   * 訪ねの意味は「二つの内のどちらが在るか」なので、**片方だけ行を持つ形**を名前を出して言う。
+   * 両方持つ・両方持たん場合は他の案内が既に言つて居るので讓る（默って二つの話をするな – 第 530 回）。
+   * `と` は語の中にも入る（`ひとつ` `とても`）ので、割つた両側が二文字以上で、しかも
+   * **片側だけが 0 件**の時だけ立つ（實測で噓にならん形だけを扱う – 第 337 回）。*/
+  function conjunctionQueryNoteJa(query: unknown, 件が當たるか: (文: string) => number): string {
+    const 文 = String(query == null ? "" : query).trim();
+    if (文.length < 5 || 文.length > 30 || /\s/.test(文) || /\./.test(文)) return "";
+    if (件が當たるか(文) !== 0) return ""; // 行が出る打ち方を説教せん（第 337 回）。
+    /* 並べる順 – 長い `または` を先に見る（`と` で先に割れると `または` の語が途中で切れる）。
+     * 抜き出す檢査（`tests/runtime_extract.ts`）は函數の体だけを持ってくるので、表は中の局所に置く。*/
+    for (const 目 of ["または", "と", "や"]) {
+      const 位置 = 文.indexOf(目);
+      if (位置 <= 0) continue;
+      const 前 = 文.slice(0, 位置);
+      const 後 = 文.slice(位置 + 目.length);
+      if (前.length < 2 || 後.length < 2) continue;
+      /* 助詞で始まる片側（`ひとつの締切` → `の締切`）は語の途中で割れた物なので讓る
+       * （`と` は語の中にも入る – 上の注）。*/
+      if (/^[のはがをにでへやもの]/.test(後)) continue;
+      const 前件 = 件が當たるか(前);
+      const 後件 = 件が當たるか(後);
+      if (前件 === 0 && 後件 === 0) continue; // 両方無い – 収録に無い語の話は別の案内がする。
+      const 繋いだ = `「${前}」と「${後}」を「${目}」で繋いで打つと両方を含む行を探すため 0 件になります`;
+      if (前件 === 0 || 後件 === 0) {
+        const 欠 = 前件 === 0 ? 前 : 後;
+        const ある = 前件 === 0 ? 後 : 前;
+        return (
+          ` 「${欠}」を書く行はなく、「${ある}」を書く行は ${前件 === 0 ? 後件 : 前件} 件あります。` +
+          `${繋いだ}。どちらかだけで打ってください。`
+        );
+      }
+      return (
+        ` 「${前}」を書く行は ${前件} 件、「${後}」を書く行は ${後件} 件ありますが、${繋いだ}。` +
+        "どちらかだけで打ってください。"
+      );
+    }
+    return "";
+  }
+
   /* 画面自身の操作・説明・出典にあたる語（第 248 回）。表の値ではないので 1 行も減らないのに、
    * 画面は「その語は収録データにありません」としか言わなかった。2026-08-09 生成ビルドで実測
    * （候補 3,253 行に対して当たり 0 件、言い換えの案内も無し）: `使い方` `ヘルプ` `てびき`
@@ -16070,6 +16114,7 @@ const Recommender = (() => {
     deadlineShiftSearchWords: deadlineShiftSearchWords,
     weekdaySearchTerms: weekdaySearchTerms,
     splitHintJa: splitHintJa,
+    conjunctionQueryNoteJa: conjunctionQueryNoteJa,
     queryTermCounts: queryTermCounts,
     shorterHitWordsJa: shorterHitWordsJa,
     extendedLabelJa: () => EXTENDED_LABEL_JA,

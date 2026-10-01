@@ -3039,6 +3039,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
        収録に無い語でもない – 締切日からの日数で絞る「締切まで」の選択欄が同じ話をする欄なので、
        そこへ送る。「語を外すと増えます」を同時に立てないため、下の条件にも入れる。 */
     const dayRangeNote = matchedRows === 0 ? Recommender.dayRangeNoteJa(trimmedQuery) : "";
+    /* 二つの語を「と」「や」で繋いだ打ち方（第 612 回）。語に割れて群 1 つになる為、語ごとの
+       件數案内（第 256 回）も割つて直す案内（第 532 回）も通らん。數へる側は `filter.splitCount` –
+       抜き出す檢査は之を渡さんので、其處では默る（同じ形の `columnValueHits` に學ぶ）。*/
+    const conjunctionNote =
+      matchedRows === 0 && !columnNote && !uiNote && !dayRangeNote && filter.splitCount
+        ? Recommender.conjunctionQueryNoteJa(trimmedQuery, filter.splitCount)
+        : "";
     /* 打った日付が、いま読み込んでいるデータの果てより先（第 293 回）。「締切まで」の窓も
        狭いときは、そっちも外す価値があるので、この場合だけ他の案内に重ねる（窓を広げずに
        全体を読み込んでも増えないので、原因を一つに絞れない）。 */
@@ -3144,7 +3151,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // URL の検索語を語に分解して「〜は収録データにも見当たりません」と言うのは誤解になる
     // （分解された語はドメインの一部で、検索の失敗理由ではない）。
     const terms =
-      !filter.urlQuery && !columnNote && !uiNote && !dayRangeNote && filter.termCounts.length > 1
+      !filter.urlQuery &&
+      !columnNote &&
+      !uiNote &&
+      !dayRangeNote &&
+      !conjunctionNote &&
+      filter.termCounts.length > 1
         ? filter.termCounts
         : [];
     const deadAll = terms.filter((t) => t.count === 0).map((t) => t.term);
@@ -3183,6 +3195,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       !columnNote &&
       !uiNote &&
       !dayRangeNote &&
+      !conjunctionNote &&
       !catalogNote &&
       !urlNote &&
       !termNote &&
@@ -3199,6 +3212,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         uiNote ||
         splitNote ||
         dayRangeNote ||
+        conjunctionNote ||
         catalogNote ||
         deadTerms.length ||
         urlNote ||
@@ -3279,6 +3293,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       !columnNote &&
       !uiNote &&
       !dayRangeNote &&
+      !conjunctionNote &&
       !horizonNote &&
       !nameNote
     ) {
@@ -3300,8 +3315,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.html に載せています。";
     if (specific) {
       return tips.length
-        ? `${base}${horizonNote}${nameNote}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${catalogNote}${urlNote}${termNote}${splitNote} 外せる条件: ${tips.join(" / ")}。`
-        : `${base}${horizonNote}${nameNote}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${catalogNote}${urlNote}${termNote}${splitNote}`;
+        ? `${base}${horizonNote}${nameNote}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${conjunctionNote}${catalogNote}${urlNote}${termNote}${splitNote} 外せる条件: ${tips.join(" / ")}。`
+        : `${base}${horizonNote}${nameNote}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${conjunctionNote}${catalogNote}${urlNote}${termNote}${splitNote}`;
     }
     if (!tips.length) return `${base}${horizonNote}${nameNote}${termNote} ${meetingNote}`;
     return `${base}${horizonNote}${nameNote}${termNote} 多いのは ${tips.join(" / ")}。${meetingNote}`;
