@@ -159,8 +159,8 @@ describe("催し物の名に手続きを繋げた打ち方（第 646 回）", ()
     const 源 = readFileSync(join(REPO_ROOT, "site", "recommender.ts"), "utf8");
     /* 組み立ての目（頭の語・手続きの尾）と斷りの文が、それぞれ一處にしか在らん事。
      * 二處目に寫られたら、畫面上の文と讀み上げが別の事を言い出す（第 392 回の実発生）。*/
-    expect(源.split("催し物の頭Ja =").length - 1, "頭の目が二處出來た").toBe(1);
-    expect(源.split("手続きの尾Ja =").length - 1, "尾の目が二處出來た").toBe(1);
+    expect(源.split("\n    const 催し物の頭Ja =").length - 1, "頭の目が二處出來た").toBe(1);
+    expect(源.split("\n    const 手続きの尾Ja =").length - 1, "尾の目が二處出來た").toBe(1);
     expect(源.split("この表は催し物ごとの手続き").length - 1, "斷りの文が二處書かれた").toBe(1);
     /* 先に羣の語として在つた物（`テンプレート` `募集要項` – 第 517 回）は其侭羣が答へる –
      * 組み立ての家は羣に當たらん打ち手だけを見る順番なので、同じ語を羣から拔かんの決まり。*/
