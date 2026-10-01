@@ -2109,6 +2109,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       Boolean(filter.hidden?.past) ||
       Boolean(filter.hidden?.est);
     const pointer = loosenable ? "。下に外せる条件も書いてあります" : "";
+    /* 案内の文が既に句點で終つて居るとき、pointer が「。」を二つ並べる（實測 –
+       「公式ページをご覧ください。。下に外せる条件も」）。聲で聽くと間が空くので、
+       句點を一つに揃へる（第 632 回）。 */
+    const 聲 = (文: string): string =>
+      pointer && /[。！？]$/.test(文) ? `${文.slice(0, -1)}${pointer}` : `${文}${pointer}`;
     // 外せる条件が 1 つも無いなら、その旨を言う（「下に案内がある」「緩めると出る」は
     // いずれも噓になる）。2026-09-23 の収録では踏めない（今後より後の締切が多数ある）
     // ので、収録が古くなった日に効く形の防御である。
@@ -2133,17 +2138,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
        * 語ではない（実測: `分野` 0 件で「語「分野」は収録データにありません」と言っていた –
        * 値の `セキュリティ` は 152 件当たる）。値の例を言って打ち直させる。 */
       const columnNote = Recommender.columnQueryLiveNoteJa(filter.query, filter.columnValueHits);
-      if (columnNote) return ` ｜ ${columnNote}${pointer}`;
+      if (columnNote) return ` ｜ ${聲(columnNote)}`;
       /* 画面自身の操作・説明・出典の語を打たれた人（第 248 回）。同じ表から短い文を作る。 */
       /* 同じ讓りの判斷 – 畫面と讀み上げが別のことを言はん（第 392 回）。 */
       const 打ち替えが在るか = (filter.shorterHits || []).length > 0;
       const uiNote = Recommender.uiWordLiveNoteJa(filter.query, 打ち替えが在るか);
-      if (uiNote) return ` ｜ ${uiNote}${pointer}`;
+      if (uiNote) return ` ｜ ${聲(uiNote)}`;
       /* 日数の範囲の言い方（`1か月以内` `1週間以内` など）を打たれた人（第 253 回）。
        * 実測: `1か月以内` 0 行・`1週間以内` 0 行・`3日以内` 0 行で、読み上げは
        * 「語がありません」としか言っていなかった。同じ判断を短い文で言う。 */
       const dayRange = Recommender.dayRangeLiveNoteJa(filter.query);
-      if (dayRange) return ` ｜ ${dayRange}${pointer}`;
+      if (dayRange) return ` ｜ ${聲(dayRange)}`;
     }
     /* 「その語が収録に無い」は、語の数え上げ（表の行だけを見る）ではなく全体の当たり数で決める
      * （第 240 回）。`常時受付` は表 0 件・常時受付ジャーナル 22 件なのに、読み上げは
@@ -3359,7 +3364,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           retypeTips.push(t);
         });
       } else {
-        retypeTips.push("別の語で試す（分野名・主題・開催地の日本語でも引けます）");
+        /* 案内の當たらん打ち手は、此處に落ちる（實測 – 2026-08-09 生成の実ビルドで 0 件の
+           打ち手 844 本の內 273 本が此の受皿に居た）。受皿の文は「過去の締切も表示」等を
+           數へるだけで、**この表が何を出す画面なのか**を一言も言はなんだ – 分野で引ける事
+           だけが伝わつて、締切の日と催し物しか載らん事は伝わらん。其方を此處に一筆置く。 */
+        retypeTips.push(
+          "別の語で試す（分野名・主題・開催地の日本語でも引けます）。" +
+            "この表が出すのは催し物の名前・締切の日・分野・種別・開催地・参加形式で、" +
+            "くわしくはページ下の『見方のてびき』に書いています",
+        );
       }
     }
 
