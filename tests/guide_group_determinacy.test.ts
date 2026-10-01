@@ -118,7 +118,9 @@ describe("同じ語を二つの群に持つ誤りを直し、てびきの群に�
 describe("ビルド成果物に目が在る事（第 466 回 – 成果物だけの検査でも捕まへる）", () => {
   const 物 = readFileSync(join(builtSite(), "recommender.js"), "utf8");
   it("てびきの群から `確定` が消え、語尾の印が 41 群に付いた", () => {
-    const 群0 = 物.slice(物.indexOf('words: ["使い方"'), 物.indexOf('words: ["使い方"') + 1600);
+    /* 語の配列を複数行に組んだ（第 641 回 – てびきの羣に語を足した）ので、目印は `words:` を
+     * 通さない – 羣の語その物を見る（`使い方` はこの羣にしか在らん）。*/
+    const 群0 = 物.slice(物.indexOf('"使い方"'), 物.indexOf('"使い方"') + 2400);
     expect(群0).not.toContain('"確定"');
     expect(群0).toContain("deadlineTail: true");
     /* 第 516 回で二つ增える（採否の数の群・当日の様子の群）。*/
