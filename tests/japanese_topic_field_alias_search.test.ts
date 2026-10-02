@@ -141,7 +141,11 @@ describe("分野の和名を英字の會議名へ寄せる（第 673 回）", ()
     const 表 = readFileSync(`${REPO_ROOT}/site/topic-aliases.ts`, "utf8");
     const 本 = readFileSync(`${REPO_ROOT}/site/recommender.ts`, "utf8");
     expect(表).toContain("export const TOPIC_QUERY_ALIASES_JA");
-    expect((表.match(/^\s*\["/gm) || []).length, "条目の合計が計畫外に動いた").toBe(102);
+    // 分けの時に 85 條・第 673 回に 102 條 – 载せ增しで增えるので下限だけ張る（確數は各回合が持つ）。
+    expect(
+      (表.match(/^\s*\["/gm) || []).length,
+      "条目が減つた（表の切り出しが崩れた）",
+    ).toBeGreaterThanOrEqual(102);
     expect(本).toContain('from "./topic-aliases.ts"');
     // 搜し 0 行の打ち手を廣げる表なので、載せた鍵は一つ殘らず 0 行**から**始まつて居る筈だ –
     // 鍵の行が增えたら（收錄が其の方の和名を書いた）彈いて別扱いにする（第 337 回）。
