@@ -123,6 +123,10 @@ export const SEARCH_CANON = (() => {
     ["CATEGORY_CHIP_TAIL", /const CATEGORY_CHIP_TAIL = new RegExp\([\s\S]*?\);/],
     ["PLACE_QUERY_ALIASES_JA", /const PLACE_QUERY_ALIASES_JA[\s\S]*?\];/],
     ["TOPIC_QUERY_ALIASES_JA", /const TOPIC_QUERY_ALIASES_JA[\s\S]*?\];/],
+    /* 寄せ表の和名を助詞で割らん門（第 676 回）が持つ鍵の cache。門は上の二つの表を読むので、
+     * 定義順（TDZ）を崩さん様に直後へ置く（書かなければ `寄せ表の和名の鍵cache is not defined`
+     * で抜き出し評価が静かに 1 行落とす – 第 675 回の `latinFoldedHit` と同じ穴）。*/
+    ["寄せ表の和名の鍵cache", /let 寄せ表の和名の鍵cache[^\n]*;/],
     ["TOPIC_ABBREVIATIONS_EN", /const TOPIC_ABBREVIATIONS_EN[\s\S]*?\];/],
     /* 時刻に繋がれたタイムゾーンの語（第 412 回）。`queryTokenGroups` の内側から読むので、
      * 抜き出す関数と一緒に注入しないと `new Function` の中で未定義になる。 */
@@ -350,6 +354,9 @@ export const SEARCH_CANON = (() => {
       /* 語の末尾に繋がれた締切の語を割る手順（第 517 回）– 同じく `splitQueryToken` が呼ぶ。*/
       "締切の語尾に割るJa",
       "訪ねの語尾に落とすいつJa",
+      // 寄せ表の和名を助詞で割らん守り（第 676 回）は `splitQueryToken` が呼ぶので、注入も一緒にする
+      // （足さんとしは eval が `寄せ表の和名か is not defined` で落ちる – 第 257 回と同じ穴）。
+      "寄せ表の和名か",
       "splitQueryToken",
       "withoutWholeTableGroups",
       "querySynonymMap",

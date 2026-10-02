@@ -12,7 +12,7 @@
  * 载せ直した五本（`性能評価`・`ワイヤレスネットワーク`・`ネットワーク測定`・`ネットワーク計測`・
  * `ネットワーク管理`）と、此の直しで初めて屆くやうにした七本（`データ管理`・`データマネジメント`・
  * `分散ファイル`・`分散ファイルシステム`・`ヘテロジニアス計算`・`ヘテロジニアスコンピューティング`・
- * `メタバース`）を張る。載せきれん組（助詞の で割れる `モノのインターネット`・收錄が和名 only で
+ * `メタバース`）を張る。載せきれん組（收錄が和名 only で
  * 書く語を含む `distributed file system`）もその理由ごと張る。 */
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
@@ -97,18 +97,20 @@ describe("並べた語の寄せ先を搜しが語ごとに數える（第 675 �
     expect(當("分散ファイル")).toBe(15);
   });
 
-  it("搜しが助詞で割れる和名は載せん – `モノのインターネット` の穴", () => {
+  it("助詞で割れる和名も载せられるやうにした – 拔いた理由の订正（第 676 回）", () => {
     const 表 = readFileSync(`${REPO_ROOT}/site/topic-aliases.ts`, "utf8");
-    expect(表.includes('["モノのインターネット",'), "モノのインターネット を載せてしまつた").toBe(
-      false,
-    );
-    expect(當("モノのインターネット")).toBe(0);
-    /* 拔いた理由 – 一まとめの語にならず二つの組へ割れるので、其の方の和名が鍵にならん。*/
+    /* 第 674 回は「搜しが助詞の で先に割れるので載せても屆かん」（決まり⑤）と拔いた。實は割れる
+     * 事自体が穴だつた – 搜し側が寄せ表の鍵を守るやうにしたので（`splitQueryToken` の門）、其の侬が
+     * 鍵として引ける。載せ直して屆いた實測は `tests/japanese_particle_compound_alias_search.test.ts`。*/
+    expect(
+      表.includes('["モノのインターネット", "IoT"]'),
+      "モノのインターネット が載つて居ん",
+    ).toBe(true);
+    expect(當("モノのインターネット"), "搜し欄で IoT と打つ人は 9 行").toBe(9);
     expect(Recommender.queryTokenGroups("モノのインターネット", AT)).toEqual([
-      ["モノ"],
-      ["インターネット"],
+      ["モノのインターネット", "IoT", "internet of things"],
     ]);
-    /* 使用者の損にはなつて居らん – 略語の門（第 414 回）が同じ事を英字の綴りへ寄せる。*/
+    /* 略語の門（第 414 回）は其侭 – 英字の綴り側も同じ組を向く。*/
     expect(Recommender.queryTokenGroups("IoT", AT)[0]).toContain("internet of things");
   });
 
@@ -136,6 +138,6 @@ describe("並べた語の寄せ先を搜しが語ごとに數える（第 675 �
     expect(當("情報理論"), "並べ語の語ごとに數えて增えた筈").toBe(9);
     expect(當("高性能計算")).toBe(207);
     const 表 = readFileSync(`${REPO_ROOT}/site/topic-aliases.ts`, "utf8");
-    expect((表.match(/^\s*\["/gm) || []).length, "条目の合計が計畫外に動いた").toBe(131);
+    expect((表.match(/^\s*\["/gm) || []).length, "条目の合計が計畫外に動いた").toBe(138);
   });
 });
