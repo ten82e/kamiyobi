@@ -2979,6 +2979,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     termRemainder?: number | null;
     urlQuery: boolean;
     catalogConferences: number;
+    /* 分野の欄に並ぶ語（第 679 回 – 受皿の案内が邊界を名指す為に渡す。畫面のチップと同じ順・
+     * 同じ日本語名。渡さんなら其の文は出ん – 別の呼び出し口が空で呼んでも壊れん）。 */
+    categoryNames?: string[];
     // 打った日付と、いま読み込んでいるデータの果て（第 293 回）。
     queryDaySpan?: { first: string; last: string; label: string } | null;
     // 名簿に在るのに締切の行が無い会議（第 294 回 – 収録側の締切は第 295 回）。
@@ -3368,8 +3371,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
            打ち手 844 本の內 273 本が此の受皿に居た）。受皿の文は「過去の締切も表示」等を
            數へるだけで、**この表が何を出す画面なのか**を一言も言はなんだ – 分野で引ける事
            だけが伝わつて、締切の日と催し物しか載らん事は伝わらん。其方を此處に一筆置く。 */
+        /* 分野の名前を並べる（第 679 回）。實測 – 2026-08-09 生成の実ビルドで「別の語で試す」に
+         * 落ちる打ち手の內、`脳科学` `ソナー` `ケルビン` `車座` のやうな**情報処理の九分野外の語**
+         * を打つ人に、今の文は「分野名でも引けます」とだけ言って居た（邊界が分かつて居らん人が
+         * 分野名を並べ直して空振りする – 收錄の品書 3,250 行で搜 0 行を確かめてある）。 */
+        const 分野 = (filter.categoryNames || []).filter((x) => String(x || "").trim());
         retypeTips.push(
           "別の語で試す（分野名・主題・開催地の日本語でも引けます）。" +
+            (分野.length
+              ? `分野の欄は${分野.join("・")}の${countJa(分野.length)}種だけで、他の分野の言葉でも其の語を行に持つ締切なら當たります。`
+              : "") +
             "この表が出すのは催し物の名前・締切の日・分野・種別・開催地・参加形式で、" +
             "くわしくはページ下の『見方のてびき』に書いています",
         );
@@ -4789,6 +4800,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
               nameOnlyConferenceMatch(searchQuery, rows, Date.now()),
               Date.now(),
               KIND_LABEL,
+            ),
+            // 受皿の案内が分野の欄の名前を數へる語（チップと同じ順 – 第 679 回）。
+            categoryNames: categoryChipKeys(DATA.categories || {}).map((k) =>
+              Recommender.categoryLabelJa(k),
             ),
             recordLastDay: DATA.calendar ? DATA.calendar.last_day : "",
             horizonDays: DATA.window ? DATA.window.upcoming_days : 0,

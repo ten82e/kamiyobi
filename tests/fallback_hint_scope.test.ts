@@ -17,6 +17,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 import { builtSite } from "./built_site.ts";
+import { REPO_ROOT } from "./helpers.ts";
 import { deadlineHintFunction, zeroResultLiveFunction } from "./runtime_extract.ts";
 
 const 基準 = Date.parse("2026-08-09T00:00:00Z");
@@ -80,6 +81,33 @@ describe("受皿の文がこの表の中身を言ふ（第 632 回）", () => {
       expect(out, `てびきの場所が書かれて居ん: ${文}`).toContain("見方のてびき");
     }
   });
+  /* 第 679 回 – 受皿の文が分野の欄の語を並べる（九分野外の語を打つ人に邊界を傳ふる）。*/
+  it("受皿の文が分野の名前を數へて並べる（第 679 回）", () => {
+    /* 實測（2026-08-09 生成の実ビルド・品書 3,250 行）– 情報処理の九分野外の語を打つ人は 0 行で、
+     * 受皿は「分野名・主題・開催地の日本語でも引けます」とだけ言っていた（`脳科学` 0 行・
+     * `ソナー` 0 行・`ケルビン` 0 行・`車座` 0 行 – 收錄の品書で搜 0 行を確かめてある）。
+     * 邊界が分らん人は分野名を並べ直して空振りし續けるので、分野の欄に出る語を數へて言う。
+     * 並べる語は檢査が品書から數へる（收錄の分野が増えたら案内にも增へる證 – 書き寫しを防ぐ）。 */
+    const 欄 = [...new Set(品書.flatMap((r: { cats?: string[] }) => (r.cats || []) as string[]))]
+      .map((c: string) => Recommender.categoryLabelJa(c))
+      .sort((a: string, b: string) => a.localeCompare(b, "ja"));
+    expect(欄.length, "品書から分野が讀められん（檢査が空振りする）").toBe(9);
+    const out = 畫面(袋("脳科学", { categoryNames: 欄 }));
+    expect(out, "分野の欄の名前が並んで居ん").toContain(`分野の欄は${欄.join("・")}`);
+    expect(out, "本數を數へて言はんだ").toContain(`の${欄.length}種だけ`);
+    // 他の呼び出し口が語を渡さんと其の文は出ん（受皿の文その物は消へん）。
+    const 無 = 畫面(袋("脳科学"));
+    // 空の並べで來ても噓を書かん（「分野の欄はの0種だけ」のやうな空文を出さない – 第 244 回）。
+    const 空 = 畫面(袋("脳科学", { categoryNames: [] }));
+    expect(空, "語の無い並べで空文を出した").not.toContain("分野の欄は");
+    expect(空, "受皿の文が消えた").toContain("別の語で試す");
+    expect(無, "渡さん語を並べた").not.toContain("分野の欄は");
+    expect(無, "受皿の文が消えた").toContain("別の語で試す");
+    // app が語を渡して居る證（渡しが切れると案内だけが古くなる – 第 215 回と同じ疵）。
+    const 源 = readFileSync(join(REPO_ROOT, "site", "app.ts"), "utf8");
+    expect(源, "app が分野の語を渡して居ん").toContain("categoryNames: categoryChipKeys(");
+  });
+
   it("羣の斷りが當たる打ち手では二重に言はん", () => {
     /* 斷りを持つ側に同じ文を並べると、同じ話を二度讀む事になる（第 392 回の「目の字と
        聲が別のことを言はん」の裏 – 之は同じ事を二つ言ふ疵）。 */
