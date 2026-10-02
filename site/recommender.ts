@@ -11,6 +11,13 @@
  *   breakdown(r, lines)        → {score, venueHit, perLine: [...]}  デバッグ/表示用
  *   safeExternalUrl(value)     → HTTP/HTTPS または相対 URL、不正な URL は ""
  */
+
+import {
+  latinAttestedJa,
+  latinNearestJa,
+  latinSkeletonJa,
+  latinVocabularyJa,
+} from "./latin-retype.ts"; // 欧文の打ち間違いの見當（第 680 回）
 import { PLACE_QUERY_ALIASES_JA } from "./place-aliases.ts"; // 繋ぎを `.ts` で書く – site/tsconfig.build.json の書き換えで成果物は `.js` になる（第 583 回）
 import { TOPIC_QUERY_ALIASES_JA } from "./topic-aliases.ts"; // 主題の寄せ表（第 672 回 – 1 MiB の壁を分ける）
 
@@ -8672,7 +8679,32 @@ const Recommender = (() => {
     /* 並べ替えは「元の語の意味を残せている順」が先（第 256 回）。割って両方残す見当は
      * 打ち直しても探している物から遠ざからないので、語を 1 つ落とす・短くするより先に置く。
      * 件数の大きさは同じ形の中では見る（1 件だけの見当より当たりのある見当のほうが役に立つ）。 */
-    const RANK: Record<string, number> = { split: 0, alone: 1, shorten: 2 };
+    /* 欧文の語を一字違ひに打つ人（第 680 回）– 他の見當が無い時だけ收錄の綴りを打ち手に出す
+     * （搜しは廣げん – 默つて廣げるのは第 246 回で禁じた）。實測六語と語彙作りの代償は
+     * `site/latin-retype.ts` と SPEC.md に讓つた。0 件の打ち手の路しか通らん。*/
+    const 寄 = new Map<string, string>();
+    {
+      const 語彙 = latinVocabularyJa(folded);
+      words.forEach((word) => {
+        if (countOf(word) > 0) return;
+        for (const 近 of latinNearestJa(語彙, latinSkeletonJa(word))) 寄.set(近.word, 近.word);
+      });
+      for (const 語 of 寄.values()) pushShown(語, 語, "retype");
+      // 收錄の語として實在せぬ欧文の切れ端は打ち手から落す（`embeded`→『embe』63 件等 – 第 680 回）。
+      for (let i = found.length - 1; i >= 0; i--) {
+        const 見 = found[i];
+        if (
+          見.how !== "shorten" ||
+          !/^[a-z0-9 .'-]+$/i.test(見.word) ||
+          latinAttestedJa(語彙, 見.word)
+        )
+          continue;
+        found.splice(i, 1);
+      }
+    }
+    /* 收錄の実在する綴りは、語の切れ端より先に置く（實測 – `embeded` に「『embe』63 件」より
+     * 「『embedded』982 件」を先に出す – 切れ端を打てと言っても打てん）。*/
+    const RANK: Record<string, number> = { retype: 0, split: 1, alone: 2, shorten: 3 };
     return found
       .sort((a, b) => {
         const ra = RANK[a.how] === undefined ? 3 : RANK[a.how];
@@ -14978,27 +15010,17 @@ const Recommender = (() => {
       let hit = false;
       for (let k = 0; k < groups[i].length; k++) {
         const term = groups[i][k];
-        /* 寄せ表の候補は **語を並べた綴り**で入ることがある（`network measurement`
-         * `distributed file system` – 第 673 回・第 674 回）。今まで此處は其の侬の文字列を
-         * 探して居たので、收錄が語を離して書くと 0 行になつた（實測 2026-08-09 生成ビルド・
-         * 品書 3,250 行 – `ネットワーク測定` の寄せ先 `network measurement` を連なりで書く行は
-         * 0 行、其の二語を別々に書く行は `network measurement` と打つ人で 21 行出る –
-         * IMC・PAM。`distributed file system` は FAST ら 15 行）。搜し欄に英語で打つ人は語に
-         * 割れて AND になるのだから、**寄せ表の候補も同じ數え方**にする（檢査側の門
-         * 「別表記の表は、実際に新しい行を増やしている」は已に語に割つて數えて居て、搜しの
-         * 述語だけが連なりを探して居た – 門と實裝のズレを塞いだ – 第 675 回）。
-         * **空格の入らん候補は今まで通り單語の門を通る** ✓ – 振ひの突合で減 0 を見て居る。*/
+        /* 寄せ表の候補は **語を並べた綴り**で入ることがある（`network measurement` 等 –
+         * 第 673 回・第 674 回）。其の侬の文字列を探して居たうちは、收錄が語を離して書くと
+         * 0 行だつた（實測は SPEC.md – 二語を別に書く行は 21 行出る）。搜し欄に英語で打つ人は
+         * 語に割れて AND になるので、**寄せ表の候補も同じ數え方**にする（門と實裝のズレを塞いだ
+         * – 第 675 回）。**空格の入らん候補は今まで通り單語の門を通る** ✓*/
         if (LATIN_TERM_TOKEN.test(term) && /\s/.test(term)) {
           const 語列 = term.split(/\s+/).filter(Boolean);
-          /* 各語には**單語の門をそのまま**通す（下の `latinFoldedHit` – 短い語は右を閉ぢず、
-           * 長い語は閉じ、複/單の寄せも見る）。此處で獨自の閉ぢ方（語ごとに右を閉じる）を
-           * すると、搜し欄で其の語を單體で打つ人より狭くなつて、ハイフンと空格の寄せが
-           * 齒合わなくなる（實測 – `ches-ches` の組が `ches ches` より广くなり、檢査
-           * `hyphen_term_reach` が「寄せは 1 語の組にスペースの形を足すだけ」の決まりで弹く）。
-           * 齊しく數える事が此の直しの目的なので、門は借りる。副つて `work` が `workshop` の
-           * やうに語の一部でも當たるが、それは其の語を單體で打つ人が既に受けて居る數と揃ふ
-           * （`計算機支援協調` 14 → 16 行 – 增分の 2 行は IROS の協調知能のワークショップで、
-           * 英字で `cooperative work` と打つ人も同じ行を見る – 內譯で確認）。*/
+          /* 各語には**單語の門をそのまま**借りる（下の `latinFoldedHit`）。此處で獨自に右を
+           * 閉ぢると、其の語を單體で打つ人より狭くなつてハイフンと空格の寄せが齒合わん
+           * （檢査 `hyphen_term_reach` が彈く）。語の一部へ當たる副作用は、單體で打つ人の數と
+           * 揃ふので許す（增分の行は內譯で確認 – 第 675 回）。*/
           let 皆當 = true;
           for (let w = 0; w < 語列.length; w++) {
             if (!latinFoldedHit(target, 語列[w])) {

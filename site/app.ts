@@ -2165,6 +2165,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         const note = ` ｜ 「${dead[0]}」は無くて「${alt.word}」なら ${countJa(alt.count)} 件当たります${pointer}`;
         // aria-live に長い文を流さない約束（SPEC §7 – 60 字）。収まらないなら短いほうに落ちる。
         if (note.length <= 60) return note;
+        /* 60 字に収まらん時、下の「収録データにありません」へ落ちるのは噓になる（第 680 回 –
+         * `camera-redy` の讀み上げが 63 字に溢れて「ありません」と言つた。打ち手の語が
+         * 見えただけ惡い）。外せる条件への導き（`pointer`）を落してでも打ち手を殘す。
+         * 欧文の語は 1 字が幅を食ふので、この落ち方は和語より頻繁に踏まれる。*/
+        const 短 = ` ｜ 「${dead[0]}」は無くて「${alt.word}」なら ${countJa(alt.count)} 件当たります`;
+        if (短.length <= 60) return 短;
+        // 語その物が長い時は、導きを落とした一層短い形で打ち手だけを說ふ。
+        const 最 = ` ｜ 「${alt.word}」なら ${countJa(alt.count)} 件当たります`;
+        if (最.length <= 60) return 最;
       }
       return ` ｜ 語「${dead[0]}」は収録データにありません${pointer}`;
     }

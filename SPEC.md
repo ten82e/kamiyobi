@@ -197,6 +197,7 @@ kamiyobi/
 │   ├── app.ts                   # ブラウザ UI 実行時処理
 │   ├── place-aliases.ts         # 國名・都市名の打ち方を収録の表記へ寄せる表
 │   ├── topic-aliases.ts         # 主題の日本語の打ち方を會議名の英字檢索語へ寄せる表
+│   ├── latin-retype.ts          # 欧文の語を一字違ひに打った人へ收錄の綴りを見當として出す表（第 680 回）
 │   ├── recommender.ts           # 論文推薦（§10。任意 CDN）
 │   ├── recommendation-core.ts   # browser / benchmark / test 共通の推薦軸
 │   ├── publish.ts               # publish manifest のブラウザ側検証
@@ -600,6 +601,7 @@ node --experimental-strip-types src/cli.ts evidence [verify|gc] [--dry-run]
 | `recommender.js` | `site/recommender.ts` から生成するサイトの推薦ロジック |
 | `place-aliases.js` | `site/place-aliases.ts` から生成する、開催地の寄せ先の表（`recommender.js` が import） |
 | `topic-aliases.js` | `site/topic-aliases.ts` から生成する、主題の寄せ先の表（`recommender.js` が import） |
+| `latin-retype.js` | `site/latin-retype.ts` から生成する、欧文の打ち間違いへ收錄の綴りを見當として出す表（`recommender.js` が import する。搜しは廣げん – 打ち手の提案だけ）
 | `recommendation-core.js` | `site/recommendation-core.ts` から生成する共有推薦軸 |
 | `publish.js` | `site/publish.ts` から生成する publish manifest 検証 |
 | `app.js` | `site/app.ts` から生成するブラウザ UI 実行時処理 |
@@ -2650,6 +2652,15 @@ conferences:
   磁石を總當たりで無く品書の文本側から張る為、檢査は品書を一度しか讀まんやうに记忆力せた –
   每回讀むと**同じ張りで 484 秒**かかる（実測 7 秒）。
 
+- **欧文の語を一字違ひに打つ人へ、收錄の綴りを打ち手として出す路を作つた（第 680 回）
+  - 事實（2026-08-09T00:00:00Z 生成の実ビルド・品書 3,250 行）– `camera-redy` `registraton` `workshp` `embeded` `netwrok` `sumposium` `hybird` はいずれも搜 0 行。近い綴りは同じ品書に `camera ready` 147 行・`registration` 66 行・`workshop` 174 行・`embedded` 982 行・`network` 373 行・`symposium` 585 行・`hybrid` 111 行と出て居るのに、畫面は受皿（「別の語で試す」）に落として了ひを讓るだけだつた。語を二つ打つ人（`machne learning`・`cyber secuirty`）も搜 0 行で同じ。打ち手の札が出る場合も、その中身が收錄の語で無い切れ端だつた（實測 – `embeded` に『embe』63 件・『ded』16 件、『specifical』に『cal』64 件・『specifi』4 件 – 打ちようが無い物を打てと言つて居た）。
+  - 直し – 新しい runtime 檔案 `site/latin-retype.ts` を作り、**收錄の語彙（畳んだ行の文本から欧文の語と二語続きを數へる）から一文字違いの綴りだけを拾つて打ち手に出す**路を `shorterHitWordsJa` に配線した（`how: "retype"`）。搜し自体は廣げん（默つて廣げるのは第 246 回の禁 – ここは提案のみ）。門は次の四つ – ① 一文字の插し・落・置換と隣り合う二文字の轉位だけ（二文字離れは彈く – `specifical`・`shorch` は默つた侬）② 空格・ハイフン・點は同じ骨に落ちる（`camera-redy` ⇔ `camera ready`）③ 收錄に無い語は默る（`keynote` – 噓の打ち手を出さん）④ 四文字以上は子音だけで終る語を彈くが、二字・三字の略語（`ai` `hpc` `os`）は收錄の語なので通す（③を嚴しくして三字からに數へた處、`AIセミナー` の打ち手が消えた – 實測して戻した）。
+  - 並べ – 收錄の実在する綴りは語の切れ端より先に置く（RANK を retype 最優先に – 『embe』より『embedded』が先）。副つて收錄の語彙に無い欧文の切れ端（`shorten` の候補）は打ち手から落すやうにした（`specifical` は空になり受皿の文に讓る – 打てない物を並べない）。
+  - 讀み上げの疵も一つ塞いだ – 60 字の制約に溢れた時、下の「語『camera-redy』は収録データにありません」へ落ちて居た（實測 63 字 – 打ち手が見えた人により惡い噓）。外せる条件への導きを落してでも打ち手を殘す短い形を二段置いた（app.ts）。
+  - 1 MiB の壁 – 表を別の檔案に分けたので `site/recommender.ts` は配線だけ（注も第 673〜675 回の実測記を縮めて余裕 1,244 バイトに戻した）。分け方は `site/topic-aliases.ts`（第 583 回・第 672 回）と同じ筋 – `site/tsconfig.build.json` の `include`・`src/build.ts` の `SITE_RUNTIME_FILES` とその説明表・`tests/build_golden.test.ts` の一時目錄に runtime を寫す四處・SPEC §2 の樹と成果物表に載せ替へた（此れらを忘れると檢べが名前を出て落る – 改ざん檢查で確かめた）。
+  - 振ひの突合 – 搜し文 3,571 本で**增 0・減 0**（搜しは變はらん）、打ち手の札は增 78・變 188・減 6（減は全部 `specifical` 系の切れ端 – 落として正しい）、retype の打ち手を出した打ち手 265 本。0 件の路だけで語彙を作る為、一打ちの重さは 20 ms → 80 ms（0 件の時のみ – 許す）。畫面の実測 – `machne learning` →「検索語を『machine』に打ち替える（収録で 562 件当たります）」・`cyber secuirty` →『security』535 件・`sumposium 締切` →『symposium』585 件。
+  - 檢べと檢索 – `tests/latin_retype_query.test.ts` 九本（七語の綴りと件數・見當の件數は搜し欄と同じ數・搜しは廣がらん・切れ端を落す・默る門・轉位・二字三字の略語・畫面と讀み上げの文・build 配線の證）。改ざん三本（配線を外す・語彙の門を三字以上に締める・SPEC §2 の樹から落す）でいずれも名前を出て落ちる事を確かめ、復元後に `cmp` 一致。`npm run typecheck` 0 件・`npm run check` 通過・offline ビルド 700 / 1,677 / 3,280 / 1,497。
+  - 宿題 – 二語を跨いだ打ち間違いは逐語の路で拾ふ（`camera redy` には『ready』+『camera』 – 同じ 147 行に屆くが綴り一つの建議ではない）。『registrat on』に分けて打つ形の切れ端は二次に残る（收錄の綴りが先なので害は薄い）。ラテン文字の誤りを和語に讓る形（ハイフン位置の違いだけの語）もまだ數へて居ない。
 - **行き止まりの受皿の文が、分野の欄に並ぶ九つの名を數へて言うやうにした（第 679 回）
   - 測り方を変へた – 第 676〜678 回まで「讓りも無言」と書いたのは `site/recommender.ts` 側の案内（`uiWordNoteJa`・`querySynonymNotes` 等七本）の話で、**畫面の 0 件案内は別の家在り**（`site/app.ts` の `emptyDeadlineHint` – 打ち替えの語・羣の斷り・受皿の文を並べる）。ビルド済みの `emptyDeadlineHint` をそのまま呼ぶ計器（`tests/runtime_extract.ts` の `deadlineHintFunction`）で自然な打ち方 33 本を通した實測 – 33 本すべて何らかの文は出て居た（「讓りも無言」は過大だった – 上三条の注記の言い方を此處で訂正する）。殘る疵は**特筆の無い打ち手の文が弱かつた**事 – 搜 0 行で打ち替えの語も無い打ち手（`脳科学`・`ソナー`・`ケルビン`・`車座`・`フンババ` – いずれも品書 3,250 行で搜 0 行を実測）は「別の語で試す（分野名・主題・開催地の日本語でも引けます）」だけを読み、邊界が分らんので分野名を並べ直して空振りし續ける（第 632 回の実測で 0 件の打ち手 844 本の內 273 本が此の受皿に落ちる）。
   - 直し – 受皿の文に `分野の欄は人工知能・データベース・グラフィックス・高性能計算・人間情報処理・ネットワーク・セキュリティ・システム・計算理論の9種だけで、他の分野の言葉でも其の語を行に持つ締切なら當たります。` を足した。並べる語は**畫面の分野チップと同じ作り**（`categoryChipKeys(DATA.categories)` → `Recommender.categoryLabelJa`）で呼び出し口から渡し、`emptyDeadlineHint` は渡された數を數へて書く（語を寫し込まん – 收錄の分野が増へれば案内も增へる。語を渡さん呼び出し口では其の文だけ出ん – 空の並べでも空文を書かん）。讀み上げ（60 字の制約を持つ `zeroResultLiveNote`）は變へて居ん。

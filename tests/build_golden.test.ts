@@ -2652,6 +2652,7 @@ it("site runtime never emits the invalid let() CSS function (#223 follow-up)", (
     "recommender.js",
     "place-aliases.js",
     "topic-aliases.js",
+    "latin-retype.js",
     "recommendation-core.js",
     "publish.js",
   ] as const;
@@ -4189,6 +4190,7 @@ it("the next-meeting note formats the schedule-only edition for a Japanese reade
   writeFileSync(recPath, runtime["recommender.js"]);
   writeFileSync(join(dir, "place-aliases.js"), runtime["place-aliases.js"]);
   writeFileSync(join(dir, "topic-aliases.js"), runtime["topic-aliases.js"]);
+  writeFileSync(join(dir, "latin-retype.js"), runtime["latin-retype.js"]);
   const script = [
     // 間接 eval でグローバルに置く（`new Function` の中身はグローバルスコープで解決されるため、
     // async IIFE の中の変数は見えない）。
@@ -4253,6 +4255,7 @@ it("the drawer lists the same conference's later meetings (SPEC §7)", () => {
   writeFileSync(recPath, runtime["recommender.js"]);
   writeFileSync(join(dir, "place-aliases.js"), runtime["place-aliases.js"]);
   writeFileSync(join(dir, "topic-aliases.js"), runtime["topic-aliases.js"]);
+  writeFileSync(join(dir, "latin-retype.js"), runtime["latin-retype.js"]);
   const script = [
     "(async () => {",
     `const { default: Recommender } = await import(${JSON.stringify(`file://${recPath}`)});`,
@@ -4598,6 +4601,7 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
   writeFileSync(recPath, siteRuntime("recommender.js"));
   writeFileSync(join(dir, "place-aliases.js"), siteRuntime("place-aliases.js"));
   writeFileSync(join(dir, "topic-aliases.js"), siteRuntime("topic-aliases.js"));
+  writeFileSync(join(dir, "latin-retype.js"), siteRuntime("latin-retype.js"));
   const script = [
     "(async () => {",
     `const { default: Recommender } = await import(${JSON.stringify(`file://${recPath}`)});`,
@@ -4922,6 +4926,7 @@ it("ドロワーは表の情報（分野・ランク・ラウンド）を落と�
   writeFileSync(recPath, siteRuntime("recommender.js"));
   writeFileSync(join(dir, "place-aliases.js"), siteRuntime("place-aliases.js"));
   writeFileSync(join(dir, "topic-aliases.js"), siteRuntime("topic-aliases.js"));
+  writeFileSync(join(dir, "latin-retype.js"), siteRuntime("latin-retype.js"));
   const openSrc = jsFunction(runtime, "openDrawer");
   const summarySrc = jsFunction(runtime, "verificationSummary");
   const script = [
