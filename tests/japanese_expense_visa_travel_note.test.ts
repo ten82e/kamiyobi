@@ -203,7 +203,10 @@ describe("出納・査証・旅と滞在を別の名で打つ人（第 672 回�
     const 本 = readFileSync(`${REPO_ROOT}/site/recommender.ts`, "utf8");
     expect(表).toContain("export const TOPIC_QUERY_ALIASES_JA");
     const 條目 = 表.match(/^\s*\["/gm) || [];
-    expect(條目.length, "条目の数が動いた（表の切り出しが崩れた可能性がある）").toBe(85);
+    // 分けの時に 85 條在つた – 載せ增しで增えるので下限だけ張る（確數は各回合の檢査が持つ）。
+    expect(條目.length, "条目が減つた（表の切り出しが崩れた可能性がある）").toBeGreaterThanOrEqual(
+      85,
+    );
     expect(本).toContain('from "./topic-aliases.ts"');
     expect(
       本.includes('const TOPIC_QUERY_ALIASES_JA: string[][] = [\n    ["'),
