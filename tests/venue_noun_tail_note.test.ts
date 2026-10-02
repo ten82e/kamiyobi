@@ -88,10 +88,22 @@ describe("羣の語に物の名を續ける打ち方", () => {
       物.indexOf("const UI_WORD_GROUPS_JA"),
       物.indexOf("const UI_WORD_TAILS_JA"),
     );
+    /* `exactOnly` の語は打ち方その物だけ受ける印（第 682 回 – 短い訪ねの語が又ぎ側に讓つて
+     * 先の尖つた案内を塞がん為）。「語尾を續けた形も讓る」決まりは此の方には掛からんので
+     * 別に取り分ける（其の印が效いて居る證は下の別條と `exact_only_query_guidance.test.ts`）。*/
+    const 其侬 = new Set<string>();
+    const 本體 = 上.replace(/exactOnly: \[[\s\S]*?\]/g, (塊) => {
+      for (const m of 塊.matchAll(/"([^"\n]+)"/g)) 其侬.add(m[1]);
+      return "";
+    });
+    expect(其侬.size, "exactOnly の語が讀められん（配線が變はつた）").toBeGreaterThan(0);
+    for (const 語 of 其侬) {
+      expect(讓り(語), `印の語『${語}』は其侬でも讓らん – 載せた甲斐が無い`).toBeTruthy();
+    }
     /* 羣の語だけを読む（行の頭が語の列 – 讓り文・空格を殘す）。*/
     const 羣 = [
       ...new Set(
-        [...上.matchAll(/^\s+"([^"\n]+)",$/gm)]
+        [...本體.matchAll(/^\s+"([^"\n]+)",$/gm)]
           .map((m) => m[1])
           .filter((語) => 語.length >= 2 && !/[。、『』（）\s]/.test(語)),
       ),
