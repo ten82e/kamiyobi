@@ -138,9 +138,18 @@ describe("『国際』を日本語で打つ人が原文の行に出会える", (
     ] as const) {
       const 行 = 字面列(原文);
       expect(行.length, `品書に "${原文}" が無い（検査が空振り）`).toBeGreaterThan(0);
-      expect(行列表(打ち方).sort(), `\`${打ち方}\` の行集合が "${原文}" の行と違う`).toEqual(
-        行.sort(),
-      );
+      const 打 = 行列表(打ち方);
+      /* 第 675 回 – 搜しが並べ語を語ごとに數えるやうになつたので、其の方の語を離して書く行
+       * （`international` と `workshop` を別々に書く行）も受ける – 連なりの集合は subset ✓。*/
+      expect(
+        行.filter((x) => !打.includes(x)),
+        `\`${打ち方}\` が "${原文}" を連なりで書く行を落とした`,
+      ).toEqual([]);
+      const 語 = 原文.split(/\s+/);
+      expect(
+        打.filter((x) => !語.every((w) => x.includes(w))),
+        `\`${打ち方}\` が語を揃へん行を拾つた`,
+      ).toEqual([]);
       /* 其の方の語を名指さない行まで出さない（`国際` だけの寄せは頼み過ぎ）。 */
       expect(件数(打ち方), `\`${打ち方}\` が \`国際\` より広くなつた`).toBeLessThan(件数("国際"));
     }

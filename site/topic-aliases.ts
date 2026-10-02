@@ -218,4 +218,25 @@ export const TOPIC_QUERY_ALIASES_JA: string[][] = [
   ["量子情報", "quantum"],
   ["自然言語生成", "natural language generation"],
   ["ハードウェア", "hardware"],
+  /* 第 675 回 – 搜し側が寄せ表の語列を語ごとに數えるやうになつたので载せ直した（载せた實測は
+   * 檢査に張る – 搜し 0 行から增える事を確かめて居る ✓ 第 337 回）。 */
+  ["ワイヤレスネットワーク", "wireless networks"],
+  ["ネットワーク測定", "network measurement"],
+  ["ネットワーク計測", "network measurement"],
+  ["ネットワーク管理", "network management"],
+  ["性能評価", "performance evaluation"],
+  /* 第 675 回 – 搜し側が語列を語ごとに數えるやうになつたので、其れまで屆か無かつた組を载せた
+   * （載せる前に搜し 0 行・載せた後の行と内譯を實測 – `分散アルゴリズム` は割れて 2 組に
+   * なるので載せて居らん – 第 674 回の ①）。 */
+  ["データ管理", "data management"],
+  ["データマネジメント", "data management"],
+  /* `distributed file system` と寄せると 0 行の侬だつた（搜しは並べた語を語ごとに數える –
+   * 第 675 回 – が、FAST ら 15 行は `distributed` を英文字で書かず、分野欄の和名 `分散` だけで
+   * 持つ）。`file system` に寄せ直すと其の 15 行と同じ集まりに屆く（實測 – どちらも FAST・LISA
+   * ら Storage Technologies 系）。寄せ先は**收錄が其の侬の綴りで書く語**にする事。*/
+  ["分散ファイル", "file system"],
+  ["分散ファイルシステム", "file system"],
+  ["ヘテロジニアス計算", "heterogeneous computing"],
+  ["ヘテロジニアスコンピューティング", "heterogeneous computing"],
+  ["メタバース", "metaverse"],
 ];

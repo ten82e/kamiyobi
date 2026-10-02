@@ -412,6 +412,9 @@ export const SEARCH_CANON = (() => {
       "placeLatinTerms",
       "cityQueryForms",
       "regionEntryMembers",
+      // 英字語の當たり門（第 675 回）は `matchFoldedGroups` が呼ぶので、注入も一緒にする
+      // （此處へ足さんとしは `latinFoldedHit is not defined` で eval が落ちる – 第 257 回と同じ穴）。
+      "latinFoldedHit",
       "matchFoldedGroups",
       // `searchMatcher` は述語の組み立てを `searchGroups` に移したので、注入も一緒にする
       // （共有部品を 1 本足すたびに、ハーネスはそれを知らないまま古い形を組む – 第 257 回と同じ穴）。

@@ -95,13 +95,15 @@ describe("英語の正式名称で打った人", () => {
         和名.forEach((row) => {
           expect(英語.has(row), `${label}: "${phrase}" が「${ja}」の行を落としている`).toBe(true);
         });
-        /* 増えて当たる分は、其の綴りを行うに持つ行だけ（別語の寄せ込みを許さない）。 */
-        const forms = formsOf(words);
+        /* 増えて当たる分は、其の綴りを行うに持つ行だけ（別語の寄せ込みを許さない）。
+         * 第 675 回 – 搜しは並べた語の寄せ先を**語ごとに**數えるので、判定も語ごとに
+         * 持つ（收錄が `big spatial data` のやうに語を離して書く行を正しい当たりとして
+         * 受け取る為 – 連なりを持つ行だけを許すと、其の直しを検出側が弹いて了ふ）。*/
         英語.forEach((row) => {
           if (和名.has(row)) return;
           expect(
-            writingAny(row, forms),
-            `${label}: "${phrase}" が綴りを行に持たない行を拾った: ${String(row.hay).slice(0, 56)}`,
+            words.every((w) => writingAny(row, formsOf([w]))),
+            `${label}: "${phrase}" の語を行に書かん行を拾った: ${String(row.hay).slice(0, 56)}`,
           ).toBe(true);
         });
       });

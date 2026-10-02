@@ -97,15 +97,18 @@ describe("分野の語を長い表記で打つ人", () => {
   it("英語側より狭い日本語は寄せない", () => {
     /* `autonomous` は自律システムまで含む – `自動運転` に寄せると「自動運転の会議」では
      * 無い行を約束することになる（`自律`→`autonomous` を置く既存の検査と同じ判断）。
-     * `記憶装置`→`storage` `性能評価`→`performance` も同じ形で置かない。 */
+     * `記憶装置`→`storage` は同じ形で置かない（`性能評価`→`performance` も – 但し其の方の
+     * 綴り `performance evaluation` は第 675 回に载せた – 広い語單体では載せん）。 */
     expect(Recommender.queryTokenGroups("自動運転"), "`自動運転` を寄せた").toEqual([["自動運転"]]);
     expect(Recommender.queryTokenGroups("記憶装置")[0], "`記憶装置` を storage に寄せた").toEqual([
       "記憶装置",
     ]);
+    // 広い側の `performance` へは寄せない – 第 675 回に其の方の綴り `performance evaluation`
+    // だけを載せたので、其の方が入つて居る事を張る（`性能` さへ書かん行を增やさない為）。
     expect(
       Recommender.queryTokenGroups("性能評価")[0],
-      "`性能評価` を performance に寄せた",
-    ).toEqual(["性能評価"]);
+      "`性能評価` を performance へ寄せた",
+    ).toEqual(["性能評価", "performance evaluation"]);
     /* 広い側の語は置いたまま – 落としていないことを見る。 */
     expect(Recommender.queryTokenGroups("自律")[0]).toContain("autonomous");
   });

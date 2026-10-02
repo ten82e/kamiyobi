@@ -14911,35 +14911,62 @@ const Recommender = (() => {
   }
 
   /** 畳み済みの語グループ（語ごとに OR、語同士は AND）を行に照合する。 */
+  /* 英字の語が品書に當たるかを數える門を一つに纏める（第 675 回）。搜し欄で語に割れた時は
+     此の門を語ごとに通る – 寄せ表（開催地・主題の別表記）に並べ語で入つた候補も、同じ
+     數え方をさせる為此處に置く。短い語と通常の語で語尾の閉じ方が違う（上の
+     `isShortLatinTerm` – 實測で此れを分けずに語尾を閉じる方だけ數えると、`file system` の
+     `system` が `systems` を弹いて `分散ファイル` が 0 行の侬になつた）。 */
+  function latinFoldedHit(target: string, term: string): boolean {
+    if (isShortLatinTerm(term)) return foldedLetterAtWordBoundary(target, term);
+    if (!LATIN_TERM_TOKEN.test(term)) return target.indexOf(term) >= 0;
+    return foldedLetterAtWordBoundary(
+      target,
+      term,
+      // 開催地の語と末尾が数字の語は右端も閉じる。
+      !placeLatinTerms()[term] && !termEndsInDigit(term),
+    );
+  }
+
   function matchFoldedGroups(target: string, groups: string[][]): boolean {
     for (let i = 0; i < groups.length; i++) {
       let hit = false;
       for (let k = 0; k < groups[i].length; k++) {
         const term = groups[i][k];
-        if (isShortLatinTerm(term)) {
-          if (foldedLetterAtWordBoundary(target, term)) {
+        /* 寄せ表の候補は **語を並べた綴り**で入ることがある（`network measurement`
+         * `distributed file system` – 第 673 回・第 674 回）。今まで此處は其の侬の文字列を
+         * 探して居たので、收錄が語を離して書くと 0 行になつた（實測 2026-08-09 生成ビルド・
+         * 品書 3,250 行 – `ネットワーク測定` の寄せ先 `network measurement` を連なりで書く行は
+         * 0 行、其の二語を別々に書く行は `network measurement` と打つ人で 21 行出る –
+         * IMC・PAM。`distributed file system` は FAST ら 15 行）。搜し欄に英語で打つ人は語に
+         * 割れて AND になるのだから、**寄せ表の候補も同じ數え方**にする（檢査側の門
+         * 「別表記の表は、実際に新しい行を増やしている」は已に語に割つて數えて居て、搜しの
+         * 述語だけが連なりを探して居た – 門と實裝のズレを塞いだ – 第 675 回）。
+         * **空格の入らん候補は今まで通り單語の門を通る** ✓ – 振ひの突合で減 0 を見て居る。*/
+        if (LATIN_TERM_TOKEN.test(term) && /\s/.test(term)) {
+          const 語列 = term.split(/\s+/).filter(Boolean);
+          /* 各語には**單語の門をそのまま**通す（下の `latinFoldedHit` – 短い語は右を閉ぢず、
+           * 長い語は閉じ、複/單の寄せも見る）。此處で獨自の閉ぢ方（語ごとに右を閉じる）を
+           * すると、搜し欄で其の語を單體で打つ人より狭くなつて、ハイフンと空格の寄せが
+           * 齒合わなくなる（實測 – `ches-ches` の組が `ches ches` より广くなり、檢査
+           * `hyphen_term_reach` が「寄せは 1 語の組にスペースの形を足すだけ」の決まりで弹く）。
+           * 齊しく數える事が此の直しの目的なので、門は借りる。副つて `work` が `workshop` の
+           * やうに語の一部でも當たるが、それは其の語を單體で打つ人が既に受けて居る數と揃ふ
+           * （`計算機支援協調` 14 → 16 行 – 增分の 2 行は IROS の協調知能のワークショップで、
+           * 英字で `cooperative work` と打つ人も同じ行を見る – 內譯で確認）。*/
+          let 皆當 = true;
+          for (let w = 0; w < 語列.length; w++) {
+            if (!latinFoldedHit(target, 語列[w])) {
+              皆當 = false;
+              break;
+            }
+          }
+          if (皆當) {
             hit = true;
             break;
           }
           continue;
         }
-        if (LATIN_TERM_TOKEN.test(term)) {
-          // 開催地の語は語全体、その他の英字語は語頭が英数字でつながっていない位置だけ。
-          // ただし末尾が数字の語は右も閉じる（上の `termEndsInDigit`）。
-          if (
-            foldedLetterAtWordBoundary(
-              target,
-              term,
-              // 開催地の語と末尾が数字の語は右端も閉じる。
-              !placeLatinTerms()[term] && !termEndsInDigit(term),
-            )
-          ) {
-            hit = true;
-            break;
-          }
-          continue;
-        }
-        if (target.indexOf(term) >= 0) {
+        if (latinFoldedHit(target, term)) {
           hit = true;
           break;
         }

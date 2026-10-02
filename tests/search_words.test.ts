@@ -840,8 +840,18 @@ it("分野の和名（画像認識・ビッグデータ・知識発見など）�
     ).toContain(en);
     const missed = enRows.filter((r) => !got.includes(r)).length;
     expect(missed, `「${word}」で原文に ${en} と書く行が ${missed} 行こぼれている`).toBe(0);
+    /* 第 675 回 – 搜しは並べた語の寄せ先を語ごとに數えるので、`ビッグデータ` は
+     * "big spatial data"（語を離して書く BSD 2026）も正しく受ける – 其の綴りの語を
+     * 揃へん行はまだ弹く（別語の寄せ込みは許さない – 此の檢査の元の決まり）。*/
     const strays = got
-      .filter((r) => !enRows.includes(r) && !String(r.hay).includes(word))
+      .filter(
+        (r) =>
+          !enRows.includes(r) &&
+          !String(r.hay).includes(word) &&
+          !String(en)
+            .split(/\s+/)
+            .every((w) => String(r.hay).includes(w)),
+      )
       .map((r) => String(r.hay).slice(0, 40));
     expect(strays, `「${word}」の寄せが ${en} 以外の行を呼んだ: ${strays.join(" / ")}`).toEqual([]);
     出会えた行数 += got.length;

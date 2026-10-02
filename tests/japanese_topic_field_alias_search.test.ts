@@ -35,17 +35,26 @@ function 注(文: string): string {
 /** 此の回に寄せ表へ載せた打ち手（搜し 0 行だった十七本 – 實測の件數）。 */
 const 寄せ: [string, string, number][] = [
   ["検索技術", "retrieval", 58],
-  ["設計自動化", "design automation", 19],
+  // 設計自動化 – 第 675 回に搜しが並べ語を語ごとに數えるやうになつたので、`design` と
+  // `automation` を離して書く行（ICCAD のやうな設計自動化の會議）も受けて 19 → 29 行。
+  ["設計自動化", "design automation", 29],
   ["計画立案", "planning", 6],
   ["自動計画", "planning", 6],
   ["プランニング", "planning", 6],
-  ["ソフトウェアテスト", "software testing", 18],
+  // ソフトウェアテスト – 第 675 回の搜し側の直しで 19 行（增分の 1 行は HPCTESTS 2026
+  // 「testing and evaluation of systems, tools, and software」 – 語を離して書く收錄 ✓）。
+  ["ソフトウェアテスト", "software testing", 19],
   ["テスト", "testing", 23],
   ["プログラマブル", "programmable", 26],
   ["フィールドプログラマブル", "field-programmable", 20],
   ["再構成可能", "reconfigurable", 2],
-  ["計算機支援協調", "cooperative work", 14],
-  ["協調作業", "cooperative work", 14],
+  // 計算機支援協調 – 第 675 回に搜しが並べ語を語ごとに數えるやうになつたので 16 行
+  // （增分の 2 行は IROS 2026 の協調知能のワークショップ – `cooperative` と `work` を離して
+  // 書く – で、英字で `cooperative work` と打つ人も同じ 16 行を見る – 實測で齊しい）。
+  ["計算機支援協調", "cooperative work", 16],
+  // 協調作業 – `cooperative work` を語ごとに數えるやうになつたので 16 行（增分の 2 行は
+  // IROS 2026 の協調知能のワークショップ – 英字で同じ語組を打つ人も同じ 16 行を見る – 實測）。
+  ["協調作業", "cooperative work", 16],
   ["ソーシャルコンピューティング", "social computing", 6],
   ["人間工学", "human factors", 17],
   ["アクセシビリティ", "accessibility", 2],
@@ -91,7 +100,6 @@ describe("分野の和名を英字の會議名へ寄せる（第 673 回）", ()
       "材料科学",
       "情報教育",
       "教育技術",
-      "性能評価",
       "モノのインターネット",
     ]) {
       expect(表.includes(`["${和名}",`), `${和名} を載せてしまつた`).toBe(false);
@@ -102,9 +110,14 @@ describe("分野の和名を英字の會議名へ寄せる（第 673 回）", ()
       當る行("education").some((r) => String(r.hay).includes("札幌市教育文化会館")),
       "education が會場名に當つ事實が消えたら、この彈きを外せる",
     ).toBe(true);
-    /* ② 搜しが先に割る熟語 – `評価` 單體で 2,000 行を越えるので `性能評価` の鍵は屆かん。 */
+    /* ② ②の判を直した – 第 673 回に `性能評価` を弹いた理由是「搜しが先に割る」だつたが、
+     *    實測では搜しは此の和名を一まとめの語として寄せ表に引いて居り、詰まりは**寄せ先の
+     *    並べた語を連なりで探して**居たのが原因だつた（第 675 回で搜し側を直し、
+     *    `性能評価`→`performance evaluation` は 2 行（PERFORMANCE 2026）屆くやうになつた –
+     *    檢査は `japanese_topic_alias_phrase_word_matching.test.ts` に張つた）。
+     *    `評価` 單體で 2,000 行を越えるので、広い側の `performance` へは寄せない決まりは殘る。*/
     expect(當("評価")).toBeGreaterThan(2000);
-    expect(當("性能評価")).toBe(0);
+    expect(當("性能評価"), "`性能評価` が 0 行に戻つた").toBe(2);
     /* ③ 略語の表が既に受ける – `IoT` は 9 行に屆いて居るので和名をdupに載せん。 */
     expect(當("IoT"), "IoT は略語の表が受ける").toBe(9);
     expect(當("モノのインターネット")).toBe(0);
