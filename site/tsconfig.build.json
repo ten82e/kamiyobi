@@ -13,6 +13,7 @@
     "app.ts",
     "recommender.ts",
     "place-aliases.ts",
+    "topic-aliases.ts",
     "recommendation-core.ts",
     "publish.ts",
     "runtime.d.ts"

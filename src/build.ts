@@ -78,6 +78,7 @@ export let ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 export const SITE_RUNTIME_FILES = [
   "recommender.js",
   "place-aliases.js",
+  "topic-aliases.js",
   "recommendation-core.js",
   "publish.js",
   "app.js",
@@ -370,6 +371,9 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
   "place-aliases.js":
     "國名・都市名の日本語の打ち方を、この表の表記へ寄せる表（`recommender.js` が import する）。" +
     "条目の增減はこの檔案でやる – 收錄データの側は變へて居らん。",
+  "topic-aliases.js":
+    "site/topic-aliases.ts から生成する、主題の日本語の打ち方を會議名の英字檢索語へ寄せる表" +
+    "（`recommender.js` が import する）。",
   "recommendation-core.js":
     "site/recommendation-core.ts から生成する共有の推薦軸。画面もビルド側も同じ軸を読む" +
     "（`src/build.ts` が読み込んでいる）。",
