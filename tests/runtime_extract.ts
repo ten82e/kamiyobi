@@ -125,6 +125,8 @@ export function wholeTableQueryStubs(rec: string): string {
     jsFunction(rec, "uiWordStemForms"),
     jsFunction(rec, "uiWordTailOk"),
     jsFunction(rec, "uiWordContain"),
+    jsFunction(rec, "訪ねの尾を剥ぐ"),
+    jsFunction(rec, "uiWordMatch文"),
     jsFunction(rec, "uiWordMatch"),
     jsFunction(rec, "uiWordEntry"),
     jsFunction(rec, "uiWordRawJa"),

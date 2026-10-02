@@ -135,13 +135,27 @@ describe("壊していない物", () => {
 describe("成果物", () => {
   it("語を並べた経路は完全一致と活用の形の後ろに在る（其の方の案内を優先する順）", () => {
     const rec = readFileSync(join(builtSite(), "recommender.js"), "utf8");
-    const 本文 = jsFunction(rec, "uiWordMatch");
-    expect(本文.length, "`uiWordMatch` が見つからない").toBeGreaterThan(0);
+    /* 第 683 回 – 選ぶ事の訪ねを剥ぐ為、當てはめ本体は `uiWordMatch文` に分けた（經路の順は其侭）。*/
+    const 本文 = jsFunction(rec, "uiWordMatch文");
+    expect(本文.length, "`uiWordMatch文` が見つからない").toBeGreaterThan(0);
     const 完全一致 = 本文.indexOf(".toLowerCase() === q");
     const 含み = 本文.indexOf("uiWordContain(q)");
     const 並べた = 本文.indexOf("語々");
     expect(完全一致 >= 0, "完全一致の形が消えた").toBe(true);
     expect(含み > 完全一致, "活用の形の照合の順が変わった").toBe(true);
     expect(並べた > 含み, "語を並べた経路が前に出た（其の方の案内を奪う）").toBe(true);
+  });
+
+  it("選ぶ事を訪ねて終る形の崩しは、其の侬が彈いた後でだけ見る（第 683 回）", () => {
+    const rec = readFileSync(join(builtSite(), "recommender.js"), "utf8");
+    const 入口 = jsFunction(rec, "uiWordMatch");
+    expect(入口.length, "`uiWordMatch` が見つからない").toBeGreaterThan(0);
+    /* 崩した形（讀點・`はどれ` 等を剥いだ物）を先に數へると、`分野は幾つ` が「分野」一文字に
+     * 落ちて第 649 回の案内を奪ふ（實測）。其の侬 → 崩 の順を產出物で張る。*/
+    expect(入口, "崩した形の道が消えた").toContain("uiWordMatch文(崩)");
+    expect(
+      入口.indexOf("uiWordMatch文(生)") < 入口.indexOf("uiWordMatch文(崩)"),
+      "崩した形が先に數はれる（先の尖つた案内を奪ふ）",
+    ).toBe(true);
   });
 });
