@@ -6,7 +6,10 @@ import { fileURLToPath } from "node:url";
 import { dump, load } from "js-yaml";
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const root = path.join(repo, "work/agent-verification/integration");
+const root = path.resolve(
+  process.env.KAMIYOBI_INTEGRATION_ROOT || path.join(repo, "work/agent-verification/integration"),
+);
+assert(root.startsWith(path.join(repo, "work/agent-verification") + path.sep));
 const tree = path.join(root, "tree");
 const prep = JSON.parse(fs.readFileSync(path.join(root, "preparation.json"), "utf8"));
 const notes = [];

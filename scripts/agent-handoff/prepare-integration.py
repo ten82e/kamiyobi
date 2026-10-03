@@ -24,7 +24,8 @@ def sha(content):
 
 head = git("rev-parse", "HEAD").decode().strip()
 base = git("merge-base", head, incoming).decode().strip()
-root = repo / "work/agent-verification/integration"
+root = Path(os.environ.get("KAMIYOBI_INTEGRATION_ROOT", str(repo / "work/agent-verification/integration"))).resolve()
+assert root.is_relative_to(repo / "work/agent-verification"), "Archive must stay in ignored verification directory"
 tree = root / "tree"
 if tree.exists() and (root / "preparation.json").exists():
     raise SystemExit("Integration archive already exists; preserve it and inspect its manifest before preparing again.")
@@ -48,7 +49,7 @@ for name in changed:
     before = blob(base, name)
     after = blob(incoming, name)
     target = tree / name
-    current = (repo / name).read_bytes() if (repo / name).exists() else b""
+    current = target.read_bytes() if target.exists() else b""
     status = "identical" if current == after else "unchanged-incoming" if before == after else "applied" if before == current else "three-way"
     target.parent.mkdir(parents=True, exist_ok=True)
     if status == "applied":
@@ -58,7 +59,7 @@ for name in changed:
         inputs.mkdir(parents=True, exist_ok=True)
         for key, content in [("current", current), ("base", before), ("incoming", after)]:
             (inputs / key).write_bytes(content)
-        result = subprocess.run(["git", "merge-file", "--diff3", "-p", "-L", "UI-working-tree", "-L", "shared-base", "-L", "updater-candidate", str(inputs / "current"), str(inputs / "base"), str(inputs / "incoming")], cwd=root, stdout=subprocess.PIPE)
+        result = subprocess.run(["git", "merge-file", "--diff3", "-p", "-L", "UI-archive", "-L", "shared-base", "-L", "updater-candidate", str(inputs / "current"), str(inputs / "base"), str(inputs / "incoming")], cwd=root, stdout=subprocess.PIPE)
         if not 0 <= result.returncode <= 127:
             raise SystemExit(f"Merge failed for {name}: {result.returncode}")
         target.write_bytes(result.stdout)

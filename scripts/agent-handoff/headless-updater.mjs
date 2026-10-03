@@ -143,6 +143,13 @@ for (const input of oldInputs) {
     )),
   });
 }
+const evoOldLinks = compatibility.filter(({ input }) => input.key === "evomusart");
+assert.equal(evoOldLinks.length, 2, "both pre-integration EvoMUSART links must be tested");
+for (const result of evoOldLinks) {
+  assert(result.opened, `${result.oldKey}: reviewed alias must open the unchanged deadline`);
+  assert.equal(result.choices.length, 0, "a unique old deadline has no ambiguous choices");
+  assert(result.detail.includes("EvoMUSART"));
+}
 await query("EvoMUSART", { kind: "abstract" });
 await cmd("Emulation.setDeviceMetricsOverride", {
   width: 390,

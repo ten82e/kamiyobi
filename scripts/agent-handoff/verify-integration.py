@@ -29,7 +29,7 @@ commands = [
     ("typecheck", ["npm", "run", "typecheck"]),
     ("lint", ["npm", "run", "check"]),
     ("fixed-build", ["node", "src/cli.ts", "build", "--out", "public", "--offline", "--no-embeddings", "--cache", ".cache", "--now", "2026-08-09T00:00:00Z"]),
-    ("tests", ["npm", "test"]),
+    ("tests", ["npm", "test", "--", "--maxWorkers=4"]),
     ("fixed-validation", ["npm", "run", "validate:data", "--", "public/data.json"]),
     ("fixed-health", ["npm", "run", "health-gate"]),
     ("semantic-recommendation", ["node", "src/bench-recommender.ts", "--v2", "tests/fixtures/bench-v2.json", "--json"]),
