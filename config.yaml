@@ -341,5 +341,85 @@ deadline_identity_migrations:
       kind: paper
       round: 1
       track: paper-submission-short-papers
-    action: rename
+    action: duplicate-collapse
     evidence_ref: data/evidence/blobs/313329e1b1243fb8c8297930dd410fccd368943906e10b6493354439916f6027.body
+  - from:
+      venue: wsdm
+      edition: wsdm27
+      kind: paper
+      round: 2
+      track: ''
+      earliest_utc: '2026-11-18T11:59:59.000Z'
+      latest_utc: '2026-11-18T11:59:59.000Z'
+    to:
+      venue: wsdm
+      edition: wsdm27
+      kind: paper
+      round: 1
+      track: paper-submission-short-papers
+    action: duplicate-collapse
+    evidence_ref: data/evidence/blobs/313329e1b1243fb8c8297930dd410fccd368943906e10b6493354439916f6027.body
+  - from:
+      venue: cvm
+      edition: cvm27
+      kind: paper
+      round: 1
+      track: ''
+      earliest_utc: '2026-10-26T23:59:59.000Z'
+      latest_utc: '2026-10-26T23:59:59.000Z'
+    to:
+      venue: cvm
+      edition: cvm27
+      kind: paper
+      round: 1
+      track: full-papers-submission
+    action: duplicate-collapse
+    evidence_ref: data/evidence/blobs/4cec899d14b03fb294dac055b5a7aec7ab28ba32c9fdad86ff2ad535eca68d35.body
+  - from:
+      venue: mmsys
+      edition: mmsys27
+      kind: abstract
+      round: 1
+      track: 'registration-second-round'
+      earliest_utc: '2026-11-13T11:59:59.000Z'
+      latest_utc: '2026-11-13T11:59:59.000Z'
+    to:
+      venue: mmsys
+      edition: mmsys27
+      kind: abstract
+      round: 2
+      track: registration-second-round
+    action: rename
+    evidence_ref: data/evidence/blobs/e36a837b58b55e998aa952e7e15a50a502e2c7dbb122ac881e6e63989e0bdc30.body
+  - from:
+      venue: mmsys
+      edition: mmsys27
+      kind: paper
+      round: 1
+      track: 'submission-second-round'
+      earliest_utc: '2026-11-20T11:59:59.000Z'
+      latest_utc: '2026-11-20T11:59:59.000Z'
+    to:
+      venue: mmsys
+      edition: mmsys27
+      kind: paper
+      round: 2
+      track: submission-second-round
+    action: rename
+    evidence_ref: data/evidence/blobs/e36a837b58b55e998aa952e7e15a50a502e2c7dbb122ac881e6e63989e0bdc30.body
+  - from:
+      venue: mmsys
+      edition: mmsys27
+      kind: notification
+      round: 1
+      track: 'notification-second-round'
+      earliest_utc: '2026-12-23T11:59:59.000Z'
+      latest_utc: '2026-12-23T11:59:59.000Z'
+    to:
+      venue: mmsys
+      edition: mmsys27
+      kind: notification
+      round: 2
+      track: notification-second-round
+    action: rename
+    evidence_ref: data/evidence/blobs/e36a837b58b55e998aa952e7e15a50a502e2c7dbb122ac881e6e63989e0bdc30.body

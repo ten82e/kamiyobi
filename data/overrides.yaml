@@ -1431,6 +1431,33 @@ conferences:
         date_text: April 9-11, 2027
         event_start: '2027-04-09'
         event_end: '2027-04-11'
+        mode: merge-slots
+        deadlines:
+          - kind: paper
+            label: Full papers submission
+            date: '2026-10-26 23:59:00'
+            tz: GMT
+            round: 1
+            evidence:
+              - source_name: CVM official dates
+                source_url: https://iccvm.org/2027/index.htm
+                sourceClass: official-cfp
+                retrievedAt: '2026-10-03T05:48:49Z'
+                verifiedAt: '2026-10-03T05:48:49Z'
+                contentHash: 4cec899d14b03fb294dac055b5a7aec7ab28ba32c9fdad86ff2ad535eca68d35
+                evidenceRef: data/evidence/blobs/4cec899d14b03fb294dac055b5a7aec7ab28ba32c9fdad86ff2ad535eca68d35.body
+                rawExcerpt: 'Full papers submission: October 26, 2026. All deadlines are at 23:59 GMT.'
+                verifiedFields: [date, time, timezone, kind]
+                confidence: official
+            superseded_deadlines:
+              - value: '2026-10-26T23:59:59Z'
+                precision: exact
+                source: https://iccvm.org/2027/index.htm
+                evidenceRef: data/evidence/blobs/4cec899d14b03fb294dac055b5a7aec7ab28ba32c9fdad86ff2ad535eca68d35.body
+                status: superseded
+                supersededBy: cvm|cvm27|paper|1|full-papers-submission
+                reason: manual-resolution
+                supersededAt: '2026-10-03T05:48:49Z'
   # 根拠: https://host.conferences.computer.org/2027/ (Washington DC, May 3-6 2027)（締切は上流と一致のため変更なし）
   host:
     editions:
