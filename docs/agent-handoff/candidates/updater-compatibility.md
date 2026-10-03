@@ -1,6 +1,6 @@
 # updater候補の互換修正
 
-元の候補 `0717f50` とmain前提 `b35010f` は変更しない。追加差分は `updater-compatibility.patch.gz`、入力・出力SHAと特徴量の監査は隣のmanifest。実UIブランチへ候補のconfig・学習データ・モデルを適用していない。
+元の候補 `0717f50` とmain前提 `b35010f` は変更しない。追加差分は `updater-compatibility.patch.gz`、入力・出力SHAと特徴量の監査は隣のmanifest。この監査・候補作成時点では実UIに未適用だった。後続の明示依頼で検証済み35ファイルを同じ本体branchへ反映した。現在の本体状態は `../verification/main-integration-latest.json`、当初のarchive状態は `../verification/integration-latest.json`。元candidateとこのmanifestは作成時の不変な記録として保持する。
 
 ## 元の7失敗の原因
 
@@ -24,7 +24,7 @@ v3の同じ決定的trainerでdevのみから再学習・校正する。heldout�
 
 ## 再現
 
-本体のUI修正commitを含むHEADと、元の候補Git objectが必要。7つの保護差分は既存verificationのSHAと一致させる。既存archiveを上書きしない。
+archiveの再現には適用前UI revision（最後は6394994）と元の候補Git objectが必要。本体へ統合済みのHEADから古いprepare/resolveをやり直さない。本体の再検証はverify-main-integration.pyとbrowser-main-integration.pyを使う。7つの保護差分は既存verificationのSHAと一致させる。既存archiveを上書きしない。
 
 ```sh
 python3 scripts/agent-handoff/prepare-integration.py
