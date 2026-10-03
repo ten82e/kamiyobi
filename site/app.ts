@@ -5191,6 +5191,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 読み上げはこちらの短い欄だけ（画面に出す文は `#count` のまま）。
     const countLive = $("countLive");
     if (countLive) countLive.textContent = cntLive;
+    const sharedChoices = $("sharedRowChoices");
+    if (sharedChoices) sharedChoices.hidden = true;
+    const choiceButtons = $("sharedRowChoiceButtons");
+    if (choiceButtons) choiceButtons.textContent = "";
     // CSV 書き出しは締切一覧の絞り込み結果に対してだけ意味がある（推薦モードでは出さない）。
     const exportBtn = $("exportCsv");
     if (exportBtn) {
@@ -6174,8 +6178,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       sharedRowNotice(
         "この旧リンクは同じ日時の複数の日程に対応します。ラウンド・トラックを確認して開いてください。",
       );
-      const live = $("countLive");
-      if (live)
+      const choices = $("sharedRowChoices");
+      const guide = $("sharedRowChoiceGuide");
+      const buttons = $("sharedRowChoiceButtons");
+      if (choices && guide && buttons) {
+        choices.hidden = false;
+        guide.textContent =
+          "この旧リンクは同じ日時の複数の日程に対応します。ラウンド・トラックを確認して開いてください。";
+        buttons.textContent = "";
         for (const row of legacyMatches) {
           const button = document.createElement("button");
           button.type = "button";
@@ -6197,8 +6207,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             .filter(Boolean)
             .join(" ／ ");
           button.addEventListener("click", () => openDrawer(row, "replace"));
-          live.appendChild(button);
+          buttons.appendChild(button);
         }
+      }
       return;
     }
     let idx = shown.findIndex(

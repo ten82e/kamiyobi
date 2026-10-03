@@ -92,6 +92,8 @@ it("曖昧な旧リンクで最初のラウンドを黙って開かず、選択�
     },
   };
   const live = { appendChild: (button: (typeof buttons)[number]) => buttons.push(button) };
+  const choiceBox = { hidden: true };
+  const guide = { textContent: "" };
   let notice = "";
   new Function(
     "rows",
@@ -111,7 +113,8 @@ it("曖昧な旧リンクで最初のラウンドを黙って開かず、選択�
     rows,
     legacy(raw[0]),
     { mode: "deadlines" },
-    () => live,
+    (id: string) =>
+      id === "sharedRowChoices" ? choiceBox : id === "sharedRowChoiceGuide" ? guide : live,
     document,
     (text: string) => {
       notice = text;
@@ -123,6 +126,8 @@ it("曖昧な旧リンクで最初のラウンドを黙って開かず、選択�
   );
   expect(opened).toEqual([]);
   expect(notice).toContain("複数の日程");
+  expect(choiceBox.hidden).toBe(false);
+  expect(guide.textContent).toContain("複数の日程");
   expect(buttons).toHaveLength(2);
   expect(buttons[1].textContent).toContain("第 2 ラウンド");
   buttons[1].click?.();

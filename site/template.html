@@ -817,6 +817,11 @@ tr.detail-row td {
 .row-detail { margin-top: 6px; white-space: normal; }
 .time-guide { margin: 12px 0; font-size: 0.85rem; color: var(--muted); }
 .time-guide strong { color: var(--fg); }
+.shared-row-options { flex-basis: 100%; min-width: 0; }
+.shared-row-options[hidden] { display: none; }
+.shared-row-options h2 { font-size: 1rem; color: var(--fg); margin: 8px 0; }
+.shared-row-options p { line-height: 1.7; margin: 8px 0; }
+.shared-row-options button { width: 100%; }
 .result-notes { flex-basis: 100%; }
 .result-notes summary, .data-scope summary { cursor: pointer; padding: 8px 0; min-height: 36px; color: var(--accent); }
 .result-notes > span { display: block; margin: 4px 0 8px; line-height: 1.7; }
@@ -1175,6 +1180,11 @@ footer a:hover { text-decoration: underline; }
      0 件のときの案内）。読み上げは上の短い生領域だけに出す（この欄は「のぞく」の
      内訳まで載るので、全体を aria-live にすると 1 打鍵ごとに数十語が流れる）。 -->
     <span id="countLive" class="sr-label" aria-live="polite"></span>
+    <div id="sharedRowChoices" class="shared-row-options" role="group" aria-labelledby="sharedRowChoiceTitle" aria-describedby="sharedRowChoiceGuide" hidden>
+      <h2 id="sharedRowChoiceTitle">共有リンク</h2>
+      <p id="sharedRowChoiceGuide"></p>
+      <div id="sharedRowChoiceButtons"></div>
+    </div>
     <strong id="resultSummary"></strong>
     <details id="resultNotes" class="result-notes"><summary>絞り込みの内訳・検索の説明</summary><span id="count"></span></details>
     <!-- 絞り込んだ結果は表計算へ持ち出して研究室内の予定表に貼れる（BOM 付き UTF-8） -->
