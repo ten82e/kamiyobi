@@ -1,0 +1,981 @@
+{
+  "baseline": {
+    "conferences": [
+      {
+        "key": "eurographics",
+        "title": "Eurographics",
+        "full_name": "The 48th Annual Conference of the European Association for Computer Graphics",
+        "acronym": "Eurographics",
+        "categories": ["ai", "graphics"],
+        "rank": {
+          "ccf": "B",
+          "core": "B",
+          "thcpl": "B"
+        },
+        "link": "https://eg2027.isti.cnr.it/",
+        "tags": ["computer-graphics"],
+        "sources": ["aideadlines", "ccfddl"],
+        "dblp": "eurographics",
+        "upstream_sub": "CG",
+        "identity": {
+          "dblpKey": "eurographics",
+          "officialDomains": ["https://eg2027.isti.cnr.it/"],
+          "sourceIds": {
+            "aideadlines": "eurographics",
+            "ccfddl": "CG/eg"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "ai",
+            "reason": "source-subfield"
+          },
+          {
+            "category": "graphics",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "eurographics27",
+            "link": "https://eg2027.isti.cnr.it/",
+            "place": "Lucca, Italy",
+            "date_text": "May 10 - 14, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-05-10",
+            "event_end": "2027-05-14",
+            "estimated": false,
+            "source": "aideadlines",
+            "identity": {
+              "officialUrls": ["https://eg2027.isti.cnr.it/"],
+              "sourceIds": {
+                "aideadlines": "eurographics27",
+                "ccfddl": "eg27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Abstract and submission form deadline",
+                "round": 1,
+                "track": "",
+                "comment": "\u540c\u6642\u523b\u306e\u5225\u8a18\u8f09: Abstract submission",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2026-09-25 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2026-09-25 23:59:59"
+                  },
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2026-09-25 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2026-09-25 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://eg2027.isti.cnr.it/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-06T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-09-25T23:59:59Z",
+                "aoe": "2026-09-25 11:59:59 AoE",
+                "tz_raw": "UTC"
+              },
+              {
+                "kind": "paper",
+                "label": "Full paper submission deadline",
+                "round": 1,
+                "track": "",
+                "comment": "\u540c\u6642\u523b\u306e\u5225\u8a18\u8f09: Paper submission",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2026-10-01 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2026-10-01 23:59:59"
+                  },
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2026-10-01 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2026-10-01 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://eg2027.isti.cnr.it/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-06T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-01T23:59:59Z",
+                "aoe": "2026-10-01 11:59:59 AoE",
+                "tz_raw": "UTC"
+              },
+              {
+                "kind": "review_release",
+                "label": "Reviews released",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2026-11-23 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2026-11-23 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://eg2027.isti.cnr.it/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-08T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-11-23T23:59:59Z",
+                "aoe": "2026-11-23 11:59:59 AoE",
+                "tz_raw": "UTC"
+              },
+              {
+                "kind": "rebuttal_end",
+                "label": "Rebuttal due",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2026-11-30 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2026-11-30 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://eg2027.isti.cnr.it/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-08T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-11-30T23:59:59Z",
+                "aoe": "2026-11-30 11:59:59 AoE",
+                "tz_raw": "UTC"
+              },
+              {
+                "kind": "notification",
+                "label": "Conditional acceptance or rejection notification",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2026-12-18 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2026-12-18 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://eg2027.isti.cnr.it/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-12-18T23:59:59Z",
+                "aoe": "2026-12-18 11:59:59 AoE",
+                "tz_raw": "UTC"
+              },
+              {
+                "kind": "camera_ready",
+                "label": "Revised version deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2027-01-26 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2027-01-26 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://eg2027.isti.cnr.it/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2027-01-26T23:59:59Z",
+                "aoe": "2027-01-26 11:59:59 AoE",
+                "tz_raw": "UTC"
+              },
+              {
+                "kind": "notification",
+                "label": "Final notification",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2027-02-09 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2027-02-09 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://eg2027.isti.cnr.it/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2027-02-09T23:59:59Z",
+                "aoe": "2027-02-09 11:59:59 AoE",
+                "tz_raw": "UTC"
+              },
+              {
+                "kind": "camera_ready",
+                "label": "Camera-ready version due",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2027-02-23 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2027-02-23 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://eg2027.isti.cnr.it/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2027-02-23T23:59:59Z",
+                "aoe": "2027-02-23 11:59:59 AoE",
+                "tz_raw": "UTC"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "securecomm",
+        "title": "SecureComm",
+        "full_name": "EAI International Conference on Security and Privacy in Communication Networks",
+        "acronym": "SecureComm",
+        "categories": ["security"],
+        "rank": {
+          "ccf": "C",
+          "core": "C",
+          "thcpl": "N"
+        },
+        "link": "https://securecomm.eai-conferences.org/2027/",
+        "tags": [],
+        "sources": ["local", "ccfddl"],
+        "dblp": "securecomm",
+        "upstream_sub": "SC",
+        "identity": {
+          "dblpKey": "securecomm",
+          "officialDomains": [
+            "https://securecomm.eai-conferences.org/2026/",
+            "https://securecomm.eai-conferences.org/2027/"
+          ],
+          "sourceIds": {
+            "ccfddl": "SC/securecomm",
+            "local": "securecomm"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "security",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "securecomm27",
+            "link": "https://securecomm.eai-conferences.org/2027/",
+            "place": "Hefei, China",
+            "date_text": "October 15-18, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-10-15",
+            "event_end": "2027-10-18",
+            "estimated": false,
+            "source": "local",
+            "identity": {
+              "officialUrls": ["https://securecomm.eai-conferences.org/2027/"],
+              "sourceIds": {
+                "local": "securecomm27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Full Paper Submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://securecomm.eai-conferences.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2027-03-01 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://securecomm.eai-conferences.org/2027/",
+                    "rawExcerpt": "2027-03-01 23:59:00"
+                  }
+                ],
+                "precision": "exact",
+                "utc": "2027-03-01T23:59:00Z",
+                "aoe": "2027-03-01 11:59:00 AoE",
+                "tz_raw": "UTC"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      }
+    ],
+    "generated_at": "2026-10-03T04:38:53Z"
+  },
+  "current": {
+    "conferences": [
+      {
+        "key": "eurographics",
+        "title": "Eurographics",
+        "full_name": "The 48th Annual Conference of the European Association for Computer Graphics",
+        "acronym": "Eurographics",
+        "categories": ["ai", "graphics"],
+        "rank": {
+          "ccf": "B",
+          "core": "B",
+          "thcpl": "B"
+        },
+        "link": "https://eg2027.isti.cnr.it/",
+        "tags": ["computer-graphics"],
+        "sources": ["aideadlines", "ccfddl"],
+        "dblp": "eurographics",
+        "upstream_sub": "CG",
+        "identity": {
+          "dblpKey": "eurographics",
+          "officialDomains": ["https://eg2027.isti.cnr.it/"],
+          "sourceIds": {
+            "aideadlines": "eurographics",
+            "ccfddl": "CG/eg"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "ai",
+            "reason": "source-subfield"
+          },
+          {
+            "category": "graphics",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "eurographics27",
+            "link": "https://eg2027.isti.cnr.it/",
+            "place": "Lucca, Italy",
+            "date_text": "May 10 - 14, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-05-10",
+            "event_end": "2027-05-14",
+            "estimated": false,
+            "source": "aideadlines",
+            "identity": {
+              "officialUrls": ["https://eg2027.isti.cnr.it/"],
+              "sourceIds": {
+                "aideadlines": "eurographics27",
+                "ccfddl": "eg27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Abstract and submission form deadline",
+                "round": 1,
+                "track": "",
+                "comment": "\u5225\u8a18\u8f09: Abstract submission",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2026-09-25 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2026-09-25 23:59:59"
+                  },
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2026-09-26 11:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2026-09-26 11:59:00"
+                  }
+                ],
+                "conflicts": [
+                  {
+                    "at_utc": "2026-09-26T11:59:00Z",
+                    "label": "Abstract submission",
+                    "source": "ccfddl",
+                    "original_value": "2026-09-26 11:59:00",
+                    "evidence": {
+                      "source_name": "ccfddl",
+                      "source_url": "https://github.com/ccfddl/ccf-deadlines",
+                      "observed_at": "",
+                      "original_value": "2026-09-26 11:59:00",
+                      "confidence": "aggregator",
+                      "sourceClass": "aggregator",
+                      "sourceUrl": "https://github.com/ccfddl/ccf-deadlines",
+                      "rawExcerpt": "2026-09-26 11:59:00"
+                    }
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://eg2027.isti.cnr.it/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T04:38:53.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-09-25T23:59:59Z",
+                "aoe": "2026-09-25 11:59:59 AoE",
+                "tz_raw": "UTC"
+              },
+              {
+                "kind": "paper",
+                "label": "Full paper submission deadline",
+                "round": 1,
+                "track": "",
+                "comment": "\u5225\u8a18\u8f09: Paper submission",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2026-10-01 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2026-10-01 23:59:59"
+                  },
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2026-10-02 11:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2026-10-02 11:59:00"
+                  }
+                ],
+                "conflicts": [
+                  {
+                    "at_utc": "2026-10-02T11:59:00Z",
+                    "label": "Paper submission",
+                    "source": "ccfddl",
+                    "original_value": "2026-10-02 11:59:00",
+                    "evidence": {
+                      "source_name": "ccfddl",
+                      "source_url": "https://github.com/ccfddl/ccf-deadlines",
+                      "observed_at": "",
+                      "original_value": "2026-10-02 11:59:00",
+                      "confidence": "aggregator",
+                      "sourceClass": "aggregator",
+                      "sourceUrl": "https://github.com/ccfddl/ccf-deadlines",
+                      "rawExcerpt": "2026-10-02 11:59:00"
+                    }
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://eg2027.isti.cnr.it/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T04:38:53.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-01T23:59:59Z",
+                "aoe": "2026-10-01 11:59:59 AoE",
+                "tz_raw": "UTC"
+              },
+              {
+                "kind": "review_release",
+                "label": "Reviews released",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2026-11-23 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2026-11-23 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://eg2027.isti.cnr.it/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-06T04:38:53.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-11-23T23:59:59Z",
+                "aoe": "2026-11-23 11:59:59 AoE",
+                "tz_raw": "UTC"
+              },
+              {
+                "kind": "rebuttal_end",
+                "label": "Rebuttal due",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2026-11-30 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2026-11-30 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://eg2027.isti.cnr.it/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-06T04:38:53.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-11-30T23:59:59Z",
+                "aoe": "2026-11-30 11:59:59 AoE",
+                "tz_raw": "UTC"
+              },
+              {
+                "kind": "notification",
+                "label": "Conditional acceptance or rejection notification",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2026-12-18 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2026-12-18 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://eg2027.isti.cnr.it/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-06T04:38:53.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-12-18T23:59:59Z",
+                "aoe": "2026-12-18 11:59:59 AoE",
+                "tz_raw": "UTC"
+              },
+              {
+                "kind": "camera_ready",
+                "label": "Revised version deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2027-01-26 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2027-01-26 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://eg2027.isti.cnr.it/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T04:38:53.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2027-01-26T23:59:59Z",
+                "aoe": "2027-01-26 11:59:59 AoE",
+                "tz_raw": "UTC"
+              },
+              {
+                "kind": "notification",
+                "label": "Final notification",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2027-02-09 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2027-02-09 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://eg2027.isti.cnr.it/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T04:38:53.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2027-02-09T23:59:59Z",
+                "aoe": "2027-02-09 11:59:59 AoE",
+                "tz_raw": "UTC"
+              },
+              {
+                "kind": "camera_ready",
+                "label": "Camera-ready version due",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://eg2027.isti.cnr.it/",
+                    "observed_at": "",
+                    "original_value": "2027-02-23 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://eg2027.isti.cnr.it/",
+                    "rawExcerpt": "2027-02-23 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://eg2027.isti.cnr.it/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T04:38:53.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2027-02-23T23:59:59Z",
+                "aoe": "2027-02-23 11:59:59 AoE",
+                "tz_raw": "UTC"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "securecomm",
+        "title": "SecureComm",
+        "full_name": "EAI International Conference on Security and Privacy in Communication Networks",
+        "acronym": "SecureComm",
+        "categories": ["security"],
+        "rank": {
+          "ccf": "C",
+          "core": "C",
+          "thcpl": "N"
+        },
+        "link": "https://securecomm.eai-conferences.org/2027/",
+        "tags": [],
+        "sources": ["local", "ccfddl"],
+        "dblp": "securecomm",
+        "upstream_sub": "SC",
+        "identity": {
+          "dblpKey": "securecomm",
+          "officialDomains": ["https://securecomm.eai-conferences.org/2027/"],
+          "sourceIds": {
+            "ccfddl": "SC/securecomm",
+            "local": "securecomm"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "security",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "securecomm27",
+            "link": "https://securecomm.eai-conferences.org/2027/",
+            "place": "Hefei, China",
+            "date_text": "October 15-18, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-10-15",
+            "event_end": "2027-10-18",
+            "estimated": false,
+            "source": "local",
+            "identity": {
+              "officialUrls": ["https://securecomm.eai-conferences.org/2027/"],
+              "sourceIds": {
+                "ccfddl": "securecomm27",
+                "local": "securecomm27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Full Paper Submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://securecomm.eai-conferences.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2027-03-01 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://securecomm.eai-conferences.org/2027/",
+                    "rawExcerpt": "2027-03-01 23:59:00"
+                  }
+                ],
+                "conflicts": [
+                  {
+                    "at_utc": "2027-02-02T11:59:59Z",
+                    "label": "Paper submission",
+                    "source": "ccfddl",
+                    "original_value": "2027-02-01 23:59:59",
+                    "evidence": {
+                      "source_name": "ccfddl",
+                      "source_url": "https://github.com/ccfddl/ccf-deadlines",
+                      "observed_at": "",
+                      "original_value": "2027-02-01 23:59:59",
+                      "confidence": "aggregator",
+                      "sourceClass": "aggregator",
+                      "sourceUrl": "https://github.com/ccfddl/ccf-deadlines",
+                      "rawExcerpt": "2027-02-01 23:59:59"
+                    }
+                  }
+                ],
+                "precision": "exact",
+                "utc": "2027-03-01T23:59:00Z",
+                "aoe": "2027-03-01 11:59:00 AoE",
+                "tz_raw": "UTC"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 2,
+                "track": "",
+                "comment": "Full Paper Submission deadline (Cycle 2)",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://securecomm.eai-conferences.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2027-04-15 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://securecomm.eai-conferences.org/2027/",
+                    "rawExcerpt": "2027-04-15 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://securecomm.eai-conferences.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T04:38:53.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2027-04-16T11:59:59Z",
+                "aoe": "2027-04-15 23:59:59 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      }
+    ],
+    "generated_at": "2026-10-03T04:38:53Z"
+  }
+}

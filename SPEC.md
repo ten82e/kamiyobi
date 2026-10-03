@@ -1065,3 +1065,17 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 eurosys / ppopp。
 rtss・usenix-security は論文個別ベクトル（paperVecs）も使用する。
 paperVecs 適用条件は「1 分野に収まる + 語彙非衝突」の 2 条件であり、対象は usenix-security・rtss のみである。
+
+### Automatic update source snapshots and deterministic recommendation inputs
+
+The updater carries `data/source-snapshots/` through the generated-update artifact
+and guarded data PR. Offline Pages builds restore these inputs before the merged
+snapshot, so retaining only `snapshot.json` would publish stale aggregator data.
+
+The required real-paper gate uses `--real-v2-feature-baseline` to first reproduce
+every pinned candidate feature and base score against immutable input metadata
+from main c06b9ff. It then evaluates the current production venue pool with the
+same pinned semantic observations, query coverage, negative cases and metric
+floors. This permits source-driven venue/category changes without refreshing
+the frozen feature store or confusing data drift with a scoring-code regression.
+A feature mismatch on the immutable baseline still fails the gate.
