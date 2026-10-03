@@ -5,6 +5,7 @@ import { load as loadYaml } from "js-yaml";
 import { expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 import {
+  assignShareIdentities,
   COMPSAC_JIP_CALL,
   consolidateReviewedSubmissions,
   reviewedSubmission,
@@ -99,6 +100,8 @@ it.each([
     reviewedSubmission({
       venueKey: "jip",
       editionId: "jip-compsac2027-si",
+      editionYear: 2027,
+      label: "投稿締切",
       officialUrl: COMPSAC_JIP_CALL.officialUrl,
       kind: "paper",
       round: 1,
@@ -122,9 +125,10 @@ it("実際のUI行生成に統合が接続され、アーカイブJSONの元記�
   const buildRows = new Function(
     "Recommender",
     "consolidateReviewedSubmissions",
+    "assignShareIdentities",
     "rowShareKeyJa",
     `return (${jsFunction(siteRuntime(), "buildRows")});`,
-  )(Recommender, consolidateReviewedSubmissions, key);
+  )(Recommender, consolidateReviewedSubmissions, assignShareIdentities, key);
   expect(
     buildRows(toJson(source, {}, now)).filter((r: { submission?: unknown }) => r.submission),
   ).toHaveLength(1);

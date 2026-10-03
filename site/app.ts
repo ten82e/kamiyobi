@@ -1,7 +1,11 @@
 import { loadPublishedRecommendation } from "./publish.js";
 import { type RecommendationAxes, recommendationAxes } from "./recommendation-core.js";
 import Recommender from "./recommender.js";
-import { consolidateReviewedSubmissions, type SubmissionDisplay } from "./submission-identity.js";
+import {
+  assignShareIdentities,
+  consolidateReviewedSubmissions,
+  type SubmissionDisplay,
+} from "./submission-identity.js";
 
 type CandidateRow = ReturnType<typeof Recommender.candidateRows>[number];
 type PaperRecord = ReturnType<typeof Recommender.parsePaperLines>[number];
@@ -23,6 +27,7 @@ type EditionRecord = CandidateRow["ed"] & {
   schedule_deadlines?: DeadlineRecord[];
 };
 type DeadlineRecord = CandidateRow["dl"] & {
+  track?: string;
   verification?: {
     official_url?: string;
     source_class?: string;
@@ -40,6 +45,8 @@ type AppRow = Omit<CandidateRow, "conf" | "ed" | "dl"> & {
   conf: ConferenceRecord;
   ed: EditionRecord;
   dl: DeadlineRecord;
+  legacyShareKey?: string;
+  shareDiscriminator?: string;
   submission?: SubmissionDisplay;
   _boosted?: boolean;
   _match?: RecommendationResult["match"];
@@ -54,6 +61,8 @@ type AppRow = Omit<CandidateRow, "conf" | "ed" | "dl"> & {
 };
 
 interface DrawerRow {
+  legacyShareKey?: string;
+  shareDiscriminator?: string;
   submission?: SubmissionDisplay;
   conf: {
     key?: string;
@@ -63,6 +72,7 @@ interface DrawerRow {
     tags?: string[];
   };
   ed: {
+    id?: string;
     year?: number;
     link?: string;
     place?: string;
@@ -545,12 +555,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     ed?: { year?: unknown };
     kind?: string;
     t?: number;
+    shareDiscriminator?: string;
   }): string {
     const key = String(r.conf?.key || "");
     const year = r.ed && r.ed.year !== undefined && r.ed.year !== null ? String(r.ed.year) : "";
     const kind = String(r.kind || "");
     const t = Number.isFinite(Number(r.t)) ? String(Math.trunc(Number(r.t))) : "";
-    return `${key}|${year}|${kind}|${t}`;
+    const legacy = `${key}|${year}|${kind}|${t}`;
+    return r.shareDiscriminator ? `${legacy}|slot=${r.shareDiscriminator}` : legacy;
   }
   /** ソートできる列の key。`th[data-sort]` と一致させる（ズレは検査で拾う）。 */
   /* 表の列数。行をまたぐ見出し（月見出し・過ぎた締切の見出し・行の詳細）はここを使う
@@ -1417,17 +1429,41 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
   });
 
-  function editionScheduleRows(r: Pick<DrawerRow, "conf" | "ed" | "submission">): AppRow[] {
+  function editionScheduleRows(
+    r: Pick<
+      DrawerRow,
+      "conf" | "ed" | "submission" | "dl" | "legacyShareKey" | "shareDiscriminator"
+    >,
+  ): AppRow[] {
     // Build from this exact edition, retaining the selected deadline's object identity.
     const edition = {
       ...r.ed,
       deadlines: [...(r.ed.deadlines || []), ...(r.ed.schedule_deadlines || [])],
     };
-    return (
-      Recommender.candidateRows({ conferences: [{ ...r.conf, editions: [edition] }] }) as AppRow[]
+    return assignShareIdentities(
+      Recommender.candidateRows({ conferences: [{ ...r.conf, editions: [edition] }] }) as AppRow[],
+      rowShareKeyJa,
     )
       .filter((next) => next.kind !== "journal")
-      .map((next) => ({ ...next, conf: r.conf, ed: r.ed, submission: r.submission }) as AppRow)
+      .map((next) => {
+        const known =
+          (typeof rows === "undefined"
+            ? undefined
+            : rows.find(
+                (candidate) =>
+                  candidate.conf.key === r.conf.key &&
+                  candidate.ed.id === r.ed.id &&
+                  candidate.dl === next.dl,
+              )) || (r.dl === next.dl ? r : undefined);
+        return {
+          ...next,
+          conf: r.conf,
+          ed: r.ed,
+          submission: r.submission,
+          legacyShareKey: known?.legacyShareKey || next.legacyShareKey,
+          shareDiscriminator: known?.shareDiscriminator || next.shareDiscriminator,
+        } as AppRow;
+      })
       .sort((a, b) => a.tShown - b.tShown);
   }
 
@@ -1751,9 +1787,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   // ---- DATA FLATTENING ----
   function buildRows(data: Catalog): AppRow[] {
     const candidates = Recommender.candidateRows(data);
-    if (!candidates.some((row) => row.conf?.key === "jip" || row.conf?.key === "ipsj-27-r-compsac"))
-      return candidates;
-    return consolidateReviewedSubmissions(candidates, rowShareKeyJa);
+    if (!candidates.some((row) => row.conf?.key)) return candidates;
+    return assignShareIdentities(
+      consolidateReviewedSubmissions(candidates, rowShareKeyJa),
+      rowShareKeyJa,
+    );
   }
   let rows = buildRows(DATA);
 
@@ -6123,9 +6161,42 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       );
       return;
     }
+    const legacyMatches = rows.filter((row) => row.legacyShareKey === pendingDrawerKey);
+    if (legacyMatches.length > 1) {
+      sharedRowNotice(
+        "この旧リンクは同じ日時の複数の日程に対応します。ラウンド・トラックを確認して開いてください。",
+      );
+      const live = $("countLive");
+      if (live)
+        for (const row of legacyMatches) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "btn-reset shared-row-choice";
+          button.style.minHeight = "44px";
+          button.style.display = "block";
+          button.style.margin = "4px 0";
+          button.style.maxWidth = "100%";
+          button.style.whiteSpace = "normal";
+          button.style.overflowWrap = "anywhere";
+          button.style.textAlign = "left";
+          button.textContent = [
+            Recommender.titleWithYearJa(row.conf.title || row.conf.key, row.ed.year),
+            KIND_LABEL[row.kind] || row.kind,
+            row.dl.round ? `第 ${row.dl.round} ラウンド` : "ラウンド未確認",
+            row.dl.track ? `トラック: ${row.dl.track}` : "",
+            kindDetailJa(null, row.dl.label),
+          ]
+            .filter(Boolean)
+            .join(" ／ ");
+          button.addEventListener("click", () => openDrawer(row, "replace"));
+          live.appendChild(button);
+        }
+      return;
+    }
     let idx = shown.findIndex(
       (r) =>
         rowShareKeyJa(r) === pendingDrawerKey ||
+        r.legacyShareKey === pendingDrawerKey ||
         r.submission?.shareAliases.includes(pendingDrawerKey),
     );
     if (idx < 0) {
@@ -6141,6 +6212,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         rows.find(
           (r) =>
             rowShareKeyJa(r) === pendingDrawerKey ||
+            r.legacyShareKey === pendingDrawerKey ||
             r.submission?.shareAliases.includes(pendingDrawerKey),
         ) || null;
       const why = sharedRowState(hit, Date.now());
@@ -6177,6 +6249,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         shown.findIndex(
           (r) =>
             rowShareKeyJa(r) === pendingDrawerKey ||
+            r.legacyShareKey === pendingDrawerKey ||
             r.submission?.shareAliases.includes(pendingDrawerKey),
         );
       idx = keyAt();

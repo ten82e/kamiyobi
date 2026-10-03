@@ -2213,8 +2213,8 @@ it("収録元の締切名は「原表記」と書いて、画面の種別と混�
   // 表のセルと行の詳細が同じ式を使う（どちらかだけ直す変更を落ちるようにする）。
   expect(
     (app.match(/kindDetailJa\(/g) || []).length,
-    "併記の呼び出し箇所（一覧・詳細・投稿日程）",
-  ).toBe(4);
+    "併記の呼び出し箇所（一覧・詳細・投稿日程・旧リンク候補）",
+  ).toBe(5);
   expect(app).not.toMatch(/detail\.push\(\s*r\.dl\.label\s*\)/);
   // 画面に出る語として、てびきにも同じ語で書いてある。
   const html = readFileSync(join(site, "index.html"), "utf8");

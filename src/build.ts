@@ -3366,6 +3366,8 @@ export function icsEventRows(
     return reviewedSubmission({
       venueKey: rec.conf.key,
       editionId: rec.edition?.edition_id,
+      editionYear: rec.edition?.year,
+      label: rec.deadline?.label,
       officialUrl: rec.edition?.link || rec.conf.link,
       kind: rec.deadline?.kind,
       round: rec.deadline?.round,

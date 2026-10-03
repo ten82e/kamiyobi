@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
+import { assignShareIdentities } from "../site/submission-identity.ts";
 import { jsFunction, siteRuntime } from "./runtime_extract.ts";
 
 const app = () => siteRuntime("app.js");
@@ -133,7 +134,7 @@ it("shows every recorded date of the selected edition, including a past abstract
   const selected = Recommender.candidateRows({ conferences: [conf] })[0];
   const schedule = new Function(
     "Recommender",
-    `${jsFunction(app(), "editionScheduleRows")}; return editionScheduleRows;`,
+    `${assignShareIdentities.toString() + "\n" + jsFunction(app(), "rowShareKeyJa") + "\n" + jsFunction(app(), "editionScheduleRows")}; return editionScheduleRows;`,
   )(Recommender);
   const got = schedule(selected);
   expect(got.map((row: typeof selected) => row.kind)).toEqual([
@@ -159,7 +160,7 @@ it("retains unknown-time precision and sorts by displayed calendar day", () => {
   const selected = Recommender.candidateRows({ conferences: [conf] })[0];
   const schedule = new Function(
     "Recommender",
-    `${jsFunction(app(), "editionScheduleRows")}; return editionScheduleRows;`,
+    `${assignShareIdentities.toString() + "\n" + jsFunction(app(), "rowShareKeyJa") + "\n" + jsFunction(app(), "editionScheduleRows")}; return editionScheduleRows;`,
   )(Recommender);
   const got = schedule(selected);
   expect(got[0].kind).toBe("paper");
@@ -329,7 +330,7 @@ it("opens period-excluded schedules repeatedly and resolves their URLs without m
   const functions = new Function(
     "Recommender",
     `
-    ${jsFunction(app(), "editionScheduleRows")}
+    ${assignShareIdentities.toString() + "\n" + jsFunction(app(), "rowShareKeyJa") + "\n" + jsFunction(app(), "editionScheduleRows")}
     ${jsFunction(app(), "rowShareKeyJa")}
     ${jsFunction(app(), "findEditionScheduleRow")}
     return { editionScheduleRows, rowShareKeyJa, findEditionScheduleRow };
@@ -440,7 +441,7 @@ it("restores a list-window deadline excluded by kind without loosening URL filte
     "openDrawer",
     "sharedRowNotice",
     `
-    ${jsFunction(app(), "editionScheduleRows")}
+    ${assignShareIdentities.toString() + "\n" + jsFunction(app(), "rowShareKeyJa") + "\n" + jsFunction(app(), "editionScheduleRows")}
     ${jsFunction(app(), "rowShareKeyJa")}
     ${jsFunction(app(), "findEditionScheduleRow")}
     const sharedRowState = () => "other";

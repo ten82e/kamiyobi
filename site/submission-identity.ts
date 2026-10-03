@@ -10,14 +10,16 @@ export const COMPSAC_JIP_CALL = {
   evidenceRef:
     "data/evidence/blobs/9972268f811c33df5e345fc94570018d6ea5ec55be146ca81b95744b7fd4f3bd.body",
   aliases: [
-    { venueKey: "jip", editionId: "jip-compsac2027-si" },
-    { venueKey: "ipsj-27-r-compsac", editionId: "ipsj-27-r26" },
+    { venueKey: "jip", editionId: "jip-compsac2027-si", year: 2027, label: "投稿締切" },
+    { venueKey: "ipsj-27-r-compsac", editionId: "ipsj-27-r26", year: 2026, label: "Submission" },
   ],
 } as const;
 
 interface SubmissionIdentityInput {
   venueKey?: string;
   editionId?: string;
+  editionYear?: number;
+  label?: string;
   officialUrl?: string;
   kind?: string;
   round?: number;
@@ -29,11 +31,15 @@ interface SubmissionIdentityInput {
 /** Scope is exact archival IDs, official CFP, one paper round, and the reviewed date-only value. */
 export function reviewedSubmission(input: SubmissionIdentityInput): typeof COMPSAC_JIP_CALL | null {
   return COMPSAC_JIP_CALL.aliases.some(
-    (alias) => alias.venueKey === input.venueKey && alias.editionId === input.editionId,
+    (alias) =>
+      alias.venueKey === input.venueKey &&
+      alias.editionId === input.editionId &&
+      alias.year === input.editionYear &&
+      alias.label === input.label,
   ) &&
     input.officialUrl === COMPSAC_JIP_CALL.officialUrl &&
     input.kind === "paper" &&
-    (input.round ?? 1) === 1 &&
+    input.round === 1 &&
     !input.track &&
     input.precision === "date-only" &&
     input.localDate === "2026-12-01"
@@ -51,7 +57,7 @@ interface SubmissionRow {
     event_start?: string | null;
     event_end?: string | null;
   };
-  dl: { kind?: string; round?: number; track?: string; precision?: string };
+  dl: { kind?: string; round?: number; track?: string; precision?: string; label?: string };
   kind: string;
   localDate?: string;
   hay: string;
@@ -76,6 +82,8 @@ export function consolidateReviewedSubmissions<T extends SubmissionRow>(
     reviewedSubmission({
       venueKey: row.conf.key,
       editionId: row.ed.id,
+      editionYear: row.ed.year,
+      label: row.dl.label,
       officialUrl: row.ed.link || row.conf.link,
       kind: row.kind,
       round: row.dl.round,
@@ -120,4 +128,35 @@ export function consolidateReviewedSubmissions<T extends SubmissionRow>(
   return rows.flatMap((row, index) =>
     index === first ? [display] : members.includes(row) ? [] : [row],
   );
+}
+
+export interface SharedRowIdentity {
+  legacyShareKey?: string;
+  shareDiscriminator?: string;
+}
+
+/** Only colliding legacy keys gain a suffix. Distinct editions, rounds and labels stay distinct. */
+export function assignShareIdentities<T extends SubmissionRow>(
+  rows: T[],
+  legacyKey: (row: T) => string,
+): Array<T & SharedRowIdentity> {
+  const groups = new Map<string, T[]>();
+  for (const row of rows) {
+    const key = legacyKey(row);
+    groups.set(key, [...(groups.get(key) || []), row]);
+  }
+  return rows.map((row) => {
+    const key = legacyKey(row);
+    if ((groups.get(key)?.length || 0) < 2) return row;
+    return {
+      ...row,
+      legacyShareKey: key,
+      shareDiscriminator: JSON.stringify([
+        row.ed.id || "",
+        row.dl.round ?? 1,
+        row.dl.track || "",
+        row.dl.label || "",
+      ]),
+    };
+  });
 }
