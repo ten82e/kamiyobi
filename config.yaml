@@ -322,3 +322,23 @@ site:
   base_url: https://ten82e.github.io/kamiyobi
   domain: ten82e.github.io
   upcoming_days: 180            # upcoming.md に載せる期間
+
+# Officially reviewed short-paper identity: old CCF round 2 denotes a track,
+# not a second round of full papers. Match this exact observation only.
+deadline_identity_migrations:
+  - from:
+      venue: wsdm
+      edition: wsdm27-ccfddl-wsdm27
+      kind: paper
+      round: 2
+      track: ''
+      earliest_utc: '2026-11-18T11:59:59.000Z'
+      latest_utc: '2026-11-18T11:59:59.000Z'
+    to:
+      venue: wsdm
+      edition: wsdm27
+      kind: paper
+      round: 1
+      track: paper-submission-short-papers
+    action: rename
+    evidence_ref: data/evidence/blobs/313329e1b1243fb8c8297930dd410fccd368943906e10b6493354439916f6027.body

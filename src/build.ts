@@ -729,7 +729,10 @@ export function toJson(
     })(),
     conferences: outConfs,
   };
-  data.identity_migrations = identityMigrationManifestForData(data);
+  data.identity_migrations = identityMigrationManifestForData(
+    data,
+    safeConfig.deadline_identity_migrations,
+  );
   return data;
 }
 

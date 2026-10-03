@@ -10,6 +10,54 @@ import { applyOverrides, mergeSources, normalizeConfiguredVenueIdentities } from
 import { conferencesFromJson } from "../src/model.ts";
 
 describe("captured hosted updater failure", () => {
+  it("reconciles captured earlier-date and disappearing-track transitions with official evidence", () => {
+    const captured = JSON.parse(
+      readFileSync("tests/fixtures/autoupdate-deadline-transitions.json", "utf8"),
+    );
+    const now = new Date("2026-10-03T06:00:00Z");
+    const options = { profileHash: "official-transition-review" };
+    const previous = healthReport(captured.baseline, now, options);
+    expect(
+      evaluateHealthGate(healthReport(captured.current, now, options), previous).reasons,
+    ).toHaveLength(5);
+    const overrides = load(readFileSync("data/overrides.yaml", "utf8")) as Record<string, unknown>;
+    const config = load(readFileSync("config.yaml", "utf8")) as Record<string, unknown>;
+    const output = toJson(
+      applyOverrides(conferencesFromJson(captured.current), overrides),
+      config,
+      now,
+    );
+    const report = healthReport(output, now, options);
+    expect(evaluateHealthGate(report, previous).reasons).toEqual([]);
+    expect(
+      report.deadline_refs!.find((ref) => ref.deadline_id === "iscas|iscas27|paper|1|")?.at_utc,
+    ).toBe("2026-10-14T04:59:59.000Z");
+    expect(
+      report.deadline_refs!.find((ref) => ref.deadline_id.startsWith("dasfaa|dasfaa27|paper"))
+        ?.at_utc,
+    ).toBe("2026-11-26T11:59:00.000Z");
+    const evo = report.deadline_refs!.find((ref) => ref.deadline_id.startsWith("evomusart-2027|"))!;
+    expect(evo.local_date).toBe("2026-11-01");
+    expect(evo.at_utc).toBeUndefined();
+    const changed = structuredClone(previous);
+    changed.deadline_refs!.find(
+      (ref) => ref.deadline_id === "wsdm|wsdm27-ccfddl-wsdm27|paper|2|",
+    )!.at_utc = "2026-11-19T11:59:59.000Z";
+    changed.deadline_refs!.find(
+      (ref) => ref.deadline_id === "wsdm|wsdm27-ccfddl-wsdm27|paper|2|",
+    )!.earliest_utc = "2026-11-19T11:59:59.000Z";
+    changed.deadline_refs!.find(
+      (ref) => ref.deadline_id === "wsdm|wsdm27-ccfddl-wsdm27|paper|2|",
+    )!.latest_utc = "2026-11-19T11:59:59.000Z";
+    expect(evaluateHealthGate(report, changed).ok).toBe(false);
+    expect(() =>
+      toJson(
+        conferencesFromJson(captured.current),
+        { ...config, deadline_identity_migrations: [{}] },
+        now,
+      ),
+    ).toThrow("invalid reviewed identity migrations");
+  });
   it("resolves official CFP corrections without hiding unknown times or dropping other EG slots", () => {
     const captured = JSON.parse(
       readFileSync("tests/fixtures/autoupdate-deadline-conflicts.json", "utf8"),

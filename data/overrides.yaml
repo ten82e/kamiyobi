@@ -36,6 +36,135 @@ aliases:
 drop: []
 
 conferences:
+  iscas:
+    editions:
+      iscas27:
+        year: 2027
+        date_text: June 6-9, 2027
+        event_start: '2027-06-06'
+        event_end: '2027-06-09'
+        deadlines:
+          - kind: paper
+            label: Paper submission
+            date: '2026-10-13 23:59:59'
+            round: 1
+            evidence:
+              - source_name: iscas official CFP
+                source_url: https://epapers2.org/iscas2027/ESR/login.php
+                sourceClass: official-cfp
+                observed_at: '2026-10-03T05:12:25Z'
+                retrievedAt: '2026-10-03T05:12:25Z'
+                verifiedAt: '2026-10-03T05:12:25Z'
+                contentHash: 08810cdea05169d3110106df6b6e8cf461c5ebda2f74feb757b712753b878c37
+                evidenceRef: data/evidence/blobs/08810cdea05169d3110106df6b6e8cf461c5ebda2f74feb757b712753b878c37.body
+                rawExcerpt: 'Submission deadline: Oct 13, 2026 23:59 (UTC -0500)'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                  - time
+                  - timezone
+                confidence: official
+            tz: UTC-0500
+            superseded_deadlines:
+              - value: '2026-10-14T11:59:59Z'
+                precision: exact
+                source: https://epapers2.org/iscas2027/ESR/login.php
+                evidenceRef: data/evidence/blobs/08810cdea05169d3110106df6b6e8cf461c5ebda2f74feb757b712753b878c37.body
+                status: superseded
+                supersededBy: iscas|iscas27|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-10-03T05:12:25Z'
+  dasfaa:
+    editions:
+      dasfaa27:
+        year: 2027
+        deadlines:
+          - kind: paper
+            label: Full Paper Submission
+            comment: 研究論文CFPとトップページは11月25日。日程一覧ページには6月6日が残っています。投稿前に研究論文CFPをご確認ください。
+            date: '2026-11-25 23:59:00'
+            round: 1
+            evidence:
+              - source_name: dasfaa official CFP
+                source_url: https://dasfaa2027.github.io/CallforResearchTrack/list.htm
+                sourceClass: official-cfp
+                observed_at: '2026-10-03T05:12:25Z'
+                retrievedAt: '2026-10-03T05:12:25Z'
+                verifiedAt: '2026-10-03T05:12:25Z'
+                contentHash: 24a85164b842fa0b7b5f98c75e1fa9dfa8851372f73571cbe2de94dc9141dd2d
+                evidenceRef: data/evidence/blobs/24a85164b842fa0b7b5f98c75e1fa9dfa8851372f73571cbe2de94dc9141dd2d.body
+                rawExcerpt: 'Research Papers: November 25, 2026; all deadlines 23:59 Anywhere on Earth (AoE).'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                  - time
+                  - timezone
+                confidence: official
+            tz: AoE
+            superseded_deadlines:
+              - value: '2027-06-07T11:59:00Z'
+                precision: exact
+                source: https://dasfaa2027.github.io/CallforResearchTrack/list.htm
+                evidenceRef: data/evidence/blobs/24a85164b842fa0b7b5f98c75e1fa9dfa8851372f73571cbe2de94dc9141dd2d.body
+                status: superseded
+                supersededBy: dasfaa|dasfaa27|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-10-03T05:12:25Z'
+  evomusart-2027:
+    editions:
+      evomusart-202727:
+        year: 2027
+        deadlines:
+          - kind: paper
+            label: Submission deadline
+            date: '2026-11-01'
+            round: 1
+            evidence:
+              - source_name: evomusart official CFP
+                source_url: https://easychair.org/cfp/evomusart2027
+                sourceClass: official-cfp
+                observed_at: '2026-10-03T05:12:25Z'
+                retrievedAt: '2026-10-03T05:12:25Z'
+                verifiedAt: '2026-10-03T05:12:25Z'
+                contentHash: 2710171d2ee3d422ec6bb0842872cac5add2e18259de3da70b4e6d7d00b190aa
+                evidenceRef: data/evidence/blobs/2710171d2ee3d422ec6bb0842872cac5add2e18259de3da70b4e6d7d00b190aa.body
+                rawExcerpt: Submission deadline November 1, 2026
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                confidence: official
+            precision: date-only
+  wsdm:
+    editions:
+      wsdm27:
+        year: 2027
+        mode: merge-slots
+        deadlines:
+          - kind: paper
+            label: Paper submission (short papers)
+            date: '2026-11-17 23:59:59'
+            round: 1
+            evidence:
+              - source_name: wsdm official CFP
+                source_url: https://www.wsdm-conference.org/2027/cfsp.html
+                sourceClass: official-cfp
+                observed_at: '2026-10-03T05:12:25Z'
+                retrievedAt: '2026-10-03T05:12:25Z'
+                verifiedAt: '2026-10-03T05:12:25Z'
+                contentHash: 313329e1b1243fb8c8297930dd410fccd368943906e10b6493354439916f6027
+                evidenceRef: data/evidence/blobs/313329e1b1243fb8c8297930dd410fccd368943906e10b6493354439916f6027.body
+                rawExcerpt: 'Short papers: Nov 17, 2026; all deadlines 11:59 pm Anywhere on Earth (AoE).'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                  - time
+                  - timezone
+                confidence: official
+            tz: AoE
   # Official CFP review 2026-10-03: Eurographics struck out both submission dates
   # and announced an extension without a replacement date; keep all other slots.
   # https://eg2027.isti.cnr.it/call-for-papers/ (body captured in evidence/blobs).
@@ -469,14 +598,70 @@ conferences:
   #   Club, Southampton, England, UK」（2026-08-12 再取得）→ 追加。
   ecir:
     editions:
+      ecir27-ccfddl-ecir27:
+        year: 2027
+        deadlines:
+          - kind: abstract
+            label: Abstract submission
+            date: '2026-09-21 23:59:59'
+            round: 1
+            evidence:
+              - source_name: ecir official CFP
+                source_url: https://www.ecir2027.co.uk/call-for-full-papers
+                sourceClass: official-cfp
+                observed_at: '2026-10-03T05:12:25Z'
+                retrievedAt: '2026-10-03T05:12:25Z'
+                verifiedAt: '2026-10-03T05:12:25Z'
+                contentHash: b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65
+                evidenceRef: data/evidence/blobs/b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65.body
+                rawExcerpt: Abstract by September 21, 2026, 11:59pm (AOE).
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                  - time
+                  - timezone
+                confidence: official
+            tz: AoE
+            superseded_deadlines:
+              - value: '2026-09-25T23:59:59Z'
+                precision: exact
+                source: https://www.ecir2027.co.uk/call-for-full-papers
+                evidenceRef: data/evidence/blobs/b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65.body
+                status: superseded
+                supersededBy: ecir|ecir27-ccfddl-ecir27|abstract|1|
+                reason: manual-resolution
+                supersededAt: '2026-10-03T05:12:25Z'
+          - kind: paper
+            label: Paper submission
+            date: '2026-10-05 23:59:59'
+            round: 1
+            evidence:
+              - source_name: ecir official CFP
+                source_url: https://www.ecir2027.co.uk/call-for-full-papers
+                sourceClass: official-cfp
+                observed_at: '2026-10-03T05:12:25Z'
+                retrievedAt: '2026-10-03T05:12:25Z'
+                verifiedAt: '2026-10-03T05:12:25Z'
+                contentHash: b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65
+                evidenceRef: data/evidence/blobs/b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65.body
+                rawExcerpt: Paper submission October 5, 2026, 11:59pm (AOE).
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                  - time
+                  - timezone
+                confidence: official
+            tz: AoE
       2027:
         event_start: '2027-03-21'
         event_end: '2027-03-25'
         date_text: March 21-25, 2027 (Southampton, UK)
         deadlines:
-          - {kind: abstract, label: 'Abstract submission', date: '2026-09-21 23:59:59', tz: GMT}
-          - {kind: paper, label: 'Paper submission', date: '2026-10-05 23:59:59', tz: GMT}
-          - {kind: notification, label: 'Notifications (full & short papers)', date: '2026-12-07 23:59:59', tz: GMT}
+          - {kind: abstract, label: 'Abstract submission', date: '2026-09-21 23:59:59', tz: AoE}
+          - {kind: paper, label: 'Paper submission', date: '2026-10-05 23:59:59', tz: AoE}
+          - {kind: notification, label: 'Notifications (full & short papers)', date: '2026-12-07', precision: date-only}
 
   # 根拠: https://acisp.org/cfp.html (2026-08-13 取得) — 公式 CFP「ACISP 2027
   #   will have two rounds of submission: Round one will be on 30 Nov 2026.
@@ -1269,12 +1454,6 @@ conferences:
         event_start: '2027-05-30'
         event_end: '2027-06-03'
   # 根拠: https://ieee-cas.org/event/conference/2027-ieee-international-symposium-circuits-and-systems (Bordeaux, 6-9 June 2027)（締切は上流と一致のため変更なし）
-  iscas:
-    editions:
-      2027:
-        date_text: June 6-9, 2027
-        event_start: '2027-06-06'
-        event_end: '2027-06-09'
   # 根拠: https://ches.iacr.org/2027/ (2026-08-13 取得, tentative)
   #   Vol 2027/1: rebuttal 23-28 Aug / notification 15 Sep / CR 14 Oct。
   #   Vol 2027/2: rebuttal 23-28 Nov / notification 15 Dec / CR 14 Jan。

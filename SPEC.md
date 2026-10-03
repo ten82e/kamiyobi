@@ -1079,3 +1079,10 @@ same pinned semantic observations, query coverage, negative cases and metric
 floors. This permits source-driven venue/category changes without refreshing
 the frozen feature store or confusing data drift with a scoring-code regression.
 A feature mismatch on the immutable baseline still fails the gate.
+
+`deadline_identity_migrations` in config carries reviewed, value-bound slot
+identity changes through public JSON and health metadata. Each entry uses the
+existing migration schema and is emitted only while its target slot exists.
+A malformed entry is rejected; the health gate still verifies changed values.
+The WSDM 2027 short-paper transition binds its original exact instant and official
+track CFP, correcting the aggregator's round-2 label without inventing a deadline.
