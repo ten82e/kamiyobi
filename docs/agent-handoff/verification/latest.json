@@ -1,40 +1,41 @@
 {
-  "recorded_at": "2026-10-03T17:10:19.876709+00:00",
+  "recorded_at": "2026-10-03T18:35:00.212225+00:00",
   "branch": "fix/site-ja-usability",
-  "code_revision": "8e39f1cf1f9a41b30ee27b4885a39b6251553c5d",
+  "code_revision": "393b3c6c478c22ffb242c4ae2e303d1e43012059",
   "own_code_commits": [
     "064055d305fd15c6a29b2e0c88510a27c2ff3f2d",
     "85240e35b3555b633e44c5504768a81644646e52",
     "892ec16cb7ab67c970c10f9a0744c3fd7d6ee845",
-    "8e39f1cf1f9a41b30ee27b4885a39b6251553c5d"
+    "8e39f1cf1f9a41b30ee27b4885a39b6251553c5d",
+    "393b3c6c478c22ffb242c4ae2e303d1e43012059"
   ],
   "new_branch_worktree_clone_during_handoff": false,
   "own_ui_branch_pushed": false,
   "verification_scope": "Actual working tree including protected pre-existing changes; clean HEAD in isolation was not tested.",
   "tests": {
-    "passed": 5321,
+    "passed": 5323,
     "files_passed": 352
   },
   "checks": [
     {
       "check": "typecheck",
       "exit_code": 0,
-      "seconds": 0.62
+      "seconds": 0.59
     },
     {
       "check": "lint",
       "exit_code": 0,
-      "seconds": 0.47
+      "seconds": 0.46
     },
     {
       "check": "fixed-build",
       "exit_code": 0,
-      "seconds": 1.12
+      "seconds": 1.09
     },
     {
       "check": "tests",
       "exit_code": 0,
-      "seconds": 136.79
+      "seconds": 118.9
     },
     {
       "check": "fixed-validation",
@@ -64,7 +65,7 @@
     {
       "check": "health-gate",
       "exit_code": 0,
-      "seconds": 0.35
+      "seconds": 0.34
     },
     {
       "check": "diff-check",
@@ -72,8 +73,8 @@
       "seconds": 0.08
     }
   ],
-  "checks_sha256": "b07fd42a8ffcc4d43f4c9a2367121f09a7a63e52ff8d815015cf57f82a88ba88",
-  "tests_log_sha256": "7a7691db507a9ebb6efe41653c8ce92dbfbd4c306da87238f45ca31bad7789c3",
+  "checks_sha256": "7dabfc3f8277577b54370fbe6f6dc761a144355b8b2c68d1fa923ca1c49dbd1e",
+  "tests_log_sha256": "9094279f5b60327889873fdeb36a7e15cd4ca586bf0e77de646440af9ded7b88",
   "headless_browser": [
     {
       "script": "scripts/agent-handoff/headless-compsac.mjs",
@@ -209,11 +210,11 @@
     "data/source-snapshots/primary.json": "73b86e439978a1c36f16eedb34e6a09371e46b8bbcf6f64621a0e39cd5b5b346"
   },
   "verification_source_sha256": {
-    "site/app.ts": "75831683b000ffcb05d64f7be362563cd4b779e4b45f109d8e0a5c79bc124819",
+    "site/app.ts": "c622d723cd8a8875b716c19e826fa25ad92003c8b9fd359a052e67ceb055867d",
     "site/template.html": "0e7fe31f9d86b586abd510685e21191454a59ee2948388213744a228ff33c7d0",
-    "site/submission-identity.ts": "1d6224dbdd40acd6a288dc36c43d9510486c9ae6518da5dbfe38f89752fcd516",
+    "site/submission-identity.ts": "e69eba706320b08147e77fd764ea3e9a6c73c7de8c23a0a64d9b1b99c1588e12",
     "src/build.ts": "dcce5d3bb0cf090ddad5854724f93595c41292dc512c857fb23a9189ba66f86d",
-    "tests/submission_share_identity.test.ts": "6962043414a28713852fb13b6d688407c41b85033307f755be70ac656e79e0b2",
+    "tests/submission_share_identity.test.ts": "6ef20b7fab5621106a206e43b0819164f5b2d81637f9a27241266ba0d4f13798",
     "scripts/agent-handoff/headless-identity.mjs": "fedee2b94a607fa180c7054d7225a612d53e3edeb56768997518f7d7fb0ccda0"
   },
   "screenshots": [
@@ -247,7 +248,43 @@
     "UI source commits require review/integration and asset build before publication.",
     "Independent updater candidate is stored in repo and not applied to the UI working tree.",
     "ECIR 2027 source duplicates and clock discrepancies remain in this older UI branch; official correction is in the independent updater candidate.",
-    "Recorded remote main was b35010f; public manifest was generated on 2026-09-07. Recheck current remote/public state before an authorized publication."
+    "Recorded remote main was b35010f; public manifest was generated on 2026-09-07. Recheck current remote/public state before an authorized publication.",
+    "Dry-run updater integration has 7 test assertions and the immutable recommendation gate blocked; see integration-latest.json. Candidate remains unapplied."
   ],
-  "publish_actions_authorized": false
+  "publish_actions_authorized": false,
+  "review_browser_checks": [
+    {
+      "mode": "reduce",
+      "script": "compsac",
+      "exit_code": 0
+    },
+    {
+      "mode": "reduce",
+      "script": "identity",
+      "exit_code": 0
+    },
+    {
+      "mode": "reduce",
+      "script": "researcher",
+      "exit_code": 0
+    },
+    {
+      "mode": "no-preference",
+      "script": "compsac",
+      "exit_code": 0
+    },
+    {
+      "mode": "no-preference",
+      "script": "identity",
+      "exit_code": 0
+    },
+    {
+      "mode": "no-preference",
+      "script": "researcher",
+      "exit_code": 0
+    }
+  ],
+  "review_fix_details": "Repeated consolidation preserves all aliases/source records/venue tags; schedule metadata belongs only to its reviewed paper deadline.",
+  "integration_report": "docs/agent-handoff/verification/integration-latest.json",
+  "agy_review": "docs/agent-handoff/reviews/agy-integration-disposition.md"
 }

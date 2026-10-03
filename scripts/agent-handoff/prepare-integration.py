@@ -67,4 +67,21 @@ for name in changed:
     records.append({"path": name, "status": status, "base_sha256": sha(before), "current_sha256": sha(current), "incoming_sha256": sha(after), "prepared_sha256": sha(target.read_bytes())})
 report = {"ui_revision": head, "shared_base": base, "incoming_revision": incoming, "main_prerequisite_revision": manifest["base"], "new_branch_worktree_clone": False, "actual_working_files_modified": False, "archive": "work/agent-verification/integration/tree", "protected_inputs": protected, "changes": records, "conflicts": [r["path"] for r in records if r["status"] == "conflict"], "git_ceiling_directories": str(root)}
 (root / "preparation.json").write_text(json.dumps(report, indent=2) + "\n")
+# Retain real pre-integration legacy URL inputs for the later browser probe.
+# Public generated data only; no raw snapshots or personal documents are sent.
+catalog = json.loads((repo / "public/catalog.json").read_text())
+old_links = []
+for conference in catalog["conferences"]:
+    if conference["key"] not in ["evomusart", "evomusart-2027", "ecir", "ecir2027", "wsdm"]: continue
+    for edition in conference["editions"]:
+        if edition["year"] != 2027: continue
+        for deadline in edition["deadlines"]:
+            if deadline["kind"] not in ["paper", "abstract"]: continue
+            old_links.append({
+                "key":conference["key"], "id":edition["id"], "year":edition["year"],
+                "kind":deadline["kind"], "round":deadline["round"], "label":deadline["label"],
+                "track":deadline.get("track", ""), "utc":deadline.get("utc"),
+                "earliest_utc":deadline.get("earliest_utc"), "local_date":deadline.get("local_date"),
+            })
+(root / "ui-old-link-inputs.json").write_text(json.dumps(old_links, indent=2) + "\n")
 print(json.dumps({"shared_base": base, "incoming_files": len(changed), "conflicts": report["conflicts"]}, indent=2))
