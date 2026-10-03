@@ -14,8 +14,21 @@ export function builtSite(): string {
     // 最新の公式訂正は researcher_deadline_flow と本番ビルドで別途検証する。
     const root = tempWork("cfp-query-reference-");
     for (const name of readdirSync(REPO_ROOT)) {
-      if (name !== "data") symlinkSync(join(REPO_ROOT, name), join(root, name));
+      if (name !== "data" && name !== "config.yaml")
+        symlinkSync(join(REPO_ROOT, name), join(root, name));
     }
+    const config = load(readFileSync(join(REPO_ROOT, "config.yaml"), "utf8")) as {
+      venue_identities: Record<string, unknown>;
+    };
+    const referenceConfig = load(
+      readFileSync(join(REPO_ROOT, "tests/fixtures/query-reference-config.yaml"), "utf8"),
+    ) as {
+      remove_venue_identities: string[];
+      venue_identities: Record<string, unknown>;
+    };
+    for (const key of referenceConfig.remove_venue_identities) delete config.venue_identities[key];
+    Object.assign(config.venue_identities, referenceConfig.venue_identities);
+    writeFileSync(join(root, "config.yaml"), dump(config));
     mkdirSync(join(root, "data"));
     for (const name of readdirSync(join(REPO_ROOT, "data"))) {
       if (name !== "overrides.yaml")

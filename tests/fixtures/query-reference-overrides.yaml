@@ -43,3 +43,15 @@ jip:
         kind: paper
         label: 投稿締切
         tz: UTC+9
+
+# Production corrections must not add history/status words to the fixed query corpus.
+# Both were absent from the original a844570 override input.
+cvm: {}
+evomusart-2027: {}
+# This historical input instant is already present in the original query fixture.
+# Production uses the independently verified November correction.
+dasfaa:
+  editions:
+    dasfaa27:
+      deadlines:
+      - {kind: paper, label: Full Paper Submission, round: 1, date: '2027-06-06 23:59:00', tz: AoE}
