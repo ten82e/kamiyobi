@@ -188,3 +188,44 @@ it("詳細の描画後にフォーカスを回復し、閉じた後や利用者�
   navigated.callbacks[0]();
   expect(navigated.focuses()).toBe(1);
 });
+
+it("再処理でも両方の旧共有リンクと出典・検索文を保持し、会議のタグを失わない", () => {
+  const raw = pair().map((r, i) => ({
+    ...r,
+    conf: { ...r.conf, tags: [i ? "special-issue" : "journal"] },
+  }));
+  const first = consolidateReviewedSubmissions(raw, legacy);
+  expect(first[0].conf.tags).toEqual(["journal", "special-issue"]);
+  for (let i = 0; i < 6; i++) expect(consolidateReviewedSubmissions(first, legacy)).toBe(first);
+  const mixed = consolidateReviewedSubmissions([...first, raw[1]], legacy);
+  expect(mixed[0].submission?.shareAliases).toEqual(first[0].submission?.shareAliases);
+  expect(mixed[0].submission?.sourceRecords).toEqual(first[0].submission?.sourceRecords);
+});
+
+it("同じ開催回の別の投稿日程へ、確認済み論文募集の別名を流用しない", () => {
+  const chosen = consolidateReviewedSubmissions(pair(), legacy)[0];
+  const other = { ...chosen.dl, kind: "notification", label: "Notification" };
+  const selected = { ...chosen, ed: { ...chosen.ed, deadlines: [chosen.dl, other] } };
+  const run = new Function(
+    "Recommender",
+    "assignShareIdentities",
+    "rowShareKeyJa",
+    "rows",
+    "selected",
+    `${jsFunction(siteRuntime(), "editionScheduleRows")};return editionScheduleRows(selected);`,
+  );
+  const result = run(
+    {
+      candidateRows: () => [
+        { ...selected, tShown: 1 },
+        { ...selected, dl: other, kind: "notification", submission: undefined, tShown: 2 },
+      ],
+    },
+    (r: unknown[]) => r,
+    legacy,
+    [selected],
+    selected,
+  );
+  expect(result[0].submission).toEqual(selected.submission);
+  expect(result[1].submission).toBeUndefined();
+});

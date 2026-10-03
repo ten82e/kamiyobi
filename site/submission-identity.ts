@@ -64,6 +64,7 @@ interface SubmissionRow {
   tEvent?: number;
   cats?: string[];
   tags?: string[];
+  submission?: SubmissionDisplay;
 }
 
 export interface SubmissionDisplay {
@@ -92,7 +93,7 @@ export function consolidateReviewedSubmissions<T extends SubmissionRow>(
       localDate: row.localDate,
     }),
   );
-  if (!members.length) return rows;
+  if (!members.length || (members.length === 1 && members[0].submission)) return rows;
   const chosen = members.find((row) => row.conf.key === "jip") || members[0];
   const display = {
     ...chosen,
@@ -100,7 +101,7 @@ export function consolidateReviewedSubmissions<T extends SubmissionRow>(
       ...chosen.conf,
       title: COMPSAC_JIP_CALL.title,
       full_name: COMPSAC_JIP_CALL.publisher,
-      tags: [...new Set(members.flatMap((row) => row.tags || []))],
+      tags: [...new Set(members.flatMap((row) => [...(row.conf.tags || []), ...(row.tags || [])]))],
     },
     ed: {
       ...chosen.ed,
@@ -116,12 +117,25 @@ export function consolidateReviewedSubmissions<T extends SubmissionRow>(
     submission: {
       issueLabel: COMPSAC_JIP_CALL.issueLabel,
       language: COMPSAC_JIP_CALL.language,
-      shareAliases: members.map(shareKey),
-      sourceRecords: members.map((row) => ({
-        venueKey: row.conf.key,
-        editionId: row.ed.id || "",
-        year: row.ed.year,
-      })),
+      shareAliases: [
+        ...new Set(members.flatMap((row) => row.submission?.shareAliases || [shareKey(row)])),
+      ],
+      sourceRecords: [
+        ...new Map(
+          members
+            .flatMap(
+              (row) =>
+                row.submission?.sourceRecords || [
+                  {
+                    venueKey: row.conf.key,
+                    editionId: row.ed.id || "",
+                    year: row.ed.year,
+                  },
+                ],
+            )
+            .map((record) => [JSON.stringify(record), record]),
+        ).values(),
+      ],
     },
   };
   const first = rows.findIndex((row) => members.includes(row));

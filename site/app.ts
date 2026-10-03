@@ -1467,7 +1467,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           ...next,
           conf: r.conf,
           ed: r.ed,
-          submission: r.submission,
+          submission: known?.submission ?? (r.dl === next.dl ? r.submission : undefined),
           legacyShareKey: known?.legacyShareKey || next.legacyShareKey,
           shareDiscriminator: known?.shareDiscriminator || next.shareDiscriminator,
         } as AppRow;
