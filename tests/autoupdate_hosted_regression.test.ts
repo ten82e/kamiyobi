@@ -22,8 +22,16 @@ describe("captured hosted updater failure", () => {
     ).toHaveLength(5);
     const overrides = load(readFileSync("data/overrides.yaml", "utf8")) as Record<string, unknown>;
     const config = load(readFileSync("config.yaml", "utf8")) as Record<string, unknown>;
+    const material = conferencesFromJson(captured.current);
+    // The artifact contains the old build's derived year override; raw source
+    // snapshots do not. Rebuild that edition through the corrected override.
+    const ecir = material.find((conference) => conference.key === "ecir")!;
+    ecir.editions = ecir.editions.filter((edition) => edition.edition_id !== "override-2027");
     const output = toJson(
-      applyOverrides(conferencesFromJson(captured.current), overrides),
+      applyOverrides(
+        mergeSources([normalizeConfiguredVenueIdentities(material, config)], config),
+        overrides,
+      ),
       config,
       now,
     );

@@ -49,6 +49,7 @@ venue_identities:
 # URL・会期・開催地が上流間で変わった同一開催回だけを明示的に結ぶ。
 # 年や source-local ID の偶然一致だけでは統合しない。
 edition_identities:
+  ecir-2027: {source_ids: {aideadlines: ecir27, ccfddl: ecir27}} # https://www.ecir2027.co.uk/call-for-full-papers
   # 公式の2025アーカイブと2026 CFPで開催回を確認。旧URLの上流記録を同じ開催回へ結ぶ。
   colm-2025: {source_ids: {aideadlines: colm25, ccfddl: colm25}} # https://colmweb.org/2025/cfp.html
   colm-2026: {source_ids: {aideadlines: colm26, ccfddl: colm26}} # https://colm.cc/Conferences/2026/CallForPapers
