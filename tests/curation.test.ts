@@ -22,6 +22,13 @@ beforeEach(() => {
 });
 afterEach(() => vi.useRealTimers());
 
+// Fixture evidence is dated September 2; only Date is fixed, elapsed-time timers remain real.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-09-02T00:00:00.000Z"));
+});
+afterEach(() => vi.useRealTimers());
+
 const issueKeys = [
   "bdiot-2026",
   "admit-2026",

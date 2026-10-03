@@ -1,0 +1,1694 @@
+{
+  "baseline": {
+    "conferences": [
+      {
+        "key": "cvm",
+        "title": "Computational Visual Media Conference",
+        "full_name": "Computational Visual Media Conference (CVM 2027)",
+        "acronym": "Computational Visual Media Conference",
+        "categories": ["graphics"],
+        "rank": {
+          "ccf": "C",
+          "core": "N",
+          "thcpl": "N"
+        },
+        "link": "http://iccvm.org/2027/",
+        "tags": [],
+        "sources": ["local", "ccfddl"],
+        "dblp": "cvm",
+        "upstream_sub": "CG",
+        "identity": {
+          "venueId": "cvm",
+          "dblpKey": "cvm",
+          "officialDomains": ["http://iccvm.org/2027/"],
+          "sourceIds": {
+            "ccfddl": "CG/cvm",
+            "local": "cvm"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "graphics",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "cvm27",
+            "link": "http://iccvm.org/2027/",
+            "place": "Singapore",
+            "date_text": "April 9-11, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-04-09",
+            "event_end": "2027-04-11",
+            "estimated": false,
+            "source": "local",
+            "identity": {
+              "officialUrls": ["http://iccvm.org/2027/"],
+              "sourceIds": {
+                "ccfddl": "cvm27",
+                "local": "cvm27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Abstract submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "http://iccvm.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-10-23 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "http://iccvm.org/2027/",
+                    "rawExcerpt": "2026-10-23 23:59:00"
+                  },
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "http://iccvm.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-10-23 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "http://iccvm.org/2027/",
+                    "rawExcerpt": "2026-10-23 23:59:59"
+                  }
+                ],
+                "conflicts": [
+                  {
+                    "at_utc": "2026-10-23T23:59:59Z",
+                    "label": "Abstract submission",
+                    "source": "ccfddl",
+                    "original_value": "2026-10-23T23:59:59Z",
+                    "evidence": {
+                      "source_name": "ccfddl",
+                      "source_url": "https://github.com/ccfddl/ccf-deadlines",
+                      "observed_at": "",
+                      "original_value": "2026-10-23T23:59:59Z",
+                      "confidence": "aggregator",
+                      "sourceClass": "aggregator",
+                      "sourceUrl": "https://github.com/ccfddl/ccf-deadlines",
+                      "rawExcerpt": "2026-10-23T23:59:59Z"
+                    }
+                  }
+                ],
+                "verification": {
+                  "official_url": "http://iccvm.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-10T09:26:24.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-23T23:59:00Z",
+                "aoe": "2026-10-23 11:59:00 AoE",
+                "tz_raw": "GMT"
+              },
+              {
+                "kind": "paper",
+                "label": "Full papers submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "http://iccvm.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-10-26 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "http://iccvm.org/2027/",
+                    "rawExcerpt": "2026-10-26 23:59:00"
+                  }
+                ],
+                "precision": "exact",
+                "utc": "2026-10-26T23:59:00Z",
+                "aoe": "2026-10-26 11:59:00 AoE",
+                "tz_raw": "GMT"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "http://iccvm.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-10-26 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "http://iccvm.org/2027/",
+                    "rawExcerpt": "2026-10-26 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "http://iccvm.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-08T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-26T23:59:59Z",
+                "aoe": "2026-10-26 11:59:59 AoE",
+                "tz_raw": "UTC+0"
+              },
+              {
+                "kind": "notification",
+                "label": "Acceptance notification",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "http://iccvm.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-12-15 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "http://iccvm.org/2027/",
+                    "rawExcerpt": "2026-12-15 23:59:00"
+                  }
+                ],
+                "precision": "exact",
+                "utc": "2026-12-15T23:59:00Z",
+                "aoe": "2026-12-15 11:59:00 AoE",
+                "tz_raw": "GMT"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "mmsys",
+        "title": "MMSys",
+        "full_name": "ACM International Conference on Multimedia Systems",
+        "acronym": "MMSys",
+        "categories": ["networking"],
+        "rank": {
+          "ccf": "N",
+          "core": "A",
+          "thcpl": "N"
+        },
+        "link": "https://2027.acmmmsys.org",
+        "tags": [],
+        "sources": ["ccfddl"],
+        "dblp": "mmsys",
+        "upstream_sub": "NW",
+        "identity": {
+          "dblpKey": "mmsys",
+          "officialDomains": ["https://2027.acmmmsys.org"],
+          "sourceIds": {
+            "ccfddl": "NW/mmsys"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "networking",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "mmsys27",
+            "link": "https://2027.acmmmsys.org",
+            "place": "Ghent, Belgium",
+            "date_text": "March 30 - April 2, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-03-30",
+            "event_end": "2027-04-02",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://2027.acmmmsys.org"],
+              "sourceIds": {
+                "ccfddl": "mmsys27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Registration (first round)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://2027.acmmmsys.org",
+                    "observed_at": "",
+                    "original_value": "2026-09-10 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://2027.acmmmsys.org",
+                    "rawExcerpt": "2026-09-10 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://2027.acmmmsys.org/",
+                  "last_attempt_at": "2026-09-06T22:09:24.000Z",
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-07T22:09:24.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_class": "unknown",
+                  "provider_identity": {
+                    "provider": "dedicated-domain",
+                    "providerKey": "2027.acmmmsys.org",
+                    "strength": "dedicated-domain"
+                  },
+                  "label_signature": "registration first round"
+                },
+                "precision": "exact",
+                "utc": "2026-09-11T11:59:59Z",
+                "aoe": "2026-09-10 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Submission (first round)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://2027.acmmmsys.org",
+                    "observed_at": "",
+                    "original_value": "2026-09-17 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://2027.acmmmsys.org",
+                    "rawExcerpt": "2026-09-17 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://2027.acmmmsys.org/",
+                  "last_attempt_at": "2026-09-06T22:09:24.000Z",
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-07T22:09:24.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_class": "unknown",
+                  "provider_identity": {
+                    "provider": "dedicated-domain",
+                    "providerKey": "2027.acmmmsys.org",
+                    "strength": "dedicated-domain"
+                  },
+                  "label_signature": "submission first round"
+                },
+                "precision": "exact",
+                "utc": "2026-09-18T11:59:59Z",
+                "aoe": "2026-09-17 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "notification",
+                "label": "Notification (first round)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://2027.acmmmsys.org",
+                    "observed_at": "",
+                    "original_value": "2026-10-24 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://2027.acmmmsys.org",
+                    "rawExcerpt": "2026-10-24 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://2027.acmmmsys.org/",
+                  "last_attempt_at": "2026-09-06T22:09:24.000Z",
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-09T22:09:24.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_class": "unknown",
+                  "source_name": "local",
+                  "provider_identity": {
+                    "provider": "dedicated-domain",
+                    "providerKey": "2027.acmmmsys.org",
+                    "strength": "dedicated-domain"
+                  },
+                  "label_signature": "notification first round"
+                },
+                "precision": "exact",
+                "utc": "2026-10-25T11:59:59Z",
+                "aoe": "2026-10-24 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "abstract",
+                "label": "Registration (second round)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://2027.acmmmsys.org",
+                    "observed_at": "",
+                    "original_value": "2026-11-12 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://2027.acmmmsys.org",
+                    "rawExcerpt": "2026-11-12 23:59:59"
+                  }
+                ],
+                "precision": "exact",
+                "utc": "2026-11-13T11:59:59Z",
+                "aoe": "2026-11-12 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Submission (second round)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://2027.acmmmsys.org",
+                    "observed_at": "",
+                    "original_value": "2026-11-19 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://2027.acmmmsys.org",
+                    "rawExcerpt": "2026-11-19 23:59:59"
+                  }
+                ],
+                "precision": "exact",
+                "utc": "2026-11-20T11:59:59Z",
+                "aoe": "2026-11-19 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "notification",
+                "label": "Notification (second round)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://2027.acmmmsys.org",
+                    "observed_at": "",
+                    "original_value": "2026-12-22 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://2027.acmmmsys.org",
+                    "rawExcerpt": "2026-12-22 23:59:59"
+                  }
+                ],
+                "precision": "exact",
+                "utc": "2026-12-23T11:59:59Z",
+                "aoe": "2026-12-22 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "camera_ready",
+                "label": "Camera ready",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://2027.acmmmsys.org",
+                    "observed_at": "",
+                    "original_value": "2027-02-19 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://2027.acmmmsys.org",
+                    "rawExcerpt": "2027-02-19 23:59:59"
+                  }
+                ],
+                "precision": "exact",
+                "utc": "2027-02-20T11:59:59Z",
+                "aoe": "2027-02-19 23:59:59 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "wsdm",
+        "title": "WSDM",
+        "full_name": "ACM International Conference on Web Search and Data Mining",
+        "acronym": "WSDM",
+        "categories": ["ai", "db"],
+        "rank": {
+          "ccf": "B",
+          "core": "A*",
+          "thcpl": "B"
+        },
+        "link": "https://www.wsdm-conference.org/2027/",
+        "tags": ["web-search", "data-mining"],
+        "sources": ["aideadlines", "ccfddl"],
+        "dblp": "wsdm",
+        "upstream_sub": "DB",
+        "identity": {
+          "dblpKey": "wsdm",
+          "officialDomains": [
+            "https://wsdm-conference.org/2027/",
+            "https://www.wsdm-conference.org/2027/"
+          ],
+          "sourceIds": {
+            "aideadlines": "wsdm",
+            "ccfddl": "DB/wsdm"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "ai",
+            "reason": "source-subfield"
+          },
+          {
+            "category": "db",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "wsdm27",
+            "link": "https://www.wsdm-conference.org/2027/",
+            "place": "Hong Kong, Hong Kong",
+            "date_text": "February 15-19, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-02-15",
+            "event_end": "2027-02-19",
+            "estimated": false,
+            "source": "aideadlines",
+            "identity": {
+              "officialUrls": [
+                "https://wsdm-conference.org/2027/",
+                "https://www.wsdm-conference.org/2027/"
+              ],
+              "sourceIds": {
+                "aideadlines": "wsdm27",
+                "ccfddl": "wsdm27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Abstract submission",
+                "round": 1,
+                "track": "",
+                "comment": "Full Paper",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-08-17 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-08-17 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-08-18T11:59:59Z",
+                "aoe": "2026-08-17 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              },
+              {
+                "kind": "abstract",
+                "label": "Abstract submission (full papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-08-17 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-08-17 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-08-18T11:59:59Z",
+                "aoe": "2026-08-17 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "Full Paper",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-08-24 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-08-24 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-08-25T11:59:59Z",
+                "aoe": "2026-08-24 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission (full papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-08-24 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-08-24 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-08-25T11:59:59Z",
+                "aoe": "2026-08-24 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "notification",
+                "label": "Author notification (full papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-11-02 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-11-02 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-08T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-11-03T11:59:59Z",
+                "aoe": "2026-11-02 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission (short papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-11-17 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-11-17 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-08T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-11-18T11:59:59Z",
+                "aoe": "2026-11-17 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "notification",
+                "label": "Author notification (short papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-12-18 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-12-18 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-12-19T11:59:59Z",
+                "aoe": "2026-12-18 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 2,
+                "track": "",
+                "comment": "Short Paper",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-11-17 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-11-17 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-08T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-11-18T11:59:59Z",
+                "aoe": "2026-11-17 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      }
+    ],
+    "generated_at": "2026-09-07T09:26:24Z"
+  },
+  "current": {
+    "conferences": [
+      {
+        "key": "cvm",
+        "title": "Computational Visual Media Conference",
+        "full_name": "Computational Visual Media Conference (CVM 2027)",
+        "acronym": "Computational Visual Media Conference",
+        "categories": ["graphics"],
+        "rank": {
+          "ccf": "C",
+          "core": "N",
+          "thcpl": "N"
+        },
+        "link": "http://iccvm.org/2027/",
+        "tags": [],
+        "sources": ["local", "ccfddl"],
+        "dblp": "cvm",
+        "upstream_sub": "CG",
+        "identity": {
+          "venueId": "cvm",
+          "dblpKey": "cvm",
+          "officialDomains": ["http://iccvm.org/2027/"],
+          "sourceIds": {
+            "ccfddl": "CG/cvm",
+            "local": "cvm"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "graphics",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "cvm27",
+            "link": "http://iccvm.org/2027/",
+            "place": "Singapore",
+            "date_text": "April 9-11, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-04-09",
+            "event_end": "2027-04-11",
+            "estimated": false,
+            "source": "local",
+            "identity": {
+              "officialUrls": ["http://iccvm.org/2027/"],
+              "sourceIds": {
+                "ccfddl": "cvm27",
+                "local": "cvm27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Abstract submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "http://iccvm.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-10-23 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "http://iccvm.org/2027/",
+                    "rawExcerpt": "2026-10-23 23:59:00"
+                  },
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "http://iccvm.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-10-23 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "http://iccvm.org/2027/",
+                    "rawExcerpt": "2026-10-23 23:59:59"
+                  }
+                ],
+                "conflicts": [
+                  {
+                    "at_utc": "2026-10-23T23:59:59Z",
+                    "label": "Abstract submission",
+                    "source": "ccfddl",
+                    "original_value": "2026-10-23 23:59:59",
+                    "evidence": {
+                      "source_name": "ccfddl",
+                      "source_url": "https://github.com/ccfddl/ccf-deadlines",
+                      "observed_at": "",
+                      "original_value": "2026-10-23 23:59:59",
+                      "confidence": "aggregator",
+                      "sourceClass": "aggregator",
+                      "sourceUrl": "https://github.com/ccfddl/ccf-deadlines",
+                      "rawExcerpt": "2026-10-23 23:59:59"
+                    }
+                  }
+                ],
+                "verification": {
+                  "official_url": "http://iccvm.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-04T05:42:25.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-23T23:59:00Z",
+                "aoe": "2026-10-23 11:59:00 AoE",
+                "tz_raw": "GMT"
+              },
+              {
+                "kind": "paper",
+                "label": "Full papers submission",
+                "round": 1,
+                "track": "",
+                "comment": "別記載: Paper submission",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "http://iccvm.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-10-26 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "http://iccvm.org/2027/",
+                    "rawExcerpt": "2026-10-26 23:59:00"
+                  },
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "http://iccvm.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-10-26 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "http://iccvm.org/2027/",
+                    "rawExcerpt": "2026-10-26 23:59:59"
+                  }
+                ],
+                "conflicts": [
+                  {
+                    "at_utc": "2026-10-26T23:59:59Z",
+                    "label": "Paper submission",
+                    "source": "ccfddl",
+                    "original_value": "2026-10-26 23:59:59",
+                    "evidence": {
+                      "source_name": "ccfddl",
+                      "source_url": "https://github.com/ccfddl/ccf-deadlines",
+                      "observed_at": "",
+                      "original_value": "2026-10-26 23:59:59",
+                      "confidence": "aggregator",
+                      "sourceClass": "aggregator",
+                      "sourceUrl": "https://github.com/ccfddl/ccf-deadlines",
+                      "rawExcerpt": "2026-10-26 23:59:59"
+                    }
+                  }
+                ],
+                "verification": {
+                  "official_url": "http://iccvm.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-04T05:42:25.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-26T23:59:00Z",
+                "aoe": "2026-10-26 11:59:00 AoE",
+                "tz_raw": "GMT"
+              },
+              {
+                "kind": "notification",
+                "label": "Acceptance notification",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "http://iccvm.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-12-15 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "http://iccvm.org/2027/",
+                    "rawExcerpt": "2026-12-15 23:59:00"
+                  }
+                ],
+                "precision": "exact",
+                "utc": "2026-12-15T23:59:00Z",
+                "aoe": "2026-12-15 11:59:00 AoE",
+                "tz_raw": "GMT"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "mmsys",
+        "title": "MMSys",
+        "full_name": "ACM International Conference on Multimedia Systems",
+        "acronym": "MMSys",
+        "categories": ["networking"],
+        "rank": {
+          "ccf": "N",
+          "core": "A",
+          "thcpl": "N"
+        },
+        "link": "https://2027.acmmmsys.org",
+        "tags": [],
+        "sources": ["ccfddl"],
+        "dblp": "mmsys",
+        "upstream_sub": "NW",
+        "identity": {
+          "dblpKey": "mmsys",
+          "officialDomains": ["https://2027.acmmmsys.org"],
+          "sourceIds": {
+            "ccfddl": "NW/mmsys"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "networking",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "mmsys27",
+            "link": "https://2027.acmmmsys.org",
+            "place": "Ghent, Belgium",
+            "date_text": "March 30 - April 2, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-03-30",
+            "event_end": "2027-04-02",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://2027.acmmmsys.org"],
+              "sourceIds": {
+                "ccfddl": "mmsys27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Registration (first round)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://2027.acmmmsys.org",
+                    "observed_at": "",
+                    "original_value": "2026-09-10 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://2027.acmmmsys.org",
+                    "rawExcerpt": "2026-09-10 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://2027.acmmmsys.org/",
+                  "last_attempt_at": "2026-09-06T22:09:24.000Z",
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-07T22:09:24.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_class": "unknown",
+                  "provider_identity": {
+                    "provider": "dedicated-domain",
+                    "providerKey": "2027.acmmmsys.org",
+                    "strength": "dedicated-domain"
+                  },
+                  "label_signature": "registration first round"
+                },
+                "precision": "exact",
+                "utc": "2026-09-11T11:59:59Z",
+                "aoe": "2026-09-10 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Submission (first round)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://2027.acmmmsys.org",
+                    "observed_at": "",
+                    "original_value": "2026-09-17 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://2027.acmmmsys.org",
+                    "rawExcerpt": "2026-09-17 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://2027.acmmmsys.org/",
+                  "last_attempt_at": "2026-09-06T22:09:24.000Z",
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-07T22:09:24.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_class": "unknown",
+                  "provider_identity": {
+                    "provider": "dedicated-domain",
+                    "providerKey": "2027.acmmmsys.org",
+                    "strength": "dedicated-domain"
+                  },
+                  "label_signature": "submission first round"
+                },
+                "precision": "exact",
+                "utc": "2026-09-18T11:59:59Z",
+                "aoe": "2026-09-17 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "notification",
+                "label": "Notification (first round)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://2027.acmmmsys.org",
+                    "observed_at": "",
+                    "original_value": "2026-10-24 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://2027.acmmmsys.org",
+                    "rawExcerpt": "2026-10-24 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://2027.acmmmsys.org/",
+                  "last_attempt_at": "2026-10-03T05:42:25.000Z",
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-04T05:42:25.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_class": "unknown",
+                  "provider_identity": {
+                    "provider": "dedicated-domain",
+                    "providerKey": "2027.acmmmsys.org",
+                    "strength": "dedicated-domain"
+                  },
+                  "label_signature": "notification first round"
+                },
+                "precision": "exact",
+                "utc": "2026-10-25T11:59:59Z",
+                "aoe": "2026-10-24 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "camera_ready",
+                "label": "Camera ready",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://2027.acmmmsys.org",
+                    "observed_at": "",
+                    "original_value": "2027-02-19 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://2027.acmmmsys.org",
+                    "rawExcerpt": "2027-02-19 23:59:59"
+                  }
+                ],
+                "precision": "exact",
+                "utc": "2027-02-20T11:59:59Z",
+                "aoe": "2027-02-19 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "abstract",
+                "label": "Registration (second round)",
+                "round": 2,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://2027.acmmmsys.org",
+                    "observed_at": "",
+                    "original_value": "2026-11-12 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://2027.acmmmsys.org",
+                    "rawExcerpt": "2026-11-12 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://2027.acmmmsys.org/",
+                  "last_attempt_at": "2026-10-03T05:42:25.000Z",
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-06T05:42:25.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_class": "unknown",
+                  "source_name": "local",
+                  "provider_identity": {
+                    "provider": "dedicated-domain",
+                    "providerKey": "2027.acmmmsys.org",
+                    "strength": "dedicated-domain"
+                  },
+                  "label_signature": "registration second round"
+                },
+                "precision": "exact",
+                "utc": "2026-11-13T11:59:59Z",
+                "aoe": "2026-11-12 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Submission (second round)",
+                "round": 2,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://2027.acmmmsys.org",
+                    "observed_at": "",
+                    "original_value": "2026-11-19 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://2027.acmmmsys.org",
+                    "rawExcerpt": "2026-11-19 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://2027.acmmmsys.org/",
+                  "last_attempt_at": "2026-10-03T05:42:25.000Z",
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-06T05:42:25.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_class": "unknown",
+                  "source_name": "local",
+                  "provider_identity": {
+                    "provider": "dedicated-domain",
+                    "providerKey": "2027.acmmmsys.org",
+                    "strength": "dedicated-domain"
+                  },
+                  "label_signature": "submission second round"
+                },
+                "precision": "exact",
+                "utc": "2026-11-20T11:59:59Z",
+                "aoe": "2026-11-19 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "notification",
+                "label": "Notification (second round)",
+                "round": 2,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://2027.acmmmsys.org",
+                    "observed_at": "",
+                    "original_value": "2026-12-22 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://2027.acmmmsys.org",
+                    "rawExcerpt": "2026-12-22 23:59:59"
+                  }
+                ],
+                "precision": "exact",
+                "utc": "2026-12-23T11:59:59Z",
+                "aoe": "2026-12-22 23:59:59 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "wsdm",
+        "title": "WSDM",
+        "full_name": "ACM International Conference on Web Search and Data Mining",
+        "acronym": "WSDM",
+        "categories": ["ai", "db"],
+        "rank": {
+          "ccf": "B",
+          "core": "A*",
+          "thcpl": "B"
+        },
+        "link": "https://www.wsdm-conference.org/2027/",
+        "tags": ["web-search", "data-mining"],
+        "sources": ["aideadlines", "ccfddl"],
+        "dblp": "wsdm",
+        "upstream_sub": "DB",
+        "identity": {
+          "dblpKey": "wsdm",
+          "officialDomains": [
+            "https://wsdm-conference.org/2027/",
+            "https://www.wsdm-conference.org/2027/"
+          ],
+          "sourceIds": {
+            "aideadlines": "wsdm",
+            "ccfddl": "DB/wsdm"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "ai",
+            "reason": "source-subfield"
+          },
+          {
+            "category": "db",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "wsdm27",
+            "link": "https://www.wsdm-conference.org/2027/",
+            "place": "Hong Kong, Hong Kong",
+            "date_text": "February 15-19, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-02-15",
+            "event_end": "2027-02-19",
+            "estimated": false,
+            "source": "aideadlines",
+            "identity": {
+              "officialUrls": ["https://www.wsdm-conference.org/2027/"],
+              "sourceIds": {
+                "aideadlines": "wsdm27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Abstract submission (full papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-08-17 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-08-17 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T05:42:25.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-08-18T11:59:59Z",
+                "aoe": "2026-08-17 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission (full papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-08-24 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-08-24 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T05:42:25.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-08-25T11:59:59Z",
+                "aoe": "2026-08-24 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "notification",
+                "label": "Author notification (full papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-11-02 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-11-02 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-06T05:42:25.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-11-03T11:59:59Z",
+                "aoe": "2026-11-02 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission (short papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "wsdm official CFP",
+                    "source_url": "https://www.wsdm-conference.org/2027/cfsp.html",
+                    "observed_at": "2026-10-03T05:12:25Z",
+                    "original_value": "Short papers: Nov 17, 2026; all deadlines 11:59 pm Anywhere on Earth (AoE).",
+                    "confidence": "official",
+                    "sourceClass": "official-cfp",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/cfsp.html",
+                    "retrievedAt": "2026-10-03T05:12:25Z",
+                    "verifiedAt": "2026-10-03T05:12:25Z",
+                    "contentHash": "313329e1b1243fb8c8297930dd410fccd368943906e10b6493354439916f6027",
+                    "evidenceRef": "data/evidence/blobs/313329e1b1243fb8c8297930dd410fccd368943906e10b6493354439916f6027.body",
+                    "rawExcerpt": "Short papers: Nov 17, 2026; all deadlines 11:59 pm Anywhere on Earth (AoE).",
+                    "verifiedFields": ["date", "kind", "round", "time", "timezone"]
+                  },
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-11-17 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-11-17 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/cfsp.html",
+                  "last_attempt_at": "2026-10-03T05:12:25.000Z",
+                  "last_verified_at": "2026-10-03T05:12:25.000Z",
+                  "next_check_at": "2026-10-06T05:42:25.000Z",
+                  "content_hash": "313329e1b1243fb8c8297930dd410fccd368943906e10b6493354439916f6027",
+                  "status": "verified",
+                  "source_class": "official-cfp",
+                  "source_name": "wsdm official CFP",
+                  "provider_identity": {
+                    "provider": "dedicated-domain",
+                    "providerKey": "www.wsdm-conference.org",
+                    "strength": "dedicated-domain"
+                  },
+                  "label_signature": "paper submission short papers"
+                },
+                "precision": "exact",
+                "utc": "2026-11-18T11:59:59Z",
+                "aoe": "2026-11-17 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "notification",
+                "label": "Author notification (short papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-12-18 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-12-18 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-06T05:42:25.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-12-19T11:59:59Z",
+                "aoe": "2026-12-18 23:59:59 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          },
+          {
+            "year": 2027,
+            "id": "wsdm27-ccfddl-wsdm27",
+            "link": "https://wsdm-conference.org/2027/",
+            "place": "Cordis, Hong Kong SAR, China",
+            "date_text": "February 15 - 19, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-02-15",
+            "event_end": "2027-02-19",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://wsdm-conference.org/2027/"],
+              "sourceIds": {
+                "ccfddl": "wsdm27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Abstract submission",
+                "round": 1,
+                "track": "",
+                "comment": "Full Paper",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-08-17 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-08-17 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T05:42:25.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-08-18T11:59:59Z",
+                "aoe": "2026-08-17 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "Full Paper",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-08-24 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-08-24 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T05:42:25.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-08-25T11:59:59Z",
+                "aoe": "2026-08-24 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      }
+    ],
+    "generated_at": "2026-10-03T06:00:00Z"
+  }
+}

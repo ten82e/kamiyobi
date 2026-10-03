@@ -156,6 +156,7 @@ jobs:
             --real-v2-heldout data/benchmarks/real-paper-required-heldout.json \
             --real-v2-negative data/benchmarks/real-paper-negative.json \
             --real-v2-features data/benchmarks/real-paper-features.jsonl \
+            --real-v2-feature-baseline data/benchmarks/real-paper-feature-baseline.json \
             --real-v2-small \
             --json > /tmp/real-paper-required.json
       - name: Upload fixed recommendation gate report

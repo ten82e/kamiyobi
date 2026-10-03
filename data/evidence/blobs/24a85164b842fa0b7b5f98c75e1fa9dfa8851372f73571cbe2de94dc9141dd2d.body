@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Call for Research Papers</title>
+<meta name="keywords" content="DASFAA 2027, Call for Papers, Database Systems for Advanced Applications, Conference">
+<meta name="description" content="Call for Papers for DASFAA 2027 Conference">
+
+<link type="text/css" href="../_css/_system/system.css" rel="stylesheet"/>
+<link type="text/css" href="../_upload/site/1/style/1/1.css" rel="stylesheet"/>
+<link type="text/css" href="../_upload/site/01/0f/271/style/253/253.css" rel="stylesheet"/>
+<link type="text/css" href="../_js/_portletPlugs/sudyNavi/css/sudyNav.css" rel="stylesheet" />
+<link type="text/css" href="../_js/_portletPlugs/simpleNews/css/simplenews.css" rel="stylesheet" />
+
+<script language="javascript" src="../_js/jquery.min.js" sudy-wp-context="" sudy-wp-siteId="271"></script>
+<script language="javascript" src="../_js/jquery.sudy.wp.visitcount.js"></script>
+<script type="text/javascript" src="../_js/_portletPlugs/sudyNavi/jquery.sudyNav.js"></script>
+<link rel="stylesheet" href="../_upload/tpl/02/82/642/template642/css/style.css%3Fv=1.css" type="text/css">
+<link rel="stylesheet" href="../_upload/tpl/02/82/642/template642/css/cfp.css%3Fv=11.css" type="text/css">
+</head>
+<body>
+
+ <!-- Header -->
+ <div class="header">
+    <div class="header-container">
+        <div class="logo-section">
+            <a href="../index.html" class="logo-link">
+                <img src="../_upload/tpl/02/82/642/template642/images/brand/dasfaa-2027-logo.png" alt="DASFAA 2027 Shenyang, China" class="logo-image">
+
+                <span class="logo-copy">
+
+                    <span class="logo-title">DASFAA 2027</span>
+
+                    <span class="logo-subtitle">Shenyang, China</span>
+
+                </span>
+            </a>
+        </div>
+        <div class="main-nav" frag="窗口1" portletmode="simpleSudyNavi" configs="{'c5':'2','c9':'0','c6':'0','c4':'_self','c8':'2','c2':'1','c7':'2','c3':'60','c1':'1'}" contents="{'c2':'0', 'c1':'/HomePage,/Committee,/Important Dates,/ Calls,/ Program,/ Attending,/ Sponsors'}">
+
+
+                <ul class="nav-menu">
+
+
+                    <li>
+                        <a href="../index.html" target="_self">HomePage</a>
+
+                    </li>
+                        <li>
+                            <a href="#" target="_self" aria-haspopup="true">Committee</a>
+                            <ul class="dropdown-menu">
+                                <li class="i2-1"><a href="../steeringcmte/list.htm" target="_self">Steering Committee</a></li>
+                                <li class="i2-2"><a href="../orgcmte/list.htm" target="_self">Organizing Committee</a></li>
+                                <li class="i2-3"><a href="../awardcmte/list.htm" target="_self">Award Committee</a></li>
+                            </ul>
+                        </li>
+
+                    <li>
+                        <a href="../ImportantDates/list.htm" target="_self">Important Dates</a>
+
+                        <ul class="dropdown-menu">
+
+                            <li class="i3-1"><a href="../dates/list.htm#mainblk" target="_self">Main Conference</a></li>
+
+                            <li class="i3-2"><a href="../dates/list.htm#wkspblk" target="_self">Workshops</a></li>
+
+                            <li class="i3-3"><a href="../dates/list.htm#tutoblk" target="_self">Tutorials</a></li>
+
+                            <li class="i3-4"><a href="../dates/list.htm#demoblk" target="_self">Demonstrations</a></li>
+
+                        </ul>
+
+                    </li>
+
+                                        <li>
+                        <a href="#" target="_self" aria-haspopup="true"> Calls</a>
+                        <ul class="dropdown-menu">
+                            <li class="i4-2"><a href="../CallforResearchTrack/list.htm" target="_self">Call for Research Papers</a></li>
+                            <li class="i4-3"><a href="../CallforAppliedTrack/list.htm" target="_self">Call for Industry Papers</a></li>
+                            <li class="i4-4"><a href="../CallforDemos/list.htm" target="_self">Call for Demo Papers</a></li>
+                            <li class="i4-5"><a href="../CallforWorkshops/list.htm" target="_self">Call for Workshop Proposals</a></li>
+                            <li class="i4-6"><a href="../CallforTutorials/list.htm" target="_self">Call for Tutorial Proposals</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#" target="_self">Program</a></li>
+                    <li>
+    <a href="#" target="_self" aria-haspopup="true">Participate</a>
+    <ul class="dropdown-menu">
+        <li class="i6-1"><a href="../DiscoverShenyang/list.htm" target="_self">Discover Shenyang</a></li>
+    </ul>
+</li>
+
+                    <li>
+                        <a href="../Sponsors/list.htm" target="_self">Sponsors</a>
+
+                    </li>
+
+                </ul>
+
+
+        </div>
+        <button class="mobile-menu-toggle" aria-label="Toggle menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </div>
+</div>
+
+
+
+<!-- Main Content -->
+<div class="main-content">
+    <section class="cfp-section">
+        <div class="container">
+            <div frag="窗口55" portletmode="simpleColumnAttri">
+            <h2 class="section-title"   >Call for Research Papers</h2>
+        </div>
+
+        <div class="news-list" frag="窗口6" portletmode="simpleList">
+
+
+
+<div class="wp_single wp_column_article" id="wp_column_article">
+     <div class="wp_entry">
+<div class="wp_articlecontent">
+             <div id="wp_content_w6_0" class="paging_content" style="display:">
+<p>The International Conference on Database Systems for Advanced Applications (DASFAA) is a leading international forum for discussing cutting-edge research on database systems and advanced applications. DASFAA, a prestigious and well-established conference, offers a platform for technical presentations and discussions among database researchers, developers, and practitioners from academia, industry, and business. DASFAA 2027 invites high-quality, original, and unpublished submissions that present state-of-the-art R&amp;D activities in database systems and their applications. In particular, as database community researchers are actively engaged in data science/intelligence and AI areas, submissions about those topics are also encouraged in DASFAA 2027.</p>
+
+<h3>Important Dates</h3>
+<p>All deadlines are 23:59 Anywhere on Earth (AoE). Deadlines are firm, and no extensions are planned.</p>
+<ul>
+    <li>Paper Submission: November 25, 2026</li>
+    <li>Acceptance Notification: January 25, 2027</li>
+    <li>Camera-Ready Submission: February 20, 2027</li>
+</ul>
+
+<h3>Topics of Interest</h3>
+<p>Topics of interest for DASFAA 2027 include, but are not limited to:</p>
+<h4>Database Systems</h4>
+<ul>
+    <li>Query processing and optimization</li><li>Indexing and storage systems</li><li>Data models and query languages</li><li>Databases for emerging hardware</li><li>Machine learning in databases</li><li>Data warehousing and Analytic DB</li><li>HTAP databases/Data lakehouses</li><li>Transaction management</li>
+</ul>
+<h4>Advanced and Domain-Specific Databases</h4>
+<ul>
+    <li>Graph databases/vector databases</li><li>Temporal and spatial databases</li><li>Data streams and time series</li><li>Probabilistic and uncertain databases</li><li>Embedded and mobile databases</li><li>Knowledge management and RDF</li><li>Text and multimedia databases</li>
+</ul>
+<h4>Data Management for Specialized Applications</h4>
+<ul>
+    <li>Data processing for VR/AR/MR</li><li>Social network data management</li><li>Statistical and scientific databases</li><li>Sensor and IoT data management</li><li>Cloud, parallel, and distributed databases</li><li>Blockchain data management</li>
+</ul>
+<h4>Data Science &amp; Intelligence and Advanced Applications</h4>
+<ul>
+    <li>RAG (retrieval-augmented generation)-inspired databases</li><li>Multi-modal LLM</li><li>Data mining and knowledge discovery</li><li>Graph and social network analytics</li><li>Neural networks and deep learning</li><li>Recommendation systems</li><li>Information retrieval and summarization</li><li>Semantic Web and knowledge graphs</li><li>Security, privacy, and trust</li><li>Bioinformatics and healthcare</li><li>Crowdsourcing and digital libraries</li><li>Web information systems</li>
+</ul>
+
+<h3>Submission Guidelines</h3>
+<p>Paper submission must be in English. All papers will be double-blind reviewed by the Program Committee based on technical quality, relevance to DASFAA, originality, significance, and clarity. All paper submissions will be handled electronically. Any submitted paper violating the length, file type, or formatting requirements will be rejected without review.</p>
+<p>Each submitted paper should include an abstract up to 200 words and be no longer than 16 pages (including references, appendices, etc.) in LNCS (Lecture Notes in Computer Science) format. We encourage authors to cite related work comprehensively. When citing conference papers, please also consider citing their extended journal versions if applicable. All papers must be submitted electronically through the paper submission system in PDF only.</p>
+<p>The submitted papers must not be previously published in a refereed journal or conference and must not be under consideration by any other conference or journal during the DASFAA review process. If the paper is accepted, at least one author must complete the regular registration and attend the conference to present the paper. For no-show authors, their papers will not be included in the proceedings. Accepted papers will be published in the conference proceedings.</p>
+
+<h3>Double-Blind Review Policy</h3>
+<p>DASFAA 2027 employs a double-blind review process. Authors must anonymize their submissions rigorously to prevent identity disclosure. Avoid self-citations that reveal authorship.</p>
+
+<h3>Conflicts of Interest</h3>
+<p>Authors must declare conflicts of interest (COIs) using the submission management system. Conflicts include recent collaboration, co-authorship, or personal relationships with PC members.</p>
+<ul>
+    <li>X and Y have worked in the same university or company in the past two years, or will be doing so in the next six months on account of an accepted job offer. Different campuses within the same university system do not count as the same university for this purpose - UC Berkeley does not have a conflict with UC Santa Barbara.</li>
+    <li>X has been a co-author of a paper with Y in the last three years.</li>
+    <li>X has been a collaborator within the past two years, as evidenced in a joint publication, joint research project, or co-organizing events, or are collaborating now.</li>
+    <li>X is the master's/PhD thesis advisor of Y or vice versa, irrespective of how long ago this was.</li>
+    <li>X is a relative or close personal friend of Y.</li>
+</ul>
+<p>It is the full responsibility of all authors of a paper to identify and declare all COIs with members of the Program Committee (reviewers, meta-reviewers, and PC chairs) prior to the submission deadline. Submissions with undeclared conflicts or spurious conflicts will be desk-rejected.</p>
+
+<h3>Acceptance Categories</h3>
+<p>Full research papers: Presented orally (optional poster).</p>
+
+<h3>Formatting and Submission</h3>
+<p>Use LNCS format templates available at: <a href="https://www.springer.com/gp/computer-science/lncs/conference-proceedings-guidelines" target="_blank" rel="noopener">https://www.springer.com/gp/computer-science/lncs/conference-proceedings-guidelines</a></p>
+
+<h3>Submission System</h3>
+<p>To submit your paper: <a href="https://cmt3.research.microsoft.com/DASFAA2027/Submission/Index" target="_blank" rel="noopener">https://cmt3.research.microsoft.com/DASFAA2027/Submission/Index</a></p>
+<p>Please select the appropriate track during your submission.</p>
+
+<p>The Microsoft CMT service was used for managing the peer-reviewing process for this conference. This service was provided for free by Microsoft and they bore all expenses, including costs for Azure cloud services as well as for software development and support.</p>
+</div>
+
+         </div>
+     </div>
+</div>
+
+
+</div>
+
+    </section>
+</div>
+
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-section">
+                <div class="logo-section">
+                    <a href="../index.html" class="logo-link">
+                        <img src="../_upload/tpl/02/82/642/template642/images/brand/dasfaa-2027-logo.png" alt="DASFAA 2027 Shenyang, China" class="logo-image">
+
+                        <span class="logo-copy">
+
+                            <span class="logo-title">DASFAA 2027</span>
+
+                            <span class="logo-subtitle">Shenyang, China</span>
+
+                        </span>
+                    </a>
+                </div>
+
+
+            </div>
+                <div class="footer-section">
+                <h4>Contact</h4>
+                <p>Email: dasfaa2027@gmail.com</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2027 DASFAA. All rights reserved.</p>
+        </div>
+    </div>
+</div>
+
+
+<script src="../_upload/tpl/02/82/642/template642/js/navigation.js%3Fv=1"></script>
+</body>
+</html>
+
+
+ <img src="../_visitcount%3FsiteId=271&amp;type=2&amp;columnId=11666.html" style="display:none" width="0" height="0"></image>

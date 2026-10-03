@@ -253,7 +253,34 @@ function deadlineRange(deadline: JsonRecord): [string, string] | null {
 /** Generate explicit slot migrations from the public legacy-key redirects. */
 export function identityMigrationManifestForData(
   data: Record<string, unknown>,
+  reviewedMigrations?: unknown,
 ): IdentityMigrationManifest {
+  const reviewed = {
+    schema_version: IDENTITY_MIGRATION_SCHEMA_VERSION,
+    from_identity_revision: "reviewed-public-slot",
+    to_identity_revision: IDENTITY_REVISION,
+    migrations: reviewedMigrations ?? [],
+  };
+  const reviewErrors = validateIdentityMigrationManifest(reviewed);
+  if (reviewErrors.length)
+    throw new Error(`invalid reviewed identity migrations: ${reviewErrors.join("; ")}`);
+  const targetKeys = new Set<string>();
+  for (const conference of records(data.conferences))
+    for (const edition of records(conference.editions))
+      for (const deadline of records(edition.deadlines))
+        targetKeys.add(
+          identityKey({
+            venue: String(conference.key),
+            edition: String(edition.id),
+            kind: String(deadline.kind),
+            round: roundOf(deadline.round),
+            track: deadlineTrackKey(
+              String(deadline.label ?? ""),
+              String(deadline.kind),
+              String(deadline.track ?? ""),
+            ),
+          }),
+        );
   const redirects = record(data.legacy_key_redirects) ?? {};
   const aliasCounts = new Map<string, number>();
   for (const target of Object.values(redirects)) {
@@ -340,6 +367,11 @@ export function identityMigrationManifestForData(
     schema_version: IDENTITY_MIGRATION_SCHEMA_VERSION,
     from_identity_revision: "legacy-public-key",
     to_identity_revision: IDENTITY_REVISION,
-    migrations,
+    migrations: [
+      ...migrations,
+      ...(reviewed.migrations as IdentityMigration[]).filter((migration) =>
+        targetKeys.has(identityKey(migration.to)),
+      ),
+    ],
   };
 }

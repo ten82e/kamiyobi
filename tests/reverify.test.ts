@@ -3467,3 +3467,12 @@ it("supports at_utc for exact deadline reverification matching and cutoff", asyn
   const targetId = "demo|demo-2027|paper|1|";
   expect(result.ledger.deadlines[targetId]?.status).toBe("verified");
 });
+
+// Pin only promotion fixture freshness; network/elapsed-time tests keep their real clocks.
+beforeEach(({ task }) => {
+  if (task.name.startsWith("applies a promotion resolution and preserves history")) {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-02T00:00:00.000Z"));
+  }
+});
+afterEach(() => vi.useRealTimers());

@@ -1,0 +1,2601 @@
+{
+  "baseline": {
+    "generated_at": "2026-10-03T05:02:03Z",
+    "conferences": [
+      {
+        "key": "dasfaa",
+        "title": "DASFAA",
+        "full_name": "The 32nd International Conference on Database Systems for Advanced Applications (DASFAA 2027)",
+        "acronym": "DASFAA",
+        "categories": ["db"],
+        "rank": {
+          "ccf": "B",
+          "core": "B",
+          "thcpl": "B"
+        },
+        "link": "https://dasfaa2027.github.io/",
+        "tags": [],
+        "sources": ["local", "ccfddl"],
+        "dblp": "dasfaa",
+        "upstream_sub": "DB",
+        "identity": {
+          "venueId": "dasfaa",
+          "dblpKey": "dasfaa",
+          "officialDomains": ["https://dasfaa2026.github.io/", "https://dasfaa2027.github.io/"],
+          "sourceIds": {
+            "ccfddl": "DB/dasfaa",
+            "local": "dasfaa"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "db",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "dasfaa27",
+            "link": "https://dasfaa2027.github.io/",
+            "place": "Shenyang, China",
+            "date_text": "",
+            "event_date_precision": "unverified",
+            "event_start": null,
+            "event_end": null,
+            "estimated": false,
+            "source": "local",
+            "identity": {
+              "officialUrls": ["https://dasfaa2027.github.io/"],
+              "sourceIds": {
+                "local": "dasfaa27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Full Paper Submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://dasfaa2027.github.io/",
+                    "observed_at": "",
+                    "original_value": "2027-06-06 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://dasfaa2027.github.io/",
+                    "rawExcerpt": "2027-06-06 23:59:00"
+                  }
+                ],
+                "precision": "exact",
+                "utc": "2027-06-07T11:59:00Z",
+                "aoe": "2027-06-06 23:59:00 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "ecir",
+        "title": "ECIR",
+        "full_name": "European Conference on Information Retrieval",
+        "acronym": "ECIR",
+        "categories": ["ai", "db"],
+        "rank": {
+          "ccf": "C",
+          "core": "A",
+          "thcpl": "B"
+        },
+        "link": "https://www.ecir2027.co.uk/",
+        "tags": ["data-mining"],
+        "sources": ["aideadlines", "ccfddl"],
+        "dblp": "ecir",
+        "upstream_sub": "DB",
+        "identity": {
+          "dblpKey": "ecir",
+          "officialDomains": ["https://ecir2027.co.uk/", "https://www.ecir2027.co.uk/"],
+          "sourceIds": {
+            "aideadlines": "ecir",
+            "ccfddl": "DB/ecir"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "ai",
+            "reason": "source-subfield"
+          },
+          {
+            "category": "db",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "ecir27",
+            "link": "https://www.ecir2027.co.uk/",
+            "place": "Southampton, United Kingdom",
+            "date_text": "March 21 - March 25, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-03-21",
+            "event_end": "2027-03-25",
+            "estimated": false,
+            "source": "aideadlines",
+            "identity": {
+              "officialUrls": ["https://www.ecir2027.co.uk/"],
+              "sourceIds": {
+                "aideadlines": "ecir27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "other",
+                "label": "Workshop proposal deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-09-07 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-09-07 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-06T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-09-08T11:59:59Z",
+                "aoe": "2026-09-07 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "abstract",
+                "label": "Full paper abstract deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-09-21 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-09-21 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-06T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-09-22T11:59:59Z",
+                "aoe": "2026-09-21 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "abstract",
+                "label": "Short paper abstract deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-10-05 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-10-05 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-08T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-06T11:59:59Z",
+                "aoe": "2026-10-05 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Full paper submission deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-10-05 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-10-05 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": "2026-09-05T22:05:09.000Z",
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-08T22:05:09.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_class": "unknown",
+                  "source_name": "local",
+                  "provider_identity": {
+                    "provider": "dedicated-domain",
+                    "providerKey": "www.ecir2027.co.uk",
+                    "strength": "dedicated-domain"
+                  },
+                  "label_signature": "paper submission"
+                },
+                "precision": "exact",
+                "utc": "2026-10-06T11:59:59Z",
+                "aoe": "2026-10-05 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "abstract",
+                "label": "Reproducibility abstract deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-10-12 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-10-12 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-08T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-13T11:59:59Z",
+                "aoe": "2026-10-12 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Short paper submission deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-10-12 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-10-12 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-08T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-13T11:59:59Z",
+                "aoe": "2026-10-12 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Reproducibility paper submission deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-10-19 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-10-19 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-08T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-20T11:59:59Z",
+                "aoe": "2026-10-19 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "abstract",
+                "label": "Doctoral Consortium abstract deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-10-26 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-10-26 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-08T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-27T11:59:59Z",
+                "aoe": "2026-10-26 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "other",
+                "label": "Demo / Doctoral Consortium paper / Industry Day / tutorial proposal / resource paper deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-11-02 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-11-02 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-08T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-11-03T11:59:59Z",
+                "aoe": "2026-11-02 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "notification",
+                "label": "Notification of acceptance",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-12-07 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-12-07 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-12-08T11:59:59Z",
+                "aoe": "2026-12-07 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "registration",
+                "label": "Author and early registration deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-12-21 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-12-21 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-12-22T11:59:59Z",
+                "aoe": "2026-12-21 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "camera_ready",
+                "label": "Tutorial camera-ready deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2027-01-10 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2027-01-10 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2027-01-11T11:59:59Z",
+                "aoe": "2027-01-10 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "registration",
+                "label": "Regular registration deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2027-02-08 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2027-02-08 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2027-02-09T11:59:59Z",
+                "aoe": "2027-02-08 23:59:59 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          },
+          {
+            "year": 2027,
+            "id": "ecir27-ccfddl-ecir27",
+            "link": "https://ecir2027.co.uk/",
+            "place": "Southampton, UK",
+            "date_text": "March 21-25, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-03-21",
+            "event_end": "2027-03-25",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://ecir2027.co.uk/"],
+              "sourceIds": {
+                "ccfddl": "ecir27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Abstract submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-09-25 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://ecir2027.co.uk/",
+                    "rawExcerpt": "2026-09-25 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-06T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-09-25T23:59:59Z",
+                "aoe": "2026-09-25 11:59:59 AoE",
+                "tz_raw": "UTC+0"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-10-02 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://ecir2027.co.uk/",
+                    "rawExcerpt": "2026-10-02 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-06T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-02T23:59:59Z",
+                "aoe": "2026-10-02 11:59:59 AoE",
+                "tz_raw": "UTC+0"
+              }
+            ]
+          },
+          {
+            "year": 2027,
+            "id": "override-2027",
+            "link": "https://www.ecir2027.co.uk/",
+            "place": "",
+            "date_text": "March 21-25, 2027 (Southampton, UK)",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-03-21",
+            "event_end": "2027-03-25",
+            "estimated": false,
+            "source": "override",
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Abstract submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "",
+                    "observed_at": "",
+                    "original_value": "2026-09-21 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "rawExcerpt": "2026-09-21 23:59:59"
+                  }
+                ],
+                "precision": "exact",
+                "utc": "2026-09-21T23:59:59Z",
+                "aoe": "2026-09-21 11:59:59 AoE",
+                "tz_raw": "GMT"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "",
+                    "observed_at": "",
+                    "original_value": "2026-10-05 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "rawExcerpt": "2026-10-05 23:59:59"
+                  }
+                ],
+                "precision": "exact",
+                "utc": "2026-10-05T23:59:59Z",
+                "aoe": "2026-10-05 11:59:59 AoE",
+                "tz_raw": "GMT"
+              },
+              {
+                "kind": "notification",
+                "label": "Notifications (full & short papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "",
+                    "observed_at": "",
+                    "original_value": "2026-12-07 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "rawExcerpt": "2026-12-07 23:59:59"
+                  }
+                ],
+                "precision": "exact",
+                "utc": "2026-12-07T23:59:59Z",
+                "aoe": "2026-12-07 11:59:59 AoE",
+                "tz_raw": "GMT"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "evomusart-2027",
+        "title": "EvoMusArt 2027",
+        "full_name": "16th International Conference on Artificial Intelligence in Music, Sound, Art and Design",
+        "acronym": "EvoMusArt 2027",
+        "categories": ["ai"],
+        "rank": {},
+        "link": "https://easychair.org/cfp/evomusart2027",
+        "tags": [],
+        "sources": ["local"],
+        "dblp": null,
+        "identity": {
+          "venueId": "evomusart-2027",
+          "officialDomains": ["https://easychair.org/cfp/evomusart2027"],
+          "sourceIds": {
+            "local": "evomusart-2027"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "ai",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "evomusart-202727",
+            "link": "https://easychair.org/cfp/evomusart2027",
+            "place": "Mainz, Germany",
+            "date_text": "Mar 31, 2027",
+            "event_date_precision": "single-day",
+            "event_start": "2027-03-31",
+            "event_end": "2027-03-31",
+            "estimated": false,
+            "source": "local",
+            "identity": {
+              "editionId": "evomusart-2027",
+              "officialUrls": ["https://easychair.org/cfp/evomusart2027"],
+              "sourceIds": {
+                "local": "evomusart-202727"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Submission deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://easychair.org/cfp/evomusart2027",
+                    "observed_at": "",
+                    "original_value": "2026-11-01",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://easychair.org/cfp/evomusart2027",
+                    "rawExcerpt": "2026-11-01"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://easychair.org/cfp/evomusart2027",
+                  "last_attempt_at": "2026-09-05T22:05:09.000Z",
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-08T22:05:09.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_class": "unknown",
+                  "source_name": "local",
+                  "provider_identity": {
+                    "provider": "easychair",
+                    "providerKey": "cfp/evomusart2027",
+                    "strength": "provider-scoped"
+                  },
+                  "label_signature": "submission"
+                },
+                "precision": "date-only",
+                "local_date": "2026-11-01",
+                "earliest_utc": "2026-10-31T10:00:00.000Z",
+                "latest_utc": "2026-11-02T11:59:59.999Z",
+                "utc": null,
+                "aoe": null,
+                "tz_raw": null
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "iscas",
+        "title": "ISCAS",
+        "full_name": "IEEE International Symposium on Circuits and Systems",
+        "acronym": "ISCAS",
+        "categories": ["systems"],
+        "rank": {
+          "ccf": "B",
+          "core": "C",
+          "thcpl": "B"
+        },
+        "link": "https://2027.ieee-iscas.org/",
+        "tags": [],
+        "sources": ["ccfddl"],
+        "dblp": "iscas",
+        "upstream_sub": "DS",
+        "identity": {
+          "dblpKey": "iscas",
+          "officialDomains": ["https://2027.ieee-iscas.org/"],
+          "sourceIds": {
+            "ccfddl": "DS/iscas"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "systems",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "iscas27",
+            "link": "https://2027.ieee-iscas.org/",
+            "place": "Bordeaux, France",
+            "date_text": "June 6-9, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-06-06",
+            "event_end": "2027-06-09",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://2027.ieee-iscas.org/"],
+              "sourceIds": {
+                "ccfddl": "iscas27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://2027.ieee-iscas.org/",
+                    "observed_at": "",
+                    "original_value": "2026-10-13 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://2027.ieee-iscas.org/",
+                    "rawExcerpt": "2026-10-13 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://2027.ieee-iscas.org/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-08T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-14T11:59:59Z",
+                "aoe": "2026-10-13 23:59:59 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "wsdm",
+        "title": "WSDM",
+        "full_name": "ACM International Conference on Web Search and Data Mining",
+        "acronym": "WSDM",
+        "categories": ["ai", "db"],
+        "rank": {
+          "ccf": "B",
+          "core": "A*",
+          "thcpl": "B"
+        },
+        "link": "https://www.wsdm-conference.org/2027/",
+        "tags": ["web-search", "data-mining"],
+        "sources": ["aideadlines", "ccfddl"],
+        "dblp": "wsdm",
+        "upstream_sub": "DB",
+        "identity": {
+          "dblpKey": "wsdm",
+          "officialDomains": [
+            "https://wsdm-conference.org/2027/",
+            "https://www.wsdm-conference.org/2027/"
+          ],
+          "sourceIds": {
+            "aideadlines": "wsdm",
+            "ccfddl": "DB/wsdm"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "ai",
+            "reason": "source-subfield"
+          },
+          {
+            "category": "db",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "wsdm27",
+            "link": "https://www.wsdm-conference.org/2027/",
+            "place": "Hong Kong, Hong Kong",
+            "date_text": "February 15-19, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-02-15",
+            "event_end": "2027-02-19",
+            "estimated": false,
+            "source": "aideadlines",
+            "identity": {
+              "officialUrls": ["https://www.wsdm-conference.org/2027/"],
+              "sourceIds": {
+                "aideadlines": "wsdm27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Abstract submission (full papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-08-17 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-08-17 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-08-18T11:59:59Z",
+                "aoe": "2026-08-17 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission (full papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-08-24 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-08-24 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-08-25T11:59:59Z",
+                "aoe": "2026-08-24 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "notification",
+                "label": "Author notification (full papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-11-02 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-11-02 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-08T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-11-03T11:59:59Z",
+                "aoe": "2026-11-02 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission (short papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-11-17 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-11-17 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-08T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-11-18T11:59:59Z",
+                "aoe": "2026-11-17 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "notification",
+                "label": "Author notification (short papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-12-18 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-12-18 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-12-19T11:59:59Z",
+                "aoe": "2026-12-18 23:59:59 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          },
+          {
+            "year": 2027,
+            "id": "wsdm27-ccfddl-wsdm27",
+            "link": "https://wsdm-conference.org/2027/",
+            "place": "Cordis, Hong Kong SAR, China",
+            "date_text": "February 15 - 19, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-02-15",
+            "event_end": "2027-02-19",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://wsdm-conference.org/2027/"],
+              "sourceIds": {
+                "ccfddl": "wsdm27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Abstract submission",
+                "round": 1,
+                "track": "",
+                "comment": "Full Paper",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-08-17 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-08-17 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-08-18T11:59:59Z",
+                "aoe": "2026-08-17 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "Full Paper",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-08-24 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-08-24 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-08-25T11:59:59Z",
+                "aoe": "2026-08-24 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 2,
+                "track": "",
+                "comment": "Short Paper",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-11-17 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-11-17 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-08T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-11-18T11:59:59Z",
+                "aoe": "2026-11-17 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      }
+    ]
+  },
+  "current": {
+    "generated_at": "2026-10-03T05:02:03Z",
+    "conferences": [
+      {
+        "key": "dasfaa",
+        "title": "DASFAA",
+        "full_name": "The 32nd International Conference on Database Systems for Advanced Applications (DASFAA 2027)",
+        "acronym": "DASFAA",
+        "categories": ["db"],
+        "rank": {
+          "ccf": "B",
+          "core": "B",
+          "thcpl": "B"
+        },
+        "link": "https://dasfaa2027.github.io/",
+        "tags": [],
+        "sources": ["local", "ccfddl"],
+        "dblp": "dasfaa",
+        "upstream_sub": "DB",
+        "identity": {
+          "venueId": "dasfaa",
+          "dblpKey": "dasfaa",
+          "officialDomains": ["https://dasfaa2027.github.io/"],
+          "sourceIds": {
+            "ccfddl": "DB/dasfaa",
+            "local": "dasfaa"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "db",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "dasfaa27",
+            "link": "https://dasfaa2027.github.io/",
+            "place": "Shenyang, China",
+            "date_text": "May 27-30, 2027",
+            "event_date_precision": "unverified",
+            "event_start": "2027-05-27",
+            "event_end": "2027-05-30",
+            "estimated": false,
+            "source": "local",
+            "identity": {
+              "officialUrls": ["https://dasfaa2027.github.io/"],
+              "sourceIds": {
+                "ccfddl": "dasfaa27",
+                "local": "dasfaa27"
+              }
+            },
+            "deadlines": []
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "ecir",
+        "title": "ECIR",
+        "full_name": "European Conference on Information Retrieval",
+        "acronym": "ECIR",
+        "categories": ["ai", "db"],
+        "rank": {
+          "ccf": "C",
+          "core": "A",
+          "thcpl": "B"
+        },
+        "link": "https://www.ecir2027.co.uk/",
+        "tags": ["data-mining"],
+        "sources": ["aideadlines", "ccfddl"],
+        "dblp": "ecir",
+        "upstream_sub": "DB",
+        "identity": {
+          "dblpKey": "ecir",
+          "officialDomains": ["https://ecir2027.co.uk/", "https://www.ecir2027.co.uk/"],
+          "sourceIds": {
+            "aideadlines": "ecir",
+            "ccfddl": "DB/ecir"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "ai",
+            "reason": "source-subfield"
+          },
+          {
+            "category": "db",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "ecir27",
+            "link": "https://www.ecir2027.co.uk/",
+            "place": "Southampton, United Kingdom",
+            "date_text": "March 21 - March 25, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-03-21",
+            "event_end": "2027-03-25",
+            "estimated": false,
+            "source": "aideadlines",
+            "identity": {
+              "officialUrls": ["https://www.ecir2027.co.uk/"],
+              "sourceIds": {
+                "aideadlines": "ecir27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "other",
+                "label": "Workshop proposal deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-09-07 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-09-07 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-09-08T11:59:59Z",
+                "aoe": "2026-09-07 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "abstract",
+                "label": "Full paper abstract deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-09-21 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-09-21 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-09-22T11:59:59Z",
+                "aoe": "2026-09-21 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "abstract",
+                "label": "Short paper abstract deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-10-05 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-10-05 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-04T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-06T11:59:59Z",
+                "aoe": "2026-10-05 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Full paper submission deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-10-05 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-10-05 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": "2026-10-03T05:02:03.000Z",
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-04T05:02:03.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_class": "aggregator",
+                  "source_name": "aideadlines",
+                  "provider_identity": {
+                    "provider": "dedicated-domain",
+                    "providerKey": "www.ecir2027.co.uk",
+                    "strength": "dedicated-domain"
+                  },
+                  "label_signature": "paper submission"
+                },
+                "precision": "exact",
+                "utc": "2026-10-06T11:59:59Z",
+                "aoe": "2026-10-05 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "abstract",
+                "label": "Reproducibility abstract deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-10-12 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-10-12 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-04T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-13T11:59:59Z",
+                "aoe": "2026-10-12 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Short paper submission deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-10-12 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-10-12 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-04T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-13T11:59:59Z",
+                "aoe": "2026-10-12 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Reproducibility paper submission deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-10-19 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-10-19 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-04T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-20T11:59:59Z",
+                "aoe": "2026-10-19 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "abstract",
+                "label": "Doctoral Consortium abstract deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-10-26 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-10-26 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-04T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-27T11:59:59Z",
+                "aoe": "2026-10-26 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "other",
+                "label": "Demo / Doctoral Consortium paper / Industry Day / tutorial proposal / resource paper deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-11-02 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-11-02 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-06T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-11-03T11:59:59Z",
+                "aoe": "2026-11-02 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "notification",
+                "label": "Notification of acceptance",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-12-07 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-12-07 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-06T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-12-08T11:59:59Z",
+                "aoe": "2026-12-07 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "registration",
+                "label": "Author and early registration deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-12-21 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2026-12-21 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-06T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-12-22T11:59:59Z",
+                "aoe": "2026-12-21 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "camera_ready",
+                "label": "Tutorial camera-ready deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2027-01-10 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2027-01-10 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2027-01-11T11:59:59Z",
+                "aoe": "2027-01-10 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "registration",
+                "label": "Regular registration deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2027-02-08 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.ecir2027.co.uk/",
+                    "rawExcerpt": "2027-02-08 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2027-02-09T11:59:59Z",
+                "aoe": "2027-02-08 23:59:59 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          },
+          {
+            "year": 2027,
+            "id": "ecir27-ccfddl-ecir27",
+            "link": "https://ecir2027.co.uk/",
+            "place": "Southampton, UK",
+            "date_text": "March 21-25, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-03-21",
+            "event_end": "2027-03-25",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://ecir2027.co.uk/"],
+              "sourceIds": {
+                "ccfddl": "ecir27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Abstract submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-09-22 11:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://ecir2027.co.uk/",
+                    "rawExcerpt": "2026-09-22 11:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-09-22T11:59:59Z",
+                "aoe": "2026-09-21 23:59:59 AoE",
+                "tz_raw": "UTC+0"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://ecir2027.co.uk/",
+                    "observed_at": "",
+                    "original_value": "2026-10-06 11:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://ecir2027.co.uk/",
+                    "rawExcerpt": "2026-10-06 11:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://ecir2027.co.uk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-04T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-06T11:59:59Z",
+                "aoe": "2026-10-05 23:59:59 AoE",
+                "tz_raw": "UTC+0"
+              }
+            ]
+          },
+          {
+            "year": 2027,
+            "id": "override-2027",
+            "link": "https://www.ecir2027.co.uk/",
+            "place": "",
+            "date_text": "March 21-25, 2027 (Southampton, UK)",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-03-21",
+            "event_end": "2027-03-25",
+            "estimated": false,
+            "source": "override",
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Abstract submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "",
+                    "observed_at": "",
+                    "original_value": "2026-09-21 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "rawExcerpt": "2026-09-21 23:59:59"
+                  }
+                ],
+                "precision": "exact",
+                "utc": "2026-09-21T23:59:59Z",
+                "aoe": "2026-09-21 11:59:59 AoE",
+                "tz_raw": "GMT"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "",
+                    "observed_at": "",
+                    "original_value": "2026-10-05 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "rawExcerpt": "2026-10-05 23:59:59"
+                  }
+                ],
+                "precision": "exact",
+                "utc": "2026-10-05T23:59:59Z",
+                "aoe": "2026-10-05 11:59:59 AoE",
+                "tz_raw": "GMT"
+              },
+              {
+                "kind": "notification",
+                "label": "Notifications (full & short papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "",
+                    "observed_at": "",
+                    "original_value": "2026-12-07 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "rawExcerpt": "2026-12-07 23:59:59"
+                  }
+                ],
+                "precision": "exact",
+                "utc": "2026-12-07T23:59:59Z",
+                "aoe": "2026-12-07 11:59:59 AoE",
+                "tz_raw": "GMT"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "evomusart-2027",
+        "title": "EvoMusArt 2027",
+        "full_name": "16th International Conference on Artificial Intelligence in Music, Sound, Art and Design",
+        "acronym": "EvoMusArt 2027",
+        "categories": ["ai"],
+        "rank": {
+          "ccf": "N",
+          "core": "B",
+          "thcpl": "N"
+        },
+        "link": "https://easychair.org/cfp/evomusart2027",
+        "tags": [],
+        "sources": ["local", "ccfddl"],
+        "dblp": "evomusart",
+        "upstream_sub": "AI",
+        "identity": {
+          "venueId": "evomusart-2027",
+          "dblpKey": "evomusart",
+          "officialDomains": [
+            "https://easychair.org/cfp/evomusart2027",
+            "https://www.evostar.org/2027/evomusart/"
+          ],
+          "sourceIds": {
+            "ccfddl": "AI/evomusart",
+            "local": "evomusart-2027"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "ai",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "evomusart-202727",
+            "link": "https://easychair.org/cfp/evomusart2027",
+            "place": "Mainz, Germany",
+            "date_text": "Mar 31, 2027",
+            "event_date_precision": "single-day",
+            "event_start": "2027-03-31",
+            "event_end": "2027-03-31",
+            "estimated": false,
+            "source": "local",
+            "identity": {
+              "editionId": "evomusart-2027",
+              "officialUrls": [
+                "https://easychair.org/cfp/evomusart2027",
+                "https://www.evostar.org/2027/evomusart/"
+              ],
+              "sourceIds": {
+                "ccfddl": "evomusart27",
+                "local": "evomusart-202727"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "Full papers / 別記載: Paper submission",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "local",
+                    "source_url": "https://easychair.org/cfp/evomusart2027",
+                    "observed_at": "",
+                    "original_value": "2026-11-01",
+                    "confidence": "aggregator",
+                    "sourceClass": "curated-manual",
+                    "sourceUrl": "https://easychair.org/cfp/evomusart2027",
+                    "rawExcerpt": "2026-11-01"
+                  },
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://www.evostar.org/2027/evomusart/",
+                    "observed_at": "",
+                    "original_value": "2026-11-01 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.evostar.org/2027/evomusart/",
+                    "rawExcerpt": "2026-11-01 23:59:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.evostar.org/2027/evomusart/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-06T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-11-02T11:59:00Z",
+                "aoe": "2026-11-01 23:59:00 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "iscas",
+        "title": "ISCAS",
+        "full_name": "IEEE International Symposium on Circuits and Systems",
+        "acronym": "ISCAS",
+        "categories": ["systems"],
+        "rank": {
+          "ccf": "B",
+          "core": "C",
+          "thcpl": "B"
+        },
+        "link": "https://2027.ieee-iscas.org/",
+        "tags": [],
+        "sources": ["ccfddl"],
+        "dblp": "iscas",
+        "upstream_sub": "DS",
+        "identity": {
+          "dblpKey": "iscas",
+          "officialDomains": ["https://2027.ieee-iscas.org/"],
+          "sourceIds": {
+            "ccfddl": "DS/iscas"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "systems",
+            "reason": "explicit-venue-rule"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "iscas27",
+            "link": "https://2027.ieee-iscas.org/",
+            "place": "Bordeaux, France",
+            "date_text": "June 6-9, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-06-06",
+            "event_end": "2027-06-09",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://2027.ieee-iscas.org/"],
+              "sourceIds": {
+                "ccfddl": "iscas27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://2027.ieee-iscas.org/",
+                    "observed_at": "",
+                    "original_value": "2026-10-13 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://2027.ieee-iscas.org/",
+                    "rawExcerpt": "2026-10-13 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://2027.ieee-iscas.org/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-04T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-10-14T04:59:59Z",
+                "aoe": "2026-10-13 16:59:59 AoE",
+                "tz_raw": "UTC-5"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "wsdm",
+        "title": "WSDM",
+        "full_name": "ACM International Conference on Web Search and Data Mining",
+        "acronym": "WSDM",
+        "categories": ["ai", "db"],
+        "rank": {
+          "ccf": "B",
+          "core": "A*",
+          "thcpl": "B"
+        },
+        "link": "https://www.wsdm-conference.org/2027/",
+        "tags": ["web-search", "data-mining"],
+        "sources": ["aideadlines", "ccfddl"],
+        "dblp": "wsdm",
+        "upstream_sub": "DB",
+        "identity": {
+          "dblpKey": "wsdm",
+          "officialDomains": [
+            "https://wsdm-conference.org/2027/",
+            "https://www.wsdm-conference.org/2027/"
+          ],
+          "sourceIds": {
+            "aideadlines": "wsdm",
+            "ccfddl": "DB/wsdm"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "ai",
+            "reason": "source-subfield"
+          },
+          {
+            "category": "db",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2027,
+            "id": "wsdm27",
+            "link": "https://www.wsdm-conference.org/2027/",
+            "place": "Hong Kong, Hong Kong",
+            "date_text": "February 15-19, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-02-15",
+            "event_end": "2027-02-19",
+            "estimated": false,
+            "source": "aideadlines",
+            "identity": {
+              "officialUrls": ["https://www.wsdm-conference.org/2027/"],
+              "sourceIds": {
+                "aideadlines": "wsdm27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Abstract submission (full papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-08-17 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-08-17 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-08-18T11:59:59Z",
+                "aoe": "2026-08-17 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission (full papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-08-24 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-08-24 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-08-25T11:59:59Z",
+                "aoe": "2026-08-24 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "notification",
+                "label": "Author notification (full papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-11-02 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-11-02 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-06T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-11-03T11:59:59Z",
+                "aoe": "2026-11-02 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission (short papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-11-17 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-11-17 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-06T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-11-18T11:59:59Z",
+                "aoe": "2026-11-17 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "notification",
+                "label": "Author notification (short papers)",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-12-18 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-12-18 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-06T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-12-19T11:59:59Z",
+                "aoe": "2026-12-18 23:59:59 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          },
+          {
+            "year": 2027,
+            "id": "wsdm27-ccfddl-wsdm27",
+            "link": "https://wsdm-conference.org/2027/",
+            "place": "Cordis, Hong Kong SAR, China",
+            "date_text": "February 15 - 19, 2027",
+            "event_date_precision": "exact-range",
+            "event_start": "2027-02-15",
+            "event_end": "2027-02-19",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://wsdm-conference.org/2027/"],
+              "sourceIds": {
+                "ccfddl": "wsdm27"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Abstract submission",
+                "round": 1,
+                "track": "",
+                "comment": "Full Paper",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-08-17 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-08-17 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-08-18T11:59:59Z",
+                "aoe": "2026-08-17 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "Full Paper",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://wsdm-conference.org/2027/",
+                    "observed_at": "",
+                    "original_value": "2026-08-24 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://wsdm-conference.org/2027/",
+                    "rawExcerpt": "2026-08-24 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://wsdm-conference.org/2027/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-10T05:02:03.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2026-08-25T11:59:59Z",
+                "aoe": "2026-08-24 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      }
+    ]
+  }
+}

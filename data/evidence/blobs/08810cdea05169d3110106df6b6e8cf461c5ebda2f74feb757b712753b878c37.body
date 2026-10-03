@@ -1,0 +1,309 @@
+		<!DOCTYPE HTML>
+		<html>
+		<head>
+      <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <!-- Latest compiled and minified CSS -->
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+      <!-- Optional theme -->
+      <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">-->
+			<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+      <link rel="stylesheet" type="text/css" href="/iscas2027/ESR/includes/select2/select2.min.css"/>
+			<link rel="stylesheet" type="text/css" href="/iscas2027/ESR/includes/select2/select2-bootstrap.min.css"/>
+			<link  rel="stylesheet" href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css"/>
+			<link rel="stylesheet" type="text/css" href="/iscas2027/ESR/includes/validate/formValidation.min.css"/>
+      <link rel="stylesheet" href="/iscas2027/ESR/css/ESR.css" type="text/css">
+			<link rel="stylesheet" type="text/css" href="/iscas2027/ESR/includes/ddlevelsfiles/ddlevelsmenu-base.css"/>
+			<link rel="stylesheet" type="text/css" href="/iscas2027/ESR/includes/ddlevelsfiles/ddlevelsmenu-topbar.css"/>
+			<link rel="stylesheet" type="text/css" href="/iscas2027/ESR/includes/ddlevelsfiles/ddlevelsmenu-sidebar.css"/>
+			<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs/dt-1.10.15/af-2.2.0/b-1.3.1/cr-1.3.3/fc-3.2.2/fh-3.1.2/kt-2.2.1/r-2.1.1/rg-1.0.0/rr-1.2.0/sc-1.4.2/se-1.2.2/datatables.min.css"/>
+			<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/yadcf/0.9.1/jquery.dataTables.yadcf.min.css"/>
+			<link rel="shortcut icon" href="/iscas2027/ESR/favicon.ico" type="image/x-icon"/>
+      <title>ISCAS 2027</title>
+		</head>
+		<body>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+		<script type="text/javascript" src="https://cdn.datatables.net/v/bs/dt-1.10.15/af-2.2.0/b-1.4.0/b-colvis-1.4.0/cr-1.3.3/fc-3.2.2/fh-3.1.2/r-2.1.1/rg-1.0.0/rr-1.2.0/se-1.2.2/datatables.min.js"></script>
+		<script type="text/javascript" src="/iscas2027/ESR/includes/validate/formValidation.min.js"></script>
+		<script type="text/javascript" src="/iscas2027/ESR/includes/validate/bootstrap.min.js"></script>
+		<script type="text/javascript" src="/iscas2027/ESR/includes/ddlevelsfiles/ddlevelsmenu.js"></script>
+    <script type="text/javascript" src="/iscas2027/ESR/includes/wz_tooltip.js"></script>
+		<script type="text/javascript" src="/iscas2027/ESR/includes/table.js"></script>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/yadcf/0.9.1/jquery.dataTables.yadcf.min.js"></script>
+		<script type="text/javascript" src="https://use.fontawesome.com/14fea55754.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js"></script>
+		<script type="text/javascript" src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+		<script type="text/javascript" src="/iscas2027/ESR/includes/select2cascade/select2cascade.js"></script>
+		<script type="text/javascript" src="/iscas2027/ESR/js/det_filter.js"></script>
+		<input type="hidden" class="sid" id="sid" value=""/>
+		<input type="hidden" class="role" id="role" value=""/>
+	<script>
+
+			function js_popup(l_url, l_win_name, l_width, l_height)
+			{
+				var l_parms = "width=" + l_width + ",height=" + l_height + ",scrollbars=1,toolbar=1,resizable=1,status=0";
+				//alert(l_win_name);
+				window.open(l_url, l_win_name, l_parms);
+			}
+	</script>
+			<link rel="stylesheet" type="text/css" href="/iscas2027/ESR/includes/swal/sweetalert.css" />
+			<script type="text/javascript" src="/iscas2027/ESR/includes/swal/sweetalert.min.js"></script>		<table class="Header" cellspacing="0" cellpadding="0" border="0">
+			<tr>
+				<td class="HeaderCenter">
+					<a href="https://2027.ieee-iscas.org" target="_blank"><img src="/iscas2027/ESR/images/banner1.jpg" border="0"></a>
+				</td>
+			</tr>
+		</table><div class="ddsubmenustyle"><ul id="subMenu2" class="ddsubmenustyle">
+<li><a href="/iscas2027/ESR/authorinfo1.php">Author Info</a></li>
+</ul><ul id="subMenu8" class="ddsubmenustyle">
+<li><a href="/iscas2027/ESR/samples.php">Templates</a></li>
+<li><a href="/iscas2027/ESR/author_help.php">PDF Help</a></li>
+<li><a href="/iscas2027/ESR/type3_fonts.php">Type 3 Font Info</a></li>
+<li><a href="/iscas2027/ESR/copyright.php">Copyright Form</a></li>
+</ul></div>
+		<!--Main-->
+		<table class="Main" cellspacing="0" cellpadding="0" border="0">
+			<tr>				<td class="Nav">
+				<div class="crap">
+					<!-- <i class="fa fa-star pull-right"></i> -->
+					<img src="/iscas2027/ESR/images/dot_clear.gif" height="1" width="200" border="0">
+					<!--Navigation-->
+					<div id="ddtopmenubar" class="markermenu">
+<ul><li><a href="/iscas2027/ESR/login.php">Login Page</a></li>
+<li><a href="javascript:void(0);" rel="subMenu2" >Authors</a></li>
+<li><a href="javascript:void(0);" rel="subMenu8" >Author Help</a></li>
+</ul></div>
+		<script type="text/javascript">
+		ddlevelsmenu.setup("ddtopmenubar", "sidebar") //ddlevelsmenu.setup("mainmenuid", "topbar|sidebar")
+		</script>
+
+					<div style="text-align: center; padding-top: 10px; padding-bottom: 20px;">
+						<a href="https://www.epapers.org" target="_blank">
+              <img src="/iscas2027/ESR/images/PoweredBy.png" border="0">
+            </a>
+					</div>
+					</div>
+				</td>
+        <script>
+          /*$(document).ready(function() {
+            // define stick menu variables
+            var navOffset, scrollPos = 0;
+            // add utility wrapper elements for positioning
+            $("nav").wrap('<div class="nav-placeholder"></div>');
+            $("nav").wrapInner('<div class="nav-inner"></div>');
+            $(".nav-inner").wrapInner('<div class="nav-inner-most"></div>');
+
+            // function to run on page load and window resize
+            function stickyUtility() {
+              // only update navOffset if it is not currently using fixed position
+              if (!$("nav").hasClass("fixed")) {
+                navOffset = $("nav").offset().top;
+              }
+              // apply matching height to nav wrapper div to avoid awkward content jumps
+              $(".nav-placeholder").height($("nav").outerHeight());
+            } // end stickyUtility function
+            // run on page load
+            stickyUtility();
+            // run on window resize
+            $(window).resize(function() {
+              stickyUtility();
+            });
+            // run on scroll event
+            $(window).scroll(function() {
+              scrollPos = $(window).scrollTop();
+              if (scrollPos >= navOffset) {
+                $("nav").addClass("fixed");
+              } else {
+                $("nav").removeClass("fixed");
+              }
+            });
+          });*/
+        </script>				<!-- ========================================================================== -->
+				<td class="Body">
+					<!-- Body: put editable content here-->
+					<table class="Body" cellpadding="0" cellspacing="0" border="0">
+
+						<tr>
+							<td class="BodyTitle" >
+								Welcome to ISCAS 2027 On-Line Submission
+							</td>
+						</tr>
+						<tr>
+					<td class="BodySubTitle">Submission Procedure:</td>
+				</tr>
+				<tr>
+					<td class="BodyContent"><ol>
+<li><b><font color="blue"><i>ISCAS is NOT double-blind review this year. Please include author information on your submission.</font></b></i></li>
+
+<li>Read the <a href="/iscas2027/ESR/authorinfo1.php">Author Information</a> page to ensure that your submission meets the guidelines. <i>Please pay particular attention to the requirements for in-person presentation</i>.
+</li>
+
+<li>Prepare your submission in PDF format using our <a href="/iscas2027/ESR/samples.php">templates</a>.</li>
+
+<li>View the <a href="javascript:js_popup('/iscas2027/ESR/display_tracks.php', 'Tracks', 425, 500);">Track List</a></li>
+
+<li>You will need each author's information (email, affiliation, etc) to complete the submission process. Have this information ready before proceeding.</li>
+<br>
+<font color="blue" size="2"><i>IEEE takes the protection of intellectual property seriously. Accordingly, all submissions will be screened for plagiarism. By submitting your work you agree to allow IEEE to screen your work.
+<br><br>
+IEEE reserves the right to exclude any accepted paper from distribution after the conference (including, removal from IEEE Xplore) if the accepted paper is not presented at the conference.</i></font>
+<br>
+</ol>
+
+			</td>
+		</tr>
+		
+				<tr>
+					<td class="BodySubTitle">Important Deadlines:</td>
+				</tr>
+				<tr>
+					<td class="BodyContent">
+			<ul>
+<li>Submission deadline: <b>Oct 13, 2026 23:59 (UTC -0500)</b></li>
+
+<li>Decision notification: <b>Jan 20, 2027 23:59 (UTC -0600)</b></li>
+
+<!--
+<li>Paper submission deadline: <b>Oct 13, 2026 23:59 (UTC -0500)</b></li>
+
+<li>Paper submission deadline <font color="#FF0000"><b>(EXTENDED)</b></font>: <b>>Oct 13, 2026 23:59 (UTC -0500)</b></li>
+
+<li>Paper submission deadline: <b><font color="#FF0000">CLOSED</font></b></li>
+
+<li>INVITED paper submission deadline: <b>Oct 13, 2026 23:59 (UTC -0500)</b></li>
+
+<li>Notification of paper acceptance: <b>Jan 20, 2027 23:59 (UTC -0600)</b></li>
+
+<li>Final submission & copyright filing deadline: <b>Feb 10, 2027 23:59 (UTC -0600)</b></li>
+
+<li>Author Registration deadline: <b>Feb 10, 2027 23:59 (UTC -0600)</b></li>
+-->
+</td></tr>
+				<tr>
+					<td class="BodyContent">
+						<form id="gdpr_parent" action="login_auth.php" method="post" enctype="multipart/form-data">
+						<table class="Form" align="center" bgcolor="#EEEEEE" cellpadding="3" cellspacing="0" border="0">
+
+			<tr>
+				<td class="FormLabelR" colspan="2"><a href="register_new.php">Register as new author</a></td>
+			</tr>
+						<tr>
+							<td class="FormLabelL" colspan="2"><b>Registered users log in here:</b></td>
+						</tr>
+						<tr>
+							<td class="FormLabelL">Username:</td>
+							<td class="FormControl"><input type="text" id="gdpr_user" name="i_user_name" value="" maxlength="30" size="30"></td>
+						</tr>
+						<tr>
+							<td class="FormLabelL">Password:</td>
+							<td class="FormControl"><input type="password" name="i_password" value="" maxlength="30" size="30"></td>
+						</tr>
+						<!-- role select box was here -->
+						<tr>
+							<td class="FormButton" colspan="2" align="center"><input type="submit" name="login" value="Login"></td>
+						</tr>
+						<tr>
+							<td class="FormLabelR" colspan="2"><a href="reset_password.php">Forgot your password?</a></td>
+						</tr>
+						</table>
+            <input type="hidden" id="gdpr_email"/>
+						</form>
+					</td>
+				</tr>
+      					</table>
+					<!-- Body: End of Editable Content-->
+				</td>
+				<!-- ========================================================================== -->
+			</tr>
+		</table>	<!--Main-->
+	<!-- comments & copyright info -->
+	<table class="Footer" align="center" cellpadding="0" cellspacing="0">
+	<tr>
+		<td class="FooterLeft">
+			For help or comments contact
+			<a href="mailto:iscas@epapers.org">iscas@epapers.org</a>
+		</td>
+		<td class="FooterRight">
+			Copyright &copy; 2001-2026, All Rights Reserved
+		</td>
+	</tr>
+	</table>
+<script type="text/javascript" src="js/gdpr.js"></script>
+<div class="modal fade" id="gdpr_modal"
+	data-backdrop="static"
+	tabindex="-1" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h4 class="text-center modal-title">Terms and Conditions</h4>
+			</div>
+			<div class="modal-body">
+				<div class="gdpr_text"><p><b>DATA COLLECTION</b><br>We store data that users have given us voluntarily.
+In our role as data controller, we may collect and store contact information,
+such as name, email address, phone number, or physical address, when users sign up
+for our services or seek support. We also may collect other identifying information
+from our users, such as IP address, public keys or authentication tokens for external
+services.</p> <p>We separately act as a data processor for users of our services to
+process EU personal data, such as uploading files containing personal information.
+Users decide what personal data, if any, is uploaded to our service.</p>
+<p><b>EMAIL</b><br>By using Epapers websites you consent to receiving email communications
+as required in order to fulfill the services of this web application which include but are
+not limited to the submission, review & publication processes of this conference.</p>
+<p><b>COOKIES</b><br>Epapers websites place cookies on your device to give you the best
+user experience. By using our websites, you agree to the placement of these cookies,
+which are required for proper operation of this web site. Our cookies do not collect
+or store any personal data.</p>
+<p><b>PRIVACY POLICY</b><br>Click here to view our <a href="privacy_policy.php" target="_blank">privacy policy</a>.</p></div>
+			</div> <!-- modal body -->
+			<div class="modal-footer">
+				<button type="button" id="btn_gdpr_decline" class="btn btn-danger">Decline</button>
+				<button type="button" id="btn_gdpr_accept" class="btn btn-success">Accept</button>
+			</div><!-- modal footer -->
+		</div><!-- modal-content -->
+	</div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+  <button onclick="topFunction()" id="myBtn" title="Back to top">TOP</button>
+  <style>
+  #myBtn {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 30px;
+    z-index: 99;
+    font-size: 18px;
+    border: none;
+    outline: none;
+    background-color: red;
+    color: white;
+    cursor: pointer;
+    padding: 15px;
+    border-radius: 4px;
+  }
+  </style>
+  <script>
+  // When the user clicks on the button, scroll to the top of the document
+  var mybutton = document.getElementById("myBtn");
+  function topFunction() {
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+      }
+
+      function scrollFunction() {
+        if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+          mybutton.style.display = "block";
+        } else {
+          mybutton.style.display = "none";
+        }
+      }
+  $(document).ready(function () {
+      //Get the button
+
+
+      // When the user scrolls down 20px from the top of the document, show the button
+      window.onscroll = function() {scrollFunction()};
+    });
+  </script>
+  </BODY></HTML>

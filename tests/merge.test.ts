@@ -141,7 +141,8 @@ describe("merge_sources", () => {
     const stats: MergeStats = { merged_deadlines: 0, merged_by_key: {} };
     const merged = mergeSources([[upstream], [local]], CONFIG, stats);
     expect(merged).toHaveLength(1);
-    expect(merged[0].key).toBe("evomusart");
+    expect(merged[0].key).toBe("evomusart-2027");
+    expect(merged[0].legacy_keys).toContain("evomusart");
     expect(merged[0].editions).toHaveLength(1);
     expect(merged[0].editions[0].identity?.editionId).toBe("evomusart-2027");
     expect(merged[0].editions[0].deadlines.find((dl) => dl.kind === "abstract")).toMatchObject({

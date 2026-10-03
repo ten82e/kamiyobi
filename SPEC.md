@@ -239,6 +239,14 @@ export type Deadline = ExactDeadline | DateOnlyDeadline;
 export interface DeadlineEstimate { point_estimate: string; window_start: string; window_end: string; source_editions: number[]; method: "median-interval"; confidence: "low" | "medium"; }
 export interface Edition { year: number; edition_id: string; link: string; place: string; date_text: string; event_start: Date | null; event_end: Date | null; deadlines: Deadline[]; estimated: boolean; estimate?: DeadlineEstimate; source: string; }
 export interface Conference { key: string; title: string; full_name: string; link: string; rank: Record<string, string>; dblp: string | null; upstream_sub: string | null; tags: string[]; categories: string[]; editions: Edition[]; sources: string[]; }
+// Optional event metadata: event_review pins this edition's exact source wording,
+// date bounds, HTTPS evidence URL, review date and note. held_year distinguishes
+// a reviewed postponed event from its nominal edition year; changed source dates
+// must fail validation, never be overwritten to match the review.
+// event_segments: {start: string; end: string; label: string}[] represents separate
+// actual sessions. Every part remains <=31 days, ordered and non-overlapping;
+// the exact source dates or reviewed envelope must match, and a long envelope
+// must contain a real gap. event_date_precision is "split-dates" for these rows.
 ```
 
 ### 3.1 キーの決め方（衝突が実在するので規則を凍結する）
@@ -15867,3 +15875,25 @@ paperVecs 適用条件は「1 分野に収まる + 語彙非衝突」の 2 条�
 - 同じ会議・年度・種別・日時でも、edition ID・round・track・ラベルの違いを同一の日程としない。旧4要素キーが衝突する行だけに、これらの識別情報を含む suffix を付ける。衝突しない共有URLは維持する。
 - 複数候補がある旧URLは先頭行を黙って開かず、ラウンド・トラック付きの候補ボタンを出す。候補を選ぶと識別可能な新URLになる。元の一覧条件と日付精度は変更しない。
 - COMPSACの例外統合は各出典の元年度（JIP 2027、IPSJ 2026）・確認済みラベル（投稿締切、Submission）・明示round 1も固定する。未確認の別年度やラベルのみの別トラックは統合しない。
+
+
+### Automatic update source snapshots and deterministic recommendation inputs
+
+The updater carries `data/source-snapshots/` through the generated-update artifact
+and guarded data PR. Offline Pages builds restore these inputs before the merged
+snapshot, so retaining only `snapshot.json` would publish stale aggregator data.
+
+The required real-paper gate uses `--real-v2-feature-baseline` to first reproduce
+every pinned candidate feature and base score against immutable input metadata
+from main c06b9ff. It then evaluates the current production venue pool with the
+same pinned semantic observations, query coverage, negative cases and metric
+floors. This permits source-driven venue/category changes without refreshing
+the frozen feature store or confusing data drift with a scoring-code regression.
+A feature mismatch on the immutable baseline still fails the gate.
+
+`deadline_identity_migrations` in config carries reviewed, value-bound slot
+identity changes through public JSON and health metadata. Each entry uses the
+existing migration schema and is emitted only while its target slot exists.
+A malformed entry is rejected; the health gate still verifies changed values.
+The WSDM 2027 short-paper transition binds its original exact instant and official
+track CFP, correcting the aggregator's round-2 label without inventing a deadline.

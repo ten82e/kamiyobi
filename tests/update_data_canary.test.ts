@@ -4,11 +4,21 @@
  * for each scenario class (edition-id rename, genuine disappearance, new
  * warning code, new identity conflict).
  */
-import { readFileSync, rmSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import {
+  copyFileSync,
+  cpSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { evaluateHealthGate, type HealthReport, type ObservationBaseline } from "../src/build.ts";
-import { makeFixtureCache, runCli, tempWork } from "./helpers.ts";
+import { makeFixtureCache, NOW_ARG, REPO_ROOT, tempWork } from "./helpers.ts";
 
 const tempDirs: string[] = [];
 function scratch(): string {
@@ -41,6 +51,39 @@ function buildPair(mutate?: (fixtureRoot: string) => void): {
   };
 }
 
+/** Upstream schema/identity scenarios use a frozen primary observation input.
+ * Live updater observations are validated by production-health and captured replay tests.
+ * Run in an isolated root so parallel suites and canonical data stay untouched. */
+function runCli(outdir: string, options: { cache: string; extra?: string[] }) {
+  const root = scratch();
+  cpSync(join(REPO_ROOT, "data"), join(root, "data"), { recursive: true });
+  copyFileSync(join(REPO_ROOT, "config.yaml"), join(root, "config.yaml"));
+  copyFileSync(
+    join(REPO_ROOT, "tests/fixtures/canary-primary-observations.yaml"),
+    join(root, "data/primary_overrides.yaml"),
+  );
+  symlinkSync(join(REPO_ROOT, "site"), join(root, "site"), "dir");
+  const script = `const {cmdBuild,setRoot}=await import(${JSON.stringify(join(REPO_ROOT, "src/cli.ts"))});setRoot(process.argv[1]);process.exitCode=await cmdBuild(JSON.parse(process.argv[2]));`;
+  return spawnSync(
+    "node",
+    [
+      "--input-type=module",
+      "-e",
+      script,
+      root,
+      JSON.stringify({
+        out: outdir,
+        config: "config.yaml",
+        offline: true,
+        now: NOW_ARG,
+        cache: options.cache,
+        noEmbeddings: true,
+      }),
+    ],
+    { cwd: REPO_ROOT, encoding: "utf8", timeout: 300_000 },
+  );
+}
+
 /** 現在の data から観測系 baseline を作る。 */
 function observationOf(report: HealthReport): ObservationBaseline {
   const conflicts = report.identity_conflicts;
@@ -64,7 +107,7 @@ describe("update-data canary", () => {
       writeFileSync(file, readFileSync(file, "utf8").replace(/id: sigcomm26/g, "id: sigcomm26b"));
     });
     const result = evaluateHealthGate(current, baseline);
-    expect(result.ok).toBe(true);
+    expect(result.ok, result.reasons.join("; ")).toBe(true);
   });
 
   it("future-edition id rename passes the gate (issta-type upstream adoption)", {
@@ -82,7 +125,7 @@ describe("update-data canary", () => {
       writeFileSync(file, text);
     });
     const result = evaluateHealthGate(current, baseline);
-    expect(result.ok).toBe(true);
+    expect(result.ok, result.reasons.join("; ")).toBe(true);
   });
 
   it("a genuinely removed future deadline fails the gate", { timeout: 180_000 }, () => {
@@ -99,9 +142,10 @@ describe("update-data canary", () => {
     };
     const result = evaluateHealthGate(mutated, baseline);
     expect(result.ok).toBe(false);
-    expect(result.reasons.some((reason) => reason.includes("future deadline disappeared"))).toBe(
-      true,
-    );
+    expect(
+      result.reasons.some((reason) => reason.includes("future deadline disappeared")),
+      result.reasons.join("; "),
+    ).toBe(true);
   });
 
   it("unchanged sources rebuild stable health metadata", { timeout: 180_000 }, () => {

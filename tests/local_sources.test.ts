@@ -125,7 +125,8 @@ describe("local source data integrity", () => {
     // 183 -> 185: IPSJ の DBS・IFAT 研究会（2026 年 12 月研究発表会、合同開催）を収録した分。
     // 185 -> 186: EvoMUSART 2027の公式CFPによる概要登録（2026-11-01、時刻未確認）。
     // 186 -> 192: SecureCommの2回・IPSJ特集号3件とJIPの同じ募集を、公式の日付のみで訂正。
-    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(192);
+    // 192 -> 194: incoming official ECIR notification and EvoMUSART paper corrections.
+    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(194);
 
     for (const row of rows) {
       if (row.precision === "date-only") {

@@ -1,0 +1,129 @@
+<html>
+  <head>
+    <title>CVM 2027 - General Information</title>
+    <link rel="stylesheet" href="style.css" type="text/css" media="screen" />
+  </head>
+
+  <body>
+    <div id="wrapper">
+      <div id="wrapper2">
+
+        <div id="header" width="760">
+          <h3><p style="font:bold;font-size:50px;color:#ffffff">
+            <a href="http://iccvm.org/2027/" style="color:#ffffff">CVM 2027</a>
+          </p></h3>
+          <h2><p style="font-size:16px;line-height:20px;color:#ffffff">
+            Computational Visual Media Conference
+            <br />
+            <span style="line-height:18px"><font size="2" color="#ffffff">April 9-11, 2027</font></span>
+            <br />
+            <span style="line-height:18px"><font size="2" color="#ffffff">Singapore</font></span>
+          </p></h2>
+        </div>
+
+        <div id="tabs">
+          <ul>
+            <li><a href="index.htm">Home</a></li>
+            <li><a href="program.htm">Program</a></li>
+            <li><a href="committee.htm">Committee</a></li>
+            <li><a href="callPaper.htm">Call for Papers</a></li>
+            <li><a href="submission.htm">Paper Submission</a></li>
+            <li><a href="registration.htm">Registration</a></li>
+            <li><a href="info.htm">Visitor Info</a></li>
+          </ul>
+        </div>  
+
+        <div id="content">
+          <div id="main">
+            <div class="post" id="post-1">
+              <div class="entry">
+                <h2>
+                  <a href="index.htm" rel="bookmark" title="Permanent Link to General Information">General Information</a>
+                </h2>
+
+                <div style="text-align: justify;">
+                  <h3><strong>Welcome to Singapore</strong></h3>
+                  <p style="text-align: center;"><img class="alignnone" style="font-size: 13px;" alt="" src="images/city-01.jpg"
+                      height="145"> <img class="alignnone" style="font-size: 13px;" alt="" src="images/city-02.jpg" height="145"> <img
+                      class="alignnone" style="font-size: 13px;" alt="" src="images/city-03.jpg" height="145"></p>
+                  
+                  <p>The Computational Visual Media Conference series is intended to provide a major international forum for exchanging novel research ideas and significant practical results both underpinning and applying Visual Media. With the rapid progress of Internet technology, large-scale visual data can be found on the Internet, bringing significant opportunities for novel processing of visual information, as well as commercial applications. The primary rationale for this new conference series is to target cross disciplinary research which amalgamates aspects of computer graphics, computer vision, machine learning, image processing, video processing, visualization and geometric computing. Original research is sought in areas concerning the classification, composition, retrieval, synthesis, and understanding of visual media.</p>
+
+                  <p>The 15th international conference on Computational Visual Media (CVM 2027) will be held on <b>April 9-11, 2027</b> at <b>Nanyang Technological University, Singapore</b>.</p>
+                  <p>&nbsp;</p>
+
+                  <h3><strong>Important dates</strong></h3>
+                  <ul>
+                    <li><strong>Abstract submission:</strong> October 23, 2026 </li>
+                    <li><strong>Full papers submission:</strong> October 26, 2026 </li>
+            		    <li><strong>Acceptance notification:</strong> December 15, 2026 </li>
+                    <li><strong>Conference days:</strong> April 9-11, 2027.</li>
+                  </ul>
+                  <p>All deadlines are at 23:59 GMT. To determine what time this means in your local time zone, you can use <a href="http://www.timeanddate.com/worldclock/converter.html" target="_blank">The World Clock</a>.</p>
+                  <p>&nbsp;</p>
+
+                  <h3><strong>Organized by</strong></h3>
+                  <p>Nanyang Technological University, Singapore</p>
+                  <p>Tsinghua University, Beijing, China</p>
+                  <p>&nbsp;</p>
+
+                  <h3><strong>In cooperation with</strong><br></h3>
+                  <ul>
+                    <li><p><a href="http://www.asiagraphics.org/" target="_blank">ASIAGRAPHICS</a></p></li>
+                    <!-- <li><p><a href="http://cg-korea.org/" target="_blank">Korea Computer Graphics Society</a></p></li> -->
+                    <!--li><p>CAD and Graphics Technical Committee, <a href="https://www.ccf.org.cn/" target="_blank">CCF</a></p></li>
+                    <li><p>Geometric Design and Computing Technical Committee, <a href="https://www.csiam.org.cn/" target="_blank">CSIAM</a></p></li-->
+                  </ul>
+                  <p>&nbsp;</p>
+
+                  <h3><strong>Sponsored by</strong><br></h3>
+                  <div align="center">
+                    <p><a href="https://www.tsinghuajournals.com/en/home" target="_blank"><img class="alignnone" alt="cvm" src="images/cvm.png" width="40%"></a></p>
+                    <!-- <p><a href="https://www.tripo3d.ai/" target="_blank"><img class="alignnone" alt="vast" src="images/VAST黑色logo.png" width="40%"></a></p>
+                    <p><a href="https://www.xverse.cn/" target="_blank"><img class="alignnone" alt="xverse" src="images/XVERSE-logo-CMYK.png" width="40%"></a></p>
+                    <p><a href="https://www.anigma-ai.com/" target="_blank"><img class="alignnone" alt="anigma" src="images/ANIGMA-logo.png" width="40%"></a></p> -->
+                  </div>
+                  <p>&nbsp;</p>
+
+                  <h3><strong> Previous conferences:</strong></h3>
+                  <ul>
+		    <!--
+                    <li><p><a href="http://iccvm.org/2012/" target="_blank">1st conference</a>, Beijing, November 8-10, 2012.</p></li>
+                    <li><p><a href="http://iccvm.org/2013/" target="_blank">2nd conference</a>, Hangzhou, September 19-20, 2013.</p></li>
+                    <li><p><a href="http://iccvm.org/2015/" target="_blank">3rd conference</a>, Beijing, April 16-17, 2015.</p></li>
+                    <li><p><a href="http://iccvm.org/2016/" target="_blank">4th conference</a>, Cardiff, April 6-8, 2016.</p></li>
+                    <li><p><a href="http://iccvm.org/2017/" target="_blank">5th conference</a>, Tianjin, April 12-14, 2017.</p></li>
+                    <li><p><a href="http://iccvm.org/2018/" target="_blank">6th conference</a>, Shanghai, April 18-20, 2018.</p></li>
+                    <li><p><a href="http://iccvm.org/2019/" target="_blank">7th conference</a>, Bath, April 24-26, 2019.</p></li>
+		    -->
+                    <li><p><a href="http://iccvm.org/2020/index.htm" target="_blank">8th conference</a>, Macau, September 3-5, 2020.</p></li>
+                    <li><p><a href="http://iccvm.org/2021/index.htm" target="_blank">9th conference</a>, Qingdao, April 21-23, 2021.</p></li>
+                    <li><p><a href="http://iccvm.org/2022/index.htm" target="_blank">10th conference</a>, Beijing, April 7-9, 2022.</p></li>
+                    <li><p><a href="http://iccvm.org/2023/index.htm" target="_blank">11th conference</a>, Shenzhen, April 6-8, 2023.</p></li>
+                    <li><p><a href="http://iccvm.org/2024/index.htm" target="_blank">12th conference</a>, Wellington, April 10-12, 2024.</p></li>
+                    <li><p><a href="http://iccvm.org/2025/index.htm" target="_blank">13th conference</a>, Hong Kong, April 19-21, 2025.</p></li>
+                    <li><p><a href="http://iccvm.org/2026/index.htm" target="_blank">14th conference</a>, Korea, April 10-12, 2026.</p></li>
+                  </ul>
+                  <p>&nbsp;</p>
+
+                  <h3><strong>Language</strong></h3>
+                  <p>English is the official language of the conference.</p>
+                  <p>&nbsp;</p>
+
+                  <h3><strong>Contact</strong></h3>
+                  <p>If you have any questions or suggestions, please send mail to <b>cvm@tsinghua.edu.cn</b></p>
+                  <p>&nbsp;</p>
+                </div>
+              </div> <!-- eof entry -->
+            </div> <!-- eof post -->
+          </div> <!-- eof main -->
+        </div> <!-- eof content -->
+
+        <div id="footer" style="padding-bottom:15px;">
+          <div id="footer-inner"></div>
+        </div>
+      </div> <!-- eof wrapper2 -->
+    </div> <!-- eof wrapper -->
+  </body>
+</html>
+

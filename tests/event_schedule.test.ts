@@ -83,6 +83,12 @@ describe("evidence-bound event schedules", () => {
       expect.arrayContaining([expect.stringContaining("event review does not match")]),
     );
   });
+  it("does not invent an absent historical edition from its evidence review", () => {
+    const missing = structuredClone(capturedWasa);
+    missing.conferences[0].editions = [];
+    const patched = applyOverrides(conferencesFromJson(missing), wasaOverride());
+    expect(patched[0].editions).toEqual([]);
+  });
   it("keeps the nominal edition year and actual held year separate", () => {
     expect(validateData(payload(edition)).errors).toEqual([]);
     expect(validateData(payload({ ...edition, event_review: undefined })).errors).toEqual(

@@ -1502,11 +1502,18 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
                 local_date: "1970-01-01",
                 comment: null,
                 remove: true,
+                ...(Array.isArray(item.values)
+                  ? {
+                      removeValues: item.values.filter(
+                        (value): value is string => typeof value === "string",
+                      ),
+                    }
+                  : {}),
               }))
           : [];
         next.deadlines =
           patch.mode === "merge-slots"
-            ? mergeDeadlineSlots(next.deadlines, [...semantics.accepted, ...removals])
+            ? mergeDeadlineSlots(next.deadlines, [...removals, ...semantics.accepted])
             : semantics.accepted;
       } else if (semantics.action === "clear") {
         next.deadlines = [];
@@ -1522,6 +1529,8 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
     if (typeof patch !== "object" || patch === null) continue;
     const rec = patch as Record<string, unknown>;
     if (rec.drop) continue;
+    // Reviews bind an observed edition; they cannot manufacture missing source history.
+    if ("event_review" in rec) continue;
 
     const isYearKey = /^\d+$/.test(patchKey);
     const year = isYearKey
@@ -1605,7 +1614,7 @@ function exactInsideDateOnly(exact: Deadline, dateOnly: Deadline): boolean {
 }
 
 /** Apply primary observations slot-by-slot without letting lower precision erase exact data. */
-export type DeadlineSlotObservation = Deadline & { remove?: boolean };
+export type DeadlineSlotObservation = Deadline & { remove?: boolean; removeValues?: string[] };
 
 export function mergeDeadlineSlots(
   existing: Deadline[],
@@ -1615,7 +1624,20 @@ export function mergeDeadlineSlots(
   for (const incoming of observed) {
     const index = out.findIndex((held) => deadlineSlotKey(held) === deadlineSlotKey(incoming));
     if (incoming.remove) {
-      if (index >= 0) out.splice(index, 1);
+      if (index >= 0) {
+        const held = out[index];
+        const value = isDateOnlyDeadline(held) ? held.local_date : held.at_utc.toISOString();
+        const values = [
+          value,
+          ...(held.conflicts ?? []).map(
+            (conflict) => conflict.local_date ?? conflict.at_utc.toISOString(),
+          ),
+        ];
+        // A withdrawn-date review applies only to the reviewed observations.
+        // New source dates/conflicts remain visible for the next review.
+        if (!incoming.removeValues || values.every((v) => incoming.removeValues!.includes(v)))
+          out.splice(index, 1);
+      }
       continue;
     }
     if (index < 0) {
