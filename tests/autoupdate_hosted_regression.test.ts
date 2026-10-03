@@ -10,6 +10,43 @@ import { applyOverrides, mergeSources, normalizeConfiguredVenueIdentities } from
 import { conferencesFromJson } from "../src/model.ts";
 
 describe("captured hosted updater failure", () => {
+  it("corrects the committed ECIR slot before rebuilding the updater baseline", () => {
+    const captured = JSON.parse(
+      readFileSync("tests/fixtures/autoupdate-committed-ecir.json", "utf8"),
+    );
+    const overrides = load(readFileSync("data/overrides.yaml", "utf8")) as Record<string, unknown>;
+    const now = new Date("2026-10-03T06:00:00Z");
+    const output = toJson(applyOverrides(conferencesFromJson(captured), overrides), {}, now);
+    const deadlines = conferencesFromJson(output)[0].editions[0].deadlines;
+    const abstract = deadlines.find((row) => row.label === "Abstract submission")!;
+    expect(abstract.at_utc?.toISOString()).toBe("2026-09-22T11:59:59.000Z");
+    expect(abstract.conflicts).toBeUndefined();
+    expect(
+      abstract.evidence?.some((evidence) => evidence.source_name === "ecir official CFP"),
+    ).toBe(true);
+    const remaining = captured.conferences[0].editions[0].deadlines.filter(
+      (row: { label: string }) =>
+        ![
+          "Abstract submission",
+          "Paper submission",
+          "Notifications (full & short papers)",
+        ].includes(row.label),
+    );
+    for (const row of remaining) {
+      const held = deadlines.find((held) => held.label === row.label)!;
+      expect(held.at_utc?.toISOString()).toBe(new Date(row.utc).toISOString());
+    }
+    const changed = structuredClone(captured);
+    changed.conferences[0].editions[0].deadlines.find(
+      (row: { label: string }) => row.label === "Abstract submission",
+    ).utc = "2026-09-24T23:59:59Z";
+    const unknown = toJson(applyOverrides(conferencesFromJson(changed), overrides), {}, now);
+    expect(
+      conferencesFromJson(unknown)[0].editions[0].deadlines.find(
+        (row) => row.label === "Abstract submission",
+      )?.conflicts?.length,
+    ).toBeGreaterThan(0);
+  });
   it("reconciles captured earlier-date and disappearing-track transitions with official evidence", () => {
     const captured = JSON.parse(
       readFileSync("tests/fixtures/autoupdate-deadline-transitions.json", "utf8"),

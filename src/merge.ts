@@ -1492,7 +1492,7 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
           : [];
         next.deadlines =
           patch.mode === "merge-slots"
-            ? mergeDeadlineSlots(next.deadlines, [...semantics.accepted, ...removals])
+            ? mergeDeadlineSlots(next.deadlines, [...removals, ...semantics.accepted])
             : semantics.accepted;
       } else if (semantics.action === "clear") {
         next.deadlines = [];

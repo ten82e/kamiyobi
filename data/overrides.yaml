@@ -602,6 +602,15 @@ conferences:
         event_start: '2027-03-21'
         event_end: '2027-03-25'
         date_text: March 21-25, 2027 (Southampton, UK)
+        # Remove only the reviewed stale generic abstract slot before applying its correction.
+        # The full/short/reproducibility/doctoral track slots remain untouched.
+        remove:
+          - kind: abstract
+            label: Abstract submission
+            round: 1
+            values:
+              - '2026-09-25T23:59:59.000Z'
+              - '2026-09-22T11:59:59.000Z'
         deadlines:
           - kind: abstract
             label: Abstract submission
