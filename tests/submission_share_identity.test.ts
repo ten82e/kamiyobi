@@ -128,3 +128,58 @@ it("曖昧な旧リンクで最初のラウンドを黙って開かず、選択�
   buttons[1].click?.();
   expect(opened).toEqual([rows[1]]);
 });
+
+it("詳細の描画後にフォーカスを回復し、閉じた後や利用者の操作からは奪わない", () => {
+  const source = jsFunction(siteRuntime(), "focusDrawerAfterRender");
+  const selected = row();
+  function harness() {
+    const callbacks: Array<() => void> = [];
+    let focuses = 0;
+    const document = { activeElement: {} };
+    let inside = false;
+    const button = {
+      focus: () => {
+        focuses += 1;
+      },
+    };
+    const run = new Function(
+      "requestAnimationFrame",
+      "drawerRow",
+      "$",
+      "document",
+      "row",
+      "button",
+      `${source};return { open: () => focusDrawerAfterRender(row, button), close: () => { drawerRow = null; } };`,
+    )(
+      (callback: () => void) => callbacks.push(callback),
+      selected,
+      () => ({ contains: () => inside }),
+      document,
+      selected,
+      button,
+    );
+    return {
+      run,
+      callbacks,
+      focuses: () => focuses,
+      moveInside: () => {
+        inside = true;
+      },
+    };
+  }
+  const reopened = harness();
+  reopened.run.open();
+  expect(reopened.focuses()).toBe(1);
+  reopened.callbacks[0]();
+  expect(reopened.focuses()).toBe(2);
+  const closed = harness();
+  closed.run.open();
+  closed.run.close();
+  closed.callbacks[0]();
+  expect(closed.focuses()).toBe(1);
+  const navigated = harness();
+  navigated.run.open();
+  navigated.moveInside();
+  navigated.callbacks[0]();
+  expect(navigated.focuses()).toBe(1);
+});

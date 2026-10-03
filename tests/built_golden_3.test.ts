@@ -161,11 +161,10 @@ it("「視差効果を減らす」設定では動きが消え、開閉自体は�
   expect(reduced.length, "動きを抑える設定の扱いがスタイルに無い").toBeGreaterThan(0);
   const star = reduced.find((b) => b.selector === "*");
   expect(star, "要素全体の動きを止めていない").toBeDefined();
-  expect(star!.body, "遷移の長さを短くしていない").toContain("transition-duration: 0.01ms");
-  // 待ち受けの安全のため `none` ではなく 0.01ms にする（0 にすると遷移終了が来ない）。
-  expect(star!.body).not.toMatch(/transition[^:]*:\s*none/);
-  // 解決関数（メディアクエリの条件は幅だけを見る）でも、動きが消えた値になること。
-  expect(effectiveCss(style, "*", "transition-duration", 1200)).toContain("0.01ms");
+  // 極短遷移を全要素へ付けると、継承した visibility が子ボタンでも遷移し、
+  // 素早く開き直した詳細へフォーカスできなくなる。終了イベントへの依存は無い。
+  expect(star!.body, "非表示の子要素に遷移が残る").toContain("transition: none");
+  expect(effectiveCss(style, "*", "transition", 1200)).toContain("none");
   // 通常時の動きまで潰していたら意味が無い（既定は従来のままだこと）。
   expect(effectiveCss(style, ".drawer", "transition", 1200)).toContain("0.25s");
   expect(effectiveCss(style, ".drawer-backdrop", "transition", 1200)).toContain("0.2s");

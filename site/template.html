@@ -874,14 +874,14 @@ footer a:hover { text-decoration: underline; }
    * 第 110 回で JS のスクロール（`scrollIntoView`）はこの設定を見たが、CSS の遷移は
    * そのまま残っていた – 同じ設定を JS だけ守っても半止まりだった（2026-09-23 実測:
    * `prefers-reduced-motion` の扱いがスタイル内に 0 箇所。ドロワーは 0.25 秒で滑り込む）。
-   * `none` にせず 0.01ms にするのは、遷移終了を待つコードが入っても止まらないようにする
-   * ため（実測で待ち受けは無いが、将来に備える）。表示/非表示は `.active` クラスが
-   * 直接決めるので、閉じる操作が効かなくなることはない（下の検査で見る）。 */
+   * 全要素を 0.01ms にすると、継承した visibility まで遷移し、詳細を素早く
+   * 開き直したときに子ボタンがまだ非表示になってフォーカスを失う。開閉は .active が
+   * 直接決め、遷移終了を待つコードも無いので、この設定では遷移自体を止める。 */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    transition-duration: 0.01ms !important;
+    transition: none !important;
     transition-delay: 0s !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

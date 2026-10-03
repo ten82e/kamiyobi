@@ -2148,7 +2148,9 @@ it("upcoming.md and llms.txt explain the coverage window and the JST basis (SPEC
 const DRAWER_NAV_STUBS =
   'let drawerRow = null, drawerOriginKey = ""; const history = { state: null }; ' +
   'const rowShareKeyJa = () => "test-row"; const setDrawerModal = () => {}; ' +
-  "const renderEditionSchedule = () => {}; ";
+  "const renderEditionSchedule = () => {}; const requestAnimationFrame = () => {}; " +
+  jsFunction(siteRuntime(), "focusDrawerAfterRender") +
+  ";";
 
 it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", () => {
   const runtime = siteRuntime();
@@ -3128,7 +3130,7 @@ it("deadline display includes AoE notation for AoE deadlines only (SPEC §7)", (
   // JST 宣言の国内締切まで AoE を並記すると、実在しない AoE 締切を検知させる。
   expect(html).toContain("Recommender.officialZone(r.dl)");
   expect(html).toMatch(/元の日時 \$\{fmtAoE\(d\)\}/);
-  expect(html).toMatch(/crossCheck = `元の日時 \$\{fmtAoE\(new Date\(r\.t\)\)\}\`/);
+  expect(html).toMatch(/crossCheck = `元の日時 \$\{fmtAoE\(new Date\(r\.t\)\)\}`/);
   expect(html).toContain('"元の日時 JST"');
   // 実行検証: fmtAoE は UTC-12 の壁時計を返す（例: 12:00 UTC → 00:00 AoE）
   const src = jsFunction(html, "fmtAoE");

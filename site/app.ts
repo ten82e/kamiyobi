@@ -1378,11 +1378,19 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     $("drawerBody").innerHTML = html;
     renderEditionSchedule(r);
     const closeBtn = $("drawerClose");
-    if (closeBtn) closeBtn.focus();
+    if (closeBtn) focusDrawerAfterRender(r, closeBtn);
   }
   window.openDrawer = (row: unknown) => {
     if (isDrawerRow(row)) openDrawer(row);
   };
+
+  // 再描画後も詳細が開いていて、利用者が内部へ移動していない場合だけ回復する。
+  function focusDrawerAfterRender(row: DrawerRow, closeButton: HTMLElement) {
+    closeButton.focus();
+    requestAnimationFrame(() => {
+      if (drawerRow === row && !$("drawer").contains(document.activeElement)) closeButton.focus();
+    });
+  }
 
   // 閉じるのは ✕ ボタン（自前 onclick 経由、引数なし）とバックドロップの直接クリックのみ。
   // ドロワー内の button がバブルしても閉じない。
