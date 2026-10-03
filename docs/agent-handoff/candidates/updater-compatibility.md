@@ -10,7 +10,7 @@
 | 検索の固定件数5件 | CVMの公式訂正履歴の「前」と、EvoMUSARTの新しいidentityに適用される観測の「の」が当時の入力に追加された。当時のoverrideとidentity設定をテスト用に隔離。期待件数・検索実装・productionの公式訂正履歴は変更しない。DASFAAも当時のUTC instantをfixtureだけに保持する。 |
 | mergeの期待値1件 | 旧UIのcanonical `evomusart` を期待していた。公開済みの `evomusart-2027` を維持する候補の契約に合わせ、その代わりに旧UI keyが明示的別名として保持されることを検証する。 |
 
-旧URLを開けない問題は実装上の不具合だった。source IDが一致する確認済みのidentity設定から `legacy_keys` を読み、予約済みの他のcanonical keyとの衝突を除く。UIは年・kind・時刻・slotを変えず照合する。同時刻の別round/trackは選択を求め、別の行を黙って開かない。
+旧URLを開けない問題は実装上の不具合だった。mergeから配信catalogまで確認済みの別名を保持する。source IDが一致する確認済みのidentity設定から `legacy_keys` を読み、予約済みの他のcanonical keyとの衝突を除く。UIは年・kind・時刻・slotを変えず照合する。同時刻の別round/trackは選択を求め、別の行を黙って開かない。
 
 ## 推薦データの更新条件
 
@@ -38,4 +38,4 @@ prepareはcommitted archiveと明示した保護7ファイルから入力を読�
 
 featuresの再生成手順はarchive内で、元の意味検索値を渡し `--data data/benchmarks/real-paper-feature-baseline.json` とfull dev/heldout/negativeを指定、`--write-required-features <出力>` を付ける。その後dev-only trainerを既定の入力・出力で実行する。固定データや意味検索値を現在のpublicから作り直さない。再生成時のエンジンrevisionはmanifestと一致させる。
 
-EvoMUSARTの公式保存blobにある概要・論文の11月1日は双方date-onlyを保持する。ECIRの公式訂正で廃止した古い時刻のリンクは「収録なし」と明示し、別の締切へ推測転送しない。歴史1,673開催回の年度・ID・原会期・event_start/endは変更しない。push/merge/deployとPR955の再試行は行わない。
+EvoMUSARTの公式保存blobにある概要・論文の11月1日は双方date-onlyを保持する。EvoMUSARTの変更のない旧概要URLは開く。訂正された旧論文時刻のURLでは、日時が一致しない旨と現在の同じ会議・年度・kindの日程を示し、利用者が確認して選ぶ。古い時刻を現行の日付へ流用せず、現在の共有URLで再読み込みできる。ECIRの公式訂正で廃止した古い時刻のリンクは「収録なし」と明示し、別の締切へ推測転送しない。歴史1,673開催回の年度・ID・原会期・event_start/endは変更しない。push/merge/deployとPR955の再試行は行わない。

@@ -156,6 +156,22 @@ for (const result of evoOldLinks) {
     assert(result.choices[0].includes("2026-11-01") && result.choices[0].includes("時刻未確認"));
     await query("EvoMUSART", { row: result.oldKey, kind: "paper" });
     await waitFor("document.querySelector('.shared-row-choice')");
+    await cmd("Emulation.setDeviceMetricsOverride", {
+      width: 390,
+      height: 844,
+      deviceScaleFactor: 1,
+      mobile: true,
+    });
+    await evaluate("document.querySelector('#sharedRowChoices').scrollIntoView({block:'center'})");
+    const choiceSize = await evaluate(
+      "({width:document.documentElement.scrollWidth, viewport:innerWidth, height:document.querySelector('.shared-row-choice').getBoundingClientRect().height})",
+    );
+    assert(choiceSize.width <= choiceSize.viewport + 1 && choiceSize.height >= 44);
+    const correctionShot = await cmd("Page.captureScreenshot", { format: "png" });
+    await writeFile(
+      "work/agent-verification/screenshots/integration-corrected-link-mobile.png",
+      Buffer.from(correctionShot.data, "base64"),
+    );
     await evaluate("document.querySelector('.shared-row-choice').click()");
     await waitFor("document.querySelector('#drawerBackdrop.active')");
     const detail = await evaluate("document.querySelector('#drawerBody').textContent");
