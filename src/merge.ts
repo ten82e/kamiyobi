@@ -18,6 +18,8 @@ import {
   deadlineTrackKey,
   type Edition,
   type EditionIdentity,
+  type EventReview,
+  type EventSegment,
   type ExactDeadline,
   fmtDate,
   isDateOnlyDeadline,
@@ -815,8 +817,14 @@ function fillEdition(target: Edition, other: Edition): void {
   if (!target.link && other.link) target.link = other.link;
   if (!target.place && other.place) target.place = other.place;
   if (!target.date_text && other.date_text) target.date_text = other.date_text;
-  if (!target.event_start && other.event_start) target.event_start = other.event_start;
-  if (!target.event_end && other.event_end) target.event_end = other.event_end;
+  if (!target.event_segments?.length && !target.event_start && other.event_start)
+    target.event_start = other.event_start;
+  if (!target.event_segments?.length && !target.event_end && other.event_end)
+    target.event_end = other.event_end;
+  if (!target.event_segments && target.date_text === other.date_text && other.event_segments)
+    target.event_segments = other.event_segments;
+  if (!target.event_review && target.date_text === other.date_text && other.event_review)
+    target.event_review = other.event_review;
   const identity = mergeEditionIdentity([target.identity, other.identity]);
   if (identity) target.identity = identity;
 }
@@ -1421,11 +1429,19 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
     const next: Edition = { ...edition, deadlines: [...edition.deadlines] };
     if ("id" in patch) next.edition_id = String(patch.id);
     for (const field of ["link", "place", "date_text"] as const) {
-      if (field in patch) next[field] = String(patch[field]);
+      // A reviewed date is a pin, not a replacement: changed upstream dates must fail revalidation.
+      if (field in patch && !(field === "date_text" && "event_review" in patch))
+        next[field] = String(patch[field]);
     }
     for (const field of ["event_start", "event_end"] as const) {
       if (field in patch) next[field] = asDate(patch[field]);
     }
+    if ("event_segments" in patch) {
+      next.event_segments = patch.event_segments as EventSegment[];
+      if (Array.isArray(next.event_segments) && next.event_segments.length)
+        next.event_date_precision = "split-dates";
+    }
+    if ("event_review" in patch) next.event_review = patch.event_review as EventReview;
     if ("estimated" in patch) {
       // 推定版 (rollforward 生成) を実版へ昇格 / 降格させるための上書き。
       next.estimated = Boolean(patch.estimated);
@@ -1465,6 +1481,13 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
                 local_date: "1970-01-01",
                 comment: null,
                 remove: true,
+                ...(Array.isArray(item.values)
+                  ? {
+                      removeValues: item.values.filter(
+                        (value): value is string => typeof value === "string",
+                      ),
+                    }
+                  : {}),
               }))
           : [];
         next.deadlines =
@@ -1485,6 +1508,8 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
     if (typeof patch !== "object" || patch === null) continue;
     const rec = patch as Record<string, unknown>;
     if (rec.drop) continue;
+    // Reviews bind an observed edition; they cannot manufacture missing source history.
+    if ("event_review" in rec) continue;
 
     const isYearKey = /^\d+$/.test(patchKey);
     const year = isYearKey
@@ -1568,7 +1593,7 @@ function exactInsideDateOnly(exact: Deadline, dateOnly: Deadline): boolean {
 }
 
 /** Apply primary observations slot-by-slot without letting lower precision erase exact data. */
-export type DeadlineSlotObservation = Deadline & { remove?: boolean };
+export type DeadlineSlotObservation = Deadline & { remove?: boolean; removeValues?: string[] };
 
 export function mergeDeadlineSlots(
   existing: Deadline[],
@@ -1578,7 +1603,20 @@ export function mergeDeadlineSlots(
   for (const incoming of observed) {
     const index = out.findIndex((held) => deadlineSlotKey(held) === deadlineSlotKey(incoming));
     if (incoming.remove) {
-      if (index >= 0) out.splice(index, 1);
+      if (index >= 0) {
+        const held = out[index];
+        const value = isDateOnlyDeadline(held) ? held.local_date : held.at_utc.toISOString();
+        const values = [
+          value,
+          ...(held.conflicts ?? []).map(
+            (conflict) => conflict.local_date ?? conflict.at_utc.toISOString(),
+          ),
+        ];
+        // A withdrawn-date review applies only to the reviewed observations.
+        // New source dates/conflicts remain visible for the next review.
+        if (!incoming.removeValues || values.every((v) => incoming.removeValues!.includes(v)))
+          out.splice(index, 1);
+      }
       continue;
     }
     if (index < 0) {

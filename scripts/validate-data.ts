@@ -10,6 +10,7 @@ import {
   evidenceClassOf,
   isConfirmedTimezone,
   parseDateRange,
+  parseEventSegments,
   parseInstant,
   truncatedVenueName,
 } from "../src/model.ts";
@@ -680,6 +681,145 @@ function parseExactDeadline(
   return null;
 }
 
+/** Evidence pins the exact source wording, bounds and edition; upstream changes require a new review. */
+function eventReviewValid(
+  edition: Record<string, unknown>,
+  id: string,
+  year: number,
+  result: DataValidation,
+  prefix: string,
+): boolean {
+  if (edition.event_review === undefined) return false;
+  const raw = edition.event_review;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    add(result.errors, `${prefix}: invalid event review`);
+    return false;
+  }
+  const review = raw as Record<string, unknown>;
+  const [parsedStart, parsedEnd] = parseDateRange(String(edition.date_text ?? ""), year);
+  const parsedSegments = parseEventSegments(String(edition.date_text ?? ""), year);
+  const start = asDate(edition.event_start) ?? parsedStart ?? asDate(parsedSegments[0]?.start);
+  const end =
+    asDate(edition.event_end) ??
+    parsedEnd ??
+    asDate(parsedSegments[parsedSegments.length - 1]?.end);
+  const sameDay = (date: Date | null, pinned: unknown) =>
+    date !== null && date.toISOString().slice(0, 10) === pinned;
+  const heldYear = review.held_year === undefined ? year : review.held_year;
+  let sourceUrlValid = false;
+  try {
+    const url = new URL(String(review.source_url ?? ""));
+    sourceUrlValid = url.protocol === "https:" && !url.username && !url.password;
+  } catch {
+    /* Invalid evidence is rejected below. */
+  }
+  const alternatives = review.source_date_text_alternatives ?? [];
+  const validTexts =
+    Array.isArray(alternatives) &&
+    alternatives.every((text) => typeof text === "string" && text.trim());
+  const pinnedTexts = [
+    review.source_date_text,
+    ...(Array.isArray(alternatives) ? alternatives : []),
+  ];
+  const validTextBounds = pinnedTexts.every((text) => {
+    const [from, to] = parseDateRange(String(text ?? ""), year);
+    const parts = parseEventSegments(String(text ?? ""), year);
+    return (
+      sameDay(from ?? asDate(parts[0]?.start), review.source_start) &&
+      sameDay(to ?? asDate(parts[parts.length - 1]?.end), review.source_end)
+    );
+  });
+  const valid =
+    validTexts &&
+    validTextBounds &&
+    review.edition_id === id &&
+    [review.source_date_text, ...(Array.isArray(alternatives) ? alternatives : [])].includes(
+      edition.date_text,
+    ) &&
+    typeof review.note === "string" &&
+    review.note.trim().length >= 20 &&
+    asDate(review.reviewed_on) !== null &&
+    sourceUrlValid &&
+    sameDay(start, review.source_start) &&
+    sameDay(end, review.source_end) &&
+    Number.isInteger(heldYear) &&
+    [year, year + 1].includes(Number(heldYear)) &&
+    start?.getUTCFullYear() === heldYear &&
+    [Number(heldYear), Number(heldYear) + 1].includes(end?.getUTCFullYear() ?? 0);
+  if (!valid)
+    add(result.errors, `${prefix}: event review does not match edition/source dates or evidence`);
+  return valid;
+}
+
+function eventSegmentsValid(
+  edition: Record<string, unknown>,
+  year: number,
+  reviewValid: boolean,
+  result: DataValidation,
+  prefix: string,
+): boolean {
+  if (edition.event_segments === undefined) return false;
+  const segments = edition.event_segments;
+  const before = result.errors.length;
+  if (!Array.isArray(segments) || segments.length < 2 || segments.length > 100) {
+    add(result.errors, `${prefix}: event segments must contain 2-100 parts`);
+    return false;
+  }
+  const allowedYear = reviewValid
+    ? Number((edition.event_review as Record<string, unknown>).held_year ?? year)
+    : year;
+  let previousEnd = "";
+  for (const segment of segments) {
+    const part =
+      segment && typeof segment === "object" && !Array.isArray(segment)
+        ? (segment as Record<string, unknown>)
+        : {};
+    const start = asDate(part.start);
+    const end = asDate(part.end);
+    if (
+      !start ||
+      !end ||
+      start > end ||
+      end.getTime() - start.getTime() > MAX_EVENT_DAYS * 86_400_000 ||
+      ![allowedYear, allowedYear + 1].includes(start.getUTCFullYear()) ||
+      ![allowedYear, allowedYear + 1].includes(end.getUTCFullYear()) ||
+      typeof part.label !== "string" ||
+      String(part.start) <= previousEnd
+    )
+      add(result.errors, `${prefix}: invalid, overlapping or unordered event segment`);
+    previousEnd = String(part.end ?? "");
+  }
+  const parsed = parseEventSegments(String(edition.date_text ?? ""), year);
+  const sameParts =
+    parsed.length === segments.length &&
+    parsed.every(
+      (part, index) => part.start === segments[index]?.start && part.end === segments[index]?.end,
+    );
+  const [parsedStart, parsedEnd] = parseDateRange(String(edition.date_text ?? ""), year);
+  const start = asDate(edition.event_start) ?? parsedStart;
+  const end = asDate(edition.event_end) ?? parsedEnd;
+  const pinnedEnvelope =
+    reviewValid &&
+    start?.toISOString().slice(0, 10) === segments[0]?.start &&
+    end?.toISOString().slice(0, 10) === segments[segments.length - 1]?.end;
+  if (!sameParts && !pinnedEnvelope)
+    add(result.errors, `${prefix}: event segments lack matching source dates or reviewed envelope`);
+  // A split schedule must actually have a gap; it cannot waive an oversized continuous event.
+  if (
+    start &&
+    end &&
+    end.getTime() - start.getTime() > MAX_EVENT_DAYS * 86_400_000 &&
+    !segments.some(
+      (part, index) =>
+        index > 0 &&
+        (asDate(part?.start)?.getTime() ?? 0) - (asDate(segments[index - 1]?.end)?.getTime() ?? 0) >
+          86_400_000,
+    )
+  )
+    add(result.errors, `${prefix}: event segments must represent separate dates`);
+  return result.errors.length === before;
+}
+
 function validateEdition(
   key: string,
   edition: Record<string, unknown>,
@@ -700,16 +840,21 @@ function validateEdition(
     add(result.errors, `${prefix}: event_start is invalid`);
   if (edition.event_end !== undefined && edition.event_end !== null && !end)
     add(result.errors, `${prefix}: event_end is invalid`);
-  if (start && start.getUTCFullYear() !== year)
+  const reviewValid = eventReviewValid(edition, id, year, result, prefix);
+  const segmentsValid = eventSegmentsValid(edition, year, reviewValid, result, prefix);
+  const heldYear = reviewValid
+    ? Number((edition.event_review as Record<string, unknown>).held_year ?? year)
+    : year;
+  if (start && start.getUTCFullYear() !== heldYear)
     add(result.errors, `${prefix}: event_start year conflicts with edition ${year}`);
-  if (end && ![year, year + 1].includes(end.getUTCFullYear()))
+  if (end && ![heldYear, heldYear + 1].includes(end.getUTCFullYear()))
     add(result.errors, `${prefix}: event_end year conflicts with edition ${year}`);
   const textYears = years(edition.date_text);
   const [textStart, textEnd] =
     !start && !end && textYears.includes(year + 1)
       ? parseDateRange(String(edition.date_text ?? ""), year)
       : [null, null];
-  const allowedTextYears = new Set([year]);
+  const allowedTextYears = new Set([heldYear]);
   if (
     (start?.getUTCFullYear() === year && end?.getUTCFullYear() === year + 1) ||
     (textStart?.getUTCFullYear() === year &&
@@ -725,7 +870,7 @@ function validateEdition(
     add(result.errors, `${prefix}: event range is incomplete`);
   if (start && end) {
     if (start > end) add(result.errors, `${prefix}: event range is reversed`);
-    if (end.getTime() - start.getTime() > MAX_EVENT_DAYS * 86_400_000) {
+    if (end.getTime() - start.getTime() > MAX_EVENT_DAYS * 86_400_000 && !segmentsValid) {
       const precision = String(edition.event_date_precision ?? "");
       const dateText = String(edition.date_text ?? "");
       const cleanText = dateText
@@ -754,11 +899,18 @@ function validateEdition(
   const eventPrecision = String(edition.event_date_precision ?? "").trim();
   if (
     eventPrecision &&
-    !["exact-range", "single-day", "month-only", "not-announced", "unverified"].includes(
-      eventPrecision,
-    )
+    ![
+      "split-dates",
+      "exact-range",
+      "single-day",
+      "month-only",
+      "not-announced",
+      "unverified",
+    ].includes(eventPrecision)
   )
     add(result.errors, `${prefix}: unknown event date precision ${eventPrecision}`);
+  if (eventPrecision === "split-dates" && !segmentsValid)
+    add(result.errors, `${prefix}: split-dates requires valid event segments`);
   const eventStatus = String(edition.event_date_status ?? "")
     .trim()
     .toLowerCase();
@@ -766,7 +918,15 @@ function validateEdition(
     eventStatus === "not-announced" ||
     /^(?:tbd(?:\s+20\d{2})?|tba(?:\s+20\d{2})?|not announced|to be announced)$/i.test(dateText) ||
     /^(?:未定|未発表)$/.test(dateText);
-  if (!start && !end && dateText && !explicitlyNotAnnounced && !eventPrecision)
+  if (
+    !start &&
+    !end &&
+    dateText &&
+    !explicitlyNotAnnounced &&
+    !eventPrecision &&
+    !reviewValid &&
+    !segmentsValid
+  )
     add(result.warnings, `${prefix}: event date text is not structured`);
 
   const slots = new Map<string, string>();

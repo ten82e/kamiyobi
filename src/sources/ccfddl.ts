@@ -15,6 +15,7 @@ import {
   eventDatePrecisionOf,
   isNonDateMarker,
   parseDateRange,
+  parseEventSegments,
   parseInstant,
   refineKindWithLabel,
   slug,
@@ -204,6 +205,9 @@ export function editionOf(
     link,
     place: String(raw.place ?? ""),
     date_text: dateText,
+    ...(parseEventSegments(dateText, year).length
+      ? { event_segments: parseEventSegments(dateText, year) }
+      : {}),
     event_date_precision: eventDatePrecisionOf(raw.event_date_precision, dateText, start, end),
     event_start: start,
     event_end: end,

@@ -36,6 +36,225 @@ aliases:
 drop: []
 
 conferences:
+  iscas:
+    editions:
+      iscas27:
+        year: 2027
+        date_text: June 6-9, 2027
+        event_start: '2027-06-06'
+        event_end: '2027-06-09'
+        deadlines:
+          - kind: paper
+            label: Paper submission
+            date: '2026-10-13 23:59:59'
+            round: 1
+            evidence:
+              - source_name: iscas official CFP
+                source_url: https://epapers2.org/iscas2027/ESR/login.php
+                sourceClass: official-cfp
+                observed_at: '2026-10-03T05:12:25Z'
+                retrievedAt: '2026-10-03T05:12:25Z'
+                verifiedAt: '2026-10-03T05:12:25Z'
+                contentHash: 08810cdea05169d3110106df6b6e8cf461c5ebda2f74feb757b712753b878c37
+                evidenceRef: data/evidence/blobs/08810cdea05169d3110106df6b6e8cf461c5ebda2f74feb757b712753b878c37.body
+                rawExcerpt: 'Submission deadline: Oct 13, 2026 23:59 (UTC -0500)'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                  - time
+                  - timezone
+                confidence: official
+            tz: UTC-0500
+            superseded_deadlines:
+              - value: '2026-10-14T11:59:59Z'
+                precision: exact
+                source: https://epapers2.org/iscas2027/ESR/login.php
+                evidenceRef: data/evidence/blobs/08810cdea05169d3110106df6b6e8cf461c5ebda2f74feb757b712753b878c37.body
+                status: superseded
+                supersededBy: iscas|iscas27|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-10-03T05:12:25Z'
+  dasfaa:
+    editions:
+      dasfaa27:
+        year: 2027
+        deadlines:
+          - kind: paper
+            label: Full Paper Submission
+            comment: 研究論文CFPとトップページは11月25日。日程一覧ページには6月6日が残っています。投稿前に研究論文CFPをご確認ください。
+            date: '2026-11-25 23:59:00'
+            round: 1
+            evidence:
+              - source_name: dasfaa official CFP
+                source_url: https://dasfaa2027.github.io/CallforResearchTrack/list.htm
+                sourceClass: official-cfp
+                observed_at: '2026-10-03T05:12:25Z'
+                retrievedAt: '2026-10-03T05:12:25Z'
+                verifiedAt: '2026-10-03T05:12:25Z'
+                contentHash: 24a85164b842fa0b7b5f98c75e1fa9dfa8851372f73571cbe2de94dc9141dd2d
+                evidenceRef: data/evidence/blobs/24a85164b842fa0b7b5f98c75e1fa9dfa8851372f73571cbe2de94dc9141dd2d.body
+                rawExcerpt: 'Research Papers: November 25, 2026; all deadlines 23:59 Anywhere on Earth (AoE).'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                  - time
+                  - timezone
+                confidence: official
+            tz: AoE
+            superseded_deadlines:
+              - value: '2027-06-07T11:59:00Z'
+                precision: exact
+                source: https://dasfaa2027.github.io/CallforResearchTrack/list.htm
+                evidenceRef: data/evidence/blobs/24a85164b842fa0b7b5f98c75e1fa9dfa8851372f73571cbe2de94dc9141dd2d.body
+                status: superseded
+                supersededBy: dasfaa|dasfaa27|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-10-03T05:12:25Z'
+  evomusart-2027:
+    editions:
+      evomusart-202727:
+        year: 2027
+        deadlines:
+          - kind: paper
+            label: Submission deadline
+            date: '2026-11-01'
+            round: 1
+            evidence:
+              - source_name: evomusart official CFP
+                source_url: https://easychair.org/cfp/evomusart2027
+                sourceClass: official-cfp
+                observed_at: '2026-10-03T05:12:25Z'
+                retrievedAt: '2026-10-03T05:12:25Z'
+                verifiedAt: '2026-10-03T05:12:25Z'
+                contentHash: 2710171d2ee3d422ec6bb0842872cac5add2e18259de3da70b4e6d7d00b190aa
+                evidenceRef: data/evidence/blobs/2710171d2ee3d422ec6bb0842872cac5add2e18259de3da70b4e6d7d00b190aa.body
+                rawExcerpt: Submission deadline November 1, 2026
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                confidence: official
+            precision: date-only
+  wsdm:
+    editions:
+      wsdm27:
+        year: 2027
+        mode: merge-slots
+        deadlines:
+          - kind: paper
+            label: Paper submission (short papers)
+            date: '2026-11-17 23:59:59'
+            round: 1
+            evidence:
+              - source_name: wsdm official CFP
+                source_url: https://www.wsdm-conference.org/2027/cfsp.html
+                sourceClass: official-cfp
+                observed_at: '2026-10-03T05:12:25Z'
+                retrievedAt: '2026-10-03T05:12:25Z'
+                verifiedAt: '2026-10-03T05:12:25Z'
+                contentHash: 313329e1b1243fb8c8297930dd410fccd368943906e10b6493354439916f6027
+                evidenceRef: data/evidence/blobs/313329e1b1243fb8c8297930dd410fccd368943906e10b6493354439916f6027.body
+                rawExcerpt: 'Short papers: Nov 17, 2026; all deadlines 11:59 pm Anywhere on Earth (AoE).'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                  - time
+                  - timezone
+                confidence: official
+            tz: AoE
+  # Official CFP review 2026-10-03: Eurographics struck out both submission dates
+  # and announced an extension without a replacement date; keep all other slots.
+  # https://eg2027.isti.cnr.it/call-for-papers/ (body captured in evidence/blobs).
+  # SecureComm lists February 1 and April 15 without an official clock/timezone.
+  eurographics:
+    editions:
+      eurographics27:
+        year: 2027
+        mode: merge-slots
+        remove:
+          - kind: abstract
+            round: 1
+            label: Abstract and submission form deadline
+            values: ['2026-09-25T23:59:59.000Z', '2026-09-26T11:59:00.000Z']
+          - kind: paper
+            round: 1
+            label: Full paper submission deadline
+            values: ['2026-10-01T23:59:59.000Z', '2026-10-02T11:59:00.000Z']
+  securecomm:
+    editions:
+      securecomm27:
+        year: 2027
+        deadlines:
+          - kind: paper
+            label: Full Paper Submission
+            round: 1
+            date: '2027-02-01'
+            precision: date-only
+            evidence:
+              - source_name: SecureComm official CFP
+                source_url: https://securecomm.eai-conferences.org/2027/
+                sourceClass: official-cfp
+                observed_at: '2026-10-03T04:53:53Z'
+                retrievedAt: '2026-10-03T04:53:53Z'
+                verifiedAt: '2026-10-03T04:53:53Z'
+                contentHash: f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d
+                evidenceRef: data/evidence/blobs/f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d.body
+                rawExcerpt: 'Cycle 1: Submission deadline 1st February, 2027'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                confidence: official
+            superseded_deadlines:
+              - value: '2027-03-01T23:59:00Z'
+                precision: exact
+                source: https://securecomm.eai-conferences.org/2027/
+                evidenceRef: data/evidence/blobs/f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d.body
+                status: superseded
+                supersededBy: securecomm|securecomm27|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-10-03T04:53:53Z'
+              - value: '2027-02-02T11:59:59Z'
+                precision: exact
+                source: https://securecomm.eai-conferences.org/2027/
+                evidenceRef: data/evidence/blobs/f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d.body
+                status: superseded
+                supersededBy: securecomm|securecomm27|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-10-03T04:53:53Z'
+          - kind: paper
+            label: Full Paper Submission
+            round: 2
+            date: '2027-04-15'
+            precision: date-only
+            evidence:
+              - source_name: SecureComm official CFP
+                source_url: https://securecomm.eai-conferences.org/2027/
+                sourceClass: official-cfp
+                observed_at: '2026-10-03T04:53:53Z'
+                retrievedAt: '2026-10-03T04:53:53Z'
+                verifiedAt: '2026-10-03T04:53:53Z'
+                contentHash: f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d
+                evidenceRef: data/evidence/blobs/f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d.body
+                rawExcerpt: 'Cycle 2: Full Paper Submission deadline 15th April 2027'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                confidence: official
+            superseded_deadlines:
+              - value: '2027-04-16T11:59:59Z'
+                precision: exact
+                source: https://securecomm.eai-conferences.org/2027/
+                evidenceRef: data/evidence/blobs/f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d.body
+                status: superseded
+                supersededBy: securecomm|securecomm27|paper|2|
+                reason: manual-resolution
+                supersededAt: '2026-10-03T04:53:53Z'
+
   # 根拠: https://ieeecec.org/ (2026-08-30 取得)「Full Paper Submission Deadline
   #   Feb 28, 2027 (No extension will be given)」。上流 aideadlines が 2027-01-15
   #   (古い延長前値) を持ち、ccfddl の 2027-02-28 と衝突して health gate の
@@ -379,24 +598,93 @@ conferences:
   #   Club, Southampton, England, UK」（2026-08-12 再取得）→ 追加。
   ecir:
     editions:
-      2027:
+      '2027':
         event_start: '2027-03-21'
         event_end: '2027-03-25'
         date_text: March 21-25, 2027 (Southampton, UK)
         deadlines:
-          - {kind: abstract, label: 'Abstract submission', date: '2026-09-21 23:59:59', tz: GMT}
-          - {kind: paper, label: 'Paper submission', date: '2026-10-05 23:59:59', tz: GMT}
-          - {kind: notification, label: 'Notifications (full & short papers)', date: '2026-12-07 23:59:59', tz: GMT}
+          - kind: abstract
+            label: Abstract submission
+            date: '2026-09-21 23:59:59'
+            round: 1
+            evidence:
+              - source_name: ecir official CFP
+                source_url: https://www.ecir2027.co.uk/call-for-full-papers
+                sourceClass: official-cfp
+                observed_at: '2026-10-03T05:12:25Z'
+                retrievedAt: '2026-10-03T05:12:25Z'
+                verifiedAt: '2026-10-03T05:12:25Z'
+                contentHash: b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65
+                evidenceRef: data/evidence/blobs/b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65.body
+                rawExcerpt: Abstract by September 21, 2026, 11:59pm (AOE).
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                  - time
+                  - timezone
+                confidence: official
+            tz: AoE
+            superseded_deadlines:
+              - value: '2026-09-25T23:59:59Z'
+                precision: exact
+                source: https://www.ecir2027.co.uk/call-for-full-papers
+                evidenceRef: data/evidence/blobs/b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65.body
+                status: superseded
+                supersededBy: ecir|ecir27|abstract|1|
+                reason: manual-resolution
+                supersededAt: '2026-10-03T05:12:25Z'
+          - kind: paper
+            label: Paper submission
+            date: '2026-10-05 23:59:59'
+            round: 1
+            evidence:
+              - source_name: ecir official CFP
+                source_url: https://www.ecir2027.co.uk/call-for-full-papers
+                sourceClass: official-cfp
+                observed_at: '2026-10-03T05:12:25Z'
+                retrievedAt: '2026-10-03T05:12:25Z'
+                verifiedAt: '2026-10-03T05:12:25Z'
+                contentHash: b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65
+                evidenceRef: data/evidence/blobs/b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65.body
+                rawExcerpt: Paper submission October 5, 2026, 11:59pm (AOE).
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                  - time
+                  - timezone
+                confidence: official
+            tz: AoE
+            superseded_deadlines:
+              - value: '2026-10-05T23:59:59Z'
+                precision: exact
+                source: https://www.ecir2027.co.uk/call-for-full-papers
+                evidenceRef: data/evidence/blobs/b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65.body
+                status: superseded
+                supersededBy: ecir|ecir27|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-10-03T05:12:25Z'
+          - kind: notification
+            label: Notifications (full & short papers)
+            date: '2026-12-07'
+            precision: date-only
+            evidence:
+              - source_name: ecir official CFP
+                source_url: https://www.ecir2027.co.uk/call-for-full-papers
+                sourceClass: official-cfp
+                observed_at: '2026-10-03T05:12:25Z'
+                retrievedAt: '2026-10-03T05:12:25Z'
+                verifiedAt: '2026-10-03T05:12:25Z'
+                contentHash: b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65
+                evidenceRef: data/evidence/blobs/b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65.body
+                rawExcerpt: 'Full paper notification: 7 December 2026'
+                verifiedFields:
+                  - date
+                  - kind
+                confidence: official
+        mode: merge-slots
 
-  # 根拠: https://acisp.org/cfp.html (2026-08-13 取得) — 公式 CFP「ACISP 2027
-  #   will have two rounds of submission: Round one will be on 30 Nov 2026.
-  #   Round two will be on 1 March 2027. … All submissions must be received by
-  #   11:59PM AoE (UTC-12) on the day of the corresponding deadline.」
-  #   → r1 = 2026-11-30 23:59 AoE = 2026-12-01T11:59:59Z / r2 = 2027-03-01 23:59 AoE
-  #   = 2027-03-02T11:59:59Z。上流 ccfddl は過去実績からの推定版 (acisp27-est:
-  #   12/11・3/12) を収録 → estimated: false で実版へ昇格し締切を置換する。
-  #   会期は https://acisp.org/ で「When: To be announced」のため date_text /
-  #   event_start / event_end は付けない (Melbourne のみ確定として place に記載)。
   acisp:
     editions:
       2027:
@@ -1179,12 +1467,6 @@ conferences:
         event_start: '2027-05-30'
         event_end: '2027-06-03'
   # 根拠: https://ieee-cas.org/event/conference/2027-ieee-international-symposium-circuits-and-systems (Bordeaux, 6-9 June 2027)（締切は上流と一致のため変更なし）
-  iscas:
-    editions:
-      2027:
-        date_text: June 6-9, 2027
-        event_start: '2027-06-06'
-        event_end: '2027-06-09'
   # 根拠: https://ches.iacr.org/2027/ (2026-08-13 取得, tentative)
   #   Vol 2027/1: rebuttal 23-28 Aug / notification 15 Sep / CR 14 Oct。
   #   Vol 2027/2: rebuttal 23-28 Nov / notification 15 Dec / CR 14 Jan。
@@ -1638,6 +1920,20 @@ conferences:
   #   November 19, 2026。Winter (TBD) は未収録。
   mobicom:
     editions:
+      mobicom21:
+        id: mobicom21
+        year: 2021
+        date_text: "March 29-April 1, 2022"
+        event_review:
+          edition_id: mobicom21
+          source_date_text: "March 29-April 1, 2022"
+          source_date_text_alternatives: ["March 29 - April 1, 2022"]
+          source_start: '2022-03-29'
+          source_end: '2022-04-01'
+          source_url: https://www.sigmobile.org/mobicom/2021/program.html
+          reviewed_on: '2026-10-02'
+          note: "MobiCom 2021年版の本会議は2022年3月29日から4月1日。3月28日のワークショップを含む全体会期とは区別。"
+          held_year: 2022
       2027:
         deadlines:
           - {kind: abstract, label: 'Abstract Registration (summer)', date: '2026-08-26 23:59:59', tz: AoE}
@@ -2030,3 +2326,106 @@ conferences:
     tags: [dormant, systems, virtual-execution]
   ipsn:
     tags: [merged, sensys, networking, iot]
+
+  adma:
+    editions:
+      adma21:
+        id: adma21
+        year: 2021
+        date_text: "February 2-4, 2022"
+        event_review:
+          edition_id: adma21
+          source_date_text: "February 2-4, 2022"
+          source_start: '2022-02-02'
+          source_end: '2022-02-04'
+          source_url: https://adma21.webflow.io/
+          reviewed_on: '2026-10-02'
+          note: "ADMA 2021年版を2022年2月に開催。公式の版名と開催日を確認。"
+          held_year: 2022
+
+  dai:
+    editions:
+      dai2021:
+        id: dai2021
+        year: 2021
+        date_text: "January 4-5, 2022"
+        event_review:
+          edition_id: dai2021
+          source_date_text: "January 4-5, 2022"
+          source_start: '2022-01-04'
+          source_end: '2022-01-05'
+          source_url: https://adai.ai/dai/2021/program-overview.html
+          reviewed_on: '2026-10-02'
+          note: "DAI 2021年版の論文セッションは2022年1月4-5日。1月3日はチュートリアル等で、上流が収録する本会議の範囲を保持。"
+          held_year: 2022
+
+  focs:
+    editions:
+      focs21:
+        id: focs21
+        year: 2021
+        date_text: "February 7-10, 2022"
+        event_review:
+          edition_id: focs21
+          source_date_text: "February 7-10, 2022"
+          source_start: '2022-02-07'
+          source_end: '2022-02-10'
+          source_url: https://focs2021.cs.colorado.edu/
+          reviewed_on: '2026-10-02'
+          note: "FOCS 2021年版は2022年2月7-10日にオンライン開催。公式の版名と延期後日程を確認。"
+          held_year: 2022
+
+  slt:
+    editions:
+      slt22:
+        id: slt22
+        year: 2022
+        date_text: "January 9-12, 2023"
+        event_review:
+          edition_id: slt22
+          source_date_text: "January 9-12, 2023"
+          source_start: '2023-01-09'
+          source_end: '2023-01-12'
+          source_url: https://www.slt2022.signalprocessingsociety.org/SLT%202022/slt2022.org/index.html
+          reviewed_on: '2026-10-02'
+          note: "SLT 2022年版は2023年1月9-12日に開催。前後のハッカソン等とは別の本会議日程を保持。"
+          held_year: 2023
+
+  wasa:
+    editions:
+      wasa22:
+        id: wasa22
+        year: 2022
+        date_text: "April 7-9, 2023"
+        event_review:
+          edition_id: wasa22
+          source_date_text: "April 7-9, 2023"
+          source_start: '2023-04-07'
+          source_end: '2023-04-09'
+          source_url: https://wasa-conference.org/WASA2022/
+          reviewed_on: '2026-10-02'
+          note: "公式WASA 2022 & 2023サイトに2023年4月7-9日の大連開催を確認。2022年版の識別子と開催年を別に保持。"
+          held_year: 2023
+
+  probml:
+    editions:
+      probml2021:
+        id: probml2021
+        year: 2021
+        date_text: "January 13-February 17, 2021"
+        event_segments:
+          - {start: '2021-01-13', end: '2021-01-13', label: 'オンライン・第1回'}
+          - {start: '2021-01-20', end: '2021-01-20', label: 'オンライン・第2回'}
+          - {start: '2021-01-27', end: '2021-01-27', label: 'オンライン・第3回'}
+          - {start: '2021-02-03', end: '2021-02-03', label: 'オンライン・第4回'}
+          - {start: '2021-02-10', end: '2021-02-10', label: 'オンライン・第5回'}
+          - {start: '2021-02-17', end: '2021-02-17', label: 'オンライン・第6回'}
+        event_review:
+          edition_id: probml2021
+          source_date_text: "January 13-February 17, 2021"
+          source_date_text_alternatives: ["January 13 - February 17, 2021"]
+          source_start: '2021-01-13'
+          source_end: '2021-02-17'
+          source_url: https://probml.cc/archives/2021/schedule/
+          reviewed_on: '2026-10-02'
+          note: "公式AABI 2021日程は1月13/20/27日、2月3/10/17日の週次オンラインセミナー6回。原文の期間を連続開催として扱わない。"

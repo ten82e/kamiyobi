@@ -411,7 +411,21 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
           end: dateWindow?.latestPossibleUtc ?? anchor,
         });
       });
-      if (ed.event_start && !ed.estimated) {
+      const segments = ed.event_segments?.length
+        ? ed.event_segments
+        : ed.event_start
+          ? [
+              {
+                start: fmtDate(ed.event_start),
+                end: fmtDate(ed.event_end ?? ed.event_start),
+                label: "",
+              },
+            ]
+          : [];
+      for (const segment of !ed.estimated ? segments : []) {
+        const start = asDate(segment.start);
+        const end = asDate(segment.end);
+        if (!start || !end) continue;
         records.push({
           type: "event",
           categories: cats,
@@ -421,8 +435,8 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
           edition: ed,
           deadline: null,
           all_day: true,
-          start: ed.event_start,
-          end: ed.event_end ?? ed.event_start,
+          start,
+          end,
         });
       }
     });
@@ -556,12 +570,16 @@ export function toJson(
         link: officialUrl,
         place: ed.place,
         date_text: ed.date_text,
-        event_date_precision: eventDatePrecisionOf(
-          ed.event_date_precision,
-          ed.date_text,
-          ed.event_start,
-          ed.event_end,
-        ),
+        event_date_precision: ed.event_segments?.length
+          ? "split-dates"
+          : eventDatePrecisionOf(
+              ed.event_date_precision,
+              ed.date_text,
+              ed.event_start,
+              ed.event_end,
+            ),
+        ...(ed.event_segments !== undefined ? { event_segments: ed.event_segments } : {}),
+        ...(ed.event_review !== undefined ? { event_review: ed.event_review } : {}),
         event_start: ed.event_start ? fmtDate(ed.event_start) : null,
         event_end: ed.event_end ? fmtDate(ed.event_end) : null,
         estimated: ed.estimated,
@@ -711,7 +729,10 @@ export function toJson(
     })(),
     conferences: outConfs,
   };
-  data.identity_migrations = identityMigrationManifestForData(data);
+  data.identity_migrations = identityMigrationManifestForData(
+    data,
+    safeConfig.deadline_identity_migrations,
+  );
   return data;
 }
 
@@ -761,6 +782,8 @@ function compactEdition(edition: JsonRecord, deadlines: JsonRecord[]): JsonRecor
       asDate(edition.event_start),
       asDate(edition.event_end),
     ),
+    ...(edition.event_segments !== undefined ? { event_segments: edition.event_segments } : {}),
+    ...(edition.event_review !== undefined ? { event_review: edition.event_review } : {}),
     event_start: edition.event_start,
     event_end: edition.event_end,
     estimated: edition.estimated,
@@ -818,7 +841,16 @@ export function toCatalog(
         const eventStart = jsonTime(edition.event_start);
         const eventEnd = jsonTime(edition.event_end ?? edition.event_start);
         const inWindow =
-          eventStart !== null && eventEnd !== null && eventEnd >= lookback && eventStart <= horizon;
+          Array.isArray(edition.event_segments) && edition.event_segments.length
+            ? jsonRecords(edition.event_segments).some((part) => {
+                const start = jsonTime(part.start);
+                const end = jsonTime(part.end);
+                return start !== null && end !== null && end >= lookback && start <= horizon;
+              })
+            : eventStart !== null &&
+              eventEnd !== null &&
+              eventEnd >= lookback &&
+              eventStart <= horizon;
         return inWindow || deadlines.length ? compactEdition(edition, deadlines) : null;
       })
       .filter((edition): edition is JsonRecord => edition !== null);
@@ -2659,9 +2691,8 @@ export function toUpcomingMd(
         `| ${when} | ${left} | ${name} | ${kindText} | ${roundText} | ${ed.estimated ? "推定" : ""} | ${placeEscaped} |`,
       );
     } else {
-      const start = ed.event_start;
-      if (start === null) continue;
-      const end = ed.event_end ?? start;
+      const start = rec.start;
+      const end = rec.end;
       if (
         dateOnly(start).getTime() > dateOnly(horizon).getTime() ||
         today.getTime() > dateOnly(end).getTime()

@@ -11,7 +11,9 @@ import {
   fixedFeatureRecord,
   readFeatureStore,
   realPaperEmbeddingBundles,
+  realPaperRegressionReasons,
   runDataDeltaBenchmark,
+  runRealPaperBenchmark,
   validateRequiredLanguageCounts,
 } from "../src/bench-recommender.ts";
 import { benchmarkEmbeddingManifestAtCutoff } from "../src/embeddings.ts";
@@ -128,6 +130,71 @@ describe("data-delta recommendation benchmark", () => {
 });
 
 describe("required frozen semantic features", () => {
+  it("checks immutable feature inputs before evaluating a changed production venue pool", {
+    timeout: 60000,
+  }, async () => {
+    const baseline = JSON.parse(
+      readFileSync(join(REPO_ROOT, "data/benchmarks/real-paper-feature-baseline.json"), "utf8"),
+    );
+    const dev = JSON.parse(
+      readFileSync(join(REPO_ROOT, "data/benchmarks/real-paper-required-dev.json"), "utf8"),
+    );
+    const heldout = JSON.parse(
+      readFileSync(join(REPO_ROOT, "data/benchmarks/real-paper-required-heldout.json"), "utf8"),
+    );
+    const negative = JSON.parse(
+      readFileSync(join(REPO_ROOT, "data/benchmarks/real-paper-negative.json"), "utf8"),
+    );
+    const features = readFeatureStore(join(REPO_ROOT, "data/benchmarks/real-paper-features.jsonl"));
+    const changed = structuredClone(baseline);
+    changed.conferences.push({
+      key: "new-source-venue",
+      title: "New Source Venue",
+      categories: ["systems"],
+    });
+    const run = await runRealPaperBenchmark(
+      dev,
+      heldout,
+      changed,
+      negative,
+      "required",
+      features,
+      undefined,
+      undefined,
+      baseline,
+    );
+    expect(realPaperRegressionReasons(run.result, "required")).toEqual([]);
+    const tampered = structuredClone(features);
+    tampered.records.find(
+      (record) => record.paper_id === "dev-2025-cvpr-01",
+    )!.candidates[0].base_score += 1;
+    await expect(
+      runRealPaperBenchmark(
+        dev,
+        heldout,
+        changed,
+        negative,
+        "required",
+        tampered,
+        undefined,
+        undefined,
+        baseline,
+      ),
+    ).rejects.toThrow("required production feature mismatch");
+    await expect(
+      runRealPaperBenchmark(
+        dev,
+        heldout,
+        changed,
+        negative,
+        "required",
+        undefined,
+        undefined,
+        undefined,
+        baseline,
+      ),
+    ).rejects.toThrow("feature baseline requires frozen semantic features");
+  });
   it("constructs frozen manifests without invoking model-backed bundle generation", async () => {
     let invoked = false;
     const bundles = await realPaperEmbeddingBundles(

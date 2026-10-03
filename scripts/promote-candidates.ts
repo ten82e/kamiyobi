@@ -15,7 +15,7 @@ if (!observations) {
   let optionError = "";
   for (let index = 0; index < options.length; ) {
     const option = options[index];
-    if (option !== "--out" && option !== "--existing") {
+    if (option !== "--out" && option !== "--existing" && option !== "--now") {
       optionError = `unknown option: ${option}`;
       break;
     }
@@ -29,6 +29,13 @@ if (!observations) {
   const outIndex = process.argv.indexOf("--out");
   const outdir =
     outIndex >= 0 ? (process.argv[outIndex + 1] ?? dirname(observations)) : dirname(observations);
+  // 判定の現在時刻。ビルドと同じ `--now` を受け、バッチの判定を実行時の時計から切り離す
+  // （第 254 回 – 引けないと、同じ入力でも日付が過ぎれば判定が promote から hold へ変わる）。
+  const nowIndex = process.argv.indexOf("--now");
+  const nowValue = nowIndex >= 0 ? process.argv[nowIndex + 1] : undefined;
+  if (nowValue && Number.isNaN(Date.parse(nowValue))) {
+    optionError = `--now needs a valid date-time value: ${nowValue}`;
+  }
   const existingIndex = process.argv.indexOf("--existing");
   const existingPath =
     existingIndex >= 0
@@ -57,6 +64,7 @@ if (!observations) {
         outputObservationsPath: batchObservations,
         existingConferences,
         canonicalizationMargin,
+        now: nowValue,
       },
     );
     const canonical = Object.fromEntries(

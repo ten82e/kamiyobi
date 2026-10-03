@@ -70,6 +70,7 @@ export interface BenchArgs {
   realV2Heldout: string | null;
   realV2Negative: string | null;
   realV2Features: string | null;
+  realV2FeatureBaseline: string | null;
   writeRequiredFeatures: string | null;
   realV2Small: boolean;
   taxonomyDetail: boolean;
@@ -107,6 +108,7 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
     realV2Heldout: null,
     realV2Negative: null,
     realV2Features: null,
+    realV2FeatureBaseline: null,
     writeRequiredFeatures: null,
     realV2Small: false,
     taxonomyDetail: false,
@@ -149,6 +151,7 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
       "real-v2-heldout": { type: "string" },
       "real-v2-negative": { type: "string" },
       "real-v2-features": { type: "string" },
+      "real-v2-feature-baseline": { type: "string" },
       "write-required-features": { type: "string" },
       "real-v2-small": { type: "boolean" },
       "taxonomy-detail": { type: "boolean" },
@@ -190,6 +193,7 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
   args.realV2Heldout = stringValue(values["real-v2-heldout"]) ?? null;
   args.realV2Negative = stringValue(values["real-v2-negative"]) ?? null;
   args.realV2Features = stringValue(values["real-v2-features"]) ?? null;
+  args.realV2FeatureBaseline = stringValue(values["real-v2-feature-baseline"]) ?? null;
   args.writeRequiredFeatures = stringValue(values["write-required-features"]) ?? null;
   args.realV2Small = booleanValue(values["real-v2-small"], false);
   args.taxonomyDetail = booleanValue(values["taxonomy-detail"], false);
@@ -2608,7 +2612,24 @@ export async function runRealPaperBenchmark(
   requiredFeatures?: RequiredSemanticFeatures,
   collectedFeatures?: RequiredSemanticFeatures["records"],
   taxonomyDetail?: boolean,
+  featureBaselineData?: { conferences: Conf[]; categories?: Record<string, string> },
 ): Promise<RealPaperRun> {
+  // Pin code behavior against immutable inputs, then measure current source data
+  // with the same semantic observations and quality floors. Category/name/venue
+  // updates legitimately change lexical features and pool-normalized base scores.
+  if (featureBaselineData) {
+    if (!requiredFeatures) throw new Error("feature baseline requires frozen semantic features");
+    const baseline = await runRealPaperBenchmark(
+      dev,
+      heldout,
+      featureBaselineData,
+      negative,
+      coverage,
+      requiredFeatures,
+    );
+    const failures = realPaperRegressionReasons(baseline.result, coverage);
+    if (failures.length) throw new Error(`feature baseline regression: ${failures.join("; ")}`);
+  }
   const confs = data.conferences ?? [];
   const venueKeys = new Set(confs.map((conference) => conference.key));
   validateRealPaperFixtures(
@@ -2766,6 +2787,7 @@ export async function runRealPaperBenchmark(
       .sort((left, right) => left.venue.localeCompare(right.venue));
     if (
       fixed &&
+      !featureBaselineData &&
       !collectedFeatures &&
       candidateDepth === rows.length &&
       JSON.stringify(fixed.candidates) !== JSON.stringify(candidateFeatures)
@@ -3406,6 +3428,9 @@ export async function main(
         requiredFeatures,
         args.writeRequiredFeatures ? collectedFeatures : undefined,
         args.taxonomyDetail,
+        args.realV2FeatureBaseline
+          ? JSON.parse(readFileSync(args.realV2FeatureBaseline, "utf8"))
+          : undefined,
       );
       if (args.writeRequiredFeatures) {
         const benchmarkProfiles = run.result.benchmark_embeddings;
@@ -3508,6 +3533,9 @@ export async function main(
         JSON.stringify(
           {
             ...run.result,
+            ...(args.realV2FeatureBaseline
+              ? { feature_baseline: { path: args.realV2FeatureBaseline, verified: true } }
+              : {}),
             benchmark_content_id: benchmarkContentId,
             semantic_content_id: semanticContentId,
             passed: regressions.length === 0,

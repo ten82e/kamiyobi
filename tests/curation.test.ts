@@ -11,7 +11,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { generateCurated } from "../scripts/generate-curated.ts";
 import {
   type Candidate,
@@ -22,6 +22,13 @@ import { type Conference, conferencesFromJson } from "../src/model.ts";
 import { writePromotionBatch } from "../src/promotion.ts";
 import { LocalSource, localSourcePaths, parseFile } from "../src/sources/local.ts";
 import { REPO_ROOT } from "./helpers.ts";
+
+// Fixture evidence is dated September 2; only Date is fixed, elapsed-time timers remain real.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-09-02T00:00:00.000Z"));
+});
+afterEach(() => vi.useRealTimers());
 
 const issueKeys = [
   "bdiot-2026",
