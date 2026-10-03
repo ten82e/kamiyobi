@@ -83,6 +83,7 @@ export interface SupersededDeadline {
 }
 
 export type EventDatePrecision =
+  | "split-dates"
   | "exact-range"
   | "single-day"
   | "month-only"
@@ -90,6 +91,7 @@ export type EventDatePrecision =
   | "unverified";
 
 const EVENT_DATE_PRECISIONS = new Set<EventDatePrecision>([
+  "split-dates",
   "exact-range",
   "single-day",
   "month-only",
@@ -107,6 +109,8 @@ export function eventDatePrecisionOf(
   if (typeof explicit === "string" && EVENT_DATE_PRECISIONS.has(explicit as EventDatePrecision))
     return explicit as EventDatePrecision;
   const s = String(dateText ?? "").trim();
+  if (parseEventSegments(s, start?.getUTCFullYear() ?? end?.getUTCFullYear() ?? 0).length)
+    return "split-dates";
   if (/\b(?:tbd|tba|not announced|to be announced)\b|未定|未発表/i.test(s)) return "not-announced";
 
   const hasMonth =
@@ -560,6 +564,25 @@ export interface PromotionRef {
   resolution: string;
 }
 
+export interface EventSegment {
+  start: string;
+  end: string;
+  label: string;
+}
+
+/** Human-reviewed association of a source date to this exact edition. */
+export interface EventReview {
+  edition_id: string;
+  source_date_text: string;
+  source_date_text_alternatives?: string[];
+  source_start: string;
+  source_end: string;
+  source_url: string;
+  reviewed_on: string;
+  note: string;
+  held_year?: number;
+}
+
 export interface Edition {
   /** Conference or workshop edition year, not the deadline's calendar year. */
   year: number;
@@ -568,6 +591,8 @@ export interface Edition {
   place: string;
   date_text: string;
   event_date_precision?: EventDatePrecision;
+  event_segments?: EventSegment[];
+  event_review?: EventReview;
   /** Calendar dates kept as UTC midnights. */
   event_start: Date | null;
   event_end: Date | null;
@@ -1499,6 +1524,56 @@ function parseJapaneseRange(
   return { matched: false, range: [null, null] };
 }
 
+/** Parse only explicit, ordered split dates; never turn their envelope into continuous days. */
+export function parseEventSegments(text: string, fallbackYear: number): EventSegment[] {
+  const s = String(text ?? "")
+    .replace(/[\u2010-\u2015\u2212]/g, "-")
+    .trim();
+  const month =
+    "(?:January|February|March|April|May|June|July|August|September|October|November|December)";
+  const dated = `${month} \\d{1,2}(?:-\\d{1,2})?, \\d{4}`;
+  // Semicolon-separated fully dated parts, optionally tagged with a participation mode.
+  const split = s.split(/\s*;\s*/);
+  let parts: Array<{ date: string; label: string }> = [];
+  if (
+    split.length > 1 &&
+    split.every((part) => new RegExp(`^${dated}(?: \\((?:virtual|in person)\\))?$`, "i").test(part))
+  ) {
+    parts = split.map((part) => ({
+      date: part.replace(/ \((?:virtual|in person)\)$/i, ""),
+      label: /\(virtual\)$/i.test(part)
+        ? "オンライン"
+        : /\(in person\)$/i.test(part)
+          ? "現地開催"
+          : "",
+    }));
+  } else {
+    const m = new RegExp(
+      `^(${month} \\d{1,2}) and (${month} \\d{1,2}(?:-\\d{1,2})?), (\\d{4})$`,
+      "i",
+    ).exec(s);
+    if (m)
+      parts = [
+        { date: `${m[1]}, ${m[3]}`, label: "" },
+        { date: `${m[2]}, ${m[3]}`, label: "" },
+      ];
+  }
+  if (!parts.length) return [];
+  const out: EventSegment[] = [];
+  for (const part of parts) {
+    const [start, end] = parseDateRange(part.date, fallbackYear);
+    if (
+      !start ||
+      !end ||
+      end.getTime() - start.getTime() > 31 * DAY_MS ||
+      (out.length && fmtDate(start) <= out[out.length - 1].end)
+    )
+      return [];
+    out.push({ start: fmtDate(start), end: fmtDate(end), label: part.label });
+  }
+  return out;
+}
+
 /**
  * Parse free-form event dates such as 'September 29 - October 3, 2025'.
  * Also accepts month-only forms: 'November, 2026', 'March-April, 2025',
@@ -1509,6 +1584,8 @@ export function parseDateRange(
   fallbackYear: number,
 ): [Date | null, Date | null] {
   if (!text || isNonDateMarker(text)) return [null, null];
+  // A recognized split schedule has no continuous range. Its segments are kept separately.
+  if (parseEventSegments(String(text), fallbackYear).length) return [null, null];
 
   let s = String(text).replace(/[\u2010-\u2015\u2212]/g, "-");
   s = s.replace(/\s+/g, " ").trim();
@@ -2222,6 +2299,12 @@ export function conferencesFromJson(
         ...(typeof ed.event_date_precision === "string"
           ? { event_date_precision: ed.event_date_precision as EventDatePrecision }
           : {}),
+        ...(ed.event_segments !== undefined
+          ? { event_segments: ed.event_segments as EventSegment[] }
+          : parseEventSegments(String(ed.date_text ?? ""), year).length
+            ? { event_segments: parseEventSegments(String(ed.date_text ?? ""), year) }
+            : {}),
+        ...(ed.event_review !== undefined ? { event_review: ed.event_review as EventReview } : {}),
         event_start: asDate(ed.event_start),
         event_end: asDate(ed.event_end),
         deadlines,

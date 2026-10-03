@@ -22,26 +22,37 @@ venue_identities:
   aamas: {source_ids: {aideadlines: aamas, ccfddl: AI/aamas}}
   acl: {source_ids: {aideadlines: acl, ccfddl: AI/acl}}
   coling: {source_ids: {aideadlines: coling, ccfddl: AI/coling}}
+  colm: {source_ids: {aideadlines: colm, ccfddl: AI/colm}} # https://colmweb.org/ → https://colm.cc/
   cvm: {source_ids: {ccfddl: CG/cvm, local: cvm}}
   dasfaa: {source_ids: {ccfddl: DB/dasfaa, local: dasfaa}}
   ecai: {source_ids: {aideadlines: ecai, ccfddl: AI/ecai}}
+  evomusart-2027: {source_ids: {ccfddl: AI/evomusart, local: evomusart-2027}} # Preserve the published key; https://www.evostar.org/2027/evomusart/
   fg: {source_ids: {aideadlines: fg, ccfddl: AI/fg, local: fg}}
   icassp: {source_ids: {aideadlines: icassp, ccfddl: CG/icassp}}
   icdar: {source_ids: {aideadlines: icdar, ccfddl: AI/icdar}}
   icra: {source_ids: {aideadlines: icra, ccfddl: AI/icra}}
   icvrv: {source_ids: {ccfddl: CG/icvrv, local: icvrv}}
+  ijcai: {source_ids: {aideadlines: ijcai, ccfddl: AI/ijcai}} # https://2026.ijcai.org/
   ijcnn: {source_ids: {aideadlines: ijcnn, ccfddl: AI/ijcnn}}
+  interspeech: {source_ids: {aideadlines: interspeech, ccfddl: CG/interspeech}} # https://interspeech2026.org/
+  iros: {source_ids: {aideadlines: iros, ccfddl: AI/iros}} # https://2026.ieee-iros.org/
   iui: {source_ids: {aideadlines: iui, ccfddl: HI/iui}}
   ksem: {source_ids: {aideadlines: ksem, ccfddl: AI/ksem}}
   msr: {source_ids: {ccfddl: SE/msr, local: msr}}
   pacificvis: {source_ids: {ccfddl: CG/PacificVis, local: pacificvis}}
   sec: {source_ids: {ccfddl: DS/sec}}
   sec-sc: {source_ids: {ccfddl: SC/sec}}
+  sgp: {source_ids: {aideadlines: sgp, ccfddl: CG/SGP}} # https://sgp26.org/
+  sigir: {source_ids: {aideadlines: sigir, ccfddl: DB/sigir}} # https://sigir2026.org/en-AU
   www: {source_ids: {aideadlines: www, ccfddl: MX/www}}
 
 # URL・会期・開催地が上流間で変わった同一開催回だけを明示的に結ぶ。
 # 年や source-local ID の偶然一致だけでは統合しない。
 edition_identities:
+  # 公式の2025アーカイブと2026 CFPで開催回を確認。旧URLの上流記録を同じ開催回へ結ぶ。
+  colm-2025: {source_ids: {aideadlines: colm25, ccfddl: colm25}} # https://colmweb.org/2025/cfp.html
+  colm-2026: {source_ids: {aideadlines: colm26, ccfddl: colm26}} # https://colm.cc/Conferences/2026/CallForPapers
+  evomusart-2027: {source_ids: {ccfddl: evomusart27, local: evomusart-202727}} # https://www.evostar.org/2027/evomusart/
   iui-2026: {source_ids: {aideadlines: iui26, ccfddl: iui26}}
   miccai-2026: {source_ids: {aideadlines: miccai26, ccfddl: miccai26}}
   mobicom-2026: {source_ids: {ccfddl: mobicom26, local: mobicom26}}

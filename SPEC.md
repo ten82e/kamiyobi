@@ -233,6 +233,14 @@ export type Deadline = ExactDeadline | DateOnlyDeadline;
 export interface DeadlineEstimate { point_estimate: string; window_start: string; window_end: string; source_editions: number[]; method: "median-interval"; confidence: "low" | "medium"; }
 export interface Edition { year: number; edition_id: string; link: string; place: string; date_text: string; event_start: Date | null; event_end: Date | null; deadlines: Deadline[]; estimated: boolean; estimate?: DeadlineEstimate; source: string; }
 export interface Conference { key: string; title: string; full_name: string; link: string; rank: Record<string, string>; dblp: string | null; upstream_sub: string | null; tags: string[]; categories: string[]; editions: Edition[]; sources: string[]; }
+// Optional event metadata: event_review pins this edition's exact source wording,
+// date bounds, HTTPS evidence URL, review date and note. held_year distinguishes
+// a reviewed postponed event from its nominal edition year; changed source dates
+// must fail validation, never be overwritten to match the review.
+// event_segments: {start: string; end: string; label: string}[] represents separate
+// actual sessions. Every part remains <=31 days, ordered and non-overlapping;
+// the exact source dates or reviewed envelope must match, and a long envelope
+// must contain a real gap. event_date_precision is "split-dates" for these rows.
 ```
 
 ### 3.1 キーの決め方（衝突が実在するので規則を凍結する）

@@ -1638,6 +1638,20 @@ conferences:
   #   November 19, 2026。Winter (TBD) は未収録。
   mobicom:
     editions:
+      mobicom21:
+        id: mobicom21
+        year: 2021
+        date_text: "March 29-April 1, 2022"
+        event_review:
+          edition_id: mobicom21
+          source_date_text: "March 29-April 1, 2022"
+          source_date_text_alternatives: ["March 29 - April 1, 2022"]
+          source_start: '2022-03-29'
+          source_end: '2022-04-01'
+          source_url: https://www.sigmobile.org/mobicom/2021/program.html
+          reviewed_on: '2026-10-02'
+          note: "MobiCom 2021年版の本会議は2022年3月29日から4月1日。3月28日のワークショップを含む全体会期とは区別。"
+          held_year: 2022
       2027:
         deadlines:
           - {kind: abstract, label: 'Abstract Registration (summer)', date: '2026-08-26 23:59:59', tz: AoE}
@@ -2030,3 +2044,106 @@ conferences:
     tags: [dormant, systems, virtual-execution]
   ipsn:
     tags: [merged, sensys, networking, iot]
+
+  adma:
+    editions:
+      adma21:
+        id: adma21
+        year: 2021
+        date_text: "February 2-4, 2022"
+        event_review:
+          edition_id: adma21
+          source_date_text: "February 2-4, 2022"
+          source_start: '2022-02-02'
+          source_end: '2022-02-04'
+          source_url: https://adma21.webflow.io/
+          reviewed_on: '2026-10-02'
+          note: "ADMA 2021年版を2022年2月に開催。公式の版名と開催日を確認。"
+          held_year: 2022
+
+  dai:
+    editions:
+      dai2021:
+        id: dai2021
+        year: 2021
+        date_text: "January 4-5, 2022"
+        event_review:
+          edition_id: dai2021
+          source_date_text: "January 4-5, 2022"
+          source_start: '2022-01-04'
+          source_end: '2022-01-05'
+          source_url: https://adai.ai/dai/2021/program-overview.html
+          reviewed_on: '2026-10-02'
+          note: "DAI 2021年版の論文セッションは2022年1月4-5日。1月3日はチュートリアル等で、上流が収録する本会議の範囲を保持。"
+          held_year: 2022
+
+  focs:
+    editions:
+      focs21:
+        id: focs21
+        year: 2021
+        date_text: "February 7-10, 2022"
+        event_review:
+          edition_id: focs21
+          source_date_text: "February 7-10, 2022"
+          source_start: '2022-02-07'
+          source_end: '2022-02-10'
+          source_url: https://focs2021.cs.colorado.edu/
+          reviewed_on: '2026-10-02'
+          note: "FOCS 2021年版は2022年2月7-10日にオンライン開催。公式の版名と延期後日程を確認。"
+          held_year: 2022
+
+  slt:
+    editions:
+      slt22:
+        id: slt22
+        year: 2022
+        date_text: "January 9-12, 2023"
+        event_review:
+          edition_id: slt22
+          source_date_text: "January 9-12, 2023"
+          source_start: '2023-01-09'
+          source_end: '2023-01-12'
+          source_url: https://www.slt2022.signalprocessingsociety.org/SLT%202022/slt2022.org/index.html
+          reviewed_on: '2026-10-02'
+          note: "SLT 2022年版は2023年1月9-12日に開催。前後のハッカソン等とは別の本会議日程を保持。"
+          held_year: 2023
+
+  wasa:
+    editions:
+      wasa22:
+        id: wasa22
+        year: 2022
+        date_text: "April 7-9, 2023"
+        event_review:
+          edition_id: wasa22
+          source_date_text: "April 7-9, 2023"
+          source_start: '2023-04-07'
+          source_end: '2023-04-09'
+          source_url: https://wasa-conference.org/WASA2022/
+          reviewed_on: '2026-10-02'
+          note: "公式WASA 2022 & 2023サイトに2023年4月7-9日の大連開催を確認。2022年版の識別子と開催年を別に保持。"
+          held_year: 2023
+
+  probml:
+    editions:
+      probml2021:
+        id: probml2021
+        year: 2021
+        date_text: "January 13-February 17, 2021"
+        event_segments:
+          - {start: '2021-01-13', end: '2021-01-13', label: 'オンライン・第1回'}
+          - {start: '2021-01-20', end: '2021-01-20', label: 'オンライン・第2回'}
+          - {start: '2021-01-27', end: '2021-01-27', label: 'オンライン・第3回'}
+          - {start: '2021-02-03', end: '2021-02-03', label: 'オンライン・第4回'}
+          - {start: '2021-02-10', end: '2021-02-10', label: 'オンライン・第5回'}
+          - {start: '2021-02-17', end: '2021-02-17', label: 'オンライン・第6回'}
+        event_review:
+          edition_id: probml2021
+          source_date_text: "January 13-February 17, 2021"
+          source_date_text_alternatives: ["January 13 - February 17, 2021"]
+          source_start: '2021-01-13'
+          source_end: '2021-02-17'
+          source_url: https://probml.cc/archives/2021/schedule/
+          reviewed_on: '2026-10-02'
+          note: "公式AABI 2021日程は1月13/20/27日、2月3/10/17日の週次オンラインセミナー6回。原文の期間を連続開催として扱わない。"

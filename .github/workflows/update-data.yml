@@ -17,10 +17,11 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout main
+      - name: Checkout update source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: main
+          # Canary reads its selected ref; scheduled/PR-writing runs stay on main.
+          ref: ${{ inputs.dry_run && github.ref || 'main' }}
           fetch-depth: 0
           persist-credentials: false
       - name: Set up Node
@@ -82,10 +83,12 @@ jobs:
       - name: Build source data with refreshed verification
         run: node src/cli.ts build --out public --no-embeddings --now "$BUILD_NOW"
       - name: Validate generated production data
+        id: validate
         run: npm run validate:data -- public/data.json --json
       - name: Persist canonical data-quality findings
         run: node scripts/validate-data.ts --write-findings --json > /tmp/kamiyobi-update/validator-findings.json
       - name: Health gate
+        id: health
         # 失敗時でも違反報告を書いて、後続の always() 診断 step が原因を残せるようにする。
         # 観測系 (warning・conflict) は committed observation baseline を比較源にする。
         run: node scripts/health-gate.ts public/health.json --require-baseline /tmp/kamiyobi-baseline/health.json /tmp/next-last-known-good-health.json --observation-baseline data/source-observation-baseline.json --report /tmp/kamiyobi-update/health-violations.json
@@ -148,7 +151,9 @@ jobs:
         if: failure()
         run: |
           {
-            echo "### update-data blocked by health gate"
+            echo "### update-data blocked"
+            echo "Production data validation: ${{ steps.validate.outcome }}"
+            echo "Health gate: ${{ steps.health.outcome }}"
             echo '```text'
             node -e '
               const fs = require("node:fs");

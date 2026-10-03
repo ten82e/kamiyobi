@@ -902,7 +902,14 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
     // Snapshot keys may carry a collision suffix from an older partial source set.
     // Re-apply configured source identities before overrides address canonical keys. Overrides
     // run only after restoration so a patch cannot manufacture a duplicate placeholder edition.
-    confs = classify(normalizeConfiguredVenueIdentities(restoredMaterial, config), config);
+    confs = classify(
+      mergeSources(
+        [normalizeConfiguredVenueIdentities(restoredMaterial, config)],
+        config,
+        mergeStats,
+      ),
+      config,
+    );
   }
 
   confs = applyOverrides(confs, overrides);
