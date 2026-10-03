@@ -52,10 +52,10 @@ describe("年＋中／内が其の年の語と同じ行に出る（第 500 回�
       expect([繋, 日の案内(繋)], `「${繋}」の案内が違ふ`).toEqual([繋, 日の案内(素)]);
     }
     /* 検査用ビルドの件数（実ビルドは 今年 796・来年 465）。*/
-    expect(列("今年内").size).toBe(426);
-    expect(列("来年内").size).toBe(113);
-    expect(列("2026年中").size).toBe(426);
-    expect(列("2027年内").size).toBe(113);
+    expect(列("今年内").size).toBe(427);
+    expect(列("来年内").size).toBe(114);
+    expect(列("2026年中").size).toBe(427);
+    expect(列("2027年内").size).toBe(114);
   });
   it("語が続く形も同じ", () => {
     for (const [繋, 素] of [
@@ -82,12 +82,12 @@ describe("年＋中／内が其の年の語と同じ行に出る（第 500 回�
   });
   it("裸の年内と月の内は此の回で変へて居ない（第 427 回の決まり）", () => {
     /* `年内` は今月から 12 月まで（779 件・実ビルド）。月の側の寄せ（今月内 = 今月中）も其の侭。*/
-    expect(列("年内").size).toBe(424);
+    expect(列("年内").size).toBe(425);
     expect(対称差(列("今月内"), 列("今月中"))).toBe(0);
     expect(列("今年中").size).toBe(列("今年").size);
   });
   it("第 470 回〜第 499 回の実測は此の回で変へて居ない", () => {
-    expect(列("今年1月から").size).toBe(426);
+    expect(列("今年1月から").size).toBe(427);
     expect(列("来年12月から").size).toBe(21);
     expect(列("2027年12月から").size).toBe(21);
     expect(列("令和九年12月").size).toBe(21);
@@ -96,9 +96,9 @@ describe("年＋中／内が其の年の語と同じ行に出る（第 500 回�
     expect(列("来週中旬").size).toBe(43);
     expect(列("年末上旬").size).toBe(40);
     expect(列("来月 末日").size).toBe(178);
-    expect(列("週 末").size).toBe(145);
+    expect(列("週 末").size).toBe(146);
     expect(列("ml から").size).toBe(0);
-    expect(列("締切時刻").size).toBe(180);
+    expect(列("締切時刻").size).toBe(181);
   });
 });
 

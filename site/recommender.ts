@@ -70,6 +70,7 @@ interface EditionRecord {
   /** 公式ページ。検索欄に URL を貼って収録確認をする人が使えるように、検索語へ入れる。 */
   link?: string;
   deadlines?: DeadlineRecord[];
+  schedule_deadlines?: DeadlineRecord[];
 }
 
 /** 会期だけが決まっていて締切が未定の回（締切一覧の表には出さない）。 */
@@ -2282,6 +2283,9 @@ const Recommender = (() => {
      * 他のゾーンの行を出す事はしない**（下の範囲の案内に書く – 無い物を数えないため）。
      * `現地時間` は寄せない – どの時刻の事かを収録が持たない（行に「現地」の語は 0 回）。 */
     const UPSTREAM_TEXT_QUERY_SYNONYMS_JA: Array<[string, string, string[]]> = [
+      ["情報処理学会", "学会「IPSJ」", ["情報処理学会", "ipsj.or.jp"]],
+      ["電子情報通信学会", "学会「IEICE」", ["電子情報通信学会", "ieice.org"]],
+      ["nips", "会議「NeurIPS」", ["neurips"]],
       ["日本時間", "行の時刻に書かれた JST という語", ["JST"]],
       ["日本標準時", "行の時刻に書かれた JST という語", ["JST"]],
       ["日本標準時間", "行の時刻に書かれた JST という語", ["JST"]],
@@ -8840,6 +8844,14 @@ const Recommender = (() => {
 
   function eventCellJa(row: unknown): string {
     const ed = ((row as { ed?: unknown } | null)?.ed || {}) as Record<string, unknown>;
+    if (Array.isArray(ed.event_segments) && ed.event_segments.length) {
+      return ed.event_segments
+        .map((part: Record<string, unknown>) => {
+          const span = eventCellJa({ ed: { event_start: part.start, event_end: part.end } });
+          return span + (part.label ? `（${String(part.label)}）` : "");
+        })
+        .join(" / ");
+    }
     const start = String(ed.event_start || "").trim();
     if (!start) return String(ed.date_text || "").trim();
     const withDay = (date: string): string => {
@@ -15594,6 +15606,24 @@ const Recommender = (() => {
   // Virtual Conference Center, USA` で誤って online 扱いになった）。
   const ONLINE_VENUE_FALSE_POSITIVES = ["virtual conference center"];
 
+  function conferenceNameSearchTerms(conf: ConferenceRecord): string {
+    const name = [conf.title, conf.full_name, conf.acronym]
+      .filter(Boolean)
+      .join(" ")
+      .normalize("NFKC");
+    let host = "";
+    try {
+      host = new URL(String(conf.link || "")).hostname.toLowerCase();
+    } catch (_) {}
+    const domainIs = (domain: string): boolean => host === domain || host.endsWith(`.${domain}`);
+    const words: string[] = [];
+    if (/(?:\bipsj\b|情報処理学会)/i.test(name) || domainIs("ipsj.or.jp"))
+      words.push("IPSJ ipsj.or.jp");
+    if (/(?:\bieice\b|電子情報通信学会)/i.test(name) || domainIs("ieice.org"))
+      words.push("IEICE ieice.org");
+    return words.join(" ");
+  }
+
   /* チェックボックスの語「国内研究会」も検索の語として引けるようにする。行の名前には
    * 「研究会」としか書かれず、「国内」はタグ側の情報なので複合語では当たらない
    * （實測）。
@@ -15755,6 +15785,7 @@ const Recommender = (() => {
            * のと同じ正本を使う）。 */
           titleWithYearJa(conf.title || conf.key || "", ed.year),
           conf.full_name,
+          conferenceNameSearchTerms(conf),
           conf.key,
           ed.place,
           ed.date_text,
@@ -15842,7 +15873,13 @@ const Recommender = (() => {
           }
         });
       }
-      const baseHay = [conf.title, conf.full_name, conf.key, NOT_APPLICABLE_LABEL_JA]
+      const baseHay = [
+        conf.title,
+        conf.full_name,
+        conferenceNameSearchTerms(conf),
+        conf.key,
+        NOT_APPLICABLE_LABEL_JA,
+      ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
@@ -15887,12 +15924,12 @@ const Recommender = (() => {
     const conferences = Array.isArray(source) ? source.filter(isConference) : [];
     conferences.forEach((conf) => {
       const confTags = conf.tags || [];
-      const baseHay = [conf.title, conf.full_name, conf.key]
+      const baseHay = [conf.title, conf.full_name, conferenceNameSearchTerms(conf), conf.key]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
       (conf.editions || []).forEach((ed) => {
-        if ((ed.deadlines || []).length) return;
+        if ((ed.deadlines || []).length || (ed.schedule_deadlines || []).length) return;
         const start = String(ed.event_start || "");
         const end = String(ed.event_end || start);
         if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) return;

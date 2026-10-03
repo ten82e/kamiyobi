@@ -113,7 +113,7 @@ describe("裸の半月と其它は其侭（第 426 回）", () => {
     expect(対称差("月 曜", "")).toBe(0);
     expect(対称差("aiとml", "ai ml")).toBe(0);
     expect(対称差("来週と 再来週", "来週と再来週")).toBe(0);
-    expect(列("").size).toBe(435);
+    expect(列("").size).toBe(436);
   });
 });
 

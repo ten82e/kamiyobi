@@ -22,6 +22,7 @@ import { dirname, isAbsolute, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { recommendationAxes } from "../site/recommendation-core.ts";
 import Recommender, { isValidRerankerModel } from "../site/recommender.ts";
+import { reviewedSubmission } from "../site/submission-identity.ts";
 // 代表採択論文タイトル（会議のセマンティック/語彙プロファイル強化）。
 // データパイプラインで conferences に papers として載せ、ブラウザの語彙一致と
 // IDF（buildNameIdf）の両方に使えるようにする。
@@ -83,6 +84,7 @@ export const SITE_RUNTIME_FILES = [
   "recommendation-core.js",
   "publish.js",
   "app.js",
+  "submission-identity.js",
 ] as const;
 
 const MANAGED_OUTPUT_FILES = [
@@ -199,6 +201,7 @@ const CSV_COLUMNS = [
    * をする人は、通知日を締切として数えてしまう。画面と同じ語の正本（`kindDateFieldJa`）から
    * 引くので、言い回しは増えない。 */
   "date_field",
+  "event_segments",
 ];
 
 /* `data.csv` の列辞書。列名は `CSV_COLUMNS` から書き出し、説明だけをここに持つ（列を足したときに
@@ -236,8 +239,12 @@ const CSV_COLUMN_NOTES_JA: Record<string, string> = {
     "意味は `deadline_utc` と同じで、`date_field` が「締切」以外の行では締切ではない日に入る。",
   tz_raw:
     "上流が書いたままのタイムゾーン表記（'AoE'、'UTC-12'、'PT' など）。'date-only' の行では空欄。",
-  event_start: "会期の開始日 'YYYY-MM-DD'。分かっていない行は空欄。",
-  event_end: "会期の終了日 'YYYY-MM-DD'。分かっていない行は空欄。",
+  event_start:
+    "会期の開始日 'YYYY-MM-DD'。複数回開催では原文の期間の先頭であり、連続開催を意味しない。分かっていない行は空欄。",
+  event_end:
+    "会期の終了日 'YYYY-MM-DD'。複数回開催では原文の期間の末尾であり、各開催日は event_segments を参照。分かっていない行は空欄。",
+  event_segments:
+    "離れた開催日・週次セミナーの各回を start / end / label の JSON 配列で示す。連続開催では空欄。",
   place:
     "開催地（上流の原文。例 'Zurich, Switzerland'）。画面と `upcoming.md` に入れる日本語化" +
     "（県名の補完や国名の変換）は施していないので、日本語で検索するときは画面を使う。",
@@ -386,6 +393,8 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
     "`recommendation-index.json` のハッシュ検証を読む。検証が通らないときは語の一致だけの推薦に" +
     "落ちる（意味検索を黙って止めない）。",
   "app.js": "site/app.ts から生成するブラウザ UI 実行時処理。",
+  "submission-identity.js":
+    "公式CFPを照合済みの同じ募集を、元の記録を保持して1件に表示する共有方針。",
 };
 
 /* 索引に添える収録範囲の文。`llms.txt` だけが読める情報として、
@@ -751,13 +760,27 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
           end: dateWindow?.latestPossibleUtc ?? anchor,
         });
       });
-      if (ed.event_start && !ed.estimated) {
+      const segments = ed.event_segments?.length
+        ? ed.event_segments
+        : ed.event_start
+          ? [
+              {
+                start: fmtDate(ed.event_start),
+                end: fmtDate(ed.event_end ?? ed.event_start),
+                label: "",
+              },
+            ]
+          : [];
+      for (const segment of !ed.estimated ? segments : []) {
+        const start = asDate(segment.start);
+        const end = asDate(segment.end);
+        if (!start || !end) continue;
         records.push({
           type: "event",
           categories: cats,
           kind_label: "開催",
           kind_ja: "開催",
-          kind_note: "",
+          kind_note: segment.label,
           /* 会期は締切ではない（第 299 回）。この行がカレンダーに載ったとき、日付の欄を
              「締切」にすると締切に見える。 */
           date_field: "会期",
@@ -766,8 +789,8 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
           edition: ed,
           deadline: null,
           all_day: true,
-          start: ed.event_start,
-          end: ed.event_end ?? ed.event_start,
+          start,
+          end,
         });
       }
     });
@@ -901,12 +924,16 @@ export function toJson(
         link: officialUrl,
         place: ed.place,
         date_text: ed.date_text,
-        event_date_precision: eventDatePrecisionOf(
-          ed.event_date_precision,
-          ed.date_text,
-          ed.event_start,
-          ed.event_end,
-        ),
+        event_date_precision: ed.event_segments?.length
+          ? "split-dates"
+          : eventDatePrecisionOf(
+              ed.event_date_precision,
+              ed.date_text,
+              ed.event_start,
+              ed.event_end,
+            ),
+        ...(ed.event_segments !== undefined ? { event_segments: ed.event_segments } : {}),
+        ...(ed.event_review !== undefined ? { event_review: ed.event_review } : {}),
         event_start: ed.event_start ? fmtDate(ed.event_start) : null,
         event_end: ed.event_end ? fmtDate(ed.event_end) : null,
         estimated: ed.estimated,
@@ -1157,6 +1184,8 @@ function compactEdition(edition: JsonRecord, deadlines: JsonRecord[]): JsonRecor
       asDate(edition.event_start),
       asDate(edition.event_end),
     ),
+    ...(edition.event_segments !== undefined ? { event_segments: edition.event_segments } : {}),
+    ...(edition.event_review !== undefined ? { event_review: edition.event_review } : {}),
     event_start: edition.event_start,
     event_end: edition.event_end,
     estimated: edition.estimated,
@@ -1217,8 +1246,26 @@ export function toCatalog(
         const eventStart = jsonTime(edition.event_start);
         const eventEnd = jsonTime(edition.event_end ?? edition.event_start);
         const inWindow =
-          eventStart !== null && eventEnd !== null && eventEnd >= lookback && eventStart <= horizon;
-        return inWindow || deadlines.length ? compactEdition(edition, deadlines) : null;
+          Array.isArray(edition.event_segments) && edition.event_segments.length
+            ? jsonRecords(edition.event_segments).some((part) => {
+                const start = jsonTime(part.start);
+                const end = jsonTime(part.end);
+                return start !== null && end !== null && end >= lookback && start <= horizon;
+              })
+            : eventStart !== null &&
+              eventEnd !== null &&
+              eventEnd >= lookback &&
+              eventStart <= horizon;
+        if (!inWindow && !deadlines.length) return null;
+        const compact = compactEdition(edition, deadlines);
+        // Supplemental dates belong only to the drawer; the list retains its existing window.
+        const scheduleDeadlines = jsonRecords(edition.deadlines).filter(
+          (deadline) => !deadlines.includes(deadline),
+        );
+        if (deadlines.length && scheduleDeadlines.length) {
+          compact.schedule_deadlines = scheduleDeadlines;
+        }
+        return compact;
       })
       .filter((edition): edition is JsonRecord => edition !== null);
     const entry = compactConference(conf, editions, false);
@@ -3073,6 +3120,7 @@ export function toCsv(records: DataRecord[] | null | undefined): string {
         String(rec.kind_ja ?? rec.kind_label ?? "").trim() || KIND_LABEL_JA.other,
         // 日付の列が締切の日を指しているかどうかは、この欄で決まる（第 302 回）。
         String(rec.date_field ?? "").trim() || "締切",
+        ed.event_segments?.length ? JSON.stringify(ed.event_segments) : "",
       ]
         .map((v) => csvField(v))
         .join(","),
@@ -3294,6 +3342,17 @@ export function sessionSpanJa(
   return estimated ? `${span}（推定）` : span;
 }
 
+export function editionSessionJa(ed: Edition): string {
+  if (ed.event_segments?.length)
+    return ed.event_segments
+      .map(
+        (part) =>
+          `${sessionSpanJa(part.start, part.end, ed.estimated)}${part.label ? `（${part.label}）` : ""}`,
+      )
+      .join(" / ");
+  return sessionSpanJa(ed.event_start, ed.event_end, ed.estimated);
+}
+
 export function icsEventRows(
   records: DataRecord[] | null | undefined,
   now: Date | null | undefined,
@@ -3302,10 +3361,34 @@ export function icsEventRows(
   const stamp = jstParts(safeNow);
   const rows: IcsRow[] = [];
   const used = new Map<string, number>();
+  const submissionOf = (rec: DataRecord) => {
+    if (rec.conf?.key !== "jip" && rec.conf?.key !== "ipsj-27-r-compsac") return null;
+    return reviewedSubmission({
+      venueKey: rec.conf.key,
+      editionId: rec.edition?.edition_id,
+      officialUrl: rec.edition?.link || rec.conf.link,
+      kind: rec.deadline?.kind,
+      round: rec.deadline?.round,
+      track: rec.deadline?.track,
+      precision: rec.deadline?.precision,
+      localDate: rec.deadline?.local_date,
+    });
+  };
+  const canonicalPresent = (records ?? []).some(
+    (rec) => rec?.type === "deadline" && rec.conf?.key === "jip" && submissionOf(rec),
+  );
+  const reviewedSeen = new Set<string>();
   for (const rec of records ?? []) {
     if (!rec || typeof rec !== "object" || rec.type !== "deadline") continue;
     const dl = rec.deadline;
     if (!dl) continue;
+    const submission = submissionOf(rec);
+    if (
+      submission &&
+      ((canonicalPresent && rec.conf.key !== "jip") || reviewedSeen.has(submission.key))
+    )
+      continue;
+    if (submission) reviewedSeen.add(submission.key);
     const conf = rec.conf ?? {};
     const ed = rec.edition ?? {};
     const kind = String(rec.kind_label ?? "").trim() || "締切";
@@ -3335,7 +3418,9 @@ export function icsEventRows(
       whenText = `${parts.human}（JST）`;
       atMs = dl.at_utc.getTime();
     }
-    const title = titleWithYear(conf.title, ed.year);
+    const title = submission
+      ? titleWithYear(submission.title, submission.publicationYear)
+      : titleWithYear(conf.title, ed.year);
     /* 種別の表示: 語だけを出す（`kind_ja`）– 区別の文言は全角の括弧で括う（第 303 回）。
        表示用の `kind_label` をそのまま載せると「種別: 概要締切: Abstract submission」の様に値の
        側が ': ' を含み、欄名で切る受信側が値を壊して読む（実測 12 件）。題名も同じで、全角の
@@ -3368,7 +3453,9 @@ export function icsEventRows(
        * `DESCRIPTION` に会期は 1 行も無く、出張の段取りをカレンダーでは決められなかった（会期の
        * 日を知りたくてサイトを再び開く形）。会期その物の終日イベントは立てられないので（第 266
        * 回）、予定の本文に 1 行足す形にした – `LOCATION` を足した第 288 回と同じ動機。 */
-      `会期: ${sessionSpanJa(ed.event_start, ed.event_end, ed.estimated) || Recommender.unconfirmedLabelJa()}`,
+      submission
+        ? `掲載予定: ${submission.issueLabel}／${submission.language}`
+        : `会期: ${editionSessionJa(ed) || Recommender.unconfirmedLabelJa()}`,
       `開催地: ${placeJa || Recommender.unconfirmedLabelJa()}`,
       rec.estimated ? "この日付は上流が推定として出したもので、公式で裏を取れていません" : "",
       link ? `詳細: ${link}` : "",
@@ -3854,16 +3941,13 @@ export function toUpcomingMd(
        * 締切・採否通知などで、日付列に会議が開かれている日が入らない – カレンダー（第 304 回）と
        * 画面には会期が有るのに、この表だけで読む人（印刷・JavaScript なし）だけ出張の段取りが
        * 決まらなかった。形はカレンダーの本文と同じ正本を呼ぶ。列は末尾に足す（第 302 回）。 */
-      const sessionText =
-        sessionSpanJa(ed.event_start, ed.event_end, ed.estimated) ||
-        Recommender.unconfirmedLabelJa();
+      const sessionText = editionSessionJa(ed) || Recommender.unconfirmedLabelJa();
       rows.push(
         `| ${when} | ${left} | ${name} | ${kindText} | ${roundText} | ${ed.estimated ? "推定" : ""} | ${placeEscaped} | ${sessionText} |`,
       );
     } else {
-      const start = ed.event_start;
-      if (start === null) continue;
-      const end = ed.event_end ?? start;
+      const start = rec.start;
+      const end = rec.end;
       if (
         dateOnly(start).getTime() > dateOnly(horizon).getTime() ||
         today.getTime() > dateOnly(end).getTime()
@@ -3885,7 +3969,7 @@ export function toUpcomingMd(
       const endText = `${fmtDate(end)}${calendarDayJa(end) ? `(${calendarDayJa(end)})` : ""}`;
       const when = end.getTime() !== start.getTime() ? `${startText} 〜 ${endText}` : startText;
       rows.push(
-        `| ${when} | ${left} | ${name} | 開催 | - | ${ed.estimated ? "推定" : ""} | ${placeEscaped} | ${when} |`,
+        `| ${when} | ${left} | ${name} | ${escapeMdCell(rec.kind_note ? `開催（${rec.kind_note}）` : "開催")} | - | ${ed.estimated ? "推定" : ""} | ${placeEscaped} | ${when} |`,
       );
     }
   }
@@ -4197,6 +4281,14 @@ export async function buildAll(
   // 品書は 1 回だけ組む（`catalog.json` と、画面に差し込む物と、索引の申告が
   // それぞれ違う品書を指さないため。第 289 回と同じ轍を踏まない）。
   const catalog = toCatalog(data, nowUtc, upcomingDays, icsMeta);
+  // A new page build does not imply that upstream deadlines were checked again.
+  catalog.source_updates = Object.values(opts.health?.sourceMetadata ?? {})
+    .filter((source) => source.source !== "local")
+    .map((source) => ({
+      name: source.source,
+      status: source.status,
+      fetched_at: source.fetchedAt,
+    }));
   const jsonText = JSON.stringify(data, null, 2);
   write("data.json", `${jsonText}\n`);
   write("catalog.json", `${JSON.stringify(catalog, null, 2)}\n`);

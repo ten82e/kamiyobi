@@ -97,7 +97,7 @@ describe("寄せない語は其侭黙る（第 433 回）", () => {
   });
   it("其它は其侭", () => {
     expect(列("aiとml").size).toBe(17);
-    expect(列("月 曜").size).toBe(435);
+    expect(列("月 曜").size).toBe(436);
     expect(列("3日あたり").size).toBe(列("3日").size);
   });
 });

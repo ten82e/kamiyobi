@@ -123,10 +123,10 @@ describe("寄せない形の守り（第 453 回・第 463 回）", () => {
     expect(列("毎 月上旬まで").size).toBe(0);
     expect(案内("明 月上旬まで")).toBe("");
     /* 第 476 回で `から` も其の初日からの幅に解けるやうになり、離つた形も詰め形と同じ行に出る。*/
-    expect(列("来月上旬から").size).toBe(388);
-    expect(列("来月 上旬 から").size).toBe(388);
-    expect(列("来月上旬以降").size).toBe(388);
-    expect(列("来月 上旬 以降").size).toBe(388);
+    expect(列("来月上旬から").size).toBe(389);
+    expect(列("来月 上旬 から").size).toBe(389);
+    expect(列("来月上旬以降").size).toBe(389);
+    expect(列("来月 上旬 以降").size).toBe(389);
     /* 其の幅は案内でなく行で答える（第 476 回 – 其の日からの幅で絞れるので「並びます」の案内は要らぬ。
      * 其の日の読み方は dayRangePairs で張る – 別の頁の `数の相対日は其の方の日から幅で絞る`）。*/
     expect(案内("来月上旬から")).toBe("");
@@ -142,14 +142,14 @@ describe("寄せない形の守り（第 453 回・第 463 回）", () => {
   });
   it("まで幅のその他の形とその他の機械の語は其侭", () => {
     expect(列("8月 まで").size).toBe(118);
-    expect(列("年度末 まで").size).toBe(28);
+    expect(列("年度末 まで").size).toBe(29);
     expect(列("来月 上旬").size).toBe(68);
     expect(列("来月 上旬").size).toBe(列("来月上旬").size);
     expect(案内("来月 上旬")).toContain("来月 上旬 = 2026年9月1日(火)");
-    expect(列("週 末").size).toBe(145);
+    expect(列("週 末").size).toBe(146);
     expect(列("来 週末").size).toBe(34);
     expect(列("今 月末").size).toBe(118);
-    expect(列("来 年中").size).toBe(113);
+    expect(列("来 年中").size).toBe(114);
   });
   it("第 470 回〜第 473 回の実測は此の回で変へて居ない", () => {
     expect(列("8 月の 締切").size).toBe(114);

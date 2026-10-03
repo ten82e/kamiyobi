@@ -69,23 +69,23 @@ describe("年度の語に暦月を直に繋いだ形が其の年度 ∧ 其の�
     }
   });
   it("行数の実測（固定ハーネスの品書 435 行）", () => {
-    expect(列("来年度3月").size).toBe(1);
-    expect(列("今年度3月").size).toBe(28);
+    expect(列("来年度3月").size).toBe(3);
+    expect(列("今年度3月").size).toBe(29);
     expect(列("来年度12月").size).toBe(11);
-    expect(列("来年度3月から").size).toBe(48);
+    expect(列("来年度3月から").size).toBe(50);
     expect(列("来年度12月まで").size).toBe(11);
     /* 其の月を含まぬ年度の語は其の侭（`来年度` 48 件 ⊇ `来年度3月` 1 件）。*/
-    expect(列("来年度").size).toBe(48);
+    expect(列("来年度").size).toBe(50);
     expect([...列("来年度3月")].every((行) => 列("来年度").has(行))).toBe(true);
   });
 });
 
 describe("其它の形は動かして居ない（第 352 回・第 484 回・第 485 回）", () => {
   it("年度のかたまりの対と、其の方で解ける年は其侭", () => {
-    expect(列("来年度末").size).toBe(1);
-    expect(列("来年度初め").size).toBe(29);
-    expect(列("来年度中").size).toBe(48);
-    expect(列("今年1月から").size).toBe(426);
+    expect(列("来年度末").size).toBe(3);
+    expect(列("来年度初め").size).toBe(31);
+    expect(列("来年度中").size).toBe(50);
+    expect(列("今年1月から").size).toBe(427);
     expect(日の案内("今年1月から")).toContain("2026年1月1日以降のこと（其の年の中まで）");
     /* 年の語に暦月を繋いで其れより後を続けた形は、第 485 回には 0 件で案内だけが幅を名乗つて
      * 居た（其の時は語を割ると行が減る形だつた）。第 493 回に**先の年を指す語だけ**を割る目を
@@ -107,19 +107,19 @@ describe("其它の形は動かして居ない（第 352 回・第 484 回・第
   });
   it("第 470 回〜第 485 回の実測は此の回で変へて居ない", () => {
     expect(列("来月 末").size).toBe(178);
-    expect(列("週 末").size).toBe(145);
+    expect(列("週 末").size).toBe(146);
     expect(列("来週 初旬").size).toBe(2);
-    expect(列("明日以降").size).toBe(422);
+    expect(列("明日以降").size).toBe(423);
     expect(列("来 上旬").size).toBe(68);
     expect(列("来月上旬").size).toBe(68);
-    expect(列("締切時刻").size).toBe(180);
+    expect(列("締切時刻").size).toBe(181);
     expect(列("来月初め").size).toBe(0);
     expect(列("来年末").size).toBe(21);
     expect(列("来年初").size).toBe(23);
     expect(列("半 年後").size).toBe(2);
     expect(列("一 週間後").size).toBe(13);
     expect(列("ml から").size).toBe(0);
-    expect(列("来週から").size).toBe(422);
+    expect(列("来週から").size).toBe(423);
   });
 });
 

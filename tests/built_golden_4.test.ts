@@ -1423,7 +1423,7 @@ it("締切の窓は行の「表示している暦日」で比べている（SPEC
   expect(jsFunction(app, "rowShownDayMs"), "表示暦日が tShown を見ていない").toContain("r.tShown");
   const after = jsFunction(app, "rowAfter");
   expect(after, "窓の上側が行の表示暦日で比較されていない").toContain(
-    "rowShownDayMs(r) > dateLimit",
+    "rowShownDayMs(r) >= dateLimit",
   );
   expect(after, "窓の上側が締切の瞬間で比較している").not.toContain("r.t >");
   const body = jsFunction(app, "filter");

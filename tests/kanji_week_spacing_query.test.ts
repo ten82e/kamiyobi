@@ -85,11 +85,11 @@ describe("他の単位に空格を広げない決まり（第 459 回・第 466 
     expect(案内("五 日後")).toContain("五 日後 = 2026年8月14日(金)");
   });
   it("第 470 回〜第 480 回の実測は此の回で変へて居ない", () => {
-    expect(列("締切時刻").size).toBe(180);
+    expect(列("締切時刻").size).toBe(181);
     expect(列("来月 終わり").size).toBe(178);
-    expect(列("週 末").size).toBe(145);
+    expect(列("週 末").size).toBe(146);
     expect(列("ml から").size).toBe(0);
-    expect(列("明日以降").size).toBe(422);
+    expect(列("明日以降").size).toBe(423);
     expect(列("来 上旬").size).toBe(68);
     expect(列("半 年後").size).toBe(2);
     expect(列("1 週間後").size).toBe(13);

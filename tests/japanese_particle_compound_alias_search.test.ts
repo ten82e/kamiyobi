@@ -52,9 +52,12 @@ const 載せた六條: Array<[string, string, number, number]> = [
 
 describe("助詞を含む和名も寄せ表が引ける（第 676 回）", () => {
   it("六條が搜し 0 行から行に出て、注も出る", () => {
-    for (const [ja, , 品, 目] of 載せた六條) {
-      expect(當(ja).length, `品書 ${ja}`).toBe(品);
-      expect(搜(目録, ja).length, `目録 ${ja}`).toBe(目);
+    for (const [ja, canonical] of 載せた六條) {
+      // 上流更新で収録数は変わる。和名と寄せ先が同じ行を返すことを検査する。
+      expect(當(ja).length, `品書 ${ja}`).toBeGreaterThan(0);
+      expect(當(ja), `品書 ${ja}`).toEqual(當(canonical));
+      expect(搜(目録, ja).length, `目録 ${ja}`).toBeGreaterThan(0);
+      expect(搜(目録, ja), `目録 ${ja}`).toEqual(搜(目録, canonical));
       expect(Recommender.querySynonymNotes(ja).join(" "), `${ja} の注`).toContain("も探しています");
     }
   });

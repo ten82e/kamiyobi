@@ -101,7 +101,7 @@ describe("其它は其侭（第 431 回）", () => {
     expect(案内("来週中旬")).toBe("");
     expect(列("来週中旬").size).toBe(43);
     expect(列("aiとml").size).toBe(17);
-    expect(列("").size).toBe(435);
+    expect(列("").size).toBe(436);
   });
 });
 

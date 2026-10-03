@@ -79,16 +79,16 @@ describe("元号で書いた年を繋げた形が、離した形と同じ行に�
   it("第 470 回〜第 497 回の実測は此の回で変へて居ない", () => {
     expect(列("2027年上旬").size).toBe(列("2027年 上旬").size);
     expect(列("2027年12月から").size).toBe(21);
-    expect(列("2026年1月から").size).toBe(426);
+    expect(列("2026年1月から").size).toBe(427);
     expect(列("2028年3月").size).toBe(0);
     expect(列("再来年3月").size).toBe(0);
     expect(列("来年上旬").size).toBe(2);
     expect(列("来週中旬").size).toBe(43);
     expect(列("年末上旬").size).toBe(40);
     expect(列("来月 末日").size).toBe(178);
-    expect(列("週 末").size).toBe(145);
+    expect(列("週 末").size).toBe(146);
     expect(列("ml から").size).toBe(0);
-    expect(列("締切時刻").size).toBe(180);
+    expect(列("締切時刻").size).toBe(181);
   });
 });
 

@@ -5104,8 +5104,13 @@ conferences:
   - categories:
       - ai
     editions:
-      - date_text: Mar 31, 2027
+      # 主催者CFP https://easychair.org/cfp/evomusart2027 (2026-10-02確認)。時刻・TZは未公表。
+      - date_text: March 31-April 2, 2027
         deadlines:
+          - date: '2026-11-01'
+            kind: abstract
+            label: Abstract registration deadline
+            precision: date-only
           - date: '2026-11-01'
             kind: paper
             label: Submission deadline
@@ -5114,10 +5119,10 @@ conferences:
         link: https://easychair.org/cfp/evomusart2027
         place: Mainz, Germany
         year: 2027
-    full_name: 16th International Conference on Artificial Intelligence in Music, Sound, Art and Design
+    full_name: International Conference on Artificial Intelligence in Music, Sound, Art and Design
     key: evomusart-2027
     link: https://easychair.org/cfp/evomusart2027
-    title: EvoMusArt 2027
+    title: EvoMUSART
   - categories:
       - ai
     editions:

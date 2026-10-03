@@ -228,7 +228,7 @@ export interface RunResult {
 /** Run `node src/cli.ts build` offline against the fixture cache. */
 export function runCli(
   outdir: string,
-  options: { now?: string; cache?: string; extra?: string[] } = {},
+  options: { now?: string; cache?: string; extra?: string[]; root?: string } = {},
 ): RunResult {
   /* 其の方が持つキャッシュを渡さ無い時は使い捨てを作る – 実測（2026-11-08）で其れが一個
    * 約 2.5 MB あつて、呼ぶ度に増へて TMPDIR に 12 GB（4 897 個）を積ませた主因だつた（第 482 回）。
@@ -253,6 +253,16 @@ export function runCli(
     options.now ?? NOW_ARG,
     ...(options.extra ?? []),
   ];
+  if (options.root) {
+    cmd.splice(
+      1,
+      1,
+      "--input-type=module",
+      "-e",
+      `import { main, setRoot } from ${JSON.stringify(join(REPO_ROOT, "src/cli.ts"))}; setRoot(process.argv[1]); process.exitCode = await main(process.argv.slice(2));`,
+      options.root,
+    );
+  }
   const proc = spawnSync(cmd[0], cmd.slice(1), {
     cwd: REPO_ROOT,
     encoding: "utf8",

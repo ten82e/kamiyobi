@@ -59,7 +59,7 @@ describe("漢数字の月・日を離つて打つ形が算用数字と同じ行�
     expect(列("二十 日").size).toBe(66);
     expect(列("一 月 五 日").size).toBe(5);
     expect(列("八 月 二十 日").size).toBe(7);
-    expect(列("三 月 と 四 月").size).toBe(56);
+    expect(列("三 月 と 四 月").size).toBe(57);
     expect(列("八 月 の 締切").size).toBe(114);
   });
   it("其の方に何も足さない – 月は其の月、日は其の日で絞れる", () => {
@@ -85,12 +85,12 @@ describe("名乗りは打たれた侭 – 畳まない形の実測（第 459 回
   });
   it("第 478 回〜第 481 回と其它の機械は其侭", () => {
     expect(列("来月 終わり").size).toBe(178);
-    expect(列("締切時刻").size).toBe(180);
+    expect(列("締切時刻").size).toBe(181);
     expect(列("一 週間後").size).toBe(13);
     expect(列("半 年後").size).toBe(2);
-    expect(列("週 末").size).toBe(145);
+    expect(列("週 末").size).toBe(146);
     expect(列("ml から").size).toBe(0);
-    expect(列("明日以降").size).toBe(422);
+    expect(列("明日以降").size).toBe(423);
     expect(列("来 上旬").size).toBe(68);
     expect(列("明日 から 明後日").size).toBe(4);
   });

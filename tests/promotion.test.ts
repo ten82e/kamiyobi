@@ -137,6 +137,35 @@ function observation(overrides: Partial<PromotionObservation> = {}): PromotionOb
 }
 
 describe("promotion batch", () => {
+  it("distinguishes Japanese abstract submission labels from manuscript deadlines (#796)", () => {
+    for (const label of ["要旨締切", "要旨提出", "要旨の提出期限", "要旨〆切"]) {
+      const [got] = extractCfpCandidates(`${label}: 2026年5月1日`);
+      expect(got, label).toMatchObject({ kind: "abstract", date: "2026-05-01" });
+      expect(got?.time, label).toBeUndefined();
+      expect(got?.timezone, label).toBeUndefined();
+    }
+    expect(extractCfpCandidates("要旨提出開始: 2026年5月1日")).toEqual([]);
+    expect(extractCfpCandidates("要旨を含む原稿投稿締切: 2026年6月1日")).toMatchObject([
+      { kind: "paper", date: "2026-06-01" },
+    ]);
+    for (const text of [
+      "要旨締切: 2026年5月1日; 原稿投稿締切: 2026年6月1日",
+      "原稿投稿締切: 2026年6月1日; 要旨提出: 2026年5月1日",
+    ]) {
+      expect(
+        extractCfpCandidates(text)
+          .map(({ kind, date }) => ({ kind, date }))
+          .sort((a, b) => String(a.date).localeCompare(String(b.date))),
+      ).toEqual([
+        { kind: "abstract", date: "2026-05-01" },
+        { kind: "paper", date: "2026-06-01" },
+      ]);
+    }
+    expect(extractCfpCandidates("要旨提出\n2026年5月1日")).toMatchObject([
+      { kind: "abstract", date: "2026-05-01" },
+    ]);
+  });
+
   it("extracts notification and camera-ready dates across inline markup", () => {
     expect(
       extractCfpCandidates(
@@ -2098,4 +2127,103 @@ describe("promotion batch", () => {
       rmSync(dir, { recursive: true, force: true });
     });
   });
+});
+
+describe("explicit timezone and workshop extraction regressions", () => {
+  it("keeps explicit Japanese-time CFP clocks and never invents missing precision", () => {
+    // Official INTERACTION 2026 schedule: https://www.interaction-ipsj.org/2026/submissions/
+    // Historical date is kept exactly as published, without borrowing the edition year.
+    expect(extractCfpCandidates("投稿〆切：2025/10/14(火) 日本時間22:00")).toMatchObject([
+      { kind: "paper", date: "2025-10-14", time: "22:00:00", timezone: "日本時間" },
+    ]);
+    for (const name of [
+      "Japan Standard Time",
+      "Anywhere on Earth",
+      "anywhere on the earth",
+      "Anywhere on inhabited Earth",
+    ]) {
+      expect(extractCfpCandidates(`Paper deadline: May 15, 2026 23:59 ${name}`)).toMatchObject([
+        {
+          kind: "paper",
+          date: "2026-05-15",
+          time: "23:59:00",
+          timezone: name.startsWith("Japan") ? "Japan Standard Time" : name,
+        },
+      ]);
+    }
+    const dateOnly = extractCfpCandidates("投稿締切：2026年5月15日 日本時間")[0];
+    expect(dateOnly).toMatchObject({ date: "2026-05-15", timezone: "日本時間" });
+    expect(dateOnly.time).toBeUndefined();
+    expect(
+      extractCfpCandidates("Paper deadline: May 15, 2026 23:59; conference in Japan")[0].timezone,
+    ).toBeUndefined();
+  });
+
+  it("distinguishes workshop proposals, explicit papers, registration and doctoral consortium (#824)", () => {
+    // Labels are controlled variants informed by CHI's separate organizer/participant submissions,
+    // not copied deadlines: https://chi2025.acm.org/for-authors/workshops/
+    for (const [label, kind] of [
+      ["Workshop deadline", "other"],
+      ["Workshops submission deadline", "other"],
+      ["Workshop proposal deadline", "other"],
+      ["Doctoral consortium submission deadline", "other"],
+      ["Workshop paper submission deadline", "paper"],
+      ["Workshop position papers due", "paper"],
+      ["Workshop manuscript deadline", "paper"],
+      ["Workshop registration deadline", "registration"],
+      ["Workshop abstract deadline", "abstract"],
+      ["Workshop notification deadline", "notification"],
+      ["Workshop camera-ready deadline", "camera_ready"],
+    ]) {
+      const rows = extractCfpCandidates(`${label}: May 15, 2026`);
+      expect(rows, label).toMatchObject([{ kind, date: "2026-05-15" }]);
+      expect(rows[0].time).toBeUndefined();
+      expect(rows[0].timezone).toBeUndefined();
+    }
+  });
+});
+
+it("keeps workshop, paper and registration labels local in compound CFP lines", () => {
+  for (const text of [
+    "Paper deadline: October 11, 2026; Workshop deadline: October 12, 2026; Workshop registration deadline: October 13, 2026",
+    "Workshop deadline: October 12, 2026; Paper deadline: October 11, 2026; Workshop registration deadline: October 13, 2026",
+  ]) {
+    const rows = extractCfpCandidates(text);
+    expect(
+      rows
+        .map(({ date, kind }) => ({ date, kind }))
+        .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? "")),
+    ).toEqual([
+      { date: "2026-10-11", kind: "paper" },
+      { date: "2026-10-12", kind: "other" },
+      { date: "2026-10-13", kind: "registration" },
+    ]);
+    expect(rows.every((row) => !row.time && !row.timezone)).toBe(true);
+  }
+});
+
+it("keeps Japanese カメラ・レディ in the final-manuscript slot (#800)", () => {
+  for (const label of ["カメラ・レディ締切", "カメラレディ締切"]) {
+    const [row] = extractCfpCandidates(`${label}: 2026年6月1日`);
+    expect(row, label).toMatchObject({ kind: "camera_ready", date: "2026-06-01" });
+    expect(row.time).toBeUndefined();
+    expect(row.timezone).toBeUndefined();
+  }
+  expect(extractCfpCandidates("原稿投稿締切: 2026年5月1日")).toMatchObject([
+    { kind: "paper", date: "2026-05-01" },
+  ]);
+  for (const text of [
+    "要旨締切: 2026年4月25日; 原稿投稿締切: 2026年5月1日; カメラ・レディ締切: 2026年6月1日",
+    "カメラ・レディ締切: 2026年6月1日; 要旨締切: 2026年4月25日; 原稿投稿締切: 2026年5月1日",
+  ]) {
+    expect(
+      extractCfpCandidates(text)
+        .map(({ kind, date }) => ({ kind, date }))
+        .sort((a, b) => String(a.date).localeCompare(String(b.date))),
+    ).toEqual([
+      { kind: "abstract", date: "2026-04-25" },
+      { kind: "paper", date: "2026-05-01" },
+      { kind: "camera_ready", date: "2026-06-01" },
+    ]);
+  }
 });

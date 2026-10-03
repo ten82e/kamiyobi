@@ -52,8 +52,8 @@ describe("其の時・処所の名を繋げて打つ形が空格で打つ人と�
     }
   });
   it("行数の実測（固定ハーネスの品書 435 行）", () => {
-    expect(列("締切時刻").size).toBe(180);
-    expect(列("会議時刻").size).toBe(184);
+    expect(列("締切時刻").size).toBe(181);
+    expect(列("会議時刻").size).toBe(185);
     expect(列("提出時刻").size).toBe(148);
     expect(列("論文時刻").size).toBe(148);
     expect(列("発表時刻").size).toBe(11);
@@ -81,7 +81,7 @@ describe("其の方の決まりで既に扱はれて居る語は割らない（�
   it("種別・締切の種類・表その物の語は詰め形の侭で行を出す", () => {
     for (const [語, 件] of [
       ["ポスター発表", 5],
-      ["参加登録", 25],
+      ["参加登録", 26],
       ["全文締切", 289],
       ["延長締切", 16],
       ["早期締切", 1],
@@ -114,17 +114,17 @@ describe("其の方の決まりで既に扱はれて居る語は割らない（�
     ] as Array<[string, number]>) {
       expect([語, 列(語).size]).toEqual([語, 件]);
     }
-    expect(列("締切").size).toBe(374);
+    expect(列("締切").size).toBe(375);
   });
   it("第 470 回〜第 478 回の実測は此の回で変へて居ない", () => {
-    expect(列("週 末").size).toBe(145);
-    expect(列("明日以降").size).toBe(422);
+    expect(列("週 末").size).toBe(146);
+    expect(列("明日以降").size).toBe(423);
     expect(列("来月 終わり").size).toBe(178);
     expect(列("1 年後から").size).toBe(1);
     expect(列("来 上旬").size).toBe(68);
     expect(案内("来 上旬")).toContain("来月 上旬 = 2026年9月1日(火)");
     expect(列("ml から").size).toBe(0);
-    expect(列("来週 から").size).toBe(422);
+    expect(列("来週 から").size).toBe(423);
     expect(列("来月 下旬 まで").size).toBe(276);
   });
 });

@@ -108,7 +108,7 @@ describe("列挙の寄せは其它の打ち方を壊さない（第 424 回）",
     expect(対称差("月 曜", "")).toBe(0);
     expect(対称差("3 日以内", "3日以内")).toBe(0);
     expect(対称差("来週 月曜", "来週 月曜")).toBe(0);
-    expect(列("").size).toBe(435);
+    expect(列("").size).toBe(436);
   });
 });
 

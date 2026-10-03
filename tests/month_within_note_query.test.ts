@@ -103,12 +103,12 @@ describe("その他は其侭（第 427 回）", () => {
   it("その他の語は一寸も動かない", () => {
     expect(対称差("来月末", "来月")).toBe(0);
     expect(対称差("年内", "")).toBeGreaterThan(0);
-    expect(列("年度末").size).toBe(28);
+    expect(列("年度末").size).toBe(29);
     expect(対称差("半月後", "15日後")).toBe(0);
     expect(対称差("来週と 再来週", "来週と再来週")).toBe(0);
     expect(対称差("aiとml", "ai ml")).toBe(0);
     expect(対称差("月 曜", "")).toBe(0);
-    expect(列("").size).toBe(435);
+    expect(列("").size).toBe(436);
   });
 });
 

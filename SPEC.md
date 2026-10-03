@@ -195,6 +195,7 @@ kamiyobi/
 │   ├── tsconfig.build.json      # public/ 用 JavaScript emit
 │   ├── template.html            # コア UI（表・絞り込み。外部 CDN なし）
 │   ├── app.ts                   # ブラウザ UI 実行時処理
+│   ├── submission-identity.ts   # 公式照合済みの同一募集を元記録を保持して統合表示
 │   ├── place-aliases.ts         # 國名・都市名の打ち方を収録の表記へ寄せる表
 │   ├── topic-aliases.ts         # 主題の日本語の打ち方を會議名の英字檢索語へ寄せる表
 │   ├── latin-retype.ts          # 欧文の語を一字違ひに打った人へ收錄の綴りを見當として出す表（第 680 回）
@@ -286,7 +287,8 @@ export type TzResolution =
 
 export function resolveTzStatus(tzRaw: string | null | undefined): TzResolution;
 export function isConfirmedTimezone(tzRaw: string | null | undefined): boolean;
-// 'AoE'/'aoe' -> {kind:'fixed', offsetMinutes:-720}
+// 'AoE'/'aoe' / 'Anywhere on Earth'（the / inhabited を含む表記も）-> UTC-12
+// '日本時間' / 'Japan Standard Time' は JST（Asia/Tokyo）として受ける
 // 'UTC' / 'GMT' -> {kind:'fixed', offsetMinutes:0}
 // 'UTC+8' 'UTC-08' 'GMT+02' 'UTC+0' 'UTC+05:30' -> 固定オフセット
 //   （ゼロ埋め・1〜2桁・コロン区切りの全てを受ける）
@@ -605,6 +607,7 @@ node --experimental-strip-types src/cli.ts evidence [verify|gc] [--dry-run]
 | `recommendation-core.js` | `site/recommendation-core.ts` から生成する共有推薦軸 |
 | `publish.js` | `site/publish.ts` から生成する publish manifest 検証 |
 | `app.js` | `site/app.ts` から生成するブラウザ UI 実行時処理 |
+| `submission-identity.js` | 公式照合済みの同一募集の表示・ICS方針 |
 | `icon.svg` | サイト自前のファビコン（図形のみ。外部フォントに依存しない） |
 | `.nojekyll` | Pages の Jekyll 処理を無効化 |
 
@@ -2061,6 +2064,16 @@ conferences:
 ---
 
 ## 7. 静的サイト（`site/template.html`）
+
+### 投稿締切の探索と詳細
+
+- 各行に「詳細・投稿日程」ボタンを置く。公式サイトへのリンクと詳細を開く操作は区別する。
+- 詳細には選択した開催回の収録済み日程を日付順に並べる。`catalog.json` の開催回ごとの `schedule_deadlines` に一覧の期間外の日程を補い、一覧の件数・検索範囲は広げない。補足日程と、保持した開催回の一覧内の日程の詳細URLは、検索・種別等の条件を変えずに復元する。別の種別の日程を選んだ場合も一覧の条件と件数は保持する。現在・今後の日程を先に、終了済みは件数付きで折り畳み、選択した日程が終了済みなら自動展開する。年が同じ別の開催回は混ぜず、概要・論文・通知・ラウンド・原ラベル・精度を保つ。日程の前後関係から投稿枠や前提条件を推測しない。
+- 適用中の条件を個別に解除できる。ブラウザの戻る・進むでは条件と詳細を復元し、検索入力中の各打鍵を履歴として積み上げない。詳細内の別日程への切替は同じ履歴を置換する。共有リンクを閉じるときはサイトから離れない。
+- 詳細の表示中は背景を inert にし、Tab を内部で循環させる。Esc は閉じるボタンにフォーカスがあっても閉じる。一覧へ戻ったら対応する詳細ボタンへフォーカスを戻す。
+- モバイル初期表示では追加条件と収録統計を折り畳む。条件・投稿日程の操作は44px以上を確保し、時刻未確認の日付をJSTへ換算済みとして扱わない。
+- `catalog.json` の `source_updates` は `{name, status, fetched_at}` の配列。`health.json` のソース取得情報から作り、画面の生成時刻で上書きしない。保存済みの上流データを使用した場合は、最新の公式確認とは区別して表示する。
+
 
 - **コア UI は静的テンプレートと strict TypeScript 実行時処理に分離**。表・絞り込み・テーマ・フォントは外部 CDN・
   Web フォント・外部画像を使わない（#223）。`site/app.ts` は `recommender.ts`、
@@ -15832,3 +15845,19 @@ paperVecs 適用条件は「1 分野に収まる + 語彙非衝突」の 2 条�
   絞り込み（検索・分野チップ・国内・オンライン・ランク・期間）を見せていないので、
   「条件を変えてみてください」は画面に存在しないものを探す案内になる。実際に打てる手
   （タイトル・概要・キーワードを足す、上のサンプルボタンで入力形を確かめる）だけを書く。
+
+### 公式根拠と複数会期（日本語の投稿日程確認）
+
+- `Edition.year` は開催回の名称の年。延期後の開催年とは別。原文 `date_text` と元の `event_start/end` を保持する。
+- `event_review` は exact edition ID、原文、開始/終了、HTTPS公式根拠、確認日と説明を固定する。`held_year` は公式確認した実開催年（版の年または翌年）。一致しない証拠や変化した上流は検証エラーになる。収録元が実際に持つ空白違いの原文だけを `source_date_text_alternatives` に列挙でき、全候補のパース結果も固定した開始/終了と一致を要する。レビュー付きの override の `date_text` は固定値の検査用で、上流をその値に書き換えない。
+- `event_segments` は `{start, end, label}` の順序付き配列。明確な非連続日程は `split-dates` 精度で各区間を保持し、区間外を連続開催として補わない。元の期間から週次開催などに分解する場合には原文・期間に固定した公式レビューを要する。各区間の不正日付・逆順・重複・31日超は従来通り棄却する。長い連続開催を分割マーカーで許可しない。
+- 一覧・詳細・画面CSVは共有の `eventCellJa` で各区間と参加方式を表示する。`data.csv` の末尾 `event_segments` に構造化日程を出し、元の期間欄は保持する。`upcoming.md` の開催行は各区間を別行にし、締切ICSの本文も区間を列挙する。締切ICSに開催だけの予定を混ぜない契約は維持する。
+- EvoMUSART 2027の概要登録は主催者CFP確認済みの2026-11-01、時刻未確認。時刻・タイムゾーンを推測せず、同日の論文締切とは別の種別として収録する。
+
+日時の併記は「元の日時」と呼ぶ。UTC/JST変換が正しいことと公式ページの再確認が済んだことを分け、集約サイトのexact値も公式確認済みと表示しない。
+
+### 同一の特集号募集と掲載年
+
+- 公式CFP `https://www.ipsj.or.jp/journal/cfp/27-R.html` のCOMPSAC連携特集号は、JIP（英語論文のみ）、投稿締切2026-12-01（時刻未確認）、掲載予定2027年9月号。開催日を掲載月から補わない。
+- `jip/jip-compsac2027-si` と `ipsj-27-r-compsac/ipsj-27-r26` の元の記録・年度・IDは保持する。上記CFP・ID・論文第1回・トラック無し・date-only 2026-12-01が一致する場合だけ、画面一覧・画面CSV・締切ICSを1件にまとめる。別の日時・種別・回・トラック・CFPを黙って統合しない。
+- 表示はJIPを優先し、2027年を掲載年として明記する。旧共有リンクの行キーを別名として受け入れる。ICSは既存JIP UIDを保持する。アーカイブ用JSON/CSVの2記録は削除しない。公式根拠は `data/evidence/blobs/9972268f811c33df5e345fc94570018d6ea5ec55be146ca81b95744b7fd4f3bd.body` に保存する。

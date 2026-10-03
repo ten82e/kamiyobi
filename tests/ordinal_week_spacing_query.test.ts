@@ -165,7 +165,7 @@ describe("其の方の表が受けない形は寄せない（第 453 回）", ()
   }
 
   it("対照 – その他の週の語と旬の語は動きを変へない", () => {
-    expect(列("第").size).toBe(435);
+    expect(列("第").size).toBe(436);
     expect(列("週").size).toBe(0);
     expect(列("来週").size).toBe(43);
     expect(列("今週").size).toBe(4);

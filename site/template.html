@@ -799,6 +799,53 @@ tr.detail-row td {
 }
 .drawer-backdrop.active .drawer { right: 0; }
 
+/* Search and submission workflow */
+.source-update-warning { margin-top: 12px; color: var(--warn); font-size: 0.85rem; }
+.source-update-details { margin-top: 8px; color: var(--muted); font-size: 0.85rem; }
+.source-update-details summary { cursor: pointer; padding: 8px 0; color: var(--accent); }
+.catalog-stats > summary { cursor: pointer; padding: 8px 0; color: var(--accent); }
+.catalog-stats[open] > summary { display: none; }
+.advanced-filters > summary { cursor: pointer; min-height: 44px; padding: 10px 0; color: var(--accent); font-size: 0.85rem; }
+.search-wrap > label { display: block; color: var(--muted); font-size: 0.78rem; margin-bottom: 4px; }
+.active-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.active-filters[hidden] { display: none; }
+.filter-remove, .row-detail {
+  font: inherit; color: var(--accent); background: var(--panel); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 10px; min-height: 36px; cursor: pointer;
+}
+.filter-remove:hover, .row-detail:hover { border-color: var(--accent); background: var(--accent-subtle); }
+.row-detail { margin-top: 6px; white-space: normal; }
+.time-guide { margin: 12px 0; font-size: 0.85rem; color: var(--muted); }
+.time-guide strong { color: var(--fg); }
+.result-notes { flex-basis: 100%; }
+.result-notes summary, .data-scope summary { cursor: pointer; padding: 8px 0; min-height: 36px; color: var(--accent); }
+.result-notes > span { display: block; margin: 4px 0 8px; line-height: 1.7; }
+.data-scope { margin: 0 0 16px; font-size: 0.85rem; }
+.data-scope[open] { padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
+body.drawer-open { overflow: hidden; }
+.edition-schedule { margin: 16px 0; }
+.edition-schedule h3 { font-size: 1rem; margin-bottom: 8px; }
+.edition-schedule p { font-size: 0.85rem; color: var(--muted); margin: 8px 0; }
+.edition-schedule ul { list-style: none; }
+.past-edition-schedule > summary { cursor: pointer; min-height: 44px; padding: 12px 0; }
+.edition-schedule button {
+  width: 100%; text-align: left; font: inherit; font-size: 0.85rem; line-height: 1.6; color: var(--fg);
+  background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 10px;
+  margin: 4px 0; cursor: pointer; overflow-wrap: anywhere;
+}
+.edition-schedule button[aria-current="true"] { border-color: var(--accent); background: var(--accent-subtle); }
+@media (max-width: 640px) {
+  .row-detail, .filter-remove { min-height: 44px; }
+  .catalog-stats > summary, .catalog-stats[open] > summary { display: list-item; padding: 10px 0; color: var(--accent); cursor: pointer; }
+  .presets-bar { display: grid; grid-template-columns: 1fr 1fr; }
+  .presets-bar > span { grid-column: 1 / -1; }
+  .presets-bar .preset-btn { min-height: 44px; white-space: normal; }
+  .wrap { padding-top: 20px; }
+  header { margin-bottom: 20px; padding-bottom: 12px; }
+  .drawer { width: 100%; max-width: 100vw; padding: 20px; }
+  #drawerClose { min-width: 44px; min-height: 44px; }
+}
+
 /* Footer */
 footer {
   margin-top: 64px;
@@ -852,6 +899,10 @@ footer a:hover { text-decoration: underline; }
   .wrap { max-width: none; padding: 0; }
   .mode-switch,
   #controlsPanel,
+  .active-filters,
+  .row-detail,
+  .data-scope,
+  .result-notes,
   #helpPanel,
   #exportCsv,
   #more,
@@ -997,9 +1048,17 @@ footer a:hover { text-decoration: underline; }
       <div class="meta-info" id="genat"></div>
     </div>
 
+    <p id="sourceUpdateWarning" class="source-update-warning" hidden>一部の情報は保存済みデータを使用しています。画面の生成日時は、公式情報の確認日時ではありません。</p>
+    <details id="sourceUpdateDetails" class="source-update-details" hidden>
+      <summary>情報の取得日時を確認</summary>
+      <p id="sourceUpdateText"></p>
+      <p>各締切の確認状況と根拠は「詳細・投稿日程」で確認できます。</p>
+    </details>
+
     <!-- 収録状況の四つ組。単位を各ラベルに書く（会議の数と締切の件数を並べておいて
          単位を書かないと、680 と 176 が同じ物だと読めてしまう。2026-09-23 実測で
          「穴場/特化誌」は実数（穴場タグの会議だけ）とラベルが食い違っていた。 -->
+    <details id="catalogStats" class="catalog-stats" open><summary>収録状況を見る</summary>
     <div class="summary-bar">
       <span class="stats-caption">絞り込み前の収録全体:</span>
       <div class="stat-item"><span>収録している会議:</span> <strong id="statConfs">--</strong></div>
@@ -1008,6 +1067,7 @@ footer a:hover { text-decoration: underline; }
       <div class="stat-item"><span>穴場として収録した会議:</span> <strong id="statNiche">--</strong></div>
       <div class="stat-item"><span>国内研究会・国内シンポジウム:</span> <strong id="statDomestic">--</strong></div>
     </div>
+    </details>
   </header>
 
   <nav class="mode-switch" aria-label="表示モード">
@@ -1030,7 +1090,7 @@ footer a:hover { text-decoration: underline; }
       <div class="search-wrap">
         <!-- 検索欄は見出しを置いていない（placeholder だけ）。打つと placeholder は
              消えるので、支援技術用にラベルを置く。 -->
-        <label for="q" class="sr-label">検索</label>
+        <label for="q">検索</label>
         <input type="search" id="q" placeholder="会議名・分野・開催地で検索（例: NSDI、ネットワーク、おきなわ、国内）...">
       </div>
       <div class="field">
@@ -1090,6 +1150,8 @@ footer a:hover { text-decoration: underline; }
     </div>
     <textarea id="paperText" hidden></textarea>
 
+    <details id="advancedFilters" class="advanced-filters deadline-only" open>
+      <summary>分野・参加形式・過去の締切で絞る</summary>
     <div class="field deadline-only">
       <span>分野（複数選択可。空ならすべて）</span>
       <div class="chips" id="cats"></div>
@@ -1101,14 +1163,20 @@ footer a:hover { text-decoration: underline; }
       <label class="check"><input type="checkbox" id="est"> <span>推定締切を含める</span></label>
       <label class="check"><input type="checkbox" id="past"> <span>過去の締切も表示</span></label>
     </div>
+    </details>
   </div>
+
+  <div id="activeFilters" class="active-filters" role="group" aria-label="適用中の検索条件（押すとその条件だけを外します）" hidden></div>
+  <p id="timeGuide" class="time-guide deadline-only"><strong>日時は日本時間（JST）</strong>。時刻未確認の行は公式の日付のままで、日本時間へ換算していません。</p>
 
   <!-- Items Counter & Keyboard Shortcuts Hint -->
   <div class="count">
     <!-- 絞り込みのたびに書き換わる唯一のフィードバック（件数・「こう探しました」・
      0 件のときの案内）。読み上げは上の短い生領域だけに出す（この欄は「のぞく」の
      内訳まで載るので、全体を aria-live にすると 1 打鍵ごとに数十語が流れる）。 -->
-    <span id="countLive" class="sr-label" aria-live="polite"></span><span id="count"></span>
+    <span id="countLive" class="sr-label" aria-live="polite"></span>
+    <strong id="resultSummary"></strong>
+    <details id="resultNotes" class="result-notes"><summary>絞り込みの内訳・検索の説明</summary><span id="count"></span></details>
     <!-- 絞り込んだ結果は表計算へ持ち出して研究室内の予定表に貼れる（BOM 付き UTF-8） -->
     <button id="exportCsv" type="button" class="btn-reset" hidden></button>
     <!-- 締切はカレンダーに入れておかないと、この画面を開いた人にしか見えない（第 266 回）。
@@ -1123,11 +1191,13 @@ footer a:hover { text-decoration: underline; }
          畫面には無かつた（出口の在りかを言う場所が噓だった過ち – 第 267 回の再発防ぎ）。
          ファイルは畫面の一覧より大きめなので、押す前にそれを title に書く（第 289 回）。 -->
     <a id="jsonLink" class="btn-reset" href="data.json" title="収録した全ての会議と締切を、機械が読む用の JSON で開きます。過ぎた締切と、畫面の一覧が持つ期間より先の締切も入つて居ます。ファイルは畫面の一覧より大きめです。表計算へ貼るだけなら『この一覧の N 件を CSV でダウンロード』のほうが小さく、今の絞り込みを保つたまま出せます。">全データ（JSON）</a>
-    <span class="count-hint">行を選ぶと詳細（公式確認の状態と根拠）<span class="count-kbd" style="font-family: var(--font-mono); font-size: 0.75rem;"> ｜ ショートカット: <kbd>j</kbd>/<kbd>k</kbd>・<kbd>↓</kbd>/<kbd>↑</kbd> 選択 | <kbd>Enter</kbd> 開く | <kbd>d</kbd> 詳細 | <kbd>Esc</kbd> 閉じる | <kbd>/</kbd> 検索</span></span>
+    <span class="count-hint">「詳細・投稿日程」で概要登録・論文提出と確認の根拠を見る<span class="count-kbd" style="font-family: var(--font-mono); font-size: 0.75rem;"> ｜ ショートカット: <kbd>j</kbd>/<kbd>k</kbd>・<kbd>↓</kbd>/<kbd>↑</kbd> 選択 | <kbd>Enter</kbd> 開く | <kbd>d</kbd> 詳細 | <kbd>Esc</kbd> 閉じる | <kbd>/</kbd> 検索</span></span>
   </div>
   <!-- カレンダーに入る物の実測（件数と収録の期間）。購読すると自分の予定の上に 2 年分が
        載る人もいるので、「押してから中身を知る」をやめる（第 289 回）。数字はビルドが
        配信物から導いた値で、この欄が無い状態（古い差し込み）では黙って出る。 -->
+  <details id="dataScope" class="data-scope">
+    <summary>カレンダーの内容・先の締切を読み込む</summary>
   <div id="icsScope" class="scrollhint" hidden></div>
   <!-- 「購読 URL をコピー」を押した後の返事。自動でコピーできない環境（このページを http で
        開くなど）でも、この文字列を選べば同じことができる。 -->
@@ -1144,6 +1214,8 @@ footer a:hover { text-decoration: underline; }
     <span id="historyStatusText"></span>
     <button id="historyRetry" type="button" hidden>収録の全体の締切を再試行</button>
   </div>
+
+  </details>
 
   <!-- Table Container -->
   <!-- 狭い画面では thead を消して行をカードにする（上の @media）。そのままだと
@@ -1216,7 +1288,7 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div>
         <dt>AoE</dt>
-        <dd>Anywhere on Earth（UTC-12）の略。「世界のどこかでその日が終わるまで受け付ける」という国際会議の締め方。AoE 2026-02-06 23:59 は JST では 2026-02-07 20:59 で、日本では AoE の翌日まで提出できる。AoE を併記するのは公式が AoE 締切のものだけで、JST 宣言の国内会議には出さない。その場合、<strong>二つの欄で違う日付を書く行</strong>があります（2026-08-09 生成ビルドでは 863 行中 486 行）。<strong>公式表記欄に書く AoE の日付もそのまま検索の語になります</strong>（一覧の月のまとめ・並び順・残りの日数は JST の暦日で決まります）。</dd>
+        <dd>Anywhere on Earth（UTC-12）の略。「世界のどこかでその日が終わるまで受け付ける」という国際会議の締め方。AoE 2026-02-06 23:59 は JST では 2026-02-07 20:59 で、日本では AoE の翌日まで提出できる。「元の日時」は収録データの表記で、公式サイトでの再確認状態とは別です。AoE を併記するのは収録元が AoE を指定しているものだけで、JST 宣言の国内会議には出さない。その場合、<strong>二つの欄で違う日付を書く行</strong>があります（2026-08-09 生成ビルドでは 863 行中 486 行）。<strong>元の日時に書く AoE の日付もそのまま検索の語になります</strong>（一覧の月のまとめ・並び順・残りの日数は JST の暦日で決まります）。</dd>
       </div>
       <div>
         <dt>時刻未確認</dt>
@@ -1373,7 +1445,7 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div>
         <dt>オンライン参加可</dt>
-        <dd>会場表記に「オンライン」「ハイブリッド」「Online」「Virtual」などの記述がある行だけを出します。記述が無い行を<strong>対面とは判定しません</strong>（公式サイトで確認してください）。会場名の一部として語が含まれる例（<code>KSIR Virtual Conference Center</code>）は除外しています。実測で既定画面 478 行のうちこの条件に書くのは 15 行だけで、のぞく 463 件のうち <strong>110 件は開催地自体が未確認</strong>です。（この頁に書いた実測値は、収録データを固定時刻で組み直した成果物に対して毎回検査しています。ズレたら検査が落とします）件数欄は「オンライン参加の記載がない N 件（うち開催地が未確認 M 件）」と分けて出すので、<strong>オンライン参加が無いのだと誤解しないでください</strong>。行の詳細には開催地の公式表記をそのまま載せています。<code>（hybrid）</code> のような対面併用の表記もオンライン参加可として数えます（英語表記だけを理由に落ちる不整合を 2026-09-23 に修正。収録 97 件 → 117 件）。このチェックボックスの語はそのまま検索の語にもなっていて、「オンライン参加可」「オンライン参加」「ハイブリッド」と打っても同じ行が引けます（広げた先は件数欄におしらせを出す）。</dd>
+        <dd>会場表記に「オンライン」「ハイブリッド」「Online」「Virtual」などの記述がある行だけを出します。記述が無い行を<strong>対面とは判定しません</strong>（公式サイトで確認してください）。会場名の一部として語が含まれる例（<code>KSIR Virtual Conference Center</code>）は除外しています。実測で既定画面 478 行のうちこの条件に書くのは 15 行だけで、のぞく 463 件のうち <strong>110 件は開催地自体が未確認</strong>です。（ここに書いた件数は当時の記録です。現在の件数は検索結果で確認してください）件数欄は「オンライン参加の記載がない N 件（うち開催地が未確認 M 件）」と分けて出すので、<strong>オンライン参加が無いのだと誤解しないでください</strong>。行の詳細には開催地の公式表記をそのまま載せています。<code>（hybrid）</code> のような対面併用の表記もオンライン参加可として数えます（英語表記だけを理由に落ちる不整合を 2026-09-23 に修正。収録 97 件 → 117 件）。このチェックボックスの語はそのまま検索の語にもなっていて、「オンライン参加可」「オンライン参加」「ハイブリッド」と打っても同じ行が引けます（広げた先は件数欄におしらせを出す）。</dd>
       </div>
       <div>
         <dt>会期のみ・締切未定</dt>

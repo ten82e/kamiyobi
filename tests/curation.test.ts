@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { generateCurated } from "../scripts/generate-curated.ts";
 import {
   type Candidate,
@@ -13,6 +13,14 @@ import { type Conference, conferencesFromJson } from "../src/model.ts";
 import { writePromotionBatch } from "../src/promotion.ts";
 import { LocalSource, localSourcePaths, parseFile } from "../src/sources/local.ts";
 import { REPO_ROOT, tempWork } from "./helpers.ts";
+
+// 保存した CFP 証拠は 2026-09-02 の fixture。実行日が30日を越えても、
+// 検証対象の昇格・再確認処理まで到達するよう実行時刻を固定する。
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-09-02T00:00:00.000Z"));
+});
+afterEach(() => vi.useRealTimers());
 
 const issueKeys = [
   "bdiot-2026",

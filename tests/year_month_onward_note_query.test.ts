@@ -57,16 +57,16 @@ describe("其の年 ∧ 其の月以降で絞れて居る形は、其の幅を�
     expect(列("今年一月から").size).toBe(列("今年1月から").size);
   });
   it("其の方の語が本当に絞れて居る（実測の件数で張る – 案内の幅と行が合ふ）", () => {
-    expect(列("今年1月から").size).toBe(426);
-    expect(列("今年1月 から").size).toBe(426);
-    expect(列("今年一月から").size).toBe(426);
+    expect(列("今年1月から").size).toBe(427);
+    expect(列("今年1月 から").size).toBe(427);
+    expect(列("今年一月から").size).toBe(427);
     expect(列("今年12月から").size).toBe(84);
     expect(列("今年 12月").size).toBe(84);
-    expect(列("来年1月から").size).toBe(113);
+    expect(列("来年1月から").size).toBe(114);
     /* 第 493 回に先の年の語を割る目を入れたので、離した形と同じ行が出る。*/
     expect(列("来年12月から").size).toBe(21);
     expect(列("来年12月から").size).toBe(列("来年 12月から").size);
-    expect(列("2027年3月から").size).toBe(75);
+    expect(列("2027年3月から").size).toBe(76);
     /* 其の月以降は其の年より広い幅にならぬ（今年1月以降 ⊇ 今年12月以降 – 行の包含関係）。*/
     expect([...列("今年12月から")].every((行) => 列("今年1月から").has(行))).toBe(true);
   });
@@ -91,7 +91,7 @@ describe("その他の形は動かして居ない（第 352 回・第 369 回・
     /* 此の頁を作つた當面は「年度の語に暦月を継いだ形（`来年度3月から`）は 0 件の侭で、其上
      * 『絞り込まずにいます』が並ぶ」状態だつた（第 484 回に残した差として載せた）。第 487 回で
      * 其の形も其の年度 ∧ 其の月に割れるやうになつたので、其の方の幅を名乗る案内が出る。*/
-    expect(列("来年度3月から").size).toBe(48);
+    expect(列("来年度3月から").size).toBe(50);
     expect(日の案内("来年度3月から")).toContain("来年度 = 2027年4月1日(木)");
     expect(日の案内("来年度3月から")).not.toContain("絞り込まずにいます");
     /* 同じ文を行が出る形に並べない事は其侭張る（第 462 回・第 463 回）。其の方が本当に絞れぬ形は、
@@ -103,20 +103,20 @@ describe("その他の形は動かして居ない（第 352 回・第 369 回・
     }
   });
   it("第 470 回〜第 484 回の実測は此の回で変へて居ない", () => {
-    expect(列("来年度末").size).toBe(1);
+    expect(列("来年度末").size).toBe(3);
     expect(列("来年末").size).toBe(21);
     expect(列("今年末").size).toBe(84);
     expect(列("来月 末").size).toBe(178);
-    expect(列("週 末").size).toBe(145);
-    expect(列("明日以降").size).toBe(422);
+    expect(列("週 末").size).toBe(146);
+    expect(列("明日以降").size).toBe(423);
     expect(列("来 上旬").size).toBe(68);
     expect(列("来月終わり").size).toBe(178);
     expect(列("ml から").size).toBe(0);
     expect(列("一 週間後").size).toBe(13);
     expect(列("半 年後").size).toBe(2);
-    expect(列("締切時刻").size).toBe(180);
+    expect(列("締切時刻").size).toBe(181);
     expect(列("来月初め").size).toBe(0);
-    expect(列("今年1月 から").size).toBe(426);
+    expect(列("今年1月 から").size).toBe(427);
   });
 });
 

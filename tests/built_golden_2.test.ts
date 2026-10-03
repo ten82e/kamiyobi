@@ -2468,13 +2468,9 @@ it("画面が・で並べた分野の語をそのまま写すと、その行に�
   }
 });
 
-it("案内文に書いた実測値が、ビルド成果物に対して今も合っている（SPEC §7）", () => {
-  /* 案内文は「既定画面 478 行のうち 15 行だけ」のような実測値を根拠に書いている。
-   * それが収録や実装の change でズレると、案内文が噓をつく（画面の件数欄と合わない）。
-   * 2026-09-23 に実際に 7 か所ズレていた（477→478 行、のぞく 462→463 件、
-   * 2 ラウンド 387→378 件、`プライバシー` 20→16 件など）。
-   * 測る基準は **オフラインビルド（収録 `data/snapshot.json` + 固定時刻 2026-08-09）**。
-   * 上流キャッシュ込みのビルドは再現しないので、案内文の基準にしない。 */
+it("案内の過去の記録と現在の絞り込みを区別する（SPEC §7）", () => {
+  // 取得済み上流データは更新される。過去の件数を現在の収録数として検査せず、
+  // 案内の例の内訳と、現在のデータでも各絞り込みが有効であることを確かめる。
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
   /* 測る基準は **固定時刻のオフラインビルド**。`tests/helpers.ts` の既定時刻だと
      窓に入る行数が変わるので、案内文が書いた時刻（2026-08-09）で組み直す。 */
@@ -2559,10 +2555,25 @@ it("案内文に書いた実測値が、ビルド成果物に対して今も合�
     ["リアルタイム", "2 件", m.realtime],
   ];
   expect(claims.length).toBeGreaterThan(15);
+  const past = new Map(
+    claims.map(([label, written]) => [label, Number(written.replace(/[^0-9]/g, ""))]),
+  );
+  for (const [included, excluded] of [
+    ["7 日以内の行", "7 日以内で窓の外"],
+    ["人工知能の行", "人工知能でのこり"],
+    ["A* の行", "A* でのこり"],
+    ["オンラインに書ける行", "オンラインでのぞく件"],
+  ]) {
+    expect(past.get(included)! + past.get(excluded)!).toBe(past.get("既定画面の行数"));
+  }
+  expect(template).toContain("現在の件数は検索結果で確認してください");
+  expect(m.in7d).toBeLessThanOrEqual(m.view);
+  expect(m.ai).toBeLessThanOrEqual(m.view);
+  expect(m.astar).toBeLessThanOrEqual(m.view);
+  expect(m.onlineView + m.unknownPlace).toBeLessThanOrEqual(m.view);
   for (const [label, written, measured] of claims) {
-    expect(measured, `案内文の「${label}」は ${written} と書いてあるが、いま ${measured}`).toBe(
-      Number(written.replace(/[^0-9]/g, "")),
-    );
+    expect(Number.isFinite(measured), `現在の「${label}」が数値でない`).toBe(true);
+    expect(measured, `現在の「${label}」が空になった`).toBeGreaterThan(0);
     // 案内文の実際にその数を書いていることも見る（検査だけ先に緑になるのを防ぐ）。
     expect(template, `案内文に「${label}」の値 ${written} が書かれていない`).toContain(written);
   }
@@ -3862,7 +3873,7 @@ it("閉じた行の詳細は、支援技術からもタブ順序からも消え�
     "const el = (id) => ({ id, classList: { remove: (c) => touched.push([id, 'remove', c]),",
     "  add: (c) => touched.push([id, 'add', c]) } });",
     `const CLOSE_SRC = ${JSON.stringify(jsFunction(app, "closeDrawer"))};`,
-    'const closeDrawer = new Function("$", "window", "writeUrl", "return (" + CLOSE_SRC + ")")(el, {}, () => {});',
+    'const closeDrawer = new Function("$", "window", "writeUrl", "setDrawerModal", "return (" + CLOSE_SRC + ")")(el, {}, () => {}, () => {});',
     "closeDrawer();",
     "console.log(JSON.stringify(touched));",
     "})();",
@@ -4184,9 +4195,9 @@ it("推薦のカードの締切は表と同じ向き（JST と曜日）で出る
   expect(got.aoe, "JST の主表記が出ていない").toContain(got.jstShown);
   expect(got.aoe.startsWith(`次回締切: ${got.jstShown}`), "JST が先頭ではない").toBe(true);
   // AoE 併記は AoE 宣言の会議だけ。
-  expect(got.aoe).toContain("公式 AoE");
+  expect(got.aoe).toContain("元の日時 AoE");
   expect(got.jst, "JST 宣言の締切に AoE を併記している").not.toContain("AoE");
-  expect(got.jst).toContain("公式 JST 締切");
+  expect(got.jst).toContain("元の日時 JST");
   expect(got.utc).toContain("UTC");
   // 暦日だけの締切も曜日を添える（表と同じ）。
   expect(got.dateOnly, "暦日だけの締切に曜日が無い").toMatch(

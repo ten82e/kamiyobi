@@ -91,14 +91,14 @@ describe("其它は其侭（第 428 回）", () => {
     expect(対称差("来月一杯", "来月")).toBe(0);
     expect(対称差("週末一杯", "週末")).toBe(0);
     expect(対称差("金曜一杯", "金曜")).toBe(0);
-    expect(列("今年一杯").size).toBe(426);
+    expect(列("今年一杯").size).toBe(427);
     expect(列("来週末一杯").size).toBe(34);
     expect(対称差("来週末までに", "来週末までに")).toBe(0);
     expect(対称差("半月後", "15日後")).toBe(0);
     expect(対称差("来週と 再来週", "来週と再来週")).toBe(0);
     expect(対称差("aiとml", "ai ml")).toBe(0);
     expect(対称差("月 曜", "")).toBe(0);
-    expect(列("").size).toBe(435);
+    expect(列("").size).toBe(436);
   });
 });
 

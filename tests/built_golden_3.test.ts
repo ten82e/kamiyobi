@@ -1988,7 +1988,7 @@ it("閉じたままのてびきの入口に、中身とズレた見出しを置�
    * そのままてびき本文と突き合わせる。
    * 併せて、開いた状態をリンクで引き継ぐ `?help=1` が画面の案内にもあることを見る。 */
   const html = readFileSync(join(site, "index.html"), "utf8");
-  const headAt = html.indexOf("<summary>");
+  const headAt = html.indexOf("<summary>", html.indexOf('id="helpPanel"'));
   expect(headAt, "てびきの見出しが見当たらない").toBeGreaterThan(-1);
   const summary = html.slice(headAt, html.indexOf("</summary>", headAt));
   const advertised = [...summary.matchAll(/「([^」]+)」/g)].map((m) => m[1]);
@@ -2211,7 +2211,10 @@ it("収録元の締切名は「原表記」と書いて、画面の種別と混�
     "第 2 ラウンド / 原表記: Abstract registration",
   );
   // 表のセルと行の詳細が同じ式を使う（どちらかだけ直す変更を落ちるようにする）。
-  expect((app.match(/kindDetailJa\(/g) || []).length, "併記の呼び出し箇所").toBe(3);
+  expect(
+    (app.match(/kindDetailJa\(/g) || []).length,
+    "併記の呼び出し箇所（一覧・詳細・投稿日程）",
+  ).toBe(4);
   expect(app).not.toMatch(/detail\.push\(\s*r\.dl\.label\s*\)/);
   // 画面に出る語として、てびきにも同じ語で書いてある。
   const html = readFileSync(join(site, "index.html"), "utf8");
@@ -2892,6 +2895,9 @@ it("既定に出ていない行の共有リンクを踏んだら、条件を外�
     `const sharedRowState = (${jsFunction(app, "sharedRowState")});`,
     `const sharedRowNotice = (${jsFunction(app, "sharedRowNotice")});`,
     `const loosenSharedRowConditions = (${jsFunction(app, "loosenSharedRowConditions")});`,
+    "const DATA = data;",
+    `const editionScheduleRows = (${jsFunction(app, "editionScheduleRows")});`,
+    `const findEditionScheduleRow = (${jsFunction(app, "findEditionScheduleRow")});`,
     `const restoreDrawerFromUrl = (${jsFunction(app, "restoreDrawerFromUrl")});`,
     // 抜き出した関数が参照する自由変数は、必ず上のスコープに置く（第 143 回の教訓）。
     /const SELECTABLE_KINDS = \[[^\]]*\];/.exec(app)?.[0],
@@ -3018,6 +3024,9 @@ it("投稿先を探す画面に切り替えると行の詳細を閉じ、その 
     `const rowShareKeyJa = (${jsFunction(app, "rowShareKeyJa")});`,
     `const sharedRowState = (${jsFunction(app, "sharedRowState")});`,
     `const sharedRowNotice = (${jsFunction(app, "sharedRowNotice")});`,
+    "const DATA = data;",
+    `const editionScheduleRows = (${jsFunction(app, "editionScheduleRows")});`,
+    `const findEditionScheduleRow = (${jsFunction(app, "findEditionScheduleRow")});`,
     `const restoreDrawerFromUrl = (${jsFunction(app, "restoreDrawerFromUrl")});`,
     "const rows = Rec.candidateRows(data.conferences, now);",
     "globalThis.Date = { now: () => now };",
@@ -3066,10 +3075,10 @@ it("投稿先を探す画面に切り替えると行の詳細を閉じ、その 
   const setMode = jsFunction(app, "setMode");
   // ビルド後の整形で改行が入るので、形では見る（開いていた行を閉じる呼び出しがあること）。
   expect(
-    /if \(drawerRow\)\s*\n?\s*closeDrawer\(\);/.test(setMode),
+    /if \(drawerRow\)\s*\n?\s*closeDrawer\(null, false\);/.test(setMode),
     "モード変更時にドロワーを閉じていない",
   ).toBe(true);
-  expect(setMode.indexOf("closeDrawer()")).toBeLessThan(setMode.indexOf("state.mode ="));
+  expect(setMode.indexOf("closeDrawer(null, false)")).toBeLessThan(setMode.indexOf("state.mode ="));
 });
 
 it("語に付いた疑問符・括弧で検索が 0 件にならない（SPEC §7）", () => {
@@ -3402,6 +3411,9 @@ it("リンクについていた検索語で行が落ちていても、種別の�
     `const sharedRowState = (${jsFunction(app, "sharedRowState")});`,
     `const sharedRowNotice = (${jsFunction(app, "sharedRowNotice")});`,
     `const loosenSharedRowConditions = (${jsFunction(app, "loosenSharedRowConditions")});`,
+    "const DATA = data;",
+    `const editionScheduleRows = (${jsFunction(app, "editionScheduleRows")});`,
+    `const findEditionScheduleRow = (${jsFunction(app, "findEditionScheduleRow")});`,
     `const restoreDrawerFromUrl = (${jsFunction(app, "restoreDrawerFromUrl")});`,
     // 表に出る種別の正本はセレクトの選択肢と同じ（書き写さない）。
     /const SELECTABLE_KINDS = \[[^\]]*\];/.exec(app)?.[0],

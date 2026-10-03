@@ -12,7 +12,7 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import { dump as dumpYaml, load as loadYaml } from "js-yaml";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { generateCurated } from "../scripts/generate-curated.ts";
 import { assertSafePageUrl, capturePage, pinnedLookup, writeCasBody } from "../src/capture.ts";
 import { applyResolutionSource } from "../src/cli.ts";
@@ -2997,6 +2997,15 @@ it("carries an edition CallIdentity into verification targets", () => {
   );
   expect(targets[0]?.callIdentity).toBe("demo-call");
 });
+
+// 昇格 fixture の証拠日だけを固定する。実際の経過時間を測るテストは実時計を使う。
+beforeEach(({ task }) => {
+  if (task.name.startsWith("applies a promotion resolution and preserves history")) {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-02T00:00:00.000Z"));
+  }
+});
+afterEach(() => vi.useRealTimers());
 
 describe("fixes for reverify defects (#744)", () => {
   it("validateDeadline accepts last_attempt_at: null without throwing", () => {

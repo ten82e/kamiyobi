@@ -76,7 +76,7 @@ describe("行の『ランク』を逆の語順で繋いだ形が正準と同じ�
        實測 `評価` 476 件・`格` で絞る道は『ランク』欄。*/
     expect(集("評価").size).toBeGreaterThan(0);
     expect(案内("評価"), "行が出る語に格の案内を當てた").toBe("");
-    expect(集("ランク").size).toBe(435);
+    expect(集("ランク").size).toBe(436);
   });
   it("格の別名 – 無言の 0 件が打ち直しを言う", () => {
     for (const 文 of ["上位", "上位の会議", "上位会議", "格付け", "レベル", "グレード"]) {
@@ -109,14 +109,14 @@ describe("行の『ランク』を逆の語順で繋いだ形が正準と同じ�
     expect(集("オンライン参加可").size).toBe(20);
   });
   it("第 470 回〜第 508 回の実測は此の回で変へて居ない", () => {
-    expect(集("年内").size).toBe(424);
-    expect(集("今年内").size).toBe(426);
+    expect(集("年内").size).toBe(425);
+    expect(集("今年内").size).toBe(427);
     expect(集("再来週内").size).toBe(18);
     expect(集("年末中").size).toBe(84);
     expect(集("年初1月").size).toBe(23);
     expect(集("来月 末日").size).toBe(178);
-    expect(集("週 末").size).toBe(145);
-    expect(集("締切時刻").size).toBe(180);
+    expect(集("週 末").size).toBe(146);
+    expect(集("締切時刻").size).toBe(181);
     expect(集("ml から").size).toBe(0);
     expect(集("オンラインの締切").size).toBe(20);
     expect(集("ISC-A").size).toBe(0);

@@ -144,6 +144,23 @@ conferences:
         event_end: '2026-10-10'
   sigmod:
     editions:
+      # 根拠: https://2026.sigmod.org/sigmod_program_overview.shtml (2026-10-02確認)。
+      # SIGMODの日程のみ。PODS 6/1や合同会議全体の5/31-6/5に広げない。
+      sigmod26:
+        id: sigmod26
+        year: 2026
+        date_text: 'May 31 and June 2-4, 2026'
+        event_review:
+          edition_id: sigmod26
+          source_date_text: 'May 31 and June 2-4, 2026'
+          source_start: '2026-05-31'
+          source_end: '2026-06-04'
+          source_url: https://2026.sigmod.org/sigmod_program_overview.shtml
+          reviewed_on: '2026-10-02'
+          note: '公式プログラムの5月31日ワークショップと6月2-4日本会議を確認。上流のSIGMOD範囲を保持し、PODSや合同会議全体と混同しない。'
+        event_segments:
+          - {start: '2026-05-31', end: '2026-05-31', label: 'ワークショップ'}
+          - {start: '2026-06-02', end: '2026-06-04', label: '本会議'}
       2023:
         date_text: June 18-23, 2023
         event_start: '2023-06-18'
@@ -1638,6 +1655,20 @@ conferences:
   #   November 19, 2026。Winter (TBD) は未収録。
   mobicom:
     editions:
+      mobicom21:
+        id: mobicom21
+        year: 2021
+        date_text: "March 29-April 1, 2022"
+        event_review:
+          edition_id: mobicom21
+          source_date_text: "March 29-April 1, 2022"
+          source_date_text_alternatives: ["March 29 - April 1, 2022"]
+          source_start: '2022-03-29'
+          source_end: '2022-04-01'
+          source_url: https://www.sigmobile.org/mobicom/2021/program.html
+          reviewed_on: '2026-10-02'
+          note: "MobiCom 2021年版の本会議は2022年3月29日から4月1日。3月28日のワークショップを含む全体会期とは区別。"
+          held_year: 2022
       2027:
         deadlines:
           - {kind: abstract, label: 'Abstract Registration (summer)', date: '2026-08-26 23:59:59', tz: AoE}
@@ -2030,3 +2061,304 @@ conferences:
     tags: [dormant, systems, virtual-execution]
   ipsn:
     tags: [merged, sensys, networking, iot]
+
+  adma:
+    editions:
+      adma21:
+        id: adma21
+        year: 2021
+        date_text: "February 2-4, 2022"
+        event_review:
+          edition_id: adma21
+          source_date_text: "February 2-4, 2022"
+          source_start: '2022-02-02'
+          source_end: '2022-02-04'
+          source_url: https://adma21.webflow.io/
+          reviewed_on: '2026-10-02'
+          note: "ADMA 2021年版を2022年2月に開催。公式の版名と開催日を確認。"
+          held_year: 2022
+
+  dai:
+    editions:
+      dai2021:
+        id: dai2021
+        year: 2021
+        date_text: "January 4-5, 2022"
+        event_review:
+          edition_id: dai2021
+          source_date_text: "January 4-5, 2022"
+          source_start: '2022-01-04'
+          source_end: '2022-01-05'
+          source_url: https://adai.ai/dai/2021/program-overview.html
+          reviewed_on: '2026-10-02'
+          note: "DAI 2021年版の論文セッションは2022年1月4-5日。1月3日はチュートリアル等で、上流が収録する本会議の範囲を保持。"
+          held_year: 2022
+
+  focs:
+    editions:
+      focs21:
+        id: focs21
+        year: 2021
+        date_text: "February 7-10, 2022"
+        event_review:
+          edition_id: focs21
+          source_date_text: "February 7-10, 2022"
+          source_start: '2022-02-07'
+          source_end: '2022-02-10'
+          source_url: https://focs2021.cs.colorado.edu/
+          reviewed_on: '2026-10-02'
+          note: "FOCS 2021年版は2022年2月7-10日にオンライン開催。公式の版名と延期後日程を確認。"
+          held_year: 2022
+
+  slt:
+    editions:
+      slt22:
+        id: slt22
+        year: 2022
+        date_text: "January 9-12, 2023"
+        event_review:
+          edition_id: slt22
+          source_date_text: "January 9-12, 2023"
+          source_start: '2023-01-09'
+          source_end: '2023-01-12'
+          source_url: https://www.slt2022.signalprocessingsociety.org/SLT%202022/slt2022.org/index.html
+          reviewed_on: '2026-10-02'
+          note: "SLT 2022年版は2023年1月9-12日に開催。前後のハッカソン等とは別の本会議日程を保持。"
+          held_year: 2023
+
+  wasa:
+    editions:
+      wasa22:
+        id: wasa22
+        year: 2022
+        date_text: "April 7-9, 2023"
+        event_review:
+          edition_id: wasa22
+          source_date_text: "April 7-9, 2023"
+          source_start: '2023-04-07'
+          source_end: '2023-04-09'
+          source_url: https://wasa-conference.org/WASA2022/
+          reviewed_on: '2026-10-02'
+          note: "公式WASA 2022 & 2023サイトに2023年4月7-9日の大連開催を確認。2022年版の識別子と開催年を別に保持。"
+          held_year: 2023
+
+  probml:
+    editions:
+      probml2021:
+        id: probml2021
+        year: 2021
+        date_text: "January 13-February 17, 2021"
+        event_segments:
+          - {start: '2021-01-13', end: '2021-01-13', label: 'オンライン・第1回'}
+          - {start: '2021-01-20', end: '2021-01-20', label: 'オンライン・第2回'}
+          - {start: '2021-01-27', end: '2021-01-27', label: 'オンライン・第3回'}
+          - {start: '2021-02-03', end: '2021-02-03', label: 'オンライン・第4回'}
+          - {start: '2021-02-10', end: '2021-02-10', label: 'オンライン・第5回'}
+          - {start: '2021-02-17', end: '2021-02-17', label: 'オンライン・第6回'}
+        event_review:
+          edition_id: probml2021
+          source_date_text: "January 13-February 17, 2021"
+          source_date_text_alternatives: ["January 13 - February 17, 2021"]
+          source_start: '2021-01-13'
+          source_end: '2021-02-17'
+          source_url: https://probml.cc/archives/2021/schedule/
+          reviewed_on: '2026-10-02'
+          note: "公式AABI 2021日程は1月13/20/27日、2月3/10/17日の週次オンラインセミナー6回。原文の期間を連続開催として扱わない。"
+
+  # SecureComm 2027: 公式の2回の投稿締切。時刻・タイムゾーンの指定はなく、日付のみを採用。
+
+  securecomm:
+    editions:
+      securecomm27:
+        year: 2027
+        deadlines:
+          - kind: paper
+            label: Full Paper Submission
+            round: 1
+            date: '2027-02-01'
+            precision: date-only
+            evidence:
+              - source_name: SecureComm official CFP
+                source_url: https://securecomm.eai-conferences.org/2027/
+                sourceClass: official-cfp
+                observed_at: '2026-10-03T04:53:53Z'
+                retrievedAt: '2026-10-03T04:53:53Z'
+                verifiedAt: '2026-10-03T04:53:53Z'
+                contentHash: f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d
+                evidenceRef: data/evidence/blobs/f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d.body
+                rawExcerpt: 'Cycle 1: Submission deadline 1st February, 2027'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                confidence: official
+            superseded_deadlines:
+              - value: '2027-03-01T23:59:00Z'
+                precision: exact
+                source: https://securecomm.eai-conferences.org/2027/
+                evidenceRef: data/evidence/blobs/f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d.body
+                status: superseded
+                supersededBy: securecomm|securecomm27|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-10-03T04:53:53Z'
+              - value: '2027-02-02T11:59:59Z'
+                precision: exact
+                source: https://securecomm.eai-conferences.org/2027/
+                evidenceRef: data/evidence/blobs/f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d.body
+                status: superseded
+                supersededBy: securecomm|securecomm27|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-10-03T04:53:53Z'
+          - kind: paper
+            label: Full Paper Submission
+            round: 2
+            date: '2027-04-15'
+            precision: date-only
+            evidence:
+              - source_name: SecureComm official CFP
+                source_url: https://securecomm.eai-conferences.org/2027/
+                sourceClass: official-cfp
+                observed_at: '2026-10-03T04:53:53Z'
+                retrievedAt: '2026-10-03T04:53:53Z'
+                verifiedAt: '2026-10-03T04:53:53Z'
+                contentHash: f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d
+                evidenceRef: data/evidence/blobs/f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d.body
+                rawExcerpt: 'Cycle 2: Full Paper Submission deadline 15th April 2027'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                confidence: official
+            superseded_deadlines:
+              - value: '2027-04-16T11:59:59Z'
+                precision: exact
+                source: https://securecomm.eai-conferences.org/2027/
+                evidenceRef: data/evidence/blobs/f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d.body
+                status: superseded
+                supersededBy: securecomm|securecomm27|paper|2|
+                reason: manual-resolution
+                supersededAt: '2026-10-03T04:53:53Z'
+
+
+  # IPSJ 特集号: 公式の投稿締切は日付のみ。UTC/JST の終日末時刻を補わない。
+  ipsj-27-m-security:
+    editions:
+      ipsj-27-m26:
+        year: 2026
+        deadlines:
+        - kind: paper
+          label: Submission
+          round: 1
+          date: '2026-11-27'
+          precision: date-only
+          evidence:
+          - source_name: IPSJ official CFP
+            source_url: https://www.ipsj.or.jp/journal/cfp/27-M.html
+            sourceClass: official-cfp
+            observed_at: '2026-10-03T14:34:11Z'
+            retrievedAt: '2026-10-03T14:34:11Z'
+            verifiedAt: '2026-10-03T14:34:11Z'
+            contentHash: 461f26731d76116911c5f7cb1a1b842123a711b8cbb5a3a5451725e90768f254
+            evidenceRef: data/evidence/blobs/461f26731d76116911c5f7cb1a1b842123a711b8cbb5a3a5451725e90768f254.body
+            rawExcerpt: 投稿締切 2026年11月27日（金）
+            verifiedFields:
+            - date
+            - kind
+            confidence: official
+          superseded_deadlines:
+          - value: '2026-11-27T23:59:00Z'
+            precision: exact
+            source: https://www.ipsj.or.jp/journal/cfp/27-M.html
+            evidenceRef: data/evidence/blobs/461f26731d76116911c5f7cb1a1b842123a711b8cbb5a3a5451725e90768f254.body
+            status: superseded
+            supersededBy: ipsj-27-m-security|ipsj-27-m26|paper|1|
+            reason: manual-resolution
+            supersededAt: '2026-10-03T14:34:11Z'
+  ipsj-27-p-ubiquitous:
+    editions:
+      ipsj-27-p26:
+        year: 2026
+        deadlines:
+        - kind: paper
+          label: Submission
+          round: 1
+          date: '2026-12-04'
+          precision: date-only
+          evidence:
+          - source_name: IPSJ official CFP
+            source_url: https://www.ipsj.or.jp/journal/cfp/27-P.html
+            sourceClass: official-cfp
+            observed_at: '2026-10-03T14:34:11Z'
+            retrievedAt: '2026-10-03T14:34:11Z'
+            verifiedAt: '2026-10-03T14:34:11Z'
+            contentHash: 118f10762b3004114ff96949bf8c4b9e452fce67965888c08fd7a2becc57fded
+            evidenceRef: data/evidence/blobs/118f10762b3004114ff96949bf8c4b9e452fce67965888c08fd7a2becc57fded.body
+            rawExcerpt: 投稿締切 2026年12月4日（金）
+            verifiedFields:
+            - date
+            - kind
+            confidence: official
+          superseded_deadlines:
+          - value: '2026-12-04T23:59:00Z'
+            precision: exact
+            source: https://www.ipsj.or.jp/journal/cfp/27-P.html
+            evidenceRef: data/evidence/blobs/118f10762b3004114ff96949bf8c4b9e452fce67965888c08fd7a2becc57fded.body
+            status: superseded
+            supersededBy: ipsj-27-p-ubiquitous|ipsj-27-p26|paper|1|
+            reason: manual-resolution
+            supersededAt: '2026-10-03T14:34:11Z'
+  ipsj-27-r-compsac:
+    editions:
+      ipsj-27-r26:
+        year: 2026
+        deadlines:
+        - kind: paper
+          label: Submission
+          round: 1
+          date: '2026-12-01'
+          precision: date-only
+          evidence:
+          - &id001
+            source_name: IPSJ official CFP
+            source_url: https://www.ipsj.or.jp/journal/cfp/27-R.html
+            sourceClass: official-cfp
+            observed_at: '2026-10-03T14:34:11Z'
+            retrievedAt: '2026-10-03T14:34:11Z'
+            verifiedAt: '2026-10-03T14:34:11Z'
+            contentHash: 9972268f811c33df5e345fc94570018d6ea5ec55be146ca81b95744b7fd4f3bd
+            evidenceRef: data/evidence/blobs/9972268f811c33df5e345fc94570018d6ea5ec55be146ca81b95744b7fd4f3bd.body
+            rawExcerpt: 投稿締切 2026年12月1日（火）
+            verifiedFields:
+            - date
+            - kind
+            confidence: official
+          superseded_deadlines:
+          - value: '2026-12-01T23:59:00Z'
+            precision: exact
+            source: https://www.ipsj.or.jp/journal/cfp/27-R.html
+            evidenceRef: data/evidence/blobs/9972268f811c33df5e345fc94570018d6ea5ec55be146ca81b95744b7fd4f3bd.body
+            status: superseded
+            supersededBy: ipsj-27-r-compsac|ipsj-27-r26|paper|1|
+            reason: manual-resolution
+            supersededAt: '2026-10-03T14:34:11Z'
+  jip:
+    editions:
+      jip-compsac2027-si:
+        year: 2027
+        deadlines:
+        - kind: paper
+          label: 投稿締切
+          round: 1
+          date: '2026-12-01'
+          precision: date-only
+          evidence:
+          - *id001
+          superseded_deadlines:
+          - value: '2026-12-01T14:59:00Z'
+            precision: exact
+            source: https://www.ipsj.or.jp/journal/cfp/27-R.html
+            evidenceRef: data/evidence/blobs/9972268f811c33df5e345fc94570018d6ea5ec55be146ca81b95744b7fd4f3bd.body
+            status: superseded
+            supersededBy: jip|jip-compsac2027-si|paper|1|
+            reason: manual-resolution
+            supersededAt: '2026-10-03T14:34:11Z'

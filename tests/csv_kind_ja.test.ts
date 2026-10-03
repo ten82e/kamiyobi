@@ -124,12 +124,14 @@ function csvColumnNote(name: string): string {
 describe("生の CSV の日本語の種別欄（第 270 回）", () => {
   it("欄が末尾に有り、既存の列順を変えていない", () => {
     const { header } = csvRows();
-    // 第 302 回で日付の意味の欄を末尾に足したので、日本語の種別欄は後ろから 2 番目。
-    expect(header[header.length - 2], "日本語の種別欄の位置が変わった").toBe("kind_ja");
+    // 日付の意味と複数会期を末尾へ追加。従来の列は相対順序を維持。
+    expect(header[header.length - 3], "日本語の種別欄の位置が変わった").toBe("kind_ja");
+    expect(header.at(-1)).toBe("event_segments");
+    expect(header.at(-2)).toBe("date_field");
     expect(header.indexOf("kind"), "英語のキーの欄が消えた").toBeGreaterThanOrEqual(0);
     expect(header.filter((h) => h === "kind_ja").length, "同じ欄が 2 本有る").toBe(1);
     // 末尾に足したので、従来いちばん後ろだった欄はそのまま残る。
-    expect(header[header.length - 3], "列の並びが変わっている").toBe("link");
+    expect(header[header.length - 4], "列の並びが変わっている").toBe("link");
   });
 
   it("全行の欄数が揃っており、日本語の種別が空欄の行が無い", () => {

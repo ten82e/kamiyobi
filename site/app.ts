@@ -1,6 +1,7 @@
 import { loadPublishedRecommendation } from "./publish.js";
 import { type RecommendationAxes, recommendationAxes } from "./recommendation-core.js";
 import Recommender from "./recommender.js";
+import { consolidateReviewedSubmissions, type SubmissionDisplay } from "./submission-identity.js";
 
 type CandidateRow = ReturnType<typeof Recommender.candidateRows>[number];
 type PaperRecord = ReturnType<typeof Recommender.parsePaperLines>[number];
@@ -14,10 +15,12 @@ type ConferenceRecord = CandidateRow["conf"] & {
   recommendation_axes?: RecommendationAxes;
 };
 type EditionRecord = CandidateRow["ed"] & {
+  id?: string;
   link?: string;
   event_start?: string | null;
   event_end?: string | null;
   event_date_precision?: string;
+  schedule_deadlines?: DeadlineRecord[];
 };
 type DeadlineRecord = CandidateRow["dl"] & {
   verification?: {
@@ -37,6 +40,7 @@ type AppRow = Omit<CandidateRow, "conf" | "ed" | "dl"> & {
   conf: ConferenceRecord;
   ed: EditionRecord;
   dl: DeadlineRecord;
+  submission?: SubmissionDisplay;
   _boosted?: boolean;
   _match?: RecommendationResult["match"];
   _vocabScore?: number;
@@ -50,6 +54,7 @@ type AppRow = Omit<CandidateRow, "conf" | "ed" | "dl"> & {
 };
 
 interface DrawerRow {
+  submission?: SubmissionDisplay;
   conf: {
     key?: string;
     title?: string;
@@ -63,6 +68,9 @@ interface DrawerRow {
     place?: string;
     date_text?: string;
     event_start?: string | null;
+    event_review?: { held_year?: number; note?: string; source_url?: string };
+    deadlines?: DeadlineRecord[];
+    schedule_deadlines?: DeadlineRecord[];
   };
   kind: string;
   dateOnly?: boolean;
@@ -99,8 +107,15 @@ interface CatalogWindow {
   upcoming_days: number;
 }
 
+interface SourceUpdate {
+  name: string;
+  status: string;
+  fetched_at: string | null;
+}
+
 interface Catalog {
   generated_at?: string;
+  source_updates?: SourceUpdate[];
   calendar?: CalendarSpan;
   window?: CatalogWindow;
   sources: SourceRecord[];
@@ -336,6 +351,23 @@ function catalogFrom(value: unknown): Catalog | null {
       : [],
     categories,
     conferences,
+    source_updates: Array.isArray(value.source_updates)
+      ? value.source_updates.flatMap((source) => {
+          if (
+            !isRecord(source) ||
+            typeof source.name !== "string" ||
+            typeof source.status !== "string"
+          )
+            return [];
+          return [
+            {
+              name: source.name,
+              status: source.status,
+              fetched_at: typeof source.fetched_at === "string" ? source.fetched_at : null,
+            },
+          ];
+        })
+      : [],
     history_ref: typeof value.history_ref === "string" ? value.history_ref : undefined,
     calendar: calendarSpan(value.calendar),
     window: catalogWindow(value.window),
@@ -498,6 +530,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * ほしい（2026-09-23 実測: 絞り込みと並び順、てびきの開閉（第 140 回）は URL に残るが、
    * 行の詳細を開いた状態はどこにも残っておらず、送られた側は表の一覧だけを受け取った）。 */
   let drawerRow: AppRow | null = null;
+  let drawerOriginKey = "";
+  let pendingDrawerReturnKey = "";
+  let restoringNavigation = false;
+  let queryEditInProgress = false;
   /* URL から受け取った行の鍵。起動時の描き込みが終わってから行を探す。 */
   let pendingDrawerKey = "";
 
@@ -864,7 +900,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 経過 24 時間で区切ると、一覧が「あと 30 日」と出す行が上の数だけから落ちる
    * （2026-08-09T21:00Z 見立ての実測: 上部 176 件・一覧 177 件で `pacificvis` が足りなかった）。 */
   function rowAfter(r: AppRow, dateLimit: number) {
-    return rowShownDayMs(r) > dateLimit;
+    // dateLimit は翌日の開始。午前0時ちょうどは次の暦日なので含めない。
+    return rowShownDayMs(r) >= dateLimit;
   }
 
   // 投稿作業は日本の時刻で回る。JST を主表記にし、曜日を必ず添える。
@@ -1058,7 +1095,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     stopHistoryLoad();
     if (state.mode === "deadlines") setDeadlineProfile(DATA);
     toForm();
-    writeUrl();
+    writeUrl("push");
     render();
   };
 
@@ -1119,7 +1156,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       sortAsc = true;
     }
     setSortAria(key);
-    writeUrl();
+    writeUrl("push");
     render();
   };
 
@@ -1136,12 +1173,22 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   });
 
   // Drawer Controls
-  function openDrawer(r: DrawerRow) {
+  function openDrawer(
+    r: DrawerRow,
+    navigation: "push" | "replace" = drawerRow ? "replace" : "push",
+  ) {
+    const alreadyOpen = Boolean(drawerRow);
+    if (!alreadyOpen)
+      drawerOriginKey =
+        navigation === "replace" && history.state?.kamiyobiOrigin
+          ? history.state.kamiyobiOrigin
+          : rowShareKeyJa(r);
     drawerRow = r as unknown as AppRow;
-    writeUrl();
+    writeUrl(navigation);
     // フォーカス管理: 開く直前の要素を保存し、ドロワー内（閉じるボタン）へフォーカスを移す。
-    window._prevFocus = document.activeElement as HTMLElement | null;
+    if (!alreadyOpen) window._prevFocus = document.activeElement as HTMLElement | null;
     $("drawerBackdrop").classList.add("active");
+    setDrawerModal(true);
     $("drawerTitle").textContent = titleWithYear(r.conf.title || r.conf.key, r.ed.year);
     $("drawerFullName").textContent = r.conf.full_name || "";
     const dateState = rowDateOnlyState(r, Date.now());
@@ -1159,9 +1206,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // （JST 宣言の国内締切に AoE を出すと、実在しない AoE 締切があると誤解させる）。
     const zone = Recommender.officialZone(r.dl);
     let crossCheck = `${fmtDate(new Date(r.t))} UTC`;
-    if (zone === "AoE") crossCheck = `公式 ${fmtAoE(new Date(r.t))}`;
-    else if (zone === "JST") crossCheck = "公式 JST 締切";
-    else if (zone && zone !== "UTC") crossCheck = `公式 ${zone} ／ ${fmtDate(new Date(r.t))} UTC`;
+    if (zone === "AoE") crossCheck = `元の日時 ${fmtAoE(new Date(r.t))}`;
+    else if (zone === "JST") crossCheck = "元の日時 JST";
+    else if (zone && zone !== "UTC")
+      crossCheck = `元の日時 ${zone} ／ ${fmtDate(new Date(r.t))} UTC`;
 
     let html =
       '<div style="background: var(--chip); padding: 14px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 16px;">' +
@@ -1203,7 +1251,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       html +=
         '<a href="' +
         esc(officialLink) +
-        '" target="_blank" style="display: block; text-align: center; background: var(--accent); color: #fff; text-decoration: none; padding: 10px; border-radius: 6px; font-weight: 600; margin-bottom: 20px;">公式サイトを開く</a>';
+        '" target="_blank" style="display: block; text-align: center; background: var(--accent); color: var(--on-accent); text-decoration: none; padding: 10px; border-radius: 6px; font-weight: 600; margin-bottom: 20px;">公式サイトを開く</a>';
     }
 
     const placeRaw = String(r.ed.place || "");
@@ -1213,11 +1261,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const eventRawJa = String(r.ed.date_text || "").trim();
     // 研究会は毎月開くので、この行の回より後の会期も併記する（「次はいつか」を
     // 行をめくって探さなくて済むように）。日程の書き方は表と揃える。
-    const laterEditions = Recommender.upcomingEditionsOf(
-      r.conf,
-      String(r.ed.event_start || ""),
-      Date.now(),
-    );
+    const laterEditions = r.submission
+      ? []
+      : Recommender.upcomingEditionsOf(r.conf, String(r.ed.event_start || ""), Date.now());
     const catNamesJa = (r.cats || []).map((key) => catLabel(key));
     const rankShown = (r.rankPairs || []).map((pair) => Recommender.rankPairLabelJa(pair));
     // 今後の会期の開催地も、表と同じ書き方で日本語に寄せる（行の詳細の中で
@@ -1242,9 +1288,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       : "";
     html +=
       '<div style="font-size: 0.85rem;">' +
-      '<p style="margin-bottom: 8px;"><strong>開催地:</strong> ' +
+      '<p style="margin-bottom: 8px;"><strong>' +
+      (r.submission ? "投稿先" : "開催地") +
+      ":</strong> " +
       esc(
-        placeShown || (Recommender.fieldNotApplicableJa(r) ? NOT_APPLICABLE_JA : UNCONFIRMED_JA),
+        r.submission
+          ? r.conf.full_name
+          : placeShown ||
+              (Recommender.fieldNotApplicableJa(r) ? NOT_APPLICABLE_JA : UNCONFIRMED_JA),
       ) +
       "</p>" +
       (placeShown && placeShown !== placeRaw
@@ -1252,8 +1303,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           esc(r.ed.place || "") +
           "</p>"
         : "") +
-      fieldReasonsJa.note(fieldReasonsJa.place(r)) +
-      '<p style="margin-bottom: 8px;"><strong>会期:</strong> ' +
+      (r.submission ? "" : fieldReasonsJa.note(fieldReasonsJa.place(r))) +
+      '<p style="margin-bottom: 8px;"><strong>' +
+      (r.submission ? "掲載予定" : "会期") +
+      ":</strong> " +
       esc(
         eventShownJa || (Recommender.fieldNotApplicableJa(r) ? NOT_APPLICABLE_JA : UNCONFIRMED_JA),
       ) +
@@ -1265,6 +1318,23 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         ? '<p style="margin-bottom: 8px; color: var(--muted); font-size: 0.8rem;">原表記: ' +
           esc(eventRawJa) +
           "</p>"
+        : "") +
+      (r.ed.event_review?.held_year && r.ed.event_review.held_year !== r.ed.year
+        ? '<p style="margin-bottom: 8px;">' +
+          esc(String(r.ed.year) + "年版・開催は" + String(r.ed.event_review.held_year) + "年") +
+          "</p>"
+        : "") +
+      (r.ed.event_review?.note && safeExternalUrl(r.ed.event_review.source_url)
+        ? '<p style="margin-bottom: 8px; color: var(--muted);">' +
+          esc(r.ed.event_review.note) +
+          ' <a target="_blank" href="' +
+          esc(safeExternalUrl(r.ed.event_review.source_url)) +
+          '">会期の根拠</a></p>'
+        : "") +
+      (r.submission
+        ? '<p style="margin-bottom: 8px;">情報処理学会／JIPの同じ募集を1件にまとめています。' +
+          esc(r.submission.language) +
+          "。</p>"
         : "") +
       fieldReasonsJa.note(fieldReasonsJa.event(r)) +
       laterEditionsHtml +
@@ -1294,6 +1364,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     html += verificationSummary(r.dl);
 
     $("drawerBody").innerHTML = html;
+    renderEditionSchedule(r);
     const closeBtn = $("drawerClose");
     if (closeBtn) closeBtn.focus();
   }
@@ -1303,11 +1374,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   // 閉じるのは ✕ ボタン（自前 onclick 経由、引数なし）とバックドロップの直接クリックのみ。
   // ドロワー内の button がバブルしても閉じない。
-  function closeDrawer(e: Event | null = null) {
+  function closeDrawer(e: Event | null = null, navigate = true) {
     if (!e || e.target === $("drawerBackdrop")) {
       $("drawerBackdrop").classList.remove("active");
+      setDrawerModal(false);
       drawerRow = null;
-      writeUrl();
+      if (navigate) writeUrl("close");
       // フォーカスを開く直前の要素へ戻す。
       const prev = window._prevFocus;
       window._prevFocus = null;
@@ -1315,6 +1387,134 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
   }
   window.closeDrawer = closeDrawer;
+
+  function setDrawerModal(open: boolean): void {
+    const wrap = document.querySelector<HTMLElement>(".wrap");
+    if (wrap) wrap.inert = open;
+    document.body.classList.toggle("drawer-open", open);
+  }
+
+  // Keep keyboard navigation inside the dialog, including Escape on its close button.
+  $("drawer").addEventListener("keydown", (e: KeyboardEvent) => {
+    e.stopPropagation();
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      closeDrawer();
+    } else if (e.key === "Tab") {
+      const controls = [
+        ...$("drawer").querySelectorAll<HTMLElement>("button:not(:disabled), a[href], summary"),
+      ];
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last?.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first?.focus();
+      }
+    }
+  });
+
+  function editionScheduleRows(r: Pick<DrawerRow, "conf" | "ed" | "submission">): AppRow[] {
+    // Build from this exact edition, retaining the selected deadline's object identity.
+    const edition = {
+      ...r.ed,
+      deadlines: [...(r.ed.deadlines || []), ...(r.ed.schedule_deadlines || [])],
+    };
+    return (
+      Recommender.candidateRows({ conferences: [{ ...r.conf, editions: [edition] }] }) as AppRow[]
+    )
+      .filter((next) => next.kind !== "journal")
+      .map((next) => ({ ...next, conf: r.conf, ed: r.ed, submission: r.submission }) as AppRow)
+      .sort((a, b) => a.tShown - b.tShown);
+  }
+
+  function findEditionScheduleRow(catalog: Catalog, key: string): AppRow | null {
+    for (const conf of catalog.conferences) {
+      for (const ed of conf.editions || []) {
+        if (!catalog.window && !ed.schedule_deadlines?.length) continue;
+        const hit = editionScheduleRows({ conf, ed }).find(
+          (next) =>
+            (catalog.window || ed.schedule_deadlines?.includes(next.dl)) &&
+            rowShareKeyJa(next) === key,
+        );
+        if (hit) return hit;
+      }
+    }
+    return null;
+  }
+
+  function renderEditionSchedule(r: DrawerRow): void {
+    const related = editionScheduleRows(r);
+    if (!related.length) return;
+    const section = document.createElement("section");
+    section.className = "edition-schedule";
+    const heading = document.createElement("h3");
+    heading.textContent = r.submission ? "投稿日程（この特集号）" : "投稿日程（この開催回）";
+    section.appendChild(heading);
+    const note = document.createElement("p");
+    note.textContent =
+      "概要の登録が論文提出より先に必要な場合があります。トラック・ラウンドと公式の募集要項を確認してください。";
+    section.appendChild(note);
+    const list = document.createElement("ul");
+    const pastList = document.createElement("ul");
+    const now = Date.now();
+    let pastCount = 0;
+    let pastSelected = false;
+    for (const next of related) {
+      const item = document.createElement("li");
+      const button = document.createElement("button");
+      button.type = "button";
+      const current = next.dl === r.dl;
+      if (current) button.setAttribute("aria-current", "true");
+      const date = next.dateOnly
+        ? `${next.localDate}（時刻未確認・日本時間への換算なし）`
+        : fmtJst(new Date(next.t));
+      const detail = kindDetailJa(next.dl?.round, next.dl?.label);
+      const status = next.est
+        ? "推定"
+        : rowIsPast(next, now)
+          ? "終了済み"
+          : next.dateOnly
+            ? "時刻未確認"
+            : "";
+      button.textContent = [
+        KIND_LABEL[next.kind] || next.kind,
+        date,
+        detail,
+        status,
+        current ? "表示中" : "確認する",
+      ]
+        .filter(Boolean)
+        .join(" ／ ");
+      button.addEventListener("click", () => openDrawer(next));
+      item.appendChild(button);
+      if (rowIsPast(next, now)) {
+        pastList.appendChild(item);
+        pastCount++;
+        if (current) pastSelected = true;
+      } else list.appendChild(item);
+    }
+    if (list.children.length) section.appendChild(list);
+    if (pastCount) {
+      const history = document.createElement("details");
+      history.className = "past-edition-schedule";
+      history.open = pastSelected;
+      const summary = document.createElement("summary");
+      summary.textContent = `終了済みの日程（${pastCount}件）`;
+      history.appendChild(summary);
+      history.appendChild(pastList);
+      section.appendChild(history);
+    }
+    const scope = document.createElement("p");
+    scope.textContent = r.submission
+      ? "この特集号の収録済み日程です。掲載予定と投稿締切は別の年月です。"
+      : "この開催回の収録済み日程です。一覧の期間外にある日程も含みます。締切の前後関係だけでは、同じ投稿トラックとは判定できません。";
+    section.appendChild(scope);
+    $("drawerBody").insertBefore(section, $("drawerBody").children[1] || null);
+  }
 
   /* どのキーを入力欄・ボタン自身が受け取るかの判断（SPEC §7）。
    *
@@ -1550,7 +1750,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   // ---- DATA FLATTENING ----
   function buildRows(data: Catalog): AppRow[] {
-    return Recommender.candidateRows(data);
+    const candidates = Recommender.candidateRows(data);
+    if (!candidates.some((row) => row.conf?.key === "jip" || row.conf?.key === "ipsj-27-r-compsac"))
+      return candidates;
+    return consolidateReviewedSubmissions(candidates, rowShareKeyJa);
   }
   let rows = buildRows(DATA);
 
@@ -2578,7 +2781,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 比較関数（抽出して検査する）の依存を増やさないため、計算はここでやる。 */
     if (state.past) {
       out.forEach((r) => {
-        r._pastBlock = Number.isFinite(r.t) && r.t < now ? 1 : 0;
+        // 時刻未確認の幅も絞り込みと同じ終了判定を使う。
+        r._pastBlock = isPast(r) ? 1 : 0;
       });
     }
 
@@ -3200,6 +3404,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // URL の検索語を語に分解して「〜は収録データにも見当たりません」と言うのは誤解になる
     // （分解された語はドメインの一部で、検索の失敗理由ではない）。
     const terms =
+      matchedRows === 0 &&
       !filter.urlQuery &&
       !columnNote &&
       !uiNote &&
@@ -3444,6 +3649,20 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const meetsQuery = Recommender.searchMatcher(searchQuery);
     return Recommender.scheduleOnlyEditions(DATA)
       .filter((m) => {
+        // 同じ会議の重なる会期に投稿締切があるなら、別出典の空の回を「未定」と案内しない。
+        const knownSubmission = DATA.conferences
+          .find((conf) => conf.key === m.key)
+          ?.editions?.some(
+            (ed) =>
+              ed.event_start &&
+              ed.event_end &&
+              ed.event_start <= m.eventEnd &&
+              m.eventStart <= ed.event_end &&
+              [...(ed.deadlines || []), ...(ed.schedule_deadlines || [])].some(
+                (dl) => dl.kind === "paper" || dl.kind === "abstract",
+              ),
+          );
+        if (knownSubmission) return false;
         if (searchQuery.trim() && !meetsQuery(m.hay)) return false;
         if (filter.domestic && m.tags.indexOf("domestic-jp") < 0) return false;
         if (filter.online && !Recommender.placeOffersOnline(m.place)) return false;
@@ -3706,9 +3925,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       line(c1, fmtJst(d), "nowrap");
       const zone = Recommender.officialZone(r.dl);
       let sub = `${fmtDate(d)} UTC`;
-      if (zone === "JST") sub = "公式 JST 締切";
-      else if (zone === "AoE") sub = `公式 ${fmtAoE(d)}`;
-      else if (zone && zone !== "UTC") sub = `公式 ${zone} ／ ${fmtDate(d)} UTC`;
+      if (zone === "JST") sub = "元の日時 JST";
+      else if (zone === "AoE") sub = `元の日時 ${fmtAoE(d)}`;
+      else if (zone && zone !== "UTC") sub = `元の日時 ${zone} ／ ${fmtDate(d)} UTC`;
       line(c1, sub, "sub nowrap");
     }
 
@@ -3728,6 +3947,20 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       head.textContent = name.trim();
     }
     c2.appendChild(head);
+    const detailButton = document.createElement("button");
+    detailButton.type = "button";
+    detailButton.className = "row-detail";
+    detailButton.textContent = "詳細・投稿日程";
+    detailButton.setAttribute(
+      "aria-label",
+      `${name.trim()}の${KIND_LABEL[r.kind] || r.kind}の詳細・投稿日程`,
+    );
+    detailButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      openDrawer(r);
+    });
+    c2.appendChild(detailButton);
+
     if (r.conf.full_name && r.conf.full_name !== r.conf.title) {
       line(c2, r.conf.full_name, "sub");
     }
@@ -4339,12 +4572,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       // 見せると、実在しない AoE 締切があると誤解させる）。
       const official =
         zone === "JST"
-          ? "（公式 JST 締切）"
+          ? "（元の日時 JST）"
           : zone === "AoE"
-            ? `（公式 AoE ${fmtAoE(d)}）`
+            ? `（元の日時 AoE ${fmtAoE(d)}）`
             : zone && zone !== "UTC"
-              ? `（公式 ${zone} ／ ${fmtDate(d)} UTC）`
-              : `（公式 ${fmtDate(d)} UTC）`;
+              ? `（元の日時 ${zone} ／ ${fmtDate(d)} UTC）`
+              : `（元の日時 ${fmtDate(d)} UTC）`;
       return "次回締切: " + fmtJst(d) + official + (a.estimated ? "（推定）" : "");
     }
     if (a.status === "past") {
@@ -4575,9 +4808,84 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
   }
 
+  function renderActiveFilters(): void {
+    const box = $("activeFilters");
+    box.hidden = state.mode !== "deadlines";
+    box.textContent = "";
+    if (box.hidden) return;
+    const conditions: Array<{ label: string; clear: () => void }> = [];
+    if (state.q)
+      conditions.push({
+        label: `検索: ${state.q}`,
+        clear: () => {
+          state.q = "";
+        },
+      });
+    for (const cat of state.cats)
+      conditions.push({
+        label: catLabel(cat),
+        clear: () => {
+          state.cats = state.cats.filter((key) => key !== cat);
+        },
+      });
+    if (state.kind)
+      conditions.push({
+        label: KIND_LABEL[state.kind] || state.kind,
+        clear: () => {
+          state.kind = "";
+        },
+      });
+    if (state.rank)
+      conditions.push({
+        label: `ランク: ${state.rank}`,
+        clear: () => {
+          state.rank = "";
+        },
+      });
+    if (state.win !== "all")
+      conditions.push({
+        label: `締切まで ${Number.parseInt(state.win, 10)} 日以内`,
+        clear: () => {
+          state.win = "all";
+        },
+      });
+    for (const [key, label] of [
+      ["domestic", "国内研究会・国内シンポジウム"],
+      ["online", "オンライン参加可"],
+      ["est", "推定締切を含める"],
+      ["past", "過去の締切も表示"],
+    ] as const) {
+      if (state[key])
+        conditions.push({
+          label,
+          clear: () => {
+            state[key] = false;
+          },
+        });
+    }
+    box.hidden = !conditions.length;
+    for (const condition of conditions) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "filter-remove";
+      button.textContent = `${condition.label} ×`;
+      button.setAttribute("aria-label", `${condition.label}を外す`);
+      button.addEventListener("click", () => {
+        condition.clear();
+        toForm();
+        apply();
+        $("activeFilters").querySelector<HTMLElement>("button")?.focus();
+        if ($("activeFilters").hidden) $("q").focus();
+      });
+      box.appendChild(button);
+    }
+  }
+
   function render() {
     // 上の四つの数もそのときの時計で数え直す（一覧と同じ目盛りを保つため）。
     renderSummaryStats();
+    renderActiveFilters();
+    $("timeGuide").hidden = state.mode !== "deadlines";
     const recMode = state.mode === "recommend";
     if (recMode && !recommendationData && !recommendationError) loadRecommendationData();
     shown = recMode && !recommendationData ? [] : filter();
@@ -4825,6 +5133,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         clearable: filtersClearable(zeroFilter),
         pastShown: state.past,
       });
+    $("resultSummary").hidden = recMode;
+    $("resultSummary").textContent = `締切の検索結果 ${countJa(shown.length)} 件`;
+    $("resultNotes").toggleAttribute("open", shown.length === 0 || Boolean(state.q.trim()));
+    if (shown.length === 0) ($("dataScope") as HTMLDetailsElement).open = true;
     $("count").textContent = cnt;
     /* 原因の識別子は画面に出さないが、捨てると調査できない（#711）。属性で残す
      * （エラーのときだけ付け、他の状態では消す – 前の理由が残り続けるのを防ぐ）。 */
@@ -4975,11 +5287,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * `drawerRow` をモードが見ていずに書く）。その URL を受け取った人は、表の出ない画面で
      * 行を開こうとして、収録があるのに「収録に見当たりません」と読まされた
      * （2026-08-09 実測: `setMode` はドロワーを閉めていなかった）。 */
-    if (drawerRow) closeDrawer();
+    if (drawerRow) closeDrawer(null, false);
     window._prevFocus = null;
     state.mode = mode === "recommend" ? "recommend" : "deadlines";
     updateModeUi();
-    writeUrl();
+    writeUrl("push");
     if (state.mode === "recommend") {
       stopHistoryLoad();
       if (recommendationData) setRecommendationProfile(recommendationData);
@@ -5086,7 +5398,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     sortAsc = p.get("dir") !== "desc";
   }
 
-  function writeUrl() {
+  function writeUrl(navigation: "replace" | "push" | "close" = "replace") {
+    if (restoringNavigation) return;
     const p = new URLSearchParams();
     p.set("mode", state.mode);
     if (state.q) p.set("q", state.q);
@@ -5107,7 +5420,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (helpPanelEl.open) p.set("help", "1");
     if (drawerRow) p.set("row", rowShareKeyJa(drawerRow));
     const str = p.toString();
-    history.replaceState(null, "", str ? `?${str}` : window.location.pathname);
+    const next = `${window.location.pathname}${str ? `?${str}` : ""}${window.location.hash}`;
+    if (navigation === "close" && history.state?.kamiyobiDrawer) {
+      pendingDrawerReturnKey = drawerOriginKey;
+      history.back();
+      return;
+    }
+    if (next === `${window.location.pathname}${window.location.search}${window.location.hash}`)
+      return;
+    const entry = {
+      kamiyobiOrigin: drawerRow ? drawerOriginKey : "",
+      kamiyobiDrawer:
+        Boolean(drawerRow) && (navigation === "push" || Boolean(history.state?.kamiyobiDrawer)),
+    };
+    if (navigation === "push") history.pushState(entry, "", next);
+    else history.replaceState(entry, "", next);
   }
 
   function toForm() {
@@ -5142,7 +5469,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   function apply() {
     fromForm();
-    writeUrl();
+    const editing = document.activeElement === $("q");
+    writeUrl(editing && queryEditInProgress ? "replace" : "push");
+    queryEditInProgress = editing;
     if (
       state.mode === "deadlines" &&
       fullRecordNeeded(state.past, state.win, fullRecordRequested)
@@ -5558,6 +5887,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   // 検索は 1 打鍵で全行を絞り込む（3234 行で約 9.6 ms）。確定・入力のたびに
   // 走らせるともたつくので、入力はまとめて 1 回だけ適用する。
   wireDebouncedInput(valueElement("q"), 180, apply);
+  $("q").addEventListener("focus", () => {
+    queryEditInProgress = false;
+  });
+  $("q").addEventListener("keydown", (e: KeyboardEvent) => {
+    if (e.key === "Enter" && !e.isComposing) {
+      e.preventDefault();
+      apply();
+      $("results").focus();
+    }
+  });
+
   wireDebouncedInput(
     $("paperText"),
     200,
@@ -5642,7 +5982,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     stopHistoryLoad();
     if (state.mode === "deadlines") setDeadlineProfile(DATA);
     toForm();
-    writeUrl();
+    writeUrl("push");
     render();
   });
   const exportCsvButton = $("exportCsv");
@@ -5783,9 +6123,26 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       );
       return;
     }
-    let idx = shown.findIndex((r) => rowShareKeyJa(r) === pendingDrawerKey);
+    let idx = shown.findIndex(
+      (r) =>
+        rowShareKeyJa(r) === pendingDrawerKey ||
+        r.submission?.shareAliases.includes(pendingDrawerKey),
+    );
     if (idx < 0) {
-      const hit = rows.find((r) => rowShareKeyJa(r) === pendingDrawerKey) || null;
+      const scheduleHit = findEditionScheduleRow(DATA, pendingDrawerKey);
+      if (scheduleHit) {
+        sharedRowNotice(
+          "一覧の条件に含まれない日程を詳細に表示しています。検索や絞り込み条件は保持しています。",
+        );
+        openDrawer(scheduleHit, "replace");
+        return;
+      }
+      const hit =
+        rows.find(
+          (r) =>
+            rowShareKeyJa(r) === pendingDrawerKey ||
+            r.submission?.shareAliases.includes(pendingDrawerKey),
+        ) || null;
       const why = sharedRowState(hit, Date.now());
       if (why === "missing") {
         sharedRowNotice(
@@ -5802,7 +6159,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         sharedRowNotice(
           "その行は表に出さない種別（採否通知・カメラレディなど）なので、行を開いて中身を出します。",
         );
-        openDrawer(hit as unknown as DrawerRow);
+        openDrawer(hit as unknown as DrawerRow, "replace");
         return;
       }
       /* 既定で隠している条件（過ぎた締切・推定）は、リンクが指す行のために自分で外す。
@@ -5816,7 +6173,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
        * 同時に含む URL で、表に出る `paper` の行が「表に出さない種別なので…」という
        * 筋違いの案内を受けていた）。送った人の画面ではその行が出ていたので、受け取る側で
        * 条件を緩めて開く（過ぎた締切・推定で決めた方針の続き）。 */
-      const keyAt = () => shown.findIndex((r) => rowShareKeyJa(r) === pendingDrawerKey);
+      const keyAt = () =>
+        shown.findIndex(
+          (r) =>
+            rowShareKeyJa(r) === pendingDrawerKey ||
+            r.submission?.shareAliases.includes(pendingDrawerKey),
+        );
       idx = keyAt();
       /* 過ぎた締切・推定を外しただけで出てくる行には、これ以上触らない（第 156 回の
        * 扱いのまま）。それでも無い行だけ、リンクについていた条件を緩めに行く。 */
@@ -5831,7 +6193,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             ? `その行はいまの一覧に出さない行なので、リンクについていた条件（${loosened.join("・")}）を外したうえで、行を開いて中身を出します。`
             : "その行はいまの一覧に出さない行なので、行を開いて中身を出します。",
         );
-        openDrawer(hit as unknown as DrawerRow);
+        openDrawer(hit as unknown as DrawerRow, "replace");
         return;
       }
       // `render()` が `#countLive` を書き直すので、案内は後から同じ欄に足す。
@@ -5849,7 +6211,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     selectedIndex = idx;
     ensureRowsDrawn(idx);
     updateRowSelection();
-    openDrawer(shown[idx] as unknown as DrawerRow);
+    openDrawer(shown[idx] as unknown as DrawerRow, "replace");
   }
 
   /* 起動時のみ使うお知らせ。`render()` が `#countLive` を書き直すので、この関数は
@@ -6020,7 +6382,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (state.mode === "deadlines") setDeadlineProfile(DATA);
     invalidateSemantic();
     toForm();
-    writeUrl();
+    writeUrl("push");
     render();
   });
 
@@ -6030,6 +6392,35 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   if (icsScopeNode && icsSpan) {
     icsScopeNode.textContent = icsScopeNoteJa(icsSpan);
     icsScopeNode.hidden = false;
+  }
+
+  function sourceUpdateNoteJa(updates: SourceUpdate[]): string {
+    return updates
+      .map((source) => {
+        const at = source.fetched_at ? Date.parse(source.fetched_at) : Number.NaN;
+        const date = Number.isFinite(at) ? fmtJst(new Date(at)) : "取得日時未確認";
+        const fallback =
+          source.status === "cache-fallback" || source.status === "snapshot-fallback";
+        const status = fallback
+          ? "保存済みデータ"
+          : source.status === "failed"
+            ? "取得に失敗"
+            : source.status === "fresh" || source.status === "success"
+              ? "上流から取得"
+              : "取得状態未確認";
+        return `${source.name}: ${status}（${date}）`;
+      })
+      .join(" ／ ");
+  }
+
+  const sourceUpdates = DATA.source_updates || [];
+  if (sourceUpdates.length) {
+    $("sourceUpdateDetails").hidden = false;
+    $("sourceUpdateText").textContent = sourceUpdateNoteJa(sourceUpdates);
+    const fallback = sourceUpdates.some(
+      (source) => source.status === "cache-fallback" || source.status === "snapshot-fallback",
+    );
+    $("sourceUpdateWarning").hidden = !fallback;
   }
 
   if (DATA.generated_at) {
@@ -6090,6 +6481,51 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     $("repolink").appendChild(a);
   }
 
+  window.addEventListener("popstate", () => {
+    const previousRow = drawerRow;
+    const previousOrigin = pendingDrawerReturnKey || (previousRow ? drawerOriginKey : "");
+    pendingDrawerReturnKey = "";
+    restoringNavigation = true;
+    try {
+      if (drawerRow) closeDrawer(null, false);
+      stopHistoryLoad();
+      readUrl();
+      setSortAria(sortKey);
+      updateModeUi();
+      toForm();
+      if (state.mode === "recommend") {
+        if (recommendationData) setRecommendationProfile(recommendationData);
+        else loadRecommendationData();
+      } else if (fullRecordNeeded(state.past, state.win, fullRecordRequested)) {
+        loadHistoryData();
+      } else setDeadlineProfile(DATA);
+      render();
+      restoreDrawerFromUrl();
+      if (!drawerRow && (previousRow || previousOrigin)) {
+        const idx = shown.findIndex(
+          (row) =>
+            rowShareKeyJa(row) ===
+              (previousOrigin || (previousRow ? rowShareKeyJa(previousRow) : "")) ||
+            row.submission?.shareAliases.includes(
+              previousOrigin || (previousRow ? rowShareKeyJa(previousRow) : ""),
+            ),
+        );
+        if (idx >= 0) {
+          selectedIndex = idx;
+          ensureRowsDrawn(idx);
+          dataRows()[idx]?.querySelector<HTMLElement>(".row-detail")?.focus();
+        } else $("results").focus();
+      }
+      queryEditInProgress = false;
+    } finally {
+      restoringNavigation = false;
+    }
+  });
+
+  if (window.matchMedia("(max-width: 640px)").matches) {
+    ($("advancedFilters") as HTMLDetailsElement).open = false;
+    ($("catalogStats") as HTMLDetailsElement).open = false;
+  }
   readUrl();
   // URL から復元した並び順をヘッダーの矢印と aria-sort にも反映する（表の中身だけ
   // 並び、見出しが既定を指しているのは読み違えのもと）。

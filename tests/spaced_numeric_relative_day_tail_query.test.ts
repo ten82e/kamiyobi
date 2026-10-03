@@ -48,7 +48,7 @@ describe("数を離つて打った相対日と語尾が詰め形と同じ行に�
     ] as Array<[string, string]>) {
       expect([離, 列(離).size]).toEqual([離, 列(繋).size]);
     }
-    expect(列("1 か月後から").size).toBe(361);
+    expect(列("1 か月後から").size).toBe(362);
     /* 全角の数字も同じ – 入力の幅として受ける（実測 – 全角の数字だけを頭から落とす改ざんが
      * 検査を落さなかつたので、此の張りを足した）。*/
     for (const [離, 繋] of [
@@ -62,12 +62,12 @@ describe("数を離つて打った相対日と語尾が詰め形と同じ行に�
   it("行数の実測（固定ハーネスの品書 435 行）", () => {
     expect(列("1 年後から").size).toBe(1);
     expect(列("1 年後以降").size).toBe(1);
-    expect(列("1 年後まで").size).toBe(434);
+    expect(列("1 年後まで").size).toBe(435);
     expect(列("1 か月後まで").size).toBe(161);
     expect(列("1 か月後までに").size).toBe(161);
-    expect(列("半 年後から").size).toBe(93);
-    expect(列("1 か月前から").size).toBe(426);
-    expect(列("2 週間後から").size).toBe(412);
+    expect(列("半 年後から").size).toBe(94);
+    expect(列("1 か月前から").size).toBe(427);
+    expect(列("2 週間後から").size).toBe(413);
     expect(列("10 か月後から").size).toBe(4);
   });
   it("件数欄が数を落とした語を名乗る噓が消えた（幅で絞れる形は無言）", () => {
@@ -91,8 +91,8 @@ describe("寄せない形の守り（第 459 回・第 466 回）", () => {
     expect(案内("3 か月後 まで")).toContain("3 か月後 まで = 2026年8月9日(日)〜");
     expect(案内("1 年後 まで")).toContain("1 年後 まで = 2026年8月9日(日)〜");
     expect(案内("1 か月後")).toContain("1 か月後 = 2026年9月9日(水)");
-    expect(列("3 か月後 まで").size).toBe(366);
-    expect(列("1 年後 まで").size).toBe(434);
+    expect(列("3 か月後 まで").size).toBe(367);
+    expect(列("1 年後 まで").size).toBe(435);
     expect(列("1 年後 から").size).toBe(列("1 年後から").size);
   });
   it("其の品書に其の日が無い形は 0 件の侭（締切の推測はしない）", () => {
@@ -110,14 +110,14 @@ describe("寄せない形の守り（第 459 回・第 466 回）", () => {
     expect(列("論文から").size).toBe(0);
   });
   it("第 470 回〜第 476 回の実測は此の回で変へて居ない", () => {
-    expect(列("週 末").size).toBe(145);
+    expect(列("週 末").size).toBe(146);
     expect(列("来月 上旬 まで").size).toBe(180);
-    expect(列("明日から").size).toBe(422);
+    expect(列("明日から").size).toBe(423);
     expect(列("来 週末").size).toBe(34);
     expect(案内("来 週末")).toContain("来週末 = 2026年8月15日(土)");
     expect(列("8 月の 締切").size).toBe(114);
     expect(列("明日 から 明後日").size).toBe(4);
-    expect(列("来月上旬から").size).toBe(388);
+    expect(列("来月上旬から").size).toBe(389);
   });
 });
 

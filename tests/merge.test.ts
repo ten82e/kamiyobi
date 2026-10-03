@@ -63,6 +63,94 @@ const PRIORITY: Record<string, unknown> = {
 };
 
 describe("merge_sources", () => {
+  it.each([
+    ["colm", "AI/colm"],
+    ["ijcai", "AI/ijcai"],
+    ["interspeech", "CG/interspeech"],
+    ["iros", "AI/iros"],
+    ["sgp", "CG/SGP"],
+    ["sigir", "DB/sigir"],
+  ])("resolves the reviewed cross-source venue identity for %s", (key, ccfId) => {
+    const stats: MergeStats = { merged_deadlines: 0, merged_by_key: {} };
+    const source = (name: string, id: string) =>
+      makeConference({
+        key,
+        title: key.toUpperCase(),
+        sources: [name],
+        identity: { sourceIds: { [name]: id } },
+        editions: [],
+      });
+    const merged = mergeSources(
+      [[source("aideadlines", key)], [source("ccfddl", ccfId)]],
+      CONFIG,
+      stats,
+    );
+    expect(merged).toHaveLength(1);
+    expect(merged[0]?.key).toBe(key);
+    expect(merged[0]?.identity?.venueId).toBe(key);
+    expect(merged[0]?.identity?.sourceIds).toEqual({ aideadlines: key, ccfddl: ccfId });
+    expect(stats.identity_conflicts).toEqual([]);
+  });
+
+  it("unifies the organiser-linked EvoMUSART 2027 CFP with its upstream edition", () => {
+    const upstream = makeConference({
+      key: "evomusart",
+      title: "EvoMUSART",
+      sources: ["ccfddl"],
+      identity: { sourceIds: { ccfddl: "AI/evomusart" } },
+      editions: [
+        makeEdition({
+          year: 2027,
+          edition_id: "evomusart27",
+          identity: { sourceIds: { ccfddl: "evomusart27" } },
+          link: "https://www.evostar.org/2027/evomusart/",
+          place: "Mainz, Germany (hybrid)",
+          event_start: utc(2027, 3, 31),
+          event_end: utc(2027, 4, 2),
+        }),
+      ],
+    });
+    const local = makeConference({
+      key: "evomusart-2027",
+      title: "EvoMUSART",
+      sources: ["local"],
+      identity: { sourceIds: { local: "evomusart-2027" } },
+      editions: [
+        makeEdition({
+          year: 2027,
+          edition_id: "evomusart-202727",
+          source: "local",
+          identity: { sourceIds: { local: "evomusart-202727" } },
+          link: "https://easychair.org/cfp/evomusart2027",
+          place: "Mainz, Germany",
+          event_start: utc(2027, 3, 31),
+          event_end: utc(2027, 4, 2),
+          deadlines: [
+            {
+              kind: "abstract",
+              label: "Abstract registration deadline",
+              precision: "date-only",
+              local_date: "2026-11-01",
+              comment: null,
+              round: 1,
+            },
+          ],
+        }),
+      ],
+    });
+    const stats: MergeStats = { merged_deadlines: 0, merged_by_key: {} };
+    const merged = mergeSources([[upstream], [local]], CONFIG, stats);
+    expect(merged).toHaveLength(1);
+    expect(merged[0].key).toBe("evomusart");
+    expect(merged[0].editions).toHaveLength(1);
+    expect(merged[0].editions[0].identity?.editionId).toBe("evomusart-2027");
+    expect(merged[0].editions[0].deadlines.find((dl) => dl.kind === "abstract")).toMatchObject({
+      precision: "date-only",
+      local_date: "2026-11-01",
+    });
+    expect(stats.identity_conflicts).toEqual([]);
+  });
+
   it("preserves legacy keys", () => {
     const [conference] = mergeSources(
       [[makeConference({ key: "current", title: "Current", legacy_keys: ["legacy"] })]],

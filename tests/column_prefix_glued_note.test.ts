@@ -139,14 +139,14 @@ describe("欄の名前が接頭辞の連結形を、門を通る時だけ受け�
     expect(欄の案内("テーマセッション")).toContain("「テーマ」はこの表の欄");
   });
   it("第 470 回〜第 507 回の実測は此の回で変へて居ない", () => {
-    expect(件("年内")).toBe(424);
-    expect(件("今年内")).toBe(426);
+    expect(件("年内")).toBe(425);
+    expect(件("今年内")).toBe(427);
     expect(件("再来週内")).toBe(18);
     expect(件("年末中")).toBe(84);
     expect(件("年初1月")).toBe(23);
     expect(件("来月 末日")).toBe(178);
-    expect(件("週 末")).toBe(145);
-    expect(件("締切時刻")).toBe(180);
+    expect(件("週 末")).toBe(146);
+    expect(件("締切時刻")).toBe(181);
     expect(件("ml から")).toBe(0);
     expect(件("オンラインの締切")).toBe(20);
     expect(Recommender.uiWordNoteJa("当面の締切") || "").toContain("曖昧な幅では絞り込めません");

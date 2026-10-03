@@ -82,11 +82,11 @@ describe("此の段から届かない形（実測で残した差）と其它の�
   });
   it("其它の機械が受ける語と前の回の実測は変へて居ない", () => {
     expect(列("ml から").size).toBe(0);
-    expect(列("週 末").size).toBe(145);
+    expect(列("週 末").size).toBe(146);
     expect(列("月末").size).toBe(118);
     expect(列("来月末").size).toBe(178);
-    expect(列("明日以降").size).toBe(422);
-    expect(列("1 か月後から").size).toBe(361);
+    expect(列("明日以降").size).toBe(423);
+    expect(列("1 か月後から").size).toBe(362);
     expect(列("来 上旬").size).toBe(68);
     expect(列("明日 から 明後日").size).toBe(4);
     expect(列("来月 下旬 まで").size).toBe(276);

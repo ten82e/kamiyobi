@@ -992,7 +992,7 @@ describe("会期を出張の段取りに使えるよう、予定の本文に書�
     return desc.filter((l) => l.startsWith("会期: "))[0] ?? "";
   }
 
-  it("ビルド成果の全ての予定に、会期の行が 1 本だけ在る", () => {
+  it("ビルド成果の各予定に会期または確認済み特集号の掲載予定が1本だけある", () => {
     /* 実測（2026-08-09 生成ビルド）: 928 個の `VEVENT` の `DESCRIPTION` に会期は 1 行も無く、
        出張の段取りをカレンダーの側で決められなかった（会期の日を知りたくてサイトを再び開く形）。
        直し後は 928 個すべてに 1 本入り、日付が分かる物が 680 個・分かっていない物が 248 個。 */
@@ -1001,7 +1001,18 @@ describe("会期を出張の段取りに使えるよう、予定の本文に書�
     const counts = new Map<number, number>();
     let dated = 0;
     let unknown = 0;
+    let publicationCount = 0;
     events.forEach((ev) => {
+      const description = (ev.DESCRIPTION?.[0] ?? "").split("\\n");
+      const publication = description.filter((line) => line.startsWith("掲載予定: "));
+      if ((ev.UID?.[0] ?? "").startsWith("kamiyobi-jip-compsac2027-si-")) {
+        publicationCount += 1;
+        expect(publication).toEqual(["掲載予定: 2027年9月号（掲載予定）／英語論文のみ"]);
+        expect(sessionLine(ev), "特集号の掲載月を開催期間と表示している").toBe("");
+        expect(description.join("\n")).not.toMatch(/2027-09-(?:01|30)/);
+        return;
+      }
+      expect(publication, "未レビューの募集を掲載予定に変えている").toEqual([]);
       const line = sessionLine(ev);
       const n = (event: Record<string, string[]>): number =>
         (event.DESCRIPTION?.[0] ?? "").split("\\n").filter((l) => l.startsWith("会期: ")).length;
@@ -1023,7 +1034,10 @@ describe("会期を出張の段取りに使えるよう、予定の本文に書�
       unknown,
       "会期が未確認の行が 1 本も無い（分からない日の言い方を検査できない）",
     ).toBeGreaterThan(0);
-    expect(dated + unknown, "会期の値が日付でも未確認でもない行が有る").toBe(events.length);
+    expect(publicationCount).toBeLessThanOrEqual(1);
+    expect(dated + unknown + publicationCount, "会期または掲載予定の値が確認できない行がある").toBe(
+      events.length,
+    );
   });
 
   it("会期その物を並べる予定を立てていない（終日で締切を埋めない – 第 266 回）", () => {

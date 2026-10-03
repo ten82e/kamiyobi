@@ -2143,6 +2143,13 @@ it("upcoming.md and llms.txt explain the coverage window and the JST basis (SPEC
   }
 });
 
+// 既存の表示テストはドロワー本体を単独で実行する。履歴・投稿日程の動作は
+// deadline_workflow.test.ts で実装を使って検証し、ここでは周辺の DOM を見立てる。
+const DRAWER_NAV_STUBS =
+  'let drawerRow = null, drawerOriginKey = ""; const history = { state: null }; ' +
+  'const rowShareKeyJa = () => "test-row"; const setDrawerModal = () => {}; ' +
+  "const renderEditionSchedule = () => {}; ";
+
 it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", () => {
   const runtime = siteRuntime();
   const sortable = runtime.match(/const SORTABLE_KEYS = \[[^\]]*\];/)?.[0];
@@ -2165,14 +2172,15 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     jsFunction(runtime, "urlValueNoticeJa"),
     jsFunction(runtime, "urlFlagJa"),
     "let written = '';",
-    "const window = { location: { search: '', pathname: '/index.html' } };",
-    "const history = { replaceState: (_s, _t, url) => { written = String(url); } };",
+    "const window = { location: { search: '', pathname: '/index.html', hash: '' } };",
+    "const history = { replaceState: (_s, _t, url) => { written = String(url).replace(/^\\/index\\.html/, ''); } };",
     // writeUrl / readUrl は `<details>` の開閉も読むので、見立てにも同じ形を置く。
     "const helpPanel = { open: false };",
     "const $ = (id) => (id === 'helpPanel' ? helpPanel : null);",
     jsFunction(runtime, "rowShareKeyJa"),
     "let drawerRow = null;",
     "let pendingDrawerKey = '';",
+    "let drawerOriginKey = ''; let pendingDrawerReturnKey = ''; const restoringNavigation = false;",
     "state.online = false;",
     jsFunction(runtime, "readUrl"),
     jsFunction(runtime, "writeUrl"),
@@ -2705,7 +2713,8 @@ it("drawer shows JST with weekday and the official timezone, viewer-timezone ind
     // 「未確認」の語は正本（recommender.js の `UNCONFIRMED_LABEL_JA`）から取る。
     (siteRuntime("recommender.js").match(/const UNCONFIRMED_LABEL_JA = [^\n]*;/) || [""])[0],
     "const UNCONFIRMED_JA = UNCONFIRMED_LABEL_JA;",
-    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'UNCONFIRMED_JA', 'fieldReasonsJa', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, { paper: '論文締切' }, (t) => t, fmtDate, fmtJst, fmtAoE, (s) => String(s ?? ''), (v) => String(v ?? ''), () => null, () => '', Recommender, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}), () => {}, UNCONFIRMED_JA, { event: () => '', place: () => '', rank: () => '', note: (t) => (t ? '<i>' + t + '</i>' : '') });`,
+    `const DRAWER_NAV_STUBS = ${JSON.stringify(DRAWER_NAV_STUBS)};`,
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'UNCONFIRMED_JA', 'fieldReasonsJa', DRAWER_NAV_STUBS + 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, { paper: '論文締切' }, (t) => t, fmtDate, fmtJst, fmtAoE, (s) => String(s ?? ''), (v) => String(v ?? ''), () => null, () => '', Recommender, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}), () => {}, UNCONFIRMED_JA, { event: () => '', place: () => '', rank: () => '', note: (t) => (t ? '<i>' + t + '</i>' : '') });`,
     "const draw = (tzRaw) => {",
     "  body.innerHTML = '';",
     "  openDrawer({",
@@ -2747,10 +2756,11 @@ it("drawer shows JST with weekday and the official timezone, viewer-timezone ind
   expect(aoeRow).toContain("2026-02-07(土) 20:59 JST");
   expect(jstRow).toContain("2026-02-07(土) 20:59 JST");
   // AoE 締切は公式表記として AoE を併記（JST の直後、UTC を挟まない）。
-  expect(aoeRow).toContain("公式 2026-02-06 23:59 AoE");
+  expect(aoeRow).toContain("元の日時 2026-02-06 23:59 AoE");
+  expect(aoeRow).not.toContain("（公式 ");
   expect(aoeRow.indexOf("JST")).toBeLessThan(aoeRow.indexOf("AoE"));
   // JST 宣言の締切（国内研究会など）に AoE は出さない。
-  expect(jstRow).toContain("公式 JST 締切");
+  expect(jstRow).toContain("元の日時 JST");
   expect(jstRow).not.toContain("AoE");
   // 公式が UTC / 表記なしは UTC を添える。
   expect(utcRow).toContain("2026-02-07 11:59 UTC");
@@ -2792,7 +2802,7 @@ it("site UI is readable for Japanese researchers: field names, JST header, help 
   // 検索で分野名・国内が引けることを案内する。
   expect(template).toContain("会議名・分野・開催地で検索");
   // スマホではキーボード案内を出さず、タップで詳細が見られることだけ伝える。
-  expect(template).toContain("行を選ぶと詳細");
+  expect(template).toContain("「詳細・投稿日程」で概要登録・論文提出");
   expect(template).toMatch(/\.count-kbd \{ display: none; \}/);
   // 開催地は国名・開催形式を日本語に寄せ、原文（会場名・市区郡）は title と詳細に残す。
   expect(runtime).toContain("Recommender.placeJa(r.ed.place)");
@@ -3064,7 +3074,7 @@ it("dark theme via prefers-color-scheme overrides the palette (SPEC §7)", () =>
 it("drawer closes only on ✕ / backdrop click, not on inner elements", () => {
   const html = siteHtmlRuntime();
   // 静的検証: BUTTON 判定の除去と名前付き関数化がビルド成果に反映されている
-  expect(html).toMatch(/function closeDrawer\(e(?:\s*=\s*null)?\)/);
+  expect(html).toMatch(/function closeDrawer\(e(?:\s*=\s*null)?,\s*navigate\s*=\s*true\)/);
   expect(html).not.toContain('e.target.tagName === "BUTTON"');
   const src = jsFunction(html, "closeDrawer");
   // 実行検証: fake DOM で閉じる / 閉じないの 4 経路を確認する
@@ -3078,7 +3088,7 @@ it("drawer closes only on ✕ / backdrop click, not on inner elements", () => {
     // 閉じると URL から行の引数が外れる（第 148 回）ので、その口も見立てに置く。
     // `node -e` は ESM（厳格モード）なので、代入される変数は宣言が要る。
     "let drawerRow = { conf: { key: 'x' } };",
-    "const writeUrl = () => {};",
+    "const writeUrl = () => {}; const setDrawerModal = () => {};",
     `const closeDrawer = ${src};`,
     // 1. ✕ の自前 onclick 経路（引数なし）→ 閉じる
     "closeDrawer();",
@@ -3117,9 +3127,9 @@ it("deadline display includes AoE notation for AoE deadlines only (SPEC §7)", (
   // 表とドロワーの両方が、公式表記が AoE のときだけ AoE を出す式になっている。
   // JST 宣言の国内締切まで AoE を並記すると、実在しない AoE 締切を検知させる。
   expect(html).toContain("Recommender.officialZone(r.dl)");
-  expect(html).toMatch(/公式 \$\{fmtAoE\(d\)\}/);
-  expect(html).toMatch(/crossCheck = `公式 \$\{fmtAoE\(new Date\(r\.t\)\)\}`/);
-  expect(html).toContain('"公式 JST 締切"');
+  expect(html).toMatch(/元の日時 \$\{fmtAoE\(d\)\}/);
+  expect(html).toMatch(/crossCheck = `元の日時 \$\{fmtAoE\(new Date\(r\.t\)\)\}\`/);
+  expect(html).toContain('"元の日時 JST"');
   // 実行検証: fmtAoE は UTC-12 の壁時計を返す（例: 12:00 UTC → 00:00 AoE）
   const src = jsFunction(html, "fmtAoE");
   const script = [
@@ -3246,12 +3256,13 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
     // 「未確認」の語は正本（recommender.js の `UNCONFIRMED_LABEL_JA`）から取る。
     (siteRuntime("recommender.js").match(/const UNCONFIRMED_LABEL_JA = [^\n]*;/) || [""])[0],
     "const UNCONFIRMED_JA = UNCONFIRMED_LABEL_JA;",
-    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'UNCONFIRMED_JA', 'fieldReasonsJa', 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: (v) => weekdayJaFromDate(v), eventCellJa: (r) => String(r?.ed?.event_start || r?.ed?.date_text || ''), meetingRangeJa: meetingRangeJa, upcomingEditionsOf: upcomingEditionsOf, laterEditionLineJa: laterEditionLineJa }, meetingRangeJa, upcomingEditionsOf, KIND_DETAIL, () => {}, UNCONFIRMED_JA, { event: () => '', place: () => '', rank: () => '', note: (t) => (t ? '<i>' + t + '</i>' : '') });",
+    `const DRAWER_NAV_STUBS = ${JSON.stringify(DRAWER_NAV_STUBS)};`,
+    "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'UNCONFIRMED_JA', 'fieldReasonsJa', DRAWER_NAV_STUBS + 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: (v) => weekdayJaFromDate(v), eventCellJa: (r) => String(r?.ed?.event_start || r?.ed?.date_text || ''), meetingRangeJa: meetingRangeJa, upcomingEditionsOf: upcomingEditionsOf, laterEditionLineJa: laterEditionLineJa }, meetingRangeJa, upcomingEditionsOf, KIND_DETAIL, () => {}, UNCONFIRMED_JA, { event: () => '', place: () => '', rank: () => '', note: (t) => (t ? '<i>' + t + '</i>' : '') });",
     "document.activeElement = prevEl;",
     "openDrawer({ kind: 'journal', conf: { title: 'X' }, ed: { place: 'P', date_text: 'D' } });",
     "const focusedClose = document.activeElement === closeBtn;",
     "const savedPrev = window._prevFocus === prevEl;",
-    "const closeDrawer = new Function('window', 'document', '$', 'writeUrl', 'return (' + CLOSE + ')')(window, document, $, () => {});",
+    "const closeDrawer = new Function('window', 'document', '$', 'writeUrl', DRAWER_NAV_STUBS + 'return (' + CLOSE + ')')(window, document, $, () => {});",
     "closeDrawer();",
     "const restored = document.activeElement === prevEl;",
     "console.log(JSON.stringify({ dOpened, dFocusedRow, focusedClose, savedPrev, restored }));",
@@ -3591,7 +3602,8 @@ it("normal deadline drawer includes verification details", () => {
     // 「未確認」の語は正本（recommender.js の `UNCONFIRMED_LABEL_JA`）から取る。
     (siteRuntime("recommender.js").match(/const UNCONFIRMED_LABEL_JA = [^\n]*;/) || [""])[0],
     "const UNCONFIRMED_JA = UNCONFIRMED_LABEL_JA;",
-    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'UNCONFIRMED_JA', 'fieldReasonsJa', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: (v) => weekdayJaFromDate(v), eventCellJa: (r) => String(r?.ed?.event_start || r?.ed?.date_text || ''), meetingRangeJa: meetingRangeJa, upcomingEditionsOf: upcomingEditionsOf, laterEditionLineJa: laterEditionLineJa }, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}), () => {}, UNCONFIRMED_JA, { event: () => '', place: () => '', rank: () => '', note: (t) => (t ? '<i>' + t + '</i>' : '') });`,
+    `const DRAWER_NAV_STUBS = ${JSON.stringify(DRAWER_NAV_STUBS)};`,
+    `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'UNCONFIRMED_JA', 'fieldReasonsJa', DRAWER_NAV_STUBS + 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: (v) => weekdayJaFromDate(v), eventCellJa: (r) => String(r?.ed?.event_start || r?.ed?.date_text || ''), meetingRangeJa: meetingRangeJa, upcomingEditionsOf: upcomingEditionsOf, laterEditionLineJa: laterEditionLineJa }, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}), () => {}, UNCONFIRMED_JA, { event: () => '', place: () => '', rank: () => '', note: (t) => (t ? '<i>' + t + '</i>' : '') });`,
     "openDrawer({",
     "  kind: 'paper', conf: { key: 'demo', title: 'Demo' },",
     "  ed: { year: 2026, place: 'P', date_text: 'D' }, t: 0, tLast: 0,",
@@ -4242,7 +4254,10 @@ it("the drawer lists the same conference's later meetings (SPEC §7)", () => {
   expect(app).toContain("今後の会期");
   // てびき に語彙を書かないと、案内だけ増えて説明が追いつかない状態になる。
   const html = readFileSync(join(site, "index.html"), "utf8");
-  const guide = html.slice(html.indexOf('id="helpPanel"'), html.indexOf("</details>"));
+  const guide = html.slice(
+    html.indexOf('id="helpPanel"'),
+    html.indexOf("</details>", html.indexOf('id="helpPanel"')),
+  );
   for (const word of ["会期のみ・締切未定", "upcoming.html", "今後の会期"]) {
     expect(guide, `てびき に「${word}」が無い`).toContain(word);
   }
@@ -4370,7 +4385,10 @@ it("the online-participation filter keeps only venues that say so (SPEC §7)", (
   // 入口（チェックボックス・ショートカット・てびき）が画面から消えないようにする。
   expect(template).toContain('<input type="checkbox" id="online">');
   expect(template).toContain('data-preset="online" onclick="applyPreset(\'online\')"');
-  const guide = template.slice(template.indexOf('id="helpPanel"'), template.indexOf("</details>"));
+  const guide = template.slice(
+    template.indexOf('id="helpPanel"'),
+    template.indexOf("</details>", template.indexOf('id="helpPanel"')),
+  );
   expect(guide).toContain("オンライン参加可");
   expect(guide).toContain("対面とは判定しません");
   const app = siteRuntime("app.js");
@@ -4959,7 +4977,8 @@ it("ドロワーは表の情報（分野・ランク・ラウンド）を落と�
     runtime.match(/const UNCONFIRMED_TITLES_JA = \{[\s\S]*?\};/)?.[0] ?? "",
     runtime.match(/const NOT_APPLICABLE_JA = [^\n]*;/)?.[0] ?? "",
     runtime.match(/const fieldReasonsJa = \{[\s\S]*?\n {4}\};/)?.[0] ?? "",
-    `const openDrawer = new Function('window','document','$','KIND_LABEL','titleWithYear','fmtDate','fmtJst','fmtAoE','esc','safeExternalUrl','rowDateOnlyState','verificationSummary','Recommender','catLabel','meetingRangeJa','upcomingEditionsOf','UNCONFIRMED_JA','kindDetailJa', 'writeUrl', 'fieldReasonsJa', 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, KIND_LABEL, titleWithYear, () => 'UTC', () => 'JST', () => 'AoE', esc, (u) => String(u ?? ''), () => null, verificationSummary, Recommender, catLabel, meetingRangeJa, upcomingEditionsOf, Recommender.unconfirmedLabelJa(), (${jsFunction(runtime, "kindDetailJa")}), () => {}, fieldReasonsJa);`,
+    `const DRAWER_NAV_STUBS = ${JSON.stringify(DRAWER_NAV_STUBS)};`,
+    `const openDrawer = new Function('window','document','$','KIND_LABEL','titleWithYear','fmtDate','fmtJst','fmtAoE','esc','safeExternalUrl','rowDateOnlyState','verificationSummary','Recommender','catLabel','meetingRangeJa','upcomingEditionsOf','UNCONFIRMED_JA','kindDetailJa', 'writeUrl', 'fieldReasonsJa', DRAWER_NAV_STUBS + 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, KIND_LABEL, titleWithYear, () => 'UTC', () => 'JST', () => 'AoE', esc, (u) => String(u ?? ''), () => null, verificationSummary, Recommender, catLabel, meetingRangeJa, upcomingEditionsOf, Recommender.unconfirmedLabelJa(), (${jsFunction(runtime, "kindDetailJa")}), () => {}, fieldReasonsJa);`,
     "openDrawer({",
     "  kind: 'paper', cats: ['hpc', 'systems'], rankPairs: ['ccf:B', 'core:A*', 'thcpl:N'],",
     "  conf: { key: 'demo', title: 'Demo', tags: ['machine-learning'] },",

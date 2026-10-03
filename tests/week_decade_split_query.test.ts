@@ -97,22 +97,22 @@ describe("案内が殘る形は其の侭（第 416 回・第 431 回・第 483 �
   it("第 470 回〜第 489 回の実測は此の回で変へて居ない", () => {
     expect(列("来年上旬").size).toBe(2);
     expect(列("来年度上旬").size).toBe(0);
-    expect(列("来年度3月").size).toBe(1);
+    expect(列("来年度3月").size).toBe(3);
     expect(列("来年12月").size).toBe(21);
     /* 第 493 回に先の年の語を割る目を入れたので、離した形と同じ行が出る。*/
     expect(列("来年12月から").size).toBe(21);
     expect(列("来年12月から").size).toBe(列("来年 12月から").size);
     expect(列("来月初め").size).toBe(0);
     expect(列("来月末").size).toBe(178);
-    expect(列("週 末").size).toBe(145);
+    expect(列("週 末").size).toBe(146);
     expect(列("来週 末").size).toBe(34);
-    expect(列("明日以降").size).toBe(422);
+    expect(列("明日以降").size).toBe(423);
     expect(列("来 上旬").size).toBe(68);
-    expect(列("締切時刻").size).toBe(180);
+    expect(列("締切時刻").size).toBe(181);
     expect(列("半 年後").size).toBe(2);
     expect(列("一 週間後").size).toBe(13);
     expect(列("ml から").size).toBe(0);
-    expect(列("今年1月から").size).toBe(426);
+    expect(列("今年1月から").size).toBe(427);
   });
 });
 

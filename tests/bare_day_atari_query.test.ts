@@ -118,7 +118,7 @@ describe("寄せない決まりは不変（第 432 回）", () => {
   });
   it("其它は其侭", () => {
     expect(列("aiとml").size).toBe(17);
-    expect(列("").size).toBe(435);
+    expect(列("").size).toBe(436);
     expect(Recommender.relativeDayNotes("aiとml", 基準).join("")).toBe("");
   });
 });

@@ -136,14 +136,14 @@ describe("他のの拒否群も締切らしい語尾を受ける（第 506 回�
     expect(足場).toContain("UI_WORD_DEADLINE_TAILS_JA");
   });
   it("第 470 回〜第 505 回の実測は此の回で変へて居ない", () => {
-    expect(列("年内").size).toBe(424);
-    expect(列("今年内").size).toBe(426);
+    expect(列("年内").size).toBe(425);
+    expect(列("今年内").size).toBe(427);
     expect(列("再来週内").size).toBe(18);
     expect(列("年末中").size).toBe(84);
     expect(列("年初1月").size).toBe(23);
     expect(列("来月 末日").size).toBe(178);
-    expect(列("週 末").size).toBe(145);
-    expect(列("締切時刻").size).toBe(180);
+    expect(列("週 末").size).toBe(146);
+    expect(列("締切時刻").size).toBe(181);
     expect(列("ml から").size).toBe(0);
     expect(列("オンラインの締切").size).toBe(20);
     expect(画面の案内("当面の締切")).toContain("曖昧な幅では絞り込めません");

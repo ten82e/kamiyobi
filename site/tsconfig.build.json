@@ -11,6 +11,7 @@
   },
   "include": [
     "app.ts",
+    "submission-identity.ts",
     "recommender.ts",
     "place-aliases.ts",
     "topic-aliases.ts",

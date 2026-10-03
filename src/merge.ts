@@ -18,6 +18,8 @@ import {
   deadlineTrackKey,
   type Edition,
   type EditionIdentity,
+  type EventReview,
+  type EventSegment,
   type ExactDeadline,
   fmtDate,
   isDateOnlyDeadline,
@@ -815,8 +817,10 @@ function fillEdition(target: Edition, other: Edition): void {
   if (!target.link && other.link) target.link = other.link;
   if (!target.place && other.place) target.place = other.place;
   if (!target.date_text && other.date_text) target.date_text = other.date_text;
-  if (!target.event_start && other.event_start) target.event_start = other.event_start;
-  if (!target.event_end && other.event_end) target.event_end = other.event_end;
+  if (!target.event_segments?.length && !target.event_start && other.event_start)
+    target.event_start = other.event_start;
+  if (!target.event_segments?.length && !target.event_end && other.event_end)
+    target.event_end = other.event_end;
   if (!target.event_date_precision && other.event_date_precision)
     target.event_date_precision = other.event_date_precision;
   if (
@@ -828,6 +832,10 @@ function fillEdition(target: Edition, other: Edition): void {
     target.event_start = target.event_end;
     target.event_end = tmp;
   }
+  if (!target.event_segments && target.date_text === other.date_text && other.event_segments)
+    target.event_segments = other.event_segments;
+  if (!target.event_review && target.date_text === other.date_text && other.event_review)
+    target.event_review = other.event_review;
   const identity = mergeEditionIdentity([target.identity, other.identity]);
   if (identity) target.identity = identity;
 }
@@ -1432,11 +1440,19 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
     const next: Edition = { ...edition, deadlines: [...edition.deadlines] };
     if ("id" in patch) next.edition_id = String(patch.id);
     for (const field of ["link", "place", "date_text"] as const) {
-      if (field in patch) next[field] = String(patch[field]);
+      // A reviewed date is a pin, not a replacement: changed upstream dates must fail revalidation.
+      if (field in patch && !(field === "date_text" && "event_review" in patch))
+        next[field] = String(patch[field]);
     }
     for (const field of ["event_start", "event_end"] as const) {
       if (field in patch) next[field] = asDate(patch[field]);
     }
+    if ("event_segments" in patch) {
+      next.event_segments = patch.event_segments as EventSegment[];
+      if (Array.isArray(next.event_segments) && next.event_segments.length)
+        next.event_date_precision = "split-dates";
+    }
+    if ("event_review" in patch) next.event_review = patch.event_review as EventReview;
     if ("estimated" in patch) {
       // 推定版 (rollforward 生成) を実版へ昇格 / 降格させるための上書き。
       next.estimated = Boolean(patch.estimated);

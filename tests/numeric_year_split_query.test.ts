@@ -77,8 +77,8 @@ describe("數字で書いた先の年の形が、離した形と同じ行に出�
       expect([繋, 列(繋).size]).toEqual([繋, 件]);
     }
     /* 今の年は割らずとも解ける（割ると減る – 実測 426 ⇔ 104）。*/
-    expect(列("2026年1月から").size).toBe(426);
-    expect(列("2026年 1月から").size).toBe(104);
+    expect(列("2026年1月から").size).toBe(427);
+    expect(列("2026年 1月から").size).toBe(105);
     /* 其の年に締切が無い形（2028年）は、割つても割らなくても 0 件。*/
     expect(列("2028年3月から").size).toBe(0);
     expect(列("2028年 3月から").size).toBe(0);
@@ -95,19 +95,19 @@ describe("數字で書いた先の年の形が、離した形と同じ行に出�
     expect(日の案内("2026年1月から")).toContain("其の年の締切が収録に無ければ何も出ません");
   });
   it("第 470 回〜第 494 回の実測は此の回で変へて居ない", () => {
-    expect(列("2027年3月から").size).toBe(75);
+    expect(列("2027年3月から").size).toBe(76);
     expect(列("2026年12月から").size).toBe(84);
-    expect(列("2026年1月から").size).toBe(426);
+    expect(列("2026年1月から").size).toBe(427);
     expect(列("来年12月から").size).toBe(21);
-    expect(列("今年1月から").size).toBe(426);
+    expect(列("今年1月から").size).toBe(427);
     expect(列("来年12月").size).toBe(21);
     expect(列("来年上旬").size).toBe(2);
     expect(列("来週中旬").size).toBe(43);
     expect(列("年末上旬").size).toBe(40);
     expect(列("来月 末日").size).toBe(178);
-    expect(列("週 末").size).toBe(145);
+    expect(列("週 末").size).toBe(146);
     expect(列("ml から").size).toBe(0);
-    expect(列("締切時刻").size).toBe(180);
+    expect(列("締切時刻").size).toBe(181);
     expect(列("半 年後").size).toBe(2);
   });
 });

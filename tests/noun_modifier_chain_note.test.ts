@@ -130,11 +130,11 @@ describe("連体の「の」で繋がれた文が其の群の導きを出す（�
     expect((Recommender.columnQueryNoteJa("分野 セキュリティ") || "").trim()).toContain(
       "「分野」は",
     );
-    expect(件("年内")).toBe(424);
+    expect(件("年内")).toBe(425);
     expect(件("年末中")).toBe(84);
     expect(件("来月 末日")).toBe(178);
-    expect(件("週 末")).toBe(145);
-    expect(件("締切時刻")).toBe(180);
+    expect(件("週 末")).toBe(146);
+    expect(件("締切時刻")).toBe(181);
     expect(件("ml から")).toBe(0);
   });
 });

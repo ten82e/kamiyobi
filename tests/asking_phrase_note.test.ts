@@ -125,7 +125,7 @@ describe("訪ねて打つ形が其の群の打ち直し方を出す（第 510 �
       expect(画面の案内(文), `「${文}」に案内が乘つた`).toBe("");
     }
     /* `締切はいつ` は行が出る（締切の語が当たる）ので案内は立たない。*/
-    expect(件("締切はいつ")).toBe(20);
+    expect(件("締切はいつ")).toBe(21);
     expect(画面の案内("締切はいつ")).toBe("");
   });
   it("第 503 回〜第 509 回の道は其侭通る", () => {
@@ -141,12 +141,12 @@ describe("訪ねて打つ形が其の群の打ち直し方を出す（第 510 �
     expect((Recommender.columnQueryNoteJa("分野 セキュリティ") || "").trim()).toContain(
       "「分野」は",
     );
-    expect(件("年内")).toBe(424);
+    expect(件("年内")).toBe(425);
     expect(件("年末中")).toBe(84);
     expect(件("再来週内")).toBe(18);
     expect(件("来月 末日")).toBe(178);
-    expect(件("週 末")).toBe(145);
-    expect(件("締切時刻")).toBe(180);
+    expect(件("週 末")).toBe(146);
+    expect(件("締切時刻")).toBe(181);
     expect(件("ml から")).toBe(0);
   });
 });
