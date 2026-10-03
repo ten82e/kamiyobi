@@ -3314,3 +3314,33 @@ describe("conferencesFromJson & defensive merge operations", () => {
     expect(ed.event_end!.toISOString().slice(0, 10)).toBe("2026-10-20");
   });
 });
+
+it("reviewed legacy venue keys survive normalisation without taking another canonical venue's key", () => {
+  const source = makeConference({
+    key: "old-source",
+    title: "Reviewed Series",
+    identity: { sourceIds: { local: "source-id" } },
+    editions: [
+      makeEdition({
+        year: 2024,
+        edition_id: "original-2024",
+        event_start: utc(2024, 1, 1),
+        event_end: utc(2024, 1, 2),
+      }),
+    ],
+  });
+  const config = {
+    venue_identities: {
+      "published-series": {
+        source_ids: { local: "source-id" },
+        legacy_keys: ["former-ui-series", "reserved-series"],
+      },
+      "reserved-series": { source_ids: { local: "other-id" } },
+    },
+  };
+  const result = normalizeConfiguredVenueIdentities([source], config)[0];
+  expect(result.key).toBe("published-series");
+  expect(result.legacy_keys).toEqual(["former-ui-series", "old-source"]);
+  expect(result.editions).toEqual(source.editions);
+  expect(source.legacy_keys).toBeUndefined();
+});

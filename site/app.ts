@@ -16,6 +16,7 @@ type ConferenceRecord = CandidateRow["conf"] & {
   editions?: EditionRecord[];
   dblp?: string | null;
   sources?: string[];
+  legacy_keys?: string[];
   recommendation_axes?: RecommendationAxes;
 };
 type EditionRecord = CandidateRow["ed"] & {
@@ -550,14 +551,20 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* 共有用の行の鍵。同じ一覧の中でも区別が要る（同じ会議は概要締切と論文締切で別行に
    * なり、同じ種別でも第 1 ラウンドと第 2 ラウンドが並ぶ）ので、会議の鍵に年・種別・
    * 締切時刻を添える。値その物ではなく照合にだけ使う。 */
-  function rowShareKeyJa(r: {
-    conf?: { key?: string };
-    ed?: { year?: unknown };
-    kind?: string;
-    t?: number;
-    shareDiscriminator?: string;
-  }): string {
-    const key = String(r.conf?.key || "");
+  function rowShareKeyJa(
+    r: {
+      conf?: { key?: string; legacy_keys?: string[] };
+      ed?: { year?: unknown };
+      kind?: string;
+      t?: number;
+      shareDiscriminator?: string;
+    },
+    reviewedAlias?: string,
+  ): string {
+    const key =
+      reviewedAlias && r.conf?.legacy_keys?.includes(reviewedAlias)
+        ? reviewedAlias
+        : String(r.conf?.key || "");
     const year = r.ed && r.ed.year !== undefined && r.ed.year !== null ? String(r.ed.year) : "";
     const kind = String(r.kind || "");
     const t = Number.isFinite(Number(r.t)) ? String(Math.trunc(Number(r.t))) : "";
@@ -1482,7 +1489,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         const hit = editionScheduleRows({ conf, ed }).find(
           (next) =>
             (catalog.window || ed.schedule_deadlines?.includes(next.dl)) &&
-            rowShareKeyJa(next) === key,
+            (rowShareKeyJa(next) === key ||
+              next.conf.legacy_keys?.some((alias) => rowShareKeyJa(next, alias) === key)),
         );
         if (hit) return hit;
       }
@@ -6173,7 +6181,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       );
       return;
     }
-    const legacyMatches = rows.filter((row) => row.legacyShareKey === pendingDrawerKey);
+    const legacyMatches = rows.filter(
+      (row) =>
+        row.legacyShareKey &&
+        (row.legacyShareKey === pendingDrawerKey ||
+          row.conf.legacy_keys?.some(
+            (alias) =>
+              rowShareKeyJa({ ...row, shareDiscriminator: undefined }, alias) === pendingDrawerKey,
+          )),
+    );
     if (legacyMatches.length > 1) {
       sharedRowNotice(
         "この旧リンクは同じ日時の複数の日程に対応します。ラウンド・トラックを確認して開いてください。",
@@ -6216,7 +6232,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       (r) =>
         rowShareKeyJa(r) === pendingDrawerKey ||
         r.legacyShareKey === pendingDrawerKey ||
-        r.submission?.shareAliases.includes(pendingDrawerKey),
+        r.submission?.shareAliases.includes(pendingDrawerKey) ||
+        r.conf.legacy_keys?.some((alias) => rowShareKeyJa(r, alias) === pendingDrawerKey),
     );
     if (idx < 0) {
       const scheduleHit = findEditionScheduleRow(DATA, pendingDrawerKey);
@@ -6232,7 +6249,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           (r) =>
             rowShareKeyJa(r) === pendingDrawerKey ||
             r.legacyShareKey === pendingDrawerKey ||
-            r.submission?.shareAliases.includes(pendingDrawerKey),
+            r.submission?.shareAliases.includes(pendingDrawerKey) ||
+            r.conf.legacy_keys?.some((alias) => rowShareKeyJa(r, alias) === pendingDrawerKey),
         ) || null;
       const why = sharedRowState(hit, Date.now());
       if (why === "missing") {
@@ -6269,7 +6287,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           (r) =>
             rowShareKeyJa(r) === pendingDrawerKey ||
             r.legacyShareKey === pendingDrawerKey ||
-            r.submission?.shareAliases.includes(pendingDrawerKey),
+            r.submission?.shareAliases.includes(pendingDrawerKey) ||
+            r.conf.legacy_keys?.some((alias) => rowShareKeyJa(r, alias) === pendingDrawerKey),
         );
       idx = keyAt();
       /* 過ぎた締切・推定を外しただけで出てくる行には、これ以上触らない（第 156 回の

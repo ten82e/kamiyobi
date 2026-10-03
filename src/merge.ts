@@ -227,6 +227,16 @@ function configuredIdentity(conf: Conference, config: Record<string, unknown>): 
     if (matches)
       return {
         ...configured,
+        ...(Array.isArray((value as Record<string, unknown>).legacy_keys)
+          ? {
+              legacy_keys: unique([
+                ...(configured.legacy_keys ?? []),
+                ...toStringArray((value as Record<string, unknown>).legacy_keys)
+                  .map(slug)
+                  .filter(Boolean),
+              ]),
+            }
+          : {}),
         identity: mergeVenueIdentity([configured.identity, { venueId }]),
       };
   }

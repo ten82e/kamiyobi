@@ -68,10 +68,14 @@ it("月次締切の12ラウンドと他の特集号の共有URLは変えない",
   expect(consolidateReviewedSubmissions(raw, legacy)).toBe(raw);
 });
 
-it("曖昧な旧リンクで最初のラウンドを黙って開かず、選択した候補だけを開く", () => {
+it.each([false, true])("曖昧な旧リンク（確認済み別名=%s）で選択した候補だけを開く", (alias) => {
   const raw = [row(), row()];
   raw[1].dl.round = 2;
-  const rows = assignShareIdentities(raw, legacy);
+  const rows = assignShareIdentities(raw, legacy).map((r) => ({
+    ...r,
+    conf: { ...r.conf, legacy_keys: ["former-jip"] },
+  }));
+  const shareKey = new Function(`return (${jsFunction(siteRuntime(), "rowShareKeyJa")});`)();
   const opened: unknown[] = [],
     buttons: Array<{
       textContent?: string;
@@ -107,11 +111,12 @@ it("曖昧な旧リンクで最初のラウンドを黙って開かず、選択�
     "KIND_LABEL",
     "Recommender",
     "kindDetailJa",
+    "rowShareKeyJa",
     `(${jsFunction(siteRuntime(), "restoreDrawerFromUrl")})();`,
   )(
     rows,
     rows,
-    legacy(raw[0]),
+    alias ? shareKey({ ...rows[0], shareDiscriminator: undefined }, "former-jip") : legacy(raw[0]),
     { mode: "deadlines" },
     (id: string) =>
       id === "sharedRowChoices" ? choiceBox : id === "sharedRowChoiceGuide" ? guide : live,
@@ -123,6 +128,7 @@ it("曖昧な旧リンクで最初のラウンドを黙って開かず、選択�
     { paper: "論文締切" },
     { titleWithYearJa: () => "JIP 2027" },
     (round: number, label: string) => `第${round}ラウンド ${label}`,
+    shareKey,
   );
   expect(opened).toEqual([]);
   expect(notice).toContain("複数の日程");
@@ -228,4 +234,20 @@ it("同じ開催回の別の投稿日程へ、確認済み論文募集の別名�
   );
   expect(result[0].submission).toEqual(selected.submission);
   expect(result[1].submission).toBeUndefined();
+});
+
+it("確認済みの会議別名だけで旧URLを照合し、年・種別・時刻・slotは変えない", () => {
+  const key = new Function(`return (${jsFunction(siteRuntime(), "rowShareKeyJa")});`)();
+  const r = {
+    ...row("published-series"),
+    conf: { key: "published-series", legacy_keys: ["former-series"] },
+    shareDiscriminator: "round-2",
+  };
+  expect(key(r, "former-series")).toBe("former-series|2027|paper|1|slot=round-2");
+  expect(key(r, "unrelated-series")).toBe(key(r));
+  expect(key({ ...r, ed: { year: 2026 } }, "former-series")).not.toBe(key(r, "former-series"));
+  expect(key({ ...r, t: 2 }, "former-series")).not.toBe(key(r, "former-series"));
+  expect(key({ ...r, shareDiscriminator: "round-1" }, "former-series")).not.toBe(
+    key(r, "former-series"),
+  );
 });
