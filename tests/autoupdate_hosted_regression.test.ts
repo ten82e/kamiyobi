@@ -10,6 +10,56 @@ import { applyOverrides, mergeSources, normalizeConfiguredVenueIdentities } from
 import { conferencesFromJson } from "../src/model.ts";
 
 describe("captured hosted updater failure", () => {
+  it("stages newly captured evidence bodies even when existing bodies are unchanged", () => {
+    const workflow = load(readFileSync(".github/workflows/update-data.yml", "utf8")) as {
+      jobs: Record<string, { steps: Array<{ name: string; run?: string }> }>;
+    };
+    const writer = workflow.jobs["write-data-pr"].steps.find(
+      (step) => step.name === "Create or update guarded data PR",
+    )!.run!;
+    const block = writer.slice(
+      writer.indexOf("evidence_changed=0"),
+      writer.indexOf('if [ "$snap_changed"'),
+    );
+    const root = mkdtempSync(join(tmpdir(), "kamiyobi-evidence-handoff-"));
+    try {
+      mkdirSync(join(root, "data/evidence/blobs"), { recursive: true });
+      writeFileSync(join(root, "data/evidence/blobs/previous.body"), "old official page");
+      for (const args of [
+        ["init", "--quiet"],
+        ["add", "data/evidence"],
+        [
+          "-c",
+          "user.name=Test",
+          "-c",
+          "user.email=test@example.invalid",
+          "commit",
+          "--quiet",
+          "-m",
+          "baseline",
+        ],
+      ])
+        execFileSync("git", args, { cwd: root });
+      const execute = () =>
+        execFileSync("bash", ["-c", block + '\nprintf "%s" "$evidence_changed"'], {
+          cwd: root,
+          encoding: "utf8",
+        });
+      expect(execute()).toBe("0");
+      writeFileSync(join(root, "data/evidence/blobs/new.body"), "new official page");
+      expect(execute()).toBe("1");
+      execFileSync(
+        "bash",
+        ["-c", block + '\nif [ "$evidence_changed" = 1 ]; then git add data/evidence; fi'],
+        { cwd: root },
+      );
+      expect(
+        execFileSync("git", ["diff", "--cached", "--name-only"], { cwd: root, encoding: "utf8" }),
+      ).toBe("data/evidence/blobs/new.body\n");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
   it("corrects the committed ECIR slot before rebuilding the updater baseline", () => {
     const captured = JSON.parse(
       readFileSync("tests/fixtures/autoupdate-committed-ecir.json", "utf8"),
