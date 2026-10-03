@@ -1,0 +1,253 @@
+{
+  "recorded_at": "2026-10-03T17:10:19.876709+00:00",
+  "branch": "fix/site-ja-usability",
+  "code_revision": "8e39f1cf1f9a41b30ee27b4885a39b6251553c5d",
+  "own_code_commits": [
+    "064055d305fd15c6a29b2e0c88510a27c2ff3f2d",
+    "85240e35b3555b633e44c5504768a81644646e52",
+    "892ec16cb7ab67c970c10f9a0744c3fd7d6ee845",
+    "8e39f1cf1f9a41b30ee27b4885a39b6251553c5d"
+  ],
+  "new_branch_worktree_clone_during_handoff": false,
+  "own_ui_branch_pushed": false,
+  "verification_scope": "Actual working tree including protected pre-existing changes; clean HEAD in isolation was not tested.",
+  "tests": {
+    "passed": 5321,
+    "files_passed": 352
+  },
+  "checks": [
+    {
+      "check": "typecheck",
+      "exit_code": 0,
+      "seconds": 0.62
+    },
+    {
+      "check": "lint",
+      "exit_code": 0,
+      "seconds": 0.47
+    },
+    {
+      "check": "fixed-build",
+      "exit_code": 0,
+      "seconds": 1.12
+    },
+    {
+      "check": "tests",
+      "exit_code": 0,
+      "seconds": 136.79
+    },
+    {
+      "check": "fixed-validation",
+      "exit_code": 0,
+      "seconds": 0.47
+    },
+    {
+      "check": "fixed-health",
+      "exit_code": 0,
+      "seconds": 0.35
+    },
+    {
+      "check": "build",
+      "exit_code": 0,
+      "seconds": 3.58
+    },
+    {
+      "check": "data-validation",
+      "exit_code": 0,
+      "seconds": 0.45
+    },
+    {
+      "check": "public-validation",
+      "exit_code": 0,
+      "seconds": 0.47
+    },
+    {
+      "check": "health-gate",
+      "exit_code": 0,
+      "seconds": 0.35
+    },
+    {
+      "check": "diff-check",
+      "exit_code": 0,
+      "seconds": 0.08
+    }
+  ],
+  "checks_sha256": "b07fd42a8ffcc4d43f4c9a2367121f09a7a63e52ff8d815015cf57f82a88ba88",
+  "tests_log_sha256": "7a7691db507a9ebb6efe41653c8ce92dbfbd4c306da87238f45ca31bad7789c3",
+  "headless_browser": [
+    {
+      "script": "scripts/agent-handoff/headless-compsac.mjs",
+      "motion": "reduce",
+      "passed": true,
+      "report": "work/agent-verification/headless-compsac-reduce.json",
+      "report_sha256": "dec50162adb3c21281499ab1a0fefa91c4d98795ae1aa8ba76c2066cff6ba84e",
+      "cases": 7,
+      "console_errors": 0
+    },
+    {
+      "script": "scripts/agent-handoff/headless-identity.mjs",
+      "motion": "reduce",
+      "passed": true,
+      "report": "work/agent-verification/headless-identity-reduce.json",
+      "report_sha256": "969e95c376adca4c417be7fc00a93b1922a579468587b5de2ce8db936e490724",
+      "cases": 0,
+      "console_errors": 0
+    },
+    {
+      "script": "scripts/agent-handoff/headless-researcher.mjs",
+      "motion": "reduce",
+      "passed": true,
+      "report": "work/agent-verification/headless-researcher-reduce.json",
+      "report_sha256": "02e758c5025dbe6c9cb76953f16509a9bc9a1d38c4355fe3e7c968c1dba917a1",
+      "cases": 16,
+      "console_errors": 0
+    },
+    {
+      "script": "scripts/agent-handoff/headless-compsac.mjs",
+      "motion": "no-preference",
+      "passed": true,
+      "report": "work/agent-verification/headless-compsac-no-preference.json",
+      "report_sha256": "4ea76a080ccadab1cee539c07c4ac28b095d143147d324f29ce58030f64a3531",
+      "cases": 7,
+      "console_errors": 0
+    },
+    {
+      "script": "scripts/agent-handoff/headless-identity.mjs",
+      "motion": "no-preference",
+      "passed": true,
+      "report": "work/agent-verification/headless-identity-no-preference.json",
+      "report_sha256": "400d8d1017a476bbf96eca67d3fb289026d3c960ce79a607cb6455ffadb78c46",
+      "cases": 0,
+      "console_errors": 0
+    },
+    {
+      "script": "scripts/agent-handoff/headless-researcher.mjs",
+      "motion": "no-preference",
+      "passed": true,
+      "report": "work/agent-verification/headless-researcher-no-preference.json",
+      "report_sha256": "8a6275ffd1e6f1e63b23d0cdfdf690ea6e20dd5c8fb4cf0f86c0cadbf074e6d0",
+      "cases": 16,
+      "console_errors": 0
+    }
+  ],
+  "identity_audit": [
+    {
+      "file": "data.json",
+      "conferences": 696,
+      "rows": 4968,
+      "shown": 4967,
+      "only_reviewed_pair_consolidated": true,
+      "canonical_share_keys_unique": true,
+      "untouched_identity_rows": 4966,
+      "special_issue_rows": 17,
+      "rolling_rows": 0,
+      "continuous_journal_rows": 22,
+      "shared_key_collision_groups": 39,
+      "multiple_round_editions": 364,
+      "shared_cfp_groups": 162,
+      "vldb2027": [
+        {
+          "key": "vldb",
+          "id": "vldb27",
+          "rounds": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "rows": 24
+        }
+      ]
+    },
+    {
+      "file": "catalog.json",
+      "conferences": 696,
+      "rows": 720,
+      "shown": 719,
+      "only_reviewed_pair_consolidated": true,
+      "canonical_share_keys_unique": true,
+      "untouched_identity_rows": 718,
+      "special_issue_rows": 12,
+      "rolling_rows": 0,
+      "continuous_journal_rows": 22,
+      "shared_key_collision_groups": 5,
+      "multiple_round_editions": 15,
+      "shared_cfp_groups": 18,
+      "vldb2027": [
+        {
+          "key": "vldb",
+          "id": "vldb27",
+          "rounds": [
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "rows": 12
+        }
+      ]
+    }
+  ],
+  "protected_source_test_hashes_unchanged": true,
+  "protected_paths_sha256": {
+    "site/recommender.ts": "bc5c73bbed9e09c36df21906aec7e7582da3e97f328051b2d0d88c48298980d6",
+    "tests/japanese_glued_kind_fold_query.test.ts": "f18101e643e27549f80ffa03d88b37fa48ad3f37feeb6464db20e2cd3a570a13",
+    "tests/held_in_suffix_query.test.ts": "6cb084a50369e0ce48298e1b64adbb191d8f7b4f178cf17af2ba4e78861e3700",
+    "data/source-snapshots/aideadlines.json": "c1411d15de9699dc5aa3e279aeccd8407e8c842744fc3f07f8bde8a226d52377",
+    "data/source-snapshots/ccfddl.json": "608d21d5f83e1a0886c5a75ec9c1fe3e37c0b0e07cc3bf701f9dc8b334bca87d",
+    "data/source-snapshots/local.json": "1b8a058ca8415710541d6a137233f27fc85b59fa0ca1658e9d2df9bceb95cbe8",
+    "data/source-snapshots/primary.json": "73b86e439978a1c36f16eedb34e6a09371e46b8bbcf6f64621a0e39cd5b5b346"
+  },
+  "verification_source_sha256": {
+    "site/app.ts": "75831683b000ffcb05d64f7be362563cd4b779e4b45f109d8e0a5c79bc124819",
+    "site/template.html": "0e7fe31f9d86b586abd510685e21191454a59ee2948388213744a228ff33c7d0",
+    "site/submission-identity.ts": "1d6224dbdd40acd6a288dc36c43d9510486c9ae6518da5dbfe38f89752fcd516",
+    "src/build.ts": "dcce5d3bb0cf090ddad5854724f93595c41292dc512c857fb23a9189ba66f86d",
+    "tests/submission_share_identity.test.ts": "6962043414a28713852fb13b6d688407c41b85033307f755be70ac656e79e0b2",
+    "scripts/agent-handoff/headless-identity.mjs": "fedee2b94a607fa180c7054d7225a612d53e3edeb56768997518f7d7fb0ccda0"
+  },
+  "screenshots": [
+    {
+      "path": "work/agent-verification/screenshots/compsac-publication-mobile.png",
+      "sha256": "718b3833164910f5f6356b61befea386e16c34ee402a266b1134425da0d28394",
+      "bytes": 99735
+    },
+    {
+      "path": "work/agent-verification/screenshots/compsac-regression-ipsj-japanese-search.png",
+      "sha256": "586004c04076168716a1106299dc86f778c34d656017e9d841cd71067dd1d5e1",
+      "bytes": 181023
+    },
+    {
+      "path": "work/agent-verification/screenshots/compsac-regression-securecomm-date-only-mobile.png",
+      "sha256": "0d1b03b3a6920b87359b0975ef791f3ea389efd010f33fc72ef298080afd1016",
+      "bytes": 96910
+    },
+    {
+      "path": "work/agent-verification/screenshots/compsac-single-call-desktop.png",
+      "sha256": "d238b399510cb72ee5e52f87c7b97299d5a53a6797af6dff73f2b0330ffe44ac",
+      "bytes": 154035
+    },
+    {
+      "path": "work/agent-verification/screenshots/shared-link-choices-mobile.png",
+      "sha256": "838a1ce18b66fbeea5cf805150376c57fb802ae304f46f368c64f954e95888cd",
+      "bytes": 89099
+    }
+  ],
+  "remaining": [
+    "UI source commits require review/integration and asset build before publication.",
+    "Independent updater candidate is stored in repo and not applied to the UI working tree.",
+    "ECIR 2027 source duplicates and clock discrepancies remain in this older UI branch; official correction is in the independent updater candidate.",
+    "Recorded remote main was b35010f; public manifest was generated on 2026-09-07. Recheck current remote/public state before an authorized publication."
+  ],
+  "publish_actions_authorized": false
+}

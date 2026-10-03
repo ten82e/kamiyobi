@@ -1,0 +1,67 @@
+{
+  "code_commit": "064055d305fd15c6a29b2e0c88510a27c2ff3f2d",
+  "tests": 5312,
+  "test_files": 351,
+  "checks": [
+    {
+      "check": "typecheck",
+      "exit_code": 0,
+      "seconds": 0.6
+    },
+    {
+      "check": "lint",
+      "exit_code": 0,
+      "seconds": 0.47
+    },
+    {
+      "check": "fixed-build",
+      "exit_code": 0,
+      "seconds": 1.1
+    },
+    {
+      "check": "tests",
+      "exit_code": 0,
+      "seconds": 130.98
+    },
+    {
+      "check": "fixed-validation",
+      "exit_code": 0,
+      "seconds": 0.48
+    },
+    {
+      "check": "fixed-health",
+      "exit_code": 0,
+      "seconds": 0.37
+    },
+    {
+      "check": "build",
+      "exit_code": 0,
+      "seconds": 3.64
+    },
+    {
+      "check": "data-validation",
+      "exit_code": 0,
+      "seconds": 0.48
+    },
+    {
+      "check": "public-validation",
+      "exit_code": 0,
+      "seconds": 0.49
+    },
+    {
+      "check": "health-gate",
+      "exit_code": 0,
+      "seconds": 0.36
+    },
+    {
+      "check": "diff-check",
+      "exit_code": 0,
+      "seconds": 0.13
+    }
+  ],
+  "headless_compsac_pass": true,
+  "headless_researcher_conditions": 16,
+  "native_input_used": false,
+  "public_cfp": "https://www.ipsj.or.jp/journal/cfp/27-R.html",
+  "cas_evidence": "data/evidence/blobs/9972268f811c33df5e345fc94570018d6ea5ec55be146ca81b95744b7fd4f3bd.body"
+}

@@ -1,0 +1,13 @@
+{
+  "checked_at": "2026-10-03T16:27:50.465684+00:00",
+  "remote_heads": [
+    "b35010f7a11fb217417b2fdf0d675ea1af9a555b\trefs/heads/main"
+  ],
+  "current_branch_pushed": false,
+  "public_generated_at": "2026-09-07T09:26:24.000Z",
+  "public_semantic_status": "ready",
+  "public_app_sha256": "a65103304989b86c873ba1414fd753f930a1c4c1a2e5dc062d96dc06bdd5936f",
+  "required_for_data_recovery": "Review the independent updater candidate and publish newly generated data; Japanese UI changes are not required to unblock the data updater.",
+  "required_for_ui_publication": "Review/integrate source commits on the final main base, build/publish all runtime assets and verify manifest.",
+  "write_actions_performed": false
+}
