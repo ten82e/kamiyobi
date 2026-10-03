@@ -146,9 +146,32 @@ for (const input of oldInputs) {
 const evoOldLinks = compatibility.filter(({ input }) => input.key === "evomusart");
 assert.equal(evoOldLinks.length, 2, "both pre-integration EvoMUSART links must be tested");
 for (const result of evoOldLinks) {
-  assert(result.opened, `${result.oldKey}: reviewed alias must open the unchanged deadline`);
-  assert.equal(result.choices.length, 0, "a unique old deadline has no ambiguous choices");
-  assert(result.detail.includes("EvoMUSART"));
+  if (result.input.kind === "abstract") {
+    assert(result.opened, `${result.oldKey}: alias must open the unchanged date-only deadline`);
+    assert.equal(result.choices.length, 0);
+  } else {
+    assert(!result.opened, "a corrected old instant must not silently open a different date");
+    assert.equal(result.choices.length, 1);
+    assert(result.notice.includes("日時に一致"));
+    assert(result.choices[0].includes("2026-11-01") && result.choices[0].includes("時刻未確認"));
+    await query("EvoMUSART", { row: result.oldKey, kind: "paper" });
+    await waitFor("document.querySelector('.shared-row-choice')");
+    await evaluate("document.querySelector('.shared-row-choice').click()");
+    await waitFor("document.querySelector('#drawerBackdrop.active')");
+    const detail = await evaluate("document.querySelector('#drawerBody').textContent");
+    assert(
+      (await evaluate("document.querySelector('#drawerTitle').textContent")).includes("EvoMUSART"),
+    );
+    assert(detail.includes("2026-11-01") && detail.includes("時刻未確認"));
+    const correctedShare = await evaluate("new URLSearchParams(location.search).get('row')");
+    assert(correctedShare.startsWith("evomusart-2027|2027|paper|"));
+    await cmd("Page.reload", { ignoreCache: true });
+    await waitFor("document.querySelector('#drawerBackdrop.active')");
+    assert.equal(await evaluate("new URLSearchParams(location.search).get('row')"), correctedShare);
+    result.selectedCurrentDate = true;
+    result.correctedShare = correctedShare;
+    result.reload = true;
+  }
 }
 await query("EvoMUSART", { kind: "abstract" });
 await cmd("Emulation.setDeviceMetricsOverride", {

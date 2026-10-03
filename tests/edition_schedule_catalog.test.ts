@@ -22,9 +22,13 @@ it("preserves complete planning dates of retained editions without widening list
     year: 2027,
     deadlines: [{ kind: "paper", utc: "2027-09-01T12:00:00Z" }],
   };
-  const source = { conferences: [{ key: "demo", editions: [edition, otherMeeting] }] };
+  const source = {
+    conferences: [{ key: "demo", legacy_keys: ["former-demo"], editions: [edition, otherMeeting] }],
+  };
   const catalog = toCatalog(source, new Date("2026-10-02T00:00:00Z"));
   const conf = (catalog.conferences as Array<Record<string, any>>)[0];
+  expect(conf.legacy_keys).toEqual(["former-demo"]);
+  expect(conf.legacy_keys).not.toBe(source.conferences[0].legacy_keys);
   expect(conf.editions).toHaveLength(1);
   expect(conf.editions[0].deadlines).toEqual([paper]);
   expect(conf.editions[0].schedule_deadlines).toEqual([oldAbstract, distantPaper, unknownTime]);

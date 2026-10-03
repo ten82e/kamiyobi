@@ -6181,28 +6181,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       );
       return;
     }
-    const legacyMatches = rows.filter(
-      (row) =>
-        row.legacyShareKey &&
-        (row.legacyShareKey === pendingDrawerKey ||
-          row.conf.legacy_keys?.some(
-            (alias) =>
-              rowShareKeyJa({ ...row, shareDiscriminator: undefined }, alias) === pendingDrawerKey,
-          )),
-    );
-    if (legacyMatches.length > 1) {
-      sharedRowNotice(
-        "この旧リンクは同じ日時の複数の日程に対応します。ラウンド・トラックを確認して開いてください。",
-      );
+    function showChoices(candidates: AppRow[], message: string) {
       const choices = $("sharedRowChoices");
       const guide = $("sharedRowChoiceGuide");
       const buttons = $("sharedRowChoiceButtons");
       if (choices && guide && buttons) {
         choices.hidden = false;
-        guide.textContent =
-          "この旧リンクは同じ日時の複数の日程に対応します。ラウンド・トラックを確認して開いてください。";
+        guide.textContent = message;
         buttons.textContent = "";
-        for (const row of legacyMatches) {
+        for (const row of candidates) {
           const button = document.createElement("button");
           button.type = "button";
           button.className = "btn-reset shared-row-choice";
@@ -6219,6 +6206,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             row.dl.round ? `第 ${row.dl.round} ラウンド` : "ラウンド未確認",
             row.dl.track ? `トラック: ${row.dl.track}` : "",
             kindDetailJa(null, row.dl.label),
+            row.localDate
+              ? `${row.localDate}（時刻未確認）`
+              : `${new Date(row.t).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })}（日本時間）`,
           ]
             .filter(Boolean)
             .join(" ／ ");
@@ -6226,7 +6216,49 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           buttons.appendChild(button);
         }
       }
+    }
+    const legacyMatches = rows.filter(
+      (row) =>
+        row.legacyShareKey &&
+        (row.legacyShareKey === pendingDrawerKey ||
+          row.conf.legacy_keys?.some(
+            (alias) =>
+              rowShareKeyJa({ ...row, shareDiscriminator: undefined }, alias) === pendingDrawerKey,
+          )),
+    );
+    if (legacyMatches.length > 1) {
+      sharedRowNotice(
+        "この旧リンクは同じ日時の複数の日程に対応します。ラウンド・トラックを確認して開いてください。",
+      );
+      showChoices(
+        legacyMatches,
+        "この旧リンクは同じ日時の複数の日程に対応します。ラウンド・トラックを確認して開いてください。",
+      );
       return;
+    }
+    const oldParts = pendingDrawerKey.split("|");
+    const exactAlias = rows.some((row) =>
+      row.conf.legacy_keys?.some((alias) => rowShareKeyJa(row, alias) === pendingDrawerKey),
+    );
+    if (
+      !exactAlias &&
+      oldParts.length === 4 &&
+      /^\d{4}$/.test(oldParts[1]) &&
+      /^\d+$/.test(oldParts[3])
+    ) {
+      const currentDates = rows.filter(
+        (row) =>
+          row.conf.legacy_keys?.includes(oldParts[0]) &&
+          String(row.ed.year) === oldParts[1] &&
+          row.kind === oldParts[2],
+      );
+      if (currentDates.length) {
+        const message =
+          "旧リンクの日時に一致する日程はありません。同じ会議・年度・締切種別の現在の日程です。日時と公式情報を確認して選んでください。";
+        sharedRowNotice(message);
+        showChoices(currentDates, message);
+        return;
+      }
     }
     let idx = shown.findIndex(
       (r) =>

@@ -1219,6 +1219,9 @@ function compactConference(
     tags: conf.tags,
     sources: conf.sources,
     ...(conf.category_assignments ? { category_assignments: conf.category_assignments } : {}),
+    ...(Array.isArray(conf.legacy_keys) && conf.legacy_keys.length
+      ? { legacy_keys: [...conf.legacy_keys] }
+      : {}),
     editions,
     ...(withPapers ? { papers: conf.papers ?? [] } : {}),
   };

@@ -68,77 +68,85 @@ it("月次締切の12ラウンドと他の特集号の共有URLは変えない",
   expect(consolidateReviewedSubmissions(raw, legacy)).toBe(raw);
 });
 
-it.each([false, true])("曖昧な旧リンク（確認済み別名=%s）で選択した候補だけを開く", (alias) => {
-  const raw = [row(), row()];
-  raw[1].dl.round = 2;
-  const rows = assignShareIdentities(raw, legacy).map((r) => ({
-    ...r,
-    conf: { ...r.conf, legacy_keys: ["former-jip"] },
-  }));
-  const shareKey = new Function(`return (${jsFunction(siteRuntime(), "rowShareKeyJa")});`)();
-  const opened: unknown[] = [],
-    buttons: Array<{
-      textContent?: string;
-      click?: () => void;
-      style: object;
-      addEventListener: (event: string, callback: () => void) => void;
-    }> = [];
-  const document = {
-    createElement: () => {
-      const button = {
-        style: {},
-        addEventListener: (_: string, callback: () => void) => {
-          button.click = callback;
-        },
-        click: undefined as (() => void) | undefined,
-      };
-      return button;
-    },
-  };
-  const live = { appendChild: (button: (typeof buttons)[number]) => buttons.push(button) };
-  const choiceBox = { hidden: true };
-  const guide = { textContent: "" };
-  let notice = "";
-  new Function(
-    "rows",
-    "shown",
-    "pendingDrawerKey",
-    "state",
-    "$",
-    "document",
-    "sharedRowNotice",
-    "openDrawer",
-    "KIND_LABEL",
-    "Recommender",
-    "kindDetailJa",
-    "rowShareKeyJa",
-    `(${jsFunction(siteRuntime(), "restoreDrawerFromUrl")})();`,
-  )(
-    rows,
-    rows,
-    alias ? shareKey({ ...rows[0], shareDiscriminator: undefined }, "former-jip") : legacy(raw[0]),
-    { mode: "deadlines" },
-    (id: string) =>
-      id === "sharedRowChoices" ? choiceBox : id === "sharedRowChoiceGuide" ? guide : live,
-    document,
-    (text: string) => {
-      notice = text;
-    },
-    (r: unknown) => opened.push(r),
-    { paper: "論文締切" },
-    { titleWithYearJa: () => "JIP 2027" },
-    (round: number, label: string) => `第${round}ラウンド ${label}`,
-    shareKey,
-  );
-  expect(opened).toEqual([]);
-  expect(notice).toContain("複数の日程");
-  expect(choiceBox.hidden).toBe(false);
-  expect(guide.textContent).toContain("複数の日程");
-  expect(buttons).toHaveLength(2);
-  expect(buttons[1].textContent).toContain("第 2 ラウンド");
-  buttons[1].click?.();
-  expect(opened).toEqual([rows[1]]);
-});
+it.each(["canonical", "alias", "changed-date"])(
+  "旧リンク（%s）で選択した候補だけを開く",
+  (variant) => {
+    const raw = [row(), row()];
+    raw[1].dl.round = 2;
+    const rows = assignShareIdentities(raw, legacy).map((r) => ({
+      ...r,
+      conf: { ...r.conf, legacy_keys: ["former-jip"] },
+    }));
+    const shareKey = new Function(`return (${jsFunction(siteRuntime(), "rowShareKeyJa")});`)();
+    const opened: unknown[] = [],
+      buttons: Array<{
+        textContent?: string;
+        click?: () => void;
+        style: object;
+        addEventListener: (event: string, callback: () => void) => void;
+      }> = [];
+    const document = {
+      createElement: () => {
+        const button = {
+          style: {},
+          addEventListener: (_: string, callback: () => void) => {
+            button.click = callback;
+          },
+          click: undefined as (() => void) | undefined,
+        };
+        return button;
+      },
+    };
+    const live = { appendChild: (button: (typeof buttons)[number]) => buttons.push(button) };
+    const choiceBox = { hidden: true };
+    const guide = { textContent: "" };
+    let notice = "";
+    new Function(
+      "rows",
+      "shown",
+      "pendingDrawerKey",
+      "state",
+      "$",
+      "document",
+      "sharedRowNotice",
+      "openDrawer",
+      "KIND_LABEL",
+      "Recommender",
+      "kindDetailJa",
+      "rowShareKeyJa",
+      `(${jsFunction(siteRuntime(), "restoreDrawerFromUrl")})();`,
+    )(
+      rows,
+      rows,
+      variant !== "canonical"
+        ? shareKey(
+            { ...rows[0], t: variant === "changed-date" ? 2 : 1, shareDiscriminator: undefined },
+            "former-jip",
+          )
+        : legacy(raw[0]),
+      { mode: "deadlines" },
+      (id: string) =>
+        id === "sharedRowChoices" ? choiceBox : id === "sharedRowChoiceGuide" ? guide : live,
+      document,
+      (text: string) => {
+        notice = text;
+      },
+      (r: unknown) => opened.push(r),
+      { paper: "論文締切" },
+      { titleWithYearJa: () => "JIP 2027" },
+      (round: number, label: string) => `第${round}ラウンド ${label}`,
+      shareKey,
+    );
+    expect(opened).toEqual([]);
+    expect(notice).toContain(variant === "changed-date" ? "日時に一致" : "複数の日程");
+    expect(choiceBox.hidden).toBe(false);
+    expect(guide.textContent).toContain(variant === "changed-date" ? "日時に一致" : "複数の日程");
+    expect(buttons).toHaveLength(2);
+    expect(buttons[1].textContent).toContain("第 2 ラウンド");
+    buttons[1].click?.();
+    expect(opened).toEqual([rows[1]]);
+  },
+);
 
 it("詳細の描画後にフォーカスを回復し、閉じた後や利用者の操作からは奪わない", () => {
   const source = jsFunction(siteRuntime(), "focusDrawerAfterRender");
