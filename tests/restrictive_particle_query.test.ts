@@ -17,9 +17,10 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 import { REPO_ROOT } from "./helpers.ts";
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 
 const AT = Date.parse("2026-08-09T00:00:00Z");
-const 品書檔案 = `${REPO_ROOT}/data/snapshot.json`;
+const 品書檔案 = queryReferenceSnapshotPath();
 
 type Row = { hay: string };
 let 品書: Row[] | null = null;

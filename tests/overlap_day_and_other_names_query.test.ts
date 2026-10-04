@@ -1,3 +1,4 @@
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 /**
  * 日をまたぐ重なりを數へる打ち方と、費用・査読の形・後から觀る形の別の名前（第 648 回）。
  * 實測（2026-08-09 生成の品書 3,250 行・固定時刻 2026-08-09T00:00:00Z）–
@@ -47,7 +48,7 @@ const 記録の新語 = 塊('"ポスター印刷"').filter((語) =>
 
 function 收錄(): Row[] {
   return Recommender.candidateRows(
-    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")),
+    JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
   ) as Row[];
 }
 

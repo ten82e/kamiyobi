@@ -19,13 +19,12 @@ import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 import { builtSite } from "./built_site.ts";
 import { REPO_ROOT } from "./helpers.ts";
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 
 const 基準 = Date.parse("2026-08-09T00:00:00Z");
 
 function 収録(): Array<{ hay: string }> {
-  const data = JSON.parse(
-    readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8"),
-  ) as unknown as never;
+  const data = JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")) as unknown as never;
   return Recommender.candidateRows(data) as unknown as Array<{ hay: string }>;
 }
 

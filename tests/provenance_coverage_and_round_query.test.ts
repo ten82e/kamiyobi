@@ -1,3 +1,4 @@
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 /**
  * 「どこから持来たの？」「第二次締切は？」を別の語で打つ人（第 645 回）。
  * 實測（品書 3,250 行・固定時刻 2026-08-09T00:00:00Z – 2026-08-09 生成）で、
@@ -22,7 +23,7 @@ const AT = Date.parse("2026-08-09T00:00:00Z");
 
 function 收錄(): Row[] {
   return Recommender.candidateRows(
-    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")),
+    JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
   ) as Row[];
 }
 
@@ -91,7 +92,7 @@ describe("出所・收錄の幅・締切の回数を別の語で打つ人（第 
   });
 
   it("收錄の締切の種別は回數を持たん – 斷りの理由が實物と合う", () => {
-    const データ = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8"));
+    const データ = JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8"));
     const 型 = new Set<string>();
     const walk = (o: unknown) => {
       if (Array.isArray(o)) {

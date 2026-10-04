@@ -1,3 +1,4 @@
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 /**
  * 二つの語を**繋げて**打ち、その上に行の原文へも當たらん名前を打つ人（第 647 回）。
  * 語を割いて打ち直しを數へるのは打ち替えの家（第 256 回 `shorterHitWordsJa`）だが、其の家は
@@ -52,7 +53,7 @@ const 尾 = [
 
 function 收錄(): { rows: Row[]; hays: string[] } {
   const rows = Recommender.candidateRows(
-    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")),
+    JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
   ) as Row[];
   return { rows, hays: [...new Set(rows.map((row) => String(row.hay)))] };
 }

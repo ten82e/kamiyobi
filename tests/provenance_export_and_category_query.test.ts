@@ -1,3 +1,4 @@
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 /**
  * データの出所・持ち出し・寫し方・分野の一覽を、其の物の名で聞く人（第 649 回）。
  * 實測（2026-08-09 生成の品書 3,250 行・固定時刻 2026-08-09T00:00:00Z）– 之れ等は**0 行で案内も無し**
@@ -54,7 +55,7 @@ const 分野の語 = 羣の語('"分野の一覧"');
 
 function 收錄(): Row[] {
   return Recommender.candidateRows(
-    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")),
+    JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
   ) as Row[];
 }
 
@@ -100,7 +101,7 @@ describe("出所・持ち出し・寫し方・分野の別の名前（第 649 �
   });
 
   it("斷りの「九種」がデータの分野表と同じ數である事（數字を實物に結ぶ）", () => {
-    const 實 = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8"));
+    const 實 = JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8"));
     const 種 = Object.keys(實.categories || {}).length;
     expect(種, "snapshot の分野表が讀めない").toBeGreaterThan(4);
     const 數字 = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];

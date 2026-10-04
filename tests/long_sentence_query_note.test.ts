@@ -1,3 +1,4 @@
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 /**
  * 敬體の長い文をそのまま打つた人への打ち直し（第 621 回）。
  *
@@ -18,9 +19,7 @@ import { REPO_ROOT } from "./helpers.ts";
 const 基準 = Date.parse("2026-08-09T00:00:00Z");
 
 function 収録(): Array<{ hay: string }> {
-  return Recommender.candidateRows(
-    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")),
-  );
+  return Recommender.candidateRows(JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")));
 }
 function 件数(語: string): number {
   const 当 = Recommender.searchMatcher(語, 基準);

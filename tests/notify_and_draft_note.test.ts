@@ -1,3 +1,4 @@
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 /**
  * 通知のくれんかと、打ちかけの論文の入力を氣にする人（第 630 回）。
  *
@@ -23,7 +24,7 @@ const 基準 = Date.parse("2026-08-09T00:00:00Z");
 const 斷り = (文: string): string => String(Recommender.uiWordNoteJa(文, false) || "").trim();
 const 短い = (文: string): string => String(Recommender.uiWordLiveNoteJa(文) || "").trim();
 const 品書 = Recommender.candidateRows(
-  JSON.parse(readFileSync(new URL("../data/snapshot.json", import.meta.url), "utf8")),
+  JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
 );
 const 収録 = (文: string): number => {
   const m = Recommender.searchMatcher(Recommender.expandRelativeMonths(文, 基準), 基準);

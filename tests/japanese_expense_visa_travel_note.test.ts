@@ -9,13 +9,14 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 import { REPO_ROOT } from "./helpers.ts";
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 
 const AT = Date.parse("2026-08-09T00:00:00Z");
 type Row = { hay: string };
 function 品書(): Row[] {
   /* 搜の土臺は實際の品書（3,250 行）で張る – fixtures の品書だと讓りの当たりが別物になる為。*/
   return Recommender.candidateRows(
-    JSON.parse(readFileSync(`${REPO_ROOT}/data/snapshot.json`, "utf8")),
+    JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
   ) as Row[];
 }
 const rows = 品書();
@@ -126,7 +127,7 @@ describe("出納・査証・旅と滞在を別の名で打つ人（第 672 回�
      * `visa` も同じで、行の『備考』に "First (visa-friendly) round" と出て居る – 搜しは其の欄を
      * 數へんので 0 行に見える。讓りが「その欄はありません」と言うたら噓になる（第 337 回）。
      * だから載せる語は搜 0 行**と原檔に現れん事**の兩方で確かめる。 */
-    const 原檔 = readFileSync(`${REPO_ROOT}/data/snapshot.json`, "utf8");
+    const 原檔 = readFileSync(queryReferenceSnapshotPath(), "utf8");
     expect(
       原檔.toLowerCase().split("visa").length - 1,
       "visa が原檔に出る内譯は變はつた",

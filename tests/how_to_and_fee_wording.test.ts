@@ -1,3 +1,4 @@
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 /**
  * 「〜する方法」で訪ねる人（第 650 回）。
  * 實測（2026-08-09 生成の品書 3,250 行・固定時刻 2026-08-09T00:00:00Z）– 二十文打つて**默り七つ**だつた
@@ -27,7 +28,7 @@ const 源 = readFileSync(join(REPO_ROOT, "site", "recommender.ts"), "utf8");
 
 function 收錄(): Row[] {
   return Recommender.candidateRows(
-    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")),
+    JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
   ) as Row[];
 }
 

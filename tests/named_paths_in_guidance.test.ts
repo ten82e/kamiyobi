@@ -1,3 +1,4 @@
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 /**
  * 案内が名指す道は本物か（第 652 回 – 橫断檢査）。
  *
@@ -40,7 +41,7 @@ const 畫面 = [join(builtSite(), "app.js"), join(builtSite(), "index.html")].ma
 
 function 收錄(): Row[] {
   return Recommender.candidateRows(
-    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")),
+    JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
   ) as Row[];
 }
 

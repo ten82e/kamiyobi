@@ -2,6 +2,7 @@ import { mkdirSync, readdirSync, readFileSync, symlinkSync, writeFileSync } from
 import { join } from "node:path";
 import { dump, load } from "js-yaml";
 import { REPO_ROOT, runCli, tempWork } from "./helpers.ts";
+import { queryReferenceData } from "./query_reference.ts";
 
 let built: string | null = null;
 
@@ -31,9 +32,18 @@ export function builtSite(): string {
     writeFileSync(join(root, "config.yaml"), dump(config));
     mkdirSync(join(root, "data"));
     for (const name of readdirSync(join(REPO_ROOT, "data"))) {
-      if (name !== "overrides.yaml")
+      if (
+        !["overrides.yaml", "snapshot.json", "primary_overrides.yaml", "source-snapshots"].includes(
+          name,
+        )
+      )
         symlinkSync(join(REPO_ROOT, "data", name), join(root, "data", name));
     }
+    // Counts belong to the captured input at ee942cd. Production snapshot coverage
+    // is still checked by built_golden_2 and the production-data regression tests.
+    mkdirSync(join(root, "data/source-snapshots"));
+    for (const [name, content] of Object.entries(queryReferenceData()))
+      writeFileSync(join(root, "data", name), content);
     const overrides = load(readFileSync(join(REPO_ROOT, "data/overrides.yaml"), "utf8")) as {
       conferences: Record<string, unknown>;
     };

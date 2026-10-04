@@ -14,6 +14,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 import { REPO_ROOT } from "./helpers.ts";
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 
 const AT = Date.parse("2026-08-09T00:00:00Z");
 
@@ -21,7 +22,7 @@ type Row = { hay: string };
 let 品書: Row[] | null = null;
 function 收錄(): Row[] {
   if (品書 === null) {
-    const data = JSON.parse(readFileSync(`${REPO_ROOT}/data/snapshot.json`, "utf8"));
+    const data = JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8"));
     品書 = Recommender.candidateRows(data) as Row[];
   }
   return 品書;

@@ -1,3 +1,4 @@
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 /**
  * 「情報工学」の括りと、分野の別名を畫面の分野名へ寄せる（第 638 回）。
  *
@@ -22,7 +23,7 @@ import Recommender from "../site/recommender.ts";
 
 const 基準 = Date.parse("2026-08-09T00:00:00Z");
 const 品書 = Recommender.candidateRows(
-  JSON.parse(readFileSync(new URL("../data/snapshot.json", import.meta.url), "utf8")),
+  JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
 );
 const 当たり = (文: string): number => {
   const m = Recommender.searchMatcher(Recommender.expandRelativeMonths(文, 基準), 基準);
