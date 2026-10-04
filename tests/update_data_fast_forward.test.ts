@@ -13,7 +13,7 @@ const run = workflow.jobs["write-data-pr"].steps.find(
 )!.run!;
 const block = run.slice(
   run.indexOf("# Preserve prior generated history"),
-  run.indexOf("\n\nnode --input-type=module"),
+  run.indexOf('git push origin "$branch"') + 'git push origin "$branch"'.length,
 );
 function fixture(existing = true, unrelated = false) {
   const root = tempWork("updater-fast-forward-");

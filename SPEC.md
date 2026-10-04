@@ -15907,3 +15907,4 @@ track CFP, correcting the aggregator's round-2 label without inventing a deadlin
 - semantic推薦と固定feature artifactは従来通り。語彙fallbackのfield重み・スコアは変更せず、ブラウザが使うfieldedの語彙経路にも同じ掲載先指定方針を適用する。回帰評価の正解・閾値・heldoutによるモデル選択は変更しない。
 
 - update-data writerは既存生成branchの親履歴を保持して通常pushする。既存branchに生成データ以外の編集がある場合は停止し、同時にremoteが進んだ場合もnon-fast-forwardとして拒否する。force pushで履歴を置き換えない。
+- update-dataのPR本文はGitHubの文字数上限内に収め、長い診断は要約する。完全なcategory/deadline差分はgenerated-update artifactに保存し、その実行へのリンクを本文に含める。本文生成の確認はremote push前に行い、データ検証・health gateを省略しない。
