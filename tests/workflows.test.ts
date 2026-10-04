@@ -119,7 +119,9 @@ describe("workflow separation", () => {
     );
     const run = String(step(writer!, "Create or update guarded data PR").run);
     expect(run).toContain("automation/data-update");
-    expect(run).toContain("git push --force-with-lease");
+    expect(run).not.toContain("--force");
+    expect(run).toContain('git push origin "$branch"');
+    expect(run).toContain("refusing to replace them");
     expect(run).toContain("git rev-parse origin/main");
     expect(run).toContain("gh pr close");
     expect(run).toContain("Validator category changes");
