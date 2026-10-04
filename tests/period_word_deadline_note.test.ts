@@ -34,7 +34,8 @@ function 品書(): string[] {
 }
 const 全 = 品書();
 function 列(文: string) {
-  return new Set(全.filter((行) => Recommender.searchMatcher(文, 基準)(行) === true));
+  const 照合 = Recommender.searchMatcher(文, 基準);
+  return new Set(全.filter((行) => 照合(行) === true));
 }
 function 案内(文: string) {
   return (Recommender.uiWordNoteJa(文) || "").trim();
