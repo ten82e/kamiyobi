@@ -124,7 +124,9 @@ describe("workflow separation", () => {
     expect(run).toContain("refusing to replace them");
     expect(run).toContain("git rev-parse origin/main");
     expect(run).toContain("gh pr close");
-    expect(run).toContain("Validator category changes");
+    const render = "node scripts/update-data-pr-body.ts /tmp/kamiyobi-update";
+    expect(run).toContain(render);
+    expect(run.indexOf(render)).toBeLessThan(run.indexOf('git push origin "$branch"'));
     expect(run).toContain("gh pr edit");
     expect(run).toContain('git push origin --delete "$branch"');
     expect(String(step(fallback!, "Trigger CI for GITHUB_TOKEN update").run)).toContain(

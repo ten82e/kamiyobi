@@ -206,6 +206,7 @@ kamiyobi/
 │   └── runtime.d.ts             # ブラウザ・生成データの型境界
 ├── scripts/
 │   ├── compare-head.ts          # snapshot / primary_overrides の実質差分
+│   ├── update-data-pr-body.ts    # 完全診断を保持しつつGitHubのPR本文上限内に要約
 │   ├── clean_tmp.ts              # 検査の使い捨て目録を掃く（一時間より古い物だけ）
 │   ├── health-gate.ts           # 直近の健全な公開結果との配信前健全性ゲート
 │   ├── generate-curated.ts      # promotion 正典から local 正典を再生成
@@ -15907,3 +15908,4 @@ track CFP, correcting the aggregator's round-2 label without inventing a deadlin
 - semantic推薦と固定feature artifactは従来通り。語彙fallbackのfield重み・スコアは変更せず、ブラウザが使うfieldedの語彙経路にも同じ掲載先指定方針を適用する。回帰評価の正解・閾値・heldoutによるモデル選択は変更しない。
 
 - update-data writerは既存生成branchの親履歴を保持して通常pushする。既存branchに生成データ以外の編集がある場合は停止し、同時にremoteが進んだ場合もnon-fast-forwardとして拒否する。force pushで履歴を置き換えない。
+- update-dataのPR本文はGitHubの文字数上限内に収め、長い診断は要約する。完全なcategory/deadline差分はgenerated-update artifactに保存し、その実行へのリンクを本文に含める。本文生成の確認はremote push前に行い、データ検証・health gateを省略しない。

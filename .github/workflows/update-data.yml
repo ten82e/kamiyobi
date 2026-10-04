@@ -317,6 +317,8 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'chore: update deadline data'
+          # Bound PR presentation before pushing; full diagnostics stay in generated-update.
+          node scripts/update-data-pr-body.ts /tmp/kamiyobi-update > /tmp/data-pr-body.md
           # Preserve prior generated history and use a normal, race-safe fast-forward push.
           if [ "$existing_branch" = true ]; then
             ancestor=$(git merge-base "$start_sha" "origin/$branch")
@@ -331,21 +333,6 @@ jobs:
           fi
           git push origin "$branch"
 
-          node --input-type=module <<'NODE' > /tmp/data-pr-body.md
-          import { readFileSync } from "node:fs";
-          const health = JSON.parse(readFileSync("/tmp/kamiyobi-update/health.json", "utf8"));
-          const recommendation = JSON.parse(readFileSync("/tmp/kamiyobi-update/recommendation-delta.json", "utf8"));
-          const categoryChanges = readFileSync("/tmp/kamiyobi-update/category-delta.md", "utf8").trim();
-          const deadlineChanges = readFileSync("/tmp/kamiyobi-update/deadline-delta.md", "utf8").trim();
-          console.log("## Automated data update");
-          console.log(`- health: tracked venues ${health.tracked_venues}; source failures: ${health.source_failures.length ? health.source_failures.join(", ") : "none"}; warnings: ${health.parse_warning_count}`);
-          console.log(`- recommendation Top-5 changes: ${recommendation.changed_top5.length ? recommendation.changed_top5.join(", ") : "none"}`);
-          console.log(`- new venues in Top-5: ${recommendation.new_venues_in_top5.length ? recommendation.new_venues_in_top5.join(", ") : "none"}`);
-          console.log("## Validator category changes");
-          console.log(categoryChanges);
-          console.log("## Deadline semantic changes");
-          console.log(deadlineChanges);
-          NODE
           if [ -n "$pr_number" ]; then
             if ! gh pr edit "$pr_number" --title 'chore: update deadline data' --body-file /tmp/data-pr-body.md; then
               git push origin --delete "$branch"
