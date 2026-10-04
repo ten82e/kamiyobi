@@ -25,13 +25,16 @@ jobs:
       # seal 側も同一関数で再計算して一致を強制する。
       - name: Compute semantic content id
         id: content
-        run: echo "id=$(node scripts/semantic-content.ts public/data.json)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "id=$(node scripts/semantic-content.ts public/data.json)" >> "$GITHUB_OUTPUT"
+          echo "gate_id=$(node scripts/semantic-content.ts --gate-policy)" >> "$GITHUB_OUTPUT"
       # 埋め込み生成の前に再利用判定。締切だけの push ではモデルを読み込まない。
       - name: Reuse sealed bundle or mark semantic change
         id: bundle
         env:
           GH_TOKEN: ${{ github.token }}
           CONTENT_ID: ${{ steps.content.outputs.id }}
+          GATE_POLICY_ID: ${{ steps.content.outputs.gate_id }}
         run: |
           mkdir -p public
           for run in $(gh api "repos/${{ github.repository }}/actions/workflows/recommendation-bundle.yml/runs?branch=main&status=success&per_page=15" --jq '.workflow_runs[] | .id'); do
@@ -44,6 +47,7 @@ jobs:
               const m = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
               process.exit(
                 m.semantic_content_id === process.env.CONTENT_ID &&
+                m.gate_policy_id === process.env.GATE_POLICY_ID &&
                 m.required_gate === "passed" &&
                 m.full_benchmark === "passed"
                   ? 0 : 1);

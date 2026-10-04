@@ -31,7 +31,12 @@ jobs:
         env:
           TRIGGER_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
         run: |
+          set -euo pipefail
           current_main="$(git ls-remote "https://github.com/${{ github.repository }}.git" refs/heads/main | cut -f1)"
+          if [[ ! "$current_main" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "cannot resolve current main SHA; deployment blocked" >&2
+            exit 1
+          fi
           if [ "$current_main" = "$TRIGGER_SHA" ]; then
             echo "current=true" >> "$GITHUB_OUTPUT"
           else
@@ -176,6 +181,7 @@ jobs:
           path: /tmp/kamiyobi-expected
       - name: Refuse stale main before deploy
         run: |
+          set -euo pipefail
           expected=$(node -p 'JSON.parse(require("node:fs").readFileSync("/tmp/kamiyobi-expected/publish.json")).source_commit')
           current_main="$(git ls-remote "https://github.com/${{ github.repository }}.git" refs/heads/main | cut -f1)"
           test "$current_main" = "$expected"
@@ -190,7 +196,7 @@ jobs:
           import { readFileSync } from "node:fs";
           const expected = JSON.parse(readFileSync("/tmp/kamiyobi-expected/publish.json", "utf8"));
           const deployed = JSON.parse(readFileSync("/tmp/kamiyobi-deployed.json", "utf8"));
-          for (const key of ["source_commit", "content_id", "build_id"]) {
+          for (const key of ["source_commit", "content_id", "build_id", "semantic_status"]) {
             if (!expected[key] || deployed[key] !== expected[key]) throw new Error(`deployed ${key} mismatch`);
           }
           NODE

@@ -2,7 +2,10 @@ import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, readFileSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import { embeddingsStale, type PublishManifest, writePublishManifest } from "../src/build.ts";
-import { semanticContentIdForArtifacts } from "../src/semantic-content.ts";
+import {
+  recommendationGatePolicyId,
+  semanticContentIdForArtifacts,
+} from "../src/semantic-content.ts";
 
 export function restoreRecommendationBundle(bundlePath: string, outdir: string): boolean {
   const bundleDir = bundlePath.endsWith(".json") ? undefined : bundlePath;
@@ -25,6 +28,7 @@ export function restoreRecommendationBundle(bundlePath: string, outdir: string):
     attestation.required_gate !== "passed" ||
     attestation.full_benchmark !== "passed" ||
     attestation.semantic_content_id !== currentContentId ||
+    attestation.gate_policy_id !== recommendationGatePolicyId() ||
     attestation.embeddings_sha256 !== hash
   )
     return false;
@@ -43,9 +47,7 @@ if (process.argv[1] && basename(process.argv[1]) === "restore-recommendation-bun
   const [bundle, outdir = "public"] = process.argv.slice(2);
   if (!bundle)
     throw new Error("usage: node scripts/restore-recommendation-bundle.ts <bundle> [out]");
-  console.log(
-    restoreRecommendationBundle(resolve(bundle), resolve(outdir))
-      ? "restored compatible recommendation bundle"
-      : "compatible recommendation bundle unavailable; publishing lexical-only",
-  );
+  if (!restoreRecommendationBundle(resolve(bundle), resolve(outdir)))
+    throw new Error("compatible recommendation bundle unavailable; semantic deployment blocked");
+  console.log("restored compatible recommendation bundle");
 }

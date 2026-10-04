@@ -15804,12 +15804,20 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
   semantic bundle の seal には required gate と full real-paper benchmark の両方の合格が要る。
   推薦内容が不変の更新では封印済み bundle を再利用し、埋め込みモデルを読み込まない。
   bundle manifest は公開 commit (`source_commit`) と生成元 commit (`bundle_origin_commit`) を分けて記録し、
-  `semantic_content_id`・`required_gate`・`full_benchmark`・`embeddings_sha256` を持つ。
+  `semantic_content_id`・`gate_policy_id`・`required_gate`・`full_benchmark`・`embeddings_sha256` を持つ。
+  `gate_policy_id` は baseline・全 split fixture/manifest・固定 feature・品質下限/評価器・
+  推薦/埋め込み実装・seal/restore・workflow・依存 lock のファイル名と SHA-256 を束縛する。
+  再利用と復元には現行 policy の一致を要求し、policy 無しの旧 bundle も拒否する。
+  締切 snapshot 自体は policy に含めず、semantic 内容も不変なら締切だけの更新は再利用できる。
   `gate_provenance.mode` は、渡された両レポートを封緘時に再検証した `verified-reports` と、
   同じ fail-fast pipeline 内での直前合格を呼出元の責任で保証する `trusted-pipeline` を区別する。
   `verified-reports` は required / full レポートそれぞれの SHA-256 と benchmark content ID も記録する。
   復元側は現在の data から `semantic_content_id` を再計算して一致を要求し (公開 commit の一致は問わない)、
-  両 gate の `passed` も強制する。
+  両 gate の `passed` も強制する。production restore CLI の不適合は非0終了で公開を止め、
+  配信後の照合には `semantic_status` を含める。main SHA の取得失敗・空値・不正形式を
+  stale の成功 skip と扱わず失敗させ、取得に成功した正しい旧 SHA だけを skip する。
+  これは gate の来歴と公開失敗の修正であり、frozen full 経路による生成 embedding 評価の欠落、
+  trusted-pipeline の report 束縛不足、pending queue と HEAD^ baseline の問題は未解決である。
 - required と full はそれぞれ記録済みの回帰下限を持ち、heldout fused Recall@5 または negative abstention が下限を割れば失敗する。JSON レポートは検査結果としてファイルに保存する。
 - `data/benchmarks/retrieval-audit.json` は候補深度、カテゴリ、言語、会議種別、失敗分類を保存し、
   `data/benchmarks/annotation-audit.json` は受理 venue の出典、理由、注釈 revision を監査する。

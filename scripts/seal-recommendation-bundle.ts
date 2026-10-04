@@ -10,7 +10,10 @@ import {
 } from "../src/bench-recommender.ts";
 import { embeddingsStale } from "../src/build.ts";
 import { embeddingProfileHash } from "../src/embeddings.ts";
-import { semanticContentIdForArtifacts } from "../src/semantic-content.ts";
+import {
+  recommendationGatePolicyId,
+  semanticContentIdForArtifacts,
+} from "../src/semantic-content.ts";
 
 const positional: string[] = [];
 let requiredGatePath = "";
@@ -107,6 +110,7 @@ writeFileSync(
       source_commit: sourceCommit,
       bundle_origin_commit: sourceCommit,
       semantic_content_id: actualContentId,
+      gate_policy_id: recommendationGatePolicyId(),
       profile_hash: embeddingProfileHash(data),
       model_revision: manifest.models.en.revision,
       multilingual_model_revision: manifest.models.multi?.revision ?? null,

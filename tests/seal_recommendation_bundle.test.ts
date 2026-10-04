@@ -16,7 +16,10 @@ import {
   embeddingManifest,
   venuePapersHash,
 } from "../src/embeddings.ts";
-import { semanticContentIdForArtifacts } from "../src/semantic-content.ts";
+import {
+  recommendationGatePolicyId,
+  semanticContentIdForArtifacts,
+} from "../src/semantic-content.ts";
 import { REPO_ROOT, tempWork } from "./helpers.ts";
 
 function embeddingFixture(data: Parameters<typeof embeddingManifest>[0]): unknown {
@@ -47,6 +50,7 @@ it("keeps the trusted-pipeline invocation compatible without report files", () =
   );
   expect(result.status).toBe(0);
   expect(JSON.parse(readFileSync(out, "utf8"))).toMatchObject({
+    gate_policy_id: recommendationGatePolicyId(),
     required_gate: "passed",
     full_benchmark: "passed",
     gate_provenance: {
@@ -319,6 +323,7 @@ it("requires distinct passed required and full real-paper reports", () => {
   writeFileSync(full, `${JSON.stringify(report("full"), null, 2)}\n`);
   expect(run().status).toBe(0);
   expect(JSON.parse(readFileSync(out, "utf8"))).toMatchObject({
+    gate_policy_id: recommendationGatePolicyId(),
     required_gate: "passed",
     full_benchmark: "passed",
     gate_provenance: {
