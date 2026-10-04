@@ -185,6 +185,7 @@ kamiyobi/
 │   ├── reverify.ts               # 公式ページ再確認と台帳更新
 │   ├── evidence.ts              # 証拠本文の検証・インデックス・回収
 │   ├── identity-migration.ts     # health gate 用の明示的 identity 移行契約
+│   ├── history.ts              # 公開済み過年度履歴の保持
 │   ├── semantic-content.ts     # sealed bundle の semantic_content_id 算出
 │   ├── embeddings.ts            # 埋め込み生成
 │   ├── bench-recommender.ts     # 推薦ベンチ
@@ -215,6 +216,7 @@ kamiyobi/
 │   ├── refresh-ieice.ts         # 研究会発表申込システムから国内研究会の会期・締切を更新
 │   ├── restore-recommendation-bundle.ts # 互換推薦 artifact の検証・復元
 │   ├── seal-recommendation-bundle.ts # semantic_content_id 付き bundle 封印
+│   ├── capture-published-history.ts # 実公開 manifest/data の照合保存
 │   ├── semantic-content.ts     # semantic content id の算出 CLI
 │   ├── train-reranker.ts       # dev-only reranker 学習・CV・校正 artifact 生成
 │   ├── validate-data.ts         # 公開データの意味検査
@@ -419,6 +421,37 @@ source snapshot の parser 形式は `conferencesFromJson` が読み戻せる契
 一次ソースの手動訂正は `data/source-snapshots/primary.json` に同じ形式で保存し、
 `primary_overrides.yaml` がないオフライン build からも復元する。
 
+### 3.5.1 公開済みの過年度履歴
+
+上流取得が成功しても、公開済みの非推定・過年度 edition を無根拠に短縮・削除しない。
+`update-data` は実公開の `publish.json` と `data.json` を取得し、SHA-256 と commit identity を
+照合する。取得失敗・空データ・不一致は中断する。この同じ保存ファイルを両 build の
+`--history-baseline` に渡す。生成済み候補や再生成した main を公開履歴の代わりにしない。
+
+`src/history.ts` は、年が build 年より小さい上流 edition の会期・精度・分割会期と既存締切
+スロットを保持する。新しい edition・新しい締切スロットは取り込む。venue の確定 identity・
+公開 key を優先し、edition の明示 ID または同じ venue・年度内で一意の公式 URL で照合する。
+明示 ID で対応済みの候補は先に確保し、別の公開版への URL 照合で再利用しない。
+ID が変わった場合は `legacy_ids` に旧 ID を記録し、次回更新でも引き継ぐ。
+対応する ID・公式 URL がない過去版は別 edition として復元し、年度だけで統合しない。
+複数候補に対応する曖昧な照合や多対一は失敗させる。
+local 正典の削除や推定値は復活させない。
+CoRL 2025 の汎用 URL と年度別 URL は公式アーカイブに基づく `edition_identities` で結び、
+同一開催の二重収録と取得失敗時の復元衝突を防ぐ。
+
+候補と公開基準の両方に手動 overrides と検証済み一次ソースを適用してから照合するので、
+根拠のある訂正・延期・削除は引き続き可能である。履歴復元は rollforward の後に行い、
+復元した過去版から新しい推定版を作らない。TCC 2023・SYSTOR 2024・CSCW 2022 は公式に基づく個別訂正を持つ。
+保持の判断は baseline hash とともに `--history-report PATH` の診断 JSON に出力し、
+更新 artifact に残す。公開ディレクトリには追加しない。
+これは公式確認済みへの格上げを意味しない。ISS 2025 の保存済み2締切は集約元由来のまま残す。
+
+引数がなければ online / offline とも開始時の `data/snapshot.json` を比較に使う。
+公開用 deploy/bundle もコミット済み snapshot を明示する。
+固定入力テストの build は更新対象データを混ぜない。
+検索の旧来の実測件数は `query-reference-data.json.gz.base64` の固定入力と固定 hash で検査し、
+現行 snapshot の都市網羅性・日本語検索の同値性は別の実データ検査で維持する。
+
 ### 3.6 統合
 
 ```ts
@@ -556,7 +589,7 @@ export async function buildAll(
 ```sh
 node --experimental-strip-types src/cli.ts build [--out public] [--config config.yaml]
                               [--offline] [--now 2026-08-09T00:00:00Z] [--cache .cache]
-                              [--no-embeddings]
+                              [--no-embeddings] [--history-baseline PATH] [--history-report PATH]
 node --experimental-strip-types src/cli.ts discover [--out path] [--categories hpc,systems]
                               [--candidate-out path] [--min-year year] [--dry-run] [--append]
 node --experimental-strip-types src/cli.ts review [--candidates data/discovery/active.yaml]
@@ -15771,12 +15804,20 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
   semantic bundle の seal には required gate と full real-paper benchmark の両方の合格が要る。
   推薦内容が不変の更新では封印済み bundle を再利用し、埋め込みモデルを読み込まない。
   bundle manifest は公開 commit (`source_commit`) と生成元 commit (`bundle_origin_commit`) を分けて記録し、
-  `semantic_content_id`・`required_gate`・`full_benchmark`・`embeddings_sha256` を持つ。
+  `semantic_content_id`・`gate_policy_id`・`required_gate`・`full_benchmark`・`embeddings_sha256` を持つ。
+  `gate_policy_id` は baseline・全 split fixture/manifest・固定 feature・品質下限/評価器・
+  推薦/埋め込み実装・seal/restore・workflow・依存 lock のファイル名と SHA-256 を束縛する。
+  再利用と復元には現行 policy の一致を要求し、policy 無しの旧 bundle も拒否する。
+  締切 snapshot 自体は policy に含めず、semantic 内容も不変なら締切だけの更新は再利用できる。
   `gate_provenance.mode` は、渡された両レポートを封緘時に再検証した `verified-reports` と、
   同じ fail-fast pipeline 内での直前合格を呼出元の責任で保証する `trusted-pipeline` を区別する。
   `verified-reports` は required / full レポートそれぞれの SHA-256 と benchmark content ID も記録する。
   復元側は現在の data から `semantic_content_id` を再計算して一致を要求し (公開 commit の一致は問わない)、
-  両 gate の `passed` も強制する。
+  両 gate の `passed` も強制する。production restore CLI の不適合は非0終了で公開を止め、
+  配信後の照合には `semantic_status` を含める。main SHA の取得失敗・空値・不正形式を
+  stale の成功 skip と扱わず失敗させ、取得に成功した正しい旧 SHA だけを skip する。
+  これは gate の来歴と公開失敗の修正であり、frozen full 経路による生成 embedding 評価の欠落、
+  trusted-pipeline の report 束縛不足、pending queue と HEAD^ baseline の問題は未解決である。
 - required と full はそれぞれ記録済みの回帰下限を持ち、heldout fused Recall@5 または negative abstention が下限を割れば失敗する。JSON レポートは検査結果としてファイルに保存する。
 - `data/benchmarks/retrieval-audit.json` は候補深度、カテゴリ、言語、会議種別、失敗分類を保存し、
   `data/benchmarks/annotation-audit.json` は受理 venue の出典、理由、注釈 revision を監査する。

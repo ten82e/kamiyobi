@@ -1,3 +1,4 @@
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 /**
  * 催し物・提出物の名に**手続きの語を繋げた**打ち方（第 646 回）。
  * 第 505・517 回の羣は「その家の答え」を持つが、語を其のまま六十四本並べて居たので、
@@ -75,7 +76,7 @@ const 尾 = [
 
 function 收錄(): Row[] {
   return Recommender.candidateRows(
-    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")),
+    JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
   ) as Row[];
 }
 

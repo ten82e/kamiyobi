@@ -1,3 +1,5781 @@
 schema: 2
 lifecycle: active
-candidates: []
+candidates:
+  - key: 2027-icger-4th-smpm
+    title: 2027 ICGER - 4th SMPM
+    full_name: >-
+      2027 International Conference on Green Energy and Resources - 4th
+      Sustainable Material Processing and Manufacturing (SMPM)
+    link: https://easychair.org/cfp/icgerconference2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Feb 28, 2027
+    editions:
+      - year: 2027
+        id: 2027-icger-4th-smpm27
+        link: https://easychair.org/cfp/icgerconference2027
+        place: Kruger National Park, South Africa
+        date_text: Aug 9, 2027
+        deadlines: []
+    id: candidate-33400bf66d97f3626b3c3f25
+    source: easychair
+    source_item_id: 2027-icger-4th-smpm
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: 2027-icger-4th-smpm
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: 3d-metasurface-assisted-wireless-communications-from-model-based-designs-to-ai-driven-approaches-ieee-wireless-communications
+    title: >-
+      3D Metasurface-Assisted Wireless Communications: From Model-Based Designs
+      to AI-Driven Approaches（IEEE Wireless Communications 特集号）
+    full_name: >-
+      3D Metasurface-Assisted Wireless Communications: From Model-Based Designs
+      to AI-Driven Approaches（IEEE Wireless Communications 特集号）
+    link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+    categories: []
+    tags:
+      - niche
+      - special-issue
+    editions:
+      - year: 2027
+        id: 3d-metasurface-assisted-wireless-communications-from-model-based-designs-to-ai-driven-approaches-ieee-wireless-communications27
+        link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+        place: ''
+        date_text: 1 January 2027
+        deadlines: []
+    id: candidate-4c626b1c91bdd817f9683363
+    source: comsoc
+    source_item_id: 3d-metasurface-assisted-wireless-communications-from-model-based-designs-to-ai-driven-approaches-ieee-wireless-communications
+    status: discovered
+    discovered_at: '2026-08-19T20:44:41.199Z'
+    first_seen_at: '2026-08-19T20:44:41.199Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: comsoc
+        source_item_id: 3d-metasurface-assisted-wireless-communications-from-model-based-designs-to-ai-driven-approaches-ieee-wireless-communications
+        source_url: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: ''
+  - key: 3rd-socaisa
+    title: 3RD SOCAISA
+    full_name: Service-Oriented Computing, AI, and IoT for Smart Applications
+    link: https://easychair.org/cfp/3rdSOCAISA
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 15, 2026
+    editions:
+      - year: 2026
+        id: 3rd-socaisa26
+        link: https://easychair.org/cfp/3rdSOCAISA
+        place: Łódź, Poland
+        date_text: Oct 15, 2026
+        deadlines: []
+    id: candidate-fe801197ce90ba14d3f933df
+    source: easychair
+    source_item_id: 3rd-socaisa
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: 3rd-socaisa
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: 4th-smpm
+    title: 4th SMPM
+    full_name: 2027 International Conference of Green Energy and Resources
+    link: https://easychair.org/cfp/icgerconference2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Feb 28, 2027
+    editions:
+      - year: 2027
+        id: 4th-smpm27
+        link: https://easychair.org/cfp/icgerconference2027
+        place: Johannesburg, South Africa
+        date_text: Aug 9, 2027
+        deadlines: []
+    id: candidate-2d011b9032fbce6ad9cfcd97
+    source: easychair
+    source_item_id: 4th-smpm
+    status: discovered
+    discovered_at: '2026-09-05T22:05:16.108Z'
+    first_seen_at: '2026-09-05T22:05:16.108Z'
+    last_seen_at: '2026-09-06T22:11:00.021Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: 4th-smpm
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-09-06T22:11:00.021Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: 6gctt-2027
+    title: 6GCTT 2027
+    full_name: The International Conference on 6G Communication and Terahertz Technology
+    link: https://easychair.org/cfp/6GCTT2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Apr 30, 2027
+    editions:
+      - year: 2027
+        id: 6gctt27
+        link: https://easychair.org/cfp/6GCTT2027
+        place: Beijing, China
+        date_text: Jul 3, 2027
+        deadlines: []
+    id: candidate-d17ff161493deb6c0463d771
+    source: easychair
+    source_item_id: 6gctt-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: 6gctt-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: 9th-accml
+    title: 9th AccML
+    full_name: 9th Workshop on Accelerated Machine Learning
+    link: https://easychair.org/cfp/accml-26
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 13, 2026
+    editions:
+      - year: 2026
+        id: 9th-accml26
+        link: https://easychair.org/cfp/accml-26
+        place: Glasgow, UK
+        date_text: Jan 19, 2027
+        deadlines: []
+    id: candidate-2b1ffe2619bb68c867314908
+    source: easychair
+    source_item_id: 9th-accml
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: 9th-accml
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: a2mra-2027
+    title: A2MRA ’2027
+    full_name: >-
+      International Workshop on Applied AI & Mathematical Methods for Real‑world
+      Applications
+    link: https://easychair.org/cfp/a2mra-27
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 2, 2026
+    editions:
+      - year: 2027
+        id: a2mra27
+        link: https://easychair.org/cfp/a2mra-27
+        place: Delft, Netherlands
+        date_text: Apr 13, 2027
+        deadlines: []
+    id: candidate-d9c027452b63f6ee69d47202
+    source: easychair
+    source_item_id: a2mra-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: a2mra-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: abis2027
+    title: ABIS2027
+    full_name: Association of Business Information Systems (ABIS) 2027
+    link: https://easychair.org/cfp/ABIS2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 15, 2026
+    editions:
+      - year: 2027
+        id: abis27
+        link: https://easychair.org/cfp/ABIS2027
+        place: Dallas, Texas, United States
+        date_text: Mar 10, 2027
+        deadlines: []
+    id: candidate-d73914fe6b83b3c6745cc0b4
+    source: easychair
+    source_item_id: abis2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: abis2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: aciids-2027
+    title: ACIIDS 2027
+    full_name: 19th Asian Conference on Intelligent Information and Database Systems
+    link: https://easychair.org/cfp/ACIIDS2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 31, 2026
+    editions:
+      - year: 2027
+        id: aciids27
+        link: https://easychair.org/cfp/ACIIDS2027
+        place: Bali, Indonesia
+        date_text: Apr 5, 2027
+        deadlines: []
+    id: candidate-024ee78d53dab2879a2f935e
+    source: easychair
+    source_item_id: aciids-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: aciids-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: acmme-2027
+    title: ACMME 2027
+    full_name: The 15th Asia Conference on Mechanical and Materials Engineering
+    link: https://easychair.org/cfp/ACMME2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Feb 1, 2027
+    editions:
+      - year: 2027
+        id: acmme27
+        link: https://easychair.org/cfp/ACMME2027
+        place: Jeju Island, South Korea
+        date_text: Jun 21, 2027
+        deadlines: []
+    id: candidate-2fe994f99dd38add445bc585
+    source: easychair
+    source_item_id: acmme-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-09-06T22:11:00.021Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: acmme-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-09-06T22:11:00.021Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: acse2026
+    title: ACSE2026
+    full_name: Call for Papers – Advanced Chemical Systems and Engineering Journal
+    link: https://easychair.org/cfp/acse2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 31, 2026
+    editions:
+      - year: 2026
+        id: acse26
+        link: https://easychair.org/cfp/acse2026
+        place: Online, Jordan
+        date_text: Dec 31, 2026
+        deadlines: []
+    id: candidate-2c0bf9708a849a59bda9095c
+    source: easychair
+    source_item_id: acse2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: acse2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: aeees2027
+    title: AEEES2027
+    full_name: 2027 9th Asia Energy and Electrical Engineering Symposium
+    link: https://easychair.org/cfp/AEEES2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 30, 2026
+    editions:
+      - year: 2027
+        id: aeees27
+        link: https://easychair.org/cfp/AEEES2027
+        place: Chengdu, China
+        date_text: Mar 19, 2027
+        deadlines: []
+    id: candidate-008b12a74b974b43b843988b
+    source: easychair
+    source_item_id: aeees2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: aeees2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ai-empowered-cognitive-digital-twin-for-future-network-ecosystems-ieee-network
+    title: >-
+      AI-Empowered Cognitive Digital Twin for Future Network Ecosystems（IEEE
+      Network 特集号）
+    full_name: >-
+      AI-Empowered Cognitive Digital Twin for Future Network Ecosystems（IEEE
+      Network 特集号）
+    link: https://www.comsoc.org/publications/magazines/ieee-network/cfp
+    categories: []
+    tags:
+      - niche
+      - special-issue
+    editions:
+      - year: 2026
+        id: ai-empowered-cognitive-digital-twin-for-future-network-ecosystems-ieee-network26
+        link: https://www.comsoc.org/publications/magazines/ieee-network/cfp
+        place: ''
+        date_text: 31 October 2026
+        deadlines: []
+    id: candidate-4fc9294eb7e87d3f3ceb5930
+    source: comsoc
+    source_item_id: ai-empowered-cognitive-digital-twin-for-future-network-ecosystems-ieee-network
+    status: discovered
+    discovered_at: '2026-08-19T20:44:41.199Z'
+    first_seen_at: '2026-08-19T20:44:41.199Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: comsoc
+        source_item_id: ai-empowered-cognitive-digital-twin-for-future-network-ecosystems-ieee-network
+        source_url: https://www.comsoc.org/publications/magazines/ieee-network/cfp
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: ''
+  - key: ai-empowered-underwater-wireless-optical-communications-for-science-exploration-and-defense-applications-ieee-wireless-communications
+    title: >-
+      AI-Empowered Underwater Wireless Optical Communications for Science
+      Exploration and Defense Applications（IEEE Wireless Communications 特集号）
+    full_name: >-
+      AI-Empowered Underwater Wireless Optical Communications for Science
+      Exploration and Defense Applications（IEEE Wireless Communications 特集号）
+    link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+    categories: []
+    tags:
+      - niche
+      - special-issue
+    editions:
+      - year: 2026
+        id: ai-empowered-underwater-wireless-optical-communications-for-science-exploration-and-defense-applications-ieee-wireless-communications26
+        link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+        place: ''
+        date_text: 1 November 2026
+        deadlines: []
+    id: candidate-50f408fe4938c74e4767e63a
+    source: comsoc
+    source_item_id: ai-empowered-underwater-wireless-optical-communications-for-science-exploration-and-defense-applications-ieee-wireless-communications
+    status: discovered
+    discovered_at: '2026-08-19T20:44:41.199Z'
+    first_seen_at: '2026-08-19T20:44:41.199Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: comsoc
+        source_item_id: ai-empowered-underwater-wireless-optical-communications-for-science-exploration-and-defense-applications-ieee-wireless-communications
+        source_url: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: ''
+  - key: ai-hcd-2027
+    title: AI-HCD 2027
+    full_name: >-
+      AI-HCD 2027: 2nd Symposium on Artificial Intelligence throughout the
+      Human-Centered Design Process
+    link: https://easychair.org/cfp/AI-HCD2027
+    categories:
+      - ai
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Mar 22, 2027
+    editions:
+      - year: 2027
+        id: ai-hcd27
+        link: https://easychair.org/cfp/AI-HCD2027
+        place: tbd, Germany
+        date_text: Dec 9, 2027
+        deadlines: []
+    id: candidate-bbb665a4a90eda97693b05ac
+    source: easychair
+    source_item_id: ai-hcd-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: ai-hcd-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ai4proteinscience
+    title: AI4ProteinScience
+    full_name: ISCB-China Workshop ISCB-China Workshop on AI for Protein Science
+    link: https://easychair.org/cfp/ai4ps
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 5, 2026
+    editions:
+      - year: 2026
+        id: ai4proteinscience26
+        link: https://easychair.org/cfp/ai4ps
+        place: Beijing, China
+        date_text: Oct 16, 2026
+        deadlines: []
+    id: candidate-e89b4bbb706f64b2d22156e9
+    source: easychair
+    source_item_id: ai4proteinscience
+    status: discovered
+    discovered_at: '2026-09-05T22:05:16.108Z'
+    first_seen_at: '2026-09-05T22:05:16.108Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: ai4proteinscience
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: aicap-2027
+    title: AICAP 2027
+    full_name: Aviation Innovation Conference for Asia-Pacific - 2027
+    link: https://easychair.org/cfp/AICAP-2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 30, 2026
+    editions:
+      - year: 2027
+        id: aicap27
+        link: https://easychair.org/cfp/AICAP-2027
+        place: Singapore, Singapore
+        date_text: Jan 27, 2027
+        deadlines: []
+    id: candidate-8f1ab3158970f04def23d6e2
+    source: easychair
+    source_item_id: aicap-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: aicap-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: aiesc-2027
+    title: AIESC 2027
+    full_name: >-
+      The International Conference on Artificial Intelligence in Education and
+      Smart Campus (AIESC 2027)
+    link: https://easychair.org/cfp/AIESC2027
+    categories:
+      - ai
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Mar 1, 2027
+    editions:
+      - year: 2027
+        id: aiesc27
+        link: https://easychair.org/cfp/AIESC2027
+        place: Tokyo, Japan
+        date_text: Apr 2, 2027
+        deadlines: []
+    id: candidate-a87f8ad4e7323ae5656c928f
+    source: easychair
+    source_item_id: aiesc-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: aiesc-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: aiit2027
+    title: AIIT2027
+    full_name: >-
+      The 2nd International Conference on Innovation in Artificial Intelligence
+      and Internet of Things
+    link: https://easychair.org/cfp/aiit2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 20, 2026
+    editions:
+      - year: 2027
+        id: aiit27
+        link: https://easychair.org/cfp/aiit2027
+        place: Jeddah, Saudi Arabia
+        date_text: Nov 3, 2027
+        deadlines: []
+    id: candidate-e2a5851e15e46618bcc85532
+    source: easychair
+    source_item_id: aiit2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: aiit2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: aimce-27
+    title: AIMCE'27
+    full_name: >-
+      The 3rd International Workshop on Artificial Intelligence, Mechanical and
+      Civil Engineering
+    link: https://easychair.org/cfp/aimce27
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 20, 2026
+    editions:
+      - year: 2026
+        id: aimce-2726
+        link: https://easychair.org/cfp/aimce27
+        place: Casablanca, Morocco
+        date_text: Apr 9, 2027
+        deadlines: []
+    id: candidate-9a7cbdd5b19d94e376c937af
+    source: easychair
+    source_item_id: aimce-27
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: aimce-27
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: aimh-2027
+    title: AiMH' 2027
+    full_name: 3rd International Conference on AI in Medicine and Healthcare
+    link: https://easychair.org/cfp/AIMH_2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Feb 28, 2027
+    editions:
+      - year: 2027
+        id: aimh27
+        link: https://easychair.org/cfp/AIMH_2027
+        place: Malé, Maldives
+        date_text: Mar 23, 2027
+        deadlines: []
+    id: candidate-fad19364d2f4924eba322bbf
+    source: easychair
+    source_item_id: aimh-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: aimh-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: aisir-2027
+    title: AISIR 2027
+    full_name: Auckland International Conference on Stroke and Intelligent Rehabilitation
+    link: https://easychair.org/cfp/AISIR2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 30, 2026
+    editions:
+      - year: 2027
+        id: aisir27
+        link: https://easychair.org/cfp/AISIR2027
+        place: Auckland, New Zealand
+        date_text: Jan 20, 2027
+        deadlines: []
+    id: candidate-b1f64da17ad109555ce40604
+    source: easychair
+    source_item_id: aisir-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: aisir-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: aix2027
+    title: AIX2027
+    full_name: >-
+      International Conference on Artificial Intelligence & Information
+      Technology
+    link: https://easychair.org/cfp/AIX-2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Feb 1, 2027
+    editions:
+      - year: 2027
+        id: aix27
+        link: https://easychair.org/cfp/AIX-2027
+        place: Bqubah, Iraq
+        date_text: Mar 17, 2027
+        deadlines: []
+    id: candidate-a5efa2e2a35df3cdef2c8411
+    source: easychair
+    source_item_id: aix2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: aix2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: aqti-2027
+    title: AQTI' 2027
+    full_name: >-
+      1st International Conference on Advances in Quantum Technologies and
+      Information
+    link: https://easychair.org/cfp/AQTI_2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Apr 5, 2027
+    editions:
+      - year: 2027
+        id: aqti27
+        link: https://easychair.org/cfp/AQTI_2027
+        place: Geneva, Switzerland
+        date_text: May 3, 2027
+        deadlines: []
+    id: candidate-b68a36586804c9631aba5bb6
+    source: easychair
+    source_item_id: aqti-2027
+    status: discovered
+    discovered_at: '2026-08-30T13:30:12.117Z'
+    first_seen_at: '2026-08-30T13:30:12.117Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: aqti-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: arci-2027
+    title: ARCI' 2027
+    full_name: >-
+      7th IFSA Winter Conference on Automation, Robotics & Communications for
+      Industry 4.0/5.0/6.0
+    link: https://easychair.org/cfp/ARCI_2027
+    categories:
+      - ai
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Jan 15, 2027
+    editions:
+      - year: 2027
+        id: arci27
+        link: https://easychair.org/cfp/ARCI_2027
+        place: Geneva, Switzerland
+        date_text: Feb 10, 2027
+        deadlines: []
+    id: candidate-165b5e033393fadd07688767
+    source: easychair
+    source_item_id: arci-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-09-05T22:06:50.189Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: arci-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-09-05T22:06:50.189Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: aspai-2027
+    title: ASPAI' 2027
+    full_name: >-
+      9th International Conference on Advances in Signal Processing and
+      Artificial Intelligence
+    link: https://easychair.org/cfp/ASPAI_2027
+    categories:
+      - ai
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Feb 28, 2027
+    editions:
+      - year: 2027
+        id: aspai27
+        link: https://easychair.org/cfp/ASPAI_2027
+        place: Malé, Maldives
+        date_text: Mar 23, 2027
+        deadlines: []
+    id: candidate-332e21e2c8234b94bda0c904
+    source: easychair
+    source_item_id: aspai-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: aspai-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: atomic-to-network-quantum-radio-front-ends-for-6g-wireless-communications-and-sensing-ieee-wireless-communications
+    title: >-
+      Atomic-to-Network: Quantum Radio Front-Ends for 6G Wireless Communications
+      and Sensing（IEEE Wireless Communications 特集号）
+    full_name: >-
+      Atomic-to-Network: Quantum Radio Front-Ends for 6G Wireless Communications
+      and Sensing（IEEE Wireless Communications 特集号）
+    link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+    categories: []
+    tags:
+      - niche
+      - special-issue
+    editions:
+      - year: 2027
+        id: atomic-to-network-quantum-radio-front-ends-for-6g-wireless-communications-and-sensing-ieee-wireless-communications27
+        link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+        place: ''
+        date_text: 1 March 2027
+        deadlines: []
+    id: candidate-36d320f7f222885f207777d7
+    source: comsoc
+    source_item_id: atomic-to-network-quantum-radio-front-ends-for-6g-wireless-communications-and-sensing-ieee-wireless-communications
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: comsoc
+        source_item_id: atomic-to-network-quantum-radio-front-ends-for-6g-wireless-communications-and-sensing-ieee-wireless-communications
+        source_url: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: ''
+  - key: aviose-27
+    title: AvioSE'27
+    full_name: Workshop on Avionics Systems and Software Engineering 2027
+    link: https://easychair.org/cfp/AvioSE27
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 9, 2026
+    editions:
+      - year: 2027
+        id: aviose27
+        link: https://easychair.org/cfp/AvioSE27
+        place: Dortmund, Germany
+        date_text: Feb 22, 2027
+        deadlines: []
+    id: candidate-17a0dc073c7c1746d92c1747
+    source: easychair
+    source_item_id: aviose-27
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: aviose-27
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: beacon-2027
+    title: BEACON 2027
+    full_name: Business Innovation & Digital Transformation in the AI Era
+    link: https://easychair.org/cfp/beacon2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Feb 27, 2027
+    editions:
+      - year: 2027
+        id: beacon27
+        link: https://easychair.org/cfp/beacon2027
+        place: Varanasi, India
+        date_text: Mar 27, 2027
+        deadlines: []
+    id: candidate-b88e94d563ba1f937629cd5c
+    source: easychair
+    source_item_id: beacon-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: beacon-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: bibe2026
+    title: BIBE2026
+    full_name: The 26th IEEE International Conference on Bioinformatics & Bioengineering
+    link: https://easychair.org/cfp/BIBE2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 31, 2026
+    editions:
+      - year: 2026
+        id: bibe26
+        link: https://easychair.org/cfp/BIBE2026
+        place: Shanghai, China
+        date_text: Nov 27, 2026
+        deadlines: []
+    id: candidate-dfc51fa380d477ecc26d8177
+    source: easychair
+    source_item_id: bibe2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: bibe2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: bmsb-2027
+    title: BMSB 2027
+    full_name: >-
+      IEEE International Symposium on Broadband Multimedia Systems and
+      Broadcasting 2027
+    link: https://easychair.org/cfp/bmsb-2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Jan 15, 2027
+    editions:
+      - year: 2027
+        id: bmsb27
+        link: https://easychair.org/cfp/bmsb-2027
+        place: Sydney, Australia
+        date_text: Jul 7, 2027
+        deadlines: []
+    id: candidate-b975fdb46712257a71574d24
+    source: easychair
+    source_item_id: bmsb-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: bmsb-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: cale-ai2027
+    title: CALE-AI2027
+    full_name: 'Evaluating AI Interventions: Causal and Longitudinal Human Effects'
+    link: https://easychair.org/cfp/CALE-AI2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 20, 2026
+    editions:
+      - year: 2027
+        id: cale-ai27
+        link: https://easychair.org/cfp/CALE-AI2027
+        place: Montréal, Canada
+        date_text: Feb 22, 2027
+        deadlines: []
+    id: candidate-518164a9e086a48e3474f251
+    source: easychair
+    source_item_id: cale-ai2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: cale-ai2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: calm-27
+    title: CALM-27
+    full_name: The 4th International Workshop on Causality, Agents and Large Models
+    link: https://easychair.org/cfp/calm-27
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 27, 2026
+    editions:
+      - year: 2026
+        id: calm-2726
+        link: https://easychair.org/cfp/calm-27
+        place: Delft, Netherlands
+        date_text: Apr 13, 2027
+        deadlines: []
+    id: candidate-233c4e262971a5fe8c072065
+    source: easychair
+    source_item_id: calm-27
+    status: discovered
+    discovered_at: '2026-08-30T13:30:12.117Z'
+    first_seen_at: '2026-08-30T13:30:12.117Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: calm-27
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: camos-2027
+    title: CAMoS 2027
+    full_name: International Conference on Connectivity, Automation and Mobile Systems
+    link: https://easychair.org/cfp/camos2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Mar 15, 2027
+    editions:
+      - year: 2027
+        id: camos27
+        link: https://easychair.org/cfp/camos2027
+        place: Split, Croatia
+        date_text: Aug 2, 2027
+        deadlines: []
+    id: candidate-10f82ae839ed0f52f74531c6
+    source: easychair
+    source_item_id: camos-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: camos-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: case2space-2027
+    title: CASE2Space 2027
+    full_name: >-
+      1st International Workshop on Software Engineering for Mission-Critical
+      and Autonomous Systems: from Earth to Outer Space
+    link: https://easychair.org/cfp/case2space-2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 13, 2026
+    editions:
+      - year: 2027
+        id: case2space27
+        link: https://easychair.org/cfp/case2space-2027
+        place: Dublin, Ireland
+        date_text: May 1, 2027
+        deadlines: []
+    id: candidate-dab4535e528ac44b38ced844
+    source: easychair
+    source_item_id: case2space-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: case2space-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: caspt-transit-data-2027
+    title: CASPT & Transit Data 2027
+    full_name: >-
+      The 17th International Conference on Advanced Systems in Public Transport
+      (CASPT2027) & 12th International Workshop and Symposium on Research and
+      Applications on the Use of Passive Data from Public Transport (TRANSIT
+      DATA)
+    link: https://easychair.org/cfp/CASPT-TransitData2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 16, 2026
+    editions:
+      - year: 2027
+        id: caspt-transit-data27
+        link: https://easychair.org/cfp/CASPT-TransitData2027
+        place: Stockholm, Sweden
+        date_text: Jun 21, 2027
+        deadlines: []
+    id: candidate-3fa6db779ad804f587bafebc
+    source: easychair
+    source_item_id: caspt-transit-data-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: caspt-transit-data-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ccai2027
+    title: CCAI2027
+    full_name: >-
+      2027 the 7th International Conference on Computer Communication and
+      Artificial Intelligence
+    link: https://easychair.org/cfp/ccai2027
+    categories:
+      - ai
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Jan 10, 2027
+    editions:
+      - year: 2027
+        id: ccai27
+        link: https://easychair.org/cfp/ccai2027
+        place: Shanghai, China
+        date_text: May 21, 2027
+        deadlines: []
+    id: candidate-85b472a91f83857d8fe09c2d
+    source: easychair
+    source_item_id: ccai2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: ccai2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ceege-2027
+    title: CEEGE 2027
+    full_name: >-
+      2027 10th International Conference on Electrical Engineering and Green
+      Energy
+    link: https://easychair.org/cfp/CEEGE2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Jan 20, 2027
+    editions:
+      - year: 2027
+        id: ceege27
+        link: https://easychair.org/cfp/CEEGE2027
+        place: Suzhou, China
+        date_text: May 7, 2027
+        deadlines: []
+    id: candidate-17cff48bd7055ade313caf4d
+    source: easychair
+    source_item_id: ceege-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: ceege-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ceepe2027
+    title: CEEPE2027
+    full_name: >-
+      2027 10th International Conference on Energy, Electrical and Power
+      Engineering
+    link: https://easychair.org/cfp/CEEPE2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 30, 2026
+    editions:
+      - year: 2027
+        id: ceepe27
+        link: https://easychair.org/cfp/CEEPE2027
+        place: Tianjin, China
+        date_text: Apr 16, 2027
+        deadlines: []
+    id: candidate-cc6815543e9afbb3ffc279c2
+    source: easychair
+    source_item_id: ceepe2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: ceepe2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: cibse-2027
+    title: CIBSE 2027
+    full_name: XXX Ibero-American Conference on Software Engineering
+    link: https://easychair.org/cfp/cibse-2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Jan 18, 2027
+    editions:
+      - year: 2027
+        id: cibse27
+        link: https://easychair.org/cfp/cibse-2027
+        place: Vina del Mar, Chile
+        date_text: May 10, 2027
+        deadlines: []
+    id: candidate-983d980882ba4a38df305df5
+    source: easychair
+    source_item_id: cibse-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: cibse-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: cilidi4
+    title: CILiDi4
+    full_name: 4th International Conference on Digital Linguistics
+    link: https://easychair.org/cfp/CILiDi-4
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 10, 2026
+    editions:
+      - year: 2026
+        id: cilidi426
+        link: https://easychair.org/cfp/CILiDi-4
+        place: Granada, Spain
+        date_text: Feb 3, 2027
+        deadlines: []
+    id: candidate-8bb2dce8bfff93e7313e01ca
+    source: easychair
+    source_item_id: cilidi4
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: cilidi4
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: circh2027
+    title: CIRCH2027
+    full_name: Concordia International Research Conference Hanoi 2027
+    link: https://easychair.org/cfp/CIRCH2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Feb 24, 2027
+    editions:
+      - year: 2027
+        id: circh27
+        link: https://easychair.org/cfp/CIRCH2027
+        place: Hanoi, Viet Nam
+        date_text: Apr 14, 2027
+        deadlines: []
+    id: candidate-398cc6519cbf97ef36931549
+    source: easychair
+    source_item_id: circh2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: circh2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ciredii-2027
+    title: CIREDII 2027
+    full_name: Congreso Internacional de la Red de Investigación Interinstitucional
+    link: https://easychair.org/cfp/ciredii2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Jan 8, 2027
+    editions:
+      - year: 2027
+        id: ciredii27
+        link: https://easychair.org/cfp/ciredii2027
+        place: Colima, Mexico
+        date_text: Mar 16, 2027
+        deadlines: []
+    id: candidate-f1c7c4fe4aeac1f60ad03729
+    source: easychair
+    source_item_id: ciredii-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: ciredii-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: csaf26
+    title: CSAF26
+    full_name: the 22nd Annual Cal Poly Pomona Cybersecurity and Awareness Fair
+    link: https://easychair.org/cfp/CSAF26
+    categories:
+      - security
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 7, 2026
+    editions:
+      - year: 2026
+        id: csaf26
+        link: https://easychair.org/cfp/CSAF26
+        place: Pomona, California, United States
+        date_text: Oct 13, 2026
+        deadlines: []
+    id: candidate-db950348bb329e7b38e2bf3e
+    source: easychair
+    source_item_id: csaf26
+    status: discovered
+    discovered_at: '2026-08-30T13:30:12.117Z'
+    first_seen_at: '2026-08-30T13:30:12.117Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: csaf26
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: cste2027
+    title: CSTE2027
+    full_name: >-
+      2027 9th International Conference on Computer Science and Technologies in
+      Education
+    link: https://easychair.org/cfp/CSTE2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 5, 2026
+    editions:
+      - year: 2027
+        id: cste27
+        link: https://easychair.org/cfp/CSTE2027
+        place: Wuhan, China
+        date_text: Apr 9, 2027
+        deadlines: []
+    id: candidate-0339a6b81a1fb8292bab80df
+    source: easychair
+    source_item_id: cste2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: cste2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: cyber-science-2027
+    title: Cyber Science 2027
+    full_name: >-
+      The International Conference on Cybersecurity, Situational Awareness and
+      Social Media
+    link: https://easychair.org/cfp/cyberscience2027
+    categories:
+      - security
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 31, 2026
+    editions:
+      - year: 2027
+        id: cyber-science27
+        link: https://easychair.org/cfp/cyberscience2027
+        place: London, UK
+        date_text: Jun 16, 2027
+        deadlines: []
+    id: candidate-779ed55496b4c10dabb84144
+    source: easychair
+    source_item_id: cyber-science-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: cyber-science-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: cycon-2027
+    title: CyCon 2027
+    full_name: '19th International Conference on Cyber Conflict: Unified Response'
+    link: https://easychair.org/cfp/CyCon2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Jan 6, 2027
+    editions:
+      - year: 2027
+        id: cycon27
+        link: https://easychair.org/cfp/CyCon2027
+        place: Tallinn, Estonia
+        date_text: May 25, 2027
+        deadlines: []
+    id: candidate-f88a708527a994d41a9366ad
+    source: easychair
+    source_item_id: cycon-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: cycon-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: daus-2027
+    title: DAUS' 2027
+    full_name: 3rd International Conference on Drones and Unmanned Systems
+    link: https://easychair.org/cfp/DAUS_2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Jan 15, 2027
+    editions:
+      - year: 2027
+        id: daus27
+        link: https://easychair.org/cfp/DAUS_2027
+        place: Geneva, Switzerland
+        date_text: Feb 10, 2027
+        deadlines: []
+    id: candidate-661facc05cc4946ffb16056e
+    source: easychair
+    source_item_id: daus-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: daus-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: dfc-2026
+    title: DFC 2026
+    full_name: Desert Fishes Council Annual Symposium 2026
+    link: https://easychair.org/cfp/DFC2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 9, 2026
+    editions:
+      - year: 2026
+        id: dfc26
+        link: https://easychair.org/cfp/DFC2026
+        place: Alpine, Texas, United States
+        date_text: Nov 18, 2026
+        deadlines: []
+    id: candidate-6529b7adc750da1ae902a8ef
+    source: easychair
+    source_item_id: dfc-2026
+    status: discovered
+    discovered_at: '2026-08-21T20:40:09.565Z'
+    first_seen_at: '2026-08-21T20:40:09.565Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: dfc-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: distributed-intelligence-and-collaborative-inference-for-foundation-models-over-wireless-edge-ieee-network
+    title: >-
+      Distributed Intelligence and Collaborative Inference for Foundation Models
+      over Wireless Edge（IEEE Network 特集号）
+    full_name: >-
+      Distributed Intelligence and Collaborative Inference for Foundation Models
+      over Wireless Edge（IEEE Network 特集号）
+    link: https://www.comsoc.org/publications/magazines/ieee-network/cfp
+    categories: []
+    tags:
+      - niche
+      - special-issue
+    editions:
+      - year: 2026
+        id: distributed-intelligence-and-collaborative-inference-for-foundation-models-over-wireless-edge-ieee-network26
+        link: https://www.comsoc.org/publications/magazines/ieee-network/cfp
+        place: ''
+        date_text: 31 December 2026
+        deadlines: []
+    id: candidate-5437a34bfd81818246bbd20a
+    source: comsoc
+    source_item_id: distributed-intelligence-and-collaborative-inference-for-foundation-models-over-wireless-edge-ieee-network
+    status: discovered
+    discovered_at: '2026-08-19T20:44:41.199Z'
+    first_seen_at: '2026-08-19T20:44:41.199Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: comsoc
+        source_item_id: distributed-intelligence-and-collaborative-inference-for-foundation-models-over-wireless-edge-ieee-network
+        source_url: https://www.comsoc.org/publications/magazines/ieee-network/cfp
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: ''
+  - key: eai-securecomm-2027
+    title: EAI SecureComm 2027
+    full_name: >-
+      23rd EAI International Conference on Security and Privacy in Communication
+      Networks​
+    link: https://easychair.org/cfp/securecomm2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Feb 1, 2027
+    editions:
+      - year: 2027
+        id: eai-securecomm27
+        link: https://easychair.org/cfp/securecomm2027
+        place: Hefei, China, China
+        date_text: Oct 15, 2027
+        deadlines: []
+    id: candidate-00bad333727403fff386fa49
+    source: easychair
+    source_item_id: eai-securecomm-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: eai-securecomm-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: edge-and-in-network-computing-for-underwater-communication-ieee-communications-magazine
+    title: >-
+      Edge and In-Network Computing for Underwater Communication（IEEE
+      Communications Magazine 特集号）
+    full_name: >-
+      Edge and In-Network Computing for Underwater Communication（IEEE
+      Communications Magazine 特集号）
+    link: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
+    categories: []
+    tags:
+      - niche
+      - special-issue
+    editions:
+      - year: 2027
+        id: edge-and-in-network-computing-for-underwater-communication-ieee-communications-magazine27
+        link: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
+        place: ''
+        date_text: 1 January 2027
+        deadlines: []
+    id: candidate-3a9fc9fe84489b6cb5f8c3b8
+    source: comsoc
+    source_item_id: edge-and-in-network-computing-for-underwater-communication-ieee-communications-magazine
+    status: discovered
+    discovered_at: '2026-08-30T13:30:12.117Z'
+    first_seen_at: '2026-08-30T13:30:12.117Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: comsoc
+        source_item_id: edge-and-in-network-computing-for-underwater-communication-ieee-communications-magazine
+        source_url: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: ''
+  - key: educonf14
+    title: educonf14
+    full_name: >-
+      The 14th National Conference on Education 2027 - Future-Ready Education:
+      Empowering Human Potential in the Age of AI
+    link: https://easychair.org/cfp/educonf14
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Jan 18, 2027
+    editions:
+      - year: 2027
+        id: educonf1427
+        link: https://easychair.org/cfp/educonf14
+        place: Hat Yai, Thailand
+        date_text: Feb 25, 2027
+        deadlines: []
+    id: candidate-b1fc45ccdcdf8eeed1849083
+    source: easychair
+    source_item_id: educonf14
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: educonf14
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: eeet-2026
+    title: EEET 2026
+    full_name: >-
+      2026 9th International Conference on Electronics and Electrical
+      Engineering Technology
+    link: https://easychair.org/cfp/EEET2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 5, 2026
+    editions:
+      - year: 2026
+        id: eeet26
+        link: https://easychair.org/cfp/EEET2026
+        place: Tianjin, China
+        date_text: Dec 4, 2026
+        deadlines: []
+    id: candidate-313d3e6987aa11c2600bacd0
+    source: easychair
+    source_item_id: eeet-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: eeet-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ergowork2026
+    title: ErgoWork2026
+    full_name: >-
+      4th International Biennial Conference of the Romanian Society on
+      Ergonomics and Workplace Management
+    link: https://easychair.org/cfp/ErgoWork2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 1, 2026
+    editions:
+      - year: 2026
+        id: ergowork26
+        link: https://easychair.org/cfp/ErgoWork2026
+        place: Timisoara, Romania
+        date_text: Nov 12, 2026
+        deadlines: []
+    id: candidate-ef78d38987fa1f5382195cf0
+    source: easychair
+    source_item_id: ergowork2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: ergowork2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: esreda69seminar
+    title: ESReDA69Seminar
+    full_name: Risk mitigation of aging infrastructures and assets under natech events
+    link: https://easychair.org/cfp/ESReDA69Seminar
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 15, 2026
+    editions:
+      - year: 2026
+        id: esreda69seminar26
+        link: https://easychair.org/cfp/ESReDA69Seminar
+        place: Chambéry, France
+        date_text: Dec 3, 2026
+        deadlines: []
+    id: candidate-b7c428c7b99c0fec4844b23a
+    source: easychair
+    source_item_id: esreda69seminar
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: esreda69seminar
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: eva-london-2027
+    title: EVA London 2027
+    full_name: EVA London 2027 Conference on Electronic Visualisation and the Arts
+    link: https://easychair.org/cfp/evalondon2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Jan 11, 2027
+    editions:
+      - year: 2027
+        id: eva-london27
+        link: https://easychair.org/cfp/evalondon2027
+        place: London, UK
+        date_text: Jul 12, 2027
+        deadlines: []
+    id: candidate-61c7ce7568e02a18d88f2142
+    source: easychair
+    source_item_id: eva-london-2027
+    status: discovered
+    discovered_at: '2026-09-05T22:05:16.108Z'
+    first_seen_at: '2026-09-05T22:05:16.108Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: eva-london-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ewdts-2026
+    title: EWDTS 2026
+    full_name: 2026 IEEE East-West Design & Test Symposium
+    link: https://easychair.org/cfp/ewdts2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 30, 2026
+    editions:
+      - year: 2026
+        id: ewdts26
+        link: https://easychair.org/cfp/ewdts2026
+        place: Batumi, Georgia
+        date_text: Dec 4, 2026
+        deadlines: []
+    id: candidate-3b7854ea13f600d5f8738a27
+    source: easychair
+    source_item_id: ewdts-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: ewdts-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: fes2027
+    title: FES2027
+    full_name: International Conference on Future Energy Solutions
+    link: https://easychair.org/cfp/FES2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Jan 15, 2027
+    editions:
+      - year: 2027
+        id: fes27
+        link: https://easychair.org/cfp/FES2027
+        place: Málaga, Spain
+        date_text: Jul 12, 2027
+        deadlines: []
+    id: candidate-d1961a8fc2dd3de643e4fc7d
+    source: easychair
+    source_item_id: fes2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: fes2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ffl2027
+    title: FFL2027
+    full_name: Future Facing Learning 2027
+    link: https://easychair.org/cfp/FFL2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Feb 24, 2027
+    editions:
+      - year: 2027
+        id: ffl27
+        link: https://easychair.org/cfp/FFL2027
+        place: Middlesbrough, UK
+        date_text: Apr 7, 2027
+        deadlines: []
+    id: candidate-100d801329f30616989a6186
+    source: easychair
+    source_item_id: ffl2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: ffl2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: fsen-2027
+    title: FSEN 2027
+    full_name: 12th International Conference on Fundamentals of Software Engineering
+    link: https://easychair.org/cfp/fsen2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 28, 2026
+    editions:
+      - year: 2027
+        id: fsen27
+        link: https://easychair.org/cfp/fsen2027
+        place: Enschede, Netherlands
+        date_text: May 24, 2027
+        deadlines: []
+    id: candidate-abe23b4b27763544dc5cd449
+    source: easychair
+    source_item_id: fsen-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: fsen-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: gccce-2027
+    title: GCCCE 2027
+    full_name: The 31st Global Chinese Conference on Computers in Education
+    link: https://easychair.org/cfp/gccce2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 15, 2026
+    editions:
+      - year: 2027
+        id: gccce27
+        link: https://easychair.org/cfp/gccce2027
+        place: Singapore, Singapore
+        date_text: May 31, 2027
+        deadlines: []
+    id: candidate-3847b68f30a710711587edb2
+    source: easychair
+    source_item_id: gccce-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: gccce-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: gd-2026
+    title: gdс-2026
+    full_name: Global Disinformation Conference
+    link: https://easychair.org/cfp/GDC-2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 21, 2026
+    editions:
+      - year: 2026
+        id: gd26
+        link: https://easychair.org/cfp/GDC-2026
+        place: Kharkiv, Ukraine
+        date_text: Oct 21, 2026
+        deadlines: []
+    id: candidate-a51c63ea6f321831106b6b31
+    source: easychair
+    source_item_id: gd-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: gd-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: herit-ai-2026
+    title: HERIT-AI 2026
+    full_name: >-
+      Iberoamerican Workshop on Trustworthy Artificial Intelligence and Cultural
+      Heritage
+    link: https://easychair.org/cfp/herit-ai-2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 18, 2026
+    editions:
+      - year: 2026
+        id: herit-ai26
+        link: https://easychair.org/cfp/herit-ai-2026
+        place: Asunción, Paraguay
+        date_text: Oct 18, 2026
+        deadlines: []
+    id: candidate-17c247c10ca2911dfb33971b
+    source: easychair
+    source_item_id: herit-ai-2026
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: herit-ai-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: hmds-2027
+    title: HMDS 2027
+    full_name: 2nd International Symposium on Heterogeneous and Multi-Domain Systems
+    link: https://easychair.org/cfp/hmds2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 15, 2026
+    editions:
+      - year: 2027
+        id: hmds27
+        link: https://easychair.org/cfp/hmds2027
+        place: Tokyo, Japan
+        date_text: Mar 30, 2027
+        deadlines: []
+    id: candidate-b5aab5421a42fa2f61ca3899
+    source: easychair
+    source_item_id: hmds-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: hmds-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: iai2027
+    title: IAI2027
+    full_name: 9th International Conference on Industrial AI
+    link: https://easychair.org/cfp/iai2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 31, 2026
+    editions:
+      - year: 2027
+        id: iai27
+        link: https://easychair.org/cfp/iai2027
+        place: Luleå, Sweden
+        date_text: Jun 1, 2027
+        deadlines: []
+    id: candidate-3d38412826ef70ff5854fc08
+    source: easychair
+    source_item_id: iai2027
+    status: discovered
+    discovered_at: '2026-08-30T13:30:12.117Z'
+    first_seen_at: '2026-08-30T13:30:12.117Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: iai2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: iaim-2026
+    title: iAIM 2026
+    full_name: International Conference on AI in Medicine (iAIM) 2026
+    link: https://easychair.org/cfp/iAIM2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 1, 2026
+    editions:
+      - year: 2026
+        id: iaim26
+        link: https://easychair.org/cfp/iAIM2026
+        place: Singapore, Singapore
+        date_text: Dec 3, 2026
+        deadlines: []
+    id: candidate-0785cfabe45459e425e64720
+    source: easychair
+    source_item_id: iaim-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: iaim-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ic-eisit-2026
+    title: IC-EISIT 2026
+    full_name: >-
+      The 2026 International Conference on Electrical, Intelligent Systems and
+      Information Technology
+    link: https://easychair.org/cfp/iceisit2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 23, 2026
+    editions:
+      - year: 2026
+        id: ic-eisit26
+        link: https://easychair.org/cfp/iceisit2026
+        place: 广州, China
+        date_text: Oct 23, 2026
+        deadlines: []
+    id: candidate-5e9b1ae5f57e4834980395dd
+    source: easychair
+    source_item_id: ic-eisit-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: ic-eisit-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ic-rate-2026
+    title: IC-RATE 2026
+    full_name: Internation conference on Recent Advancements in Technology & Engineering
+    link: https://easychair.org/cfp/icrate2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 24, 2026
+    editions:
+      - year: 2026
+        id: ic-rate26
+        link: https://easychair.org/cfp/icrate2026
+        place: Bengaluru, India
+        date_text: Nov 4, 2026
+        deadlines: []
+    id: candidate-1ce559152bef95c45573be6e
+    source: easychair
+    source_item_id: ic-rate-2026
+    status: discovered
+    discovered_at: '2026-08-30T13:30:12.117Z'
+    first_seen_at: '2026-08-30T13:30:12.117Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: ic-rate-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ic4e-2027
+    title: IC4e 2027
+    full_name: >-
+      2027 18th International Conference on E-Education, E-Business,
+      E-Management and E-Learning
+    link: https://easychair.org/cfp/IC4e2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 20, 2026
+    editions:
+      - year: 2027
+        id: ic4e27
+        link: https://easychair.org/cfp/IC4e2027
+        place: Fukuoka, Japan
+        date_text: Mar 26, 2027
+        deadlines: []
+    id: candidate-201c0d3562c634256a5ae8fd
+    source: easychair
+    source_item_id: ic4e-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: ic4e-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icabcd2027
+    title: icABCD2027
+    full_name: >-
+      2027 International Conference on Artificial Intelligence, Big Data,
+      Computing and Data Communication Systems
+    link: https://easychair.org/cfp/icABCD2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 30, 2026
+    editions:
+      - year: 2027
+        id: icabcd27
+        link: https://easychair.org/cfp/icABCD2027
+        place: Flic en Flac, Mauritius
+        date_text: Jul 22, 2027
+        deadlines: []
+    id: candidate-fc0e09b58a0f75f5385d2952
+    source: easychair
+    source_item_id: icabcd2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icabcd2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icacte-2027
+    title: ICACTE 2027
+    full_name: >-
+      2027 20th International Conference on Advanced Computer Theory and
+      Engineering
+    link: https://easychair.org/cfp/ICACTE2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Mar 10, 2027
+    editions:
+      - year: 2027
+        id: icacte27
+        link: https://easychair.org/cfp/ICACTE2027
+        place: Nanjing, China
+        date_text: Aug 13, 2027
+        deadlines: []
+    id: candidate-4cd1f00d186c323d09f25b0c
+    source: easychair
+    source_item_id: icacte-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icacte-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icah27
+    title: ICAH27
+    full_name: >-
+      International Conference on AI for Humanity: Leveraging Indian Knowledge
+      Systems to Accelerate Sustainable Development Goals
+    link: https://easychair.org/cfp/ICAH27
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 20, 2026
+    editions:
+      - year: 2026
+        id: icah2726
+        link: https://easychair.org/cfp/ICAH27
+        place: Raipur, India
+        date_text: Jan 22, 2027
+        deadlines: []
+    id: candidate-e6b1510ed3c7e7a09e507722
+    source: easychair
+    source_item_id: icah27
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: icah27
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icaigc-2027
+    title: ICAIGC 2027
+    full_name: >-
+      2027 IEEE International Conference on Artificial Intelligence and
+      Generated Content
+    link: https://easychair.org/cfp/ICAIGC2027
+    categories:
+      - ai
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Feb 20, 2027
+    editions:
+      - year: 2027
+        id: icaigc27
+        link: https://easychair.org/cfp/ICAIGC2027
+        place: Melaka, Malaysia
+        date_text: Aug 14, 2027
+        deadlines: []
+    id: candidate-0e93ddd58e4a2f3510dd620f
+    source: easychair
+    source_item_id: icaigc-2027
+    status: discovered
+    discovered_at: '2026-09-05T22:05:16.108Z'
+    first_seen_at: '2026-09-05T22:05:16.108Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icaigc-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icaimt2027
+    title: ICAIMT2027
+    full_name: International Conference on Artificial Intelligence Management and Trends
+    link: https://easychair.org/cfp/ICAIMT2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Mar 5, 2027
+    editions:
+      - year: 2027
+        id: icaimt27
+        link: https://easychair.org/cfp/ICAIMT2027
+        place: Abu Dhabi, UAE
+        date_text: Apr 28, 2027
+        deadlines: []
+    id: candidate-c82239398358111fd029897d
+    source: easychair
+    source_item_id: icaimt2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icaimt2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icams-2026
+    title: ICAMS 2026
+    full_name: International Congress on Advances in Mechanical Sciences
+    link: https://easychair.org/cfp/icams2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 30, 2026
+    editions:
+      - year: 2026
+        id: icams26
+        link: https://easychair.org/cfp/icams2026
+        place: Hyderabad, India
+        date_text: Dec 4, 2026
+        deadlines: []
+    id: candidate-0caa264ccf1168ab44788329
+    source: easychair
+    source_item_id: icams-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: icams-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icatipsh27
+    title: ICATIPSH27
+    full_name: >-
+      International Conference on AI and Translational Innovations in
+      Pharmaceutical Sciences and Healthcare for Viksit Bharat 2047
+    link: https://easychair.org/cfp/ICATIPSH27
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Mar 10, 2027
+    editions:
+      - year: 2047
+        id: icatipsh2747
+        link: https://easychair.org/cfp/ICATIPSH27
+        place: Raipur, India
+        date_text: Mar 30, 2027
+        deadlines: []
+    id: candidate-f60c34052059c28e95edce6c
+    source: easychair
+    source_item_id: icatipsh27
+    status: discovered
+    discovered_at: '2026-08-30T13:30:12.117Z'
+    first_seen_at: '2026-08-30T13:30:12.117Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2047
+    evidence:
+      - source: easychair
+        source_item_id: icatipsh27
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icbelts-2027
+    title: ICBELTS 2027
+    full_name: >-
+      Envisioning Sustainable Global Futures: Converging Perspectives from
+      Business, Economics, Literature, Technology and Society
+    link: https://easychair.org/cfp/ICBELTS_2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 10, 2026
+    editions:
+      - year: 2027
+        id: icbelts27
+        link: https://easychair.org/cfp/ICBELTS_2027
+        place: Bengaluru, Karnataka, India
+        date_text: Feb 12, 2027
+        deadlines: []
+    id: candidate-545a5868eaf32e1e9afe9098
+    source: easychair
+    source_item_id: icbelts-2027
+    status: discovered
+    discovered_at: '2026-08-30T13:30:12.117Z'
+    first_seen_at: '2026-08-30T13:30:12.117Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icbelts-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: iccae-2027
+    title: ICCAE 2027
+    full_name: 2027 19th International Conference on Computer and Automation Engineering
+    link: https://easychair.org/cfp/ICCAE-27
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 20, 2026
+    editions:
+      - year: 2027
+        id: iccae27
+        link: https://easychair.org/cfp/ICCAE-27
+        place: Melbourne, Australia
+        date_text: Mar 12, 2027
+        deadlines: []
+    id: candidate-c45c439bfea4d82aaf6247a8
+    source: easychair
+    source_item_id: iccae-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-09-06T22:11:00.021Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: iccae-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-09-06T22:11:00.021Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: iccar-2027
+    title: ICCAR 2027
+    full_name: 2027 13th International Conference on Control, Automation and Robotics
+    link: https://easychair.org/cfp/ICCAR2027
+    categories:
+      - ai
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 25, 2026
+    editions:
+      - year: 2027
+        id: iccar27
+        link: https://easychair.org/cfp/ICCAR2027
+        place: Nanchang, China
+        date_text: Apr 23, 2027
+        deadlines: []
+    id: candidate-236b3c3aa35ab16a5a89c627
+    source: easychair
+    source_item_id: iccar-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-09-06T22:11:00.021Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: iccar-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-09-06T22:11:00.021Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: iccaua2027
+    title: ICCAUA2027
+    full_name: >-
+      10th International Conference of Contemporary Affairs in Architecture and
+      Urbanism
+    link: https://easychair.org/cfp/ICCAUA2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Apr 5, 2027
+    editions:
+      - year: 2027
+        id: iccaua27
+        link: https://easychair.org/cfp/ICCAUA2027
+        place: Istanbul, Turkey
+        date_text: May 5, 2027
+        deadlines: []
+    id: candidate-ffdd2a72e5d3f6c2beee46e3
+    source: easychair
+    source_item_id: iccaua2027
+    status: discovered
+    discovered_at: '2026-08-30T13:30:12.117Z'
+    first_seen_at: '2026-08-30T13:30:12.117Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: iccaua2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: iccc-2026
+    title: ICCC 2026
+    full_name: 2026 the 12th International Conference on Computer and Communications
+    link: https://easychair.org/cfp/iccc2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 20, 2026
+    editions:
+      - year: 2026
+        id: iccc26
+        link: https://easychair.org/cfp/iccc2026
+        place: Chengdu, China
+        date_text: Dec 11, 2026
+        deadlines: []
+    id: candidate-e54acb2d49185f7d7dbbfae6
+    source: easychair
+    source_item_id: iccc-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: iccc-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icccas2027
+    title: ICCCAS2027
+    full_name: >-
+      2027 16th International Conference on Communications, Circuits, and
+      Systems
+    link: https://easychair.org/cfp/ICCCAS2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Jan 1, 2027
+    editions:
+      - year: 2027
+        id: icccas27
+        link: https://easychair.org/cfp/ICCCAS2027
+        place: Chengdu, China
+        date_text: May 21, 2027
+        deadlines: []
+    id: candidate-1dda1227f1b16592cb028599
+    source: easychair
+    source_item_id: icccas2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icccas2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icccr-2027
+    title: ICCCR 2027
+    full_name: 2027 7th International Conference on Computer, Control and Robotics
+    link: https://easychair.org/cfp/ICCCR2027
+    categories:
+      - ai
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Jan 1, 2027
+    editions:
+      - year: 2027
+        id: icccr27
+        link: https://easychair.org/cfp/ICCCR2027
+        place: Chengdu, China
+        date_text: May 14, 2027
+        deadlines: []
+    id: candidate-2d206a87c16a59000b185a07
+    source: easychair
+    source_item_id: icccr-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icccr-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icccs2027
+    title: ICCCS2027
+    full_name: 2027 12th International Conference on Computer and Communication Systems
+    link: https://easychair.org/cfp/ICCCS2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 20, 2026
+    editions:
+      - year: 2027
+        id: icccs27
+        link: https://easychair.org/cfp/ICCCS2027
+        place: Shenzhen, China
+        date_text: Apr 16, 2027
+        deadlines: []
+    id: candidate-9a2fd22acdb9f09342b0d565
+    source: easychair
+    source_item_id: icccs2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icccs2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: iccece-2027
+    title: ICCECE 2027
+    full_name: >-
+      International Conference on Computer, Electrical & Communication
+      Engineering
+    link: https://easychair.org/cfp/ICCECE-2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 15, 2026
+    editions:
+      - year: 2027
+        id: iccece27
+        link: https://easychair.org/cfp/ICCECE-2027
+        place: Kolkata, India
+        date_text: Feb 5, 2027
+        deadlines: []
+    id: candidate-b18927eec2be4b7bec00035d
+    source: easychair
+    source_item_id: iccece-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: iccece-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: iccms-2027
+    title: ICCMS 2027
+    full_name: 2027 19th International Conference on Computer Modeling and Simulation
+    link: https://easychair.org/cfp/ICCMS2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 10, 2026
+    editions:
+      - year: 2027
+        id: iccms27
+        link: https://easychair.org/cfp/ICCMS2027
+        place: Beijing, China
+        date_text: May 14, 2027
+        deadlines: []
+    id: candidate-e4a1d3d9cb0ded29a0846d70
+    source: easychair
+    source_item_id: iccms-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: iccms-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icdcm-2027
+    title: ICDCM 2027
+    full_name: 9th IEEE International Conference on DC Microgrids
+    link: https://easychair.org/cfp/ICDCM-2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Jan 15, 2027
+    editions:
+      - year: 2027
+        id: icdcm27
+        link: https://easychair.org/cfp/ICDCM-2027
+        place: Christchurch, New Zealand
+        date_text: Jun 30, 2027
+        deadlines: []
+    id: candidate-23c159dc5aae25fdd5cdd335
+    source: easychair
+    source_item_id: icdcm-2027
+    status: discovered
+    discovered_at: '2026-09-05T22:05:16.108Z'
+    first_seen_at: '2026-09-05T22:05:16.108Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icdcm-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icdip-2027
+    title: ICDIP 2027
+    full_name: The 19th International Conference on Digital Image Processing
+    link: https://easychair.org/cfp/ICDIP2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 10, 2026
+    editions:
+      - year: 2027
+        id: icdip27
+        link: https://easychair.org/cfp/ICDIP2027
+        place: Beijing, China
+        date_text: Apr 16, 2027
+        deadlines: []
+    id: candidate-58c5d074b8002fdbf280f768
+    source: easychair
+    source_item_id: icdip-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-09-05T22:06:50.189Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icdip-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-09-05T22:06:50.189Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: iceasre-2027
+    title: ICEASRE-2027
+    full_name: >-
+      International Conference on Engineering, Agritech and Sustainable Rural
+      Ecosystems
+    link: https://easychair.org/cfp/ICEASRE-2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Feb 20, 2027
+    editions:
+      - year: 2027
+        id: iceasre27
+        link: https://easychair.org/cfp/ICEASRE-2027
+        place: Raipur, India
+        date_text: Mar 12, 2027
+        deadlines: []
+    id: candidate-9e8c110985e92f936b40cc28
+    source: easychair
+    source_item_id: iceasre-2027
+    status: discovered
+    discovered_at: '2026-08-30T13:30:12.117Z'
+    first_seen_at: '2026-08-30T13:30:12.117Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: iceasre-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: iceee-2027
+    title: ICEEE 2027
+    full_name: >-
+      2027 14th International Conference on Electrical and Electronics
+      Engineering
+    link: https://easychair.org/cfp/ICEEE2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 1, 2026
+    editions:
+      - year: 2027
+        id: iceee27
+        link: https://easychair.org/cfp/ICEEE2027
+        place: Ankara, Turkey
+        date_text: Apr 16, 2027
+        deadlines: []
+    id: candidate-616df06795dc9edc8192d054
+    source: easychair
+    source_item_id: iceee-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: iceee-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: iceit-2027
+    title: ICEIT 2027
+    full_name: >-
+      The 16th International Conference on Educational and Information
+      Technology
+    link: https://easychair.org/cfp/ICEIT2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 5, 2026
+    editions:
+      - year: 2027
+        id: iceit27
+        link: https://easychair.org/cfp/ICEIT2027
+        place: Chongqing, China
+        date_text: Mar 26, 2027
+        deadlines: []
+    id: candidate-303eeba55131ce752fd16750
+    source: easychair
+    source_item_id: iceit-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: iceit-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icetc-2026
+    title: ICETC 2026
+    full_name: >-
+      2026 the 18th International Conference on Education Technology and
+      Computers
+    link: https://easychair.org/cfp/ICETC2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 10, 2026
+    editions:
+      - year: 2026
+        id: icetc26
+        link: https://easychair.org/cfp/ICETC2026
+        place: Porto, Portugal
+        date_text: Dec 14, 2026
+        deadlines: []
+    id: candidate-705884088c78d79cca34a298
+    source: easychair
+    source_item_id: icetc-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: icetc-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ich-2026
+    title: ICH 2026
+    full_name: 'InterHeritage: Interfaces for Construction Heritage'
+    link: https://easychair.org/cfp/ich2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 9, 2026
+    editions:
+      - year: 2026
+        id: ich26
+        link: https://easychair.org/cfp/ich2026
+        place: Turin, Italy
+        date_text: Oct 9, 2026
+        deadlines: []
+    id: candidate-2851466756d39caed093614f
+    source: easychair
+    source_item_id: ich-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: ich-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icidst-2026
+    title: ICIDST 2026
+    full_name: >-
+      3rd International Conference on Intelligent Digital Systems and
+      Sustainable Technology
+    link: https://easychair.org/cfp/icidst26
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 25, 2026
+    editions:
+      - year: 2026
+        id: icidst26
+        link: https://easychair.org/cfp/icidst26
+        place: Istanbul, Turkey
+        date_text: Nov 25, 2026
+        deadlines: []
+    id: candidate-e5050db8d40711e175cc918c
+    source: easychair
+    source_item_id: icidst-2026
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: icidst-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: iciea-2027
+    title: ICIEA 2027
+    full_name: >-
+      2027 14th International Conference on Industrial Engineering and
+      Applications
+    link: https://easychair.org/cfp/ICIEA2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 25, 2026
+    editions:
+      - year: 2027
+        id: iciea27
+        link: https://easychair.org/cfp/ICIEA2027
+        place: Bangkok, Thailand
+        date_text: Apr 18, 2027
+        deadlines: []
+    id: candidate-b1b8e9c23d9b6bcf95911dec
+    source: easychair
+    source_item_id: iciea-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-09-06T22:11:00.021Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: iciea-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-09-06T22:11:00.021Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: iciea-eu-2027
+    title: ICIEA-EU 2027
+    full_name: >-
+      2027 The 14th International Conference on Industrial Engineering and
+      Applications
+    link: https://easychair.org/cfp/ICIEAEU2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 25, 2026
+    editions:
+      - year: 2027
+        id: iciea-eu27
+        link: https://easychair.org/cfp/ICIEAEU2027
+        place: Porto, Portugal
+        date_text: Jan 13, 2027
+        deadlines: []
+    id: candidate-cfd2046b81e6d2248d057f39
+    source: easychair
+    source_item_id: iciea-eu-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: iciea-eu-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: iciss-phd-forum-2026
+    title: ICISS PhD Forum 2026
+    full_name: International Conference on Information Systems Security - PhD Forum
+    link: https://easychair.org/cfp/iciss-2026-phd-forum
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 16, 2026
+    editions:
+      - year: 2026
+        id: iciss-phd-forum26
+        link: https://easychair.org/cfp/iciss-2026-phd-forum
+        place: Chennai, India
+        date_text: Dec 16, 2026
+        deadlines: []
+    id: candidate-dd38eff379643702fddc6f96
+    source: easychair
+    source_item_id: iciss-phd-forum-2026
+    status: discovered
+    discovered_at: '2026-09-05T22:05:16.108Z'
+    first_seen_at: '2026-09-05T22:05:16.108Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: iciss-phd-forum-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icist2027
+    title: ICIST2027
+    full_name: 2027 6th International Conference on Intelligent Science and Technology
+    link: https://easychair.org/cfp/ICIST2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Mar 5, 2027
+    editions:
+      - year: 2027
+        id: icist27
+        link: https://easychair.org/cfp/ICIST2027
+        place: Nanjing, China
+        date_text: Aug 6, 2027
+        deadlines: []
+    id: candidate-0cbf419d35c60c6ff55975c0
+    source: easychair
+    source_item_id: icist2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icist2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: iclt-2027
+    title: ICLT 2027
+    full_name: International Conference on Learning and Teaching 2027
+    link: https://easychair.org/cfp/ICLT2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 23, 2026
+    editions:
+      - year: 2027
+        id: iclt27
+        link: https://easychair.org/cfp/ICLT2027
+        place: Hong Kong, China
+        date_text: May 18, 2027
+        deadlines: []
+    id: candidate-f05e5f619207116ecfc48da6
+    source: easychair
+    source_item_id: iclt-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: iclt-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icmlai-2027
+    title: ICMLAI-2027
+    full_name: >-
+      4th International Conference on Machine Learning, Artificial Intelligence
+      & Data Science
+    link: https://easychair.org/cfp/icmlai-2027
+    categories:
+      - ai
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Apr 30, 2027
+    editions:
+      - year: 2027
+        id: icmlai27
+        link: https://easychair.org/cfp/icmlai-2027
+        place: Berlin, Germany
+        date_text: May 24, 2027
+        deadlines: []
+    id: candidate-cc2e120d6888b9dee3246e3b
+    source: easychair
+    source_item_id: icmlai-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icmlai-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icmmse-ir-2027
+    title: 'ICMMSE: IR 2027'
+    full_name: >-
+      6th International Conference on Mechanical & Material Science Engineering
+      Innovation & Research
+    link: https://easychair.org/cfp/s1
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 25, 2026
+    editions:
+      - year: 2027
+        id: icmmse-ir27
+        link: https://easychair.org/cfp/s1
+        place: Nashik, India
+        date_text: Jan 28, 2027
+        deadlines: []
+    id: candidate-10ade992b748241f12c56bf3
+    source: easychair
+    source_item_id: icmmse-ir-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icmmse-ir-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icoaims-2027
+    title: ICoAIMS 2027
+    full_name: >-
+      6th International Conference on Applied & Industrial Mathematics and
+      Statistics 2027
+    link: https://easychair.org/cfp/icoaims2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Apr 30, 2027
+    editions:
+      - year: 2027
+        id: icoaims27
+        link: https://easychair.org/cfp/icoaims2027
+        place: Kuantan, Malaysia
+        date_text: Aug 25, 2027
+        deadlines: []
+    id: candidate-d40d4826a958221a58d966c8
+    source: easychair
+    source_item_id: icoaims-2027
+    status: discovered
+    discovered_at: '2026-08-21T20:40:09.565Z'
+    first_seen_at: '2026-08-21T20:40:09.565Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icoaims-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icosin-2026
+    title: ICOSIN 2026
+    full_name: International Conference on Smart Informatics
+    link: https://easychair.org/cfp/icosin-2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 12, 2026
+    editions:
+      - year: 2026
+        id: icosin26
+        link: https://easychair.org/cfp/icosin-2026
+        place: Pontianak, Indonesia
+        date_text: Nov 12, 2026
+        deadlines: []
+    id: candidate-1b1548cf5be3f60ed6539b6a
+    source: easychair
+    source_item_id: icosin-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: icosin-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icpadm-2027
+    title: ICPADM 2027
+    full_name: >-
+      2027 15th International Conference on the Properties and Applications of
+      Dielectric Materials
+    link: https://easychair.org/cfp/ICPADM2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Mar 1, 2027
+    editions:
+      - year: 2027
+        id: icpadm27
+        link: https://easychair.org/cfp/ICPADM2027
+        place: Denpasar, Bali, Indonesia
+        date_text: Aug 2, 2027
+        deadlines: []
+    id: candidate-0d977d7ac8e6c5631305c8fe
+    source: easychair
+    source_item_id: icpadm-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icpadm-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icpe-2026
+    title: ICPE 2026
+    full_name: 2026 the 7th International Conference on Power Engineering
+    link: https://easychair.org/cfp/ICPE2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 10, 2026
+    editions:
+      - year: 2026
+        id: icpe26
+        link: https://easychair.org/cfp/ICPE2026
+        place: Jilin, China
+        date_text: Nov 20, 2026
+        deadlines: []
+    id: candidate-96aedd4ed1edc18a9711f5ab
+    source: easychair
+    source_item_id: icpe-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: icpe-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icpes-2026
+    title: ICPES 2026
+    full_name: The 16th International Conference on Power and Energy Systems
+    link: https://easychair.org/cfp/ICPES2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 5, 2026
+    editions:
+      - year: 2026
+        id: icpes26
+        link: https://easychair.org/cfp/ICPES2026
+        place: Xi'an, China
+        date_text: Dec 4, 2026
+        deadlines: []
+    id: candidate-0162bdfbe699df2126482193
+    source: easychair
+    source_item_id: icpes-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: icpes-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icpies-2027
+    title: ICPIES 2027
+    full_name: >-
+      2027 IEEE 3rd International Conference on Power and Integrated Energy
+      Systems
+    link: https://easychair.org/cfp/ICPIES2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 20, 2026
+    editions:
+      - year: 2027
+        id: icpies27
+        link: https://easychair.org/cfp/ICPIES2027
+        place: Shenzhen, China
+        date_text: Apr 16, 2027
+        deadlines: []
+    id: candidate-d29c95bc7eb6104251c918a9
+    source: easychair
+    source_item_id: icpies-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icpies-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icsa2027
+    title: ICSA2027
+    full_name: The 24th IEEE International Conference on Software Architecture
+    link: https://easychair.org/cfp/ICSA2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 4, 2026
+    editions:
+      - year: 2027
+        id: icsa27
+        link: https://easychair.org/cfp/ICSA2027
+        place: Sydney, Australia
+        date_text: Mar 8, 2027
+        deadlines: []
+    id: candidate-c7820296f9d5c32ca09b4ed2
+    source: easychair
+    source_item_id: icsa2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icsa2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icsge-2026
+    title: ICSGE 2026
+    full_name: 2026 The 2nd International Conference on Smart Grid and Energy
+    link: https://easychair.org/cfp/ICSGE2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 15, 2026
+    editions:
+      - year: 2026
+        id: icsge26
+        link: https://easychair.org/cfp/ICSGE2026
+        place: Paris, France
+        date_text: Dec 3, 2026
+        deadlines: []
+    id: candidate-e52f05182c20e7991639ae76
+    source: easychair
+    source_item_id: icsge-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: icsge-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icsgsc-2026
+    title: ICSGSC 2026
+    full_name: 2026 the 10th International Conference on Smart Grid and Smart Cities
+    link: https://easychair.org/cfp/ICSGSC2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 20, 2026
+    editions:
+      - year: 2026
+        id: icsgsc26
+        link: https://easychair.org/cfp/ICSGSC2026
+        place: Guangzhou, China
+        date_text: Dec 4, 2026
+        deadlines: []
+    id: candidate-b73c48a99c2f5cfcab51b8c5
+    source: easychair
+    source_item_id: icsgsc-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: icsgsc-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icsic-2026
+    title: ICSIC 2026
+    full_name: The 6th International Computer Sciences and Informatics Conference
+    link: https://easychair.org/cfp/ICSIC2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 25, 2026
+    editions:
+      - year: 2026
+        id: icsic26
+        link: https://easychair.org/cfp/ICSIC2026
+        place: amman, Jordan
+        date_text: Nov 24, 2026
+        deadlines: []
+    id: candidate-479dead1d3e3638e73779c51
+    source: easychair
+    source_item_id: icsic-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: icsic-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icsmmai-2027
+    title: ICSMMAI-2027
+    full_name: >-
+      International Conference on Smart Manufacturing , Materials and Artificial
+      Intelligence
+    link: https://easychair.org/cfp/ICSMMAI-2027
+    categories:
+      - ai
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 25, 2026
+    editions:
+      - year: 2027
+        id: icsmmai27
+        link: https://easychair.org/cfp/ICSMMAI-2027
+        place: Bangkok, Thailand
+        date_text: Jan 4, 2027
+        deadlines: []
+    id: candidate-9ac6100dc8b3142ecbaae528
+    source: easychair
+    source_item_id: icsmmai-2027
+    status: discovered
+    discovered_at: '2026-09-05T22:05:16.108Z'
+    first_seen_at: '2026-09-05T22:05:16.108Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icsmmai-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: icsss2027
+    title: ICSSS2027
+    full_name: 2027 International Conference on System Safety and Security
+    link: https://easychair.org/cfp/ICSSS2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Jun 20, 2027
+    editions:
+      - year: 2027
+        id: icsss27
+        link: https://easychair.org/cfp/ICSSS2027
+        place: Savannah, Georgia, United States
+        date_text: Nov 3, 2027
+        deadlines: []
+    id: candidate-cc4fd1eea5d2bb87763515ad
+    source: easychair
+    source_item_id: icsss2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: icsss2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ieee-ic4
+    title: IEEE-IC4
+    full_name: 3rd IEEE International Conference on Computer, Communication and Control
+    link: https://easychair.org/cfp/ic4
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 15, 2026
+    editions:
+      - year: 2026
+        id: ieee-ic426
+        link: https://easychair.org/cfp/ic4
+        place: Indore, India
+        date_text: Mar 18, 2027
+        deadlines: []
+    id: candidate-24b164cbe0bffdcc233222df
+    source: easychair
+    source_item_id: ieee-ic4
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: ieee-ic4
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ieee-latiniot-2027
+    title: IEEE LatinIoT 2027
+    full_name: IEEE Latin American Conference on Internet of Things
+    link: https://easychair.org/cfp/latinIoT2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 28, 2026
+    editions:
+      - year: 2027
+        id: ieee-latiniot27
+        link: https://easychair.org/cfp/latinIoT2027
+        place: Santiago, Chile
+        date_text: Apr 28, 2027
+        deadlines: []
+    id: candidate-7a577454685cd6aea270021a
+    source: easychair
+    source_item_id: ieee-latiniot-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: ieee-latiniot-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: iem-icdc-2027
+    title: IEM-ICDC 2027
+    full_name: >-
+      5th International Conference on Computational Intelligence, Data Science
+      and Cloud Computing
+    link: https://easychair.org/cfp/iem-icdc2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 10, 2026
+    editions:
+      - year: 2027
+        id: iem-icdc27
+        link: https://easychair.org/cfp/iem-icdc2027
+        place: Kolkata, India
+        date_text: Mar 17, 2027
+        deadlines: []
+    id: candidate-3dc36cf3e5ea4afc6740ad0b
+    source: easychair
+    source_item_id: iem-icdc-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: iem-icdc-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: igame-2027
+    title: iGAME 2027
+    full_name: 1st Innovation Global Advanced Manufacturing Engineering Conference
+    link: https://easychair.org/cfp/iGAME-2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Mar 31, 2027
+    editions:
+      - year: 2027
+        id: igame27
+        link: https://easychair.org/cfp/iGAME-2027
+        place: Phuket, Thailand
+        date_text: Jul 7, 2027
+        deadlines: []
+    id: candidate-4520b540bc5b1576c149a2aa
+    source: easychair
+    source_item_id: igame-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: igame-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: iikssdtt27
+    title: IIKSSDTT27
+    full_name: >-
+      Integration of Indian Knowledge Systems for Sustainable Development and
+      Technological Transformation
+    link: https://easychair.org/cfp/IIKSSDTT27
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Feb 10, 2027
+    editions:
+      - year: 2027
+        id: iikssdtt27
+        link: https://easychair.org/cfp/IIKSSDTT27
+        place: Raipur, India
+        date_text: Feb 26, 2027
+        deadlines: []
+    id: candidate-8570e7254476bba46a24aeb3
+    source: easychair
+    source_item_id: iikssdtt27
+    status: discovered
+    discovered_at: '2026-08-30T13:30:12.117Z'
+    first_seen_at: '2026-08-30T13:30:12.117Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: iikssdtt27
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: iman2026
+    title: IMAN2026
+    full_name: >-
+      14th International Conference on Islamic Applications in Computer Science
+      and Technologies – IMAN - المؤتمر الدولي الرابع عشر للتطبيقات الإسلامية في
+      علوم الحاسوب وتقنياته
+    link: https://easychair.org/cfp/iman2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 15, 2026
+    editions:
+      - year: 2026
+        id: iman26
+        link: https://easychair.org/cfp/iman2026
+        place: Kuala Lumpur, Malaysia
+        date_text: Dec 17, 2026
+        deadlines: []
+    id: candidate-260977acf6a5fd951b1e2c18
+    source: easychair
+    source_item_id: iman2026
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: iman2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: in-orbit-computing-striding-into-the-era-of-space-centric-intelligence-ieee-wireless-communications
+    title: >-
+      In-Orbit Computing: Striding into the Era of Space-Centric
+      Intelligence（IEEE Wireless Communications 特集号）
+    full_name: >-
+      In-Orbit Computing: Striding into the Era of Space-Centric
+      Intelligence（IEEE Wireless Communications 特集号）
+    link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+    categories: []
+    tags:
+      - niche
+      - special-issue
+    editions:
+      - year: 2026
+        id: in-orbit-computing-striding-into-the-era-of-space-centric-intelligence-ieee-wireless-communications26
+        link: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+        place: ''
+        date_text: 1 November 2026
+        deadlines: []
+    id: candidate-2e09a379501d7cb7968ed437
+    source: comsoc
+    source_item_id: in-orbit-computing-striding-into-the-era-of-space-centric-intelligence-ieee-wireless-communications
+    status: discovered
+    discovered_at: '2026-08-19T20:44:41.199Z'
+    first_seen_at: '2026-08-19T20:44:41.199Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: comsoc
+        source_item_id: in-orbit-computing-striding-into-the-era-of-space-centric-intelligence-ieee-wireless-communications
+        source_url: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: ''
+  - key: inciscos-2026
+    title: INCISCOS 2026
+    full_name: International Conference on Computer Science and Information Systems
+    link: https://easychair.org/cfp/INCISCOS-2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 4, 2026
+    editions:
+      - year: 2026
+        id: inciscos26
+        link: https://easychair.org/cfp/INCISCOS-2026
+        place: Quito, Ecuador
+        date_text: Nov 18, 2026
+        deadlines: []
+    id: candidate-95496a81023b6bc8c2f8214d
+    source: easychair
+    source_item_id: inciscos-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: inciscos-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: incoed-2026
+    title: INCOED 2026
+    full_name: >-
+      International Conference on Education 2026: Empowering Education Through
+      Diversity and Sustainability for Inclusive Futures
+    link: https://easychair.org/cfp/INCOED2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 31, 2026
+    editions:
+      - year: 2026
+        id: incoed26
+        link: https://easychair.org/cfp/INCOED2026
+        place: Petaling Jaya, Malaysia
+        date_text: Nov 4, 2026
+        deadlines: []
+    id: candidate-762fc0bd6b382e7d63d374f7
+    source: easychair
+    source_item_id: incoed-2026
+    status: discovered
+    discovered_at: '2026-09-05T22:05:16.108Z'
+    first_seen_at: '2026-09-05T22:05:16.108Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: incoed-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: incosef-2026
+    title: INCOSEF 2026
+    full_name: INCOSEF EUMMAS A2S 2026
+    link: https://easychair.org/cfp/incosef2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 8, 2026
+    editions:
+      - year: 2026
+        id: incosef26
+        link: https://easychair.org/cfp/incosef2026
+        place: Ho Chi Minh City, Viet Nam
+        date_text: Dec 10, 2026
+        deadlines: []
+    id: candidate-33c41303cd4770aadf42f0ea
+    source: easychair
+    source_item_id: incosef-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: incosef-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: innrf-2027
+    title: INNRF 2027
+    full_name: Innovation for Resilient Futures 2027
+    link: https://easychair.org/cfp/innrf_2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Feb 26, 2027
+    editions:
+      - year: 2027
+        id: innrf27
+        link: https://easychair.org/cfp/innrf_2027
+        place: Fortaleza, Brazil
+        date_text: Jul 11, 2027
+        deadlines: []
+    id: candidate-0ae9a0262cf3461c0e50d4c3
+    source: easychair
+    source_item_id: innrf-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: innrf-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: internet-of-agents-for-communications-and-networking-architectures-protocols-and-orchestration-ieee-communications-magazine
+    title: >-
+      Internet of Agents for Communications and Networking: Architectures,
+      Protocols, and Orchestration（IEEE Communications Magazine 特集号）
+    full_name: >-
+      Internet of Agents for Communications and Networking: Architectures,
+      Protocols, and Orchestration（IEEE Communications Magazine 特集号）
+    link: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
+    categories: []
+    tags:
+      - niche
+      - special-issue
+    editions:
+      - year: 2027
+        id: internet-of-agents-for-communications-and-networking-architectures-protocols-and-orchestration-ieee-communications-magazine27
+        link: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
+        place: ''
+        date_text: 1 February 2027
+        deadlines: []
+    id: candidate-595fdd58fbd4f795c97bcabc
+    source: comsoc
+    source_item_id: internet-of-agents-for-communications-and-networking-architectures-protocols-and-orchestration-ieee-communications-magazine
+    status: discovered
+    discovered_at: '2026-08-19T20:44:41.199Z'
+    first_seen_at: '2026-08-19T20:44:41.199Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: comsoc
+        source_item_id: internet-of-agents-for-communications-and-networking-architectures-protocols-and-orchestration-ieee-communications-magazine
+        source_url: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: ''
+  - key: iot-prec-farm26
+    title: IoT-Prec-Farm26
+    full_name: IoT for Precision Farming and Animal Husbandry
+    link: https://easychair.org/cfp/IoTPrecFarm26
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 1, 2026
+    editions:
+      - year: 2026
+        id: iot-prec-farm26
+        link: https://easychair.org/cfp/IoTPrecFarm26
+        place: ''
+        date_text: Nov 1, 2026
+        deadlines: []
+    id: candidate-fa5b544735149a1b3cd27e16
+    source: easychair
+    source_item_id: iot-prec-farm26
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: iot-prec-farm26
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ipc20-helsinki-2027
+    title: IPC20 Helsinki 2027
+    full_name: 20th International Pragmatics Conference
+    link: https://easychair.org/cfp/dhprag-ipra27
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 15, 2026
+    editions:
+      - year: 2027
+        id: ipc20-helsinki27
+        link: https://easychair.org/cfp/dhprag-ipra27
+        place: Helsinki, Finland
+        date_text: Jun 27, 2027
+        deadlines: []
+    id: candidate-fb689af7e6b42fd190cadee8
+    source: easychair
+    source_item_id: ipc20-helsinki-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: ipc20-helsinki-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ipsj-27-r
+    title: >-
+      “Applications and the internet” in conjunction with the main topics of
+      COMPSAC 2026（IPSJ 論文誌 特集号）
+    full_name: >-
+      “Applications and the internet” in conjunction with the main topics of
+      COMPSAC 2026（IPSJ 論文誌 特集号）
+    link: https://www.ipsj.or.jp/journal/cfp/27-R.html
+    categories: []
+    tags:
+      - niche
+      - special-issue
+    editions:
+      - year: 2026
+        id: ipsj-27-r26
+        link: https://www.ipsj.or.jp/journal/cfp/27-R.html
+        place: ''
+        date_text: '2026-12-01'
+        deadlines: []
+    id: candidate-d1f0dcafe5940a2d37135c88
+    source: ipsj
+    source_item_id: ipsj-27-r
+    status: discovered
+    discovered_at: '2026-08-19T20:44:41.199Z'
+    first_seen_at: '2026-08-19T20:44:41.199Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: ipsj
+        source_item_id: ipsj-27-r
+        source_url: https://www.ipsj.or.jp/journal/cfp/27-R.html
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: ''
+  - key: ir26
+    title: IR26
+    full_name: Rethinking International Relations in an Age of Uncertainty
+    link: https://easychair.org/cfp/IR26
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 20, 2026
+    editions:
+      - year: 2026
+        id: ir26
+        link: https://easychair.org/cfp/IR26
+        place: Hong Kong, China
+        date_text: Nov 21, 2026
+        deadlines: []
+    id: candidate-283429ff025842c72e292205
+    source: easychair
+    source_item_id: ir26
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: ir26
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: isc-12
+    title: ISC 12
+    full_name: 12. İstanbul Security Conference
+    link: https://easychair.org/cfp/isc12
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 30, 2026
+    editions:
+      - year: 2026
+        id: isc-1226
+        link: https://easychair.org/cfp/isc12
+        place: Istanbul, Turkey
+        date_text: Nov 19, 2026
+        deadlines: []
+    id: candidate-2b78c79ad7d7dd2368332e31
+    source: easychair
+    source_item_id: isc-12
+    status: discovered
+    discovered_at: '2026-08-21T20:40:09.565Z'
+    first_seen_at: '2026-08-21T20:40:09.565Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: isc-12
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: isi-2027
+    title: ISI 2027
+    full_name: 19. Internationales Symposium für Informationswissenschaft
+    link: https://easychair.org/cfp/ISI2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 16, 2026
+    editions:
+      - year: 2027
+        id: isi27
+        link: https://easychair.org/cfp/ISI2027
+        place: Hamburg, Germany
+        date_text: Mar 16, 2027
+        deadlines: []
+    id: candidate-ab6470ac3be10974007720f2
+    source: easychair
+    source_item_id: isi-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: isi-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ismsi-2027
+    title: ISMSI 2027
+    full_name: >-
+      2027 11th International Conference on Intelligent Systems, Metaheuristics
+      & Swarm Intelligence
+    link: https://easychair.org/cfp/ISMSI2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 25, 2026
+    editions:
+      - year: 2027
+        id: ismsi27
+        link: https://easychair.org/cfp/ISMSI2027
+        place: Ho Chi Minh City, Viet Nam
+        date_text: Apr 23, 2027
+        deadlines: []
+    id: candidate-f0a7c28502189a7b1a2de462
+    source: easychair
+    source_item_id: ismsi-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: ismsi-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: isphoa-2026
+    title: ISPhOA 2026
+    full_name: The 6th International Seminar on Photonics, Optics, and its Applications
+    link: https://easychair.org/cfp/isphoa2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 15, 2026
+    editions:
+      - year: 2026
+        id: isphoa26
+        link: https://easychair.org/cfp/isphoa2026
+        place: Batusangkar, Indonesia
+        date_text: Dec 2, 2026
+        deadlines: []
+    id: candidate-9ae4659f9e6a2763b9e55030
+    source: easychair
+    source_item_id: isphoa-2026
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: isphoa-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: itk2027
+    title: ITK2027
+    full_name: Interactive Technology in Education Conference 2027
+    link: https://easychair.org/cfp/ITK2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 2, 2026
+    editions:
+      - year: 2027
+        id: itk27
+        link: https://easychair.org/cfp/ITK2027
+        place: Tampere, Finland
+        date_text: Apr 21, 2027
+        deadlines: []
+    id: candidate-5849bb5529e6d1c948834e03
+    source: easychair
+    source_item_id: itk2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: itk2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: itng-2027
+    title: ITNG 2027
+    full_name: 24th Int'l Conference on Information Technology- New Generation
+    link: https://easychair.org/cfp/itng2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 9, 2026
+    editions:
+      - year: 2027
+        id: itng27
+        link: https://easychair.org/cfp/itng2027
+        place: LAS VEGAS, Nevada, United States
+        date_text: Apr 11, 2027
+        deadlines: []
+    id: candidate-e8096a43cf6a646c2d7cc30d
+    source: easychair
+    source_item_id: itng-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: itng-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: lida-2027
+    title: LIDA 2027
+    full_name: Libraries in the Digital Age (LIDA) 2027
+    link: https://easychair.org/cfp/lida2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 10, 2026
+    editions:
+      - year: 2027
+        id: lida27
+        link: https://easychair.org/cfp/lida2027
+        place: Šibenik, Croatia
+        date_text: May 19, 2027
+        deadlines: []
+    id: candidate-2cda91c1f9b59461c7a4734d
+    source: easychair
+    source_item_id: lida-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: lida-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: marlog16
+    title: MARLOG16
+    full_name: >-
+      Building Future Bridges of Global Trade: Advancing Maritime Alliances
+      towards Vision 2050
+    link: https://easychair.org/cfp/MARLOG16
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 15, 2026
+    editions:
+      - year: 2050
+        id: marlog1650
+        link: https://easychair.org/cfp/MARLOG16
+        place: Alexandria, Egypt
+        date_text: Apr 4, 2027
+        deadlines: []
+    id: candidate-2e8324507f67d9ed1a532ab8
+    source: easychair
+    source_item_id: marlog16
+    status: discovered
+    discovered_at: '2026-08-30T13:30:12.117Z'
+    first_seen_at: '2026-08-30T13:30:12.117Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2050
+    evidence:
+      - source: easychair
+        source_item_id: marlog16
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: maso-2026
+    title: MASO 2026
+    full_name: >-
+      The 1st International Workshop on Multi-Agent and Agentic Systems in
+      Organizations
+    link: https://easychair.org/cfp/maso2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 10, 2026
+    editions:
+      - year: 2026
+        id: maso26
+        link: https://easychair.org/cfp/maso2026
+        place: Kumamoto, Japan
+        date_text: Dec 14, 2026
+        deadlines: []
+    id: candidate-1f5f6466dab6fc1b56ac4071
+    source: easychair
+    source_item_id: maso-2026
+    status: discovered
+    discovered_at: '2026-08-21T20:40:09.565Z'
+    first_seen_at: '2026-08-21T20:40:09.565Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: maso-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: mea-27
+    title: MEA'27
+    full_name: More Electric Aircraft - Greener Aviation
+    link: https://easychair.org/cfp/mea-27
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 23, 2026
+    editions:
+      - year: 2026
+        id: mea-2726
+        link: https://easychair.org/cfp/mea-27
+        place: Bordeaux, France
+        date_text: Feb 3, 2027
+        deadlines: []
+    id: candidate-a6240e9f5ac1489a1cf5bb5c
+    source: easychair
+    source_item_id: mea-27
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: mea-27
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: mesic-2027
+    title: MESIC 2027
+    full_name: XII Manufacturing Engineering Society International Conference
+    link: https://easychair.org/cfp/MESIC2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 15, 2026
+    editions:
+      - year: 2027
+        id: mesic27
+        link: https://easychair.org/cfp/MESIC2027
+        place: Barcelona, Spain
+        date_text: Jun 28, 2027
+        deadlines: []
+    id: candidate-865b7a5bfeba01e535a8833c
+    source: easychair
+    source_item_id: mesic-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: mesic-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ml4cps-2027
+    title: ML4CPS 2027
+    full_name: Machine Learning 4 Cyber Physical Systems
+    link: https://easychair.org/cfp/ml4cps2027
+    categories:
+      - ai
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Mar 5, 2027
+    editions:
+      - year: 2027
+        id: ml4cps27
+        link: https://easychair.org/cfp/ml4cps2027
+        place: Berlin, Germany
+        date_text: Mar 11, 2027
+        deadlines: []
+    id: candidate-1b5c9feab23f60731430f1d5
+    source: easychair
+    source_item_id: ml4cps-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: ml4cps-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: mlet-2027
+    title: MLET 2027
+    full_name: >-
+      2027 International Conference on Modern Learning and Educational
+      Technology
+    link: https://easychair.org/cfp/MLET2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Mar 5, 2027
+    editions:
+      - year: 2027
+        id: mlet27
+        link: https://easychair.org/cfp/MLET2027
+        place: Osaka, Japan
+        date_text: Aug 8, 2027
+        deadlines: []
+    id: candidate-98f239c1c5861ecbea6d3681
+    source: easychair
+    source_item_id: mlet-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-09-06T22:11:00.021Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: mlet-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-09-06T22:11:00.021Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: mmia-2026
+    title: MMIA-2026
+    full_name: The 7th International Conference on Multi-modal Information Analytics
+    link: https://easychair.org/cfp/mmia-2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 15, 2026
+    editions:
+      - year: 2026
+        id: mmia26
+        link: https://easychair.org/cfp/mmia-2026
+        place: Huainan, China
+        date_text: Dec 4, 2026
+        deadlines: []
+    id: candidate-2259259d7726bb299a4b8aed
+    source: easychair
+    source_item_id: mmia-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: mmia-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: mulssec2026
+    title: MULSSEC2026
+    full_name: >-
+      "From Data to Knowledge: Statistical Science and Contemporary Challenges"
+      — 30th Anniversary Conference of the Department of Statistics and
+      Econometrics, MULS
+    link: https://easychair.org/cfp/MULSSEC2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 23, 2026
+    editions:
+      - year: 2026
+        id: mulssec26
+        link: https://easychair.org/cfp/MULSSEC2026
+        place: Ulaanbaatar, Mongolia
+        date_text: Oct 29, 2026
+        deadlines: []
+    id: candidate-5d644e4cab22682423666103
+    source: easychair
+    source_item_id: mulssec2026
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: mulssec2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: nelc-2026
+    title: NELC 2026
+    full_name: National eLearning Conference 2026
+    link: https://easychair.org/cfp/NELC2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 10, 2026
+    editions:
+      - year: 2026
+        id: nelc26
+        link: https://easychair.org/cfp/NELC2026
+        place: Baguio, Philippines
+        date_text: Dec 3, 2026
+        deadlines: []
+    id: candidate-2bf39ad7377d1613d0d3c67d
+    source: easychair
+    source_item_id: nelc-2026
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: nelc-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: opensoc4he-2027
+    title: OpenSoC4HE 2027
+    full_name: >-
+      1st Workshop on Open System on Chips for Higher Education in Computer
+      Architecture
+    link: https://easychair.org/cfp/opensoc4he2027
+    categories:
+      - systems
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 16, 2026
+    editions:
+      - year: 2027
+        id: opensoc4he27
+        link: https://easychair.org/cfp/opensoc4he2027
+        place: Glasgow, UK
+        date_text: Jan 18, 2027
+        deadlines: []
+    id: candidate-e8c28a1c15622056253914c8
+    source: easychair
+    source_item_id: opensoc4he-2027
+    status: discovered
+    discovered_at: '2026-09-05T22:05:16.108Z'
+    first_seen_at: '2026-09-05T22:05:16.108Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: opensoc4he-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: pc26
+    title: PC26
+    full_name: PasswordsCon
+    link: https://easychair.org/cfp/PasswordsCon-26
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 4, 2026
+    editions:
+      - year: 2026
+        id: pc26
+        link: https://easychair.org/cfp/PasswordsCon-26
+        place: Cork, Ireland
+        date_text: Dec 8, 2026
+        deadlines: []
+    id: candidate-e3d97423ebf2cc0f6386d693
+    source: easychair
+    source_item_id: pc26
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: pc26
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: pcce-2026
+    title: PCCE 2026
+    full_name: >-
+      2026 The 2nd International Conference on Power Conversion and Control
+      Engineering
+    link: https://easychair.org/cfp/PCCE2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 15, 2026
+    editions:
+      - year: 2026
+        id: pcce26
+        link: https://easychair.org/cfp/PCCE2026
+        place: Guangzhou, China
+        date_text: Nov 13, 2026
+        deadlines: []
+    id: candidate-6c0a34211c5a792b3297351a
+    source: easychair
+    source_item_id: pcce-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: pcce-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: pesa2026
+    title: PESA2026
+    full_name: The International Conference on Power Electronics Systems and Applications
+    link: https://easychair.org/cfp/PESA2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 5, 2026
+    editions:
+      - year: 2026
+        id: pesa26
+        link: https://easychair.org/cfp/PESA2026
+        place: Singapore, Singapore
+        date_text: Nov 13, 2026
+        deadlines: []
+    id: candidate-b29d95a954b879315ad8a925
+    source: easychair
+    source_item_id: pesa2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: pesa2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: post-quantum-cryptography-for-real-world-deployment-ieee-communications-magazine
+    title: >-
+      Post-Quantum Cryptography for Real-World Deployment（IEEE Communications
+      Magazine 特集号）
+    full_name: >-
+      Post-Quantum Cryptography for Real-World Deployment（IEEE Communications
+      Magazine 特集号）
+    link: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
+    categories: []
+    tags:
+      - niche
+      - special-issue
+    editions:
+      - year: 2027
+        id: post-quantum-cryptography-for-real-world-deployment-ieee-communications-magazine27
+        link: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
+        place: ''
+        date_text: 15 February 2027
+        deadlines: []
+    id: candidate-99e44f78fe6de7f6594560b4
+    source: comsoc
+    source_item_id: post-quantum-cryptography-for-real-world-deployment-ieee-communications-magazine
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: comsoc
+        source_item_id: post-quantum-cryptography-for-real-world-deployment-ieee-communications-magazine
+        source_url: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: ''
+  - key: pqcrypto-2027
+    title: PQCrypto 2027
+    full_name: >-
+      PQCrypto 2027 - The 18th International Conference on Post-Quantum
+      Cryptography
+    link: https://easychair.org/cfp/pqcrypto2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 24, 2026
+    editions:
+      - year: 2027
+        id: pqcrypto27
+        link: https://easychair.org/cfp/pqcrypto2027
+        place: Waterloo, Canada
+        date_text: May 12, 2027
+        deadlines: []
+    id: candidate-a496d3c7d50591a1177510d2
+    source: easychair
+    source_item_id: pqcrypto-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: pqcrypto-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: prism-2026
+    title: PRISM 2026
+    full_name: PRISM International Conference 2026
+    link: https://easychair.org/cfp/PRISM_2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 15, 2026
+    editions:
+      - year: 2026
+        id: prism26
+        link: https://easychair.org/cfp/PRISM_2026
+        place: Faridabad, Haryana, India
+        date_text: Nov 17, 2026
+        deadlines: []
+    id: candidate-511182167cf26e001a7b9ad0
+    source: easychair
+    source_item_id: prism-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: prism-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: psce-2027
+    title: PSCE 2027
+    full_name: 2027 International Conference on Power Systems and Control Engineering
+    link: https://easychair.org/cfp/PSCE2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Apr 15, 2027
+    editions:
+      - year: 2027
+        id: psce27
+        link: https://easychair.org/cfp/PSCE2027
+        place: Hong Kong, China
+        date_text: Aug 18, 2027
+        deadlines: []
+    id: candidate-d3422bed10ab4ce8a95c7fb2
+    source: easychair
+    source_item_id: psce-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: psce-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: qccs-2026
+    title: QCCS 2026
+    full_name: Quantum Computer Cybersecurity Symposium
+    link: https://easychair.org/cfp/qccs2026
+    categories:
+      - security
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 25, 2026
+    editions:
+      - year: 2026
+        id: qccs26
+        link: https://easychair.org/cfp/qccs2026
+        place: Evanston, Illinois, United States
+        date_text: Nov 11, 2026
+        deadlines: []
+    id: candidate-cc483146dc998b047ff79108
+    source: easychair
+    source_item_id: qccs-2026
+    status: discovered
+    discovered_at: '2026-09-06T22:09:32.143Z'
+    first_seen_at: '2026-09-06T22:09:32.143Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: qccs-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: robontics-2026
+    title: RobOntics 2026
+    full_name: International Workshop on Ontologies for Autonomous Robots
+    link: https://easychair.org/cfp/RobOntics2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 12, 2026
+    editions:
+      - year: 2026
+        id: robontics26
+        link: https://easychair.org/cfp/RobOntics2026
+        place: Bressanone, Italy
+        date_text: Dec 3, 2026
+        deadlines: []
+    id: candidate-9118f188919b85abd83d4333
+    source: easychair
+    source_item_id: robontics-2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: robontics-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: sajbe-01-26
+    title: SAJBE 01/26
+    full_name: South [African] Journal for the Built Environment
+    link: https://easychair.org/cfp/SAJBE0126
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 31, 2026
+    editions:
+      - year: 2026
+        id: sajbe-0126
+        link: https://easychair.org/cfp/SAJBE0126
+        place: Pretoria, South Africa
+        date_text: Dec 31, 2026
+        deadlines: []
+    id: candidate-27cfcc8a1ae8b0e46fd915a5
+    source: easychair
+    source_item_id: sajbe-01-26
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: sajbe-01-26
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: sand-2027
+    title: SAND 2027
+    full_name: 6th Symposium on Algorithmic Foundations of Dynamic Networks
+    link: https://easychair.org/cfp/SAND2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 8, 2026
+    editions:
+      - year: 2027
+        id: sand27
+        link: https://easychair.org/cfp/SAND2027
+        place: Paderborn, Germany
+        date_text: Jun 30, 2027
+        deadlines: []
+    id: candidate-9e84206792b552a33ab29f63
+    source: easychair
+    source_item_id: sand-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: sand-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: scer2026
+    title: SCER2026
+    full_name: 2026 Screner Core Compute Engineering Conference
+    link: https://easychair.org/cfp/scer2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 25, 2026
+    editions:
+      - year: 2026
+        id: scer26
+        link: https://easychair.org/cfp/scer2026
+        place: San Francisco, California, United States
+        date_text: Nov 4, 2026
+        deadlines: []
+    id: candidate-73371dbdcc115dfad2066638
+    source: easychair
+    source_item_id: scer2026
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: scer2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: scisustain-2027
+    title: scisustain-2027
+    full_name: >-
+      International Conference on AI-Driven Scientific Innovations for
+      Sustainable Development Goals
+    link: https://easychair.org/cfp/scisustain-2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 30, 2026
+    editions:
+      - year: 2027
+        id: scisustain27
+        link: https://easychair.org/cfp/scisustain-2027
+        place: Raipur, India
+        date_text: Jan 21, 2027
+        deadlines: []
+    id: candidate-32343521929290a6d7e9de61
+    source: easychair
+    source_item_id: scisustain-2027
+    status: discovered
+    discovered_at: '2026-08-21T20:40:09.565Z'
+    first_seen_at: '2026-08-21T20:40:09.565Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: scisustain-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: scsn27-ai
+    title: SCSN27-AI
+    full_name: >-
+      15th International Workshop on Semantic Computing and AI for Social
+      Networks and Organizational Knowledge - From User Information to
+      Collective Intelligence in the Age of AI Agents
+    link: https://easychair.org/cfp/SCSN-AI27
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 23, 2026
+    editions:
+      - year: 2026
+        id: scsn27-ai26
+        link: https://easychair.org/cfp/SCSN-AI27
+        place: Laguna Hills, California, United States
+        date_text: Feb 1, 2027
+        deadlines: []
+    id: candidate-780ef0b67f5157b7a13385ba
+    source: easychair
+    source_item_id: scsn27-ai
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: scsn27-ai
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: security-and-privacy-of-multimodal-embodied-iot-ieee-communications-magazine
+    title: >-
+      Security and Privacy of Multimodal Embodied IoT（IEEE Communications
+      Magazine 特集号）
+    full_name: >-
+      Security and Privacy of Multimodal Embodied IoT（IEEE Communications
+      Magazine 特集号）
+    link: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
+    categories:
+      - security
+    tags:
+      - niche
+      - special-issue
+    editions:
+      - year: 2026
+        id: security-and-privacy-of-multimodal-embodied-iot-ieee-communications-magazine26
+        link: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
+        place: ''
+        date_text: 1 November 2026
+        deadlines: []
+    id: candidate-d0090fd77cd6103f9dc507d1
+    source: comsoc
+    source_item_id: security-and-privacy-of-multimodal-embodied-iot-ieee-communications-magazine
+    status: discovered
+    discovered_at: '2026-08-19T20:44:41.199Z'
+    first_seen_at: '2026-08-19T20:44:41.199Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: comsoc
+        source_item_id: security-and-privacy-of-multimodal-embodied-iot-ieee-communications-magazine
+        source_url: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: ''
+  - key: set-iv-2027
+    title: SET-IV-2027
+    full_name: >-
+      Entrepreneurship Ahead: AI, Innovation, and Transformative Learning
+      Systems
+    link: https://easychair.org/cfp/SET-IV-2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Feb 28, 2027
+    editions:
+      - year: 2027
+        id: set-iv27
+        link: https://easychair.org/cfp/SET-IV-2027
+        place: Boston, Massachusetts, United States
+        date_text: Mar 19, 2027
+        deadlines: []
+    id: candidate-bc9d50a55c00ced0a5b46e7b
+    source: easychair
+    source_item_id: set-iv-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: set-iv-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: sicherheit-2027
+    title: Sicherheit 2027
+    full_name: GI Sicherheit 2027
+    link: https://easychair.org/cfp/sicherheit-2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Nov 1, 2026
+    editions:
+      - year: 2027
+        id: sicherheit27
+        link: https://easychair.org/cfp/sicherheit-2027
+        place: Salzburg, Austria
+        date_text: Feb 23, 2027
+        deadlines: []
+    id: candidate-f10ae32922a262df14d4fe5d
+    source: easychair
+    source_item_id: sicherheit-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: sicherheit-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: simhydro-2027
+    title: SimHydro 2027
+    full_name: SimHydro 2027
+    link: https://easychair.org/cfp/SimHydro2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Apr 1, 2027
+    editions:
+      - year: 2027
+        id: simhydro27
+        link: https://easychair.org/cfp/SimHydro2027
+        place: Sophia Antipolis, France
+        date_text: Jun 2, 2027
+        deadlines: []
+    id: candidate-76e565ad826997be66899a71
+    source: easychair
+    source_item_id: simhydro-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: simhydro-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: sip-2027
+    title: SIP 2027
+    full_name: 4th International Conference on Sustainable Innovations and Partnerships
+    link: https://easychair.org/cfp/SIP2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Feb 28, 2027
+    editions:
+      - year: 2027
+        id: sip27
+        link: https://easychair.org/cfp/SIP2027
+        place: Vancouver, District of Columbia, United States
+        date_text: Mar 18, 2027
+        deadlines: []
+    id: candidate-4d11a7c8a56a67cd46c83973
+    source: easychair
+    source_item_id: sip-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: sip-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: special-section-on-log-data-usage-technology-and-office-information-systems-ieice-trans-inf-syst
+    title: >-
+      Special Section on Log Data Usage Technology and Office Information
+      Systems（IEICE Trans. Inf. & Syst. 特集号）
+    full_name: >-
+      Special Section on Log Data Usage Technology and Office Information
+      Systems（IEICE Trans. Inf. & Syst. 特集号）
+    link: https://www.ieice.org/eng_r/information/schedule/journals.php
+    categories: []
+    tags:
+      - niche
+      - special-issue
+    editions:
+      - year: 2026
+        id: special-section-on-log-data-usage-technology-and-office-information-systems-ieice-trans-inf-syst26
+        link: https://www.ieice.org/eng_r/information/schedule/journals.php
+        place: ''
+        date_text: '2026-11-12'
+        deadlines: []
+    id: candidate-3ec1e8282d2684c93ce8cf80
+    source: ieice
+    source_item_id: special-section-on-log-data-usage-technology-and-office-information-systems-ieice-trans-inf-syst
+    status: discovered
+    discovered_at: '2026-08-31T11:34:08.592Z'
+    first_seen_at: '2026-08-31T11:34:08.592Z'
+    last_seen_at: '2026-08-31T11:36:17.023Z'
+    target_year: 2026
+    evidence:
+      - source: ieice
+        source_item_id: special-section-on-log-data-usage-technology-and-office-information-systems-ieice-trans-inf-syst
+        source_url: https://www.ieice.org/eng_r/information/schedule/journals.php
+        observed_at: '2026-08-31T11:36:17.023Z'
+    evidence_url: ''
+  - key: special-section-on-recent-progress-in-nonlinear-theory-and-its-applications-nolta
+    title: >-
+      Special Section on Recent Progress in Nonlinear Theory and Its
+      Applications（NOLTA 特集号）
+    full_name: >-
+      Special Section on Recent Progress in Nonlinear Theory and Its
+      Applications（NOLTA 特集号）
+    link: https://www.ieice.org/eng_r/information/schedule/journals.php
+    categories:
+      - theory
+    tags:
+      - niche
+      - special-issue
+    editions:
+      - year: 2027
+        id: special-section-on-recent-progress-in-nonlinear-theory-and-its-applications-nolta27
+        link: https://www.ieice.org/eng_r/information/schedule/journals.php
+        place: ''
+        date_text: '2027-01-10'
+        deadlines: []
+    id: candidate-3e7b3a270e76a185d612542f
+    source: ieice
+    source_item_id: special-section-on-recent-progress-in-nonlinear-theory-and-its-applications-nolta
+    status: discovered
+    discovered_at: '2026-08-31T11:34:08.592Z'
+    first_seen_at: '2026-08-31T11:34:08.592Z'
+    last_seen_at: '2026-08-31T11:36:17.023Z'
+    target_year: 2027
+    evidence:
+      - source: ieice
+        source_item_id: special-section-on-recent-progress-in-nonlinear-theory-and-its-applications-nolta
+        source_url: https://www.ieice.org/eng_r/information/schedule/journals.php
+        observed_at: '2026-08-31T11:36:17.023Z'
+    evidence_url: ''
+  - key: spra-2027
+    title: SPRA 2027
+    full_name: 7th Symposium on Pattern Recognition and Applications
+    link: https://easychair.org/cfp/SPRA2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 10, 2026
+    editions:
+      - year: 2027
+        id: spra27
+        link: https://easychair.org/cfp/SPRA2027
+        place: Tokyo, Japan
+        date_text: Mar 3, 2027
+        deadlines: []
+    id: candidate-7687afbe0b6c9eb3bd64603c
+    source: easychair
+    source_item_id: spra-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-09-06T22:11:00.021Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: spra-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-09-06T22:11:00.021Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: su2con07
+    title: SU2CON07
+    full_name: 7th SU2 conference
+    link: https://easychair.org/cfp/su2-conference-2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 30, 2026
+    editions:
+      - year: 2026
+        id: su2con0726
+        link: https://easychair.org/cfp/su2-conference-2026
+        place: Milan, Italy
+        date_text: Nov 9, 2026
+        deadlines: []
+    id: candidate-deb1981e749b78f268e04501
+    source: easychair
+    source_item_id: su2con07
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: su2con07
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: tc-hvacr-2027
+    title: TC-HVACR 2027
+    full_name: International Conference on Tropical Cooling and Sustainable HVAC&R 2027
+    link: https://easychair.org/cfp/TC-HVACR2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 15, 2026
+    editions:
+      - year: 2027
+        id: tc-hvacr27
+        link: https://easychair.org/cfp/TC-HVACR2027
+        place: Bangkok, Thailand
+        date_text: Apr 1, 2027
+        deadlines: []
+    id: candidate-acde9a1f3aefee8d109464d9
+    source: easychair
+    source_item_id: tc-hvacr-2027
+    status: discovered
+    discovered_at: '2026-09-06T22:09:32.143Z'
+    first_seen_at: '2026-09-06T22:09:32.143Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: tc-hvacr-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: tisec-2027
+    title: TISEC 2027
+    full_name: >-
+      International Conference on Technological Innovation, Sustainability and
+      Environmental Conservation
+    link: https://easychair.org/cfp/tisec-2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Apr 14, 2027
+    editions:
+      - year: 2027
+        id: tisec27
+        link: https://easychair.org/cfp/tisec-2026
+        place: ''
+        date_text: Aug 2, 2027
+        deadlines: []
+    id: candidate-36ea969dd02726d3cdac75a7
+    source: easychair
+    source_item_id: tisec-2027
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-08-31T11:36:17.023Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: tisec-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-08-31T11:36:17.023Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: towards-intellicise-agent-communication-networks-autonomous-integration-and-evolution-of-humans-and-networks-ieee-network
+    title: >-
+      Towards Intellicise Agent Communication Networks: Autonomous Integration
+      and Evolution of Humans and Networks（IEEE Network 特集号）
+    full_name: >-
+      Towards Intellicise Agent Communication Networks: Autonomous Integration
+      and Evolution of Humans and Networks（IEEE Network 特集号）
+    link: https://www.comsoc.org/publications/magazines/ieee-network/cfp
+    categories: []
+    tags:
+      - niche
+      - special-issue
+    editions:
+      - year: 2026
+        id: towards-intellicise-agent-communication-networks-autonomous-integration-and-evolution-of-humans-and-networks-ieee-network26
+        link: https://www.comsoc.org/publications/magazines/ieee-network/cfp
+        place: ''
+        date_text: 30 November 2026
+        deadlines: []
+    id: candidate-0049037e023f2f6ba0403a0a
+    source: comsoc
+    source_item_id: towards-intellicise-agent-communication-networks-autonomous-integration-and-evolution-of-humans-and-networks-ieee-network
+    status: discovered
+    discovered_at: '2026-08-19T20:44:41.199Z'
+    first_seen_at: '2026-08-19T20:44:41.199Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: comsoc
+        source_item_id: towards-intellicise-agent-communication-networks-autonomous-integration-and-evolution-of-humans-and-networks-ieee-network
+        source_url: https://www.comsoc.org/publications/magazines/ieee-network/cfp
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: ''
+  - key: ttra-conference-europe-tourism-2040
+    title: 'TTRA Conference Europe: Tourism 2040'
+    full_name: 'Tourism 2040: Human-Centered Futures in Smart and Regenerative Ecosystems'
+    link: https://easychair.org/cfp/TTRAEurope-Tourism2024
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Jan 15, 2027
+    editions:
+      - year: 2040
+        id: ttra-conference-europe-tourism40
+        link: https://easychair.org/cfp/TTRAEurope-Tourism2024
+        place: Bournemouth, UK
+        date_text: Mar 30, 2027
+        deadlines: []
+    id: candidate-9a6adf5948f316a2af65b582
+    source: easychair
+    source_item_id: ttra-conference-europe-tourism-2040
+    status: discovered
+    discovered_at: '2026-08-20T20:45:37.898Z'
+    first_seen_at: '2026-08-20T20:45:37.898Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2040
+    evidence:
+      - source: easychair
+        source_item_id: ttra-conference-europe-tourism-2040
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: ubi-media-2027
+    title: Ubi-Media 2027
+    full_name: The 15th International Conference on Ubi-Media Computing
+    link: https://easychair.org/cfp/UbiMedia-27
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 15, 2026
+    editions:
+      - year: 2027
+        id: ubi-media27
+        link: https://easychair.org/cfp/UbiMedia-27
+        place: Okinawa, Japan
+        date_text: Jan 17, 2027
+        deadlines: []
+    id: candidate-b954fb26714b1c68117d97e4
+    source: easychair
+    source_item_id: ubi-media-2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: ubi-media-2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: wacci-2026
+    title: WACCI 2026
+    full_name: >-
+      International Workshop on Adaptive, Compressive and Computational Imaging
+      2026
+    link: https://easychair.org/cfp/WACCI2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 21, 2026
+    editions:
+      - year: 2026
+        id: wacci26
+        link: https://easychair.org/cfp/WACCI2026
+        place: Pucón, Chile
+        date_text: Dec 14, 2026
+        deadlines: []
+    id: candidate-92e26a48b0d12cd37a75e92e
+    source: easychair
+    source_item_id: wacci-2026
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: wacci-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: wcitdais-2026
+    title: WCITDAIS-2026
+    full_name: >-
+      World Conference on Information Technology, Data Analytics, and
+      Intelligent Systems
+    link: https://easychair.org/cfp/WCITDAIS-2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 6, 2026
+    editions:
+      - year: 2026
+        id: wcitdais26
+        link: https://easychair.org/cfp/WCITDAIS-2026
+        place: Trichy, Tamilnadu, India
+        date_text: Oct 9, 2026
+        deadlines: []
+    id: candidate-cb0832ad45c7e1a7e4bf97bf
+    source: easychair
+    source_item_id: wcitdais-2026
+    status: discovered
+    discovered_at: '2026-09-05T22:05:16.108Z'
+    first_seen_at: '2026-09-05T22:05:16.108Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: wcitdais-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: wcnps2026
+    title: WCNPS2026
+    full_name: 2026 Workshop on Communication Networks and Power Systems
+    link: https://easychair.org/cfp/wcnps2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 11, 2026
+    editions:
+      - year: 2026
+        id: wcnps26
+        link: https://easychair.org/cfp/wcnps2026
+        place: ''
+        date_text: Dec 3, 2026
+        deadlines: []
+    id: candidate-20bcde35b8dcd91814bed1f2
+    source: easychair
+    source_item_id: wcnps2026
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: wcnps2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: websci-27
+    title: WebSci'27
+    full_name: The 19th ACM Web Science Conference 2027
+    link: https://easychair.org/cfp/WebSci27
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Dec 15, 2026
+    editions:
+      - year: 2027
+        id: websci27
+        link: https://easychair.org/cfp/WebSci27
+        place: Singapore, Singapore
+        date_text: May 25, 2027
+        deadlines: []
+    id: candidate-778a5c66fac5abc30243671c
+    source: easychair
+    source_item_id: websci-27
+    status: discovered
+    discovered_at: '2026-08-30T13:30:12.117Z'
+    first_seen_at: '2026-08-30T13:30:12.117Z'
+    last_seen_at: '2026-09-06T22:11:00.021Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: websci-27
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-09-06T22:11:00.021Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: wisp2026
+    title: WISP2026
+    full_name: Workshop on Information Security and Privacy 2026
+    link: https://easychair.org/cfp/wisp2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 14, 2026
+    editions:
+      - year: 2026
+        id: wisp26
+        link: https://easychair.org/cfp/wisp2026
+        place: Lisbon, Portugal
+        date_text: Dec 12, 2026
+        deadlines: []
+    id: candidate-63bf1b82bee904ad3d61651e
+    source: easychair
+    source_item_id: wisp2026
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: wisp2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: wmt-2026
+    title: WMT 2026
+    full_name: >-
+      When Materials Think: Computational Materials for Mobile and Ubiquitous
+      Interaction
+    link: https://easychair.org/cfp/wmt2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 10, 2026
+    editions:
+      - year: 2026
+        id: wmt26
+        link: https://easychair.org/cfp/wmt2026
+        place: Glasgow, UK
+        date_text: Dec 1, 2026
+        deadlines: []
+    id: candidate-7461b973bfb954598411854f
+    source: easychair
+    source_item_id: wmt-2026
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: wmt-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: wow-2026
+    title: WoW 2026
+    full_name: Words in the World International Conference 2026
+    link: https://easychair.org/cfp/WoW2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 12, 2026
+    editions:
+      - year: 2026
+        id: wow26
+        link: https://easychair.org/cfp/WoW2026
+        place: Hamilton, Canada
+        date_text: Dec 4, 2026
+        deadlines: []
+    id: candidate-1f4aad65c545e4f95aa263a9
+    source: easychair
+    source_item_id: wow-2026
+    status: discovered
+    discovered_at: '2026-08-21T20:40:09.565Z'
+    first_seen_at: '2026-08-21T20:40:09.565Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: wow-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: wr-27
+    title: WR 27
+    full_name: We Robot 2027
+    link: https://easychair.org/cfp/WR27
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 5, 2026
+    editions:
+      - year: 2027
+        id: wr27
+        link: https://easychair.org/cfp/WR27
+        place: Oxford, UK
+        date_text: Apr 22, 2027
+        deadlines: []
+    id: candidate-487b5696ef56813b4f283390
+    source: easychair
+    source_item_id: wr-27
+    status: discovered
+    discovered_at: '2026-09-05T22:05:16.108Z'
+    first_seen_at: '2026-09-05T22:05:16.108Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: wr-27
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: wsis-2026
+    title: WSIS 2026
+    full_name: >-
+      Workshop on Secure and Intelligent Systems (in Conjunction with the 19th
+      International Conference on Internet of Things and Smart Spaces)
+    link: https://easychair.org/cfp/WSIS-2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 8, 2026
+    editions:
+      - year: 2026
+        id: wsis26
+        link: https://easychair.org/cfp/WSIS-2026
+        place: Hanoi, Viet Nam
+        date_text: Nov 23, 2026
+        deadlines: []
+    id: candidate-20554bf45deba8fa93658ff0
+    source: easychair
+    source_item_id: wsis-2026
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: wsis-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: xiii-eiit-ufpso-2026
+    title: XIII EIIT UFPSO 2026
+    full_name: 13th International Conference of Technological Innovation
+    link: https://easychair.org/cfp/XIII_EIIT_UFPSO_2026
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Oct 10, 2026
+    editions:
+      - year: 2026
+        id: xiii-eiit-ufpso26
+        link: https://easychair.org/cfp/XIII_EIIT_UFPSO_2026
+        place: Ocaña, Norte de Santander, Colombia
+        date_text: Oct 14, 2026
+        deadlines: []
+    id: candidate-ceabf17c0080cdc64c7bdd93
+    source: easychair
+    source_item_id: xiii-eiit-ufpso-2026
+    status: discovered
+    discovered_at: '2026-08-21T20:40:09.565Z'
+    first_seen_at: '2026-08-21T20:40:09.565Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2026
+    evidence:
+      - source: easychair
+        source_item_id: xiii-eiit-ufpso-2026
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/
+  - key: xrm2027
+    title: XRM2027
+    full_name: 12th International XR-Metaverse Conference 2027
+    link: https://easychair.org/cfp/xrm2027
+    categories: []
+    tags:
+      - niche
+      - easychair
+    submission_deadline_text: Mar 31, 2027
+    editions:
+      - year: 2027
+        id: xrm27
+        link: https://easychair.org/cfp/xrm2027
+        place: Seoul, South Korea
+        date_text: Jun 22, 2027
+        deadlines: []
+    id: candidate-fe58ca41275b6c0ed1b4a1a1
+    source: easychair
+    source_item_id: xrm2027
+    status: discovered
+    discovered_at: '2026-10-04T12:39:08.732Z'
+    first_seen_at: '2026-10-04T12:39:08.732Z'
+    last_seen_at: '2026-10-04T12:42:32.218Z'
+    target_year: 2027
+    evidence:
+      - source: easychair
+        source_item_id: xrm2027
+        source_url: https://easychair.org/cfp/
+        observed_at: '2026-10-04T12:42:32.218Z'
+    evidence_url: https://easychair.org/cfp/

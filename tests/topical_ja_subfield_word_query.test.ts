@@ -1,3 +1,4 @@
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 /**
  * 分野の**下位の名前**を日本語で打った人の検査（SPEC §7・第 518 回）。
  * 二つの穴を塞いでいる。
@@ -31,7 +32,7 @@ function 品書(): Row[] {
 
 function 収録(): Row[] {
   return Recommender.candidateRows(
-    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")),
+    JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
   ) as Row[];
 }
 

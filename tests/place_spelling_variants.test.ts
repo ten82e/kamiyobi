@@ -145,18 +145,24 @@ it("表の英文字側が品書の開催地に現れる語は、和名で打つ�
   ).toBeGreaterThan(10);
 });
 
-it("表の英文字側は、収録か品書に一度は現れる（第 312 回）", () => {
+it("表の英文字側は、収録・品書・保存した更新データの開催地に一度は現れる（第 312 回）", () => {
   /* 収録に現れない表記を寄せ先にしない（第 309 回からの不変条件）。品書（ビルド済みハーネス）は
    * 検査用のデータなので、収録 `data/snapshot.json` も見る。 */
   const 収録 = fold(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8"));
   const 品書 = fold(readFileSync(join(builtSite(), "catalog.json"), "utf8"));
+  const 更新データ = JSON.parse(
+    readFileSync(join(REPO_ROOT, "tests/fixtures/pr958-city-search.json"), "utf8"),
+  ) as Array<{ conference: { editions: Array<{ place: string }> } }>;
+  const 更新の開催地 = fold(
+    更新データ.flatMap((row) => row.conference.editions.map((ed) => ed.place)).join("\n"),
+  );
   /* 例外は理由付きで 1 語だけ。`aizuwakamatsu` は今の収録に開催地が 0 行だが、上流の取得状況で
    * 増える行に備えて置く（`tests/built_golden_2.test.ts` の合成行の検査が同じ約束を留めている）。 */
   const 例外 = new Set(["aizuwakamatsu"]);
   const 死語 = aliasTable()
     .filter(([, latin]) => {
       const t = fold(latin);
-      return !収録.includes(t) && !品書.includes(t) && !例外.has(t);
+      return !収録.includes(t) && !品書.includes(t) && !更新の開催地.includes(t) && !例外.has(t);
     })
     .map(([ja, latin]) => `${ja}/${latin}`);
   expect(死語, "収録にも品書にも一度も出ない英文字側を寄せ先にしている").toEqual([]);

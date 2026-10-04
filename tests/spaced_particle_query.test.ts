@@ -116,7 +116,11 @@ describe("空格で離した助詞が詰め形と同じ行に出る（第 458 �
   /* 断つた物 – 測つて、落とさないと決めた形。 */
   it("語その物が助詞の打ち方は其侭（空の検索語にしない – 第 417 回・第 419 回）", () => {
     /* 一語だけで了う打ち方は落ちない（落すと空の検索語 = 全行になる）。 */
-    expect(列("の").size).toBe(174);
+    // 都市名の日本語表記が増えても、単独の助詞を落とさず文字通りに照合する。
+    const literalNo = new Set(品.filter((row) => /[のノ]/u.test(row.normalize("NFKC"))));
+    expect(literalNo.size).toBeGreaterThan(0);
+    expect(literalNo.size).toBeLessThan(new Set(品).size);
+    expect(列("の")).toEqual(literalNo);
     expect(列("を").size).toBe(1);
     expect(列("は").size).toBe(4);
     expect(列("が").size).toBe(13);
@@ -124,7 +128,7 @@ describe("空格で離した助詞が詰め形と同じ行に出る（第 458 �
     expect(列("で").size).toBe(78);
     /* 語の頭で立つ助詞も落さない（前后の語が要る – 実測 `の 締切` 151 行は
      * 打ち直し前から同じ – 詰め形 `の締切` は 0 行なので寄せない）。 */
-    expect(列("の 締切").size).toBe(150);
+    expect(列("の 締切")).toEqual(new Set([...literalNo].filter((row) => row.includes("締切"))));
     expect(列("の締切").size).toBe(0);
   });
 

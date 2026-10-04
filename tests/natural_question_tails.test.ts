@@ -1,3 +1,4 @@
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 /**
  * 助詞が一枚挟まつた問ひ・言ひ換へを受けるやうにした回の檢査（第 620 回）。
  *
@@ -26,9 +27,7 @@ function 品書(): Array<{ hay: string }> {
   );
 }
 function 収録(): Array<{ hay: string }> {
-  return Recommender.candidateRows(
-    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")),
-  );
+  return Recommender.candidateRows(JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")));
 }
 function 件数(列: Array<{ hay: string }>, 語: string): number {
   const 当 = Recommender.searchMatcher(語, 基準);

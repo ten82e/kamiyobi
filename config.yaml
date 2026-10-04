@@ -49,6 +49,12 @@ venue_identities:
 # URL・会期・開催地が上流間で変わった同一開催回だけを明示的に結ぶ。
 # 年や source-local ID の偶然一致だけでは統合しない。
 edition_identities:
+  # https://2025.cpal.cc/deadlines/ and /program_schedule/ identify both source records
+  # as the March 24-27 Stanford edition; its two submission tracks are separate slots.
+  cpal-2025: {source_ids: {aideadlines: cpal25, ccfddl: cpal25}}
+  # https://2025.corl.org/ identifies the September 27-30 Seoul edition;
+  # the rotating www.corl.org URL and the year-specific URL refer to this same edition.
+  corl-2025: {source_ids: {aideadlines: corl25, ccfddl: corl25}}
   ecir-2027: {source_ids: {aideadlines: ecir27, ccfddl: ecir27}} # https://www.ecir2027.co.uk/call-for-full-papers
   # 公式の2025アーカイブと2026 CFPで開催回を確認。旧URLの上流記録を同じ開催回へ結ぶ。
   colm-2025: {source_ids: {aideadlines: colm25, ccfddl: colm25}} # https://colmweb.org/2025/cfp.html

@@ -970,9 +970,9 @@ export function canonicalRealPaperBenchmarkContentId(coverage: RealPaperCoverage
       coverage === "required" ? "real-paper-required-heldout.json" : "real-paper-heldout.json",
     ),
     fixture("real-paper-negative.json"),
-    coverage === "required"
-      ? readFeatureStore(fileURLToPath(realPaperFixture("real-paper-features.jsonl")))
-      : undefined,
+    // Both release gates run the pinned feature store. Include it in the full
+    // identity too, matching the CLI report and the bundle workflow inputs.
+    readFeatureStore(fileURLToPath(realPaperFixture("real-paper-features.jsonl"))),
   );
 }
 

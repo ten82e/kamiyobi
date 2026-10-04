@@ -107,10 +107,14 @@ describe("語の末尾に助詞を繋いだ打ち方が語その物と同じ行�
   });
 
   it("語の頭で立つ助詞の語は其侭（語その物を打った人の当たりを変へない – 第 458 回）", () => {
-    expect(列("の").size).toBe(174);
+    // 都市名の日本語表記が増えても、単独の助詞を落とさず文字通りに照合する。
+    const literalNo = new Set(品.filter((row) => /[のノ]/u.test(row.normalize("NFKC"))));
+    expect(literalNo.size).toBeGreaterThan(0);
+    expect(literalNo.size).toBeLessThan(new Set(品).size);
+    expect(列("の")).toEqual(literalNo);
     expect(列("で").size).toBe(78);
     /* 前の語に続く形だけ落とす – 語の頭の `の` は其侭残るので詰め形とは別物（残した差）。 */
-    expect(列("の 締切").size).toBe(150);
+    expect(列("の 締切")).toEqual(new Set([...literalNo].filter((row) => row.includes("締切"))));
     expect(列("の締切").size).toBe(0);
   });
 });

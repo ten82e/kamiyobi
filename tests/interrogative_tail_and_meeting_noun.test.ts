@@ -13,12 +13,13 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 import { deadlineHintFunction } from "./runtime_extract.ts";
 
 const AT = Date.parse("2026-08-09T00:00:00Z");
 const 本 = readFileSync(`${process.cwd()}/site/recommender.ts`, "utf8");
 const 品書 = Recommender.candidateRows(
-  JSON.parse(readFileSync(`${process.cwd()}/data/snapshot.json`, "utf8")),
+  JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
 );
 const hays = 品書.map((行) => String(行.hay));
 

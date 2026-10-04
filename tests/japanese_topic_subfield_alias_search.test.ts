@@ -20,13 +20,14 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 import { REPO_ROOT } from "./helpers.ts";
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 
 const AT = Date.parse("2026-08-09T00:00:00Z");
 type Row = { hay: string };
 function 品書(): Row[] {
   /* 搜の土臺は實際の品書で張る（目録 3,280 行とは少し當りが違ふので、此方の數を正とする）。*/
   return Recommender.candidateRows(
-    JSON.parse(readFileSync(`${REPO_ROOT}/data/snapshot.json`, "utf8")),
+    JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
   ) as Row[];
 }
 const rows = 品書();

@@ -1,3 +1,4 @@
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 /**
  * 欧文の語を一字違ひに打った人へ、收錄の綴りを打ち手として出す路（第 680 回）。
  *
@@ -24,7 +25,7 @@ const 基準 = Date.parse("2026-08-09T00:00:00Z");
 const 畫面 = deadlineHintFunction();
 const 聲 = zeroResultLiveFunction();
 const 品書 = Recommender.candidateRows(
-  JSON.parse(readFileSync(join(REPO_ROOT, "data/snapshot.json"), "utf8")),
+  JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
 );
 const hays = 品書.map((r: { hay?: string }) => String(r.hay ?? ""));
 

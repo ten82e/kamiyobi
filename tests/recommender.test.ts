@@ -41,7 +41,7 @@ import {
   main as embeddingsMain,
   venuePapersHash,
 } from "../src/embeddings.ts";
-import { computeSemanticContentId } from "../src/semantic-content.ts";
+import { computeSemanticContentId, recommendationGatePolicyId } from "../src/semantic-content.ts";
 import { REPO_ROOT, tempWork } from "./helpers.ts";
 
 const R = recommender as any;
@@ -2849,6 +2849,7 @@ describe("recommendation bundle restoration", () => {
       source_commit: "origin-commit-not-current",
       bundle_origin_commit: "origin-commit-not-current",
       semantic_content_id: contentId,
+      gate_policy_id: recommendationGatePolicyId(),
       profile_hash: manifest.profile_hash,
       model_revision: manifest.models.en.revision,
       runtime_version: manifest.runtime_version,
@@ -2866,12 +2867,14 @@ describe("recommendation bundle restoration", () => {
     expect(restore()).toBe(true);
     for (const [field, value] of Object.entries({
       semantic_content_id: "wrong",
+      gate_policy_id: "previous-gate-policy",
       embeddings_sha256: "0".repeat(64),
       required_gate: "failed",
       full_benchmark: "failed",
     })) {
       expect(restore({ [field]: value }), field).toBe(false);
     }
+    expect(restore({ gate_policy_id: undefined })).toBe(false);
   });
 });
 

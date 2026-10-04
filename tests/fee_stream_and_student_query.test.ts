@@ -1,3 +1,4 @@
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 /**
  * 費用・配信・發表の形・受理を**其の方の語で短く**打った人（第 644 回）。
  * 實測（品書 3,250 行・固定時刻 2026-08-09T00:00:00Z – 2026-08-09 生成）で、
@@ -24,7 +25,7 @@ const AT = Date.parse("2026-08-09T00:00:00Z");
 
 function 收錄(): Row[] {
   return Recommender.candidateRows(
-    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")),
+    JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
   ) as Row[];
 }
 

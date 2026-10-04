@@ -511,8 +511,16 @@ describe("打ち方に日付を添えても、名前一つと同じ答えにな�
   });
 
   it("全ての語に当たる会議が無くても、名簿に在る語は「無い」の列から外れる", () => {
-    const name = example().name;
-    const both = nameOnly(`${name} international`);
+    // Two known names with no joint match, independent of which live venue sorts first.
+    const name = "NETYS";
+    const both = nameOnly(
+      `${name} international`,
+      [],
+      [
+        { key: "netys", acronym: name, full_name: "Networked Systems", editions: [] },
+        { key: "other", full_name: "International Conference", editions: [] },
+      ],
+    );
     expect(both, "語が名簿に見えるのに案内が黙った").not.toBeNull();
     expect(both?.count, "該当する会議が無いのに件数を作った").toBe(0);
     expect(both?.terms, "名簿に在る語を返していない").toContain(name);

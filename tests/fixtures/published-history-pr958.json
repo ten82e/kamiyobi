@@ -1,0 +1,3264 @@
+{
+  "provenance": {
+    "baseline_sha256": "f223d0a92541136594f454cf2caab01f7cf8f2d777756f0168f2f624cbc33320",
+    "incoming_sha256": "6518cfcec97e63eec3df17f85189df0f02cc0a4e1a10b2672050f28f2c549a50"
+  },
+  "baseline": {
+    "conferences": [
+      {
+        "key": "3dv",
+        "title": "3DV",
+        "full_name": "International Conference on 3D Vision",
+        "acronym": "3DV",
+        "categories": ["ai", "graphics"],
+        "rank": {
+          "ccf": "C",
+          "core": "N",
+          "thcpl": "N"
+        },
+        "link": "https://3dvconf.github.io/2027/",
+        "tags": ["machine-learning", "computer-vision"],
+        "sources": ["aideadlines", "ccfddl"],
+        "dblp": "3dim",
+        "upstream_sub": "CG",
+        "identity": {
+          "dblpKey": "3dim",
+          "officialDomains": ["https://3dvconf.github.io/2027/"],
+          "sourceIds": {
+            "aideadlines": "3dv",
+            "ccfddl": "CG/3dv"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "ai",
+            "reason": "source-subfield"
+          },
+          {
+            "category": "graphics",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2024,
+            "id": "3dv2024",
+            "link": "https://3dvconf.github.io/2024/",
+            "place": "Davos, Switzerland",
+            "date_text": "March 18-21, 2024",
+            "event_date_precision": "exact-range",
+            "event_start": "2024-03-18",
+            "event_end": "2024-03-21",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://3dvconf.github.io/2024/"],
+              "sourceIds": {
+                "ccfddl": "3dv2024"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://3dvconf.github.io/2024/",
+                    "observed_at": "",
+                    "original_value": "2023-08-07 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://3dvconf.github.io/2024/",
+                    "rawExcerpt": "2023-08-07 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://3dvconf.github.io/2024/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-08-08T06:59:59Z",
+                "aoe": "2023-08-07 18:59:59 AoE",
+                "tz_raw": "UTC-7"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "aaai",
+        "title": "AAAI",
+        "full_name": "AAAI Conference on Artificial Intelligence",
+        "acronym": "AAAI",
+        "categories": ["ai"],
+        "rank": {
+          "ccf": "A",
+          "core": "A*",
+          "thcpl": "A"
+        },
+        "link": "https://aaai.org/conference/aaai/aaai-27/",
+        "tags": [
+          "data-mining",
+          "machine-learning",
+          "natural-language-processing",
+          "computer-vision"
+        ],
+        "sources": ["aideadlines", "ccfddl"],
+        "dblp": "aaai",
+        "upstream_sub": "AI",
+        "identity": {
+          "dblpKey": "aaai",
+          "officialDomains": ["https://aaai.org/conference/aaai/aaai-27/"],
+          "sourceIds": {
+            "aideadlines": "aaai",
+            "ccfddl": "AI/aaai"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "ai",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2024,
+            "id": "aaai24",
+            "link": "https://www.aaai.org/aaai-conference/",
+            "place": "Vancouver, British Columbia, Canada",
+            "date_text": "February 20 - February 27, 2024",
+            "event_date_precision": "exact-range",
+            "event_start": "2024-02-20",
+            "event_end": "2024-02-27",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://www.aaai.org/aaai-conference/"],
+              "sourceIds": {
+                "ccfddl": "aaai24"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Abstract submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://www.aaai.org/aaai-conference/",
+                    "observed_at": "",
+                    "original_value": "2023-08-08 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.aaai.org/aaai-conference/",
+                    "rawExcerpt": "2023-08-08 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.aaai.org/aaai-conference/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-08-09T11:59:59Z",
+                "aoe": "2023-08-08 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://www.aaai.org/aaai-conference/",
+                    "observed_at": "",
+                    "original_value": "2023-08-15 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.aaai.org/aaai-conference/",
+                    "rawExcerpt": "2023-08-15 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.aaai.org/aaai-conference/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-08-16T11:59:59Z",
+                "aoe": "2023-08-15 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "fse-sc",
+        "title": "FSE",
+        "full_name": "Fast Software Encryption",
+        "acronym": "FSE",
+        "categories": ["security"],
+        "rank": {
+          "ccf": "B",
+          "core": "B",
+          "thcpl": "B"
+        },
+        "link": "https://fse.iacr.org/2026/",
+        "tags": [],
+        "sources": ["ccfddl"],
+        "dblp": "fse",
+        "upstream_sub": "SC",
+        "identity": {
+          "dblpKey": "fse",
+          "officialDomains": ["https://fse.iacr.org/2026/"],
+          "sourceIds": {
+            "ccfddl": "SC/fse"
+          }
+        },
+        "legacy_keys": ["fse"],
+        "category_assignments": [
+          {
+            "category": "security",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2023,
+            "id": "fse23",
+            "link": "https://fse.iacr.org/2023/",
+            "place": "Beijing, China",
+            "date_text": "March 20-24, 2023",
+            "event_date_precision": "exact-range",
+            "event_start": "2023-03-20",
+            "event_end": "2023-03-24",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://fse.iacr.org/2023/"],
+              "sourceIds": {
+                "ccfddl": "fse23"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "Submission deadline",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2023/",
+                    "observed_at": "",
+                    "original_value": "2022-03-01 11:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2023/",
+                    "rawExcerpt": "2022-03-01 11:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2023/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2022-03-01T11:59:59Z",
+                "aoe": "2022-02-28 23:59:59 AoE",
+                "tz_raw": "UTC+0"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 2,
+                "track": "",
+                "comment": "Submission deadline",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2023/",
+                    "observed_at": "",
+                    "original_value": "2022-06-01 11:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2023/",
+                    "rawExcerpt": "2022-06-01 11:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2023/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2022-06-01T11:59:59Z",
+                "aoe": "2022-05-31 23:59:59 AoE",
+                "tz_raw": "UTC+0"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 3,
+                "track": "",
+                "comment": "Submission deadline",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2023/",
+                    "observed_at": "",
+                    "original_value": "2022-09-01 11:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2023/",
+                    "rawExcerpt": "2022-09-01 11:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2023/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2022-09-01T11:59:59Z",
+                "aoe": "2022-08-31 23:59:59 AoE",
+                "tz_raw": "UTC+0"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 4,
+                "track": "",
+                "comment": "Submission deadline",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2023/",
+                    "observed_at": "",
+                    "original_value": "2022-11-23 11:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2023/",
+                    "rawExcerpt": "2022-11-23 11:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2023/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2022-11-23T11:59:59Z",
+                "aoe": "2022-11-22 23:59:59 AoE",
+                "tz_raw": "UTC+0"
+              }
+            ]
+          },
+          {
+            "year": 2024,
+            "id": "fse24",
+            "link": "https://fse.iacr.org/2024/",
+            "place": "Leuven, Belgium",
+            "date_text": "March 25-29, 2024",
+            "event_date_precision": "exact-range",
+            "event_start": "2024-03-25",
+            "event_end": "2024-03-29",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://fse.iacr.org/2024/"],
+              "sourceIds": {
+                "ccfddl": "fse24"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "Submission deadline",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2024/",
+                    "observed_at": "",
+                    "original_value": "2023-03-01 11:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2024/",
+                    "rawExcerpt": "2023-03-01 11:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2024/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-03-01T11:59:59Z",
+                "aoe": "2023-02-28 23:59:59 AoE",
+                "tz_raw": "UTC+0"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 2,
+                "track": "",
+                "comment": "Submission deadline",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2024/",
+                    "observed_at": "",
+                    "original_value": "2023-06-01 11:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2024/",
+                    "rawExcerpt": "2023-06-01 11:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2024/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-06-01T11:59:59Z",
+                "aoe": "2023-05-31 23:59:59 AoE",
+                "tz_raw": "UTC+0"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 3,
+                "track": "",
+                "comment": "Submission deadline",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2024/",
+                    "observed_at": "",
+                    "original_value": "2023-09-01 11:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2024/",
+                    "rawExcerpt": "2023-09-01 11:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2024/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-09-01T11:59:59Z",
+                "aoe": "2023-08-31 23:59:59 AoE",
+                "tz_raw": "UTC+0"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 4,
+                "track": "",
+                "comment": "Submission deadline",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2024/",
+                    "observed_at": "",
+                    "original_value": "2023-11-23 11:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2024/",
+                    "rawExcerpt": "2023-11-23 11:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2024/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-11-23T11:59:59Z",
+                "aoe": "2023-11-22 23:59:59 AoE",
+                "tz_raw": "UTC+0"
+              }
+            ]
+          },
+          {
+            "year": 2025,
+            "id": "fse25",
+            "link": "https://fse.iacr.org/2025/",
+            "place": "Rome, Italy",
+            "date_text": "March 17-21, 2025",
+            "event_date_precision": "exact-range",
+            "event_start": "2025-03-17",
+            "event_end": "2025-03-21",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://fse.iacr.org/2025/"],
+              "sourceIds": {
+                "ccfddl": "fse25"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "ToSC, Volume 2024, Issue 2 Submission deadline",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2025/",
+                    "observed_at": "",
+                    "original_value": "2024-03-01 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2025/",
+                    "rawExcerpt": "2024-03-01 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2025/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2024-03-02T11:59:59Z",
+                "aoe": "2024-03-01 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 2,
+                "track": "",
+                "comment": "ToSC, Volume 2024, Issue 3 Submission deadline",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2025/",
+                    "observed_at": "",
+                    "original_value": "2024-06-01 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2025/",
+                    "rawExcerpt": "2024-06-01 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2025/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2024-06-02T11:59:59Z",
+                "aoe": "2024-06-01 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 3,
+                "track": "",
+                "comment": "ToSC, Volume 2024, Issue 4 Submission deadline",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2025/",
+                    "observed_at": "",
+                    "original_value": "2024-09-01 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2025/",
+                    "rawExcerpt": "2024-09-01 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2025/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2024-09-02T11:59:59Z",
+                "aoe": "2024-09-01 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 4,
+                "track": "",
+                "comment": "ToSC, Volume 2025, Issue 1 Submission deadline",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2025/",
+                    "observed_at": "",
+                    "original_value": "2024-11-22 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2025/",
+                    "rawExcerpt": "2024-11-22 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2025/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2024-11-23T11:59:59Z",
+                "aoe": "2024-11-22 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "ica3pp",
+        "title": "ICA3PP",
+        "full_name": "International Conference on Algorithms and Architectures for Parallel Processing",
+        "acronym": "ICA3PP",
+        "categories": ["hpc"],
+        "rank": {
+          "ccf": "C",
+          "core": "C",
+          "thcpl": "N"
+        },
+        "link": "https://hpcn.exeter.ac.uk/ica3pp2026/",
+        "tags": [],
+        "sources": ["ccfddl"],
+        "dblp": "ica3pp",
+        "upstream_sub": "DS",
+        "identity": {
+          "dblpKey": "ica3pp",
+          "officialDomains": ["https://hpcn.exeter.ac.uk/ica3pp2026/"],
+          "sourceIds": {
+            "ccfddl": "DS/ica3pp"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "hpc",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2022,
+            "id": "ica3pp",
+            "link": "https://ica3pp2022.compute.dtu.dk/",
+            "place": "Copenhagen, Denmark",
+            "date_text": "October 10-12, 2022",
+            "event_date_precision": "exact-range",
+            "event_start": "2022-10-10",
+            "event_end": "2022-10-12",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://ica3pp2022.compute.dtu.dk/"],
+              "sourceIds": {
+                "ccfddl": "ica3pp"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "first round",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://ica3pp2022.compute.dtu.dk/",
+                    "observed_at": "",
+                    "original_value": "2021-05-30 17:00:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://ica3pp2022.compute.dtu.dk/",
+                    "rawExcerpt": "2021-05-30 17:00:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://ica3pp2022.compute.dtu.dk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2021-05-31T01:00:00Z",
+                "aoe": "2021-05-30 13:00:00 AoE",
+                "tz_raw": "UTC-8"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 2,
+                "track": "",
+                "comment": "second round",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://ica3pp2022.compute.dtu.dk/",
+                    "observed_at": "",
+                    "original_value": "2021-06-30 17:00:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://ica3pp2022.compute.dtu.dk/",
+                    "rawExcerpt": "2021-06-30 17:00:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://ica3pp2022.compute.dtu.dk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2021-07-01T01:00:00Z",
+                "aoe": "2021-06-30 13:00:00 AoE",
+                "tz_raw": "UTC-8"
+              }
+            ]
+          },
+          {
+            "year": 2023,
+            "id": "ica3pp-ccfddl-ica3pp",
+            "link": "http://tjutanklab.com/ica3pp2023/",
+            "place": "Tianjin, China",
+            "date_text": "October 20-22, 2023",
+            "event_date_precision": "exact-range",
+            "event_start": "2023-10-20",
+            "event_end": "2023-10-22",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["http://tjutanklab.com/ica3pp2023/"],
+              "sourceIds": {
+                "ccfddl": "ica3pp"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "Paper Submission Due",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "http://tjutanklab.com/ica3pp2023/",
+                    "observed_at": "",
+                    "original_value": "2023-05-30 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "http://tjutanklab.com/ica3pp2023/",
+                    "rawExcerpt": "2023-05-30 23:59:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "http://tjutanklab.com/ica3pp2023/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-05-31T07:59:00Z",
+                "aoe": "2023-05-30 19:59:00 AoE",
+                "tz_raw": "UTC-8"
+              }
+            ]
+          },
+          {
+            "year": 2025,
+            "id": "ica3pp-ccfddl-ica3pp-2",
+            "link": "https://ieee-cybermatics.org/2025/ica3pp/",
+            "place": "Zhengzhou, Henan, China",
+            "date_text": "October 30- November 2, 2025",
+            "event_date_precision": "exact-range",
+            "event_start": "2025-10-30",
+            "event_end": "2025-11-02",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://ieee-cybermatics.org/2025/ica3pp/"],
+              "sourceIds": {
+                "ccfddl": "ica3pp"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "Paper Submission Due",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://ieee-cybermatics.org/2025/ica3pp/",
+                    "observed_at": "",
+                    "original_value": "2025-06-30 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://ieee-cybermatics.org/2025/ica3pp/",
+                    "rawExcerpt": "2025-06-30 23:59:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://ieee-cybermatics.org/2025/ica3pp/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2025-07-01T07:59:00Z",
+                "aoe": "2025-06-30 19:59:00 AoE",
+                "tz_raw": "UTC-8"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "iss",
+        "title": "ISS",
+        "full_name": "ACM International Conference on Interactive Surfaces and Spaces",
+        "acronym": "ISS",
+        "categories": ["hci"],
+        "rank": {
+          "ccf": "B",
+          "core": "N",
+          "thcpl": "N"
+        },
+        "link": "https://iss.acm.org/2026/",
+        "tags": [],
+        "sources": ["ccfddl"],
+        "dblp": "tabletop",
+        "upstream_sub": "HI",
+        "identity": {
+          "dblpKey": "tabletop",
+          "officialDomains": ["https://iss.acm.org/2026/"],
+          "sourceIds": {
+            "ccfddl": "HI/iss"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "hci",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2025,
+            "id": "iss25",
+            "link": "https://iss.acm.org/2025/",
+            "place": "TBD",
+            "date_text": "TBD",
+            "event_date_precision": "not-announced",
+            "event_start": null,
+            "event_end": null,
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://iss.acm.org/2025/"],
+              "sourceIds": {
+                "ccfddl": "iss25"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "First round 2025",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://iss.acm.org/2025/",
+                    "observed_at": "",
+                    "original_value": "2025-03-14 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://iss.acm.org/2025/",
+                    "rawExcerpt": "2025-03-14 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://iss.acm.org/2025/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2025-03-15T11:59:59Z",
+                "aoe": "2025-03-14 23:59:59 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 2,
+                "track": "",
+                "comment": "Second round 2025",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://iss.acm.org/2025/",
+                    "observed_at": "",
+                    "original_value": "2025-07-25 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://iss.acm.org/2025/",
+                    "rawExcerpt": "2025-07-25 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://iss.acm.org/2025/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2025-07-26T11:59:59Z",
+                "aoe": "2025-07-25 23:59:59 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "systor",
+        "title": "SYSTOR",
+        "full_name": "ACM International Systems and Storage Conference",
+        "acronym": "SYSTOR",
+        "categories": ["systems"],
+        "rank": {
+          "ccf": "C",
+          "core": "N",
+          "thcpl": "N"
+        },
+        "link": "https://www.systor.org/",
+        "tags": [],
+        "sources": ["local", "ccfddl"],
+        "dblp": "systor",
+        "upstream_sub": "DS",
+        "identity": {
+          "dblpKey": "systor",
+          "officialDomains": ["https://www.systor.org/", "https://www.systor.org/2026/"],
+          "sourceIds": {
+            "ccfddl": "DS/systor",
+            "local": "systor"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "systems",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2024,
+            "id": "systor24",
+            "link": "https://www.systor.org/2024/",
+            "place": "Tel Aviv, Israel",
+            "date_text": "June 17-19, 2024",
+            "event_date_precision": "exact-range",
+            "event_start": "2024-06-17",
+            "event_end": "2024-06-19",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://www.systor.org/2024/"],
+              "sourceIds": {
+                "ccfddl": "systor24"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "Full and Short Papers Track",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://www.systor.org/2024/",
+                    "observed_at": "",
+                    "original_value": "2024-03-13 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.systor.org/2024/",
+                    "rawExcerpt": "2024-03-13 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.systor.org/2024/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2024-03-13T22:59:59Z",
+                "aoe": "2024-03-13 10:59:59 AoE",
+                "tz_raw": "UTC+1"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 2,
+                "track": "",
+                "comment": "Highlight Papers Track",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://www.systor.org/2024/",
+                    "observed_at": "",
+                    "original_value": "2024-04-03 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.systor.org/2024/",
+                    "rawExcerpt": "2024-04-03 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.systor.org/2024/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2024-04-03T22:59:59Z",
+                "aoe": "2024-04-03 10:59:59 AoE",
+                "tz_raw": "UTC+1"
+              },
+              {
+                "kind": "other",
+                "label": "Paper submission",
+                "round": 3,
+                "track": "",
+                "comment": "Posters with Extended Abstract Track",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://www.systor.org/2024/",
+                    "observed_at": "",
+                    "original_value": "2024-04-11 22:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.systor.org/2024/",
+                    "rawExcerpt": "2024-04-11 22:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.systor.org/2024/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2024-04-11T21:59:59Z",
+                "aoe": "2024-04-11 09:59:59 AoE",
+                "tz_raw": "UTC+1"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "tcc",
+        "title": "TCC",
+        "full_name": "Theory of Cryptography Conference",
+        "acronym": "TCC",
+        "categories": ["security"],
+        "rank": {
+          "ccf": "B",
+          "core": "A",
+          "thcpl": "B"
+        },
+        "link": "https://tcc.iacr.org/2026/",
+        "tags": [],
+        "sources": ["ccfddl"],
+        "dblp": "tcc",
+        "upstream_sub": "SC",
+        "identity": {
+          "dblpKey": "tcc",
+          "officialDomains": ["https://tcc.iacr.org/2026/"],
+          "sourceIds": {
+            "ccfddl": "SC/tcc"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "security",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2023,
+            "id": "tcc23",
+            "link": "https://tcc.iacr.org/2023/",
+            "place": "Taipei, China",
+            "date_text": "Nov 29 - Dec 12, 2023",
+            "event_date_precision": "exact-range",
+            "event_start": "2023-11-29",
+            "event_end": "2023-12-12",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://tcc.iacr.org/2023/"],
+              "sourceIds": {
+                "ccfddl": "tcc23"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://tcc.iacr.org/2023/",
+                    "observed_at": "",
+                    "original_value": "2023-06-01 15:00:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://tcc.iacr.org/2023/",
+                    "rawExcerpt": "2023-06-01 15:00:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://tcc.iacr.org/2023/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "ccfddl",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-06-01T19:00:00Z",
+                "aoe": "2023-06-01 07:00:00 AoE",
+                "tz_raw": "UTC-4"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "cscw",
+        "title": "CSCW",
+        "full_name": "ACM Conference on Computer Supported Cooperative Work and Social Computing",
+        "acronym": "CSCW",
+        "categories": ["hci"],
+        "rank": {
+          "ccf": "A",
+          "core": "A",
+          "thcpl": "A"
+        },
+        "link": "https://cscw.acm.org/2026/",
+        "tags": [],
+        "sources": ["ccfddl"],
+        "dblp": "cscw",
+        "upstream_sub": "HI",
+        "identity": {
+          "dblpKey": "cscw",
+          "officialDomains": ["https://cscw.acm.org/2026/"],
+          "sourceIds": {
+            "ccfddl": "HI/cscw"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "hci",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2022,
+            "id": "cscw22",
+            "link": "https://cscw.acm.org/2022/",
+            "place": "Taiwan",
+            "date_text": "January 1, 2022",
+            "event_date_precision": "single-day",
+            "event_start": "2022-01-01",
+            "event_end": "2022-01-01",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://cscw.acm.org/2022/"],
+              "sourceIds": {
+                "ccfddl": "cscw22"
+              }
+            },
+            "deadlines": []
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "corl",
+        "title": "CoRL",
+        "full_name": "The Conference on Robot Learning",
+        "acronym": "CoRL",
+        "categories": ["ai"],
+        "rank": {
+          "ccf": "N",
+          "core": "N",
+          "thcpl": "N"
+        },
+        "link": "https://www.corl.org/",
+        "tags": ["machine-learning", "robotics"],
+        "sources": ["aideadlines", "ccfddl"],
+        "dblp": "corl",
+        "upstream_sub": "AI",
+        "identity": {
+          "dblpKey": "corl",
+          "officialDomains": ["https://www.corl.org/"],
+          "sourceIds": {
+            "aideadlines": "corl",
+            "ccfddl": "AI/corl"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "ai",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2025,
+            "id": "corl25",
+            "link": "https://www.corl.org/",
+            "place": "Seoul, South Korea",
+            "date_text": "September 27-30, 2025",
+            "event_date_precision": "exact-range",
+            "event_start": "2025-09-27",
+            "event_end": "2025-09-30",
+            "estimated": false,
+            "source": "aideadlines",
+            "identity": {
+              "officialUrls": ["https://www.corl.org/"],
+              "sourceIds": {
+                "aideadlines": "corl25",
+                "ccfddl": "corl25"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.corl.org/",
+                    "observed_at": "",
+                    "original_value": "2025-04-30 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.corl.org/",
+                    "rawExcerpt": "2025-04-30 23:59:59"
+                  },
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://www.corl.org/",
+                    "observed_at": "",
+                    "original_value": "2025-04-30 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.corl.org/",
+                    "rawExcerpt": "2025-04-30 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.corl.org/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2025-05-01T11:59:59Z",
+                "aoe": "2025-04-30 23:59:59 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "cpal",
+        "title": "CPAL",
+        "full_name": "The Conference on Parsimony and Learning",
+        "acronym": "CPAL",
+        "categories": ["ai"],
+        "rank": {
+          "ccf": "N",
+          "core": "N",
+          "thcpl": "N"
+        },
+        "link": "https://cpal.cc/",
+        "tags": ["machine-learning"],
+        "sources": ["aideadlines", "ccfddl"],
+        "dblp": "cpal",
+        "upstream_sub": "AI",
+        "identity": {
+          "dblpKey": "cpal",
+          "officialDomains": ["https://cpal.cc/"],
+          "sourceIds": {
+            "aideadlines": "cpal",
+            "ccfddl": "AI/cpal"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "ai",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2025,
+            "id": "cpal25",
+            "link": "https://cpal.cc/",
+            "place": "Stanford, USA",
+            "date_text": "March 24-27, 2025",
+            "event_date_precision": "exact-range",
+            "event_start": "2025-03-24",
+            "event_end": "2025-03-27",
+            "estimated": false,
+            "source": "aideadlines",
+            "identity": {
+              "officialUrls": ["https://cpal.cc/"],
+              "sourceIds": {
+                "aideadlines": "cpal25",
+                "ccfddl": "cpal25"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission deadline",
+                "round": 1,
+                "track": "",
+                "comment": "同時刻の別記載: Paper submission",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://cpal.cc/",
+                    "observed_at": "",
+                    "original_value": "2024-11-25 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://cpal.cc/",
+                    "rawExcerpt": "2024-11-25 23:59:59"
+                  },
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://cpal.cc/",
+                    "observed_at": "",
+                    "original_value": "2024-11-25 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://cpal.cc/",
+                    "rawExcerpt": "2024-11-25 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://cpal.cc/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-09-12T06:49:53.000Z",
+                  "content_hash": null,
+                  "status": "manual-required",
+                  "source_name": "aideadlines",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2024-11-26T11:59:59Z",
+                "aoe": "2024-11-25 23:59:59 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      }
+    ]
+  },
+  "incoming": {
+    "conferences": [
+      {
+        "key": "3dv",
+        "title": "3DV",
+        "full_name": "International Conference on 3D Vision",
+        "acronym": "3DV",
+        "categories": ["ai", "graphics"],
+        "rank": {
+          "ccf": "C",
+          "core": "N",
+          "thcpl": "N"
+        },
+        "link": "https://3dvconf.github.io/2027/",
+        "tags": ["machine-learning", "computer-vision"],
+        "sources": ["aideadlines", "ccfddl"],
+        "dblp": "3dim",
+        "upstream_sub": "CG",
+        "identity": {
+          "dblpKey": "3dim",
+          "officialDomains": ["https://3dvconf.github.io/2027/"],
+          "sourceIds": {
+            "aideadlines": "3dv",
+            "ccfddl": "CG/3dv"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "ai",
+            "reason": "source-subfield"
+          },
+          {
+            "category": "graphics",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2024,
+            "id": "3dv2024",
+            "link": "https://3dvconf.github.io/2024/",
+            "place": "Davos, Switzerland",
+            "date_text": "March 19-21, 2024",
+            "event_date_precision": "exact-range",
+            "event_start": "2024-03-19",
+            "event_end": "2024-03-21",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://3dvconf.github.io/2024/"],
+              "sourceIds": {
+                "ccfddl": "3dv2024"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://3dvconf.github.io/2024/",
+                    "observed_at": "",
+                    "original_value": "2023-08-07 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://3dvconf.github.io/2024/",
+                    "rawExcerpt": "2023-08-07 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://3dvconf.github.io/2024/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-08-08T06:59:59Z",
+                "aoe": "2023-08-07 18:59:59 AoE",
+                "tz_raw": "UTC-7"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "aaai",
+        "title": "AAAI",
+        "full_name": "AAAI Conference on Artificial Intelligence",
+        "acronym": "AAAI",
+        "categories": ["ai"],
+        "rank": {
+          "ccf": "A",
+          "core": "A*",
+          "thcpl": "A"
+        },
+        "link": "https://aaai.org/conference/aaai/aaai-27/",
+        "tags": [
+          "data-mining",
+          "machine-learning",
+          "natural-language-processing",
+          "computer-vision"
+        ],
+        "sources": ["aideadlines", "ccfddl"],
+        "dblp": "aaai",
+        "upstream_sub": "AI",
+        "identity": {
+          "dblpKey": "aaai",
+          "officialDomains": ["https://aaai.org/conference/aaai/aaai-27/"],
+          "sourceIds": {
+            "aideadlines": "aaai",
+            "ccfddl": "AI/aaai"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "ai",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2024,
+            "id": "aaai24",
+            "link": "https://aaai.org/conference/aaai/aaai-24/",
+            "place": "Vancouver, British Columbia, Canada",
+            "date_text": "February 22-25, 2024",
+            "event_date_precision": "exact-range",
+            "event_start": "2024-02-22",
+            "event_end": "2024-02-25",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://aaai.org/conference/aaai/aaai-24/"],
+              "sourceIds": {
+                "ccfddl": "aaai24"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Abstract submission",
+                "round": 1,
+                "track": "",
+                "comment": "Regular round",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://aaai.org/conference/aaai/aaai-24/",
+                    "observed_at": "",
+                    "original_value": "2023-08-08 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://aaai.org/conference/aaai/aaai-24/",
+                    "rawExcerpt": "2023-08-08 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://aaai.org/conference/aaai/aaai-24/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-08-09T11:59:59Z",
+                "aoe": "2023-08-08 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "Regular round",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://aaai.org/conference/aaai/aaai-24/",
+                    "observed_at": "",
+                    "original_value": "2023-08-15 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://aaai.org/conference/aaai/aaai-24/",
+                    "rawExcerpt": "2023-08-15 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://aaai.org/conference/aaai/aaai-24/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-08-16T11:59:59Z",
+                "aoe": "2023-08-15 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              },
+              {
+                "kind": "abstract",
+                "label": "Abstract submission",
+                "round": 2,
+                "track": "",
+                "comment": "NeurIPS fast track",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://aaai.org/conference/aaai/aaai-24/",
+                    "observed_at": "",
+                    "original_value": "2023-09-25 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://aaai.org/conference/aaai/aaai-24/",
+                    "rawExcerpt": "2023-09-25 23:59:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://aaai.org/conference/aaai/aaai-24/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-09-26T11:59:00Z",
+                "aoe": "2023-09-25 23:59:00 AoE",
+                "tz_raw": "UTC-12"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 2,
+                "track": "",
+                "comment": "NeurIPS fast track",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://aaai.org/conference/aaai/aaai-24/",
+                    "observed_at": "",
+                    "original_value": "2023-09-25 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://aaai.org/conference/aaai/aaai-24/",
+                    "rawExcerpt": "2023-09-25 23:59:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://aaai.org/conference/aaai/aaai-24/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-09-26T11:59:00Z",
+                "aoe": "2023-09-25 23:59:00 AoE",
+                "tz_raw": "UTC-12"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "fse-sc",
+        "title": "FSE",
+        "full_name": "Fast Software Encryption",
+        "acronym": "FSE",
+        "categories": ["security"],
+        "rank": {
+          "ccf": "B",
+          "core": "B",
+          "thcpl": "B"
+        },
+        "link": "https://fse.iacr.org/2027/",
+        "tags": [],
+        "sources": ["ccfddl"],
+        "dblp": "fse",
+        "upstream_sub": "SC",
+        "identity": {
+          "dblpKey": "fse",
+          "officialDomains": ["https://fse.iacr.org/2027/"],
+          "sourceIds": {
+            "ccfddl": "SC/fse"
+          }
+        },
+        "legacy_keys": ["fse"],
+        "category_assignments": [
+          {
+            "category": "security",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2023,
+            "id": "iacr-fse23",
+            "link": "https://fse.iacr.org/2023/",
+            "place": "Beijing, China",
+            "date_text": "March 20-24, 2023",
+            "event_date_precision": "exact-range",
+            "event_start": "2023-03-20",
+            "event_end": "2023-03-24",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://fse.iacr.org/2023/"],
+              "sourceIds": {
+                "ccfddl": "iacr-fse23"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "ToSC 2022/2",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2023/",
+                    "observed_at": "",
+                    "original_value": "2022-03-01 12:00:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2023/",
+                    "rawExcerpt": "2022-03-01 12:00:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2023/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2022-03-01T12:00:00Z",
+                "aoe": "2022-03-01 00:00:00 AoE",
+                "tz_raw": "UTC+0"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 2,
+                "track": "",
+                "comment": "ToSC 2022/3",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2023/",
+                    "observed_at": "",
+                    "original_value": "2022-06-01 12:00:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2023/",
+                    "rawExcerpt": "2022-06-01 12:00:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2023/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2022-06-01T12:00:00Z",
+                "aoe": "2022-06-01 00:00:00 AoE",
+                "tz_raw": "UTC+0"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 3,
+                "track": "",
+                "comment": "ToSC 2022/4",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2023/",
+                    "observed_at": "",
+                    "original_value": "2022-09-01 12:00:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2023/",
+                    "rawExcerpt": "2022-09-01 12:00:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2023/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2022-09-01T12:00:00Z",
+                "aoe": "2022-09-01 00:00:00 AoE",
+                "tz_raw": "UTC+0"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 4,
+                "track": "",
+                "comment": "ToSC 2023/1",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2023/",
+                    "observed_at": "",
+                    "original_value": "2022-11-23 12:00:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2023/",
+                    "rawExcerpt": "2022-11-23 12:00:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2023/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2022-11-23T12:00:00Z",
+                "aoe": "2022-11-23 00:00:00 AoE",
+                "tz_raw": "UTC+0"
+              }
+            ]
+          },
+          {
+            "year": 2024,
+            "id": "iacr-fse24",
+            "link": "https://fse.iacr.org/2024/",
+            "place": "Leuven, Belgium",
+            "date_text": "March 25-29, 2024",
+            "event_date_precision": "exact-range",
+            "event_start": "2024-03-25",
+            "event_end": "2024-03-29",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://fse.iacr.org/2024/"],
+              "sourceIds": {
+                "ccfddl": "iacr-fse24"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "ToSC 2023/2",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2024/",
+                    "observed_at": "",
+                    "original_value": "2023-03-01 12:00:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2024/",
+                    "rawExcerpt": "2023-03-01 12:00:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2024/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-03-01T12:00:00Z",
+                "aoe": "2023-03-01 00:00:00 AoE",
+                "tz_raw": "UTC+0"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 2,
+                "track": "",
+                "comment": "ToSC 2023/3",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2024/",
+                    "observed_at": "",
+                    "original_value": "2023-06-01 12:00:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2024/",
+                    "rawExcerpt": "2023-06-01 12:00:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2024/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-06-01T12:00:00Z",
+                "aoe": "2023-06-01 00:00:00 AoE",
+                "tz_raw": "UTC+0"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 3,
+                "track": "",
+                "comment": "ToSC 2023/4",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2024/",
+                    "observed_at": "",
+                    "original_value": "2023-09-01 12:00:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2024/",
+                    "rawExcerpt": "2023-09-01 12:00:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2024/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-09-01T12:00:00Z",
+                "aoe": "2023-09-01 00:00:00 AoE",
+                "tz_raw": "UTC+0"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 4,
+                "track": "",
+                "comment": "ToSC 2024/1",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2024/",
+                    "observed_at": "",
+                    "original_value": "2023-11-23 12:00:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2024/",
+                    "rawExcerpt": "2023-11-23 12:00:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2024/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-11-23T12:00:00Z",
+                "aoe": "2023-11-23 00:00:00 AoE",
+                "tz_raw": "UTC+0"
+              }
+            ]
+          },
+          {
+            "year": 2025,
+            "id": "iacr-fse25",
+            "link": "https://fse.iacr.org/2025/",
+            "place": "Rome, Italy",
+            "date_text": "March 17-21, 2025",
+            "event_date_precision": "exact-range",
+            "event_start": "2025-03-17",
+            "event_end": "2025-03-21",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://fse.iacr.org/2025/"],
+              "sourceIds": {
+                "ccfddl": "iacr-fse25"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "ToSC 2024/2",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2025/",
+                    "observed_at": "",
+                    "original_value": "2024-03-01 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2025/",
+                    "rawExcerpt": "2024-03-01 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2025/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2024-03-02T11:59:59Z",
+                "aoe": "2024-03-01 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 2,
+                "track": "",
+                "comment": "ToSC 2024/3",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2025/",
+                    "observed_at": "",
+                    "original_value": "2024-06-01 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2025/",
+                    "rawExcerpt": "2024-06-01 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2025/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2024-06-02T11:59:59Z",
+                "aoe": "2024-06-01 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 3,
+                "track": "",
+                "comment": "ToSC 2024/4",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2025/",
+                    "observed_at": "",
+                    "original_value": "2024-09-01 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2025/",
+                    "rawExcerpt": "2024-09-01 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2025/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2024-09-02T11:59:59Z",
+                "aoe": "2024-09-01 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 4,
+                "track": "",
+                "comment": "ToSC 2025/1",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://fse.iacr.org/2025/",
+                    "observed_at": "",
+                    "original_value": "2024-11-22 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://fse.iacr.org/2025/",
+                    "rawExcerpt": "2024-11-22 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://fse.iacr.org/2025/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2024-11-23T11:59:59Z",
+                "aoe": "2024-11-22 23:59:59 AoE",
+                "tz_raw": "UTC-12"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "ica3pp",
+        "title": "ICA3PP",
+        "full_name": "International Conference on Algorithms and Architectures for Parallel Processing",
+        "acronym": "ICA3PP",
+        "categories": ["hpc"],
+        "rank": {
+          "ccf": "C",
+          "core": "C",
+          "thcpl": "N"
+        },
+        "link": "https://hpcn.exeter.ac.uk/ica3pp2026/",
+        "tags": [],
+        "sources": ["ccfddl"],
+        "dblp": "ica3pp",
+        "upstream_sub": "DS",
+        "identity": {
+          "dblpKey": "ica3pp",
+          "officialDomains": ["https://hpcn.exeter.ac.uk/ica3pp2026/"],
+          "sourceIds": {
+            "ccfddl": "DS/ica3pp"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "hpc",
+            "reason": "explicit-venue-rule"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2022,
+            "id": "ica3pp22",
+            "link": "https://ica3pp2022.compute.dtu.dk/",
+            "place": "Copenhagen, Denmark (Online)",
+            "date_text": "October 10-12, 2022",
+            "event_date_precision": "exact-range",
+            "event_start": "2022-10-10",
+            "event_end": "2022-10-12",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://ica3pp2022.compute.dtu.dk/"],
+              "sourceIds": {
+                "ccfddl": "ica3pp22"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://ica3pp2022.compute.dtu.dk/",
+                    "observed_at": "",
+                    "original_value": "2022-06-30 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://ica3pp2022.compute.dtu.dk/",
+                    "rawExcerpt": "2022-06-30 23:59:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://ica3pp2022.compute.dtu.dk/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2022-07-01T11:59:00Z",
+                "aoe": "2022-06-30 23:59:00 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          },
+          {
+            "year": 2023,
+            "id": "ica3pp23",
+            "link": "http://tjutanklab.com/ica3pp2023/",
+            "place": "Tianjin, China",
+            "date_text": "October 20-22, 2023",
+            "event_date_precision": "exact-range",
+            "event_start": "2023-10-20",
+            "event_end": "2023-10-22",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["http://tjutanklab.com/ica3pp2023/"],
+              "sourceIds": {
+                "ccfddl": "ica3pp23"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "http://tjutanklab.com/ica3pp2023/",
+                    "observed_at": "",
+                    "original_value": "2023-05-30 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "http://tjutanklab.com/ica3pp2023/",
+                    "rawExcerpt": "2023-05-30 23:59:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "http://tjutanklab.com/ica3pp2023/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-05-31T07:59:00Z",
+                "aoe": "2023-05-30 19:59:00 AoE",
+                "tz_raw": "UTC-8"
+              }
+            ]
+          },
+          {
+            "year": 2025,
+            "id": "ica3pp25",
+            "link": "https://ieee-cybermatics.org/2025/ica3pp/",
+            "place": "Zhengzhou, Henan, China",
+            "date_text": "October 30 - November 1, 2025",
+            "event_date_precision": "exact-range",
+            "event_start": "2025-10-30",
+            "event_end": "2025-11-01",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://ieee-cybermatics.org/2025/ica3pp/"],
+              "sourceIds": {
+                "ccfddl": "ica3pp25"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://ieee-cybermatics.org/2025/ica3pp/",
+                    "observed_at": "",
+                    "original_value": "2025-08-10 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://ieee-cybermatics.org/2025/ica3pp/",
+                    "rawExcerpt": "2025-08-10 23:59:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://ieee-cybermatics.org/2025/ica3pp/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2025-08-11T11:59:00Z",
+                "aoe": "2025-08-10 23:59:00 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "iss",
+        "title": "ISS",
+        "full_name": "ACM International Conference on Interactive Surfaces and Spaces",
+        "acronym": "ISS",
+        "categories": ["hci"],
+        "rank": {
+          "ccf": "B",
+          "core": "N",
+          "thcpl": "N"
+        },
+        "link": "https://iss.acm.org/2026/",
+        "tags": [],
+        "sources": ["ccfddl"],
+        "dblp": "tabletop",
+        "upstream_sub": "HI",
+        "identity": {
+          "dblpKey": "tabletop",
+          "officialDomains": ["https://iss.acm.org/2026/"],
+          "sourceIds": {
+            "ccfddl": "HI/iss"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "hci",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [],
+        "papers": []
+      },
+      {
+        "key": "systor",
+        "title": "SYSTOR",
+        "full_name": "ACM International Systems and Storage Conference",
+        "acronym": "SYSTOR",
+        "categories": ["systems"],
+        "rank": {
+          "ccf": "C",
+          "core": "N",
+          "thcpl": "N"
+        },
+        "link": "https://www.systor.org/",
+        "tags": [],
+        "sources": ["local", "ccfddl"],
+        "dblp": "systor",
+        "upstream_sub": "DS",
+        "identity": {
+          "dblpKey": "systor",
+          "officialDomains": ["https://www.systor.org/", "https://www.systor.org/2026/"],
+          "sourceIds": {
+            "ccfddl": "DS/systor",
+            "local": "systor"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "systems",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2024,
+            "id": "systor24",
+            "link": "https://www.systor.org/2024/",
+            "place": "Virtual",
+            "date_text": "September 23-24, 2024",
+            "event_date_precision": "exact-range",
+            "event_start": "2024-09-23",
+            "event_end": "2024-09-24",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://www.systor.org/2024/"],
+              "sourceIds": {
+                "ccfddl": "systor24"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://www.systor.org/2024/",
+                    "observed_at": "",
+                    "original_value": "2024-06-24 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.systor.org/2024/",
+                    "rawExcerpt": "2024-06-24 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.systor.org/2024/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2024-06-24T21:59:59Z",
+                "aoe": "2024-06-24 09:59:59 AoE",
+                "tz_raw": "UTC+2"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "tcc",
+        "title": "TCC",
+        "full_name": "Theory of Cryptography Conference",
+        "acronym": "TCC",
+        "categories": ["security"],
+        "rank": {
+          "ccf": "B",
+          "core": "A",
+          "thcpl": "B"
+        },
+        "link": "https://tcc.iacr.org/2026/",
+        "tags": [],
+        "sources": ["ccfddl"],
+        "dblp": "tcc",
+        "upstream_sub": "SC",
+        "identity": {
+          "dblpKey": "tcc",
+          "officialDomains": ["https://tcc.iacr.org/2026/"],
+          "sourceIds": {
+            "ccfddl": "SC/tcc"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "security",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2023,
+            "id": "tcc23",
+            "link": "https://tcc.iacr.org/2023/",
+            "place": "Taipei, Taiwan",
+            "date_text": "November 29 - December 2, 2023",
+            "event_date_precision": "exact-range",
+            "event_start": "2023-11-29",
+            "event_end": "2023-12-02",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://tcc.iacr.org/2023/"],
+              "sourceIds": {
+                "ccfddl": "tcc23"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://tcc.iacr.org/2023/",
+                    "observed_at": "",
+                    "original_value": "2023-06-01 15:00:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://tcc.iacr.org/2023/",
+                    "rawExcerpt": "2023-06-01 15:00:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://tcc.iacr.org/2023/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2023-06-01T19:00:00Z",
+                "aoe": "2023-06-01 07:00:00 AoE",
+                "tz_raw": "UTC-4"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "cscw",
+        "title": "CSCW",
+        "full_name": "ACM Conference on Computer Supported Cooperative Work and Social Computing",
+        "acronym": "CSCW",
+        "categories": ["hci"],
+        "rank": {
+          "ccf": "A",
+          "core": "A",
+          "thcpl": "A"
+        },
+        "link": "https://cscw.acm.org/2026/",
+        "tags": [],
+        "sources": ["ccfddl"],
+        "dblp": "cscw",
+        "upstream_sub": "HI",
+        "identity": {
+          "dblpKey": "cscw",
+          "officialDomains": ["https://cscw.acm.org/2026/"],
+          "sourceIds": {
+            "ccfddl": "HI/cscw"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "hci",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2022,
+            "id": "cscw22",
+            "link": "https://cscw.acm.org/2022/",
+            "place": "Virtual",
+            "date_text": "November 8-22, 2022",
+            "event_date_precision": "exact-range",
+            "event_start": "2022-11-08",
+            "event_end": "2022-11-22",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://cscw.acm.org/2022/"],
+              "sourceIds": {
+                "ccfddl": "cscw22"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "July 2021 cycle",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://cscw.acm.org/2022/",
+                    "observed_at": "",
+                    "original_value": "2021-07-15 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://cscw.acm.org/2022/",
+                    "rawExcerpt": "2021-07-15 23:59:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://cscw.acm.org/2022/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2021-07-16T11:59:00Z",
+                "aoe": "2021-07-15 23:59:00 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 2,
+                "track": "",
+                "comment": "January 2022 cycle",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://cscw.acm.org/2022/",
+                    "observed_at": "",
+                    "original_value": "2022-01-15 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://cscw.acm.org/2022/",
+                    "rawExcerpt": "2022-01-15 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://cscw.acm.org/2022/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2022-01-16T11:59:59Z",
+                "aoe": "2022-01-15 23:59:59 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "corl",
+        "title": "CoRL",
+        "full_name": "The Conference on Robot Learning",
+        "acronym": "CoRL",
+        "categories": ["ai"],
+        "rank": {
+          "ccf": "N",
+          "core": "N",
+          "thcpl": "N"
+        },
+        "link": "https://www.corl.org/",
+        "tags": ["machine-learning", "robotics"],
+        "sources": ["aideadlines", "ccfddl"],
+        "dblp": "corl",
+        "upstream_sub": "AI",
+        "identity": {
+          "dblpKey": "corl",
+          "officialDomains": ["https://www.corl.org/"],
+          "sourceIds": {
+            "aideadlines": "corl",
+            "ccfddl": "AI/corl"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "ai",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2025,
+            "id": "corl25",
+            "link": "https://www.corl.org/",
+            "place": "Seoul, South Korea",
+            "date_text": "September 27-30, 2025",
+            "event_date_precision": "exact-range",
+            "event_start": "2025-09-27",
+            "event_end": "2025-09-30",
+            "estimated": false,
+            "source": "aideadlines",
+            "identity": {
+              "officialUrls": ["https://www.corl.org/"],
+              "sourceIds": {
+                "aideadlines": "corl25"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://www.corl.org/",
+                    "observed_at": "",
+                    "original_value": "2025-04-30 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://www.corl.org/",
+                    "rawExcerpt": "2025-04-30 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://www.corl.org/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2025-05-01T11:59:59Z",
+                "aoe": "2025-04-30 23:59:59 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          },
+          {
+            "year": 2025,
+            "id": "corl25-ccfddl-corl25",
+            "link": "https://2025.corl.org/",
+            "place": "Seoul, Korea",
+            "date_text": "September 28-30, 2025",
+            "event_date_precision": "exact-range",
+            "event_start": "2025-09-28",
+            "event_end": "2025-09-30",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://2025.corl.org/"],
+              "sourceIds": {
+                "ccfddl": "corl25"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "abstract",
+                "label": "Abstract submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://2025.corl.org/",
+                    "observed_at": "",
+                    "original_value": "2025-04-23 23:59:00",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://2025.corl.org/",
+                    "rawExcerpt": "2025-04-23 23:59:00"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://2025.corl.org/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2025-04-24T11:59:00Z",
+                "aoe": "2025-04-23 23:59:00 AoE",
+                "tz_raw": "AoE"
+              },
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://2025.corl.org/",
+                    "observed_at": "",
+                    "original_value": "2025-04-30 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://2025.corl.org/",
+                    "rawExcerpt": "2025-04-30 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://2025.corl.org/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2025-05-01T11:59:59Z",
+                "aoe": "2025-04-30 23:59:59 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      },
+      {
+        "key": "cpal",
+        "title": "CPAL",
+        "full_name": "The Conference on Parsimony and Learning",
+        "acronym": "CPAL",
+        "categories": ["ai"],
+        "rank": {
+          "ccf": "N",
+          "core": "N",
+          "thcpl": "N"
+        },
+        "link": "https://cpal.cc/",
+        "tags": ["machine-learning"],
+        "sources": ["aideadlines", "ccfddl"],
+        "dblp": "cpal",
+        "upstream_sub": "AI",
+        "identity": {
+          "dblpKey": "cpal",
+          "officialDomains": ["https://cpal.cc/"],
+          "sourceIds": {
+            "aideadlines": "cpal",
+            "ccfddl": "AI/cpal"
+          }
+        },
+        "category_assignments": [
+          {
+            "category": "ai",
+            "reason": "source-subfield"
+          }
+        ],
+        "editions": [
+          {
+            "year": 2025,
+            "id": "cpal25",
+            "link": "https://cpal.cc/",
+            "place": "Stanford, USA",
+            "date_text": "March 24-27, 2025",
+            "event_date_precision": "exact-range",
+            "event_start": "2025-03-24",
+            "event_end": "2025-03-27",
+            "estimated": false,
+            "source": "aideadlines",
+            "identity": {
+              "officialUrls": ["https://cpal.cc/"],
+              "sourceIds": {
+                "aideadlines": "cpal25"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission deadline",
+                "round": 1,
+                "track": "",
+                "comment": null,
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "aideadlines",
+                    "source_url": "https://cpal.cc/",
+                    "observed_at": "",
+                    "original_value": "2024-11-25 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://cpal.cc/",
+                    "rawExcerpt": "2024-11-25 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://cpal.cc/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "aideadlines",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2024-11-26T11:59:59Z",
+                "aoe": "2024-11-25 23:59:59 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          },
+          {
+            "year": 2025,
+            "id": "cpal25-ccfddl-cpal25",
+            "link": "https://2025.cpal.cc/",
+            "place": "Stanford, California, USA",
+            "date_text": "March 25-27, 2025",
+            "event_date_precision": "exact-range",
+            "event_start": "2025-03-25",
+            "event_end": "2025-03-27",
+            "estimated": false,
+            "source": "ccfddl",
+            "identity": {
+              "officialUrls": ["https://2025.cpal.cc/"],
+              "sourceIds": {
+                "ccfddl": "cpal25"
+              }
+            },
+            "deadlines": [
+              {
+                "kind": "paper",
+                "label": "Paper submission",
+                "round": 1,
+                "track": "",
+                "comment": "Proceedings Track",
+                "status": "confirmed",
+                "selection_rule": "source_priority_then_nearest_within_configured_window",
+                "evidence": [
+                  {
+                    "source_name": "ccfddl",
+                    "source_url": "https://2025.cpal.cc/",
+                    "observed_at": "",
+                    "original_value": "2024-12-02 23:59:59",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "sourceUrl": "https://2025.cpal.cc/",
+                    "rawExcerpt": "2024-12-02 23:59:59"
+                  }
+                ],
+                "verification": {
+                  "official_url": "https://2025.cpal.cc/",
+                  "last_attempt_at": null,
+                  "last_verified_at": null,
+                  "next_check_at": "2026-10-11T12:38:58.000Z",
+                  "content_hash": null,
+                  "source_name": "ccfddl",
+                  "status": "manual-required",
+                  "source_class": "aggregator"
+                },
+                "precision": "exact",
+                "utc": "2024-12-03T11:59:59Z",
+                "aoe": "2024-12-02 23:59:59 AoE",
+                "tz_raw": "AoE"
+              }
+            ]
+          }
+        ],
+        "papers": []
+      }
+    ]
+  }
+}

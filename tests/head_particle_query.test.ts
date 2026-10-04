@@ -79,8 +79,12 @@ describe("助詞を後ろの語に繋げた打ち方が他の打ち方と同じ�
 describe("剥がないと決めた形（測つた断り）", () => {
   it("助詞だけで立つ語は第 458 回の侭（語その物を打った人の当たりを変へない）", () => {
     /* 前に語が在る時だけ剥ぐ – 語の頭で立つ助詞は其侭残る。 */
-    expect(列("の").size).toBe(174);
-    expect(列("の 締切").size).toBe(150);
+    // 都市名の日本語表記が増えても、単独の助詞を落とさず文字通りに照合する。
+    const literalNo = new Set(品.filter((row) => /[のノ]/u.test(row.normalize("NFKC"))));
+    expect(literalNo.size).toBeGreaterThan(0);
+    expect(literalNo.size).toBeLessThan(new Set(品).size);
+    expect(列("の")).toEqual(literalNo);
+    expect(列("の 締切")).toEqual(new Set([...literalNo].filter((row) => row.includes("締切"))));
     expect(列("ml で").size).toBe(18);
     /* 前に語が無いので剥がない – 助詞が前に付いた打ち方も 0 行の侭（寄せない）。 */
     expect(列("の締切").size).toBe(0);

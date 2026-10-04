@@ -19,10 +19,11 @@
 import fs from "node:fs";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 
 const AT = Date.parse("2026-08-09T00:00:00Z");
 const 品書 = Recommender.candidateRows(
-  JSON.parse(fs.readFileSync("data/snapshot.json", "utf8")) as never,
+  JSON.parse(fs.readFileSync(queryReferenceSnapshotPath(), "utf8")) as never,
 ) as unknown as Array<{ hay: string }>;
 const 畳 = (x: unknown) => String(x).normalize("NFKC").toLowerCase();
 function 當る(q: string): string[] {
