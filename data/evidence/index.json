@@ -40,7 +40,9 @@
       "bytes": 15133,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "0897bd33c86b3a97f0021ccac945af4a870fc246915caef34644da738dd9117b": {
@@ -52,8 +54,7 @@
         "data/promotions/2026-08-31-dac-2027/observations.jsonl",
         "data/promotions/2026-08-31-dac-2027/resolutions.json",
         "data/snapshot.json",
-        "data/source-snapshots/local.json",
-        "data/verification-ledger.json"
+        "data/source-snapshots/local.json"
       ]
     },
     "102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1": {
@@ -73,28 +74,52 @@
       "bytes": 70624,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "24a85164b842fa0b7b5f98c75e1fa9dfa8851372f73571cbe2de94dc9141dd2d": {
       "bytes": 13714,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
+      ]
+    },
+    "25ddda7467fd4e6d3c3db4c34c29d969c1db6f718904d4622d03725fed6b3a4d": {
+      "bytes": 9788,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/reverification-resolutions.json",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "2710171d2ee3d422ec6bb0842872cac5add2e18259de3da70b4e6d7d00b190aa": {
       "bytes": 9789,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json"
+      ]
+    },
+    "2981c7fce2be3dd37b2155a3f694777840792198b91bf12ceeca5b2ef30ffac1": {
+      "bytes": 5490,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "313329e1b1243fb8c8297930dd410fccd368943906e10b6493354439916f6027": {
       "bytes": 34667,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "38a8af2993bbd2ba098fb730a561987253b4634a01315c18678d2eaded00674f": {
@@ -126,7 +151,9 @@
       "bytes": 72106,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "4a41e3acf4f8e5be14c218b8abc2b31d5c4fbbbaf2728f88072051365e79bcbd": {
@@ -140,7 +167,9 @@
       "bytes": 8442,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "5f77a214d1a00f47dc38b70a6353936b9cdaa48ae320bf0da72bdc1b389d8759": {
@@ -215,6 +244,14 @@
         "data/source-snapshots/local.json"
       ]
     },
+    "7ed48896bebaa2aa8577ef323538500f2b9bba99db872f8c0469decc303f5c1b": {
+      "bytes": 326007,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/snapshot.json",
+        "data/verification-ledger.json"
+      ]
+    },
     "8646e62b7b863709f586c7d12b76ce187fcdf1845049828bc421da61e6c389c7": {
       "bytes": 384948,
       "content_type": "application/octet-stream",
@@ -224,7 +261,14 @@
         "data/promotions/2026-08-31-tsc-llm-service-ecosystems-2027/observations.jsonl",
         "data/promotions/2026-08-31-tsc-llm-service-ecosystems-2027/resolutions.json",
         "data/snapshot.json",
-        "data/source-snapshots/local.json",
+        "data/source-snapshots/local.json"
+      ]
+    },
+    "8743dcc6adfd7877380eee2c215250045b5b0ada1f7499ce504f98d22e2002ab": {
+      "bytes": 391807,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -233,7 +277,8 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/evidence/reviews/cpal-2025.json",
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json"
       ]
     },
     "8a48e8e43a6e07457730db37f0171ff7779b6510f22467b05fdcb1774e3f806c": {
@@ -266,7 +311,18 @@
       "bytes": 71805,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
+      ]
+    },
+    "b49b9b1572db96b04c83c1f57208366d0c5d6e573809a54c271e1a0b0031eee3": {
+      "bytes": 39462,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/reverification-resolutions.json",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "b8eaad25f2fd07862684f630e200c51d94564ba54e0658905bed0456748de3dc": {
@@ -280,7 +336,9 @@
       "bytes": 300426,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "c7d9a6de6f77a7ff281702ac593e813fd86aee5f4a66c6a9f40c6478852a4ac3": {
@@ -340,7 +398,8 @@
       "bytes": 25325,
       "content_type": "application/octet-stream",
       "references": [
-        "data/evidence/reviews/recovered-captures-20261004.json"
+        "data/evidence/reviews/recovered-captures-20261004.json",
+        "data/snapshot.json"
       ]
     },
     "efb31692c1c015580f9a41fac2a74666c580e3e7d2701f1d9021934e49ae7714": {
@@ -351,6 +410,7 @@
         "data/promotions/2026-08-31-arc-2027/manifest.json",
         "data/promotions/2026-08-31-arc-2027/observations.jsonl",
         "data/promotions/2026-08-31-arc-2027/resolutions.json",
+        "data/reverification-resolutions.json",
         "data/snapshot.json",
         "data/source-snapshots/local.json",
         "data/verification-ledger.json"
@@ -360,7 +420,9 @@
       "bytes": 651432,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "fb70f78d0d5bdccbe8acd308296ce0c3db2a90a8672b57178bfc490f74385dc4": {
