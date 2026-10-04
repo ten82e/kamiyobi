@@ -30,7 +30,6 @@ it("ラウンドの R 表記が、別の周目の行を混ぜない（SPEC §7�
     "const now = Date.parse('2026-08-09T00:00:00Z');",
     "const rows = Recommender.candidateRows(DATA, now);",
     "const match = (q) => Recommender.searchMatcher(q, now);",
-    "const hit = (r, q) => match(q)(r.hay);",
     "const round = (r) => Number((r.dl && r.dl.round) || 0);",
     // 規則の直接検査: 末尾が数字の語は右も閉じ、英字で終わる語は語頭だけ開く。
     "  const digits = {",
@@ -48,13 +47,18 @@ it("ラウンドの R 表記が、別の周目の行を混ぜない（SPEC §7�
     // 収録全体: 周目の数だけ、それぞれの R 表記がその周目の行にだけ当たることを見る。
     "  const seen = {};",
     "  for (const r of rows) { const n = round(r); if (n > 0) seen[n] = (seen[n] || 0) + 1; }",
-    "  const perRound = Object.keys(seen).map(Number).sort((a, b) => a - b).map((n) => ({",
+    // 画面と同じく検索式はクエリごとに一度だけ作り、収録全行に適用する。
+    "  const perRound = Object.keys(seen).map(Number).sort((a, b) => a - b).map((n) => {",
+    "    const english = match('R' + n);",
+    "    const japanese = match('第 ' + n + ' ラウンド');",
+    "    return ({",
     "    n,",
     "    present: seen[n],",
-    "    hits: rows.filter((r) => hit(r, 'R' + n)).length,",
-    "    wrong: rows.filter((r) => hit(r, 'R' + n) && round(r) !== n).length,",
-    "    ja: rows.filter((r) => hit(r, '第 ' + n + ' ラウンド')).length,",
-    "  }));",
+    "    hits: rows.filter((r) => english(r.hay)).length,",
+    "    wrong: rows.filter((r) => english(r.hay) && round(r) !== n).length,",
+    "    ja: rows.filter((r) => japanese(r.hay)).length,",
+    "    });",
+    "  });",
     "  console.log(JSON.stringify({ digits, letters, perRound, total: rows.length }));",
     "})();",
   ].join("\n");
@@ -62,7 +66,7 @@ it("ラウンドの R 表記が、別の周目の行を混ぜない（SPEC §7�
     encoding: "utf8",
     timeout: 180_000,
   });
-  expect(proc.status, proc.stderr).toBe(0);
+  expect(proc.status, proc.error?.message || proc.stderr).toBe(0);
   const out = JSON.parse(proc.stdout) as {
     digits: Record<string, boolean>;
     letters: Record<string, boolean>;
