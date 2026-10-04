@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -12,6 +11,7 @@ import {
   verificationLabelsSource,
 } from "./built_golden_shared.ts";
 import { NOW, REPO_ROOT, runCli, tempWork } from "./helpers.ts";
+import { spawnScript as spawnSync } from "./node_script.ts";
 import { jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
 it("ラウンドの R 表記が、別の周目の行を混ぜない（SPEC §7）", () => {

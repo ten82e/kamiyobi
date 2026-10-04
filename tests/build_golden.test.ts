@@ -2,7 +2,6 @@
  * End-to-end build from tests/fixtures/ only: SPEC.md sections 4 and 8.
  */
 
-import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -74,6 +73,7 @@ import {
   tempWork,
   utc,
 } from "./helpers.ts";
+import { spawnScript as spawnSync } from "./node_script.ts";
 import { deadlineHintFunction, jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
 it("healthReport separates future confirmed and estimated values", () => {

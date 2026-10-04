@@ -130,9 +130,7 @@ describe("data-delta recommendation benchmark", () => {
 });
 
 describe("required frozen semantic features", () => {
-  it("checks immutable feature inputs before evaluating a changed production venue pool", {
-    timeout: 60000,
-  }, async () => {
+  it("checks immutable feature inputs before evaluating a changed production venue pool", async () => {
     const baseline = JSON.parse(
       readFileSync(join(REPO_ROOT, "data/benchmarks/real-paper-feature-baseline.json"), "utf8"),
     );

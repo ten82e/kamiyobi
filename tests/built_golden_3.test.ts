@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
@@ -22,6 +21,7 @@ import {
   tempWork,
   utc,
 } from "./helpers.ts";
+import { spawnScript as spawnSync } from "./node_script.ts";
 import {
   jsFunction,
   liveNoteSource,

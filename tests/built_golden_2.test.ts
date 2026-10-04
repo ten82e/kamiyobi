@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -12,6 +11,7 @@ import {
   siteHtmlRuntime,
 } from "./built_golden_shared.ts";
 import { REPO_ROOT, runCli, tempWork } from "./helpers.ts";
+import { spawnScript as spawnSync } from "./node_script.ts";
 import { jsFunction, liveNoteSource, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
 it("相対週が実カタログで其の週 7 日と同じ行を出し、暦日でも引ける（SPEC §7）", () => {
