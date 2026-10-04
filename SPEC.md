@@ -206,6 +206,7 @@ kamiyobi/
 │   └── runtime.d.ts             # ブラウザ・生成データの型境界
 ├── scripts/
 │   ├── compare-head.ts          # snapshot / primary_overrides の実質差分
+│   ├── update-data-pr-body.ts    # 完全診断を保持しつつGitHubのPR本文上限内に要約
 │   ├── clean_tmp.ts              # 検査の使い捨て目録を掃く（一時間より古い物だけ）
 │   ├── health-gate.ts           # 直近の健全な公開結果との配信前健全性ゲート
 │   ├── generate-curated.ts      # promotion 正典から local 正典を再生成
