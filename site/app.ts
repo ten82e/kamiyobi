@@ -1,6 +1,6 @@
 import { loadPublishedRecommendation } from "./publish.js";
+import Recommender from "./recommendation.js";
 import { type RecommendationAxes, recommendationAxes } from "./recommendation-core.js";
-import Recommender from "./recommender.js";
 import {
   assignShareIdentities,
   consolidateReviewedSubmissions,

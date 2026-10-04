@@ -82,6 +82,7 @@ export const SITE_RUNTIME_FILES = [
   "topic-aliases.js",
   "latin-retype.js",
   "recommendation-core.js",
+  "recommendation.js",
   "publish.js",
   "app.js",
   "submission-identity.js",
@@ -385,6 +386,8 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
   "latin-retype.js":
     "site/latin-retype.ts から生成する、欧文の語を一字違ひに打った人へ收錄の綴りを見當として出す表" +
     "（`recommender.js` が import する。搜しは廣げん – 打ち手の提案だけ）。",
+  "recommendation.js":
+    "語の一致だけで推薦する際に、指定した掲載先と分野名だけの誤一致を区別する共有処理。",
   "recommendation-core.js":
     "site/recommendation-core.ts から生成する共有の推薦軸。画面もビルド側も同じ軸を読む" +
     "（`src/build.ts` が読み込んでいる）。",

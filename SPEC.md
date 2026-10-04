@@ -15897,3 +15897,9 @@ existing migration schema and is emitted only while its target slot exists.
 A malformed entry is rejected; the health gate still verifies changed values.
 The WSDM 2027 short-paper transition binds its original exact instant and official
 track CFP, correcting the aggregator's round-2 label without inventing a deadline.
+
+### 公開時の初回snapshotと語彙推薦の互換性
+
+- SIGMOD 2026の合同会期「May 31-June 5, 2026」と個別日程「May 31 and June 2-4, 2026」は出典の原文をそのまま保持する。個別日程のreviewを別の原文へ付けず、分割日程はparseEventSegmentsで解析する。過去の開催年・原文・会期や検証基準を書き換えてCIを通さない。
+- site/recommendation.tsはブラウザとベンチマークが共有する語彙fallback方針。入力のタイトル/keywordsに会議のkeyが単独で指定された場合、元のスコア・confidenceを変えず該当候補を優先する。部分一致・分野名は指定と見なさず、カテゴリ以外のfield根拠も主題根拠もない短い名称の誤一致は棄権する。
+- fielded/semantic推薦のスコア・固定feature artifactは従来通り。回帰評価の正解・閾値・heldoutによるモデル選択は変更しない。

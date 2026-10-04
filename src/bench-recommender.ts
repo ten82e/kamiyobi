@@ -41,7 +41,7 @@ import {
 } from "./embeddings.ts";
 import { semanticContentIdForArtifacts } from "./semantic-content.ts";
 
-const Recommender = (await import("../site/recommender.ts")).default;
+const Recommender = (await import("../site/recommendation.ts")).default;
 type PaperLine = ReturnType<typeof Recommender.parsePaperLines>[number];
 type VenueRecommendation = ReturnType<typeof Recommender.venueRecommendations>[number];
 

@@ -17,6 +17,7 @@
     "topic-aliases.ts",
     "latin-retype.ts",
     "recommendation-core.ts",
+    "recommendation.ts",
     "publish.ts",
     "runtime.d.ts"
   ]

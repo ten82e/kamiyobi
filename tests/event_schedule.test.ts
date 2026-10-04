@@ -89,6 +89,42 @@ describe("evidence-bound event schedules", () => {
     const patched = applyOverrides(conferencesFromJson(missing), wasaOverride());
     expect(patched[0].editions).toEqual([]);
   });
+  it("keeps each SIGMOD 2026 source schedule intact on cold and warm snapshot paths", () => {
+    const overrides = load(readFileSync("data/overrides.yaml", "utf8")) as Record<string, unknown>;
+    for (const date_text of ["May 31-June 5, 2026", "May 31 and June 2-4, 2026"]) {
+      const original = {
+        conferences: [
+          {
+            key: "sigmod",
+            title: "SIGMOD",
+            categories: ["db"],
+            editions: [
+              {
+                id: "sigmod26",
+                year: 2026,
+                date_text,
+                event_start: date_text.includes(" and ") ? null : "2026-05-31",
+                event_end: date_text.includes(" and ") ? null : "2026-06-05",
+                deadlines: [],
+              },
+            ],
+          },
+        ],
+      };
+      const source = conferencesFromJson(original);
+      const output = toJson(applyOverrides(source, overrides), {}, new Date("2026-08-09"));
+      const actual = (
+        output.conferences as Array<{ editions: Array<Record<string, unknown>> }>
+      )[0].editions.find((ed) => ed.id === "sigmod26")!;
+      expect(actual.date_text).toBe(date_text);
+      expect(actual.year).toBe(2026);
+      expect(actual.event_review).toBeUndefined();
+      expect(validateData(output).errors).toEqual([]);
+      expect(actual.event_date_precision).toBe(
+        date_text.includes(" and ") ? "split-dates" : "exact-range",
+      );
+    }
+  });
   it("keeps the nominal edition year and actual held year separate", () => {
     expect(validateData(payload(edition)).errors).toEqual([]);
     expect(validateData(payload({ ...edition, event_review: undefined })).errors).toEqual(

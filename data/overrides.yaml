@@ -386,23 +386,9 @@ conferences:
 
   sigmod:
     editions:
-      # 根拠: https://2026.sigmod.org/sigmod_program_overview.shtml (2026-10-02確認)。
-      # SIGMODの日程のみ。PODS 6/1や合同会議全体の5/31-6/5に広げない。
-      sigmod26:
-        id: sigmod26
-        year: 2026
-        date_text: 'May 31 and June 2-4, 2026'
-        event_review:
-          edition_id: sigmod26
-          source_date_text: 'May 31 and June 2-4, 2026'
-          source_start: '2026-05-31'
-          source_end: '2026-06-04'
-          source_url: https://2026.sigmod.org/sigmod_program_overview.shtml
-          reviewed_on: '2026-10-02'
-          note: '公式プログラムの5月31日ワークショップと6月2-4日本会議を確認。上流のSIGMOD範囲を保持し、PODSや合同会議全体と混同しない。'
-        event_segments:
-          - {start: '2026-05-31', end: '2026-05-31', label: 'ワークショップ'}
-          - {start: '2026-06-02', end: '2026-06-04', label: '本会議'}
+      # SIGMOD 2026 は出典により合同会期と個別日程が異なる。固定したreviewを
+      # 別の原文へ移さず、各sourceのdate_textとparseEventSegmentsの結果を保持する。
+      # https://2026.sigmod.org/sigmod_program_overview.shtml
       2023:
         date_text: June 18-23, 2023
         event_start: '2023-06-18'
