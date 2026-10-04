@@ -227,6 +227,16 @@ function configuredIdentity(conf: Conference, config: Record<string, unknown>): 
     if (matches)
       return {
         ...configured,
+        ...(Array.isArray((value as Record<string, unknown>).legacy_keys)
+          ? {
+              legacy_keys: unique([
+                ...(configured.legacy_keys ?? []),
+                ...toStringArray((value as Record<string, unknown>).legacy_keys)
+                  .map(slug)
+                  .filter(Boolean),
+              ]),
+            }
+          : {}),
         identity: mergeVenueIdentity([configured.identity, { venueId }]),
       };
   }
@@ -821,6 +831,17 @@ function fillEdition(target: Edition, other: Edition): void {
     target.event_start = other.event_start;
   if (!target.event_segments?.length && !target.event_end && other.event_end)
     target.event_end = other.event_end;
+  if (!target.event_date_precision && other.event_date_precision)
+    target.event_date_precision = other.event_date_precision;
+  if (
+    target.event_start &&
+    target.event_end &&
+    target.event_start.getTime() > target.event_end.getTime()
+  ) {
+    const tmp = target.event_start;
+    target.event_start = target.event_end;
+    target.event_end = tmp;
+  }
   if (!target.event_segments && target.date_text === other.date_text && other.event_segments)
     target.event_segments = other.event_segments;
   if (!target.event_review && target.date_text === other.date_text && other.event_review)

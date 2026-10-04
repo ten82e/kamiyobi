@@ -1,9 +1,8 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { generateCurated } from "../scripts/generate-curated.ts";
 import { observeCfp } from "../scripts/observe-cfp.ts";
 import type { Conference } from "../src/model.ts";
@@ -21,7 +20,7 @@ import {
   verifyPromotionObservation as verifyPromotionObservationAt,
   writePromotionBatch as writePromotionBatchAt,
 } from "../src/promotion.ts";
-import { makeConference, makeDeadline, makeEdition, REPO_ROOT } from "./helpers.ts";
+import { makeConference, makeDeadline, makeEdition, REPO_ROOT, tempWork } from "./helpers.ts";
 
 /* 検査は実行時の時計に依存させない。`resolvePromotion` の既定の現在時刻は `new Date()` で、
  * ここに書いた fixture の締切（2026-09・2026-10・2027-01）は現実の日付が過ぎた瞬間に
@@ -81,7 +80,7 @@ const evidence = {
 
 const capturedBody =
   "Paper deadline: January 2, 2027 23:59 AoE\nNotification: January 3, 2027 23:59 AoE";
-const capturedBodyPath = join(mkdtempSync(join(tmpdir(), "kamiyobi-promotion-body-")), "cfp.html");
+const capturedBodyPath = join(tempWork("kamiyobi-promotion-body-"), "cfp.html");
 writeFileSync(capturedBodyPath, capturedBody);
 const capturedHash = createHash("sha256").update(capturedBody).digest("hex");
 evidence.contentHash = capturedHash;
@@ -138,6 +137,35 @@ function observation(overrides: Partial<PromotionObservation> = {}): PromotionOb
 }
 
 describe("promotion batch", () => {
+  it("distinguishes Japanese abstract submission labels from manuscript deadlines (#796)", () => {
+    for (const label of ["要旨締切", "要旨提出", "要旨の提出期限", "要旨〆切"]) {
+      const [got] = extractCfpCandidates(`${label}: 2026年5月1日`);
+      expect(got, label).toMatchObject({ kind: "abstract", date: "2026-05-01" });
+      expect(got?.time, label).toBeUndefined();
+      expect(got?.timezone, label).toBeUndefined();
+    }
+    expect(extractCfpCandidates("要旨提出開始: 2026年5月1日")).toEqual([]);
+    expect(extractCfpCandidates("要旨を含む原稿投稿締切: 2026年6月1日")).toMatchObject([
+      { kind: "paper", date: "2026-06-01" },
+    ]);
+    for (const text of [
+      "要旨締切: 2026年5月1日; 原稿投稿締切: 2026年6月1日",
+      "原稿投稿締切: 2026年6月1日; 要旨提出: 2026年5月1日",
+    ]) {
+      expect(
+        extractCfpCandidates(text)
+          .map(({ kind, date }) => ({ kind, date }))
+          .sort((a, b) => String(a.date).localeCompare(String(b.date))),
+      ).toEqual([
+        { kind: "abstract", date: "2026-05-01" },
+        { kind: "paper", date: "2026-06-01" },
+      ]);
+    }
+    expect(extractCfpCandidates("要旨提出\n2026年5月1日")).toMatchObject([
+      { kind: "abstract", date: "2026-05-01" },
+    ]);
+  });
+
   it("extracts notification and camera-ready dates across inline markup", () => {
     expect(
       extractCfpCandidates(
@@ -920,6 +948,35 @@ describe("promotion batch", () => {
     expect(regularCandidate).not.toHaveProperty("track");
   });
 
+  it("判定は実行時の時計を変えても変わらない（`--now` と同じ時刻で再現する）", () => {
+    /* fixture の締切は 2026-09・2027-01 で、実行時の時計に任せた判定は現実の日付が過ぎた
+     * 瞬間に promote から hold へ変わった（2026-09-24 に 13 件が落ちた）。時刻の引き継ぎを
+     * 一か所でも忘れると同じ症状が戻るため、時計を未来へ動かして確かめる。 */
+    vi.useFakeTimers({ toFake: ["Date"], now: Date.parse("2028-05-05T00:00:00.000Z") });
+    try {
+      expect(resolvePromotion(observation()).decision).toBe("promote");
+      const dir = tempWork("kamiyobi-promotion-clock-");
+      const observations = join(dir, "observations.jsonl");
+      writeFileSync(observations, `${JSON.stringify(observation())}\n`);
+      const resolutions = writePromotionBatch(
+        observations,
+        join(dir, "resolutions.json"),
+        join(dir, "manifest.json"),
+      );
+      expect(resolutions[0]?.decision, "バッチの判定が実行時の時計で変わった").toBe("promote");
+      const badNow = spawnSync(
+        "node",
+        ["scripts/promote-candidates.ts", observations, "--now", "明日"],
+        { cwd: REPO_ROOT, encoding: "utf8" },
+      );
+      expect(badNow.status, "不正な --now を通した").toBe(2);
+      expect(badNow.stderr).toContain("--now needs a valid date-time value");
+      rmSync(dir, { recursive: true, force: true });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("requires explicit venue and category review before promotion", () => {
     expect(resolvePromotion(observation({ reviewState: undefined })).decision).toBe("hold");
     expect(resolvePromotion(observation({ categories: [] })).decision).toBe("hold");
@@ -1343,10 +1400,7 @@ describe("promotion batch", () => {
     ).toBe("hold");
     expect(resolvePromotion(observation({ eventEndDate: undefined })).decision).toBe("hold");
     const previousYearBody = "Paper deadline: January 2, 2026 23:59 UTC";
-    const previousYearBodyPath = join(
-      mkdtempSync(join(tmpdir(), "kamiyobi-promotion-previous-year-")),
-      "cfp.html",
-    );
+    const previousYearBodyPath = join(tempWork("kamiyobi-promotion-previous-year-"), "cfp.html");
     writeFileSync(previousYearBodyPath, previousYearBody);
     const previousYearHash = createHash("sha256").update(previousYearBody).digest("hex");
     const previousYearDeadline = resolvePromotion(
@@ -1390,7 +1444,7 @@ describe("promotion batch", () => {
   });
 
   it("writes byte-identical isolated batch artifacts and verifies JSONL files", () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-"));
+    const dir = tempWork("kamiyobi-promotion-");
     const observations = join(dir, "observations.jsonl");
     writeFileSync(
       observations,
@@ -1444,7 +1498,7 @@ describe("promotion batch", () => {
     const generated = join(dir, "generated");
     const promoted = spawnSync(
       "node",
-      ["scripts/promote-candidates.ts", observations, "--now", PROMOTION_CLOCK, "--out", generated],
+      ["scripts/promote-candidates.ts", observations, "--out", generated, "--now", PROMOTION_CLOCK],
       { cwd: REPO_ROOT, encoding: "utf8" },
     );
     expect(promoted.status).toBe(0);
@@ -1458,10 +1512,10 @@ describe("promotion batch", () => {
       [
         "scripts/promote-candidates.ts",
         observations,
-        "--now",
-        PROMOTION_CLOCK,
         "--existing",
         join(REPO_ROOT, "data/snapshot.json"),
+        "--now",
+        PROMOTION_CLOCK,
       ],
       { cwd: REPO_ROOT, encoding: "utf8" },
     );
@@ -1470,7 +1524,7 @@ describe("promotion batch", () => {
   });
 
   it("does not verify a replacement batch against its stale output manifest", () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-replace-"));
+    const dir = tempWork("kamiyobi-promotion-replace-");
     const observations = join(dir, "observations.jsonl");
     const resolutions = join(dir, "resolutions.json");
     const manifest = join(dir, "manifest.json");
@@ -1516,7 +1570,7 @@ describe("promotion batch", () => {
   });
 
   it("does not rewrite batch files when replacement validation throws", () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-invalid-replace-"));
+    const dir = tempWork("kamiyobi-promotion-invalid-replace-");
     const observations = join(dir, "observations.jsonl");
     const resolutions = join(dir, "resolutions.json");
     const manifest = join(dir, "manifest.json");
@@ -1536,8 +1590,8 @@ describe("promotion batch", () => {
   });
 
   it("relocates a flat capture when the CLI writes to another directory", () => {
-    const sourceDir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-flat-source-"));
-    const outDir = join(mkdtempSync(join(tmpdir(), "kamiyobi-promotion-flat-out-")), "batch");
+    const sourceDir = tempWork("kamiyobi-promotion-flat-source-");
+    const outDir = join(tempWork("kamiyobi-promotion-flat-out-"), "batch");
     const bodyPath = join(sourceDir, "capture.body");
     writeFileSync(bodyPath, capturedBody);
     const { bodyPath: _ignored, ...flatCapture } = defaultCapture;
@@ -1554,12 +1608,12 @@ describe("promotion batch", () => {
       [
         "scripts/promote-candidates.ts",
         source,
-        "--now",
-        PROMOTION_CLOCK,
         "--out",
         outDir,
         "--existing",
         join(sourceDir, "missing.json"),
+        "--now",
+        PROMOTION_CLOCK,
       ],
       { cwd: REPO_ROOT, encoding: "utf8" },
     );
@@ -1572,7 +1626,7 @@ describe("promotion batch", () => {
   });
 
   it("does not rewrite CLI batch files when validation throws", () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-cli-invalid-"));
+    const dir = tempWork("kamiyobi-promotion-cli-invalid-");
     const source = join(dir, "invalid.jsonl");
     const outDir = join(dir, "batch");
     const files = ["observations.jsonl", "resolutions.json", "manifest.json"];
@@ -1593,12 +1647,12 @@ describe("promotion batch", () => {
       [
         "scripts/promote-candidates.ts",
         source,
-        "--now",
-        PROMOTION_CLOCK,
         "--out",
         outDir,
         "--existing",
         join(dir, "missing.json"),
+        "--now",
+        PROMOTION_CLOCK,
       ],
       { cwd: REPO_ROOT, encoding: "utf8" },
     );
@@ -1609,7 +1663,7 @@ describe("promotion batch", () => {
   });
 
   it("captures a deterministic body and verifies hash, excerpt, domain, extraction, and freshness", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-cfp-"));
+    const dir = tempWork("kamiyobi-cfp-");
     const bodyPath = join(dir, "nested", "body.html");
     const body = "<h1>ExampleConf 2027</h1>\n<p>Paper deadline: January 2, 2027 23:59 AoE</p>";
     await expect(
@@ -1704,7 +1758,7 @@ describe("promotion batch", () => {
   });
 
   it("rejects altered, missing, injected, and manifest-mismatched CFP evidence", () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-cfp-evidence-"));
+    const dir = tempWork("kamiyobi-cfp-evidence-");
     const bodyPath = join(dir, "cfp.html");
     writeFileSync(bodyPath, capturedBody);
     const capture = { ...defaultCapture, bodyPath };
@@ -1840,7 +1894,7 @@ describe("promotion batch", () => {
   });
 
   it("does not rewrite curated data from a semantically altered resolution", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-curated-semantic-tamper-"));
+    const root = tempWork("kamiyobi-curated-semantic-tamper-");
     const dataDir = join(root, "data");
     const batchDir = join(dataDir, "promotions", "batch");
     mkdirSync(batchDir, { recursive: true });
@@ -1880,7 +1934,7 @@ describe("promotion batch", () => {
   });
 
   it("rejects deleting an applied add-new-edition decision", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-curated-canonical-deletion-"));
+    const root = tempWork("kamiyobi-curated-canonical-deletion-");
     const dataDir = join(root, "data");
     const batchDir = join(dataDir, "promotions", "batch");
     mkdirSync(batchDir, { recursive: true });
@@ -1963,7 +2017,7 @@ describe("promotion batch", () => {
     });
 
     it("verifyBatch returns resolutions with valid resolution_id (#750)", () => {
-      const dir = mkdtempSync(join(tmpdir(), "kamiyobi-verify-batch-"));
+      const dir = tempWork("kamiyobi-verify-batch-");
       const obsPath = join(dir, "observations.jsonl");
       writeFileSync(obsPath, `${JSON.stringify(observation())}\n`);
       const resolutions = verifyBatch(obsPath);
@@ -1973,7 +2027,7 @@ describe("promotion batch", () => {
     });
 
     it("writePromotionBatch does not overwrite manifest decisions for multiple resolutions with same candidate (#750)", () => {
-      const dir = mkdtempSync(join(tmpdir(), "kamiyobi-manifest-decisions-"));
+      const dir = tempWork("kamiyobi-manifest-decisions-");
       const obsPath = join(dir, "observations.jsonl");
       const resPath = join(dir, "resolutions.json");
       const manifestPath = join(dir, "manifest.json");
@@ -2023,7 +2077,7 @@ describe("promotion batch", () => {
       const body =
         "Round 1 paper deadline: January 2, 2027 23:59 AoE\n" +
         "Round 2 paper deadline: June 1, 2027 23:59 AoE";
-      const dir = mkdtempSync(join(tmpdir(), "kamiyobi-promotion-round-"));
+      const dir = tempWork("kamiyobi-promotion-round-");
       const bodyPath = join(dir, "cfp.html");
       writeFileSync(bodyPath, body);
       const hash = createHash("sha256").update(body).digest("hex");
@@ -2073,4 +2127,103 @@ describe("promotion batch", () => {
       rmSync(dir, { recursive: true, force: true });
     });
   });
+});
+
+describe("explicit timezone and workshop extraction regressions", () => {
+  it("keeps explicit Japanese-time CFP clocks and never invents missing precision", () => {
+    // Official INTERACTION 2026 schedule: https://www.interaction-ipsj.org/2026/submissions/
+    // Historical date is kept exactly as published, without borrowing the edition year.
+    expect(extractCfpCandidates("投稿〆切：2025/10/14(火) 日本時間22:00")).toMatchObject([
+      { kind: "paper", date: "2025-10-14", time: "22:00:00", timezone: "日本時間" },
+    ]);
+    for (const name of [
+      "Japan Standard Time",
+      "Anywhere on Earth",
+      "anywhere on the earth",
+      "Anywhere on inhabited Earth",
+    ]) {
+      expect(extractCfpCandidates(`Paper deadline: May 15, 2026 23:59 ${name}`)).toMatchObject([
+        {
+          kind: "paper",
+          date: "2026-05-15",
+          time: "23:59:00",
+          timezone: name.startsWith("Japan") ? "Japan Standard Time" : name,
+        },
+      ]);
+    }
+    const dateOnly = extractCfpCandidates("投稿締切：2026年5月15日 日本時間")[0];
+    expect(dateOnly).toMatchObject({ date: "2026-05-15", timezone: "日本時間" });
+    expect(dateOnly.time).toBeUndefined();
+    expect(
+      extractCfpCandidates("Paper deadline: May 15, 2026 23:59; conference in Japan")[0].timezone,
+    ).toBeUndefined();
+  });
+
+  it("distinguishes workshop proposals, explicit papers, registration and doctoral consortium (#824)", () => {
+    // Labels are controlled variants informed by CHI's separate organizer/participant submissions,
+    // not copied deadlines: https://chi2025.acm.org/for-authors/workshops/
+    for (const [label, kind] of [
+      ["Workshop deadline", "other"],
+      ["Workshops submission deadline", "other"],
+      ["Workshop proposal deadline", "other"],
+      ["Doctoral consortium submission deadline", "other"],
+      ["Workshop paper submission deadline", "paper"],
+      ["Workshop position papers due", "paper"],
+      ["Workshop manuscript deadline", "paper"],
+      ["Workshop registration deadline", "registration"],
+      ["Workshop abstract deadline", "abstract"],
+      ["Workshop notification deadline", "notification"],
+      ["Workshop camera-ready deadline", "camera_ready"],
+    ]) {
+      const rows = extractCfpCandidates(`${label}: May 15, 2026`);
+      expect(rows, label).toMatchObject([{ kind, date: "2026-05-15" }]);
+      expect(rows[0].time).toBeUndefined();
+      expect(rows[0].timezone).toBeUndefined();
+    }
+  });
+});
+
+it("keeps workshop, paper and registration labels local in compound CFP lines", () => {
+  for (const text of [
+    "Paper deadline: October 11, 2026; Workshop deadline: October 12, 2026; Workshop registration deadline: October 13, 2026",
+    "Workshop deadline: October 12, 2026; Paper deadline: October 11, 2026; Workshop registration deadline: October 13, 2026",
+  ]) {
+    const rows = extractCfpCandidates(text);
+    expect(
+      rows
+        .map(({ date, kind }) => ({ date, kind }))
+        .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? "")),
+    ).toEqual([
+      { date: "2026-10-11", kind: "paper" },
+      { date: "2026-10-12", kind: "other" },
+      { date: "2026-10-13", kind: "registration" },
+    ]);
+    expect(rows.every((row) => !row.time && !row.timezone)).toBe(true);
+  }
+});
+
+it("keeps Japanese カメラ・レディ in the final-manuscript slot (#800)", () => {
+  for (const label of ["カメラ・レディ締切", "カメラレディ締切"]) {
+    const [row] = extractCfpCandidates(`${label}: 2026年6月1日`);
+    expect(row, label).toMatchObject({ kind: "camera_ready", date: "2026-06-01" });
+    expect(row.time).toBeUndefined();
+    expect(row.timezone).toBeUndefined();
+  }
+  expect(extractCfpCandidates("原稿投稿締切: 2026年5月1日")).toMatchObject([
+    { kind: "paper", date: "2026-05-01" },
+  ]);
+  for (const text of [
+    "要旨締切: 2026年4月25日; 原稿投稿締切: 2026年5月1日; カメラ・レディ締切: 2026年6月1日",
+    "カメラ・レディ締切: 2026年6月1日; 要旨締切: 2026年4月25日; 原稿投稿締切: 2026年5月1日",
+  ]) {
+    expect(
+      extractCfpCandidates(text)
+        .map(({ kind, date }) => ({ kind, date }))
+        .sort((a, b) => String(a.date).localeCompare(String(b.date))),
+    ).toEqual([
+      { kind: "abstract", date: "2026-04-25" },
+      { kind: "paper", date: "2026-05-01" },
+      { kind: "camera_ready", date: "2026-06-01" },
+    ]);
+  }
 });

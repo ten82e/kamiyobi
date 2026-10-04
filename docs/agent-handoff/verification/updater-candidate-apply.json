@@ -1,0 +1,10 @@
+{
+  "base": "b35010f7a11fb217417b2fdf0d675ea1af9a555b",
+  "candidate": "0717f506192e05517bb57af9ae260c702f90078c",
+  "files": 11,
+  "applies_and_matches_candidate": true,
+  "not_applied_to_main_working_tree": true,
+  "patch_sha256": "cb868d400b61869acab18f43d81514fb4de5eecaa27bf8246e5007db0d040704",
+  "normalized_blank_context_lines": 6,
+  "all_11_files_byte_identical_after_recheck": true
+}

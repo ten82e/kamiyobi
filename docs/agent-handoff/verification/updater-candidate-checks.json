@@ -1,0 +1,70 @@
+{
+  "kind": "carried-forward prior verification of the independent local candidate",
+  "candidate_revision": "0717f506192e05517bb57af9ae260c702f90078c",
+  "base": "b35010f7a11fb217417b2fdf0d675ea1af9a555b",
+  "working_tree_clean_when_recorded": true,
+  "test_files_passed": 32,
+  "tests_passed": 1609,
+  "checks": [
+    {
+      "check": "typecheck",
+      "exit_code": 0,
+      "seconds": 0.51
+    },
+    {
+      "check": "lint",
+      "exit_code": 0,
+      "seconds": 0.33
+    },
+    {
+      "check": "fixed-build",
+      "exit_code": 0,
+      "seconds": 1.01
+    },
+    {
+      "check": "tests",
+      "exit_code": 0,
+      "seconds": 16.17
+    },
+    {
+      "check": "data-validation",
+      "exit_code": 0,
+      "seconds": 0.46
+    },
+    {
+      "check": "public-validation",
+      "exit_code": 0,
+      "seconds": 0.39
+    },
+    {
+      "check": "health-gate",
+      "exit_code": 0,
+      "seconds": 0.33
+    },
+    {
+      "check": "semantic-recommendation",
+      "exit_code": 0,
+      "seconds": 0.22
+    },
+    {
+      "check": "recommendation-data-delta",
+      "exit_code": 0,
+      "seconds": 7.64
+    },
+    {
+      "check": "real-paper-recommendation",
+      "exit_code": 0,
+      "seconds": 12.53
+    },
+    {
+      "check": "diff-check",
+      "exit_code": 0,
+      "seconds": 0.01
+    }
+  ],
+  "original_test_log_sha256": "1b1e0b6bbc532cc7a98e3d83ef08d621eda4625ba566403bcb4d629c7515e1af",
+  "canary_revision": "96881aa57eb68fb9d3c730ea75bf0ff6a9a71f05",
+  "canary_run": 37101195216,
+  "local_0717_test_only_fix_has_no_claimed_canary": true,
+  "not_applied_to_ui_working_tree": true
+}

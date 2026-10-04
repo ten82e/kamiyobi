@@ -4,9 +4,21 @@
     "module": "ES2022",
     "moduleResolution": "Bundler",
     "noEmit": false,
-    "allowImportingTsExtensions": false,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
     "outDir": "../.site-build",
     "rootDir": "."
   },
-  "include": ["app.ts", "recommender.ts", "recommendation-core.ts", "publish.ts", "runtime.d.ts"]
+  "include": [
+    "app.ts",
+    "submission-identity.ts",
+    "recommender.ts",
+    "place-aliases.ts",
+    "topic-aliases.ts",
+    "latin-retype.ts",
+    "recommendation-core.ts",
+    "recommendation.ts",
+    "publish.ts",
+    "runtime.d.ts"
+  ]
 }

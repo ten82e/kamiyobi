@@ -1,5 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -15,6 +14,7 @@ import {
   validateProduction,
   validatorWarnings,
 } from "../scripts/validate-data.ts";
+import { tempWork } from "./helpers.ts";
 
 describe("validate:data", () => {
   it("uses one warning identity for legacy extra and snapshot prefixes", () => {
@@ -778,7 +778,7 @@ describe("month envelope validation fixes (#746)", () => {
 
   describe("validateProduction venueKeys collection (#748)", () => {
     it("includes manual and curated inputs in venueKeys so primary matches them without error", () => {
-      const dir = mkdtempSync(join(tmpdir(), "kamiyobi-val-prod-"));
+      const dir = tempWork("kamiyobi-val-prod-");
       mkdirSync(join(dir, "data"), { recursive: true });
       writeFileSync(join(dir, "config.yaml"), "categories:\n  systems: Systems\n");
       writeFileSync(join(dir, "data", "extra.yaml"), "conferences: []\n");

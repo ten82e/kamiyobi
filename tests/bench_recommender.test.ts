@@ -1,5 +1,4 @@
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -17,7 +16,7 @@ import {
   validateRequiredLanguageCounts,
 } from "../src/bench-recommender.ts";
 import { benchmarkEmbeddingManifestAtCutoff } from "../src/embeddings.ts";
-import { REPO_ROOT } from "./helpers.ts";
+import { REPO_ROOT, tempWork } from "./helpers.ts";
 
 const fixture = JSON.parse(
   readFileSync(join(REPO_ROOT, "tests", "fixtures", "recommendation-data-delta.json"), "utf8"),
@@ -28,14 +27,15 @@ describe("data-delta recommendation benchmark", () => {
     const result = runDataDeltaBenchmark(fixture);
     expect(result).toMatchObject({
       case_count: 63,
-      recall_at_1: 0.619048,
-      recall_at_5: 0.698413,
-      mrr: 0.644709,
-      abstention_rate: 0.111111,
+      // 44 first-place hits and one fifth-place hit out of 63 labeled cases.
+      recall_at_1: Number((44 / 63).toFixed(6)),
+      recall_at_5: 0.714286,
+      mrr: Number(((44 + 1 / 5) / 63).toFixed(6)),
+      abstention_rate: 0.095238,
       expected_venues_dropped: [],
     });
-    expect(result.ndcg_at_10).toBeCloseTo(0.657912, 6);
-    expect(result.changed_top5).toHaveLength(55);
+    expect(result.ndcg_at_10).toBeCloseTo((44 + 1 / Math.log2(6)) / 63, 6);
+    expect(result.changed_top5).toHaveLength(56);
     expect(result.changed_top5).toContain("case-01-hpc-en");
     expect(result.new_venues_in_top5).toContain("ieice-fundamentals-discrete-math-special");
   });
@@ -47,7 +47,7 @@ describe("data-delta recommendation benchmark", () => {
     expect(dataDeltaRegressionReasons(changed, result)).toEqual(
       expect.arrayContaining([expect.stringContaining("recall_at_5 regressed")]),
     );
-    const path = `${mkdtempSync(`${tmpdir()}/kamiyobi-bench-`)}/fixture.json`;
+    const path = `${tempWork("kamiyobi-bench-")}/fixture.json`;
     writeFileSync(path, JSON.stringify(changed));
     expect(await benchMain(["--data-delta", path, "--json"])).toBe(1);
   });
@@ -130,9 +130,7 @@ describe("data-delta recommendation benchmark", () => {
 });
 
 describe("required frozen semantic features", () => {
-  it("checks immutable feature inputs before evaluating a changed production venue pool", {
-    timeout: 60000,
-  }, async () => {
+  it("checks immutable feature inputs before evaluating a changed production venue pool", async () => {
     const baseline = JSON.parse(
       readFileSync(join(REPO_ROOT, "data/benchmarks/real-paper-feature-baseline.json"), "utf8"),
     );
@@ -152,6 +150,8 @@ describe("required frozen semantic features", () => {
       title: "New Source Venue",
       categories: ["systems"],
     });
+    // Verify every candidate and frozen input; depth-only timing sweeps repeat
+    // scoring at 50/100/200 without contributing to these integrity assertions.
     const run = await runRealPaperBenchmark(
       dev,
       heldout,
@@ -162,8 +162,11 @@ describe("required frozen semantic features", () => {
       undefined,
       undefined,
       baseline,
+      false,
     );
     expect(realPaperRegressionReasons(run.result, "required")).toEqual([]);
+    expect(Object.keys(run.result.splits.dev.candidate_depths ?? {})).toEqual(["all"]);
+    expect(Object.keys(run.result.splits.heldout.candidate_depths ?? {})).toEqual(["all"]);
     const tampered = structuredClone(features);
     tampered.records.find(
       (record) => record.paper_id === "dev-2025-cvpr-01",
@@ -179,6 +182,7 @@ describe("required frozen semantic features", () => {
         undefined,
         undefined,
         baseline,
+        false,
       ),
     ).rejects.toThrow("required production feature mismatch");
     await expect(
@@ -192,6 +196,7 @@ describe("required frozen semantic features", () => {
         undefined,
         undefined,
         baseline,
+        false,
       ),
     ).rejects.toThrow("feature baseline requires frozen semantic features");
   });

@@ -49,6 +49,21 @@ export function normTitle(title: string | null | undefined): string {
   return t.trim().split(/\s+/).join(" ");
 }
 
+const SPONSOR_PREFIX_PATTERN =
+  /^(?:(?:acm|ieee|ifip|springer|usenix|ipsj|ieice|情報処理学会|電子情報通信学会)\s*)+/iu;
+
+export function stripSponsorPrefix(s: string | null | undefined): string {
+  if (!s) return "";
+  return String(s).replace(SPONSOR_PREFIX_PATTERN, "").trim();
+}
+
+export function normGroupKey(title: string | null | undefined): string {
+  const norm = normTitle(title);
+  if (!norm) return "";
+  const stripped = stripSponsorPrefix(norm);
+  return stripped || norm;
+}
+
 export function loadTrackedTitles(root: string = ROOT): Set<string> {
   /** 収録済み (snapshot + local canonical inputs + overrides) の名称集合。 */
   const tracked = new Set<string>();
@@ -57,29 +72,24 @@ export function loadTrackedTitles(root: string = ROOT): Set<string> {
       console.warn(`warning: cannot read tracked data from ${path} (${String(error)})`);
     }
   };
+  const addKey = (raw: unknown): void => {
+    if (typeof raw === "string" && raw) {
+      const k = normTitle(raw);
+      if (k) {
+        tracked.add(k);
+        const stripped = stripSponsorPrefix(k);
+        if (stripped) tracked.add(stripped);
+      }
+    }
+  };
   const add = (c: Record<string, unknown>): void => {
-    if (typeof c.title === "string" && c.title) {
-      const k = normTitle(c.title);
-      if (k) tracked.add(k);
-    }
-    if (typeof c.full_name === "string" && c.full_name) {
-      const k = normTitle(c.full_name);
-      if (k) tracked.add(k);
-    }
-    if (typeof c.key === "string" && c.key) {
-      const k = normTitle(c.key);
-      if (k) tracked.add(k);
-    }
-    if (typeof c.acronym === "string" && c.acronym) {
-      const k = normTitle(c.acronym);
-      if (k) tracked.add(k);
-    }
+    addKey(c.title);
+    addKey(c.full_name);
+    addKey(c.key);
+    addKey(c.acronym);
     if (Array.isArray(c.legacy_keys)) {
       for (const lk of c.legacy_keys) {
-        if (typeof lk === "string" && lk) {
-          const k = normTitle(lk);
-          if (k) tracked.add(k);
-        }
+        addKey(lk);
       }
     }
   };
@@ -113,8 +123,7 @@ export function loadTrackedTitles(root: string = ROOT): Set<string> {
     for (const [key, val] of Object.entries(
       (overrides?.conferences as Record<string, unknown>) ?? {},
     )) {
-      const k = normTitle(key);
-      if (k) tracked.add(k);
+      addKey(key);
       if (typeof val === "object" && val !== null) add(val as Record<string, unknown>);
     }
   } catch (error) {
@@ -170,28 +179,43 @@ export function runReviewCandidates(
       const fKey = normTitle(String(c.full_name ?? ""));
       const kKey = normTitle(String(c.key ?? ""));
       const deadlineText = reviewDeadlineText(c, safeToday);
+      const isTracked = (k: string): boolean => {
+        if (!k) return false;
+        return tracked.has(k) || tracked.has(stripSponsorPrefix(k));
+      };
       return {
         c,
         dl: parseDeadlineText(deadlineText),
         future: deadlineIsFuture(deadlineText, safeToday),
         pred: isPredatory(`${c.title ?? ""} ${c.full_name ?? ""}`),
-        tracked:
-          (Boolean(tKey) && tracked.has(tKey)) ||
-          (Boolean(fKey) && tracked.has(fKey)) ||
-          (Boolean(kKey) && tracked.has(kKey)),
+        tracked: isTracked(tKey) || isTracked(fKey) || isTracked(kKey),
       };
     });
 
   const future = enriched
     .filter((e) => e.dl && e.future && !e.tracked)
     .sort((a, b) => a.dl!.getTime() - b.dl!.getTime());
+
+  const seenFutureGroups = new Set<string>();
+  const deduplicatedFuture: Enriched[] = [];
+  for (const e of future) {
+    const gKey = normGroupKey(String(e.c.title ?? ""));
+    if (gKey && seenFutureGroups.has(gKey)) {
+      continue;
+    }
+    if (gKey) seenFutureGroups.add(gKey);
+    deduplicatedFuture.push(e);
+  }
+
   const past = enriched.filter((e) => e.dl && !e.future && !e.tracked);
   const unknown = enriched.filter((e) => !e.dl && !e.tracked);
   const already = enriched.filter((e) => e.tracked);
 
   const fmt = (d: Date): string => d.toISOString().slice(0, 10);
-  console.log(`=== レビュー推奨: 締切昇順 (未来 ${future.length} 件中 上位 ${limit} 件) ===`);
-  for (const e of future.slice(0, limit)) {
+  console.log(
+    `=== レビュー推奨: 締切昇順 (未来 ${deduplicatedFuture.length} 件中 上位 ${limit} 件) ===`,
+  );
+  for (const e of deduplicatedFuture.slice(0, limit)) {
     const flag = e.pred ? " [ハゲタカ会議の疑い]" : "";
     console.log(`${fmt(e.dl!)}  ${String(e.c.title).slice(0, 44)}${flag}`);
     console.log(`    ${e.c.link ?? ""}  tags=${e.c.tags ?? ""}`);
@@ -199,7 +223,7 @@ export function runReviewCandidates(
 
   const groups = new Map<string, Enriched[]>();
   for (const e of enriched) {
-    const key = normTitle(String(e.c.title ?? ""));
+    const key = normGroupKey(String(e.c.title ?? ""));
     if (!key) continue;
     groups.set(key, [...(groups.get(key) ?? []), e]);
   }

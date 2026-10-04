@@ -12,8 +12,7 @@
  * JSON / upcoming から落ちた。
  */
 
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
 import { describe, expect, it } from "vitest";
@@ -25,7 +24,7 @@ import {
   warningCounts,
 } from "../src/model.ts";
 import { LocalSource, parseFile } from "../src/sources/local.ts";
-import { REPO_ROOT } from "./helpers.ts";
+import { REPO_ROOT, tempWork } from "./helpers.ts";
 
 interface RawDeadline {
   src: string;
@@ -118,7 +117,16 @@ describe("local source data integrity", () => {
     resetWarnings();
     const rows = rawDeadlines();
     expect(rows.length).toBeGreaterThan(100);
-    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(178);
+    // 基準値。local 源の締切精度が意図せず動いたら気づくためのピン（国内研究会の
+    // 発表申込締切は公式ページが日付だけを表示しているので date-only で数える）。
+    // 178 -> 181: IEICE の IBISML・DE・SS 研究会の発表申込締切を公式ページから追記した分。
+    // 181 -> 183: IPSJ の HPC・ARC 研究会（2026 年 12 月研究発表会）の発表申込締切を
+    // 研究会発表申込システム（ken.ieice.org）から追記した分。
+    // 183 -> 185: IPSJ の DBS・IFAT 研究会（2026 年 12 月研究発表会、合同開催）を収録した分。
+    // 185 -> 186: EvoMUSART 2027の公式CFPによる概要登録（2026-11-01、時刻未確認）。
+    // 186 -> 192: SecureCommの2回・IPSJ特集号3件とJIPの同じ募集を、公式の日付のみで訂正。
+    // 192 -> 194: incoming official ECIR notification and EvoMUSART paper corrections.
+    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(194);
 
     for (const row of rows) {
       if (row.precision === "date-only") {
@@ -223,7 +231,7 @@ describe("local source data integrity", () => {
 });
 
 it("unions categories and tags when the same local key spans files (#768)", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-local-merge-"));
+  const dir = tempWork("kamiyobi-local-merge-");
   const venue = (categories: string, tags: string, year: number, id: string) =>
     [
       "conferences:",
@@ -260,7 +268,7 @@ it("unions categories and tags when the same local key spans files (#768)", asyn
 });
 
 it("merges rank, dblp, link, full_name, and acronym when the same local key spans files", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-local-merge-rank-"));
+  const dir = tempWork("kamiyobi-local-merge-rank-");
   const first = join(dir, "manual.yaml");
   const second = join(dir, "curated.yaml");
   writeFileSync(

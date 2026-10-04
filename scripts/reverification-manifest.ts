@@ -17,6 +17,7 @@ interface DeadlineBase {
   deadline?: string;
   precision?: "exact" | "date-only";
   utc?: string | null;
+  at_utc?: string | null;
   local_date?: string | null;
   latest_utc?: string | null;
   kind: string;
@@ -33,7 +34,8 @@ interface DeadlineBase {
 
 /** 表示値と未来判定境界。date-only は時刻を作らず、公開済みの不確実性上限を使う。 */
 function deadlineMoment(dl: DeadlineBase): { display: string; cutoff: string } | null {
-  const display = dl.precision === "date-only" ? dl.local_date : (dl.utc ?? dl.deadline);
+  const display =
+    dl.precision === "date-only" ? dl.local_date : (dl.utc ?? dl.at_utc ?? dl.deadline);
   const cutoff = dl.precision === "date-only" ? dl.latest_utc : display;
   return display && cutoff && Number.isFinite(Date.parse(cutoff)) ? { display, cutoff } : null;
 }

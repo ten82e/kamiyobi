@@ -13,6 +13,22 @@ npm test            # vitest
 node src/cli.ts build --out public --offline --no-embeddings --cache .cache --now 2026-08-09T00:00:00Z
 ```
 
+- 整形は対象を絞って掛ける（`npx biome check --write site tests src` など）。リポジトリ全体に
+  `--write .` を掛けると `data/**` の JSON まで再整形され、`data/recommender-reranker.json` の
+  `input_hashes` 固定（`pins the reranker development inputs by hash`）が壊れる
+  （2026-09-23 に実発生。`git checkout -- data/` で戻せる）。
+- テストハーネスが `node -e` に渡すソースは `tests/build_golden.test.ts` の `vmSafeSource` を
+  通すこと。Node 26 は `-e` のソースを ESM 判定しており、配列リテラルに `"crypto"` が 1 語で
+  含まれるとモジュール扱いになり、トップレベルの `const`/`var` が `new Function` の本体から
+  見えなくなる（`ReferenceError: Recommender is not defined` に化ける。2026-09-23 に実発生）。
+  **判定は生テキストに対して行われるので、ビルド成果物に残るコメントに同じ語を書いただけでも
+  発火する**
+  （2026-09-25 に実測 – `site/recommender.ts` のコメントに書いたもので 14 本の検査が落ちた）。
+  回避策を通していない呼び出し方も有るので、`site/**` のコメントや画面に出す説明に其の語を
+  書かない（必要なら「其の英字語」のように伏せる）。
+- 改ざん検査（ソースを一時的に壊して検査が落ちることを確かめる手順）を走らせている間は、
+  ビルドとテストを併走させない。壊した一時点を読むので、**偽の失敗**が出る（2026-09-25 に実測 –
+  併走した `npm test` は 14 本落ち、2 回ビルドの diff は 4 ファイル出た。どちらも復元後に消えた）。
 - `public/` は `.gitignore`（CI が生成）。`data/snapshot.json` は健全な online ビルドが更新する。
 - offline ビルドは snapshot を書かない（fixtures 汚染防止）。実キャッシュ成果を snapshot に載せるときは手でコピー。
 

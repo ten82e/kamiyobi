@@ -2,8 +2,7 @@
  * fetch-primary.ts の抽出ロジックの最小テスト。
  */
 
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -22,7 +21,7 @@ import {
   toLines,
 } from "../src/fetch-primary.ts";
 import { resolvePrimaryObservations } from "../src/sources/primary.ts";
-import { REPO_ROOT } from "./helpers.ts";
+import { REPO_ROOT, tempWork } from "./helpers.ts";
 
 let stderrSpy: ReturnType<typeof vi.spyOn> | null = null;
 
@@ -36,6 +35,29 @@ function spyStderr(): void {
 }
 
 describe("fetch-primary extraction", () => {
+  it("keeps Japanese abstract and manuscript submission dates in separate slots (#796)", () => {
+    for (const label of ["要旨締切", "要旨提出", "要旨の提出期限", "要旨〆切"]) {
+      const got = extractDeadline(`${label}: 2026年5月1日`, 2026);
+      expect(got, label).toMatchObject({ kind: "abstract", date: "2026-05-01" });
+      expect(got?.time, label).toBeUndefined();
+      expect(got?.tz, label).toBeUndefined();
+    }
+    expect(extractDeadline("要旨提出開始: 2026年5月1日", 2026)).toBeNull();
+    expect(extractDeadline("要旨を含む原稿投稿締切: 2026年6月1日", 2026)).toMatchObject({
+      kind: "paper",
+      date: "2026-06-01",
+    });
+    expect(
+      extractDeadlines(["要旨締切: 2026年5月1日", "原稿投稿締切: 2026年6月1日"], 2026),
+    ).toMatchObject([
+      { kind: "abstract", date: "2026-05-01" },
+      { kind: "paper", date: "2026-06-01" },
+    ]);
+    expect(extractDeadlines(["要旨提出", "2026年5月1日"], 2026)).toMatchObject([
+      { kind: "abstract", date: "2026-05-01" },
+    ]);
+  });
+
   it("selects a stable source-aware adapter before generic fallback", () => {
     expect(primaryAdapter("https://easychair.org/cfp/example")).toMatchObject({
       id: "easychair-v1",
@@ -282,7 +304,7 @@ describe("fetch-primary extraction", () => {
 
   it("loadYamlFile warns and returns {} on unparsable YAML", () => {
     spyStderr();
-    const path = join(mkdtempSync(join(tmpdir(), "cfp-fp-")), "bad.yaml");
+    const path = join(tempWork("cfp-fp-"), "bad.yaml");
     writeFileSync(path, "conferences:\n  whpc: [unclosed\n", "utf8");
     expect(loadYamlFile(path)).toEqual({});
     const calls: string[] = (stderrSpy?.mock.calls ?? []).map((c: unknown[]) => String(c[0]));
@@ -291,7 +313,7 @@ describe("fetch-primary extraction", () => {
 
   it("loadYamlFile parses valid YAML without warning", () => {
     spyStderr();
-    const path = join(mkdtempSync(join(tmpdir(), "cfp-fp2-")), "ok.yaml");
+    const path = join(tempWork("cfp-fp2-"), "ok.yaml");
     writeFileSync(
       path,
       "conferences:\n  whpc:\n    editions:\n      2026:\n        deadlines:\n          - date: 2026-08-21\n",
@@ -409,7 +431,7 @@ describe("fetch-primary extraction", () => {
         label: "Notification",
         date: "2026-06-20",
         round: 1,
-        tz: "JST",
+        // No zone on this row; the paper row's JST does not apply here.
       },
       {
         kind: "camera_ready",
@@ -472,7 +494,7 @@ describe("page-year diagnostics", () => {
 
 describe("runFetchPrimary", () => {
   it("resolves default input paths after the root is changed", async () => {
-    const root = mkdtempSync(join(tmpdir(), "cfp-primary-root-"));
+    const root = tempWork("cfp-primary-root-");
     mkdirSync(join(root, "data"), { recursive: true });
     writeFileSync(
       join(root, "data", "primary.yaml"),
@@ -496,7 +518,7 @@ describe("runFetchPrimary", () => {
 
   it("returns 2 when registry has no conferences", async () => {
     spyStderr();
-    const emptyRegistry = join(mkdtempSync(join(tmpdir(), "cfp-reg-")), "empty.yaml");
+    const emptyRegistry = join(tempWork("cfp-reg-"), "empty.yaml");
     writeFileSync(emptyRegistry, "conferences: {}\n", "utf8");
     const code = await runFetchPrimary(false, emptyRegistry);
     expect(code).toBe(2);
@@ -504,7 +526,7 @@ describe("runFetchPrimary", () => {
 
   it("keeps the previous observation when the page title is an older edition", async () => {
     spyStderr();
-    const dir = mkdtempSync(join(tmpdir(), "cfp-primary-year-"));
+    const dir = tempWork("cfp-primary-year-");
     const registryPath = join(dir, "primary.yaml");
     const outPath = join(dir, "primary_overrides.yaml");
     writeFileSync(
@@ -533,7 +555,7 @@ describe("runFetchPrimary", () => {
 
   it("keeps unobserved slots and emits revision evidence for observed slots", async () => {
     spyStderr();
-    const dir = mkdtempSync(join(tmpdir(), "cfp-primary-partial-"));
+    const dir = tempWork("cfp-primary-partial-");
     const registryPath = join(dir, "primary.yaml");
     const outPath = join(dir, "primary_overrides.yaml");
     writeFileSync(
@@ -580,7 +602,7 @@ describe("runFetchPrimary", () => {
   });
 
   it("does not let a generic fallback replace an exact deadline", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "cfp-primary-generic-"));
+    const dir = tempWork("cfp-primary-generic-");
     const registryPath = join(dir, "primary.yaml");
     const outPath = join(dir, "primary_overrides.yaml");
     writeFileSync(
@@ -659,4 +681,131 @@ describe("parsePrimaryArgs and null safety", () => {
     const nodeHelp = await fetchPrimaryMain(["node", "src/fetch-primary.ts", "-h"]);
     expect(nodeHelp).toBe(0);
   });
+});
+
+describe("explicit timezone and workshop extraction regressions", () => {
+  it("keeps explicit Japanese-time CFP clocks and never invents missing precision", () => {
+    // Official INTERACTION 2026 schedule: https://www.interaction-ipsj.org/2026/submissions/
+    // Historical date is kept exactly as published, without borrowing the edition year.
+    expect(extractDeadlines(["投稿〆切：2025/10/14(火) 日本時間22:00"], 2026)).toMatchObject([
+      { kind: "paper", date: "2025-10-14", time: "22:00:00", tz: "JST" },
+    ]);
+    for (const name of [
+      "Japan Standard Time",
+      "Anywhere on Earth",
+      "anywhere on the earth",
+      "Anywhere on inhabited Earth",
+    ]) {
+      expect(extractDeadlines([`Paper deadline: May 15, 2026 23:59 ${name}`], 2026)).toMatchObject([
+        {
+          kind: "paper",
+          date: "2026-05-15",
+          time: "23:59:00",
+          tz: name.startsWith("Japan") ? "JST" : "AoE",
+        },
+      ]);
+    }
+    const dateOnly = extractDeadlines(["投稿締切：2026年5月15日 日本時間"], 2026)[0];
+    expect(dateOnly).toMatchObject({ date: "2026-05-15", tz: "JST" });
+    expect(dateOnly.time).toBeUndefined();
+    expect(
+      extractDeadlines(["Paper deadline: May 15, 2026 23:59; conference in Japan"], 2026)[0].tz,
+    ).toBeUndefined();
+  });
+
+  it("distinguishes workshop proposals, explicit papers, registration and doctoral consortium (#824)", () => {
+    // Labels are controlled variants informed by CHI's separate organizer/participant submissions,
+    // not copied deadlines: https://chi2025.acm.org/for-authors/workshops/
+    for (const [label, kind] of [
+      ["Workshop deadline", "other"],
+      ["Workshops submission deadline", "other"],
+      ["Workshop proposal deadline", "other"],
+      ["Doctoral consortium submission deadline", "other"],
+      ["Workshop paper submission deadline", "paper"],
+      ["Workshop position papers due", "paper"],
+      ["Workshop manuscript deadline", "paper"],
+      ["Workshop registration deadline", "registration"],
+      ["Workshop abstract deadline", "abstract"],
+      ["Workshop notification deadline", "notification"],
+      ["Workshop camera-ready deadline", "camera_ready"],
+    ]) {
+      const rows = extractDeadlines([`${label}: May 15, 2026`], 2026);
+      expect(rows, label).toMatchObject([{ kind, date: "2026-05-15" }]);
+      expect(rows[0].time).toBeUndefined();
+      expect(rows[0].tz).toBeUndefined();
+    }
+  });
+});
+
+it("uses each primary CFP row's label for workshop, paper and registration deadlines", () => {
+  const rows = extractDeadlines(
+    [
+      "Workshop proposal deadline: October 12, 2026",
+      "Workshop paper deadline: October 13, 2026",
+      "Workshop registration deadline: October 14, 2026",
+    ],
+    2026,
+  );
+  expect(rows).toMatchObject([
+    { kind: "other", date: "2026-10-12", label: "Workshop proposal deadline: October 12, 2026" },
+    { kind: "paper", date: "2026-10-13" },
+    { kind: "registration", date: "2026-10-14" },
+  ]);
+});
+
+it("keeps explicit clocks and zones on their own dated CFP rows", () => {
+  expect(
+    extractDeadlines(
+      [
+        "Paper deadline: October 25, 2026 日本時間22:00",
+        "Workshop proposal deadline: October 26, 2026",
+        "Workshop paper deadline: October 27, 2026 23:59 Anywhere on Earth",
+        "Workshop registration deadline: October 28, 2026 23:59 Japan Standard Time",
+        "Paper deadline: October 29, 2026 23:59",
+      ],
+      2026,
+    ),
+  ).toMatchObject([
+    { kind: "paper", date: "2026-10-25", time: "22:00:00", tz: "JST" },
+    { kind: "other", date: "2026-10-26" },
+    { kind: "paper", date: "2026-10-27", time: "23:59:00", tz: "AoE" },
+    { kind: "registration", date: "2026-10-28", time: "23:59:00", tz: "JST" },
+    { kind: "paper", date: "2026-10-29", time: "23:59:00" },
+  ]);
+  const rows = extractDeadlines(
+    [
+      "Paper deadline: October 25, 2026 日本時間22:00",
+      "Workshop proposal deadline: October 26, 2026",
+      "Paper deadline: October 27, 2026 23:59",
+    ],
+    2026,
+  );
+  expect(rows[1].time).toBeUndefined();
+  expect(rows[1].tz).toBeUndefined();
+  expect(rows[2].tz).toBeUndefined();
+  expect(
+    extractDeadline(
+      "All deadlines use AoE Paper deadline: October 27, 2026 23:59",
+      2026,
+      "Paper deadline: October 27, 2026 23:59",
+    ),
+  ).toMatchObject({ tz: "AoE" });
+  expect(
+    extractDeadline(
+      "All deadlines use AoE Paper deadline: October 27, 2026 23:59 日本時間",
+      2026,
+      "Paper deadline: October 27, 2026 23:59 日本時間",
+    ),
+  ).toMatchObject({ tz: "JST" });
+});
+
+it("keeps Japanese カメラ・レディ separate from the manuscript deadline (#800)", () => {
+  for (const label of ["カメラ・レディ締切", "カメラレディ締切"]) {
+    const rows = extractDeadlines(["原稿投稿締切: 2026年5月1日", `${label}: 2026年6月1日`], 2026);
+    expect(rows).toMatchObject([
+      { kind: "paper", date: "2026-05-01" },
+      { kind: "camera_ready", date: "2026-06-01" },
+    ]);
+    expect(rows.every((row) => row.time === undefined && row.tz === undefined)).toBe(true);
+  }
 });

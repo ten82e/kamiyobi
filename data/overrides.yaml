@@ -75,6 +75,7 @@ conferences:
                 supersededBy: iscas|iscas27|paper|1|
                 reason: manual-resolution
                 supersededAt: '2026-10-03T05:12:25Z'
+
   dasfaa:
     editions:
       dasfaa27:
@@ -112,6 +113,7 @@ conferences:
                 supersededBy: dasfaa|dasfaa27|paper|1|
                 reason: manual-resolution
                 supersededAt: '2026-10-03T05:12:25Z'
+
   evomusart-2027:
     editions:
       evomusart-202727:
@@ -137,6 +139,15 @@ conferences:
                   - round
                 confidence: official
             precision: date-only
+        mode: merge-slots
+        remove:
+          - kind: paper
+            label: Paper submission
+            round: 1
+            values:
+              - '2026-11-02T11:59:00.000Z'
+              - '2026-11-01'
+
   wsdm:
     editions:
       wsdm27:
@@ -169,6 +180,7 @@ conferences:
   # and announced an extension without a replacement date; keep all other slots.
   # https://eg2027.isti.cnr.it/call-for-papers/ (body captured in evidence/blobs).
   # SecureComm lists February 1 and April 15 without an official clock/timezone.
+
   eurographics:
     editions:
       eurographics27:
@@ -183,6 +195,7 @@ conferences:
             round: 1
             label: Full paper submission deadline
             values: ['2026-10-01T23:59:59.000Z', '2026-10-02T11:59:00.000Z']
+
   securecomm:
     editions:
       securecomm27:
@@ -261,6 +274,7 @@ conferences:
   #   deadline slot conflict で update-data が 4 日間 block されていた
   #   (2026-08-26〜08-29 の failures)。公式は時刻・タイムゾーンを示していないため
   #   date-only の公式値に固定して解消。
+
   ieee-cec:
     editions:
       2027:
@@ -274,6 +288,7 @@ conferences:
   #   通知のみで abstract registration が欠落、Final 12/2 は UTC-7 固定で 1 時間ズレ
   #   (12/2 は PST = UTC-8 → 19:00Z が正)。5 件フルリストで訂正。会期 Apr 6-9, 2027,
   #   Thessaloniki も公式一致。
+
   3dv:
     editions:
       2027:
@@ -293,6 +308,7 @@ conferences:
   #   https://mlsys.org/Conferences/2026/Dates「Oct 30 '25 01:00 PM PDT」= 20:00 UTC
   #   に対し収録は 2025-10-31T08:00Z (12 時間遅れ) → 両方訂正。2027 推定は訂正後の
   #   2026 (2025-10-30T20:00Z) から再生成される。
+
   mlsys:
     editions:
       2025:
@@ -307,6 +323,7 @@ conferences:
   #   5 PM AOE July 18 (Sat), 2026」。上流 ccfddl DS/aspdac.yml は 2027 を abstract
   #   2026-07-03・paper 2026-07-10 (延長前) で収録 → 公式の現行値に訂正 (2026 は
   #   公式 July 4/11 と一致済みのため変更なし)。2028 推定は訂正後から導出される。
+
   asp-dac:
     editions:
       2024:
@@ -320,6 +337,7 @@ conferences:
 
   # ---- 会期の年号タイポ訂正 (2026-08-12 機械スキャン: edition year と会期年の不一致 6 件) ----
   # 上流 ccfddl の date フィールドに年号タイポが集中。公式 (dblp/Springer/公式サイト) で裏取り済み。
+
   cikm:
     editions:
       2020:
@@ -337,32 +355,40 @@ conferences:
           - {kind: paper, label: 'Full research papers submission deadline', date: '2026-05-23 23:59:00', tz: AoE}
           - {kind: notification, label: 'Notification', date: '2026-08-07 23:59:00', tz: AoE}
           - {kind: camera_ready, label: 'Camera-ready', date: '2026-08-23 23:59:00', tz: AoE}
+
   dimva:
     editions:
       2021:
         date_text: July 14-16, 2021
         event_start: '2021-07-14'
         event_end: '2021-07-16'
+
   euro-par:
     editions:
       2024:
         date_text: August 26-30, 2024
         event_start: '2024-08-26'
         event_end: '2024-08-30'
+
   ica3pp:
     editions:
       2023:
         date_text: October 20-22, 2023
         event_start: '2023-10-20'
         event_end: '2023-10-22'
+
   seke:
     editions:
       2026:
         date_text: October 1-10, 2026
         event_start: '2026-10-01'
         event_end: '2026-10-10'
+
   sigmod:
     editions:
+      # SIGMOD 2026 は出典により合同会期と個別日程が異なる。固定したreviewを
+      # 別の原文へ移さず、各sourceのdate_textとparseEventSegmentsの結果を保持する。
+      # https://2026.sigmod.org/sigmod_program_overview.shtml
       2023:
         date_text: June 18-23, 2023
         event_start: '2023-06-18'
@@ -377,6 +403,7 @@ conferences:
   #   2026-09-05 再取得: Important Dates 表で「VBS paper submission deadline
   #   (extended) 07 Sep → 22 Sep 2026」の延長と Camera-ready 28 Oct 2026 を確認
   #   (旧値 11/1 は 8/13 時点の表記。現行表は 28 Oct)。
+
   mmm:
     editions:
       2027:
@@ -419,6 +446,7 @@ conferences:
   #   上流 ccfddl は Regular Paper / Special Session を 8/14 1 本にまとめているが、
   #   公式は Special Session Paper 8/21 AoE・Demo / Industry 9/1 AoE を別途明記。
   #   Acceptance Notification Oct 2, 2026 (2026-08-13 再取得)。CR は TBA。
+
   mmasia:
     editions:
       2026:
@@ -431,6 +459,7 @@ conferences:
   # 根拠: https://conferences.sigcomm.org/imc/2026/ (2026-08-09 取得)
   #   「ACM IMC 2026 conference will be held from October 12-16, 2026 in Karlsruhe, Germany」
   #   上流 ccfddl NW/imc.yml は date: November 03-06, 2026 のまま（会期更新が未反映）。
+
   imc:
     editions:
       2026:
@@ -448,6 +477,7 @@ conferences:
   #   Notification Nov 14, 2026 (AoE)」。収録 (HF 由来) は abstract/paper のみで cycle 1 の
   #   rebuttal/notification が欠落 → 追記 (2026 版の収録形式と同パターン)。Second Cycle は
   #   公式 CFP が First Cycle のみを公開中 → 推定を入れない。
+
   sigkdd:
     editions:
       2027:
@@ -467,6 +497,7 @@ conferences:
   #   いたので link を 2027 へ。Important Dates も同ページで確認: Abstract Aug 13 /
   #   Full Document Aug 20, 2026 (AoE・上流と一致)・会期 Feb 8-11, 2027 Helsinki
   #   （IUI は 2027 から 2 月開催に変更 → 締切サイクルが 10 月から 8 月に前倒し）。
+
   iui:
     link: https://iui.acm.org/2027/
     editions:
@@ -482,6 +513,7 @@ conferences:
   #   Notification 13 Nov / Shepherded 04 Dec / CR 11 Dec (AoE)。
   #   2nd: paper 11 Dec / Early Rejection 5 Feb / Rebuttal 8-12 Mar /
   #   Notification 31 Mar / Shepherded 21 Apr / CR 7 May (AoE)。
+
   asiaccs:
     link: https://asiaccs2027.cityu.edu.mo/index.html
     editions:
@@ -507,6 +539,7 @@ conferences:
   #   会期 June 8-12, 2026 Nottingham (eurovis.org.uk)。
   #   上流 ccfddl の paper 2024-12-03 は年号タイポ (2025-12-03 が正) → drop を
   #   実 edition で置換し rollforward の anchor を 2026 に固定。
+
   eurovis:
     editions:
       2026:
@@ -527,6 +560,7 @@ conferences:
   #   会期 28 June – 1 July 2027 @ Windsor Building, Royal Holloway (Egham, UK)。
   #   上流 ccfddl は 2027 を 2026 版からの推定 (10/31, 2/27) のまま → deadlines 置換で
   #   公式値を正とする。
+
   acns:
     editions:
       2027:
@@ -548,6 +582,7 @@ conferences:
   #   23:59 AoE」で AoE 明記 (2026-08-30 再取得)。
   #   上流 ccfddl conference/SC/fse.yml は 2026 までで 2027 版なし → 新規 edition として
   #   追加 (merge.ts patchEditions の year 追加パス)。
+
   fse-sc:
     editions:
       2027:
@@ -569,6 +604,7 @@ conferences:
   #   注: 上流 ccfddl は 2027 (issta27, abstract/paper) を 2026-08-30 時点で公式収録済み。
   #   override は詳細締切 (rebuttal/notification/camera_ready) の補完に留める。
   #   上流の edition id (issta27) と統合され、rename 誤検知は identity 一致で吸収される。
+
   issta:
     editions:
       2027:
@@ -596,6 +632,7 @@ conferences:
   #   timeline「7 Dec 2026 Notifications: Full & Short papers」（2026-08-12 再取得）→ 通知追加。
   #   会期: 公式トップ「in-person from 21-25 March 2027, at Southampton Football
   #   Club, Southampton, England, UK」（2026-08-12 再取得）→ 追加。
+
   ecir:
     editions:
       '2027':
@@ -694,6 +731,7 @@ conferences:
                 confidence: official
         mode: merge-slots
 
+
   acisp:
     editions:
       2027:
@@ -712,6 +750,7 @@ conferences:
   #   (2026 版からの推定 ifip-wg-11-927-est: 9/30 AoE) → estimated: false で実版へ昇格し
   #   締切を置換する。CFP にタイムゾーン明記なし → README「タイムゾーンが不明な締切は
   #   協定世界時として扱う」の規約に従い UTC で扱う。
+
   ifip-wg-11-9:
     editions:
       2027:
@@ -733,6 +772,7 @@ conferences:
   #   → estimated: false で実版へ昇格し、公式の単一締切に置換する。公式サイトに
   #   タイムゾーン明記なし → README「タイムゾーンが不明な締切は協定世界時として扱う」
   #   の規約に従い UTC で扱う。
+
   esann:
     editions:
       2027:
@@ -751,6 +791,7 @@ conferences:
   #   上流 ccfddl (conference/SE/ease.yml) は 2026 までで 2027 版なし (2026 版からの推定
   #   ease27-est: 1/8・1/15 AoE) → estimated: false で実版へ昇格し、公式締切に置換する。
   #   会期・開催地は公式 (researchr) で確定。リンクも ease-2026 から ease-2027 へ更新。
+
   ease:
     editions:
       2027:
@@ -772,6 +813,7 @@ conferences:
   #   facct.yml) は 2026 までで 2027 版なし (推定 facct27-est: 1/8・1/13) →
   #   estimated: false で実版へ昇格し、公式締切に置換する。開催地は ACM DL の
   #   FAccT '27 ページ (dl.acm.org) で「June 21 - 24, 2027. Porto, Portugal」。
+
   facct:
     editions:
       2027:
@@ -791,6 +833,7 @@ conferences:
   #   2027」「Location: Dallas-Fort Worth, Texas, USA」。上流 ccfddl は 2026 版からの
   #   推定 ccgrid27-est (abstract/paper とも 12/21 AoE・場所/会期なし) のまま →
   #   estimated: false で実版へ昇格し、公式締切・場所・会期に置換する。
+
   ccgrid:
     editions:
       2027:
@@ -808,6 +851,7 @@ conferences:
   #   「Paper submission deadline (cycle 2): Monday, May 11, 2026 (AoE)」。
   #   上流 ccfddl SC/sac.yml は 2026 版 cycle 2 を 2025-05-11 と年号タイポ
   #   (cycle 1 2026-02-02 より前になり非単調) → deadlines 置換で訂正。
+
   sac:
     editions:
       2026:
@@ -824,6 +868,7 @@ conferences:
   #   Research Track「Abstract: ~~April 10, 2026~~ April 24, 2026 (AoE) / Paper:
   #   ~~April 17, 2026~~ April 24, 2026 (AoE)」。上流は abstract 4/10 (延長前)・
   #   paper 2025-04-17 (年号タイポ)→ 延長後 (4/24 AoE) で訂正。
+
   issre:
     editions:
       2023:
@@ -840,6 +885,7 @@ conferences:
   #   上流 ccfddl AI/icra.yml は submission open 2024-07-15 12:00 UTC-4 と close
   #   2024-09-15 00:00 UTC-4 を deadline として収録し、HF 側 (9/16T06:59Z = 延長前の
   #   15 Sep 23:59 PST) と混ざって 3 本になった → 最終締切 1 本に置換。
+
   icra:
     editions:
       2025:
@@ -853,6 +899,7 @@ conferences:
   #   First Wave 2025-07-08/15 (収録済み) に加え Second Wave「Abstract and Title
   #   Submission: March 24, 2026 / Submission Deadline: March 31, 2026」(AoE) が欠落 →
   #   追記。First Wave が会期 1.5 年前にあるのは本会議の 2 波制の設計で誤りではない。
+
   group:
     editions:
       2027:
@@ -867,6 +914,7 @@ conferences:
   #   submission deadline to May 11, 2026」。上流 ccfddl ED/fmcad.yml は 2026 を
   #   deadline 4/26 + abstract_deadline 5/3 と field を swap した形で収録 (2025 は
   #   abstract 4/20 → paper 4/27 の正順) → 延長後の 5/4・5/11 (AoE) で訂正。
+
   fmcad:
     editions:
       2026:
@@ -879,6 +927,7 @@ conferences:
   #   #149・pl-conferences も一致)。上流 ccfddl CT/ijcar.yml は paper を 2025-02-15 と
   #   年号タイポ (abstract 2026-02-06 より前になり非単調)→ 2026-02-15 AoE に訂正。
   #   2028 推定 (rollforward) も 2026 修正から自動で正しい年へ再生成される。
+
   ijcar:
     editions:
       2026:
@@ -889,6 +938,7 @@ conferences:
   # 根拠: https://hscc.acm.org/2026/ (2026-08-12 取得・生存)。旧リンク
   #   isis.vanderbilt.edu/events/hscciccps-2026 は DNS は解けるが接続不可 (000)。
   #   2027 版サイトは未公開 (hscc.acm.org/2027/ 404) → root を指す。
+
   hscc:
     link: https://hscc.acm.org/
     editions:
@@ -899,6 +949,7 @@ conferences:
 
   # 根拠: https://services.conferences.computer.org/2026/icws/ (2026-08-12 取得・生存)。
   #   旧リンク .../2026/icws-2026/ は 404 (正しいパスは icws のハイフン無し)。
+
   icws:
     link: https://services.conferences.computer.org/2026/icws/
     editions:
@@ -909,6 +960,7 @@ conferences:
 
   # 根拠: https://2026.declarativeai.net/ruleml-rr (2026-08-12 取得・生存)。旧パス
   #   /events/ruleml-rr は 404 (2026 版サイトの構成変更で /events/ が無くなった)。
+
   ruleml-rr:
     link: https://2026.declarativeai.net/ruleml-rr
     editions:
@@ -922,6 +974,7 @@ conferences:
   #   Submission: Thursday, July 10, 2025 (23:59 AoE)」— 7/3 から延長済み。上流 ccfddl は
   #   延長前の 7/3 に加え時刻 22:59:59 のタイポ (AoE 23:59 が正) で収録 → 7/10 23:59 AoE
   #   (= 7/11T11:59Z) に訂正。
+
   systor:
     editions:
       2025:
@@ -934,6 +987,7 @@ conferences:
   #   August 2, 2024」(11:59pm PDT 慣例) → abstract は 2024-07-27T06:59:59Z が正。
   #   上流は abstract を 23:59:59 UTC (7h 早い) と誤変換しつつ paper は 06:59:59 UTC
   #   (PDT 正) と混在。
+
   hpca:
     editions:
       2025:
@@ -964,6 +1018,7 @@ conferences:
   #   「Paper submission deadline: June 16, 2026 (11:59 PM UTC-12:00, AoE)」。
   #   2026 版が欠落していたため 2027 推定が 2025 から導出されリンクも 2025 サイトのまま
   #   だった → 実 2026 版を追加し、2027 推定が 2026 実績 + 2026.emnlp.org から再生成される。
+
   emnlp-industry-track:
     editions:
       2026:
@@ -975,6 +1030,7 @@ conferences:
   #   Poster Submission Deadline Aug. 25, 2026 (AoE)」・開催 Dec 18-20, 2026 Ningbo。
   #   （2026-08-12: extra.yaml の ieee-msn が上流 msn と重複だったため削除し、
   #   ここへ統合 — 上流 ccfddl msn 2026 は Regular Paper Aug 20 を収録済み）
+
   msn:
     editions:
       2026:
@@ -993,6 +1049,7 @@ conferences:
   #   SEIP submission Aug 24・Doctoral Symposium Oct 5・ERA/SEIP notification Sep 28。
   #   会期 Mon 7 - Thu 10 Dec 2026, Bali。TZ 表記なし → 23:59 UTC (COCOA 前例)。
   #   リンクは apsec-2025 → apsec-2026 に訂正。
+
   apsec:
     link: https://conf.researchr.org/home/apsec-2026
     editions:
@@ -1012,6 +1069,7 @@ conferences:
   # 根拠: https://cgs-network.org/CASAXR26/ (2026-08-12 取得)「June 1-3, 2026,
   #   Campus Biotech, Geneva」+ wikiCFP eventid=190112「Submission deadline:
   #   February 15, 2026」(easyChair は 2/10)。2027 は Xian, China (June 2027)。
+
   casa:
     editions:
       2026:
@@ -1025,6 +1083,7 @@ conferences:
 
   # 根拠: http://2026.cscwd.org (2026-08-12 取得)「May 13-15, 2026, Fuzhou」+
   #   paper submission Nov 30, 2025 (EasyChair)。TZ 表記なし → 23:59 UTC。
+
   cscwd:
     editions:
       2026:
@@ -1039,6 +1098,7 @@ conferences:
   # 根拠: https://dfrws.org/conferences/dfrws-apac-2026/ (2026-08-12 取得)
   #   「Oct 19-23, 2026 Singapore (hybrid)」+ LinkedIn「Submission Deadline:
   #   May 22, 2026; camera-ready due July 28」。TZ 表記なし → 23:59 UTC。
+
   dfrws-apac:
     editions:
       2026:
@@ -1052,6 +1112,7 @@ conferences:
 
   # 根拠: https://ieee-hyper-intelligence.org/2026/hpcc/ (2026-08-12 取得) +
   #   wikiCFP「Oct 29 - Nov 2, 2026, Luoyang, Jul 15, 2026」。TZ 表記なし → 23:59 UTC。
+
   hpcc:
     editions:
       2026:
@@ -1066,6 +1127,7 @@ conferences:
   # 根拠: https://icsoc2026.it.p.lodz.pl/call-research-papers.html (2026-08-12 取得)
   #   「Abstract (extended) 12 July 2026 / Paper (hard deadline) 19 July 2026,
   #   all 11:59 PM Anywhere on Earth」・会期 Dec 1-4, 2026, Łódź。
+
   icsoc:
     editions:
       2026:
@@ -1083,6 +1145,7 @@ conferences:
   #   Notification of acceptance Sep 7, 2026・会期 Nov 6-10, 2026。上流 ccfddl の
   #   ijcnlp 2026 は ARR 締切のみで commitment がコメント内 → 明示化。t z は公式の
   #   AoE (UTC-12) に統一（旧 UTC 表記は 12 時間早かった）。
+
   ijcnlp:
     editions:
       2026:
@@ -1099,6 +1162,7 @@ conferences:
   # 根拠: https://indocrypt2026.cdacb.in/ (2026-08-12 取得)「Submission
   #   deadline: Aug 15 (AoE), 2026・(2nd line: Aug 20 AoE)・Final notification:
   #   Oct 10, 2026」・会期 Dec 13-16, 2026, Bengaluru (IACR 公式も一致)。
+
   indocrypt:
     editions:
       2026:
@@ -1115,6 +1179,7 @@ conferences:
   # 根拠: https://isbra2026.scimeeting.cn/ (2026-08-12 取得)「Submission
   #   deadline Mar 15 delayed to Mar 22・Notif Apr 20・Final May 20」・
   #   会期 July 22-24, 2026, Macao (Springer LNBI 一致)。TZ 表記なし → 23:59 UTC。
+
   isbra:
     editions:
       2026:
@@ -1130,6 +1195,7 @@ conferences:
 
   # 根拠: https://smiconf.github.io/2026/ (2026-08-12 取得)「Abstract Mar 16 /
   #   Mar 23 (soft deadline)」・SPM と共同開催 July 6-9, 2026。TZ 表記なし → 23:59 UTC。
+
   smi:
     editions:
       2026:
@@ -1145,6 +1211,7 @@ conferences:
   # 根拠: https://spmconf2026.github.io/ (2026-08-12 取得)「Abstract Jan 25 /
   #   Feb 8・Full paper Feb 1 / Feb 15」・SMI と共同開催 July 6-9, 2026。
   #   TZ 表記なし → 23:59 UTC。
+
   spm:
     editions:
       2026:
@@ -1160,6 +1227,7 @@ conferences:
   # 根拠: https://services.conferences.computer.org/2026/sse/ (2026-08-12 取得)
   #   「July 13-18, 2026, Sydney」+ SERVICES 2026 公式「paper submission
   #   extended from March 8 to March 22 (firm)」・IEEE SERVICES 系は 11pm AoE 慣例。
+
   sse:
     editions:
       2026:
@@ -1174,6 +1242,7 @@ conferences:
   # 根拠: https://swc-ieee-2026.github.io/uic/ (2026-08-12 取得)「Sep 7-11, 2026・
   #   Submission Deadline: July 31, 2026」+ r8.ieee.org「May 1, 2026 (Extended)」。
   #   TZ 表記なし → 23:59 UTC。
+
   uic:
     editions:
       2026:
@@ -1188,6 +1257,7 @@ conferences:
   # 根拠: https://vinci-symp.org/ (2026-08-12 取得)「19th VINCI, Hangzhou,
   #   Nov 1-4, 2026」+ myhuiban「paper deadline 2026-06-12 / notif 2026-07-24」。
   #   ※ vinci-conf.org はドメイン乗っ取り (togel スパム) のため使用しない。
+
   vinci:
     editions:
       2026:
@@ -1204,6 +1274,7 @@ conferences:
   #   「Paper/Panel Submission: October 10, 2026・Notification of Acceptance:
   #   November 10, 2026」・会期 Jan 7-8, 2027, Eros Hotel New Delhi (ifip119.org
   #   Conferences ページ)。上流の推定 9/30 は 10 日早い。TZ は上流既存と同様 AoE。
+
   cav:
     editions:
       2027:
@@ -1220,6 +1291,7 @@ conferences:
   #   Jan 15 2027・会場 Edinburgh (会期は May 2027 で未発表)。上流は 2026 まで →
   #   2027 実 edition 追加 (y2028 推定抑止)。会期は公式アナウンス (ICWSM 公式
   #   Facebook/LinkedIn 2026-05-11)「June 21-25, 2027」で確定 (2026-08-12 追記)。
+
   icwsm:
     link: https://www.icwsm.org/2027/
     editions:
@@ -1238,6 +1310,7 @@ conferences:
   #   「Mar 30 - Apr 2, 2027, Edinburgh」+ DFRWS 公式 Facebook「CFP: title &
   #   abstract Sep 18, 2026 (AoE)・final full-paper Sep 25, 2026 (AoE)」。上流は
   #   2026 まで → 2027 実 edition 追加 (y2028 推定抑止)。
+
   dfrws:
     link: https://dfrws.org/conferences/dfceurope2027/
     editions:
@@ -1254,6 +1327,7 @@ conferences:
   # 根拠: https://msstconference.org/ (2026-08-12 取得)「MSST 2027 will be held
   #   during the week of May 17th-21st, 2027」CFP 未公開 → 会期のみ実 edition 追加
   #   (y2028 推定抑止・締切は公開後に上流/overrides で追従)。
+
   msst:
     editions:
       2027:
@@ -1267,6 +1341,7 @@ conferences:
   #   deadline: 27 February 2026 / 4 March 2026 (延長)・All deadlines 23:59 AoE」。
   #   上流は 2025-03-04 (年号タイポ) → 2026-03-04 に訂正。会期 Jul 23-25, 2026
   #   Singapore は一致。
+
   cocoon:
     editions:
       2026:
@@ -1277,6 +1352,7 @@ conferences:
   #   Jan 10, 2026 / Full paper Jan 17, 2026 (AoE)」+ dblp「May 13-16, 2026,
   #   Atlanta, GA」。上流は 2022/2024/2025 のみで 2026 欠落 → 追加すると
   #   rollforward の間隔中央値が 1 年になり y2028 誤推定が y2027 に戻る。
+
   fccm:
     editions:
       2026:
@@ -1293,6 +1369,7 @@ conferences:
   #   2027 | Hanoi, Vietnam | May 3-7, 2027」 (2026-08-12)。締切 (abstract Oct 1 /
   #   paper Oct 8 AoE) は上流と一致済み。会期が May 3-3 の 1 日分しか無かった → 7 日
   #   に訂正。
+
   aamas:
     editions:
       2027:
@@ -1304,6 +1381,7 @@ conferences:
   # 根拠: https://www.isfpga.org/call-for-papers/ (2026-08-12 取得)「Abstracts
   #   due Oct 1, 2026 (No Extensions) / Submissions due Oct 8, 2026」AoE。上流は
   #   両方 kind=paper で登録 → 1 件目を abstract に訂正 (日時は一致)。
+
   fpga:
     editions:
       2027:
@@ -1314,6 +1392,7 @@ conferences:
   # 根拠: https://percom.org/ (2026-08-12 取得) + IEEEPerCom 公式 X「PerCom2027
   #   (Goa, 8-12 Mar 2027)」。上流は会期が「March 2027」月プレースホルダ → 実日付
   #   Mar 8-12 に訂正。締切 (registration Sep 4 / submission Sep 11 AoE) は一致済み。
+
   percom:
     editions:
       2027:
@@ -1348,6 +1427,7 @@ conferences:
   # 根拠: https://2027.cgo.org/track/cgo-2027-papers (conf.researchr.org「Thu 10 Sep 2026
   #   Main Conference Submission」) + 公式 X/LinkedIn「Author Rebuttal Period 27-29 Oct /
   #   Paper Notification: 9 November 2026」。Spring cycle paper Jun 11 2026 AoE も公式。
+
   ieee-acm-cgo:
     editions:
       2027:
@@ -1358,6 +1438,7 @@ conferences:
 
   # --- 公式 Dates 確認済みの 2027 会期追加（締切は上流と一致のため変更なし） ---
   # 根拠: https://chi2027.acm.org/ (May 10-14, 2027 Pittsburgh) / https://sigchi.org/events/chi-2027/
+
   chi:
     editions:
       2027:
@@ -1373,6 +1454,7 @@ conferences:
           - {kind: paper, label: 'Resubmission Due', date: '2026-12-03 23:59:59', tz: AoE}
           - {kind: notification, label: 'Notification', date: '2026-12-17 23:59:59', tz: AoE}
   # 根拠: https://www.date-conference.com/ (Dresden, Germany, 22 - 24 March 2027)（締切は上流と一致のため変更なし）
+
   date:
     editions:
       2027:
@@ -1386,6 +1468,7 @@ conferences:
   #   「held on August 11–13, 2027, in Denver, CO」。締切 2 サイクル・会期は上流と
   #   一致確認済み（収録 8/19Z・8/26Z は Aug 18/25 AoE の正確な変換）。
   #   Cycle 1 notification (Dec 3 AoE)・final papers (Jan 14 / Jun 3) を追加。
+
   usenix-security:
     editions:
       2027:
@@ -1403,6 +1486,7 @@ conferences:
           - {kind: paper, label: 'Cycle 2 paper submission', date: '2027-01-26 23:59:59', tz: AoE, round: 2}
           - {kind: camera_ready, label: 'Cycle 2 final papers due', date: '2027-06-03 23:59:59', tz: AoE, round: 2}
   # 根拠: https://pkc.iacr.org/2027/callforpapers.php (全締切 23:59:59 AoE 明示・2-round system。Taipei, Mar 1-4, 2027)
+
   pkc:
     editions:
       2027:
@@ -1418,6 +1502,7 @@ conferences:
 
   # --- 2027 会期（公式 Dates/CFP 確認済み・締切は上流と一致のため変更なし） ---
   # 根拠: https://fg2027.ieee-biometrics.org/ (April 26-30, 2027 Marrakesh)
+
   fg:
     editions:
       2027:
@@ -1425,6 +1510,7 @@ conferences:
         event_start: '2027-04-26'
         event_end: '2027-04-30'
   # 根拠: https://www.hooklee.com/cfp_one_deadline.asp (CVM 2027, April 9-11, 2027 Singapore)（締切は上流と一致のため変更なし）
+
   cvm:
     editions:
       2027:
@@ -1459,6 +1545,7 @@ conferences:
                 reason: manual-resolution
                 supersededAt: '2026-10-03T05:48:49Z'
   # 根拠: https://host.conferences.computer.org/2027/ (Washington DC, May 3-6 2027)（締切は上流と一致のため変更なし）
+
   host:
     editions:
       2027:
@@ -1466,6 +1553,7 @@ conferences:
         event_start: '2027-05-03'
         event_end: '2027-05-06'
   # 根拠: https://2027.rtas.org/ (Boulder, CO — May 17-20, 2027)（締切は上流と一致のため変更なし）
+
   rtas:
     editions:
       2027:
@@ -1473,6 +1561,7 @@ conferences:
         event_start: '2027-05-17'
         event_end: '2027-05-20'
   # 根拠: https://conf.researchr.org/home/icpc-2027 (Dublin, co-located with ICSE 2027, Apr 25-30)（締切は上流と一致のため変更なし）
+
   icpc:
     editions:
       2027:
@@ -1486,6 +1575,7 @@ conferences:
   #   Paper-Acceptance Notification: November 22, 2026」。収録済み paper
   #   (10/2 23:59 PDT = 10/3T06:59:59Z) と一致。通知 11/22 は tz 未表記のため UTC と解釈。
   #   通知を追加収録。会期 March 23-26, 2027 Snowbird。
+
   dcc:
     editions:
       2027:
@@ -1496,6 +1586,7 @@ conferences:
           - {kind: paper, label: 'Paper submission', date: '2026-10-02 23:59:59', tz: PDT}
           - {kind: notification, label: 'Paper-Acceptance Notification', date: '2026-11-22 23:59:00', tz: UTC}
   # 根拠: https://icc2027.ieee-icc.org/ (Washington, DC, May 30 - June 3, 2027)（締切は上流と一致のため変更なし）
+
   icc:
     editions:
       2027:
@@ -1509,6 +1600,7 @@ conferences:
   #   Vol 2027/3: rebuttal 23-28 Feb / notification 15 Mar / CR 14 Apr。
   #   Vol 2027/4: rebuttal 23-28 May / notification 15 Jun / CR 14 Jul。
   #   全て 23:59:59 AoE。会期 September 6-9, 2027。
+
   ches:
     editions:
       2027:
@@ -1537,6 +1629,7 @@ conferences:
           - {kind: notification, label: 'Notification (TCHES 2027/4)', date: '2027-06-15 23:59:59', tz: AoE, round: 4}
           - {kind: camera_ready, label: 'Camera ready (TCHES 2027/4)', date: '2027-07-14 23:59:59', tz: AoE, round: 4}
   # 根拠: https://www.ieee-security.org/TC/CSF2027/ (July 26-29, 2027 Tokyo)（締切は上流と一致のため変更なし）
+
   csfw:
     editions:
       2027:
@@ -1554,6 +1647,7 @@ conferences:
           - {kind: paper, label: 'Winter cycle paper submission', date: '2027-01-28 23:59:59', tz: AoE, round: 3}
           - {kind: notification, label: 'Winter cycle author notification', date: '2027-04-05 23:59:59', tz: AoE, round: 3}
   # 根拠: https://eurocrypt.iacr.org/2027/ (Eindhoven, April 11-15, 2027)（締切は上流と一致のため変更なし）
+
   eurocrypt:
     editions:
       2027:
@@ -1571,6 +1665,7 @@ conferences:
           - {kind: notification, label: 'Final notification', date: '2027-01-18 23:59:59', tz: AoE}
           - {kind: camera_ready, label: 'Camera-ready', date: '2027-02-08 23:59:59', tz: AoE}
   # 根拠: https://ifca.ai/fc27/ (Accra, 8-12 February 2027) — 従来の Barbados (tentative) を更新（締切は上流と一致のため変更なし）
+
   fc:
     editions:
       2027:
@@ -1579,6 +1674,7 @@ conferences:
         event_start: '2027-02-08'
         event_end: '2027-02-12'
   # 根拠: https://2027.msrconf.org/ (Dublin, April 26-27, 2027)（締切は上流と一致のため変更なし）
+
   msr:
     editions:
       2027:
@@ -1586,6 +1682,7 @@ conferences:
         event_start: '2027-04-26'
         event_end: '2027-04-27'
   # 根拠: https://conf.researchr.org/home/icst-2027 (San Sebastián, May 17-21, 2027)（締切は上流と一致のため変更なし）
+
   icst:
     editions:
       2027:
@@ -1593,6 +1690,7 @@ conferences:
         event_start: '2027-05-17'
         event_end: '2027-05-21'
   # 根拠: https://edbticdt2027.github.io/ (Lille, April 6-9, 2027)（締切は上流と一致のため変更なし）
+
   edbt:
     editions:
       2027:
@@ -1732,6 +1830,7 @@ conferences:
   # 根拠: https://edbticdt2027.github.io/?contents=important_dates.html (2026-08-13 取得)
   #   ICDT 1st: abstract Mar 3 / paper Mar 10 / notification Jun 1。
   #   ICDT 2nd: abstract Sep 3 / paper Sep 10 / notification Dec 1。全て AoE。
+
   icdt:
     editions:
       2027:
@@ -1744,6 +1843,7 @@ conferences:
           - {kind: notification, label: 'Notification (round 2)', date: '2026-12-01 23:59:59', tz: AoE, round: 2}
 
   # 根拠: https://2027.naacl.org/ (San Francisco, April 12-17, 2027)（締切は上流と一致のため変更なし）
+
   naacl:
     editions:
       2027:
@@ -1751,6 +1851,7 @@ conferences:
         event_start: '2027-04-12'
         event_end: '2027-04-17'
   # 根拠: COLING 2027 公式 (Macau, May 9-14, 2027)（締切は上流と一致のため変更なし）
+
   coling:
     editions:
       2027:
@@ -1762,6 +1863,7 @@ conferences:
   # 根拠: https://cs3-lab.github.io/icdcn/ (2026-08-12 取得)
   #   「Paper submission deadline extended to August 13, 2026 (FIRM)」・
   #   Conference Jan 4-7, 2027 NITK Surathkal・Acceptance Oct 1・Camera-Ready Oct 29（全て AoE）
+
   icdcn:
     editions:
       2027:
@@ -1779,6 +1881,7 @@ conferences:
   #   Conference: May 24-27, 2027, Dallas-Fort Worth, Texas, USA（初の米国開催）。
   #   従来推定 12/21 は 2026 開催分（Sydney 5/18-21）のサイクル踏襲で 20 日遅れだった。
   #   上流 ccfddl は 2027 edition を持たず、abstract 締切も無し（paper のみ）。
+
   wacv:
     editions:
       2027:
@@ -1804,6 +1907,7 @@ conferences:
   #   上流 ccfddl の 2027 は推定 (abstract 12/29・paper 1/26) で乖離 → 実 edition
   #   追加で置換 (推定置換パス)。tz は公式未表記 → 過去年 (2024-2026) の AoE 収録
   #   前例を踏襲。conf リンクも 2026 サイトから 2027 公式に更新。
+
   ets:
     link: https://ets2027.co.uk/
     editions:
@@ -1824,6 +1928,7 @@ conferences:
   #   22 January 2027, AoE」+ series 頁「Tue 15 - Fri 18 June 2027, Hanoi, Vietnam」。
   #   上流は 2027 推定 (abstract 1/9・paper 1/16) で 6-7 日乖離 → 実 edition で置換。
   #   conf リンクも ease-2026 から 2027 に更新。
+
   dis:
     link: https://dis.acm.org/2027/
     editions:
@@ -1848,6 +1953,7 @@ conferences:
   #   実 edition で置換。Track A / 2nd round は公式 TBA のため未収録 (推定を
   #   残すと 2/6 は Track A に誤誘導するため意図的に落とす)。通知 12/8 は
   #   日付のみ → AoE 収録の前例踏襲。conf リンクも 2026 共同サイトから 2027 公式へ。
+
   icalp:
     link: https://icalp.uj.edu.pl/
     editions:
@@ -1871,6 +1977,7 @@ conferences:
   #   上流は 2027 推定 (abstract 3/13・paper 3/20、単一サイクルの過去年パターン) で
   #   **Cycle 1 (9/18・9/25) を完全欠落** → 実 edition で置換。カメラレディは公式
   #   TBD のため未収録。ラウンドは公式サイクル番号に合わせる。
+
   spaa:
     link: https://spaa.acm.org/
     editions:
@@ -1897,6 +2004,7 @@ conferences:
   #   上流は 2027 推定 (abstract 2/16・paper 2/23) → 実 edition で置換 + 通知/最終版
   #   追加。tz は公式未表記 → AoE 収録の前例踏襲。conf リンクも cade-30 (Stuttgart)
   #   から 2027 共同公式へ更新。
+
   cade:
     link: https://fscd-cade.science.ru.nl/
     editions:
@@ -1921,6 +2029,7 @@ conferences:
   #   上流は 2027 推定 (abstract 3/2・paper 3/14、2026 の 2 月パターン) で実際の
   #   12 月締切から 3 か月乖離 → 実 edition で置換。tz は公式の「London 23:59
   #   デフォルト・注記のみ AoE」に従う。イベントは hybrid・by invitation。
+
   mathai:
     link: https://mathai.club/
     editions:
@@ -1941,6 +2050,7 @@ conferences:
   #   Main Track: Submission ~~May 30~~ Jun 17 (Hard deadline) / Reviews Jul 22 /
   #   Revision Aug 5 / Final Notification Aug 18 / Camera-Ready Sep 4。
   #   上流は 5 件（旧 main + 他トラック混在）を収録していたため現行 main track のみに置換。
+
   sibgrapi:
     editions:
       2026:
@@ -1954,6 +2064,7 @@ conferences:
   #   Abstract Registration **August 26, 2026 23:59 AoE** / Paper Submission **September 2, 2026
   #   23:59 AoE** / Early Rejection Notification October 23, 2026 / Final Notifications
   #   November 19, 2026。Winter (TBD) は未収録。
+
   mobicom:
     editions:
       mobicom21:
@@ -1982,6 +2093,7 @@ conferences:
   #   April cycle: Full paper Apr 15, 2026 / notification Jul 27。September cycle: Full paper
   #   Sep 9, 2026 / Author response Dec 1-4 / **Notification Dec 21, 2026**。「No separate
   #   abstract submission deadline」明示 → abstract は元々無し。会期 Apr 11-15, 2027 Crete。
+
   asplos:
     editions:
       2027:
@@ -1996,6 +2108,7 @@ conferences:
   #   Second Submission Round: Registration Nov 12 / Submission Nov 19 /
   #   Notification Dec 22 / CR Feb 19 2027」。会期 Mar 30-Apr 2, 2027 Ghent。
   #   tz 表記なし → AoE (上流の round 1 値と一致)。
+
   mmsys:
     editions:
       2027:
@@ -2014,6 +2127,7 @@ conferences:
   #   camera-ready Sep 25。Fall: titles/abstracts Sep 17 / full papers Sep 24 /
   #   notification **Jan 29, 2027** / camera-ready **Mar 5, 2027**。
   #   tz 表記なし → 上流の AoE 変換と一致するため AoE。会期 Apr 19-23, 2027 Rabat。
+
   eurosys:
     editions:
       2027:
@@ -2029,6 +2143,7 @@ conferences:
   # 根拠: https://2026.inlgmeeting.org/ 「All deadlines are Anywhere on Earth (UTC-12)」。
   #   Direct submission 延長 ~~Jul 15~~ Jul 18 AoE / ARR commitment Aug 5 AoE /
   #   Notification Aug 15 AoE / Non-archival Aug 22 AoE。上流 3 件は正確だったため同一値を pin + 1 件追加。
+
   inlg:
     editions:
       2026:
@@ -2043,6 +2158,7 @@ conferences:
   #   Fall: titles/abstracts Sep 10 / full papers Sep 17 (11:59 pm EDT) /
   #   Notification to authors Dec 8, 2026 / Final paper files Mar 4, 2027。
   #   通知・最終原稿は日付のみ → UTC 23:59 慣例。
+
   nsdi:
     editions:
       2027:
@@ -2058,6 +2174,7 @@ conferences:
   # 根拠: https://www.usenix.org/conference/fast27/call-for-papers (2026-08-12 取得)
   #   Fall: Paper submissions Sep 15, 2026 23:59 AoE / Notification Dec 8 /
   #   Final paper files Jan 26, 2027 23:59 AoE。Spring は過去のため現行値 pin。
+
   fast:
     editions:
       2027:
@@ -2072,6 +2189,7 @@ conferences:
   # --- saner 2027 通知追加（締切 2 件は公式一致で pin） ---
   # 根拠: https://conf.researchr.org/track/saner-2027/saner-2027-papers (2026-08-12 取得)
   #   Abstract Mon 21 Sep 2026 / Paper Fri 25 Sept 2026 / Notifications Tue 1 Dec 2026 (AoE)。
+
   saner:
     editions:
       2027:
@@ -2084,6 +2202,7 @@ conferences:
   # 根拠: https://2027.ieeeicassp.org/call-for-papers/ (2026-08-12 取得)
   #   Full Paper Submission Sep 16, 2026 / Paper Acceptance Notification Jan 13, 2027 /
   #   Final Paper Deadline Jan 27, 2027。tz 未表記 → 上流の AoE 変換と一致するため AoE。
+
   icassp:
     editions:
       2027:
@@ -2099,6 +2218,7 @@ conferences:
   #   Complete paper submissions Dec 8, 2026 5:59pm EST (10:59pm UTC) /
   #   Notification to authors Mar 16, 2027 / Final papers due Jun 3, 2027。
   #   通知・最終原稿は日付のみ → UTC 23:59 慣例。
+
   osdi:
     editions:
       2027:
@@ -2115,6 +2235,7 @@ conferences:
   #   Second: abstract Nov 10 / paper Nov 17 / early-reject Jan 18 /
   #   reviews Feb 11 / rebuttal Feb 16 / interactive Feb 17-26 /
   #   acceptance Mar 5 / camera-ready Apr 8 (2027)。全て 23:59:59 AoE。
+
   s-p:
     editions:
       2027:
@@ -2138,6 +2259,7 @@ conferences:
   #   Abstracts Jul 21 / Full papers Jul 28 (11:59 PM UTC-12) /
   #   Notification of Phase 1 rejections Sep 24 /
   #   Notification of final acceptance or rejection Nov 30 (Main Technical Track)。
+
   aaai:
     editions:
       2027:
@@ -2151,6 +2273,7 @@ conferences:
   # 根拠: https://icde2027.github.io/cf-research-papers.html (2026-08-12 取得)
   #   R1 due Jun 11 / Notification Sep 10 / CR Oct 10 (2026)。
   #   R2 due Nov 11 / Notification Feb 10 / CR Mar 10 (2027)。全て 5:00pm PT。
+
   icde:
     editions:
       2027:
@@ -2166,6 +2289,7 @@ conferences:
   # 根拠: https://conf.researchr.org/track/icse-2027/icse-2027-research-track (2026-08-12 取得)
   #   Notification Oct 20 / CR (direct accept) Nov 24 / Final decision (major revision)
   #   Dec 18 / CR (major revision) Jan 25。全て AoE。
+
   icse:
     editions:
       2027:
@@ -2181,6 +2305,7 @@ conferences:
   # 根拠: https://infocom2027.ieee-infocom.org/ (2026-08-12 取得)
   #   Abstract 24 Jul / Paper 31 Jul / Early-Reject Notification 09 Oct /
   #   Acceptance Notification 08 Dec (2026)。
+
   infocom:
     editions:
       2027:
@@ -2197,6 +2322,7 @@ conferences:
   #   Issue 3: paper Nov 30 / notification Feb 1 / revision Mar 1 / CR Mar 15。
   #   Issue 4: paper Feb 28 / notification May 1 / revision Jun 1 / CR Jun 15。
   #   全て 23:59:59 AoE。
+
   pets:
     editions:
       2027:
@@ -2222,6 +2348,7 @@ conferences:
   # --- cidr 2027 通知・CR 追加（paper は公式一致で pin） ---
   # 根拠: https://www.cidrdb.org/cidr2027/cfp.html (2026-08-12 取得)
   #   Submission Aug 4 / Author notification Oct 6 / Camera ready Dec 4 (11:59pm PT)。
+
   cidr:
     editions:
       2027:
@@ -2233,6 +2360,7 @@ conferences:
   # --- eacl 2027 通知追加（paper は公式一致で pin） ---
   # 根拠: https://2027.eacl.org/calls/papers/ (2026-08-12 取得)
   #   ARR submission Aug 3 / Commitment Oct 11 / Notification of acceptance Nov 12 (AoE)。
+
   eacl:
     editions:
       2027:
@@ -2244,6 +2372,7 @@ conferences:
   # --- sigmetrics 2027 通知 3 件追加（締切 6 件は公式一致で pin） ---
   # 根拠: https://www.sigmetrics.org/sigmetrics2027/ (2026-08-12 取得)
   #   Summer notification Sep 9 / Fall notification Dec 9 / Winter notification Mar 10 (2027)。
+
   sigmetrics:
     editions:
       2027:
@@ -2266,6 +2395,7 @@ conferences:
   #   March 18, 2027 Notification to Authors / April 24, 2027 Camera Ready Materials /
   #   All dates refer to AoE time (Anywhere on Earth)」。abstract/paper は収録済み値と
   #   一致 (11/25・12/2 AoE)。rebuttal 期間は日付 1 点でないため収録せず (PETS 前例)。
+
   dsn:
     editions:
       2027:
@@ -2281,6 +2411,7 @@ conferences:
   #   11:59 PM Anywhere on Earth (AoE) unless otherwise specified」。Abstract 10/18、
   #   Paper 10/25、Result Release 12/21、Rebuttal 12/21-31、Notification 1/4、
   #   Final Version 1/31。旧公開値 (Abstract 10/11、Paper 10/18、Result 12/10) を更新。
+
   www:
     editions:
       2027:
@@ -2299,6 +2430,7 @@ conferences:
   # 根拠: https://www.iacr.org/events/ (2026-08-13 取得)「CT-RSAC 2027 ... Submission
   #   deadline: 22 October 2026 / Notification date: 3 December 2026」。paper 10/22 AoE は
   #   収録済み値 (10/23T11:59:59Z) と一致。通知日を PKC 前例 (IACR 通知は AoE) で追加。
+
   ct-rsa:
     editions:
       2027:
@@ -2308,6 +2440,7 @@ conferences:
   # --- models 2026 欠落版の追加収録 ---
   # 根拠: https://conf.researchr.org/home/models-2026 (2026-08-14 取得)
   #   Málaga, Spain, Oct 4-9, 2026. Abstract: Mar 20, Paper: Mar 27, Notif: Jun 17, Camera-ready: Jul 31 (AoE).
+
   models:
     editions:
       2026:
@@ -2325,6 +2458,7 @@ conferences:
   # --- ispa 2026 欠落版の追加収録 ---
   # 根拠: https://ieee-ai-for-science.org/ispa2026/ (2026-08-14 取得)
   #   Shenyang, China, Dec 27-30, 2026. Paper: Aug 30, Notif: Oct 30, Camera-ready: Nov 30 (AoE).
+
   ispa:
     editions:
       2026:
@@ -2341,6 +2475,7 @@ conferences:
   # --- netys 2026 欠落版の追加収録 ---
   # 根拠: https://netys.net/ (2026-08-14 取得)
   #   Agadir, Morocco, Jun 10-12, 2026. Abstract: Mar 11, Paper: Mar 18 (AoE).
+
   netys:
     editions:
       2026:
@@ -2354,14 +2489,19 @@ conferences:
           - {kind: paper, label: 'Paper Submission', date: '2026-03-18 23:59:59', tz: AoE}
 
   # --- 休止・終了・統合会議のタグ付与 ---
+
   hotsec:
     tags: [discontinued, workshop, security]
+
   lisa:
     tags: [discontinued, sysadmin, systems]
+
   vee:
     tags: [dormant, systems, virtual-execution]
+
   ipsn:
     tags: [merged, sensys, networking, iot]
+
 
   adma:
     editions:
@@ -2379,6 +2519,7 @@ conferences:
           note: "ADMA 2021年版を2022年2月に開催。公式の版名と開催日を確認。"
           held_year: 2022
 
+
   dai:
     editions:
       dai2021:
@@ -2394,6 +2535,7 @@ conferences:
           reviewed_on: '2026-10-02'
           note: "DAI 2021年版の論文セッションは2022年1月4-5日。1月3日はチュートリアル等で、上流が収録する本会議の範囲を保持。"
           held_year: 2022
+
 
   focs:
     editions:
@@ -2411,6 +2553,7 @@ conferences:
           note: "FOCS 2021年版は2022年2月7-10日にオンライン開催。公式の版名と延期後日程を確認。"
           held_year: 2022
 
+
   slt:
     editions:
       slt22:
@@ -2427,6 +2570,7 @@ conferences:
           note: "SLT 2022年版は2023年1月9-12日に開催。前後のハッカソン等とは別の本会議日程を保持。"
           held_year: 2023
 
+
   wasa:
     editions:
       wasa22:
@@ -2442,6 +2586,7 @@ conferences:
           reviewed_on: '2026-10-02'
           note: "公式WASA 2022 & 2023サイトに2023年4月7-9日の大連開催を確認。2022年版の識別子と開催年を別に保持。"
           held_year: 2023
+
 
   probml:
     editions:
@@ -2465,3 +2610,128 @@ conferences:
           source_url: https://probml.cc/archives/2021/schedule/
           reviewed_on: '2026-10-02'
           note: "公式AABI 2021日程は1月13/20/27日、2月3/10/17日の週次オンラインセミナー6回。原文の期間を連続開催として扱わない。"
+
+  ipsj-27-m-security:
+    editions:
+      ipsj-27-m26:
+        year: 2026
+        deadlines:
+        - kind: paper
+          label: Submission
+          round: 1
+          date: '2026-11-27'
+          precision: date-only
+          evidence:
+          - source_name: IPSJ official CFP
+            source_url: https://www.ipsj.or.jp/journal/cfp/27-M.html
+            sourceClass: official-cfp
+            observed_at: '2026-10-03T14:34:11Z'
+            retrievedAt: '2026-10-03T14:34:11Z'
+            verifiedAt: '2026-10-03T14:34:11Z'
+            contentHash: 461f26731d76116911c5f7cb1a1b842123a711b8cbb5a3a5451725e90768f254
+            evidenceRef: data/evidence/blobs/461f26731d76116911c5f7cb1a1b842123a711b8cbb5a3a5451725e90768f254.body
+            rawExcerpt: 投稿締切 2026年11月27日（金）
+            verifiedFields:
+            - date
+            - kind
+            confidence: official
+          superseded_deadlines:
+          - value: '2026-11-27T23:59:00Z'
+            precision: exact
+            source: https://www.ipsj.or.jp/journal/cfp/27-M.html
+            evidenceRef: data/evidence/blobs/461f26731d76116911c5f7cb1a1b842123a711b8cbb5a3a5451725e90768f254.body
+            status: superseded
+            supersededBy: ipsj-27-m-security|ipsj-27-m26|paper|1|
+            reason: manual-resolution
+            supersededAt: '2026-10-03T14:34:11Z'
+
+  ipsj-27-p-ubiquitous:
+    editions:
+      ipsj-27-p26:
+        year: 2026
+        deadlines:
+        - kind: paper
+          label: Submission
+          round: 1
+          date: '2026-12-04'
+          precision: date-only
+          evidence:
+          - source_name: IPSJ official CFP
+            source_url: https://www.ipsj.or.jp/journal/cfp/27-P.html
+            sourceClass: official-cfp
+            observed_at: '2026-10-03T14:34:11Z'
+            retrievedAt: '2026-10-03T14:34:11Z'
+            verifiedAt: '2026-10-03T14:34:11Z'
+            contentHash: 118f10762b3004114ff96949bf8c4b9e452fce67965888c08fd7a2becc57fded
+            evidenceRef: data/evidence/blobs/118f10762b3004114ff96949bf8c4b9e452fce67965888c08fd7a2becc57fded.body
+            rawExcerpt: 投稿締切 2026年12月4日（金）
+            verifiedFields:
+            - date
+            - kind
+            confidence: official
+          superseded_deadlines:
+          - value: '2026-12-04T23:59:00Z'
+            precision: exact
+            source: https://www.ipsj.or.jp/journal/cfp/27-P.html
+            evidenceRef: data/evidence/blobs/118f10762b3004114ff96949bf8c4b9e452fce67965888c08fd7a2becc57fded.body
+            status: superseded
+            supersededBy: ipsj-27-p-ubiquitous|ipsj-27-p26|paper|1|
+            reason: manual-resolution
+            supersededAt: '2026-10-03T14:34:11Z'
+
+  ipsj-27-r-compsac:
+    editions:
+      ipsj-27-r26:
+        year: 2026
+        deadlines:
+        - kind: paper
+          label: Submission
+          round: 1
+          date: '2026-12-01'
+          precision: date-only
+          evidence:
+          - &id001
+            source_name: IPSJ official CFP
+            source_url: https://www.ipsj.or.jp/journal/cfp/27-R.html
+            sourceClass: official-cfp
+            observed_at: '2026-10-03T14:34:11Z'
+            retrievedAt: '2026-10-03T14:34:11Z'
+            verifiedAt: '2026-10-03T14:34:11Z'
+            contentHash: 9972268f811c33df5e345fc94570018d6ea5ec55be146ca81b95744b7fd4f3bd
+            evidenceRef: data/evidence/blobs/9972268f811c33df5e345fc94570018d6ea5ec55be146ca81b95744b7fd4f3bd.body
+            rawExcerpt: 投稿締切 2026年12月1日（火）
+            verifiedFields:
+            - date
+            - kind
+            confidence: official
+          superseded_deadlines:
+          - value: '2026-12-01T23:59:00Z'
+            precision: exact
+            source: https://www.ipsj.or.jp/journal/cfp/27-R.html
+            evidenceRef: data/evidence/blobs/9972268f811c33df5e345fc94570018d6ea5ec55be146ca81b95744b7fd4f3bd.body
+            status: superseded
+            supersededBy: ipsj-27-r-compsac|ipsj-27-r26|paper|1|
+            reason: manual-resolution
+            supersededAt: '2026-10-03T14:34:11Z'
+
+  jip:
+    editions:
+      jip-compsac2027-si:
+        year: 2027
+        deadlines:
+        - kind: paper
+          label: 投稿締切
+          round: 1
+          date: '2026-12-01'
+          precision: date-only
+          evidence:
+          - *id001
+          superseded_deadlines:
+          - value: '2026-12-01T14:59:00Z'
+            precision: exact
+            source: https://www.ipsj.or.jp/journal/cfp/27-R.html
+            evidenceRef: data/evidence/blobs/9972268f811c33df5e345fc94570018d6ea5ec55be146ca81b95744b7fd4f3bd.body
+            status: superseded
+            supersededBy: jip|jip-compsac2027-si|paper|1|
+            reason: manual-resolution
+            supersededAt: '2026-10-03T14:34:11Z'

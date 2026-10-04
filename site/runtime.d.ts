@@ -1,3 +1,12 @@
+/** 早め絞り込みのボタンが担当する条件（検索語・締切種別・推定・過去表示は含まない）。 */
+type PresetSelection = {
+  win: string;
+  rank: string;
+  cats: string[];
+  domestic: boolean;
+  online: boolean;
+};
+
 interface SiteDeadline {
   kind: string;
   label?: string;
@@ -139,6 +148,115 @@ interface SiteRecommenderApi {
   rankMatches(rankPairs: string[], grade: string): boolean;
   comparePapers(a: SiteRow, b: SiteRow, now: number): number;
   candidateRows(data: unknown): SiteRow[];
+  categoryLabelJa(key: unknown): string;
+  meetingRangeJa(start: string, end: string): string;
+  upcomingEditionsOf(
+    conf: unknown,
+    exceptStart: string,
+    nowMs: number,
+    max?: number,
+  ): Array<{ start: string; end: string; place: string }>;
+  laterEditionSearchWords(conf: unknown, exceptStart: string): string;
+  laterEditionLineJa(ed: { start: string; end: string; place: string }): string;
+  categoryChipLabelJa(key: unknown, enLabel: unknown): string;
+  categorySearchTerms(
+    cats: readonly string[] | null | undefined,
+    tags: readonly string[] | null | undefined,
+  ): string;
+  officialZone(dl: unknown): string;
+  /** 検索語を語の組に分け、収録データの何行に当たるかを数える（0 件のときの案内がどの語の
+   * せいかを言うため）。組の中は OR、組の間は AND なので、組の単位で数える。 */
+  queryTermCounts(
+    query: unknown,
+    hays: readonly unknown[],
+    nowMs?: number,
+  ): Array<{ term: string; count: number }>;
+  /** 一覧の日付欄に出す JST の曜日を、検索の語として返す（「土曜 土曜日」）。
+   * 一文字（`土`）は他の語を巻くので入れていない。 */
+  weekdaySearchTerms(value: unknown): string;
+  /** 上流の締切名が延長を示しているか（一覧・CSV・検索で同じ判定を使う）。 */
+  isExtendedDeadline(dl: unknown): boolean;
+  deadlineRowIsPast(
+    row: { t?: unknown; tLast?: unknown; dateOnly?: unknown },
+    nowMs: number,
+  ): boolean;
+  pastDeadlineTagJa(
+    row: {
+      t?: unknown;
+      tLast?: unknown;
+      tEvent?: unknown;
+      dateOnly?: unknown;
+      conf?: unknown;
+      ed?: { event_start?: unknown } | null;
+    },
+    nowMs: number,
+  ): string;
+  deadlineShiftsOf(dl: unknown): Array<{ fromJa: string; toJa: string; later: boolean }>;
+  deadlineShiftLineJa(dl: unknown): string;
+  deadlineShiftSearchWords(dl: unknown): string;
+  /** 延長を示すチップの語（画面・CSV・検索で同じ語を使う）。 */
+  extendedLabelJa(): string;
+  placeJa(value: unknown): string;
+  weekdayJaFromDate(value: unknown): string;
+  deadlinesToCsv(
+    rows: readonly Record<string, unknown>[] | null | undefined,
+    nowMs: number,
+  ): string;
+  searchNormalize(value: unknown): string;
+  kanaFold(value: unknown): string;
+  monthTermsJa(value: unknown): string;
+  placePrefectureJa(value: unknown): string;
+  placeWithPrefectureJa(value: unknown): string;
+  /** 会場表記にオンライン参加の記述があるか（対面かどうかは判定しない）。 */
+  placeOffersOnline(value: unknown): boolean;
+  /** 早め絞り込みのボタンが押されている状態か（点灯の正本）。 */
+  /** 評価の等級を「よさ」の順に並べた表（選択欄・URL・並び順で同じ正本）。 */
+  rankGradeOrderJa(): string[];
+  /** ランク順の並びキー（等級のよさだけを見る。評価の無い行は末尾）。 */
+  rankSortKey(pairs: readonly string[] | null | undefined): string;
+  presetIsActive(preset: unknown, current: PresetSelection | null): boolean;
+  /** 早め絞り込みのボタンを押した後の状態（自分の担当する条件だけを出し入れする）。 */
+  presetNextSelection(preset: unknown, current: PresetSelection | null): PresetSelection;
+  /** 空の会期・開催地・ランクを表で出す語（検索側と同じ正本）。 */
+  unconfirmedLabelJa(): string;
+  semanticReasonJa(value: unknown): string;
+  dataAgeNoteJa(generatedAt: unknown, nowMs: number): string;
+  notApplicableLabelJa(): string;
+  unconfirmedFieldsJa(row: unknown): string[];
+  unconfirmedHayJa(row: unknown): string;
+  notApplicableTitleJa(field: string): string;
+  fieldNotApplicableJa(row: unknown): boolean;
+  readonly dataStaleDaysJa: number;
+  readonly semanticReasonLabelsJa: { [code: string]: string };
+  queryNarrowHintJa(query: unknown): string;
+  querySynonymNotes(query: unknown): string[];
+  dayTermsJa(value: unknown): string;
+  weekDayTermsJa(token: string, nowMs: number): string[];
+  relativeDayNotes(query: unknown, nowMs: number): string[];
+  queryHiddenKindMatches(query: unknown, hiddenKindLabels: readonly string[]): string[];
+  rankPairLabelJa(pair: string): string;
+  rankScaleLabelJa(name: string): string;
+  rankUnratedLabelJa(): string;
+  rankSearchTerms(rankPairs: readonly string[] | null | undefined): string;
+  expandRelativeMonths(query: unknown, nowMs: number): string;
+  queryTokenGroups(query: unknown): string[][];
+  queryTokens(query: unknown): string[];
+  hayMatches(hay: unknown, query: unknown): boolean;
+  /** 検索語ごとの照合関数を 1 回だけ作る（一覧の絞り込みは行ごとに作り直さない）。 */
+  searchMatcher(query: unknown, nowMs?: number): (hay: unknown) => boolean;
+  scheduleOnlyEditions(data: unknown): Array<{
+    key: string;
+    name: string;
+    link: string;
+    place: string;
+    eventStart: string;
+    eventEnd: string;
+    cats: string[];
+    tags: string[];
+    hay: string;
+  }>;
+  tagLabelJa(tag: unknown): string;
+  topicTagsJa(tags: readonly string[] | null | undefined): string[];
   safeExternalUrl(value: unknown): string;
   pdfPaperRecord(metadata: unknown, pages: unknown[], fallbackText: string): SitePaperRecord;
   textPaperRecord(text: string, fallbackText: string): SitePaperRecord;

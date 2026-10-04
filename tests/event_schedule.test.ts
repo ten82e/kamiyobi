@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { load } from "js-yaml";
 import { describe, expect, it } from "vitest";
 import { validateData } from "../scripts/validate-data.ts";
-import { recordsOf, toCatalog, toJson } from "../src/build.ts";
+import Recommender from "../site/recommender.ts";
+import { editionSessionJa, recordsOf, toCatalog, toJson } from "../src/build.ts";
 import { applyOverrides } from "../src/merge.ts";
 import { conferencesFromJson, parseDateRange, parseEventSegments } from "../src/model.ts";
 
@@ -87,6 +88,42 @@ describe("evidence-bound event schedules", () => {
     missing.conferences[0].editions = [];
     const patched = applyOverrides(conferencesFromJson(missing), wasaOverride());
     expect(patched[0].editions).toEqual([]);
+  });
+  it("keeps each SIGMOD 2026 source schedule intact on cold and warm snapshot paths", () => {
+    const overrides = load(readFileSync("data/overrides.yaml", "utf8")) as Record<string, unknown>;
+    for (const date_text of ["May 31-June 5, 2026", "May 31 and June 2-4, 2026"]) {
+      const original = {
+        conferences: [
+          {
+            key: "sigmod",
+            title: "SIGMOD",
+            categories: ["db"],
+            editions: [
+              {
+                id: "sigmod26",
+                year: 2026,
+                date_text,
+                event_start: date_text.includes(" and ") ? null : "2026-05-31",
+                event_end: date_text.includes(" and ") ? null : "2026-06-05",
+                deadlines: [],
+              },
+            ],
+          },
+        ],
+      };
+      const source = conferencesFromJson(original);
+      const output = toJson(applyOverrides(source, overrides), {}, new Date("2026-08-09"));
+      const actual = (
+        output.conferences as Array<{ editions: Array<Record<string, unknown>> }>
+      )[0].editions.find((ed) => ed.id === "sigmod26")!;
+      expect(actual.date_text).toBe(date_text);
+      expect(actual.year).toBe(2026);
+      expect(actual.event_review).toBeUndefined();
+      expect(validateData(output).errors).toEqual([]);
+      expect(actual.event_date_precision).toBe(
+        date_text.includes(" and ") ? "split-dates" : "exact-range",
+      );
+    }
   });
   it("keeps the nominal edition year and actual held year separate", () => {
     expect(validateData(payload(edition)).errors).toEqual([]);
@@ -177,6 +214,11 @@ describe("evidence-bound event schedules", () => {
         row.end.toISOString().slice(0, 10),
       ]),
     ).toEqual(parts.map((part) => [part.start, part.end]));
+    const shown = Recommender.eventCellJa({ ed: { event_segments: parts } });
+    expect(shown).toBe(
+      "2023-03-31(金)（オンライン） / 2023-04-03(月) 〜 2023-04-05(水)（現地開催）",
+    );
+    expect(editionSessionJa(confs[0].editions[0])).toBe(shown);
     expect(parseEventSegments("March 32, 2023; April 3-5, 2023", 2023)).toEqual([]);
   });
   it("restores split dates from an older snapshot and retains upcoming event-only parts without filling gaps", () => {

@@ -16,6 +16,7 @@ import {
   explicitDeadlineExtension,
   type IdentityProvider,
   isDateOnlyDeadline,
+  isNonPaperWorkshopLabel,
   monthOf,
   type ProviderIdentity,
   parseInstant,
@@ -303,6 +304,7 @@ function extractedDate(text: string): { date: string; year: number } | null {
 function extractedDates(
   text: string,
 ): Array<{ date: string; year: number; index: number; end: number }> {
+  text = text.normalize("NFKC");
   return DATE_PATTERNS.flatMap((pattern) =>
     [...text.matchAll(pattern)].flatMap((match) => {
       const value = extractedDate(match[0]);
@@ -314,6 +316,7 @@ function extractedDates(
 }
 
 function extractedTime(text: string): string | undefined {
+  text = text.normalize("NFKC");
   const match =
     /(?<!(?:utc|gmt)\s*[+-]\s*)\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?\b/i.exec(
       text,
@@ -346,7 +349,7 @@ function extractedTime(text: string): string | undefined {
 // 切り詰められ、後段の実在性検証で誤って棄却されてしまう (#723 の独立
 // 反証レビューで発見)。
 const TIMEZONE_PATTERN =
-  /\b(AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|WET|WEST|JST|KST|SGT|HKT|BOT|COT|FJT|GET|PKT|TRT|BRT|CAT|WAT|NZST|NZDT|WIB|WITA|WIT|IDT|MSK|ChST|CHST|HAST|HADT|AKDT|AKST|HST|EAT|SAST|ACST|ACDT|AEDT|AEST|AWST|PT|ET|CT|MT|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)\b/gi;
+  /(\b(?:anywhere on (?:the )?(?:inhabited )?earth|Japan Standard Time|AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|WET|WEST|JST|KST|SGT|HKT|BOT|COT|FJT|GET|PKT|TRT|BRT|CAT|WAT|NZST|NZDT|WIB|WITA|WIT|IDT|MSK|ChST|CHST|HAST|HADT|AKDT|AKST|HST|EAT|SAST|ACST|ACDT|AEDT|AEST|AWST|PT|ET|CT|MT|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)\b|日本時間)/gi;
 
 /**
  * IANA Area/Location 名として実在するかだけを判定する (model.ts の
@@ -364,6 +367,7 @@ function isKnownIanaTimezone(name: string): boolean {
 }
 
 function extractedTimezone(text: string): string | undefined {
+  text = text.normalize("NFKC");
   for (const match of text.matchAll(TIMEZONE_PATTERN)) {
     const candidate = match[1];
     // 2文字の略号 (PT/ET/CT/MT) は大文字表記のみタイムゾーンとして受理する。
@@ -385,11 +389,16 @@ function extractedTimezone(text: string): string | undefined {
   return undefined;
 }
 
+// 提出開始日や原稿に含まれる要旨の説明から、概要締切を作らない。
+const ABSTRACT_DEADLINE_JA =
+  /要旨(?:の)?(?:締切|〆切|期限|期日|提出(?=\s*(?:締切|〆切|期限|期日|[:：]?\s*(?:\d{4}(?:年|[-/.])|$))))/;
+
 function candidateKind(text: string): string {
   const value = text.toLowerCase();
   if (
     value.includes("abstract") ||
     value.includes("概要") ||
+    ABSTRACT_DEADLINE_JA.test(text) ||
     value.includes("発表申込") ||
     value.includes("講演申込")
   )
@@ -397,7 +406,7 @@ function candidateKind(text: string): string {
   if (
     value.includes("camera-ready") ||
     value.includes("camera ready") ||
-    value.includes("カメラレディ") ||
+    /カメラ・?レディ/.test(value) ||
     value.includes("最終原稿")
   )
     return "camera_ready";
@@ -410,7 +419,7 @@ function candidateKind(text: string): string {
   if (value.includes("rebuttal") || value.includes("author response") || value.includes("査読回答"))
     return "rebuttal_end";
   if (value.includes("registration") || value.includes("参加登録")) return "registration";
-  return "paper";
+  return isNonPaperWorkshopLabel(text) ? "other" : "paper";
 }
 
 const TRACK_STOPWORDS = new Set([
@@ -504,23 +513,28 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
     /deadline|due|at the latest|not later than|no later than|on or before|\bcloses?\b|closing date|not be entertained after|not entertained after|not be considered after|not considered after|not be accepted after|not accepted after|must arrive|drop[ -]?dead|reach us by|accept(?:ing)? papers until|received by|receipt of|last date|cut-?off|notification|camera[- ]?ready|締切|〆切|期限|必着/i;
   const blockedAdjacentDate =
     /\b(?:submissions?|events?|conferences?|open(?:s|ing)?|starts?|begins?)\b|開催/i;
-  const isAdjacentDeadlineLabel = (line: string) =>
-    deadlineLabel.test(line) &&
-    !/^all deadlines?\b/i.test(line) &&
-    !extractedDates(line).length &&
-    !/\b(?:open|opens|opening|event|conference)\b|開催/i.test(line);
+  const isAdjacentDeadlineLabel = (line: string) => {
+    line = line.normalize("NFKC");
+    return (
+      (deadlineLabel.test(line) || ABSTRACT_DEADLINE_JA.test(line)) &&
+      !/^all deadlines?\b/i.test(line) &&
+      !extractedDates(line).length &&
+      !/\b(?:open|opens|opening|event|conference)\b|開催/i.test(line)
+    );
+  };
   const lines = rawLines
     .map((line, index) => {
       const next = rawLines[index + 1];
       if (isAdjacentDeadlineLabel(line) && next && extractedDates(next).length === 1)
-        return deadlineLabel.test(next) || blockedAdjacentDate.test(next)
+        return deadlineLabel.test(next.normalize("NFKC")) ||
+          blockedAdjacentDate.test(next.normalize("NFKC"))
           ? line
           : `${line} ${next}`;
       const previous = rawLines[index - 1];
       return previous &&
         isAdjacentDeadlineLabel(previous) &&
         extractedDates(line).length === 1 &&
-        !deadlineLabel.test(line)
+        !deadlineLabel.test(line.normalize("NFKC"))
         ? ""
         : line;
     })
@@ -528,7 +542,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
   const globalDeadlineTiming = lines.find(
     (line) =>
       /^all deadlines?(?:\s+(?:are\s+at|are|at))?\s*[:\s]\s*\d{1,2}:\d{2}(?::\d{2})?\s*(?:[ap]\.?m\.?\s+)?[(（]?(?:AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|WET|WEST|JST|KST|SGT|HKT|AEDT|AEST|AWST|PT|ET|CT|MT|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)[)）]?(?:\s*\(Anywhere on Earth\))?[.!]?$/i.test(
-        line,
+        line.normalize("NFKC"),
       ) &&
       extractedTime(line) &&
       extractedTimezone(line),
@@ -544,18 +558,20 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
     /\b(?:\d{1,2}:\d{2}(?::\d{2})?|\d{1,2}\s*(?:a\.?m\.?|p\.?m\.?)|at\s+\d{3,4}|noon|midnight|end of (?:the )?day|eod)\b/i.test(
       value,
     );
-  for (const raw of lines) {
+  for (const originalRaw of lines) {
+    const raw = originalRaw.normalize("NFKC");
     if (
       !/deadline|due|at the latest|not later than|no later than|on or before|\bcloses?\b|closing date|not be entertained after|not entertained after|not be considered after|not considered after|not be accepted after|not accepted after|must arrive|drop[ -]?dead|reach us by|accept(?:ing)? papers until|received by|receipt of|last date|cut-?off|submission|submit|notification|camera[- ]?ready|call for papers|cfp|event|conference|開催|締切|〆切|期限|投稿|募集|必着/i.test(
         raw,
-      )
+      ) &&
+      !ABSTRACT_DEADLINE_JA.test(raw)
     )
       continue;
     const extracted = extractedDates(raw);
     const headerHasDeadline =
       /deadline|due|at the latest|not later than|no later than|on or before|\bcloses?\b|closing date|not be entertained after|not entertained after|not be considered after|not considered after|not be accepted after|not accepted after|must arrive|drop[ -]?dead|reach us by|accept(?:ing)? papers until|received by|receipt of|last date|cut-?off|submit|submission|notification|camera[- ]?ready|締切|〆切|期限|必着/i.test(
         raw.slice(0, extracted[0]?.index),
-      );
+      ) || ABSTRACT_DEADLINE_JA.test(raw.slice(0, extracted[0]?.index));
     const hasBareMilitaryTime = extracted.some((date, index) =>
       /\b(?:[01]?\d|2[0-3])[0-5]\d\b/.test(
         raw.slice(date.end, extracted[index + 1]?.index).replace(/\b20[2-9]\d\b/g, ""),
@@ -578,13 +594,14 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
       const segmentLabel = currentPrefix.replace(/^[\s,;:—–|-]*(?:and\s+)?/i, "").trim();
       const segmentHasKindWords =
         extracted.length > 1 &&
-        /abstract|camera|notification|rebuttal|registration|paper|submission|final|概要|通知|投稿|申込|最終原稿|カメラレディ|査読回答|採否/i.test(
+        (/abstract|camera|notification|rebuttal|registration|paper|submission|final|workshops?|doctoral consortium|概要|通知|投稿|申込|最終原稿|カメラ・?レディ|査読回答|採否/i.test(
           segmentLabel,
-        );
+        ) ||
+          ABSTRACT_DEADLINE_JA.test(segmentLabel));
       const candidate: CfpExtractionCandidate = {
-        rawExcerpt: raw,
-        text: raw,
-        label: segmentHasKindWords ? segmentLabel : raw,
+        rawExcerpt: originalRaw,
+        text: originalRaw,
+        label: segmentHasKindWords ? segmentLabel : originalRaw,
         kind: candidateKind(segmentHasKindWords ? segmentLabel : raw),
         date: value.date,
         editionYear: value.year,
@@ -606,7 +623,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
         (/\b(?:round|cycle|phase)\b/i.test(currentPrefix) || /^[\s:—–-]*$/.test(currentPrefix)) &&
         (extracted.length === 1 || /^[\s,;:—–|-]*$/.test(suffix));
       const hasDeadlineSemantics =
-        ((deadlineSemantics.test(currentPrefix) &&
+        (((deadlineSemantics.test(currentPrefix) || ABSTRACT_DEADLINE_JA.test(currentPrefix)) &&
           (index === 0 || !/^\s*[—–-]/.test(currentPrefix))) ||
           (extracted.length === 1 && deadlineSemantics.test(raw.slice(value.end))) ||
           inheritsHeader) &&

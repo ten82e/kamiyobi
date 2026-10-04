@@ -617,6 +617,45 @@ function main(argv = process.argv.slice(2)): void {
       ambiguous: ambiguousThreshold,
     },
   };
+  // 昇格判断の来歴 (#687): 既定の本番入力で v3 を再学習しても
+  // reranker-comparison.json の判断メタデータが落ちないよう復元する。
+  // 実験用の --candidate-v4 やカスタムパスでは付けない。
+  const isDefaultProduction =
+    !candidateV4 &&
+    devPath === "data/benchmarks/real-paper-dev.json" &&
+    featurePath === "data/benchmarks/real-paper-features.jsonl" &&
+    profilePath === "data/venue-profiles.json" &&
+    outPath === "data/recommender-reranker.json";
+  let provenance: Record<string, string> = {};
+  if (isDefaultProduction) {
+    try {
+      const comparison = JSON.parse(
+        readFileSync("data/benchmarks/reranker-comparison.json", "utf8"),
+      ) as {
+        production?: { trainer_revision?: unknown };
+        candidate?: { trainer_revision?: unknown };
+        candidate_rejected_reason?: unknown;
+      };
+      if (typeof comparison.production?.trainer_revision === "string")
+        provenance = {
+          ...provenance,
+          production_trainer_revision: comparison.production.trainer_revision,
+        };
+      if (typeof comparison.candidate?.trainer_revision === "string")
+        provenance = {
+          ...provenance,
+          candidate_trainer_revision: comparison.candidate.trainer_revision,
+        };
+      if (typeof comparison.candidate_rejected_reason === "string")
+        provenance = {
+          ...provenance,
+          candidate_rejected_reason: comparison.candidate_rejected_reason,
+        };
+    } catch {
+      // 比較レポートが無い初回生成では来歴なしでよい。
+    }
+  }
+  const finalArtifact = { ...artifact, ...provenance };
   // site/recommender.ts の isValidRerankerModel が要求する不変条件
   // (0 <= ambiguous <= sufficient <= 1) を書き出し前に確認する。破れていれば
   // ここで大声で失敗させる — build.ts のビルドゲートまで届いてから
@@ -627,7 +666,7 @@ function main(argv = process.argv.slice(2)): void {
       `invariant violated: expected 0 <= ambiguous <= sufficient <= 1, got ambiguous=${ambiguous} sufficient=${sufficient}`,
     );
   }
-  writeFileSync(outPath, `${JSON.stringify(artifact, null, 2)}\n`);
+  writeFileSync(outPath, `${JSON.stringify(finalArtifact, null, 2)}\n`);
 }
 
 if (import.meta.main) main();

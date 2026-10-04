@@ -1,0 +1,57 @@
+# Immutable search-count reference: a844570 data/manual.yaml, securecomm27.
+# This former value is only for the 2026-08-09 historical query fixture.
+# Production uses the evidence-backed date-only correction in data/overrides.yaml.
+securecomm:
+  editions:
+    securecomm27:
+      year: 2027
+      deadlines:
+      - kind: paper
+        label: Full Paper Submission
+        round: 1
+        date: '2027-03-01 23:59:00'
+        tz: UTC
+ipsj-27-m-security:
+  editions:
+    ipsj-27-m26:
+      deadlines:
+      - date: '2026-11-27 23:59:00'
+        kind: paper
+        label: Submission
+        tz: UTC
+ipsj-27-p-ubiquitous:
+  editions:
+    ipsj-27-p26:
+      deadlines:
+      - date: '2026-12-04 23:59:00'
+        kind: paper
+        label: Submission
+        tz: UTC
+ipsj-27-r-compsac:
+  editions:
+    ipsj-27-r26:
+      deadlines:
+      - date: '2026-12-01 23:59:00'
+        kind: paper
+        label: Submission
+        tz: UTC
+jip:
+  editions:
+    jip-compsac2027-si:
+      deadlines:
+      - date: '2026-12-01 23:59:00'
+        kind: paper
+        label: 投稿締切
+        tz: UTC+9
+
+# Production corrections must not add history/status words to the fixed query corpus.
+# Both were absent from the original a844570 override input.
+cvm: {}
+evomusart-2027: {}
+# This historical input instant is already present in the original query fixture.
+# Production uses the independently verified November correction.
+dasfaa:
+  editions:
+    dasfaa27:
+      deadlines:
+      - {kind: paper, label: Full Paper Submission, round: 1, date: '2027-06-06 23:59:00', tz: AoE}

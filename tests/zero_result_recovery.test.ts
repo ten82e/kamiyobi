@@ -1,0 +1,243 @@
+/**
+ * 0 件案内の「打ち直しの見当」（第 256 回）。
+ *
+ * 2026-08-09 生成ビルドで自然な打ち方 93 語を調べると 47 語が 0 件で、案内はどれにも
+ * 同じ「検索語を短くする」を出していた。短くしても 0 件の語（`高速計算` `採択率`
+ * `博士前期`）にその助言は直らない – 短くした語が収録に無いので、打ち直しても 0 件の
+ * まま画面が動かない。逆に効く打ち直し（`機械学習国際会議` → `機械学習` – 第 359 回で `生成AI` は 1 件通る語になった為、見本の語を移した）には、その語と件数を出せる。
+ * ここでは「効く見当だけを、打たれた形で、正しい件数で出す」を見る（SPEC §7）。
+ */
+
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { beforeAll, expect, it } from "vitest";
+import { data, site } from "./built_golden_shared.ts";
+import { deadlineHintFunction, zeroResultLiveFunction } from "./runtime_extract.ts";
+
+type Reco = {
+  shorterHitWordsJa: (
+    query: string,
+    hays: readonly string[],
+    nowMs?: number,
+    limit?: number,
+  ) => Array<{ word: string; count: number; how: string; pair?: string }>;
+  candidateRows: (catalog: unknown, now?: number) => Array<{ hay: string }>;
+  journalRows: (conferences: unknown, now?: number) => Array<{ hay: string }>;
+};
+
+type MatchFn = (hay: string) => boolean;
+
+let Rec: Reco & { searchMatcher: (query: string, nowMs: number) => MatchFn };
+const NOW = Date.parse("2026-08-09T00:00:00Z");
+
+beforeAll(async () => {
+  const mod = await import(pathToFileURL(`${site}/recommender.js`).href);
+  Rec = mod.default as unknown as Reco & { searchMatcher: (q: string, n: number) => MatchFn };
+  expect(existsSync(`${site}/recommender.js`), "ビルド済み recommender が無い").toBe(true);
+});
+
+/* 合成の収録（数の期待値を独立に数えられるようにするため – 実データの件数はデータの
+ * 更新で動くので、ここではabsoluteな件数を検証に使わない）。 */
+const HAYS = [
+  "ai security symposium 2027 提案募集",
+  "ai hpc workshop 提案募集 論文",
+  "計算科学シンポジウム 提案募集",
+  "学生 論文 賞 提案募集",
+  "ネットワーク ワークショップ 提案募集",
+  "論文誌 特別号 提案募集",
+];
+
+it("効く打ち直しを、打たれた形と件数で出す（ビルド済み recommender）", () => {
+  const hits = Rec.shorterHitWordsJa("生成AI", HAYS, NOW);
+  expect(hits.length, "見当が出ていない").toBeGreaterThan(0);
+  /* 見本は小文字に折らない – `ai` と出しても読み手はそのまま打てない。 */
+  expect(hits.map((h) => h.word)).toContain("AI");
+  expect(hits[0].count, "AI を含む行は 2 件").toBe(2);
+});
+
+it("収録の表記が全角でも、見当の件数は画面と同じに数える", () => {
+  /* 見当は行の畳み込み（`kanaFold` – 全角・半角・仮名のゆらぎを寄せる）を行側にも掛ける。
+   * ここを省くと全角表記の行が数えられず、同じ画面の検索と見当の件数が食い違う
+   * （2026-08-09 生成ビルドの実データでも `学生` は畳み込み無しで 0 行になる – 第 257 回）。 */
+  const fullWidth = ["ＡＩ 国際会議 提案募集", "ほかに何も無い行 提案募集"];
+  const hits = Rec.shorterHitWordsJa("生成AI", fullWidth, NOW);
+  expect(hits.length, "全角表記の行を見当から落としている").toBeGreaterThan(0);
+  expect(hits[0].word).toBe("AI");
+  expect(hits[0].count, "全角の行を数えていない").toBe(1);
+  /* 画面の検索（`searchMatcher`）と同じ行に当たっていることもここで寄せる。 */
+  expect(fullWidth.filter(Rec.searchMatcher("AI", NOW)).length).toBe(1);
+});
+
+it("当たっている語は短くしない（語を外す案内と混ざる）", () => {
+  /* `ネットワーク` は 1 行に当たっている。この語を `ネットワー` に縮める見当は、
+   * 「その語を外すと増えます」と同時に立つと打ち直しの方針が二つになる。 */
+  const hits = Rec.shorterHitWordsJa("ネットワーク福岡", HAYS, NOW);
+  expect(hits.map((h) => h.word)).not.toContain("ネットワー");
+  /* `論文誌` は当たっている（1 行）。短くした `論文` は 3 行に出る – 当たっている語に
+   * これ以上見当を付けないなら、見当は空になる（当たっている語の短縮は外す案内と混ざる）。 */
+  expect(Rec.shorterHitWordsJa("論文誌", HAYS, NOW)).toEqual([]);
+});
+
+it("割った組みは、両方を書く行の数を数える", () => {
+  const hits = Rec.shorterHitWordsJa("学生論文", HAYS, NOW);
+  const split = hits.filter((h) => h.how === "split");
+  expect(split.length, "分割の見当が出ていない").toBeGreaterThan(0);
+  /* `学生` は 1 行、`論文` は 2 行に出るが、両方を書く行は 1 行。打ち直した人に見えるのは
+   * その 1 行なので、大きいほう（2）を言ってはならない。 */
+  expect(split[0].count).toBe(1);
+});
+
+it("短くしても 0 件の語は見当を出さない（効かない助言の出どころを止める）", () => {
+  expect(Rec.shorterHitWordsJa("博士前期", HAYS, NOW)).toEqual([]);
+  expect(Rec.shorterHitWordsJa("", HAYS, NOW)).toEqual([]);
+  expect(Rec.shorterHitWordsJa(undefined as unknown as string, HAYS, NOW)).toEqual([]);
+  expect(Rec.shorterHitWordsJa("量子", [], NOW)).toEqual([]);
+  /* 語が多すぎると打ち直しの見当が絞れないので手を出さない。 */
+  expect(Rec.shorterHitWordsJa("あ い う え お か き", HAYS, NOW)).toEqual([]);
+});
+
+it("画面の案内は、効く見当を名指しし、効かないときは「短くする」と言わない", () => {
+  const hint = deadlineHintFunction();
+  const base = {
+    window: "all",
+    past: false,
+    cats: 0,
+    domestic: false,
+    online: false,
+    rank: "all",
+    kind: "",
+    est: false,
+    hidden: { past: 1200, est: 134 },
+    hiddenKindWords: [],
+    queryMatch: { catalog: 0, journal: 0 },
+    termCounts: [{ term: "生成AI", count: 0 }],
+    urlQuery: false,
+    catalogConferences: 12,
+  };
+  const named = hint({
+    ...base,
+    query: "生成AI",
+    shorterHits: [{ word: "AI", count: 1083, how: "shorten" }],
+  });
+  expect(named).toContain("検索語を「AI」に打ち替える");
+  expect(named).toContain("1,083 件");
+  expect(named, "効く見当があるのに一般的助言を並べている").not.toContain("検索語を短くする");
+
+  const none = hint({ ...base, query: "博士前期", shorterHits: [] });
+  expect(none, "短くしても 0 件の語に「短くする」と言っている").not.toContain("検索語を短くする");
+  expect(none).toContain("別の語で試す");
+});
+
+it("読み上げは打ち直しを先に言い、60 字を越えるなら短い形に落ちる", () => {
+  const live = zeroResultLiveFunction();
+  const base = {
+    hiddenKindWords: [],
+    termCounts: [{ term: "生成AI", count: 0 }],
+    urlQuery: false,
+    queryMatch: { catalog: 0, journal: 0 },
+    catalogConferences: 12,
+    query: "生成AI",
+    clearable: true,
+    pastShown: false,
+    hidden: { past: 1200, est: 134 },
+  };
+  const withAlt = live({
+    ...base,
+    shorterHits: [{ word: "AI", count: 1083, how: "shorten" }],
+  });
+  expect(withAlt).toContain("「AI」なら 1,083 件当たります");
+  expect(withAlt.length, `読み上げが長い: ${withAlt.length} 字`).toBeLessThanOrEqual(60);
+  /* 見当が無いときは従来どおり、語が収録に無いことを言う（打ち直しの文で隠さない）。 */
+  const plain = live({ ...base, shorterHits: [] });
+  expect(plain).toContain("語「生成AI」は収録データにありません");
+  /* 長い語で見当を付けると 60 字に収まらないことがある – そのときは見当を出さない。 */
+  const longWord = live({
+    ...base,
+    termCounts: [{ term: "分散並列処理基盤システム", count: 0 }],
+    query: "分散並列処理基盤システム",
+    shorterHits: [{ word: "分散並列処理基盤", count: 1200, how: "shorten" }],
+  });
+  expect(longWord.length, `読み上げが長い: ${longWord.length} 字`).toBeLessThanOrEqual(60);
+});
+
+it("実データのビルドで、打ち直しの見当が実際の収録から出る", async () => {
+  const rows = Rec.candidateRows(data, NOW).concat(Rec.journalRows(data.conferences, NOW));
+  const seen: Record<string, boolean> = {};
+  const hays: string[] = [];
+  rows.forEach((row) => {
+    const hay = String(row.hay);
+    if (seen[hay]) return;
+    seen[hay] = true;
+    hays.push(hay);
+  });
+  /* 短くした語が収録にある形だけを見る – `機械学習国際会議` は 0 件で、短くした `機械学習` は
+   * 出る（2026-08-09 生成ビルドの実測で 81 件）。`生成AI` は第 359 回で『原文に generative と
+   * 書かれた行』に寄せて 1 件通る語になったので、此処の見本からは外した（其の方は
+   * `tests/field_word_synonyms.test.ts` で見る）。 */
+  const hits = Rec.shorterHitWordsJa("機械学習国際会議", hays, NOW);
+  expect(hits.length, "実データで見当が出ていない").toBeGreaterThan(0);
+  const named = hits.map((h) => h.word);
+  expect(
+    named.some((w) => w === "機械学習"),
+    `見当が 機械学習 でない: ${named.join(",")}`,
+  ).toBe(true);
+  /* 見当として出した語の件数は、**画面の検索と同じ数え上げ**と一致しなければならない。
+   * 見当は行の畳み込み（`kanaFold`）を自分の側で掛けるので、そこを省くと畳み込まれた語が
+   * 当たらず、同じ画面の中で 2 つの数が食い違う（実データで `学生` は畳み込み無しで 0 行）。 */
+  hits.forEach((hit) => {
+    const matcher = Rec.searchMatcher(hit.word, NOW);
+    expect(hit.count, `見当「${hit.word}」の件数が画面の検索と食い違う`).toBe(
+      hays.filter((hay) => matcher(hay)).length,
+    );
+  });
+  /* 収録に無い語（`GPU`）は見当も出さない – 見当が出ないこと自体が案内の分岐になる。 */
+  expect(Rec.shorterHitWordsJa("GPU", hays, NOW)).toEqual([]);
+});
+
+it("見当は表を 1 回畳むだけで数える（1 打鍵で検索欄を固めない・SPEC §7）", () => {
+  /* 2026-08-09 生成ビルド・候補行 3,275 行 / 210 万字で実測: 見当の数え上げが語ごとに
+   * 行を畳み直していて、`分散並列処理基盤システム` 1 語に **628 ms**、`高速計算` 155 ms
+   * かかっていた（この画面は検索 1 打鍵 83 ms ころうとするので、収録に無い語を打った人
+   * だけが 0.6 秒固まる）。行の畳み込みを 1 回にまとめ、述語の組み立てを `searchMatcher`
+   * と共有して 63 ms / 37 ms になった。絶対時間は機械の負荷で化けるので、
+   * **表の行を読んだ回数**で見る（機械に依存せず、昔の形に戻ると必ず越える）。 */
+  const app = readFileSync(join(site, "recommender.js"), "utf8");
+  const start = app.indexOf("function shorterHitWordsJa");
+  expect(start, "ビルド済み recommender に見当の関数がない").toBeGreaterThan(-1);
+  /* 関数の本体は「同じ字下げの次の関数」までで切る（ビルド後は関数が 4 字下げなので、
+   * 閉じ括弧の字下げを探すと後ろまで読みすぎる）。 */
+  const next = app.indexOf("\n    function ", start + 10);
+  const body = app.slice(start, next > start ? next : app.length);
+  expect(body.length, "関数の本体を切れていない（終わり方を見直す）").toBeLessThan(20_000);
+  expect(
+    body,
+    "見当の数え上げが `searchMatcher` を呼んでいる（行の畳み込みが語の数だけ走る）",
+  ).not.toContain("searchMatcher(");
+  expect(body, "述語の作り方を共有していない（`searchGroups` を使わない別の組み立て）").toContain(
+    "searchGroups(",
+  );
+
+  const DATA = JSON.parse(readFileSync(join(site, "data.json"), "utf8"));
+  const rows = Rec.candidateRows(DATA, NOW).concat(Rec.journalRows(DATA.conferences, NOW));
+  const seen: Record<string, boolean> = {};
+  const hays: string[] = [];
+  rows.forEach((row) => {
+    const hay = String(row.hay);
+    if (seen[hay]) return;
+    seen[hay] = true;
+    hays.push(hay);
+  });
+  let reads = 0;
+  const counted = new Proxy(hays, {
+    get(target, key) {
+      if (typeof key === "string" && /^[0-9]+$/.test(key)) reads += 1;
+      return target[key as unknown as number];
+    },
+  });
+  Rec.shorterHitWordsJa("分散並列処理基盤システム", counted, NOW);
+  /* 語の短縮・分割で多くて 10 本程度の見当を見るが、表は 1 回しか読まない –
+   * 2 回分に収まることを上限にする（語ごとに読み直す形に戻ると 10 倍を越える）。 */
+  expect(reads, "表の行を読んだ回数が多すぎる").toBeLessThanOrEqual(hays.length * 2);
+  expect(reads, "表を読んでいない（見当が空振りしている）。").toBeGreaterThan(0);
+});

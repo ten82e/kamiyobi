@@ -1,0 +1,26 @@
+{
+  "checked_at": "2026-10-04T05:16:24.366304+00:00",
+  "remote_heads": [
+    "b35010f7a11fb217417b2fdf0d675ea1af9a555b\trefs/heads/main"
+  ],
+  "current_branch_pushed": false,
+  "public_generated_at": "2026-09-07T09:26:24.000Z",
+  "public_semantic_status": "ready",
+  "public_app_sha256": "a65103304989b86c873ba1414fd753f930a1c4c1a2e5dc062d96dc06bdd5936f",
+  "required_for_data_recovery": "Local fixes already integrated and revalidated; publishing them remains subject to the prior approval block. No rejected merge/deploy retry.",
+  "required_for_ui_publication": "Review/integrate source commits on the final main base, build/publish all runtime assets and verify manifest.",
+  "write_actions_performed": false,
+  "public_source_commit": "c3fe30b23fc2a8ef2b2d566ab44d94ee24a10be4",
+  "latest_scheduled_update_failure": {
+    "id": 37160762669,
+    "url": "https://github.com/ten82e/kamiyobi/actions/runs/37160762669",
+    "revision": "b35010f7a11fb217417b2fdf0d675ea1af9a555b",
+    "conclusion": "failure",
+    "created_at": "2026-10-03T23:07:59Z",
+    "failed_step": "Health gate",
+    "reason": "previous deadline slot conflict: ecir|ecir27|abstract|1|"
+  },
+  "local_source_integrated": true,
+  "local_health_stage_replay_passed": true,
+  "resume_report": "docs/agent-handoff/verification/resume-latest.json"
+}

@@ -1,0 +1,99 @@
+{
+  "kind": "Reviewed candidate-specific overlay; original updater patch and actual feature/model artifacts unchanged",
+  "candidate_revision": "0717f506192e05517bb57af9ae260c702f90078c",
+  "feature_engine_revision": "b2739fa71c650e479dc9cdd691b8e76fe98b19d4",
+  "justifying_engine_change": "ca305a3b028257d9e9e671139c102446a9ca0255",
+  "patch_sha256": "605a056837645477670c09d80c6192cc5224bab8082c60c31cbe23c4f480e98e",
+  "gzip_sha256": "a1cd1ec6dbd2165aa0b0d03c22baf3961205b9fa4e2d8b684059337be04edc8d",
+  "patch_bytes": 5112409,
+  "gzip_bytes": 450309,
+  "files": [
+    {
+      "path": "config.yaml",
+      "base_sha256": "c10c40e659b31f1b08d7b0bf827be4d672e5d4c788a00d12b17c40a91a6c9bfc",
+      "target_sha256": "456daf5f68825f64cfbeca1d40cea7b5d50126e8915c8e5bf005b09c9190b23a"
+    },
+    {
+      "path": "tests/merge.test.ts",
+      "base_sha256": "8c1946a28d9b2ed6b5d8f8258944abec894d579edb1154883f63656724fb4110",
+      "target_sha256": "7742432c28a80355151f5612bad43d7dff50779f39a4dc1534f086a82a5a1152"
+    },
+    {
+      "path": "src/bench-recommender.ts",
+      "base_sha256": "d161cce9a71e274af49b927164c54f6997d2d6fc90daa8dd1363b65321801191",
+      "target_sha256": "2b98cba1ec53c6ad2e1a1e20f12370e4ec3db34de92bf9635a1e5b5fd69c6809"
+    },
+    {
+      "path": "data/benchmarks/real-paper-features.jsonl",
+      "base_sha256": "1f34c88bb1463022c84e4e0c744a4897c9ab0cc871102d7a0e4948db8b536dbd",
+      "target_sha256": "be70f5648bece9a8ff3cb1c5edd1d9015ced0b16f75f363754e5a471a017a12d"
+    },
+    {
+      "path": "data/recommender-reranker.json",
+      "base_sha256": "148d7b5f0ea25120039a5eae445e4af1c9575190ae408396b1484f3376f2328d",
+      "target_sha256": "a7c771c5ac6740def2eca58f8a1251d189a6bfa31535fc4baa62e72ccaceacc6"
+    }
+  ],
+  "feature_audit": {
+    "records": 201,
+    "non_candidate_fields_unchanged": true,
+    "semantic_vectors_downloaded_or_changed": false,
+    "manifest_sha256_unchanged": {
+      "real-paper-dev-manifest.json": "27a032b8089312c3be9fffe2ef862636dab9269e0d2b4e162dddcf02c6fff92d",
+      "real-paper-heldout-manifest.json": "0dc3d8f7c488f2ee194a15a5d05567d0d75d4b04e5cb5446cb9fd43b449f93bf",
+      "real-paper-required-manifest.json": "04a2566a031cfa8f566c30b820c2700b14682877241f0837e7730f992b4c4622"
+    },
+    "changed_common_candidates": 1464,
+    "changed_fields": {
+      "venue_name_evidence": 37,
+      "base_score": 1430,
+      "lexical_score": 92
+    },
+    "added_candidate_venues": {
+      "ieice-cpsy": 6,
+      "ieice-cq": 7,
+      "ieice-cys": 7,
+      "ieice-electron-analog-circuits-special": 3,
+      "ieice-electron-microwave-special": 3,
+      "ieice-fundamentals-discrete-math-special": 4,
+      "ieice-ia": 7,
+      "ieice-icm": 6,
+      "ieice-in": 7,
+      "ieice-inf-syst-log-data-special": 5,
+      "ieice-isec": 7,
+      "ieice-nolta-recent-progress-special": 4,
+      "ieice-ns": 7,
+      "ieice-rcs": 7,
+      "ieice-sita": 5,
+      "ipsj-27-l-superintelligence": 4,
+      "ipsj-27-m-security": 4,
+      "ipsj-27-n-info-systems": 4,
+      "ipsj-27-p-ubiquitous": 2,
+      "ipsj-27-r-compsac": 2,
+      "ipsj-deim": 1,
+      "ipsj-dicomo": 1,
+      "ipsj-sigarc": 6,
+      "ipsj-sigdps": 6,
+      "ipsj-sigemb": 6,
+      "ipsj-sighpc": 7,
+      "ipsj-sigkbs": 2,
+      "ipsj-sigos": 6,
+      "ipsj-sigpro": 6,
+      "ipsj-sigse": 6,
+      "ipsj-sigsec": 7,
+      "ipsj-sigubi": 7
+    },
+    "removed_candidate_venues": {},
+    "candidate_pool_explanation": "The later Japanese category detection in ca305a3 adds legitimate Japanese society venues to affected full-fixture candidate pools. No venues were removed; semantic observations are identical. The required-subset mismatch count originally reported was 826; full coverage audits 201 records."
+  },
+  "training": {
+    "algorithm": "l2-pairwise-logistic-reranker-v3-grouped-cv",
+    "selected_on": "real-paper-dev",
+    "heldout_used_for_training_or_selection": false,
+    "sufficient_enabled": false,
+    "production_provenance_preserved": true,
+    "provenance_scope": "The three promotion fields describe the historical #687 decision to retain v3, not a new heldout-based selection. The refreshed artifact is deterministic v3 dev-only training."
+  },
+  "reproduction_note": "Apply only after preparing and resolving an archive from the committed UI fixes. Base and target SHA256 are enforced. Full quality and tamper gates remain mandatory.",
+  "performance_adjustment": "Immutable baseline evaluates every frozen candidate and all original quality floors once. Pool-depth diagnostics remain enabled in the outer current-data run; no timeout, tamper check, or quality floor is relaxed."
+}

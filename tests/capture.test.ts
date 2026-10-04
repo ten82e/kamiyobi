@@ -1,8 +1,8 @@
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { assertSafePageUrl, capturePage, PageCaptureError, writeCasBody } from "../src/capture.ts";
+import { tempWork } from "./helpers.ts";
 
 describe("capture safety and SSRF protections", () => {
   it("blocks private, loopback, and documentation IPv4 addresses", () => {
@@ -147,7 +147,7 @@ describe("capturePage resource cleanup and error mapping", () => {
   });
 
   it("stores and validates CAS bodies correctly", () => {
-    const dir = mkdtempSync(join(tmpdir(), "kamiyobi-cas-test-"));
+    const dir = tempWork("kamiyobi-cas-test-");
     const data = new Uint8Array([1, 2, 3, 4, 5]);
     const hash = "74f81fe167d99b4cb41d6d0ccda82278caee9f3e2f25d5e5a3936ff3dcec60d0";
 
@@ -172,5 +172,31 @@ describe("capturePage resource cleanup and error mapping", () => {
         new Uint8Array([1]),
       ),
     ).toThrow(/content-addressed body mismatch/);
+  });
+
+  it("preserves cached contentLength on 304 Not Modified", async () => {
+    const mockFetch: typeof fetch = async () => new Response(null, { status: 304 });
+    const res = await capturePage("https://example.com/cached", {
+      fetchImpl: mockFetch,
+      previous: {
+        contentLength: 4242,
+        contentHash: "abcdef",
+        bodyRef: "test.body",
+      },
+    });
+    expect(res.notModified).toBe(true);
+    expect(res.contentLength).toBe(4242);
+    expect(res.contentHash).toBe("abcdef");
+    expect(res.bodyRef).toBe("test.body");
+  });
+
+  it("throws clear network error when redirect response lacks Location header", async () => {
+    const mockFetch: typeof fetch = async () => new Response(null, { status: 302 });
+    await expect(
+      capturePage("https://example.com/bad-redirect", { fetchImpl: mockFetch }),
+    ).rejects.toMatchObject({
+      code: "network",
+      message: expect.stringContaining("missing Location header"),
+    });
   });
 });

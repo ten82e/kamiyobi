@@ -2,7 +2,7 @@
  * parse_instant / parse_date_range / slug: SPEC.md section 3.
  */
 
-import { existsSync, mkdtempSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -59,7 +59,7 @@ import {
   editionOf as localEditionOf,
   parseFile as localParseFile,
 } from "../src/sources/local.ts";
-import { exactAt, utc } from "./helpers.ts";
+import { exactAt, tempWork, utc } from "./helpers.ts";
 
 describe("deadline state", () => {
   it("uses the full UTC+14 through UTC-12 window for date-only deadlines", () => {
@@ -853,7 +853,7 @@ describe("aideadlines rankOf", () => {
   });
 
   it("rejects an existing scalar YAML file instead of treating it as an empty source", () => {
-    const tmpDir = mkdtempSync(join(tmpdir(), "aideadlines-shape-"));
+    const tmpDir = tempWork("aideadlines-shape-");
     const path = join(tmpDir, "broken.yml");
     writeFileSync(path, "not-a-conference\n", "utf8");
     try {
@@ -933,7 +933,7 @@ describe("local source utilities and defensive parsing", () => {
   });
 
   it("fails closed on malformed conference and edition entries", () => {
-    const tmpDir = mkdtempSync(join(tmpdir(), "kamiyobi-local-entry-shape-"));
+    const tmpDir = tempWork("kamiyobi-local-entry-shape-");
     const path = join(tmpDir, "broken.yaml");
     try {
       writeFileSync(path, "conferences:\n  - bad\n", "utf8");
@@ -1185,7 +1185,7 @@ describe("ccfddl parsing", () => {
   });
 
   it("rejects an existing scalar YAML file instead of treating it as an empty source", () => {
-    const tmpDir = mkdtempSync(join(tmpdir(), "ccfddl-shape-"));
+    const tmpDir = tempWork("ccfddl-shape-");
     const path = join(tmpDir, "broken.yml");
     writeFileSync(path, "not-a-conference\n", "utf8");
     try {
@@ -1542,7 +1542,7 @@ describe("aideadlines deadlinesOf parsing", () => {
   });
 
   it("aideadlines and local sources parse non-array tags and categories safely (#348)", () => {
-    const tmpDir = mkdtempSync(join(tmpdir(), "cfp-tags-test-"));
+    const tmpDir = tempWork("cfp-tags-test-");
     const yamlContent = `
 title: StringTagsConf
 year: 2026
@@ -1896,4 +1896,21 @@ it("deadlineEvidence keeps snake_case verified_fields and provenance (#772)", ()
     retrievedAt: "2026-08-01T00:00:00.000Z",
     verifiedAt: "2026-08-01T00:00:00.000Z",
   });
+});
+
+it("aideadlines editionOf normalizes inverted event start/end dates so start <= end", () => {
+  const ed = editionOf(
+    {
+      year: 2026,
+      start: "2026-10-25",
+      end: "2026-10-20",
+    },
+    "demo",
+  );
+  expect(ed).not.toBeNull();
+  expect(ed!.event_start).not.toBeNull();
+  expect(ed!.event_end).not.toBeNull();
+  expect(ed!.event_start!.getTime()).toBeLessThanOrEqual(ed!.event_end!.getTime());
+  expect(ed!.event_start!.toISOString().slice(0, 10)).toBe("2026-10-20");
+  expect(ed!.event_end!.toISOString().slice(0, 10)).toBe("2026-10-25");
 });

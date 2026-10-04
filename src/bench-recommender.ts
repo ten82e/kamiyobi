@@ -41,7 +41,7 @@ import {
 } from "./embeddings.ts";
 import { semanticContentIdForArtifacts } from "./semantic-content.ts";
 
-const Recommender = (await import("../site/recommender.ts")).default;
+const Recommender = (await import("../site/recommendation.ts")).default;
 type PaperLine = ReturnType<typeof Recommender.parsePaperLines>[number];
 type VenueRecommendation = ReturnType<typeof Recommender.venueRecommendations>[number];
 
@@ -2613,6 +2613,7 @@ export async function runRealPaperBenchmark(
   collectedFeatures?: RequiredSemanticFeatures["records"],
   taxonomyDetail?: boolean,
   featureBaselineData?: { conferences: Conf[]; categories?: Record<string, string> },
+  includeCandidateDepthDiagnostics = true,
 ): Promise<RealPaperRun> {
   // Pin code behavior against immutable inputs, then measure current source data
   // with the same semantic observations and quality floors. Category/name/venue
@@ -2626,6 +2627,10 @@ export async function runRealPaperBenchmark(
       negative,
       coverage,
       requiredFeatures,
+      undefined,
+      undefined,
+      undefined,
+      false,
     );
     const failures = realPaperRegressionReasons(baseline.result, coverage);
     if (failures.length) throw new Error(`feature baseline regression: ${failures.join("; ")}`);
@@ -2867,7 +2872,11 @@ export async function runRealPaperBenchmark(
     const confidence: Record<string, string> = {};
     const probability: Record<string, { top1: number; top5: number }> = {};
     const failures: Record<string, FailureClassification> = {};
-    const depthKeys = ["50", "100", "200", "all"] as const;
+    // Baseline checks still evaluate every frozen feature and the quality floors.
+    // Pool-depth diagnostics are measured on the current pool in the outer run.
+    const depthKeys = includeCandidateDepthDiagnostics
+      ? (["50", "100", "200", "all"] as const)
+      : (["all"] as const);
     const depthCounters = Object.fromEntries(
       depthKeys.map((depth) => [
         depth,
@@ -2914,7 +2923,7 @@ export async function runRealPaperBenchmark(
       if (split !== "negative") {
         const acceptable = new Set("acceptable_venues" in record ? record.acceptable_venues : []);
         recordDepth("all", evaluation, acceptable, elapsed);
-        for (const depth of [50, 100, 200] as const) {
+        for (const depth of includeCandidateDepthDiagnostics ? ([50, 100, 200] as const) : []) {
           const depthStart = performance.now();
           const depthEvaluation = recommend(record, rows, bundle, split, depth);
           recordDepth(

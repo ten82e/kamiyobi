@@ -1,0 +1,94 @@
+{
+  "checked_at": "2026-10-04T05:16:24.366304+00:00",
+  "local_head_before_status_commit": "a8595279fb1cadf6eaf30837058b56bc0f50060b",
+  "branch": "fix/site-ja-usability",
+  "application_sources_unchanged_from_validated_integration": true,
+  "protected_seven_unchanged": true,
+  "remote_main": "b35010f7a11fb217417b2fdf0d675ea1af9a555b",
+  "published_source_commit": "c3fe30b23fc2a8ef2b2d566ab44d94ee24a10be4",
+  "published_generated_at": "2026-09-07T09:26:24.000Z",
+  "published_manifest": "https://ten82e.github.io/kamiyobi/publish.json",
+  "published_manifest_sha256": "15b07f17c8c053bff13b751afcb23e417bb9810a277e7afb28d394ab6be9219d",
+  "latest_updater_run": {
+    "id": 37160762669,
+    "url": "https://github.com/ten82e/kamiyobi/actions/runs/37160762669",
+    "revision": "b35010f7a11fb217417b2fdf0d675ea1af9a555b",
+    "conclusion": "failure",
+    "created_at": "2026-10-03T23:07:59Z",
+    "failed_step": "Health gate",
+    "reason": "previous deadline slot conflict: ecir|ecir27|abstract|1|"
+  },
+  "latest_deploy_run": {
+    "id": 37100048859,
+    "url": "https://github.com/ten82e/kamiyobi/actions/runs/37100048859",
+    "conclusion": "failure",
+    "failed_step": "Health gate",
+    "reason": "current deadline slot conflict: ecir|ecir27|abstract|1|"
+  },
+  "pr955": {
+    "state": "open",
+    "merged": false,
+    "head": "96881aa57eb68fb9d3c730ea75bf0ff6a9a71f05",
+    "url": "https://github.com/ten82e/kamiyobi/pull/955"
+  },
+  "local_replay": {
+    "scope": "Captured health-stage replay only. Preserve source diagnostics; no fetch, discovery, reverify, deployment, or workflow dispatch.",
+    "before": {
+      "ok": false,
+      "reasons": [
+        "previous deadline slot conflict: ecir|ecir27|abstract|1|"
+      ],
+      "warnings": []
+    },
+    "after": {
+      "ok": true,
+      "reasons": [],
+      "warnings": [
+        "previous duplicate deadline slot: ieee-cec|override-2027|paper|1|",
+        "current duplicate deadline slot: ieee-cec|override-2027|paper|1|"
+      ]
+    },
+    "now": "2026-10-03T23:08:20.000Z"
+  },
+  "replay_report": "work/agent-verification/resume-2026-10-04/captured-gate-replay.json",
+  "replay_command": "node scripts/agent-handoff/recheck-hosted-updater.mjs <generated-update-artifact-dir>",
+  "related_regression_tests": {
+    "passed": 16,
+    "files_passed": 2,
+    "log": "work/agent-verification/resume-2026-10-04/hosted-regression-tests.log",
+    "log_sha256": "e2d2274242c5f8b16ac90b418794854f23d4b0fbbaaebb62285445fe90e79a85"
+  },
+  "additional_checks": [
+    "typecheck passed",
+    "lint passed with existing warnings/info",
+    "offline build for 2026-10-04 passed into ignored output",
+    "data validation: 4965 deadlines passed",
+    "local health gate passed"
+  ],
+  "local_browser": [
+    {
+      "script": "researcher",
+      "exit_code": 0
+    },
+    {
+      "script": "updater",
+      "exit_code": 0
+    }
+  ],
+  "local_preview": "http://127.0.0.1:8771/",
+  "local_preview_restarted": true,
+  "dedicated_headless_restarted": true,
+  "gui_used": false,
+  "historical_editions_preserved": 1673,
+  "prior_full_validation": "docs/agent-handoff/verification/main-integration-latest.json",
+  "application_fixes_needed": [],
+  "external_write_actions": false,
+  "public_merge_deploy_retried": false,
+  "additional_agy_dsh_reviews_used": false,
+  "remaining_work": [
+    "Publication/integration of local source awaits new explicit authorization; prior approval block was not retried.",
+    "After any future authorized publication, verify served source/manifest/data and the next scheduled updater. The captured replay is a health-stage diagnosis, not a new remote canary run."
+  ],
+  "replay_helper_sha256": "03839f7ca82f1a2148cb4f5f22fa99d86afbfcef96d3a0557984ba957def0aeb",
+  "replay_source_diagnostics_asserted_unchanged": true
+}

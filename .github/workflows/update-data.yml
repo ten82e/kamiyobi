@@ -317,7 +317,19 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'chore: update deadline data'
-          git push --force-with-lease=refs/heads/$branch origin "$branch"
+          # Preserve prior generated history and use a normal, race-safe fast-forward push.
+          if [ "$existing_branch" = true ]; then
+            ancestor=$(git merge-base "$start_sha" "origin/$branch")
+            while IFS= read -r path; do
+              case "$path" in
+                data/snapshot.json|data/primary_overrides.yaml|data/discovered_candidates.yaml|data/discovery/*|data/verification-ledger.json|data/reverification-resolutions.json|data/validator-findings.json|data/source-observation-baseline.json|data/source-snapshots/*|data/evidence/*) ;;
+                *) echo "::error::automation branch has unrelated changes; refusing to replace them"; exit 1 ;;
+              esac
+            done < <(git diff --name-only "$ancestor" "origin/$branch")
+            # The new tree has already passed schema/health gates against current main.
+            git merge --strategy=ours --no-ff -m 'chore: retain prior automated data history' "origin/$branch"
+          fi
+          git push origin "$branch"
 
           node --input-type=module <<'NODE' > /tmp/data-pr-body.md
           import { readFileSync } from "node:fs";

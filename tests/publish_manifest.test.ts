@@ -1,7 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -18,7 +17,7 @@ import {
   embeddingManifest,
   venuePapersHash,
 } from "../src/embeddings.ts";
-import { NOW, runCli } from "./helpers.ts";
+import { NOW, runCli, tempWork } from "./helpers.ts";
 
 function sha256(text: string): string {
   return createHash("sha256").update(text, "utf8").digest("hex");
@@ -43,7 +42,7 @@ const provenance: PublishProvenance = {
 
 describe("publish manifest", () => {
   it("hashes every present build input and promotion manifest deterministically", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-provenance-"));
+    const root = tempWork("kamiyobi-provenance-");
     const data = join(root, "data");
     mkdirSync(join(data, "promotions", "batch-b"), { recursive: true });
     for (const name of [
@@ -79,7 +78,7 @@ describe("publish manifest", () => {
   });
 
   it("reports tracked changes without treating generated files as source dirt", () => {
-    const root = mkdtempSync(join(tmpdir(), "kamiyobi-provenance-git-"));
+    const root = tempWork("kamiyobi-provenance-git-");
     writeFileSync(join(root, "config.yaml"), "site: clean\n", "utf8");
     execFileSync("git", ["init"], { cwd: root });
     execFileSync("git", ["add", "config.yaml"], { cwd: root });
@@ -96,7 +95,7 @@ describe("publish manifest", () => {
   });
 
   it("hashes final artifacts deterministically and excludes the manifest itself", () => {
-    const outdir = mkdtempSync(join(tmpdir(), "kamiyobi-publish-"));
+    const outdir = tempWork("kamiyobi-publish-");
     const files = ["b.txt", "a.txt"];
     for (const [name, text] of [
       ["a.txt", "alpha"],
@@ -144,7 +143,7 @@ describe("publish manifest", () => {
   });
 
   it("distinguishes a lexical-only build from a restored embedding bundle", () => {
-    const outdir = join(mkdtempSync(join(tmpdir(), "kamiyobi-site-")), "public");
+    const outdir = join(tempWork("kamiyobi-site-"), "public");
     const run = runCli(outdir, { extra: ["--no-embeddings"] });
     expect(
       run.status,

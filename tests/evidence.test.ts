@@ -3,18 +3,17 @@ import {
   chmodSync,
   existsSync,
   mkdirSync,
-  mkdtempSync,
   readFileSync,
   symlinkSync,
   writeFileSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 import { gcEvidence, verifyEvidence } from "../src/evidence.ts";
+import { tempWork } from "./helpers.ts";
 
 it("counts a body_ref-only ledger entry as a live evidence reference", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-evidence-"));
+  const root = tempWork("kamiyobi-evidence-");
   const body = "captured official page";
   const hash = createHash("sha256").update(body).digest("hex");
   mkdirSync(join(root, "data", "evidence", "blobs"), { recursive: true });
@@ -30,7 +29,7 @@ it("counts a body_ref-only ledger entry as a live evidence reference", () => {
 });
 
 it("reports secret headers serialized as JSON", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-evidence-secret-header-"));
+  const root = tempWork("kamiyobi-evidence-secret-header-");
   mkdirSync(join(root, "data"), { recursive: true });
   writeFileSync(
     join(root, "data", "verification-ledger.json"),
@@ -42,7 +41,7 @@ it("reports secret headers serialized as JSON", () => {
 });
 
 it("reports legacy promotion-local bodies outside the canonical CAS", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-evidence-legacy-body-"));
+  const root = tempWork("kamiyobi-evidence-legacy-body-");
   const body = "legacy promotion-local page";
   const hash = createHash("sha256").update(body).digest("hex");
   const legacy = join(root, "data", "promotions", "batch", "bodies");
@@ -57,7 +56,7 @@ it("reports legacy promotion-local bodies outside the canonical CAS", () => {
 });
 
 it("reports a body_ref and content_hash disagreement", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-evidence-conflict-"));
+  const root = tempWork("kamiyobi-evidence-conflict-");
   const body = "captured official page";
   const hash = createHash("sha256").update(body).digest("hex");
   mkdirSync(join(root, "data", "evidence", "blobs"), { recursive: true });
@@ -80,7 +79,7 @@ it("reports a body_ref and content_hash disagreement", () => {
 });
 
 it("does not cross-compare independent body references in one file", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-evidence-multiple-"));
+  const root = tempWork("kamiyobi-evidence-multiple-");
   const bodies = ["first captured page", "second captured page"];
   const records = bodies.map((body) => {
     const hash = createHash("sha256").update(body).digest("hex");
@@ -121,7 +120,7 @@ it("does not cross-compare independent body references in one file", () => {
 });
 
 it("fails closed when a potential evidence reference cannot be read", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-evidence-unreadable-"));
+  const root = tempWork("kamiyobi-evidence-unreadable-");
   const body = "captured official page";
   const hash = createHash("sha256").update(body).digest("hex");
   const data = join(root, "data");
@@ -134,7 +133,7 @@ it("fails closed when a potential evidence reference cannot be read", () => {
 });
 
 it("fails closed when an evidence body is not a regular file", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-evidence-linked-body-"));
+  const root = tempWork("kamiyobi-evidence-linked-body-");
   const body = "linked captured page";
   const hash = createHash("sha256").update(body).digest("hex");
   const blobs = join(root, "data", "evidence", "blobs");
@@ -145,7 +144,7 @@ it("fails closed when an evidence body is not a regular file", () => {
   expect(() => verifyEvidence(root)).toThrow(/body blob must be a regular file/);
   expect(() => gcEvidence(root, true)).toThrow(/body blob must be a regular file/);
 
-  const directoryRoot = mkdtempSync(join(tmpdir(), "kamiyobi-evidence-body-directory-"));
+  const directoryRoot = tempWork("kamiyobi-evidence-body-directory-");
   mkdirSync(join(directoryRoot, "data", "evidence", "blobs", `${hash}.body`), {
     recursive: true,
   });
@@ -154,7 +153,7 @@ it("fails closed when an evidence body is not a regular file", () => {
 });
 
 it("fails closed when an evidence reference directory cannot be traversed", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-evidence-untraversable-"));
+  const root = tempWork("kamiyobi-evidence-untraversable-");
   const data = join(root, "data");
   const references = join(data, "references");
   mkdirSync(references, { recursive: true });
@@ -169,7 +168,7 @@ it("fails closed when an evidence reference directory cannot be traversed", () =
 });
 
 it("preserves orphan body blobs when the trash command is unavailable (#758)", () => {
-  const root = mkdtempSync(join(tmpdir(), "kamiyobi-evidence-gc-fallback-"));
+  const root = tempWork("kamiyobi-evidence-gc-fallback-");
   const data = join(root, "data");
   mkdirSync(join(data, "evidence", "blobs"), { recursive: true });
   const body = "orphan captured page";

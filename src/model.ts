@@ -968,6 +968,10 @@ const TZ_FIXED: Record<string, number> = {
   ut: 0,
   z: 0,
   aoe: AOE_OFFSET_MINUTES,
+  "anywhere on earth": AOE_OFFSET_MINUTES,
+  "anywhere on the earth": AOE_OFFSET_MINUTES,
+  "anywhere on inhabited earth": AOE_OFFSET_MINUTES,
+  "anywhere on the inhabited earth": AOE_OFFSET_MINUTES,
 };
 
 /** Abbreviations whose standard/daylight meaning is explicit. */
@@ -1020,6 +1024,8 @@ const TZ_NAMED: Record<string, string> = {
   ct: "America/Chicago",
   et: "America/New_York",
   jst: "Asia/Tokyo",
+  日本時間: "Asia/Tokyo",
+  "japan standard time": "Asia/Tokyo",
   kst: "Asia/Seoul",
   sgt: "Asia/Singapore",
   hkt: "Asia/Hong_Kong",
@@ -1763,6 +1769,12 @@ const REGISTRATION = new Set(["registration", "reviewer_registration", "commitme
  */
 const NON_PAPER_LABEL_RE =
   /(?<![\w-])(posters?(?![\w-])|art gallery|student volunteer|workshops?(?![\w-])|student research competition|doctoral consortium|demonstration(?![\w-])|demo session|rising stars|appy hour|real-time live!|frontiers deadline|panels?(?![\w-])|educator)/i;
+
+/** Workshop/DC labels alone do not establish a paper submission; explicit papers do. */
+export function isNonPaperWorkshopLabel(label: string): boolean {
+  if (!/\b(?:workshops?|doctoral consortium)\b/i.test(label)) return false;
+  return /\bproposals?\b/i.test(label) || !/\b(?:papers?|manuscripts?)\b|論文|原稿/i.test(label);
+}
 
 /** Refine a kind derived from a generic upstream type using the row's own label. */
 export function refineKindWithLabel(
