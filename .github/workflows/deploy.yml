@@ -70,7 +70,7 @@ jobs:
       - name: Capture build time
         run: echo "BUILD_NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
       - name: Build merged site
-        run: node src/cli.ts build --out public --offline --no-embeddings --cache .cache --now "$BUILD_NOW"
+        run: node src/cli.ts build --out public --offline --no-embeddings --history-baseline data/snapshot.json --cache .cache --now "$BUILD_NOW"
       - name: Restore immutable recommendation bundle
         if: ${{ github.event_name == 'workflow_run' }}
         env:
