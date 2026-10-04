@@ -40,6 +40,14 @@ describe("shared word-only recommendation fallback", () => {
     expect(result[0].fit.score).toBe(original.fit.score);
     expect(result[0].fit.confidence).toBe(original.fit.confidence);
   });
+  it("uses the same intent policy for the browser's fielded fallback when semantics are unavailable", () => {
+    const input = [...workshop, ...journal];
+    expect(
+      Recommendation.venueRecommendations(input, lines("機械学習の応用 fgcs"), null, now, {
+        fieldedLexical: true,
+      })[0].venueKey,
+    ).toBe("fgcs");
+  });
   it("requires a whole venue key, not a prefix or a hyphenated longer venue", () => {
     for (const title of ["機械学習の応用 xfgcsx", "機械学習の応用 fgcs-workshop"]) {
       const input = [...workshop, ...journal];
@@ -70,10 +78,10 @@ describe("shared word-only recommendation fallback", () => {
       )[0].venueKey,
     ).toBe("ipsj-sigdbs");
   });
-  it("keeps independently verified fielded and semantic scoring unchanged", () => {
+  it("keeps independently verified semantic scoring unchanged", () => {
     const input = [...workshop, ...journal];
     for (const [semantic, options] of [
-      [null, { fieldedLexical: true }],
+      [{ fgcs: 80 }, { fieldedLexical: true }],
       [{ fgcs: 80 }, {}],
     ] as const) {
       expect(

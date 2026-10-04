@@ -4,10 +4,10 @@ type Args = Parameters<typeof Core.venueRecommendations>;
 type Result = ReturnType<typeof Core.venueRecommendations>[number];
 
 /** Word-only fallback: respect an explicitly named venue and reject category-only false matches.
- * Semantic/fielded retrieval keeps its independently verified scoring and feature artifacts. */
+ * Semantic retrieval keeps its independently verified scoring and feature artifacts. */
 export function venueRecommendations(...args: Args): Result[] {
   const [rows, lines, semanticScores, now, options = {}] = args;
-  if (options.fieldedLexical || semanticScores) return Core.venueRecommendations(...args);
+  if (semanticScores) return Core.venueRecommendations(...args);
   const named = new Set<string>();
   const text = lines
     .map((line) => `${line.title} ${line.keywords ?? ""}`)
