@@ -112,3 +112,11 @@ python3 scripts/agent-handoff/browser-main-integration.py
 `verification/integration-latest.json` は先に成功したarchiveの記録、`verification/main-integration-latest.json` が本体反映後の記録である。現状の引き継ぎは後者と `verification/latest.json` を優先する。本体の画像とbrowserログは `work/agent-verification/main-integration/browser/`。新branch/worktreeは作成せず、push/merge/deploy、PR955の再試行も行わない。
 
 本体最終成果: `2abaf05`（更新復旧・identity・根拠・fixture）、`6bdb20e`（監査済み特徴量とdev-only v3モデル）。5,337 tests／353 files・全14 checks・最終8 browser・full推薦201件が成功。歴史1,673開催回・保護7ファイルは保持。最終publicのsource commitは6bdb20e。本体検証の阻害点は0、公開操作は0。
+
+## 2026-10-04 環境復旧後の再開
+
+本体a859527と保護7ファイル・適用済み35ソースのSHAは前回検証と一致。mainはb35010fのまま、実際の公開manifestはc3fe30b・2026-09-07生成であり、mainのHEADと公開済みのHEADは異なる。最新schedule 37160762669はECIRのprevious slot conflict、直近deploy 37100048859はcurrent slot conflictでHealth gate停止。PR955はopen・未merge。拒否されたmerge/deployは再試行しない。
+
+最新generated-update artifactをダウンロードし、元のECIR失敗を再現、本体の確認済みoverride/identityを適用するとsource診断を保持してHealth gate違反0となった。再現helperはrecheck-hosted-updater.mjs。fetch/discovery/reverify/公開全体の再実行とは区別する。既存hosted/canary 16テスト・型・lint・今日のoffline build・data/healthが成功。歴史1,673開催回と保護差分を保持。商品ソースへの追加修正は不要と判断した。
+
+停止していたlocalhost8771の本体previewと、専用profileのheadless Chrome9240を再開。研究者の主要16操作と旧URLの2ブラウザスイートが成功。Mac GUIは操作せず、追加agy/dshレビューも行っていない。詳細はverification/resume-latest.json。残作業は、明確な承認後の公開反映と公開・次回scheduleの確認。承認待ち状態を解除するための再試行は行わない。
