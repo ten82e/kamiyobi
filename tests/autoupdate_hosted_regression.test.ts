@@ -10,6 +10,128 @@ import { applyOverrides, mergeSources, normalizeConfiguredVenueIdentities } from
 import { conferencesFromJson } from "../src/model.ts";
 
 describe("captured hosted updater failure", () => {
+  it("preserves all five future slots from the last published site through reviewed identity changes", () => {
+    const captured = JSON.parse(
+      readFileSync("tests/fixtures/autoupdate-published-identities.json", "utf8"),
+    );
+    const now = new Date("2026-10-03T06:00:00Z");
+    const previous = healthReport(captured.baseline, new Date("2026-09-07T09:26:24Z"), {});
+    expect(
+      evaluateHealthGate(healthReport(captured.current, now, {}), previous).reasons,
+    ).toHaveLength(5);
+    const config = load(readFileSync("config.yaml", "utf8")) as Record<string, unknown>;
+    const overrides = load(readFileSync("data/overrides.yaml", "utf8")) as Record<string, unknown>;
+    const output = toJson(
+      applyOverrides(conferencesFromJson(captured.current), overrides),
+      config,
+      now,
+    );
+    const report = healthReport(output, now, {});
+    expect(evaluateHealthGate(report, previous).reasons).toEqual([]);
+    for (const ref of previous.deadline_refs!.filter(
+      (ref) => ref.deadline_id.startsWith("mmsys|") && ref.deadline_id.includes("second-round"),
+    )) {
+      const target = report.deadline_refs!.find(
+        (held) => held.deadline_id === ref.deadline_id.replace("|1|", "|2|"),
+      )!;
+      expect(target.at_utc).toBe(ref.at_utc);
+    }
+    const changed = structuredClone(previous);
+    changed.deadline_refs!.find((ref) => ref.deadline_id === "wsdm|wsdm27|paper|2|")!.at_utc =
+      "2026-11-19T11:59:59.000Z";
+    changed.deadline_refs!.find((ref) => ref.deadline_id === "wsdm|wsdm27|paper|2|")!.earliest_utc =
+      "2026-11-19T11:59:59.000Z";
+    changed.deadline_refs!.find((ref) => ref.deadline_id === "wsdm|wsdm27|paper|2|")!.latest_utc =
+      "2026-11-19T11:59:59.000Z";
+    expect(evaluateHealthGate(report, changed).ok).toBe(false);
+  });
+  it("stages newly captured evidence bodies even when existing bodies are unchanged", () => {
+    const workflow = load(readFileSync(".github/workflows/update-data.yml", "utf8")) as {
+      jobs: Record<string, { steps: Array<{ name: string; run?: string }> }>;
+    };
+    const writer = workflow.jobs["write-data-pr"].steps.find(
+      (step) => step.name === "Create or update guarded data PR",
+    )!.run!;
+    const block = writer.slice(
+      writer.indexOf("evidence_changed=0"),
+      writer.indexOf('if [ "$snap_changed"'),
+    );
+    const root = mkdtempSync(join(tmpdir(), "kamiyobi-evidence-handoff-"));
+    try {
+      mkdirSync(join(root, "data/evidence/blobs"), { recursive: true });
+      writeFileSync(join(root, "data/evidence/blobs/previous.body"), "old official page");
+      for (const args of [
+        ["init", "--quiet"],
+        ["add", "data/evidence"],
+        [
+          "-c",
+          "user.name=Test",
+          "-c",
+          "user.email=test@example.invalid",
+          "commit",
+          "--quiet",
+          "-m",
+          "baseline",
+        ],
+      ])
+        execFileSync("git", args, { cwd: root });
+      const execute = () =>
+        execFileSync("bash", ["-c", block + '\nprintf "%s" "$evidence_changed"'], {
+          cwd: root,
+          encoding: "utf8",
+        });
+      expect(execute()).toBe("0");
+      writeFileSync(join(root, "data/evidence/blobs/new.body"), "new official page");
+      expect(execute()).toBe("1");
+      execFileSync(
+        "bash",
+        ["-c", block + '\nif [ "$evidence_changed" = 1 ]; then git add data/evidence; fi'],
+        { cwd: root },
+      );
+      expect(
+        execFileSync("git", ["diff", "--cached", "--name-only"], { cwd: root, encoding: "utf8" }),
+      ).toBe("data/evidence/blobs/new.body\n");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+  it("corrects the committed ECIR slot before rebuilding the updater baseline", () => {
+    const captured = JSON.parse(
+      readFileSync("tests/fixtures/autoupdate-committed-ecir.json", "utf8"),
+    );
+    const overrides = load(readFileSync("data/overrides.yaml", "utf8")) as Record<string, unknown>;
+    const now = new Date("2026-10-03T06:00:00Z");
+    const output = toJson(applyOverrides(conferencesFromJson(captured), overrides), {}, now);
+    const deadlines = conferencesFromJson(output)[0].editions[0].deadlines;
+    const abstract = deadlines.find((row) => row.label === "Abstract submission")!;
+    expect(abstract.at_utc?.toISOString()).toBe("2026-09-22T11:59:59.000Z");
+    expect(abstract.conflicts).toBeUndefined();
+    expect(
+      abstract.evidence?.some((evidence) => evidence.source_name === "ecir official CFP"),
+    ).toBe(true);
+    const remaining = captured.conferences[0].editions[0].deadlines.filter(
+      (row: { label: string }) =>
+        ![
+          "Abstract submission",
+          "Paper submission",
+          "Notifications (full & short papers)",
+        ].includes(row.label),
+    );
+    for (const row of remaining) {
+      const held = deadlines.find((held) => held.label === row.label)!;
+      expect(held.at_utc?.toISOString()).toBe(new Date(row.utc).toISOString());
+    }
+    const changed = structuredClone(captured);
+    changed.conferences[0].editions[0].deadlines.find(
+      (row: { label: string }) => row.label === "Abstract submission",
+    ).utc = "2026-09-24T23:59:59Z";
+    const unknown = toJson(applyOverrides(conferencesFromJson(changed), overrides), {}, now);
+    expect(
+      conferencesFromJson(unknown)[0].editions[0].deadlines.find(
+        (row) => row.label === "Abstract submission",
+      )?.conflicts?.length,
+    ).toBeGreaterThan(0);
+  });
   it("reconciles captured earlier-date and disappearing-track transitions with official evidence", () => {
     const captured = JSON.parse(
       readFileSync("tests/fixtures/autoupdate-deadline-transitions.json", "utf8"),
