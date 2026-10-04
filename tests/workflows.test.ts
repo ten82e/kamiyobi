@@ -187,6 +187,25 @@ describe("workflow separation", () => {
 });
 
 describe("CI contracts", () => {
+  it("checks frozen feature integrity against immutable inputs in every real-paper workflow", () => {
+    for (const name of ["ci.yml", "nightly.yml", "recommendation-bundle.yml"]) {
+      const { value } = workflow(`../.github/workflows/${name}`);
+      const commands = Object.values(value.jobs ?? {})
+        .flatMap((job) => (job.steps ?? []).map((candidate) => String(candidate.run ?? "")))
+        .filter((run) => run.includes("--real-v2-features"));
+      expect(commands.length, name).toBeGreaterThan(0);
+      for (const run of commands) {
+        expect(run, name).toContain(
+          "--real-v2-feature-baseline data/benchmarks/real-paper-feature-baseline.json",
+        );
+      }
+    }
+    const manifest = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+    expect(manifest.scripts.bench).toContain(
+      "--real-v2-feature-baseline data/benchmarks/real-paper-feature-baseline.json",
+    );
+  });
+
   it("keeps eight CI checks, reports dispatch statuses, and reserves the full benchmark for nightly", () => {
     const { text, value } = workflow("../.github/workflows/ci.yml");
     expect(text).toContain("workflow_dispatch:");
