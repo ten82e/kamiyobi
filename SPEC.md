@@ -684,6 +684,7 @@ schema version の増加だけでは緩和しない。移行先欠落、同一 s
 `publish.json` は最終的な公開セットを検査する。`semantic_status` は埋め込みが有効なとき
 `ready`、省略または検証に失敗したとき `lexical-only` になる。成果物一覧の `artifacts` は `publish.json`
 自身を除く各公開ファイルのバイト数と SHA-256 を持つ。
+Pages 用アーカイブも `.nojekyll` を含む同じ一覧にするため、upload action の `include-hidden-files` を `true` にする。
 schema 4 は `source_commit`、`data_commit`、`workflow_run_id`、`dirty_worktree`、ビルド入力の SHA-256、promotion batch の SHA-256、build 時刻、Node 版、offline/cache 方針、再実行コマンドを持つ。
 `content_id` は source commit・入力・promotion・profile・モデル revision から計算し、
 `build_id` は `content_id` と生成時刻から計算する。
