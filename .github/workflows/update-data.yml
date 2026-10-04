@@ -35,6 +35,8 @@ jobs:
           mkdir -p /tmp/kamiyobi-update
           git rev-parse HEAD > /tmp/kamiyobi-update/main.sha
           echo "BUILD_NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+      - name: Capture verified published history
+        run: node scripts/capture-published-history.ts /tmp/kamiyobi-update/published/data.json
       - name: Build committed baseline
         run: node src/cli.ts build --out /tmp/kamiyobi-baseline --offline --no-embeddings --cache .cache --now "$BUILD_NOW"
       - name: Fetch primary sources
@@ -44,7 +46,7 @@ jobs:
         # --archive-out フラグは廃止)。
         run: node src/cli.ts discover --candidate-out data/discovered_candidates.yaml
       - name: Build source data
-        run: node src/cli.ts build --out public --no-embeddings --now "$BUILD_NOW"
+        run: node src/cli.ts build --out public --no-embeddings --now "$BUILD_NOW" --history-baseline /tmp/kamiyobi-update/published/data.json --history-report /tmp/kamiyobi-update/current/history-retention.json
       - name: Reverify due official deadlines
         # resolutions (data/reverification-resolutions.json) と evidence (data/evidence/blobs)
         # は新 CLI の既定パス。run は source-unreachable / retryable / parser-failed が
@@ -81,7 +83,7 @@ jobs:
             fi
           fi
       - name: Build source data with refreshed verification
-        run: node src/cli.ts build --out public --no-embeddings --now "$BUILD_NOW"
+        run: node src/cli.ts build --out public --no-embeddings --now "$BUILD_NOW" --history-baseline /tmp/kamiyobi-update/published/data.json --history-report /tmp/kamiyobi-update/current/history-retention.json
       - name: Validate generated production data
         id: validate
         run: npm run validate:data -- public/data.json --json

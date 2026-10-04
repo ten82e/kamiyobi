@@ -289,8 +289,13 @@ conferences:
   #   (12/2 は PST = UTC-8 → 19:00Z が正)。5 件フルリストで訂正。会期 Apr 6-9, 2027,
   #   Thessaloniki も公式一致。
 
+  # 2026-10-04: https://3dvconf.github.io/2024/ gives March 18-21 (not 19-21).
   3dv:
     editions:
+      2024:
+        date_text: March 18-21, 2024
+        event_start: '2024-03-18'
+        event_end: '2024-03-21'
       2027:
         date_text: April 6-9, 2027
         event_start: '2027-04-06'
@@ -370,8 +375,13 @@ conferences:
         event_start: '2024-08-26'
         event_end: '2024-08-30'
 
+  # 2026-10-04: https://ieee-cybermatics.org/2025/ica3pp/ gives Oct 30-Nov 02.
   ica3pp:
     editions:
+      2025:
+        date_text: October 30 - November 2, 2025
+        event_start: '2025-10-30'
+        event_end: '2025-11-02'
       2023:
         date_text: October 20-22, 2023
         event_start: '2023-10-20'
@@ -970,13 +980,105 @@ conferences:
   # 次元 11 (同一 tz 内の UTC 時刻不整合) で検出・公式裏取りした 3 件 (全て過去 edition の
   # データ誤りを訂正する。
 
+  # Official CPAL 2025 key dates and program, captured 2026-10-04T14:49:57Z.
+  # Keep the old published submission value as superseded evidence, not an active deadline.
+  cpal:
+    editions:
+      2025:
+        id: cpal25
+        link: https://2025.cpal.cc/
+        date_text: March 24-27, 2025
+        event_start: '2025-03-24'
+        event_end: '2025-03-27'
+        place: Stanford, California, USA
+        deadlines:
+          - kind: paper
+            label: Proceedings Track
+            track: proceedings
+            round: 1
+            date: '2024-12-02 23:59:00'
+            tz: AoE
+            evidence:
+              - source_name: CPAL 2025 official key dates
+                source_url: https://2025.cpal.cc/deadlines/
+                sourceClass: official-cfp
+                observed_at: '2026-10-04T14:49:57Z'
+                retrievedAt: '2026-10-04T14:49:57Z'
+                verifiedAt: '2026-10-04T14:49:57Z'
+                contentHash: 8882e74d3a87ccfd3c7b29b013dc3bf4e3bc12a9690fce22364beb67d266361d
+                evidenceRef: data/evidence/blobs/8882e74d3a87ccfd3c7b29b013dc3bf4e3bc12a9690fce22364beb67d266361d.body
+                original_value: 'December 2nd, 2024; all deadlines 23:59 Anywhere-on-Earth'
+                rawExcerpt: 'Submission Deadline December 2nd, 2024'
+                verifiedFields: [date, time, timezone, kind, track]
+                confidence: official
+            superseded_deadlines:
+              - value: '2024-11-26T11:59:59Z'
+                precision: exact
+                source: https://cpal.cc/
+                status: superseded
+                supersededBy: cpal|cpal25|paper|1|proceedings
+                reason: manual-resolution
+                supersededAt: '2026-10-04T14:49:57Z'
+                evidenceRef: data/evidence/blobs/8882e74d3a87ccfd3c7b29b013dc3bf4e3bc12a9690fce22364beb67d266361d.body
+              - value: '2024-12-03T11:59:59Z'
+                precision: exact
+                source: https://2025.cpal.cc/
+                status: superseded
+                supersededBy: cpal|cpal25|paper|1|proceedings
+                reason: manual-resolution
+                supersededAt: '2026-10-04T14:49:57Z'
+                evidenceRef: data/evidence/blobs/8882e74d3a87ccfd3c7b29b013dc3bf4e3bc12a9690fce22364beb67d266361d.body
+          - kind: paper
+            label: Recent Spotlight Track
+            track: recent spotlight
+            round: 1
+            date: '2025-01-12 23:59:00'
+            tz: AoE
+            evidence:
+              - source_name: CPAL 2025 official key dates
+                source_url: https://2025.cpal.cc/deadlines/
+                sourceClass: official-cfp
+                observed_at: '2026-10-04T14:49:57Z'
+                retrievedAt: '2026-10-04T14:49:57Z'
+                verifiedAt: '2026-10-04T14:49:57Z'
+                contentHash: 8882e74d3a87ccfd3c7b29b013dc3bf4e3bc12a9690fce22364beb67d266361d
+                evidenceRef: data/evidence/blobs/8882e74d3a87ccfd3c7b29b013dc3bf4e3bc12a9690fce22364beb67d266361d.body
+                original_value: 'January 12th, 2025; all deadlines 23:59 Anywhere-on-Earth'
+                rawExcerpt: 'Submission Deadline January 12th, 2025'
+                verifiedFields: [date, time, timezone, kind, track]
+                confidence: official
+
+  # 2026-10-04: https://cscw.acm.org/2022/ confirms Nov 8-22, held virtually.
+  # The old January 1 placeholder would otherwise precede the January submission cycle.
+  cscw:
+    editions:
+      2022:
+        date_text: November 8-22, 2022
+        event_start: '2022-11-08'
+        event_end: '2022-11-22'
+        event_date_precision: exact-range
+        place: Virtual
+
+  # 2026-10-04: https://tcc.iacr.org/2023/ gives Nov 29-Dec 2, not Dec 12.
+  tcc:
+    editions:
+      2023:
+        date_text: November 29 - December 2, 2023
+        event_start: '2023-11-29'
+        event_end: '2023-12-02'
+
+  # 2026-10-04: https://www.systor.org/2024/ explicitly postpones the virtual
+  # conference to September 23-24; ISW on September 25 is a separate workshop.
   # 根拠: https://www.systor.org/2025/cfp/ (2026-08-12 取得)「Poster & Abstract
   #   Submission: Thursday, July 10, 2025 (23:59 AoE)」— 7/3 から延長済み。上流 ccfddl は
   #   延長前の 7/3 に加え時刻 22:59:59 のタイポ (AoE 23:59 が正) で収録 → 7/10 23:59 AoE
   #   (= 7/11T11:59Z) に訂正。
-
   systor:
     editions:
+      2024:
+        date_text: September 23-24, 2024
+        event_start: '2024-09-23'
+        event_end: '2024-09-24'
       2025:
         deadlines:
           - {kind: paper, label: 'Full and Short Papers Track', date: '2025-05-22 23:59:59', tz: AoE}

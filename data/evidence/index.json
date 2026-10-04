@@ -130,6 +130,14 @@
         "data/source-snapshots/local.json"
       ]
     },
+    "8882e74d3a87ccfd3c7b29b013dc3bf4e3bc12a9690fce22364beb67d266361d": {
+      "bytes": 22264,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/evidence/reviews/cpal-2025.json",
+        "data/overrides.yaml"
+      ]
+    },
     "8a48e8e43a6e07457730db37f0171ff7779b6510f22467b05fdcb1774e3f806c": {
       "bytes": 114112,
       "content_type": "application/octet-stream",
@@ -147,6 +155,13 @@
         "data/promotions/2026-08-31-ieee-network-6g-isac-2027/resolutions.json",
         "data/snapshot.json",
         "data/source-snapshots/local.json"
+      ]
+    },
+    "984409d0cee40bef1215c500f87799963cbd4ce0840a32b58a4bcbe2f1f1c989": {
+      "bytes": 26863,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/evidence/reviews/cpal-2025.json"
       ]
     },
     "b8eaad25f2fd07862684f630e200c51d94564ba54e0658905bed0456748de3dc": {

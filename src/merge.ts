@@ -21,6 +21,7 @@ import {
   type EventReview,
   type EventSegment,
   type ExactDeadline,
+  eventDatePrecisionOf,
   fmtDate,
   isDateOnlyDeadline,
   isExactDeadline,
@@ -1456,6 +1457,17 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
     }
     for (const field of ["event_start", "event_end"] as const) {
       if (field in patch) next[field] = asDate(patch[field]);
+    }
+    if ("event_date_precision" in patch) {
+      const precision = eventDatePrecisionOf(
+        patch.event_date_precision,
+        next.date_text ?? "",
+        next.event_start,
+        next.event_end,
+      );
+      if (precision !== patch.event_date_precision)
+        throw new Error(`invalid event_date_precision override: ${patchKey}`);
+      next.event_date_precision = precision;
     }
     if ("event_segments" in patch) {
       next.event_segments = patch.event_segments as EventSegment[];
