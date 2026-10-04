@@ -150,6 +150,8 @@ describe("required frozen semantic features", () => {
       title: "New Source Venue",
       categories: ["systems"],
     });
+    // Verify every candidate and frozen input; depth-only timing sweeps repeat
+    // scoring at 50/100/200 without contributing to these integrity assertions.
     const run = await runRealPaperBenchmark(
       dev,
       heldout,
@@ -160,8 +162,11 @@ describe("required frozen semantic features", () => {
       undefined,
       undefined,
       baseline,
+      false,
     );
     expect(realPaperRegressionReasons(run.result, "required")).toEqual([]);
+    expect(Object.keys(run.result.splits.dev.candidate_depths ?? {})).toEqual(["all"]);
+    expect(Object.keys(run.result.splits.heldout.candidate_depths ?? {})).toEqual(["all"]);
     const tampered = structuredClone(features);
     tampered.records.find(
       (record) => record.paper_id === "dev-2025-cvpr-01",
@@ -177,6 +182,7 @@ describe("required frozen semantic features", () => {
         undefined,
         undefined,
         baseline,
+        false,
       ),
     ).rejects.toThrow("required production feature mismatch");
     await expect(
@@ -190,6 +196,7 @@ describe("required frozen semantic features", () => {
         undefined,
         undefined,
         baseline,
+        false,
       ),
     ).rejects.toThrow("feature baseline requires frozen semantic features");
   });
