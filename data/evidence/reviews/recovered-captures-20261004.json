@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "recovery": {
+    "repository": "ten82e/kamiyobi",
+    "pull_request": 719,
+    "run_id": 34063171308,
+    "artifact_id": 9998136784,
+    "artifact_sha256": "1d95d93378b2c67c1e12f16c2a29c5f6adaf1ba4524a8791d671a4cba866933e",
+    "reason": "Restore original captured response bytes missing from the repository; all eight hashes match existing verification-ledger references exactly. No deadline values or original verification claims were replaced.",
+    "bodies": [
+      {
+        "body_ref": "evidence/blobs/043992d3db6a968ed2d1a507412846e35f66d15b27d46f4b096c526e497f4738.body",
+        "content_hash": "043992d3db6a968ed2d1a507412846e35f66d15b27d46f4b096c526e497f4738",
+        "bytes": 6246
+      },
+      {
+        "body_ref": "evidence/blobs/38a8af2993bbd2ba098fb730a561987253b4634a01315c18678d2eaded00674f.body",
+        "content_hash": "38a8af2993bbd2ba098fb730a561987253b4634a01315c18678d2eaded00674f",
+        "bytes": 15632
+      },
+      {
+        "body_ref": "evidence/blobs/43381fd60c61406273ab27147a03907754bef439526e88735ad98122c6eab452.body",
+        "content_hash": "43381fd60c61406273ab27147a03907754bef439526e88735ad98122c6eab452",
+        "bytes": 116752
+      },
+      {
+        "body_ref": "evidence/blobs/6faedc0b8a06a9b9f7888af19dcff75484951597267dbe1f373821206da3d6ef.body",
+        "content_hash": "6faedc0b8a06a9b9f7888af19dcff75484951597267dbe1f373821206da3d6ef",
+        "bytes": 7934
+      },
+      {
+        "body_ref": "evidence/blobs/c7d9a6de6f77a7ff281702ac593e813fd86aee5f4a66c6a9f40c6478852a4ac3.body",
+        "content_hash": "c7d9a6de6f77a7ff281702ac593e813fd86aee5f4a66c6a9f40c6478852a4ac3",
+        "bytes": 7057
+      },
+      {
+        "body_ref": "evidence/blobs/cba6c8dc97d5c8f4ea5fb3661d989c8329bd0e74031fa95d2fbb8bee53281a66.body",
+        "content_hash": "cba6c8dc97d5c8f4ea5fb3661d989c8329bd0e74031fa95d2fbb8bee53281a66",
+        "bytes": 119553
+      },
+      {
+        "body_ref": "evidence/blobs/d92ede457dfb03539f155505991d440b11057bf750d0bb5b7b3ca4a98aa2ca21.body",
+        "content_hash": "d92ede457dfb03539f155505991d440b11057bf750d0bb5b7b3ca4a98aa2ca21",
+        "bytes": 13715
+      },
+      {
+        "body_ref": "evidence/blobs/fb70f78d0d5bdccbe8acd308296ce0c3db2a90a8672b57178bfc490f74385dc4.body",
+        "content_hash": "fb70f78d0d5bdccbe8acd308296ce0c3db2a90a8672b57178bfc490f74385dc4",
+        "bytes": 6024
+      }
+    ]
+  },
+  "retained_archive": [
+    {
+      "body_ref": "evidence/blobs/77f70f1aceb8fb84775488920b2af7c6d2bf44be386c954f2cfb86925e744e9c.body",
+      "content_hash": "77f70f1aceb8fb84775488920b2af7c6d2bf44be386c954f2cfb86925e744e9c",
+      "title": "Call for Full Papers — EUROGRAPHICS 2027",
+      "canonical_url_in_body": "https://eg2027.isti.cnr.it/call-for-papers/",
+      "purpose": "Keep the existing historical page capture. It is not used to assert an active deadline."
+    },
+    {
+      "body_ref": "evidence/blobs/e36a837b58b55e998aa952e7e15a50a502e2c7dbb122ac881e6e63989e0bdc30.body",
+      "content_hash": "e36a837b58b55e998aa952e7e15a50a502e2c7dbb122ac881e6e63989e0bdc30",
+      "title": "ACM MMSys’27",
+      "purpose": "Keep the existing page capture referenced by the refreshed snapshot. Its original URL and retrieval time are not asserted by this inventory."
+    }
+  ]
+}

@@ -1,6 +1,15 @@
 {
   "schema_version": 1,
   "blobs": {
+    "043992d3db6a968ed2d1a507412846e35f66d15b27d46f4b096c526e497f4738": {
+      "bytes": 6246,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/evidence/reviews/recovered-captures-20261004.json",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
+      ]
+    },
     "0504a90b6d71903a25e71d6444a6cfa58a97c374862ab89ec91c1b126ace1e89": {
       "bytes": 37964,
       "content_type": "application/octet-stream",
@@ -10,7 +19,8 @@
         "data/promotions/2026-08-31-eudat-conference-2026/observations.jsonl",
         "data/promotions/2026-08-31-eudat-conference-2026/resolutions.json",
         "data/snapshot.json",
-        "data/source-snapshots/local.json"
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "07c39722e2187fca7dfce689ae338119476343eb548eb8c1ed7ee60e0fc2201a": {
@@ -22,7 +32,15 @@
         "data/promotions/2026-08-31-sovereignai-2026/observations.jsonl",
         "data/promotions/2026-08-31-sovereignai-2026/resolutions.json",
         "data/snapshot.json",
-        "data/source-snapshots/local.json"
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
+      ]
+    },
+    "08810cdea05169d3110106df6b6e8cf461c5ebda2f74feb757b712753b878c37": {
+      "bytes": 15133,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/overrides.yaml"
       ]
     },
     "0897bd33c86b3a97f0021ccac945af4a870fc246915caef34644da738dd9117b": {
@@ -34,7 +52,8 @@
         "data/promotions/2026-08-31-dac-2027/observations.jsonl",
         "data/promotions/2026-08-31-dac-2027/resolutions.json",
         "data/snapshot.json",
-        "data/source-snapshots/local.json"
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1": {
@@ -46,7 +65,45 @@
         "data/promotions/2026-08-31-lascas-2027/observations.jsonl",
         "data/promotions/2026-08-31-lascas-2027/resolutions.json",
         "data/snapshot.json",
-        "data/source-snapshots/local.json"
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
+      ]
+    },
+    "118f10762b3004114ff96949bf8c4b9e452fce67965888c08fd7a2becc57fded": {
+      "bytes": 70624,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/overrides.yaml"
+      ]
+    },
+    "24a85164b842fa0b7b5f98c75e1fa9dfa8851372f73571cbe2de94dc9141dd2d": {
+      "bytes": 13714,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/overrides.yaml"
+      ]
+    },
+    "2710171d2ee3d422ec6bb0842872cac5add2e18259de3da70b4e6d7d00b190aa": {
+      "bytes": 9789,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/overrides.yaml"
+      ]
+    },
+    "313329e1b1243fb8c8297930dd410fccd368943906e10b6493354439916f6027": {
+      "bytes": 34667,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/overrides.yaml"
+      ]
+    },
+    "38a8af2993bbd2ba098fb730a561987253b4634a01315c18678d2eaded00674f": {
+      "bytes": 15632,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/evidence/reviews/recovered-captures-20261004.json",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "3df25f395b304760d846a06aebf4a3f726bfda1edf0398a6ceccf3be771538b0": {
@@ -56,11 +113,34 @@
         "data/promotions/2026-08-31-sovereignai-2026/manifest.json"
       ]
     },
+    "43381fd60c61406273ab27147a03907754bef439526e88735ad98122c6eab452": {
+      "bytes": 116752,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/evidence/reviews/recovered-captures-20261004.json",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
+      ]
+    },
+    "461f26731d76116911c5f7cb1a1b842123a711b8cbb5a3a5451725e90768f254": {
+      "bytes": 72106,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/overrides.yaml"
+      ]
+    },
     "4a41e3acf4f8e5be14c218b8abc2b31d5c4fbbbaf2728f88072051365e79bcbd": {
       "bytes": 58877,
       "content_type": "application/octet-stream",
       "references": [
         "data/promotions/2026-08-31-conversations-2026/manifest.json"
+      ]
+    },
+    "4cec899d14b03fb294dac055b5a7aec7ab28ba32c9fdad86ff2ad535eca68d35": {
+      "bytes": 8442,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/overrides.yaml"
       ]
     },
     "5f77a214d1a00f47dc38b70a6353936b9cdaa48ae320bf0da72bdc1b389d8759": {
@@ -72,7 +152,8 @@
         "data/promotions/2026-08-31-conversations-2026/observations.jsonl",
         "data/promotions/2026-08-31-conversations-2026/resolutions.json",
         "data/snapshot.json",
-        "data/source-snapshots/local.json"
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "6c94db3b66fd1b4e3ffaa52819dca36d770b039e01dbfdbb8d614197bac34ab5": {
@@ -80,6 +161,15 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/promotions/2026-08-31-sesame-jcdl-2026/manifest.json"
+      ]
+    },
+    "6faedc0b8a06a9b9f7888af19dcff75484951597267dbe1f373821206da3d6ef": {
+      "bytes": 7934,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/evidence/reviews/recovered-captures-20261004.json",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "7238cfba9ecf5eaffae6ecb6b86a1fdae90e4c2c28669f5a458965491c5d06a2": {
@@ -92,6 +182,13 @@
         "data/promotions/2026-08-31-wcm-agentic-ai-2027/resolutions.json",
         "data/snapshot.json",
         "data/source-snapshots/local.json"
+      ]
+    },
+    "77f70f1aceb8fb84775488920b2af7c6d2bf44be386c954f2cfb86925e744e9c": {
+      "bytes": 93809,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/evidence/reviews/recovered-captures-20261004.json"
       ]
     },
     "78e838df21338c35405deb432ec11c68d4c17ffbc9e55a964a9921df7915eab1": {
@@ -127,7 +224,8 @@
         "data/promotions/2026-08-31-tsc-llm-service-ecosystems-2027/observations.jsonl",
         "data/promotions/2026-08-31-tsc-llm-service-ecosystems-2027/resolutions.json",
         "data/snapshot.json",
-        "data/source-snapshots/local.json"
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "8882e74d3a87ccfd3c7b29b013dc3bf4e3bc12a9690fce22364beb67d266361d": {
@@ -164,11 +262,44 @@
         "data/evidence/reviews/cpal-2025.json"
       ]
     },
+    "9972268f811c33df5e345fc94570018d6ea5ec55be146ca81b95744b7fd4f3bd": {
+      "bytes": 71805,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/overrides.yaml"
+      ]
+    },
     "b8eaad25f2fd07862684f630e200c51d94564ba54e0658905bed0456748de3dc": {
       "bytes": 33593,
       "content_type": "application/octet-stream",
       "references": [
         "data/promotions/2026-08-31-genai4sg-cikm-2026/manifest.json"
+      ]
+    },
+    "b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65": {
+      "bytes": 300426,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/overrides.yaml"
+      ]
+    },
+    "c7d9a6de6f77a7ff281702ac593e813fd86aee5f4a66c6a9f40c6478852a4ac3": {
+      "bytes": 7057,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/evidence/reviews/recovered-captures-20261004.json",
+        "data/reverification-resolutions.json",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
+      ]
+    },
+    "cba6c8dc97d5c8f4ea5fb3661d989c8329bd0e74031fa95d2fbb8bee53281a66": {
+      "bytes": 119553,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/evidence/reviews/recovered-captures-20261004.json",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "cdb226fa64645300f44f019877355aa756f663f5bdf9198e484f8dea597ad23c": {
@@ -183,6 +314,15 @@
         "data/source-snapshots/local.json"
       ]
     },
+    "d92ede457dfb03539f155505991d440b11057bf750d0bb5b7b3ca4a98aa2ca21": {
+      "bytes": 13715,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/evidence/reviews/recovered-captures-20261004.json",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
+      ]
+    },
     "dc13ed46653fa4f2330f09aa2babacdb34a9df603549e1d0fd3ea15d59e8a8ba": {
       "bytes": 6025,
       "content_type": "application/octet-stream",
@@ -192,7 +332,15 @@
         "data/promotions/2026-08-31-wqs-2026/observations.jsonl",
         "data/promotions/2026-08-31-wqs-2026/resolutions.json",
         "data/snapshot.json",
-        "data/source-snapshots/local.json"
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
+      ]
+    },
+    "e36a837b58b55e998aa952e7e15a50a502e2c7dbb122ac881e6e63989e0bdc30": {
+      "bytes": 25325,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/evidence/reviews/recovered-captures-20261004.json"
       ]
     },
     "efb31692c1c015580f9a41fac2a74666c580e3e7d2701f1d9021934e49ae7714": {
@@ -204,7 +352,24 @@
         "data/promotions/2026-08-31-arc-2027/observations.jsonl",
         "data/promotions/2026-08-31-arc-2027/resolutions.json",
         "data/snapshot.json",
-        "data/source-snapshots/local.json"
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
+      ]
+    },
+    "f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d": {
+      "bytes": 651432,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/overrides.yaml"
+      ]
+    },
+    "fb70f78d0d5bdccbe8acd308296ce0c3db2a90a8672b57178bfc490f74385dc4": {
+      "bytes": 6024,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/evidence/reviews/recovered-captures-20261004.json",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     }
   }

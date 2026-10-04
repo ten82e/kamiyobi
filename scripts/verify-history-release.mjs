@@ -212,11 +212,11 @@ console.log(
         runtime: embedding.manifest.runtime_version,
         keys: embedding.manifest.keys.length,
       },
-    source_commit: publish.source_commit,
-    data_commit: publish.data_commit,
-    bundle_origin_commit: bundle.bundle_origin_commit,
-    scope:
-      "Historical, query, artifact-hash and bundle checks only. A clean Git source commit, complete evidence archive and publication authorization remain separate requirements.",
+      source_commit: publish.source_commit,
+      data_commit: publish.data_commit,
+      bundle_origin_commit: bundle.bundle_origin_commit,
+      scope:
+        "Historical, query, artifact-hash and bundle checks only. A clean Git source commit, complete evidence archive and publication authorization remain separate requirements.",
     },
     null,
     2,
