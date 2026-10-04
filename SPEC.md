@@ -201,6 +201,7 @@ kamiyobi/
 │   ├── latin-retype.ts          # 欧文の語を一字違ひに打った人へ收錄の綴りを見當として出す表（第 680 回）
 │   ├── recommender.ts           # 論文推薦（§10。任意 CDN）
 │   ├── recommendation-core.ts   # browser / benchmark / test 共通の推薦軸
+│   ├── recommendation.ts        # browser / benchmark 共通の語彙fallbackと掲載先指定
 │   ├── publish.ts               # publish manifest のブラウザ側検証
 │   └── runtime.d.ts             # ブラウザ・生成データの型境界
 ├── scripts/
@@ -609,6 +610,7 @@ node --experimental-strip-types src/cli.ts evidence [verify|gc] [--dry-run]
 | `llms.txt` | エージェント向け出力索引 |
 | `embeddings.json` | 会議スコープの埋め込み（§10）。`--no-embeddings` で省略可 |
 | `recommender.js` | `site/recommender.ts` から生成するサイトの推薦ロジック |
+| `recommendation.js` | `site/recommendation.ts` から生成する共有の語彙fallback・掲載先指定処理 |
 | `place-aliases.js` | `site/place-aliases.ts` から生成する、開催地の寄せ先の表（`recommender.js` が import） |
 | `topic-aliases.js` | `site/topic-aliases.ts` から生成する、主題の寄せ先の表（`recommender.js` が import） |
 | `latin-retype.js` | `site/latin-retype.ts` から生成する、欧文の打ち間違いへ收錄の綴りを見當として出す表（`recommender.js` が import する。搜しは廣げん – 打ち手の提案だけ）

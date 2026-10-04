@@ -27,13 +27,14 @@ describe("data-delta recommendation benchmark", () => {
     const result = runDataDeltaBenchmark(fixture);
     expect(result).toMatchObject({
       case_count: 63,
-      recall_at_1: 0.68254,
+      // 44 first-place hits and one fifth-place hit out of 63 labeled cases.
+      recall_at_1: Number((44 / 63).toFixed(6)),
       recall_at_5: 0.714286,
-      mrr: 0.693651,
+      mrr: Number(((44 + 1 / 5) / 63).toFixed(6)),
       abstention_rate: 0.095238,
       expected_venues_dropped: [],
     });
-    expect(result.ndcg_at_10).toBeCloseTo(0.698695, 6);
+    expect(result.ndcg_at_10).toBeCloseTo((44 + 1 / Math.log2(6)) / 63, 6);
     expect(result.changed_top5).toHaveLength(56);
     expect(result.changed_top5).toContain("case-01-hpc-en");
     expect(result.new_venues_in_top5).toContain("ieice-fundamentals-discrete-math-special");

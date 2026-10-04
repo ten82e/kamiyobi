@@ -140,10 +140,13 @@ describe("browser publish manifest", () => {
     expect(existsSync(join(REPO_ROOT, "site", "app.js"))).toBe(false);
     expect(existsSync(join(REPO_ROOT, "site", "recommender.js"))).toBe(false);
     expect(readFileSync(join(REPO_ROOT, "site", "app.ts"), "utf8")).toContain(
-      'from "./recommender.js"',
+      'from "./recommendation.js"',
+    );
+    expect(readFileSync(join(REPO_ROOT, "site", "recommendation.ts"), "utf8")).toContain(
+      'from "./recommender.ts"',
     );
     const benchSource = readFileSync(join(REPO_ROOT, "src", "bench-recommender.ts"), "utf8");
-    expect(benchSource).toContain('import("../site/recommender.ts")');
+    expect(benchSource).toContain('import("../site/recommendation.ts")');
     expect(benchSource).not.toContain("recommender-api");
   });
 
@@ -167,10 +170,16 @@ describe("browser publish manifest", () => {
         { cwd: REPO_ROOT, encoding: "utf8" },
       );
       expect(built.status, built.stderr).toBe(0);
-      for (const name of ["app.js", "recommender.js", "recommendation-core.js", "publish.js"]) {
+      for (const name of [
+        "app.js",
+        "recommender.js",
+        "recommendation.js",
+        "recommendation-core.js",
+        "publish.js",
+      ]) {
         expect(existsSync(join(out, name))).toBe(true);
       }
-      expect(readFileSync(join(out, "app.js"), "utf8")).toContain('from "./recommender.js"');
+      expect(readFileSync(join(out, "app.js"), "utf8")).toContain('from "./recommendation.js"');
       expect(readFileSync(join(out, "index.html"), "utf8")).toContain('src="app.js"');
     } finally {
       rmSync(out, { recursive: true, force: true });
