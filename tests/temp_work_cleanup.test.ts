@@ -6,11 +6,22 @@
  * 片付けるやうにした – ①プロセスが終る時に自分が作った目録を消す ②読む時に、一時間より古い
  * 同じ接頭辞の目録を掃く（vitest のワーカーは殺されることが在って、其の場合①が走らない –
  * 実測で 98 個が残つた為）。此の頁は其の二つを張る。*/
-import { mkdtempSync, readdirSync, rmSync, statSync, utimesSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import {
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  utimesSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
-import { tempWork, 古い一時目録を掃く } from "./helpers.ts";
+import { REPO_ROOT, tempWork, 古い一時目録を掃く } from "./helpers.ts";
 
 const 作った物: string[] = [];
 function 手製(接頭辞: string): string {
@@ -59,4 +70,36 @@ describe("検査の一時目録は片付けられる（第 482 回）", () => {
     古い一時目録を掃く();
     expect(() => statSync(道)).not.toThrow();
   });
+
+  it.each(["helper", "cli"])(
+    "%s preserves the actual owner when a prefix also contains p<digits>-",
+    (entry) => {
+      const root = 手製("other-project-sweep-cases-");
+      const exited = spawnSync(process.execPath, ["--input-type=module"], {
+        input: "",
+        encoding: "utf8",
+      });
+      expect(exited.status).toBe(0);
+      expect(() => process.kill(exited.pid, 0)).toThrow();
+      const active = mkdtempSync(join(root, `cfp-fp${exited.pid}-p${process.pid}-`));
+      const stale = mkdtempSync(join(root, `cfp-p${exited.pid}-`));
+      const unknown = mkdtempSync(join(root, "cfp-unknown-"));
+      const yaml = "conferences:\n  whpc: {}\n";
+      writeFileSync(join(active, "ok.yaml"), yaml);
+      const result =
+        entry === "cli"
+          ? spawnSync(process.execPath, [join(REPO_ROOT, "scripts/clean_tmp.ts"), root], {
+              encoding: "utf8",
+            })
+          : spawnSync(process.execPath, ["--input-type=module"], {
+              input: `import { 古い一時目録を掃く } from ${JSON.stringify(pathToFileURL(join(REPO_ROOT, "tests/helpers.ts")).href)}; 古い一時目録を掃く();`,
+              env: { ...process.env, TMPDIR: root, TMP: root, TEMP: root },
+              encoding: "utf8",
+            });
+      expect(result.status, result.stderr).toBe(0);
+      expect(readFileSync(join(active, "ok.yaml"), "utf8")).toBe(yaml);
+      expect(existsSync(stale)).toBe(false);
+      expect(existsSync(unknown)).toBe(true);
+    },
+  );
 });

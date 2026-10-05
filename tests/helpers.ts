@@ -130,7 +130,8 @@ export function makeFixtureCache(dir: string): string {
  * 待たずに消して良い。生存を見るので、同時に走る検査は壊さない。
  */
 function 生きて居る(目録名: string): boolean | null {
-  const マッチ = /p(\d+)-/.exec(目録名);
+  // mkdtemp の末尾部分の直前が所有 PID。接頭辞 cfp-fp2- の p2 を拾わない。
+  const マッチ = /p(\d+)-[^-]+$/.exec(目録名);
   if (!マッチ) return null;
   try {
     process.kill(Number(マッチ[1]), 0); // 何も送らずに存在だけ見る

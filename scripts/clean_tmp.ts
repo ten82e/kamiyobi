@@ -40,7 +40,8 @@ function 大きさ(道: string): number {
 }
 
 function 生きて居る(目録名: string): boolean | null {
-  const マッチ = /p(\d+)-/.exec(目録名);
+  // mkdtemp の末尾部分の直前が所有 PID。接頭辞 cfp-fp2- の p2 を拾わない。
+  const マッチ = /p(\d+)-[^-]+$/.exec(目録名);
   if (!マッチ) return null;
   try {
     process.kill(Number(マッチ[1]), 0); // 何も送らずに存在だけ見る
