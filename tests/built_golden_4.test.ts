@@ -234,6 +234,15 @@ it("印刷した紙が、紙に出る語を紙の説明だけで読ませる（S
   expect(printBlock![1], "主の日付まで折つて居る").not.toContain(
     "td .nowrap { white-space: normal; }",
   );
+  /* 折り返しを許した副の行の中で、**日付の塊**だけは折らない（第 704 回）。會期は
+     `2027-05-03(月) 〜 2027-05-06(木)` の形で、其の侭だと紙で「2027-」「05-」に割れる
+     （2026-10-06 實測）。割れ目は「 〜 」の一箇所だけにする。 */
+  expect(printBlock![1], "日付の塊を折つて居る").toContain(
+    "td .sub.nowrap .span-part { white-space: nowrap; }",
+  );
+  const 畫面の實行 = siteRuntime("app.js");
+  expect(畫面の實行, "會期の兩端を塊にして居ない").toContain('s.className = "span-part"');
+  expect(畫面の實行, "「 〜 」で割つて居ない").toContain("span.split(/\\s*〜\\s*/)");
 
   // (4) てびきが、紙の但し書きを画面の語で案内している（語を検査に写さない）。
   const prefix = out.legend.slice(0, out.legend.indexOf(": "));

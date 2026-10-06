@@ -4146,7 +4146,25 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 会期の式は一覧・行の詳細・CSV で `eventCellJa` を共有する。ここで別の式を持つと
     // 行の詳細だけ公式ページの原文（英語）になった（SPEC §7）。
     const span = Recommender.eventCellJa(r) || (eventNa ? NOT_APPLICABLE_JA : UNCONFIRMED_JA);
-    const spanCell = line(c5, span, "sub nowrap");
+    /* 會期の範圍（`2027-05-03(月) 〜 2027-05-06(木)`）は、**日付其々を折らない塊**にして
+     * 入れる（第 704 回）。紙では副の行の折り返しを許して居るので、其の侭だと
+     * 「2027-」「05-」の樣に**日付の途中で割れて**讀めなくなる – 割れ目は「 〜 」の
+     * 一箇所だけにする。範圍で無い時（`未確認` 等）は今まで通り素の行。 */
+    const spanCell = (() => {
+      const 部 = span.split(/\s*〜\s*/);
+      if (部.length !== 2 || !部[0] || !部[1]) return line(c5, span, "sub nowrap");
+      const d = document.createElement("div");
+      d.className = "sub nowrap";
+      部.forEach((text, i) => {
+        if (i) d.appendChild(document.createTextNode(" 〜 "));
+        const s = document.createElement("span");
+        s.className = "span-part";
+        s.textContent = text;
+        d.appendChild(s);
+      });
+      c5.appendChild(d);
+      return d;
+    })();
     // 理由の語は行の詳細と同じ入口から取る（2 箇所で条件を書くと、どちらかだけ直る）。
     if (spanCell) spanCell.title = fieldReasonsJa.event(r);
 

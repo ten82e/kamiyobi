@@ -958,6 +958,8 @@ footer a:hover { text-decoration: underline; }
      日付（「2026-10-05(月)」）まで折ると讀めなくなる（實測 – 全部折ると日時の列が 79px に
      成つて日付が途中で切れた）。副の行を折ると、表は 779px に收まつた（實測）。 */
   td .sub.nowrap { white-space: normal; }
+  /* 折らない塊（會期の兩端の日付）は其の侭 – 割れ目は「 〜 」の一箇所だけ（第 704 回）。 */
+  td .sub.nowrap .span-part { white-space: nowrap; }
   th, td {
     color: #111 !important;
     background: transparent !important;
