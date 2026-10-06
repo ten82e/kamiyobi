@@ -3460,6 +3460,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const terms =
       matchedRows === 0 &&
       !filter.urlQuery &&
+      /* 表その物を指す語の案内（`会議一覧` のやうに全行の語を繋げた形 – 第 694 回）が立つ時は、
+         語ごとの件數を重ねない – 同じ畫面で「全行にあてはまる」と「収録に見當たりません」の
+         二つを言ふと、どちらを信じれば良いか讀めなくなる（第 530・531 回と同じ決まり）。
+         實測 2026-10-06 – `会議一覧` に「「会議」・「一覧」は収録データにも見當たりません。
+         その語を外すと增へます」が重なつて居た（どちらの語も全行にあたるので外しても增へん）。 */
+      !wholeNote &&
       !columnNote &&
       !uiNote &&
       !dayRangeNote &&

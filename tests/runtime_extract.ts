@@ -135,6 +135,9 @@ export function wholeTableQueryStubs(rec: string): string {
     jsFunction(rec, "uiWordNoteJa"),
     jsFunction(rec, "uiWordLiveNoteJa"),
     jsFunction(rec, "wholeTableQueryWordJa"),
+    /* 全行の語を繋げて打つた形（`会議一覧` – 第 694 回）は `wholeTableQueryNoteJa` が呼ぶので、
+     * 一緒に抜かないと `全行の語の組みJa is not defined` に化ける（第 257 回と同じ穴）。 */
+    jsFunction(rec, "全行の語の組みJa"),
     jsFunction(rec, "wholeTableQueryNoteJa"),
     jsFunction(rec, "columnGluedEntryJa"),
     jsFunction(rec, "columnGluedTailEntryJa"),
