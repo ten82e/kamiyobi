@@ -6172,6 +6172,20 @@ const Recommender = (() => {
       if (!tail.endsWith(名)) continue;
       const 頭 = tail.slice(0, tail.length - 名.length);
       if (頭.length > 0 && UI_WORD_TAILS_JA.includes(頭)) return true;
+      /* 語と名の間に**必要・できるの係り**が入る問ひ（`ビザが必要な会議` `英語で発表できる会議` –
+       * 第 707 回）。實測（2026-10-06）で此の形は 0 行・案内も無しだつた – 群の語（`ビザ` `英語`）に
+       * 當たつて居るのに、間の「が必要な」が語尾の白一覧に無い爲に彈かれて居た。
+       * **白一覧に限る** – 間を廣く許すと比べる打ち手（`費用が安い会議`）まで斷りが乘り、
+       * 第 656・362 回の境界に觸れる（實測で檢査三本が落ちた – 第 706 回の記錄）。*/
+      if (
+        頭.length >= 2 &&
+        頭.length <= 12 &&
+        !/[\s、，,]/.test(頭) &&
+        /^(?:が必要(?:な|です)?|が要る|が必須|が求められ(?:る|ます)?|が(?:不要|無し|無い|ない)(?:な|です)?|で(?:発表|參加|登壇|聽講)できる|でも(?:発表|參加)できる|ができる)$/.test(
+          頭,
+        )
+      )
+        return true;
     }
     /* 語と語尾の間に**短い語が一枚挟まつた問ひ**も受ける（`招待状は発行してもらえますか` – 第 620 回）。
      * 彈く決まり四つ – 挾まる語は**二〜六字**（一字に緩めると第 610 回の斷りを奪ふ）、語尾は**四字以上**
@@ -14910,9 +14924,24 @@ const Recommender = (() => {
   function withoutFunctionGroups(groups: string[][]): string[][] {
     if (groups.length < 2) return groups;
     const 語々 = FUNCTION_WORDS_JA.map((word) => kanaFold(word));
-    const kept = groups.filter(
-      (group) => !group.every((term) => 語々.indexOf(kanaFold(term)) >= 0),
+    /* 尾に來る名は**催し物の名**に限る（第 707 回 – 實測で `開催予定` をのぞくと
+     * `開催予定はいつ` が 565 行の雜多に成り、其の群の斷り（「行の『會期』に出て居ます」）を
+     * 失つた。`予定` `時` `方法` の樣な名は機能語と熟して一語に成る物が在るので外す）。*/
+    const 名々 = ["会議", "学会", "大会", "研究会", "ワークショップ", "セッション"].map((word) =>
+      kanaFold(word),
     );
+    const 機能語の組か = (group: string[]): boolean => {
+      if (group.length !== 1) return false;
+      const 語 = kanaFold(group[0]);
+      if (語々.indexOf(語) >= 0) return true;
+      /* 機能語に**名を續けた塊**（`開催される会議` – 第 707 回）。實測（2026-10-06）で
+       * `海外で開催される会議` は 0 行だつた – `で` で割れた後の片方が「開催される会議」と
+       * 云ふ一塊に成り、其れを要求して 0 行に落ちて居た（同じ意味の `海外開催` は 3,953 行）。
+       * 頭が機能語・尾が名（會議・學會…）の時だけのぞく（十六字まで）。*/
+      if (語.length > 16) return false;
+      return 語々.some((w) => 語.startsWith(w)) && 名々.some((n) => 語.endsWith(n));
+    };
+    const kept = groups.filter((group) => !機能語の組か(group));
     return kept.length ? kept : groups;
   }
 
