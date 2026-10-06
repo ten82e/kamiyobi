@@ -3465,6 +3465,12 @@
       "source_url_hash": "b928812ec73f63808da10ab119fe956f20d541e1fa5af986c6c30857cf33454c"
     },
     {
+      "fingerprint": "candidate-3cdca623b2d8a706da7f54ef",
+      "decision": "no-reviewable-deadline",
+      "last_reviewed": "2026-10-04T23:19:49.899Z",
+      "source_url_hash": "a4e639629c56cf1b35208060bcb8b1f5e34e691a5d94ab963aa025c401b602c1"
+    },
+    {
       "fingerprint": "candidate-e2f7828de12b21d936c3269e",
       "decision": "no-reviewable-deadline",
       "last_reviewed": "2026-10-04T12:42:32.442Z",

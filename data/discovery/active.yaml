@@ -25,13 +25,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: 2027-icger-4th-smpm
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: 3d-metasurface-assisted-wireless-communications-from-model-based-designs-to-ai-driven-approaches-ieee-wireless-communications
     title: >-
@@ -58,13 +58,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-19T20:44:41.199Z'
     first_seen_at: '2026-08-19T20:44:41.199Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: comsoc
         source_item_id: 3d-metasurface-assisted-wireless-communications-from-model-based-designs-to-ai-driven-approaches-ieee-wireless-communications
         source_url: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: ''
   - key: 3rd-socaisa
     title: 3RD SOCAISA
@@ -88,13 +88,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: 3rd-socaisa
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: 4th-smpm
     title: 4th SMPM
@@ -148,19 +148,20 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: 6gctt-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: 9th-accml
     title: 9th AccML
     full_name: 9th Workshop on Accelerated Machine Learning
     link: https://easychair.org/cfp/accml-26
-    categories: []
+    categories:
+      - ai
     tags:
       - niche
       - easychair
@@ -178,13 +179,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: 9th-accml
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: a2mra-2027
     title: A2MRA ’2027
@@ -210,13 +211,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: a2mra-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: abis2027
     title: ABIS2027
@@ -240,19 +241,20 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: abis2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: aciids-2027
     title: ACIIDS 2027
     full_name: 19th Asian Conference on Intelligent Information and Database Systems
     link: https://easychair.org/cfp/ACIIDS2027
-    categories: []
+    categories:
+      - db
     tags:
       - niche
       - easychair
@@ -270,13 +272,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: aciids-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: acmme-2027
     title: ACMME 2027
@@ -330,13 +332,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: acse2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: aeees2027
     title: AEEES2027
@@ -360,13 +362,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: aeees2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ai-empowered-cognitive-digital-twin-for-future-network-ecosystems-ieee-network
     title: >-
@@ -393,13 +395,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-19T20:44:41.199Z'
     first_seen_at: '2026-08-19T20:44:41.199Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: comsoc
         source_item_id: ai-empowered-cognitive-digital-twin-for-future-network-ecosystems-ieee-network
         source_url: https://www.comsoc.org/publications/magazines/ieee-network/cfp
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: ''
   - key: ai-empowered-underwater-wireless-optical-communications-for-science-exploration-and-defense-applications-ieee-wireless-communications
     title: >-
@@ -426,13 +428,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-19T20:44:41.199Z'
     first_seen_at: '2026-08-19T20:44:41.199Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: comsoc
         source_item_id: ai-empowered-underwater-wireless-optical-communications-for-science-exploration-and-defense-applications-ieee-wireless-communications
         source_url: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: ''
   - key: ai-hcd-2027
     title: AI-HCD 2027
@@ -459,13 +461,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: ai-hcd-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ai4proteinscience
     title: AI4ProteinScience
@@ -489,13 +491,13 @@ candidates:
     status: discovered
     discovered_at: '2026-09-05T22:05:16.108Z'
     first_seen_at: '2026-09-05T22:05:16.108Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: ai4proteinscience
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: aicap-2027
     title: AICAP 2027
@@ -519,13 +521,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: aicap-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: aiesc-2027
     title: AIESC 2027
@@ -552,13 +554,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: aiesc-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: aiit2027
     title: AIIT2027
@@ -566,7 +568,8 @@ candidates:
       The 2nd International Conference on Innovation in Artificial Intelligence
       and Internet of Things
     link: https://easychair.org/cfp/aiit2027
-    categories: []
+    categories:
+      - ai
     tags:
       - niche
       - easychair
@@ -584,13 +587,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: aiit2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: aimce-27
     title: AIMCE'27
@@ -598,7 +601,8 @@ candidates:
       The 3rd International Workshop on Artificial Intelligence, Mechanical and
       Civil Engineering
     link: https://easychair.org/cfp/aimce27
-    categories: []
+    categories:
+      - ai
     tags:
       - niche
       - easychair
@@ -616,13 +620,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: aimce-27
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: aimh-2027
     title: AiMH' 2027
@@ -646,13 +650,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: aimh-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: aisir-2027
     title: AISIR 2027
@@ -676,13 +680,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: aisir-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: aix2027
     title: AIX2027
@@ -690,7 +694,8 @@ candidates:
       International Conference on Artificial Intelligence & Information
       Technology
     link: https://easychair.org/cfp/AIX-2027
-    categories: []
+    categories:
+      - ai
     tags:
       - niche
       - easychair
@@ -708,13 +713,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: aix2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: aqti-2027
     title: AQTI' 2027
@@ -740,13 +745,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-30T13:30:12.117Z'
     first_seen_at: '2026-08-30T13:30:12.117Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: aqti-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: arci-2027
     title: ARCI' 2027
@@ -806,13 +811,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: aspai-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: atomic-to-network-quantum-radio-front-ends-for-6g-wireless-communications-and-sensing-ieee-wireless-communications
     title: >-
@@ -839,13 +844,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: comsoc
         source_item_id: atomic-to-network-quantum-radio-front-ends-for-6g-wireless-communications-and-sensing-ieee-wireless-communications
         source_url: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: ''
   - key: aviose-27
     title: AvioSE'27
@@ -869,13 +874,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: aviose-27
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: beacon-2027
     title: BEACON 2027
@@ -899,13 +904,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: beacon-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: bibe2026
     title: BIBE2026
@@ -929,13 +934,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: bibe2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: bmsb-2027
     title: BMSB 2027
@@ -943,7 +948,8 @@ candidates:
       IEEE International Symposium on Broadband Multimedia Systems and
       Broadcasting 2027
     link: https://easychair.org/cfp/bmsb-2027
-    categories: []
+    categories:
+      - graphics
     tags:
       - niche
       - easychair
@@ -961,13 +967,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: bmsb-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: cale-ai2027
     title: CALE-AI2027
@@ -991,13 +997,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: cale-ai2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: calm-27
     title: CALM-27
@@ -1021,13 +1027,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-30T13:30:12.117Z'
     first_seen_at: '2026-08-30T13:30:12.117Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: calm-27
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: camos-2027
     title: CAMoS 2027
@@ -1051,13 +1057,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: camos-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: case2space-2027
     title: CASE2Space 2027
@@ -1083,13 +1089,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: case2space-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: caspt-transit-data-2027
     title: CASPT & Transit Data 2027
@@ -1117,13 +1123,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: caspt-transit-data-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ccai2027
     title: CCAI2027
@@ -1150,13 +1156,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: ccai2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ceege-2027
     title: CEEGE 2027
@@ -1182,13 +1188,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: ceege-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ceepe2027
     title: CEEPE2027
@@ -1214,13 +1220,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: ceepe2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: cibse-2027
     title: CIBSE 2027
@@ -1244,13 +1250,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: cibse-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: cilidi4
     title: CILiDi4
@@ -1274,13 +1280,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: cilidi4
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: circh2027
     title: CIRCH2027
@@ -1304,13 +1310,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: circh2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ciredii-2027
     title: CIREDII 2027
@@ -1334,13 +1340,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: ciredii-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: csaf26
     title: CSAF26
@@ -1365,13 +1371,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-30T13:30:12.117Z'
     first_seen_at: '2026-08-30T13:30:12.117Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: csaf26
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: cste2027
     title: CSTE2027
@@ -1397,13 +1403,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: cste2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: cyber-science-2027
     title: Cyber Science 2027
@@ -1430,13 +1436,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: cyber-science-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: cycon-2027
     title: CyCon 2027
@@ -1460,13 +1466,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: cycon-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: daus-2027
     title: DAUS' 2027
@@ -1490,13 +1496,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: daus-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: dfc-2026
     title: DFC 2026
@@ -1520,13 +1526,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-21T20:40:09.565Z'
     first_seen_at: '2026-08-21T20:40:09.565Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: dfc-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: distributed-intelligence-and-collaborative-inference-for-foundation-models-over-wireless-edge-ieee-network
     title: >-
@@ -1553,13 +1559,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-19T20:44:41.199Z'
     first_seen_at: '2026-08-19T20:44:41.199Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: comsoc
         source_item_id: distributed-intelligence-and-collaborative-inference-for-foundation-models-over-wireless-edge-ieee-network
         source_url: https://www.comsoc.org/publications/magazines/ieee-network/cfp
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: ''
   - key: eai-securecomm-2027
     title: EAI SecureComm 2027
@@ -1567,7 +1573,8 @@ candidates:
       23rd EAI International Conference on Security and Privacy in Communication
       Networks​
     link: https://easychair.org/cfp/securecomm2027
-    categories: []
+    categories:
+      - security
     tags:
       - niche
       - easychair
@@ -1585,13 +1592,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: eai-securecomm-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: edge-and-in-network-computing-for-underwater-communication-ieee-communications-magazine
     title: >-
@@ -1618,13 +1625,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-30T13:30:12.117Z'
     first_seen_at: '2026-08-30T13:30:12.117Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: comsoc
         source_item_id: edge-and-in-network-computing-for-underwater-communication-ieee-communications-magazine
         source_url: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: ''
   - key: educonf14
     title: educonf14
@@ -1650,13 +1657,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: educonf14
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: eeet-2026
     title: EEET 2026
@@ -1682,13 +1689,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: eeet-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ergowork2026
     title: ErgoWork2026
@@ -1714,13 +1721,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: ergowork2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: esreda69seminar
     title: ESReDA69Seminar
@@ -1744,13 +1751,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: esreda69seminar
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: eva-london-2027
     title: EVA London 2027
@@ -1774,13 +1781,13 @@ candidates:
     status: discovered
     discovered_at: '2026-09-05T22:05:16.108Z'
     first_seen_at: '2026-09-05T22:05:16.108Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: eva-london-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ewdts-2026
     title: EWDTS 2026
@@ -1804,13 +1811,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: ewdts-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: fes2027
     title: FES2027
@@ -1834,13 +1841,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: fes2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ffl2027
     title: FFL2027
@@ -1864,13 +1871,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: ffl2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: fsen-2027
     title: FSEN 2027
@@ -1894,13 +1901,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: fsen-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: gccce-2027
     title: GCCCE 2027
@@ -1924,13 +1931,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: gccce-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: gd-2026
     title: gdс-2026
@@ -1954,13 +1961,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: gd-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: herit-ai-2026
     title: HERIT-AI 2026
@@ -1968,7 +1975,8 @@ candidates:
       Iberoamerican Workshop on Trustworthy Artificial Intelligence and Cultural
       Heritage
     link: https://easychair.org/cfp/herit-ai-2026
-    categories: []
+    categories:
+      - ai
     tags:
       - niche
       - easychair
@@ -1986,13 +1994,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: herit-ai-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: hmds-2027
     title: HMDS 2027
@@ -2016,13 +2024,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: hmds-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: iai2027
     title: IAI2027
@@ -2046,13 +2054,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-30T13:30:12.117Z'
     first_seen_at: '2026-08-30T13:30:12.117Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: iai2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: iaim-2026
     title: iAIM 2026
@@ -2076,13 +2084,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: iaim-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ic-eisit-2026
     title: IC-EISIT 2026
@@ -2108,13 +2116,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: ic-eisit-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ic-rate-2026
     title: IC-RATE 2026
@@ -2138,13 +2146,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-30T13:30:12.117Z'
     first_seen_at: '2026-08-30T13:30:12.117Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: ic-rate-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ic4e-2027
     title: IC4e 2027
@@ -2170,13 +2178,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: ic4e-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icabcd2027
     title: icABCD2027
@@ -2184,7 +2192,9 @@ candidates:
       2027 International Conference on Artificial Intelligence, Big Data,
       Computing and Data Communication Systems
     link: https://easychair.org/cfp/icABCD2027
-    categories: []
+    categories:
+      - ai
+      - db
     tags:
       - niche
       - easychair
@@ -2202,13 +2212,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: icabcd2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icacte-2027
     title: ICACTE 2027
@@ -2216,7 +2226,8 @@ candidates:
       2027 20th International Conference on Advanced Computer Theory and
       Engineering
     link: https://easychair.org/cfp/ICACTE2027
-    categories: []
+    categories:
+      - theory
     tags:
       - niche
       - easychair
@@ -2234,13 +2245,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: icacte-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icah27
     title: ICAH27
@@ -2266,13 +2277,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: icah27
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icaigc-2027
     title: ICAIGC 2027
@@ -2299,19 +2310,20 @@ candidates:
     status: discovered
     discovered_at: '2026-09-05T22:05:16.108Z'
     first_seen_at: '2026-09-05T22:05:16.108Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: icaigc-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icaimt2027
     title: ICAIMT2027
     full_name: International Conference on Artificial Intelligence Management and Trends
     link: https://easychair.org/cfp/ICAIMT2027
-    categories: []
+    categories:
+      - ai
     tags:
       - niche
       - easychair
@@ -2329,13 +2341,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: icaimt2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icams-2026
     title: ICAMS 2026
@@ -2359,13 +2371,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: icams-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icatipsh27
     title: ICATIPSH27
@@ -2391,13 +2403,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-30T13:30:12.117Z'
     first_seen_at: '2026-08-30T13:30:12.117Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2047
     evidence:
       - source: easychair
         source_item_id: icatipsh27
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icbelts-2027
     title: ICBELTS 2027
@@ -2423,13 +2435,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-30T13:30:12.117Z'
     first_seen_at: '2026-08-30T13:30:12.117Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: icbelts-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: iccae-2027
     title: ICCAE 2027
@@ -2516,13 +2528,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-30T13:30:12.117Z'
     first_seen_at: '2026-08-30T13:30:12.117Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: iccaua2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: iccc-2026
     title: ICCC 2026
@@ -2546,13 +2558,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: iccc-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icccas2027
     title: ICCCAS2027
@@ -2578,13 +2590,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: icccas2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icccr-2027
     title: ICCCR 2027
@@ -2609,13 +2621,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: icccr-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icccs2027
     title: ICCCS2027
@@ -2639,13 +2651,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: icccs2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: iccece-2027
     title: ICCECE 2027
@@ -2671,13 +2683,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: iccece-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: iccms-2027
     title: ICCMS 2027
@@ -2701,13 +2713,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: iccms-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icdcm-2027
     title: ICDCM 2027
@@ -2731,13 +2743,13 @@ candidates:
     status: discovered
     discovered_at: '2026-09-05T22:05:16.108Z'
     first_seen_at: '2026-09-05T22:05:16.108Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: icdcm-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icdip-2027
     title: ICDIP 2027
@@ -2793,13 +2805,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-30T13:30:12.117Z'
     first_seen_at: '2026-08-30T13:30:12.117Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: iceasre-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: iceee-2027
     title: ICEEE 2027
@@ -2825,13 +2837,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: iceee-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: iceit-2027
     title: ICEIT 2027
@@ -2857,13 +2869,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: iceit-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icetc-2026
     title: ICETC 2026
@@ -2889,13 +2901,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: icetc-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ich-2026
     title: ICH 2026
@@ -2919,13 +2931,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: ich-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icidst-2026
     title: ICIDST 2026
@@ -2951,13 +2963,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: icidst-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: iciea-2027
     title: ICIEA 2027
@@ -3015,13 +3027,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: iciea-eu-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: iciss-phd-forum-2026
     title: ICISS PhD Forum 2026
@@ -3045,13 +3057,13 @@ candidates:
     status: discovered
     discovered_at: '2026-09-05T22:05:16.108Z'
     first_seen_at: '2026-09-05T22:05:16.108Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: iciss-phd-forum-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icist2027
     title: ICIST2027
@@ -3075,13 +3087,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: icist2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: iclt-2027
     title: ICLT 2027
@@ -3105,13 +3117,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: iclt-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icmlai-2027
     title: ICMLAI-2027
@@ -3138,13 +3150,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: icmlai-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icmmse-ir-2027
     title: 'ICMMSE: IR 2027'
@@ -3170,13 +3182,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: icmmse-ir-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icoaims-2027
     title: ICoAIMS 2027
@@ -3202,13 +3214,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-21T20:40:09.565Z'
     first_seen_at: '2026-08-21T20:40:09.565Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: icoaims-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icosin-2026
     title: ICOSIN 2026
@@ -3232,13 +3244,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: icosin-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icpadm-2027
     title: ICPADM 2027
@@ -3264,13 +3276,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: icpadm-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icpe-2026
     title: ICPE 2026
@@ -3294,13 +3306,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: icpe-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icpes-2026
     title: ICPES 2026
@@ -3324,13 +3336,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: icpes-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icpies-2027
     title: ICPIES 2027
@@ -3356,13 +3368,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: icpies-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icsa2027
     title: ICSA2027
@@ -3386,13 +3398,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: icsa2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icsge-2026
     title: ICSGE 2026
@@ -3416,13 +3428,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: icsge-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icsgsc-2026
     title: ICSGSC 2026
@@ -3446,13 +3458,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: icsgsc-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icsic-2026
     title: ICSIC 2026
@@ -3476,13 +3488,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: icsic-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icsmmai-2027
     title: ICSMMAI-2027
@@ -3509,13 +3521,13 @@ candidates:
     status: discovered
     discovered_at: '2026-09-05T22:05:16.108Z'
     first_seen_at: '2026-09-05T22:05:16.108Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: icsmmai-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: icsss2027
     title: ICSSS2027
@@ -3539,13 +3551,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: icsss2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ieee-ic4
     title: IEEE-IC4
@@ -3569,13 +3581,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: ieee-ic4
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ieee-latiniot-2027
     title: IEEE LatinIoT 2027
@@ -3599,13 +3611,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: ieee-latiniot-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: iem-icdc-2027
     title: IEM-ICDC 2027
@@ -3613,7 +3625,8 @@ candidates:
       5th International Conference on Computational Intelligence, Data Science
       and Cloud Computing
     link: https://easychair.org/cfp/iem-icdc2027
-    categories: []
+    categories:
+      - systems
     tags:
       - niche
       - easychair
@@ -3631,13 +3644,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: iem-icdc-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: igame-2027
     title: iGAME 2027
@@ -3661,13 +3674,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: igame-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: iikssdtt27
     title: IIKSSDTT27
@@ -3693,13 +3706,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-30T13:30:12.117Z'
     first_seen_at: '2026-08-30T13:30:12.117Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: iikssdtt27
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: iman2026
     title: IMAN2026
@@ -3726,13 +3739,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: iman2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: in-orbit-computing-striding-into-the-era-of-space-centric-intelligence-ieee-wireless-communications
     title: >-
@@ -3759,13 +3772,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-19T20:44:41.199Z'
     first_seen_at: '2026-08-19T20:44:41.199Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: comsoc
         source_item_id: in-orbit-computing-striding-into-the-era-of-space-centric-intelligence-ieee-wireless-communications
         source_url: https://www.comsoc.org/publications/magazines/ieee-wireless-communications/cfp
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: ''
   - key: inciscos-2026
     title: INCISCOS 2026
@@ -3789,13 +3802,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: inciscos-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: incoed-2026
     title: INCOED 2026
@@ -3821,13 +3834,13 @@ candidates:
     status: discovered
     discovered_at: '2026-09-05T22:05:16.108Z'
     first_seen_at: '2026-09-05T22:05:16.108Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: incoed-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: incosef-2026
     title: INCOSEF 2026
@@ -3851,13 +3864,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: incosef-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: innrf-2027
     title: INNRF 2027
@@ -3881,13 +3894,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: innrf-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: internet-of-agents-for-communications-and-networking-architectures-protocols-and-orchestration-ieee-communications-magazine
     title: >-
@@ -3914,13 +3927,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-19T20:44:41.199Z'
     first_seen_at: '2026-08-19T20:44:41.199Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: comsoc
         source_item_id: internet-of-agents-for-communications-and-networking-architectures-protocols-and-orchestration-ieee-communications-magazine
         source_url: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: ''
   - key: iot-prec-farm26
     title: IoT-Prec-Farm26
@@ -3944,13 +3957,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: iot-prec-farm26
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ipc20-helsinki-2027
     title: IPC20 Helsinki 2027
@@ -3974,13 +3987,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: ipc20-helsinki-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ipsj-27-r
     title: >-
@@ -4007,13 +4020,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-19T20:44:41.199Z'
     first_seen_at: '2026-08-19T20:44:41.199Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: ipsj
         source_item_id: ipsj-27-r
         source_url: https://www.ipsj.or.jp/journal/cfp/27-R.html
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: ''
   - key: ir26
     title: IR26
@@ -4037,13 +4050,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: ir26
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: isc-12
     title: ISC 12
@@ -4067,13 +4080,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-21T20:40:09.565Z'
     first_seen_at: '2026-08-21T20:40:09.565Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: isc-12
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: isi-2027
     title: ISI 2027
@@ -4097,13 +4110,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: isi-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ismsi-2027
     title: ISMSI 2027
@@ -4129,13 +4142,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: ismsi-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: isphoa-2026
     title: ISPhOA 2026
@@ -4159,13 +4172,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: isphoa-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: itk2027
     title: ITK2027
@@ -4189,13 +4202,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: itk2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: itng-2027
     title: ITNG 2027
@@ -4219,13 +4232,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: itng-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: lida-2027
     title: LIDA 2027
@@ -4249,13 +4262,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: lida-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: marlog16
     title: MARLOG16
@@ -4281,13 +4294,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-30T13:30:12.117Z'
     first_seen_at: '2026-08-30T13:30:12.117Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2050
     evidence:
       - source: easychair
         source_item_id: marlog16
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: maso-2026
     title: MASO 2026
@@ -4313,13 +4326,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-21T20:40:09.565Z'
     first_seen_at: '2026-08-21T20:40:09.565Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: maso-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: mea-27
     title: MEA'27
@@ -4343,13 +4356,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: mea-27
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: mesic-2027
     title: MESIC 2027
@@ -4373,13 +4386,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: mesic-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ml4cps-2027
     title: ML4CPS 2027
@@ -4404,13 +4417,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: ml4cps-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: mlet-2027
     title: MLET 2027
@@ -4466,13 +4479,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: mmia-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: mulssec2026
     title: MULSSEC2026
@@ -4499,13 +4512,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: mulssec2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: nelc-2026
     title: NELC 2026
@@ -4529,13 +4542,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: nelc-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: opensoc4he-2027
     title: OpenSoC4HE 2027
@@ -4562,13 +4575,13 @@ candidates:
     status: discovered
     discovered_at: '2026-09-05T22:05:16.108Z'
     first_seen_at: '2026-09-05T22:05:16.108Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: opensoc4he-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: pc26
     title: PC26
@@ -4592,13 +4605,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: pc26
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: pcce-2026
     title: PCCE 2026
@@ -4624,13 +4637,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: pcce-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: pesa2026
     title: PESA2026
@@ -4654,13 +4667,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: pesa2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: post-quantum-cryptography-for-real-world-deployment-ieee-communications-magazine
     title: >-
@@ -4670,7 +4683,8 @@ candidates:
       Post-Quantum Cryptography for Real-World Deployment（IEEE Communications
       Magazine 特集号）
     link: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
-    categories: []
+    categories:
+      - security
     tags:
       - niche
       - special-issue
@@ -4687,13 +4701,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: comsoc
         source_item_id: post-quantum-cryptography-for-real-world-deployment-ieee-communications-magazine
         source_url: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: ''
   - key: pqcrypto-2027
     title: PQCrypto 2027
@@ -4701,7 +4715,8 @@ candidates:
       PQCrypto 2027 - The 18th International Conference on Post-Quantum
       Cryptography
     link: https://easychair.org/cfp/pqcrypto2027
-    categories: []
+    categories:
+      - security
     tags:
       - niche
       - easychair
@@ -4719,13 +4734,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: pqcrypto-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: prism-2026
     title: PRISM 2026
@@ -4749,13 +4764,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: prism-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: psce-2027
     title: PSCE 2027
@@ -4779,13 +4794,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: psce-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: qccs-2026
     title: QCCS 2026
@@ -4810,13 +4825,13 @@ candidates:
     status: discovered
     discovered_at: '2026-09-06T22:09:32.143Z'
     first_seen_at: '2026-09-06T22:09:32.143Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: qccs-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: robontics-2026
     title: RobOntics 2026
@@ -4840,13 +4855,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: robontics-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: sajbe-01-26
     title: SAJBE 01/26
@@ -4870,13 +4885,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: sajbe-01-26
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: sand-2027
     title: SAND 2027
@@ -4900,13 +4915,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: sand-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: scer2026
     title: SCER2026
@@ -4930,13 +4945,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: scer2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: scisustain-2027
     title: scisustain-2027
@@ -4962,13 +4977,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-21T20:40:09.565Z'
     first_seen_at: '2026-08-21T20:40:09.565Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: scisustain-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: scsn27-ai
     title: SCSN27-AI
@@ -4995,13 +5010,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: scsn27-ai
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: security-and-privacy-of-multimodal-embodied-iot-ieee-communications-magazine
     title: >-
@@ -5029,13 +5044,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-19T20:44:41.199Z'
     first_seen_at: '2026-08-19T20:44:41.199Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: comsoc
         source_item_id: security-and-privacy-of-multimodal-embodied-iot-ieee-communications-magazine
         source_url: https://www.comsoc.org/publications/magazines/ieee-communications-magazine/cfp
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: ''
   - key: set-iv-2027
     title: SET-IV-2027
@@ -5061,13 +5076,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: set-iv-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: sicherheit-2027
     title: Sicherheit 2027
@@ -5091,13 +5106,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: sicherheit-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: simhydro-2027
     title: SimHydro 2027
@@ -5121,13 +5136,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: simhydro-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: sip-2027
     title: SIP 2027
@@ -5151,13 +5166,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: sip-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: special-section-on-log-data-usage-technology-and-office-information-systems-ieice-trans-inf-syst
     title: >-
@@ -5278,13 +5293,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: su2con07
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: tc-hvacr-2027
     title: TC-HVACR 2027
@@ -5308,13 +5323,13 @@ candidates:
     status: discovered
     discovered_at: '2026-09-06T22:09:32.143Z'
     first_seen_at: '2026-09-06T22:09:32.143Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: tc-hvacr-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: tisec-2027
     title: TISEC 2027
@@ -5373,13 +5388,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-19T20:44:41.199Z'
     first_seen_at: '2026-08-19T20:44:41.199Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: comsoc
         source_item_id: towards-intellicise-agent-communication-networks-autonomous-integration-and-evolution-of-humans-and-networks-ieee-network
         source_url: https://www.comsoc.org/publications/magazines/ieee-network/cfp
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: ''
   - key: ttra-conference-europe-tourism-2040
     title: 'TTRA Conference Europe: Tourism 2040'
@@ -5403,13 +5418,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2040
     evidence:
       - source: easychair
         source_item_id: ttra-conference-europe-tourism-2040
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: ubi-media-2027
     title: Ubi-Media 2027
@@ -5433,13 +5448,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: ubi-media-2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: wacci-2026
     title: WACCI 2026
@@ -5465,13 +5480,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: wacci-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: wcitdais-2026
     title: WCITDAIS-2026
@@ -5497,13 +5512,13 @@ candidates:
     status: discovered
     discovered_at: '2026-09-05T22:05:16.108Z'
     first_seen_at: '2026-09-05T22:05:16.108Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: wcitdais-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: wcnps2026
     title: WCNPS2026
@@ -5527,13 +5542,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: wcnps2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: websci-27
     title: WebSci'27
@@ -5569,7 +5584,8 @@ candidates:
     title: WISP2026
     full_name: Workshop on Information Security and Privacy 2026
     link: https://easychair.org/cfp/wisp2026
-    categories: []
+    categories:
+      - security
     tags:
       - niche
       - easychair
@@ -5587,13 +5603,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: wisp2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: wmt-2026
     title: WMT 2026
@@ -5619,13 +5635,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: wmt-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: wow-2026
     title: WoW 2026
@@ -5649,13 +5665,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-21T20:40:09.565Z'
     first_seen_at: '2026-08-21T20:40:09.565Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: wow-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: wr-27
     title: WR 27
@@ -5679,13 +5695,13 @@ candidates:
     status: discovered
     discovered_at: '2026-09-05T22:05:16.108Z'
     first_seen_at: '2026-09-05T22:05:16.108Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: wr-27
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: wsis-2026
     title: WSIS 2026
@@ -5711,13 +5727,13 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: wsis-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: xiii-eiit-ufpso-2026
     title: XIII EIIT UFPSO 2026
@@ -5741,13 +5757,13 @@ candidates:
     status: discovered
     discovered_at: '2026-08-21T20:40:09.565Z'
     first_seen_at: '2026-08-21T20:40:09.565Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2026
     evidence:
       - source: easychair
         source_item_id: xiii-eiit-ufpso-2026
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
   - key: xrm2027
     title: XRM2027
@@ -5771,11 +5787,11 @@ candidates:
     status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
-    last_seen_at: '2026-10-04T12:42:32.218Z'
+    last_seen_at: '2026-10-04T23:19:49.754Z'
     target_year: 2027
     evidence:
       - source: easychair
         source_item_id: xrm2027
         source_url: https://easychair.org/cfp/
-        observed_at: '2026-10-04T12:42:32.218Z'
+        observed_at: '2026-10-04T23:19:49.754Z'
     evidence_url: https://easychair.org/cfp/
