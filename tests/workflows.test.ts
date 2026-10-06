@@ -160,6 +160,10 @@ describe("workflow separation", () => {
       "workflow_run.head_sha",
     );
     expect(String(step(build!, "Build merged site").run)).toContain("--offline");
+    expect(step(build!, "Upload Pages artifact").with).toEqual({
+      path: "public",
+      "include-hidden-files": true,
+    });
     expect(String(step(gate!, "Check trigger is current main").run)).toContain("TRIGGER_SHA");
     expect(String(build?.if)).toContain("needs.gate.outputs.current == 'true'");
     expect(String(step(build!, "Restore immutable recommendation bundle").run)).toContain(
