@@ -3158,6 +3158,17 @@ it("表の列見出しと件数欄が支援技術に伝わる（SPEC §7）", ()
   // 月見出しは列グループの見出し（列見出しと同じ規則になっていること）。
   const runtime = siteRuntime();
   expect(runtime).toContain('th.scope = "colgroup"');
+  /* 推薦モードの件數は**見える欄**に出す（第 692 回）。`#count` は畳んだ `<details>`
+   * （絞り込みの内訳）の中なので、論文を入れても候補の數・分野自動判定・意味検索の狀態が
+   * 讀めなかつた（2026-10-06 實測: 候補 161 件が何れも畳まれた中に在つた）。 */
+  expect(runtime, "推薦モードで件數欄を隠して居る").not.toContain(
+    '$("resultSummary").hidden = recMode',
+  );
+  expect(runtime, "推薦モードの件數を resultSummary に出して居ない").toMatch(
+    /\$\("resultSummary"\)\.textContent = recMode/,
+  );
+  /* 畳んだ中身にも同じ文を殘す（內訳を開いた人に同じ事を言ふ）。 */
+  expect(runtime).toContain('$("count").textContent = cnt;');
 });
 
 it("絞り込みの各欄に名前があり、支援技術から消していない（SPEC §7）", () => {

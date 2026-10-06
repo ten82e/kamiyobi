@@ -9342,11 +9342,9 @@ const Recommender = (() => {
     }
     folded = folded.replace(DIACRITIC_FOLD_CHARS, (ch) => DIACRITIC_FOLD_JA[ch] || ch);
     folded = folded.replace(KANJI_VARIANT_FOLD_CHARS, (ch) => KANJI_VARIANT_FOLD_JA[ch] || ch);
-    /* 長音の打ち違は寄せる（第 639 回 – 實測は SPEC.md 同條）。品書 3,250 行で「データベース」の
-     * 長音を一文字變へるだけ – 本物の ー と `〜`（NFKC で ー になる）は 447 行、その他の九字
-     * （－ − ‐ ‑ – — - ～）はいずれも 0 行だつた。英字IMEやスマホで長音の代はりに打たれる字
-     * なので、片假名・長音の後に続くそれを ー に寄せる（語の中も語末も）。拉丁と数字の次は
-     * 寄せん – `HPC-Grid` `2024-2026` `C++` は區切りの本物。搜の語と品書に同じ目を通す。*/
+    /* 長音の打ち違は寄せる（第 639 回 – 實測は SPEC.md 同條）。英字 IME やスマホで長音の代はりに
+     * 打たれる字を ー に寄せる（語の中も語末も）。拉丁と數字の次は寄せん – `HPC-Grid`
+     * `2024-2026` `C++` は區切りの本物。搜の語と品書に同じ目を通す。*/
     folded = folded.replace(KATAKANA_HYPHEN_CHARS, "ー");
     return folded.toLowerCase().replace(/\s+/g, " ").trim();
   }
@@ -15559,8 +15557,9 @@ const Recommender = (() => {
     "index structure mismatch": "推薦データの形が一致しません",
     "index build_id mismatch": "推薦データの版が一致しません（再読み込みで直ることがあります）",
     "index content_id mismatch": "推薦データの内容が一致しません（再読み込みで直ることがあります）",
-    "semantic_status lexical-only":
-      "この推薦データでは意味検索を使えません（言葉の一致だけで探します）",
+    /* 件数の欄に出す文は「意味検索は利用不可（語彙検索のみ・原因: …）」なので、此の理由は
+     * **原因だけ**を書く（同じ事を二度言はない – 第 692 回に此の欄が見えるやうに成つた）。 */
+    "semantic_status lexical-only": "この推薦データは意味検索に対応していません",
     "embeddings mismatch": "意味検索のデータが一致しません",
   };
 

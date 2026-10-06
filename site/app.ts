@@ -5191,8 +5191,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         clearable: filtersClearable(zeroFilter),
         pastShown: state.past,
       });
-    $("resultSummary").hidden = recMode;
-    $("resultSummary").textContent = `締切の検索結果 ${countJa(shown.length)} 件`;
+    /* 件数欄は**見える欄**に出す。推薦モードの文言（`あなたの論文に合う投稿先 N 件`・
+     * 分野自動判定・意味検索の状態）は `#count` に置いていたが、`#count` は畳んだ
+     * `<details>`（絞り込みの内訳）の中なので、**論文を入れても候補の数が読めなかった**
+     * （2026-10-06 実測 – 候補 161 件・分野自動判定: システム・意味検索は利用不可、の三つが
+     * 何れも畳まれた中に在った）。締切モードは今まで通り「締切の検索結果 N 件」を出し、
+     * 詳しい内訳は `#count` に残す。 */
+    $("resultSummary").hidden = false;
+    $("resultSummary").textContent = recMode ? cnt : `締切の検索結果 ${countJa(shown.length)} 件`;
     $("resultNotes").toggleAttribute("open", shown.length === 0 || Boolean(state.q.trim()));
     if (shown.length === 0) ($("dataScope") as HTMLDetailsElement).open = true;
     $("count").textContent = cnt;
