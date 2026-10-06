@@ -948,6 +948,16 @@ footer a:hover { text-decoration: underline; }
   tbody td,
   tbody th[scope="row"] { display: table-cell; }
   .tablewrap { overflow: visible; border: 0; }
+  /* 紙は A4 の本文幅（14mm の余白で 779px 相当）なのに、表の最小幅（880px）と「折らない」
+     印が効いて**表が 1,021px** に成り、**右の列（会期・開催地）が紙からはみ出して切れて
+     居た**（2026-10-06 實測 – 印刷の媒體で表 1,021px / 本文 779px）。紙では最小幅を外し、
+     字を小さくして頁の幅に收める（日付は折らない侭 – 折ると讀めなくなる）。 */
+  table { min-width: 0; }
+  th, td { font-size: 8pt; }
+  /* 折り返しを許すのは**副の行**（「元の日時 …」「時刻未確認」「会期」）だけにする – 主の
+     日付（「2026-10-05(月)」）まで折ると讀めなくなる（實測 – 全部折ると日時の列が 79px に
+     成つて日付が途中で切れた）。副の行を折ると、表は 779px に收まつた（實測）。 */
+  td .sub.nowrap { white-space: normal; }
   th, td {
     color: #111 !important;
     background: transparent !important;

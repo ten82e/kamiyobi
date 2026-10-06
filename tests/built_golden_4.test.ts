@@ -218,6 +218,23 @@ it("印刷した紙が、紙に出る語を紙の説明だけで読ませる（S
   expect(printBlock, "印刷の取りまとめが見つからない").not.toBeNull();
   expect(printBlock![1], "印刷でてびきが消えない（紙の説明が二つになる）").toContain("#helpPanel");
 
+  /* 紙の幅に表を收める（第 701 回）。A4 の本文幅は 14mm の余白で 779px 相當なのに、
+     表の最小幅（880px）と「折らない」印が效いて**表が 1,021px** に成り、**右の列
+     （會期・開催地）が紙からはみ出して切れて居た**（2026-10-06 實測 – 印刷の媒體で
+     表 1,021px / 本文 779px。直した後は 779px = 頁の幅）。 */
+  for (const 規則 of [
+    "table { min-width: 0; }",
+    "th, td { font-size: 8pt; }",
+    "td .sub.nowrap { white-space: normal; }",
+  ]) {
+    expect(printBlock![1], `印刷で紙の幅に收める規則が無い: ${規則}`).toContain(規則);
+  }
+  /* 主の日付（`nowrap` だけの行）は折らない侭にする – 折ると日付が途中で切れる
+     （實測 – 全部折ると日時の列が 79px に成つた）。 */
+  expect(printBlock![1], "主の日付まで折つて居る").not.toContain(
+    "td .nowrap { white-space: normal; }",
+  );
+
   // (4) てびきが、紙の但し書きを画面の語で案内している（語を検査に写さない）。
   const prefix = out.legend.slice(0, out.legend.indexOf(": "));
   const dtAt = html.indexOf("<dt>印刷</dt>");
