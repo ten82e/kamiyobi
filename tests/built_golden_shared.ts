@@ -127,6 +127,10 @@ export const SEARCH_CANON = (() => {
      * 定義順（TDZ）を崩さん様に直後へ置く（書かなければ `寄せ表の和名の鍵cache is not defined`
      * で抜き出し評価が静かに 1 行落とす – 第 675 回の `latinFoldedHit` と同じ穴）。*/
     ["寄せ表の和名の鍵cache", /let 寄せ表の和名の鍵cache[^\n]*;/],
+    /* 催し物の開き方を指す機能語（`開催` `実施`）の一覽（第 705 回）。`withoutFunctionGroups` が
+     * 讀むので、拔き出した関数と一緒に注入する（一覽を知らない抽出檢査が
+     * `FUNCTION_WORDS_JA is not defined` で落ちる – 第 257 回と同じ穴。實際に十四本落ちた）。 */
+    ["FUNCTION_WORDS_JA", /const FUNCTION_WORDS_JA = \[[^\]]*\];/],
     ["TOPIC_ABBREVIATIONS_EN", /const TOPIC_ABBREVIATIONS_EN[\s\S]*?\];/],
     /* 時刻に繋がれたタイムゾーンの語（第 412 回）。`queryTokenGroups` の内側から読むので、
      * 抜き出す関数と一緒に注入しないと `new Function` の中で未定義になる。 */
@@ -426,6 +430,10 @@ export const SEARCH_CANON = (() => {
       // `searchMatcher` は述語の組み立てを `searchGroups` に移したので、注入も一緒にする
       // （共有部品を 1 本足すたびに、ハーネスはそれを知らないまま古い形を組む – 第 257 回と同じ穴）。
       "searchGroups",
+      // 機能語（`開催` `実施`）を他の語があるときにのぞく目（第 705 回）は `searchGroups` が
+      // 呼ぶので、注入も一緒にする（此処へ足さないと `withoutFunctionGroups is not defined`
+      // で eval が落ちる – 第 257 回と同じ穴。實際に十四本落ちた）。
+      "withoutFunctionGroups",
       "searchMatcher",
       "hayMatches",
     ].map((name) => jsFunction(rec, name)),

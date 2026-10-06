@@ -14900,9 +14900,25 @@ const Recommender = (() => {
   /* 検索語から述語（語の組）を作る。`searchMatcher` と、同じ表に複数の語を掛ける
    * 数え上げ（`shorterHitWordsJa`）で**同じ述語の作り方を共有する**（第 257 回 –
    * 述語の組み立てを 2 か所に持つと必ず片方が古くなる）。 */
+  /* 催し物の開き方を指す**機能語**（`開催` `実施`）。單體では行を持つ（`開催` は 152 行 –
+   * 「國內開催」の樣な行）ので全行の語には出來ないが、他の語と並んだ時は絞り込みに使へない
+   * （2026-10-06 實測 – `海外で開催` **0 行** / 同じ意味の `海外開催` 3,953 行・`東京で開催`
+   * **0 行** / `東京開催` 41 行・`パリで開催` **0 行** / `パリ開催` 17 行）。**他の語が在る時だけ
+   * のぞく**（第 705 回）– 打つ人は「何處で開かれるか」を聞いて居るので、開き方を要求して
+   * 0 行に落とさない（全行の語をのぞく第 245 回と同じ筋）。 */
+  const FUNCTION_WORDS_JA = ["開催", "実施"];
+  function withoutFunctionGroups(groups: string[][]): string[][] {
+    if (groups.length < 2) return groups;
+    const 語々 = FUNCTION_WORDS_JA.map((word) => kanaFold(word));
+    const kept = groups.filter(
+      (group) => !group.every((term) => 語々.indexOf(kanaFold(term)) >= 0),
+    );
+    return kept.length ? kept : groups;
+  }
+
   function searchGroups(query: unknown, nowMs?: number): string[][] {
-    return withoutWholeTableGroups(queryTokenGroups(query, nowMs)).map((group) =>
-      group.map((term) => kanaFold(term)),
+    return withoutFunctionGroups(withoutWholeTableGroups(queryTokenGroups(query, nowMs))).map(
+      (group) => group.map((term) => kanaFold(term)),
     );
   }
 
