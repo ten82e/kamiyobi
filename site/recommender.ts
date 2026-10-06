@@ -2618,6 +2618,12 @@ const Recommender = (() => {
     "情報系",
     "計算機科学",
     "コンピュータサイエンス",
+    /* 片假名の形（第 711 回 – 實測 2026-10-06: `シメキリ` `カイギ` `タイカイ` は 0 行で案内も
+     * 無しだつた。ひらがなの形（`しめきり` `かいぎ` `たいかい`）は既に此の表に在るので、
+     * 同じ語の字の形を揃へる – IME の取り違へで片假名に成る事が在る）。*/
+    "シメキリ",
+    "カイギ",
+    "タイカイ",
   ];
 
   /**
@@ -2640,11 +2646,16 @@ const Recommender = (() => {
       "見せて",
       "見せてください",
     ];
-    const q = String(query == null ? "" : query)
+    /* 半角片假名は全角に折つてから見る（第 711 回 – 實測: `ｼﾒｷﾘ` は 0 行・案内も無しだつた
+     * が、同じ語の `シメキリ`（全角）は此の表が受ける。IME の取り違へで半角に成る事が在る。
+     * 折りは此處で行ふ – 外の函數を呼ぶと、此の函數だけを取り出して動かす檢査が落ちる
+     * （第 341 回の決まり）。*/
+    const 折る = (値: string) => (typeof 値.normalize === "function" ? 値.normalize("NFKC") : 値);
+    const q = 折る(String(query == null ? "" : query))
       .trim()
       .toLowerCase();
     if (!q) return "";
-    const hit = WHOLE_TABLE_QUERY_JA.find((word) => word.toLowerCase() === q);
+    const hit = WHOLE_TABLE_QUERY_JA.find((word) => 折る(word).toLowerCase() === q);
     if (hit) return hit;
     /* 全行の語に頼みを継いだ打ち方（第 631 回）。（實測）で
      * `すべて表示` `全部出してください` `全件見たい` `全て表示して` はいずれも 0 件で
@@ -4335,6 +4346,23 @@ const Recommender = (() => {
          * 行き止まりだつた）。「課題と展望」の樣に論文の節の名としても使ふ語なので、
          * 中身の言葉の群が其のまま答へになる。*/
         "課題",
+        /* 英語で打つ人（第 711 回 – 實測 2026-10-06: 此の十三語は 0 行・案内も無しだつた。
+         * 同じ語の片假名の形（`サーベイ` `データセット` 等）は此の群が既に受けるので、
+         * 英語の綴りも揃へる）。`method` `experiment` `evaluation` `contribution` `discussion`
+         * は行が出るので載せない（第 337 回の門）。*/
+        "survey",
+        "dataset",
+        "conclusion",
+        "introduction",
+        "related work",
+        "prior work",
+        "future work",
+        "background",
+        "motivation",
+        "figure",
+        "table",
+        "reference",
+        "citation",
       ],
       echo: true,
       note: "は論文の中身の言葉で、この表が持つ欄の名前ではありません。この表が並べているのは催し物の名前・締切の日・分野・種別・開催地・参加形式・等級です。論文の題名や要旨を貼って投稿先の候補を出す機能は画面上部の『投稿先を探す』にあります（分野や主題の語でも引けます）。",

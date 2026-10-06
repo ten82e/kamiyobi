@@ -73,6 +73,21 @@ const 載せた語 = [
   /* 最後に残っていた一つ（第 710 回 – 自然語の見本 239 語を総当たりして、この語だけが
    * 行き止まりだった）。「課題と展望」のように論文の節の名としても使う語。 */
   "課題",
+  /* 英語で打つ人（第 711 回 – 実測 2026-10-06: 此の十三語は 0 行・案内も無しだった。
+   * 同じ語の片仮名の形は此の群が既に受けるので、英語の綴りも揃へる）。 */
+  "survey",
+  "dataset",
+  "conclusion",
+  "introduction",
+  "related work",
+  "prior work",
+  "future work",
+  "background",
+  "motivation",
+  "figure",
+  "table",
+  "reference",
+  "citation",
 ];
 
 describe("論文の中身の言葉（第 696 回）", () => {
