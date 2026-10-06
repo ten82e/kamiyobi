@@ -161,6 +161,24 @@ describe("静的な一覧の入口情報（第 286 回）", () => {
     expect(up, "アイコンへのリンクが成果物に無い").toContain('href="icon.svg"');
   });
 
+  it("利用者に出る文に、日本語で無い語（支那語）を混ぜない", () => {
+    /* `upcoming.md` / `upcoming.html` の末尾が「静的な**快照**です」と書いて居た
+     *（2026-10-06 實測）。`快照` は支那語で、日本語では「写し」「スナップショット」 –
+     * 讀む人は其處で止まる。`llms.txt` の `place-aliases.js` の説明にも `檔案`（同じく支那語）が
+     * 在つた。利用者に出る文からは此の二語を除く（内部の註は別 – 此の檢べは生成物だけを見る）。*/
+    for (const [名, 文] of [
+      ["upcoming.md", readFileSync(join(site, "upcoming.md"), "utf8")],
+      ["upcoming.html", readFileSync(join(site, "upcoming.html"), "utf8")],
+      ["llms.txt", readFileSync(join(site, "llms.txt"), "utf8")],
+    ] as Array<[string, string]>) {
+      for (const 語 of ["快照", "檔案"]) {
+        expect(文, `${名} に日本語で無い語が殘つて居る: ${語}`).not.toContain(語);
+      }
+    }
+    /* 直した文が實際に在る事（空振り防止）。 */
+    expect(readFileSync(join(site, "upcoming.md"), "utf8")).toContain("静的な写し");
+  });
+
   it("同じ場所への行き先もリンクにする（生のマークダウンを頁に出さない）", () => {
     /* 絕對 URL だけをリンクに直して居た爲、`[絞り込みの効く一覧（\`index.html\`）](index.html)`
      * と `[締切の一覧に戻る](index.html)` の二つが**生のマークダウンの侭** upcoming.html の

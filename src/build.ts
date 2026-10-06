@@ -379,7 +379,7 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
     "画面の `app.js` が呼ぶ。",
   "place-aliases.js":
     "國名・都市名の日本語の打ち方を、この表の表記へ寄せる表（`recommender.js` が import する）。" +
-    "条目の增減はこの檔案でやる – 收錄データの側は變へて居らん。",
+    "条目の増減はこのファイルでやる – 収録データの側は変えていません。",
   "topic-aliases.js":
     "site/topic-aliases.ts から生成する、主題の日本語の打ち方を會議名の英字檢索語へ寄せる表" +
     "（`recommender.js` が import する）。",
@@ -3637,7 +3637,7 @@ function pageDescription(heading: string, columns: string[]): string {
  * 応答として出すので、ここに口を置いておく。相対リンクにすると、サイトの直下
  * （`https://<domain>/deadlines.ics` のように場所の prefix を落とした打ち方）で開いたときに
  * 別々のおかしい場所に飛ぶ – **サイトの絶対 URL で書く**（`site.base_url` が正本）。
- * 日付は載せない – 快照を何時までも見せる物なので、古い日付を置いて嘘を言わないため。 */
+ * 日付は載せない – 其の時点の写しを何時までも見せる物なので、古い日付を置いて嘘を言わないため。 */
 export function toNotFoundHtml(styleBlock = "", baseUrl = ""): string {
   const base = baseUrl.replace(/\/+$/, "");
   const link = (file: string): string => (base ? `${base}/${file}` : file);
@@ -4046,7 +4046,7 @@ export function toUpcomingMd(
   const tail = [
     "",
     `[${UPCOMING_BACK_TEXT_JA}](index.html) ―― 日本時間への換算・残り日数・絞り込みはそちら。` +
-      ` この表は生成時刻の時点で直近 ${String(safeDays)} 日を並べた静的な快照です。`,
+      ` この表は生成時刻の時点の静的な写しで、直近 ${String(safeDays)} 日を並べています。`,
   ];
   return `${[...head, ...rows, ...tail].join("\n")}\n`;
 }
