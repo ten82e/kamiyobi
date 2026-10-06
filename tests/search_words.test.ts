@@ -256,9 +256,12 @@ it("「セキュリティの会議」のように助詞で繋いだ検索語が�
     ).toContain("検索では絞り込めません");
   }
   const note = Recommender.querySynonymNotes("セキュリティの会議").join("");
+  /* 此の一文は長らく「…語なので絞り込みに使い、他の語（…）で探して居ます」と、**打ち消しの
+   * 拔けた矛盾した文**だつた（第 709 回に直した）。使はない事を書いて居るかを見る。 */
   expect(note, "どう探したかを出していない").toContain(
-    "この表の全行にあてはまる語なので絞り込みに使い",
+    "この表の全行にあてはまる語なので絞り込みには使わず",
   );
+  expect(note, "打ち消しが拔けて居る").not.toContain("絞り込みに使い、");
   expect(note, "代わりに使った語を書いていない").toContain("「セキュリティ」");
   /* てびき: built の index.html に当てる。 */
   const html = readFileSync(join(builtSite(), "index.html"), "utf8");

@@ -7211,7 +7211,10 @@ const Recommender = (() => {
       const kept = tokens.filter((token) => whole.indexOf(kanaFold(token)) < 0);
       if (dropped.length && kept.length) {
         const note =
-          `「${打たれた表記Ja(query, dropped[0])}」はこの表の全行にあてはまる語なので絞り込みに使い、` +
+          /* 「絞り込みに使い、」と書いて居た（第 709 回に直した）– **打ち消しが拔けて居た**ので、
+           * 「全行にあてはまる語なので絞り込みに使い、他の語で探して居ます」と云ふ**矛盾した文**に
+           * 成つて居た（實測 – `セキュリティの会議` の件數欄）。意圖は上の註の通り「使はない」。*/
+          `「${打たれた表記Ja(query, dropped[0])}」はこの表の全行にあてはまる語なので絞り込みには使わず、` +
           `他の語（${kept
             .slice(0, 2)
             .map((token) => `「${打たれた表記Ja(query, token)}」`)
