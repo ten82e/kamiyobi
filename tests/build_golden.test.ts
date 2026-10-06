@@ -2817,6 +2817,13 @@ it("site UI is readable for Japanese researchers: field names, JST header, help 
   expect(runtime).toContain('$("helpPanel").hidden = recommend');
   // 検索で分野名・国内が引けることを案内する。
   expect(template).toContain("会議名・分野・開催地で検索");
+  /* 開き方を指す語（`開催` `実施`）を他の語と一緒のときにのぞく事も、てびきに書く
+   *（第 708 回 – 畫面が默つてのぞくと、なぜ其の行が出たか分からない。全行の語
+   *（`会議` `大会`）の扱ひは既に此の項に書いて在るので、其の隣に並べる）。*/
+  expect(template, "てびきが開き方を指す語の扱ひを書いて居ない").toContain(
+    "開き方を指す <code>開催</code>・<code>実施</code> も同じで、他の語と一緒のときは絞り込みに使いません",
+  );
+  expect(template, "てびきが同じ行に出る例を書いて居ない").toContain("海外開催</code> と同じ行");
   // スマホではキーボード案内を出さず、タップで詳細が見られることだけ伝える。
   expect(template).toContain("「詳細・投稿日程」で概要登録・論文提出");
   expect(template).toMatch(/\.count-kbd \{ display: none; \}/);
