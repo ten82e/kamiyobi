@@ -2794,6 +2794,24 @@ it("health.md は日本語で書き、数値が health.json とずれていな�
       : "| 収録 snapshot で組んだか（`snapshot_fallback`） | いいえ |",
   );
   expect(md, "結論が先に書いていない（まとめ章がない）").toContain("## まとめ");
+  /* 未取得と失敗を書き分ける（第 703 回）。保存済みの値を使つただけのソース
+   *（`cache-fallback`）は失敗ではないのに、上の表が「不明（cache-fallback）」と言つて居る橫で
+   *「取れなかつたソース: なし」と書くと、**其の場で取つた**と讀み違へる。 */
+  expect(md, "未取得と失敗を書き分けて居ない").toContain("上流の取得に失敗したソース:");
+  expect(md, "「取れなかつた」の侭（未取得と混ざる）").not.toContain(
+    "上流をその場で取れなかったソース",
+  );
+  /* 分野の内訳に、畫面と同じ日本語の名を添へる（第 703 回 – キーだけでは讀めない）。 */
+  const dist = json.category_distribution as Record<string, number> | undefined;
+  expect(dist, "health.json に分野の内訳が無い").toBeTruthy();
+  expect(md, "分野の表に日本語の欄が無い").toContain("| 分野（キー） | 日本語 | 会議数 |");
+  for (const [key, count] of Object.entries(dist ?? {})) {
+    const label = String(Recommender.categoryLabelJa(key) ?? "").trim();
+    const 名 = label && label !== key ? label : "－";
+    expect(md, `分野 ${key} の行が health.json と合わない`).toContain(
+      `| ${key} | ${名} | ${String(count)} |`,
+    );
+  }
 });
 
 it("キーボード操作は効き、入力中は効かない（SPEC §7）", () => {

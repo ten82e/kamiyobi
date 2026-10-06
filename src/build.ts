@@ -2967,17 +2967,22 @@ export function healthMarkdown(report: HealthReport, omittedOutputs: string[] = 
       ([source, status]) => `| ${source} | ${sourceNote(status)}（\`${status}\`） |`,
     ),
     "",
-    `上流をその場で取れなかったソース: ${report.source_failures.length > 0 ? `${report.source_failures.join(", ")}（収録 snapshot の値で組んだ）` : "なし"}`,
+    /* 「取れなかつた」ではなく「取得に失敗した」と書く（第 703 回）。保存済みの値を使つた
+     * だけのソース（`cache-fallback`）は**失敗ではない**のに、上の表が「不明（cache-fallback）」と
+     * 言つて居る橫で「取れなかつたソース: なし」と書くと、**其の場で取つた**と讀み違へる
+     * （未取得と失敗は別の話 – 上のまとめが其の區別を書いて居る）。 */
+    `上流の取得に失敗したソース: ${report.source_failures.length > 0 ? `${report.source_failures.join(", ")}（収録 snapshot の値で組んだ）` : "なし"}`,
     "",
     "## 分野の内訳",
     "",
-    "> 分野は機械可読のキーで出す。日本語の名前は一覧のチップと行の詳細に出す（`data.json` の `categories` は英語名）。",
+    "> 分野は機械可読のキー（`data.json` の `categories` と同じ物）で出す。日本語の名前は画面のチップと行の詳細に出る物と同じ入口（`Recommender.categoryLabelJa`）から添へる（第 703 回）。",
     "",
-    "| 分野（キー） | 会議数 |",
-    "|---|---:|",
-    ...Object.entries(report.category_distribution).map(
-      ([category, count]) => `| ${category} | ${count} |`,
-    ),
+    "| 分野（キー） | 日本語 | 会議数 |",
+    "|---|---|---:|",
+    ...Object.entries(report.category_distribution).map(([category, count]) => {
+      const label = String(Recommender.categoryLabelJa(category) ?? "").trim();
+      return `| ${category} | ${label && label !== category ? label : "－"} | ${count} |`;
+    }),
     "",
     "## 解析上の注意",
     "",
