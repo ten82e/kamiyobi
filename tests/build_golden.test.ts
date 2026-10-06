@@ -2112,9 +2112,23 @@ it("the 残り vocabulary in the table is documented in the guide (SPEC §7)", (
     "本日終了",
     "日前に終了",
     "時刻未確認",
+    /* 日付だけの締切の二つの状態も、表の語と てびき の説明を両方で張る（第 692 回 –
+     * 此の二語は長らく表にだけ在って説明が無かった）。 */
+    "締切日（過ぎた可能性）",
+    "締切日経過",
   ]) {
     expect(guide, `てびきに ${word} の説明がない`).toContain(word);
   }
+  for (const word of ["締切日（過ぎた可能性）", "締切日経過"]) {
+    expect(runtime, `表の語が変わった: ${word}`).toContain(word);
+  }
+  /* 「残り」の欄は折らせない（第 692 回 – 表は `table-layout: auto` なので、長い日本語は
+   * 1 字ぶんまで縮められ、既定の並び順が示す欄が読めなくなる。2026-10-06 実測: 1280px の幅で
+   * 此の列 65px・2 字/行）。 */
+  const style = template.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? "";
+  expect(effectiveCss(style, "td.c-deadline", "white-space", 1280), "残り欄が折れる").toBe(
+    "nowrap",
+  );
   // 「過去の締切は既定で出さない」はEmpty 状態の案内と食い違うと誤解を招くので、同じ場所で説明する。
   expect(guide).toContain("過去の締切も表示");
 });

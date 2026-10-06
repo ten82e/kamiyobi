@@ -3949,7 +3949,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       ? dateState === "definitely-past"
         ? { text: "締切日経過", cls: "past" }
         : dateState === "uncertain-on-date"
-          ? { text: "締切日です（終了済みの可能性あり）", cls: "today" }
+          ? /* 日付だけの締切がその日に入った時（時刻の幅が今を含む）。**短く書く** – この欄は
+             * 列の中で最も狭く、長い文は一字ずつ縦に折れて読めなくなる（2026-10-06 実測:
+             * 1280px の幅でこの列 65px・「締切日です（終了済みの可能性あり）」が 2 字/行）。
+             * `td.c-deadline` に `nowrap` を付けた上で、文言もこの長さに収める。 */
+            { text: "締切日（過ぎた可能性）", cls: "today" }
           : { text: "時刻未確認", cls: "" }
       : remain(r.tShown);
     // 常時受付ジャーナルは締切の概念がないため「本日終了」等の誤解を与えない表示にする
