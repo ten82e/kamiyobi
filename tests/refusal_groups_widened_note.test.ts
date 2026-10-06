@@ -125,7 +125,8 @@ describe("他のの拒否群も締切らしい語尾を受ける（第 506 回�
     const 物 = readFileSync(join(builtSite(), "recommender.js"), "utf8");
     /* 第 516 回で二つ增える（採否の数の群・当日の様子の群）。*/
     /* 第 516 回で二つ增えて 37、第 517 回で『催し物の名前＋締切の言い方』の群が增えて 38。*/
-    expect(物.split("deadlineTail: true").length - 1).toBe(41);
+    /* 第 685 回で募集・應募の群が增えて 42（`應募締切` `募集期限` `募集の締切` を同じ群で受ける）。*/
+    expect(物.split("deadlineTail: true").length - 1).toBe(42);
     /* 第 648 回で日をまたぐ重なりを數へる羣（祝日級の次に置いた）を增やしたので 14 → 15。*/
     /* 第 649 回で分野の一覽の羣（語尾を問わん印を開いた）を增やしたので 15 → 16。*/
     expect(物.split("anyTail: true").length - 1).toBe(16);
