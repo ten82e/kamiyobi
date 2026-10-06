@@ -3690,7 +3690,14 @@ export function toNotFoundHtml(styleBlock = "", baseUrl = ""): string {
 export function toUpcomingHtml(markdown: string, styleBlock = "", baseUrl = ""): string {
   const inlineMd = (value: string): string =>
     escapeHtmlText(value)
-      .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, (_all, text: string, url: string) => {
+      /* 行き先は絶対 URL だけでなく**同じ場所の檔案**（`index.html`）も受ける。絕對 URL だけを
+       * 見て居た爲、`[絞り込みの効く一覧（\`index.html\`）](index.html)` と
+       * `[${UPCOMING_BACK_TEXT_JA}](index.html)` の二つが**生のマークダウンの侭**頁に出て居た
+       * （2026-10-06 實測 – upcoming.html の冒頭と末尾。讀者は括弧と丸括弧の並びを讀まされ、
+       * 行き先も押せなかつた）。筋（`javascript:` の樣な物）は通さない – 相對と http(s) だけ。*/
+      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_all, text: string, url: string) => {
+        const 筋付き = /^[A-Za-z][A-Za-z0-9+.-]*:/.test(url);
+        if (筋付き && !/^https?:\/\//.test(url)) return _all;
         // URL は `escapeMdUrl` でパーセント形式（`&` を含まない）にしているが、
         // 属性の引用符は念のため守る。
         return `<a href="${url.replace(/"/g, "%22")}" rel="noopener">${text}</a>`;

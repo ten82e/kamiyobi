@@ -161,6 +161,28 @@ describe("静的な一覧の入口情報（第 286 回）", () => {
     expect(up, "アイコンへのリンクが成果物に無い").toContain('href="icon.svg"');
   });
 
+  it("同じ場所への行き先もリンクにする（生のマークダウンを頁に出さない）", () => {
+    /* 絕對 URL だけをリンクに直して居た爲、`[絞り込みの効く一覧（\`index.html\`）](index.html)`
+     * と `[締切の一覧に戻る](index.html)` の二つが**生のマークダウンの侭** upcoming.html の
+     * 冒頭と末尾に出て居た（2026-10-06 實測 – 讀者は括弧の並びを讀まされ、行き先も押せなかつた）。*/
+    const markdown =
+      "# 直近 180 日の締切と開催\n\n> 同じ式を出す [絞り込みの効く一覧（`index.html`）](index.html) が早い。\n\n| 日付 |\n| --- |\n| 2026-09-01 |\n";
+    const html = toUpcomingHtml(markdown, "<style>body{}</style>");
+    expect(html, "相對の行き先がリンクになって居ない").toContain('<a href="index.html"');
+    expect(html, "生のマークダウンが殘つて居る").not.toContain("](index.html)");
+    /* 危險な筋（`javascript:`）は素の侭にする（リンクにしない）。 */
+    const bad = toUpcomingHtml("> [押す](javascript:alert(1)) と出る", "<style>body{}</style>");
+    expect(bad, "javascript: をリンクにした").not.toContain('href="javascript:');
+    /* 絕對 URL は今まで通りリンクにする（此の回で緩めた門が效き過ぎて居ない事）。 */
+    const absolute = toUpcomingHtml(
+      "> [公式](https://example.test/a) を見る",
+      "<style>body{}</style>",
+    );
+    expect(absolute, "絕對 URL がリンクになつて居ない").toContain(
+      '<a href="https://example.test/a" rel="noopener">公式</a>',
+    );
+  });
+
   it("所在を渡さない組み立てでも、ページは壊れない（呼び出しの既定）", () => {
     /* `toUpcomingHtml` は所在（base_url）を渡さない呼び出し方も許す。そのときは
      * 「自分の場所」を書かないだけで、表と説明はそのまま出る（ビルドの組み立てが変わっても
