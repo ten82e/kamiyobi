@@ -408,9 +408,13 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
     return `「${word}」は ${件數} 行に當たります（${名}・案内は出ません）。search_deadlines で其の儘引けます。`;
   }
   const 案内 = guidance(word, 0);
+  /* 打ち直しの見當も渡す（第 763 回 – `search_deadlines` と同じ扱ひに揃へる。語を調べる人が
+   * 「では何と打てばよいか」まで一往復で分かる樣に）。件數は照合そのもので數へる（第 762 回）。 */
+  const 手 = retypeTips(word, 畫面の既定(list, now, {}), now);
   return [
     `「${word}」は 0 行です。畫面が此の時に出す案内:`,
     ...(案内.length ? 案内.map((n) => `- ${n}`) : ["- （案内は無し＝表の語では無い語）"]),
+    ...手.map((t) => `- 打ち直すなら ${t}`),
   ].join("\n");
 }
 

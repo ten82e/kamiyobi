@@ -332,3 +332,18 @@ it("0 件の時に、畫面と同じ「打ち直すなら」を渡す（第 762 
   const 出た = Number(/に當たる締切: ([\d,]+) 件/.exec(次)?.[1]?.replace(/,/g, "") ?? -1);
   expect(出た, `提案の件數と結果が違ふ: ${word}`).toBe(件數);
 });
+
+it("explain_word でも、同じ「打ち直すなら」を渡す（第 763 回）", async () => {
+  /* 語を調べる人が「では何と打てばよいか」まで一往復で分かるように、search_deadlines と同じ
+   * 扱いに揃える。件數は照合そのもので數へるので、其の語で引いた結果と一致する（第 762 回）。 */
+  const text = await call("explain_word", { word: "参加費が高い", scope: "all" });
+  expect(text, "0 行である事を言つて居ん").toContain("0 行");
+  expect(text, "打ち直す手を渡して居ん").toContain("打ち直すなら");
+  const word = /検索語を「([^」]+)」/.exec(text)?.[1] ?? "";
+  expect(word, "提案の語が讀めない").not.toBe("");
+  const 次 = await call("search_deadlines", { query: word, scope: "all", limit: 1 });
+  expect(次, `提案が空振り: ${word}`).toMatch(/に當たる締切: [1-9]\d* 件/);
+  /* 行が出る語には付けない。 */
+  const 有 = await call("explain_word", { word: "ポスター", scope: "all" });
+  expect(有, "行が出る語に提案を付けた").not.toContain("打ち直すなら");
+});
