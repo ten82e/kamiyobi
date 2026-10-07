@@ -41,6 +41,8 @@ function 註を外す(本文: string): string {
     .replace(/^(\s*)\/\/.*$/gm, "$1");
 }
 
+let 鍵らしき件數 = 0;
+
 function 見る(path: string): number {
   const 本文 = readFileSync(path, "utf8");
   const 註抜き = 註を外す(本文);
@@ -67,8 +69,16 @@ function 見る(path: string): number {
         continue;
       }
       if (!/^(?:const|let|var|function|class|interface|type)\b/.test(行)) {
-        console.log(`${path}:${行番号}: 旧字体「${字}」 | ${行.slice(0, 90)}`);
+        /* 其の字が**照合用の鍵**の中か、**文**の中かを見分ける目安を添へる（第 773 回）。鍵は
+         * 意図的に旧字体で置いてある（旧字体で打つ人の爲）ので、掃除してはならん – 一括置換を
+         * 試して檢查七本が落ちた（第 772 回）。目安は「行が裸の並びの要素か」「表の印の近くか」。*/
+        const 鍵らしい =
+          /^\s*["'`][^"'`]*["'`],?\s*$/.test(行) || /words:|\[\s*$|寄せ|\bretype\b/.test(行);
+        console.log(
+          `${path}:${行番号}: 旧字体「${字}」${鍵らしい ? "（鍵らしい）" : "（文らしい）"} | ${行.slice(0, 80)}`,
+        );
         件數 += 1;
+        if (鍵らしい) 鍵らしき件數 += 1;
       }
       at = 註抜き.indexOf(字, at + 1);
       continue;
@@ -89,4 +99,7 @@ for (const path of ファイル) {
     console.log(`${path}: 讀めない（${String(error).slice(0, 60)}）`);
   }
 }
-console.log(`\n候補 ${合計} 件。註・識別子の物は其の侭でよい（人が見て決める）。`);
+console.log(
+  `\n候補 ${合計} 件（うち鍵らしい物 ${鍵らしき件數} 件）。鍵は旧字体で打つ人の爲に意図的に置いて` +
+    `あるので觸らない（第 772 回）。註・識別子の物も其の侭でよい – 人が見て決める。`,
+);
