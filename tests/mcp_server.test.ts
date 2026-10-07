@@ -413,3 +413,20 @@ it("collection_stats が、收錄その物の數と檔案を返す（第 769 回
   const 數 = (收錄.conferences ?? []).length;
   expect(text, "会議の數が収録と合はん").toContain(`会議 ${數} 件`);
 });
+
+it("語を省いて、種別だけでも引ける（第 793 回）", async () => {
+  /* 實測 2026-10-06: 「登録締切を全部見たい」と云ふ聞き方に、語が空だと斷つて居た。種別を
+   * 指定して居れば語が無くても返す（人も AI も同じ聞き方をする）。 */
+  const text = await call("search_deadlines", {
+    query: "",
+    kind: "registration",
+    scope: "all",
+    limit: 2,
+  });
+  expect(text, "語が無いと斷つて居る").toContain("語を指定せず、種別だけ");
+  expect(text, "件數を返して居ん").toMatch(/種別だけ: [1-9]\d* 件/);
+  /* 語も種別も無い時は、今まで通り斷る（何を見ればよいか分からん）。 */
+  const 空 = await call("search_deadlines", { query: "" });
+  expect(空, "種別も無いのに返した").toContain("検索語が空です");
+  expect(空, "代はりの聞き方を敎へて居ん").toContain("kind / kinds");
+});

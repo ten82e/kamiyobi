@@ -242,10 +242,18 @@ function searchDeadlines(
   now: number,
 ): string {
   const query = String(args.query ?? "").trim();
-  if (!query) return "検索語が空です。会議名・分野・開催地・締切の語をください。";
+  /* 語が空でも**種別を指定して居れば**引ける（第 793 回 – 實測 2026-10-06: 「登録締切を全部見たい」
+   * と云ふ聞き方に答へられなかつた。人は「語」で引く物だと思ひ込んで居たが、種別だけの一覽も要る）。
+   * 語が空で種別も無い時だけ斷る。 */
+  const 種別だけ = !query && (args.kind !== undefined || args.kinds !== undefined);
+  if (!query && !種別だけ)
+    return "検索語が空です。会議名・分野・開催地・締切の語をください（種別だけを見るなら kind / kinds を添へてください）。";
   const limit = Math.min(Math.max(Number(args.limit) || 20, 1), 100);
   const { list, 名 } = pick(args.scope);
-  const 照合 = Recommender.searchMatcher(Recommender.expandRelativeMonths(query, now), now);
+  /* 語が空（種別だけの時）は**全部に當たる**目にする（第 793 回）。 */
+  const 照合 = 種別だけ
+    ? () => true
+    : Recommender.searchMatcher(Recommender.expandRelativeMonths(query, now), now);
   const 素の = list.filter((r) => 照合(r.hay) === true);
   const hit = sortRows(畫面の既定(素の, now, args));
   const 知って居る種別 = [
@@ -272,7 +280,7 @@ function searchDeadlines(
     /(?:\d+月|\d+日|今月|来月|先月|今週|来週|先週|今年|来年|年内|年度|以内|までに|以降)/.test(
       query,
     );
-  const 頭 = `検索語「${query}」に當たる締切: ${hit.length} 件（${名} ${list.length} 行・畫面の既定と同じ絞り込み。絞る前は ${素の.length} 行）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に當たる（畫面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}`;
+  const 頭 = `${種別だけ ? "語を指定せず、種別だけ" : `検索語「${query}」に當たる締切`}: ${hit.length} 件（${名} ${list.length} 行・畫面の既定と同じ絞り込み。絞る前は ${素の.length} 行）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に當たる（畫面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}`;
   if (!hit.length) {
     /* 畫面と同じ約束 – 案内は「素の當たりが 0」の時に出る物なので、絞り込みで 0 に成つた時は
      * 其の旨を書く（絞り込みを外せば出る事がある）。 */
@@ -459,7 +467,7 @@ const TOOLS = [
   {
     name: "search_deadlines",
     description:
-      "kamiyobi の収録（国際会議・国內研究会の締切と会期）を日本語で引く。会議名・分野・開催地・締切の語・相対日付（『今月』『30日以内』『來週』など）が使へる。**0 件の時は、畫面と同じ案内（其の語が表に無い事）と、同じ「打ち直すなら」の次の一手を返す** – 其の一手の件數は、實際に引いた時に出る行數と一致する（その侭打ち直せる）。",
+      "**語を省いて `kind` / `kinds` だけでも引ける**（「登録締切を全部」の樣な聞き方）。kamiyobi の収録（国際会議・国内研究会の締切と会期）を日本語で引く。会議名・分野・開催地・締切の語・相対日付（『今月』『30日以内』『來週』など）が使へる。**0 件の時は、畫面と同じ案内（其の語が表に無い事）と、同じ「打ち直すなら」の次の一手を返す** – 其の一手の件數は、實際に引いた時に出る行數と一致する（その侭打ち直せる）。",
     inputSchema: {
       type: "object",
       properties: {
