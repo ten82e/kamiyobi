@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
 import Recommender from "../site/recommender.ts";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-/* 畫面が最初に讀む窓（180 日）と、收錄の全體。**數字を畫面と一致させる**のが肝なので、
+/* 畫面が最初に読む窓（180 日）と、收錄の全體。**數字を畫面と一致させる**のが肝なので、
  * 先づ畫面と同じ窓（`public/catalog.json`）を見る。無ければ（まだ建てて居ない・配付物を
  * 持たない手元）収録の全体（`data/snapshot.json`）へ落ちて、其の旨を言ふ。 */
 const CATALOG_PATH = join(ROOT, "public", "catalog.json");
@@ -65,7 +65,7 @@ function 讀む(path: string): Row[] {
   ) as unknown as Row[];
 }
 
-/** 畫面が最初に讀む窓（`public/catalog.json`）。無ければ null。 */
+/** 畫面が最初に読む窓（`public/catalog.json`）。無ければ null。 */
 function screenRows(): Row[] | null {
   if (screenCache) return screenCache;
   try {
@@ -86,7 +86,7 @@ function allRows(): Row[] {
 function pick(scope: unknown): { list: Row[]; 名: string } {
   if (String(scope ?? "") === "all") return { list: allRows(), 名: "収録の全体" };
   const 窓 = screenRows();
-  return 窓 ? { list: 窓, 名: "畫面が最初に讀む窓" } : { list: allRows(), 名: "収録の全体" };
+  return 窓 ? { list: 窓, 名: "畫面が最初に読む窓" } : { list: allRows(), 名: "収録の全体" };
 }
 
 const JST = new Intl.DateTimeFormat("ja-JP", {
