@@ -3792,7 +3792,9 @@ export function toUpcomingHtml(markdown: string, styleBlock = "", baseUrl = ""):
      * blockquote が並んでいた）。ブラウザは表に置けない要素を表の外へ押し出すので、
      * 画面の見えとマークアップがズレ、支援技術には表の見出しとして読まれない。 */
     out.push(
-      `<div class="tablewrap">\n<table class="upcoming">\n${parts.join("\n")}\n</table>\n</div>`,
+      /* 狹い畫面（電話）では冒頭の說明が 1 畫面近くを占めるので、表へ一 tapped で飛べる樣に
+       * 表へ id を付ける（第 725 回）。此の id は `toUpcomingHtml` の飛び先のリンクと對。*/
+      `<div class="tablewrap">\n<table class="upcoming" id="upcoming-table">\n${parts.join("\n")}\n</table>\n</div>`,
     );
     table = [];
   };
@@ -3858,6 +3860,10 @@ export function toUpcomingHtml(markdown: string, styleBlock = "", baseUrl = ""):
       '<a href="upcoming.md">upcoming.md</a>、全件は <a href="data.csv">data.csv</a> にあります。' +
       '締切を自分のカレンダーに入れるには <a href="deadlines.ics">deadlines.ics</a>（今後の締切が全て、' +
       "1 件 = 1 つの終日（JST の暦日）で、このページの絞り込みはありません）。</p>",
+    /* 狹い畫面（電話）では此の先の說明（列の意味・但し書き）が 1 畫面近くを占めるので、
+     * 表へ一 tapped で飛べる道を置く（第 725 回）。說明を讀みたい人は其の侭 scroll すればよい
+     * （說明は消さない – 列の意味は表を讀むのに要る）。*/
+    '<p class="skip-to-table"><a href="#upcoming-table">表へ（列の意味と但し書きを飛ばす）</a></p>',
     out.join("\n"),
     // 長い表の終端にも出口を置く（先頭まで戻れないまま画面を閉じないために）。
     '<p><a href="#top">' +

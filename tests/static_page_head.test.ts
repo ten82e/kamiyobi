@@ -179,6 +179,17 @@ describe("静的な一覧の入口情報（第 286 回）", () => {
     expect(readFileSync(join(site, "upcoming.md"), "utf8")).toContain("静的な写し");
   });
 
+  it("狭い画面のために、表へ飛ぶ道がある（第 725 回）", () => {
+    /* 電話では冒頭の説明（列の意味と但し書き）が 1 画面近くを占めるので、表へ一 tapped で
+     * 飛べる道を置いた。**飛び先が実際に在る事**まで見る（href だけ書いて id が無い、を防ぐ）。 */
+    const up = readFileSync(join(site, "upcoming.html"), "utf8");
+    expect(up, "表へ飛ぶ道が無い").toContain('class="skip-to-table"');
+    expect(up, "飛び先の名が違ふ").toContain('href="#upcoming-table"');
+    expect(up, "飛び先（表の id）が無い").toContain('id="upcoming-table"');
+    /* 説明は消して居ない（列の意味は表を讀むのに要る）。 */
+    expect(up, "説明を消した").toContain("列の意味");
+  });
+
   it("同じ場所への行き先もリンクにする（生のマークダウンを頁に出さない）", () => {
     /* 絕對 URL だけをリンクに直して居た爲、`[絞り込みの効く一覧（\`index.html\`）](index.html)`
      * と `[締切の一覧に戻る](index.html)` の二つが**生のマークダウンの侭** upcoming.html の
