@@ -1,4 +1,5 @@
 import { queryReferenceSnapshotPath } from "./query_reference.ts";
+import { siteRuntime } from "./runtime_extract.ts";
 /**
  * 欧文の語を一字違ひに打った人へ、收錄の綴りを打ち手として出す路（第 680 回）。
  *
@@ -144,7 +145,9 @@ describe("欧文の一字違ひに收錄の綴りを見當として出す（第 
   it("畫面の文が打ち手として件數を說ふ", () => {
     const 文 = "camera-redy";
     const out = String(畫面(袋(文, { shorterHits: 見当(文) })));
-    expect(out).toContain("検索語を「camera ready」に打ち替える（収録の全体で 147 件当たります）");
+    expect(out).toContain(
+      "検索語を「camera ready」に打ち替える（いまの絞り込みで 147 件当たります）",
+    );
     const 音 = String(聲(袋(文, { shorterHits: 見当(文) })));
     expect(音).toContain("camera ready");
     expect(音).toContain("147");
@@ -161,4 +164,15 @@ describe("欧文の一字違ひに收錄の綴りを見當として出す（第 
     // 説明も置いて居る（build.ts は説明表の型で強ひるが、寫らん內は通らん所以念）。
     expect(build).toContain("site/latin-retype.ts から生成する");
   });
+});
+
+it("打ち直しの件數は、打ち直した時に見える行で數へる（第 761 回）", () => {
+  /* 實測 2026-10-06: `デモができる会議` の提案「デモが」は素では 10 件だが、**畫面の既定の
+   * 絞り込みでは 0 件** – 提案に従ふと行き止まりに着いて居た（第 756・757 回）。0 件の時に
+   * **問ひを外した行**（今の絞り込みを通過する行）で數へる事を見る。
+   * 行の動きは此の檢查では追へない（DOM を持つ環境でしか動かん）ので、**配線**を張る。 */
+  const runtime = siteRuntime();
+  expect(runtime, "問ひを外した行で數へて居ない").toContain("shorterWordsForZero(searchQuery)");
+  expect(runtime, "短い語の見當を、渡された行で數へて居ない").toContain("基準の行 ?? ");
+  expect(runtime, "問ひを外した行を得て居ない").toContain('filter("")');
 });

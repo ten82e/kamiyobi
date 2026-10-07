@@ -2504,6 +2504,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return queryMatchCounts(殘).catalog;
   }
 
+  /* 問ひを外した時に見える行を渡して、打ち直しの見當を數へる（第 761 回）。 */
+  function shorterWordsForZero(
+    query: string,
+  ): Array<{ word: string; count: number; how: string; pair?: string }> {
+    const 元 = searchQuery;
+    const 基準の行 = filter("");
+    searchQuery = 元;
+    return shorterWordNotes(query, 基準の行);
+  }
+
   /* 假名だけの語を見分ける目（第 623 回 – `shorterWordNotes` の屑除けにだけ使う）。 */
   const HIRAGANA_ONLY_JA = /^[\u3041-\u309f]+$/;
 
@@ -2511,13 +2521,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 同じにする – 同じ表を 2 か所で違う範囲で数えると、案内だけが古くなる（第 215 回など）。 */
   function shorterWordNotes(
     query: string,
+    基準の行?: AppRow[],
   ): Array<{ word: string; count: number; how: string; pair?: string }> {
     const trimmed = query.trim();
     if (!trimmed) return [];
     const now = Date.now();
     const seen: Record<string, boolean> = {};
     const hays: string[] = [];
-    (rows as AppRow[])
+    /* 數へる集合は、呼び出し側が渡した行（打ち直した時に見える行）を優先する（第 761 回）。 */
+    ((基準の行 ?? (rows as AppRow[])) as AppRow[])
       .concat(Recommender.journalRows(activeData.conferences, now) as unknown as AppRow[])
       .forEach((row) => {
         const hay = String(row.hay);
@@ -2604,11 +2616,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return (Math.floor((now + 9 * 3600000) / DAY) - n) * DAY - 9 * 3600000;
   }
 
-  function filter(): AppRow[] {
+  function filter(問ひ?: string): AppRow[] {
     const now = Date.now();
     // `来月` などの相対月を検索語として受け付ける。展開式の一覧への反映は recommender が
     // 持つ（`来月` がどの月を指すかの判断を UI 側に二重化しない）。
     searchQuery = Recommender.expandRelativeMonths(state.q, now);
+    /* 引數を渡すと、其の語で引いた時の行を返す（第 761 回 – 「打ち直すなら」の件數を、打ち直した
+     * 時に實際に見える行で數へる爲）。上の行は檢查が文字で張つて居るので其の侭殘し、此處で
+     * 上書きする。*/
+    if (問ひ !== undefined) searchQuery = Recommender.expandRelativeMonths(問ひ, now);
     // 検索語の分解は 1 描画に 1 回で足りる。行ごとに `hayMatches` を呼ぶと、そのたびに
     // 語を分解し直す（3234 行で 1 打鍵あたり約 83 ms かかっていた）。
     const matchesQuery = Recommender.searchMatcher(searchQuery);
@@ -3616,15 +3632,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
        * 3 桁区切りにしている検査が「素の数字を出している」と見て落ちる – 第 256 回）。 */
       if (hit.how === "split") {
         altTips.push(
-          `検索語を「${word}」に分けて打つ（両方を書く行が収録の全体で ${countJa(hit.count)} 件）`,
+          `検索語を「${word}」に分けて打つ（両方を書く行がいまの絞り込みで ${countJa(hit.count)} 件）`,
         );
       } else if (hit.how === "alone" && word.indexOf(" ") < 0) {
         altTips.push(
-          `検索語を「${word}」だけに絞る（収録の全体で ${countJa(hit.count)} 件当たります）`,
+          `検索語を「${word}」だけに絞る（いまの絞り込みで ${countJa(hit.count)} 件当たります）`,
         );
       } else {
         altTips.push(
-          `検索語を「${word}」に打ち替える（収録の全体で ${countJa(hit.count)} 件当たります）`,
+          `検索語を「${word}」に打ち替える（いまの絞り込みで ${countJa(hit.count)} 件当たります）`,
         );
       }
     });
@@ -5185,7 +5201,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             termCounts: queryTermNotes(searchQuery),
             columnValueHits: columnValueHitsJa,
             splitCount: splitCountJa,
-            shorterHits: shorterWordNotes(searchQuery),
+            /* 提案の件數は、打ち直した時に實際に見える行で數へる（第 761 回）。素の全部で
+             * 數へると、提案の件數と、其の語で引いた結果が食ひ違ふ（第 756・757 回の實測）。 */
+            shorterHits: shorterWordsForZero(searchQuery),
             termRemainder: deadTermRemainderCount(searchQuery),
             // データその物が無い場合と、絞り込みで 0 件の場合を区別する材料。
             catalogConferences: DATA.conferences.length,
