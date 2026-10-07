@@ -258,6 +258,15 @@ it("印刷した紙が、紙に出る語を紙の説明だけで読ませる（S
   const dlEnd = html.indexOf("</details>", dl);
   const items = [...html.slice(dl, dlEnd).matchAll(/<dd>([\s\S]*?)<\/dd>/g)];
   expect(items.length, "てびきの項が読めない").toBeGreaterThan(10);
+  /* AI に渡す道（第 730 回）。てびきは人向けなので、機械向けの索引（llms.txt）と、
+   * 同じ検索核を使ふ MCP サーバの在り處を書く。**外へ送る物が無い事**も書く。 */
+  const aiAt = html.indexOf("<dt>AI に聞く</dt>");
+  expect(aiAt, "AI に聞くの項が無い").toBeGreaterThan(-1);
+  const ai項 = html.slice(aiAt, html.indexOf("</dd>", aiAt)).replace(/<[^>]+>/g, "");
+  expect(ai項, "llms.txt を指して居ん").toContain("llms.txt");
+  expect(ai項, "MCP サーバの在り處を書いて居ん").toContain("src/mcp.ts");
+  expect(ai項, "同じ數字で引けると言つて居ん").toContain("同じ數字");
+  expect(ai項, "外へ送る物が無いと言つて居ん").toContain("外へ送る物は無く");
   for (const m of items) {
     const text = m[1].replace(/<[^>]+>/g, "");
     const open = text.split("（").length - 1;
