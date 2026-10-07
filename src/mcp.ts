@@ -344,8 +344,13 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
     .slice()
     .sort((a, b) => Number(a.t < now) - Number(b.t < now) || a.t - b.t)
     .map((r) => line(r, now));
+  /* 今後の締切が無い會議では、**其の事を先に言ふ**（第 754 回 – 過ぎた行だけを並べると、
+   * 讀む人（と AI）が「次はこれ」と取り違へる）。 */
+  const 今後 = hit.filter((r) => r.t >= now).length;
+  const 斷り = 今後 ? "" : "※ この會議の今後の締切は収録にありません（下の行は過ぎた物です）。\n";
   return [
-    `會議: ${一つ.conf.title}（key: ${一つ.conf.key}${一つ.conf.acronym ? `・${一つ.conf.acronym}` : ""}）`,
+    斷り +
+      `會議: ${一つ.conf.title}（key: ${一つ.conf.key}${一つ.conf.acronym ? `・${一つ.conf.acronym}` : ""}）`,
     `版: ${版.join(" / ")}`,
     /* 分野は畫面と同じ日本語で出す（第 726 回 – 機械向けのキー（`ai`）の侭では、人が讀む時に
      * 畫面のチップと結び付かん。同じ入口（`categoryLabelJa`）から取る – 書き寫すとずれる）。*/

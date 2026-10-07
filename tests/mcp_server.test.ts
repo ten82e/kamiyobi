@@ -299,3 +299,13 @@ it("會議の一覽は、今後の物から並ぶ（第 752 回）", async () =>
   expect(今後.length, "此の檢査の前提（今後の締切が在る）が崩れた").toBeGreaterThan(0);
   expect(日付の行[0], "過去の行を先に並べて居る").not.toContain("（過ぎた）");
 });
+
+it("今後の締切が無い會議では、其の事を先に言ふ（第 754 回）", async () => {
+  /* 過ぎた行だけを並べると、讀む人（と AI）が「次はこれ」と取り違へる。 */
+  const 過去だけ = await call("venue_info", { key: "aft", scope: "all" });
+  expect(過去だけ, "今後の締切が無い事を言つて居ん").toContain("今後の締切は収録にありません");
+  expect(過去だけ, "過ぎた物だと斷つて居ん").toContain("（過ぎた）");
+  /* 今後が在る會議には付けない（雜音を增やさない）。 */
+  const 今後あり = await call("venue_info", { key: "sigkdd", scope: "all" });
+  expect(今後あり, "要らない斷りを付けた").not.toContain("今後の締切は収録にありません");
+});
