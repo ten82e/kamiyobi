@@ -58,7 +58,7 @@ function 目安を決める(行: string): 目安 {
   const 註を外した行 = 行.replace(/\/\/.*$/, "").trim();
   if (
     /\$\{[^}]*$/.test(行) ||
-    /^[^\s"'`(,]+\s*=[^=]/.test(註を外した行) ||
+    /^[^\s"'`(,]+\s*(?:[+\-*/]?=)[^=]/.test(註を外した行) ||
     /^[^\s"'`(,]+\s*:\s*["'`]/.test(註を外した行) ||
     /^(?:const|let|var|function|class|interface|type|return|if|for|while|import|export)\b/.test(
       註を外した行,
