@@ -3812,3 +3812,19 @@ it("分野チップに並ぶ語（英表記を併記した形）をそのまま�
     expect(item.ja, `分野ラベルその物に括弧が入っている: ${item.ja}`).not.toContain("（");
   }
 });
+
+it("upcoming.md が、日付欄に出る形を散文で説明している（第 736 回）", () => {
+  /* 実測 2026-10-06: `upcoming.md` の「日付」欄には推定の行に『推定期間 A〜B』の形が 19 行
+   * 出ているのに、冒頭の散文は「推定」の話はしても「推定期間」の語を一度も書いていなかった
+   * （日付の形を読む人と AI の為に書き足した）。**形が実際に出ている事**と、**散文が其れを
+   * 名指している事**の両方を見る（片方だけでは空振りする）。 */
+  const md = readFileSync(join(site, "upcoming.md"), "utf8");
+  const lines = md.split("\n");
+  const 表の行 = lines.filter((l) => l.startsWith("| ") && /推定期間/.test(l));
+  expect(表の行.length, "此の検査の前提（推定期間の行が在る）が崩れた").toBeGreaterThan(0);
+  const 散文 = lines.filter((l) => l.startsWith(">"));
+  expect(
+    散文.some((l) => /推定期間/.test(l)),
+    "散文が日付欄の「推定期間」の形を説明していない",
+  ).toBe(true);
+});
