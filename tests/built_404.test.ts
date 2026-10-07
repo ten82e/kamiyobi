@@ -86,3 +86,19 @@ it("出口の索引（llms.txt）が 404 ページを隠さない（第 307 回�
     expect(line as string, `llms.txt の 404.html の項に「${語}」が無い`).toContain(語);
   }
 });
+
+it("出口に、表計算と文字だけの表も並んでいる（第 737 回）", () => {
+  /* 実測 2026-10-06: 404 の出口は五つ（画面・直近の表・カレンダー・data.json・llms.txt）で、
+   * **data.csv と upcoming.md が抜けていた**。どちらも締切と会期を運ぶ物なので、迷い込んだ人が
+   * 自分のやり方（表計算・grep）で読める道として並べる。 */
+  const html = readFileSync(join(builtSite(), "404.html"), "utf8");
+  for (const [file, 語] of [
+    ["data.csv", "表計算"],
+    ["upcoming.md", "文字だけの表"],
+  ] as Array<[string, string]>) {
+    expect(html, `${file} への出口が無い`).toContain(`${file}"`);
+    expect(html, `${file} の説明が無い`).toContain(語);
+  }
+  /* 出口の數（足した分だけ増えている）。 */
+  expect((html.match(/<li><a href/g) || []).length, "出口の數が合わない").toBe(7);
+});

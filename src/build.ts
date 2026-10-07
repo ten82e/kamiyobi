@@ -3674,6 +3674,10 @@ export function toNotFoundHtml(styleBlock = "", baseUrl = ""): string {
       " – 実行処理を必要としない版（印刷・JavaScript なしで読める）",
     ),
     row("deadlines.ics", "カレンダー（deadlines.ics）", " – 収録している今後の締切を全て"),
+    /* 表計算と、grep・他ツールに渡す形（第 737 回 – 迷ひ込んだ人が自分のやり方で讀めるやうに。
+     * どちらも締切と會期を運ぶ物なので、此の頁の目的（締切と會期は何處に在るか）に合ふ）。*/
+    row("data.csv", "表計算のための表（data.csv）", " – 1 行 1 締切。過去の分も入っている"),
+    row("upcoming.md", "文字だけの表（upcoming.md）", " – 直近 180 日。grep や他ツールに渡せる形"),
     row(
       "data.json",
       "機械可読のデータ（data.json）",
