@@ -358,3 +358,23 @@ it("會議の一覽の見出しが、並びと切り詰めを言ふ（第 765 �
   if (行數 >= 60) expect(text, "切り詰めを默つて居る").toContain("のうち 60 件");
   else expect(text, "切り詰めて居ないのに件數を添へた").not.toContain("のうち 60 件");
 });
+
+it("道具の說明が、實装の要る所を言つて居る（第 766 回）", async () => {
+  /* AI は此の說明だけを見て道具を選ぶ。此の數回に足した舉動が說明から落ちると、使はれなくなる。 */
+  const res = (await client.ask({ jsonrpc: "2.0", id: 5, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name?: string; description?: string }> };
+  };
+  const 說明 = new Map(
+    (res.result?.tools ?? []).map((t) => [String(t.name), String(t.description)]),
+  );
+  const 要る: Array<[string, string]> = [
+    ["search_deadlines", "打ち直すなら"],
+    ["list_upcoming", "種別では絞らない"],
+    ["venue_info", "今後の物から"],
+    ["venue_info", "略稱"],
+    ["explain_word", "打ち直すなら"],
+  ];
+  for (const [道具, 語] of 要る) {
+    expect(說明.get(道具) ?? "", `${道具} の說明に「${語}」が無い`).toContain(語);
+  }
+});
