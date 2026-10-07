@@ -277,6 +277,9 @@ describe("數字と案内が畫面と同じ（第 714 回）", () => {
     const text = await call("venue_info", { name: "KDD", scope: "all" });
     expect(text, "候補を並べて居ん").toContain("會議が當たりました");
     expect(text, "key を添へて居ん").toContain("（key: ");
+    /* 候補には公式の繋ぎ先も添へる（第 750 回 – 名前と key だけでは、どれが探して居る物か
+     * 決められん。人は URL を見て選ぶ）。 */
+    expect(text, "候補に繋ぎ先が無い").toMatch(/https?:\/\//);
   });
 
   it("收錄に無い會議は、無いと言ふ（在る樣に裝はない）", async () => {

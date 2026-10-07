@@ -321,9 +321,18 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
   const 會々 = [...new Set(hit.map((r) => r.conf.key))];
   if (會々.length > 1) {
     const 名乗り = [...new Map(hit.map((r) => [r.conf.key, r.conf.title])).entries()];
+    /* 候補には**公式の繋ぎ先**も添へる（第 750 回 – 名前と key だけでは、どれが探して居る物か
+     * 決められん。人は URL を見て選ぶ）。同じ key の行の內、最初に繋ぎ先を持つ物を使ふ。*/
+    const 繋ぎ先 = new Map<string, string>();
+    for (const r of hit) {
+      const url = String(r.ed.link ?? "").trim();
+      if (url && !繋ぎ先.has(r.conf.key)) 繋ぎ先.set(r.conf.key, url);
+    }
     return [
       `「${key || name}」には ${會々.length} の會議が當たりました。名を細く打つか、key で指してください:`,
-      ...名乗り.slice(0, 20).map(([k, t]) => `- ${t}（key: ${k}）`),
+      ...名乗り
+        .slice(0, 20)
+        .map(([k, t]) => `- ${t}（key: ${k}）${繋ぎ先.get(k) ? ` ${繋ぎ先.get(k)}` : ""}`),
       ...(名乗り.length > 20 ? [`- ほか ${名乗り.length - 20} 件`] : []),
     ].join("\n");
   }
