@@ -40,7 +40,14 @@ interface Row {
     event_start?: string;
     event_end?: string;
   };
-  dl: { kind: string; label?: string; round?: number; precision?: string };
+  dl: {
+    kind: string;
+    label?: string;
+    round?: number;
+    precision?: string;
+    tz_raw?: string;
+    utc?: string;
+  };
   kind: string;
   est: boolean;
   t: number;
@@ -114,7 +121,16 @@ function line(r: Row, now: number): string {
   const 場所 = String(Recommender.placeJa(r.ed.place) ?? "").trim() || "未確認";
   const 推定 = r.est ? "（推定）" : "";
   const 出典 = r.ed.link ? ` ${r.ed.link}` : "";
-  return `${日}${殘り文} | ${種別}${回}${推定} | ${r.conf.title}（${r.ed.id}）| ${場所}${出典}`;
+  /* 畫面の日時欄は「日本時間の読み」と「元の日時」の二段で出す。**日本時間で無い宣言**の行は、
+   * 宣言した時間帯と瞬間（UTC）を添へる（實測 2026-10-06: `dl.tz_raw` は AoE・UTC-7・PDT・
+   * JST など。`dl.aoe` は**何れの行にも在る派生値**なので、宣言を言ふには使へない）。*/
+  const tz = String(r.dl.tz_raw ?? "").trim();
+  const utc = String(r.dl.utc ?? "");
+  const 元 =
+    tz && utc && !/^JST$/i.test(tz)
+      ? `（元の宣言 ${tz}／${utc.replace("T", " ").replace("Z", " UTC")}）`
+      : "";
+  return `${日}${殘り文}${元} | ${種別}${回}${推定} | ${r.conf.title}（${r.ed.id}）| ${場所}${出典}`;
 }
 
 /** 0 件の時に畫面が出す案内と同じ物を組む（同じ函數から取る）。 */
