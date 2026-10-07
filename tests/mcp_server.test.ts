@@ -130,6 +130,11 @@ describe("AI 向けの索引が、MCP の在り處を書いて居る（第 714 �
     for (const 名 of ["search_deadlines", "list_upcoming", "venue_info", "explain_word"]) {
       expect(build, `道具の名が書かれて居ない: ${名}`).toContain(名);
     }
+    /* 索引の説明が、實装とずれて居ない事（第 731 回 – 第 726〜728 回に足した物）。
+     * 人が讀む索引なので、實装に無い事を書いて居たら迷はす。*/
+    for (const 印 of ['["all"]', "kind", "kinds", "略稱", "scope"]) {
+      expect(build, `索引に ${印} の話が無い（實装とずれて居る）`).toContain(印);
+    }
     /* 置けない物を「在る」と書いて居ない事（靜的サイトにサーバは置けない）。 */
     expect(build, "置き場所の斷りが無い").toContain("讀み取り專用");
   });
