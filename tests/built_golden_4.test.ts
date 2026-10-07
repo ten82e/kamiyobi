@@ -3828,3 +3828,20 @@ it("upcoming.md が、日付欄に出る形を散文で説明している（第 
     "散文が日付欄の「推定期間」の形を説明していない",
   ).toBe(true);
 });
+
+it("upcoming.md が、種別に元の呼び名を添へた形を散文で説明している（第 788 回）", () => {
+  /* 實測 2026-10-06: 實ビルドの 1,129 行のうち 12 行が「論文締切: Paper submission」の樣に
+   * **上流の元の呼び名**を添へた形だつたのに、散文は其れを言つて居なかつた（第 736 回の
+   * 「推定期間」と同じ型）。形が實際に出て居る事と、散文が名指して居る事の兩方を見る。 */
+  const md = readFileSync(join(site, "upcoming.md"), "utf8");
+  const lines = md.split("\n");
+  const 添へた行 = lines.filter((l) => l.startsWith("| ") && /\| [^|]+: [^|]+ \|/.test(l));
+  expect(添へた行.length, "此の検査の前提（元の呼び名を添へた行が在る）が崩れた").toBeGreaterThan(
+    0,
+  );
+  const 散文 = lines.filter((l) => l.startsWith(">"));
+  expect(
+    散文.some((l) => /元の呼び名/.test(l)),
+    "散文が種別の「元の呼び名」の形を説明していない",
+  ).toBe(true);
+});
