@@ -309,3 +309,26 @@ it("今後の締切が無い會議では、其の事を先に言ふ（第 754 �
   const 今後あり = await call("venue_info", { key: "sigkdd", scope: "all" });
   expect(今後あり, "要らない斷りを付けた").not.toContain("今後の締切は収録にありません");
 });
+
+it("0 件の時に、畫面と同じ「打ち直すなら」を渡す（第 762 回）", async () => {
+  /* 實測 2026-10-06: 畫面は 0 件の時に次の一手を出すのに、MCP は案内文だけで止まつて居た。
+   * 第 756 回に一度載せたが、**件數と結果が食ひ違つた**（「デモが」を 7 件と數へるのに、
+   * 其の語で引くと 0 件）ので讓つた。今は**照合そのもので數へる**ので一致する。 */
+  const text = await call("search_deadlines", {
+    query: "デモができる会議",
+    scope: "all",
+    limit: 1,
+  });
+  expect(text, "行き止まりへ送る提案を出した").not.toContain("打ち直すなら");
+
+  const 有益 = await call("search_deadlines", { query: "参加費が高い", scope: "all", limit: 1 });
+  expect(有益, "打ち直す手を渡して居ん").toContain("打ち直すなら");
+  const word = /検索語を「([^」]+)」/.exec(有益)?.[1] ?? "";
+  const 件數 = Number(/（(?:両方を書く行が )?([\d,]+) 件/.exec(有益)?.[1]?.replace(/,/g, "") ?? -1);
+  expect(word, "提案の語が讀めない").not.toBe("");
+  expect(件數, "提案の件數が讀めない").toBeGreaterThan(0);
+  /* **提案の件數と、其の語で引いた結果が一致する。** */
+  const 次 = await call("search_deadlines", { query: word, scope: "all", limit: 1 });
+  const 出た = Number(/に當たる締切: ([\d,]+) 件/.exec(次)?.[1]?.replace(/,/g, "") ?? -1);
+  expect(出た, `提案の件數と結果が違ふ: ${word}`).toBe(件數);
+});

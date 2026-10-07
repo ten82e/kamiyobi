@@ -133,6 +133,34 @@ function line(r: Row, now: number): string {
   return `${日}${殘り文}${元} | ${種別}${回}${推定} | ${r.conf.title}（${r.ed.id}）| ${場所}${出典}`;
 }
 
+/** 0 件の時に畫面が出す「打ち直すなら」と同じ物を組む（第 762 回）。
+ *
+ * **件數は照合そのもので數へる** – `shorterHitWordsJa` の件數は「行の文字に其の語が含まれるか」
+ * で數へる爲、檢索の照合（語尾・助詞の扱ひ）と食ひ違ふ（實測 2026-10-06: 「デモが」を 7 件と
+ * 數へるのに、其の語で引くと 0 件だつた）。同じ行集合・同じ照合で數へれば、**提案の件數と、
+ * 其の語で引いた結果が必ず一致する**。0 件に成る候補は出さない（行き止まりへ送らない）。 */
+function retypeTips(query: string, list: Row[], now: number): string[] {
+  const 候補 = Recommender.shorterHitWordsJa(
+    query,
+    list.map((r) => r.hay),
+    now,
+  );
+  const out: string[] = [];
+  for (const hit of 候補) {
+    const word = String(hit.word ?? "").trim();
+    if (!word) continue;
+    const 照合 = Recommender.searchMatcher(Recommender.expandRelativeMonths(word, now), now);
+    const 件數 = list.filter((r) => 照合(r.hay) === true).length;
+    if (!件數) continue;
+    const how = String(hit.how ?? "");
+    if (how === "split") out.push(`検索語を「${word}」に分けて打つ（両方を書く行が ${件數} 件）`);
+    else if (how === "alone" && word.indexOf(" ") < 0)
+      out.push(`検索語を「${word}」だけに絞る（${件數} 件当たります）`);
+    else out.push(`検索語を「${word}」に打ち替える（${件數} 件当たります）`);
+  }
+  return out;
+}
+
 /** 0 件の時に畫面が出す案内と同じ物を組む（同じ函數から取る）。 */
 function guidance(query: string, matched: number): string[] {
   if (matched > 0) return [];
@@ -256,6 +284,11 @@ function searchDeadlines(
         ? "語は當たりますが、既定の絞り込み（今後の投稿締切・推定を除く）で 0 件に成りました。include_past / include_estimated / kinds を試してください。"
         : "この語では 1 行も出ません。",
       ...案内.map((n) => `案内: ${n}`),
+      ...(() => {
+        if (素の.length) return [];
+        const 手 = retypeTips(query, 畫面の既定(list, now, args), now);
+        return 手.length ? [`打ち直すなら ${手.join(" / ")}`] : [];
+      })(),
     ].join("\n");
   }
   const 見本 = hit.slice(0, limit).map((r) => line(r, now));
