@@ -143,10 +143,11 @@ function 畫面の既定(
 ): Row[] {
   const 過去も = args.include_past === true;
   const 推定も = args.include_estimated === true;
-  const 種別 = Array.isArray(args.kinds)
-    ? args.kinds.map((k) => String(k))
-    : typeof args.kinds === "string"
-      ? [String(args.kinds)]
+  const 引き = args.kinds ?? (args as { kind?: unknown }).kind;
+  const 種別 = Array.isArray(引き)
+    ? 引き.map((k) => String(k))
+    : typeof 引き === "string"
+      ? [引き]
       : null;
   /* `kinds: ["all"]`（又は `"all"`）は**種別で絞らん**の意（第 727 回 – 實測 2026-10-06:
    * 此れを彈いて居たので、全ての種別を見る道が無く、「kinds を試してください」と言はれても
@@ -191,6 +192,7 @@ function searchDeadlines(
     include_past?: unknown;
     include_estimated?: unknown;
     kinds?: unknown;
+    kind?: unknown;
     scope?: unknown;
   },
   now: number,
@@ -245,7 +247,12 @@ function listUpcoming(
   now: number,
 ): string {
   const days = Math.min(Math.max(Number(args.days) || 30, 1), 400);
-  const kind = String(args.kind ?? "").trim();
+  const 引き = args.kind ?? (args as { kinds?: unknown }).kinds;
+  const 名乗り = (Array.isArray(引き) ? 引き : 引き === undefined ? [] : [引き])
+    .map((k) => String(k).trim())
+    .filter((k) => k.length > 0);
+  const 全部 = 名乗り.some((k) => k.toLowerCase() === "all");
+  const kind = 全部 ? "" : 名乗り.join(" ");
   const { list, 名 } = pick(args.scope ?? "all");
   const 限り = now + days * 86400000;
   const hit = sortRows(
@@ -371,7 +378,15 @@ const TOOLS = [
       type: "object",
       properties: {
         days: { type: "number", description: "何日先まで（既定 30・最大 400）" },
-        kind: { type: "string", description: "種別のキー（例: paper / abstract / camera_ready）" },
+        kind: {
+          type: "string",
+          description: '種別のキー（例: paper / abstract / camera_ready。全部なら "all"）',
+        },
+        kinds: {
+          type: "array",
+          items: { type: "string" },
+          description: "種別のキーの並び（search_deadlines と同じ名。どちらでも受ける）",
+        },
         scope: { type: "string", enum: ["screen", "all"], description: "見る窓（既定 all）" },
       },
     },

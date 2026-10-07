@@ -238,6 +238,26 @@ describe("數字と案内が畫面と同じ（第 714 回）", () => {
     expect(カメラ, "名指した種別に屆いて居ん").toMatch(/に當たる締切: [1-9]\d* 件/);
   });
 
+  it("種別の名は道具の間で揃って居る（kind でも kinds でも受ける・第 728 回）", async () => {
+    /* 實測 2026-10-06: `list_upcoming` は `kind`（單數）、`search_deadlines` は `kinds`（複數）で、
+     * 同じ事を指して居た。片方を覺えた機械が 0 件で默るのを防ぐ。*/
+    const 數 = (t: string): number => Number(/締切: (\d+) 件/.exec(t)?.[1] ?? -1);
+    const 單 = await call("list_upcoming", { days: 60, kind: "paper", scope: "all" });
+    const 複 = await call("list_upcoming", { days: 60, kinds: ["paper"], scope: "all" });
+    expect(數(單), "kind で絞れて居ん").toBeGreaterThan(0);
+    expect(數(複), "kinds で絞れて居ん").toBe(數(單));
+    const 全部 = await call("list_upcoming", { days: 60, kind: "all", scope: "all" });
+    expect(數(全部), "all で廣がつて居ん").toBeGreaterThan(數(單));
+    /* search_deadlines も單數の名を受ける。 */
+    const 檢 = await call("search_deadlines", {
+      query: "カメラレディ",
+      kind: "camera_ready",
+      scope: "all",
+      limit: 1,
+    });
+    expect(檢, "search_deadlines が kind を受けて居ん").toMatch(/に當たる締切: [1-9]\d* 件/);
+  });
+
   it("曖昧な名では決め打たず、候補を並べる", async () => {
     /* `KDD` は kdd・sigkdd・pakdd・ecmlpkdd に當たる。決め打つと別の會議の版を混ぜて返す。*/
     const text = await call("venue_info", { name: "KDD", scope: "all" });
