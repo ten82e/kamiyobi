@@ -281,7 +281,7 @@ function searchDeadlines(
       頭,
       "",
       素の.length
-        ? "語は當たりますが、既定の絞り込み（今後の投稿締切・推定を除く）で 0 件に成りました。include_past / include_estimated / kinds を試してください。"
+        ? "語は当たりますが、既定の絞り込み（今後の投稿締切・推定を除く）で 0 件に成りました。include_past / include_estimated / kinds を試してください。"
         : "この語では 1 行も出ません。",
       ...案内.map((n) => `案内: ${n}`),
       ...(() => {
@@ -329,9 +329,9 @@ function listUpcoming(
 function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now: number): string {
   const key = String(args.key ?? "").trim();
   const name = String(args.name ?? "").trim();
-  if (!key && !name) return "key（會議の識別子）か name（會議名の一部）をください。";
+  if (!key && !name) return "key（会議の識別子）か name（会議名の一部）をください。";
   const { list, 名 } = pick(args.scope ?? "all");
-  /* 會議は**略稱で打たれる**のが普通（實測 2026-10-06: `KDD` `CCS` `AsiaCCS` は此の matching では
+  /* 会議は**略稱で打たれる**のが普通（實測 2026-10-06: `KDD` `CCS` `AsiaCCS` は此の matching では
    * 見付からなかつた – 表の題は「ACM SIGKDD Conference …」の樣に長く、略稱は別の欄に在る）。
    * 題・略稱・識別子の三つを見る（第 726 回）。*/
   const 求 = name.toLowerCase();
@@ -346,10 +346,10 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
   const hit = list.filter(的);
   if (!hit.length) {
     const 會 = [...new Set(list.map((r) => r.conf.key))];
-    return `その會議は收録に在りません（收録 ${會.length} 會議）。會議名の一部で試すか、search_deadlines で引いてください。`;
+    return `その会議は收録に在りません（收録 ${會.length} 会議）。会議名の一部で試すか、search_deadlines で引いてください。`;
   }
-  /* 曖昧な打ち方（`KDD` は kdd・sigkdd・pakdd・ecmlpkdd に當たる）では**一つの會議に決め打たない**。
-   * 決め打つと、別の會議の版を一つに混ぜて返す（實測 2026-10-06 にそう成つた – 第 726 回）。
+  /* 曖昧な打ち方（`KDD` は kdd・sigkdd・pakdd・ecmlpkdd に當たる）では**一つの会議に決め打たない**。
+   * 決め打つと、別の会議の版を一つに混ぜて返す（實測 2026-10-06 にそう成つた – 第 726 回）。
    * 名乘りが割れた時は候補を並べて、細く打ち直して貰ふ。*/
   const 會々 = [...new Set(hit.map((r) => r.conf.key))];
   if (會々.length > 1) {
@@ -362,7 +362,7 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
       if (url && !繋ぎ先.has(r.conf.key)) 繋ぎ先.set(r.conf.key, url);
     }
     return [
-      `「${key || name}」には ${會々.length} の會議が當たりました。名を細く打つか、key で指してください:`,
+      `「${key || name}」には ${會々.length} の会議が當たりました。名を細く打つか、key で指してください:`,
       ...名乗り
         .slice(0, 20)
         .map(([k, t]) => `- ${t}（key: ${k}）${繋ぎ先.get(k) ? ` ${繋ぎ先.get(k)}` : ""}`),
@@ -377,13 +377,13 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
     .slice()
     .sort((a, b) => Number(a.t < now) - Number(b.t < now) || a.t - b.t)
     .map((r) => line(r, now));
-  /* 今後の締切が無い會議では、**其の事を先に言ふ**（第 754 回 – 過ぎた行だけを並べると、
+  /* 今後の締切が無い会議では、**其の事を先に言ふ**（第 754 回 – 過ぎた行だけを並べると、
    * 讀む人（と AI）が「次はこれ」と取り違へる）。 */
   const 今後 = hit.filter((r) => r.t >= now).length;
-  const 斷り = 今後 ? "" : "※ この會議の今後の締切は収録にありません（下の行は過ぎた物です）。\n";
+  const 斷り = 今後 ? "" : "※ この会議の今後の締切は収録にありません（下の行は過ぎた物です）。\n";
   return [
     斷り +
-      `會議: ${一つ.conf.title}（key: ${一つ.conf.key}${一つ.conf.acronym ? `・${一つ.conf.acronym}` : ""}）`,
+      `会議: ${一つ.conf.title}（key: ${一つ.conf.key}${一つ.conf.acronym ? `・${一つ.conf.acronym}` : ""}）`,
     `版: ${版.join(" / ")}`,
     /* 分野は畫面と同じ日本語で出す（第 726 回 – 機械向けのキー（`ai`）の侭では、人が讀む時に
      * 畫面のチップと結び付かん。同じ入口（`categoryLabelJa`）から取る – 書き寫すとずれる）。*/
@@ -396,7 +396,7 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
     /* 並びは第 751 回から「今後の物が先」に變はつたので、其れを書く（前に書いて居た
      * 「日本時間の早い順」は、版を跨ぐと過去が先に來る意味に讀めてしまふ）。切り詰めも
      * **默らない**（第 765 回 – 60 件で切れて居る事を言はないと、AI が「これで全部」と答へる）。*/
-    `締切と會期（今後の物から、同じ側では日本時間の早い順）${見本.length > 60 ? `・${見本.length} 件のうち 60 件` : ""}:`,
+    `締切と会期（今後の物から、同じ側では日本時間の早い順）${見本.length > 60 ? `・${見本.length} 件のうち 60 件` : ""}:`,
     ...見本.slice(0, 60),
   ].join("\n");
 }
@@ -421,24 +421,24 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
   ].join("\n");
 }
 
-/** 收錄その物の數（第 769 回）。「何件を覆つて居るか」「どの檔案が在るか」を一往復で答へる –
- * AI が「この收錄は何か」を説明する時、人に檔案を渡す時に要る。**數字は llms.txt と同じ物**を
+/** 收錄その物の數（第 769 回）。「何件を覆つて居るか」「どのファイルが在るか」を一往復で答へる –
+ * AI が「この收錄は何か」を説明する時、人にファイルを渡す時に要る。**數字は llms.txt と同じ物**を
  * 同じ入口（`data/snapshot.json`）から數へる。`scope` は取らない（收錄の全體を數へるのが役目）。 */
 function collectionStats(now: number): string {
   const list = allRows();
-  /* 會議と版は**收錄その物**から數へる（行から數へると「締切を持つ物」だけに成り、建てた時の
-   * 「696 會議 / 2,603 版」と食ひ違ふ – 第 769 回に一度其れを踏んだ）。行は締切の數へに使ふ。*/
+  /* 会議と版は**收錄その物**から數へる（行から數へると「締切を持つ物」だけに成り、建てた時の
+   * 「696 会議 / 2,603 版」と食ひ違ふ – 第 769 回に一度其れを踏んだ）。行は締切の數へに使ふ。*/
   const 收錄 = JSON.parse(readFileSync(DATA_PATH, "utf8")) as {
     conferences?: Array<{ editions?: unknown[] }>;
   };
-  const 會議 = (收錄.conferences ?? []).length;
+  const 会議 = (收錄.conferences ?? []).length;
   const 版 = (收錄.conferences ?? []).reduce(
     (n, c) => n + (Array.isArray(c.editions) ? c.editions.length : 0),
     0,
   );
   const 今後 = list.filter((r) => r.t >= now).length;
   const 日 = list.map((r) => r.localDate || new Date(r.t).toISOString().slice(0, 10)).sort();
-  const 檔案 = [
+  const ファイル = [
     "index.html（畫面。絞り込みと検索）",
     "upcoming.md / upcoming.html（直近 180 日の表）",
     "data.csv（1 行 1 締切の平坦な表）",
@@ -447,11 +447,11 @@ function collectionStats(now: number): string {
     "llms.txt（機械向けの索引。何が何處に在るか）",
   ];
   return [
-    `収録（${DATA_PATH.replace(`${ROOT}/`, "")}）: 会議 ${會議} 件 / 版 ${版} 件（生の収録。建てる時は同じ物を束ねるので、建てた表示とは少し違い得る）/ 締切の行 ${list.length} 行（日付の幅 ${日[0]} 〜 ${日[日.length - 1]}）`,
+    `収録（${DATA_PATH.replace(`${ROOT}/`, "")}）: 会議 ${会議} 件 / 版 ${版} 件（生の収録。建てる時は同じ物を束ねるので、建てた表示とは少し違い得る）/ 締切の行 ${list.length} 行（日付の幅 ${日[0]} 〜 ${日[日.length - 1]}）`,
     `うち今後の締切: ${今後} 行（${new Date(now).toISOString().slice(0, 10)} 以降）`,
     "",
-    "配付して居る檔案（サイトと同じ場所に在る）:",
-    ...檔案.map((f) => `- ${f}`),
+    "配付して居るファイル（サイトと同じ場所に在る）:",
+    ...ファイル.map((f) => `- ${f}`),
   ].join("\n");
 }
 
@@ -516,8 +516,8 @@ const TOOLS = [
     inputSchema: {
       type: "object",
       properties: {
-        key: { type: "string", description: "會議の識別子（例: kdd）" },
-        name: { type: "string", description: "會議名の一部（例: KDD）" },
+        key: { type: "string", description: "会議の識別子（例: kdd）" },
+        name: { type: "string", description: "会議名の一部（例: KDD）" },
         scope: { type: "string", enum: ["screen", "all"], description: "見る窓（既定 all）" },
       },
     },
@@ -525,7 +525,7 @@ const TOOLS = [
   {
     name: "collection_stats",
     description:
-      "この収録その物の規模（会議數・版數・締切の行數・日付の幅・今後の件數）と、配付して居る檔案の一覽を返す。「この収録は何か」「何件あるか」「人に渡すなら何を渡せばよいか」に答へる時に使ふ。",
+      "この収録その物の規模（会議數・版數・締切の行數・日付の幅・今後の件數）と、配付して居るファイルの一覽を返す。「この収録は何か」「何件あるか」「人に渡すなら何を渡せばよいか」に答へる時に使ふ。",
     inputSchema: { type: "object", properties: {} },
   },
   {
@@ -535,7 +535,7 @@ const TOOLS = [
     inputSchema: {
       type: "object",
       properties: {
-        word: { type: "string", description: "調べる語（例: 學生でも投稿できる）" },
+        word: { type: "string", description: "調べる語（例: 学生でも投稿できる）" },
         scope: { type: "string", enum: ["screen", "all"], description: "見る窓（既定 screen）" },
       },
       required: ["word"],

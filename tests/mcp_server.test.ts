@@ -206,23 +206,23 @@ describe("數字と案内が畫面と同じ（第 714 回）", () => {
     const text = await call("search_deadlines", { query: 語, scope: "all", limit: 2 });
     expect(text, "行を返して居ない").toContain(`に當たる締切: ${正} 件`);
     expect(text, "行が出て居るのに案内を付けた").not.toContain("案内:");
-    /* 日付・種別・會議名が讀める形で返る（人が見る列と同じ順）。 */
+    /* 日付・種別・会議名が讀める形で返る（人が見る列と同じ順）。 */
     expect(text, "行の形が違ふ").toMatch(/\d{4}-\d{2}-\d{2}/);
   });
 
-  it("會議の版と締切を、名前の一部から引ける", async () => {
+  it("会議の版と締切を、名前の一部から引ける", async () => {
     const 一つ = rows.find((r) => r.conf.title.includes("AsiaCCS"));
     expect(一つ, "此の檢査の前提（AsiaCCS が收錄に在る）が崩れた").toBeTruthy();
     const text = await call("venue_info", { name: "AsiaCCS", scope: "all" });
-    expect(text, "會議の名を返して居ない").toContain("會議:");
+    expect(text, "会議の名を返して居ない").toContain("会議:");
     expect(text, "版を返して居ない").toContain("版:");
     expect(text, "締切の行を返して居ない").toMatch(/\d{4}-\d{2}-\d{2}/);
   });
 
-  it("會議は略稱でも引ける（key で一意に指せる）", async () => {
+  it("会議は略稱でも引ける（key で一意に指せる）", async () => {
     /* 實測 2026-10-06: 略稱（`KDD` `CCS`）では見付からなかつた – 題は長く、略稱は別の欄に在る。*/
     const text = await call("venue_info", { key: "sigkdd", scope: "all" });
-    expect(text, "key で引け無い").toContain("會議:");
+    expect(text, "key で引け無い").toContain("会議:");
     expect(text, "分野を日本語で出して居ん（畫面と同じ語）").toMatch(
       /分野: (人工知能|データベース)/,
     );
@@ -280,25 +280,25 @@ describe("數字と案内が畫面と同じ（第 714 回）", () => {
   });
 
   it("曖昧な名では決め打たず、候補を並べる", async () => {
-    /* `KDD` は kdd・sigkdd・pakdd・ecmlpkdd に當たる。決め打つと別の會議の版を混ぜて返す。*/
+    /* `KDD` は kdd・sigkdd・pakdd・ecmlpkdd に當たる。決め打つと別の会議の版を混ぜて返す。*/
     const text = await call("venue_info", { name: "KDD", scope: "all" });
-    expect(text, "候補を並べて居ん").toContain("會議が當たりました");
+    expect(text, "候補を並べて居ん").toContain("会議が當たりました");
     expect(text, "key を添へて居ん").toContain("（key: ");
     /* 候補には公式の繋ぎ先も添へる（第 750 回 – 名前と key だけでは、どれが探して居る物か
      * 決められん。人は URL を見て選ぶ）。 */
     expect(text, "候補に繋ぎ先が無い").toMatch(/https?:\/\//);
   });
 
-  it("收錄に無い會議は、無いと言ふ（在る樣に裝はない）", async () => {
+  it("收錄に無い会議は、無いと言ふ（在る樣に裝はない）", async () => {
     const text = await call("venue_info", { name: "ぬけぬけ会議", scope: "all" });
     expect(text, "無いと言つて居ない").toContain("收録に在りません");
   });
 });
 
-it("會議の一覽は、今後の物から並ぶ（第 752 回）", async () => {
+it("会議の一覽は、今後の物から並ぶ（第 752 回）", async () => {
   /* 實測 2026-10-06: `venue sigkdd` の一覽が 2021 年から始まつて居た（日の早い順に並べて居た）。
-   * 人は「次はいつか」を聞いて居るので、過去を先に讀ませない。今後の行を持つ會議で、
-   * **最初の日付の行が過去で無い**事を見る（此の會議には今後が在る – 前提も張る）。 */
+   * 人は「次はいつか」を聞いて居るので、過去を先に讀ませない。今後の行を持つ会議で、
+   * **最初の日付の行が過去で無い**事を見る（此の会議には今後が在る – 前提も張る）。 */
   const text = await call("venue_info", { key: "sigkdd", scope: "all" });
   const 日付の行 = text.split("\n").filter((l) => /^\d{4}-\d{2}-\d{2}/.test(l));
   expect(日付の行.length, "此の檢査の前提（日付の行が在る）が崩れた").toBeGreaterThan(1);
@@ -307,12 +307,12 @@ it("會議の一覽は、今後の物から並ぶ（第 752 回）", async () =>
   expect(日付の行[0], "過去の行を先に並べて居る").not.toContain("（過ぎた）");
 });
 
-it("今後の締切が無い會議では、其の事を先に言ふ（第 754 回）", async () => {
+it("今後の締切が無い会議では、其の事を先に言ふ（第 754 回）", async () => {
   /* 過ぎた行だけを並べると、讀む人（と AI）が「次はこれ」と取り違へる。 */
   const 過去だけ = await call("venue_info", { key: "aft", scope: "all" });
   expect(過去だけ, "今後の締切が無い事を言つて居ん").toContain("今後の締切は収録にありません");
   expect(過去だけ, "過ぎた物だと斷つて居ん").toContain("（過ぎた）");
-  /* 今後が在る會議には付けない（雜音を增やさない）。 */
+  /* 今後が在る会議には付けない（雜音を增やさない）。 */
   const 今後あり = await call("venue_info", { key: "sigkdd", scope: "all" });
   expect(今後あり, "要らない斷りを付けた").not.toContain("今後の締切は収録にありません");
 });
@@ -355,12 +355,12 @@ it("explain_word でも、同じ「打ち直すなら」を渡す（第 763 回�
   expect(有, "行が出る語に提案を付けた").not.toContain("打ち直すなら");
 });
 
-it("會議の一覽の見出しが、並びと切り詰めを言ふ（第 765 回）", async () => {
+it("会議の一覽の見出しが、並びと切り詰めを言ふ（第 765 回）", async () => {
   /* 第 751 回に「今後の物が先」へ變へたので、見出しの「日本時間の早い順」だけでは過去が先に
    * 來る意味に讀めた。切り詰め（60 件）も默らない – 言はないと「これで全部」と讀まれる。 */
   const text = await call("venue_info", { key: "sigkdd", scope: "all" });
   expect(text, "並びの説明が古い").toContain("今後の物から");
-  /* 切り詰めた時だけ件數を添へる（此の會議は 60 件に滿たないので付かない）。 */
+  /* 切り詰めた時だけ件數を添へる（此の会議は 60 件に滿たないので付かない）。 */
   const 行數 = text.split("\n").filter((l) => /^\d{4}-\d{2}-\d{2}/.test(l)).length;
   if (行數 >= 60) expect(text, "切り詰めを默つて居る").toContain("のうち 60 件");
   else expect(text, "切り詰めて居ないのに件數を添へた").not.toContain("のうち 60 件");
@@ -405,7 +405,7 @@ it("collection_stats が、收錄その物の數と檔案を返す（第 769 回
   for (const 檔案 of ["upcoming.md", "data.csv", "deadlines.ics", "data.json", "llms.txt"]) {
     expect(text, `${檔案} を並べて居ん`).toContain(檔案);
   }
-  /* 會議の數は、收錄その物（snapshot）の會議數と一致する（行から數へると減る – 第 769 回に
+  /* 会議の數は、收錄その物（snapshot）の会議數と一致する（行から數へると減る – 第 769 回に
    * 一度それを踏んだ）。 */
   const 收錄 = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
     conferences?: unknown[];
