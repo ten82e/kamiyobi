@@ -419,12 +419,16 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
     /* 行が出る時は**中身を少し見せる**（第 796 回 – 前は「search_deadlines で引けます」とだけ
      * 言つて居たので、語を調べた人がもう一往復する必要が在つた。AI も同じ）。行は
      * `search_deadlines` と同じ形（`line()`）で、3 行まで。 */
-    const 行 = sortRows(list.filter((r) => 照合(r.hay) === true)).slice(0, 3);
+    const 素の行 = list.filter((r) => 照合(r.hay) === true);
+    /* **兩方の數を言ふ**（第 797 回 – 素の照合と、畫面の既定の絞り込みを通した數は違ふ。片方だけ
+     * 言ふと「同じ語で違ふ數字」に成る – 第 796 回に實測: `ポスター` は素 9 行・絞り込み後 0 件）。*/
+    const 畫面の行 = 畫面の既定(素の行, now, {});
+    const 行 = sortRows(畫面の行).slice(0, 3);
     return [
-      `「${word}」は ${件數} 行に當たります（${名}・案内は出ません）。`,
+      `「${word}」は素の照合で ${件數} 行・畫面の既定の絞り込み（今後・投稿締切の種別・推定を除く）を通すと ${畫面の行.length} 行です（${名}）。`,
       ...行.map((r) => `- ${line(r, now)}`),
-      ...(件數 > 行.length
-        ? [`- …ほか ${件數 - 行.length} 行（search_deadlines で引けます）`]
+      ...(畫面の行.length > 行.length
+        ? [`- …ほか ${畫面の行.length - 行.length} 行（search_deadlines で引けます）`]
         : []),
     ].join("\n");
   }

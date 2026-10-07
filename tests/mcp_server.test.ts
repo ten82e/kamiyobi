@@ -434,8 +434,10 @@ it("語を省いて、種別だけでも引ける（第 793 回）", async () =>
 it("explain_word は、行が出る時に中身を少し見せる（第 796 回）", async () => {
   /* 前は「search_deadlines で引けます」とだけ言っていたので、語を調べた人がもう一往復する
    * 必要があった（AI も同じ）。行は search_deadlines と同じ形（`line()`）で 3 行まで。 */
-  const text = await call("explain_word", { word: "ポスター", scope: "all" });
-  expect(text, "行數を言つて居ん").toMatch(/は [1-9]\d* 行に當たります/);
+  const text = await call("explain_word", { word: "セキュリティ", scope: "all" });
+  expect(text, "行數を言つて居ん").toMatch(
+    /素の照合で [1-9]\d* 行・畫面の既定の絞り込み（[^）]*）を通すと \d+ 行/,
+  );
   const 行 = text.split("\n").filter((l) => l.startsWith("- 20"));
   expect(行.length, "中身を見せて居ん").toBeGreaterThan(0);
   expect(行.length, "見せる行が多過ぎる").toBeLessThanOrEqual(3);
