@@ -135,6 +135,15 @@ describe("AI 向けの索引が、MCP の在り處を書いて居る（第 714 �
     for (const 印 of ['["all"]', "kind", "kinds", "略稱", "scope"]) {
       expect(build, `索引に ${印} の話が無い（實装とずれて居る）`).toContain(印);
     }
+    /* CSV の説明が「日本語は書かない」と言い切っていたのを直した（第 732 回 – 実測: 七列
+     * （title・full_name・label・place・date_text・date_field・event_segments）に上流の原文の
+     * 日本語が入る）。**サイトが付ける印は書かない**という意味だと書き直す。 */
+    expect(build, "CSV の説明が日本語の混在を言っていない").toContain(
+      "上流の原文に日本語が在れば其の侭出す",
+    );
+    expect(build, "印を書かない事を言っていない").not.toContain(
+      "「未確認」「該当なし」などの日本語は書かない",
+    );
     /* 置けない物を「在る」と書いて居ない事（靜的サイトにサーバは置けない）。 */
     expect(build, "置き場所の斷りが無い").toContain("讀み取り專用");
   });
