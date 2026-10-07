@@ -22,7 +22,7 @@ import Recommender from "../site/recommender.ts";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 /* 畫面が最初に讀む窓（180 日）と、收錄の全體。**數字を畫面と一致させる**のが肝なので、
  * 先づ畫面と同じ窓（`public/catalog.json`）を見る。無ければ（まだ建てて居ない・配付物を
- * 持たない手元）收錄の全體（`data/snapshot.json`）へ落ちて、其の旨を言ふ。 */
+ * 持たない手元）収録の全体（`data/snapshot.json`）へ落ちて、其の旨を言ふ。 */
 const CATALOG_PATH = join(ROOT, "public", "catalog.json");
 const DATA_PATH = join(ROOT, "data", "snapshot.json");
 const SERVER_NAME = "kamiyobi";
@@ -76,7 +76,7 @@ function screenRows(): Row[] | null {
   }
 }
 
-/** 收錄の全體（`data/snapshot.json`）。1 度だけ讀む（5,069 行・約 9MB）。 */
+/** 収録の全体（`data/snapshot.json`）。1 度だけ讀む（5,069 行・約 9MB）。 */
 function allRows(): Row[] {
   if (!allCache) allCache = 讀む(DATA_PATH);
   return allCache;
@@ -84,9 +84,9 @@ function allRows(): Row[] {
 
 /** 使ふ窓を決める（既定は畫面と同じ。`scope: "all"` で收錄の全體）。 */
 function pick(scope: unknown): { list: Row[]; 名: string } {
-  if (String(scope ?? "") === "all") return { list: allRows(), 名: "收錄の全體" };
+  if (String(scope ?? "") === "all") return { list: allRows(), 名: "収録の全体" };
   const 窓 = screenRows();
-  return 窓 ? { list: 窓, 名: "畫面が最初に讀む窓" } : { list: allRows(), 名: "收錄の全體" };
+  return 窓 ? { list: 窓, 名: "畫面が最初に讀む窓" } : { list: allRows(), 名: "収録の全体" };
 }
 
 const JST = new Intl.DateTimeFormat("ja-JP", {
@@ -280,7 +280,7 @@ function searchDeadlines(
     /(?:\d+月|\d+日|今月|来月|先月|今週|来週|先週|今年|来年|年内|年度|以内|までに|以降)/.test(
       query,
     );
-  const 頭 = `${種別だけ ? "語を指定せず、種別だけ" : `検索語「${query}」に當たる締切`}: ${hit.length} 件（${名} ${list.length} 行・畫面の既定と同じ絞り込み。絞る前は ${素の.length} 行）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に當たる（畫面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}`;
+  const 頭 = `${種別だけ ? "語を指定せず、種別だけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・畫面の既定と同じ絞り込み。絞る前は ${素の.length} 行）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に當たる（畫面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}`;
   if (!hit.length) {
     /* 畫面と同じ約束 – 案内は「素の當たりが 0」の時に出る物なので、絞り込みで 0 に成つた時は
      * 其の旨を書く（絞り込みを外せば出る事がある）。 */
@@ -327,7 +327,7 @@ function listUpcoming(
     ),
   );
   return [
-    `今日から ${days} 日以內の締切: ${hit.length} 件（${名}・日本時間の早い順）`,
+    `今日から ${days} 日以内の締切: ${hit.length} 件（${名}・日本時間の早い順）`,
     "",
     ...hit.slice(0, 100).map((r) => line(r, now)),
     ...(hit.length > 100 ? ["", `（100 件まで表示・殘り ${hit.length - 100} 件）`] : []),

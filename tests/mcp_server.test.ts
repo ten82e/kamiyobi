@@ -183,7 +183,7 @@ describe("數字と案内が畫面と同じ（第 714 回）", () => {
     const now = Date.now();
     for (const 語 of ["セキュリティ", "機械学習", "海外開催"]) {
       const text = await call("search_deadlines", { query: 語, scope: "all", limit: 1 });
-      const 出た = Number(/に當たる締切: (\d+) 件/.exec(text)?.[1] ?? -1);
+      const 出た = Number(/に当たる締切: (\d+) 件/.exec(text)?.[1] ?? -1);
       expect(出た, `件數が讀めない: ${語}`).toBeGreaterThanOrEqual(0);
       expect(出た, `畫面の數へ方と違ふ: ${語}`).toBe(畫面の既定で數へる(語, now));
     }
@@ -204,7 +204,7 @@ describe("數字と案内が畫面と同じ（第 714 回）", () => {
     const 正 = 畫面の既定で數へる(語, Date.now());
     expect(正, `此の檢査の前提（既定の絞り込みで行が出る語）が崩れた: ${語}`).toBeGreaterThan(0);
     const text = await call("search_deadlines", { query: 語, scope: "all", limit: 2 });
-    expect(text, "行を返して居ない").toContain(`に當たる締切: ${正} 件`);
+    expect(text, "行を返して居ない").toContain(`に当たる締切: ${正} 件`);
     expect(text, "行が出て居るのに案内を付けた").not.toContain("案内:");
     /* 日付・種別・会議名が讀める形で返る（人が見る列と同じ順）。 */
     expect(text, "行の形が違ふ").toMatch(/\d{4}-\d{2}-\d{2}/);
@@ -240,7 +240,7 @@ describe("數字と案内が畫面と同じ（第 714 回）", () => {
       limit: 1,
     });
     const 既定 = await call("search_deadlines", { query: "セキュリティ", scope: "all", limit: 1 });
-    const 數 = (t: string): number => Number(/に當たる締切: (\d+) 件/.exec(t)?.[1] ?? -1);
+    const 數 = (t: string): number => Number(/に当たる締切: (\d+) 件/.exec(t)?.[1] ?? -1);
     expect(數(全部), "all で絞られて居る").toBeGreaterThan(數(既定));
     const 未知 = await call("search_deadlines", {
       query: "セキュリティ",
@@ -256,7 +256,7 @@ describe("數字と案内が畫面と同じ（第 714 回）", () => {
       scope: "all",
       limit: 1,
     });
-    expect(カメラ, "名指した種別に屆いて居ん").toMatch(/に當たる締切: [1-9]\d* 件/);
+    expect(カメラ, "名指した種別に屆いて居ん").toMatch(/に当たる締切: [1-9]\d* 件/);
   });
 
   it("種別の名は道具の間で揃って居る（kind でも kinds でも受ける・第 728 回）", async () => {
@@ -276,11 +276,11 @@ describe("數字と案内が畫面と同じ（第 714 回）", () => {
       scope: "all",
       limit: 1,
     });
-    expect(檢, "search_deadlines が kind を受けて居ん").toMatch(/に當たる締切: [1-9]\d* 件/);
+    expect(檢, "search_deadlines が kind を受けて居ん").toMatch(/に当たる締切: [1-9]\d* 件/);
   });
 
   it("曖昧な名では決め打たず、候補を並べる", async () => {
-    /* `KDD` は kdd・sigkdd・pakdd・ecmlpkdd に當たる。決め打つと別の会議の版を混ぜて返す。*/
+    /* `KDD` は kdd・sigkdd・pakdd・ecmlpkdd に当たる。決め打つと別の会議の版を混ぜて返す。*/
     const text = await call("venue_info", { name: "KDD", scope: "all" });
     expect(text, "候補を並べて居ん").toContain("会議が當たりました");
     expect(text, "key を添へて居ん").toContain("（key: ");
@@ -336,7 +336,7 @@ it("0 件の時に、畫面と同じ「打ち直すなら」を渡す（第 762 
   expect(件數, "提案の件數が讀めない").toBeGreaterThan(0);
   /* **提案の件數と、其の語で引いた結果が一致する。** */
   const 次 = await call("search_deadlines", { query: word, scope: "all", limit: 1 });
-  const 出た = Number(/に當たる締切: ([\d,]+) 件/.exec(次)?.[1]?.replace(/,/g, "") ?? -1);
+  const 出た = Number(/に当たる締切: ([\d,]+) 件/.exec(次)?.[1]?.replace(/,/g, "") ?? -1);
   expect(出た, `提案の件數と結果が違ふ: ${word}`).toBe(件數);
 });
 
@@ -349,7 +349,7 @@ it("explain_word でも、同じ「打ち直すなら」を渡す（第 763 回�
   const word = /検索語を「([^」]+)」/.exec(text)?.[1] ?? "";
   expect(word, "提案の語が讀めない").not.toBe("");
   const 次 = await call("search_deadlines", { query: word, scope: "all", limit: 1 });
-  expect(次, `提案が空振り: ${word}`).toMatch(/に當たる締切: [1-9]\d* 件/);
+  expect(次, `提案が空振り: ${word}`).toMatch(/に当たる締切: [1-9]\d* 件/);
   /* 行が出る語には付けない。 */
   const 有 = await call("explain_word", { word: "ポスター", scope: "all" });
   expect(有, "行が出る語に提案を付けた").not.toContain("打ち直すなら");
