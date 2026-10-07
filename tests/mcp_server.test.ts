@@ -430,3 +430,21 @@ it("語を省いて、種別だけでも引ける（第 793 回）", async () =>
   expect(空, "種別も無いのに返した").toContain("検索語が空です");
   expect(空, "代はりの聞き方を敎へて居ん").toContain("kind / kinds");
 });
+
+it("explain_word は、行が出る時に中身を少し見せる（第 796 回）", async () => {
+  /* 前は「search_deadlines で引けます」とだけ言っていたので、語を調べた人がもう一往復する
+   * 必要があった（AI も同じ）。行は search_deadlines と同じ形（`line()`）で 3 行まで。 */
+  const text = await call("explain_word", { word: "ポスター", scope: "all" });
+  expect(text, "行數を言つて居ん").toMatch(/は [1-9]\d* 行に當たります/);
+  const 行 = text.split("\n").filter((l) => l.startsWith("- 20"));
+  expect(行.length, "中身を見せて居ん").toBeGreaterThan(0);
+  expect(行.length, "見せる行が多過ぎる").toBeLessThanOrEqual(3);
+  /* **件數は search_deadlines と違ふ事が在る**（此方は素の照合で數へ、向こうは語の畳みや
+   * 絞り込みを通す – 第 796 回に實測: `ポスター` は此方 9 行・向こう 0 件）。其の事が説明に
+   * 書いて在る事を見る（同じ數字だと思はせない）。 */
+  const 一覽 = (await client.ask({ jsonrpc: "2.0", id: 6, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name?: string; description?: string }> };
+  };
+  const 説明 = (一覽.result?.tools ?? []).find((t) => t.name === "explain_word")?.description ?? "";
+  expect(説明, "數へ方の違ひを説明して居ん").toContain("素の照合");
+});

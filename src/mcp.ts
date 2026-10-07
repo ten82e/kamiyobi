@@ -416,7 +416,17 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
   const 照合 = Recommender.searchMatcher(Recommender.expandRelativeMonths(word, now), now);
   const 件數 = list.filter((r) => 照合(r.hay) === true).length;
   if (件數 > 0) {
-    return `「${word}」は ${件數} 行に當たります（${名}・案内は出ません）。search_deadlines で其の儘引けます。`;
+    /* 行が出る時は**中身を少し見せる**（第 796 回 – 前は「search_deadlines で引けます」とだけ
+     * 言つて居たので、語を調べた人がもう一往復する必要が在つた。AI も同じ）。行は
+     * `search_deadlines` と同じ形（`line()`）で、3 行まで。 */
+    const 行 = sortRows(list.filter((r) => 照合(r.hay) === true)).slice(0, 3);
+    return [
+      `「${word}」は ${件數} 行に當たります（${名}・案内は出ません）。`,
+      ...行.map((r) => `- ${line(r, now)}`),
+      ...(件數 > 行.length
+        ? [`- …ほか ${件數 - 行.length} 行（search_deadlines で引けます）`]
+        : []),
+    ].join("\n");
   }
   const 案内 = guidance(word, 0);
   /* 打ち直しの見當も渡す（第 763 回 – `search_deadlines` と同じ扱ひに揃へる。語を調べる人が
@@ -539,7 +549,7 @@ const TOOLS = [
   {
     name: "explain_word",
     description:
-      "1 つの語が収録に何行当たるかと、0 行の時に畫面が出す案内文を其の儘返す（人が見る說明と AI の說明を同じにする）。**0 行の時は「打ち直すなら」の次の一手も返す**（件數は實際に引いた時の行數と一致）。",
+      "1 つの語が収録に何行当たるか（**素の照合で數へるので、`search_deadlines` の絞り込みを通した數とは違ふ事が在る**。行が出る時は中身を 3 行まで見せる）と、0 行の時に畫面が出す案内文を其の儘返す（人が見る說明と AI の說明を同じにする）。**0 行の時は「打ち直すなら」の次の一手も返す**（件數は實際に引いた時の行數と一致）。",
     inputSchema: {
       type: "object",
       properties: {
