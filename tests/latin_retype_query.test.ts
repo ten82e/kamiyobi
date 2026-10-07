@@ -144,7 +144,7 @@ describe("欧文の一字違ひに收錄の綴りを見當として出す（第 
   it("畫面の文が打ち手として件數を說ふ", () => {
     const 文 = "camera-redy";
     const out = String(畫面(袋(文, { shorterHits: 見当(文) })));
-    expect(out).toContain("検索語を「camera ready」に打ち替える（収録で 147 件当たります）");
+    expect(out).toContain("検索語を「camera ready」に打ち替える（収録の全体で 147 件当たります）");
     const 音 = String(聲(袋(文, { shorterHits: 見当(文) })));
     expect(音).toContain("camera ready");
     expect(音).toContain("147");

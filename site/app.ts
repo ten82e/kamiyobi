@@ -3616,13 +3616,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
        * 3 桁区切りにしている検査が「素の数字を出している」と見て落ちる – 第 256 回）。 */
       if (hit.how === "split") {
         altTips.push(
-          `検索語を「${word}」に分けて打つ（両方を書く行が収録で ${countJa(hit.count)} 件）`,
+          `検索語を「${word}」に分けて打つ（両方を書く行が収録の全体で ${countJa(hit.count)} 件）`,
         );
       } else if (hit.how === "alone" && word.indexOf(" ") < 0) {
-        altTips.push(`検索語を「${word}」だけに絞る（収録で ${countJa(hit.count)} 件当たります）`);
+        altTips.push(
+          `検索語を「${word}」だけに絞る（収録の全体で ${countJa(hit.count)} 件当たります）`,
+        );
       } else {
         altTips.push(
-          `検索語を「${word}」に打ち替える（収録で ${countJa(hit.count)} 件当たります）`,
+          `検索語を「${word}」に打ち替える（収録の全体で ${countJa(hit.count)} 件当たります）`,
         );
       }
     });
