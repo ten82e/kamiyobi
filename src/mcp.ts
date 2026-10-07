@@ -421,6 +421,40 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
   ].join("\n");
 }
 
+/** 收錄その物の數（第 769 回）。「何件を覆つて居るか」「どの檔案が在るか」を一往復で答へる –
+ * AI が「この收錄は何か」を説明する時、人に檔案を渡す時に要る。**數字は llms.txt と同じ物**を
+ * 同じ入口（`data/snapshot.json`）から數へる。`scope` は取らない（收錄の全體を數へるのが役目）。 */
+function collectionStats(now: number): string {
+  const list = allRows();
+  /* 會議と版は**收錄その物**から數へる（行から數へると「締切を持つ物」だけに成り、建てた時の
+   * 「696 會議 / 2,603 版」と食ひ違ふ – 第 769 回に一度其れを踏んだ）。行は締切の數へに使ふ。*/
+  const 收錄 = JSON.parse(readFileSync(DATA_PATH, "utf8")) as {
+    conferences?: Array<{ editions?: unknown[] }>;
+  };
+  const 會議 = (收錄.conferences ?? []).length;
+  const 版 = (收錄.conferences ?? []).reduce(
+    (n, c) => n + (Array.isArray(c.editions) ? c.editions.length : 0),
+    0,
+  );
+  const 今後 = list.filter((r) => r.t >= now).length;
+  const 日 = list.map((r) => r.localDate || new Date(r.t).toISOString().slice(0, 10)).sort();
+  const 檔案 = [
+    "index.html（畫面。絞り込みと検索）",
+    "upcoming.md / upcoming.html（直近 180 日の表）",
+    "data.csv（1 行 1 締切の平坦な表）",
+    "deadlines.ics（カレンダー。1 日 1 件の終日）",
+    "data.json（收錄の全体。機械可読の正）",
+    "llms.txt（機械向けの索引。何が何處に在るか）",
+  ];
+  return [
+    `收錄（${DATA_PATH.replace(`${ROOT}/`, "")}）: 會議 ${會議} 件 / 版 ${版} 件（生の收錄。建てる時は同じ物を束ねるので、建てた表示とは少し違い得る）/ 締切の行 ${list.length} 行（日付の幅 ${日[0]} 〜 ${日[日.length - 1]}）`,
+    `うち今後の締切: ${今後} 行（${new Date(now).toISOString().slice(0, 10)} 以降）`,
+    "",
+    "配付して居る檔案（サイトと同じ場所に在る）:",
+    ...檔案.map((f) => `- ${f}`),
+  ].join("\n");
+}
+
 const TOOLS = [
   {
     name: "search_deadlines",
@@ -489,6 +523,12 @@ const TOOLS = [
     },
   },
   {
+    name: "collection_stats",
+    description:
+      "この收錄その物の規模（會議數・版數・締切の行數・日付の幅・今後の件數）と、配付して居る檔案の一覽を返す。「この收錄は何か」「何件あるか」「人に渡すなら何を渡せばよいか」に答へる時に使ふ。",
+    inputSchema: { type: "object", properties: {} },
+  },
+  {
     name: "explain_word",
     description:
       "1 つの語が收録に何行當たるかと、0 行の時に畫面が出す案内文を其の儘返す（人が見る說明と AI の說明を同じにする）。**0 行の時は「打ち直すなら」の次の一手も返す**（件數は實際に引いた時の行數と一致）。",
@@ -508,6 +548,7 @@ function callTool(name: string, args: Record<string, unknown>, now: number): str
   if (name === "list_upcoming") return listUpcoming(args, now);
   if (name === "venue_info") return venueInfo(args, now);
   if (name === "explain_word") return explainWord(args, now);
+  if (name === "collection_stats") return collectionStats(now);
   throw new Error(`知らない道具: ${name}`);
 }
 

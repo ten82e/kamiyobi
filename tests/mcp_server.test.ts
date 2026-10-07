@@ -96,12 +96,13 @@ describe("MCP の手順が話せる（第 714 回）", () => {
     expect(pong.result, "ping に返事が無い").toEqual({});
   });
 
-  it("道具の一覽が讀める（四つ・どれも入力の形を持つ）", async () => {
+  it("道具の一覽が讀める（五つ・どれも入力の形を持つ）", async () => {
     const res = (await client.ask({ jsonrpc: "2.0", id: 3, method: "tools/list" })) as {
       result?: { tools?: Array<{ name?: string; description?: string; inputSchema?: unknown }> };
     };
     const tools = res.result?.tools ?? [];
     expect(tools.map((t) => t.name).sort()).toEqual([
+      "collection_stats",
       "explain_word",
       "list_upcoming",
       "search_deadlines",
@@ -386,4 +387,23 @@ it("索引（llms.txt の組み立て）が、道具の説明と同じ事を言�
   for (const 語 of ["次の一手まで返す", "切り詰めは默らない", "今後の物から"]) {
     expect(build, `索引に「${語}」の話が無い（道具の説明とずれている）`).toContain(語);
   }
+});
+
+it("collection_stats が、收錄その物の數と檔案を返す（第 769 回）", async () => {
+  /* AI が「この收錄は何か」「人に渡すなら何を渡せばよいか」に一往復で答へられるようにした。
+   * 數字は出典（`data/snapshot.json`）を名乘り、人が讀む檔案を並べる。 */
+  const text = await call("collection_stats", {});
+  expect(text, "會議の數を返して居ん").toMatch(/會議 \d+ 件/);
+  expect(text, "締切の行を返して居ん").toMatch(/締切の行 [\d,]+ 行/);
+  expect(text, "出典を名乘つて居ん").toContain("data/snapshot.json");
+  for (const 檔案 of ["upcoming.md", "data.csv", "deadlines.ics", "data.json", "llms.txt"]) {
+    expect(text, `${檔案} を並べて居ん`).toContain(檔案);
+  }
+  /* 會議の數は、收錄その物（snapshot）の會議數と一致する（行から數へると減る – 第 769 回に
+   * 一度それを踏んだ）。 */
+  const 收錄 = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
+    conferences?: unknown[];
+  };
+  const 數 = (收錄.conferences ?? []).length;
+  expect(text, "會議の數が收錄と合はん").toContain(`會議 ${數} 件`);
 });
