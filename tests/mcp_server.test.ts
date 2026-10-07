@@ -399,7 +399,7 @@ it("collection_stats が、收錄その物の數と檔案を返す（第 769 回
   /* AI が「この收錄は何か」「人に渡すなら何を渡せばよいか」に一往復で答へられるようにした。
    * 數字は出典（`data/snapshot.json`）を名乘り、人が讀む檔案を並べる。 */
   const text = await call("collection_stats", {});
-  expect(text, "會議の數を返して居ん").toMatch(/會議 \d+ 件/);
+  expect(text, "会議の數を返して居ん").toMatch(/会議 \d+ 件/);
   expect(text, "締切の行を返して居ん").toMatch(/締切の行 [\d,]+ 行/);
   expect(text, "出典を名乘つて居ん").toContain("data/snapshot.json");
   for (const 檔案 of ["upcoming.md", "data.csv", "deadlines.ics", "data.json", "llms.txt"]) {
@@ -411,5 +411,5 @@ it("collection_stats が、收錄その物の數と檔案を返す（第 769 回
     conferences?: unknown[];
   };
   const 數 = (收錄.conferences ?? []).length;
-  expect(text, "會議の數が收錄と合はん").toContain(`會議 ${數} 件`);
+  expect(text, "会議の數が収録と合はん").toContain(`会議 ${數} 件`);
 });

@@ -447,7 +447,7 @@ function collectionStats(now: number): string {
     "llms.txt（機械向けの索引。何が何處に在るか）",
   ];
   return [
-    `收錄（${DATA_PATH.replace(`${ROOT}/`, "")}）: 會議 ${會議} 件 / 版 ${版} 件（生の收錄。建てる時は同じ物を束ねるので、建てた表示とは少し違い得る）/ 締切の行 ${list.length} 行（日付の幅 ${日[0]} 〜 ${日[日.length - 1]}）`,
+    `収録（${DATA_PATH.replace(`${ROOT}/`, "")}）: 会議 ${會議} 件 / 版 ${版} 件（生の収録。建てる時は同じ物を束ねるので、建てた表示とは少し違い得る）/ 締切の行 ${list.length} 行（日付の幅 ${日[0]} 〜 ${日[日.length - 1]}）`,
     `うち今後の締切: ${今後} 行（${new Date(now).toISOString().slice(0, 10)} 以降）`,
     "",
     "配付して居る檔案（サイトと同じ場所に在る）:",
@@ -630,7 +630,7 @@ function main(): void {
     process.stdout.write(
       [
         "kamiyobi の MCP サーバ（読み取り専用・stdio）。",
-        "  AI から: MCP の客户として此の檔案を起動する（`node src/mcp.ts`）。",
+        "  AI から: MCP の客户として此のファイルを起動する（`node src/mcp.ts`）。",
         "  人から: 道具の名を引數に書くと 1 回だけ走らせて文字を出す。",
         `  道具: ${TOOLS.map((t) => t.name).join(" / ")}`,
         '  例: node src/mcp.ts search "セキュリティ" 5',
