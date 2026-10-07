@@ -190,12 +190,29 @@ describe("數字と案内が畫面と同じ（第 714 回）", () => {
   });
 
   it("會議の版と締切を、名前の一部から引ける", async () => {
-    const 一つ = rows.find((r) => r.conf.title.includes("KDD"));
-    expect(一つ, "此の檢査の前提（KDD が收錄に在る）が崩れた").toBeTruthy();
-    const text = await call("venue_info", { name: "KDD", scope: "all" });
+    const 一つ = rows.find((r) => r.conf.title.includes("AsiaCCS"));
+    expect(一つ, "此の檢査の前提（AsiaCCS が收錄に在る）が崩れた").toBeTruthy();
+    const text = await call("venue_info", { name: "AsiaCCS", scope: "all" });
     expect(text, "會議の名を返して居ない").toContain("會議:");
     expect(text, "版を返して居ない").toContain("版:");
     expect(text, "締切の行を返して居ない").toMatch(/\d{4}-\d{2}-\d{2}/);
+  });
+
+  it("會議は略稱でも引ける（key で一意に指せる）", async () => {
+    /* 實測 2026-10-06: 略稱（`KDD` `CCS`）では見付からなかつた – 題は長く、略稱は別の欄に在る。*/
+    const text = await call("venue_info", { key: "sigkdd", scope: "all" });
+    expect(text, "key で引け無い").toContain("會議:");
+    expect(text, "分野を日本語で出して居ん（畫面と同じ語）").toMatch(
+      /分野: (人工知能|データベース)/,
+    );
+    expect(text, "機械向けのキーの侭").not.toMatch(/分野: (ai|db|hpc)$/m);
+  });
+
+  it("曖昧な名では決め打たず、候補を並べる", async () => {
+    /* `KDD` は kdd・sigkdd・pakdd・ecmlpkdd に當たる。決め打つと別の會議の版を混ぜて返す。*/
+    const text = await call("venue_info", { name: "KDD", scope: "all" });
+    expect(text, "候補を並べて居ん").toContain("會議が當たりました");
+    expect(text, "key を添へて居ん").toContain("（key: ");
   });
 
   it("收錄に無い會議は、無いと言ふ（在る樣に裝はない）", async () => {

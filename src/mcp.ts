@@ -225,12 +225,34 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
   const name = String(args.name ?? "").trim();
   if (!key && !name) return "key（會議の識別子）か name（會議名の一部）をください。";
   const { list, 名 } = pick(args.scope ?? "all");
+  /* 會議は**略稱で打たれる**のが普通（實測 2026-10-06: `KDD` `CCS` `AsiaCCS` は此の matching では
+   * 見付からなかつた – 表の題は「ACM SIGKDD Conference …」の樣に長く、略稱は別の欄に在る）。
+   * 題・略稱・識別子の三つを見る（第 726 回）。*/
+  const 求 = name.toLowerCase();
   const 的 = (r: Row): boolean =>
-    key ? r.conf.key === key : r.conf.title.toLowerCase().includes(name.toLowerCase());
+    key
+      ? r.conf.key.toLowerCase() === String(key).toLowerCase()
+      : r.conf.title.toLowerCase().includes(求) ||
+        String(r.conf.acronym ?? "")
+          .toLowerCase()
+          .includes(求) ||
+        r.conf.key.toLowerCase().includes(求);
   const hit = list.filter(的);
   if (!hit.length) {
     const 會 = [...new Set(list.map((r) => r.conf.key))];
     return `その會議は收録に在りません（收録 ${會.length} 會議）。會議名の一部で試すか、search_deadlines で引いてください。`;
+  }
+  /* 曖昧な打ち方（`KDD` は kdd・sigkdd・pakdd・ecmlpkdd に當たる）では**一つの會議に決め打たない**。
+   * 決め打つと、別の會議の版を一つに混ぜて返す（實測 2026-10-06 にそう成つた – 第 726 回）。
+   * 名乘りが割れた時は候補を並べて、細く打ち直して貰ふ。*/
+  const 會々 = [...new Set(hit.map((r) => r.conf.key))];
+  if (會々.length > 1) {
+    const 名乗り = [...new Map(hit.map((r) => [r.conf.key, r.conf.title])).entries()];
+    return [
+      `「${key || name}」には ${會々.length} の會議が當たりました。名を細く打つか、key で指してください:`,
+      ...名乗り.slice(0, 20).map(([k, t]) => `- ${t}（key: ${k}）`),
+      ...(名乗り.length > 20 ? [`- ほか ${名乗り.length - 20} 件`] : []),
+    ].join("\n");
   }
   const 一つ = hit[0];
   const 版 = [...new Set(hit.map((r) => r.ed.id))].sort();
@@ -238,7 +260,13 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
   return [
     `會議: ${一つ.conf.title}（key: ${一つ.conf.key}${一つ.conf.acronym ? `・${一つ.conf.acronym}` : ""}）`,
     `版: ${版.join(" / ")}`,
-    `分野: ${(一つ.conf.categories ?? []).join("・") || "未確認"}`,
+    /* 分野は畫面と同じ日本語で出す（第 726 回 – 機械向けのキー（`ai`）の侭では、人が讀む時に
+     * 畫面のチップと結び付かん。同じ入口（`categoryLabelJa`）から取る – 書き寫すとずれる）。*/
+    `分野: ${
+      (一つ.conf.categories ?? [])
+        .map((key) => String(Recommender.categoryLabelJa(key) ?? key))
+        .join("・") || "未確認"
+    }`,
     "",
     "締切と會期（日本時間の早い順）:",
     ...見本.slice(0, 60),
@@ -446,7 +474,7 @@ function main(): void {
       ? { query: rest[0], word: rest[0], limit: rest[1] }
       : 名 === "list_upcoming"
         ? { days: rest[0], kind: rest[1] }
-        : { key: rest[0], name: rest[0] };
+        : { name: rest[0] };
   process.stdout.write(`${callTool(名, args, now)}\n`);
 }
 
