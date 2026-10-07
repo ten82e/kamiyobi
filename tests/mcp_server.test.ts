@@ -208,6 +208,36 @@ describe("數字と案内が畫面と同じ（第 714 回）", () => {
     expect(text, "機械向けのキーの侭").not.toMatch(/分野: (ai|db|hpc)$/m);
   });
 
+  it("種別は all で全部、知らないキーは其の旨を言ふ（第 727 回）", async () => {
+    /* 實測 2026-10-06: `kinds: ["all"]` を彈いて居たので、**全ての種別を見る道が無く**、
+     * 「kinds を試してください」と言はれても試す物が無かつた。未知のキーは 0 件に成るので、
+     * 默らず「知らない種別」と名指す（AI が打ち直せる樣に）。*/
+    const 全部 = await call("search_deadlines", {
+      query: "セキュリティ",
+      kinds: ["all"],
+      scope: "all",
+      limit: 1,
+    });
+    const 既定 = await call("search_deadlines", { query: "セキュリティ", scope: "all", limit: 1 });
+    const 數 = (t: string): number => Number(/に當たる締切: (\d+) 件/.exec(t)?.[1] ?? -1);
+    expect(數(全部), "all で絞られて居る").toBeGreaterThan(數(既定));
+    const 未知 = await call("search_deadlines", {
+      query: "セキュリティ",
+      kinds: ["xxx"],
+      scope: "all",
+      limit: 1,
+    });
+    expect(未知, "知らない種別を名指して居ん").toContain("知らない種別");
+    /* 既定では屆かん種別も、名指せば屆く（camera_ready は既定の三つに入らん）。 */
+    const カメラ = await call("search_deadlines", {
+      query: "カメラレディ",
+      kinds: ["camera_ready"],
+      scope: "all",
+      limit: 1,
+    });
+    expect(カメラ, "名指した種別に屆いて居ん").toMatch(/に當たる締切: [1-9]\d* 件/);
+  });
+
   it("曖昧な名では決め打たず、候補を並べる", async () => {
     /* `KDD` は kdd・sigkdd・pakdd・ecmlpkdd に當たる。決め打つと別の會議の版を混ぜて返す。*/
     const text = await call("venue_info", { name: "KDD", scope: "all" });

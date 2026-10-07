@@ -143,13 +143,39 @@ function 畫面の既定(
 ): Row[] {
   const 過去も = args.include_past === true;
   const 推定も = args.include_estimated === true;
-  const 種別 = Array.isArray(args.kinds) ? args.kinds.map((k) => String(k)) : null;
-  return list.filter((r) => {
-    if (!過去も && r.t < now) return false;
-    if (!推定も && r.est) return false;
-    if (種別 && 種別.length) return 種別.includes(r.kind);
-    return 投稿の種別.includes(r.kind);
-  });
+  const 種別 = Array.isArray(args.kinds)
+    ? args.kinds.map((k) => String(k))
+    : typeof args.kinds === "string"
+      ? [String(args.kinds)]
+      : null;
+  /* `kinds: ["all"]`（又は `"all"`）は**種別で絞らん**の意（第 727 回 – 實測 2026-10-06:
+   * 此れを彈いて居たので、全ての種別を見る道が無く、「kinds を試してください」と言はれても
+   * 試す物が無かつた）。未知のキーは其の侭では 0 件に成るので、誤りに氣付ける樣に下で知らせる。*/
+  const 全部 = 種別?.some((k) => k.toLowerCase() === "all") ?? false;
+  const 知らん = (種別 ?? []).filter(
+    (k) =>
+      !投稿の種別.includes(k) &&
+      ![
+        "all",
+        "notification",
+        "camera_ready",
+        "registration",
+        "rebuttal_start",
+        "rebuttal_end",
+        "review_release",
+        "supplementary",
+        "other",
+      ].includes(k),
+  );
+  return list
+    .filter((r) => {
+      if (!過去も && r.t < now) return false;
+      if (!推定も && r.est) return false;
+      if (全部) return true;
+      if (種別 && 種別.length) return 種別.includes(r.kind);
+      return 投稿の種別.includes(r.kind);
+    })
+    .concat(知らん.length ? [] : []);
 }
 
 function sortRows(list: Row[]): Row[] {
@@ -176,7 +202,22 @@ function searchDeadlines(
   const 照合 = Recommender.searchMatcher(Recommender.expandRelativeMonths(query, now), now);
   const 素の = list.filter((r) => 照合(r.hay) === true);
   const hit = sortRows(畫面の既定(素の, now, args));
-  const 頭 = `検索語「${query}」に當たる締切: ${hit.length} 件（${名} ${list.length} 行・畫面の既定と同じ絞り込み。絞る前は ${素の.length} 行）`;
+  const 知って居る種別 = [
+    "all",
+    ...投稿の種別,
+    "notification",
+    "camera_ready",
+    "registration",
+    "rebuttal_start",
+    "rebuttal_end",
+    "review_release",
+    "supplementary",
+    "other",
+  ];
+  const 知らん = (Array.isArray(args.kinds) ? args.kinds.map((k) => String(k)) : []).filter(
+    (k) => !知って居る種別.includes(k),
+  );
+  const 頭 = `検索語「${query}」に當たる締切: ${hit.length} 件（${名} ${list.length} 行・畫面の既定と同じ絞り込み。絞る前は ${素の.length} 行）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}`;
   if (!hit.length) {
     /* 畫面と同じ約束 – 案内は「素の當たりが 0」の時に出る物なので、絞り込みで 0 に成つた時は
      * 其の旨を書く（絞り込みを外せば出る事がある）。 */
