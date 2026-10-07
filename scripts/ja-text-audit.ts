@@ -66,7 +66,11 @@ function 目安を決める(行: string): 目安 {
   ) {
     return "コードらしい";
   }
-  if (/^\s*["'`][^"'`]*["'`],?\s*$/.test(行) || /words:|\[\s*$|寄せ|\bretype\b/.test(行)) {
+  if (
+    /^\s*\[/.test(行) ||
+    /^\s*["'`][^"'`]*["'`],?\s*$/.test(行) ||
+    /words:|\[\s*$|寄せ|\bretype\b/.test(行)
+  ) {
     return "鍵らしい";
   }
   return "文らしい";
