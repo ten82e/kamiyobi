@@ -338,7 +338,12 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
   }
   const 一つ = hit[0];
   const 版 = [...new Set(hit.map((r) => r.ed.id))].sort();
-  const 見本 = sortRows(hit).map((r) => line(r, now));
+  /* **今後の物を先に**並べる（第 751 回 – 實測 2026-10-06: `venue sigkdd` の一覽が 2021 年から
+   * 始まつて居た。人は「次はいつか」を聞いて居るので、過去を先に讀ませない。同じ側では日の早い順）。*/
+  const 見本 = sortRows(hit)
+    .slice()
+    .sort((a, b) => Number(a.t < now) - Number(b.t < now) || a.t - b.t)
+    .map((r) => line(r, now));
   return [
     `會議: ${一つ.conf.title}（key: ${一つ.conf.key}${一つ.conf.acronym ? `・${一つ.conf.acronym}` : ""}）`,
     `版: ${版.join(" / ")}`,
