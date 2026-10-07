@@ -347,3 +347,14 @@ it("explain_word でも、同じ「打ち直すなら」を渡す（第 763 回�
   const 有 = await call("explain_word", { word: "ポスター", scope: "all" });
   expect(有, "行が出る語に提案を付けた").not.toContain("打ち直すなら");
 });
+
+it("會議の一覽の見出しが、並びと切り詰めを言ふ（第 765 回）", async () => {
+  /* 第 751 回に「今後の物が先」へ變へたので、見出しの「日本時間の早い順」だけでは過去が先に
+   * 來る意味に讀めた。切り詰め（60 件）も默らない – 言はないと「これで全部」と讀まれる。 */
+  const text = await call("venue_info", { key: "sigkdd", scope: "all" });
+  expect(text, "並びの説明が古い").toContain("今後の物から");
+  /* 切り詰めた時だけ件數を添へる（此の會議は 60 件に滿たないので付かない）。 */
+  const 行數 = text.split("\n").filter((l) => /^\d{4}-\d{2}-\d{2}/.test(l)).length;
+  if (行數 >= 60) expect(text, "切り詰めを默つて居る").toContain("のうち 60 件");
+  else expect(text, "切り詰めて居ないのに件數を添へた").not.toContain("のうち 60 件");
+});
