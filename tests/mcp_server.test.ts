@@ -128,7 +128,13 @@ describe("AI 向けの索引が、MCP の在り處を書いて居る（第 714 �
      * 檢べられる – 第 714 回）。*/
     const build = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
     expect(build, "llms.txt に AI 向けの節が無い").toContain("## AI から引く（MCP）");
-    for (const 名 of ["search_deadlines", "list_upcoming", "venue_info", "explain_word"]) {
+    for (const 名 of [
+      "search_deadlines",
+      "list_upcoming",
+      "venue_info",
+      "explain_word",
+      "collection_stats",
+    ]) {
       expect(build, `道具の名が書かれて居ない: ${名}`).toContain(名);
     }
     /* 索引の説明が、實装とずれて居ない事（第 731 回 – 第 726〜728 回に足した物）。
