@@ -1704,3 +1704,119 @@ it("道具の説明と索引の例に、データ依存の件數を書かない�
     expect(形.test(節), `索引の${名}を固めた數で書いて居る`).toBe(false);
   expect(節, "索引の例の形が消えて居る").toContain("N 件当たります");
 });
+
+/** 畫面（`app.js`）の 0 件案內を、最小の材料で拔き出して走らせる（第 884 回の突き合はせ）。 */
+function 畫面の受皿(query: string): string {
+  const app = siteRuntime();
+  const s = app;
+  const i = s.indexOf("function emptyDeadlineHint");
+  if (i < 0) return "";
+  let d = 0;
+  let k = s.indexOf("{", i);
+  while (true) {
+    if (s[k] === "{") d += 1;
+    else if (s[k] === "}") {
+      d -= 1;
+      if (d === 0) break;
+    }
+    k += 1;
+  }
+  const countJa = (n: number): string => n.toLocaleString("ja-JP");
+  const fn = new Function(
+    "Recommender",
+    "countJa",
+    `${s.slice(i, k + 1)}\nreturn emptyDeadlineHint;`,
+  )(Recommender, countJa) as (f: Record<string, unknown>) => string;
+  const 品書 = JSON.parse(readFileSync(join(REPO_ROOT, "public", "catalog.json"), "utf8")) as {
+    categories?: Record<string, string>;
+    conferences?: unknown[];
+  };
+  const rows = Recommender.candidateRows(品書 as never) as Array<{ hay: string }>;
+  return fn({
+    window: "all",
+    past: false,
+    cats: 0,
+    domestic: false,
+    online: false,
+    rank: "",
+    kind: "",
+    est: false,
+    hidden: {},
+    hiddenKindWords: [],
+    urlQuery: Recommender.looksLikeUrlQuery(query),
+    query,
+    termCounts: Recommender.queryTermCounts(
+      query,
+      rows.map((r) => r.hay),
+      Date.now(),
+    ),
+    catalogConferences: rows.length,
+    clearable: true,
+    pastShown: false,
+    loadedLastDay: "",
+    recordLastDay: "",
+    horizonDays: 0,
+    nameOnly: null,
+    categoryNames: Object.keys(品書.categories ?? {})
+      .sort((a, b) => {
+        const la = Recommender.categoryChipLabelJa(a, String(品書.categories?.[a] || ""));
+        const lb = Recommender.categoryChipLabelJa(b, String(品書.categories?.[b] || ""));
+        return la.localeCompare(lb, "ja") || a.localeCompare(b);
+      })
+      .map((k) => Recommender.categoryChipLabelJa(k, String(品書.categories?.[k] || ""))),
+    queryMatch: { catalog: 0, journal: 0 },
+  });
+}
+
+it("どの案内にも當たらなかつた問に、此の表が何を出す画面なのかを言ふ（第 884 回）", async () => {
+  /* 畫面は「別の語で試す」の受皿に、①此の表が何を出す画面なのか（催し物の名前・締切の日・
+   * 分野・種別・開催地・參加形式 – 第 240 回）、②**分野の欄が何を幾つ持つか**（第 679 回 –
+   * `脳科學` の樣な情報處理の九分野外の語でも空振りさせない爲に名前を並べる）を置く。
+   * MCP は默つて居た – 實測 2026-10-18: `脳科学` は見出しと古さの斷りしか返さかつた。 */
+  const text = await call("search_deadlines", { query: "脳科学" });
+  expect(text, "此の表が何を出す畫面なのかを言つて居ん").toContain(
+    "この表が出すのは催し物の名前・締切の日・分野・種別・開催地・参加形式で",
+  );
+  expect(text, "他の語で試す事を言つて居ん").toContain(
+    "別の語で試す（分野名・主題・開催地の日本語でも引けます）",
+  );
+  /* 分野の名は**品書が持つ地圖**から、畫面のと同じ順・同じ札で（固定の一覽を書くと
+   * 增えた分野が落ちる – 第 679 回）。 */
+  const 品書 = JSON.parse(readFileSync(join(REPO_ROOT, "public", "catalog.json"), "utf8")) as {
+    categories?: Record<string, string>;
+  };
+  const 地圖 = 品書.categories ?? {};
+  const 期待 = Object.keys(地圖)
+    .sort((a, b) => {
+      const la = Recommender.categoryChipLabelJa(a, String(地圖[a] || ""));
+      const lb = Recommender.categoryChipLabelJa(b, String(地圖[b] || ""));
+      return la.localeCompare(lb, "ja") || a.localeCompare(b);
+    })
+    .map((k) => Recommender.categoryChipLabelJa(k, String(地圖[k] || "")));
+  expect(期待.length, "此の檢查の前提（品書の分野）が崩れた").toBeGreaterThan(0);
+  expect(text, `分野の欄が畫面と同じ言ひ方でない: ${期待.join("・")}`).toContain(
+    `分野の欄は${期待.join("・")}の${期待.length}種だけで`,
+  );
+  /* 畫面の文と突き合はせる（拔き出した `emptyDeadlineHint` に同じ問を通す）。 */
+  const 畫面の文 = 畫面の受皿("脳科学");
+  if (畫面の文) {
+    /* 兩方に「この表が出すのは」が在る事まで（文言は畫面が正本）。 */
+    expect(畫面の文, "畫面の文が變はつた（此の檢查を見直す）").toContain(
+      "この表が出すのは催し物の名前",
+    );
+  }
+  /* 他の案内が立つ問には重ねない（二度言はない – 第 530 回と同じ決めごと）。 */
+  for (const 問 of ["ネットワーク GPU", "セキュリティ 福岡", "カメラレディ", "採否通知"]) {
+    const 答 = await call("search_deadlines", { query: 問 });
+    expect(
+      答.includes("この表が出すのは") &&
+        !答.includes("見当たりません") &&
+        !答.includes("種別に当たります"),
+      `「${問}」に受皿を重ねた`,
+    ).toBe(false);
+  }
+  /* 「打ち直すなら」が立つ時も讓る。 */
+  const 打ち直し = await call("search_deadlines", { query: "参加費が高い" });
+  if (打ち直し.includes("打ち直すなら"))
+    expect(打ち直し, "打ち直しが立つのに受皿を重ねた").not.toContain("この表が出すのは");
+});
