@@ -48,7 +48,7 @@ describe("幅の語に口語の語尾を繋いだ打ち方", () => {
   it("指し名の形は、幅の語と欄の名前を並べた打ち方へ送る", () => {
     const 案内 = Recommender.uiWordNoteJa("来週のやつ");
     expect(案内).toContain("今週 締切");
-    expect(案内).toContain("單體で");
+    expect(案内).toContain("単体で");
     /* 「やつ」が何のことかを勝手に決めんと決める（締切の推測をせんの約束）。*/
     expect(案内).toContain("決まりません");
   });
@@ -111,7 +111,7 @@ describe("幅の語に口語の語尾を繋いだ打ち方", () => {
       expect(頭の列, `頭に載せてしまつた: ${頭}`).not.toContain(頭);
       /* 他の家が喋つて良い（實測 – `去年のものだけ` は收錄の年の幅の斷りが立つ – 第 500 回）が、
        * この勸め（幅の語を單體で打つ）だけは立たん事。*/
-      expect(Recommender.uiWordNoteJa(文), `この勸めを立てた: ${文}`).not.toContain("を單體で");
+      expect(Recommender.uiWordNoteJa(文), `この勸めを立てた: ${文}`).not.toContain("を単体で");
     }
     /* 同じ打ち方で、單體で行が出る語は斷られる（其の方の語が载つて居る證）。*/
     expect(件("今週")).toBeGreaterThan(0);

@@ -61,7 +61,7 @@ describe("並び方・名前の形・延伸前の日付の打ち手（第 643 �
     }
     for (const 語 of 名前) {
       const 案 = 案内(語);
-      expect(案, `"${語}" が名前のもつ形を敎へて居ん`).toContain("略稱");
+      expect(案, `"${語}" が名前のもつ形を敎へて居ん`).toContain("略称");
       expect(案, `"${語}" が正式名の話をして居ん`).toContain("正式");
     }
     for (const 語 of 延伸前) {
