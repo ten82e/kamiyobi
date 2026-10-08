@@ -96,7 +96,7 @@ describe("MCP の手順が話せる（第 714 回）", () => {
     expect(pong.result, "ping に返事が無い").toEqual({});
   });
 
-  it("道具の一覽が讀める（五つ・どれも入力の形を持つ）", async () => {
+  it("道具の一覽が讀める（六つ・どれも入力の形を持つ）", async () => {
     const res = (await client.ask({ jsonrpc: "2.0", id: 3, method: "tools/list" })) as {
       result?: { tools?: Array<{ name?: string; description?: string; inputSchema?: unknown }> };
     };
@@ -105,6 +105,7 @@ describe("MCP の手順が話せる（第 714 回）", () => {
       "collection_stats",
       "explain_word",
       "list_upcoming",
+      "recommend_venues",
       "search_deadlines",
       "venue_info",
     ]);
@@ -134,6 +135,7 @@ describe("AI 向けの索引が、MCP の在り處を書いて居る（第 714 �
       "venue_info",
       "explain_word",
       "collection_stats",
+      "recommend_venues",
     ]) {
       expect(build, `道具の名が書かれて居ない: ${名}`).toContain(名);
     }
@@ -524,12 +526,19 @@ it("索引が、data.csv の列名と data.json の鍵の關係を書いてい�
   expect(build, "實測の列數が索引に無い").toContain("28 列のうち 24 列が此の規則で辿れる");
 });
 
-it("索引が、5 道具の引數の名を書いている（第 843 回）", () => {
+it("索引が、6 道具の引數の名を書いている（第 843 回・第 857 回に推薦の分を足した）", () => {
   /* 實測 2026-10-06: 索引は kinds / kind / scope / key / name / word は書いて居たが、query・
    * limit・include_past・include_estimated・days を書いて居なかつた（道具の schema を見ない
    * 讀み手には、何が渡せるか分からん）。 */
   const build = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
-  for (const 名 of ["`query`", "`limit`", "`include_past`", "`include_estimated`", "`days`"]) {
+  for (const 名 of [
+    "`query`",
+    "`limit`",
+    "`include_past`",
+    "`include_estimated`",
+    "`days`",
+    "`paper`",
+  ]) {
     expect(build, `${名} が索引に無い`).toContain(名);
   }
 });
@@ -771,4 +780,37 @@ it("MCP が返す文に、舊字體を混ぜない（第 854 回）", () => {
     const 混ざり = [...new Set([...文].filter((c) => 舊字體.includes(c)))];
     expect(混ざり.join(""), `src/mcp.ts:${行} の文に舊字體: ${文.slice(0, 60)}`).toBe("");
   }
+});
+
+it("投稿先の推薦が、畫面と同じ核で出る（第 857 回）", async () => {
+  /* 畫面の「投稿先を探す」は此の計畫の看板だが、MCP に出口が無く、AI は「この論文は何處に
+   * 出せる?」に此の收錄を使って答へられなかつた。**同じ推薦核**（`venueRecommendations`）を
+   * 使ふので、候補も順も畫面と一致する（語の一致だけの道 – 埋め込みは讀まない）。 */
+  const 索引 = JSON.parse(
+    readFileSync(join(REPO_ROOT, "public", "recommendation-index.json"), "utf8"),
+  ) as { conferences?: unknown[]; reranker?: unknown };
+  expect(索引.conferences?.length, "此の檢査の前提（建てた推薦の索引）が崩れた").toBeGreaterThan(0);
+  Recommender.setNameIdf(Recommender.buildNameIdf(索引.conferences ?? []));
+  Recommender.setReranker(索引.reranker ?? null);
+  const 題 =
+    "Time-Sensitive Networking Scheduling for Deterministic Industrial Networks | tsn, real-time, scheduling, deterministic";
+  const now = Date.now();
+  const 正 = Recommender.venueRecommendations(
+    Recommender.candidateRows(索引 as never),
+    Recommender.parsePaperLines(題),
+    null,
+    now,
+    { fieldedLexical: true },
+  ).filter((r) => r.fit.score >= 10);
+  expect(正.length, "此の檢査の前提（候補が出る題名）が崩れた").toBeGreaterThan(0);
+  const text = await call("recommend_venues", { paper: 題, limit: 5 });
+  expect(text, "件數が核と違ふ").toContain(`に合う投稿先: ${正.length} 件`);
+  expect(text, "先頭の候補が核と違ふ").toContain(String(正[0].row.conf.title));
+  /* **語の一致だけ**である事を頭で斷る（人が見る數と AI が言ふ數が違ふのが一番惡い）。 */
+  expect(text, "語の一致だけである事を言つて居ん").toContain("語の一致だけ");
+  expect(text, "切り詰めを默つて居る").toContain("残り");
+  /* 題名が空なら、打ち方を敎へる（默らない）。 */
+  const 空 = await call("recommend_venues", { paper: "" });
+  expect(空, "空の題名に答へて居ん").toContain("論文の題名");
+  expect(空, "入力の形を敎へて居ん").toContain("題名 | キーワード");
 });

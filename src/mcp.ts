@@ -25,6 +25,9 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
  * 持たない手元）収録の全体（`data/snapshot.json`）へ落ちて、其の旨を言ふ。 */
 const CATALOG_PATH = join(ROOT, "public", "catalog.json");
 const DATA_PATH = join(ROOT, "data", "snapshot.json");
+/* 投稿先推薦の索引（建てた物）。**畫面が讀むのと同じ檔案**を使ふ – 別の索引を持つと、
+ * AI が擧げる候補と畫面の候補が違ふ（第 714 回の「同じ検索核」と同じ理由）。 */
+const RECOMMENDATION_PATH = join(ROOT, "public", "recommendation-index.json");
 const SERVER_NAME = "kamiyobi";
 const SERVER_VERSION = "1.0.0";
 const DEFAULT_PROTOCOL = "2025-06-18";
@@ -545,6 +548,78 @@ function collectionStats(now: number): string {
   ].join("\n");
 }
 
+/* ---- 投稿先の推薦（第 857 回）---- */
+
+/* 畫面の「投稿先を探す」は、論文の題名・概要から候補を出す – 此の計畫の看板だが、MCP には
+ * 出口が無く、AI は「この論文どこに出せる?」に此の收錄を使って答へられなかつた。
+ *
+ * **語の一致だけ**で評價する（意味檢索の埋め込みは讀まない – 模型を抱へると此の道具が重く
+ * 成る。畫面も埋め込みが無い時は同じ道に落ちる）。其の旨は返り値の頭に書く（人が見る數と
+ * AI が言ふ數が違ふのが一番惡い – 埋め込みを使へる畫面では點が少し動く）。 */
+let recommendationCache: { rows: Row[]; conferences: unknown[] } | null | undefined;
+
+/** 推薦の索引を一度だけ讀み、同じ下準備（名前の IDF と reranker）をして行を作る。 */
+function recommendation(): { rows: Row[]; conferences: unknown[] } | null {
+  if (recommendationCache !== undefined) return recommendationCache;
+  try {
+    const 品書 = JSON.parse(readFileSync(RECOMMENDATION_PATH, "utf8")) as {
+      conferences?: unknown[];
+      reranker?: unknown;
+    };
+    const conferences = Array.isArray(品書.conferences) ? 品書.conferences : [];
+    if (!conferences.length) throw new Error("conferences が空");
+    Recommender.setNameIdf(Recommender.buildNameIdf(conferences));
+    Recommender.setReranker(品書.reranker ?? null);
+    recommendationCache = {
+      rows: Recommender.candidateRows(品書 as never) as unknown as Row[],
+      conferences,
+    };
+  } catch {
+    recommendationCache = null;
+  }
+  return recommendationCache;
+}
+
+function recommendVenues(args: { paper?: unknown; limit?: unknown }, now: number): string {
+  const paper = String(args.paper ?? "").trim();
+  if (!paper)
+    return [
+      "論文の題名か概要をください。",
+      "画面の入力と同じ形（`題名 | キーワード, キーワード | 投稿先`）が一番よく当たります（1 行だけでも構ひません）。",
+    ].join("\n");
+  const 索引 = recommendation();
+  if (!索引)
+    return `推薦の索引（${RECOMMENDATION_PATH.replace(`${ROOT}/`, "")}）が読めません。建てた物（\`npm run build\`）と同じ場所に置いてから使つてください。`;
+  const limit = Math.min(Math.max(Number(args.limit) || 10, 1), 30);
+  const lines = Recommender.parsePaperLines(paper);
+  if (!lines.length)
+    return "論文の題名を読み取れませんでした。題名を 1 行でください（`|` でキーワードと投稿先を添へられます）。";
+  const 候補 = Recommender.venueRecommendations(索引.rows, lines, null, now, {
+    fieldedLexical: true,
+  }).filter((r) => r.fit.score >= 10);
+  const 題 = lines
+    .map((l) => String(l.title ?? "").trim())
+    .filter(Boolean)
+    .join(" / ");
+  const 頭 = `「${題}」に合う投稿先: ${候補.length} 件（語の一致だけで評価 – 意味検索の埋め込みは読まないので、埋め込みを使へる画面とは点が少し動く事がある）`;
+  if (!候補.length)
+    return [
+      頭,
+      "",
+      "この題名の語と重なる投稿先は見付かりませんでした。題名に加へて、分野の語やキーワード（`tsn, real-time, scheduling` の様に）を添へると当たりやすくなります。",
+    ].join("\n");
+  const 見本 = 候補.slice(0, limit);
+  return [
+    頭,
+    `（一致評価の高い順。${limit} 件まで表示${候補.length > limit ? `・残り ${候補.length - limit} 件` : ""}）`,
+    "",
+    ...見本.map((r, i) => {
+      const 評價 = `${String(r.fit.label ?? "評価保留")}（${Number(r.fit.score) || 0} 点）`;
+      return `${i + 1}. 一致評価 ${評價}｜${line(r.row as unknown as Row, now)}`;
+    }),
+  ].join("\n");
+}
+
 const TOOLS = [
   {
     name: "search_deadlines",
@@ -625,6 +700,23 @@ const TOOLS = [
     inputSchema: { type: "object", properties: {} },
   },
   {
+    name: "recommend_venues",
+    description:
+      "投稿予定の論文（題名・キーワード・概要）に合う投稿先を、一致評価の高い順に返す（画面の「投稿先を探す」と同じ推薦核を使ふ）。**語の一致だけで評価する**ので、意味検索の埋め込みを使へる画面とは点が少し動く事がある（其の旨は返り値の頭に書く）。入力は画面と同じ `題名 | キーワード, キーワード | 投稿先` の形が一番よく当たる。候補は点の高い順で、切り詰めた時は残り件数を書く。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        paper: {
+          type: "string",
+          description:
+            "投稿予定の論文。`題名 | キーワード, キーワード | 投稿先` の形（1 行だけでも構はない）",
+        },
+        limit: { type: "number", description: "返す候補の数（既定 10・最大 30）" },
+      },
+      required: ["paper"],
+    },
+  },
+  {
     name: "explain_word",
     description:
       "1 つの語が収録に何行当たるか（**素の照合で数へるので、`search_deadlines` の絞り込みを通した数とは違ふ事が在る**。行が出る時は中身を 3 行まで見せる）と、0 行の時に画面が出す案内文を其の儘返す（人が見る説明と AI の説明を同じにする）。**0 行の時は「打ち直すなら」の次の一手も返す**（件数は実際に引いた時の行数と一致）。",
@@ -644,6 +736,7 @@ function callTool(name: string, args: Record<string, unknown>, now: number): str
   if (name === "list_upcoming") return listUpcoming(args, now);
   if (name === "venue_info") return venueInfo(args, now);
   if (name === "explain_word") return explainWord(args, now);
+  if (name === "recommend_venues") return recommendVenues(args, now);
   if (name === "collection_stats") return collectionStats(now);
   throw new Error(`知らない道具: ${name}`);
 }
@@ -744,14 +837,23 @@ function main(): void {
     upcoming: "list_upcoming",
     venue: "venue_info",
     explain: "explain_word",
+    recommend: "recommend_venues",
   };
   const 名 = 別名[tool] ?? tool;
+  /* 人の道では、題名が空白で割れて渡つて來る。**末尾が數の時だけ**件數として扱ふ
+   * （題名の語に數字が混ざる事がある – 全部を件數と讀むと、題名が削られる）。 */
+  const 尾が數 = rest.length > 1 && /^\d+$/.test(String(rest[rest.length - 1] ?? ""));
   const args: Record<string, unknown> =
     名 === "search_deadlines" || 名 === "explain_word"
       ? { query: rest[0], word: rest[0], limit: rest[1] }
-      : 名 === "list_upcoming"
-        ? { days: rest[0], kind: rest[1] }
-        : { name: rest[0] };
+      : 名 === "recommend_venues"
+        ? {
+            paper: (尾が數 ? rest.slice(0, -1) : rest).join(" "),
+            limit: 尾が數 ? rest[rest.length - 1] : undefined,
+          }
+        : 名 === "list_upcoming"
+          ? { days: rest[0], kind: rest[1] }
+          : { name: rest[0] };
   process.stdout.write(`${callTool(名, args, now)}\n`);
 }
 

@@ -252,10 +252,12 @@ describe("畫面の一覧をカレンダーに書き出す（第 856 回）", ()
       body: { appendChild: () => {}, removeChild: () => {} },
     };
     class Blob {
-      constructor(
-        public parts: unknown[],
-        public opts: { type?: string },
-      ) {}
+      parts: unknown[];
+      opts: { type?: string };
+      constructor(parts: unknown[], opts: { type?: string }) {
+        this.parts = parts;
+        this.opts = opts;
+      }
     }
     const URL = { createObjectURL: () => "blob:x", revokeObjectURL: () => {} };
     const 走らせる = new Function(
