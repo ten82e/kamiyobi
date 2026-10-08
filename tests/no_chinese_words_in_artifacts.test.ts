@@ -58,3 +58,26 @@ describe("出來上がりに、日本語で無い語を混ぜない（第 740 �
     expect(見た, "出來上がりを一つも見て居ない（建ててから走らせる事）").toBeGreaterThanOrEqual(5);
   });
 });
+
+it("生成した散文に、旧字体を混ぜない（第 848 回）", () => {
+  /* 第 843 回に足した llms.txt の一條が舊字體（引數・行數・收錄・全體・數へる）で、成果物の字を
+   * 檢べて居なかつた爲に第 847 回の定期點檢まで潛つた。**生成した散文（人が讀む物）**には
+   * 舊字體を混ぜない、を機械で止める。
+   * 範圍を `llms.txt` だけに限る理由（實測 2026-10-06 に候補 0 件を確かめた）: 他の成果物には
+   * **意図的に**舊字體が入る – 配られる JS の識別子・照合の鍵（`latin-retype.js` の `當`）・
+   * `data.csv` や `upcoming.md` の上流の原文（`北國会館`＝實際の建物の名。此の檢查を
+   * `upcoming.md` にも掛けたら、此の一語で正しく落ちた – 第 848 回）。 */
+  const 舊字體 = "收錄檢當兩變學會國轉譯眞晝驛拂內與敎數萬覽說讀斷點對經曆專鹽髮齊劑";
+  const site = builtSite();
+  let 見た = 0;
+  for (const 名 of ["llms.txt"]) {
+    const path = join(site, 名);
+    if (!existsSync(path)) continue;
+    見た += 1;
+    const 本文 = readFileSync(path, "utf8");
+    for (const 字 of 舊字體) {
+      expect(本文.includes(字), `${名} に舊字體「${字}」が混ざつて居る`).toBe(false);
+    }
+  }
+  expect(見た, "生成した散文を見て居ない").toBeGreaterThanOrEqual(1);
+});
