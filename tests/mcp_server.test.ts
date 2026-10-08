@@ -538,6 +538,7 @@ it("索引が、6 道具の引數の名を書いている（第 843 回・第 85
     "`include_estimated`",
     "`days`",
     "`paper`",
+    "`rank`",
   ]) {
     expect(build, `${名} が索引に無い`).toContain(名);
   }
@@ -813,4 +814,52 @@ it("投稿先の推薦が、畫面と同じ核で出る（第 857 回）", async
   const 空 = await call("recommend_venues", { paper: "" });
   expect(空, "空の題名に答へて居ん").toContain("論文の題名");
   expect(空, "入力の形を敎へて居ん").toContain("題名 | キーワード");
+});
+
+it("行にランクが付き、等級で厳密に絞れる（畫面のランク列と同じ語・同じ判定・第 858 回）", async () => {
+  /* 畫面の一覧にはランクの列が在り「A*ランク」のボタンで絞れるのに、MCP の行にはランクが
+   * 無く、語で引いても厳密に絞れなかった（實測 2026-10-08: `CCF A` の語は 101 行に當たるが、
+   * `ccf:A` を持つ行は 34 行 – 語の檢索では等級も體系も卷き込む）。 */
+  const rows = Recommender.candidateRows(
+    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never,
+  );
+  const now = Date.now();
+  const 語 = "セキュリティ";
+  const 照合 = Recommender.searchMatcher(Recommender.expandRelativeMonths(語, now), now);
+  const 正 = rows.filter(
+    (r) =>
+      照合(r.hay) === true &&
+      r.t >= now &&
+      !r.est &&
+      ["abstract", "paper", "journal"].includes(r.kind) &&
+      Recommender.rankMatches(r.rankPairs ?? [], "A*"),
+  ).length;
+  expect(正, "此の檢査の前提（A* の行が在る）が崩れた").toBeGreaterThan(0);
+  const 數 = (t: string): number => Number(/に当たる締切: (\d+) 件/.exec(t)?.[1] ?? -1);
+  const text = await call("search_deadlines", { query: 語, rank: "A*", scope: "all", limit: 1 });
+  expect(數(text), "A* の絞り込みが畫面の判定と違ふ").toBe(正);
+  expect(text, "頭にランクを出して居ん").toContain("／ランク A*");
+  /* 行その物にもランクが付く（畫面のランク列と同じ語 – 内部の `ccf:A` は出さない）。 */
+  const 広 = await call("search_deadlines", { query: 語, scope: "all", limit: 5 });
+  expect(広, "行にランクが無い").toMatch(/\| (CCF|CORE|THCPL) [^|]*\|/);
+  expect(広, "ランクの内部の書き方を出して居る").not.toMatch(/\| (ccf|core|thcpl):/);
+  /* どのランク表にも載って居ない行は、畫面と同じく「ランク未確認」と書く。 */
+  const 全部 = await call("search_deadlines", {
+    query: "研究会",
+    kinds: ["all"],
+    scope: "all",
+    limit: 20,
+  });
+  expect(全部, "「ランク未確認」を書いて居ん").toContain("ランク未確認");
+  /* 無い等級は名指す（其の侭では 0 件に成る）。 */
+  const 無 = await call("search_deadlines", { query: 語, rank: "A+", scope: "all", limit: 1 });
+  expect(無, "知らない等級を名指して居ん").toContain("知らないランク");
+  expect(無, "等級の一覧を敎へて居ん").toContain("A*・A・B・C・N");
+});
+
+it("venue_info が、分野とランクを返す（第 858 回）", async () => {
+  const text = await call("venue_info", { key: "sigkdd", scope: "all" });
+  expect(text, "分野を返して居ん").toContain("分野:");
+  expect(text, "ランクを返して居ん").toMatch(/ランク: (CCF|CORE|THCPL)/);
+  expect(text, "ランクの語を書き寫して居る").not.toMatch(/ランク: (ccf|core|thcpl):/);
 });

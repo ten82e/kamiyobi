@@ -35,6 +35,8 @@ const DEFAULT_PROTOCOL = "2025-06-18";
 /* 行の形（`Recommender.candidateRows` が返す物の內、此處で使ふ分だけ）。 */
 interface Row {
   conf: { key: string; title: string; acronym?: string; categories?: string[]; rank?: unknown };
+  /** ランクの對（`ccf:A`・`core:A*` の形）。畫面のランク列と同じ正本から組む。 */
+  rankPairs?: string[];
   ed: {
     id: string;
     year?: number;
@@ -161,6 +163,17 @@ function 古さの斷り(生成: unknown, now: number): string {
   return String(Recommender.dataAgeNoteJa(生成, now) ?? "").trim();
 }
 
+/** ランクの語（畫面のランク列と同じ入口・同じ語）。無い行は畫面と同じく「ランク未確認」と
+ * 書く – **書かないと、AI が「ランクが無い」と讀むか「此方の抜け」と讀むか決まらない**。 */
+function ランクJa(r: Row): string {
+  return (
+    (r.rankPairs ?? [])
+      .map((pair) => String(Recommender.rankPairLabelJa(pair) ?? "").trim())
+      .filter(Boolean)
+      .join("・") || `ランク${String(Recommender.unconfirmedLabelJa() ?? "未確認")}`
+  );
+}
+
 /** 1 行を 1 行の文字にする（畫面の列と同じ順・同じ語）。 */
 function line(r: Row, now: number): string {
   const 日 = r.dateOnly ? `${r.localDate}（時刻未確認）` : jst(r.t);
@@ -169,6 +182,7 @@ function line(r: Row, now: number): string {
   const 種別 = String(Recommender.kindLabelJa(r.kind) ?? r.kind);
   const 回 = (r.dl.round ?? 1) > 1 ? ` R${r.dl.round}` : "";
   const 場所 = String(Recommender.placeJa(r.ed.place) ?? "").trim() || "未確認";
+  const ランク = ランクJa(r);
   const 推定 = r.est ? "（推定）" : "";
   const 出典 = r.ed.link ? ` ${r.ed.link}` : "";
   /* 畫面の日時欄は「日本時間の読み」と「元の日時」の二段で出す。**日本時間で無い宣言**の行は、
@@ -180,7 +194,7 @@ function line(r: Row, now: number): string {
     tz && utc && !/^JST$/i.test(tz)
       ? `（元の宣言 ${tz}／${utc.replace("T", " ").replace("Z", " UTC")}）`
       : "";
-  return `${日}${殘り文}${元} | ${種別}${回}${推定} | ${r.conf.title}（${r.ed.id}）| ${場所}${出典}`;
+  return `${日}${殘り文}${元} | ${種別}${回}${推定} | ${r.conf.title}（${r.ed.id}）| ${ランク} | ${場所}${出典}`;
 }
 
 /** 0 件の時に畫面が出す「打ち直すなら」と同じ物を組む（第 762 回）。
@@ -262,10 +276,14 @@ function 畫面の既定(
         "other",
       ].includes(k),
   );
+  /* ランクは畫面の選擇欄と同じ**等級の厳密比較**（`A` を選んで `core:A*` を巻き込まない –
+   * 第 726 回に畫面で直した其の判定を其の侭使ふ）。値は `A*` `A` `B` `C` `N`。 */
+  const ランク = String((args as { rank?: unknown }).rank ?? "").trim();
   return list
     .filter((r) => {
       if (!過去も && r.t < now) return false;
       if (!推定も && r.est) return false;
+      if (ランク && !Recommender.rankMatches(r.rankPairs ?? [], ランク)) return false;
       if (全部) return true;
       if (種別 && 種別.length) return 種別.includes(r.kind);
       return 投稿の種別.includes(r.kind);
@@ -287,6 +305,7 @@ function searchDeadlines(
     include_estimated?: unknown;
     kinds?: unknown;
     kind?: unknown;
+    rank?: unknown;
     scope?: unknown;
   },
   now: number,
@@ -322,6 +341,9 @@ function searchDeadlines(
   const 知らん = (Array.isArray(args.kinds) ? args.kinds.map((k) => String(k)) : []).filter(
     (k) => !知って居る種別.includes(k),
   );
+  /* 知らない等級も名指す（`A+` の樣な無い値は、其の侭では 0 件に成る – AI が打ち直せる樣に）。 */
+  const ランク = String(args.rank ?? "").trim();
+  const 知らんランク = ランク && !Recommender.rankGradeOrderJa().includes(ランク) ? ランク : "";
   /* 日付は日本時間で出す。**元の表記が別の日の事が在る**ので、月で引いた時に表示の月がずれる
    * 行が在る（實測 2026-10-06: `9月` で引いた行が「2026-10-16(金) 20:59 JST」と出る – 元の
    * 表記は AoE で 9 月 30 日）。AI が其のまま「10 月」と答へん樣に、頭で斷つて置く。*/
@@ -331,7 +353,7 @@ function searchDeadlines(
     /(?:\d+月|\d+日|今月|来月|先月|今週|来週|先週|今年|来年|年内|年度|以内|までに|以降)/.test(
       query,
     );
-  const 頭 = `${種別だけ ? "語を指定せず、種別だけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}`;
+  const 頭 = `${種別だけ ? "語を指定せず、種別だけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}`;
   if (!hit.length) {
     /* 畫面と同じ約束 – 案内は「素の當たりが 0」の時に出る物なので、絞り込みで 0 に成つた時は
      * 其の旨を書く（絞り込みを外せば出る事がある）。 */
@@ -340,7 +362,7 @@ function searchDeadlines(
       頭,
       "",
       素の.length
-        ? "語は当たりますが、既定の絞り込み（今後の投稿締切・推定を除く）で 0 件に成りました。include_past / include_estimated / kinds を試してください。"
+        ? `語は当たりますが、既定の絞り込み（今後の投稿締切・推定を除く）で 0 件に成りました。include_past / include_estimated / kinds${ランク ? " / rank（いま " + ランク + "）" : ""} を試してください。`
         : "この語では 1 行も出ません。",
       ...案内.map((n) => `案内: ${n}`),
       ...(() => {
@@ -461,6 +483,8 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
         .map((key) => String(Recommender.categoryLabelJa(key) ?? key))
         .join("・") || "未確認"
     }`,
+    /* ランクも言ふ（一つの會議を調べた人が、次の一手を決めるのに要る – 畫面の列と同じ語）。 */
+    `ランク: ${ランクJa(一つ)}`,
     "",
     /* 並びは第 751 回から「今後の物が先」に變はつたので、其れを書く（前に書いて居た
      * 「日本時間の早い順」は、版を跨ぐと過去が先に來る意味に讀めてしまふ）。切り詰めも
