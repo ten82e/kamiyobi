@@ -2712,6 +2712,12 @@ conferences:
   磁石を總當たりで無く品書の文本側から張る為、檢査は品書を一度しか讀まんやうに记忆力せた –
   每回讀むと**同じ張りで 484 秒**かかる（実測 7 秒）。
 
+- **索引の「出典とライセンス」を實物と突き合はせた – 一致（第 840 回）**
+  - 確かめた事（2026-10-06 実測 – 建てた `llms.txt`・`data.json`・`NOTICE.md` を讀み比べた）– ①索引の三行（`ccfddl: ccfddl/ccf-deadlines （MIT）`・`aideadlines: huggingface/ai-deadlines （MIT）`・`local: data/extra.yaml （MIT）`）は `data.json` の `sources`（名前・`repo`・`license`）と**一致**②「本リポジトリの生成物は MIT ライセンスで配布する」は `NOTICE.md` の「このリポジトリのコードとデータは MIT ライセンスで配布する」と一致③「`NOTICE.md` に歸屬表示がある」も本物 – `NOTICE.md`（2,484 バイト）が實在し、上流二つ（ccfddl・ai-deadlines）と MIT の保持義務を書いて居る。
+  - **畫面との違ひも筋が通つて居る** – 畫面は `local` のライセンスを出さない（第 831 回に確かめた – 上流と並ぶ欄に自前の入力へ「MIT」を出すと配布物のライセンス表記に見える）。**索引と `data.json` は出す**（機械が讀む物なので、`sources` の欄を其の侭寫す）。此の書き分けは意圖どほり。
+  - 此の回は直す物が無かつた（確かめて無事だつた事を殘す回 – 二十六度目）。
+  - 檢索 – `npm run typecheck` 0 件・`npm test` 385 ファイル 5,574 本通過（此の回はコードを變へて居らん）。1 MiB の餘裕は 33,000 バイト。
+
 - **`data.csv` の列名と `data.json` の鍵の關係を索引に書いた（第 839 回）**
   - 事實（2026-10-06 実測 – 建てた `data.csv` の 28 列と `data.json` の鍵を突き合はせた）– 索引の CSV の節は「`data.json` の `conferences[].editions[].deadlines[]` を展開した物」と**一般的な出所**は書いて居たが、**列名の規則**は書いて居なかつた。實測すると **28 列のうち 24 列**が「同じ名（又は接頭辭を外した名）」で辿れる – `deadline_*` → `deadlines[]`・`event_*` → `editions[]`・`rank_*` → `conferences[].rank`・`estimate_window_*` → `editions[].estimate`。規則に無いのは `kind_ja`（既に説明が在る – 畫面と同じ日本語を併記）・`date_field` など。
   - 直し – CSV の節の**前書き**に一條足した（列の箇條には足さない – 第 789 回に列の節へ足して張りに止められた爲）。「列の名は、多くが `data.json` の鍵と同じ名である（…）。此の規則に無い列は、其の列の説明を見る（`kind_ja`・`date_field` など – 實測 2026-10-06: 28 列のうち 24 列が此の規則で辿れる）」。
