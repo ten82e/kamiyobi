@@ -1511,3 +1511,39 @@ it("key で問はれた時は、其の会議の事を言ふ（第 876 回）", a
   const 名 = await call("venue_info", { name: "sc", scope: "screen" });
   expect(名, "名の一部で候補を並べて居ん").toContain("会議が当たりました");
 });
+
+it("使へない數の引數は默つて既定に戻さない（第 878 回）", async () => {
+  /* 實測 2026-10-13: `search_deadlines({within_days: 0})` は窓が掛からず 214 件を返して居た
+   * –「0 日以内」の問に 214 件と答へる形で、**其の値が無視された事をどこにも書いて居なかつた**
+   * （`list_upcoming({days: "abc"})` も默つて既定の 30 日に戻る）。知らない種別（第 727 回）・
+   * 知らないランク（第 858 回）を頭で名指すのと同じ扱ひにした。 */
+  const 檢索 = await call("search_deadlines", { query: "セキュリティ", within_days: 0 });
+  expect(檢索, "使ひ切れない値を默つた").toContain("within_days は 1 以上の数で指定してください");
+  expect(檢索, "其の値を使つた事にして居る").toContain("其の値は使はないので、既定の儘引きます");
+  expect(檢索, "窓を書いた").not.toContain("／締切まで");
+  /* 負の値・數でない値も（`Number("abc")` は NaN になる）。 */
+  const 負 = await call("search_deadlines", { query: "セキュリティ", within_days: -5 });
+  expect(負, "負の値を默つた").toContain("within_days は 1 以上の数で指定してください");
+  const 文字 = await call("search_deadlines", { query: "セキュリティ", within_days: "三" });
+  expect(文字, "數でない値を默つた").toContain("within_days は 1 以上の数で指定してください");
+  /* 使へる値は其の儘通す（斷りを付けない）。 */
+  const 使へる = await call("search_deadlines", { query: "セキュリティ", within_days: 30 });
+  expect(使へる, "使へる値に斷りを付けた").not.toContain("1 以上の数で指定してください");
+  expect(使へる, "窓を書いて居ん").toContain("／締切まで 30 日以内");
+  /* 他の數の引數も同じ（`limit`・`days`）。 */
+  const 件數 = await call("search_deadlines", { query: "ai", limit: 0 });
+  expect(件數, "limit を默つた").toContain("limit は 1 以上の数で指定してください");
+  const 一覽 = await call("list_upcoming", { days: "abc" });
+  expect(一覽, "days を默つた").toContain("days は 1 以上の数で指定してください");
+  expect(一覽, "既定で讀んだ事を書いて居ん").toContain("30 日（既定）");
+  /* 省略された時は何も言はない（既定を使つた事を毎回書かない）。 */
+  const 省いた = await call("list_upcoming", {});
+  expect(省いた, "省いた時に斷りを付けた").not.toContain("1 以上の数で指定してください");
+  expect(省いた, "省略時に既定の表示に變はつた").toContain("30 日以内");
+  /* 推薦の `limit` も同じ。 */
+  const 推薦 = await call("recommend_venues", {
+    paper: "Low-Latency Networking | network",
+    limit: 0,
+  });
+  expect(推薦, "推薦の limit を默つた").toContain("limit は 1 以上の数で指定してください");
+});
