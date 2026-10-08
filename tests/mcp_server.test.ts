@@ -425,8 +425,8 @@ it("語を省いて、種別だけでも引ける（第 793 回）", async () =>
     scope: "all",
     limit: 2,
   });
-  expect(text, "語が無いと斷つて居る").toContain("語を指定せず、種別だけ");
-  expect(text, "件數を返して居ん").toMatch(/種別だけ: [1-9]\d* 件/);
+  expect(text, "語が無いと斷つて居る").toContain("語を指定せず、絞り込みだけ");
+  expect(text, "件數を返して居ん").toMatch(/絞り込みだけ: [1-9]\d* 件/);
   /* 語も種別も無い時は、今まで通り斷る（何を見ればよいか分からん）。 */
   const 空 = await call("search_deadlines", { query: "" });
   expect(空, "種別も無いのに返した").toContain("検索語が空です");
@@ -711,6 +711,8 @@ it("入力の形が、道具の説明と一致する（第 854 回）", async ()
       "kinds",
       "kind",
       "rank",
+      "domestic",
+      "online",
       "scope",
     ],
     list_upcoming: ["days", "kind", "kinds", "scope"],
@@ -738,7 +740,7 @@ it("入力の形が、道具の説明と一致する（第 854 回）", async ()
   ).toContain("kind");
   /* 擧動でも確かめる（形だけ直して、受け方が違つては意味が無い）。 */
   const 數 = (t: string): number =>
-    Number(/種別だけ: ([\d,]+) 件/.exec(t)?.[1]?.replace(/,/g, "") ?? -1);
+    Number(/絞り込みだけ: ([\d,]+) 件/.exec(t)?.[1]?.replace(/,/g, "") ?? -1);
   const 單 = await call("search_deadlines", { kind: "paper", scope: "all", limit: 1 });
   const 複 = await call("search_deadlines", { kinds: ["paper"], scope: "all", limit: 1 });
   expect(數(單), "語を省いて kind だけでは引け無い").toBeGreaterThan(0);
@@ -948,4 +950,43 @@ it("行に、延長と確認の状態の札が付く（畫面の一覧の札と�
       await call("venue_info", { key: String(延長.conf.key), scope: "all" }),
       "延長の札が無い",
     ).toContain(String(Recommender.extendedLabelJa()));
+});
+
+it("国内・オンラインの絞り込みが、画面のチェック欄と同じ集合を返す（第 865 回）", async () => {
+  /* 畫面のチェック欄（「国内研究会・国内シンポジウムのみ」「オンライン参加可のみ」）と
+   * **同じ判定**を引數にした。語（「国内」「オンライン参加可」）でも同じ集合に成る事は
+   * 實測して居るが、AI が魔法の語を知らないと使へない – 引數なら畫面のボタンと同じ物が
+   * 其の侭使へる。 */
+  const rows = Recommender.candidateRows(
+    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never,
+  );
+  const now = Date.now();
+  const 既定 = (r: (typeof rows)[number]): boolean =>
+    r.t >= now && !r.est && ["abstract", "paper", "journal"].includes(r.kind);
+  const 國內 = rows.filter((r) => 既定(r) && (r.tags ?? []).indexOf("domestic-jp") >= 0).length;
+  const オンライン = rows.filter(
+    (r) => 既定(r) && Recommender.placeOffersOnline(r.ed.place),
+  ).length;
+  expect(國內, "此の檢査の前提（國內の行）が崩れた").toBeGreaterThan(0);
+  expect(オンライン, "此の檢査の前提（オンラインの行）が崩れた").toBeGreaterThan(0);
+  const 數 = (t: string): number =>
+    Number(/絞り込みだけ: ([\d,]+) 件/.exec(t)?.[1]?.replace(/,/g, "") ?? -1);
+  /* 語を省いても、絞り込みだけで引ける（「國內の締切を全部」の樣な聞き方）。 */
+  const 國 = await call("search_deadlines", { domestic: true, scope: "all", limit: 1 });
+  expect(數(國), "國內の件數が畫面の判定と違ふ").toBe(國內);
+  expect(國, "頭に絞り込みを書いて居ん").toContain("／国内のみ");
+  const 網 = await call("search_deadlines", { online: true, scope: "all", limit: 1 });
+  expect(數(網), "オンラインの件數が畫面の判定と違ふ").toBe(オンライン);
+  expect(網, "頭に絞り込みを書いて居ん").toContain("／オンライン参加可のみ");
+  /* 語で引いた時と同じ集合（同じ數に成る）。 */
+  const 語 = await call("search_deadlines", { query: "国内", scope: "all", limit: 1 });
+  expect(Number(/に当たる締切: ([\d,]+) 件/.exec(語)?.[1]?.replace(/,/g, "") ?? -1)).toBe(國內);
+  /* 兩方のチェックは重ねられる（畫面と同じ – 國內のオンライン參加可）。 */
+  const 兩方 = await call("search_deadlines", {
+    domestic: true,
+    online: true,
+    scope: "all",
+    limit: 1,
+  });
+  expect(數(兩方), "兩方の絞り込みが重なつて居ん").toBeLessThanOrEqual(國內);
 });

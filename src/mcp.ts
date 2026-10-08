@@ -37,6 +37,8 @@ interface Row {
   conf: { key: string; title: string; acronym?: string; categories?: string[]; rank?: unknown };
   /** ランクの對（`ccf:A`・`core:A*` の形）。畫面のランク列と同じ正本から組む。 */
   rankPairs?: string[];
+  /** 會議のタグ（`domestic-jp` など）。畫面の「国内研究会…のみ」と同じ判定に使ふ。 */
+  tags?: string[];
   ed: {
     id: string;
     year?: number;
@@ -269,7 +271,14 @@ const 投稿の種別 = ["abstract", "paper", "journal"];
 function 畫面の既定(
   list: Row[],
   now: number,
-  args: { include_past?: unknown; kinds?: unknown; include_estimated?: unknown },
+  args: {
+    include_past?: unknown;
+    kinds?: unknown;
+    include_estimated?: unknown;
+    rank?: unknown;
+    domestic?: unknown;
+    online?: unknown;
+  },
 ): Row[] {
   const 過去も = args.include_past === true;
   const 推定も = args.include_estimated === true;
@@ -301,11 +310,20 @@ function 畫面の既定(
   /* ランクは畫面の選擇欄と同じ**等級の厳密比較**（`A` を選んで `core:A*` を巻き込まない –
    * 第 726 回に畫面で直した其の判定を其の侭使ふ）。値は `A*` `A` `B` `C` `N`。 */
   const ランク = String((args as { rank?: unknown }).rank ?? "").trim();
+  /* 畫面のチェック欄（「国内研究会・国内シンポジウムのみ」「オンライン参加可のみ」）と
+   * **同じ判定**を持つ（第 865 回）。語で引いても同じ集合に成る事は實測したが、AI が
+   * 魔法の語を知らないと使へない – 引數にすれば、畫面のボタンと同じ物が其の侭使へる。 */
+  const 國內だけ = args.domestic === true;
+  const オンラインだけ = args.online === true;
   return list
     .filter((r) => {
       if (!過去も && r.t < now) return false;
       if (!推定も && r.est) return false;
       if (ランク && !Recommender.rankMatches(r.rankPairs ?? [], ランク)) return false;
+      /* 國內は**主催の區分**（日本で開かれる會議ではない）。判定は畫面と同じタグ一本。 */
+      if (國內だけ && (r.tags ?? []).indexOf("domestic-jp") < 0) return false;
+      /* オンラインは會場の表記から畫面と同じ函數で見る。 */
+      if (オンラインだけ && !Recommender.placeOffersOnline(r.ed.place)) return false;
       if (全部) return true;
       if (種別 && 種別.length) return 種別.includes(r.kind);
       return 投稿の種別.includes(r.kind);
@@ -328,22 +346,30 @@ function searchDeadlines(
     kinds?: unknown;
     kind?: unknown;
     rank?: unknown;
+    domestic?: unknown;
+    online?: unknown;
     scope?: unknown;
   },
   now: number,
 ): string {
   const query = String(args.query ?? "").trim();
-  /* 語が空でも**種別を指定して居れば**引ける（第 793 回 – 實測 2026-10-06: 「登録締切を全部見たい」
-   * と云ふ聞き方に答へられなかつた。人は「語」で引く物だと思ひ込んで居たが、種別だけの一覽も要る）。
-   * 語が空で種別も無い時だけ斷る。 */
-  const 種別だけ = !query && (args.kind !== undefined || args.kinds !== undefined);
-  if (!query && !種別だけ)
-    return "検索語が空です。会議名・分野・開催地・締切の語をください（種別だけを見るなら kind / kinds を添へてください）。";
+  /* 語が空でも**絞り込みを指定して居れば**引ける（第 793 回 – 實測 2026-10-06: 「登録締切を全部
+   * 見たい」と云ふ聞き方に答へられなかつた。第 865 回に `rank`・`domestic`・`online` へ廣げた –
+   * 「國內の締切を全部」も同じ形の聞き方）。語も絞り込みも無い時だけ斷る。 */
+  const 絞り込みだけ =
+    !query &&
+    (args.kind !== undefined ||
+      args.kinds !== undefined ||
+      args.rank !== undefined ||
+      args.domestic !== undefined ||
+      args.online !== undefined);
+  if (!query && !絞り込みだけ)
+    return "検索語が空です。会議名・分野・開催地・締切の語をください（語を省くなら kind / kinds / rank / domestic / online の何れかを添へてください）。";
   const limit = Math.min(Math.max(Number(args.limit) || 20, 1), 100);
   const { list, 名, 生成 } = pick(args.scope);
   const 古さ = 古さの斷り(生成, now);
   /* 語が空（種別だけの時）は**全部に當たる**目にする（第 793 回）。 */
-  const 照合 = 種別だけ
+  const 照合 = 絞り込みだけ
     ? () => true
     : Recommender.searchMatcher(Recommender.expandRelativeMonths(query, now), now);
   const 素の = list.filter((r) => 照合(r.hay) === true);
@@ -375,7 +401,7 @@ function searchDeadlines(
     /(?:\d+月|\d+日|今月|来月|先月|今週|来週|先週|今年|来年|年内|年度|以内|までに|以降)/.test(
       query,
     );
-  const 頭 = `${種別だけ ? "語を指定せず、種別だけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}`;
+  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}`;
   if (!hit.length) {
     /* 畫面と同じ約束 – 案内は「素の當たりが 0」の時に出る物なので、絞り込みで 0 に成つた時は
      * 其の旨を書く（絞り込みを外せば出る事がある）。 */
@@ -670,7 +696,7 @@ const TOOLS = [
   {
     name: "search_deadlines",
     description:
-      "**語を省いて `kind` / `kinds` だけでも引ける**（「登録締切を全部」の様な聞き方）。kamiyobi の収録（国際会議・国内研究会の締切と会期）を日本語で引く。会議名・分野・開催地・締切の語・相対日付（『今月』『30日以内』『来週』など）が使へる。**0 件の時は、画面と同じ案内（其の語が表に無い事）と、同じ「打ち直すなら」の次の一手を返す** – 其の一手の件数は、実際に引いた時に出る行数と一致する（その侭打ち直せる）。**必須の引数は無い**。行にはランク（`CCF A・CORE A*` の形。無い行は「ランク未確認」）・会期・確認の状態の札（`複数候補のため要確認` など。確認済みと未設定では付かない）と `延長後` も付く。収録が古ければ、末尾に画面と同じ断りが付く。",
+      "**語を省いて `kind` / `kinds` だけでも引ける**（「登録締切を全部」の様な聞き方）。kamiyobi の収録（国際会議・国内研究会の締切と会期）を日本語で引く。会議名・分野・開催地・締切の語・相対日付（『今月』『30日以内』『来週』など）が使へる。**0 件の時は、画面と同じ案内（其の語が表に無い事）と、同じ「打ち直すなら」の次の一手を返す** – 其の一手の件数は、実際に引いた時に出る行数と一致する（その侭打ち直せる）。**必須の引数は無い**。絞り込みは画面と同じ物が揃っている（`kinds`・`rank`・`domestic`・`online`・`include_past`・`include_estimated`）。行にはランク（`CCF A・CORE A*` の形。無い行は「ランク未確認」）・会期・確認の状態の札（`複数候補のため要確認` など。確認済みと未設定では付かない）と `延長後` も付く。収録が古ければ、末尾に画面と同じ断りが付く。",
     inputSchema: {
       type: "object",
       properties: {
@@ -697,6 +723,16 @@ const TOOLS = [
           type: "string",
           description:
             "ランクの等級で絞る（`A*` / `A` / `B` / `C` / `N`。画面のランク欄と同じ厳密比較 – `A` は `core:A*` を巻き込まない）",
+        },
+        domestic: {
+          type: "boolean",
+          description:
+            "国内研究会・国内シンポジウムだけに絞る（画面の同じ名前のチェック欄と同じ判定。**日本で開かれる国際会議は入らない** – それは開催地の語「東京」「日本」で引く）",
+        },
+        online: {
+          type: "boolean",
+          description:
+            "オンライン参加可の行だけに絞る（画面の同じ名前のチェック欄と同じ判定。会場の表記にオンライン・ハイブリッドなどの記述がある行だけ – 記述が無い行を対面と決めつけない）",
         },
         scope: {
           type: "string",
