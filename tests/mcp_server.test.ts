@@ -1638,3 +1638,37 @@ it("URL を貼つた人を、ドメインの部品の話に引きずり込まな
   expect(通常, "URL でない問に URL の話を付けた").not.toContain("検索語の URL の会議は");
   expect(通常, "死語の話が恢復して居らん").toContain("「gpu」");
 });
+
+it("畫面のてびきが、MCP の全ての道具を名指す（第 882 回）", async () => {
+  /* てびきは「締切の検索・直近の一覧・会議ごとの版・語の案内の四つ」と書いた儘で、
+   * **collection_stats（第 769 回）と recommend_venues（第 857 回）を言つて居なかつた** –
+   * 實測 2026-10-17。道具を增すたびに古くなる文は、數を書かずに**一つづつ名指す**形にして、
+   * 此の檢查で張る（新增の道具が默つた儘に成らない）。 */
+  const 頁 = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const 段 = ((): string => {
+    const i = 頁.indexOf("AI に聞く");
+    expect(i, "てびきに「AI に聞く」の段が無い").toBeGreaterThan(0);
+    return 頁.slice(i, 頁.indexOf("</dd>", i));
+  })();
+  const 道具の言ひ方: Record<string, string> = {
+    search_deadlines: "締切の検索",
+    list_upcoming: "直近の一覧",
+    venue_info: "会議ごとの版",
+    explain_word: "語の案内",
+    collection_stats: "収録の数",
+    recommend_venues: "論文に合う投稿先",
+  };
+  /* 實装が持つ道具の一覽（`tools/list`）と、てびきが名指す文を突き合はせる。 */
+  const res = (await client.ask({ jsonrpc: "2.0", id: 98, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name?: string }> };
+  };
+  const 名々 = (res.result?.tools ?? []).map((t) => String(t.name ?? "")).sort();
+  expect(名々.length, "此の檢查の前提（道具の一覽）が崩れた").toBeGreaterThan(0);
+  for (const 名 of 名々) {
+    const 言ひ方 = 道具の言ひ方[名];
+    expect(言ひ方, `てびきの文を決めて居ない道具が增えた: ${名}（此の表に足す事）`).toBeTruthy();
+    expect(段, `てびきが ${名}（${言ひ方}）を名指して居ん`).toContain(言ひ方);
+  }
+  /* 雙方の樣に數も變へた（「四つ」が殘つて居ると讀む人が古い數を信じる）。 */
+  expect(段, "てびきが「四つ」の儘").not.toContain("の四つ）");
+});
