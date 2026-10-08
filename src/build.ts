@@ -3981,6 +3981,26 @@ export function toLlmsTxt(
      * `recommendation-core.js`・`publish.js`・`index.html`・`icon.svg`・`.nojekyll`・
      * `llms.txt` 自身にはどこにもふれていなかった）。名前はビルドが管理する出力一覧
      * `MANAGED_OUTPUT_FILES` から書き出す（書き写すと、公開物を増やしたときに索引だけ古くなる）。 */
+    /* 配信の絕対 URL（`site.base_url` が正本 – 404 の頁や `upcoming.html` と同じ）。
+     * 索引を読む機械が「カレンダーを購読したい」に答えられる様に、**購讀先の URL** を書く。
+     * ファイル名だけでは 1 度ダウンロードするやり方になり、每日入れ替はる物が古い儘になる
+     * （實測 2026-10-12: 索引に `github.io` が 1 箇所も無く、答へるのに README を読む必要が
+     * 在った）。 */
+    ...(() => {
+      const base = String(
+        (safeConfig.site as Record<string, unknown> | null)?.base_url ?? "",
+      ).replace(/\/+$/, "");
+      if (!base) return [];
+      // 空行は導入文との境に一つ（配列の前に在る物）で足りる。
+      return [
+        `配信している絶対 URL（\`site.base_url\` が正本）: ${base}`,
+        `- 画面: ${base}/`,
+        `- カレンダーの購読先に指定する URL: ${base}/deadlines.ics`,
+        "  （毎日朝の更新のあと、新しい一覧に置き換わります。ファイルを一度ダウンロードするだけでは",
+        "  古くなります。画面の絞り込みは効きません。分野は各予定の `CATEGORIES` にも入ります）",
+      ];
+    })(),
+    "",
     "## 出力一覧",
     "",
     ...MANAGED_OUTPUT_FILES.map((name) => {

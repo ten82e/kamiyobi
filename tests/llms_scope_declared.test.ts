@@ -12,7 +12,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { deadlineSpan, toLlmsTxt } from "../src/build.ts";
-import { site } from "./built_golden_shared.ts";
+import { data, site } from "./built_golden_shared.ts";
 
 function llms(): string {
   return readFileSync(join(site, "llms.txt"), "utf8");
@@ -152,4 +152,23 @@ describe("索引が収録範囲を実測で言う（第 291 回）", () => {
       deadlineSpan({ conferences: [{ editions: [{ deadlines: [{ note: "日付なし" }] }] }] }),
     ).toBeNull();
   });
+});
+
+it("索引が、カレンダーの購読先の URL を言う（第 877 回）", () => {
+  /* 索引を読む機械が「カレンダーを購読したい」に答えられる様に、**絶対 URL** を書く。
+   * 實測 2026-10-12: 索引に `github.io` が 1 箇所も無く、購讀先を答へるには README を讀む
+   * 必要が在った。ファイル名だけでは 1 度ダウンロードするやり方になり、每日朝に入れ替はる
+   * 物が古い儘になる（画面は「購読先に指定すると毎日置き換わる」と言つて居る）。 */
+  const base = String(data.site?.base_url ?? "").replace(/\/+$/, "");
+  expect(base, "此の檢查の前提（配信 URL）が崩れた").not.toBe("");
+  const 本文 = llms();
+  expect(本文, "配信の絶對 URL を言つて居ん").toContain(
+    `配信している絶対 URL（\`site.base_url\` が正本）: ${base}`,
+  );
+  expect(本文, "購讀先の URL を言つて居ん").toContain(`${base}/deadlines.ics`);
+  /* 畫面の URL も（「どこで見られるか」に答へる）。 */
+  expect(本文, "畫面の URL を言つて居ん").toContain(`- 画面: ${base}/`);
+  /* 購讀と 1 度のダウンロードの違いを隱さない（編集のない購讀は每日更新される）。 */
+  expect(本文, "購讀と download の違いを言つて居ん").toContain("ダウンロードするだけでは");
+  expect(本文, "每日入れ替はる事を言つて居ん").toContain("毎日朝の更新のあと");
 });
