@@ -523,3 +523,13 @@ it("索引が、data.csv の列名と data.json の鍵の關係を書いてい�
   expect(build, "列名の規則が索引に無い").toContain("多くが `data.json` の鍵と同じ名である");
   expect(build, "實測の列數が索引に無い").toContain("28 列のうち 24 列が此の規則で辿れる");
 });
+
+it("索引が、5 道具の引數の名を書いている（第 843 回）", () => {
+  /* 實測 2026-10-06: 索引は kinds / kind / scope / key / name / word は書いて居たが、query・
+   * limit・include_past・include_estimated・days を書いて居なかつた（道具の schema を見ない
+   * 讀み手には、何が渡せるか分からん）。 */
+  const build = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
+  for (const 名 of ["`query`", "`limit`", "`include_past`", "`include_estimated`", "`days`"]) {
+    expect(build, `${名} が索引に無い`).toContain(名);
+  }
+});
