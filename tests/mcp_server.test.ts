@@ -938,11 +938,13 @@ it("行に、延長と確認の状態の札が付く（畫面の一覧の札と�
       r.conf?.key &&
       String((檢(r) as { status?: unknown } | undefined)?.status ?? "") === "verified",
   );
-  if (確認済み)
-    expect(
-      await call("venue_info", { key: String(確認済み.conf.key), scope: "all" }),
-      "確認済みに札を付けた",
-    ).not.toContain("確認済み");
+  if (確認済み) {
+    const t2 = await call("venue_info", { key: String(確認済み.conf.key), scope: "all" });
+    /* **行の札**には付けない（確認済みの行は畫面も印を出さない）。第 868 回に足した
+     * 「確認: 」の內譯の行は別 – 其方は狀態の語を數へて出す物。 */
+    for (const l of t2.split("\n").filter((l) => /^\d{4}-\d{2}-\d{2}/.test(l)))
+      expect(l, `確認済みの行に札を付けた: ${l.slice(0, 60)}`).not.toContain("確認済み");
+  }
   /* 延長の札（上流の締切名に Extended と付く行）。 */
   const 延長 = rows.find((r) => r.conf?.key && Recommender.isExtendedDeadline(r.dl));
   if (延長)
@@ -1055,4 +1057,38 @@ it("0 件の時、収録の会議の名前に当たっていれば其の旨を�
   /* 語が當たる時は、此の案内を出さない（行が出るので要らない）。 */
   const 有 = await call("search_deadlines", { query: "セキュリティ", scope: "all", limit: 1 });
   expect(有, "行が出て居るのに名前の案内を付けた").not.toContain("収録の会議の名前には");
+});
+
+it("確認の状態の内訳を、画面と同じ語で返す（第 868 回）", async () => {
+  /* 「この収録は信用できるか」は研究者が最初に聞く事。畫面は行ごとの札と行の詳細で答へて
+   * 居るが、MCP は行ごとの札しか言はなかつたので、收錄全體の內譯（公式で確認済みが何行か）を
+   * 答へられなかつた。語は畫面と同じ正本から取る。 */
+  const rows = Recommender.candidateRows(
+    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never,
+  );
+  const 表 = Recommender.verificationStatusLabelTable() as Record<string, string>;
+  const 期待 = new Map<string, number>();
+  let 記録なし = 0;
+  for (const r of rows) {
+    const s = String(
+      (r.dl as { verification?: { status?: string } } | undefined)?.verification?.status ?? "",
+    ).trim();
+    if (!s) {
+      記録なし += 1;
+      continue;
+    }
+    const 語 = 表[s] || "再確認待ち";
+    期待.set(語, (期待.get(語) ?? 0) + 1);
+  }
+  expect(期待.size, "此の檢査の前提（確認の狀態）が崩れた").toBeGreaterThan(0);
+  const text = await call("collection_stats", {});
+  const 行 = text.split("\n").find((l) => l.startsWith("確認の状態: "));
+  expect(行, "確認の状態の行が無い").toBeTruthy();
+  for (const [語, n] of 期待) expect(行, `${語} の數が違ふ`).toContain(`${語} ${n} 行`);
+  expect(行, "記錄なしを數へて居ん").toContain(`確認の記録なし ${記録なし} 行`);
+  /* 內部の狀態の名（`manual-required` など）は出さない（畫面と同じ語だけ）。 */
+  expect(text, "內部の狀態の名を出して居る").not.toContain("manual-required");
+  /* 會議ごとの內譯も言ふ（行ごとの札だけでは、其の會議の偏りが分からん）。 */
+  const 題 = await call("venue_info", { key: "sigkdd", scope: "all" });
+  expect(題, "會議ごとの確認が無い").toMatch(/確認: .+\d+ 行/);
 });

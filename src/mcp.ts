@@ -185,6 +185,35 @@ function ランクJa(r: Row): string {
   );
 }
 
+/** 締切の行の**確認の状態**を、畫面と同じ語で數へる（第 868 回）。
+ *
+ * 「此の收錄は信用できるか」は研究者が最初に聞く事で、畫面は行ごとの札と行の詳細で答へて居る。
+ * MCP は行ごとの札しか言はなかつたので、收錄全體の內譯（公式で確認済みが何行あるか）を
+ * 答へられなかつた。語は畫面と同じ正本（`verificationStatusLabelTable`）から取る。 */
+function 確認の內譯(rows: Row[]): string {
+  const 表 = Recommender.verificationStatusLabelTable() as Record<string, string>;
+  const 數 = new Map<string, number>();
+  let 記録なし = 0;
+  for (const r of rows) {
+    const key = String(
+      typeof r.dl?.verification === "string"
+        ? r.dl.verification
+        : ((r.dl?.verification as { status?: unknown } | undefined)?.status ?? ""),
+    ).trim();
+    if (!key) {
+      記録なし += 1;
+      continue;
+    }
+    const 語 = 表[key] || "再確認待ち";
+    數.set(語, (數.get(語) ?? 0) + 1);
+  }
+  const 部 = [...數.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ja"))
+    .map(([語, n]) => `${語} ${n} 行`);
+  if (記録なし) 部.push(`確認の記録なし ${記録なし} 行`);
+  return 部.join(" ／ ");
+}
+
 /** 1 行を 1 行の文字にする。**語は畫面の列と同じ入口から取る**（日時・種別・会議・ランク・
  * 会期・開催地）。並びは此方の都合（日時 → 種別 → 会議 → ランク → 会期 → 開催地）で、
  * 畫面の列の順其の侭ではない。 */
@@ -615,6 +644,8 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
     }`,
     /* ランクも言ふ（一つの會議を調べた人が、次の一手を決めるのに要る – 畫面の列と同じ語）。 */
     `ランク: ${ランクJa(一つ)}`,
+    /* 其の會議の締切が、どの位確かめられて居るか（行ごとの札だけでは、全體の偏りが分からん）。 */
+    `確認: ${確認の內譯(hit)}`,
     "",
     /* 並びは第 751 回から「今後の物が先」に變はつたので、其れを書く（前に書いて居た
      * 「日本時間の早い順」は、版を跨ぐと過去が先に來る意味に讀めてしまふ）。切り詰めも
@@ -699,6 +730,7 @@ function collectionStats(now: number): string {
     `データ生成: ${生成の表示(元の生成)}（上の行と同じ出所。画面の右上と同じ書き方）`,
     ...(窓の生成 ? [`画面が最初に読む窓（public/catalog.json）のデータ生成: ${窓の生成}`] : []),
     `うち今後の締切: ${今後} 行（${new Date(now).toISOString().slice(0, 10)} 以降）`,
+    `確認の状態: ${確認の內譯(list)}`,
     ...(古さ ? ["", 古さ] : []),
     "",
     "配付して居るファイル（サイトと同じ場所に在る）:",
