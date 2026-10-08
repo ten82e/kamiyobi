@@ -496,3 +496,12 @@ it("索引が、data.json の残りの鍵も説明している（第 814 回）"
   }
   expect(build, "付く頻度の實測が索引に無い").toContain("稀にしか付かない物と");
 });
+
+it("索引が、元の収録と建てた表示で数が違ふ事を書いている（第 816 回）", () => {
+  /* 實測 2026-10-06: MCP の collection_stats は data/snapshot.json を数へるので「版 2,659」と
+   * 言ふが、索引は「版 2,603」と書いて居た（建てた表示）。出所が違ふ事を索引が言はないと、
+   * 讀む人（と AI）は同じ物の數だと思つて突き合はせる。 */
+  const build = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
+  expect(build, "數の出所の違ひが索引に無い").toContain("元の収録と建てた表示で数が違ふ事がある");
+  expect(build, "實測の數が索引に無い").toContain("版 2,659 ⇔ 建てた表示 2,603");
+});
