@@ -1020,3 +1020,39 @@ it("締切の行が 1 本も無い会議を「収録に無い」と言わない�
   const 無 = await call("venue_info", { name: "ぬけぬけ会議", scope: "all" });
   expect(無, "收錄の數が收錄その物と違ふ").toContain(`収録 ${會.length} 会議`);
 });
+
+it("0 件の時、収録の会議の名前に当たっていれば其の旨を言う（第 867 回）", async () => {
+  /* 畫面の 0 件案内は「名簿に在るのに締切の行が 1 本も無い會議」を名指す（第 294 回）が、
+   * 其の計算は畫面の側に在り、MCP は Recommender 層の案内しか使つて居なかつた –
+   * 締切を持たん會議の名前で引くと「1 行も出ません」とだけ言ひ、**収録に在る事**も、
+   * 會期が何處に載るかも言はなかつた。 */
+  const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
+    conferences?: Array<{ key?: string; editions?: Array<{ event_start?: string }> }>;
+  };
+  const 會 = snap.conferences ?? [];
+  const 行の鍵 = new Set(
+    Recommender.candidateRows(snap as never).map((r) => String(r.conf?.key ?? "")),
+  );
+  const 締切なし = 會.find(
+    (c) =>
+      c.key &&
+      !行の鍵.has(String(c.key)) &&
+      (c.editions ?? []).some((e) => String(e.event_start ?? "").trim()),
+  );
+  expect(締切なし, "此の檢査の前提（締切の行が無く會期だけの會議）が崩れた").toBeTruthy();
+  const text = await call("search_deadlines", {
+    query: String(締切なし?.key),
+    scope: "all",
+    limit: 1,
+  });
+  expect(text, "1 行も出ないと言ふだけ").toContain("収録の会議の名前には");
+  expect(text, "締切が無い事を言つて居ん").toContain("締切の行が 1 本もありません");
+  expect(text, "會期の行き先を敎へて居ん").toContain("upcoming.md");
+  expect(text, "「収録に無い」と言つた").not.toContain("収録に在りません");
+  /* 収録に無い語では、此の案内を出さない（默るのが正しい）。 */
+  const 無 = await call("search_deadlines", { query: "ぬけぬけ会議", scope: "all", limit: 1 });
+  expect(無, "収録に無い語に名前の案内を付けた").not.toContain("収録の会議の名前には");
+  /* 語が當たる時は、此の案内を出さない（行が出るので要らない）。 */
+  const 有 = await call("search_deadlines", { query: "セキュリティ", scope: "all", limit: 1 });
+  expect(有, "行が出て居るのに名前の案内を付けた").not.toContain("収録の会議の名前には");
+});

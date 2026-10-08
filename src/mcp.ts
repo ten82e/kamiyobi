@@ -76,6 +76,7 @@ interface SnapshotFile {
     key?: unknown;
     title?: unknown;
     acronym?: unknown;
+    full_name?: unknown;
     link?: unknown;
     editions?: unknown[];
   }>;
@@ -337,6 +338,52 @@ function 畫面の既定(
     .concat(知らん.length ? [] : []);
 }
 
+/** 語が 0 件の時、**収録の會議の名前**に當たつて居ないかを見る（第 867 回）。
+ *
+ * 畫面の 0 件案内は「名簿に在るのに締切の行が 1 本も無い會議」を名指す（第 294 回）が、
+ * 其の計算は畫面の側に在り、MCP は Recommender 層の案内しか使つて居なかつた – 締切を持たん
+ * 會議の名前で引くと「1 行も出ません」とだけ言ひ、**収録に在る事**も、會期が何處に載るかも
+ * 言はなかつた（實測 2026-10-08: `apnoms` は版 1 件・會期ありで upcoming.md に載つて居る）。 */
+function 名乘りの案内(query: string, list: Row[]): string[] {
+  const 語々 = query
+    .toLowerCase()
+    .split(/[\s、。，,・/|（）()「」『』【】]+/)
+    .map((w) => w.trim())
+    .filter((w) => [...w].length >= 2);
+  if (!語々.length) return [];
+  const 行の鍵 = new Set(list.map((r) => String(r.conf.key ?? "")));
+  const 當たる = (snapshot().conferences ?? []).filter((c) => {
+    const 名 = [
+      String(c.key ?? ""),
+      String(c.title ?? ""),
+      String(c.acronym ?? ""),
+      String(c.full_name ?? ""),
+    ]
+      .join(" ")
+      .toLowerCase();
+    return 語々.every((w) => 名.includes(w));
+  });
+  if (!當たる.length) return [];
+  const 見本 = 當たる.slice(0, 3).map((c) => {
+    const key = String(c.key ?? "");
+    const 版々 = Array.isArray(c.editions) ? c.editions : [];
+    const 會期あり = 版々.some((e) =>
+      String((e as { event_start?: unknown } | null)?.event_start ?? "").trim(),
+    );
+    const 狀態 = 行の鍵.has(key)
+      ? "締切の行は在りますが、いまの絞り込みで 0 件に成つて居ます（絞り込みを外すと出ます）"
+      : 會期あり
+        ? "締切の行が 1 本もありません（会期だけが収録に在り、upcoming.md とカレンダーには「開催」として載ります）"
+        : "締切の行が 1 本もありません（会期も確認できて居ません）";
+    return `- ${String(c.title ?? key)}（key: ${key}・版 ${版々.length} 件）: ${狀態}`;
+  });
+  return [
+    `収録の会議の名前には ${當たる.length} 件当たります:`,
+    ...見本,
+    ...(當たる.length > 見本.length ? [`- ほか ${當たる.length - 見本.length} 件`] : []),
+  ];
+}
+
 function sortRows(list: Row[]): Row[] {
   return list.slice().sort((a, b) => a.t - b.t || a.conf.title.localeCompare(b.conf.title, "ja"));
 }
@@ -419,6 +466,7 @@ function searchDeadlines(
         ? `語は当たりますが、既定の絞り込み（今後の投稿締切・推定を除く）で 0 件に成りました。include_past / include_estimated / kinds${ランク ? " / rank（いま " + ランク + "）" : ""} を試してください。`
         : "この語では 1 行も出ません。",
       ...案内.map((n) => `案内: ${n}`),
+      ...(素の.length ? [] : 名乘りの案内(query, list)),
       ...(() => {
         if (素の.length) return [];
         const 手 = retypeTips(query, 畫面の既定(list, now, args), now);
@@ -609,6 +657,10 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
   return [
     `「${word}」は 0 行です。画面が此の時に出す案内:`,
     ...(案内.length ? 案内.map((n) => `- ${n}`) : ["- （案内は無し＝表の語では無い語）"]),
+    /* 語が 0 行でも、**収録の會議の名前**に當たつて居れば其の旨を言ふ（第 867 回 –
+     * `search_deadlines` と同じ扱ひに揃へる。「この語は知らない」と「此の會議は締切を持たん」
+     * は別の事で、後者は次の一手（會期を見る・upcoming.md を見る）に繋がる）。 */
+    ...名乘りの案内(word, list).map((n, i) => (i === 0 ? `- ${n}` : `  ${n}`)),
     ...手.map((t) => `- 打ち直すなら ${t}`),
     ...(古さ ? ["", 古さ] : []),
   ].join("\n");
@@ -730,7 +782,7 @@ const TOOLS = [
   {
     name: "search_deadlines",
     description:
-      "**語を省いて `kind` / `kinds` だけでも引ける**（「登録締切を全部」の様な聞き方）。kamiyobi の収録（国際会議・国内研究会の締切と会期）を日本語で引く。会議名・分野・開催地・締切の語・相対日付（『今月』『30日以内』『来週』など）が使へる。**0 件の時は、画面と同じ案内（其の語が表に無い事）と、同じ「打ち直すなら」の次の一手を返す** – 其の一手の件数は、実際に引いた時に出る行数と一致する（その侭打ち直せる）。**必須の引数は無い**。絞り込みは画面と同じ物が揃っている（`kinds`・`rank`・`domestic`・`online`・`include_past`・`include_estimated`）。行にはランク（`CCF A・CORE A*` の形。無い行は「ランク未確認」）・会期・確認の状態の札（`複数候補のため要確認` など。確認済みと未設定では付かない）と `延長後` も付く。収録が古ければ、末尾に画面と同じ断りが付く。",
+      "**語を省いて `kind` / `kinds` だけでも引ける**（「登録締切を全部」の様な聞き方）。kamiyobi の収録（国際会議・国内研究会の締切と会期）を日本語で引く。会議名・分野・開催地・締切の語・相対日付（『今月』『30日以内』『来週』など）が使へる。**0 件の時は、画面と同じ案内（其の語が表に無い事）と、同じ「打ち直すなら」の次の一手を返す** – 其の一手の件数は、実際に引いた時に出る行数と一致する（その侭打ち直せる）。**0 件の時は、収録の会議の名前に当たっていないかも見る**（「締切の行が 1 本もありません」「会期は upcoming.md に『開催』として載ります」のように、収録に在る事と、何処を見ればよいかを言う – 「収録に無い」とは言わない）。**必須の引数は無い**。絞り込みは画面と同じ物が揃っている（`kinds`・`rank`・`domestic`・`online`・`include_past`・`include_estimated`）。行にはランク（`CCF A・CORE A*` の形。無い行は「ランク未確認」）・会期・確認の状態の札（`複数候補のため要確認` など。確認済みと未設定では付かない）と `延長後` も付く。収録が古ければ、末尾に画面と同じ断りが付く。",
     inputSchema: {
       type: "object",
       properties: {
