@@ -238,12 +238,32 @@ const CSV_COLUMNS = [
    * 引くので、言い回しは増えない。 */
   "date_field",
   "event_segments",
+  /* 確認の状態（第 863 回）。畫面の一覧の行に付く札・カレンダーの本文・`upcoming.md` の
+   * 状態の列と同じ事実を、**機械可読のキーのまま**此の表にも入れる（此の表は「此のサイトが
+   * 付ける日本語の印は書かない」と決めて居るので、日本語の札ではなく上流の狀態の名を書く）。
+   * 値を絞り込めないと、表計算で「公式で確認済みの締切だけ」を選べない。 */
+  "verification_status",
+  "verification_source_class",
+  "extended",
 ];
 
 /* `data.csv` の列辞書。列名は `CSV_COLUMNS` から書き出し、説明だけをここに持つ（列を足したときに
  * 名前の方が古くなる事故を防ぐため、説明側は名前で引く）。空欄の意味や 'N' のような番兵を
  * 書かないと、Excel で開いた人が「評価なし」と「ランク無し」を同じものとして扱ってしまう。 */
 const CSV_COLUMN_NOTES_JA: Record<string, string> = {
+  verification_status:
+    "締切の確認の状態（`data.json` の `deadlines[].verification.status` と同じ値）。" +
+    "'verified' は公式ページで確認した行、'manual-required'・'parser-failed' は公式ページに候補が" +
+    "複数あって人の確認が要る行（画面の札では「複数候補のため要確認」）、'pending' は次の確認に" +
+    "回した行。空欄は確認の記録が無い行（上流の集約データの多くがこれで、**未確認とは別物**）。",
+  verification_source_class:
+    "確認の元の種類（`data.json` の `deadlines[].verification.source_class` と同じ値）。" +
+    "'official-cfp' は公式の募集ページ、'publisher' は出版社、'aggregator' は集約サイト、" +
+    "'unknown' は不明。空欄は確認の記録が無い行。",
+  extended:
+    "'true' は上流が締切を後ろへ動かした行（画面の札では「延長後」。上流の締切名に Extended と" +
+    "付く行と、前の日付を持つ行で日付が後ろへ動いた物）。'false' は動いていない行。" +
+    "前倒しは 'false'（延長とは呼ばない）。",
   key: "会議の正規化キー（slug）。`data.json` の `conferences[].key` と同じ。",
   title: "会議の略称。例 'SIGCOMM'。",
   full_name: "会議の正式名称（上流の原文）。",
@@ -3180,6 +3200,11 @@ export function toCsv(records: DataRecord[] | null | undefined): string {
         // 日付の列が締切の日を指しているかどうかは、この欄で決まる（第 302 回）。
         String(rec.date_field ?? "").trim() || "締切",
         ed.event_segments?.length ? JSON.stringify(ed.event_segments) : "",
+        /* 確認の状態（第 863 回）。記録が無い行は空欄（「未確認」とは書かない – 此の表の
+         * 空欄は「其の値が分からん」の意で、狀態の語を此方が作らない）。 */
+        dl.verification?.status ?? "",
+        dl.verification?.source_class ?? "",
+        Recommender.isExtendedDeadline(dl) ? "true" : "false",
       ]
         .map((v) => csvField(v))
         .join(","),
@@ -4093,7 +4118,7 @@ export function toLlmsTxt(
     "## data.csv の列",
     "",
     "1 行 1 締切の平坦な表で、`data.json` の `conferences[].editions[].deadlines[]` を展開した物である。",
-    "列の名は、多くが `data.json` の鍵と同じ名である（`deadline_*` は `deadlines[]`、`event_*` は `editions[]`、`rank_*` は `conferences[].rank`、`estimate_window_*` は `editions[].estimate` の下）。此の規則に無い列は、其の列の説明を見る（`kind_ja`・`date_field` など – 実測 2026-10-06: 28 列のうち 24 列が此の規則で辿れる）。",
+    "列の名は、多くが `data.json` の鍵と同じ名である（`deadline_*` は `deadlines[]`、`event_*` は `editions[]`、`rank_*` は `conferences[].rank`、`estimate_window_*` は `editions[].estimate`、`verification_*` は `deadlines[].verification` の下）。此の規則に無い列は、其の列の説明を見る（`kind_ja`・`date_field`・`extended` など – 実測 2026-10-08: 31 列のうち 26 列が此の規則で辿れる）。",
     "推定版と過去の締切もそのまま含まれる。画面や `upcoming.md` と違い、**値は機械可読のまま**にしてある。",
     "**此のサイトが付ける印としての日本語は書かない**（「未確認」「該当なし」など。空欄は「その値が分かっていない」を意味する – 実測 2026-10-06: 其の種の印が値として出て居る列は一つも無い）。但し**上流の原文に日本語が在れば其の侭出す** – 国内の催し物では `title` `full_name` `label` `place` `date_text` `date_field` `event_segments` の七列に日本語が入る（「値は機械可読のまま」と云ふのは**此のサイトが語を足さない**と云ふ意味である）。",
     "**上流が英語の印を書いて居る事がある**（実測 2026-10-06: `date_text` 65 行・`place` 10 行が `TBD`）。此れは此方が付けた印では無く**上流の原文**なので、其の侭出す（空欄と `TBD` は意味が違ふ – 空欄は其の値が分からん、`TBD` は上流が「未定」と書いて居る）。",

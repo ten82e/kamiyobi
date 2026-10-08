@@ -124,14 +124,20 @@ function csvColumnNote(name: string): string {
 describe("生の CSV の日本語の種別欄（第 270 回）", () => {
   it("欄が末尾に有り、既存の列順を変えていない", () => {
     const { header } = csvRows();
-    // 日付の意味と複数会期を末尾へ追加。従来の列は相対順序を維持。
-    expect(header[header.length - 3], "日本語の種別欄の位置が変わった").toBe("kind_ja");
-    expect(header.at(-1)).toBe("event_segments");
-    expect(header.at(-2)).toBe("date_field");
+    /* 日付の意味・複数会期・確認の状態を末尾へ追加。従来の列は相対順序を維持する
+     * （第 863 回に確認の状態の 3 列を足した – 足すのは常に末尾）。 */
+    expect(header.slice(-3), "確認の状態の列が末尾に無い").toEqual([
+      "verification_status",
+      "verification_source_class",
+      "extended",
+    ]);
+    expect(header[header.length - 4]).toBe("event_segments");
+    expect(header[header.length - 5]).toBe("date_field");
+    expect(header[header.length - 6], "日本語の種別欄の位置が変わった").toBe("kind_ja");
     expect(header.indexOf("kind"), "英語のキーの欄が消えた").toBeGreaterThanOrEqual(0);
     expect(header.filter((h) => h === "kind_ja").length, "同じ欄が 2 本有る").toBe(1);
     // 末尾に足したので、従来いちばん後ろだった欄はそのまま残る。
-    expect(header[header.length - 4], "列の並びが変わっている").toBe("link");
+    expect(header[header.length - 7], "列の並びが変わっている").toBe("link");
   });
 
   it("全行の欄数が揃っており、日本語の種別が空欄の行が無い", () => {
@@ -355,4 +361,48 @@ describe("生の CSV の日本語の種別欄（第 270 回）", () => {
     const line = txt.split("\n").find((l) => l.startsWith("- data.csv："));
     expect(line, "索引の CSV の説明が種別欄を言わない").toContain("kind_ja");
   });
+});
+
+it("確認の状態を、機械の値のまま 3 列で持つ（第 863 回）", () => {
+  /* 畫面の一覧の札・カレンダーの本文・`upcoming.md` の状態の列と同じ事実を、この表にも入れる。
+   * この表は「このサイトが付ける日本語の印は書かない」と決めているので、上流の状態の名と
+   * 'true'/'false' で持つ（表計算で「公式で確認済みの締切だけ」を選べるように）。 */
+  const { header } = csvRows();
+  expect(header.slice(-3), "末尾の三列が違う").toEqual([
+    "verification_status",
+    "verification_source_class",
+    "extended",
+  ]);
+  const 状態 = column("verification_status").values;
+  const 源 = column("verification_source_class").values;
+  const 延長 = column("extended").values;
+  /* 値は `data.json` の鍵と同じである事を、鍵の集合で見る（書き写していない）。 */
+  const 記録 = JSON.parse(readFileSync(join(site, "data.json"), "utf8")) as {
+    conferences?: Array<{
+      editions?: Array<{
+        deadlines?: Array<{ verification?: { status?: string; source_class?: string } }>;
+      }>;
+    }>;
+  };
+  const 状態の鍵 = new Set<string>();
+  const 源の鍵 = new Set<string>();
+  for (const c of 記録.conferences ?? [])
+    for (const e of c.editions ?? [])
+      for (const d of e.deadlines ?? []) {
+        if (d.verification?.status) 状態の鍵.add(d.verification.status);
+        if (d.verification?.source_class) 源の鍵.add(d.verification.source_class);
+      }
+  expect(状態の鍵.size, "此の検査の前提（確認の記録）が崩れた").toBeGreaterThan(0);
+  for (const v of new Set(状態))
+    if (v) expect(状態の鍵.has(v), `data.json に無い状態: ${v}`).toBe(true);
+  for (const v of new Set(源))
+    if (v) expect(源の鍵.has(v), `data.json に無い元の種類: ${v}`).toBe(true);
+  /* 日本語の印は書かない（この表の約束）。 */
+  for (const v of [...状態, ...源])
+    expect(/[ぁ-んァ-ヶ一-龥]/.test(v), `日本語の印が混ざっている: ${v}`).toBe(false);
+  /* 延長は 'true'/'false' だけ（推定の列と同じ書き方）。 */
+  expect([...new Set(延長)].sort(), "延長の値が違う").toEqual(["false", "true"]);
+  /* 空欄は確認の記録が無い行（「未確認」とは書かない – この表の空欄は「分かっていない」の意）。 */
+  expect(状態.filter((v) => !v).length, "空欄の行が無い（此の検査の前提）").toBeGreaterThan(0);
+  expect(状態.includes("未確認"), "「未確認」と書いている").toBe(false);
 });

@@ -523,7 +523,7 @@ it("索引が、data.csv の列名と data.json の鍵の關係を書いてい�
    * estimate_window_* → editions[].estimate）。索引は一般的な出所しか書いて居なかった。 */
   const build = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
   expect(build, "列名の規則が索引に無い").toContain("多くが `data.json` の鍵と同じ名である");
-  expect(build, "實測の列數が索引に無い").toContain("28 列のうち 24 列が此の規則で辿れる");
+  expect(build, "實測の列數が索引に無い").toContain("31 列のうち 26 列が此の規則で辿れる");
 });
 
 it("索引が、6 道具の引數の名を書いている（第 843 回・第 857 回に推薦の分を足した）", () => {

@@ -765,6 +765,13 @@ schema 4 は `source_commit`、`data_commit`、`workflow_run_id`、`dirty_worktr
   '公開日'・'開始日'）。日付の列 `deadline_local_date`・`deadline_utc`・`deadline_aoe` は締切では
   ない行にも値が入るので、列の説明は 3 本すべてが `date_field` を指す。呼びの語は
   `deadlines.ics`・`data.json`・画面と同じ正本から引く（言い回しを増やさない）。
+- **機械可読の表にも、確認の状態を機械の値で持たせる**（第 863 回で加えた）: `data.csv` は
+  「このサイトが付ける日本語の印は書かない」と決めているので、`upcoming.md` の状態の列や画面の
+  札と同じ事実を、**上流の状態の名のまま**（`verification_status`・`verification_source_class`）と
+  `extended`（'true'/'false'）の 3 列で持つ。列は**末尾に足して既存の列の位置を変えない**。
+  値が無い行は空欄（「未確認」とは書かない – この表の空欄は「その値が分かっていない」の意で、
+  状態の語をこちらで作らない）。画面の札の語（`複数候補のため要確認`）は `upcoming.md` と
+  `deadlines.ics` が持つ – 出口ごとに語と値を選ぶ。
 - **カレンダーの値は、欄名が使う区切りを真似ない**（第 303 回で加えた）: `deadlines.ics` の
   `SUMMARY` は「会議名：種別」の 1 本だけを全角の「：」で区切り、`DESCRIPTION` の「種別: 」の値は
   語だけ – 同じ版に同じ種別が重なる行の区別（上流のラベル）は全角の括弧で括る（「WSDM 2027：
