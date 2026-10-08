@@ -2712,6 +2712,12 @@ conferences:
   磁石を總當たりで無く品書の文本側から張る為、檢査は品書を一度しか讀まんやうに记忆力せた –
   每回讀むと**同じ張りで 484 秒**かかる（実測 7 秒）。
 
+- **索引の「出力一覧」と「利用上の注意」を實物と突き合はせた – どちらも本物だつた（第 815 回）**
+  - 「出力一覧」– 建てた物の**檔案 24 本すべて**が其の節に出て居た（漏れ 0）。JS の束（`app.js`・`recommender.js`・`recommendation-core.js`・`publish.js` など）も、人が讀む物（`index.html`・`upcoming.html`・`data.csv`・`data.json`・`deadlines.ics`・`llms.txt`・`health.md`）も載つて居る。
+  - 「利用上の注意」– 確かめられる主張を四つ検めた（2026-10-06 実測）– ①`utc`・`earliest_utc`・`latest_utc`・`aoe` は**締切の欄に在る**（exact の比較は `utc`・date-only は不確実性区間、と云ふ書き方どほり）②`data.csv` のヘッダーに `comment`・`tags`・`thcpl` は**一つも無い**（0 列）③`estimated` は**版の欄**（此の計畫の型 `src/model.ts` の `Edition` に在る – 節の文も「estimated=true の**版**」と言つて居る）④權威は上流と公式サイト（此れは方針の文）。
+  - 此の回は直す物が無かつた（確かめて無事だつた事を殘す回 – 七度目）。**索引の節を一つずつ實物と突き合はせる型は、まだ穴が出る（第 812・813・814 回）が、此の二節は既に正しかつた。**
+  - 檢索 – `npm run typecheck` 0 件・`npm test` 385 ファイル 5,571 本通過（此の回はコードを變へて居らん）。1 MiB の餘裕は 33,000 バイト。
+
 - **`data.json` の各階層を總當たりし、索引に無い八つの鍵を書いた（第 814 回）**
   - 方法 – `data.json` の**各階層**（会議・版・締切・論文）の鍵を集め、索引のスキーマ要約の節に其の名が在るかを見た。**論文の階層は鍵が 0**（此の版の `data.json` には論文の配列が無い）。
   - 見付けた物 – **索引のどこにも出て居ない鍵が八つ** – 会議 `upstream_sub`／版 `call_identity`・`legacy_ids`・`event_review`／締切 `track`・`verification`・`superseded_deadlines`・`promotion_ref`（何れも 0 箇所）。
