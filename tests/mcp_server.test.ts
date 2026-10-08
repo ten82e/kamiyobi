@@ -863,3 +863,27 @@ it("venue_info が、分野とランクを返す（第 858 回）", async () => 
   expect(text, "ランクを返して居ん").toMatch(/ランク: (CCF|CORE|THCPL)/);
   expect(text, "ランクの語を書き寫して居る").not.toMatch(/ランク: (ccf|core|thcpl):/);
 });
+
+it("行に会期が付く（畫面の「会期」列と同じ入口・第 859 回）", async () => {
+  /* 畫面の一覧には「会期」の列が在るのに、MCP の行は締切だけを言つて居た – AI は
+   * 「NSDI 2027 はいつ開かれる?」に此の收錄で答えられなかつた（出張の段取りは此れで決める）。 */
+  const rows = Recommender.candidateRows(
+    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never,
+  );
+  const 題 = await call("venue_info", { key: "nsdi", scope: "all" });
+  const 會期 = [
+    ...new Set(rows.filter((r) => r.conf.key === "nsdi").map((r) => Recommender.eventCellJa(r))),
+  ].filter(Boolean);
+  expect(會期.length, "此の檢査の前提（NSDI の会期）が崩れた").toBeGreaterThan(0);
+  expect(題, "会期を出して居ん").toContain(`会期 ${會期[0]}`);
+  /* **どの行にも会期の欄が在る**（決まって居ない行も「未確認」と書く – 默ると
+   * 「無い」と讀まれる）。 */
+  const 一覽 = await call("list_upcoming", { days: 90, scope: "all" });
+  const 行 = 一覽.split("\n").filter((l) => /^\d{4}-\d{2}-\d{2}/.test(l));
+  expect(行.length, "此の檢査の前提（日付の行が在る）が崩れた").toBeGreaterThan(3);
+  for (const l of 行) {
+    expect(l, `会期の欄が無い行が在る: ${l.slice(0, 60)}`).toMatch(/\| 会期 [^|]+ \|/);
+  }
+  /* 値は畫面と同じ助っ人（`eventCellJa`）から取つた物で突き合はせる – 上の `toContain` が
+   * 其れ（書き寫すと、會期の言ひ方がずれる）。 */
+});

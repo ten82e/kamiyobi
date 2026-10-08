@@ -174,7 +174,9 @@ function ランクJa(r: Row): string {
   );
 }
 
-/** 1 行を 1 行の文字にする（畫面の列と同じ順・同じ語）。 */
+/** 1 行を 1 行の文字にする。**語は畫面の列と同じ入口から取る**（日時・種別・会議・ランク・
+ * 会期・開催地）。並びは此方の都合（日時 → 種別 → 会議 → ランク → 会期 → 開催地）で、
+ * 畫面の列の順其の侭ではない。 */
 function line(r: Row, now: number): string {
   const 日 = r.dateOnly ? `${r.localDate}（時刻未確認）` : jst(r.t);
   const 殘り = Math.floor((r.t - now) / 86400000);
@@ -183,6 +185,16 @@ function line(r: Row, now: number): string {
   const 回 = (r.dl.round ?? 1) > 1 ? ` R${r.dl.round}` : "";
   const 場所 = String(Recommender.placeJa(r.ed.place) ?? "").trim() || "未確認";
   const ランク = ランクJa(r);
+  /* **會期も入れる**（畫面の「会期」列と同じ入口 `eventCellJa`）。出張の段取りは此れで決める
+   * ので、締切だけ言へても足りん。決まって居ない行は畫面と同じ語（常時受付の期刊行は
+   * 「該当なし」、それ以外は「未確認」）で書く – 默ると「無い」と讀まれる。 */
+  const 會期 =
+    String(Recommender.eventCellJa(r) ?? "").trim() ||
+    String(
+      Recommender.fieldNotApplicableJa(r)
+        ? Recommender.notApplicableLabelJa()
+        : Recommender.unconfirmedLabelJa(),
+    );
   const 推定 = r.est ? "（推定）" : "";
   const 出典 = r.ed.link ? ` ${r.ed.link}` : "";
   /* 畫面の日時欄は「日本時間の読み」と「元の日時」の二段で出す。**日本時間で無い宣言**の行は、
@@ -194,7 +206,7 @@ function line(r: Row, now: number): string {
     tz && utc && !/^JST$/i.test(tz)
       ? `（元の宣言 ${tz}／${utc.replace("T", " ").replace("Z", " UTC")}）`
       : "";
-  return `${日}${殘り文}${元} | ${種別}${回}${推定} | ${r.conf.title}（${r.ed.id}）| ${ランク} | ${場所}${出典}`;
+  return `${日}${殘り文}${元} | ${種別}${回}${推定} | ${r.conf.title}（${r.ed.id}）| ${ランク} | 会期 ${會期} | ${場所}${出典}`;
 }
 
 /** 0 件の時に畫面が出す「打ち直すなら」と同じ物を組む（第 762 回）。
