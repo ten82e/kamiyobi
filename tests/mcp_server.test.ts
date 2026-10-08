@@ -1582,3 +1582,34 @@ it("表に出さん種別の語は、選び方を件數つきで敿へる（第 
   if (默る數 && Number(默る數[1]) > 0)
     expect(默る, "行が出る問に種別の話を付けた").not.toContain("の種別に当たります");
 });
+
+it("語を並べて打つた時、收錄に無い語を名指す（第 880 回）", async () => {
+  /* 畫面は「検索語のうち『GPU』は収録データにも見当かりません。その語を外すと増えます」と
+   * 言ふ（第 258 回）。MCP は「打ち直すなら『ネットワーク』だけに絞る（20 件）」とだけで、
+   * **收錄が其の語を一つも持たん事**が讀めなかつた。實測 2026-10-15: `ネットワーク GPU` は
+   * GPU が窓 0 行・收錄 0 行。 */
+  const text = await call("search_deadlines", { query: "ネットワーク GPU" });
+  expect(text, "收錄に無い語を名指して居ん").toContain("は収録データにも見当たりません");
+  expect(text, "外すと増える事を言つて居ん").toContain("その語を外すと増えます");
+  /* 語ごとの件數も、畫面と同じ正典（`queryTermCounts`）で數へた物と一致する。 */
+  const 窓 = Recommender.candidateRows(
+    JSON.parse(readFileSync(join(REPO_ROOT, "public", "catalog.json"), "utf8")) as never,
+  ) as Array<{ hay: string }>;
+  const now = Date.now();
+  const 件數 = Recommender.queryTermCounts(
+    Recommender.expandRelativeMonths("ネットワーク GPU", now),
+    窓.map((r) => r.hay),
+    now,
+  );
+  const 死んだ語 = 件數.filter((t) => t.count === 0).map((t) => t.term);
+  expect(死んだ語.length, "此の檢查の前提（死語が在る問）が崩れた").toBeGreaterThan(0);
+  expect(text, `死語の名が違ふ: ${死んだ語.join("・")}`).toContain(`「${死んだ語[0]}」`);
+  /* どれも收錄に在るのに「全部を含む行」が無い時 – 語ごとの件數を並べて、どれを外すか選ばせる。 */
+  const 兩方 = await call("search_deadlines", { query: "セキュリティ 福岡" });
+  expect(兩方, "死語としてゐない問に死語の話をした").not.toContain("見当たりません");
+  expect(兩方, "語ごとの件數を書いて居ん").toContain("語をすべて含む行はありません");
+  expect(兩方, "福岡の件數が書かれて居ん").toContain("「福岡」");
+  /* 語が一つの時は他の家（打ち直し・種別の話）に讓る（重ねて二度言はない）。 */
+  const 一つ = await call("search_deadlines", { query: "閏年" });
+  expect(一つ, "語が一つの問に語ごとの話を付けた").not.toContain("語をすべて含む行はありません");
+});
