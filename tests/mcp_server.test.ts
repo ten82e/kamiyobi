@@ -15,6 +15,7 @@ import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 import { REPO_ROOT } from "./helpers.ts";
+import { jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
 /** MCP の客户の眞似をして、行ごとの JSON-RPC をやり取りする。 */
 function mcpClient() {
@@ -713,6 +714,7 @@ it("入力の形が、道具の説明と一致する（第 854 回）", async ()
       "rank",
       "domestic",
       "online",
+      "within_days",
       "scope",
     ],
     list_upcoming: ["days", "kind", "kinds", "scope"],
@@ -1138,21 +1140,25 @@ it("日数の幅は、同じ幅を引ける検索語に置き換へて敎へる�
   expect(text, "日数の幅を其の侭檢索語として扱つた").toContain(
     "日数の幅はそのままでは検索語に当たりません",
   );
-  const m = /近い幅は検索語「(\d+)日以内」で引けます（([\d,]+) 件当たります）/.exec(text);
-  expect(m, "同じ幅を引ける檢索語を敎へて居ん").toBeTruthy();
-  const 敎へた語 = `${m?.[1]}日以内`;
+  const m = /語を省いて `within_days: (\d+)` で引けます（([\d,]+) 件当たります）/.exec(text);
+  expect(m, "同じ幅を引く引数を敎へて居ん").toBeTruthy();
+  const 敎へた日數 = Number(m?.[1]);
   const 敎へた件數 = Number(String(m?.[2]).replace(/,/g, ""));
-  expect(敎へた件數, "敎へた語が 0 件（行き止まりへ送つた）").toBeGreaterThan(0);
-  /* **敎へた語で引くと、言つた件數と一致する**（其の侭打ち直せる – 第 762 回と同じ約束）。 */
-  const 引いた = await call("search_deadlines", { query: 敎へた語, scope: "all", limit: 1 });
-  const 出た = Number(/に当たる締切: ([\d,]+) 件/.exec(引いた)?.[1]?.replace(/,/g, "") ?? -1);
-  expect(出た, `敎へた件數と結果が違ふ: ${敎へた語}`).toBe(敎へた件數);
+  expect(敎へた件數, "敎へた引数が 0 件（行き止まりへ送つた）").toBeGreaterThan(0);
+  /* **敎へた引数で引くと、言つた件數と一致する**（其の侭打ち直せる – 第 762 回と同じ約束）。 */
+  const 引いた = await call("search_deadlines", {
+    within_days: 敎へた日數,
+    scope: "all",
+    limit: 1,
+  });
+  const 出た = Number(/絞り込みだけ: ([\d,]+) 件/.exec(引いた)?.[1]?.replace(/,/g, "") ?? -1);
+  expect(出た, `敎へた件數と結果が違ふ: within_days ${敎へた日數}`).toBe(敎へた件數);
   /* 幅の終はりが書かれて居ない言ひ方（過去の幅）は、過去を出す引数を敎へる（行は作らない）。 */
   const 過去 = await call("search_deadlines", { query: "3日前まで", scope: "all", limit: 1 });
   expect(過去, "過去の幅に何も言はん").toContain("include_past: true");
   /* 語を調べる道具でも同じ事を言ふ（第 869 回の窓の外と同じ扱ひ）。 */
   const 語の = await call("explain_word", { word: "1か月以内", scope: "all" });
-  expect(語の, "explain_word が近い幅を敎へて居ん").toContain(`近い幅は検索語「${敎へた語}」`);
+  expect(語の, "explain_word が同じ幅を敎へて居ん").toContain(`within_days: ${敎へた日數}`);
   /* 時間・分の幅は日で丸める（此の表は締切を日單位で持つ – 丸めた事を隱さない）。 */
   const 時間 = await call("search_deadlines", { query: "3時間以内", scope: "all", limit: 1 });
   expect(時間, "時間の幅に丸めた事を言はん").toContain("時間・分の幅は日で丸めます");
@@ -1196,4 +1202,128 @@ it("収録の果てより先の日付を「無い」と言はない（第 871 �
   /* 行が出る語には付けない。 */
   const 有 = await call("search_deadlines", { query: "ポスター", scope: "all", limit: 1 });
   expect(有, "行が出る語に果ての斷りを付けた").not.toContain("より先です");
+});
+
+/** 畫面（`app.js`）の窓の式を拔き出して、使へる形にする（第 872 回の突き合はせ用）。 */
+function 畫面の窓(): {
+  limit: (win: string, now: number) => number;
+  floor: (win: string, now: number) => number;
+} {
+  const app = siteRuntime();
+  const src = [
+    jsFunction(app, "windowLimitMs"),
+    jsFunction(app, "windowFloorMs"),
+    "return { limit: windowLimitMs, floor: windowFloorMs };",
+  ].join("\n");
+  return new Function("DAY", vmSafeSource(src))(86400000) as {
+    limit: (win: string, now: number) => number;
+    floor: (win: string, now: number) => number;
+  };
+}
+
+/** 瞬間を JST の暦日（`YYYY-MM-DD`）で書く。 */
+function 日Ja(ms: number): string {
+  const d = new Date(ms + 9 * 3600000);
+  const p = (n: number): string => String(n).padStart(2, "0");
+  return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())}`;
+}
+
+it("「締切まで N 日」の窓の式が、畫面と一致する（第 872 回）", () => {
+  /* 畫面側の `windowLimitMs`・`windowFloorMs` は 10 本の檢查が拔き出して使ふので動かせない。
+   * 同じ式を `site/recommender.ts` に置いた（MCP が同じ引數を持つ爲）ので、**値を突き合はせる** –
+   * ずれると、同じ日に人が見る行と AI が言ふ行が違ふ（窓は JST の暦日で切る – 第 202 回）。 */
+  const 畫面 = 畫面の窓();
+  const 時 = [
+    Date.parse("2026-10-08T14:59:59Z"), // JST の 0 時の直前
+    Date.parse("2026-10-08T15:00:00Z"), // JST の 0 時ちょうど
+    Date.parse("2026-10-09T14:59:59Z"), // JST の翌日 0 時の直前
+    Date.parse("2026-12-31T16:30:00Z"),
+    Date.parse("2027-02-28T23:59:00Z"),
+    Date.parse("2028-02-29T00:00:00Z"), // 閏日
+  ];
+  for (const now of 時) {
+    for (const 日 of [1, 7, 30, 90, 180, 365, 730]) {
+      const 印 = new Date(now).toISOString();
+      expect(Recommender.withinDaysLimitMs(日, now), `上限が違ふ: ${日} 日 / ${印}`).toBe(
+        畫面.limit(`${日}d`, now),
+      );
+      expect(Recommender.withinDaysFloorMs(日, now), `下限が違ふ: ${日} 日 / ${印}`).toBe(
+        畫面.floor(`${日}d`, now),
+      );
+    }
+  }
+});
+
+it("within_days は、畫面の「締切まで N 日」と同じ行を返す（第 872 回）", async () => {
+  /* 第 871 回までは、AI が日数の幅を言はれても檢索語（「30日以内」）で代はるしか無く、其れは
+   * **締切の瞬間**で數へる別の物だつた（窓は JST の暦日で切る）。畫面の選擇欄と同じ引數を持つ。 */
+  const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never;
+  const 全行 = Recommender.candidateRows(snap);
+  const 畫面 = 畫面の窓();
+  /* 畫面の既定（今後・投稿締切の種別・推定を除く）と同じ土俵で數へる。 */
+  const 期待 = (日: number, now: number, 過去も: boolean): number =>
+    全行.filter((r) => {
+      /* 過去も出す時は「今後の物だけ」の絞り込みが外れる（畫面と同じ）。 */
+      if (!過去も && r.t < now) return false;
+      if (r.est) return false;
+      if (!["abstract", "paper", "journal"].includes(r.kind)) return false;
+      const d = typeof r.tShown === "number" && Number.isFinite(r.tShown) ? r.tShown : r.t;
+      if (d >= 畫面.limit(`${日}d`, now)) return false;
+      if (過去も && d < 畫面.floor(`${日}d`, now)) return false;
+      return true;
+    }).length;
+  const 件數を讀む = (text: string): number =>
+    Number(/絞り込みだけ: ([\d,]+) 件/.exec(text)?.[1]?.replace(/,/g, "") ?? -1);
+
+  /* 語を省いて、窓だけで引ける（第 793 回の「絞り込みだけ」の仲間に入れた）。 */
+  const 前 = Date.now();
+  const text = await call("search_deadlines", { within_days: 30, scope: "all", limit: 1 });
+  const 後 = Date.now();
+  expect(text, "語を省いて窓だけで引ける事を言つて居ん").toContain("語を指定せず、絞り込みだけ");
+  expect(text, "窓を頭に書いて居ん").toContain("／締切まで 30 日以内");
+  /* 數へ方は**呼び出しの前後**の時計で挾む（道具は自分の時計で數へるので、境目を跨いでも
+   * 落ちない樣に – 其の幅の中で一致する事を見る）。 */
+  const 幅 = [期待(30, 前, false), 期待(30, 後, false)].sort((a, b) => a - b);
+  const 出た = 件數を讀む(text);
+  expect(出た, `畫面の式と違ふ（${幅[0]}〜${幅[1]} の筈）`).toBeGreaterThanOrEqual(幅[0]);
+  expect(出た, `畫面の式と違ふ（${幅[0]}〜${幅[1]} の筈）`).toBeLessThanOrEqual(幅[1]);
+
+  /* 過去も出す時は下側も効く（第 202 回 – 上側だけだと 2019 年まで殘り、窓が意味を失ふ）。 */
+  const 前2 = Date.now();
+  const 過去 = await call("search_deadlines", {
+    within_days: 7,
+    include_past: true,
+    scope: "all",
+    limit: 100,
+  });
+  const 後2 = Date.now();
+  const 幅2 = [期待(7, 前2, true), 期待(7, 後2, true)].sort((a, b) => a - b);
+  const 出た2 = 件數を讀む(過去);
+  expect(出た2, `過去込みの數が畫面の式と違ふ（${幅2[0]}〜${幅2[1]} の筈）`).toBeGreaterThanOrEqual(
+    幅2[0],
+  );
+  expect(出た2, `過去込みの數が畫面の式と違ふ（${幅2[0]}〜${幅2[1]} の筈）`).toBeLessThanOrEqual(
+    幅2[1],
+  );
+  /* 返つた行の日を讀んで、窓の中だけである事を見る（數だけ合つて中身が違ふ、を止める）。
+   * 上限は「翌日の開始」なので、窓に入る最後の日は其の前日。 */
+  const 下限日 = 日Ja(畫面.floor("7d", 前2));
+  const 上限日 = 日Ja(畫面.limit("7d", 前2) - 86400000);
+  const 日々 = 過去
+    .split("\n")
+    .filter((l) => /^\d{4}-\d{2}-\d{2}/.test(l))
+    .map((l) => l.slice(0, 10));
+  expect(日々.length, "行が 1 本も無い（此の檢查の前提が崩れた）").toBeGreaterThan(0);
+  for (const 日 of 日々) {
+    expect(日 >= 下限日 && 日 <= 上限日, `窓の外の行を返した: ${日}（${下限日}〜${上限日}）`).toBe(
+      true,
+    );
+  }
+  /* 窓は語と一緒にも使へる（絞り込みの一つとして効く）。 */
+  const 語と = await call("search_deadlines", {
+    query: "セキュリティ",
+    within_days: 30,
+    scope: "all",
+  });
+  expect(語と, "語と窓の併用が効いて居ん").toContain("／締切まで 30 日以内");
 });

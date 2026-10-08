@@ -8085,6 +8085,22 @@ const Recommender = (() => {
   /* 検索語に書かれた日付の幅を、ISO の暦日として返す（第 293 回 – 內譯は SPEC.md 同條）。
    * 解釈するのは一覽の檢索が實際に持つ形だけ（`monthTermsJa` `dayTermsJa` `isoDayJa` が hay に
    * 入れる語と同じ物にする）。年を言はない `3月10日` は推測になるので返さない（AGENTS.md）。*/
+  /* 「締切まで N 日」の窓の端（第 872 回）。**畫面の `windowLimitMs`・`windowFloorMs` と同じ式**を
+   * 此處に置く – MCP（`src/mcp.ts`）も同じ引數を持つので、同じ日に同じ行を出さねばならん。
+   * 畫面側は 10 本の檢查が函數を拔き出して使ふので動かせない（書き換えると其れ等が落ちる）。
+   * 同じ式が 2 箇所に在る事は、`tests/mcp_server.test.ts` が**値を突き合はせて**張る。
+   *
+   * 上側は **JST の暦日**で切る（「N 日後の暦日まで」の終はり際）。經過 24 時間で區切ると、
+   * 同じ畫面が「あと N 日」と出す行が窓の外に落ちる（第 202 回にそこへ揃へた）。
+   * 下側は「過去の締切も表示」と同時に使ふ時の物で、同じ暦日の基準で N 日前の暦日の始まりから。 */
+  function withinDaysLimitMs(days: number, nowMs: number): number {
+    return (Math.floor((nowMs + 9 * 3600000) / 86400000) + days + 1) * 86400000 - 9 * 3600000;
+  }
+
+  function withinDaysFloorMs(days: number, nowMs: number): number {
+    return (Math.floor((nowMs + 9 * 3600000) / 86400000) - days) * 86400000 - 9 * 3600000;
+  }
+
   function queryDaySpanJa(query: unknown): { first: string; last: string; label: string } | null {
     const text = String(query ?? "");
     if (!text) return null;
@@ -17168,6 +17184,9 @@ const Recommender = (() => {
     dayRangeWindowJa: dayRangeWindowJa,
     dayRangeNoteJa: dayRangeNoteJa,
     queryDaySpanJa: queryDaySpanJa,
+    /* 「締切まで N 日」の窓の端（第 872 回 – 畫面の同名の函數と同じ式）。 */
+    withinDaysLimitMs: withinDaysLimitMs,
+    withinDaysFloorMs: withinDaysFloorMs,
     dayRangeLiveNoteJa: dayRangeLiveNoteJa,
     uiWordLiveNoteJa: uiWordLiveNoteJa,
     wholeTableQueryWordJa: wholeTableQueryWordJa,

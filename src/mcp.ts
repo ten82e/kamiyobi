@@ -322,10 +322,10 @@ function 日數幅の案内(
     return [
       "幅の終わりが書かれていない言い方（過去の幅）なので、検索語では絞りません。その範囲は過ぎています – include_past: true を付けると並びます。",
     ];
-  const 語 = `${日數}日以内`;
-  const 照合 = Recommender.searchMatcher(Recommender.expandRelativeMonths(語, now), now);
-  const 素の = list.filter((r) => 照合(r.hay) === true);
-  const 件數 = 畫面の既定(素の, now, args).length;
+  /* 敎へるのは**此の道具の引數**（第 872 回に `within_days` を足した）。畫面の「締切まで」と
+   * 同じ式で切るので、數へた件數は其の侭「其の引數で引いた件數」に成る（檢索語で代はるより正確 –
+   * 檢索語の日數は締切の瞬間で數へるのに対し、窓は JST の暦日で切る）。 */
+  const 件數 = 畫面の既定(list, now, { ...args, within_days: 日數 }).length;
   /* 時間・分の幅は日で丸める（此の表は締切を日單位で持つ – 畫面の同じ斷りと同じ事）。
    * 「3時間以内」に「同じ幅」と言ふと、丸めた事が傳はらん。 */
   const 丸め =
@@ -334,10 +334,10 @@ function 日數幅の案内(
       : "";
   if (件數)
     return [
-      `日数の幅はそのままでは検索語に当たりません（画面は「締切まで」の選択欄で選びます）。近い幅は検索語「${語}」で引けます（${件數} 件当たります）。${丸め}`.trimEnd(),
+      `日数の幅はそのままでは検索語に当たりません（画面は「締切まで」の選択欄で選びます）。語を省いて \`within_days: ${日數}\` で引けます（${件數} 件当たります）。${丸め}`.trimEnd(),
     ];
   return [
-    `日数の幅はそのままでは検索語に当たりません。「${語}」も 0 件です（検索語で引けるのは 1 年ぶんまで – それより長い幅は scope: "all" で見てください）。${丸め}`.trimEnd(),
+    `日数の幅はそのままでは検索語に当たりません。語を省いて \`within_days: ${日數}\` で引けますが、いまの絞り込みでは 0 件です。${丸め}`.trimEnd(),
   ];
 }
 
@@ -395,9 +395,13 @@ function 畫面の既定(
     rank?: unknown;
     domestic?: unknown;
     online?: unknown;
+    /** 「締切まで N 日」の窓（畫面の同じ名前の選擇欄。第 872 回）。 */
+    within_days?: unknown;
   },
 ): Row[] {
   const 過去も = args.include_past === true;
+  const 窓の日數 = Number(args.within_days);
+  const 窓あり = Number.isFinite(窓の日數) && 窓の日數 > 0;
   const 推定も = args.include_estimated === true;
   const 引き = args.kinds ?? (args as { kind?: unknown }).kind;
   const 種別 = Array.isArray(引き)
@@ -432,10 +436,21 @@ function 畫面の既定(
    * 魔法の語を知らないと使へない – 引數にすれば、畫面のボタンと同じ物が其の侭使へる。 */
   const 國內だけ = args.domestic === true;
   const オンラインだけ = args.online === true;
+  /* 窓は**畫面と同じ式**で切る（`Recommender.withinDaysLimitMs` – 同じ日に同じ行を出す）。
+   * 比べるのは「表示して居る暦日」（`tShown`。無ければ `t`）で、畫面の `rowShownDayMs` と同じ。
+   * 過去も出す時は下側も効かせる（第 202 回の畫面と同じ – 上側だけだと 2019 年まで殘り、
+   * 窓が意味を失ふ）。 */
+  const 窓の上限 = 窓あり ? Recommender.withinDaysLimitMs(窓の日數, now) : 0;
+  const 窓の下限 = 窓あり && 過去も ? Recommender.withinDaysFloorMs(窓の日數, now) : 0;
   return list
     .filter((r) => {
       if (!過去も && r.t < now) return false;
       if (!推定も && r.est) return false;
+      if (窓あり) {
+        const 日 = typeof r.tShown === "number" && Number.isFinite(r.tShown) ? r.tShown : r.t;
+        if (日 >= 窓の上限) return false;
+        if (窓の下限 && 日 < 窓の下限) return false;
+      }
       if (ランク && !Recommender.rankMatches(r.rankPairs ?? [], ランク)) return false;
       /* 國內は**主催の區分**（日本で開かれる會議ではない）。判定は畫面と同じタグ一本。 */
       if (國內だけ && (r.tags ?? []).indexOf("domestic-jp") < 0) return false;
@@ -521,6 +536,7 @@ function searchDeadlines(
     rank?: unknown;
     domestic?: unknown;
     online?: unknown;
+    within_days?: unknown;
     scope?: unknown;
   },
   now: number,
@@ -535,10 +551,15 @@ function searchDeadlines(
       args.kinds !== undefined ||
       args.rank !== undefined ||
       args.domestic !== undefined ||
-      args.online !== undefined);
+      args.online !== undefined ||
+      args.within_days !== undefined);
   if (!query && !絞り込みだけ)
-    return "検索語が空です。会議名・分野・開催地・締切の語をください（語を省くなら kind / kinds / rank / domestic / online の何れかを添へてください）。";
+    return "検索語が空です。会議名・分野・開催地・締切の語をください（語を省くなら kind / kinds / rank / domestic / online / within_days の何れかを添へてください）。";
   const limit = Math.min(Math.max(Number(args.limit) || 20, 1), 100);
+  /* 「締切まで N 日」の窓（畫面の同じ名前の選擇欄と同じ物。第 872 回）。頭にも言ふ –
+   * 窓で切つた事を默ると、AI が「これで全部」と讀む。 */
+  const 窓の日數 = Number(args.within_days);
+  const 窓あり = Number.isFinite(窓の日數) && 窓の日數 > 0;
   const { list, 名, 生成 } = pick(args.scope);
   const 古さ = 古さの斷り(生成, now);
   /* 語が空（種別だけの時）は**全部に當たる**目にする（第 793 回）。 */
@@ -575,7 +596,7 @@ function searchDeadlines(
     /(?:\d+月|\d+日|今月|来月|先月|今週|来週|先週|今年|来年|年内|年度|以内|までに|以降)/.test(
       query,
     );
-  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}`;
+  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内` : ""}）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}`;
   if (!hit.length) {
     /* 畫面と同じ約束 – 案内は「素の當たりが 0」の時に出る物なので、絞り込みで 0 に成つた時は
      * 其の旨を書く（絞り込みを外せば出る事がある）。 */
@@ -928,7 +949,7 @@ const TOOLS = [
   {
     name: "search_deadlines",
     description:
-      '**語を省いて `kind` / `kinds` だけでも引ける**（「登録締切を全部」の様な聞き方）。kamiyobi の収録（国際会議・国内研究会の締切と会期）を日本語で引く。会議名・分野・開催地・締切の語・相対日付（『今月』『30日以内』『来週』など）が使へる。**0 件の時は、画面と同じ案内（其の語が表に無い事）と、同じ「打ち直すなら」の次の一手を返す** – 其の一手の件数は、実際に引いた時に出る行数と一致する（その侭打ち直せる）。**窓（`scope: "screen"`）で 0 件の時は、収録の全体に何行あるかを言う**（「窓には 1 行もありませんが、収録の全体には N 行あります（`scope: "all"` で引けます）」– 窓は画面が最初に読む 180 日ぶんだけなので、其れを「無い」と読ませない）。**日数の幅（「1か月以内」）は検索語に当たらないので、同じ幅を引ける検索語を件数つきで言ふ**（「同じ幅は検索語「30日以内」で引けます（90 件当たります）」– 画面の「締切まで」の選択欄に当たる引数は此方に無いので、検索語で代はる。「3日前まで」の様に幅の終はりが無い言ひ方は、過去なので `include_past: true` を教へる）。**打つた日付が収録の果て（一番遠い締切）より先なら、「無い」とは言はない**（「打った日付「2029年3月」は、収録している中で一番遠い締切 2028-06-05 より先です。その日付に締切があるかどうかも、まだ確認できていません。」– 画面の第 293 回と同じ決めごと）。**0 件の時は、収録の会議の名前に当たっていないかも見る**（「締切の行が 1 本もありません」「会期は upcoming.md に『開催』として載ります」のように、収録に在る事と、何処を見ればよいかを言う – 「収録に無い」とは言わない）。**必須の引数は無い**。絞り込みは画面と同じ物が揃っている（`kinds`・`rank`・`domestic`・`online`・`include_past`・`include_estimated`）。行にはランク（`CCF A・CORE A*` の形。無い行は「ランク未確認」）・会期・確認の状態の札（`複数候補のため要確認` など。確認済みと未設定では付かない）と `延長後` も付く。収録が古ければ、末尾に画面と同じ断りが付く。',
+      '**語を省いて `kind` / `kinds` / `within_days` だけでも引ける**（「登録締切を全部」「30 日以内の締切を全部」の様な聞き方）。kamiyobi の収録（国際会議・国内研究会の締切と会期）を日本語で引く。会議名・分野・開催地・締切の語・相対日付（『今月』『30日以内』『来週』など）が使へる。**0 件の時は、画面と同じ案内（其の語が表に無い事）と、同じ「打ち直すなら」の次の一手を返す** – 其の一手の件数は、実際に引いた時に出る行数と一致する（その侭打ち直せる）。**窓（`scope: "screen"`）で 0 件の時は、収録の全体に何行あるかを言う**（「窓には 1 行もありませんが、収録の全体には N 行あります（`scope: "all"` で引けます）」– 窓は画面が最初に読む 180 日ぶんだけなので、其れを「無い」と読ませない）。**日数の幅（「1か月以内」）は検索語に当たらないので、同じ幅を引く引数を件数つきで言ふ**（「語を省いて `within_days: 30` で引けます（88 件当たります）」– 画面の「締切まで」の選択欄と同じ物が `within_days` である。「3日前まで」の様に幅の終はりが無い言ひ方は、過去なので `include_past: true` を教へる）。**打つた日付が収録の果て（一番遠い締切）より先なら、「無い」とは言はない**（「打った日付「2029年3月」は、収録している中で一番遠い締切 2028-06-05 より先です。その日付に締切があるかどうかも、まだ確認できていません。」– 画面の第 293 回と同じ決めごと）。**0 件の時は、収録の会議の名前に当たっていないかも見る**（「締切の行が 1 本もありません」「会期は upcoming.md に『開催』として載ります」のように、収録に在る事と、何処を見ればよいかを言う – 「収録に無い」とは言わない）。**必須の引数は無い**。絞り込みは画面と同じ物が揃っている（`kinds`・`rank`・`domestic`・`online`・`within_days`・`include_past`・`include_estimated`）。行にはランク（`CCF A・CORE A*` の形。無い行は「ランク未確認」）・会期・確認の状態の札（`複数候補のため要確認` など。確認済みと未設定では付かない）と `延長後` も付く。収録が古ければ、末尾に画面と同じ断りが付く。',
     inputSchema: {
       type: "object",
       properties: {
@@ -965,6 +986,11 @@ const TOOLS = [
           type: "boolean",
           description:
             "オンライン参加可の行だけに絞る（画面の同じ名前のチェック欄と同じ判定。会場の表記にオンライン・ハイブリッドなどの記述がある行だけ – 記述が無い行を対面と決めつけない）",
+        },
+        within_days: {
+          type: "number",
+          description:
+            "「締切まで N 日」の窓（画面の同じ名前の選択欄と同じ判定。JST の暦日で切り、`include_past: true` の時は同じ日数の過去側も含める）。語を省いてこれだけでも引ける",
         },
         scope: {
           type: "string",
