@@ -1423,3 +1423,70 @@ it("list_upcoming と search_deadlines は、同じ條件なら同じ件数を�
   );
   expect(說明, "推定の取扱ひを說明して居ん").toContain("推定");
 });
+
+it("名簿の案内が、畫面と同じ規則で名を探す（第 875 回）", async () => {
+  /* 「X 2027」の樣に**年を添えて**打つと、MCP は名前にその年を要求して居て 0 件・無言だつた
+   * （實測 2026-10-11: `ACSAC 2027` は收錄 0 行・案内も無し。人は「ACSAC 2027 の締切は？」と
+   * 譯に「無い」と受け取る）。畫面は**數字と日付の部品だけの語を名前の語から外す**（第 296 回）
+   * ので、「打った語に似た名前の会議（ACSAC）は、収録の名簿に見えます」と言ふ。
+   * 畫面の函數は 10 本の檢查が拔き出して使ふので動かせない – 拔き出した畫面の函數と
+   * **突き合はせる**（第 872 回の窓の式と同じやり方）。 */
+  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  if (!existsSync(品書)) return; // 畫面側の名簿は建てた時だけ在る（此の檔案の約束）。
+  const 品書の會議 = (
+    JSON.parse(readFileSync(品書, "utf8")) as { conferences?: unknown[] }
+  ).conferences?.filter((c) => c && typeof c === "object" && !Array.isArray(c));
+  expect(品書の會議?.length, "此の檢查の前提（品書の名簿）が崩れた").toBeGreaterThan(0);
+  const 拔く = jsFunction(siteRuntime(), "nameOnlyConferenceMatch");
+  const 畫面 = new Function(
+    "DATA",
+    "Recommender",
+    vmSafeSource(`${拔く}\nreturn nameOnlyConferenceMatch;`),
+  )({ conferences: 品書の會議 }, Recommender) as (
+    q: string,
+    rows: unknown[],
+    now: number,
+  ) => { count: number; terms: string[] } | null;
+  /* 意圖的に混ぜる – 年に年が在る物・在らん物・日本語の名前・英字の短い略稱。 */
+  for (const 語 of ["ACSAC 2027", "CoNLL 2027", "NSDI 2028", "apnoms", "情報処理学会 HPC 研究会"]) {
+    const 見 = 畫面(語, [], Date.now());
+    if (!見 || (!見.count && !見.terms.length)) continue; // 畫面も默る問は比べる意味が無い
+    /* 既定の窓（畫面と同じ）で引く – 收錄にまで行が在る問（`CoNLL 2027` は收錄 1 行）は
+     * MCP が行を返して默るので、比べるのは畫面と同じ窓。 */
+    const text = await call("search_deadlines", { query: 語, limit: 1 });
+    const 會議を名指した = text.includes("収録の会議の名前には");
+    const 語を名指した = text.includes("名簿に、その語に似た名前の会議は在ります");
+    /* 畫面が**會議を 1 件に定めた**時は、MCP も會議を名指さねばならん（狀態を添へる方が
+     * 役に立つ – 「締切の行が 1 本もありません」「絞り込みを外すと出ます」は會議の話に付く）。
+     * 畫面が語だけを見付けた時は、語を名指すので足りる。 */
+    expect(
+      見.count > 0 ? 會議を名指した : 語を名指した || 會議を名指した,
+      `「${語}」は畫面が名簿を名指す（count ${見.count}・語 ${見.terms.join("・")}）のに、MCP は同し事を言つて居ない`,
+    ).toBe(true);
+  }
+  /* 英字の語は名前の中で**獨立に立つ**事を要求する（畫面と同じ – `st` は多くの名前に
+   * 部分として含まるが、どれにも立たない）。部分一致に戻すと、名前にその語を含むだけの
+   * 會議を「名簿に在る」と言之てしまふ。 */
+  /* 前提を此の方で確かめる – `st` は名前に部分として含まるが、どれにも**語として立たん**。 */
+  const 殻 = (品書の會議 ?? []).map((c) =>
+    `${String((c as { acronym?: unknown }).acronym ?? "")} ${String((c as { title?: unknown }).title ?? "")} ${String((c as { full_name?: unknown }).full_name ?? "")} ${String((c as { key?: unknown }).key ?? "")}`.toLowerCase(),
+  );
+  expect(
+    殻.some((h) => /(^|[^a-z0-9])st([^a-z0-9]|$)/u.test(h)),
+    "此の檢查の前提（`st` がどこにも立たん）が崩れた",
+  ).toBe(false);
+  const 部分 = await call("search_deadlines", { query: "st", scope: "all", limit: 1 });
+  expect(部分, "部分一致の語を名簿の名指しに使つた").not.toContain("収録の会議の名前には");
+  expect(部分, "部分一致の語を名簿の名指しに使つた").not.toContain(
+    "名簿に、その語に似た名前の会議は在ります",
+  );
+  /* 畫面も默る問には、MCP も名簿の話を立てない（行が出るのであれば、どちらも默る）。 */
+  const 默る = 畫面("zzzznotaconference", [], Date.now());
+  expect(默る, "此の檢查の前提（畫面が默る問）が崩れた").toBeNull();
+  const 默る答 = await call("search_deadlines", {
+    query: "zzzznotaconference",
+    scope: "all",
+    limit: 1,
+  });
+  expect(默る答, "畫面が默る問に名簿の話を立てた").not.toContain("収録の会議の名前には");
+});
