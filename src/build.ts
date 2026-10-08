@@ -31,9 +31,9 @@ import {
   icsCalendarText,
   icsCategoryLabels,
   icsEventBody,
-  icsStatusMarks,
   icsUidSafe,
   jstParts,
+  statusMarksJa,
 } from "../site/ics.ts";
 import { recommendationAxes } from "../site/recommendation-core.ts";
 
@@ -50,9 +50,9 @@ export {
   icsEventBody,
   icsFoldLine,
   icsNextDay,
-  icsStatusMarks,
   icsUidSafe,
   jstParts,
+  statusMarksJa,
 } from "../site/ics.ts";
 
 import Recommender, { isValidRerankerModel } from "../site/recommender.ts";
@@ -3367,7 +3367,7 @@ export function icsEventRows(
      * ズレない – 県名の補いも国名の日本語化も同じ正本）。
      * 出ていない行は `LOCATION` を **書かない**: カレンダーの場所欄に「未確認」は
      * 場所として表示されるので、無い場所を渡すよりマシ（本当のことは下の `開催地:` に書く）。 */
-    const 状態 = icsStatusMarks(dl);
+    const 状態 = statusMarksJa(dl);
     const placeJa = String(
       Recommender.placeJa(Recommender.placeWithPrefectureJa(ed.place)) ?? "",
     ).trim();
@@ -3827,8 +3827,12 @@ export function toUpcomingMd(
        * 画面には会期が有るのに、この表だけで読む人（印刷・JavaScript なし）だけ出張の段取りが
        * 決まらなかった。形はカレンダーの本文と同じ正本を呼ぶ。列は末尾に足す（第 302 回）。 */
       const sessionText = editionSessionJa(ed) || Recommender.unconfirmedLabelJa();
+      /* 状態の列（第 862 回）。畫面の一覧の行に付く札（延長・確認の状態）を、この表だけを
+       * 読む人にも出す – 購読やカレンダーと同じく、確かめていない締切を確かめた物として
+       * 使わせない。語は畫面と同じ正本（`statusMarksJa`）から取る。無い行は空欄。 */
+      const 状態 = statusMarksJa(dl).join("・");
       rows.push(
-        `| ${when} | ${left} | ${name} | ${kindText} | ${roundText} | ${ed.estimated ? "推定" : ""} | ${placeEscaped} | ${sessionText} |`,
+        `| ${when} | ${left} | ${name} | ${kindText} | ${roundText} | ${ed.estimated ? "推定" : ""} | ${placeEscaped} | ${sessionText} | ${状態} |`,
       );
     } else {
       const start = rec.start;
@@ -3854,7 +3858,7 @@ export function toUpcomingMd(
       const endText = `${fmtDate(end)}${calendarDayJa(end) ? `(${calendarDayJa(end)})` : ""}`;
       const when = end.getTime() !== start.getTime() ? `${startText} 〜 ${endText}` : startText;
       rows.push(
-        `| ${when} | ${left} | ${name} | ${escapeMdCell(rec.kind_note ? `開催（${rec.kind_note}）` : "開催")} | - | ${ed.estimated ? "推定" : ""} | ${placeEscaped} | ${when} |`,
+        `| ${when} | ${left} | ${name} | ${escapeMdCell(rec.kind_note ? `開催（${rec.kind_note}）` : "開催")} | - | ${ed.estimated ? "推定" : ""} | ${placeEscaped} | ${when} |  |`,
       );
     }
   }
@@ -3889,6 +3893,9 @@ export function toUpcomingMd(
     "> 各予定の本文に書いた物と同じ値で、上流が推定とした会期には「（推定）」を添える）。種別が",
     "> 「開催」の行は日付列が会期その物なので、同じ値を繰り返す。",
     "> 「推定」は前年までの実績から機械的に置いた未確認の値で、公式の発表ではない。",
+    "> 「状態」は、公式ページに候補が複数あって人の確認が要る日（「複数候補のため要確認」）や、",
+    "> 上流が締切を後ろへ動かした日（「延長後」）に付く（画面の一覧の札と同じ語）。空欄は、",
+    "> 公式で確認済みか、確認の記録が無い日のいずれか。",
     /* 日付列に「推定期間 A〜B」と云ふ形が出るのに、散文が其れを説明して居なかつた（第 736 回 –
      * 實測 2026-10-06: 此の形は upcoming.md に 19 行在り、散文には「推定」の話は在るが
      * 「推定期間」の語は一つも無い）。日付の形を読む人（と AI）の爲に書き足す。*/
@@ -3907,8 +3914,8 @@ export function toUpcomingMd(
     "> 出すかが公式に出ていない行。",
     `> ${Recommender.aoeMeaningJa()}。`,
     "",
-    "| 日付 | 残り | 会議 | 種別 | ラウンド | 推定 | 開催地 | 会期 |",
-    "|---|---|---|---|---|---|---|---|",
+    "| 日付 | 残り | 会議 | 種別 | ラウンド | 推定 | 開催地 | 会期 | 状態 |",
+    "|---|---|---|---|---|---|---|---|---|",
   ];
   if (rows.length === 0) rows.push("| - | - | 該当なし | - | - | - | - | - |");
   /* 1,000 行を超える表なので、最後まで読んだ人にも出口を置く（`upcoming.html` と同じ言い回しを

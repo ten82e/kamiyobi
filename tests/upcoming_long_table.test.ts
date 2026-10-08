@@ -37,7 +37,7 @@ describe("縦に長い静的な一覧（第 269 回）", () => {
      * 592 行を実測）。ここでは「先頭の 1 個だけでは戻れないほど長い」と言える根拠として、
      * 画面の 1 画面ぶん（40 行）を大きく越えることを見る。 */
     expect(rows, "想定より短い表になっている（見直しの合図）").toBeGreaterThan(200);
-    expect(up.match(/<th scope="col">/g)?.length, "欄の数が変わった").toBe(8);
+    expect(up.match(/<th scope="col">/g)?.length, "欄の数が変わった").toBe(9);
   });
 
   it("終端に出口が有る（最後の行よりうしろに、先頭と画面へ戻る物を出す）", () => {
@@ -135,4 +135,36 @@ describe("縦に長い静的な一覧（第 269 回）", () => {
     expect(print, "印刷用の規則が見つからない").not.toBe("");
     expect(print, "印刷に粘着を混ぜている（用紙ごとにずれる）。").not.toContain("sticky");
   });
+});
+
+it("状態の列が、畫面の一覧の札と同じ語を持つ（第 862 回）", () => {
+  /* 畫面の行には札が付き、カレンダーの本文にも書く樣に成つたが、**此の表だけを讀む人**
+   * （印刷する人・grep する人）には何も無かつた – 確かめて居ない締切を、確かめた物として
+   * 使はせない爲に、同じ語を此處にも出す。 */
+  const rows = page("upcoming.html");
+  const head = /<thead>([\s\S]*?)<\/thead>/.exec(rows)?.[1] ?? "";
+  const 見出し = [...head.matchAll(/<th\b[\s\S]*?<\/th>/g)].map((m) =>
+    String(m[0])
+      .replace(/<[^>]*>/g, "")
+      .trim(),
+  );
+  expect(見出し[見出し.length - 1], "狀態の列が末尾に無い").toBe("状態");
+  const md = readFileSync(join(site, "upcoming.md"), "utf8");
+  const 表 = md.split("\n").filter((l) => l.startsWith("|"));
+  const 幅 = [...new Set(表.map((l) => l.slice(1, -1).split("|").length))];
+  expect(幅, "列數が揃つて居ない").toEqual([9]);
+  /* 語は畫面と同じ正本（`statusMarksJa`）から取る。 */
+  const 札の行 = 表.filter((l) => l.includes("複数候補のため要確認") || l.includes("延長後"));
+  expect(札の行.length, "札を持つ行が無い（此の檢査の前提）").toBeGreaterThan(0);
+  for (const l of 札の行) {
+    const セル = l
+      .slice(1, -1)
+      .split("|")
+      .map((c) => c.trim());
+    expect(セル[8], `狀態の列が空の行が在る: ${l.slice(0, 60)}`).toMatch(
+      /^(複数候補のため要確認|延長後)(・(複数候補のため要確認|延長後))*$/,
+    );
+  }
+  /* 表の凡例（md を單體で讀む人）にも、列の意味を書く。 */
+  expect(md, "凡例が狀態の列を説明して居ん").toContain("「状態」は、公式ページに候補が複数あって");
 });

@@ -240,10 +240,13 @@ export function icsCalendarDescriptionJa(
 
 /** 一覧の行に付く**札**（延長・確認の状態）。語は畫面と同じ正本から取る。無ければ空の配列。
  *
+ * **カレンダー（配付物と畫面の書き出し）と、`upcoming.md` の状態の列が同じ物を使ふ** –
+ * 書き寫すと、出口ごとに言ひ方がずれる。
+ *
  * 畫面だけが知つて居る事にしない – 購読した人はカレンダーしか見ないので、上流に候補が複数
  * ある締切（「複数候補のため要確認」）が、其の侭では確定の締切として予定表に並ぶ。**確認済みと
  * 未設定では何も返さない**（畫面も印を出さない – 默るのが正しい）。 */
-export function icsStatusMarks(dl: unknown): string[] {
+export function statusMarksJa(dl: unknown): string[] {
   return [
     Recommender.isExtendedDeadline(dl) ? String(Recommender.extendedLabelJa() ?? "").trim() : "",
     String(
@@ -354,7 +357,7 @@ export function icsRowsFromScreen(
       `${String(item.dateField ?? "").trim() || "日付"}: ${String(item.whenText ?? "")}`,
       `会期: ${String(item.session ?? "").trim() || Recommender.unconfirmedLabelJa()}`,
       ...(() => {
-        const 札 = icsStatusMarks(item.dl);
+        const 札 = statusMarksJa(item.dl);
         return 札.length ? [`状態: ${札.join("・")}`] : [];
       })(),
       `開催地: ${placeJa || Recommender.unconfirmedLabelJa()}`,
