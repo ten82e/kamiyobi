@@ -450,3 +450,11 @@ it("explain_word は、行が出る時に中身を少し見せる（第 796 回�
   const 説明 = (一覽.result?.tools ?? []).find((t) => t.name === "explain_word")?.description ?? "";
   expect(説明, "數へ方の違ひを説明して居ん").toContain("素の照合");
 });
+
+it("索引が、0 件の時の振る舞いを書いている（第 812 回）", () => {
+  /* 畫面の 0 件案内（次に打つ手と、いまの絞り込みで数へた件数）は、索引を読む人と AI にも
+   * 要る（第 758〜761 回に数へ方を直したが、索引には書いていなかった）。 */
+  const build = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
+  expect(build, "0 件の時の振る舞いが索引に無い").toContain("0 件の時は、次に打つ手を示す");
+  expect(build, "件数の基準が索引に無い").toContain("いまの絞り込みを通過した行で数へる");
+});
