@@ -514,3 +514,12 @@ it("索引が、上流の英語の印（TBD）を説明している（第 833 �
   expect(build, "上流の英語の印の説明が索引に無い").toContain("上流が英語の印を書いて居る事がある");
   expect(build, "實測の行數が索引に無い").toContain("`date_text` 65 行・`place` 10 行");
 });
+
+it("索引が、data.csv の列名と data.json の鍵の關係を書いている（第 839 回）", () => {
+  /* 實測 2026-10-06: 28 列のうち 24 列は「同じ名（又は接頭辭を外した名）」で data.json の鍵へ
+   * 辿れる（deadline_* → deadlines[]、event_* → editions[]、rank_* → conferences[].rank、
+   * estimate_window_* → editions[].estimate）。索引は一般的な出所しか書いて居なかった。 */
+  const build = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
+  expect(build, "列名の規則が索引に無い").toContain("多くが `data.json` の鍵と同じ名である");
+  expect(build, "實測の列數が索引に無い").toContain("28 列のうち 24 列が此の規則で辿れる");
+});
