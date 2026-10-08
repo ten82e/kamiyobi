@@ -875,11 +875,29 @@ function listUpcoming(
   const 日數の表現 =
     使ふ日數 === null && !日數の引數.省かれた ? `${days} 日（既定）` : `${days} 日以内`;
   const 引き = args.kind ?? (args as { kinds?: unknown }).kinds;
-  const 名乗り = (Array.isArray(引き) ? 引き : 引き === undefined ? [] : [引き])
+  const 名乘り = (Array.isArray(引き) ? 引き : 引き === undefined ? [] : [引き])
+    .flat()
     .map((k) => String(k).trim())
     .filter((k) => k.length > 0);
-  const 全部 = 名乗り.some((k) => k.toLowerCase() === "all");
-  const kind = 全部 ? "" : 名乗り.join(" ");
+  const 全部 = 名乘り.some((k) => k.toLowerCase() === "all");
+  /* 種別は**どれかに當たる行**として選ぶ（第 886 回）。`kinds: ["paper","zzz"]` の樣に
+   * 複數をもらつた時、空白で繫いで「paper zzz」といふ存在せぬ種別にして居た – 實測
+   * 2026-10-19: 0 件で默つて居た。大文字でも受け付ける（AI は `PAPER` を送る）。 */
+  const 選ぶ = new Set(名乘り.map((k) => k.toLowerCase()));
+  /* 知らない種別は名指す（`search_deadlines` と同じ扱ひ – 其の侭では 0 件に成る）。 */
+  const 知って居る種別 = [
+    "all",
+    ...投稿の種別,
+    "notification",
+    "camera_ready",
+    "registration",
+    "rebuttal_start",
+    "rebuttal_end",
+    "review_release",
+    "supplementary",
+    "other",
+  ];
+  const 知らん = 名乘り.filter((k) => !知って居る種別.includes(k.toLowerCase()));
   const { list, 名, 生成 } = pick(args.scope ?? "all");
   const 古さ = 古さの斷り(生成, now);
   /* 上の境目は**畫面の窓と同じ** JST の暦日で切る（第 874 回）。經由 24 時間で切つて居ると、
@@ -893,11 +911,17 @@ function listUpcoming(
     typeof r.tShown === "number" && Number.isFinite(r.tShown) ? r.tShown : r.t;
   const hit = sortRows(
     list.filter(
-      (r) => r.t >= now && 暦日(r) < 限り && (!kind || r.kind === kind || r.dl.kind === kind),
+      (r) =>
+        r.t >= now &&
+        暦日(r) < 限り &&
+        (全部 || 選ぶ.size === 0 || 選ぶ.has(r.kind) || 選ぶ.has(r.dl.kind)),
     ),
   );
+  const 知らんの斷り = 知らん.length
+    ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}`
+    : "";
   return [
-    `今日から ${日數の表現}（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順${讀めない引數}）`,
+    `今日から ${日數の表現}（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順${讀めない引數}${知らんの斷り}）`,
     "",
     ...hit.slice(0, 100).map((r) => line(r, now)),
     ...(hit.length > 100 ? ["", `（100 件まで表示・残り ${hit.length - 100} 件）`] : []),
@@ -1259,14 +1283,15 @@ const TOOLS = [
   {
     name: "list_upcoming",
     description:
-      "今日から N 日以内の締切を日本時間の早い順に返す（**種別では絞らない** – 登録・カメラレディ・採否通知も混ざる。**推定の締切も入ります**（search_deadlines の既定は外すので、条件を揃えて比べるときは `include_estimated: true` を添えてください）。上の境目は JST の暦日で切り、`search_deadlines` の `within_days` と同じ数え方です（同じ条件なら同じ件数になります）。100 件を超える時は其の旨と残り件数を末尾に書く。行にはランク（`CCF A・CORE A*` の形。無い行は「ランク未確認」）・会期・確認の状態の札も付きます。",
+      "今日から N 日以内の締切を日本時間の早い順に返す（**種別では絞らない**（既定）– `kind` を渡すとその種別だけに絞れます。複数は配列で（どれかに当たる行）。登録・カメラレディ・採否通知も混ざる。**推定の締切も入ります**（search_deadlines の既定は外すので、条件を揃えて比べるときは `include_estimated: true` を添えてください）。上の境目は JST の暦日で切り、`search_deadlines` の `within_days` と同じ数え方です（同じ条件なら同じ件数になります）。100 件を超える時は其の旨と残り件数を末尾に書く。行にはランク（`CCF A・CORE A*` の形。無い行は「ランク未確認」）・会期・確認の状態の札も付きます。",
     inputSchema: {
       type: "object",
       properties: {
         days: { type: "number", description: "何日先まで（既定 30・最大 400）" },
         kind: {
           type: "string",
-          description: '種別のキー（例: paper / abstract / camera_ready。全部なら "all"）',
+          description:
+            '種別のキー（例: paper / abstract / camera_ready。全部なら "all"。複数を配列で渡すとどれかに当たる行を選ぶ。大文字は小文字に直して受ける）',
         },
         kinds: {
           type: "array",

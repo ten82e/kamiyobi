@@ -1873,3 +1873,34 @@ it("どの案内にも當たらなかつた問に、此の表が何を出す画�
     expect(答, `「${q}」に受皿と打ち直しを重ねた`).not.toContain("打ち直すなら");
   }
 });
+
+it("list_upcoming の種別はどれかで選び、知らない種別を名指す（第 886 回）", async () => {
+  /* 實測 2026-10-19: `list_upcoming({kinds: ["paper","zzz"]})` は**0 件**だつた – 空白で繫いで
+   * 「paper zzz」といふ存在せぬ種別にして居た（どれかに當たる行として選んで居なかつた）。
+   * 知らない種別（`kind: "nosuchkind"`・`PAPER` の樣な大文字）も默つて居た – `search_deadlines`
+   * は第 858 回から名指して居るのに、此方だけ缺けて居た。 */
+  /* 複數の種別は**どれか**（61 件 = `paper` だけと同じ）。 */
+  const 複数 = await call("list_upcoming", { kinds: ["paper", "zzz"] });
+  expect(複数, "どれかで選べて居ん").toMatch(/締切: [1-9]\d* 件/);
+  expect(複数, "知らない種別を名指して居ん").toContain(
+    "知らない種別（其の侭では 0 件に成ります）: zzz",
+  );
+  /* 大文字でも受け付ける（AI は `PAPER` を送る）。 */
+  const 大文字 = await call("list_upcoming", { kind: "PAPER" });
+  expect(大文字, "大文字の種別を受け付けて居ん").toMatch(/締切: [1-9]\d* 件/);
+  const 小文字 = await call("list_upcoming", { kind: "paper" });
+  const 數 = (t: string): string => /締切: ([\d,]+) 件/.exec(t)?.[1] ?? "-1";
+  expect(數(大文字), "大文字と小文字で件數が違ふ").toBe(數(小文字));
+  /* 知らない種別だけの時は 0 件だが、其の種別が在る事を言ふ。 */
+  const 知らん = await call("list_upcoming", { kind: "nosuchkind" });
+  expect(知らん).toContain("知らない種別");
+  expect(知らん, "知らない種別が在る様に見せて居る").toMatch(/締切: 0 件/);
+  /* 知つて居る種別には斷りを付けない。 */
+  for (const 語 of ["paper", "all"]) {
+    const 答 = await call("list_upcoming", { kind: 語 });
+    expect(答, `「${語}」に知らない種別の斷りを付けた`).not.toContain("知らない種別");
+  }
+  /* `search_deadlines` と同じ言ひ方（兩方の道具で同じ文を返す）。 */
+  const 檢索 = await call("search_deadlines", { kinds: ["zzz", "paper"] });
+  expect(檢索, "檢索の方が知らない種別を名指して居ん").toContain("知らない種別");
+});
