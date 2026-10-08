@@ -3347,9 +3347,14 @@ it("CSV のファイル名の日は端末の時刻合わせに左右されない
     "globalThis.document = {",
     "  createElement: () => ({ click() {}, set download(v) { downloaded = v; }, get download() { return downloaded; } }),",
     "  body: { appendChild() {}, removeChild() {} },",
+    // 書き出しの別は論文の欄を読んで決める（第 870 回）。ここは締切の一覧（空の入力）。
+    "  getElementById: () => ({ value: '' }),",
     "};",
     `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
     `const exportShownCsv = (${jsFunction(app, "exportShownCsv")});`,
+    // 書き出しの別の規則は `candidateScopeOnScreen()`（第 870 回）。此処は其の正本を使ふ。
+    `const candidateScopeOnScreen = (${jsFunction(app, "candidateScopeOnScreen")});`,
+    "const state = { mode: 'deadlines' };",
     "const shown = [{ t: FIXED, conf: { key: 'demo', title: 'Demo', categories: [] }, ed: { year: 2026 }, dl: { kind: 'paper' }, kind: 'paper' }];",
     "exportShownCsv();",
     // 基準: 同じ瞬間の JST の日付（+09:00 で数える。画面の日時の数え方と同じ）。

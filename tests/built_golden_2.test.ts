@@ -844,7 +844,7 @@ it("CSV ボタンのラベルは、画面に並んでいない行を「表示中
   // 数字は件数欄と同じ `shown.length` を見る（ラベルだけ別の数を言わないように）。
   const render = jsFunction(app, "render");
   expect(render, "ボタンがラベルの組み立てを見ていない").toContain(
-    "exportCsvLabelJa(shown.length)",
+    "exportCsvLabelJa(shown.length, 候補を書き出す)",
   );
   expect(render, "件数欄が `shown.length` を言っていない").toMatch(
     /countJa\(shown\.length\)\} 件 \/ 全/,

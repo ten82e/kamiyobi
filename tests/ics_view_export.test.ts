@@ -279,6 +279,8 @@ describe("畫面の一覧をカレンダーに書き出す（第 856 回）", ()
     const document = {
       createElement: () => anchor,
       body: { appendChild: () => {}, removeChild: () => {} },
+      /* 書き出しの別は `candidateScopeOnScreen()` が論文の欄を読んで決める（第 870 回）。 */
+      getElementById: () => ({ value: "" }),
     };
     class Blob {
       parts: unknown[];
@@ -295,10 +297,18 @@ describe("畫面の一覧をカレンダーに書き出す（第 856 回）", ()
       "URL",
       "document",
       "state",
+      "candidateScopeOnScreen",
       vmSafeSource(`${src}\nreturn exportShownIcs;`),
-    )(() => "BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n", Blob, URL, document, {
-      mode: "deadlines",
-    }) as () => void;
+    )(
+      () => "BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n",
+      Blob,
+      URL,
+      document,
+      { mode: "deadlines" },
+      /* 書き出しの別の規則その物は `tests/candidate_csv_export.test.ts` が持つ。ここは
+       * 締切の一覧として落ちて来る物の名前を見る。 */
+      () => false,
+    ) as () => void;
     走らせる();
     expect(落ちた.length, "1 本も落ちて來ない").toBe(1);
     /* 名前に JST の日が入る（CSV と同じ約束 – 端末の時刻合わせで日付が一日ずれない）。 */
@@ -372,11 +382,17 @@ describe("畫面の一覧をカレンダーに書き出す（第 856 回）", ()
     expect(文言(12, true), "候補の文言が違ふ").toBe(
       "この候補 12 件をカレンダー（.ics）でダウンロード",
     );
-    /* 押した時の繋ぎも、畫面の別を渡して居る（推薦では候補の写しとして書き出す）。 */
-    expect(app, "推薦の別を渡して居ん").toContain('shownIcsText(state.mode === "recommend")');
+    /* 押した時の繋ぎも、畫面の別を渡して居る（推薦では候補の写しとして書き出す）。第 870 回に
+     * 條件を `candidateScopeOnScreen()`（推薦の畫面で論文情報が在る時だけ候補）へ寄せた –
+     * 推薦の畫面でも、論文情報が空なら候補は 1 件も出て居ない。 */
+    expect(app, "推薦の別を渡して居ん").toContain("shownIcsText(candidateScopeOnScreen())");
+    expect(app, "書き出しの別の正本が無い").toContain("function candidateScopeOnScreen()");
     /* 候補の時も、候補が空なら出さない（hidden の條件から推薦の別を外した）。 */
     expect(app, "推薦では出さないままに成つて居る").not.toContain(
       "exportIcsBtn.hidden = recMode || !shown.length;",
+    );
+    expect(app, "候補が出て居ない時に候補の名で出して居る").toContain(
+      "exportIcsBtn.hidden = !shown.length || (recMode && !候補を書き出す);",
     );
   });
 });

@@ -202,6 +202,11 @@ interface SiteRecommenderApi {
     rows: readonly Record<string, unknown>[] | null | undefined,
     nowMs: number,
   ): string;
+  /** 推薦の候補の CSV（一致評価・一致の点・言葉の一致・意味の近さ＋締切の欄。第 870 回）。 */
+  candidateRowsToCsv(
+    rows: readonly Record<string, unknown>[] | null | undefined,
+    nowMs: number,
+  ): string;
   searchNormalize(value: unknown): string;
   kanaFold(value: unknown): string;
   monthTermsJa(value: unknown): string;

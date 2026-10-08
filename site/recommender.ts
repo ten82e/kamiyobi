@@ -5271,7 +5271,7 @@ const Recommender = (() => {
       ],
       echo: true,
       deadlineTail: true,
-      note: "のことなら、検索欄では絞り込めません（表にそのようには書いていないので当たりません）。持ち出しと購読は一覧の下の操作で出します – 『カレンダーに追加（.ics）』で今後の締切を自分のカレンダーに、『この一覧の N 件を CSV でダウンロード』で絞り込み後の全行を表計算に、『購読 URL をコピー』でアプリに打ち込む URL が出ます。なお .ics は収録全体を購読する形で、画面の絞り込みは引き継がれません。JSON をお探しなら、一覧の下の『全データ（JSON）』がこのサイトの同じ場所の data.json へのリンクです（機械が読む用の正で、画面の一覧に使う catalog.json より広く、過去の締切とそれより先の締切まで載ります。表計算に貼るだけなら CSV のほうが小さく、絞り込みを保ったまま出せます）",
+      note: "のことなら、検索欄では絞り込めません（表にそのようには書いていないので当たりません）。持ち出しと購読は一覧の下の操作で出します – 『カレンダーに追加（.ics）』で今後の締切を自分のカレンダーに、『この一覧の N 件を CSV でダウンロード』で絞り込み後の全行を表計算に、『購読 URL をコピー』でアプリに打ち込む URL が出ます。なお .ics は収録全体を購読する形で、画面の絞り込みは引き継がれません。『投稿先を探す』の候補も同じ場所から書き出せます（『この候補 N 件を CSV でダウンロード』と『この候補 N 件をカレンダー（.ics）でダウンロード』。候補の CSV は先頭に一致評価・一致の点・言葉の一致・意味の近さの 4 列が付きます）。JSON をお探しなら、一覧の下の『全データ（JSON）』がこのサイトの同じ場所の data.json へのリンクです（機械が読む用の正で、画面の一覧に使う catalog.json より広く、過去の締切とそれより先の締切まで載ります。表計算に貼るだけなら CSV のほうが小さく、絞り込みを保ったまま出せます）",
       live: "のことなら、.ics や CSV で出せます – .ics は収録全体で絞り込みは引き継がれません",
       /* SPEC 第 392 回（群の理由と實測は SPEC に在る – 第 699 回に此處を一讀に縮めた）。*/
     },
@@ -9083,101 +9083,158 @@ const Recommender = (() => {
     return end && end !== start ? `${withDay(start)} 〜 ${withDay(end)}` : withDay(start);
   }
 
+  /* 締切 1 行ぶんの欄（見出し `CSV_HEADERS_JA` と同じ並び）。一覧と推薦の候補で**同じ関数**を
+   * 通す – 書き写すと、片方だけ直したときに同じ行が 2 つの書き方に割れる（第 870 回）。 */
+  function csvDeadlineCells(row: Record<string, unknown>, nowMs: number): string[] {
+    const conf = (row.conf || {}) as Record<string, unknown>;
+    const ed = (row.ed || {}) as Record<string, unknown>;
+    const dl = (row.dl || {}) as Record<string, unknown>;
+    const rank = (conf.rank || {}) as Record<string, unknown>;
+    const kind = String(row.kind || dl.kind || "");
+    const dateOnly = row.dateOnly === true;
+    const t = typeof row.t === "number" ? row.t : Number.NaN;
+    let when = "";
+    let official = "";
+    if (kind === "journal") {
+      when = "常時受付"; // 種別ラベルと同じ語（1 行の中で 2 つの名前を見せない）
+    } else if (dateOnly) {
+      const day = weekdayJaFromDate(row.localDate);
+      when = day ? `${row.localDate}(${day})` : String(row.localDate || "");
+      official = TIME_UNCONFIRMED_LABEL_JA;
+    } else if (Number.isFinite(t)) {
+      when = csvJstInstant(t);
+      const zone = officialZone(dl);
+      if (zone === "JST") official = "JST";
+      else if (zone === "AoE") official = fmtAoEText(t);
+      else if (zone && zone !== "UTC") official = `${zone} ／ UTC`;
+      else official = "UTC";
+    }
+    /* 残り日数は数値のまま出す。表計算で開いたときに並べ替えたり近い分だけ狭めたりできる形で
+     * 持てるためで、画面の「あと N 日」（読みやすさ優先）とは書き方が違う。過ぎた分は負の数。
+     * 日期のみの行も日粒度で数値を出す（時刻の未確認は「公式表記」列が既に伝えている）。 */
+    let left = "";
+    // 幅を持つ行は、画面と同じ「表示している暦日」から数える（`tShown`）。画面の
+    // 「あと N 日」と表計算の数が違うと、どちらを信じていいか分からなくなる。
+    const tShown = typeof row.tShown === "number" && Number.isFinite(row.tShown) ? row.tShown : t;
+    if (kind !== "journal" && Number.isFinite(tShown)) {
+      /* 過ぎた分の数え方は、画面と同じ **JST の暦日差**にする。経過時間の floor だと、
+       * 午前中の締切で「画面は 2019 日前に終了、表計算は -2020」と 1 日ずれる
+       * （實測）。画面の数を
+       * 確認するために表計算を開く人が、どちらを信じるか分からなくなるため。
+       * 先の分も同じ暦日差にした（2026-08-09 生成ビルドで実測: 経過時間の floor だった
+       * 日は、締切 2026-08-22 03:00 JST の行が JST 09:00 の眺めで「あと 12 日」／表計算は
+       * 12 で、暦日では 13 日後。ずれは JST 20:00 の眺めだと 785 行中 320 行出た）。
+       * 24 時間未满の行は画面が「あと N 時間」を出す側なので 0 のまま（急ぎを 1 日に
+       * 丸めて大きく見せない）。 */
+      const jstDay = (value: number) => Math.floor((value + 9 * 3600000) / 86400000);
+      const ahead = tShown - nowMs;
+      left =
+        tShown < nowMs
+          ? String(-(jstDay(nowMs) - jstDay(tShown)))
+          : ahead < 86400000
+            ? "0"
+            : String(jstDay(tShown) - jstDay(nowMs));
+    }
+    /* ランクは画面と同じ書き方にする。上流の `N` は「ランクが付いていない」ことを
+     * 表す番兵で等級ではない（SPEC §2）ので、表計算にそのまま渡すと「N という等級」
+     * と読める（2026-09-23 実測: 将来締切 917 行の CSV に `N` が 271 マス出ていた。
+     * 画面と行の詳細は同じ所を「評価なし」と出している）。体系その物が無い欄は
+     * 空のまま出す（「評価なし」と「収録で未追跡」を混ぜない）。 */
+    const csvRank = (value: unknown): string => {
+      const text = String(value ?? "").trim();
+      if (!text) return "";
+      return RANK_ABSENT_GRADES.indexOf(text.toLowerCase()) >= 0 ? RANK_UNRATED_LABEL_JA : text;
+    };
+    // 画面が「未確認」「該当なし」と出す項目も、この列が引き受ける（値の列は空のまま）。
+    const status = statusBadgeWords(ed, dl).concat(unconfirmedFieldsJa(row)).join("・");
+    const place = placeJa(ed.place) || String(ed.place || "");
+    // 分野は画面と同じ日本語の語を書く（英字の key を表計算に渡さない）。
+    const catsJa = (
+      (row.cats as string[] | undefined) ||
+      (conf.categories as string[] | undefined) ||
+      []
+    )
+      .map((c: string) => categoryLabelJa(c))
+      .join("・");
+    return [
+      when,
+      official,
+      left,
+      // 会議名は画面と同じ式（年を添え、title が無ければ key）。CSV には年の列が
+      // 無いので、素の title を書くと表計算で画面と同じ名前が引けない。
+      titleWithYearJa(conf.title || conf.key || "", ed.year),
+      catsJa,
+      kindLabelJa(kind),
+      dl.round == null ? "" : `R${dl.round}`,
+      csvRank(rank.ccf),
+      csvRank(rank.core),
+      csvRank(rank.thcpl),
+      // 会期は画面と同じ式（一覧・行の詳細・CSV で `eventCellJa` を共有する）。
+      eventCellJa(row),
+      place,
+      status,
+      /* URL は文字列として渡す（`csvField` は何でも字にするので、以前は素の値を渡していた –
+       * 欄を組み立てる関数が `string[]` を返すようになったので、ここで字にする）。 */
+      String(ed.link || conf.link || ""),
+    ];
+  }
+
   function deadlinesToCsv(
     rows: readonly Record<string, unknown>[] | null | undefined,
     nowMs: number,
   ): string {
     const lines: string[] = [CSV_HEADERS_JA.join(",")];
     (rows || []).forEach((row) => {
-      const conf = (row.conf || {}) as Record<string, unknown>;
-      const ed = (row.ed || {}) as Record<string, unknown>;
-      const dl = (row.dl || {}) as Record<string, unknown>;
-      const rank = (conf.rank || {}) as Record<string, unknown>;
-      const kind = String(row.kind || dl.kind || "");
-      const dateOnly = row.dateOnly === true;
-      const t = typeof row.t === "number" ? row.t : Number.NaN;
-      let when = "";
-      let official = "";
-      if (kind === "journal") {
-        when = "常時受付"; // 種別ラベルと同じ語（1 行の中で 2 つの名前を見せない）
-      } else if (dateOnly) {
-        const day = weekdayJaFromDate(row.localDate);
-        when = day ? `${row.localDate}(${day})` : String(row.localDate || "");
-        official = TIME_UNCONFIRMED_LABEL_JA;
-      } else if (Number.isFinite(t)) {
-        when = csvJstInstant(t);
-        const zone = officialZone(dl);
-        if (zone === "JST") official = "JST";
-        else if (zone === "AoE") official = fmtAoEText(t);
-        else if (zone && zone !== "UTC") official = `${zone} ／ UTC`;
-        else official = "UTC";
-      }
-      /* 残り日数は数値のまま出す。表計算で開いたときに並べ替えたり近い分だけ狭めたりできる形で
-       * 持てるためで、画面の「あと N 日」（読みやすさ優先）とは書き方が違う。過ぎた分は負の数。
-       * 日期のみの行も日粒度で数値を出す（時刻の未確認は「公式表記」列が既に伝えている）。 */
-      let left = "";
-      // 幅を持つ行は、画面と同じ「表示している暦日」から数える（`tShown`）。画面の
-      // 「あと N 日」と表計算の数が違うと、どちらを信じていいか分からなくなる。
-      const tShown = typeof row.tShown === "number" && Number.isFinite(row.tShown) ? row.tShown : t;
-      if (kind !== "journal" && Number.isFinite(tShown)) {
-        /* 過ぎた分の数え方は、画面と同じ **JST の暦日差**にする。経過時間の floor だと、
-         * 午前中の締切で「画面は 2019 日前に終了、表計算は -2020」と 1 日ずれる
-         * （實測）。画面の数を
-         * 確認するために表計算を開く人が、どちらを信じるか分からなくなるため。
-         * 先の分も同じ暦日差にした（2026-08-09 生成ビルドで実測: 経過時間の floor だった
-         * 日は、締切 2026-08-22 03:00 JST の行が JST 09:00 の眺めで「あと 12 日」／表計算は
-         * 12 で、暦日では 13 日後。ずれは JST 20:00 の眺めだと 785 行中 320 行出た）。
-         * 24 時間未满の行は画面が「あと N 時間」を出す側なので 0 のまま（急ぎを 1 日に
-         * 丸めて大きく見せない）。 */
-        const jstDay = (value: number) => Math.floor((value + 9 * 3600000) / 86400000);
-        const ahead = tShown - nowMs;
-        left =
-          tShown < nowMs
-            ? String(-(jstDay(nowMs) - jstDay(tShown)))
-            : ahead < 86400000
-              ? "0"
-              : String(jstDay(tShown) - jstDay(nowMs));
-      }
-      /* ランクは画面と同じ書き方にする。上流の `N` は「ランクが付いていない」ことを
-       * 表す番兵で等級ではない（SPEC §2）ので、表計算にそのまま渡すと「N という等級」
-       * と読める（2026-09-23 実測: 将来締切 917 行の CSV に `N` が 271 マス出ていた。
-       * 画面と行の詳細は同じ所を「評価なし」と出している）。体系その物が無い欄は
-       * 空のまま出す（「評価なし」と「収録で未追跡」を混ぜない）。 */
-      const csvRank = (value: unknown): string => {
-        const text = String(value ?? "").trim();
-        if (!text) return "";
-        return RANK_ABSENT_GRADES.indexOf(text.toLowerCase()) >= 0 ? RANK_UNRATED_LABEL_JA : text;
-      };
-      // 画面が「未確認」「該当なし」と出す項目も、この列が引き受ける（値の列は空のまま）。
-      const status = statusBadgeWords(ed, dl).concat(unconfirmedFieldsJa(row)).join("・");
-      const place = placeJa(ed.place) || String(ed.place || "");
-      // 分野は画面と同じ日本語の語を書く（英字の key を表計算に渡さない）。
-      const catsJa = (
-        (row.cats as string[] | undefined) ||
-        (conf.categories as string[] | undefined) ||
-        []
-      )
-        .map((c: string) => categoryLabelJa(c))
-        .join("・");
+      lines.push(csvDeadlineCells(row, nowMs).map(csvField).join(","));
+    });
+    return `${lines.join("\r\n")}\r\n`;
+  }
+
+  /* 推薦の候補の CSV（第 870 回）。締切の欄は一覧と**同じ関数**で作り、其の前に一致の欄を
+   * 足す（同じ行が 2 つの書き方に割れない – 欄の並びも、一致の欄の後ろは一覧の CSV と同じ）。
+   * 「投稿先を探す」の候補は絞り込みの結果ではないので、一覧の CSV とは別の物として出す
+   * （同じ名前で出すと、表計算に並べたときに何の一覧か分からなくなる）。
+   *
+   * 4 つの欄は別々の物を測つて居る（此處を一緒にすると、表計算の人が「一致の點」を
+   * 「一致評價」の點と讀む）:
+   *   - 一致評價: 畫面の札と同じ 3 語（`fitLabel`）。當たつた證據の強さと、2 番目との差で決まる。
+   *   - 一致の點: 候補の**並び順**を決めた點（大きい程が上。`_matchScore`）。
+   *   - 言葉の一致 / 意味の近さ: 其の內譯（行の詳細が「言葉の一致スコア N點」「意味の近さ N點」
+   *     と出す物と同じ値。`_vocabScore` と `_semScore`）。 */
+  const RECOMMEND_CSV_HEADERS_JA = [
+    // 画面のカードの札と同じ語（`fitLabel` の 3 語）。
+    "一致評価",
+    // 並べ替えに使う数なので、見出しに「点」まで書く（「一致」だけだと何の数か分からない）。
+    "一致の点",
+    // 内訳の 2 本（欄の並びは行の詳細と同じ順）。
+    "言葉の一致",
+    "意味の近さ",
+    ...CSV_HEADERS_JA,
+  ];
+
+  function candidateRowsToCsv(
+    rows: readonly Record<string, unknown>[] | null | undefined,
+    nowMs: number,
+  ): string {
+    const lines: string[] = [RECOMMEND_CSV_HEADERS_JA.join(",")];
+    (rows || []).forEach((row) => {
+      /* 評価の語は候補の行が持つ値をそのまま書く（`_fitLabel` は `fitLabel` が付けた物で、
+       * 画面のカードの札と同じ 1 語）。 */
+      const 評価 = String(row._fitLabel || "").trim();
+      const 數 = (value: unknown): string => (typeof value === "number" ? String(value) : "");
+      /* 意味の近さは 0 を書かない（畫面も「意味の近さ 0點」とは出さない – 札の內訳は
+       * 0 より大きい時だけ並ぶ）。意味檢索を使へん環境では全行が空に成り、「測つて 0」と
+       * 「測つて居ない」が同じ數字に成らない。言葉の一致は逆に行の詳細が 0 點と書くので、
+       * 0 も其のまま書く。 */
+      const 意味の近さ =
+        typeof row._semScore === "number" && row._semScore > 0 ? String(row._semScore) : "";
       lines.push(
         [
-          when,
-          official,
-          left,
-          // 会議名は画面と同じ式（年を添え、title が無ければ key）。CSV には年の列が
-          // 無いので、素の title を書くと表計算で画面と同じ名前が引けない。
-          titleWithYearJa(conf.title || conf.key || "", ed.year),
-          catsJa,
-          kindLabelJa(kind),
-          dl.round == null ? "" : `R${dl.round}`,
-          csvRank(rank.ccf),
-          csvRank(rank.core),
-          csvRank(rank.thcpl),
-          // 会期は画面と同じ式（一覧・行の詳細・CSV で `eventCellJa` を共有する）。
-          eventCellJa(row),
-          place,
-          status,
-          ed.link || conf.link,
+          評価,
+          數(row._matchScore),
+          數(row._vocabScore),
+          意味の近さ,
+          ...csvDeadlineCells(row, nowMs),
         ]
           .map(csvField)
           .join(","),
@@ -17098,6 +17155,8 @@ const Recommender = (() => {
     eventCellJa: eventCellJa,
     titleWithYearJa: titleWithYearJa,
     deadlinesToCsv: deadlinesToCsv,
+    /* 推薦の候補の CSV（第 870 回）。一覧の CSV と同じ締切の欄に、一致の欄を足した物。 */
+    candidateRowsToCsv: candidateRowsToCsv,
     searchNormalize: searchNormalize,
     queryNarrowHintJa: queryNarrowHintJa,
     columnQueryWordJa: columnQueryWordJa,

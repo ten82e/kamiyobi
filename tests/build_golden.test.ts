@@ -2568,8 +2568,12 @@ it("filtered rows can be exported to a spreadsheet as BOM-prefixed CSV (SPEC §7
   // Excel は BOM の無い UTF-8 を日本語として読めない。
   // BOM 付きで渡していること（書き方が変わっても BOM 文字 + csv の組合せを見る）。
   expect(runtime).toContain("`\\ufeff${csv}`");
-  // 推薦モードでは出さず、締切一覧の絞り込み件数ラベルをそのまま使う。
-  expect(runtime).toContain("exportBtn.hidden = recMode || !shown.length;");
+  /* 推薦の候補も同じボタンから出す（第 870 回 – 候補は絞り込みの結果ではないので、欄と
+     ファイル名を別にする。判定の細部は `tests/candidate_csv_export.test.ts` が持つ）。 */
+  expect(runtime).toContain("Recommender.candidateRowsToCsv(");
+  /* 候補が出ていない時（推薦の畫面で論文情報が空）は出さない – 別の正本は
+     `candidateScopeOnScreen()`（第 870 回）。 */
+  expect(runtime).toContain("exportBtn.hidden = !shown.length || (recMode && !候補を書き出す);");
   expect(runtime).toContain("件を CSV でダウンロード");
   // 行はクリックで開いたまま、ボタン行は表のヘッダー選択対象にしない。
   expect(template).toContain('id="exportCsv"');

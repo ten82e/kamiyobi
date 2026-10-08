@@ -2968,8 +2968,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     );
   }
 
-  function exportCsvLabelJa(total: number): string {
-    return `この一覧の ${countJa(total)} 件を CSV でダウンロード`;
+  /* 締切の一覧では「この一覧の N 件」、推薦の候補では「この候補 N 件」と言う（同じ物を
+   * 指す語を画面ごとに変えない – CSV も .ics も同じ約束。第 870 回）。 */
+  function exportCsvLabelJa(total: number, recMode = false): string {
+    return recMode
+      ? `この候補 ${countJa(total)} 件を CSV でダウンロード`
+      : `この一覧の ${countJa(total)} 件を CSV でダウンロード`;
   }
 
   /* 購読（カレンダーに URL で入れておく形）には、このファイルの場所をカレンダーアプリに
@@ -3030,11 +3034,26 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
   }
 
+  /* いま画面に出ている一覧が、論文の語と重ねた「候補」かどうか（書き出しの別の正本）。
+   * 推薦の画面でも、論文情報が空なら候補は 1 件も出ず、カードは入力を促すだけ – その時に
+   * 候補の名で書き出すと、**画面に出ていない締切の一覧**を候補として渡すことになる
+   * （第 870 回に気付いた。第 864 回の .ics も同じ條件だった）。
+   * `render` の `paperMode`（カードを出すかの判断）と同じ規則 – 書き出しの別もそこで揃える。 */
+  function candidateScopeOnScreen(): boolean {
+    if (state.mode !== "recommend") return false;
+    const paper = document.getElementById("paperText") as HTMLTextAreaElement | null;
+    return Boolean(paper && String(paper.value || "").trim());
+  }
+
+  /* 推薦の候補にも CSV の出口を作る（第 870 回）。候補は絞り込みの結果ではないので、欄も
+   * 別の物を出す – 前に「一致評価・一致の点・言葉の一致・意味の近さ」を足した 1 本で、
+   * 表計算に並べて点で並べ替え、締切の近さと突き合わせるのが実際の使い方（.ics と同じ理由）。 */
   function exportShownCsv() {
-    const csv = Recommender.deadlinesToCsv(
-      shown as unknown as Record<string, unknown>[],
-      Date.now(),
-    );
+    const recMode = candidateScopeOnScreen();
+    const rows = shown as unknown as Record<string, unknown>[];
+    const csv = recMode
+      ? Recommender.candidateRowsToCsv(rows, Date.now())
+      : Recommender.deadlinesToCsv(rows, Date.now());
     if (typeof Blob === "undefined" || typeof URL === "undefined" || !URL.createObjectURL) return;
     const url = URL.createObjectURL(new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8" }));
     /* ファイル名の日は JST にする。このサイトは「日時は JST で出しています」と宣言し、
@@ -3049,7 +3068,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const stamp = `${stampDate.getUTCFullYear()}${String(stampDate.getUTCMonth() + 1).padStart(2, "0")}${String(stampDate.getUTCDate()).padStart(2, "0")}`;
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `kamiyobi-deadlines-${stamp}.csv`;
+    /* 候補と一覧は別の物なので、名前も分ける（同じ日に両方を落とした人が、表計算の
+     * タブで見分けられるように – 欄も先頭の 4 本が違う）。 */
+    anchor.download = `kamiyobi-${recMode ? "candidates" : "deadlines"}-${stamp}.csv`;
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
@@ -3123,7 +3144,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   function exportShownIcs() {
-    const text = shownIcsText(state.mode === "recommend");
+    /* 候補の別は CSV と同じ規則で決める（推薦の画面でも、論文情報が空なら候補は出ていない）。 */
+    const text = shownIcsText(candidateScopeOnScreen());
     if (typeof Blob === "undefined" || typeof URL === "undefined" || !URL.createObjectURL) return;
     const url = URL.createObjectURL(new Blob([text], { type: "text/calendar;charset=utf-8" }));
     /* ファイル名の日は JST（CSV と同じ理由 – 端末の時刻合わせで日付が一日ずれる）。 */
@@ -5340,20 +5362,35 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (sharedChoices) sharedChoices.hidden = true;
     const choiceButtons = $("sharedRowChoiceButtons");
     if (choiceButtons) choiceButtons.textContent = "";
-    // CSV 書き出しは締切一覧の絞り込み結果に対してだけ意味がある（推薦モードでは出さない）。
+    /* 推薦の候補も CSV で書き出せる（第 870 回）。候補を表計算に並べ、一致の点で並べ替えて
+     * 締切と突き合わせるのが実際の使い方 – 絞り込みの結果ではないので、欄の先頭 4 本
+     *（一致評価・一致の点・言葉の一致・意味の近さ）とファイル名を候補の物に替える。
+     * 別の正本は `candidateScopeOnScreen()`（推薦の画面でも、論文情報が空なら候補は出ていない –
+     * その時は此のボタンも隠す – 表にもカードにも出ていない行を書き出さない）。 */
+    const 候補を書き出す = candidateScopeOnScreen();
     const exportBtn = $("exportCsv");
     if (exportBtn) {
-      exportBtn.textContent = exportCsvLabelJa(shown.length);
-      exportBtn.hidden = recMode || !shown.length;
+      exportBtn.textContent = exportCsvLabelJa(shown.length, 候補を書き出す);
+      exportBtn.hidden = !shown.length || (recMode && !候補を書き出す);
+      exportBtn.title = 候補を書き出す
+        ? "「投稿先を探す」が挙げた候補を、表計算で読める形（BOM 付き CSV）にしたファイルです。" +
+          "先頭の 4 列が一致評価・一致の点・言葉の一致・意味の近さで、残りの列は締切の一覧と同じ物です。" +
+          "「一致の点」は候補を並べた点（大きいほど上）、「一致評価」の札は別の計算（当たった証拠の強さ）で、" +
+          "同じ行でも点が高いのに札が「候補」のことがあります。" +
+          "意味検索が使えない環境では「意味の近さ」は空になります（0 とは書きません）。" +
+          "候補は絞り込みではなく、論文の語との重なりで選ばれています（画面のカードと同じ順・同じ件数）。"
+        : "いまの絞り込みで残った行を、表計算で読める形（BOM 付き CSV）にしたファイルです。" +
+          "「残り日数」は数値なので、並べ替えや絞り込みに使えます。日時は JST、日付だけ分かっている行は「時刻未確認」と書きます。" +
+          "この一覧に出ていない行（過ぎた締切や、期間より先の締切）は入りません。";
     }
-    // カレンダーへの書き出しも同じ条件（推薦モードでは出さない・0 件でも出さない）。
+    // カレンダーへの書き出しも同じ条件（候補が出ていない時は出さない・0 件でも出さない）。
     const exportIcsBtn = $("exportIcs");
     if (exportIcsBtn) {
-      exportIcsBtn.textContent = exportIcsLabelJa(shown.length, recMode);
+      exportIcsBtn.textContent = exportIcsLabelJa(shown.length, 候補を書き出す);
       /* 推薦の候補も書き出せる（第 864 回）。候補の締切をカレンダーに入れて比べるのが、
        * 投稿先を決める時の実際の動作 – 候補に出口が無かつた。 */
-      exportIcsBtn.hidden = !shown.length;
-      exportIcsBtn.title = recMode
+      exportIcsBtn.hidden = !shown.length || (recMode && !候補を書き出す);
+      exportIcsBtn.title = 候補を書き出す
         ? "「投稿先を探す」が挙げた候補の締切だけを、カレンダーアプリで読める形（RFC 5545）にしたファイルです。" +
           "1 件 = 1 つの日の終日で、日付だけ分かっている行は「時刻未確認」と書きます。" +
           "候補は絞り込みではなく、論文の語との重なりで選ばれています（画面のカードと同じ順・同じ件数）。"
