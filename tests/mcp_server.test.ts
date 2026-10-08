@@ -1092,3 +1092,39 @@ it("確認の状態の内訳を、画面と同じ語で返す（第 868 回）",
   const 題 = await call("venue_info", { key: "sigkdd", scope: "all" });
   expect(題, "會議ごとの確認が無い").toMatch(/確認: .+\d+ 行/);
 });
+
+it("窓の外にだけ在る締切を「無い」と言わない（第 869 回）", async () => {
+  /* 畫面は窓の外の締切を「収録の全体を読み込む」で出せる（第 290 回）。MCP にも
+   * `scope: "all"` があるのに、窓で 0 件の時に其の事を言はなかつた – 實測 2026-10-08:
+   * 「2028年」は窓 0 行・収録の全体 12 行で、AI が「2028 年の締切は無い」と答へてしまふ。 */
+  /* 窓（`public/catalog.json`）は建てた時だけ在る物なので、無い手元では此の檢査は空振りに
+   * 成る（此の檔案の約束 – 配付物を持たない手元で落とさない）。窓が無い時は最初から収録の
+   * 全體を見るので、此の案内は出ない（それで正しい）。 */
+  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  if (!existsSync(品書)) return;
+  const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never;
+  const 全行 = Recommender.candidateRows(snap);
+  const 窓行 = Recommender.candidateRows(JSON.parse(readFileSync(品書, "utf8")) as never);
+  const now = Date.now();
+  /* 窓の果てより後の年を探す（収録の全體にだけ在る語）。 */
+  const 最晚年 = Math.max(...全行.map((r) => new Date(r.t).getUTCFullYear()));
+  const 語 = `${最晚年}年`;
+  const 照合 = Recommender.searchMatcher(Recommender.expandRelativeMonths(語, now), now);
+  expect(
+    全行.filter((r) => 照合(r.hay) === true).length,
+    "此の檢査の前提（収録の全体に当たる年）が崩れた",
+  ).toBeGreaterThan(0);
+  expect(
+    窓行.filter((r) => 照合(r.hay) === true).length,
+    `此の檢査の前提（窓の外の年）が崩れた: ${語}`,
+  ).toBe(0);
+  const text = await call("search_deadlines", { query: 語, limit: 1 });
+  expect(text, "窓の外を「無い」と言つた").toContain("収録の全体には");
+  expect(text, "scope: all を敎へて居ん").toContain('scope: "all"');
+  /* `scope: "all"` で引けば、其の先の事（絞り込みで 0 件か）を言ふ。 */
+  const 全 = await call("search_deadlines", { query: 語, scope: "all", limit: 1 });
+  expect(全, "窓の外の案内を出し続けて居る").not.toContain("収録の全体には");
+  /* 語を調べる道具でも同じ事を言ふ。 */
+  const 語の = await call("explain_word", { word: 語 });
+  expect(語の, "explain_word が窓の外を敎へて居ん").toContain("収録の全体には");
+});
