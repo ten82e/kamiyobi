@@ -1,3 +1,4 @@
+import { icsViewText, jstParts, type ScreenDeadlineInput } from "./ics.js";
 import { loadPublishedRecommendation } from "./publish.js";
 import Recommender from "./recommendation.js";
 import { type RecommendationAxes, recommendationAxes } from "./recommendation-core.js";
@@ -3055,6 +3056,77 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (URL.revokeObjectURL) URL.revokeObjectURL(url);
   }
 
+  /* いまの絞り込みのままカレンダーへ持ち出せるようにする（第 856 回）。配付する
+   * `deadlines.ics` は収録の全部で、購読すると毎日入れ替わるが**絞り込みは効かない** –
+   * 「国内研究会だけ」「自分の分野だけ」をカレンダーに入れたい人は、CSV と同じ一覧から
+   * 同じ 1 本を作れるようにする。器と折り方は `site/ics.ts` の共通の物を使う
+   * （配付物と同じ形になる – 書き写すと、片方だけ直したときにずれる）。 */
+  function exportIcsLabelJa(total: number): string {
+    return `この一覧の ${countJa(total)} 件をカレンダー（.ics）でダウンロード`;
+  }
+
+  /** いまの一覧（`shown`）を、カレンダーの材料へ写す（組み立ては `site/ics.ts` が持つ）。
+   * 値は**画面に出ている物と同じ入口**から取る（会議名は年を添えた形・種別・日付欄・会期・
+   * 開催地）。画面と食い違う 1 本を書き出さないため。 */
+  function shownIcsInput(): ScreenDeadlineInput[] {
+    const out: ScreenDeadlineInput[] = [];
+    for (const r of shown) {
+      const at = Number(r.t);
+      if (!Number.isFinite(at)) continue;
+      const ed = r.ed || {};
+      const conf = r.conf || {};
+      const 時 = jstParts(new Date(at));
+      const day = r.dateOnly
+        ? String(r.localDate ?? "")
+            .replace(/-/g, "")
+            .slice(0, 8)
+        : (時?.day ?? "");
+      if (!/^\d{8}$/.test(day)) continue;
+      out.push({
+        key: String(conf.key ?? ""),
+        editionId: String(ed.id ?? ""),
+        year: ed.year ?? null,
+        title: Recommender.titleWithYearJa(conf.title || conf.key || "", ed.year),
+        kind: String(r.kind ?? ""),
+        kindWord: String(Recommender.kindLabelJa(r.kind) ?? r.kind ?? "").trim(),
+        dateField: String(Recommender.kindDateFieldJa(r.dl?.kind) ?? "").trim(),
+        day,
+        whenText: r.dateOnly
+          ? `${String(r.localDate ?? "")}（時刻未確認）`
+          : `${時?.human ?? ""}（JST）`,
+        at,
+        estimated: Boolean(r.est),
+        categories: conf.categories,
+        place: ed.place,
+        link: ed.link || conf.link,
+        session: Recommender.eventCellJa(r),
+      });
+    }
+    return out;
+  }
+
+  /** 書き出す 1 本。データ生成は画面の右上と同じ値（`DATA.generated_at`）を使う。 */
+  function shownIcsText(): string {
+    const generated = typeof DATA.generated_at === "string" ? new Date(DATA.generated_at) : null;
+    return icsViewText(shownIcsInput(), new Date(), generated);
+  }
+
+  function exportShownIcs() {
+    const text = shownIcsText();
+    if (typeof Blob === "undefined" || typeof URL === "undefined" || !URL.createObjectURL) return;
+    const url = URL.createObjectURL(new Blob([text], { type: "text/calendar;charset=utf-8" }));
+    /* ファイル名の日は JST（CSV と同じ理由 – 端末の時刻合わせで日付が一日ずれる）。 */
+    const stampDate = new Date(Date.now() + 9 * 3600000);
+    const stamp = `${stampDate.getUTCFullYear()}${String(stampDate.getUTCMonth() + 1).padStart(2, "0")}${String(stampDate.getUTCDate()).padStart(2, "0")}`;
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `kamiyobi-deadlines-${stamp}.ics`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    if (URL.revokeObjectURL) URL.revokeObjectURL(url);
+  }
+
   /* SPEC §7: 0 件のとき、原因になりやすい条件をそのまま並べる。
    * 期間窓・過去非表示・「開催行は表に出さない」が重なると、収録が無いのだと
    * 誤解して離脱するため、いま外せる条件を実名で示す。*/
@@ -5263,6 +5335,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       exportBtn.textContent = exportCsvLabelJa(shown.length);
       exportBtn.hidden = recMode || !shown.length;
     }
+    // カレンダーへの書き出しも同じ条件（推薦モードでは出さない・0 件でも出さない）。
+    const exportIcsBtn = $("exportIcs");
+    if (exportIcsBtn) {
+      exportIcsBtn.textContent = exportIcsLabelJa(shown.length);
+      exportIcsBtn.hidden = recMode || !shown.length;
+      exportIcsBtn.title =
+        "いまの絞り込みで残った行だけを、カレンダーアプリで読める形（RFC 5545）にしたファイルです。" +
+        "1 件 = 1 つの日の終日で、日付だけ分かっている行は「時刻未確認」と書きます。" +
+        "上の『カレンダーに追加（.ics）』は収録の全部で、購読すると毎日入れ替わりますが、絞り込みは効きません。";
+    }
     const showHistoryStatus =
       !recMode &&
       fullRecordNeeded(state.past, state.win, fullRecordRequested) &&
@@ -6099,6 +6181,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   });
   const exportCsvButton = $("exportCsv");
   if (exportCsvButton) exportCsvButton.addEventListener("click", exportShownCsv);
+  const exportIcsButton = $("exportIcs");
+  if (exportIcsButton) exportIcsButton.addEventListener("click", exportShownIcs);
   // JavaScript が動いているときだけ出る（押せない物を紙と JavaScript 無効の画面に出さない）。
   const fullRecordButton = $("fullRecordButton");
   if (fullRecordButton)

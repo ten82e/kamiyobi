@@ -205,6 +205,7 @@ kamiyobi/
 │   ├── recommendation-core.ts   # browser / benchmark / test 共通の推薦軸
 │   ├── recommendation.ts        # browser / benchmark 共通の語彙fallbackと掲載先指定
 │   ├── publish.ts               # publish manifest のブラウザ側検証
+│   ├── ics.ts                   # カレンダー（RFC 5545）の組み立て（配付物と画面の書き出しで共通）
 │   └── runtime.d.ts             # ブラウザ・生成データの型境界
 ├── scripts/
 │   ├── compare-head.ts          # snapshot / primary_overrides の実質差分

@@ -20,7 +20,39 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import type { IcsCalendarMeta, IcsRow } from "../site/ics.ts";
+/* カレンダーの組み立ては `site/ics.ts` に置いた（第 856 回）– **畫面も同じ物を使ふ**ので、
+ * 配付する `deadlines.ics` と、畫面が「この一覧の N 件をカレンダーで」で書き出す 1 本が
+ * 同じ器・同じ折り方に成る。此處からも同じ名で使へる樣に再輸出する（既存の檢查が
+ * `src/build.ts` から取つて居る）。 */
+import {
+  ICS_CAL_NAME_JA,
+  icsCalendarMeta,
+  icsCalendarText,
+  icsCategoryLabels,
+  icsEventBody,
+  icsUidSafe,
+  jstParts,
+} from "../site/ics.ts";
 import { recommendationAxes } from "../site/recommendation-core.ts";
+
+export type { IcsCalendarMeta, IcsRow } from "../site/ics.ts";
+export {
+  ICS_CAL_NAME_JA,
+  icsCalendarDescriptionJa,
+  icsCalendarMeta,
+  icsCalendarText,
+  icsCategoryLabels,
+  icsCategoryList,
+  icsDayIso,
+  icsEscapeText,
+  icsEventBody,
+  icsFoldLine,
+  icsNextDay,
+  icsUidSafe,
+  jstParts,
+} from "../site/ics.ts";
+
 import Recommender, { isValidRerankerModel } from "../site/recommender.ts";
 import { reviewedSubmission } from "../site/submission-identity.ts";
 // 代表採択論文タイトル（会議のセマンティック/語彙プロファイル強化）。
@@ -84,6 +116,7 @@ export const SITE_RUNTIME_FILES = [
   "recommendation-core.js",
   "recommendation.js",
   "publish.js",
+  "ics.js",
   "app.js",
   "submission-identity.js",
 ] as const;
@@ -399,6 +432,10 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
     "`recommendation-index.json` のハッシュ検証を読む。検証が通らないときは語の一致だけの推薦に" +
     "落ちる（意味検索を黙って止めない）。",
   "app.js": "site/app.ts から生成するブラウザ UI 実行時処理。",
+  "ics.js":
+    "site/ics.ts から生成する、カレンダー（RFC 5545）の組み立て。配付する `deadlines.ics` と、" +
+    "画面が「この一覧の N 件をカレンダー（.ics）で」と書き出す 1 本が、同じ器と同じ折り方に" +
+    "なるようにする（`app.js` が import する）。",
   "submission-identity.js":
     "公式CFPを照合済みの同じ募集を、元の記録を保持して1件に表示する共有方針。",
 };
@@ -3188,119 +3225,6 @@ function escapeHtmlText(value: string): string {
  * `escapeMdCell` が `\|` に逃がすので、そこで区切ってから戻す。 */
 /* ------------------------------------------------------------------ カレンダー配信 */
 
-/** カレンダーアプリの棚に出る名前（`X-WR-CALNAME`）。 */
-const ICS_CAL_NAME_JA = "kamiyobi 締切一覧";
-
-/* カレンダーアプリの説明欄に出る文。ここだけは相手側が翻訳しないので日本語で書く。
- *
- * 以前は決まった文章の先頭を半角スペースで始めていた（`" kamiyobi が…"`）。RFC 5545 §3.1 は
- * 名前とコロンとの間に空白を置かないと定めており、相手はそれを値の一部に残す – カレンダーの
- * 情報欄が「 kamiyobi …」と頭が空いて出ていた（2026-09-24 実測）。
- * 「画面上の全件」とも書いていたが、カレンダー側に「上」は無い – 収録の**件数と期間**を
- * 実測の値で書く（2026-08-09 生成ビルドで 928 件・2026-08-09 〜 2028-03-30。画面の表示窓は
- * 生成から 180 日なので、同じ物を想像して取り込む人とズレる）。 */
-function icsCalendarDescriptionJa(meta: IcsCalendarMeta, stamp: { human: string } | null): string {
-  const span =
-    meta.event_count > 0
-      ? `いま ${meta.event_count} 件（${meta.first_day} 〜 ${meta.last_day}）`
-      : "いま 0 件";
-  /* 内訳（第 300 回）。第 299 回まで、この説明は入る物を「締切」と呼んでいたが、実測で
-     928 件のうち 167 件は採否通知・査読結果公開・反論期間の開始だった。カレンダーアプリは
-     この文をカレンダーの情報欄に出すので、購読する人が最初に読む話になる。 */
-  const mix =
-    meta.deadline_count > 0 && meta.deadline_count < meta.event_count
-      ? `うち締切は ${meta.deadline_count} 件で、残りは採否通知・査読結果公開・反論期間の開始の` +
-        "ように、その日までに何かを出す必要の無い日（本文の日付の欄も「通知日」などになる）。"
-      : "";
-  return [
-    "kamiyobi が収録した会議の日付。1 件 = 1 つの日で、その日（JST の暦日）を埋める形で出る。",
-    `入るのは収録している今後の日付すべてで、${span}。${mix}画面の絞り込みと並び替えは引き継がれない。`,
-    "収録の期間は画面の表示窓より長い（画面は指定した期間だけを出し、こちらには出ている締切が",
-    "全て入る）。時刻が公式に出ていない締切は「時刻未確認」と書き、上流が推定としている日付には",
-    "「推定」と付ける。過ぎた日は入れない。会議が開かれている日（会期）その物を並べる予定は" +
-      "立てません – 終日が並ぶと締切が見えなくなるためで、会期は各予定の本文に書きます。",
-    stamp ? `データ生成: ${stamp.human}（JST）。` : "",
-  ]
-    .filter(Boolean)
-    .join("");
-}
-
-/** 1 行の上限（RFC 5545 §3.1 は 75 オクテット）。 */
-const ICS_MAX_LINE_OCTETS = 75;
-
-/** RFC 5545 の TEXT 値で意味を持つ文字（バックスラッシュ・セミコロン・カンマ・改行）。 */
-export function icsEscapeText(value: unknown): string {
-  return String(value ?? "")
-    .replace(/\\/g, "\\\\")
-    .replace(/;/g, "\\;")
-    .replace(/,/g, "\\,")
-    .replace(/\r\n|\r|\n/g, "\\n");
-}
-
-/**
- * 1 行を 75 オクテット以内へ畳む（RFC 5545 §3.1 – 第 266 回）。
- * **文字数ではなくオクテット数**で見る。日本語の 1 文字は UTF-8 で 3 オクテットあるので、
- * 文字数で切ると相手のカレンダー側で文字化けする。続け字（surrogate pair など）の
- * 途中でも切らない – 1 文字単位で数える。
- *
- * **2 文字の転義（`\n`・`\,`・`\;`・`\\`）をまたいでも切らない**（§3.1 が禁じている）。
- * 以前は切れ目でバックスラッシュが前の行に残り、続きの行が `n…` で始まっていた
- * （2026-09-24 実測: 配信した `deadlines.ics` に 30 箇所）。開いてから解く受け手では
- * 元に戻るが、行ごとに扱う受け手では転義が解けず `\` がそのまま画面に出る。
- * 切れ目が転義の先頭になったときは **バックスラッシュを続きの行へ送る**
- * （前の行を短くする形で、75 オクテットの上限は保つ）。
- */
-export function icsFoldLine(line: string): string {
-  const value = String(line ?? "");
-  if (Buffer.byteLength(value, "utf8") <= ICS_MAX_LINE_OCTETS) return value;
-  const chars = [...value];
-  const sizes = chars.map((ch) => Buffer.byteLength(ch, "utf8"));
-  const out: string[] = [];
-  let start = 0;
-  while (start < chars.length) {
-    // 2 行目以降は、折り返しの半角スペース 1 オクテットを込んで数える（相手はそれを戻す）。
-    let end = start;
-    let used = start === 0 ? 0 : 1;
-    while (end < chars.length && used + sizes[end] <= ICS_MAX_LINE_OCTETS) {
-      used += sizes[end];
-      end += 1;
-    }
-    // 転義の先頭で切らない（ただし 1 文字は必ず残す – さもないと前に進まない）。
-    if (end > start + 1 && chars[end - 1] === "\\") end -= 1;
-    out.push((start === 0 ? "" : " ") + chars.slice(start, end).join(""));
-    start = end;
-  }
-  return out.join("\r\n");
-}
-
-/** JST の暦日（`YYYYMMDD`）と、人が読む形（`YYYY-MM-DD HH:MM`）をまとめて返す。 */
-function jstParts(at: Date | null | undefined): { day: string; human: string } | null {
-  if (!(at instanceof Date) || Number.isNaN(at.getTime())) return null;
-  const iso = new Date(at.getTime() + 9 * 3_600_000).toISOString();
-  return {
-    day: iso.slice(0, 10).replace(/-/g, ""),
-    human: `${iso.slice(0, 10)} ${iso.slice(11, 16)}`,
-  };
-}
-
-/** JST の暦日を 1 日後ろへ（終日イベントの `DTEND` は「その日の終わり」ではないため）。 */
-function icsNextDay(day: string): string {
-  const y = Number(day.slice(0, 4));
-  const m = Number(day.slice(4, 6));
-  const d = Number(day.slice(6, 8));
-  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return day;
-  const next = new Date(Date.UTC(y, m - 1, d + 1));
-  return next.toISOString().slice(0, 10).replace(/-/g, "");
-}
-
-/** UID に載せる語を作る（同じ締切が再購読で重複しないよう、ビルドをまたいで同じ値にする）。 */
-function icsUidSafe(value: unknown): string {
-  return String(value ?? "")
-    .replace(/[^A-Za-z0-9._-]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 96);
-}
-
 /**
  * カレンダー購信用の 1 本（`deadlines.ics`）を作る（第 266 回）。
  *
@@ -3321,25 +3245,6 @@ function icsUidSafe(value: unknown): string {
 /* カレンダーに載せる分野（第 292 回）。語は画面の分野列と同じ入口
  * （`Recommender.categoryLabelJa`）から取り、書き写しでズレないようにする。未知の語は
  * 画面と同じく原文のまま – 画面に無い語をカレンダーだけ作らない。 */
-export function icsCategoryLabels(categories: readonly string[] | null | undefined): string[] {
-  const raw = categories;
-  if (!Array.isArray(raw)) return [];
-  const out: string[] = [];
-  raw.forEach((key) => {
-    const label = String(Recommender.categoryLabelJa(key) ?? "").trim();
-    if (label && out.indexOf(label) < 0) out.push(label);
-  });
-  return out;
-}
-
-/* `CATEGORIES` は値の区切りにカンマを使うので、`icsEscapeText`（カンマを \, に逃がす）を
- * そのまま使えない。値の中のセミコロンとバックスラッシュだけ逃がし、区切りは残す。 */
-export function icsCategoryList(labels: string[]): string {
-  return labels
-    .map((label) => label.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,"))
-    .join(",");
-}
-
 /* カレンダーの本文に書く会期の表示（第 304 回）。`upcoming.md` の会期行と同じ手の値にする –
  * 曜日を添えるのも同じ（出張・会場押さえは曜日で見込むため）。会期その物の終日イベントは立てない
  * – 終日が並ぶと締切の行が見えなくなる（第 266 回）。 */
@@ -3501,24 +3406,20 @@ export function icsEventRows(
       at: atMs,
       // 欄名を決めた所で「締切かどうか」も決めておく（数え方を後から真似ない – 第 300 回）。
       deadline: rec.date_field === "締切",
-      body: [
-        "BEGIN:VEVENT",
-        `UID:${base}${n === 0 ? "" : `-${n + 1}`}@kamiyobi`,
-        `DTSTAMP:${safeNow
-          .toISOString()
-          .replace(/[-:]/g, "")
-          .replace(/\.\d{3}/, "")}`,
-        `DTSTART;VALUE=DATE:${day}`,
-        `DTEND;VALUE=DATE:${icsNextDay(day)}`,
-        `SUMMARY:${icsEscapeText(summary)}`,
-        `DESCRIPTION:${icsEscapeText(desc.join("\n"))}`,
-        link ? `URL:${String(link).trim()}` : "",
-        // 並び替えは上の `SUMMARY`（本文の 6 行目）を見るので、挿れるのはうしろ側。
-        catsJa.length ? `CATEGORIES:${icsCategoryList(catsJa)}` : "",
-        placeJa ? `LOCATION:${icsEscapeText(placeJa)}` : "",
-        "TRANSP:TRANSPARENT",
-        "END:VEVENT",
-      ].filter(Boolean),
+      /* 器（`BEGIN:VEVENT` から `END:VEVENT` まで）は共通の函數に組ませる（第 856 回）。
+         畫面が書き出す 1 本と同じ形に成る – 此處で書き寫すと、片方だけ直した時にずれる。 */
+      body: icsEventBody(
+        {
+          uid: `${base}${n === 0 ? "" : `-${n + 1}`}@kamiyobi`,
+          day,
+          summary,
+          description: desc.join("\n"),
+          link,
+          categories: catsJa,
+          location: placeJa,
+        },
+        safeNow,
+      ),
     });
   }
   rows.sort((a, b) => a.at - b.at || cmpStr(a.body[5] ?? "", b.body[5] ?? ""));
@@ -3527,69 +3428,6 @@ export function icsEventRows(
 
 /* 購読先に申告する事実。行から導く – 別々に数えると、申告と中身がズレる
  * （「928 件」と書いて 927 件しか入っていない、が一番信用を失う）。 */
-export type IcsRow = {
-  day: string;
-  at: number;
-  body: string[];
-  /** 日付の欄が「締切」の行か（第 300 回）。採否通知などは False で、申告の内訳に使う。 */
-  deadline: boolean;
-};
-export type IcsCalendarMeta = {
-  event_count: number;
-  /** 配信行の内、日付の欄が「締切」の物（第 300 回）。採否通知などは数えない。 */
-  deadline_count: number;
-  first_day: string;
-  last_day: string;
-};
-
-/** `YYYYMMDD` を人が読む形に直す（カレンダーの申告文と画面の注記で同じ形を使う）。 */
-function icsDayIso(day: string): string {
-  return /^\d{8}$/.test(day) ? `${day.slice(0, 4)}-${day.slice(4, 6)}-${day.slice(6, 8)}` : "";
-}
-
-export function icsCalendarMeta(rows: IcsRow[] | null | undefined): IcsCalendarMeta {
-  const safe = rows ?? [];
-  const days = safe
-    .map((r) => r.day)
-    .filter((d) => /^\d{8}$/.test(d))
-    .sort(cmpStr);
-  return {
-    event_count: safe.length,
-    /* 中身の内訳を、書き出した行から数える（第 300 回）。第 299 回まで配信物は締切では無い日
-       （採否通知・査読結果公開・反論期間の開始）も含むのに、画面も索引も「締切 N 件」と言って
-       いた。欄名が「締切」の行だけを締切として数える – 数え方を 2 か所に持たない。 */
-    deadline_count: safe.filter((r) => r.deadline).length,
-    first_day: days.length ? icsDayIso(days[0]) : "",
-    last_day: days.length ? icsDayIso(days[days.length - 1]) : "",
-  };
-}
-
-export function icsCalendarText(
-  rows: IcsRow[] | null | undefined,
-  now: Date | null | undefined,
-): string {
-  const safe = rows ?? [];
-  const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
-  const stamp = jstParts(safeNow);
-  return [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//kamiyobi//deadlines//JA",
-    "CALSCALE:GREGORIAN",
-    "METHOD:PUBLISH",
-    `X-WR-CALNAME:${icsEscapeText(ICS_CAL_NAME_JA)}`,
-    `X-WR-CALDESC:${icsEscapeText(icsCalendarDescriptionJa(icsCalendarMeta(safe), stamp))}`,
-    "X-WR-TIMEZONE:Asia/Tokyo",
-    "X-PUBLISHED-TTL:P1D",
-    "REFRESH-INTERVAL;VALUE=DURATION:P1D",
-    ...safe.flatMap((r) => r.body),
-    "END:VCALENDAR",
-    "",
-  ]
-    .map(icsFoldLine)
-    .join("\r\n");
-}
-
 /** 入口（行を作ってカレンダーの本文に組む）。行だけが必要なら `icsEventRows` を使う。 */
 export function toIcsText(
   records: DataRecord[] | null | undefined,
