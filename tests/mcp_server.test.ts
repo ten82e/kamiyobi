@@ -505,3 +505,12 @@ it("索引が、元の収録と建てた表示で数が違ふ事を書いてい�
   expect(build, "數の出所の違ひが索引に無い").toContain("元の収録と建てた表示で数が違ふ事がある");
   expect(build, "實測の數が索引に無い").toContain("版 2,659 ⇔ 建てた表示 2,603");
 });
+
+it("索引が、上流の英語の印（TBD）を説明している（第 833 回）", () => {
+  /* 實測 2026-10-06: data.csv の `date_text` 65 行・`place` 10 行が上流の原文 `TBD` だつた。
+   * 索引は「此方が付ける印は書かない」とだけ言つて居たので、讀む人（と AI）は `TBD` を
+   * 此方の印と讀みかねない（空欄とは意味が違ふ）。 */
+  const build = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
+  expect(build, "上流の英語の印の説明が索引に無い").toContain("上流が英語の印を書いて居る事がある");
+  expect(build, "實測の行數が索引に無い").toContain("`date_text` 65 行・`place` 10 行");
+});
