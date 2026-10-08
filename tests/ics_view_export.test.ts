@@ -294,8 +294,11 @@ describe("畫面の一覧をカレンダーに書き出す（第 856 回）", ()
       "Blob",
       "URL",
       "document",
+      "state",
       vmSafeSource(`${src}\nreturn exportShownIcs;`),
-    )(() => "BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n", Blob, URL, document) as () => void;
+    )(() => "BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n", Blob, URL, document, {
+      mode: "deadlines",
+    }) as () => void;
     走らせる();
     expect(落ちた.length, "1 本も落ちて來ない").toBe(1);
     /* 名前に JST の日が入る（CSV と同じ約束 – 端末の時刻合わせで日付が一日ずれない）。 */
@@ -342,5 +345,38 @@ describe("畫面の一覧をカレンダーに書き出す（第 856 回）", ()
     expect(出た[1].day, "日付だけの行の日が違ふ").toBe("20270301");
     expect(出た[1].whenText, "日付だけの行に時刻を作つた").toContain("時刻未確認");
     expect(出た[1].estimated, "推定を落とした").toBe(true);
+  });
+
+  it("推薦の候補を書き出す時は、説明欄が候補の写しだと言う（第 864 回）", () => {
+    /* 「投稿先を探す」画面の候補にも出口が無かった（第 856 回は締切の一覧だけだった）。
+     * 同じ函數を使ふが、説明欄は「何の写しか」を言ひ分ける – カレンダーの情報欄で
+     * 取り違へない樣に。 */
+    const 締切 = icsViewText([材料()], NOW, 生成);
+    const 候補 = icsViewText([材料()], NOW, 生成, { scopeJa: "「投稿先を探す」が挙げた候補" });
+    const 説明 = (raw: string): string =>
+      開く(raw).find((l) => l.startsWith("X-WR-CALDESC:")) ?? "";
+    expect(説明(締切), "締切の一覧の説明が違ふ").toContain("画面で絞り込んだ 1 件");
+    expect(説明(候補), "候補の説明が違ふ").toContain("画面で「投稿先を探す」が挙げた候補 1 件");
+    /* どちらも「購読ではなく写し」である事は同じ。 */
+    for (const raw of [締切, 候補])
+      expect(説明(raw), "写しである事を言つて居ん").toContain("購読ではなく");
+  });
+
+  it("推薦の候補のボタンが、候補の語で出る（第 864 回）", () => {
+    const app = siteRuntime();
+    const 文言 = new Function(
+      "countJa",
+      vmSafeSource(`${jsFunction(app, "exportIcsLabelJa")}\nreturn exportIcsLabelJa;`),
+    )((n: number) => String(n)) as (n: number, recMode?: boolean) => string;
+    expect(文言(12), "一覧の文言が違ふ").toBe("この一覧の 12 件をカレンダー（.ics）でダウンロード");
+    expect(文言(12, true), "候補の文言が違ふ").toBe(
+      "この候補 12 件をカレンダー（.ics）でダウンロード",
+    );
+    /* 押した時の繋ぎも、畫面の別を渡して居る（推薦では候補の写しとして書き出す）。 */
+    expect(app, "推薦の別を渡して居ん").toContain('shownIcsText(state.mode === "recommend")');
+    /* 候補の時も、候補が空なら出さない（hidden の條件から推薦の別を外した）。 */
+    expect(app, "推薦では出さないままに成つて居る").not.toContain(
+      "exportIcsBtn.hidden = recMode || !shown.length;",
+    );
   });
 });

@@ -3061,8 +3061,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 「国内研究会だけ」「自分の分野だけ」をカレンダーに入れたい人は、CSV と同じ一覧から
    * 同じ 1 本を作れるようにする。器と折り方は `site/ics.ts` の共通の物を使う
    * （配付物と同じ形になる – 書き写すと、片方だけ直したときにずれる）。 */
-  function exportIcsLabelJa(total: number): string {
-    return `この一覧の ${countJa(total)} 件をカレンダー（.ics）でダウンロード`;
+  /* 締切の一覧では「この一覧の N 件」、推薦の候補では「この候補 N 件」と言う（同じ物を
+   * 指す語を画面ごとに変へない – 押す前に、何が入るかが分かる樣に）。 */
+  function exportIcsLabelJa(total: number, recMode = false): string {
+    return recMode
+      ? `この候補 ${countJa(total)} 件をカレンダー（.ics）でダウンロード`
+      : `この一覧の ${countJa(total)} 件をカレンダー（.ics）でダウンロード`;
   }
 
   /** いまの一覧（`shown`）を、カレンダーの材料へ写す（組み立ては `site/ics.ts` が持つ）。
@@ -3109,13 +3113,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   /** 書き出す 1 本。データ生成は画面の右上と同じ値（`DATA.generated_at`）を使う。 */
-  function shownIcsText(): string {
+  function shownIcsText(recMode = false): string {
     const generated = typeof DATA.generated_at === "string" ? new Date(DATA.generated_at) : null;
-    return icsViewText(shownIcsInput(), new Date(), generated);
+    /* 説明欄にも、何の写しかを書く（候補を書き出した人と、絞り込みを書き出した人が、
+     * カレンダーの情報欄で取り違へない樣に）。 */
+    return icsViewText(shownIcsInput(), new Date(), generated, {
+      scopeJa: recMode ? "「投稿先を探す」が挙げた候補" : "絞り込んだ",
+    });
   }
 
   function exportShownIcs() {
-    const text = shownIcsText();
+    const text = shownIcsText(state.mode === "recommend");
     if (typeof Blob === "undefined" || typeof URL === "undefined" || !URL.createObjectURL) return;
     const url = URL.createObjectURL(new Blob([text], { type: "text/calendar;charset=utf-8" }));
     /* ファイル名の日は JST（CSV と同じ理由 – 端末の時刻合わせで日付が一日ずれる）。 */
@@ -5341,12 +5349,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // カレンダーへの書き出しも同じ条件（推薦モードでは出さない・0 件でも出さない）。
     const exportIcsBtn = $("exportIcs");
     if (exportIcsBtn) {
-      exportIcsBtn.textContent = exportIcsLabelJa(shown.length);
-      exportIcsBtn.hidden = recMode || !shown.length;
-      exportIcsBtn.title =
-        "いまの絞り込みで残った行だけを、カレンダーアプリで読める形（RFC 5545）にしたファイルです。" +
-        "1 件 = 1 つの日の終日で、日付だけ分かっている行は「時刻未確認」と書きます。" +
-        "上の『カレンダーに追加（.ics）』は収録の全部で、購読すると毎日入れ替わりますが、絞り込みは効きません。";
+      exportIcsBtn.textContent = exportIcsLabelJa(shown.length, recMode);
+      /* 推薦の候補も書き出せる（第 864 回）。候補の締切をカレンダーに入れて比べるのが、
+       * 投稿先を決める時の実際の動作 – 候補に出口が無かつた。 */
+      exportIcsBtn.hidden = !shown.length;
+      exportIcsBtn.title = recMode
+        ? "「投稿先を探す」が挙げた候補の締切だけを、カレンダーアプリで読める形（RFC 5545）にしたファイルです。" +
+          "1 件 = 1 つの日の終日で、日付だけ分かっている行は「時刻未確認」と書きます。" +
+          "候補は絞り込みではなく、論文の語との重なりで選ばれています（画面のカードと同じ順・同じ件数）。"
+        : "いまの絞り込みで残った行だけを、カレンダーアプリで読める形（RFC 5545）にしたファイルです。" +
+          "1 件 = 1 つの日の終日で、日付だけ分かっている行は「時刻未確認」と書きます。" +
+          "上の『カレンダーに追加（.ics）』は収録の全部で、購読すると毎日入れ替わりますが、絞り込みは効きません。";
     }
     const showHistoryStatus =
       !recMode &&

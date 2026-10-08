@@ -402,15 +402,20 @@ function stampHumanJa(at: Date): string {
   return parts ? `${parts.human}（JST）` : "未確認";
 }
 
-/** 書き出した 1 本の説明欄（配付物の説明と違い、**絞り込みの写し**である事を言う）。 */
-export function icsViewDescriptionJa(rows: IcsRow[], generatedAt: Date | null | undefined): string {
+/** 書き出した 1 本の説明欄（配付物の説明と違い、**画面の写し**である事を言う）。
+ * `scopeJa` は何の写しか（既定は「絞り込んだ」。推薦の候補を書き出す時は其方を渡す）。 */
+export function icsViewDescriptionJa(
+  rows: IcsRow[],
+  generatedAt: Date | null | undefined,
+  scopeJa = "絞り込んだ",
+): string {
   const days = rows
     .map((r) => r.day)
     .filter((d) => /^\d{8}$/.test(d))
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   const span = days.length ? `${icsDayIso(days[0])} 〜 ${icsDayIso(days[days.length - 1])}` : "";
   return [
-    `kamiyobi の画面で絞り込んだ ${rows.length} 件をそのまま入れたもの${span ? `（${span}）` : ""}。`,
+    `kamiyobi の画面で${scopeJa} ${rows.length} 件をそのまま入れたもの${span ? `（${span}）` : ""}。`,
     "1 件 = 1 つの日で、その日（JST の暦日）を埋める形で出る。",
     "これは購読ではなく、いまの一覧の写しです – 一覧が変わったら、もう一度この画面から",
     "書き出してください。収録の全部を購読するなら、同じ場所にある deadlines.ics を",
@@ -428,11 +433,12 @@ export function icsViewText(
   items: readonly ScreenDeadlineInput[] | null | undefined,
   now: Date | null | undefined,
   generatedAt?: Date | null,
+  options?: { scopeJa?: string },
 ): string {
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
   const rows = icsRowsFromScreen(items, safeNow);
   return icsCalendarText(rows, safeNow, {
     calName: ICS_VIEW_CAL_NAME_JA,
-    description: icsViewDescriptionJa(rows, generatedAt ?? null),
+    description: icsViewDescriptionJa(rows, generatedAt ?? null, options?.scopeJa),
   });
 }
