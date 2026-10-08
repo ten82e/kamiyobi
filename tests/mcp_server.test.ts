@@ -1547,3 +1547,38 @@ it("使へない數の引數は默つて既定に戻さない（第 878 回）",
   });
   expect(推薦, "推薦の limit を默つた").toContain("limit は 1 以上の数で指定してください");
 });
+
+it("表に出さん種別の語は、選び方を件數つきで敿へる（第 879 回）", async () => {
+  /* 畫面は「検索語は『採否通知』の種別に當たります（表には投稿締切だけを出します）」と言ふ
+   * （第 244 回）。MCP は「既定の絞り込みで 0 件。include_past / include_estimated / kinds を
+   * 試して」とだけで、**其の種別が收錄に在る事**を言つて居なかつた – 實測 2026-10-14:
+   * `カメラレディ` は 70 行當たるのに、AI は「カメラレディの締切は無い」と受け取りかねない。 */
+  for (const [語, 種別] of [
+    ["採否通知", "notification"],
+    ["カメラレディ", "camera_ready"],
+    ["査読結果", "review_release"],
+    ["登録締切", "registration"],
+  ] as const) {
+    const text = await call("search_deadlines", { query: 語 });
+    expect(text, `「${語}」に種別の話が無い`).toContain("の種別に当たります");
+    expect(text, `「${語}」が表の既定を言つて居ん`).toContain("表には投稿締切だけを出します");
+    const m = new RegExp(`kinds: \\[\\"${種別}\\"\\] で引けます（([\\d,]+) 件当たります）`).exec(
+      text,
+    );
+    expect(m, `「${語}」に選び方が書かれて居ん`).toBeTruthy();
+    /* **敎へた件數は、其の指定で實際に引いた結果と一致する**（第 762 回と同じ約束）。 */
+    const 敎へた = Number(String(m?.[1]).replace(/,/g, ""));
+    expect(敎へた, `「${語}」の件數が讀めない`).toBeGreaterThan(0);
+    const 引いた = await call("search_deadlines", { query: 語, kinds: [種別] });
+    const 出た = Number(/に当たる締切: ([\d,]+) 件/.exec(引いた)?.[1]?.replace(/,/g, "") ?? -1);
+    expect(出た, `「${語}」の件數が實際と違ふ: ${敎へた} ≠ ${出た}`).toBe(敎へた);
+  }
+  /* 投稿締切の種別を打つた人には付けない（其の種別は既定で出る）。 */
+  const 論文 = await call("search_deadlines", { query: "論文締切" });
+  expect(論文, "投稿締切に種別の話を付けた").not.toContain("の種別に当たります");
+  /* 畫面が默る問（どの種別の語でも無い）にも付けない。 */
+  const 默る = await call("search_deadlines", { query: "インターネット" });
+  const 默る數 = /に當たる締切: ([\d,]+) 件/.exec(默る);
+  if (默る數 && Number(默る數[1]) > 0)
+    expect(默る, "行が出る問に種別の話を付けた").not.toContain("の種別に当たります");
+});
