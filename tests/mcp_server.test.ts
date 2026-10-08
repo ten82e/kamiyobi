@@ -1128,3 +1128,72 @@ it("窓の外にだけ在る締切を「無い」と言わない（第 869 回�
   const 語の = await call("explain_word", { word: 語 });
   expect(語の, "explain_word が窓の外を敎へて居ん").toContain("収録の全体には");
 });
+
+it("日数の幅は、同じ幅を引ける検索語に置き換へて敎へる（第 871 回）", async () => {
+  /* 畫面は「1か月以内」を「『締切まで』の選擇欄で『30 日以内』を選ぶと同じ話です」と送る
+   * （`dayRangeNoteJa`）が、**MCP に其の欄は無い**。實測 2026-10-08（窓 870 行）: `1か月以内` は
+   * 0 件で案内も無く、同じ幅の `30日以内` は 90 件だつた – AI は「1 か月以内の締切は無い」と
+   * 答へてしまふ。 */
+  const text = await call("search_deadlines", { query: "1か月以内", scope: "all", limit: 1 });
+  expect(text, "日数の幅を其の侭檢索語として扱つた").toContain(
+    "日数の幅はそのままでは検索語に当たりません",
+  );
+  const m = /近い幅は検索語「(\d+)日以内」で引けます（([\d,]+) 件当たります）/.exec(text);
+  expect(m, "同じ幅を引ける檢索語を敎へて居ん").toBeTruthy();
+  const 敎へた語 = `${m?.[1]}日以内`;
+  const 敎へた件數 = Number(String(m?.[2]).replace(/,/g, ""));
+  expect(敎へた件數, "敎へた語が 0 件（行き止まりへ送つた）").toBeGreaterThan(0);
+  /* **敎へた語で引くと、言つた件數と一致する**（其の侭打ち直せる – 第 762 回と同じ約束）。 */
+  const 引いた = await call("search_deadlines", { query: 敎へた語, scope: "all", limit: 1 });
+  const 出た = Number(/に当たる締切: ([\d,]+) 件/.exec(引いた)?.[1]?.replace(/,/g, "") ?? -1);
+  expect(出た, `敎へた件數と結果が違ふ: ${敎へた語}`).toBe(敎へた件數);
+  /* 幅の終はりが書かれて居ない言ひ方（過去の幅）は、過去を出す引数を敎へる（行は作らない）。 */
+  const 過去 = await call("search_deadlines", { query: "3日前まで", scope: "all", limit: 1 });
+  expect(過去, "過去の幅に何も言はん").toContain("include_past: true");
+  /* 語を調べる道具でも同じ事を言ふ（第 869 回の窓の外と同じ扱ひ）。 */
+  const 語の = await call("explain_word", { word: "1か月以内", scope: "all" });
+  expect(語の, "explain_word が近い幅を敎へて居ん").toContain(`近い幅は検索語「${敎へた語}」`);
+  /* 時間・分の幅は日で丸める（此の表は締切を日單位で持つ – 丸めた事を隱さない）。 */
+  const 時間 = await call("search_deadlines", { query: "3時間以内", scope: "all", limit: 1 });
+  expect(時間, "時間の幅に丸めた事を言はん").toContain("時間・分の幅は日で丸めます");
+  /* 行が出る語には付けない（要らない斷りを增やさない）。 */
+  const 有 = await call("search_deadlines", { query: "30日以内", scope: "all", limit: 1 });
+  expect(有, "行が出る幅に斷りを付けた").not.toContain("日数の幅はそのままでは");
+});
+
+it("収録の果てより先の日付を「無い」と言はない（第 871 回）", async () => {
+  /* 第 293 回の畫面と同じ決めごと – 幅の終はりが分からん物を「無い」と斷定しない。
+   * 窓の外の案内（第 869 回）は**収録にその語の行が在る時**だけなので、収録の果てより先は
+   * 依然として「この語では 1 行も出ません」とだけ返つて居た。 */
+  const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never;
+  const 全行 = Recommender.candidateRows(snap);
+  /* 果ての數へ方は畫面と同じ（表示して居る暦日 = `tShown`。無ければ `t`。JST の暦日で出す）。 */
+  let 一番遠い = Number.NEGATIVE_INFINITY;
+  for (const r of 全行) {
+    const s = typeof r.tShown === "number" && Number.isFinite(r.tShown) ? r.tShown : r.t;
+    if (Number.isFinite(s) && s > 一番遠い) 一番遠い = s;
+  }
+  const d = new Date(一番遠い + 9 * 3600000);
+  const pad = (n: number): string => String(n).padStart(2, "0");
+  const 果て = `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+  /* 果てより先で、**素の照合でも 0 行**の月を探す（前提を此の檢查の中で確かめる –
+   * 會期の日付が果てより先に在る事があるので、年だけで決め打たない）。 */
+  const now = Date.now();
+  let 語 = "";
+  for (let 年 = d.getUTCFullYear() + 1; 年 < d.getUTCFullYear() + 12 && !語; 年 += 1) {
+    const 候補 = `${年}年${d.getUTCMonth() + 1}月`;
+    const 照合 = Recommender.searchMatcher(Recommender.expandRelativeMonths(候補, now), now);
+    if (全行.filter((r) => 照合(r.hay) === true).length === 0) 語 = 候補;
+  }
+  expect(語, "此の檢查の前提（収録の果てより先で 0 行の月）が崩れた").not.toBe("");
+  const text = await call("search_deadlines", { query: 語, scope: "all", limit: 1 });
+  expect(text, "果ての日を言つて居ん").toContain(`一番遠い締切 ${果て} より先です`);
+  expect(text, "確かめて居ない事を言つて居ん").toContain("まだ確認できていません");
+  expect(text, "「無い」と斷定した").not.toContain("この語では 1 行も出ません");
+  /* 語を調べる道具でも同じ事を言ふ。 */
+  const 語の = await call("explain_word", { word: 語, scope: "all" });
+  expect(語の, "explain_word が果てを敎へて居ん").toContain(`一番遠い締切 ${果て} より先です`);
+  /* 行が出る語には付けない。 */
+  const 有 = await call("search_deadlines", { query: "ポスター", scope: "all", limit: 1 });
+  expect(有, "行が出る語に果ての斷りを付けた").not.toContain("より先です");
+});
