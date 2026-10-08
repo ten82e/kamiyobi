@@ -990,3 +990,33 @@ it("国内・オンラインの絞り込みが、画面のチェック欄と同�
   });
   expect(數(兩方), "兩方の絞り込みが重なつて居ん").toBeLessThanOrEqual(國內);
 });
+
+it("締切の行が 1 本も無い会議を「収録に無い」と言わない（第 866 回）", async () => {
+  /* 畫面は「収録に無い」と「収録に在るが締切が 1 本も無い」を分けて居る（第 294 回の實測:
+   * 品書の會議 248 件のうち 74 件は締切が 1 本も無い）。行から引いて居たので、MCP は
+   * 締切を持たん會議に「収録に在りません」と答へて居た（會期だけの會議は upcoming.md に
+   * 「開催」として載つて居るのに、其れも言はなかつた）。 */
+  const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
+    conferences?: Array<{ key?: string; editions?: Array<{ event_start?: string }> }>;
+  };
+  const 會 = snap.conferences ?? [];
+  const 行の鍵 = new Set(
+    Recommender.candidateRows(snap as never).map((r) => String(r.conf?.key ?? "")),
+  );
+  const 締切なし = 會.filter((c) => c.key && !行の鍵.has(String(c.key)));
+  expect(締切なし.length, "此の檢査の前提（締切の行が無い會議）が崩れた").toBeGreaterThan(0);
+  const 會期あり = 締切なし.find((c) => (c.editions ?? []).some((e) => e.event_start));
+  const 會期なし = 締切なし.find((c) => !(c.editions ?? []).some((e) => e.event_start));
+  for (const c of [會期あり, 會期なし].filter(Boolean)) {
+    const text = await call("venue_info", { key: String(c?.key), scope: "all" });
+    expect(text, `${c?.key} を「収録に無い」と言つた`).not.toContain("収録に在りません");
+    expect(text, `${c?.key} に締切が無い事を言つて居ん`).toContain("締切の行が 1 本もありません");
+  }
+  if (會期あり) {
+    const text = await call("venue_info", { key: String(會期あり.key), scope: "all" });
+    expect(text, "會期の行き先を敎へて居ん").toContain("upcoming.md");
+  }
+  /* 收錄その物の數（`collection_stats` と同じ）を言ふ – 行から數へると 622 に成つて居た。 */
+  const 無 = await call("venue_info", { name: "ぬけぬけ会議", scope: "all" });
+  expect(無, "收錄の數が收錄その物と違ふ").toContain(`収録 ${會.length} 会議`);
+});

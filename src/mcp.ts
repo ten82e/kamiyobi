@@ -72,7 +72,13 @@ let allCache: Row[] | null = null;
  * 「データ生成」を常に出して居るので、MCP が其れを言はないと、人が見た日付と AI の答へが
  * 違ふ（人が見る物と AI が言ふ物を同じにする、が此の計畫の決まり）。 */
 interface SnapshotFile {
-  conferences?: Array<{ editions?: unknown[] }>;
+  conferences?: Array<{
+    key?: unknown;
+    title?: unknown;
+    acronym?: unknown;
+    link?: unknown;
+    editions?: unknown[];
+  }>;
   snapshot_metadata?: { generated_at?: unknown };
 }
 let snapshotCache: SnapshotFile | null = null;
@@ -480,9 +486,37 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
         r.conf.key.toLowerCase().includes(求);
   const hit = list.filter(的);
   if (!hit.length) {
-    const 會 = [...new Set(list.map((r) => r.conf.key))];
+    /* **「收錄に無い」と「收錄に在るが締切の行が 1 本も無い」を混同しない**（第 866 回）。
+     * 畫面は其の二つを分けて居る（第 294 回の實測: 品書の會議 248 件のうち 74 件は締切が 1 本も
+     * 無い）。行から引くと、締切を持たん會議は「收錄に無い」と答へてしまふ – 收錄その物から引く。 */
+    const 求 = name.toLowerCase();
+    const 收錄の會議 = snapshot().conferences ?? [];
+    const 在る = 收錄の會議.find((c) => {
+      const key = String(c.key ?? "").toLowerCase();
+      const title = String(c.title ?? "").toLowerCase();
+      const acronym = String(c.acronym ?? "").toLowerCase();
+      return (
+        Boolean(key) &&
+        (key === 求 || title.includes(求) || acronym.includes(求) || key.includes(求))
+      );
+    });
+    if (在る) {
+      const 版々 = Array.isArray(在る.editions) ? 在る.editions : [];
+      const 會期あり = 版々.some((e) =>
+        String((e as { event_start?: unknown } | null)?.event_start ?? "").trim(),
+      );
+      const link = String(在る.link ?? "").trim();
+      return [
+        `その会議は収録に在りますが、**締切の行が 1 本もありません**（版 ${版々.length} 件）。` +
+          (會期あり
+            ? "会期は収録に在るので、直近の一覧（upcoming.md）とカレンダー（deadlines.ics）には「開催」として載ります。"
+            : "会期も確認できていないので、どの一覧にも出ません。"),
+        ...(link ? [`公式ページ: ${link}`] : []),
+        ...(古さ ? ["", 古さ] : []),
+      ].join("\n");
+    }
     return [
-      `その会議は収録に在りません（収録 ${會.length} 会議）。会議名の一部で試すか、search_deadlines で引いてください。`,
+      `その会議は収録に在りません（収録 ${收錄の會議.length} 会議）。会議名の一部で試すか、search_deadlines で引いてください。`,
       ...(古さ ? ["", 古さ] : []),
     ].join("\n");
   }
