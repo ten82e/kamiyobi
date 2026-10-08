@@ -699,6 +699,33 @@ it("入力の形が、道具の説明と一致する（第 854 回）", async ()
       ).toContain(名);
     }
   }
+  /* **實装が受ける引數と、形に書いた物を突き合はせる**（表で持つ – 引數を足したのに形へ
+   * 書き忘れると、引數を形で檢める客户が其の引數を彈く。第 858 回に `rank` を實装へ足して
+   * 形へ書き忘れ、第 860 回に此の檢查で見付けた）。 */
+  const 期待: Record<string, string[]> = {
+    search_deadlines: [
+      "query",
+      "limit",
+      "include_past",
+      "include_estimated",
+      "kinds",
+      "kind",
+      "rank",
+      "scope",
+    ],
+    list_upcoming: ["days", "kind", "kinds", "scope"],
+    venue_info: ["key", "name", "scope"],
+    recommend_venues: ["paper", "limit"],
+    explain_word: ["word", "scope"],
+    collection_stats: [],
+  };
+  for (const [道具, 鍵] of Object.entries(期待)) {
+    const t = tools.find((x) => x.name === 道具);
+    expect(t, `道具が無い: ${道具}`).toBeTruthy();
+    expect(Object.keys(t?.inputSchema?.properties ?? {}).sort(), `${道具} の引數が違ふ`).toEqual(
+      [...鍵].sort(),
+    );
+  }
   const 檢索 = tools.find((t) => t.name === "search_deadlines");
   expect(String(檢索?.description ?? ""), "語を省ける事を說明して居ん").toContain("語を省いて");
   expect(
@@ -886,4 +913,39 @@ it("行に会期が付く（畫面の「会期」列と同じ入口・第 859 �
   }
   /* 値は畫面と同じ助っ人（`eventCellJa`）から取つた物で突き合はせる – 上の `toContain` が
    * 其れ（書き寫すと、會期の言ひ方がずれる）。 */
+});
+
+it("行に、延長と確認の状態の札が付く（畫面の一覧の札と同じ語・第 860 回）", async () => {
+  /* 畫面の一覧の行には札が付く（延長・確認の状態）。MCP の行には無かったので、AI は
+   * **上流に候補が複数ある締切**（複数候補のため要確認）を、確定した締切として答へて居た。 */
+  const rows = Recommender.candidateRows(
+    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never,
+  );
+  const 檢 = (r: (typeof rows)[number]): unknown =>
+    (r.dl as { verification?: unknown } | undefined)?.verification;
+  const 印 = (r: (typeof rows)[number]): string =>
+    String(Recommender.verificationStatusLabelJa(檢(r)) ?? "").trim();
+  const 要確認 = rows.find((r) => r.conf?.key && 印(r));
+  expect(要確認, "此の檢査の前提（印の付く行）が崩れた").toBeTruthy();
+  const text = await call("venue_info", { key: String(要確認?.conf.key), scope: "all" });
+  expect(text, "確認の状態の札が無い").toContain(印(要確認!));
+  expect(text, "內部の狀態の名を出して居る").not.toContain("manual-required");
+  /* 確認済みには札を付けない（畫面も印を出さない – 默るのが正しい）。 */
+  const 確認済み = rows.find(
+    (r) =>
+      r.conf?.key &&
+      String((檢(r) as { status?: unknown } | undefined)?.status ?? "") === "verified",
+  );
+  if (確認済み)
+    expect(
+      await call("venue_info", { key: String(確認済み.conf.key), scope: "all" }),
+      "確認済みに札を付けた",
+    ).not.toContain("確認済み");
+  /* 延長の札（上流の締切名に Extended と付く行）。 */
+  const 延長 = rows.find((r) => r.conf?.key && Recommender.isExtendedDeadline(r.dl));
+  if (延長)
+    expect(
+      await call("venue_info", { key: String(延長.conf.key), scope: "all" }),
+      "延長の札が無い",
+    ).toContain(String(Recommender.extendedLabelJa()));
 });
