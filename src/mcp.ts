@@ -287,8 +287,12 @@ function retypeTips(query: string, list: Row[], now: number): string[] {
   return out;
 }
 
-/** 0 件の時に畫面が出す案内と同じ物を組む（同じ函數から取る）。 */
-function guidance(query: string, matched: number): string[] {
+/** 0 件の時に畫面が出す案内と同じ物を組む（同じ函數から取る）。
+ *
+ * 第 873 回に欄の名前と「と」「や」の案内を足した。何れも**品書を持たないと答えられない問答**
+ * （其の語だけで行が出るか）を伴ふので、行を持つ此方の側で答へて正典へ渡す（畫面の
+ * `columnValueHitsJa`・`splitCountJa` と同じ筋 – 第 464・495・508 回）。 */
+function guidance(query: string, matched: number, list: Row[], now: number): string[] {
   if (matched > 0) return [];
   const out: string[] = [];
   const whole = String(Recommender.wholeTableQueryNoteJa(query) ?? "").trim();
@@ -298,6 +302,28 @@ function guidance(query: string, matched: number): string[] {
   });
   const word = String(Recommender.uiWordNoteJa(query, false) ?? "").trim();
   if (word) out.push(word);
+  /* 語を照らすのは 1 描画に 1 度で足りる（同じ語を何度も分解しない）。 */
+  const 照合を組む = (語: string): ((hay: string) => boolean) =>
+    Recommender.searchMatcher(Recommender.expandRelativeMonths(語, now), now);
+  /* 欄の名前（`分野` `種別` `会場` など）を打たれた人（第 244 回）。値ではないので、語を
+   * 短くしても増えない – 値の例を名指して送る。 */
+  const column = String(
+    Recommender.columnQueryNoteJa(query, (語: string) =>
+      list.some((r) => 照合を組む(語)(r.hay) === true),
+    ) ?? "",
+  ).trim();
+  if (column) out.push(column);
+  /* 二つの語を「と」「や」で繋いだ打ち方（第 612 回）。畫面と同じ順で、欄の名前・畫面自身の語・
+   * 日數の幅の案内が立つ時は重ねない（同じ事を二度言はない – 畫面の `emptyDeadlineHint` と同じ）。 */
+  const 日數の幅 = Boolean(String(Recommender.dayRangeNoteJa(query) ?? "").trim());
+  if (!column && !word && !日數の幅) {
+    const 件が当たるか = (文: string): number =>
+      list.filter((r) => 照合を組む(文)(r.hay) === true).length;
+    const conjunction = String(
+      Recommender.conjunctionQueryNoteJa(query, 件が当たるか) ?? "",
+    ).trim();
+    if (conjunction) out.push(conjunction);
+  }
   return out;
 }
 
@@ -600,7 +626,7 @@ function searchDeadlines(
   if (!hit.length) {
     /* 畫面と同じ約束 – 案内は「素の當たりが 0」の時に出る物なので、絞り込みで 0 に成つた時は
      * 其の旨を書く（絞り込みを外せば出る事がある）。 */
-    const 案内 = 素の.length ? [] : guidance(query, 0);
+    const 案内 = 素の.length ? [] : guidance(query, 0, list, now);
     /* 收錄の果てより先の日付を打たれた時は「無い」と言はない（第 293 回の畫面と同じ）。
      * 窓の外に行が在る時は其の案内が同じ事を言ふので、重ねない。 */
     const 果て = 素の.length || 窓の外 ? "" : 果ての案内(query, list, 名);
@@ -803,7 +829,7 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
     ].join("\n");
   }
   const 窓の外 = 窓の外の件數(照合, 名);
-  const 案内 = guidance(word, 0);
+  const 案内 = guidance(word, 0, list, now);
   /* 日數の幅（「1か月以内」）と、收錄の果てより先の日付も、`search_deadlines` と同じ事を言ふ
    * （第 871 回 – 語を調べる人が「では何と打てばよいか」まで一往復で分かる樣に。窓の外の案内と
    * 同じ判斷で、窓の外に行が在る時は果ての話を重ねない）。 */
@@ -949,7 +975,7 @@ const TOOLS = [
   {
     name: "search_deadlines",
     description:
-      '**語を省いて `kind` / `kinds` / `within_days` だけでも引ける**（「登録締切を全部」「30 日以内の締切を全部」の様な聞き方）。kamiyobi の収録（国際会議・国内研究会の締切と会期）を日本語で引く。会議名・分野・開催地・締切の語・相対日付（『今月』『30日以内』『来週』など）が使へる。**0 件の時は、画面と同じ案内（其の語が表に無い事）と、同じ「打ち直すなら」の次の一手を返す** – 其の一手の件数は、実際に引いた時に出る行数と一致する（その侭打ち直せる）。**窓（`scope: "screen"`）で 0 件の時は、収録の全体に何行あるかを言う**（「窓には 1 行もありませんが、収録の全体には N 行あります（`scope: "all"` で引けます）」– 窓は画面が最初に読む 180 日ぶんだけなので、其れを「無い」と読ませない）。**日数の幅（「1か月以内」）は検索語に当たらないので、同じ幅を引く引数を件数つきで言ふ**（「語を省いて `within_days: 30` で引けます（88 件当たります）」– 画面の「締切まで」の選択欄と同じ物が `within_days` である。「3日前まで」の様に幅の終はりが無い言ひ方は、過去なので `include_past: true` を教へる）。**打つた日付が収録の果て（一番遠い締切）より先なら、「無い」とは言はない**（「打った日付「2029年3月」は、収録している中で一番遠い締切 2028-06-05 より先です。その日付に締切があるかどうかも、まだ確認できていません。」– 画面の第 293 回と同じ決めごと）。**0 件の時は、収録の会議の名前に当たっていないかも見る**（「締切の行が 1 本もありません」「会期は upcoming.md に『開催』として載ります」のように、収録に在る事と、何処を見ればよいかを言う – 「収録に無い」とは言わない）。**必須の引数は無い**。絞り込みは画面と同じ物が揃っている（`kinds`・`rank`・`domestic`・`online`・`within_days`・`include_past`・`include_estimated`）。行にはランク（`CCF A・CORE A*` の形。無い行は「ランク未確認」）・会期・確認の状態の札（`複数候補のため要確認` など。確認済みと未設定では付かない）と `延長後` も付く。収録が古ければ、末尾に画面と同じ断りが付く。',
+      '**語を省いて `kind` / `kinds` / `within_days` だけでも引ける**（「登録締切を全部」「30 日以内の締切を全部」の様な聞き方）。kamiyobi の収録（国際会議・国内研究会の締切と会期）を日本語で引く。会議名・分野・開催地・締切の語・相対日付（『今月』『30日以内』『来週』など）が使へる。**0 件の時は、画面と同じ案内（其の語が表に無い事）と、同じ「打ち直すなら」の次の一手を返す** – 其の一手の件数は、実際に引いた時に出る行数と一致する（その侭打ち直せる）。**欄の名前（`分野` `種別` `会場` など）を打たれたら、値で打ち直す事を言う**（「「種別」はこの表の欄の名前で、値その物ではありません。値で打ってください（例: 「論文締切」）」– 例で打つと行が出る）。**二つの語を「と」「や」で繋いだ打ち方には、どちらかだけで打つ事を、片方づつの件数つきで言う**（「「ネットワーク」を書く行は 76 件、「セキュリティ」を書く行は 154 件ありますが、『と』で繋いで打つと両方を含む行を探すため 0 件になります。どちらかだけで打ってください」）。**窓（`scope: "screen"`）で 0 件の時は、収録の全体に何行あるかを言う**（「窓には 1 行もありませんが、収録の全体には N 行あります（`scope: "all"` で引けます）」– 窓は画面が最初に読む 180 日ぶんだけなので、其れを「無い」と読ませない）。**日数の幅（「1か月以内」）は検索語に当たらないので、同じ幅を引く引数を件数つきで言ふ**（「語を省いて `within_days: 30` で引けます（88 件当たります）」– 画面の「締切まで」の選択欄と同じ物が `within_days` である。「3日前まで」の様に幅の終はりが無い言ひ方は、過去なので `include_past: true` を教へる）。**打つた日付が収録の果て（一番遠い締切）より先なら、「無い」とは言はない**（「打った日付「2029年3月」は、収録している中で一番遠い締切 2028-06-05 より先です。その日付に締切があるかどうかも、まだ確認できていません。」– 画面の第 293 回と同じ決めごと）。**0 件の時は、収録の会議の名前に当たっていないかも見る**（「締切の行が 1 本もありません」「会期は upcoming.md に『開催』として載ります」のように、収録に在る事と、何処を見ればよいかを言う – 「収録に無い」とは言わない）。**必須の引数は無い**。絞り込みは画面と同じ物が揃っている（`kinds`・`rank`・`domestic`・`online`・`within_days`・`include_past`・`include_estimated`）。行にはランク（`CCF A・CORE A*` の形。無い行は「ランク未確認」）・会期・確認の状態の札（`複数候補のため要確認` など。確認済みと未設定では付かない）と `延長後` も付く。収録が古ければ、末尾に画面と同じ断りが付く。',
     inputSchema: {
       type: "object",
       properties: {

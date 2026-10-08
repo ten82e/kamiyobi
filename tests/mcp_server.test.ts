@@ -1327,3 +1327,65 @@ it("within_days は、畫面の「締切まで N 日」と同じ行を返す（�
   });
   expect(語と, "語と窓の併用が効いて居ん").toContain("／締切まで 30 日以内");
 });
+
+it("欄の名前を打たれたら、値で打ち直す案内を返す（第 873 回）", async () => {
+  /* 畫面は「『分野』はこの表の欄の名前で、値その物ではありません。値で打ってください（例: …）」
+   * と送る（第 244 回）が、MCP は其れを言はず、窓の外の案内と名乘りだけを返して居た –
+   * AI は「『分野』に當たる行が 5 件あります」と答へてしまふ（實測 2026-10-09: 窓 0 行・
+   * 收錄 5 行。其の 5 行は會議の説明文に「分野」の語が在るだけで、欄の名前を探した物ではない）。 */
+  const text = await call("search_deadlines", { query: "種別", scope: "all", limit: 1 });
+  expect(text, "欄の名前だと言つて居ん").toContain("この表の欄の名前で、値その物ではありません");
+  expect(text, "値の例を名指して居ん").toContain("論文締切");
+  /* **案内の例で打つと行が出る**（行き止まりへ送つて居ない）。 */
+  const 値 = await call("search_deadlines", { query: "論文締切", scope: "all", limit: 1 });
+  expect(値, "案内の例で行が出ん").toMatch(/に当たる締切: [1-9]\d* 件/);
+  /* 行が出る語には付けない（要らない斷りを增やさない）。 */
+  const 有 = await call("search_deadlines", { query: "締切", scope: "all", limit: 1 });
+  expect(有, "行が出る語に欄の案内を付けた").not.toContain("欄の名前で");
+  /* 語を調べる道具でも同じ事を言ふ（第 869 回の窓の外と同じ扱ひ）。 */
+  const 語の = await call("explain_word", { word: "参加形式", scope: "all" });
+  expect(語の, "explain_word が欄の名前を敎へて居ん").toContain("欄の名前で");
+});
+
+it("「と」「や」で繋いだ打ち方に、どちらかだけで打つ案内を返す（第 873 回）", async () => {
+  /* 畫面は「『A』を書く行は N 件、『B』を書く行は M 件ありますが、『と』で繋いで打つと兩方を含む
+   * 行を探すため 0 件に成ります。どちらかだけで打つてください」と言ふ（第 612 回）。MCP は
+   * 「打ち直すなら」しか返して居なかつた – 語に割れるので、どちらが足りんのかが讀めん。 */
+  const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never;
+  const 全行 = Recommender.candidateRows(snap);
+  const now = Date.now();
+  const 素 = (語: string): number => {
+    const m = Recommender.searchMatcher(Recommender.expandRelativeMonths(語, now), now);
+    return 全行.filter((r) => m(r.hay) === true).length;
+  };
+  const text = await call("search_deadlines", {
+    query: "ネットワークとセキュリティ",
+    scope: "all",
+    limit: 1,
+  });
+  expect(text, "繋いだ打ち方だと言つて居ん").toContain(
+    "「と」で繋いで打つと両方を含む行を探すため",
+  );
+  expect(text, "どちらかだけで打つ樣に言つて居ん").toContain("どちらかだけで打ってください");
+  /* **言つた件數は、收錄の行を同じ照合で數へた物と一致する**（畫面と同じ數字）。 */
+  const m = /「ネットワーク」を書く行は ([\d,]+) 件/.exec(text);
+  expect(m, "片方の件数を言つて居ん").toBeTruthy();
+  expect(Number(String(m?.[1]).replace(/,/g, "")), "件數が收錄と違ふ").toBe(素("ネットワーク"));
+  const m2 = /「セキュリティ」を書く行は ([\d,]+) 件/.exec(text);
+  expect(Number(String(m2?.[1]).replace(/,/g, "")), "件數が收錄と違ふ").toBe(素("セキュリティ"));
+  /* 片方だけで打てば行が出る（案内が行き止まりへ送つて居ない）。 */
+  const 片 = await call("search_deadlines", { query: "セキュリティ", scope: "all", limit: 1 });
+  expect(片, "片方だけで行が出ん").toMatch(/に当たる締切: [1-9]\d* 件/);
+  /* 兩方を含む行が在る打ち方には付けない（行が出るので案内は立たない）。 */
+  const 兩方 = await call("search_deadlines", {
+    query: "AIとセキュリティ",
+    scope: "all",
+    limit: 1,
+  });
+  expect(兩方, "行が出る打ち方に斷りを付けた").not.toContain("繋いで打つと");
+  /* 欄の名前の案内が立つ時は重ねない（畫面と同じ順 – 同じ事を二度言はない）。 */
+  const 欄と = await call("search_deadlines", { query: "締切と会場", scope: "all", limit: 1 });
+  /* 欄の名前に別名が在る語は「欄（開催地）の名前で」と書く（畫面と同じ語）。 */
+  expect(欄と, "欄の名前の案内を出して居ん").toContain("の名前で、値その物ではありません");
+  expect(欄と, "欄の名前と接続の案内を重ねた").not.toContain("繋いで打つと");
+});
