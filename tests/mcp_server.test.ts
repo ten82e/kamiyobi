@@ -14,6 +14,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
+import { site } from "./built_golden_shared.ts";
 import { REPO_ROOT } from "./helpers.ts";
 import { jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
@@ -1671,4 +1672,35 @@ it("畫面のてびきが、MCP の全ての道具を名指す（第 882 回）"
   }
   /* 雙方の樣に數も變へた（「四つ」が殘つて居ると讀む人が古い數を信じる）。 */
   expect(段, "てびきが「四つ」の儘").not.toContain("の四つ）");
+});
+
+it("道具の説明と索引の例に、データ依存の件數を書かない（第 883 回）", async () => {
+  /* 說明の例に「44 件當たります」と書くと、讀む AI は其の數字を其の儘答へに使ひかねない
+   * – データは每日變はる。實測 2026-10-17: `search_deadlines` の說明に「88 件」「44 件」
+   * 「76 件」「154 件」、一番遠い締切の例に「2028-06-05」が固めてあつた。**實際に數へる事は
+   * 返り値が請け合ふ**（第 762 回）ので、説明が持つべきは形だけ。 */
+  const res = (await client.ask({ jsonrpc: "2.0", id: 97, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name?: string; description?: string }> };
+  };
+  const 檢索 = String(
+    res.result?.tools?.find((t) => t.name === "search_deadlines")?.description ?? "",
+  );
+  expect(檢索, "search_deadlines の說明が讀めない").toContain("語を省いて");
+  const データ依存の例: Array<[string, RegExp]> = [
+    ["件數の例（N 件にして居る）", /\d+ 件当たります/u],
+    ["語ごとの件數の例", /を書く行は \d+ 件/u],
+    ["一番遠い締切の例", /一番遠い締切 \d{4}-\d{2}-\d{2}/u],
+  ];
+  for (const [名, 形] of データ依存の例)
+    expect(形.test(檢索), `${名}を固めた數で書いて居る（N 件にする事）`).toBe(false);
+  /* 形は殘つて居る（例を消して「件數つき」と言ふだけにしては、AI がどう書くか分からん）。 */
+  expect(檢索, "件數を添へる形を書いて居ん").toContain("N 件当たります");
+  /* 索引（建てた `llms.txt`）の MCP の節も同じ（此方が持つ實測の數は、建てた時に數へた物
+   * なので正しい – 見るのは**例**の文だけ）。 */
+  const 索引 = readFileSync(join(site, "llms.txt"), "utf8");
+  const 節 = 索引.slice(索引.indexOf("## AI から引く（MCP）"));
+  expect(節, "索引に AI の節が無い").toContain("MCP");
+  for (const [名, 形] of データ依存の例)
+    expect(形.test(節), `索引の${名}を固めた數で書いて居る`).toBe(false);
+  expect(節, "索引の例の形が消えて居る").toContain("N 件当たります");
 });
