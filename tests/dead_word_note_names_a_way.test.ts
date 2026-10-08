@@ -78,7 +78,7 @@ describe("死語の案内に行き止まりを残さん（第 623 回）", () =>
       termRemainder: 0,
       shorterHits: [{ word: "査読", count: 32, how: "alone" }],
     });
-    expect(嘘になる形).toContain("其れを外しても殘りの語では 0 件の侭です。");
+    expect(嘘になる形).toContain("其れを外しても残りの語では 0 件の侭です。");
     expect(嘘になる形, "增えんのに增へると言つて居る").not.toContain("その語を外すと増えます");
     /* 殘りで 0 件でも、打ち替え語を同じ文に添へて置く（之が無ければ行き止まり）。 */
     expect(嘘になる形).toContain("検索語を「査読」だけに絞る");

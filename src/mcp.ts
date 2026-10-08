@@ -59,34 +59,62 @@ interface Row {
 let screenCache: Row[] | null = null;
 let allCache: Row[] | null = null;
 
-function 讀む(path: string): Row[] {
-  return Recommender.candidateRows(
-    JSON.parse(readFileSync(path, "utf8")) as never,
-  ) as unknown as Row[];
+/* 元の檔案を一度だけ讀んで憶える（行と**生成時刻**を同じ物から取る）。畫面は右上に
+ * 「データ生成」を常に出して居るので、MCP が其れを言はないと、人が見た日付と AI の答へが
+ * 違ふ（人が見る物と AI が言ふ物を同じにする、が此の計畫の決まり）。 */
+interface SnapshotFile {
+  conferences?: Array<{ editions?: unknown[] }>;
+  snapshot_metadata?: { generated_at?: unknown };
+}
+let snapshotCache: SnapshotFile | null = null;
+let catalogCache: Record<string, unknown> | null | undefined;
+
+/** 收錄の全体（`data/snapshot.json`。5,069 行・約 9MB）。 */
+function snapshot(): SnapshotFile {
+  if (!snapshotCache) snapshotCache = JSON.parse(readFileSync(DATA_PATH, "utf8")) as SnapshotFile;
+  return snapshotCache;
 }
 
 /** 畫面が最初に読む窓（`public/catalog.json`）。無ければ null。 */
+function catalog(): Record<string, unknown> | null {
+  if (catalogCache === undefined) {
+    try {
+      catalogCache = JSON.parse(readFileSync(CATALOG_PATH, "utf8")) as Record<string, unknown>;
+    } catch {
+      catalogCache = null;
+    }
+  }
+  return catalogCache;
+}
+
+/** 画面が最初に読む窓の行。無ければ null。 */
 function screenRows(): Row[] | null {
   if (screenCache) return screenCache;
+  const 品書 = catalog();
+  if (!品書) return null;
   try {
-    screenCache = 讀む(CATALOG_PATH);
+    screenCache = Recommender.candidateRows(品書 as never) as unknown as Row[];
     return screenCache;
   } catch {
     return null;
   }
 }
 
-/** 収録の全体（`data/snapshot.json`）。1 度だけ讀む（5,069 行・約 9MB）。 */
+/** 收錄の全体の行。 */
 function allRows(): Row[] {
-  if (!allCache) allCache = 讀む(DATA_PATH);
+  if (!allCache) allCache = Recommender.candidateRows(snapshot() as never) as unknown as Row[];
   return allCache;
 }
 
-/** 使ふ窓を決める（既定は畫面と同じ。`scope: "all"` で收錄の全體）。 */
-function pick(scope: unknown): { list: Row[]; 名: string } {
-  if (String(scope ?? "") === "all") return { list: allRows(), 名: "収録の全体" };
+/** 使ふ窓を決める（既定は畫面と同じ。`scope: "all"` で收錄の全體）。
+ * **生成時刻も一緒に返す** – 窓に依って出所の檔案が違ふので、古さの斷りも其れに合わせる。 */
+function pick(scope: unknown): { list: Row[]; 名: string; 生成: unknown } {
+  if (String(scope ?? "") === "all")
+    return { list: allRows(), 名: "収録の全体", 生成: snapshot().snapshot_metadata?.generated_at };
   const 窓 = screenRows();
-  return 窓 ? { list: 窓, 名: "畫面が最初に読む窓" } : { list: allRows(), 名: "収録の全体" };
+  return 窓
+    ? { list: 窓, 名: "画面が最初に読む窓", 生成: catalog()?.generated_at }
+    : { list: allRows(), 名: "収録の全体", 生成: snapshot().snapshot_metadata?.generated_at };
 }
 
 const JST = new Intl.DateTimeFormat("ja-JP", {
@@ -100,22 +128,41 @@ const JST = new Intl.DateTimeFormat("ja-JP", {
   hour12: false,
 });
 
-/** 締切の瞬間を日本時間で書く（畫面の日時欄と同じ読み）。 */
-function jst(ms: number): string {
+/** 瞬間を日本時間で書く（畫面の日時欄と同じ読み）。`秒も` は締切の行だけ –
+ * 畫面の「データ生成」は分までしか書かないので、同じ物は同じ書き方で出す。 */
+function jst書(ms: number, 秒も: boolean): string {
   const parts = JST.formatToParts(new Date(ms));
   const get = (type: string): string => parts.find((p) => p.type === type)?.value ?? "";
   const 秒 = new Date(ms).getUTCSeconds();
-  const 分 = get("minute");
-  return `${get("year")}-${get("month")}-${get("day")}(${get("weekday")}) ${get("hour")}:${分}${
-    秒 ? `:${String(秒).padStart(2, "0")}` : ""
+  return `${get("year")}-${get("month")}-${get("day")}(${get("weekday")}) ${get("hour")}:${get("minute")}${
+    秒も && 秒 ? `:${String(秒).padStart(2, "0")}` : ""
   } JST`;
+}
+
+function jst(ms: number): string {
+  return jst書(ms, true);
+}
+
+/** 畫面の右上の「データ生成」と同じ書き方（分まで）。讀めない値は原文のまま返す
+ * （畫面と同じ扱ひ – 勝手に日付を作らない）。 */
+function 生成の表示(生成: unknown): string {
+  const raw = typeof 生成 === "string" ? 生成.trim() : "";
+  if (!raw) return "未確認";
+  const at = Date.parse(raw);
+  return Number.isFinite(at) ? jst書(at, false) : raw;
+}
+
+/** 畫面と同じ「データは N 日前」の斷り（生成から 3 日以上の時だけ）。**同じ函數から取る**ので、
+ * 閾値も日数の數へ方も畫面と必ず一致する。 */
+function 古さの斷り(生成: unknown, now: number): string {
+  return String(Recommender.dataAgeNoteJa(生成, now) ?? "").trim();
 }
 
 /** 1 行を 1 行の文字にする（畫面の列と同じ順・同じ語）。 */
 function line(r: Row, now: number): string {
   const 日 = r.dateOnly ? `${r.localDate}（時刻未確認）` : jst(r.t);
   const 殘り = Math.floor((r.t - now) / 86400000);
-  const 殘り文 = r.dateOnly ? "" : ` 殘り${殘り < 0 ? "（過ぎた）" : `${殘り}日`}`;
+  const 殘り文 = r.dateOnly ? "" : ` 残り${殘り < 0 ? "（過ぎた）" : `${殘り}日`}`;
   const 種別 = String(Recommender.kindLabelJa(r.kind) ?? r.kind);
   const 回 = (r.dl.round ?? 1) > 1 ? ` R${r.dl.round}` : "";
   const 場所 = String(Recommender.placeJa(r.ed.place) ?? "").trim() || "未確認";
@@ -249,7 +296,8 @@ function searchDeadlines(
   if (!query && !種別だけ)
     return "検索語が空です。会議名・分野・開催地・締切の語をください（種別だけを見るなら kind / kinds を添へてください）。";
   const limit = Math.min(Math.max(Number(args.limit) || 20, 1), 100);
-  const { list, 名 } = pick(args.scope);
+  const { list, 名, 生成 } = pick(args.scope);
+  const 古さ = 古さの斷り(生成, now);
   /* 語が空（種別だけの時）は**全部に當たる**目にする（第 793 回）。 */
   const 照合 = 種別だけ
     ? () => true
@@ -280,7 +328,7 @@ function searchDeadlines(
     /(?:\d+月|\d+日|今月|来月|先月|今週|来週|先週|今年|来年|年内|年度|以内|までに|以降)/.test(
       query,
     );
-  const 頭 = `${種別だけ ? "語を指定せず、種別だけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・畫面の既定と同じ絞り込み。絞る前は ${素の.length} 行）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に當たる（畫面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}`;
+  const 頭 = `${種別だけ ? "語を指定せず、種別だけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}`;
   if (!hit.length) {
     /* 畫面と同じ約束 – 案内は「素の當たりが 0」の時に出る物なので、絞り込みで 0 に成つた時は
      * 其の旨を書く（絞り込みを外せば出る事がある）。 */
@@ -297,14 +345,16 @@ function searchDeadlines(
         const 手 = retypeTips(query, 畫面の既定(list, now, args), now);
         return 手.length ? [`打ち直すなら ${手.join(" / ")}`] : [];
       })(),
+      ...(古さ ? ["", 古さ] : []),
     ].join("\n");
   }
   const 見本 = hit.slice(0, limit).map((r) => line(r, now));
   return [
     頭,
-    `（日本時間の早い順。${limit} 件まで表示${hit.length > limit ? `・殘り ${hit.length - limit} 件` : ""}）`,
+    `（日本時間の早い順。${limit} 件まで表示${hit.length > limit ? `・残り ${hit.length - limit} 件` : ""}）`,
     "",
     ...見本,
+    ...(古さ ? ["", 古さ] : []),
   ].join("\n");
 }
 
@@ -319,7 +369,8 @@ function listUpcoming(
     .filter((k) => k.length > 0);
   const 全部 = 名乗り.some((k) => k.toLowerCase() === "all");
   const kind = 全部 ? "" : 名乗り.join(" ");
-  const { list, 名 } = pick(args.scope ?? "all");
+  const { list, 名, 生成 } = pick(args.scope ?? "all");
+  const 古さ = 古さの斷り(生成, now);
   const 限り = now + days * 86400000;
   const hit = sortRows(
     list.filter(
@@ -330,7 +381,8 @@ function listUpcoming(
     `今日から ${days} 日以内の締切: ${hit.length} 件（${名}・日本時間の早い順）`,
     "",
     ...hit.slice(0, 100).map((r) => line(r, now)),
-    ...(hit.length > 100 ? ["", `（100 件まで表示・殘り ${hit.length - 100} 件）`] : []),
+    ...(hit.length > 100 ? ["", `（100 件まで表示・残り ${hit.length - 100} 件）`] : []),
+    ...(古さ ? ["", 古さ] : []),
   ].join("\n");
 }
 
@@ -338,7 +390,9 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
   const key = String(args.key ?? "").trim();
   const name = String(args.name ?? "").trim();
   if (!key && !name) return "key（会議の識別子）か name（会議名の一部）をください。";
-  const { list, 名 } = pick(args.scope ?? "all");
+  /* `名` は使はない（此の道具は會議の名を自分で組み立てる）ので受け取らない。 */
+  const { list, 生成 } = pick(args.scope ?? "all");
+  const 古さ = 古さの斷り(生成, now);
   /* 会議は**略稱で打たれる**のが普通（實測 2026-10-06: `KDD` `CCS` `AsiaCCS` は此の matching では
    * 見付からなかつた – 表の題は「ACM SIGKDD Conference …」の樣に長く、略稱は別の欄に在る）。
    * 題・略稱・識別子の三つを見る（第 726 回）。*/
@@ -354,7 +408,10 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
   const hit = list.filter(的);
   if (!hit.length) {
     const 會 = [...new Set(list.map((r) => r.conf.key))];
-    return `その会議は收録に在りません（收録 ${會.length} 会議）。会議名の一部で試すか、search_deadlines で引いてください。`;
+    return [
+      `その会議は収録に在りません（収録 ${會.length} 会議）。会議名の一部で試すか、search_deadlines で引いてください。`,
+      ...(古さ ? ["", 古さ] : []),
+    ].join("\n");
   }
   /* 曖昧な打ち方（`KDD` は kdd・sigkdd・pakdd・ecmlpkdd に當たる）では**一つの会議に決め打たない**。
    * 決め打つと、別の会議の版を一つに混ぜて返す（實測 2026-10-06 にそう成つた – 第 726 回）。
@@ -370,11 +427,12 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
       if (url && !繋ぎ先.has(r.conf.key)) 繋ぎ先.set(r.conf.key, url);
     }
     return [
-      `「${key || name}」には ${會々.length} の会議が當たりました。名を細く打つか、key で指してください:`,
+      `「${key || name}」には ${會々.length} の会議が当たりました。名を細く打つか、key で指してください:`,
       ...名乗り
         .slice(0, 20)
         .map(([k, t]) => `- ${t}（key: ${k}）${繋ぎ先.get(k) ? ` ${繋ぎ先.get(k)}` : ""}`),
       ...(名乗り.length > 20 ? [`- ほか ${名乗り.length - 20} 件`] : []),
+      ...(古さ ? ["", 古さ] : []),
     ].join("\n");
   }
   const 一つ = hit[0];
@@ -406,13 +464,15 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
      * **默らない**（第 765 回 – 60 件で切れて居る事を言はないと、AI が「これで全部」と答へる）。*/
     `締切と会期（今後の物から、同じ側では日本時間の早い順）${見本.length > 60 ? `・${見本.length} 件のうち 60 件` : ""}:`,
     ...見本.slice(0, 60),
+    ...(古さ ? ["", 古さ] : []),
   ].join("\n");
 }
 
 function explainWord(args: { word?: unknown; scope?: unknown }, now: number): string {
   const word = String(args.word ?? "").trim();
   if (!word) return "語をください。";
-  const { list, 名 } = pick(args.scope);
+  const { list, 名, 生成 } = pick(args.scope);
+  const 古さ = 古さの斷り(生成, now);
   const 照合 = Recommender.searchMatcher(Recommender.expandRelativeMonths(word, now), now);
   const 件數 = list.filter((r) => 照合(r.hay) === true).length;
   if (件數 > 0) {
@@ -420,16 +480,17 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
      * 言つて居たので、語を調べた人がもう一往復する必要が在つた。AI も同じ）。行は
      * `search_deadlines` と同じ形（`line()`）で、3 行まで。 */
     const 素の行 = list.filter((r) => 照合(r.hay) === true);
-    /* **兩方の數を言ふ**（第 797 回 – 素の照合と、畫面の既定の絞り込みを通した數は違ふ。片方だけ
+    /* **兩方の數を言ふ**（第 797 回 – 素の照合と、画面の既定の絞り込みを通した數は違ふ。片方だけ
      * 言ふと「同じ語で違ふ數字」に成る – 第 796 回に實測: `ポスター` は素 9 行・絞り込み後 0 件）。*/
     const 畫面の行 = 畫面の既定(素の行, now, {});
     const 行 = sortRows(畫面の行).slice(0, 3);
     return [
-      `「${word}」は素の照合で ${件數} 行・畫面の既定の絞り込み（今後・投稿締切の種別・推定を除く）を通すと ${畫面の行.length} 行です（${名}）。`,
+      `「${word}」は素の照合で ${件數} 行・画面の既定の絞り込み（今後・投稿締切の種別・推定を除く）を通すと ${畫面の行.length} 行です（${名}）。`,
       ...行.map((r) => `- ${line(r, now)}`),
       ...(畫面の行.length > 行.length
         ? [`- …ほか ${畫面の行.length - 行.length} 行（search_deadlines で引けます）`]
         : []),
+      ...(古さ ? ["", 古さ] : []),
     ].join("\n");
   }
   const 案内 = guidance(word, 0);
@@ -437,9 +498,10 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
    * 「では何と打てばよいか」まで一往復で分かる樣に）。件數は照合そのもので數へる（第 762 回）。 */
   const 手 = retypeTips(word, 畫面の既定(list, now, {}), now);
   return [
-    `「${word}」は 0 行です。畫面が此の時に出す案内:`,
+    `「${word}」は 0 行です。画面が此の時に出す案内:`,
     ...(案内.length ? 案内.map((n) => `- ${n}`) : ["- （案内は無し＝表の語では無い語）"]),
     ...手.map((t) => `- 打ち直すなら ${t}`),
+    ...(古さ ? ["", 古さ] : []),
   ].join("\n");
 }
 
@@ -450,9 +512,7 @@ function collectionStats(now: number): string {
   const list = allRows();
   /* 会議と版は**收錄その物**から數へる（行から數へると「締切を持つ物」だけに成り、建てた時の
    * 「696 会議 / 2,603 版」と食ひ違ふ – 第 769 回に一度其れを踏んだ）。行は締切の數へに使ふ。*/
-  const 收錄 = JSON.parse(readFileSync(DATA_PATH, "utf8")) as {
-    conferences?: Array<{ editions?: unknown[] }>;
-  };
+  const 收錄 = snapshot();
   const 会議 = (收錄.conferences ?? []).length;
   const 版 = (收錄.conferences ?? []).reduce(
     (n, c) => n + (Array.isArray(c.editions) ? c.editions.length : 0),
@@ -460,17 +520,25 @@ function collectionStats(now: number): string {
   );
   const 今後 = list.filter((r) => r.t >= now).length;
   const 日 = list.map((r) => r.localDate || new Date(r.t).toISOString().slice(0, 10)).sort();
+  /* 生成時刻は**同じ檔案**から取る（畫面の右上の「データ生成」と同じ書き方・同じ函數）。
+   * 畫面が最初に讀む窓は別の檔案なので、其方の生成時刻も添へる（古さの斷りは窓ごとに違ふ）。 */
+  const 元の生成 = 收錄.snapshot_metadata?.generated_at;
+  const 窓の生成 = catalog() ? 生成の表示(catalog()?.generated_at) : "";
+  const 古さ = 古さの斷り(元の生成, now);
   const ファイル = [
-    "index.html（畫面。絞り込みと検索）",
+    "index.html（画面。絞り込みと検索）",
     "upcoming.md / upcoming.html（直近 180 日の表）",
     "data.csv（1 行 1 締切の平坦な表）",
     "deadlines.ics（カレンダー。1 日 1 件の終日）",
     "data.json（収録の全体。機械可読の正）",
-    "llms.txt（機械向けの索引。何が何處に在るか）",
+    "llms.txt（機械向けの索引。何が何処に在るか）",
   ];
   return [
     `収録（${DATA_PATH.replace(`${ROOT}/`, "")}）: 会議 ${会議} 件 / 版 ${版} 件（生の収録。建てる時は同じ物を束ねるので、建てた表示とは少し違い得る）/ 締切の行 ${list.length} 行（日付の幅 ${日[0]} 〜 ${日[日.length - 1]}）`,
+    `データ生成: ${生成の表示(元の生成)}（上の行と同じ出所。画面の右上と同じ書き方）`,
+    ...(窓の生成 ? [`画面が最初に読む窓（public/catalog.json）のデータ生成: ${窓の生成}`] : []),
     `うち今後の締切: ${今後} 行（${new Date(now).toISOString().slice(0, 10)} 以降）`,
+    ...(古さ ? ["", 古さ] : []),
     "",
     "配付して居るファイル（サイトと同じ場所に在る）:",
     ...ファイル.map((f) => `- ${f}`),
@@ -481,7 +549,7 @@ const TOOLS = [
   {
     name: "search_deadlines",
     description:
-      "**語を省いて `kind` / `kinds` だけでも引ける**（「登録締切を全部」の樣な聞き方）。kamiyobi の収録（国際会議・国内研究会の締切と会期）を日本語で引く。会議名・分野・開催地・締切の語・相対日付（『今月』『30日以内』『來週』など）が使へる。**0 件の時は、畫面と同じ案内（其の語が表に無い事）と、同じ「打ち直すなら」の次の一手を返す** – 其の一手の件数は、實際に引いた時に出る行数と一致する（その侭打ち直せる）。",
+      "**語を省いて `kind` / `kinds` だけでも引ける**（「登録締切を全部」の様な聞き方）。kamiyobi の収録（国際会議・国内研究会の締切と会期）を日本語で引く。会議名・分野・開催地・締切の語・相対日付（『今月』『30日以内』『来週』など）が使へる。**0 件の時は、画面と同じ案内（其の語が表に無い事）と、同じ「打ち直すなら」の次の一手を返す** – 其の一手の件数は、実際に引いた時に出る行数と一致する（その侭打ち直せる）。**必須の引数は無い**。収録が古ければ、末尾に画面と同じ断りが付く。",
     inputSchema: {
       type: "object",
       properties: {
@@ -492,28 +560,34 @@ const TOOLS = [
         limit: { type: "number", description: "返す行数（既定 20・最大 100）" },
         include_past: {
           type: "boolean",
-          description: "過ぎた締切も含める（既定 false＝畫面の既定と同じ）",
+          description: "過ぎた締切も含める（既定 false＝画面の既定と同じ）",
         },
         include_estimated: { type: "boolean", description: "推定の締切も含める（既定 false）" },
         kinds: {
           type: "array",
           items: { type: "string" },
-          description: "種別のキーで絞る（既定は畫面と同じ abstract / paper / journal）",
+          description: "種別のキーで絞る（既定は画面と同じ abstract / paper / journal）",
+        },
+        kind: {
+          type: "string",
+          description: "種別のキーを一つだけ絞る（`kinds` の単数の書き方。同じ物を受ける）",
         },
         scope: {
           type: "string",
           enum: ["screen", "all"],
           description:
-            "見る窓。screen＝畫面が最初に読む窓（180 日。catalog.json が在る時だけ）／all＝収録の全體（過去と先の締切も含む）",
+            "見る窓。screen＝画面が最初に読む窓（180 日。catalog.json が在る時だけ）／all＝収録の全体（過去と先の締切も含む）",
         },
       },
-      required: ["query"],
+      /* **必須の引数は無い**（語も種別も無い時は、代はりの聞き方を返す）。schema で query を
+       * 必須にすると、說明に書いた「語を省いて kind / kinds だけでも引ける」呼び方を、
+       * schema を検める客户が彈く（第 854 回に氣付いた）。 */
     },
   },
   {
     name: "list_upcoming",
     description:
-      "今日から N 日以内の締切を日本時間の早い順に返す（**種別では絞らない** – 登録・カメラレディ・採否通知も混ざる。投稿の締切だけ見るなら search_deadlines を使ふ）。100 件を超える時は其の旨と殘り件数を末尾に書く。",
+      "今日から N 日以内の締切を日本時間の早い順に返す（**種別では絞らない** – 登録・カメラレディ・採否通知も混ざる。投稿の締切だけ見るなら search_deadlines を使ふ）。100 件を超える時は其の旨と残り件数を末尾に書く。",
     inputSchema: {
       type: "object",
       properties: {
@@ -534,7 +608,7 @@ const TOOLS = [
   {
     name: "venue_info",
     description:
-      "1 つの会議の版・分野・締切・会期を返す。**key（識別子）・name（名前の一部）・略稱の何れでも引ける**。締切は**今後の物から**並ぶ（同じ側では日の早い順）。今後の締切が無い会議では其の旨を先に言ふ。名乘りが割れた時は候補（名・key・公式 URL）を並べて決め打たない。",
+      "1 つの会議の版・分野・締切・会期を返す。**key（識別子）・name（名前の一部）・略称の何れでも引ける**。締切は**今後の物から**並ぶ（同じ側では日の早い順）。今後の締切が無い会議では其の旨を先に言ふ。名乗りが割れた時は候補（名・key・公式 URL）を並べて決め打たない。収録が古ければ、末尾に画面と同じ断りが付く。",
     inputSchema: {
       type: "object",
       properties: {
@@ -547,13 +621,13 @@ const TOOLS = [
   {
     name: "collection_stats",
     description:
-      "この収録その物の規模（会議数・版数・締切の行数・日付の幅・今後の件数）と、配付して居るファイルの一覧を返す。「この収録は何か」「何件あるか」「人に渡すなら何を渡せばよいか」に答へる時に使ふ。",
+      "この収録その物の規模（会議数・版数・締切の行数・日付の幅・今後の件数）と、配付して居るファイルの一覧を返す。**この収録のデータ生成時刻（画面の右上と同じ書き方）も返す**ので、「何時のデータか」を人に言ふ時に使ふ。「この収録は何か」「何件あるか」「人に渡すなら何を渡せばよいか」に答へる時に使ふ。生成から 3 日以上経つて居れば、一覧を返す道具と同じ断りも付く。",
     inputSchema: { type: "object", properties: {} },
   },
   {
     name: "explain_word",
     description:
-      "1 つの語が収録に何行当たるか（**素の照合で数へるので、`search_deadlines` の絞り込みを通した数とは違ふ事が在る**。行が出る時は中身を 3 行まで見せる）と、0 行の時に畫面が出す案内文を其の儘返す（人が見る説明と AI の説明を同じにする）。**0 行の時は「打ち直すなら」の次の一手も返す**（件数は實際に引いた時の行数と一致）。",
+      "1 つの語が収録に何行当たるか（**素の照合で数へるので、`search_deadlines` の絞り込みを通した数とは違ふ事が在る**。行が出る時は中身を 3 行まで見せる）と、0 行の時に画面が出す案内文を其の儘返す（人が見る説明と AI の説明を同じにする）。**0 行の時は「打ち直すなら」の次の一手も返す**（件数は実際に引いた時の行数と一致）。",
     inputSchema: {
       type: "object",
       properties: {
@@ -585,7 +659,7 @@ function handle(raw: string, now: number): void {
   try {
     request = JSON.parse(raw) as typeof request;
   } catch {
-    return; // 讀めない行は默つて捨てる（MCP の決まり – 返事の形が作れない）
+    return; // 読めない行は默つて捨てる（MCP の決まり – 返事の形が作れない）
   }
   const { id, method } = request;
   const params = (request.params ?? {}) as Record<string, unknown>;
@@ -681,7 +755,7 @@ function main(): void {
   process.stdout.write(`${callTool(名, args, now)}\n`);
 }
 
-/* 直接起動された時だけ stdio を開く（import した檢査では開かない）。 */
+/* 直接起動された時だけ stdio を開く（import した検査では開かない）。 */
 if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
   if (process.argv.length > 2) main();
   else runStdio();

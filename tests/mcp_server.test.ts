@@ -10,7 +10,7 @@
  */
 
 import { spawn } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
@@ -139,7 +139,7 @@ describe("AI 向けの索引が、MCP の在り處を書いて居る（第 714 �
     }
     /* 索引の説明が、實装とずれて居ない事（第 731 回 – 第 726〜728 回に足した物）。
      * 人が讀む索引なので、實装に無い事を書いて居たら迷はす。*/
-    for (const 印 of ['["all"]', "kind", "kinds", "略稱", "scope"]) {
+    for (const 印 of ['["all"]', "kind", "kinds", "略称", "scope"]) {
       expect(build, `索引に ${印} の話が無い（實装とずれて居る）`).toContain(印);
     }
     /* CSV の説明が「日本語は書かない」と言い切っていたのを直した（第 732 回 – 実測: 七列
@@ -282,7 +282,7 @@ describe("數字と案内が畫面と同じ（第 714 回）", () => {
   it("曖昧な名では決め打たず、候補を並べる", async () => {
     /* `KDD` は kdd・sigkdd・pakdd・ecmlpkdd に当たる。決め打つと別の会議の版を混ぜて返す。*/
     const text = await call("venue_info", { name: "KDD", scope: "all" });
-    expect(text, "候補を並べて居ん").toContain("会議が當たりました");
+    expect(text, "候補を並べて居ん").toContain("会議が当たりました");
     expect(text, "key を添へて居ん").toContain("（key: ");
     /* 候補には公式の繋ぎ先も添へる（第 750 回 – 名前と key だけでは、どれが探して居る物か
      * 決められん。人は URL を見て選ぶ）。 */
@@ -291,7 +291,7 @@ describe("數字と案内が畫面と同じ（第 714 回）", () => {
 
   it("收錄に無い会議は、無いと言ふ（在る樣に裝はない）", async () => {
     const text = await call("venue_info", { name: "ぬけぬけ会議", scope: "all" });
-    expect(text, "無いと言つて居ない").toContain("收録に在りません");
+    expect(text, "無いと言つて居ない").toContain("収録に在りません");
   });
 });
 
@@ -378,7 +378,7 @@ it("道具の說明が、實装の要る所を言つて居る（第 766 回）",
     ["search_deadlines", "打ち直すなら"],
     ["list_upcoming", "種別では絞らない"],
     ["venue_info", "今後の物から"],
-    ["venue_info", "略稱"],
+    ["venue_info", "略称"],
     ["explain_word", "打ち直すなら"],
   ];
   for (const [道具, 語] of 要る) {
@@ -390,7 +390,7 @@ it("索引（llms.txt の組み立て）が、道具の説明と同じ事を言�
   /* 索引は人が読む物でもあるので、実装が増えたのに索引が古いと「できる事」が伝わらない
    * （第 731・767 回に実際にずれた）。組み立ての側を読んで、要る語が入っているかを見る。 */
   const build = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
-  for (const 語 of ["次の一手まで返す", "切り詰めは默らない", "今後の物から"]) {
+  for (const 語 of ["次の一手まで返す", "切り詰めは黙らない", "今後の物から"]) {
     expect(build, `索引に「${語}」の話が無い（道具の説明とずれている）`).toContain(語);
   }
 });
@@ -436,7 +436,7 @@ it("explain_word は、行が出る時に中身を少し見せる（第 796 回�
    * 必要があった（AI も同じ）。行は search_deadlines と同じ形（`line()`）で 3 行まで。 */
   const text = await call("explain_word", { word: "セキュリティ", scope: "all" });
   expect(text, "行數を言つて居ん").toMatch(
-    /素の照合で [1-9]\d* 行・畫面の既定の絞り込み（[^）]*）を通すと \d+ 行/,
+    /素の照合で [1-9]\d* 行・画面の既定の絞り込み（[^）]*）を通すと \d+ 行/,
   );
   const 行 = text.split("\n").filter((l) => l.startsWith("- 20"));
   expect(行.length, "中身を見せて居ん").toBeGreaterThan(0);
@@ -531,5 +531,244 @@ it("索引が、5 道具の引數の名を書いている（第 843 回）", () 
   const build = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
   for (const 名 of ["`query`", "`limit`", "`include_past`", "`include_estimated`", "`days`"]) {
     expect(build, `${名} が索引に無い`).toContain(名);
+  }
+});
+
+/* ---- 第 854 回: 返り値の文と、データ生成の言ひ方を畫面に揃へる ---- */
+
+/** 舊字體（此の計畫の內側では使ふが、利用者に出る文では使はない）。 */
+const 舊字體 =
+  "亞惡壓圍爲醫壹榮衞驛悅圓緣艷鹽奧應歐毆櫻橫溫價畫會懷繪擴殼學嶽樂渴卷陷勸寬歡罐觀關顏歸" +
+  "氣龜僞戲犧舊據擧峽狹鄕曉區驅勳薰羣徑惠揭溪經繼莖螢輕鷄藝擊缺儉劍圈檢權獻硏縣險顯驗嚴廣效" +
+  "恆鑛號國黑濟碎齋劑冱雜參慘蠶贊殘絲齒兒辭濕實舍壽收從澁獸縱肅處敍將燒獎條狀乘淨剩疊孃讓" +
+  "釀囑觸寢愼盡圖粹醉穗隨髓數樞瀨聲靜齊攝竊專淺戰纖禪曾雙壯爭莊搜巢裝騷增藏臟屬續墮體對帶" +
+  "滯臺瀧擇澤單膽團彈斷癡遲蟲鑄廳徵聽懲鎭遞鐵點轉傳燈當黨盜稻鬪德獨讀屆繩惱腦霸廢拜賣麥發" +
+  "髮拔蠻祕拂佛變邊辨瓣辯舖步寶豐襃沒飜槇每萬滿默彌藥與搖樣謠來賴亂覽龍兩獵綠淚壘禮勵戾靈" +
+  "齡曆歷戀鍊爐勞樓郞錄灣眞";
+
+/** TS の字句を讀み、**此方が書いた文**（文字列リテラルの內、`${…}` の外）だけを集める。
+ * 註と識別子は入れない（識別子を文として數へると、字の掃除が改名に化ける – 第 774 回）。 */
+function 文を集める(本文: string): Array<{ 行: number; 文: string }> {
+  const out: Array<{ 行: number; 文: string }> = [];
+  let i = 0;
+  let 行 = 1;
+  const 長さ = 本文.length;
+
+  const 文字列 = (引用: string): void => {
+    const 開始 = 行;
+    let buf = "";
+    while (i < 長さ) {
+      const c = 本文[i];
+      if (c === "\\") {
+        buf += 本文.slice(i, i + 2);
+        i += 2;
+        continue;
+      }
+      if (c === 引用) {
+        i += 1;
+        break;
+      }
+      if (c === "\n") {
+        行 += 1;
+        if (引用 !== "`") break;
+        buf += c;
+        i += 1;
+        continue;
+      }
+      if (引用 === "`" && c === "$" && 本文[i + 1] === "{") {
+        i += 2;
+        式();
+        continue;
+      }
+      buf += c;
+      i += 1;
+    }
+    out.push({ 行: 開始, 文: buf });
+  };
+
+  const 式 = (): void => {
+    let 深さ = 1;
+    while (i < 長さ && 深さ > 0) {
+      const c = 本文[i];
+      if (c === "\n") {
+        行 += 1;
+        i += 1;
+        continue;
+      }
+      if (c === "/" && 本文[i + 1] === "/") {
+        while (i < 長さ && 本文[i] !== "\n") i += 1;
+        continue;
+      }
+      if (c === "/" && 本文[i + 1] === "*") {
+        i += 2;
+        while (i < 長さ && !(本文[i] === "*" && 本文[i + 1] === "/")) {
+          if (本文[i] === "\n") 行 += 1;
+          i += 1;
+        }
+        i += 2;
+        continue;
+      }
+      if (c === '"' || c === "'" || c === "`") {
+        i += 1;
+        文字列(c);
+        continue;
+      }
+      if (c === "{") 深さ += 1;
+      else if (c === "}") 深さ -= 1;
+      i += 1;
+    }
+  };
+
+  while (i < 長さ) {
+    const c = 本文[i];
+    if (c === "\n") {
+      行 += 1;
+      i += 1;
+      continue;
+    }
+    if (c === "/" && 本文[i + 1] === "/") {
+      while (i < 長さ && 本文[i] !== "\n") i += 1;
+      continue;
+    }
+    if (c === "/" && 本文[i + 1] === "*") {
+      i += 2;
+      while (i < 長さ && !(本文[i] === "*" && 本文[i + 1] === "/")) {
+        if (本文[i] === "\n") 行 += 1;
+        i += 1;
+      }
+      i += 2;
+      continue;
+    }
+    if (c === '"' || c === "'" || c === "`") {
+      i += 1;
+      文字列(c);
+      continue;
+    }
+    i += 1;
+  }
+  return out;
+}
+
+/** 收錄その物の生成時刻（`data/snapshot.json` の `snapshot_metadata`）。 */
+function 收錄の生成時刻(): string {
+  const 收錄 = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
+    snapshot_metadata?: { generated_at?: string };
+  };
+  return String(收錄.snapshot_metadata?.generated_at ?? "");
+}
+
+/** 畫面の右上と同じ書き方（`YYYY-MM-DD(曜) HH:MM JST`）を此方で組んで突き合はせる。 */
+function 畫面の書き方(iso: string): string {
+  const jst = new Date(Date.parse(iso) + 9 * 3600000);
+  const 曜 = ["日", "月", "火", "水", "木", "金", "土"][jst.getUTCDay()];
+  const 二桁 = (n: number): string => String(n).padStart(2, "0");
+  return `${jst.getUTCFullYear()}-${二桁(jst.getUTCMonth() + 1)}-${二桁(jst.getUTCDate())}(${曜}) ${二桁(jst.getUTCHours())}:${二桁(jst.getUTCMinutes())} JST`;
+}
+
+it("入力の形が、道具の説明と一致する（第 854 回）", async () => {
+  /* 實測 2026-10-08: `search_deadlines` の說明は「**語を省いて `kind` / `kinds` だけでも
+   * 引ける**」と言ひ、實装も其う動くのに、schema は `required: ["query"]` と言つて居た –
+   * 引數を schema で檢める客户は、說明に在る呼び方を彈く。同じく、說明と實装が受ける
+   * `kind`（單數）が `properties` に無かつた（第 728 回に受ける樣にしたが、形に書いて
+   * 居なかつた）。 */
+  const res = (await client.ask({ jsonrpc: "2.0", id: 7, method: "tools/list" })) as {
+    result?: {
+      tools?: Array<{
+        name?: string;
+        description?: string;
+        inputSchema?: { properties?: Record<string, unknown>; required?: string[] };
+      }>;
+    };
+  };
+  const tools = res.result?.tools ?? [];
+  for (const tool of tools) {
+    for (const 名 of tool.inputSchema?.required ?? []) {
+      expect(
+        Object.keys(tool.inputSchema?.properties ?? {}),
+        `${tool.name} の必須 ${名} が properties に無い（形が自分と食ひ違ふ）`,
+      ).toContain(名);
+    }
+  }
+  const 檢索 = tools.find((t) => t.name === "search_deadlines");
+  expect(String(檢索?.description ?? ""), "語を省ける事を說明して居ん").toContain("語を省いて");
+  expect(
+    檢索?.inputSchema?.required ?? [],
+    "說明は語を省けると言ふのに、形は query を必須にして居る",
+  ).not.toContain("query");
+  expect(
+    Object.keys(檢索?.inputSchema?.properties ?? {}),
+    "說明と實装が受ける kind（單數）が形に無い",
+  ).toContain("kind");
+  /* 擧動でも確かめる（形だけ直して、受け方が違つては意味が無い）。 */
+  const 數 = (t: string): number =>
+    Number(/種別だけ: ([\d,]+) 件/.exec(t)?.[1]?.replace(/,/g, "") ?? -1);
+  const 單 = await call("search_deadlines", { kind: "paper", scope: "all", limit: 1 });
+  const 複 = await call("search_deadlines", { kinds: ["paper"], scope: "all", limit: 1 });
+  expect(數(單), "語を省いて kind だけでは引け無い").toBeGreaterThan(0);
+  expect(數(複), "kind と kinds で數が違ふ").toBe(數(單));
+});
+
+it("collection_stats が、畫面の右上と同じ書き方でデータ生成を返す（第 854 回）", async () => {
+  /* 畫面は右上に「データ生成」を常に出し、生成から 3 日以上なら其の旨も出す。MCP が何も
+   * 言はないと、人が見た日付と AI の答へが違ふ（第 803・804 回と同じ考へ – 人が見る物と
+   * AI が言ふ物を同じにする）。**同じ檔案から、同じ書き方で**出す。 */
+  const 生成 = 收錄の生成時刻();
+  expect(生成, "此の檢査の前提（收錄の生成時刻）が崩れた").not.toBe("");
+  const text = await call("collection_stats", {});
+  expect(text, "データ生成を言つて居ん").toContain(`データ生成: ${畫面の書き方(生成)}`);
+  expect(text, "畫面と違ふ書き方（UTC の侭・秒まで）").toMatch(
+    /データ生成: \d{4}-\d{2}-\d{2}\([日月火水木金土]\) \d{2}:\d{2} JST/,
+  );
+  /* 説明にも書く（AI は説明だけを見て道具を選ぶ – 第 766 回）。 */
+  const 一覽 = (await client.ask({ jsonrpc: "2.0", id: 8, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name?: string; description?: string }> };
+  };
+  const 説明 = (一覽.result?.tools ?? []).find((t) => t.name === "collection_stats")?.description;
+  expect(String(説明 ?? ""), "データ生成時刻を言ふ事を説明して居ん").toContain("データ生成時刻");
+  /* 畫面が最初に讀む窓は別の檔案なので、其方の生成時刻も別に言ふ。 */
+  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  if (existsSync(品書)) {
+    const catalog = JSON.parse(readFileSync(品書, "utf8")) as { generated_at?: string };
+    const 窓 = String(catalog.generated_at ?? "");
+    if (窓) expect(text, "窓の生成時刻を言つて居ん").toContain(畫面の書き方(窓));
+  }
+});
+
+it("收錄が古ければ、畫面と同じ斷りを付ける（第 854 回）", async () => {
+  /* 畫面は生成から 3 日以上で「データは N 日前に生成されたものです」と出す。MCP も
+   * **同じ函數から**取る – 別に書くと、畫面と AI で日數も閾値もずれる。 */
+  const 今 = Date.now();
+  const 元の斷り = String(Recommender.dataAgeNoteJa(收錄の生成時刻(), 今) ?? "").trim();
+  const 全體 = await call("search_deadlines", { query: "セキュリティ", scope: "all", limit: 1 });
+  if (元の斷り) expect(全體, "古いのに斷りが無い").toContain(元の斷り);
+  else expect(全體, "新しいのに斷りを付けた").not.toContain("日前に生成された");
+  /* 窓を見る時は、窓の生成時刻で數へる（出所の檔案が違ふ）。 */
+  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  if (!existsSync(品書)) return;
+  const catalog = JSON.parse(readFileSync(品書, "utf8")) as { generated_at?: string };
+  const 窓の斷り = String(Recommender.dataAgeNoteJa(catalog.generated_at, 今) ?? "").trim();
+  const 窓 = await call("search_deadlines", { query: "セキュリティ", scope: "screen", limit: 1 });
+  if (窓の斷り) expect(窓, "窓の古さを言つて居ん").toContain(窓の斷り);
+  else expect(窓, "新しい窓に斷りを付けた").not.toContain("日前に生成された");
+  /* 二つの窓の古さが違ふ時は、取り違へて居ない事まで見る（別の檔案を讀んで居る證據）。 */
+  if (元の斷り && 窓の斷り && 元の斷り !== 窓の斷り) {
+    expect(全體, "窓の古さを混ぜた").not.toContain(窓の斷り);
+    expect(窓, "收錄の古さを混ぜた").not.toContain(元の斷り);
+  }
+});
+
+it("MCP が返す文に、舊字體を混ぜない（第 854 回）", () => {
+  /* 畫面は「画面」「収録」「残り」と書く。MCP の文が「畫面」「收錄」「殘り」だと、AI が
+   * 其の侭人に返し、畫面の語と食ひ違ふ。第 803・804 回に手で洗つたが守りが無かつたので、
+   * 第 848 回と同じ考へで機械に止めさせる。**見るのは此方が書いた文だけ** – 註と識別子は
+   * 內側の文体（第 774 回）。 */
+  const 文々 = 文を集める(readFileSync(join(REPO_ROOT, "src", "mcp.ts"), "utf8"));
+  expect(文々.length, "文を一つも集められて居ない（走査が壊れて居る）").toBeGreaterThan(100);
+  for (const { 行, 文 } of 文々) {
+    /* 走査が崩れて居たら氣付ける樣に、集めた文に註の記号が混ざつて居ない事も見る（字句の
+     * 讀み方が崩れると、文で無い物を文として見たり、本當の文を見落としたりする）。 */
+    expect(/\/\*|\*\//.test(文), `src/mcp.ts:${行} の走査が崩れて居る`).toBe(false);
+    const 混ざり = [...new Set([...文].filter((c) => 舊字體.includes(c)))];
+    expect(混ざり.join(""), `src/mcp.ts:${行} の文に舊字體: ${文.slice(0, 60)}`).toBe("");
   }
 });

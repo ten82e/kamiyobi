@@ -3504,7 +3504,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           .map((w) => `「${w}」`)
           .join("・")}は` +
         "収録データにも見当たりません。" +
-        (外しても零件 ? "其れを外しても殘りの語では 0 件の侭です。" : "その語を外すと増えます。");
+        (外しても零件 ? "其れを外しても残りの語では 0 件の侭です。" : "その語を外すと増えます。");
     } else if (terms.length > 1) {
       termNote =
         " 語をすべて含む行はありません（" +
