@@ -1490,3 +1490,24 @@ it("名簿の案内が、畫面と同じ規則で名を探す（第 875 回）",
   });
   expect(默る答, "畫面が默る問に名簿の話を立てた").not.toContain("収録の会議の名前には");
 });
+
+it("key で問はれた時は、其の会議の事を言ふ（第 876 回）", async () => {
+  /* 實測 2026-10-12: `venue_info({key: "sc", scope: "screen"})`（窓に行が無い）が、
+   * **全く別の会議**（jornadas-dl2）を「その会議は収録に在りますが…」と返して居た。key を
+   * 受けた時に名が空の儘名前で名簿を探すと、`title.includes("")` がどれにも當たつて
+   * **先頭の会議**を拾ふため。AI は「その会議の締切は無い」と問はた會議の事として言つてしまふ。 */
+  const text = await call("venue_info", { key: "sc", scope: "screen" });
+  expect(text, "問はた會議を名指して居ん").toContain("key: sc");
+  expect(text, "別の會議の事を言つた").not.toContain("jornadas");
+  expect(text, "問はた會議の名を出して居ん").toContain("SC");
+  /* 大文字の key も受け付ける（照合は畫面と同じ）。 */
+  const 大 = await call("venue_info", { key: "SC", scope: "screen" });
+  expect(大, "大文字の key を別の會議と取り違へた").toContain("key: sc");
+  expect(大).not.toContain("jornadas");
+  /* 收錄に無い key は「無い」と言ふ（第 866 回 – 別の會議を渡さない）。 */
+  const 無 = await call("venue_info", { key: "nosuchconfkey", scope: "screen" });
+  expect(無, "收錄に無い時に別の會議を返した").toContain("その会議は収録に在りません");
+  /* 名の一部で問はれた時は候補を並べる（一つに決め打たない – 第 726 回の儘）。 */
+  const 名 = await call("venue_info", { name: "sc", scope: "screen" });
+  expect(名, "名の一部で候補を並べて居ん").toContain("会議が当たりました");
+});

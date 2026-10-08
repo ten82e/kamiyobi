@@ -757,15 +757,21 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
      * 無い）。行から引くと、締切を持たん會議は「收錄に無い」と答へてしまふ – 收錄その物から引く。 */
     const 求 = name.toLowerCase();
     const 收錄の會議 = snapshot().conferences ?? [];
-    const 在る = 收錄の會議.find((c) => {
-      const key = String(c.key ?? "").toLowerCase();
-      const title = String(c.title ?? "").toLowerCase();
-      const acronym = String(c.acronym ?? "").toLowerCase();
-      return (
-        Boolean(key) &&
-        (key === 求 || title.includes(求) || acronym.includes(求) || key.includes(求))
-      );
-    });
+    /* key を指定されて居る時は**其の key で**名簿を引く。名が空の儘名前で探すと、
+     * `title.includes("")` がどれにも當たつて**先頭の会議**を返してしまふ – 實測 2026-10-12:
+     * `venue_info({key: "sc"})`（窓に行が無い）が、全く別の會議（jornadas-dl2）の情報を
+     * 「その会議は収録に在りますが…」と返して居た。問はた會議の事を言ふのが此の道具の役目。 */
+    const 在る = key
+      ? 收錄の會議.find((c) => String(c.key ?? "").toLowerCase() === key.toLowerCase())
+      : 收錄の會議.find((c) => {
+          const ck = String(c.key ?? "").toLowerCase();
+          const title = String(c.title ?? "").toLowerCase();
+          const acronym = String(c.acronym ?? "").toLowerCase();
+          return (
+            Boolean(ck) &&
+            (ck === 求 || title.includes(求) || acronym.includes(求) || ck.includes(求))
+          );
+        });
     if (在る) {
       const 版々 = Array.isArray(在る.editions) ? 在る.editions : [];
       const 會期あり = 版々.some((e) =>
@@ -773,7 +779,7 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
       );
       const link = String(在る.link ?? "").trim();
       return [
-        `その会議は収録に在りますが、**締切の行が 1 本もありません**（版 ${版々.length} 件）。` +
+        `問はた会議（${String(在る.acronym || 在る.title || 在る.key)}・key: ${String(在る.key)}）は収録に在りますが、**締切の行が 1 本もありません**（版 ${版々.length} 件）。` +
           (會期あり
             ? "会期は収録に在るので、直近の一覧（upcoming.md）とカレンダー（deadlines.ics）には「開催」として載ります。"
             : "会期も確認できていないので、どの一覧にも出ません。"),
@@ -1266,7 +1272,18 @@ function main(): void {
           }
         : 名 === "list_upcoming"
           ? { days: rest[0], kind: rest[1] }
-          : { name: rest[0] };
+          : (() => {
+              /* 打たれた語が**そのまま key** に在る時は key として扱ふ。名の一部として引くと、
+               * `sc` の様に 42 件の候補に割れてしまふ（實測 2026-10-12 – 其の語の會議を
+               * 一意に指して居るのに、候補の一覽を返して居た）。 */
+              const 語 = String(rest[0] ?? "").trim();
+              const 其の儘 =
+                Boolean(語) &&
+                (snapshot().conferences ?? []).some(
+                  (c) => String(c.key ?? "").toLowerCase() === 語.toLowerCase(),
+                );
+              return 其の儘 ? { key: 語 } : { name: 語 };
+            })();
   process.stdout.write(`${callTool(名, args, now)}\n`);
 }
 
