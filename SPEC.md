@@ -2712,6 +2712,14 @@ conferences:
   磁石を總當たりで無く品書の文本側から張る為、檢査は品書を一度しか讀まんやうに记忆力せた –
   每回讀むと**同じ張りで 484 秒**かかる（実測 7 秒）。
 
+- **`data.json` の各階層を總當たりし、索引に無い八つの鍵を書いた（第 814 回）**
+  - 方法 – `data.json` の**各階層**（会議・版・締切・論文）の鍵を集め、索引のスキーマ要約の節に其の名が在るかを見た。**論文の階層は鍵が 0**（此の版の `data.json` には論文の配列が無い）。
+  - 見付けた物 – **索引のどこにも出て居ない鍵が八つ** – 会議 `upstream_sub`／版 `call_identity`・`legacy_ids`・`event_review`／締切 `track`・`verification`・`superseded_deadlines`・`promotion_ref`（何れも 0 箇所）。
+  - 意味は**型から確かめた**（推測で書かない）– `src/model.ts` の `CallIdentity`（{seriesId, editionId, callId, parentEventId}）・`SupersededDeadline`（value・precision・source・supersededBy・reason）・`PromotionRef`（{batch, resolution}）・`VerificationState`（official_url・last_attempt_at・last_verified_at）・`EventReview`（source_date_text・reviewed_on・note など）・`upstream_sub`（上流 ccfdll の `sub` 欄への落とし込み）。
+  - 頻度も**實測して書いた**（2026-10-06）– 版 2,603 のうち `call_identity` 12・`legacy_ids` 18・`event_review` 7／締切 4,984 のうち `track` 8・`superseded_deadlines` 35・`promotion_ref` 19／`verification` は 4,467 件で殆どの締切に付く／`upstream_sub` は会議 696 のうち 354 件。**「稀にしか付かない物と、殆どの行に付く物とがある」**と一條で言ふ形にした（數は日付を添へる – 第 733 回の敎へ）。
+  - 檢べ – `tests/mcp_server.test.ts` に一本（八つの鍵の名と頻度の行が索引の組み立てに在る事）。MCP 26 本。
+  - 檢索 – `npm run typecheck` 0 件・`npm run check` 452 ファイル（誤り 0）・`node src/cli.ts build --offline --now 2026-08-09T00:00:00Z`（696 會議 / 2,603 版 / 4,984 締切）・`npm test` 385 ファイル 5,571 本通過。1 MiB の餘裕は 33,000 バイト。
+
 - **索引が説明して居なかつた `event_date_precision` を書いた（第 813 回）**
   - 事實（2026-10-06 実測 – 實ビルドの `data.json` と `llms.txt` を突き合はせた）– `data.json` の版（全 2,603 版）には **`event_date_precision`** が在り、値は**六つ** – `exact-range`（開始と終了が確定・2,243 版）・`single-day`（1 日・114 版）・`unverified`（未確認・173 版）・`not-announced`（未発表・59 版）・`month-only`（月まで・11 版）・`split-dates`（飛び石・3 版）。**索引（`llms.txt`）には一度も出て居なかつた**（0 箇所）– 讀む人（と AI）は其の欄を讀めない。スキーマ要約の他の鍵（`event_start`・`event_end`・`estimated` など）は書いて在つた。
   - 直し – スキーマ要約の「版」の項に一條足した（六つの値と件數、日付が入るのは `exact-range` と `single-day` が主である事）。

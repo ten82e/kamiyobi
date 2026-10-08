@@ -476,3 +476,23 @@ it("索引が、會期の日付の確かさ（event_date_precision）を説明�
     expect(build, `${値} の説明が索引に無い`).toContain(値);
   }
 });
+
+it("索引が、data.json の残りの鍵も説明している（第 814 回）", () => {
+  /* 實測 2026-10-06: data.json の各階層を總當たりすると、索引に一度も出て居ない鍵が八つ在つた
+   * （会議 upstream_sub／版 call_identity・legacy_ids・event_review／締切 track・verification・
+   * superseded_deadlines・promotion_ref）。讀む人（と AI）は其れ等を讀めない。 */
+  const build = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
+  for (const 鍵 of [
+    "upstream_sub",
+    "call_identity",
+    "legacy_ids",
+    "event_review",
+    "track",
+    "verification",
+    "superseded_deadlines",
+    "promotion_ref",
+  ]) {
+    expect(build, `${鍵} の説明が索引に無い`).toContain(鍵);
+  }
+  expect(build, "付く頻度の實測が索引に無い").toContain("稀にしか付かない物と");
+});
