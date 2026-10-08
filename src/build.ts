@@ -4194,6 +4194,7 @@ export function toLlmsTxt(
     "    - year: integer, id: string（例 'sigcomm26'）, link: string, place: string",
     "    - date_text: string：上流の自由文の会期表記。構造化されていないことがある。",
     "    - event_start / event_end: string|null：'YYYY-MM-DD'。パース不能なら null。",
+    "    - event_date_precision: string：会期の日付の確かさ。'exact-range'（開始と終了が確定・2,243 版）・'single-day'（1 日・114 版）・'month-only'（月までしか分からない・11 版）・'split-dates'（飛び石・3 版）・'unverified'（未確認・173 版）・'not-announced'（未発表・59 版）。'exact-range' と 'single-day' 以外は日付が空の事が多い（実測 2026-10-06: 其れ以外の 246 版のうち 15 版は event_start が入っている。収録が増えればこの数も動く）。",
     "    - estimated: boolean：true は過去実績からの推定。実データではない。",
     "    - estimate: object|null：推定版の点推定・日付窓・根拠版・信頼度。確定版には無い。",
     "      window_start / window_end は表示用の日付範囲であり、公式締切ではない。",

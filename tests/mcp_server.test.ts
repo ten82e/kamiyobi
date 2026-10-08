@@ -458,3 +458,21 @@ it("索引が、0 件の時の振る舞いを書いている（第 812 回）", 
   expect(build, "0 件の時の振る舞いが索引に無い").toContain("0 件の時は、次に打つ手を示す");
   expect(build, "件数の基準が索引に無い").toContain("いまの絞り込みを通過した行で数へる");
 });
+
+it("索引が、會期の日付の確かさ（event_date_precision）を説明している（第 813 回）", () => {
+  /* 實測 2026-10-06: data.json の版には event_date_precision が全 2,603 版に在り、値は六つ
+   * （exact-range・single-day・month-only・split-dates・unverified・not-announced）だが、
+   * 索引（llms.txt）に一度も出て居なかった – 讀む人（と AI）は其の欄を讀めない。 */
+  const build = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
+  expect(build, "event_date_precision を索引が説明して居ん").toContain("event_date_precision");
+  for (const 値 of [
+    "exact-range",
+    "single-day",
+    "month-only",
+    "split-dates",
+    "unverified",
+    "not-announced",
+  ]) {
+    expect(build, `${値} の説明が索引に無い`).toContain(値);
+  }
+});
