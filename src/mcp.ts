@@ -674,14 +674,22 @@ function listUpcoming(
   const kind = 全部 ? "" : 名乗り.join(" ");
   const { list, 名, 生成 } = pick(args.scope ?? "all");
   const 古さ = 古さの斷り(生成, now);
-  const 限り = now + days * 86400000;
+  /* 上の境目は**畫面の窓と同じ** JST の暦日で切る（第 874 回）。經由 24 時間で切つて居ると、
+   * 同じ「N 日以内」の問に二つの道具が違ふ數を返す – 實測 2026-10-10（窓・論文のみ）:
+   * 7 日で list_upcoming 16 件／search_deadlines 19 件、90 日で 134 件／128 件。同じ式は
+   * `within_days`（第 872 回）と共有する。下の境目（今後の物だけ）は `r.t` の侭で、
+   * 畫面の既定と同じ。 */
+  const 限り = Recommender.withinDaysLimitMs(days, now);
+  /* 表示して居る暦日で比べる（`tShown`。無ければ `t`）。 */
+  const 暦日 = (r: Row): number =>
+    typeof r.tShown === "number" && Number.isFinite(r.tShown) ? r.tShown : r.t;
   const hit = sortRows(
     list.filter(
-      (r) => r.t >= now && r.t <= 限り && (!kind || r.kind === kind || r.dl.kind === kind),
+      (r) => r.t >= now && 暦日(r) < 限り && (!kind || r.kind === kind || r.dl.kind === kind),
     ),
   );
   return [
-    `今日から ${days} 日以内の締切: ${hit.length} 件（${名}・日本時間の早い順）`,
+    `今日から ${days} 日以内（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順）`,
     "",
     ...hit.slice(0, 100).map((r) => line(r, now)),
     ...(hit.length > 100 ? ["", `（100 件まで表示・残り ${hit.length - 100} 件）`] : []),
@@ -1033,7 +1041,7 @@ const TOOLS = [
   {
     name: "list_upcoming",
     description:
-      "今日から N 日以内の締切を日本時間の早い順に返す（**種別では絞らない** – 登録・カメラレディ・採否通知も混ざる。投稿の締切だけ見るなら search_deadlines を使ふ）。100 件を超える時は其の旨と残り件数を末尾に書く。行にはランク（`CCF A・CORE A*` の形。無い行は「ランク未確認」）・会期・確認の状態の札も付く。",
+      "今日から N 日以内の締切を日本時間の早い順に返す（**種別では絞らない** – 登録・カメラレディ・採否通知も混ざる。**推定の締切も入ります**（search_deadlines の既定は外すので、条件を揃えて比べるときは `include_estimated: true` を添えてください）。上の境目は JST の暦日で切り、`search_deadlines` の `within_days` と同じ数え方です（同じ条件なら同じ件数になります）。100 件を超える時は其の旨と残り件数を末尾に書く。行にはランク（`CCF A・CORE A*` の形。無い行は「ランク未確認」）・会期・確認の状態の札も付きます。",
     inputSchema: {
       type: "object",
       properties: {

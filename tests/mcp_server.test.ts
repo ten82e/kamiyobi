@@ -1389,3 +1389,37 @@ it("「と」「や」で繋いだ打ち方に、どちらかだけで打つ案�
   expect(欄と, "欄の名前の案内を出して居ん").toContain("の名前で、値その物ではありません");
   expect(欄と, "欄の名前と接続の案内を重ねた").not.toContain("繋いで打つと");
 });
+
+it("list_upcoming と search_deadlines は、同じ條件なら同じ件数を返す（第 874 回）", async () => {
+  /* 同じ「N 日以内」の問に、二つの道具が違ふ數を返して居た – `list_upcoming` の上は
+   * **經由 24 時間**で切つて居たため（窓は JST の暦日で切る – 第 202 回）。實測 2026-10-10
+   * （窓・論文のみ）: 7 日で 16 件／19 件、90 日で 134 件／128 件。今は同じ式を持つ。
+   * 殘る違いは**推定の締切**（`search_deadlines` の既定は外す・`list_upcoming` は入れる）
+   * だけなので、其れを揃へて比べる。 */
+  const 一覽の件數 = (text: string): number => Number(/(\d+) 件/.exec(text)?.[1] ?? -1);
+  const 檢索の件數 = (text: string): number =>
+    Number(/絞り込みだけ: ([\d,]+) 件/.exec(text)?.[1]?.replace(/,/g, "") ?? -1);
+  for (const 日 of [7, 30, 90]) {
+    const 一覽 = await call("list_upcoming", { days: 日, kind: "paper", scope: "screen" });
+    const 檢索 = await call("search_deadlines", {
+      within_days: 日,
+      kinds: ["paper"],
+      include_estimated: true,
+      scope: "screen",
+      limit: 1,
+    });
+    const 求 = 一覽の件數(一覽);
+    expect(求, `list_upcoming の件數が讀めない: ${日} 日`).toBeGreaterThan(0);
+    expect(檢索の件數(檢索), `${日} 日で二つの道具の數が違ふ`).toBe(求);
+  }
+  /* 片方に推定が入つて居る事を、道具の説明で隱さない（ extrapolated を默つて外すと
+   * 「數が違ふ」に成る）。 */
+  const 說明 = String(
+    (
+      (await client.ask({ jsonrpc: "2.0", id: 99, method: "tools/list" })) as {
+        result?: { tools?: Array<{ name?: string; description?: string }> };
+      }
+    ).result?.tools?.find((t) => t.name === "list_upcoming")?.description ?? "",
+  );
+  expect(說明, "推定の取扱ひを說明して居ん").toContain("推定");
+});
