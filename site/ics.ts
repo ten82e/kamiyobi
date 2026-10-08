@@ -238,6 +238,22 @@ export function icsCalendarDescriptionJa(
     .join("");
 }
 
+/** 一覧の行に付く**札**（延長・確認の状態）。語は畫面と同じ正本から取る。無ければ空の配列。
+ *
+ * 畫面だけが知つて居る事にしない – 購読した人はカレンダーしか見ないので、上流に候補が複数
+ * ある締切（「複数候補のため要確認」）が、其の侭では確定の締切として予定表に並ぶ。**確認済みと
+ * 未設定では何も返さない**（畫面も印を出さない – 默るのが正しい）。 */
+export function icsStatusMarks(dl: unknown): string[] {
+  return [
+    Recommender.isExtendedDeadline(dl) ? String(Recommender.extendedLabelJa() ?? "").trim() : "",
+    String(
+      Recommender.verificationStatusLabelJa(
+        (dl as { verification?: unknown } | null | undefined)?.verification,
+      ) ?? "",
+    ).trim(),
+  ].filter(Boolean);
+}
+
 /** カレンダー 1 本の文字（RFC 5545）。`description` を渡すと説明欄の文を差し替える。 */
 export function icsCalendarText(
   rows: IcsRow[] | null | undefined,
@@ -304,6 +320,8 @@ export interface ScreenDeadlineInput {
   link?: unknown;
   /** 会期の表示（画面と同じ式で組んだ物）。 */
   session?: unknown;
+  /** 締切の記録その物（確認の状態と延長の判定に使う。畫面が持つ `dl` をそのまま渡す）。 */
+  dl?: unknown;
 }
 
 /** 画面の行から、カレンダーの行を組む。**見えている物だけ**を入れる（過ぎた締切を表示して
@@ -335,6 +353,10 @@ export function icsRowsFromScreen(
       catsJa.length ? `分野: ${catsJa.join("・")}` : "",
       `${String(item.dateField ?? "").trim() || "日付"}: ${String(item.whenText ?? "")}`,
       `会期: ${String(item.session ?? "").trim() || Recommender.unconfirmedLabelJa()}`,
+      ...(() => {
+        const 札 = icsStatusMarks(item.dl);
+        return 札.length ? [`状態: ${札.join("・")}`] : [];
+      })(),
       `開催地: ${placeJa || Recommender.unconfirmedLabelJa()}`,
       item.estimated ? "この日付は上流が推定として出したもので、公式で裏を取れていません" : "",
       link ? `詳細: ${link}` : "",

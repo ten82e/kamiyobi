@@ -1111,3 +1111,30 @@ describe("会期を出張の段取りに使えるよう、予定の本文に書�
     expect(llms, "列の辞書が噓のまま残っている").not.toContain("`deadlines.ics` だけに出る");
   });
 });
+
+it("確認の状態と延長の札が、カレンダーの本文にも入る（第 861 回）", () => {
+  /* 畫面の一覧の行には札が付くのに、カレンダーには何も無かった – 購読した人は
+   * 「複数候補のため要確認」の締切を、確定の締切として予定表で見て居た（此の計畫の
+   * 一番怖い失敗は、確かめて居ない締切を確かめた物として使はせる事）。 */
+  const 本文 = (r: DataRecord): string => unfoldIcs(toIcsText([r], NOW)).join("\n");
+  const 締切 = (over: Record<string, unknown>): DataRecord =>
+    rec({ deadline: { precision: "exact", at_utc: new Date("2027-02-12T11:59:00Z"), ...over } });
+  const 要確認 = 本文(締切({ verification: { status: "manual-required" } }));
+  expect(要確認, "確認の状態を本文に書いて居ん").toContain(
+    `状態: ${Recommender.verificationStatusLabelJa({ status: "manual-required" })}`,
+  );
+  /* 確認済みと未設定では書かない（畫面も印を出さない – 默るのが正しい）。 */
+  const 確認済み = 本文(締切({ verification: { status: "verified" } }));
+  expect(確認済み, "確認済みに印を付けた").not.toContain("状態: ");
+  expect(本文(締切({})), "狀態が無い行に印を付けた").not.toContain("状態: ");
+  /* 延長の札（上流が締切を後ろへ動かした行）。 */
+  const 延長 = 本文(締切({ label: "Extended deadline" }));
+  expect(延長, "延長の印が無い").toContain(String(Recommender.extendedLabelJa()));
+  /* 語は畫面と同じ正本から取る（書き寫すと、畫面とカレンダーで言ひ方がずれる）。 */
+  expect(要確認, "畫面の語と違ふ").toContain(
+    String(Recommender.verificationStatusLabelJa({ status: "manual-required" })),
+  );
+  /* 索引も、カレンダーが狀態を書く事を言ふ。 */
+  const llms = readFileSync(join(site, "llms.txt"), "utf8");
+  expect(llms, "索引がカレンダーの狀態を言って居ん").toContain("`状態: ` の行");
+});

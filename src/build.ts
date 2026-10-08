@@ -31,6 +31,7 @@ import {
   icsCalendarText,
   icsCategoryLabels,
   icsEventBody,
+  icsStatusMarks,
   icsUidSafe,
   jstParts,
 } from "../site/ics.ts";
@@ -49,6 +50,7 @@ export {
   icsEventBody,
   icsFoldLine,
   icsNextDay,
+  icsStatusMarks,
   icsUidSafe,
   jstParts,
 } from "../site/ics.ts";
@@ -399,7 +401,10 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
   "deadlines.ics":
     "収録した会議の日付をカレンダーに入れるための 1 本（RFC 5545）。1 日 = 1 イベントの終日" +
     "（JST の暦日）で、" +
-    "画面の絞り込みは効かない。時刻未確認と推定はそのまま書く（第 266 回）。分野は画面と同じ日本語で " +
+    "画面の絞り込みは効かない。時刻未確認と推定はそのまま書く（第 266 回）。確認の状態" +
+    "（`複数候補のため要確認` など）と延長（`延長後`）は、各予定の本文に `状態: ` の行で書く" +
+    "（画面の一覧の札と同じ語 – 購読した人はカレンダーしか見ないため。第 861 回）。" +
+    "分野は画面と同じ日本語で " +
     "`CATEGORIES` と説明行の `分野:` の両方に載せる（第 292 回）。受信側の表示対応は kamiyobi 側では" +
     "検証していないが、説明行の語はカレンダー本文の検索に掛かる。",
   "llms.txt": "このファイル。機械が読む索引で、人間の操作説明は画面の中に書く。",
@@ -3362,6 +3367,7 @@ export function icsEventRows(
      * ズレない – 県名の補いも国名の日本語化も同じ正本）。
      * 出ていない行は `LOCATION` を **書かない**: カレンダーの場所欄に「未確認」は
      * 場所として表示されるので、無い場所を渡すよりマシ（本当のことは下の `開催地:` に書く）。 */
+    const 状態 = icsStatusMarks(dl);
     const placeJa = String(
       Recommender.placeJa(Recommender.placeWithPrefectureJa(ed.place)) ?? "",
     ).trim();
@@ -3382,6 +3388,11 @@ export function icsEventRows(
         : `会期: ${editionSessionJa(ed) || Recommender.unconfirmedLabelJa()}`,
       `開催地: ${placeJa || Recommender.unconfirmedLabelJa()}`,
       rec.estimated ? "この日付は上流が推定として出したもので、公式で裏を取れていません" : "",
+      /* 一覧の行に付く**札**（延長・確認の状態）を、カレンダーの本文にも書く（第 861 回）。
+       * 畫面だけが知つて居る事にしない – 購読した人はカレンダーしか見ないので、上流に候補が
+       * 複数ある締切（「複数候補のため要確認」）が、其の侭では確定の締切として予定表に並ぶ。
+       * 語は畫面と同じ正本から取る（書き寫すとずれる）。 */
+      状態.length ? `状態: ${状態.join("・")}` : "",
       link ? `詳細: ${link}` : "",
       `収録: ${ICS_CAL_NAME_JA}（データ生成: ${stamp ? `${stamp.human}（JST）` : "未確認"}）`,
     ].filter(Boolean);

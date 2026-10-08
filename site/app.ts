@@ -3100,6 +3100,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         place: ed.place,
         link: ed.link || conf.link,
         session: Recommender.eventCellJa(r),
+        /* 締切の記録その物も渡す（確認の状態と延長の札を、配付する ICS と同じ語で本文に
+         * 書くため – 語は共通の `icsStatusMarks` が畫面の正本から取る）。 */
+        dl: r.dl,
       });
     }
     return out;

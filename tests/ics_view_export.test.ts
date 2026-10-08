@@ -238,6 +238,35 @@ describe("畫面の一覧をカレンダーに書き出す（第 856 回）", ()
     expect(llms, "索引が ics.js を書いて居ない").toContain("ics.js");
   });
 
+  it("確認の状態と延長の札が、書き出す 1 本にも入る（第 861 回）", () => {
+    /* 配付するカレンダーと同じ約束 – 畫面から書き出した 1 本にも、一覧の札を本文に書く
+     * （書き出した物を配る人・貼る人が、確かめて居ない締切を確定として扱はない樣に）。 */
+    const 題 = icsViewText(
+      [
+        材料({
+          dl: { verification: { status: "manual-required" } },
+        }),
+        材料({ editionId: "b27", kind: "abstract", dl: { label: "Extended deadline" } }),
+      ],
+      NOW,
+      生成,
+    );
+    const 本文 = 開く(題);
+    const 狀態 = 本文.filter((l) => l.includes("状態: "));
+    expect(狀態.length, "札が本文に無い").toBe(2);
+    expect(題, "確認の状態を書いて居ん").toContain(
+      String(Recommender.verificationStatusLabelJa({ status: "manual-required" })),
+    );
+    expect(題, "延長の印を書いて居ん").toContain(String(Recommender.extendedLabelJa()));
+    /* 確認済みと未設定では書かない（畫面も印を出さない）。 */
+    const 確認済み = 開く(
+      icsViewText([材料({ dl: { verification: { status: "verified" } } })], NOW, 生成),
+    );
+    expect(確認済み.filter((l) => l.includes("状態: ")).length, "確認済みに印を付けた").toBe(0);
+    const 無し = 開く(icsViewText([材料()], NOW, 生成));
+    expect(無し.filter((l) => l.includes("状態: ")).length, "狀態の無い行に印を付けた").toBe(0);
+  });
+
   it("押すと、その一覧の 1 本が落ちて来る（DOM を眞似する）", () => {
     /* 拔き出した函數を、最小の DOM で走らせる（落ちて來る物の名前と中身の型を見る）。 */
     const src = jsFunction(siteRuntime(), "exportShownIcs");
