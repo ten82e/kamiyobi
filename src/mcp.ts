@@ -34,7 +34,17 @@ const DEFAULT_PROTOCOL = "2025-06-18";
 
 /* 行の形（`Recommender.candidateRows` が返す物の內、此處で使ふ分だけ）。 */
 interface Row {
-  conf: { key: string; title: string; acronym?: string; categories?: string[]; rank?: unknown };
+  conf: {
+    key: string;
+    title: string;
+    acronym?: string;
+    /* 正式名（第 887 回 – 略稱だけでは `Supercomputing` の樣に正式名にしか出て居ない語が
+     * 引けない。實測 2026-10-20: search_deadlines は 37 行出すのに、venue_info は
+     * 「收錄に在りません」と答へて居た）。 */
+    full_name?: string;
+    categories?: string[];
+    rank?: unknown;
+  };
   /** ランクの對（`ccf:A`・`core:A*` の形）。畫面のランク列と同じ正本から組む。 */
   rankPairs?: string[];
   /** 會議のタグ（`domestic-jp` など）。畫面の「国内研究会…のみ」と同じ判定に使ふ。 */
@@ -947,6 +957,9 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
         String(r.conf.acronym ?? "")
           .toLowerCase()
           .includes(求) ||
+        String(r.conf.full_name ?? "")
+          .toLowerCase()
+          .includes(求) ||
         r.conf.key.toLowerCase().includes(求);
   const hit = list.filter(的);
   if (!hit.length) {
@@ -967,7 +980,16 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
           const acronym = String(c.acronym ?? "").toLowerCase();
           return (
             Boolean(ck) &&
-            (ck === 求 || title.includes(求) || acronym.includes(求) || ck.includes(求))
+            (ck === 求 ||
+              title.includes(求) ||
+              acronym.includes(求) ||
+              /* 正式名も見る（第 887 回 – `Supercomputing` は `ICS` の正式名の中にしか
+               * 出て居なかつた。實測 2026-10-20: search_deadlines は 37 行出すのに、
+               * 此方は「收錄に在りません」と答へて居た）。 */
+              String(c.full_name ?? "")
+                .toLowerCase()
+                .includes(求) ||
+              ck.includes(求))
           );
         });
     if (在る) {
@@ -982,6 +1004,26 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
             ? "会期は収録に在るので、直近の一覧（upcoming.md）とカレンダー（deadlines.ics）には「開催」として載ります。"
             : "会期も確認できていないので、どの一覧にも出ません。"),
         ...(link ? [`公式ページ: ${link}`] : []),
+        ...(古さ ? ["", 古さ] : []),
+      ].join("\n");
+    }
+    /* **版（edition）の識別子**を渡された時は、其の會議を指して敿へる（第 887 回）。
+     * 實測 2026-10-20: `venue_info({key: "sc26"})` は「收錄に在りません」と答へて居た –
+     * `data.csv` の `edition_id` や `data.json` の `editions[].id` を其の儘渡すことは
+     * 實際に在る（AI は此れ等を讀んで居る）。版は確かに會議では無いが、「無い」では無い。 */
+    const 版の會議 = key
+      ? 收錄の會議.find((c) =>
+          (Array.isArray(c.editions) ? c.editions : []).some(
+            (e) =>
+              String((e as { id?: unknown } | null)?.id ?? "").toLowerCase() === key.toLowerCase(),
+          ),
+        )
+      : undefined;
+    if (版の會議) {
+      const 本の會議 = String(版の會議.key ?? "");
+      return [
+        `「${key}」は**版（edition）の識別子**で、会議その物の key ではありません。` +
+          `会議の key は \`${本の會議}\` です（key で引き直すと、この会議の全ての版と締切が出ます）。`,
         ...(古さ ? ["", 古さ] : []),
       ].join("\n");
     }
@@ -1305,7 +1347,7 @@ const TOOLS = [
   {
     name: "venue_info",
     description:
-      "1 つの会議の版・分野・締切・会期を返す。**key（識別子）・name（名前の一部）・略称の何れでも引ける**。締切は**今後の物から**並ぶ（同じ側では日の早い順）。今後の締切が無い会議では其の旨を先に言ふ。名乗りが割れた時は候補（名・key・公式 URL）を並べて決め打たない。**分野とランク（`CCF A・CORE A*` の形）も返す**。行には会期と確認の状態の札も付く。収録が古ければ、末尾に画面と同じ断りが付く。",
+      "1 つの会議の版・分野・締切・会期を返す。**key（識別子）・name（名前の一部）・略称・正式名のどれでも引ける**（正式名は `ICS` = ACM International Conference on Supercomputing のように略称だけでは出て居ない語も引ける）。**版（edition）の識別子**（`data.csv` の `edition_id` のような `sc26`）を渡された時は、それが版だと言つた上で会議の key を教へる（「収録に無い」とは言わない）。締切は**今後の物から**並ぶ（同じ側では日の早い順）。今後の締切が無い会議では其の旨を先に言ふ。名乗りが割れた時は候補（名・key・公式 URL）を並べて決め打たない。**分野とランク（`CCF A・CORE A*` の形）も返す**。行には会期と確認の状態の札も付く。収録が古ければ、末尾に画面と同じ断りが付く。",
     inputSchema: {
       type: "object",
       properties: {

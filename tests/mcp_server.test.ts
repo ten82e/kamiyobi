@@ -1904,3 +1904,45 @@ it("list_upcoming の種別はどれかで選び、知らない種別を名指�
   const 檢索 = await call("search_deadlines", { kinds: ["zzz", "paper"] });
   expect(檢索, "檢索の方が知らない種別を名指して居ん").toContain("知らない種別");
 });
+
+it("venue_info は正式名で引き、版の識別子を會議に敿へる（第 887 回）", async () => {
+  /* 實測 2026-10-20 で二つ:
+   * ① `name: "Supercomputing"` は「收錄に在りません」と答へて居た。正式名
+   *   （`ICS` = ACM International Conference on Supercomputing）にしか出て居ない語で、
+   *   搜检索側（`search_deadlines`）は 37 行出すのに venue_info は默つて居た。
+   * ② `key: "sc26"`（版の識別子）も「收錄に在りません」。`data.csv` の `edition_id` や
+   *   `data.json` の `editions[].id` を其の儘渡すことは實際に在る（AI は讀んで居る）。 */
+  const 正式名 = await call("venue_info", { name: "Supercomputing" });
+  expect(正式名, "正式名で引けて居ん").not.toContain("その会議は収録に在りません");
+  /* 行が見付かつた**上で**候補を並べる（名簿の受皿に落とさない – 其れは「締切の行が 1 本も
+   * ありません」といふ噓に成る。ICS は正式名の語で 37 行持って居る）。 */
+  expect(正式名, "正式名の會議を教へて居ん").toContain("ICS");
+  expect(正式名, "名簿の受皿に落ちた（締切が在るのに無いと言ふ）").not.toContain(
+    "締切の行が 1 本もありません",
+  );
+  /* 搜检索が行を出す語は、此方でも會議を見付ける（同じ評價を持つ – 第 726 回の延長）。 */
+  const rows = Recommender.candidateRows(
+    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never,
+  );
+  const now = Date.now();
+  const m = Recommender.searchMatcher(Recommender.expandRelativeMonths("Supercomputing", now), now);
+  const 搜した = rows.filter((r) => m(String(r.hay)) === true);
+  expect(搜した.length, "此の檢查の前提（搜检索が行を出す語）が崩れた").toBeGreaterThan(0);
+  expect(正式名).toContain(`${[...new Set(搜した.map((r) => String(r.conf.title)))][0]}`);
+
+  /* 版の識別子は「無い」と言はない（會議の key を教へる）。 */
+  const 版 = await call("venue_info", { key: "sc26" });
+  expect(版, "版の識別子を無いと言つた").not.toContain("その会議は収録に在りません");
+  expect(版, "版だと言つて居ん").toContain("版（edition）の識別子");
+  expect(版, "會議の key を教へて居ん").toContain("`sc`");
+  /* 大文字の版の識別子も受け付ける。 */
+  const 大文字 = await call("venue_info", { key: "SC26" });
+  expect(大文字, "大文字の版の識別子を受け付けて居ん").toContain("`sc`");
+  /* 會議の key は其の儘通す（版の話を出さない）。 */
+  const 會議 = await call("venue_info", { key: "sc" });
+  expect(會議, "會議の key に版の話を付けた").not.toContain("版（edition）の識別子");
+  expect(會議).toContain("会議:");
+  /* どちらでも無い識別子は「無い」と言ふ（第 876 回の儘）。 */
+  const 無し = await call("venue_info", { key: "nosuchconfkey" });
+  expect(無し, "收錄に無い時に別の會議を返した").toContain("その会議は収録に在りません");
+});
