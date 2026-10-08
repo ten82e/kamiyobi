@@ -1584,7 +1584,7 @@ it("表に出さん種別の語は、選び方を件數つきで敿へる（第 
 });
 
 it("語を並べて打つた時、收錄に無い語を名指す（第 880 回）", async () => {
-  /* 畫面は「検索語のうち『GPU』は収録データにも見当かりません。その語を外すと増えます」と
+  /* 畫面は「検索語のうち『GPU』は収録データにも見当たりません。その語を外すと増えます」と
    * 言ふ（第 258 回）。MCP は「打ち直すなら『ネットワーク』だけに絞る（20 件）」とだけで、
    * **收錄が其の語を一つも持たん事**が讀めなかつた。實測 2026-10-15: `ネットワーク GPU` は
    * GPU が窓 0 行・收錄 0 行。 */
@@ -1612,4 +1612,29 @@ it("語を並べて打つた時、收錄に無い語を名指す（第 880 回�
   /* 語が一つの時は他の家（打ち直し・種別の話）に讓る（重ねて二度言はない）。 */
   const 一つ = await call("search_deadlines", { query: "閏年" });
   expect(一つ, "語が一つの問に語ごとの話を付けた").not.toContain("語をすべて含む行はありません");
+});
+
+it("URL を貼つた人を、ドメインの部品の話に引きずり込まない（第 881 回）", async () => {
+  /* 畫面は第 153 回から、URL を貼つた人に**打つた文字列を「語が無い」と言はない**
+   * （分解された語はドメインの一部で、檢索の失敗理由では無い）。實測 2026-10-16:
+   * `https://icde2027.example.org/cfp` に MCP は「『example』は収録データにも見当たりません」
+   * 「名簿に『cfp』に似た名前の会議が在ります」と出して居た – 兩方とも部品の話。 */
+  const text = await call("search_deadlines", { query: "https://icde2027.example.org/cfp" });
+  expect(text, "收錄の中心を言つて居ん").toContain("検索語の URL の会議は収録に見当たりません");
+  expect(text, "會議名で試す事を言つて居ん").toContain("会議名（「ICDE」など）で試してください");
+  expect(text, "ドメインの部品を語として扱つた").not.toContain("「example」");
+  expect(text, "ドメインの部品を會議の名として扱つた").not.toContain("「cfp」に似た名前");
+  /* http が無い形（ドメインだけ）も受ける。 */
+  const ドメイン = await call("search_deadlines", { query: "icde2027.example.org" });
+  expect(ドメイン, "ドメインだけの形に URL の話をして居ん").toContain(
+    "検索語の URL の会議は収録に見当たりません",
+  );
+  expect(ドメイン).not.toContain("「example」");
+  /* 會議の URL が收錄に在る時は、默つて行を返す（畫面と同じ – 0 件の時にだけ立てる）。 */
+  const 在る = await call("search_deadlines", { query: "https://www.sigcomm.org/" });
+  expect(在る).toContain("検索語");
+  /* 通常の語には効かない（URL の話を出さん）。 */
+  const 通常 = await call("search_deadlines", { query: "ネットワーク GPU" });
+  expect(通常, "URL でない問に URL の話を付けた").not.toContain("検索語の URL の会議は");
+  expect(通常, "死語の話が恢復して居らん").toContain("「gpu」");
 });
