@@ -3089,3 +3089,21 @@ it("limit は整数で、打ち切って無い時は言わない（第 924 回�
   });
   expect(推, "推薦で切り詰めた時に limit を言つて居ん").toContain("3 件まで表示");
 });
+
+it("explain_word も、切り詰めて居る時に其の旨を書く（第 925 回）", async () => {
+  /* 實測 2026-11-11: 見出しは「37 行」と書きながら 3 行しか出て居なかった – 読む人は 37 行を
+   * 當てる。第 924 回の `limit` と同じ括り（文は 37 行だが実際は 3 行だと思ふ）。 */
+  /* 切り詰めがある時 */
+  const 切替 = await call("explain_word", { word: "セキュリティ" });
+  const 頭 = 切替.split("\n")[0] ?? "";
+  expect(頭, "切り詰めて居るのに其の旨を書いて居ん").toContain("このうち 3 行を出します");
+  expect(切替.split("\n").filter((l) => /^- 20\d\d-/.test(l)).length).toBe(3);
+  /* 切り詰めが無い時は書かない（1 行しか無い語 – 騒音を增やさない）。 */
+  const 一行 = await call("explain_word", { word: "ICDE" });
+  expect(一行.split("\n")[0] ?? "", "1 行の語に切り詰めの文を付けた").not.toContain("このうち");
+  /* 見える行數と「N 行」の N が矛盾しない（37 里有 3 行だと書く）。 */
+  const 全部 = await call("explain_word", { word: "締切" });
+  expect(全部.split("\n")[0] ?? "", "212 行の語に切り詰めの文が無い").toContain(
+    "このうち 3 行を出します",
+  );
+});
