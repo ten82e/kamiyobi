@@ -10,6 +10,7 @@
  * ここは機械が確かめる。旧字体の検査とは別に、「読めない字が混入していない」事だけを見る。
  */
 
+import { spawnSync } from "node:child_process";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { extname, join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -96,5 +97,29 @@ describe("中国語の簡体字", () => {
     for (const 字 of ["国", "学", "会", "実", "画", "声", "残", "点", "猫"]) {
       expect(表, `日本語でも使う「${字}」が表に在る（偽檢査になる）`).not.toContain(字);
     }
+  });
+});
+
+describe("舊字體の監査が動く", () => {
+  it("スクリプトがsyntax error で止まらない（第 933 回）", () => {
+    /* 實測 2026-11-16: 第 915 回の編集で `scripts/ja-text-audit.ts` の**文字列リテラル**が
+     * 崩れて、監査が `SyntaxError` で止まっていた – **10 団のあいだ氣づかなかった**。
+     * typecheck は通る（壊れたのは文字列の中だから）で、この検査も読み出しだけだった。
+     * ここで**実行まで**して確かめる – 検査が壊れて居たら氣づく様に。 */
+    const proc = spawnSync(
+      process.execPath,
+      [join(ROOT, "scripts", "ja-text-audit.ts"), join(ROOT, "site", "template.html")],
+      { encoding: "utf8", timeout: 120_000 },
+    );
+    const 出 = `${proc.stdout ?? ""}${proc.stderr ?? ""}`;
+    expect(proc.status, `監査が止まった:\n${出.slice(0, 300)}`).toBe(0);
+    expect(出, "候補の要約が出て居ない（表の定義が読めて居ない）").toContain("候補");
+    /* 検出能力も確かめる（表の 1 字を入れれば出る – ここが空振りでないこと）。 */
+    const 當 = spawnSync(
+      process.execPath,
+      [join(ROOT, "scripts", "ja-text-audit.ts"), join(ROOT, "src", "mcp.ts")],
+      { encoding: "utf8", timeout: 120_000 },
+    );
+    expect(`${當.stdout ?? ""}${當.stderr ?? ""}`).toContain("候補");
   });
 });
