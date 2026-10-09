@@ -1416,18 +1416,25 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
   if (會々.length > 1) {
     const 名乗り = [...new Map(hit.map((r) => [r.conf.key, r.conf.title])).entries()];
     /* 候補には**公式の繋ぎ先**も添へる（第 750 回 – 名前と key だけでは、どれが探して居る物か
-     * 決められん。人は URL を見て選ぶ）。同じ key の行の內、最初に繋ぎ先を持つ物を使ふ。*/
-    const 繋ぎ先 = new Map<string, string>();
+     * 決められん。人は URL を見て選ぶ）。同じ key の行の内、**一番新しい版**の繋ぎ先を使ふ
+     * （第 946 回 – 實測 2026-11-10: `KDD` の候補が `kdd.org/kdd2021/` を出して居た。
+     *   探して居る人は 2027 の KDD なので、2021 の頁に送るのは誤り。行は日の早い順なので、
+     *   **後ろ**に行くほど新しい）。 */
+    const 繋ぎ先 = new Map<string, { url: string; 日: number }>();
     for (const r of hit) {
       const url = String(r.ed.link ?? "").trim();
-      if (url && !繋ぎ先.has(r.conf.key)) 繋ぎ先.set(r.conf.key, url);
+      if (!url) continue;
+      /* 一番**新しい**行の繋ぎ先を残す（行の並びに依らない – 第 946 回）。 */
+      const 今 = 繋ぎ先.get(r.conf.key);
+      if (!今 || r.t >= 今.日) 繋ぎ先.set(r.conf.key, { url, 日: r.t });
     }
     return [
       `「${key || name}」には ${會々.length} の会議が当たりました。名を細く打つか、key で指してください:`,
       ...(scopeErr ? [scopeErr] : []),
-      ...名乗り
-        .slice(0, 20)
-        .map(([k, t]) => `- ${t}（key: ${k}）${繋ぎ先.get(k) ? ` ${繋ぎ先.get(k)}` : ""}`),
+      ...名乗り.slice(0, 20).map(([k, t]) => {
+        const 先 = 繋ぎ先.get(k);
+        return `- ${t}（key: ${k}）${先 ? ` ${先.url}` : ""}`;
+      }),
       ...(名乗り.length > 20 ? [`- ほか ${名乗り.length - 20} 件`] : []),
       ...(古さ ? ["", 古さ] : []),
     ].join("\n");

@@ -3322,3 +3322,21 @@ it("venue_info は過去の締切も出して、其の札を書く（第 945 回
   expect(説明, "venue_info の説明が讀めない（此の檢査の前提が崩れた）").not.toBe("");
   expect(説明, "過去が出ると書いて居ない").toContain("過ぎた分も全部出る");
 });
+
+it("曖昧な名の候補は、一番新しい版の繋ぎ先を添へる（第 946 回）", async () => {
+  /* 實測 2026-11-10: `venue_info({name: "KDD"})` の候補が `kdd.org/kdd2021/` を出して居た –
+   * 探して居る人は 2027 の KDD なのに、2021 の頁に送る。繋ぎ先は候補を選ぶための物なので、
+   * **探して居る側の年**でなければ意味が無い（第 750 回で足した物の意圖 – 選べる様にする）。 */
+  const 答 = await call("venue_info", { name: "KDD" });
+  const 候補 = 答.split("\n").filter((l) => l.startsWith("- "));
+  expect(候補.length, "候補が出て居ない（この檢查の前提が崩れた）").toBeGreaterThan(1);
+  for (const l of 候補) {
+    const url = /(https?:\/\/\S+)/.exec(l)?.[1] ?? "";
+    if (!url) continue;
+    expect(url, `候補の繋ぎ先が古い年版: ${l}`).not.toMatch(/20(1[0-9]|2[0-5])\b/);
+  }
+  /* 一番新しい版の link（`kdd2027`）を出す。 */
+  const kdd = 候補.find((l) => l.includes("key: sigkdd")) ?? "";
+  expect(kdd, "KDD の候補に繋ぎ先が無い").toMatch(/https?:\/\//);
+  expect(kdd, "一番新しい版の繋ぎ先では無い").toContain("kdd2027");
+});
