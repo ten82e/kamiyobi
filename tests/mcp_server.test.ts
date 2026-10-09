@@ -3052,3 +3052,40 @@ it("collection_stats も絞り込みの引数を黙って捨てない（第 922 
   const 空 = await call("collection_stats", { scope: "" });
   expect(空.split("\n")[0] ?? "", "空文字列で注を付けた").not.toContain("無視した絞り込み");
 });
+
+it("limit は整数で、打ち切って無い時は言わない（第 924 回）", async () => {
+  /* 實測 2026-11-10: `limit: 3.7` で「3.7 件まで表示」と出て、`slice(0, 3.7)` の 3 行と
+   * 数が合わない文になった。また 37 件しか無い時に `limit: 50` を渡すと「50 件まで表示」と
+   * 書きながら 37 行しか出ない – 読む人は 50 行が来ると思ふ。 */
+  const 全文 = (t: string): string => t;
+  const 劈いた = async (l: unknown): Promise<string> =>
+    全文(await call("search_deadlines", { query: "セキュリティ", limit: l }));
+  const 行數 = (t: string): number => t.split("\n").filter((l) => /^20\d\d-/.test(l)).length;
+
+  /* 打ち切る時は limit を言って、行數と一致する。 */
+  const 五 = await 劈いた(5);
+  expect(五.split("\n")[1] ?? "", "5 件で切り詰めた時に limit を言つて居ん").toContain(
+    "5 件まで表示・残り 32 件",
+  );
+  expect(行數(五), "5 件まで表示なのに 5 行出て居ない").toBe(5);
+
+  /* 小数は**切り捨て**（3.7 は 3 行、且つ文も整数）。 */
+  const 小 = await 劈いた(3.7);
+  expect(行數(小), "3.7 を 3 行に切り詰めなかった").toBe(3);
+  expect(小.split("\n")[1] ?? "", "小数をそのまま書いた").toContain("3 件まで表示");
+  expect(小.split("\n")[1] ?? "", "小数點が传来的").not.toContain(".");
+
+  /* 打ち切って居ないなら limit を言わない（37 件しか無いのに「50 件まで表示」と言わない）。 */
+  const 五十 = await 劈いた(50);
+  expect(五十.split("\n")[1] ?? "", "切り詰めて居ないのに limit を言つた").not.toContain(
+    "件まで表示",
+  );
+  expect(行數(五十), "37 件全部が出て居ない").toBe(37);
+
+  /* 推薦の道具も同じ（同じ書き方にした – 讀む人が二つで違う数字を見るのは，讀む人が二つの道具で違うのを見るのは、最も見つけ難い方だから）。 */
+  const 推 = await call("recommend_venues", {
+    paper: "Time-Sensitive Networking | tsn, scheduling",
+    limit: 3,
+  });
+  expect(推, "推薦で切り詰めた時に limit を言つて居ん").toContain("3 件まで表示");
+});

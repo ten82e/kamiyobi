@@ -919,7 +919,9 @@ function searchDeadlines(
   if (!query && !絞り込みだけ)
     return "検索語が空です。会議名・分野・開催地・締切の語をください（語を省くなら kind / kinds / rank / domestic / online / within_days の何れかを添へてください）。";
   const 限り = 數の引數("limit", args.limit, 1);
-  const limit = Math.min(限り.使ふ ?? 20, 100);
+  /* 件数は**整数**にする（小数を「3.7 件まで表示」の樣に書くと読めない – 第 924 回）。
+   * 切り詰めは `Math.floor`（3.7 は 3 件 – 4 件は出ない）。 */
+  const limit = Math.max(1, Math.floor(Math.min(限り.使ふ ?? 20, 100)));
   /* 「締切まで N 日」の窓（畫面の同じ名前の選擇欄と同じ物。第 872 回）。頭にも言ふ –
    * 窓で切つた事を默ると、AI が「これで全部」と讀む。使へない値は其の旨を言ふ（第 878 回）。 */
   const 窓の引數 = 數の引數("within_days", args.within_days, 1);
@@ -1048,7 +1050,9 @@ function searchDeadlines(
   const 見本 = hit.slice(0, limit).map((r) => line(r, now));
   return [
     頭,
-    `（日本時間の早い順。${limit} 件まで表示${hit.length > limit ? `・残り ${hit.length - limit} 件` : ""}）`,
+    /* 打ち切って無い時は **limit を言わない**（第 924 回 – 37 件しか無い時に「50 件まで表示」と
+     * 書くと、読む人は 50 行が来ると思ふ）。 */
+    `（日本時間の早い順${hit.length > limit ? `。${limit} 件まで表示・残り ${hit.length - limit} 件` : ""}）`,
     "",
     ...見本,
     ...(古さ ? ["", 古さ] : []),
@@ -1627,7 +1631,7 @@ function recommendVenues(
     ? `（無視した絞り込み ${無視した.join("・")} は此の道具では効きません – 順位と点で選びます）`
     : "";
   const 限り = 數の引數("limit", args.limit, 1);
-  const limit = Math.min(限り.使ふ ?? 10, 30);
+  const limit = Math.max(1, Math.floor(Math.min(限り.使ふ ?? 10, 30)));
   const lines = Recommender.parsePaperLines(paper);
   if (!lines.length)
     return "論文の題名を読み取れませんでした。題名を 1 行でください（`|` でキーワードと投稿先を添へられます）。";
@@ -1683,7 +1687,7 @@ function recommendVenues(
      * 札（「候補」・「重なりうすい」）を其の儘返すだけで、何を意味するかが讀めなかつた。
      * AI が「候補」を確度として取り違へると、推薦の强さが變はつてしまふ）。 */
     "札は「候補」＝いちばん近い会議との差が小さい、「重なりうすい」＝言葉の重なりが弱い、です（画面の『見方のてびき』と同じ）。数値は並べるための目安で、採択の予測ではありません。",
-    `（一致評価の高い順。${limit} 件まで表示${候補.length > limit ? `・残り ${候補.length - limit} 件` : ""}）`,
+    `（一致評価の高い順${候補.length > limit ? `。${limit} 件まで表示・残り ${候補.length - limit} 件` : ""}）`,
     "",
     ...見本.map((r, i) => {
       const 評價 = `${String(r.fit.label ?? "評価保留")}（${Number(r.fit.score) || 0} 点）`;
