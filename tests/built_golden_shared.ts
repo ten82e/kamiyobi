@@ -121,6 +121,9 @@ export const SEARCH_CANON = (() => {
     ["CATEGORY_LABELS_JA", /const CATEGORY_LABELS_JA[\s\S]*?\};/],
     ["CATEGORY_CHIP_HEADS_JA", /const CATEGORY_CHIP_HEADS_JA[\s\S]*?\)\);/],
     ["CATEGORY_CHIP_TAIL", /const CATEGORY_CHIP_TAIL = new RegExp\([\s\S]*?\);/],
+    /* 語が 2 個以上の時の「幅の語尾」の表（`queryTokenGroups` が読む – 第 917 回の畫面 probe で
+     * 「ネットワーク GPU」が eval に落ちた）。定義 inject を忘れると `is not defined` になる。 */
+    ["幅の語尾の語Ja", /const 幅の語尾の語Ja = [^;]*;/],
     ["PLACE_QUERY_ALIASES_JA", /const PLACE_QUERY_ALIASES_JA[\s\S]*?\];/],
     ["TOPIC_QUERY_ALIASES_JA", /const TOPIC_QUERY_ALIASES_JA[\s\S]*?\];/],
     /* 寄せ表の和名を助詞で割らん門（第 676 回）が持つ鍵の cache。門は上の二つの表を読むので、
@@ -436,6 +439,7 @@ export const SEARCH_CANON = (() => {
       "withoutFunctionGroups",
       "searchMatcher",
       "hayMatches",
+      "幅の語尾を継いだ形が解けるJa",
     ].map((name) => jsFunction(rec, name)),
   ];
 })();

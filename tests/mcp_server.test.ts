@@ -11,11 +11,12 @@
 
 import { spawn, spawnSync } from "node:child_process";
 import { copyFileSync, existsSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { recommendationAxes } from "../site/recommendation-core.ts";
 import Recommender from "../site/recommender.ts";
-import { site } from "./built_golden_shared.ts";
+import { FILTER_RUNTIME_STUBS, site } from "./built_golden_shared.ts";
 import { REPO_ROOT } from "./helpers.ts";
 import { jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
@@ -207,7 +208,7 @@ describe("數字と案内が畫面と同じ（第 714 回）", () => {
     return rows.filter(
       (r) =>
         照合(r.hay) === true &&
-        r.t >= now &&
+        !Recommender.deadlineRowIsPast(r, now) &&
         !r.est &&
         ["abstract", "paper", "journal"].includes(r.kind),
     ).length;
@@ -1012,7 +1013,9 @@ it("国内・オンラインの絞り込みが、画面のチェック欄と同�
   );
   const now = Date.now();
   const 既定 = (r: (typeof rows)[number]): boolean =>
-    r.t >= now && !r.est && ["abstract", "paper", "journal"].includes(r.kind);
+    !Recommender.deadlineRowIsPast(r, now) &&
+    !r.est &&
+    ["abstract", "paper", "journal"].includes(r.kind);
   const 國內 = rows.filter((r) => 既定(r) && (r.tags ?? []).indexOf("domestic-jp") >= 0).length;
   const オンライン = rows.filter(
     (r) => 既定(r) && Recommender.placeOffersOnline(r.ed.place),
@@ -1309,8 +1312,10 @@ it("within_days は、畫面の「締切まで N 日」と同じ行を返す（�
   /* 畫面の既定（今後・投稿締切の種別・推定を除く）と同じ土俵で數へる。 */
   const 期待 = (日: number, now: number, 過去も: boolean): number =>
     全行.filter((r) => {
-      /* 過去も出す時は「今後の物だけ」の絞り込みが外れる（畫面と同じ）。 */
-      if (!過去も && r.t < now) return false;
+      /* 過去も出す時は「今後の物だけ」の絞り込みが外れる（畫面と同じ）。過去かどうかは
+       * `deadlineRowIsPast` で見る – 時刻未確認の行は「一番遅い可能性の日」で判定する
+       * （第 917 回。`r.t < now` だと此方の數が画面より 1 件多くなる）。 */
+      if (!過去も && Recommender.deadlineRowIsPast(r, now)) return false;
       if (r.est) return false;
       if (!["abstract", "paper", "journal"].includes(r.kind)) return false;
       const d = typeof r.tShown === "number" && Number.isFinite(r.tShown) ? r.tShown : r.t;
@@ -2825,7 +2830,15 @@ it("道具の說明が、實際に出ているものを名指す（第 914 回�
     const 説 = 有二.find((t) => t.name === 名)?.description ?? "";
     for (const 語 of 語々) {
       if (process.env.DEBUG_TOOLS)
-        console.log("DEBUG", 名, JSON.stringify(語), 説.includes(語), "len", 説.length, "indexOf", 説.indexOf("選定理由"));
+        console.log(
+          名,
+          JSON.stringify(語),
+          説.includes(語),
+          "len",
+          説.length,
+          "indexOf",
+          説.indexOf("選定理由"),
+        );
       expect(説, `${名} の說明が「${語}」を名指して居ん`).toContain(語);
     }
   }
@@ -2834,4 +2847,60 @@ it("道具の說明が、實際に出ているものを名指す（第 914 回�
   expect(上記, "說明に在る節が實際の返り値に無い").toContain("分野別の会議数");
   const 一覧 = await call("list_upcoming", { days: 30, scope: "all", limit: 1 });
   expect(一覧, "說明に在る開催の節が實際の返り値に無い").toContain("開催（会期の行）");
+});
+
+it("畫面と MCP が、同じ問に同じ行を出す（第 917 回）", async () => {
+  /* 件數が一致することは第 858・894・895 回で確かめた。**どの行**が出るかまでは見て
+   * 居なかつた – AI が「載せる」と-entry 人や 画面と別の會報を答えても、中の件数は同じで
+   * 氣づかれない。畫面の絞り込みを**正本から**拔いて、同じ問の束で兩方の行を突き合はせる。 */
+  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  if (!existsSync(品書)) return;
+  const html = siteRuntime();
+  const rowsFile = join(tmpdir(), `kamiyobi-screen-rows-${process.pid}.json`);
+  writeFileSync(
+    rowsFile,
+    JSON.stringify(Recommender.candidateRows(JSON.parse(readFileSync(品書, "utf8")))),
+  );
+  afterAll(() => {
+    rmSync(rowsFile, { force: true });
+  });
+  const 畫面の行 = (問: string): string[] => {
+    const script = [
+      "const DAY = 86400000;",
+      `const FILTER = ${JSON.stringify(jsFunction(html, "filter"))};`,
+      `const NOW = ${Date.now()};`,
+      "class FakeDate extends Date { static now() { return NOW; } }",
+      "const fs = require('node:fs');",
+      `const catalog = JSON.parse(fs.readFileSync(${JSON.stringify(品書)}, 'utf8'));`,
+      FILTER_RUNTIME_STUBS, // 連結済みの 1 本の文字列（配列ではない）
+      /* 行は**此方で作って**渡す（`public/recommender.js` は ESM なので probe 里面の require で
+       * は讀めない – 此方差分はこっち側の同じ函数を使う）。 */
+      `const rows = JSON.parse(fs.readFileSync(${JSON.stringify(rowsFile)}, 'utf8'));`,
+      `const state = { q: ${JSON.stringify(問)}, cats: [], kind: "", rank: "", win: "all", est: false };`,
+      "const filter = new Function('Date','DAY','rows','state','sortAsc','sortKey',",
+      "  'return (' + FILTER + ')')(FakeDate, DAY, rows, state, false, 'time');",
+      "const filterRows = filter();",
+      "console.log(JSON.stringify([...new Set(filterRows.map((r) => r.ed.id))].sort()));",
+    ].join("\n");
+    const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+      encoding: "utf8",
+      timeout: 120_000,
+      /* 畫面と MCP の**時を同じにする** – 差分は時でずれる（實測 2026-11-06: 畫面 probe の
+       * 凍結時刻が 1 日前だつた爲に「今月」で 5 行が違ふ樣に見えた）。 */
+    });
+    expect(proc.status, `畫面の絞り込みが動かない（${問}）: ${proc.stderr.slice(0, 300)}`).toBe(0);
+    return JSON.parse(proc.stdout.trim()) as string[];
+  };
+  for (const 問 of ["AAMAS", "セキュリティ", "今月", "来週", "ネットワーク GPU", "ICDE"]) {
+    const 畫面 = 畫面の行(問);
+    const 答 = await call("search_deadlines", { query: 問, limit: 400 });
+    /* MCP の行は「… | 會議名（版の識別子）|…」の形 – 版の識別子を集めて比べる。 */
+    const mcp = [
+      ...new Set([...答.matchAll(/（([a-z0-9][a-z0-9.'-]*)）/g)].map((m) => m[1])),
+    ].sort();
+    expect(
+      mcp,
+      `「${問}」で兩者の行が違ふ（画面 ${畫面.length} 件 / MCP ${mcp.length} 件）`,
+    ).toEqual(畫面);
+  }
 });

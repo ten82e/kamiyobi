@@ -619,7 +619,12 @@ function 畫面の既定(
   const 窓の下限 = 窓あり && 過去も ? Recommender.withinDaysFloorMs(窓の日數, now) : 0;
   return list
     .filter((r) => {
-      if (!過去も && r.t < now) return false;
+      /* 過去かどうかは**畫面と同じ関数**で見る（第 917 回 – 實測 2026-11-07: 時刻未確認の行
+       * （`dateOnly`）は、畫面が「**一番遅い可能性の日**より前なら過ぎない」と判定する
+       * の。此方が `t < now`（一番早い可能性の日）で見て居たので、`10/09〜10/11` の幅の行を
+       * 此方だけ落とし、畫面と**別の行**を返して居た – 締切日の幅の行。研究者が「今月」を
+       * 聞いた時に AI が其の会議を出し損ねる）。 */
+      if (!過去も && Recommender.deadlineRowIsPast(r, now)) return false;
       if (!推定も && r.est) return false;
       if (窓あり) {
         const 日 = typeof r.tShown === "number" && Number.isFinite(r.tShown) ? r.tShown : r.t;
@@ -1175,7 +1180,7 @@ function listUpcoming(
   const hit = sortRows(
     list.filter(
       (r) =>
-        r.t >= now &&
+        !Recommender.deadlineRowIsPast(r, now) &&
         暦日(r) < 限り &&
         (全部 || 選ぶ.size === 0 || 選ぶ.has(r.kind) || 選ぶ.has(r.dl.kind)),
     ),
@@ -1343,7 +1348,7 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
     .map((r) => line(r, now));
   /* 今後の締切が無い会議では、**其の事を先に言ふ**（第 754 回 – 過ぎた行だけを並べると、
    * 讀む人（と AI）が「次はこれ」と取り違へる）。 */
-  const 今後 = hit.filter((r) => r.t >= now).length;
+  const 今後 = hit.filter((r) => !Recommender.deadlineRowIsPast(r, now)).length;
   const 斷り = 今後 ? "" : "※ この会議の今後の締切は収録にありません（下の行は過ぎた物です）。\n";
   /* **次の投稿締切**を先頭で言ふ（第 893 回 – 實測 2026-10-24: `venue sigkdd` の一覽の
    * 先頭は「反論期間終了」と「採否通知」で、「KDD の次の締切は？」と聞いた人が投稿の締切を
@@ -1352,7 +1357,7 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
   const 投稿の行 = hit
     .filter((r) => 投稿の種別.includes(r.kind))
     .sort((a, b) => Number(a.t < now) - Number(b.t < now) || a.t - b.t);
-  const 次の投稿 = 投稿の行.find((r) => r.t >= now);
+  const 次の投稿 = 投稿の行.find((r) => !Recommender.deadlineRowIsPast(r, now));
   /* 過ぎた分の「直近」は**一番遲い過去**（投稿の締切が今年の分まで出たなら其れを言ふ –
    * 一番古い過去を出すと「5 年前に終はつた會議」と讀めてしまふ）。 */
   const 直近の過去 = 投稿の行
@@ -1480,7 +1485,7 @@ function collectionStats(now: number): string {
     (n, c) => n + (Array.isArray(c.editions) ? c.editions.length : 0),
     0,
   );
-  const 今後 = list.filter((r) => r.t >= now).length;
+  const 今後 = list.filter((r) => !Recommender.deadlineRowIsPast(r, now)).length;
   const 日 = list.map((r) => r.localDate || new Date(r.t).toISOString().slice(0, 10)).sort();
   /* 生成時刻は**同じ檔案**から取る（畫面の右上の「データ生成」と同じ書き方・同じ函數）。
    * 畫面が最初に讀む窓は別の檔案なので、其方の生成時刻も添へる（古さの斷りは窓ごとに違ふ）。 */
