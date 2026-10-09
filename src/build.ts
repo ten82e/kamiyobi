@@ -1223,6 +1223,25 @@ function recordDeadlineLastDay(conf: JsonRecord): string | null | "" {
    （実測 – 収録にこれからの締切が在る会議 42 件のうち 19 件は、一番近い締切が品書の申告より
    前に在った。CADE は申告が 2027-06-01 で、一番近いのは 2027-02-16 の要旨の締切）。
    画面が数え直さずに言えるよう、近い日・その種別・本数をここに書く（第 298 回）。 */
+/** 収録の**推定の未来の締切**の最早日（`recordDeadlineNext` は `utc` の在る行だけを見るので、
+ * 推定の行は数へらない – 第 931 回）。将来が無い會議は空文字を返す（書かない）。 */
+function recordEstimatedNextDay(conf: JsonRecord, nowMs: number): string {
+  let bestMs = Number.NaN;
+  jsonRecords(conf.editions).forEach((edition) => {
+    /* 版の推定は**除外しない** – 實測 2026-11-15: `SOSP` の推定は版ごと推定（`sosp27-est`）で、
+     * 版のフラグで切ると一つも數へない。行の推定で十分（第 931 回）。 */
+    jsonRecords(edition.deadlines).forEach((deadline) => {
+      if (deadline.estimated !== true) return;
+      const day = typeof deadline.local_date === "string" ? deadline.local_date : "";
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return;
+      const noon = Date.parse(`${day}T00:00:00Z`) + 9 * 3600000;
+      if (!Number.isFinite(noon) || noon < nowMs) return;
+      if (!Number.isFinite(bestMs) || noon < bestMs) bestMs = noon;
+    });
+  });
+  return Number.isFinite(bestMs) ? new Date(bestMs - 9 * 3600000).toISOString().slice(0, 10) : "";
+}
+
 function recordDeadlineNext(
   conf: JsonRecord,
   nowMs: number,
@@ -1364,6 +1383,11 @@ export function toCatalog(
         entry.record_deadline_next_kind = next.kind;
         entry.record_deadline_count = next.count;
       }
+      /* **推定**の未来も申告する（第 931 回 – `recordDeadlineNext` は `utc` の在る行だけを数へる
+       * ので、推定の行（`utc` が無い）は入らない。實測 2026-11-15: `SOSP` に推定の
+       * 2027-03-19 が在るのに画面は「収録にあるのは過ぎた締切（2026-04-02）だけ」と言う – 讀む人は
+       * 其れで足りるが、**推定の日を知る必要も無いと決めない**。画面も MCP と同じ 사실을言える樣にする）。 */
+      entry.record_estimated_next = recordEstimatedNextDay(conf, safeNow.getTime());
     }
     /* 推薦の軸を**全版の歴**で求めて載せる（第 900 回 – 實測 2026-10-31: 画面は
      * `r.conf.recommendation_axes` が無いと其場で計算するが、品書の会議は窓の版しか持たない
@@ -4065,7 +4089,7 @@ export function toLlmsTxt(
     "- **数へ方の違い**: `search_deadlines` と `explain_word` は同じ語でも数が違う事がある – 前者は語の畳みと絞り込みを通し、後者は**素の照合**で数へる。`explain_word` は両方の数（素の照合・画面の既定の絞り込みを通した物）を並べて言ふので、どちらの数かは取り違えない。",
     '- **数字は画面と同じ**: 既定の絞り込み（今後の締切・投稿締切の種別・推定を除く）と、見る窓（`scope: "screen"`＝画面が最初に読む窓／`"all"`＝収録の全体）を揃へて在る。人が見る数と AI が言ふ数が違ふのが一番悪いので、隱した件数は返り値の頭に書く。',
     "- **データの生成時刻も言ふ**: `collection_stats` は収録のデータ生成時刻を、画面の右上と同じ書き方（`YYYY-MM-DD(曜) HH:MM JST`。秒は書かない）で返す。画面が最初に読む窓は別のファイルなので、其方の生成時刻も別の行で言ふ。生成から 3 日以上経つて居れば、一覧を返す道具も末尾に画面と同じ断りを付ける（**同じ関数から取る**ので、日数も閾値も画面と一致する）。",
-    "- **元の収録と建てた表示で数が違ふ事がある**: `collection_stats` は `data/snapshot.json`（元の収録）を数へるので、建てる時に束ねたり落としたりした分だけ**建てた表示より少し大きく出る事がある**（実測 2026-10-06: 版 2,659 ⇔ 建てた表示 2,603／締切の行 5,069 ⇔ 4,984）。人が読む数（此の索引や画面）と、MCP が言ふ数の出所が違ふので、突き合はせる時は此れを踏まえる。",
+    "- **元の収録と建てた表示で数が違ふ事がある**: `collection_stats` は `data/snapshot.json`（元の収録）を数へるので、建てる時に束ねたり落としたりした分だけ**建てた表示より少し大きく出る事がある**（実測 2026-10-06: 版 2,659 ⇔ 建てた表示 2,603／締切の行 5,069 ⇔ 4,984）。人が読む数（此の索引や画面）と、MCP が言ふ数の出所が違ふので、突き合はせる時は此れを踏まえる。**落ちるのは推定の行** – 実測 2026-11-15: 元の収録の推定の行 162 の中、|data.json| に在るのは 77 行だけで、落ちた 85 行は**推定で遠い年のもの**（`SOSP` の推定 2027-03-19 など – 画面には出ないが MCP は `include_estimated` で出せると言ふ）。その差を数へるときは「推定で前者だけに在る」と書く。",
     "- **引数**: `search_deadlines` は `query`（語）・`limit`（返す行数）・`include_past`（過ぎた締切も）・`include_estimated`（推定も）・`kinds`（種別。`kind` でも受ける）・`scope`（窓）。`list_upcoming` は `days`（今日から N 日）・`kind` / `kinds`（複数は配列で、どれかに当たる行）・`scope`。知らない種別は名指す。`venue_info` は `key` / `name`・`scope`。`explain_word` は `word`・`scope`。`search_deadlines` は等級（`A*` `A` `B` `C` `N`）の `rank` でも、`domestic`（国内研究会・国内シンポジウムのみ。日本で開かれる国際会議は入らない）・`online`（オンライン参加可のみ）・`within_days`（「締切まで N 日」の窓。JST の暦日で切り、`include_past: true` の時は同じ日数の過去側も含める）でも絞れる – どれも画面の同じ名前の選択欄・チェック欄と同じ判定（窓の式は画面と値を突き合わせて検査してある）。**語を省いて絞り込みだけでも引ける**（「国内の締切を全部」の形）。`recommend_venues` は `paper`（題名。`題名 | キーワード, キーワード | 投稿先` の形。1 行だけでも構わない）・`limit`（返す候補の数）。`collection_stats` は引数を取らない（収録の全体を数える）。",
     /* 此の数回に足した舉動を索引にも書く（第 767 回 – 索引は人が読む物でもあるので、道具の
      * 説明とずれて居ると「できる事」が傳はらん）。 */
