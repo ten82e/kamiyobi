@@ -1946,3 +1946,39 @@ it("venue_info は正式名で引き、版の識別子を會議に敿へる（�
   const 無し = await call("venue_info", { key: "nosuchconfkey" });
   expect(無し, "收錄に無い時に別の會議を返した").toContain("その会議は収録に在りません");
 });
+
+it("explain_word も search_deadlines と同じ案内を出す（第 888 回）", async () => {
+  /* 語を調べる道具は「0 件の時に画面が出す案内文を其の儘返す」と請け合つて居るのに、
+   * 檢索の方に足した案内（第 879〜884 回）が inert こなかつた。實測 2026-10-21:
+   * `explain_word("カメラレディ")` は 70 行ある事だけ言つて、其の種別の選び方を言はなかつた。
+   * `explain_word("ネットワーク GPU")` は「（案内は無し＝表の語では無い語）」と書きながら、
+   * 次の行に名簿の案内を出して居た（「無し」と言之ながら有る物を出すのは噓）。 */
+  /* ① 素の照合で行が在るのに、畫面の既定で 0 件に成る語 – 其の**理由**を言ふ。 */
+  const 種別 = await call("explain_word", { word: "カメラレディ" });
+  expect(種別, "0 件に成る理由を言つて居ん").toContain("画面の既定の絞り込みで 0 件に成る理由");
+  expect(種別, "種別の選び方を言つて居ん").toContain('kinds: ["camera_ready"]');
+  /* 檢索が言ふ件數と同じ（其の指定で實際に引いた數 – 第 762 回）。 */
+  const 檢索 = await call("search_deadlines", { query: "カメラレディ" });
+  const 件數 = (t: string): string =>
+    /kinds: \["camera_ready"\] で引けます（([\d,]+) 件/.exec(t)?.[1] ?? "";
+  expect(件數(種別), `語の案内と檢索で件數が違ふ: ${件數(種別)} ≠ ${件數(檢索)}`).toBe(件數(檢索));
+  /* ② 語ごとの件數（第 880 回）も出す。 */
+  const 死語 = await call("explain_word", { word: "ネットワーク GPU" });
+  expect(死語, "收錄に無い語を名指して居ん").toContain("は収録データにも見当たりません");
+  /* ③ 「案内は無し」は何も無い時だけ（次の行に名簿の案内が在るのに「無し」は噓）。 */
+  expect(死語, "名簿の案内が在るのに「無し」と書いた").toContain("収録の名簿に");
+  expect(死語.split("\n").some((l) => l.includes("案内は無し") && l.includes("名簿"))).toBe(false);
+  expect(
+    (await call("explain_word", { word: "ネットワーク GPU" })).includes("案内は無し"),
+    "案内が在るのに「無し」を出した",
+  ).toBe(false);
+  /* ④ URL（第 881 回）と受皿（第 884 回）も出す。 */
+  const URLの答 = await call("explain_word", { word: "https://icde2027.example.org/cfp" });
+  expect(URLの答, "URL の案内を出して居ん").toContain("検索語の URL の会議は収録に見当たりません");
+  const 受皿 = await call("explain_word", { word: "脳科学" });
+  expect(受皿, "此の表が何を出す畫面なのかを言つて居ん").toContain("この表が出すのは催し物の名前");
+  /* ⑤ 行が出る語には理由を付けない（餘計な斷りを增やさない）。 */
+  const 行あり = await call("explain_word", { word: "セキュリティ" });
+  expect(行あり, "行が出る語に理由を付けた").not.toContain("0 件に成る理由");
+  expect(行あり).toContain("素の照合で");
+});

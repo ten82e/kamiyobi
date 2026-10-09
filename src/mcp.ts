@@ -646,6 +646,35 @@ function URLの案内(query: string): string[] {
   ];
 }
 
+/** 表に出さん種別の語が打たれた時の文（第 879 回・第 888 回）。
+ *
+ * `search_deadlines` と `explain_word` の**兩方**が出す（書き寫すと、片方だけが古くなる –
+ * 實測 2026-10-21: 檢索は `kinds: ["camera_ready"]` を教へて居たのに、語を調べる方は默つて居た）。
+ * 件數は**其の指定で實際に引いた數**（第 762 回と同じ約束 – 其の儘打ち直せる）。 */
+function 種別の報べ(
+  query: string,
+  list: Row[],
+  now: number,
+  args: Record<string, unknown> | undefined,
+  // 素で當たつた行（無ければ其の窓の行）の中から、その種別だけの行で數へる。
+  素の?: Row[],
+): string[] {
+  const 種別の語 = 隱れた種別の語(query);
+  if (!種別の語.length) return [];
+  const 選べる = 種別の語.map((語) => `「${語}」`).join("・");
+  /* 種別の鍵に直す（表示の語から – 增えた種別が落ちない様に選びの表から引く）。 */
+  const 鍵々 = 種別の語
+    .map((語) =>
+      Object.keys(Recommender.kindLabelTable()).find((k) => Recommender.kindLabelTable()[k] === 語),
+    )
+    .filter((k): k is string => Boolean(k));
+  if (!鍵々.length) return [];
+  const 件數 = 畫面の既定(素の ?? list, now, { ...(args ?? {}), kinds: 鍵々 }).length;
+  return [
+    `検索語は${選べる}の種別に当たります（表には投稿締切だけを出します）。kinds: ${JSON.stringify(鍵々)} で引けます（${件數} 件当たります）。`,
+  ];
+}
+
 /** 語が 0 件の時、**収録の會議の名前**に當たつて居ないかを見る（第 867 回）。
  *
  * 畫面の 0 件案内は「名簿に在るのに締切の行が 1 本も無い會議」を名指す（第 294 回）が、
@@ -1098,13 +1127,35 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
   const 古さ = 古さの斷り(生成, now);
   const 照合 = Recommender.searchMatcher(Recommender.expandRelativeMonths(word, now), now);
   const 件數 = list.filter((r) => 照合(r.hay) === true).length;
+  /* 0 件の時に出す案内は、**素の照合で行が在つても**要る（第 888 回）。畫面は見える一覧が 0 の
+   * 時に名簿・種別・打ち直しの話を出す（第 875 回）– 語を調べる人も同じ話が必要。實測
+   * 2026-10-21: `explain_word("カメラレディ")` は 70 行ある事だけ言つて、其の種別の選び方
+   * （`kinds: ["camera_ready"]`）を言はなかつた（「畫面が出す案内文を其の儘返す」に反する）。 */
+  const 窓の外 = 窓の外の件數(照合, 名);
+  const 案内 = guidance(word, 0, list, now);
+  const 果て = 窓の外 ? "" : 果ての案内(word, list, 名);
+  const 日數 = 日數幅の案内(word, list, now, {});
+  const 種別の報 = 種別の報べ(word, list, now, {});
+  const 語ごと = 語ごとの案號(word, list, now);
+  const URLの報 = URLの案内(word);
+  const 名簿 = 名乘りの案内(word, list);
+  const 手 = retypeTips(word, 畫面の既定(list, now, {}), now);
+  const 指南 = [
+    ...案内,
+    ...(果て ? [果て] : []),
+    ...日數,
+    ...(種別の報.length ? [種別の報] : []),
+    ...語ごと,
+    ...URLの報,
+    ...名簿,
+  ];
+  /* 受皿は何も立たなんだ時だけ（`search_deadlines` と同じ門 – 第 884 回）。 */
+  const 受皿 = 指南.length || 手.length ? [] : 受皿の案內();
   if (件數 > 0) {
-    /* 行が出る時は**中身を少し見せる**（第 796 回 – 前は「search_deadlines で引けます」とだけ
-     * 言つて居たので、語を調べた人がもう一往復する必要が在つた。AI も同じ）。行は
-     * `search_deadlines` と同じ形（`line()`）で、3 行まで。 */
+    /* 行が出る時は**中身を少し見せる**（第 796 回）。行は `search_deadlines` と同じ形
+     * （`line()`）で、3 行まで。 */
     const 素の行 = list.filter((r) => 照合(r.hay) === true);
-    /* **兩方の數を言ふ**（第 797 回 – 素の照合と、画面の既定の絞り込みを通した數は違ふ。片方だけ
-     * 言ふと「同じ語で違ふ數字」に成る – 第 796 回に實測: `ポスター` は素 9 行・絞り込み後 0 件）。*/
+    /* **兩方の數を言ふ**（第 797 回 – 素の照合と、画面の既定の絞り込みを通した數は違ふ）。 */
     const 畫面の行 = 畫面の既定(素の行, now, {});
     const 行 = sortRows(畫面の行).slice(0, 3);
     return [
@@ -1113,20 +1164,15 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
       ...(畫面の行.length > 行.length
         ? [`- …ほか ${畫面の行.length - 行.length} 行（search_deadlines で引けます）`]
         : []),
+      /* 畫面の既定で 0 件に成る時は、その**理由**を添える（第 888 回）。 */
+      ...(畫面の行.length === 0 && (指南.length || 受皿.length)
+        ? ["画面の既定の絞り込みで 0 件に成る理由:", ...指南, ...受皿].map((n) =>
+            n === "" ? "" : `- ${n}`,
+          )
+        : []),
       ...(古さ ? ["", 古さ] : []),
     ].join("\n");
   }
-  const 窓の外 = 窓の外の件數(照合, 名);
-  const 案内 = guidance(word, 0, list, now);
-  /* 日數の幅（「1か月以内」）と、收錄の果てより先の日付も、`search_deadlines` と同じ事を言ふ
-   * （第 871 回 – 語を調べる人が「では何と打てばよいか」まで一往復で分かる樣に。窓の外の案内と
-   * 同じ判斷で、窓の外に行が在る時は果ての話を重ねない）。 */
-  const 果て = 窓の外 ? "" : 果ての案内(word, list, 名);
-  const 日數 = 日數幅の案内(word, list, now, {});
-  const 他の案内 = [...(果て ? [果て] : []), ...日數];
-  /* 打ち直しの見當も渡す（第 763 回 – `search_deadlines` と同じ扱ひに揃へる。語を調べる人が
-   * 「では何と打てばよいか」まで一往復で分かる樣に）。件數は照合そのもので數へる（第 762 回）。 */
-  const 手 = retypeTips(word, 畫面の既定(list, now, {}), now);
   return [
     `「${word}」は 0 行です。画面が此の時に出す案内:`,
     ...(窓の外
@@ -1134,21 +1180,16 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
           `- 画面が最初に読む窓（${list.length} 行）には 1 行もありませんが、**収録の全体には ${窓の外} 行あります**（scope: "all" で引けます）`,
         ]
       : []),
-    ...(案内.length || 他の案内.length
-      ? [...案内, ...他の案内].map((n) => `- ${n}`)
+    /* 「案内は無し」は**何も立たなんだ時だけ**（第 875 回の檢索と同じ – 次の行に名簿の案内が
+     * 在るのに「無し」と書くのは噓だつた）。 */
+    ...(指南.length || 受皿.length
+      ? [...指南, ...受皿].map((n) => `- ${n}`)
       : ["- （案内は無し＝表の語では無い語）"]),
-    /* 語が 0 行でも、**収録の會議の名前**に當たつて居れば其の旨を言ふ（第 867 回 –
-     * `search_deadlines` と同じ扱ひに揃へる。「この語は知らない」と「此の會議は締切を持たん」
-     * は別の事で、後者は次の一手（會期を見る・upcoming.md を見る）に繋がる）。 */
-    ...名乘りの案内(word, list).map((n, i) => (i === 0 ? `- ${n}` : `  ${n}`)),
     ...手.map((t) => `- 打ち直すなら ${t}`),
     ...(古さ ? ["", 古さ] : []),
   ].join("\n");
 }
 
-/** 收錄その物の數（第 769 回）。「何件を覆つて居るか」「どのファイルが在るか」を一往復で答へる –
- * AI が「この收錄は何か」を説明する時、人にファイルを渡す時に要る。**數字は llms.txt と同じ物**を
- * 同じ入口（`data/snapshot.json`）から數へる。`scope` は取らない（收錄の全體を數へるのが役目）。 */
 function collectionStats(now: number): string {
   const list = allRows();
   /* 会議と版は**收錄その物**から數へる（行から數へると「締切を持つ物」だけに成り、建てた時の
@@ -1383,7 +1424,7 @@ const TOOLS = [
   {
     name: "explain_word",
     description:
-      "1 つの語が収録に何行当たるか（**素の照合で数へるので、`search_deadlines` の絞り込みを通した数とは違ふ事が在る**。行が出る時は中身を 3 行まで見せる）と、0 行の時に画面が出す案内文を其の儘返す（人が見る説明と AI の説明を同じにする）。**0 行の時は「打ち直すなら」の次の一手も返す**（件数は実際に引いた時の行数と一致）。",
+      "1 つの語が収録に何行当たるか（**素の照合で数へるので、`search_deadlines` の絞り込みを通した数とは違ふ事が在る**。行が出る時は中身を 3 行まで見せる）と、0 行の時に画面が出す案内文を其の儘返す（人が見る説明と AI の説明を同じにする。**`search_deadlines` と同じ案内を出す** – 表に出さん種別の選び方・収録に無い語・URL・この表が何を出す画面なのかも言ふ）。**0 行の時は「打ち直すなら」の次の一手も返す**（件数は実際に引いた時の行数と一致）。",
     inputSchema: {
       type: "object",
       properties: {
