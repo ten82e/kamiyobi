@@ -3192,3 +3192,21 @@ it("相対の語がどう解けたかを頭に書く（畫面と同じ – 第 9
   /* 展開できない形に判定を出さない（騒音を増やさない – `2026年` だけは年その物）。 */
   expect(await 注("セキュリティ"), "普通の語に判定を出した").toBe("");
 });
+
+it("曖昧な語の常時の案内を出す（畫面と同じ – 第 942 回）", async () => {
+  /* 實測 2026-11-09: 畫面は `ics` を打つと件數欄に「二つの物があり得ます」の案内を出すが、
+   * MCP は行を出すだけで何も言はなかつた – AI が「カレンダーのファイルは？」と聞かれて
+   * 會議の行を返すのと同じ結果になる。畫面と同じ `uiWordAlwaysNoteJa` を使ふ。 */
+  const 答 = await call("search_deadlines", { query: "ics", limit: 3 });
+  const 案内 = 答.split("\n").find((l) => l.startsWith("「ics」のことなら")) ?? "";
+  expect(案内, "曖昧さの案内が出て居ん").not.toBe("");
+  expect(案内).toContain("二つの物があり得ます");
+  /* 此の道具を使ふ AI に、配付物の名を添える（畫面の UI の名は此では使へない）。 */
+  const 添 = 答.split("\n").find((l) => l.startsWith("（この道具が出せるのは行だけです")) ?? "";
+  expect(添, "配付物の名が出て居ん").toContain("deadlines.ics");
+  /* 行が出ない時は出さない（0 件案内が同じ事を言ふ – 畫面と同じ決まり）。 */
+  for (const 語 of ["セキュリティ", "締切"]) {
+    const 素 = await call("search_deadlines", { query: 語, limit: 3 });
+    expect(素, `「${語}」に關係無い案内が出た`).not.toContain("この道具が出せるのは行だけです");
+  }
+});

@@ -1046,7 +1046,17 @@ function searchDeadlines(
     .map((n) => String(n).trim())
     .filter((n) => n.length > 0);
   const 解決の文 = 相対の解決.length ? `\n${相対の解決.map((n) => `判定: ${n}`).join(" / ")}` : "";
-  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内` : ""}${讀めない引數}）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${種別一種 ? `／kind は kinds と共に与えられたので見て居ません` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}`;
+  /* 行が**見えて居る**時にだけ、行が當たるかどうかに関係なく言ふ案内（`ics` のやうな
+   * 曖昧さ – 畫面の `uiWordAlwaysNoteJa` と同じ。第 942 回）。0 件の時は 0 件案内が同じ事を
+   * 言ふので、此の道具でも重ねない（畫面と同じ決まり）。 */
+  const 常時 = String(Recommender.uiWordAlwaysNoteJa(query) ?? "").trim();
+  /* 常時の案内は畫面の UI の名を示すので、**此の道具を使ふ AI** には配付物の名を添える
+   * （`llms.txt` が同じ名を持つ – 第 942 回）。 */
+  const 常時の文 =
+    hit.length && !絞り込みだけ && 常時
+      ? `\n${常時}\n（この道具が出せるのは行だけです。カレンダーのファイルは deadlines.ics、購読 URL はページ（README の購読手順）に在ります）`
+      : "";
+  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内` : ""}${讀めない引數}）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${種別一種 ? `／kind は kinds と共に与えられたので見て居ません` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${常時の文}`;
   if (!hit.length) {
     /* 畫面と同じ約束 – 案内は「素の當たりが 0」の時に出る物なので、絞り込みで 0 に成つた時は
      * 其の旨を書く（絞り込みを外せば出る事がある）。 */
@@ -1101,6 +1111,13 @@ function searchDeadlines(
         if (URLの案内(query).length) return [];
         if (隱れた種別の語(query).length) return [];
         if (語ごとの案號(query, list, now).length) return [];
+        /* 行が**見えて居る**時にだけ、行が當たるかどうかに関係なく言ふ案内（`ics` のやうな
+         * 曖昧さ – 畫面の `uiWordAlwaysNoteJa` と同じ。第 942 回）。0 件の時は 0 件案内が同じ事を
+         * 言ふので、此の道具でも重ねない。 */
+        if (hit.length && !素の.length) {
+          const 常時 = String(Recommender.uiWordAlwaysNoteJa(query) ?? "").trim();
+          if (常時) return [常時];
+        }
         const 手 = retypeTips(query, 畫面の既定(list, now, args), now);
         if (手.length) return []; // 「打ち直すなら」が立つ時は其方に讓る（重ねて二度言はない）。
         return 受皿の案內();
