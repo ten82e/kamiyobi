@@ -18,7 +18,9 @@ type ConferenceRecord = CandidateRow["conf"] & {
   dblp?: string | null;
   sources?: string[];
   legacy_keys?: string[];
-  recommendation_axes?: RecommendationAxes;
+  /* `recommendation_axes` は `CandidateRow["conf"]` に入る（推薦の核が正本のまま –
+   * 第 901 回。此處で `RecommendationAxes` ともう一度書くと、兩方の型の交差になり
+   * `CandidateRow[]` が `AppRow[]` に當たらなかつた）。 */
 };
 type EditionRecord = CandidateRow["ed"] & {
   id?: string;

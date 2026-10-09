@@ -2440,3 +2440,33 @@ it("品書の推薦の軸は全版で數へて居る – 新規の會議を新�
   /* 內部の語を出さない（畫面と同じ約束）。 */
   expect(text, "內部の語をそのまま出した").not.toMatch(/(established|emerging|unverified)\b/);
 });
+
+it("推薦の軸が畫面の行まで届く（第 901 回）", async () => {
+  /* 第 900 回は品書に軸を載せたが、`normalizeConference` が其れを落として居た – 行列の
+   * `conf.recommendation_axes` が常に空で、畫面は其場で計算するesy fall back に落ちて居た。
+   * 實測 2026-10-31: `ICDE` の行が「新規・確認した年 1 年」を持って居た。 */
+  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  if (!existsSync(品書)) return;
+  const catalog = JSON.parse(readFileSync(品書, "utf8"));
+  const rows = Recommender.candidateRows(catalog as never) as unknown as Array<{
+    conf?: {
+      key?: string;
+      recommendation_axes?: {
+        venue_maturity?: { status?: string; evidence?: { yearsObserved?: number } };
+      };
+    };
+  }>;
+  expect(rows.length, "此の檢査の前提（行が出て居ない）が崩れた").toBeGreaterThan(0);
+  const 軸のある行 = rows.filter((r) => r.conf?.recommendation_axes);
+  expect(軸のある行.length, "行の conf に推薦の軸が届いて居ん").toBe(rows.length);
+  /* 窓の版しか無くて其場で計算すると 1 年になる行が、2 年以上の値を持って居る。 */
+  const icde = rows.find((r) => r.conf?.key === "icde");
+  expect(
+    icde?.conf?.recommendation_axes?.venue_maturity?.status,
+    "ICDE の成熟度が見当たらない",
+  ).toBeTruthy();
+  expect(
+    Number(icde?.conf?.recommendation_axes?.venue_maturity?.evidence?.yearsObserved ?? 0),
+    "ICDE の観測年数が 1 年以下 – 窓の版から其場で計算して居る",
+  ).toBeGreaterThan(1);
+});
