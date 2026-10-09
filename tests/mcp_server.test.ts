@@ -2253,3 +2253,18 @@ it("品書が再學習の重みを持つ – 畫面の推薦が MCP と同じ順
     true,
   );
 });
+
+it("推薦の札の意味を、畫面てびきと同じ言い回しで添える（第 896 回）", async () => {
+  /* 實測 2026-10-27: 札（「候補」・「重なりうすい」）を其の儘返すだけで、何を意味するか讀めなかつた。
+   * AI が「候補」を「當たる見込みが高い」と取ると、推薦の强さが變はつてしまふ – 札は**一致の
+   * 證據の强さ**で、採択の予測ではない（畫面のてびきの「いちばん近い會議との差が小さい」）。 */
+  const text = await call("recommend_venues", {
+    paper:
+      "Time-Sensitive Networking Scheduling for Deterministic Industrial Networks | tsn, real-time, scheduling",
+    limit: 3,
+  });
+  expect(text, "札の意味を言つて居ん").toContain("いちばん近い会議との差が小さい");
+  expect(text, "札の意味を言つて居ん").toContain("言葉の重なりが弱い");
+  /* 數値（點）の讀み方も默らない（並べるための目安で採択の予測ではない – 畫面のてびきの約束）。 */
+  expect(text, "數値の讀み方を言つて居ん").toContain("採択の予測ではありません");
+});
