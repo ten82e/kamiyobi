@@ -3339,4 +3339,18 @@ it("曖昧な名の候補は、一番新しい版の繋ぎ先を添へる（第 
   const kdd = 候補.find((l) => l.includes("key: sigkdd")) ?? "";
   expect(kdd, "KDD の候補に繋ぎ先が無い").toMatch(/https?:\/\//);
   expect(kdd, "一番新しい版の繋ぎ先では無い").toContain("kdd2027");
+  /* 他の會議でも同じ（古い link を出して居る會議が他にも在る – 實測 2026-11-10 で
+   * 年が 6 以上離れた會議が 122 件在つた。其の中から 5 つを見る）。 */
+  for (const [名, 鍵] of [
+    ["SOSP", "sosp"],
+    ["NSDI", "nsdi"],
+    ["CCS", "ccs"],
+    ["AAAI", "aaai"],
+    ["3DV", "3dv"],
+  ] as Array<[string, string]>) {
+    const 答 = await call("venue_info", { name: 名 });
+    const 行 = 答.split("\n").find((l) => l.includes(`key: ${鍵}`));
+    if (行 === undefined) continue; // 曖昧で無い（一つに決まる）會議は此の檢查の對象外
+    expect(行, `${名} の候補の繋ぎ先が古い年版: ${行}`).not.toMatch(/20(1[0-9]|2[0-5])\b/);
+  }
 });
