@@ -2996,3 +2996,38 @@ it("recommend_venues は、効かない絞り込みの引数を名指す（第 9
   const 空 = await call("recommend_venues", { paper: 題, limit: 2, rank: "" });
   expect(空.split("\n")[0] ?? "", "空文字列で名指した").not.toContain("無視した絞り込み");
 });
+
+it("二つ與えた片方を黙って捨てない（第 921 回）", async () => {
+  /* 默って片方を捨てると、讀む人は両方効いたと思ふ。二つの道具で其れが在つた（實測 2026-11-09）。 */
+  const 檢 = await call("search_deadlines", {
+    query: "セキュリティ",
+    kinds: ["paper"],
+    kind: "notification",
+    limit: 1,
+  });
+  expect(檢.split("\n")[0] ?? "", "`kinds` と `kind` を両方渡しても名指して居ん").toContain(
+    "kind は kinds と共に与えられたので見て居ません",
+  );
+  /* 片方だけなら名指さない（騒音を增やさない）。 */
+  const 片 = await call("search_deadlines", { query: "セキュリティ", kind: "paper", limit: 1 });
+  expect(片.split("\n")[0] ?? "", "片方だけなのに名指した").not.toContain("見て居ません");
+  /* どちらを渡しても答えは同じ（`kinds` が勝つ – 第 727 回の約束）。 */
+  const 両方 = await call("search_deadlines", {
+    query: "セキュリティ",
+    kinds: ["paper"],
+    kind: "notification",
+    limit: 1,
+  });
+  const 件數 = (t: string): string => /締切: ([\d,]+) 件/.exec(t)?.[1] ?? "-1";
+  expect(件數(両方), "`kind` を效かせてしまつた").toBe(件數(片));
+  /* venue_info も – `key` と `name` を両方渡した時は `name` を見て居ない。 */
+  const 會 = await call("venue_info", { key: "sigkdd", name: "ICDE" });
+  expect(會, "`key` と `name` を両方渡しても名指して居ん").toContain(
+    "name は key と共に与えられたので見て居ません",
+  );
+  const 片會 = await call("venue_info", { key: "sigkdd" });
+  expect(片會, "片方だけなのに名指した").not.toContain("見て居ません");
+  /* 空文字は「渡して無い」と見る。 */
+  const 空 = await call("venue_info", { key: "sigkdd", name: "" });
+  expect(空, "空文字列で名指した").not.toContain("見て居ません");
+});
