@@ -2933,3 +2933,42 @@ it("recommend_venues の見出しは、題名の最初の一行だけを出す�
   expect(長い頭, "長い題名を切り詰めなかった").toContain("…");
   expect(長い頭, "切り詰めたのに 80 字出て居る").not.toContain("A".repeat(60));
 });
+
+it("道具の返り値に、壊れた補間の跡（$）が残らない（第 919 回）", async () => {
+  /* 2026-11-08 の事故: 編集中に模板リテラルの `${…}` を数箇所壊し、biome の誤復旧で
+   * `$…` に変わった（`$限定.斷り`・`$件數`）。**型検査は通る** – 文字列の中の只是別の文字列だ
+   * からで、`includes()` が落ちたのは其の後の検査だけ。一览無盡の事故なので、**返り値に `$` が
+   * 出ないこと**を検査にする（此の MCP の返り値に 正当なドルは 1 つも無い –
+   * 實測 2026-11-08 で 10 呼びを實測して 0 件）。 */
+  const 呼び: Array<[string, Record<string, unknown>]> = [
+    ["search_deadlines", { query: "セキュリティ" }],
+    ["search_deadlines", { query: "セキュリティ", include_past: true }],
+    ["search_deadlines", { query: "カメラレディ" }],
+    ["search_deadlines", { query: "1か月以内" }],
+    ["search_deadlines", { query: "脳科学" }],
+    ["search_deadlines", { query: "https://icde2027.example.org/cfp" }],
+    ["search_deadlines", { query: "ネットワーク GPU", scope: "nosuch" }],
+    ["list_upcoming", { days: 7 }],
+    ["list_upcoming", { days: 30, scope: "all" }],
+    ["list_upcoming", { days: 30, kind: "nosuchkind" }],
+    ["venue_info", { key: "sigkdd" }],
+    ["venue_info", { name: "KDD" }],
+    ["venue_info", { key: "sc26" }],
+    ["venue_info", { key: "nosuchkey" }],
+    ["explain_word", { word: "ネットワーク GPU" }],
+    ["explain_word", { word: "締切" }],
+    ["recommend_venues", { paper: "Time-Sensitive Networking | tsn", limit: 3 }],
+    ["recommend_venues", { paper: "1行だけ", limit: 2 }],
+    ["collection_stats", {}],
+  ];
+  const 見つかった: string[] = [];
+  for (const [道具, 引數] of 呼び) {
+    const 答 = await call(道具, 引數);
+    const 行 = 答.split("\n").find((l) => l.includes("$"));
+    if (行 !== undefined) 見つかった.push(`${道具} ${JSON.stringify(引數)}: ${行.slice(0, 80)}`);
+  }
+  expect(
+    見つかった,
+    `返り値にドルが出て居る（壊れた補間の跡 – 第 919 回）:\n${見つかった.join("\n")}`,
+  ).toEqual([]);
+});
