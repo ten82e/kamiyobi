@@ -1371,7 +1371,26 @@ function recommendVenues(args: { paper?: unknown; limit?: unknown }, now: number
     "",
     ...見本.map((r, i) => {
       const 評價 = `${String(r.fit.label ?? "評価保留")}（${Number(r.fit.score) || 0} 点）`;
-      return `${i + 1}. 一致評価 ${評價}｜${line(r.row as unknown as Row, now)}`;
+      /* **選定理由** – 畫面のカードと同じ言ひ回し・同じ要素（`site/app.ts` の `reasonSignals`
+       * と同じ 5 つ + 過去掲載先）。實測 2026-10-28: AI が「何で此の會報か」を根拠付きで
+       * 言へなかつた（點と札だけ）。畫面が持つ物を默つて落とすと、推薦の強さが分からん。 */
+      const agg = (r.match as { agg?: Record<string, number> } | undefined)?.agg ?? {};
+      const 理由: string[] = [];
+      const 號: Array<[string, number]> = [
+        ["分野の一致", agg.domain ?? 0],
+        ["会議名一致", agg.venueName ?? 0],
+        ["採択論文一致", agg.paper ?? 0],
+        ["日本語一致", agg.jp ?? 0],
+        ["主題の一致", agg.tags ?? 0],
+      ];
+      for (const [名, 値] of 號) if (値 > 0) 理由.push(名);
+      if ((agg.venue ?? 0) > 0) 理由.push("過去掲載先一致");
+      const 意味順 = (r.fit as { semanticRank?: number | null }).semanticRank;
+      if (意味順) 理由.push(`意味検索順位 ${意味順}`);
+      if (r.boosted) 理由.push("同じ分野（掲載先から推定）");
+      return `${i + 1}. 一致評価 ${評價}｜${line(r.row as unknown as Row, now)}｜選定理由: ${
+        理由.length ? 理由.join(" / ") : "目立つ一致はないが候補に入った"
+      }`;
     }),
   ].join("\n");
 }

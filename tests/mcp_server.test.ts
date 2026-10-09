@@ -2268,3 +2268,55 @@ it("推薦の札の意味を、畫面てびきと同じ言い回しで添える�
   /* 數値（點）の讀み方も默らない（並べるための目安で採択の予測ではない – 畫面のてびきの約束）。 */
   expect(text, "數値の讀み方を言つて居ん").toContain("採択の予測ではありません");
 });
+
+it("推薦の行に、畫面と同じ選定理由が付く（第 897 回）", async () => {
+  /* 實測 2026-10-28: MCP の推薦行は「點」と「札」だけで、**何で此の會報か**が分からなかつた。
+   * 畫面のカードは「選定理由: 分野の一致 / 会議名一致」と言ふ（`site/app.ts` の
+   * `reasonSignals` – 同じ 5 つ + 過去掲載先。重みは書かない – 畫面が「スコアと合はない」
+   * 實測で削つた）。默つて落とすと、AI は根拠を言へず「おすすめです」に成る。 */
+  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  if (!existsSync(品書)) return;
+  const catalog = JSON.parse(readFileSync(品書, "utf8")) as {
+    reranker?: unknown;
+    conferences?: unknown[];
+  };
+  const paper =
+    "Time-Sensitive Networking Scheduling for Deterministic Industrial Networks | tsn, real-time, scheduling";
+  /* 畫面が表示する札と同じ理由を此方で組む。 */
+  const now = Date.now();
+  const rows = Recommender.candidateRows(catalog as never);
+  const pool = (rows as unknown as Parameters<typeof Recommender.deadlineRowIsPast>[0][])
+    .filter((r) => !Recommender.deadlineRowIsPast(r as never, now))
+    .concat(Recommender.journalRows(catalog.conferences ?? [], now) as unknown as never[])
+    .concat(Recommender.pastRepresentatives(rows as never, now) as unknown as never[]);
+  Recommender.setNameIdf(Recommender.buildNameIdf(catalog.conferences ?? []));
+  Recommender.setReranker(catalog.reranker ?? null);
+  const 正 = Recommender.venueRecommendations(
+    pool as never,
+    Recommender.parsePaperLines(paper),
+    null,
+    now,
+    { fieldedLexical: true },
+  ).filter((r) => r.fit.score >= 10);
+  expect(正.length, "此の檢査の前提（候補が出る題名）が崩れた").toBeGreaterThan(0);
+  const 理由の形 = (r: { match?: { agg?: Record<string, number> }; boosted?: boolean }): string => {
+    const agg = r.match?.agg ?? {};
+    const 號: Array<[string, number]> = [
+      ["分野の一致", agg.domain ?? 0],
+      ["会議名一致", agg.venueName ?? 0],
+      ["採択論文一致", agg.paper ?? 0],
+      ["日本語一致", agg.jp ?? 0],
+      ["主題の一致", agg.tags ?? 0],
+    ];
+    const 出 = 號.filter(([, v]) => v > 0).map(([名]) => 名);
+    if ((agg.venue ?? 0) > 0) 出.push("過去掲載先一致");
+    if (r.boosted) 出.push("同じ分野（掲載先から推定）");
+    return 出.length ? 出.join(" / ") : "目立つ一致はないが候補に入った";
+  };
+  const 期待 = 理由の形(正[0]);
+  const text = await call("recommend_venues", { paper, limit: 5 });
+  expect(text, "選定理由を言つて居ん").toContain("選定理由: ");
+  expect(text, `先頭の候補の理由が畫面と違ふ: ${期待}`).toContain(`選定理由: ${期待}`);
+  /* 重みは書かない（畫面と同じ – 數字を並べると「點と合はない」と誤讀させる）。 */
+  expect(text, "重みの數字を書いた").not.toMatch(/選定理由: [^\n]*\d+ 点/);
+});
