@@ -17,6 +17,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { recommendationAxes } from "../site/recommendation-core.ts";
 import Recommender from "../site/recommender.ts";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -1374,6 +1375,29 @@ function recommendVenues(args: { paper?: unknown; limit?: unknown }, now: number
       /* **選定理由** – 畫面のカードと同じ言ひ回し・同じ要素（`site/app.ts` の `reasonSignals`
        * と同じ 5 つ + 過去掲載先）。實測 2026-10-28: AI が「何で此の會報か」を根拠付きで
        * 言へなかつた（點と札だけ）。畫面が持つ物を默つて落とすと、推薦の強さが分からん。 */
+      /* **締切の確認状況** – 畫面のカードと同じ 4 つの軸（`site/app.ts` の
+       * `deadlineTrust`。軸その物は `recommendation-core.ts` の共有計算）。實測
+       * 2026-10-29: MCP の推薦行は日付と種別だけを出して、**その締切が公式確認できて居るか**
+       * を言はなかつた（AI が「次は 2027-01-29 です」と言へても、推定の日付なのか分からん）。 */
+      const 軸 = recommendationAxes(
+        r.row.conf as unknown as Record<string, unknown>,
+        Number(r.fit.score) || null,
+        now,
+      );
+      const 信賴の札: Record<string, string> = {
+        official: "公式確認",
+        publisher: "出版社確認",
+        "curated-manual": "手動確認",
+        aggregator: "集約情報",
+        assumption: "推定",
+        unverified: "未確認",
+      };
+      const 締切の信賴 = 軸.deadline_trust;
+      const 確認狀況 =
+        `締切の確認状況: 日付 ${信賴の札[締切の信賴.date] ?? String(締切の信賴.date)}` +
+        ` ／ 時刻 ${信賴の札[締切の信賴.time] ?? String(締切の信賴.time)}` +
+        ` ／ タイムゾーン ${信賴の札[締切の信賴.timezone] ?? String(締切の信賴.timezone)}` +
+        ` ／ 種別 ${信賴の札[締切の信賴.kind] ?? String(締切の信賴.kind)}`;
       const agg = (r.match as { agg?: Record<string, number> } | undefined)?.agg ?? {};
       const 理由: string[] = [];
       const 號: Array<[string, number]> = [
@@ -1388,7 +1412,7 @@ function recommendVenues(args: { paper?: unknown; limit?: unknown }, now: number
       const 意味順 = (r.fit as { semanticRank?: number | null }).semanticRank;
       if (意味順) 理由.push(`意味検索順位 ${意味順}`);
       if (r.boosted) 理由.push("同じ分野（掲載先から推定）");
-      return `${i + 1}. 一致評価 ${評價}｜${line(r.row as unknown as Row, now)}｜選定理由: ${
+      return `${i + 1}. 一致評価 ${評價}｜${line(r.row as unknown as Row, now)}｜${確認狀況}｜選定理由: ${
         理由.length ? 理由.join(" / ") : "目立つ一致はないが候補に入った"
       }`;
     }),

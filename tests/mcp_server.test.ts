@@ -13,6 +13,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { copyFileSync, existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
+import { recommendationAxes } from "../site/recommendation-core.ts";
 import Recommender from "../site/recommender.ts";
 import { site } from "./built_golden_shared.ts";
 import { REPO_ROOT } from "./helpers.ts";
@@ -2319,4 +2320,53 @@ it("推薦の行に、畫面と同じ選定理由が付く（第 897 回）", as
   expect(text, `先頭の候補の理由が畫面と違ふ: ${期待}`).toContain(`選定理由: ${期待}`);
   /* 重みは書かない（畫面と同じ – 數字を並べると「點と合はない」と誤讀させる）。 */
   expect(text, "重みの數字を書いた").not.toMatch(/選定理由: [^\n]*\d+ 点/);
+});
+
+it("推薦の行に、畫面と同じ締切の確認狀況が付く（第 898 回）", async () => {
+  /* 實測 2026-10-29: 推薦行は日付と種別だけを出して、**その締切が公式確認できて居るか**を
+   * 言はなかつた。AI が「次は 2027-01-29 です」と言へても、推定の日付なのか分からん。
+   * 畫面のカードは 4 つの軸（日期・時刻・タイムゾーン・種別）を出す – 軸の計算は
+   * `site/recommendation-core.ts` の共有関數（畫面と同じ入口）。 */
+  const paper =
+    "Time-Sensitive Networking Scheduling for Deterministic Industrial Networks | tsn, real-time, scheduling";
+  const text = await call("recommend_venues", { paper, limit: 3 });
+  const 行 = text.split("\n").filter((l) => /^\d+\. 一致評価 /.test(l));
+  expect(行.length, "推薦行が出て居ん（此の檢查の前提が崩れた）").toBeGreaterThan(0);
+  for (const l of 行) {
+    expect(l, "確認狀況が付いて居ない行がある").toContain("締切の確認状況: 日付");
+    for (const 軸 of ["時刻", "タイムゾーン", "種別"])
+      expect(l, `${軸}の軸が無い`).toContain(`${軸} `);
+    /* **內部の表記を見せない**（畫面と同じ約束 – `official` をそのまま出さない）。 */
+    expect(l, "內部の語をそのまま出した").not.toMatch(
+      /(official|unverified|assumption|aggregator|publisher)\b/,
+    );
+  }
+  /* 軸の値は共有の函數が數へたものと同じ（畫面と一體）。 */
+  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  if (existsSync(品書)) {
+    const catalog = JSON.parse(readFileSync(品書, "utf8")) as { conferences?: unknown[] };
+    const 語: Record<string, string> = {
+      official: "公式確認",
+      publisher: "出版社確認",
+      "curated-manual": "手動確認",
+      aggregator: "集約情報",
+      assumption: "推定",
+      unverified: "未確認",
+    };
+    const now = Date.now();
+    for (const conf of (catalog.conferences ?? []).slice(0, 40)) {
+      const 軸 = recommendationAxes(conf as Record<string, unknown>, null, now);
+      const 信 = 軸.deadline_trust;
+      const 期待 = `締切の確認状況: 日付 ${語[信.date] ?? 信.date} ／ 時刻 ${語[信.time] ?? 信.time} ／ タイムゾーン ${
+        語[信.timezone] ?? 信.timezone
+      } ／ 種別 ${語[信.kind] ?? 信.kind}`;
+      /* 會議名と confidence の語が揃ふ行が在れば、その文が出tein – 全部の會議を一就有に
+       * 並べると行が可笑しいので、會議名と狀況の兩方が同じ行にある時だけ確かめる。 */
+      const 名 = String((conf as { title?: unknown }).title ?? "").slice(0, 12);
+      if (名 && text.includes(名)) {
+        expect(text.includes(`｜${期待}｜`), `「${名}」の確認狀況が共有の函數と違ふ`).toBe(true);
+        break;
+      }
+    }
+  }
 });
