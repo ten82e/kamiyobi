@@ -2182,7 +2182,7 @@ it("推薦の pool は畫面と同じ組み立て（第 894 回）", async () =>
   /* 畫面の pool を此方で組み立てる（`site/app.ts` の `pool` と同じ 3 つ）。 */
   const pool = (rows as unknown as Parameters<typeof Recommender.deadlineRowIsPast>[0][])
     .filter((r) => !Recommender.deadlineRowIsPast(r as never, now))
-    .concat(Recommender.journalRows(catalog.conferences, now) as unknown as never[])
+    .concat(Recommender.journalRows(catalog.conferences ?? [], now) as unknown as never[])
     .concat(Recommender.pastRepresentatives(rows as never, now) as unknown as never[]);
   const 題 =
     "Time-Sensitive Networking Scheduling for Deterministic Industrial Networks | tsn, real-time, scheduling, deterministic";
@@ -2203,4 +2203,53 @@ it("推薦の pool は畫面と同じ組み立て（第 894 回）", async () =>
   const 過ぎた = 正.filter((r) => Number(r.row.t) < now).length;
   if (過ぎた > 0)
     expect(text, "過ぎた候補の件數を言つて居ん").toContain(`うち ${過ぎた} 件は締切が過ぎた会議`);
+});
+
+it("品書が再學習の重みを持つ – 畫面の推薦が MCP と同じ順に成る（第 895 回）", async () => {
+  /* 實測 2026-10-26: 畫面は `catalog.reranker` を讀む樣にして居る（`site/app.ts` の
+   * `setReranker(catalog.reranker ?? null)`）が、**品書が其れを載せて居なかつた**ので常に
+   * `null`（重み無し）だつた。推薦の順が畫面（語の一致だけ）と MCP（重み付き）で違つて居た –
+   * 第 894 回で pool を揃へたのは其の半分。サイズは 5 KB（品書 2.2 MB の 0.2%）。 */
+  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  if (!existsSync(品書)) return; // 品書は建てた時だけ在る（此の檔案の約束）。
+  const catalog = JSON.parse(readFileSync(品書, "utf8")) as {
+    reranker?: unknown;
+    conferences?: unknown[];
+  };
+  expect(catalog.reranker, "品書が再學習の重みを載せて居ん").toBeTruthy();
+  /* 畫面が讀む通りに讀んで、MCP と同じ順序が出ることを確かめる（第 894 回の pool で）。 */
+  const paper =
+    "Time-Sensitive Networking Scheduling for Deterministic Industrial Networks | tsn, real-time, scheduling, deterministic";
+  const now = Date.now();
+  const rows = Recommender.candidateRows(catalog as never);
+  const pool = (rows as unknown as Parameters<typeof Recommender.deadlineRowIsPast>[0][])
+    .filter((r) => !Recommender.deadlineRowIsPast(r as never, now))
+    .concat(Recommender.journalRows(catalog.conferences ?? [], now) as unknown as never[])
+    .concat(Recommender.pastRepresentatives(rows as never, now) as unknown as never[]);
+  Recommender.setNameIdf(
+    Recommender.buildNameIdf((catalog as { conferences?: unknown[] }).conferences ?? []),
+  );
+  Recommender.setReranker(catalog.reranker ?? null);
+  const 正 = Recommender.venueRecommendations(
+    pool as never,
+    Recommender.parsePaperLines(paper),
+    null,
+    now,
+    {
+      fieldedLexical: true,
+    },
+  )
+    .filter((r) => r.fit.score >= 10)
+    .slice(0, 5)
+    .map((r) => String(r.row.conf.title));
+  const text = await call("recommend_venues", { paper, limit: 5 });
+  for (const 名 of 正) {
+    expect(text, `畫面が表示する上位（${名}）が MCP の返りに無い`).toContain(名);
+  }
+  /* 順序も確かめる（上の 5 つが同じ順に並ぶ – 先頭の 3 つで見る）。 */
+  const 順 = 正.slice(0, 3);
+  const 位置 = 順.map((名) => text.indexOf(名));
+  expect(位置[0] < 位置[1] && 位置[1] < 位置[2], `上位の順が MCP と違ふ: ${位置.join("・")}`).toBe(
+    true,
+  );
 });

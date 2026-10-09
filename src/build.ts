@@ -400,7 +400,8 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
     "含まれるかを示す semantic_status（ready / lexical-only）。自分自身のハッシュは持てない。",
   "catalog.json":
     "締切画面向けの現在・近日期間カタログ。画面の最初の一覧はこのファイルに載る締切だけを出し、" +
-    "それより先を見るには画面で「収録の全体を読み込む」を選ぶ。",
+    "それより先を見るには画面で「収録の全体を読み込む」を選ぶ。投稿先推薦の再学習の重みも" +
+    "この中（`reranker`）にあります。",
   "recommendation-index.json": "投稿先推薦の会議プロフィールと埋め込み参照。",
   "data.csv":
     "1 行 1 締切のフラット表。列の意味は下の「data.csv の列」に書く。文字コードは BOM を付けない" +
@@ -1369,6 +1370,11 @@ export function toCatalog(
     window: { lookback_days: 30, upcoming_days: Math.max(1, days) },
     history_ref: "data.json",
     recommendation_ref: "recommendation-index.json",
+    /* 再學習の重みを品書に載せる（第 895 回 – 畫面は `catalog.reranker` を讀む樣にして居るが
+     * （`site/app.ts` の `setReranker(catalog.reranker ?? null)`）、此迄 *此れを載せて居なかつ
+     * た* ので常に `null` だつた。實測 2026-10-26: 推薦の順が畫面（語の一致だけ）と MCP
+     * （重み付き）で違つて居た。サイズは 5 KB で、品書 2.2 MB の 0.2%）。 */
+    reranker: readRerankerModel(),
     // カレンダー配信の中身の実測（件数と収録の最初/最後の締切日）。画面の注記はここを読む –
     // 画面側で数え直すと、配信物と同じ数を言えなくなる（第 289 回）。
     calendar: calendar ?? null,
@@ -1377,22 +1383,26 @@ export function toCatalog(
 }
 
 /** The recommendation payload: venue profiles and one representative availability record. */
+/** 再學習の重み（`data/recommender-reranker.json`）を讀む。讀めなければビルドを落とす –
+ * 默つて無しにして畫面が「語の一致だけ」に落ちるのを避ける爲（第 895 回）。 */
+function readRerankerModel(): Record<string, unknown> {
+  const rerankerPath = join(ROOT, "data", "recommender-reranker.json");
+  try {
+    const value = JSON.parse(readFileSync(rerankerPath, "utf8"));
+    if (!isValidRerankerModel(value)) throw new Error("model contract is invalid");
+    return value as unknown as Record<string, unknown>;
+  } catch (error) {
+    throw new Error(`recommender reranker ${rerankerPath} を読めない: ${String(error)}`);
+  }
+}
+
 export function toRecommendationIndex(
   data: Record<string, unknown>,
   now: Date | null | undefined,
   sourceStatus: Record<string, string> = {},
 ): Record<string, unknown> {
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
-  const rerankerPath = join(ROOT, "data", "recommender-reranker.json");
-  const reranker = (() => {
-    try {
-      const value = JSON.parse(readFileSync(rerankerPath, "utf8"));
-      if (!isValidRerankerModel(value)) throw new Error("model contract is invalid");
-      return value;
-    } catch (error) {
-      throw new Error(`recommender reranker ${rerankerPath} を読めない: ${String(error)}`);
-    }
-  })();
+  const reranker = readRerankerModel();
   const conferences = jsonRecords(data.conferences).map((conf) => {
     const editions = jsonRecords(conf.editions)
       .map((edition) => {
