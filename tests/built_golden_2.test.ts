@@ -1796,6 +1796,11 @@ it("「評価でしぼる」でのぞいた件数を件数欄に出す（SPEC §
    * 等級の判定は recommender の正本（厳密比較）を使う — 選択欄と同じ比較式でないと
    * 「A」が「A*」に誤マッチして数字が合うはずのものが合わなくなる。 */
   const runtime = siteRuntime();
+  /* 長い論文は最初の 20 行だけを見る（第 954 回 – 39 KB を貼ると 120 秒逾も固まつて居た）。
+   * 切つたことは**件數欄**で言ふ（默つて切ると「參考にして居ない」がばれる）。 */
+  expect(runtime, "截つた行の宣告が件數欄に無い").toContain("行を省いて調べました");
+  expect(runtime, "截つた行を數へて居ない").toContain("截つた行 =");
+
   const rec = readFileSync(join(site, "recommender.js"), "utf8");
   const filterSrc = jsFunction(runtime, "filter");
   const rankMatchesSrc = jsFunction(rec, "rankMatches");
