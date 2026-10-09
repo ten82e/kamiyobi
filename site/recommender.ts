@@ -422,10 +422,10 @@ function normalizeConference(value: unknown): ConferenceRecord | null {
   return {
     key: typeof value.key === "string" ? value.key : "",
     link: typeof value.link === "string" ? value.link : undefined,
-    /* **推薦の軸をAlongす**（第 901 回 – 實測 2026-10-31: 品書が載せた `recommendation_axes` を
+    /* **推薦の軸を通す**（第 901 回 – 實測 2026-10-31: 品書が載せた `recommendation_axes` を
      * 畫面が読めずに其場で計算して居た。品書の會議は窓の版しか無いため历年が 1 年になり、
-     * `ICDE` が「新規・確認した年 1 年」になる（実物は「成長中・確認した年 7 年」）。 Norma-
-     * lize が落とした.Fields は載せて持つ – 讀むputes 側が `isRecommendationAxes` で檢査する）。 */
+     * `ICDE` が「新規・確認した年 1 年」になる（実物は「成長中・確認した年 7 年」）。
+     * 正規化が落とした野は載せて持つ – 読む側が `isRecommendationAxes` で檢査する）。 */
     recommendation_axes: isRecord(value.recommendation_axes)
       ? value.recommendation_axes
       : undefined,
