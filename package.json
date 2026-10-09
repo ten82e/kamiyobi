@@ -17,7 +17,7 @@
     "health-gate": "node scripts/health-gate.ts public/health.json --report work/health-gate-violations.json --observation-baseline data/source-observation-baseline.json",
     "test": "vitest run",
     "clean:tmp": "node scripts/clean_tmp.ts",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p site/tsconfig.json",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p site/tsconfig.json && tsc --noEmit -p scripts/tsconfig.json",
     "check": "biome check src scripts site/*.ts tests --files-ignore-unknown=false",
     "format": "biome format --write src scripts site/*.ts tests",
     "update": "npm run validate:data && npm run validate:data -- public/data.json && npm run health-gate",

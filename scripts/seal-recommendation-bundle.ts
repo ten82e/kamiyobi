@@ -80,9 +80,15 @@ function readPassedReport(
   };
 }
 
-const bytes = readFileSync(embeddingsPath);
+/* 埋め込みの索引は **JSON の文字列**として讀む（第 934 回 – 此の script は型検査に
+ * 入れて居なかつたので、`readFileSync` の返り値（Buffer）を其のまま `JSON.parse` と
+ * digest へ渡す不整合が 2 箇所残って居た）。文字列にしてから兩方に渡す。 */
+const bytes = readFileSync(embeddingsPath, "utf8");
 const embedding = JSON.parse(bytes) as {
-  manifest?: { runtime_version?: unknown; models?: { en?: { revision?: unknown } } };
+  manifest?: {
+    runtime_version?: unknown;
+    models?: { en?: { revision?: unknown }; multi?: { revision?: unknown } };
+  };
 };
 const manifest = embedding.manifest;
 if (!manifest?.runtime_version || !manifest.models?.en?.revision)
