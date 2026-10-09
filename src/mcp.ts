@@ -14,7 +14,7 @@
  * （`node src/mcp.ts search "セキュリティ"`）。同じ道を人が確かめられる。
  */
 
-import { readFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { recommendationAxes } from "../site/recommendation-core.ts";
@@ -1253,6 +1253,13 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
   ].join("\n");
 }
 
+/** 容量を MiB / KB で示す（畫面の `bytesJa` と同じ式 – 兩方で單位が違ふと読めない）。 */
+function 容量の文(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "";
+  if (bytes < 1024 * 1024) return `約 ${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `約 ${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function collectionStats(now: number): string {
   const list = allRows();
   /* 会議と版は**收錄その物**から數へる（行から數へると「締切を持つ物」だけに成り、建てた時の
@@ -1270,12 +1277,26 @@ function collectionStats(now: number): string {
   const 元の生成 = 收錄.snapshot_metadata?.generated_at;
   const 窓の生成 = catalog() ? 生成の表示(catalog()?.generated_at) : "";
   const 古さ = 古さの斷り(元の生成, now);
+  /* 容量は**測った値だけ**書く（第 906 回 – 實測 2026-10-31: 畫面は「収録の全体」を押す前に
+   * 容量を數字で示す樣にした（第 905 回）が、AI 側は「全部取り込むのにどれ-elles要るか」が
+   * 分から無い。品書が `history_bytes` を載せて居れば其れを使い、無い時は**書かない**
+   * – 數をでっち上げない。畫面と同じ単位（MiB）に揃へる）。 */
+  const 全体容量 = (() => {
+    const 申告 = Number((catalog() as { history_bytes?: unknown } | null)?.history_bytes ?? 0);
+    if (Number.isFinite(申告) && 申告 > 0) return 容量の文(申告);
+    try {
+      const 実 = statSync(join(ROOT, "public", "data.json")).size;
+      return 実 > 0 ? 容量の文(実) : "";
+    } catch {
+      return "";
+    }
+  })();
   const ファイル = [
     "index.html（画面。絞り込みと検索）",
     "upcoming.md / upcoming.html（直近 180 日の表）",
     "data.csv（1 行 1 締切の平坦な表）",
     "deadlines.ics（カレンダー。1 日 1 件の終日）",
-    "data.json（収録の全体。機械可読の正）",
+    `data.json（収録の全体。機械可読の正${全体容量 ? `・${全体容量}` : ""}）`,
     "llms.txt（機械向けの索引。何が何処に在るか）",
   ];
   return [

@@ -2558,3 +2558,27 @@ it("「収録の全体」を押す前に、読み込む容量を数字で示す�
   expect(無し, "容量が無い時に從來の言葉へ戻らない").toContain("大きめのデータ");
   expect(無し, "容量が無い時に數を作つた").not.toMatch(/(KB|MB)/);
 });
+
+it("collection_stats は data.json の容量を、測れる時にだけ書く（第 906 回）", async () => {
+  /* 畫面は「収録の全体」を押す前に容量を数字で示す樣にした（第 905 回）。AI 側も
+   * 「全部取り込むのにどれくらい要るか」が分から無いと、道具を使ふ判断がつかない。
+   * 品書が `history_bytes` を載せて居れば其れを使い、無ければ其の物を測り、
+   * **どちらも無ければ書かない**（數をでっち上げない）。 */
+  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  const text = await call("collection_stats", {});
+  expect(text, "ファイルの案内が出て居ん").toContain("data.json（収録の全体");
+  if (!existsSync(品書)) {
+    expect(text, "集群が無くても容量をでっち上げた").not.toMatch(/約 [\d.]+ (KB|MB)/);
+    return;
+  }
+  const catalog = JSON.parse(readFileSync(品書, "utf8")) as { history_bytes?: number };
+  const 実 = statSync(join(REPO_ROOT, "public", "data.json")).size;
+  expect(実, "此の檢査の前提（data.json が在る）が崩れた").toBeGreaterThan(0);
+  /* 品書の申告（過去實測で 9,490,437 バイト）と同じ測定結果に丸められる。 */
+  const 期待 = catalog.history_bytes
+    ? `約 ${(Number(catalog.history_bytes) / (1024 * 1024)).toFixed(1)} MB`
+    : `約 ${(実 / (1024 * 1024)).toFixed(1)} MB`;
+  expect(text, `容量の数字が容量の實測と違ふ（${期待} の筈）`).toContain(
+    `data.json（収録の全体。機械可読の正・${期待}）`,
+  );
+});
