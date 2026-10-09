@@ -2669,3 +2669,29 @@ it("真偽の引数は文字列でも効く – 読めない値は名指す（�
   /* 省いた時は名指さない。 */
   expect(基本, "省いたのに名指した").not.toContain("true か false で指定してください");
 });
+
+it("list_upcoming に会期（開催）の行を出す（第 910 回）", async () => {
+  /* 実測 2026-11-02: 会議がいつなのかを聞いた AI は、畫面・MCP・カレンダーのどれでも
+   * 会期の行が出ずに「会議が在らない」と答えて居た – 会期の行は upcoming.md /
+   * upcoming.html にしか無かった。会期は edition の event_start / event_end（分段が在る版は
+   * event_segments）に在るので、同じ所から引く（推定の版は入れない – 畫面の表と同じ規則）。 */
+  const text = await call("list_upcoming", { days: 30, scope: "all", limit: 1 });
+  expect(text, "開催の節が無い").toContain("開催（会期の行）");
+  /* **どこにも無い物ではない**ことを書く（AI が表に讀みに行く様に）。 */
+  expect(text, "同じ表の場所を言つて居ん").toContain("upcoming.md");
+  expect(text, "畫面とカレンダーに出ない事を言つて居ん").toContain(
+    "画面の一覧とカレンダーには出ない",
+  );
+  const 件 = /開催（会期の行）: ([\d,]+) 件/.exec(text)?.[1]?.replace(/,/g, "") ?? "0";
+  expect(Number(件), "開催の行が 1 件も出て居ん").toBeGreaterThan(0);
+  /* 件数と行数が合う（切り詰めた時も它的に書く – 第 765 回の決めごと）。 */
+  const 行 = text
+    .split("\n")
+    .slice(text.split("\n").findIndex((l) => l.includes("開催（会期の行）")) + 1)
+    .filter((l) => l.startsWith("- 20"));
+  expect(行.length, `開催の行が ${件} 件と違ふ`).toBe(Number(件));
+  /* 各行は会期を持つ（`- 2026-10-11(土) 〜 2026-10-15(木) | 会議名（key: …）`）。 */
+  expect(行[0], "会期の行の形が違う").toMatch(/^- 20\d\d-\d\d-\d\d\(.\).*\| .+（key: [^）]+）/u);
+  /* 締切の行も出て居る（開催の節を足しても、締切の行は減らして居ない）。 */
+  expect(text, "締切の行が見えない").toMatch(/^20\d\d-\d\d-\d\d/mu);
+});

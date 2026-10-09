@@ -416,7 +416,8 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
     "日付の列が**締切の日を指すかその他の予定日かを区別する欄は `date_field`**（2026-10-06 の" +
     "実測で 4,984 行のうち 311 行が締切ではない日 – 締切として数えると間違える。収録が増えれば" +
     "この数も動く）。",
-  "upcoming.md": "直近の締切と会期の表。",
+  "upcoming.md":
+    "直近 180 日の締切と開催の表。**会期の行はこの表にだけ在る**（畫面・MCP・`deadlines.ics` は締切の行だけ – MCP の `list_upcoming` はこの表と同じ會期の行を続けて書く）。",
   "upcoming.html":
     "`upcoming.md` と同じ表を、ブラウザでそのまま読める形にしたもの（第 263 回）。Markdown の" +
     " 方は機械が読む用のまま残してある。",
@@ -4032,9 +4033,15 @@ export function toLlmsTxt(
     ...MANAGED_OUTPUT_FILES.map((name) => {
       const note = LLMS_OUTPUT_NOTES_JA[name] ?? "";
       if (name === "upcoming.md") {
-        return `- ${name}：直近 ${String(
-          Number((safeConfig.site as Record<string, unknown> | null)?.upcoming_days ?? 180),
-        )} 日の締切と開催の表。`;
+        /* **会期の行はこの表にだけ在る**と書く（第 910 回 – 實測 2026-11-02: 會議がいつなのかを
+         * 聞いた AI は此れに讀みに行かずに「会議が在らない」と答えて居た）。窗の日数は
+         * このビルドの設定から取る（畫面と同じ）。 */
+        return (
+          `- ${name}：直近 ${String(
+            Number((safeConfig.site as Record<string, unknown> | null)?.upcoming_days ?? 180),
+          )} 日の締切と開催の表。**会期の行はこの表にだけ在ります**（画面・MCP・` +
+          "`deadlines.ics` は締切の行だけ – MCP の `list_upcoming` は同じ会期の行を続けて書きます）。"
+        );
       }
       /* 収録の範囲は、索引を読む側が最初に知りたがる情報なのに、かつての索引は「現在・近日期間」
        * という語だけで、何日先まで・何件・いつまでを一切言わなかった（第 291 回）。値は必ず

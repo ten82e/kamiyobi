@@ -1015,6 +1015,84 @@ function searchDeadlines(
   ].join("\n");
 }
 
+/** 会期（開催）の行 – `upcoming.md` と同じ規則で并列へ出す（第 910 回）。
+ *
+ * 実測 2026-11-02: 会議がいつなのかを聞いた AI は、畫面・MCP・
+ * カレンダーのどれでも会期の行が出ずに「会議が在らない」と答えて居た。会期の行は
+ * upcoming.md / upcoming.html にしか無かった。会期は edition の event_start /
+ * `event_end` に在るので、同じ所から引く（推定の版は入れない – 畫面の表と同じ規則）。 */
+function 開催の行(
+  days: number,
+  now: number,
+): Array<{
+  開始: number;
+  終了: number;
+  会議: string;
+  key: string;
+  版: string;
+  開催地: string;
+  link: string;
+}> {
+  const 限り = Recommender.withinDaysLimitMs(days, now);
+  const 出: Array<{
+    開始: number;
+    終了: number;
+    会議: string;
+    key: string;
+    版: string;
+    開催地: string;
+    link: string;
+  }> = [];
+  for (const c of snapshot().conferences ?? []) {
+    const 会議 = c as {
+      key?: unknown;
+      title?: unknown;
+      acronym?: unknown;
+      link?: unknown;
+      editions?: unknown[];
+    };
+    const 略稱 = String(会議.acronym ?? "");
+    for (const e of 会議.editions ?? []) {
+      const ed = e as {
+        id?: unknown;
+        estimated?: unknown;
+        event_start?: unknown;
+        event_end?: unknown;
+        event_segments?: unknown;
+        place?: unknown;
+        link?: unknown;
+      };
+      /* 推定の版は入れない（畫面の表と同じ規則 – 第 299 回）。 */
+      if (ed.estimated === true) continue;
+      /* 會期は**区分ごと**に 1 行（`event_segments` が在る版は分段 – `upcoming.md` と同じ規則。
+       * 實測 2026-11-02: 分段を見ないと 30 日窓で 85 行に対して表は 91 行になる）。 */
+      const 区分: Array<{ start?: unknown; end?: unknown }> =
+        Array.isArray(ed.event_segments) && ed.event_segments.length
+          ? (ed.event_segments as Array<{ start?: unknown; end?: unknown }>)
+          : ed.event_start
+            ? [{ start: ed.event_start, end: ed.event_end ?? ed.event_start }]
+            : [];
+      for (const seg of 区分) {
+        const 開始 = Date.parse(String(seg.start ?? ""));
+        if (!Number.isFinite(開始)) continue;
+        const 終了 = Date.parse(String(seg.end ?? seg.start ?? "")) || 開始;
+        /* 期間に掛かって居る会期だけ（会期中の会議も「開催中」として出す）。 */
+        if (終了 < now || 開始 >= 限り) continue;
+        出.push({
+          開始,
+          終了,
+          会議: 略稱 || String(会議.title ?? 会議.key ?? ""),
+          key: String(会議.key ?? ""),
+          版: String(ed.id ?? ""),
+          開催地: String(ed.place ?? ""),
+          link: String(ed.link ?? 会議.link ?? ""),
+        });
+      }
+    }
+  }
+  return 出.sort((a, b) => a.開始 - b.開始 || a.会議.localeCompare(b.会議, "ja"));
+}
+
 function listUpcoming(
   args: { days?: unknown; kind?: unknown; scope?: unknown },
   now: number,
@@ -1080,8 +1158,31 @@ function listUpcoming(
     "",
     ...hit.slice(0, 100).map((r) => line(r, now)),
     ...(hit.length > 100 ? ["", `（100 件まで表示・残り ${hit.length - 100} 件）`] : []),
+    ...開催の節(開催の行(days, now)),
     ...(古さ ? ["", 古さ] : []),
   ].join("\n");
+}
+
+/** 會期の行の節（第 910 回）。`upcoming.md` と同じ規則 – **會期の行はあの表にしか無い**ため、
+ * 此方で出さないと AI は「会議が在らない」と答えてしまふ。件數が無い時は**黙る**（あると
+ * 分るので、無い時の文は何も足さない）。 */
+function 開催の節(行: ReturnType<typeof 開催の行>): string[] {
+  if (!行.length) return [];
+  const 日 = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
+  const 曜日 = (ms: number): string =>
+    ["日", "月", "火", "水", "木", "金", "土"][new Date(ms).getUTCDay()] ?? "";
+  return [
+    "",
+    `開催（会期の行）: ${行.length} 件（同じ窓・同じ表。画面の一覧とカレンダーには出ない。upcoming.md と同じ物）`,
+    ...行
+      .slice(0, 100)
+      .map(
+        (r) =>
+          `- ${日(r.開始)}(${曜日(r.開始)}) ${r.終了 === r.開始 ? "" : `〜 ${日(r.終了)}(${曜日(r.終了)}) `}` +
+          `| ${r.会議}（key: ${r.key}${r.版 ? `・${r.版}` : ""}）${r.開催地 ? ` | ${r.開催地}` : ""}${r.link ? ` ${r.link}` : ""}`,
+      ),
+    ...(行.length > 100 ? [`- ほか ${行.length - 100} 件`] : []),
+  ];
 }
 
 function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now: number): string {
@@ -1640,7 +1741,7 @@ const TOOLS = [
   {
     name: "list_upcoming",
     description:
-      "今日から N 日以内の締切を日本時間の早い順に返す（**種別では絞らない**（既定）– `kind` を渡すとその種別だけに絞れます。複数は配列で（どれかに当たる行）。登録・カメラレディ・採否通知も混ざる。**推定の締切も入ります**（search_deadlines の既定は外すので、条件を揃えて比べるときは `include_estimated: true` を添えてください）。上の境目は JST の暦日で切り、`search_deadlines` の `within_days` と同じ数え方です（同じ条件なら同じ件数になります）。100 件を超える時は其の旨と残り件数を末尾に書く。行にはランク（`CCF A・CORE A*` の形。無い行は「ランク未確認」）・会期・確認の状態の札も付きます。",
+      "今日から N 日以内の締切を日本時間の早い順に返し、**その窓の会議の開催（会期）も続けて書く**（会期の行は画面・カレンダーには無い – upcoming.md と同じ物）。**種別では絞らない**（既定）– `kind` を渡すとその種別だけに絞れます。複数は配列で（どれかに当たる行）。登録・カメラレディ・採否通知も混ざる。**推定の締切も入ります**（search_deadlines の既定は外すので、条件を揃えて比べるときは `include_estimated: true` を添えてください）。上の境目は JST の暦日で切り、`search_deadlines` の `within_days` と同じ数え方です（同じ条件なら同じ件数になります）。100 件を超える時は其の旨と残り件数を末尾に書く。行にはランク（`CCF A・CORE A*` の形。無い行は「ランク未確認」）・会期・確認の状態の札も付きます。",
     inputSchema: {
       type: "object",
       properties: {
