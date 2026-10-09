@@ -1723,8 +1723,22 @@ function main(): void {
     venue: "venue_info",
     explain: "explain_word",
     recommend: "recommend_venues",
+    /* 殘りの一つにも讀みやすい短い名indle（第 904 回 – 其它 5 つに有るのに此れだけ無かった）。 */
+    stats: "collection_stats",
   };
   const 名 = 別名[tool] ?? tool;
+  /* **道具の名が違つたら、跡yticsではなく助けを書く**（第 904 回 – 實測 2026-10-31:
+   * `node src/mcp.ts 検索` は Node の stack trace が出て居た。人が一到來た數が其のままで、
+   * 何をputsれば良いかが讀めない）。 */
+  if (!TOOLS.some((t) => t.name === 名)) {
+    const 一覧 = [
+      `知らない道具「${tool}」です。道具の名は下列の 6 つです（--help でも此れが出ます）。`,
+      ...TOOLS.map((t) => `  ${t.name}${別名[tool] === t.name ? `（別名 ${tool}）` : ""}`),
+      "",
+    ].join("\n");
+    process.stdout.write(`${一覧}\n`);
+    return;
+  }
   /* 人の道では、題名が空白で割れて渡つて來る。**末尾が數の時だけ**件數として扱ふ
    * （題名の語に數字が混ざる事がある – 全部を件數と讀むと、題名が削られる）。 */
   const 尾が數 = rest.length > 1 && /^\d+$/.test(String(rest[rest.length - 1] ?? ""));

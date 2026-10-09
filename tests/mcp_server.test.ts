@@ -2470,3 +2470,47 @@ it("推薦の軸が畫面の行まで届く（第 901 回）", async () => {
     "ICDE の観測年数が 1 年以下 – 窓の版から其場で計算して居る",
   ).toBeGreaterThan(1);
 });
+
+it("人が道具の名を間違えたら、跡ytics ではなく助けを書く（第 904 回）", () => {
+  /* 實測 2026-10-31: `node src/mcp.ts 検索` は Node の stack trace が出て居た。一到來た人が
+   * 其の儘打入した語であらうと、何を書けばよいかが読めない。`--help` と同じ一覧を出す。 */
+  const 実行 = (args: string[]): string => {
+    const r = spawnSync(process.execPath, [join(REPO_ROOT, "src", "mcp.ts"), ...args], {
+      encoding: "utf8",
+      timeout: 180_000,
+    });
+    return `${r.stdout ?? ""}${r.stderr ?? ""}`;
+  };
+  /* 道具の日本語名や、字を一つ増やした名前 – 人がよく打つ誤り。 */
+  for (const 語 of ["検索", "venue_infoe", "saerch"]) {
+    const 出 = 実行([語]);
+    expect(出, `「${語}」で stack trace が出て居る`).not.toContain("at Object.");
+    expect(出, `「${語}」の跡yticsを出して居ない`).not.toContain("ReferenceError");
+    expect(出, `「${語}」が道具の名だと言ふ案内が無い`).toContain(`知らない道具「${語}」`);
+    /* 道具の名を全部出す（どれを書けば良いかが分かる）。 */
+    for (const 名 of [
+      "search_deadlines",
+      "list_upcoming",
+      "venue_info",
+      "explain_word",
+      "collection_stats",
+      "recommend_venues",
+    ]) {
+      expect(出, `「${語}」の助けに ${名} が無い`).toContain(名);
+    }
+  }
+  /* 短い別名は 6 つとも在る（`collection_stats` には `stats` – 其它 5 つに有るのに其在無かった）。
+   * 別名ごとに**同じ道具**に繋がることを、返り値の先頭の文で確かめる。 */
+  for (const [別名, 引数, 期待] of [
+    ["search", "セキュリティ", "検索語「セキュリティ」に当たる締切"],
+    ["upcoming", "", "今日から 30 日以内"],
+    ["venue", "sigkdd", "会議: KDD"],
+    ["explain", "締切", "「締切」は"],
+    ["recommend", "tsn", "に合う投稿先"],
+    ["stats", "", "収録（data/snapshot.json）"],
+  ] as const) {
+    const 出 = 実行(引数 === "" ? [別名] : [別名, 引数]);
+    expect(出, `別名 ${別名} が利かない`).toContain(期待);
+    expect(出, `別名 ${別名} が道具に繋げて居ない`).not.toContain("知らない道具");
+  }
+});
